@@ -1,0 +1,3090 @@
+﻿<!DOCTYPE html>
+<html lang="lv">
+<head>
+<script>
+(function() {
+  var API_BASE = 'https://minka-api.gamernr1elite.workers.dev';
+  var TOKEN_KEY = 'minka_api_token_v1';
+  window.MINKA_API_BASE = API_BASE;
+  window.hospitalDatabase = Array.isArray(window.hospitalDatabase) ? window.hospitalDatabase : [];
+
+  function getToken() {
+    try {
+      var fromStorage = sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY) || '';
+      if (fromStorage) return fromStorage;
+      var qp = new URLSearchParams(window.location.search).get('token') || '';
+      if (qp) {
+        try { sessionStorage.setItem(TOKEN_KEY, qp); } catch(_e) {}
+        return qp;
+      }
+      return '';
+    }
+    catch(e) { return ''; }
+  }
+
+  function setToken(token, persist) {
+    try {
+      sessionStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(TOKEN_KEY);
+      if (token) {
+        if (persist) localStorage.setItem(TOKEN_KEY, token);
+        else sessionStorage.setItem(TOKEN_KEY, token);
+      }
+    } catch(e) {}
+    document.documentElement.classList.toggle('minka-auth-locked', !token);
+    document.dispatchEvent(new CustomEvent(token ? 'minka:auth-ok' : 'minka:auth-required'));
+  }
+
+  function clearToken() {
+    setToken('', false);
+  }
+
+  async function apiFetch(path, options) {
+    options = options || {};
+    var headers = new Headers(options.headers || {});
+    var token = getToken();
+    if (token) headers.set('authorization', 'Bearer ' + token);
+    if (options.json !== undefined) {
+      headers.set('content-type', 'application/json');
+      options.body = JSON.stringify(options.json);
+    }
+    var response = await fetch((/^https?:/i).test(path) ? path : (API_BASE + path), Object.assign({}, options, {
+      headers: headers,
+      cache: options.cache || 'no-store'
+    }));
+    if (response.status === 401) clearToken();
+    return response;
+  }
+
+  window.MinkaApi = {
+    base: API_BASE,
+    getToken: getToken,
+    setToken: setToken,
+    clearToken: clearToken,
+    apiFetch: apiFetch
+  };
+
+  document.documentElement.classList.toggle('minka-auth-locked', !getToken());
+})();
+</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="manifest" href="/Minka/manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Minka">
+<meta name="theme-color" content="#0a0a1a">
+<title>Minka Search OS - Clean Start</title>
+<!-- bundle.css is critical ï¿½ load normally -->
+<link rel="stylesheet" href="css/bundle.css">
+<!-- External fonts/icons: non-blocking preload swap -->
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preload" as="style"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  onload="this.onload=null;this.rel='stylesheet'">
+<link rel="preload" as="style"
+  href="https://fonts.googleapis.com/icon?family=Material+Icons+Round"
+  onload="this.onload=null;this.rel='stylesheet'">
+<link rel="preload" as="style"
+  href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+  onload="this.onload=null;this.rel='stylesheet'">
+<link rel="preload" as="style"
+  href="https://fonts.cdnfonts.com/css/digital-7-mono"
+  onload="this.onload=null;this.rel='stylesheet'">
+<noscript>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Round">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+  <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/digital-7-mono">
+</noscript>
+<link rel="icon" href="../data/minka_icon.ico">
+
+<style id="rg_corner_clip_fix">
+/* RG corner clip fix */
+html, body { overflow: hidden !important; }
+#grafiks-app {
+  border-radius: 32px !important;
+  overflow: hidden !important;
+  clip-path: inset(0 round 32px);
+  isolation: isolate !important;
+}
+.side-panel.left-panel { border-top-left-radius: 32px !important; border-bottom-left-radius: 32px !important; overflow: hidden !important; }
+.side-panel.right-panel { border-top-right-radius: 32px !important; border-bottom-right-radius: 32px !important; overflow: hidden !important; }
+.main-panel { overflow: hidden !important; }
+#minkaBarWrap {
+  border-radius: 22px !important;
+  overflow: visible !important;
+  clip-path: none !important;
+}
+#minkaBar { filter: none !important; overflow: visible !important; }
+#minkaBarInner { border-radius: 18px !important; }
+#minkaBarMute, #minkaBarMenu, #minkaLogo { position: relative; z-index: 2; }
+</style>
+<style id="minka_auth_overlay_css">
+html.minka-auth-locked body { overflow: hidden !important; }
+html.minka-auth-locked #grafiks-app { filter: blur(10px) saturate(.9); pointer-events: none !important; user-select: none !important; }
+#minka-auth-overlay { position: fixed; inset: 0; z-index: 200000; display: none; align-items: center; justify-content: center; background: rgba(4, 7, 14, 0.72); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 20px; }
+html.minka-auth-locked #minka-auth-overlay { display: flex; }
+.minka-auth-card { width: min(420px, calc(100vw - 32px)); border-radius: 22px; border: 1px solid rgba(255,255,255,0.10); background: #0d1118; box-shadow: 0 28px 80px rgba(0,0,0,0.55); padding: 22px 22px 18px; color: #eef2ff; }
+.minka-auth-head { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+.minka-auth-icon { width: 52px; height: 52px; border-radius: 16px; border: 1px solid rgba(139,92,246,0.28); background: radial-gradient(circle at 30% 30%, rgba(139,92,246,0.30), rgba(91,33,182,0.12) 60%, transparent 100%), #121722; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 10px 24px rgba(0,0,0,0.22); flex: 0 0 52px; }
+.minka-auth-icon svg { width: 24px; height: 24px; fill: #d8c4ff; opacity: .96; }
+.minka-auth-title { font-size: 18px; font-weight: 800; letter-spacing: -.02em; margin: 0 0 6px; }
+.minka-auth-sub { font-size: 13px; color: rgba(255,255,255,0.60); margin: 0 0 16px; }
+.minka-auth-note { margin-top: 10px; font-size: 11px; line-height: 1.45; color: rgba(255,255,255,0.48); }
+#minka-auth-password { width: 100%; height: 46px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.10); background: #121722; color: #fff; padding: 0 14px; font: inherit; outline: none; box-sizing: border-box; }
+#minka-auth-password:focus { border-color: rgba(139,92,246,0.55); box-shadow: 0 0 0 3px rgba(139,92,246,0.12); }
+.minka-auth-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; }
+.minka-auth-check { display: flex; align-items: center; gap: 8px; font-size: 12px; color: rgba(255,255,255,0.66); }
+#minka-auth-submit { border: 0; border-radius: 14px; height: 42px; padding: 0 18px; background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: #fff; font-weight: 800; cursor: pointer; }
+#minka-auth-status { margin-top: 12px; min-height: 18px; font-size: 12px; color: rgba(255,255,255,0.64); }
+#minka-auth-status.is-error { color: #fda4af; }
+#minka-auth-status.ok { color: #86efac; }
+</style>
+</head>
+<body class="ai-collapsed">
+<noscript><div style="padding:40px;text-align:center;color:#ccc;font-family:sans-serif;background:#111;min-height:100vh;">JavaScript ir nepieciešams, lai šī lapa darbotos. / JavaScript is required.</div></noscript>
+<div id="minka-auth-overlay">
+  <div class="minka-auth-card">
+    <div class="minka-auth-head">
+      <div class="minka-auth-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2l7 3v6c0 5.25-3.44 9.95-7 11-3.56-1.05-7-5.75-7-11V5l7-3zm0 5a3 3 0 00-3 3v1H8.5a1.5 1.5 0 00-1.5 1.5v4A1.5 1.5 0 008.5 18h7a1.5 1.5 0 001.5-1.5v-4A1.5 1.5 0 0015.5 11H15v-1a3 3 0 00-3-3zm-1 4v-1a1 1 0 112 0v1h-2z"/>
+        </svg>
+      </div>
+      <div>
+        <h2 class="minka-auth-title">Droša Piekļuve Minka</h2>
+        <p class="minka-auth-sub">Šī piekļuve aizsargā darba datus un privāto sistēmas saturu ar Cloudflare aizsargātu infrastruktūru.</p>
+      </div>
+    </div>
+    <p class="minka-auth-sub">Publiskajā versijā sensitīvā informācija netiek glabāta. Dati tiek ielādēti tikai pēc autorizācijas.</p>
+    <input id="minka-auth-password" type="password" placeholder="Parole">
+    <div class="minka-auth-row">
+      <label class="minka-auth-check"><input id="minka-auth-remember" type="checkbox"> Atcerēties šajā ierīcē</label>
+      <button id="minka-auth-submit" type="button">Ieiet</button>
+    </div>
+    <div id="minka-auth-status"></div>
+    <div class="minka-auth-note">Parole un aizsargātie dati netiek glabāti GitHub repozitorijā. Tie tiek apstrādāti caur aizsargātu Cloudflare Worker infrastruktūru.</div>
+  </div>
+</div>
+<!-- MacScape background (visual only) -->
+<div id="macscapeBg" aria-hidden="true">
+  <div class="ms-grid"></div>
+  <div class="ms-orb orb1"></div>
+  <div class="ms-orb orb2"></div>
+  <div class="ms-orb orb3"></div>
+  <div class="ms-noise"></div>
+</div>
+
+<!-- Sun / Moon widgets removed -->
+
+<!-- GRAFIKS ï¿½ draggable, resizable, glassy, with search inside -->
+<div id="grafiks-app">
+
+  <div id="grafiks-loader">
+    <div id="minka-loader-building">
+      <div class="mlb-building">
+        <div class="mlb-antenna">
+          <div class="mlb-antenna-dot"></div>
+          <div class="mlb-antenna-stem"></div>
+        </div>
+        <div class="mlb-wing-l">
+          <div class="mlb-win" data-wid="wl0"></div>
+          <div class="mlb-win" data-wid="wl1"></div>
+          <div class="mlb-win" data-wid="wl2"></div>
+        </div>
+        <div class="mlb-body">
+          <div class="mlb-win" data-wid="w0"></div>
+          <div class="mlb-win" data-wid="w1"></div>
+          <div class="mlb-win" data-wid="w2"></div>
+          <div class="mlb-win" data-wid="w3"></div>
+          <div class="mlb-win" data-wid="w4"></div>
+          <div class="mlb-win" data-wid="w5"></div>
+          <div class="mlb-win" data-wid="w6"></div>
+          <div class="mlb-win" data-wid="w7"></div>
+          <div class="mlb-win" data-wid="w8"></div>
+          <div class="mlb-win" data-wid="w9"></div>
+          <div class="mlb-win" data-wid="w10"></div>
+          <div class="mlb-win" data-wid="w11"></div>
+        </div>
+        <div class="mlb-wing-r">
+          <div class="mlb-win" data-wid="wr0"></div>
+          <div class="mlb-win" data-wid="wr1"></div>
+          <div class="mlb-win" data-wid="wr2"></div>
+        </div>
+        <div class="mlb-base"></div>
+      </div>
+    <div class="mlb-title">LĀDĒ DATUS...</div>
+    </div>
+  </div>
+  
+  <!-- LEFT PANEL - RADIOGRĀFERI -->
+  <div class="side-panel left-panel">
+    <div>
+      <div class="status-tag radiographers">
+        <div class="dot radiographers-dot"></div> RADIOGRĀFERI
+        <span id="radiographers-today-badge" class="today-badge" hidden>TAGAD</span>
+      </div>
+      <div id="radiographers-duty" class="duty-vertical"></div>
+    </div>
+    <div>
+      <div id="radiographers-next-container" class="next-box">
+        <div class="next-box-label">⏱ NĀKAMĀ MAIŅA</div>
+        <span id="radiographers-next" class="next-names">...</span>
+        <span id="radiographers-next-countdown" class="next-box-countdown"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER PANEL -->
+  <div class="main-panel">
+    <!-- Search 2-in-1: AI assistant + phone/dept search -->
+    <!-- ï¿½ï¿½ï¿½ï¿½ MINKA BAR WRAPPER ï¿½ï¿½ï¿½ï¿½ -->
+    <div id="minkaBarWrap">
+    <!-- ï¿½ï¿½ï¿½ï¿½ MINKA BAR ï¿½ï¿½ï¿½ï¿½ -->
+    <div id="minkaBar">
+      <div id="minkaBarInner">
+        <img id="minkaLogo" src="../data/minka_icon.ico" alt="M">
+        <div id="minkaBarInput" role="textbox" tabindex="0" spellcheck="false" 
+             contenteditable="false" data-ph="Grafika jautājums? Raksti ?"></div>
+        <div id="minkaBarHint"></div>
+        <div id="minkaBarPill"></div>
+        <button id="minkaBarClear" aria-label="Dzēst">×</button>
+        <button id="minkaBarMenu" onclick="toggleFullListModal(event)" title="Viss saraksts">
+          <span class="material-icons-round">menu</span>
+        </button>
+        <button id="minkaBarMute" aria-label="Izslēgt skaņu" title="Skaņa ieslēgta" style="width:36px;height:36px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:#cbd5e1;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;">🔊</button>
+      </div>
+      <!-- Search results -->
+      <div id="minkaResults" class="results-area" style="display:none"></div>
+      <!-- AI / proactive panel -->
+      <div id="minkaAiPanel">
+        <div id="minkaAiHeader">
+          <span id="minkaAiDot"></span>
+          <span id="minkaAiMode">MINKA</span>
+        </div>
+        <div id="minkaAiText"></div>
+      </div>
+    </div>
+    <!-- ï¿½ï¿½ï¿½ï¿½ NAMEDAY CHIP ï¿½ï¿½ï¿½ï¿½ -->
+    <div id="minkaNamedayChip" style="display:flex">
+      <span id="minkaNamedayChipIcon">📅</span>
+      <span id="minkaNamedayChipText">Ielādē...</span>
+    </div>
+    </div><!-- /minkaBarWrap -->
+
+    <div class="top-row">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div class="date-title-wrap">
+          <h1 id="grafiks-dateTitle">...</h1>
+          <span id="grafiks-todayTag" class="today-tag" hidden>ŠODIEN</span>
+        </div>
+        <!-- LIVE badge -->
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="view-btn" onclick="g_toggleView()">
+          <span class="material-icons-round" id="grafiks-viewIcon">format_list_bulleted</span>
+        </button>
+        <button class="view-btn" onclick="openStatsModal()" title="Maiņu statistika">
+          <span class="material-icons-round">bar_chart</span>
+        </button>
+        <button id="mkSettingsBtn" class="view-btn" type="button" title="Iestatījumi" aria-label="Iestatījumi">
+          <span class="material-icons-round">settings</span>
+        </button>
+        <select id="grafiks-monthPicker" class="month-select" onchange="g_changeMonth()"></select>
+      </div>
+    </div>
+
+    <!-- YouTube-style shift progress bar -->
+    <div id="shift-progress-wrap" class="shift-progress-wrap" hidden>
+      <div class="shift-progress-times">
+        <span id="shift-start-label" class="shift-time-label">08:00</span>
+        <div class="shift-progress-center">
+          <span id="shift-elapsed-label" class="shift-elapsed">Pagājis: —</span>
+          <span id="grafiks-countdown" class="shift-remaining">Atlikušas: —</span>
+        </div>
+        <span id="shift-end-label" class="shift-time-label">20:00</span>
+      </div>
+      <div class="shift-bar-track" id="shift-bar-track">
+        <div class="shift-bar-fill" id="shift-bar-fill"></div>
+        <div class="shift-bar-scrubber" id="shift-bar-scrubber">
+      <div class="shift-bar-tooltip" id="shift-bar-tooltip">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scroll-row">
+      <button class="arrow" onclick="g_scrollCal(-1)"><span class="material-icons-round">chevron_left</span></button>
+      <div class="scroller" id="grafiks-scroller"></div>
+      <button class="arrow" onclick="g_scrollCal(1)"><span class="material-icons-round">chevron_right</span></button>
+      <button class="arrow" onclick="toggleMiniCal(event)" id="miniCalBtn" title="Kalend&#257;rs" style="margin-left:6px;"><span class="material-icons-round">calendar_month</span></button>
+    </div>
+    
+    <div id="grafiks-list" class="grid-view"></div>
+    <div id="night-split-panel" class="night-split-panel"></div>
+  </div>
+
+  <!-- RIGHT PANEL ï¿½ RADIOLOGI -->
+  <div class="side-panel right-panel">
+    <div>
+      <div class="status-tag radiologists">
+        <div class="dot radiologists-dot"></div> RADIOLOGI
+        <span id="radiologists-today-badge" class="today-badge" hidden>TAGAD</span>
+      </div>
+      <div id="radiologists-duty" class="duty-vertical"></div>
+    </div>
+    <div>
+      <div id="radiologists-next-container" class="next-box">
+        <div class="next-box-label">⏱ NĀKAMĀ MAIŅA</div>
+        <span id="radiologists-next" class="next-names">--</span>
+        <span id="radiologists-next-countdown" class="next-box-countdown"></span>
+      </div>
+    </div>
+  </div>
+  <!-- Mini calendar popup ï¿½ at app level so overflow:hidden doesn't clip it -->
+  <div id="miniCalPopup" style="display:none;position:absolute;z-index:9000;background:rgba(10,9,22,0.97);border:1px solid rgba(183,123,255,0.35);border-radius:16px;padding:16px;backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);box-shadow:0 20px 50px rgba(0,0,0,0.7);min-width:272px;"></div>
+</div>
+
+
+<!-- STATS MODAL -->
+<div id="stats-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.72);backdrop-filter:blur(6px);align-items:center;justify-content:center;" onclick="if(event.target===this)closeStatsModal()">
+  <div style="background:#0f0f14;border:1px solid rgba(255,255,255,0.1);border-radius:14px;width:min(900px,96vw);max-height:80vh;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,0.9);">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.07);">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="material-icons-round" style="color:#00ff7f;font-size:20px;">bar_chart</span>
+        <span style="font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#fff;">Maiņu statistika</span>
+        <span id="stats-month-label" style="font-size:11px;color:rgba(255,255,255,0.45);font-weight:600;"></span>
+      </div>
+      <button onclick="closeStatsModal()" style="background:none;border:none;color:rgba(255,255,255,0.5);cursor:pointer;padding:4px;border-radius:6px;line-height:1;" title="Aizvērt">
+        <span class="material-icons-round" style="font-size:18px;">close</span>
+      </button>
+    </div>
+    <div id="stats-table-wrap" style="overflow:auto;padding:16px 20px;flex:1;"></div>
+  </div>
+</div>
+
+<!-- WORKER MODAL BACKDROP -->
+<div id="worker-modal-backdrop" onclick="closeWorkerModal()"></div>
+
+<!-- WORKER MODAL - bottom sheet -->
+<div id="worker-modal" onclick="event.stopPropagation()">
+  <div class="modal-header">
+    <div class="modal-avatar" id="modal-avatar-initials">??</div>
+    <div class="modal-header-text">
+      <h2 id="modal-worker-name">Darbinieks</h2>
+      <span class="modal-surname-line" id="modal-surname-line">--</span>
+    </div>
+    <span id="modal-total-hours">0h</span>
+    <div class="modal-close" onclick="closeWorkerModal()"><span class="material-icons-round" style="font-size:18px">close</span></div>
+  </div>
+  <!-- hidden fields for JS compat -->
+  <div style="display:none">
+    <span id="modal-firstname">--</span>
+    <span id="modal-surname">--</span>
+  </div>
+  <div class="view-toggle">
+    <button id="toggle-fatigue" class="toggle-btn active" onclick="showModalView('fatigue')">⚡ Nogurums</button>
+    <button id="toggle-list" class="toggle-btn" onclick="showModalView('list')">📋 Saraksts</button>
+    <button id="toggle-calendar" class="toggle-btn" onclick="showModalView('calendar')">🗓 Kalendārs</button>
+    <button id="toggle-emoji" class="toggle-btn" onclick="showModalView('emoji')">Emoji</button>
+  </div>
+  <div class="modal-content">
+    <div id="modal-list-view" class="list-view-wrapper hide">
+      <div class="dates-list" id="modal-dates-list"></div>
+    </div>
+    <div id="modal-calendar-view" class="calendar-view-wrapper">
+      <div class="calendar-container">
+        <div class="calendar-header">
+          <div class="current-date" id="modal-calendar-month-year">--</div>
+          <div class="calendar-nav">
+            <span class="cal-nav-btn material-symbols-rounded" onclick="modalCalendarMonth(-1)">chevron_left</span>
+            <span class="cal-nav-btn material-symbols-rounded" onclick="modalCalendarMonth(1)">chevron_right</span>
+          </div>
+        </div>
+        <div class="calendar">
+          <ul class="weeks">
+            <li>P</li><li>O</li><li>T</li><li>C</li><li>P</li><li>S</li><li>Sv</li>
+          </ul>
+          <ul class="days" id="modal-calendar-days"></ul>
+        </div>
+      </div>
+    </div>
+    <div id="modal-fatigue-view" class="fatigue-view-wrapper">
+      <!-- Aizpilda fatigue.js -->
+    </div>
+    <div id="modal-emoji-view" class="fatigue-view-wrapper hide" style="padding:8px;">
+      <!-- Aizpilda emoji.js -->
+    </div>
+  </div>
+</div>
+
+<!-- FULL LIST MODAL -->
+<div id="full-list-modal" onclick="event.stopPropagation()">
+  <div class="full-list-header">
+    <h2>📞 Visi numuri</h2>
+    <div class="full-list-close" onclick="closeFullListModal()"><span class="material-icons-round">close</span></div>
+  </div>
+  <div class="full-list-content" id="full-list-content"></div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var overlay = document.getElementById('minka-auth-overlay');
+  var input = document.getElementById('minka-auth-password');
+  var remember = document.getElementById('minka-auth-remember');
+  var submit = document.getElementById('minka-auth-submit');
+  var status = document.getElementById('minka-auth-status');
+  if (!overlay || !window.MinkaApi) return;
+
+  function sync() {
+    var locked = !window.MinkaApi.getToken();
+    document.documentElement.classList.toggle('minka-auth-locked', locked);
+    if (!locked && input) input.value = '';
+  }
+
+  async function doLogin() {
+    if (!input) return;
+    var password = String(input.value || '').trim();
+    status.textContent = '';
+    status.classList.remove('is-error');
+    if (!password) {
+      status.textContent = 'Ievadi paroli.';
+      status.classList.add('is-error');
+      return;
+    }
+    submit.disabled = true;
+    submit.textContent = 'Pārbauda...';
+    try {
+      var res = await fetch(window.MINKA_API_BASE + '/api/login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: password })
+      });
+      var data = await res.json().catch(function(){ return {}; });
+      if (!res.ok || !data || !data.token) throw new Error((data && data.error) || 'Login failed');
+      window.MinkaApi.setToken(data.token, !!(remember && remember.checked));
+      status.textContent = 'Pieslēgts.';
+      document.dispatchEvent(new CustomEvent('minka:auth-ok'));
+    } catch (err) {
+      status.textContent = 'Nepareiza parole vai API nav sasniedzams.';
+      status.classList.add('is-error');
+    } finally {
+      submit.disabled = false;
+      submit.textContent = 'Ieiet';
+      sync();
+    }
+  }
+
+  if (submit) submit.addEventListener('click', doLogin);
+  if (input) input.addEventListener('keydown', function(e){ if (e.key === 'Enter') doLogin(); });
+  document.addEventListener('minka:auth-required', sync);
+  document.addEventListener('minka:auth-ok', sync);
+  window.addEventListener('load', function(){
+    sync();
+    if (document.documentElement.classList.contains('minka-auth-locked') && input) input.focus();
+  });
+})();
+</script>
+<script src="data/namedays.local.js"></script>
+<script src="js/calendar.js"></script>
+<script src="js/calendar_extras_v4.js"></script>
+<script src="js/fatigue.js?v=20260318d"></script>
+<script src="js/nightsplit.js?v=20260318e" defer></script>
+<script src="js/design_v1.js" defer></script>
+<script src="js/theme.js" defer></script>
+<script src="js/minka.sync.config.js" defer></script>
+<script src="js/emoji.js" defer></script>
+<script src="js/levels.js" defer></script>
+
+<script>
+// ï¿½ï¿½ï¿½ï¿½ Smooth staggered entrance for duty blocks ï¿½ï¿½ï¿½ï¿½
+(function(){
+  function staggerEntrance(){
+    const blocks = document.querySelectorAll('.duty-block, .grafiks-row, .day-pill');
+    blocks.forEach((el, i) => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(8px)';
+      el.style.transition = `opacity .35s ease ${i * 30}ms, transform .35s cubic-bezier(.2,.9,.2,1) ${i * 30}ms`;
+      requestAnimationFrame(() => {
+        el.style.opacity = '1';
+        el.style.transform = 'translateY(0)';
+      });
+    });
+  }
+  
+  // Observer to trigger entrance on new content
+  const observer = new MutationObserver((mutations) => {
+    for (const m of mutations) {
+      if (m.addedNodes.length > 0) {
+        const hasRelevant = [...m.addedNodes].some(n => 
+          n.nodeType === 1 && (n.classList?.contains('duty-block') || n.classList?.contains('grafiks-row') || n.classList?.contains('day-pill'))
+        );
+        if (hasRelevant) staggerEntrance();
+      }
+    }
+  });
+  
+  const targets = ['radiographers-duty', 'radiologists-duty', 'grafiks-list', 'grafiks-scroller'];
+  targets.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) observer.observe(el, { childList: true });
+  });
+})();
+
+// ï¿½ï¿½ï¿½ï¿½ Keyboard shortcut: ESC closes modals ï¿½ï¿½ï¿½ï¿½
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('worker-modal')?.classList.contains('open')) {
+      if (typeof closeWorkerModal === 'function') closeWorkerModal();
+    }
+    if (document.getElementById('full-list-modal')?.classList.contains('open')) {
+      if (typeof closeFullListModal === 'function') closeFullListModal();
+    }
+  }
+  // Ctrl+F / Cmd+F: focus search
+  if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+    e.preventDefault();
+    const search = document.getElementById('searchInput');
+    if (search) { search.focus(); search.select(); }
+  }
+  // Arrow keys navigate calendar
+  if (!document.getElementById('searchInput')?.matches(':focus')) {
+    if (e.key === 'ArrowLeft' && !e.ctrlKey) {
+      e.preventDefault();
+      if (typeof g_scrollCal === 'function') g_scrollCal(-1);
+    }
+    if (e.key === 'ArrowRight' && !e.ctrlKey) {
+      e.preventDefault();
+      if (typeof g_scrollCal === 'function') g_scrollCal(1);
+    }
+  }
+});
+</script>
+
+
+
+
+<!-- ï¿½ï¿½ï¿½ï¿½ Night Split Overlay ï¿½ï¿½ï¿½ï¿½ -->
+<div id="nsOverlay">
+  <div id="nsOverlay-backdrop" onclick="toggleNsOverlay()"></div>
+  <div id="nsPanel">
+    <button id="nsCloseBtn" onclick="toggleNsOverlay()">×</button>
+    <div id="nsPanelContent">
+      <div style="color:rgba(255,255,255,.3);text-align:center;padding:32px;">Ielādē...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var overlay=document.getElementById('nsOverlay');
+  var _nsOpen=false;
+
+  window.toggleNsOverlay=function(forceOpen){
+    if(typeof forceOpen==='boolean') _nsOpen=!forceOpen; // will be toggled below
+    _nsOpen=!_nsOpen;
+    overlay.classList.toggle('open',_nsOpen);
+    if(_nsOpen && window.__ns) {
+      setTimeout(function(){ if(window.__ns && typeof window.__ns._render==='function') window.__ns._render(); }, 50);
+    }
+    if(!_nsOpen) {
+      // notify parent
+      try { window.parent.postMessage({type:'nsClosed'},'*'); } catch(e) {}
+    }
+  };
+
+  // Listen for postMessage from parent
+  window.addEventListener('message', function(e) {
+    if(e.data && e.data.type==='toggleNs') {
+      var shouldOpen = e.data.open;
+      if(shouldOpen !== _nsOpen) toggleNsOverlay();
+    }
+  });
+
+  // Escape to close
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&_nsOpen){ toggleNsOverlay(); try{window.parent.postMessage({type:'nsClosed'},'*');}catch(ex){} }
+  });
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+<script>
+/* ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½
+   MINKA BAR v3 ï¿½ lightweight, fast, proactive AI assistant
+   - contenteditable input (no form/label issues)
+   - Web Audio sounds (no files)
+   - Proactive messages: weather, news, fatigue, vÄrdadienas
+   - AI: instant responses via Anthropic API
+   - RSS news cycling from LSM.lv
+ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ï¿½"ï¿½ */
+(function() {
+  'use strict';
+
+  /* ï¿½ï¿½ï¿½ï¿½ DOM refs ï¿½ï¿½ï¿½ï¿½ */
+  const bar     = document.getElementById('minkaBar');
+  const inner   = document.getElementById('minkaBarInner');
+  const input   = document.getElementById('minkaBarInput');
+  const hint    = document.getElementById('minkaBarHint');
+  const pill    = document.getElementById('minkaBarPill');
+  const clearB  = document.getElementById('minkaBarClear');
+  const muteB   = document.getElementById('minkaBarMute');
+  const results = document.getElementById('minkaResults');
+  const aiPanel = document.getElementById('minkaAiPanel');
+  const mainPanel = document.querySelector('.main-panel');
+  const aiMode  = document.getElementById('minkaAiMode');
+  const aiText  = document.getElementById('minkaAiText');
+  if (!bar || !input) return;
+
+  /* ï¿½ï¿½ï¿½ï¿½ Sound engine (Web Audio, zero files) ï¿½ï¿½ï¿½ï¿½ */
+  let _ac = null;
+  let __minkaMuted = false;
+  try { __minkaMuted = localStorage.getItem('minka_muted') === '1'; } catch(e) {}
+  function setMuteUI() {
+    if (!muteB) return;
+  muteB.textContent = __minkaMuted ? '🔇' : '🔊';
+  muteB.title = __minkaMuted ? 'Skaņa izslēgta' : 'Skaņa ieslēgta';
+  muteB.setAttribute('aria-label', __minkaMuted ? 'Ieslēgt skaņu' : 'Izslēgt skaņu');
+    muteB.style.opacity = __minkaMuted ? '0.85' : '1';
+  }
+  setMuteUI();
+  if (muteB) muteB.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    __minkaMuted = !__minkaMuted;
+    try { localStorage.setItem('minka_muted', __minkaMuted ? '1' : '0'); } catch(err) {}
+    setMuteUI();
+  });
+  function ac() {
+    if (!_ac) try { _ac = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){}
+    if (_ac && _ac.state === 'suspended') _ac.resume().catch(()=>{});
+    return _ac;
+  }
+  function beep(freq, dur, vol, type) {
+    if (__minkaMuted) return;
+    const c = ac(); if (!c) return;
+    try {
+      const o = c.createOscillator(), g = c.createGain();
+      o.connect(g); g.connect(c.destination);
+      o.type = type||'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(0, c.currentTime);
+      g.gain.linearRampToValueAtTime(vol||0.05, c.currentTime + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
+      o.start(); o.stop(c.currentTime + dur + 0.01);
+    } catch(e) {}
+  }
+  const snd = {
+    click:  () => beep(520, 0.07, 0.05),
+    nav:    () => beep(420, 0.08, 0.04),
+    open:   () => beep(380, 0.12, 0.04),
+    close:  () => beep(280, 0.10, 0.04),
+    type:   () => beep(700 + Math.random()*200, 0.035, 0.018, 'triangle'),
+    ai:     () => { beep(480, 0.08, 0.04); setTimeout(()=>beep(640, 0.10, 0.03), 80); },
+    warn:   () => { beep(360, 0.14, 0.06); setTimeout(()=>beep(300, 0.18, 0.05), 120); },
+    news:   () => beep(500, 0.07, 0.03),
+  };
+
+  /* ï¿½ï¿½ï¿½ï¿½ Global click sounds ï¿½ï¿½ï¿½ï¿½ */
+  document.addEventListener('click', e => {
+    const el = e.target.closest('button,.day-btn,.card,.duty-block,.pill,[onclick],.result-item');
+    if (!el || el === clearB || el.id === 'minkaBarMenu' || el.id === 'minkaBarMute') return;
+    if (el.classList.contains('pill') || el.classList.contains('arrow')) snd.nav();
+    else if (el.classList.contains('card') || el.classList.contains('duty-block')) snd.open();
+    else snd.click();
+  }, true);
+
+  /* ï¿½ï¿½ï¿½ï¿½ Typing sounds ï¿½ï¿½ï¿½ï¿½ */
+  let _typeN = 0;
+  document.addEventListener('keydown', e => {
+    if (document.activeElement === input && e.key.length === 1) {
+      if (++_typeN % 4 === 0) snd.type();
+    }
+  }, true);
+
+  /* ï¿½ï¿½ï¿½ï¿½ State ï¿½ï¿½ï¿½ï¿½ */
+  let _text = '';
+  let _hintTimer, _hintErase, _hintIdx = 0;
+  let _aiDebounce, _aiOpen = false;
+  let _msgQueue = [], _msgBusy = false;
+  let _msgHideTimer = 0, _msgRunToken = 0;
+  let _weatherData = null, _newsItems = [], _newsFeedIdx = {v:0,l:0,r:0};
+  let _cbId = 0;
+
+  const HINTS = [
+    'Meklē nodaļu, numuru vai vārdu...',
+    'Jautā AI: raksti ? un jautājumu',
+    'Piemērs: "kardioloģija" vai "7801"',
+    'Grafika jautājums? Raksti ?',
+  ];
+  const WKEY = 'e91db7aba1dd5745f52eb99e7cc38e8e';
+  const RSS  = 'https://api.rss2json.com/v1/api.json';
+  const FEEDS = {
+    v:  'https://www.lsm.lv/rss/?lang=lv&catid=51',    // VeselÄ«ba
+    l:  'https://www.lsm.lv/rss/?lang=lv&catid=20',    // Latvija
+    r:  'https://www.lsm.lv/rss/?lang=lv&catid=22695', // RÄ«ga
+    sv: 'https://www.lsm.lv/rss/?lang=lv&catid=16',    // SabiedrÄ«ba
+    ek: 'https://www.lsm.lv/rss/?lang=lv&catid=14',    // Ekonomika
+    pa: 'https://www.lsm.lv/rss/?lang=lv&catid=29',    // Pasaule
+    sp: 'https://www.lsm.lv/rss/?lang=lv&catid=12',    // Sports
+  };
+  const FEEDS_LABELS = {v:'Veselība',l:'Latvija',r:'Rīga',sv:'Sabiedrība',ek:'Ekonomika',pa:'Pasaule',sp:'Sports'};
+  const DESCMAP = {'clear sky':'Skaidrs','few clouds':'Daži mākoņi','scattered clouds':'Mainīgi mākoņains','broken clouds':'Mākoņains','overcast clouds':'Apmācies','light rain':'Viegls lietus','moderate rain':'Lietus','heavy intensity rain':'Stiprs lietus','rain':'Lietus','thunderstorm':'Pērkona negaiss','snow':'Sniegs','light snow':'Viegls sniegs','mist':'Migla','fog':'Bieza migla','drizzle':'Smidzina','sleet':'Slapjš sniegs'};
+  /* VARDA ï¿½ tiek izmantots no data/varda.js (window.LATVIAN_NAMEDAYS) */
+  const h = new Date().getHours();
+  const GREET = h<5?'Nakts rit':h<11?'Labrīt':h<17?'Labdien':'Labvakar';
+
+
+  function openExternalLink(url) {
+    const target = String(url || '').trim();
+    if (!target) return;
+    // Tauri v2: invoke open_external Rust command (uses open crate)
+    try {
+      const invoke = window.__TAURI__ && window.__TAURI__.core && typeof window.__TAURI__.core.invoke === 'function'
+        ? window.__TAURI__.core.invoke : null;
+      if (invoke) {
+        invoke('open_external', { url: target }).catch(function(err){
+          console.warn('[Minka] open_external failed:', err);
+          try { window.open(target, '_blank', 'noopener'); } catch (_e) {}
+        });
+        return;
+      }
+    } catch (_e) {}
+    try { window.open(target, '_blank', 'noopener'); } catch (_e) {}
+  }
+
+  /* ï¿½ï¿½ï¿½ï¿½ Hint animation ï¿½ï¿½ï¿½ï¿½ */
+  function typeHint(text) {
+    clearTimeout(_hintTimer); clearTimeout(_hintErase);
+    let i = 0; hint.textContent = '';
+    (function tick() {
+      if (_text || document.activeElement === input) return;
+      if (i < text.length) { hint.textContent = text.slice(0, ++i); _hintTimer = setTimeout(tick, 30 + Math.random()*15); }
+    })();
+  }
+  function eraseHint(cb) {
+    clearTimeout(_hintTimer);
+    (function tick() {
+      if (hint.textContent.length > 0) { hint.textContent = hint.textContent.slice(0,-1); _hintErase = setTimeout(tick, 12); }
+      else if (cb) cb();
+    })();
+  }
+  function startHints() {
+    typeHint(HINTS[0]);
+    _hintTimer = setInterval(() => eraseHint(() => {
+      _hintIdx = (_hintIdx+1) % HINTS.length;
+      setTimeout(() => { if (!_text) typeHint(HINTS[_hintIdx]); }, 320);
+    }), 5200);
+  }
+  function stopHints() { clearInterval(_hintTimer); clearTimeout(_hintErase); hint.textContent = ''; }
+
+  /* ï¿½ï¿½ï¿½ï¿½ Input handling (contenteditable) ï¿½ï¿½ï¿½ï¿½ */
+  function getText() { return input.textContent.trim(); }
+  function clearText() { input.textContent = ''; _text = ''; updateState(); }
+
+  input.addEventListener('focus', () => { bar.classList.add('focused'); stopHints(); });
+  input.addEventListener('blur',  () => {
+    bar.classList.remove('focused');
+    if (!_text) { startHints(); setMode('idle'); setTimeout(drainMsgs, 1500); }
+  });
+
+  input.addEventListener('input', () => {
+    _text = getText();
+    updateState();
+    clearTimeout(_aiDebounce);
+
+    // If user starts typing ï¿½ immediately stop any proactive message
+    if (_text && _msgBusy) {
+      abortTypewrite();
+      _msgBusy = false;
+      closeAi();
+    }
+
+    if (!_text) { setMode('idle'); closeAi(); closeResults(); startHints(); setTimeout(drainMsgs, 2000); return; }
+
+    const isAi = _text[0]==='?' || (
+      _text.length > 3 && /^(kur|kas|cik|vai|kÄpï¿½c|kÄdï¿½Ä¼|kÄ |kad |paskaidro|palÄ«dzi)/i.test(_text)
+    );
+    if (isAi && _text.replace('?','').trim().length >= 2) {
+      setMode('ai');
+      closeResults();
+      _aiDebounce = setTimeout(() => askAI(_text.replace(/^\?/,'').trim()), 550);
+    } else {
+      setMode('search');
+      closeAi();
+      doSearch(_text);
+    }
+  });
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { clearText(); closeAi(); closeResults(); input.blur(); snd.close(); }
+    if (e.key === 'Enter') { e.preventDefault(); }
+  });
+
+  clearB.addEventListener('click', () => { clearText(); closeAi(); closeResults(); input.focus(); snd.click(); });
+
+  /* ï¿½ï¿½ï¿½ï¿½ Make contenteditable behave like input ï¿½ï¿½ï¿½ï¿½ */
+  input.setAttribute('contenteditable', 'true');
+  input.addEventListener('paste', e => {
+    e.preventDefault();
+    const text = (e.clipboardData||window.clipboardData).getData('text/plain').replace(/\n/g,' ').slice(0,100);
+    document.execCommand('insertText', false, text);
+  });
+
+  /* ï¿½ï¿½ï¿½ï¿½ State management ï¿½ï¿½ï¿½ï¿½ */
+  function updateState() {
+    bar.classList.toggle('has-text', !!_text);
+  }
+  function setMode(m) {
+    bar.classList.toggle('ai-mode', m==='ai');
+    bar.classList.remove('ai-mode');
+    if (m==='ai') { pill.textContent='AI'; bar.classList.add('ai-mode'); }
+    else if (m==='search') { pill.textContent='MEKLĒ'; }
+    else { pill.textContent='MINKA'; }
+  }
+
+  /* ï¿½ï¿½ï¿½ï¿½ Results ï¿½ï¿½ï¿½ï¿½ */
+  function closeResults() { results.style.display='none'; results.innerHTML=''; }
+  function doSearch(q) {
+    const query = String(q || '').trim();
+    if (query.length < 2) { closeResults(); return; }
+    if (typeof renderSearchResults === 'function') {
+      renderSearchResults(query, results);
+      requestAnimationFrame(() => { results.style.display = results.innerHTML.trim() ? 'block' : 'none'; });
+    } else {
+      closeResults();
+    }
+  }
+
+  /* ï¿½ï¿½ï¿½ï¿½ AI panel ï¿½ï¿½ï¿½ï¿½ */
+  function openAi() { aiPanel.classList.add('open'); document.body.classList.remove('ai-collapsed'); _aiOpen = true; }
+  function closeAi() { aiPanel.classList.remove('open'); document.body.classList.add('ai-collapsed'); _aiOpen = false; aiText.innerHTML = ''; }
+
+  /* ï¿½ï¿½ï¿½ï¿½ Typewriter ï¿½ï¿½ï¿½ï¿½ */
+  let _twRunId = 0;
+  let _twTimer = 0;
+
+  function abortTypewrite() {
+    _twRunId++;
+    clearTimeout(_twTimer);
+    _twTimer = 0;
+  }
+
+  function typewrite(el, text, speed) {
+    speed = speed || 22; // faster base speed
+    abortTypewrite();
+    const runId = _twRunId;
+
+    // Use a text node + caret span ï¿½ no textContent rebuild on every char
+    el.innerHTML = '';
+    const textNode = document.createTextNode('');
+    const caret = document.createElement('span');
+    caret.id = 'minkaAiCaret';
+    el.appendChild(textNode);
+    el.appendChild(caret);
+
+    return new Promise(resolve => {
+      let i = 0;
+      // Batch characters for very long texts ï¿½ write 2-3 chars per frame
+      const batchSize = text.length > 120 ? 2 : 1;
+
+      (function tick() {
+        if (runId !== _twRunId) {
+          resolve();
+          return;
+        }
+        if (i < text.length) {
+          // Write batchSize chars at once
+          const chunk = text.slice(i, i + batchSize);
+          textNode.nodeValue += chunk;
+          i += batchSize;
+
+          const lastChar = chunk[chunk.length - 1];
+          let d = speed + Math.random() * 8;
+          if ('.!?'.includes(lastChar)) d += 60;  // reduced from 160
+          else if (',;:'.includes(lastChar)) d += 30; // reduced from 80
+
+          _twTimer = setTimeout(tick, d);
+        } else {
+          // Done ï¿½ remove caret cleanly
+          if (caret.parentNode) caret.parentNode.removeChild(caret);
+          resolve();
+        }
+      })();
+    });
+  }
+
+  /* ï¿½ï¿½ï¿½ï¿½ Ask AI ï¿½ï¿½ï¿½ï¿½ */
+  async function askAI(q) {
+    if (!q) return;
+    snd.ai();
+    aiMode.textContent = 'MINKA AI';
+    openAi();
+    aiText.innerHTML = '<span id="minkaAiCaret"></span>';
+
+    let ctx = '';
+    try {
+      const s = window.__minkaGetSelectedDayState ? window.__minkaGetSelectedDayState() : null;
+      if (s) {
+        ctx = 'Datums:' + s.dateStr +
+          '. RadiogrÄferi:' + (s.workers||[]).map(w=>w.name+'('+w.shift+'h)').join(',') +
+          '. Radiologi:' + (s.radiologists||[]).map(w=>w.name+'('+w.shift+'h)').join(',') + '.';
+      }
+    } catch(e) {}
+
+    // Enrich context with fatigue scores for all visible workers
+    try {
+      if (window.__fatigue && window.__fatigue.calculateFatigue) {
+        const allNames = new Set();
+        const s = window.__minkaGetSelectedDayState ? window.__minkaGetSelectedDayState() : null;
+        if (s) {
+          (s.workers||[]).forEach(w => allNames.add(w.name));
+          (s.radiologists||[]).forEach(w => allNames.add(w.name));
+        }
+        // Also include workers from next 7 days
+        const today = new Date();
+        const fatigueLines = [];
+        allNames.forEach(name => {
+          try {
+            const f = window.__fatigue.calculateFatigue(name);
+            if (f) {
+              const level = f.score >= 85 ? 'KRITISKS' : f.score >= 65 ? 'AUGSTS' : f.score >= 40 ? 'VIDï¿½JS' : 'ZEMS';
+              fatigueLines.push(`${name}: ${f.score}% (${level})`);
+            }
+          } catch(e){}
+        });
+        if (fatigueLines.length) {
+          ctx += ' Noguruma skori: ' + fatigueLines.join(', ') + '.';
+        }
+      }
+    } catch(e) {}
+
+    try {
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          model:'claude-sonnet-4-20250514', max_tokens:200,
+          system: `Tu esi Minka - RAKUS Gaiļezera radioloģijas nodaļas asistents.
+
+Zini TIKAI šo:
+- Grafiku dati: kurš strādā, maiņu laiki, veidi (12h/24h/nakts)
+- Noguruma skori: aprēķināti pēc atpūtas starp maiņām
+- Šodienas maiņu progress un atlikušais laiks
+- Datums un izvēlētā diena
+
+NEATBILDI uz jautājumiem par: ārstēšanu, diagnozēm, medicīnas procedūrām, zālēm, citām nodaļām, laiku ārpus grafikā redzamā.
+
+Ja jautājums nav par grafiku vai nogurumu, atbildi: "Par to man nav informācijas."
+
+Atbild 1-3 teikumos latviski. Konkrēti skaitļi. Bez emojiem.
+
+Noguruma skoru interpretācija:
+0-39% = ZEMS (labi), 40-64% = VIDĒJS, 65-84% = AUGSTS (uzmanīgi), 85-100% = KRITISKS (risks).
+
+Skors aprēķināts pēc: atpūtas laika starp maiņām, maiņu biežuma, nakts maiņu skaita.
+
+Tu vari atbildēt uz: "Kurš ir visvairāk noguris?", "Vai kāds ir riskā?", "Kurš labāks rītdienas maiņai?", "Cik nogurusi ir [vārds]?"` + (ctx ? '\n\nAktuālie dati: ' + ctx : ''),
+          messages:[{role:'user',content:q}]
+        })
+      });
+      const data = await r.json();
+      const answer = data.content?.[0]?.text || 'Neizdevās atbildēt.';
+      await typewrite(aiText, answer);
+    } catch(e) {
+      await typewrite(aiText, 'Savienojuma kļūda.');
+    }
+  }
+
+  /* ï¿½ï¿½ï¿½ï¿½ Proactive message queue ï¿½ï¿½ï¿½ï¿½ */
+  function getModeLabel(mode) {
+  const modeLabels = {weather:'LAIKS', warning:'NOGURUMS', news:'ZIŅAS', info:'MINKA'};
+    return modeLabels[mode] || 'MINKA';
+  }
+
+  function setupPanelLink(mode, link) {
+    const chip = document.getElementById('minkaNamedayChip');
+    if (mode === 'news' && link) {
+      aiPanel.style.cursor = 'pointer';
+      aiPanel.classList.add('news-clickable');
+      aiPanel.onclick = () => openExternalLink(link);
+  aiPanel.title = 'Atvērt ziņu';
+      if (chip) {
+        chip.classList.add('news-clickable');
+        chip.style.cursor = 'pointer';
+        chip.onclick = () => openExternalLink(link);
+  chip.title = 'Atvērt ziņu';
+      }
+    } else {
+      aiPanel.style.cursor = '';
+      aiPanel.classList.remove('news-clickable');
+      aiPanel.onclick = null;
+      aiPanel.title = '';
+      if (chip) {
+        chip.classList.remove('news-clickable');
+        chip.style.cursor = '';
+        chip.onclick = null;
+        chip.title = '';
+      }
+    }
+  }
+
+  function presentMessage(item, durationMs) {
+    const text = item && item.text ? String(item.text) : '';
+    if (!text) {
+      _msgBusy = false;
+      setTimeout(drainMsgs, 0);
+      return;
+    }
+
+    const mode = item && item.mode ? item.mode : 'info';
+    const link = item && item.link ? item.link : '';
+    const token = ++_msgRunToken;
+
+    _msgBusy = true;
+    clearTimeout(_msgHideTimer);
+    abortTypewrite();
+    aiText.innerHTML = '';
+
+    aiMode.textContent = getModeLabel(mode);
+    if (mode === 'warning') snd.warn();
+    else if (mode === 'news') snd.news();
+    else snd.ai();
+
+    setupPanelLink(mode, link);
+    openAi();
+    setMode('ai');
+
+    typewrite(aiText, text, 35).then(() => {
+      if (token !== _msgRunToken) return;
+      clearTimeout(_msgHideTimer);
+      _msgBusy = false;
+      if (_msgQueue.length) {
+        _msgHideTimer = setTimeout(() => { if (token === _msgRunToken) drainMsgs(); }, Math.max(4000, durationMs || 10000));
+      }
+    });
+  }
+
+  function qMsg(text, mode, link) {
+    _msgQueue.push({text, mode: mode||'info', link: link||''});
+    if (!_msgBusy) drainMsgs();
+  }
+  window.__minkaQueueMessage = qMsg;
+
+  window.__minkaClearQueuedMessages = function(mode) {
+    if (!mode) {
+      _msgQueue = [];
+      return;
+    }
+    const target = String(mode);
+    _msgQueue = _msgQueue.filter(item => String(item && item.mode || '') !== target);
+  };
+
+  window.isUiNavigationBusy = window.isUiNavigationBusy || function(){
+    return Number(window.__minkaUiBusyUntil || 0) > Date.now();
+  };
+
+  window.__minkaShowPriorityMessage = function(text, mode, link, opts) {
+    const o = opts && typeof opts === 'object' ? opts : {};
+    if (o.clearAll) {
+      _msgQueue = [];
+    } else if (Array.isArray(o.clearModes) && o.clearModes.length) {
+      const clearSet = new Set(o.clearModes.map(v => String(v)));
+      _msgQueue = _msgQueue.filter(item => !clearSet.has(String(item && item.mode || '')));
+    }
+    if (window.isUiNavigationBusy && window.isUiNavigationBusy()) {
+      window.__minkaQueueMessage(text, mode || 'info', link || '');
+      return;
+    }
+    clearTimeout(_msgHideTimer);
+    _msgBusy = false;
+    presentMessage({ text, mode: mode || 'info', link: link || '' }, o.durationMs || 9000);
+  };
+
+  function drainMsgs() {
+    if (_msgBusy || !_msgQueue.length) return;
+    if (_text || document.activeElement===input || _aiOpen) { setTimeout(drainMsgs, 4000); return; }
+    const item = _msgQueue.shift();
+    presentMessage(item, 10000);
+  }
+
+  /* ï¿½ï¿½ï¿½ï¿½ Weather ï¿½ï¿½ï¿½ï¿½ */
+  async function fetchWeather() {
+    try {
+      const r = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=Riga&appid=${WKEY}&units=metric`, {cache:'no-store'});
+      const w = await r.json();
+      const raw = String(w?.weather?.[0]?.description||'').toLowerCase();
+      const desc = DESCMAP[raw] || raw.charAt(0).toUpperCase()+raw.slice(1);
+      const t = Math.round(w?.main?.temp||0);
+      const tf = Math.round(w?.main?.feels_like||t);
+      const wind = Math.round((w?.wind?.speed||0)*10)/10;
+      function fmt(ts){ const d=new Date(ts*1000); return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0'); }
+      _weatherData = {desc, t, tf, wind, sr:w?.sys?.sunrise?fmt(w.sys.sunrise):'—', ss:w?.sys?.sunset?fmt(w.sys.sunset):'—'};
+    } catch(e) {}
+  }
+
+  /* ï¿½ï¿½ï¿½ï¿½ RSS ï¿½ï¿½ï¿½ï¿½ */
+  function fetchRSS(url) {
+    return fetch(RSS + '?rss_url=' + encodeURIComponent(url), {cache:'no-store'})
+      .then(r => r.json())
+      .then(d => (d?.status==='ok' ? d.items : []).map(x => ({
+        title: String(x.title||'').replace(/<[^>]*>/g,' ').trim(),
+        link:  String(x.link||x.url||'').trim()
+      })).filter(x => x.title))
+      .catch(() => []);
+  }
+  async function fetchNews() {
+    try {
+      const keys = Object.keys(FEEDS);
+      const results = await Promise.all(keys.map(k => fetchRSS(FEEDS[k])));
+      _newsItems = keys.map((k,i) => ({key:k, cat:FEEDS_LABELS[k]||k, items:results[i]})).filter(x=>x.items.length>0);
+      keys.forEach(k => { if(!(_newsFeedIdx[k]>=0)) _newsFeedIdx[k]=0; });
+    } catch(e) {}
+  }
+  let _newsFeedRobin = 0;
+  let _lastNewsLink = '';
+  function nextNews() {
+    if (!_newsItems.length) return null;
+    let tries = _newsItems.length;
+    while (tries-- > 0) {
+      const src = _newsItems[_newsFeedRobin % _newsItems.length];
+      _newsFeedRobin++;
+      const k = src.key;
+      if (!src.items.length) continue;
+      const idx = (_newsFeedIdx[k]||0) % src.items.length;
+      _newsFeedIdx[k] = idx + 1;
+      const item = src.items[idx];
+      _lastNewsLink = item.link || '';
+      return src.cat + ': ' + item.title;
+    }
+    return null;
+  }
+
+  /* ï¿½ï¿½ï¿½ï¿½ VÄrdadienas (no data/varda.js ï¿½  window.LATVIAN_NAMEDAYS) ï¿½ï¿½ï¿½ï¿½ */
+  function todayVarda() {
+    const db = window.LATVIAN_NAMEDAYS;
+  if (!db) { console.warn('[MINKA] LATVIAN_NAMEDAYS nav ielādēts!'); return []; }
+    let mm = '', dd = '';
+    try {
+      const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Europe/Riga', month: '2-digit', day: '2-digit'
+      }).formatToParts(new Date());
+      mm = parts.find(p => p.type === 'month')?.value || '';
+      dd = parts.find(p => p.type === 'day')?.value || '';
+    } catch(_e) {}
+    if (!mm || !dd) {
+      const d = new Date();
+      mm = String(d.getMonth()+1).padStart(2,'0');
+      dd = String(d.getDate()).padStart(2,'0');
+    }
+    const key = mm + '-' + dd;
+    const names = db[key] || [];
+  console.log('[MINKA] Vārdadienas:', key, '→', names);
+  return names.filter(n => n && n.trim() && n.trim() !== '–' && n.trim() !== '-');
+  }
+
+  /* ï¿½ï¿½ï¿½ï¿½ Fatigue warning ï¿½ï¿½ï¿½ï¿½ */
+  function getFatigueWarning() {
+    try {
+      if (!window.__fatigue || !window.__minkaGetSelectedDayState) return null;
+      const st = window.__minkaGetSelectedDayState();
+      if (!st) return null;
+      let worst=null, top=0;
+      [...(st.workers||[]),...(st.radiologists||[])].forEach(w=>{
+        try { const f=window.__fatigue.calculateFatigue(w.name); if(f&&f.score>top){top=f.score;worst=w;} } catch(e){}
+      });
+      if (worst&&top>=60) return {name:worst.name.split(' ')[0], score:top, isCrit:top>=80};
+    } catch(e) {}
+    return null;
+  }
+
+  function buildFatigueMsg(fw) {
+    if (!fw) return null;
+    return fw.isCrit
+      ? `Kritiski: ${fw.name} noguruma līmenis ${fw.score}%. Ieteicams pārrunāt ar kolēģiem.`
+      : `${fw.name} noguruma līmenis paaugstināts (${fw.score}%).`;
+  }
+
+  /* ï¿½ï¿½ï¿½ï¿½ Init proactive cycle ï¿½ï¿½ï¿½ï¿½ */
+  async function startProactive() {
+    await Promise.all([fetchWeather(), fetchNews()]);
+    const msgs = [];
+
+    if (_weatherData) {
+      msgs.push({text:`${GREET}! Rīgā: ${_weatherData.desc}, ${_weatherData.t}°C (sajūta ${_weatherData.tf}°C), vējš ${_weatherData.wind} m/s. Saule ${_weatherData.sr}–${_weatherData.ss}.`, mode:'weather'});
+    }
+    const varda = todayVarda();
+    if (varda.length) msgs.push({text:`Šodien vārdadienu svin ${varda.join(' un ')}.`, mode:'info'});
+    const fw = getFatigueWarning();
+    const fwMsg = buildFatigueMsg(fw);
+    if (fwMsg) msgs.push({text: fwMsg, mode:'warning'});
+    // Show 3 news at startup (after weather/varda msgs)
+    for (let ni = 0; ni < 3; ni++) {
+      const n = nextNews();
+      if (n) msgs.push({text: n, mode:'news', link: _lastNewsLink});
+    }
+
+    msgs.forEach((m,i) => setTimeout(()=>qMsg(m.text, m.mode, m.link||''), 2000 + i*13000));
+
+    // News every 4 min ï¿½ 2 items each refresh cycle
+    setInterval(async () => {
+      await fetchNews();
+      const n1 = nextNews(); if (n1) qMsg(n1, 'news', _lastNewsLink);
+      setTimeout(() => { const n2 = nextNews(); if (n2) qMsg(n2, 'news', _lastNewsLink); }, 11000);
+    }, 4*60*1000);
+
+    // Weather + fatigue every 30 min
+    setInterval(async () => {
+      await fetchWeather();
+      if (_weatherData) qMsg(`Rīgā: ${_weatherData.desc}, ${_weatherData.t}°C, vējš ${_weatherData.wind} m/s.`, 'weather');
+      const fw2 = getFatigueWarning();
+      if (fw2 && fw2.score>=65) qMsg(`${fw2.name} nogurums: ${fw2.score}%. Ievērojiet piesardzību.`, 'warning');
+    }, 30*60*1000);
+  }
+
+  /* ï¿½ï¿½ï¿½ï¿½ Also expose searchInput alias for old code ï¿½ï¿½ï¿½ï¿½ */
+  Object.defineProperty(window, '__minkaBarGetText', {get:()=>getText});
+  // Legacy: if calendar.js uses #searchInput ID directly for results rendering
+  // redirect results to our new container
+  const legacyResultsEl = document.getElementById('results');
+  if (legacyResultsEl) {
+    // Mirror results to our new container
+    const observer = new MutationObserver(() => {
+      if (legacyResultsEl.innerHTML !== results.innerHTML) {
+        results.innerHTML = legacyResultsEl.innerHTML;
+        results.style.display = results.innerHTML.trim() ? 'block' : 'none';
+      }
+    });
+    observer.observe(legacyResultsEl, {childList:true, subtree:true, characterData:true});
+  }
+
+  /* ï¿½ï¿½ï¿½ï¿½ Click outside closes panels ï¿½ï¿½ï¿½ï¿½ */
+  document.addEventListener('mousedown', e => {
+    if (!bar.contains(e.target)) {
+      closeAi(); closeResults();
+      if (document.activeElement===input) input.blur();
+    }
+  });
+
+  /* ï¿½ï¿½ï¿½ï¿½ Start ï¿½ï¿½ï¿½ï¿½ */
+  setMode('idle');
+  startHints();
+  /* Legacy proactive loop disabled ï¿½ v34 is the single recurring scheduler */
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+/* NAMEDAY FIX ï¿½ local JSON only, selected day message, golden highlight */
+(function(){
+  'use strict';
+  const getNamedayDB = () => (window.LATVIAN_NAMEDAYS && typeof window.LATVIAN_NAMEDAYS === 'object' ? window.LATVIAN_NAMEDAYS : {});
+  function normalizeDateStr(dateStr){
+    const m = String(dateStr || '').trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+    if(!m) return String(dateStr || '').trim();
+    const dd = String(parseInt(m[1],10)).padStart(2,'0');
+    const mm = String(parseInt(m[2],10)).padStart(2,'0');
+    return dd + '.' + mm + '.' + m[3];
+  }
+
+
+  function normalizeName(v){
+    return String(v || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function cleanList(arr){
+    return (Array.isArray(arr) ? arr : []).map(v => String(v || '').trim()).filter(v => v && v !== 'ï¿½' && v !== '-');
+  }
+
+  function keyFromDateStr(dateStr){
+    const m = String(dateStr || '').trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+    if (!m) return '';
+    const dd = String(parseInt(m[1],10)).padStart(2,'0');
+    const mm = String(parseInt(m[2],10)).padStart(2,'0');
+    return mm + '-' + dd;
+  }
+
+  function getSelectedInfo(){
+    let st = null;
+    try { if (typeof window.__minkaGetSelectedDayState === 'function') st = window.__minkaGetSelectedDayState(); } catch (_e) {}
+    let dateStr = st && st.activeDateStr ? String(st.activeDateStr) : '';
+    if (!dateStr && window.__activeDateStr) dateStr = String(window.__activeDateStr);
+    if (!dateStr) {
+      try {
+        const cal = window.__minkaCalendarState && typeof window.__minkaCalendarState.getSelectedDayState === 'function'
+          ? window.__minkaCalendarState.getSelectedDayState() : null;
+        if (cal && cal.activeDateStr) {
+          dateStr = String(cal.activeDateStr);
+          st = st || cal;
+        }
+      } catch (_e) {}
+    }
+    dateStr = normalizeDateStr(dateStr);
+    const key = dateStr ? keyFromDateStr(dateStr) : '';
+    const names = cleanList(getNamedayDB()[key] || []);
+    const now = new Date();
+    const todayStr = String(now.getDate()).padStart(2,'0') + '.' + String(now.getMonth()+1).padStart(2,'0') + '.' + now.getFullYear();
+    return {
+      state: st,
+      dateStr,
+      key,
+      names,
+      isToday: dateStr ? (dateStr === todayStr || !!(st && st.isToday)) : true
+    };
+  }
+
+  function ensureNamedayStyle(){
+    if (document.getElementById('minkaNamedayGoldStyle')) return;
+    const style = document.createElement('style');
+    style.id = 'minkaNamedayGoldStyle';
+    style.textContent = `
+      .nameday-gold {
+        box-shadow: 0 0 0 1px rgba(255, 210, 90, 0.32) inset, 0 0 18px rgba(255, 200, 70, 0.10) !important;
+        border-color: rgba(255, 208, 92, 0.55) !important;
+        background: linear-gradient(180deg, rgba(255,215,120,0.10), rgba(255,183,0,0.04)) !important;
+      }
+      .nameday-gold .duty-name,
+      .nameday-gold .name-main,
+      .nameday-gold.list-row b,
+      .nameday-gold .duty-surname,
+      .nameday-gold .name-sub {
+        color: #ffd76a !important;
+        text-shadow: 0 0 10px rgba(255, 205, 86, 0.20);
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function applyNamedayHighlight(){
+    ensureNamedayStyle();
+    const info = getSelectedInfo();
+    const namedaySet = new Set(info.names.map(normalizeName));
+
+    document.querySelectorAll('.nameday-gold').forEach(el => el.classList.remove('nameday-gold'));
+    if (!namedaySet.size) return info;
+
+    document.querySelectorAll('[data-worker]').forEach(el => {
+      const full = String(el.getAttribute('data-worker') || '').trim();
+      const first = normalizeName(full.split(/\s+/)[0] || '');
+      if (!first) return;
+      if (namedaySet.has(first)) el.classList.add('nameday-gold');
+    });
+
+    return info;
+  }
+
+  let lastAnnounced = '';
+  function announceSelectedDayNameday(force){
+    const info = applyNamedayHighlight();
+    if (!info.names.length) return;
+  const text = (info.isToday ? 'Šodien vārdadienu svin ' : 'Šajā dienā vārdadienu svin ') + info.names.join(' un ') + '.';
+    const sig = (info.dateStr || info.key || 'today') + '|' + text;
+    if (!force && sig === lastAnnounced) return;
+    lastAnnounced = sig;
+    /* Message queue handled by v34 only. This block keeps highlight state in sync. */
+  }
+
+  function refreshNamedays(forceMsg){
+    applyNamedayHighlight();
+    if (forceMsg) announceSelectedDayNameday(true);
+  }
+
+  window.__minkaApplyNamedays = refreshNamedays;
+
+  window.addEventListener('daySelected', (e) => {
+    const date = e && e.detail && e.detail.date ? e.detail.date : null;
+    if (date) window.__activeDateStr = normalizeDateStr(date); // ensure sync before highlight
+    setTimeout(() => refreshNamedays(true), 180);
+    setTimeout(() => applyNamedayHighlight(), 450);
+  });
+
+  window.addEventListener('load', () => {
+    setTimeout(() => refreshNamedays(false), 600);
+    setTimeout(() => applyNamedayHighlight(), 1500);
+  });
+
+  if ('MutationObserver' in window) {
+    const watchIds = ['radiographers-duty', 'radiologists-duty', 'grafiks-list'];
+    watchIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      new MutationObserver(() => setTimeout(applyNamedayHighlight, 40)).observe(el, { childList: true, subtree: true });
+    });
+  }
+
+  setInterval(applyNamedayHighlight, 30000);
+})();
+</script>
+
+
+<script>
+/* v34 single recurring assistant loop ï¿½ news + weather + namedays + moon (offline calc) */
+(function(){
+  'use strict';
+  const getNamedayDB = () => (window.LATVIAN_NAMEDAYS && typeof window.LATVIAN_NAMEDAYS === 'object' ? window.LATVIAN_NAMEDAYS : {});
+  const input = document.getElementById('minkaBarInput');
+  const aiPanel = document.getElementById('minkaAiPanel');
+  const RSS = 'https://api.rss2json.com/v1/api.json';
+  const WEATHER_URL = 'https://api.openweathermap.org/data/2.5/weather?q=Riga&appid=e91db7aba1dd5745f52eb99e7cc38e8e&units=metric';
+  const FEEDS = [
+    { label:'Latvija', url:'https://www.lsm.lv/rss/?lang=lv&catid=20' },
+    { label:'Rīga', url:'https://www.lsm.lv/rss/?lang=lv&catid=22695' },
+    { label:'Veselība', url:'https://www.lsm.lv/rss/?lang=lv&catid=51' }
+  ];
+  const DESCMAP = {
+    'clear sky':'skaidrs',
+    'few clouds':'daži mākoņi',
+    'scattered clouds':'mainīgi mākoņains',
+    'broken clouds':'mākoņains',
+    'overcast clouds':'apmācies',
+    'light rain':'viegls lietus',
+    'moderate rain':'lietus',
+    'heavy intensity rain':'stiprs lietus',
+    'rain':'lietus',
+    'thunderstorm':'pērkona negaiss',
+    'snow':'sniegs',
+    'light snow':'viegls sniegs',
+    'mist':'migla',
+    'fog':'bieza migla',
+    'drizzle':'smidzina',
+    'sleet':'slapjš sniegs'
+  };
+
+  let newsCache = [];
+  let newsIdx = 0;
+  let seen = [];
+  let tickTimer = 0;
+  let cycle = 0;
+  let slotIndex = 0;
+  let lastNamedaySig = '';
+  let lastNewsSig = '';
+  let lastWeatherSig = '';
+  let lastNamedayCycle = -999;
+  let lastWeatherCycle = -999;
+  let newsBusy = false;
+  let weatherBusy = false;
+  let weatherCache = null;
+
+function getTauriInvoke(){
+  try {
+    return window.__TAURI__ && window.__TAURI__.core && typeof window.__TAURI__.core.invoke === 'function'
+      ? window.__TAURI__.core.invoke
+      : null;
+  } catch (_e) {
+    return null;
+  }
+}
+
+
+  function clean(list){
+  return (Array.isArray(list) ? list : []).map(v => String(v || '').trim()).filter(v => v && v !== '–' && v !== '-');
+  }
+  function pad2(v){ return String(v).padStart(2, '0'); }
+  function resolveSelectedDateState(){
+    let st = null;
+    try { if (typeof window.__minkaGetSelectedDayState === 'function') st = window.__minkaGetSelectedDayState(); } catch (_e) {}
+    let ds = st && st.activeDateStr ? String(st.activeDateStr) : '';
+    if (!ds && window.__activeDateStr) ds = String(window.__activeDateStr);
+    if (!ds) {
+      try {
+        const cal = window.__minkaCalendarState && typeof window.__minkaCalendarState.getSelectedDayState === 'function'
+          ? window.__minkaCalendarState.getSelectedDayState() : null;
+        if (cal && cal.activeDateStr) {
+          ds = String(cal.activeDateStr);
+          st = st || cal;
+        }
+      } catch (_e) {}
+    }
+    return {
+      dateStr: ds,
+      isToday: !!(st && st.isToday),
+      state: st
+    };
+  }
+  function getSelectedDate(){
+    const sel = resolveSelectedDateState();
+    const ds = String(sel.dateStr || '');
+    const m = ds.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+    if (m) {
+      const dd = pad2(+m[1]);
+      const mm = pad2(+m[2]);
+      const norm = dd + '.' + mm + '.' + m[3];
+      const today = new Date();
+      const todayStr = pad2(today.getDate()) + '.' + pad2(today.getMonth()+1) + '.' + today.getFullYear();
+      return { day:+m[1], month:+m[2], year:+m[3], dateStr: norm, isToday: norm === todayStr || !!sel.isToday };
+    }
+    const now = new Date();
+    return { day: now.getDate(), month: now.getMonth()+1, year: now.getFullYear(), dateStr: pad2(now.getDate()) + '.' + pad2(now.getMonth()+1) + '.' + now.getFullYear(), isToday: true };
+  }
+  function keyFromState(){
+    const d = getSelectedDate();
+    return { key: pad2(d.month) + '-' + pad2(d.day), isToday: d.isToday, dateStr: d.dateStr };
+  }
+  function buildNameday(){
+    const info = keyFromState();
+    const names = clean(getNamedayDB()[info.key] || []);
+    if (!names.length) {
+      try { const chip = document.getElementById('minkaNamedayChip'); if (chip) chip.style.display='none'; } catch(e){}
+      return null;
+    }
+  const text = (info.isToday ? 'Šodien vārdadienu svin ' : 'Šajā dienā vārdadienu svin ') + names.join(' un ') + '.';
+    // Update nameday chip
+    try {
+      const chip = document.getElementById('minkaNamedayChip');
+      const chipTxt = document.getElementById('minkaNamedayChipText');
+      const panelOpen = !!(aiPanel && aiPanel.classList.contains('open'));
+      if (chip && chipTxt && !panelOpen) {
+  chipTxt.innerHTML = (info.isToday ? 'Vārdadiena: ' : 'Šajā dienā: ') + names.map(n => `<strong>${n}</strong>`).join(', ');
+        chip.style.display = 'flex';
+      }
+    } catch(e){}
+    return { text, sig: (info.dateStr || info.key || 'today') + '|' + text };
+  }
+  window.isUiNavigationBusy = window.isUiNavigationBusy || function(){
+    return Number(window.__minkaUiBusyUntil || 0) > Date.now();
+  };
+  function isIdle(){
+    const typing = !!(input && String(input.textContent || '').trim());
+    const open = !!(aiPanel && aiPanel.classList.contains('open'));
+    return !document.hidden && !typing && !open && !(window.isUiNavigationBusy && window.isUiNavigationBusy());
+  }
+  function queue(text, mode, link){
+    if (!text || typeof window.__minkaQueueMessage !== 'function' || !isIdle()) return false;
+    window.__minkaQueueMessage(text, mode || 'info', link || '');
+    return true;
+  }
+
+  function normalizeDesc(raw){
+    const s = String(raw || '').toLowerCase().trim();
+  return DESCMAP[s] || s || 'laikapstākļi nav zināmi';
+  }
+  function moonPhaseInfo(year, month, day){
+    const c = Math.floor;
+    let y = year, m = month;
+    if (m < 3) { y -= 1; m += 12; }
+    m += 1;
+    const jd = 365.25 * y + 30.6 * m + day - 694039.09;
+    const phase = ((jd / 29.5305882) % 1 + 1) % 1;
+    let index = c(phase * 8 + 0.5) & 7;
+    const names = [
+    'jauns mēness',
+    'augošs sirpis',
+      'pirmais ceturksnis',
+    'augošs mēness',
+    'pilnmēness',
+    'dilstošs mēness',
+    'pēdējais ceturksnis',
+    'dilstošs sirpis'
+    ];
+  const icons = ['🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘'];
+    // Illumination % from phase angle
+    const illum = Math.round((1 - Math.cos(phase * 2 * Math.PI)) / 2 * 100);
+    const dayOfCycle = Math.round(phase * 29.53);
+    return { name: names[index], icon: icons[index], index, illum, dayOfCycle, sig: `${year}-${pad2(month)}-${pad2(day)}|${index}` };
+  }
+  function currentMoon(){
+    const d = getSelectedDate();
+    return moonPhaseInfo(d.year, d.month, d.day);
+  }
+
+  async function refreshWeather(){
+    if (weatherBusy) return;
+    weatherBusy = true;
+    try {
+      const r = await fetch(WEATHER_URL, { cache:'no-store' });
+      const w = await r.json();
+      const raw = String(w && w.weather && w.weather[0] && w.weather[0].description || '').toLowerCase();
+      const temp = Math.round(Number(w && w.main && w.main.temp || 0));
+      const feels = Math.round(Number(w && w.main && w.main.feels_like || temp));
+      const wind = Math.round(Number(w && w.wind && w.wind.speed || 0) * 10) / 10;
+      weatherCache = {
+        desc: normalizeDesc(raw),
+        temp,
+        feels,
+        wind,
+        sig: [normalizeDesc(raw), temp, feels, wind].join('|')
+      };
+    } catch(_e) {}
+    weatherBusy = false;
+  }
+  function buildWeatherMessage(){
+    const moon = currentMoon();
+    if (weatherCache && weatherCache.desc) {
+      const text = `Rīgā ${weatherCache.desc} · ${weatherCache.temp}°C · sajūta ${weatherCache.feels}°C · vējš ${weatherCache.wind} m/s · ${moon.icon} ${moon.name.toLowerCase()} (${moon.illum}%).`;
+      return { text, sig: `${weatherCache.sig}|${moon.sig}` };
+    }
+    return { text: `${moon.icon} Mēness fāze: ${moon.name}.`, sig: `moon|${moon.sig}` };
+  }
+
+
+async function refreshNews(){
+  if (newsBusy) return;
+  newsBusy = true;
+  try {
+    const invoke = getTauriInvoke();
+    if (invoke) {
+      const items = await invoke('fetch_news', { feeds: FEEDS });
+      newsCache = (Array.isArray(items) ? items : [])
+        .map(it => ({
+          sig: String(it && it.sig || '').trim(),
+          link: String(it && it.link || '').trim(),
+          pub: Number(it && it.pub || 0) || 0,
+          text: String(it && it.text || '').trim()
+        }))
+        .filter(it => it.text && it.text.length > 8);
+      newsIdx = 0;
+      if (!newsCache.length) console.warn('[Minka] Tauri news cache empty');
+      newsBusy = false;
+      return;
+    }
+
+    const chunks = await Promise.all(FEEDS.map(async (feed) => {
+      try {
+        const r = await fetch(RSS + '?rss_url=' + encodeURIComponent(feed.url), { cache:'no-store' });
+        const d = await r.json();
+        const ok = !d || !('status' in d) || d.status === 'ok';
+        if (!ok) {
+          console.warn('[Minka] RSS fetch failed for', feed.label, d && d.message ? d.message : d);
+          return [];
+        }
+        const items = Array.isArray(d && d.items) ? d.items : [];
+        return items.slice(0, 4).map(it => ({
+          sig: String(feed.label + '|' + (it && it.link || '') + '|' + (it && it.title || '')).trim(),
+          link: String(it && it.link || '').trim(),
+          pub: Date.parse(String(it && it.pubDate || '')) || 0,
+          text: feed.label + ': ' + String(it && it.title || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+        })).filter(it => it.text && it.text.length > 8);
+      } catch(e) {
+        console.warn('[Minka] RSS network error for', feed.label, e);
+        return [];
+      }
+    }));
+    newsCache = chunks.flat().sort((a,b) => (b.pub || 0) - (a.pub || 0)).slice(0, 12);
+    newsIdx = 0;
+    if (!newsCache.length) console.warn('[Minka] News cache empty after refresh');
+  } catch(e) {
+    console.warn('[Minka] refreshNews failed', e);
+  }
+  newsBusy = false;
+}
+
+function nextNews(){
+
+    if (!newsCache.length) {
+      if (!newsBusy) refreshNews();
+      return null;
+    }
+    for (let i = 0; i < newsCache.length; i++) {
+      const item = newsCache[(newsIdx + i) % newsCache.length];
+      if (!item || !item.text) continue;
+      newsIdx = (newsIdx + i + 1) % newsCache.length;
+      if (item.sig === lastNewsSig) continue;
+      if (seen.includes(item.sig)) continue;
+      seen.push(item.sig);
+      if (seen.length > 24) seen = seen.slice(-24);
+      lastNewsSig = item.sig;
+      return item;
+    }
+    const fallback = newsCache[(newsIdx++) % newsCache.length];
+    if (fallback && fallback.text) {
+      lastNewsSig = fallback.sig || '';
+      return fallback;
+    }
+    return null;
+  }
+
+  function schedule(ms){
+    clearTimeout(tickTimer);
+    tickTimer = setTimeout(tick, ms);
+  }
+
+  function queueNews(){
+    const news = nextNews();
+    if (news && queue(news.text, 'news', news.link)) return true;
+    return false;
+  }
+  function queueWeather(weather, forceRepeat){
+    if (!weather) return false;
+    const allow = forceRepeat || weather.sig !== lastWeatherSig || (cycle - lastWeatherCycle) >= 4;
+    if (!allow) return false;
+    if (queue(weather.text, 'weather')) {
+      lastWeatherSig = weather.sig;
+      lastWeatherCycle = cycle;
+      return true;
+    }
+    return false;
+  }
+  function queueNameday(nameday, forceRepeat){
+    if (!nameday) return false;
+    const allow = forceRepeat || nameday.sig !== lastNamedaySig || (cycle - lastNamedayCycle) >= 8;
+    if (!allow) return false;
+    if (queue(nameday.text, 'info')) {
+      lastNamedaySig = nameday.sig;
+      lastNamedayCycle = cycle;
+      return true;
+    }
+    return false;
+  }
+
+  function tick(){
+    cycle++;
+    if (!isIdle()) return schedule(5000);
+
+    const nameday = buildNameday();
+    const weather = buildWeatherMessage();
+    const order = [
+      ['news', 'weather', 'nameday'],
+      ['weather', 'news', 'nameday'],
+      ['nameday', 'news', 'weather']
+    ][slotIndex % 3];
+
+    for (const slot of order) {
+      let spoken = false;
+      if (slot === 'news') spoken = queueNews();
+      else if (slot === 'weather') spoken = queueWeather(weather, slotIndex % 3 === 1);
+      else if (slot === 'nameday') spoken = queueNameday(nameday, slotIndex % 3 === 2);
+      if (spoken) {
+        slotIndex = (slotIndex + 1) % 3;
+        return schedule(17000);
+      }
+    }
+
+    if (!newsCache.length && !newsBusy) refreshNews();
+    if (!weatherCache && !weatherBusy) refreshWeather();
+    schedule(9000);
+  }
+
+  function announceSelectedDay(prefer){
+    const nameday = buildNameday();
+    const weather = buildWeatherMessage();
+
+    if (prefer === 'nameday') {
+      if (queueNameday(nameday, true)) {
+        slotIndex = 0;
+        return schedule(17000);
+      }
+      if (queueWeather(weather, true)) {
+        slotIndex = 0;
+        return schedule(17000);
+      }
+      return;
+    }
+
+    if (queueWeather(weather, true)) {
+      slotIndex = 0;
+      return schedule(17000);
+    }
+    if (queueNameday(nameday, true)) {
+      slotIndex = 0;
+      return schedule(17000);
+    }
+  }
+
+  window.addEventListener('load', () => {
+    setTimeout(refreshNews, 600);
+    setTimeout(refreshWeather, 900);
+    setTimeout(() => { announceSelectedDay('weather'); }, 1500);
+    schedule(11000);
+    setInterval(refreshNews, 8 * 60 * 1000);
+    setInterval(refreshWeather, 20 * 60 * 1000);
+  });
+
+  let _namedayTimer = null;
+  function forceSelectedDayNameday(e){
+    lastNamedaySig = '';
+    lastNamedayCycle = -999;
+    if (_namedayTimer) { clearTimeout(_namedayTimer); _namedayTimer = null; }
+
+    const capturedDate = String((e && e.detail && e.detail.date) ? e.detail.date : (window.__activeDateStr || '')).trim();
+
+    _namedayTimer = setTimeout(function() {
+      _namedayTimer = null;
+      if (!capturedDate) return;
+
+      const m = capturedDate.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+      if (!m) {
+        announceSelectedDay('nameday');
+        return;
+      }
+
+      const ds = pad2(+m[1]) + '.' + pad2(+m[2]) + '.' + m[3];
+      const key = pad2(+m[2]) + '-' + pad2(+m[1]);
+      const db = getNamedayDB();
+      const names = clean(db[key] || []);
+      if (!names.length) return;
+
+      const now = new Date();
+      const todayStr = pad2(now.getDate()) + '.' + pad2(now.getMonth()+1) + '.' + now.getFullYear();
+      const isToday = ds === todayStr;
+  const text = (isToday ? 'Šodien vārdadienu svin ' : 'Šajā dienā vārdadienu svin ') + names.join(' un ') + '.';
+      const sig = ds + '|' + text;
+
+      lastNamedaySig = sig;
+      lastNamedayCycle = cycle;
+
+      if (typeof window.__minkaShowPriorityMessage === 'function') {
+        window.__minkaShowPriorityMessage(text, 'info', '', { clearModes: ['info'], durationMs: 9000 });
+      } else if (typeof window.__minkaQueueMessage === 'function') {
+        if (typeof window.__minkaClearQueuedMessages === 'function') window.__minkaClearQueuedMessages('info');
+        window.__minkaQueueMessage(text, 'info', '');
+      }
+    }, 720);
+
+    setTimeout(() => { schedule(9000); }, 1200);
+  }
+
+  window.addEventListener('daySelected', forceSelectedDayNameday);
+  // Note: click on .day-btn triggers g_selectDay ï¿½  daySelected event ï¿½  forceSelectedDayNameday
+  // No need for separate click handler which would fire without correct event.detail
+})();
+</script>
+
+
+<style>
+/* v35 search polish */
+#minkaResults .search-item.is-active,
+#minkaResults .list-item.is-active {
+  border-color: rgba(183,123,255,0.38) !important;
+  background: rgba(183,123,255,0.12) !important;
+  box-shadow: 0 0 0 1px rgba(183,123,255,0.08) inset;
+}
+#minkaResults .search-hint-row {
+  padding: 8px 12px 10px;
+  font-size: 11px;
+  color: rgba(220,220,255,0.58);
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+</style>
+<script>
+/* v35 stable dropdown search + reliable news click */
+(function(){
+  'use strict';
+  const input = document.getElementById('minkaBarInput');
+  const results = document.getElementById('minkaResults');
+  const bar = document.getElementById('minkaBar');
+  const aiPanel = document.getElementById('minkaAiPanel');
+  const mainPanel = document.querySelector('.main-panel');
+  const topRow = document.querySelector('.main-panel .top-row');
+  const scrollRow = document.querySelector('.main-panel .scroll-row');
+  const shiftProgress = document.getElementById('shift-progress-wrap');
+  if (!input || !results || !bar) return;
+
+  window.__MINKA_SEARCH_OWNER = 'v35';
+
+  let t = 0;
+  let activeIndex = -1;
+  let currentNodes = [];
+
+  function getQuery(){ return String(input.textContent || '').replace(/Â /g, ' ').trim(); }
+  function isAiQuery(q){
+    const s = String(q || '').trim();
+    return !!s && (s[0] === '?' || /^(kur|kas|cik|vai|kapec|kadel|kÄpï¿½c|kÄdï¿½Ä¼|kÄ |kad |paskaidro|palÄ«dzi)/i.test(s));
+  }
+  function hide(){
+    results.style.display = 'none';
+    results.innerHTML = '';
+    activeIndex = -1;
+    currentNodes = [];
+    if (mainPanel) mainPanel.classList.remove('mk-search-open');
+  }
+  function esc(v){
+    return String(v == null ? '' : v).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+  }
+  function getWorkers(){
+    const seen = new Set();
+    const out = [];
+    const add = (name, shift, isRd) => {
+      const n = String(name || '').trim();
+      if (!n) return;
+      const key = n.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      out.push({ name:n, shift:String(shift || ''), isRd:!!isRd });
+    };
+    const collect = (store, isRd) => {
+      try {
+        Object.values(store || {}).forEach(months => (months || []).forEach(day => ((day && day.workers) || []).forEach(w => add(w.name, w.shift, isRd))));
+      } catch(_e) {}
+    };
+    collect(window.__grafiksStore, false);
+    collect(window.__grafiksStoreRad, true);
+    // Scrape any rendered DOM cards (side panel + main grid) as fallback
+    document.querySelectorAll('[data-worker]').forEach(el => {
+      const isRd = el.classList.contains('card-rd') || !!el.closest('#radiologists-duty') || el.getAttribute('data-type') === 'rd';
+      add(el.getAttribute('data-worker'), el.getAttribute('data-shift') || '', isRd);
+    });
+    return out;
+  }
+  function score(text, q){
+    const src = String(text || '').toLowerCase();
+    const needle = String(q || '').toLowerCase();
+    if (!needle) return 9999;
+    const idx = src.indexOf(needle);
+    if (idx < 0) return 9999;
+    return idx + Math.max(0, src.length - needle.length) * 0.01;
+  }
+  function pickData(q){
+    const ql = q.toLowerCase();
+    const workers = getWorkers()
+      .filter(w => (w.name + ' ' + w.shift).toLowerCase().includes(ql))
+      .sort((a,b) => score(a.name, q) - score(b.name, q))
+      .slice(0, q.length < 2 ? 5 : 8);
+    const db = Array.isArray(window.hospitalDatabase) ? window.hospitalDatabase : [];
+    const phones = db
+      .filter(item => (((item && item.name) || '') + ' ' + ((item && item.cat) || '') + ' ' + ((item && item.sub) || '') + ' ' + ((item && item.phone) || '')).toLowerCase().includes(ql))
+      .sort((a,b) => score((a && a.name) || '', q) - score((b && b.name) || '', q))
+      .slice(0, q.length < 2 ? 6 : 14);
+    return { workers, phones };
+  }
+  function refreshActive(){
+    currentNodes = Array.from(results.querySelectorAll('.search-item, .list-item'));
+    currentNodes.forEach((el, idx) => el.classList.toggle('is-active', idx === activeIndex));
+  }
+  function setActive(idx){
+    if (!currentNodes.length) { activeIndex = -1; return; }
+    activeIndex = Math.max(0, Math.min(idx, currentNodes.length - 1));
+    refreshActive();
+    const el = currentNodes[activeIndex];
+    if (el && typeof el.scrollIntoView === 'function') el.scrollIntoView({ block:'nearest' });
+  }
+  function wire(){
+    currentNodes = Array.from(results.querySelectorAll('.search-item, .list-item'));
+    currentNodes.forEach((el, idx) => {
+      el.addEventListener('mouseenter', () => { activeIndex = idx; refreshActive(); }, { passive:true });
+    });
+    refreshActive();
+  }
+  function render(){
+    const q = getQuery();
+    if (!q || isAiQuery(q)) return hide();
+    const { workers, phones } = pickData(q);
+    const shortMode = q.length < 2;
+    if (!workers.length && !phones.length) {
+      if (shortMode) return hide();
+    results.innerHTML = '<div class="search-empty"><div class="search-empty-icon">🔍</div><div class="search-empty-text">Nav rezultātu par <b>' + esc(q) + '</b></div><div class="search-empty-hint">Mēģini pilnu vārdu, nodaļu vai numuru</div></div>';
+      results.style.display = 'block';
+      activeIndex = -1;
+      currentNodes = [];
+      if (mainPanel) mainPanel.classList.add('mk-search-open');
+      return;
+    }
+    let html = '';
+    if (workers.length) {
+    html += '<div class="search-category">👤 Ieteikumi</div>';
+      workers.forEach((w) => {
+        const color = w.isRd ? '#ff7c6e' : '#b77bff';
+        const role = w.isRd ? 'Radiologs' : 'Radiogrāfers';
+        const initials = w.name.split(' ').map(p => p[0] || '').slice(0,2).join('');
+        html += '<a class="search-item worker-result-item" href="#" data-kind="worker" data-name="' + esc(w.name) + '" data-shift="' + esc(w.shift) + '">'
+          + '<div class="search-item-icon" style="background:' + color + '18;border-color:' + color + '33;color:' + color + ';">' + esc(initials) + '</div>'
+          + '<div class="search-item-body"><div class="search-item-title">' + esc(w.name) + '</div><div class="search-item-sub">' + role + '</div></div>'
+          + '<div class="search-item-badge" style="color:' + color + ';border-color:' + color + '33;background:' + color + '12;">' + esc(w.shift || '?') + 'h</div>'
+          + '</a>';
+      });
+    }
+    if (phones.length) {
+    html += '<div class="search-category">📞 Nodaļas / numuri</div>';
+      phones.forEach((item) => {
+        const name = String((item && item.name) || '');
+        const phone = String((item && item.phone) || '');
+        const cat = esc((item && item.cat) || '');
+        const sub = item && item.sub ? ' Â· ' + esc(item.sub) : '';
+    const initials = name.split(' ').map(p => p[0] || '').slice(0,1).join('') || '📞';
+        html += '<a class="search-item" href="#" data-kind="phone" data-phone="' + esc(phone) + '">'
+          + '<div class="search-item-icon">' + esc(initials) + '</div>'
+          + '<div class="search-item-body"><div class="search-item-title">' + esc(name) + '</div><div class="search-item-sub">' + cat + sub + '</div></div>'
+          + '<div class="search-item-phone">' + esc(phone) + '</div>'
+          + '</a>';
+      });
+    }
+    html += '<div class="search-hint-row">↓ ↑ pārvietošanās · Enter atvērt · Esc aizvērt</div>';
+    results.innerHTML = html;
+    results.style.display = 'block';
+    activeIndex = -1;
+    if (mainPanel) mainPanel.classList.add('mk-search-open');
+    wire();
+    results.querySelectorAll('[data-kind="worker"]').forEach(el => {
+      el.addEventListener('click', function(ev){
+        ev.preventDefault();
+        ev.stopPropagation();
+        const name = el.getAttribute('data-name') || '';
+        const shift = el.getAttribute('data-shift') || '';
+        hide();
+        if (typeof window.showWorkerSchedule === 'function') window.showWorkerSchedule(name, shift);
+      });
+    });
+    results.querySelectorAll('[data-kind="phone"]').forEach(el => {
+      el.addEventListener('click', function(ev){
+        ev.preventDefault();
+        ev.stopPropagation();
+        const phone = el.getAttribute('data-phone') || '';
+        if (navigator.clipboard && phone) navigator.clipboard.writeText(phone).catch(function(){});
+      });
+    });
+  }
+  function schedule(){ clearTimeout(t); t = setTimeout(render, 220); }
+
+  function captureSearchEvent(e){
+    if (window.__MINKA_SEARCH_OWNER !== 'v35') return;
+    const target = e.target;
+    if (target !== input && !(input.contains && input.contains(target))) return;
+    e.stopPropagation();
+    schedule();
+  }
+
+  window.renderSearchResults = schedule;
+
+  // Re-run search automatically once schedule data arrives from async g_init fetch
+  document.addEventListener('minka:storeReady', function() {
+    var q = getQuery();
+    if (q && q.length >= 2 && !isAiQuery(q)) schedule();
+  }, { once: true });
+
+  ['input','paste','cut','keyup','focus'].forEach(function(ev){
+    document.addEventListener(ev, captureSearchEvent, true);
+  });
+  input.addEventListener('keydown', function(e){
+    if (results.style.display === 'none') return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); setActive(activeIndex + 1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setActive(activeIndex <= 0 ? currentNodes.length - 1 : activeIndex - 1); }
+    else if (e.key === 'Enter') {
+      const target = currentNodes[activeIndex >= 0 ? activeIndex : 0];
+      if (target) { e.preventDefault(); target.click(); }
+    } else if (e.key === 'Escape') {
+      hide();
+    }
+  }, true);
+  document.addEventListener('mousedown', function(e){
+    if (!bar.contains(e.target) && !results.contains(e.target)) hide();
+  }, true);
+
+  aiPanel.addEventListener('click', function(e){
+    const fn = typeof aiPanel.onclick === 'function' ? aiPanel.onclick : null;
+    if (!fn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    fn.call(aiPanel, e);
+  }, true);
+})();
+</script>
+
+
+<script>
+(function(){
+  // ï¿½ï¿½ï¿½ï¿½ MAIï¿½&U STATISTIKA MODÄ¬LS ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+  window.openStatsModal = function() {
+    const modal = document.getElementById('stats-modal');
+    const wrap = document.getElementById('stats-table-wrap');
+    const monthLabel = document.getElementById('stats-month-label');
+    if (!modal || !wrap) return;
+
+    const store = window.__grafiksStore || {};
+    const storeRad = window.__grafiksStoreRad || {};
+    const activeMonth = window.__activeMonth || '';
+    monthLabel.textContent = activeMonth;
+
+    // Gather all workers for the month
+    function getShiftType(w) {
+      const hrs = parseInt(String(w.shift||'').replace(/\D/g,'')) || 0;
+      const t = String(w.type||'').toUpperCase();
+      if (t === 'DIENNAKTS' || hrs >= 24) return 'diennakts';
+      if (t === 'NAKTS') return 'nakts';
+      return 'diena';
+    }
+
+    const workerStats = {};
+    function processStore(s, isRad) {
+      const monthData = s[activeMonth] || [];
+      for (const day of monthData) {
+        for (const w of (day.workers || [])) {
+          if (!w.name || !w.shift) continue;
+          const name = w.name;
+          if (!workerStats[name]) workerStats[name] = { name, isRad, d12:0, n12:0, h24:0, h8:0, hOther:0, total:0, totalHrs:0 };
+          const st = getShiftType(w);
+          const hrs = parseInt(String(w.shift||'').replace(/\D/g,'')) || 8;
+          workerStats[name].totalHrs += hrs;
+          workerStats[name].total++;
+          if (st === 'diennakts') workerStats[name].h24++;
+          else if (st === 'nakts') workerStats[name].n12++;
+          else if (hrs >= 12) workerStats[name].d12++;
+          else if (hrs >= 8) workerStats[name].h8++;
+          else workerStats[name].hOther++;
+        }
+      }
+    }
+    processStore(store, false);
+    processStore(storeRad, true);
+
+    const radiografers = Object.values(workerStats).filter(w => !w.isRad).sort((a,b) => b.totalHrs - a.totalHrs);
+    const radiologi = Object.values(workerStats).filter(w => w.isRad).sort((a,b) => b.totalHrs - a.totalHrs);
+
+    function renderTable(workers, title, accent) {
+      if (!workers.length) return '';
+      const rows = workers.map(w => {
+        const name = w.name.split(' ').map((p,i) => i===0 ? p : p[0]+'.').join(' ');
+        const bar = Math.min(100, Math.round(w.totalHrs / 200 * 100));
+        return `<tr>
+          <td style="padding:7px 10px;font-size:11px;font-weight:700;color:#e0e0e0;white-space:nowrap;">${name}</td>
+          <td style="padding:7px 10px;text-align:center;font-size:12px;font-weight:800;color:#00ff7f;">${w.totalHrs}h</td>
+          <td style="padding:7px 10px;text-align:center;font-size:11px;color:#60a5fa;">${w.d12 || '-'}</td>
+          <td style="padding:7px 10px;text-align:center;font-size:11px;color:#c084fc;">${w.n12 || '-'}</td>
+          <td style="padding:7px 10px;text-align:center;font-size:11px;color:#fb923c;">${w.h24 || '-'}</td>
+          <td style="padding:7px 10px;text-align:center;font-size:11px;color:rgba(255,255,255,0.4);">${w.h8||w.hOther ? (w.h8||0)+(w.hOther||0) : '-'}</td>
+          <td style="padding:7px 10px;min-width:80px;">
+            <div style="height:4px;border-radius:99px;background:rgba(255,255,255,0.07);">
+              <div style="height:100%;width:${bar}%;background:${accent};border-radius:99px;"></div>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+      return `<div style="margin-bottom:20px;">
+        <div style="font-size:10px;font-weight:800;letter-spacing:.12em;color:${accent};text-transform:uppercase;margin-bottom:8px;">${title}</div>
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.07);">
+              <th style="padding:5px 10px;text-align:left;font-size:9px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:.08em;text-transform:uppercase;">Darbinieks</th>
+              <th style="padding:5px 10px;font-size:9px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:.08em;text-transform:uppercase;">Kopā</th>
+              <th style="padding:5px 10px;font-size:9px;font-weight:700;color:#60a5fa;letter-spacing:.08em;text-transform:uppercase;">12h D</th>
+              <th style="padding:5px 10px;font-size:9px;font-weight:700;color:#c084fc;letter-spacing:.08em;text-transform:uppercase;">12h N</th>
+              <th style="padding:5px 10px;font-size:9px;font-weight:700;color:#fb923c;letter-spacing:.08em;text-transform:uppercase;">24h</th>
+              <th style="padding:5px 10px;font-size:9px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:.08em;text-transform:uppercase;">Citas</th>
+              <th style="padding:5px 10px;font-size:9px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:.08em;text-transform:uppercase;">Slodze</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+    }
+
+    wrap.innerHTML = renderTable(radiografers, '● Radiogrāferi', '#00ff7f') +
+                     renderTable(radiologi, '● Radiologi', '#a78bfa');
+
+    if (window.MinkaLevels) {
+      setTimeout(function() { window.MinkaLevels.injectIntoStats(); }, 0);
+    }
+    modal.style.display = 'flex';
+  };
+
+  window.closeStatsModal = function() {
+    const m = document.getElementById('stats-modal');
+    if (m) m.style.display = 'none';
+  };
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') window.closeStatsModal?.(); });
+
+})();
+</script>
+
+
+<script>
+/* ï¿½ï¿½ï¿½ï¿½ MINKA CHIP MIRROR ï¿½ reflects AI panel content into compact chip ï¿½ï¿½ï¿½ï¿½ */
+(function() {
+  function initMirror() {
+    const aiPanel  = document.getElementById('minkaAiPanel');
+    const aiMode   = document.getElementById('minkaAiMode');
+    const aiText   = document.getElementById('minkaAiText');
+    const chip     = document.getElementById('minkaNamedayChip');
+    const chipIcon = document.getElementById('minkaNamedayChipIcon');
+    const chipText = document.getElementById('minkaNamedayChipText');
+    if (!aiPanel || !chip || !chipText) return;
+
+  const MODE_ICONS = { 'LAIKS':'🌤', 'NOGURUMS':'⚠️', 'ZIŅAS':'📰', 'MINKA':'✦', 'MINKA AI':'✦', 'AI':'✦' };
+
+    function syncToChip() {
+      const open = aiPanel.classList.contains('open');
+      const txt  = (aiText  && aiText.textContent  || '').replace(/\s+/g,' ').trim();
+      const mode = (aiMode  && aiMode.textContent   || 'MINKA').trim();
+      if (open && txt) {
+  chipIcon.textContent = MODE_ICONS[mode] || '✦';
+        chipText.innerHTML   = txt;
+        chip.style.display   = 'flex';
+        chip.setAttribute('data-mode', mode.toLowerCase().replace(' ',''));
+      }
+      // If panel closed but chip has nameday content ï¿½ keep it (set by buildNameday)
+    }
+
+    // Watch panel open/close and text changes
+    const obs = new MutationObserver(syncToChip);
+    obs.observe(aiPanel,  { attributes:true, attributeFilter:['class'] });
+    obs.observe(aiText,   { childList:true, subtree:true, characterData:true });
+    if (aiMode) obs.observe(aiMode, { childList:true, characterData:true });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initMirror, {once:true});
+  else setTimeout(initMirror, 400);
+})();
+</script>
+
+
+<script>
+/* ï¿½ï¿½ï¿½ï¿½ NEXT SHIFT COUNTDOWN ï¿½ reads actual next shift date from store ï¿½ï¿½ï¿½ï¿½ */
+(function() {
+  function getNextShiftStart(storeKey) {
+    // Find the next shift-day after today in the store
+    const s = window[storeKey] || {};
+    const now = new Date();
+    // Effective today: if before 08:00 we're still in yesterday's shift
+    const eff = new Date(now);
+    if (now.getHours() < 8) eff.setDate(eff.getDate() - 1);
+    const todayStr = String(eff.getDate()).padStart(2,'0') + '.' +
+                     String(eff.getMonth()+1).padStart(2,'0') + '.' + eff.getFullYear();
+
+    // Collect all shift dates across all months
+    const dates = [];
+    Object.keys(s).forEach(function(mKey) {
+      if (!Array.isArray(s[mKey])) return;
+      s[mKey].forEach(function(day) {
+        if (!day || !day.date || !Array.isArray(day.workers)) return;
+        if (day.workers.some(function(w){ return w.shift && parseInt(w.shift) >= 8; })) {
+          dates.push(day.date);
+        }
+      });
+    });
+
+    // Sort and find first date strictly after todayStr
+    dates.sort(function(a, b) {
+      var pa = a.split('.'), pb = b.split('.');
+      return new Date(+pa[2],+pa[1]-1,+pa[0]) - new Date(+pb[2],+pb[1]-1,+pb[0]);
+    });
+
+    var nextDateStr = null;
+    for (var i = 0; i < dates.length; i++) {
+      var p = dates[i].split('.');
+      var d = new Date(+p[2], +p[1]-1, +p[0]);
+      var tP = todayStr.split('.');
+      var today0 = new Date(+tP[2], +tP[1]-1, +tP[0]);
+      if (d > today0) { nextDateStr = dates[i]; break; }
+    }
+    if (!nextDateStr) return null;
+
+    // Next shift starts at 08:00 on that date
+    var np = nextDateStr.split('.');
+    return new Date(+np[2], +np[1]-1, +np[0], 8, 0, 0, 0);
+  }
+
+  function fmt(diff) {
+    if (diff <= 0) return 'tūlīt';
+    var h = Math.floor(diff / 3600000);
+    var m = Math.floor((diff % 3600000) / 60000);
+    if (h >= 24) {
+      var d = Math.floor(h / 24), rh = h % 24;
+    return rh > 0 ? 'pēc ' + d + 'd ' + rh + 'h' : 'pēc ' + d + ' d.';
+    }
+    return h > 0 ? 'pēc ' + h + 'h ' + String(m).padStart(2,'0') + 'm' : 'pēc ' + m + 'm';
+  }
+
+  function updateNextCountdowns() {
+    var now = new Date();
+    var radgNext = getNextShiftStart('__grafiksStore');
+    var radlNext = getNextShiftStart('__grafiksStoreRad');
+
+    var elG = document.getElementById('radiographers-next-countdown');
+    var elL = document.getElementById('radiologists-next-countdown');
+    if (elG) elG.textContent = radgNext ? fmt(radgNext - now) : '';
+    if (elL) elL.textContent = radlNext ? fmt(radlNext - now) : '';
+  }
+
+  // Run every 30s so it stays accurate
+  updateNextCountdowns();
+  setInterval(updateNextCountdowns, 30000);
+})();
+</script>
+
+
+<script>
+/* ï¿½ï¿½ï¿½ï¿½ Glass opacity control from parent ï¿½ï¿½ï¿½ï¿½ */
+window.addEventListener('message', function(e) {
+  if (!e.data || e.data.type !== 'mk_glass_opacity') return;
+  var opacity = parseFloat(e.data.opacity);
+  if (isNaN(opacity)) return;
+  opacity = Math.max(0.12, Math.min(0.95, opacity));
+  var r = document.documentElement;
+  var panelAlpha = Math.max(0.08, opacity * 0.18);
+  var cardAlpha = Math.max(0.16, Math.min(0.24, opacity * 0.24));
+  var cardBorderAlpha = Math.max(0.10, Math.min(0.16, opacity * 0.14));
+  r.style.setProperty('--glass-bg', 'rgba(10,13,18,' + panelAlpha.toFixed(3) + ')');
+  r.style.setProperty('--mk-panel-bg', 'rgba(8,10,16,' + (panelAlpha + 0.02).toFixed(3) + ')');
+  r.style.setProperty('--glass-opacity', String(opacity));
+  r.style.background = 'transparent';
+  var app = document.getElementById('grafiks-app');
+  if (app) {
+    app.style.background = 'rgba(8,12,20,' + Math.max(0.08, opacity * 0.14).toFixed(3) + ')';
+    app.style.boxShadow = 'none';
+  }
+  document.querySelectorAll('.side-panel, .calendar-view-wrapper, .list-view-wrapper, .fatigue-view-wrapper, #tk-panel, .top-row, .bottom-player-shell, #minkaBarInner').forEach(function(el) {
+    el.style.background = 'rgba(8,12,20,' + panelAlpha.toFixed(3) + ')';
+  });
+  document.querySelectorAll('.schedule-card, .day-card, .staff-card, .doctor-card, .info-card, .timeline, .next-box, .card, .duty-block, .month-select, .view-btn, .arrow, .tk-bg-card, .tk-preview, .tk-preview-card, .tk-seg-btn, .tk-swatch').forEach(function(el) {
+    el.style.background = 'rgba(8,12,20,' + cardAlpha.toFixed(3) + ')';
+    el.style.borderColor = 'rgba(255,255,255,' + cardBorderAlpha.toFixed(3) + ')';
+  });
+});
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/Minka/sw.js', {scope: '/Minka/'})
+      .then(r => console.log('Minka SW ok'))
+      .catch(e => console.log('SW error:', e));
+  });
+}
+</script>
+
+<script>
+window.addEventListener('message', function(e) {
+  if (!e || !e.data) return;
+  if (e.data.type === 'mk_open_settings') {
+    if (window.__themeEngine && typeof window.__themeEngine.togglePanel === 'function') {
+      window.__themeEngine.togglePanel();
+    }
+  }
+});
+</script>
+
+<script>
+(function(){
+  function ready(fn){
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn, { once:true });
+    else fn();
+  }
+  ready(function(){
+    var settingsBtn = document.getElementById('mkSettingsBtn');
+    var barInput = document.getElementById('minkaBarInput');
+    var chipIcon = document.getElementById('minkaNamedayChipIcon');
+    var root = document.documentElement;
+    function applySidePanelCompact(panel){
+      if (!panel) return;
+      var duty = panel.querySelector('.duty-vertical');
+      if (!duty) return;
+      panel.classList.remove('compact-duty', 'mini-duty');
+      var available = duty.clientHeight;
+      var needed = duty.scrollHeight;
+      if (needed > available + 8) panel.classList.add('compact-duty');
+      if (needed > available + 72) panel.classList.add('mini-duty');
+    }
+    function syncSidePanels(){
+      document.querySelectorAll('.side-panel').forEach(applySidePanelCompact);
+    }
+    var layoutRaf = 0;
+    function queueLayoutSync(){
+      if (layoutRaf) return;
+      layoutRaf = requestAnimationFrame(function(){
+        layoutRaf = 0;
+        syncRadioLayout();
+      });
+    }
+    function syncRadioLayout(){
+      try {
+        if (typeof window.g_adjustDutyNameFontSize === 'function') window.g_adjustDutyNameFontSize();
+      } catch (_e) {}
+      try {
+  barInput.setAttribute('data-ph', 'Meklē darbinieku, nodaļu vai numuru');
+        if (list) list.style.minHeight = '0';
+      } catch (_e) {}
+      syncSidePanels();
+    }
+    if (barInput) {
+      barInput.setAttribute('data-ph', 'Mekle darbinieku, nodalu vai numuru');
+    }
+    if (chipIcon) {
+      chipIcon.textContent = '';
+      chipIcon.setAttribute('aria-hidden', 'true');
+    }
+    if (root && !root.__mkRadioObs) {
+      root.__mkRadioObs = new MutationObserver(queueLayoutSync);
+      root.__mkRadioObs.observe(root, { attributes:true, attributeFilter:['class'] });
+      window.addEventListener('resize', queueLayoutSync, { passive:true });
+      document.querySelectorAll('#radiographers-duty, #radiologists-duty').forEach(function(el){
+        new MutationObserver(queueLayoutSync).observe(el, { childList:true, subtree:true });
+      });
+      setTimeout(queueLayoutSync, 80);
+    }
+    if (settingsBtn && !settingsBtn.__mkBound) {
+      settingsBtn.__mkBound = true;
+      settingsBtn.addEventListener('click', function(){
+        if (window.__themeEngine && typeof window.__themeEngine.togglePanel === 'function') {
+          window.__themeEngine.togglePanel();
+        }
+      });
+    }
+  });
+})();
+</script>
+<script>
+(function(){
+  'use strict';
+  const results = document.getElementById('minkaResults');
+  const mainPanel = document.querySelector('.main-panel');
+  const topRow = document.querySelector('.main-panel .top-row');
+  const scrollRow = document.querySelector('.main-panel .scroll-row');
+  const shiftProgress = document.getElementById('shift-progress-wrap');
+  if (!results || !mainPanel) return;
+
+  function isResultsOpen() {
+    const style = window.getComputedStyle(results);
+    return style.display !== 'none' && style.visibility !== 'hidden' && results.childElementCount > 0;
+  }
+
+  function syncSearchOverlay() {
+    const open = isResultsOpen();
+    mainPanel.classList.toggle('mk-search-open', open);
+    [topRow, scrollRow, shiftProgress].forEach(function(el){
+      if (!el) return;
+      el.style.opacity = open ? '0' : '';
+      el.style.visibility = open ? 'hidden' : '';
+      el.style.pointerEvents = open ? 'none' : '';
+    });
+  }
+
+  new MutationObserver(syncSearchOverlay).observe(results, {
+    attributes: true,
+    attributeFilter: ['style', 'class'],
+    childList: true,
+    subtree: true
+  });
+
+  window.addEventListener('load', syncSearchOverlay);
+  document.addEventListener('input', syncSearchOverlay, true);
+  document.addEventListener('click', function(){ requestAnimationFrame(syncSearchOverlay); }, true);
+})();
+</script>
+<style id="mk-layer-fix-v1">
+#minkaAiPanel,
+#minkaAiPanel.open {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+#grafiks-app {
+  isolation: isolate !important;
+}
+.side-panel {
+  position: relative !important;
+  z-index: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+.main-panel,
+.top-row,
+#minkaBarWrap,
+#minkaBar,
+#minkaNamedayChip {
+  position: relative !important;
+}
+.main-panel {
+  z-index: 2 !important;
+  overflow: hidden !important;
+}
+.main-panel.mk-search-open::before {
+  content: "" !important;
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 54px !important;
+  bottom: 0 !important;
+  background: #0b1017 !important;
+  opacity: 0.97 !important;
+  border-radius: 20px !important;
+  z-index: 5 !important;
+  pointer-events: none !important;
+}
+.main-panel.mk-search-open .top-row,
+.main-panel.mk-search-open .scroll-row,
+.main-panel.mk-search-open .shift-progress-wrap {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+.top-row,
+#minkaBarWrap,
+#minkaBar,
+#minkaNamedayChip {
+  z-index: 4 !important;
+}
+#minkaBarWrap,
+#minkaBar {
+  z-index: 20 !important;
+}
+#minkaResults,
+#minkaResults.results-area {
+  z-index: 30 !important;
+}
+.top-row {
+  z-index: 2 !important;
+}
+#minkaNamedayChip {
+  max-width: calc(100% - 24px) !important;
+}
+.side-panel > div {
+  min-height: 0 !important;
+}
+.left-panel > div:first-child,
+.right-panel > div:first-child {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+#radiographers-duty,
+#radiologists-duty {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: visible !important;
+  padding-right: 4px !important;
+}
+.left-panel > div:last-child,
+.right-panel > div:last-child {
+  flex: 0 0 auto !important;
+  position: relative !important;
+  bottom: auto !important;
+  top: auto !important;
+  margin-top: 8px !important;
+}
+.right-panel > div:nth-child(2) {
+  flex: 0 0 auto !important;
+  margin-top: 8px !important;
+}
+.side-panel > div:last-child {
+  position: relative !important;
+  background: none !important;
+  padding-top: 8px !important;
+  flex-shrink: 0 !important;
+}
+.next-box,
+#radiographers-next-container,
+#radiologists-next-container {
+  position: relative !important;
+  inset: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-top: 0 !important;
+  overflow: hidden !important;
+  z-index: 0 !important;
+}
+.side-panel.compact-duty .duty-vertical {
+  gap: 8px !important;
+}
+.side-panel.compact-duty .duty-block {
+  padding: 7px 8px 5px !important;
+  margin-bottom: 3px !important;
+}
+.side-panel.compact-duty .duty-name {
+  font-size: 15px !important;
+  line-height: 1.02 !important;
+}
+.side-panel.compact-duty .duty-surname {
+  font-size: 10px !important;
+}
+.side-panel.compact-duty .badge-row {
+  gap: 6px !important;
+  margin-top: 3px !important;
+}
+.side-panel.compact-duty .next-box,
+.side-panel.compact-duty #radiographers-next-container,
+.side-panel.compact-duty #radiologists-next-container {
+  margin-top: 4px !important;
+  padding-top: 4px !important;
+}
+.side-panel.compact-duty .next-box-label {
+  font-size: 10px !important;
+}
+.side-panel.compact-duty .next-names,
+.side-panel.compact-duty .next-box-countdown {
+  font-size: 11px !important;
+}
+.side-panel.mini-duty .duty-vertical {
+  gap: 6px !important;
+}
+.side-panel.mini-duty .duty-block {
+  padding: 6px 7px 4px !important;
+  margin-bottom: 2px !important;
+  border-radius: 10px !important;
+}
+.side-panel.mini-duty .duty-name {
+  font-size: 13px !important;
+  line-height: 1 !important;
+}
+.side-panel.mini-duty .duty-surname {
+  font-size: 9px !important;
+}
+.side-panel.mini-duty .badge-row {
+  gap: 4px !important;
+  margin-top: 2px !important;
+}
+.side-panel.mini-duty .duty-timer,
+.side-panel.mini-duty .duty-done-badge {
+  font-size: 9px !important;
+}
+.side-panel.mini-duty .side-fat-bar-wrap {
+  height: 2px !important;
+  margin-top: 4px !important;
+}
+.side-panel.mini-duty .next-box,
+.side-panel.mini-duty #radiographers-next-container,
+.side-panel.mini-duty #radiologists-next-container {
+  margin-top: 2px !important;
+  padding-top: 2px !important;
+}
+.side-panel.mini-duty .next-box-label {
+  font-size: 9px !important;
+}
+.side-panel.mini-duty .next-names,
+.side-panel.mini-duty .next-box-countdown {
+  font-size: 10px !important;
+}
+:root.host-radio-open #radiographers-next-container,
+:root.host-radio-open #radiologists-next-container,
+:root.host-radio-open .next-box {
+  display: none !important;
+}
+.next-box-label,
+.next-box-countdown,
+.next-names,
+#radiographers-next,
+#radiologists-next {
+  display: block !important;
+  max-width: 100% !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+}
+#radiographers-next,
+#radiologists-next {
+  line-height: 1.35 !important;
+}
+.duty-block,
+.duty-block .name-row,
+.duty-block .badge-row {
+  overflow: visible !important;
+}
+.duty-block {
+  z-index: 1 !important;
+}
+.duty-block:hover {
+  z-index: 8 !important;
+}
+.mk-emoji-side {
+  z-index: 2 !important;
+  transition: transform .2s cubic-bezier(.2,.9,.2,1), filter .2s ease !important;
+  transform-origin: top right !important;
+}
+.duty-block:hover .mk-emoji-side {
+  z-index: 9 !important;
+  transform: translate(20%, -18%) scale(1.28) !important;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.28)) !important;
+}
+#minkaBarWrap {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+#minkaBarInner {
+  height: 40px !important;
+  padding: 0 12px !important;
+  border-radius: 999px !important;
+  background: #12141c !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+#minkaBarInner:focus-within,
+#minkaBar.focused #minkaBarInner {
+  background: #151822 !important;
+  border-color: rgba(255,255,255,0.14) !important;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.04) !important;
+}
+#minkaBarInput {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.01em !important;
+  color: rgba(255,255,255,0.92) !important;
+}
+#minkaBarInput:empty::before {
+  color: rgba(255,255,255,0.34) !important;
+  font-weight: 500 !important;
+}
+#minkaBarPill,
+#minkaBar.ai-mode #minkaBarPill,
+#minkaBar.has-text:not(.ai-mode) #minkaBarPill {
+  background: rgba(255,255,255,0.05) !important;
+  color: rgba(255,255,255,0.68) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  box-shadow: none !important;
+}
+#minkaBarMenu,
+#minkaBarMute,
+#minkaBarClear {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  color: rgba(255,255,255,0.6) !important;
+  box-shadow: none !important;
+}
+#minkaNamedayChip {
+  min-height: 30px !important;
+  padding: 0 12px !important;
+  border-radius: 14px !important;
+  background: #11141c !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+#minkaNamedayChipIcon {
+  display: none !important;
+}
+#minkaNamedayChipText {
+  color: rgba(255,255,255,0.82) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.01em !important;
+}
+#minkaNamedayChipText strong {
+  color: rgba(255,255,255,0.94) !important;
+  font-weight: 600 !important;
+  text-shadow: none !important;
+}
+#minkaNamedayChip,
+#minkaNamedayChip[data-mode],
+#minkaNamedayChip.news-clickable {
+  width: calc(100% - 4px) !important;
+  max-width: calc(100% - 4px) !important;
+  margin: 6px auto 0 !important;
+  padding-left: 18px !important;
+  padding-right: 18px !important;
+  display: grid !important;
+  place-items: center !important;
+  text-align: center !important;
+}
+#minkaNamedayChipText {
+  width: 100% !important;
+  display: block !important;
+  text-align: center !important;
+  margin: 0 auto !important;
+}
+#minkaNamedayChip.news-clickable::after,
+#minkaAiCaret {
+  display: none !important;
+}
+.top-row .view-btn {
+  display: none !important;
+}
+.top-row > div:last-child button {
+  display: none !important;
+}
+.top-row {
+  align-items: center !important;
+}
+.top-row > div:last-child {
+  margin-left: auto !important;
+}
+:root.host-radio-open .cards-subgrid {
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)) !important;
+  gap: 7px !important;
+  padding-bottom: 12px !important;
+}
+:root.host-radio-open .card {
+  min-height: 92px !important;
+  max-height: 108px !important;
+  aspect-ratio: 1 / 0.86 !important;
+}
+:root.host-radio-open .card .card-top {
+  padding: 5px 6px 0 !important;
+}
+:root.host-radio-open .card .card-middle {
+  padding: 0 6px 0 !important;
+  gap: 1px !important;
+}
+:root.host-radio-open .card .card-shift {
+  font-size: clamp(18px, 1.6vw, 26px) !important;
+  line-height: 0.94 !important;
+}
+:root.host-radio-open .card .name-main {
+  font-size: clamp(8px, 0.72vw, 10px) !important;
+}
+:root.host-radio-open .card .name-sub {
+  font-size: clamp(7px, 0.62vw, 8px) !important;
+}
+:root.host-radio-open .card-bottom,
+:root.host-radio-open .card-fat-row {
+  padding: 0 6px 5px !important;
+}
+:root.host-radio-open #grafiks-list,
+:root.host-radio-open #grafiks-list.grid-view {
+  padding-bottom: max(18px, calc(var(--host-radio-h, 170px) * 0.12)) !important;
+  scroll-padding-bottom: max(18px, calc(var(--host-radio-h, 170px) * 0.12)) !important;
+}
+:root.host-radio-open .main-panel {
+  gap: 6px !important;
+  min-height: 0 !important;
+}
+#shift-progress-wrap {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 0 4px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.shift-progress-times {
+  display: grid !important;
+  grid-template-columns: 72px 1fr 72px !important;
+  align-items: center !important;
+  gap: 16px !important;
+  margin-bottom: 3px !important;
+}
+.shift-progress-center {
+  gap: 3px !important;
+}
+.shift-time-label {
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  letter-spacing: .02em !important;
+  color: rgba(255,255,255,0.26) !important;
+}
+.shift-elapsed {
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  color: rgba(255,255,255,0.34) !important;
+  letter-spacing: -.01em !important;
+}
+.shift-remaining,
+.shift-remaining[data-urgency],
+.shift-remaining[data-urgency="ok"],
+.shift-remaining[data-urgency="warn"],
+.shift-remaining[data-urgency="crit"] {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: rgba(255,255,255,0.92) !important;
+  letter-spacing: -.02em !important;
+  text-shadow: none !important;
+  animation: none !important;
+}
+.shift-bar-track {
+  position: relative !important;
+  height: 6px !important;
+  width: 100% !important;
+  border-radius: 999px !important;
+  background: rgba(255,255,255,0.10) !important;
+  border: none !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03) !important;
+  overflow: visible !important;
+}
+.shift-bar-fill {
+  background: linear-gradient(90deg, #6f5cff 0%, #8b5cf6 45%, #b794ff 100%) !important;
+  border-radius: inherit !important;
+  box-shadow: none !important;
+}
+.shift-bar-scrubber {
+  width: 10px !important;
+  height: 10px !important;
+  margin-top: -1px !important;
+  border-radius: 999px !important;
+  background: #f3edff !important;
+  border: 1px solid rgba(255,255,255,0.62) !important;
+  box-shadow: 0 0 0 3px rgba(139,92,246,0.18) !important;
+}
+.shift-bar-tooltip {
+  display: none !important;
+}
+#grafiks-loader,
+#minka-loader-building {
+  filter: drop-shadow(0 0 18px rgba(139,92,246,0.22)) !important;
+}
+.mlb-antenna-dot {
+  box-shadow: 0 0 10px rgba(139,92,246,0.55), 0 0 20px rgba(139,92,246,0.28) !important;
+}
+.mlb-win.lit-purple {
+  box-shadow: 0 0 10px rgba(183,123,255,0.72), 0 0 24px rgba(183,123,255,0.36) !important;
+}
+.mlb-title {
+  text-shadow: 0 0 12px rgba(139,92,246,0.24) !important;
+}
+.pill.active,
+.day-pill.active,
+.date-pill.active {
+  border-color: rgba(139,92,246,0.58) !important;
+  background: rgba(139,92,246,0.16) !important;
+  box-shadow: inset 0 0 0 1px rgba(196,181,253,0.10) !important;
+}
+.pill.active .date-num,
+.day-pill.active .date-num,
+.date-pill.active .date-num {
+  color: #c4b5fd !important;
+  text-shadow: none !important;
+}
+.top-row {
+  margin-bottom: 0 !important;
+}
+#minkaBarWrap {
+  margin-bottom: 2px !important;
+}
+#minkaNamedayChip,
+#minkaNamedayChip[data-mode],
+#minkaNamedayChip.news-clickable {
+  margin: 2px auto 0 !important;
+  min-height: 24px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+.scroll-row {
+  margin-top: 0 !important;
+}
+#grafiks-list.grid-view {
+  padding-top: 0 !important;
+}
+.cards-section {
+  margin-top: 0 !important;
+}
+.card,
+.card:hover,
+.card:active,
+.duty-block,
+.duty-block:hover {
+  filter: none !important;
+}
+.card {
+  box-shadow: none !important;
+  background-image: none !important;
+}
+.card:hover {
+  box-shadow: 0 10px 24px rgba(0,0,0,0.28) !important;
+  transform: translateY(-2px) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+}
+.card:active {
+  box-shadow: 0 6px 14px rgba(0,0,0,0.22) !important;
+  transform: translateY(0) scale(.985) !important;
+}
+.card::before,
+.card::after {
+  display: none !important;
+  opacity: 0 !important;
+}
+.side-panel::before,
+.left-panel::before,
+.right-panel::before {
+  display: none !important;
+  opacity: 0 !important;
+}
+#minkaBarInner::before,
+#minkaBarInner::after {
+  display: none !important;
+  opacity: 0 !important;
+}
+#minkaBarInner {
+  box-shadow: none !important;
+}
+#minkaResults,
+#minkaResults.results-area {
+  position: absolute !important;
+  isolation: isolate !important;
+  top: calc(100% + 6px) !important;
+  left: 0 !important;
+  right: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  background: #0d1118 !important;
+  background-color: #0d1118 !important;
+  background-image: none !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  box-shadow: 0 18px 42px rgba(0,0,0,0.56) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  overflow: hidden !important;
+  opacity: 1 !important;
+}
+#minkaBarWrap #minkaResults,
+#minkaBar #minkaResults {
+  left: 0 !important;
+  right: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+#minkaResults::before,
+#minkaResults.results-area::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  background: #0d1118 !important;
+  background-color: #0d1118 !important;
+  background-image: none !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  opacity: 1 !important;
+}
+#minkaResults > *,
+#minkaResults.results-area > * {
+  position: relative !important;
+  z-index: 1 !important;
+}
+#minkaResults .search-item,
+#minkaResults .worker-result-item,
+#minkaResults a.search-item,
+#minkaResults .list-item,
+#minkaResults .search-empty,
+#minkaResults .search-category,
+#minkaResults .search-hint-row,
+#minkaResults .section-label {
+  background: #11161f !important;
+  background-color: #11161f !important;
+  background-image: none !important;
+  opacity: 1 !important;
+}
+#minkaResults .search-item,
+#minkaResults .worker-result-item,
+#minkaResults a.search-item {
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+#minkaResults .search-category,
+#minkaResults .search-hint-row,
+#minkaResults .search-empty,
+#minkaResults .section-label {
+  background: #0f141d !important;
+  background-color: #0f141d !important;
+  background-image: none !important;
+  opacity: 1 !important;
+}
+#minkaResults .search-item:hover,
+#minkaResults .worker-result-item:hover,
+#minkaResults a.search-item:hover,
+#minkaResults .list-item:hover {
+  background: #181e29 !important;
+}
+</style>
+</body>
+</html>

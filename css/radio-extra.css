@@ -1,0 +1,833 @@
+/* --- Milkdrop is separate: spectrum always stays in the main monitor --- */
+#milkdropCanvas{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:none;
+}
+/* Never show Milkdrop inside the small monitor. */
+#monitorContent #milkdropCanvas{ display:none !important; }
+/* Show Milkdrop only inside the expanded panel (or fullscreen) when enabled. */
+body.milkdrop-on #milkdropPanel #milkdropCanvas{ display:block; }
+
+/* --- RG FIX: hide mode label near the cat (requested) --- */
+#vizLabel { display:none !important; }
+
+
+/* Cat should ALWAYS be green (match the classic look) */
+.pixel-cat {
+  /* classic “green phosphor” tint from older versions */
+  /* no glow: just tint */
+  filter: grayscale(1) brightness(0.55) sepia(1) saturate(110) hue-rotate(95deg) !important;
+  opacity: 0.95 !important;
+}
+
+/* No special state styling needed: the cat stays green in all modes */
+
+
+/* Removed overlay menus: cat cycles spectrum, button cycles Milkdrop presets. */
+
+/* --- Small Milkdrop toggle icon (Winamp-ish) --- */
+.viz-icon-btn{
+  width: 36px;
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,255,136,0.18);
+  background: rgba(255,255,255,0.02);
+  color: #caffca;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform .06s ease, background .2s ease, border-color .2s ease, opacity .2s ease;
+}
+.viz-icon-btn:hover{ background: rgba(0,255,136,0.08); border-color: rgba(0,255,136,0.28); }
+.viz-icon-btn:active{ transform: scale(0.985); }
+body.milkdrop-on .viz-icon-btn{
+  border-color: rgba(0,255,136,0.55);
+  background: rgba(0,255,136,0.12);
+}
+
+/* (Milkdrop overlay window removed) */
+
+/* --- Station button: more iconic (Winamp/Pioneer-ish) --- */
+.station-btn{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,255,136,0.20);
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.10));
+  color: rgba(202,255,202,0.92);
+  letter-spacing: 1.4px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  transition: transform .06s ease, background .2s ease, border-color .2s ease, filter .2s ease;
+}
+.station-btn::before{
+  content: "";
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+  background-repeat: no-repeat;
+  background-size: 14px 14px;
+  opacity: 0.95;
+  filter: drop-shadow(0 0 10px rgba(0,255,136,0.18));
+  background-image: url('data:image/svg+xml;utf8,\
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23b7ffb7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">\
+<path d="M12 20v-6"/>\
+<path d="M8 20h8"/>\
+<path d="M12 7a6 6 0 0 0-6 6"/>\
+<path d="M12 7a6 6 0 0 1 6 6"/>\
+<path d="M12 3c5 0 9 4 9 9"/>\
+<path d="M12 3C7 3 3 7 3 12"/>\
+</svg>');
+}
+.station-btn:hover{
+  background: linear-gradient(180deg, rgba(0,255,136,0.08), rgba(0,0,0,0.16));
+  border-color: rgba(0,255,136,0.35);
+}
+.station-btn:active{ transform: scale(0.985); }
+
+/* --- Milkdrop expanded panel --- */
+#milkdropPanel{
+  position: fixed;
+  z-index: 99999;
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(0,0,0,0.78);
+  border: 1px solid rgba(0,255,136,0.22);
+  box-shadow: 0 30px 80px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.04) inset;
+  backdrop-filter: blur(16px);
+}
+
+/* Stations drawer must always be above Milkdrop */
+#stationOverlay{
+  z-index: 100005 !important;
+}
+#milkdropPanel .md-head{
+  height: 42px;
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  padding: 0 10px 0 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(0,0,0,0.15));
+  border-bottom: 1px solid rgba(0,255,136,0.12);
+}
+#milkdropPanel .md-title{
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: rgba(202,255,202,0.9);
+  text-shadow: 0 0 18px rgba(0,255,136,0.18);
+}
+#milkdropPanel .md-actions{ display:flex; gap:8px; }
+#milkdropPanel .md-btn{
+  width: 32px;
+  height: 28px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,255,136,0.22);
+  background: rgba(255,255,255,0.02);
+  color: rgba(202,255,202,0.92);
+  cursor: pointer;
+  transition: transform .06s ease, background .2s ease, border-color .2s ease;
+}
+#milkdropPanel .md-btn:hover{ background: rgba(0,255,136,0.08); border-color: rgba(0,255,136,0.38); }
+#milkdropPanel .md-btn:active{ transform: scale(0.985); }
+#milkdropPanel .md-body{
+  position: relative;
+  width: 100%;
+  height: calc(100% - 42px);
+  background: #000;
+}
+#milkdropPanel #milkdropCanvas{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+}
+
+/* --- Milkdrop preset skip buttons (appear only when Milkdrop is ON) --- */
+.md-skip{ display:none; align-items:center; gap:8px; }
+body.milkdrop-on.milkdrop-expanded .md-skip{ display:flex; }
+.md-skip-btn{
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,255,136,0.45);
+  background: rgba(0,255,136,0.10);
+  color: #9fffcf;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform .08s ease, background .2s ease, border-color .2s ease, opacity .2s ease;
+}
+.md-skip-btn:hover{ background: rgba(0,255,136,0.16); border-color: rgba(0,255,136,0.65); }
+.md-skip-btn:active{ transform: scale(0.98); }
+
+/* --- Fullscreen Milkdrop: hide the radio UI like Winamp fullscreen visual --- */
+body.milkdrop-fs #radioWindow{
+  opacity: 0;
+  pointer-events: none;
+}
+body.milkdrop-fs .radio-resize-se{ display:none; }
+
+
+/* --- STATIONS button upgrade (Winamp/Pioneer-ish) --- */
+.station-btn{
+  border-radius: 14px !important;
+  border: 1px solid rgba(0,255,136,0.28) !important;
+  background: rgba(255,255,255,0.02) !important;
+  color: #eafff1 !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+}
+.station-btn::before{
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,255,136,0.6);
+  box-shadow: 0 0 10px rgba(0,255,136,0.18);
+  background: radial-gradient(circle at 35% 35%, rgba(160,255,210,0.95), rgba(0,255,136,0.15));
+}
+.station-btn:hover{ border-color: rgba(0,255,136,0.55) !important; background: rgba(0,255,136,0.06) !important; }
+
+/* --- RG: STATIONS as small square icon button (prevents overlap) --- */
+.station-square{
+  width: 38px !important;
+  height: 38px !important;
+  padding: 0 !important;
+  border-radius: 12px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0 !important;
+  letter-spacing: 0 !important;
+}
+.station-square::before{ display:none !important; }
+.station-square i, .station-square svg{ font-size: 14px; opacity: 0.95; }
+
+/* keep control cluster from spilling into the visual screen */
+#radioWindow .control-panel{ min-width: 0; }
+#radioWindow .monitor-frame{ min-width: 0; }
+
+/* --- RG: make sure control buttons never visually overlap the monitor (esp. with cat glow) --- */
+#radioWindow .bottom-console{ gap: 18px !important; }
+#radioWindow .monitor-frame{ margin-right: 16px !important; }
+
+/* --- RG: Stations icon = green radio --- */
+.station-square{ color: rgba(0,255,136,0.95) !important; }
+.station-radio-svg{ width: 18px; height: 18px; display:block; }
+.station-square:hover{ color: rgba(0,255,136,1) !important; }
+
+
+/* --- v9: ensure spacing between the visual monitor + controls (no overlap) --- */
+#radioWindow .bottom-console{ column-gap: 24px !important; }
+#radioWindow .monitor-frame{ margin: 0 16px 0 12px !important; }
+
+/* Keep control panel pinned inside its column */
+#radioWindow .control-panel{
+  justify-self: end;
+  align-self: center;
+}
+
+/* --- Milkdrop quick controls (arrows + preset name) --- */
+#radioWindow .control-panel{ position: relative; }
+
+.md-mini{
+  position: absolute;
+  /* sits in the empty strip ABOVE the transport, aligned to the right cluster */
+  top: -44px;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+  z-index: 50;
+}
+.md-mini[aria-hidden="true"]{ display:none; }
+
+.md-mini-btn{
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,255,136,0.18);
+  background: rgba(255,255,255,0.02);
+  color: rgba(202,255,202,0.92);
+  cursor: pointer;
+  transition: transform .06s ease, background .2s ease, border-color .2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+.md-mini-btn:hover{ background: rgba(0,255,136,0.07); border-color: rgba(0,255,136,0.30); }
+.md-mini-btn:active{ transform: scale(0.985); }
+.md-mini-btn.md-arrow{ width: 36px; }
+.md-mini-btn.md-preset{
+  width: 200px;
+  max-width: 240px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.15px;
+  text-transform: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.md-mini-btn.md-preset .mdp-label{
+  display: inline-block;
+  will-change: transform;
+}
+
+.md-mini-btn.md-preset .mdp-label{
+  display:inline-block;
+  will-change: transform;
+}
+
+/* Preset panel (Winamp-like dropdown) */
+.md-preset-panel{
+  position: fixed;
+  z-index: 999999;
+  width: min(420px, calc(100vw - 24px));
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(calc(6px + var(--glassAmt, 0.72) * 10px));
+  box-shadow: 0 18px 50px rgba(0,0,0,0.55);
+  padding: 12px;
+  display: none;
+}
+.md-preset-panel[aria-hidden="false"]{ display:block; }
+
+.mdp-head{ display:flex; align-items:center; justify-content: space-between; padding: 2px 2px 10px 2px; }
+.mdp-title{ font-size: 11px; letter-spacing: 2px; color: rgba(202,255,202,0.85); font-weight: 800; }
+.mdp-close{
+  width: 32px; height: 28px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,255,136,0.18);
+  background: rgba(255,255,255,0.03);
+  color: rgba(202,255,202,0.85);
+  cursor: pointer;
+}
+.mdp-close:hover{ background: rgba(0,255,136,0.08); }
+
+.mdp-search-wrap{ padding-bottom: 10px; }
+.mdp-search-wrap input{
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.20);
+  color: rgba(255,255,255,0.90);
+  outline: none;
+}
+.mdp-list{
+  max-height: 320px;
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.20);
+  padding: 6px;
+}
+.mdp-item{
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.02);
+  color: rgba(255,255,255,0.85);
+  cursor: pointer;
+  margin: 4px 0;
+  font-size: 12px;
+  line-height: 1.2;
+}
+.mdp-item:hover{ background: rgba(0,255,136,0.08); border-color: rgba(0,255,136,0.22); }
+.mdp-item.is-active{ background: rgba(0,255,136,0.14); border-color: rgba(0,255,136,0.30); }
+
+
+/* --- THEME BUTTON + PANEL (WindowGlass) --- */
+.theme-icon-btn{
+  width: 36px;
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,255,136,0.18);
+  background: rgba(255,255,255,0.02);
+  color: rgba(202,255,202,0.90);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform .06s ease, background .2s ease, border-color .2s ease;
+}
+.theme-icon-btn:hover{ background: rgba(0,255,136,0.07); border-color: rgba(0,255,136,0.30); }
+.theme-icon-btn:active{ transform: scale(0.985); }
+
+.theme-panel{
+  position: fixed;
+  z-index: 999999;
+  width: min(360px, calc(100vw - 24px));
+  border-radius: 16px;
+  padding: 12px;
+  background: var(--glass-bg, rgba(18,18,20,0.72));
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.10));
+  box-shadow: var(--glass-shadow, 0 22px 60px rgba(0,0,0,0.55));
+  backdrop-filter: blur(var(--glass-blur, 24px));
+  -webkit-backdrop-filter: blur(var(--glass-blur, 24px));
+  display: none;
+}
+.theme-panel[aria-hidden='false']{ display:block; }
+
+.theme-head{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  padding: 2px 2px 10px 2px;
+}
+.theme-title{
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: rgba(202,255,202,0.92);
+}
+.theme-close{
+  width: 34px;
+  height: 30px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,255,136,0.20);
+  background: rgba(255,255,255,0.02);
+  color: rgba(202,255,202,0.88);
+  cursor:pointer;
+}
+.theme-close:hover{ background: rgba(0,255,136,0.08); border-color: rgba(0,255,136,0.34); }
+
+.theme-search-wrap input{
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(0,255,136,0.16);
+  background: rgba(0,0,0,0.28);
+  color: rgba(234,255,241,0.95);
+  padding: 10px 12px;
+  outline: none;
+}
+.theme-search-wrap input:focus{ border-color: rgba(0,255,136,0.35); }
+
+.theme-list{
+  margin-top: 10px;
+  max-height: 160px;
+  overflow: auto;
+  padding-right: 4px;
+}
+.theme-item{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.02);
+  cursor:pointer;
+  margin-bottom: 8px;
+  transition: background .2s ease, border-color .2s ease, transform .06s ease;
+}
+.theme-item:hover{ background: rgba(0,255,136,0.06); border-color: rgba(0,255,136,0.18); }
+.theme-item:active{ transform: scale(0.992); }
+.theme-item.active{
+  background: rgba(0,255,136,0.10);
+  border-color: rgba(0,255,136,0.32);
+}
+.theme-item .name{
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: rgba(234,255,241,0.95);
+}
+.theme-item .chip{
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.16);
+  box-shadow: 0 0 12px rgba(0,0,0,0.35);
+}
+
+.theme-controls{
+  margin-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.theme-controls .trow{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 2px;
+  color: rgba(202,255,202,0.86);
+  font-size: 12px;
+}
+#accentPicker{
+  width: 46px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  cursor:pointer;
+}
+#glassSlider{
+  width: 190px;
+}
+.theme-hint{
+  margin-top: 6px;
+  font-size: 11px;
+  opacity: 0.75;
+  color: rgba(202,255,202,0.78);
+}
+
+
+/* ============================================================
+   THEME APPLIES TO WHOLE RADIO (not only the menu)
+   ============================================================ */
+:root{
+  --radio-accent-rgb: 0,255,136; /* JS keeps this in sync */
+}
+
+/* Main radio window glass */
+#radioWindow{
+  background: var(--glass-bg, rgba(10,10,12,0.78)) !important;
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.10)) !important;
+  box-shadow: var(--glass-shadow, 0 40px 140px rgba(0,0,0,0.78)) !important;
+  backdrop-filter: blur(var(--glass-blur, 18px)) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur, 18px)) saturate(160%) !important;
+}
+
+/* Header + buttons */
+#radioWindow .radio-win-header{
+  background: color-mix(in srgb, var(--glass-bg, rgba(255,255,255,0.03)) 65%, rgba(255,255,255,0.04)) !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--glass-border, rgba(255,255,255,0.08)) 70%, rgba(255,255,255,0.08)) !important;
+}
+#radioWindow .radio-win-btn{
+  background: color-mix(in srgb, var(--glass-bg, rgba(255,255,255,0.04)) 55%, rgba(255,255,255,0.04)) !important;
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.10)) !important;
+}
+#radioWindow .radio-win-btn:hover{
+  border-color: rgba(var(--radio-accent-rgb), 0.45) !important;
+  box-shadow: 0 0 0 1px rgba(var(--radio-accent-rgb), 0.22), 0 18px 40px rgba(var(--radio-accent-rgb), 0.12) !important;
+}
+
+/* Inner panels */
+#radioWindow .tech-panel,
+#radioWindow .monitor-frame{
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.10)) !important;
+  background: color-mix(in srgb, rgba(0,0,0,0.70) 70%, var(--glass-bg, rgba(0,0,0,0.55))) !important;
+}
+
+/* Active EQ + “more” uses accent */
+#radioWindow .eq-btn.active{
+  background: rgba(var(--radio-accent-rgb), 0.12) !important;
+  border-color: rgba(var(--radio-accent-rgb), 0.55) !important;
+  color: rgba(var(--radio-accent-rgb), 0.98) !important;
+}
+
+/* Station square button: follow accent */
+.station-square{
+  border-color: rgba(var(--radio-accent-rgb), 0.28) !important;
+  background: rgba(var(--radio-accent-rgb), 0.06) !important;
+  color: rgba(var(--radio-accent-rgb), 0.95) !important;
+}
+.station-square:hover{
+  border-color: rgba(var(--radio-accent-rgb), 0.55) !important;
+  background: rgba(var(--radio-accent-rgb), 0.10) !important;
+}
+
+/* Milkdrop icon button follows accent */
+.viz-icon-btn{
+  border-color: rgba(var(--radio-accent-rgb), 0.20) !important;
+  background: rgba(255,255,255,0.02) !important;
+  color: rgba(var(--radio-accent-rgb), 0.92) !important;
+}
+.viz-icon-btn:hover{
+  background: rgba(var(--radio-accent-rgb), 0.08) !important;
+  border-color: rgba(var(--radio-accent-rgb), 0.32) !important;
+}
+body.milkdrop-on .viz-icon-btn{
+  border-color: rgba(var(--radio-accent-rgb), 0.60) !important;
+  background: rgba(var(--radio-accent-rgb), 0.14) !important;
+}
+
+/* When Milkdrop is active, hide the Milkdrop toggle icon (controls live in the Milkdrop window) */
+body.milkdrop-open #vizBtn,
+body.milkdrop-open .viz-icon-btn{
+  display: none !important;
+}
+
+/* ============================================================
+   THEME APPLIES TO MILKDROP WINDOW TOO
+   ============================================================ */
+
+#milkdropPanel{
+  background: var(--glass-bg, rgba(10,10,12,0.78)) !important;
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.10)) !important;
+  box-shadow: var(--glass-shadow, 0 40px 140px rgba(0,0,0,0.78)) !important;
+  backdrop-filter: blur(var(--glass-blur, 18px)) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur, 18px)) saturate(160%) !important;
+}
+
+#milkdropPanel .md-head{
+  background: color-mix(in srgb, var(--glass-bg, rgba(255,255,255,0.03)) 65%, rgba(255,255,255,0.04)) !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--glass-border, rgba(255,255,255,0.08)) 70%, rgba(255,255,255,0.08)) !important;
+}
+
+#milkdropPanel .md-title{
+  color: rgba(234,255,241,0.92) !important;
+  text-shadow: 0 0 18px rgba(var(--radio-accent-rgb), 0.18) !important;
+}
+
+#milkdropPanel .md-btn{
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.12)) !important;
+  background: color-mix(in srgb, var(--glass-bg, rgba(255,255,255,0.04)) 55%, rgba(255,255,255,0.04)) !important;
+  color: rgba(234,255,241,0.92) !important;
+}
+
+#milkdropPanel .md-btn:hover{
+  border-color: rgba(var(--radio-accent-rgb), 0.45) !important;
+  box-shadow: 0 0 0 1px rgba(var(--radio-accent-rgb), 0.18), 0 16px 38px rgba(var(--radio-accent-rgb), 0.10) !important;
+}
+
+/* --- NOW PLAYING (CF Worker proxy) --- */
+.np-row{
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  overflow: hidden; /* hard stop: keep text inside the box */
+}
+.np-cover{
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid rgba(140,255,193,0.18);
+  background: transparent;
+  flex: 0 0 44px;
+  opacity: 0.92;
+  display: none; /* hidden by default; JS sets display:block when src loads */
+}
+.np-lines{ flex: 1; min-width: 0; overflow: hidden; }
+
+.np-artist{
+  display: block;
+  max-width: 100%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.12;
+  color: rgba(230, 255, 245, 0.92);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.np-title{
+  margin-top: 2px;
+  display: block;
+  max-width: 100%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.12;
+  color: rgba(200, 255, 235, 0.75);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.np-line{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  line-height: 1.15;
+  color: rgba(220, 255, 240, 0.82);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ═══════════════════════════════════════════════════
+   EQ PRESET CHIPS  – flat pill, green accent
+   Matches reference: compact, readable, no LEDs
+   ═══════════════════════════════════════════════════ */
+.eq-pioneer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  background: transparent;
+  border: none;
+  padding: 4px 0 2px;
+  margin-top: 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+/* Chip */
+.epb {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 5px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background .1s, border-color .1s, color .1s;
+  flex-shrink: 0;
+}
+.epb-led { display: none; } /* hidden */
+.epb-label {
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+  color: rgba(255,255,255,0.45);
+  font-family: ui-monospace, 'SF Mono', 'Consolas', monospace;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+}
+.epb:hover {
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.20);
+}
+.epb:hover .epb-label { color: rgba(255,255,255,0.80); }
+.epb:active { transform: scale(0.96); }
+/* ── ACTIVE: green ── */
+.epb.active {
+  background: rgba(0,255,136,0.13);
+  border-color: rgba(0,255,136,0.50);
+}
+.epb.active .epb-label {
+  color: rgb(0,255,136);
+}
+/* ── SLOW: violet ── */
+.epb.epb-special.active {
+  background: rgba(185,110,255,0.14) !important;
+  border-color: rgba(185,110,255,0.50) !important;
+}
+.epb.epb-special.active .epb-label {
+  color: rgb(200,150,255) !important;
+}
+
+
+
+
+/* Slowed wave canvas — hidden, spectrum color change handles the effect now */
+.slowed-wave-canvas {
+  display: none !important;
+}
+/* Purple tint on monitor border when slowed active */
+body.slowed-active .monitor-frame {
+  box-shadow: 0 0 0 1px rgba(160,80,255,0.30), 0 0 40px rgba(130,60,220,0.18) inset !important;
+  transition: box-shadow 1.2s ease !important;
+}
+
+
+/* --- SLOW FX PANEL (under SLOW button) --- */
+.slowfx-panel{display:none; margin-top:10px; padding:10px; border-radius:16px; border:1px solid rgba(255,255,255,.10); background:rgba(8,10,18,.68); backdrop-filter: blur(10px); box-shadow: inset 0 1px 0 rgba(255,255,255,.03), 0 10px 20px rgba(0,0,0,.25);}
+.slowfx-panel.open{display:block;}
+.slowfx-row{display:flex; align-items:center; gap:10px; border-radius:999px; padding:8px 12px; margin:7px 0; color:#fff; border:1px solid rgba(255,255,255,.08);}
+.slowfx-ico{width:26px; min-width:26px; text-align:center; font-size:18px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.35));}
+.slowfx-main{flex:1; min-width:0;}
+.slowfx-top{display:flex; align-items:center; justify-content:space-between; gap:8px; font:700 11px/1.2 Inter,system-ui,sans-serif; letter-spacing:.08em;}
+.slowfx-top span{font-size:12px; letter-spacing:.01em;}
+.slowfx-row input[type=range]{width:100%; margin-top:6px; accent-color:#b45aff; background:transparent;}
+.slowfx-row input[type=range]::-webkit-slider-runnable-track{height:7px; border-radius:999px; background:rgba(255,255,255,.16);}
+.slowfx-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none; width:15px; height:15px; border-radius:50%; margin-top:-4px; background:#fff; border:2px solid rgba(0,0,0,.18);}
+.slowfx-row input[type=range]::-moz-range-track{height:7px; border-radius:999px; background:rgba(255,255,255,.16);}
+.slowfx-row input[type=range]::-moz-range-thumb{width:15px; height:15px; border-radius:50%; background:#fff; border:2px solid rgba(0,0,0,.18);}
+.slowfx-vol{background:linear-gradient(90deg, rgba(186,31,95,.88), rgba(97,8,44,.88));}
+.slowfx-pitch{background:linear-gradient(90deg, rgba(238,172,42,.94), rgba(170,118,10,.94)); color:#fff;}
+.slowfx-speed{background:linear-gradient(90deg, rgba(74,143,212,.96), rgba(36,84,138,.96));}
+.slowfx-reverb{background:linear-gradient(90deg, rgba(157,219,58,.96), rgba(96,148,22,.96)); color:#112;}
+.slowfx-reverb .slowfx-top span{color:#17320b;}
+
+
+/* v32: Slow FX popup menu (Minka colors) */
+.eq-wrap{ position:relative; overflow:visible !important; }
+.slowfx-panel.slowfx-popup{
+  position:absolute;
+  top: auto;
+  bottom: auto;
+  left: 8px;
+  width: min(320px, calc(100vw - 36px));
+  max-width: calc(100% - 12px);
+  z-index: 40;
+  margin-top:0;
+  padding: 10px;
+  border-radius: 18px;
+  border:1px solid rgba(168,85,247,.35);
+  background: linear-gradient(180deg, rgba(10,12,26,.96), rgba(6,9,20,.92));
+  box-shadow: 0 14px 40px rgba(0,0,0,.45), 0 0 0 1px rgba(102,217,255,.08) inset, 0 0 24px rgba(168,85,247,.12);
+  backdrop-filter: blur(14px) saturate(140%);
+  transform-origin: bottom left;
+  animation: slowfxPop .18s ease-out;
+}
+@keyframes slowfxPop{ from{opacity:0; transform:translateY(-4px) scale(.985)} to{opacity:1; transform:translateY(0) scale(1)} }
+.slowfx-popup-head{ display:flex; flex-direction:column; gap:8px; padding:4px 4px 8px; }
+.slowfx-popup-title{ color:#caa7ff; font:800 11px/1 Inter,system-ui,sans-serif; letter-spacing:.14em; text-transform:uppercase; text-shadow:0 0 10px rgba(168,85,247,.25); }
+.slowfx-keep-toggle{ display:flex; align-items:center; gap:8px; color:rgba(255,255,255,.88); font:600 11px/1.2 Inter,system-ui,sans-serif; cursor:pointer; user-select:none; }
+.slowfx-keep-toggle input{ position:absolute; opacity:0; pointer-events:none; }
+.slowfx-switch{ width:32px; height:18px; border-radius:999px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.16); position:relative; box-shadow: inset 0 1px 2px rgba(0,0,0,.35); }
+.slowfx-switch::after{ content:""; position:absolute; left:2px; top:2px; width:12px; height:12px; border-radius:50%; background:#d7c0ff; transition:transform .16s ease, background .16s ease; box-shadow:0 1px 4px rgba(0,0,0,.35); }
+.slowfx-keep-toggle input:checked + .slowfx-switch{ background: linear-gradient(90deg, rgba(102,217,255,.35), rgba(168,85,247,.45)); border-color: rgba(168,85,247,.35); }
+.slowfx-keep-toggle input:checked + .slowfx-switch::after{ transform: translateX(14px); background:#66d9ff; }
+.slowfx-keep-label{ color:rgba(208,224,255,.92); }
+.slowfx-panel.slowfx-popup::before{ content:""; position:absolute; top:-7px; left: var(--slowfx-arrow-x, 20px); width:12px; height:12px; transform:rotate(45deg); background:rgba(10,12,26,.96); border-left:1px solid rgba(168,85,247,.35); border-top:1px solid rgba(168,85,247,.35); }
+.slowfx-panel.slowfx-popup .slowfx-row{ border-color: rgba(255,255,255,.06); box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
+.slowfx-panel.slowfx-popup .slowfx-row input[type=range]{ accent-color:#b579ff; }
+.slowfx-panel.slowfx-popup .slowfx-row input[type=range]::-webkit-slider-runnable-track{ background:rgba(255,255,255,.2); }
+.slowfx-panel.slowfx-popup .slowfx-row input[type=range]::-webkit-slider-thumb{ background:#e7d7ff; border-color:rgba(86,48,138,.35); }
+.slowfx-panel.slowfx-popup .slowfx-row input[type=range]::-moz-range-thumb{ background:#e7d7ff; border-color:rgba(86,48,138,.35); }
+.slowfx-panel.slowfx-popup .slowfx-row input[type=range]::-moz-range-track{ background:rgba(255,255,255,.2); }
+
+#radioWindow .eq-wrap{ overflow: visible !important; }
+#radioWindow .slowfx-panel.slowfx-popup{ z-index: 100000 !important; max-width: calc(100% - 12px); }
+
+/* v36 popup fixed + unclipped */
+.slowfx-panel.slowfx-popup.arrow-bottom::before{ top:auto; bottom:-7px; transform:rotate(225deg); border-left:none; border-top:none; border-right:1px solid rgba(168,85,247,.35); border-bottom:1px solid rgba(168,85,247,.35); }
+.slowfx-panel.slowfx-popup.arrow-top::before{ top:-7px; bottom:auto; transform:rotate(45deg); }
+
+
+/* Remove dark slab behind transport controls — keep only individual buttons glassy */
+#radioWindow .control-panel{
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* === 2026-03-17 radio bottom cleanup (updated for macOS dock) === */
+/* #bottomBar is the old dark slab — dock pill replaces it visually */
+#bottomBar{
+  display:none !important;
+}
+/* #radioWindow bottom is managed via --btnbar-h set by syncShellLayout()
+   which now measures #dockShelf height — no manual offset needed here */
+#radioWindow{
+  bottom: var(--btnbar-h, 62px) !important;
+}
+/* #bottomBtnBar glass pill is styled inline in index.html — do NOT override here */
+#radioWindow .bottom-console,
+#radioWindow .radio-win-body,
+#radioWindow .control-panel{
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  outline:0 !important;
+}

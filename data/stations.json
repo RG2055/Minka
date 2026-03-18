@@ -1,0 +1,862 @@
+[
+  {
+    "title": "Record",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Russian Mix",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-rus/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-rus/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Супердискотека 90-х",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-sd90/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-sd90/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Radio Вера",
+    "hls": "http://radiovera.hostingradio.ru:8007/radiovera_128",
+    "url": "http://radiovera.hostingradio.ru:8007/radiovera_128",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Lady Waks",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-ladywaks/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-ladywaks/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Feel",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-feel/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-feel/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "A State of Trance",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-asot/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-asot/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Chill-Out",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-chil/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-chil/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Deep",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-deep/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-deep/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Megamix",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-mix/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-mix/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Колбасный Цех",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-pump/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-pump/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "На шашлыки!",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-nashashlyki/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-nashashlyki/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Remix",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-rmx/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-rmx/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Chill House",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-chillhouse/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-chillhouse/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Рекорд 00-х",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-2000/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-2000/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Big Hits",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-bighits/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-bighits/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Summer Dance",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-summerparty/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-summerparty/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Маятник Фуко",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-mf/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-mf/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Trancemission",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-tm/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-tm/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Record 80-х",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-1980/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-1980/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Rock",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-rock/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-rock/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Russian Gold",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-russiangold/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-russiangold/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Pirate Station",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-ps/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-ps/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Innocence",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-ibiza/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-ibiza/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Party 24/7",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-party/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-party/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Lo-Fi House",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-lofihouse/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-lofihouse/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Record Gold",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-gold/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-gold/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Nu Dance",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-nudance/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-nudance/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Afro House",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-afro/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-afro/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "На Хайпе",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-hype/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-hype/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Phonk",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-phonk/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-phonk/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Tiesto",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-tiesto/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-tiesto/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "David Guetta",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-guetta/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-guetta/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Armin van Buuren",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-armin/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-armin/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Summer Lounge",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-summerlounge/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-summerlounge/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Руки Вверх!",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-rv/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-rv/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Rap Hits",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-rap/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-rap/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Rap Classics",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-rapclassics/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-rapclassics/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Trance Classics",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-trancehits/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-trancehits/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "VIP House",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-vip/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-vip/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Bass House",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-jackin/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-jackin/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Organic",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-organic/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-organic/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Black Rap",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-yo/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-yo/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "D'n'B Classics",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-drumhits/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-drumhits/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "10's Dance",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-2010/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-2010/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "EDM",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-club/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-club/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Lo-Fi",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-lofi/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-lofi/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Neurofunk",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-neurofunk/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-neurofunk/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Workout",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-workout/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-workout/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Breaks",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-brks/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-brks/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Tropical",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-trop/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-trop/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Tech House",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-techouse/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-techouse/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Trap",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-trap/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-trap/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Liquid Funk",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-liquidfunk/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-liquidfunk/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Dubstep",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-dub/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-dub/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "House Hits",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-househits/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-househits/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "GOA/PSY",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-goa/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-goa/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Trancehouse",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-trancehouse/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-trancehouse/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Ambient",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-ambient/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-ambient/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "TOP 100 EDM",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-top100edm/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-top100edm/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Dream Dance",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-dream/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-dream/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Techno",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-techno/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-techno/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Live DJ-sets",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-livedjsets/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-livedjsets/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "70's Dance",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-1970/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-1970/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Technopop",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-technopop/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-technopop/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Minimal/Tech",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-mini/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-mini/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Dream Pop",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-dreampop/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-dreampop/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "House Classics",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-houseclss/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-houseclss/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Uplifting",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-uplift/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-uplift/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Eurodance",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-eurodance/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-eurodance/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "60's Dance",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-cadillac/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-cadillac/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Future Rave",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-futurerave/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-futurerave/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Future House",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-fut/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-fut/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "UK Garage",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-ukgarage/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-ukgarage/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Reggae",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-reggae/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-reggae/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Disco/Funk",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-discofunk/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-discofunk/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Dancecore",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-dc/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-dc/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Hard Bass",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-hbass/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-hbass/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Electro",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-elect/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-elect/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Progressive",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-progr/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-progr/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Christmas Chill",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-christmaschill/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-christmaschill/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "EDM Classics",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-edmhits/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-edmhits/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Русская Зима",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-ruszima/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-ruszima/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Christmas",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-christmas/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-christmas/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Hardstyle",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-teo/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-teo/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Darkside",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-darkside/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-darkside/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Synthwave",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-synth/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-synth/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Latina Dance",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-latina/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-latina/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Tecktonik",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-tecktonik/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-tecktonik/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Future Bass",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-fbass/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-fbass/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Гоп FM",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-gop/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-gop/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Midtempo",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-mt/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-mt/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Jungle",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-jungle/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-jungle/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Hypnotic",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-hypno/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-hypno/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Rave FM",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-rave/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-rave/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Moombahton",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-mmbt/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-mmbt/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "2-step",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-2step/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-2step/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Медляк FM",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-mdl/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-mdl/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Веснушка FM",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-deti/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-deti/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Groove/Tribal",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-groovetribal/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-groovetribal/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Гастарбайтер FM",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-gast/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-gast/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Нафталин FM",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-naft/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-naft/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Симфония FM",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-symph/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-symph/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Complextro",
+    "hls": "https://hls-01-radiorecord.hostingradio.ru/record-complextro/playlist.m3u8",
+    "url": "https://hls-01-radiorecord.hostingradio.ru/record-complextro/playlist.m3u8",
+    "codec": "HLS",
+    "group": "radiorecord"
+  },
+  {
+    "title": "Studio21",
+    "hls": "",
+    "url": "https://stream.studio21.ru/studio2196.aacp",
+    "codec": "AAC/MP3",
+    "group": "radiorecord"
+  },
+  {
+    "title": "──── LATVIJAS RADIO ────",
+    "url": "",
+    "group": "separator"
+  },
+  {
+    "title": "Latvijas Radio 1",
+    "url": "http://lr1mp1.latvijasradio.lv:8012/;stream.mp3",
+    "group": "latvija"
+  },
+  {
+    "title": "Latvijas Radio 2",
+    "url": "http://lr2mp1.latvijasradio.lv:8002/;stream.mp3",
+    "group": "latvija"
+  },
+  {
+    "title": "Latvijas Radio 3 (Klasika)",
+    "url": "http://lr3mp0.latvijasradio.lv:8004/;stream.mp3",
+    "group": "latvija"
+  },
+  {
+    "title": "Latvijas Radio 4 (Doma Laukums)",
+    "url": "http://lr4mp1.latvijasradio.lv:8020/;stream.mp3",
+    "group": "latvija"
+  },
+  {
+    "title": "SWH",
+    "url": "https://live.radioswh.lv:8443/swhmp3",
+    "group": "latvija"
+  },
+  {
+    "title": "SWH Gold",
+    "url": "https://live.radioswh.lv:8443/goldmp3",
+    "group": "latvija"
+  },
+  {
+    "title": "SWH Rock",
+    "url": "https://live.radioswh.lv:8443/rockmp3",
+    "group": "latvija"
+  },
+  {
+    "title": "SWH LV",
+    "url": "https://live.radioswh.lv:8443/swh_lv",
+    "group": "latvija"
+  },
+  {
+    "title": "EHR",
+    "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR.mp3",
+    "group": "latvija"
+  },
+  {
+    "title": "EHR Latviešu Hiti",
+    "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_LATVIESU_HITI.mp3",
+    "group": "latvija"
+  },
+  {
+    "title": "EHR Dance",
+    "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_DANCE.mp3",
+    "group": "latvija"
+  },
+  {
+    "title": "EHR Fresh",
+    "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_FRESH.mp3",
+    "group": "latvija"
+  },
+  {
+    "title": "Retro FM LV",
+    "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/RETRO_FM.mp3",
+    "group": "latvija"
+  },
+  {
+    "title": "Latviešu Deju Hiti",
+    "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/LATVIESU_HITI_DEJU_HITI.mp3",
+    "group": "latvija"
+  },
+  {
+    "title": "Skonto",
+    "url": "https://stream.radioskonto.lv:8443/stereo",
+    "group": "latvija"
+  },
+  {
+    "title": "Skonto Plus",
+    "url": "https://stream.radioskontoplus.lv:8443/st128",
+    "group": "latvija"
+  },
+  {
+    "title": "Radio 9",
+    "url": "http://streams.radioskonto.lv:8010/radio9",
+    "group": "latvija"
+  },
+  {
+    "title": "Lounge FM",
+    "url": "https://streams.radioskonto.lv:8443/lounge",
+    "group": "latvija"
+  },
+  {
+    "title": "Star FM",
+    "url": "http://starfm.live.advailo.com/audio/mp3/icecast.audio",
+    "group": "latvija"
+  },
+  {
+    "title": "Power Hit Radio",
+    "url": "https://stream.rcs.revma.com/f31w7e0fveuvv",
+    "group": "latvija"
+  },
+  {
+    "title": "GRadio",
+    "url": "https://stream.gradio.lv/gradio.mp3",
+    "group": "latvija"
+  },
+  {
+    "title": "Divu Krastu Radio",
+    "url": "https://live.dkradio.lv/01",
+    "group": "latvija"
+  },
+  {
+    "title": "Mix FM",
+    "url": "http://195.130.205.203:8000/07",
+    "group": "latvija"
+  },
+  {
+    "title": "Norma",
+    "url": "http://80.232.245.141:8000/norma",
+    "group": "latvija"
+  }
+]

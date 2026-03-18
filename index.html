@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<script>
+(function() {
+  var API_BASE = 'https://minka-api.gamernr1elite.workers.dev';
+  var TOKEN_KEY = 'minka_api_token_v1';
+
+  function getToken() {
+    try { return sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY) || ''; }
+    catch(e) { return ''; }
+  }
+
+  function setToken(token, persist) {
+    try {
+      sessionStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(TOKEN_KEY);
+      if (token) {
+        if (persist) localStorage.setItem(TOKEN_KEY, token);
+        else sessionStorage.setItem(TOKEN_KEY, token);
+      }
+    } catch(e) {}
+  }
+
+  function notifyIframeAuth() {
+    setTimeout(function() {
+      var f = document.getElementById('calIframe');
+      if (!f) return;
+      var base = f.getAttribute('data-base-src') || 'kalendars/index.html';
+      var token = getToken();
+      var next = base;
+      if (token) next += (next.indexOf('?') >= 0 ? '&' : '?') + 'token=' + encodeURIComponent(token);
+      if (f.getAttribute('src') !== next) f.setAttribute('src', next);
+      if (f.contentWindow) f.contentWindow.postMessage({ type: 'minka_auth_ok' }, '*');
+    }, 180);
+  }
+
+  function showGate() {
+    document.documentElement.style.visibility = 'hidden';
+    document.addEventListener('DOMContentLoaded', function() {
+      document.documentElement.style.visibility = '';
+      var overlay = document.createElement('div');
+      overlay.id = 'minka-gate';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(6,10,18,.84);display:flex;align-items:center;justify-content:center;z-index:999999;font-family:system-ui,sans-serif;backdrop-filter:blur(12px);padding:20px';
+      overlay.innerHTML = ''
+        + '<div style="background:#0d1118;border:1px solid rgba(255,255,255,0.10);border-radius:22px;padding:28px 28px 22px;text-align:left;width:min(420px,calc(100vw - 32px));box-shadow:0 28px 80px rgba(0,0,0,.55);color:#eef2ff;">'
+        + '<div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">'
+        + '<div style="width:52px;height:52px;border-radius:16px;border:1px solid rgba(139,92,246,0.28);background:radial-gradient(circle at 30% 30%, rgba(139,92,246,0.30), rgba(91,33,182,0.12) 60%, transparent 100%), #121722;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 1px 0 rgba(255,255,255,0.05),0 10px 24px rgba(0,0,0,0.22);font-size:24px;">&#128737;&#65039;</div>'
+        + '<div><div style="font-size:18px;font-weight:800;line-height:1.1;">Dro&#353;a piek&#316;uve Minka</div><div style="margin-top:4px;font-size:12px;color:rgba(203,213,225,0.72);">Cloudflare aizsarg&#257;ta piek&#316;uve darba datiem un priv&#257;tajam sist&#275;mas saturam.</div></div>'
+        + '</div>'
+        + '<div style="font-size:12px;line-height:1.55;color:rgba(226,232,240,0.76);margin-bottom:16px;">Publiskaj&#257; versij&#257; sensit&#299;v&#257; inform&#257;cija netiek glab&#257;ta. Dati tiek iel&#257;d&#275;ti tikai p&#275;c autoriz&#257;cijas.</div>'
+        + '<input id="minka-pw" type="password" placeholder="Parole" autocomplete="current-password" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:12px 14px;color:#fff;font-size:14px;outline:none;margin-bottom:12px">'
+        + '<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(203,213,225,0.72);margin-bottom:14px;"><input id="minka-remember" type="checkbox" style="accent-color:#8b5cf6"> Atcer&#275;ties &#353;o ier&#299;ci</label>'
+        + '<button id="minka-btn" style="width:100%;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:14px;padding:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer">Ieiet</button>'
+        + '<div id="minka-err" style="color:#f87171;font-size:12px;margin-top:10px;min-height:16px"></div>'
+        + '</div>';
+      document.body.prepend(overlay);
+      var input = document.getElementById('minka-pw');
+      var btn = document.getElementById('minka-btn');
+      var err = document.getElementById('minka-err');
+      var remember = document.getElementById('minka-remember');
+      async function attempt() {
+        var password = String(input.value || '').trim();
+        err.textContent = '';
+        if (!password) {
+          err.textContent = 'Ievadi paroli';
+          return;
+        }
+        btn.disabled = true;
+        btn.textContent = 'P&#257;rbauda...';
+        try {
+          var res = await fetch(API_BASE + '/api/login', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ password: password })
+          });
+          var data = await res.json().catch(function(){ return {}; });
+          if (!res.ok || !data || !data.token) throw new Error((data && data.error) || 'Login failed');
+          setToken(data.token, !!(remember && remember.checked));
+          notifyIframeAuth();
+          overlay.style.transition = 'opacity 0.3s';
+          overlay.style.opacity = '0';
+          setTimeout(function(){ overlay.remove(); }, 300);
+        } catch (_e) {
+          err.textContent = 'Nepareiza parole vai API nav sasniedzams';
+          input.value = '';
+          input.focus();
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Ieiet';
+        }
+      }
+      btn.addEventListener('click', attempt);
+      input.addEventListener('keydown', function(e){ if(e.key==='Enter') attempt(); });
+      input.focus();
+    }, { once: true });
+  }
+
+  if (!getToken()) showGate();
+  else document.addEventListener('DOMContentLoaded', notifyIframeAuth, { once: true });
+})();
+</script>
+
+<meta charset="UTF-8">
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Minka">
+<meta name="theme-color" content="#0a0a1a">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Minka</title>
+<link rel="icon" href="data/minka_icon.ico">
+
+<!-- Preconnect to external origins so DNS/TLS is resolved before requests fire -->
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+
+<!-- Fonts: non-blocking via media trick → swap to all once loaded -->
+<link rel="preload" as="style"
+  href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
+  onload="this.onload=null;this.rel='stylesheet'">
+<noscript>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+</noscript>
+
+<!-- Font Awesome: non-blocking (icons appear after load, not critical) -->
+<link rel="preload" as="style"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  onload="this.onload=null;this.rel='stylesheet'">
+<noscript>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</noscript>
+
+<!-- Digital-7 font: non-blocking (only used in radio clock display) -->
+<link rel="preload" as="style"
+  href="https://fonts.cdnfonts.com/css/digital-7-mono"
+  onload="this.onload=null;this.rel='stylesheet'">
+<noscript>
+  <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/digital-7-mono">
+</noscript>
+
+<!-- hls.js: defer so it never blocks the first paint (loaded before radio plays) -->
+<script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
+
+<!-- Alpine.js: defer (already was) -->
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+<!-- App CSS: critical shell loads normally; radio extras load non-blocking -->
+<link rel="stylesheet" href="css/minka.css">
+<link rel="stylesheet" href="css/radio-extra.css">
+<!-- Non-critical CSS loaded async -->
+<link rel="preload" as="style" href="css/improvements.css"
+  onload="this.onload=null;this.rel='stylesheet'">
+<link rel="preload" as="style" href="css/radio_extras_v4.css"
+  onload="this.onload=null;this.rel='stylesheet'">
+<noscript>
+  <link rel="stylesheet" href="css/improvements.css">
+  <link rel="stylesheet" href="css/radio_extras_v4.css">
+</noscript>
+
+<style>
+/* ═══ MINKA v11 Shell ═══ */
+:root {
+  --rh: clamp(142px, 21vh, 170px);        /* fallback radio height */
+  --btnbar-h: 52px;
+  --calendar-safe-gap: 14px;
+  --calendar-bottom: calc(var(--rh) + var(--btnbar-h) + var(--calendar-safe-gap));
+  --font: 'Space Grotesk', system-ui, sans-serif;
+}
+html, body {
+  margin: 0; padding: 0; overflow: hidden;
+  height: 100vh; width: 100vw;
+  background:
+    radial-gradient(1200px 700px at 8% 50%, rgba(0,95,255,.22), transparent 55%),
+    radial-gradient(1200px 700px at 92% 50%, rgba(0,255,180,.12), transparent 58%),
+    linear-gradient(180deg, #040812 0%, #050a14 55%, #060b13 100%);
+  transition: background-color 0.5s ease;
+}
+/* Wallpaper on body */
+body.has-wallpaper {
+  background-color: #060810;
+}
+body * { font-family: var(--font), inherit; }
+
+/* When wallpaper active - radio window becomes glass */
+html.has-wallpaper-bg #radioWindow {
+  background: rgba(6,8,14,0.52) !important;
+  backdrop-filter: blur(32px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(180%) !important;
+}
+/* MacscapeBg overlay stays but becomes semi-transparent */
+html.has-wallpaper-bg #macscapeBg {
+  opacity: 0.35;
+}
+
+/* Calendar area: fills all space above radio bar */
+#calendarEmbed {
+  position: fixed;
+  top: 6px; left: 6px; right: 6px;
+  bottom: calc(var(--calendar-bottom) + 4px);
+  z-index: 100;
+  border-radius: 28px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(8, 12, 22, 0.18);
+  backdrop-filter: blur(30px) saturate(160%);
+  -webkit-backdrop-filter: blur(30px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+  transition: bottom .35s cubic-bezier(.4,0,.2,1), background .2s ease, backdrop-filter .2s ease;
+  /* GPU compositing layer — avoids layout thrashing on bottom transition */
+  will-change: bottom;
+  contain: layout style;
+}
+#calendarEmbed::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.01) 18%, rgba(255,255,255,0.02) 100%),
+    radial-gradient(120% 90% at 12% 0%, rgba(130,170,255,0.14), transparent 48%),
+    radial-gradient(110% 90% at 88% 100%, rgba(255,150,90,0.10), transparent 44%);
+  mix-blend-mode: screen;
+  opacity: .9;
+  z-index: 0;
+}
+body.radio-hidden #calendarEmbed { bottom: calc(var(--btnbar-h) + 4px); }
+body.radio-idle #calendarEmbed { bottom: calc(var(--btnbar-h) + 4px) !important; }
+
+#calendarEmbed iframe {
+  position: relative;
+  z-index: 1;
+  width: 100%; height: 100%;
+  border: 0; display: block; background: transparent !important;
+  border-radius: inherit;
+  color-scheme: normal;
+
+}
+
+/* Radio window: docked at bottom, full width */
+#radioWindow {
+  position: fixed !important;
+  left: 0 !important; right: 0 !important;
+  bottom: var(--btnbar-h) !important; top: auto !important; /* leave space for button bar */
+  width: 100% !important;
+  height: var(--rh);
+  max-height: calc(100vh - var(--btnbar-h) - 10px);
+  transform: none !important;
+  z-index: 500;
+  transition: transform .35s cubic-bezier(.4,0,.2,1), opacity .3s;
+  transform-origin: bottom center;
+  /* Promote to own GPU layer — slide-in/out is transform-only, zero layout cost */
+  will-change: transform, opacity;
+  contain: layout style;
+}
+body.radio-hidden #radioWindow {
+  transform: translateY(100%) !important;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Radio toggle — inside #bottomBtnBar */
+#radioToggle {
+  position: static !important;
+  z-index: 600;
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 14px 7px 11px;
+  border-radius: 22px;
+  background: rgba(6,8,16,0.90);
+  border: 1px solid rgba(0,255,136,0.25);
+  backdrop-filter: blur(20px);
+  color: #f0f4ff; cursor: pointer;
+  font-size: 11px; font-weight: 700; letter-spacing: .08em;
+  box-shadow: 0 4px 24px rgba(0,0,0,.55);
+  transition: border-color .2s, box-shadow .2s, bottom .35s cubic-bezier(.4,0,.2,1);
+  user-select: none;
+}
+
+#radioToggle:hover { border-color: rgba(0,220,100,.7); box-shadow: 0 0 0 1px rgba(0,220,100,.15), 0 0 20px rgba(0,220,100,.35), 0 0 40px rgba(0,220,100,.15); }
+#radioToggle:active { transform: scale(.96); }
+.rtog-led {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #00ff88; box-shadow: 0 0 7px #00ff88;
+  flex-shrink: 0; transition: background .3s, box-shadow .3s;
+  animation: rledPulse 2s ease-in-out infinite;
+}
+body.radio-hidden #radioToggle .rtog-led { background: #333; box-shadow: none; animation: none; }
+@keyframes rledPulse {
+  0%,100% { box-shadow: 0 0 5px #00ff88; }
+  50%      { box-shadow: 0 0 12px #00ff88, 0 0 20px rgba(0,255,136,.4); }
+}
+
+/* Overlay menus stay on top but not over radio toggle */
+#stationOverlay, #mdPresetPanel, #themePanel { z-index: 120000 !important; }
+/* Radio toggle ALWAYS visible above overlays */
+/* z-index handled by #bottomBtnBar */
+
+/* Radio idle btn - always glows, low CPU (CSS only, no JS) */
+#radioIdleBtn {
+  cursor: pointer;
+  transition: filter .3s ease, transform .3s ease;
+}
+#radioIdleBtn:hover .rg-idle-icon {
+  filter:
+    drop-shadow(0 0 8px rgba(0,220,90,0.9))
+    drop-shadow(0 0 20px rgba(0,220,90,0.5))
+    drop-shadow(0 10px 22px rgba(0,0,0,0.65));
+}
+
+/* Minka bubble */
+
+
+/* Idle icon */
+#radioIdleBtn{position:static;background:rgba(6,8,16,0.88);border:1px solid rgba(0,255,136,0.28);backdrop-filter:blur(16px);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:24px;gap:7px;color:#e0ffe8;font:700 11px/1 system-ui;letter-spacing:.08em;}
+body:not(.radio-idle) #radioIdleBtn{display:none;}
+.rg-idle-icon{width:48px;height:48px;display:block;border-radius:12px;filter:drop-shadow(0 0 8px rgba(0,220,90,0.35)) drop-shadow(0 10px 22px rgba(0,0,0,0.65));animation:rgIdlePulse 2.6s ease-in-out infinite;}
+@keyframes rgIdlePulse{0%,100%{transform:scale(1);}50%{transform:scale(1.05);}}
+body.radio-idle #radioWindow{display:none!important;}
+body.radio-idle #radioToggle{display:none;}
+body:not(.radio-idle) #radioIdleBtn{display:none;}
+
+@media (max-width: 760px), (pointer: coarse) {
+  #calendarEmbed {
+    top: 4px;
+    left: 4px;
+    right: 4px;
+    border-radius: 22px;
+    backdrop-filter: blur(18px) saturate(135%);
+    -webkit-backdrop-filter: blur(18px) saturate(135%);
+  }
+  #bottomBtnBar {
+    gap: 4px !important;
+    padding: 5px 8px !important;
+    border-radius: 18px !important;
+    backdrop-filter: blur(24px) saturate(145%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(145%) !important;
+  }
+  #nsToggleBtnParent,
+  #statsDocBtn,
+  #settingsDockBtn,
+  #radioIdleBtn,
+  #radioToggle {
+    padding: 6px 10px 6px 8px !important;
+    gap: 5px !important;
+    border-radius: 14px !important;
+    font-size: 10px !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,.35) !important;
+  }
+}
+
+@media (max-width: 520px) {
+  #dockShelf {
+    padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  #bottomBtnBar {
+    width: min(calc(100vw - 12px), 100%) !important;
+    justify-content: center !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+  }
+  #bottomBtnBar::-webkit-scrollbar {
+    display: none !important;
+  }
+  .dock-emoji {
+    display: none !important;
+  }
+}
+</style>
+</head>
+<body class="radio-idle" x-data x-init="initApp()">
+
+<!-- Calendar embed -->
+<div id="calendarEmbed">
+  <iframe src="kalendars/index.html" data-base-src="kalendars/index.html" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+</div>
+
+<!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
+<div id="mk-app-loader" style="
+  position:fixed;inset:0;z-index:9999;
+  background:radial-gradient(1200px 700px at 8% 50%,rgba(0,95,255,.22),transparent 55%),
+             radial-gradient(1200px 700px at 92% 50%,rgba(0,255,180,.12),transparent 58%),
+             linear-gradient(180deg,#040812 0%,#050a14 55%,#060b13 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
+  transition:opacity .9s ease;
+">
+  <div style="display:flex;flex-direction:column;align-items:center;">
+    <div id="mkl-dot" style="width:6px;height:6px;border-radius:50%;background:#8b5cf6;margin:0 auto;animation:mklBlink 1.2s ease-in-out infinite;"></div>
+    <div style="width:1px;height:14px;background:rgba(255,255,255,0.2);margin:0 auto;"></div>
+    <div style="display:flex;align-items:flex-end;">
+      <div style="width:24px;height:58px;background:rgba(255,255,255,0.03);border:1px solid rgba(139,92,246,0.15);border-bottom:none;border-radius:4px 4px 0 0;display:grid;grid-template-rows:repeat(4,1fr);gap:5px;padding:7px 5px 5px;">
+        <div class="mkl-win"></div><div class="mkl-win"></div><div class="mkl-win"></div><div class="mkl-win"></div>
+      </div>
+      <div style="width:110px;height:88px;background:rgba(255,255,255,0.035);border:1px solid rgba(139,92,246,0.22);border-bottom:none;border-radius:6px 6px 0 0;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(3,1fr);gap:7px;padding:10px 10px 8px;position:relative;">
+        <div class="mkl-win"></div><div class="mkl-win"></div><div class="mkl-win"></div><div class="mkl-win"></div>
+        <div class="mkl-win"></div><div class="mkl-win"></div><div class="mkl-win"></div><div class="mkl-win"></div>
+        <div class="mkl-win"></div><div class="mkl-win"></div><div class="mkl-win"></div><div class="mkl-win"></div>
+      </div>
+      <div style="width:24px;height:58px;background:rgba(255,255,255,0.03);border:1px solid rgba(139,92,246,0.15);border-bottom:none;border-radius:4px 4px 0 0;display:grid;grid-template-rows:repeat(4,1fr);gap:5px;padding:7px 5px 5px;">
+        <div class="mkl-win"></div><div class="mkl-win"></div><div class="mkl-win"></div><div class="mkl-win"></div>
+      </div>
+    </div>
+    <div style="width:158px;height:5px;background:rgba(139,92,246,0.18);border-radius:0 0 3px 3px;"></div>
+  </div>
+  <div style="font-size:0.68rem;font-weight:800;letter-spacing:.20em;color:rgba(183,150,255,0.55);text-transform:uppercase;" id="mkl-text">Lādē datus…</div>
+  <div id="mkl-subtext" style="font-size:0.74rem;color:rgba(231,236,255,0.54);letter-spacing:.04em;">Sagatavo mekl&#275;&#353;anu, grafiku un iestat&#299;jumus</div>
+  <div id="mkl-progress" style="width:min(320px,78vw);height:8px;border-radius:999px;background:rgba(255,255,255,0.06);overflow:hidden;border:1px solid rgba(255,255,255,0.06);box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);">
+    <div id="mkl-progress-fill" style="width:14%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#6d48ff 0%,#8d5dff 44%,#bb78ff 100%);box-shadow:0 0 16px rgba(155,120,255,.24);transition:width .6s cubic-bezier(.22,1,.36,1);position:relative;overflow:visible;">
+      <span id="mkl-progress-glow" style="position:absolute;right:-18px;top:50%;width:20px;height:20px;border-radius:999px;transform:translateY(-50%);background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.94) 0 14%,rgba(214,184,255,.92) 28%,rgba(160,110,255,.95) 68%,rgba(106,72,255,.96) 100%);box-shadow:0 0 0 5px rgba(141,93,255,.08),0 0 14px rgba(141,93,255,.22),0 6px 16px rgba(0,0,0,.20);animation:mklPulse 2.2s ease-in-out infinite;"></span>
+      <span id="mkl-progress-sheen" style="position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(100deg,transparent 0%,rgba(255,255,255,.10) 40%,rgba(255,255,255,.34) 52%,rgba(255,255,255,.10) 64%,transparent 100%);background-size:120px 100%;animation:mklSheen 1.8s linear infinite;"></span>
+    </div>
+  </div>
+</div>
+<style>
+@keyframes mklBlink{0%,100%{opacity:.3;box-shadow:none;}50%{opacity:1;box-shadow:0 0 8px rgba(139,92,246,0.9);}}
+@keyframes mklSheen{0%{background-position:-120px 0;}100%{background-position:120px 0;}}
+@keyframes mklPulse{0%,100%{opacity:.88;transform:translateY(-50%) scale(.96);}50%{opacity:1;transform:translateY(-50%) scale(1.02);}}
+.mkl-win{border-radius:2px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);transition:background .35s ease,box-shadow .35s ease;}
+.mkl-win.lit-warm{background:rgba(255,205,100,0.82);box-shadow:0 0 6px rgba(255,190,80,0.65),0 0 14px rgba(255,190,80,0.28);border-color:rgba(255,205,100,0.5);}
+.mkl-win.lit-cool{background:rgba(120,200,255,0.72);box-shadow:0 0 6px rgba(100,190,255,0.55),0 0 14px rgba(100,190,255,0.26);border-color:rgba(120,200,255,0.45);}
+.mkl-win.lit-purple{background:rgba(200,140,255,0.78);box-shadow:0 0 6px rgba(183,123,255,0.65),0 0 14px rgba(183,123,255,0.30);border-color:rgba(183,123,255,0.5);}
+</style>
+<script>
+(function(){
+  var loader = document.getElementById('mk-app-loader');
+  var loaderFill = document.getElementById('mkl-progress-fill');
+  var loaderText = document.getElementById('mkl-text');
+  var loaderSub = document.getElementById('mkl-subtext');
+  var startedAt = Date.now();
+  var minVisibleMs = 3200;
+  var litClasses = ['lit-warm','lit-cool','lit-purple'];
+  var statusSteps = [
+    { progress: 18, title: 'Lādē datus…', sub: 'Pieslēdzas pie grafika skata' },
+        { progress: 38, title: 'Sak\u0101rto skatu\u2026', sub: 'Ielasa \u0161odienas mai\u0146as un mekl\u0113\u0161anu' },
+    { progress: 64, title: 'Sagatavo PWA…', sub: 'Pielāgo kešu, izskatu un shell elementus' },
+    { progress: 86, title: 'Gandrīz gatavs…', sub: 'Palaiž interaktīvos elementus' }
+  ];
+  var statusIndex = 0;
+  function paintStatus(step){
+    if (!step) return;
+    if (loaderFill) loaderFill.style.width = step.progress + '%';
+    if (loaderText) loaderText.textContent = step.title;
+    if (loaderSub) loaderSub.textContent = step.sub;
+  }
+  function animWins(){
+    if (document.hidden) return;
+    var wins = Array.from(document.querySelectorAll('.mkl-win'));
+    if(!wins.length) return;
+    wins.forEach(function(w){ w.classList.remove('lit-warm','lit-cool','lit-purple'); });
+    var count = 3 + Math.floor(Math.random()*4);
+    wins.slice().sort(function(){return Math.random()-.5;}).slice(0,count)
+      .forEach(function(w){ w.classList.add(litClasses[Math.floor(Math.random()*litClasses.length)]); });
+  }
+  var winTimer = setInterval(animWins, window.matchMedia('(pointer: coarse)').matches ? 900 : 650);
+  var statusTimer = setInterval(function(){
+    if (document.hidden) return;
+    statusIndex = Math.min(statusIndex + 1, statusSteps.length - 1);
+    paintStatus(statusSteps[statusIndex]);
+  }, 1100);
+  animWins();
+  paintStatus(statusSteps[0]);
+  var hidden = false;
+  function hideLoader(){
+    if(hidden) return;
+    var delay = Math.max(0, minVisibleMs - (Date.now() - startedAt));
+    hidden = true;
+    setTimeout(function(){
+      clearInterval(winTimer);
+      clearInterval(statusTimer);
+      if (loaderFill) loaderFill.style.width = '100%';
+      if (loaderText) loaderText.textContent = 'Gatavs';
+      if (loaderSub) loaderSub.textContent = 'Atveram Minka vidi';
+      if(!loader) return;
+      loader.style.opacity = '0';
+      setTimeout(function(){ loader.style.display = 'none'; }, 920);
+    }, delay);
+  }
+  // Hide only when iframe signals data is fully ready
+  window.addEventListener('message', function(e){
+    if(e.data && e.data.type === 'minka:appReady') hideLoader();
+  });
+  // Fallback: hide after 18s regardless
+  setTimeout(hideLoader, 18000);
+})();
+</script>
+
+<div id="stationOverlay"></div>
+
+<!-- Radio window -->
+<div id="radioWindow" style="display:none;">
+  <div class="radio-drag-strip" id="radioWinHeader" title="Drag"></div>
+  <div class="radio-win-body">
+    <footer class="bottom-console" id="radioApp">
+      <div class="tech-panel">
+        <div class="header-row">
+          <div id="timeDisp">00:00:00</div>
+          <div class="branding">
+            <div class="led-core" id="ledPoint"><div class="led-glow" id="ledHalo"></div></div>
+            <div class="brand-text">RG RADIO</div>
+            <button class="skin-mini-btn" id="themeBtn" title="Skin / Theme" aria-label="Skin / Theme">
+              <i class="fas fa-layer-group" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+        <h2 id="curStation"></h2>
+        <div id="npRow" class="np-row" aria-label="Now playing">
+          <img id="npCover" class="np-cover" alt="" crossorigin="anonymous"/>
+          <div class="np-lines">
+            <div id="npArtist" class="np-artist">—</div>
+            <div id="npTitle" class="np-title">—</div>
+          </div>
+        </div>
+        <div class="meta-status" id="metaWrap">
+          <div><span class="meta-tag">CODEC:</span> <span id="ui-codec">--</span></div>
+          <div><span class="meta-tag">QUALITY:</span> <span id="ui-kbps">--</span></div>
+        </div>
+        <div class="eq-wrap">
+          <div class="eq-pioneer" id="eqRow" role="group" aria-label="Sound preset">
+            <button id="eq-none" class="epb active" onclick="setEQ('none')"><span class="epb-led"></span><span class="epb-label">FLAT</span></button>
+            <button id="eq-bass" class="epb" onclick="setEQ('bass')"><span class="epb-led"></span><span class="epb-label">BASS</span></button>
+            <button id="eq-bassplus" class="epb" onclick="setEQ('bassplus')"><span class="epb-led"></span><span class="epb-label">BASS+</span></button>
+            <button id="eq-clear" class="epb" onclick="setEQ('clear')"><span class="epb-led"></span><span class="epb-label">CRISP</span></button>
+            <button id="eq-studio" class="epb" onclick="setEQ('studio')"><span class="epb-led"></span><span class="epb-label">STUDIO</span></button>
+            <button id="eq-radio" class="epb" onclick="setEQ('radio')"><span class="epb-led"></span><span class="epb-label">RADIO</span></button>
+            <button id="eq-chill" class="epb" onclick="setEQ('chill')"><span class="epb-led"></span><span class="epb-label">CHILL</span></button>
+            <button id="eq-depth" class="epb" onclick="setEQ('depth')"><span class="epb-led"></span><span class="epb-label">SPACE</span></button>
+            <button id="eq-lofi" class="epb" onclick="setEQ('lofi')"><span class="epb-led"></span><span class="epb-label">LOFI</span></button>
+            <button id="eq-chilldeep" class="epb epb-special" onclick="return(window.openSlowFxMenu?openSlowFxMenu(event):(window.handleSlowButton?handleSlowButton():false));"><span class="epb-led"></span><span class="epb-label">SLOW</span></button>
+          </div>
+          <div id="slowFxPanel" class="slowfx-panel slowfx-popup" aria-hidden="true">
+            <div class="slowfx-popup-head">
+              <div class="slowfx-popup-title">MINKA FX</div>
+              <label class="slowfx-keep-toggle" title="Keep original pitch while changing speed">
+                <input id="slowfxKeepPitch" type="checkbox">
+                <span class="slowfx-switch"></span>
+                <span class="slowfx-keep-label">Keep original pitch</span>
+              </label>
+            </div>
+            <div class="slowfx-row slowfx-vol">
+              <div class="slowfx-ico">🔊</div>
+              <div class="slowfx-main">
+                <div class="slowfx-top">VOLUME <span id="slowfxVolumeVal">106%</span></div>
+                <input id="slowfxVolume" type="range" min="50" max="160" step="1" value="106">
+              </div>
+            </div>
+            <div class="slowfx-row slowfx-pitch">
+              <div class="slowfx-ico">🎵</div>
+              <div class="slowfx-main">
+                <div class="slowfx-top">PITCH <span id="slowfxPitchVal">+0.00</span></div>
+                <input id="slowfxPitch" type="range" min="-6" max="6" step="0.01" value="0">
+              </div>
+            </div>
+            <div class="slowfx-row slowfx-speed">
+              <div class="slowfx-ico">⚡</div>
+              <div class="slowfx-main">
+                <div class="slowfx-top">SPEED <span id="slowfxSpeedVal">100%</span></div>
+                <input id="slowfxSpeed" type="range" min="60" max="130" step="1" value="100">
+              </div>
+            </div>
+            <div class="slowfx-row slowfx-reverb">
+              <div class="slowfx-ico">✨</div>
+              <div class="slowfx-main">
+                <div class="slowfx-top">REVERB <span id="slowfxReverbVal">40%</span></div>
+                <input id="slowfxReverb" type="range" min="0" max="100" step="1" value="40">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="monitor-frame">
+        <div id="vizLabel" style="display:none"></div>
+        <div id="volumeOSD">
+          <div id="osd-num">00</div>
+          <div id="osd-segments"></div>
+        </div>
+        <img src="data/dolphin.webp" id="dolphin-bg" onerror="this.onerror=null;this.src='data/dolphin.gif'" alt="">
+        <canvas id="slowedWaveCanvas" class="slowed-wave-canvas"></canvas>
+        <canvas id="vizCanvas"></canvas>
+        <canvas id="milkdropCanvas"></canvas>
+        <img src="https://images.steamusercontent.com/ugc/1878591893790334004/B4176E21DAA54F881A29B455496699908EC6D290/" class="pixel-cat" onclick="changeVizStyle()" title="Change Style">
+      </div>
+
+      <div class="control-panel">
+        <button class="station-btn station-square" onclick="toggleMenu()" title="Stations" aria-label="Stations">
+          <svg class="station-radio-svg" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 8.5 18.5 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <rect x="3" y="8" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+            <circle cx="8" cy="14" r="2" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M13 12h5M13 16h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button class="viz-icon-btn" id="vizBtn" title="Milkdrop Visuals" aria-label="Milkdrop Visuals">
+          <i class="fas fa-wave-square" aria-hidden="true"></i>
+        </button>
+        <div class="md-mini" id="mdMini" aria-hidden="true">
+          <button class="md-mini-btn md-arrow" id="mdPrevBtn" type="button" title="Previous preset">⟵</button>
+          <button class="md-mini-btn md-preset" id="mdPresetBtn" type="button" title="Preset">PRESET</button>
+          <button class="md-mini-btn md-arrow" id="mdNextBtn" type="button" title="Next preset">⟶</button>
+        </div>
+        <div class="nav-cluster">
+          <button class="nav-btn" onclick="playPrev()"><i class="fas fa-backward fa-fw"></i></button>
+          <button class="play-trigger" id="playBtn"><i class="fas fa-play"></i></button>
+          <button class="nav-btn" onclick="playNext()"><i class="fas fa-forward fa-fw"></i></button>
+        </div>
+        <input type="range" class="fader" id="vol" min="0" max="1" step="0.01" value="0.7" draggable="false" ondragstart="return false">
+      </div>
+    </footer>
+  </div>
+</div>
+
+<!-- Milkdrop preset picker -->
+<div id="mdPresetPanel" class="md-preset-panel" aria-hidden="true">
+  <div class="mdp-head">
+    <div class="mdp-title">MILKDROP PRESETS</div>
+    <button class="mdp-close" id="mdPresetClose" aria-label="Close">×</button>
+  </div>
+  <div class="mdp-search-wrap">
+    <input id="mdPresetSearch" type="text" placeholder="Search preset…" autocomplete="off"/>
+  </div>
+  <div id="mdPresetList" class="mdp-list" role="listbox" aria-label="Milkdrop preset list"></div>
+</div>
+
+<!-- Theme panel -->
+<div id="themePanel" class="theme-panel" aria-hidden="true">
+  <div class="theme-head">
+    <div class="theme-title">THEME</div>
+    <button class="theme-close" id="themeClose" aria-label="Close">×</button>
+  </div>
+  <div class="theme-search-wrap">
+    <input id="themeSearch" type="text" placeholder="Search theme…" autocomplete="off"/>
+  </div>
+  <div id="themeList" class="theme-list"></div>
+  <div class="theme-controls">
+    <label class="trow">
+      <span>Accent</span>
+      <input id="accentPicker" type="color" value="#00ff88"/>
+    </label>
+    <label class="trow">
+      <span>Glass</span>
+      <input id="glassSlider" type="range" min="0" max="100" value="72"/>
+    </label>
+    <div class="theme-hint">Tip: themes change variables only. Your layout stays the same.</div>
+  </div>
+</div>
+
+
+
+<!-- radioToggle moved to #bottomBtnBar -->
+
+<!-- Idle icon (shown before first radio load) -->
+<!-- radioIdleBtn moved to #bottomBtnBar -->
+
+<script>
+/* ──────────────────────────────────────────────
+   RADIO LAZY LOAD
+────────────────────────────────────────────── */
+let _radioScriptsLoaded = false, _radioScriptsLoading = false;
+
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.async = false;
+    s.onload = () => res(src);
+    s.onerror = () => rej(src);
+    document.head.appendChild(s);
+  });
+}
+async function loadAny(urls) {
+  for (const u of urls) { try { await loadScript(u); return true; } catch(e) {} }
+  return false;
+}
+async function loadRadioScripts() {
+  if (_radioScriptsLoaded || _radioScriptsLoading) return _radioScriptsLoaded;
+  _radioScriptsLoading = true;
+  await loadAny(['js/radio.js']);
+  await loadAny(['js/radio_extras_v4.js']);
+  await loadAny(['js/ambilight.js']);
+  _radioScriptsLoaded = true;
+  _radioScriptsLoading = false;
+  return true;
+}
+
+let _milkdropLibsPromise = null;
+function ensureMilkdropLibs() {
+  if (window.butterchurn && window.butterchurnPresets) return Promise.resolve(true);
+  if (_milkdropLibsPromise) return _milkdropLibsPromise;
+  _milkdropLibsPromise = (async() => {
+    await loadAny(['vendor/butterchurn.min.js','https://cdn.jsdelivr.net/npm/butterchurn@2.6.7/lib/butterchurn.min.js']);
+    await loadAny(['vendor/butterchurnPresets.min.js','https://cdn.jsdelivr.net/npm/butterchurn-presets@2.4.7/lib/butterchurnPresets.min.js']);
+    return true;
+  })();
+  return _milkdropLibsPromise;
+}
+function wireVizLazyMilkdrop() {
+  const btn = document.getElementById('vizBtn');
+  if (!btn || btn._rgMilkdropHooked) return;
+  btn._rgMilkdropHooked = true;
+  btn.addEventListener('click', async function(e) {
+    if (window.butterchurn && window.butterchurnPresets) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    btn.disabled = true;
+    try { await ensureMilkdropLibs(); } catch(_e) {}
+    btn.disabled = false;
+    setTimeout(() => btn.click(), 0);
+  }, true);
+}
+</script>
+
+<script>
+/* ──────────────────────────────────────────────
+   RADIO TOGGLE & CALENDAR SYNC
+────────────────────────────────────────────── */
+function toggleRadio() {
+  const isHidden = document.body.classList.contains('radio-hidden');
+  if (isHidden) {
+    // Show radio
+    document.body.classList.remove('radio-hidden');
+    document.body.classList.remove('radio-idle');
+    const rw = document.getElementById('radioWindow');
+    if (rw) rw.style.display = '';
+    // Update toggle label
+    document.getElementById('radioToggleLabel').textContent = 'RADIO';
+    document.querySelector('#radioToggle .fas').className = 'fas fa-chevron-down';
+    document.querySelector('#radioToggle .fas').style.fontSize = '9px';
+    document.querySelector('#radioToggle .fas').style.opacity = '.7';
+    syncShellLayout();
+  } else {
+    // Hide radio
+    document.body.classList.add('radio-hidden');
+    document.querySelector('#radioToggle .fas').className = 'fas fa-music';
+    document.querySelector('#radioToggle .fas').style.fontSize = '11px';
+    document.querySelector('#radioToggle .fas').style.opacity = '.85';
+    syncShellLayout();
+  }
+}
+
+function radioIdleClick() {
+  const btn = document.getElementById('radioIdleBtn');
+  if (!btn || btn._loading) return;
+  btn._loading = true;
+
+  const rw = document.getElementById('radioWindow');
+  if (rw) rw.style.display = '';
+  document.body.classList.remove('radio-idle');
+  document.body.classList.remove('radio-hidden');
+  syncShellLayout();
+
+  loadRadioScripts().then(function() {
+    try { wireVizLazyMilkdrop(); } catch(e) {}
+    function tryStart() {
+      if (typeof selectStation === 'function' && window.stationsList && window.stationsList.length) {
+        btn._loading = false;
+        selectStation(window.currentIndex || 0);
+        try { window.showAssistantMessage && window.showAssistantMessage(false); } catch(e) {}
+      } else {
+        setTimeout(tryStart, 100);
+      }
+    }
+    tryStart();
+  }).catch(function(err) {
+    console.error(err);
+    btn._loading = false;
+  });
+}
+
+// Keep calendar area synced to the actual radio height
+let _syncRaf = 0;
+function syncShellLayout() {
+  cancelAnimationFrame(_syncRaf);
+  _syncRaf = requestAnimationFrame(_doSync);
+}
+function _doSync() {
+  const root = document.documentElement;
+  const rw = document.getElementById('radioWindow');
+  const iframe = document.getElementById('calIframe');
+  // Measure dock shelf height (includes padding + safe-area) for accurate layout
+  const dockShelf = document.getElementById('dockShelf');
+  const dockBar   = document.getElementById('bottomBtnBar');
+  const btnH = (dockShelf && dockShelf.offsetHeight) ? dockShelf.offsetHeight
+             : (dockBar   && dockBar.offsetHeight)   ? dockBar.offsetHeight + 20
+             : 52;
+  const radioVisible = !!rw && !document.body.classList.contains('radio-hidden') && !document.body.classList.contains('radio-idle') && rw.style.display !== 'none';
+  const radioH = radioVisible ? Math.max(0, Math.round(rw.getBoundingClientRect().height || rw.offsetHeight || 0)) : 0;
+  root.style.setProperty('--btnbar-h', btnH + 'px');
+  const safeGap = radioVisible ? 10 : 6;
+  root.style.setProperty('--calendar-safe-gap', safeGap + 'px');
+  root.style.setProperty('--calendar-bottom', (radioH + btnH + safeGap) + 'px');
+  if (iframe && iframe.contentWindow) {
+    try { iframe.contentWindow.postMessage({ type: 'hostLayoutChanged', radioVisible, radioHeight: radioH, buttonBarHeight: btnH }, '*'); } catch(e) {}
+  }
+}
+
+// Initialize Alpine app method
+function initApp() {
+  // Strip iframe background
+  const iframe = document.getElementById('calIframe');
+  function stripBg() {
+    try {
+      const d = iframe.contentDocument;
+      if (!d) return;
+      if (d.documentElement) {
+        d.documentElement.style.background = 'transparent';
+        d.documentElement.style.backgroundColor = 'transparent';
+      }
+      if (d.body) {
+        d.body.style.background = 'transparent';
+        d.body.style.backgroundColor = 'transparent';
+      }
+      // macscapeBg kept visible — orb gradients show through transparent glass
+    } catch(e) {}
+  }
+  iframe.addEventListener('load', () => { stripBg(); setTimeout(stripBg, 200); });
+  setTimeout(stripBg, 400);
+
+  // Keep shell responsive to viewport and radio size
+  window.addEventListener('resize', () => syncShellLayout());
+  const rw = document.getElementById('radioWindow');
+  if (rw && 'ResizeObserver' in window) {
+    const ro = new ResizeObserver(() => syncShellLayout());
+    ro.observe(rw);
+  }
+  const cal = document.getElementById('calIframe');
+  if (cal) cal.addEventListener('load', () => setTimeout(syncShellLayout, 80));
+  setTimeout(syncShellLayout, 80);
+
+  // Keyboard shortcut: Space = play, arrows = next/prev, M = mute
+  document.addEventListener('keydown', e => {
+    if (['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
+    if (e.code === 'Space' && !e.ctrlKey && !e.altKey) {
+      e.preventDefault();
+      const btn = document.getElementById('playBtn');
+      if (btn) btn.click();
+    }
+    if (e.key === 'ArrowRight' && !e.ctrlKey) { e.preventDefault(); if (typeof playNext === 'function') playNext(); }
+    if (e.key === 'ArrowLeft' && !e.ctrlKey) { e.preventDefault(); if (typeof playPrev === 'function') playPrev(); }
+  });
+}
+
+// When radio scripts load, dock assistant to side
+window.addEventListener('DOMContentLoaded', () => {
+  document.body.classList.add('radio-idle');
+  syncShellLayout();
+});
+</script>
+
+
+
+
+<!-- Bottom bar background -->
+<div id="bottomBar"></div>
+
+<!-- macOS-style Dock: centered glass shelf -->
+<div id="dockShelf">
+  <!-- Bottom Button Bar: NAKTS + RADIO -->
+  <div id="bottomBtnBar">
+    <style>
+    /* ═══ macOS Dock Shell ═══ */
+
+    /* Bottom status bar — slim dark strip when radio hidden/idle */
+    #bottomBar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 52px;
+      background: transparent;
+      border-top: 0;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      z-index: 160000;
+      pointer-events: none;
+      transition: none;
+    }
+    body:not(.radio-idle):not(.radio-hidden) #bottomBar {
+      background: transparent;
+      border-top-color: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      box-shadow:none;
+    }
+
+    /* ── Dock shelf: full-width anchor, centers the pill ── */
+    #dockShelf {
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      z-index: 161000 !important;
+      display: flex !important;
+      justify-content: center !important;
+      align-items: flex-end !important;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+      pointer-events: none !important;
+    }
+
+    /* ── The inner dock pill (macOS glass tray) ── */
+    #bottomBtnBar {
+      pointer-events: all !important;
+      position: relative !important;
+      bottom: auto !important;
+      right: auto !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+
+      /* macOS dock glass */
+      background: rgba(8,10,22,0.72) !important;
+      border: 1px solid rgba(255,255,255,0.11) !important;
+      border-bottom-color: rgba(255,255,255,0.05) !important;
+      border-radius: 22px !important;
+      padding: 6px 10px !important;
+      backdrop-filter: blur(40px) saturate(180%) !important;
+      -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+      box-shadow:
+        0 1px 0 rgba(255,255,255,0.08) inset,
+        0 8px 32px rgba(0,0,0,0.65),
+        0 2px 8px rgba(0,0,0,0.45) !important;
+
+      /* Separator uses pseudo, defined per-item below */
+    }
+
+    /* Subtle highlight line at top of dock */
+    #bottomBtnBar::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 16px; right: 16px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.14) 30%, rgba(255,255,255,0.14) 70%, transparent);
+      border-radius: 999px;
+      pointer-events: none;
+    }
+
+    /* ── Dock separator between NAKTS and RADIO ── */
+    #dockSep {
+      width: 1px;
+      height: 22px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 999px;
+      flex-shrink: 0;
+      margin: 0 2px;
+    }
+
+    /* ── Hide rules — must beat display:flex !important below ── */
+    body.radio-idle #radioToggle    { display: none !important; }
+    body:not(.radio-idle) #radioIdleBtn { display: none !important; }
+
+    /* ── Shared dock item base — macOS lift on hover ── */
+    #nsToggleBtnParent,
+    #statsDocBtn,
+    #settingsDockBtn,
+    #radioIdleBtn,
+    #radioToggle {
+      position: static !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      padding: 7px 13px 7px 10px !important;
+      border-radius: 16px !important;
+      backdrop-filter: none !important;
+      font: 700 11px/1 'Space Grotesk', system-ui !important;
+      letter-spacing: .08em !important;
+      cursor: pointer !important;
+      user-select: none !important;
+      /* macOS-style lift transition */
+      transition:
+        border-color .22s ease,
+        box-shadow .22s ease,
+        transform .18s cubic-bezier(.34,1.56,.64,1),
+        background .22s ease !important;
+      will-change: transform !important;
+    }
+
+    /* ── NAKTS button ── */
+    #nsToggleBtnParent {
+      background: rgba(14,18,40,0.70) !important;
+      border: 1px solid rgba(80,100,255,0.30) !important;
+      color: #d4dcff !important;
+      box-shadow: 0 2px 12px rgba(0,0,0,.45) !important;
+    }
+    #nsToggleBtnParent:hover {
+      border-color: rgba(100,140,255,.70) !important;
+      box-shadow:
+        0 0 0 1px rgba(100,140,255,.14),
+        0 0 18px rgba(100,140,255,.38),
+        0 0 36px rgba(100,140,255,.14),
+        0 6px 20px rgba(0,0,0,.55) !important;
+      transform: translateY(-4px) !important;
+      background: rgba(18,24,56,0.80) !important;
+    }
+    #nsToggleBtnParent:active { transform: translateY(-1px) scale(.97) !important; }
+    #nsToggleBtnParent.ns-open {
+      border-color: rgba(140,170,255,.80) !important;
+      box-shadow:
+        0 0 0 1px rgba(140,170,255,.20),
+        0 0 22px rgba(120,150,255,.50),
+        0 0 44px rgba(100,140,255,.18) !important;
+    }
+
+    /* ── RADIO / RADIO IDLE buttons ── */
+    #radioToggle,
+    #radioIdleBtn {
+      background: rgba(4,14,10,0.72) !important;
+      border: 1px solid rgba(0,255,136,0.24) !important;
+      color: #e0ffe8 !important;
+      box-shadow: 0 2px 12px rgba(0,0,0,.45) !important;
+    }
+    #radioToggle:hover,
+    #radioIdleBtn:hover {
+      border-color: rgba(0,220,100,.70) !important;
+      box-shadow:
+        0 0 0 1px rgba(0,220,100,.14),
+        0 0 18px rgba(0,220,100,.38),
+        0 0 36px rgba(0,220,100,.14),
+        0 6px 20px rgba(0,0,0,.55) !important;
+      transform: translateY(-4px) !important;
+      background: rgba(4,20,14,0.82) !important;
+    }
+    #radioToggle:active,
+    #radioIdleBtn:active { transform: translateY(-1px) scale(.97) !important; }
+    /* ── STATS button ── */
+    #statsDocBtn {
+      background: rgba(20,10,40,0.70) !important;
+      border: 1px solid rgba(139,92,246,0.28) !important;
+      color: #c4b5fd !important;
+      box-shadow: 0 2px 12px rgba(0,0,0,.45) !important;
+    }
+    #settingsDockBtn {
+      background: rgba(28,24,12,0.72) !important;
+      border: 1px solid rgba(255,214,102,0.24) !important;
+      color: #ffe8b0 !important;
+      box-shadow: 0 2px 12px rgba(0,0,0,.45) !important;
+    }
+    #statsDocBtn:hover {
+      border-color: rgba(167,139,250,.70) !important;
+      box-shadow:
+        0 0 0 1px rgba(139,92,246,.14),
+        0 0 18px rgba(139,92,246,.38),
+        0 0 36px rgba(139,92,246,.14),
+        0 6px 20px rgba(0,0,0,.55) !important;
+      transform: translateY(-4px) !important;
+      background: rgba(30,15,60,0.82) !important;
+    }
+    #statsDocBtn:active { transform: translateY(-1px) scale(.97) !important; }
+    #settingsDockBtn:hover {
+      border-color: rgba(255,214,102,.70) !important;
+      box-shadow:
+        0 0 0 1px rgba(255,214,102,.14),
+        0 0 18px rgba(255,214,102,.30),
+        0 0 36px rgba(255,214,102,.12),
+        0 6px 20px rgba(0,0,0,.55) !important;
+      transform: translateY(-4px) !important;
+      background: rgba(40,34,16,0.84) !important;
+    }
+    #settingsDockBtn:active { transform: translateY(-1px) scale(.97) !important; }
+    #settingsDockBtn.settings-open {
+      border-color: rgba(255,214,102,.82) !important;
+      box-shadow:
+        0 0 0 1px rgba(255,214,102,.20),
+        0 0 20px rgba(255,214,102,.34),
+        0 0 42px rgba(255,214,102,.14) !important;
+    }
+    #statsDocBtn.stats-open {
+      border-color: rgba(167,139,250,.80) !important;
+      box-shadow:
+        0 0 0 1px rgba(167,139,250,.20),
+        0 0 22px rgba(139,92,246,.50),
+        0 0 44px rgba(139,92,246,.18) !important;
+    }
+
+
+    body.radio-hidden #radioToggle .rtog-led { background: #333 !important; box-shadow: none !important; animation: none !important; }
+
+    /* ── Responsive: narrow phones ── */
+    @media (max-width: 400px) {
+      #bottomBtnBar {
+        gap: 4px !important;
+        padding: 5px 7px !important;
+        border-radius: 18px !important;
+      }
+      #nsToggleBtnParent,
+      #settingsDockBtn,
+      #radioIdleBtn,
+      #radioToggle {
+        padding: 6px 10px 6px 8px !important;
+        font-size: 10px !important;
+        border-radius: 13px !important;
+      }
+      #dockSep { height: 18px; }
+    }
+
+    /* ── Responsive: very narrow (hide emoji labels) ── */
+    @media (max-width: 320px) {
+      .dock-emoji { display: none !important; }
+      #nsToggleBtnParent, #settingsDockBtn, #radioIdleBtn, #radioToggle {
+        padding: 6px 9px !important;
+      }
+    }
+
+    /* ── Subtle dock appear animation on load ── */
+    @keyframes dockRise {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    #bottomBtnBar {
+      animation: dockRise .45s cubic-bezier(.22,1,.36,1) both !important;
+      animation-delay: .15s !important;
+    }
+    </style>
+
+    <button id="nsToggleBtnParent" onclick="toggleNsFromParent()" title="Nakts Sadalījums">
+      <div id="nsLedParent" style="width:7px;height:7px;border-radius:50%;background:#6488ff;box-shadow:0 0 7px #6488ff;flex-shrink:0;animation:rledPulse 2.5s ease-in-out infinite;"></div>
+      <span>NAKTS</span>
+      <span class="dock-emoji" style="font-size:11px;">🌙</span>
+    </button>
+
+    <div id="dockSep" role="separator" aria-hidden="true"></div>
+
+    <button id="statsDocBtn" onclick="openStatsFromDock()" title="Statistika &amp; Leaderboard">
+      <div style="width:7px;height:7px;border-radius:50%;background:#a78bfa;box-shadow:0 0 7px #a78bfa;flex-shrink:0;animation:rledPulse 3s ease-in-out infinite;"></div>
+      <span>STATISTIKA</span>
+      <span class="dock-emoji" style="font-size:11px;">📊</span>
+    </button>
+
+    <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
+    <button id="settingsDockBtn" onclick="openSettingsFromDock()" title="Iestatījumi">
+      <div style="width:7px;height:7px;border-radius:50%;background:#ffd666;box-shadow:0 0 7px #ffd666;flex-shrink:0;animation:rledPulse 3.2s ease-in-out infinite;"></div>
+      <span>IESTATĪJUMI</span>
+      <span class="dock-emoji" style="font-size:11px;">⚙️</span>
+    </button>
+
+    <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
+
+    <button id="radioIdleBtn" onclick="radioIdleClick()" title="RG Radio" aria-label="RG Radio">
+      <div class="rtog-led" style="background:#00ff88;box-shadow:0 0 7px #00ff88;animation:rledPulse 2s ease-in-out infinite;"></div>
+      <span>RADIO</span>
+      <span class="dock-emoji" style="font-size:11px;">♪</span>
+    </button>
+    <button id="radioToggle" onclick="toggleRadio()" title="Paslēpt/Rādīt Radio">
+      <div class="rtog-led"></div>
+      <span id="radioToggleLabel">RADIO</span>
+      <i class="fas fa-chevron-down" style="font-size:9px;opacity:.7;"></i>
+    </button>
+  </div><!-- end #bottomBtnBar -->
+</div><!-- end #dockShelf -->
+
+<script>
+var _nsOpen = false;
+
+function openStatsFromDock() {
+  var iframe = document.getElementById("calIframe");
+  if (!iframe || !iframe.contentWindow) return;
+  iframe.contentWindow.postMessage({ type: "mk_open_stats" }, "*");
+}
+
+function openSettingsFromDock() {
+  var iframe = document.getElementById("calIframe");
+  if (!iframe || !iframe.contentWindow) return;
+  iframe.contentWindow.postMessage({ type: "mk_open_settings" }, "*");
+}
+
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'mk_stats_closed') {
+    var btn = document.getElementById('statsDocBtn');
+    if (btn) btn.classList.remove('stats-open');
+  } else if (e.data && e.data.type === 'mk_stats_opened') {
+    var btn = document.getElementById('statsDocBtn');
+    if (btn) btn.classList.add('stats-open');
+  } else if (e.data && e.data.type === 'mk_settings_closed') {
+    var sbtn = document.getElementById('settingsDockBtn');
+    if (sbtn) sbtn.classList.remove('settings-open');
+  } else if (e.data && e.data.type === 'mk_settings_opened') {
+    var sbtn = document.getElementById('settingsDockBtn');
+    if (sbtn) sbtn.classList.add('settings-open');
+  }
+});
+
+function toggleNsFromParent() {
+  _nsOpen = !_nsOpen;
+  const iframe = document.getElementById('calIframe');
+  if (iframe && iframe.contentWindow) {
+    iframe.contentWindow.postMessage({ type: 'toggleNs', open: _nsOpen }, '*');
+  }
+  const btn = document.getElementById('nsToggleBtnParent');
+  const led = document.getElementById('nsLedParent');
+  if (_nsOpen) {
+    btn.style.borderColor = 'rgba(100,140,255,.65)';
+    btn.style.boxShadow = '0 4px 28px rgba(100,140,255,.35)';
+    led.style.background = '#fff';
+    led.style.boxShadow = '0 0 8px #fff';
+    led.style.animation = 'none';
+  } else {
+    btn.style.borderColor = '';
+    btn.style.boxShadow = '';
+    led.style.background = '#6488ff';
+    led.style.boxShadow = '0 0 7px #6488ff';
+    led.style.animation = 'rledPulse 2.5s ease-in-out infinite';
+  }
+}
+// Listen for NS close from iframe
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'nsClosed') {
+    _nsOpen = false;
+    const btn = document.getElementById('nsToggleBtnParent');
+    const led = document.getElementById('nsLedParent');
+    if (btn) { btn.style.borderColor = ''; btn.style.boxShadow = ''; }
+    if (led) { led.style.background = '#6488ff'; led.style.boxShadow = '0 0 7px #6488ff'; led.style.animation = 'rledPulse 2.5s ease-in-out infinite'; }
+  }
+});
+</script>
+
+<script>
+/* Parent sound system for NAKTS/RADIO buttons */
+(function(){
+  let _ctx=null;
+  function ctx(){ if(!_ctx)try{_ctx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}return _ctx; }
+  function blip(freq,dur,vol){
+    const c=ctx();if(!c)return;
+    try{const o=c.createOscillator(),g=c.createGain();
+    o.connect(g);g.connect(c.destination);
+    o.type='sine';o.frequency.value=freq;
+    g.gain.setValueAtTime(0,c.currentTime);
+    g.gain.linearRampToValueAtTime(vol||0.05,c.currentTime+0.008);
+    g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dur);
+    o.start(c.currentTime);o.stop(c.currentTime+dur+0.01);}catch(e){}
+  }
+  document.addEventListener('click',function(e){
+    const b=e.target.closest('button');
+    if(!b)return;
+    if(b.id==='nsToggleBtnParent') blip(420,0.12,0.04);
+    else if(b.id==='radioToggle'||b.id==='radioIdleBtn') blip(380,0.10,0.04);
+  },true);
+})();
+</script>
+
+<script>
+if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(r => console.log('Minka SW ok'))
+      .catch(e => console.log('SW error:', e));
+  });
+}
+</script>
+
+
+
+
+<script>
+/* ── Wallpaper: apply to parent body so it shows behind transparent iframe ── */
+var _wpEl = null;
+
+function applyWallpaperToParent(wallpaper, bodyBase) {
+  if (wallpaper) {
+    // Set wallpaper directly as body background — overrides CSS gradient
+    document.body.style.backgroundImage = "url('" + wallpaper + "')";
+    document.body.style.backgroundSize = 'cover';
+    document.body.style.backgroundPosition = 'center';
+    document.body.style.backgroundAttachment = 'fixed';
+    document.body.style.backgroundColor = bodyBase || '#060810';
+    document.documentElement.classList.add('has-wallpaper-bg');
+  } else {
+    // Restore original CSS gradient background
+    document.body.style.backgroundImage = '';
+    document.body.style.backgroundSize = '';
+    document.body.style.backgroundPosition = '';
+    document.body.style.backgroundAttachment = '';
+    document.body.style.backgroundColor = '';
+    document.body.style.background = '';
+    document.documentElement.classList.remove('has-wallpaper-bg');
+  }
+}
+
+window.__lastWallpaper = null;
+window.__lastWallpaperBase = null;
+
+window.addEventListener('message', function(e) {
+  if (!e.data) return;
+
+  if (e.data.type === 'mk_wallpaper') {
+    window.__lastWallpaper = e.data.wallpaper || null;
+    window.__lastWallpaperBase = e.data.bodyBase || '#06070b';
+    applyWallpaperToParent(window.__lastWallpaper, window.__lastWallpaperBase);
+  }
+
+  if (e.data.type === 'mk_glass_opacity') {
+    var go = parseFloat(e.data.opacity);
+    if (isNaN(go)) return;
+    setCalGlass(go);
+  }
+});
+
+// Control calendar glass opacity from parent
+function setCalGlass(opacity) {
+  opacity = Math.max(0.12, Math.min(0.95, parseFloat(opacity) || 0.58));
+  var shell = document.getElementById('calendarEmbed');
+  var shellAlpha = (0.10 + opacity * 0.22).toFixed(3);
+  var shellBorder = (0.08 + opacity * 0.10).toFixed(3);
+  var shellBlur = Math.round(16 + opacity * 24);
+  if (shell) {
+    shell.style.background = 'rgba(8, 12, 22, ' + shellAlpha + ')';
+    shell.style.borderColor = 'rgba(255,255,255,' + shellBorder + ')';
+    shell.style.backdropFilter = 'blur(' + shellBlur + 'px) saturate(160%)';
+    shell.style.webkitBackdropFilter = 'blur(' + shellBlur + 'px) saturate(160%)';
+  }
+  var iframe = document.getElementById('calIframe');
+  if (iframe && iframe.contentWindow) {
+    iframe.contentWindow.postMessage({type: 'mk_glass_opacity', opacity: opacity}, '*');
+  }
+  try { localStorage.setItem('mk_cal_glass', String(opacity)); } catch(e) {}
+}
+
+// Restore glass on load
+window.addEventListener('load', function() {
+  var saved = null;
+  try { saved = localStorage.getItem('mk_cal_glass'); } catch(e) {}
+  var v = saved !== null ? parseFloat(saved) : 0.58;
+  var iframe = document.getElementById('calIframe');
+  if (iframe) {
+    iframe.addEventListener('load', function() {
+      setTimeout(function() { setCalGlass(v); }, 400);
+    });
+  }
+  setTimeout(function(){ setCalGlass(v); }, 250);
+});
+</script>
+<style id="mk-shell-premium-polish">
+body {
+  color: rgba(244, 248, 255, 0.96);
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(900px 460px at 50% -10%, rgba(128, 92, 255, 0.18), transparent 65%),
+    radial-gradient(780px 420px at 50% 110%, rgba(60, 218, 181, 0.10), transparent 58%);
+}
+#calendarEmbed {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.09),
+    0 26px 80px rgba(0,0,0,0.32) !important;
+}
+#mk-app-loader {
+  backdrop-filter: blur(18px) saturate(135%);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+}
+#mkl-progress {
+  position: relative;
+}
+#mkl-progress::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+}
+#mkl-progress-fill {
+  min-width: 18px;
+}
+#mkl-progress-glow {
+  transition: transform .6s cubic-bezier(.22,1,.36,1), box-shadow .6s cubic-bezier(.22,1,.36,1), opacity .24s ease;
+}
+#mkl-progress-fill[style*="100%"] #mkl-progress-glow {
+  transform: translateY(-50%) scale(.96);
+}
+#dockShelf {
+  padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px)) !important;
+}
+#bottomBtnBar {
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 20px 50px rgba(0,0,0,0.34) !important;
+}
+#nsToggleBtnParent,
+#statsDocBtn,
+#settingsDockBtn,
+#radioIdleBtn,
+#radioToggle {
+  min-height: 46px !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 12px 26px rgba(0,0,0,0.22) !important;
+}
+body.mk-low-motion *,
+body.mk-low-motion *::before,
+body.mk-low-motion *::after {
+  animation-duration: .01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: .01ms !important;
+  scroll-behavior: auto !important;
+}
+@media (max-width: 760px), (pointer: coarse) {
+  #calendarEmbed {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.08),
+      0 16px 44px rgba(0,0,0,0.28) !important;
+  }
+  #bottomBtnBar {
+    width: min(calc(100vw - 14px), 100%) !important;
+  }
+}
+</style>
+<script id="mk-shell-premium-script">
+(function(){
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.body.classList.add('mk-low-motion');
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+test-results/
+*.bak
+*.tmp
+*.old
+*.orig
+
+cloudflare/phones.import.sql
+
+.DS_Store
+Thumbs.db

@@ -1,0 +1,1656 @@
+/* ═══ MINKA v11 Calendar Override ═══
+   - Auto-resize layout
+   - Radiologist cards above radiographers
+   - Fatigue bar inside cards
+   - Glowing card edges (CSS only, low CPU)
+   - Night split as floating overlay
+   - Search-only top bar (Minka removed from bottom)
+*/
+
+html, body { background: transparent !important; background-image: none !important; }
+#macscapeBg { display: none !important; }
+
+/* ── Fill iframe ── */
+#grafiks-app {
+  position: absolute !important;
+  inset: 6px !important;
+  width: auto !important; height: auto !important;
+  max-width: none !important;
+  left: 6px !important; right: 6px !important;
+  top: 6px !important; bottom: 6px !important;
+  transform: none !important;
+  resize: none !important;
+  overflow: hidden !important;
+}
+
+/* ══ LAYOUT ══ */
+.side-panel {
+  width: clamp(155px, 16vw, 230px) !important;
+  flex-shrink: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 38px 8px 56px !important;
+  scrollbar-width: none !important;
+  border: none !important;
+  background: var(--tk-bg-side) !important;
+  clip-path: none !important;
+}
+.side-panel::-webkit-scrollbar { display: none; }
+.left-panel { border-right: 1px solid rgba(255,255,255,0.05) !important; }
+.right-panel { border-left: 1px solid rgba(255,255,255,0.05) !important; overflow-y: auto !important; }
+.main-panel {
+  flex: 1 1 0 !important; min-width: 0 !important; overflow: hidden !important;
+  display: flex !important; flex-direction: column !important;
+  padding: 36px 14px 10px !important; gap: 8px !important;
+}
+.duty-vertical { overflow-y: auto !important; flex: 1 !important; }
+
+/* ══ DUTY BLOCKS — clean card style ══ */
+.duty-block {
+  border-radius: 12px !important;
+  padding: 8px 10px 6px !important;
+  margin-bottom: 5px !important;
+  cursor: pointer !important;
+  transition: background .15s, transform .12s !important;
+  background: var(--tk-bg-card) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  border-left: 3px solid rgba(183,123,255,0.5) !important;
+}
+.duty-block:hover {
+  background: rgba(255,255,255,0.07) !important;
+  transform: translateX(2px) !important;
+}
+.duty-name { font-size: 17px !important; font-weight: 800 !important; }
+.duty-surname { font-size: 11px !important; }
+
+/* Radiographers — violet */
+#radiographers-duty .duty-block { border-left-color: rgba(183,123,255,0.55) !important; }
+#radiographers-duty .duty-block:hover { background: rgba(183,123,255,0.07) !important; }
+
+/* Radiologists — coral */
+#radiologists-duty .duty-block {
+  border-left-color: rgba(255,100,80,0.65) !important;
+  background: rgba(255,70,58,0.03) !important;
+}
+#radiologists-duty .duty-block:hover { background: rgba(255,80,60,0.08) !important; }
+#radiologists-duty .duty-name { color: #ff9580 !important; -webkit-text-fill-color: #ff9580 !important; }
+#radiologists-duty .duty-surname { color: rgba(255,149,128,0.5) !important; }
+.status-tag.radiologists { color: rgba(255,110,90,1) !important; }
+.dot.radiologists-dot { background: #ff5a46 !important; box-shadow: 0 0 5px rgba(255,70,58,.4); }
+
+/* ═══════════════════════════════════════════════
+   CARDS GRID — fills space, radiologists shown
+═══════════════════════════════════════════════ */
+#grafiks-list {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+#grafiks-list.grid-view {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  padding: 2px 1px 16px !important;
+}
+.cards-section {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  margin-bottom: 10px !important;
+}
+.cards-section-label {
+  font-size: 9px !important;
+  font-weight: 900 !important;
+  letter-spacing: .12em !important;
+  text-transform: uppercase !important;
+  opacity: .7 !important;
+  padding: 6px 2px 5px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+.cards-subgrid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+  gap: 9px !important;
+  width: 100% !important;
+  align-items: start !important;
+}
+.cards-subgrid .card {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* cards-divider spans full grid row */
+.cards-divider {
+  grid-column: 1 / -1 !important;
+  grid-row: auto !important;
+  height: 24px !important;
+  align-self: end !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 8px 2px 4px !important;
+  margin-top: 4px !important;
+  font-size: 8px !important;
+  font-weight: 900 !important;
+  letter-spacing: .14em !important;
+  text-transform: uppercase !important;
+  pointer-events: none !important;
+  position: relative !important;
+  z-index: 0 !important;
+}
+
+/* ═══════════════════════════════════════════════
+   GLOWING EDGE CARDS
+   - Rotating conic gradient border on hover
+   - Overflow hidden for inner content
+   - ::before lives outside (inset:-1.5px) for glow
+═══════════════════════════════════════════════ */
+@property --card-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes cardBorderSpin {
+  to { --card-angle: 360deg; }
+}
+
+.card {
+  position: relative !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  background: var(--tk-bg-modal) !important;
+  overflow: hidden !important;
+  isolation: isolate !important;
+  transition: transform .2s cubic-bezier(.2,.9,.3,1), box-shadow .2s !important;
+  cursor: pointer !important;
+  z-index: 0 !important;
+}
+.card:hover {
+  transform: translateY(-4px) scale(1.02) !important;
+  box-shadow: 0 12px 36px rgba(0,0,0,.55) !important;
+  border-color: transparent !important;
+  z-index: 10 !important;
+}
+
+/* Rotating glow border — sits BEHIND content using z-index */
+.card::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: -2px !important;
+  border-radius: 16px !important;
+  z-index: -1 !important;
+  opacity: 0 !important;
+  transition: opacity .3s !important;
+  background: conic-gradient(
+    from var(--card-angle),
+    #b77bff 0%, #64dcff 20%, #00ff88 40%,
+    #ffe040 55%, #ff5088 75%, #b77bff 100%
+  ) !important;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0) !important;
+  -webkit-mask-composite: xor !important;
+  mask-composite: exclude !important;
+  padding: 2px !important;
+}
+.card:hover::before {
+  opacity: 1 !important;
+  animation: cardBorderSpin 2.5s linear infinite !important;
+}
+
+/* Subtle glow behind hovered card */
+.card::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  border-radius: 14px !important;
+  z-index: -2 !important;
+  opacity: 0 !important;
+  transition: opacity .3s !important;
+  box-shadow: 0 0 30px rgba(183,123,255,0.25) !important;
+}
+.card:hover::after { opacity: 1 !important; }
+
+/* All card children above pseudo-elements */
+.card > * { position: relative; z-index: 1; }
+
+/* ── Radiologist card variant ── */
+.card-rd {
+  border: 1px solid rgba(255,90,70,0.15) !important;
+  background: rgba(14,8,8,0.82) !important;
+}
+.card-rd::before {
+  background: conic-gradient(
+    from var(--card-angle),
+    #ff7c6e 0%, #ffb060 25%, #ff508a 55%, #ff9060 80%, #ff7c6e 100%
+  ) !important;
+}
+.card-rd:hover::after {
+  box-shadow: 0 0 30px rgba(255,80,60,0.3) !important;
+}
+
+.card-shift { font-size: clamp(30px, 3.2vw, 52px) !important; font-weight: 900 !important; min-width: 0 !important; }
+.card-rd .card-shift { color: #ff7c6e !important; }
+.card-init-rd {
+  background: rgba(255,70,58,0.14) !important;
+  border-color: rgba(255,80,70,0.28) !important;
+  color: #ff9080 !important;
+}
+/* RD badge styling */
+.card-rd-badge {
+  font-size: 8px !important; font-weight: 900 !important; letter-spacing: .1em !important;
+  color: #ff7c6e !important; background: rgba(255,70,58,0.15) !important;
+  border: 1px solid rgba(255,80,70,0.3) !important;
+  border-radius: 5px !important; padding: 2px 5px !important;
+  line-height: 1 !important;
+}
+
+/* ═══════════════════════════════════════════════
+   FATIGUE BAR INSIDE CARDS
+═══════════════════════════════════════════════ */
+/* Override card overflow to clip fatigue bar */
+.card { overflow: hidden !important; }
+
+.card-fatigue-bar {
+  width: calc(100% - 16px) !important;
+  height: 3px !important;
+  border-radius: 99px !important;
+  background: rgba(255,255,255,0.07) !important;
+  overflow: hidden !important;
+  margin: 4px 8px 6px !important;
+  flex-shrink: 0 !important;
+}
+.card-fatigue-fill {
+  height: 100% !important;
+  border-radius: inherit !important;
+  transition: width .5s cubic-bezier(.4,0,.2,1) !important;
+}
+.card-fatigue-pct {
+  font-size: 8px !important;
+  font-weight: 700 !important;
+  color: rgba(255,255,255,0.38) !important;
+  padding: 0 8px 0 !important;
+  display: block !important;
+  text-align: right !important;
+}
+
+/* ═══════════════════════════════════════════════
+   NAKTS SADALĪJUMS — hidden from bottom, 
+   shown as floating panel triggered by icon
+═══════════════════════════════════════════════ */
+#night-split-panel { display: none !important; }
+
+/* Nightsplit floating overlay */
+#nsOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+#nsOverlay.open {
+  pointer-events: all;
+  opacity: 1;
+}
+#nsOverlay-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4,6,16,0.65);
+  backdrop-filter: blur(8px);
+}
+#nsPanel {
+  position: absolute;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%) translateY(24px);
+  width: min(98vw, 1300px);
+  max-height: 80vh;
+  background: linear-gradient(180deg, rgba(8,10,20,0.97) 0%, rgba(6,8,16,0.97) 100%);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 22px;
+  box-shadow: 0 24px 80px rgba(0,0,0,.75), 0 0 0 1px rgba(255,255,255,.03) inset;
+  backdrop-filter: blur(28px);
+  overflow: hidden;
+  transition: transform .3s cubic-bezier(.2,.9,.3,1);
+  padding: 16px 18px 14px;
+}
+#nsOverlay.open #nsPanel {
+  transform: translateX(-50%) translateY(0);
+}
+
+/* NS Panel close button */
+#nsCloseBtn {
+  position: absolute;
+  top: 12px; right: 14px;
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.55);
+  font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s, color .15s;
+  z-index: 2;
+}
+#nsCloseBtn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+
+
+/* ═══════════════════════════════════════════════
+   NIGHTSPLIT CARDS — GLOWING like inspired photo
+═══════════════════════════════════════════════ */
+/* Drag handle visual hint */
+.nsc-full-card::before {
+  content: "⠿" !important;
+  position: absolute !important;
+  top: 8px !important; left: 8px !important;
+  font-size: 14px !important; color: rgba(255,255,255,0.15) !important;
+  cursor: grab !important; pointer-events: none !important;
+  line-height: 1 !important;
+}
+.nsc-full-card:active { cursor: grabbing !important; }
+.nsc-full-card {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 160px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(8,10,18,0.75);
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  isolation: isolate;
+  transition: transform .18s cubic-bezier(.2,.9,.3,1), box-shadow .2s;
+}
+.nsc-full-card:hover { transform: translateY(-4px); }
+.nsc-full-card::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 17px;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity .3s ease-out;
+  padding: 1px;
+  background: var(--nsc-grad, conic-gradient(from 0deg, transparent 0%, var(--nsc-accent, #b77bff) 30%, transparent 60%));
+  -webkit-mask: linear-gradient(#fff,#fff) content-box, linear-gradient(#fff,#fff);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+.nsc-full-card:hover::before { opacity: 1; }
+
+/* Active card glows */
+.nsc-full-card.nsc-active::before { opacity: 0.6 !important; }
+.nsc-full-card.nsc-active {
+  box-shadow: 0 0 0 1px var(--nsc-accent, #b77bff), 0 8px 32px rgba(0,0,0,.5) !important;
+}
+
+/* Ambient glow behind NS card */
+.nsc-full-card::after {
+  content: "";
+  position: absolute;
+  inset: -8px; border-radius: 24px; z-index: -2;
+  opacity: 0;
+  transition: opacity .3s;
+  background: radial-gradient(ellipse at 50% 100%, color-mix(in srgb, var(--nsc-accent, #b77bff) 40%, transparent) 0%, transparent 70%);
+  filter: blur(12px);
+}
+.nsc-full-card:hover::after { opacity: 1; }
+
+/* NS card content layout */
+.nsc-full-inner { padding: 12px 14px 10px; height: 100%; display: flex; flex-direction: column; gap: 4px; }
+.nsc-full-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.nsc-full-name { font-size: 20px; font-weight: 900; line-height: 1; color: var(--nsc-accent, #b77bff); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nsc-full-status {
+  font-size: 9px; font-weight: 900; letter-spacing: .1em;
+  padding: 3px 7px; border-radius: 20px; white-space: nowrap;
+  background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.6);
+  flex-shrink: 0;
+}
+.nsc-full-status.active { background: rgba(0,255,136,0.15); color: #69f0a2; }
+.nsc-full-status.upnext { background: rgba(245,197,24,0.13); color: #f5c842; }
+.nsc-full-status.done { opacity: .5; }
+
+.nsc-full-time { font-family: 'DM Mono', 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: rgba(255,255,255,.88); }
+.nsc-full-meta { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-top: 2px; }
+.nsc-full-dur { font-family: monospace; font-size: 10px; color: rgba(255,255,255,.4); }
+.nsc-full-fat { font-size: 11px; font-weight: 800; }
+.nsc-full-fat.up   { color: #f5c842; }
+.nsc-full-fat.down { color: #79e7a5; }
+.nsc-full-fat.flat { color: #aab; }
+
+/* Progress bar in NS card */
+.nsc-full-progress { height: 3px; border-radius: 99px; background: rgba(255,255,255,.07); overflow: hidden; margin-top: auto; padding-top: 8px; }
+.nsc-full-progress span { display: block; height: 100%; border-radius: inherit; }
+
+/* NS sparkline */
+.nsc-full-spark { padding: 4px 0 0; line-height: 0; }
+
+/* NS panel header */
+.ns-panel-head {
+  display: flex; align-items: center; gap: 14px;
+  flex-wrap: wrap; margin-bottom: 12px; padding-right: 36px;
+}
+.ns-panel-title { font-size: 10px; font-weight: 900; letter-spacing: .14em; color: rgba(255,255,255,.5); text-transform: uppercase; }
+.ns-panel-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ns-panel-controls .nss { font-size: 12px; padding: 5px 22px 5px 9px; border-radius: 8px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.10); color: #f0f4ff; cursor: pointer; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,.35)'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 7px center; }
+.ns-panel-controls .nss:hover { border-color: rgba(255,255,255,.2); }
+.ns-mode-btns { display: flex; gap: 6px; }
+.ns-mode-btn { padding: 6px 11px; border-radius: 9px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09); color: rgba(255,255,255,.78); font-size: 11px; font-weight: 700; cursor: pointer; transition: background .15s, border-color .15s; }
+.ns-mode-btn:hover { background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.16); }
+.ns-mode-btn.active { background: rgba(100,136,255,.18); border-color: rgba(100,136,255,.4); color: #a8c0ff; }
+
+/* NS cards row */
+.ns-cards-row {
+  display: flex; gap: 10px; overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: none;
+  min-height: 160px;
+}
+.ns-cards-row::-webkit-scrollbar { display: none; }
+
+/* NS flow timeline bar */
+.ns-flow-bar { height: 8px; border-radius: 99px; background: rgba(255,255,255,.06); overflow: hidden; display: flex; margin-top: 12px; }
+.ns-flow-seg { flex: var(--w, 1); position: relative; cursor: pointer; transition: filter .15s; }
+.ns-flow-seg:hover { filter: brightness(1.3); }
+.ns-flow-fill { position: absolute; inset: 0; opacity: .75; }
+.ns-flow-seg.is-active .ns-flow-fill { opacity: 1; }
+
+/* NS sort reason */
+.ns-sort-reason { margin-top: 10px; padding: 8px 12px; border-radius: 10px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07); font-size: 11px; color: rgba(255,255,255,.38); line-height: 1.5; }
+.ns-sort-reason b { color: rgba(255,255,255,.6); font-weight: 700; }
+
+/* Scrollbars */
+* { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent; }
+*::-webkit-scrollbar { width: 3px; height: 3px; }
+*::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+
+/* Responsive */
+@media (max-width: 860px) {
+  .side-panel { width: clamp(118px, 14vw, 175px) !important; padding: 32px 7px 10px !important; }
+  #grafiks-list.grid-view { grid-template-columns: repeat(auto-fill, minmax(100px,1fr)) !important; }
+  /* Drag handle visual hint */
+.nsc-full-card::before {
+  content: "⠿" !important;
+  position: absolute !important;
+  top: 8px !important; left: 8px !important;
+  font-size: 14px !important; color: rgba(255,255,255,0.15) !important;
+  cursor: grab !important; pointer-events: none !important;
+  line-height: 1 !important;
+}
+.nsc-full-card:active { cursor: grabbing !important; }
+.nsc-full-card { min-width: 140px; }
+}
+
+/* Search AI stuff */
+.search-input.ai-mode::placeholder { color: rgba(183,123,255,0.6) !important; }
+.search-card.ai-active { border-color: rgba(183,123,255,0.35) !important; box-shadow: 0 0 0 2px rgba(183,123,255,0.10) !important; }
+.minka-avatar-img.ai-thinking { animation: minkaThink 1s ease-in-out infinite alternate; opacity: 1 !important; filter: hue-rotate(280deg) saturate(2) brightness(1.4); }
+@keyframes minkaThink { from { transform: scale(1) rotate(-3deg); } to { transform: scale(1.15) rotate(3deg); } }
+#minkaAiBubble { position: absolute; left: 0; right: 0; top: calc(100% + 6px); background: rgba(14,12,28,0.97); border: 1px solid rgba(183,123,255,0.22); border-radius: 18px; padding: 14px 16px 12px; font-size: 13px; line-height: 1.55; color: #e8e0ff; z-index: 1000; box-shadow: 0 16px 48px rgba(0,0,0,.65); backdrop-filter: blur(18px); display: none; max-height: 38vh; overflow-y: auto; }
+#minkaAiBubble.visible { display: block; animation: aiBubbleIn .22s cubic-bezier(.2,.9,.3,1); }
+@keyframes aiBubbleIn { from { opacity: 0; transform: translateY(-6px) scale(.98); } to { opacity: 1; transform: none; } }
+#minkaAiBubble .ai-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: rgba(183,123,255,.7); }
+#minkaAiBubble .ai-header-dot { width: 6px; height: 6px; border-radius: 50%; background: #b77bff; box-shadow: 0 0 8px #b77bff; animation: aiPulse 1.4s ease-in-out infinite; }
+@keyframes aiPulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+#minkaAiBubble .ai-text { white-space: pre-wrap; }
+#minkaAiBubble .ai-caret { display: inline-block; width: 2px; height: 1em; background: #b77bff; vertical-align: -2px; border-radius: 1px; margin-left: 2px; animation: aiCaretBlink 1s steps(1) infinite; }
+@keyframes aiCaretBlink { 50% { opacity: 0; } }
+#minkaAiBubble .ai-close { position: absolute; top: 10px; right: 12px; background: none; border: none; color: rgba(255,255,255,.3); font-size: 16px; cursor: pointer; padding: 2px 4px; transition: color .15s; }
+#minkaAiBubble .ai-close:hover { color: rgba(255,255,255,.7); }
+.search-hint-anim { position: absolute; left: 52px; top: 50%; transform: translateY(-50%); pointer-events: none; font-size: 14px; color: rgba(255,255,255,0.28); white-space: nowrap; overflow: hidden; max-width: calc(100% - 120px); }
+
+/* ═══ 2-in-1 SEARCH + AI BAR ═══ */
+.search-card { position: relative !important; overflow: visible !important; }
+/* Keep search-card from growing too tall */
+.search-card .results-area { max-height: 40vh !important; }
+
+/* Minka avatar */
+.minka-avatar-wrap { position: relative; flex-shrink: 0; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; }
+.minka-avatar-img { width: 22px !important; height: 22px !important; object-fit: contain; flex-shrink: 0; transition: filter .3s ease, opacity .2s; }
+.minka-av-ring { position: absolute; inset: -3px; border-radius: 50%; border: 1.5px solid rgba(183,123,255,0.7); box-shadow: 0 0 6px rgba(183,123,255,0.4); opacity: 0; transition: opacity .3s; pointer-events: none; animation: avRingPulse 1.5s ease-in-out infinite; }
+@keyframes avRingPulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.1);} }
+
+/* Mode pill — right of the search bar, no overlap */
+.search-mode-pill {
+  font-size: 8px !important; font-weight: 900 !important; letter-spacing: .10em !important;
+  padding: 3px 8px !important; border-radius: 20px !important;
+  background: transparent !important; color: rgba(255,255,255,.22) !important;
+  flex-shrink: 0 !important; white-space: nowrap !important;
+  transition: background .2s, color .2s !important;
+  pointer-events: none !important; text-transform: uppercase !important;
+}
+/* Search bar - clean layout */
+.search-header { 
+  position: relative !important;
+  display: flex !important; 
+  align-items: center !important;
+  gap: 0 !important;
+  padding: 0 12px !important;
+  height: 46px !important;
+}
+.search-input { 
+  flex: 1 !important; 
+  min-width: 0 !important; 
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  font-size: 15px !important;
+  color: #fff !important;
+  padding: 0 8px !important;
+}
+
+/* Hint text — full width of input area */
+.search-hint-anim { position: absolute !important; left: 58px !important; top: 50% !important; transform: translateY(-50%) !important; pointer-events: none !important; font-size: 14px !important; color: rgba(255,255,255,0.26) !important; white-space: nowrap !important; overflow: hidden !important; max-width: calc(100% - 90px) !important; }
+
+/* AI panel — slim, compact, no overflow */
+.minka-ai-panel {
+  display: none;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  background: rgba(10,8,22,0.98);
+  border-radius: 0 0 24px 24px;
+  padding: 10px 14px 12px;
+  overflow: hidden;
+}
+.minka-ai-panel.visible {
+  display: block;
+  animation: aiPanelSlide .2s cubic-bezier(.2,.9,.3,1);
+}
+@keyframes aiPanelSlide { from { opacity:0; clip-path:inset(0 0 100% 0); } to { opacity:1; clip-path:inset(0 0 0% 0); } }
+
+.minka-ai-inner { display: flex; flex-direction: column; gap: 5px; }
+.minka-ai-status { display: flex; align-items: center; gap: 6px; font-size: 8.5px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; color: rgba(183,123,255,0.55); }
+.minka-ai-dot { width: 5px; height: 5px; border-radius: 50%; background: #b77bff; box-shadow: 0 0 5px #b77bff; flex-shrink: 0; animation: aiPulse 1.4s ease-in-out infinite; }
+@keyframes aiPulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.minka-ai-text { font-size: 15px; line-height: 1.55; color: #ede8ff; white-space: pre-wrap; word-break: break-word; max-height: 140px; overflow-y: auto; scrollbar-width: none; }
+.minka-ai-text::-webkit-scrollbar { display: none; }
+.minka-ai-caret { display: inline-block; width: 2px; height: .9em; background: #b77bff; vertical-align: -1px; border-radius: 1px; margin-left: 1px; animation: aiCaretBlink 1s steps(1) infinite; }
+@keyframes aiCaretBlink { 50% { opacity: 0; } }
+
+/* AI mode card */
+.search-card[data-mode="ai"] { border-color: rgba(183,123,255,0.28) !important; }
+.search-card[data-mode="ai"] .search-input::placeholder { color: rgba(183,123,255,0.45) !important; }
+
+
+/* ═══════════════════════════════════════════════════════
+   MINKA BAR — kompakts, ātrs, estētisks
+═══════════════════════════════════════════════════════ */
+#minkaBar {
+  position: relative;
+  margin-bottom: 12px;
+  z-index: 200;
+}
+#minkaBarInner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px 0 12px;
+  height: 44px;
+  background: rgba(12,11,26,0.82);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 22px;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  transition: border-color .2s, box-shadow .2s;
+  position: relative;
+}
+#minkaBar.focused #minkaBarInner {
+  border-color: rgba(183,123,255,0.4);
+  box-shadow: 0 0 0 3px rgba(183,123,255,0.08), 0 8px 32px rgba(0,0,0,0.4);
+}
+#minkaBar.has-text #minkaBarInner {
+  border-color: rgba(0,200,120,0.35);
+  box-shadow: 0 0 0 3px rgba(0,200,120,0.07);
+}
+#minkaBar.ai-mode #minkaBarInner {
+  border-color: rgba(183,123,255,0.45);
+  box-shadow: 0 0 0 3px rgba(183,123,255,0.10), 0 0 24px rgba(140,80,255,0.12);
+  border-radius: 22px 22px 0 0;
+}
+
+/* Logo */
+#minkaLogo {
+  width: 20px; height: 20px;
+  object-fit: contain;
+  opacity: 0.5;
+  flex-shrink: 0;
+  transition: opacity .2s, filter .2s;
+  filter: grayscale(1);
+}
+#minkaBar.focused #minkaLogo { opacity: 0.9; filter: none; }
+#minkaBar.ai-mode #minkaLogo {
+  opacity: 1;
+  filter: hue-rotate(280deg) saturate(3) brightness(1.3);
+  animation: logoGlow 2s ease-in-out infinite;
+}
+@keyframes logoGlow {
+  0%,100% { filter: hue-rotate(280deg) saturate(3) brightness(1.3) drop-shadow(0 0 4px rgba(183,123,255,0.6)); }
+  50% { filter: hue-rotate(260deg) saturate(4) brightness(1.5) drop-shadow(0 0 10px rgba(183,123,255,0.9)); }
+}
+
+/* Editable text area */
+#minkaBarInput {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #f0ecff;
+  letter-spacing: 0.01em;
+  outline: none;
+  cursor: text;
+  white-space: nowrap;
+  overflow: hidden;
+  caret-color: #b77bff;
+  line-height: 44px;
+}
+#minkaBarInput:empty::before {
+  content: '';
+}
+
+/* Hint text */
+#minkaBarHint {
+  position: absolute;
+  left: 44px; /* after logo */
+  top: 0; bottom: 0;
+  display: flex; align-items: center;
+  font-size: 14px;
+  color: rgba(255,255,255,0.22);
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: calc(100% - 120px);
+  transition: opacity .15s;
+}
+#minkaBar.has-text #minkaBarHint,
+#minkaBar.focused #minkaBarHint { opacity: 0; }
+
+/* Mode pill */
+#minkaBarPill {
+  font-size: 7.5px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  padding: 3px 7px;
+  border-radius: 99px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  transition: background .2s, color .2s, opacity .2s;
+  opacity: 0.6;
+  color: rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.06);
+}
+#minkaBar.focused #minkaBarPill { opacity: 1; }
+#minkaBar.ai-mode #minkaBarPill {
+  background: rgba(183,123,255,0.18);
+  color: #c4a0ff;
+  opacity: 1;
+}
+#minkaBar.has-text:not(.ai-mode) #minkaBarPill {
+  background: rgba(0,200,120,0.12);
+  color: #00e67a;
+  opacity: 1;
+}
+
+/* Clear button */
+#minkaBarClear {
+  display: none;
+  background: none; border: none;
+  color: rgba(255,255,255,0.35);
+  font-size: 12px; cursor: pointer;
+  padding: 4px; border-radius: 50%;
+  flex-shrink: 0;
+  transition: color .15s, background .15s;
+  line-height: 1;
+}
+#minkaBarClear:hover { color: #fff; background: rgba(255,255,255,0.1); }
+#minkaBar.has-text #minkaBarClear { display: block; }
+
+/* Menu button */
+#minkaBarMenu {
+  background: none; border: none;
+  color: rgba(255,255,255,0.3);
+  cursor: pointer; padding: 4px;
+  border-radius: 8px; flex-shrink: 0;
+  transition: color .15s, background .15s;
+  display: flex; align-items: center;
+}
+#minkaBarMenu:hover { color: #fff; background: rgba(255,255,255,0.08); }
+#minkaBarMenu .material-icons-round { font-size: 18px; }
+
+/* Results dropdown */
+#minkaResults {
+  position: absolute;
+  left: 0; right: 0; top: calc(100% + 6px);
+  background: #0b0d14;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 18px;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  max-height: 42vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(183,123,255,0.3) transparent;
+  z-index: 10020;
+  box-shadow: 0 14px 34px rgba(0,0,0,0.55);
+  animation: none;
+  contain: layout paint;
+}
+#minkaResults::-webkit-scrollbar { width: 4px; }
+#minkaResults::-webkit-scrollbar-thumb { background: rgba(183,123,255,0.3); border-radius: 2px; }
+@keyframes dropIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
+
+/* AI panel */
+#minkaAiPanel {
+  position: absolute;
+  left: 0; right: 0; top: 100%;
+  background: rgba(10,9,22,0.985);
+  border: 1px solid rgba(183,123,255,0.25);
+  border-top: none;
+  border-radius: 0 0 18px 18px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 8px 16px 14px;
+  z-index: 10010;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.48);
+  display: none;
+  animation: none;
+}
+#minkaAiPanel.open { display: block; }
+#minkaAiHeader {
+  display: flex; align-items: center; gap: 7px;
+  margin-bottom: 8px;
+}
+#minkaAiDot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #b77bff;
+  box-shadow: 0 0 6px #b77bff;
+  animation: aiDotPulse 1.8s ease-in-out infinite;
+}
+@keyframes aiDotPulse { 0%,100%{opacity:1;box-shadow:0 0 6px #b77bff} 50%{opacity:.4;box-shadow:0 0 12px #b77bff} }
+#minkaAiMode {
+  font-size: 8px; font-weight: 900; letter-spacing: .14em;
+  text-transform: uppercase; color: rgba(183,123,255,0.6);
+}
+#minkaAiText {
+  font-size: 14px; line-height: 1.6;
+  color: #e8e0ff;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 120px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+#minkaAiText::-webkit-scrollbar { display: none; }
+#minkaAiCaret {
+  display: inline-block; width: 2px; height: 1em;
+  background: #b77bff; vertical-align: -2px;
+  border-radius: 1px; margin-left: 1px;
+  animation: caretBlink 1s steps(1) infinite;
+}
+@keyframes caretBlink { 50%{opacity:0} }
+
+/* Keep results-area styles for compatibility */
+.results-area { padding: 8px; }
+.result-group-title { font-size: 8.5px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,0.28); padding: 8px 10px 4px; }
+.result-item { padding: 8px 10px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background .12s; }
+.result-item:hover { background: rgba(255,255,255,0.07); }
+.result-number { font-size: 18px; font-weight: 900; color: var(--accent,#b77bff); min-width: 32px; text-align: right; }
+.result-info { flex: 1; min-width: 0; }
+.result-name { font-size: 13px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.result-dept { font-size: 11px; color: rgba(255,255,255,0.45); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Cards must clip content */
+.card { overflow: hidden !important; }
+.card > * { position: relative; z-index: 1; }
+
+/* Card bottom section - name + fatigue bar */
+.card-bottom {
+  display: flex !important;
+  flex-direction: column !important;
+  flex-shrink: 0 !important;
+}
+/* ── CARD — square 1:1 flex ── */
+.card {
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  align-items: stretch !important;
+  padding: 0 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  aspect-ratio: 1 / 1 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  box-sizing: border-box !important;
+}
+.card .card-top {
+  padding: 10px 10px 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-shrink: 0 !important;
+}
+/* Middle: number + name — perfectly centered */
+.card .card-middle {
+  flex-grow: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 2px !important;
+  padding: 0 8px !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+.card .card-name-wrap {
+  padding: 0 !important;
+  text-align: center !important;
+  flex-shrink: 0 !important;
+}
+.card-fat-row { flex-shrink: 0 !important; }
+.card-fat-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 0 10px 8px !important;
+  flex-shrink: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+.fat-track {
+  flex: 1 !important;
+  height: 3px !important;
+  border-radius: 99px !important;
+  background: rgba(255,255,255,0.08) !important;
+  overflow: hidden !important;
+}
+.fat-fill {
+  height: 100% !important;
+  border-radius: 99px !important;
+  transition: width 0.8s ease !important;
+}
+.fat-pct {
+  font-size: 9px !important;
+  font-weight: 900 !important;
+  flex-shrink: 0 !important;
+  min-width: 24px !important;
+  text-align: right !important;
+  letter-spacing: 0.02em !important;
+}
+
+
+/* ═══ v18 stability patch ═══ */
+.main-panel {
+  padding-bottom: 18px !important;
+}
+#grafiks-list {
+  padding-bottom: 34px !important;
+  scroll-padding-bottom: 34px !important;
+}
+.cards-subgrid {
+  padding: 0 2px 8px !important;
+  align-content: start !important;
+}
+.card {
+  aspect-ratio: 1 / 0.82 !important;
+  min-height: 136px !important;
+}
+.card .card-middle {
+  padding: 4px 10px 2px !important;
+}
+.card .card-name-wrap,
+.card-bottom {
+  padding-bottom: 2px !important;
+}
+
+/* ═══════════════════════════════════════════════
+   SEARCH FIX: use fixed positioning to avoid overflow:hidden clip
+   CARD COLORS: use theme accent
+   RADIO LAYOUT: scroll cards properly
+   CALENDAR POPUP: ensure visibility
+═══════════════════════════════════════════════ */
+
+/* Fix search results being clipped by overflow:hidden on .main-panel */
+#minkaResults {
+  position: fixed !important;
+  left: 210px !important;
+  top: 80px !important;
+  right: auto !important;
+  width: calc(100vw - 420px) !important;
+  contain: none !important;
+  z-index: 99999 !important;
+}
+
+/* AI panel also needs fixed positioning */
+#minkaAiPanel {
+  position: fixed !important;
+  left: 210px !important;
+  top: 74px !important;
+  right: auto !important;
+  width: calc(100vw - 420px) !important;
+  border-radius: 0 0 18px 18px !important;
+  z-index: 99998 !important;
+}
+
+/* Ensure miniCal popup is always on top */
+#miniCalPopup {
+  z-index: 999999 !important;
+}
+
+/* But grafiks-list keeps its own scroll */
+#grafiks-list {
+  overflow-y: auto !important;
+  min-height: 0 !important;
+}
+
+/* Card section label colors follow theme */
+.cards-section-label {
+  color: var(--accent) !important;
+}
+.cards-section-label[style*="color:#ff6b6b"],
+.cards-section-label[style*="color: #ff6b6b"] {
+  color: var(--rad-accent) !important;
+}
+
+/* ═══════════════════════════════════════════════
+   THEME VARIABLE OVERRIDES — replace hardcoded aurora purple
+   with dynamic CSS variables so theme switching works
+═══════════════════════════════════════════════ */
+
+/* Radiographers duty blocks accent */
+#radiographers-duty .duty-block {
+  border-left-color: rgba(var(--accent-rgb), 0.55) !important;
+}
+#radiographers-duty .duty-block:hover {
+  background: rgba(var(--accent-rgb), 0.07) !important;
+}
+
+/* Minka bar focused state */
+#minkaBar.focused #minkaBarInner {
+  border-color: rgba(var(--accent-rgb), 0.4) !important;
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.08), 0 8px 32px rgba(0,0,0,0.4) !important;
+}
+#minkaBar.ai-mode #minkaBarInner {
+  border-color: rgba(var(--accent-rgb), 0.45) !important;
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.10), 0 0 24px rgba(var(--accent-rgb), 0.12) !important;
+}
+#minkaBarInput {
+  caret-color: var(--accent) !important;
+}
+#minkaBar.ai-mode #minkaBarPill {
+  background: rgba(var(--accent-rgb), 0.18) !important;
+  color: var(--accent) !important;
+}
+#minkaAiDot {
+  background: var(--accent) !important;
+  box-shadow: 0 0 6px var(--accent) !important;
+}
+#minkaAiMode {
+  color: rgba(var(--accent-rgb), 0.6) !important;
+}
+#minkaAiCaret {
+  background: var(--accent) !important;
+}
+#minkaAiPanel {
+  border-color: rgba(var(--accent-rgb), 0.25) !important;
+}
+#minkaResults::-webkit-scrollbar-thumb {
+  background: rgba(var(--accent-rgb), 0.3) !important;
+}
+
+/* Section label theme-aware colors */
+.cards-section-label-rd {
+  color: var(--rad-accent) !important;
+}
+.cards-section-label-rg {
+  color: var(--accent) !important;
+}
+.cards-lbl-line {
+  width: 20px !important;
+  height: 1px !important;
+  opacity: 0.4 !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  margin-right: 6px !important;
+  background: currentColor !important;
+}
+
+/* ═══════════════════════════════════════════════
+   RADIO LAYOUT FIX — side panels scroll when radio takes space
+═══════════════════════════════════════════════ */
+.side-panel {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+.side-panel::-webkit-scrollbar { display: none !important; }
+.side-panel { scrollbar-width: none !important; }
+
+/* ═══════════════════════════════════════════════
+   CARD NAME FIX — long names like JEĻIZAVETA BARANOVA
+   Use smaller font + 2-line clamp instead of nowrap+clip
+═══════════════════════════════════════════════ */
+.card .name-main {
+  white-space: normal !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  word-break: break-word !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  font-size: clamp(10px, 1.1vw, 14px) !important;
+  line-height: 1.2 !important;
+}
+.card .name-sub {
+  white-space: normal !important;
+  overflow: hidden !important;
+  word-break: break-word !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 1 !important;
+  -webkit-box-orient: vertical !important;
+  font-size: clamp(9px, 0.9vw, 11px) !important;
+  line-height: 1.2 !important;
+}
+.card .card-middle {
+  overflow: hidden !important;
+  min-height: 0 !important;
+}
+.card-name-wrap {
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+/* ═══════════════════════════════════════════════
+   WORKER SEARCH RESULT ITEMS
+═══════════════════════════════════════════════ */
+.worker-result-item {
+  border-left-width: 3px !important;
+  border-left-style: solid !important;
+  margin-bottom: 1px !important;
+}
+.worker-result-item:hover {
+  background: rgba(255,255,255,0.06) !important;
+}
+
+
+/* ═══════════════════════════════════════════════
+   v27 FINAL HOTFIX — search closed on start,
+   AI/results align to bar, radio-open responsive cards
+═══════════════════════════════════════════════ */
+#minkaBar { isolation: isolate !important; }
+#minkaResults {
+  position: fixed !important;
+  right: auto !important;
+  max-height: min(46vh, 420px) !important;
+  background: var(--tk-bg-modal) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 18px 42px rgba(0,0,0,0.62) !important;
+}
+#minkaAiPanel {
+  position: fixed !important;
+  right: auto !important;
+  background: var(--tk-bg-modal) !important;
+  border-top: none !important;
+  border-radius: 0 0 18px 18px !important;
+}
+
+/* Default (radio closed): keep cards comfortable */
+:root {
+  --cards-min-col: 130px;
+  --cards-gap: 9px;
+  --card-min-h: 136px;
+  --card-ratio: 1 / 0.82;
+  --cards-bottom-pad: 34px;
+}
+.cards-subgrid {
+  grid-template-columns: repeat(auto-fill, minmax(var(--cards-min-col), 1fr)) !important;
+  gap: var(--cards-gap) !important;
+}
+.card {
+  aspect-ratio: var(--card-ratio) !important;
+  min-height: var(--card-min-h) !important;
+}
+#grafiks-list {
+  padding-bottom: var(--cards-bottom-pad) !important;
+  scroll-padding-bottom: var(--cards-bottom-pad) !important;
+}
+
+/* Radio open: shrink cards and add breathing room above dock */
+:root.host-radio-open {
+  --cards-min-col: 108px;
+  --cards-gap: 8px;
+  --card-min-h: 108px;
+  --card-ratio: 1 / 0.78;
+  --cards-bottom-pad: clamp(64px, calc(var(--host-radio-h, 170px) * 0.34), 108px);
+}
+:root.host-radio-open .main-panel {
+  padding-bottom: 12px !important;
+}
+:root.host-radio-open .cards-subgrid {
+  padding-bottom: 12px !important;
+}
+:root.host-radio-open .card .card-top {
+  padding: 7px 8px 0 !important;
+}
+:root.host-radio-open .card .card-middle {
+  padding: 2px 8px 0 !important;
+  gap: 3px !important;
+}
+:root.host-radio-open .card .card-shift {
+  font-size: clamp(24px, 2.6vw, 42px) !important;
+  line-height: 0.96 !important;
+}
+:root.host-radio-open .card .name-main {
+  font-size: clamp(9px, 0.95vw, 12px) !important;
+}
+:root.host-radio-open .card .name-sub {
+  font-size: clamp(8px, 0.8vw, 10px) !important;
+}
+:root.host-radio-open .card-fat-row {
+  padding: 1px 8px 6px !important;
+}
+
+
+/* === FINAL HOTFIX: solid search, aligned AI panel, safer radio-open cards === */
+#minkaBar { overflow: visible !important; }
+#minkaResults {
+  position: absolute !important;
+  background: var(--tk-bg-deep) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  opacity: 1 !important;
+  z-index: 2000 !important;
+  overflow-x: hidden !important;
+}
+#minkaAiPanel {
+  position: fixed !important;
+  background: var(--tk-bg-deep) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  z-index: 10040 !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+:root.host-radio-open {
+  --cards-min-col: 96px !important;
+  --cards-gap: 8px !important;
+  --card-min-h: 120px !important;
+  --card-ratio: 1 / 0.96 !important;
+  --cards-bottom-pad: clamp(96px, calc(var(--host-radio-h, 170px) * 0.52), 160px) !important;
+}
+:root.host-radio-open #grafiks-list {
+  padding-bottom: var(--cards-bottom-pad) !important;
+  scroll-padding-bottom: var(--cards-bottom-pad) !important;
+}
+:root.host-radio-open .cards-subgrid {
+  grid-template-columns: repeat(auto-fill, minmax(var(--cards-min-col), 1fr)) !important;
+  gap: var(--cards-gap) !important;
+  padding-bottom: 16px !important;
+}
+:root.host-radio-open .card {
+  min-height: var(--card-min-h) !important;
+  aspect-ratio: var(--card-ratio) !important;
+}
+:root.host-radio-open .card .card-top { padding: 7px 8px 0 !important; }
+:root.host-radio-open .card .card-middle { padding: 2px 8px 0 !important; gap: 3px !important; }
+:root.host-radio-open .card .card-shift {
+  font-size: clamp(22px, 2.3vw, 36px) !important;
+  line-height: 0.94 !important;
+}
+:root.host-radio-open .card .name-main {
+  font-size: clamp(9px, 0.9vw, 11px) !important;
+  line-height: 1.05 !important;
+}
+:root.host-radio-open .card .name-sub {
+  font-size: clamp(7px, 0.72vw, 9px) !important;
+  line-height: 1.05 !important;
+}
+:root.host-radio-open .card-fat-row,
+:root.host-radio-open .card-bottom { padding: 1px 8px 7px !important; }
+
+
+/* === v5 strict layout + solid search + square cards === */
+html, body, #grafiks-app, #grafiks-app * { box-sizing: border-box !important; }
+#minkaResults,
+#minkaResults.results-area {
+  position: fixed !important;
+  background: var(--tk-bg-deep) !important;
+  background: var(--tk-bg-deep) !important;
+  opacity: 1 !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  border-radius: 18px !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: 0 18px 40px rgba(0,0,0,.62) !important;
+  overflow: auto !important;
+  overflow-x: hidden !important;
+  z-index: 10060 !important;
+}
+#minkaResults::before { content: none !important; }
+#minkaResults .list-item,
+#minkaResults .worker-result-item,
+#minkaResults .section-label,
+#minkaResults .search-empty {
+  background: transparent !important;
+}
+#minkaAiPanel {
+  position: fixed !important;
+  left: auto;
+  right: auto;
+  background: var(--tk-bg-deep) !important;
+  border: 1px solid rgba(183,123,255,0.20) !important;
+  border-top: none !important;
+  border-radius: 0 0 18px 18px !important;
+  box-shadow: 0 14px 34px rgba(0,0,0,.46) !important;
+  z-index: 10050 !important;
+}
+#minkaBar { overflow: visible !important; }
+
+#grafiks-list.grid-view {
+  display: block !important;
+  padding-bottom: max(42px, var(--host-safe-bottom, 42px)) !important;
+  scroll-padding-bottom: max(42px, var(--host-safe-bottom, 42px)) !important;
+}
+.cards-section {
+  display: block !important;
+  margin: 0 0 16px 0 !important;
+  padding: 0 !important;
+}
+.cards-section-label {
+  margin: 4px 0 10px 0 !important;
+}
+.cards-subgrid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)) !important;
+  justify-content: start !important;
+  align-items: start !important;
+  align-content: start !important;
+  gap: 16px !important;
+  padding: 0 0 8px 0 !important;
+  margin: 0 !important;
+}
+.cards-subgrid > * { min-width: 0 !important; }
+.card {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  aspect-ratio: 1 / 1 !important;
+  min-height: 132px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  transform: none !important;
+}
+.card:hover { transform: translateY(-2px) !important; }
+.card .card-top {
+  position: relative !important;
+  flex: 0 0 auto !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  padding: 8px 8px 0 !important;
+}
+.card .card-middle {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  gap: 3px !important;
+  padding: 2px 8px 0 !important;
+}
+.card .card-shift {
+  line-height: 0.94 !important;
+  font-size: clamp(22px, 2.2vw, 38px) !important;
+  min-width: 0 !important;
+}
+.card .card-name-wrap,
+.card .name-main,
+.card .name-sub {
+  width: 100% !important;
+  text-align: center !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+.card .name-main { font-size: clamp(11px, 1vw, 14px) !important; line-height: 1.06 !important; }
+.card .name-sub { font-size: clamp(9px, .8vw, 11px) !important; line-height: 1.04 !important; opacity: .8 !important; }
+.card .card-bottom,
+.card .card-fat-row,
+.card-fat-row {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  padding: 2px 8px 8px !important;
+}
+.card .fatigue-mini { margin-top: 0 !important; }
+
+:root.host-radio-open #grafiks-list.grid-view {
+  padding-bottom: max(86px, var(--host-safe-bottom, 86px)) !important;
+  scroll-padding-bottom: max(86px, var(--host-safe-bottom, 86px)) !important;
+}
+:root.host-radio-open .cards-subgrid {
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)) !important;
+  gap: 12px !important;
+}
+:root.host-radio-open .card {
+  aspect-ratio: 1 / 1 !important;
+  min-height: 118px !important;
+}
+:root.host-radio-open .card .card-shift {
+  font-size: clamp(20px, 1.8vw, 30px) !important;
+}
+:root.host-radio-open .card .name-main { font-size: clamp(10px, .82vw, 12px) !important; }
+:root.host-radio-open .card .name-sub { font-size: clamp(8px, .68vw, 10px) !important; }
+
+/* ── Search results: solid dark bg so it's always readable ── */
+#minkaResults,
+#minkaResults.results-area {
+  background: var(--tk-bg-deep) !important;
+  background: var(--tk-bg-deep) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  opacity: 1 !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.70) !important;
+}
+#minkaResults .list-item,
+#minkaResults .worker-result-item,
+#minkaResults .section-label,
+#minkaResults .search-empty {
+  background: transparent !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MODERN FLOATING SEARCH RESULTS  — Spotlight / Raycast style
+   Keeps existing positioning JS, only improves visuals
+═══════════════════════════════════════════════════════════ */
+
+/* Container — solid bg, slide-in, floats above everything */
+#minkaResults,
+#minkaResults.results-area {
+  background: var(--tk-bg-deep) !important;
+  background: var(--tk-bg-deep) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid rgba(255,255,255,0.09) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.04) inset !important;
+  padding: 8px 6px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  max-height: 56vh !important;
+  z-index: 99999 !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(255,255,255,0.08) transparent !important;
+  animation: searchDrop .16s cubic-bezier(.22,.68,0,1.2) !important;
+}
+@keyframes searchDrop {
+  from { opacity:0; transform:translateY(-8px) scale(.98); }
+  to   { opacity:1; transform:translateY(0)   scale(1);    }
+}
+#minkaResults::-webkit-scrollbar { width:3px !important; }
+#minkaResults::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.07) !important; border-radius:2px !important; }
+
+/* Category header */
+.search-category {
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  letter-spacing: .13em !important;
+  text-transform: uppercase !important;
+  color: rgba(255,255,255,0.20) !important;
+  padding: 10px 14px 5px !important;
+  display: block !important;
+  user-select: none !important;
+}
+.search-category + .search-category { padding-top: 14px !important; }
+
+/* Each result row */
+.search-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 9px 12px !important;
+  border-radius: 10px !important;
+  margin: 1px 0 !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  color: inherit !important;
+  transition: background .1s !important;
+  border: 1px solid transparent !important;
+}
+.search-item:hover {
+  background: rgba(255,255,255,0.05) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+}
+
+/* Avatar / icon circle */
+.search-item-icon {
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  border-radius: 9px !important;
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.09) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: rgba(255,255,255,0.55) !important;
+  letter-spacing: 0 !important;
+  text-transform: uppercase !important;
+  flex-shrink: 0 !important;
+}
+
+/* Text block */
+.search-item-body {
+  flex: 1 !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+.search-item-title {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: rgba(255,255,255,0.90) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  line-height: 1.3 !important;
+}
+/* Highlight match with bold underline, not colored text */
+.search-item-title b {
+  font-weight: 800 !important;
+  color: #fff !important;
+  text-decoration: underline !important;
+  text-underline-offset: 2px !important;
+  text-decoration-thickness: 1px !important;
+  text-decoration-color: rgba(183,123,255,0.45) !important;
+}
+.search-item-sub {
+  font-size: 11px !important;
+  color: rgba(255,255,255,0.28) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  line-height: 1.2 !important;
+}
+
+/* Right-side shift badge (workers) */
+.search-item-badge {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  padding: 3px 8px !important;
+  border-radius: 7px !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  background: rgba(255,255,255,0.05) !important;
+  color: rgba(255,255,255,0.45) !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  letter-spacing: .03em !important;
+}
+
+/* Right-side phone number (contacts) */
+.search-item-phone {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: rgba(0,220,130,0.75) !important;
+  background: rgba(0,200,100,0.07) !important;
+  border: 1px solid rgba(0,200,100,0.15) !important;
+  border-radius: 7px !important;
+  padding: 3px 9px !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+/* Empty state */
+#minkaResults .search-empty {
+  padding: 28px 16px !important;
+  text-align: center !important;
+  background: transparent !important;
+}
+#minkaResults .search-empty-icon { font-size: 26px !important; opacity:.3 !important; margin-bottom:8px !important; }
+#minkaResults .search-empty-text { font-size:13px !important; color:rgba(255,255,255,.45) !important; font-weight:600 !important; }
+#minkaResults .search-empty-hint { font-size:11px !important; color:rgba(255,255,255,.20) !important; margin-top:4px !important; }
+
+
+/* ── AI panel: back to absolute inside #minkaBar, no JS needed ── */
+#minkaAiPanel {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 100% !important;
+  width: auto !important;
+  box-sizing: border-box !important;
+  background: var(--tk-bg-deep) !important;
+  border: 1px solid rgba(183,123,255,0.18) !important;
+  border-top: none !important;
+  border-radius: 0 0 18px 18px !important;
+  box-shadow: 0 14px 34px rgba(0,0,0,.50) !important;
+  z-index: 200 !important;
+  padding: 10px 18px 16px !important;
+  display: none !important;
+}
+#minkaAiPanel.open {
+  display: block !important;
+}
+#minkaBar {
+  overflow: visible !important;
+  position: relative !important;
+  z-index: 200 !important;
+}
+
+/* ════════════════════════════════════════════════════
+   FINAL FIXES v32
+   1. Search results — solid bg, never transparent
+   2. Radio open — cards actually shrink noticeably
+   3. AI panel — clickable cursor for news
+════════════════════════════════════════════════════ */
+
+/* 1. SEARCH — solid dark background, always readable */
+#minkaResults,
+#minkaResults.results-area {
+  background: var(--tk-bg-deep) !important;
+  background: var(--tk-bg-deep) !important;
+  border: 1px solid rgba(255,255,255,0.11) !important;
+  box-shadow: 0 20px 48px rgba(0,0,0,0.80), 0 0 0 1px rgba(183,123,255,0.06) inset !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  opacity: 1 !important;
+}
+.search-item,
+.search-item:hover,
+#minkaResults .list-item,
+#minkaResults .worker-result-item,
+#minkaResults .section-label,
+#minkaResults .search-empty,
+#minkaResults .search-category {
+  background: transparent !important;
+}
+.search-item:hover,
+#minkaResults .list-item:hover,
+#minkaResults .worker-result-item:hover {
+  background: rgba(255,255,255,0.05) !important;
+}
+
+/* 2. RADIO OPEN — shrink cards significantly */
+:root.host-radio-open {
+  --cards-min-col: 90px !important;
+  --cards-gap: 8px !important;
+  --card-min-h: 90px !important;
+  --card-ratio: 1 / 1 !important;
+  --cards-bottom-pad: 16px !important;
+}
+:root.host-radio-open #grafiks-list,
+:root.host-radio-open #grafiks-list.grid-view {
+  padding-bottom: max(20px, var(--host-safe-bottom, 20px)) !important;
+  scroll-padding-bottom: max(20px, var(--host-safe-bottom, 20px)) !important;
+}
+:root.host-radio-open .cards-subgrid {
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)) !important;
+  gap: 8px !important;
+  padding-bottom: 8px !important;
+}
+:root.host-radio-open .card {
+  min-height: 90px !important;
+  aspect-ratio: 1 / 1 !important;
+}
+:root.host-radio-open .card .card-shift {
+  font-size: clamp(18px, 2vw, 28px) !important;
+  line-height: 0.9 !important;
+}
+:root.host-radio-open .card .name-main {
+  font-size: clamp(8px, 0.78vw, 10px) !important;
+  line-height: 1.05 !important;
+}
+:root.host-radio-open .card .name-sub {
+  font-size: clamp(7px, 0.62vw, 9px) !important;
+}
+:root.host-radio-open .card .card-top {
+  padding: 5px 6px 0 !important;
+}
+:root.host-radio-open .card .card-middle {
+  padding: 1px 6px 0 !important;
+  gap: 2px !important;
+}
+:root.host-radio-open .card-fat-row,
+:root.host-radio-open .card-bottom {
+  padding: 1px 6px 5px !important;
+}
+/* main-panel top also tighter when radio open */
+:root.host-radio-open .main-panel {
+  padding-top: 10px !important;
+  gap: 4px !important;
+}
+
+/* 3. AI panel — pointer cursor when news mode */
+#minkaAiPanel[style*="cursor: pointer"],
+#minkaAiPanel.news-clickable {
+  cursor: pointer !important;
+}
+#minkaAiPanel[style*="cursor: pointer"]:hover,
+#minkaAiPanel.news-clickable:hover {
+  border-color: rgba(183,123,255,0.30) !important;
+}
+/* "Open" indicator for news */
+#minkaAiPanel[title]::after {
+  content: none !important;
+  display: none !important;
+}
+

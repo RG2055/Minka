@@ -1,0 +1,59 @@
+/* ================================================================
+   CALENDAR EXTRAS v4 CSS
+   ================================================================ */
+
+/* ── Full-list modal: on top of everything, smooth animation ── */
+#full-list-modal {
+  z-index: 999999 !important;
+}
+#full-list-modal.open {
+  animation: modalIn .22s cubic-bezier(.2,.9,.2,1) both !important;
+}
+@keyframes modalIn {
+  from { opacity:0; transform: translate(-50%,-47%) scale(0.94); }
+  to   { opacity:1; transform: translate(-50%,-50%) scale(1); }
+}
+
+/* Worker modal on top */
+#worker-modal {
+  z-index: 900000 !important;
+}
+
+/* ── Grid cards: smooth auto-resize ── */
+.grid-view {
+  align-items: stretch;
+}
+.card {
+  transition: 
+    transform .2s cubic-bezier(.2,.9,.2,1),
+    border-color .2s ease,
+    box-shadow .2s ease,
+    height .22s ease !important;
+}
+.card-shift {
+  transition: font-size .2s ease, transform .15s ease !important;
+}
+
+/* ── Worker expiry fade ── */
+.duty-block.fading-out {
+  opacity: 0 !important;
+  transform: translateX(-18px) scale(0.95) !important;
+  pointer-events: none !important;
+  transition: opacity .42s ease, transform .42s ease !important;
+}
+
+/* ── Timer warning colours ── */
+.duty-timer.warning-low .val {
+  color: rgba(255,165,10,0.95) !important;
+  text-shadow: 0 0 8px rgba(255,165,10,0.5) !important;
+  animation: twarn 1.2s ease-in-out infinite !important;
+}
+.duty-timer.warning-critical .val {
+  color: rgba(255,50,50,0.95) !important;
+  text-shadow: 0 0 12px rgba(255,50,50,0.65) !important;
+  animation: twarn .5s ease-in-out infinite !important;
+}
+@keyframes twarn {
+  0%,100% { opacity:1; }
+  50%      { opacity:0.4; }
+}

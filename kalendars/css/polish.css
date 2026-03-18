@@ -1,0 +1,1035 @@
+/* ================================================================
+   POLISH v1 — WHOOP-inspired smoothness, GPU hints, visual depth
+   All transitions use compositor-only properties (transform/opacity)
+   where possible for 60/120fps performance.
+   ================================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap');
+
+/* ── Font upgrade ── */
+body, button, input, select {
+  font-family: 'DM Sans', -apple-system, sans-serif !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* ── Compositor hints: only on things that actually animate ── */
+#grafiks-app {
+  will-change: box-shadow !important;
+  transition:
+    box-shadow 400ms cubic-bezier(.2,.9,.2,1) !important;
+}
+
+.card, .duty-block, .nsc, .fatigue-panel, .fatigue-tendency,
+.fatigue-health-age, .night-split-panel {
+  will-change: transform !important;
+}
+
+/* ── Main window: refined glass ── */
+#grafiks-app {
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  background: rgba(10,10,16,0.82) !important;
+  backdrop-filter: blur(28px) saturate(1.3) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.3) !important;
+}
+
+/* ── Side panels: lighter blur (saves GPU) ── */
+.side-panel {
+  background: rgba(0,0,0,0.22) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+}
+
+/* ── Duty blocks: clean text list — NO card boxes in side panel ── */
+.duty-block {
+  padding: 6px 4px 6px 8px !important;
+  border-radius: 0 !important;
+  border: none !important;
+  border-left: 2px solid transparent !important;
+  background: transparent !important;
+  gap: 2px !important;
+  transition:
+    border-color 180ms ease,
+    transform 180ms cubic-bezier(.2,.9,.2,1) !important;
+}
+.duty-block:hover {
+  background: transparent !important;
+  border-left-color: rgba(var(--accent-rgb, 183,123,255), 0.5) !important;
+  transform: translateX(4px) !important;
+}
+.duty-block:hover .duty-name {
+  color: rgba(255,255,255,0.95) !important;
+}
+
+/* ── Cards: refined WHOOP-style ── */
+.card {
+  background: rgba(255,255,255,0.03) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  border-radius: 20px !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  transition:
+    transform 240ms cubic-bezier(.2,.9,.2,1),
+    border-color 220ms ease,
+    box-shadow 240ms ease !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.05) inset,
+    0 8px 24px rgba(0,0,0,0.25) !important;
+}
+.card:hover {
+  border-color: rgba(var(--accent-rgb, 183,123,255), 0.3) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.07) inset,
+    0 20px 50px rgba(0,0,0,0.45),
+    0 0 30px rgba(var(--accent-rgb, 183,123,255), 0.08) !important;
+  transform: translateY(-5px) scale(1.01) !important;
+}
+.card:active {
+  transform: translateY(-2px) scale(0.985) !important;
+}
+
+/* Card shift number — uses accent */
+.card-shift {
+  color: var(--accent, #b77bff) !important;
+  text-shadow: 0 0 40px rgba(var(--accent-rgb, 183,123,255), 0.2) !important;
+}
+
+/* ── Day pills in calendar strip ── */
+.day-pill {
+  border-radius: 14px !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    transform 200ms cubic-bezier(.2,.9,.2,1),
+    box-shadow 220ms ease !important;
+}
+.day-pill:hover {
+  transform: translateY(-2px) !important;
+  border-color: rgba(var(--accent-rgb, 183,123,255), 0.25) !important;
+}
+.day-pill.active {
+  border-color: rgba(var(--accent-rgb, 183,123,255), 0.5) !important;
+  box-shadow:
+    0 0 0 1px rgba(var(--accent-rgb, 183,123,255), 0.2),
+    0 0 20px rgba(var(--accent-rgb, 183,123,255), 0.12) !important;
+}
+
+/* ── Calendar selected day ring ── */
+.days li.worked,
+.days li.is-today {
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb, 183,123,255), 0.5) !important;
+}
+.days li.worked { background: rgba(var(--accent-rgb, 183,123,255), 0.18) !important; }
+
+/* ── Modal: smooth entrance + glass ── */
+#worker-modal {
+  background: rgba(10,10,18,0.92) !important;
+  border: 1px solid rgba(255,255,255,0.09) !important;
+  backdrop-filter: blur(30px) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(1.4) !important;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04) inset,
+    0 40px 120px rgba(0,0,0,0.75) !important;
+  border-radius: 28px 28px 0 0 !important;
+}
+
+#worker-modal.open {
+  animation: modal-rise 0.38s cubic-bezier(.2,.9,.2,1) both !important;
+}
+@keyframes modal-rise {
+  from { transform: translateY(100%); opacity: 0.5; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* Modal avatar: WHOOP-circle style */
+.modal-avatar {
+  background: rgba(var(--accent-rgb, 183,123,255), 0.14) !important;
+  border: 1.5px solid rgba(var(--accent-rgb, 183,123,255), 0.35) !important;
+  box-shadow: 0 0 24px rgba(var(--accent-rgb, 183,123,255), 0.15) !important;
+  color: var(--accent, #b77bff) !important;
+  transition: box-shadow 300ms ease !important;
+}
+
+/* Toggle buttons in modal */
+.toggle-btn {
+  border-radius: 10px !important;
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    box-shadow 180ms ease !important;
+}
+.toggle-btn.active {
+  background: rgba(var(--accent-rgb, 183,123,255), 0.14) !important;
+  color: var(--accent, #b77bff) !important;
+  box-shadow: 0 0 16px rgba(var(--accent-rgb, 183,123,255), 0.12) !important;
+}
+
+/* ── Search card: sharper glass ── */
+.search-card {
+  background: rgba(14,14,22,0.88) !important;
+  border: 1px solid rgba(255,255,255,0.09) !important;
+  backdrop-filter: blur(24px) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.4) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.06) inset,
+    0 8px 30px rgba(0,0,0,0.4) !important;
+  transition: box-shadow 250ms ease, border-color 250ms ease !important;
+}
+.search-card:focus-within {
+  border-color: rgba(var(--accent-rgb, 183,123,255), 0.3) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.06) inset,
+    0 0 0 3px rgba(var(--accent-rgb, 183,123,255), 0.08),
+    0 8px 30px rgba(0,0,0,0.4) !important;
+}
+
+/* ── View buttons (list/grid toggle) ── */
+.view-btn {
+  border-radius: 10px !important;
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms cubic-bezier(.2,.9,.2,1) !important;
+}
+.view-btn:hover {
+  transform: scale(1.07) !important;
+}
+
+/* ── Month select ── */
+.month-select {
+  border-radius: 10px !important;
+  border-color: rgba(255,255,255,0.10) !important;
+  transition: border-color 160ms ease, box-shadow 160ms ease !important;
+}
+.month-select:focus {
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 183,123,255), 0.18) !important;
+  border-color: rgba(var(--accent-rgb, 183,123,255), 0.4) !important;
+}
+
+/* ── Arrow navigation buttons ── */
+.arrow {
+  transition:
+    background 160ms ease,
+    transform 160ms cubic-bezier(.2,.9,.2,1) !important;
+}
+.arrow:hover {
+  background: var(--accent, #b77bff) !important;
+  transform: scale(1.1) !important;
+}
+
+/* ── Next-box ── */
+.next-box {
+  border-radius: 14px !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  background: rgba(255,255,255,0.02) !important;
+  padding: 12px 14px !important;
+}
+
+/* ── Status dots: pulsing glow on live ── */
+.dot.radiographers-dot {
+  animation: dot-pulse-accent 2.5s ease-in-out infinite !important;
+}
+.dot.radiologists-dot {
+  animation: dot-pulse-rad 2.5s ease-in-out infinite !important;
+}
+@keyframes dot-pulse-accent {
+  0%,100% { box-shadow: 0 0 6px var(--accent, #b77bff); }
+  50%      { box-shadow: 0 0 14px var(--accent, #b77bff), 0 0 28px rgba(var(--accent-rgb,183,123,255),0.25); }
+}
+@keyframes dot-pulse-rad {
+  0%,100% { box-shadow: 0 0 6px var(--rad-accent, #ff453a); }
+  50%      { box-shadow: 0 0 14px var(--rad-accent, #ff453a), 0 0 28px rgba(255,69,58,0.25); }
+}
+
+/* ── Grafiks rows (list view) ── */
+.grafiks-row {
+  border-radius: 12px !important;
+  transition: background 160ms ease, transform 160ms cubic-bezier(.2,.9,.2,1) !important;
+}
+.grafiks-row:hover {
+  background: rgba(255,255,255,0.04) !important;
+  transform: translateX(2px) !important;
+}
+
+/* ── Today badge ── */
+.today-badge, .today-tag {
+  background: rgba(var(--accent-rgb, 183,123,255), 0.15) !important;
+  color: var(--accent, #b77bff) !important;
+  border: 1px solid rgba(var(--accent-rgb, 183,123,255), 0.3) !important;
+  border-radius: 6px !important;
+  animation: badge-pulse 3s ease-in-out infinite !important;
+}
+@keyframes badge-pulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.7; }
+}
+
+/* ── date title ── */
+#grafiks-dateTitle {
+  transition: color 250ms ease !important;
+}
+#grafiks-dateTitle.is-today {
+  color: var(--accent, #b77bff) !important;
+  text-shadow: 0 0 30px rgba(var(--accent-rgb, 183,123,255), 0.2) !important;
+}
+
+/* ── Shift timer ── */
+.shift-timer {
+  border-radius: 12px !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  background: rgba(0,0,0,0.25) !important;
+}
+
+/* ── Full list modal ── */
+#full-list-modal {
+  background: rgba(10,10,18,0.96) !important;
+  border: 1px solid rgba(255,255,255,0.09) !important;
+  backdrop-filter: blur(28px) !important;
+  -webkit-backdrop-filter: blur(28px) !important;
+}
+
+/* ── Scrollbars: ultra thin ── */
+*::-webkit-scrollbar { width: 4px !important; height: 4px !important; }
+*::-webkit-scrollbar-track { background: transparent !important; }
+*::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.10) !important;
+  border-radius: 999px !important;
+  transition: background 150ms ease !important;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--accent-rgb, 183,123,255), 0.4) !important;
+}
+
+/* ── Fatigue panel: tighter integration ── */
+.fatigue-panel, .fatigue-health-age, .fatigue-tendency {
+  margin-left: 10px !important;
+  margin-right: 10px !important;
+}
+
+/* ── Night split cards: match card style ── */
+.nsc {
+  border-radius: 14px !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.05) inset,
+    0 4px 16px rgba(0,0,0,0.3) !important;
+  transition:
+    transform 220ms cubic-bezier(.2,.9,.2,1),
+    filter 180ms ease,
+    box-shadow 220ms ease !important;
+}
+
+/* ── Resize handles: use accent on hover ── */
+.grafiks-resize-handle-bottom:hover::after,
+.grafiks-resize-handle-right:hover::after,
+.grafiks-resize-handle-left:hover::after {
+  background: rgba(var(--accent-rgb, 183,123,255), 0.5) !important;
+}
+.grafiks-resize-handle-top:hover::after {
+  background: rgba(var(--accent-rgb, 183,123,255), 0.4) !important;
+}
+
+/* ── Date item in modal list ── */
+.date-item {
+  border-radius: 12px !important;
+  transition:
+    background 160ms ease,
+    transform 180ms cubic-bezier(.2,.9,.2,1) !important;
+}
+.date-item:hover {
+  background: rgba(255,255,255,0.05) !important;
+  transform: translateX(4px) !important;
+}
+.date-item .shift {
+  color: var(--accent, #b77bff) !important;
+}
+
+/* ── List items in search results ── */
+.list-item {
+  transition:
+    background 150ms ease,
+    transform 180ms cubic-bezier(.2,.9,.2,1),
+    border-color 150ms ease !important;
+  border-radius: 10px !important;
+}
+.list-item:hover {
+  background: rgba(var(--accent-rgb, 183,123,255), 0.07) !important;
+  transform: translateX(3px) !important;
+  border-left-color: rgba(var(--accent-rgb, 183,123,255), 0.4) !important;
+}
+
+/* ── Shift pills ── */
+.shift-pill, .diennakts-icon {
+  transition: transform 160ms cubic-bezier(.2,.9,.2,1), filter 160ms ease !important;
+}
+.shift-pill:hover { transform: scale(1.08) !important; }
+
+/* ── Calendar day hover ── */
+.days li {
+  transition:
+    background 150ms ease,
+    transform 160ms cubic-bezier(.2,.9,.2,1),
+    box-shadow 180ms ease !important;
+  border-radius: 10px !important;
+}
+.days li:not(.inactive):hover {
+  background: rgba(var(--accent-rgb, 183,123,255), 0.1) !important;
+  transform: scale(1.05) !important;
+}
+
+/* ── Loader text: better font ── */
+#grafiks-loader {
+  font-family: 'DM Mono', monospace !important;
+  letter-spacing: 3px !important;
+  font-size: 11px !important;
+  color: rgba(var(--accent-rgb, 183,123,255), 0.7) !important;
+}
+
+/* ── Reduce motion: respect OS preference ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  .ms-orb { animation: none !important; }
+}
+
+/* ── Fix: grafiks-handle no gradient/border — only the resize-top pill shows ── */
+.grafiks-handle {
+  background: transparent !important;
+  border-bottom: none !important;
+  height: 20px !important;
+  z-index: 1001 !important;
+}
+.grafiks-handle::after,
+.grafiks-handle::before,
+.grafiks-handle .dots {
+  display: none !important;
+}
+
+/* ── Top resize handle: unified drag pill, more visible ── */
+.grafiks-resize-handle-top {
+  height: 20px !important;
+  cursor: ns-resize !important;
+  z-index: 25001 !important;
+}
+.grafiks-resize-handle-top::after {
+  width: 44px !important;
+  height: 5px !important;
+  top: 7px !important;
+  background: rgba(255,255,255,0.22) !important;
+  border-radius: 999px !important;
+  transition: background 0.2s, width 0.2s !important;
+}
+.grafiks-resize-handle-top:hover::after {
+  background: rgba(var(--accent-rgb, 183,123,255), 0.6) !important;
+  width: 64px !important;
+}
+
+/* ── Gear button: make it always visible, not transparent ── */
+.tk-gear {
+  background: rgba(255,255,255,0.07) !important;
+  border-color: rgba(255,255,255,0.14) !important;
+  color: rgba(255,255,255,0.75) !important;
+  width: 36px !important;
+  height: 36px !important;
+}
+.tk-gear:hover {
+  background: rgba(255,255,255,0.14) !important;
+  border-color: rgba(var(--accent-rgb, 183,123,255), 0.5) !important;
+  color: #fff !important;
+  box-shadow: 0 0 18px rgba(var(--accent-rgb, 183,123,255), 0.25) !important;
+}
+
+/* ── Side panel: bigger names, clean list look ── */
+.duty-name {
+  font-size: 20px !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.3px !important;
+}
+.duty-surname {
+  font-size: 11px !important;
+  color: rgba(255,255,255,0.42) !important;
+}
+.duty-vertical {
+  gap: 10px !important;
+}
+/* The fatigue mini bar should stay tight under the name */
+.fatigue-mini {
+  margin-top: 3px !important;
+}
+
+/* ── Bigger numbers everywhere else too ── */
+.nsc-time {
+  font-size: 13px !important;
+  color: rgba(255,255,255,0.72) !important;
+}
+.nsc-dur {
+  font-size: 11px !important;
+  color: rgba(255,255,255,0.45) !important;
+}
+.shift-timer .val {
+  font-size: 28px !important;
+  letter-spacing: -1px !important;
+}
+
+/* ══════════════════════════════════════════════════
+   MODAL CALENDAR — shift type colours
+   12h DAY  = warm red/orange  ☀️
+   12h NIGHT = cool blue       🌙
+   24h ALL   = purple          🕛
+   ══════════════════════════════════════════════════ */
+
+/* Base worked day */
+#modal-calendar-view .days li.worked {
+  position: relative;
+  font-weight: 800 !important;
+}
+
+/* 24h / diennakts — purple (default accent) */
+#modal-calendar-view .days li.shift-allday {
+  background: rgba(var(--accent-rgb, 183,123,255), 0.20) !important;
+  box-shadow: 0 0 0 1.5px rgba(var(--accent-rgb, 183,123,255), 0.50) !important;
+  color: #fff !important;
+}
+#modal-calendar-view .days li.shift-allday .shift-label {
+  background: rgba(var(--accent-rgb, 183,123,255), 0.35) !important;
+  color: var(--accent, #b77bff) !important;
+  font-weight: 800 !important;
+}
+
+/* 12h DAY — orange/amber ☀️ */
+#modal-calendar-view .days li.shift-day {
+  background: rgba(255, 155, 30, 0.18) !important;
+  box-shadow: 0 0 0 1.5px rgba(255, 155, 30, 0.55) !important;
+  color: #fff !important;
+}
+#modal-calendar-view .days li.shift-day .shift-label {
+  background: rgba(255, 155, 30, 0.32) !important;
+  color: #ffb84d !important;
+  font-weight: 800 !important;
+}
+
+/* 12h NIGHT — blue 🌙 */
+#modal-calendar-view .days li.shift-night {
+  background: rgba(50, 140, 255, 0.20) !important;
+  box-shadow: 0 0 0 1.5px rgba(50, 140, 255, 0.55) !important;
+  color: #fff !important;
+}
+#modal-calendar-view .days li.shift-night .shift-label {
+  background: rgba(50, 140, 255, 0.30) !important;
+  color: #64aaff !important;
+  font-weight: 800 !important;
+}
+
+/* Shift label: bigger, bolder always */
+#modal-calendar-view .days li .shift-label {
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  padding: 2px 6px !important;
+  border-radius: 5px !important;
+  letter-spacing: 0.2px !important;
+  margin-top: 2px !important;
+}
+
+/* ══════════════════════════════════════════════════
+   LCD GHOST FIX — DM Sans override was making 
+   ghost "88:88:88" render as visible black digits
+   ══════════════════════════════════════════════════ */
+.lcd-main .ghost,
+.duty-timer .ghost {
+  font-family: 'Digital-7 Mono', monospace !important;
+  color: transparent !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+/* The val stays fully visible */
+.lcd-main .val,
+.duty-timer .val {
+  font-family: 'DM Mono', 'JetBrains Mono', monospace !important;
+}
+/* Preserve minimum width from ghost without showing it */
+.lcd-main {
+  min-width: 150px !important;
+}
+
+/* ══════════════════════════════════════════════════
+   NAKTS SADALĪJUMS — drag glow effect
+   ══════════════════════════════════════════════════ */
+.nsc {
+  transition:
+    transform 220ms cubic-bezier(.2,.9,.3,1),
+    box-shadow 220ms ease,
+    filter 180ms ease !important;
+}
+/* While being dragged: glow in own colour */
+.nsdrag {
+  opacity: 0.35 !important;
+  transform: scale(0.94) rotateZ(1deg) !important;
+  /* box-shadow colour set inline per card, keep it */
+  filter: brightness(1.4) !important;
+}
+/* Drop target: strong glow pulse */
+.nsover {
+  transform: translateY(-8px) scale(1.04) !important;
+  filter: brightness(1.35) saturate(1.2) !important;
+  z-index: 20 !important;
+  /* border glow is from inline style — add extra ring */
+  outline: 2px solid rgba(255,255,255,0.25) !important;
+  outline-offset: 2px !important;
+}
+
+/* ══════════════════════════════════════════════════
+   NAKTS SADALĪJUMS — glassmorphism clock
+   Based on reference HTML: CSS div hands + SVG arcs
+   Clock is 80px; hovers to 2.6× via transform-origin left
+   ══════════════════════════════════════════════════ */
+.nsh-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: visible;
+}
+/* Clock + title stacked vertically so hover scale doesn't push title away */
+.nsh-clock-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  overflow: visible;
+}
+/* Title sits below the clock, never overlaps */
+.nsh-clock-col .nsh-title {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  margin-left: 2px;
+}
+
+/* ── Clock outer wrapper ── */
+.ns-clock-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 82px;
+  height: 82px;
+  overflow: visible;
+}
+
+/* The actual clock div — mirrors reference .clock-wrap + .clock */
+.nscw-outer {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  position: relative;
+  /* Outer bezel — matches reference image: dark glass ring */
+  background: linear-gradient(160deg, rgba(40,48,72,0.92) 0%, rgba(14,18,32,0.98) 100%);
+  border: 1px solid rgba(255,255,255,0.13);
+  box-shadow:
+    0 8px 28px rgba(0,0,0,0.60),
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    inset 0 -1px 0 rgba(0,0,0,0.5);
+  cursor: pointer;
+  transform-origin: left center;
+  transition: transform 0.32s cubic-bezier(.15,.9,.3,1.05), box-shadow 0.25s ease;
+  overflow: visible;
+}
+.ns-clock-wrap:hover .nscw-outer {
+  transform: scale(2.7);
+  box-shadow:
+    0 20px 60px rgba(0,0,0,0.75),
+    0 0 0 1px rgba(255,255,255,0.10),
+    inset 0 1px 0 rgba(255,255,255,0.15);
+  z-index: 600;
+}
+
+/* Arc SVGs (positioned absolute, fill the outer div) */
+.nscw-segs {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+/* Inner clock face (dark glass inset) */
+.nscw-outer::before {
+  content: '';
+  position: absolute;
+  inset: 6%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 26%, rgba(255,255,255,0.09), transparent 50%),
+    radial-gradient(circle at 72% 76%, rgba(255,255,255,0.04), transparent 38%),
+    rgba(8, 12, 22, 0.92);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.03),
+    inset 0 8px 30px rgba(255,255,255,0.04),
+    inset 0 -15px 25px rgba(0,0,0,0.45);
+}
+
+/* ── Clock hands — exact reference HTML approach ── */
+/* Each hand: left:50%, top:50%, negative margins to center pivot,
+   transform-origin at pivot point (near bottom of hand),
+   JS sets just rotate(Xdeg)  */
+.nscw-hand {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-origin: 50% calc(100% - 10px);
+  border-radius: 999px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+  z-index: 5;
+  transform: rotate(0deg);
+}
+.nscw-hour {
+  width: 2.4px;
+  height: 24%;
+  margin-left: -1.2px;
+  margin-top: calc(-24% + 8px);
+  background: linear-gradient(180deg, #ffffff, #f7fbff 50%, #e8f1ff);
+  opacity: 1;
+  box-shadow: 0 1px 10px rgba(255,255,255,0.16), 0 2px 10px rgba(0,0,0,0.36);
+}
+.nscw-min {
+  width: 1.8px;
+  height: 34%;
+  margin-left: -0.9px;
+  margin-top: calc(-34% + 8px);
+  background: linear-gradient(180deg, #ffffff, #f7fbff 58%, #eaf3ff);
+  opacity: 0.98;
+  box-shadow: 0 1px 10px rgba(255,255,255,0.14), 0 2px 10px rgba(0,0,0,0.34);
+}
+.nscw-sec {
+  width: 0.6px;
+  height: 31%;
+  margin-left: -0.3px;
+  margin-top: calc(-35% + 8px);
+  background: linear-gradient(180deg, rgba(122,220,255,0.95), rgba(80,184,255,0.9));
+  box-shadow: 0 0 5px rgba(79, 195, 255, 0.30);
+  z-index: 6;
+}
+.nscw-outer::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.8px;
+  height: 34%;
+  margin-left: -0.4px;
+  margin-top: calc(-38% + 8px);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffc0d4, #ff5a73);
+  box-shadow: 0 0 5px rgba(255,90,115,0.28);
+  transform-origin: 50% calc(100% - 10px);
+  transform: rotate(190deg);
+  z-index: 6;
+  pointer-events: none;
+}
+
+/* Center jewel */
+.nscw-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8%;
+  height: 8%;
+  margin: -4%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 32%, #fff, #d8e8ff 35%, #8faaff 70%, #5b76d6);
+  border: 1px solid rgba(255,255,255,0.38);
+  box-shadow: 0 0 12px rgba(140,175,255,0.40), inset 0 1px 2px rgba(255,255,255,0.6);
+  z-index: 10;
+}
+
+/* ── Tooltip ── */
+.ns-clock-tooltip {
+  position: fixed;  /* fixed escapes all overflow:hidden parents */
+  min-width: 260px;
+  background: rgba(3,4,14,0.98);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 16px;
+  padding: 12px 15px;
+  box-shadow: 0 28px 80px rgba(0,0,0,0.90), 0 0 0 1px rgba(255,255,255,0.06) inset;
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-50%) translateX(-8px) scale(0.95);
+  transform-origin: left center;
+  transition: opacity 0.20s ease, transform 0.20s cubic-bezier(.2,.9,.3,1);
+  z-index: 99999;
+  /* Position set via JS mouseenter */
+  top: 0; left: 0;
+}
+.ns-clock-wrap:hover .ns-clock-tooltip {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0) scale(1);
+}
+
+.ns-ct-title {
+  font-size: 10px; font-weight: 800; letter-spacing: 1.5px;
+  color: rgba(255,255,255,0.40); text-transform: uppercase;
+  margin-bottom: 9px; padding-bottom: 7px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.ns-ct-row {
+  display: grid;
+  grid-template-columns: 10px 70px 1fr 36px 44px;
+  align-items: center; gap: 7px; padding: 5px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.ns-ct-row:last-child { border-bottom: none; }
+.ns-ct-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.ns-ct-name { font-weight: 900; font-size: 13px; text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap; }
+.ns-ct-time { font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.85); }
+.ns-ct-dur  { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.50); text-align: right; }
+.ns-ct-fat  { font-size: 11px; font-weight: 800; color: #f5c842; text-align: right; }
+
+/* Per-arc mini tooltip (shown when hovering individual arc) */
+.ns-arc-tip {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(3,4,14,0.98);
+  border: 1px solid rgba(255,255,255,0.20);
+  border-radius: 12px;
+  padding: 9px 14px;
+  box-shadow: 0 16px 50px rgba(0,0,0,0.85);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  pointer-events: none;
+  z-index: 99999;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  font-family: 'DM Mono', 'DM Sans', sans-serif;
+}
+
+/* ── Reorder button ── */
+.nsrb {
+  width: auto !important; height: 30px !important;
+  padding: 0 11px !important; border-radius: 99px !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  background: rgba(255,255,255,0.06) !important;
+  color: rgba(255,255,255,0.72) !important;
+  font-size: 11px !important; font-weight: 700 !important;
+  font-family: 'DM Sans', sans-serif !important;
+  letter-spacing: 0.5px !important; cursor: pointer !important;
+  display: inline-flex !important; align-items: center !important;
+  gap: 5px !important;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s !important;
+  white-space: nowrap !important; position: relative !important; z-index: 10 !important;
+}
+.nsrb:hover {
+  background: rgba(var(--accent-rgb,183,123,255), 0.20) !important;
+  border-color: rgba(var(--accent-rgb,183,123,255), 0.55) !important;
+  color: #fff !important; transform: none !important;
+}
+.nsrb:active { transform: scale(0.94) !important; }
+
+@keyframes nsrb-spin-anim {
+  0%   { transform: scale(1) rotate(0deg); }
+  30%  { transform: scale(0.92) rotate(180deg); }
+  70%  { transform: scale(1.05) rotate(340deg); }
+  100% { transform: scale(1) rotate(360deg); }
+}
+.nsrb-spin {
+  animation: nsrb-spin-anim 0.55s cubic-bezier(.2,.9,.3,1) both !important;
+  background: rgba(var(--accent-rgb,183,123,255), 0.28) !important;
+  border-color: rgba(var(--accent-rgb,183,123,255), 0.7) !important;
+  color: #fff !important;
+}
+
+.nscw-face text{paint-order:stroke;stroke:rgba(0,0,0,.35);stroke-width:.6px;letter-spacing:0;font-kerning:none;text-rendering:geometricPrecision;pointer-events:none}
+
+.nscw-face, .nscw-face *{pointer-events:none !important;}
+.nscw-segs:not(:first-child), .nscw-segs:not(:first-child) *{pointer-events:none;}
+
+.nscw-segs:first-child, .nscw-segs:first-child *{pointer-events:auto;}
+.nscw-arc-hit{pointer-events:visibleStroke !important;}
+
+
+.ns-arc-hover-label{position:absolute;left:50%;top:8px;transform:translate(-50%,-100%);z-index:25;pointer-events:none;
+  padding:2px 7px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.03em;color:#eaf4ff;
+  background:rgba(8,14,24,.92);border:1px solid rgba(120,190,255,.26);box-shadow:0 8px 18px rgba(0,0,0,.35);white-space:nowrap;}
+
+
+/* v19 plain lightweight night clock */
+.ns-clock-wrap.ns-clock-plain{position:relative; width:88px; height:88px; margin:0 auto; overflow:visible;}
+.ns-clock-wrap.ns-clock-plain .ns-bubble{position:absolute; border-radius:50%; filter:blur(6px); opacity:.35; z-index:0; animation:nsBubbleFloat 7s ease-in-out infinite alternate;}
+.ns-clock-wrap.ns-clock-plain .ns-b1{width:42px;height:42px;left:-10px;top:8px;background:radial-gradient(circle at 35% 35%,#ff4d7a,#b84dff 70%,transparent 72%);}
+.ns-clock-wrap.ns-clock-plain .ns-b2{width:34px;height:34px;right:-8px;bottom:6px;background:radial-gradient(circle at 35% 35%,#7dff3a,#25d5ff 70%,transparent 72%); animation-duration:9s;}
+.ns-clock-wrap.ns-clock-plain .ns-b3{width:24px;height:24px;right:8px;top:10px;background:radial-gradient(circle at 35% 35%,#7a5cff,#c45bff 70%,transparent 72%); opacity:.25; animation-duration:11s;}
+.ns-clock-wrap.ns-clock-plain .ns-clock-svg{position:relative; z-index:2; overflow:visible;}
+.ns-clock-wrap.ns-clock-plain .ns-face{fill:rgba(8,10,16,.82); stroke:rgba(255,255,255,.14); stroke-width:1.4;}
+.ns-clock-wrap.ns-clock-plain .ns-glass{fill:url(#nsGlass); opacity:.55;}
+.ns-clock-wrap.ns-clock-plain .ns-h.ns-hour{stroke:#f4f7ff; stroke-width:2.6 !important;}
+.ns-clock-wrap.ns-clock-plain .ns-h.ns-min{stroke:#eaf2ff; stroke-width:2.1 !important;}
+.ns-clock-wrap.ns-clock-plain .ns-h.ns-sec{stroke:#ff6d86; stroke-width:1.0 !important; opacity:.9;}
+.ns-clock-wrap.ns-clock-plain .ns-subh{stroke:#78d8ff; stroke-width:.9 !important; opacity:.8;}
+.ns-clock-wrap.ns-clock-plain .ns-subh2{stroke:#bb7cff; stroke-width:.8 !important; opacity:.8;}
+.ns-clock-wrap.ns-clock-plain .ns-num{font-size:6.8px; font-weight:700; fill:rgba(255,255,255,.9);}
+.ns-clock-wrap.ns-clock-plain .nscw-arc-hit{pointer-events:stroke; stroke-width:10; opacity:.001;}
+.ns-clock-wrap.ns-clock-plain .nscw-arc-hit:hover + *{}
+.ns-clock-wrap.ns-clock-plain .ns-cat-peek{position:absolute; left:50%; bottom:-8px; transform:translateX(-50%); font-size:14px; line-height:1; z-index:1; opacity:.9; filter:drop-shadow(0 0 4px rgba(144,105,255,.45)); animation:nsCatPeek 8s ease-in-out infinite;}
+.ns-clock-wrap.ns-clock-plain .ns-clock-label{position:absolute; left:50%; transform:translateX(-50%); bottom:-24px; white-space:nowrap;}
+#night-split-panel .ns-arc-tip{z-index:9999;}
+@keyframes nsBubbleFloat{0%{transform:translate(0,0) scale(1)}100%{transform:translate(5px,-4px) scale(1.08)}}
+@keyframes nsCatPeek{0%,78%,100%{transform:translateX(-50%) translateY(4px);opacity:.2}82%,94%{transform:translateX(-50%) translateY(-2px);opacity:.95}}
+
+#night-split-panel .minka-bubble{max-width:min(340px,calc(100vw - 40px));font-size:12px;line-height:1.35;padding:10px 12px;}
+
+
+/* === PERFORMANCE FLAT UI PATCH === */
+.card,
+.duty-block,
+.list-row,
+.shift-timer,
+.nsc,
+.ns-reason,
+.nss,
+.nsrb,
+.duty-timer,
+.duty-12h,.duty-15h,.duty-24h,.duty-9h,
+.today-badge {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.card {
+  background: #0c1120 !important;
+  border-color: rgba(255,255,255,0.09) !important;
+  box-shadow: none !important;
+}
+.card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: none !important;
+}
+.duty-block {
+  background: #0b101d !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  box-shadow: none !important;
+}
+
+.card,
+.duty-block {
+  --staff-accent: #7dd3fc;
+}
+.card .card-shift,
+.duty-block .duty-name {
+  color: var(--staff-accent) !important;
+  -webkit-text-fill-color: var(--staff-accent) !important;
+  text-shadow: none !important;
+}
+.card .card-init {
+  border-color: color-mix(in srgb, var(--staff-accent) 40%, rgba(255,255,255,.12)) !important;
+}
+.card.is-active-duty,
+.duty-block.is-active-duty {
+  border-color: color-mix(in srgb, var(--staff-accent) 55%, rgba(255,255,255,.10)) !important;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--staff-accent) 28%, transparent), 0 0 18px color-mix(in srgb, var(--staff-accent) 14%, transparent) !important;
+}
+.card.is-up-next-duty,
+.duty-block.is-up-next-duty {
+  border-color: rgba(245,197,24,0.28) !important;
+}
+
+.duty-timer,
+.shift-timer .lcd-main,
+.shift-timer {
+  background: #0a0e18 !important;
+  box-shadow: none !important;
+}
+.duty-timer {
+  border-color: rgba(255,255,255,0.08) !important;
+  max-width: 100%;
+}
+.badge-row { flex-wrap: nowrap !important; min-width: 0; }
+.badge-row > * { min-width: 0; }
+.duty-timer .ghost { opacity: .16; }
+
+/* Nightsplit: flat + stronger hierarchy */
+.nsc {
+  background: #0c1020 !important;
+  box-shadow: none !important;
+}
+.nsc-row2 .nsc-time {
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  color: rgba(255,255,255,0.92) !important;
+}
+.nsc-meta {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding: 0 10px 5px;
+}
+.nsc-status {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .9px;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 2px 7px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.nsc-status.active { color:#86efac; border-color: rgba(134,239,172,0.25); background: rgba(134,239,172,0.10); }
+.nsc-status.upnext { color:#fcd34d; border-color: rgba(252,211,77,0.22); background: rgba(252,211,77,0.08); }
+.nsc-status.done { color:rgba(255,255,255,0.45); background: rgba(255,255,255,0.04); }
+.nsc-left {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: rgba(255,255,255,0.70);
+  white-space: nowrap;
+}
+.nsc-progress {
+  height: 4px;
+  margin: 0 10px 5px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.nsc-progress-fill {
+  display:block;
+  height:100%;
+  border-radius: inherit;
+}
+.nsc-active {
+  border-color: rgba(134,239,172,0.28) !important;
+}
+.ns-trend.up { color:#ff8c42; }
+.ns-trend.down { color:#86efac; }
+.ns-trend.flat { color: rgba(255,255,255,0.62); }
+
+/* Shift Pulse: lightweight ping at the current progress edge (no filters) */
+.nsc-progress-fill { position: relative; }
+.nsc-active .nsc-progress-fill::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.92);
+  transform: translate(50%, -50%) scale(0.6);
+  animation: nsPing 1.25s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes nsPing {
+  0%   { transform: translate(50%, -50%) scale(0.6); opacity: 0.9; }
+  80%  { transform: translate(50%, -50%) scale(1.7); opacity: 0; }
+  100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nsc-active .nsc-progress-fill::after { animation: none; opacity: 0.6; }
+}

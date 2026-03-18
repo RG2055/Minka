@@ -1,0 +1,112 @@
+/* Google-style Minka search overlay fix */
+
+/* Keep the visual shell rounded, but do not clip the dropdown */
+#minkaBarWrap {
+  overflow: visible !important;
+  clip-path: none !important;
+}
+#minkaBar {
+  overflow: visible !important;
+}
+#minkaBarInner {
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+/* Results should open as a big readable panel below the bar */
+#minkaResults,
+#minkaResults.results-area {
+  position: absolute !important;
+  top: calc(100% + 10px) !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-height: min(68vh, 760px) !important;
+  min-height: 280px !important;
+  padding: 10px 8px 12px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  border-radius: 20px !important;
+  background: rgba(8, 10, 18, 0.985) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.72), inset 0 1px 0 rgba(255,255,255,0.035) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  z-index: 12050 !important;
+}
+
+/* Make the underlying content get out of the way while searching */
+#grafiks-app.search-open .top-row,
+#grafiks-app.search-open #shiftProgressWrap,
+#grafiks-app.search-open #weekStrip,
+#grafiks-app.search-open #grafiks-list,
+#grafiks-app.search-open #mini-calendar,
+#grafiks-app.search-open .calendar-view-wrapper,
+#grafiks-app.search-open .list-view-wrapper,
+#grafiks-app.search-open .fatigue-view-wrapper {
+  opacity: 0.08 !important;
+  pointer-events: none !important;
+  filter: blur(1px) !important;
+  transition: opacity .18s ease, filter .18s ease !important;
+}
+
+/* Keep side panels visible but quieter */
+#grafiks-app.search-open .side-panel {
+  opacity: 0.35 !important;
+  transition: opacity .18s ease !important;
+}
+
+/* Make the dropdown rows clearly visible */
+#minkaResults .search-category {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 2 !important;
+  padding: 10px 12px 8px !important;
+  margin: 0 4px 4px !important;
+  background: linear-gradient(180deg, rgba(8,10,18,0.98), rgba(8,10,18,0.82)) !important;
+  color: rgba(255,255,255,0.56) !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: .10em !important;
+  text-transform: uppercase !important;
+}
+#minkaResults .search-item,
+#minkaResults .worker-result-item,
+#minkaResults a.search-item {
+  min-height: 54px !important;
+  padding: 10px 14px !important;
+  margin: 2px 6px !important;
+  border-radius: 14px !important;
+  background: rgba(255,255,255,0.02) !important;
+}
+#minkaResults .search-item:hover,
+#minkaResults .worker-result-item:hover,
+#minkaResults a.search-item:hover,
+#minkaResults .search-item.is-active,
+#minkaResults .list-item.is-active {
+  background: rgba(255,255,255,0.07) !important;
+}
+#minkaResults .search-item-title {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: rgba(255,255,255,0.94) !important;
+}
+#minkaResults .search-item-sub,
+#minkaResults .search-item-phone {
+  font-size: 12px !important;
+  color: rgba(255,255,255,0.58) !important;
+}
+#minkaResults .search-item-badge {
+  font-size: 11px !important;
+  padding: 4px 8px !important;
+  border-radius: 999px !important;
+}
+#minkaResults .search-empty {
+  min-height: 220px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+}

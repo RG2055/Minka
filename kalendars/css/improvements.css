@@ -1,0 +1,500 @@
+/* ============================================================
+   KALENDARS — VISUAL IMPROVEMENTS v3
+   Better animations, polish, accessibility, aesthetics
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap');
+
+:root {
+  --spring: cubic-bezier(.2,.9,.2,1);
+  --bounce: cubic-bezier(.34,1.56,.64,1);
+  --accent-glow: 0 0 20px rgba(var(--accent-rgb, 183,123,255),0.25);
+  --green-glow: 0 0 16px rgba(0,255,136,0.2);
+  --red-glow: 0 0 16px rgba(255,69,58,0.2);
+}
+
+/* ── App: improved entrance ── */
+@keyframes appReveal {
+  from { opacity: 0; transform: scale(0.985) translateY(12px); filter: blur(6px); }
+  to   { opacity: 1; transform: scale(1)     translateY(0);    filter: blur(0); }
+}
+#grafiks-app {
+  animation: appReveal .5s var(--spring) both !important;
+  border-radius: 28px !important;
+}
+
+/* ── Background orbs: more dynamic ── */
+.ms-orb {
+  filter: blur(80px) !important;
+}
+.ms-orb.orb1 { 
+  animation-duration: 18s !important;
+  background: radial-gradient(circle, rgba(var(--accent-rgb, 183,123,255),0.35) 0%, transparent 65%) !important;
+}
+.ms-orb.orb2 { 
+  animation-duration: 24s !important;
+  background: radial-gradient(circle, rgba(0,255,136,0.2) 0%, transparent 65%) !important;
+}
+.ms-orb.orb3 { 
+  animation-duration: 20s !important;
+  background: radial-gradient(circle, rgba(94,92,230,0.25) 0%, transparent 65%) !important;
+}
+
+/* ── Search card: polished ── */
+.search-card {
+  border-radius: 20px !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  background: rgba(20,20,24,0.80) !important;
+  backdrop-filter: blur(20px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.40), 0 0 0 1px rgba(255,255,255,0.04) inset !important;
+  transition: box-shadow .25s ease, border-color .25s ease !important;
+}
+.search-card:focus-within {
+  border-color: rgba(0,255,136,0.22) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.45), 0 0 0 3px rgba(0,255,136,0.07), 0 0 0 1px rgba(255,255,255,0.04) inset !important;
+}
+.search-header { height: 50px !important; }
+.results-area { top: 50px !important; }
+
+/* ── Search input: cleaner ── */
+.search-input {
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.2px !important;
+}
+.search-input::placeholder {
+  color: rgba(255,255,255,0.28) !important;
+}
+
+/* ── Date title: refined typography ── */
+#grafiks-dateTitle {
+  font-size: clamp(22px, 2.5vw, 32px) !important;
+  letter-spacing: -0.5px !important;
+  font-weight: 800 !important;
+  background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.75) 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* ── Today tag: more prominent ── */
+#grafiks-todayTag {
+  background: linear-gradient(135deg, rgba(0,255,136,0.25), rgba(0,255,136,0.08)) !important;
+  border: 1px solid rgba(0,255,136,0.4) !important;
+  color: rgba(0,255,136,0.95) !important;
+  font-weight: 800 !important;
+  padding: 3px 12px !important;
+  border-radius: 999px !important;
+  box-shadow: 0 0 16px rgba(0,255,136,0.15) !important;
+  animation: todayPulse 3s ease-in-out infinite !important;
+}
+@keyframes todayPulse {
+  0%, 100% { box-shadow: 0 0 16px rgba(0,255,136,0.15); }
+  50% { box-shadow: 0 0 24px rgba(0,255,136,0.25); }
+}
+
+/* ── Shift timer: LCD improvements ── */
+.shift-timer {
+  border-radius: 999px !important;
+  background: rgba(var(--accent-rgb, 183,123,255),0.08) !important;
+  border: 1px solid rgba(var(--accent-rgb, 183,123,255),0.22) !important;
+  box-shadow: 0 0 0 4px rgba(var(--accent-rgb, 183,123,255),0.04) !important;
+  transition: all .3s ease !important;
+}
+.shift-timer:hover {
+  background: rgba(var(--accent-rgb, 183,123,255),0.14) !important;
+  border-color: rgba(var(--accent-rgb, 183,123,255),0.35) !important;
+  box-shadow: 0 0 0 6px rgba(var(--accent-rgb, 183,123,255),0.06), var(--accent-glow) !important;
+}
+
+/* ── LCD countdown: more vivid ── */
+.lcd-main .val {
+  font-family: 'JetBrains Mono', 'Digital-7 Mono', monospace !important;
+  color: rgba(230,210,255,0.95) !important;
+  text-shadow: 0 0 20px rgba(var(--accent-rgb, 183,123,255),0.5) !important;
+}
+.lcd-main .ghost {
+  font-family: 'JetBrains Mono', 'Digital-7 Mono', monospace !important;
+}
+
+/* ── Day cards in scroller: better hover ── */
+.day-pill {
+  transition: all .2s var(--spring) !important;
+  border-radius: 16px !important;
+}
+.day-pill:hover {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.08) inset !important;
+}
+.day-pill.today {
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb, 183,123,255),0.5), 0 8px 24px rgba(var(--accent-rgb, 183,123,255),0.2) !important;
+}
+.day-pill.active {
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb, 183,123,255),0.7), 0 12px 32px rgba(var(--accent-rgb, 183,123,255),0.3) !important;
+}
+
+/* ── Duty blocks: better hover ── */
+.duty-block {
+  padding: 8px 10px !important;
+  border-radius: 14px !important;
+  transition: background .2s ease, transform .2s var(--spring) !important;
+  cursor: pointer !important;
+}
+.duty-block:hover {
+  background: rgba(255,255,255,0.04) !important;
+  transform: translateX(3px) !important;
+}
+
+/* ── Worker cards in list: better ── */
+.worker-card {
+  transition: all .18s var(--spring) !important;
+  border-radius: 16px !important;
+}
+.worker-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 14px 36px rgba(0,0,0,0.4) !important;
+}
+
+/* ── Side panels: better separation ── */
+.side-panel {
+  border-radius: 0 !important;
+  transition: background .3s ease !important;
+}
+.left-panel {
+  border-right: 1px solid rgba(255,255,255,0.06) !important;
+}
+.right-panel {
+  border-left: 1px solid rgba(255,255,255,0.06) !important;
+}
+
+/* ── Duty name: nicer typography ── */
+.duty-name {
+  font-size: 20px !important;
+  letter-spacing: -0.3px !important;
+  line-height: 1.1 !important;
+}
+
+/* ── Shift badges: enhanced glow ── */
+.duty-12h { 
+  box-shadow: 0 0 12px rgba(255,159,10,0.15) !important;
+}
+.duty-15h {
+  box-shadow: 0 0 12px rgba(255,69,58,0.15) !important;
+}
+.duty-24h {
+  box-shadow: 0 0 12px rgba(191,90,242,0.2) !important;
+}
+.duty-9h {
+  box-shadow: 0 0 12px rgba(100,210,255,0.15) !important;
+}
+
+/* ── Status dots: pulsing glow ── */
+@keyframes dotGlow {
+  0%, 100% { box-shadow: 0 0 6px currentColor; opacity: 1; }
+  50% { box-shadow: 0 0 12px currentColor; opacity: 0.8; }
+}
+.dot {
+  animation: dotGlow 3s ease-in-out infinite !important;
+}
+
+/* ── Worker modal: more premium ── */
+#worker-modal {
+  border-radius: 22px !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  box-shadow: 
+    0 60px 200px rgba(0,0,0,0.75),
+    0 0 0 1px rgba(255,255,255,0.04) inset !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+}
+#worker-modal.open {
+  animation: appReveal .3s var(--spring) both !important;
+}
+
+/* ── Modal header: drag affordance ── */
+.modal-header {
+  border-radius: 22px 22px 0 0 !important;
+  background: rgba(255,255,255,0.03) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.07) !important;
+  padding: 16px 20px !important;
+}
+.modal-header::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 8px;
+  width: 36px;
+  height: 3px;
+  background: rgba(255,255,255,0.18);
+  border-radius: 999px;
+}
+
+/* ── Toggle buttons: clear active/inactive states ── */
+.toggle-btn {
+  transition: all .2s var(--spring) !important;
+  border-radius: 12px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  padding: 9px 0 !important;
+  letter-spacing: 0.3px !important;
+}
+.toggle-btn:not(.active) {
+  color: rgba(255,255,255,0.35) !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+.toggle-btn.active {
+  background: var(--accent, var(--accent, #b77bff)) !important;
+  border-color: var(--accent, var(--accent, #b77bff)) !important;
+  color: #fff !important;
+  box-shadow: 0 0 18px rgba(var(--accent-rgb, 183,123,255),0.35) !important;
+  transform: scale(1.02) !important;
+}
+.toggle-btn:hover:not(.active) {
+  background: rgba(255,255,255,0.06) !important;
+  color: rgba(255,255,255,0.6) !important;
+}
+
+/* ── Calendar days: worked highlights ── */
+.days li.worked {
+  background: linear-gradient(135deg, rgba(var(--accent-rgb, 183,123,255),0.2), rgba(var(--accent-rgb, 183,123,255),0.1)) !important;
+  border: 1px solid rgba(var(--accent-rgb, 183,123,255),0.3) !important;
+  box-shadow: 0 0 14px rgba(var(--accent-rgb, 183,123,255),0.12) !important;
+  transition: all .2s ease !important;
+}
+.days li.worked:hover {
+  box-shadow: 0 0 20px rgba(var(--accent-rgb, 183,123,255),0.25) !important;
+  transform: scale(1.05) !important;
+}
+
+/* ── Arrow buttons: smoother ── */
+.arrow {
+  transition: all .18s var(--spring) !important;
+  border-radius: 14px !important;
+}
+.arrow:hover {
+  background: rgba(255,255,255,0.08) !important;
+  transform: scale(1.08) !important;
+}
+.arrow:active {
+  transform: scale(0.95) !important;
+}
+
+/* ── View toggle button ── */
+.view-btn {
+  transition: all .2s var(--spring) !important;
+  border-radius: 14px !important;
+}
+.view-btn:hover {
+  background: rgba(var(--accent-rgb, 183,123,255),0.12) !important;
+  border-color: rgba(var(--accent-rgb, 183,123,255),0.3) !important;
+  transform: scale(1.05) !important;
+}
+.view-btn:active { transform: scale(0.96) !important; }
+
+/* ── Grafiks handle (titlebar): better drag area ── */
+.grafiks-handle {
+  background: linear-gradient(to bottom, rgba(255,255,255,0.04), transparent) !important;
+  border-radius: 28px 28px 0 0 !important;
+  position: absolute !important;
+}
+.grafiks-handle::after {
+  display: none !important; /* pill is on grafiks-resize-handle-top::after instead */
+}
+
+/* ── macscapeBg: richer noise ── */
+#macscapeBg {
+  opacity: 1 !important;
+}
+
+/* ── Resize handles: more visible ── */
+.grafiks-resize-handle-bottom::after,
+.grafiks-resize-handle-right::after {
+  background: rgba(255,255,255,0.16) !important;
+  transition: background .2s, width .2s, height .2s !important;
+}
+.grafiks-resize-handle-bottom:hover::after {
+  background: rgba(var(--accent-rgb, 183,123,255),0.5) !important;
+  width: 70px !important;
+}
+.grafiks-resize-handle-right:hover::after {
+  background: rgba(var(--accent-rgb, 183,123,255),0.5) !important;
+  height: 70px !important;
+}
+
+/* ── Full list modal: more polished ── */
+#full-list-modal {
+  border-radius: 28px !important;
+  box-shadow: 0 60px 200px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.06) inset !important;
+  animation: appReveal .3s var(--spring) both !important;
+}
+.full-list-item {
+  transition: all .2s var(--spring) !important;
+}
+.full-list-item:hover {
+  transform: translateX(4px) !important;
+}
+
+/* ── Loader: spinning animation ── */
+@keyframes loadPulse {
+  0%, 100% { opacity: 0.6; letter-spacing: 2px; }
+  50% { opacity: 1; letter-spacing: 4px; }
+}
+#grafiks-loader {
+  animation: loadPulse 1.8s ease-in-out infinite !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  letter-spacing: 2px !important;
+}
+
+/* ── Month picker: better styled ── */
+.month-select {
+  transition: all .2s ease !important;
+  border-radius: 12px !important;
+}
+.month-select:hover {
+  border-color: rgba(var(--accent-rgb, 183,123,255),0.4) !important;
+  box-shadow: 0 0 16px rgba(var(--accent-rgb, 183,123,255),0.12) !important;
+}
+.month-select:focus {
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 183,123,255),0.2) !important;
+  outline: none !important;
+}
+
+/* ── Search results: slide-in ── */
+@keyframes resultIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.list-item {
+  animation: resultIn .2s ease both !important;
+}
+.list-item:hover {
+  background: rgba(var(--accent-rgb, 183,123,255),0.07) !important;
+  border-left: 2px solid rgba(var(--accent-rgb, 183,123,255),0.4) !important;
+  padding-left: 18px !important;
+  transition: all .15s ease !important;
+}
+
+/* ── Next shift box: cleaner ── */
+.next-box {
+  background: rgba(255,255,255,0.02) !important;
+  border-radius: 12px !important;
+  padding: 12px !important;
+  border-top: none !important;
+  border: 1px solid rgba(255,255,255,0.05) !important;
+}
+
+/* ── Date item in modal list: hover ── */
+.date-item {
+  transition: all .15s ease !important;
+  border-radius: 10px !important;
+}
+.date-item:hover {
+  background: rgba(255,255,255,0.05) !important;
+  transform: translateX(3px) !important;
+}
+
+/* ── Scrollbar: thin and clean ── */
+*::-webkit-scrollbar { width: 5px !important; height: 5px !important; }
+*::-webkit-scrollbar-track { background: transparent !important; }
+*::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.14) !important;
+  border-radius: 999px !important;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--accent-rgb, 183,123,255),0.45) !important;
+}
+
+/* ── Grid view list items ── */
+.grafiks-row {
+  transition: background .15s ease !important;
+  border-radius: 14px !important;
+}
+.grafiks-row:hover {
+  background: rgba(255,255,255,0.04) !important;
+}
+
+/* ── Duty timer LCD: enhanced ── */
+.duty-timer .val {
+  font-family: 'JetBrains Mono', monospace !important;
+  color: rgba(255,255,255,0.9) !important;
+}
+
+/* ── Panel separator lines: subtle gradient ── */
+.grafiks-handle {
+  border-bottom: 1px solid rgba(255,255,255,0.07) !important;
+}
+
+/* ── minka-avatar cat: bounce animation ── */
+@keyframes catBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+.minka-avatar {
+  animation: catBob 3s ease-in-out infinite !important;
+  display: inline-block !important;
+}
+
+/* ── Focus rings for accessibility ── */
+button:focus-visible {
+  outline: 2px solid rgba(var(--accent-rgb, 183,123,255),0.7) !important;
+  outline-offset: 2px !important;
+}
+input:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 183,123,255),0.2) !important;
+}
+
+
+/* ── Modal calendar: compact to fit without scroll ── */
+#modal-calendar-view .calendar-container {
+  padding: 12px 14px !important;
+  margin-top: 4px !important;
+  border-radius: 18px !important;
+}
+#modal-calendar-view .calendar-header {
+  padding-bottom: 8px !important;
+}
+#modal-calendar-view .current-date {
+  font-size: 1rem !important;
+}
+#modal-calendar-view .cal-nav-btn {
+  height: 30px !important;
+  width: 30px !important;
+  font-size: 1.3rem !important;
+  line-height: 30px !important;
+}
+#modal-calendar-view .calendar .weeks {
+  margin-bottom: 2px !important;
+}
+#modal-calendar-view .calendar .weeks li {
+  font-size: 0.7rem !important;
+  padding-bottom: 2px !important;
+}
+#modal-calendar-view .calendar .days li {
+  min-height: 36px !important;
+  margin-top: 2px !important;
+  margin-bottom: 2px !important;
+  padding: 3px 0 !important;
+  font-size: 0.85rem !important;
+  border-radius: 10px !important;
+}
+#modal-calendar-view .calendar .days li .shift-label {
+  font-size: 7px !important;
+  padding: 1px 5px !important;
+  margin-top: 1px !important;
+}
+#modal-calendar-view .calendar-view-wrapper {
+  padding: 6px 12px 10px !important;
+}
+
+
+/* RG PATCH: side panel scrolling + sticky next-box */
+.side-panel{overflow-y:auto !important; scrollbar-width:thin; overscroll-behavior:contain;}
+.side-panel::-webkit-scrollbar{display:block;width:8px;}
+.side-panel::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:999px;}
+.side-panel > div:first-child{min-height:0;}
+.side-panel > div:last-child{position:sticky;bottom:0;padding-top:10px;background:linear-gradient(180deg, rgba(5,10,20,0) 0%, rgba(5,10,20,.82) 22%, rgba(5,10,20,.94) 100%);margin-top:auto;}
+#radiographers-duty,#radiologists-duty{padding-right:4px;}

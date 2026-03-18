@@ -1,0 +1,1026 @@
+/* ═══════════════════════════════════════════════════════════════════
+   GLOW CARDS v2 — Premium glowing hover + redesigned Minka AI panel
+   Full overhaul: cinematic card glow, glassmorphism prompt UI,
+   aurora shimmer, liquid glass search bar
+═══════════════════════════════════════════════════════════════════ */
+
+/* ────────────────────────────────────────────────
+   CARD GLOW — CINEMATIC DUAL-COLOR BLOOM
+   Inspired by neon-lit glass panels
+──────────────────────────────────────────────────*/
+
+.card {
+  overflow: hidden;
+  position: relative;
+  transition:
+    transform 0.38s cubic-bezier(.22,.68,0,1.18),
+    box-shadow 0.38s ease,
+    border-color 0.38s ease,
+    background 0.38s ease !important;
+  will-change: transform;
+  isolation: isolate;
+}
+
+/* Glow orb layer — hidden by default */
+.card::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  pointer-events: none;
+  z-index: -1;
+  background: radial-gradient(ellipse at 50% 0%,
+    rgba(183,80,255,0.22) 0%,
+    rgba(0,180,255,0.12) 50%,
+    transparent 75%);
+}
+
+/* Top edge light line */
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 15%;
+  right: 15%;
+  height: 1px;
+  border-radius: 1px;
+  opacity: 0;
+  transition: opacity 0.38s ease;
+  pointer-events: none;
+  z-index: 2;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(183,123,255,0.7) 30%,
+    rgba(255,255,255,0.9) 50%,
+    rgba(0,200,255,0.7) 70%,
+    transparent 100%);
+  box-shadow: 0 0 12px rgba(183,123,255,0.6), 0 0 20px rgba(0,200,255,0.4);
+}
+
+/* HOVER — full cinematic glow */
+.card:hover {
+  transform: translateY(-7px) scale(1.013) !important;
+  background: rgba(183,123,255,0.055) !important;
+  border-color: rgba(183,123,255,0.0) !important;
+  box-shadow:
+    /* Inner chromatic glow */
+    inset 0 0 50px rgba(183,123,255,0.07),
+    inset 16px 0 70px rgba(183,50,255,0.09),
+    inset -16px 0 70px rgba(0,210,255,0.09),
+    inset 16px 0 250px rgba(183,50,255,0.055),
+    inset -16px 0 250px rgba(0,210,255,0.055),
+    /* Outer halo */
+    0 0 40px rgba(255,255,255,0.04),
+    -8px 0 50px rgba(183,50,255,0.13),
+    8px 0 50px rgba(0,210,255,0.13),
+    /* Depth shadow */
+    0 30px 70px rgba(0,0,0,0.70),
+    0 8px 20px rgba(0,0,0,0.45) !important;
+}
+
+.card:hover::after  { opacity: 1; }
+.card:hover::before { opacity: 1; }
+
+/* Active/press */
+.card:active {
+  transform: scale(0.973) !important;
+  background: rgba(183,123,255,0.09) !important;
+  box-shadow:
+    inset 0 0 60px rgba(183,123,255,0.16),
+    0 0 35px rgba(183,80,255,0.20),
+    0 10px 25px rgba(0,0,0,0.50) !important;
+}
+
+/* ── Shift-type accent overrides ── */
+
+.card[data-shift-type="day"]:hover {
+  background: rgba(255,190,60,0.04) !important;
+  box-shadow:
+    inset 0 0 50px rgba(255,200,80,0.08),
+    inset 16px 0 70px rgba(255,160,0,0.10),
+    inset -16px 0 70px rgba(255,230,60,0.08),
+    inset 16px 0 250px rgba(255,160,0,0.05),
+    inset -16px 0 250px rgba(255,230,60,0.04),
+    0 0 40px rgba(255,255,255,0.03),
+    -8px 0 50px rgba(255,160,0,0.14),
+    8px 0 50px rgba(255,230,60,0.12),
+    0 30px 70px rgba(0,0,0,0.70) !important;
+}
+
+.card[data-shift-type="day"]::before {
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255,200,80,0.7) 30%,
+    rgba(255,255,200,0.95) 50%,
+    rgba(255,180,0,0.7) 70%,
+    transparent 100%);
+  box-shadow: 0 0 12px rgba(255,180,0,0.7), 0 0 20px rgba(255,220,60,0.4);
+}
+
+.card[data-shift-type="night"]:hover {
+  background: rgba(60,100,255,0.04) !important;
+  box-shadow:
+    inset 0 0 50px rgba(80,120,255,0.09),
+    inset 16px 0 70px rgba(60,80,255,0.11),
+    inset -16px 0 70px rgba(100,200,255,0.08),
+    inset 16px 0 250px rgba(60,80,255,0.05),
+    inset -16px 0 250px rgba(100,200,255,0.04),
+    0 0 40px rgba(255,255,255,0.03),
+    -8px 0 50px rgba(60,80,255,0.14),
+    8px 0 50px rgba(100,200,255,0.12),
+    0 30px 70px rgba(0,0,0,0.70) !important;
+}
+
+.card[data-shift-type="night"]::before {
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(80,120,255,0.7) 30%,
+    rgba(180,220,255,0.9) 50%,
+    rgba(60,160,255,0.7) 70%,
+    transparent 100%);
+  box-shadow: 0 0 12px rgba(60,120,255,0.6), 0 0 20px rgba(100,200,255,0.4);
+}
+
+/* ── Card content micro-interactions ── */
+
+.card .card-init,
+.card .card-shift,
+.card .card-name {
+  transition: opacity 0.28s ease, transform 0.28s ease, text-shadow 0.28s ease;
+}
+
+.card:hover .card-shift {
+  transform: scale(1.06) !important;
+  text-shadow:
+    0 0 30px rgba(var(--accent-rgb,183,123,255),0.45),
+    0 0 60px rgba(var(--accent-rgb,183,123,255),0.20) !important;
+}
+
+.card:hover .card-init {
+  border-color: rgba(183,123,255,0.32) !important;
+  box-shadow: 0 0 12px rgba(183,123,255,0.15) !important;
+}
+
+/* ── Today / selected card states ── */
+
+.card.today-card {
+  border-color: rgba(183,123,255,0.38) !important;
+  box-shadow:
+    0 0 0 1px rgba(183,123,255,0.14),
+    inset 0 0 30px rgba(183,123,255,0.06),
+    0 10px 35px rgba(0,0,0,0.50) !important;
+}
+
+.card.selected {
+  border-color: rgba(183,123,255,0.58) !important;
+  box-shadow:
+    0 0 0 2px rgba(183,123,255,0.22),
+    inset 0 0 40px rgba(183,123,255,0.09),
+    0 0 30px rgba(183,80,255,0.17),
+    0 18px 45px rgba(0,0,0,0.60) !important;
+}
+
+/* ── Duty blocks — same treatment ── */
+
+.duty-block {
+  transition:
+    transform 0.30s cubic-bezier(.22,.68,0,1.18),
+    box-shadow 0.30s ease,
+    border-color 0.30s ease,
+    background 0.30s ease !important;
+}
+
+.duty-block:hover {
+  transform: translateY(-3px) scale(1.012) !important;
+  box-shadow:
+    inset 12px 0 50px rgba(183,80,255,0.07),
+    inset -12px 0 50px rgba(0,190,255,0.07),
+    0 0 25px rgba(183,80,255,0.10),
+    0 16px 40px rgba(0,0,0,0.55) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   MINKA BAR — COMPLETE REDESIGN
+   Glassmorphism prompt UI + aurora search
+═══════════════════════════════════════════════════════════════════ */
+
+#minkaBar {
+  position: relative !important;
+  z-index: 200 !important;
+  margin-bottom: 16px !important;
+  overflow: visible !important;
+  /* Subtle outer glow always on */
+  filter: drop-shadow(0 4px 24px rgba(0,0,0,0.30));
+}
+
+/* ── Main pill ── */
+#minkaBarInner {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 0 12px 0 12px !important;
+  height: 42px !important;
+  background: rgba(8,7,22,0.82) !important;
+  border: 1px solid rgba(255,255,255,0.09) !important;
+  border-radius: 25px !important;
+  backdrop-filter: blur(32px) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(1.4) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  transition:
+    border-color .28s ease,
+    box-shadow .32s ease,
+    border-radius .25s ease !important;
+
+  /* Glass reflections */
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    inset 0 -1px 0 rgba(0,0,0,0.25),
+    0 2px 8px rgba(0,0,0,0.30),
+    0 8px 32px rgba(0,0,0,0.40) !important;
+}
+
+/* Subtle gradient sheen inside bar */
+#minkaBarInner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg,
+    rgba(255,255,255,0.035) 0%,
+    transparent 50%,
+    rgba(183,123,255,0.018) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Focus state ── */
+#minkaBar.focused #minkaBarInner {
+  border-color: rgba(183,123,255,0.42) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.09),
+    inset 0 -1px 0 rgba(0,0,0,0.20),
+    0 0 0 3px rgba(183,123,255,0.09),
+    0 0 20px rgba(140,80,255,0.16),
+    0 8px 32px rgba(0,0,0,0.50) !important;
+}
+
+/* ── has-text (search) state ── */
+#minkaBar.has-text:not(.ai-mode) #minkaBarInner {
+  border-color: rgba(0,220,140,0.36) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    0 0 0 3px rgba(0,220,140,0.07),
+    0 0 16px rgba(0,200,120,0.13),
+    0 8px 28px rgba(0,0,0,0.45) !important;
+}
+
+/* ── AI mode — full aurora ── */
+#minkaBar.ai-mode #minkaBarInner {
+  border-color: rgba(183,123,255,0.48) !important;
+  border-radius: 25px 25px 0 0 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(183,123,255,0.12),
+    0 0 0 3px rgba(183,123,255,0.10),
+    0 0 45px rgba(140,80,255,0.22),
+    -10px 0 35px rgba(183,80,255,0.13),
+    10px 0 35px rgba(0,170,255,0.11),
+    0 10px 35px rgba(0,0,0,0.55) !important;
+  animation: auroraBarBreath 3.5s ease-in-out infinite !important;
+}
+
+@keyframes auroraBarBreath {
+  0%, 100% {
+    box-shadow:
+      inset 0 1px 0 rgba(183,123,255,0.12),
+      0 0 0 3px rgba(183,123,255,0.10),
+      0 0 45px rgba(140,80,255,0.22),
+      -10px 0 35px rgba(183,80,255,0.13),
+      10px 0 35px rgba(0,170,255,0.11),
+      0 10px 35px rgba(0,0,0,0.55);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgba(183,123,255,0.20),
+      0 0 0 3px rgba(183,123,255,0.16),
+      0 0 70px rgba(140,80,255,0.32),
+      -14px 0 50px rgba(183,80,255,0.20),
+      14px 0 50px rgba(0,190,255,0.18),
+      0 12px 45px rgba(0,0,0,0.60);
+  }
+}
+
+/* ── AI mode — gradient overlay pulse ── */
+#minkaBar.ai-mode #minkaBarInner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(45deg,
+    rgba(183,80,255,0.06),
+    rgba(80,120,255,0.04),
+    rgba(0,200,255,0.06),
+    rgba(183,80,255,0.04));
+  background-size: 200% 200%;
+  animation: aurGradShift 5s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes aurGradShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   MINKA AI PANEL — Glassmorphism prompt expansion
+   Slides down from bar with liquid glass feel
+═══════════════════════════════════════════════════════════════════ */
+
+#minkaAiPanel {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 100% !important;
+  box-sizing: border-box !important;
+
+  /* Glass background */
+  background: linear-gradient(
+    160deg,
+    rgba(10,8,28,0.98) 0%,
+    rgba(14,10,30,0.97) 60%,
+    rgba(8,6,22,0.99) 100%
+  ) !important;
+  border: 1px solid rgba(183,123,255,0.20) !important;
+  border-top: none !important;
+  border-radius: 0 0 18px 18px !important;
+
+  /* Inner light effects */
+  box-shadow:
+    inset 0 -1px 0 rgba(183,123,255,0.05),
+    inset 14px 0 50px rgba(183,80,255,0.04),
+    inset -14px 0 50px rgba(0,170,255,0.035),
+    inset 0 0 80px rgba(183,80,255,0.025),
+    0 24px 60px rgba(0,0,0,0.70),
+    -8px 10px 35px rgba(183,80,255,0.08),
+    8px 10px 35px rgba(0,160,255,0.06) !important;
+
+  z-index: 199 !important;
+  overflow: hidden !important;
+
+  /* PERMANENTLY HIDDEN — content mirrored to #minkaNamedayChip */
+  display: none !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+/* Keep open state hidden too — chip handles display */
+#minkaAiPanel.open {
+  display: none !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+
+/* Top separator line inside panel — subtle aurora */
+#minkaAiPanel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(183,80,255,0.25) 30%,
+    rgba(140,100,255,0.40) 50%,
+    rgba(0,180,255,0.25) 70%,
+    transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+
+/* ── Panel Header ── */
+#minkaAiHeader {
+  display: flex !important;
+  align-items: center !important;
+  gap: 9px !important;
+  padding: 6px 12px 5px !important;
+  border-bottom: 1px solid rgba(183,123,255,0.07) !important;
+  position: relative;
+  z-index: 2;
+}
+
+/* Pulsing dot */
+#minkaAiDot {
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
+  flex-shrink: 0 !important;
+  background: radial-gradient(circle at 35% 30%, #e0c4ff 0%, #c080ff 50%, #9040e0 100%) !important;
+  box-shadow:
+    0 0 6px rgba(183,80,255,0.8),
+    0 0 16px rgba(183,123,255,0.50),
+    0 0 30px rgba(183,123,255,0.25) !important;
+  animation: dotHeartbeat 2.2s ease-in-out infinite !important;
+}
+
+@keyframes dotHeartbeat {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 6px rgba(183,80,255,0.8),
+      0 0 16px rgba(183,123,255,0.50),
+      0 0 30px rgba(183,123,255,0.25);
+  }
+  40% {
+    transform: scale(1.35);
+    box-shadow:
+      0 0 10px rgba(183,80,255,1.0),
+      0 0 24px rgba(183,123,255,0.70),
+      0 0 45px rgba(183,123,255,0.40);
+  }
+  60% {
+    transform: scale(1.15);
+  }
+}
+
+/* Mode label pill */
+#minkaAiMode {
+  font-size: 7px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.16em !important;
+  text-transform: uppercase !important;
+  color: rgba(210,175,255,0.82) !important;
+  background: rgba(183,123,255,0.09) !important;
+  border: 1px solid rgba(183,123,255,0.18) !important;
+  padding: 2px 7px !important;
+  border-radius: 99px !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  box-shadow: 0 0 10px rgba(183,123,255,0.10) !important;
+  transition: all .25s ease !important;
+}
+
+/* ── AI Text area ── */
+#minkaAiText {
+  font-size: 12.5px !important;
+  line-height: 1.55 !important;
+  color: rgba(235,226,255,0.90) !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  max-height: 80px !important;
+  overflow-y: auto !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(183,123,255,0.22) transparent !important;
+  padding: 6px 12px 10px !important;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.45) !important;
+  display: block !important;
+  position: relative;
+  z-index: 2;
+}
+
+#minkaAiText::-webkit-scrollbar { width: 3px !important; }
+#minkaAiText::-webkit-scrollbar-track { background: transparent !important; }
+#minkaAiText::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(183,80,255,0.35), rgba(0,170,255,0.25)) !important;
+  border-radius: 3px !important;
+}
+
+/* ── Typing caret ── */
+#minkaAiCaret {
+  display: inline-block !important;
+  width: 2px !important;
+  height: 1.1em !important;
+  background: linear-gradient(180deg, #e0c0ff 0%, #9840ff 100%) !important;
+  vertical-align: -2px !important;
+  border-radius: 2px !important;
+  margin-left: 2px !important;
+  animation: caretPulse 0.85s steps(1) infinite !important;
+  box-shadow:
+    0 0 6px rgba(183,80,255,0.70),
+    0 0 14px rgba(183,123,255,0.40) !important;
+}
+
+@keyframes caretPulse { 50% { opacity: 0; } }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   SEARCH RESULTS DROPDOWN
+═══════════════════════════════════════════════════════════════════ */
+
+#minkaResults {
+  background: linear-gradient(
+    150deg,
+    rgba(10,8,28,0.99) 0%,
+    rgba(8,6,22,0.98) 100%
+  ) !important;
+  border: 1px solid rgba(255,255,255,0.09) !important;
+  border-top: none !important;
+  border-radius: 0 0 22px 22px !important;
+  box-shadow:
+    0 24px 65px rgba(0,0,0,0.75),
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    inset 0 0 0 1px rgba(183,123,255,0.03) !important;
+  overflow: hidden !important;
+  backdrop-filter: none !important;
+}
+
+.result-item:hover,
+.search-item:hover,
+#minkaResults .list-item:hover,
+#minkaResults .worker-result-item:hover {
+  background: rgba(183,123,255,0.075) !important;
+  border-left: 2px solid rgba(183,123,255,0.32) !important;
+  padding-left: calc(var(--item-pl, 12px) - 2px) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   BAR INPUT & CONTROLS
+═══════════════════════════════════════════════════════════════════ */
+
+#minkaBarInput {
+  flex: 1 !important;
+  min-width: 0 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #f2eeff !important;
+  letter-spacing: 0.01em !important;
+  outline: none !important;
+  caret-color: #c49fff !important;
+  line-height: 42px !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Mode pill */
+#minkaBarPill {
+  font-size: 7.5px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.13em !important;
+  padding: 3px 9px !important;
+  border-radius: 99px !important;
+  text-transform: uppercase !important;
+  flex-shrink: 0 !important;
+  transition: all .25s !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+#minkaBar.ai-mode #minkaBarPill {
+  background: rgba(183,123,255,0.13) !important;
+  color: #cba8ff !important;
+  border: 1px solid rgba(183,123,255,0.22) !important;
+  box-shadow: 0 0 10px rgba(183,123,255,0.18) !important;
+}
+
+#minkaBar.has-text:not(.ai-mode) #minkaBarPill {
+  background: rgba(0,220,140,0.10) !important;
+  color: #00eE80 !important;
+  border: 1px solid rgba(0,210,130,0.22) !important;
+  box-shadow: 0 0 8px rgba(0,200,120,0.14) !important;
+}
+
+/* Clear button */
+#minkaBarClear {
+  display: none !important;
+  background: rgba(255,255,255,0.05) !important;
+  border: 1px solid rgba(255,255,255,0.09) !important;
+  color: rgba(255,255,255,0.38) !important;
+  font-size: 11px !important;
+  cursor: pointer !important;
+  padding: 3px 8px !important;
+  border-radius: 99px !important;
+  flex-shrink: 0 !important;
+  transition: all .18s !important;
+  line-height: 1.4 !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+#minkaBarClear:hover {
+  color: #fff !important;
+  background: rgba(255,70,70,0.14) !important;
+  border-color: rgba(255,80,80,0.24) !important;
+  box-shadow: 0 0 8px rgba(255,60,60,0.15) !important;
+}
+
+#minkaBar.has-text #minkaBarClear { display: block !important; }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   LOGO ANIMATION IN AI MODE
+═══════════════════════════════════════════════════════════════════ */
+
+#minkaBar.ai-mode #minkaLogo {
+  opacity: 1 !important;
+  animation: logoChromaWave 3.5s ease-in-out infinite !important;
+}
+
+@keyframes logoChromaWave {
+  0%   { filter: hue-rotate(275deg) saturate(3.5) brightness(1.35) drop-shadow(0 0 6px rgba(183,123,255,0.75)); }
+  33%  { filter: hue-rotate(250deg) saturate(4.5) brightness(1.65) drop-shadow(0 0 16px rgba(183,123,255,1.0)) drop-shadow(0 0 28px rgba(120,80,255,0.55)); }
+  66%  { filter: hue-rotate(195deg) saturate(4.0) brightness(1.45) drop-shadow(0 0 12px rgba(0,190,255,0.65)); }
+  100% { filter: hue-rotate(275deg) saturate(3.5) brightness(1.35) drop-shadow(0 0 6px rgba(183,123,255,0.75)); }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   SMOOTH SCROLL
+═══════════════════════════════════════════════════════════════════ */
+
+#grafiks-list {
+  scroll-behavior: smooth;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   LAYOUT SHIFT FIX — AI panel must NEVER push calendar content
+   minkaBar has overflow:visible, panel is position:absolute
+   so we ensure nothing in normal flow is affected
+═══════════════════════════════════════════════════════════════════ */
+
+/* The bar itself: fixed height, no growth */
+#minkaBar {
+  position: relative !important;
+  z-index: 300 !important;
+  overflow: visible !important;
+  /* Reserve only bar height — panel floats above content via z-index */
+  height: 42px !important;
+  flex-shrink: 0 !important;
+}
+
+/* AI panel: absolute, floats over calendar, zero layout impact */
+#minkaAiPanel {
+  position: absolute !important;
+  top: calc(100% + 2px) !important;
+  left: 0 !important;
+  right: 0 !important;
+  /* Float above everything */
+  z-index: 2000 !important;
+  /* Does not participate in document flow */
+  height: auto !important;
+  /* No margin, no padding-bottom that could be measured */
+  margin: 0 !important;
+}
+
+/* Results panel same treatment */
+#minkaResults {
+  position: absolute !important;
+  top: calc(100% + 2px) !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 1999 !important;
+  margin: 0 !important;
+}
+
+/* Prevent the outer calendar wrapper from growing with ai panel */
+#grafiks-app,
+.calendar-layout,
+.grafiks-wrap,
+[id*="grafiks"] > .top-area,
+.main-content {
+  overflow: visible !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   NAMEDAY CHIP — compact info strip below search bar
+   Never participates in layout flow push
+═══════════════════════════════════════════════════════════════════ */
+
+#minkaNamedayChip {
+  display: none;  /* shown via JS */
+  align-items: center !important;
+  gap: 7px !important;
+  height: 28px !important;
+  padding: 0 12px 0 10px !important;
+  margin: 4px auto 0 !important;
+  width: fit-content !important;
+  max-width: 100% !important;
+  border-radius: 99px !important;
+  background: rgba(183,123,255,0.08) !important;
+  border: 1px solid rgba(183,123,255,0.16) !important;
+  box-shadow: 0 0 14px rgba(183,123,255,0.07) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  font-size: 11.5px !important;
+  color: rgba(210,195,255,0.72) !important;
+  letter-spacing: 0.01em !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  /* Does NOT push layout — uses margin not padding on parent */
+  position: relative !important;
+  z-index: 1 !important;
+  animation: chipFadeIn 0.4s ease forwards !important;
+}
+
+@keyframes chipFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+#minkaNamedayChipIcon {
+  font-size: 12px !important;
+  flex-shrink: 0 !important;
+  opacity: 0.75 !important;
+}
+
+#minkaNamedayChipText {
+  color: rgba(200,185,255,0.68) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+}
+
+#minkaNamedayChipText strong {
+  color: rgba(var(--accent-rgb, 183,123,255), 1) !important;
+  font-weight: 700 !important;
+  text-shadow: 0 0 10px rgba(183,123,255,0.35) !important;
+}
+
+/* ── When chip is shown, add a tiny gap below bar ── */
+#minkaBar:has(~ #minkaNamedayChip[style*="flex"]) {
+  margin-bottom: 4px !important;
+}
+
+/* ── Bar wrapper — contains bar + chip, sized exactly ── */
+#minkaBarWrap {
+  position: relative !important;
+  z-index: 300 !important;
+  flex-shrink: 0 !important;
+  margin-bottom: 8px !important;
+  /* Height = bar + optional chip, never more */
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+/* Override: bar no longer needs its own margin-bottom */
+#minkaBarWrap #minkaBar {
+  margin-bottom: 0 !important;
+}
+
+/* AI panel + results still float from bar, not wrap */
+#minkaBarWrap #minkaAiPanel,
+#minkaBarWrap #minkaResults {
+  position: absolute !important;
+  /* top:100% relative to #minkaBar which is inside wrap */
+}
+
+
+/* ── Chip mode-based styling ── */
+#minkaNamedayChip[data-mode="laiks"] {
+  background: rgba(100,210,255,0.08) !important;
+  border-color: rgba(100,210,255,0.18) !important;
+}
+#minkaNamedayChip[data-mode="laiks"] #minkaNamedayChipIcon { filter: none !important; }
+
+#minkaNamedayChip[data-mode="nogurums"] {
+  background: rgba(255,120,60,0.08) !important;
+  border-color: rgba(255,120,60,0.22) !important;
+}
+#minkaNamedayChip[data-mode="nogurums"] #minkaNamedayChipText {
+  color: rgba(255,160,100,0.85) !important;
+}
+
+#minkaNamedayChip[data-mode="ziņas"],
+#minkaNamedayChip[data-mode="ziṇas"] {
+  background: rgba(60,200,130,0.08) !important;
+  border-color: rgba(60,200,130,0.18) !important;
+}
+
+#minkaNamedayChip[data-mode="minkaai"],
+#minkaNamedayChip[data-mode="minka"] {
+  background: rgba(183,123,255,0.10) !important;
+  border-color: rgba(183,123,255,0.22) !important;
+  box-shadow: 0 0 18px rgba(183,123,255,0.10) !important;
+}
+#minkaNamedayChip[data-mode="minkaai"] #minkaNamedayChipText,
+#minkaNamedayChip[data-mode="minka"] #minkaNamedayChipText {
+  color: rgba(220,200,255,0.90) !important;
+}
+
+/* Caret inside chip text */
+#minkaAiCaret {
+  display: inline-block !important;
+  width: 1.5px !important;
+  height: 0.9em !important;
+  background: rgba(183,123,255,0.9) !important;
+  vertical-align: -1px !important;
+  border-radius: 1px !important;
+  margin-left: 1px !important;
+  animation: caretPulse 0.85s steps(1) infinite !important;
+}
+
+/* Wider chip when showing AI response (more text) */
+#minkaNamedayChip[data-mode="minkaai"],
+#minkaNamedayChip[data-mode="minka"] {
+  max-width: min(600px, 90%) !important;
+  width: fit-content !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   FIX 1: SEARCH RESULTS — absolute from #minkaBar, never drifts
+═══════════════════════════════════════════════════════════════════ */
+
+#minkaResults,
+#minkaResults.results-area {
+  position: absolute !important;
+  top: calc(100% + 4px) !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: auto !important;
+  /* Clear any JS-injected fixed values */
+  transform: none !important;
+  margin: 0 !important;
+  z-index: 2000 !important;
+  border-radius: 18px !important;
+  background: rgba(8,8,20,0.99) !important;
+  border: 1px solid rgba(255,255,255,0.09) !important;
+  box-shadow:
+    0 20px 50px rgba(0,0,0,0.75),
+    inset 0 1px 0 rgba(255,255,255,0.04) !important;
+  overflow: hidden !important;
+  max-height: 55vh !important;
+  overflow-y: auto !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FIX 2: SECTION TITLE "RADIOGRĀFERI" — truncation fix
+═══════════════════════════════════════════════════════════════════ */
+
+.status-tag {
+  font-size: 10px !important;
+  letter-spacing: 0.8px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  min-width: 0 !important;
+  flex-shrink: 1 !important;
+}
+
+.status-tag .dot {
+  flex-shrink: 0 !important;
+}
+
+/* Also fix the today-badge shrinking properly */
+.status-tag .today-badge {
+  flex-shrink: 0 !important;
+  margin-left: auto !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FIX 3: NAMEDAY CHIP — clickable for news links
+═══════════════════════════════════════════════════════════════════ */
+
+#minkaNamedayChip.news-clickable {
+  cursor: pointer !important;
+  border-color: rgba(60,200,130,0.28) !important;
+  background: rgba(60,200,130,0.09) !important;
+}
+
+#minkaNamedayChip.news-clickable:hover {
+  background: rgba(60,200,130,0.14) !important;
+  box-shadow: 0 0 18px rgba(60,200,130,0.12) !important;
+  transform: translateY(-1px) !important;
+  transition: all 0.18s ease !important;
+}
+
+#minkaNamedayChip.news-clickable::after {
+  content: ' ↗' !important;
+  color: rgba(60,200,130,0.65) !important;
+  font-size: 10px !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   COUNTDOWN URGENCY — green → amber → red as shift end approaches
+═══════════════════════════════════════════════════════════════════ */
+
+.shift-remaining {
+  transition: color 2s ease, text-shadow 2s ease !important;
+}
+
+/* > 4h remaining — calm green */
+.shift-remaining[data-urgency="ok"] {
+  color: rgba(80, 220, 140, 0.85) !important;
+  text-shadow: 0 0 8px rgba(80, 220, 140, 0.25) !important;
+}
+
+/* 2–4h remaining — amber warning */
+.shift-remaining[data-urgency="warn"] {
+  color: rgba(255, 185, 40, 0.92) !important;
+  text-shadow: 0 0 10px rgba(255, 185, 40, 0.30) !important;
+  animation: warnPulse 3s ease-in-out infinite !important;
+}
+
+/* < 2h remaining — red urgent, faster pulse */
+.shift-remaining[data-urgency="crit"] {
+  color: rgba(255, 75, 75, 0.95) !important;
+  text-shadow: 0 0 12px rgba(255, 75, 75, 0.45) !important;
+  animation: critPulse 1.4s ease-in-out infinite !important;
+}
+
+@keyframes warnPulse {
+  0%, 100% { opacity: 0.92; }
+  50%       { opacity: 0.65; }
+}
+
+@keyframes critPulse {
+  0%, 100% { opacity: 1;    text-shadow: 0 0 12px rgba(255,75,75,0.5); }
+  50%       { opacity: 0.7; text-shadow: 0 0 20px rgba(255,75,75,0.2); }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   DUTY BLOCK — left-border fatigue indicator
+═══════════════════════════════════════════════════════════════════ */
+
+.duty-block {
+  position: relative !important;
+  padding-left: 10px !important;
+  border-left: 3px solid rgba(255,255,255,0.07) !important;
+  border-radius: 0 6px 6px 0 !important;
+  margin-left: 2px !important;
+  transition: border-color 0.4s ease !important;
+}
+
+.duty-block[data-fatigue="low"]  { border-left-color: rgba(48, 209, 88, 0.70) !important; }
+.duty-block[data-fatigue="mid"]  { border-left-color: rgba(255, 214, 10, 0.75) !important; }
+.duty-block[data-fatigue="high"] { border-left-color: rgba(255, 149, 0,  0.85) !important; }
+.duty-block[data-fatigue="crit"] {
+  border-left-color: rgba(255, 59, 48, 0.90) !important;
+  box-shadow: -2px 0 8px rgba(255,59,48,0.20) !important;
+}
+
+/* Remove the inline % text — the bar is enough */
+.duty-block .side-fat-pct { display: none !important; }
+
+/* Thicker, more visible fatigue bar */
+.duty-block .side-fat-bar-wrap {
+  height: 3px !important;
+  margin-top: 5px !important;
+  border-radius: 99px !important;
+  background: rgba(255,255,255,0.07) !important;
+  overflow: hidden !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   NEXT SHIFT BOX — time countdown chip
+═══════════════════════════════════════════════════════════════════ */
+
+.next-box {
+  margin-top: 12px !important;
+  padding: 10px 12px !important;
+  background: rgba(255,255,255,0.03) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  border-radius: 12px !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+.next-box-label {
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  color: rgba(255,255,255,0.30) !important;
+  text-transform: uppercase !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  margin-bottom: 5px !important;
+}
+
+.next-box-countdown {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: rgba(183,123,255,0.85) !important;
+  margin-top: 3px !important;
+  display: block !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SHIFT PROGRESS BAR — thicker + glow
+═══════════════════════════════════════════════════════════════════ */
+
+.shift-bar-track {
+  height: 5px !important;
+  border-radius: 99px !important;
+  background: rgba(255,255,255,0.07) !important;
+  overflow: visible !important;
+}
+
+.shift-bar-fill {
+  height: 100% !important;
+  border-radius: 99px !important;
+  box-shadow: 0 0 8px rgba(255,100,80,0.50) !important;
+  transition: width 1s linear !important;
+}
