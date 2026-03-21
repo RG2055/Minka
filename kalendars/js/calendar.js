@@ -340,6 +340,70 @@ function closeFullListModal() {
   function writeCachedSchedule(data){ try{ localStorage.setItem(API_CACHE_KEY, JSON.stringify(data)); localStorage.setItem(API_CACHE_TS_KEY, String(Date.now())); }catch(e){} }
   let store = {}, storeRad = {}, activeMonth = "", activeDateStr = "", isGridView = true;
   let g_todayStr = null;
+  let g_shiftStopGroups = new Map();
+  let g_shiftStopExits = new Map();
+  let g_shiftStopsRenderKey = '';
+  let g_shiftStopPopoverData = Object.create(null);
+  let g_shiftStopPopoverEl = null;
+  let g_shiftStopPopoverHideTimer = null;
+
+  function ensureShiftStopPopover() {
+    if (g_shiftStopPopoverEl) return g_shiftStopPopoverEl;
+    g_shiftStopPopoverEl = document.getElementById('shift-stop-popover');
+    if (!g_shiftStopPopoverEl) {
+      g_shiftStopPopoverEl = document.createElement('div');
+      g_shiftStopPopoverEl.id = 'shift-stop-popover';
+      g_shiftStopPopoverEl.hidden = true;
+      document.body.appendChild(g_shiftStopPopoverEl);
+    }
+    return g_shiftStopPopoverEl;
+  }
+
+  function hideShiftStopPopover() {
+    if (g_shiftStopPopoverHideTimer) {
+      clearTimeout(g_shiftStopPopoverHideTimer);
+      g_shiftStopPopoverHideTimer = null;
+    }
+    var pop = ensureShiftStopPopover();
+    pop.hidden = true;
+    pop.innerHTML = '';
+  }
+
+  function scheduleHideShiftStopPopover() {
+    if (g_shiftStopPopoverHideTimer) clearTimeout(g_shiftStopPopoverHideTimer);
+    g_shiftStopPopoverHideTimer = setTimeout(hideShiftStopPopover, 90);
+  }
+
+  function showShiftStopPopover(pin) {
+    if (!pin) return;
+    if (g_shiftStopPopoverHideTimer) {
+      clearTimeout(g_shiftStopPopoverHideTimer);
+      g_shiftStopPopoverHideTimer = null;
+    }
+    var key = pin.getAttribute('data-stop-key');
+    if (!key || !g_shiftStopPopoverData[key]) return;
+    var payload = g_shiftStopPopoverData[key];
+    var pop = ensureShiftStopPopover();
+    pop.innerHTML =
+      '<div class="shift-stop-popover-head"><div class="shift-stop-popover-time">' + payload.time + '</div></div>' +
+      payload.rows.map(function(row) {
+        return '<div class="shift-stop-popover-row"><div class="shift-stop-popover-name">' + row.name + '</div>' +
+          (row.emoji ? '<div class="shift-stop-popover-emoji">' + row.emoji + '</div>' : '') +
+        '</div>';
+      }).join('');
+    pop.hidden = false;
+    var rect = pin.getBoundingClientRect();
+    var popRect = pop.getBoundingClientRect();
+    var left = rect.left + rect.width / 2 - popRect.width / 2;
+    var top = rect.top - popRect.height - 12;
+    var minLeft = 12;
+    var maxLeft = window.innerWidth - popRect.width - 12;
+    if (left < minLeft) left = minLeft;
+    if (left > maxLeft) left = maxLeft;
+    if (top < 12) top = rect.bottom + 12;
+    pop.style.left = left + 'px';
+    pop.style.top = top + 'px';
+  }
 
   const capitalize = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : "";
   const normShift = (s) => String(s || "").toUpperCase().trim();
@@ -796,6 +860,241 @@ function closeFullListModal() {
     return Math.round(parseFloat(m[1].replace(',', '.')) || 0);
   }
 
+  const NIGHT_SPLIT_STORE_KEY = 'minkaNightSplitByDateV1';
+  const NIGHT_SPLIT_ENDS = [
+    { h: 7, m: 20, l: '07:20' },
+    { h: 7, m: 30, l: '07:30' },
+    { h: 8, m: 0, l: '08:00' }
+  ];
+  const NIGHT_SPLIT_COLORS = [
+    { bg:'rgba(255,140,0,0.20)', accent:'#ffa032' },
+    { bg:'rgba(0,170,255,0.18)', accent:'#1ec8ff' },
+    { bg:'rgba(160,0,255,0.18)', accent:'#be50ff' },
+    { bg:'rgba(0,220,80,0.18)', accent:'#00f064' },
+    { bg:'rgba(255,30,90,0.18)', accent:'#ff3c6e' },
+    { bg:'rgba(240,210,0,0.18)', accent:'#ffe628' },
+    { bg:'rgba(0,210,190,0.18)', accent:'#00ebd7' },
+    { bg:'rgba(255,80,200,0.18)', accent:'#ff6edc' }
+  ];
+
+  function getNightSplitSavedMap() {
+    try {
+      const raw = localStorage.getItem(NIGHT_SPLIT_STORE_KEY);
+      const parsed = raw ? JSON.parse(raw) : {};
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch(_e) {
+      return {};
+    }
+  }
+
+  function getNightSplitColorOrder(workers) {
+    const used = [];
+    return (Array.isArray(workers) ? workers : []).map(function(w) {
+      const key = String((w && w.name) || '').trim().toUpperCase();
+      let h = 0;
+      for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) & 0x7fffffff;
+      let idx = h % NIGHT_SPLIT_COLORS.length;
+      for (let tries = 0; tries < NIGHT_SPLIT_COLORS.length; tries++) {
+        if (used.indexOf(idx) === -1) break;
+        idx = (idx + 1) % NIGHT_SPLIT_COLORS.length;
+      }
+      used.push(idx);
+      return NIGHT_SPLIT_COLORS[idx];
+    });
+  }
+
+  function getNightSplitWorkersForDate(dateStr) {
+    const out = [];
+    const seen = new Set();
+    const stores = [store];
+    stores.forEach(function(src) {
+      Object.keys(src || {}).forEach(function(month) {
+        const days = src[month];
+        if (!Array.isArray(days)) return;
+        days.forEach(function(day) {
+          if (!day || day.date !== dateStr || !Array.isArray(day.workers)) return;
+          day.workers.forEach(function(w) {
+            const name = String((w && w.name) || '').trim();
+            if (!name || seen.has(name)) return;
+            const sh = String((w && w.shift) || '').toUpperCase().trim();
+            if (sh === 'N' || sh.indexOf('A') >= 0 || sh === 'B' || !sh || sh === '0') return;
+            const hrs = w.hours || parseInt(sh, 10) || 0;
+            if (hrs < 12) return;
+            const sH = w.startTime ? parseInt(String(w.startTime).split(':')[0], 10) : -1;
+            const tp = String((w && w.type) || '').toUpperCase();
+            let night = hrs >= 24 || tp === 'NAKTS' || tp === 'DIENNAKTS';
+            if (!night && sH >= 0 && (sH >= 18 || sH <= 5)) night = true;
+            if (!night && sH === -1 && hrs >= 12) night = true;
+            if (!night) return;
+            let fatigue = 50;
+            try {
+              if (window.__fatigue && typeof window.__fatigue.calculateFatigue === 'function') {
+                const f = window.__fatigue.calculateFatigue(name);
+                if (f && typeof f.score === 'number') fatigue = f.score;
+              }
+            } catch(_e) {}
+            seen.add(name);
+            out.push(Object.assign({}, w, { name, fs: fatigue }));
+          });
+        });
+      });
+    });
+    out.sort(function(a, b) { return (b.fs || 0) - (a.fs || 0) || String(a.name).localeCompare(String(b.name)); });
+    return out;
+  }
+
+  function getNightSplitPlan(dateStr) {
+    const workers = getNightSplitWorkersForDate(dateStr);
+    if (!workers.length) return null;
+
+    const saved = getNightSplitSavedMap()[dateStr];
+    const order = Array.isArray(saved && saved.order) ? saved.order.map(function(v){ return String(v || '').trim(); }).filter(Boolean) : [];
+    const startHour = typeof (saved && saved.sh) === 'number' && isFinite(saved.sh) ? saved.sh : 0;
+    const endOpt = NIGHT_SPLIT_ENDS[(typeof (saved && saved.ei) === 'number' && NIGHT_SPLIT_ENDS[saved.ei]) ? saved.ei : 2];
+
+    let ordered = workers.slice();
+    if (order.length) {
+      const byName = new Map();
+      ordered.forEach(function(w) { byName.set(String(w.name).trim(), w); });
+      const next = [];
+      order.forEach(function(name) {
+        if (byName.has(name)) {
+          next.push(byName.get(name));
+          byName.delete(name);
+        }
+      });
+      ordered = next.concat(Array.from(byName.values()));
+    }
+
+    const [dd, mm, yy] = String(dateStr || '').split('.').map(Number);
+    if (!dd || !mm || !yy) return null;
+    const start = new Date(yy, mm - 1, dd, 0, 0, 0, 0);
+    const wholeMinutes = Math.round(startHour * 60);
+    start.setMinutes(wholeMinutes);
+    const end = new Date(start);
+    end.setHours(endOpt.h, endOpt.m, 0, 0);
+    if (end <= start) end.setDate(end.getDate() + 1);
+
+    const totalMin = Math.max(1, Math.round((end - start) / 60000));
+    const n = ordered.length;
+    const base = Math.floor(totalMin / n);
+    const rem = totalMin % n;
+    let cursor = new Date(start);
+    const resolvedColors = getNightSplitColorOrder(ordered);
+    const segments = ordered.map(function(w, index) {
+      const segStart = new Date(cursor);
+      const len = base + (index < rem ? 1 : 0);
+      cursor = new Date(cursor.getTime() + len * 60000);
+      const segEnd = new Date(cursor);
+      return {
+        worker: w,
+        name: String(w.name || ''),
+        start: segStart,
+        end: segEnd,
+        color: resolvedColors[index] || NIGHT_SPLIT_COLORS[index % NIGHT_SPLIT_COLORS.length]
+      };
+    });
+
+    return { start, end, segments };
+  }
+
+  function buildNightSplitGradient(segments, start, end) {
+    if (!Array.isArray(segments) || !segments.length || !(start instanceof Date) || !(end instanceof Date)) return '';
+    const total = Math.max(1, end - start);
+    const stops = ['transparent 0%'];
+    let cursorPct = 0;
+    segments.forEach(function(seg) {
+      const from = Math.max(0, Math.min(100, ((seg.start - start) / total) * 100));
+      const to = Math.max(0, Math.min(100, ((seg.end - start) / total) * 100));
+      if (from > cursorPct) {
+        stops.push('transparent ' + from.toFixed(3) + '%');
+      }
+      stops.push(seg.color.bg + ' ' + from.toFixed(3) + '%');
+      stops.push(seg.color.bg + ' ' + to.toFixed(3) + '%');
+      cursorPct = to;
+    });
+    if (cursorPct < 100) {
+      stops.push('transparent ' + cursorPct.toFixed(3) + '%');
+      stops.push('transparent 100%');
+    }
+    return 'linear-gradient(90deg, ' + stops.join(', ') + ')';
+  }
+
+  function buildNightSplitLabels(segments, start, end) {
+    if (!Array.isArray(segments) || !segments.length || !(start instanceof Date) || !(end instanceof Date)) return '';
+    const total = Math.max(1, end - start);
+    return segments.map(function(seg) {
+      const from = Math.max(0, Math.min(100, ((seg.start - start) / total) * 100));
+      const to = Math.max(0, Math.min(100, ((seg.end - start) / total) * 100));
+      const mid = from + ((to - from) / 2);
+      const firstName = String(seg.name || '').split(/\s+/)[0] || '—';
+      const widthPct = Math.max(0, to - from);
+      const cls = widthPct < 10 ? ' is-hidden' : (widthPct < 16 ? ' is-tight' : '');
+      return '<span class="shift-progress-seg-label' + cls + '" style="left:' + mid.toFixed(3) + '%;--seg-color:' + seg.color.accent + '">' + firstName + '</span>';
+    }).join('');
+  }
+
+  function buildNightSplitMeta(segments, start, end, now) {
+    if (!Array.isArray(segments) || !segments.length || !(start instanceof Date) || !(end instanceof Date)) return '';
+    const total = Math.max(1, end - start);
+    const parts = [];
+    segments.forEach(function(seg, index) {
+      if (now instanceof Date && now >= seg.end) return;
+      const from = Math.max(0, Math.min(100, ((seg.start - start) / total) * 100));
+      const to = Math.max(0, Math.min(100, ((seg.end - start) / total) * 100));
+      const mid = from + ((to - from) / 2);
+      const anchor = Math.max(6, Math.min(94, mid));
+      const firstName = String(seg.name || '').split(/\s+/)[0] || '-';
+      const widthPct = Math.max(0, to - from);
+      const timeLabel =
+        String(seg.start.getHours()).padStart(2,'0') + ':' + String(seg.start.getMinutes()).padStart(2,'0') +
+        '–' +
+        String(seg.end.getHours()).padStart(2,'0') + ':' + String(seg.end.getMinutes()).padStart(2,'0');
+      const cls = (widthPct < 7 ? ' is-hidden' : (widthPct < 13 ? ' is-tight' : '')) + (to > 96 ? ' is-end' : (from < 4 ? ' is-start' : ''));
+      parts.push(
+        '<span class="shift-progress-seg-label' + cls + '" style="left:' + anchor.toFixed(3) + '%;--seg-color:' + seg.color.accent + '">' +
+          '<span class="shift-progress-seg-name">' + firstName + '</span>' +
+          '<span class="shift-progress-seg-time">' + timeLabel + '</span>' +
+        '</span>'
+      );
+      if (index < segments.length - 1 && !(now instanceof Date && now >= seg.end)) {
+        parts.push('<span class="shift-progress-seg-divider" style="left:' + to.toFixed(3) + '%"></span>');
+      }
+    });
+    return parts.join('');
+  }
+
+  function mapNightSplitToRange(plan, rangeStart, rangeEnd) {
+    if (!plan || !Array.isArray(plan.segments) || !plan.segments.length || !(rangeStart instanceof Date) || !(rangeEnd instanceof Date)) return null;
+    function clipSegments(segments) {
+      return segments.map(function(seg) {
+        const start = seg.start > rangeStart ? seg.start : rangeStart;
+        const end = seg.end < rangeEnd ? seg.end : rangeEnd;
+        if (!(end > start)) return null;
+        return {
+          name: seg.name,
+          start: new Date(start),
+          end: new Date(end),
+          color: seg.color
+        };
+      }).filter(Boolean);
+    }
+    let clipped = clipSegments(plan.segments);
+    if (!clipped.length) {
+      const shifted = plan.segments.map(function(seg) {
+        return {
+          name: seg.name,
+          start: new Date(seg.start.getTime() + 86400000),
+          end: new Date(seg.end.getTime() + 86400000),
+          color: seg.color
+        };
+      });
+      clipped = clipSegments(shifted);
+    }
+    if (!clipped.length) return null;
+    return { start: rangeStart, end: rangeEnd, segments: clipped };
+  }
+
   function getShiftBadgeHtml(worker) {
     const hours = parseShiftHours(worker && worker.shift);
     if (hours > 0) {
@@ -1056,6 +1355,7 @@ function closeFullListModal() {
     let activeEnd = null;
     let activeStart = null;
     let activeDur = 0;
+    let activeStops = [];
     const allStores = [store, storeRad];
     for (const s of allStores) {
       for (const month of Object.keys(s || {})) {
@@ -1078,9 +1378,21 @@ function closeFullListModal() {
             activeEnd = end;
             activeStart = start;
           }
+          activeStops.push({
+            name: w.name || '',
+            emoji: window.MinkaEmoji && window.MinkaEmoji.get ? (window.MinkaEmoji.get(w.name || '') || '') : '',
+            end: end,
+            endLabel: `${String(end.getHours()).padStart(2,'0')}:${String(end.getMinutes()).padStart(2,'0')}`,
+            start: start,
+            isRadiologist: s === storeRad
+          });
         }
       }
     }
+
+    activeStops.sort((a, b) => a.end - b.end || a.name.localeCompare(b.name));
+
+    const splitPlan = activeDateStr ? getNightSplitPlan(activeDateStr) : null;
 
     // Fallback
     if (!activeEnd) {
@@ -1105,6 +1417,7 @@ function closeFullListModal() {
     const totalDur = Math.max(1, activeEnd - activeStart);
     const elapsed = Math.max(0, now - activeStart);
     const pct = Math.max(0, Math.min(100, (elapsed / totalDur) * 100));
+    const splitOverlay = splitPlan ? mapNightSplitToRange(splitPlan, activeStart, activeEnd) : null;
 
     // Format helpers
     function fmtHM(ms) {
@@ -1124,18 +1437,65 @@ function closeFullListModal() {
 
     // Update progress bar elements
     const wrap = document.getElementById('shift-progress-wrap');
+    const track = document.getElementById('shift-bar-track');
     const fill = document.getElementById('shift-bar-fill');
+    const labelsEl = document.getElementById('shift-progress-segments');
     const scrubber = document.getElementById('shift-bar-scrubber');
     const tooltip = document.getElementById('shift-bar-tooltip');
     const elapsedEl = document.getElementById('shift-elapsed-label');
     const remainEl = document.getElementById('grafiks-countdown');
     const startLbl = document.getElementById('shift-start-label');
     const endLbl = document.getElementById('shift-end-label');
+    const stopsEl = document.getElementById('shift-progress-stops');
 
     if (wrap) {
       wrap.hidden = false;
+      if (track) {
+        if (splitOverlay && splitOverlay.segments && splitOverlay.segments.length) {
+          const splitGradient = buildNightSplitGradient(splitOverlay.segments, splitOverlay.start, splitOverlay.end);
+          track.style.setProperty('background', splitGradient + ', linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.00) 35%, rgba(255,255,255,0.15) 48%, rgba(255,255,255,0.26) 50%, rgba(255,255,255,0.15) 52%, rgba(255,255,255,0.00) 65%, transparent 100%)', 'important');
+          track.classList.add('has-night-split');
+          track.style.setProperty('box-shadow', 'inset 0 0 0 1px rgba(255,255,255,0.05)', 'important');
+        } else {
+          track.classList.remove('has-night-split');
+          track.style.setProperty('background', 'rgba(255,255,255,0.10)', 'important');
+          track.style.setProperty('box-shadow', 'inset 0 1px 0 rgba(255,255,255,0.03)', 'important');
+        }
+      }
       if (fill) fill.style.width = pct + '%';
+      if (fill) {
+        if (splitOverlay && splitOverlay.segments && splitOverlay.segments.length) {
+          fill.style.setProperty('background', 'linear-gradient(90deg, rgba(255,255,255,0.26), rgba(255,255,255,0.08))', 'important');
+        } else {
+          fill.style.setProperty('background', 'linear-gradient(90deg, #6f5cff 0%, #8b5cf6 45%, #b794ff 100%)', 'important');
+        }
+      }
+      if (labelsEl) {
+        if (splitOverlay && splitOverlay.segments && splitOverlay.segments.length) {
+          labelsEl.innerHTML = buildNightSplitMeta(splitOverlay.segments, splitOverlay.start, splitOverlay.end, now);
+          labelsEl.hidden = false;
+        } else {
+          labelsEl.innerHTML = '';
+          labelsEl.hidden = true;
+        }
+      }
       if (scrubber) scrubber.style.left = pct + '%';
+      if (scrubber && splitOverlay && splitOverlay.segments && splitOverlay.segments.length) {
+        let currentSeg = splitOverlay.segments.find(function(seg) { return now >= seg.start && now < seg.end; }) || null;
+        if (currentSeg && currentSeg.color) {
+          scrubber.style.setProperty('background', '#fff7f2', 'important');
+          scrubber.style.setProperty('box-shadow', '0 0 0 3px ' + currentSeg.color.bg + ', 0 0 16px ' + currentSeg.color.bg, 'important');
+          scrubber.style.setProperty('border', '1px solid rgba(255,255,255,0.72)', 'important');
+        } else {
+          scrubber.style.setProperty('background', '#f3edff', 'important');
+          scrubber.style.setProperty('box-shadow', '0 0 0 3px rgba(139,92,246,0.18)', 'important');
+          scrubber.style.setProperty('border', '1px solid rgba(255,255,255,0.62)', 'important');
+        }
+      } else if (scrubber) {
+        scrubber.style.setProperty('background', '#f3edff', 'important');
+        scrubber.style.setProperty('box-shadow', '0 0 0 3px rgba(139,92,246,0.18)', 'important');
+        scrubber.style.setProperty('border', '1px solid rgba(255,255,255,0.62)', 'important');
+      }
       if (tooltip) tooltip.textContent = fmtHHMM(now);
       if (elapsedEl) elapsedEl.textContent = 'Pagājis: ' + fmtHM(elapsed);
       if (remainEl) {
@@ -1150,6 +1510,122 @@ function closeFullListModal() {
       }
       if (startLbl) startLbl.textContent = fmtHHMM(activeStart);
       if (endLbl) endLbl.textContent = fmtHHMM(activeEnd);
+      if (stopsEl) {
+        if (activeStops.length) {
+          var groupedStops = [];
+          activeStops.forEach(function(stop) {
+            var key = String(stop.end.getTime());
+            var lastGroup = groupedStops[groupedStops.length - 1];
+            if (lastGroup && lastGroup.key === key) {
+              lastGroup.items.push(stop);
+              if (stop.isRadiologist) lastGroup.hasRadiologist = true;
+            } else {
+              groupedStops.push({
+                key: key,
+                end: stop.end,
+                endLabel: stop.endLabel,
+                items: [stop],
+                hasRadiologist: !!stop.isRadiologist
+              });
+            }
+          });
+          var nowMs = Date.now();
+          g_shiftStopExits.forEach(function(exitGroup, key) {
+            if (exitGroup.expiresAt <= nowMs) g_shiftStopExits.delete(key);
+          });
+          var nextGroups = new Map();
+          groupedStops.forEach(function(group) {
+            nextGroups.set(group.key, group);
+          });
+          g_shiftStopGroups.forEach(function(prevGroup, key) {
+            if (!nextGroups.has(key) && !g_shiftStopExits.has(key)) {
+              g_shiftStopExits.set(key, Object.assign({}, prevGroup, { exiting: true, expiresAt: nowMs + 700 }));
+            }
+          });
+          g_shiftStopGroups = nextGroups;
+          var displayGroups = groupedStops.concat(
+            Array.from(g_shiftStopExits.values()).filter(function(group) {
+              return !nextGroups.has(group.key);
+            })
+          ).sort(function(a, b) {
+            return a.end - b.end;
+          });
+          var renderKey = JSON.stringify(displayGroups.map(function(group, index) {
+            return {
+              key: group.key,
+              exiting: !!group.exiting,
+              primary: index === 0 && !group.exiting,
+              rad: !!group.hasRadiologist,
+              items: group.items.map(function(stop) {
+                return { name: stop.name, emoji: stop.emoji || '' };
+              })
+            };
+          }));
+          if (renderKey !== g_shiftStopsRenderKey) {
+            g_shiftStopPopoverData = Object.create(null);
+            stopsEl.innerHTML = displayGroups.map((group, index) => {
+              const tone = index === 0 && !group.exiting ? ' is-primary' : '';
+              const dept = group.hasRadiologist ? ' is-rad' : '';
+              const stopPct = Math.max(0, Math.min(100, ((group.end - activeStart) / totalDur) * 100));
+              g_shiftStopPopoverData[group.key] = {
+                time: group.endLabel,
+                rows: group.items.map(function(stop) {
+                  return { name: stop.name, emoji: stop.emoji || '' };
+                })
+              };
+              return `<div class="shift-stop${tone}${dept}${group.exiting ? ' is-exiting' : ''}">
+                <button class="shift-stop-pin" type="button" data-stop-key="${group.key}" style="left:${stopPct}%" aria-label="${group.endLabel}">
+                  <span class="shift-stop-dot"></span>
+                </button>
+              </div>`;
+            }).join('');
+            stopsEl.querySelectorAll('.shift-stop-pin[data-stop-key]').forEach(function(pin) {
+              pin.addEventListener('mouseenter', function() { showShiftStopPopover(pin); });
+              pin.addEventListener('mouseleave', function() { scheduleHideShiftStopPopover(); });
+              pin.addEventListener('focus', function() { showShiftStopPopover(pin); });
+              pin.addEventListener('blur', function() { scheduleHideShiftStopPopover(); });
+              pin.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                showShiftStopPopover(pin);
+              });
+            });
+            g_shiftStopsRenderKey = renderKey;
+          }
+          stopsEl.hidden = false;
+        } else {
+          g_shiftStopGroups.forEach(function(prevGroup, key) {
+            if (!g_shiftStopExits.has(key)) {
+              g_shiftStopExits.set(key, Object.assign({}, prevGroup, { exiting: true, expiresAt: Date.now() + 700 }));
+            }
+          });
+          g_shiftStopGroups = new Map();
+          var exitOnly = Array.from(g_shiftStopExits.values()).filter(function(group) {
+            return group.expiresAt > Date.now();
+          }).sort(function(a, b) { return a.end - b.end; });
+          if (exitOnly.length) {
+            var exitRenderKey = JSON.stringify(exitOnly.map(function(group) {
+              return { key: group.key, exiting: true, rad: !!group.hasRadiologist };
+            }));
+            if (exitRenderKey !== g_shiftStopsRenderKey) {
+              g_shiftStopPopoverData = Object.create(null);
+              stopsEl.innerHTML = exitOnly.map((group) => {
+                const dept = group.hasRadiologist ? ' is-rad' : '';
+                const stopPct = Math.max(0, Math.min(100, ((group.end - activeStart) / totalDur) * 100));
+                return `<div class="shift-stop${dept} is-exiting"><button class="shift-stop-pin" type="button" style="left:${stopPct}%" tabindex="-1" aria-hidden="true"><span class="shift-stop-dot"></span></button></div>`;
+              }).join('');
+              g_shiftStopsRenderKey = exitRenderKey;
+            }
+            stopsEl.hidden = false;
+          } else {
+            stopsEl.innerHTML = '';
+            stopsEl.hidden = true;
+            g_shiftStopsRenderKey = '';
+            g_shiftStopPopoverData = Object.create(null);
+            hideShiftStopPopover();
+          }
+        }
+      }
     }
 
     updateTimers();
@@ -2356,9 +2832,44 @@ document.addEventListener('click', function(e) {
   }
 });
 
+document.addEventListener('mouseover', function(e) {
+  var pin = e.target && e.target.closest ? e.target.closest('.shift-stop-pin[data-stop-key]') : null;
+  if (pin) showShiftStopPopover(pin);
+});
+
+document.addEventListener('click', function(e) {
+  var pin = e.target && e.target.closest ? e.target.closest('.shift-stop-pin[data-stop-key]') : null;
+  if (pin) {
+    e.preventDefault();
+    e.stopPropagation();
+    showShiftStopPopover(pin);
+    return;
+  }
+  var stopPopover = document.getElementById('shift-stop-popover');
+  if (stopPopover && !stopPopover.hidden && !stopPopover.contains(e.target)) {
+    hideShiftStopPopover();
+  }
+}, true);
+
+document.addEventListener('mouseout', function(e) {
+  var pin = e.target && e.target.closest ? e.target.closest('.shift-stop-pin[data-stop-key]') : null;
+  if (pin && (!e.relatedTarget || !pin.contains(e.relatedTarget))) scheduleHideShiftStopPopover();
+});
+
+document.addEventListener('focusin', function(e) {
+  var pin = e.target && e.target.closest ? e.target.closest('.shift-stop-pin[data-stop-key]') : null;
+  if (pin) showShiftStopPopover(pin);
+});
+
+document.addEventListener('focusout', function(e) {
+  var pin = e.target && e.target.closest ? e.target.closest('.shift-stop-pin[data-stop-key]') : null;
+  if (pin) scheduleHideShiftStopPopover();
+});
+
 window.addEventListener('resize', function() {
   var pop = document.getElementById('miniCalPopup');
   if (pop && pop.style.display !== 'none') positionMiniCalPopup();
+  hideShiftStopPopover();
 });
 
 window.addEventListener('message', function(e) {

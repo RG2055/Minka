@@ -67,6 +67,26 @@
   document.documentElement.classList.toggle('minka-auth-locked', !getToken());
 })();
 </script>
+<script>
+(function() {
+  try {
+    var nav = window.navigator || {};
+    var mem = Number(nav.deviceMemory || 0);
+    var cores = Number(nav.hardwareConcurrency || 0);
+    var reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    var lowSpec = reduceMotion || (mem > 0 && mem <= 8) || (cores > 0 && cores <= 4);
+    window.__mkPerfProfile = {
+      lowSpec: lowSpec,
+      reducedMotion: reduceMotion,
+      deviceMemory: mem,
+      hardwareConcurrency: cores
+    };
+    if (lowSpec) document.documentElement.classList.add('mk-low-spec');
+  } catch (_e) {
+    window.__mkPerfProfile = { lowSpec: false, reducedMotion: false, deviceMemory: 0, hardwareConcurrency: 0 };
+  }
+})();
+</script>
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -142,6 +162,28 @@ html.minka-auth-locked #minka-auth-overlay { display: flex; }
 #minka-auth-status { margin-top: 12px; min-height: 18px; font-size: 12px; color: rgba(255,255,255,0.64); }
 #minka-auth-status.is-error { color: #fda4af; }
 #minka-auth-status.ok { color: #86efac; }
+html.mk-low-spec #grafiks-app,
+html.mk-low-spec .side-panel,
+html.mk-low-spec .main-panel,
+html.mk-low-spec .mac-glass {
+  backdrop-filter: blur(8px) saturate(1.05) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(1.05) !important;
+}
+html.mk-low-spec #macscapeBg .ms-grid,
+html.mk-low-spec #macscapeBg .ms-noise {
+  opacity: 0.02 !important;
+}
+html.mk-low-spec #macscapeBg .ms-orb {
+  filter: blur(24px) !important;
+  opacity: 0.18 !important;
+  animation: none !important;
+}
+html.mk-low-spec *,
+html.mk-low-spec *::before,
+html.mk-low-spec *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+}
 </style>
 </head>
 <body class="ai-collapsed">
@@ -309,6 +351,8 @@ html.minka-auth-locked #minka-auth-overlay { display: flex; }
       </div>
       <div class="shift-bar-track" id="shift-bar-track">
         <div class="shift-bar-fill" id="shift-bar-fill"></div>
+        <div id="shift-progress-segments" class="shift-progress-segments" aria-hidden="true"></div>
+        <div id="shift-progress-stops" class="shift-progress-stops" aria-label="Maiņu beigu pieturas"></div>
         <div class="shift-bar-scrubber" id="shift-bar-scrubber">
       <div class="shift-bar-tooltip" id="shift-bar-tooltip">—</div>
         </div>
@@ -2348,9 +2392,50 @@ window.addEventListener('message', function(e) {
 
 <script>
 if ('serviceWorker' in navigator) {
+  const MINKA_APP_VERSION = '2026.03.22.1';
+  const MINKA_VERSION_KEY = 'minka_app_version';
+  const MINKA_RELOAD_KEY = 'minka_sw_reloading';
+  function clearMinkaRuntimeCaches() {
+    try {
+      localStorage.removeItem('minka_schedule_cache_v2');
+      localStorage.removeItem('minka_schedule_cache_ts_v2');
+      localStorage.removeItem('minka_emoji_v1');
+    } catch (e) {}
+    return caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key)))).catch(() => {});
+  }
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/Minka/sw.js', {scope: '/Minka/'})
-      .then(r => console.log('Minka SW ok'))
+      .then(async (r) => {
+        try {
+          const prev = localStorage.getItem(MINKA_VERSION_KEY);
+          if (prev !== MINKA_APP_VERSION) {
+            await clearMinkaRuntimeCaches();
+            localStorage.setItem(MINKA_VERSION_KEY, MINKA_APP_VERSION);
+            await r.update();
+          }
+        } catch (e) {}
+
+        if (r.waiting) r.waiting.postMessage({ type: 'SKIP_WAITING' });
+        r.addEventListener('updatefound', () => {
+          const next = r.installing;
+          if (!next) return;
+          next.addEventListener('statechange', () => {
+            if (next.state === 'installed' && navigator.serviceWorker.controller) {
+              next.postMessage({ type: 'SKIP_WAITING' });
+            }
+          });
+        });
+
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          try {
+            if (sessionStorage.getItem(MINKA_RELOAD_KEY) === MINKA_APP_VERSION) return;
+            sessionStorage.setItem(MINKA_RELOAD_KEY, MINKA_APP_VERSION);
+          } catch (e) {}
+          location.reload();
+        });
+
+        console.log('Minka SW ok');
+      })
       .catch(e => console.log('SW error:', e));
   });
 }
@@ -2699,7 +2784,7 @@ window.addEventListener('message', function(e) {
 }
 .duty-block:hover .mk-emoji-side {
   z-index: 9 !important;
-  transform: translate(20%, -18%) scale(1.28) !important;
+  transform: translate(var(--mk-duty-emoji-x, 20%), var(--mk-duty-emoji-y, -18%)) scale(var(--mk-duty-emoji-scale, 1.28)) !important;
   filter: drop-shadow(0 4px 10px rgba(0,0,0,0.28)) !important;
 }
 #minkaBarWrap {
@@ -2874,6 +2959,15 @@ window.addEventListener('message', function(e) {
   letter-spacing: .02em !important;
   color: rgba(255,255,255,0.26) !important;
 }
+#shift-start-label {
+  justify-self: start !important;
+  text-align: left !important;
+}
+#shift-end-label {
+  justify-self: end !important;
+  text-align: right !important;
+  padding-right: 10px !important;
+}
 .shift-elapsed {
   font-size: 10px !important;
   font-weight: 500 !important;
@@ -2918,6 +3012,226 @@ window.addEventListener('message', function(e) {
 }
 .shift-bar-tooltip {
   display: none !important;
+}
+.shift-progress-stops {
+  position: absolute !important;
+  inset: 0 !important;
+  overflow: visible !important;
+  pointer-events: auto !important;
+}
+.shift-progress-segments {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 100% !important;
+  margin-bottom: 8px !important;
+  height: 26px !important;
+  pointer-events: none !important;
+  overflow: visible !important;
+}
+.shift-progress-seg-label {
+  position: absolute !important;
+  top: 0 !important;
+  transform: translateX(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  max-width: 110px !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: .04em !important;
+  text-transform: uppercase !important;
+  color: rgba(255,255,255,0.94) !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.58) !important;
+}
+.shift-progress-seg-label::before {
+  content: none !important;
+}
+.shift-progress-seg-name {
+  display: block !important;
+  line-height: 1 !important;
+  color: var(--seg-color, #8b5cf6) !important;
+}
+.shift-progress-seg-time {
+  margin-top: 1px !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  color: rgba(255,255,255,0.72) !important;
+}
+.shift-progress-seg-label.is-tight {
+  max-width: 82px !important;
+}
+.shift-progress-seg-label.is-start {
+  transform: none !important;
+  text-align: left !important;
+}
+.shift-progress-seg-label.is-end {
+  transform: translateX(-50%) !important;
+  text-align: center !important;
+}
+.shift-progress-seg-label.is-hidden {
+  display: none !important;
+}
+.shift-progress-seg-divider {
+  position: absolute !important;
+  top: 10px !important;
+  width: 1px !important;
+  height: 20px !important;
+  background: rgba(255,255,255,0.34) !important;
+  box-shadow: 0 0 8px rgba(255,255,255,0.14) !important;
+  transform: translateX(-50%) !important;
+}
+.shift-bar-track.has-night-split {
+  background-size: 100% 100%, 180px 100% !important;
+  background-repeat: no-repeat, repeat-x !important;
+  animation: shiftNightFlow 7.5s linear infinite !important;
+}
+@keyframes shiftNightFlow {
+  from { background-position: 0 0, -180px 0; }
+  to { background-position: 0 0, 180px 0; }
+}
+.shift-stop {
+  position: absolute !important;
+  inset: 0 !important;
+  overflow: visible !important;
+  pointer-events: none !important;
+}
+.shift-stop-pin {
+  position: absolute !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  display: block !important;
+  overflow: visible !important;
+  pointer-events: auto !important;
+  z-index: 3 !important;
+  width: 20px !important;
+  height: 20px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: none !important;
+  border: 0 !important;
+  outline: none !important;
+  cursor: pointer !important;
+  border-radius: 999px !important;
+  -webkit-appearance: none !important;
+}
+.shift-stop-pin::before {
+  content: '' !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 26px !important;
+  height: 26px !important;
+  transform: translate(-50%, -50%) !important;
+  border-radius: 999px !important;
+}
+.shift-stop-dot {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 999px !important;
+  background: #f6f1ff !important;
+  box-shadow: 0 0 0 2px rgba(139,92,246,0.12) !important;
+  pointer-events: none !important;
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease, opacity .18s ease !important;
+}
+.shift-stop.is-primary .shift-stop-dot {
+  width: 7px !important;
+  height: 7px !important;
+  box-shadow: 0 0 0 3px rgba(139,92,246,0.18), 0 0 14px rgba(168,85,247,0.25) !important;
+  background: #ffffff !important;
+}
+.shift-stop.is-rad .shift-stop-dot {
+  box-shadow: 0 0 0 2px rgba(255,120,96,0.16) !important;
+  background: #ffd4cb !important;
+}
+.shift-stop-pin:hover .shift-stop-dot,
+.shift-stop-pin:focus-visible .shift-stop-dot {
+  transform: translate(-50%, -50%) scale(var(--mk-stop-hover-scale, 1.18)) !important;
+  box-shadow: var(--mk-stop-hover-shadow, 0 0 0 3px rgba(255,255,255,0.10), 0 0 14px rgba(255,255,255,0.12)) !important;
+}
+.shift-stop.is-exiting .shift-stop-pin {
+  pointer-events: none !important;
+}
+.shift-stop.is-exiting .shift-stop-dot {
+  animation: shiftStopFadeOut .7s ease forwards !important;
+}
+@keyframes shiftStopFadeOut {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.55);
+    filter: blur(1px);
+  }
+}
+#shift-stop-popover {
+  position: fixed !important;
+  z-index: 10020 !important;
+  display: inline-flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 6px !important;
+  min-width: 196px !important;
+  padding: 10px 12px !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(255,255,255,0.09) !important;
+  background: rgba(13,12,22,0.92) !important;
+  box-shadow: 0 18px 42px rgba(0,0,0,0.42) !important;
+  pointer-events: none !important;
+  backdrop-filter: blur(14px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(140%) !important;
+}
+#shift-stop-popover[hidden] {
+  display: none !important;
+}
+.shift-stop-popover-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: 100% !important;
+  padding-bottom: 6px !important;
+  border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+}
+.shift-stop-popover-time {
+  font-family: 'DM Mono', monospace !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  color: rgba(255,255,255,0.94) !important;
+}
+.shift-stop-popover-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  width: 100% !important;
+}
+.shift-stop-popover-name {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: rgba(255,255,255,0.86) !important;
+}
+.shift-stop-popover-emoji {
+  font-size: 13px !important;
+  line-height: 1 !important;
 }
 #grafiks-loader,
 #minka-loader-building {
@@ -2980,13 +3294,13 @@ window.addEventListener('message', function(e) {
   background-image: none !important;
 }
 .card:hover {
-  box-shadow: 0 10px 24px rgba(0,0,0,0.28) !important;
-  transform: translateY(-2px) !important;
+  box-shadow: var(--mk-card-hover-shadow, 0 10px 24px rgba(0,0,0,0.28)) !important;
+  transform: translateY(var(--mk-card-hover-y, -2px)) !important;
   border-color: rgba(255,255,255,0.12) !important;
 }
 .card:active {
-  box-shadow: 0 6px 14px rgba(0,0,0,0.22) !important;
-  transform: translateY(0) scale(.985) !important;
+  box-shadow: var(--mk-card-active-shadow, 0 6px 14px rgba(0,0,0,0.22)) !important;
+  transform: translateY(0) scale(var(--mk-card-active-scale, .985)) !important;
 }
 .card::before,
 .card::after {

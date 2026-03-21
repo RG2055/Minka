@@ -14,6 +14,7 @@
   var GIST_TOKEN = window.MINKA_GIST_TOKEN || SYNC_CFG.gistToken || '';
   var GIST_FILE  = 'minka_emoji.json';
   var POLL_MS    = 60000;
+  var LOCAL_KEY  = 'minka_emoji_v2';
   function hasApiAuth() {
     return !!(window.MinkaApi && typeof window.MinkaApi.apiFetch === 'function' && window.MinkaApi.getToken && window.MinkaApi.getToken());
   }
@@ -62,6 +63,13 @@
     rare:    ['🔥','🏆','💎','👑'],
   };
 
+  EMOJI_BY_SECTION.med = EMOJI_BY_SECTION.med.concat(['🫁','🫀','🦴','🧫','🧼','🩹','🩼','🧑‍⚕️','👨‍⚕️','👩‍⚕️']);
+  EMOJI_BY_SECTION.mood = EMOJI_BY_SECTION.mood.concat(['😍','🥰','🤩','😊','😌','🤔','😇','😜','🤗','😺']);
+  EMOJI_BY_SECTION.energy = EMOJI_BY_SECTION.energy.concat(['🔋','🔌','🌞','🌛','🌈','🎇','🎆','🪄','💣','🧨']);
+  EMOJI_BY_SECTION.animals = EMOJI_BY_SECTION.animals.concat(['🐶','🐰','🐹','🐮','🐴','🦉','🦄','🐑','🦆','🐯']);
+  EMOJI_BY_SECTION.nature = EMOJI_BY_SECTION.nature.concat(['🍃','🌼','🌙','🪷','🌬️','🌥️','🌦️','🌨️','🌧️','🌲']);
+  EMOJI_BY_SECTION.stuff = EMOJI_BY_SECTION.stuff.concat(['👓','🕹️','🏓','🏀','⚽','🎯','🎬','📚','📎','🪀']);
+
   // Build "all" from all sections except rare
   EMOJI_BY_SECTION.all = [];
   ['med','mood','energy','animals','nature','stuff'].forEach(function(k) {
@@ -77,16 +85,23 @@
   var _selectedEmoji = null;
   var _activeTab = 'all';
   var _hookedCards = new WeakSet();
+  function getPerfMode() {
+    var root = document.documentElement;
+    return (root && root.getAttribute('data-performance')) || (root && root.classList.contains('mk-low-spec') ? 'low' : 'high');
+  }
 
   // ── GIST ─────────────────────────────────────────────────────────────────────
   async function loadFromGist() {
     if (hasApiAuth()) {
       try {
-        var apiRes = await window.MinkaApi.apiFetch('/api/emoji');
+        var apiRes = await window.MinkaApi.apiFetch('/api/emoji?_=' + Date.now());
         if (apiRes.ok) {
           var apiJson = await apiRes.json();
           _data = (apiJson && typeof apiJson === 'object') ? apiJson : {};
-          try { localStorage.setItem('minka_emoji_v1', JSON.stringify(_data)); } catch(e) {}
+          try {
+            localStorage.setItem(LOCAL_KEY, JSON.stringify(_data));
+            localStorage.removeItem('minka_emoji_v1');
+          } catch(e) {}
           refreshAllCards();
           return;
         }
@@ -96,23 +111,37 @@
     try {
       var h = { 'Accept': 'application/vnd.github+json' };
       if (GIST_TOKEN) h['Authorization'] = 'Bearer ' + GIST_TOKEN;
-      var r = await fetch('https://api.github.com/gists/' + GIST_ID, { headers: h });
+      var r = await fetch('https://api.github.com/gists/' + GIST_ID + '?_=' + Date.now(), { headers: h, cache: 'no-store' });
       if (!r.ok) return;
       var j = await r.json();
       var raw = j.files && j.files[GIST_FILE] && j.files[GIST_FILE].content;
-      if (raw) { _data = JSON.parse(raw); refreshAllCards(); }
+      if (raw) {
+        _data = JSON.parse(raw);
+        try {
+          localStorage.setItem(LOCAL_KEY, JSON.stringify(_data));
+          localStorage.removeItem('minka_emoji_v1');
+        } catch(e) {}
+        refreshAllCards();
+      }
     } catch(e) {}
   }
 
   async function saveToGist(workerName) {
-    try { localStorage.setItem('minka_emoji_v1', JSON.stringify(_data)); } catch(e) {}
+    try {
+      localStorage.setItem(LOCAL_KEY, JSON.stringify(_data));
+      localStorage.removeItem('minka_emoji_v1');
+    } catch(e) {}
     if (hasApiAuth() && workerName) {
       try {
         var apiRes = await window.MinkaApi.apiFetch('/api/emoji', {
           method: 'POST',
           json: { worker: workerName, emoji: _data[workerName] || null }
         });
-        return apiRes.ok ? 'github' : 'error';
+        if (apiRes.ok) {
+          setTimeout(loadFromGist, 150);
+          return 'github';
+        }
+        return 'error';
       } catch(e) { return 'error'; }
     }
     if (!GIST_ID) return 'local';
@@ -128,7 +157,10 @@
   }
 
   function loadLocal() {
-    try { var s = localStorage.getItem('minka_emoji_v1'); if (s) _data = JSON.parse(s); } catch(e) {}
+    try {
+      var s = localStorage.getItem(LOCAL_KEY) || localStorage.getItem('minka_emoji_v1');
+      if (s) _data = JSON.parse(s);
+    } catch(e) {}
   }
 
   // ── WORKER LVL ───────────────────────────────────────────────────────────────
@@ -391,10 +423,14 @@
       btn.addEventListener('mouseenter', function() {
         var e = btn.getAttribute('data-emoji');
         var rot = (Math.random() * 24 - 12).toFixed(1);
+        var perf = getPerfMode();
+        var scale = perf === 'low' ? 1.12 : (perf === 'medium' ? 1.26 : 1.5);
+        var lift = perf === 'low' ? 0 : -2;
+        var tilt = perf === 'low' ? 0 : rot;
         btn.style.transition = 'transform .14s cubic-bezier(.34,1.8,.64,1)';
-        btn.style.transform = 'scale(1.5) translateY(-4px) rotate(' + rot + 'deg)';
+        btn.style.transform = 'scale(' + scale + ') translateY(' + lift + 'px) rotate(' + tilt + 'deg)';
         btn.style.zIndex = '10';
-        btn.style.filter = 'drop-shadow(0 4px 8px rgba(139,92,246,0.6))';
+        btn.style.filter = perf === 'low' ? 'none' : 'drop-shadow(0 4px 8px rgba(139,92,246,0.6))';
         var pe = document.getElementById('mkp-preview-emoji');
         if (pe) pe.textContent = e;
       });
@@ -565,6 +601,13 @@
         filter:drop-shadow(0 6px 14px rgba(0,0,0,.18));
         animation:mkEmojiFlow 1.7s cubic-bezier(.45,.05,.55,.95) infinite;
       }
+      html[data-performance="low"] .mk-emoji-badge.mk-emoji-hovered {
+        filter:none;
+        animation:none;
+      }
+      html[data-performance="medium"] .mk-emoji-badge.mk-emoji-hovered {
+        animation:mkEmojiFlow 2.4s cubic-bezier(.45,.05,.55,.95) infinite;
+      }
       .mk-emoji-badge.mk-emoji-hovered::before {
         opacity:1;
         transform:scale(1.08);
@@ -624,6 +667,7 @@
         align-items:center; justify-content:center; z-index:10;
       }
       .card:hover .mk-emoji-edit-btn { opacity:1; background:rgba(139,92,246,0.35); }
+      html[data-performance="low"] .card:hover .mk-emoji-edit-btn { background:rgba(139,92,246,0.18); }
       .card { position:relative; }
 
       /* ── Picker shell ── */
@@ -678,6 +722,8 @@
         line-height:1; flex-shrink:0;
       }
       .mkp-tab:hover { background:rgba(255,255,255,0.08); transform:scale(1.2); }
+      html[data-performance="low"] .mkp-tab:hover { transform:none; }
+      html[data-performance="medium"] .mkp-tab:hover { transform:scale(1.08); }
       .mkp-tab-active { background:rgba(139,92,246,0.3) !important; box-shadow:0 0 0 1px rgba(139,92,246,0.5); }
 
       /* Grid */
@@ -699,6 +745,13 @@
       .mkp-emoji-btn:hover:not(.mkp-locked) {
         transform:scale(1.35);
         background:rgba(139,92,246,0.22); z-index:5;
+      }
+      html[data-performance="low"] .mkp-emoji-btn:hover:not(.mkp-locked) {
+        transform:none;
+        background:rgba(139,92,246,0.14);
+      }
+      html[data-performance="medium"] .mkp-emoji-btn:hover:not(.mkp-locked) {
+        transform:scale(1.14);
       }
       .mkp-emoji-btn.mkp-selected {
         background:rgba(139,92,246,0.4);
@@ -811,6 +864,7 @@
         animation: mkCtxIn .12s cubic-bezier(.2,.9,.3,1) both;
       }
       @keyframes mkCtxIn { from{opacity:0;transform:scale(.94)} to{opacity:1;transform:scale(1)} }
+      html[data-performance="low"] .mk-ctx-menu { animation:none; }
       .mk-ctx-item {
         padding: 8px 12px;
         font-size: 12px;
@@ -840,9 +894,10 @@
     injectCSS();
     loadLocal();
     hookNewCards();
+    refreshAllCards();
     setInterval(hookNewCards, 2000);
-    setTimeout(loadFromGist, 800);
-    if (GIST_ID) setInterval(loadFromGist, POLL_MS);
+    setTimeout(loadFromGist, 250);
+    if (hasApiAuth() || GIST_ID) setInterval(loadFromGist, POLL_MS);
     document.addEventListener('minka:auth-ok', loadFromGist);
   }
 
@@ -955,10 +1010,14 @@
       btn.addEventListener('mouseenter', function() {
         var e = btn.getAttribute('data-emoji');
         // Fun bounce animation
+        var perf = getPerfMode();
+        var scale = perf === 'low' ? 1.12 : (perf === 'medium' ? 1.26 : 1.5);
+        var lift = perf === 'low' ? 0 : -2;
+        var tilt = perf === 'low' ? 0 : (Math.random()*16-8);
         btn.style.transition = 'transform .12s cubic-bezier(.34,1.8,.64,1)';
-        btn.style.transform = 'scale(1.5) translateY(-4px) rotate(' + (Math.random()*16-8) + 'deg)';
+        btn.style.transform = 'scale(' + scale + ') translateY(' + lift + 'px) rotate(' + tilt + 'deg)';
         btn.style.zIndex = '10';
-        btn.style.filter = 'drop-shadow(0 4px 8px rgba(139,92,246,0.6))';
+        btn.style.filter = perf === 'low' ? 'none' : 'drop-shadow(0 4px 8px rgba(139,92,246,0.6))';
         // Update modal preview
         var pe = document.getElementById('mkp-modal-prev-emoji');
         if (pe) pe.textContent = e;

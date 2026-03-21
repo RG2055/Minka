@@ -1,4 +1,4 @@
-const CACHE = 'minka-v12-portable';
+const CACHE = 'minka-v13-portable';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
@@ -44,11 +44,33 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
+self.addEventListener('message', event => {
+  const data = event && event.data;
+  if (!data) return;
+  if (data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener('fetch', event => {
   const request = event.request;
   const url = request.url;
 
   if (request.method !== 'GET' || !isHttpRequest(request)) return;
+
+  const isApiRequest = (() => {
+    try {
+      const parsed = new URL(url);
+      return parsed.pathname.includes('/api/');
+    } catch (_e) {
+      return false;
+    }
+  })();
+
+  if (isApiRequest) {
+    event.respondWith(fetch(request));
+    return;
+  }
 
   const isRemoteNetworkFirst =
     url.includes('cdn.') ||

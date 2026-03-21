@@ -27,6 +27,10 @@ const RG_peaks   = new Float32Array(128).fill(0);
 const RG_holdCnt = new Int32Array(128).fill(0);
 const PEAK_HOLD  = 38;
 const PEAK_DECAY = 0.91;
+const RG_EXTRA_LOW_SPEC = !!(window.__mkPerfProfile && window.__mkPerfProfile.lowSpec);
+const RG_EXTRA_FRAME_MS = RG_EXTRA_LOW_SPEC ? 1000 / 24 : 0;
+let RG_extraLastFrameTs = 0;
+let RG_extraFreqData = null;
 
 function updatePeaks(data, n) {
   for (let i = 0; i < n; i++) {
@@ -256,8 +260,17 @@ function drawDotMatrix(ctx, W, H, data) {
   function extraLoop(){
     extraVizRaf = 0;
     if (!shouldRunExtraViz()) return;
+    const now = performance.now();
+    if (RG_EXTRA_FRAME_MS && (now - RG_extraLastFrameTs) < RG_EXTRA_FRAME_MS) {
+      extraVizRaf = requestAnimationFrame(extraLoop);
+      return;
+    }
+    RG_extraLastFrameTs = now;
 
-    const data = new Uint8Array(analyser.frequencyBinCount);
+    if (!RG_extraFreqData || RG_extraFreqData.length !== analyser.frequencyBinCount) {
+      RG_extraFreqData = new Uint8Array(analyser.frequencyBinCount);
+    }
+    const data = RG_extraFreqData;
     analyser.getByteFrequencyData(data);
 
     const w = cvs.clientWidth | 0, h = cvs.clientHeight | 0;

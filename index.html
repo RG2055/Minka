@@ -100,6 +100,26 @@
   else document.addEventListener('DOMContentLoaded', notifyIframeAuth, { once: true });
 })();
 </script>
+<script>
+(function() {
+  try {
+    var nav = window.navigator || {};
+    var mem = Number(nav.deviceMemory || 0);
+    var cores = Number(nav.hardwareConcurrency || 0);
+    var reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    var lowSpec = reduceMotion || (mem > 0 && mem <= 8) || (cores > 0 && cores <= 4);
+    window.__mkPerfProfile = {
+      lowSpec: lowSpec,
+      reducedMotion: reduceMotion,
+      deviceMemory: mem,
+      hardwareConcurrency: cores
+    };
+    if (lowSpec) document.documentElement.classList.add('mk-low-spec');
+  } catch (_e) {
+    window.__mkPerfProfile = { lowSpec: false, reducedMotion: false, deviceMemory: 0, hardwareConcurrency: 0 };
+  }
+})();
+</script>
 
 <meta charset="UTF-8">
 <link rel="manifest" href="manifest.json">
@@ -190,6 +210,11 @@ html.has-wallpaper-bg #radioWindow {
   backdrop-filter: blur(32px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(32px) saturate(180%) !important;
 }
+html.mk-low-spec.has-wallpaper-bg #radioWindow {
+  background: rgba(6,8,14,0.72) !important;
+  backdrop-filter: blur(12px) saturate(125%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(125%) !important;
+}
 /* MacscapeBg overlay stays but becomes semi-transparent */
 html.has-wallpaper-bg #macscapeBg {
   opacity: 0.35;
@@ -212,6 +237,12 @@ html.has-wallpaper-bg #macscapeBg {
   /* GPU compositing layer — avoids layout thrashing on bottom transition */
   will-change: bottom;
   contain: layout style;
+}
+html.mk-low-spec #calendarEmbed {
+  background: rgba(8, 12, 22, 0.34);
+  backdrop-filter: blur(10px) saturate(115%);
+  -webkit-backdrop-filter: blur(10px) saturate(115%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
 }
 #calendarEmbed::before {
   content: '';
@@ -260,6 +291,23 @@ body.radio-hidden #radioWindow {
   transform: translateY(100%) !important;
   opacity: 0;
   pointer-events: none;
+}
+html.mk-low-spec #calendarEmbed::before,
+html.mk-low-spec #macscapeBg,
+html.mk-low-spec #bottomBtnBar::before,
+html.mk-low-spec #dockShelf::before {
+  opacity: .35 !important;
+}
+html.mk-low-spec #bottomBtnBar,
+html.mk-low-spec #dockShelf,
+html.mk-low-spec #radioIdleBtn,
+html.mk-low-spec #radioToggle,
+html.mk-low-spec #statsDocBtn,
+html.mk-low-spec #settingsDockBtn,
+html.mk-low-spec #nsToggleBtnParent {
+  backdrop-filter: blur(10px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(120%) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 10px 24px rgba(0,0,0,0.18) !important;
 }
 
 /* Radio toggle — inside #bottomBtnBar */
@@ -1235,9 +1283,50 @@ window.addEventListener('message', function(e) {
 
 <script>
 if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
+  const MINKA_APP_VERSION = '2026.03.22.1';
+  const MINKA_VERSION_KEY = 'minka_app_version';
+  const MINKA_RELOAD_KEY = 'minka_sw_reloading';
+  function clearMinkaRuntimeCaches() {
+    try {
+      localStorage.removeItem('minka_schedule_cache_v2');
+      localStorage.removeItem('minka_schedule_cache_ts_v2');
+      localStorage.removeItem('minka_emoji_v1');
+    } catch (e) {}
+    return caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key)))).catch(() => {});
+  }
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js')
-      .then(r => console.log('Minka SW ok'))
+      .then(async (r) => {
+        try {
+          const prev = localStorage.getItem(MINKA_VERSION_KEY);
+          if (prev !== MINKA_APP_VERSION) {
+            await clearMinkaRuntimeCaches();
+            localStorage.setItem(MINKA_VERSION_KEY, MINKA_APP_VERSION);
+            await r.update();
+          }
+        } catch (e) {}
+
+        if (r.waiting) r.waiting.postMessage({ type: 'SKIP_WAITING' });
+        r.addEventListener('updatefound', () => {
+          const next = r.installing;
+          if (!next) return;
+          next.addEventListener('statechange', () => {
+            if (next.state === 'installed' && navigator.serviceWorker.controller) {
+              next.postMessage({ type: 'SKIP_WAITING' });
+            }
+          });
+        });
+
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          try {
+            if (sessionStorage.getItem(MINKA_RELOAD_KEY) === MINKA_APP_VERSION) return;
+            sessionStorage.setItem(MINKA_RELOAD_KEY, MINKA_APP_VERSION);
+          } catch (e) {}
+          location.reload();
+        });
+
+        console.log('Minka SW ok');
+      })
       .catch(e => console.log('SW error:', e));
   });
 }
@@ -1405,9 +1494,13 @@ body.mk-low-motion *::after {
 </style>
 <script id="mk-shell-premium-script">
 (function(){
-  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    document.body.classList.add('mk-low-motion');
+  var perf = window.__mkPerfProfile || {};
+  function applyPerfClasses() {
+    if (perf.reducedMotion && document.body) document.body.classList.add('mk-low-motion');
+    if (perf.lowSpec && document.body) document.body.classList.add('mk-low-spec');
   }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyPerfClasses, { once: true });
+  else applyPerfClasses();
 })();
 </script>
 </body>

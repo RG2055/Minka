@@ -28,6 +28,10 @@
   let dpr = 1;
   let panelAdded = false;
   let renderRaf = 0;
+  let lastRenderTs = 0;
+  const PERF = window.__mkPerfProfile || {};
+  const LOW_SPEC = !!PERF.lowSpec;
+  const FRAME_MS = LOW_SPEC ? 1000 / 24 : 0;
 
   const FALLBACK = [[138,43,226],[255,60,180],[75,0,200],[220,40,255],[100,20,180]];
 
@@ -118,7 +122,7 @@
     if (!canvas) return;
     const r = document.getElementById('radioWindow');
     if (!r) return;
-    dpr = window.devicePixelRatio || 1;
+    dpr = Math.min(window.devicePixelRatio || 1, LOW_SPEC ? 1 : 2);
     canvas.width = Math.round(r.offsetWidth * dpr);
     canvas.height = Math.round(r.offsetHeight * dpr);
   }
@@ -247,9 +251,14 @@
   }
 
   // ── MAIN RENDER ──
-  function render() {
+  function render(ts = 0) {
     renderRaf = 0;
     if (!canRender()) return;
+    if (FRAME_MS && ts && (ts - lastRenderTs) < FRAME_MS) {
+      renderRaf = requestAnimationFrame(render);
+      return;
+    }
+    lastRenderTs = ts || performance.now();
     const radio = document.getElementById('radioWindow');
     if (!radio) return;
 

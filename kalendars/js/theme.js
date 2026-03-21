@@ -1,6 +1,25 @@
 (function ThemeEngine() {
   'use strict';
 
+  const PERF = window.__mkPerfProfile || {};
+  const LOW_SPEC = !!PERF.lowSpec;
+  function detectPerformanceTier() {
+    const mem = Number(PERF.deviceMemory || 0);
+    const cores = Number(PERF.hardwareConcurrency || 0);
+    const reduced = !!PERF.reducedMotion;
+    if (reduced || (mem > 0 && mem <= 4) || (cores > 0 && cores <= 2)) return 'low';
+    if ((mem > 0 && mem <= 8) || (cores > 0 && cores <= 4) || LOW_SPEC) return 'medium';
+    return 'high';
+  }
+  const AUTO_PERF = detectPerformanceTier();
+
+  function clampPx(value, fallback, max) {
+    const raw = String(value == null ? fallback : value).trim();
+    const num = parseFloat(raw);
+    const safe = Number.isFinite(num) ? num : fallback;
+    return Math.min(safe, max) + 'px';
+  }
+
   const THEMES = {
     aurora:   { label: 'Aurora',   accent:'#b77bff', accentRgb:'183,123,255', accentSoft:'rgba(183,123,255,0.12)', radAccent:'#ff5f57', orb1:'rgba(163,71,255,0.22)', orb2:'rgba(255,79,129,0.18)', orb3:'rgba(92,225,230,0.14)', bgBase:'#06070b', gridColor:'rgba(163,71,255,0.14)' },
     ice:      { label: 'Ice',      accent:'#64d2ff', accentRgb:'100,210,255', accentSoft:'rgba(100,210,255,0.12)', radAccent:'#ff9f0a', orb1:'rgba(60,160,255,0.20)', orb2:'rgba(170,240,255,0.14)', orb3:'rgba(80,200,240,0.14)', bgBase:'#04070d', gridColor:'rgba(80,160,255,0.12)' },
@@ -185,12 +204,20 @@
     normal: { label:'Normal', ui:'170ms', hover:'220ms', glow:'0.16' }
   };
 
+  const PERFORMANCE = {
+    auto:   { label:'Auto' },
+    low:    { label:'Low' },
+    medium: { label:'Medium' },
+    high:   { label:'High' }
+  };
+
   const FONT_STEPS = [0.92, 0.97, 1.00, 1.06, 1.12];
 
   let state = {
     theme: 'aurora',
     background: 'obsidian',
     density: 'balanced',
+    performance: 'auto',
     speed: 'fast',
     fontIndex: 2,
     glow: 0,
@@ -203,6 +230,7 @@
       if (saved.theme && THEMES[saved.theme]) state.theme = saved.theme;
       if (saved.background && BACKGROUNDS[saved.background]) state.background = saved.background; else state.background = 'obsidian';
       if (saved.density && DENSITY[saved.density]) state.density = saved.density;
+      if (saved.performance && PERFORMANCE[saved.performance]) state.performance = saved.performance;
       if (saved.speed && SPEED[saved.speed]) state.speed = saved.speed;
       if (Number.isInteger(saved.fontIndex) && saved.fontIndex >= 0 && saved.fontIndex < FONT_STEPS.length) state.fontIndex = saved.fontIndex;
       if (typeof saved.glow === 'number' && saved.glow >= 0 && saved.glow <= 1) state.glow = saved.glow;
@@ -223,6 +251,7 @@
     const bg = BACKGROUNDS[state.background];
     const density = DENSITY[state.density];
     const speed = SPEED[state.speed];
+    const perfMode = state.performance === 'auto' ? AUTO_PERF : state.performance;
     const fontScale = FONT_STEPS[state.fontIndex] * parseFloat(density.fontStep);
     const root = document.documentElement;
 
@@ -244,21 +273,70 @@
     setVar('--mk-grid-gap', density.gap);
     setVar('--mk-radius', density.radius);
     setVar('--mk-card-shift', density.cardShift);
+    if (perfMode === 'low') {
+      setVar('--mk-card-hover-y', '-1px');
+      setVar('--mk-card-active-scale', '0.992');
+      setVar('--mk-card-hover-shadow', '0 4px 12px rgba(0,0,0,0.20)');
+      setVar('--mk-card-active-shadow', '0 2px 8px rgba(0,0,0,0.16)');
+      setVar('--mk-duty-emoji-scale', '1.08');
+      setVar('--mk-duty-emoji-x', '8%');
+      setVar('--mk-duty-emoji-y', '-8%');
+      setVar('--mk-stop-hover-scale', '1.05');
+      setVar('--mk-stop-hover-shadow', '0 0 0 2px rgba(255,255,255,0.06), 0 0 8px rgba(255,255,255,0.08)');
+      setVar('--mk-panel-enter-scale', '0.985');
+    } else if (perfMode === 'medium') {
+      setVar('--mk-card-hover-y', '-2px');
+      setVar('--mk-card-active-scale', '0.988');
+      setVar('--mk-card-hover-shadow', '0 8px 18px rgba(0,0,0,0.24)');
+      setVar('--mk-card-active-shadow', '0 4px 10px rgba(0,0,0,0.20)');
+      setVar('--mk-duty-emoji-scale', '1.16');
+      setVar('--mk-duty-emoji-x', '14%');
+      setVar('--mk-duty-emoji-y', '-12%');
+      setVar('--mk-stop-hover-scale', '1.12');
+      setVar('--mk-stop-hover-shadow', '0 0 0 2px rgba(255,255,255,0.08), 0 0 10px rgba(255,255,255,0.10)');
+      setVar('--mk-panel-enter-scale', '0.982');
+    } else {
+      setVar('--mk-card-hover-y', '-2px');
+      setVar('--mk-card-active-scale', '0.985');
+      setVar('--mk-card-hover-shadow', '0 10px 24px rgba(0,0,0,0.28)');
+      setVar('--mk-card-active-shadow', '0 6px 14px rgba(0,0,0,0.22)');
+      setVar('--mk-duty-emoji-scale', '1.28');
+      setVar('--mk-duty-emoji-x', '20%');
+      setVar('--mk-duty-emoji-y', '-18%');
+      setVar('--mk-stop-hover-scale', '1.18');
+      setVar('--mk-stop-hover-shadow', '0 0 0 3px rgba(255,255,255,0.10), 0 0 14px rgba(255,255,255,0.12)');
+      setVar('--mk-panel-enter-scale', '0.98');
+    }
     // Apply all vars from background theme
     Object.entries(bg.vars || {}).forEach(([k,v]) => setVar(k,v));
-    setVar('--ms-orb', bg.orb);
-    setVar('--ms-grid', bg.grid);
-    setVar('--ms-noise', bg.noise || '0.04');
-    setVar('--ms-motion', bg.motion);
+    if (LOW_SPEC || perfMode === 'low') {
+      setVar('--glass-blur', clampPx((bg.vars || {})['--glass-blur'], 12, 10));
+      setVar('--mk-panel-blur', clampPx((bg.vars || {})['--mk-panel-blur'], 10, 8));
+    } else if (perfMode === 'medium') {
+      setVar('--glass-blur', clampPx((bg.vars || {})['--glass-blur'], 14, 14));
+      setVar('--mk-panel-blur', clampPx((bg.vars || {})['--mk-panel-blur'], 12, 12));
+    }
+    setVar('--ms-orb', (LOW_SPEC || perfMode === 'low') ? String(Math.min(parseFloat(bg.orb) || 0.30, 0.18)) : (perfMode === 'medium' ? String(Math.min(parseFloat(bg.orb) || 0.30, 0.30)) : bg.orb));
+    setVar('--ms-grid', (LOW_SPEC || perfMode === 'low') ? String(Math.min(parseFloat(bg.grid) || 0.04, 0.03)) : (perfMode === 'medium' ? String(Math.min(parseFloat(bg.grid) || 0.04, 0.06)) : bg.grid));
+    setVar('--ms-noise', (LOW_SPEC || perfMode === 'low') ? String(Math.min(parseFloat(bg.noise || '0.04') || 0.04, 0.015)) : (perfMode === 'medium' ? String(Math.min(parseFloat(bg.noise || '0.04') || 0.04, 0.03)) : (bg.noise || '0.04')));
+    setVar('--ms-motion', (LOW_SPEC || perfMode === 'low') ? '0' : (perfMode === 'medium' ? String(Math.min(parseFloat(bg.motion) || 0.45, 0.45)) : bg.motion));
 
-    const glowShadow = `0 0 0 1px rgba(${theme.accentRgb},0.10), 0 0 54px rgba(${theme.accentRgb},${speed.glow}), 0 18px 48px rgba(0,0,0,0.56)`;
+    const glowShadow = (LOW_SPEC || perfMode === 'low')
+      ? `0 0 0 1px rgba(${theme.accentRgb},0.08), 0 10px 28px rgba(0,0,0,0.44)`
+      : perfMode === 'medium'
+      ? `0 0 0 1px rgba(${theme.accentRgb},0.08), 0 0 26px rgba(${theme.accentRgb},0.08), 0 14px 34px rgba(0,0,0,0.50)`
+      : `0 0 0 1px rgba(${theme.accentRgb},0.10), 0 0 54px rgba(${theme.accentRgb},${speed.glow}), 0 18px 48px rgba(0,0,0,0.56)`;
     setVar('--glass-shadow', glowShadow);
     setVar('--window-glow-shadow', glowShadow);
     // Glow intensity
     setVar('--tk-glow', String(state.glow));
 
     // ── Apply background: body base color + orb gradients on top ──
-    const orbV = parseFloat(bg.orb) || 0.30;
+    const orbV = (LOW_SPEC || perfMode === 'low')
+      ? Math.min(parseFloat(bg.orb) || 0.30, 0.18)
+      : perfMode === 'medium'
+      ? Math.min(parseFloat(bg.orb) || 0.30, 0.30)
+      : (parseFloat(bg.orb) || 0.30);
     const alpha1 = (orbV * 0.55).toFixed(2);
     const alpha2 = (orbV * 0.40).toFixed(2);
     const alpha3 = (orbV * 0.30).toFixed(2);
@@ -315,8 +393,15 @@
 
     root.setAttribute('data-theme', state.theme);
     root.setAttribute('data-bg', state.background);
+    root.setAttribute('data-performance', perfMode);
+    root.classList.toggle('mk-low-spec', perfMode === 'low');
+    root.classList.toggle('mk-medium-spec', perfMode === 'medium');
     // Apply glass opacity
-    const go = state.glassOpacity ?? 0.55;
+    const go = (LOW_SPEC || perfMode === 'low')
+      ? Math.min(state.glassOpacity ?? 0.55, 0.70)
+      : perfMode === 'medium'
+      ? Math.min(state.glassOpacity ?? 0.55, 0.62)
+      : (state.glassOpacity ?? 0.55);
     root.style.setProperty('--glass-opacity', String(go));
     root.style.setProperty('--glass-bg', `rgba(10,13,18,${go})`);
     root.style.setProperty('--mk-panel-bg', `rgba(8,10,16,${Math.min(go + 0.05, 0.98)})`);
@@ -439,6 +524,16 @@
 
         <div class="tk-section">
           <div class="tk-label-row">
+            <span class="tk-section-label">Veiktspēja</span>
+            <span class="tk-value" id="tkPerfHint">Auto: ${AUTO_PERF.toUpperCase()} · ${PERF.deviceMemory || '?'}GB · ${PERF.hardwareConcurrency || '?'} cores</span>
+          </div>
+          <div class="tk-seg">${segHtml(PERFORMANCE, 'performance', state.performance)}</div>
+        </div>
+
+        <div class="tk-divider"></div>
+
+        <div class="tk-section">
+          <div class="tk-label-row">
             <span class="tk-section-label">✦ Spīdums</span>
             <span class="tk-value" id="tkGlowValue">${state.glow === 0 ? 'Izslēgts' : Math.round(state.glow * 100) + '%'}</span>
           </div>
@@ -463,7 +558,7 @@
     style.textContent = `
       #tk-wrap { position:fixed; inset:0; z-index:12000; pointer-events:none; }
       #tk-wrap::before { content:''; position:absolute; inset:0; background:rgba(3,5,12,.52); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); opacity:0; transition:opacity 180ms ease; }
-      #tk-panel { position:fixed !important; top:50% !important; left:50% !important; right:auto !important; transform:translate(-50%,-48%) scale(.98); width:min(760px, calc(100vw - 32px)) !important; max-height:min(84vh, 980px); overflow:auto; border-radius:28px !important; padding:18px 18px 16px !important; pointer-events:auto; opacity:0; transition:transform 190ms ease, opacity 190ms ease; box-shadow:0 26px 80px rgba(0,0,0,.55) !important; background:#0d1220 !important; border:1px solid rgba(255,255,255,.08) !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
+      #tk-panel { position:fixed !important; top:50% !important; left:50% !important; right:auto !important; transform:translate(-50%,-48%) scale(var(--mk-panel-enter-scale, .98)); width:min(760px, calc(100vw - 32px)) !important; max-height:min(84vh, 980px); overflow:auto; border-radius:28px !important; padding:18px 18px 16px !important; pointer-events:auto; opacity:0; transition:transform 190ms ease, opacity 190ms ease; box-shadow:0 26px 80px rgba(0,0,0,.55) !important; background:#0d1220 !important; border:1px solid rgba(255,255,255,.08) !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
       #tk-panel.visible { opacity:1; transform:translate(-50%,-50%) scale(1); }
       #tk-wrap:has(#tk-panel.visible)::before { opacity:1; }
       .tk-panel-header { align-items:flex-start !important; }
@@ -473,6 +568,9 @@
       .tk-preview { border-radius:20px !important; }
       .tk-swatches, .tk-bg-grid { gap:10px !important; }
       .tk-close { width:38px; height:38px; border-radius:14px; }
+      .tk-value.is-auto-low { color:#fca5a5; }
+      .tk-value.is-auto-medium { color:#fcd34d; }
+      .tk-value.is-auto-high { color:#86efac; }
       @media (max-width: 700px) {
         #tk-panel { width:calc(100vw - 18px) !important; max-height:88vh; padding:14px 14px 12px !important; border-radius:22px !important; }
         .tk-section.two-col { grid-template-columns:1fr !important; }
@@ -497,11 +595,25 @@
     document.querySelectorAll('.tk-swatch').forEach((el) => el.classList.toggle('active', el.dataset.theme === state.theme));
     document.querySelectorAll('.tk-bg-card').forEach((el) => el.classList.toggle('active', el.dataset.bg === state.background));
     document.querySelectorAll('[data-density]').forEach((el) => el.classList.toggle('active', el.dataset.density === state.density));
+    document.querySelectorAll('[data-performance]').forEach((el) => el.classList.toggle('active', el.dataset.performance === state.performance));
     document.querySelectorAll('[data-speed]').forEach((el) => el.classList.toggle('active', el.dataset.speed === state.speed));
     const range = document.getElementById('tkFontRange');
     if (range) range.value = String(state.fontIndex);
     const val = document.getElementById('tkFontValue');
     if (val) val.textContent = `${state.fontIndex + 1}/5`;
+    const perfHint = document.getElementById('tkPerfHint');
+    if (perfHint) {
+      const effective = state.performance === 'auto' ? AUTO_PERF : state.performance;
+      perfHint.textContent = state.performance === 'auto'
+        ? `Auto: ${AUTO_PERF.toUpperCase()} · ${PERF.deviceMemory || '?'}GB · ${PERF.hardwareConcurrency || '?'} cores`
+        : `Manual: ${effective.toUpperCase()}`;
+      perfHint.classList.remove('is-auto-low', 'is-auto-medium', 'is-auto-high');
+      perfHint.classList.add(
+        effective === 'low' ? 'is-auto-low' :
+        effective === 'medium' ? 'is-auto-medium' :
+        'is-auto-high'
+      );
+    }
   }
 
   function mountGearButton() {
@@ -540,6 +652,9 @@
     });
     wrap.querySelectorAll('[data-density]').forEach((el) => {
       el.addEventListener('click', () => { state.density = el.dataset.density; save(); applyThemeDebounced(); }, { passive: true });
+    });
+    wrap.querySelectorAll('[data-performance]').forEach((el) => {
+      el.addEventListener('click', () => { state.performance = el.dataset.performance; save(); applyThemeDebounced(); }, { passive: true });
     });
     wrap.querySelectorAll('[data-speed]').forEach((el) => {
       el.addEventListener('click', () => { state.speed = el.dataset.speed; save(); applyThemeDebounced(); }, { passive: true });

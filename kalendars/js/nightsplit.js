@@ -426,6 +426,52 @@
     return {active:active,next:next,after:after};
   }
 
+  function getFlowLiveState(slots){
+    if(!slots || !slots.length) return null;
+    var now=new Date();
+    var cur=now.getHours()*60 + now.getMinutes() + (now.getSeconds()/60);
+    if(st && typeof st.sh==='number'){
+      var startMin=Math.round(st.sh*60);
+      if(st.sh >= 20 && cur < 12*60) cur += 1440;
+      if(st.sh >= 20 && cur < startMin && now.getHours() >= 20) cur += 1440;
+    }
+    var start=slots[0].s;
+    var end=slots[slots.length-1].e;
+    if(cur < start || cur > end) return null;
+    var tot=Math.max(1, end-start);
+    return {
+      now: cur,
+      pct: Math.max(0, Math.min(100, ((cur-start)/tot)*100))
+    };
+  }
+
+  function ensureNightSplitLiveStyles(){
+    if(document.getElementById('nsLiveFlowStyles')) return;
+    var style=document.createElement('style');
+    style.id='nsLiveFlowStyles';
+    style.textContent=''
+      +'.ns-flow-bar{position:relative;overflow:visible}'
+      +'.ns-flow-live{position:absolute;top:50%;transform:translate(-50%,-50%);width:16px;height:16px;border-radius:999px;background:#ff4d5f;border:2px solid rgba(255,255,255,.9);box-shadow:0 0 0 3px rgba(255,77,95,.15),0 0 16px rgba(255,77,95,.48),0 0 28px rgba(255,77,95,.28);pointer-events:none;z-index:7}'
+      +'.ns-flow-live::before{content:\"\";position:absolute;left:50%;bottom:100%;transform:translate(-50%,-4px);width:2px;height:10px;border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.1));opacity:.9}'
+      +'.ns-flow-live::after{content:\"\";position:absolute;inset:-5px;border-radius:inherit;border:1px solid rgba(255,255,255,.18);animation:nsFlowLivePulse 1.8s ease-out infinite}'
+      +'@keyframes nsFlowLivePulse{0%{transform:scale(.72);opacity:.85}100%{transform:scale(1.55);opacity:0}}';
+    document.head.appendChild(style);
+  }
+
+  function refreshFlowLiveMarker(){
+    var bar=document.querySelector('#nsPanelContent .ns-flow-bar');
+    if(!bar || !st || !st.sl || !st.sl.length) return;
+    var dot=bar.querySelector('.ns-flow-live');
+    if(!dot) return;
+    var live=getFlowLiveState(st.sl);
+    if(!live){
+      dot.style.display='none';
+      return;
+    }
+    dot.style.display='block';
+    dot.style.left=live.pct.toFixed(3)+'%';
+  }
+
   function buildFlowBar(slots){
     if(!slots||!slots.length) return '';
     var tot=Math.max(1, slots[slots.length-1].e-slots[0].s);
@@ -502,17 +548,21 @@
         +'</div>';
     }).join('');
 
+    ensureNightSplitLiveStyles();
+
     // Build flow timeline
     var flowBar='';
     if(st.sl.length>1){
       var tot=st.sl[st.sl.length-1].e-st.sl[0].s;
+      var live=getFlowLiveState(st.sl);
       flowBar='<div class="ns-flow-bar">'+st.sl.map(function(s,i){
         var c=getCol(s.w.name);
         var pct=(s.d/tot*100).toFixed(2);
         return '<div class="ns-flow-seg'+(slotRealtime(s).active?' is-active':'')+'" style="--w:'+pct+'"><div class="ns-flow-fill" style="background:'+c.accent+'"></div></div>';
-      }).join('')+'</div>';
+      }).join('')
+      +(live?'<div class="ns-flow-live" style="left:'+live.pct.toFixed(3)+'%"></div>':'')
+      +'</div>';
     }
-
     panel.innerHTML=
       '<div class="ns-panel-head">'
       +'<span class="ns-panel-title">🌙 Nakts sadalījums</span>'
@@ -534,6 +584,7 @@
       var btn=document.getElementById('nsToggleBtn');
       if(btn){btn.style.borderColor=hasActive?'rgba(0,255,136,.55)':'';btn.querySelector && btn.querySelector('.ns-led') && (btn.querySelector('.ns-led').style.background=hasActive?'#00ff88':'');}
     }catch(e){}
+    refreshFlowLiveMarker();
   }
 
   // â”€â”€ Drag & Drop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -616,6 +667,7 @@
     if(!window.__grafiksStore){setTimeout(init,500);return;}
     window.addEventListener('daySelected',function(){setTimeout(update,200);});
     setTimeout(update,600);setTimeout(update,1500);
+    setInterval(refreshFlowLiveMarker, 15000);
   }
 
   function _cloneSlotsWithNewEndKeepStarts(oldSlots, ei){

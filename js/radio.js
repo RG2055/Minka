@@ -4,6 +4,9 @@ const RG_DEBUG = false; // Set true for development logging
 const _log  = (...a) => { if (RG_DEBUG) console.log(...a); };
 const _warn = (...a) => { if (RG_DEBUG) console.warn(...a); };
 const _err  = (...a) => { if (RG_DEBUG) console.error(...a); };
+const MK_PERF = window.__mkPerfProfile || {};
+const MK_LOW_SPEC = !!MK_PERF.lowSpec;
+const MK_VIZ_FRAME_MS = MK_LOW_SPEC ? 1000 / 30 : 0;
 let aCtx, analyser, src, lowNode, highNode, hls, masterGain, dryGain, wetGain, delayNode, feedbackNode, convolverNode, compressorNode, vinylNoiseSrc, vinylLPF, vinylGain, depthSplitter, depthMerger, depthDelayR, depthDryGain, depthWetGain, depthSumGain;
 let stationsList = [];
 let recordStations = [];
@@ -43,6 +46,7 @@ let isFirstPlay = true;
 
 let peaks = Array(128).fill(0);
 let __vizFreqData = null;
+let __vizLastFrameTs = 0;
 
 const cvs = document.getElementById('vizCanvas');
 const ctx = cvs.getContext('2d');
@@ -979,7 +983,7 @@ function ensureMilkdropCanvas() {
     if (!canvas) return null;
     const frame = canvas.parentElement || canvas;
     const rect = frame.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(window.devicePixelRatio || 1, MK_LOW_SPEC ? 1 : 2);
     const w = Math.max(1, Math.floor(rect.width * dpr));
     const h = Math.max(1, Math.floor(rect.height * dpr));
     if (canvas.width !== w || canvas.height !== h) {
@@ -2267,7 +2271,7 @@ function ensureCanvasSize(){
     }
 }
 
-function draw() {
+function draw(ts = 0) {
     // Reduce CPU when hidden / paused / radio hidden
     const radioWinEl = document.getElementById('radioWindow');
     const shouldSleep = document.hidden || audio.paused || !analyser || (radioWinEl && getComputedStyle(radioWinEl).display === 'none');
@@ -2276,6 +2280,8 @@ function draw() {
         return;
     }
     requestAnimationFrame(draw);
+    if (MK_VIZ_FRAME_MS && ts && (ts - __vizLastFrameTs) < MK_VIZ_FRAME_MS) return;
+    __vizLastFrameTs = ts || performance.now();
     if (!__vizFreqData || __vizFreqData.length !== analyser.frequencyBinCount) __vizFreqData = new Uint8Array(analyser.frequencyBinCount);
     const data = __vizFreqData;
     analyser.getByteFrequencyData(data);
