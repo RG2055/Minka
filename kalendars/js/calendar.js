@@ -969,6 +969,7 @@ function closeFullListModal() {
     const [dd, mm, yy] = String(dateStr || '').split('.').map(Number);
     if (!dd || !mm || !yy) return null;
     const start = new Date(yy, mm - 1, dd, 0, 0, 0, 0);
+    if (startHour < 8) start.setDate(start.getDate() + 1);
     const wholeMinutes = Math.round(startHour * 60);
     start.setMinutes(wholeMinutes);
     const end = new Date(start);
@@ -1066,31 +1067,17 @@ function closeFullListModal() {
 
   function mapNightSplitToRange(plan, rangeStart, rangeEnd) {
     if (!plan || !Array.isArray(plan.segments) || !plan.segments.length || !(rangeStart instanceof Date) || !(rangeEnd instanceof Date)) return null;
-    function clipSegments(segments) {
-      return segments.map(function(seg) {
-        const start = seg.start > rangeStart ? seg.start : rangeStart;
-        const end = seg.end < rangeEnd ? seg.end : rangeEnd;
-        if (!(end > start)) return null;
-        return {
-          name: seg.name,
-          start: new Date(start),
-          end: new Date(end),
-          color: seg.color
-        };
-      }).filter(Boolean);
-    }
-    let clipped = clipSegments(plan.segments);
-    if (!clipped.length) {
-      const shifted = plan.segments.map(function(seg) {
-        return {
-          name: seg.name,
-          start: new Date(seg.start.getTime() + 86400000),
-          end: new Date(seg.end.getTime() + 86400000),
-          color: seg.color
-        };
-      });
-      clipped = clipSegments(shifted);
-    }
+    const clipped = plan.segments.map(function(seg) {
+      const start = seg.start > rangeStart ? seg.start : rangeStart;
+      const end = seg.end < rangeEnd ? seg.end : rangeEnd;
+      if (!(end > start)) return null;
+      return {
+        name: seg.name,
+        start: new Date(start),
+        end: new Date(end),
+        color: seg.color
+      };
+    }).filter(Boolean);
     if (!clipped.length) return null;
     return { start: rangeStart, end: rangeEnd, segments: clipped };
   }
@@ -1392,7 +1379,7 @@ function closeFullListModal() {
 
     activeStops.sort((a, b) => a.end - b.end || a.name.localeCompare(b.name));
 
-    const splitPlan = activeDateStr ? getNightSplitPlan(activeDateStr) : null;
+    const splitPlan = (activeDateStr && activeDateStr === g_todayStr) ? getNightSplitPlan(activeDateStr) : null;
 
     // Fallback
     if (!activeEnd) {
