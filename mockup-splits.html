@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minka — Mockup: Splits + Today XP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0a0a0c;
+    --panel:     #151517;
+    --card-bg:   rgba(255,255,255,0.035);
+    --glass-bg:  rgba(28,28,30,0.75);
+    --border:    rgba(255,255,255,0.10);
+    --text:      #f5f5f7;
+    --muted:     rgba(255,255,255,0.45);
+    --accent:    #b77bff;
+    --green:     #30d158;
+    --orange:    #ff9f0a;
+    --red:       #ff453a;
+    --blue:      #0a84ff;
+    --cyan:      #1ec8ff;
+    --blur:      24px;
+
+    /* modality colors */
+    --ct:   rgba(0,170,255,0.22);
+    --ct-b: rgba(30,200,255,0.70);
+    --ct-a: #1ec8ff;
+    --xr:   rgba(255,140,0,0.22);
+    --xr-b: rgba(255,165,50,0.70);
+    --xr-a: #ffa032;
+    --mri:  rgba(160,0,255,0.22);
+    --mri-b:rgba(190,80,255,0.70);
+    --mri-a:#be50ff;
+    --usg:  rgba(0,220,80,0.22);
+    --usg-b:rgba(0,240,100,0.70);
+    --usg-a:#00f064;
+  }
+
+  body {
+    background: var(--bg);
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    padding: 32px 24px 60px;
+  }
+
+  .page-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 32px;
+  }
+  .page-title span { color: var(--accent); }
+
+  /* ── Section headers ── */
+  .section {
+    margin-bottom: 48px;
+  }
+  .section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+    padding-left: 2px;
+  }
+
+  /* ── Day column ── */
+  .day-col {
+    background: var(--glass-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    backdrop-filter: blur(var(--blur));
+    padding: 16px;
+    max-width: 320px;
+  }
+  .day-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .day-head .date-num {
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .day-head .date-sub {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .day-head .today-pill {
+    margin-left: auto;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    background: rgba(48,209,88,.15);
+    border: 1px solid rgba(48,209,88,.4);
+    color: var(--green);
+    border-radius: 20px;
+    padding: 2px 8px;
+  }
+
+  /* ── Shift card ── */
+  .shift-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 11px 13px;
+    margin-bottom: 8px;
+    position: relative;
+    transition: border-color .2s;
+  }
+  .shift-card:hover { border-color: rgba(255,255,255,.18); }
+
+  .shift-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 7px;
+  }
+  .worker-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .worker-name {
+    font-size: 13px;
+    font-weight: 600;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Shift type badge */
+  .shift-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    border-radius: 6px;
+    padding: 2px 6px;
+    border: 1px solid;
+  }
+  .badge-12h { background: rgba(255,159,10,.15); border-color: rgba(255,159,10,.5); color: var(--orange); }
+  .badge-24h { background: rgba(191,90,242,.15); border-color: rgba(191,90,242,.5); color: #bf5af2; }
+  .badge-8h  { background: rgba(100,210,255,.15); border-color: rgba(100,210,255,.5); color: #64d2ff; }
+
+  /* ── TODAY XP BADGE ── */
+  .xp-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent);
+    background: rgba(183,123,255,.12);
+    border: 1px solid rgba(183,123,255,.35);
+    border-radius: 20px;
+    padding: 2px 7px;
+    margin-left: 2px;
+  }
+  .xp-badge svg { opacity: .85; }
+
+  /* Shift time row */
+  .shift-time-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .shift-time-row .time { font-variant-numeric: tabular-nums; }
+
+  /* ── MODALITY SPLIT BAR ── */
+  .split-bar {
+    display: flex;
+    border-radius: 6px;
+    overflow: hidden;
+    height: 20px;
+    gap: 1px;
+    margin-bottom: 7px;
+  }
+  .split-seg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    border-radius: 5px;
+    border: 1px solid;
+    transition: opacity .15s;
+  }
+  .split-seg:hover { opacity: .85; cursor: default; }
+  .seg-ct  { background: var(--ct);  border-color: var(--ct-b);  color: var(--ct-a); }
+  .seg-xr  { background: var(--xr);  border-color: var(--xr-b);  color: var(--xr-a); }
+  .seg-mri { background: var(--mri); border-color: var(--mri-b); color: var(--mri-a); }
+  .seg-usg { background: var(--usg); border-color: var(--usg-b); color: var(--usg-a); }
+
+  .split-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 4px;
+  }
+  .split-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: var(--muted);
+  }
+  .split-legend-dot {
+    width: 6px; height: 6px;
+    border-radius: 2px;
+  }
+
+  /* Split action row */
+  .split-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .btn-split {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    background: rgba(255,255,255,.05);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 3px 8px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .btn-split:hover { color: var(--text); border-color: rgba(255,255,255,.25); background: rgba(255,255,255,.09); }
+  .sync-dot {
+    margin-left: auto;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+  }
+  .sync-dot.pending { background: var(--orange); box-shadow: 0 0 6px var(--orange); }
+
+  /* ── INLINE SPLIT EDITOR ── */
+  .split-editor {
+    background: rgba(18,18,22,.9);
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 14px;
+    padding: 13px;
+    margin-top: 10px;
+  }
+  .editor-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 11px;
+  }
+  .editor-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 8px;
+  }
+  .editor-row .mod-select {
+    appearance: none;
+    background: rgba(255,255,255,.07);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 8px;
+    width: 68px;
+    cursor: pointer;
+  }
+  .editor-row .time-input {
+    appearance: none;
+    background: rgba(255,255,255,.07);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    padding: 5px 8px;
+    width: 62px;
+    text-align: center;
+  }
+  .editor-row .time-sep {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .editor-row .btn-remove {
+    background: none;
+    border: none;
+    color: rgba(255,69,58,.6);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0 3px;
+    transition: color .15s;
+  }
+  .editor-row .btn-remove:hover { color: var(--red); }
+
+  .mod-pill {
+    display: inline-flex;
+    align-items: center;
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 800;
+    border: 1px solid;
+    flex-shrink: 0;
+  }
+  .mod-pill.ct  { background: var(--ct);  border-color: var(--ct-b);  color: var(--ct-a); }
+  .mod-pill.xr  { background: var(--xr);  border-color: var(--xr-b);  color: var(--xr-a); }
+  .mod-pill.mri { background: var(--mri); border-color: var(--mri-b); color: var(--mri-a); }
+  .mod-pill.usg { background: var(--usg); border-color: var(--usg-b); color: var(--usg-a); }
+
+  .editor-footer {
+    display: flex;
+    gap: 7px;
+    margin-top: 11px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .btn-add-seg {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    background: rgba(255,255,255,.05);
+    border: 1px dashed rgba(255,255,255,.2);
+    border-radius: 8px;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .btn-add-seg:hover { color: var(--text); border-color: rgba(255,255,255,.4); }
+  .btn-save {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--bg);
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    padding: 5px 14px;
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  .btn-save:hover { opacity: .85; }
+
+  /* ── STATS CARD (today summary) ── */
+  .today-summary {
+    background: var(--glass-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    backdrop-filter: blur(var(--blur));
+    padding: 18px 20px;
+    max-width: 320px;
+  }
+  .ts-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .ts-head .ts-title {
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .ts-head .ts-date {
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+  .xp-earned-big {
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .xp-earned-big span {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--muted);
+    vertical-align: super;
+  }
+  .xp-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  /* XP breakdown */
+  .xp-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .xp-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+  }
+  .xp-row-label { color: var(--muted); flex: 1; }
+  .xp-row-val { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .xp-row-val.pos { color: var(--green); }
+  .xp-row-val.neu { color: var(--accent); }
+
+  /* Level progress bar */
+  .level-bar-wrap {
+    margin-top: 4px;
+  }
+  .level-bar-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+  .level-bar-labels .lv-current { color: var(--text); font-weight: 700; }
+  .level-bar-labels .lv-next { }
+  .level-bar-track {
+    height: 5px;
+    background: rgba(255,255,255,.08);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .level-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #ff6edc);
+    border-radius: 99px;
+    width: 63%;
+    transition: width .6s cubic-bezier(.4,0,.2,1);
+  }
+  .level-bar-note {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 5px;
+    text-align: right;
+  }
+
+  /* ── Two-col layout ── */
+  .cols {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  /* ── Annotation labels ── */
+  .annotation {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 8px;
+    padding-left: 4px;
+  }
+  .annotation::before {
+    content: '↑';
+    font-size: 14px;
+    color: var(--accent);
+  }
+</style>
+</head>
+<body>
+
+<p class="page-title">Minka — UI Mockup · <span>Modality Splits + Today XP</span></p>
+
+<!-- ═══════════════════════════════════════════
+     SECTION 1 — Shift cards with XP badge
+     ═══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-label">1 — Today's XP badge on shift cards</div>
+  <div class="cols">
+
+    <!-- Card A: plain shift, no split -->
+    <div style="max-width:300px">
+      <div class="day-col">
+        <div class="day-head">
+          <span class="date-num">22</span>
+          <span class="date-sub">Mar · Sestdiena</span>
+          <span class="today-pill">Šodien</span>
+        </div>
+
+        <!-- Worker 1 — night shift -->
+        <div class="shift-card">
+          <div class="shift-top">
+            <div class="worker-dot" style="background:#1ec8ff;box-shadow:0 0 5px #1ec8ff88"></div>
+            <span class="worker-name">Jānis Bērziņš</span>
+            <span class="shift-badge badge-12h">12h</span>
+            <span class="xp-badge">
+              <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
+                <polygon points="5,1 6.5,4 10,4.5 7.5,7 8.2,10 5,8.5 1.8,10 2.5,7 0,4.5 3.5,4" fill="#b77bff"/>
+              </svg>
+              +39 XP
+            </span>
+          </div>
+          <div class="shift-time-row">
+            <span class="time">08:00</span>
+            <span>→</span>
+            <span class="time">20:00</span>
+            <span style="margin-left:auto;font-size:10px">Dienas maiņa</span>
+          </div>
+          <div class="split-actions">
+            <button class="btn-split">
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+                <line x1="6" y1="1" x2="6" y2="11"/>
+                <rect x="1" y="3" width="4" height="6" rx="1.5"/>
+                <rect x="7" y="3" width="4" height="6" rx="1.5"/>
+              </svg>
+              Sadalīt
+            </button>
+          </div>
+        </div>
+
+        <!-- Worker 2 — with split already -->
+        <div class="shift-card">
+          <div class="shift-top">
+            <div class="worker-dot" style="background:#ffa032;box-shadow:0 0 5px #ffa03288"></div>
+            <span class="worker-name">Māris Kalniņš</span>
+            <span class="shift-badge badge-12h">12h</span>
+            <span class="xp-badge">
+              <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
+                <polygon points="5,1 6.5,4 10,4.5 7.5,7 8.2,10 5,8.5 1.8,10 2.5,7 0,4.5 3.5,4" fill="#b77bff"/>
+              </svg>
+              +39 XP
+            </span>
+          </div>
+          <div class="shift-time-row">
+            <span class="time">08:00</span>
+            <span>→</span>
+            <span class="time">20:00</span>
+          </div>
+          <!-- SPLIT BAR -->
+          <div class="split-bar">
+            <div class="split-seg seg-ct" style="flex:6" title="CT 08:00–14:00">CT</div>
+            <div class="split-seg seg-xr" style="flex:6" title="XR 14:00–20:00">XR</div>
+          </div>
+          <div class="split-legend">
+            <div class="split-legend-item">
+              <div class="split-legend-dot" style="background:var(--ct-a)"></div>
+              CT 08:00–14:00
+            </div>
+            <div class="split-legend-item">
+              <div class="split-legend-dot" style="background:var(--xr-a)"></div>
+              XR 14:00–20:00
+            </div>
+          </div>
+          <div class="split-actions">
+            <button class="btn-split">
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M2 6h8M6 2v8"/>
+              </svg>
+              Rediģēt
+            </button>
+            <div class="sync-dot" title="Synced to Cloudflare"></div>
+          </div>
+        </div>
+
+        <!-- Worker 3 — 24h with 3-way split -->
+        <div class="shift-card">
+          <div class="shift-top">
+            <div class="worker-dot" style="background:#be50ff;box-shadow:0 0 5px #be50ff88"></div>
+            <span class="worker-name">Anna Ozola</span>
+            <span class="shift-badge badge-24h">24h</span>
+            <span class="xp-badge">
+              <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
+                <polygon points="5,1 6.5,4 10,4.5 7.5,7 8.2,10 5,8.5 1.8,10 2.5,7 0,4.5 3.5,4" fill="#b77bff"/>
+              </svg>
+              +73 XP
+            </span>
+          </div>
+          <div class="shift-time-row">
+            <span class="time">08:00</span>
+            <span>→</span>
+            <span class="time">08:00+1</span>
+          </div>
+          <div class="split-bar">
+            <div class="split-seg seg-ct"  style="flex:8"  title="CT 08:00–16:00">CT</div>
+            <div class="split-seg seg-xr"  style="flex:8"  title="XR 16:00–00:00">XR</div>
+            <div class="split-seg seg-mri" style="flex:8"  title="MRI 00:00–08:00">MRI</div>
+          </div>
+          <div class="split-legend">
+            <div class="split-legend-item"><div class="split-legend-dot" style="background:var(--ct-a)"></div>CT 08–16</div>
+            <div class="split-legend-item"><div class="split-legend-dot" style="background:var(--xr-a)"></div>XR 16–00</div>
+            <div class="split-legend-item"><div class="split-legend-dot" style="background:var(--mri-a)"></div>MRI 00–08</div>
+          </div>
+          <div class="split-actions">
+            <button class="btn-split">
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M2 6h8M6 2v8"/>
+              </svg>
+              Rediģēt
+            </button>
+            <div class="sync-dot" title="Synced"></div>
+          </div>
+        </div>
+
+      </div>
+      <p class="annotation">Shift cards: XP badge + modality split bar</p>
+    </div>
+
+    <!-- Card B: inline split EDITOR open -->
+    <div style="max-width:300px">
+      <div class="day-col">
+        <div class="day-head">
+          <span class="date-num">22</span>
+          <span class="date-sub">Mar · Sestdiena</span>
+          <span class="today-pill">Šodien</span>
+        </div>
+
+        <div class="shift-card" style="border-color:rgba(183,123,255,.35)">
+          <div class="shift-top">
+            <div class="worker-dot" style="background:#1ec8ff;box-shadow:0 0 5px #1ec8ff88"></div>
+            <span class="worker-name">Jānis Bērziņš</span>
+            <span class="shift-badge badge-12h">12h</span>
+            <span class="xp-badge">+39 XP</span>
+          </div>
+          <div class="shift-time-row">
+            <span class="time">08:00</span>
+            <span>→</span>
+            <span class="time">20:00</span>
+          </div>
+
+          <!-- ── INLINE EDITOR ── -->
+          <div class="split-editor">
+            <div class="editor-title">Modalitāšu sadalījums</div>
+
+            <!-- Row 1 -->
+            <div class="editor-row">
+              <div class="mod-pill ct">CT</div>
+              <select class="mod-select">
+                <option selected>CT</option>
+                <option>XR</option>
+                <option>MRI</option>
+                <option>USG</option>
+              </select>
+              <input class="time-input" type="text" value="08:00" readonly>
+              <span class="time-sep">–</span>
+              <input class="time-input" type="text" value="14:00">
+              <button class="btn-remove">×</button>
+            </div>
+
+            <!-- Row 2 -->
+            <div class="editor-row">
+              <div class="mod-pill xr">XR</div>
+              <select class="mod-select">
+                <option>CT</option>
+                <option selected>XR</option>
+                <option>MRI</option>
+                <option>USG</option>
+              </select>
+              <input class="time-input" type="text" value="14:00" readonly>
+              <span class="time-sep">–</span>
+              <input class="time-input" type="text" value="20:00">
+              <button class="btn-remove">×</button>
+            </div>
+
+            <div class="editor-footer">
+              <button class="btn-add-seg">
+                <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M6 2v8M2 6h8"/>
+                </svg>
+                Pievienot
+              </button>
+              <button class="btn-save">Saglabāt</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <p class="annotation">Inline editor — no modal, opens inside the card</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SECTION 2 — Today's XP summary widget
+     ═══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-label">2 — Today's XP earned widget (on stats modal)</div>
+  <div class="cols">
+
+    <div>
+      <div class="today-summary">
+        <div class="ts-head">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+            <polygon points="10,2 12.5,7.5 18.5,8.2 14,12.5 15.5,18.5 10,15.5 4.5,18.5 6,12.5 1.5,8.2 7.5,7.5" fill="#b77bff" opacity=".9"/>
+          </svg>
+          <span class="ts-title">Šodienas pieredze</span>
+          <span class="ts-date">22.03.2026</span>
+        </div>
+
+        <div class="xp-earned-big">+39 <span>XP</span></div>
+        <div class="xp-sub">Šajā maiņā nopelnīts · Kopā 1 847 XP</div>
+
+        <div class="xp-breakdown">
+          <div class="xp-row">
+            <span class="xp-row-label">Bāze (12h × 2)</span>
+            <span class="xp-row-val neu">+24</span>
+          </div>
+          <div class="xp-row">
+            <span class="xp-row-label">Nakts maiņa</span>
+            <span class="xp-row-val pos">+15</span>
+          </div>
+          <div class="xp-row" style="opacity:.35">
+            <span class="xp-row-label">24h maiņa</span>
+            <span class="xp-row-val">—</span>
+          </div>
+          <div class="xp-row" style="opacity:.35">
+            <span class="xp-row-label">Svētku diena</span>
+            <span class="xp-row-val">—</span>
+          </div>
+        </div>
+
+        <div class="level-bar-wrap">
+          <div class="level-bar-labels">
+            <span class="lv-current">Lv.6 Virsnieks</span>
+            <span class="lv-next">Lv.7 Komandieris →</span>
+          </div>
+          <div class="level-bar-track">
+            <div class="level-bar-fill"></div>
+          </div>
+          <div class="level-bar-note">347 XP līdz nākamajam līmenim</div>
+        </div>
+      </div>
+      <p class="annotation">Lightweight today-widget — all from existing XP data</p>
+    </div>
+
+    <!-- Pair comparison mini-card -->
+    <div>
+      <div class="today-summary" style="max-width:280px">
+        <div class="ts-head">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <circle cx="5.5" cy="5.5" r="3" stroke="#1ec8ff" stroke-width="1.5"/>
+            <circle cx="10.5" cy="5.5" r="3" stroke="#ffa032" stroke-width="1.5"/>
+            <path d="M1 14c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4" stroke="#1ec8ff" stroke-width="1.5"/>
+            <path d="M7 14c.5-2 2-3.5 3.5-3.5S14 12 14 14" stroke="#ffa032" stroke-width="1.5"/>
+          </svg>
+          <span class="ts-title">Pāra modalitātes</span>
+          <span class="ts-date">Šodien</span>
+        </div>
+
+        <!-- Person 1 -->
+        <div style="margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <div style="width:7px;height:7px;border-radius:50%;background:#1ec8ff;box-shadow:0 0 5px #1ec8ff88"></div>
+            <span style="font-size:12px;font-weight:600">Jānis Bērziņš</span>
+            <span class="xp-badge" style="margin-left:auto">+39 XP</span>
+          </div>
+          <div class="split-bar">
+            <div class="split-seg seg-ct" style="flex:6">CT</div>
+            <div class="split-seg seg-xr" style="flex:6">XR</div>
+          </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">CT 08–14 · XR 14–20</div>
+        </div>
+
+        <!-- Person 2 -->
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <div style="width:7px;height:7px;border-radius:50%;background:#ffa032;box-shadow:0 0 5px #ffa03288"></div>
+            <span style="font-size:12px;font-weight:600">Māris Kalniņš</span>
+            <span class="xp-badge" style="margin-left:auto">+39 XP</span>
+          </div>
+          <div class="split-bar">
+            <div class="split-seg seg-xr" style="flex:6">XR</div>
+            <div class="split-seg seg-ct" style="flex:6">CT</div>
+          </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">XR 08–14 · CT 14–20</div>
+        </div>
+
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;align-items:center;gap:6px">
+          <div class="sync-dot"></div>
+          <span style="font-size:10px;color:var(--muted)">Cloudflare KV · synced 2min ago</span>
+        </div>
+      </div>
+      <p class="annotation">Pair view — same shift, mirrored split bars</p>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
