@@ -158,7 +158,11 @@
 
   function loadLocal() {
     try {
-      var s = localStorage.getItem(LOCAL_KEY) || localStorage.getItem('minka_emoji_v1');
+      var s = localStorage.getItem(LOCAL_KEY);
+      if (!s) {
+        s = localStorage.getItem('minka_emoji_v1');
+        if (s) localStorage.setItem(LOCAL_KEY, s); // migrate immediately
+      }
       if (s) _data = JSON.parse(s);
     } catch(e) {}
   }

@@ -2399,7 +2399,6 @@ if ('serviceWorker' in navigator) {
     try {
       localStorage.removeItem('minka_schedule_cache_v2');
       localStorage.removeItem('minka_schedule_cache_ts_v2');
-      localStorage.removeItem('minka_emoji_v1');
     } catch (e) {}
     return caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key)))).catch(() => {});
   }
