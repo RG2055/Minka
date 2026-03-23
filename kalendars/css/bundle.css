@@ -8660,3 +8660,26 @@ html.has-wallpaper-bg .residents-launch-btn {
 .shift-bar-scrubber:hover {
   transform: translate(-50%, -50%) scale(1.4) !important;
 }
+
+/* ── Nakts quick-toggle button in shift progress bar ── */
+.ns-quick-btn {
+  background: rgba(120, 80, 220, 0.18);
+  border: 1px solid rgba(160, 100, 255, 0.35);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.75);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  margin-left: 8px;
+  padding: 4px 7px;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  flex-shrink: 0;
+}
+.ns-quick-btn:hover {
+  background: rgba(140, 90, 255, 0.32);
+  border-color: rgba(180, 120, 255, 0.65);
+  transform: scale(1.1);
+}
+.ns-quick-btn:active {
+  transform: scale(0.95);
+}
