@@ -68,6 +68,7 @@
         savedAt: Date.now()
       };
       saveSavedMap(map);
+      if(window.__nsKv) window.__nsKv.push(dk);
     }catch(e){}
   }
   function applySavedDayState(workers, fallbackSh, fallbackEi){
@@ -79,9 +80,20 @@
       if(!dk) return out;
       var saved = loadSavedMap()[dk];
       if(!saved || typeof saved!=='object') return out;
-      out.workers = sorted;
       out.sh = (typeof saved.sh === 'number' && isFinite(saved.sh)) ? saved.sh : fallbackSh;
       out.ei = (typeof saved.ei === 'number' && isFinite(saved.ei)) ? saved.ei : fallbackEi;
+      // Apply saved order — same logic as getNightSplitPlan in calendar.js
+      if(Array.isArray(saved.order) && saved.order.length){
+        var byName={};
+        sorted.forEach(function(w){ byName[String(w.name||'').trim()]=w; });
+        var next=[];
+        saved.order.forEach(function(name){
+          name=String(name||'').trim();
+          if(byName[name]){ next.push(byName[name]); delete byName[name]; }
+        });
+        Object.keys(byName).forEach(function(k){ next.push(byName[k]); });
+        if(next.length===sorted.length) out.workers=next;
+      }
       return out;
     }catch(e){ return out; }
   }
@@ -530,7 +542,7 @@
       var spk=sparkline(s.w.name, c.accent);
       var statusCls=rt.active?'active':(rt.status==='NĀKAMĀ'?'upnext':'done');
       var gradCss='conic-gradient(from 0deg, transparent 0%, '+c.accent+' 30%, transparent 60%)';
-      return '<div class="nsc-full-card'+(rt.active?' nsc-active':'')+'" draggable="true" data-i="'+i+'" style="--nsc-accent:'+c.accent+';--nsc-grad:'+gradCss+'">'
+      return '<div class="nsc-full-card'+(rt.active?' nsc-active':'')+'" data-i="'+i+'" style="--nsc-accent:'+c.accent+';--nsc-grad:'+gradCss+'">'
         +'<div class="nsc-full-inner">'
         +'<div class="nsc-full-top">'
         +'<span class="nsc-full-name">'+nm+'</span>'
@@ -587,57 +599,90 @@
     refreshFlowLiveMarker();
   }
 
-  // â”€â”€ Drag & Drop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Drag & Drop ── pure mouse + touch, zero HTML5 drag API ───────────────
   function drag(el){
-    var cs=el.querySelectorAll('.nsc-full-card');
-    var di=null,te=null,lastH=null;
+    if(el._dragWired) return;
+    el._dragWired=true;
+    var dragging=null, touching=null, lastH=null, ghost=null, rafId=null, mx=0, my=0;
 
-    cs.forEach(function(c){
-      c.addEventListener('dragstart',function(e){
-        di=+c.dataset.i; sndPickup();
-        c.classList.add('nsdrag');
-        // keep colour â€” no desaturation
-        e.dataTransfer.effectAllowed='move';
-        e.dataTransfer.setData('text/plain','');
-      });
-      c.addEventListener('dragend',function(){
-        c.classList.remove('nsdrag'); di=null;
-        cs.forEach(function(x){x.classList.remove('nsover');});
-        lastH=null;
-      });
-      c.addEventListener('dragover',function(e){
-        e.preventDefault();
-        if(lastH!==c){ if(lastH)lastH.classList.remove('nsover'); c.classList.add('nsover'); lastH=c; sndHover(); }
-      });
-      c.addEventListener('dragleave',function(e){
-        if(!e.relatedTarget||!c.contains(e.relatedTarget)){ c.classList.remove('nsover'); if(lastH===c)lastH=null; }
-      });
-      c.addEventListener('drop',function(e){
-        e.preventDefault(); c.classList.remove('nsover');
-        var j=+c.dataset.i;
-        if(di!=null&&di!==j){ sndDrop(); swap(di,j); }
-        di=null;lastH=null;
-      });
-      // Touch
-      c.addEventListener('touchstart',function(){
-        te=c; sndPickup(); c.classList.add('nsdrag');
-      },{passive:true});
-      c.addEventListener('touchmove',function(e){
-        if(!te)return;
-        var t=e.touches[0],o=document.elementFromPoint(t.clientX,t.clientY);
-        cs.forEach(function(x){x.classList.remove('nsover');});
-        var g=o&&o.closest('.nsc');
-        if(g&&g!==te){ if(lastH!==g){sndHover();lastH=g;} g.classList.add('nsover'); }else lastH=null;
-      },{passive:true});
-      c.addEventListener('touchend',function(e){
-        if(!te)return;
-        var t=e.changedTouches[0],o=document.elementFromPoint(t.clientX,t.clientY),g=o&&o.closest('.nsc');
-        if(g&&g!==te){ sndDrop(); swap(+te.dataset.i,+g.dataset.i); }
-        te.classList.remove('nsdrag');
-        cs.forEach(function(x){x.classList.remove('nsover');});
-        te=null;lastH=null;
-      });
+    function allCards(){ return el.querySelectorAll('.nsc-full-card'); }
+    function clearOver(){ allCards().forEach(function(x){x.classList.remove('nsover');}); lastH=null; }
+    function killGhost(){ cancelAnimationFrame(rafId); if(ghost){ghost.remove();ghost=null;} }
+    function moveGhost(){ if(ghost){ ghost.style.left=(mx+18)+'px'; ghost.style.top=(my-28)+'px'; } }
+
+    function startGhost(c){
+      killGhost();
+      var nm=c.querySelector('.nsc-full-name');
+      var accent=(c.style.getPropertyValue('--nsc-accent')||'#b77bff').trim();
+      ghost=document.createElement('div');
+      ghost.textContent=nm?nm.textContent:'?';
+      ghost.style.cssText='position:fixed;pointer-events:none;z-index:99999;'
+        +'padding:6px 16px;border-radius:12px;font-size:17px;font-weight:900;'
+        +'background:rgba(8,10,20,0.92);border:2px solid '+accent+';color:'+accent+';'
+        +'box-shadow:0 0 18px '+accent+';transform:scale(1.06) rotate(-2deg);'
+        +'backdrop-filter:blur(6px);white-space:nowrap;';
+      document.body.appendChild(ghost);
+      moveGhost();
+    }
+
+    function updateOver(ox,oy){
+      var o=document.elementFromPoint(ox,oy);
+      var active=dragging||touching;
+      var target=o&&o.closest('.nsc-full-card');
+      if(target&&(!el.contains(target)||target===active))target=null;
+      if(lastH&&lastH!==target)lastH.classList.remove('nsover');
+      lastH=target;
+      if(target){ target.classList.add('nsover'); }
+    }
+
+    // ── Mouse ──────────────────────────────────────────────────────────────
+    el.addEventListener('mousedown',function(e){
+      var c=e.target.closest('.nsc-full-card'); if(!c||e.button!==0)return;
+      e.preventDefault();
+      dragging=c; mx=e.clientX; my=e.clientY;
+      c.classList.add('nsdrag');
+      startGhost(c); sndPickup();
     });
+    document.addEventListener('mousemove',function(e){
+      if(!dragging)return;
+      mx=e.clientX; my=e.clientY;
+      cancelAnimationFrame(rafId); rafId=requestAnimationFrame(moveGhost);
+      updateOver(mx,my);
+    });
+    document.addEventListener('mouseup',function(){
+      if(!dragging)return;
+      var target=lastH;
+      dragging.classList.remove('nsdrag'); clearOver(); killGhost();
+      if(target){ sndDrop(); swap(+dragging.dataset.i,+target.dataset.i); }
+      dragging=null;
+    });
+
+    // ── Touch ──────────────────────────────────────────────────────────────
+    el.addEventListener('touchstart',function(e){
+      var c=e.target.closest('.nsc-full-card'); if(!c)return;
+      touching=c; mx=e.touches[0].clientX; my=e.touches[0].clientY;
+      c.classList.add('nsdrag');
+      startGhost(c); sndPickup();
+    },{passive:true});
+    el.addEventListener('touchmove',function(e){
+      if(!touching)return;
+      mx=e.touches[0].clientX; my=e.touches[0].clientY;
+      cancelAnimationFrame(rafId); rafId=requestAnimationFrame(moveGhost);
+      updateOver(mx,my);
+    },{passive:true});
+    el.addEventListener('touchend',function(e){
+      if(!touching)return;
+      var t=e.changedTouches[0];
+      updateOver(t.clientX,t.clientY);
+      var target=lastH;
+      touching.classList.remove('nsdrag'); clearOver(); killGhost();
+      if(target){ sndDrop(); swap(+touching.dataset.i,+target.dataset.i); }
+      touching=null;
+    });
+    el.addEventListener('touchcancel',function(){
+      if(!touching)return;
+      touching.classList.remove('nsdrag'); clearOver(); killGhost(); touching=null;
+    },{passive:true});
   }
 
   function swap(a,b){
@@ -646,6 +691,7 @@
     st.sl=calc(w,st.sh,st.ei);
     saveCurrentDayState();
     sndReorder(); render();
+    try{ if(window.__nsBarSync) window.__nsBarSync(); }catch(_e){}
     setTimeout(function(){
       var c=document.querySelectorAll('#nsPanelContent .nsc-full-card');
       [a,b].forEach(function(i){if(c[i]){c[i].classList.add('nsswapped');setTimeout(function(){c[i]&&c[i].classList.remove('nsswapped');},600);}});
@@ -704,6 +750,7 @@
 
   window.__ns={
     _render: render,
+    _update: update,
     ss:function(v){if(!st)return;st.sh=parseFloat(v);st.sl=calc(st.sl.map(function(s){return s.w;}),st.sh,st.ei);saveCurrentDayState();render();},
     se:function(v){if(!st)return;st.ei=parseInt(v); st.sl=calc(st.sl.map(function(s){return s.w;}),st.sh,st.ei); saveCurrentDayState(); render();},
     eq:function(){

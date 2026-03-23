@@ -351,12 +351,14 @@ html.mk-low-spec *::after {
       </div>
       <div class="shift-bar-track" id="shift-bar-track">
         <div class="shift-bar-fill" id="shift-bar-fill"></div>
-        <div id="shift-progress-segments" class="shift-progress-segments" aria-hidden="true"></div>
+        <div id="shift-progress-segments" class="shift-progress-segments"></div>
         <div id="shift-progress-stops" class="shift-progress-stops" aria-label="Maiņu beigu pieturas"></div>
         <div class="shift-bar-scrubber" id="shift-bar-scrubber">
-      <div class="shift-bar-tooltip" id="shift-bar-tooltip">—</div>
+          <div class="shift-bar-tooltip" id="shift-bar-tooltip">—</div>
         </div>
       </div>
+      <div id="shift-progress-below" class="shift-progress-below" hidden></div>
+      <button id="ns-bar-toggle" class="ns-bar-toggle" title="Rādīt/slēpt nakts sadalījumu uz progresa joslas" hidden>🌙 Nakts sadalījums</button>
     </div>
 
     <div class="scroll-row">
@@ -2933,6 +2935,9 @@ window.addEventListener('message', function(e) {
   min-height: 0 !important;
 }
 #shift-progress-wrap {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
   width: 100% !important;
   max-width: none !important;
   margin: 0 0 4px !important;
@@ -2942,6 +2947,32 @@ window.addEventListener('message', function(e) {
   box-shadow: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+}
+/* Button: bottom-right, pill, dummy-proof */
+#ns-bar-toggle {
+  align-self: flex-end !important;
+  margin-top: 4px !important;
+  padding: 4px 11px 4px 9px !important;
+  border-radius: 20px !important;
+  border: 1px solid rgba(255,255,255,0.13) !important;
+  background: rgba(255,255,255,0.05) !important;
+  color: rgba(255,255,255,0.35) !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: background .25s, color .25s, border-color .25s !important;
+}
+#ns-bar-toggle.is-on {
+  background: rgba(80,160,255,0.16) !important;
+  color: #b8daff !important;
+  border-color: rgba(80,160,255,0.35) !important;
+}
+/* Aura: pseudo-element on track, animate opacity only (60fps, no repaints) */
+#shift-bar-track {
+  overflow: visible !important;
 }
 .shift-progress-times {
   display: grid !important;
@@ -3019,79 +3050,115 @@ window.addEventListener('message', function(e) {
   overflow: visible !important;
   pointer-events: auto !important;
 }
+/* Names above bar */
 .shift-progress-segments {
   position: absolute !important;
   left: 0 !important;
   right: 0 !important;
   bottom: 100% !important;
-  margin-bottom: 8px !important;
-  height: 26px !important;
+  margin-bottom: 7px !important;
+  height: 18px !important;
+  pointer-events: auto !important;
+  overflow: visible !important;
+  cursor: default !important;
+}
+/* Times below bar — normal flow item so it spaces the button */
+.shift-progress-below {
+  position: relative !important;
+  width: 100% !important;
+  height: 14px !important;
   pointer-events: none !important;
   overflow: visible !important;
+  flex-shrink: 0 !important;
 }
+.shift-progress-time-label {
+  position: absolute !important;
+  transform: translateX(-50%) !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  color: rgba(255,255,255,0.38) !important;
+  letter-spacing: 0 !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+}
+.shift-progress-time-label.is-start { transform: none !important; }
+.shift-progress-time-label.is-end   { transform: translateX(-100%) !important; }
+/* Hide start/end time labels when night overlay is active to avoid clash with worker names */
+#shift-progress-wrap.ns-bar-active #shift-start-label,
+#shift-progress-wrap.ns-bar-active #shift-end-label { opacity: 0 !important; pointer-events: none !important; }
+/* Ghost drag element */
+.ns-drag-ghost {
+  position: fixed !important;
+  pointer-events: none !important;
+  z-index: 99999 !important;
+  padding: 3px 9px !important;
+  border-radius: 6px !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: .05em !important;
+  text-transform: uppercase !important;
+  background: rgba(10,10,20,0.88) !important;
+  border: 1px solid var(--ghost-color, #8b5cf6) !important;
+  color: var(--ghost-color, #8b5cf6) !important;
+  box-shadow: 0 0 12px var(--ghost-color, #8b5cf6) !important;
+  transform: scale(1.12) rotate(-2deg) !important;
+  transition: none !important;
+  backdrop-filter: blur(4px) !important;
+}
+/* Name labels */
 .shift-progress-seg-label {
   position: absolute !important;
   top: 0 !important;
   transform: translateX(-50%) !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: .05em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+  color: var(--seg-color, #8b5cf6) !important;
+  text-shadow: 0 0 10px var(--seg-color, #8b5cf6), 0 1px 6px rgba(0,0,0,0.6) !important;
+  cursor: grab !important;
+  user-select: none !important;
+  transition: opacity .15s !important;
+  line-height: 1 !important;
+}
+.shift-progress-seg-label::before { content: none !important; }
+.shift-progress-seg-label.is-start { transform: none !important; }
+.shift-progress-seg-label.is-end   { transform: translateX(-50%) !important; }
+.shift-progress-seg-label.is-hidden { display: none !important; }
+.shift-progress-seg-label.is-current {
+  text-shadow:
+    0 0 8px var(--seg-color, #8b5cf6),
+    0 0 18px var(--seg-color, #8b5cf6),
+    0 1px 6px rgba(0,0,0,0.6) !important;
+  filter: brightness(1.25) !important;
+}
+.shift-progress-seg-label.is-past { opacity: 0.3 !important; filter: grayscale(0.5) !important; }
+.shift-progress-seg-label.is-dragging { opacity: 0.4 !important; cursor: grabbing !important; }
+.shift-progress-seg-label.is-drag-over {
+  text-shadow: 0 0 14px #fff, 0 0 6px var(--seg-color,#8b5cf6) !important;
+  filter: brightness(1.5) !important;
+}
+/* Draggable dividers between segments */
+.shift-progress-seg-divider {
+  position: absolute !important;
+  top: -4px !important;
+  width: 9px !important;
+  height: 26px !important;
+  transform: translateX(-50%) !important;
+  cursor: ew-resize !important;
+  pointer-events: auto !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  flex-direction: column !important;
-  min-width: 0 !important;
-  max-width: 110px !important;
-  padding: 0 !important;
-  border-radius: 0 !important;
-  font-size: 10px !important;
-  font-weight: 800 !important;
-  letter-spacing: .04em !important;
-  text-transform: uppercase !important;
-  color: rgba(255,255,255,0.94) !important;
-  background: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  text-shadow: 0 1px 8px rgba(0,0,0,0.58) !important;
 }
-.shift-progress-seg-label::before {
-  content: none !important;
-}
-.shift-progress-seg-name {
-  display: block !important;
-  line-height: 1 !important;
-  color: var(--seg-color, #8b5cf6) !important;
-}
-.shift-progress-seg-time {
-  margin-top: 1px !important;
-  font-size: 9px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0 !important;
-  text-transform: none !important;
-  color: rgba(255,255,255,0.72) !important;
-}
-.shift-progress-seg-label.is-tight {
-  max-width: 82px !important;
-}
-.shift-progress-seg-label.is-start {
-  transform: none !important;
-  text-align: left !important;
-}
-.shift-progress-seg-label.is-end {
-  transform: translateX(-50%) !important;
-  text-align: center !important;
-}
-.shift-progress-seg-label.is-hidden {
-  display: none !important;
-}
-.shift-progress-seg-divider {
-  position: absolute !important;
-  top: 10px !important;
+.shift-progress-seg-divider::after {
+  content: '' !important;
   width: 1px !important;
-  height: 20px !important;
-  background: rgba(255,255,255,0.34) !important;
-  box-shadow: 0 0 8px rgba(255,255,255,0.14) !important;
-  transform: translateX(-50%) !important;
+  height: 100% !important;
+  background: rgba(255,255,255,0.3) !important;
+  box-shadow: 0 0 6px rgba(255,255,255,0.2) !important;
+  display: block !important;
 }
 .shift-bar-track.has-night-split {
   background-size: 100% 100%, 180px 100% !important;

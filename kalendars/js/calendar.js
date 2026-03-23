@@ -340,6 +340,7 @@ function closeFullListModal() {
   function writeCachedSchedule(data){ try{ localStorage.setItem(API_CACHE_KEY, JSON.stringify(data)); localStorage.setItem(API_CACHE_TS_KEY, String(Date.now())); }catch(e){} }
   let store = {}, storeRad = {}, activeMonth = "", activeDateStr = "", isGridView = true;
   let g_todayStr = null;
+  let _nsBarOn = false;
   let g_shiftStopGroups = new Map();
   let g_shiftStopExits = new Map();
   let g_shiftStopsRenderKey = '';
@@ -585,7 +586,8 @@ function closeFullListModal() {
       g_selectDay(todayExists ? g_todayStr : firstDate);
       g_updateLive();
       setInterval(g_updateLive, 1000);
-    } catch(e) { 
+      if (window.__nsKv) window.__nsKv.startPolling();
+    } catch(e) {
       console.error('g_init fail:', e);
       const loader = document.getElementById('grafiks-loader');
       const cached = readCachedSchedule();
@@ -617,6 +619,7 @@ function closeFullListModal() {
           g_selectDay(todayExists ? g_todayStr : firstDate);
           g_updateLive();
           if (!window.__minkaLiveStarted) { window.__minkaLiveStarted = true; setInterval(g_updateLive, 1000); }
+          if (window.__nsKv) window.__nsKv.startPolling();
           return;
         } catch(_) {}
       }
@@ -867,14 +870,14 @@ function closeFullListModal() {
     { h: 8, m: 0, l: '08:00' }
   ];
   const NIGHT_SPLIT_COLORS = [
-    { bg:'rgba(255,140,0,0.20)', accent:'#ffa032' },
-    { bg:'rgba(0,170,255,0.18)', accent:'#1ec8ff' },
-    { bg:'rgba(160,0,255,0.18)', accent:'#be50ff' },
-    { bg:'rgba(0,220,80,0.18)', accent:'#00f064' },
-    { bg:'rgba(255,30,90,0.18)', accent:'#ff3c6e' },
-    { bg:'rgba(240,210,0,0.18)', accent:'#ffe628' },
-    { bg:'rgba(0,210,190,0.18)', accent:'#00ebd7' },
-    { bg:'rgba(255,80,200,0.18)', accent:'#ff6edc' }
+    { bg:'rgba(255,140,0,0.72)', accent:'#ffa032' },
+    { bg:'rgba(0,170,255,0.68)', accent:'#1ec8ff' },
+    { bg:'rgba(160,0,255,0.68)', accent:'#be50ff' },
+    { bg:'rgba(0,220,80,0.68)', accent:'#00f064' },
+    { bg:'rgba(255,30,90,0.68)', accent:'#ff3c6e' },
+    { bg:'rgba(240,210,0,0.68)', accent:'#ffe628' },
+    { bg:'rgba(0,210,190,0.68)', accent:'#00ebd7' },
+    { bg:'rgba(255,80,200,0.68)', accent:'#ff6edc' }
   ];
 
   function getNightSplitSavedMap() {
@@ -1036,33 +1039,289 @@ function closeFullListModal() {
   }
 
   function buildNightSplitMeta(segments, start, end, now) {
+    // Names above bar + draggable dividers
     if (!Array.isArray(segments) || !segments.length || !(start instanceof Date) || !(end instanceof Date)) return '';
     const total = Math.max(1, end - start);
     const parts = [];
     segments.forEach(function(seg, index) {
-      if (now instanceof Date && now >= seg.end) return;
       const from = Math.max(0, Math.min(100, ((seg.start - start) / total) * 100));
-      const to = Math.max(0, Math.min(100, ((seg.end - start) / total) * 100));
-      const mid = from + ((to - from) / 2);
-      const anchor = Math.max(6, Math.min(94, mid));
-      const firstName = String(seg.name || '').split(/\s+/)[0] || '-';
-      const widthPct = Math.max(0, to - from);
-      const timeLabel =
-        String(seg.start.getHours()).padStart(2,'0') + ':' + String(seg.start.getMinutes()).padStart(2,'0') +
-        '–' +
-        String(seg.end.getHours()).padStart(2,'0') + ':' + String(seg.end.getMinutes()).padStart(2,'0');
-      const cls = (widthPct < 7 ? ' is-hidden' : (widthPct < 13 ? ' is-tight' : '')) + (to > 96 ? ' is-end' : (from < 4 ? ' is-start' : ''));
+      const to   = Math.max(0, Math.min(100, ((seg.end   - start) / total) * 100));
+      const mid  = from + (to - from) / 2;
+      const anchor = Math.max(4, Math.min(96, mid));
+      const firstName = String(seg.name || '').split(/\s+/)[0] || '–';
+      const widthPct  = Math.max(0, to - from);
+      const isCurrent = now instanceof Date && now >= seg.start && now < seg.end;
+      const isPast    = now instanceof Date && now >= seg.end;
+      let cls = widthPct < 7 ? ' is-hidden' : '';
+      if (to > 96) cls += ' is-end'; else if (from < 4) cls += ' is-start';
+      if (isCurrent) cls += ' is-current';
+      if (isPast) cls += ' is-past';
       parts.push(
-        '<span class="shift-progress-seg-label' + cls + '" style="left:' + anchor.toFixed(3) + '%;--seg-color:' + seg.color.accent + '">' +
-          '<span class="shift-progress-seg-name">' + firstName + '</span>' +
-          '<span class="shift-progress-seg-time">' + timeLabel + '</span>' +
+        '<span class="shift-progress-seg-label' + cls + '"' +
+          ' style="left:' + anchor.toFixed(2) + '%;--seg-color:' + seg.color.accent + '"' +
+          ' data-seg-name="' + firstName + '" data-seg-idx="' + index + '">' +
+          firstName +
         '</span>'
       );
-      if (index < segments.length - 1 && !(now instanceof Date && now >= seg.end)) {
-        parts.push('<span class="shift-progress-seg-divider" style="left:' + to.toFixed(3) + '%"></span>');
+      if (index < segments.length - 1) {
+        parts.push('<span class="shift-progress-seg-divider" style="left:' + to.toFixed(2) + '%" data-div-idx="' + index + '"></span>');
       }
     });
     return parts.join('');
+  }
+
+  function buildNightSplitTimesBelow(segments, start, end) {
+    // Time labels below bar (start time of each segment + end of last)
+    if (!Array.isArray(segments) || !segments.length || !(start instanceof Date) || !(end instanceof Date)) return '';
+    const total = Math.max(1, end - start);
+    const parts = [];
+    segments.forEach(function(seg, index) {
+      const from = Math.max(0, Math.min(100, ((seg.start - start) / total) * 100));
+      const to   = Math.max(0, Math.min(100, ((seg.end   - start) / total) * 100));
+      const fmt  = function(d) { return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); };
+      const clsFrom = from < 2 ? ' is-start' : '';
+      parts.push('<span class="shift-progress-time-label' + clsFrom + '" style="left:' + from.toFixed(2) + '%">' + fmt(seg.start) + '</span>');
+      if (index === segments.length - 1) {
+        const clsTo = to > 98 ? ' is-end' : '';
+        parts.push('<span class="shift-progress-time-label' + clsTo + '" style="left:' + to.toFixed(2) + '%">' + fmt(seg.end) + '</span>');
+      }
+    });
+    return parts.join('');
+  }
+
+  function saveNightSplitOrder(dateStr, newOrder) {
+    try {
+      const map = getNightSplitSavedMap();
+      const saved = map[dateStr] || {};
+      map[dateStr] = { sh: saved.sh || 0, ei: saved.ei !== undefined ? saved.ei : 2, order: newOrder, savedAt: Date.now() };
+      localStorage.setItem(NIGHT_SPLIT_STORE_KEY, JSON.stringify(map));
+      if (window.__nsKv) window.__nsKv.push(dateStr);
+    } catch(e) {}
+  }
+
+  // ---------------------------------------------------------------------------
+  // Night-split KV sync — push/pull via Cloudflare Worker for cross-device share
+  // ---------------------------------------------------------------------------
+  window.__nsKv = (function() {
+    var STORE_KEY = 'minkaNightSplitByDateV1';
+    var _bc = null;
+    var _polling = false;
+    try { _bc = new BroadcastChannel('minka-ns-sync'); } catch(e) {}
+
+    function _api() {
+      return (window.MinkaApi && typeof window.MinkaApi.apiFetch === 'function' && window.MinkaApi.getToken())
+        ? window.MinkaApi : null;
+    }
+    function _activeDateStr() {
+      return String(window.__activeDateStr || window.__todayDateStr || '').trim();
+    }
+
+    function push(dateStr) {
+      var api = _api();
+      if (!api || !dateStr) return;
+      try {
+        var map = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
+        var data = map[dateStr];
+        if (!data) return;
+        var payload = { date: dateStr, order: data.order || [], sh: data.sh || 0, ei: data.ei !== undefined ? data.ei : 2, savedAt: data.savedAt || Date.now() };
+        api.apiFetch('/api/ns-order', { method: 'POST', json: payload }).catch(function(){});
+        if (_bc) try { _bc.postMessage(payload); } catch(_e) {}
+      } catch(e) {}
+    }
+
+    function pull(dateStr, cb) {
+      var api = _api();
+      if (!api || !dateStr) return;
+      api.apiFetch('/api/ns-order?date=' + encodeURIComponent(dateStr))
+        .then(function(r) { return r.json(); })
+        .then(function(remote) {
+          if (!remote || !Array.isArray(remote.order) || !remote.order.length) return;
+          var map = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
+          var local = map[dateStr];
+          if (!local || !local.savedAt || (remote.savedAt && remote.savedAt > local.savedAt)) {
+            map[dateStr] = { sh: remote.sh || 0, ei: remote.ei !== undefined ? remote.ei : 2, order: remote.order, savedAt: remote.savedAt || Date.now() };
+            localStorage.setItem(STORE_KEY, JSON.stringify(map));
+            if (cb) cb();
+          }
+        }).catch(function(){});
+    }
+
+    function startPolling() {
+      if (_polling) return;
+      _polling = true;
+      if (_bc) {
+        _bc.onmessage = function(evt) {
+          try {
+            var p = evt.data;
+            if (!p || !p.date || !Array.isArray(p.order)) return;
+            var map = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
+            var local = map[p.date];
+            if (!local || !local.savedAt || (p.savedAt && p.savedAt > local.savedAt)) {
+              map[p.date] = { sh: p.sh || 0, ei: p.ei !== undefined ? p.ei : 2, order: p.order, savedAt: p.savedAt || Date.now() };
+              localStorage.setItem(STORE_KEY, JSON.stringify(map));
+              if (p.date === _activeDateStr()) {
+                try { if (window.__ns && window.__ns._update) window.__ns._update(); } catch(_e) {}
+                try { if (window.__nsBarSync) window.__nsBarSync(); } catch(_e) {}
+              }
+            }
+          } catch(_e) {}
+        };
+      }
+      // Initial pull
+      var d0 = _activeDateStr();
+      if (d0) pull(d0, function() {
+        try { if (window.__ns && window.__ns._update) window.__ns._update(); } catch(_e) {}
+        try { if (window.__nsBarSync) window.__nsBarSync(); } catch(_e) {}
+      });
+      // 30s cross-device poll
+      setInterval(function() {
+        var d = _activeDateStr();
+        if (!d) return;
+        pull(d, function() {
+          try { if (window.__ns && window.__ns._update) window.__ns._update(); } catch(_e) {}
+          try { if (window.__nsBarSync) window.__nsBarSync(); } catch(_e) {}
+        });
+      }, 30000);
+    }
+
+    return { push: push, pull: pull, startPolling: startPolling };
+  })();
+
+  function playNightToggleSound(on) {
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      // ON:  soft A3→C4→E4 — low, calm, ascending like distant wind chimes
+      // OFF: gentle E4→A3 descend — slow, quiet fade
+      var notes = on ? [220.00, 261.63, 329.63] : [329.63, 220.00];
+      var spacing = on ? 0.22 : 0.28;
+      notes.forEach(function(freq, i) {
+        var osc  = ctx.createOscillator();
+        var gain = ctx.createGain();
+        // slight shimmer via a second detuned oscillator for warmth
+        var osc2  = ctx.createOscillator();
+        var gain2 = ctx.createGain();
+        var t0 = ctx.currentTime + i * spacing;
+        var peak = on ? 0.06 : 0.045;
+        var attack = 0.14;
+        var release = on ? 2.8 : 2.0;
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, t0);
+        gain.gain.setValueAtTime(0, t0);
+        gain.gain.linearRampToValueAtTime(peak, t0 + attack);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + attack + release);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t0);
+        osc.stop(t0 + attack + release + 0.1);
+
+        // shimmer layer — 2 Hz above, very quiet
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(freq + 2, t0);
+        gain2.gain.setValueAtTime(0, t0);
+        gain2.gain.linearRampToValueAtTime(peak * 0.25, t0 + attack + 0.1);
+        gain2.gain.exponentialRampToValueAtTime(0.0001, t0 + attack + release);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(t0);
+        osc2.stop(t0 + attack + release + 0.1);
+      });
+    } catch(e) {}
+  }
+
+  function initNsBarDrag(segmentsEl) {
+    if (!segmentsEl || segmentsEl._nsDragWired) return;
+    segmentsEl._nsDragWired = true;
+
+    var dragging = null, overLabel = null, ghost = null, rafId = null;
+    var mx = 0, my = 0;
+
+    function getLabel(el) { return el && el.closest ? el.closest('.shift-progress-seg-label') : null; }
+
+    // Same sounds as the nakts bottom panel
+    function _tone(freq,dur,type,vol){try{var c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type=type||'triangle';o.frequency.value=freq;g.gain.setValueAtTime(0,c.currentTime);g.gain.linearRampToValueAtTime(vol||0.1,c.currentTime+0.01);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dur);o.start(c.currentTime);o.stop(c.currentTime+dur);}catch(e){}}
+    function sndBarPickup(){ _tone(220,0.09,'triangle',0.13); setTimeout(function(){_tone(280,0.07,'triangle',0.07);},25); }
+    function sndBarHover(){  _tone(600,0.03,'sine',0.035); }
+    function sndBarDrop(){   _tone(240,0.13,'triangle',0.16); setTimeout(function(){_tone(300,0.09,'triangle',0.09);},55); }
+    function sndBarReorder(){ _tone(420,0.07,'sine',0.06); setTimeout(function(){_tone(530,0.1,'sine',0.08);},85); }
+
+    function updateDropTarget() {
+      // Layout reads in RAF — doesn't block ghost movement
+      var trackEl = segmentsEl.parentElement;
+      var trackRect = trackEl ? trackEl.getBoundingClientRect() : null;
+      var nearBar = trackRect && my >= trackRect.top - 50 && my <= trackRect.bottom + 50
+                    && mx >= trackRect.left - 20 && mx <= trackRect.right + 20;
+      if (ghost) ghost.style.opacity = nearBar ? '1' : '0.3';
+      var labels = segmentsEl.querySelectorAll('.shift-progress-seg-label');
+      var found = null;
+      if (nearBar) {
+        labels.forEach(function(el) {
+          if (el === dragging) return;
+          var r = el.getBoundingClientRect();
+          if (mx >= r.left - 10 && mx <= r.right + 10) found = el;
+        });
+      }
+      if (overLabel && overLabel !== found) overLabel.classList.remove('is-drag-over');
+      overLabel = found;
+      if (overLabel) overLabel.classList.add('is-drag-over');
+    }
+
+    segmentsEl.addEventListener('mousedown', function(e) {
+      var lbl = getLabel(e.target);
+      if (!lbl) return;
+      e.preventDefault();
+      dragging = lbl;
+      mx = e.clientX; my = e.clientY;
+      lbl.classList.add('is-dragging');
+      ghost = document.createElement('div');
+      ghost.className = 'ns-drag-ghost';
+      ghost.textContent = lbl.dataset.segName || lbl.textContent;
+      ghost.style.setProperty('--ghost-color', getComputedStyle(lbl).getPropertyValue('--seg-color').trim() || '#8b5cf6');
+      document.body.appendChild(ghost);
+      ghost.style.left = (mx + 14) + 'px';
+      ghost.style.top  = (my - 20) + 'px';
+      sndBarPickup();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+      if (!dragging) return;
+      mx = e.clientX; my = e.clientY;
+      // Ghost follows mouse immediately — no frame delay
+      if (ghost) { ghost.style.left = (mx + 14) + 'px'; ghost.style.top = (my - 20) + 'px'; }
+      // Drop target detection deferred to RAF (needs getBoundingClientRect)
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(function() {
+        var prevOver = overLabel;
+        updateDropTarget();
+        if (overLabel && overLabel !== prevOver) sndBarHover();
+      });
+    });
+
+    document.addEventListener('mouseup', function() {
+      if (!dragging) return;
+      cancelAnimationFrame(rafId);
+      if (ghost) { ghost.remove(); ghost = null; }
+      dragging.classList.remove('is-dragging');
+      var target = overLabel;
+      if (overLabel) { overLabel.classList.remove('is-drag-over'); overLabel = null; }
+
+      if (target && target !== dragging) {
+        var fromIdx = parseInt(dragging.dataset.segIdx, 10);
+        var toIdx   = parseInt(target.dataset.segIdx, 10);
+        if (!isNaN(fromIdx) && !isNaN(toIdx) && fromIdx !== toIdx) {
+          sndBarDrop();
+          setTimeout(sndBarReorder, 60);
+          var plan = getNightSplitPlan(activeDateStr);
+          if (plan && plan.segments) {
+            var order = plan.segments.map(function(s) { return s.name; });
+            var tmp = order[fromIdx]; order[fromIdx] = order[toIdx]; order[toIdx] = tmp;
+            saveNightSplitOrder(activeDateStr, order);
+            if (window.__ns) { if (window.__ns._update) window.__ns._update(); else if (window.__ns._render) window.__ns._render(); }
+          }
+        }
+      }
+      dragging = null;
+    });
   }
 
   function mapNightSplitToRange(plan, rangeStart, rangeEnd) {
@@ -1319,6 +1578,8 @@ function closeFullListModal() {
     }
   }
 
+  window.__nsBarSync = function() { try { g_updateLive(); } catch(_e){} };
+
   function g_updateLive() {
     const now = new Date();
 
@@ -1437,9 +1698,26 @@ function closeFullListModal() {
 
     if (wrap) {
       wrap.hidden = false;
+      // Wire night-split bar toggle button
+      const nsBarToggle = document.getElementById('ns-bar-toggle');
+      if (nsBarToggle) {
+        nsBarToggle.hidden = !splitPlan;
+        wrap.classList.toggle('ns-bar-active', _nsBarOn && !!splitPlan);
+        if (!nsBarToggle._wired) {
+          nsBarToggle._wired = true;
+          nsBarToggle.addEventListener('click', function() {
+            _nsBarOn = !_nsBarOn;
+            nsBarToggle.classList.toggle('is-on', _nsBarOn);
+            var w = document.getElementById('shift-progress-wrap');
+            if (w) w.classList.toggle('ns-bar-active', _nsBarOn);
+            playNightToggleSound(_nsBarOn);
+          });
+        }
+      }
+      const effectiveOverlay = _nsBarOn ? splitOverlay : null;
       if (track) {
-        if (splitOverlay && splitOverlay.segments && splitOverlay.segments.length) {
-          const splitGradient = buildNightSplitGradient(splitOverlay.segments, splitOverlay.start, splitOverlay.end);
+        if (effectiveOverlay && effectiveOverlay.segments && effectiveOverlay.segments.length) {
+          const splitGradient = buildNightSplitGradient(effectiveOverlay.segments, effectiveOverlay.start, effectiveOverlay.end);
           track.style.setProperty('background', splitGradient + ', linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.00) 35%, rgba(255,255,255,0.15) 48%, rgba(255,255,255,0.26) 50%, rgba(255,255,255,0.15) 52%, rgba(255,255,255,0.00) 65%, transparent 100%)', 'important');
           track.classList.add('has-night-split');
           track.style.setProperty('box-shadow', 'inset 0 0 0 1px rgba(255,255,255,0.05)', 'important');
@@ -1451,24 +1729,35 @@ function closeFullListModal() {
       }
       if (fill) fill.style.width = pct + '%';
       if (fill) {
-        if (splitOverlay && splitOverlay.segments && splitOverlay.segments.length) {
+        if (effectiveOverlay && effectiveOverlay.segments && effectiveOverlay.segments.length) {
           fill.style.setProperty('background', 'linear-gradient(90deg, rgba(255,255,255,0.26), rgba(255,255,255,0.08))', 'important');
         } else {
           fill.style.setProperty('background', 'linear-gradient(90deg, #6f5cff 0%, #8b5cf6 45%, #b794ff 100%)', 'important');
         }
       }
+      const belowEl = document.getElementById('shift-progress-below');
       if (labelsEl) {
-        if (splitOverlay && splitOverlay.segments && splitOverlay.segments.length) {
-          labelsEl.innerHTML = buildNightSplitMeta(splitOverlay.segments, splitOverlay.start, splitOverlay.end, now);
+        if (effectiveOverlay && effectiveOverlay.segments && effectiveOverlay.segments.length) {
+          labelsEl.innerHTML = buildNightSplitMeta(effectiveOverlay.segments, effectiveOverlay.start, effectiveOverlay.end, now);
           labelsEl.hidden = false;
+          initNsBarDrag(labelsEl);
         } else {
           labelsEl.innerHTML = '';
           labelsEl.hidden = true;
         }
       }
+      if (belowEl) {
+        if (effectiveOverlay && effectiveOverlay.segments && effectiveOverlay.segments.length) {
+          belowEl.innerHTML = buildNightSplitTimesBelow(effectiveOverlay.segments, effectiveOverlay.start, effectiveOverlay.end);
+          belowEl.hidden = false;
+        } else {
+          belowEl.innerHTML = '';
+          belowEl.hidden = true;
+        }
+      }
       if (scrubber) scrubber.style.left = pct + '%';
-      if (scrubber && splitOverlay && splitOverlay.segments && splitOverlay.segments.length) {
-        let currentSeg = splitOverlay.segments.find(function(seg) { return now >= seg.start && now < seg.end; }) || null;
+      if (scrubber && effectiveOverlay && effectiveOverlay.segments && effectiveOverlay.segments.length) {
+        let currentSeg = effectiveOverlay.segments.find(function(seg) { return now >= seg.start && now < seg.end; }) || null;
         if (currentSeg && currentSeg.color) {
           scrubber.style.setProperty('background', '#fff7f2', 'important');
           scrubber.style.setProperty('box-shadow', '0 0 0 3px ' + currentSeg.color.bg + ', 0 0 16px ' + currentSeg.color.bg, 'important');
