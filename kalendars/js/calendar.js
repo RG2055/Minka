@@ -3145,7 +3145,7 @@ document.addEventListener('focusout', function(e) {
 window.addEventListener('resize', function() {
   var pop = document.getElementById('miniCalPopup');
   if (pop && pop.style.display !== 'none') positionMiniCalPopup();
-  hideShiftStopPopover();
+  if (typeof hideShiftStopPopover === 'function') hideShiftStopPopover();
 });
 
 window.addEventListener('message', function(e) {
