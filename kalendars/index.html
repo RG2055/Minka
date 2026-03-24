@@ -382,6 +382,14 @@ html.mk-low-spec *::after {
       <div id="radiologists-duty" class="duty-vertical"></div>
     </div>
     <div>
+      <div id="radiologists-plan-container" class="next-box radiologists-plan-box">
+        <div class="radiologists-plan-head">
+          <div class="next-box-label">🗂 SADALĪJUMS</div>
+          <button id="radiologists-plan-edit" class="radiologists-plan-edit" type="button">Rediģēt</button>
+        </div>
+        <div id="radiologists-plan-date" class="radiologists-plan-date">--</div>
+        <div id="radiologists-plan-content" class="radiologists-plan-content">Nav ievadīts.</div>
+      </div>
       <div id="radiologists-next-container" class="next-box">
         <div class="next-box-label">⏱ NĀKAMĀ MAIŅA</div>
         <span id="radiologists-next" class="next-names">--</span>
@@ -544,6 +552,7 @@ html.mk-low-spec *::after {
 <script src="js/minka.sync.config.js" defer></script>
 <script src="js/emoji.js" defer></script>
 <script src="js/levels.js" defer></script>
+<script src="js/radiologist_plan.js" defer></script>
 
 <script>
 // ï¿½ï¿½ï¿½ï¿½ Smooth staggered entrance for duty blocks ï¿½ï¿½ï¿½ï¿½
@@ -2655,6 +2664,9 @@ window.addEventListener('message', function(e) {
   bottom: auto !important;
   top: auto !important;
   margin-top: 8px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
 }
 .right-panel > div:nth-child(2) {
   flex: 0 0 auto !important;
@@ -2676,6 +2688,164 @@ window.addEventListener('message', function(e) {
   margin-top: 0 !important;
   overflow: hidden !important;
   z-index: 0 !important;
+}
+#radiologists-plan-container {
+  padding: 11px 12px 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 7px !important;
+  flex: 0 0 auto !important;
+  min-height: 124px !important;
+}
+.radiologists-plan-box {
+  border-color: rgba(255,110,90,0.16) !important;
+  background: linear-gradient(180deg, rgba(255,90,70,0.06), rgba(12,18,30,0.72)) !important;
+}
+.radiologists-plan-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.radiologists-plan-edit {
+  appearance: none;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.72);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  padding: 5px 9px;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.radiologists-plan-edit:hover {
+  background: rgba(255,110,90,0.12);
+  border-color: rgba(255,110,90,0.28);
+  color: #fff;
+}
+.radiologists-plan-date {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.34);
+}
+.radiologists-plan-content {
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(255,255,255,0.82);
+  white-space: pre-wrap;
+  word-break: break-word;
+  min-height: 44px;
+  max-height: 150px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.radiologists-plan-content.is-empty {
+  color: rgba(255,255,255,0.34);
+}
+#radiologists-next-container {
+  flex: 0 0 auto !important;
+}
+.radiologists-plan-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.68);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 20px;
+}
+.radiologists-plan-modal.is-open {
+  display: flex;
+}
+.radiologists-plan-sheet {
+  width: min(560px, 96vw);
+  background: #0c1220;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 20px;
+  box-shadow: 0 24px 70px rgba(0,0,0,0.52);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.radiologists-plan-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.radiologists-plan-modal-title {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  color: rgba(255,255,255,0.88);
+  text-transform: uppercase;
+}
+.radiologists-plan-modal-date {
+  font-size: 11px;
+  color: rgba(255,255,255,0.48);
+  font-weight: 700;
+}
+.radiologists-plan-textarea {
+  width: 100%;
+  min-height: 220px;
+  resize: vertical;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.04);
+  color: #eef3ff;
+  padding: 14px 16px;
+  box-sizing: border-box;
+  outline: none;
+  font: 600 14px/1.5 "JetBrains Mono", "SF Mono", monospace;
+}
+.radiologists-plan-textarea:focus {
+  border-color: rgba(255,110,90,0.35);
+  box-shadow: 0 0 0 1px rgba(255,110,90,0.16);
+}
+.radiologists-plan-help {
+  font-size: 11px;
+  color: rgba(255,255,255,0.42);
+  line-height: 1.45;
+}
+.radiologists-plan-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.radiologists-plan-status {
+  font-size: 11px;
+  color: rgba(255,255,255,0.50);
+}
+.radiologists-plan-btns {
+  display: flex;
+  gap: 8px;
+}
+.radiologists-plan-btn {
+  appearance: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.10);
+}
+.radiologists-plan-btn.secondary {
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.72);
+}
+.radiologists-plan-btn.primary {
+  background: rgba(255,110,90,0.16);
+  border-color: rgba(255,110,90,0.30);
+  color: #ffd7cf;
 }
 .side-panel.compact-duty .duty-vertical {
   gap: 8px !important;

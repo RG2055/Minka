@@ -568,6 +568,22 @@ function closeFullListModal() {
       window.__grafiksStoreRad = storeRad;
       // Signal search that worker data is now available
       document.dispatchEvent(new CustomEvent('minka:storeReady'));
+      // Push workers index to parent for bolus tracker
+      try {
+        var _wIdx = {};
+        for (var _m in store) {
+          var _days = store[_m];
+          if (Array.isArray(_days)) _days.forEach(function(day) {
+            if (day && day.date && Array.isArray(day.workers)) {
+              var seen = {};
+              _wIdx[day.date] = day.workers
+                .filter(function(w){ return w && w.name && !seen[w.name] && (seen[w.name]=1); })
+                .map(function(w){ return String(w.name).trim(); });
+            }
+          });
+        }
+        window.parent.postMessage({ type: 'mk_workers_index', data: _wIdx }, '*');
+      } catch(_e) {}
 
       const picker = document.getElementById('grafiks-monthPicker');
       picker.innerHTML = "";
@@ -2545,6 +2561,50 @@ function closeFullListModal() {
   bindResizeHandle(rzBL, 'bottom left');
   bindResizeHandle(rzTR, 'top right');
   bindResizeHandle(rzTL, 'top left');
+
+  // Bolus tracker: parent requests workers for a date
+  window.addEventListener('message', function(e) {
+    if (!e || !e.data || e.data.type !== 'mk_get_workers') return;
+    var dateStr = e.data.date;
+    var workers = [];
+    if (store) {
+      outer: for (var month in store) {
+        var days = store[month];
+        if (!Array.isArray(days)) continue;
+        for (var i = 0; i < days.length; i++) {
+          if (days[i].date === dateStr && Array.isArray(days[i].workers)) {
+            var seen = {};
+            workers = days[i].workers
+              .filter(function(w){ return w && w.name && !seen[w.name] && (seen[w.name]=1); })
+              .map(function(w){ return String(w.name).trim(); });
+            break outer;
+          }
+        }
+      }
+    }
+    try { e.source.postMessage({ type: 'mk_workers_result', date: dateStr, workers: workers }, '*'); } catch(_){}
+  });
+
+  // Re-send full workers index on demand (handles race-condition where parent wasn't ready on first load)
+  window.addEventListener('message', function(e) {
+    if (!e || !e.data || e.data.type !== 'mk_request_workers_index') return;
+    if (!store) return;
+    try {
+      var idx = {};
+      for (var _m in store) {
+        var _days = store[_m];
+        if (Array.isArray(_days)) _days.forEach(function(day) {
+          if (day && day.date && Array.isArray(day.workers)) {
+            var seen = {};
+            idx[day.date] = day.workers
+              .filter(function(w){ return w && w.name && !seen[w.name] && (seen[w.name]=1); })
+              .map(function(w){ return String(w.name).trim(); });
+          }
+        });
+      }
+      window.parent.postMessage({ type: 'mk_workers_index', data: idx }, '*');
+    } catch(_e) {}
+  });
 
 })();
 ;
