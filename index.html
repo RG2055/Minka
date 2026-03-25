@@ -1383,7 +1383,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return (Date.now() - (_lastLocalWriteAt[roomId] || 0)) > 15000;
   }
   function _kvPull(cb) {
-    fetch(GS_URL).then(function(r){ return r.json(); }).then(function(remote) {
+    fetch(GS_URL + '?_=' + Date.now(), { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(remote) {
       if (!remote || typeof remote !== 'object') return;
       var changed = false;
       ROOMS.forEach(function(r) {
