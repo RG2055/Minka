@@ -1374,7 +1374,7 @@ window.addEventListener('DOMContentLoaded', () => {
     var ts = _state[roomId] && _state[roomId].changedAt;
     var name = encodeURIComponent(_names[roomId] || 'Anonīms');
     if (ts) fetch(GS_URL + '?action=write&room=' + roomId + '&ts=' + ts + '&name=' + name).catch(function(){});
-    if (_bc) try { _bc.postMessage({ type: 'bolus', state: JSON.parse(JSON.stringify(_state)) }); } catch(e) {}
+    if (_bc) try { _bc.postMessage({ type: 'bolus', state: JSON.parse(JSON.stringify(_state)), history: JSON.parse(JSON.stringify(_history)) }); } catch(e) {}
   }
   function _markLocalWrite(roomId) {
     _lastLocalWriteAt[roomId] = Date.now();
@@ -1987,9 +1987,9 @@ window.addEventListener('DOMContentLoaded', () => {
         var ch = false;
         ROOMS.forEach(function(r){
           var rem=d.state[r.id],loc=_state[r.id];
-          if(rem&&rem.changedAt&&_remoteOverwriteAllowed(r.id)&&(!loc.changedAt||rem.changedAt>loc.changedAt)){_state[r.id]={changedAt:rem.changedAt};ch=true;}
+          if(rem&&rem.changedAt&&_remoteOverwriteAllowed(r.id)&&(!loc.changedAt||rem.changedAt>loc.changedAt)){_state[r.id]={changedAt:rem.changedAt};if(d.history&&d.history[r.id])_history[r.id]=d.history[r.id];ch=true;}
         });
-        if(ch){_save();if(_open)_render();_updateLed();}
+        if(ch){_save();_saveHistory();if(_open)_render();_updateLed();}
       } catch(e) {}
     };
   }
