@@ -1451,7 +1451,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return {
       dasharray: circumference.toFixed(2),
       dashoffset: offset.toFixed(2),
-      cap: clamped > 3 ? 'round' : 'butt'
+      cap: (clamped > 3 && clamped < 99) ? 'round' : 'butt'
     };
   }
   function _renderRoom(r) {
