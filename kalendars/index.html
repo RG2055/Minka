@@ -185,6 +185,12 @@ html.mk-low-spec *::after {
   animation-iteration-count: 1 !important;
 }
 </style>
+<style>
+#mk-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(30,32,48,0.97);color:#fff;padding:10px 18px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.05em;z-index:99999;box-shadow:0 4px 24px rgba(0,0,0,.5);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;white-space:nowrap;border:1px solid rgba(255,255,255,.08);}
+#mk-toast.mk-show{opacity:1;transform:translateX(-50%) translateY(0);}
+#mk-toast.mk-err{border-color:rgba(255,60,60,.4);color:#ff6b6b;}
+#mk-toast.mk-ok{border-color:rgba(48,209,88,.35);color:#30d158;}
+</style>
 </head>
 <body class="ai-collapsed">
 <noscript><div style="padding:40px;text-align:center;color:#ccc;font-family:sans-serif;background:#111;min-height:100vh;">JavaScript ir nepieciešams, lai šī lapa darbotos. / JavaScript is required.</div></noscript>
@@ -483,6 +489,15 @@ html.mk-low-spec *::after {
   <div class="full-list-content" id="full-list-content"></div>
 </div>
 
+<script>
+function _mkToast(msg, type) {
+  var t = document.getElementById('mk-toast') || (function(){ var el = document.createElement('div'); el.id = 'mk-toast'; document.body.appendChild(el); return el; })();
+  t.textContent = msg;
+  t.className = 'mk-show' + (type === 'error' ? ' mk-err' : type === 'ok' ? ' mk-ok' : '');
+  clearTimeout(t._to);
+  t._to = setTimeout(function(){ t.className = ''; }, 3000);
+}
+</script>
 <script>
 (function(){
   'use strict';
@@ -1614,7 +1629,7 @@ function getTauriInvoke(){
       const chipTxt = document.getElementById('minkaNamedayChipText');
       const panelOpen = !!(aiPanel && aiPanel.classList.contains('open'));
       if (chip && chipTxt && !panelOpen) {
-  chipTxt.innerHTML = (info.isToday ? 'Vārdadiena: ' : 'Šajā dienā: ') + names.map(n => `<strong>${n}</strong>`).join(', ');
+  chipTxt.innerHTML = (info.isToday ? 'Vārdadiena: ' : 'Šajā dienā: ') + names.map(n => `<strong>${n.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</strong>`).join(', ');
         chip.style.display = 'flex';
       }
     } catch(e){}
