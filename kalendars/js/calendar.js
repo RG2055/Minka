@@ -286,20 +286,21 @@ function openFullListModal(ev) {
       <div class="fll-group">
         <div class="fll-group-header">
           <span class="fll-group-icon">${catIcon(cat)}</span>
-          <span class="fll-group-name">${cat}</span>
+          <span class="fll-group-name">${escapeHtml(cat)}</span>
           <span class="fll-group-count">${groups[cat].length}</span>
         </div>
         <div class="fll-group-items">`;
     groups[cat].forEach(item => {
+      const safePhone = escapeHtml(item.phone).replace(/'/g, '&#39;');
       html += `
-        <a class="fll-item" href="javascript:void(0)" onclick="event.stopPropagation();if(navigator.clipboard){navigator.clipboard.writeText('${item.phone}').catch(()=>{});var s=this.querySelector('.fll-phone-num');if(s){var t=s.textContent;s.textContent='✓';setTimeout(function(){s.textContent=t},1400);}}">
+        <a class="fll-item" href="javascript:void(0)" onclick="event.stopPropagation();if(navigator.clipboard){navigator.clipboard.writeText('${safePhone}').catch(()=>{});var s=this.querySelector('.fll-phone-num');if(s){var t=s.textContent;s.textContent='✓';setTimeout(function(){s.textContent=t},1400);}}">
           <div class="fll-item-info">
-            <span class="fll-item-name">${item.name}</span>
-            ${item.sub ? `<span class="fll-item-sub">${item.sub}</span>` : ''}
+            <span class="fll-item-name">${escapeHtml(item.name)}</span>
+            ${item.sub ? `<span class="fll-item-sub">${escapeHtml(item.sub)}</span>` : ''}
           </div>
           <div class="fll-item-phone">
             <span class="fll-phone-icon">📞</span>
-            <span class="fll-phone-num">${item.phone}</span>
+            <span class="fll-phone-num">${escapeHtml(item.phone)}</span>
           </div>
         </a>`;
     });
@@ -386,10 +387,10 @@ function closeFullListModal() {
     var payload = g_shiftStopPopoverData[key];
     var pop = ensureShiftStopPopover();
     pop.innerHTML =
-      '<div class="shift-stop-popover-head"><div class="shift-stop-popover-time">' + payload.time + '</div></div>' +
+      '<div class="shift-stop-popover-head"><div class="shift-stop-popover-time">' + escapeHtml(String(payload.time||'')) + '</div></div>' +
       payload.rows.map(function(row) {
-        return '<div class="shift-stop-popover-row"><div class="shift-stop-popover-name">' + row.name + '</div>' +
-          (row.emoji ? '<div class="shift-stop-popover-emoji">' + row.emoji + '</div>' : '') +
+        return '<div class="shift-stop-popover-row"><div class="shift-stop-popover-name">' + escapeHtml(String(row.name||'')) + '</div>' +
+          (row.emoji ? '<div class="shift-stop-popover-emoji">' + escapeHtml(String(row.emoji||'')) + '</div>' : '') +
         '</div>';
       }).join('');
     pop.hidden = false;
@@ -647,6 +648,7 @@ function closeFullListModal() {
         if (loader) {
           loader.style.pointerEvents = 'all';
           loader.innerHTML = '<div style="text-align:center;padding:24px;max-width:320px"><div style="font-size:22px;margin-bottom:10px">⚠️</div><div style="color:rgba(255,120,80,0.9);font-size:11px;font-weight:700;letter-spacing:.1em">NEVAR IELĀDĒT DATUS</div><div style="font-size:9px;color:rgba(255,255,255,0.4);margin-top:8px;line-height:1.5">Pārbaudiet internetu. Ja grafiks reiz jau bija atvērts šajā pārlūkā, tiks izmantots lokālais kešs.</div><button onclick="g_init(0)" style="margin-top:14px;padding:7px 16px;border:1px solid rgba(255,120,80,0.35);background:rgba(255,80,50,0.1);color:#fff;border-radius:10px;cursor:pointer;font-size:10px;font-weight:700">🔄 Mēģināt vēlreiz</button></div>';
+          if (typeof _mkToast === 'function') _mkToast('Grafiku nevar ielādēt', 'error');
         }
       }
     }
