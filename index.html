@@ -1301,7 +1301,6 @@ window.addEventListener('DOMContentLoaded', () => {
           var win = f && f.contentWindow;
           if (!win) return;
           _collectWorkersFromStore(win.__grafiksStore, dateStr, seen, out);
-          _collectWorkersFromStore(win.__grafiksStoreRad, dateStr, seen, out);
         } catch(_e) {}
       });
     } catch(_e) {}
