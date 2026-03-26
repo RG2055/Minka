@@ -1332,7 +1332,22 @@ window.addEventListener('DOMContentLoaded', () => {
   var _chipDay  = { ge: 0, philips: 0 }; // day offset from today for worker chips (0=today,-1=yesterday)
   var LAT_MONTHS = ['Janvāris','Februāris','Marts','Aprīlis','Maijs','Jūnijs','Jūlijs','Augusts','Septembris','Oktobris','Novembris','Decembris'];
   var LAT_DAYS   = ['P','O','T','C','Pk','S','Sv'];
-  function _pickTs(room) { return _pick[room] !== null ? _pick[room] : (_state[room].changedAt || Date.now()); }
+  function _shiftStart() {
+    var now = new Date();
+    var s = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0, 0, 0);
+    if (now.getHours() < 8) s.setDate(s.getDate() - 1);
+    return s.getTime();
+  }
+  function _pickTs(room) {
+    if (_pick[room] !== null) return _pick[room];
+    var saved = _state[room].changedAt;
+    if (!saved) return Date.now();
+    if (saved < _shiftStart()) {
+      var d = new Date(saved), t = new Date();
+      return new Date(t.getFullYear(), t.getMonth(), t.getDate(), d.getHours(), d.getMinutes(), 0).getTime();
+    }
+    return saved;
+  }
   function _buildCal(room) {
     var cv = _calView[room]; var y = cv.y, m = cv.m;
     var sel = new Date(_pickTs(room)); var now = new Date();
