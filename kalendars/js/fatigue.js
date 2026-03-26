@@ -747,7 +747,7 @@
 
     var level, levelClass;
     if (score <= 20) { level = 'ZEMS'; levelClass = 'fatigue-low'; }
-    else if (score <= 45) { level = 'VIDÄ’JS'; levelClass = 'fatigue-moderate'; }
+    else if (score <= 45) { level = 'VIDĒJS'; levelClass = 'fatigue-moderate'; }
     else if (score <= 70) { level = 'AUGSTS'; levelClass = 'fatigue-high'; }
     else { level = 'KRITISKS'; levelClass = 'fatigue-critical'; }
 

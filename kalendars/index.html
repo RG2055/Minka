@@ -1013,7 +1013,7 @@ document.addEventListener('keydown', (e) => {
           try {
             const f = window.__fatigue.calculateFatigue(name);
             if (f) {
-              const level = f.score >= 85 ? 'KRITISKS' : f.score >= 65 ? 'AUGSTS' : f.score >= 40 ? 'VIDï¿½JS' : 'ZEMS';
+              const level = f.score >= 85 ? 'KRITISKS' : f.score >= 65 ? 'AUGSTS' : f.score >= 40 ? 'VIDĒJS' : 'ZEMS';
               fatigueLines.push(`${name}: ${f.score}% (${level})`);
             }
           } catch(e){}
