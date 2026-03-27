@@ -177,10 +177,30 @@
     return false;
   }
 
+  function _bolusChangesPerPerson() {
+    var counts = {};
+    try {
+      var h = JSON.parse(localStorage.getItem('minkaBolusHistoryV1') || 'null');
+      if (h) {
+        ['ge', 'philips'].forEach(function(room) {
+          var arr = h[room];
+          if (!Array.isArray(arr)) return;
+          arr.forEach(function(entry) {
+            var name = (entry.name || '').trim();
+            if (!name || name === 'Anonīms') return;
+            counts[name] = (counts[name] || 0) + 1;
+          });
+        });
+      }
+    } catch(_e) {}
+    return counts;
+  }
+
   function buildAllTimeStats() {
     var store = window.__grafiksStore || {};
     var storeRad = window.__grafiksStoreRad || {};
     var workers = {};
+    var bolusCounts = _bolusChangesPerPerson();
 
     function processStore(src, isRad) {
       Object.values(src).forEach(function(monthArr) {
@@ -269,6 +289,10 @@
       var loadBonus = ratio > 1 ? Math.min(100, Math.round((ratio - 1) * 150)) : 0;
       xp += loadBonus;
 
+      var bolusCount = bolusCounts[ws.name] || 0;
+      var bolusBonus = bolusCount * 20;
+      xp += bolusBonus;
+
       ws.xp = Math.round(xp);
       ws.levelData = getLevelData(ws.xp);
       ws.longestStreak = calcLongestStreak(ws.dates);
@@ -279,7 +303,9 @@
         diversity: hasAll ? 200 : has2 ? 80 : 0,
         regularity: regularityBonus,
         holidays: ws.holidays * 30,
-        load: loadBonus
+        load: loadBonus,
+        bolus: bolusBonus,
+        bolusCount: bolusCount
       };
     });
 
@@ -340,6 +366,7 @@
           '<span style="color:#fbbf24;">Regularitate</span> — jo stabilak katru nedelu, jo vairak XP (max +150)<br>' +
           '<span style="color:#f472b6;">Svetku mainas</span> — katra svetku diena +30 XP<br>' +
           '<span style="color:#a3e635;">Komandas slodze</span> — virs komandas videja papildus lidz +100 XP<br>' +
+          '<span style="color:#f87171;">Bolusa maina</span> — katra bolusa maina +20 XP<br>' +
         '</div>' +
         '<div style="font-size:8px;color:rgba(255,255,255,0.26);margin-top:6px;">Hover uz rindas redzams detalizets XP sadalijums</div>' +
     '</div>';
@@ -430,6 +457,7 @@
       'Regularitate: +' + (b.regularity || 0),
       'Svetki: +' + (b.holidays || 0),
       'Slodze: +' + (b.load || 0),
+      'Boluss: +' + (b.bolus || 0) + ' (' + (b.bolusCount || 0) + 'x)',
       'Streak: ' + (ws.longestStreak || 0) + ' dienas'
     ].join(' | ');
 
