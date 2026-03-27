@@ -791,11 +791,12 @@ document.addEventListener('keydown', (e) => {
   let _weatherData = null, _newsItems = [], _newsFeedIdx = {v:0,l:0,r:0};
   let _cbId = 0;
 
+  const _dn = ['Svētdiena','Pirmdiena','Otrdiena','Trešdiena','Ceturtdiena','Piektdiena','Sestdiena'];
+  const _td = new Date();
+  const _todayStr = _dn[_td.getDay()] + ', ' + _td.getDate() + '.' + String(_td.getMonth()+1).padStart(2,'0') + '.' + _td.getFullYear();
   const HINTS = [
-    'Meklē nodaļu, numuru vai vārdu...',
-    'Jautā AI: raksti ? un jautājumu',
-    'Piemērs: "kardioloģija" vai "7801"',
-    'Grafika jautājums? Raksti ?',
+    'Meklē nodaļu, numuru vai darbinieku...',
+    _todayStr,
   ];
   const WKEY = 'e91db7aba1dd5745f52eb99e7cc38e8e';
   const RSS  = 'https://api.rss2json.com/v1/api.json';
@@ -918,7 +919,7 @@ document.addEventListener('keydown', (e) => {
   function setMode(m) {
     bar.classList.toggle('ai-mode', m==='ai');
     bar.classList.remove('ai-mode');
-    if (m==='ai') { pill.textContent='AI'; bar.classList.add('ai-mode'); }
+    if (m==='ai') { pill.textContent='?'; bar.classList.add('ai-mode'); }
     else if (m==='search') { pill.textContent='MEKLĒ'; }
     else { pill.textContent='MINKA'; }
   }
@@ -993,6 +994,60 @@ document.addEventListener('keydown', (e) => {
       })();
     });
   }
+
+  /* ---- HTML-aware typewriter ---- */
+  function typewriteHtml(el, html, speed) {
+    speed = speed || 30;
+    abortTypewrite();
+    var runId = _twRunId;
+
+    // Parse HTML once into real DOM, collect text-node segments
+    var tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    el.innerHTML = '';
+
+    var segments = []; // {node: TextNode, full: string}
+    function cloneTree(src, dest) {
+      src.childNodes.forEach(function(child) {
+        if (child.nodeType === 3 /* TEXT_NODE */) {
+          var tn = document.createTextNode('');
+          dest.appendChild(tn);
+          if (child.nodeValue) segments.push({node: tn, full: child.nodeValue});
+        } else if (child.nodeType === 1 /* ELEMENT_NODE */) {
+          var el2 = document.createElement(child.tagName);
+          for (var a = 0; a < child.attributes.length; a++)
+            el2.setAttribute(child.attributes[a].name, child.attributes[a].value);
+          dest.appendChild(el2);
+          cloneTree(child, el2);
+        }
+      });
+    }
+    cloneTree(tmp, el);
+
+    var caret = document.createElement('span');
+    caret.id = 'minkaAiCaret';
+    el.appendChild(caret);
+
+    var segIdx = 0, charIdx = 0;
+    return new Promise(function(resolve) {
+      (function tick() {
+        if (runId !== _twRunId) { resolve(); return; }
+        // advance to next non-empty segment if current is done
+        while (segIdx < segments.length && charIdx >= segments[segIdx].full.length) {
+          segments[segIdx].node.nodeValue = segments[segIdx].full;
+          segIdx++; charIdx = 0;
+        }
+        if (segIdx >= segments.length) {
+          if (caret.parentNode) caret.parentNode.removeChild(caret);
+          resolve(); return;
+        }
+        charIdx++;
+        segments[segIdx].node.nodeValue = segments[segIdx].full.slice(0, charIdx);
+        _twTimer = setTimeout(tick, speed + Math.random() * 8);
+      })();
+    });
+  }
+
 
   /* ï¿½ï¿½ï¿½ï¿½ Ask AI ï¿½ï¿½ï¿½ï¿½ */
   async function askAI(q) {
@@ -1078,7 +1133,7 @@ Tu vari atbildēt uz: "Kurš ir visvairāk noguris?", "Vai kāds ir riskā?", "K
 
   /* ï¿½ï¿½ï¿½ï¿½ Proactive message queue ï¿½ï¿½ï¿½ï¿½ */
   function getModeLabel(mode) {
-  const modeLabels = {weather:'LAIKS', warning:'NOGURUMS', news:'ZIŅAS', info:'MINKA'};
+  const modeLabels = {weather:'LAIKS', warning:'NOGURUMS', news:'ZIŅAS', info:'MINKA', top:'TOP', bolus:'BOLUS'};
     return modeLabels[mode] || 'MINKA';
   }
 
@@ -1135,12 +1190,17 @@ Tu vari atbildēt uz: "Kurš ir visvairāk noguris?", "Vai kāds ir riskā?", "K
     openAi();
     setMode('ai');
 
-    typewrite(aiText, text, 35).then(() => {
+    const isProactive = (mode === 'bolus' || mode === 'top');
+    const twFn = isProactive ? typewriteHtml : typewrite;
+    twFn(aiText, text, 35).then(() => {
       if (token !== _msgRunToken) return;
       clearTimeout(_msgHideTimer);
       _msgBusy = false;
       if (_msgQueue.length) {
         _msgHideTimer = setTimeout(() => { if (token === _msgRunToken) drainMsgs(); }, Math.max(4000, durationMs || 10000));
+      } else if (isProactive) {
+        // Auto-close proactive messages so panel doesn't block future messages
+        _msgHideTimer = setTimeout(() => { if (token === _msgRunToken) closeAi(); }, 8000);
       }
     });
   }
@@ -1294,7 +1354,7 @@ Tu vari atbildēt uz: "Kurš ir visvairāk noguris?", "Vai kāds ir riskā?", "K
       msgs.push({text:`${GREET}! Rīgā: ${_weatherData.desc}, ${_weatherData.t}°C (sajūta ${_weatherData.tf}°C), vējš ${_weatherData.wind} m/s. Saule ${_weatherData.sr}–${_weatherData.ss}.`, mode:'weather'});
     }
     const varda = todayVarda();
-    if (varda.length) msgs.push({text:`Šodien vārdadienu svin ${varda.join(' un ')}.`, mode:'info'});
+    if (varda.length) msgs.push({text:`Šodien vārdadienu svin ${(varda.length > 1 ? varda.slice(0,-1).join(', ') + ' un ' + varda[varda.length-1] : varda[0])}.`, mode:'info'});
     const fw = getFatigueWarning();
     const fwMsg = buildFatigueMsg(fw);
     if (fwMsg) msgs.push({text: fwMsg, mode:'warning'});
@@ -1304,7 +1364,37 @@ Tu vari atbildēt uz: "Kurš ir visvairāk noguris?", "Vai kāds ir riskā?", "K
       if (n) msgs.push({text: n, mode:'news', link: _lastNewsLink});
     }
 
+    // Bolus reminder
+    msgs.push({text: 'Samaini un atzīmē <span style="color:#ff3b30;font-weight:800;">bolusu</span> nomaiņu statistikai — saņem +20 XP! 💉', mode:'bolus'});
+
     msgs.forEach((m,i) => setTimeout(()=>qMsg(m.text, m.mode, m.link||''), 2000 + i*13000));
+
+    // Top 5 — poll until __grafiksStore has data (max 60s)
+    let _top5Done = false;
+    function _tryTop5() {
+      if (_top5Done) return;
+      try {
+        const store = window.__grafiksStore || {};
+        if (!Object.keys(store).length) return; // not ready yet
+        const allW = window.MinkaLevels && typeof window.MinkaLevels.buildAllTimeStats === 'function'
+          ? window.MinkaLevels.buildAllTimeStats() : {};
+        const top5 = Object.values(allW)
+          .filter(w => !w.isRad && w.xp > 0)
+          .sort((a,b) => b.xp - a.xp)
+          .slice(0,5);
+        if (!top5.length) return;
+        _top5Done = true;
+        const medals = ['🥇','🥈','🥉','4)','5)'];
+        const html = top5.map((w,i) => {
+          const lvl = w.levelData && w.levelData.current ? w.levelData.current.lvl : '?';
+          const col = (w.levelData && w.levelData.current && w.levelData.current.color) || '#a78bfa';
+          return medals[i] + ' <b>' + w.name.split(' ')[0] + '</b> <span style="color:' + col + ';font-weight:700;">' + w.xp + ' XP</span> <span style="font-size:10px;opacity:.45">Lv.' + lvl + '</span>';
+        }).join('&ensp;&ensp;');
+        qMsg('🏆 ' + html, 'top');
+      } catch(_e) {}
+    }
+    const _top5Interval = setInterval(() => { _tryTop5(); if (_top5Done) clearInterval(_top5Interval); }, 2000);
+    setTimeout(() => clearInterval(_top5Interval), 60000);
 
     // News every 4 min ï¿½ 2 items each refresh cycle
     setInterval(async () => {
@@ -1341,7 +1431,8 @@ Tu vari atbildēt uz: "Kurš ir visvairāk noguris?", "Vai kāds ir riskā?", "K
   /* ï¿½ï¿½ï¿½ï¿½ Click outside closes panels ï¿½ï¿½ï¿½ï¿½ */
   document.addEventListener('mousedown', e => {
     if (!bar.contains(e.target)) {
-      closeAi(); closeResults();
+      if (!_msgBusy) closeAi();
+      closeResults();
       if (document.activeElement===input) input.blur();
     }
   });
@@ -1472,7 +1563,7 @@ Tu vari atbildēt uz: "Kurš ir visvairāk noguris?", "Vai kāds ir riskā?", "K
   function announceSelectedDayNameday(force){
     const info = applyNamedayHighlight();
     if (!info.names.length) return;
-  const text = (info.isToday ? 'Šodien vārdadienu svin ' : 'Šajā dienā vārdadienu svin ') + info.names.join(' un ') + '.';
+  const text = (info.isToday ? 'Šodien vārdadienu svin ' : 'Šajā dienā vārdadienu svin ') + (info.names.length > 1 ? info.names.slice(0,-1).join(', ') + ' un ' + info.names[info.names.length-1] : info.names[0]) + '.';
     const sig = (info.dateStr || info.key || 'today') + '|' + text;
     if (!force && sig === lastAnnounced) return;
     lastAnnounced = sig;
@@ -1556,6 +1647,8 @@ Tu vari atbildēt uz: "Kurš ir visvairāk noguris?", "Vai kāds ir riskā?", "K
   let lastWeatherSig = '';
   let lastNamedayCycle = -999;
   let lastWeatherCycle = -999;
+  let lastTop5Cycle = -999;
+  let lastBolusCycle = -999;
   let newsBusy = false;
   let weatherBusy = false;
   let weatherCache = null;
@@ -1622,7 +1715,7 @@ function getTauriInvoke(){
       try { const chip = document.getElementById('minkaNamedayChip'); if (chip) chip.style.display='none'; } catch(e){}
       return null;
     }
-  const text = (info.isToday ? 'Šodien vārdadienu svin ' : 'Šajā dienā vārdadienu svin ') + names.join(' un ') + '.';
+  const text = (info.isToday ? 'Šodien vārdadienu svin ' : 'Šajā dienā vārdadienu svin ') + (names.length > 1 ? names.slice(0,-1).join(', ') + ' un ' + names[names.length-1] : names[0]) + '.';
     // Update nameday chip
     try {
       const chip = document.getElementById('minkaNamedayChip');
@@ -1821,9 +1914,38 @@ function nextNews(){
     return false;
   }
 
+  function queueTop5() {
+    if ((cycle - lastTop5Cycle) < 6) return false;
+    try {
+      const allW = window.MinkaLevels && typeof window.MinkaLevels.buildAllTimeStats === 'function' ? window.MinkaLevels.buildAllTimeStats() : {};
+      const top5 = Object.values(allW).filter(function(w){ return !w.isRad && w.xp > 0; }).sort(function(a,b){ return b.xp - a.xp; }).slice(0,5);
+      if (!top5.length) return false;
+      const medals = ['\uD83E\uDD47','\uD83E\uDD48','\uD83E\uDD49','4)','5)'];
+      const parts = top5.map(function(w,i) {
+        const lvl = w.levelData && w.levelData.current ? w.levelData.current.lvl : '?';
+        const col = (w.levelData && w.levelData.current && w.levelData.current.color) || '#a78bfa';
+        return medals[i] + ' <b>' + w.name.split(' ')[0] + '</b> <span style="color:' + col + ';font-weight:700;">Lv.' + lvl + '</span> <span style="color:#4ade80;font-weight:700;">' + w.xp + ' XP</span>';
+      });
+      const html = '<span style="font-weight:800;opacity:.7">LĪDERI:</span> ' + parts.join(' &nbsp; ');
+      if (queue(html, 'top')) { lastTop5Cycle = cycle; return true; }
+    } catch(_e) {}
+    return false;
+  }
+
+  function queueBolus() {
+    if ((cycle - lastBolusCycle) < 10) return false;
+    const html = 'Samaini <span style="color:#ff3b30;font-weight:800;">bolusu</span>, atzīmē — saņem <span style="color:#4ade80;font-weight:700;">20 XP</span>! 💉';
+    if (queue(html, 'bolus')) { lastBolusCycle = cycle; return true; }
+    return false;
+  }
+
   function tick(){
     cycle++;
     if (!isIdle()) return schedule(5000);
+
+    // Every 5th cycle show top5, every 9th show bolus
+    if (cycle % 5 === 0 && queueTop5()) return schedule(17000);
+    if (cycle % 9 === 0 && queueBolus()) return schedule(17000);
 
     const nameday = buildNameday();
     const weather = buildWeatherMessage();
@@ -1911,7 +2033,7 @@ function nextNews(){
       const now = new Date();
       const todayStr = pad2(now.getDate()) + '.' + pad2(now.getMonth()+1) + '.' + now.getFullYear();
       const isToday = ds === todayStr;
-  const text = (isToday ? 'Šodien vārdadienu svin ' : 'Šajā dienā vārdadienu svin ') + names.join(' un ') + '.';
+  const text = (isToday ? 'Šodien vārdadienu svin ' : 'Šajā dienā vārdadienu svin ') + (names.length > 1 ? names.slice(0,-1).join(', ') + ' un ' + names[names.length-1] : names[0]) + '.';
       const sig = ds + '|' + text;
 
       lastNamedaySig = sig;
@@ -2283,14 +2405,16 @@ function nextNews(){
     const chipText = document.getElementById('minkaNamedayChipText');
     if (!aiPanel || !chip || !chipText) return;
 
-  const MODE_ICONS = { 'LAIKS':'🌤', 'NOGURUMS':'⚠️', 'ZIŅAS':'📰', 'MINKA':'✦', 'MINKA AI':'✦', 'AI':'✦' };
+  const MODE_ICONS = { 'LAIKS':'🌤', 'NOGURUMS':'⚠️', 'ZIŅAS':'📰', 'MINKA':'✦', 'MINKA AI':'✦', 'AI':'✦', 'TOP':'🏆', 'BOLUS':'💉' };
 
     function syncToChip() {
       const open = aiPanel.classList.contains('open');
-      const txt  = (aiText  && aiText.textContent  || '').replace(/\s+/g,' ').trim();
+      const _clone = aiText ? aiText.cloneNode(true) : null;
+      if (_clone) { const _c = _clone.querySelector('#minkaAiCaret'); if (_c) _c.remove(); }
+      const txt  = (_clone && _clone.innerHTML || '').replace(/\s+/g,' ').trim();
       const mode = (aiMode  && aiMode.textContent   || 'MINKA').trim();
       if (open && txt) {
-  chipIcon.textContent = MODE_ICONS[mode] || '✦';
+        chipIcon.textContent = MODE_ICONS[mode] || '✦';
         chipText.innerHTML   = txt;
         chip.style.display   = 'flex';
         chip.setAttribute('data-mode', mode.toLowerCase().replace(' ',''));
