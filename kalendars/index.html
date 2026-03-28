@@ -364,7 +364,10 @@ html.mk-low-spec *::after {
         </div>
       </div>
       <div id="shift-progress-below" class="shift-progress-below" hidden></div>
-      <button id="ns-bar-toggle" class="ns-bar-toggle" title="Rādīt/slēpt nakts sadalījumu uz progresa joslas" hidden>🌙 Nakts sadalījums</button>
+      <div class="ns-btn-row">
+        <img src="data/cat_small.webp" class="ns-jiji-bg" alt="" aria-hidden="true">
+        <button id="ns-bar-toggle" class="ns-bar-toggle" title="Rādīt/slēpt nakts sadalījumu uz progresa joslas" hidden>🌙 Nakts sadalījums</button>
+      </div>
     </div>
 
     <div class="scroll-row">
@@ -3495,6 +3498,35 @@ window.addEventListener('message', function(e) {
 @keyframes shiftNightFlow {
   from { background-position: 0 0, -180px 0; }
   to { background-position: 0 0, 180px 0; }
+}
+/* ── Jiji cat — next to nakts sadalījums button ── */
+.ns-btn-row {
+  display: flex !important;
+  align-items: center !important;
+  align-self: flex-end !important;
+  gap: 6px !important;
+  margin-top: 4px !important;
+}
+.ns-jiji-bg {
+  width: 38px !important;
+  height: auto !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  flex-shrink: 0 !important;
+  transition: opacity 0.5s ease !important;
+}
+#shift-progress-wrap.ns-bar-active .ns-jiji-bg {
+  opacity: 1 !important;
+  animation: jiji-appear 0.5s cubic-bezier(.2,.9,.3,1) forwards,
+             jiji-float 3.5s ease-in-out 0.5s infinite !important;
+}
+@keyframes jiji-appear {
+  from { transform: scale(0.72); }
+  to   { transform: scale(1); }
+}
+@keyframes jiji-float {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50%       { transform: scale(1.05) translateY(-4px); }
 }
 .shift-stop {
   position: absolute !important;
