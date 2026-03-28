@@ -401,7 +401,7 @@
   function lastSlotChecklist(i,total){
     if(i !== total - 1) return '';
     var note = 'Pirms pedejas dalas parliecinies par bolusa pieejamibu, oranzo maisu sagatavotibu un CT/RTG iekartu kalibracijas vai restarta statusu.';
-    return '<div class="nsc-last-checklist" title="'+escHtml(note)+'" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px">'
+    return '<div class="nsc-last-checklist" title="'+escHtml(note)+'" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px">'
       + '<span style="display:inline-flex;justify-content:center;align-items:center;gap:4px;padding:4px 6px;border-radius:10px;background:rgba(59,130,246,.14);border:1px solid rgba(96,165,250,.35);color:#bfdbfe;font-size:10px;font-weight:700;line-height:1.05;text-align:center">&#128137; Bolus</span>'
       + '<span style="display:inline-flex;justify-content:center;align-items:center;gap:4px;padding:4px 6px;border-radius:10px;background:rgba(249,115,22,.14);border:1px solid rgba(251,146,60,.38);color:#fdba74;font-size:10px;font-weight:700;line-height:1.05;text-align:center">&#128999; Maisi</span>'
       + '<span style="display:inline-flex;justify-content:center;align-items:center;gap:4px;padding:4px 6px;border-radius:10px;background:rgba(244,63,94,.14);border:1px solid rgba(251,113,133,.36);color:#fda4af;font-size:10px;font-weight:700;line-height:1.05;text-align:center">&#9881; CT/RTG</span>'
@@ -534,6 +534,193 @@
     var so=START.map(function(o){return'<option value="'+o.v+'"'+(o.v===st.sh?' selected':'')+'>'+o.l+'</option>';}).join('');
     var eo=END.map(function(o,i){return'<option value="'+i+'"'+(i===(st.ei||0)?' selected':'')+'>'+o.l+'</option>';}).join('');
 
+    // Night theme helper — maps slot start hour → visual theme
+    function _nightTheme(startMin){
+      var h=Math.floor(((startMin%1440)+1440)%1440/60);
+      if(h>=22||h<1)  return 'moon';
+      if(h>=1&&h<3)   return 'starry';
+      if(h>=3&&h<5)   return 'horizon';
+      return 'sunrise';
+    }
+    var _nightDescs={moon:'Dziļā Nakts & Mēness Virsma',starry:'Zvaigžņotais Plašums',horizon:'Tālais Horizonts & Rītausma',sunrise:'Pirmā Gaisma & Saullēkts'};
+
+    // Compute fatigue sparkline path data scaled to SVG coordinates
+    function _sparkPaths(workerName, uid, x0, y0, sw, sh){
+      if(!window.__fatigue) return null;
+      var hist=window.__fatigue.gatherWorkerHistory(workerName);
+      if(!hist||hist.length<3) return null;
+      var today=new Date(), scores=[];
+      for(var i=13;i>=0;i--){
+        var d=new Date(today); d.setDate(d.getDate()-i);
+        var dow=d.getDay(), mo=dow===0?6:dow-1;
+        var ws=new Date(d); ws.setDate(ws.getDate()-mo);
+        var we=new Date(ws); we.setDate(we.getDate()+6);
+        var wsh=hist.filter(function(e){return e.date>=ws&&e.date<=we;});
+        var wh=wsh.reduce(function(s,e){return s+e.hours;},0);
+        var wn=wsh.filter(function(e){return e.isNight;}).length;
+        var sc=0;
+        if(wh>=60)sc+=40;else if(wh>=48)sc+=20+Math.round((wh-48)/12*20);else sc+=Math.max(0,Math.round(wh/48*15));
+        sc+=Math.min(18,wsh.length*3); sc+=Math.min(15,wn*5);
+        scores.push(Math.max(0,Math.min(100,sc)));
+      }
+      if(scores.length<2) return null;
+      var pad=2, mn=Math.min.apply(null,scores), mx=Math.max.apply(null,scores);
+      if(mx===mn) mx=mn+1;
+      var xp=function(i){return x0+pad+(i/(scores.length-1))*(sw-pad*2);};
+      var yp=function(s){return y0+sh-pad-(s-mn)/(mx-mn)*(sh-pad*2);};
+      var path='M '+xp(0).toFixed(1)+','+yp(scores[0]).toFixed(1);
+      for(var j=1;j<scores.length;j++){
+        var px=xp(j-1),cx=(px+xp(j))/2;
+        path+=' C '+cx.toFixed(1)+','+yp(scores[j-1]).toFixed(1)+' '+cx.toFixed(1)+','+yp(scores[j]).toFixed(1)+' '+xp(j).toFixed(1)+','+yp(scores[j]).toFixed(1);
+      }
+      var area=path+' L '+xp(scores.length-1).toFixed(1)+','+(y0+sh)+' L '+xp(0).toFixed(1)+','+(y0+sh)+' Z';
+      return {line:path, area:area};
+    }
+
+    // SVG background per theme — unique IDs via card index to avoid conflicts
+    function _nightSvg(theme, idx, workerName, accent){
+      var u='nsc'+idx;
+      var d='', bg='', deco='', gr='';
+      // Shared glow filter for graph lines — renders line twice: blurred under + crisp on top
+      var gf='<filter id="'+u+'-gl" x="-10%" y="-80%" width="120%" height="260%" color-interpolation-filters="sRGB">'
+        +'<feGaussianBlur in="SourceGraphic" stdDeviation="2" result="b"/>'
+        +'<feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>'
+        +'</filter>';
+
+      if(theme==='moon'){
+        d='<linearGradient id="'+u+'-bg" x1="10%" y1="0%" x2="0%" y2="100%">'
+          +'<stop offset="0%" stop-color="#201840"/><stop offset="55%" stop-color="#120f28"/><stop offset="100%" stop-color="#08060f"/>'
+          +'</linearGradient>'
+          +'<linearGradient id="'+u+'-gr" x1="0%" y1="0%" x2="0%" y2="100%">'
+          +'<stop offset="0%" stop-color="#9a8cff" stop-opacity="0.55"/>'
+          +'<stop offset="60%" stop-color="#9a8cff" stop-opacity="0.12"/>'
+          +'<stop offset="100%" stop-color="#9a8cff" stop-opacity="0"/>'
+          +'</linearGradient>'
+          +'<filter id="'+u+'-mf"><feGaussianBlur stdDeviation="12"/></filter>'
+          +gf;
+        bg='url(#'+u+'-bg)';
+        deco=// Nebula wash
+             '<ellipse cx="90" cy="80" rx="110" ry="60" fill="#7050d0" opacity="0.06"/>'
+            // Scattered stars
+            +'<circle cx="28" cy="18" r="1"   fill="#fff" opacity="0.5"/>'
+            +'<circle cx="72" cy="32" r="1.4" fill="#fff" opacity="0.65"/>'
+            +'<circle cx="118" cy="14" r="0.9" fill="#fff" opacity="0.4"/>'
+            +'<circle cx="155" cy="26" r="1.1" fill="#fff" opacity="0.55"/>'
+            +'<circle cx="60"  cy="52" r="0.8" fill="#fff" opacity="0.3"/>'
+            // Moon outer soft halo (3 layers)
+            +'<circle cx="238" cy="36" r="64" fill="#b0a0ff" opacity="0.07" filter="url(#'+u+'-mf)"/>'
+            +'<circle cx="238" cy="36" r="40" fill="#d0c8ff" opacity="0.1"  filter="url(#'+u+'-mf)"/>'
+            // Crisp moon disc
+            +'<circle cx="238" cy="36" r="27" fill="#eeeaff" opacity="0.92"/>'
+            // Crescent shadow — offset circle to cut the moon shape
+            +'<circle cx="250" cy="30" r="23" fill="#130f28" opacity="0.9"/>';
+        gr='<path d="M10 148 Q55 108 115 126 T232 134 L232 182 L10 182 Z" fill="url(#'+u+'-gr)"/>'
+          +'<path d="M10 148 Q55 108 115 126 T232 134" fill="none" stroke="#9a8cff" stroke-width="2" filter="url(#'+u+'-gl)" opacity="0.9"/>';
+
+      } else if(theme==='starry'){
+        d='<linearGradient id="'+u+'-bg" x1="5%" y1="0%" x2="0%" y2="100%">'
+          +'<stop offset="0%" stop-color="#0e1a32"/><stop offset="100%" stop-color="#050b18"/>'
+          +'</linearGradient>'
+          +'<linearGradient id="'+u+'-gr" x1="0%" y1="0%" x2="0%" y2="100%">'
+          +'<stop offset="0%" stop-color="#f0e68c" stop-opacity="0.4"/>'
+          +'<stop offset="100%" stop-color="#f0e68c" stop-opacity="0"/>'
+          +'</linearGradient>'
+          +gf;
+        bg='url(#'+u+'-bg)';
+        deco=// Milky way subtle diagonal band
+             '<ellipse cx="150" cy="55" rx="160" ry="28" fill="#5070c0" opacity="0.055" transform="rotate(-8,150,55)"/>'
+            // Stars — varied sizes and brightnesses
+            +'<circle cx="22"  cy="14" r="1"   fill="#fff" opacity="0.75"/>'
+            +'<circle cx="58"  cy="28" r="1.6" fill="#fff" opacity="0.9"/>'
+            +'<circle cx="98"  cy="10" r="0.9" fill="#fff" opacity="0.5"/>'
+            +'<circle cx="138" cy="22" r="1.2" fill="#fff" opacity="0.7"/>'
+            +'<circle cx="178" cy="8"  r="1.5" fill="#fff" opacity="0.85"/>'
+            +'<circle cx="215" cy="20" r="0.9" fill="#fff" opacity="0.6"/>'
+            +'<circle cx="252" cy="12" r="1.8" fill="#fff" opacity="0.9"/>'
+            +'<circle cx="40"  cy="44" r="0.8" fill="#fff" opacity="0.4"/>'
+            +'<circle cx="88"  cy="48" r="1"   fill="#fff" opacity="0.5"/>'
+            +'<circle cx="130" cy="38" r="0.8" fill="#fff" opacity="0.35"/>'
+            +'<circle cx="195" cy="40" r="1"   fill="#fff" opacity="0.55"/>'
+            +'<circle cx="262" cy="36" r="0.8" fill="#fff" opacity="0.7"/>'
+            +'<circle cx="240" cy="55" r="1.1" fill="#ffe0a0" opacity="0.6"/>'; // warm tinted star
+        gr='<path d="M10 155 Q42 126 82 144 T152 128 T222 146 L222 182 L10 182 Z" fill="url(#'+u+'-gr)"/>'
+          +'<path d="M10 155 Q42 126 82 144 T152 128 T222 146" fill="none" stroke="#f0e68c" stroke-width="1.8" stroke-dasharray="5,3" filter="url(#'+u+'-gl)" opacity="0.85"/>';
+
+      } else if(theme==='horizon'){
+        d='<linearGradient id="'+u+'-bg" x1="5%" y1="0%" x2="0%" y2="100%">'
+          +'<stop offset="0%" stop-color="#1e1008"/><stop offset="55%" stop-color="#150c06"/><stop offset="100%" stop-color="#0a0604"/>'
+          +'</linearGradient>'
+          +'<linearGradient id="'+u+'-atm" x1="0%" y1="0%" x2="0%" y2="100%">'
+          +'<stop offset="0%" stop-color="#ff6010" stop-opacity="0"/>'
+          +'<stop offset="100%" stop-color="#ff6010" stop-opacity="0.22"/>'
+          +'</linearGradient>'
+          +'<linearGradient id="'+u+'-gr" x1="0%" y1="0%" x2="0%" y2="100%">'
+          +'<stop offset="0%" stop-color="#ffb380" stop-opacity="0.55"/>'
+          +'<stop offset="60%" stop-color="#ffb380" stop-opacity="0.1"/>'
+          +'<stop offset="100%" stop-color="#ffb380" stop-opacity="0"/>'
+          +'</linearGradient>'
+          +'<filter id="'+u+'-mf"><feGaussianBlur stdDeviation="14"/></filter>'
+          +gf;
+        bg='url(#'+u+'-bg)';
+        deco=// Warm atmosphere wash from bottom
+             '<rect x="0" y="0" width="280" height="182" fill="url(#'+u+'-atm)"/>'
+            // Layered horizon glow — 3 ellipses for depth
+            +'<ellipse cx="140" cy="195" rx="180" ry="65" fill="#ff5500" opacity="0.12" filter="url(#'+u+'-mf)"/>'
+            +'<ellipse cx="140" cy="190" rx="130" ry="44" fill="#ff7820" opacity="0.14" filter="url(#'+u+'-mf)"/>'
+            +'<ellipse cx="140" cy="184" rx="80"  ry="24" fill="#ffaa40" opacity="0.1"  filter="url(#'+u+'-mf)"/>'
+            // Subtle horizon line
+            +'<line x1="0" y1="155" x2="280" y2="155" stroke="#ff8030" stroke-width="0.6" opacity="0.2"/>';
+        gr='<path d="M10 140 C50 140 68 162 108 154 C148 146 172 142 232 152 L232 182 L10 182 Z" fill="url(#'+u+'-gr)"/>'
+          +'<path d="M10 140 C50 140 68 162 108 154 C148 146 172 142 232 152" fill="none" stroke="#ffb380" stroke-width="2" filter="url(#'+u+'-gl)" opacity="0.9"/>';
+
+      } else { // sunrise
+        d='<linearGradient id="'+u+'-bg" x1="5%" y1="0%" x2="0%" y2="100%">'
+          +'<stop offset="0%" stop-color="#260e16"/><stop offset="55%" stop-color="#19090f"/><stop offset="100%" stop-color="#0e0508"/>'
+          +'</linearGradient>'
+          +'<radialGradient id="'+u+'-sg" cx="92%" cy="98%" r="70%">'
+          +'<stop offset="0%"   stop-color="#ffb030" stop-opacity="0.55"/>'
+          +'<stop offset="35%"  stop-color="#ff5020" stop-opacity="0.18"/>'
+          +'<stop offset="100%" stop-color="#ff1060" stop-opacity="0"/>'
+          +'</radialGradient>'
+          +'<linearGradient id="'+u+'-gr" x1="0%" y1="0%" x2="0%" y2="100%">'
+          +'<stop offset="0%" stop-color="#ff8ca3" stop-opacity="0.55"/>'
+          +'<stop offset="60%" stop-color="#ff8ca3" stop-opacity="0.1"/>'
+          +'<stop offset="100%" stop-color="#ff8ca3" stop-opacity="0"/>'
+          +'</linearGradient>'
+          +'<filter id="'+u+'-sf"><feGaussianBlur stdDeviation="18"/></filter>'
+          +'<filter id="'+u+'-sm"><feGaussianBlur stdDeviation="8"/></filter>'
+          +gf;
+        bg='url(#'+u+'-bg)';
+        deco=// Dawn atmosphere radial wash
+             '<rect x="0" y="0" width="280" height="182" fill="url(#'+u+'-sg)"/>'
+            // Sun — 3 glow layers for depth + solid disc
+            +'<circle cx="256" cy="172" r="88"  fill="#ffaa20" opacity="0.1"  filter="url(#'+u+'-sf)"/>'
+            +'<circle cx="256" cy="172" r="56"  fill="#ffcc40" opacity="0.2"  filter="url(#'+u+'-sm)"/>'
+            +'<circle cx="256" cy="172" r="36"  fill="#ffe060" opacity="0.82"/>';
+        gr='<path d="M10 158 L36 146 L62 152 L88 132 L114 143 L140 118 L166 130 L192 108 L218 122 L232 98 L232 182 L10 182 Z" fill="url(#'+u+'-gr)"/>'
+          +'<path d="M10 158 L36 146 L62 152 L88 132 L114 143 L140 118 L166 130 L192 108 L218 122 L232 98" fill="none" stroke="#ff8ca3" stroke-width="2" filter="url(#'+u+'-gl)" opacity="0.9"/>';
+      }
+      // Embed real fatigue sparkline — x:10–262, y:118–175 (57px tall band)
+      var spk=_sparkPaths(workerName, u, 10, 118, 252, 57);
+      var spkGrad='', spkPaths='';
+      if(spk){
+        spkGrad='<linearGradient id="'+u+'-spk" x1="0%" y1="0%" x2="0%" y2="100%">'
+          +'<stop offset="0%" stop-color="'+accent+'" stop-opacity="0.38"/>'
+          +'<stop offset="100%" stop-color="'+accent+'" stop-opacity="0"/>'
+          +'</linearGradient>';
+        spkPaths='<path d="'+spk.area+'" fill="url(#'+u+'-spk)"/>'
+          +'<path d="'+spk.line+'" fill="none" stroke="'+accent+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>';
+      } else {
+        // fallback static decorative line if no data
+        spkPaths=gr;
+      }
+      return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 182" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">'
+        +'<defs>'+d+spkGrad+'</defs>'
+        +'<rect width="280" height="182" fill="'+bg+'"/>'
+        +deco+spkPaths
+        +'</svg>';
+    }
+
     // Build full glowing cards
     var cards=st.sl.map(function(s,i){
       var nm=escHtml(String(s.w.name||'').split(/\s+/)[0]);
@@ -544,21 +731,26 @@
       var spk=sparkline(s.w.name, c.accent);
       var statusCls=rt.active?'active':(rt.status==='NĀKAMĀ'?'upnext':'done');
       var gradCss='conic-gradient(from 0deg, transparent 0%, '+c.accent+' 30%, transparent 60%)';
-      return '<div class="nsc-full-card'+(rt.active?' nsc-active':'')+'" data-i="'+i+'" style="--nsc-accent:'+c.accent+';--nsc-grad:'+gradCss+'">'
+      var theme=_nightTheme(s.s);
+      var desc=_nightDescs[theme]||'';
+      var checklist = lastSlotChecklist(i, st.sl.length);
+      return '<div class="nsc-card-wrap" data-i="'+i+'">'
+        +'<div class="nsc-full-card nsc-theme-'+theme+(rt.active?' nsc-active':'')+'" data-i="'+i+'" style="--nsc-accent:'+c.accent+';--nsc-grad:'+gradCss+'">'
+        +'<div class="nsc-deco" aria-hidden="true">'+_nightSvg(theme,i,s.w.name,c.accent)+'</div>'
         +'<div class="nsc-full-inner">'
         +'<div class="nsc-full-top">'
         +'<span class="nsc-full-name">'+nm+'</span>'
-        +'<span class="nsc-full-status '+statusCls+'">'+escHtml(rt.status)+'</span>'
         +'</div>'
         +'<div class="nsc-full-time">'+escHtml(s.ss)+' – '+escHtml(s.es)+'</div>'
+        +(desc?'<div class="nsc-full-desc">'+desc+'</div>':'')
         +'<div class="nsc-full-meta">'
         +'<span class="nsc-full-dur">'+dur+'</span>'
         +'<span class="nsc-full-fat '+tr.cls+'">'+(s.w.fs||0)+'% '+tr.icon+'</span>'
         +'</div>'
-        +(spk?'<div class="nsc-full-spark">'+spk+'</div>':'')
         +(rt.active?'<div class="nsc-full-progress"><span style="width:'+rt.pct.toFixed(1)+'%;background:'+c.accent+'"></span></div>':'')
-        +lastSlotChecklist(i, st.sl.length)
         +'</div>'
+        +'</div>'
+        +(checklist?'<div class="nsc-below-checklist">'+checklist+'</div>':'')
         +'</div>';
     }).join('');
 
@@ -610,7 +802,9 @@
     function allCards(){ return el.querySelectorAll('.nsc-full-card'); }
     function clearOver(){ allCards().forEach(function(x){x.classList.remove('nsover');}); lastH=null; }
     function killGhost(){ cancelAnimationFrame(rafId); if(ghost){ghost.remove();ghost=null;} }
-    function moveGhost(){ if(ghost){ ghost.style.left=(mx+18)+'px'; ghost.style.top=(my-28)+'px'; } }
+    function moveGhost(){
+      if(ghost) ghost.style.transform='translate3d('+(mx+18)+'px,'+(my-28)+'px,0) scale(1.06) rotate(-2deg)';
+    }
 
     function startGhost(c){
       killGhost();
@@ -618,11 +812,10 @@
       var accent=(c.style.getPropertyValue('--nsc-accent')||'#b77bff').trim();
       ghost=document.createElement('div');
       ghost.textContent=nm?nm.textContent:'?';
-      ghost.style.cssText='position:fixed;pointer-events:none;z-index:99999;'
+      ghost.style.cssText='position:fixed;top:0;left:0;pointer-events:none;z-index:99999;'
         +'padding:6px 16px;border-radius:12px;font-size:17px;font-weight:900;'
         +'background:rgba(8,10,20,0.92);border:2px solid '+accent+';color:'+accent+';'
-        +'box-shadow:0 0 18px '+accent+';transform:scale(1.06) rotate(-2deg);'
-        +'backdrop-filter:blur(6px);white-space:nowrap;';
+        +'box-shadow:0 0 18px '+accent+';will-change:transform;white-space:nowrap;';
       document.body.appendChild(ghost);
       moveGhost();
     }
@@ -648,8 +841,8 @@
     document.addEventListener('mousemove',function(e){
       if(!dragging)return;
       mx=e.clientX; my=e.clientY;
-      cancelAnimationFrame(rafId); rafId=requestAnimationFrame(moveGhost);
-      updateOver(mx,my);
+      cancelAnimationFrame(rafId);
+      rafId=requestAnimationFrame(function(){ moveGhost(); updateOver(mx,my); });
     });
     document.addEventListener('mouseup',function(){
       if(!dragging)return;
@@ -669,8 +862,8 @@
     el.addEventListener('touchmove',function(e){
       if(!touching)return;
       mx=e.touches[0].clientX; my=e.touches[0].clientY;
-      cancelAnimationFrame(rafId); rafId=requestAnimationFrame(moveGhost);
-      updateOver(mx,my);
+      cancelAnimationFrame(rafId);
+      rafId=requestAnimationFrame(function(){ moveGhost(); updateOver(mx,my); });
     },{passive:true});
     el.addEventListener('touchend',function(e){
       if(!touching)return;
