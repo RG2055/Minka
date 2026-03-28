@@ -3436,24 +3436,23 @@ window.addEventListener('message', function(e) {
 /* Name labels */
 .shift-progress-seg-label {
   position: absolute !important;
-  top: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  font-size: 9px !important;
+  top: 0 !important;
+  transform: translateX(-50%) !important;
+  font-size: 10px !important;
   font-weight: 800 !important;
   letter-spacing: .05em !important;
   text-transform: uppercase !important;
   white-space: nowrap !important;
-  color: #fff !important;
-  text-shadow: 0 1px 4px rgba(0,0,0,0.8) !important;
+  color: var(--seg-color, #8b5cf6) !important;
+  text-shadow: 0 0 10px var(--seg-color, #8b5cf6), 0 1px 6px rgba(0,0,0,0.6) !important;
   cursor: grab !important;
   user-select: none !important;
   transition: opacity .15s !important;
   line-height: 1 !important;
-  z-index: 3 !important;
 }
 .shift-progress-seg-label::before { content: none !important; }
-.shift-progress-seg-label.is-start { transform: translate(0, -50%) !important; }
-.shift-progress-seg-label.is-end   { transform: translate(-100%, -50%) !important; }
+.shift-progress-seg-label.is-start { transform: none !important; }
+.shift-progress-seg-label.is-end   { transform: translateX(-50%) !important; }
 .shift-progress-seg-label.is-hidden { display: none !important; }
 .shift-progress-seg-label.is-current {
   text-shadow:
