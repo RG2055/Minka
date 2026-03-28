@@ -1070,7 +1070,7 @@ function closeFullListModal() {
       const widthPct  = Math.max(0, to - from);
       const isCurrent = now instanceof Date && now >= seg.start && now < seg.end;
       const isPast    = now instanceof Date && now >= seg.end;
-      let cls = widthPct < 7 ? ' is-hidden' : '';
+      let cls = widthPct < 1.5 ? ' is-hidden' : '';
       if (to > 96) cls += ' is-end'; else if (from < 4) cls += ' is-start';
       if (isCurrent) cls += ' is-current';
       if (isPast) cls += ' is-past';
@@ -1089,7 +1089,7 @@ function closeFullListModal() {
   }
 
   function buildNightSplitTimesBelow(segments, start, end, now) {
-    // Name labels (top row) + time labels (bottom row) below bar
+    // Time labels below bar
     if (!Array.isArray(segments) || !segments.length || !(start instanceof Date) || !(end instanceof Date)) return '';
     const total = Math.max(1, end - start);
     const parts = [];
@@ -1097,13 +1097,6 @@ function closeFullListModal() {
     segments.forEach(function(seg, index) {
       const from = Math.max(0, Math.min(100, ((seg.start - start) / total) * 100));
       const to   = Math.max(0, Math.min(100, ((seg.end   - start) / total) * 100));
-      const mid  = from + (to - from) / 2;
-      const firstName = String(seg.name || '').split(/\s+/)[0] || '';
-      const isCurrent = now instanceof Date && now >= seg.start && now < seg.end;
-      const accent = (seg.color && seg.color.accent) ? seg.color.accent : 'rgba(255,255,255,0.6)';
-      if (firstName) {
-        parts.push('<span class="ns-bar-name' + (isCurrent ? ' is-current' : '') + '" style="left:' + mid.toFixed(2) + '%;--ns-bar-color:' + accent + '">' + firstName + '</span>');
-      }
       const clsFrom = from < 2 ? ' is-start' : '';
       parts.push('<span class="shift-progress-time-label' + clsFrom + '" style="left:' + from.toFixed(2) + '%">' + fmt(seg.start) + '</span>');
       if (index === segments.length - 1) {
