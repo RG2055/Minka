@@ -805,7 +805,18 @@ function closeFullListModal() {
     if (end <= start) {
       // end is next day (night shift) or bad data
       if (shiftHours > 0 && shiftHours < 24) {
-        end = new Date(start.getTime() + shiftHours * 3600000);
+        // Prefer the stored endTime + 1 day — DST-safe (avoids +1h drift on spring-forward)
+        const candidate = new Date(end);
+        candidate.setDate(candidate.getDate() + 1);
+        const wallHours = (candidate - start) / 3600000;
+        // Accept if within 2h of declared shift length (covers ±1h DST swing)
+        if (Math.abs(wallHours - shiftHours) <= 2) {
+          end = candidate;
+        } else {
+          // Fallback: add hours via setHours (also DST-aware)
+          end = new Date(start);
+          end.setHours(end.getHours() + Math.round(shiftHours));
+        }
       } else {
         end.setDate(end.getDate() + 1);
       }
@@ -1657,6 +1668,13 @@ function closeFullListModal() {
     }
 
     activeStops.sort((a, b) => a.end - b.end || a.name.localeCompare(b.name));
+    // Remove stops that coincide with the main shift end — those are final exits,
+    // not meaningful intermediate stops (fixes 24h workers polluting the stop list)
+    if (activeEnd) {
+      activeStops = activeStops.filter(function(stop) {
+        return Math.abs(stop.end.getTime() - activeEnd.getTime()) > 2 * 60000;
+      });
+    }
 
     const splitPlan = (activeDateStr && activeDateStr === g_todayStr) ? getNightSplitPlan(activeDateStr) : null;
 
