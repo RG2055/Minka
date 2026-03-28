@@ -3528,6 +3528,75 @@ window.addEventListener('message', function(e) {
   0%, 100% { transform: scale(1) translateY(0); }
   50%       { transform: scale(1.05) translateY(-4px); }
 }
+/* ── Night schedule card themes ── */
+/* Make cards fill the blank space */
+.ns-cards-row { min-height: 210px !important; }
+.nsc-full-card { min-height: 210px !important; }
+
+.nsc-full-desc {
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  letter-spacing: .03em !important;
+  color: rgba(255,255,255,0.62) !important;
+  margin-top: 1px !important;
+  margin-bottom: 2px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+/* Card wrapper — column so checklist sits below the card */
+.ns-cards-row { align-items: flex-start !important; }
+.nsc-card-wrap {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 0 !important;
+  min-width: 140px !important;
+  gap: 6px !important;
+}
+/* Card never shrinks — buttons live outside it */
+.nsc-card-wrap .nsc-full-card {
+  flex: 0 0 auto !important;
+  min-width: unset !important;
+  width: 100% !important;
+}
+.nsc-below-checklist { padding: 0 2px !important; }
+/* SVG decorative background fills the whole card */
+.nsc-deco {
+  position: absolute !important;
+  inset: 0 !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+  border-radius: inherit !important;
+  overflow: hidden !important;
+}
+.nsc-deco svg {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+}
+.nsc-full-inner { position: relative !important; z-index: 1 !important; }
+/* Override default card bg — SVG provides the background */
+.nsc-theme-moon    { background: transparent !important; border-color: rgba(154,140,255,0.22) !important; }
+.nsc-theme-starry  { background: transparent !important; border-color: rgba(240,230,140,0.18) !important; }
+.nsc-theme-horizon { background: transparent !important; border-color: rgba(255,179,128,0.22) !important; }
+.nsc-theme-sunrise { background: transparent !important; border-color: rgba(255,140,163,0.22) !important; }
+
+/* Sleeker action buttons below last card */
+.nsc-below-checklist span {
+  border-radius: 12px !important;
+  padding: 6px 8px !important;
+  font-size: 10px !important;
+  letter-spacing: .04em !important;
+  transition: filter .2s, transform .15s !important;
+  cursor: default !important;
+}
+.nsc-below-checklist span:hover {
+  filter: brightness(1.25) !important;
+  transform: translateY(-1px) !important;
+}
+
 .shift-stop {
   position: absolute !important;
   inset: 0 !important;
