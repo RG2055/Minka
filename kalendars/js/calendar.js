@@ -1668,13 +1668,6 @@ function closeFullListModal() {
     }
 
     activeStops.sort((a, b) => a.end - b.end || a.name.localeCompare(b.name));
-    // Remove stops that coincide with the main shift end — those are final exits,
-    // not meaningful intermediate stops (fixes 24h workers polluting the stop list)
-    if (activeEnd) {
-      activeStops = activeStops.filter(function(stop) {
-        return Math.abs(stop.end.getTime() - activeEnd.getTime()) > 2 * 60000;
-      });
-    }
 
     const splitPlan = (activeDateStr && activeDateStr === g_todayStr) ? getNightSplitPlan(activeDateStr) : null;
 
