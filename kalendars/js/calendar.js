@@ -1088,15 +1088,22 @@ function closeFullListModal() {
     return parts.join('');
   }
 
-  function buildNightSplitTimesBelow(segments, start, end) {
-    // Time labels below bar (start time of each segment + end of last)
+  function buildNightSplitTimesBelow(segments, start, end, now) {
+    // Name labels (top row) + time labels (bottom row) below bar
     if (!Array.isArray(segments) || !segments.length || !(start instanceof Date) || !(end instanceof Date)) return '';
     const total = Math.max(1, end - start);
     const parts = [];
+    const fmt = function(d) { return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); };
     segments.forEach(function(seg, index) {
       const from = Math.max(0, Math.min(100, ((seg.start - start) / total) * 100));
       const to   = Math.max(0, Math.min(100, ((seg.end   - start) / total) * 100));
-      const fmt  = function(d) { return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); };
+      const mid  = from + (to - from) / 2;
+      const firstName = String(seg.name || '').split(/\s+/)[0] || '';
+      const isCurrent = now instanceof Date && now >= seg.start && now < seg.end;
+      const accent = (seg.color && seg.color.accent) ? seg.color.accent : 'rgba(255,255,255,0.6)';
+      if (firstName) {
+        parts.push('<span class="ns-bar-name' + (isCurrent ? ' is-current' : '') + '" style="left:' + mid.toFixed(2) + '%;--ns-bar-color:' + accent + '">' + firstName + '</span>');
+      }
       const clsFrom = from < 2 ? ' is-start' : '';
       parts.push('<span class="shift-progress-time-label' + clsFrom + '" style="left:' + from.toFixed(2) + '%">' + fmt(seg.start) + '</span>');
       if (index === segments.length - 1) {
@@ -1766,7 +1773,7 @@ function closeFullListModal() {
       }
       if (belowEl) {
         if (effectiveOverlay && effectiveOverlay.segments && effectiveOverlay.segments.length) {
-          belowEl.innerHTML = buildNightSplitTimesBelow(effectiveOverlay.segments, effectiveOverlay.start, effectiveOverlay.end);
+          belowEl.innerHTML = buildNightSplitTimesBelow(effectiveOverlay.segments, effectiveOverlay.start, effectiveOverlay.end, now);
           belowEl.hidden = false;
         } else {
           belowEl.innerHTML = '';

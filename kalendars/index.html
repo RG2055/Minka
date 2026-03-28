@@ -3328,7 +3328,7 @@ window.addEventListener('message', function(e) {
 }
 .shift-bar-track {
   position: relative !important;
-  height: 20px !important;
+  height: 6px !important;
   width: 100% !important;
   border-radius: 999px !important;
   background: rgba(255,255,255,0.10) !important;
@@ -3342,9 +3342,9 @@ window.addEventListener('message', function(e) {
   box-shadow: none !important;
 }
 .shift-bar-scrubber {
-  width: 14px !important;
-  height: 14px !important;
-  margin-top: 0 !important;
+  width: 10px !important;
+  height: 10px !important;
+  margin-top: -1px !important;
   border-radius: 999px !important;
   background: #f3edff !important;
   border: 1px solid rgba(255,255,255,0.62) !important;
@@ -3359,28 +3359,48 @@ window.addEventListener('message', function(e) {
   overflow: visible !important;
   pointer-events: auto !important;
 }
-/* Names above bar */
+/* Drag handles — invisible hit targets above bar */
 .shift-progress-segments {
   position: absolute !important;
-  inset: 0 !important;
-  margin-bottom: 0 !important;
-  height: auto !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 100% !important;
+  margin-bottom: 7px !important;
+  height: 18px !important;
   pointer-events: auto !important;
-  overflow: hidden !important;
+  overflow: visible !important;
   cursor: default !important;
-  border-radius: 999px !important;
 }
-/* Times below bar — normal flow item so it spaces the button */
+/* Times + names below bar — normal flow, never clipped */
 .shift-progress-below {
   position: relative !important;
   width: 100% !important;
-  height: 14px !important;
+  height: 28px !important;
   pointer-events: none !important;
   overflow: visible !important;
   flex-shrink: 0 !important;
 }
+/* Name labels inside below row */
+.ns-bar-name {
+  position: absolute !important;
+  top: 0 !important;
+  transform: translateX(-50%) !important;
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  letter-spacing: .04em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+  color: var(--ns-bar-color, rgba(255,255,255,0.75)) !important;
+  line-height: 1 !important;
+  pointer-events: none !important;
+}
+.ns-bar-name.is-current {
+  color: #fff !important;
+  text-shadow: 0 0 8px var(--ns-bar-color, #8b5cf6) !important;
+}
 .shift-progress-time-label {
   position: absolute !important;
+  top: 14px !important;
   transform: translateX(-50%) !important;
   font-size: 9px !important;
   font-weight: 700 !important;
