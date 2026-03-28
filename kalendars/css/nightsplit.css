@@ -203,10 +203,11 @@
 .ns-stage.is-empty{opacity:.65;}
 .ns-stage-empty{font-size:18px;font-weight:800;color:rgba(255,255,255,.36);padding:10px 0 8px;}
 .ns-flow-wrap{border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px 12px;background:#0d1220;margin-bottom:10px;}
-.ns-flow-track{display:flex;height:14px;border-radius:999px;background:#131a29;overflow:hidden;position:relative;}
+.ns-flow-track{display:flex;height:26px;border-radius:999px;background:#131a29;overflow:hidden;position:relative;}
 .ns-flow-seg{position:relative;min-width:14px;border-right:1px solid rgba(6,10,16,.7);}
 .ns-flow-seg:last-child{border-right:none;}
 .ns-flow-fill{position:absolute;inset:0;opacity:.8;}
+.ns-flow-name{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7);letter-spacing:.3px;overflow:hidden;pointer-events:none;z-index:2;}
 .ns-flow-seg.is-active .ns-flow-fill{opacity:1;}
 .ns-flow-pulse{position:absolute;top:50%;width:10px;height:10px;border-radius:50%;background:#fff;transform:translate(-50%,-50%);box-shadow:0 0 0 2px var(--seg, #fff), 0 0 10px rgba(255,255,255,.18);animation:ns-pulse 1.35s ease-in-out infinite;}
 @keyframes ns-pulse{0%,100%{transform:translate(-50%,-50%) scale(.85);opacity:.8}50%{transform:translate(-50%,-50%) scale(1.05);opacity:1}}
