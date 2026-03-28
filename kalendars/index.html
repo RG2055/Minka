@@ -359,10 +359,12 @@ html.mk-low-spec *::after {
       <div class="shift-bar-track" id="shift-bar-track">
         <div class="shift-bar-fill" id="shift-bar-fill"></div>
         <div id="shift-progress-stops" class="shift-progress-stops" aria-label="Maiņu beigu pieturas"></div>
+        <div id="shift-bar-icons" class="shift-bar-icons"></div>
         <div class="shift-bar-scrubber" id="shift-bar-scrubber">
           <div class="shift-bar-tooltip" id="shift-bar-tooltip">—</div>
         </div>
       </div>
+      <div id="shift-bar-ruler" class="shift-bar-ruler"></div>
       <div id="shift-progress-below" class="shift-progress-below" hidden></div>
       <div class="ns-btn-row">
         <img src="data/cat_small.webp" class="ns-jiji-bg" alt="" aria-hidden="true">
@@ -3305,11 +3307,13 @@ window.addEventListener('message', function(e) {
 #shift-start-label {
   justify-self: start !important;
   text-align: left !important;
+  visibility: hidden !important;
 }
 #shift-end-label {
   justify-self: end !important;
   text-align: right !important;
   padding-right: 10px !important;
+  visibility: hidden !important;
 }
 .shift-elapsed {
   font-size: 10px !important;
@@ -3329,32 +3333,102 @@ window.addEventListener('message', function(e) {
   text-shadow: none !important;
   animation: none !important;
 }
+/* ── Premium progress bar ── */
 .shift-bar-track {
   position: relative !important;
-  height: 6px !important;
+  height: 10px !important;
   width: 100% !important;
   border-radius: 999px !important;
-  background: rgba(255,255,255,0.10) !important;
+  background: rgba(255,255,255,0.07) !important;
   border: none !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03) !important;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.5), inset 0 -1px 0 rgba(255,255,255,0.03) !important;
   overflow: visible !important;
 }
 .shift-bar-fill {
-  background: linear-gradient(90deg, #6f5cff 0%, #8b5cf6 45%, #b794ff 100%) !important;
+  background: linear-gradient(90deg, #7c3aed 0%, #5b21b6 28%, #1e40af 62%, #0284c7 100%) !important;
   border-radius: inherit !important;
-  box-shadow: none !important;
+  box-shadow: 0 0 14px rgba(124,58,237,0.45) !important;
 }
+/* Playhead scrubber — ring + inner dot via ::before */
 .shift-bar-scrubber {
-  width: 10px !important;
-  height: 10px !important;
-  margin-top: -1px !important;
-  border-radius: 999px !important;
-  background: #f3edff !important;
-  border: 1px solid rgba(255,255,255,0.62) !important;
-  box-shadow: 0 0 0 3px rgba(139,92,246,0.18) !important;
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  border: 2px solid rgba(255,255,255,0.9) !important;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.1), 0 0 16px rgba(255,255,255,0.35) !important;
+  overflow: visible !important;
+  /* Override minka.css hover scale — keep only position transform */
+  transform: translateX(-50%) translateY(-50%) !important;
+  transition: box-shadow 0.2s ease !important;
 }
+/* Kill the zoom-on-hover from minka.css */
+.shift-bar-track:hover .shift-bar-scrubber {
+  transform: translateX(-50%) translateY(-50%) !important;
+}
+/* Inner white dot */
+.shift-bar-scrubber::before {
+  content: '' !important;
+  position: absolute !important;
+  inset: 4px !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  pointer-events: none !important;
+}
+/* Day/Night icon layer */
+#shift-bar-icons {
+  position: absolute !important;
+  inset: 0 !important;
+  overflow: visible !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
+}
+.sbi-icon {
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateX(-50%) translateY(-50%) !important;
+  pointer-events: none !important;
+}
+.sbi-sun { filter: drop-shadow(0 0 5px rgba(251,191,36,0.7)) !important; }
+.sbi-moon { filter: drop-shadow(0 0 5px rgba(167,139,250,0.7)) !important; }
+/* Time ruler below bar */
+.shift-bar-ruler {
+  position: relative !important;
+  width: 100% !important;
+  height: 14px !important;
+  margin-top: 5px !important;
+  pointer-events: none !important;
+}
+.sbt-tick {
+  position: absolute !important;
+  top: 0 !important;
+  font-size: 9px !important;
+  font-weight: 600 !important;
+  letter-spacing: .03em !important;
+  color: rgba(255,255,255,0.28) !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+}
+.sbt-tick-sun { color: rgba(251,191,36,0.55) !important; }
+.sbt-tick-moon { color: rgba(167,139,250,0.55) !important; }
+/* Time tooltip pill floating above the scrubber */
 .shift-bar-tooltip {
-  display: none !important;
+  display: block !important;
+  position: absolute !important;
+  bottom: calc(100% + 8px) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  background: #ffffff !important;
+  color: #0a0818 !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  letter-spacing: .03em !important;
+  padding: 3px 10px !important;
+  border-radius: 20px !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
+  z-index: 10 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
 }
 .shift-progress-stops {
   position: absolute !important;
@@ -3491,13 +3565,13 @@ window.addEventListener('message', function(e) {
   display: block !important;
 }
 .shift-bar-track.has-night-split {
-  background-size: 100% 100%, 180px 100% !important;
+  background-size: 100% 100%, 200px 100% !important;
   background-repeat: no-repeat, repeat-x !important;
-  animation: shiftNightFlow 7.5s linear infinite !important;
+  animation: shiftNightFlow 8s linear infinite !important;
 }
 @keyframes shiftNightFlow {
-  from { background-position: 0 0, -180px 0; }
-  to { background-position: 0 0, 180px 0; }
+  from { background-position: 0 0, -200px 0; }
+  to { background-position: 0 0, 200px 0; }
 }
 /* ── Jiji cat — next to nakts sadalījums button ── */
 .ns-btn-row {
