@@ -495,8 +495,10 @@
       var c=getCol(s.w.name);
       var rt=slotRealtime(s);
       var w=((s.d/tot)*100).toFixed(3);
+      var nm=escHtml(String(s.w.name||'').split(/\s+/)[0]||'');
       return '<div class="ns-flow-seg'+(rt.active?' is-active':'')+'" style="width:'+w+'%;--seg:'+c.accent+'">'
         +'<div class="ns-flow-fill" style="background:'+c.accent+'"></div>'
+        +(nm?'<span class="ns-flow-name">'+nm+'</span>':'')
         +(rt.active?'<div class="ns-flow-pulse" style="left:'+rt.pct.toFixed(1)+'%"></div>':'')
         +'</div>';
     }).join('');

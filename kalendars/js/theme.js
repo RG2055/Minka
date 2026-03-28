@@ -217,7 +217,7 @@
     theme: 'aurora',
     background: 'obsidian',
     density: 'balanced',
-    performance: 'auto',
+    performance: 'low',
     speed: 'fast',
     fontIndex: 2,
     glow: 0,
