@@ -1685,6 +1685,110 @@ function closeFullListModal() {
     const pct = Math.max(0, Math.min(100, (elapsed / totalDur) * 100));
     const splitOverlay = splitPlan ? mapNightSplitToRange(splitPlan, activeStart, activeEnd) : null;
 
+    // ── Day/Night track background gradient ──────────────────────────────
+    function buildDayNightTrackBg(startMs, endMs) {
+      var total = endMs - startMs;
+      if (total <= 0) return 'rgba(255,255,255,0.10)';
+      function toPct(ms) { return Math.max(0, Math.min(100, (ms - startMs) / total * 100)); }
+      function isDay(h) { return h >= 6 && h < 22; }
+      var DAY = 'rgba(245,158,11,0.28)';  // warm amber — day
+      var NGT = 'rgba(67,56,202,0.40)';   // deep indigo — night
+      var startH = new Date(startMs).getHours();
+      var parts = [(isDay(startH) ? DAY : NGT) + ' 0%'];
+      var t = new Date(startMs);
+      t.setMinutes(0, 0, 0);
+      t.setHours(t.getHours() + 1);
+      while (t.getTime() < endMs) {
+        var h = t.getHours();
+        if (h === 6 || h === 22) {
+          var p = toPct(t.getTime()).toFixed(1);
+          parts.push((h === 22 ? DAY : NGT) + ' ' + p + '%');
+          parts.push((h === 6  ? DAY : NGT) + ' ' + p + '%');
+        }
+        t.setHours(t.getHours() + 1);
+      }
+      var endH = new Date(endMs).getHours();
+      parts.push((isDay(endH) ? DAY : NGT) + ' 100%');
+      return 'linear-gradient(90deg, ' + parts.join(', ') + ')';
+    }
+
+    // ── Sun / Moon icon overlay ──────────────────────────────────────────
+    function updateBarIcons(iconsEl, startMs, endMs, dur) {
+      if (!iconsEl) return;
+      function toPct(ms) { return Math.max(0, Math.min(100, (ms - startMs) / dur * 100)); }
+      var icons = [];
+      // Sun at 14:00 on shift-start date
+      var sunT = new Date(startMs); sunT.setHours(14, 0, 0, 0);
+      var sunP = toPct(sunT.getTime());
+      if (sunP > 2 && sunP < 98) icons.push({ type: 'sun', pct: sunP });
+      // Moon at 02:00 — scan +0, +1, +2 days
+      for (var d = 0; d <= 2; d++) {
+        var moonT = new Date(startMs); moonT.setHours(2, 0, 0, 0); moonT.setDate(moonT.getDate() + d);
+        var moonP = toPct(moonT.getTime());
+        if (moonP > 2 && moonP < 98) { icons.push({ type: 'moon', pct: moonP }); break; }
+      }
+      if (!icons.length) { iconsEl.innerHTML = ''; return; }
+      iconsEl.innerHTML = icons.map(function(ic) {
+        var s = 'left:' + ic.pct.toFixed(2) + '%';
+        if (ic.type === 'sun') {
+          return '<div class="sbi-icon sbi-sun" style="' + s + '">' +
+            '<svg width="22" height="22" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">' +
+            '<circle cx="11" cy="11" r="8" fill="#fbbf24" opacity="0.10"/>' +
+            '<circle cx="11" cy="11" r="5" fill="#fbbf24" opacity="0.92"/>' +
+            '<g stroke="#fbbf24" stroke-width="1.4" stroke-linecap="round" opacity="0.60">' +
+            '<line x1="11" y1="2" x2="11" y2="4.2"/>' +
+            '<line x1="11" y1="17.8" x2="11" y2="20"/>' +
+            '<line x1="2" y1="11" x2="4.2" y2="11"/>' +
+            '<line x1="17.8" y1="11" x2="20" y2="11"/>' +
+            '<line x1="4.6" y1="4.6" x2="6.2" y2="6.2"/>' +
+            '<line x1="15.8" y1="15.8" x2="17.4" y2="17.4"/>' +
+            '<line x1="17.4" y1="4.6" x2="15.8" y2="6.2"/>' +
+            '<line x1="6.2" y1="15.8" x2="4.6" y2="17.4"/>' +
+            '</g>' +
+            '</svg></div>';
+        } else {
+          var uid = 'mm' + Math.random().toString(36).slice(2,7);
+          return '<div class="sbi-icon sbi-moon" style="' + s + '">' +
+            '<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">' +
+            '<defs><mask id="' + uid + '"><rect width="20" height="20" fill="white"/>' +
+            '<circle cx="12.5" cy="8" r="5.5" fill="black"/></mask></defs>' +
+            '<circle cx="10" cy="10" r="8" fill="#818cf8" opacity="0.10"/>' +
+            '<circle cx="9" cy="10" r="6" fill="#a78bfa" opacity="0.92" mask="url(#' + uid + ')"/>' +
+            '</svg></div>';
+        }
+      }).join('');
+    }
+
+    // ── Time ruler below bar ─────────────────────────────────────────────
+    function updateBarRuler(rulerEl, startMs, endMs, dur) {
+      if (!rulerEl) return;
+      // Fixed anchors: 08, 14, 20, 02, 08 (6-hour grid)
+      var anchors = [[0,8],[0,14],[0,20],[1,2],[1,8],[1,14],[1,20],[2,2],[2,8]];
+      var sunH  = { 14: true };
+      var moonH = { 2: true };
+      var d0 = new Date(startMs); d0.setHours(0,0,0,0);
+      var ticks = [];
+      anchors.forEach(function(pair) {
+        var t = new Date(d0.getTime());
+        t.setDate(t.getDate() + pair[0]);
+        t.setHours(pair[1], 0, 0, 0);
+        if (t.getTime() >= startMs && t.getTime() <= endMs) {
+          ticks.push({ ms: t.getTime(), h: pair[1] });
+        }
+      });
+      if (!ticks.length) { rulerEl.innerHTML = ''; return; }
+      rulerEl.innerHTML = ticks.map(function(tk, i) {
+        var pct = ((tk.ms - startMs) / dur * 100).toFixed(2);
+        var xform = i === 0 ? 'translateX(0)' :
+                    i === ticks.length - 1 ? 'translateX(-100%)' :
+                    'translateX(-50%)';
+        var cls = sunH[tk.h]  ? ' sbt-tick-sun'  :
+                  moonH[tk.h] ? ' sbt-tick-moon' : '';
+        var label = String(tk.h).padStart(2,'0') + ':00';
+        return '<span class="sbt-tick' + cls + '" style="left:' + pct + '%;transform:' + xform + '">' + label + '</span>';
+      }).join('');
+    }
+
     // Format helpers
     function fmtHM(ms) {
       const h = Math.floor(ms / 3600000);
@@ -1741,16 +1845,27 @@ function closeFullListModal() {
           track.style.setProperty('box-shadow', 'inset 0 0 0 1px rgba(255,255,255,0.05)', 'important');
         } else {
           track.classList.remove('has-night-split');
-          track.style.setProperty('background', 'rgba(255,255,255,0.10)', 'important');
-          track.style.setProperty('box-shadow', 'inset 0 1px 0 rgba(255,255,255,0.03)', 'important');
+          var dnBg = buildDayNightTrackBg(activeStart.getTime(), activeEnd.getTime());
+          track.style.setProperty('background', dnBg, 'important');
+          track.style.setProperty('box-shadow', 'inset 0 1px 3px rgba(0,0,0,0.5), inset 0 -1px 0 rgba(255,255,255,0.03)', 'important');
         }
       }
+      // Sun / moon icons (only in normal mode, not overlay)
+      var iconsEl = document.getElementById('shift-bar-icons');
+      if (!effectiveOverlay || !(effectiveOverlay.segments && effectiveOverlay.segments.length)) {
+        updateBarIcons(iconsEl, activeStart.getTime(), activeEnd.getTime(), totalDur);
+      } else if (iconsEl) {
+        iconsEl.innerHTML = '';
+      }
+      // Time ruler below bar
+      var rulerEl = document.getElementById('shift-bar-ruler');
+      updateBarRuler(rulerEl, activeStart.getTime(), activeEnd.getTime(), totalDur);
       if (fill) fill.style.width = pct + '%';
       if (fill) {
         if (effectiveOverlay && effectiveOverlay.segments && effectiveOverlay.segments.length) {
           fill.style.setProperty('background', 'linear-gradient(90deg, rgba(255,255,255,0.26), rgba(255,255,255,0.08))', 'important');
         } else {
-          fill.style.setProperty('background', 'linear-gradient(90deg, #6f5cff 0%, #8b5cf6 45%, #b794ff 100%)', 'important');
+          fill.style.setProperty('background', 'linear-gradient(90deg, #7c3aed 0%, #5b21b6 28%, #1e40af 62%, #0284c7 100%)', 'important');
         }
       }
       const belowEl = document.getElementById('shift-progress-below');
@@ -1777,18 +1892,18 @@ function closeFullListModal() {
       if (scrubber && effectiveOverlay && effectiveOverlay.segments && effectiveOverlay.segments.length) {
         let currentSeg = effectiveOverlay.segments.find(function(seg) { return now >= seg.start && now < seg.end; }) || null;
         if (currentSeg && currentSeg.color) {
-          scrubber.style.setProperty('background', '#fff7f2', 'important');
-          scrubber.style.setProperty('box-shadow', '0 0 0 3px ' + currentSeg.color.bg + ', 0 0 16px ' + currentSeg.color.bg, 'important');
-          scrubber.style.setProperty('border', '1px solid rgba(255,255,255,0.72)', 'important');
+          scrubber.style.setProperty('background', 'transparent', 'important');
+          scrubber.style.setProperty('border', '2px solid rgba(255,255,255,0.92)', 'important');
+          scrubber.style.setProperty('box-shadow', '0 0 0 3px ' + currentSeg.color.bg + ', 0 0 18px ' + currentSeg.color.glow, 'important');
         } else {
-          scrubber.style.setProperty('background', '#f3edff', 'important');
-          scrubber.style.setProperty('box-shadow', '0 0 0 3px rgba(139,92,246,0.18)', 'important');
-          scrubber.style.setProperty('border', '1px solid rgba(255,255,255,0.62)', 'important');
+          scrubber.style.setProperty('background', 'transparent', 'important');
+          scrubber.style.setProperty('border', '2px solid rgba(255,255,255,0.9)', 'important');
+          scrubber.style.setProperty('box-shadow', '0 0 0 3px rgba(255,255,255,0.1), 0 0 16px rgba(255,255,255,0.35)', 'important');
         }
       } else if (scrubber) {
-        scrubber.style.setProperty('background', '#f3edff', 'important');
-        scrubber.style.setProperty('box-shadow', '0 0 0 3px rgba(139,92,246,0.18)', 'important');
-        scrubber.style.setProperty('border', '1px solid rgba(255,255,255,0.62)', 'important');
+        scrubber.style.setProperty('background', 'transparent', 'important');
+        scrubber.style.setProperty('border', '2px solid rgba(255,255,255,0.9)', 'important');
+        scrubber.style.setProperty('box-shadow', '0 0 0 3px rgba(255,255,255,0.1), 0 0 16px rgba(255,255,255,0.35)', 'important');
       }
       if (tooltip) tooltip.textContent = fmtHHMM(now);
       if (elapsedEl) elapsedEl.textContent = 'Pagājis: ' + fmtHM(elapsed);
