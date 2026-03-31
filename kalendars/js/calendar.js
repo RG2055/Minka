@@ -2076,20 +2076,22 @@ function closeFullListModal() {
         scrubber.style.setProperty('border', '2px solid rgba(255,255,255,0.9)', 'important');
         scrubber.style.setProperty('box-shadow', '0 0 0 3px rgba(255,255,255,0.1), 0 0 16px rgba(255,255,255,0.35)', 'important');
       }
+      const effectiveDiff = Math.max(0, visualEnd - now);
+      const effectiveElapsedHm = fmtHM(visualElapsed);
       if (tooltip) tooltip.textContent = fmtHHMM(now);
-      if (elapsedEl) elapsedEl.textContent = 'Pagājis: ' + fmtHM(elapsed);
+      if (elapsedEl) elapsedEl.textContent = 'Pagājis: ' + effectiveElapsedHm;
       if (remainEl) {
-        const h = Math.floor(diff / 3600000);
-        const m = Math.floor((diff % 3600000) / 60000);
-        const s = Math.floor((diff % 60000) / 1000);
+        const h = Math.floor(effectiveDiff / 3600000);
+        const m = Math.floor((effectiveDiff % 3600000) / 60000);
+        const s = Math.floor((effectiveDiff % 60000) / 1000);
         const hm = h > 0 ? `${h}h ${String(m).padStart(2,'0')}m` : `${m}m`;
         remainEl.textContent = `Atlikušas: ${hm} ${String(s).padStart(2,'0')}s`;
         // Color urgency: green > 4h, amber 2-4h, red < 2h
-        const hoursLeft = diff / 3600000;
+        const hoursLeft = effectiveDiff / 3600000;
         remainEl.dataset.urgency = hoursLeft > 4 ? 'ok' : hoursLeft > 2 ? 'warn' : 'crit';
       }
-      if (startLbl) startLbl.textContent = fmtHHMM(activeStart);
-      if (endLbl) endLbl.textContent = fmtHHMM(activeEnd);
+      if (startLbl) startLbl.textContent = fmtHHMM(visualStart);
+      if (endLbl) endLbl.textContent = fmtHHMM(visualEnd);
       if (stopsEl) {
         if (activeStops.length) {
           var groupedStops = [];

@@ -4611,17 +4611,21 @@ window.addEventListener('message', function(e) {
 }
 
 :root.mk-mobile-shell .shift-progress-seg-label {
-  font-size: 7px !important;
-  letter-spacing: .01em !important;
-  text-shadow: 0 0 6px var(--seg-color, #8b5cf6), 0 1px 4px rgba(0,0,0,0.45) !important;
-  max-width: 30% !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  top: -2px !important;
+  padding: 0 2px !important;
+  font-size: 8px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0 !important;
+  text-shadow: 0 0 8px var(--seg-color, #8b5cf6), 0 1px 4px rgba(0,0,0,0.55) !important;
+  max-width: 32% !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
 }
 
 :root.mk-mobile-shell .shift-progress-seg-label.is-tight {
-  font-size: 6px !important;
-  max-width: 22% !important;
+  font-size: 7px !important;
+  max-width: 26% !important;
 }
 
 :root.mk-mobile-shell .shift-progress-time-label {
