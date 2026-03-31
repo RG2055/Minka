@@ -1521,6 +1521,15 @@ function closeFullListModal() {
     return { start, end };
   }
 
+  function getDisplayNowForDate(dateStr, actualNow) {
+    const now = actualNow instanceof Date ? actualNow : new Date();
+    const parts = String(dateStr || '').split('.').map(Number);
+    if (parts.length !== 3 || !parts[0] || !parts[1] || !parts[2]) return now;
+    const mapped = new Date(parts[2], parts[1] - 1, parts[0], now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+    if (now.getHours() < 8) mapped.setDate(mapped.getDate() + 1);
+    return mapped;
+  }
+
   function getShiftBadgeHtml(worker) {
     const hours = parseShiftHours(worker && worker.shift);
     if (hours > 0) {
@@ -1779,6 +1788,8 @@ function closeFullListModal() {
       g_renderMonth();
     }
 
+    const displayNow = getDisplayNowForDate(activeDateStr || g_todayStr, now);
+
     // Try to find the currently active shift among today's workers
     let activeEnd = null;
     let activeStart = null;
@@ -1840,7 +1851,7 @@ function closeFullListModal() {
       }
     }
 
-    let diff = activeEnd - now;
+    let diff = activeEnd - displayNow;
     if (diff <= 0 && activeDateStr === g_todayStr) {
       const nextDate = g_getNextKnownDate(activeDateStr);
       if (nextDate) {
@@ -1849,7 +1860,7 @@ function closeFullListModal() {
       }
     }
     const totalDur = Math.max(1, activeEnd - activeStart);
-    const elapsed = Math.max(0, now - activeStart);
+    const elapsed = Math.max(0, displayNow - activeStart);
     const pct = Math.max(0, Math.min(100, (elapsed / totalDur) * 100));
     const splitOverlay = splitPlan ? mapNightSplitToRange(splitPlan, activeStart, activeEnd) : null;
     const splitBarRange = splitPlan ? getNightSplitBarRange(activeDateStr) : null;
@@ -2012,7 +2023,7 @@ function closeFullListModal() {
       const visualStart = effectiveOverlay ? effectiveOverlay.start : activeStart;
       const visualEnd = effectiveOverlay ? effectiveOverlay.end : activeEnd;
       const visualDur = Math.max(1, visualEnd - visualStart);
-      const visualElapsed = Math.max(0, now - visualStart);
+      const visualElapsed = Math.max(0, displayNow - visualStart);
       const visualPct = Math.max(0, Math.min(100, (visualElapsed / visualDur) * 100));
       if (track) {
         if (effectiveOverlay && effectiveOverlay.segments && effectiveOverlay.segments.length) {
@@ -2048,7 +2059,7 @@ function closeFullListModal() {
       const belowEl = document.getElementById('shift-progress-below');
       if (labelsEl) {
         if (effectiveOverlay && effectiveOverlay.segments && effectiveOverlay.segments.length) {
-          labelsEl.innerHTML = buildNightSplitMeta(effectiveOverlay.segments, effectiveOverlay.start, effectiveOverlay.end, now);
+          labelsEl.innerHTML = buildNightSplitMeta(effectiveOverlay.segments, effectiveOverlay.start, effectiveOverlay.end, displayNow);
           labelsEl.hidden = false;
           initNsBarDrag(labelsEl);
         } else {
@@ -2058,7 +2069,7 @@ function closeFullListModal() {
       }
       if (belowEl) {
         if (effectiveOverlay && effectiveOverlay.segments && effectiveOverlay.segments.length) {
-          belowEl.innerHTML = buildNightSplitTimesBelow(effectiveOverlay.segments, effectiveOverlay.start, effectiveOverlay.end, now);
+          belowEl.innerHTML = buildNightSplitTimesBelow(effectiveOverlay.segments, effectiveOverlay.start, effectiveOverlay.end, displayNow);
           belowEl.hidden = false;
         } else {
           belowEl.innerHTML = '';
@@ -2067,7 +2078,7 @@ function closeFullListModal() {
       }
       if (scrubber) scrubber.style.left = visualPct + '%';
       if (scrubber && effectiveOverlay && effectiveOverlay.segments && effectiveOverlay.segments.length) {
-        let currentSeg = effectiveOverlay.segments.find(function(seg) { return now >= seg.start && now < seg.end; }) || null;
+        let currentSeg = effectiveOverlay.segments.find(function(seg) { return displayNow >= seg.start && displayNow < seg.end; }) || null;
         if (currentSeg && currentSeg.color) {
           scrubber.style.setProperty('background', 'transparent', 'important');
           scrubber.style.setProperty('border', '2px solid rgba(255,255,255,0.92)', 'important');
@@ -2082,9 +2093,9 @@ function closeFullListModal() {
         scrubber.style.setProperty('border', '2px solid rgba(255,255,255,0.9)', 'important');
         scrubber.style.setProperty('box-shadow', '0 0 0 3px rgba(255,255,255,0.1), 0 0 16px rgba(255,255,255,0.35)', 'important');
       }
-      const effectiveDiff = Math.max(0, visualEnd - now);
+      const effectiveDiff = Math.max(0, visualEnd - displayNow);
       const effectiveElapsedHm = fmtHM(visualElapsed);
-      if (tooltip) tooltip.textContent = fmtHHMM(now);
+      if (tooltip) tooltip.textContent = fmtHHMM(displayNow);
       if (elapsedEl) elapsedEl.textContent = 'Pagājis: ' + effectiveElapsedHm;
       if (remainEl) {
         const h = Math.floor(effectiveDiff / 3600000);
