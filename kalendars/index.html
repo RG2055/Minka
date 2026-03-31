@@ -4498,42 +4498,41 @@ window.addEventListener('message', function(e) {
 }
 
 :root.mk-mobile-shell .ns-cards-row {
-  gap: 10px !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 6px !important;
   padding-bottom: 6px !important;
   min-height: 0 !important;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-  scroll-snap-type: x proximity !important;
-  -webkit-overflow-scrolling: touch !important;
+  overflow: visible !important;
 }
 
 :root.mk-mobile-shell .nsc-card-wrap {
-  flex: 0 0 auto !important;
-  width: clamp(132px, 35vw, 152px) !important;
-  min-width: clamp(132px, 35vw, 152px) !important;
-  scroll-snap-align: start !important;
+  flex: 1 1 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
 }
 
 :root.mk-mobile-shell .nsc-card-wrap .nsc-full-card,
 :root.mk-mobile-shell .nsc-full-card {
-  flex: 0 0 clamp(132px, 35vw, 152px) !important;
-  min-width: clamp(132px, 35vw, 152px) !important;
-  min-height: 156px !important;
-  border-radius: 15px !important;
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 148px !important;
+  border-radius: 14px !important;
 }
 
 :root.mk-mobile-shell .nsc-full-inner {
-  padding: 8px 9px 8px !important;
-  gap: 3px !important;
+  padding: 8px 8px 7px !important;
+  gap: 2px !important;
 }
 
 :root.mk-mobile-shell .nsc-full-name {
-  font-size: 9px !important;
-  line-height: 1.04 !important;
+  font-size: 10px !important;
+  line-height: 1.02 !important;
 }
 
 :root.mk-mobile-shell .nsc-full-time {
-  font-size: 8px !important;
+  font-size: 7px !important;
   white-space: nowrap !important;
 }
 
@@ -4544,7 +4543,7 @@ window.addEventListener('message', function(e) {
 
 :root.mk-mobile-shell .nsc-full-dur,
 :root.mk-mobile-shell .nsc-full-fat {
-  font-size: 8px !important;
+  font-size: 7px !important;
 }
 
 :root.mk-mobile-shell .nsc-full-progress {
@@ -4557,7 +4556,7 @@ window.addEventListener('message', function(e) {
 }
 
 :root.mk-mobile-shell .nsc-full-spark svg {
-  height: 38px !important;
+  height: 34px !important;
 }
 
 :root.mk-mobile-shell .ns-stage-grid {
@@ -4679,18 +4678,16 @@ window.addEventListener('message', function(e) {
 
   :root.mk-mobile-shell .nsc-card-wrap .nsc-full-card,
   :root.mk-mobile-shell .nsc-full-card {
-    flex-basis: clamp(122px, 34vw, 140px) !important;
-    min-width: clamp(122px, 34vw, 140px) !important;
-    min-height: 146px !important;
+    min-height: 138px !important;
   }
 
   :root.mk-mobile-shell .nsc-card-wrap {
-    width: clamp(122px, 34vw, 140px) !important;
-    min-width: clamp(122px, 34vw, 140px) !important;
+    width: auto !important;
+    min-width: 0 !important;
   }
 
   :root.mk-mobile-shell .nsc-full-name {
-    font-size: 8px !important;
+    font-size: 9px !important;
   }
 
   :root.mk-mobile-shell .nsc-full-time,
@@ -4700,7 +4697,7 @@ window.addEventListener('message', function(e) {
   }
 
   :root.mk-mobile-shell .nsc-full-spark svg {
-    height: 32px !important;
+    height: 28px !important;
   }
 }
 </style>
