@@ -4236,6 +4236,8 @@ window.addEventListener('message', function(e) {
 }
 
 :root.mk-mobile-shell #minkaBarInner {
+  display: flex !important;
+  align-items: center !important;
   min-height: 42px !important;
   height: 42px !important;
   padding: 0 8px 0 10px !important;
@@ -4252,9 +4254,18 @@ window.addEventListener('message', function(e) {
 }
 
 :root.mk-mobile-shell #minkaLogo {
-  width: 21px !important;
-  height: 21px !important;
-  border-radius: 7px !important;
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  border-radius: 6px !important;
+  opacity: .85 !important;
+}
+
+:root.mk-mobile-shell #minkaBarHint,
+:root.mk-mobile-shell #minkaBarPill,
+:root.mk-mobile-shell #minkaBarClear,
+:root.mk-mobile-shell #minkaAiHeader {
+  display: none !important;
 }
 
 :root.mk-mobile-shell #minkaNamedayChip {
@@ -4269,6 +4280,11 @@ window.addEventListener('message', function(e) {
 }
 
 :root.mk-mobile-shell #minkaBarInput {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
   pointer-events: auto !important;
   user-select: text !important;
   -webkit-user-select: text !important;
@@ -4290,14 +4306,24 @@ window.addEventListener('message', function(e) {
 :root.mk-mobile-shell #minkaBarMenu,
 :root.mk-mobile-shell #minkaBarMute,
 :root.mk-mobile-shell #minkaBarClear {
-  width: 34px !important;
-  min-width: 34px !important;
-  height: 34px !important;
-  border-radius: 12px !important;
+  flex: 0 0 auto !important;
+  width: 30px !important;
+  min-width: 30px !important;
+  height: 30px !important;
+  border-radius: 10px !important;
 }
 
 :root.mk-mobile-shell #minkaBarMenu .material-icons-round {
-  font-size: 18px !important;
+  font-size: 16px !important;
+}
+
+:root.mk-mobile-shell #minkaBarMute {
+  display: none !important;
+}
+
+:root.mk-mobile-shell #minkaAiPanel {
+  margin-top: 6px !important;
+  border-radius: 14px !important;
 }
 
 :root.mk-mobile-shell #minkaBarWrap #minkaResults,
