@@ -200,37 +200,98 @@ body * { font-family: var(--font), inherit; }
 #mobileLoader {
   position: fixed;
   inset: 0;
-  z-index: 9998;
+  z-index: 9999;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 14px;
-  padding: 24px;
+  gap: 16px;
+  padding: 28px;
   background:
-    radial-gradient(800px 600px at 50% 10%, rgba(0,200,255,.16), transparent 55%),
-    linear-gradient(180deg, #040b16, #07101f);
-  transition: opacity .55s ease, visibility .55s ease;
+    radial-gradient(900px 640px at 50% 0%, rgba(0,200,255,.18), transparent 54%),
+    radial-gradient(500px 320px at 20% 18%, rgba(92,103,255,.18), transparent 60%),
+    linear-gradient(180deg, #040b16, #07101f 48%, #050c18);
+  transition: opacity .55s ease, visibility .55s ease, transform .55s ease;
+  overflow: hidden;
 }
 
 #mobileLoader.is-hidden {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+  transform: scale(1.015);
+}
+
+#mobileLoader::before,
+#mobileLoader::after {
+  content: "";
+  position: absolute;
+  inset: auto;
+  border-radius: 999px;
+  filter: blur(22px);
+  opacity: .48;
+  pointer-events: none;
+}
+
+#mobileLoader::before {
+  width: 220px;
+  height: 220px;
+  top: 12%;
+  left: -40px;
+  background: radial-gradient(circle, rgba(0,200,255,.22), transparent 70%);
+}
+
+#mobileLoader::after {
+  width: 260px;
+  height: 260px;
+  right: -60px;
+  bottom: 12%;
+  background: radial-gradient(circle, rgba(106,92,255,.18), transparent 72%);
+}
+
+.loader-shell {
+  position: relative;
+  width: min(320px, calc(100vw - 40px));
+  padding: 22px 20px 18px;
+  border-radius: 28px;
+  border: 1px solid rgba(255,255,255,.10);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03) 28%, rgba(255,255,255,.02)),
+    rgba(7,14,26,.58);
+  box-shadow:
+    0 24px 80px rgba(0,0,0,.34),
+    inset 0 1px 0 rgba(255,255,255,.10),
+    inset 0 -1px 0 rgba(255,255,255,.03);
+  backdrop-filter: blur(24px) saturate(1.14);
+  -webkit-backdrop-filter: blur(24px) saturate(1.14);
+}
+
+.loader-shell::after {
+  content: "";
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: 12px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.10);
 }
 
 .loader-mark {
-  width: 84px;
-  height: 84px;
-  border-radius: 28px;
+  width: 88px;
+  height: 88px;
+  margin: 8px auto 4px;
+  border-radius: 30px;
   border: 1px solid rgba(255,255,255,.12);
   background:
     radial-gradient(circle at 30% 30%, rgba(0,200,255,.32), rgba(0,200,255,0) 62%),
-    linear-gradient(160deg, rgba(255,255,255,.10), rgba(255,255,255,.02));
+    linear-gradient(160deg, rgba(255,255,255,.12), rgba(255,255,255,.03));
   box-shadow: 0 20px 60px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08);
+  animation: loaderPulse 2.1s ease-in-out infinite;
 }
 
 .loader-title {
+  text-align: center;
   font-size: .82rem;
   letter-spacing: .24em;
   text-transform: uppercase;
@@ -239,8 +300,44 @@ body * { font-family: var(--font), inherit; }
 }
 
 .loader-sub {
+  text-align: center;
   font-size: .9rem;
   color: rgba(232,244,255,.56);
+}
+
+.loader-progress {
+  width: min(250px, 72vw);
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255,255,255,.08);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+.loader-progress-bar {
+  width: 42%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(0,200,255,.92), rgba(123,97,255,.88));
+  box-shadow: 0 0 22px rgba(0,200,255,.28);
+  animation: loaderBar 1.45s cubic-bezier(.37,.01,.63,1) infinite;
+}
+
+.loader-caption {
+  font-size: .74rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: rgba(232,244,255,.42);
+}
+
+@keyframes loaderPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 20px 60px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08); }
+  50% { transform: scale(1.025); box-shadow: 0 24px 72px rgba(0,0,0,.34), 0 0 40px rgba(0,200,255,.12), inset 0 1px 0 rgba(255,255,255,.10); }
+}
+
+@keyframes loaderBar {
+  0% { transform: translateX(-92%); }
+  100% { transform: translateX(230%); }
 }
 
 #calendarEmbed {
@@ -257,7 +354,12 @@ body * { font-family: var(--font), inherit; }
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   box-shadow: none;
-  transition: bottom .32s cubic-bezier(.22,1,.36,1);
+  opacity: 0;
+  transition: bottom .32s cubic-bezier(.22,1,.36,1), opacity .38s ease;
+}
+
+#calendarEmbed.is-ready {
+  opacity: 1;
 }
 
 html.mk-low-spec #calendarEmbed {
@@ -385,9 +487,13 @@ html.mk-low-spec #calendarEmbed {
 </head>
 <body>
   <div id="mobileLoader" aria-hidden="true">
-    <div class="loader-mark"></div>
-    <div class="loader-title">Minka Mobile</div>
-    <div class="loader-sub">Atver kalendāru un darbības rīkus</div>
+    <div class="loader-shell">
+      <div class="loader-mark"></div>
+      <div class="loader-title">Minka Mobile</div>
+      <div class="loader-sub">Ielādē kalendāru, maiņas un mobile skatu</div>
+    </div>
+    <div class="loader-progress" aria-hidden="true"><div class="loader-progress-bar"></div></div>
+    <div class="loader-caption" id="mobileLoaderCaption">Sagatavo interfeisu…</div>
   </div>
 
   <div id="calendarEmbed">
@@ -960,14 +1066,24 @@ html.mk-low-spec #calendarEmbed {
   let _syncRaf = 0;
   let _nsOpen = false;
   let _mobileLoaderHidden = false;
+  let _mobileLoaderCanHideAt = Date.now() + 1150;
+
+  function setMobileLoaderCaption(text) {
+    var el = document.getElementById('mobileLoaderCaption');
+    if (el && text) el.textContent = text;
+  }
 
   function hideMobileLoader(delay) {
     if (_mobileLoaderHidden) return;
-    _mobileLoaderHidden = true;
+    const wait = Math.max(0, _mobileLoaderCanHideAt - Date.now(), delay || 0);
     setTimeout(function() {
+      if (_mobileLoaderHidden) return;
+      _mobileLoaderHidden = true;
       var el = document.getElementById('mobileLoader');
       if (el) el.classList.add('is-hidden');
-    }, Math.max(0, delay || 0));
+      var embed = document.getElementById('calendarEmbed');
+      if (embed) embed.classList.add('is-ready');
+    }, wait);
   }
 
   function syncShellLayout() {
@@ -1022,6 +1138,7 @@ html.mk-low-spec #calendarEmbed {
       document.getElementById('nsToggleBtnParent').classList.remove('is-active');
     }
     if (e.data.type === 'minka:appReady') {
+      setMobileLoaderCaption('Kalendārs gatavs');
       hideMobileLoader(0);
     }
   });
@@ -1051,9 +1168,12 @@ html.mk-low-spec #calendarEmbed {
     const iframe = document.getElementById('calIframe');
     if (iframe) iframe.addEventListener('load', function() {
       setTimeout(syncShellLayout, 90);
-      hideMobileLoader(180);
+      setMobileLoaderCaption('Ielādē maiņu datus…');
     });
-    setTimeout(function() { hideMobileLoader(0); }, 2600);
+    setTimeout(function() {
+      setMobileLoaderCaption('Gandrīz gatavs…');
+    }, 900);
+    setTimeout(function() { hideMobileLoader(0); }, 7000);
     syncShellLayout();
   });
 
@@ -1097,7 +1217,7 @@ html.mk-low-spec #calendarEmbed {
 
   <script>
   if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-    const MINKA_APP_VERSION = '2026.03.31.mobile.34';
+    const MINKA_APP_VERSION = '2026.03.31.mobile.35';
     const MINKA_VERSION_KEY = 'minka_mobile_app_version';
     const MINKA_RELOAD_KEY = 'minka_mobile_sw_reloading';
     function clearMinkaRuntimeCaches() {
