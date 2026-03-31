@@ -12,7 +12,7 @@ function updateSunMoon(){}
 const input = document.getElementById('minkaBarInput');
 const resultsArea = document.getElementById('minkaResults');
 const clearBtn = document.getElementById('searchClearBtn');
-const GRAFIKS_LOADER_MIN_MS = 2600;
+const GRAFIKS_LOADER_MIN_MS = document.documentElement.classList.contains('mk-mobile-shell') ? 450 : 2600;
 window.__minkaGrafiksLoaderStartedAt = window.__minkaGrafiksLoaderStartedAt || Date.now();
 window.hospitalDatabase = Array.isArray(window.hospitalDatabase) ? window.hospitalDatabase : [];
 var hospitalDatabase = window.hospitalDatabase;
