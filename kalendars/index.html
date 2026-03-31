@@ -672,12 +672,6 @@ document.addEventListener('keydown', (e) => {
     if(typeof forceOpen==='boolean') _nsOpen=!forceOpen; // will be toggled below
     _nsOpen=!_nsOpen;
     overlay.classList.toggle('open',_nsOpen);
-    try {
-      var nsBarToggle = document.getElementById('ns-bar-toggle');
-      if (nsBarToggle && document.documentElement.classList.contains('mk-mobile-shell')) {
-        nsBarToggle.classList.toggle('is-on', _nsOpen);
-      }
-    } catch(_e) {}
     if(_nsOpen && window.__ns) {
       setTimeout(function(){ if(window.__ns && typeof window.__ns._render==='function') window.__ns._render(); }, 50);
     }
