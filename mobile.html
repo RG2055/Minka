@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<script>
+(function() {
+  var API_BASE = 'https://minka-api.gamernr1elite.workers.dev';
+  var TOKEN_KEY = 'minka_api_token_v1';
+
+  function getToken() {
+    try { return sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY) || ''; }
+    catch (_e) { return ''; }
+  }
+
+  function setToken(token, persist) {
+    try {
+      sessionStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(TOKEN_KEY);
+      if (token) {
+        if (persist) localStorage.setItem(TOKEN_KEY, token);
+        else sessionStorage.setItem(TOKEN_KEY, token);
+      }
+    } catch (_e) {}
+  }
+
+  function notifyIframeAuth() {
+    setTimeout(function() {
+      var f = document.getElementById('calIframe');
+      if (!f) return;
+      var base = f.getAttribute('data-base-src') || 'kalendars/index.html';
+      var token = getToken();
+      var next = base;
+      if (token) next += (next.indexOf('?') >= 0 ? '&' : '?') + 'token=' + encodeURIComponent(token);
+      if (f.getAttribute('src') !== next) f.setAttribute('src', next);
+      if (f.contentWindow) f.contentWindow.postMessage({ type: 'minka_auth_ok' }, '*');
+    }, 180);
+  }
+
+  function showGate() {
+    document.documentElement.style.visibility = 'hidden';
+    document.addEventListener('DOMContentLoaded', function() {
+      document.documentElement.style.visibility = '';
+      var overlay = document.createElement('div');
+      overlay.id = 'minka-gate';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(4,7,14,.86);display:flex;align-items:center;justify-content:center;z-index:999999;font-family:system-ui,sans-serif;backdrop-filter:blur(12px);padding:20px';
+      overlay.innerHTML = ''
+        + '<div style="background:#0d1118;border:1px solid rgba(255,255,255,0.10);border-radius:22px;padding:24px 22px 18px;text-align:left;width:min(420px,calc(100vw - 28px));box-shadow:0 28px 80px rgba(0,0,0,.55);color:#eef2ff;">'
+        + '<div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">'
+        + '<div style="width:50px;height:50px;border-radius:16px;border:1px solid rgba(0,200,255,0.22);background:radial-gradient(circle at 30% 30%, rgba(0,200,255,0.26), rgba(0,91,182,0.11) 60%, transparent 100%), #121722;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 1px 0 rgba(255,255,255,0.05),0 10px 24px rgba(0,0,0,0.22);font-size:24px;">&#128241;</div>'
+        + '<div><div style="font-size:18px;font-weight:800;line-height:1.1;">Minka Mobile</div><div style="margin-top:4px;font-size:12px;color:rgba(203,213,225,0.72);">Dro&#353;a piek&#316;uve kalend&#257;ram no telefona.</div></div>'
+        + '</div>'
+        + '<div style="font-size:12px;line-height:1.55;color:rgba(226,232,240,0.76);margin-bottom:16px;">Sensit&#299;vie dati tiek iel&#257;d&#275;ti tikai p&#275;c autoriz&#257;cijas.</div>'
+        + '<input id="minka-pw" type="password" placeholder="Parole" autocomplete="current-password" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:12px 14px;color:#fff;font-size:14px;outline:none;margin-bottom:12px">'
+        + '<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(203,213,225,0.72);margin-bottom:14px;"><input id="minka-remember" type="checkbox" style="accent-color:#00c8ff"> Atcer&#275;ties &#353;o ier&#299;ci</label>'
+        + '<button id="minka-btn" style="width:100%;background:linear-gradient(135deg,#00b7ff,#4f46e5);border:none;border-radius:14px;padding:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer">Ieiet</button>'
+        + '<div id="minka-err" style="color:#f87171;font-size:12px;margin-top:10px;min-height:16px"></div>'
+        + '</div>';
+      document.body.prepend(overlay);
+      var input = document.getElementById('minka-pw');
+      var btn = document.getElementById('minka-btn');
+      var err = document.getElementById('minka-err');
+      var remember = document.getElementById('minka-remember');
+
+      async function attempt() {
+        var password = String(input.value || '').trim();
+        err.textContent = '';
+        if (!password) {
+          err.textContent = 'Ievadi paroli';
+          return;
+        }
+        btn.disabled = true;
+        btn.textContent = 'Pārbauda...';
+        try {
+          var res = await fetch(API_BASE + '/api/login', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ password: password })
+          });
+          var data = await res.json().catch(function() { return {}; });
+          if (!res.ok || !data || !data.token) throw new Error((data && data.error) || 'Login failed');
+          setToken(data.token, !!(remember && remember.checked));
+          notifyIframeAuth();
+          overlay.style.transition = 'opacity 0.3s';
+          overlay.style.opacity = '0';
+          setTimeout(function() { overlay.remove(); }, 300);
+        } catch (_e) {
+          err.textContent = 'Nepareiza parole vai API nav sasniedzams';
+          input.value = '';
+          input.focus();
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Ieiet';
+        }
+      }
+
+      btn.addEventListener('click', attempt);
+      input.addEventListener('keydown', function(e) { if (e.key === 'Enter') attempt(); });
+      input.focus();
+    }, { once: true });
+  }
+
+  if (!getToken()) showGate();
+  else document.addEventListener('DOMContentLoaded', notifyIframeAuth, { once: true });
+})();
+</script>
+<script>
+(function() {
+  try {
+    var nav = window.navigator || {};
+    var mem = Number(nav.deviceMemory || 0);
+    var cores = Number(nav.hardwareConcurrency || 0);
+    var reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    var lowSpec = reduceMotion || (mem > 0 && mem <= 8) || (cores > 0 && cores <= 4);
+    window.__mkPerfProfile = {
+      lowSpec: lowSpec,
+      reducedMotion: reduceMotion,
+      deviceMemory: mem,
+      hardwareConcurrency: cores
+    };
+    if (lowSpec) document.documentElement.classList.add('mk-low-spec');
+  } catch (_e) {
+    window.__mkPerfProfile = { lowSpec: false, reducedMotion: false, deviceMemory: 0, hardwareConcurrency: 0 };
+  }
+})();
+</script>
+
+<meta charset="UTF-8">
+<link rel="manifest" href="manifest-mobile.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Minka Mobile">
+<meta name="theme-color" content="#06101f">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Minka Mobile</title>
+<link rel="icon" href="data/minka_icon.ico">
+
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://esm.sh" crossorigin>
+
+<link rel="preload" as="style"
+  href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap"
+  onload="this.onload=null;this.rel='stylesheet'">
+<noscript>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+</noscript>
+
+<link rel="preload" as="style"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  onload="this.onload=null;this.rel='stylesheet'">
+<noscript>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</noscript>
+
+<link rel="preload" as="style"
+  href="https://fonts.cdnfonts.com/css/digital-7-mono"
+  onload="this.onload=null;this.rel='stylesheet'">
+<noscript>
+  <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/digital-7-mono">
+</noscript>
+
+<script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+<link rel="stylesheet" href="css/minka.css">
+<link rel="stylesheet" href="css/radio-extra.css">
+<link rel="preload" as="style" href="css/improvements.css" onload="this.onload=null;this.rel='stylesheet'">
+<link rel="preload" as="style" href="css/radio_extras_v4.css" onload="this.onload=null;this.rel='stylesheet'">
+<noscript>
+  <link rel="stylesheet" href="css/improvements.css">
+  <link rel="stylesheet" href="css/radio_extras_v4.css">
+</noscript>
+
+<style>
+:root {
+  --font: 'Space Grotesk', system-ui, sans-serif;
+  --dock-h: 76px;
+  --calendar-bottom: calc(var(--dock-h) + env(safe-area-inset-bottom, 0px) + 14px);
+  --page-pad: 12px;
+  --accent: #00c8ff;
+  --accent-2: #38bdf8;
+  --ink: #e8f4ff;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  font-family: var(--font);
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 900px at 0% -10%, rgba(0,200,255,.18), transparent 50%),
+    radial-gradient(1000px 800px at 100% 0%, rgba(79,70,229,.18), transparent 52%),
+    linear-gradient(180deg, #020814 0%, #07101f 46%, #09131b 100%);
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(120deg, rgba(255,255,255,.03), transparent 28%),
+    radial-gradient(circle at 18% 18%, rgba(255,255,255,.05), transparent 22%);
+  opacity: .8;
+  z-index: 0;
+}
+
+body * { font-family: var(--font), inherit; }
+
+#mobileLoader {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  padding: 24px;
+  background:
+    radial-gradient(800px 600px at 50% 10%, rgba(0,200,255,.16), transparent 55%),
+    linear-gradient(180deg, #040b16, #07101f);
+  transition: opacity .55s ease, visibility .55s ease;
+}
+
+#mobileLoader.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loader-mark {
+  width: 84px;
+  height: 84px;
+  border-radius: 28px;
+  border: 1px solid rgba(255,255,255,.12);
+  background:
+    radial-gradient(circle at 30% 30%, rgba(0,200,255,.32), rgba(0,200,255,0) 62%),
+    linear-gradient(160deg, rgba(255,255,255,.10), rgba(255,255,255,.02));
+  box-shadow: 0 20px 60px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+.loader-title {
+  font-size: .82rem;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: rgba(232,244,255,.78);
+}
+
+.loader-sub {
+  font-size: .9rem;
+  color: rgba(232,244,255,.56);
+}
+
+#calendarEmbed {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + var(--page-pad));
+  left: var(--page-pad);
+  right: var(--page-pad);
+  bottom: var(--calendar-bottom);
+  z-index: 1;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(8,16,28,.58);
+  backdrop-filter: blur(24px) saturate(135%);
+  -webkit-backdrop-filter: blur(24px) saturate(135%);
+  box-shadow: 0 22px 60px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.06);
+  transition: bottom .32s cubic-bezier(.22,1,.36,1);
+}
+
+html.mk-low-spec #calendarEmbed {
+  backdrop-filter: blur(10px) saturate(110%);
+  -webkit-backdrop-filter: blur(10px) saturate(110%);
+}
+
+#calendarEmbed iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+}
+
+#calendarStatusChip {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 18px);
+  right: 18px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(6,17,31,.74);
+  border: 1px solid rgba(255,255,255,.12);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 10px 26px rgba(0,0,0,.2);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #00d084;
+  box-shadow: 0 0 14px rgba(0,208,132,.8);
+}
+
+.mobile-dock {
+  position: fixed;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  z-index: 30;
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+  border-radius: 26px;
+  background: rgba(5,12,22,.82);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 18px 45px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+.mobile-dock-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dock-btn {
+  appearance: none;
+  border: 1px solid rgba(255,255,255,.10);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03)),
+    rgba(8,18,30,.74);
+  color: #eef7ff;
+  border-radius: 18px;
+  min-height: 58px;
+  padding: 8px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+.dock-btn:active {
+  transform: translateY(1px) scale(.99);
+}
+
+.dock-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,.06);
+  font-size: 13px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+.dock-btn.is-active {
+  border-color: rgba(0,200,255,.34);
+  box-shadow: 0 12px 28px rgba(0,200,255,.12), inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+.dock-btn.primary {
+  background:
+    linear-gradient(180deg, rgba(0,200,255,.18), rgba(79,70,229,.14)),
+    rgba(8,18,30,.90);
+}
+
+.dock-btn.hidden-install {
+  display: none;
+}
+
+pwa-install {
+  position: fixed;
+  inset: auto 0 0 auto;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  z-index: -1;
+}
+
+@media (max-width: 390px) {
+  :root {
+    --dock-h: 72px;
+  }
+
+  #calendarEmbed {
+    left: 10px;
+    right: 10px;
+    border-radius: 20px;
+  }
+
+  .dock-btn {
+    min-height: 54px;
+    font-size: 9px;
+  }
+
+  .dock-icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  #calendarStatusChip {
+    padding: 9px 12px;
+    font-size: 11px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .mobile-dock-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .dock-btn {
+    min-height: 50px;
+  }
+}
+</style>
+</head>
+<body>
+  <div id="mobileLoader" aria-hidden="true">
+    <div class="loader-mark"></div>
+    <div class="loader-title">Minka Mobile</div>
+    <div class="loader-sub">Atver kalendāru un darbības rīkus</div>
+  </div>
+
+  <div id="calendarStatusChip">
+    <span class="status-dot"></span>
+    <span>Kalendārs</span>
+  </div>
+
+  <div id="calendarEmbed">
+    <iframe
+      src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec"
+      data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec"
+      id="calIframe"
+      loading="eager"
+      allowtransparency="true"
+      fetchpriority="high"></iframe>
+  </div>
+
+  <div class="mobile-dock" id="dockShelf">
+    <div class="mobile-dock-grid" id="bottomBtnBar">
+      <button id="nsToggleBtnParent" class="dock-btn" onclick="toggleNsFromParent()" title="Nakts sadalījums">
+        <span class="dock-icon">🌙</span>
+        <span>Nakts</span>
+      </button>
+      <button id="statsDocBtn" class="dock-btn" onclick="openStatsFromDock()" title="Statistika">
+        <span class="dock-icon">📊</span>
+        <span>Stats</span>
+      </button>
+      <button id="settingsDockBtn" class="dock-btn" onclick="openSettingsFromDock()" title="Iestatījumi">
+        <span class="dock-icon">⚙️</span>
+        <span>Settings</span>
+      </button>
+      <button id="installBtn" class="dock-btn hidden-install" onclick="showInstallDialog()" title="Instalēt lietotni">
+        <span class="dock-icon">⬇️</span>
+        <span>Install</span>
+      </button>
+    </div>
+  </div>
+
+  <pwa-install
+    id="pwaInstall"
+    manual-apple
+    manual-chrome
+    use-local-storage
+    manifest-url="manifest-mobile.json"
+    styles='{"--tint-color":"#00c8ff"}'></pwa-install>
+
+  <script>
+  let _syncRaf = 0;
+  let _nsOpen = false;
+
+  function syncShellLayout() {
+    cancelAnimationFrame(_syncRaf);
+    _syncRaf = requestAnimationFrame(function() {
+      document.documentElement.style.setProperty('--dock-h', Math.max(72, Math.round(document.getElementById('dockShelf').getBoundingClientRect().height || 76)) + 'px');
+      const iframe = document.getElementById('calIframe');
+      if (iframe && iframe.contentWindow) {
+        try {
+          iframe.contentWindow.postMessage({
+            type: 'hostLayoutChanged',
+            radioVisible: false,
+            radioHeight: 0,
+            buttonBarHeight: Math.round(document.getElementById('dockShelf').getBoundingClientRect().height || 76)
+          }, '*');
+        } catch (_e) {}
+      }
+    });
+  }
+
+  function openStatsFromDock() {
+    const iframe = document.getElementById('calIframe');
+    if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage({ type: 'mk_open_stats' }, '*');
+  }
+
+  function openSettingsFromDock() {
+    const iframe = document.getElementById('calIframe');
+    if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage({ type: 'mk_open_settings' }, '*');
+  }
+
+  function toggleNsFromParent() {
+    _nsOpen = !_nsOpen;
+    const iframe = document.getElementById('calIframe');
+    if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage({ type: 'toggleNs', open: _nsOpen }, '*');
+    document.getElementById('nsToggleBtnParent').classList.toggle('is-active', _nsOpen);
+  }
+
+  function showInstallDialog() {
+    const el = document.getElementById('pwaInstall');
+    if (!el || typeof el.showDialog !== 'function') return;
+    el.showDialog();
+  }
+
+  window.addEventListener('message', function(e) {
+    if (!e.data) return;
+    if (e.data.type === 'mk_stats_closed') document.getElementById('statsDocBtn').classList.remove('is-active');
+    if (e.data.type === 'mk_stats_opened') document.getElementById('statsDocBtn').classList.add('is-active');
+    if (e.data.type === 'mk_settings_closed') document.getElementById('settingsDockBtn').classList.remove('is-active');
+    if (e.data.type === 'mk_settings_opened') document.getElementById('settingsDockBtn').classList.add('is-active');
+    if (e.data.type === 'nsClosed') {
+      _nsOpen = false;
+      document.getElementById('nsToggleBtnParent').classList.remove('is-active');
+    }
+    if (e.data.type === 'minka:appReady') {
+      document.getElementById('mobileLoader').classList.add('is-hidden');
+    }
+  });
+
+  document.addEventListener('click', function(e) {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.id === 'installBtn') return;
+    if (!window.AudioContext && !window.webkitAudioContext) return;
+    try {
+      if (!window.__dockAudioCtx) window.__dockAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const c = window.__dockAudioCtx;
+      const o = c.createOscillator();
+      const g = c.createGain();
+      o.connect(g);
+      g.connect(c.destination);
+      o.type = 'sine';
+      o.frequency.value = b.id === 'nsToggleBtnParent' ? 420 : 460;
+      g.gain.setValueAtTime(0, c.currentTime);
+      g.gain.linearRampToValueAtTime(0.035, c.currentTime + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.12);
+      o.start(c.currentTime);
+      o.stop(c.currentTime + 0.13);
+    } catch (_e) {}
+  }, true);
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const iframe = document.getElementById('calIframe');
+    if (iframe) iframe.addEventListener('load', function() { setTimeout(syncShellLayout, 90); });
+    setTimeout(function() { document.getElementById('mobileLoader').classList.add('is-hidden'); }, 9000);
+    syncShellLayout();
+  });
+
+  window.addEventListener('resize', syncShellLayout, { passive: true });
+  window.addEventListener('orientationchange', function() { setTimeout(syncShellLayout, 220); }, { passive: true });
+
+  if ('ResizeObserver' in window) {
+    const ro = new ResizeObserver(syncShellLayout);
+    ro.observe(document.documentElement);
+    ro.observe(document.getElementById('dockShelf'));
+  }
+  </script>
+
+  <script type="module">
+  import 'https://esm.sh/@khmyznikov/pwa-install';
+
+  const pwaInstall = document.getElementById('pwaInstall');
+  const installBtn = document.getElementById('installBtn');
+
+  function refreshInstallVisibility() {
+    if (!pwaInstall || !installBtn) return;
+    const hide = !!pwaInstall.isUnderStandaloneMode || !!window.matchMedia('(display-mode: standalone)').matches;
+    installBtn.classList.toggle('hidden-install', hide);
+  }
+
+  pwaInstall.addEventListener('pwa-install-available-event', () => {
+    installBtn.classList.remove('hidden-install');
+  });
+  pwaInstall.addEventListener('pwa-install-success-event', refreshInstallVisibility);
+  pwaInstall.addEventListener('pwa-user-choice-result-event', refreshInstallVisibility);
+
+  window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(refreshInstallVisibility, 400);
+  });
+  </script>
+
+  <script>
+  if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
+    const MINKA_APP_VERSION = '2026.03.31.mobile.1';
+    const MINKA_VERSION_KEY = 'minka_mobile_app_version';
+    const MINKA_RELOAD_KEY = 'minka_mobile_sw_reloading';
+    function clearMinkaRuntimeCaches() {
+      try {
+        localStorage.removeItem('minka_schedule_cache_v2');
+        localStorage.removeItem('minka_schedule_cache_ts_v2');
+        localStorage.removeItem('minka_emoji_v1');
+      } catch (_e) {}
+      return caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key)))).catch(() => {});
+    }
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(async (r) => {
+          try {
+            const prev = localStorage.getItem(MINKA_VERSION_KEY);
+            if (prev !== MINKA_APP_VERSION) {
+              await clearMinkaRuntimeCaches();
+              localStorage.setItem(MINKA_VERSION_KEY, MINKA_APP_VERSION);
+              await r.update();
+            }
+          } catch (_e) {}
+
+          if (r.waiting) r.waiting.postMessage({ type: 'SKIP_WAITING' });
+          r.addEventListener('updatefound', () => {
+            const next = r.installing;
+            if (!next) return;
+            next.addEventListener('statechange', () => {
+              if (next.state === 'installed' && navigator.serviceWorker.controller) next.postMessage({ type: 'SKIP_WAITING' });
+            });
+          });
+
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            try {
+              if (sessionStorage.getItem(MINKA_RELOAD_KEY) === MINKA_APP_VERSION) return;
+              sessionStorage.setItem(MINKA_RELOAD_KEY, MINKA_APP_VERSION);
+            } catch (_e) {}
+            location.reload();
+          });
+        })
+        .catch(function(e) { console.log('SW error:', e); });
+    });
+  }
+  </script>
+</body>
+</html>
