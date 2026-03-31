@@ -4163,9 +4163,9 @@ window.addEventListener('message', function(e) {
 
 :root.mk-mobile-shell .top-row {
   display: grid !important;
-  grid-template-columns: 1fr auto !important;
-  gap: 6px !important;
-  align-items: center !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 4px !important;
+  align-items: start !important;
 }
 
 :root.mk-mobile-shell .top-row > div:first-child,
@@ -4178,13 +4178,29 @@ window.addEventListener('message', function(e) {
   align-items: center !important;
   gap: 6px !important;
   min-width: 0 !important;
+  justify-content: flex-start !important;
 }
 
 :root.mk-mobile-shell .top-row > div:last-child {
   display: grid !important;
-  grid-template-columns: repeat(4, 34px) 92px !important;
+  grid-template-columns: 90px repeat(3, 32px) !important;
   gap: 4px !important;
   align-items: center !important;
+  justify-self: end !important;
+  justify-content: end !important;
+  width: fit-content !important;
+}
+
+:root.mk-mobile-shell .top-row > div:last-child .month-select {
+  order: -1 !important;
+}
+
+:root.mk-mobile-shell .date-title-wrap {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 5px !important;
+  min-width: 0 !important;
 }
 
 :root.mk-mobile-shell #grafiks-dateTitle {
@@ -4208,11 +4224,12 @@ window.addEventListener('message', function(e) {
 }
 
 :root.mk-mobile-shell .month-select {
-  width: 84px !important;
-  min-width: 84px !important;
+  width: 90px !important;
+  min-width: 90px !important;
   padding-left: 8px !important;
   padding-right: 18px !important;
-  font-size: 7px !important;
+  font-size: 8px !important;
+  justify-self: end !important;
 }
 
 :root.mk-mobile-shell #shift-progress-wrap {
@@ -4520,7 +4537,7 @@ window.addEventListener('message', function(e) {
   }
 
   :root.mk-mobile-shell .top-row > div:last-child {
-    grid-template-columns: repeat(4, 28px) 72px !important;
+    grid-template-columns: 76px repeat(3, 28px) !important;
   }
 
   :root.mk-mobile-shell .cards-subgrid {
