@@ -495,6 +495,26 @@ pwa-install {
         }
       }
     }
+    function _frameActiveDate(f) {
+      try {
+        var ds = String((f && f.contentWindow && (f.contentWindow.__activeDateStr || f.contentWindow.__todayDateStr)) || '').trim();
+        return ds || '';
+      } catch(_e) { return ''; }
+    }
+    function _workerDateCandidates(dateStr) {
+      var list = [];
+      function add(v) {
+        v = String(v || '').trim();
+        if (!v || list.indexOf(v) >= 0) return;
+        list.push(v);
+      }
+      add(dateStr);
+      try {
+        document.querySelectorAll('iframe').forEach(function(f) { add(_frameActiveDate(f)); });
+      } catch(_e) {}
+      add(_tsToDateStr(Date.now()));
+      return list;
+    }
     function _directWorkersForDate(dateStr) {
       var out = [];
       var seen = {};
@@ -509,15 +529,21 @@ pwa-install {
     function _ensureWorkersForDate(dateStr) {
       dateStr = String(dateStr || '').trim();
       if (!dateStr) return [];
-      if (Array.isArray(_workersCache[dateStr]) && _workersCache[dateStr].length) return _workersCache[dateStr];
-      var direct = _directWorkersForDate(dateStr);
-      if (direct.length) {
-        _workersCache[dateStr] = direct;
-        return direct;
+      var dates = _workerDateCandidates(dateStr);
+      for (var di = 0; di < dates.length; di++) {
+        var dKey = dates[di];
+        if (Array.isArray(_workersCache[dKey]) && _workersCache[dKey].length) return _workersCache[dKey];
+        var direct = _directWorkersForDate(dKey);
+        if (direct.length) {
+          _workersCache[dKey] = direct;
+          return direct;
+        }
       }
       try {
         document.querySelectorAll('iframe').forEach(function(f) {
-          try { f.contentWindow.postMessage({ type: 'mk_request_workers_for_date', date: dateStr }, '*'); } catch(_e) {}
+          dates.forEach(function(dKey) {
+            try { f.contentWindow.postMessage({ type: 'mk_request_workers_for_date', date: dKey }, '*'); } catch(_e) {}
+          });
         });
       } catch(_e) {}
       return _workersCache[dateStr] || [];
@@ -818,22 +844,22 @@ pwa-install {
           '.brc{padding:12px 10px 10px;border-radius:20px;display:flex;flex-direction:column;align-items:stretch;gap:8px;min-height:0;}'+
           '.brn{font-size:clamp(14px,4.8vw,20px);letter-spacing:.20em;}'+
           '.brn{text-align:center;}'+
-          '.bring-wrap{width:min(32vw,124px);margin:0 auto;}'+
+          '.bring-wrap{width:min(28vw,108px);margin:0 auto;}'+
           '.bring-time{font-size:clamp(19px,6.2vw,28px);}'+
           '.bring-secs{font-size:clamp(11px,3.4vw,15px);}'+
           '.bring-label{font-size:10px;}'+
           '.bwd-nav,.bwrap,.bname-inp,.bnm-section,.bhist-hdr,.bhist{width:100%;}'+
-          '.bnm-section{padding:9px 10px 9px;border-radius:14px;}'+
-          '.bnm-label{font-size:8px;margin-bottom:6px;}'+
-          '.bwd-nav{gap:10px;margin-bottom:4px;}'+
+          '.bnm-section{padding:7px 9px 7px;border-radius:13px;}'+
+          '.bnm-label{font-size:7px;margin-bottom:4px;}'+
+          '.bwd-nav{gap:8px;margin-bottom:2px;}'+
           '.bwd-arr{width:34px;height:30px;border-radius:10px;font-size:16px;}'+
           '.bwd-lbl{font-size:11px;min-width:56px;}'+
           '.bwrap{justify-content:center;gap:6px;}'+
-          '.bwc{font-size:12px;padding:8px 12px;border-radius:12px;}'+
+          '.bwc{font-size:11px;padding:7px 10px;border-radius:11px;}'+
           '.bname-inp{font-size:13px;padding:9px 12px;border-radius:11px;}'+
           '.bnm-prow{flex-wrap:wrap;gap:6px;}'+
-          '.bnm-dpick,.bnm-tpick{flex:1 1 calc(50% - 3px);font-size:12px;padding:9px 8px;border-radius:10px;}'+
-          '.bnm-savepick,.bnm-now{flex:1 1 100%;font-size:12px;padding:10px 10px;border-radius:10px;}'+
+          '.bnm-dpick,.bnm-tpick{flex:1 1 calc(50% - 3px);font-size:11px;padding:7px 6px;border-radius:10px;}'+
+          '.bnm-savepick,.bnm-now{flex:1 1 100%;font-size:11px;padding:8px 8px;border-radius:10px;}'+
           '.bnm-caldrop{padding:8px 7px 10px;border-radius:14px;}'+
           '.bnm-calh span{font-size:11px;}'+
           '.bnm-cnav{font-size:15px;padding:3px 10px;border-radius:8px;}'+
@@ -845,7 +871,7 @@ pwa-install {
           '.bhist-hdr{padding:0 2px 2px;}'+
           '.bhist-lbl{font-size:10px;}'+
           '.bhist-cnt{font-size:10px;padding:2px 6px;}'+
-          '.bhist{max-height:15dvh;padding:7px 8px;border-radius:13px;}'+
+          '.bhist{max-height:12dvh;padding:6px 7px;border-radius:12px;}'+
           '.bhist-row{font-size:11px;gap:4px 8px;padding:5px 2px;}'+
           '.bhist-num{font-size:10px;min-width:14px;}'+
           '.bhist-who{font-size:11px;padding:2px 7px;border-radius:7px;}'+
@@ -856,16 +882,16 @@ pwa-install {
           '#bolus-rooms{gap:7px;padding:4px 7px max(calc(env(safe-area-inset-bottom,0px) + 90px),104px);}'+
           '.brc{padding:10px 9px 9px;gap:7px;border-radius:18px;}'+
           '.brn{font-size:clamp(13px,4.4vw,18px);}'+
-          '.bring-wrap{width:min(30vw,114px);}'+
+          '.bring-wrap{width:min(25vw,96px);}'+
           '.bring-bg,.bring-arc{stroke-width:8;}'+
           '.bring-time{font-size:clamp(17px,5.8vw,24px);}'+
           '.bring-secs{font-size:clamp(10px,3vw,13px);}'+
           '.bwd-arr{width:30px;height:28px;font-size:15px;}'+
           '.bwd-lbl{font-size:10px;min-width:52px;}'+
           '.bwrap{gap:5px;justify-content:center;}'+
-          '.bwc{font-size:11px;padding:7px 10px;}'+
-          '.bnm-dpick,.bnm-tpick{font-size:11px;padding:8px 6px;}'+
-          '.bnm-savepick,.bnm-now{font-size:11px;padding:9px 8px;}'+
+          '.bwc{font-size:10px;padding:6px 8px;}'+
+          '.bnm-dpick,.bnm-tpick{font-size:10px;padding:7px 5px;}'+
+          '.bnm-savepick,.bnm-now{font-size:10px;padding:7px 7px;}'+
           '.bhist{max-height:18dvh;}'+
           '.bhist-row{font-size:10px;}'+
           '.bhist-who{font-size:10px;}'+
@@ -883,7 +909,17 @@ pwa-install {
       ov.style.display = _open ? 'flex' : 'none';
       var btn = document.getElementById('bolusDocBtn');
       if (btn) btn.classList.toggle('is-active', _open);
-      if (_open) { _kvPull(_render); _render(); _startTick(); }
+      if (_open) {
+        try {
+          document.querySelectorAll('iframe').forEach(function(f) {
+            try { f.contentWindow.postMessage({ type: 'mk_request_workers_index' }, '*'); } catch(_e) {}
+          });
+        } catch(_e) {}
+        _kvPull(_render);
+        _render();
+        setTimeout(function(){ if (_open) _render(); }, 250);
+        _startTick();
+      }
       else _stopTick();
     };
     function init() {
@@ -1048,7 +1084,7 @@ pwa-install {
 
   <script>
   if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-    const MINKA_APP_VERSION = '2026.03.31.mobile.22';
+    const MINKA_APP_VERSION = '2026.03.31.mobile.23';
     const MINKA_VERSION_KEY = 'minka_mobile_app_version';
     const MINKA_RELOAD_KEY = 'minka_mobile_sw_reloading';
     function clearMinkaRuntimeCaches() {
