@@ -349,15 +349,6 @@ html.mk-low-spec #calendarEmbed {
   display: none;
 }
 
-pwa-install {
-  position: fixed;
-  inset: auto 0 0 auto;
-  width: 0;
-  height: 0;
-  overflow: hidden;
-  z-index: -1;
-}
-
 @media (max-width: 390px) {
   :root {
     --dock-h: 72px;
@@ -432,6 +423,9 @@ pwa-install {
 
   <pwa-install
     id="pwaInstall"
+    manual-apple
+    manual-chrome
+    manual-how-to
     use-local-storage
     manifest-url="manifest-mobile.json"
     styles='{"--tint-color":"#00c8ff"}'></pwa-install>
@@ -1078,19 +1072,32 @@ pwa-install {
 
   const pwaInstall = document.getElementById('pwaInstall');
   if (pwaInstall) {
+    let installDialogShown = false;
+    function tryShowInstallDialog(force) {
+      if (!pwaInstall || typeof pwaInstall.showDialog !== 'function') return;
+      const isStandalone = !!pwaInstall.isUnderStandaloneMode || !!window.matchMedia('(display-mode: standalone)').matches;
+      if (isStandalone) return;
+      if (installDialogShown && !force) return;
+      installDialogShown = true;
+      pwaInstall.showDialog(!!force);
+    }
     window.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
-        const isStandalone = !!pwaInstall.isUnderStandaloneMode || !!window.matchMedia('(display-mode: standalone)').matches;
-        if (isStandalone) return;
-        if (typeof pwaInstall.showDialog === 'function') pwaInstall.showDialog();
+        tryShowInstallDialog(false);
       }, 900);
+    });
+    pwaInstall.addEventListener('pwa-install-available-event', () => {
+      setTimeout(() => tryShowInstallDialog(false), 80);
+    });
+    window.addEventListener('focus', () => {
+      setTimeout(() => tryShowInstallDialog(false), 180);
     });
   }
   </script>
 
   <script>
   if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-    const MINKA_APP_VERSION = '2026.03.31.mobile.27';
+    const MINKA_APP_VERSION = '2026.03.31.mobile.28';
     const MINKA_VERSION_KEY = 'minka_mobile_app_version';
     const MINKA_RELOAD_KEY = 'minka_mobile_sw_reloading';
     function clearMinkaRuntimeCaches() {
