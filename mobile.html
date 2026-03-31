@@ -288,6 +288,18 @@ body * { font-family: var(--font), inherit; }
     linear-gradient(160deg, rgba(255,255,255,.12), rgba(255,255,255,.03));
   box-shadow: 0 20px 60px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08);
   animation: loaderPulse 2.1s ease-in-out infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.loader-mark img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 8px 18px rgba(0,0,0,.22));
 }
 
 .loader-title {
@@ -488,7 +500,7 @@ html.mk-low-spec #calendarEmbed {
 <body>
   <div id="mobileLoader" aria-hidden="true">
     <div class="loader-shell">
-      <div class="loader-mark"></div>
+      <div class="loader-mark"><img src="data/icon-192.png" alt="Minka logo"></div>
       <div class="loader-title">Minka Mobile</div>
       <div class="loader-sub">Ielādē kalendāru, maiņas un mobile skatu</div>
     </div>
@@ -1217,7 +1229,7 @@ html.mk-low-spec #calendarEmbed {
 
   <script>
   if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-    const MINKA_APP_VERSION = '2026.03.31.mobile.37';
+    const MINKA_APP_VERSION = '2026.03.31.mobile.38';
     const MINKA_VERSION_KEY = 'minka_mobile_app_version';
     const MINKA_RELOAD_KEY = 'minka_mobile_sw_reloading';
     function clearMinkaRuntimeCaches() {
