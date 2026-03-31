@@ -290,51 +290,6 @@ html.mk-low-spec #calendarEmbed {
   box-shadow: 0 16px 40px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.10), inset 0 -1px 0 rgba(255,255,255,.03);
 }
 
-.install-fab {
-  position: fixed;
-  right: 10px;
-  bottom: calc(var(--dock-h) + env(safe-area-inset-bottom, 0px) + 16px);
-  z-index: 35;
-  appearance: none;
-  border: 1px solid rgba(255,255,255,.18);
-  border-radius: 18px;
-  padding: 10px 14px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #eef7ff;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.06) 35%, rgba(255,255,255,.03)),
-    rgba(8,18,30,.64);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  box-shadow: 0 12px 28px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.12);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
-
-.install-fab:active {
-  transform: translateY(1px) scale(.99);
-}
-
-.install-fab .fab-icon {
-  width: 24px;
-  height: 24px;
-  border-radius: 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0,200,255,.14);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
-  font-size: 13px;
-}
-
-.install-fab.hidden-install {
-  display: none;
-}
-
 .mobile-dock-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -419,13 +374,6 @@ pwa-install {
     font-size: 8px;
   }
 
-  .install-fab {
-    right: 8px;
-    bottom: calc(var(--dock-h) + env(safe-area-inset-bottom, 0px) + 12px);
-    padding: 9px 12px;
-    font-size: 10px;
-  }
-
   .dock-icon {
     width: 22px;
     height: 22px;
@@ -461,11 +409,6 @@ pwa-install {
       fetchpriority="high"></iframe>
   </div>
 
-  <button id="installBtn" class="install-fab hidden-install" onclick="showInstallDialog()" title="Install app">
-    <span class="fab-icon">⬇️</span>
-    <span>Install App</span>
-  </button>
-
   <div class="mobile-dock" id="dockShelf">
     <div class="mobile-dock-grid" id="bottomBtnBar">
       <button id="nsToggleBtnParent" class="dock-btn" onclick="toggleNsFromParent()" title="Nakts sadalījums">
@@ -489,9 +432,6 @@ pwa-install {
 
   <pwa-install
     id="pwaInstall"
-    manual-apple
-    manual-chrome
-    manual-how-to
     use-local-storage
     manifest-url="manifest-mobile.json"
     styles='{"--tint-color":"#00c8ff"}'></pwa-install>
@@ -1095,7 +1035,6 @@ pwa-install {
   document.addEventListener('click', function(e) {
     const b = e.target.closest('button');
     if (!b) return;
-    if (b.id === 'installBtn') return;
     if (!window.AudioContext && !window.webkitAudioContext) return;
     try {
       if (!window.__dockAudioCtx) window.__dockAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1138,28 +1077,20 @@ pwa-install {
   import 'https://esm.sh/@khmyznikov/pwa-install';
 
   const pwaInstall = document.getElementById('pwaInstall');
-  const installBtn = document.getElementById('installBtn');
-
-  function refreshInstallVisibility() {
-    if (!pwaInstall || !installBtn) return;
-    const hide = !!pwaInstall.isUnderStandaloneMode || !!window.matchMedia('(display-mode: standalone)').matches;
-    installBtn.classList.toggle('hidden-install', hide);
+  if (pwaInstall) {
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        const isStandalone = !!pwaInstall.isUnderStandaloneMode || !!window.matchMedia('(display-mode: standalone)').matches;
+        if (isStandalone) return;
+        if (typeof pwaInstall.showDialog === 'function') pwaInstall.showDialog();
+      }, 900);
+    });
   }
-
-  pwaInstall.addEventListener('pwa-install-available-event', () => {
-    installBtn.classList.remove('hidden-install');
-  });
-  pwaInstall.addEventListener('pwa-install-success-event', refreshInstallVisibility);
-  pwaInstall.addEventListener('pwa-user-choice-result-event', refreshInstallVisibility);
-
-  window.addEventListener('DOMContentLoaded', () => {
-    setTimeout(refreshInstallVisibility, 400);
-  });
   </script>
 
   <script>
   if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-    const MINKA_APP_VERSION = '2026.03.31.mobile.26';
+    const MINKA_APP_VERSION = '2026.03.31.mobile.27';
     const MINKA_VERSION_KEY = 'minka_mobile_app_version';
     const MINKA_RELOAD_KEY = 'minka_mobile_sw_reloading';
     function clearMinkaRuntimeCaches() {
