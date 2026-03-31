@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.1.63';
+const CACHE = 'minka-4.1.64';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
@@ -30,8 +30,8 @@ self.addEventListener('install', event => {
       appUrl('manifest.json'),
       appUrl('manifest-mobile.json'),
       appUrl('kalendars/index.html'),
-      appUrl('data/icon-192.png'),
-      appUrl('data/icon-512.png'),
+      appUrl('data/rg-icon-192.png'),
+      appUrl('data/rg-icon-512.png'),
     ]))
   );
   self.skipWaiting();
