@@ -4036,6 +4036,13 @@ window.addEventListener('message', function(e) {
   margin-bottom: 4px !important;
 }
 
+:root.mk-mobile-shell .duty-block .name-row {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 4px !important;
+}
+
 :root.mk-mobile-shell .duty-name {
   font-size: clamp(9px, 2.4vw, 11px) !important;
   line-height: .98 !important;
@@ -4044,6 +4051,49 @@ window.addEventListener('message', function(e) {
 :root.mk-mobile-shell .duty-surname {
   font-size: clamp(6px, 1.7vw, 8px) !important;
   line-height: 1.05 !important;
+}
+
+:root.mk-mobile-shell .badge-row {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 4px !important;
+  margin-top: 3px !important;
+}
+
+:root.mk-mobile-shell .duty-timer {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+  padding: 2px 6px !important;
+  font-size: 9px !important;
+  line-height: 1 !important;
+  letter-spacing: .5px !important;
+  white-space: nowrap !important;
+}
+
+:root.mk-mobile-shell .duty-timer .ghost,
+:root.mk-mobile-shell .duty-timer .val {
+  white-space: nowrap !important;
+}
+
+:root.mk-mobile-shell .duty-timer .ghost {
+  left: 6px !important;
+  right: 6px !important;
+  top: 2px !important;
+}
+
+:root.mk-mobile-shell .duty-12h,
+:root.mk-mobile-shell .duty-15h,
+:root.mk-mobile-shell .duty-24h,
+:root.mk-mobile-shell .duty-9h,
+:root.mk-mobile-shell .duty-8h {
+  flex: 0 0 auto !important;
+  font-size: 9px !important;
+  padding: 2px 5px !important;
+  white-space: nowrap !important;
 }
 
 :root.mk-mobile-shell .duty-timer,
@@ -4319,6 +4369,15 @@ window.addEventListener('message', function(e) {
 
   :root.mk-mobile-shell .duty-surname {
     font-size: 6px !important;
+  }
+
+  :root.mk-mobile-shell .badge-row {
+    gap: 3px !important;
+  }
+
+  :root.mk-mobile-shell .duty-timer {
+    font-size: 8px !important;
+    padding: 2px 5px !important;
   }
 }
 </style>
