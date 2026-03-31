@@ -884,6 +884,108 @@ function closeFullListModal() {
     return `${prevDate.getDate().toString().padStart(2,'0')}.${(prevDate.getMonth()+1).toString().padStart(2,'0')}.${prevDate.getFullYear()}`;
   }
 
+  function getNextDateStr(dateStr) {
+    const [d, m, y] = dateStr.split('.').map(Number);
+    const nextDate = new Date(y, m - 1, d + 1);
+    return `${nextDate.getDate().toString().padStart(2,'0')}.${(nextDate.getMonth()+1).toString().padStart(2,'0')}.${nextDate.getFullYear()}`;
+  }
+
+  function g_getMonthForDate(dateStr) {
+    const normalized = normalizeDateStr(dateStr);
+    const months = getAllMonths();
+    for (const month of months) {
+      if (getMergedDays(month).some(day => normalizeDateStr(day.date) === normalized)) {
+        return month;
+      }
+    }
+    return '';
+  }
+
+  function g_selectDateWithMonthSync(dateStr) {
+    const normalized = normalizeDateStr(dateStr);
+    if (!normalized) return false;
+    const targetMonth = g_getMonthForDate(normalized);
+    if (!targetMonth) return false;
+    if (targetMonth !== activeMonth) {
+      activeMonth = targetMonth;
+      window.__activeMonth = targetMonth;
+      const picker = document.getElementById('grafiks-monthPicker');
+      if (picker) picker.value = targetMonth;
+      g_renderMonth();
+    }
+    g_selectDay(normalized);
+    return true;
+  }
+
+  function g_stepDay(dir) {
+    const current = normalizeDateStr(activeDateStr || window.__activeDateStr || '');
+    if (!current) return false;
+    const target = dir < 0 ? getPrevDateStr(current) : getNextDateStr(current);
+    return g_selectDateWithMonthSync(target);
+  }
+
+  function g_installMobileDaySwipe() {
+    if (!document.documentElement.classList.contains('mk-mobile-shell')) return;
+    if (window.__minkaDaySwipeInstalled) return;
+    window.__minkaDaySwipeInstalled = true;
+
+    const root = document.querySelector('.main-panel');
+    const hint = document.getElementById('mobile-swipe-hint');
+    if (!root) return;
+
+    let startX = 0;
+    let startY = 0;
+    let startAt = 0;
+    let tracking = false;
+
+    function markHintUsed() {
+      if (!hint) return;
+      hint.classList.add('is-used');
+      try { localStorage.setItem('minkaMobileDaySwipeSeen', '1'); } catch(_e) {}
+    }
+
+    if (hint) {
+      try {
+        if (localStorage.getItem('minkaMobileDaySwipeSeen') === '1') hint.classList.add('is-used');
+      } catch(_e) {}
+    }
+
+    function shouldIgnoreTarget(target) {
+      if (!target) return true;
+      if (document.getElementById('nsOverlay')?.classList.contains('open')) return true;
+      return !!target.closest(
+        'button, select, input, textarea, [contenteditable="true"], #miniCalPopup, #worker-modal, #full-list-modal, #nsPanel, .night-split-panel, .ns-cards-row, .month-select'
+      );
+    }
+
+    root.addEventListener('touchstart', function(e) {
+      if (!e.touches || e.touches.length !== 1) return;
+      if (shouldIgnoreTarget(e.target)) {
+        tracking = false;
+        return;
+      }
+      const t = e.touches[0];
+      startX = t.clientX;
+      startY = t.clientY;
+      startAt = Date.now();
+      tracking = true;
+    }, { passive: true });
+
+    root.addEventListener('touchend', function(e) {
+      if (!tracking || !e.changedTouches || !e.changedTouches.length) return;
+      tracking = false;
+      if (Number(window.__minkaUiBusyUntil || 0) > Date.now()) return;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+      const dt = Date.now() - startAt;
+      if (dt > 700) return;
+      if (Math.abs(dx) < 42) return;
+      if (Math.abs(dx) < Math.abs(dy) * 1.25) return;
+      if (g_stepDay(dx < 0 ? 1 : -1)) markHintUsed();
+    }, { passive: true });
+  }
+
   function parseShiftHours(shiftValue) {
     const txt = String(shiftValue || '').trim();
     if (!txt) return 0;
@@ -2470,6 +2572,7 @@ function closeFullListModal() {
   window.__minkaPostAssistantState = __minkaPostAssistantState;
 
   g_init(0);
+  g_installMobileDaySwipe();
 
   window.g_init = g_init;
   window.g_scrollCal = g_scrollCal;
@@ -2477,6 +2580,7 @@ function closeFullListModal() {
   window.g_changeMonth = g_changeMonth;
   window.g_updatePanelsForDate = g_updatePanelsForDate;
   window.g_selectDay = g_selectDay;
+  window.g_stepDay = g_stepDay;
 })();
 
 /* =============================

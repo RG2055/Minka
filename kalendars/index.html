@@ -388,6 +388,10 @@ html.mk-low-spec *::after {
       <button class="arrow" onclick="g_scrollCal(1)"><span class="material-icons-round">chevron_right</span></button>
       <button class="arrow" onclick="toggleMiniCal(event)" id="miniCalBtn" title="Kalend&#257;rs" style="margin-left:6px;"><span class="material-icons-round">calendar_month</span></button>
     </div>
+    <div id="mobile-swipe-hint" class="mobile-swipe-hint" aria-hidden="true">
+      <span class="material-icons-round">swap_horiz</span>
+      <span>Velc pa kreisi vai pa labi, lai mainītu dienu</span>
+    </div>
     
     <div id="grafiks-list" class="grid-view"></div>
     <div id="night-split-panel" class="night-split-panel"></div>
@@ -3875,6 +3879,9 @@ window.addEventListener('message', function(e) {
 .scroll-row {
   margin-top: 0 !important;
 }
+.mobile-swipe-hint {
+  display: none;
+}
 #grafiks-list.grid-view {
   padding-top: 0 !important;
 }
@@ -4309,6 +4316,45 @@ window.addEventListener('message', function(e) {
 :root.mk-mobile-shell .scroll-row {
   gap: 4px !important;
   align-items: center !important;
+}
+
+:root.mk-mobile-shell .mobile-swipe-hint {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  margin: 4px auto 6px !important;
+  padding: 4px 10px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(183,123,255,0.18) !important;
+  background:
+    linear-gradient(180deg, rgba(18,22,42,0.92), rgba(10,12,24,0.88)) !important;
+  color: rgba(228,226,255,0.78) !important;
+  font-size: 8px !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+  box-shadow:
+    0 8px 22px rgba(0,0,0,0.22),
+    inset 0 1px 0 rgba(255,255,255,0.08) !important;
+  transition: opacity .25s ease, transform .25s ease, filter .25s ease !important;
+  animation: mkSwipeHintPulse 2.3s ease-in-out infinite !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+:root.mk-mobile-shell .mobile-swipe-hint .material-icons-round {
+  font-size: 12px !important;
+  opacity: .9 !important;
+}
+
+:root.mk-mobile-shell .mobile-swipe-hint.is-used {
+  opacity: .58 !important;
+  filter: saturate(.82) !important;
+  animation: none !important;
+}
+
+@keyframes mkSwipeHintPulse {
+  0%, 100% { transform: translateY(0); box-shadow: 0 8px 22px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.08); }
+  50% { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(91,132,255,0.16), inset 0 1px 0 rgba(255,255,255,0.08); }
 }
 
 :root.mk-mobile-shell .scroller {
