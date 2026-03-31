@@ -753,11 +753,30 @@ function closeFullListModal() {
   }
 
   function g_selectDay(date) {
+    const prevDate = normalizeDateStr(activeDateStr);
     date = normalizeDateStr(date);
     if(!date) return;
     window.__minkaUiBusyUntil = Date.now() + 650;
     activeDateStr = date;
     window.__activeDateStr = date;
+    try {
+      const panel = document.querySelector('.main-panel');
+      if (panel && document.documentElement.classList.contains('mk-mobile-shell')) {
+        let dir = 0;
+        if (prevDate && prevDate !== date) {
+          const [pd, pm, py] = prevDate.split('.').map(Number);
+          const [nd, nm, ny] = date.split('.').map(Number);
+          dir = new Date(ny, nm - 1, nd) > new Date(py, pm - 1, pd) ? 1 : -1;
+        }
+        panel.classList.remove('mk-day-transition-next', 'mk-day-transition-prev');
+        void panel.offsetWidth;
+        panel.classList.add(dir >= 0 ? 'mk-day-transition-next' : 'mk-day-transition-prev');
+        clearTimeout(window.__minkaDayFxTimer);
+        window.__minkaDayFxTimer = setTimeout(() => {
+          panel.classList.remove('mk-day-transition-next', 'mk-day-transition-prev');
+        }, 260);
+      }
+    } catch(_e) {}
     try{window.dispatchEvent(new CustomEvent('daySelected', {detail:{date}}))}catch(e){}
     document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
     const safeId = 'p-' + date.replace(/\./g, '-');
