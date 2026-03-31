@@ -1370,6 +1370,15 @@ function closeFullListModal() {
     return { start: rangeStart, end: rangeEnd, segments: clipped };
   }
 
+  function getNightSplitBarRange(dateStr) {
+    const parts = String(dateStr || '').split('.').map(Number);
+    if (parts.length !== 3 || !parts[0] || !parts[1] || !parts[2]) return null;
+    const start = new Date(parts[2], parts[1] - 1, parts[0], 8, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+    return { start, end };
+  }
+
   function getShiftBadgeHtml(worker) {
     const hours = parseShiftHours(worker && worker.shift);
     if (hours > 0) {
@@ -1695,6 +1704,10 @@ function closeFullListModal() {
     const elapsed = Math.max(0, now - activeStart);
     const pct = Math.max(0, Math.min(100, (elapsed / totalDur) * 100));
     const splitOverlay = splitPlan ? mapNightSplitToRange(splitPlan, activeStart, activeEnd) : null;
+    const splitBarRange = splitPlan ? getNightSplitBarRange(activeDateStr) : null;
+    const splitBarOverlay = (splitPlan && splitBarRange)
+      ? mapNightSplitToRange(splitPlan, splitBarRange.start, splitBarRange.end)
+      : null;
 
     // ── Day/Night track background gradient ──────────────────────────────
     function buildDayNightTrackBg(startMs, endMs) {
@@ -1847,7 +1860,12 @@ function closeFullListModal() {
           });
         }
       }
-      const effectiveOverlay = _nsBarOn ? splitOverlay : null;
+      const effectiveOverlay = _nsBarOn ? (splitBarOverlay || splitOverlay) : null;
+      const visualStart = effectiveOverlay ? effectiveOverlay.start : activeStart;
+      const visualEnd = effectiveOverlay ? effectiveOverlay.end : activeEnd;
+      const visualDur = Math.max(1, visualEnd - visualStart);
+      const visualElapsed = Math.max(0, now - visualStart);
+      const visualPct = Math.max(0, Math.min(100, (visualElapsed / visualDur) * 100));
       if (track) {
         if (effectiveOverlay && effectiveOverlay.segments && effectiveOverlay.segments.length) {
           const splitGradient = buildNightSplitGradient(effectiveOverlay.segments, effectiveOverlay.start, effectiveOverlay.end);
@@ -1870,8 +1888,8 @@ function closeFullListModal() {
       }
       // Time ruler below bar
       var rulerEl = document.getElementById('shift-bar-ruler');
-      updateBarRuler(rulerEl, activeStart.getTime(), activeEnd.getTime(), totalDur);
-      if (fill) fill.style.width = pct + '%';
+      updateBarRuler(rulerEl, visualStart.getTime(), visualEnd.getTime(), visualDur);
+      if (fill) fill.style.width = visualPct + '%';
       if (fill) {
         if (effectiveOverlay && effectiveOverlay.segments && effectiveOverlay.segments.length) {
           fill.style.setProperty('background', 'linear-gradient(90deg, rgba(255,255,255,0.26), rgba(255,255,255,0.08))', 'important');
@@ -1899,7 +1917,7 @@ function closeFullListModal() {
           belowEl.hidden = true;
         }
       }
-      if (scrubber) scrubber.style.left = pct + '%';
+      if (scrubber) scrubber.style.left = visualPct + '%';
       if (scrubber && effectiveOverlay && effectiveOverlay.segments && effectiveOverlay.segments.length) {
         let currentSeg = effectiveOverlay.segments.find(function(seg) { return now >= seg.start && now < seg.end; }) || null;
         if (currentSeg && currentSeg.color) {
