@@ -177,8 +177,8 @@
 :root {
   --font: 'Space Grotesk', system-ui, sans-serif;
   --dock-h: 76px;
-  --calendar-bottom: calc(var(--dock-h) + env(safe-area-inset-bottom, 0px) + 14px);
-  --page-pad: 12px;
+  --calendar-bottom: calc(var(--dock-h) + env(safe-area-inset-bottom, 0px) + 4px);
+  --page-pad: 0px;
   --accent: #00c8ff;
   --accent-2: #38bdf8;
   --ink: #e8f4ff;
@@ -192,22 +192,7 @@ html, body {
   overflow: hidden;
   font-family: var(--font);
   color: var(--ink);
-  background:
-    radial-gradient(1200px 900px at 0% -10%, rgba(0,200,255,.18), transparent 50%),
-    radial-gradient(1000px 800px at 100% 0%, rgba(79,70,229,.18), transparent 52%),
-    linear-gradient(180deg, #020814 0%, #07101f 46%, #09131b 100%);
-}
-
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(120deg, rgba(255,255,255,.03), transparent 28%),
-    radial-gradient(circle at 18% 18%, rgba(255,255,255,.05), transparent 22%);
-  opacity: .8;
-  z-index: 0;
+  background: #040915;
 }
 
 body * { font-family: var(--font), inherit; }
@@ -260,24 +245,24 @@ body * { font-family: var(--font), inherit; }
 
 #calendarEmbed {
   position: fixed;
-  top: calc(env(safe-area-inset-top, 0px) + var(--page-pad));
-  left: var(--page-pad);
-  right: var(--page-pad);
+  top: env(safe-area-inset-top, 0px);
+  left: 0;
+  right: 0;
   bottom: var(--calendar-bottom);
   z-index: 1;
   overflow: hidden;
-  border-radius: 24px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(8,16,28,.58);
-  backdrop-filter: blur(24px) saturate(135%);
-  -webkit-backdrop-filter: blur(24px) saturate(135%);
-  box-shadow: 0 22px 60px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.06);
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
   transition: bottom .32s cubic-bezier(.22,1,.36,1);
 }
 
 html.mk-low-spec #calendarEmbed {
-  backdrop-filter: blur(10px) saturate(110%);
-  -webkit-backdrop-filter: blur(10px) saturate(110%);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 #calendarEmbed iframe {
@@ -290,9 +275,9 @@ html.mk-low-spec #calendarEmbed {
 
 .mobile-dock {
   position: fixed;
-  left: 10px;
-  right: 10px;
-  bottom: 10px;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
   z-index: 30;
   padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
   border-radius: 26px;
@@ -377,9 +362,9 @@ pwa-install {
   }
 
   #calendarEmbed {
-    left: 10px;
-    right: 10px;
-    border-radius: 20px;
+    left: 0;
+    right: 0;
+    border-radius: 0;
   }
 
   .dock-btn {
@@ -589,7 +574,7 @@ pwa-install {
 
   <script>
   if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-    const MINKA_APP_VERSION = '2026.03.31.mobile.8';
+    const MINKA_APP_VERSION = '2026.03.31.mobile.9';
     const MINKA_VERSION_KEY = 'minka_mobile_app_version';
     const MINKA_RELOAD_KEY = 'minka_mobile_sw_reloading';
     function clearMinkaRuntimeCaches() {
