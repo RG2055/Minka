@@ -3988,33 +3988,110 @@ window.addEventListener('message', function(e) {
   box-shadow: none !important;
 }
 
-:root.mk-mobile-shell .side-panel {
-  display: none !important;
+:root.mk-mobile-shell .main-panel {
+  padding: calc(env(safe-area-inset-top, 0px) + 8px) 8px calc(env(safe-area-inset-bottom, 0px) + 8px) !important;
+  gap: 6px !important;
 }
 
-:root.mk-mobile-shell .main-panel {
-  padding: calc(env(safe-area-inset-top, 0px) + 10px) 10px calc(env(safe-area-inset-bottom, 0px) + 12px) !important;
-  gap: 10px !important;
+:root.mk-mobile-shell .side-panel {
+  display: flex !important;
+  width: clamp(88px, 23vw, 112px) !important;
+  min-width: clamp(88px, 23vw, 112px) !important;
+  padding: calc(env(safe-area-inset-top, 0px) + 8px) 4px 8px !important;
+  gap: 6px !important;
+  background: rgba(8, 12, 20, 0.28) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+:root.mk-mobile-shell .left-panel {
+  border-right: 1px solid rgba(255,255,255,.05) !important;
+}
+
+:root.mk-mobile-shell .right-panel {
+  border-left: 1px solid rgba(255,255,255,.05) !important;
+}
+
+:root.mk-mobile-shell .status-tag {
+  font-size: 8px !important;
+  letter-spacing: .12em !important;
+  padding: 0 3px !important;
+  line-height: 1.05 !important;
+}
+
+:root.mk-mobile-shell .today-badge {
+  font-size: 7px !important;
+  padding: 2px 5px !important;
+}
+
+:root.mk-mobile-shell #radiographers-duty,
+:root.mk-mobile-shell #radiologists-duty {
+  padding-right: 0 !important;
+  gap: 6px !important;
+}
+
+:root.mk-mobile-shell .duty-block {
+  border-radius: 16px !important;
+  padding: 6px 6px 5px !important;
+  margin-bottom: 6px !important;
+}
+
+:root.mk-mobile-shell .duty-name {
+  font-size: clamp(11px, 3.2vw, 14px) !important;
+  line-height: .98 !important;
+}
+
+:root.mk-mobile-shell .duty-surname {
+  font-size: clamp(8px, 2.3vw, 10px) !important;
+  line-height: 1.05 !important;
+}
+
+:root.mk-mobile-shell .duty-timer,
+:root.mk-mobile-shell .duty-done-badge,
+:root.mk-mobile-shell .side-fat-bar-wrap,
+:root.mk-mobile-shell .badge-row {
+  transform: scale(.88) !important;
+  transform-origin: left center !important;
+}
+
+:root.mk-mobile-shell .next-box,
+:root.mk-mobile-shell #radiographers-next-container,
+:root.mk-mobile-shell #radiologists-next-container,
+:root.mk-mobile-shell #radiologists-plan-container {
+  margin-top: 6px !important;
+  padding: 8px 7px !important;
+  border-radius: 14px !important;
+}
+
+:root.mk-mobile-shell .next-box-label,
+:root.mk-mobile-shell .radiologists-plan-date,
+:root.mk-mobile-shell .radiologists-plan-content,
+:root.mk-mobile-shell .next-names,
+:root.mk-mobile-shell .next-box-countdown,
+:root.mk-mobile-shell .radiologists-plan-edit {
+  font-size: 8px !important;
+  line-height: 1.25 !important;
 }
 
 :root.mk-mobile-shell #minkaBarWrap {
-  margin-bottom: 4px !important;
+  margin-bottom: 2px !important;
 }
 
 :root.mk-mobile-shell #minkaBarInner {
-  height: 42px !important;
-  border-radius: 16px !important;
+  height: 38px !important;
+  border-radius: 14px !important;
 }
 
 :root.mk-mobile-shell #minkaNamedayChip {
   max-width: 100% !important;
-  margin-top: 6px !important;
+  margin-top: 4px !important;
+  min-height: 20px !important;
 }
 
 :root.mk-mobile-shell .top-row {
   display: grid !important;
   grid-template-columns: 1fr !important;
-  gap: 10px !important;
+  gap: 6px !important;
   align-items: stretch !important;
 }
 
@@ -4026,21 +4103,21 @@ window.addEventListener('message', function(e) {
 :root.mk-mobile-shell .top-row > div:last-child {
   display: grid !important;
   grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: 8px !important;
+  gap: 6px !important;
   align-items: center !important;
 }
 
 :root.mk-mobile-shell #grafiks-dateTitle {
-  font-size: clamp(24px, 8vw, 42px) !important;
+  font-size: clamp(18px, 5.8vw, 28px) !important;
   line-height: 1.04 !important;
 }
 
 :root.mk-mobile-shell .month-select,
 :root.mk-mobile-shell .view-btn,
 :root.mk-mobile-shell .arrow {
-  min-height: 46px !important;
-  height: 46px !important;
-  border-radius: 16px !important;
+  min-height: 40px !important;
+  height: 40px !important;
+  border-radius: 14px !important;
 }
 
 :root.mk-mobile-shell .month-select {
@@ -4048,7 +4125,7 @@ window.addEventListener('message', function(e) {
 }
 
 :root.mk-mobile-shell .scroll-row {
-  gap: 8px !important;
+  gap: 6px !important;
   align-items: center !important;
 }
 
@@ -4058,33 +4135,54 @@ window.addEventListener('message', function(e) {
 
 :root.mk-mobile-shell #grafiks-list,
 :root.mk-mobile-shell #grafiks-list.grid-view {
-  padding: 0 0 12px !important;
+  padding: 0 0 8px !important;
 }
 
 :root.mk-mobile-shell .cards-section {
-  margin-bottom: 8px !important;
+  margin-bottom: 6px !important;
 }
 
 :root.mk-mobile-shell .cards-subgrid {
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  gap: 10px !important;
+  gap: 8px !important;
 }
 
 :root.mk-mobile-shell .card {
-  min-height: 156px !important;
-  aspect-ratio: 1 / 1.1 !important;
+  min-height: 122px !important;
+  aspect-ratio: 1 / .96 !important;
+}
+
+:root.mk-mobile-shell .card .card-top {
+  padding: 6px 7px 0 !important;
+}
+
+:root.mk-mobile-shell .card .card-middle {
+  padding: 0 7px 14px !important;
+  gap: 1px !important;
 }
 
 :root.mk-mobile-shell .card .card-shift {
-  font-size: clamp(22px, 7vw, 32px) !important;
+  font-size: clamp(16px, 5.2vw, 24px) !important;
 }
 
 :root.mk-mobile-shell .card .name-main {
-  font-size: clamp(12px, 4.4vw, 18px) !important;
+  font-size: clamp(10px, 3.5vw, 14px) !important;
+  line-height: .98 !important;
 }
 
 :root.mk-mobile-shell .card .name-sub {
-  font-size: clamp(10px, 3vw, 12px) !important;
+  font-size: clamp(8px, 2.4vw, 10px) !important;
+}
+
+:root.mk-mobile-shell .card-bottom,
+:root.mk-mobile-shell .card-fat-row {
+  padding: 0 7px 6px !important;
+}
+
+:root.mk-mobile-shell .mk-emoji-side {
+  top: 5px !important;
+  right: 6px !important;
+  font-size: 14px !important;
 }
 
 :root.mk-mobile-shell #stats-modal > div {
@@ -4124,12 +4222,34 @@ window.addEventListener('message', function(e) {
 }
 
 @media (max-width: 390px) {
-  :root.mk-mobile-shell .cards-subgrid {
-    grid-template-columns: 1fr !important;
+  :root.mk-mobile-shell .side-panel {
+    width: clamp(78px, 21vw, 92px) !important;
+    min-width: clamp(78px, 21vw, 92px) !important;
   }
 
   :root.mk-mobile-shell .top-row > div:last-child {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  :root.mk-mobile-shell .cards-subgrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  :root.mk-mobile-shell .card {
+    min-height: 112px !important;
+  }
+
+  :root.mk-mobile-shell .card .card-shift {
+    font-size: clamp(15px, 5vw, 20px) !important;
+  }
+
+  :root.mk-mobile-shell .duty-name {
+    font-size: 10px !important;
+  }
+
+  :root.mk-mobile-shell .duty-surname {
+    font-size: 7px !important;
   }
 }
 </style>
