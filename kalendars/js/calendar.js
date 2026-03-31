@@ -31,14 +31,23 @@ function hideGrafiksLoader(loader) {
 }
 
 function notifyHostAppReady() {
+  let attempts = 0;
+  const tryNotify = () => {
+    attempts += 1;
+    const title = (document.getElementById('grafiks-dateTitle')?.textContent || '').trim();
+    const hasTitle = !!title && title !== '...';
+    const hasCards = !!document.querySelector('#grafiks-list .card, #radiographers-duty .duty-block, #radiologists-duty .duty-block');
+    const hasMonth = !!document.getElementById('grafiks-monthPicker')?.value;
+    if ((hasTitle && hasCards && hasMonth) || attempts >= 20) {
+      try { window.parent && window.parent.postMessage({ type: 'minka:appReady' }, '*'); } catch(_e) {}
+      return;
+    }
+    setTimeout(tryNotify, 90);
+  };
   try {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        try { window.parent && window.parent.postMessage({ type: 'minka:appReady' }, '*'); } catch(_e) {}
-      });
-    });
+    requestAnimationFrame(() => requestAnimationFrame(tryNotify));
   } catch(_e) {
-    try { window.parent && window.parent.postMessage({ type: 'minka:appReady' }, '*'); } catch(__e) {}
+    setTimeout(tryNotify, 120);
   }
 }
 
