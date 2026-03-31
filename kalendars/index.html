@@ -4501,6 +4501,17 @@ window.addEventListener('message', function(e) {
   gap: 10px !important;
   padding-bottom: 6px !important;
   min-height: 0 !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scroll-snap-type: x proximity !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+:root.mk-mobile-shell .nsc-card-wrap {
+  flex: 0 0 auto !important;
+  width: clamp(156px, 42vw, 186px) !important;
+  min-width: clamp(156px, 42vw, 186px) !important;
+  scroll-snap-align: start !important;
 }
 
 :root.mk-mobile-shell .nsc-card-wrap .nsc-full-card,
@@ -4671,6 +4682,11 @@ window.addEventListener('message', function(e) {
     flex-basis: clamp(144px, 41vw, 166px) !important;
     min-width: clamp(144px, 41vw, 166px) !important;
     min-height: 176px !important;
+  }
+
+  :root.mk-mobile-shell .nsc-card-wrap {
+    width: clamp(144px, 41vw, 166px) !important;
+    min-width: clamp(144px, 41vw, 166px) !important;
   }
 
   :root.mk-mobile-shell .nsc-full-name {
