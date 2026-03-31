@@ -87,6 +87,16 @@
   }
 })();
 </script>
+<script>
+(function() {
+  try {
+    var params = new URLSearchParams(window.location.search || '');
+    if (params.get('mobile') === '1') {
+      document.documentElement.classList.add('mk-mobile-shell');
+    }
+  } catch (_e) {}
+})();
+</script>
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -3967,6 +3977,146 @@ window.addEventListener('message', function(e) {
 #minkaResults a.search-item:hover,
 #minkaResults .list-item:hover {
   background: #181e29 !important;
+}
+
+:root.mk-mobile-shell #grafiks-app {
+  inset: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+:root.mk-mobile-shell .side-panel {
+  display: none !important;
+}
+
+:root.mk-mobile-shell .main-panel {
+  padding: calc(env(safe-area-inset-top, 0px) + 10px) 10px calc(env(safe-area-inset-bottom, 0px) + 12px) !important;
+  gap: 10px !important;
+}
+
+:root.mk-mobile-shell #minkaBarWrap {
+  margin-bottom: 4px !important;
+}
+
+:root.mk-mobile-shell #minkaBarInner {
+  height: 42px !important;
+  border-radius: 16px !important;
+}
+
+:root.mk-mobile-shell #minkaNamedayChip {
+  max-width: 100% !important;
+  margin-top: 6px !important;
+}
+
+:root.mk-mobile-shell .top-row {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 10px !important;
+  align-items: stretch !important;
+}
+
+:root.mk-mobile-shell .top-row > div:first-child,
+:root.mk-mobile-shell .top-row > div:last-child {
+  width: 100% !important;
+}
+
+:root.mk-mobile-shell .top-row > div:last-child {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  align-items: center !important;
+}
+
+:root.mk-mobile-shell #grafiks-dateTitle {
+  font-size: clamp(24px, 8vw, 42px) !important;
+  line-height: 1.04 !important;
+}
+
+:root.mk-mobile-shell .month-select,
+:root.mk-mobile-shell .view-btn,
+:root.mk-mobile-shell .arrow {
+  min-height: 46px !important;
+  height: 46px !important;
+  border-radius: 16px !important;
+}
+
+:root.mk-mobile-shell .month-select {
+  width: 100% !important;
+}
+
+:root.mk-mobile-shell .scroll-row {
+  gap: 8px !important;
+  align-items: center !important;
+}
+
+:root.mk-mobile-shell .scroller {
+  min-width: 0 !important;
+}
+
+:root.mk-mobile-shell #grafiks-list,
+:root.mk-mobile-shell #grafiks-list.grid-view {
+  padding: 0 0 12px !important;
+}
+
+:root.mk-mobile-shell .cards-section {
+  margin-bottom: 8px !important;
+}
+
+:root.mk-mobile-shell .cards-subgrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+:root.mk-mobile-shell .card {
+  min-height: 156px !important;
+  aspect-ratio: 1 / 1.1 !important;
+}
+
+:root.mk-mobile-shell .card .card-shift {
+  font-size: clamp(22px, 7vw, 32px) !important;
+}
+
+:root.mk-mobile-shell .card .name-main {
+  font-size: clamp(12px, 4.4vw, 18px) !important;
+}
+
+:root.mk-mobile-shell .card .name-sub {
+  font-size: clamp(10px, 3vw, 12px) !important;
+}
+
+:root.mk-mobile-shell #stats-modal > div {
+  width: min(96vw, 720px) !important;
+  max-height: 86vh !important;
+}
+
+:root.mk-mobile-shell #worker-modal {
+  width: min(100vw, 100%) !important;
+  border-top-left-radius: 24px !important;
+  border-top-right-radius: 24px !important;
+}
+
+:root.mk-mobile-shell #miniCalPopup {
+  max-width: calc(100vw - 20px) !important;
+  min-width: 0 !important;
+}
+
+:root.mk-mobile-shell #nsPanel {
+  width: min(calc(100vw - 20px), 760px) !important;
+  max-height: 80vh !important;
+  border-radius: 24px !important;
+}
+
+@media (max-width: 390px) {
+  :root.mk-mobile-shell .cards-subgrid {
+    grid-template-columns: 1fr !important;
+  }
+
+  :root.mk-mobile-shell .top-row > div:last-child {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
 }
 </style>
 </body>

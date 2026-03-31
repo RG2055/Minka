@@ -128,6 +128,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Minka Mobile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#06101f">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Minka Mobile</title>
@@ -397,6 +398,107 @@ pwa-install {
   z-index: -1;
 }
 
+.install-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(2, 8, 20, .62);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.install-sheet.is-open {
+  display: flex;
+}
+
+.install-sheet-card {
+  width: min(100%, 520px);
+  margin: 0 10px calc(10px + env(safe-area-inset-bottom, 0px));
+  padding: 18px 18px 16px;
+  border-radius: 26px;
+  border: 1px solid rgba(255,255,255,.12);
+  background:
+    radial-gradient(600px 220px at 20% 0%, rgba(0,200,255,.12), transparent 55%),
+    linear-gradient(180deg, rgba(9,16,28,.98), rgba(7,12,21,.98));
+  box-shadow: 0 24px 70px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+.install-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.install-sheet-title {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+}
+
+.install-sheet-close {
+  appearance: none;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.06);
+  color: #eef7ff;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  font-size: 20px;
+}
+
+.install-sheet-copy {
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(232,244,255,.72);
+  margin-bottom: 14px;
+}
+
+.install-steps {
+  display: grid;
+  gap: 10px;
+}
+
+.install-step {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 12px 12px;
+  border-radius: 18px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.07);
+}
+
+.install-step-num {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,200,255,.14);
+  color: #7dd3fc;
+  font-weight: 800;
+}
+
+.install-step strong {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 13px;
+}
+
+.install-step span {
+  display: block;
+  color: rgba(232,244,255,.62);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 @media (max-width: 390px) {
   :root {
     --dock-h: 72px;
@@ -449,8 +551,8 @@ pwa-install {
 
   <div id="calendarEmbed">
     <iframe
-      src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec"
-      data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec"
+      src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec"
+      data-base-src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec"
       id="calIframe"
       loading="eager"
       allowtransparency="true"
@@ -485,6 +587,30 @@ pwa-install {
     use-local-storage
     manifest-url="manifest-mobile.json"
     styles='{"--tint-color":"#00c8ff"}'></pwa-install>
+
+  <div id="installSheet" class="install-sheet" aria-hidden="true">
+    <div class="install-sheet-card" role="dialog" aria-modal="true" aria-labelledby="installSheetTitle">
+      <div class="install-sheet-head">
+        <div class="install-sheet-title" id="installSheetTitle">Install on iPhone</div>
+        <button type="button" class="install-sheet-close" id="installSheetClose" aria-label="Close">×</button>
+      </div>
+      <div class="install-sheet-copy">Safari on iPhone installs web apps through the Share menu. If the automatic dialog does not appear, use these steps:</div>
+      <div class="install-steps">
+        <div class="install-step">
+          <div class="install-step-num">1</div>
+          <div><strong>Open the Share menu</strong><span>Tap the Share button in Safari’s bottom toolbar.</span></div>
+        </div>
+        <div class="install-step">
+          <div class="install-step-num">2</div>
+          <div><strong>Choose “Add to Home Screen”</strong><span>Scroll the action list if you do not see it right away.</span></div>
+        </div>
+        <div class="install-step">
+          <div class="install-step-num">3</div>
+          <div><strong>Tap “Add”</strong><span>The app will then launch as a standalone home screen app.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script>
   let _syncRaf = 0;
@@ -527,6 +653,12 @@ pwa-install {
 
   function showInstallDialog() {
     const el = document.getElementById('pwaInstall');
+    const isAppleMobile = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (isAppleMobile) {
+      document.getElementById('installSheet').classList.add('is-open');
+      return;
+    }
     if (!el || typeof el.showDialog !== 'function') return;
     el.showDialog();
   }
@@ -571,6 +703,14 @@ pwa-install {
   document.addEventListener('DOMContentLoaded', function() {
     const iframe = document.getElementById('calIframe');
     if (iframe) iframe.addEventListener('load', function() { setTimeout(syncShellLayout, 90); });
+    const installSheet = document.getElementById('installSheet');
+    const installSheetClose = document.getElementById('installSheetClose');
+    if (installSheet && installSheetClose) {
+      installSheetClose.addEventListener('click', function() { installSheet.classList.remove('is-open'); });
+      installSheet.addEventListener('click', function(e) {
+        if (e.target === installSheet) installSheet.classList.remove('is-open');
+      });
+    }
     setTimeout(function() { document.getElementById('mobileLoader').classList.add('is-hidden'); }, 9000);
     syncShellLayout();
   });
