@@ -1839,11 +1839,6 @@ function closeFullListModal() {
         if (!nsBarToggle._wired) {
           nsBarToggle._wired = true;
           nsBarToggle.addEventListener('click', function() {
-            if (document.documentElement.classList.contains('mk-mobile-shell') && typeof window.toggleNsOverlay === 'function') {
-              window.toggleNsOverlay();
-              nsBarToggle.classList.toggle('is-on', document.getElementById('nsOverlay')?.classList.contains('open'));
-              return;
-            }
             _nsBarOn = !_nsBarOn;
             nsBarToggle.classList.toggle('is-on', _nsBarOn);
             var w = document.getElementById('shift-progress-wrap');
