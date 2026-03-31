@@ -4133,10 +4133,10 @@ window.addEventListener('message', function(e) {
 
 :root.mk-mobile-shell .radiologists-plan-head {
   display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: 4px !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  gap: 5px !important;
 }
 
 :root.mk-mobile-shell #radiologists-plan-container .next-box-label,
@@ -4144,8 +4144,21 @@ window.addEventListener('message', function(e) {
 :root.mk-mobile-shell #radiologists-plan-container .radiologists-plan-content {
   writing-mode: horizontal-tb !important;
   text-orientation: mixed !important;
+  display: block !important;
+  width: 100% !important;
+  white-space: normal !important;
   word-break: normal !important;
   overflow-wrap: anywhere !important;
+}
+
+:root.mk-mobile-shell #radiologists-plan-container .next-box-label {
+  font-size: 7px !important;
+  line-height: 1.2 !important;
+  letter-spacing: .08em !important;
+}
+
+:root.mk-mobile-shell #radiologists-plan-container .radiologists-plan-edit {
+  align-self: flex-start !important;
 }
 
 :root.mk-mobile-shell #minkaBarWrap {
