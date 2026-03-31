@@ -245,7 +245,7 @@ body * { font-family: var(--font), inherit; }
 
 #calendarEmbed {
   position: fixed;
-  top: env(safe-area-inset-top, 0px);
+  top: 0;
   left: 0;
   right: 0;
   bottom: var(--calendar-bottom);
@@ -1097,7 +1097,7 @@ html.mk-low-spec #calendarEmbed {
 
   <script>
   if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-    const MINKA_APP_VERSION = '2026.03.31.mobile.30';
+    const MINKA_APP_VERSION = '2026.03.31.mobile.31';
     const MINKA_VERSION_KEY = 'minka_mobile_app_version';
     const MINKA_RELOAD_KEY = 'minka_mobile_sw_reloading';
     function clearMinkaRuntimeCaches() {
