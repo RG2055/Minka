@@ -30,6 +30,18 @@ function hideGrafiksLoader(loader) {
   }, delay);
 }
 
+function notifyHostAppReady() {
+  try {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        try { window.parent && window.parent.postMessage({ type: 'minka:appReady' }, '*'); } catch(_e) {}
+      });
+    });
+  } catch(_e) {
+    try { window.parent && window.parent.postMessage({ type: 'minka:appReady' }, '*'); } catch(__e) {}
+  }
+}
+
 const HISTORY_KEY = 'minka_search_history_v2';
 const MAX_HISTORY = 8;
 
@@ -596,12 +608,12 @@ function closeFullListModal() {
       });
       if(!activeMonth && months.length > 0) { activeMonth = months[0]; window.__activeMonth = months[0]; }
       const _ldr=document.getElementById('grafiks-loader'); if(_ldr) hideGrafiksLoader(_ldr);
-      try { window.parent && window.parent.postMessage({type:'minka:appReady'}, '*'); } catch(_e) {}
       g_renderMonth();
       const todayExists = getMergedDays(activeMonth).some(day => day.date === g_todayStr);
       const firstDate = getMergedDays(activeMonth)[0]?.date || null;
       g_selectDay(todayExists ? g_todayStr : firstDate);
       g_updateLive();
+      notifyHostAppReady();
       setInterval(g_updateLive, 1000);
       if (window.__nsKv) window.__nsKv.startPolling();
     } catch(e) {
@@ -629,12 +641,12 @@ function closeFullListModal() {
           });
           if(!activeMonth && months.length > 0) { activeMonth = months[0]; window.__activeMonth = months[0]; }
           if(loader) hideGrafiksLoader(loader);
-          try { window.parent && window.parent.postMessage({type:'minka:appReady'}, '*'); } catch(_e) {}
           g_renderMonth();
           const todayExists = getMergedDays(activeMonth).some(day => day.date === g_todayStr);
           const firstDate = getMergedDays(activeMonth)[0]?.date || null;
           g_selectDay(todayExists ? g_todayStr : firstDate);
           g_updateLive();
+          notifyHostAppReady();
           if (!window.__minkaLiveStarted) { window.__minkaLiveStarted = true; setInterval(g_updateLive, 1000); }
           if (window.__nsKv) window.__nsKv.startPolling();
           return;
