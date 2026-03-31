@@ -1822,16 +1822,22 @@ function closeFullListModal() {
 
     const splitPlan = (activeDateStr && activeDateStr === g_todayStr) ? getNightSplitPlan(activeDateStr) : null;
 
-    // Fallback
-    if (!activeEnd) {
-      activeEnd = new Date(now);
-      if (now.getHours() >= 8) activeEnd.setDate(activeEnd.getDate() + 1);
-      activeEnd.setHours(8, 0, 0, 0);
-    }
-    if (!activeStart) {
-      activeStart = new Date(now);
-      if (now.getHours() >= 8) activeStart.setHours(8, 0, 0, 0);
-      else { activeStart.setDate(activeStart.getDate() - 1); activeStart.setHours(8, 0, 0, 0); }
+    const fixedShiftRange = getNightSplitBarRange(activeDateStr || g_todayStr);
+    if (fixedShiftRange) {
+      activeStart = fixedShiftRange.start;
+      activeEnd = fixedShiftRange.end;
+    } else {
+      // Fallback
+      if (!activeEnd) {
+        activeEnd = new Date(now);
+        if (now.getHours() >= 8) activeEnd.setDate(activeEnd.getDate() + 1);
+        activeEnd.setHours(8, 0, 0, 0);
+      }
+      if (!activeStart) {
+        activeStart = new Date(now);
+        if (now.getHours() >= 8) activeStart.setHours(8, 0, 0, 0);
+        else { activeStart.setDate(activeStart.getDate() - 1); activeStart.setHours(8, 0, 0, 0); }
+      }
     }
 
     let diff = activeEnd - now;
