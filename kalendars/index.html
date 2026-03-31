@@ -4016,6 +4016,8 @@ window.addEventListener('message', function(e) {
 
 :root.mk-mobile-shell .right-panel {
   border-left: 1px solid rgba(255,255,255,.05) !important;
+  width: clamp(84px, 21vw, 102px) !important;
+  min-width: clamp(84px, 21vw, 102px) !important;
 }
 
 :root.mk-mobile-shell .status-tag {
@@ -4158,13 +4160,24 @@ window.addEventListener('message', function(e) {
 }
 
 :root.mk-mobile-shell #radiologists-plan-container .next-box-label {
-  font-size: 7px !important;
-  line-height: 1.2 !important;
-  letter-spacing: .08em !important;
+  font-size: 6px !important;
+  line-height: 1.15 !important;
+  letter-spacing: .04em !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  overflow-wrap: normal !important;
 }
 
 :root.mk-mobile-shell #radiologists-plan-container .radiologists-plan-edit {
   align-self: flex-start !important;
+  font-size: 6px !important;
+  padding: 3px 7px !important;
+}
+
+:root.mk-mobile-shell #radiologists-plan-container {
+  padding: 5px 6px !important;
+  min-height: 0 !important;
 }
 
 :root.mk-mobile-shell #minkaBarWrap {
@@ -4182,7 +4195,7 @@ window.addEventListener('message', function(e) {
 
 :root.mk-mobile-shell .top-row {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
   gap: 4px !important;
   align-items: start !important;
 }
@@ -4202,7 +4215,7 @@ window.addEventListener('message', function(e) {
 
 :root.mk-mobile-shell .top-row > div:last-child {
   display: grid !important;
-  grid-template-columns: 90px repeat(3, 32px) !important;
+  grid-template-columns: repeat(3, 32px) !important;
   gap: 4px !important;
   align-items: center !important;
   justify-self: end !important;
@@ -4211,7 +4224,9 @@ window.addEventListener('message', function(e) {
 }
 
 :root.mk-mobile-shell .top-row > div:last-child .month-select {
-  order: -1 !important;
+  order: 4 !important;
+  grid-column: 1 / -1 !important;
+  margin-top: 2px !important;
 }
 
 :root.mk-mobile-shell .date-title-wrap {
@@ -4243,12 +4258,13 @@ window.addEventListener('message', function(e) {
 }
 
 :root.mk-mobile-shell .month-select {
-  width: 90px !important;
-  min-width: 90px !important;
+  width: 100% !important;
+  min-width: 0 !important;
   padding-left: 8px !important;
   padding-right: 18px !important;
   font-size: 8px !important;
   justify-self: end !important;
+  text-align: left !important;
 }
 
 :root.mk-mobile-shell #shift-progress-wrap {
@@ -4298,14 +4314,14 @@ window.addEventListener('message', function(e) {
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   justify-content: start !important;
   align-content: start !important;
-  gap: 5px !important;
+  gap: 4px !important;
 }
 
 :root.mk-mobile-shell .card {
   width: 100% !important;
   max-width: none !important;
-  min-height: 78px !important;
-  aspect-ratio: 1 / .72 !important;
+  min-height: 68px !important;
+  aspect-ratio: 1 / .6 !important;
 }
 
 :root.mk-mobile-shell .card .card-top {
@@ -4318,17 +4334,17 @@ window.addEventListener('message', function(e) {
 }
 
 :root.mk-mobile-shell .card .card-shift {
-  font-size: clamp(10px, 3vw, 14px) !important;
+  font-size: clamp(9px, 2.5vw, 12px) !important;
   line-height: .92 !important;
 }
 
 :root.mk-mobile-shell .card .name-main {
-  font-size: clamp(7px, 2vw, 9px) !important;
+  font-size: clamp(6px, 1.7vw, 8px) !important;
   line-height: .98 !important;
 }
 
 :root.mk-mobile-shell .card .name-sub {
-  font-size: clamp(5px, 1.35vw, 7px) !important;
+  font-size: clamp(4px, 1.1vw, 6px) !important;
   line-height: 1 !important;
 }
 
@@ -4556,7 +4572,7 @@ window.addEventListener('message', function(e) {
   }
 
   :root.mk-mobile-shell .top-row > div:last-child {
-    grid-template-columns: 76px repeat(3, 28px) !important;
+    grid-template-columns: repeat(3, 28px) !important;
   }
 
   :root.mk-mobile-shell .cards-subgrid {
