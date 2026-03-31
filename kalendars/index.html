@@ -4042,9 +4042,9 @@ window.addEventListener('message', function(e) {
 
 :root.mk-mobile-shell .side-panel {
   display: flex !important;
-  width: clamp(74px, 19vw, 88px) !important;
-  min-width: clamp(74px, 19vw, 88px) !important;
-  padding: calc(env(safe-area-inset-top, 0px) + 2px) 3px 6px !important;
+  width: clamp(82px, 21vw, 96px) !important;
+  min-width: clamp(82px, 21vw, 96px) !important;
+  padding: calc(env(safe-area-inset-top, 0px) + 2px) 4px 6px !important;
   gap: 4px !important;
   background: transparent !important;
   backdrop-filter: none !important;
@@ -4058,15 +4058,18 @@ window.addEventListener('message', function(e) {
 
 :root.mk-mobile-shell .right-panel {
   border-left: 1px solid rgba(255,255,255,.05) !important;
-  width: clamp(84px, 21vw, 102px) !important;
-  min-width: clamp(84px, 21vw, 102px) !important;
+  width: clamp(88px, 22vw, 106px) !important;
+  min-width: clamp(88px, 22vw, 106px) !important;
 }
 
 :root.mk-mobile-shell .status-tag {
-  font-size: 7px !important;
-  letter-spacing: .12em !important;
-  padding: 0 2px !important;
+  font-size: 6px !important;
+  letter-spacing: .08em !important;
+  padding: 0 3px !important;
   line-height: 1.05 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: clip !important;
 }
 
 :root.mk-mobile-shell .today-badge {
