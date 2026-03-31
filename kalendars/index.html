@@ -1646,6 +1646,7 @@ Tu vari atbildēt uz: "Kurš ir visvairāk noguris?", "Vai kāds ir riskā?", "K
 /* v34 single recurring assistant loop ï¿½ news + weather + namedays + moon (offline calc) */
 (function(){
   'use strict';
+  const isMobileShell = document.documentElement.classList.contains('mk-mobile-shell');
   const getNamedayDB = () => (window.LATVIAN_NAMEDAYS && typeof window.LATVIAN_NAMEDAYS === 'object' ? window.LATVIAN_NAMEDAYS : {});
   const input = document.getElementById('minkaBarInput');
   const aiPanel = document.getElementById('minkaAiPanel');
@@ -1691,6 +1692,20 @@ Tu vari atbildēt uz: "Kurš ir visvairāk noguris?", "Vai kāds ir riskā?", "K
   let newsBusy = false;
   let weatherBusy = false;
   let weatherCache = null;
+
+  if (isMobileShell) {
+    try {
+      const chip = document.getElementById('minkaNamedayChip');
+      if (chip) chip.style.display = 'none';
+      if (aiPanel) {
+        aiPanel.classList.remove('open', 'news-clickable');
+        aiPanel.style.cursor = '';
+        aiPanel.onclick = null;
+        aiPanel.title = '';
+      }
+    } catch(_e) {}
+    return;
+  }
 
 function getTauriInvoke(){
   try {
@@ -4217,7 +4232,7 @@ window.addEventListener('message', function(e) {
 }
 
 :root.mk-mobile-shell #minkaNamedayChip {
-  display: inline-flex !important;
+  display: none !important;
   max-width: min(52vw, 210px) !important;
   min-height: 28px !important;
   padding: 4px 10px !important;
@@ -4352,9 +4367,50 @@ window.addEventListener('message', function(e) {
   animation: none !important;
 }
 
+:root.mk-mobile-shell .main-panel.mk-day-transition-next #shift-progress-wrap,
+:root.mk-mobile-shell .main-panel.mk-day-transition-next .scroll-row,
+:root.mk-mobile-shell .main-panel.mk-day-transition-next .mobile-swipe-hint,
+:root.mk-mobile-shell .main-panel.mk-day-transition-next #grafiks-list,
+:root.mk-mobile-shell .main-panel.mk-day-transition-next .side-panel,
+:root.mk-mobile-shell .main-panel.mk-day-transition-prev #shift-progress-wrap,
+:root.mk-mobile-shell .main-panel.mk-day-transition-prev .scroll-row,
+:root.mk-mobile-shell .main-panel.mk-day-transition-prev .mobile-swipe-hint,
+:root.mk-mobile-shell .main-panel.mk-day-transition-prev #grafiks-list,
+:root.mk-mobile-shell .main-panel.mk-day-transition-prev .side-panel {
+  animation-duration: .24s !important;
+  animation-timing-function: cubic-bezier(.2,.7,.2,1) !important;
+  animation-fill-mode: both !important;
+}
+
+:root.mk-mobile-shell .main-panel.mk-day-transition-next #shift-progress-wrap,
+:root.mk-mobile-shell .main-panel.mk-day-transition-next .scroll-row,
+:root.mk-mobile-shell .main-panel.mk-day-transition-next .mobile-swipe-hint,
+:root.mk-mobile-shell .main-panel.mk-day-transition-next #grafiks-list,
+:root.mk-mobile-shell .main-panel.mk-day-transition-next .side-panel {
+  animation-name: mkDaySlideNext !important;
+}
+
+:root.mk-mobile-shell .main-panel.mk-day-transition-prev #shift-progress-wrap,
+:root.mk-mobile-shell .main-panel.mk-day-transition-prev .scroll-row,
+:root.mk-mobile-shell .main-panel.mk-day-transition-prev .mobile-swipe-hint,
+:root.mk-mobile-shell .main-panel.mk-day-transition-prev #grafiks-list,
+:root.mk-mobile-shell .main-panel.mk-day-transition-prev .side-panel {
+  animation-name: mkDaySlidePrev !important;
+}
+
 @keyframes mkSwipeHintPulse {
   0%, 100% { transform: translateY(0); box-shadow: 0 8px 22px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.08); }
   50% { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(91,132,255,0.16), inset 0 1px 0 rgba(255,255,255,0.08); }
+}
+
+@keyframes mkDaySlideNext {
+  0% { opacity: .72; transform: translate3d(14px, 0, 0) scale(.992); filter: saturate(.92); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: saturate(1); }
+}
+
+@keyframes mkDaySlidePrev {
+  0% { opacity: .72; transform: translate3d(-14px, 0, 0) scale(.992); filter: saturate(.92); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: saturate(1); }
 }
 
 :root.mk-mobile-shell .scroller {
