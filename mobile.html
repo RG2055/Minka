@@ -615,6 +615,16 @@ pwa-install {
   <script>
   let _syncRaf = 0;
   let _nsOpen = false;
+  let _mobileLoaderHidden = false;
+
+  function hideMobileLoader(delay) {
+    if (_mobileLoaderHidden) return;
+    _mobileLoaderHidden = true;
+    setTimeout(function() {
+      var el = document.getElementById('mobileLoader');
+      if (el) el.classList.add('is-hidden');
+    }, Math.max(0, delay || 0));
+  }
 
   function syncShellLayout() {
     cancelAnimationFrame(_syncRaf);
@@ -674,7 +684,7 @@ pwa-install {
       document.getElementById('nsToggleBtnParent').classList.remove('is-active');
     }
     if (e.data.type === 'minka:appReady') {
-      document.getElementById('mobileLoader').classList.add('is-hidden');
+      hideMobileLoader(0);
     }
   });
 
@@ -702,7 +712,10 @@ pwa-install {
 
   document.addEventListener('DOMContentLoaded', function() {
     const iframe = document.getElementById('calIframe');
-    if (iframe) iframe.addEventListener('load', function() { setTimeout(syncShellLayout, 90); });
+    if (iframe) iframe.addEventListener('load', function() {
+      setTimeout(syncShellLayout, 90);
+      hideMobileLoader(180);
+    });
     const installSheet = document.getElementById('installSheet');
     const installSheetClose = document.getElementById('installSheetClose');
     if (installSheet && installSheetClose) {
@@ -711,7 +724,7 @@ pwa-install {
         if (e.target === installSheet) installSheet.classList.remove('is-open');
       });
     }
-    setTimeout(function() { document.getElementById('mobileLoader').classList.add('is-hidden'); }, 9000);
+    setTimeout(function() { hideMobileLoader(0); }, 2600);
     syncShellLayout();
   });
 
