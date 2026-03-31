@@ -921,6 +921,26 @@ document.addEventListener('keydown', (e) => {
 
   /* ï¿½ï¿½ï¿½ï¿½ Make contenteditable behave like input ï¿½ï¿½ï¿½ï¿½ */
   input.setAttribute('contenteditable', 'true');
+  input.setAttribute('inputmode', 'search');
+  input.setAttribute('autocapitalize', 'sentences');
+  input.setAttribute('autocorrect', 'on');
+  input.setAttribute('autocomplete', 'off');
+  function focusMinkaInput() {
+    try { input.focus({ preventScroll:true }); } catch(e) { input.focus(); }
+  }
+  [bar, inner, input].forEach(function(el) {
+    if (!el) return;
+    el.addEventListener('touchend', function(e) {
+      var t = e.target;
+      if (t === clearB || t === muteB || (t && t.id === 'minkaBarMenu')) return;
+      focusMinkaInput();
+    }, { passive:true });
+    el.addEventListener('click', function(e) {
+      var t = e.target;
+      if (t === clearB || t === muteB || (t && t.id === 'minkaBarMenu')) return;
+      focusMinkaInput();
+    });
+  });
   input.addEventListener('paste', e => {
     e.preventDefault();
     const text = (e.clipboardData||window.clipboardData).getData('text/plain').replace(/\n/g,' ').slice(0,100);
@@ -4190,7 +4210,22 @@ window.addEventListener('message', function(e) {
 }
 
 :root.mk-mobile-shell #minkaNamedayChip {
-  display: none !important;
+  display: inline-flex !important;
+  max-width: min(52vw, 210px) !important;
+  min-height: 28px !important;
+  padding: 4px 10px !important;
+  font-size: 11px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+:root.mk-mobile-shell #minkaBarInput {
+  pointer-events: auto !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -webkit-touch-callout: default !important;
+  caret-color: #ffffff !important;
 }
 
 :root.mk-mobile-shell .top-row {
