@@ -4499,8 +4499,8 @@ window.addEventListener('message', function(e) {
 
 :root.mk-mobile-shell .ns-cards-row {
   display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 6px !important;
+  grid-template-columns: repeat(var(--ns-cols, 3), minmax(0, 1fr)) !important;
+  gap: var(--ns-gap, 6px) !important;
   padding-bottom: 6px !important;
   min-height: 0 !important;
   overflow: visible !important;
@@ -4517,7 +4517,7 @@ window.addEventListener('message', function(e) {
   flex: 1 1 auto !important;
   width: 100% !important;
   min-width: 0 !important;
-  min-height: 148px !important;
+  min-height: var(--ns-card-h, 148px) !important;
   border-radius: 14px !important;
 }
 
@@ -4527,7 +4527,7 @@ window.addEventListener('message', function(e) {
 }
 
 :root.mk-mobile-shell .nsc-full-name {
-  font-size: 10px !important;
+  font-size: var(--ns-name-size, 10px) !important;
   line-height: 1.02 !important;
 }
 
@@ -4678,7 +4678,7 @@ window.addEventListener('message', function(e) {
 
   :root.mk-mobile-shell .nsc-card-wrap .nsc-full-card,
   :root.mk-mobile-shell .nsc-full-card {
-    min-height: 138px !important;
+    min-height: var(--ns-card-h, 138px) !important;
   }
 
   :root.mk-mobile-shell .nsc-card-wrap {
@@ -4687,7 +4687,7 @@ window.addEventListener('message', function(e) {
   }
 
   :root.mk-mobile-shell .nsc-full-name {
-    font-size: 9px !important;
+    font-size: var(--ns-name-size, 9px) !important;
   }
 
   :root.mk-mobile-shell .nsc-full-time,

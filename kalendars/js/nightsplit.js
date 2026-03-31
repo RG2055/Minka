@@ -769,6 +769,10 @@
       +(live?'<div class="ns-flow-live" style="left:'+live.pct.toFixed(3)+'%"></div>':'')
       +'</div>';
     }
+    var nsCount=Math.max(1, Math.min(st.sl.length||1, 4));
+    var nsGap=(nsCount>=4)?'4px':((nsCount===3)?'6px':'8px');
+    var nsCardH=(nsCount>=4)?'136px':((nsCount===3)?'148px':'164px');
+    var nsNameSize=(nsCount>=4)?'9px':((nsCount===3)?'10px':'11px');
     panel.innerHTML=
       '<div class="ns-panel-head">'
       +'<span class="ns-panel-title">🌙 Nakts sadalījums</span>'
@@ -779,7 +783,7 @@
       +'</div>'
       +'<div class="ns-mode-btns"></div>'
       +'</div>'
-      +'<div class="ns-cards-row">'+cards+'</div>'
+      +'<div class="ns-cards-row" style="--ns-cols:'+nsCount+';--ns-gap:'+nsGap+';--ns-card-h:'+nsCardH+';--ns-name-size:'+nsNameSize+'">'+cards+'</div>'
       +flowBar
       +'<div class="ns-flow-meta">'+sortReason(st.sl)+'</div>';
 
