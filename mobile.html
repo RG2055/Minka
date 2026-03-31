@@ -899,12 +899,14 @@ html.mk-low-spec #calendarEmbed {
         '#mk-toast.mk-show{opacity:1;transform:translateX(-50%) translateY(0)}'+
         '#mk-toast.mk-ok{background:rgba(16,64,38,.96)}'+
         '#mk-toast.mk-err{background:rgba(76,18,18,.96)}'+
-        '#bolus-overlay{position:fixed;inset:0;z-index:1500;background:rgba(0,0,0,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);display:none;align-items:flex-end;justify-content:center;}'+
+        '#bolus-overlay{position:fixed;inset:0;z-index:1500;background:rgba(0,0,0,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);display:none;align-items:flex-end;justify-content:center;touch-action:manipulation;}'+
         '#bolus-sheet{width:100%;max-width:min(720px,98vw);background:linear-gradient(170deg,#0c1422 0%,#060c18 55%,#040a14 100%);border-radius:28px 28px 0 0;border:1px solid rgba(255,255,255,0.10);border-bottom:none;display:flex;flex-direction:column;height:calc(100dvh - 90px);overflow:hidden;box-shadow:0 -24px 80px rgba(0,0,0,0.75),0 -2px 0 rgba(255,255,255,0.04);}'+
         '#bolus-handle{width:36px;height:4px;background:rgba(255,255,255,0.14);border-radius:99px;margin:10px auto 0;flex-shrink:0;}'+
-        '#bolus-title-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 10px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.06);}'+
+        '#bolus-title-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 10px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.06);position:relative;}'+
         '#bolus-title{font-size:11px;font-weight:800;letter-spacing:.20em;color:rgba(255,255,255,0.55);text-transform:uppercase;}'+
-        '#bolus-close-btn{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.10);color:rgba(255,255,255,0.45);border-radius:50%;width:26px;height:26px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0;}'+
+        '#bolus-close-btn{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.62);border-radius:50%;width:44px;height:44px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,transform .15s;flex-shrink:0;position:relative;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}'+
+        '#bolus-close-btn:active{transform:scale(.96);background:rgba(255,255,255,0.16);}'+
+        '#bolus-close-btn::before{content:"";position:absolute;inset:-8px;}'+
         '#bolus-rooms{display:flex;flex-direction:row;gap:10px;padding:2px 10px max(env(safe-area-inset-bottom,0px),52px);flex:1;min-height:0;overflow:hidden;}'+
         '.brc{flex:1;min-width:0;min-height:0;background:linear-gradient(160deg,rgba(255,255,255,0.055) 0%,rgba(255,255,255,0.020) 100%);border:1px solid rgba(255,255,255,0.10);border-radius:22px;padding:14px 11px 12px;display:flex;flex-direction:column;align-items:center;gap:7px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.50),inset 0 1px 0 rgba(255,255,255,0.07);}'+
         '.brd{border-color:rgba(255,59,48,0.65)!important;background:linear-gradient(160deg,rgba(255,59,48,0.10) 0%,rgba(255,59,48,0.04) 100%)!important;}'+
@@ -964,7 +966,7 @@ html.mk-low-spec #calendarEmbed {
         '@media (max-width: 720px){'+
           '#bolus-sheet{max-width:100vw;height:calc(100dvh - 20px);border-radius:26px 26px 0 0;}'+
           '#bolus-title-bar{padding:10px 14px 10px;}'+
-          '#bolus-close-btn{width:34px;height:34px;font-size:14px;}'+
+          '#bolus-close-btn{width:48px;height:48px;font-size:20px;}'+
           '#bolus-rooms{flex-direction:column;gap:8px;padding:4px 8px max(calc(env(safe-area-inset-bottom,0px) + 92px),108px);overflow-y:auto;overflow-x:hidden;}'+
           '.brc{padding:12px 10px 10px;border-radius:20px;display:flex;flex-direction:column;align-items:stretch;gap:8px;min-height:0;overflow:visible;}'+
           '.brn{font-size:clamp(14px,4.8vw,20px);letter-spacing:.20em;}'+
@@ -1030,10 +1032,12 @@ html.mk-low-spec #calendarEmbed {
         '#bolusDocBtn.bolus-alert{border-color:rgba(255,59,48,0.9)!important;border-width:1.5px!important;}';
       document.head.appendChild(s);
     }
-    window.toggleBolus = function() {
+    window.toggleBolus = function(forceState) {
       var ov = document.getElementById('bolus-overlay');
       if (!ov) return;
-      _open = !_open;
+      var nextState = (typeof forceState === 'boolean') ? forceState : !_open;
+      if (nextState === _open) return;
+      _open = nextState;
       ov.style.display = _open ? 'flex' : 'none';
       var btn = document.getElementById('bolusDocBtn');
       if (btn) btn.classList.toggle('is-active', _open);
@@ -1055,9 +1059,23 @@ html.mk-low-spec #calendarEmbed {
       _injectCss();
       var ov = document.createElement('div');
       ov.id = 'bolus-overlay';
-      ov.innerHTML = '<div id="bolus-sheet" onclick="event.stopPropagation()"><div id="bolus-handle"></div><div id="bolus-title-bar"><span id="bolus-title"><i class="fas fa-syringe" style="font-size:10px;opacity:.7;"></i> BOLUSA MAINA</span><button id="bolus-close-btn" onclick="toggleBolus()">✕</button></div><div id="bolus-rooms"></div></div>';
-      ov.addEventListener('click', function(e){ if(e.target===ov) toggleBolus(); });
+      ov.innerHTML = '<div id="bolus-sheet"><div id="bolus-handle"></div><div id="bolus-title-bar"><span id="bolus-title"><i class="fas fa-syringe" style="font-size:10px;opacity:.7;"></i> BOLUSA MAINA</span><button id="bolus-close-btn" type="button" aria-label="Aizvert bolus paneli">✕</button></div><div id="bolus-rooms"></div></div>';
+      ov.addEventListener('click', function(e){
+        var sheet = document.getElementById('bolus-sheet');
+        if (!sheet) return;
+        if (!sheet.contains(e.target)) toggleBolus(false);
+      });
+      ov.addEventListener('pointerdown', function(e){
+        var sheet = document.getElementById('bolus-sheet');
+        if (!sheet) return;
+        if (!sheet.contains(e.target)) toggleBolus(false);
+      });
       document.body.appendChild(ov);
+      var closeBtn = document.getElementById('bolus-close-btn');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); toggleBolus(false); });
+        closeBtn.addEventListener('pointerdown', function(e){ e.stopPropagation(); });
+      }
       _initBc();
       _updateLed();
       function _requestWorkers() {
@@ -1230,7 +1248,7 @@ html.mk-low-spec #calendarEmbed {
 
   <script>
   if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-    const MINKA_APP_VERSION = '2026.03.31.mobile.47';
+    const MINKA_APP_VERSION = '2026.03.31.mobile.48';
     const MINKA_VERSION_KEY = 'minka_mobile_app_version';
     const MINKA_RELOAD_KEY = 'minka_mobile_sw_reloading';
     function clearMinkaRuntimeCaches() {
