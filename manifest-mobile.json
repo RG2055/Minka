@@ -1,7 +1,7 @@
 {
   "id": "/mobile.html",
-  "name": "Minka Mobile",
-  "short_name": "Minka",
+  "name": "RG Mobile",
+  "short_name": "RG",
   "description": "RAKUS Gaiļezers radiology shift scheduler for mobile viewing",
   "start_url": "./mobile.html",
   "scope": "./",
