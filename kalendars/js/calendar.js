@@ -842,6 +842,14 @@ function closeFullListModal() {
     const start = createDateFromDateTime(dateStr, worker.startTime);
     let end = createDateFromDateTime(dateStr, worker.endTime);
     const shiftHours = parseFloat(String(worker.shift || '').replace(/[^0-9.]/g, '')) || 0;
+    if (shiftHours >= 15 && shiftHours < 24) {
+      // Hospital rule: the long evening shifts shown as 15h/16h always belong
+      // to the current shift-day and finish at 08:00 the following morning.
+      const fixedMorningEnd = new Date(start);
+      fixedMorningEnd.setDate(fixedMorningEnd.getDate() + 1);
+      fixedMorningEnd.setHours(8, 0, 0, 0);
+      return fixedMorningEnd;
+    }
     if (end <= start) {
       // end is next day (night shift) or bad data
       if (shiftHours > 0 && shiftHours < 24) {
