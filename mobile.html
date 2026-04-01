@@ -6,6 +6,7 @@
   var API_BASE = 'https://minka-api.gamernr1elite.workers.dev';
   var TOKEN_KEY = 'minka_api_token_v1';
   var AUTO_PW_KEY = 'pw';
+  var AUTO_PW_STORE_KEY = 'minka_auto_pw_v1';
 
   function getToken() {
     try { return sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY) || ''; }
@@ -21,6 +22,23 @@
         else sessionStorage.setItem(TOKEN_KEY, token);
       }
     } catch (_e) {}
+  }
+
+  function saveAutoPassword(password) {
+    try {
+      if (!password) return;
+      localStorage.setItem(AUTO_PW_STORE_KEY, String(password));
+    } catch (_e) {}
+  }
+
+  function getStoredAutoPassword() {
+    try { return String(localStorage.getItem(AUTO_PW_STORE_KEY) || '').trim(); }
+    catch (_e) { return ''; }
+  }
+
+  function clearStoredAutoPassword() {
+    try { localStorage.removeItem(AUTO_PW_STORE_KEY); }
+    catch (_e) {}
   }
 
   function notifyIframeAuth() {
@@ -57,8 +75,31 @@
       });
       var data = await res.json().catch(function() { return {}; });
       if (!res.ok || !data || !data.token) return false;
+      saveAutoPassword(password);
       setToken(data.token, true);
       stripAutoLoginParam();
+      notifyIframeAuth();
+      return true;
+    } catch (_e) {
+      return false;
+    }
+  }
+
+  async function tryAutoLoginFromStoredPassword() {
+    try {
+      var password = getStoredAutoPassword();
+      if (!password) return false;
+      var res = await fetch(API_BASE + '/api/login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: password })
+      });
+      var data = await res.json().catch(function() { return {}; });
+      if (!res.ok || !data || !data.token) {
+        clearStoredAutoPassword();
+        return false;
+      }
+      setToken(data.token, true);
       notifyIframeAuth();
       return true;
     } catch (_e) {
@@ -107,6 +148,7 @@
           });
           var data = await res.json().catch(function() { return {}; });
           if (!res.ok || !data || !data.token) throw new Error((data && data.error) || 'Login failed');
+          saveAutoPassword(password);
           setToken(data.token, !!(remember && remember.checked));
           notifyIframeAuth();
           overlay.style.transition = 'opacity 0.3s';
@@ -135,7 +177,10 @@
     document.addEventListener('DOMContentLoaded', function() {
       tryAutoLoginFromQuery().then(function(ok) {
         if (ok) return;
-        showGate();
+        tryAutoLoginFromStoredPassword().then(function(storedOk) {
+          if (storedOk) return;
+          showGate();
+        });
       });
     }, { once: true });
   } else {
