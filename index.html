@@ -389,6 +389,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
     -webkit-backdrop-filter: blur(24px) saturate(145%) !important;
   }
   #nsToggleBtnParent,
+  #mobileDockBtn,
   #statsDocBtn,
   #settingsDockBtn,
   #radioIdleBtn,
@@ -1004,6 +1005,7 @@ window.addEventListener('DOMContentLoaded', () => {
     /* ── Shared dock item base — macOS lift on hover ── */
     #nsToggleBtnParent,
     #bolusDocBtn,
+    #mobileDockBtn,
     #statsDocBtn,
     #settingsDockBtn,
     #radioIdleBtn,
@@ -1088,6 +1090,30 @@ window.addEventListener('DOMContentLoaded', () => {
       color: #ffe8b0 !important;
       box-shadow: 0 2px 12px rgba(0,0,0,.45) !important;
     }
+    #mobileDockBtn {
+      background: rgba(18,12,38,0.72) !important;
+      border: 1px solid rgba(169,127,255,0.28) !important;
+      color: #e8dcff !important;
+      box-shadow:
+        0 2px 12px rgba(0,0,0,.45),
+        0 0 0 1px rgba(169,127,255,.10),
+        0 0 16px rgba(169,127,255,.18) !important;
+      animation: mobileDockPulse 2.8s ease-in-out infinite !important;
+    }
+    @keyframes mobileDockPulse {
+      0%, 100% {
+        box-shadow:
+          0 2px 12px rgba(0,0,0,.45),
+          0 0 0 1px rgba(169,127,255,.10),
+          0 0 16px rgba(169,127,255,.16);
+      }
+      50% {
+        box-shadow:
+          0 2px 12px rgba(0,0,0,.45),
+          0 0 0 1px rgba(190,160,255,.18),
+          0 0 26px rgba(169,127,255,.30);
+      }
+    }
     #statsDocBtn:hover {
       border-color: rgba(167,139,250,.70) !important;
       box-shadow:
@@ -1109,7 +1135,18 @@ window.addEventListener('DOMContentLoaded', () => {
       transform: translateY(-4px) !important;
       background: rgba(40,34,16,0.84) !important;
     }
+    #mobileDockBtn:hover {
+      border-color: rgba(190,160,255,.74) !important;
+      box-shadow:
+        0 0 0 1px rgba(169,127,255,.14),
+        0 0 18px rgba(169,127,255,.34),
+        0 0 36px rgba(169,127,255,.14),
+        0 6px 20px rgba(0,0,0,.55) !important;
+      transform: translateY(-4px) !important;
+      background: rgba(28,18,54,0.84) !important;
+    }
     #settingsDockBtn:active { transform: translateY(-1px) scale(.97) !important; }
+    #mobileDockBtn:active { transform: translateY(-1px) scale(.97) !important; }
     #settingsDockBtn.settings-open {
       border-color: rgba(255,214,102,.82) !important;
       box-shadow:
@@ -1123,6 +1160,14 @@ window.addEventListener('DOMContentLoaded', () => {
         0 0 0 1px rgba(167,139,250,.20),
         0 0 22px rgba(139,92,246,.50),
         0 0 44px rgba(139,92,246,.18) !important;
+    }
+    #mobileDockBtn.mobile-open {
+      border-color: rgba(190,160,255,.84) !important;
+      box-shadow:
+        0 0 0 1px rgba(190,160,255,.20),
+        0 0 22px rgba(169,127,255,.46),
+        0 0 44px rgba(169,127,255,.18) !important;
+      animation: none !important;
     }
 
     /* ── BOLUS button ── */
@@ -1162,6 +1207,7 @@ window.addEventListener('DOMContentLoaded', () => {
       }
       #nsToggleBtnParent,
       #bolusDocBtn,
+      #mobileDockBtn,
       #settingsDockBtn,
       #radioIdleBtn,
       #radioToggle {
@@ -1175,7 +1221,7 @@ window.addEventListener('DOMContentLoaded', () => {
     /* ── Responsive: very narrow (hide emoji labels) ── */
     @media (max-width: 320px) {
       .dock-emoji { display: none !important; }
-      #nsToggleBtnParent, #bolusDocBtn, #settingsDockBtn, #radioIdleBtn, #radioToggle {
+      #nsToggleBtnParent, #bolusDocBtn, #mobileDockBtn, #settingsDockBtn, #radioIdleBtn, #radioToggle {
         padding: 6px 9px !important;
       }
     }
@@ -1221,6 +1267,14 @@ window.addEventListener('DOMContentLoaded', () => {
 
     <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
 
+    <button id="mobileDockBtn" onclick="toggleMobileQrModal()" title="Atvērt mobile QR">
+      <div style="width:7px;height:7px;border-radius:50%;background:#b58cff;box-shadow:0 0 7px #b58cff;flex-shrink:0;animation:rledPulse 2.9s ease-in-out infinite;"></div>
+      <span>MOBILE</span>
+      <span class="dock-emoji" style="font-size:11px;">📱</span>
+    </button>
+
+    <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
+
     <button id="radioIdleBtn" onclick="radioIdleClick()" title="RG Radio" aria-label="RG Radio">
       <div class="rtog-led" style="background:#00ff88;box-shadow:0 0 7px #00ff88;animation:rledPulse 2s ease-in-out infinite;"></div>
       <span>RADIO</span>
@@ -1233,6 +1287,34 @@ window.addEventListener('DOMContentLoaded', () => {
     </button>
   </div><!-- end #bottomBtnBar -->
 </div><!-- end #dockShelf -->
+
+<div id="mobileQrModal" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171000;background:rgba(0,0,0,.82);backdrop-filter:blur(18px) saturate(120%);-webkit-backdrop-filter:blur(18px) saturate(120%);padding:20px;">
+  <div id="mobileQrBackdrop" onclick="closeMobileQrModal()" style="position:absolute;inset:0;"></div>
+  <div id="mobileQrDialog" role="dialog" aria-modal="true" aria-labelledby="mobileQrTitle" style="position:relative;max-width:min(880px,calc(100vw - 32px));margin:0 auto;top:50%;transform:translateY(-50%);border-radius:26px;border:1px solid rgba(255,255,255,.10);background:#040404;box-shadow:0 32px 96px rgba(0,0,0,.72), inset 0 1px 0 rgba(255,255,255,.05);overflow:hidden;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:18px 18px 6px;">
+      <div>
+        <div id="mobileQrTitle" style="font:800 24px/1 'Space Grotesk',system-ui;color:#f8fbff;letter-spacing:-.03em;">Mobile</div>
+        <div style="margin-top:6px;max-width:460px;font:500 12px/1.4 'Space Grotesk',system-ui;color:rgba(216,226,255,.74);">Noskenē QR kodu un telefonā atvērsies mobile skats.</div>
+      </div>
+      <button id="mobileQrCloseBtn" type="button" onclick="closeMobileQrModal()" aria-label="Aizvērt mobile QR" style="flex-shrink:0;width:44px;height:44px;border-radius:14px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.04);color:#eef4ff;font-size:26px;line-height:1;cursor:pointer;">×</button>
+    </div>
+    <div id="mobileQrBody" style="display:grid;grid-template-columns:228px minmax(320px,1fr);gap:14px;padding:0 18px 18px;align-items:center;">
+      <div style="border-radius:20px;border:1px solid rgba(255,255,255,.08);background:#060606;padding:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.03);">
+        <div style="display:flex;align-items:center;justify-content:center;min-height:212px;border-radius:16px;background:#000;border:1px solid rgba(255,255,255,.05);">
+          <img id="mobileQrImage" alt="Mobile QR kods" style="width:min(100%,188px);height:auto;display:block;border-radius:14px;background:#000;box-shadow:0 12px 30px rgba(0,0,0,.42);" />
+        </div>
+        <div style="margin-top:10px;text-align:center;font:700 11px/1.35 'Space Grotesk',system-ui;letter-spacing:.12em;color:#cbbcff;text-transform:uppercase;">
+          Noskenē ar telefonu
+        </div>
+      </div>
+      <div style="border-radius:20px;border:1px solid rgba(255,255,255,.08);background:#060606;padding:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.03);">
+        <div id="mobilePreviewShell" style="display:flex;justify-content:center;padding:0;">
+          <img src="data/phoneqr.png" alt="Mobile preview" style="display:block;width:min(100%,360px);height:auto;border-radius:20px;filter:drop-shadow(0 20px 38px rgba(0,0,0,.42));" />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 // ============================================================
@@ -2139,6 +2221,82 @@ window.addEventListener('message', function(e) {
 </script>
 
 <script>
+/* Desktop -> Mobile QR modal */
+(function(){
+  var MOBILE_QR_TOKEN_KEY = 'minka_api_token_v1';
+  var MOBILE_QR_PASSWORD = 'NMPUK888';
+  var _mobileQrUrl = '';
+
+  function buildMobileBaseUrl() {
+    if (/^https?:$/i.test(location.protocol) && location.origin && !/^(null|file:)/i.test(location.origin)) {
+      return new URL('mobile.html', location.href).toString();
+    }
+    return 'https://rg2055.github.io/Minka/mobile.html';
+  }
+
+  function buildMobileAuthUrl() {
+    var token = '';
+    try { token = sessionStorage.getItem(MOBILE_QR_TOKEN_KEY) || localStorage.getItem(MOBILE_QR_TOKEN_KEY) || ''; } catch (_e) {}
+    var url = new URL(buildMobileBaseUrl());
+    if (token) url.searchParams.set('token', token);
+    if (MOBILE_QR_PASSWORD) url.searchParams.set('pw', MOBILE_QR_PASSWORD);
+    url.searchParams.set('from', 'desktop-qr');
+    return url.toString();
+  }
+
+  function refreshMobileQrModal() {
+    _mobileQrUrl = buildMobileAuthUrl();
+    var qrImage = document.getElementById('mobileQrImage');
+    if (qrImage) qrImage.src = 'data/qr.png';
+  }
+
+  window.toggleMobileQrModal = function toggleMobileQrModal() {
+    var modal = document.getElementById('mobileQrModal');
+    var btn = document.getElementById('mobileDockBtn');
+    if (!modal) return;
+    var opening = modal.style.display === 'none' || !modal.style.display;
+    if (!opening) return window.closeMobileQrModal();
+    refreshMobileQrModal();
+    modal.style.display = 'block';
+    modal.setAttribute('aria-hidden', 'false');
+    if (btn) btn.classList.add('mobile-open');
+    requestAnimationFrame(function(){
+      var closeBtn = document.getElementById('mobileQrCloseBtn');
+      if (closeBtn) closeBtn.focus({ preventScroll: true });
+    });
+  };
+
+  window.closeMobileQrModal = function closeMobileQrModal() {
+    var modal = document.getElementById('mobileQrModal');
+    var btn = document.getElementById('mobileDockBtn');
+    if (!modal) return;
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
+    if (btn) btn.classList.remove('mobile-open');
+  };
+
+  window.copyMobileQrUrl = async function copyMobileQrUrl() {
+    if (!_mobileQrUrl) refreshMobileQrModal();
+    var btn = document.getElementById('mobileQrCopyBtn');
+    try {
+      await navigator.clipboard.writeText(_mobileQrUrl);
+      if (btn) {
+        var prev = btn.textContent;
+        btn.textContent = 'NOKOPĒTS';
+        setTimeout(function(){ btn.textContent = prev; }, 1400);
+      }
+    } catch (_e) {
+      window.prompt('Nokopē mobile linku', _mobileQrUrl);
+    }
+  };
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') window.closeMobileQrModal();
+  });
+})();
+</script>
+
+<script>
 /* Parent sound system for NAKTS/RADIO buttons */
 (function(){
   let _ctx=null;
@@ -2158,6 +2316,7 @@ window.addEventListener('message', function(e) {
     if(!b)return;
     if(b.id==='nsToggleBtnParent') blip(420,0.12,0.04);
     else if(b.id==='bolusDocBtn') blip(460,0.11,0.04);
+    else if(b.id==='mobileDockBtn') blip(500,0.12,0.04);
     else if(b.id==='radioToggle'||b.id==='radioIdleBtn') blip(380,0.10,0.04);
   },true);
 })();
@@ -2349,12 +2508,21 @@ body::before {
 }
 #nsToggleBtnParent,
 #bolusDocBtn,
+#mobileDockBtn,
 #statsDocBtn,
 #settingsDockBtn,
 #radioIdleBtn,
 #radioToggle {
   min-height: 46px !important;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 12px 26px rgba(0,0,0,0.22) !important;
+}
+@media (max-width: 1180px) {
+  #mobileQrBody {
+    grid-template-columns: 1fr !important;
+  }
+  #mobilePreviewShell {
+    padding-top: 0 !important;
+  }
 }
 body.mk-low-motion *,
 body.mk-low-motion *::before,
