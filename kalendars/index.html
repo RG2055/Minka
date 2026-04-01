@@ -201,6 +201,78 @@ html.mk-low-spec *::after {
 #mk-toast.mk-err{border-color:rgba(255,60,60,.4);color:#ff6b6b;}
 #mk-toast.mk-ok{border-color:rgba(48,209,88,.35);color:#30d158;}
 </style>
+<style id="rg_stars_overlay_css">
+#stars-overlay{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:1005;
+  pointer-events:none;
+  overflow:hidden;
+  opacity:var(--stars-overlay-opacity, .92);
+  mix-blend-mode:screen;
+  transition:opacity 1.8s ease;
+}
+body.stars-active #stars-overlay{display:block;}
+#stars-overlay::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at 78% 16%, rgba(180,210,255,.10), transparent 18%),
+    linear-gradient(180deg, rgba(8,12,28,.10), rgba(8,12,28,0) 45%, rgba(255,170,120,.04) 100%);
+}
+.stars-layer{
+  position:absolute;
+  inset:-8vh -8vw;
+}
+.s-star{
+  position:absolute;
+  will-change:transform,opacity;
+  animation:s-drift var(--drift-dur, 24s) linear infinite alternate;
+}
+.s-star-core{
+  display:block;
+  width:100%;
+  height:100%;
+  border-radius:50%;
+  background:radial-gradient(circle at 40% 40%, rgba(255,255,255,.98) 0%, rgba(230,240,255,.92) 38%, rgba(170,190,255,.30) 62%, rgba(170,190,255,0) 100%);
+  box-shadow:0 0 8px rgba(255,255,255,.28), 0 0 16px rgba(168,139,250,.14);
+  animation:s-breathe var(--twinkle-dur, 8s) ease-in-out infinite;
+  animation-delay:var(--twinkle-delay, 0s);
+}
+.s-star.is-dim .s-star-core{
+  opacity:.45;
+  filter:blur(.15px);
+}
+.s-star.is-tiny .s-star-core{
+  box-shadow:0 0 4px rgba(255,255,255,.18);
+}
+.stars-moon{
+  position:absolute;
+  width:clamp(54px, 5vw, 76px);
+  height:clamp(54px, 5vw, 76px);
+  opacity:calc(var(--moon-overlay-opacity, .82) * 1);
+  filter:drop-shadow(0 0 10px rgba(196,205,255,.22)) drop-shadow(0 0 24px rgba(140,130,255,.16));
+  transform:translate3d(0,0,0);
+  transition:opacity 1.8s ease, transform 12s ease, left .6s ease, top .6s ease;
+}
+.stars-moon svg{
+  width:100%;
+  height:100%;
+  display:block;
+}
+@keyframes s-breathe{
+  0%{opacity:.34; transform:scale(.94);}
+  35%{opacity:.76; transform:scale(1.03);}
+  70%{opacity:.52; transform:scale(.98);}
+  100%{opacity:.88; transform:scale(1.06);}
+}
+@keyframes s-drift{
+  0%{transform:translate3d(0,0,0);}
+  100%{transform:translate3d(var(--dx, 0px), var(--dy, 0px), 0);}
+}
+</style>
 </head>
 <body class="ai-collapsed">
 <noscript><div style="padding:40px;text-align:center;color:#ccc;font-family:sans-serif;background:#111;min-height:100vh;">JavaScript ir nepieciešams, lai šī lapa darbotos. / JavaScript is required.</div></noscript>
@@ -235,6 +307,7 @@ html.mk-low-spec *::after {
   <div class="ms-orb orb3"></div>
   <div class="ms-noise"></div>
 </div>
+<div id="stars-overlay" aria-hidden="true"></div>
 
 <!-- Sun / Moon widgets removed -->
 
@@ -697,6 +770,262 @@ document.addEventListener('keydown', (e) => {
   document.addEventListener('keydown',function(e){
     if(e.key==='Escape'&&_nsOpen){ toggleNsOverlay(); try{window.parent.postMessage({type:'nsClosed'},'*');}catch(ex){} }
   });
+})();
+</script>
+
+<script>
+(function(){
+  var generated=false;
+  var STORAGE_KEY='rg_stars_manual_v1';
+  var manualOn=false;
+  var moonNode=null;
+
+  try { manualOn = localStorage.getItem(STORAGE_KEY) === '1'; } catch(_e) {}
+
+  function container(){
+    return document.getElementById('stars-overlay');
+  }
+
+  function ensureStars(){
+    if(generated) return;
+    var host=container();
+    if(!host) return;
+    var layerFar=document.createElement('div');
+    var layerNear=document.createElement('div');
+    layerFar.className='stars-layer stars-layer-far';
+    layerNear.className='stars-layer stars-layer-near';
+    host.appendChild(layerFar);
+    host.appendChild(layerNear);
+
+    function addStars(layer, count, scale){
+      for(var i=0;i<count;i++){
+        var star=document.createElement('div');
+        var core=document.createElement('span');
+        var size=(Math.random()*scale + (scale > 2 ? 0.9 : 0.55)).toFixed(2);
+        star.className='s-star' + (Math.random() < 0.45 ? ' is-dim' : '') + (parseFloat(size) < 1.2 ? ' is-tiny' : '');
+        core.className='s-star-core';
+        star.style.cssText=[
+          'width:'+size+'px',
+          'height:'+size+'px',
+          'left:'+(Math.random()*100).toFixed(3)+'vw',
+          'top:'+(Math.random()*100).toFixed(3)+'vh',
+          '--dx:'+((Math.random()*10)-5).toFixed(2)+'px',
+          '--dy:'+((Math.random()*8)-4).toFixed(2)+'px',
+          '--drift-dur:'+(Math.random()*20+18).toFixed(2)+'s',
+          '--twinkle-dur:'+(Math.random()*7+6).toFixed(2)+'s',
+          '--twinkle-delay:'+(-Math.random()*8).toFixed(2)+'s',
+          'opacity:'+(Math.random()*0.55+0.20).toFixed(2)
+        ].join(';');
+        star.appendChild(core);
+        layer.appendChild(star);
+      }
+    }
+    addStars(layerFar, 85, 1.6);
+    addStars(layerNear, 42, 2.8);
+
+    moonNode=document.createElement('div');
+    moonNode.className='stars-moon';
+    moonNode.setAttribute('aria-hidden', 'true');
+    host.appendChild(moonNode);
+    syncMoon();
+    generated=true;
+  }
+
+  function moonSvgByIndex(index){
+    var shadowByIndex = {
+      0: '<circle cx="32" cy="32" r="18" fill="rgba(18,24,44,.96)"/>',
+      1: '<circle cx="40" cy="32" r="16" fill="rgba(18,24,44,.96)"/>',
+      2: '<rect x="32" y="14" width="18" height="36" fill="rgba(18,24,44,.96)"/>',
+      3: '<circle cx="24" cy="32" r="16" fill="rgba(18,24,44,.96)"/>',
+      4: '',
+      5: '<circle cx="24" cy="32" r="16" fill="rgba(18,24,44,.96)"/>',
+      6: '<rect x="14" y="14" width="18" height="36" fill="rgba(18,24,44,.96)"/>',
+      7: '<circle cx="40" cy="32" r="16" fill="rgba(18,24,44,.96)"/>'
+    };
+    return ''
+      +'<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">'
+      +'<defs>'
+      +'<radialGradient id="moonGlow" cx="40%" cy="35%" r="65%">'
+      +'<stop offset="0%" stop-color="rgba(255,255,255,.98)"/>'
+      +'<stop offset="58%" stop-color="rgba(217,227,255,.96)"/>'
+      +'<stop offset="100%" stop-color="rgba(176,190,238,.92)"/>'
+      +'</radialGradient>'
+      +'<filter id="moonBlur" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="5"/></filter>'
+      +'</defs>'
+      +'<circle cx="32" cy="32" r="24" fill="rgba(175,190,255,.12)" filter="url(#moonBlur)"/>'
+      +'<circle cx="32" cy="32" r="18" fill="url(#moonGlow)"/>'
+      + shadowByIndex[index == null ? 4 : index]
+      +'</svg>';
+  }
+
+  function syncMoon(){
+    if(!moonNode) return;
+    try{
+      var moon = (typeof currentMoon === 'function') ? currentMoon() : null;
+      var index = moon && typeof moon.index === 'number' ? moon.index : 4;
+      moonNode.innerHTML = moonSvgByIndex(index);
+      moonNode.title = moon && moon.name ? moon.name : 'Mēness';
+    }catch(_e){
+      moonNode.innerHTML = moonSvgByIndex(4);
+    }
+  }
+
+  function syncMoonPlacement(){
+    if(!moonNode) return;
+    try{
+      var app = document.getElementById('grafiks-app');
+      var rightPanel = document.querySelector('.side-panel.right-panel');
+      var plan = document.getElementById('radiologists-plan-container');
+      var nextBox = document.getElementById('radiologists-next-container');
+      if(!app){
+        moonNode.style.left = 'calc(100vw - 180px)';
+        moonNode.style.top = '110px';
+        return;
+      }
+
+      var appRect = app.getBoundingClientRect();
+      var panelRect = rightPanel ? rightPanel.getBoundingClientRect() : appRect;
+      var size = moonNode.getBoundingClientRect();
+      var w = Math.max(54, size.width || 64);
+      var h = Math.max(54, size.height || 64);
+      var gap = 12;
+
+      function rectOf(el){
+        if(!el) return null;
+        var r = el.getBoundingClientRect();
+        if(!r || !r.width || !r.height) return null;
+        return { left:r.left, top:r.top, right:r.right, bottom:r.bottom, width:r.width, height:r.height };
+      }
+
+      function overlaps(a, b){
+        return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+      }
+
+      function inflate(r, pad){
+        return { left:r.left-pad, top:r.top-pad, right:r.right+pad, bottom:r.bottom+pad };
+      }
+
+      var occupied = [];
+      Array.prototype.forEach.call(document.querySelectorAll(
+        '.duty-block, #grafiks-list .card, #radiologists-plan-container, #radiologists-next-container, #shift-progress-wrap, .scroll-row, .top-row'
+      ), function(el){
+        if(!el || !el.offsetParent) return;
+        var r = rectOf(el);
+        if(r) occupied.push(inflate(r, 8));
+      });
+
+      var candidates = [];
+      if (plan) {
+        var pr = rectOf(plan);
+        if (pr) {
+          candidates.push({ left: pr.left + pr.width * 0.34 - w * 0.5, top: pr.top - h - 18 });
+          candidates.push({ left: pr.left - w - 18, top: pr.top + 8 });
+          candidates.push({ left: pr.left - w - 18, top: pr.top - h * 0.12 });
+        }
+      }
+      if (nextBox) {
+        var nr = rectOf(nextBox);
+        if (nr) {
+          candidates.push({ left: nr.left - w - 18, top: nr.top + 8 });
+        }
+      }
+
+      candidates.push(
+        { left: panelRect.left + 22, top: panelRect.top + 70 },
+        { left: panelRect.left + panelRect.width * 0.52 - w * 0.5, top: panelRect.top + 86 },
+        { left: appRect.right - w - 28, top: appRect.top + 84 },
+        { left: appRect.right - w - 28, top: appRect.top + 170 }
+      );
+
+      function clampPos(pos){
+        return {
+          left: Math.max(appRect.left + 12, Math.min(appRect.right - w - 12, pos.left)),
+          top: Math.max(appRect.top + 18, Math.min(appRect.bottom - h - 18, pos.top))
+        };
+      }
+
+      function score(pos){
+        var box = { left:pos.left, top:pos.top, right:pos.left + w, bottom:pos.top + h };
+        var hits = 0;
+        for (var i = 0; i < occupied.length; i++) {
+          if (overlaps(box, occupied[i])) hits++;
+        }
+        return hits;
+      }
+
+      var best = null;
+      var bestScore = Infinity;
+      for (var i = 0; i < candidates.length; i++) {
+        var cand = clampPos(candidates[i]);
+        var sc = score(cand);
+        if (sc === 0) { best = cand; bestScore = 0; break; }
+        if (sc < bestScore) { best = cand; bestScore = sc; }
+      }
+
+      if (!best) {
+        best = { left: appRect.right - w - 28, top: appRect.top + 96 };
+      }
+
+      moonNode.style.left = best.left.toFixed(1) + 'px';
+      moonNode.style.top = best.top.toFixed(1) + 'px';
+    }catch(_e){}
+  }
+
+  function isAutoNight(){
+    var h=(new Date()).getHours();
+    return h >= 0 && h < 8;
+  }
+
+  function autoStrength(){
+    var now = new Date();
+    var minutes = now.getHours() * 60 + now.getMinutes();
+    if (minutes < 0 || minutes >= 480) return 0;
+    if (minutes < 270) return 1;
+    var t = (minutes - 270) / 210;
+    return Math.max(0.06, 1 - t);
+  }
+
+  function applyStrength(visible){
+    var host = container();
+    if(!host) return;
+    var strength = 0;
+    if (isAutoNight()) strength = autoStrength();
+    else if (manualOn) strength = 0.86;
+    host.style.setProperty('--stars-overlay-opacity', visible ? String(strength) : '0');
+    host.style.setProperty('--moon-overlay-opacity', visible ? String(Math.min(0.95, strength + 0.08)) : '0');
+    if (moonNode) {
+      moonNode.style.transform = 'translate3d(' + (visible ? '0px' : '10px') + ',' + (visible ? '0px' : '-6px') + ',0)';
+    }
+  }
+
+  function apply(){
+    var on = manualOn || isAutoNight();
+    if(on) ensureStars();
+    syncMoon();
+    syncMoonPlacement();
+    document.body.classList.toggle('stars-active', on);
+    applyStrength(on);
+  }
+
+  window.__setStarsManual = function(on){
+    manualOn = !!on;
+    try { localStorage.setItem(STORAGE_KEY, manualOn ? '1' : '0'); } catch(_e) {}
+    apply();
+  };
+
+  window.__syncStarsOverlay = function(){
+    apply();
+  };
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', apply, { once:true });
+  } else {
+    apply();
+  }
+  setInterval(apply, 20 * 1000);
+  window.addEventListener('focus', apply);
+  window.addEventListener('resize', apply);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) apply(); });
 })();
 </script>
 
