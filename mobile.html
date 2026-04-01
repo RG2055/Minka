@@ -5,11 +5,35 @@
 (function() {
   var API_BASE = 'https://minka-api.gamernr1elite.workers.dev';
   var TOKEN_KEY = 'minka_api_token_v1';
+  var TOKEN_COOKIE_KEY = 'minka_api_token_cookie_v1';
   var AUTO_PW_KEY = 'pw';
   var AUTO_PW_STORE_KEY = 'minka_auto_pw_v1';
 
+  function cookiePath() {
+    try {
+      var parts = location.pathname.split('/').filter(Boolean);
+      if (parts.length) return '/' + parts[0] + '/';
+    } catch (_e) {}
+    return '/';
+  }
+
+  function readCookie(name) {
+    try {
+      var escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      var match = document.cookie.match(new RegExp('(?:^|; )' + escaped + '=([^;]*)'));
+      return match ? decodeURIComponent(match[1]) : '';
+    } catch (_e) { return ''; }
+  }
+
+  function writeCookie(name, value, days) {
+    try {
+      var maxAge = Math.max(0, Math.floor((days || 0) * 86400));
+      document.cookie = name + '=' + encodeURIComponent(value || '') + '; path=' + cookiePath() + '; max-age=' + maxAge + '; SameSite=Lax';
+    } catch (_e) {}
+  }
+
   function getToken() {
-    try { return sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY) || ''; }
+    try { return sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY) || readCookie(TOKEN_COOKIE_KEY) || ''; }
     catch (_e) { return ''; }
   }
 
@@ -17,9 +41,15 @@
     try {
       sessionStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(TOKEN_KEY);
+      writeCookie(TOKEN_COOKIE_KEY, '', 0);
       if (token) {
-        if (persist) localStorage.setItem(TOKEN_KEY, token);
-        else sessionStorage.setItem(TOKEN_KEY, token);
+        if (persist) {
+          localStorage.setItem(TOKEN_KEY, token);
+          writeCookie(TOKEN_COOKIE_KEY, token, 45);
+        } else {
+          sessionStorage.setItem(TOKEN_KEY, token);
+          writeCookie(TOKEN_COOKIE_KEY, token, 7);
+        }
       }
     } catch (_e) {}
   }
@@ -1366,7 +1396,7 @@ html.mk-low-spec #calendarEmbed {
 
   <script>
   if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-    const MINKA_APP_VERSION = '2026.04.01.mobile.53';
+    const MINKA_APP_VERSION = '2026.04.02.mobile.58';
     const MINKA_VERSION_KEY = 'minka_mobile_app_version';
     const MINKA_RELOAD_KEY = 'minka_mobile_sw_reloading';
     function clearMinkaRuntimeCaches() {
