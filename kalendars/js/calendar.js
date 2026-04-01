@@ -2032,9 +2032,14 @@ function closeFullListModal() {
             nsBarToggle.classList.toggle('is-on', _nsBarOn);
             var w = document.getElementById('shift-progress-wrap');
             if (w) w.classList.toggle('ns-bar-active', _nsBarOn);
+            try { if (window.__setStarsManual) window.__setStarsManual(_nsBarOn); } catch(_e) {}
             playNightToggleSound(_nsBarOn);
           });
         }
+        try {
+          nsBarToggle.classList.toggle('is-on', _nsBarOn);
+          if (window.__setStarsManual) window.__setStarsManual(_nsBarOn);
+        } catch(_e) {}
       }
       const effectiveOverlay = _nsBarOn ? (splitBarOverlay || splitOverlay) : null;
       const visualStart = effectiveOverlay ? effectiveOverlay.start : activeStart;
@@ -2055,6 +2060,7 @@ function closeFullListModal() {
           track.style.setProperty('box-shadow', 'inset 0 1px 3px rgba(0,0,0,0.5), inset 0 -1px 0 rgba(255,255,255,0.03)', 'important');
         }
       }
+      try { if (window.__syncStarsOverlay) window.__syncStarsOverlay(); } catch(_e) {}
       // Sun / moon icons (only in normal mode, not overlay)
       var iconsEl = document.getElementById('shift-bar-icons');
       if (!effectiveOverlay || !(effectiveOverlay.segments && effectiveOverlay.segments.length)) {
