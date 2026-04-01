@@ -1584,6 +1584,15 @@ function closeFullListModal() {
     return '';
   }
 
+  function filterVisibleWorkers(workers, isToday, now) {
+    const list = Array.isArray(workers) ? workers.slice() : [];
+    return list.filter(function(w) {
+      if (!isValidShift(w && w.shift)) return false;
+      if (!isToday || !w || !w.startTime || !w.endTime) return true;
+      return !isWorkerShiftDone(w, w.date || activeDateStr, now);
+    });
+  }
+
   function g_updatePanelsForDate() {
     const isToday = (activeDateStr === g_todayStr);
     const now = new Date();
@@ -1596,7 +1605,7 @@ function closeFullListModal() {
       // IMPORTANT: shift-day is already normalized to 08:00 rollover (see g_todayStr).
       // That means we no longer need to merge "active yesterday" at midnight.
       // We simply render the selected date's roster.
-      let workersToShow = getWorkersForDateWithDate(store, activeDateStr);
+      let workersToShow = filterVisibleWorkers(getWorkersForDateWithDate(store, activeDateStr), isToday, now);
 
       radgContainer.innerHTML = "";
       workersToShow.forEach(w => {
@@ -1649,7 +1658,7 @@ function closeFullListModal() {
     if (radlContainer) {
       // With the 08:00 rollover logic, "today" already points at the shift-start day,
       // so we don't need to mix in yesterday-at-midnight shifts (it created duplicates).
-      let workersToShow = getWorkersForDateWithDate(storeRad, activeDateStr);
+      let workersToShow = filterVisibleWorkers(getWorkersForDateWithDate(storeRad, activeDateStr), isToday, now);
 
       const seen = new Set();
       workersToShow = workersToShow.filter(w => {
@@ -2332,17 +2341,18 @@ function closeFullListModal() {
     const dayData = g_findDay(store, activeDateStr)?.day || null;
     // Collect radiologists — search all months
     const radDayData = g_findDay(storeRad, activeDateStr)?.day || null;
+    const isToday = (activeDateStr === g_todayStr);
+    const now = new Date();
 
-    const hasRg = dayData && (dayData.workers || []).some(w => isValidShift(w.shift));
-    const hasRd = radDayData && (radDayData.workers || []).some(w => isValidShift(w.shift));
+    const visibleRgWorkers = filterVisibleWorkers(dayData && dayData.workers, isToday, now);
+    const visibleRdWorkers = filterVisibleWorkers(radDayData && radDayData.workers, isToday, now);
+    const hasRg = visibleRgWorkers.length > 0;
+    const hasRd = visibleRdWorkers.length > 0;
 
     if (!hasRg && !hasRd) {
       container.innerHTML = "<div style='color:#666;width:100%;text-align:center;margin-top:50px;'>Nav datu</div>";
       return;
     }
-
-    const isToday = (activeDateStr === g_todayStr);
-    const now = new Date();
 
     function buildCard(w, isRd) {
       const parts = String(w.name || "").trim().split(/\s+/).filter(Boolean);
@@ -2352,7 +2362,7 @@ function closeFullListModal() {
       let iconHtml = '';
       if (w.type === 'DIENA') iconHtml = '<span class="shift-icon static sun-icon">☀️</span>';
       else if (w.type === 'NAKTS') iconHtml = '<span class="shift-icon static moon-icon">🌙</span>';
-      const isDoneCard = isToday && w.startTime && w.endTime && isWorkerShiftDone(w, activeDateStr, new Date());
+      const isDoneCard = isToday && w.startTime && w.endTime && isWorkerShiftDone(w, activeDateStr, now);
 
       // Get fatigue score
       let fatigueScore = 0, fatigueColor = 'rgba(0,255,136,0.7)', hasFatigueScore = false;
@@ -2446,12 +2456,12 @@ function closeFullListModal() {
         sec.appendChild(lbl);
         const grid = document.createElement('div');
         grid.className = 'cards-subgrid';
-        (radDayData.workers || []).filter(w => isValidShift(w.shift))
+        visibleRdWorkers
           .forEach(w => { grid.appendChild(buildCard(w, true)); });
         sec.appendChild(grid);
         container.appendChild(sec);
       } else {
-        (radDayData.workers || []).filter(w => isValidShift(w.shift))
+        visibleRdWorkers
           .forEach(w => { container.appendChild(buildCard(w, true)); });
       }
     }
@@ -2468,12 +2478,12 @@ function closeFullListModal() {
         sec.appendChild(lbl);
         const grid = document.createElement('div');
         grid.className = 'cards-subgrid';
-        (dayData.workers || []).filter(w => isValidShift(w.shift))
+        visibleRgWorkers
           .forEach(w => { grid.appendChild(buildCard(w, false)); });
         sec.appendChild(grid);
         container.appendChild(sec);
       } else {
-        (dayData.workers || []).filter(w => isValidShift(w.shift))
+        visibleRgWorkers
           .forEach(w => { container.appendChild(buildCard(w, false)); });
       }
     }
