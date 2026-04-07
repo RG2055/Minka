@@ -41,6 +41,13 @@
   var st=null;
   var _actx=null;
   var NS_STORE_KEY='minkaNightSplitByDateV1';
+  var NS_ROOM_LEGACY_STORE_KEY='minkaNightRoomByDateV1';
+  var NS_ROOM_KEY_PREFIX='nsrooms::';
+  var NS_ROOM_API_PATH='/api/ns-rooms';
+  var ROOM_BED_KEYS=['main_left_top','main_left_bottom','main_right_top','nmp_center'];
+  var _roomBc=null;
+  var _roomPolling=false;
+  try{ _roomBc = new BroadcastChannel('minka-ns-rooms-sync'); }catch(_e){}
 
   function activeDateKey(){
     return String(window.__activeDateStr || window.__todayDateStr || '').trim();
@@ -54,6 +61,161 @@
   }
   function saveSavedMap(map){
     try{ localStorage.setItem(NS_STORE_KEY, JSON.stringify(map||{})); }catch(e){}
+  }
+  function roomStorageKey(dateKey){
+    dateKey=String(dateKey||'').trim();
+    return dateKey ? (NS_ROOM_KEY_PREFIX + dateKey) : '';
+  }
+  function loadLegacyRoomSavedMap(){
+    try{
+      var raw = localStorage.getItem(NS_ROOM_LEGACY_STORE_KEY);
+      var parsed = raw ? JSON.parse(raw) : {};
+      return (parsed && typeof parsed==='object') ? parsed : {};
+    }catch(e){ return {}; }
+  }
+  function loadRoomSavedState(dateKey){
+    try{
+      var key=roomStorageKey(dateKey);
+      if(key){
+        var raw=localStorage.getItem(key);
+        if(raw){
+          var parsed=JSON.parse(raw);
+          if(parsed && typeof parsed==='object') return parsed;
+        }
+      }
+    }catch(e){}
+    try{
+      var legacy=loadLegacyRoomSavedMap()[String(dateKey||'').trim()];
+      return (legacy && typeof legacy==='object') ? legacy : null;
+    }catch(e){ return null; }
+  }
+  function saveRoomSavedState(dateKey, data){
+    try{
+      var key=roomStorageKey(dateKey);
+      if(!key || !data || typeof data!=='object') return;
+      localStorage.setItem(key, JSON.stringify(data));
+    }catch(e){}
+  }
+  function roomBedsToOrder(beds, names){
+    var next=new Array(4).fill('');
+    var valid={};
+    (names||[]).forEach(function(n){ if(n) valid[n]=true; });
+    if(beds && typeof beds==='object'){
+      ROOM_BED_KEYS.forEach(function(key, idx){
+        var name=String((beds[key]||'')).trim();
+        if(name && valid[name] && next.indexOf(name)===-1) next[idx]=name;
+      });
+    }
+    var remaining=(names||[]).filter(function(n){ return next.indexOf(n)===-1; });
+    for(var i=0;i<next.length && remaining.length;i++){
+      if(!next[i]) next[i]=remaining.shift();
+    }
+    return next.slice(0,4);
+  }
+  function orderToRoomBeds(order){
+    var beds={};
+    ROOM_BED_KEYS.forEach(function(key, idx){
+      var name=String(((order||[])[idx]||'')).trim();
+      if(name) beds[key]=name;
+    });
+    return beds;
+  }
+  function getRoomOrder(slots){
+    var names=(slots||[]).map(function(s){ return String((s && s.w && s.w.name) || '').trim(); }).filter(Boolean);
+    var dk=activeDateKey();
+    var saved=dk ? loadRoomSavedState(dk) : null;
+    if(!saved) return names.slice(0,4);
+    if(saved.beds && typeof saved.beds==='object'){
+      return roomBedsToOrder(saved.beds, names);
+    }
+    if(Array.isArray(saved.order) && saved.order.length){
+      return roomBedsToOrder(orderToRoomBeds(saved.order), names);
+    }
+    return names.slice(0,4);
+  }
+  function saveRoomOrder(order){
+    try{
+      var dk=activeDateKey();
+      if(!dk || !Array.isArray(order)) return;
+      var payload={
+        date: dk,
+        beds: orderToRoomBeds(order.slice(0,4)),
+        savedAt: Date.now()
+      };
+      saveRoomSavedState(dk, payload);
+      pushRoomState(dk);
+    }catch(e){}
+  }
+  function activeRoomApi(){
+    return (window.MinkaApi && typeof window.MinkaApi.apiFetch==='function' && window.MinkaApi.getToken())
+      ? window.MinkaApi
+      : null;
+  }
+  function normalizeRoomPayload(data, dateStr){
+    if(!data || typeof data!=='object') return null;
+    var beds=(data.beds && typeof data.beds==='object') ? data.beds : null;
+    if(!beds && Array.isArray(data.order)) beds=orderToRoomBeds(data.order);
+    if(!beds) return null;
+    var normalizedBeds={};
+    ROOM_BED_KEYS.forEach(function(key){
+      var name=String((beds[key]||'')).trim();
+      if(name) normalizedBeds[key]=name;
+    });
+    return {
+      date: String(dateStr||data.date||'').trim(),
+      beds: normalizedBeds,
+      savedAt: data.savedAt || Date.now()
+    };
+  }
+  function pushRoomState(dateStr){
+    var api=activeRoomApi();
+    if(!api || !dateStr) return;
+    try{
+      var payload=normalizeRoomPayload(loadRoomSavedState(dateStr), dateStr);
+      if(!payload || !payload.date) return;
+      api.apiFetch(NS_ROOM_API_PATH, { method:'POST', json: payload }).catch(function(){});
+      if(_roomBc) try{ _roomBc.postMessage(payload); }catch(_e){}
+    }catch(e){}
+  }
+  function pullRoomState(dateStr, cb){
+    var api=activeRoomApi();
+    if(!api || !dateStr) return;
+    api.apiFetch(NS_ROOM_API_PATH + '?date=' + encodeURIComponent(dateStr))
+      .then(function(r){ return r.json(); })
+      .then(function(remote){
+        var payload=normalizeRoomPayload(remote, dateStr);
+        if(!payload || !payload.date || !payload.beds) return;
+        var local=loadRoomSavedState(dateStr);
+        if(!local || !local.savedAt || (payload.savedAt && payload.savedAt > local.savedAt)){
+          saveRoomSavedState(dateStr, payload);
+          if(cb) cb(payload);
+        }
+      }).catch(function(){});
+  }
+  function startRoomPolling(){
+    if(_roomPolling) return;
+    _roomPolling=true;
+    if(_roomBc){
+      _roomBc.onmessage=function(evt){
+        try{
+          var payload=normalizeRoomPayload(evt.data, evt.data && evt.data.date);
+          if(!payload || !payload.date) return;
+          var local=loadRoomSavedState(payload.date);
+          if(!local || !local.savedAt || (payload.savedAt && payload.savedAt > local.savedAt)){
+            saveRoomSavedState(payload.date, payload);
+            if(payload.date===activeDateKey()){
+              try{ render(); }catch(_e){}
+            }
+          }
+        }catch(_e){}
+      };
+    }
+    var d0=activeDateKey();
+    if(d0) pullRoomState(d0, function(){ if(d0===activeDateKey()) render(); });
+    setInterval(function(){
+      var d=activeDateKey();
+      if(d) pullRoomState(d, function(){ if(d===activeDateKey()) render(); });
+    }, 45000);
   }
   function saveCurrentDayState(){
     try{
@@ -116,6 +278,11 @@
   function sndHover(){ tone(600,0.03,'sine',0.035); }
   function sndDrop(){ tone(240,0.13,'triangle',0.16); setTimeout(function(){tone(300,0.09,'triangle',0.09);},55); }
   function sndReorder(){ tone(420,0.07,'sine',0.06); setTimeout(function(){tone(530,0.1,'sine',0.08);},85); }
+  function sndSnore(){
+    tone(145,0.12,'sine',0.035);
+    setTimeout(function(){ tone(120,0.18,'triangle',0.028); },90);
+    setTimeout(function(){ tone(96,0.22,'sine',0.02); },210);
+  }
 
   // â”€â”€ Utils â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function mt(m){m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');}
@@ -520,6 +687,156 @@
       +'</div>';
   }
 
+  function roomInitials(name){
+    var parts=String(name||'').trim().split(/\s+/).filter(Boolean);
+    if(!parts.length) return '—';
+    if(parts.length===1) return parts[0].slice(0,2).toUpperCase();
+    return (parts[0].charAt(0)+parts[1].charAt(0)).toUpperCase();
+  }
+
+  function roomNames(name){
+    var parts=String(name||'').trim().split(/\s+/).filter(Boolean);
+    var main=(parts[0]||'Brīva').toUpperCase();
+    var size='16px';
+    if(main.length >= 11) size='9px';
+    else if(main.length >= 10) size='9.5px';
+    else if(main.length >= 9) size='10px';
+    else if(main.length >= 8) size='10.5px';
+    else if(main.length >= 7) size='11px';
+    else if(main.length >= 6) size='12.5px';
+    else if(main.length >= 5) size='14px';
+    return {
+      main: escHtml(main),
+      sub: escHtml(parts.slice(1).join(' ')),
+      size: size
+    };
+  }
+
+  function roomEmoji(name){
+    try{
+      return window.MinkaEmoji && typeof window.MinkaEmoji.get === 'function'
+        ? String(window.MinkaEmoji.get(String(name||'')) || '')
+        : '';
+    }catch(_e){ return ''; }
+  }
+
+  function roomDevices(slot){
+    if(!slot || typeof slot._idx !== 'number' || !st || !Array.isArray(st.sl) || !st.sl.length) return '';
+    var activeIdx = -1;
+    try{
+      var now = new Date();
+      var cur = now.getHours()*60 + now.getMinutes();
+      var firstStart = st.sl[0] ? st.sl[0].s : 0;
+      if(firstStart >= 20*60 && cur < 12*60) cur += 1440;
+      for(var ai=0; ai<st.sl.length; ai++){
+        var sl = st.sl[ai];
+        if(cur >= sl.s && cur < sl.e){ activeIdx = ai; break; }
+      }
+    }catch(_e){ activeIdx = -1; }
+    var deviceIdx = activeIdx >= 0 ? activeIdx : 0;
+    if(slot._idx !== deviceIdx) return '';
+    var arr=['feature','smart','feature','smart'];
+    return '<div class="ns-room-bed-devices" aria-hidden="true">'
+      + arr.map(function(tp, idx){
+          return '<span class="ns-room-device is-'+tp+' dev-'+idx+'"></span>';
+        }).join('')
+      + '</div>';
+  }
+
+  function roomBed(roomIdx, slot, posCls){
+    if(!slot){
+      return '<div class="ns-room-bed ns-room-bed-empty '+posCls+'" data-i="'+roomIdx+'" data-empty="1">'
+        +'<div class="ns-room-bed-card">'
+        +'<div class="ns-room-bed-pillow"></div>'
+        +'<div class="ns-room-bed-blanket"><span class="ns-room-bed-main">Brīva</span></div>'
+        +'</div>'
+        +'</div>';
+    }
+    var c=getCol(slot.w.name);
+    var nm=roomNames(slot.w.name);
+    var em=roomEmoji(slot.w.name);
+    return '<div class="ns-room-bed '+posCls+'" data-i="'+roomIdx+'" data-name="'+escHtml(String(slot.w.name||''))+'" data-accent="'+c.accent+'">'
+      +'<div class="ns-room-bed-card" style="--bed:'+c.accent+';--bed-border:'+c.border+'">'
+      +roomDevices(slot)
+      +(em?'<div class="ns-room-bed-head-emoji">'+escHtml(em)+'</div>':'')
+      +'<div class="ns-room-bed-zzz" aria-hidden="true"><span>Z</span><span>Z</span><span>Z</span></div>'
+      +'<div class="ns-room-bed-pillow"></div>'
+      +'<div class="ns-room-bed-blanket"><span class="ns-room-bed-main" style="font-size:'+nm.size+'">'+nm.main+'</span></div>'
+      +'</div>'
+      +'</div>';
+  }
+
+  function roomLegendItem(slot){
+    if(!slot) return '';
+    var c=getCol(slot.w.name);
+    var em=roomEmoji(slot.w.name);
+    return '<div class="ns-room-pill" style="--pill:'+c.accent+'">'
+      +'<span class="ns-room-pill-dot"></span>'
+      +'<span class="ns-room-pill-name">'+(em?'<span class="ns-room-pill-emoji">'+escHtml(em)+'</span> ':'')+escHtml(String(slot.w.name||''))+'</span>'
+      +'<span class="ns-room-pill-time">'+escHtml(slot.ss)+'–'+escHtml(slot.es)+'</span>'
+      +'</div>';
+  }
+
+  function roomLayout(slots){
+    if(!slots||!slots.length) return '';
+    var byName={};
+    slots.forEach(function(s, idx){
+      var nm=String((s && s.w && s.w.name) || '').trim();
+      if(nm) byName[nm]=Object.assign({_idx:idx}, s);
+    });
+    var roomOrder=getRoomOrder(slots);
+    var picked=roomOrder.map(function(name){ return byName[name] || null; });
+    while(picked.length<4) picked.push(null);
+    return '<div class="ns-room-block">'
+      +'<div class="ns-room-head">Istabu sadalījums</div>'
+      +'<div class="ns-room-fit"><div class="ns-room-layout">'
+      +'<div class="ns-room ns-room-main">'
+      +'<div class="ns-room-titlebar">Galvenā istaba</div>'
+      +'<div class="ns-room-shell">'
+      +roomBed(0, picked[0], 'is-left')
+      +roomBed(1, picked[1], 'is-right-top')
+      +roomBed(2, picked[2], 'is-right-bottom')
+      +'</div>'
+      +'</div>'
+      +'<div class="ns-room ns-room-nmp">'
+      +'<div class="ns-room-titlebar">Jaunais NMP</div>'
+      +'<div class="ns-room-shell">'
+      +roomBed(3, picked[3], 'is-center')
+      +'</div>'
+      +'</div>'
+      +'</div></div>'
+      +'</div>';
+  }
+
+  function fitRoomBlocks(root){
+    try{
+      var scope = root || document;
+      var panel = document.getElementById('nsPanelContent');
+      if(!panel) return;
+      var panelRect = panel.getBoundingClientRect();
+      var blocks = scope.querySelectorAll('.ns-room-block');
+      blocks.forEach(function(block){
+        var fit = block.querySelector('.ns-room-fit');
+        var layout = fit && fit.querySelector('.ns-room-layout');
+        if(!fit || !layout) return;
+
+        layout.style.transform = 'none';
+        fit.style.height = 'auto';
+
+        var naturalW = layout.scrollWidth || layout.offsetWidth || 1;
+        var naturalH = layout.scrollHeight || layout.offsetHeight || 1;
+        var fitRect = fit.getBoundingClientRect();
+        var availW = Math.max(120, fit.clientWidth || block.clientWidth || naturalW);
+        var availH = Math.max(120, panelRect.bottom - fitRect.top - 10);
+        var scale = Math.min(1, availW / naturalW, availH / naturalH);
+        if(!isFinite(scale) || scale <= 0) scale = 1;
+
+        layout.style.transform = 'scale(' + scale + ')';
+        fit.style.height = Math.ceil(naturalH * scale) + 16 + 'px';
+      });
+    }catch(_e){}
+  }
+
   // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function render(){
     // Target the nsPanel inside overlay, not the old bottom panel
@@ -785,7 +1102,13 @@
       +'</div>'
       +'<div class="ns-cards-row" style="--ns-cols:'+nsCount+';--ns-gap:'+nsGap+';--ns-card-h:'+nsCardH+';--ns-name-size:'+nsNameSize+'">'+cards+'</div>'
       +flowBar
+      +roomLayout(st.sl)
       +'<div class="ns-flow-meta">'+sortReason(st.sl)+'</div>';
+
+    requestAnimationFrame(function(){
+      fitRoomBlocks(panel);
+      requestAnimationFrame(function(){ fitRoomBlocks(panel); });
+    });
 
     drag(panel);
     // Update toggle button LED if active worker exists
@@ -797,14 +1120,19 @@
     refreshFlowLiveMarker();
   }
 
+  window.addEventListener('resize', function(){
+    requestAnimationFrame(function(){ fitRoomBlocks(document); });
+  }, { passive:true });
+
   // ── Drag & Drop ── pure mouse + touch, zero HTML5 drag API ───────────────
   function drag(el){
     if(el._dragWired) return;
     el._dragWired=true;
     var dragging=null, touching=null, lastH=null, ghost=null, rafId=null, mx=0, my=0;
+    var touchHoldTimer=null, touchStartX=0, touchStartY=0, touchDragReady=false, touchMoved=false;
 
-    function allCards(){ return el.querySelectorAll('.nsc-full-card'); }
-    function clearOver(){ allCards().forEach(function(x){x.classList.remove('nsover');}); lastH=null; }
+    function allDraggables(){ return el.querySelectorAll('.nsc-full-card, .ns-room-bed[data-i]'); }
+    function clearOver(){ allDraggables().forEach(function(x){x.classList.remove('nsover');}); lastH=null; }
     function killGhost(){ cancelAnimationFrame(rafId); if(ghost){ghost.remove();ghost=null;} }
     function moveGhost(){
       if(ghost) ghost.style.transform='translate3d('+(mx+18)+'px,'+(my-28)+'px,0) scale(1.06) rotate(-2deg)';
@@ -812,10 +1140,15 @@
 
     function startGhost(c){
       killGhost();
-      var nm=c.querySelector('.nsc-full-name');
+      var nm=c.classList.contains('nsc-full-card')
+        ? (c.querySelector('.nsc-full-name') && c.querySelector('.nsc-full-name').textContent)
+        : (c.getAttribute('data-name')||'');
       var accent=(c.style.getPropertyValue('--nsc-accent')||'#b77bff').trim();
+      if(!accent && c.classList.contains('ns-room-bed')){
+        accent = c.getAttribute('data-accent') || '#b77bff';
+      }
       ghost=document.createElement('div');
-      ghost.textContent=nm?nm.textContent:'?';
+      ghost.textContent=nm||'?';
       ghost.style.cssText='position:fixed;top:0;left:0;pointer-events:none;z-index:99999;'
         +'padding:6px 16px;border-radius:12px;font-size:17px;font-weight:900;'
         +'background:rgba(8,10,20,0.92);border:2px solid '+accent+';color:'+accent+';'
@@ -824,19 +1157,54 @@
       moveGhost();
     }
 
+    function clearTouchHold(){
+      if(touchHoldTimer){
+        clearTimeout(touchHoldTimer);
+        touchHoldTimer=null;
+      }
+    }
+
     function updateOver(ox,oy){
       var o=document.elementFromPoint(ox,oy);
       var active=dragging||touching;
-      var target=o&&o.closest('.nsc-full-card');
+      var target=o&&(o.closest('.nsc-full-card') || o.closest('.ns-room-bed[data-i]'));
       if(target&&(!el.contains(target)||target===active))target=null;
+      if(target && active){
+        var activeRoom=active.classList && active.classList.contains('ns-room-bed');
+        var targetRoom=target.classList && target.classList.contains('ns-room-bed');
+        var activeCard=active.classList && active.classList.contains('nsc-full-card');
+        var targetCard=target.classList && target.classList.contains('nsc-full-card');
+        if(!((activeRoom && targetRoom) || (activeCard && targetCard))) target=null;
+      }
+      if(!target && active && active.classList && active.classList.contains('ns-room-bed')){
+        target = nearestRoomBed(ox, oy, active);
+      }
       if(lastH&&lastH!==target)lastH.classList.remove('nsover');
       lastH=target;
       if(target){ target.classList.add('nsover'); }
     }
 
+    function nearestRoomBed(x,y,exclude){
+      var beds=[].slice.call(el.querySelectorAll('.ns-room-bed[data-i]')).filter(function(b){ return b!==exclude; });
+      if(!beds.length) return null;
+      var best=null, bestDist=Infinity;
+      beds.forEach(function(b){
+        var r=b.getBoundingClientRect();
+        var cx=r.left + r.width/2;
+        var cy=r.top + r.height/2;
+        var dx=cx-x, dy=cy-y;
+        var dist=Math.sqrt(dx*dx+dy*dy);
+        var reach=Math.max(r.width, r.height) * 0.95;
+        if(dist <= reach && dist < bestDist){
+          best=b; bestDist=dist;
+        }
+      });
+      return best;
+    }
+
     // ── Mouse ──────────────────────────────────────────────────────────────
     el.addEventListener('mousedown',function(e){
-      var c=e.target.closest('.nsc-full-card'); if(!c||e.button!==0)return;
+      var c=e.target.closest('.nsc-full-card, .ns-room-bed[data-i]'); if(!c||e.button!==0)return;
       e.preventDefault();
       dragging=c; mx=e.clientX; my=e.clientY;
       c.classList.add('nsdrag');
@@ -851,36 +1219,74 @@
     document.addEventListener('mouseup',function(){
       if(!dragging)return;
       var target=lastH;
+      if(dragging.classList.contains('ns-room-bed')) target = nearestRoomBed(mx, my, dragging) || target;
       dragging.classList.remove('nsdrag'); clearOver(); killGhost();
-      if(target){ sndDrop(); swap(+dragging.dataset.i,+target.dataset.i); }
+      if(target){
+        sndDrop();
+        if(dragging.classList.contains('ns-room-bed')) swapRoom(+dragging.dataset.i,+target.dataset.i);
+        else swap(+dragging.dataset.i,+target.dataset.i);
+      }
       dragging=null;
     });
 
     // ── Touch ──────────────────────────────────────────────────────────────
     el.addEventListener('touchstart',function(e){
-      var c=e.target.closest('.nsc-full-card'); if(!c)return;
-      touching=c; mx=e.touches[0].clientX; my=e.touches[0].clientY;
-      c.classList.add('nsdrag');
-      startGhost(c); sndPickup();
+      var c=e.target.closest('.nsc-full-card, .ns-room-bed[data-i]'); if(!c)return;
+      touching=c;
+      touchDragReady=false;
+      touchMoved=false;
+      touchStartX=mx=e.touches[0].clientX;
+      touchStartY=my=e.touches[0].clientY;
+      clearTouchHold();
+      touchHoldTimer=setTimeout(function(){
+        if(!touching || touchMoved) return;
+        touchDragReady=true;
+        touching.classList.add('nsdrag');
+        startGhost(touching);
+        sndPickup();
+      }, 180);
     },{passive:true});
     el.addEventListener('touchmove',function(e){
       if(!touching)return;
       mx=e.touches[0].clientX; my=e.touches[0].clientY;
+      if(!touchDragReady){
+        if(Math.abs(mx-touchStartX)>10 || Math.abs(my-touchStartY)>10){
+          touchMoved=true;
+          clearTouchHold();
+          touching=null;
+        }
+        return;
+      }
       cancelAnimationFrame(rafId);
       rafId=requestAnimationFrame(function(){ moveGhost(); updateOver(mx,my); });
-    },{passive:true});
+      e.preventDefault();
+    },{passive:false});
     el.addEventListener('touchend',function(e){
+      clearTouchHold();
       if(!touching)return;
+      if(!touchDragReady){
+        touching=null;
+        return;
+      }
       var t=e.changedTouches[0];
+      mx=t.clientX; my=t.clientY;
       updateOver(t.clientX,t.clientY);
       var target=lastH;
+      if(touching.classList.contains('ns-room-bed')) target = nearestRoomBed(mx, my, touching) || target;
       touching.classList.remove('nsdrag'); clearOver(); killGhost();
-      if(target){ sndDrop(); swap(+touching.dataset.i,+target.dataset.i); }
+      if(target){
+        sndDrop();
+        if(touching.classList.contains('ns-room-bed')) swapRoom(+touching.dataset.i,+target.dataset.i);
+        else swap(+touching.dataset.i,+target.dataset.i);
+      }
       touching=null;
+      touchDragReady=false;
     });
     el.addEventListener('touchcancel',function(){
+      clearTouchHold();
       if(!touching)return;
       touching.classList.remove('nsdrag'); clearOver(); killGhost(); touching=null;
+      touchDragReady=false;
     },{passive:true});
   }
 
@@ -897,9 +1303,30 @@
     },40);
   }
 
+  function swapRoom(a,b){
+    if(!st || a===b || a<0 || b<0) return;
+    var order=getRoomOrder(st.sl);
+    while(order.length<4) order.push('');
+    var t=order[a]; order[a]=order[b]; order[b]=t;
+    saveRoomOrder(order);
+    sndReorder();
+    render();
+    setTimeout(function(){
+      [a,b].forEach(function(i){
+        var bed=document.querySelector('#nsPanelContent .ns-room-bed[data-i="'+i+'"]');
+        if(bed){
+          bed.classList.add('nsswapped');
+          setTimeout(function(){ bed && bed.classList.remove('nsswapped'); },700);
+        }
+      });
+    },40);
+  }
+
   function update(){
     var el=document.getElementById('night-split-panel');if(!el)return;
     try{ window.__todayDateStr = (window.__grafiksTodayStr || window.__todayDateStr || ''); }catch(e){}
+    var dk=activeDateKey();
+    if(dk) pullRoomState(dk, function(){ if(dk===activeDateKey()) render(); });
     resetColours(); // reset colour map each time we re-compute for new day
     var wk=getW();
     if(wk.length<2){st=null;render();return;}
@@ -910,6 +1337,7 @@
 
   function init(){
     if(!window.__grafiksStore){setTimeout(init,500);return;}
+    startRoomPolling();
     window.addEventListener('daySelected',function(){setTimeout(update,200);});
     setTimeout(update,600);setTimeout(update,1500);
     setInterval(refreshFlowLiveMarker, 15000);
