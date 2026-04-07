@@ -5,35 +5,10 @@
 (function() {
   var API_BASE = 'https://minka-api.gamernr1elite.workers.dev';
   var TOKEN_KEY = 'minka_api_token_v1';
-  var TOKEN_COOKIE_KEY = 'minka_api_token_cookie_v1';
   var AUTO_PW_KEY = 'pw';
-  var AUTO_PW_STORE_KEY = 'minka_auto_pw_v1';
-
-  function cookiePath() {
-    try {
-      var parts = location.pathname.split('/').filter(Boolean);
-      if (parts.length) return '/' + parts[0] + '/';
-    } catch (_e) {}
-    return '/';
-  }
-
-  function readCookie(name) {
-    try {
-      var escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      var match = document.cookie.match(new RegExp('(?:^|; )' + escaped + '=([^;]*)'));
-      return match ? decodeURIComponent(match[1]) : '';
-    } catch (_e) { return ''; }
-  }
-
-  function writeCookie(name, value, days) {
-    try {
-      var maxAge = Math.max(0, Math.floor((days || 0) * 86400));
-      document.cookie = name + '=' + encodeURIComponent(value || '') + '; path=' + cookiePath() + '; max-age=' + maxAge + '; SameSite=Lax';
-    } catch (_e) {}
-  }
 
   function getToken() {
-    try { return sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY) || readCookie(TOKEN_COOKIE_KEY) || ''; }
+    try { return sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY) || ''; }
     catch (_e) { return ''; }
   }
 
@@ -41,34 +16,11 @@
     try {
       sessionStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(TOKEN_KEY);
-      writeCookie(TOKEN_COOKIE_KEY, '', 0);
       if (token) {
-        if (persist) {
-          localStorage.setItem(TOKEN_KEY, token);
-          writeCookie(TOKEN_COOKIE_KEY, token, 45);
-        } else {
-          sessionStorage.setItem(TOKEN_KEY, token);
-          writeCookie(TOKEN_COOKIE_KEY, token, 7);
-        }
+        if (persist) localStorage.setItem(TOKEN_KEY, token);
+        else sessionStorage.setItem(TOKEN_KEY, token);
       }
     } catch (_e) {}
-  }
-
-  function saveAutoPassword(password) {
-    try {
-      if (!password) return;
-      localStorage.setItem(AUTO_PW_STORE_KEY, String(password));
-    } catch (_e) {}
-  }
-
-  function getStoredAutoPassword() {
-    try { return String(localStorage.getItem(AUTO_PW_STORE_KEY) || '').trim(); }
-    catch (_e) { return ''; }
-  }
-
-  function clearStoredAutoPassword() {
-    try { localStorage.removeItem(AUTO_PW_STORE_KEY); }
-    catch (_e) {}
   }
 
   function notifyIframeAuth() {
@@ -105,31 +57,8 @@
       });
       var data = await res.json().catch(function() { return {}; });
       if (!res.ok || !data || !data.token) return false;
-      saveAutoPassword(password);
       setToken(data.token, true);
       stripAutoLoginParam();
-      notifyIframeAuth();
-      return true;
-    } catch (_e) {
-      return false;
-    }
-  }
-
-  async function tryAutoLoginFromStoredPassword() {
-    try {
-      var password = getStoredAutoPassword();
-      if (!password) return false;
-      var res = await fetch(API_BASE + '/api/login', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ password: password })
-      });
-      var data = await res.json().catch(function() { return {}; });
-      if (!res.ok || !data || !data.token) {
-        clearStoredAutoPassword();
-        return false;
-      }
-      setToken(data.token, true);
       notifyIframeAuth();
       return true;
     } catch (_e) {
@@ -178,7 +107,6 @@
           });
           var data = await res.json().catch(function() { return {}; });
           if (!res.ok || !data || !data.token) throw new Error((data && data.error) || 'Login failed');
-          saveAutoPassword(password);
           setToken(data.token, !!(remember && remember.checked));
           notifyIframeAuth();
           overlay.style.transition = 'opacity 0.3s';
@@ -207,10 +135,7 @@
     document.addEventListener('DOMContentLoaded', function() {
       tryAutoLoginFromQuery().then(function(ok) {
         if (ok) return;
-        tryAutoLoginFromStoredPassword().then(function(storedOk) {
-          if (storedOk) return;
-          showGate();
-        });
+        showGate();
       });
     }, { once: true });
   } else {
@@ -249,8 +174,8 @@
 <meta name="theme-color" content="#06101f">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>RG Mobile</title>
-<link rel="icon" type="image/png" href="data/rg-any-192.png">
-<link rel="apple-touch-icon" sizes="180x180" href="data/rg-apple-touch-180.png">
+<link rel="icon" type="image/png" href="https://rg2055.github.io/Minka/data/rg-any-192.png">
+<link rel="apple-touch-icon" href="https://rg2055.github.io/Minka/data/rg-any-192.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -624,19 +549,6 @@ html.mk-low-spec #calendarEmbed {
       </button>
     </div>
   </div>
-
-  <pwa-install
-    id="pwaInstall"
-    lang="lv"
-    name="RG"
-    description="RAKUS Gaiļezers radioloģijas maiņu grafiks mobilajai lietošanai"
-    install-description="Pievieno RG sākuma ekrānam, lai kalendārs vienmēr ir ērti pieejams."
-    manual-apple
-    manual-chrome
-    manual-how-to
-    use-local-storage
-    manifest-url="manifest-mobile.json"
-    styles='{"--tint-color":"#00c8ff"}'></pwa-install>
 
   <script>
   (function(){
@@ -1313,90 +1225,9 @@ html.mk-low-spec #calendarEmbed {
   }
   </script>
 
-  <script type="module">
-  import 'https://esm.sh/@khmyznikov/pwa-install';
-
-  const pwaInstall = document.getElementById('pwaInstall');
-  if (pwaInstall) {
-    const LV_INSTALL_TEXT = new Map([
-      ['This site has app functionality. Add it to your Home Screen for extensive experience and easy access.', 'Šai vietnei ir lietotnes funkcionalitāte. Pievieno to sākuma ekrānam, lai lietošana būtu ērtāka un ātrāka.'],
-      ['Open in your main browser', 'Atver galvenajā pārlūkā'],
-      ['Press More if no Share icon', 'Spied "Vairāk", ja nav kopīgošanas ikonas'],
-      ['Press Share in Navigation bar', 'Spied "Kopīgot" navigācijas joslā'],
-      ['Scroll down to "Add to Home Screen"', 'Ritini uz leju līdz "Pievienot sākuma ekrānam"'],
-      ['Back', 'Atpakaļ'],
-      ['Show Gallery', 'Rādīt galeriju'],
-      ['Add to Home Screen', 'Pievienot sākuma ekrānam'],
-      ['Install', 'Instalēt'],
-      ['Get related apps', 'Saņemt saistītās lietotnes'],
-      ['Installation component', 'Instalēšanas komponents'],
-      ['Web Application', 'Tīmekļa lietotne']
-    ]);
-
-    function localizePwaInstallText() {
-      const root = pwaInstall.shadowRoot;
-      if (!root) return;
-      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-      let node;
-      while ((node = walker.nextNode())) {
-        const raw = String(node.nodeValue || '');
-        const trimmed = raw.trim();
-        if (!trimmed) continue;
-        const translated = LV_INSTALL_TEXT.get(trimmed);
-        if (!translated || translated === trimmed) continue;
-        node.nodeValue = raw.replace(trimmed, translated);
-      }
-      root.querySelectorAll('[aria-label],[title]').forEach((el) => {
-        const aria = el.getAttribute('aria-label');
-        if (aria && LV_INSTALL_TEXT.has(aria)) el.setAttribute('aria-label', LV_INSTALL_TEXT.get(aria));
-        const title = el.getAttribute('title');
-        if (title && LV_INSTALL_TEXT.has(title)) el.setAttribute('title', LV_INSTALL_TEXT.get(title));
-      });
-    }
-
-    function armPwaInstallLocalization() {
-      if (!pwaInstall.shadowRoot) return;
-      localizePwaInstallText();
-      if (pwaInstall._lvObserver) return;
-      const observer = new MutationObserver(() => localizePwaInstallText());
-      observer.observe(pwaInstall.shadowRoot, { childList: true, subtree: true, characterData: true, attributes: true });
-      pwaInstall._lvObserver = observer;
-    }
-
-    let installDialogShown = false;
-    function tryShowInstallDialog(force) {
-      if (!pwaInstall || typeof pwaInstall.showDialog !== 'function') return;
-      const isStandalone = !!pwaInstall.isUnderStandaloneMode || !!window.matchMedia('(display-mode: standalone)').matches;
-      if (isStandalone) return;
-      if (installDialogShown && !force) return;
-      installDialogShown = true;
-      pwaInstall.showDialog(!!force);
-      setTimeout(armPwaInstallLocalization, 60);
-      setTimeout(armPwaInstallLocalization, 260);
-    }
-    window.addEventListener('DOMContentLoaded', () => {
-      setTimeout(() => {
-        armPwaInstallLocalization();
-        tryShowInstallDialog(false);
-      }, 900);
-    });
-    pwaInstall.addEventListener('pwa-install-available-event', () => {
-      armPwaInstallLocalization();
-      setTimeout(() => tryShowInstallDialog(false), 80);
-    });
-    window.addEventListener('focus', () => {
-      armPwaInstallLocalization();
-      setTimeout(() => tryShowInstallDialog(false), 180);
-    });
-    customElements.whenDefined('pwa-install').then(() => {
-      setTimeout(armPwaInstallLocalization, 80);
-    });
-  }
-  </script>
-
   <script>
   if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-    const MINKA_APP_VERSION = '2026.04.02.mobile.58';
+    const MINKA_APP_VERSION = '2026.04.08.mobile.59';
     const MINKA_VERSION_KEY = 'minka_mobile_app_version';
     const MINKA_RELOAD_KEY = 'minka_mobile_sw_reloading';
     function clearMinkaRuntimeCaches() {
