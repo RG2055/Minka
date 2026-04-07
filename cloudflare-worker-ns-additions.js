@@ -37,3 +37,29 @@ if (url.pathname === "/api/ns-order" && method === "POST") {
   }), { expirationTtl: ttl });
   return json(request, { ok: true });
 }
+
+// GET /api/ns-rooms?date=DD.MM.YYYY
+if (url.pathname === "/api/ns-rooms" && method === "GET") {
+  const date = url.searchParams.get("date");
+  if (!date) return json(request, { ok: false, error: "date required" }, 400);
+  const val = await env.MINKA_EMOJI.get("nsrooms::" + date);
+  return json(request, val ? JSON.parse(val) : {});
+}
+
+// POST /api/ns-rooms
+if (url.pathname === "/api/ns-rooms" && method === "POST") {
+  const body = await readJson(request);
+  if (!body?.date) return json(request, { ok: false, error: "date required" }, 400);
+  const beds = (body.beds && typeof body.beds === "object") ? body.beds : {};
+  const ttl = nsTtl(body.date);
+  await env.MINKA_EMOJI.put("nsrooms::" + body.date, JSON.stringify({
+    beds: {
+      main_left_top: typeof beds.main_left_top === "string" ? beds.main_left_top : "",
+      main_left_bottom: typeof beds.main_left_bottom === "string" ? beds.main_left_bottom : "",
+      main_right_top: typeof beds.main_right_top === "string" ? beds.main_right_top : "",
+      nmp_center: typeof beds.nmp_center === "string" ? beds.nmp_center : ""
+    },
+    savedAt: body.savedAt || Date.now()
+  }), { expirationTtl: ttl });
+  return json(request, { ok: true });
+}
