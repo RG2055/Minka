@@ -698,17 +698,21 @@
     var parts=String(name||'').trim().split(/\s+/).filter(Boolean);
     var main=(parts[0]||'Brīva').toUpperCase();
     var size='16px';
-    if(main.length >= 11) size='9px';
-    else if(main.length >= 10) size='9.5px';
-    else if(main.length >= 9) size='10px';
-    else if(main.length >= 8) size='10.5px';
-    else if(main.length >= 7) size='11px';
+    var scale='1';
+    if(main.length >= 13){ size='7.2px'; scale='.8'; }
+    else if(main.length >= 12){ size='7.8px'; scale='.84'; }
+    else if(main.length >= 11){ size='8.4px'; scale='.88'; }
+    else if(main.length >= 10){ size='9px'; scale='.91'; }
+    else if(main.length >= 9){ size='9.8px'; scale='.94'; }
+    else if(main.length >= 8){ size='10.6px'; scale='.965'; }
+    else if(main.length >= 7) size='11.4px';
     else if(main.length >= 6) size='12.5px';
     else if(main.length >= 5) size='14px';
     return {
       main: escHtml(main),
       sub: escHtml(parts.slice(1).join(' ')),
-      size: size
+      size: size,
+      scale: scale
     };
   }
 
@@ -761,7 +765,7 @@
       +(em?'<div class="ns-room-bed-head-emoji">'+escHtml(em)+'</div>':'')
       +'<div class="ns-room-bed-zzz" aria-hidden="true"><span>Z</span><span>Z</span><span>Z</span></div>'
       +'<div class="ns-room-bed-pillow"></div>'
-      +'<div class="ns-room-bed-blanket"><span class="ns-room-bed-main" style="font-size:'+nm.size+'">'+nm.main+'</span></div>'
+      +'<div class="ns-room-bed-blanket"><span class="ns-room-bed-main" style="font-size:'+nm.size+';--ns-room-name-scale:'+nm.scale+'">'+nm.main+'</span></div>'
       +'</div>'
       +'</div>';
   }
