@@ -699,13 +699,13 @@
     var main=(parts[0]||'Brīva').toUpperCase();
     var size='16px';
     var scale='1';
-    if(main.length >= 13){ size='7.2px'; scale='.8'; }
-    else if(main.length >= 12){ size='7.8px'; scale='.84'; }
-    else if(main.length >= 11){ size='8.4px'; scale='.88'; }
-    else if(main.length >= 10){ size='9px'; scale='.91'; }
-    else if(main.length >= 9){ size='9.8px'; scale='.94'; }
-    else if(main.length >= 8){ size='10.6px'; scale='.965'; }
-    else if(main.length >= 7) size='11.4px';
+    if(main.length >= 13){ size='7px'; scale='.78'; }
+    else if(main.length >= 12){ size='7.5px'; scale='.82'; }
+    else if(main.length >= 11){ size='8.1px'; scale='.86'; }
+    else if(main.length >= 10){ size='8.7px'; scale='.89'; }
+    else if(main.length >= 9){ size='9.2px'; scale='.91'; }
+    else if(main.length >= 8){ size='9.8px'; scale='.93'; }
+    else if(main.length >= 7){ size='10.9px'; scale='.96'; }
     else if(main.length >= 6) size='12.5px';
     else if(main.length >= 5) size='14px';
     return {

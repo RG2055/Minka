@@ -4410,9 +4410,10 @@ window.addEventListener('message', function(e) {
 }
 
 .ns-room-bed-main {
-  width: 100% !important;
-  max-width: 100% !important;
-  overflow: hidden !important;
+  width: calc(100% + 8px) !important;
+  max-width: calc(100% + 8px) !important;
+  margin-left: -4px !important;
+  overflow: visible !important;
   text-overflow: clip !important;
   white-space: nowrap !important;
   word-break: normal !important;
@@ -4423,7 +4424,7 @@ window.addEventListener('message', function(e) {
   text-align: center !important;
   text-shadow: 0 1px 0 rgba(255,255,255,0.12) !important;
   display: block !important;
-  letter-spacing: -.045em !important;
+  letter-spacing: -.06em !important;
   padding-top: 2px !important;
   transform: scaleX(var(--ns-room-name-scale, 1)) !important;
   transform-origin: center center !important;
@@ -5719,7 +5720,7 @@ window.addEventListener('message', function(e) {
 :root.mk-mobile-shell .ns-room-bed-main {
   font-size: 9px !important;
   line-height: 1 !important;
-  letter-spacing: -.05em !important;
+  letter-spacing: -.065em !important;
 }
 
 :root.mk-mobile-shell .ns-room-bed-pillow {
