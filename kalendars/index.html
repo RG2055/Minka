@@ -653,7 +653,7 @@ function _mkToast(msg, type) {
 <script src="js/calendar.js"></script>
 <script src="js/calendar_extras_v4.js"></script>
 <script src="js/fatigue.js?v=20260318d"></script>
-<script src="js/nightsplit.js?v=20260408a" defer></script>
+<script src="js/nightsplit.js?v=20260408b" defer></script>
 <script src="js/design_v1.js" defer></script>
 <script src="js/theme.js" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
@@ -2925,7 +2925,7 @@ window.addEventListener('message', function(e) {
 
 <script>
 if ('serviceWorker' in navigator) {
-  const MINKA_APP_VERSION = '2026.04.08.2';
+  const MINKA_APP_VERSION = '2026.04.08.3';
   const MINKA_VERSION_KEY = 'minka_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -4138,6 +4138,17 @@ window.addEventListener('message', function(e) {
   overflow: hidden !important;
 }
 
+.ns-room-walker {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+  opacity: .92 !important;
+  overflow: visible !important;
+}
+
 .ns-room-main .ns-room-shell {
   width: 430px !important;
   height: clamp(286px, 32vw, 308px) !important;
@@ -4171,6 +4182,7 @@ window.addEventListener('message', function(e) {
   position: relative !important;
   width: clamp(78px, 6.2vw, 86px) !important;
   height: clamp(98px, 8.2vw, 112px) !important;
+  z-index: 3 !important;
 }
 
 .ns-room-main .ns-room-bed.is-left {
@@ -4252,7 +4264,7 @@ window.addEventListener('message', function(e) {
   inset: 12px 8px auto 8px !important;
   height: 52px !important;
   pointer-events: none !important;
-  z-index: 4 !important;
+  z-index: 2 !important;
 }
 
 .ns-room-device {
@@ -4343,29 +4355,31 @@ window.addEventListener('message', function(e) {
   align-items: flex-end !important;
   gap: 0 !important;
   pointer-events: none !important;
-  z-index: 2 !important;
-  opacity: .72 !important;
+  z-index: 6 !important;
+  opacity: .98 !important;
 }
 
 .ns-room-bed-zzz span {
-  color: rgba(255,255,255,0.82) !important;
-  font-size: 10px !important;
+  color: rgba(255,255,255,0.98) !important;
+  font-size: 13px !important;
   font-weight: 900 !important;
-  line-height: .9 !important;
-  letter-spacing: -.04em !important;
-  text-shadow: 0 0 8px rgba(255,255,255,0.08) !important;
+  line-height: .86 !important;
+  letter-spacing: -.03em !important;
+  text-shadow: 0 0 10px rgba(255,255,255,0.32), 0 0 18px rgba(255,255,255,0.18), 0 2px 6px rgba(0,0,0,0.42) !important;
+  -webkit-text-stroke: 0.35px rgba(22,18,34,0.65) !important;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.32)) !important;
   animation: nsZzzFloat 3.2s ease-in-out infinite !important;
 }
 
 .ns-room-bed-zzz span:nth-child(2) {
-  font-size: 8px !important;
-  margin-right: 8px !important;
+  font-size: 11px !important;
+  margin-right: 10px !important;
   animation-delay: .5s !important;
 }
 
 .ns-room-bed-zzz span:nth-child(3) {
-  font-size: 7px !important;
-  margin-right: 13px !important;
+  font-size: 9px !important;
+  margin-right: 16px !important;
   animation-delay: 1s !important;
 }
 
@@ -4387,6 +4401,8 @@ window.addEventListener('message', function(e) {
   background: linear-gradient(180deg, color-mix(in srgb, var(--bed, #8b5cf6) 84%, white 16%), color-mix(in srgb, var(--bed, #8b5cf6) 72%, black 28%)) !important;
   box-shadow: 0 -4px 14px color-mix(in srgb, var(--bed, #8b5cf6) 28%, transparent) !important;
   overflow: hidden !important;
+  position: relative !important;
+  z-index: 4 !important;
 }
 
 .ns-room-bed-empty .ns-room-bed-blanket {
@@ -5733,17 +5749,17 @@ window.addEventListener('message', function(e) {
 }
 
 :root.mk-mobile-shell .ns-room-bed-zzz span {
-  font-size: 6px !important;
+  font-size: 8px !important;
 }
 
 :root.mk-mobile-shell .ns-room-bed-zzz span:nth-child(2) {
-  font-size: 5px !important;
-  margin-right: 5px !important;
+  font-size: 7px !important;
+  margin-right: 7px !important;
 }
 
 :root.mk-mobile-shell .ns-room-bed-zzz span:nth-child(3) {
-  font-size: 4px !important;
-  margin-right: 9px !important;
+  font-size: 6px !important;
+  margin-right: 10px !important;
 }
 
 :root.mk-mobile-shell .ns-room-bed-blanket {
