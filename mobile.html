@@ -23,11 +23,24 @@
     } catch (_e) {}
   }
 
+  var CALENDAR_BUILD = '20260408c';
+
+  function withCalendarBuild(url) {
+    try {
+      var u = new URL(url, window.location.href);
+      u.searchParams.set('cv', CALENDAR_BUILD);
+      return u.pathname + u.search + u.hash;
+    } catch (_e) {
+      var join = url.indexOf('?') >= 0 ? '&' : '?';
+      return url + join + 'cv=' + encodeURIComponent(CALENDAR_BUILD);
+    }
+  }
+
   function notifyIframeAuth() {
     setTimeout(function() {
       var f = document.getElementById('calIframe');
       if (!f) return;
-      var base = f.getAttribute('data-base-src') || 'kalendars/index.html';
+      var base = withCalendarBuild(f.getAttribute('data-base-src') || 'kalendars/index.html');
       var token = getToken();
       var next = base;
       if (token) next += (next.indexOf('?') >= 0 ? '&' : '?') + 'token=' + encodeURIComponent(token);
@@ -521,8 +534,8 @@ html.mk-low-spec #calendarEmbed {
 
   <div id="calendarEmbed">
     <iframe
-      src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec"
-      data-base-src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec"
+      src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260408c"
+      data-base-src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260408c"
       id="calIframe"
       loading="eager"
       allowtransparency="true"
@@ -1227,7 +1240,7 @@ html.mk-low-spec #calendarEmbed {
 
   <script>
   if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-    const MINKA_APP_VERSION = '2026.04.08.mobile.60';
+    const MINKA_APP_VERSION = '2026.04.08.mobile.61';
     const MINKA_VERSION_KEY = 'minka_mobile_app_version';
     const MINKA_RELOAD_KEY = 'minka_mobile_sw_reloading';
     function clearMinkaRuntimeCaches() {
