@@ -777,6 +777,62 @@
       +'</div>';
   }
 
+  function roomWalker(roomType){
+    if(roomType==='nmp'){
+      return '<svg class="ns-room-walker ns-room-walker-nmp" viewBox="0 0 250 308" aria-hidden="true" focusable="false">'
+        +'<g opacity="0.95">'
+        +'<g>'
+        +'<animateTransform attributeName="transform" type="translate" values="42 242; 84 222; 128 196; 176 204; 150 232; 96 236; 42 242" dur="26s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.2 1; 0.42 0 0.2 1; 0.42 0 0.2 1; 0.42 0 0.2 1; 0.42 0 0.2 1; 0.42 0 0.2 1" />'
+        +'<animateTransform attributeName="transform" type="scale" additive="sum" values="-1 1; -1 1; -1 1; 1 1; 1 1; 1 1; -1 1" dur="26s" repeatCount="indefinite" calcMode="discrete" />'
+        +'<animateTransform attributeName="transform" type="translate" additive="sum" values="0 0; 0 -1.4; 0 0.7; 0 -1; 0 0" dur="2.4s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.2 1; 0.42 0 0.2 1; 0.42 0 0.2 1; 0.42 0 0.2 1" />'
+        +'<text x="1.5" y="2" font-size="24" text-anchor="middle" dominant-baseline="middle" fill="rgba(0,0,0,0.42)">🐈‍⬛</text>'
+        +'<text font-size="24" text-anchor="middle" dominant-baseline="middle">🐈‍⬛</text>'
+        +'</g></g></svg>';
+    }
+    return '<svg class="ns-room-walker ns-room-walker-main" viewBox="0 0 430 308" aria-hidden="true" focusable="false">'
+      +'<g opacity="0.95">'
+      +'<g opacity="0.94">'
+      +'<g>'
+      +'<animateTransform attributeName="transform" type="translate" values="78 112; 94 98; 126 92; 144 108; 136 132; 92 144; 58 148; 42 170; 38 196; 56 218; 92 236; 128 252; 164 248; 202 236; 248 212; 288 182; 322 154; 352 132; 378 112; 386 92; 372 76; 338 74; 308 88; 286 112; 252 148; 224 188; 198 222; 164 242; 126 246; 94 230; 70 204; 62 170; 78 112" dur="40s" repeatCount="indefinite" calcMode="spline" keySplines="0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1; 0.46 0 0.2 1" />'
+      +'<animateTransform attributeName="transform" type="scale" additive="sum" values="1 1; 1 1; 1 1; 1 1; -1 1; -1 1; -1 1; -1 1; -1 1; 1 1; 1 1; 1 1; 1 1; 1 1; 1 1; 1 1; 1 1; 1 1; 1 1; -1 1; -1 1; -1 1; -1 1; -1 1; -1 1; -1 1; -1 1; -1 1; -1 1; 1 1; 1 1; 1 1; 1 1" dur="40s" repeatCount="indefinite" calcMode="discrete" />'
+      +'<animateTransform attributeName="transform" type="translate" additive="sum" values="0 0; 0 -1.15; 0 0.6; 0 -0.9; 0 0" dur="1.1s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.2 1; 0.42 0 0.2 1; 0.42 0 0.2 1; 0.42 0 0.2 1" />'
+      +'<animate attributeName="opacity" values="0.96;0.96;0.92;0.86;0.52;0.34;0.28;0.22;0.22;0.42;0.78;0.9;0.96;0.96;0.94;0.9;0.84;0.74;0.62;0.46;0.26;0.22;0.22;0.34;0.66;0.82;0.9;0.96;0.96;0.92;0.86;0.92;0.96" dur="40s" repeatCount="indefinite" calcMode="discrete" />'
+      +'<ellipse cx="0" cy="2.8" rx="7.8" ry="4.6" fill="rgba(0,0,0,0.14)" />'
+      +'<path d="M-6.5 -0.6 C-9.8 -5.8 -12.6 -9.8 -16.8 -11.2" stroke="rgba(154,160,168,0.96)" stroke-width="1.35" stroke-linecap="round" fill="none" />'
+      +'<path d="M-9.2 0 C-8.4 -4.6 -4.8 -7.2 1 -7.2 C7.6 -7.2 11.8 -3.2 11.8 1.2 C11.8 4.8 8.4 7.6 2.8 7.8 C-3.2 8 -8.6 5 -9.2 0 Z" fill="#9aa0a8" />'
+      +'<path d="M-6.2 -3.8 C-6.1 -7.4 -4.2 -10 -1.6 -10 C0.2 -10 1.2 -7.4 0.6 -4.6 Z" fill="#b7bec8" />'
+      +'<path d="M-1.2 -4.2 C-0.8 -7.4 1 -9.5 3.3 -9.1 C4.8 -8.8 5.2 -6.2 4 -3.8 Z" fill="#c2c8d1" />'
+      +'<circle cx="7.3" cy="-1.5" r="0.72" fill="#111827" />'
+      +'<circle cx="9.4" cy="0.3" r="0.58" fill="#e8a2b5" />'
+      +'<path d="M9.4 0.8 L13.6 -0.5 M9.2 1.7 L13.6 1.8 M9 2.7 L13.1 4.2" stroke="rgba(239,242,247,0.9)" stroke-width="0.78" stroke-linecap="round" />'
+      +'</g>'
+      +'</g>'
+      +'<g>'
+      +'<animateTransform attributeName="transform" type="translate" values="74 100; 120 90; 140 124; 92 228; 150 244; 220 228; 320 122; 374 100; 352 144; 260 228; 168 208; 98 128; 74 100" dur="36s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.2 1; 0.42 0 0.2 1; 0.42 0 0.2 1; 0.42 0 0.2 1; 0.42 0 0.2 1; 0.42 0 0.2 1; 0.42 0 0.2 1; 0.42 0 0.2 1; 0.42 0 0.2 1; 0.42 0 0.2 1; 0.42 0 0.2 1; 0.42 0 0.2 1" />'
+      +'<animateTransform attributeName="transform" type="translate" additive="sum" values="0 0; 0 -2.1; 0 1.1; 0 -1.4; 0 0" dur="1.9s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.2 1; 0.42 0 0.2 1; 0.42 0 0.2 1; 0.42 0 0.2 1" />'
+      +'<g>'
+      +'<animateTransform attributeName="transform" type="scale" values="-1 1; -1 1; 1 1; 1 1; -1 1; -1 1; -1 1; 1 1; 1 1; 1 1; -1 1; -1 1; -1 1" dur="36s" repeatCount="indefinite" calcMode="discrete" />'
+      +'<text x="1.6" y="2.2" font-size="26" text-anchor="middle" dominant-baseline="middle" fill="rgba(0,0,0,0.42)">🐈‍⬛</text>'
+      +'<text font-size="26" text-anchor="middle" dominant-baseline="middle">🐈‍⬛</text>'
+      +'</g>'
+      +'<g transform="translate(-12,-11)">'
+      +'<animate attributeName="opacity" values="0;0;0;0;0.96;0;0;0;0;0;0;0;0" dur="36s" repeatCount="indefinite" calcMode="discrete" />'
+      +'<animateTransform attributeName="transform" type="translate" additive="sum" values="-12 -11; -11 -14; -12 -11; -12 -11" dur="2.2s" repeatCount="indefinite" />'
+      +'<rect x="-14" y="-11" rx="9" ry="9" width="30" height="15" fill="rgba(255,255,255,0.92)" />'
+      +'<path d="M2 2 L5 7 L7 2 Z" fill="rgba(255,255,255,0.92)" />'
+      +'<text x="1" y="-1" font-size="8.5" font-weight="800" text-anchor="middle" dominant-baseline="middle" fill="#1c1325">ņau</text>'
+      +'</g>'
+      +'<g transform="translate(12,-11)">'
+      +'<animate attributeName="opacity" values="0;0;0;0;0;0;0;0;0;0.9;0;0;0" dur="36s" repeatCount="indefinite" calcMode="discrete" />'
+      +'<animateTransform attributeName="transform" type="translate" additive="sum" values="12 -11; 13 -14; 12 -11; 12 -11" dur="2.2s" repeatCount="indefinite" />'
+      +'<rect x="-14" y="-11" rx="9" ry="9" width="30" height="15" fill="rgba(255,255,255,0.92)" />'
+      +'<path d="M-7 2 L-5 7 L-2 2 Z" fill="rgba(255,255,255,0.92)" />'
+      +'<text x="1" y="-1" font-size="8.5" font-weight="800" text-anchor="middle" dominant-baseline="middle" fill="#1c1325">ņau</text>'
+      +'</g>'
+      +'</g>'
+      +'</g></svg>';
+  }
+
   function roomLayout(slots){
     if(!slots||!slots.length) return '';
     var byName={};
@@ -793,6 +849,7 @@
       +'<div class="ns-room ns-room-main">'
       +'<div class="ns-room-titlebar">Galvenā istaba</div>'
       +'<div class="ns-room-shell">'
+      +roomWalker('main')
       +roomBed(0, picked[0], 'is-left')
       +roomBed(1, picked[1], 'is-right-top')
       +roomBed(2, picked[2], 'is-right-bottom')
@@ -801,6 +858,7 @@
       +'<div class="ns-room ns-room-nmp">'
       +'<div class="ns-room-titlebar">Jaunais NMP</div>'
       +'<div class="ns-room-shell">'
+      +roomWalker('nmp')
       +roomBed(3, picked[3], 'is-center')
       +'</div>'
       +'</div>'
