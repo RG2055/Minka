@@ -316,36 +316,46 @@
     var store = window.__grafiksStore || {};
     var storeRad = window.__grafiksStoreRad || {};
     var workerStats = {};
+    var amUp = String(activeMonth || '').toUpperCase();
+    var amYear = (amUp.match(/20\d{2}/) || [''])[0];
+    var mNums = {'JANVĀRIS':1,'JANVARIS':1,'FEBRUĀRIS':2,'FEBRUARIS':2,'MARTS':3,
+      'APRĪLIS':4,'APRILIS':4,'MAIJS':5,'JŪNIJS':6,'JUNIJS':6,
+      'JŪLIJS':7,'JULIJS':7,'AUGUSTS':8,'SEPTEMBRIS':9,'OKTOBRIS':10,'NOVEMBRIS':11,'DECEMBRIS':12};
+    var mKey = Object.keys(mNums).find(function(k){ return amUp.indexOf(k) !== -1; });
+    var amMM = mKey ? mNums[mKey] : null;
 
     function process(src, isRad) {
-      var monthData = src[activeMonth] || [];
-      for (var i = 0; i < monthData.length; i++) {
-        var day = monthData[i];
-        if (!day || !Array.isArray(day.workers)) continue;
-        for (var j = 0; j < day.workers.length; j++) {
-          var w = day.workers[j];
-          if (!w.name || !w.shift) continue;
-          var name = w.name;
-          if (!workerStats[name]) {
-            workerStats[name] = {
-              name: name,
-              isRad: isRad,
-              d12: 0,
-              n12: 0,
-              h24: 0,
-              h8: 0,
-              total: 0,
-              totalHrs: 0
-            };
+      var seen = new Set();
+      var keys = Object.keys(src);
+      for (var ki = 0; ki < keys.length; ki++) {
+        var days = src[keys[ki]];
+        if (!Array.isArray(days)) continue;
+        for (var i = 0; i < days.length; i++) {
+          var day = days[i];
+          if (!day || !Array.isArray(day.workers)) continue;
+          var dp = String(day.date || '').split('.');
+          if (dp.length !== 3) continue;
+          var dd = Number(dp[0]), mm = Number(dp[1]), yy = Number(dp[2]);
+          if (amMM && amYear && (mm !== amMM || String(yy) !== amYear)) continue;
+          for (var j = 0; j < day.workers.length; j++) {
+            var w = day.workers[j];
+            if (!w.name || !w.shift) continue;
+            var dedupKey = day.date + '|' + w.name + '|' + w.shift;
+            if (seen.has(dedupKey)) continue;
+            seen.add(dedupKey);
+            var name = w.name;
+            if (!workerStats[name]) {
+              workerStats[name] = { name: name, isRad: isRad, d12: 0, n12: 0, h24: 0, h8: 0, total: 0, totalHrs: 0 };
+            }
+            var hrs = parseInt(String(w.shift || '').replace(/\D/g, ''), 10) || 0;
+            var type = String(w.type || '').toUpperCase();
+            workerStats[name].totalHrs += hrs;
+            workerStats[name].total++;
+            if (type === 'DIENNAKTS' || hrs >= 24) workerStats[name].h24++;
+            else if (type === 'NAKTS') workerStats[name].n12++;
+            else if (hrs >= 12) workerStats[name].d12++;
+            else workerStats[name].h8++;
           }
-          var hrs = parseInt(String(w.shift || '').replace(/\D/g, ''), 10) || 8;
-          var type = String(w.type || '').toUpperCase();
-          workerStats[name].totalHrs += hrs;
-          workerStats[name].total++;
-          if (type === 'DIENNAKTS' || hrs >= 24) workerStats[name].h24++;
-          else if (type === 'NAKTS') workerStats[name].n12++;
-          else if (hrs >= 12) workerStats[name].d12++;
-          else workerStats[name].h8++;
         }
       }
     }
