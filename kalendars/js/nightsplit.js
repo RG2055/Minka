@@ -504,10 +504,12 @@
     var catPivot=clockWrap.querySelector('.nsh-catPivot'), cat=clockWrap.querySelector('.nsh-cat');
     function loop(){
       if(!document.body.contains(clockWrap)) return;
-      var n=new Date(), ms=n.getMilliseconds(), ss=n.getSeconds()+ms/1000, mm=n.getMinutes()+ss/60, hh=(n.getHours()%12)+mm/60;
-      if(S) S.style.transform='rotate('+(ss*6)+'deg)';
-      if(M) M.style.transform='rotate('+(mm*6)+'deg)';
-      if(H) H.style.transform='rotate('+(hh*30)+'deg)';
+      if(!document.hidden){
+        var n=new Date(), ms=n.getMilliseconds(), ss=n.getSeconds()+ms/1000, mm=n.getMinutes()+ss/60, hh=(n.getHours()%12)+mm/60;
+        if(S) S.style.transform='rotate('+(ss*6)+'deg)';
+        if(M) M.style.transform='rotate('+(mm*6)+'deg)';
+        if(H) H.style.transform='rotate('+(hh*30)+'deg)';
+      }
       requestAnimationFrame(loop);
     } requestAnimationFrame(loop);
     if(catPivot && cat && !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)){
@@ -697,17 +699,17 @@
   function roomNames(name){
     var parts=String(name||'').trim().split(/\s+/).filter(Boolean);
     var main=(parts[0]||'Brīva').toUpperCase();
-    var size='16px';
+    var size='30px';
     var scale='1';
-    if(main.length >= 13){ size='7px'; scale='.78'; }
-    else if(main.length >= 12){ size='7.5px'; scale='.82'; }
-    else if(main.length >= 11){ size='8.1px'; scale='.86'; }
-    else if(main.length >= 10){ size='8.7px'; scale='.89'; }
-    else if(main.length >= 9){ size='9.2px'; scale='.91'; }
-    else if(main.length >= 8){ size='9.8px'; scale='.93'; }
-    else if(main.length >= 7){ size='10.9px'; scale='.96'; }
-    else if(main.length >= 6) size='12.5px';
-    else if(main.length >= 5) size='14px';
+    if(main.length >= 13){ size='12px'; scale='.78'; }
+    else if(main.length >= 12){ size='13px'; scale='.82'; }
+    else if(main.length >= 11){ size='14px'; scale='.86'; }
+    else if(main.length >= 10){ size='15px'; scale='.89'; }
+    else if(main.length >= 9){ size='16px'; scale='.91'; }
+    else if(main.length >= 8){ size='18px'; scale='.93'; }
+    else if(main.length >= 7){ size='20px'; scale='.96'; }
+    else if(main.length >= 6) size='23px';
+    else if(main.length >= 5) size='26px';
     return {
       main: escHtml(main),
       sub: escHtml(parts.slice(1).join(' ')),
@@ -849,6 +851,7 @@
     while(picked.length<4) picked.push(null);
     return '<div class="ns-room-block">'
       +'<div class="ns-room-head">Istabu sadalījums</div>'
+      +'<div class="ns-room-stage">'
       +'<div class="ns-room-fit"><div class="ns-room-layout">'
       +'<div class="ns-room ns-room-main">'
       +'<div class="ns-room-titlebar">Galvenā istaba</div>'
@@ -866,7 +869,12 @@
       +roomBed(3, picked[3], 'is-center')
       +'</div>'
       +'</div>'
-      +'</div></div>'
+      +'</div>'
+      +'</div>'
+      +'<div class="ns-room-cat" aria-hidden="true">'
+      +'<iframe src="../pikts_kakis.html?embed=1&nostats=1" class="ns-lamp-iframe" frameborder="0" scrolling="no" style="border:none;display:block;"></iframe>'
+      +'</div>'
+      +'</div>'
       +'</div>';
   }
 
@@ -875,26 +883,44 @@
       var scope = root || document;
       var panel = document.getElementById('nsPanelContent');
       if(!panel) return;
-      var panelRect = panel.getBoundingClientRect();
       var blocks = scope.querySelectorAll('.ns-room-block');
       blocks.forEach(function(block){
         var fit = block.querySelector('.ns-room-fit');
         var layout = fit && fit.querySelector('.ns-room-layout');
+        var stage = block.querySelector('.ns-room-stage');
+        var cat = block.querySelector('.ns-room-cat');
         if(!fit || !layout) return;
 
+        // Reset to measure natural size
         layout.style.transform = 'none';
-        fit.style.height = 'auto';
+        layout.style.zoom = '';
 
         var naturalW = layout.scrollWidth || layout.offsetWidth || 1;
         var naturalH = layout.scrollHeight || layout.offsetHeight || 1;
-        var fitRect = fit.getBoundingClientRect();
-        var availW = Math.max(120, fit.clientWidth || block.clientWidth || naturalW);
-        var availH = Math.max(120, panelRect.bottom - fitRect.top - 10);
+        var catW = 320;
+        var blockW = panel.clientWidth || block.clientWidth || naturalW;
+        var availW = Math.max(120, blockW - catW - 16);
+        var panelRect = panel.getBoundingClientRect();
+        var fitRect  = fit.getBoundingClientRect();
+        var availH   = Math.max(80, panelRect.bottom - fitRect.top - 12);
         var scale = Math.min(1, availW / naturalW, availH / naturalH);
         if(!isFinite(scale) || scale <= 0) scale = 1;
 
         layout.style.transform = 'scale(' + scale + ')';
-        fit.style.height = Math.ceil(naturalH * scale) + 16 + 'px';
+        var roomsW = Math.ceil(naturalW * scale);
+        var roomsH = Math.ceil(naturalH * scale);
+        // These set width/height with no !important in CSS so JS wins
+        fit.style.width  = roomsW + 'px';
+        fit.style.height = roomsH + 'px';
+        // Lamp: same height as rooms, width proportional to 500:420 scene ratio
+        var lampH = roomsH;
+        var lampW = Math.ceil(lampH * 500 / 420);
+        if(cat) {
+          cat.style.width  = lampW + 'px';
+          cat.style.height = lampH + 'px';
+          var iframe = cat.querySelector('.ns-lamp-iframe');
+          if(iframe) { iframe.style.width = lampW + 'px'; iframe.style.height = lampH + 'px'; }
+        }
       });
     }catch(_e){}
   }
@@ -921,7 +947,41 @@
       if(h>=3&&h<5)   return 'horizon';
       return 'sunrise';
     }
-    var _nightDescs={moon:'Dziļā Nakts & Mēness Virsma',starry:'Zvaigžņotais Plašums',horizon:'Tālais Horizonts & Rītausma',sunrise:'Pirmā Gaisma & Saullēkts'};
+    var _nightDescs={moon:'Nakts sākums',starry:'Dziļā nakts',horizon:'Rīta puse',sunrise:'Rīts'};
+
+    function _moonPhase(dateStr){
+      try{
+        var d;
+        if(dateStr){
+          var m=String(dateStr).match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+          if(m) d=new Date(m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2)+'T12:00:00Z');
+          else d=new Date(dateStr+'T12:00:00Z');
+        } else { d=new Date(); }
+        var ref=new Date('2000-01-06T18:14:00Z');
+        var cycle=29.53058867;
+        var elapsed=(d-ref)/86400000;
+        return((elapsed%cycle)+cycle)%cycle/cycle;
+      }catch(e){return 0.5;}
+    }
+    function _moonSVG(cx,cy,r,phase){
+      var disc='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="#eeeaff" opacity="0.92"/>';
+      var k=(1-Math.cos(2*Math.PI*phase))/2;
+      if(k<0.02) return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="#100d1e" opacity="0.88"/>';
+      if(k>0.98) return disc;
+      var waxing=phase<0.5;
+      var ex=Math.cos(2*Math.PI*phase)*r;
+      var rx=Math.abs(ex).toFixed(2);
+      var T=(cy-r).toFixed(2),B=(cy+r).toFixed(2),X=cx.toFixed(2);
+      var shadow;
+      if(waxing){
+        if(ex>0) shadow='M '+X+' '+T+' A '+r+' '+r+' 0 0 0 '+X+' '+B+' A '+rx+' '+r+' 0 0 1 '+X+' '+T+' Z';
+        else     shadow='M '+X+' '+T+' A '+r+' '+r+' 0 0 0 '+X+' '+B+' A '+rx+' '+r+' 0 0 0 '+X+' '+T+' Z';
+      } else {
+        if(ex>0) shadow='M '+X+' '+T+' A '+r+' '+r+' 0 0 1 '+X+' '+B+' A '+rx+' '+r+' 0 0 0 '+X+' '+T+' Z';
+        else     shadow='M '+X+' '+T+' A '+r+' '+r+' 0 0 1 '+X+' '+B+' A '+rx+' '+r+' 0 0 1 '+X+' '+T+' Z';
+      }
+      return disc+'<path d="'+shadow+'" fill="#100d1e" opacity="0.92"/>';
+    }
 
     // Compute fatigue sparkline path data scaled to SVG coordinates
     function _sparkPaths(workerName, uid, x0, y0, sw, sh){
@@ -980,19 +1040,20 @@
         bg='url(#'+u+'-bg)';
         deco=// Nebula wash
              '<ellipse cx="90" cy="80" rx="110" ry="60" fill="#7050d0" opacity="0.06"/>'
-            // Scattered stars
+            // Scattered stars — grouped for CSS twinkle animation
+            +'<g class="ns-stars">'
             +'<circle cx="28" cy="18" r="1"   fill="#fff" opacity="0.5"/>'
             +'<circle cx="72" cy="32" r="1.4" fill="#fff" opacity="0.65"/>'
             +'<circle cx="118" cy="14" r="0.9" fill="#fff" opacity="0.4"/>'
             +'<circle cx="155" cy="26" r="1.1" fill="#fff" opacity="0.55"/>'
             +'<circle cx="60"  cy="52" r="0.8" fill="#fff" opacity="0.3"/>'
-            // Moon outer soft halo (3 layers)
+            +'</g>'
+            // Moon — grouped for CSS float animation
+            +'<g class="ns-moon-float">'
             +'<circle cx="238" cy="36" r="64" fill="#b0a0ff" opacity="0.07" filter="url(#'+u+'-mf)"/>'
             +'<circle cx="238" cy="36" r="40" fill="#d0c8ff" opacity="0.1"  filter="url(#'+u+'-mf)"/>'
-            // Crisp moon disc
-            +'<circle cx="238" cy="36" r="27" fill="#eeeaff" opacity="0.92"/>'
-            // Crescent shadow — offset circle to cut the moon shape
-            +'<circle cx="250" cy="30" r="23" fill="#130f28" opacity="0.9"/>';
+            +_moonSVG(238,36,27,_moonPhase(window.__activeDateStr))
+            +'</g>';
         gr='<path d="M10 148 Q55 108 115 126 T232 134 L232 182 L10 182 Z" fill="url(#'+u+'-gr)"/>'
           +'<path d="M10 148 Q55 108 115 126 T232 134" fill="none" stroke="#9a8cff" stroke-width="2" filter="url(#'+u+'-gl)" opacity="0.9"/>';
 
@@ -1008,7 +1069,8 @@
         bg='url(#'+u+'-bg)';
         deco=// Milky way subtle diagonal band
              '<ellipse cx="150" cy="55" rx="160" ry="28" fill="#5070c0" opacity="0.055" transform="rotate(-8,150,55)"/>'
-            // Stars — varied sizes and brightnesses
+            // Stars — grouped for CSS twinkle animation
+            +'<g class="ns-stars">'
             +'<circle cx="22"  cy="14" r="1"   fill="#fff" opacity="0.75"/>'
             +'<circle cx="58"  cy="28" r="1.6" fill="#fff" opacity="0.9"/>'
             +'<circle cx="98"  cy="10" r="0.9" fill="#fff" opacity="0.5"/>'
@@ -1021,7 +1083,8 @@
             +'<circle cx="130" cy="38" r="0.8" fill="#fff" opacity="0.35"/>'
             +'<circle cx="195" cy="40" r="1"   fill="#fff" opacity="0.55"/>'
             +'<circle cx="262" cy="36" r="0.8" fill="#fff" opacity="0.7"/>'
-            +'<circle cx="240" cy="55" r="1.1" fill="#ffe0a0" opacity="0.6"/>'; // warm tinted star
+            +'<circle cx="240" cy="55" r="1.1" fill="#ffe0a0" opacity="0.6"/>'
+            +'</g>'; // warm tinted star
         gr='<path d="M10 155 Q42 126 82 144 T152 128 T222 146 L222 182 L10 182 Z" fill="url(#'+u+'-gr)"/>'
           +'<path d="M10 155 Q42 126 82 144 T152 128 T222 146" fill="none" stroke="#f0e68c" stroke-width="1.8" stroke-dasharray="5,3" filter="url(#'+u+'-gl)" opacity="0.85"/>';
 
@@ -1140,13 +1203,19 @@
     if(st.sl.length>1){
       var tot=st.sl[st.sl.length-1].e-st.sl[0].s;
       var live=getFlowLiveState(st.sl);
-      flowBar='<div class="ns-flow-bar">'+st.sl.map(function(s,i){
+      var _flowSegs=st.sl.map(function(s,i){
         var c=getCol(s.w.name);
         var pct=(s.d/tot*100).toFixed(2);
-        return '<div class="ns-flow-seg'+(slotRealtime(s).active?' is-active':'')+'" style="--w:'+pct+'"><div class="ns-flow-fill" style="background:'+c.accent+'"></div></div>';
-      }).join('')
-      +(live?'<div class="ns-flow-live" style="left:'+live.pct.toFixed(3)+'%"></div>':'')
-      +'</div>';
+        return '<div class="ns-flow-seg'+(slotRealtime(s).active?' is-active':'')+'" style="--w:'+pct+';--seg:'+c.accent+'"><div class="ns-flow-fill" style="background:'+c.accent+'"></div></div>';
+      }).join('');
+      var _flowLabels='<div class="ns-flow-labels"><span>'+escHtml(st.sl[0].ss)+'</span>'
+        +st.sl.map(function(s){ return '<span>'+escHtml(s.es)+'</span>'; }).join('')
+        +'</div>';
+      flowBar='<div class="ns-flow-bar">'
+        +_flowSegs
+        +(live?'<div class="ns-flow-live" style="left:'+live.pct.toFixed(3)+'%"></div>':'')
+        +'</div>'
+        +_flowLabels;
     }
     var nsCount=Math.max(1, Math.min(st.sl.length||1, 4));
     var nsGap=(nsCount>=4)?'4px':((nsCount===3)?'6px':'8px');

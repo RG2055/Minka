@@ -221,7 +221,9 @@
     speed: 'fast',
     fontIndex: 2,
     glow: 0,
-    glassOpacity: 0.55
+    glassOpacity: 0.55,
+    noBlur: false,
+    noAnim: false
   };
 
   function load() {
@@ -235,6 +237,8 @@
       if (Number.isInteger(saved.fontIndex) && saved.fontIndex >= 0 && saved.fontIndex < FONT_STEPS.length) state.fontIndex = saved.fontIndex;
       if (typeof saved.glow === 'number' && saved.glow >= 0 && saved.glow <= 1) state.glow = saved.glow;
       if (typeof saved.glassOpacity === 'number') state.glassOpacity = saved.glassOpacity;
+      if (typeof saved.noBlur === 'boolean') state.noBlur = saved.noBlur;
+      if (typeof saved.noAnim === 'boolean') state.noAnim = saved.noAnim;
     } catch (e) {}
   }
 
@@ -408,6 +412,18 @@
     root.setAttribute('data-density', state.density);
     root.setAttribute('data-speed', state.speed);
 
+    root.classList.toggle('mk-no-blur', !!state.noBlur);
+    root.classList.toggle('mk-no-anim', !!state.noAnim);
+    if (state.noBlur) {
+      setVar('--glass-blur', '0px');
+      setVar('--mk-panel-blur', '0px');
+      const app = document.getElementById('grafiks-app');
+      if (app) { app.style.removeProperty('backdrop-filter'); app.style.removeProperty('-webkit-backdrop-filter'); }
+      document.querySelectorAll('.side-panel').forEach(function(el){
+        el.style.removeProperty('backdrop-filter'); el.style.removeProperty('-webkit-backdrop-filter');
+      });
+    }
+
     updateUI();
   }
 
@@ -544,6 +560,22 @@
           </div>
         </div>
 
+        <div class="tk-divider"></div>
+
+        <div class="tk-section">
+          <div class="tk-label-row"><span class="tk-section-label">⚡ Optimizācija</span></div>
+          <label class="tk-toggle">
+            <input type="checkbox" id="tkNoBlur" ${state.noBlur ? 'checked' : ''}>
+            <div style="flex:1"><div class="tk-toggle-label">Bez blur efekta</div><div class="tk-toggle-sub">Noņem stikla blur no visām panelēm — lielākais ieguvums vecam Intel GPU</div></div>
+            <span class="tk-toggle-track"></span>
+          </label>
+          <label class="tk-toggle" style="margin-top:8px">
+            <input type="checkbox" id="tkNoAnim" ${state.noAnim ? 'checked' : ''}>
+            <div style="flex:1"><div class="tk-toggle-label">Bez animācijām</div><div class="tk-toggle-sub">Aptur pulsēšanu, mirgoņu, fona kustību — karšu hover paliek</div></div>
+            <span class="tk-toggle-track"></span>
+          </label>
+        </div>
+
         <div class="tk-footer">Saglabājas automātiski · tikai kalendārs</div>
       </div>`;
   }
@@ -575,6 +607,14 @@
         #tk-panel { width:calc(100vw - 18px) !important; max-height:88vh; padding:14px 14px 12px !important; border-radius:22px !important; }
         .tk-section.two-col { grid-template-columns:1fr !important; }
       }
+      .tk-toggle { display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
+      .tk-toggle input { display:none; }
+      .tk-toggle-label { font-size:13px; font-weight:700; color:rgba(255,255,255,.9); }
+      .tk-toggle-sub { font-size:11px; color:rgba(255,255,255,.42); margin-top:2px; }
+      .tk-toggle-track { flex-shrink:0; width:36px; height:20px; border-radius:10px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.15); position:relative; transition:background .2s; }
+      .tk-toggle-track::after { content:''; position:absolute; top:2px; left:2px; width:14px; height:14px; border-radius:50%; background:#fff; transition:transform .2s; }
+      .tk-toggle input:checked ~ .tk-toggle-track { background:var(--accent,#b77bff); }
+      .tk-toggle input:checked ~ .tk-toggle-track::after { transform:translateX(16px); }
     `;
     document.head.appendChild(style);
   }
@@ -597,6 +637,10 @@
     document.querySelectorAll('[data-density]').forEach((el) => el.classList.toggle('active', el.dataset.density === state.density));
     document.querySelectorAll('[data-performance]').forEach((el) => el.classList.toggle('active', el.dataset.performance === state.performance));
     document.querySelectorAll('[data-speed]').forEach((el) => el.classList.toggle('active', el.dataset.speed === state.speed));
+    const cbBlur = document.getElementById('tkNoBlur');
+    if (cbBlur) cbBlur.checked = !!state.noBlur;
+    const cbAnim = document.getElementById('tkNoAnim');
+    if (cbAnim) cbAnim.checked = !!state.noAnim;
     const range = document.getElementById('tkFontRange');
     if (range) range.value = String(state.fontIndex);
     const val = document.getElementById('tkFontValue');
@@ -684,14 +728,18 @@
         document.documentElement.style.setProperty('--mk-panel-bg', `rgba(8,10,16,${Math.min(go+0.05,0.98).toFixed(2)})`);
         const app = document.getElementById('grafiks-app');
         if (app) {
-          app.style.setProperty('background',              `rgba(10,13,18,${go.toFixed(2)})`, 'important');
-          app.style.setProperty('backdrop-filter',         `blur(${blur}px) saturate(180%)`,  'important');
-          app.style.setProperty('-webkit-backdrop-filter', `blur(${blur}px) saturate(180%)`,  'important');
+          app.style.setProperty('background', `rgba(10,13,18,${go.toFixed(2)})`, 'important');
+          if (!state.noBlur) {
+            app.style.setProperty('backdrop-filter',         `blur(${blur}px) saturate(180%)`, 'important');
+            app.style.setProperty('-webkit-backdrop-filter', `blur(${blur}px) saturate(180%)`, 'important');
+          }
         }
         document.querySelectorAll('.side-panel').forEach(el => {
-          el.style.setProperty('background',              `rgba(4,6,14,${(go*0.85).toFixed(2)})`, 'important');
-          el.style.setProperty('backdrop-filter',         `blur(${blur}px) saturate(160%)`,        'important');
-          el.style.setProperty('-webkit-backdrop-filter', `blur(${blur}px) saturate(160%)`,        'important');
+          el.style.setProperty('background', `rgba(4,6,14,${(go*0.85).toFixed(2)})`, 'important');
+          if (!state.noBlur) {
+            el.style.setProperty('backdrop-filter',         `blur(${blur}px) saturate(160%)`, 'important');
+            el.style.setProperty('-webkit-backdrop-filter', `blur(${blur}px) saturate(160%)`, 'important');
+          }
         });
         save();
       });
@@ -706,6 +754,15 @@
         save();
       }, { passive: true });
     }
+
+    [['#tkNoBlur','noBlur'],['#tkNoAnim','noAnim']].forEach(function(pair){
+      const cb = wrap.querySelector(pair[0]);
+      if (cb) cb.addEventListener('change', function(){
+        state[pair[1]] = cb.checked;
+        save();
+        applyTheme();
+      });
+    });
 
     const closeBtn = wrap.querySelector('#tkClose');
     if (closeBtn) closeBtn.addEventListener('click', hidePanel, { passive: true });
