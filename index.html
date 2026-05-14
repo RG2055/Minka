@@ -22,7 +22,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260419d';
+  var CALENDAR_BUILD = '20260428x';
 
   function withCalendarBuild(url) {
     try {
@@ -444,7 +444,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260419d" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260419d" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260428x" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260428x" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -978,7 +978,7 @@ window.addEventListener('DOMContentLoaded', () => {
       background: rgba(8,10,22,0.72) !important;
       border: 1px solid rgba(255,255,255,0.11) !important;
       border-bottom-color: rgba(255,255,255,0.05) !important;
-      border-radius: 22px !important;
+      border-radius: 28px !important;
       padding: 6px 10px !important;
       backdrop-filter: blur(40px) saturate(180%) !important;
       -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
@@ -1027,8 +1027,8 @@ window.addEventListener('DOMContentLoaded', () => {
       display: flex !important;
       align-items: center !important;
       gap: 6px !important;
-      padding: 7px 13px 7px 10px !important;
-      border-radius: 16px !important;
+      padding: 7px 14px 7px 10px !important;
+      border-radius: 10px !important;
       backdrop-filter: none !important;
       font: 700 11px/1 'Space Grotesk', system-ui !important;
       letter-spacing: .08em !important;
@@ -1046,9 +1046,9 @@ window.addEventListener('DOMContentLoaded', () => {
     /* ── NAKTS button ── */
     #nsToggleBtnParent {
       background: rgba(14,18,40,0.70) !important;
-      border: 1px solid rgba(80,100,255,0.30) !important;
+      border: 1px solid rgba(80,100,255,0.50) !important;
       color: #d4dcff !important;
-      box-shadow: 0 2px 12px rgba(0,0,0,.45) !important;
+      box-shadow: 0 0 10px rgba(80,100,255,.20), 0 2px 12px rgba(0,0,0,.45) !important;
     }
     #nsToggleBtnParent:hover {
       border-color: rgba(100,140,255,.70) !important;
@@ -1073,9 +1073,9 @@ window.addEventListener('DOMContentLoaded', () => {
     #radioToggle,
     #radioIdleBtn {
       background: rgba(4,14,10,0.72) !important;
-      border: 1px solid rgba(0,255,136,0.24) !important;
+      border: 1px solid rgba(0,255,136,0.44) !important;
       color: #e0ffe8 !important;
-      box-shadow: 0 2px 12px rgba(0,0,0,.45) !important;
+      box-shadow: 0 0 10px rgba(0,255,136,.18), 0 2px 12px rgba(0,0,0,.45) !important;
     }
     #radioToggle:hover,
     #radioIdleBtn:hover {
@@ -1093,19 +1093,19 @@ window.addEventListener('DOMContentLoaded', () => {
     /* ── STATS button ── */
     #statsDocBtn {
       background: rgba(20,10,40,0.70) !important;
-      border: 1px solid rgba(139,92,246,0.28) !important;
+      border: 1px solid rgba(139,92,246,0.48) !important;
       color: #c4b5fd !important;
-      box-shadow: 0 2px 12px rgba(0,0,0,.45) !important;
+      box-shadow: 0 0 10px rgba(139,92,246,.20), 0 2px 12px rgba(0,0,0,.45) !important;
     }
     #settingsDockBtn {
       background: rgba(28,24,12,0.72) !important;
-      border: 1px solid rgba(255,214,102,0.24) !important;
+      border: 1px solid rgba(255,214,102,0.44) !important;
       color: #ffe8b0 !important;
-      box-shadow: 0 2px 12px rgba(0,0,0,.45) !important;
+      box-shadow: 0 0 10px rgba(255,214,102,.18), 0 2px 12px rgba(0,0,0,.45) !important;
     }
     #mobileDockBtn {
       background: rgba(18,12,38,0.72) !important;
-      border: 1px solid rgba(169,127,255,0.28) !important;
+      border: 1px solid rgba(169,127,255,0.46) !important;
       color: #e8dcff !important;
       box-shadow:
         0 2px 12px rgba(0,0,0,.45),
@@ -1186,9 +1186,9 @@ window.addEventListener('DOMContentLoaded', () => {
     /* ── BOLUS button ── */
     #bolusDocBtn {
       background: rgba(0,18,36,0.72);
-      border: 1px solid rgba(0,200,255,0.28) !important;
+      border: 1px solid rgba(0,200,255,0.50) !important;
       color: #b0eeff !important;
-      box-shadow: 0 2px 12px rgba(0,0,0,.45);
+      box-shadow: 0 0 10px rgba(0,200,255,.22), 0 2px 12px rgba(0,0,0,.45);
     }
     #bolusDocBtn:hover {
       border-color: rgba(0,210,255,.72) !important;
@@ -1226,7 +1226,7 @@ window.addEventListener('DOMContentLoaded', () => {
       #radioToggle {
         padding: 6px 10px 6px 8px !important;
         font-size: 10px !important;
-        border-radius: 13px !important;
+        border-radius: 10px !important;
       }
       #dockSep { height: 18px; }
     }

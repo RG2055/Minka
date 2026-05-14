@@ -1584,6 +1584,20 @@ function closeFullListModal() {
     return '';
   }
 
+  function updateShiftCountPill(id, count, singular, plural) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = `DEŽŪRĀ ${count}`;
+    el.title = `Dežūrā: ${count} ${count === 1 ? singular : plural}`;
+  }
+
+  function formatSideNamePart(value, upper) {
+    const text = String(value || '').trim();
+    if (!text) return '';
+    if (upper) return text.toUpperCase();
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  }
+
   function filterVisibleWorkers(workers, isToday, now) {
     const list = Array.isArray(workers) ? workers.slice() : [];
     return list.filter(function(w) {
@@ -1600,26 +1614,26 @@ function closeFullListModal() {
     // RADIOGRAPHERS
     const radgContainer = document.getElementById('radiographers-duty');
     const radgNext = document.getElementById('radiographers-next');
-    const radgBadge = document.getElementById('radiographers-today-badge');
     if (radgContainer) {
       // IMPORTANT: shift-day is already normalized to 08:00 rollover (see g_todayStr).
       // That means we no longer need to merge "active yesterday" at midnight.
       // We simply render the selected date's roster.
       let workersToShow = filterVisibleWorkers(getWorkersForDateWithDate(store, activeDateStr), isToday, now);
+      updateShiftCountPill('radiographers-shift-count', workersToShow.length, 'radiogrāfers', 'radiogrāferi');
 
       radgContainer.innerHTML = "";
       workersToShow.forEach(w => {
         const nameParts = String(w.name || "").trim().split(/\s+/).filter(Boolean);
-        const firstName = nameParts[0] ? nameParts[0].toUpperCase() : "";
-        const surname = nameParts.slice(1).join(' ');
+        const firstName = formatSideNamePart(nameParts[0], false);
+        const surname = formatSideNamePart(nameParts.slice(1).join(' '), true);
         const uiState = getWorkerUiState(w, w.date, now);
         const shiftBadge = uiState.shiftBadge;
-        let timerHtml = '';
+        let sideTimerHtml = '';
         let isDone = false;
         if (isToday && w.startTime && w.endTime) {
           isDone = uiState.isDone;
           if (uiState.isActive && uiState.remainingMs > 0) {
-            timerHtml = `<span class="duty-timer" data-worker="${w.name}" data-date="${w.date}" data-start="${w.startTime}" data-end="${w.endTime}" data-shift="${w.shift || ''}"><span class="ghost">88:88:88</span><span class="val">${uiState.timerText}</span></span>`;
+            sideTimerHtml = `<span class="duty-timer mk-side-timer" data-worker="${w.name}" data-date="${w.date}" data-start="${w.startTime}" data-end="${w.endTime}" data-shift="${w.shift || ''}"><span class="ghost">88:88:88</span><span class="val">${uiState.timerText}</span></span>`;
           }
         }
 
@@ -1627,26 +1641,36 @@ function closeFullListModal() {
 
         // Get fatigue for side panel
         let sideFatScore = 0, sideFatColor = '#30d158';
-        try { if(window.__fatigue){ const sf=window.__fatigue.calculateFatigue(w.name); if(sf){ sideFatScore=sf.score; if(sideFatScore>70)sideFatColor='#ff3b30'; else if(sideFatScore>45)sideFatColor='#ff9500'; else if(sideFatScore>20)sideFatColor='#ffd60a'; else sideFatColor='#30d158'; } } }catch(e){}
+        try { if(window.__fatigue){ const sf=window.__fatigue.calculateFatigue(w.name); if(sf){ sideFatScore=sf.score; if(sideFatScore>70)sideFatColor='#ff6b5f'; else if(sideFatScore>45)sideFatColor='#e59b42'; else if(sideFatScore>20)sideFatColor='#d8c64a'; else sideFatColor='#35d07f'; } } }catch(e){}
         const fatLevel = sideFatScore > 85 ? 'crit' : sideFatScore > 65 ? 'high' : sideFatScore > 40 ? 'mid' : 'low';
-        const sideFatBar = `<div style="display:flex;align-items:center;gap:5px;margin-top:5px;"><div class="side-fat-bar-wrap" style="flex:1;height:3px;border-radius:99px;background:rgba(255,255,255,0.07);overflow:hidden;"><div style="height:100%;width:${sideFatScore}%;background:${sideFatColor};border-radius:99px;"></div></div><span style="font-size:9px;font-weight:800;color:${sideFatColor};opacity:.85;min-width:24px;text-align:right;">${sideFatScore}%</span></div>`;
+        const shiftChip = uiState.shiftHours ? `<span class="mk-side-shift-chip">${uiState.shiftHours}H</span>` : shiftBadge;
+        const sideVars = `--mk-side-fat:${sideFatScore}%;--mk-side-fat-color:${sideFatColor};`;
+        const sideFatRing = `<div class="mk-side-ring" aria-label="Nogurums ${sideFatScore}%"><span>${sideFatScore}</span></div>`;
+        const sideFatBar = `<div class="mk-side-progress"><div class="side-fat-bar-wrap"><div></div></div><span class="side-fat-pct">${sideFatScore}%</span></div>`;
         radgContainer.innerHTML += `
-          <div class="duty-block${isDone ? ' duty-done' : ''}" data-worker="${w.name}" data-shift="${w.shift}" data-type="${w.type || ''}" data-fatigue="${fatLevel}">
-            <div class="name-row">
-              <span class="duty-name">${firstName}</span>
-            </div>
-            ${surname ? `<span class="duty-surname">${surname}</span>` : ''}
-            <div class="badge-row">
-              ${iconHtml}
-              ${shiftBadge}
-              ${isDone ? '<span class="duty-done-badge">Maiņa beigusies</span>' : timerHtml}
+          <div class="duty-block mk-side-card mk-side-radiographer${iconHtml ? ' has-shift-icon' : ''}${isDone ? ' duty-done' : ''}" style="${sideVars}" data-worker="${w.name}" data-shift="${w.shift}" data-type="${w.type || ''}" data-fatigue="${fatLevel}">
+            <div class="mk-side-shimmer" aria-hidden="true"></div>
+            <div class="mk-side-card-main">
+              ${sideFatRing}
+              <div class="mk-side-card-body">
+                <div class="name-row mk-side-name-row">
+                  <div class="mk-side-name-wrap">
+                    <span class="duty-name">${firstName}</span>
+                    ${surname ? `<span class="duty-surname">${surname}</span>` : ''}
+                  </div>
+                  <div class="mk-side-icon-rail">${iconHtml}</div>
+                </div>
+                <div class="badge-row mk-side-clock-row">
+                  ${shiftChip}
+                  ${sideTimerHtml}
+                </div>
+              </div>
             </div>
             ${sideFatBar}
           </div>`;
       });
       if (!radgContainer.innerHTML) radgContainer.innerHTML = "<span style='color:#666'>ATPŪTA</span>";
     }
-    if (radgBadge) radgBadge.hidden = !isToday;
     // Hide next-card when not today
     const radgNextCard = radgNext && (radgNext.closest('.mk-next-card') || radgNext.closest('.next-box'));
     if (radgNextCard) radgNextCard.style.display = isToday ? '' : 'none';
@@ -1654,7 +1678,6 @@ function closeFullListModal() {
     // RADIOLOGISTS (same dedupe)
     const radlContainer = document.getElementById('radiologists-duty');
     const radlNext = document.getElementById('radiologists-next');
-    const radlBadge = document.getElementById('radiologists-today-badge');
     if (radlContainer) {
       // With the 08:00 rollover logic, "today" already points at the shift-start day,
       // so we don't need to mix in yesterday-at-midnight shifts (it created duplicates).
@@ -1666,46 +1689,57 @@ function closeFullListModal() {
         seen.add(w.name);
         return true;
       });
+      updateShiftCountPill('radiologists-shift-count', workersToShow.length, 'radiologs', 'radiologi');
 
       radlContainer.innerHTML = "";
       workersToShow.forEach(w => {
         const nameParts = String(w.name || "").trim().split(/\s+/).filter(Boolean);
-        const firstName = nameParts[0] ? nameParts[0].toUpperCase() : "";
-        const surname = nameParts.slice(1).join(' ');
+        const firstName = formatSideNamePart(nameParts[0], false);
+        const surname = formatSideNamePart(nameParts.slice(1).join(' '), true);
         const uiState = getWorkerUiState(w, w.date, now);
         const shiftBadge = uiState.shiftBadge;
-        let timerHtml = '';
+        let sideTimerHtmlL = '';
         let isDone = false;
         if (isToday && w.startTime && w.endTime) {
           isDone = uiState.isDone;
           if (uiState.isActive && uiState.remainingMs > 0) {
-            timerHtml = `<span class="duty-timer" data-worker="${w.name}" data-date="${w.date}" data-start="${w.startTime}" data-end="${w.endTime}" data-shift="${w.shift || ''}"><span class="ghost">88:88:88</span><span class="val">${uiState.timerText}</span></span>`;
+            sideTimerHtmlL = `<span class="duty-timer mk-side-timer" data-worker="${w.name}" data-date="${w.date}" data-start="${w.startTime}" data-end="${w.endTime}" data-shift="${w.shift || ''}"><span class="ghost">88:88:88</span><span class="val">${uiState.timerText}</span></span>`;
           }
         }
 
         const iconHtml = getSideIconHtml(w.type);
 
         let sideFatScoreL = 0, sideFatColorL = '#30d158';
-        try { if(window.__fatigue){ const sf=window.__fatigue.calculateFatigue(w.name); if(sf){ sideFatScoreL=sf.score; if(sideFatScoreL>70)sideFatColorL='#ff3b30'; else if(sideFatScoreL>45)sideFatColorL='#ff9500'; else if(sideFatScoreL>20)sideFatColorL='#ffd60a'; else sideFatColorL='#30d158'; } } }catch(e){}
+        try { if(window.__fatigue){ const sf=window.__fatigue.calculateFatigue(w.name); if(sf){ sideFatScoreL=sf.score; if(sideFatScoreL>70)sideFatColorL='#ff6b5f'; else if(sideFatScoreL>45)sideFatColorL='#e59b42'; else if(sideFatScoreL>20)sideFatColorL='#d8c64a'; else sideFatColorL='#35d07f'; } } }catch(e){}
         const fatLevelL = sideFatScoreL > 85 ? 'crit' : sideFatScoreL > 65 ? 'high' : sideFatScoreL > 40 ? 'mid' : 'low';
-        const sideFatBarL = `<div style="display:flex;align-items:center;gap:5px;margin-top:5px;"><div class="side-fat-bar-wrap" style="flex:1;height:3px;border-radius:99px;background:rgba(255,255,255,0.07);overflow:hidden;"><div style="height:100%;width:${sideFatScoreL}%;background:${sideFatColorL};border-radius:99px;"></div></div><span style="font-size:9px;font-weight:800;color:${sideFatColorL};opacity:.85;min-width:24px;text-align:right;">${sideFatScoreL}%</span></div>`;
+        const shiftChipL = uiState.shiftHours ? `<span class="mk-side-shift-chip">${uiState.shiftHours}H</span>` : shiftBadge;
+        const sideVarsL = `--mk-side-fat:${sideFatScoreL}%;--mk-side-fat-color:${sideFatColorL};`;
+        const sideFatRingL = `<div class="mk-side-ring" aria-label="Nogurums ${sideFatScoreL}%"><span>${sideFatScoreL}</span></div>`;
+        const sideFatBarL = `<div class="mk-side-progress"><div class="side-fat-bar-wrap"><div></div></div><span class="side-fat-pct">${sideFatScoreL}%</span></div>`;
         radlContainer.innerHTML += `
-          <div class="duty-block${isDone ? ' duty-done' : ''}" data-worker="${w.name}" data-shift="${w.shift}" data-type="${w.type || ''}" data-fatigue="${fatLevelL}">
-            <div class="name-row">
-              <span class="duty-name">${firstName}</span>
-            </div>
-            ${surname ? `<span class="duty-surname">${surname}</span>` : ''}
-            <div class="badge-row">
-              ${iconHtml}
-              ${shiftBadge}
-              ${isDone ? '<span class="duty-done-badge">Maiņa beigusies</span>' : timerHtml}
+          <div class="duty-block mk-side-card mk-side-radiologist${iconHtml ? ' has-shift-icon' : ''}${isDone ? ' duty-done' : ''}" style="${sideVarsL}" data-worker="${w.name}" data-shift="${w.shift}" data-type="${w.type || ''}" data-fatigue="${fatLevelL}">
+            <div class="mk-side-shimmer" aria-hidden="true"></div>
+            <div class="mk-side-card-main">
+              ${sideFatRingL}
+              <div class="mk-side-card-body">
+                <div class="name-row mk-side-name-row">
+                  <div class="mk-side-name-wrap">
+                    <span class="duty-name">${firstName}</span>
+                    ${surname ? `<span class="duty-surname">${surname}</span>` : ''}
+                  </div>
+                  <div class="mk-side-icon-rail">${iconHtml}</div>
+                </div>
+                <div class="badge-row mk-side-clock-row">
+                  ${shiftChipL}
+                  ${sideTimerHtmlL}
+                </div>
+              </div>
             </div>
             ${sideFatBarL}
           </div>`;
       });
       if (!radlContainer.innerHTML) radlContainer.innerHTML = "<span style='color:#666'>ATPŪTA</span>";
     }
-    if (radlBadge) radlBadge.hidden = !isToday;
     // Hide next-card when not today
     const radlNextCard = radlNext && (radlNext.closest('.mk-next-card') || radlNext.closest('.next-box'));
     if (radlNextCard) radlNextCard.style.display = isToday ? '' : 'none';
