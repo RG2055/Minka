@@ -939,12 +939,19 @@
     var so=START.map(function(o){return'<option value="'+o.v+'"'+(o.v===st.sh?' selected':'')+'>'+o.l+'</option>';}).join('');
     var eo=END.map(function(o,i){return'<option value="'+i+'"'+(i===(st.ei||0)?' selected':'')+'>'+o.l+'</option>';}).join('');
 
-    // Night theme helper — maps slot start hour → visual theme
-    function _nightTheme(startMin){
-      var h=Math.floor(((startMin%1440)+1440)%1440/60);
-      if(h>=22||h<1)  return 'moon';
-      if(h>=1&&h<3)   return 'starry';
-      if(h>=3&&h<5)   return 'horizon';
+    // Night theme helper — maps the slot's place in this split, not just clock time.
+    function _nightTheme(slotIndex, slotCount, startMin, firstStart, lastEnd){
+      slotCount=Math.max(1, slotCount||1);
+      if(slotCount===1) return 'starry';
+      if(slotCount===2) return slotIndex===0?'starry':'sunrise';
+      if(slotCount===3) return ['starry','horizon','sunrise'][slotIndex]||'sunrise';
+      if(slotCount===4) return ['moon','starry','horizon','sunrise'][slotIndex]||'sunrise';
+
+      var span=Math.max(1, (lastEnd||0)-(firstStart||0));
+      var ratio=Math.max(0, Math.min(1, ((startMin||0)-(firstStart||0))/span));
+      if(ratio<0.25) return 'moon';
+      if(ratio<0.58) return 'starry';
+      if(ratio<0.84) return 'horizon';
       return 'sunrise';
     }
     var _nightDescs={moon:'Nakts sākums',starry:'Dziļā nakts',horizon:'Rīta puse',sunrise:'Rīts'};
@@ -1173,7 +1180,7 @@
       var spk=sparkline(s.w.name, c.accent);
       var statusCls=rt.active?'active':(rt.status==='NĀKAMĀ'?'upnext':'done');
       var gradCss='conic-gradient(from 0deg, transparent 0%, '+c.accent+' 30%, transparent 60%)';
-      var theme=_nightTheme(s.s);
+      var theme=_nightTheme(i, st.sl.length, s.s, st.sl[0].s, st.sl[st.sl.length-1].e);
       var desc=_nightDescs[theme]||'';
       var checklist = lastSlotChecklist(i, st.sl.length);
       return '<div class="nsc-card-wrap" data-i="'+i+'">'

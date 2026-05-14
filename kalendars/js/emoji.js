@@ -227,7 +227,11 @@
       el = document.createElement('span');
       el.className = 'mk-emoji-side';
       block.style.position = 'relative';
-      block.appendChild(el);
+      var sideIconRail = block.querySelector('.mk-side-icon-rail');
+      var sideNameRow = block.querySelector('.mk-side-name-row');
+      if (sideIconRail) sideIconRail.insertBefore(el, sideIconRail.firstChild);
+      else if (sideNameRow) sideNameRow.appendChild(el);
+      else block.appendChild(el);
     }
     el.textContent = emoji;
   }

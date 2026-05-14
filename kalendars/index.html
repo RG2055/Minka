@@ -124,7 +124,7 @@
   href="https://fonts.cdnfonts.com/css/digital-7-mono"
   onload="this.onload=null;this.rel='stylesheet'">
 <link rel="preload" as="style"
-  href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;900&family=Space+Mono:wght@400;700&display=swap"
+  href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Space+Grotesk:wght@400;600;700;900&family=Space+Mono:wght@400;700&display=swap"
   onload="this.onload=null;this.rel='stylesheet'">
 <noscript>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -358,8 +358,8 @@ body.stars-active #stars-overlay{display:block;}
   <div class="side-panel left-panel">
     <div>
       <div class="status-tag radiographers">
-        RADIOGRĀFERI
-        <span id="radiographers-today-badge" class="today-badge" hidden>TAGAD</span>
+        <span>RADIOGRĀFERI</span>
+        <span id="radiographers-shift-count" class="mk-shift-count-pill">DEŽŪRĀ 0</span>
       </div>
       <div id="radiographers-duty" class="duty-vertical"></div>
     </div>
@@ -477,8 +477,8 @@ body.stars-active #stars-overlay{display:block;}
   <div class="side-panel right-panel">
     <div>
       <div class="status-tag radiologists">
-        RADIOLOGI
-        <span id="radiologists-today-badge" class="today-badge" hidden>TAGAD</span>
+        <span>RADIOLOGI</span>
+        <span id="radiologists-shift-count" class="mk-shift-count-pill">DEŽŪRĀ 0</span>
       </div>
       <div id="radiologists-duty" class="duty-vertical"></div>
     </div>
@@ -653,10 +653,10 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js"></script>
+<script src="js/calendar.js?v=20260428x"></script>
 <script src="js/calendar_extras_v4.js"></script>
 <script src="js/fatigue.js?v=20260318d"></script>
-<script src="js/nightsplit.js?v=20260419d" defer></script>
+<script src="js/nightsplit.js?v=20260428x" defer></script>
 <script src="js/design_v1.js" defer></script>
 <script src="js/theme.js" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
@@ -6230,6 +6230,510 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
   color: rgba(255,255,255,.38) !important;
   letter-spacing: .04em !important;
   pointer-events: none !important;
+}
+
+/* Side duty rows — V3 ring-first ribbon timer */
+.status-tag.radiographers,
+.status-tag.radiologists {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 4px !important;
+  margin-bottom: 22px !important;
+  text-align: center !important;
+  width: 100% !important;
+}
+.status-tag.radiographers,
+.status-tag.radiologists {
+  align-items: center !important;
+}
+.mk-shift-count-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 17px !important;
+  margin-left: 0 !important;
+  padding: 0 9px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(167,139,250,.36) !important;
+  background: rgba(167,139,250,.14) !important;
+  color: currentColor !important;
+  font: 800 9px/1 Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  letter-spacing: .09em !important;
+  white-space: nowrap !important;
+}
+.status-tag.radiologists .mk-shift-count-pill {
+  border-color: rgba(255,122,122,.36) !important;
+  background: rgba(255,122,122,.13) !important;
+}
+#radiographers-duty,
+#radiologists-duty {
+  gap: 16px !important;
+  padding: 18px 0 0 !important;
+}
+.mk-side-card {
+  --mk-side-accent: #a78bfa;
+  --mk-side-accent-rgb: 167,139,250;
+  --mk-side-name: #e8e9ef;
+  --mk-side-sub: #8a8ca0;
+  position: relative !important;
+  isolation: isolate !important;
+  overflow: hidden !important;
+  gap: 0 !important;
+  min-height: 82px !important;
+  padding: 10px 10px !important;
+  border-radius: 10px !important;
+  background: rgba(35,30,56,.56) !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  text-transform: none !important;
+  transition: opacity .16s ease, transform .16s ease !important;
+}
+.mk-side-card[data-fatigue="low"] {
+  background: linear-gradient(90deg, rgba(43,38,70,.70), rgba(18,18,31,.72)) !important;
+}
+.mk-side-card[data-fatigue="mid"] {
+  background: linear-gradient(90deg, rgba(58,52,28,.58), rgba(22,21,20,.72)) !important;
+}
+.mk-side-card[data-fatigue="high"],
+.mk-side-card[data-fatigue="crit"] {
+  background: linear-gradient(90deg, rgba(64,26,30,.58), rgba(24,17,22,.74)) !important;
+}
+.mk-side-radiologist {
+  background: linear-gradient(270deg, rgba(58,24,30,.54), rgba(20,14,20,.74)) !important;
+}
+.mk-side-card::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  padding: 1.5px !important;
+  border-radius: inherit !important;
+  background:
+    conic-gradient(from -90deg,
+      var(--mk-side-fat-color) var(--mk-side-fat, 0%),
+      rgba(255,255,255,.08) 0) !important;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0) !important;
+  -webkit-mask-composite: xor !important;
+  mask-composite: exclude !important;
+  opacity: .78 !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+}
+.mk-side-card[data-fatigue="high"]::after,
+.mk-side-card[data-fatigue="crit"]::after {
+  opacity: .68 !important;
+}
+.mk-side-card[data-fatigue="low"]::after {
+  opacity: .55 !important;
+}
+.mk-side-card:hover {
+  transform: translateY(-1px) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  opacity: .96 !important;
+}
+.mk-side-radiologist {
+  --mk-side-accent: #ff7a7a;
+  --mk-side-accent-rgb: 255,122,122;
+  --mk-side-name: #e8e9ef;
+  --mk-side-sub: #8a8ca0;
+}
+.mk-side-shimmer {
+  display: none !important;
+}
+.mk-side-card-main {
+  display: grid !important;
+  grid-template-columns: 56px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+.mk-side-radiologist .mk-side-card-main {
+  grid-template-columns: 56px minmax(0, 1fr) !important;
+}
+.mk-side-card-body {
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+.mk-side-radiologist .mk-side-card-body {
+  text-align: left !important;
+}
+.mk-side-ring {
+  position: relative !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 50% !important;
+  background: conic-gradient(var(--mk-side-fat-color) var(--mk-side-fat, 0%), rgba(255,255,255,.055) 0) !important;
+  box-shadow: none !important;
+}
+.mk-side-ring::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 6px !important;
+  border-radius: inherit !important;
+  background: #07070d !important;
+  border: 0 !important;
+}
+.mk-side-radiologist .mk-side-ring::after {
+  background: #07070d !important;
+}
+.mk-side-ring span {
+  position: relative !important;
+  z-index: 1 !important;
+  color: var(--mk-side-fat-color) !important;
+  font: 900 15px/1 Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  letter-spacing: .02em !important;
+}
+.mk-side-name-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) max-content !important;
+  align-items: center !important;
+  gap: 5px !important;
+  margin: 0 0 6px !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+}
+.mk-side-radiologist .mk-side-name-wrap {
+  text-align: left !important;
+}
+.mk-side-radiologist .duty-name,
+.mk-side-radiologist .duty-surname {
+  text-align: left !important;
+}
+.mk-side-name-wrap {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  padding-right: 0 !important;
+  overflow: hidden !important;
+}
+.mk-side-radiologist .mk-side-name-wrap {
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+}
+.mk-side-card .duty-name {
+  display: block !important;
+  color: var(--mk-side-name) !important;
+  -webkit-text-fill-color: var(--mk-side-name) !important;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 17px !important;
+  font-weight: 850 !important;
+  line-height: 1.04 !important;
+  letter-spacing: -.015em !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  padding-right: 0 !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  overflow-wrap: anywhere !important;
+  text-overflow: clip !important;
+}
+.mk-side-radiologist .duty-name {
+  padding-right: 0 !important;
+}
+.mk-side-card .duty-surname {
+  display: block !important;
+  margin-top: 3px !important;
+  color: var(--mk-side-sub) !important;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  line-height: 1.08 !important;
+  letter-spacing: .01em !important;
+  max-width: 100% !important;
+  padding-right: 0 !important;
+  box-sizing: border-box !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  overflow-wrap: anywhere !important;
+  text-overflow: clip !important;
+}
+.mk-side-icon-rail {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  min-width: 0 !important;
+  width: auto !important;
+  max-width: 42px !important;
+  height: 34px !important;
+  overflow: hidden !important;
+}
+.mk-side-icon-rail:empty {
+  display: none !important;
+}
+.mk-side-card .shift-icon-side {
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+  opacity: .95 !important;
+  filter: none !important;
+  transform: none !important;
+  z-index: 3 !important;
+}
+.mk-side-radiologist .shift-icon-side {
+  right: auto !important;
+  left: auto !important;
+}
+.mk-side-card .mk-emoji-side {
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 20px !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+  transform: none !important;
+  filter: none !important;
+  z-index: 4 !important;
+  margin: 0 !important;
+}
+.mk-side-card.has-shift-icon .mk-emoji-side {
+  right: auto !important;
+  margin-left: 0 !important;
+}
+.mk-side-radiologist .mk-emoji-side {
+  right: auto !important;
+}
+.mk-side-radiologist.has-shift-icon .mk-emoji-side {
+  right: auto !important;
+}
+.mk-side-card:hover .mk-emoji-side {
+  background: transparent !important;
+  border-color: transparent !important;
+  transform: none !important;
+}
+.mk-side-clock-row {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  gap: 8px !important;
+  margin-top: 0 !important;
+  min-width: 0 !important;
+}
+.mk-side-radiologist .mk-side-clock-row {
+  justify-content: flex-start !important;
+  flex-direction: row !important;
+}
+.mk-side-shift-chip {
+  flex: 0 0 auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: auto !important;
+  height: 22px !important;
+  padding: 0 8px !important;
+  border-radius: 7px !important;
+  background: rgba(94,224,224,.13) !important;
+  border: 0 !important;
+  color: #5ee0e0 !important;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  letter-spacing: .02em !important;
+}
+.mk-side-radiologist .mk-side-shift-chip {
+  background: rgba(255,122,122,.13) !important;
+  color: #ff7a7a !important;
+}
+.mk-side-card .mk-side-timer.duty-timer {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 78px !important;
+  max-width: none !important;
+  height: 22px !important;
+  padding: 0 8px !important;
+  border-radius: 9px !important;
+  background: rgba(6,7,12,.66) !important;
+  border: 1px solid rgba(255,255,255,.075) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035) !important;
+  color: rgba(232,233,239,.88) !important;
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  letter-spacing: .04em !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+.mk-side-card .mk-side-timer.duty-timer::before {
+  content: none !important;
+  display: none !important;
+}
+.mk-side-card .mk-side-timer.duty-timer .ghost {
+  display: none !important;
+}
+.mk-side-card .mk-side-timer.duty-timer .val {
+  color: inherit !important;
+  font: inherit !important;
+}
+.mk-side-progress {
+  display: none !important;
+}
+.mk-side-progress .side-fat-bar-wrap {
+  flex: 1 1 auto !important;
+  height: 4px !important;
+  border-radius: 999px !important;
+  background: rgba(255,255,255,.06) !important;
+  overflow: hidden !important;
+}
+.mk-side-progress .side-fat-bar-wrap > div {
+  width: var(--mk-side-fat, 0%) !important;
+  height: 100% !important;
+  border-radius: inherit !important;
+  background: var(--mk-side-fat-color) !important;
+  box-shadow: none !important;
+  transition: width .85s cubic-bezier(.22,1,.36,1) !important;
+}
+.mk-side-progress .side-fat-pct {
+  flex: 0 0 auto !important;
+  min-width: 34px !important;
+  text-align: right !important;
+  color: var(--mk-side-fat-color) !important;
+  opacity: 1 !important;
+  font: 800 12px/1 "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace !important;
+}
+.mk-side-card.duty-done {
+  opacity: .42 !important;
+  filter: grayscale(.5) brightness(.78) !important;
+}
+.mk-side-card.duty-done .duty-name {
+  color: rgba(255,255,255,.48) !important;
+  -webkit-text-fill-color: rgba(255,255,255,.48) !important;
+}
+#radiographers-duty .mk-side-card,
+#radiologists-duty .mk-side-card,
+#radiographers-duty .mk-side-card.is-active-duty,
+#radiologists-duty .mk-side-card.is-active-duty,
+#radiographers-duty .mk-side-card.is-up-next-duty,
+#radiologists-duty .mk-side-card.is-up-next-duty,
+html.has-wallpaper-bg #radiographers-duty .mk-side-card,
+html.has-wallpaper-bg #radiologists-duty .mk-side-card {
+  border: 0 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+:root.mk-mobile-shell .mk-side-card,
+.side-panel.compact-duty .mk-side-card,
+.side-panel.mini-duty .mk-side-card {
+  min-height: 72px !important;
+  padding: 8px 10px !important;
+  border-radius: 8px !important;
+}
+:root.mk-mobile-shell .mk-side-card-main,
+.side-panel.compact-duty .mk-side-card-main,
+.side-panel.mini-duty .mk-side-card-main {
+  grid-template-columns: 40px minmax(0, 1fr) !important;
+  gap: 7px !important;
+}
+:root.mk-mobile-shell .mk-side-radiologist .mk-side-card-main,
+.side-panel.compact-duty .mk-side-radiologist .mk-side-card-main,
+.side-panel.mini-duty .mk-side-radiologist .mk-side-card-main {
+  grid-template-columns: 40px minmax(0, 1fr) !important;
+}
+:root.mk-mobile-shell .mk-side-ring,
+.side-panel.compact-duty .mk-side-ring,
+.side-panel.mini-duty .mk-side-ring {
+  width: 38px !important;
+  height: 38px !important;
+}
+:root.mk-mobile-shell .mk-side-ring::after,
+.side-panel.compact-duty .mk-side-ring::after,
+.side-panel.mini-duty .mk-side-ring::after {
+  inset: 5px !important;
+}
+:root.mk-mobile-shell .mk-side-ring span,
+.side-panel.compact-duty .mk-side-ring span,
+.side-panel.mini-duty .mk-side-ring span {
+  font-size: 10px !important;
+}
+:root.mk-mobile-shell .mk-side-card .duty-name,
+.side-panel.compact-duty .mk-side-card .duty-name,
+.side-panel.mini-duty .mk-side-card .duty-name {
+  font-size: 17px !important;
+  letter-spacing: 0 !important;
+  padding-right: 0 !important;
+}
+:root.mk-mobile-shell .mk-side-card .duty-surname,
+.side-panel.compact-duty .mk-side-card .duty-surname,
+.side-panel.mini-duty .mk-side-card .duty-surname {
+  font-size: 10px !important;
+  letter-spacing: .01em !important;
+}
+:root.mk-mobile-shell .mk-side-name-row,
+.side-panel.compact-duty .mk-side-name-row,
+.side-panel.mini-duty .mk-side-name-row {
+  grid-template-columns: minmax(0, 1fr) max-content !important;
+  gap: 4px !important;
+}
+:root.mk-mobile-shell .mk-side-icon-rail,
+.side-panel.compact-duty .mk-side-icon-rail,
+.side-panel.mini-duty .mk-side-icon-rail {
+  width: auto !important;
+  max-width: 40px !important;
+  height: 30px !important;
+}
+:root.mk-mobile-shell .mk-side-card .mk-emoji-side,
+.side-panel.compact-duty .mk-side-card .mk-emoji-side,
+.side-panel.mini-duty .mk-side-card .mk-emoji-side {
+  font-size: 18px !important;
+  min-width: 18px !important;
+}
+:root.mk-mobile-shell .mk-side-card .shift-icon-side,
+.side-panel.compact-duty .mk-side-card .shift-icon-side,
+.side-panel.mini-duty .mk-side-card .shift-icon-side {
+  font-size: 17px !important;
+}
+:root.mk-mobile-shell .mk-side-name-wrap,
+.side-panel.compact-duty .mk-side-name-wrap,
+.side-panel.mini-duty .mk-side-name-wrap {
+  max-width: 100% !important;
+  padding-right: 0 !important;
+}
+:root.mk-mobile-shell .mk-side-radiologist .mk-side-name-wrap,
+.side-panel.compact-duty .mk-side-radiologist .mk-side-name-wrap,
+.side-panel.mini-duty .mk-side-radiologist .mk-side-name-wrap {
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+}
+:root.mk-mobile-shell .mk-side-timer,
+.side-panel.compact-duty .mk-side-timer,
+.side-panel.mini-duty .mk-side-timer {
+  min-width: 54px !important;
+  height: 18px !important;
+  font-size: 10px !important;
+}
+:root.mk-mobile-shell .mk-side-shift-chip,
+.side-panel.compact-duty .mk-side-shift-chip,
+.side-panel.mini-duty .mk-side-shift-chip {
+  min-width: 0 !important;
+  height: 16px !important;
+  padding: 0 5px !important;
+  font-size: 10px !important;
 }
 </style>
 </body>
