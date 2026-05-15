@@ -354,7 +354,7 @@ body.stars-active #stars-overlay{display:block;}
     </div>
   </div>
   
-  <!-- LEFT PANEL - RADIOGRĀFERI -->
+    <!-- LEFT PANEL - RADIOGRĀFERI -->
   <div class="side-panel left-panel">
     <div>
       <div class="status-tag radiographers">
@@ -433,16 +433,9 @@ body.stars-active #stars-overlay{display:block;}
 
     <!-- YouTube-style shift progress bar -->
     <div id="shift-progress-wrap" class="shift-progress-wrap" hidden>
-      <div class="shift-progress-times">
-        <span id="shift-start-label" class="shift-time-label">08:00</span>
-        <div class="shift-progress-center">
-          <span id="shift-elapsed-label" class="shift-elapsed">Pagājis: —</span>
-          <span id="grafiks-countdown" class="shift-remaining">Atlikušas: —</span>
-        </div>
-        <span id="shift-end-label" class="shift-time-label">20:00</span>
-      </div>
       <div id="shift-progress-segments" class="shift-progress-segments" hidden></div>
-      <div class="shift-bar-track" id="shift-bar-track">
+      <div id="shift-lanes-wrap" class="shift-lanes-wrap"></div>
+      <div class="shift-bar-track" id="shift-bar-track" style="display:none!important">
         <div class="shift-bar-fill" id="shift-bar-fill"></div>
         <div id="shift-progress-stops" class="shift-progress-stops" aria-label="Maiņu beigu pieturas"></div>
         <div id="shift-bar-icons" class="shift-bar-icons"></div>
@@ -454,7 +447,7 @@ body.stars-active #stars-overlay{display:block;}
       <div id="shift-progress-below" class="shift-progress-below" hidden></div>
       <div class="ns-btn-row">
         <img src="data/cat_small.webp" class="ns-jiji-bg" alt="" aria-hidden="true">
-        <button id="ns-bar-toggle" class="ns-bar-toggle" title="Rādīt/slēpt nakts sadalījumu uz progresa joslas" hidden>🌙 Nakts sadalījums</button>
+        <button id="ns-bar-toggle" class="ns-bar-toggle" title="Rādīt/slēpt nakts sadalījumu uz progresa joslas" hidden><span class="ns-moon">🌙</span> NAKTS SADALĪJUMS</button>
       </div>
     </div>
 
@@ -3682,6 +3675,7 @@ window.addEventListener('message', function(e) {
   min-height: 0 !important;
 }
 #shift-progress-wrap {
+  position: relative !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: stretch !important;
@@ -3694,43 +3688,89 @@ window.addEventListener('message', function(e) {
   box-shadow: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  overflow: visible !important;
 }
 /* Button: bottom-right, pill, dummy-proof */
 #ns-bar-toggle {
-  align-self: flex-end !important;
-  margin-top: 4px !important;
-  padding: 4px 11px 4px 9px !important;
+  margin: 0 !important;
+  padding: 4px 11px 4px 10px !important;
   border-radius: 20px !important;
-  border: 1px solid rgba(255,255,255,0.13) !important;
-  background: rgba(255,255,255,0.05) !important;
-  color: rgba(255,255,255,0.35) !important;
+  border: 1px solid rgba(calc(140 + var(--mg,0)*80), calc(180 + var(--mg,0)*40), 255, calc(0.13 + var(--mg,0)*0.55)) !important;
+  background: rgba(20, 12, 50, calc(0.55 + var(--mg,0)*0.25)) !important;
+  color: rgba(255,255,255,calc(0.38 + var(--mg,0)*0.55)) !important;
   font-size: 10px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.05em !important;
-  text-transform: uppercase !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
   cursor: pointer !important;
   white-space: nowrap !important;
-  transition: background .25s, color .25s, border-color .25s !important;
+  box-shadow: 0 0 calc(var(--mg,0) * 18px) rgba(140,180,255,calc(var(--mg,0)*0.55)),
+              0 0 calc(var(--mg,0) * 36px) rgba(100,140,255,calc(var(--mg,0)*0.25)) !important;
+  transition: background .8s ease, color .8s ease, border-color .8s ease, box-shadow .8s ease !important;
 }
 #ns-bar-toggle.is-on {
-  background: rgba(80,160,255,0.16) !important;
-  color: #b8daff !important;
-  border-color: rgba(80,160,255,0.35) !important;
+  background: rgba(30, 20, 80, 0.75) !important;
+  color: #c8d8ff !important;
+  border-color: rgba(140,180,255,0.60) !important;
+}
+#ns-bar-toggle .ns-moon {
+  display: inline-block !important;
+  filter: drop-shadow(0 0 calc(var(--mg,0)*8px) rgba(180,210,255,0.95))
+          drop-shadow(0 0 calc(var(--mg,0)*18px) rgba(140,180,255,0.60)) !important;
+  animation: moon-pulse var(--mg-spd, 99s) ease-in-out infinite !important;
+  transition: filter 1.5s ease !important;
+}
+@keyframes moon-pulse {
+  0%,100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(calc(1 + var(--mg,0)*0.25)); opacity: calc(0.75 + var(--mg,0)*0.25); }
 }
 /* Aura: pseudo-element on track, animate opacity only (60fps, no repaints) */
 #shift-bar-track {
   overflow: visible !important;
 }
-.shift-progress-times {
-  display: grid !important;
-  grid-template-columns: 72px 1fr 72px !important;
-  align-items: center !important;
-  gap: 16px !important;
-  margin-bottom: 3px !important;
+/* ── Elapsed / remaining strip (below ruler, above bars) ── */
+.sl-times-strip {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 5px 4px 0;
+  margin-top: 4px;
+  border-top: 1px solid rgba(255,255,255,0.06);
 }
-.shift-progress-center {
-  gap: 3px !important;
+.sl-ns-slot {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-right: 10px;
 }
+.sl-ts-label {
+  font: 600 9px/1 'Space Grotesk', system-ui;
+  letter-spacing: .10em;
+  color: rgba(255,255,255,0.30);
+}
+.sl-ts-val {
+  font: 700 14px/1 'Space Grotesk', system-ui;
+  letter-spacing: -.01em;
+  color: rgba(255,255,255,0.90);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* Fixed-width ATLIKUŠAS value so ticking seconds don't shift the button */
+.sl-ts-val.sl-ts-rem {
+  display: inline-block;
+  min-width: 6.5ch;
+  text-align: left;
+}
+.sl-ts-sep {
+  display: inline-block;
+  width: 1px;
+  height: 14px;
+  background: rgba(255,255,255,0.12);
+  margin: 0 4px;
+}
+/* keep old classes functional for any external references */
+.shift-elapsed, .shift-remaining { display: none !important; }
+.shift-progress-times { display: none !important; }
 .shift-time-label {
   font-size: 10px !important;
   font-weight: 600 !important;
@@ -3748,24 +3788,388 @@ window.addEventListener('message', function(e) {
   padding-right: 10px !important;
   visibility: hidden !important;
 }
-.shift-elapsed {
-  font-size: 10px !important;
-  font-weight: 500 !important;
-  color: rgba(255,255,255,0.34) !important;
-  letter-spacing: -.01em !important;
-}
+/* old .shift-elapsed rule removed — superseded by new header CSS above */
 .shift-remaining,
 .shift-remaining[data-urgency],
 .shift-remaining[data-urgency="ok"],
 .shift-remaining[data-urgency="warn"],
 .shift-remaining[data-urgency="crit"] {
-  font-size: 16px !important;
-  font-weight: 700 !important;
+  font: 700 13px/1 'Space Grotesk', system-ui !important;
   color: rgba(255,255,255,0.92) !important;
-  letter-spacing: -.02em !important;
+  letter-spacing: -.01em !important;
   text-shadow: none !important;
   animation: none !important;
 }
+/* Bottom ruler hidden — ticks live in sl-ruler above */
+#shift-bar-ruler { display: none !important; }
+/* ── New ruler above lanes ── */
+.sl-ruler {
+  position: relative;
+  height: 38px;
+  margin-bottom: 4px;
+  padding-top: 22px; /* space for tick labels + gap above bar */
+  overflow: visible; /* pill must not be clipped */
+}
+.sl-ruler-band {
+  position: relative;
+  display: flex;
+  height: 16px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.sl-ruler-elapsed {
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  background: rgba(120,105,230,0.82);
+  pointer-events: none;
+  z-index: 1;
+}
+.sl-ruler-future {
+  position: absolute;
+  top: 0; bottom: 0; right: 0;
+  background: rgba(0,0,0,0.55);
+  pointer-events: none;
+  z-index: 1;
+}
+.sl-ruler-pct {
+  position: absolute;
+  top: 22px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  font: 800 11px/1 'Space Grotesk', system-ui;
+  letter-spacing: .04em;
+  color: rgba(255,255,255,0.92);
+  pointer-events: none;
+  z-index: 3;
+  white-space: nowrap;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.9);
+}
+.sl-rtick {
+  position: absolute;
+  top: 0;
+  line-height: 14px;
+  font: 600 9px/14px 'Space Grotesk', system-ui;
+  color: rgba(255,255,255,0.32);
+  letter-spacing: .02em;
+  white-space: nowrap;
+  transition: opacity .25s ease;
+}
+.sl-rtick-sun  { color: rgba(251,191,36,0.60) !important; }
+.sl-rtick-moon { color: rgba(167,139,250,0.55) !important; }
+.sl-rtick-hidden { opacity: 0 !important; pointer-events: none !important; }
+.sl-ruler-now {
+  position: absolute;
+  top: 0;
+  line-height: 14px;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.92);
+  color: #07070d;
+  font: 700 9px/14px 'Space Grotesk', system-ui;
+  letter-spacing: .04em;
+  padding: 0 6px;
+  border-radius: 20px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 5;
+}
+/* ── Circadian rhythm chart ── */
+.sl-circ-chart {
+  position: relative;
+  margin-bottom: 2px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(8,6,28,0.70);
+  border: 1px solid rgba(167,139,250,0.14);
+}
+.sl-circ-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 18px;
+  padding: 8px 14px 0;
+  font: 700 10px/1 'Space Grotesk', system-ui;
+  letter-spacing: .08em;
+  color: rgba(255,255,255,0.45);
+}
+.sl-circ-tagad strong { color: rgba(255,255,255,0.88); font-size: 13px; }
+.sl-circ-atlik strong { color: rgba(139,92,246,0.95);  font-size: 13px; }
+.sl-circ-chart svg {
+  display: block;
+  width: 100%;
+  height: 240px;
+}
+.sl-circ-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font: 600 9px/1.4 'Space Grotesk', system-ui;
+  letter-spacing: .05em;
+  padding: 6px 12px 8px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+/* ── Night-split overlay bar (shown when 🌙 button is active) ── */
+.sl-ns-bar {
+  position: relative;
+  margin-bottom: 5px;
+}
+.sl-ns-labels {
+  position: relative;
+  height: 20px;
+  margin-bottom: 3px;
+}
+.sl-ns-name {
+  position: absolute;
+  transform: translateX(-50%);
+  font: 700 10px/1 'Space Grotesk', system-ui;
+  letter-spacing: .07em;
+  color: var(--seg-color, rgba(255,255,255,0.75));
+  text-shadow: 0 0 10px var(--seg-color, transparent);
+  white-space: nowrap;
+  pointer-events: auto;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.sl-ns-name.is-current { font-size: 11px; opacity: 1; }
+.sl-ns-name.is-past    { opacity: 0.38; }
+.sl-ns-divider {
+  position: absolute;
+  top: 0; bottom: -4px;
+  width: 1px;
+  background: rgba(255,255,255,0.13);
+  transform: translateX(-50%);
+}
+.sl-ns-track {
+  position: relative;
+  height: 10px;
+  border-radius: 5px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  overflow: visible;
+}
+.sl-ns-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  border-radius: 5px;
+  pointer-events: none;
+}
+.sl-ns-scrubber {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 13px; height: 13px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(255,255,255,0.65);
+  z-index: 5;
+  pointer-events: none;
+}
+.sl-ns-times {
+  position: relative;
+  height: 16px;
+  margin-top: 4px;
+}
+.sl-ns-time {
+  position: absolute;
+  font: 600 9px/1 'Space Grotesk', system-ui;
+  color: rgba(255,255,255,0.30);
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.sl-ns-time.is-start { transform: translateX(0); }
+.sl-ns-time.is-end   { transform: translateX(-100%); }
+.sl-ns-time-moon     { color: rgba(167,139,250,0.75) !important; }
+/* ── Shift lanes (grouped by shift type) ── */
+.shift-lanes-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 4px;
+  overflow: visible;
+}
+/* Day/night color band between lanes and ruler */
+.sl-time-band {
+  display: flex;
+  height: 4px;
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 3px 0 2px;
+  opacity: 0.75;
+}
+/*
+ * 24h bar — real sky palette, all values near-black (<100 RGB)
+ * Colour lives as a subtle tinted haze, not vivid hues.
+ *
+ * 08:00  warm amber dawn        rgba(95,58,25)
+ * 14:00  muted steel-blue       rgba(24,46,72)
+ * 20:00  dark amber dusk        rgba(88,48,18)
+ * 02:00  near-black navy        rgba(10,12,24)
+ * 08:00  pre-dawn warm          rgba(72,40,16)
+ */
+.sl-tb-morning {
+  flex: 1; position: relative; border-radius: 3px 0 0 3px;
+  background: linear-gradient(90deg,
+    rgba(95,58,25,0.88) 0%,
+    rgba(24,46,72,0.86) 100%);
+}
+.sl-tb-day {
+  flex: 1; position: relative;
+  background: linear-gradient(90deg,
+    rgba(24,46,72,0.86) 0%,
+    rgba(88,48,18,0.84) 100%);
+}
+.sl-tb-evening {
+  flex: 1; position: relative;
+  background: linear-gradient(90deg,
+    rgba(85,40,16,0.88) 0%,
+    rgba(42,18,58,0.94) 55%,
+    rgba(12,10,24,0.98) 100%);
+}
+.sl-tb-night {
+  flex: 1; position: relative; border-radius: 0 3px 3px 0;
+  background: linear-gradient(90deg,
+    rgba(10,12,24,0.99) 0%,
+    rgba(20,20,46,0.96) 60%,
+    rgba(72,40,16,0.72) 100%);
+}
+
+/* ── Circadian details — pure CSS, zero JS, zero animation ── */
+
+
+/* Nakts: zvaigznes, izgaist labajā pusē (rītausma tur) */
+.sl-tb-night::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    radial-gradient(1px 1px at  6% 28%, rgba(255,255,255,0.82) 50%, transparent 50%),
+    radial-gradient(1px 1px at 14% 68%, rgba(255,255,255,0.65) 50%, transparent 50%),
+    radial-gradient(2px 2px at 23% 22%, rgba(255,255,255,0.72) 50%, transparent 50%),
+    radial-gradient(1px 1px at 33% 62%, rgba(255,255,255,0.60) 50%, transparent 50%),
+    radial-gradient(1px 1px at 42% 35%, rgba(255,255,255,0.75) 50%, transparent 50%),
+    radial-gradient(1px 1px at 52% 75%, rgba(255,255,255,0.50) 50%, transparent 50%),
+    radial-gradient(1px 1px at 61% 20%, rgba(255,255,255,0.40) 50%, transparent 50%),
+    radial-gradient(1px 1px at 70% 55%, rgba(255,255,255,0.28) 50%, transparent 50%);
+}
+
+/* Saule 08:00 — diskrēts silts spīdums, z-index 2 virs future overlay */
+.sl-ruler-band::after {
+  content: ''; position: absolute; pointer-events: none; z-index: 2;
+  right: 0; top: 50%; transform: translateY(-50%);
+  width: 26px; height: 26px;
+  background: radial-gradient(circle at center,
+    rgba(210,150,50,0.80) 0%,
+    rgba(180,100,25,0.35) 45%,
+    transparent 68%);
+}
+/* wrapper: full-width flex row — bar + % label sit side by side */
+.sl-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+.sl {
+  position: relative;
+  height: 26px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid;
+}
+.sl-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  border-radius: inherit;
+  transition: width 1s linear;
+  pointer-events: none;
+}
+.sl-row {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 38px 0 8px;
+  z-index: 1;
+}
+.sl-badge {
+  font: 700 9px/1 'Space Grotesk', system-ui;
+  letter-spacing: .06em;
+  padding: 2px 5px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.sl-workers {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  padding-right: 6px;
+}
+.swc {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+.swc-init {
+  font: 700 9px/1 'Space Grotesk', system-ui;
+  opacity: .55;
+}
+.swc-name {
+  font: 600 11px/1 'Space Grotesk', system-ui;
+}
+.swc-emoji { font-size: 11px; line-height: 1; }
+.swc-dot {
+  color: rgba(255,255,255,0.22);
+  font-size: 10px;
+  flex-shrink: 0;
+}
+.sl-pct {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  font: 700 10px/1 'Space Grotesk', system-ui;
+  letter-spacing: .03em;
+  white-space: nowrap;
+  z-index: 2;
+  background: rgba(0,0,0,0.30);
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+.sl-bars-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.sl-scrubber {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: rgba(255,255,255,0.88);
+  border-radius: 999px;
+  box-shadow: 0 0 6px rgba(255,255,255,0.55);
+  pointer-events: none;
+  z-index: 10;
+}
+.sl-scrubber::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 9px;
+  height: 9px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.25), 0 0 10px rgba(255,255,255,0.55);
+}
+
 /* ── Premium progress bar ── */
 .shift-bar-track {
   position: relative !important;
@@ -3875,6 +4279,7 @@ window.addEventListener('message', function(e) {
   width: 100% !important;
   height: 20px !important;
   margin-bottom: 4px !important;
+  display: none !important;
   pointer-events: auto !important;
   overflow: visible !important;
   cursor: default !important;
@@ -4008,11 +4413,7 @@ window.addEventListener('message', function(e) {
 }
 /* ── Jiji cat — next to nakts sadalījums button ── */
 .ns-btn-row {
-  display: flex !important;
-  align-items: center !important;
-  align-self: flex-end !important;
-  gap: 6px !important;
-  margin-top: 4px !important;
+  display: none !important;
 }
 .ns-jiji-bg {
   width: 38px !important;
@@ -5513,7 +5914,8 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
 }
 
 :root.mk-mobile-shell .shift-progress-times {
-  grid-template-columns: 48px 1fr 48px !important;
+  justify-content: flex-start !important;
+  padding-left: 4px !important;
   gap: 8px !important;
   margin-bottom: 2px !important;
 }
