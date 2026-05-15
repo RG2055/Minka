@@ -124,6 +124,18 @@ function getCatIcon(cat) {
 function escapeHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+// Latvian accusative → nominative for -e stem names:
+// "Inesi" → "Inese", "Kristīni" → "Kristīne", "Anci" → "Ance"
+// Rule: consonant + final 'i' → consonant + 'e'
+function normalizeLvName(name) {
+  if (!name || name.length < 3) return name;
+  if (/[bcčdfgģhkķlļmnņprsštvzž]i$/i.test(name)) {
+    const last = name[name.length - 1];
+    const isUpper = last === last.toUpperCase() && last !== last.toLowerCase();
+    return name.slice(0, -1) + (isUpper ? 'E' : 'e');
+  }
+  return name;
+}
 function escapeRegExp(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -363,6 +375,7 @@ function closeFullListModal() {
   let store = {}, storeRad = {}, activeMonth = "", activeDateStr = "", isGridView = true;
   let g_todayStr = null;
   let _nsBarOn = false;
+  let _nsDragMoveHandler = null, _nsDragUpHandler = null; // single global drag handlers
   let g_shiftStopGroups = new Map();
   let g_shiftStopExits = new Map();
   let g_shiftStopsRenderKey = '';
@@ -1227,7 +1240,7 @@ function closeFullListModal() {
       const to   = Math.max(0, Math.min(100, ((seg.end   - start) / total) * 100));
       const mid  = from + (to - from) / 2;
       const anchor = Math.max(4, Math.min(96, mid));
-      const firstName = String(seg.name || '').split(/\s+/)[0] || '–';
+      const firstName = normalizeLvName(String(seg.name || '').split(/\s+/)[0] || '–');
       const widthPct  = Math.max(0, to - from);
       const isCurrent = now instanceof Date && now >= seg.start && now < seg.end;
       const isPast    = now instanceof Date && now >= seg.end;
@@ -1409,8 +1422,10 @@ function closeFullListModal() {
   }
 
   function initNsBarDrag(segmentsEl) {
-    if (!segmentsEl || segmentsEl._nsDragWired) return;
-    segmentsEl._nsDragWired = true;
+    if (!segmentsEl) return;
+    // Remove previous global handlers before registering new ones
+    if (_nsDragMoveHandler) document.removeEventListener('mousemove', _nsDragMoveHandler);
+    if (_nsDragUpHandler)   document.removeEventListener('mouseup',   _nsDragUpHandler);
 
     var dragging = null, overLabel = null, ghost = null, rafId = null;
     var mx = 0, my = 0;
@@ -1462,21 +1477,20 @@ function closeFullListModal() {
       sndBarPickup();
     });
 
-    document.addEventListener('mousemove', function(e) {
+    _nsDragMoveHandler = function(e) {
       if (!dragging) return;
       mx = e.clientX; my = e.clientY;
-      // Ghost follows mouse immediately — no frame delay
       if (ghost) { ghost.style.left = (mx + 14) + 'px'; ghost.style.top = (my - 20) + 'px'; }
-      // Drop target detection deferred to RAF (needs getBoundingClientRect)
       cancelAnimationFrame(rafId);
       rafId = requestAnimationFrame(function() {
         var prevOver = overLabel;
         updateDropTarget();
         if (overLabel && overLabel !== prevOver) sndBarHover();
       });
-    });
+    };
+    document.addEventListener('mousemove', _nsDragMoveHandler);
 
-    document.addEventListener('mouseup', function() {
+    _nsDragUpHandler = function() {
       if (!dragging) return;
       cancelAnimationFrame(rafId);
       if (ghost) { ghost.remove(); ghost = null; }
@@ -1500,7 +1514,8 @@ function closeFullListModal() {
         }
       }
       dragging = null;
-    });
+    };
+    document.addEventListener('mouseup', _nsDragUpHandler);
   }
 
   function mapNightSplitToRange(plan, rangeStart, rangeEnd) {
@@ -1874,6 +1889,7 @@ function closeFullListModal() {
             end: end,
             endLabel: `${String(end.getHours()).padStart(2,'0')}:${String(end.getMinutes()).padStart(2,'0')}`,
             start: start,
+            shiftH: parseShiftHours(w.shift) || Math.round((end - start) / 3600000),
             isRadiologist: s === storeRad
           });
         }
@@ -2058,6 +2074,18 @@ function closeFullListModal() {
       const nsBarToggle = document.getElementById('ns-bar-toggle');
       if (nsBarToggle) {
         nsBarToggle.hidden = !splitPlan;
+        // Moon glow intensity based on time of day
+        (function() {
+          var _h = displayNow.getHours() + displayNow.getMinutes() / 60;
+          var _mg = 0;
+          if (_h >= 6 && _h < 18) { _mg = 0; }
+          else if (_h >= 18 && _h < 21) { _mg = (_h - 18) / 3 * 0.45; }
+          else if (_h >= 21 && _h < 23) { _mg = 0.45 + (_h - 21) / 2 * 0.55; }
+          else if (_h >= 4 && _h < 6)  { _mg = (_h < 5) ? 1.0 : (6 - _h); }
+          else { _mg = 1.0; }
+          nsBarToggle.style.setProperty('--mg', _mg.toFixed(3));
+          nsBarToggle.style.setProperty('--mg-spd', (2.5 - _mg * 1.5).toFixed(2) + 's');
+        })();
         wrap.classList.toggle('ns-bar-active', _nsBarOn && !!splitPlan);
         if (!nsBarToggle._wired) {
           nsBarToggle._wired = true;
@@ -2068,6 +2096,8 @@ function closeFullListModal() {
             if (w) w.classList.toggle('ns-bar-active', _nsBarOn);
             try { if (window.__setStarsManual) window.__setStarsManual(_nsBarOn); } catch(_e) {}
             playNightToggleSound(_nsBarOn);
+            // Immediately re-render lanes with new axis
+            try { g_updateLive(); } catch(_e) {}
           });
         }
         try {
@@ -2125,13 +2155,8 @@ function closeFullListModal() {
         }
       }
       if (belowEl) {
-        if (effectiveOverlay && effectiveOverlay.segments && effectiveOverlay.segments.length) {
-          belowEl.innerHTML = buildNightSplitTimesBelow(effectiveOverlay.segments, effectiveOverlay.start, effectiveOverlay.end, displayNow);
-          belowEl.hidden = false;
-        } else {
-          belowEl.innerHTML = '';
-          belowEl.hidden = true;
-        }
+        belowEl.innerHTML = '';
+        belowEl.hidden = true;
       }
       if (scrubber) scrubber.style.left = visualPct + '%';
       if (scrubber && effectiveOverlay && effectiveOverlay.segments && effectiveOverlay.segments.length) {
@@ -2153,13 +2178,16 @@ function closeFullListModal() {
       const effectiveDiff = Math.max(0, visualEnd - displayNow);
       const effectiveElapsedHm = fmtHM(visualElapsed);
       if (tooltip) tooltip.textContent = fmtHHMM(displayNow);
-      if (elapsedEl) elapsedEl.textContent = 'Pagājis: ' + effectiveElapsedHm;
+      if (elapsedEl) {
+        const _eh = Math.floor(visualElapsed / 3600000);
+        const _em = Math.floor((visualElapsed % 3600000) / 60000);
+        elapsedEl.textContent = String(_eh).padStart(2,'0') + ':' + String(_em).padStart(2,'0');
+      }
       if (remainEl) {
         const h = Math.floor(effectiveDiff / 3600000);
         const m = Math.floor((effectiveDiff % 3600000) / 60000);
         const s = Math.floor((effectiveDiff % 60000) / 1000);
-        const hm = h > 0 ? `${h}h ${String(m).padStart(2,'0')}m` : `${m}m`;
-        remainEl.textContent = `Atlikušas: ${hm} ${String(s).padStart(2,'0')}s`;
+        remainEl.textContent = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
         // Color urgency: green > 4h, amber 2-4h, red < 2h
         const hoursLeft = effectiveDiff / 3600000;
         remainEl.dataset.urgency = hoursLeft > 4 ? 'ok' : hoursLeft > 2 ? 'warn' : 'crit';
@@ -2285,6 +2313,628 @@ function closeFullListModal() {
     }
 
     updateTimers();
+
+    // Lanes: today/past → live today data; future date → static preview of that date
+    let _laneStops = activeStops;
+    let _laneAxisStart = activeStart;
+    let _laneAxisEnd   = activeEnd;
+    let _laneNow       = displayNow;
+
+    // Include ALL of today's scheduled workers in lanes:
+    // active ones are already in activeStops; add upcoming (not started) + past (already done)
+    if (!activeDateStr || !g_todayStr || activeDateStr === g_todayStr) {
+      const _seen = new Set(activeStops.map(function(s) {
+        return s.name + ':' + (s.start instanceof Date ? s.start.getTime() : +s.start);
+      }));
+      const _extra = [];
+      for (const _src of [store, storeRad]) {
+        for (const _mo of Object.keys(_src || {})) {
+          const _days = _src[_mo];
+          if (!Array.isArray(_days)) continue;
+          const _day = _days.find(function(d) { return d.date === g_todayStr; });
+          if (!_day || !Array.isArray(_day.workers)) continue;
+          _day.workers.forEach(function(_w) {
+            if (!_w.startTime || !_w.endTime) return;
+            const [_wh, _wm] = _w.startTime.split(':').map(Number);
+            const _wStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), _wh, _wm, 0);
+            const _wEnd = getShiftEnd(_w, g_todayStr);
+            if (!_wEnd) return;
+            // Skip workers whose shift is currently active (already in activeStops)
+            if (_wStart <= now && now < _wEnd) return;
+            const _key = _w.name + ':' + _wStart.getTime();
+            if (_seen.has(_key)) return;
+            _seen.add(_key);
+            _extra.push({
+              name: _w.name || '',
+              emoji: window.MinkaEmoji && window.MinkaEmoji.get ? (window.MinkaEmoji.get(_w.name || '') || '') : '',
+              end: _wEnd, start: _wStart,
+              shiftH: parseShiftHours(_w.shift) || Math.round((_wEnd - _wStart) / 3600000),
+              isRadiologist: _src === storeRad
+            });
+          });
+        }
+      }
+      if (_extra.length) _laneStops = activeStops.concat(_extra);
+    }
+
+    if (activeDateStr && g_todayStr && activeDateStr !== g_todayStr) {
+      const _sp = activeDateStr.split('.');
+      const _tp = g_todayStr.split('.');
+      const _selD = new Date(+_sp[2], +_sp[1]-1, +_sp[0]);
+      const _todD = new Date(+_tp[2], +_tp[1]-1, +_tp[0]);
+
+      if (_selD > _todD) {
+        // Future date: build zero-progress preview lanes
+        _laneStops = [];
+        const _fd = new Date(+_sp[2], +_sp[1]-1, +_sp[0], 8, 0, 0);
+        _laneAxisStart = _fd;
+        _laneAxisEnd   = new Date(_fd.getTime() + 24 * 3600000);
+        _laneNow       = _fd;
+
+        for (const _src of [store, storeRad]) {
+          for (const _mo of Object.keys(_src || {})) {
+            const _days = _src[_mo];
+            if (!Array.isArray(_days)) continue;
+            const _day = _days.find(function(d) { return d.date === activeDateStr; });
+            if (!_day || !Array.isArray(_day.workers)) continue;
+            _day.workers.forEach(function(_w) {
+              if (!_w.startTime || !_w.endTime) return;
+              const _wEnd = getShiftEnd(_w, activeDateStr);
+              if (!_wEnd) return;
+              const _wp = _w.startTime.split(':').map(Number);
+              const _wStart = new Date(+_sp[2], +_sp[1]-1, +_sp[0], _wp[0], _wp[1], 0);
+              _laneStops.push({
+                name: _w.name || '',
+                emoji: window.MinkaEmoji && window.MinkaEmoji.get ? (window.MinkaEmoji.get(_w.name || '') || '') : '',
+                end: _wEnd, start: _wStart,
+                shiftH: parseShiftHours(_w.shift) || Math.round((_wEnd - _wStart) / 3600000),
+                isRadiologist: _src === storeRad
+              });
+            });
+          }
+        }
+        if (_laneStops.length) {
+          const _minMs = Math.min.apply(null, _laneStops.map(function(s) { return s.start.getTime(); }));
+          _laneAxisStart = new Date(_minMs);
+          _laneAxisStart.setHours(8, 0, 0, 0);
+          _laneAxisEnd = new Date(_laneAxisStart.getTime() + 24 * 3600000);
+        }
+      } else {
+        // Past date: show that day's completed workers (100% progress)
+        _laneStops = [];
+        const _fd = new Date(+_sp[2], +_sp[1]-1, +_sp[0], 8, 0, 0);
+        _laneAxisStart = _fd;
+        _laneAxisEnd   = new Date(_fd.getTime() + 24 * 3600000);
+        _laneNow       = _laneAxisEnd; // 100% — all shifts completed
+
+        for (const _src of [store, storeRad]) {
+          for (const _mo of Object.keys(_src || {})) {
+            const _days = _src[_mo];
+            if (!Array.isArray(_days)) continue;
+            const _day = _days.find(function(d) { return d.date === activeDateStr; });
+            if (!_day || !Array.isArray(_day.workers)) continue;
+            _day.workers.forEach(function(_w) {
+              if (!_w.startTime || !_w.endTime) return;
+              const _wEnd = getShiftEnd(_w, activeDateStr);
+              if (!_wEnd) return;
+              const _wp = _w.startTime.split(':').map(Number);
+              const _wStart = new Date(+_sp[2], +_sp[1]-1, +_sp[0], _wp[0], _wp[1], 0);
+              _laneStops.push({
+                name: _w.name || '',
+                emoji: window.MinkaEmoji && window.MinkaEmoji.get ? (window.MinkaEmoji.get(_w.name || '') || '') : '',
+                end: _wEnd, start: _wStart,
+                shiftH: parseShiftHours(_w.shift) || Math.round((_wEnd - _wStart) / 3600000),
+                isRadiologist: _src === storeRad
+              });
+            });
+          }
+        }
+        if (_laneStops.length) {
+          const _minMs = Math.min.apply(null, _laneStops.map(function(s) { return s.start.getTime(); }));
+          _laneAxisStart = new Date(_minMs);
+          _laneAxisStart.setHours(8, 0, 0, 0);
+          _laneAxisEnd = new Date(_laneAxisStart.getTime() + 24 * 3600000);
+          _laneNow = _laneAxisEnd;
+        }
+      }
+    }
+
+    // Night-split: zoom lane axis to the actual night window (splitPlan.start → splitPlan.end)
+    if (_nsBarOn && splitPlan && splitPlan.start && splitPlan.end &&
+        (!activeDateStr || !g_todayStr || activeDateStr === g_todayStr)) {
+      _laneAxisStart = splitPlan.start;
+      _laneAxisEnd   = splitPlan.end;
+    }
+
+    // Pass the night split plan when 🌙 is active (for the overlay bar)
+    const _nsOverlay = (_nsBarOn && splitPlan && splitPlan.segments && splitPlan.segments.length)
+      ? splitPlan : null;
+
+    buildShiftLanes(_laneStops, _laneAxisStart, _laneAxisEnd, _laneNow, _nsOverlay);
+  }
+
+  function buildCircadianChartHtml(axisStartMs, axisEndMs, nowMs) {
+    // Hourly circadian data: [melatonin, cortisol, bodytemp, alertness] 0-100 normalized
+    // CIRC[hour] = [melatonin, cortisol, bodytemp, alertness] — 0-100 normalised
+    // Scientifically accurate: WOCL nadir at 04:00, melatonin peak ~01:00,
+    // cortisol stays near zero until 04:00 then spikes, alertness lowest at 04:00
+    var CIRC = [
+      [92,  5, 48, 22], // 0  midnight — mel near peak, cortisol very low
+      [100, 4, 43, 15], // 1  mel absolute peak, cortisol still near zero
+      [96,  4, 37, 11], // 2  mel falling, cortisol very low, alertness low
+      [86,  5, 31,  7], // 3  mel falling fast, cortisol low, alertness very low
+      [68,  9, 27,  5], // 4  WOCL nadir — temp nadir, alertness NADIR
+      [44, 26, 27,  8], // 5  cortisol rising, alertness still very low
+      [20, 52, 34, 20], // 6  cortisol rising fast, alertness beginning to rise
+      [ 8, 78, 44, 40], // 7  cortisol high, alertness rising
+      [ 3, 95, 56, 60], // 8  cortisol near peak, alertness moderate
+      [ 3,100, 64, 74], // 9  cortisol peak, alertness rising
+      [ 3, 82, 70, 82], // 10
+      [ 2, 68, 76, 88], // 11
+      [ 2, 58, 82, 86], // 12
+      [ 2, 52, 85, 82], // 13
+      [ 2, 46, 88, 82], // 14
+      [ 2, 40, 88, 80], // 15
+      [ 3, 36, 86, 78], // 16
+      [ 5, 30, 82, 74], // 17
+      [ 8, 25, 78, 70], // 18
+      [15, 20, 73, 62], // 19
+      [30, 15, 66, 54], // 20  melatonin starting to rise
+      [52, 10, 59, 44], // 21  melatonin rising
+      [74,  7, 52, 34], // 22  melatonin rising fast
+      [88,  5, 49, 27]  // 23  melatonin high, approaching peak
+    ];
+
+    var W = 1000, H = 240;
+    var LEFT = 0, RIGHT = 0, TOP = 28, BOTTOM = 26;
+    var chartW = W - LEFT - RIGHT;
+    var chartH = H - TOP - BOTTOM; // 186
+    var axisDur = Math.max(1, axisEndMs - axisStartMs);
+    var uid = axisStartMs % 1000000;
+    var gradId    = 'cmel-'   + uid;
+    var dangerGId = 'cdngr-'  + uid;
+    var SAMPLES = 80;
+
+    function getVal(ms, col) {
+      var axisStartDate = new Date(axisStartMs);
+      var axisStartHour = axisStartDate.getHours() + axisStartDate.getMinutes() / 60;
+      var absHour = axisStartHour + (ms - axisStartMs) / 3600000;
+      var h = Math.floor(absHour) % 24; if (h < 0) h += 24;
+      var frac = absHour - Math.floor(absHour);
+      return CIRC[h][col] * (1 - frac) + CIRC[(h + 1) % 24][col] * frac;
+    }
+    function tsToX(ms) { return LEFT + (ms - axisStartMs) / axisDur * chartW; }
+    function valToY(v) { return TOP + chartH - (v / 100) * chartH; }
+
+    function getPoints(col) {
+      var pts = [];
+      for (var i = 0; i <= SAMPLES; i++) {
+        var t = axisStartMs + axisDur * i / SAMPLES;
+        pts.push([LEFT + chartW * i / SAMPLES, valToY(getVal(t, col))]);
+      }
+      return pts;
+    }
+    function buildPath(pts) {
+      var d = 'M' + pts[0][0].toFixed(1) + ',' + pts[0][1].toFixed(1);
+      for (var i = 0; i < pts.length - 1; i++) {
+        var mx = (pts[i][0] + pts[i+1][0]) / 2, my = (pts[i][1] + pts[i+1][1]) / 2;
+        d += ' Q' + pts[i][0].toFixed(1) + ',' + pts[i][1].toFixed(1) + ' ' + mx.toFixed(1) + ',' + my.toFixed(1);
+      }
+      return d + ' L' + pts[pts.length-1][0].toFixed(1) + ',' + pts[pts.length-1][1].toFixed(1);
+    }
+    function buildArea(pts) {
+      return buildPath(pts) +
+        ' L' + pts[pts.length-1][0].toFixed(1) + ',' + (TOP + chartH).toFixed(1) +
+        ' L' + pts[0][0].toFixed(1) + ',' + (TOP + chartH).toFixed(1) + ' Z';
+    }
+
+    var melPts = getPoints(0), corPts = getPoints(1), alertPts = getPoints(3);
+
+    // Find melatonin peak within axis
+    var peakMs = axisStartMs, peakVal = -1;
+    for (var si = 0; si <= SAMPLES; si++) {
+      var t2 = axisStartMs + axisDur * si / SAMPLES;
+      var vm = getVal(t2, 0);
+      if (vm > peakVal) { peakVal = vm; peakMs = t2; }
+    }
+    var peakX = tsToX(peakMs), peakY = valToY(peakVal);
+    var peakDate  = new Date(peakMs);
+    var peakHHMM  = String(peakDate.getHours()).padStart(2,'0') + ':' + String(peakDate.getMinutes()).padStart(2,'0');
+
+    // Danger zone: scan for hours 02:00–06:00 within axis
+    var dangerX0 = -1, dangerX1 = -1;
+    for (var di = 0; di <= SAMPLES; di++) {
+      var dt = axisStartMs + axisDur * di / SAMPLES;
+      var dh = new Date(dt).getHours() + new Date(dt).getMinutes() / 60;
+      var inDanger = (dh >= 2 && dh < 6);
+      var dx = LEFT + chartW * di / SAMPLES;
+      if (inDanger && dangerX0 < 0) dangerX0 = dx;
+      if (inDanger) dangerX1 = dx;
+    }
+    var dangerRect = '';
+    if (dangerX0 >= 0 && dangerX1 > dangerX0) {
+      dangerRect = '<rect x="' + dangerX0.toFixed(1) + '" y="' + TOP + '" width="' + (dangerX1 - dangerX0).toFixed(1) + '" height="' + chartH + '" fill="url(#' + dangerGId + ')"/>';
+    }
+
+    // Grid lines – every 1h minor, every 2h major
+    var gridSvg = '';
+    var axisStartDate = new Date(axisStartMs);
+    var firstH = axisStartDate.getHours();
+    var totalH = Math.ceil(axisDur / 3600000) + 2;
+    for (var hi = 0; hi <= totalH; hi++) {
+      var tMs = axisStartMs + hi * 3600000;
+      if (tMs < axisStartMs || tMs > axisEndMs + 60000) continue;
+      var hMod = (firstH + hi) % 24;
+      var xg = tsToX(tMs);
+      var isMaj = (hMod % 2 === 0);
+      gridSvg += '<line x1="' + xg.toFixed(1) + '" y1="' + TOP + '" x2="' + xg.toFixed(1) + '" y2="' + (TOP + chartH) +
+        '" stroke="rgba(255,255,255,' + (isMaj ? '0.10' : '0.04') + ')" stroke-width="' + (isMaj ? '1' : '0.5') + '"/>';
+      if (isMaj) {
+        gridSvg += '<text x="' + xg.toFixed(1) + '" y="' + (TOP + chartH + 17) + '" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-family="Space Grotesk,system-ui" font-size="9" font-weight="600">' +
+          String(hMod).padStart(2,'0') + ':00</text>';
+      }
+    }
+
+    // Now-line — only show when nowMs is within the axis window
+    var nowInAxis = (nowMs >= axisStartMs && nowMs <= axisEndMs);
+    var nowX = nowInAxis ? tsToX(nowMs) : -999;
+    var nowDate = new Date(nowMs);
+    var nowHHMM = String(nowDate.getHours()).padStart(2,'0') + ':' + String(nowDate.getMinutes()).padStart(2,'0');
+    var pillX0 = Math.max(LEFT, Math.min(LEFT + chartW - 62, nowX - 31));
+
+    // Curve label positions (% along axis)
+    function curveLabelAt(pct, col) {
+      var t = axisStartMs + axisDur * pct;
+      return { x: tsToX(t), y: valToY(getVal(t, col)) };
+    }
+    var mlb = curveLabelAt(0.22, 0);  // Melatonīns
+    var clb = curveLabelAt(0.82, 1);  // Kortizols
+    var alb = curveLabelAt(0.08, 3);  // Modrība
+
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="' + H + '" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">' +
+      '<defs>' +
+        '<linearGradient id="' + gradId + '" x1="0" y1="0" x2="0" y2="1">' +
+          '<stop offset="0%" stop-color="rgba(167,139,250,0.30)"/>' +
+          '<stop offset="100%" stop-color="rgba(167,139,250,0.02)"/>' +
+        '</linearGradient>' +
+        '<linearGradient id="' + dangerGId + '" x1="0" y1="0" x2="0" y2="1">' +
+          '<stop offset="0%" stop-color="rgba(180,30,50,0.16)"/>' +
+          '<stop offset="55%" stop-color="rgba(130,10,35,0.28)"/>' +
+          '<stop offset="100%" stop-color="rgba(100,8,25,0.06)"/>' +
+        '</linearGradient>' +
+      '</defs>' +
+      // Y-axis labels
+      '<text x="4" y="' + (TOP + 9) + '" text-anchor="start" fill="rgba(255,255,255,0.28)" font-family="Space Grotesk,system-ui" font-size="8" font-weight="700" letter-spacing="0.06em">AUGSTS</text>' +
+      '<text x="4" y="' + (TOP + chartH - 3) + '" text-anchor="start" fill="rgba(255,255,255,0.28)" font-family="Space Grotesk,system-ui" font-size="8" font-weight="700" letter-spacing="0.06em">ZEMS</text>' +
+      // Danger zone highlight
+      dangerRect +
+      // Grid
+      gridSvg +
+      // Melatonin fill
+      '<path d="' + buildArea(melPts) + '" fill="url(#' + gradId + ')"/>' +
+      // Curves
+      '<path d="' + buildPath(melPts) + '" fill="none" stroke="rgba(167,139,250,0.92)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>' +
+      '<path d="' + buildPath(corPts) + '" fill="none" stroke="rgba(251,191,36,0.82)" stroke-width="2" stroke-dasharray="7 4" stroke-linejoin="round" stroke-linecap="round"/>' +
+      '<path d="' + buildPath(alertPts) + '" fill="none" stroke="rgba(74,222,128,0.78)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>' +
+      // Curve labels
+      '<text x="' + mlb.x.toFixed(1) + '" y="' + (mlb.y - 13).toFixed(1) + '" text-anchor="middle" fill="rgba(167,139,250,0.95)" font-family="Space Grotesk,system-ui" font-size="12" font-weight="700">Melatonīns</text>' +
+      '<text x="' + clb.x.toFixed(1) + '" y="' + (clb.y - 12).toFixed(1) + '" text-anchor="end"   fill="rgba(251,191,36,0.92)"  font-family="Space Grotesk,system-ui" font-size="12" font-weight="700">Kortizols</text>' +
+      '<text x="' + alb.x.toFixed(1) + '" y="' + (alb.y - 12).toFixed(1) + '" text-anchor="start" fill="rgba(74,222,128,0.88)"  font-family="Space Grotesk,system-ui" font-size="12" font-weight="700">Modrība</text>' +
+      // Melatonin peak dot + annotation (text above dot)
+      '<circle cx="' + peakX.toFixed(1) + '" cy="' + peakY.toFixed(1) + '" r="4" fill="rgba(167,139,250,1.0)"/>' +
+      '<text x="' + peakX.toFixed(1) + '" y="' + (peakY - 8).toFixed(1) + '" text-anchor="middle" fill="rgba(167,139,250,0.78)" font-family="Space Grotesk,system-ui" font-size="10" font-weight="600">max ~' + peakHHMM + '</text>' +
+      // Now-line solid + pill (only when now is within the axis window)
+      (nowInAxis ? (
+        '<line x1="' + nowX.toFixed(1) + '" y1="' + (TOP - 2) + '" x2="' + nowX.toFixed(1) + '" y2="' + (TOP + chartH) + '" stroke="rgba(255,255,255,0.88)" stroke-width="1.5"/>' +
+        '<rect x="' + pillX0.toFixed(1) + '" y="' + (TOP - 18) + '" width="62" height="16" rx="4" fill="rgba(255,255,255,0.90)"/>' +
+        '<text x="' + (pillX0 + 31).toFixed(1) + '" y="' + (TOP - 6) + '" text-anchor="middle" fill="rgba(8,8,24,0.95)" font-family="Space Grotesk,system-ui" font-size="9" font-weight="800">TAGAD ' + nowHHMM + '</text>'
+      ) : '') +
+    '</svg>';
+
+    // TAGAD / ATLIKUŠAS header (top-right overlay)
+    var remMs = Math.max(0, axisEndMs - nowMs);
+    var remH = Math.floor(remMs / 3600000);
+    var remM = Math.floor((remMs % 3600000) / 60000);
+    var remS = Math.floor((remMs % 60000) / 1000);
+    var remStr = String(remH).padStart(2,'0') + ':' + String(remM).padStart(2,'0') + ':' + String(remS).padStart(2,'0');
+    var header = '<div class="sl-circ-header">' +
+      '<span class="sl-circ-tagad">TAGAD&nbsp;<strong>' + nowHHMM + '</strong></span>' +
+    '</div>';
+
+    var legend = '<div class="sl-circ-legend">' +
+      '<span style="color:rgba(167,139,250,0.95)">&#9632; 😴 Melatonīns</span>' +
+      '<span style="color:rgba(251,191,36,0.90)">&#9135;&#9135; ⚡ Kortizols</span>' +
+      '<span style="color:rgba(74,222,128,0.90)">&#9135; 💡 Modrība</span>' +
+    '</div>';
+
+    return '<div class="sl-circ-chart">' + header + svg + legend + '</div>';
+  }
+
+  function buildNightSplitLaneHtml(overlay, nowMs) {
+    if (!overlay || !overlay.segments || !overlay.segments.length) return '';
+    const ovStart = overlay.start instanceof Date ? overlay.start.getTime() : +overlay.start;
+    const ovEnd   = overlay.end   instanceof Date ? overlay.end.getTime()   : +overlay.end;
+    const ovDur   = Math.max(1, ovEnd - ovStart);
+    const nowPct  = Math.max(0, Math.min(100, (nowMs - ovStart) / ovDur * 100));
+    const grad    = buildNightSplitGradient(overlay.segments, overlay.start, overlay.end);
+    const fmt     = function(d) { return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); };
+
+    // Worker name labels
+    var labelsHtml = '';
+    overlay.segments.forEach(function(seg, i) {
+      const from = Math.max(0, Math.min(100, (seg.start - ovStart) / ovDur * 100));
+      const to   = Math.max(0, Math.min(100, (seg.end   - ovStart) / ovDur * 100));
+      const mid  = from + (to - from) / 2;
+      const firstName = normalizeLvName(String(seg.name || '').split(/\s+/)[0] || '–');
+      const isCurrent = nowMs >= seg.start && nowMs < seg.end;
+      const isPast    = nowMs >= seg.end;
+      const cls = (isCurrent ? ' is-current' : '') + (isPast ? ' is-past' : '');
+      const wPct = to - from;
+      if (wPct > 1) {
+        labelsHtml += '<span class="sl-ns-name shift-progress-seg-label' + cls + '" style="left:' + mid.toFixed(2) + '%;--seg-color:' + seg.color.accent + '" data-seg-idx="' + i + '" data-seg-name="' + escapeHtml(firstName) + '">' + escapeHtml(firstName) + '</span>';
+      }
+      if (i < overlay.segments.length - 1) {
+        labelsHtml += '<span class="sl-ns-divider" style="left:' + to.toFixed(2) + '%"></span>';
+      }
+    });
+
+    // Time ticks at segment boundaries
+    var timesHtml = '';
+    overlay.segments.forEach(function(seg, i) {
+      const from = Math.max(0, Math.min(100, (seg.start - ovStart) / ovDur * 100));
+      const to   = Math.max(0, Math.min(100, (seg.end   - ovStart) / ovDur * 100));
+      const clsFrom = from < 2 ? ' is-start' : '';
+      timesHtml += '<span class="sl-ns-time' + clsFrom + '" style="left:' + from.toFixed(2) + '%">' + fmt(seg.start) + '</span>';
+      if (i === overlay.segments.length - 1) {
+        const clsTo = to > 98 ? ' is-end' : '';
+        timesHtml += '<span class="sl-ns-time' + clsTo + '" style="left:' + to.toFixed(2) + '%">' + fmt(seg.end) + '</span>';
+      }
+    });
+
+    return '<div class="sl-ns-bar">' +
+      '<div class="sl-ns-labels">' + labelsHtml + '</div>' +
+      '<div class="sl-ns-track">' +
+        '<div class="sl-ns-fill" style="width:' + nowPct.toFixed(2) + '%;background:' + grad + '"></div>' +
+        '<div class="sl-ns-scrubber" style="left:' + nowPct.toFixed(2) + '%"></div>' +
+      '</div>' +
+      '<div class="sl-ns-times">' + timesHtml + '</div>' +
+    '</div>';
+  }
+
+  function initNsWrapDrag(wrap) {
+    // Event delegation on the static wrap — fires once, works on dynamically rebuilt .sl-ns-labels
+    if (!wrap || wrap._nsWrapDragWired) return;
+    wrap._nsWrapDragWired = true;
+    var dragging = null, overLabel = null, ghost = null, rafId = null, mx = 0, my = 0;
+    function getLabel(el) { return el && el.closest ? el.closest('.shift-progress-seg-label') : null; }
+    function _tone(f,d,t,v){try{var c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type=t||'triangle';o.frequency.value=f;g.gain.setValueAtTime(0,c.currentTime);g.gain.linearRampToValueAtTime(v||0.1,c.currentTime+0.01);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+d);o.start(c.currentTime);o.stop(c.currentTime+d);}catch(e){}}
+    wrap.addEventListener('mousedown', function(e) {
+      var lbl = getLabel(e.target);
+      if (!lbl || !lbl.closest('.sl-ns-labels')) return;
+      e.preventDefault();
+      dragging = lbl; mx = e.clientX; my = e.clientY;
+      lbl.classList.add('is-dragging');
+      ghost = document.createElement('div');
+      ghost.className = 'ns-drag-ghost';
+      ghost.textContent = lbl.dataset.segName || lbl.textContent;
+      ghost.style.setProperty('--ghost-color', getComputedStyle(lbl).getPropertyValue('--seg-color').trim() || '#8b5cf6');
+      document.body.appendChild(ghost);
+      ghost.style.left = (mx + 14) + 'px'; ghost.style.top = (my - 20) + 'px';
+      _tone(220,0.09,'triangle',0.13);
+    });
+    document.addEventListener('mousemove', function(e) {
+      if (!dragging) return;
+      mx = e.clientX; my = e.clientY;
+      if (ghost) { ghost.style.left = (mx + 14) + 'px'; ghost.style.top = (my - 20) + 'px'; }
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(function() {
+        var labelsEl = wrap.querySelector('.sl-ns-labels');
+        if (!labelsEl) return;
+        var trackRect = labelsEl.getBoundingClientRect();
+        var nearBar = my >= trackRect.top - 50 && my <= trackRect.bottom + 50 && mx >= trackRect.left - 20 && mx <= trackRect.right + 20;
+        if (ghost) ghost.style.opacity = nearBar ? '1' : '0.3';
+        var labels = labelsEl.querySelectorAll('.shift-progress-seg-label');
+        var found = null;
+        if (nearBar) { labels.forEach(function(el) { if (el === dragging) return; var r = el.getBoundingClientRect(); if (mx >= r.left - 10 && mx <= r.right + 10) found = el; }); }
+        if (overLabel && overLabel !== found) overLabel.classList.remove('is-drag-over');
+        overLabel = found;
+        if (overLabel) { overLabel.classList.add('is-drag-over'); }
+      });
+    });
+    document.addEventListener('mouseup', function() {
+      if (!dragging) return;
+      cancelAnimationFrame(rafId);
+      if (ghost) { ghost.remove(); ghost = null; }
+      dragging.classList.remove('is-dragging');
+      var target = overLabel;
+      if (overLabel) { overLabel.classList.remove('is-drag-over'); overLabel = null; }
+      if (target && target !== dragging) {
+        var fromIdx = parseInt(dragging.dataset.segIdx, 10);
+        var toIdx   = parseInt(target.dataset.segIdx, 10);
+        if (!isNaN(fromIdx) && !isNaN(toIdx) && fromIdx !== toIdx) {
+          _tone(240,0.13,'triangle',0.16);
+          setTimeout(function(){ _tone(300,0.09,'triangle',0.09); }, 55);
+          var plan = getNightSplitPlan(activeDateStr);
+          if (plan && plan.segments) {
+            var order = plan.segments.map(function(s) { return s.name; });
+            var tmp = order[fromIdx]; order[fromIdx] = order[toIdx]; order[toIdx] = tmp;
+            saveNightSplitOrder(activeDateStr, order);
+            try { g_updateLive(); } catch(_e) {}
+            if (window.__ns) { if (window.__ns._update) window.__ns._update(); else if (window.__ns._render) window.__ns._render(); }
+          }
+        }
+      }
+      dragging = null;
+    });
+  }
+
+  function buildShiftLanes(stops, axisStart, axisEnd, nowDate, nsOverlay) {
+    const wrap = document.getElementById('shift-lanes-wrap');
+    if (!wrap) return;
+    // Wire NS bar drag once on the static wrap element (event delegation)
+    initNsWrapDrag(wrap);
+    if (!stops || !stops.length) { wrap.innerHTML = ''; return; }
+
+    const nowMs = nowDate instanceof Date ? nowDate.getTime() : nowDate;
+    const axisStartMs = axisStart instanceof Date ? axisStart.getTime() : axisStart;
+    const axisEndMs   = axisEnd   instanceof Date ? axisEnd.getTime()   : axisEnd;
+    const axisDur = Math.max(1, axisEndMs - axisStartMs);
+
+    // Group by [isRadiologist, shiftH, startHour] — separates day/night same-duration shifts
+    const groups = new Map();
+    stops.forEach(function(stop) {
+      const startH = stop.start instanceof Date ? stop.start.getHours() : new Date(stop.start).getHours();
+      const key = (stop.isRadiologist ? 'rad' : 'rg') + ':' + (stop.shiftH || 0) + ':' + startH;
+      if (!groups.has(key)) {
+        groups.set(key, {
+          shiftH: stop.shiftH || 0,
+          isRadiologist: !!stop.isRadiologist,
+          workers: [],
+          start: stop.start,
+          end: stop.end
+        });
+      }
+      const g = groups.get(key);
+      g.workers.push(stop);
+      if (stop.start < g.start) g.start = stop.start;
+      if (stop.end   > g.end)   g.end   = stop.end;
+    });
+
+    // Colors: Radiographers = violet family, Radiologists = cyan family
+    const COL_RG = {  // violet/purple
+      24: { bg:'rgba(139,92,246,0.13)',  border:'rgba(139,92,246,0.38)',  fill:'linear-gradient(90deg,rgba(109,40,217,0.55),rgba(139,92,246,0.32))', ink:'rgba(221,214,254,0.95)', badge:'rgba(139,92,246,0.28)' },
+      12: { bg:'rgba(167,139,250,0.11)', border:'rgba(167,139,250,0.32)', fill:'linear-gradient(90deg,rgba(124,58,237,0.48),rgba(167,139,250,0.28))', ink:'rgba(221,214,254,0.90)', badge:'rgba(167,139,250,0.22)' },
+       8: { bg:'rgba(196,181,253,0.09)', border:'rgba(196,181,253,0.28)', fill:'linear-gradient(90deg,rgba(139,92,246,0.40),rgba(196,181,253,0.22))', ink:'rgba(237,233,254,0.90)', badge:'rgba(196,181,253,0.18)' }
+    };
+    const COL_RAD = { // cyan/teal
+      24: { bg:'rgba(34,211,238,0.11)',  border:'rgba(34,211,238,0.36)',  fill:'linear-gradient(90deg,rgba(8,145,178,0.55),rgba(34,211,238,0.30))',  ink:'rgba(165,243,252,0.95)', badge:'rgba(34,211,238,0.24)' },
+      16: { bg:'rgba(94,224,224,0.10)',  border:'rgba(94,224,224,0.34)',  fill:'linear-gradient(90deg,rgba(14,116,144,0.52),rgba(94,224,224,0.28))', ink:'rgba(207,250,254,0.95)', badge:'rgba(94,224,224,0.22)' },
+      15: { bg:'rgba(94,224,224,0.10)',  border:'rgba(94,224,224,0.34)',  fill:'linear-gradient(90deg,rgba(14,116,144,0.52),rgba(94,224,224,0.28))', ink:'rgba(207,250,254,0.95)', badge:'rgba(94,224,224,0.22)' },
+      13: { bg:'rgba(56,189,248,0.10)',  border:'rgba(56,189,248,0.33)',  fill:'linear-gradient(90deg,rgba(3,105,161,0.52),rgba(56,189,248,0.27))',  ink:'rgba(186,230,253,0.95)', badge:'rgba(56,189,248,0.21)' },
+      12: { bg:'rgba(45,212,191,0.10)',  border:'rgba(45,212,191,0.32)',  fill:'linear-gradient(90deg,rgba(15,118,110,0.50),rgba(45,212,191,0.26))', ink:'rgba(153,246,228,0.95)', badge:'rgba(45,212,191,0.20)' },
+       9: { bg:'rgba(94,234,212,0.09)',  border:'rgba(94,234,212,0.30)',  fill:'linear-gradient(90deg,rgba(17,94,89,0.48),rgba(94,234,212,0.24))',   ink:'rgba(204,251,241,0.90)', badge:'rgba(94,234,212,0.18)' }
+    };
+    const DEF_RG  = { bg:'rgba(139,92,246,0.10)',  border:'rgba(139,92,246,0.30)',  fill:'linear-gradient(90deg,rgba(109,40,217,0.44),rgba(139,92,246,0.24))', ink:'rgba(221,214,254,0.90)', badge:'rgba(139,92,246,0.20)' };
+    const DEF_RAD = { bg:'rgba(34,211,238,0.09)',  border:'rgba(34,211,238,0.28)',  fill:'linear-gradient(90deg,rgba(8,145,178,0.44),rgba(34,211,238,0.22))', ink:'rgba(165,243,252,0.90)', badge:'rgba(34,211,238,0.18)' };
+
+    // Sort: longest shift first, radiographers before radiologists within same shift
+    const sorted = Array.from(groups.values()).sort(function(a, b) {
+      if (b.shiftH !== a.shiftH) return b.shiftH - a.shiftH;
+      return (a.isRadiologist ? 1 : 0) - (b.isRadiologist ? 1 : 0);
+    });
+
+    // ── Ruler above bars ──
+    const nowD = nowDate instanceof Date ? nowDate : new Date(nowDate);
+    const nowH = nowD.getHours(), nowMin = nowD.getMinutes();
+    const nowLabel = String(nowH).padStart(2,'0') + ':' + String(nowMin).padStart(2,'0');
+    const scrubPctR = Math.max(0, Math.min(100, (nowMs - axisStartMs) / axisDur * 100));
+    // Fixed ticks at axis anchors (08,14,20,02,08)
+    const axisD0 = new Date(axisStartMs); axisD0.setHours(0,0,0,0);
+    const tickAnchors = [[0,8],[0,14],[0,20],[1,2],[1,8]];
+    let rulerTicks = '';
+    tickAnchors.forEach(function(pair, i) {
+      const t = new Date(axisD0.getTime());
+      t.setDate(t.getDate() + pair[0]);
+      t.setHours(pair[1], 0, 0, 0);
+      const tMs = t.getTime();
+      if (tMs < axisStartMs || tMs > axisEndMs) return;
+      const lpNum = (tMs - axisStartMs) / axisDur * 100;
+      const lp = lpNum.toFixed(2);
+      const xf = i === 0 ? 'translateX(0)' : (tMs === axisEndMs ? 'translateX(-100%)' : 'translateX(-50%)');
+      const isSun = pair[1] === 14, isMoon = pair[1] === 2;
+      // Hide tick if current-time pill overlaps it (~4% threshold ≈ ~1h)
+      const hidden = Math.abs(lpNum - scrubPctR) < 4.2;
+      rulerTicks += '<span class="sl-rtick' + (isSun?' sl-rtick-sun':'') + (isMoon?' sl-rtick-moon':'') + (hidden?' sl-rtick-hidden':'') + '" style="left:' + lp + '%;transform:' + xf + '">' + String(pair[1]).padStart(2,'0') + ':00</span>';
+    });
+    // Elapsed / remaining strip
+    var _elMs = Math.max(0, nowMs - axisStartMs);
+    var _reMs = Math.max(0, axisEndMs - nowMs);
+    var _elStr = String(Math.floor(_elMs/3600000)).padStart(2,'0') + ':' + String(Math.floor((_elMs%3600000)/60000)).padStart(2,'0');
+    var _reH = Math.floor(_reMs/3600000), _reM = Math.floor((_reMs%3600000)/60000), _reS = Math.floor((_reMs%60000)/1000);
+    var _reStr = String(_reH).padStart(2,'0') + ':' + String(_reM).padStart(2,'0') + ':' + String(_reS).padStart(2,'0');
+    var _reColor = _reMs > 14400000 ? 'rgba(139,92,246,0.95)' : _reMs > 7200000 ? 'rgba(251,191,36,0.95)' : 'rgba(239,68,68,0.95)';
+
+    var _pctInt = Math.round(scrubPctR);
+    // % sits just left of the scrubber inside the elapsed zone
+    var _pctRight = 'calc(' + (100 - Math.max(6, scrubPctR)).toFixed(2) + '% + 6px)';
+    var html = '<div class="sl-ruler">' +
+      '<div class="sl-ruler-band">' +
+        '<div class="sl-tb-morning"></div><div class="sl-tb-day"></div><div class="sl-tb-evening"></div><div class="sl-tb-night"></div>' +
+        '<div class="sl-ruler-elapsed" style="width:' + scrubPctR.toFixed(2) + '%"></div>' +
+        '<div class="sl-ruler-future" style="left:' + scrubPctR.toFixed(2) + '%"></div>' +
+      '</div>' +
+      '<span class="sl-ruler-pct" style="right:' + _pctRight + '">' + _pctInt + '%</span>' +
+      rulerTicks +
+      '<span class="sl-ruler-now" style="left:' + scrubPctR.toFixed(2) + '%;transform:translateX(' + (scrubPctR < 5 ? '0' : scrubPctR > 95 ? '-100%' : '-50%') + ')">' + nowLabel + '</span>' +
+    '</div>';
+
+    var _timesStrip = '<div class="sl-times-strip">' +
+      '<span id="sl-ns-slot" class="sl-ns-slot"></span>' +
+      '<span class="sl-ts-label">PAGĀJIS</span><strong class="sl-ts-val">' + _elStr + '</strong>' +
+      '<span class="sl-ts-sep"></span>' +
+      '<span class="sl-ts-label">ATLIKUŠAS</span><strong class="sl-ts-val sl-ts-rem" style="color:' + _reColor + '">' + _reStr + '</strong>' +
+    '</div>';
+
+    // Night split overlay bar (shown when 🌙 is active)
+    if (nsOverlay) {
+      html += buildNightSplitLaneHtml(nsOverlay, nowMs);
+      html += buildCircadianChartHtml(axisStartMs, axisEndMs, nowMs);
+    } else {
+      html += '<div class="sl-bars-wrap">';
+      sorted.forEach(function(g) {
+        const col = (g.isRadiologist ? COL_RAD[g.shiftH] || DEF_RAD : COL_RG[g.shiftH] || DEF_RG);
+        const laneStartMs = g.start instanceof Date ? g.start.getTime() : g.start;
+        const laneEndMs   = g.end   instanceof Date ? g.end.getTime()   : g.end;
+        const laneDur  = Math.max(1, laneEndMs - laneStartMs);
+        const elapsed  = Math.max(0, nowMs - laneStartMs);
+        const pct      = Math.max(0, Math.min(100, elapsed / laneDur * 100));
+        const leftPct  = Math.max(0, (laneStartMs - axisStartMs) / axisDur * 100);
+        const widthPct = Math.min(100 - leftPct, laneDur / axisDur * 100);
+
+        const badge = g.shiftH + 'H';
+        const chips = g.workers.map(function(w) {
+          const parts = String(w.name || '').trim().split(/\s+/);
+          const init  = ((parts[0] || '').charAt(0) + (parts[1] || '').charAt(0)).toUpperCase();
+          const first = escapeHtml(normalizeLvName(parts[0] || w.name || ''));
+          const emoji = w.emoji ? '<span class="swc-emoji">' + w.emoji + '</span>' : '';
+          return '<span class="swc">' +
+            '<span class="swc-init" style="color:' + col.ink + ';">' + escapeHtml(init) + '</span>' +
+            '<span class="swc-name">' + first + '</span>' +
+            emoji + '</span>';
+        }).join('<span class="swc-dot">·</span>');
+
+        html += '<div class="sl" style="margin-left:' + leftPct.toFixed(2) + '%;width:' + widthPct.toFixed(2) + '%;background:' + col.bg + ';border-color:' + col.border + ';">' +
+            '<div class="sl-fill" style="width:' + pct.toFixed(1) + '%;background:' + col.fill + ';"></div>' +
+            '<div class="sl-row">' +
+              '<span class="sl-badge" style="background:' + col.badge + ';color:' + col.ink + ';">' + badge + '</span>' +
+              '<span class="sl-workers">' + chips + '</span>' +
+              '<span class="sl-pct" style="color:' + col.ink + ';">' + Math.round(pct) + '%</span>' +
+            '</div>' +
+          '</div>';
+      });
+
+      // Shared scrubber line across all lanes
+      const scrubPct = Math.max(0, Math.min(100, (nowMs - axisStartMs) / axisDur * 100));
+      html += '<div class="sl-scrubber" style="left:' + scrubPct.toFixed(2) + '%;"></div>';
+      html += '</div>'; // close sl-bars-wrap
+    }
+
+    // Only show elapsed/remaining for today
+    var _isToday = !activeDateStr || !g_todayStr || activeDateStr === g_todayStr;
+    if (_isToday) html += _timesStrip;
+
+    // Rescue the button from wrap BEFORE innerHTML destroys it
+    var _nsBtn = document.getElementById('ns-bar-toggle');
+    if (_nsBtn && wrap.contains(_nsBtn)) {
+      var _nsBtnRow = document.querySelector('.ns-btn-row');
+      if (_nsBtnRow) _nsBtnRow.appendChild(_nsBtn);
+    }
+    wrap.innerHTML = html;
+
+    // Re-slot the button into today's strip (keeps its event listener alive)
+    var _nsSlot = wrap.querySelector('#sl-ns-slot');
+    if (_nsSlot && _nsBtn) _nsSlot.appendChild(_nsBtn);
+
   }
 
   function g_formatDate(date) { 
