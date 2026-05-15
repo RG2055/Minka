@@ -2336,7 +2336,10 @@ function closeFullListModal() {
           _day.workers.forEach(function(_w) {
             if (!_w.startTime || !_w.endTime) return;
             const [_wh, _wm] = _w.startTime.split(':').map(Number);
-            const _wStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), _wh, _wm, 0);
+            // Use g_todayStr date, not now.getDate() — avoids midnight date-rollover bug
+            // where now is already May 16 00:xx but duty date is still May 15
+            const _tdp = g_todayStr.split('.');
+            const _wStart = new Date(+_tdp[2], +_tdp[1]-1, +_tdp[0], _wh, _wm, 0);
             const _wEnd = getShiftEnd(_w, g_todayStr);
             if (!_wEnd) return;
             // Skip workers whose shift is currently active (already in activeStops)
