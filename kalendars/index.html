@@ -382,10 +382,26 @@ body.stars-active #stars-overlay{display:block;}
       <div id="minkaBarInner">
         <img id="minkaLogo" src="../data/rg-any-192.png" alt="RG">
         <div id="minkaBarInput" role="textbox" tabindex="0" spellcheck="false" 
-             contenteditable="false" data-ph="Grafika jautājums? Raksti ?"></div>
+             contenteditable="false" data-ph="Sestdiena, 16.05.2026"></div>
         <div id="minkaBarHint"></div>
         <div id="minkaBarPill"></div>
         <button id="minkaBarClear" aria-label="Dzēst">×</button>
+        <!-- ── Bar info: weather · moon · nameday | news ticker ── -->
+        <div class="mk-bar-sep" aria-hidden="true"></div>
+        <div class="mk-info-group" id="mkInfoGroup">
+          <span id="mkMoonChip"    class="mk-info-chip"></span>
+          <span id="mkTempChip"    class="mk-info-chip"></span>
+          <span id="mkNamedayBar"  class="mk-info-chip mk-nameday-bar" hidden></span>
+        </div>
+        <div class="mk-bar-sep" aria-hidden="true"></div>
+        <div class="mk-ticker-wrap" id="mkTickerWrap">
+          <div class="mk-ticker-label"><span class="mk-pulse"></span>Ziņas</div>
+          <div class="mk-ticker-scroll">
+            <div class="mk-ticker-fade-l"></div>
+            <div class="mk-ticker-fade-r"></div>
+            <div class="mk-ticker-track" id="mkTickerTrack"></div>
+          </div>
+        </div>
         <button id="minkaBarMenu" onclick="toggleFullListModal(event)" title="Viss saraksts">
           <span class="material-icons-round">menu</span>
         </button>
@@ -403,7 +419,7 @@ body.stars-active #stars-overlay{display:block;}
       </div>
     </div>
     <!-- ï¿½ï¿½ï¿½ï¿½ NAMEDAY CHIP ï¿½ï¿½ï¿½ï¿½ -->
-    <div id="minkaNamedayChip" style="display:flex">
+    <div id="minkaNamedayChip" style="display:none">
       <span id="minkaNamedayChipIcon">📅</span>
       <span id="minkaNamedayChipText">Ielādē...</span>
     </div>
@@ -492,7 +508,7 @@ body.stars-active #stars-overlay{display:block;}
     </div>
   </div>
   <!-- Mini calendar popup ï¿½ at app level so overflow:hidden doesn't clip it -->
-  <div id="miniCalPopup" style="display:none;position:absolute;z-index:9000;background:rgba(10,9,22,0.97);border:1px solid rgba(183,123,255,0.35);border-radius:16px;padding:16px;backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);box-shadow:0 20px 50px rgba(0,0,0,0.7);min-width:272px;"></div>
+  <div id="miniCalPopup" style="display:none;position:absolute;z-index:9000;background:rgba(10,9,22,0.97);border:1px solid rgba(56,189,248,0.30);border-radius:16px;padding:16px;backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);box-shadow:0 20px 50px rgba(0,0,0,0.7);min-width:272px;"></div>
 </div>
 
 
@@ -1109,28 +1125,41 @@ document.addEventListener('keydown', (e) => {
     if (_ac && _ac.state === 'suspended') _ac.resume().catch(()=>{});
     return _ac;
   }
-  function beep(freq, dur, vol, type) {
+  // Modern soft chime: two sine waves + gentle gain envelope
+  function chime(notes, vol) {
     if (__minkaMuted) return;
     const c = ac(); if (!c) return;
     try {
-      const o = c.createOscillator(), g = c.createGain();
-      o.connect(g); g.connect(c.destination);
-      o.type = type||'sine'; o.frequency.value = freq;
-      g.gain.setValueAtTime(0, c.currentTime);
-      g.gain.linearRampToValueAtTime(vol||0.05, c.currentTime + 0.008);
-      g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
-      o.start(); o.stop(c.currentTime + dur + 0.01);
+      const master = c.createGain();
+      master.gain.setValueAtTime(0, c.currentTime);
+      master.gain.linearRampToValueAtTime(vol || 0.04, c.currentTime + 0.012);
+      master.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + (notes[0][1] || 0.18));
+      master.connect(c.destination);
+      notes.forEach(([freq, dur], i) => {
+        setTimeout(() => {
+          if (__minkaMuted) return;
+          try {
+            const o = c.createOscillator(), g = c.createGain();
+            o.type = 'sine'; o.frequency.value = freq;
+            g.gain.setValueAtTime(0, c.currentTime);
+            g.gain.linearRampToValueAtTime(1, c.currentTime + 0.01);
+            g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
+            o.connect(g); g.connect(master);
+            o.start(); o.stop(c.currentTime + dur + 0.02);
+          } catch(e) {}
+        }, i * 55);
+      });
     } catch(e) {}
   }
   const snd = {
-    click:  () => beep(520, 0.07, 0.05),
-    nav:    () => beep(420, 0.08, 0.04),
-    open:   () => beep(380, 0.12, 0.04),
-    close:  () => beep(280, 0.10, 0.04),
-    type:   () => beep(700 + Math.random()*200, 0.035, 0.018, 'triangle'),
-    ai:     () => { beep(480, 0.08, 0.04); setTimeout(()=>beep(640, 0.10, 0.03), 80); },
-    warn:   () => { beep(360, 0.14, 0.06); setTimeout(()=>beep(300, 0.18, 0.05), 120); },
-    news:   () => beep(500, 0.07, 0.03),
+    click:  () => chime([[1047, 0.10], [1319, 0.08]], 0.035),          // C6→E6 soft tap
+    nav:    () => chime([[880, 0.10], [1109, 0.09]], 0.030),           // A5→C#6
+    open:   () => chime([[659, 0.14], [880, 0.12], [1047, 0.10]], 0.032), // E5→A5→C6 open chord
+    close:  () => chime([[1047, 0.10], [784, 0.12]], 0.028),           // C6→G5 descend
+    type:   () => chime([[1319 + Math.random()*220, 0.04]], 0.012),    // random high tap
+    ai:     () => chime([[523, 0.08], [659, 0.10], [784, 0.12]], 0.030), // C5→E5→G5 arpeggio
+    warn:   () => chime([[392, 0.16], [349, 0.18]], 0.045),            // G4→F4 descending warn
+    news:   () => chime([[1047, 0.07], [1175, 0.09]], 0.022),          // C6→D6 gentle ping
   };
 
   /* ï¿½ï¿½ï¿½ï¿½ Global click sounds ï¿½ï¿½ï¿½ï¿½ */
@@ -1203,29 +1232,27 @@ document.addEventListener('keydown', (e) => {
   }
 
   /* ï¿½ï¿½ï¿½ï¿½ Hint animation ï¿½ï¿½ï¿½ï¿½ */
-  function typeHint(text) {
-    clearTimeout(_hintTimer); clearTimeout(_hintErase);
-    let i = 0; hint.textContent = '';
-    (function tick() {
-      if (_text || document.activeElement === input) return;
-      if (i < text.length) { hint.textContent = text.slice(0, ++i); _hintTimer = setTimeout(tick, 30 + Math.random()*15); }
-    })();
-  }
-  function eraseHint(cb) {
-    clearTimeout(_hintTimer);
-    (function tick() {
-      if (hint.textContent.length > 0) { hint.textContent = hint.textContent.slice(0,-1); _hintErase = setTimeout(tick, 12); }
-      else if (cb) cb();
-    })();
-  }
+  /* Static hint — no typewriter animation */
+  const _dn2 = ['Svētdiena','Pirmdiena','Otrdiena','Trešdiena','Ceturtdiena','Piektdiena','Sestdiena'];
+  const _d2  = new Date();
+  const _staticHint = _dn2[_d2.getDay()] + ', '
+    + String(_d2.getDate()).padStart(2,'0') + '.'
+    + String(_d2.getMonth()+1).padStart(2,'0') + '.'
+    + _d2.getFullYear();
+  const _searchIcon = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
+
+  function typeHint()  { /* disabled — static only */ }
+  function eraseHint(cb) { if (cb) cb(); }
   function startHints() {
-    typeHint(HINTS[0]);
-    _hintTimer = setInterval(() => eraseHint(() => {
-      _hintIdx = (_hintIdx+1) % HINTS.length;
-      setTimeout(() => { if (!_text) typeHint(HINTS[_hintIdx]); }, 320);
-    }), 5200);
+    if (_text) return;
+    hint.innerHTML = _searchIcon + '<span>' + _staticHint + '</span>';
+    hint.style.opacity = '1';
+    hint.style.visibility = 'visible';
   }
-  function stopHints() { clearInterval(_hintTimer); clearTimeout(_hintErase); hint.textContent = ''; }
+  function stopHints() {
+    hint.style.opacity = '0';
+    hint.style.visibility = 'hidden';
+  }
 
   /* ï¿½ï¿½ï¿½ï¿½ Input handling (contenteditable) ï¿½ï¿½ï¿½ï¿½ */
   function getText() { return input.textContent.trim(); }
@@ -1236,8 +1263,11 @@ document.addEventListener('keydown', (e) => {
     bar.classList.remove('focused');
     if (!_text) { startHints(); setMode('idle'); setTimeout(drainMsgs, 1500); }
   });
+  /* Kill hint on first keydown — fires BEFORE any character is inserted */
+  input.addEventListener('keydown', () => { stopHints(); }, { capture: true, passive: true });
 
   input.addEventListener('input', () => {
+    stopHints(); // belt-and-suspenders: hide on every input event too
     _text = getText();
     updateState();
     clearTimeout(_aiDebounce);
@@ -1561,6 +1591,13 @@ Tu vari atbildēt uz: "Kurš ir visvairāk noguris?", "Vai kāds ir riskā?", "K
     }
 
     const mode = item && item.mode ? item.mode : 'info';
+
+    // These modes are now displayed inside the main bar (ticker, chips) — skip the panel.
+    if (mode === 'info' || mode === 'weather' || mode === 'news') {
+      _msgBusy = false;
+      setTimeout(drainMsgs, 0);
+      return;
+    }
     const link = item && item.link ? item.link : '';
     const token = ++_msgRunToken;
 
@@ -1648,6 +1685,8 @@ Tu vari atbildēt uz: "Kurš ir visvairāk noguris?", "Vai kāds ir riskā?", "K
       const wind = Math.round((w?.wind?.speed||0)*10)/10;
       function fmt(ts){ const d=new Date(ts*1000); return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0'); }
       _weatherData = {desc, t, tf, wind, sr:w?.sys?.sunrise?fmt(w.sys.sunrise):'—', ss:w?.sys?.sunset?fmt(w.sys.sunset):'—'};
+      window.__mkBarWeatherData = _weatherData;
+      if (typeof window.mkBarRefresh === 'function') window.mkBarRefresh();
     } catch(e) {}
   }
 
@@ -1662,12 +1701,8 @@ Tu vari atbildēt uz: "Kurš ir visvairāk noguris?", "Vai kāds ir riskā?", "K
       .catch(() => []);
   }
   async function fetchNews() {
-    try {
-      const keys = Object.keys(FEEDS);
-      const results = await Promise.all(keys.map(k => fetchRSS(FEEDS[k])));
-      _newsItems = keys.map((k,i) => ({key:k, cat:FEEDS_LABELS[k]||k, items:results[i]})).filter(x=>x.items.length>0);
-      keys.forEach(k => { if(!(_newsFeedIdx[k]>=0)) _newsFeedIdx[k]=0; });
-    } catch(e) {}
+    // News ticker is now fed by v34 refreshNews() → window.mkTickerFeed()
+    // This stub exists only for legacy callers (e.g. the proactive interval)
   }
   let _newsFeedRobin = 0;
   let _lastNewsLink = '';
@@ -2119,16 +2154,7 @@ function getTauriInvoke(){
       return null;
     }
   const text = (info.isToday ? 'Šodien vārdadienu svin ' : 'Šajā dienā vārdadienu svin ') + (names.length > 1 ? names.slice(0,-1).join(', ') + ' un ' + names[names.length-1] : names[0]) + '.';
-    // Update nameday chip
-    try {
-      const chip = document.getElementById('minkaNamedayChip');
-      const chipTxt = document.getElementById('minkaNamedayChipText');
-      const panelOpen = !!(aiPanel && aiPanel.classList.contains('open'));
-      if (chip && chipTxt && !panelOpen) {
-  chipTxt.innerHTML = (info.isToday ? 'Vārdadiena: ' : 'Šajā dienā: ') + names.map(n => `<strong>${n.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</strong>`).join(', ');
-        chip.style.display = 'flex';
-      }
-    } catch(e){}
+    // Nameday chip suppressed — nameday now shown in #mkNamedayBar inside the main bar
     return { text, sig: (info.dateStr || info.key || 'today') + '|' + text };
   }
   window.isUiNavigationBusy = window.isUiNavigationBusy || function(){
@@ -2178,7 +2204,11 @@ function getTauriInvoke(){
     return moonPhaseInfo(d.year, d.month, d.day);
   }
   window.currentMoon = currentMoon;
-  window.addEventListener('daySelected', function(){ syncMoon(); });
+  window.addEventListener('daySelected', function(){
+    syncMoon();
+    // Refresh moon chip when day changes
+    if (typeof window.mkBarRefresh === 'function') window.mkBarRefresh();
+  });
 
   async function refreshWeather(){
     if (weatherBusy) return;
@@ -2197,6 +2227,11 @@ function getTauriInvoke(){
         wind,
         sig: [normalizeDesc(raw), temp, feels, wind].join('|')
       };
+      // Feed bar chip + rebuild ticker so weather item appears
+      window.__mkBarWeatherData = { t: weatherCache.temp, desc: weatherCache.desc, wind: weatherCache.wind };
+      if (typeof window.mkBarRefresh === 'function') window.mkBarRefresh();
+      // Rebuild ticker with updated weather prepended (pass current newsCache)
+      if (typeof window.mkTickerFeed === 'function') window.mkTickerFeed(newsCache);
     } catch(_e) {}
     weatherBusy = false;
   }
@@ -2227,6 +2262,7 @@ async function refreshNews(){
         .filter(it => it.text && it.text.length > 8);
       newsIdx = 0;
       if (!newsCache.length) console.warn('[Minka] Tauri news cache empty');
+      if (typeof window.mkTickerFeed === 'function') window.mkTickerFeed(newsCache);
       newsBusy = false;
       return;
     }
@@ -2255,6 +2291,8 @@ async function refreshNews(){
     newsCache = chunks.flat().sort((a,b) => (b.pub || 0) - (a.pub || 0)).slice(0, 12);
     newsIdx = 0;
     if (!newsCache.length) console.warn('[Minka] News cache empty after refresh');
+    // Feed bar ticker
+    if (typeof window.mkTickerFeed === 'function') window.mkTickerFeed(newsCache);
   } catch(e) {
     console.warn('[Minka] refreshNews failed', e);
   }
@@ -2459,6 +2497,194 @@ function nextNews(){
   // Note: click on .day-btn triggers g_selectDay ï¿½  daySelected event ï¿½  forceSelectedDayNameday
   // No need for separate click handler which would fire without correct event.detail
 })();
+
+/* ── Bar info chips + news carousel ── */
+(function() {
+  function pad2(n) { return String(n).padStart(2,'0'); }
+
+  /* Fade-swap a chip's text */
+  function chipSet(el, text) {
+    if (!el || el.textContent === text) return;
+    el.style.transition = 'opacity 0.28s ease, transform 0.28s ease';
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(5px)';
+    setTimeout(function() {
+      el.textContent = text;
+      el.style.opacity = '';
+      el.style.transform = '';
+    }, 200);
+  }
+
+  /* Moon + weather refresh */
+  window.mkBarRefresh = function() {
+    var moon = (typeof window.currentMoon === 'function') ? window.currentMoon() : null;
+    /* Show emoji + illumination % */
+    chipSet(document.getElementById('mkMoonChip'), moon ? moon.icon + ' ' + moon.illum + '%' : '');
+    var wd = window.__mkBarWeatherData;
+    chipSet(document.getElementById('mkTempChip'), wd ? wd.t + '°C' : '');
+  };
+
+  /* Nameday for a date string DD.MM.YYYY */
+  window.mkBarNameday = function(dateStr) {
+    var chip = document.getElementById('mkNamedayBar');
+    if (!chip) return;
+    var db = window.LATVIAN_NAMEDAYS;
+    if (!db || !dateStr) { chip.hidden = true; return; }
+    var m = String(dateStr).match(/^(\d{1,2})\.(\d{1,2})/);
+    if (!m) { chip.hidden = true; return; }
+    var key = pad2(+m[2]) + '-' + pad2(+m[1]);
+    var names = (db[key] || []).filter(function(n) {
+      return n && n.trim() && n !== '–' && n !== '-';
+    });
+    if (!names.length) { chip.hidden = true; return; }
+    /* Names separated by commas */
+    var text = names.join(', ');
+    if (chip.hidden) {
+      chip.hidden = false;
+      chip.style.opacity = '0'; chip.style.transform = 'translateY(5px)';
+      chip.style.transition = 'opacity 0.28s ease, transform 0.28s ease';
+      setTimeout(function() { chip.textContent = text; chip.style.opacity = ''; chip.style.transform = ''; }, 60);
+    } else if (chip.textContent !== text) {
+      chipSet(chip, text);
+    }
+  };
+
+  /* ── News continuous marquee ── */
+  /* Category → CSS class map */
+  var CAT_CLASS = {
+    'latvija':'latvija','rīga':'riga','riga':'riga',
+    'veselība':'veseliba','veseliba':'veseliba',
+    'sports':'sports','hokejs':'hokejs',
+    'politika':'politika','kultūra':'kultura','kultura':'kultura',
+    'ekonomika':'ekonomika','bizness':'ekonomika',
+    'laiks':'laiks','laiks':'laiks'
+  };
+  function catClass(cat) {
+    return 'mk-cat-' + (CAT_CLASS[String(cat||'').toLowerCase()] || 'default');
+  }
+  function fmtPub(ts) {
+    if (!ts) return '';
+    var d = new Date(ts);
+    if (isNaN(d)) return '';
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+
+  /* Static fallback shown until live data arrives */
+  var FALLBACK_ITEMS = [
+    { cat: 'Latvija', text: 'Ielādē jaunākās ziņas no LSM…', link: '', time: '' },
+    { cat: 'Laiks',   text: 'Iegūst laika apstākļus Rīgai…', link: '', time: '' },
+    { cat: 'Sports',  text: 'Sporta jaunumi tiek ielādēti…', link: '', time: '' },
+  ];
+
+  window.mkTickerFeed = function(newsItems) {
+    var track = document.getElementById('mkTickerTrack');
+    if (!track) return;
+
+    var items = [];
+
+    /* Weather item first */
+    var wd = window.__mkBarWeatherData;
+    if (wd && wd.desc && wd.t !== undefined) {
+      var moon = (typeof window.currentMoon === 'function') ? window.currentMoon() : null;
+      var wText = 'Rīgā ' + wd.desc + ' · ' + wd.t + '°C'
+        + (wd.wind ? ' · vējš ' + wd.wind + ' m/s' : '')
+        + (moon ? ' · ' + moon.icon + ' ' + moon.name : '');
+      items.push({ cat: 'Laiks', text: wText, link: '', time: '' });
+    }
+
+    /* News items from v34 cache — format: "Category: headline" */
+    (newsItems || []).forEach(function(d) {
+      var raw = String(d.text || '');
+      var colon = raw.indexOf(': ');
+      var cat = colon > 0 ? raw.slice(0, colon) : '';
+      var headline = colon > 0 ? raw.slice(colon + 2) : raw;
+      headline = headline.replace(/^[•·●◦\s\-–]+/, '').trim();
+      if (headline) items.push({ cat: cat, text: headline, link: d.link || '', time: fmtPub(d.pub) });
+    });
+
+    /* If nothing loaded yet, keep fallback visible */
+    if (!items.length) items = FALLBACK_ITEMS;
+
+    /* Render one item as HTML string */
+    function renderItem(d) {
+      var esc = String(d.link || '').replace(/"/g,'&quot;');
+      var open = '<span class="mk-news-item"' + (d.link ? ' data-href="' + esc + '"' : '') + '>';
+      var time = d.time ? '<span class="mk-tick-time">' + d.time + '</span>' : '';
+      var badge = d.cat ? '<span class="mk-ticker-cat ' + catClass(d.cat) + '">' + d.cat + '</span>' : '';
+      var text = '<span class="mk-news-headline">' + d.text + '</span>';
+      return open + time + badge + text + '</span>';
+    }
+
+    /* Duplicate for seamless CSS loop */
+    var half = items.map(renderItem).join('');
+    track.innerHTML = half + half;
+
+    /* Click to open news link — no hover-pause, ticker runs continuously */
+    if (!track._mkEvt) {
+      track._mkEvt = true;
+      track.addEventListener('click', function(e) {
+        var t = e.target.closest('[data-href]');
+        if (t && t.dataset.href) window.open(t.dataset.href, '_blank', 'noopener');
+      });
+    }
+  };
+
+  /* ── JS marquee loop — GPU transform, truly infinite, immune to mk-low-spec CSS ── */
+  (function startMarquee() {
+    var SPEED  = 48;   /* px/s — slow, easy to read */
+    var x      = 0;
+    var last   = null;
+    var paused = false;
+
+    /* Pause on hover — attach to the static wrapper, not the moving track */
+    var wrap = document.getElementById('mkTickerWrap');
+    if (wrap) {
+      wrap.addEventListener('mouseenter', function() { paused = true;  }, { passive: true });
+      wrap.addEventListener('mouseleave', function() { paused = false; }, { passive: true });
+    }
+
+    function tick(ts) {
+      if (last === null) last = ts;
+      var dt = Math.min(ts - last, 100) / 1000; /* cap so tab-switch can't jump */
+      last = ts;
+
+      if (!paused) {
+        var track = document.getElementById('mkTickerTrack');
+        if (track) {
+          var half = track.scrollWidth / 2;
+          if (half > 10) {
+            x -= SPEED * dt;
+            if (x <= -half) x += half;
+            track.style.transform = 'translateX(' + x + 'px)';
+          }
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  })();
+
+  /* Seed ticker immediately so it's never blank on load */
+  window.mkTickerFeed([]);
+
+  /* Events */
+  window.addEventListener('daySelected', function(e) {
+    window.mkBarRefresh();
+    var date = e && e.detail && e.detail.date ? e.detail.date : (window.__activeDateStr || '');
+    window.mkBarNameday(date);
+  });
+  document.addEventListener('minka:storeReady', function() {
+    setTimeout(window.mkBarRefresh, 300);
+    window.mkBarNameday(window.__g_todayStr || '');
+  });
+  /* Fallback: try after 2s regardless */
+  setTimeout(function() {
+    window.mkBarRefresh();
+    var ds = window.__activeDateStr || window.__g_todayStr || '';
+    window.mkBarNameday(ds);
+  }, 2000);
+})();
+
 </script>
 
 
@@ -2466,9 +2692,9 @@ function nextNews(){
 /* v35 search polish */
 #minkaResults .search-item.is-active,
 #minkaResults .list-item.is-active {
-  border-color: rgba(183,123,255,0.38) !important;
-  background: rgba(183,123,255,0.12) !important;
-  box-shadow: 0 0 0 1px rgba(183,123,255,0.08) inset;
+  border-color: rgba(56,189,248,0.38) !important;
+  background: rgba(56,189,248,0.08) !important;
+  box-shadow: 0 0 0 1px rgba(56,189,248,0.08) inset;
 }
 #minkaResults .search-hint-row {
   padding: 8px 12px 10px;
@@ -2839,18 +3065,8 @@ function nextNews(){
   const MODE_ICONS = { 'LAIKS':'🌤', 'NOGURUMS':'⚠️', 'ZIŅAS':'📰', 'MINKA':'✦', 'MINKA AI':'✦', 'AI':'✦', 'TOP':'🏆', 'BOLUS':'💉' };
 
     function syncToChip() {
-      const open = aiPanel.classList.contains('open');
-      const _clone = aiText ? aiText.cloneNode(true) : null;
-      if (_clone) { const _c = _clone.querySelector('#minkaAiCaret'); if (_c) _c.remove(); }
-      const txt  = (_clone && _clone.innerHTML || '').replace(/\s+/g,' ').trim();
-      const mode = (aiMode  && aiMode.textContent   || 'MINKA').trim();
-      if (open && txt) {
-        chipIcon.textContent = MODE_ICONS[mode] || '✦';
-        chipText.innerHTML   = txt;
-        chip.style.display   = 'flex';
-        chip.setAttribute('data-mode', mode.toLowerCase().replace(' ',''));
-      }
-      // If panel closed but chip has nameday content ï¿½ keep it (set by buildNameday)
+      // Nameday chip suppressed — info now displayed inside the main bar
+      if (chip) chip.style.display = 'none';
     }
 
     // Watch panel open/close and text changes
@@ -3070,14 +3286,12 @@ window.addEventListener('message', function(e) {
         if (typeof window.g_adjustDutyNameFontSize === 'function') window.g_adjustDutyNameFontSize();
       } catch (_e) {}
       try {
-  barInput.setAttribute('data-ph', 'Meklē darbinieku, nodaļu vai numuru');
+  /* data-ph managed by startHints() */
         if (list) list.style.minHeight = '0';
       } catch (_e) {}
       syncSidePanels();
     }
-    if (barInput) {
-      barInput.setAttribute('data-ph', 'Mekle darbinieku, nodalu vai numuru');
-    }
+    /* data-ph managed by startHints() */
     if (chipIcon) {
       chipIcon.textContent = '';
       chipIcon.setAttribute('aria-hidden', 'true');
@@ -3168,6 +3382,7 @@ window.addEventListener('message', function(e) {
 .main-panel {
   z-index: 2 !important;
   overflow: hidden !important;
+  padding-top: 4px !important;
 }
 .main-panel.mk-search-open::before {
   content: "" !important;
@@ -3205,6 +3420,8 @@ window.addEventListener('message', function(e) {
 }
 .top-row {
   z-index: 2 !important;
+  margin-top: 6px !important;
+  padding-top: 0 !important;
 }
 #minkaNamedayChip {
   max-width: calc(100% - 24px) !important;
@@ -3533,49 +3750,98 @@ window.addEventListener('message', function(e) {
   background: transparent !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  padding-top: 0 !important;
+  margin-top: 0 !important;
 }
 #minkaBarInner {
-  height: 40px !important;
-  padding: 0 12px !important;
+  height: 52px !important;
+  padding: 0 14px !important;
   border-radius: 999px !important;
-  background: #12141c !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04) !important;
+  background: #0f1218 !important;
+  border: 1px solid rgba(56,189,248,0.38) !important;
+  box-shadow:
+    0 0 0 1px rgba(56,189,248,0.10),
+    0 0 22px rgba(56,189,248,0.16),
+    inset 0 1px 0 rgba(255,255,255,0.04) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
+/* Kill every violet state bundle.css injects on the bar */
 #minkaBarInner:focus-within,
-#minkaBar.focused #minkaBarInner {
-  background: #151822 !important;
-  border-color: rgba(255,255,255,0.14) !important;
-  box-shadow: 0 0 0 3px rgba(255,255,255,0.04) !important;
+#minkaBar.focused #minkaBarInner,
+#minkaBar.ai-mode #minkaBarInner,
+#minkaBar.has-text #minkaBarInner {
+  background: #131820 !important;
+  border-color: rgba(56,189,248,0.50) !important;
+  box-shadow:
+    0 0 0 3px rgba(56,189,248,0.08),
+    0 0 20px rgba(56,189,248,0.16),
+    inset 0 1px 0 rgba(255,255,255,0.04) !important;
+  animation: none !important;
+}
+/* Kill violet pseudo-element overlays on bar */
+#minkaBarInner::before,
+#minkaBarInner::after,
+#minkaBar.ai-mode #minkaBarInner::before,
+#minkaBar.ai-mode #minkaBarInner::after {
+  display: none !important;
+  content: none !important;
+  animation: none !important;
 }
 #minkaBarInput {
-  font-size: 14px !important;
+  font-size: 15px !important;
   font-weight: 500 !important;
   letter-spacing: -0.01em !important;
   color: rgba(255,255,255,0.92) !important;
+  caret-color: rgba(56,189,248,0.85) !important;
+  position: relative !important;
 }
-#minkaBarInput:empty::before {
-  color: rgba(255,255,255,0.34) !important;
-  font-weight: 500 !important;
-}
+/* Kill all pseudo-elements on input — no fake placeholders via CSS */
+#minkaBarInput::before, #minkaBarInput::after { display: none !important; }
 #minkaBarPill,
 #minkaBar.ai-mode #minkaBarPill,
+#minkaBarPill,
+#minkaBar.ai-mode #minkaBarPill,
+#minkaBar.has-text #minkaBarPill,
 #minkaBar.has-text:not(.ai-mode) #minkaBarPill {
   background: rgba(255,255,255,0.05) !important;
   color: rgba(255,255,255,0.68) !important;
   border: 1px solid rgba(255,255,255,0.08) !important;
   box-shadow: none !important;
 }
-#minkaBarMenu,
-#minkaBarMute,
+#minkaBarMenu {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  color: rgba(255,255,255,0.48) !important;
+  width: 36px !important; height: 36px !important;
+  min-width: 36px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  cursor: pointer !important;
+  transition: color .15s !important;
+}
+#minkaBarMenu:hover {
+  color: rgba(255,255,255,0.85) !important;
+  background: none !important;
+}
+#minkaBarMenu .material-icons-round {
+  font-size: 20px !important;
+  line-height: 1 !important;
+  display: block !important;
+}
 #minkaBarClear {
   background: rgba(255,255,255,0.04) !important;
   border: 1px solid rgba(255,255,255,0.07) !important;
   color: rgba(255,255,255,0.6) !important;
   box-shadow: none !important;
+  flex-shrink: 0 !important;
 }
+#minkaBarMute { display: none !important; }
 #minkaNamedayChip {
   min-height: 30px !important;
   padding: 0 12px !important;
@@ -3622,6 +3888,199 @@ window.addEventListener('message', function(e) {
 #minkaAiCaret {
   display: none !important;
 }
+
+/* ── Integrated news ticker inside minkaBarInner ── */
+/* Logo gone → input gets a bit more room */
+#minkaBarInner #minkaBarInput {
+  flex: 0 0 auto !important;
+  width: 220px !important;
+  min-width: 140px !important;
+  max-width: 220px !important;
+  transition: width .22s ease, max-width .22s ease !important;
+}
+/* Expand input when focused/searching, collapse ticker */
+#minkaBar.focused #minkaBarInner #minkaBarInput,
+#minkaBar.has-text #minkaBarInner #minkaBarInput {
+  width: clamp(200px, 40vw, 420px) !important;
+  max-width: clamp(200px, 40vw, 420px) !important;
+}
+#minkaBar.focused .mk-ticker-wrap,
+#minkaBar.has-text .mk-ticker-wrap {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  flex: 0 0 0 !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+.mk-bar-sep {
+  width: 1px; height: 28px; flex-shrink: 0;
+  background: linear-gradient(180deg,
+    transparent 0%, rgba(255,255,255,0.12) 25%,
+    rgba(255,255,255,0.12) 75%, transparent 100%);
+  margin: 0 4px;
+  transition: opacity .22s ease;
+}
+#minkaBar.focused .mk-bar-sep,
+#minkaBar.has-text .mk-bar-sep {
+  opacity: 0 !important;
+  flex: 0 0 0 !important;
+}
+.mk-ticker-wrap {
+  flex: 1 1 0; min-width: 0;
+  display: flex; align-items: center;
+  height: 100%; overflow: hidden;
+  transition: opacity .22s ease, flex .22s ease;
+}
+.mk-ticker-label {
+  flex-shrink: 0;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 0 10px 0 6px;
+  font: 600 10px/1 'Space Grotesk', system-ui;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  color: rgba(239,68,68,0.88);
+}
+.mk-pulse {
+  width: 5px; height: 5px; border-radius: 999px;
+  flex-shrink: 0;
+  background: rgba(239,68,68,0.90);
+  box-shadow: 0 0 6px rgba(239,68,68,0.75);
+  animation: mk-pulse 1.4s ease-in-out infinite;
+}
+@keyframes mk-pulse {
+  0%,100% { opacity:1; transform:scale(1); }
+  50%      { opacity:0.35; transform:scale(0.78); }
+}
+/* ── Ticker area ── */
+#minkaBarPill  { display: none !important; }
+/* Hint: shown/hidden purely by JS — just fix its position and style */
+#minkaBarHint {
+  position: absolute !important;
+  left: 54px !important;
+  top: 0 !important; bottom: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font: 400 15px/1 'Space Grotesk', system-ui !important;
+  letter-spacing: -0.01em !important;
+  color: rgba(255,255,255,0.34) !important;
+  pointer-events: none !important;
+  white-space: nowrap !important;
+  z-index: 2 !important;
+  visibility: hidden;  /* JS overrides this via inline style */
+  opacity: 0;         /* JS overrides this via inline style */
+}
+#minkaBarHint svg {
+  flex-shrink: 0 !important;
+  color: rgba(56,189,248,0.85) !important;
+  stroke: rgba(56,189,248,0.85) !important;
+}
+.mk-ticker-label { display: none !important; }
+/* Logo: show it */
+#minkaLogo {
+  display: block !important;
+  width: 36px !important; height: 36px !important;
+  border-radius: 10px !important;
+  flex-shrink: 0 !important;
+  margin-left: 2px !important;
+  margin-right: 6px !important;
+  object-fit: cover !important;
+  opacity: 0.90 !important;
+}
+
+/* Continuous scrolling marquee */
+.mk-ticker-scroll {
+  position: relative; flex: 1; min-width: 0;
+  height: 100%; overflow: hidden;
+  display: flex; align-items: center;
+}
+#mkTickerTrack {
+  position: absolute; top: 0; left: 0; height: 100%;
+  display: inline-flex; align-items: center; gap: 0;
+  white-space: nowrap;
+  font: 400 14px/1 'Space Grotesk', system-ui;
+  letter-spacing: -0.006em;
+  color: rgba(255,255,255,0.82);
+  will-change: transform;
+  /* JS drives the transform — no CSS animation */
+}
+#mkTickerTrack:empty { opacity: 0; }
+/* Each news item */
+.mk-news-item {
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 0 28px 0 0;
+  cursor: default;
+}
+.mk-news-item[data-href] { cursor: pointer; }
+.mk-news-item:hover .mk-news-headline { color: rgba(255,255,255,0.98); }
+.mk-tick-time {
+  font: 500 11.5px/1 'Space Grotesk', ui-monospace, monospace;
+  color: rgba(255,255,255,0.32);
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+.mk-news-headline {
+  color: rgba(255,255,255,0.80);
+  transition: color 0.15s;
+}
+/* Category badges with colours */
+.mk-ticker-cat {
+  font: 700 10px/1 'Space Grotesk', system-ui;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 4px 8px; border-radius: 999px;
+  border: 1px solid; flex-shrink: 0;
+}
+.mk-cat-latvija   { color: rgba(251,191,36,0.90);  border-color: rgba(251,191,36,0.30); background: rgba(251,191,36,0.08); }
+.mk-cat-riga      { color: rgba(56,189,248,0.90);  border-color: rgba(56,189,248,0.30); background: rgba(56,189,248,0.08); }
+.mk-cat-veseliba  { color: rgba(74,222,128,0.90);  border-color: rgba(74,222,128,0.30); background: rgba(74,222,128,0.08); }
+.mk-cat-laiks     { color: rgba(125,211,252,0.90); border-color: rgba(125,211,252,0.28); background: rgba(125,211,252,0.07); }
+.mk-cat-sports    { color: rgba(251,146,60,0.90);  border-color: rgba(251,146,60,0.30); background: rgba(251,146,60,0.08); }
+.mk-cat-hokejs    { color: rgba(251,146,60,0.90);  border-color: rgba(251,146,60,0.30); background: rgba(251,146,60,0.08); }
+.mk-cat-politika  { color: rgba(248,113,113,0.90); border-color: rgba(248,113,113,0.30); background: rgba(248,113,113,0.08); }
+.mk-cat-kultura   { color: rgba(232,121,249,0.90); border-color: rgba(232,121,249,0.30); background: rgba(232,121,249,0.08); }
+.mk-cat-ekonomika { color: rgba(56,189,248,0.90);  border-color: rgba(56,189,248,0.30); background: rgba(56,189,248,0.08); }
+.mk-cat-default   { color: rgba(148,163,184,0.80); border-color: rgba(148,163,184,0.20); background: rgba(148,163,184,0.06); }
+/* Edge fades */
+.mk-ticker-fade-l, .mk-ticker-fade-r {
+  position: absolute; top: 0; bottom: 0; width: 32px;
+  z-index: 2; pointer-events: none;
+}
+.mk-ticker-fade-l { left:  0; background: linear-gradient(90deg,  #0f1218, transparent); }
+.mk-ticker-fade-r { right: 0; background: linear-gradient(-90deg, #0f1218, transparent); }
+
+/* ── Info group: moon · temp · nameday ── */
+.mk-info-group {
+  display: flex; align-items: center; gap: 6px;
+  flex-shrink: 0; padding: 0 6px;
+  transition: opacity .22s ease;
+}
+#minkaBar.focused .mk-info-group,
+#minkaBar.has-text .mk-info-group {
+  opacity: 0; pointer-events: none;
+}
+.mk-info-chip {
+  font: 500 13px/1 'Space Grotesk', system-ui;
+  color: rgba(255,255,255,0.62);
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+#mkMoonChip { font-size: 16px; line-height: 1; }
+#mkTempChip { color: rgba(125,211,252,0.75); }
+.mk-nameday-bar {
+  display: inline-flex; align-items: center;
+  font: 600 13px/1 'Space Grotesk', system-ui !important;
+  color: rgba(255,255,255,0.88) !important;
+  text-shadow: none !important;
+  background: none !important;
+  border-left: 1px solid rgba(56,189,248,0.22);
+  padding-left: 10px; margin-left: 4px;
+  max-width: 280px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  letter-spacing: -0.005em;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+/* Hide old chip below bar — content now lives in the bar itself */
+#minkaNamedayChip { display: none !important; }
 .top-row .view-btn {
   display: none !important;
 }
@@ -3820,7 +4279,7 @@ window.addEventListener('message', function(e) {
 .sl-ruler-elapsed {
   position: absolute;
   top: 0; bottom: 0; left: 0;
-  background: rgba(120,105,230,0.82);
+  background: rgba(56,189,248,0.65);
   pointer-events: none;
   z-index: 1;
 }
@@ -3856,7 +4315,7 @@ window.addEventListener('message', function(e) {
   transition: opacity .25s ease;
 }
 .sl-rtick-sun  { color: rgba(251,191,36,0.60) !important; }
-.sl-rtick-moon { color: rgba(167,139,250,0.55) !important; }
+.sl-rtick-moon { color: rgba(125,211,252,0.55) !important; }
 .sl-rtick-hidden { opacity: 0 !important; pointer-events: none !important; }
 .sl-ruler-now {
   position: absolute;
@@ -3880,7 +4339,7 @@ window.addEventListener('message', function(e) {
   border-radius: 10px;
   overflow: hidden;
   background: rgba(8,6,28,0.70);
-  border: 1px solid rgba(167,139,250,0.14);
+  border: 1px solid rgba(56,189,248,0.14);
 }
 .sl-circ-header {
   display: flex;
@@ -3893,7 +4352,7 @@ window.addEventListener('message', function(e) {
   color: rgba(255,255,255,0.45);
 }
 .sl-circ-tagad strong { color: rgba(255,255,255,0.88); font-size: 13px; }
-.sl-circ-atlik strong { color: rgba(139,92,246,0.95);  font-size: 13px; }
+.sl-circ-atlik strong { color: rgba(56,189,248,0.95);  font-size: 13px; }
 .sl-circ-chart svg {
   display: block;
   width: 100%;
@@ -3979,7 +4438,7 @@ window.addEventListener('message', function(e) {
 }
 .sl-ns-time.is-start { transform: translateX(0); }
 .sl-ns-time.is-end   { transform: translateX(-100%); }
-.sl-ns-time-moon     { color: rgba(167,139,250,0.75) !important; }
+.sl-ns-time-moon     { color: rgba(125,211,252,0.75) !important; }
 /* ── Shift lanes (grouped by shift type) ── */
 .shift-lanes-wrap {
   position: relative;
@@ -4182,7 +4641,7 @@ window.addEventListener('message', function(e) {
   overflow: visible !important;
 }
 .shift-bar-fill {
-  background: linear-gradient(90deg, #7c3aed 0%, #5b21b6 28%, #1e40af 62%, #0284c7 100%) !important;
+  background: linear-gradient(90deg, #0e7490 0%, #0284c7 30%, #38bdf8 65%, #7dd3fc 100%) !important;
   border-radius: inherit !important;
   box-shadow: 0 0 14px rgba(124,58,237,0.45) !important;
 }
@@ -4227,7 +4686,7 @@ window.addEventListener('message', function(e) {
   pointer-events: none !important;
 }
 .sbi-sun { filter: drop-shadow(0 0 5px rgba(251,191,36,0.7)) !important; }
-.sbi-moon { filter: drop-shadow(0 0 5px rgba(167,139,250,0.7)) !important; }
+.sbi-moon { filter: drop-shadow(0 0 5px rgba(125,211,252,0.65)) !important; }
 /* Time ruler below bar */
 .shift-bar-ruler {
   position: relative !important;
@@ -4247,7 +4706,7 @@ window.addEventListener('message', function(e) {
   line-height: 1 !important;
 }
 .sbt-tick-sun { color: rgba(251,191,36,0.55) !important; }
-.sbt-tick-moon { color: rgba(167,139,250,0.55) !important; }
+.sbt-tick-moon { color: rgba(125,211,252,0.55) !important; }
 /* Time tooltip pill floating above the scrubber */
 .shift-bar-tooltip {
   display: block !important;
@@ -4310,7 +4769,7 @@ window.addEventListener('message', function(e) {
 }
 .ns-bar-name.is-current {
   color: #fff !important;
-  text-shadow: 0 0 8px var(--ns-bar-color, #8b5cf6) !important;
+  text-shadow: 0 0 8px var(--ns-bar-color, #38bdf8) !important;
 }
 .shift-progress-time-label {
   position: absolute !important;
@@ -5073,14 +5532,14 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
   height: 6px !important;
   border-radius: 999px !important;
   background: #f6f1ff !important;
-  box-shadow: 0 0 0 2px rgba(139,92,246,0.12) !important;
+  box-shadow: 0 0 0 2px rgba(56,189,248,0.12) !important;
   pointer-events: none !important;
   transition: transform .18s ease, box-shadow .18s ease, background .18s ease, opacity .18s ease !important;
 }
 .shift-stop.is-primary .shift-stop-dot {
   width: 7px !important;
   height: 7px !important;
-  box-shadow: 0 0 0 3px rgba(139,92,246,0.18), 0 0 14px rgba(168,85,247,0.25) !important;
+  box-shadow: 0 0 0 3px rgba(56,189,248,0.18), 0 0 14px rgba(56,189,248,0.20) !important;
   background: #ffffff !important;
 }
 .shift-stop.is-rad .shift-stop-dot {
@@ -5162,22 +5621,22 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
 }
 #grafiks-loader,
 #minka-loader-building {
-  filter: drop-shadow(0 0 18px rgba(139,92,246,0.22)) !important;
+  filter: drop-shadow(0 0 18px rgba(56,189,248,0.20)) !important;
 }
 .mlb-antenna-dot {
-  box-shadow: 0 0 10px rgba(139,92,246,0.55), 0 0 20px rgba(139,92,246,0.28) !important;
+  box-shadow: 0 0 10px rgba(56,189,248,0.50), 0 0 20px rgba(56,189,248,0.24) !important;
 }
 .mlb-win.lit-purple {
   box-shadow: 0 0 10px rgba(183,123,255,0.72), 0 0 24px rgba(183,123,255,0.36) !important;
 }
 .mlb-title {
-  text-shadow: 0 0 12px rgba(139,92,246,0.24) !important;
+  text-shadow: 0 0 12px rgba(56,189,248,0.24) !important;
 }
 .pill.active,
 .day-pill.active,
 .date-pill.active {
-  border-color: rgba(139,92,246,0.58) !important;
-  background: rgba(139,92,246,0.16) !important;
+  border-color: rgba(56,189,248,0.50) !important;
+  background: rgba(56,189,248,0.12) !important;
   box-shadow: inset 0 0 0 1px rgba(196,181,253,0.10) !important;
 }
 .pill.active .date-num,
@@ -5190,7 +5649,7 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
   margin-bottom: 0 !important;
 }
 #minkaBarWrap {
-  margin-bottom: 2px !important;
+  margin-bottom: 0 !important;
 }
 #minkaNamedayChip,
 #minkaNamedayChip[data-mode],
@@ -5248,8 +5707,17 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
   display: none !important;
   opacity: 0 !important;
 }
+/* Lobotomise bundle.css aurora/violet keyframes — redefining them makes them no-ops */
+@keyframes auroraBarBreath { from {} to {} }
+@keyframes aurGradShift    { from {} to {} }
+
 #minkaBarInner {
-  box-shadow: none !important;
+  box-shadow:
+    0 0 0 1px rgba(56,189,248,0.10),
+    0 0 28px rgba(56,189,248,0.20),
+    0 4px 20px rgba(0,0,0,0.30),
+    inset 0 1px 0 rgba(255,255,255,0.04) !important;
+  border-color: rgba(56,189,248,0.38) !important;
 }
 #minkaResults,
 #minkaResults.results-area {
