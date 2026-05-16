@@ -380,19 +380,24 @@ body.stars-active #stars-overlay{display:block;}
     <!-- ï¿½ï¿½ï¿½ï¿½ MINKA BAR ï¿½ï¿½ï¿½ï¿½ -->
     <div id="minkaBar">
       <div id="minkaBarInner">
-        <img id="minkaLogo" src="../data/rg-any-192.png" alt="RG">
+        <div id="mkSearchDate" class="mk-search-date" aria-label="Izvēlētais datums">
+          <div class="mk-search-date-main">
+            <span id="mkSearchDateNum" class="mk-search-date-num">16.05.2026</span>
+            <span id="mkSearchWeekday" class="mk-search-weekday">Sestdiena</span>
+          </div>
+          <div class="mk-search-date-meta">
+            <span id="mkSearchToday" class="mk-search-today" hidden>ŠODIEN</span>
+            <span id="mkMoonChip"    class="mk-info-chip"></span>
+            <span id="mkTempChip"    class="mk-info-chip"></span>
+            <span id="mkNamedayBar"  class="mk-info-chip mk-nameday-bar" hidden></span>
+          </div>
+        </div>
         <div id="minkaBarInput" role="textbox" tabindex="0" spellcheck="false" 
              contenteditable="false" data-ph="Sestdiena, 16.05.2026"></div>
         <div id="minkaBarHint"></div>
         <div id="minkaBarPill"></div>
         <button id="minkaBarClear" aria-label="Dzēst">×</button>
         <!-- ── Bar info: weather · moon · nameday | news ticker ── -->
-        <div class="mk-bar-sep" aria-hidden="true"></div>
-        <div class="mk-info-group" id="mkInfoGroup">
-          <span id="mkMoonChip"    class="mk-info-chip"></span>
-          <span id="mkTempChip"    class="mk-info-chip"></span>
-          <span id="mkNamedayBar"  class="mk-info-chip mk-nameday-bar" hidden></span>
-        </div>
         <div class="mk-bar-sep" aria-hidden="true"></div>
         <div class="mk-ticker-wrap" id="mkTickerWrap">
           <div class="mk-ticker-label"><span class="mk-pulse"></span>Ziņas</div>
@@ -402,6 +407,9 @@ body.stars-active #stars-overlay{display:block;}
             <div class="mk-ticker-track" id="mkTickerTrack"></div>
           </div>
         </div>
+        <button id="mkSearchLaunch" class="mk-bar-icon-btn" type="button" title="Meklēt" aria-label="Meklēt">
+          <span class="material-icons-round">search</span>
+        </button>
         <button id="minkaBarMenu" onclick="toggleFullListModal(event)" title="Viss saraksts">
           <span class="material-icons-round">menu</span>
         </button>
@@ -431,6 +439,7 @@ body.stars-active #stars-overlay{display:block;}
           <h1 id="grafiks-dateTitle">...</h1>
           <span id="grafiks-todayTag" class="today-tag" hidden>ŠODIEN</span>
         </div>
+        <div id="mk-times-under-date"></div>
         <!-- LIVE badge -->
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
@@ -443,7 +452,6 @@ body.stars-active #stars-overlay{display:block;}
         <button id="mkSettingsBtn" class="view-btn" type="button" title="Iestatījumi" aria-label="Iestatījumi">
           <span class="material-icons-round">settings</span>
         </button>
-        <select id="grafiks-monthPicker" class="month-select" onchange="g_changeMonth()"></select>
       </div>
     </div>
 
@@ -471,7 +479,10 @@ body.stars-active #stars-overlay{display:block;}
       <button class="arrow" onclick="g_scrollCal(-1)"><span class="material-icons-round">chevron_left</span></button>
       <div class="scroller" id="grafiks-scroller"></div>
       <button class="arrow" onclick="g_scrollCal(1)"><span class="material-icons-round">chevron_right</span></button>
-      <button class="arrow" onclick="toggleMiniCal(event)" id="miniCalBtn" title="Kalend&#257;rs" style="margin-left:6px;"><span class="material-icons-round">calendar_month</span></button>
+      <div class="mk-date-controls" aria-label="Datuma vadība">
+        <select id="grafiks-monthPicker" class="month-select mk-month-control" onchange="g_changeMonth()"></select>
+        <button class="arrow mk-calendar-control" onclick="toggleMiniCal(event)" id="miniCalBtn" title="Kalend&#257;rs"><span class="material-icons-round">calendar_month</span></button>
+      </div>
     </div>
     <div id="mobile-swipe-hint" class="mobile-swipe-hint" aria-hidden="true">
       <span class="material-icons-round">swap_horiz</span>
@@ -1094,6 +1105,7 @@ document.addEventListener('keydown', (e) => {
   const pill    = document.getElementById('minkaBarPill');
   const clearB  = document.getElementById('minkaBarClear');
   const muteB   = document.getElementById('minkaBarMute');
+  const searchLaunch = document.getElementById('mkSearchLaunch');
   const results = document.getElementById('minkaResults');
   const aiPanel = document.getElementById('minkaAiPanel');
   const mainPanel = document.querySelector('.main-panel');
@@ -1240,18 +1252,65 @@ document.addEventListener('keydown', (e) => {
     + String(_d2.getMonth()+1).padStart(2,'0') + '.'
     + _d2.getFullYear();
   const _searchIcon = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
+  const _searchDateEl = document.getElementById('mkSearchDate');
+  const _searchWeekdayEl = document.getElementById('mkSearchWeekday');
+  const _searchDateNumEl = document.getElementById('mkSearchDateNum');
+  const _searchTodayEl = document.getElementById('mkSearchToday');
+
+  function mkNormalizeDateStr(dateStr) {
+    const m = String(dateStr || '').trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+    if (!m) return '';
+    return String(m[1]).padStart(2, '0') + '.' + String(m[2]).padStart(2, '0') + '.' + m[3];
+  }
+  function mkTodayStr() {
+    const now = new Date();
+    return String(now.getDate()).padStart(2, '0') + '.'
+      + String(now.getMonth() + 1).padStart(2, '0') + '.'
+      + now.getFullYear();
+  }
+  function mkFormatWeekday(dateStr) {
+    const m = String(dateStr || '').match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    if (!m) return _dn2[new Date().getDay()];
+    const d = new Date(+m[3], +m[2] - 1, +m[1]);
+    return _dn2[d.getDay()];
+  }
+  function updateSearchDate(dateStr) {
+    const normalized = mkNormalizeDateStr(dateStr) || mkTodayStr();
+    const isToday = normalized === mkTodayStr();
+    if (_searchWeekdayEl) _searchWeekdayEl.textContent = mkFormatWeekday(normalized);
+    if (_searchDateNumEl) _searchDateNumEl.textContent = normalized;
+    if (_searchTodayEl) _searchTodayEl.hidden = !isToday;
+    if (_searchDateEl) _searchDateEl.classList.toggle('is-today', isToday);
+    if (input) input.setAttribute('data-ph', mkFormatWeekday(normalized) + ', ' + normalized);
+  }
 
   function typeHint()  { /* disabled — static only */ }
   function eraseHint(cb) { if (cb) cb(); }
   function startHints() {
     if (_text) return;
-    hint.innerHTML = _searchIcon + '<span>' + _staticHint + '</span>';
+    hint.innerHTML = '<span>Meklē nodaļu, numuru vai darbinieku...</span>';
     hint.style.opacity = '1';
     hint.style.visibility = 'visible';
   }
   function stopHints() {
     hint.style.opacity = '0';
     hint.style.visibility = 'hidden';
+  }
+  function openSearchMode() {
+    bar.classList.add('search-open');
+    setMode('search');
+    focusMinkaInput();
+    if (!_text) {
+      hint.innerHTML = '<span>Meklē nodaļu, numuru vai darbinieku...</span>';
+      hint.style.opacity = '1';
+      hint.style.visibility = 'visible';
+    }
+  }
+  function closeSearchMode() {
+    if (_text) return;
+    bar.classList.remove('search-open');
+    setMode('idle');
+    stopHints();
   }
 
   /* ï¿½ï¿½ï¿½ï¿½ Input handling (contenteditable) ï¿½ï¿½ï¿½ï¿½ */
@@ -1261,7 +1320,7 @@ document.addEventListener('keydown', (e) => {
   input.addEventListener('focus', () => { bar.classList.add('focused'); stopHints(); });
   input.addEventListener('blur',  () => {
     bar.classList.remove('focused');
-    if (!_text) { startHints(); setMode('idle'); setTimeout(drainMsgs, 1500); }
+    if (!_text) { closeSearchMode(); setTimeout(drainMsgs, 1500); }
   });
   /* Kill hint on first keydown — fires BEFORE any character is inserted */
   input.addEventListener('keydown', () => { stopHints(); }, { capture: true, passive: true });
@@ -1279,7 +1338,7 @@ document.addEventListener('keydown', (e) => {
       closeAi();
     }
 
-    if (!_text) { setMode('idle'); closeAi(); closeResults(); startHints(); setTimeout(drainMsgs, 2000); return; }
+    if (!_text) { setMode('search'); closeAi(); closeResults(); startHints(); setTimeout(drainMsgs, 2000); return; }
 
     const isAi = _text[0]==='?' || (
       _text.length > 3 && /^(kur|kas|cik|vai|kÄpï¿½c|kÄdï¿½Ä¼|kÄ |kad |paskaidro|palÄ«dzi)/i.test(_text)
@@ -1296,11 +1355,18 @@ document.addEventListener('keydown', (e) => {
   });
 
   input.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { clearText(); closeAi(); closeResults(); input.blur(); snd.close(); }
+    if (e.key === 'Escape') { clearText(); closeAi(); closeResults(); input.blur(); closeSearchMode(); snd.close(); }
     if (e.key === 'Enter') { e.preventDefault(); }
   });
 
   clearB.addEventListener('click', () => { clearText(); closeAi(); closeResults(); input.focus(); snd.click(); });
+  if (searchLaunch) {
+    searchLaunch.addEventListener('click', function(e) {
+      e.preventDefault();
+      openSearchMode();
+      snd.click();
+    });
+  }
 
   /* ï¿½ï¿½ï¿½ï¿½ Make contenteditable behave like input ï¿½ï¿½ï¿½ï¿½ */
   input.setAttribute('contenteditable', 'true');
@@ -1311,7 +1377,7 @@ document.addEventListener('keydown', (e) => {
   function focusMinkaInput() {
     try { input.focus({ preventScroll:true }); } catch(e) { input.focus(); }
   }
-  [bar, inner, input].forEach(function(el) {
+  [input].forEach(function(el) {
     if (!el) return;
     el.addEventListener('touchend', function(e) {
       var t = e.target;
@@ -1354,6 +1420,12 @@ document.addEventListener('keydown', (e) => {
       closeResults();
     }
   }
+
+  updateSearchDate(window.__activeDateStr || window.__g_todayStr || mkTodayStr());
+  window.addEventListener('daySelected', function(e) {
+    const ds = e && e.detail && e.detail.date ? e.detail.date : '';
+    updateSearchDate(ds);
+  });
 
   /* ï¿½ï¿½ï¿½ï¿½ AI panel ï¿½ï¿½ï¿½ï¿½ */
   function openAi() { aiPanel.classList.add('open'); document.body.classList.remove('ai-collapsed'); _aiOpen = true; }
@@ -2618,6 +2690,11 @@ function nextNews(){
     /* Duplicate for seamless CSS loop */
     var half = items.map(renderItem).join('');
     track.innerHTML = half + half;
+    if (window.__mkTickerState) {
+      window.__mkTickerState.x = 0;
+      window.__mkTickerState.half = 0;
+      window.__mkTickerState.needsMeasure = true;
+    }
 
     /* Click to open news link — no hover-pause, ticker runs continuously */
     if (!track._mkEvt) {
@@ -2629,33 +2706,46 @@ function nextNews(){
     }
   };
 
-  /* ── JS marquee loop — GPU transform, truly infinite, immune to mk-low-spec CSS ── */
+  /* ── Low CPU marquee loop — throttled GPU transform, smooth and pause-aware ── */
   (function startMarquee() {
-    var SPEED  = 48;   /* px/s — slow, easy to read */
-    var x      = 0;
-    var last   = null;
-    var paused = false;
+    var state = window.__mkTickerState = window.__mkTickerState || {
+      x: 0,
+      half: 0,
+      needsMeasure: true,
+      last: null,
+      lastPaint: 0,
+      paused: false
+    };
+    var SPEED = 30;       /* px/s — calmer and easier on the eyes */
+    var FRAME_MS = 1000 / 30;
 
     /* Pause on hover — attach to the static wrapper, not the moving track */
     var wrap = document.getElementById('mkTickerWrap');
     if (wrap) {
-      wrap.addEventListener('mouseenter', function() { paused = true;  }, { passive: true });
-      wrap.addEventListener('mouseleave', function() { paused = false; }, { passive: true });
+      wrap.addEventListener('mouseenter', function() { state.paused = true;  }, { passive: true });
+      wrap.addEventListener('mouseleave', function() { state.paused = false; }, { passive: true });
     }
 
     function tick(ts) {
-      if (last === null) last = ts;
-      var dt = Math.min(ts - last, 100) / 1000; /* cap so tab-switch can't jump */
-      last = ts;
+      if (state.last === null) state.last = ts;
 
-      if (!paused) {
+      if (ts - state.lastPaint >= FRAME_MS) {
+        var dt = Math.min(ts - state.last, 120) / 1000;
+        state.last = ts;
+        state.lastPaint = ts;
         var track = document.getElementById('mkTickerTrack');
-        if (track) {
-          var half = track.scrollWidth / 2;
-          if (half > 10) {
-            x -= SPEED * dt;
-            if (x <= -half) x += half;
-            track.style.transform = 'translateX(' + x + 'px)';
+        var hidden = document.hidden;
+        var bar = document.getElementById('minkaBar');
+        var searchOpen = !!(bar && (bar.classList.contains('focused') || bar.classList.contains('has-text') || bar.classList.contains('search-open')));
+        if (track && !state.paused && !hidden && !searchOpen) {
+          if (state.needsMeasure) {
+            state.half = track.scrollWidth / 2;
+            state.needsMeasure = false;
+          }
+          if (state.half > 10) {
+            state.x -= SPEED * dt;
+            if (state.x <= -state.half) state.x += state.half;
+            track.style.transform = 'translate3d(' + state.x.toFixed(2) + 'px,0,0)';
           }
         }
       }
@@ -3754,14 +3844,14 @@ window.addEventListener('message', function(e) {
   margin-top: 0 !important;
 }
 #minkaBarInner {
-  height: 52px !important;
-  padding: 0 14px !important;
+  height: 72px !important;
+  padding: 0 18px !important;
   border-radius: 999px !important;
   background: #0f1218 !important;
   border: 1px solid rgba(56,189,248,0.38) !important;
   box-shadow:
     0 0 0 1px rgba(56,189,248,0.10),
-    0 0 22px rgba(56,189,248,0.16),
+    0 0 18px rgba(56,189,248,0.16),
     inset 0 1px 0 rgba(255,255,255,0.04) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -3770,12 +3860,13 @@ window.addEventListener('message', function(e) {
 #minkaBarInner:focus-within,
 #minkaBar.focused #minkaBarInner,
 #minkaBar.ai-mode #minkaBarInner,
-#minkaBar.has-text #minkaBarInner {
+#minkaBar.has-text #minkaBarInner,
+#minkaBar.search-open #minkaBarInner {
   background: #131820 !important;
   border-color: rgba(56,189,248,0.50) !important;
   box-shadow:
-    0 0 0 3px rgba(56,189,248,0.08),
-    0 0 20px rgba(56,189,248,0.16),
+    0 0 0 2px rgba(56,189,248,0.08),
+    0 0 18px rgba(56,189,248,0.18),
     inset 0 1px 0 rgba(255,255,255,0.04) !important;
   animation: none !important;
 }
@@ -3795,6 +3886,127 @@ window.addEventListener('message', function(e) {
   color: rgba(255,255,255,0.92) !important;
   caret-color: rgba(56,189,248,0.85) !important;
   position: relative !important;
+}
+.mk-search-date {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+  flex: 0 0 auto !important;
+  height: 100% !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  transition: opacity .18s ease, transform .18s ease, max-width .22s ease !important;
+}
+.mk-search-date-main {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  min-width: 0 !important;
+  line-height: 1 !important;
+}
+.mk-search-date-meta {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 18px !important;
+  padding-left: 1px !important;
+  line-height: 1 !important;
+}
+.mk-search-date-meta .mk-info-chip {
+  font: 500 13px/1 'Space Grotesk', system-ui !important;
+  color: rgba(255,255,255,0.58) !important;
+}
+.mk-search-date-meta #mkTempChip {
+  color: rgba(125,211,252,0.78) !important;
+}
+.mk-search-date-meta .mk-nameday-bar {
+  color: rgba(255,255,255,0.82) !important;
+  font-weight: 700 !important;
+}
+.mk-search-date-meta .mk-info-chip[hidden] {
+  display: none !important;
+}
+.mk-search-date-icon,
+.mk-search-date-dot,
+#minkaLogo {
+  display: none !important;
+}
+.mk-search-date-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 18px !important;
+  height: 18px !important;
+  flex: 0 0 18px !important;
+  color: rgba(56,189,248,0.92) !important;
+  filter: drop-shadow(0 0 7px rgba(56,189,248,0.58)) !important;
+}
+.mk-search-weekday {
+  display: inline-flex !important;
+  align-items: center !important;
+  font: 500 22px/1 'Space Grotesk', system-ui !important;
+  letter-spacing: 0 !important;
+  color: rgba(226,240,255,0.78) !important;
+}
+.mk-search-date-dot {
+  display: inline-block !important;
+  width: 6px !important;
+  height: 6px !important;
+  flex: 0 0 6px !important;
+  border-radius: 999px !important;
+  background: rgba(34,211,238,0.98) !important;
+  box-shadow:
+    0 0 6px rgba(34,211,238,0.95),
+    0 0 14px rgba(34,211,238,0.48) !important;
+}
+.mk-search-date-num {
+  display: inline-flex !important;
+  align-items: center !important;
+  font: 500 28px/1 'Space Grotesk', system-ui !important;
+  letter-spacing: 0 !important;
+  color: rgba(125,211,252,0.98) !important;
+  text-shadow:
+    0 0 8px rgba(125,211,252,0.62),
+    0 0 18px rgba(56,189,248,0.28) !important;
+}
+.mk-search-today {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 18px !important;
+  padding: 0 7px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(16,185,129,0.48) !important;
+  background: rgba(5,150,105,0.11) !important;
+  color: rgba(52,245,161,0.90) !important;
+  font: 800 10px/1 'Space Grotesk', system-ui !important;
+  letter-spacing: 0.09em !important;
+  text-shadow: 0 0 6px rgba(52,245,161,0.26) !important;
+  box-shadow:
+    0 0 0 1px rgba(16,185,129,0.10) inset,
+    0 0 7px rgba(16,185,129,0.14) !important;
+  transform: none !important;
+}
+.mk-search-today[hidden] {
+  display: none !important;
+}
+#minkaBar.focused .mk-search-date,
+#minkaBar.has-text .mk-search-date,
+#minkaBar.search-open .mk-search-date {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  max-width: 0 !important;
+  overflow: hidden !important;
+  transform: translateX(-6px) !important;
+}
+#minkaBar.focused .mk-search-date-meta,
+#minkaBar.has-text .mk-search-date-meta,
+#minkaBar.search-open .mk-search-date-meta {
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 /* Kill all pseudo-elements on input — no fake placeholders via CSS */
 #minkaBarInput::before, #minkaBarInput::after { display: none !important; }
@@ -3824,6 +4036,33 @@ window.addEventListener('message', function(e) {
   flex-shrink: 0 !important;
   cursor: pointer !important;
   transition: color .15s !important;
+}
+.mk-bar-icon-btn {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  border: 1px solid rgba(56,189,248,0.18) !important;
+  border-radius: 12px !important;
+  background: rgba(10,17,26,0.50) !important;
+  color: rgba(125,211,252,0.82) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  flex-shrink: 0 !important;
+  cursor: pointer !important;
+  box-shadow: 0 0 0 1px rgba(56,189,248,0.06) inset !important;
+  transition: border-color .15s ease, background .15s ease, color .15s ease !important;
+}
+.mk-bar-icon-btn:hover,
+.mk-bar-icon-btn:focus-visible {
+  border-color: rgba(56,189,248,0.42) !important;
+  background: rgba(14,30,44,0.76) !important;
+  color: rgba(235,248,255,0.96) !important;
+}
+.mk-bar-icon-btn .material-icons-round {
+  font-size: 20px !important;
+  line-height: 1 !important;
 }
 #minkaBarMenu:hover {
   color: rgba(255,255,255,0.85) !important;
@@ -3893,19 +4132,21 @@ window.addEventListener('message', function(e) {
 /* Logo gone → input gets a bit more room */
 #minkaBarInner #minkaBarInput {
   flex: 0 0 auto !important;
-  width: 220px !important;
-  min-width: 140px !important;
-  max-width: 220px !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
   transition: width .22s ease, max-width .22s ease !important;
 }
 /* Expand input when focused/searching, collapse ticker */
 #minkaBar.focused #minkaBarInner #minkaBarInput,
-#minkaBar.has-text #minkaBarInner #minkaBarInput {
+#minkaBar.has-text #minkaBarInner #minkaBarInput,
+#minkaBar.search-open #minkaBarInner #minkaBarInput {
   width: clamp(200px, 40vw, 420px) !important;
   max-width: clamp(200px, 40vw, 420px) !important;
 }
 #minkaBar.focused .mk-ticker-wrap,
-#minkaBar.has-text .mk-ticker-wrap {
+#minkaBar.has-text .mk-ticker-wrap,
+#minkaBar.search-open .mk-ticker-wrap {
   opacity: 0 !important;
   pointer-events: none !important;
   flex: 0 0 0 !important;
@@ -3921,7 +4162,8 @@ window.addEventListener('message', function(e) {
   transition: opacity .22s ease;
 }
 #minkaBar.focused .mk-bar-sep,
-#minkaBar.has-text .mk-bar-sep {
+#minkaBar.has-text .mk-bar-sep,
+#minkaBar.search-open .mk-bar-sep {
   opacity: 0 !important;
   flex: 0 0 0 !important;
 }
@@ -3974,15 +4216,18 @@ window.addEventListener('message', function(e) {
   color: rgba(56,189,248,0.85) !important;
   stroke: rgba(56,189,248,0.85) !important;
 }
+#minkaBar:not(.focused):not(.has-text):not(.search-open) #minkaBarHint {
+  display: none !important;
+}
 .mk-ticker-label { display: none !important; }
 /* Logo: show it */
 #minkaLogo {
   display: block !important;
-  width: 36px !important; height: 36px !important;
+  width: 44px !important; height: 44px !important;
   border-radius: 10px !important;
   flex-shrink: 0 !important;
   margin-left: 2px !important;
-  margin-right: 6px !important;
+  margin-right: 8px !important;
   object-fit: cover !important;
   opacity: 0.90 !important;
 }
@@ -3993,7 +4238,7 @@ window.addEventListener('message', function(e) {
   height: 100%; overflow: hidden;
   display: flex; align-items: center;
 }
-#mkTickerTrack {
+  #mkTickerTrack {
   position: absolute; top: 0; left: 0; height: 100%;
   display: inline-flex; align-items: center; gap: 0;
   white-space: nowrap;
@@ -4001,6 +4246,8 @@ window.addEventListener('message', function(e) {
   letter-spacing: -0.006em;
   color: rgba(255,255,255,0.82);
   will-change: transform;
+  transform: translate3d(0,0,0);
+  backface-visibility: hidden;
   /* JS drives the transform — no CSS animation */
 }
 #mkTickerTrack:empty { opacity: 0; }
@@ -4054,8 +4301,12 @@ window.addEventListener('message', function(e) {
   transition: opacity .22s ease;
 }
 #minkaBar.focused .mk-info-group,
-#minkaBar.has-text .mk-info-group {
+#minkaBar.has-text .mk-info-group,
+#minkaBar.search-open .mk-info-group {
   opacity: 0; pointer-events: none;
+}
+.mk-search-date .mk-info-chip {
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 .mk-info-chip {
   font: 500 13px/1 'Space Grotesk', system-ui;
@@ -4263,10 +4514,11 @@ window.addEventListener('message', function(e) {
 #shift-bar-ruler { display: none !important; }
 /* ── New ruler above lanes ── */
 .sl-ruler {
+  --sl-ruler-band-top: 22px;
   position: relative;
   height: 38px;
   margin-bottom: 4px;
-  padding-top: 22px; /* space for tick labels + gap above bar */
+  padding-top: var(--sl-ruler-band-top); /* space for tick labels + gap above bar */
   overflow: visible; /* pill must not be clipped */
 }
 .sl-ruler-band {
@@ -4292,10 +4544,11 @@ window.addEventListener('message', function(e) {
 }
 .sl-ruler-pct {
   position: absolute;
-  top: 22px;
+  top: var(--sl-ruler-band-top);
   height: 16px;
   display: flex;
   align-items: center;
+  line-height: 16px;
   font: 800 11px/1 'Space Grotesk', system-ui;
   letter-spacing: .04em;
   color: rgba(255,255,255,0.92);
@@ -4308,14 +4561,15 @@ window.addEventListener('message', function(e) {
   position: absolute;
   top: 0;
   line-height: 14px;
-  font: 600 9px/14px 'Space Grotesk', system-ui;
-  color: rgba(255,255,255,0.32);
+  font: 700 10px/14px 'Space Grotesk', system-ui;
+  color: rgba(255,255,255,0.90);
   letter-spacing: .02em;
   white-space: nowrap;
   transition: opacity .25s ease;
+  text-shadow: 0 0 8px rgba(255,255,255,0.40);
 }
-.sl-rtick-sun  { color: rgba(251,191,36,0.60) !important; }
-.sl-rtick-moon { color: rgba(125,211,252,0.55) !important; }
+.sl-rtick-sun  { color: rgba(251,191,36,0.97) !important; text-shadow: 0 0 10px rgba(251,191,36,0.50) !important; }
+.sl-rtick-moon { color: rgba(125,211,252,0.97) !important; text-shadow: 0 0 10px rgba(56,189,248,0.55) !important; }
 .sl-rtick-hidden { opacity: 0 !important; pointer-events: none !important; }
 .sl-ruler-now {
   position: absolute;
@@ -4379,18 +4633,25 @@ window.addEventListener('message', function(e) {
 }
 .sl-ns-name {
   position: absolute;
+  top: 0;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transform: translateX(-50%);
-  font: 700 10px/1 'Space Grotesk', system-ui;
+  font: 800 10px/20px 'Space Grotesk', system-ui;
   letter-spacing: .07em;
-  color: var(--seg-color, rgba(255,255,255,0.75));
-  text-shadow: 0 0 10px var(--seg-color, transparent);
+  color: rgba(190,232,255,0.94);
+  text-shadow:
+    0 0 8px rgba(56,189,248,0.42),
+    0 0 14px rgba(139,92,246,0.30);
   white-space: nowrap;
   pointer-events: auto;
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
 }
-.sl-ns-name.is-current { font-size: 11px; opacity: 1; }
+.sl-ns-name.is-current { opacity: 1; color: rgba(226,246,255,0.98); }
 .sl-ns-name.is-past    { opacity: 0.38; }
 .sl-ns-divider {
   position: absolute;
@@ -4403,8 +4664,11 @@ window.addEventListener('message', function(e) {
   position: relative;
   height: 10px;
   border-radius: 5px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(8,14,28,0.82);
+  border: 1px solid rgba(125,211,252,0.20);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.035),
+    0 0 12px rgba(56,189,248,0.10);
   overflow: visible;
 }
 .sl-ns-fill {
@@ -4412,15 +4676,21 @@ window.addEventListener('message', function(e) {
   left: 0; top: 0; bottom: 0;
   border-radius: 5px;
   pointer-events: none;
+  box-shadow:
+    0 0 12px rgba(139,92,246,0.34),
+    0 0 20px rgba(56,189,248,0.16);
 }
 .sl-ns-scrubber {
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
   width: 13px; height: 13px;
-  background: #fff;
+  background: #e0f7ff;
   border-radius: 50%;
-  box-shadow: 0 0 10px rgba(255,255,255,0.65);
+  box-shadow:
+    0 0 0 2px rgba(8,14,28,0.82),
+    0 0 10px rgba(125,211,252,0.78),
+    0 0 18px rgba(139,92,246,0.36);
   z-index: 5;
   pointer-events: none;
 }
@@ -4511,16 +4781,8 @@ window.addEventListener('message', function(e) {
     radial-gradient(1px 1px at 70% 55%, rgba(255,255,255,0.28) 50%, transparent 50%);
 }
 
-/* Saule 08:00 — diskrēts silts spīdums, z-index 2 virs future overlay */
-.sl-ruler-band::after {
-  content: ''; position: absolute; pointer-events: none; z-index: 2;
-  right: 0; top: 50%; transform: translateY(-50%);
-  width: 26px; height: 26px;
-  background: radial-gradient(circle at center,
-    rgba(210,150,50,0.80) 0%,
-    rgba(180,100,25,0.35) 45%,
-    transparent 68%);
-}
+/* Saule 08:00 — noņemta */
+.sl-ruler-band::after { display: none !important; }
 /* wrapper: full-width flex row — bar + % label sit side by side */
 .sl-item {
   display: flex;
@@ -4685,7 +4947,7 @@ window.addEventListener('message', function(e) {
   transform: translateX(-50%) translateY(-50%) !important;
   pointer-events: none !important;
 }
-.sbi-sun { filter: drop-shadow(0 0 5px rgba(251,191,36,0.7)) !important; }
+.sbi-sun { display: none !important; }
 .sbi-moon { filter: drop-shadow(0 0 5px rgba(125,211,252,0.65)) !important; }
 /* Time ruler below bar */
 .shift-bar-ruler {
@@ -4787,6 +5049,8 @@ window.addEventListener('message', function(e) {
 /* Hide start/end time labels when night overlay is active to avoid clash with worker names */
 #shift-progress-wrap.ns-bar-active #shift-start-label,
 #shift-progress-wrap.ns-bar-active #shift-end-label { opacity: 0 !important; pointer-events: none !important; }
+/* Hide duplicate ruler bar when night split is active */
+#shift-progress-wrap.ns-bar-active .sl-ruler { display: none !important; }
 /* Ghost drag element */
 .ns-drag-ghost {
   position: fixed !important;
@@ -5648,6 +5912,9 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
 .top-row {
   margin-bottom: 0 !important;
 }
+.date-title-wrap {
+  display: none !important;
+}
 #minkaBarWrap {
   margin-bottom: 0 !important;
 }
@@ -5659,8 +5926,201 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
   padding-top: 0 !important;
   padding-bottom: 0 !important;
 }
+/* ── Iceman date typography ── */
+#grafiks-dateTitle {
+  font-family: 'Space Grotesk', system-ui !important;
+  font-size: clamp(26px, 3vw, 40px) !important;
+  font-weight: 300 !important;
+  letter-spacing: -0.03em !important;
+  background: linear-gradient(135deg,
+    rgba(220, 240, 255, 0.96) 0%,
+    rgba(56, 189, 248, 0.85) 55%,
+    rgba(125, 211, 252, 0.70) 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  text-shadow: none !important;
+}
+/* Remove the today underline (conflicts with text-fill) */
+#grafiks-dateTitle.is-today {
+  box-shadow: none !important;
+  padding-bottom: 0 !important;
+}
 .scroll-row {
   margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  gap: 4px !important;
+}
+.mk-date-controls {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex: 0 0 auto !important;
+  margin-left: 8px !important;
+}
+.mk-date-controls .mk-month-control,
+.mk-date-controls .mk-calendar-control {
+  height: 40px !important;
+  min-height: 40px !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(56,189,248,0.28) !important;
+  background: rgba(10,17,26,0.72) !important;
+  color: rgba(235,248,255,0.94) !important;
+  box-shadow:
+    0 0 0 1px rgba(56,189,248,0.08) inset,
+    0 0 10px rgba(56,189,248,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.04) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease, transform .18s ease !important;
+}
+.mk-date-controls .mk-month-control {
+  width: 104px !important;
+  min-width: 104px !important;
+  padding: 0 20px 0 14px !important;
+  font: 800 18px/1 'Space Grotesk', system-ui !important;
+  letter-spacing: 0.02em !important;
+}
+.mk-date-controls .mk-calendar-control {
+  width: 44px !important;
+  min-width: 44px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-left: 0 !important;
+}
+.mk-date-controls .mk-calendar-control .material-icons-round {
+  font-size: 22px !important;
+  line-height: 1 !important;
+  color: rgba(235,248,255,0.92) !important;
+  text-shadow: 0 0 7px rgba(56,189,248,0.22) !important;
+}
+.mk-date-controls .mk-month-control:hover,
+.mk-date-controls .mk-month-control:focus,
+.mk-date-controls .mk-calendar-control:hover,
+.mk-date-controls .mk-calendar-control:focus-visible {
+  border-color: rgba(56,189,248,0.58) !important;
+  background: rgba(14,30,44,0.86) !important;
+  box-shadow:
+    0 0 0 1px rgba(56,189,248,0.14) inset,
+    0 0 12px rgba(56,189,248,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.06) !important;
+}
+.mk-date-controls .mk-calendar-control:hover {
+  transform: translateY(-1px) !important;
+}
+/* ── Compact day pills ── */
+:root:not(.mk-mobile-shell) .pill,
+:root:not(.mk-mobile-shell) .day-pill {
+  min-width: 34px !important;
+  width: 34px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+  padding: 0 !important;
+  color: rgba(255,255,255,0.92) !important;
+}
+:root:not(.mk-mobile-shell) .pill .weekday,
+:root:not(.mk-mobile-shell) .day-pill .weekday {
+  font-size: 8px !important;
+  margin-bottom: 1px !important;
+  color: rgba(255,255,255,0.55) !important;
+}
+/* Restore red for weekends and holidays */
+:root:not(.mk-mobile-shell) .weekend-pill,
+:root:not(.mk-mobile-shell) .weekend-pill .weekday {
+  color: #c96060 !important;
+}
+:root:not(.mk-mobile-shell) .holiday-pill,
+:root:not(.mk-mobile-shell) .holiday-pill .weekday {
+  color: #e04040 !important;
+}
+:root:not(.mk-mobile-shell) .scroller {
+  gap: 3px !important;
+}
+/* Arrow buttons — iceman hover instead of violet */
+:root:not(.mk-mobile-shell) .arrow:hover {
+  background: rgba(56,189,248,0.18) !important;
+  border-color: rgba(56,189,248,0.45) !important;
+  color: rgba(125,211,252,1) !important;
+  box-shadow: 0 0 12px rgba(56,189,248,0.20) !important;
+  transform: scale(1.1) !important;
+}
+/* ── Times strip under date title ── */
+#mk-times-under-date {
+  display: flex;
+  align-items: center;
+}
+#mk-times-under-date .sl-times-strip {
+  border-top: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 6px !important;
+  justify-content: flex-start !important;
+}
+#mk-times-under-date .sl-ts-label {
+  font-size: 9px !important;
+  letter-spacing: 0.10em !important;
+  color: rgba(255,255,255,0.35) !important;
+}
+#mk-times-under-date .sl-ts-val {
+  font-size: 15px !important;
+  color: rgba(255,255,255,0.90) !important;
+}
+/* Override violet → cyan for ATLIKUŠAS */
+#mk-times-under-date .sl-ts-val.sl-ts-rem,
+.sl-ts-val.sl-ts-rem {
+  color: rgba(56,189,248,0.95) !important;
+}
+/* ── NAKTS SADALĪJUMS button — beside elapsed/remaining time ── */
+#mk-ns-slot #ns-bar-toggle,
+#sl-ns-slot #ns-bar-toggle {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+  padding: 5px 12px 5px 10px !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(125,211,252,0.20) !important;
+  background: rgba(14,30,48,0.70) !important;
+  color: rgba(125,211,252,0.70) !important;
+  font: 600 10px/1 'Space Grotesk', system-ui !important;
+  letter-spacing: 0.07em !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: background .2s, border-color .2s, color .2s, box-shadow .2s !important;
+  box-shadow: none !important;
+}
+#mk-ns-slot #ns-bar-toggle[hidden],
+#sl-ns-slot #ns-bar-toggle[hidden] {
+  display: none !important;
+}
+#mk-ns-slot #ns-bar-toggle:hover,
+#sl-ns-slot #ns-bar-toggle:hover {
+  background: rgba(14,40,60,0.90) !important;
+  border-color: rgba(125,211,252,0.45) !important;
+  color: rgba(125,211,252,0.95) !important;
+  box-shadow: 0 0 14px rgba(56,189,248,0.18) !important;
+}
+#mk-ns-slot #ns-bar-toggle.is-on,
+#sl-ns-slot #ns-bar-toggle.is-on {
+  background: rgba(14,40,60,0.85) !important;
+  border-color: rgba(125,211,252,0.55) !important;
+  color: rgba(125,211,252,1) !important;
+  box-shadow: 0 0 18px rgba(56,189,248,0.28), 0 0 6px rgba(56,189,248,0.18) !important;
+}
+#mk-ns-slot #ns-bar-toggle .ns-moon,
+#sl-ns-slot #ns-bar-toggle .ns-moon {
+  font-size: 11px !important;
+  margin-right: 4px !important;
+}
+#sl-ns-slot {
+  display: inline-flex !important;
+  align-items: center !important;
+  flex-shrink: 0 !important;
+  margin-right: 8px !important;
 }
 .mobile-swipe-hint {
   display: none;
@@ -7605,6 +8065,216 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   padding: 0 5px !important;
   font-size: 10px !important;
 }
+
+/* Final date-in-search override: this block wins over earlier desktop/mobile layers. */
+.date-title-wrap,
+:root.mk-mobile-shell .date-title-wrap {
+  display: none !important;
+}
+#minkaLogo,
+.mk-search-date-icon,
+.mk-search-date-dot {
+  display: none !important;
+}
+.mk-search-launch {
+  color: rgba(125,211,252,0.88) !important;
+  border-color: rgba(56,189,248,0.22) !important;
+  background: rgba(14,30,48,0.42) !important;
+  box-shadow:
+    0 0 0 1px rgba(56,189,248,0.06) inset,
+    0 0 14px rgba(56,189,248,0.10) !important;
+  transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease !important;
+}
+.mk-search-launch:hover,
+.mk-search-launch:focus-visible {
+  color: rgba(226,246,255,0.98) !important;
+  border-color: rgba(56,189,248,0.48) !important;
+  background: rgba(14,40,60,0.74) !important;
+  box-shadow:
+    0 0 0 1px rgba(56,189,248,0.12) inset,
+    0 0 18px rgba(56,189,248,0.24) !important;
+  transform: translateY(-1px) !important;
+}
+.mk-search-launch .material-icons-round {
+  font-size: 20px !important;
+  line-height: 1 !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner {
+  height: 72px !important;
+  min-height: 72px !important;
+  padding: 0 18px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  border-radius: 6px !important;
+  border-color: rgba(56,189,248,0.44) !important;
+  box-shadow:
+    0 0 0 1px rgba(56,189,248,0.12),
+    0 0 18px rgba(56,189,248,0.16),
+    inset 0 1px 0 rgba(255,255,255,0.04) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+:root.mk-mobile-shell #minkaBarInner {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+:root:not(.mk-mobile-shell) .main-panel.mk-search-open::before {
+  top: 82px !important;
+}
+:root:not(.mk-mobile-shell) .main-panel.mk-search-open #minkaBarWrap,
+:root:not(.mk-mobile-shell) .main-panel.mk-search-open #minkaBar {
+  z-index: 9 !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap,
+:root:not(.mk-mobile-shell) #minkaBar {
+  width: 100% !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+  border-radius: 6px !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner,
+:root:not(.mk-mobile-shell) #minkaBarInner:focus-within,
+:root:not(.mk-mobile-shell) #minkaBar.focused #minkaBarInner,
+:root:not(.mk-mobile-shell) #minkaBar.ai-mode #minkaBarInner,
+:root:not(.mk-mobile-shell) #minkaBar.has-text #minkaBarInner,
+:root:not(.mk-mobile-shell) #minkaBar.search-open #minkaBarInner {
+  border-radius: 6px !important;
+}
+:root.mk-mobile-shell .mk-search-date {
+  gap: 6px !important;
+}
+:root.mk-mobile-shell .mk-search-date-main {
+  gap: 7px !important;
+}
+:root.mk-mobile-shell .mk-search-date-meta {
+  gap: 5px !important;
+  min-height: 14px !important;
+}
+:root.mk-mobile-shell .mk-search-date-meta .mk-info-chip {
+  font-size: 9px !important;
+}
+:root.mk-mobile-shell .mk-search-weekday {
+  font-size: 13px !important;
+}
+:root.mk-mobile-shell .mk-search-date-num {
+  font-size: 16px !important;
+}
+:root.mk-mobile-shell .mk-search-today {
+  height: 22px !important;
+  padding: 0 8px !important;
+  font-size: 10px !important;
+}
+:root.mk-mobile-shell .mk-search-today[hidden] {
+  display: none !important;
+}
+:root.mk-mobile-shell .mk-search-date-icon,
+:root.mk-mobile-shell .mk-search-date-dot {
+  display: none !important;
+}
+:root.mk-mobile-shell .mk-search-launch {
+  min-width: 32px !important;
+  width: 32px !important;
+  height: 32px !important;
+}
+:root.mk-mobile-shell .mk-bar-icon-btn {
+  width: 32px !important;
+  min-width: 32px !important;
+  height: 32px !important;
+}
+:root:not(.mk-mobile-shell) .scroll-row .mk-date-controls {
+  margin-left: 8px !important;
+  display: inline-flex !important;
+}
+:root:not(.mk-mobile-shell) .scroll-row .mk-date-controls .month-select {
+  order: initial !important;
+  grid-column: auto !important;
+  margin-top: 0 !important;
+  width: 104px !important;
+  min-width: 104px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+}
+:root:not(.mk-mobile-shell) .scroll-row .mk-date-controls #miniCalBtn {
+  width: 44px !important;
+  min-width: 44px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+}
+:root.mk-mobile-shell .scroll-row .mk-date-controls {
+  gap: 6px !important;
+  margin-left: 6px !important;
+}
+:root.mk-mobile-shell .scroll-row .mk-date-controls .month-select {
+  width: 92px !important;
+  min-width: 92px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  padding: 0 18px 0 10px !important;
+  font-size: 12px !important;
+}
+:root.mk-mobile-shell .scroll-row .mk-date-controls #miniCalBtn {
+  width: 34px !important;
+  min-width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+}
+:root:not(.mk-mobile-shell) .main-panel {
+  gap: 4px !important;
+  padding-top: 16px !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap {
+  margin-bottom: -4px !important;
+}
+:root:not(.mk-mobile-shell) #shift-progress-wrap {
+  margin-top: -18px !important;
+  margin-bottom: 2px !important;
+}
+:root:not(.mk-mobile-shell) .sl-ruler {
+  --sl-ruler-band-top: 18px;
+  height: 32px !important;
+  padding-top: var(--sl-ruler-band-top) !important;
+  margin-bottom: 2px !important;
+}
+:root:not(.mk-mobile-shell) .scroll-row {
+  margin-top: -2px !important;
+}
+:root.mk-mobile-shell #shift-progress-wrap {
+  margin-top: -8px !important;
+}
 </style>
+<script>
+/* PAGĀJIS/ATLIKUŠAS → under date title; NAKTS SADALĪJUMS → scroll-row right */
+(function() {
+  var wrap       = document.getElementById('shift-progress-wrap');
+  var timesSlot  = document.getElementById('mk-times-under-date');   /* under date */
+  var scrollRow  = document.querySelector('.scroll-row');
+  if (!wrap || !timesSlot || !scrollRow) return;
+
+  var _raf = 0;
+  function rehome() {
+    cancelAnimationFrame(_raf);
+    _raf = requestAnimationFrame(function() {
+      /* 1. Times strip → under date */
+      var strip = wrap.querySelector('.sl-times-strip');
+      if (strip) {
+        var stale = timesSlot.querySelector('.sl-times-strip');
+        if (stale) stale.parentNode.removeChild(stale);
+        timesSlot.appendChild(strip);
+      }
+
+      /* 2. NAKTS SADALĪJUMS button → beside PAGĀJIS/ATLIKUŠAS */
+      var ns = document.getElementById('ns-bar-toggle');
+      var liveStrip = timesSlot.querySelector('.sl-times-strip');
+      var nsSlot = liveStrip && liveStrip.querySelector('#sl-ns-slot');
+      if (ns && nsSlot && ns.parentElement !== nsSlot) {
+        nsSlot.appendChild(ns);
+      }
+    });
+  }
+
+  new MutationObserver(rehome).observe(wrap, { childList: true });
+  rehome();
+})();
+</script>
 </body>
 </html>

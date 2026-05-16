@@ -626,7 +626,7 @@ function closeFullListModal() {
       months.forEach(m => {
         const isCur = d.currentMonthName && m.toLowerCase().includes(d.currentMonthName.split(' ')[0].toLowerCase());
         if (isCur) { activeMonth = m; window.__activeMonth = m; }
-        picker.innerHTML += `<option value="${m}" ${isCur ? 'selected' : ''}>${m.toUpperCase()}</option>`;
+        picker.innerHTML += `<option value="${m}" ${isCur ? 'selected' : ''}>${m.replace(/\s+\d{4}\s*$/, '').toUpperCase()}</option>`;
       });
       if(!activeMonth && months.length > 0) { activeMonth = months[0]; window.__activeMonth = months[0]; }
       const _ldr=document.getElementById('grafiks-loader'); if(_ldr) hideGrafiksLoader(_ldr);
@@ -659,7 +659,7 @@ function closeFullListModal() {
           months.forEach(m => {
             const isCur = cached.currentMonthName && m.toLowerCase().includes(cached.currentMonthName.split(' ')[0].toLowerCase());
             if (isCur) { activeMonth = m; window.__activeMonth = m; }
-            picker.innerHTML += `<option value="${m}" ${isCur ? 'selected' : ''}>${m.toUpperCase()}</option>`;
+            picker.innerHTML += `<option value="${m}" ${isCur ? 'selected' : ''}>${m.replace(/\s+\d{4}\s*$/, '').toUpperCase()}</option>`;
           });
           if(!activeMonth && months.length > 0) { activeMonth = months[0]; window.__activeMonth = months[0]; }
           if(loader) hideGrafiksLoader(loader);
@@ -1970,7 +1970,8 @@ function closeFullListModal() {
       // Sun at 14:00 on shift-start date
       var sunT = new Date(startMs); sunT.setHours(14, 0, 0, 0);
       var sunP = toPct(sunT.getTime());
-      if (sunP > 2 && sunP < 98) icons.push({ type: 'sun', pct: sunP });
+      // sun icon disabled
+      // if (sunP > 2 && sunP < 98) icons.push({ type: 'sun', pct: sunP });
       // Moon at 02:00 — scan +0, +1, +2 days
       for (var d = 0; d <= 2; d++) {
         var moonT = new Date(startMs); moonT.setHours(2, 0, 0, 0); moonT.setDate(moonT.getDate() + d);
@@ -2659,7 +2660,7 @@ function closeFullListModal() {
     const ovEnd   = overlay.end   instanceof Date ? overlay.end.getTime()   : +overlay.end;
     const ovDur   = Math.max(1, ovEnd - ovStart);
     const nowPct  = Math.max(0, Math.min(100, (nowMs - ovStart) / ovDur * 100));
-    const grad    = buildNightSplitGradient(overlay.segments, overlay.start, overlay.end);
+    const grad    = 'linear-gradient(90deg, rgba(91,33,182,0.90) 0%, rgba(124,58,237,0.96) 42%, rgba(56,189,248,0.90) 100%)';
     const fmt     = function(d) { return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); };
 
     // Worker name labels
