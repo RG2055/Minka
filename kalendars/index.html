@@ -2592,15 +2592,14 @@ function nextNews(){
     var list = (names || []).map(function(n){ return String(n || '').trim(); }).filter(Boolean);
     if (!list.length) return '';
     var regular = [];
-    var special = [];
+    var hasSpecial = false;
     list.forEach(function(n) {
-      if (/neparasto|neierakst/i.test(n)) special.push(n);
+      if (/neparasto|neierakst/i.test(n)) hasSpecial = true;
       else regular.push(n);
     });
-    var out = regular.slice(0, 3).join(', ');
-    if (special.length) out += (out ? ' + ' : '') + 'neierakstītie vārdi';
-    else if (regular.length > 3) out += ' +' + (regular.length - 3);
-    return out || list[0];
+    var out = regular.join(', ');
+    if (hasSpecial) out += (out ? ' + ' : '') + 'neierakstītie vārdi';
+    return out || 'neierakstītie vārdi';
   }
 
   /* Moon + weather refresh */
