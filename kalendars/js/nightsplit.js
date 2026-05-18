@@ -1000,7 +1000,7 @@
       var k=(1-Math.cos(2*Math.PI*phase))/2;
       if(k<0.02) return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="#100d1e" opacity="0.88"/>';
       if(k>0.98) return disc;
-      var shadowPhase=(phase+0.5)%1;
+      var shadowPhase=(0.5-phase+1)%1;
       var waxing=shadowPhase<0.5;
       var ex=Math.cos(2*Math.PI*shadowPhase)*r;
       var rx=Math.abs(ex).toFixed(2);
