@@ -653,6 +653,31 @@
     dot.style.left=live.pct.toFixed(3)+'%';
   }
 
+  function getPublicPlan(){
+    if(!st || !st.sl || !st.sl.length) return null;
+    return {
+      count: st.sl.length,
+      start: st.sl[0].ss,
+      end: st.sl[st.sl.length-1].es,
+      segments: st.sl.map(function(s){
+        return {
+          name: String((s.w && s.w.name) || ''),
+          firstName: String((s.w && s.w.name) || '').trim().split(/\s+/)[0] || '',
+          start: s.ss,
+          end: s.es
+        };
+      })
+    };
+  }
+
+  function publishPlan(){
+    try{
+      if(window.parent && window.parent !== window){
+        window.parent.postMessage({type:'nightSplitPlan', plan:getPublicPlan()}, '*');
+      }
+    }catch(e){}
+  }
+
   function buildFlowBar(slots){
     if(!slots||!slots.length) return '';
     var tot=Math.max(1, slots[slots.length-1].e-slots[0].s);
@@ -1256,6 +1281,7 @@
       if(btn){btn.style.borderColor=hasActive?'rgba(0,255,136,.55)':'';btn.querySelector && btn.querySelector('.ns-led') && (btn.querySelector('.ns-led').style.background=hasActive?'#00ff88':'');}
     }catch(e){}
     refreshFlowLiveMarker();
+    publishPlan();
   }
 
   window.addEventListener('resize', function(){
@@ -1516,6 +1542,7 @@
   window.__ns={
     _render: render,
     _update: update,
+    getPlan:getPublicPlan,
     ss:function(v){if(!st)return;st.sh=parseFloat(v);st.sl=calc(st.sl.map(function(s){return s.w;}),st.sh,st.ei);saveCurrentDayState();render();},
     se:function(v){if(!st)return;st.ei=parseInt(v); st.sl=calc(st.sl.map(function(s){return s.w;}),st.sh,st.ei); saveCurrentDayState(); render();},
     eq:function(){

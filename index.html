@@ -2581,6 +2581,7 @@ body.mk-low-motion *::after {
 #mk-buddy-bottle{position:absolute;left:calc(100% + 2px);bottom:0;image-rendering:pixelated;display:none;pointer-events:none;}
 #mk-buddy-coffee{position:absolute;left:calc(100% + 2px);bottom:7px;image-rendering:pixelated;display:none;pointer-events:none;}
 #mk-buddy-phone{position:absolute;right:calc(100% - 2px);bottom:13px;image-rendering:pixelated;display:none;pointer-events:none;}
+#mk-buddy-prop{position:absolute;left:calc(100% + 1px);bottom:-1px;image-rendering:pixelated;display:none;pointer-events:none;}
 #mk-buddy-bubble{
   position:absolute;bottom:calc(100% + 7px);left:50%;
   transform:translateX(-50%) translateY(5px);
@@ -2608,6 +2609,7 @@ body.mk-low-motion *::after {
     <canvas id="mk-buddy-bottle"></canvas>
     <canvas id="mk-buddy-coffee"></canvas>
     <canvas id="mk-buddy-phone"></canvas>
+    <canvas id="mk-buddy-prop"></canvas>
     <canvas id="mk-buddy-bolus"></canvas>
   </div>
 </div>
@@ -2769,9 +2771,9 @@ body.mk-low-motion *::after {
     cofRect(2,8+bob,4,1,'#94a3b8');
   }
 
-  // Phone prop.
+  // Mobile phone prop.
   var PHCVS = document.getElementById('mk-buddy-phone');
-  var PHPX = 3, PHCOLS = 8, PHROWS = 9;
+  var PHPX = 3, PHCOLS = 7, PHROWS = 12;
   PHCVS.width = PHCOLS * PHPX;
   PHCVS.height = PHROWS * PHPX;
   var phCtx = PHCVS.getContext('2d');
@@ -2779,14 +2781,54 @@ body.mk-low-motion *::after {
     phCtx.fillStyle=col;
     phCtx.fillRect(c*PHPX,r*PHPX,w*PHPX,h*PHPX);
   }
-  function drawPhone(fi){
+  function drawMobilePhone(fi){
     var bob=fi%2;
     phCtx.clearRect(0,0,PHCVS.width,PHCVS.height);
-    phRect(2,1+bob,4,1,'#111827');
-    phRect(1,2+bob,2,4,'#111827');
-    phRect(3,2+bob,3,5,'#1f2937');
-    phRect(4,3+bob,1,2,'#60a5fa');
-    phRect(4,6+bob,1,1,'#94a3b8');
+    phRect(1,0+bob,5,1,'#111827');
+    phRect(0,1+bob,7,9,'#111827');
+    phRect(1,2+bob,5,6,'#1e3a8a');
+    phRect(2,2+bob,2,1,'#60a5fa');
+    phRect(5,3+bob,1,3,'#93c5fd');
+    phRect(3,0+bob,1,1,'#4b5563');
+    phRect(3,9+bob,1,1,'#e5e7eb');
+    phRect(1,10+bob,5,1,'rgba(0,0,0,.34)');
+  }
+
+  // General prop canvas for tiny one-off props: box, burger, toothbrush.
+  var PCVS = document.getElementById('mk-buddy-prop');
+  var PPX = 3, PCOLS = 12, PROWS = 12;
+  PCVS.width = PCOLS * PPX;
+  PCVS.height = PROWS * PPX;
+  var pCtx = PCVS.getContext('2d');
+  function pRect(c,r,w,h,col){
+    pCtx.fillStyle=col;
+    pCtx.fillRect(c*PPX,r*PPX,w*PPX,h*PPX);
+  }
+  function drawBox(fi){
+    var dx=(fi%2===0)?0:1;
+    pCtx.clearRect(0,0,PCVS.width,PCVS.height);
+    pRect(1+dx,4,8,6,'#b7793b');
+    pRect(1+dx,4,8,1,'#d89a52');
+    pRect(1+dx,9,8,1,'#7c4a24');
+    pRect(2+dx,5,2,1,'#eab676');
+    pRect(6+dx,5,2,1,'#8a552a');
+    pRect(4+dx,4,1,6,'rgba(255,255,255,.18)');
+    pRect(0+dx,7,1,2,'#925cff');
+  }
+  function drawBurger(fi){
+    var bite=fi>0;
+    pCtx.clearRect(0,0,PCVS.width,PCVS.height);
+    pRect(2,3,7,2,'#f4b35d');
+    pRect(3,3,1,1,'#fff7ad');
+    pRect(6,3,1,1,'#fff7ad');
+    pRect(1,5,9,1,'#22c55e');
+    pRect(2,6,7,1,'#7c2d12');
+    pRect(2,7,7,1,'#facc15');
+    pRect(2,8,7,2,'#d97706');
+    if(bite){
+      pCtx.clearRect(7*PPX,3*PPX,3*PPX,3*PPX);
+      pRect(8,5,1,1,'#050510');
+    }
   }
 
   var HCOLS_STATUS = {
@@ -2868,12 +2910,11 @@ body.mk-low-motion *::after {
   var isSleeping = false, sleepReason = '';
   var bhvBusy = false;
   var animTimer = null, pettingTimer = null, zzzTimer = null;
+  var lastNightSplitPlan = null;
   var mx=0,my=0;
   var home={x:0,y:0};
   var totalH = STS.height + 4 + CVS.height; // 6+4+40=50px
   var W2=25, H2=25;
-  var lastActive=Date.now();
-  var IDLE_MS=150000; // 2.5 min idle → sleep
   var eyeDirX=0,eyeDirY=0;
   var curFi=0,curEyeOpen=true;
   var glassesOn=false;
@@ -2888,6 +2929,9 @@ body.mk-low-motion *::after {
   var coffeeOn=false;
   var allergyOn=false;
   var boredOn=false;
+  var disappointedOn=false;
+  var eatingOn=false;
+  var boxOn=false;
   var phoneOn=false;
 
   // ── Helpers ───────────────────────────────────────────────────────────
@@ -2898,6 +2942,112 @@ body.mk-low-motion *::after {
     r=Math.round(r*f);g=Math.round(g*f);b=Math.round(b*f);
     return '#'+('0'+r.toString(16)).slice(-2)+('0'+g.toString(16)).slice(-2)+('0'+b.toString(16)).slice(-2);
   }
+  function firstName(name){
+    return String(name||'').trim().split(/\s+/)[0] || '';
+  }
+  function getCalendarWindow(){
+    var frame = document.getElementById('calIframe');
+    try{ return frame && frame.contentWindow ? frame.contentWindow : null; }catch(e){ return null; }
+  }
+  function getNightWorkersFromStore(win, dateKey){
+    var store = win && win.__grafiksStore;
+    var out = [];
+    if(!store || !dateKey) return out;
+    try{
+      for(var mo in store){
+        var days = store[mo];
+        if(!Array.isArray(days)) continue;
+        for(var di=0; di<days.length; di++){
+          var day = days[di];
+          if(!day || day.date !== dateKey || !Array.isArray(day.workers)) continue;
+          for(var wi=0; wi<day.workers.length; wi++){
+            var w = day.workers[wi] || {};
+            var sh = String(w.shift||'').toUpperCase().trim();
+            if(sh==='N'||sh.indexOf('A')>=0||sh==='B'||!sh||sh==='0') continue;
+            var hrs = w.hours || parseInt(sh,10) || 0;
+            if(hrs < 12) continue;
+            var sH = w.startTime ? parseInt(String(w.startTime).split(':')[0],10) : -1;
+            var tp = String(w.type||'').toUpperCase();
+            var night = hrs>=24 || tp==='NAKTS' || tp==='DIENNAKTS';
+            if(!night && sH>=0 && (sH>=18 || sH<=5)) night=true;
+            if(!night && sH===-1 && hrs>=12) night=true;
+            if(night && !out.some(function(x){ return x.name === w.name; })) out.push(w);
+          }
+        }
+      }
+    }catch(e){}
+    return out;
+  }
+  function getNightSplitPlanFromStore(win){
+    try{
+      var dateKey = String(win.__activeDateStr || win.__todayDateStr || win.__grafiksTodayStr || '').trim();
+      var workers = getNightWorkersFromStore(win, dateKey);
+      if(!workers.length) return null;
+      var order = [];
+      try{
+        var savedMap = JSON.parse(win.localStorage.getItem('minkaNightSplitByDateV1') || '{}');
+        var saved = savedMap && savedMap[dateKey];
+        if(saved && Array.isArray(saved.order)) order = saved.order.map(function(n){ return String(n||'').trim(); }).filter(Boolean);
+      }catch(e){}
+      if(order.length){
+        var byName = {};
+        workers.forEach(function(w){ byName[String(w.name||'').trim()] = w; });
+        var sorted = [];
+        order.forEach(function(n){ if(byName[n]) sorted.push(byName[n]); });
+        workers.forEach(function(w){ if(sorted.indexOf(w) < 0) sorted.push(w); });
+        workers = sorted;
+      }
+      return {
+        count: workers.length,
+        segments: workers.map(function(w){ return { name:String(w.name||'') }; })
+      };
+    }catch(e){ return null; }
+  }
+  function getNightSplitPlan(){
+    var win = getCalendarWindow();
+    if(lastNightSplitPlan && lastNightSplitPlan.segments && lastNightSplitPlan.segments.length){
+      return lastNightSplitPlan;
+    }
+    try{
+      if(win && win.__ns && typeof win.__ns.getPlan === 'function'){
+        var livePlan = win.__ns.getPlan();
+        if(livePlan && livePlan.segments && livePlan.segments.length){
+          lastNightSplitPlan = livePlan;
+          return livePlan;
+        }
+      }
+    }catch(e){}
+    var storePlan = getNightSplitPlanFromStore(win);
+    if(storePlan){
+      lastNightSplitPlan = storePlan;
+      return storePlan;
+    }
+    try{
+      var doc = win && win.document;
+      if(doc){
+        var names = [].slice.call(doc.querySelectorAll('.ns-flow-name,.nsc-full-name,.ns-stage-name'))
+          .map(function(el){ return (el.textContent||'').trim(); })
+          .filter(Boolean);
+        if(names.length){
+          lastNightSplitPlan = {count:names.length, segments:names.map(function(n){ return {name:n}; })};
+          return lastNightSplitPlan;
+        }
+      }
+    }catch(e){}
+    return null;
+  }
+  function getNightSplitNames(){
+    var plan = getNightSplitPlan();
+    if(!plan || !plan.segments) return [];
+    return plan.segments.map(function(s){ return firstName(s.name); }).filter(Boolean);
+  }
+  window.addEventListener('message', function(e){
+    var data = e && e.data;
+    if(!data || data.type !== 'nightSplitPlan') return;
+    if(data.plan && data.plan.segments && data.plan.segments.length){
+      lastNightSplitPlan = data.plan;
+    }
+  });
 
   // ── Draw ──────────────────────────────────────────────────────────────
   function drawFrame(fi, eyeOpen){
@@ -2905,9 +3055,9 @@ body.mk-low-motion *::after {
     var frame=sp.f[Math.max(0,fi)]||sp.f[0];
     curFi=fi; curEyeOpen=eyeOpen;
     ctx.clearRect(0,0,CVS.width,CVS.height);
-    var bodyCol=devilOn?'#ef233c':(allergyOn?'#ff4d5e':(boredOn?'#7b8190':(isSleeping?dimColor(sp.c,0.28):sp.c)));
-    var hiCol=devilOn?'#ff6b6b':(allergyOn?'#ff8a92':(boredOn?'#a4aab8':(isSleeping?dimColor(sp.c,0.34):'#caa4ff')));
-    var shadeCol=devilOn?'#8f101d':(allergyOn?'#b91c1c':(boredOn?'#4b5563':(isSleeping?dimColor(sp.c,0.22):'#925cff')));
+    var bodyCol=devilOn?'#ef233c':(allergyOn?'#ff4d5e':((boredOn||disappointedOn)?'#7b8190':(isSleeping?dimColor(sp.c,0.28):sp.c)));
+    var hiCol=devilOn?'#ff6b6b':(allergyOn?'#ff8a92':((boredOn||disappointedOn)?'#a4aab8':(isSleeping?dimColor(sp.c,0.34):'#caa4ff')));
+    var shadeCol=devilOn?'#8f101d':(allergyOn?'#b91c1c':((boredOn||disappointedOn)?'#4b5563':(isSleeping?dimColor(sp.c,0.22):'#925cff')));
 
     // Collect eye groups per row for directional rendering
     var eyeGroups={}; // row -> [{cols:[]}]
@@ -2935,7 +3085,7 @@ body.mk-low-motion *::after {
         } else if(ch==='S'){
           ctx.fillStyle=shadeCol; ctx.fillRect(c*PX,r*PX,PX,PX);
         } else if(ch==='E'){
-          if((cuteFace||surprisedOn||crazySmileOn||boredOn||bigMouthOn)&&eyeOpen){
+          if((cuteFace||surprisedOn||crazySmileOn||boredOn||disappointedOn||bigMouthOn)&&eyeOpen){
             continue;
           }
           if(!eyeOpen){
@@ -3007,6 +3157,16 @@ body.mk-low-motion *::after {
       ctx.fillRect(6*PX,3*PX,2*PX,PX);
       ctx.fillRect(4*PX,5*PX,2*PX,PX);
     }
+    if(disappointedOn&&eyeOpen){
+      ctx.fillStyle='#050510';
+      ctx.fillRect(2*PX,3*PX,PX,PX);
+      ctx.fillRect(3*PX,4*PX,PX,PX);
+      ctx.fillRect(7*PX,3*PX,PX,PX);
+      ctx.fillRect(6*PX,4*PX,PX,PX);
+      ctx.fillRect(4*PX,6*PX,2*PX,PX);
+      ctx.fillRect(3*PX,5*PX,PX,PX);
+      ctx.fillRect(6*PX,5*PX,PX,PX);
+    }
     if(glassesOn&&eyeOpen){
       var frameCol=isSleeping?'rgba(0,0,0,.62)':'rgba(0,0,0,.88)';
       var lensCol=isSleeping?'rgba(92,120,132,.32)':'rgba(178,238,246,.58)';
@@ -3058,6 +3218,16 @@ body.mk-low-motion *::after {
     if(phoneOn){
       ctx.fillStyle=bodyCol;
       ctx.fillRect(1*PX,3*PX,PX,PX);
+    }
+    if(boxOn){
+      ctx.fillStyle=bodyCol;
+      ctx.fillRect(8*PX,5*PX,PX,PX);
+    }
+    if(eatingOn){
+      ctx.fillStyle='#050510';
+      ctx.fillRect(4*PX,4*PX,2*PX,2*PX);
+      ctx.fillStyle=bodyCol;
+      ctx.fillRect(8*PX,4*PX,PX,PX);
     }
     if(allergyOn){
       ctx.fillStyle='#fee2e2';
@@ -3160,7 +3330,7 @@ body.mk-low-motion *::after {
 
   function doYawn(){
     bhvBusy=true;
-    var sleepyTxt=['Zzz','zzZ','miedziņš','z z z'][Math.floor(Math.random()*4)];
+    var sleepyTxt=['zzz','zzz','miedziņš','z z z'][Math.floor(Math.random()*4)];
     showBubble(sleepyTxt);
     animTimer=setTimeout(function(){
       drawFrame(0,false);
@@ -3168,7 +3338,7 @@ body.mk-low-motion *::after {
         if(sleepyTxt==='miedziņš'){
           drawFrame(5,false);
           animTimer=setTimeout(function(){
-            showBubble('Zzz');
+            showBubble('zzz');
             drawFrame(5,false);
             animTimer=setTimeout(function(){
               drawFrame(0,true);
@@ -3290,7 +3460,7 @@ body.mk-low-motion *::after {
     bhvBusy=true;
     surprisedOn=true;
     eyeDirX=0;
-    showBubble('Perfūzija ?');
+    showBubble('perfūzija ?');
     drawFrame(0,true);
     animTimer=setTimeout(function(){
       drawFrame(1,true);
@@ -3318,7 +3488,6 @@ body.mk-low-motion *::after {
       animTimer=setTimeout(function(){
         surprisedOn=false;
         crazySmileOn=true;
-        showBubble('vēl 100 sekunde');
         drawFrame(0,true);
         animTimer=setTimeout(function(){
           crazySmileOn=false;
@@ -3336,10 +3505,10 @@ body.mk-low-motion *::after {
     tallOn=false;
     BOTCVS.style.display='block';
     drawBottle();
-    showBubble('Svars?');
+    showBubble('svars?');
     drawFrame(0,true);
     animTimer=setTimeout(function(){
-      showBubble('Augums?');
+      showBubble('augums?');
       bigMouthOn=false;
       fatOn=false;
       tallOn=true;
@@ -3429,16 +3598,16 @@ body.mk-low-motion *::after {
     },1700);
   }
 
-  function doPhoneOld(){
+  function doMobilePhone(){
     bhvBusy=true;
     phoneOn=true;
     eyeDirX=-1;
     PHCVS.style.display='block';
-    drawPhone(0);
+    drawMobilePhone(0);
     showBubble('atbrauc uz veco lūdzu?');
     drawFrame(3,true);
     animTimer=setTimeout(function(){
-      drawPhone(1);
+      drawMobilePhone(1);
       drawFrame(3,true);
       animTimer=setTimeout(function(){
         PHCVS.style.display='none';
@@ -3448,6 +3617,149 @@ body.mk-low-motion *::after {
         bhvBusy=false;
       },2200);
     },1700);
+  }
+
+  function doRanRoom(){
+    bhvBusy=true;
+    surprisedOn=true;
+    eyeDirX=0;
+    showBubble('ran zāle?');
+    drawFrame(0,true);
+    animTimer=setTimeout(function(){
+      drawFrame(1,true);
+      animTimer=setTimeout(function(){
+        surprisedOn=false;
+        drawFrame(0,true);
+        bhvBusy=false;
+      },1700);
+    },1300);
+  }
+
+  function doWaitFive(){
+    bhvBusy=true;
+    phoneOn=true;
+    boredOn=true;
+    eyeDirX=-1;
+    PHCVS.style.display='block';
+    drawMobilePhone(0);
+    showBubble('jāgaida 5 min');
+    drawFrame(0,true);
+    animTimer=setTimeout(function(){
+      drawMobilePhone(1);
+      drawFrame(1,true);
+      animTimer=setTimeout(function(){
+        PHCVS.style.display='none';
+        phoneOn=false;
+        boredOn=false;
+        eyeDirX=0;
+        drawFrame(0,true);
+        bhvBusy=false;
+      },2300);
+    },1800);
+  }
+
+  function doStorageBox(){
+    bhvBusy=true;
+    boxOn=true;
+    eyeDirX=1;
+    PCVS.style.display='block';
+    showBubble('atveda noliktavu');
+    var i=0;
+    (function shove(){
+      drawBox(i);
+      drawFrame(i%2?4:0,true);
+      i++;
+      if(i<8){
+        animTimer=setTimeout(shove,260);
+      } else {
+        animTimer=setTimeout(function(){
+          PCVS.style.display='none';
+          boxOn=false;
+          eyeDirX=0;
+          drawFrame(0,true);
+          bhvBusy=false;
+        },700);
+      }
+    })();
+  }
+
+  function doBurger(){
+    bhvBusy=true;
+    eatingOn=true;
+    eyeDirX=1;
+    PCVS.style.display='block';
+    showBubble('es eju ēst');
+    drawBurger(0);
+    drawFrame(0,true);
+    animTimer=setTimeout(function(){
+      drawBurger(1);
+      drawFrame(4,true);
+      animTimer=setTimeout(function(){
+        drawBurger(1);
+        drawFrame(4,false);
+        animTimer=setTimeout(function(){
+          PCVS.style.display='none';
+          eatingOn=false;
+          eyeDirX=0;
+          drawFrame(0,true);
+          bhvBusy=false;
+        },900);
+      },900);
+    },1300);
+  }
+
+  function doThreeOnNight(){
+    var plan = getNightSplitPlan();
+    if(!plan || plan.count !== 3){
+      bhvBusy=false;
+      return false;
+    }
+    bhvBusy=true;
+    disappointedOn=true;
+    eyeDirX=0;
+    showBubble('ak vai, trīs uz nakti?');
+    drawFrame(0,true);
+    animTimer=setTimeout(function(){
+      drawFrame(1,true);
+      animTimer=setTimeout(function(){
+        disappointedOn=false;
+        drawFrame(0,true);
+        bhvBusy=false;
+      },1900);
+    },1700);
+    return true;
+  }
+
+  function doFirstNightPart(){
+    var names = getNightSplitNames();
+    if(!names.length) return false;
+    bhvBusy=true;
+    surprisedOn=true;
+    eyeDirX=0;
+    showBubble('kas ņem pirmo daļu?');
+    drawFrame(0,true);
+    animTimer=setTimeout(function(){
+      surprisedOn=false;
+      crazySmileOn=true;
+      var first = names[0];
+      showBubble('pirmo daļu ņem ' + first);
+      drawFrame(1,true);
+      animTimer=setTimeout(function(){
+        if(names.length > 1){
+          showBubble('tālāk: ' + names.slice(1).join(', '));
+          drawFrame(3,true);
+          animTimer=setTimeout(function(){
+            crazySmileOn=false;
+            drawFrame(0,true);
+            bhvBusy=false;
+          },1900);
+        } else {
+          crazySmileOn=false;
+          drawFrame(0,true);
+          bhvBusy=false;
+        }
+      },1900);
+    },1600);
   }
 
   function doDance(){
@@ -3534,7 +3846,13 @@ body.mk-low-motion *::after {
     {fn:doAkVai,           dur:4200},
     {fn:doAllergy,         dur:4200},
     {fn:doPolitrauma,      dur:4200},
-    {fn:doPhoneOld,        dur:5200}
+    {fn:doMobilePhone,     dur:5200},
+    {fn:doRanRoom,         dur:4300},
+    {fn:doWaitFive,        dur:5200},
+    {fn:doStorageBox,      dur:4300},
+    {fn:doBurger,          dur:4300},
+    {fn:doThreeOnNight,    dur:4300},
+    {fn:doFirstNightPart,  dur:5600}
   ];
 
   function scheduleSeq(delay){
@@ -3549,8 +3867,8 @@ body.mk-low-motion *::after {
     }
     var item=SEQ[seqIndex%SEQ.length];
     seqIndex++;
-    item.fn();
-    scheduleSeq(item.dur + SEQ_GAP_MS);
+    var ran = item.fn();
+    scheduleSeq(ran === false ? 1000 : item.dur + SEQ_GAP_MS);
   }
 
   // ── Sleep ─────────────────────────────────────────────────────────────
@@ -3568,7 +3886,7 @@ body.mk-low-motion *::after {
     clearTimeout(zzzTimer);
     if(!isSleeping) return;
     zzzTimer=setTimeout(function(){
-      if(isSleeping) showBubble(['z z z','zzZ','guļu...','Zzz'][Math.floor(Math.random()*4)]);
+      if(isSleeping) showBubble(['z z z','zzz','guļu...','zzz'][Math.floor(Math.random()*4)]);
       scheduleZzz();
     },5000+Math.random()*7000);
   }
@@ -3590,6 +3908,9 @@ body.mk-low-motion *::after {
     coffeeOn=false;
     allergyOn=false;
     boredOn=false;
+    disappointedOn=false;
+    eatingOn=false;
+    boxOn=false;
     phoneOn=false;
     sleepSi=0;
     LCVS.style.display='none';
@@ -3597,6 +3918,7 @@ body.mk-low-motion *::after {
     BOTCVS.style.display='none';
     COFCVS.style.display='none';
     PHCVS.style.display='none';
+    PCVS.style.display='none';
     drawHearts('sleep');
     runSleepAnim();
     scheduleZzz();
@@ -3639,17 +3961,6 @@ body.mk-low-motion *::after {
   checkNight();
   setInterval(checkNight, 60000);
 
-  // Idle sleep
-  function resetIdle(){ lastActive=Date.now(); if(isSleeping&&sleepReason==='idle') exitSleep(); }
-  setInterval(function(){
-    if(!isSleeping&&mood!=='petted'&&mood!=='alert'&&mood!=='warn'){
-      if(Date.now()-lastActive>IDLE_MS) enterSleep('idle');
-    }
-  },20000);
-  ['mousemove','mousedown','keydown','scroll','touchstart'].forEach(function(ev){
-    document.addEventListener(ev,resetIdle,{passive:true});
-  });
-
   // ── Mood ──────────────────────────────────────────────────────────────
   function setMood(m){
     if(mood===m) return;
@@ -3658,7 +3969,7 @@ body.mk-low-motion *::after {
       drawHearts(m);
       bhvBusy=false;
     }
-    if(m!==''&&m!=='petted'&&!isSleeping) showBubble({warn:'hm...',alert:'hei!',tired:'*nogurst*'}[m]||'');
+    if(m!==''&&m!=='petted'&&!isSleeping) showBubble({warn:'hm...',alert:'hei!',tired:''}[m]||'');
   }
 
 
@@ -3685,7 +3996,6 @@ body.mk-low-motion *::after {
     setTimeout(function(){if(n.parentNode)n.parentNode.removeChild(n);},1500);
   }
   W.addEventListener('click',function(){
-    resetIdle();
     setMood('petted');
     for(var i=0;i<5;i++)(function(n){setTimeout(spawnHeart,n*110);})(i);
     clearTimeout(pettingTimer);
