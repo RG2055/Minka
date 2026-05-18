@@ -676,7 +676,7 @@ function _mkToast(msg, type) {
 <script src="js/calendar.js?v=20260428x"></script>
 <script src="js/calendar_extras_v4.js"></script>
 <script src="js/fatigue.js?v=20260318d"></script>
-<script src="js/nightsplit.js?v=20260518d" defer></script>
+<script src="js/nightsplit.js?v=20260518e" defer></script>
 <script src="js/design_v1.js" defer></script>
 <script src="js/theme.js" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
@@ -875,8 +875,9 @@ document.addEventListener('keydown', (e) => {
     if(k<0.02){
       shadow='<circle cx="32" cy="32" r="18" fill="rgba(10,14,30,.97)"/>';
     } else if(k<0.98){
-      var waxing=phase<0.5;
-      var ex=Math.cos(2*Math.PI*phase)*r;
+      var shadowPhase=(phase+0.5)%1;
+      var waxing=shadowPhase<0.5;
+      var ex=Math.cos(2*Math.PI*shadowPhase)*r;
       var rx=Math.abs(ex).toFixed(2);
       var T=(cy-r).toFixed(2),B=(cy+r).toFixed(2),X=cx.toFixed(2);
       var d;
