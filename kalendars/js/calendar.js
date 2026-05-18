@@ -3285,6 +3285,7 @@ function closeFullListModal() {
     try {
       const state = __minkaGetSelectedDayState();
       let fatigue = [];
+      let rgHeartColors = [];
       try {
         const calc = window.__fatigue && window.__fatigue.calculateFatigue;
         if (typeof calc === 'function' && state) {
@@ -3305,6 +3306,42 @@ function closeFullListModal() {
               return { fullName: String(f.workerName || fullName).trim(), score: Math.round(f.score) };
             } catch(e) { return null; }
           }).filter(Boolean).sort((a,b) => (b.score||0) - (a.score||0));
+          rgHeartColors = (Array.isArray(state.rg) ? state.rg : []).filter(w => !w || !w.done).map(w => {
+            const fullName = String((w && w.name) || '').trim();
+            if (!fullName) return null;
+            try {
+              const f = calc(fullName);
+              const score = f && Number.isFinite(f.score) ? Math.round(f.score) : 0;
+              let color = '#35d07f';
+              if (score > 70) color = '#ff6b5f';
+              else if (score > 45) color = '#e59b42';
+              else if (score > 20) color = '#d8c64a';
+              return { fullName, score, color };
+            } catch(e) {
+              return { fullName, score: 0, color: '#35d07f' };
+            }
+          }).filter(Boolean);
+        }
+      } catch(e) {}
+      try {
+        if ((!rgHeartColors || !rgHeartColors.length) && state) {
+          const calc = window.__fatigue && window.__fatigue.calculateFatigue;
+          rgHeartColors = (Array.isArray(state.rg) ? state.rg : []).filter(w => !w || !w.done).map(w => {
+            const fullName = String((w && w.name) || '').trim();
+            if (!fullName) return null;
+            let score = 0;
+            try {
+              if (typeof calc === 'function') {
+                const f = calc(fullName);
+                if (f && Number.isFinite(f.score)) score = Math.round(f.score);
+              }
+            } catch(e) {}
+            let color = '#35d07f';
+            if (score > 70) color = '#ff6b5f';
+            else if (score > 45) color = '#e59b42';
+            else if (score > 20) color = '#d8c64a';
+            return { fullName, score, color };
+          }).filter(Boolean);
         }
       } catch(e) {}
 
@@ -3316,7 +3353,8 @@ function closeFullListModal() {
         rd: Array.isArray(state && state.rd) ? state.rd : [],
         nextRg: Array.isArray(state && state.nextRg) ? state.nextRg : [],
         nextRd: Array.isArray(state && state.nextRd) ? state.nextRd : [],
-        fatigue: Array.isArray(fatigue) ? fatigue : []
+        fatigue: Array.isArray(fatigue) ? fatigue : [],
+        rgHeartColors: Array.isArray(rgHeartColors) ? rgHeartColors : []
       };
 
       // Dedupe repeated bridge posts (fatigue/card observers can fire multiple times for same state)
@@ -3328,7 +3366,8 @@ function closeFullListModal() {
           rd: (payload.rd || []).map(w => [w && w.name, w && w.shift, !!(w && w.done), !!(w && w.active)]),
           nrg: payload.nextRg || [],
           nrd: payload.nextRd || [],
-          f: (payload.fatigue || []).map(x => [x && x.fullName, x && x.score])
+          f: (payload.fatigue || []).map(x => [x && x.fullName, x && x.score]),
+          hc: (payload.rgHeartColors || []).map(x => [x && x.fullName, x && x.score, x && x.color])
         });
         if (digest && digest === window.__minkaLastAssistantBridgeDigest) return;
         window.__minkaLastAssistantBridgeDigest = digest;
@@ -3343,6 +3382,8 @@ function closeFullListModal() {
   window.__minkaPostAssistantState = __minkaPostAssistantState;
 
   g_init(0);
+  try { setTimeout(() => { try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(e) {} }, 80); } catch(e) {}
+  try { setTimeout(() => { try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(e) {} }, 650); } catch(e) {}
   g_installMobileDaySwipe();
 
   window.g_init = g_init;

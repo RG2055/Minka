@@ -2856,6 +2856,7 @@ body.mk-low-motion *::after {
   }
 
   function getRadiographerDutyCount(){
+    if(lastBuddyHeartData && lastBuddyHeartData.length) return lastBuddyHeartData.length;
     var count = getDutyDocCount(document);
     if(count) return count;
     var frame = document.getElementById('calIframe');
@@ -2866,6 +2867,32 @@ body.mk-low-motion *::after {
       }
     }catch(e){}
     return heartCount || 3;
+  }
+
+  function getDutyHeartColors(){
+    if(lastBuddyHeartData && lastBuddyHeartData.length){
+      var worst = lastBuddyHeartData.reduce(function(best, item){
+        return ((item && item.score) || 0) > ((best && best.score) || 0) ? item : best;
+      }, lastBuddyHeartData[0]);
+      var color = String((worst && worst.color) || '#35d07f').trim() || '#35d07f';
+      return lastBuddyHeartData.map(function(){ return color; });
+    }
+    var frame = document.getElementById('calIframe');
+    var doc = document;
+    try{
+      if(frame && frame.contentDocument) doc = frame.contentDocument;
+    }catch(e){}
+    var wrap = doc && doc.getElementById && doc.getElementById('radiographers-duty');
+    if(!wrap) return [];
+    var blocks = [].slice.call(wrap.querySelectorAll('.duty-block:not(.duty-done)'));
+    return blocks.map(function(block){
+      var col = '';
+      try{
+        col = block.style.getPropertyValue('--mk-side-fat-color') ||
+          (doc.defaultView && doc.defaultView.getComputedStyle(block).getPropertyValue('--mk-side-fat-color'));
+      }catch(e){}
+      return String(col || '').trim();
+    }).filter(Boolean);
   }
 
   function resizeHeartCanvas(count){
@@ -2882,6 +2909,11 @@ body.mk-low-motion *::after {
   function drawHearts(m) {
     var cols = HCOLS_STATUS[m] || HCOLS_STATUS[''];
     var count = getRadiographerDutyCount();
+    var fatigueCols = (m === 'sleep' || m === 'petted') ? [] : getDutyHeartColors();
+    if(fatigueCols.length) {
+      cols = fatigueCols;
+      count = fatigueCols.length;
+    }
     resizeHeartCanvas(count);
     sCtx.clearRect(0, 0, STS.width, STS.height);
     for (var hi = 0; hi < count; hi++) {
@@ -2911,6 +2943,7 @@ body.mk-low-motion *::after {
   var bhvBusy = false;
   var animTimer = null, pettingTimer = null, zzzTimer = null;
   var lastNightSplitPlan = null;
+  var lastBuddyHeartData = [];
   var mx=0,my=0;
   var home={x:0,y:0};
   var totalH = STS.height + 4 + CVS.height; // 6+4+40=50px
@@ -3043,9 +3076,19 @@ body.mk-low-motion *::after {
   }
   window.addEventListener('message', function(e){
     var data = e && e.data;
-    if(!data || data.type !== 'nightSplitPlan') return;
-    if(data.plan && data.plan.segments && data.plan.segments.length){
+    if(!data) return;
+    if(data.type === 'nightSplitPlan' && data.plan && data.plan.segments && data.plan.segments.length){
       lastNightSplitPlan = data.plan;
+      return;
+    }
+    if(data.type === 'minka-calendar-selected-day-state' && data.payload){
+      var heartData = Array.isArray(data.payload.rgHeartColors) ? data.payload.rgHeartColors : [];
+      lastBuddyHeartData = heartData.map(function(item){
+        var color = String((item && item.color) || '').trim();
+        if(!color) return null;
+        return { color: color, score: Math.max(0, Number((item && item.score) || 0) || 0) };
+      }).filter(Boolean);
+      drawHearts(isSleeping ? 'sleep' : (extMood || mood));
     }
   });
 
