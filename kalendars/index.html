@@ -673,7 +673,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260428x"></script>
+<script src="js/calendar.js?v=20260518g"></script>
 <script src="js/calendar_extras_v4.js"></script>
 <script src="js/fatigue.js?v=20260318d"></script>
 <script src="js/nightsplit.js?v=20260518f" defer></script>
@@ -2588,6 +2588,21 @@ function nextNews(){
     }, 200);
   }
 
+  function compactNameday(names) {
+    var list = (names || []).map(function(n){ return String(n || '').trim(); }).filter(Boolean);
+    if (!list.length) return '';
+    var regular = [];
+    var special = [];
+    list.forEach(function(n) {
+      if (/neparasto|neierakst/i.test(n)) special.push(n);
+      else regular.push(n);
+    });
+    var out = regular.slice(0, 3).join(', ');
+    if (special.length) out += (out ? ' + ' : '') + 'neierakstītie vārdi';
+    else if (regular.length > 3) out += ' +' + (regular.length - 3);
+    return out || list[0];
+  }
+
   /* Moon + weather refresh */
   window.mkBarRefresh = function() {
     var moon = (typeof window.currentMoon === 'function') ? window.currentMoon() : null;
@@ -2610,8 +2625,9 @@ function nextNews(){
       return n && n.trim() && n !== '–' && n !== '-';
     });
     if (!names.length) { chip.hidden = true; return; }
-    /* Names separated by commas */
-    var text = names.join(', ');
+    /* Compact text for the header; full value stays in the tooltip. */
+    var text = compactNameday(names);
+    chip.title = names.join(', ');
     if (chip.hidden) {
       chip.hidden = false;
       chip.style.opacity = '0'; chip.style.transform = 'translateY(5px)';
@@ -4326,7 +4342,7 @@ window.addEventListener('message', function(e) {
   background: none !important;
   border-left: 1px solid rgba(56,189,248,0.22);
   padding-left: 10px; margin-left: 4px;
-  max-width: 280px;
+  max-width: min(360px, 38vw);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   letter-spacing: -0.005em;
   transition: opacity 0.3s ease, transform 0.3s ease;
