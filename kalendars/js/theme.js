@@ -362,6 +362,12 @@
         wallpaper: bg.wallpaper || null,
         bodyBase: bodyBase
       }, '*');
+      window.parent.postMessage({
+        type: 'mk_performance',
+        performance: perfMode,
+        noAnim: !!state.noAnim,
+        noBlur: !!state.noBlur
+      }, '*');
     } catch(e) {}
 
     // Keep iframe itself transparent

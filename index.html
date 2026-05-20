@@ -2595,7 +2595,7 @@ body.mk-low-motion *::after {
 @keyframes mkHF{0%{opacity:1;transform:translateY(0) scale(1.1)}100%{opacity:0;transform:translateY(-36px) scale(0.5)}}
 .mk-heart{position:absolute;font-size:13px;animation:mkHF 1.1s ease-out forwards;}
 @keyframes mkNoteFloat{0%{opacity:0;transform:translateY(0) translateX(0) scale(.7)}15%{opacity:1}100%{opacity:0;transform:translateY(-42px) translateX(var(--mx,0px)) scale(1.1)}}
-.mk-note{position:absolute;font-size:15px;font-weight:900;line-height:1;animation:mkNoteFloat 1.25s ease-out forwards;text-shadow:0 0 8px currentColor;}
+.mk-note{position:absolute;font-size:15px;font-weight:900;line-height:1;animation:mkNoteFloat 1.25s ease-out forwards;text-shadow:none;}
 </style>
 
 <div id="mk-buddy">
@@ -2944,6 +2944,7 @@ body.mk-low-motion *::after {
   var animTimer = null, pettingTimer = null, zzzTimer = null;
   var lastNightSplitPlan = null;
   var lastBuddyHeartData = [];
+  var buddyPerfLow = false;
   var mx=0,my=0;
   var home={x:0,y:0};
   var totalH = STS.height + 4 + CVS.height; // 6+4+40=50px
@@ -3089,6 +3090,25 @@ body.mk-low-motion *::after {
         return { color: color, score: Math.max(0, Number((item && item.score) || 0) || 0) };
       }).filter(Boolean);
       drawHearts(isSleeping ? 'sleep' : (extMood || mood));
+      return;
+    }
+    if(data.type === 'mk_performance'){
+      buddyPerfLow = data.performance === 'low' || !!data.noAnim;
+      if(buddyPerfLow){
+        clearTimeout(seqTimer);
+        clearTimeout(animTimer);
+        bhvBusy=false;
+        glassesOn=false; cuteFace=false; syringeOn=false; devilOn=false; surprisedOn=false;
+        crazySmileOn=false; bigMouthOn=false; fatOn=false; tallOn=false; coffeeOn=false;
+        allergyOn=false; boredOn=false; disappointedOn=false; eatingOn=false; boxOn=false; phoneOn=false;
+        LCVS.style.display='none'; SCVS.style.display='none'; BOTCVS.style.display='none';
+        COFCVS.style.display='none'; PHCVS.style.display='none'; PCVS.style.display='none'; BCVS.style.display='none';
+        drawFrame(0,true);
+        drawHearts(isSleeping ? 'sleep' : mood);
+        scheduleSeq(22000);
+      } else if(!seqTimer && !isSleeping){
+        scheduleSeq(12000);
+      }
     }
   });
 
@@ -3334,13 +3354,14 @@ body.mk-low-motion *::after {
 
   // ── Eye direction tracking ───────────────────────────────────────────
   setInterval(function(){
+    if(document.hidden) return;
     if(isSleeping||!curEyeOpen) return;
     var bx=home.x+CVS.width/2;
     var by=home.y+(STS.height+4+CVS.height/2);
     var dx=mx-bx, dy=my-by;
     var nx= dx>50?1:(dx<-50?-1:0);
     if(nx!==eyeDirX){ eyeDirX=nx; drawFrame(curFi,true); }
-  },120);
+  },600);
 
   // ── Bubble ────────────────────────────────────────────────────────────
   var bubbleTimer=null;
@@ -3868,7 +3889,8 @@ body.mk-low-motion *::after {
   }
 
   // ── Sequential behavior playlist ──────────────────────────────────────
-  var SEQ_GAP_MS = 5000;
+  var SEQ_GAP_MS = 18000;
+  var SEQ_GAP_LOW_MS = 65000;
   var seqIndex = 0;
   var seqTimer = null;
   var SEQ = [
@@ -3904,14 +3926,19 @@ body.mk-low-motion *::after {
   }
 
   function runSeq(){
+    if(document.hidden){
+      scheduleSeq(buddyPerfLow ? 30000 : 15000);
+      return;
+    }
     if(isSleeping||bhvBusy){
-      scheduleSeq(1000);
+      scheduleSeq(buddyPerfLow ? 10000 : 4000);
       return;
     }
     var item=SEQ[seqIndex%SEQ.length];
     seqIndex++;
     var ran = item.fn();
-    scheduleSeq(ran === false ? 1000 : item.dur + SEQ_GAP_MS);
+    var gap = buddyPerfLow ? (SEQ_GAP_LOW_MS + Math.random()*25000) : SEQ_GAP_MS;
+    scheduleSeq(ran === false ? (buddyPerfLow ? 15000 : 1000) : item.dur + gap);
   }
 
   // ── Sleep ─────────────────────────────────────────────────────────────
@@ -4068,14 +4095,24 @@ body.mk-low-motion *::after {
     if(mood!=='petted') setMood(extMood||'');
   }).observe(bBtn,{attributes:true,attributeFilter:['class']});
   setInterval(function(){
+    if(document.hidden) return;
     if(extMood==='alert'||extMood==='warn') return;
     var over=document.querySelectorAll('.worker-xp-ring.overdue,.wc-ring-over,[data-fatigue="high"]');
     var ne=(over&&over.length>=2)?'tired':'';
     if(ne!==extMood){extMood=ne;if(mood!=='petted') setMood(extMood||'');}
   },5000);
   setInterval(function(){
+    if(document.hidden) return;
     drawHearts(isSleeping ? 'sleep' : mood);
-  },8000);
+  },30000);
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden){
+      clearTimeout(seqTimer);
+    } else {
+      drawHearts(isSleeping ? 'sleep' : mood);
+      scheduleSeq(buddyPerfLow ? 22000 : 12000);
+    }
+  });
 
   // ── Init ──────────────────────────────────────────────────────────────
   requestAnimationFrame(function(){

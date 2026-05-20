@@ -179,16 +179,16 @@ html.mk-low-spec #grafiks-app,
 html.mk-low-spec .side-panel,
 html.mk-low-spec .main-panel,
 html.mk-low-spec .mac-glass {
-  backdrop-filter: blur(8px) saturate(1.05) !important;
-  -webkit-backdrop-filter: blur(8px) saturate(1.05) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 html.mk-low-spec #macscapeBg .ms-grid,
 html.mk-low-spec #macscapeBg .ms-noise {
   opacity: 0.02 !important;
 }
 html.mk-low-spec #macscapeBg .ms-orb {
-  filter: blur(24px) !important;
-  opacity: 0.18 !important;
+  filter: none !important;
+  opacity: 0.08 !important;
   animation: none !important;
 }
 html.mk-low-spec *,
@@ -673,10 +673,10 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260518g"></script>
+<script src="js/calendar.js?v=20260520c"></script>
 <script src="js/calendar_extras_v4.js"></script>
 <script src="js/fatigue.js?v=20260318d"></script>
-<script src="js/nightsplit.js?v=20260518f" defer></script>
+<script src="js/nightsplit.js?v=20260520a" defer></script>
 <script src="js/design_v1.js" defer></script>
 <script src="js/theme.js" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
@@ -771,10 +771,11 @@ document.addEventListener('keydown', (e) => {
   window.toggleNsOverlay=function(forceOpen){
     if(typeof forceOpen==='boolean') _nsOpen=!forceOpen; // will be toggled below
     _nsOpen=!_nsOpen;
-    overlay.classList.toggle('open',_nsOpen);
-    if(_nsOpen && window.__ns) {
-      setTimeout(function(){ if(window.__ns && typeof window.__ns._render==='function') window.__ns._render(); }, 50);
-    }
+	    overlay.classList.toggle('open',_nsOpen);
+	    if(_nsOpen && window.__ns) {
+	      if(typeof window.__ns._update==='function') window.__ns._update();
+	      else if(typeof window.__ns._render==='function') window.__ns._render();
+	    }
     if(!_nsOpen) {
       // notify parent
       try { window.parent.postMessage({type:'nsClosed'},'*'); } catch(e) {}
@@ -1446,6 +1447,12 @@ document.addEventListener('keydown', (e) => {
     speed = speed || 22; // faster base speed
     abortTypewrite();
     const runId = _twRunId;
+    text = String(text || '');
+
+    if (document.hidden || text.length > 180) {
+      el.textContent = text;
+      return Promise.resolve();
+    }
 
     // Use a text node + caret span ï¿½ no textContent rebuild on every char
     el.innerHTML = '';
@@ -1457,8 +1464,8 @@ document.addEventListener('keydown', (e) => {
 
     return new Promise(resolve => {
       let i = 0;
-      // Batch characters for very long texts ï¿½ write 2-3 chars per frame
-      const batchSize = text.length > 120 ? 2 : 1;
+      // Batch characters so message typing does not repaint on every single letter.
+      const batchSize = text.length > 120 ? 6 : 4;
 
       (function tick() {
         if (runId !== _twRunId) {
@@ -1476,7 +1483,7 @@ document.addEventListener('keydown', (e) => {
           if ('.!?'.includes(lastChar)) d += 60;  // reduced from 160
           else if (',;:'.includes(lastChar)) d += 30; // reduced from 80
 
-          _twTimer = setTimeout(tick, d);
+          _twTimer = setTimeout(tick, Math.max(16, d * 0.55));
         } else {
           // Done ï¿½ remove caret cleanly
           if (caret.parentNode) caret.parentNode.removeChild(caret);
@@ -1496,6 +1503,10 @@ document.addEventListener('keydown', (e) => {
     var tmp = document.createElement('div');
     tmp.innerHTML = html;
     el.innerHTML = '';
+    if (document.hidden || tmp.textContent.length > 220) {
+      el.innerHTML = html;
+      return Promise.resolve();
+    }
 
     var segments = []; // {node: TextNode, full: string}
     function cloneTree(src, dest) {
@@ -1520,6 +1531,7 @@ document.addEventListener('keydown', (e) => {
     el.appendChild(caret);
 
     var segIdx = 0, charIdx = 0;
+    var batchSize = tmp.textContent.length > 120 ? 6 : 4;
     return new Promise(function(resolve) {
       (function tick() {
         if (runId !== _twRunId) { resolve(); return; }
@@ -1532,9 +1544,9 @@ document.addEventListener('keydown', (e) => {
           if (caret.parentNode) caret.parentNode.removeChild(caret);
           resolve(); return;
         }
-        charIdx++;
+        charIdx += batchSize;
         segments[segIdx].node.nodeValue = segments[segIdx].full.slice(0, charIdx);
-        _twTimer = setTimeout(tick, speed + Math.random() * 8);
+        _twTimer = setTimeout(tick, Math.max(16, speed * 0.55 + Math.random() * 5));
       })();
     });
   }
@@ -1854,20 +1866,23 @@ Tu vari atbildēt uz: "Kurš ir visvairāk noguris?", "Vai kāds ir riskā?", "K
     const fw = getFatigueWarning();
     const fwMsg = buildFatigueMsg(fw);
     if (fwMsg) msgs.push({text: fwMsg, mode:'warning'});
-    // Show 3 news at startup (after weather/varda msgs)
-    for (let ni = 0; ni < 3; ni++) {
-      const n = nextNews();
-      if (n) msgs.push({text: n, mode:'news', link: _lastNewsLink});
-    }
+    if (!isLowPerformance()) {
+      // Show 3 news at startup (after weather/varda msgs)
+      for (let ni = 0; ni < 3; ni++) {
+        const n = nextNews();
+        if (n) msgs.push({text: n, mode:'news', link: _lastNewsLink});
+      }
 
-    // Bolus reminder
-    msgs.push({text: 'Samaini un atzīmē <span style="color:#ff3b30;font-weight:800;">bolusu</span> nomaiņu statistikai — saņem +20 XP! 💉', mode:'bolus'});
+      // Bolus reminder
+      msgs.push({text: 'Samaini un atzīmē <span style="color:#ff3b30;font-weight:800;">bolusu</span> nomaiņu statistikai — saņem +20 XP! 💉', mode:'bolus'});
+    }
 
     msgs.forEach((m,i) => setTimeout(()=>qMsg(m.text, m.mode, m.link||''), 2000 + i*13000));
 
     // Top 5 — poll until __grafiksStore has data (max 60s)
     let _top5Done = false;
     function _tryTop5() {
+      if (isLowPerformance()) { _top5Done = true; return; }
       if (_top5Done) return;
       try {
         const store = window.__grafiksStore || {};
@@ -1895,9 +1910,10 @@ Tu vari atbildēt uz: "Kurš ir visvairāk noguris?", "Vai kāds ir riskā?", "K
     // News every 4 min ï¿½ 2 items each refresh cycle
     setInterval(async () => {
       await fetchNews();
+      if (isLowPerformance()) return;
       const n1 = nextNews(); if (n1) qMsg(n1, 'news', _lastNewsLink);
       setTimeout(() => { const n2 = nextNews(); if (n2) qMsg(n2, 'news', _lastNewsLink); }, 11000);
-    }, 4*60*1000);
+    }, 15*60*1000);
 
     // Weather + fatigue every 30 min
     setInterval(async () => {
@@ -2233,10 +2249,15 @@ function getTauriInvoke(){
   window.isUiNavigationBusy = window.isUiNavigationBusy || function(){
     return Number(window.__minkaUiBusyUntil || 0) > Date.now();
   };
+  function isLowPerformance(){
+    return document.documentElement.getAttribute('data-performance') === 'low' ||
+      document.documentElement.classList.contains('mk-low-spec') ||
+      document.documentElement.classList.contains('mk-no-anim');
+  }
   function isIdle(){
     const typing = !!(input && String(input.textContent || '').trim());
     const open = !!(aiPanel && aiPanel.classList.contains('open'));
-    return !document.hidden && !typing && !open && !(window.isUiNavigationBusy && window.isUiNavigationBusy());
+    return !isLowPerformance() && !document.hidden && !typing && !open && !(window.isUiNavigationBusy && window.isUiNavigationBusy());
   }
   function queue(text, mode, link){
     if (!text || typeof window.__minkaQueueMessage !== 'function' || !isIdle()) return false;
@@ -2650,12 +2671,20 @@ function nextNews(){
   function catClass(cat) {
     return 'mk-cat-' + (CAT_CLASS[String(cat||'').toLowerCase()] || 'default');
   }
-  function fmtPub(ts) {
-    if (!ts) return '';
-    var d = new Date(ts);
-    if (isNaN(d)) return '';
-    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
-  }
+	  function fmtPub(ts) {
+	    if (!ts) return '';
+	    var d = new Date(ts);
+	    if (isNaN(d)) return '';
+	    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+	  }
+	  function renderTickerItem(d) {
+	    var esc = String(d.link || '').replace(/"/g,'&quot;');
+	    var open = '<span class="mk-news-item"' + (d.link ? ' data-href="' + esc + '"' : '') + '>';
+	    var time = d.time ? '<span class="mk-tick-time">' + d.time + '</span>' : '';
+	    var badge = d.cat ? '<span class="mk-ticker-cat ' + catClass(d.cat) + '">' + d.cat + '</span>' : '';
+	    var text = '<span class="mk-news-headline">' + d.text + '</span>';
+	    return open + time + badge + text + '</span>';
+	  }
 
   /* Static fallback shown until live data arrives */
   var FALLBACK_ITEMS = [
@@ -2693,24 +2722,13 @@ function nextNews(){
     /* If nothing loaded yet, keep fallback visible */
     if (!items.length) items = FALLBACK_ITEMS;
 
-    /* Render one item as HTML string */
-    function renderItem(d) {
-      var esc = String(d.link || '').replace(/"/g,'&quot;');
-      var open = '<span class="mk-news-item"' + (d.link ? ' data-href="' + esc + '"' : '') + '>';
-      var time = d.time ? '<span class="mk-tick-time">' + d.time + '</span>' : '';
-      var badge = d.cat ? '<span class="mk-ticker-cat ' + catClass(d.cat) + '">' + d.cat + '</span>' : '';
-      var text = '<span class="mk-news-headline">' + d.text + '</span>';
-      return open + time + badge + text + '</span>';
-    }
-
-    /* Duplicate for seamless CSS loop */
-    var half = items.map(renderItem).join('');
-    track.innerHTML = half + half;
-    if (window.__mkTickerState) {
-      window.__mkTickerState.x = 0;
-      window.__mkTickerState.half = 0;
-      window.__mkTickerState.needsMeasure = true;
-    }
+	    var half = items.map(renderTickerItem).join('');
+	    track.innerHTML = half + half;
+	    if (window.__mkTickerState) {
+	      window.__mkTickerState.x = 0;
+	      window.__mkTickerState.half = 0;
+	      window.__mkTickerState.needsMeasure = true;
+	    }
 
     /* Click to open news link — no hover-pause, ticker runs continuously */
     if (!track._mkEvt) {
@@ -2730,10 +2748,10 @@ function nextNews(){
       needsMeasure: true,
       last: null,
       lastPaint: 0,
-      paused: false
-    };
-    var SPEED = 30;       /* px/s — calmer and easier on the eyes */
-    var FRAME_MS = 1000 / 30;
+	      paused: false
+	    };
+	    var SPEED = 14;       /* px/s — visible, but very light on work PCs */
+	    var FRAME_MS = 1000 / 15;
 
     /* Pause on hover — attach to the static wrapper, not the moving track */
     var wrap = document.getElementById('mkTickerWrap');
@@ -2742,8 +2760,8 @@ function nextNews(){
       wrap.addEventListener('mouseleave', function() { state.paused = false; }, { passive: true });
     }
 
-    function tick(ts) {
-      if (state.last === null) state.last = ts;
+	    function tick(ts) {
+	      if (state.last === null) state.last = ts;
 
       if (ts - state.lastPaint >= FRAME_MS) {
         var dt = Math.min(ts - state.last, 120) / 1000;
@@ -2753,7 +2771,7 @@ function nextNews(){
         var hidden = document.hidden;
         var bar = document.getElementById('minkaBar');
         var searchOpen = !!(bar && (bar.classList.contains('focused') || bar.classList.contains('has-text') || bar.classList.contains('search-open')));
-        if (track && !state.paused && !hidden && !searchOpen) {
+	        if (track && !state.paused && !hidden && !searchOpen) {
           if (state.needsMeasure) {
             state.half = track.scrollWidth / 2;
             state.needsMeasure = false;
@@ -2765,10 +2783,11 @@ function nextNews(){
           }
         }
       }
-      requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-  })();
+      if (document.hidden) setTimeout(function(){ requestAnimationFrame(tick); }, 1000);
+      else requestAnimationFrame(tick);
+	    }
+	    requestAnimationFrame(tick);
+	  })();
 
   /* Seed ticker immediately so it's never blank on load */
   window.mkTickerFeed([]);
@@ -2784,12 +2803,18 @@ function nextNews(){
     window.mkBarNameday(window.__g_todayStr || '');
   });
   /* Fallback: try after 2s regardless */
-  setTimeout(function() {
-    window.mkBarRefresh();
-    var ds = window.__activeDateStr || window.__g_todayStr || '';
-    window.mkBarNameday(ds);
-  }, 2000);
-})();
+	  setTimeout(function() {
+	    window.mkBarRefresh();
+	    var ds = window.__activeDateStr || window.__g_todayStr || '';
+	    window.mkBarNameday(ds);
+	    window.mkTickerFeed(newsCache || []);
+	  }, 2000);
+	  setTimeout(function() {
+	    window.mkBarRefresh();
+	    window.mkBarNameday(window.__activeDateStr || window.__g_todayStr || '');
+	    window.mkTickerFeed(newsCache || []);
+	  }, 4500);
+	})();
 
 </script>
 
@@ -5198,6 +5223,40 @@ window.addEventListener('message', function(e) {
 .nsc-full-fat  { font-size: 12px !important; }
 html.mk-no-blur * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 html.mk-no-anim * { animation: none !important; transition: none !important; }
+/* Work-PC saver: avoid animated glow/blur paints that can slow other PWAs. */
+.minka-orb-mini .nsh-plasma,
+.minka-orb-mini .nsh-cat,
+.ns-flow-live::after,
+.nsc-full-card,
+.shift-progress-seg-label,
+.ns-bed-zzz {
+  animation: none !important;
+}
+.minka-orb-mini .nsh-plasma,
+.minka-orb-mini .nsh-ringseg,
+.minka-orb-mini:hover .nscw-outer,
+.ns-stage-ghost,
+.ns-bed-zzz,
+.sbi-moon,
+.shift-progress-seg-label {
+  filter: none !important;
+}
+.minka-orb-mini .nsh-core {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.minka-orb-mini .nsh-sec,
+.minka-orb-mini .sec,
+.minka-orb-mini .nsh-pin,
+.minka-orb-mini .nsh-eye,
+.ns-flow-live {
+  box-shadow: none !important;
+}
+.ns-bed-zzz,
+.shift-progress-seg-label,
+.nsh-num {
+  text-shadow: none !important;
+}
 .ns-panel-head { position: relative !important; }
 .ns-lamp-iframe {
   display: block !important;

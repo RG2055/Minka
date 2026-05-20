@@ -1833,10 +1833,25 @@ function closeFullListModal() {
     }
   }
 
-  window.__nsBarSync = function() { try { g_updateLive(); } catch(_e){} };
+  var __minkaLastLiveHeavyPaint = 0;
+  function __minkaCalendarLowPerf(){
+    var root = document.documentElement;
+    return document.hidden ||
+      root.getAttribute('data-performance') === 'low' ||
+      root.classList.contains('mk-low-spec') ||
+      root.classList.contains('mk-no-anim');
+  }
 
-  function g_updateLive() {
+  window.__nsBarSync = function() { try { g_updateLive(true); } catch(_e){} };
+
+  function g_updateLive(force) {
     const now = new Date();
+    if (document.hidden) return;
+    if (!force && __minkaCalendarLowPerf() && __minkaLastLiveHeavyPaint && (now - __minkaLastLiveHeavyPaint) < 5000) {
+      updateTimers();
+      return;
+    }
+    __minkaLastLiveHeavyPaint = now;
 
     // Recompute g_todayStr every tick — fixes month-boundary bug where page loaded
     // before 08:00 kept showing previous day's workers after the 08:00 rollover
@@ -2098,7 +2113,7 @@ function closeFullListModal() {
             try { if (window.__setStarsManual) window.__setStarsManual(_nsBarOn); } catch(_e) {}
             playNightToggleSound(_nsBarOn);
             // Immediately re-render lanes with new axis
-            try { g_updateLive(); } catch(_e) {}
+            try { g_updateLive(true); } catch(_e) {}
           });
         }
         try {
