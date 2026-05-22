@@ -1376,7 +1376,20 @@ window.addEventListener('DOMContentLoaded', () => {
       transform: translateY(-2px) !important;
     }
     #bolusDocBtn::before {
-      display: none !important;
+      content: "" !important;
+      display: block !important;
+      position: absolute !important;
+      inset: -2px !important;
+      border-radius: 14px !important;
+      padding: 2px !important;
+      background: conic-gradient(from -90deg,var(--bp-col,transparent) var(--bp-pct,0%),rgba(255,255,255,0.05) 0%) !important;
+      -webkit-mask: linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0) !important;
+      -webkit-mask-composite: destination-out !important;
+      mask-composite: exclude !important;
+      pointer-events: none !important;
+      z-index: 0 !important;
+      opacity: var(--bp-vis,0) !important;
+      transition: opacity .6s, background .6s !important;
     }
     #nsToggleBtnParent::before,
     #bolusDocBtn .bolus-pattern {
@@ -4571,14 +4584,22 @@ body.mk-low-motion *::after {
   });
 
   // ── Drag + spring ─────────────────────────────────────────────────────
+  function usableAnchorButton(id){
+    var el=document.getElementById(id);
+    if(!el) return null;
+    var r=null;
+    try{ r=el.getBoundingClientRect(); }catch(e){}
+    if(!r || r.width < 4 || r.height < 4) return null;
+    return el;
+  }
   function getBuddyAnchorButton(){
     if(window.__minkaBolusNeedsChange){
-      var bolus = document.getElementById('bolusDocBtn');
+      var bolus = usableAnchorButton('bolusDocBtn');
       if(bolus) return bolus;
     }
-    return document.getElementById('radioToggle') ||
-      document.getElementById('radioIdleBtn') ||
-      document.getElementById('bolusDocBtn');
+    return usableAnchorButton('radioToggle') ||
+      usableAnchorButton('radioIdleBtn') ||
+      usableAnchorButton('bolusDocBtn');
   }
   function moveBuddyHome(){
     home=homePos();
@@ -4612,6 +4633,10 @@ body.mk-low-motion *::after {
       scheduleSeq(buddyPerfLow ? 5000 : 2500);
     }
   });
+  if(window.MutationObserver && document.body){
+    new MutationObserver(function(){ moveBuddyHome(); })
+      .observe(document.body,{attributes:true,attributeFilter:['class']});
+  }
 
   // ── Watchers ──────────────────────────────────────────────────────────
   var bBtn=document.getElementById('bolusDocBtn');
