@@ -1936,7 +1936,7 @@ window.addEventListener('DOMContentLoaded', () => {
             '<button class="bnm-tpick'+(_tpOpen[r.id]?' bnm-pact':'')+'" data-room="'+r.id+'">⏰ '+tStr+'</button>'+
             (dirty
               ? '<button class="bnm-savepick" data-room="'+r.id+'">Saglabāt ✓</button>'
-              : '<button class="bnm-now" data-room="'+r.id+'">Tagad</button>')+
+              : '<button class="bnm-now" data-room="'+r.id+'">Saglabāt</button>')+
           '</div>'+
           calH+tpH+
         '</div>';
@@ -2402,7 +2402,60 @@ window.addEventListener('DOMContentLoaded', () => {
       '.bnm-tpa:hover{background:rgba(255,255,255,0.12);color:#fff;}'+
       '.bnm-tpa:active{background:rgba(0,190,255,0.20)!important;color:rgba(140,235,255,0.97)!important;}'+
       '.bnm-tpv{font-size:clamp(18px,2.8dvh,24px);font-weight:900;color:#fff;font-variant-numeric:tabular-nums;min-width:34px;text-align:center;line-height:1.1;}'+
-      '.bnm-tpsep{font-size:clamp(18px,2.8dvh,24px);font-weight:900;color:rgba(255,255,255,0.32);line-height:1.1;margin-bottom:2px;}';
+      '.bnm-tpsep{font-size:clamp(18px,2.8dvh,24px);font-weight:900;color:rgba(255,255,255,0.32);line-height:1.1;margin-bottom:2px;}'+
+      /* ── Medical injector screen pass ── */
+      '#bolus-sheet{background:linear-gradient(180deg,#06111f 0%,#020712 100%)!important;border-color:rgba(43,151,255,.42)!important;border-radius:10px!important;box-shadow:0 -6px 18px rgba(0,0,0,.58),inset 0 1px 0 rgba(121,196,255,.08)!important;}'+
+      '#bolus-title-bar{padding:13px 18px 12px!important;background:linear-gradient(180deg,rgba(12,30,52,.84),rgba(3,10,20,.96))!important;border-bottom:1px solid rgba(32,150,255,.72)!important;box-shadow:0 1px 0 rgba(80,190,255,.16)!important;}'+
+      '#bolus-title{font-size:17px!important;font-weight:900!important;letter-spacing:.22em!important;color:#f1f7ff!important;text-shadow:none!important;}'+
+      '#bolus-title i{color:#2b95ff!important;opacity:1!important;font-size:15px!important;margin-right:8px!important;}'+
+      '#bolus-close-btn{width:38px!important;height:38px!important;border-radius:7px!important;background:rgba(4,18,34,.92)!important;border-color:rgba(43,151,255,.74)!important;color:#f3f8ff!important;font-size:22px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.10)!important;}'+
+      '#bolus-rooms{gap:14px!important;padding:12px 14px max(env(safe-area-inset-bottom,0px),18px)!important;background:linear-gradient(90deg,rgba(16,69,122,.08),rgba(0,0,0,0),rgba(25,124,64,.08))!important;}'+
+      '.brc{border-radius:14px!important;padding:14px!important;gap:8px!important;background:linear-gradient(160deg,rgba(5,16,31,.98),rgba(1,7,16,.98))!important;border-color:rgba(111,151,194,.24)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 4px 14px rgba(0,0,0,.38)!important;}'+
+      '.brc[data-room="ge"]{background:radial-gradient(circle at 50% 20%,rgba(10,132,255,.18),transparent 42%),linear-gradient(160deg,#06162a,#020814)!important;border-color:rgba(43,151,255,.68)!important;}'+
+      '.brc[data-room="philips"]{background:radial-gradient(circle at 50% 20%,rgba(48,209,88,.16),transparent 42%),linear-gradient(160deg,#061b15,#020a0d)!important;border-color:rgba(74,222,128,.56)!important;}'+
+      '.brn{font-size:18px!important;letter-spacing:.28em!important;text-shadow:none!important;}'+
+      '.bring-wrap{width:min(58%,clamp(112px,18dvh,158px))!important;}'+
+      '.bring-bg{stroke:rgba(34,65,102,.82)!important;stroke-width:9!important;}'+
+      '.bring-arc{stroke-width:9!important;filter:none!important;}'+
+      '.bring-time{font-size:clamp(20px,3.2dvh,28px)!important;color:#f8fbff!important;text-shadow:none!important;}'+
+      '.bring-secs{font-size:clamp(12px,1.7dvh,15px)!important;color:rgba(248,251,255,.92)!important;}'+
+      '.bring-label{font-size:10px!important;color:rgba(218,232,248,.74)!important;}'+
+      '.bwd-arr,.bwc,.bwblank,.bwcits,.bnm-dpick,.bnm-tpick,.bnm-now,.bnm-savepick,.bnm-cnav,.bnm-tpa{background:linear-gradient(180deg,rgba(12,33,58,.92),rgba(2,12,25,.96))!important;border:1px solid rgba(57,151,255,.52)!important;border-radius:7px!important;color:#f4f9ff!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important;font-weight:900!important;}'+
+      '.brc[data-room="philips"] .bwd-arr,.brc[data-room="philips"] .bwc,.brc[data-room="philips"] .bwblank,.brc[data-room="philips"] .bwcits,.brc[data-room="philips"] .bnm-dpick,.brc[data-room="philips"] .bnm-tpick,.brc[data-room="philips"] .bnm-now,.brc[data-room="philips"] .bnm-savepick,.brc[data-room="philips"] .bnm-cnav,.brc[data-room="philips"] .bnm-tpa{background:linear-gradient(180deg,rgba(9,43,25,.94),rgba(2,17,10,.98))!important;border-color:rgba(74,222,128,.54)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important;}'+
+      '.bwd-lbl,.bnm-label,.bhist-lbl{color:var(--room-col,#60a5fa)!important;text-shadow:none!important;}'+
+      '.brc[data-room="ge"]{--room-col:#2b95ff;}.brc[data-room="philips"]{--room-col:#63e46f;}'+
+      '.bnm-section{background:rgba(1,9,18,.74)!important;border-color:rgba(43,151,255,.46)!important;border-radius:13px!important;box-shadow:inset 0 0 18px rgba(0,0,0,.25)!important;}'+
+      '.brc[data-room="philips"] .bnm-section{border-color:rgba(74,222,128,.42)!important;}'+
+      '.bnm-savepick,.bnm-now{min-width:96px!important;color:#ffffff!important;}'+
+      '.brc[data-room="ge"] .bnm-savepick,.brc[data-room="ge"] .bnm-now{background:linear-gradient(180deg,rgba(18,90,154,.92),rgba(5,36,73,.96))!important;border-color:rgba(43,151,255,.72)!important;}'+
+      '.brc[data-room="philips"] .bnm-savepick,.brc[data-room="philips"] .bnm-now{background:linear-gradient(180deg,rgba(24,117,52,.92),rgba(6,50,24,.96))!important;border-color:rgba(74,222,128,.72)!important;}'+
+      '.bhist{background:rgba(1,7,15,.86)!important;border-color:rgba(115,144,177,.18)!important;border-radius:9px!important;padding:5px 8px 18px!important;overflow-y:auto!important;border-bottom:1px solid rgba(115,144,177,.22)!important;}'+
+      '.bhist-row{border-bottom-color:rgba(129,156,190,.15)!important;color:#f3f7fb!important;}'+
+      '.bhist-num{color:rgba(222,232,244,.50)!important;}'+
+      '.bhist-time{color:rgba(255,255,255,.78)!important;}'+
+      '.bhist-who{border:1px solid rgba(43,151,255,.42)!important;background:rgba(5,24,43,.86)!important;color:#dff4ff!important;border-radius:6px!important;}'+
+      '.brc[data-room="philips"] .bhist-who{background:rgba(5,35,19,.86)!important;color:#dcffe8!important;}'+
+      /* ── Compact vertical fit ── */
+      '#bolus-sheet{height:calc(100dvh - 10px)!important;}'+
+      '#bolus-handle{height:3px!important;margin:4px auto 0!important;}'+
+      '#bolus-title-bar{padding:8px 16px 8px!important;}'+
+      '#bolus-title{font-size:15px!important;}'+
+      '#bolus-close-btn{width:32px!important;height:32px!important;font-size:19px!important;}'+
+      '#bolus-rooms{padding:8px 12px max(env(safe-area-inset-bottom,0px),76px)!important;align-items:stretch!important;}'+
+      '.brc{padding:10px 12px!important;gap:5px!important;display:flex!important;min-height:0!important;}'+
+      '.brn{font-size:16px!important;line-height:1!important;}'+
+      '.bring-wrap{width:min(42%,clamp(92px,14dvh,124px))!important;}'+
+      '.bring-time{font-size:clamp(18px,2.6dvh,24px)!important;}'+
+      '.bring-secs{font-size:clamp(10px,1.4dvh,13px)!important;}'+
+      '.bwd-nav{margin-bottom:0!important;}'+
+      '.bwrap{gap:4px!important;padding-bottom:1px!important;}'+
+      '.bwc{font-size:9px!important;padding:4px 8px!important;border-radius:8px!important;}'+
+      '.bnm-section{padding:5px 7px!important;border-radius:10px!important;}'+
+      '.bnm-label{font-size:7px!important;margin-bottom:3px!important;}'+
+      '.bnm-dpick,.bnm-tpick,.bnm-now,.bnm-savepick{font-size:9px!important;padding:5px 6px!important;border-radius:7px!important;}'+
+      '.bhist-hdr{padding-top:2px!important;}'+
+      '.bhist{flex:1 1 0!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;padding-bottom:26px!important;margin-bottom:0!important;}'+
+      '.bhist-row{font-size:9px!important;padding:3px 2px!important;}';
     document.head.appendChild(s);
   }
   window.toggleBolus = function() {
