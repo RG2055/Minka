@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.3.58';
+const CACHE = 'minka-4.3.61';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
@@ -30,6 +30,28 @@ self.addEventListener('install', event => {
       appUrl('manifest.json'),
       appUrl('manifest-mobile.json'),
       appUrl('kalendars/index.html'),
+      appUrl('css/minka.css'),
+      appUrl('css/radio-extra.css'),
+      appUrl('css/improvements.css'),
+      appUrl('css/radio_extras_v4.css'),
+      appUrl('js/radio.js'),
+      appUrl('js/radio_extras_v4.js'),
+      appUrl('js/ambilight.js'),
+      appUrl('kalendars/css/bundle.css'),
+      appUrl('kalendars/data/cat_small.webp'),
+      appUrl('kalendars/data/namedays.local.js'),
+      appUrl('kalendars/js/calendar.js'),
+      appUrl('kalendars/js/calendar_extras_v4.js'),
+      appUrl('kalendars/js/fatigue.js'),
+      appUrl('kalendars/js/nightsplit.js'),
+      appUrl('kalendars/js/design_v1.js'),
+      appUrl('kalendars/js/theme.js'),
+      appUrl('kalendars/js/minka.sync.config.js'),
+      appUrl('kalendars/js/emoji.js'),
+      appUrl('kalendars/js/levels.js'),
+      appUrl('kalendars/js/radiologist_plan.js'),
+      appUrl('data/rg-logo.png'),
+      appUrl('data/dolphin.webp'),
       appUrl('data/rg-any-192.png'),
       appUrl('data/rg-any-512.png'),
       appUrl('data/rg-maskable-192.png'),
