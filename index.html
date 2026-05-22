@@ -1030,7 +1030,7 @@ window.addEventListener('DOMContentLoaded', () => {
         box-shadow .22s ease,
         transform .18s cubic-bezier(.34,1.56,.64,1),
         background .22s ease !important;
-      will-change: transform !important;
+      will-change: auto !important;
     }
     #nsLedParent,
     #bolusLed,
@@ -1184,20 +1184,40 @@ window.addEventListener('DOMContentLoaded', () => {
 
     /* ── BOLUS button ── */
     #bolusDocBtn {
-      background: rgba(0,18,36,0.72);
-      border: 1px solid rgba(0,200,255,0.50) !important;
-      color: #b0eeff !important;
-      box-shadow: 0 0 10px rgba(0,200,255,.22), 0 2px 12px rgba(0,0,0,.45);
+      background: linear-gradient(180deg,rgba(20,27,40,.86),rgba(12,18,28,.90)) !important;
+      border: 1px solid rgba(74,95,122,0.42) !important;
+      color: #dbe7f3 !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 10px 26px rgba(0,0,0,.28) !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      gap: 10px !important;
+      min-width: 0 !important;
+      width: 170px !important;
+      min-height: 58px !important;
+      padding: 8px 8px 8px 13px !important;
+      border-radius: 15px !important;
+      overflow: hidden !important;
+    }
+    #bolusDocBtn::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 14px;
+      bottom: 14px;
+      width: 4px;
+      border-radius: 0 99px 99px 0;
+      background: #34d7bf;
+      box-shadow: 0 0 18px rgba(52,215,191,.55);
+      pointer-events: none;
     }
     #bolusDocBtn:hover {
-      border-color: rgba(0,210,255,.72) !important;
+      border-color: rgba(86,114,146,.62) !important;
       box-shadow:
-        0 0 0 1px rgba(0,200,255,.14),
-        0 0 18px rgba(0,200,255,.42),
-        0 0 36px rgba(0,200,255,.16),
-        0 6px 20px rgba(0,0,0,.55) !important;
+        inset 0 1px 0 rgba(255,255,255,.08),
+        0 0 22px rgba(52,215,191,.14),
+        0 10px 26px rgba(0,0,0,.34) !important;
       transform: translateY(-4px) !important;
-      background: rgba(0,28,52,0.84) !important;
+      background: linear-gradient(180deg,rgba(25,34,50,.92),rgba(13,20,31,.94)) !important;
     }
     #bolusDocBtn:active { transform: translateY(-1px) scale(.97) !important; }
     #bolusDocBtn.bolus-open {
@@ -1206,6 +1226,250 @@ window.addEventListener('DOMContentLoaded', () => {
         0 0 0 1px rgba(0,210,255,.20),
         0 0 22px rgba(0,200,255,.52),
         0 0 44px rgba(0,200,255,.18) !important;
+    }
+    #bolusDocBtn .bolus-dock-title {
+      display: inline-flex;
+      align-items: center;
+      flex: 0 1 auto;
+      min-width: 0;
+      font-size: 12px;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: .14em;
+      color: rgba(232,238,246,.96);
+      text-transform: uppercase;
+      text-shadow: 0 1px 0 rgba(0,0,0,.55);
+      white-space: nowrap;
+    }
+    #bolusDocBtn .bolus-dock-mark {
+      width: 18px;
+      height: 18px;
+      margin-left: 8px;
+      flex: 0 0 auto;
+      position: relative;
+    }
+    #bolusDocBtn .bolus-dock-mark::before {
+      content: "";
+      position: absolute;
+      left: 4px;
+      top: 3px;
+      width: 9px;
+      height: 12px;
+      border: 2px solid #34d7bf;
+      border-radius: 10px 10px 10px 2px;
+      transform: rotate(45deg);
+      box-shadow: 0 0 12px rgba(52,215,191,.55);
+    }
+    #bolusDocBtn .bolus-room-row {
+      display: grid;
+      grid-template-columns: repeat(2,minmax(0,1fr));
+      gap: 4px;
+      width: 74px;
+      flex: 0 0 74px;
+    }
+    #bolusDocBtn .bolus-room-seg {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      height: 38px;
+      border-radius: 11px;
+      border: 1px solid rgba(74,95,122,.32);
+      background: rgba(6,10,17,.72);
+      color: rgba(197,207,220,.72);
+      font: 900 11px/1 'Space Grotesk', system-ui;
+      letter-spacing: .08em;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04), inset 0 -1px 0 rgba(0,0,0,.38), 0 2px 7px rgba(0,0,0,.32);
+    }
+    #bolusDocBtn .bolus-room-seg.is-fresh {
+      border-color: rgba(52,215,191,.78);
+      background: linear-gradient(180deg,rgba(56,214,187,.94),rgba(37,194,169,.90));
+      color: #031b1a;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.26), 0 0 0 1px rgba(52,215,191,.14), 0 0 18px rgba(52,215,191,.38);
+    }
+    #bolusDocBtn .bolus-room-seg.is-stale {
+      border-color: rgba(255,76,96,.86);
+      background: linear-gradient(180deg,rgba(129,32,42,.92),rgba(90,22,30,.92));
+      color: #ffe8eb;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 1px rgba(255,76,96,.16), 0 0 16px rgba(255,76,96,.42);
+      animation: bolusRoomBlink 1.15s ease-in-out infinite;
+    }
+    @keyframes bolusRoomBlink {
+      0%,100% { filter: brightness(1); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 1px rgba(255,76,96,.16), 0 0 14px rgba(255,76,96,.34); }
+      50% { filter: brightness(1.28); box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 0 0 1px rgba(255,76,96,.28), 0 0 26px rgba(255,76,96,.72); }
+    }
+    #bolusDocBtn .dock-emoji,
+    #bolusDocBtn #bolusLed {
+      display: none !important;
+    }
+    /* ── Unified dock sizing/style ── */
+    #nsToggleBtnParent,
+    #bolusDocBtn,
+    #mobileDockBtn,
+    #statsDocBtn,
+    #settingsDockBtn,
+    #radioIdleBtn,
+    #radioToggle {
+      --dock-accent: #6f82ff;
+      --dock-glow: rgba(111,130,255,.28);
+      position: relative !important;
+      flex: 0 0 132px !important;
+      width: 132px !important;
+      min-width: 132px !important;
+      max-width: 132px !important;
+      height: 44px !important;
+      min-height: 44px !important;
+      padding: 0 11px !important;
+      border-radius: 12px !important;
+      display: inline-flex !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 7px !important;
+      overflow: hidden !important;
+      background: linear-gradient(180deg,rgba(20,27,40,.88),rgba(12,18,28,.94)) !important;
+      border: 1px solid rgba(74,95,122,.44) !important;
+      color: rgba(232,238,246,.96) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 6px 16px rgba(0,0,0,.24) !important;
+      animation: none !important;
+      font: 900 10.5px/1 'Space Grotesk', system-ui !important;
+      letter-spacing: .08em !important;
+      text-transform: uppercase !important;
+    }
+    #nsToggleBtnParent { --dock-accent: #6f82ff; --dock-glow: rgba(111,130,255,.28); }
+    #bolusDocBtn { --dock-accent: #34d7bf; --dock-glow: rgba(52,215,191,.28); }
+    #statsDocBtn { --dock-accent: #ff9856; --dock-glow: rgba(255,152,86,.26); }
+    #settingsDockBtn { --dock-accent: #ffd666; --dock-glow: rgba(255,214,102,.24); }
+    #mobileDockBtn { --dock-accent: #39cfe3; --dock-glow: rgba(57,207,227,.26); }
+    #radioIdleBtn,
+    #radioToggle { --dock-accent: #5ee87d; --dock-glow: rgba(94,232,125,.24); }
+
+    #nsToggleBtnParent::after,
+    #bolusDocBtn::after,
+    #mobileDockBtn::after,
+    #statsDocBtn::after,
+    #settingsDockBtn::after,
+    #radioIdleBtn::after,
+    #radioToggle::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 10px;
+      bottom: 10px;
+      width: 3px;
+      border-radius: 0 99px 99px 0;
+      background: var(--dock-accent);
+      box-shadow: 0 0 12px var(--dock-glow);
+      pointer-events: none;
+    }
+    #nsToggleBtnParent:hover,
+    #bolusDocBtn:hover,
+    #mobileDockBtn:hover,
+    #statsDocBtn:hover,
+    #settingsDockBtn:hover,
+    #radioIdleBtn:hover,
+    #radioToggle:hover {
+      border-color: rgba(104,128,160,.62) !important;
+      background: linear-gradient(180deg,rgba(25,34,50,.94),rgba(13,20,31,.96)) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 14px var(--dock-glow), 0 7px 18px rgba(0,0,0,.30) !important;
+      transform: translateY(-2px) !important;
+    }
+    #bolusDocBtn::before {
+      display: none !important;
+    }
+    #nsToggleBtnParent::before,
+    #bolusDocBtn .bolus-pattern {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: .42;
+      z-index: 0;
+    }
+    #nsToggleBtnParent::before {
+      background:
+        radial-gradient(circle at 22% 30%, rgba(210,220,255,.95) 0 1px, transparent 1.4px),
+        radial-gradient(circle at 72% 24%, rgba(160,178,255,.75) 0 1px, transparent 1.4px),
+        radial-gradient(circle at 44% 72%, rgba(255,255,255,.70) 0 1px, transparent 1.4px),
+        radial-gradient(circle at 86% 70%, rgba(130,150,255,.62) 0 1px, transparent 1.4px);
+    }
+    #bolusDocBtn .bolus-pattern {
+      display: none;
+    }
+    #nsToggleBtnParent > *,
+    #bolusDocBtn > *:not(.bolus-pattern),
+    #mobileDockBtn > *,
+    #statsDocBtn > *,
+    #settingsDockBtn > *,
+    #radioIdleBtn > *,
+    #radioToggle > * {
+      position: relative;
+      z-index: 1;
+    }
+    #bolusDocBtn {
+      justify-content: space-between !important;
+      gap: 5px !important;
+      padding: 0 6px 0 18px !important;
+    }
+    #bolusDocBtn .bolus-dock-mark { display: none !important; }
+    #bolusDocBtn .bolus-dock-title {
+      flex: 1 1 auto;
+      text-align: center;
+      justify-content: center;
+      font-size: 10px;
+      letter-spacing: .08em;
+    }
+    #bolusDocBtn .bolus-room-row {
+      width: 50px;
+      flex: 0 0 50px;
+      gap: 3px;
+    }
+    #bolusDocBtn .bolus-room-seg {
+      height: 28px;
+      border-radius: 8px;
+      font-size: 8px;
+      letter-spacing: .03em;
+    }
+    @media (max-width: 700px) {
+      #nsToggleBtnParent,
+      #bolusDocBtn,
+      #mobileDockBtn,
+      #statsDocBtn,
+      #settingsDockBtn,
+      #radioIdleBtn,
+      #radioToggle {
+        flex-basis: 116px !important;
+        width: 116px !important;
+        min-width: 116px !important;
+        max-width: 116px !important;
+        height: 42px !important;
+        min-height: 42px !important;
+        font-size: 9px !important;
+        letter-spacing: .06em !important;
+        padding: 0 8px !important;
+      }
+      #bolusDocBtn {
+        width: 116px !important;
+        gap: 4px !important;
+        padding-left: 7px !important;
+      }
+      #bolusDocBtn .bolus-dock-mark {
+        margin-left: 8px;
+      }
+      #bolusDocBtn .bolus-room-row {
+        width: 46px;
+        flex-basis: 46px;
+      }
+      #bolusDocBtn .bolus-room-seg {
+        height: 26px;
+        font-size: 7.5px;
+        border-radius: 8px;
+      }
+      #bolusDocBtn .bolus-dock-title {
+        font-size: 8.5px;
+        letter-spacing: .05em;
+      }
     }
 
     body.radio-hidden #radioToggle .rtog-led { background: #333 !important; box-shadow: none !important; animation: none !important; }
@@ -1258,8 +1522,12 @@ window.addEventListener('DOMContentLoaded', () => {
     <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
     <button id="bolusDocBtn" onclick="toggleBolus()" title="Bolusa maiņa">
       <div id="bolusLed" style="width:7px;height:7px;border-radius:50%;background:#00c8ff;box-shadow:0 0 7px #00c8ff;flex-shrink:0;animation:rledPulse 2.8s ease-in-out infinite;"></div>
-      <span>BOLUS</span>
-      <span class="dock-emoji" style="font-size:11px;">💉</span>
+      <span class="bolus-pattern" aria-hidden="true"></span>
+      <span class="bolus-dock-title">Bolus</span>
+      <span class="bolus-room-row" aria-hidden="true">
+        <span id="bolusSegGe" class="bolus-room-seg" data-room="ge">GE</span>
+        <span id="bolusSegPh" class="bolus-room-seg" data-room="philips">PH</span>
+      </span>
     </button>
 
     <div id="dockSep" role="separator" aria-hidden="true"></div>
@@ -1267,14 +1535,12 @@ window.addEventListener('DOMContentLoaded', () => {
     <button id="statsDocBtn" onclick="openStatsFromDock()" title="Statistika &amp; Leaderboard">
       <div style="width:7px;height:7px;border-radius:50%;background:#a78bfa;box-shadow:0 0 7px #a78bfa;flex-shrink:0;animation:rledPulse 3s ease-in-out infinite;"></div>
       <span>STATISTIKA</span>
-      <span class="dock-emoji" style="font-size:11px;">📊</span>
     </button>
 
     <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
     <button id="settingsDockBtn" onclick="openSettingsFromDock()" title="Iestatījumi">
       <div style="width:7px;height:7px;border-radius:50%;background:#ffd666;box-shadow:0 0 7px #ffd666;flex-shrink:0;animation:rledPulse 3.2s ease-in-out infinite;"></div>
       <span>IESTATĪJUMI</span>
-      <span class="dock-emoji" style="font-size:11px;">⚙️</span>
     </button>
 
     <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
@@ -1282,7 +1548,6 @@ window.addEventListener('DOMContentLoaded', () => {
     <button id="mobileDockBtn" onclick="toggleMobileQrModal()" title="Atvērt mobile QR">
       <div style="width:7px;height:7px;border-radius:50%;background:#b58cff;box-shadow:0 0 7px #b58cff;flex-shrink:0;animation:rledPulse 2.9s ease-in-out infinite;"></div>
       <span>MOBILE</span>
-      <span class="dock-emoji" style="font-size:11px;">📱</span>
     </button>
 
     <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
@@ -1321,7 +1586,7 @@ window.addEventListener('DOMContentLoaded', () => {
       </div>
       <div style="border-radius:20px;border:1px solid rgba(255,255,255,.08);background:#060606;padding:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.03);">
         <div id="mobilePreviewShell" style="display:flex;justify-content:center;padding:0;">
-          <img src="data/phoneqr.png" alt="Mobile preview" style="display:block;width:min(100%,360px);height:auto;border-radius:20px;filter:drop-shadow(0 20px 38px rgba(0,0,0,.42));" />
+          <img id="mobilePreviewImage" data-src="data/phoneqr.png" alt="Mobile preview" width="1024" height="1536" loading="lazy" decoding="async" style="display:block;width:min(100%,360px);height:auto;border-radius:20px;filter:drop-shadow(0 20px 38px rgba(0,0,0,.42));" />
         </div>
       </div>
     </div>
@@ -1901,27 +2166,47 @@ window.addEventListener('DOMContentLoaded', () => {
   function _updateLed() {
     var btn = document.getElementById('bolusDocBtn');
     var led = document.getElementById('bolusLed');
-    if (!btn || !led) return;
+    if (!btn) return;
     var now = Date.now();
     var worstPct = 0;
+    var staleCount = 0;
     ROOMS.forEach(function(r) {
       var st = _state[r.id];
+      var fresh = !!(st.changedAt && (now - st.changedAt) < WARN_MS);
+      var seg = document.getElementById(r.id === 'ge' ? 'bolusSegGe' : 'bolusSegPh');
+      if (seg) {
+        seg.classList.toggle('is-fresh', fresh);
+        seg.classList.toggle('is-stale', !fresh);
+        seg.title = r.label + (fresh ? ' bolus nomainīts' : ' bolus jāmaina');
+      }
+      if (!fresh) staleCount++;
       if (st.changedAt) {
         var pct = Math.min((now - st.changedAt) / WARN_MS * 100, 100);
         if (pct > worstPct) worstPct = pct;
+      } else {
+        worstPct = 100;
       }
     });
-    var isAlert = worstPct >= 100;
+    var isAlert = staleCount > 0 || worstPct >= 100;
     var isWarn  = worstPct >= 80 && !isAlert;
-    var col = isAlert ? '#ff3b30' : (isWarn ? '#ff9500' : '#00c8ff');
-    led.style.background = col;
-    led.style.boxShadow  = '0 0 8px ' + col;
+    var col = isAlert ? '#ff3b30' : (isWarn ? '#ff9500' : '#34d399');
+    if (led) {
+      led.style.background = col;
+      led.style.boxShadow  = '0 0 8px ' + col;
+    }
     btn.classList.toggle('bolus-alert', isAlert);
     btn.classList.toggle('bolus-warn',  isWarn);
+    btn.setAttribute('aria-label', 'Bolus: GE ' + (document.getElementById('bolusSegGe') && document.getElementById('bolusSegGe').classList.contains('is-fresh') ? 'nomainīts' : 'jāmaina') + ', PH ' + (document.getElementById('bolusSegPh') && document.getElementById('bolusSegPh').classList.contains('is-fresh') ? 'nomainīts' : 'jāmaina'));
     // Drive conic-gradient progress ring via CSS custom properties
     btn.style.setProperty('--bp-pct', worstPct.toFixed(2) + '%');
     btn.style.setProperty('--bp-col', col);
-    btn.style.setProperty('--bp-vis', worstPct <= 0 ? '0' : '1');
+    btn.style.setProperty('--bp-vis', '1');
+    if (window.__minkaBolusNeedsChange !== isAlert) {
+      window.__minkaBolusNeedsChange = isAlert;
+      window.dispatchEvent(new CustomEvent('minka-bolus-status', { detail: { needsChange: isAlert } }));
+    } else {
+      window.__minkaBolusNeedsChange = isAlert;
+    }
   }
   function _playWelcome() {
     try {
@@ -2050,11 +2335,11 @@ window.addEventListener('DOMContentLoaded', () => {
       '#bolus-edit-cancel{flex:0 0 76px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:10px;color:rgba(255,255,255,0.35);font-size:12px;font-weight:700;padding:13px 8px;cursor:pointer;}'+
       '#bolus-gs-btn{display:none;}'+
       /* ── Dock button progress ring ── */
-      '#bolusDocBtn{position:relative!important;overflow:visible!important;border-radius:12px!important;}'+
+      '#bolusDocBtn{position:relative!important;overflow:visible!important;border-radius:18px!important;}'+
       '#bolusDocBtn>*{position:relative;z-index:1;}'+
-      '#bolusDocBtn::before{content:"";position:absolute;inset:-2px;border-radius:14px;padding:2px;background:conic-gradient(from -90deg,var(--bp-col,transparent) var(--bp-pct,0%),rgba(255,255,255,0.05) 0%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:destination-out;mask-composite:exclude;pointer-events:none;z-index:0;opacity:var(--bp-vis,0);transition:opacity 1.2s;}'+
+      '#bolusDocBtn::before{content:"";position:absolute;inset:-2px;border-radius:20px;padding:2px;background:conic-gradient(from -90deg,var(--bp-col,transparent) var(--bp-pct,0%),rgba(255,255,255,0.05) 0%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:destination-out;mask-composite:exclude;pointer-events:none;z-index:0;opacity:var(--bp-vis,0);transition:opacity 1.2s;}'+
       '#bolusDocBtn.bolus-warn{border-color:rgba(255,150,0,0.7)!important;box-shadow:0 0 18px rgba(255,150,0,.45),0 2px 12px rgba(0,0,0,.45)!important;}'+
-      '#bolusDocBtn.bolus-alert{border-color:rgba(255,59,48,0.9)!important;border-width:1px!important;animation:bap 1.5s ease-in-out infinite!important;}'+
+      '#bolusDocBtn.bolus-alert{border-color:rgba(255,59,48,0.62)!important;border-width:1px!important;animation:none!important;}'+
       '@keyframes bap{0%,100%{background:rgba(255,30,0,0.06);box-shadow:0 2px 12px rgba(0,0,0,.45),0 0 6px rgba(255,59,48,.25),0 0 14px rgba(255,59,48,.10);}50%{background:rgba(255,30,0,0.38);box-shadow:0 2px 12px rgba(0,0,0,.45),0 0 22px rgba(255,59,48,.95),0 0 50px rgba(255,59,48,.55),0 0 80px rgba(255,59,48,.22);}}'+
       '@keyframes ledBap{0%,100%{box-shadow:0 0 5px rgba(255,59,48,.6);}50%{box-shadow:0 0 12px rgba(255,59,48,1),0 0 22px rgba(255,59,48,.5);}}'+
       '#bolusDocBtn.bolus-alert #bolusLed{animation:ledBap 1.5s ease-in-out infinite!important;}'+
@@ -2261,6 +2546,8 @@ window.addEventListener('message', function(e) {
     _mobileQrUrl = buildMobileAuthUrl();
     var qrImage = document.getElementById('mobileQrImage');
     if (qrImage) qrImage.src = 'data/qr.png';
+    var previewImage = document.getElementById('mobilePreviewImage');
+    if (previewImage && !previewImage.getAttribute('src')) previewImage.src = previewImage.getAttribute('data-src') || '';
   }
 
   window.toggleMobileQrModal = function toggleMobileQrModal() {
@@ -2346,7 +2633,7 @@ if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
       localStorage.removeItem('minka_schedule_cache_ts_v2');
       localStorage.removeItem('minka_emoji_v1');
     } catch (e) {}
-    return caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key)))).catch(() => {});
+    return Promise.resolve();
   }
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js')
@@ -2628,6 +2915,9 @@ body.mk-low-motion *::after {
   var PX = 5, COLS = 10, ROWS = 8;
   CVS.width = COLS*PX; CVS.height = ROWS*PX;  // 50×40
   var ctx = CVS.getContext('2d');
+  var buddyFrameCache = new Map();
+  var buddyFrameCacheMax = 128;
+  var renderingBuddyCache = false;
 
   // Status hearts: one tiny pixel heart per radiographer on duty.
   var SH = 2, HCOLS = 3, HROWS = 3, HGAP = 4;
@@ -2944,8 +3234,11 @@ body.mk-low-motion *::after {
   var animTimer = null, pettingTimer = null, zzzTimer = null;
   var lastNightSplitPlan = null;
   var lastBuddyHeartData = [];
-  var buddyPerfLow = false;
+  var perfProfile = window.__mkPerfProfile || {};
+  var buddyPerfLow = !!(perfProfile.lowSpec || perfProfile.reducedMotion);
   var mx=0,my=0;
+  var lastPointerAt = 0;
+  var lastEyePaintAt = 0;
   var home={x:0,y:0};
   var totalH = STS.height + 4 + CVS.height; // 6+4+40=50px
   var W2=25, H2=25;
@@ -2969,6 +3262,161 @@ body.mk-low-motion *::after {
   var phoneOn=false;
 
   // ── Helpers ───────────────────────────────────────────────────────────
+  function getBuddyRenderState(){
+    return {
+      eyeDirX: eyeDirX,
+      isSleeping: isSleeping,
+      glassesOn: glassesOn,
+      cuteFace: cuteFace,
+      syringeOn: syringeOn,
+      devilOn: devilOn,
+      surprisedOn: surprisedOn,
+      crazySmileOn: crazySmileOn,
+      bigMouthOn: bigMouthOn,
+      fatOn: fatOn,
+      tallOn: tallOn,
+      coffeeOn: coffeeOn,
+      allergyOn: allergyOn,
+      boredOn: boredOn,
+      disappointedOn: disappointedOn,
+      eatingOn: eatingOn,
+      boxOn: boxOn,
+      phoneOn: phoneOn
+    };
+  }
+  function setBuddyRenderState(s){
+    eyeDirX = s.eyeDirX;
+    isSleeping = s.isSleeping;
+    glassesOn = s.glassesOn;
+    cuteFace = s.cuteFace;
+    syringeOn = s.syringeOn;
+    devilOn = s.devilOn;
+    surprisedOn = s.surprisedOn;
+    crazySmileOn = s.crazySmileOn;
+    bigMouthOn = s.bigMouthOn;
+    fatOn = s.fatOn;
+    tallOn = s.tallOn;
+    coffeeOn = s.coffeeOn;
+    allergyOn = s.allergyOn;
+    boredOn = s.boredOn;
+    disappointedOn = s.disappointedOn;
+    eatingOn = s.eatingOn;
+    boxOn = s.boxOn;
+    phoneOn = s.phoneOn;
+  }
+  function buddyFrameKey(fi, eyeOpen){
+    return [
+      curSp, fi, eyeOpen ? 1 : 0, eyeDirX, isSleeping ? 1 : 0,
+      glassesOn ? 1 : 0, cuteFace ? 1 : 0, syringeOn ? 1 : 0,
+      devilOn ? 1 : 0, surprisedOn ? 1 : 0, crazySmileOn ? 1 : 0,
+      bigMouthOn ? 1 : 0, fatOn ? 1 : 0, tallOn ? 1 : 0,
+      coffeeOn ? 1 : 0, allergyOn ? 1 : 0, boredOn ? 1 : 0,
+      disappointedOn ? 1 : 0, eatingOn ? 1 : 0, boxOn ? 1 : 0,
+      phoneOn ? 1 : 0
+    ].join('|');
+  }
+  function rememberBuddyFrame(key, canvas){
+    if(buddyFrameCache.has(key)) return;
+    while(buddyFrameCache.size >= buddyFrameCacheMax){
+      buddyFrameCache.delete(buddyFrameCache.keys().next().value);
+    }
+    buddyFrameCache.set(key, canvas);
+  }
+  function renderBuddyFrameCanvas(fi, eyeOpen){
+    var off = document.createElement('canvas');
+    off.width = CVS.width;
+    off.height = CVS.height;
+    var offCtx = off.getContext('2d');
+    var prevCtx = ctx;
+    var prevFi = curFi;
+    var prevEyeOpen = curEyeOpen;
+    renderingBuddyCache = true;
+    ctx = offCtx;
+    try{
+      drawFrame(fi, eyeOpen);
+    } finally {
+      ctx = prevCtx;
+      curFi = prevFi;
+      curEyeOpen = prevEyeOpen;
+      renderingBuddyCache = false;
+    }
+    return off;
+  }
+  function cacheBuddyFrame(fi, eyeOpen){
+    var key = buddyFrameKey(fi, eyeOpen);
+    if(!buddyFrameCache.has(key)) rememberBuddyFrame(key, renderBuddyFrameCanvas(fi, eyeOpen));
+  }
+  function primeBuddyFrameCache(){
+    var saved = getBuddyRenderState();
+    var frames = [0,1,3,4,5];
+    var dirs = [-1,0,1];
+    var faces = [
+      {},
+      { cuteFace: true },
+      { surprisedOn: true },
+      { boredOn: true },
+      { disappointedOn: true },
+      { glassesOn: true },
+      { coffeeOn: true },
+      { phoneOn: true },
+      { boxOn: true }
+    ];
+    var work = [];
+    faces.forEach(function(face){
+      dirs.forEach(function(dir){
+        frames.forEach(function(fi){
+          work.push({face: face, dir: dir, fi: fi, eyeOpen: true});
+        });
+      });
+    });
+    frames.forEach(function(fi){ work.push({face: {}, dir: 0, fi: fi, eyeOpen: false}); });
+    var i = 0;
+    function batch(deadline){
+      var liveState = getBuddyRenderState();
+      var liveFi = curFi;
+      var liveEyeOpen = curEyeOpen;
+      var start = Date.now();
+      while(i < work.length && ((deadline && deadline.timeRemaining && deadline.timeRemaining() > 1) || Date.now() - start < 8)){
+        var item = work[i++];
+        setBuddyRenderState(saved);
+        glassesOn=false;
+        cuteFace=false;
+        syringeOn=false;
+        devilOn=false;
+        surprisedOn=false;
+        crazySmileOn=false;
+        bigMouthOn=false;
+        fatOn=false;
+        tallOn=false;
+        coffeeOn=false;
+        allergyOn=false;
+        boredOn=false;
+        disappointedOn=false;
+        eatingOn=false;
+        boxOn=false;
+        phoneOn=false;
+        cuteFace = !!item.face.cuteFace;
+        surprisedOn = !!item.face.surprisedOn;
+        boredOn = !!item.face.boredOn;
+        disappointedOn = !!item.face.disappointedOn;
+        glassesOn = !!item.face.glassesOn;
+        coffeeOn = !!item.face.coffeeOn;
+        phoneOn = !!item.face.phoneOn;
+        boxOn = !!item.face.boxOn;
+        eyeDirX = item.dir;
+        cacheBuddyFrame(item.fi, item.eyeOpen);
+      }
+      setBuddyRenderState(liveState);
+      curFi = liveFi;
+      curEyeOpen = liveEyeOpen;
+      if(i < work.length){
+        if(window.requestIdleCallback) window.requestIdleCallback(batch, {timeout: 800});
+        else setTimeout(batch, 50);
+      }
+    }
+    if(window.requestIdleCallback) window.requestIdleCallback(batch, {timeout: 800});
+    else setTimeout(batch, 50);
+  }
   function getH(){ return new Date().getHours(); }
   function isNight(){ var h=getH(); return h>=0&&h<7; }
   function dimColor(hex,f){
@@ -3094,29 +3542,36 @@ body.mk-low-motion *::after {
     }
     if(data.type === 'mk_performance'){
       buddyPerfLow = data.performance === 'low' || !!data.noAnim;
+      if(document.body) document.body.classList.toggle('mk-low-spec', buddyPerfLow);
       if(buddyPerfLow){
         clearTimeout(seqTimer);
         clearTimeout(animTimer);
         bhvBusy=false;
-        glassesOn=false; cuteFace=false; syringeOn=false; devilOn=false; surprisedOn=false;
-        crazySmileOn=false; bigMouthOn=false; fatOn=false; tallOn=false; coffeeOn=false;
-        allergyOn=false; boredOn=false; disappointedOn=false; eatingOn=false; boxOn=false; phoneOn=false;
-        LCVS.style.display='none'; SCVS.style.display='none'; BOTCVS.style.display='none';
-        COFCVS.style.display='none'; PHCVS.style.display='none'; PCVS.style.display='none'; BCVS.style.display='none';
         drawFrame(0,true);
         drawHearts(isSleeping ? 'sleep' : mood);
-        scheduleSeq(22000);
+        scheduleSeq(6000);
       } else if(!seqTimer && !isSleeping){
-        scheduleSeq(12000);
+        scheduleSeq(3000);
       }
     }
   });
 
   // ── Draw ──────────────────────────────────────────────────────────────
   function drawFrame(fi, eyeOpen){
-    var sp=SP[curSp]||SP.cat;
-    var frame=sp.f[Math.max(0,fi)]||sp.f[0];
     curFi=fi; curEyeOpen=eyeOpen;
+    if(!renderingBuddyCache){
+      var cacheKey = buddyFrameKey(fi, eyeOpen);
+      var cachedFrame = buddyFrameCache.get(cacheKey);
+      if(!cachedFrame){
+        cachedFrame = renderBuddyFrameCanvas(fi, eyeOpen);
+        rememberBuddyFrame(cacheKey, cachedFrame);
+      }
+      ctx.clearRect(0,0,CVS.width,CVS.height);
+      ctx.drawImage(cachedFrame, 0, 0);
+      return;
+    }
+    var sp=SP[curSp]||SP.ghost;
+    var frame=sp.f[Math.max(0,fi)]||sp.f[0];
     ctx.clearRect(0,0,CVS.width,CVS.height);
     var bodyCol=devilOn?'#ef233c':(allergyOn?'#ff4d5e':((boredOn||disappointedOn)?'#7b8190':(isSleeping?dimColor(sp.c,0.28):sp.c)));
     var hiCol=devilOn?'#ff6b6b':(allergyOn?'#ff8a92':((boredOn||disappointedOn)?'#a4aab8':(isSleeping?dimColor(sp.c,0.34):'#caa4ff')));
@@ -3353,15 +3808,30 @@ body.mk-low-motion *::after {
 
 
   // ── Eye direction tracking ───────────────────────────────────────────
-  setInterval(function(){
-    if(document.hidden) return;
-    if(isSleeping||!curEyeOpen) return;
+  function updateEyesFromPointer(force){
+    if(document.hidden || isSleeping || !curEyeOpen) return;
+    var now = Date.now();
+    if(lastPointerAt && now - lastPointerAt > 9000){
+      if(eyeDirX !== 0){
+        eyeDirX = 0;
+        drawFrame(curFi, true);
+      }
+      return;
+    }
+    if(!force && now - lastEyePaintAt < (buddyPerfLow ? 260 : 120)) return;
     var bx=home.x+CVS.width/2;
     var by=home.y+(STS.height+4+CVS.height/2);
     var dx=mx-bx, dy=my-by;
     var nx= dx>50?1:(dx<-50?-1:0);
-    if(nx!==eyeDirX){ eyeDirX=nx; drawFrame(curFi,true); }
-  },600);
+    if(nx!==eyeDirX){
+      eyeDirX=nx;
+      lastEyePaintAt = now;
+      drawFrame(curFi,true);
+    }
+  }
+  setInterval(function(){
+    updateEyesFromPointer(false);
+  }, buddyPerfLow ? 2200 : 900);
 
   // ── Bubble ────────────────────────────────────────────────────────────
   var bubbleTimer=null;
@@ -3890,8 +4360,11 @@ body.mk-low-motion *::after {
 
   // ── Sequential behavior playlist ──────────────────────────────────────
   var SEQ_GAP_MS = 18000;
-  var SEQ_GAP_LOW_MS = 65000;
+  var SEQ_GAP_LOW_MS = 21000;
   var seqIndex = 0;
+  var seqRunCount = 0;
+  var lowSeqIndex = 0;
+  var lastBolusNagAt = 0;
   var seqTimer = null;
   var SEQ = [
     {fn:doBlink,           dur:1300},
@@ -3919,6 +4392,15 @@ body.mk-low-motion *::after {
     {fn:doThreeOnNight,    dur:4300},
     {fn:doFirstNightPart,  dur:5600}
   ];
+  var LOW_SEQ = [
+    {fn:doBlink,           dur:1300},
+    {fn:doLook,            dur:1200},
+    {fn:doCuteFace,        dur:2700},
+    {fn:doDance,           dur:4700},
+    {fn:doCoffee,          dur:4200},
+    {fn:doSurprised,       dur:2700},
+    {fn:doType,            dur:4700}
+  ];
 
   function scheduleSeq(delay){
     clearTimeout(seqTimer);
@@ -3927,18 +4409,34 @@ body.mk-low-motion *::after {
 
   function runSeq(){
     if(document.hidden){
-      scheduleSeq(buddyPerfLow ? 30000 : 15000);
+      scheduleSeq(buddyPerfLow ? 24000 : 15000);
       return;
     }
     if(isSleeping||bhvBusy){
-      scheduleSeq(buddyPerfLow ? 10000 : 4000);
+      scheduleSeq(buddyPerfLow ? 6500 : 4000);
       return;
     }
-    var item=SEQ[seqIndex%SEQ.length];
-    seqIndex++;
+    var bolusDue = !!window.__minkaBolusNeedsChange;
+    var now = Date.now();
+    if(bolusDue && now - lastBolusNagAt > (buddyPerfLow ? 42000 : 28000)){
+      lastBolusNagAt = now;
+      var bolusRan = doBolus();
+      scheduleSeq(bolusRan === false ? 6500 : 12000);
+      return;
+    }
+    seqRunCount++;
+    var useLightLowSeq = buddyPerfLow && (seqRunCount % 4 !== 0);
+    var item;
+    if(useLightLowSeq){
+      item = LOW_SEQ[lowSeqIndex % LOW_SEQ.length];
+      lowSeqIndex++;
+    } else {
+      item = SEQ[seqIndex % SEQ.length];
+      seqIndex++;
+    }
     var ran = item.fn();
-    var gap = buddyPerfLow ? (SEQ_GAP_LOW_MS + Math.random()*25000) : SEQ_GAP_MS;
-    scheduleSeq(ran === false ? (buddyPerfLow ? 15000 : 1000) : item.dur + gap);
+    var gap = buddyPerfLow ? (SEQ_GAP_LOW_MS + Math.random()*9000) : SEQ_GAP_MS;
+    scheduleSeq(ran === false ? (buddyPerfLow ? 6500 : 1000) : item.dur + gap);
   }
 
   // ── Sleep ─────────────────────────────────────────────────────────────
@@ -4073,19 +4571,46 @@ body.mk-low-motion *::after {
   });
 
   // ── Drag + spring ─────────────────────────────────────────────────────
+  function getBuddyAnchorButton(){
+    if(window.__minkaBolusNeedsChange){
+      var bolus = document.getElementById('bolusDocBtn');
+      if(bolus) return bolus;
+    }
+    return document.getElementById('radioToggle') ||
+      document.getElementById('radioIdleBtn') ||
+      document.getElementById('bolusDocBtn');
+  }
+  function moveBuddyHome(){
+    home=homePos();
+    W.style.left=(home.x-W2)+'px';
+    W.style.top=(home.y-H2)+'px';
+  }
   function homePos(){
     var shelf=document.getElementById('dockShelf');
-    var bar=document.getElementById('bottomBtnBar');
+    var anchor=getBuddyAnchorButton();
     var sr=shelf?shelf.getBoundingClientRect():null;
-    var cy=sr?sr.top-totalH/2:window.innerHeight-totalH/2-8;
-    var cx=window.innerWidth-W2-14;
-    if(bar){var br=bar.getBoundingClientRect();var cand=br.right+W2+14;if(cand+W2<window.innerWidth-8)cx=cand;}
+    var ar=null;
+    try{ ar=anchor?anchor.getBoundingClientRect():null; }catch(e){}
+    var cy=(sr?sr.top:(ar?ar.top:window.innerHeight-8))-totalH/2-6;
+    var cx=ar?(ar.left+ar.width/2):(window.innerWidth-W2-14);
+    cx=Math.max(W2+8,cx);
     cx=Math.min(cx,window.innerWidth-W2-8);
     return {x:cx,y:cy};
   }
-  window.addEventListener('mousemove',function(e){mx=e.clientX;my=e.clientY;});
+  window.addEventListener('pointermove',function(e){
+    mx=e.clientX;
+    my=e.clientY;
+    lastPointerAt=Date.now();
+    updateEyesFromPointer(false);
+  }, { passive: true });
   window.addEventListener('resize',function(){
-    home=homePos();W.style.left=(home.x-W2)+'px';W.style.top=(home.y-H2)+'px';
+    moveBuddyHome();
+  });
+  window.addEventListener('minka-bolus-status',function(e){
+    moveBuddyHome();
+    if(e && e.detail && e.detail.needsChange && !document.hidden && !isSleeping && !bhvBusy){
+      scheduleSeq(buddyPerfLow ? 5000 : 2500);
+    }
   });
 
   // ── Watchers ──────────────────────────────────────────────────────────
@@ -4097,31 +4622,34 @@ body.mk-low-motion *::after {
   setInterval(function(){
     if(document.hidden) return;
     if(extMood==='alert'||extMood==='warn') return;
+    if(buddyPerfLow && isSleeping) return;
     var over=document.querySelectorAll('.worker-xp-ring.overdue,.wc-ring-over,[data-fatigue="high"]');
     var ne=(over&&over.length>=2)?'tired':'';
     if(ne!==extMood){extMood=ne;if(mood!=='petted') setMood(extMood||'');}
-  },5000);
+  }, buddyPerfLow ? 12000 : 5000);
   setInterval(function(){
     if(document.hidden) return;
+    if(buddyPerfLow && !lastBuddyHeartData.length && mood !== 'petted') return;
     drawHearts(isSleeping ? 'sleep' : mood);
-  },30000);
+  }, buddyPerfLow ? 60000 : 30000);
   document.addEventListener('visibilitychange', function(){
     if(document.hidden){
       clearTimeout(seqTimer);
     } else {
+      moveBuddyHome();
       drawHearts(isSleeping ? 'sleep' : mood);
-      scheduleSeq(buddyPerfLow ? 22000 : 12000);
+      scheduleSeq(buddyPerfLow ? 7000 : 12000);
     }
   });
 
   // ── Init ──────────────────────────────────────────────────────────────
   requestAnimationFrame(function(){
-    home=homePos();
-    W.style.left=(home.x-W2)+'px'; W.style.top=(home.y-H2)+'px';
+    moveBuddyHome();
     W.style.visibility='visible';
     drawFrame(0,true);
     drawHearts('');
-    scheduleSeq(2000);
+    scheduleSeq(buddyPerfLow ? 4500 : 2000);
+    if(!isSleeping) primeBuddyFrameCache();
     // laptop hidden on start — appears only during typing
   });
 })();

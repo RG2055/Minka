@@ -1799,6 +1799,7 @@ function closeFullListModal() {
   function updateTimers() {
     const now = new Date();
     let shouldRefresh = false;
+    updateShiftStripTimers(now);
     document.querySelectorAll('.duty-timer').forEach(timer => {
       const workerName = timer.dataset.worker;
       const dateStr = timer.dataset.date;
@@ -1831,6 +1832,30 @@ function closeFullListModal() {
         try { window.__refreshFatigueBars && window.__refreshFatigueBars(); } catch(e) {}
       }, 60);
     }
+  }
+
+  function updateShiftStripTimers(now) {
+    const t = now instanceof Date ? now.getTime() : Date.now();
+    document.querySelectorAll('.sl-times-strip').forEach(function(strip) {
+      const elapsedEl = strip.querySelector('.sl-ts-elapsed');
+      const remainEl = strip.querySelector('.sl-ts-rem[data-end-ms]');
+      const startMs = Number(strip.getAttribute('data-start-ms') || 0);
+      const endMs = Number(strip.getAttribute('data-end-ms') || (remainEl && remainEl.getAttribute('data-end-ms')) || 0);
+      if (elapsedEl && startMs) {
+        const elapsedMs = Math.max(0, t - startMs);
+        const h = Math.floor(elapsedMs / 3600000);
+        const m = Math.floor((elapsedMs % 3600000) / 60000);
+        elapsedEl.textContent = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+      }
+      if (remainEl && endMs) {
+        const remainingMs = Math.max(0, endMs - t);
+        const h = Math.floor(remainingMs / 3600000);
+        const m = Math.floor((remainingMs % 3600000) / 60000);
+        const s = Math.floor((remainingMs % 60000) / 1000);
+        remainEl.textContent = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        remainEl.style.color = remainingMs > 14400000 ? 'rgba(139,92,246,0.95)' : remainingMs > 7200000 ? 'rgba(251,191,36,0.95)' : 'rgba(239,68,68,0.95)';
+      }
+    });
   }
 
   var __minkaLastLiveHeavyPaint = 0;
@@ -2887,11 +2912,11 @@ function closeFullListModal() {
       '<span class="sl-ruler-now" style="left:' + scrubPctR.toFixed(2) + '%;transform:translateX(' + (scrubPctR < 5 ? '0' : scrubPctR > 95 ? '-100%' : '-50%') + ')">' + nowLabel + '</span>' +
     '</div>';
 
-    var _timesStrip = '<div class="sl-times-strip">' +
+    var _timesStrip = '<div class="sl-times-strip" data-start-ms="' + axisStartMs + '" data-end-ms="' + axisEndMs + '">' +
       '<span id="sl-ns-slot" class="sl-ns-slot"></span>' +
-      '<span class="sl-ts-label">PAGĀJIS</span><strong class="sl-ts-val">' + _elStr + '</strong>' +
+      '<span class="sl-ts-label">PAGĀJIS</span><strong class="sl-ts-val sl-ts-elapsed">' + _elStr + '</strong>' +
       '<span class="sl-ts-sep"></span>' +
-      '<span class="sl-ts-label">ATLIKUŠAS</span><strong class="sl-ts-val sl-ts-rem" style="color:' + _reColor + '">' + _reStr + '</strong>' +
+      '<span class="sl-ts-label">ATLIKUŠAS</span><strong class="sl-ts-val sl-ts-rem" data-end-ms="' + axisEndMs + '" style="color:' + _reColor + '">' + _reStr + '</strong>' +
     '</div>';
 
     // Night split overlay bar (shown when 🌙 is active)

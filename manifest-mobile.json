@@ -1,5 +1,5 @@
 {
-  "id": "/mobile.html",
+  "id": "./mobile.html",
   "name": "RG Mobile",
   "short_name": "RG",
   "description": "RAKUS Gaiļezers radiology shift scheduler for mobile viewing",
@@ -11,25 +11,25 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://rg2055.github.io/Minka/data/rg-any-192.png",
+      "src": "data/rg-any-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "https://rg2055.github.io/Minka/data/rg-any-512.png",
+      "src": "data/rg-any-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "https://rg2055.github.io/Minka/data/rg-maskable-192.png",
+      "src": "data/rg-maskable-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "https://rg2055.github.io/Minka/data/rg-maskable-512.png",
+      "src": "data/rg-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
