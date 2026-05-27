@@ -1657,11 +1657,55 @@ function closeFullListModal() {
         // Get fatigue for side panel
         let sideFatScore = 0, sideFatColor = '#30d158';
         try { if(window.__fatigue){ const sf=window.__fatigue.calculateFatigue(w.name); if(sf){ sideFatScore=sf.score; if(sideFatScore>70)sideFatColor='#ff6b5f'; else if(sideFatScore>45)sideFatColor='#e59b42'; else if(sideFatScore>20)sideFatColor='#d8c64a'; else sideFatColor='#35d07f'; } } }catch(e){}
-        const fatLevel = sideFatScore > 85 ? 'crit' : sideFatScore > 65 ? 'high' : sideFatScore > 40 ? 'mid' : 'low';
+        const fatLevel = sideFatScore > 70 ? 'crit' : sideFatScore > 45 ? 'high' : sideFatScore > 20 ? 'mid' : 'low';
+        const fatLevelLabel = fatLevel === 'crit' ? 'Kritisks' : fatLevel === 'high' ? 'Augsts' : fatLevel === 'mid' ? 'Vidējs' : 'Zems';
         const shiftChip = uiState.shiftHours ? `<span class="mk-side-shift-chip">${uiState.shiftHours}H</span>` : shiftBadge;
         const sideVars = `--mk-side-fat:${sideFatScore}%;--mk-side-fat-color:${sideFatColor};`;
-        const sideFatRing = `<div class="mk-side-ring" aria-label="Nogurums ${sideFatScore}%"><span>${sideFatScore}</span></div>`;
+        const sideFatRing = `<div class="mk-side-ring" aria-label="Nogurums ${sideFatScore}%"><span>${sideFatScore}<small>${fatLevelLabel}</small></span></div>`;
         const sideFatBar = `<div class="mk-side-progress"><div class="side-fat-bar-wrap"><div></div></div><span class="side-fat-pct">${sideFatScore}%</span></div>`;
+        // ── nfoot: next shift + month count (today only) ──
+        // dates in store are DD.MM.YYYY — convert to YYYYMMDD number for safe comparison
+        const _MO_SHORT=['janvāris','februāris','marts','aprīlis','maijs','jūnijs','jūlijs','augusts','septembris','oktobris','novembris','decembris'];
+        const _MO_LOC=['janvārī','februārī','martā','aprīlī','maijā','jūnijā','jūlijā','augustā','septembrī','oktobrī','novembrī','decembrī'];
+        const _dnum=(ds)=>{const p=(ds||'').split('.');return p.length===3?parseInt(p[2])*10000+parseInt(p[1])*100+parseInt(p[0]):0;};
+        let nfootHtml = '';
+        if (isToday) { try {
+          const _activeNum=_dnum(activeDateStr);
+          const _wn=String(w.name||'').trim();
+          // next shift
+          let nsHtml = '';
+          const nsArr = [];
+          for (const _mo in store) { const _days=store[_mo]; if(!Array.isArray(_days)) continue;
+            for (const _d of _days) { if(!_d||!_d.date||_dnum(_d.date)<=_activeNum) continue;
+              for (const _nw of (_d.workers||[])) { if(String(_nw.name||'').trim()===_wn) nsArr.push({n:_dnum(_d.date),date:_d.date,w:_nw}); }
+            }
+          }
+          nsArr.sort((a,b)=>a.n-b.n);
+          if (nsArr[0]) {
+            const [_nd,_nm]=nsArr[0].date.split('.');
+            const _ntime=nsArr[0].w.startTime?` · ${nsArr[0].w.startTime}`:'';
+            const _nhrs=nsArr[0].w.shift?` · ${nsArr[0].w.shift}h`:'';
+            nsHtml=`<dt>Nākamā maiņa</dt><dd>${parseInt(_nd)}. ${_MO_SHORT[parseInt(_nm)-1]}${_ntime}${_nhrs}</dd>`;
+          }
+          // month count — match same YYYYMM (numeric, padding-safe)
+          const _activeYM=Math.floor(_activeNum/100);
+          let mHtml = '';
+          let _done=0,_tot=0;
+          for (const _mo in store) { const _days=store[_mo]; if(!Array.isArray(_days)) continue;
+            for (const _d of _days) { if(!_d||!_d.date) continue;
+              if(Math.floor(_dnum(_d.date)/100)!==_activeYM) continue;
+              for (const _mw of (_d.workers||[])) { if(String(_mw.name||'').trim()===_wn){ _tot++; if(_dnum(_d.date)<=_activeNum)_done++; } }
+            }
+          }
+          if (_tot > 0) {
+            const _rem=_tot-_done;
+            const _segs=(()=>{const MAX=8;const n=Math.min(_tot,MAX);let s='<span class="mk-nfoot-seg">';for(let i=0;i<n;i++)s+=`<i${i<Math.min(_done,MAX)?' class="on"':''}></i>`;return s+'</span>';})();
+            const _mlbl=_MO_LOC[(_activeYM%100)-1];
+            mHtml=`<dt>Maiņas ${_mlbl}</dt><dd style="--mk-side-fat-color:${sideFatColor}">${_done} / ${_tot}${_rem>0?` <em>(vēl ${_rem})</em>`:''} ${_segs}</dd>`;
+          }
+          if (nsHtml||mHtml) nfootHtml=`<dl class="mk-side-nfoot">${nsHtml}${mHtml}</dl>`;
+        } catch(e){} }
+        const initials = (nameParts[0]?.[0]||'')+(nameParts[1]?.[0]||'');
         radgContainer.innerHTML += `
           <div class="duty-block mk-side-card mk-side-radiographer${iconHtml ? ' has-shift-icon' : ''}${isDone ? ' duty-done' : ''}" style="${sideVars}" data-worker="${w.name}" data-shift="${w.shift}" data-type="${w.type || ''}" data-fatigue="${fatLevel}">
             <div class="mk-side-shimmer" aria-hidden="true"></div>
@@ -1682,6 +1726,8 @@ function closeFullListModal() {
               </div>
             </div>
             ${sideFatBar}
+            ${nfootHtml}
+            ${initials ? `<span class="mk-side-wm" aria-hidden="true">${initials}</span>` : ''}
           </div>`;
       });
       if (!radgContainer.innerHTML) radgContainer.innerHTML = "<span style='color:#666'>ATPŪTA</span>";
@@ -1726,11 +1772,54 @@ function closeFullListModal() {
 
         let sideFatScoreL = 0, sideFatColorL = '#30d158';
         try { if(window.__fatigue){ const sf=window.__fatigue.calculateFatigue(w.name); if(sf){ sideFatScoreL=sf.score; if(sideFatScoreL>70)sideFatColorL='#ff6b5f'; else if(sideFatScoreL>45)sideFatColorL='#e59b42'; else if(sideFatScoreL>20)sideFatColorL='#d8c64a'; else sideFatColorL='#35d07f'; } } }catch(e){}
-        const fatLevelL = sideFatScoreL > 85 ? 'crit' : sideFatScoreL > 65 ? 'high' : sideFatScoreL > 40 ? 'mid' : 'low';
+        const fatLevelL = sideFatScoreL > 70 ? 'crit' : sideFatScoreL > 45 ? 'high' : sideFatScoreL > 20 ? 'mid' : 'low';
+        const fatLevelLabelL = fatLevelL === 'crit' ? 'Kritisks' : fatLevelL === 'high' ? 'Augsts' : fatLevelL === 'mid' ? 'Vidējs' : 'Zems';
         const shiftChipL = uiState.shiftHours ? `<span class="mk-side-shift-chip">${uiState.shiftHours}H</span>` : shiftBadge;
         const sideVarsL = `--mk-side-fat:${sideFatScoreL}%;--mk-side-fat-color:${sideFatColorL};`;
-        const sideFatRingL = `<div class="mk-side-ring" aria-label="Nogurums ${sideFatScoreL}%"><span>${sideFatScoreL}</span></div>`;
+        const sideFatRingL = `<div class="mk-side-ring" aria-label="Nogurums ${sideFatScoreL}%"><span>${sideFatScoreL}<small>${fatLevelLabelL}</small></span></div>`;
         const sideFatBarL = `<div class="mk-side-progress"><div class="side-fat-bar-wrap"><div></div></div><span class="side-fat-pct">${sideFatScoreL}%</span></div>`;
+        // ── nfoot: next shift + month count (today only) ──
+        // dates in store are DD.MM.YYYY — convert to YYYYMMDD number for safe comparison
+        const _dnumL=(ds)=>{const p=(ds||'').split('.');return p.length===3?parseInt(p[2])*10000+parseInt(p[1])*100+parseInt(p[0]):0;};
+        const _MO_SHORT_L=['janvāris','februāris','marts','aprīlis','maijs','jūnijs','jūlijs','augusts','septembris','oktobris','novembris','decembris'];
+        const _MO_LOC_L=['janvārī','februārī','martā','aprīlī','maijā','jūnijā','jūlijā','augustā','septembrī','oktobrī','novembrī','decembrī'];
+        let nfootHtmlL = '';
+        if (isToday) { try {
+          const _activeNumL=_dnumL(activeDateStr);
+          // next shift
+          let nsHtmlL = '';
+          const nsArrL = [];
+          for (const _mo in storeRad) { const _days=storeRad[_mo]; if(!Array.isArray(_days)) continue;
+            for (const _d of _days) { if(!_d||!_d.date||_dnumL(_d.date)<=_activeNumL) continue;
+              for (const _nw of (_d.workers||[])) { if(_nw.name===w.name) nsArrL.push({n:_dnumL(_d.date),date:_d.date,w:_nw}); }
+            }
+          }
+          nsArrL.sort((a,b)=>a.n-b.n);
+          if (nsArrL[0]) {
+            const [_nd,_nm]=nsArrL[0].date.split('.');
+            const _ntime=nsArrL[0].w.startTime?` · ${nsArrL[0].w.startTime}`:'';
+            const _nhrs=nsArrL[0].w.shift?` · ${nsArrL[0].w.shift}h`:'';
+            nsHtmlL=`<dt>Nākamā maiņa</dt><dd>${parseInt(_nd)}. ${_MO_SHORT_L[parseInt(_nm)-1]}${_ntime}${_nhrs}</dd>`;
+          }
+          // month count — match same YYYYMM (numeric, padding-safe)
+          const _activeYML=Math.floor(_activeNumL/100);
+          let mHtmlL = '';
+          let _doneL=0,_totL=0;
+          for (const _mo in storeRad) { const _days=storeRad[_mo]; if(!Array.isArray(_days)) continue;
+            for (const _d of _days) { if(!_d||!_d.date) continue;
+              if(Math.floor(_dnumL(_d.date)/100)!==_activeYML) continue;
+              for (const _mw of (_d.workers||[])) { if(String(_mw.name||'').trim()===String(w.name||'').trim()){ _totL++; if(_dnumL(_d.date)<=_activeNumL)_doneL++; } }
+            }
+          }
+          if (_totL > 0) {
+            const _remL=_totL-_doneL;
+            const _segsL=(()=>{const MAX=8;const n=Math.min(_totL,MAX);let s='<span class="mk-nfoot-seg">';for(let i=0;i<n;i++)s+=`<i${i<Math.min(_doneL,MAX)?' class="on"':''}></i>`;return s+'</span>';})();
+            const _mlblL=_MO_LOC_L[(_activeYML%100)-1];
+            mHtmlL=`<dt>Maiņas ${_mlblL}</dt><dd style="--mk-side-fat-color:${sideFatColorL}">${_doneL} / ${_totL}${_remL>0?` <em>(vēl ${_remL})</em>`:''} ${_segsL}</dd>`;
+          }
+          if (nsHtmlL||mHtmlL) nfootHtmlL=`<dl class="mk-side-nfoot">${nsHtmlL}${mHtmlL}</dl>`;
+        } catch(e){} }
+        const initialsL = (nameParts[0]?.[0]||'')+(nameParts[1]?.[0]||'');
         radlContainer.innerHTML += `
           <div class="duty-block mk-side-card mk-side-radiologist${iconHtml ? ' has-shift-icon' : ''}${isDone ? ' duty-done' : ''}" style="${sideVarsL}" data-worker="${w.name}" data-shift="${w.shift}" data-type="${w.type || ''}" data-fatigue="${fatLevelL}">
             <div class="mk-side-shimmer" aria-hidden="true"></div>
@@ -1751,6 +1840,8 @@ function closeFullListModal() {
               </div>
             </div>
             ${sideFatBarL}
+            ${nfootHtmlL}
+            ${initialsL ? `<span class="mk-side-wm" aria-hidden="true">${initialsL}</span>` : ''}
           </div>`;
       });
       if (!radlContainer.innerHTML) radlContainer.innerHTML = "<span style='color:#666'>ATPŪTA</span>";

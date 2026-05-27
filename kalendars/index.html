@@ -7685,28 +7685,32 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
   position: relative !important;
   isolation: isolate !important;
   overflow: hidden !important;
+  flex-shrink: 0 !important;
   gap: 0 !important;
   min-height: 82px !important;
   padding: 10px 10px !important;
-  border-radius: 10px !important;
-  background: rgba(35,30,56,.56) !important;
+  border-radius: 14px !important;
+  background: linear-gradient(160deg, #0f141b 0%, #0a0d14 100%) !important;
   border: 0 !important;
   box-shadow: none !important;
   text-transform: none !important;
   transition: opacity .16s ease, transform .16s ease !important;
 }
 .mk-side-card[data-fatigue="low"] {
-  background: linear-gradient(90deg, rgba(43,38,70,.70), rgba(18,18,31,.72)) !important;
+  background: linear-gradient(160deg, rgba(14,30,22,.92), rgba(8,14,12,.96)) !important;
 }
 .mk-side-card[data-fatigue="mid"] {
-  background: linear-gradient(90deg, rgba(58,52,28,.58), rgba(22,21,20,.72)) !important;
+  background: linear-gradient(160deg, rgba(34,30,14,.90), rgba(14,13,8,.96)) !important;
 }
-.mk-side-card[data-fatigue="high"],
+.mk-side-card[data-fatigue="high"] {
+  background: linear-gradient(160deg, rgba(38,24,12,.92), rgba(16,11,6,.96)) !important;
+}
 .mk-side-card[data-fatigue="crit"] {
-  background: linear-gradient(90deg, rgba(64,26,30,.58), rgba(24,17,22,.74)) !important;
+  background: linear-gradient(160deg, rgba(42,14,14,.94), rgba(18,8,8,.98)) !important;
+  box-shadow: 0 0 14px rgba(255,107,95,.10) !important;
 }
 .mk-side-radiologist {
-  background: linear-gradient(270deg, rgba(58,24,30,.54), rgba(20,14,20,.74)) !important;
+  background: linear-gradient(160deg, rgba(32,12,14,.92), rgba(14,8,10,.96)) !important;
 }
 .mk-side-card::after {
   content: "" !important;
@@ -7717,28 +7721,25 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
   background:
     conic-gradient(from -90deg,
       var(--mk-side-fat-color) var(--mk-side-fat, 0%),
-      rgba(255,255,255,.08) 0) !important;
+      rgba(255,255,255,.07) 0) !important;
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0) !important;
   -webkit-mask-composite: xor !important;
   mask-composite: exclude !important;
-  opacity: .78 !important;
+  opacity: .82 !important;
   pointer-events: none !important;
-  z-index: 1 !important;
+  z-index: 2 !important;
 }
-.mk-side-card[data-fatigue="high"]::after,
 .mk-side-card[data-fatigue="crit"]::after {
-  opacity: .68 !important;
+  opacity: .95 !important;
 }
 .mk-side-card[data-fatigue="low"]::after {
-  opacity: .55 !important;
+  opacity: .60 !important;
 }
 .mk-side-card:hover {
-  transform: translateY(-1px) !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
-  opacity: .96 !important;
+  transform: none !important;
+  opacity: 1 !important;
 }
 .mk-side-radiologist {
   --mk-side-accent: #ff7a7a;
@@ -7751,7 +7752,7 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
 }
 .mk-side-card-main {
   display: grid !important;
-  grid-template-columns: 56px minmax(0, 1fr) !important;
+  grid-template-columns: auto minmax(0, 1fr) !important;
   align-items: center !important;
   gap: 10px !important;
   min-width: 0 !important;
@@ -7760,11 +7761,11 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
   z-index: 2 !important;
 }
 .mk-side-radiologist .mk-side-card-main {
-  grid-template-columns: 56px minmax(0, 1fr) !important;
+  grid-template-columns: auto minmax(0, 1fr) !important;
 }
 .mk-side-card-body {
   min-width: 0 !important;
-  overflow: hidden !important;
+  overflow: visible !important;
 }
 .mk-side-radiologist .mk-side-card-body {
   text-align: left !important;
@@ -7778,34 +7779,46 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
   border-radius: 50% !important;
   background: conic-gradient(var(--mk-side-fat-color) var(--mk-side-fat, 0%), rgba(255,255,255,.055) 0) !important;
   box-shadow: none !important;
+  flex-shrink: 0 !important;
 }
 .mk-side-ring::after {
   content: "" !important;
   position: absolute !important;
-  inset: 6px !important;
+  inset: 5px !important;
   border-radius: inherit !important;
-  background: #07070d !important;
+  background: #06080c !important;
   border: 0 !important;
 }
 .mk-side-radiologist .mk-side-ring::after {
-  background: #07070d !important;
+  background: #06080c !important;
 }
 .mk-side-ring span {
   position: relative !important;
   z-index: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
   color: var(--mk-side-fat-color) !important;
-  font: 900 15px/1 Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font: 900 14px/1 Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
   letter-spacing: .02em !important;
 }
+.mk-side-ring span small {
+  display: block !important;
+  font: 700 4.8px/1 Inter, system-ui, sans-serif !important;
+  color: rgba(255,255,255,.48) !important;
+  letter-spacing: -.02em !important;
+  text-transform: uppercase !important;
+  text-align: center !important;
+  margin-top: 3px !important;
+  white-space: nowrap !important;
+}
 .mk-side-name-row {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) max-content !important;
-  align-items: center !important;
-  gap: 5px !important;
+  display: block !important;
   margin: 0 0 6px !important;
   min-width: 0 !important;
   max-width: 100% !important;
   overflow: visible !important;
+  position: relative !important;
 }
 .mk-side-radiologist .mk-side-name-wrap {
   text-align: left !important;
@@ -7817,8 +7830,7 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
 .mk-side-name-wrap {
   min-width: 0 !important;
   max-width: 100% !important;
-  padding-right: 0 !important;
-  overflow: hidden !important;
+  overflow: visible !important;
 }
 .mk-side-radiologist .mk-side-name-wrap {
   padding-right: 0 !important;
@@ -7833,12 +7845,8 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
   font-weight: 850 !important;
   line-height: 1.04 !important;
   letter-spacing: -.015em !important;
-  max-width: 100% !important;
-  box-sizing: border-box !important;
-  padding-right: 0 !important;
-  white-space: normal !important;
+  white-space: nowrap !important;
   overflow: visible !important;
-  overflow-wrap: anywhere !important;
   text-overflow: clip !important;
 }
 .mk-side-radiologist .duty-name {
@@ -7862,15 +7870,14 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
   text-overflow: clip !important;
 }
 .mk-side-icon-rail {
+  position: absolute !important;
+  top: -4px !important;
+  right: 0 !important;
   display: flex !important;
   align-items: center !important;
-  justify-content: center !important;
-  gap: 3px !important;
-  min-width: 0 !important;
-  width: auto !important;
-  max-width: 42px !important;
-  height: 34px !important;
-  overflow: hidden !important;
+  gap: 2px !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
 }
 .mk-side-icon-rail:empty {
   display: none !important;
@@ -7929,11 +7936,12 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
 }
 .mk-side-clock-row {
   display: flex !important;
+  flex-direction: row !important;
   align-items: center !important;
-  flex-wrap: nowrap !important;
-  gap: 8px !important;
-  margin-top: 0 !important;
+  gap: 4px !important;
+  margin-top: 4px !important;
   min-width: 0 !important;
+  overflow: hidden !important;
 }
 .mk-side-radiologist .mk-side-clock-row {
   justify-content: flex-start !important;
@@ -7945,14 +7953,14 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
   align-items: center !important;
   justify-content: center !important;
   min-width: auto !important;
-  height: 22px !important;
-  padding: 0 8px !important;
-  border-radius: 7px !important;
+  height: 18px !important;
+  padding: 0 5px !important;
+  border-radius: 5px !important;
   background: rgba(94,224,224,.13) !important;
   border: 0 !important;
   color: #5ee0e0 !important;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
-  font-size: 13px !important;
+  font-size: 10px !important;
   font-weight: 900 !important;
   line-height: 1 !important;
   letter-spacing: .02em !important;
@@ -7965,22 +7973,23 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  min-width: 78px !important;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
   max-width: none !important;
-  height: 22px !important;
-  padding: 0 8px !important;
-  border-radius: 9px !important;
+  height: 18px !important;
+  padding: 0 5px !important;
+  border-radius: 6px !important;
   background: rgba(6,7,12,.66) !important;
   border: 1px solid rgba(255,255,255,.075) !important;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.035) !important;
   color: rgba(232,233,239,.88) !important;
   font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace !important;
-  font-size: 11px !important;
+  font-size: 9px !important;
   font-weight: 800 !important;
   line-height: 1 !important;
-  letter-spacing: .04em !important;
+  letter-spacing: .03em !important;
   white-space: nowrap !important;
-  overflow: visible !important;
+  overflow: hidden !important;
   text-overflow: clip !important;
 }
 .mk-side-card .mk-side-timer.duty-timer::before {
@@ -8019,6 +8028,79 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
   color: var(--mk-side-fat-color) !important;
   opacity: 1 !important;
   font: 800 12px/1 "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace !important;
+}
+/* ── nfoot: next shift + month count ── */
+.mk-side-nfoot {
+  margin-top: 8px !important;
+  padding-top: 7px !important;
+  border-top: 1px dashed rgba(255,255,255,.10) !important;
+  display: grid !important;
+  grid-template-columns: max-content 1fr !important;
+  gap: 4px 8px !important;
+  align-items: baseline !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+.mk-side-nfoot dt {
+  font-size: 7.5px !important;
+  letter-spacing: .10em !important;
+  color: rgba(255,255,255,.55) !important;
+  text-transform: uppercase !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  align-self: center !important;
+}
+.mk-side-nfoot dd {
+  margin: 0 !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  font-variant-numeric: tabular-nums !important;
+  font-size: 10.5px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+.mk-side-nfoot dd em {
+  font-style: normal !important;
+  color: rgba(255,255,255,.65) !important;
+  font-weight: 500 !important;
+  font-size: 9.5px !important;
+}
+.mk-nfoot-seg {
+  display: inline-flex !important;
+  gap: 2px !important;
+  flex-shrink: 0 !important;
+}
+.mk-nfoot-seg i {
+  width: 5px !important;
+  height: 5px !important;
+  border-radius: 50% !important;
+  background: rgba(255,255,255,.12) !important;
+  display: inline-block !important;
+}
+.mk-nfoot-seg i.on {
+  background: var(--mk-side-fat-color, #35d07f) !important;
+}
+/* watermark initials */
+.mk-side-wm {
+  position: absolute !important;
+  right: 8px !important;
+  bottom: 6px !important;
+  font-size: 38px !important;
+  font-weight: 900 !important;
+  letter-spacing: -.05em !important;
+  color: rgba(255,255,255,.052) !important;
+  pointer-events: none !important;
+  line-height: 1 !important;
+  z-index: 1 !important;
+  user-select: none !important;
+}
+.mk-side-ring span small {
+  font-size: 4.8px !important;
+  letter-spacing: -.02em !important;
 }
 .mk-side-card.duty-done {
   opacity: .42 !important;
@@ -8131,6 +8213,12 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   min-width: 54px !important;
   height: 18px !important;
   font-size: 10px !important;
+}
+.mk-side-card .mk-side-timer.duty-timer {
+  min-width: 0 !important;
+  flex: 1 1 0 !important;
+  height: 18px !important;
+  font-size: 9px !important;
 }
 :root.mk-mobile-shell .mk-side-shift-chip,
 .side-panel.compact-duty .mk-side-shift-chip,
