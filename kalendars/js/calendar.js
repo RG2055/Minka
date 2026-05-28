@@ -3122,6 +3122,19 @@ function closeFullListModal() {
         const f = window.__fatigue.calculateFatigue(name);
         if (!f || !Number.isFinite(f.score)) return;
         const score = Math.max(0, f.score);
+        if (card.classList.contains('mk-mid-card')) {
+          const level = score > 66 ? 'hi' : score >= 33 ? 'mid' : 'low';
+          card.classList.remove('mk-mid-fat-none', 'mk-mid-fat-low', 'mk-mid-fat-mid', 'mk-mid-fat-hi');
+          card.classList.add('mk-mid-fat-' + level);
+          const filled = Math.max(0, Math.min(10, Math.ceil(score / 10)));
+          card.querySelectorAll('.mk-mid-fat-seg').forEach((seg, i) => {
+            seg.classList.toggle('on', i < filled);
+            seg.classList.toggle('on-s', i === filled - 1);
+          });
+          const pct = card.querySelector('.mk-mid-fat-pct');
+          if (pct) pct.textContent = score + '%';
+          return;
+        }
         // Krāsas: zaļš→dzeltens→oranžs→sarkans, katram līmenim skaidri atšķirīgs
         let color, glowColor, borderColor;
         if (score > 70) {
@@ -3179,14 +3192,59 @@ function closeFullListModal() {
       return;
     }
 
+    function getPersonEmoji(worker) {
+      try {
+        if (window.MinkaEmoji && typeof window.MinkaEmoji.get === 'function') {
+          const saved = window.MinkaEmoji.get(worker.name || '');
+          if (saved) return saved;
+        }
+      } catch(e) {}
+      return '';
+    }
+
+    function getShiftEmoji(worker) {
+      const type = String(worker && worker.type || '').toUpperCase();
+      if (type === 'DIENA') return '☀️';
+      if (type === 'NAKTS') return '🌙';
+      return '';
+    }
+
+    function getMonthHoursForWorker(workerName, isRd) {
+      const targetStore = isRd ? storeRad : store;
+      const targetName = String(workerName || '').trim();
+      if (!targetName) return 0;
+      let total = 0;
+      const months = activeMonth && targetStore && targetStore[activeMonth] ? [activeMonth] : safeKeys(targetStore);
+      months.forEach(month => {
+        const days = targetStore && targetStore[month];
+        if (!Array.isArray(days)) return;
+        days.forEach(day => {
+          if (!day || !Array.isArray(day.workers)) return;
+          day.workers.forEach(item => {
+            if (!item || String(item.name || '').trim() !== targetName) return;
+            total += parseShiftHours(item.shift) || 0;
+          });
+        });
+      });
+      return total;
+    }
+
+    function buildFatigueSegments(score) {
+      const filled = Math.max(0, Math.min(10, Math.ceil((Number(score) || 0) / 10)));
+      return Array.from({ length: 10 }, (_, i) => {
+        const cls = i < filled ? (i === filled - 1 ? ' on on-s' : ' on') : '';
+        return `<span class="mk-mid-fat-seg${cls}"></span>`;
+      }).join('');
+    }
+
     function buildCard(w, isRd) {
       const parts = String(w.name || "").trim().split(/\s+/).filter(Boolean);
       const initials = ((parts[0]?.[0] || "") + (parts[1]?.[0] || "")).toUpperCase();
       const firstName = capitalize(parts[0] || "");
       const surname = parts.slice(1).map(n => capitalize(n)).join(' ');
-      let iconHtml = '';
-      if (w.type === 'DIENA') iconHtml = '<span class="shift-icon static sun-icon">☀️</span>';
-      else if (w.type === 'NAKTS') iconHtml = '<span class="shift-icon static moon-icon">🌙</span>';
+      const personEmoji = getPersonEmoji(w);
+      const shiftEmoji = getShiftEmoji(w);
+      const bgEmoji = personEmoji || shiftEmoji;
       const isDoneCard = isToday && w.startTime && w.endTime && isWorkerShiftDone(w, activeDateStr, now);
 
       // Get fatigue score
@@ -3212,36 +3270,33 @@ function closeFullListModal() {
         card.setAttribute('data-shift', w.shift);
         if (w.type) card.setAttribute('data-type', w.type);
         card.onclick = (e) => { e.stopPropagation(); showWorkerSchedule(w.name, w.shift); };
-
-        // TOP: initials + icon
-        const topDiv = document.createElement('div');
-        topDiv.className = 'card-top';
-        topDiv.innerHTML = `<div class="card-init${isRd ? ' card-init-rd' : ''}">${initials}</div>${iconHtml ? `<div class="shift-icons">${iconHtml}</div>` : ''}`;
-        card.appendChild(topDiv);
-
-        // MIDDLE: shift number + name (centered)
-        const middleDiv = document.createElement('div');
-        middleDiv.className = 'card-middle';
-        const shiftEl = document.createElement('div');
-        shiftEl.className = 'card-shift';
-        shiftEl.textContent = w.shift;
-        const nameWrap = document.createElement('div');
-        nameWrap.className = 'card-name-wrap';
-        nameWrap.innerHTML = `<span class="name-main">${firstName}</span><span class="name-sub">${surname}</span>`;
-        middleDiv.appendChild(shiftEl);
-        middleDiv.appendChild(nameWrap);
-        card.appendChild(middleDiv);
-
-        // FATIGUE BAR
-        const fatRow = document.createElement('div');
-        fatRow.className = 'card-fat-row';
-        const fatColor = hasFatigueScore ? fatigueColor : 'rgba(255,255,255,0.1)';
-        fatRow.innerHTML = `
-          <div class="fat-track">
-            <div class="fat-fill" style="width:${fatigueScore}%;background:${fatColor};"></div>
+        const roleClass = isRd ? ' mk-mid-card-rd' : ' mk-mid-card-rg';
+        const fatigueLevel = !hasFatigueScore ? 'none' : fatigueScore > 66 ? 'hi' : fatigueScore >= 33 ? 'mid' : 'low';
+        const monthHours = getMonthHoursForWorker(w.name, isRd);
+        card.className += ` mk-mid-card${roleClass} mk-mid-fat-${fatigueLevel}`;
+        card.innerHTML = `
+          <div class="mk-mid-top">
+            <div class="mk-mid-left">
+              <div class="mk-mid-initials">${initials}</div>
+              ${(personEmoji || shiftEmoji) ? `<div class="mk-mid-status-icons">${personEmoji ? `<span class="mk-mid-person-emoji">${personEmoji}</span>` : ''}${shiftEmoji ? `<span class="mk-mid-shift-emoji">${shiftEmoji}</span>` : ''}</div>` : ''}
+            </div>
+            <div class="mk-mid-month">
+              <div class="mk-mid-month-num">${monthHours || parseShiftHours(w.shift) || 0}h</div>
+              <div class="mk-mid-month-label">MĒNESĪ</div>
+            </div>
           </div>
-          <span class="fat-pct" style="color:${fatColor};">${hasFatigueScore ? fatigueScore + '%' : ''}</span>`;
-        card.appendChild(fatRow);
+          <div class="mk-mid-center">
+            ${bgEmoji ? `<div class="mk-mid-bg-emoji">${bgEmoji}</div>` : ''}
+            <div class="card-shift mk-mid-hours">${parseShiftHours(w.shift) || w.shift}</div>
+            <div class="card-name-wrap mk-mid-name-wrap">
+              <span class="name-main">${firstName}</span>
+              <span class="name-sub">${surname}</span>
+            </div>
+          </div>
+          <div class="card-fat-row mk-mid-fatigue">
+            <div class="mk-mid-fat-segs">${buildFatigueSegments(fatigueScore)}</div>
+            <span class="fat-pct mk-mid-fat-pct">${hasFatigueScore ? fatigueScore + '%' : ''}</span>
+          </div>`;
 
         return card;
       } else {
