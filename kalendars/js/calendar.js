@@ -3278,11 +3278,12 @@ function closeFullListModal() {
           <div class="mk-mid-top">
             <div class="mk-mid-left">
               <div class="mk-mid-initials">${initials}</div>
-              ${(personEmoji || shiftEmoji) ? `<div class="mk-mid-status-icons">${personEmoji ? `<span class="mk-mid-person-emoji">${personEmoji}</span>` : ''}${shiftEmoji ? `<span class="mk-mid-shift-emoji">${shiftEmoji}</span>` : ''}</div>` : ''}
+              ${personEmoji ? `<div class="mk-mid-status-icons"><span class="mk-mid-person-emoji">${personEmoji}</span></div>` : ''}
             </div>
             <div class="mk-mid-month">
               <div class="mk-mid-month-num">${monthHours || parseShiftHours(w.shift) || 0}h</div>
               <div class="mk-mid-month-label">MĒNESĪ</div>
+              ${shiftEmoji ? `<div class="mk-mid-shift-icons"><span class="mk-mid-shift-emoji">${shiftEmoji}</span></div>` : ''}
             </div>
           </div>
           <div class="mk-mid-center">
