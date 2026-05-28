@@ -8404,6 +8404,274 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 :root.mk-mobile-shell #shift-progress-wrap {
   margin-top: -8px !important;
 }
+
+/* Middle roster cards: large hardware-style cards from Cards (2).html */
+#grafiks-list.grid-view {
+  background: transparent !important;
+}
+#grafiks-list.grid-view .cards-section {
+  margin: 0 0 24px !important;
+}
+#grafiks-list.grid-view .cards-section-label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0 !important;
+  margin: 0 0 12px !important;
+  color: #a78bfa !important;
+  font: 850 11px/1 Inter, system-ui, sans-serif !important;
+  letter-spacing: .22em !important;
+  text-transform: uppercase !important;
+}
+#grafiks-list.grid-view .cards-section-label-rd {
+  color: #ff6b7a !important;
+}
+#grafiks-list.grid-view .cards-lbl-line {
+  display: none !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card {
+  box-sizing: border-box !important;
+  container-type: inline-size !important;
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  padding: clamp(8px, 3.2cqw, 14px) !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(255, 255, 255, .08) !important;
+  border-radius: 22px !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,0) 44%),
+    #14141d !important;
+  box-shadow: inset 0 0 0 1px rgba(167, 139, 250, .28) !important;
+  filter: none !important;
+  transform: none !important;
+  transition: none !important;
+  contain: layout paint style !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card-rd {
+  box-shadow: inset 0 0 0 1px rgba(255, 107, 122, .28) !important;
+}
+#grafiks-list.grid-view .mk-mid-top {
+  position: relative !important;
+  z-index: 2 !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+#grafiks-list.grid-view .mk-mid-left {
+  position: relative !important;
+  display: block !important;
+  min-width: 0 !important;
+  padding-bottom: clamp(18px, 8cqw, 30px) !important;
+}
+#grafiks-list.grid-view .mk-mid-initials {
+  color: rgba(167, 139, 250, .22) !important;
+  font: 900 clamp(22px, 13cqw, 44px)/.9 Inter, system-ui, sans-serif !important;
+  letter-spacing: .02em !important;
+  user-select: none !important;
+}
+#grafiks-list.grid-view .mk-mid-card-rd .mk-mid-initials {
+  color: rgba(255, 107, 122, .22) !important;
+}
+#grafiks-list.grid-view .mk-mid-status-icons {
+  position: absolute !important;
+  left: 0 !important;
+  top: calc(clamp(22px, 13cqw, 44px) + clamp(4px, 1.8cqw, 8px)) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: clamp(4px, 2cqw, 8px) !important;
+  max-width: clamp(54px, 22cqw, 96px) !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+#grafiks-list.grid-view .mk-mid-status-emoji,
+#grafiks-list.grid-view .mk-mid-person-emoji,
+#grafiks-list.grid-view .mk-mid-shift-emoji {
+  font-size: clamp(15px, 8cqw, 28px) !important;
+  line-height: 1 !important;
+  display: inline-block !important;
+}
+#grafiks-list.grid-view .mk-mid-month {
+  text-align: right !important;
+  line-height: 1.12 !important;
+  color: rgba(235, 236, 245, .95) !important;
+  margin-left: auto !important;
+  flex: 0 0 auto !important;
+}
+#grafiks-list.grid-view .mk-mid-month-num {
+  font: 900 clamp(13px, 6cqw, 20px)/1 Inter, system-ui, sans-serif !important;
+  font-variant-numeric: tabular-nums !important;
+}
+#grafiks-list.grid-view .mk-mid-month-label {
+  margin-top: 3px !important;
+  color: rgba(160, 166, 184, .78) !important;
+  font: 800 clamp(6px, 2.8cqw, 10px)/1 Inter, system-ui, sans-serif !important;
+  letter-spacing: .12em !important;
+}
+#grafiks-list.grid-view .mk-mid-center {
+  position: absolute !important;
+  z-index: 1 !important;
+  left: 50% !important;
+  top: 52% !important;
+  transform: translate(-50%, -50%) !important;
+  text-align: center !important;
+  width: min(78%, 220px) !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+#grafiks-list.grid-view .mk-mid-bg-emoji {
+  position: absolute !important;
+  inset: 50% auto auto 50% !important;
+  transform: translate(-50%, -54%) !important;
+  font-size: clamp(72px, 46cqw, 150px) !important;
+  line-height: 1 !important;
+  opacity: .12 !important;
+  pointer-events: none !important;
+  user-select: none !important;
+  z-index: 0 !important;
+}
+#grafiks-list.grid-view .mk-mid-hours.card-shift {
+  position: relative !important;
+  z-index: 1 !important;
+  margin: 0 !important;
+  color: #a78bfa !important;
+  font-family: Inter, system-ui, sans-serif !important;
+  font-size: clamp(30px, 20cqw, 62px) !important;
+  font-weight: 900 !important;
+  line-height: .82 !important;
+  letter-spacing: -.03em !important;
+  font-variant-numeric: tabular-nums !important;
+}
+#grafiks-list.grid-view .mk-mid-card-rd .mk-mid-hours.card-shift {
+  color: #ff6b7a !important;
+}
+#grafiks-list.grid-view .mk-mid-name-wrap {
+  position: relative !important;
+  z-index: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 1px !important;
+  margin-top: clamp(3px, 2cqw, 8px) !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+#grafiks-list.grid-view .mk-mid-name-wrap .name-main {
+  color: #fff !important;
+  font: 900 clamp(14px, 7.4cqw, 24px)/1.02 Inter, system-ui, sans-serif !important;
+  letter-spacing: -.02em !important;
+  text-align: center !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+#grafiks-list.grid-view .mk-mid-name-wrap .name-sub {
+  color: #fff !important;
+  font: 750 clamp(11px, 5.6cqw, 18px)/1.02 Inter, system-ui, sans-serif !important;
+  text-align: center !important;
+  opacity: .98 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+#grafiks-list.grid-view .mk-mid-fatigue.card-fat-row {
+  position: relative !important;
+  z-index: 2 !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  gap: clamp(5px, 2cqw, 10px) !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+#grafiks-list.grid-view .mk-mid-fat-segs {
+  flex: 1 1 auto !important;
+  display: grid !important;
+  grid-template-columns: repeat(10, 1fr) !important;
+  gap: clamp(2px, 1.4cqw, 5px) !important;
+  min-width: 0 !important;
+}
+#grafiks-list.grid-view .mk-mid-fat-seg {
+  height: clamp(3px, 1.7cqw, 7px) !important;
+  border-radius: 4px !important;
+  background: #23232f !important;
+}
+#grafiks-list.grid-view .mk-mid-fat-low .mk-mid-fat-seg.on { background: rgba(52, 211, 153, .42) !important; }
+#grafiks-list.grid-view .mk-mid-fat-low .mk-mid-fat-seg.on-s { background: #34d399 !important; }
+#grafiks-list.grid-view .mk-mid-fat-mid .mk-mid-fat-seg.on { background: rgba(251, 191, 36, .42) !important; }
+#grafiks-list.grid-view .mk-mid-fat-mid .mk-mid-fat-seg.on-s { background: #fbbf24 !important; }
+#grafiks-list.grid-view .mk-mid-fat-hi .mk-mid-fat-seg.on { background: rgba(255, 107, 122, .45) !important; }
+#grafiks-list.grid-view .mk-mid-fat-hi .mk-mid-fat-seg.on-s { background: #ff6b7a !important; }
+#grafiks-list.grid-view .mk-mid-fat-pct {
+  min-width: clamp(28px, 9cqw, 38px) !important;
+  text-align: right !important;
+  font: 900 clamp(10px, 4.4cqw, 14px)/1 Inter, system-ui, sans-serif !important;
+  font-variant-numeric: tabular-nums !important;
+}
+#grafiks-list.grid-view .mk-mid-fat-low .mk-mid-fat-pct { color: #34d399 !important; }
+#grafiks-list.grid-view .mk-mid-fat-mid .mk-mid-fat-pct { color: #fbbf24 !important; }
+#grafiks-list.grid-view .mk-mid-fat-hi .mk-mid-fat-pct { color: #ff6b7a !important; }
+:root.host-radio-open #grafiks-list.grid-view .card.mk-mid-card {
+  padding: 7px !important;
+  border-radius: 16px !important;
+}
+:root.host-radio-open #grafiks-list.grid-view .mk-mid-status-icons {
+  top: calc(clamp(18px, 12cqw, 28px) + 4px) !important;
+  gap: 3px !important;
+  max-width: 48px !important;
+}
+:root.host-radio-open #grafiks-list.grid-view .mk-mid-status-emoji,
+:root.host-radio-open #grafiks-list.grid-view .mk-mid-person-emoji,
+:root.host-radio-open #grafiks-list.grid-view .mk-mid-shift-emoji {
+  font-size: clamp(12px, 7cqw, 18px) !important;
+}
+:root.host-radio-open #grafiks-list.grid-view .mk-mid-initials {
+  font-size: clamp(18px, 12cqw, 28px) !important;
+}
+:root.host-radio-open #grafiks-list.grid-view .mk-mid-month-num {
+  font-size: clamp(11px, 6cqw, 15px) !important;
+}
+:root.host-radio-open #grafiks-list.grid-view .mk-mid-month-label {
+  display: none !important;
+}
+:root.host-radio-open #grafiks-list.grid-view .mk-mid-bg-emoji {
+  font-size: clamp(48px, 42cqw, 84px) !important;
+  opacity: .1 !important;
+}
+:root.host-radio-open #grafiks-list.grid-view .mk-mid-center {
+  top: 53% !important;
+  width: 82% !important;
+}
+:root.host-radio-open #grafiks-list.grid-view .mk-mid-hours.card-shift {
+  font-size: clamp(20px, 16cqw, 34px) !important;
+}
+:root.host-radio-open #grafiks-list.grid-view .mk-mid-name-wrap {
+  margin-top: 2px !important;
+}
+:root.host-radio-open #grafiks-list.grid-view .mk-mid-name-wrap .name-main {
+  font-size: clamp(11px, 7cqw, 15px) !important;
+}
+:root.host-radio-open #grafiks-list.grid-view .mk-mid-name-wrap .name-sub {
+  font-size: clamp(9px, 5.5cqw, 12px) !important;
+}
+:root.host-radio-open #grafiks-list.grid-view .mk-mid-fat-segs {
+  gap: 2px !important;
+}
+:root.host-radio-open #grafiks-list.grid-view .mk-mid-fat-seg {
+  height: 3px !important;
+}
+:root.host-radio-open #grafiks-list.grid-view .mk-mid-fat-pct {
+  min-width: 24px !important;
+  font-size: 10px !important;
+}
 </style>
 <script>
 /* PAGĀJIS/ATLIKUŠAS → under date title; NAKTS SADALĪJUMS → scroll-row right */
