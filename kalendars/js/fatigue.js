@@ -156,7 +156,7 @@
 
   function formatDateShort(dateStr) {
     const [d, m] = String(dateStr || '').split('.').map(Number);
-    const months = ['jan.','feb.','mar.','apr.','mai.','jÅ«n.','jÅ«l.','aug.','sep.','okt.','nov.','dec.'];
+    const months = ['janvāris','februāris','marts','aprīlis','maijs','jūnijs','jūlijs','augusts','septembris','oktobris','novembris','decembris'];
     return `${d}. ${months[(m || 1) - 1]}`;
   }
 
@@ -998,7 +998,7 @@
     const hoursOk = f.weeklyHours < THRESHOLDS.weeklyHoursWarn;
     rows.push(`<div class="fatigue-row">
       ${hoursOk ? okIcon : warnIcon}
-      <span class="fatigue-row-label">&#128336; Ned&#275;&#316;as slodze</span>
+      <span class="fatigue-row-label">&#128336; Nedēļas slodze</span>
       <span class="fatigue-row-val ${hoursOk ? '' : 'fatigue-val-warn'}">${f.weeklyHours} stundas</span>
     </div>`);
 
@@ -1096,42 +1096,51 @@
       </div>`);
     }
 
-    // Ring circumference 2Ï€Ã—30 â‰ˆ 188.5
-    const C = 188.5;
-    const dashOffset = (C - (f.score / 100) * C).toFixed(1);
+    function titleCaseLevel(level) {
+      const s = String(level || '').trim().toLowerCase();
+      return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+    }
+
+    function detailSegments(score) {
+      const active = Math.max(0, Math.min(10, Math.ceil((Number(score) || 0) / 10)));
+      return Array.from({ length: 10 }, (_, i) =>
+        `<span class="mk-detail-fat-seg${i < active ? ' is-on' : ''}${i === active - 1 ? ' is-last' : ''}"></span>`
+      ).join('');
+    }
+
+    function reasonImpactWidth(points) {
+      const n = Math.abs(parseInt(String(points || '').replace(/[^\d-]/g, ''), 10) || 0);
+      return Math.max(8, Math.min(100, n * 6));
+    }
 
     return `
-    <div class="fatigue-panel fatigue-tab-panel ${f.levelClass}">
-      <div class="fatigue-hero">
-        <div class="fatigue-ring-wrap ${f.levelClass}">
-          <svg width="72" height="72" viewBox="0 0 72 72">
-            <circle class="fatigue-ring-bg" cx="36" cy="36" r="30"/>
-            <circle class="fatigue-ring-fill" cx="36" cy="36" r="30"
-              stroke-dasharray="${C}" stroke-dashoffset="${dashOffset}"/>
-          </svg>
-          <div class="fatigue-ring-center">
-            <span class="fatigue-ring-score">${f.score}</span>
-            <span class="fatigue-ring-label">/100</span>
-          </div>
+    <div class="fatigue-panel fatigue-tab-panel mk-detail-fatigue ${f.levelClass}">
+      <div class="mk-detail-score-card">
+        <div class="mk-detail-score-box">
+          <div class="mk-detail-score-num">${f.score}</div>
+          <div class="mk-detail-score-max">/ 100</div>
         </div>
-        <div class="fatigue-hero-info">
-          <div class="fatigue-title">${f.viewMode === "future" ? "🔮 PROGNOZĒTS" : "⚡ NOGURUMS"}</div>
-          <div class="fatigue-level-badge">${f.level}</div>
-          <div class="fatigue-bar-track">
-            <div class="fatigue-bar-fill ${f.levelClass}" style="width:${f.score}%"></div>
+        <div class="mk-detail-score-meter">
+          <div class="mk-detail-score-head">
+            <span class="mk-detail-score-label">${f.viewMode === "future" ? "🔮 PROGNOZĒTS" : "⚡ NOGURUMS"}</span>
+            <span class="mk-detail-level-pill">${titleCaseLevel(f.level)}</span>
           </div>
+          <div class="mk-detail-fat-segs">${detailSegments(f.score)}</div>
         </div>
       </div>
-      <div class="fatigue-details">
+      <div class="fatigue-details mk-detail-stats">
         ${rows.join('')}
       </div>
       ${f.scoreReasons && f.scoreReasons.length ? `
       <div class="fatigue-reasons">
-        <div class="fatigue-reasons-title">⚙️ Skora pamatojums</div>
+        <div class="fatigue-reasons-head">
+          <div class="fatigue-reasons-title">Kā veidojas</div>
+          <div class="fatigue-reasons-total">Kopā <b>${f.score}</b></div>
+        </div>
         ${f.scoreReasons.map(r => `
           <div class="fatigue-reason fatigue-reason-${r.type}">
-            <span class="fatigue-reason-icon">${r.type==='bad'?'⬆':r.type==='good'?'⬇':r.type==='warn'?'⚠':'ℹ'}</span>
-            <span class="fatigue-reason-text">${r.text}</span>
+            <span class="fatigue-reason-icon"></span>
+            <span class="fatigue-reason-text">${r.text}<span class="fatigue-reason-bar"><i style="width:${reasonImpactWidth(r.pts)}%"></i></span></span>
             <span class="fatigue-reason-pts">${r.pts}</span>
           </div>`).join('')}
       </div>` : ''}

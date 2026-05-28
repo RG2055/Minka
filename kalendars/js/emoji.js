@@ -28,9 +28,8 @@
 
   function getSyncLabel() {
     var mode = getSyncMode();
-    if (mode === 'github') return 'GitHub sync';
-    if (mode === 'github-read') return 'GitHub read-only';
-    return 'Only this device';
+    if (mode === 'github' || mode === 'github-read') return 'Sinhronizēts';
+    return 'Lokāli';
   }
 
   // ── RARE LOCKED EMOJI (require LVL) ─────────────────────────────────────────
@@ -45,12 +44,12 @@
   var SECTIONS = [
     { id:'all',     label:'⭐',  title:'Visi'        },
     { id:'med',     label:'🩺',  title:'Medicīna'    },
-    { id:'mood',    label:'😎',  title:'Sajūtas'     },
+    { id:'mood',    label:'😎',  title:'Sejas'       },
     { id:'energy',  label:'⚡',  title:'Enerģija'    },
     { id:'animals', label:'🦊',  title:'Dzīvnieki'   },
     { id:'nature',  label:'🌿',  title:'Daba'        },
-    { id:'stuff',   label:'☕',  title:'Fun'         },
-    { id:'rare',    label:'🔒',  title:'Rare'        },
+    { id:'stuff',   label:'☕',  title:'Ikdiena'     },
+    { id:'rare',    label:'🔒',  title:'Simboli'     },
   ];
 
   var EMOJI_BY_SECTION = {
@@ -70,6 +69,15 @@
   EMOJI_BY_SECTION.animals = EMOJI_BY_SECTION.animals.concat(['🐶','🐰','🐹','🐮','🐴','🦉','🦄','🐑','🦆','🐯','🐈','🐈‍⬛','😸','🦕','🦖','🫎','🐻‍❄️','🦬','🦤','🪼']);
   EMOJI_BY_SECTION.nature = EMOJI_BY_SECTION.nature.concat(['🍃','🌼','🪻','🪷','🐾','🌥️','🌦️','🌨️','🪵','🌳']);
   EMOJI_BY_SECTION.stuff = EMOJI_BY_SECTION.stuff.concat(['👓','🕹️','🏓','🏀','⚽','🎰','🎬','📚','📎','🪀','🧋','🍜','🪆','🎻','🛸']);
+  EMOJI_BY_SECTION.med = EMOJI_BY_SECTION.med.concat(['🧑‍⚕️','👩‍⚕️','👨‍⚕️','🧑‍🔬','👩‍🔬','👨‍🔬','🫀','🫁','🧫','🧯','🧊','🦠','🧵','🧷','🧻','🧽','🪥','🦿','🦾']);
+  EMOJI_BY_SECTION.mood = EMOJI_BY_SECTION.mood.concat(['🫡','🫢','🫣','🫨','🫩','🙂‍↔️','🙂‍↕️','😶‍🌫️','😮‍💨','😵‍💫','❤️‍🔥','❤️‍🩹','🫶','🫰','🫱','🫲']);
+  EMOJI_BY_SECTION.energy = EMOJI_BY_SECTION.energy.concat(['🫧','🪩','🛸','🛰️','📟','📈','🧭','🧲','⚙️','🪫','🔦','🚨','🟢','🟡','🟠','🔴','🫆']);
+  EMOJI_BY_SECTION.animals = EMOJI_BY_SECTION.animals.concat(['🪿','🪽','🐦‍🔥','🫎','🫏','🪼','🪲','🪱','🦥','🦦','🦧','🦣','🦛','🦏','🦓','🦒','🐿️']);
+  EMOJI_BY_SECTION.nature = EMOJI_BY_SECTION.nature.concat(['🪾','🪻','🫚','🫛','🫜','🪷','🪸','🪨','🪵','🧋','🌘','🌗','🌖','🌔','🌓','🌒','🌌']);
+  EMOJI_BY_SECTION.stuff = EMOJI_BY_SECTION.stuff.concat(['🪭','🪈','🪇','🪉','🪏','🛜','🪫','🫙','🧿','🪬','🪄','🧰','🧪','🧯','🕹️','🖥️','⌨️','🖱️','📱','💻']);
+  Object.keys(EMOJI_BY_SECTION).forEach(function(k) {
+    EMOJI_BY_SECTION[k] = EMOJI_BY_SECTION[k].filter(function(e,i,a){return a.indexOf(e)===i;});
+  });
 
   // Build "all" from all sections except rare
   EMOJI_BY_SECTION.all = [];
@@ -79,6 +87,85 @@
   EMOJI_BY_SECTION.all = EMOJI_BY_SECTION.all.concat(EMOJI_BY_SECTION.rare);
   EMOJI_BY_SECTION.all = EMOJI_BY_SECTION.all.filter(function(e,i,a){return a.indexOf(e)===i;});
 
+  var SECTION_TITLES = {};
+  SECTIONS.forEach(function(sec) { SECTION_TITLES[sec.id] = sec.title; });
+  var EMOJI_NAMES = {
+    '🩻':'Rentgens','💉':'Šļirce','🏥':'Slimnīca','🔬':'Mikroskops','💊':'Tablete','🩺':'Stetoskops','🩹':'Plāksteris','🧬':'DNS','🫀':'Sirds','🫁':'Plaušas','🧠':'Smadzenes','🩸':'Asinis','🧪':'Mēģene','🚑':'Ātrā palīdzība','🥼':'Halāts','😷':'Maska','🤒':'Slims','🦴':'Kauls',
+    '😴':'Miegs','😎':'Foršs','🤯':'Pārslodze','🤖':'Robots','🥱':'Žāva','🫡':'Dežūra','🫠':'Izkusis','😮‍💨':'Izelpa','😵‍💫':'Reibonis','❤️‍🔥':'Deg','❤️‍🩹':'Atkopjas',
+    '⚡':'Enerģija','❄️':'Ledus','☀️':'Saule','🌙':'Mēness','🚀':'Raķete','🔮':'Kristāls','🪩':'Disko','🛸':'NLO','🚨':'Trauksme','🟢':'Zaļš','🟡':'Dzeltens','🟠':'Oranžs','🔴':'Sarkans',
+    '🦊':'Lapsa','🐱':'Kaķis','🐶':'Suns','🐉':'Pūķis','🦖':'Dinozaurs','🦕':'Dinozaurs','🦉':'Pūce','🐦‍🔥':'Fēnikss','🪼':'Medūza','🫎':'Alnis',
+    '🌿':'Lapa','🍀':'Āboliņš','🪻':'Hiacinte','🪷':'Lotoss','🪾':'Koks','🌌':'Galaktika','🌈':'Varavīksne','🫧':'Burbuļi',
+    '☕':'Kafija','🍕':'Pica','🎮':'Spēles','🎧':'Austiņas','📚':'Grāmatas','🪄':'Burvju nūjiņa','🪬':'Amulets','🛜':'Wi-Fi','💻':'Dators','📱':'Telefons',
+    '🔥':'Uguns','🏆':'Kauss','💎':'Dimants','👑':'Kronis'
+  };
+
+  function getEmojiSection(emoji) {
+    var keys = ['med','mood','energy','animals','nature','stuff','rare'];
+    for (var i = 0; i < keys.length; i++) {
+      if ((EMOJI_BY_SECTION[keys[i]] || []).indexOf(emoji) !== -1) return keys[i];
+    }
+    return 'all';
+  }
+
+  function getEmojiName(emoji) {
+    return EMOJI_NAMES[emoji] || 'Emoji';
+  }
+
+  function getVisibleEmojiList() {
+    var source = EMOJI_BY_SECTION[_activeTab] || EMOJI_BY_SECTION.all;
+    var q = String(_emojiQuery || '').trim().toLowerCase();
+    if (!q) return source;
+    return source.filter(function(e) {
+      return e.indexOf(q) !== -1 ||
+        getEmojiName(e).toLowerCase().indexOf(q) !== -1 ||
+        (SECTION_TITLES[getEmojiSection(e)] || '').toLowerCase().indexOf(q) !== -1;
+    });
+  }
+
+  function buildCategoryButtons(buttonClass) {
+    return SECTIONS.map(function(sec) {
+      return '<button class="' + buttonClass + (_activeTab === sec.id ? ' mkp-tab-active' : '') + '" data-tab="' + sec.id + '" title="' + sec.title + '">' +
+        sec.label + '<span class="mkp-cat-name">' + sec.title + '</span></button>';
+    }).join('');
+  }
+
+  function emojiButtonHtml(e, workerLvl, currentEmoji) {
+    var locked = LOCKED[e] && workerLvl < LOCKED[e].lvl;
+    var isSelected = e === currentEmoji;
+    var cls = 'mkp-emoji-btn' + (isSelected ? ' mkp-selected' : '') + (locked ? ' mkp-locked' : '');
+    if (locked) {
+      return '<button class="' + cls + '" data-emoji="' + e + '" data-locked="1" title="Nepieciešams ' + LOCKED[e].label + '">' +
+        '<span class="mkp-lock-emoji">' + e + '</span>' +
+        '<span class="mkp-lock-badge">' + LOCKED[e].label + '</span>' +
+      '</button>';
+    }
+    return '<button class="' + cls + '" data-emoji="' + e + '" title="' + getEmojiName(e) + '">' + e + '</button>';
+  }
+
+  function buildEmojiGroupsHtml(workerLvl, currentEmoji) {
+    var q = String(_emojiQuery || '').trim().toLowerCase();
+    var keys = _activeTab === 'all'
+      ? ['med','mood','energy','animals','nature','stuff','rare']
+      : [_activeTab];
+    var html = '';
+    keys.forEach(function(k) {
+      var list = (EMOJI_BY_SECTION[k] || []).filter(function(e) {
+        if (!q) return true;
+        return e.indexOf(q) !== -1 ||
+          getEmojiName(e).toLowerCase().indexOf(q) !== -1 ||
+          (SECTION_TITLES[k] || '').toLowerCase().indexOf(q) !== -1;
+      });
+      if (!list.length) return;
+      html += '<section class="mkp-group" data-group="' + k + '">' +
+        '<h5>' + (SECTION_TITLES[k] || k) + '</h5>' +
+        '<div class="mkp-grid">' +
+          list.map(function(e) { return emojiButtonHtml(e, workerLvl, currentEmoji); }).join('') +
+        '</div>' +
+      '</section>';
+    });
+    return html || '<div class="mkp-empty">Nekas nav atrasts</div>';
+  }
+
   // ── STATE ────────────────────────────────────────────────────────────────────
   var _data = {};
   var _pickerEl = null;
@@ -86,6 +173,8 @@
   var _activeCard = null;
   var _selectedEmoji = null;
   var _activeTab = 'all';
+  var _emojiQuery = '';
+  var _emojiSearchTimer = 0;
   var _hookedCards = new WeakSet();
   function getPerfMode() {
     var root = document.documentElement;
@@ -251,17 +340,7 @@
       card.appendChild(btn);
       updateCardEmoji(card, card.getAttribute('data-worker'));
 
-      // Keep emoji aligned; flow is driven by CSS so it stays smooth and deterministic
-      card.addEventListener('mouseenter', function() {
-        var badge = card.querySelector('.mk-emoji-badge');
-        if (!badge) return;
-        badge.classList.add('mk-emoji-hovered');
-      });
-      card.addEventListener('mouseleave', function() {
-        var badge = card.querySelector('.mk-emoji-badge');
-        if (!badge) return;
-        badge.classList.remove('mk-emoji-hovered');
-      });
+      // No hover animation here: emoji updates stay static for low CPU/GPU usage.
     });
     document.querySelectorAll('.duty-block[data-worker]').forEach(function(b) {
       updateSideEmoji(b, b.getAttribute('data-worker'));
@@ -352,49 +431,31 @@
     var workerLvl = getWorkerLvl(_activeWorker || '');
     var currentEmoji = _selectedEmoji;
 
-    // ── Tabs ──
-    var tabsHtml = '<div class="mkp-tabs">';
-    SECTIONS.forEach(function(sec) {
-      var isActive = _activeTab === sec.id;
-      tabsHtml += '<button class="mkp-tab' + (isActive ? ' mkp-tab-active' : '') + '" data-tab="' + sec.id + '" title="' + sec.title + '">' + sec.label + '</button>';
-    });
-    tabsHtml += '</div>';
-
-    // ── Grid ──
-    var emojis = EMOJI_BY_SECTION[_activeTab] || EMOJI_BY_SECTION.all;
-    var gridHtml = '<div class="mkp-grid">';
-    emojis.forEach(function(e) {
-      var locked = LOCKED[e] && workerLvl < LOCKED[e].lvl;
-      var isSelected = e === currentEmoji;
-      var cls = 'mkp-emoji-btn' + (isSelected ? ' mkp-selected' : '') + (locked ? ' mkp-locked' : '');
-      if (locked) {
-        gridHtml += '<button class="' + cls + '" data-emoji="' + e + '" data-locked="1" title="Nepieciešams ' + LOCKED[e].label + '">' +
-          '<span class="mkp-lock-emoji">' + e + '</span>' +
-          '<span class="mkp-lock-badge">' + LOCKED[e].label + '</span>' +
-        '</button>';
-      } else {
-        gridHtml += '<button class="' + cls + '" data-emoji="' + e + '">' + e + '</button>';
-      }
-    });
-    gridHtml += '</div>';
+    var gridHtml = buildEmojiGroupsHtml(workerLvl, currentEmoji);
 
     // ── Live preview ──
-    var previewEmoji = currentEmoji || '?';
+    var previewEmoji = currentEmoji || '';
     var workerFirst = (_activeWorker || '').split(' ')[0] || '';
     var workerSur   = (_activeWorker || '').split(' ').slice(1).join(' ') || '';
-    var shortSur    = workerSur ? workerSur[0] + '.' : '';
+    var initials    = ((workerFirst[0] || '') + (workerSur[0] || '')).toUpperCase() || '??';
+    var emojiCat = getEmojiSection(previewEmoji);
     var previewHtml =
       '<div class="mkp-preview-wrap">' +
-        '<div class="mkp-preview-label">DZĪVAIS<br>PRIEKŠSKATĪJUMS</div>' +
+        '<div class="mkp-preview-label">Dzīvais priekšskatījums</div>' +
         '<div class="mkp-preview-card" id="mkp-preview-card">' +
           '<div class="mkp-prev-top">' +
-            '<div class="mkp-prev-init">' + workerFirst.substring(0,2).toUpperCase() + '</div>' +
-            '<div class="mkp-prev-emoji" id="mkp-preview-emoji">' + (currentEmoji || '') + '</div>' +
+            '<div><div class="mkp-prev-init">' + initials + '</div><div class="mkp-prev-side-emoji" id="mkp-preview-emoji">' + previewEmoji + '</div></div>' +
+            '<div class="mkp-prev-month"><span>132h</span><em>Mēnesī</em></div>' +
           '</div>' +
-          '<div class="mkp-prev-shift" id="mkp-preview-shift">24</div>' +
-          '<div class="mkp-prev-name">' + workerFirst + '</div>' +
-          '<div class="mkp-prev-sub">' + shortSur + '</div>' +
+          '<div class="mkp-prev-center">' +
+            '<span class="mkp-prev-bg-emoji" id="mkp-preview-bg-emoji">' + previewEmoji + '</span>' +
+            '<div class="mkp-prev-shift" id="mkp-preview-shift">24</div>' +
+            '<div class="mkp-prev-name">' + workerFirst + '</div>' +
+            '<div class="mkp-prev-sub">' + workerSur + '</div>' +
+          '</div>' +
+          '<div class="mkp-prev-segs"><span class="on"></span><span class="on"></span><span class="on-s"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>' +
         '</div>' +
+        '<div class="mkp-picked-meta"><div class="mkp-picked-big" id="mkp-picked-big">' + (previewEmoji || '—') + '</div><div><div id="mkp-picked-name">' + (previewEmoji ? getEmojiName(previewEmoji) : 'Nav izvēlēts') + '</div><span id="mkp-picked-cat">' + (previewEmoji ? (SECTION_TITLES[emojiCat] || '') : '') + '</span></div></div>' +
       '</div>';
 
     // ── Footer ──
@@ -403,14 +464,18 @@
     var footerHtml =
       '<div class="mkp-footer">' +
         '<button class="mkp-btn mkp-clear" data-mk-clear="1">Noņemt</button>' +
-        '<div class="mkp-sync-meta"><div class="mkp-sync-dot' + dotClass + '" id="mkp-dot"></div><span class="mkp-sync-text" id="mkp-sync-text">' + getSyncLabel() + '</span></div>' +
-        '<button class="mkp-btn mkp-save" id="mkp-save">Saglabāt ✓</button>' +
+        '<div></div>' +
+        '<button class="mkp-btn mkp-save" id="mkp-save">Saglabāt</button>' +
       '</div>';
 
     inner.innerHTML =
-      '<div class="mkp-title">IZVĒLIES SAVU EMOJI <button class="mkp-close" data-mk-close="1">✕</button></div>' +
+      '<div class="mkp-title"><span>Izvēlies savu emoji</span><button class="mkp-close" data-mk-close="1">×</button></div>' +
+      '<div class="mkp-toolbar">' +
+        '<label class="mkp-search"><span>⌕</span><input id="mkp-search-input" value="' + String(_emojiQuery || '').replace(/"/g, '&quot;') + '" placeholder="Meklēt emoji..." autocomplete="off"></label>' +
+        '<div class="mkp-tabs">' + buildCategoryButtons('mkp-tab') + '</div>' +
+      '</div>' +
       '<div class="mkp-body">' +
-        '<div class="mkp-left">' + tabsHtml + gridHtml + '</div>' +
+        '<div class="mkp-left">' + gridHtml + '</div>' +
         previewHtml +
       '</div>' +
       footerHtml;
@@ -424,32 +489,31 @@
       });
     });
 
-    // Emoji hover → live preview + bounce
+    var searchInput = inner.querySelector('#mkp-search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', function(e) {
+        _emojiQuery = e.target.value || '';
+        clearTimeout(_emojiSearchTimer);
+        _emojiSearchTimer = setTimeout(renderPicker, 90);
+      });
+      if (_emojiQuery) {
+        searchInput.focus();
+        searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+      }
+    }
+
+    // Emoji click only: no hover transform/drop-shadow.
     inner.querySelectorAll('.mkp-emoji-btn:not(.mkp-locked)').forEach(function(btn) {
       btn.addEventListener('mouseenter', function() {
-        var e = btn.getAttribute('data-emoji');
-        var rot = (Math.random() * 24 - 12).toFixed(1);
-        var perf = getPerfMode();
-        var scale = perf === 'low' ? 1.12 : (perf === 'medium' ? 1.26 : 1.5);
-        var lift = perf === 'low' ? 0 : -2;
-        var tilt = perf === 'low' ? 0 : rot;
-        btn.style.transition = 'transform .14s cubic-bezier(.34,1.8,.64,1)';
-        btn.style.transform = 'scale(' + scale + ') translateY(' + lift + 'px) rotate(' + tilt + 'deg)';
-        btn.style.zIndex = '10';
-        btn.style.filter = perf === 'low' ? 'none' : 'drop-shadow(0 4px 8px rgba(139,92,246,0.6))';
-        var pe = document.getElementById('mkp-preview-emoji');
-        if (pe) pe.textContent = e;
+        previewPickerEmoji(btn.getAttribute('data-emoji'));
       });
       btn.addEventListener('mouseleave', function() {
-        btn.style.transform = '';
-        btn.style.zIndex = '';
-        btn.style.filter = '';
-        var pe = document.getElementById('mkp-preview-emoji');
-        if (pe) pe.textContent = _selectedEmoji || '';
+        previewPickerEmoji(_selectedEmoji);
       });
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
         selectEmoji(btn.getAttribute('data-emoji'));
+        renderPicker();
       });
     });
 
@@ -476,12 +540,46 @@
     // Update preview immediately
     var pe = document.getElementById('mkp-preview-emoji');
     if (pe) pe.textContent = e || '';
+    var bg = document.getElementById('mkp-preview-bg-emoji');
+    if (bg) bg.textContent = e || '';
+    var big = document.getElementById('mkp-picked-big');
+    if (big) big.textContent = e || '—';
+    var name = document.getElementById('mkp-picked-name');
+    if (name) name.textContent = e ? getEmojiName(e) : 'Nav izvēlēts';
+    var cat = document.getElementById('mkp-picked-cat');
+    if (cat) cat.textContent = e ? (SECTION_TITLES[getEmojiSection(e)] || '') : '';
     // Update selected state in grid
     if (_pickerEl) {
       _pickerEl.querySelectorAll('.mkp-emoji-btn').forEach(function(b) {
         b.classList.toggle('mkp-selected', b.getAttribute('data-emoji') === e);
       });
     }
+  }
+
+  function previewPickerEmoji(e) {
+    var pe = document.getElementById('mkp-preview-emoji');
+    if (pe) pe.textContent = e || '';
+    var bg = document.getElementById('mkp-preview-bg-emoji');
+    if (bg) bg.textContent = e || '';
+    var big = document.getElementById('mkp-picked-big');
+    if (big) big.textContent = e || '—';
+    var name = document.getElementById('mkp-picked-name');
+    if (name) name.textContent = e ? getEmojiName(e) : 'Nav izvēlēts';
+    var cat = document.getElementById('mkp-picked-cat');
+    if (cat) cat.textContent = e ? (SECTION_TITLES[getEmojiSection(e)] || '') : '';
+  }
+
+  function previewModalEmoji(e) {
+    var pe = document.getElementById('mkp-modal-prev-emoji');
+    if (pe) pe.textContent = e || '';
+    var bg = document.getElementById('mkp-modal-bg-emoji');
+    if (bg) bg.textContent = e || '';
+    var big = document.getElementById('mkp-modal-picked-big');
+    if (big) big.textContent = e || '—';
+    var name = document.getElementById('mkp-modal-picked-name');
+    if (name) name.textContent = e ? getEmojiName(e) : 'Nav izvēlēts';
+    var cat = document.getElementById('mkp-modal-picked-cat');
+    if (cat) cat.textContent = e ? (SECTION_TITLES[getEmojiSection(e)] || '') : '';
   }
 
   async function doSave() {
@@ -493,7 +591,7 @@
     else delete _data[_activeWorker];
     refreshAllCards();
     if (dot) dot.className = 'mkp-sync-dot mkp-syncing';
-    if (saveBtn) saveBtn.textContent = '⏳';
+    if (saveBtn) saveBtn.textContent = 'Saglabā...';
     var state = await saveToGist(_activeWorker);
     if (dot) dot.className = 'mkp-sync-dot ' + (
       state === 'github' ? 'mkp-ok' :
@@ -501,15 +599,9 @@
       state === 'github-read' ? 'mkp-github-read' : 'mkp-err'
     );
     if (text) text.textContent =
-      state === 'github' ? 'Saved to GitHub' :
-      state === 'local' ? 'Saved on this device' :
-      state === 'github-read' ? 'Saved locally only' :
-      'Save failed';
+      state === 'error' ? 'Kļūda' : 'Saglabāts';
     if (saveBtn) saveBtn.textContent =
-      state === 'github' ? '✓ GitHub saved' :
-      state === 'local' ? '✓ Saved locally' :
-      state === 'github-read' ? '✓ Saved locally' :
-      '⚠️ Error';
+      state === 'error' ? 'Kļūda' : 'Saglabāts';
     setTimeout(closePicker, 700);
   }
 
@@ -533,7 +625,7 @@
     }
 
     // Center on screen
-    var PW = 560, M = 8;
+    var PW = Math.min(1080, Math.max(720, window.innerWidth - 32)), M = 8;
     var vw = window.innerWidth, vh = window.innerHeight;
     var scrollY = window.pageYOffset || 0;
 
@@ -956,14 +1048,15 @@
 
       /* Context menu */
       #mk-ctx-menu {
-        background: rgba(12,8,28,0.98);
-        border: 1px solid rgba(139,92,246,0.4);
+        background: #14141d;
+        border: 1px solid #23232f;
         border-radius: 12px;
         padding: 5px;
         min-width: 155px;
-        box-shadow: 0 16px 48px rgba(0,0,0,0.8);
-        backdrop-filter: blur(20px);
-        animation: mkCtxIn .12s cubic-bezier(.2,.9,.3,1) both;
+        box-shadow: 0 16px 42px rgba(0,0,0,0.72);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        animation: none;
       }
       @keyframes mkCtxIn { from{opacity:0;transform:scale(.94)} to{opacity:1;transform:scale(1)} }
       html[data-performance="low"] .mk-ctx-menu { animation:none; }
@@ -977,15 +1070,481 @@
         transition: background .1s;
         font-family: -apple-system, BlinkMacSystemFont, sans-serif;
       }
-      .mk-ctx-item:hover { background: rgba(139,92,246,0.25); }
+      .mk-ctx-item:hover { background: rgba(255,255,255,0.07); }
       .mk-ctx-remove { color: rgba(248,113,113,0.8) !important; }
       .mk-ctx-remove:hover { background: rgba(248,113,113,0.12) !important; }
       .mk-ctx-sep { height:1px; background:rgba(255,255,255,0.07); margin:4px 0; }
       .mk-ctx-label {
         padding: 5px 12px 4px;
         font-size: 9px; font-weight: 700;
-        color: rgba(167,139,250,0.5);
+        color: rgba(255,255,255,0.45);
         letter-spacing: .08em; text-transform: uppercase;
+      }
+
+      /* Lightweight picker redesign from EmojiPicker.html */
+      .mk-emoji-badge,
+      .mk-emoji-badge.mk-emoji-hovered {
+        animation:none !important;
+        filter:none !important;
+        transform:none !important;
+        transition:opacity .12s ease !important;
+        font-size:18px !important;
+      }
+      .mk-emoji-badge::before { display:none !important; }
+      .mk-emoji-edit-btn {
+        background:transparent !important;
+        box-shadow:none !important;
+        filter:none !important;
+      }
+      .card:hover .mk-emoji-edit-btn { background:rgba(255,255,255,.08) !important; }
+      #mk-emoji-picker {
+        width:min(1080px, calc(100vw - 32px)) !important;
+        max-width:1080px !important;
+      }
+      .mkp-inner {
+        background:#14141d !important;
+        border:1px solid #23232f !important;
+        border-radius:22px !important;
+        box-shadow:0 26px 70px rgba(0,0,0,.78), inset 0 0 0 1px rgba(255,255,255,.05) !important;
+        max-height:min(82vh, 720px) !important;
+        display:grid !important;
+        grid-template-rows:auto auto minmax(0, 1fr) auto !important;
+        overflow:hidden !important;
+        backdrop-filter:none !important;
+        -webkit-backdrop-filter:none !important;
+      }
+      .mkp-title {
+        display:grid !important;
+        grid-template-columns:1fr auto 1fr !important;
+        align-items:center !important;
+        padding:18px 22px !important;
+        border-bottom:1px solid #1f1f2a !important;
+        color:#b0b0c0 !important;
+        font:800 12px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+        letter-spacing:.22em !important;
+        text-transform:uppercase !important;
+        text-align:center !important;
+      }
+      .mkp-title > span { grid-column:2 !important; }
+      .mkp-close {
+        grid-column:3 !important;
+        justify-self:end !important;
+        position:static !important;
+        transform:none !important;
+        width:32px !important;
+        height:32px !important;
+        border-radius:50% !important;
+        display:grid !important;
+        place-items:center !important;
+        background:#1a1a25 !important;
+        border:1px solid #23232f !important;
+        color:#b0b0c0 !important;
+        font:800 17px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+        padding:0 !important;
+      }
+      .mkp-close:hover { background:#20202c !important; color:#fff !important; }
+      .mkp-toolbar {
+        display:grid !important;
+        grid-template-columns:minmax(190px,280px) 1fr !important;
+        gap:14px !important;
+        padding:14px 20px !important;
+        border-bottom:1px solid #1f1f2a !important;
+        background:#14141d !important;
+      }
+      .mkp-search {
+        display:flex !important;
+        align-items:center !important;
+        gap:8px !important;
+        min-width:0 !important;
+        background:#1a1a25 !important;
+        border:1px solid #23232f !important;
+        border-radius:10px !important;
+        padding:9px 12px !important;
+        color:#7a7a8c !important;
+      }
+      .mkp-search input {
+        width:100% !important;
+        min-width:0 !important;
+        border:0 !important;
+        outline:0 !important;
+        background:transparent !important;
+        color:#fff !important;
+        font:500 14px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+      }
+      .mkp-search input::placeholder { color:#7a7a8c !important; }
+      .mkp-tabs {
+        display:grid !important;
+        grid-template-columns:repeat(8, minmax(0, 1fr)) !important;
+        gap:6px !important;
+        padding:0 !important;
+        overflow:visible !important;
+      }
+      .mkp-tab {
+        position:relative !important;
+        height:40px !important;
+        border-radius:10px !important;
+        border:1px solid transparent !important;
+        background:transparent !important;
+        color:#fff !important;
+        display:grid !important;
+        place-items:center !important;
+        font-size:20px !important;
+        padding:0 !important;
+        transition:background .1s, border-color .1s !important;
+        transform:none !important;
+        box-shadow:none !important;
+      }
+      .mkp-tab:hover { background:rgba(255,255,255,.04) !important; transform:none !important; }
+      .mkp-tab-active {
+        background:rgba(255,255,255,.06) !important;
+        border-color:rgba(255,255,255,.18) !important;
+        box-shadow:none !important;
+      }
+      .mkp-cat-name {
+        position:absolute !important;
+        top:44px !important;
+        left:50% !important;
+        transform:translateX(-50%) !important;
+        padding:3px 7px !important;
+        border-radius:6px !important;
+        background:#1a1a25 !important;
+        border:1px solid #23232f !important;
+        color:#7a7a8c !important;
+        font:800 10px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+        letter-spacing:.06em !important;
+        text-transform:uppercase !important;
+        white-space:nowrap !important;
+        opacity:0 !important;
+        pointer-events:none !important;
+        z-index:5 !important;
+      }
+      .mkp-tab:hover .mkp-cat-name { opacity:1 !important; }
+      .mkp-body {
+        display:grid !important;
+        grid-template-columns:minmax(0, 1fr) 280px !important;
+        min-height:0 !important;
+        overflow:hidden !important;
+        background:#14141d !important;
+      }
+      .mkp-left {
+        min-width:0 !important;
+        border-right:1px solid #1f1f2a !important;
+        overflow:auto !important;
+        padding:16px 20px !important;
+        contain:layout style paint !important;
+      }
+      .mkp-group {
+        margin:0 0 26px !important;
+      }
+      .mkp-group:last-child {
+        margin-bottom:0 !important;
+      }
+      .mkp-group h5 {
+        margin:0 0 18px !important;
+        color:#7a7a8c !important;
+        font:900 12px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+        letter-spacing:.22em !important;
+        text-transform:uppercase !important;
+      }
+      .mkp-grid {
+        display:grid !important;
+        grid-template-columns:repeat(9, minmax(0, 1fr)) !important;
+        gap:18px 26px !important;
+        padding:0 !important;
+        overflow:visible !important;
+        scrollbar-width:thin !important;
+        scrollbar-color:#343442 transparent !important;
+        contain:layout style !important;
+      }
+      .mkp-empty {
+        grid-column:1 / -1 !important;
+        color:#7a7a8c !important;
+        font:700 13px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+        padding:28px 8px !important;
+        text-align:center !important;
+      }
+      .mkp-emoji-btn {
+        border:1px solid transparent !important;
+        background:transparent !important;
+        border-radius:10px !important;
+        font-size:26px !important;
+        aspect-ratio:1 / 1 !important;
+        display:grid !important;
+        place-items:center !important;
+        cursor:pointer !important;
+        padding:0 !important;
+        transform:none !important;
+        filter:none !important;
+        box-shadow:none !important;
+        transition:background .1s, border-color .1s !important;
+        contain:layout style !important;
+      }
+      .mkp-emoji-btn:hover:not(.mkp-locked) {
+        transform:none !important;
+        filter:none !important;
+        background:rgba(255,255,255,.05) !important;
+        border-color:rgba(255,255,255,.10) !important;
+        z-index:auto !important;
+      }
+      .mkp-emoji-btn.mkp-selected {
+        background:rgba(255,255,255,.12) !important;
+        border-color:rgba(255,255,255,.62) !important;
+        box-shadow:inset 0 0 0 1px rgba(255,255,255,.24) !important;
+      }
+      .mkp-locked { opacity:.45 !important; cursor:not-allowed !important; }
+      .mkp-lock-emoji { filter:grayscale(1) !important; }
+      .mkp-preview-wrap {
+        width:auto !important;
+        padding:18px !important;
+        display:flex !important;
+        flex-direction:column !important;
+        gap:14px !important;
+        align-items:stretch !important;
+        border-left:0 !important;
+      }
+      .mkp-preview-label {
+        display:block !important;
+        color:#7a7a8c !important;
+        font:800 11px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+        letter-spacing:.18em !important;
+        text-transform:uppercase !important;
+        text-align:center !important;
+      }
+      .mkp-preview-card {
+        position:relative !important;
+        overflow:hidden !important;
+        width:100% !important;
+        height:220px !important;
+        display:grid !important;
+        grid-template-rows:auto 1fr auto !important;
+        padding:14px !important;
+        border-radius:18px !important;
+        background:#14141d !important;
+        border:1px solid #20202c !important;
+        box-shadow:inset 0 0 0 1px rgba(255,107,122,.22) !important;
+        text-align:initial !important;
+      }
+      .mkp-prev-top {
+        display:flex !important;
+        align-items:flex-start !important;
+        justify-content:space-between !important;
+        margin:0 !important;
+        position:relative !important;
+        z-index:2 !important;
+      }
+      .mkp-prev-init {
+        display:block !important;
+        padding:0 !important;
+        border:0 !important;
+        background:transparent !important;
+        color:rgba(255,107,122,.32) !important;
+        font:900 28px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+        letter-spacing:.02em !important;
+      }
+      .mkp-prev-side-emoji {
+        margin-top:4px !important;
+        font-size:20px !important;
+        line-height:1 !important;
+      }
+      .mkp-prev-month {
+        text-align:right !important;
+        line-height:1.15 !important;
+      }
+      .mkp-prev-month span {
+        display:block !important;
+        color:#fff !important;
+        font:900 14px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+        font-variant-numeric:tabular-nums !important;
+      }
+      .mkp-prev-month em {
+        display:block !important;
+        margin-top:2px !important;
+        color:#7a7a8c !important;
+        font:800 8px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+        letter-spacing:.14em !important;
+        text-transform:uppercase !important;
+        font-style:normal !important;
+      }
+      .mkp-prev-center {
+        position:relative !important;
+        align-self:center !important;
+        text-align:center !important;
+      }
+      .mkp-prev-bg-emoji {
+        position:absolute !important;
+        top:50% !important;
+        left:50% !important;
+        transform:translate(-50%, -58%) !important;
+        font-size:110px !important;
+        line-height:1 !important;
+        opacity:.14 !important;
+        pointer-events:none !important;
+        user-select:none !important;
+      }
+      .mkp-prev-shift {
+        position:relative !important;
+        z-index:1 !important;
+        margin:0 !important;
+        color:#ff6b7a !important;
+        font:900 42px/.95 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+        letter-spacing:-.03em !important;
+        font-variant-numeric:tabular-nums !important;
+      }
+      .mkp-prev-name {
+        position:relative !important;
+        z-index:1 !important;
+        margin-top:6px !important;
+        color:#fff !important;
+        font:900 16px/1.08 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+      }
+      .mkp-prev-sub {
+        position:relative !important;
+        z-index:1 !important;
+        margin-top:2px !important;
+        color:#fff !important;
+        font:700 12px/1.1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+      }
+      .mkp-prev-segs {
+        display:grid !important;
+        grid-template-columns:repeat(10, 1fr) !important;
+        gap:3px !important;
+        position:relative !important;
+        z-index:2 !important;
+      }
+      .mkp-prev-segs span {
+        height:6px !important;
+        border-radius:2px !important;
+        background:#23232f !important;
+      }
+      .mkp-prev-segs span.on { background:rgba(251,191,36,.40) !important; }
+      .mkp-prev-segs span.on-s { background:#fbbf24 !important; }
+      .mkp-picked-meta {
+        display:grid !important;
+        grid-template-columns:auto 1fr !important;
+        align-items:center !important;
+        gap:12px !important;
+        padding:10px 12px !important;
+        border-radius:12px !important;
+        background:#1a1a25 !important;
+        border:1px solid #23232f !important;
+      }
+      .mkp-picked-big {
+        font-size:32px !important;
+        line-height:1 !important;
+      }
+      .mkp-picked-meta div div {
+        color:#fff !important;
+        font:800 13px/1.15 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+      }
+      .mkp-picked-meta span {
+        display:block !important;
+        margin-top:3px !important;
+        color:#7a7a8c !important;
+        font:800 11px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+        letter-spacing:.08em !important;
+        text-transform:uppercase !important;
+      }
+      .mkp-footer {
+        display:grid !important;
+        grid-template-columns:auto 1fr auto !important;
+        align-items:center !important;
+        gap:12px !important;
+        padding:14px 18px !important;
+        border-top:1px solid #1f1f2a !important;
+        background:#14141d !important;
+      }
+      .mkp-btn {
+        flex:initial !important;
+        height:40px !important;
+        padding:0 18px !important;
+        border-radius:10px !important;
+        border:1px solid #23232f !important;
+        background:#1a1a25 !important;
+        color:#b0b0c0 !important;
+        font:800 14px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+        box-shadow:none !important;
+      }
+      .mkp-btn:hover { background:#20202c !important; color:#fff !important; }
+      .mkp-save {
+        background:#34d399 !important;
+        color:#04241a !important;
+        border-color:transparent !important;
+        padding:0 22px !important;
+      }
+      .mkp-sync-meta {
+        display:none !important;
+        min-width:0 !important;
+      }
+      .mkp-sync-dot {
+        box-shadow:none !important;
+        animation:none !important;
+      }
+      .mkp-sync-text {
+        color:#7a7a8c !important;
+        font:700 12px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+        letter-spacing:0 !important;
+        text-transform:none !important;
+      }
+      .mkp-modal-body {
+        grid-template-columns:minmax(0, 1fr) 240px !important;
+      }
+      #modal-emoji-view .mkp-toolbar {
+        padding:0 0 14px !important;
+        border-bottom:0 !important;
+      }
+      #modal-emoji-view .mkp-grid {
+        max-height:none !important;
+        overflow:visible !important;
+        padding:0 !important;
+      }
+      #modal-emoji-view .mkp-left {
+        padding:0 14px 0 0 !important;
+        border-right:0 !important;
+        max-height:min(44vh, 430px) !important;
+        overflow-y:auto !important;
+        overflow-x:hidden !important;
+        scrollbar-width:none !important;
+      }
+      #modal-emoji-view .mkp-left::-webkit-scrollbar {
+        width:0 !important;
+        height:0 !important;
+      }
+      #modal-emoji-view .mkp-preview-wrap {
+        padding:0 0 0 14px !important;
+      }
+      #modal-emoji-view .mkp-footer {
+        padding:14px 0 0 !important;
+        border-top:1px solid #1f1f2a !important;
+      }
+      #mk-emoji-picker.mkp-mobile .mkp-inner {
+        max-height:min(78vh, 680px) !important;
+      }
+      #mk-emoji-picker.mkp-mobile .mkp-toolbar,
+      #modal-emoji-view .mkp-toolbar {
+        grid-template-columns:1fr !important;
+      }
+      #mk-emoji-picker.mkp-mobile .mkp-tabs,
+      #modal-emoji-view .mkp-tabs {
+        grid-template-columns:repeat(8, minmax(34px, 1fr)) !important;
+      }
+      #mk-emoji-picker.mkp-mobile .mkp-body,
+      #modal-emoji-view .mkp-modal-body {
+        grid-template-columns:1fr !important;
+      }
+      #mk-emoji-picker.mkp-mobile .mkp-preview-wrap,
+      #modal-emoji-view .mkp-preview-wrap {
+        display:none !important;
+      }
+      #mk-emoji-picker.mkp-mobile .mkp-grid,
+      #modal-emoji-view .mkp-grid {
+        grid-template-columns:repeat(8, minmax(0, 1fr)) !important;
+      }
+      @media (max-width: 720px) {
+        .mkp-body { grid-template-columns:1fr !important; }
+        .mkp-preview-wrap { display:none !important; }
+        .mkp-toolbar { grid-template-columns:1fr !important; }
+        .mkp-tabs { grid-template-columns:repeat(8, minmax(34px, 1fr)) !important; }
+        .mkp-grid { grid-template-columns:repeat(7, minmax(0, 1fr)) !important; }
       }
     `;
     document.head.appendChild(s);
@@ -997,7 +1556,12 @@
     loadLocal();
     hookNewCards();
     refreshAllCards();
-    setInterval(hookNewCards, 2000);
+    var hookTimer = 0;
+    var mo = new MutationObserver(function() {
+      clearTimeout(hookTimer);
+      hookTimer = setTimeout(hookNewCards, 120);
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
     setTimeout(loadFromGist, 250);
     if (hasApiAuth() || GIST_ID) setInterval(loadFromGist, POLL_MS);
     document.addEventListener('minka:auth-ok', loadFromGist);
@@ -1030,60 +1594,51 @@
     var workerName = _modalWorker;
     var workerLvl = getWorkerLvl(workerName);
     var current = _data[workerName] || null;
-    var _sel = current;
+    if (_activeWorker !== workerName) {
+      _activeWorker = workerName;
+      _selectedEmoji = current;
+    }
+    var _sel = _selectedEmoji;
     var workerFirst = workerName.split(' ')[0] || '';
     var workerSur   = workerName.split(' ').slice(1).join(' ') || '';
-    var shortSur    = workerSur ? workerSur[0] + '.' : '';
     var initials    = ((workerFirst[0]||'') + (workerSur[0]||'')).toUpperCase();
 
-    // Build inline picker (no position, fits modal)
-    var sectionsHtml = '';
-    // Tabs
-    var tabs = '<div class="mkp-tabs" style="flex-wrap:wrap;">';
-    SECTIONS.forEach(function(sec) {
-      tabs += '<button class="mkp-tab' + (_activeTab === sec.id ? ' mkp-tab-active' : '') + '" data-tab="' + sec.id + '" title="' + sec.title + '">' + sec.label + '</button>';
-    });
-    tabs += '</div>';
-
-    var emojis = EMOJI_BY_SECTION[_activeTab] || EMOJI_BY_SECTION.all;
-    var grid = '<div class="mkp-grid" style="grid-template-columns:repeat(10,1fr);max-height:220px;">';
-    emojis.forEach(function(e) {
-      var locked = LOCKED[e] && workerLvl < LOCKED[e].lvl;
-      var sel = e === _sel;
-      var cls = 'mkp-emoji-btn' + (sel ? ' mkp-selected' : '') + (locked ? ' mkp-locked' : '');
-      if (locked) {
-        grid += '<button class="' + cls + '" data-emoji="' + e + '" data-locked="1" title="' + LOCKED[e].label + '"><span class="mkp-lock-emoji">' + e + '</span><span class="mkp-lock-badge">' + LOCKED[e].label + '</span></button>';
-      } else {
-        grid += '<button class="' + cls + '" data-emoji="' + e + '">' + e + '</button>';
-      }
-    });
-    grid += '</div>';
+    var grid = buildEmojiGroupsHtml(workerLvl, _sel);
 
     var footer =
       '<div class="mkp-footer" style="padding:8px 0 0;">' +
         '<button class="mkp-btn mkp-clear" data-mk-modal-clear="1">Noņemt</button>' +
-        '<div class="mkp-sync-meta"><div class="mkp-sync-dot' + (getSyncMode() === 'local' ? ' mkp-local' : (getSyncMode() === 'github-read' ? ' mkp-github-read' : '')) + '" id="mkp-modal-dot"></div><span class="mkp-sync-text" id="mkp-modal-sync-text">' + getSyncLabel() + '</span></div>' +
-        '<button class="mkp-btn mkp-save" id="mkp-modal-save">Saglabāt ✓</button>' +
+        '<div></div>' +
+        '<button class="mkp-btn mkp-save" id="mkp-modal-save">Saglabāt</button>' +
       '</div>';
 
+    var emojiCat = getEmojiSection(_sel || '');
     var preview =
-      '<div class="mkp-modal-preview">' +
-        '<div class="mkp-preview-label">PRIEKŠSKATĪJUMS</div>' +
-        '<div class="mkp-preview-card" style="width:100px;">' +
+      '<div class="mkp-preview-wrap mkp-modal-preview">' +
+        '<div class="mkp-preview-label">Dzīvais priekšskatījums</div>' +
+        '<div class="mkp-preview-card">' +
           '<div class="mkp-prev-top">' +
-            '<div class="mkp-prev-init">' + initials + '</div>' +
-            '<div class="mkp-prev-emoji" id="mkp-modal-prev-emoji">' + (_sel||'') + '</div>' +
+            '<div><div class="mkp-prev-init">' + initials + '</div><div class="mkp-prev-side-emoji" id="mkp-modal-prev-emoji">' + (_sel||'') + '</div></div>' +
+            '<div class="mkp-prev-month"><span>132h</span><em>Mēnesī</em></div>' +
           '</div>' +
-          '<div class="mkp-prev-shift">24</div>' +
-          '<div class="mkp-prev-name">' + workerFirst + '</div>' +
-          '<div class="mkp-prev-sub">' + shortSur + '</div>' +
+          '<div class="mkp-prev-center">' +
+            '<span class="mkp-prev-bg-emoji" id="mkp-modal-bg-emoji">' + (_sel||'') + '</span>' +
+            '<div class="mkp-prev-shift">24</div>' +
+            '<div class="mkp-prev-name">' + workerFirst + '</div>' +
+            '<div class="mkp-prev-sub">' + workerSur + '</div>' +
+          '</div>' +
+          '<div class="mkp-prev-segs"><span class="on"></span><span class="on"></span><span class="on-s"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>' +
         '</div>' +
-        '<div style="font-size:8px;color:rgba(255,255,255,0.2);text-align:center;margin-top:4px;letter-spacing:.05em;">Lv.' + workerLvl + '</div>' +
+        '<div class="mkp-picked-meta"><div class="mkp-picked-big" id="mkp-modal-picked-big">' + (_sel || '—') + '</div><div><div id="mkp-modal-picked-name">' + (_sel ? getEmojiName(_sel) : 'Nav izvēlēts') + '</div><span id="mkp-modal-picked-cat">' + (_sel ? (SECTION_TITLES[emojiCat] || '') : '') + '</span></div></div>' +
       '</div>';
 
     container.innerHTML =
-      '<div style="display:flex;gap:0;">' +
-        '<div style="flex:1;min-width:0;">' + tabs + grid + '</div>' +
+      '<div class="mkp-toolbar">' +
+        '<label class="mkp-search"><span>⌕</span><input id="mkp-modal-search-input" value="' + String(_emojiQuery || '').replace(/"/g, '&quot;') + '" placeholder="Meklēt emoji..." autocomplete="off"></label>' +
+        '<div class="mkp-tabs">' + buildCategoryButtons('mkp-tab') + '</div>' +
+      '</div>' +
+      '<div class="mkp-body mkp-modal-body">' +
+        '<div class="mkp-left">' + grid + '</div>' +
         preview +
       '</div>' +
       footer;
@@ -1097,40 +1652,45 @@
       });
     });
 
+    var searchInput = container.querySelector('#mkp-modal-search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', function(e) {
+        _emojiQuery = e.target.value || '';
+        clearTimeout(_emojiSearchTimer);
+        _emojiSearchTimer = setTimeout(function(){ renderInModal(container); }, 90);
+      });
+      if (_emojiQuery) {
+        searchInput.focus();
+        searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+      }
+    }
+
     // Emoji clicks
     container.querySelectorAll('.mkp-emoji-btn:not(.mkp-locked)').forEach(function(btn) {
+      btn.addEventListener('mouseenter', function() {
+        previewModalEmoji(btn.getAttribute('data-emoji'));
+      });
+      btn.addEventListener('mouseleave', function() {
+        previewModalEmoji(_selectedEmoji);
+      });
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
         _sel = btn.getAttribute('data-emoji');
+        _selectedEmoji = _sel;
         container.querySelectorAll('.mkp-emoji-btn').forEach(function(b) {
           b.classList.toggle('mkp-selected', b.getAttribute('data-emoji') === _sel);
         });
         // Lock preview on click
         var pe = document.getElementById('mkp-modal-prev-emoji');
-        if (pe) { pe.textContent = _sel; pe.style.transform='scale(1.3)'; setTimeout(function(){ pe.style.transform=''; },300); }
-      });
-      btn.addEventListener('mouseenter', function() {
-        var e = btn.getAttribute('data-emoji');
-        // Fun bounce animation
-        var perf = getPerfMode();
-        var scale = perf === 'low' ? 1.12 : (perf === 'medium' ? 1.26 : 1.5);
-        var lift = perf === 'low' ? 0 : -2;
-        var tilt = perf === 'low' ? 0 : (Math.random()*16-8);
-        btn.style.transition = 'transform .12s cubic-bezier(.34,1.8,.64,1)';
-        btn.style.transform = 'scale(' + scale + ') translateY(' + lift + 'px) rotate(' + tilt + 'deg)';
-        btn.style.zIndex = '10';
-        btn.style.filter = perf === 'low' ? 'none' : 'drop-shadow(0 4px 8px rgba(139,92,246,0.6))';
-        // Update modal preview
-        var pe = document.getElementById('mkp-modal-prev-emoji');
-        if (pe) pe.textContent = e;
-      });
-      btn.addEventListener('mouseleave', function() {
-        btn.style.transform = '';
-        btn.style.zIndex = '';
-        btn.style.filter = '';
-        // Restore selected or empty in preview
-        var pe = document.getElementById('mkp-modal-prev-emoji');
         if (pe) pe.textContent = _sel || '';
+        var bg = document.getElementById('mkp-modal-bg-emoji');
+        if (bg) bg.textContent = _sel || '';
+        var big = document.getElementById('mkp-modal-picked-big');
+        if (big) big.textContent = _sel || '—';
+        var name = document.getElementById('mkp-modal-picked-name');
+        if (name) name.textContent = _sel ? getEmojiName(_sel) : 'Nav izvēlēts';
+        var cat = document.getElementById('mkp-modal-picked-cat');
+        if (cat) cat.textContent = _sel ? (SECTION_TITLES[getEmojiSection(_sel)] || '') : '';
       });
     });
 
@@ -1148,7 +1708,18 @@
     if (clearBtn) clearBtn.addEventListener('click', function(e) {
       e.stopPropagation();
       _sel = null;
+      _selectedEmoji = null;
       container.querySelectorAll('.mkp-emoji-btn').forEach(function(b) { b.classList.remove('mkp-selected'); });
+      var pe = document.getElementById('mkp-modal-prev-emoji');
+      var bg = document.getElementById('mkp-modal-bg-emoji');
+      var big = document.getElementById('mkp-modal-picked-big');
+      var name = document.getElementById('mkp-modal-picked-name');
+      var cat = document.getElementById('mkp-modal-picked-cat');
+      if (pe) pe.textContent = '';
+      if (bg) bg.textContent = '';
+      if (big) big.textContent = '—';
+      if (name) name.textContent = 'Nav izvēlēts';
+      if (cat) cat.textContent = '';
     });
 
     // Save
@@ -1157,11 +1728,12 @@
     var syncText = document.getElementById('mkp-modal-sync-text');
     if (saveBtn) saveBtn.addEventListener('click', async function(e) {
       e.stopPropagation();
+      _sel = _selectedEmoji;
       if (_sel) _data[workerName] = _sel;
       else delete _data[workerName];
       refreshAllCards();
       if (dot) dot.className = 'mkp-sync-dot mkp-syncing';
-      saveBtn.textContent = '⏳';
+      saveBtn.textContent = 'Saglabā...';
       var state = await saveToGist(workerName);
       if (dot) dot.className = 'mkp-sync-dot ' + (
         state === 'github' ? 'mkp-ok' :
@@ -1169,15 +1741,9 @@
         state === 'github-read' ? 'mkp-github-read' : 'mkp-err'
       );
       if (syncText) syncText.textContent =
-        state === 'github' ? 'Saved to GitHub' :
-        state === 'local' ? 'Saved on this device' :
-        state === 'github-read' ? 'Saved locally only' :
-        'Save failed';
+        state === 'error' ? 'Kļūda' : 'Saglabāts';
       saveBtn.textContent =
-        state === 'github' ? '✓ GitHub saved' :
-        state === 'local' ? '✓ Saved locally' :
-        state === 'github-read' ? '✓ Saved locally' :
-        '⚠️ Error';
+        state === 'error' ? 'Kļūda' : 'Saglabāts';
     });
   }
 
