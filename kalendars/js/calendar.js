@@ -3988,8 +3988,8 @@ function showWorkerSchedule(workerName, currentShift) {
   modal.style.top = '';
 
   // Compute exact px center to bypass any stacking context from iframe/backdrop-filter
-  const mw = Math.min(560, window.innerWidth * 0.96);
-  const mh = Math.min(window.innerHeight * 0.82, 700);
+  const mw = Math.min(820, window.innerWidth * 0.86);
+  const mh = Math.min(window.innerHeight * 0.90, 760);
   const cx = Math.round((window.innerWidth  - mw) / 2);
   const cy = Math.round((window.innerHeight - mh) / 2);
   modal.style.width  = mw + 'px';
