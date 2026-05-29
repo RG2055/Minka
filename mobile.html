@@ -232,7 +232,10 @@
 <style>
 :root {
   --font: 'Space Grotesk', system-ui, sans-serif;
-  --dock-h: 76px;
+  --dock-h: 60px;
+  --dock-btn-h: clamp(36px, 6.8svh, 42px);
+  --dock-icon-size: clamp(16px, 3.2svh, 20px);
+  --dock-seg-h: clamp(17px, 3.2svh, 21px);
   --calendar-bottom: calc(var(--dock-h) + env(safe-area-inset-bottom, 0px) + 4px);
   --page-pad: 0px;
   --accent: #00c8ff;
@@ -645,6 +648,124 @@ html.mk-low-spec #calendarEmbed {
 
   .dock-btn {
     min-height: 50px;
+  }
+}
+
+.mobile-dock {
+  left: 10px;
+  right: 10px;
+  bottom: 6px;
+  padding: 5px 5px calc(5px + env(safe-area-inset-bottom, 0px));
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(31,42,59,.92), rgba(8,16,28,.96));
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-color: rgba(134,151,176,.24);
+  box-shadow: 0 10px 24px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+.mobile-dock-grid {
+  gap: 5px;
+}
+
+.dock-btn {
+  min-height: var(--dock-btn-h);
+  padding: 4px 3px;
+  border-radius: 13px;
+  gap: 3px;
+  font-size: 8px;
+  letter-spacing: .07em;
+  background:
+    linear-gradient(180deg, rgba(28,38,54,.94), rgba(10,18,30,.96));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+.dock-icon {
+  width: var(--dock-icon-size);
+  height: var(--dock-icon-size);
+  border-radius: 9px;
+  font-size: 12px;
+}
+
+#bolusDocBtn {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 4px 3px;
+}
+
+#bolusDocBtn::after {
+  top: 7px;
+  bottom: 7px;
+  box-shadow: none;
+}
+
+#bolusDocBtn .bolus-dock-mark {
+  display: none;
+}
+
+#bolusDocBtn .bolus-dock-title {
+  flex: 0 0 auto;
+  justify-content: center;
+  font-size: 8px;
+  text-shadow: none;
+}
+
+#bolusDocBtn .bolus-room-row {
+  width: auto;
+  flex: 0 0 auto;
+  gap: 3px;
+}
+
+#bolusDocBtn .bolus-room-seg {
+  width: 24px;
+  height: var(--dock-seg-h);
+  border-radius: 8px;
+  font-size: 8px;
+}
+
+@media (max-width: 390px) {
+  .mobile-dock {
+    left: 7px;
+    right: 7px;
+    padding: 5px 5px calc(5px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .mobile-dock-grid {
+    gap: 4px;
+  }
+
+  .dock-btn {
+    min-height: 40px;
+    font-size: 8px;
+  }
+
+  #bolusDocBtn .bolus-room-seg {
+    width: 22px;
+    height: 20px;
+    font-size: 8px;
+  }
+}
+
+@media (max-height: 700px) {
+  :root {
+    --dock-h: 52px;
+    --dock-btn-h: 36px;
+    --dock-icon-size: 16px;
+    --dock-seg-h: 17px;
+  }
+
+  .mobile-dock {
+    bottom: 4px;
+    padding: 4px 4px calc(4px + env(safe-area-inset-bottom, 0px));
+    border-radius: 16px;
+  }
+
+  .dock-btn {
+    border-radius: 11px;
+    gap: 2px;
   }
 }
 </style>
@@ -1287,7 +1408,7 @@ html.mk-low-spec #calendarEmbed {
   function syncShellLayout() {
     cancelAnimationFrame(_syncRaf);
     _syncRaf = requestAnimationFrame(function() {
-      document.documentElement.style.setProperty('--dock-h', Math.max(72, Math.round(document.getElementById('dockShelf').getBoundingClientRect().height || 76)) + 'px');
+      document.documentElement.style.setProperty('--dock-h', Math.max(50, Math.round(document.getElementById('dockShelf').getBoundingClientRect().height || 54)) + 'px');
       const iframe = document.getElementById('calIframe');
       if (iframe && iframe.contentWindow) {
         try {
