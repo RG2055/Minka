@@ -309,10 +309,9 @@
     }).sort(function(a,b){return b.fs-a.fs});
   }
   function getW(){
-    // Get workers from BOTH radiographers store AND radiologists store
     var ds=window.__activeDateStr||'';if(!ds)return[];
     var f=[];
-    var stores=[window.__grafiksStore]; // Nakts sadalÄ«jums: tikai radiogrÄferi
+    var stores=[window.__grafiksStore];
     stores.forEach(function(s){
       if(!s||typeof s!=='object')return;
       for(var mo in s){var days=s[mo];if(!Array.isArray(days))continue;
@@ -321,21 +320,44 @@
           for(var wi=0;wi<day.workers.length;wi++){var w=day.workers[wi];
             var sh=String(w.shift||'').toUpperCase().trim();
             if(sh==='N'||sh.indexOf('A')>=0||sh==='B'||!sh||sh==='0')continue;
-            var hrs=w.hours||parseInt(sh)||0;if(hrs<12)continue;
+            var hrs=w.hours||parseInt(sh)||0;
             var sH=w.startTime?parseInt(w.startTime.split(':')[0]):-1;
             var tp=String(w.type||'').toUpperCase();
             var night=hrs>=24||tp==='NAKTS'||tp==='DIENNAKTS';
             if(!night&&sH>=0&&(sH>=18||sH<=5))night=true;
             if(!night&&sH===-1&&hrs>=12)night=true;
-            if(night&&!f.some(function(x){return x.name===w.name;}))f.push(w);
+            // Allow explicit NAKTS fragments >=4h (cross-month continuations)
+            if(!night||hrs<4)continue;
+            if(!f.some(function(x){return x.name===w.name;}))f.push(w);
+          }
+        }
+      }
+      // Cross-month: include workers who have NAKTS on day "01" of the next month
+      // and also appear (with any hours) on the active date — they started their
+      // night shift as a short fragment on this day.
+      for(var mo in s){var days=s[mo];if(!Array.isArray(days))continue;
+        for(var di=0;di<days.length;di++){var day=days[di];
+          if(day.date!=='01'||!Array.isArray(day.workers))continue;
+          for(var wi=0;wi<day.workers.length;wi++){var w=day.workers[wi];
+            var tp=String(w.type||'').toUpperCase();
+            if(tp!=='NAKTS')continue;
+            var hrs=w.hours||parseInt(String(w.shift||''))||0;
+            if(hrs<4||hrs>12)continue;
+            if(f.some(function(x){return x.name===w.name;}))continue;
+            var hasOnActiveDate=false;
+            for(var mo2 in s){var days2=s[mo2];if(!Array.isArray(days2))continue;
+              for(var di2=0;di2<days2.length;di2++){var day2=days2[di2];
+                if(day2.date!==ds||!Array.isArray(day2.workers))continue;
+                if(day2.workers.some(function(w2){return w2.name===w.name;})){hasOnActiveDate=true;break;}
+              }if(hasOnActiveDate)break;
+            }
+            if(hasOnActiveDate)f.push(w);
           }
         }
       }
     });
     return f;
-  }
-
-  // â”€â”€ Fatigue mini sparkline SVG â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  }/ â”€â”€ Fatigue mini sparkline SVG â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function sparkline(workerName, accentColor) {
     if(!window.__fatigue)return'';
     var hist=window.__fatigue.gatherWorkerHistory(workerName);
