@@ -357,7 +357,9 @@
       }
     });
     return f;
-  }/ â”€â”€ Fatigue mini sparkline SVG â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  }
+
+  // â”€â”€ Fatigue mini sparkline SVG â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function sparkline(workerName, accentColor) {
     if(!window.__fatigue)return'';
     var hist=window.__fatigue.gatherWorkerHistory(workerName);
