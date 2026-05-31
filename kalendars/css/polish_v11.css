@@ -305,7 +305,7 @@ html, body { background: transparent !important; background-image: none !importa
   position: absolute;
   inset: 0;
   background: rgba(4,6,16,0.65);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(4px);
 }
 #nsPanel {
   position: absolute;
@@ -314,11 +314,11 @@ html, body { background: transparent !important; background-image: none !importa
   transform: translateX(-50%) translateY(24px);
   width: min(98vw, 1300px);
   max-height: 80vh;
-  background: linear-gradient(180deg, rgba(8,10,20,0.97) 0%, rgba(6,8,16,0.97) 100%);
+  background: linear-gradient(180deg, rgba(8,10,20,0.99) 0%, rgba(6,8,16,0.99) 100%);
   border: 1px solid rgba(255,255,255,0.09);
   border-radius: 22px;
   box-shadow: 0 24px 80px rgba(0,0,0,.75), 0 0 0 1px rgba(255,255,255,.03) inset;
-  backdrop-filter: blur(28px);
+  backdrop-filter: blur(12px);
   overflow: hidden;
   transition: transform .3s cubic-bezier(.2,.9,.3,1);
   padding: 16px 18px 14px;
