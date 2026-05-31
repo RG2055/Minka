@@ -2382,9 +2382,9 @@ async function refreshNews(){
         return [];
       }
     }));
-    newsCache = chunks.flat().sort((a,b) => (b.pub || 0) - (a.pub || 0)).slice(0, 12);
-    newsIdx = 0;
-    if (!newsCache.length) console.warn('[Minka] News cache empty after refresh');
+    const fresh = chunks.flat().sort((a,b) => (b.pub || 0) - (a.pub || 0)).slice(0, 12);
+    if (fresh.length) { newsCache = fresh; newsIdx = 0; }
+    else console.warn('[Minka] News fetch returned no items — keeping stale cache');
     // Feed bar ticker
     if (typeof window.mkTickerFeed === 'function') window.mkTickerFeed(newsCache);
   } catch(e) {
