@@ -493,6 +493,59 @@ function closeFullListModal() {
     return result;
   }
 
+  // Infer NAKTS type for cross-month night continuations.
+  // When a worker has an unknown-type short shift on the 1st of a month
+  // and the same worker had a NAKTS shift on the last day of the previous month,
+  // the 1st-of-month entry is a night continuation — mark it NAKTS.
+  function patchCrossMonthContinuations(storeRef) {
+    const monthOrder = [];
+    const monthMap2 = {
+      "JANVĀRIS":0,"JANVARIS":0,"FEBRUĀRIS":1,"FEBRUARIS":1,"MARTS":2,
+      "APRĪLIS":3,"APRILIS":3,"MAIJS":4,"JŪNIJS":5,"JUNIJS":5,
+      "JŪLIJS":6,"JULIJS":6,"AUGUSTS":7,"SEPTEMBRIS":8,
+      "OKTOBRIS":9,"NOVEMBRIS":10,"DECEMBRIS":11
+    };
+    for (const key of Object.keys(storeRef)) {
+      const parts = key.toUpperCase().split(' ');
+      const m = monthMap2[parts[0]];
+      const y = parseInt(parts[1]) || 0;
+      if (m !== undefined) monthOrder.push({ key, sort: y * 12 + m });
+    }
+    monthOrder.sort((a, b) => a.sort - b.sort);
+
+    for (let i = 1; i < monthOrder.length; i++) {
+      const curKey  = monthOrder[i].key;
+      const prevKey = monthOrder[i - 1].key;
+      const curDays  = storeRef[curKey]  || [];
+      const prevDays = storeRef[prevKey] || [];
+
+      // Collect NAKTS workers from last day of previous month
+      const prevLastDay = prevDays.reduce((max, d) => parseInt(d.date) > parseInt(max) ? d.date : max, '0');
+      const prevEntry = prevDays.find(d => d.date === prevLastDay);
+      if (!prevEntry || !Array.isArray(prevEntry.workers)) continue;
+      const prevNaktsNames = new Set(
+        prevEntry.workers
+          .filter(w => String(w.type || '').toUpperCase() === 'NAKTS')
+          .map(w => String(w.name || '').trim().toLowerCase())
+      );
+      if (!prevNaktsNames.size) continue;
+
+      // Patch day-1 entries in current month
+      const day1Entry = curDays.find(d => parseInt(d.date) === 1);
+      if (!day1Entry || !Array.isArray(day1Entry.workers)) continue;
+      day1Entry.workers.forEach(w => {
+        const tp = String(w.type || '').toUpperCase();
+        if (tp === 'DIENA' || tp === 'NAKTS' || tp === 'DIENNAKTS') return;
+        const hrs = Math.round(parseFloat(String(w.shift || '').replace(',', '.')) || 0);
+        if (hrs < 1 || hrs > 12) return;
+        if (prevNaktsNames.has(String(w.name || '').trim().toLowerCase())) {
+          w.type = 'NAKTS';
+          w.isNight = true;
+        }
+      });
+    }
+  }
+
   function getAllMonths() {
     const monthsSet = new Set([...safeKeys(store), ...safeKeys(storeRad)]);
 
@@ -585,6 +638,8 @@ function closeFullListModal() {
       window.__g_todayStr = g_todayStr;
       store = normalizeStoreKeys((d.radiographers && typeof d.radiographers === "object") ? d.radiographers : (d.allMonths || {}));
       storeRad = normalizeStoreKeys((d.radiologists && typeof d.radiologists === "object") ? d.radiologists : (d.radiologi || {}));
+      patchCrossMonthContinuations(store);
+      patchCrossMonthContinuations(storeRad);
 
       window.__grafiksStore = store;
       window.__grafiksStoreRad = storeRad;
