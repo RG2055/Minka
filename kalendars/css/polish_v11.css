@@ -304,8 +304,7 @@ html, body { background: transparent !important; background-image: none !importa
 #nsOverlay-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(4,6,16,0.65);
-  backdrop-filter: blur(4px);
+  background: rgba(4,6,16,0.72);
 }
 #nsPanel {
   position: absolute;
@@ -318,8 +317,8 @@ html, body { background: transparent !important; background-image: none !importa
   border: 1px solid rgba(255,255,255,0.09);
   border-radius: 22px;
   box-shadow: 0 24px 80px rgba(0,0,0,.75), 0 0 0 1px rgba(255,255,255,.03) inset;
-  backdrop-filter: blur(12px);
   overflow: hidden;
+  will-change: transform;
   transition: transform .3s cubic-bezier(.2,.9,.3,1);
   padding: 16px 18px 14px;
 }
