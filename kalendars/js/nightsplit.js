@@ -321,9 +321,10 @@
           for(var wi=0;wi<day.workers.length;wi++){var w=day.workers[wi];
             var sh=String(w.shift||'').toUpperCase().trim();
             if(sh==='N'||sh.indexOf('A')>=0||sh==='B'||!sh||sh==='0')continue;
-            var hrs=w.hours||parseInt(sh)||0;if(hrs<12)continue;
-            var sH=w.startTime?parseInt(w.startTime.split(':')[0]):-1;
+            var hrs=w.hours||parseInt(sh)||0;
             var tp=String(w.type||'').toUpperCase();
+            if(hrs<12&&tp!=='NAKTS'&&tp!=='DIENNAKTS')continue;
+            var sH=w.startTime?parseInt(w.startTime.split(':')[0]):-1;
             var night=hrs>=24||tp==='NAKTS'||tp==='DIENNAKTS';
             if(!night&&sH>=0&&(sH>=18||sH<=5))night=true;
             if(!night&&sH===-1&&hrs>=12)night=true;
