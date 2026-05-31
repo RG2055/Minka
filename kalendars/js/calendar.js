@@ -536,11 +536,15 @@ function closeFullListModal() {
       const prevEntry = prevDays.find(d => d.date === prevLastDay);
       if (!prevEntry || !Array.isArray(prevEntry.workers)) continue;
 
-      // Map: name → { type, hrs } for all non-DIENA workers on last day of prev month
+      // Map: name → { type, hrs } for all non-explicitly-NAKTS/DIENNAKTS workers on last day of prev month
+      // Include DIENA too — we need their hours for the sum-pattern check
       const prevWorkerMap = new Map();
       prevEntry.workers.forEach(w => {
         const tp = String(w.type || '').toUpperCase();
-        if (tp === 'DIENA') return;
+        if (tp === 'NAKTS' || tp === 'DIENNAKTS') {
+          prevWorkerMap.set(String(w.name || '').trim().toLowerCase(), { type: tp, hrs: 999 });
+          return;
+        }
         const hrs = Math.round(parseFloat(String(w.shift || '').replace(',', '.')) || 0);
         if (hrs < 1) return;
         prevWorkerMap.set(String(w.name || '').trim().toLowerCase(), { type: tp, hrs });
@@ -551,21 +555,31 @@ function closeFullListModal() {
       if (!day1Entry || !Array.isArray(day1Entry.workers)) continue;
       day1Entry.workers.forEach(w => {
         const tp = String(w.type || '').toUpperCase();
-        if (tp === 'DIENA' || tp === 'NAKTS' || tp === 'DIENNAKTS') return;
+        if (tp === 'NAKTS' || tp === 'DIENNAKTS') return; // already correct
+
         const hrs = Math.round(parseFloat(String(w.shift || '').replace(',', '.')) || 0);
         if (hrs < 1 || hrs > 12) return;
         const name = String(w.name || '').trim().toLowerCase();
+
+        // Signal 1: startTime in early morning (00:00–07:xx) → definitive night continuation
+        // Overrides even explicit DIENA type because the time is the ground truth
+        const st = String(w.startTime || '');
+        const stHr = st ? parseInt(st.split(':')[0], 10) : -1;
+        if (stHr >= 0 && stHr <= 7) {
+          w.type = 'NAKTS'; w.isNight = true; return;
+        }
+
+        // Signal 2: previous month pattern (skip only if already correct)
         const prev = prevWorkerMap.get(name);
         if (!prev) return;
         // Condition A: prev month entry is explicitly NAKTS
         const isNakts = prev.type === 'NAKTS';
-        // Condition B: prev entry has unknown type but hours sum to a standard shift
-        // e.g. 4h (May 31) + 8h (Jun 1) = 12h night, or 8h + 8h = 16h, etc.
+        // Condition B: prev entry has short unknown/day-coded hours that sum to standard shift
+        // e.g. 4h (May 31) + 8h (Jun 1) = 12h night
         const isContinuation = !isNakts && prev.hrs <= 8 &&
           [12, 16, 24].includes(prev.hrs + hrs);
         if (isNakts || isContinuation) {
-          w.type = 'NAKTS';
-          w.isNight = true;
+          w.type = 'NAKTS'; w.isNight = true;
         }
       });
     }
