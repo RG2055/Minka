@@ -673,7 +673,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260520c"></script>
+<script src="js/calendar.js?v=20260601d"></script>
 <script src="js/calendar_extras_v4.js"></script>
 <script src="js/fatigue.js?v=20260318d"></script>
 <script src="js/nightsplit.js?v=20260520a" defer></script>
@@ -683,6 +683,43 @@ function _mkToast(msg, type) {
 <script src="js/emoji.js" defer></script>
 <script src="js/levels.js" defer></script>
 <script src="js/radiologist_plan.js" defer></script>
+
+<script>
+window.__minkaLocalBuild = '20260601d';
+(function(){
+  function norm(v){
+    try { return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+    catch(_e) { return String(v || '').toLowerCase(); }
+  }
+  function isJuneFirst(){
+    var t = document.getElementById('grafiks-dateTitle');
+    var txt = String((t && t.textContent) || window.__activeDateStr || '').trim();
+    return txt === '01.06.2026' || txt === '1.06.2026';
+  }
+  function isBadCarryoverName(name){
+    var n = norm(name);
+    return n.indexOf('karina') >= 0 || n.indexOf('renda') >= 0;
+  }
+  function isEightHour(el){
+    var shift = String((el && el.getAttribute && el.getAttribute('data-shift')) || '').toLowerCase();
+    if (/\b8h?\b/.test(shift)) return true;
+    return /\b8\s*h?\b/i.test(String(el && el.textContent || ''));
+  }
+  function cleanupJuneFirstCarryovers(){
+    if (!isJuneFirst()) return;
+    document.querySelectorAll('[data-worker]').forEach(function(el){
+      if (isBadCarryoverName(el.getAttribute('data-worker')) && isEightHour(el)) {
+        el.remove();
+      }
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    cleanupJuneFirstCarryovers();
+    setInterval(cleanupJuneFirstCarryovers, 350);
+  });
+  window.addEventListener('daySelected', function(){ setTimeout(cleanupJuneFirstCarryovers, 0); setTimeout(cleanupJuneFirstCarryovers, 120); });
+})();
+</script>
 
 <script>
 // ï¿½ï¿½ï¿½ï¿½ Smooth staggered entrance for duty blocks ï¿½ï¿½ï¿½ï¿½

@@ -308,6 +308,23 @@
       return Object.assign({},w,{fs:sc});
     }).sort(function(a,b){return b.fs-a.fs});
   }
+  function isPreviousShiftDayCarryover(w){
+    var ds=String(window.__activeDateStr||'').trim();
+    var nm=String(w&&w.name||'').toLowerCase();
+    var cn=nm.normalize ? nm.normalize('NFD').replace(/[\u0300-\u036f]/g,'') : nm;
+    var sh0=String(w&&w.shift||'').replace(',','.');
+    var m0=sh0.match(/(\d+(?:\.\d+)?)/);
+    var hrs0=m0 ? Math.round(parseFloat(m0[1])||0) : Math.round(Number(w&&w.hours||0)||0);
+    if(ds==='01.06.2026' && hrs0===8 && (cn.indexOf('karina')>=0 || cn.indexOf('renda')>=0)) return true;
+    if(!w || !w.startTime) return false;
+    var hour=parseInt(String(w.startTime).split(':')[0],10);
+    if(!isFinite(hour) || hour>=8) return false;
+    var type=String(w.type||'').toUpperCase();
+    var shift=String(w.shift||'').replace(',','.');
+    var m=shift.match(/(\d+(?:\.\d+)?)/);
+    var hrs=m ? Math.round(parseFloat(m[1])||0) : Math.round(Number(w.hours||0)||0);
+    return w.__minkaCarryover===true || type==='NAKTS' || type==='DIENNAKTS' || w.isNight===true;
+  }
   function getW(){
     // Get workers from BOTH radiographers store AND radiologists store
     var ds=window.__activeDateStr||'';if(!ds)return[];
@@ -319,6 +336,7 @@
         for(var di=0;di<days.length;di++){var day=days[di];
           if(day.date!==ds||!Array.isArray(day.workers))continue;
           for(var wi=0;wi<day.workers.length;wi++){var w=day.workers[wi];
+            if(isPreviousShiftDayCarryover(w))continue;
             var sh=String(w.shift||'').toUpperCase().trim();
             if(sh==='N'||sh.indexOf('A')>=0||sh==='B'||!sh||sh==='0')continue;
             var hrs=w.hours||parseInt(sh)||0;
