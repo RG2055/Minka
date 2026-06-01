@@ -526,6 +526,7 @@ function closeFullListModal() {
     }
     monthOrder.sort((a, b) => a.sort - b.sort);
 
+    console.debug('[patch] monthOrder=', monthOrder.map(m=>m.key));
     for (let i = 1; i < monthOrder.length; i++) {
       const curKey  = monthOrder[i].key;
       const prevKey = monthOrder[i - 1].key;
@@ -553,12 +554,19 @@ function closeFullListModal() {
 
       const day1Entry = curDays.find(d => parseInt(d.date) === 1);
       if (!day1Entry || !Array.isArray(day1Entry.workers)) continue;
+      // Debug: dump prevMap keys + raw day1 entries for Renda/Karīna
+      day1Entry.workers.forEach(w => {
+        if(/rend|kar[iī]/i.test(String(w.name||''))) console.debug('[patch] RAW day1', curKey, JSON.parse(JSON.stringify(w)));
+      });
+      prevEntry.workers.forEach(w => {
+        if(/rend|kar[iī]/i.test(String(w.name||''))) console.debug('[patch] RAW prevLast', prevKey, prevLastDay, JSON.parse(JSON.stringify(w)));
+      });
       day1Entry.workers.forEach(w => {
         const tp = String(w.type || '').toUpperCase();
-        if (tp === 'NAKTS' || tp === 'DIENNAKTS') return; // already correct
+        if (tp === 'NAKTS' || tp === 'DIENNAKTS') { if(/rend|kar[iī]/i.test(String(w.name||''))) console.debug('[patch] skip already-NAKTS', w.name); return; } // already correct
 
         const hrs = Math.round((w.hours || 0) || parseFloat(String(w.shift || '').replace(',', '.')) || 0);
-        if (hrs < 1 || hrs > 12) return;
+        if (hrs < 1 || hrs > 12) { if(/rend|kar[iī]/i.test(String(w.name||''))) console.debug('[patch] skip hrs out of range', w.name, hrs); return; }
         const name = String(w.name || '').trim().toLowerCase();
 
         // Signal 1: startTime in early morning (00:00–07:xx) → definitive night continuation
