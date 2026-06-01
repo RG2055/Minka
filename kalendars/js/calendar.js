@@ -545,7 +545,7 @@ function closeFullListModal() {
           prevWorkerMap.set(String(w.name || '').trim().toLowerCase(), { type: tp, hrs: 999 });
           return;
         }
-        const hrs = Math.round(parseFloat(String(w.shift || '').replace(',', '.')) || 0);
+        const hrs = Math.round((w.hours || 0) || parseFloat(String(w.shift || '').replace(',', '.')) || 0);
         if (hrs < 1) return;
         prevWorkerMap.set(String(w.name || '').trim().toLowerCase(), { type: tp, hrs });
       });
@@ -557,7 +557,7 @@ function closeFullListModal() {
         const tp = String(w.type || '').toUpperCase();
         if (tp === 'NAKTS' || tp === 'DIENNAKTS') return; // already correct
 
-        const hrs = Math.round(parseFloat(String(w.shift || '').replace(',', '.')) || 0);
+        const hrs = Math.round((w.hours || 0) || parseFloat(String(w.shift || '').replace(',', '.')) || 0);
         if (hrs < 1 || hrs > 12) return;
         const name = String(w.name || '').trim().toLowerCase();
 
@@ -571,7 +571,8 @@ function closeFullListModal() {
 
         // Signal 2: previous month pattern (skip only if already correct)
         const prev = prevWorkerMap.get(name);
-        if (!prev) return;
+        if (!prev) { if(/rend|kar[iī]/i.test(name)) console.debug('[patch] no prev entry for',name,'in',prevKey); return; }
+        if(/rend|kar[iī]/i.test(name)) console.debug('[patch]',name,'prev=',prev,'hrs=',hrs,'sum=',prev.hrs+hrs);
         // Condition A: prev month entry is explicitly NAKTS
         const isNakts = prev.type === 'NAKTS';
         // Condition B: prev entry has short unknown/day-coded hours that sum to standard shift
