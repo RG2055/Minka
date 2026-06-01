@@ -673,7 +673,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260601e"></script>
+<script src="js/calendar.js?v=20260601f"></script>
 <script src="js/calendar_extras_v4.js"></script>
 <script src="js/fatigue.js?v=20260318d"></script>
 <script src="js/nightsplit.js?v=20260520a" defer></script>
@@ -685,7 +685,7 @@ function _mkToast(msg, type) {
 <script src="js/radiologist_plan.js" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260601e';
+window.__minkaLocalBuild = '20260601f';
 (function(){
   function norm(v){
     try { return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
@@ -4946,6 +4946,43 @@ window.addEventListener('message', function(e) {
   display: flex;
   flex-direction: column;
   gap: 3px;
+  background: none !important;
+}
+.sl-bars-wrap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg,
+      transparent calc(25% - .5px),
+      rgba(255,255,255,.07) calc(25% - .5px),
+      rgba(255,255,255,.07) calc(25% + .5px),
+      transparent calc(25% + .5px)
+    ),
+    linear-gradient(90deg,
+      transparent calc(50% - .5px),
+      rgba(255,255,255,.07) calc(50% - .5px),
+      rgba(255,255,255,.07) calc(50% + .5px),
+      transparent calc(50% + .5px)
+    ),
+    linear-gradient(90deg,
+      transparent calc(75% - .5px),
+      rgba(255,255,255,.07) calc(75% - .5px),
+      rgba(255,255,255,.07) calc(75% + .5px),
+      transparent calc(75% + .5px)
+    );
+  background-repeat: no-repeat;
+  pointer-events: none;
+  z-index: 0;
+}
+.sl-gridline {
+  display: none !important;
+}
+.sl-bars-wrap .sl {
+  z-index: 1;
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,.12),
+    inset 0 1px 0 rgba(255,255,255,.045);
 }
 .sl-scrubber {
   position: absolute;
@@ -8174,6 +8211,18 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
     inset 0 1px 0 rgba(255,255,255,.055),
     0 10px 22px rgba(0,0,0,.24) !important;
 }
+#radiologists-duty .mk-side-card,
+html.has-wallpaper-bg #radiologists-duty .mk-side-card {
+  background: linear-gradient(160deg, rgba(17,20,25,.94), rgba(7,9,13,.98)) !important;
+  border-left-color: rgba(255,255,255,.12) !important;
+}
+#radiologists-duty .mk-side-card::after {
+  background:
+    conic-gradient(from -90deg,
+      var(--mk-side-fat-color) var(--mk-side-fat, 0%),
+      rgba(255,255,255,.07) 0) !important;
+  opacity: .72 !important;
+}
 #radiographers-duty .mk-side-card::after,
 #radiologists-duty .mk-side-card::after {
   opacity: .90 !important;
@@ -8253,17 +8302,22 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 }
 #radiographers-duty .mk-side-ring::before,
 #radiologists-duty .mk-side-ring::before {
+  content: none !important;
+  display: none !important;
+}
+#radiographers-duty .mk-side-card::before,
+#radiologists-duty .mk-side-card::before {
   content: "NOGURUMS" !important;
   position: absolute !important;
-  left: 50% !important;
-  top: calc(100% + 8px) !important;
+  left: 40px !important;
+  top: 77px !important;
   transform: translateX(-50%) !important;
   color: rgba(190,199,220,.78) !important;
   font: 850 7px/1 Inter, system-ui, sans-serif !important;
   letter-spacing: .16em !important;
   text-transform: uppercase !important;
   white-space: nowrap !important;
-  z-index: 3 !important;
+  z-index: 5 !important;
   pointer-events: none !important;
 }
 #radiographers-duty .mk-side-ring span,
@@ -8517,12 +8571,38 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 }
 :root.mk-mobile-shell #radiographers-duty .mk-side-ring::before,
 :root.mk-mobile-shell #radiologists-duty .mk-side-ring::before,
-.side-panel.compact-duty #radiographers-duty .mk-side-ring::before,
-.side-panel.compact-duty #radiologists-duty .mk-side-ring::before,
 .side-panel.mini-duty #radiographers-duty .mk-side-ring::before,
 .side-panel.mini-duty #radiologists-duty .mk-side-ring::before {
   content: none !important;
   display: none !important;
+}
+:root.mk-mobile-shell #radiographers-duty .mk-side-card::before,
+:root.mk-mobile-shell #radiologists-duty .mk-side-card::before,
+.side-panel.mini-duty #radiographers-duty .mk-side-card::before,
+.side-panel.mini-duty #radiologists-duty .mk-side-card::before {
+  content: none !important;
+  display: none !important;
+}
+.side-panel.compact-duty #radiographers-duty .mk-side-ring::before,
+.side-panel.compact-duty #radiologists-duty .mk-side-ring::before {
+  content: none !important;
+  display: none !important;
+}
+.side-panel.compact-duty #radiographers-duty .mk-side-card::before,
+.side-panel.compact-duty #radiologists-duty .mk-side-card::before {
+  content: "NOGURUMS" !important;
+  display: block !important;
+  position: absolute !important;
+  left: 29px !important;
+  top: 60px !important;
+  transform: translateX(-50%) !important;
+  color: rgba(190,199,220,.82) !important;
+  font: 850 6.4px/1 Inter, system-ui, sans-serif !important;
+  letter-spacing: .14em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+  z-index: 5 !important;
+  pointer-events: none !important;
 }
 :root.mk-mobile-shell #radiographers-duty .mk-side-ring span,
 :root.mk-mobile-shell #radiologists-duty .mk-side-ring span,
