@@ -3316,6 +3316,8 @@ body.mk-low-motion *::after {
   var bhvBusy = false;
   var animTimer = null, pettingTimer = null, zzzTimer = null;
   var lastNightSplitPlan = null;
+  var lastNightBriefDigest = '';
+  var lastNightBriefAt = 0;
   var lastBuddyHeartData = [];
   var perfProfile = window.__mkPerfProfile || {};
   var buddyPerfLow = !!(perfProfile.lowSpec || perfProfile.reducedMotion);
@@ -3606,11 +3608,47 @@ body.mk-low-motion *::after {
     if(!plan || !plan.segments) return [];
     return plan.segments.map(function(s){ return firstName(s.name); }).filter(Boolean);
   }
+  function makeNightSplitBrief(names){
+    if(!names || !names.length) return '';
+    if(names.length === 1) return 'nakti ņem ' + names[0];
+    return 'pirmo daļu ņem ' + names[0] + '; tālāk ' + names.slice(1).join(', ');
+  }
+  function triggerNightSplitBrief(){
+    var names = getNightSplitNames();
+    if(!names.length) return false;
+    var digest = names.join('|');
+    var now = Date.now();
+    if(digest === lastNightBriefDigest && now - lastNightBriefAt < 10 * 60 * 1000) return false;
+    lastNightBriefDigest = digest;
+    lastNightBriefAt = now;
+    if(isSleeping){
+      showBubble(makeNightSplitBrief(names));
+      return true;
+    }
+    runWhenFree(function(){
+      if(buddyPerfLow){
+        bhvBusy = true;
+        surprisedOn = true;
+        showBubble(makeNightSplitBrief(names));
+        drawFrame(0, true);
+        clearTimeout(animTimer);
+        animTimer = setTimeout(function(){
+          surprisedOn = false;
+          drawFrame(0, true);
+          bhvBusy = false;
+        }, 1800);
+      } else {
+        doFirstNightPart();
+      }
+    }, 6);
+    return true;
+  }
   window.addEventListener('message', function(e){
     var data = e && e.data;
     if(!data) return;
     if(data.type === 'nightSplitPlan' && data.plan && data.plan.segments && data.plan.segments.length){
       lastNightSplitPlan = data.plan;
+      setTimeout(triggerNightSplitBrief, 250);
       return;
     }
     if(data.type === 'minka-calendar-selected-day-state' && data.payload){
@@ -4456,6 +4494,8 @@ body.mk-low-motion *::after {
     {fn:doGlasses,         dur:3600},
     {fn:doSyringe,         dur:4200},
     {fn:doBolus,           dur:4700},
+    {fn:doThreeOnNight,    dur:4300},
+    {fn:doFirstNightPart,  dur:5600},
     {fn:doYawn,            dur:8500},
     {fn:doDance,           dur:4700},
     {fn:doDevil,           dur:4700},
@@ -4471,9 +4511,7 @@ body.mk-low-motion *::after {
     {fn:doRanRoom,         dur:4300},
     {fn:doWaitFive,        dur:5200},
     {fn:doStorageBox,      dur:4300},
-    {fn:doBurger,          dur:4300},
-    {fn:doThreeOnNight,    dur:4300},
-    {fn:doFirstNightPart,  dur:5600}
+    {fn:doBurger,          dur:4300}
   ];
   var LOW_SEQ = [
     {fn:doBlink,           dur:1300},
@@ -4482,7 +4520,10 @@ body.mk-low-motion *::after {
     {fn:doDance,           dur:4700},
     {fn:doCoffee,          dur:4200},
     {fn:doSurprised,       dur:2700},
-    {fn:doType,            dur:4700}
+    {fn:doType,            dur:4700},
+    {fn:doMobilePhone,     dur:5200},
+    {fn:doWaitFive,        dur:5200},
+    {fn:doFirstNightPart,  dur:5600}
   ];
 
   function scheduleSeq(delay){
@@ -4508,7 +4549,7 @@ body.mk-low-motion *::after {
       return;
     }
     seqRunCount++;
-    var useLightLowSeq = buddyPerfLow && (seqRunCount % 4 !== 0);
+    var useLightLowSeq = buddyPerfLow && (seqRunCount % 3 !== 0);
     var item;
     if(useLightLowSeq){
       item = LOW_SEQ[lowSeqIndex % LOW_SEQ.length];

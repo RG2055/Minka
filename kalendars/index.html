@@ -6126,10 +6126,10 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
   transition: border-color .18s ease, box-shadow .18s ease, background .18s ease, transform .18s ease !important;
 }
 .mk-date-controls .mk-month-control {
-  width: 104px !important;
-  min-width: 104px !important;
-  padding: 0 20px 0 14px !important;
-  font: 800 18px/1 'Space Grotesk', system-ui !important;
+  width: 122px !important;
+  min-width: 122px !important;
+  padding: 0 24px 0 14px !important;
+  font: 800 17px/1 'Space Grotesk', system-ui !important;
   letter-spacing: 0.02em !important;
 }
 .mk-date-controls .mk-calendar-control {
@@ -8654,6 +8654,72 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   letter-spacing: .03em !important;
 }
 
+/* Side card fit guard: long August dates and surnames must stay readable on macOS/Windows. */
+#radiographers-duty .mk-side-card .duty-surname,
+#radiologists-duty .mk-side-card .duty-surname {
+  max-width: calc(100% - 2px) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  text-overflow: clip !important;
+  font-size: 10.1px !important;
+  letter-spacing: .035em !important;
+}
+#radiographers-duty .mk-side-nfoot,
+#radiologists-duty .mk-side-nfoot {
+  grid-template-columns: 74px minmax(0, 1fr) !important;
+  gap: 7px 5px !important;
+}
+#radiographers-duty .mk-side-nfoot dt,
+#radiologists-duty .mk-side-nfoot dt {
+  font-size: 7.2px !important;
+  letter-spacing: .07em !important;
+}
+#radiographers-duty .mk-side-nfoot dd,
+#radiologists-duty .mk-side-nfoot dd {
+  font-size: 10.05px !important;
+  letter-spacing: -.025em !important;
+  gap: 2px !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+#radiographers-duty .mk-side-nfoot dd em,
+#radiologists-duty .mk-side-nfoot dd em {
+  font-size: 8.9px !important;
+}
+.side-panel.compact-duty #radiographers-duty .mk-side-card .duty-surname,
+.side-panel.compact-duty #radiologists-duty .mk-side-card .duty-surname,
+.side-panel.mini-duty #radiographers-duty .mk-side-card .duty-surname,
+.side-panel.mini-duty #radiologists-duty .mk-side-card .duty-surname {
+  font-size: 9.4px !important;
+  letter-spacing: .015em !important;
+}
+.side-panel.compact-duty #radiographers-duty .mk-side-nfoot,
+.side-panel.compact-duty #radiologists-duty .mk-side-nfoot,
+.side-panel.mini-duty #radiographers-duty .mk-side-nfoot,
+.side-panel.mini-duty #radiologists-duty .mk-side-nfoot {
+  grid-template-columns: 72px minmax(0, 1fr) !important;
+  gap: 6px 4px !important;
+}
+.side-panel.compact-duty #radiographers-duty .mk-side-nfoot dt,
+.side-panel.compact-duty #radiologists-duty .mk-side-nfoot dt,
+.side-panel.mini-duty #radiographers-duty .mk-side-nfoot dt,
+.side-panel.mini-duty #radiologists-duty .mk-side-nfoot dt {
+  font-size: 6.9px !important;
+  letter-spacing: .06em !important;
+}
+.side-panel.compact-duty #radiographers-duty .mk-side-nfoot dd,
+.side-panel.compact-duty #radiologists-duty .mk-side-nfoot dd,
+.side-panel.mini-duty #radiographers-duty .mk-side-nfoot dd,
+.side-panel.mini-duty #radiologists-duty .mk-side-nfoot dd {
+  font-size: 9.85px !important;
+  letter-spacing: -.025em !important;
+  gap: 2px !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
 /* Final date-in-search override: this block wins over earlier desktop/mobile layers. */
 .date-title-wrap,
 :root.mk-mobile-shell .date-title-wrap {
@@ -8787,10 +8853,12 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   order: initial !important;
   grid-column: auto !important;
   margin-top: 0 !important;
-  width: 104px !important;
-  min-width: 104px !important;
+  width: 122px !important;
+  min-width: 122px !important;
   height: 40px !important;
   min-height: 40px !important;
+  padding-right: 24px !important;
+  font-size: 17px !important;
 }
 :root:not(.mk-mobile-shell) .scroll-row .mk-date-controls #miniCalBtn {
   width: 44px !important;
@@ -8803,8 +8871,8 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   margin-left: 6px !important;
 }
 :root.mk-mobile-shell .scroll-row .mk-date-controls .month-select {
-  width: 92px !important;
-  min-width: 92px !important;
+  width: 102px !important;
+  min-width: 102px !important;
   height: 34px !important;
   min-height: 34px !important;
   padding: 0 18px 0 10px !important;
