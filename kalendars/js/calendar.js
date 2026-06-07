@@ -961,6 +961,9 @@ function closeFullListModal() {
     g_updateList();
     g_updatePanelsForDate();
     g_adjustDutyNameFontSize();
+    // Force an immediate full live-update on day switch so the shift progress bar
+    // refreshes right away — the 60s throttle only applies to the idle background loop.
+    try { g_updateLive(true); } catch(_e) {}
     try { setTimeout(() => { try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(e) {} }, 40); } catch(e) {}
     try { setTimeout(() => { try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(e) {} }, 280); } catch(e) {}
     try { setTimeout(() => { try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(e) {} }, 900); } catch(e) {}
