@@ -22,7 +22,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260601f';
+  var CALENDAR_BUILD = '20260601g';
 
   function withCalendarBuild(url) {
     try {
@@ -218,16 +218,12 @@ body.has-wallpaper {
 }
 body * { font-family: var(--font), inherit; }
 
-/* When wallpaper active - radio window becomes glass */
-html.has-wallpaper-bg #radioWindow {
-  background: rgba(6,8,14,0.52) !important;
-  backdrop-filter: blur(32px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(32px) saturate(180%) !important;
-}
+/* Radio window stays solid (glass removed) even over wallpaper */
+html.has-wallpaper-bg #radioWindow,
 html.mk-low-spec.has-wallpaper-bg #radioWindow {
-  background: rgba(6,8,14,0.72) !important;
-  backdrop-filter: blur(12px) saturate(125%) !important;
-  -webkit-backdrop-filter: blur(12px) saturate(125%) !important;
+  background: #14151b !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 /* MacscapeBg overlay stays but becomes semi-transparent */
 html.has-wallpaper-bg #macscapeBg {
@@ -342,19 +338,14 @@ html.mk-low-spec #nsToggleBtnParent {
   user-select: none;
 }
 
-#radioToggle:hover { border-color: rgba(0,220,100,.7); box-shadow: 0 0 0 1px rgba(0,220,100,.15), 0 0 20px rgba(0,220,100,.35), 0 0 40px rgba(0,220,100,.15); }
+#radioToggle:hover { border-color: rgba(0,220,100,.7); box-shadow: 0 4px 24px rgba(0,0,0,.55); }
 #radioToggle:active { transform: scale(.96); }
 .rtog-led {
   width: 7px; height: 7px; border-radius: 50%;
-  background: #00ff88; box-shadow: 0 0 7px #00ff88;
+  background: #00ff88; box-shadow: none;
   flex-shrink: 0; transition: background .3s, box-shadow .3s;
-  animation: rledPulse 2s ease-in-out infinite;
 }
 body.radio-hidden #radioToggle .rtog-led { background: #333; box-shadow: none; animation: none; }
-@keyframes rledPulse {
-  0%,100% { box-shadow: 0 0 5px #00ff88; }
-  50%      { box-shadow: 0 0 12px #00ff88, 0 0 20px rgba(0,255,136,.4); }
-}
 
 /* Overlay menus stay on top but not over radio toggle */
 #stationOverlay, #mdPresetPanel, #themePanel { z-index: 120000 !important; }
@@ -444,7 +435,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260601f" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260601f" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260601g" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260601g" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -1074,15 +1065,13 @@ window.addEventListener('DOMContentLoaded', () => {
       background: rgba(4,14,10,0.72) !important;
       border: 1px solid rgba(0,255,136,0.44) !important;
       color: #e0ffe8 !important;
-      box-shadow: 0 0 10px rgba(0,255,136,.18), 0 2px 12px rgba(0,0,0,.45) !important;
+      box-shadow: 0 2px 12px rgba(0,0,0,.45) !important;
     }
     #radioToggle:hover,
     #radioIdleBtn:hover {
       border-color: rgba(0,220,100,.70) !important;
       box-shadow:
         0 0 0 1px rgba(0,220,100,.14),
-        0 0 18px rgba(0,220,100,.38),
-        0 0 36px rgba(0,220,100,.14),
         0 6px 20px rgba(0,0,0,.55) !important;
       transform: translateY(-4px) !important;
       background: rgba(4,20,14,0.82) !important;
@@ -1578,7 +1567,7 @@ window.addEventListener('DOMContentLoaded', () => {
     <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
 
     <button id="radioIdleBtn" onclick="radioIdleClick()" title="RG Radio" aria-label="RG Radio">
-      <div class="rtog-led" style="background:#00ff88;box-shadow:0 0 7px #00ff88;animation:rledPulse 2s ease-in-out infinite;"></div>
+      <div class="rtog-led" style="background:#00ff88;box-shadow:none;"></div>
       <span>RADIO</span>
       <span class="dock-emoji" style="font-size:11px;">♪</span>
     </button>
