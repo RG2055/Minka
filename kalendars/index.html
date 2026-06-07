@@ -231,7 +231,7 @@ body.stars-active #stars-overlay{display:block;}
 }
 .s-star{
   position:absolute;
-  will-change:transform,opacity;
+  /* will-change removed: 127 stars no longer each pin a standing GPU layer; the drift still animates */
   animation:s-drift var(--drift-dur, 24s) linear infinite alternate;
 }
 .s-star-core{
@@ -246,7 +246,7 @@ body.stars-active #stars-overlay{display:block;}
 }
 .s-star.is-dim .s-star-core{
   opacity:.45;
-  filter:blur(.15px);
+  /* blur(.15px) removed: sub-pixel blur is invisible but forced every star onto the GPU filter path */
 }
 .s-star.is-tiny .s-star-core{
   box-shadow:0 0 4px rgba(255,255,255,.18);
