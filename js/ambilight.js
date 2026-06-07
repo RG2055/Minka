@@ -93,10 +93,13 @@
   }
 
   // ── AUDIO ──
+  let _ambFreqData = null; // reused across frames — avoids 60 allocations/sec
   function getAudio() {
     if (typeof analyser === 'undefined' || !analyser) return {bass:0,mid:0,high:0};
     try {
-      const d = new Uint8Array(analyser.frequencyBinCount);
+      if (!_ambFreqData || _ambFreqData.length !== analyser.frequencyBinCount)
+        _ambFreqData = new Uint8Array(analyser.frequencyBinCount);
+      const d = _ambFreqData;
       analyser.getByteFrequencyData(d);
       const avg=(s,e)=>{let sum=0,n=0;for(let i=Math.min(s,d.length);i<Math.min(e,d.length);i++){sum+=d[i];n++;}return n?sum/n/255:0;};
       return { bass:avg(0,6), mid:avg(6,24), high:avg(24,60) };

@@ -3533,6 +3533,22 @@ window.addEventListener('message', function(e) {
 }
 #grafiks-app {
   isolation: isolate !important;
+  /* box-shadow can't be GPU-accelerated — drop the wasteful standing layer bundle.css pins */
+  will-change: auto !important;
+}
+/* RAM: bundle.css permanently promotes every card + the night-split panel to its
+   own GPU layer via will-change:transform, even while idle. These elements only
+   transform on hover/slide, so let the browser promote them transiently instead
+   of pinning a standing retina layer each. Frees ~12-15 idle GPU layers. */
+.card,
+.duty-block,
+.nsc,
+.fatigue-panel,
+.fatigue-tendency,
+.fatigue-health-age,
+.night-split-panel,
+.ns-room-fit > .ns-room-layout {
+  will-change: auto !important;
 }
 .side-panel {
   position: relative !important;

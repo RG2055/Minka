@@ -57,6 +57,14 @@ const audio = new Audio();
 audio.crossOrigin = "anonymous";
 audio.preload = "none";
 audio.addEventListener('play', () => requestAnimationFrame(draw));
+// Idle the entire audio graph (EQ, reverb, compressor, vinyl noise, analyser)
+// while paused; resume it on play. Frees CPU and stops the looping vinyl source.
+audio.addEventListener('pause', () => {
+    try { if (aCtx && aCtx.state === 'running') aCtx.suspend().catch(()=>{}); } catch(e) {}
+});
+audio.addEventListener('play', () => {
+    try { if (aCtx && aCtx.state === 'suspended') aCtx.resume().catch(()=>{}); } catch(e) {}
+});
 
 // Pre-warm AudioContext on first user gesture anywhere — eliminates the
 // "click twice" bug caused by suspended AudioContext on iOS/Chrome
@@ -579,8 +587,9 @@ function openMilkdropOverlay(){
     positionMilkdropOverlay();
     el.style.display = 'block';
     syncMilkdropToggleUI();
-    // refresh preset list
-    ensureMilkdrop();
+    // Populate the preset picker without creating the WebGL visualizer —
+    // the heavy GL context is only spun up when Milkdrop is actually enabled.
+    ensureMilkdropPresets();
     fillMilkdropSelect(el.querySelector('#milkdropSearch')?.value || '');
     updateMilkdropUI();
 }
@@ -759,6 +768,12 @@ function enableMilkdrop(){
 function disableMilkdrop(){
     try { milkdropCollapse(true); } catch(e) {}
     milkdropEnabled = false;
+    // Free the WebGL visualizer (the expensive GPU/RAM cost). Presets stay
+    // cached so re-enabling rebuilds the context instantly via ensureMilkdrop().
+    if (milkdrop) {
+        try { milkdropStop(); } catch(e) {}
+        milkdrop = null;
+    }
     applyVizMode();
     syncMilkdropToggleUI();
 }
@@ -993,6 +1008,26 @@ function ensureMilkdropCanvas() {
     return canvas;
 }
 
+// Load preset definitions only (needed by the picker UI). This is the RAM-heavy
+// part, but the far more expensive WebGL visualizer is created lazily in
+// ensureMilkdrop() — only when Milkdrop is actually enabled.
+function ensureMilkdropPresets() {
+    if (milkdropPresets) return true;
+    if (!milkdropLibsReady()) return false;
+    try {
+        milkdropPresets = window.butterchurnPresets.getPresets ? window.butterchurnPresets.getPresets() : null;
+        milkdropPresetKeys = milkdropPresets ? Object.keys(milkdropPresets) : [];
+        _log('[Milkdrop] presets:', milkdropPresetKeys.length);
+        if (milkdropPresetKeys.length) milkdropPresetIndex = Math.floor(Math.random() * milkdropPresetKeys.length);
+    } catch (e) {
+        _err('[Milkdrop] presets load failed:', e);
+        milkdropPresets = null;
+        milkdropPresetKeys = [];
+        return false;
+    }
+    return !!(milkdropPresets && milkdropPresetKeys.length);
+}
+
 function ensureMilkdrop() {
     if (!hasWebGL2()) {
         _warn('[Milkdrop] unavailable: no WebGL2');
@@ -1013,18 +1048,7 @@ function ensureMilkdrop() {
         aCtx.resume().catch(() => {});
     }
 
-    if (!milkdropPresets) {
-        try {
-            milkdropPresets = window.butterchurnPresets.getPresets ? window.butterchurnPresets.getPresets() : null;
-            milkdropPresetKeys = milkdropPresets ? Object.keys(milkdropPresets) : [];
-            _log('[Milkdrop] presets:', milkdropPresetKeys.length);
-            if (milkdropPresetKeys.length) milkdropPresetIndex = Math.floor(Math.random() * milkdropPresetKeys.length);
-        } catch (e) {
-            _err('[Milkdrop] presets load failed:', e);
-            milkdropPresets = null;
-            milkdropPresetKeys = [];
-        }
-    }
+    ensureMilkdropPresets();
 
     const canvas = ensureMilkdropCanvas();
     if (!canvas) return false;
@@ -2298,8 +2322,8 @@ function draw(ts = 0) {
     
     if (triggerPower > 0.38) {
         ledPoint.style.background = "var(--led-on)";
-        ledPoint.style.boxShadow = "0 0 8px rgba(0, 255, 136, 0.6)";
-        ledHalo.style.opacity = 0.8;
+        ledPoint.style.boxShadow = "none";
+        ledHalo.style.opacity = 0;
     } else {
         ledPoint.style.background = "var(--led-off)";
         ledPoint.style.boxShadow = "none";
@@ -2904,22 +2928,28 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
       const controlPanels = rw ? rw.querySelectorAll('.control-panel') : [];
       const stationButtons = rw ? rw.querySelectorAll('.station-btn, .viz-icon-btn, .nav-btn, .play-trigger, .md-mini-btn') : [];
 
+      // Glass removed: radio surfaces are solid & opaque (no blur), but still
+      // layered with subtle shade differences so it stays good-looking.
+      const solidWin     = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+      const solidPanel   = `rgb(${Math.min(255,rgb[0]+6)},${Math.min(255,rgb[1]+7)},${Math.min(255,rgb[2]+9)})`;
+      const solidMonitor = `rgb(${Math.max(0,rgb[0]-10)},${Math.max(0,rgb[1]-10)},${Math.max(0,rgb[2]-8)})`;
+
       if (rw) {
-        rw.style.setProperty('background', glassBg, 'important');
+        rw.style.setProperty('background', solidWin, 'important');
         rw.style.setProperty('border-color', border, 'important');
-        rw.style.setProperty('backdrop-filter', `blur(${blur}px) saturate(160%)`, 'important');
-        rw.style.setProperty('-webkit-backdrop-filter', `blur(${blur}px) saturate(160%)`, 'important');
+        rw.style.setProperty('backdrop-filter', 'none', 'important');
+        rw.style.setProperty('-webkit-backdrop-filter', 'none', 'important');
       }
       if (body) body.style.setProperty('background', 'transparent', 'important');
       if (consoleEl) consoleEl.style.setProperty('background', 'transparent', 'important');
       techPanels.forEach(el => {
-        el.style.setProperty('background', panelBg, 'important');
+        el.style.setProperty('background', solidPanel, 'important');
         el.style.setProperty('border-color', border, 'important');
-        el.style.setProperty('backdrop-filter', `blur(${Math.max(8, blur-10)}px) saturate(150%)`, 'important');
-        el.style.setProperty('-webkit-backdrop-filter', `blur(${Math.max(8, blur-10)}px) saturate(150%)`, 'important');
+        el.style.setProperty('backdrop-filter', 'none', 'important');
+        el.style.setProperty('-webkit-backdrop-filter', 'none', 'important');
       });
       monitorFrames.forEach(el => {
-        el.style.setProperty('background', monitorBg, 'important');
+        el.style.setProperty('background', solidMonitor, 'important');
         el.style.setProperty('border-color', border, 'important');
         el.style.setProperty('box-shadow', `0 12px 38px rgba(0,0,0,${(0.18 + t/100*0.20).toFixed(3)})`, 'important');
       });

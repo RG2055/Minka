@@ -74,7 +74,7 @@ body.milkdrop-on .viz-icon-btn{
   background-repeat: no-repeat;
   background-size: 14px 14px;
   opacity: 0.95;
-  filter: drop-shadow(0 0 10px rgba(0,255,136,0.18));
+  filter: none;
   background-image: url('data:image/svg+xml;utf8,\
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23b7ffb7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">\
 <path d="M12 20v-6"/>\
@@ -122,7 +122,7 @@ body.milkdrop-on .viz-icon-btn{
   font-weight: 900;
   letter-spacing: 2px;
   color: rgba(202,255,202,0.9);
-  text-shadow: 0 0 18px rgba(0,255,136,0.18);
+  text-shadow: none;
 }
 #milkdropPanel .md-actions{ display:flex; gap:8px; }
 #milkdropPanel .md-btn{
@@ -192,7 +192,7 @@ body.milkdrop-fs .radio-resize-se{ display:none; }
   height: 10px;
   border-radius: 999px;
   border: 1px solid rgba(0,255,136,0.6);
-  box-shadow: 0 0 10px rgba(0,255,136,0.18);
+  box-shadow: none;
   background: radial-gradient(circle at 35% 35%, rgba(160,255,210,0.95), rgba(0,255,136,0.15));
 }
 .station-btn:hover{ border-color: rgba(0,255,136,0.55) !important; background: rgba(0,255,136,0.06) !important; }
@@ -519,7 +519,7 @@ body.milkdrop-fs .radio-resize-se{ display:none; }
 }
 #radioWindow .radio-win-btn:hover{
   border-color: rgba(var(--radio-accent-rgb), 0.45) !important;
-  box-shadow: 0 0 0 1px rgba(var(--radio-accent-rgb), 0.22), 0 18px 40px rgba(var(--radio-accent-rgb), 0.12) !important;
+  box-shadow: 0 0 0 1px rgba(var(--radio-accent-rgb), 0.22) !important;
 }
 
 /* Inner panels */
@@ -587,7 +587,7 @@ body.milkdrop-open .viz-icon-btn{
 
 #milkdropPanel .md-title{
   color: rgba(234,255,241,0.92) !important;
-  text-shadow: 0 0 18px rgba(var(--radio-accent-rgb), 0.18) !important;
+  text-shadow: none !important;
 }
 
 #milkdropPanel .md-btn{
@@ -598,7 +598,7 @@ body.milkdrop-open .viz-icon-btn{
 
 #milkdropPanel .md-btn:hover{
   border-color: rgba(var(--radio-accent-rgb), 0.45) !important;
-  box-shadow: 0 0 0 1px rgba(var(--radio-accent-rgb), 0.18), 0 16px 38px rgba(var(--radio-accent-rgb), 0.10) !important;
+  box-shadow: 0 0 0 1px rgba(var(--radio-accent-rgb), 0.18) !important;
 }
 
 /* --- NOW PLAYING (CF Worker proxy) --- */
@@ -732,7 +732,7 @@ body.milkdrop-open .viz-icon-btn{
 }
 /* Purple tint on monitor border when slowed active */
 body.slowed-active .monitor-frame {
-  box-shadow: 0 0 0 1px rgba(160,80,255,0.30), 0 0 40px rgba(130,60,220,0.18) inset !important;
+  box-shadow: 0 0 0 1px rgba(160,80,255,0.30) !important;
   transition: box-shadow 1.2s ease !important;
 }
 
@@ -772,14 +772,14 @@ body.slowed-active .monitor-frame {
   border-radius: 18px;
   border:1px solid rgba(168,85,247,.35);
   background: linear-gradient(180deg, rgba(10,12,26,.96), rgba(6,9,20,.92));
-  box-shadow: 0 14px 40px rgba(0,0,0,.45), 0 0 0 1px rgba(102,217,255,.08) inset, 0 0 24px rgba(168,85,247,.12);
+  box-shadow: 0 14px 40px rgba(0,0,0,.45), 0 0 0 1px rgba(102,217,255,.08) inset;
   backdrop-filter: blur(14px) saturate(140%);
   transform-origin: bottom left;
   animation: slowfxPop .18s ease-out;
 }
 @keyframes slowfxPop{ from{opacity:0; transform:translateY(-4px) scale(.985)} to{opacity:1; transform:translateY(0) scale(1)} }
 .slowfx-popup-head{ display:flex; flex-direction:column; gap:8px; padding:4px 4px 8px; }
-.slowfx-popup-title{ color:#caa7ff; font:800 11px/1 Inter,system-ui,sans-serif; letter-spacing:.14em; text-transform:uppercase; text-shadow:0 0 10px rgba(168,85,247,.25); }
+.slowfx-popup-title{ color:#caa7ff; font:800 11px/1 Inter,system-ui,sans-serif; letter-spacing:.14em; text-transform:uppercase; text-shadow:none; }
 .slowfx-keep-toggle{ display:flex; align-items:center; gap:8px; color:rgba(255,255,255,.88); font:600 11px/1.2 Inter,system-ui,sans-serif; cursor:pointer; user-select:none; }
 .slowfx-keep-toggle input{ position:absolute; opacity:0; pointer-events:none; }
 .slowfx-switch{ width:32px; height:18px; border-radius:999px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.16); position:relative; box-shadow: inset 0 1px 2px rgba(0,0,0,.35); }
@@ -830,4 +830,61 @@ body.slowed-active .monitor-frame {
   border:0 !important;
   box-shadow:none !important;
   outline:0 !important;
+}
+
+/* ============================================================
+   GLASS REMOVED — solid opaque radio surfaces (kept tasteful:
+   layered dark shades, crisp 1px borders, soft dark depth).
+   Scoped to radio UI only; global --glass-* vars untouched so
+   the rest of the app keeps its look.
+   ============================================================ */
+#radioWindow,
+#radioWindow .tech-panel,
+#radioWindow .monitor-frame,
+#radioWindow .control-panel,
+#milkdropPanel,
+#ceqPanel,
+#stationOverlay,
+#mdPresetPanel,
+#themePanel,
+.slowfx-panel,
+.slowfx-panel.slowfx-popup{
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Solid window + popup surfaces (border/radius kept from base docked style) */
+#radioWindow{
+  background: #14151b !important;
+}
+#milkdropPanel,
+#ceqPanel,
+#stationOverlay,
+#mdPresetPanel,
+#themePanel{
+  background: #15161d !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.55) !important;
+}
+
+/* Inner layered panels */
+#radioWindow .tech-panel{
+  background: #1a1c23 !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+}
+#radioWindow .monitor-frame{
+  background: #0b0c11 !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+}
+
+/* Slow FX popup → solid */
+.slowfx-panel,
+.slowfx-panel.slowfx-popup{
+  background: #15171f !important;
+}
+
+/* Header strips inside popups → solid, slightly lighter for separation */
+#milkdropPanel .md-head{
+  background: #1b1d25 !important;
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
 }
