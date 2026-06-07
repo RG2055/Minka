@@ -2123,7 +2123,10 @@ function closeFullListModal() {
   function g_updateLive(force) {
     const now = new Date();
     if (document.hidden) return;
-    if (!force && __minkaCalendarLowPerf() && __minkaLastLiveHeavyPaint && (now - __minkaLastLiveHeavyPaint) < 5000) {
+    // Countdown timers (updateTimers) keep ticking every second for smooth HH:MM:SS.
+    // The expensive full-data rescan + progress-bar/gradient recompute only needs to
+    // run ~once a minute — the bar fill moves <0.01%/sec, so this is imperceptible.
+    if (!force && __minkaLastLiveHeavyPaint && (now - __minkaLastLiveHeavyPaint) < 60000) {
       updateTimers();
       return;
     }

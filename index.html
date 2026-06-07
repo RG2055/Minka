@@ -22,7 +22,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260601g';
+  var CALENDAR_BUILD = '20260601h';
 
   function withCalendarBuild(url) {
     try {
@@ -240,8 +240,9 @@ html.has-wallpaper-bg #macscapeBg {
   overflow: hidden;
   border: 1px solid rgba(255,255,255,0.12);
   background: rgba(8, 12, 22, 0.18);
-  backdrop-filter: blur(30px) saturate(160%);
-  -webkit-backdrop-filter: blur(30px) saturate(160%);
+  /* blur removed: calendar iframe is opaque, so this 726x662 live-blur was invisible but still computed every frame */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
   transition: bottom .35s cubic-bezier(.4,0,.2,1), background .2s ease, backdrop-filter .2s ease;
   /* GPU compositing layer — avoids layout thrashing on bottom transition */
@@ -250,8 +251,8 @@ html.has-wallpaper-bg #macscapeBg {
 }
 html.mk-low-spec #calendarEmbed {
   background: rgba(8, 12, 22, 0.34);
-  backdrop-filter: blur(10px) saturate(115%);
-  -webkit-backdrop-filter: blur(10px) saturate(115%);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
 }
 #calendarEmbed::before {
@@ -382,8 +383,8 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
     left: 4px;
     right: 4px;
     border-radius: 22px;
-    backdrop-filter: blur(18px) saturate(135%);
-    -webkit-backdrop-filter: blur(18px) saturate(135%);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
   #bottomBtnBar {
     gap: 4px !important;
@@ -435,7 +436,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260601g" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260601g" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260601h" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260601h" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -2798,12 +2799,13 @@ function setCalGlass(opacity) {
   var shell = document.getElementById('calendarEmbed');
   var shellAlpha = (0.10 + opacity * 0.22).toFixed(3);
   var shellBorder = (0.08 + opacity * 0.10).toFixed(3);
-  var shellBlur = Math.round(16 + opacity * 24);
   if (shell) {
     shell.style.background = 'rgba(8, 12, 22, ' + shellAlpha + ')';
     shell.style.borderColor = 'rgba(255,255,255,' + shellBorder + ')';
-    shell.style.backdropFilter = 'blur(' + shellBlur + 'px) saturate(160%)';
-    shell.style.webkitBackdropFilter = 'blur(' + shellBlur + 'px) saturate(160%)';
+    // Blur removed: the calendar iframe is opaque, so this full-area backdrop-blur
+    // was invisible but re-computed every frame. Keep the subtle frame tint only.
+    shell.style.backdropFilter = 'none';
+    shell.style.webkitBackdropFilter = 'none';
   }
   var iframe = document.getElementById('calIframe');
   if (iframe && iframe.contentWindow) {

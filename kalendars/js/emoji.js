@@ -13,7 +13,7 @@
   var GIST_ID    = window.MINKA_GIST_ID    || SYNC_CFG.gistId    || '';
   var GIST_TOKEN = window.MINKA_GIST_TOKEN || SYNC_CFG.gistToken || '';
   var GIST_FILE  = 'minka_emoji.json';
-  var POLL_MS    = 60000;
+  var POLL_MS    = 300000; /* 5 min (was 60s) — lighter background polling */
   var LOCAL_KEY  = 'minka_emoji_v2';
   function hasApiAuth() {
     return !!(window.MinkaApi && typeof window.MinkaApi.apiFetch === 'function' && window.MinkaApi.getToken && window.MinkaApi.getToken());

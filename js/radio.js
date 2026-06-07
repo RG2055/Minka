@@ -3251,3 +3251,34 @@ try{ window.handleSlowButton = handleSlowButton; }catch(e){}
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attach, {once:true}); else attach();
   window.addEventListener('load', attach, {once:true});
 })();
+
+/* ── Release audio + GPU resources on unload ──
+   Without this, refreshing leaves the old AudioContext + WebGL context alive
+   until Chrome lazily reclaims them, so the new page's memory stacks on top
+   (the "310 → 510 on refresh" effect). Free them the instant we leave. */
+(function(){
+  let __mkCleaned = false;
+  function mkReleaseResources(){
+    if (__mkCleaned) return; __mkCleaned = true;
+    // Stop the Milkdrop render loop
+    try { if (milkdropRaf) cancelAnimationFrame(milkdropRaf); } catch(e){}
+    // Free the WebGL visualizer context (only if it was ever created)
+    if (typeof milkdrop !== 'undefined' && milkdrop) {
+      try {
+        const mc = document.getElementById('milkdropCanvas');
+        const gl = mc && (mc.getContext('webgl2') || mc.getContext('webgl'));
+        const ext = gl && gl.getExtension('WEBGL_lose_context');
+        if (ext) ext.loseContext();
+      } catch(e){}
+      milkdrop = null;
+    }
+    // Close the whole audio graph (EQ, reverb, vinyl, analyser, …)
+    try { if (typeof aCtx !== 'undefined' && aCtx && aCtx.state !== 'closed') aCtx.close(); } catch(e){}
+  }
+  window.addEventListener('pagehide', function(e){
+    // If the page is being frozen for back/forward cache, keep resources so
+    // restoring is instant — only release on a real unload/refresh.
+    if (e.persisted) return;
+    mkReleaseResources();
+  });
+})();

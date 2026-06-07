@@ -12,7 +12,7 @@
   var titleDateEl = null;
   var isSaving = false;
   var _pollTimer = null;
-  var POLL_MS = 30000;
+  var POLL_MS = 300000; /* 5 min (was 30s) — lighter background polling */
 
   function getActiveDate() {
     return String(window.__activeDateStr || '').trim();
