@@ -673,7 +673,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260601f"></script>
+<script src="js/calendar.js?v=20260608a"></script>
 <script src="js/calendar_extras_v4.js"></script>
 <script src="js/fatigue.js?v=20260318d"></script>
 <script src="js/nightsplit.js?v=20260520a" defer></script>
@@ -685,7 +685,7 @@ function _mkToast(msg, type) {
 <script src="js/radiologist_plan.js" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260601f';
+window.__minkaLocalBuild = '20260608a';
 (function(){
   function norm(v){
     try { return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
@@ -2338,7 +2338,7 @@ function getTauriInvoke(){
   }
   window.currentMoon = currentMoon;
   window.addEventListener('daySelected', function(){
-    syncMoon();
+    if (typeof syncMoon === 'function') syncMoon();
     // Refresh moon chip when day changes
     if (typeof window.mkBarRefresh === 'function') window.mkBarRefresh();
   });
@@ -3359,7 +3359,7 @@ window.addEventListener('message', function(e) {
 
 <script>
 if ('serviceWorker' in navigator) {
-  const MINKA_APP_VERSION = '2026.04.08.4';
+  const MINKA_APP_VERSION = '2026.06.08.1';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
