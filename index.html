@@ -22,7 +22,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260601i';
+  var CALENDAR_BUILD = '20260608a';
 
   function withCalendarBuild(url) {
     try {
@@ -436,7 +436,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260601i" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260601i" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260608a" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260608a" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -1002,6 +1002,7 @@ window.addEventListener('DOMContentLoaded', () => {
     #bolusDocBtn,
     #mobileDockBtn,
     #statsDocBtn,
+    #lacitisDockBtn,
     #settingsDockBtn,
     #radioIdleBtn,
     #radioToggle {
@@ -1027,6 +1028,7 @@ window.addEventListener('DOMContentLoaded', () => {
     #nsLedParent,
     #bolusLed,
     #statsDocBtn > div,
+    #lacitisDockBtn > div,
     #settingsDockBtn > div,
     #mobileDockBtn > div,
     #radioIdleBtn .rtog-led,
@@ -1086,6 +1088,12 @@ window.addEventListener('DOMContentLoaded', () => {
       color: #ffd2ad !important;
       box-shadow: 0 0 10px rgba(255,128,56,.18), 0 2px 12px rgba(0,0,0,.45) !important;
     }
+    #lacitisDockBtn {
+      background: rgba(28,18,10,0.72) !important;
+      border: 1px solid rgba(245,158,11,0.48) !important;
+      color: #ffe2b8 !important;
+      box-shadow: 0 0 10px rgba(245,158,11,.18), 0 2px 12px rgba(0,0,0,.45) !important;
+    }
     #settingsDockBtn {
       background: rgba(28,24,12,0.72) !important;
       border: 1px solid rgba(255,214,102,0.44) !important;
@@ -1127,6 +1135,17 @@ window.addEventListener('DOMContentLoaded', () => {
       background: rgba(48,24,8,0.84) !important;
     }
     #statsDocBtn:active { transform: translateY(-1px) scale(.97) !important; }
+    #lacitisDockBtn:hover {
+      border-color: rgba(245,158,11,.72) !important;
+      box-shadow:
+        0 0 0 1px rgba(245,158,11,.14),
+        0 0 18px rgba(245,158,11,.34),
+        0 0 36px rgba(245,158,11,.12),
+        0 6px 20px rgba(0,0,0,.55) !important;
+      transform: translateY(-4px) !important;
+      background: rgba(44,27,10,0.84) !important;
+    }
+    #lacitisDockBtn:active { transform: translateY(-1px) scale(.97) !important; }
     #settingsDockBtn:hover {
       border-color: rgba(255,214,102,.70) !important;
       box-shadow:
@@ -1310,6 +1329,7 @@ window.addEventListener('DOMContentLoaded', () => {
     #bolusDocBtn,
     #mobileDockBtn,
     #statsDocBtn,
+    #lacitisDockBtn,
     #settingsDockBtn,
     #radioIdleBtn,
     #radioToggle {
@@ -1342,6 +1362,7 @@ window.addEventListener('DOMContentLoaded', () => {
     #nsToggleBtnParent { --dock-accent: #6f82ff; --dock-glow: rgba(111,130,255,.28); }
     #bolusDocBtn { --dock-accent: #34d7bf; --dock-glow: rgba(52,215,191,.28); }
     #statsDocBtn { --dock-accent: #ff9856; --dock-glow: rgba(255,152,86,.26); }
+    #lacitisDockBtn { --dock-accent: #f59e0b; --dock-glow: rgba(245,158,11,.26); }
     #settingsDockBtn { --dock-accent: #ffd666; --dock-glow: rgba(255,214,102,.24); }
     #mobileDockBtn { --dock-accent: #39cfe3; --dock-glow: rgba(57,207,227,.26); }
     #radioIdleBtn,
@@ -1351,6 +1372,7 @@ window.addEventListener('DOMContentLoaded', () => {
     #bolusDocBtn::after,
     #mobileDockBtn::after,
     #statsDocBtn::after,
+    #lacitisDockBtn::after,
     #settingsDockBtn::after,
     #radioIdleBtn::after,
     #radioToggle::after {
@@ -1369,6 +1391,7 @@ window.addEventListener('DOMContentLoaded', () => {
     #bolusDocBtn:hover,
     #mobileDockBtn:hover,
     #statsDocBtn:hover,
+    #lacitisDockBtn:hover,
     #settingsDockBtn:hover,
     #radioIdleBtn:hover,
     #radioToggle:hover {
@@ -1416,6 +1439,7 @@ window.addEventListener('DOMContentLoaded', () => {
     #bolusDocBtn > *:not(.bolus-pattern),
     #mobileDockBtn > *,
     #statsDocBtn > *,
+    #lacitisDockBtn > *,
     #settingsDockBtn > *,
     #radioIdleBtn > *,
     #radioToggle > * {
@@ -1451,6 +1475,7 @@ window.addEventListener('DOMContentLoaded', () => {
       #bolusDocBtn,
       #mobileDockBtn,
       #statsDocBtn,
+      #lacitisDockBtn,
       #settingsDockBtn,
       #radioIdleBtn,
       #radioToggle {
@@ -1499,6 +1524,7 @@ window.addEventListener('DOMContentLoaded', () => {
       #nsToggleBtnParent,
       #bolusDocBtn,
       #mobileDockBtn,
+      #lacitisDockBtn,
       #settingsDockBtn,
       #radioIdleBtn,
       #radioToggle {
@@ -1512,7 +1538,7 @@ window.addEventListener('DOMContentLoaded', () => {
     /* ── Responsive: very narrow (hide emoji labels) ── */
     @media (max-width: 320px) {
       .dock-emoji { display: none !important; }
-      #nsToggleBtnParent, #bolusDocBtn, #mobileDockBtn, #settingsDockBtn, #radioIdleBtn, #radioToggle {
+      #nsToggleBtnParent, #bolusDocBtn, #mobileDockBtn, #lacitisDockBtn, #settingsDockBtn, #radioIdleBtn, #radioToggle {
         padding: 6px 9px !important;
       }
     }
@@ -1567,6 +1593,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
     <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
 
+    <button id="lacitisDockBtn" onclick="openLacitisLauncher()" title="Lācītis dežūra">
+      <div style="width:7px;height:7px;border-radius:50%;background:#f59e0b;box-shadow:0 0 7px #f59e0b;flex-shrink:0;animation:rledPulse 3.1s ease-in-out infinite;"></div>
+      <span>LĀCĪTIS</span>
+      <span class="dock-emoji" style="font-size:13px;">🐻‍❄️</span>
+      <span class="dock-emoji" style="font-size:12px;">♫</span>
+    </button>
+
+    <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
+
     <button id="radioIdleBtn" onclick="radioIdleClick()" title="RG Radio" aria-label="RG Radio">
       <div class="rtog-led" style="background:#00ff88;box-shadow:none;"></div>
       <span>RADIO</span>
@@ -1579,6 +1614,39 @@ window.addEventListener('DOMContentLoaded', () => {
     </button>
   </div><!-- end #bottomBtnBar -->
 </div><!-- end #dockShelf -->
+
+<div id="lacitisSheet" aria-hidden="true" onclick="if(event.target===this) closeLacitisSheet()" style="display:none;position:fixed;inset:0;z-index:171200;pointer-events:auto;background:transparent;">
+  <section id="lacitisSheetPanel" aria-label="Lācītis dežūra" onclick="event.stopPropagation()" style="position:absolute;right:12px;bottom:86px;width:min(430px,calc(100vw - 24px));height:min(680px,calc(100dvh - 108px));min-height:500px;border-radius:18px;border:1px solid rgba(255,255,255,.18);background:#202020;box-shadow:0 18px 60px rgba(0,0,0,.58),0 0 0 1px rgba(255,255,255,.05) inset;overflow:hidden;pointer-events:auto;">
+    <div style="height:38px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 10px 0 14px;border-bottom:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.035);color:#f7f7f7;font:900 12px/1 'Space Grotesk',system-ui;letter-spacing:.08em;text-transform:uppercase;">
+      <span style="display:flex;align-items:center;gap:8px;"><span>🐻‍❄️</span><span>Lācītis</span><span style="opacity:.75;">♫</span></span>
+      <button type="button" onclick="closeLacitisSheet()" aria-label="Aizvērt Lācīti" style="width:30px;height:30px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.24);color:#f7f7f7;font:900 18px/1 system-ui;cursor:pointer;">×</button>
+    </div>
+    <iframe id="lacitisSheetFrame" title="Lācītis dežūra" style="display:block;width:100%;height:calc(100% - 38px);border:0;background:#202020;" referrerpolicy="no-referrer"></iframe>
+  </section>
+</div>
+
+<div id="lacitisFull" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171300;background:transparent;pointer-events:none;">
+  <div id="lacitisFullPanel" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1180px,calc(100vw - 44px));height:min(820px,calc(100dvh - 44px));min-width:380px;min-height:520px;max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);resize:both;overflow:hidden;border-radius:22px;border:1px solid rgba(255,255,255,.16);box-shadow:0 22px 70px rgba(0,0,0,.68);background:#050609;pointer-events:auto;display:flex;flex-direction:column;">
+    <div id="lacitisFullTopbar" style="height:42px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 10px 0 14px;border-bottom:1px solid rgba(255,255,255,.10);background:#15171c;color:#f7f7f7;font:900 12px/1 'Space Grotesk',system-ui;letter-spacing:.08em;text-transform:uppercase;flex-shrink:0;">
+      <span style="display:flex;align-items:center;gap:9px;min-width:0;">
+        <img src="https://lacitis.pages.dev/lacitis-bear.png" alt="" style="width:24px;height:20px;object-fit:contain;image-rendering:pixelated;flex-shrink:0;">
+        <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Lācītis</span>
+        <span style="opacity:.75;">♫</span>
+      </span>
+      <span style="display:flex;align-items:center;gap:8px;">
+        <button id="lacitisMinBtn" type="button" onclick="minimizeLacitisFull()" title="Minimizēt" aria-label="Minimizēt Lācīti" style="width:32px;height:32px;border-radius:11px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#f7f7f7;font:900 18px/1 system-ui;cursor:pointer;">−</button>
+        <button id="lacitisPhoneBtn" type="button" onclick="toggleLacitisPhoneSize()" title="Kompakts izmērs" aria-label="Kompakts izmērs" style="width:32px;height:32px;border-radius:11px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#f7f7f7;font:900 16px/1 system-ui;cursor:pointer;">▣</button>
+        <button type="button" onclick="closeLacitisFull()" aria-label="Aizvērt Lācīti" style="width:32px;height:32px;border-radius:11px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#f7f7f7;font:900 20px/1 system-ui;cursor:pointer;">×</button>
+      </span>
+    </div>
+    <iframe id="lacitisFullFrame" title="Lācītis pilns skats" style="display:block;width:100%;height:100%;min-height:0;flex:1;border:0;background:#050609;" referrerpolicy="no-referrer"></iframe>
+  </div>
+  <button id="lacitisMinChip" type="button" onclick="restoreLacitisFull()" title="Atvērt Lācīti" style="display:none;position:absolute;right:24px;bottom:92px;align-items:center;gap:8px;height:42px;padding:0 14px;border-radius:14px;border:1px solid rgba(245,158,11,.45);background:rgba(20,16,10,.92);color:#ffe9c5;font:900 12px/1 'Space Grotesk',system-ui;letter-spacing:.08em;text-transform:uppercase;box-shadow:0 14px 38px rgba(0,0,0,.55);cursor:pointer;pointer-events:auto;">
+    <img src="https://lacitis.pages.dev/lacitis-bear.png" alt="" style="width:24px;height:20px;object-fit:contain;image-rendering:pixelated;">
+    <span>Lācītis</span>
+    <span style="opacity:.75;">♫</span>
+  </button>
+</div>
 
 <div id="mobileQrModal" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171000;background:rgba(0,0,0,.82);backdrop-filter:blur(18px) saturate(120%);-webkit-backdrop-filter:blur(18px) saturate(120%);padding:20px;">
   <div id="mobileQrBackdrop" onclick="closeMobileQrModal()" style="position:absolute;inset:0;"></div>
@@ -2542,6 +2610,9 @@ function openSettingsFromDock() {
 }
 
 window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'minka-calendar-selected-day-state' && e.data.payload) {
+    window.__minkaLastSelectedDayState = e.data.payload;
+  }
   if (e.data && e.data.type === 'mk_stats_closed') {
     var btn = document.getElementById('statsDocBtn');
     if (btn) btn.classList.remove('stats-open');
@@ -2556,6 +2627,293 @@ window.addEventListener('message', function(e) {
     if (sbtn) sbtn.classList.add('settings-open');
   }
 });
+
+/* Lācītis launcher: Minka only passes today's worker names; Lācītis owns login/PIN. */
+(function(){
+  function getCalendarState() {
+    var frame = document.getElementById('calIframe');
+    try {
+      if (frame && frame.contentWindow && typeof frame.contentWindow.__minkaGetSelectedDayState === 'function') {
+        return frame.contentWindow.__minkaGetSelectedDayState();
+      }
+    } catch (_e) {}
+    return window.__minkaLastSelectedDayState || null;
+  }
+
+  function prettyWorkerName(name) {
+    return String(name || '')
+      .trim()
+      .replace(/\s+/g, ' ')
+      .toLocaleLowerCase('lv-LV')
+      .replace(/(^|[\s-])([a-zāčēģīķļņōŗšūž])/g, function(_, pre, ch) {
+        return pre + ch.toLocaleUpperCase('lv-LV');
+      });
+  }
+
+  function uniqueTodayWorkers() {
+    var state = getCalendarState();
+    var rg = Array.isArray(state && state.rg) ? state.rg : [];
+    var live = rg.filter(function(w){ return w && w.name && !w.done; });
+    var src = live.length ? live : rg;
+    var seen = {};
+    return src.map(function(w){ return prettyWorkerName(w && w.name); })
+      .filter(Boolean)
+      .filter(function(name){
+        var key = name.toLocaleLowerCase('lv-LV');
+        if (seen[key]) return false;
+        seen[key] = true;
+        return true;
+      });
+  }
+
+  function encodeLacitisLaunch(payload) {
+    var json = JSON.stringify(payload);
+    var utf8 = encodeURIComponent(json).replace(/%([0-9A-F]{2})/g, function(_, hex) {
+      return String.fromCharCode(parseInt(hex, 16));
+    });
+    return btoa(utf8).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  }
+
+  function lacitisPayload(names) {
+    return {
+      workers: names.map(function(name) {
+        return { name: name, shift: 'Dežūra' };
+      }),
+      expiresAt: (function(){
+        var d = new Date();
+        d.setHours(8, 0, 0, 0);
+        if (Date.now() >= d.getTime()) d.setDate(d.getDate() + 1);
+        return d.getTime();
+      })()
+    };
+  }
+
+  function buildLacitisUrl(base, names) {
+    var url = new URL(base);
+    url.searchParams.set('mode', 'dezura');
+    url.searchParams.set('launch', encodeLacitisLaunch(lacitisPayload(names)));
+    return url.toString();
+  }
+
+  function writeLacitisLaunch(popup, launchId, names) {
+    if (!popup) return false;
+    try {
+      var payload = lacitisPayload(names);
+      popup.name = 'lacitis-launch:' + JSON.stringify(payload);
+      return true;
+    } catch (_e) {
+      return false;
+    }
+  }
+
+  async function pickLacitisBase() {
+    return 'https://lacitis.pages.dev/';
+  }
+
+  function showLacitisOffline(frame) {
+    if (!frame) return;
+    frame.removeAttribute('src');
+    frame.srcdoc = '<!doctype html><html><head><meta charset="utf-8"><style>'+
+      'html,body{margin:0;height:100%;background:#202020;color:#f4f4f4;font-family:system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;}'+
+      'body{display:grid;place-items:center;padding:22px;box-sizing:border-box;text-align:center;}'+
+      '.box{max-width:310px}.icon{font-size:42px;margin-bottom:12px}.title{font-size:22px;font-weight:900;margin-bottom:8px}.text{font-size:14px;line-height:1.45;color:#cfcfcf}'+
+      '</style></head><body><div class="box"><div class="icon">🐻‍❄️♫</div><div class="title">Lācītis nav sasniedzams</div><div class="text">Pārbaudi internetu un mēģini vēlreiz.</div></div></body></html>';
+  }
+
+  function showLacitisLoading(frame) {
+    if (!frame) return;
+    frame.removeAttribute('src');
+    frame.srcdoc = '<!doctype html><html><head><meta charset="utf-8"><style>'+
+      'html,body{margin:0;height:100%;background:#202020;color:#f4f4f4;font-family:system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;}'+
+      'body{display:grid;place-items:center;padding:22px;box-sizing:border-box;text-align:center;}'+
+      '.box{max-width:310px}.icon{font-size:38px;margin-bottom:12px}.title{font-size:21px;font-weight:900;margin-bottom:8px}.text{font-size:14px;line-height:1.45;color:#cfcfcf}.dot{display:inline-block;animation:p 1s ease-in-out infinite}@keyframes p{50%{opacity:.35}}'+
+      '</style></head><body><div class="box"><div class="icon">🐻‍❄️♫</div><div class="title">Ielādē Lācīti<span class="dot">...</span></div><div class="text">Ja logs paliek tukšs, Lācītis dev serveris nav atbildējis.</div></div></body></html>';
+  }
+
+  function positionLacitisSheet() {
+    var sheet = document.getElementById('lacitisSheet');
+    var panel = document.getElementById('lacitisSheetPanel');
+    var btn = document.getElementById('lacitisDockBtn');
+    if (!sheet || !panel || !btn || sheet.style.display === 'none') return;
+
+    var rect = btn.getBoundingClientRect();
+    var margin = 12;
+    var gap = 10;
+    var width = Math.min(430, window.innerWidth - margin * 2);
+    var height = Math.min(680, window.innerHeight - rect.height - margin * 2 - gap);
+    height = Math.max(500, height);
+    if (height > window.innerHeight - margin * 2) height = window.innerHeight - margin * 2;
+
+    var left = rect.left + rect.width / 2 - width / 2;
+    left = Math.max(margin, Math.min(left, window.innerWidth - width - margin));
+    var bottom = window.innerHeight - rect.top + gap;
+    if (bottom + height > window.innerHeight - margin) {
+      bottom = Math.max(margin, window.innerHeight - height - margin);
+    }
+
+    panel.style.width = width + 'px';
+    panel.style.height = height + 'px';
+    panel.style.left = left + 'px';
+    panel.style.right = 'auto';
+    panel.style.bottom = bottom + 'px';
+  }
+
+  window.openLacitisLauncher = async function openLacitisLauncher() {
+    var names = uniqueTodayWorkers();
+    if (!names.length) {
+      alert('Nav atrasti šodienas darbinieki.');
+      return;
+    }
+
+    var launchId = 'minka-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+    var btn = document.getElementById('lacitisDockBtn');
+    var popupWidth = 430;
+    var popupHeight = 760;
+    var popupLeft = Math.max(20, Math.round((window.screenX || 0) + (window.innerWidth - popupWidth) / 2));
+    var popupTop = Math.max(20, Math.round((window.screenY || 0) + 80));
+    if (btn) {
+      var r = btn.getBoundingClientRect();
+      popupLeft = Math.round((window.screenX || 0) + r.left + r.width / 2 - popupWidth / 2);
+      popupTop = Math.round((window.screenY || 0) + r.top - popupHeight - 18);
+      if (popupTop < 20) popupTop = Math.round((window.screenY || 0) + r.bottom + 14);
+      if (popupLeft < 20) popupLeft = 20;
+      if (popupLeft + popupWidth > window.screen.availWidth - 20) popupLeft = window.screen.availWidth - popupWidth - 20;
+    }
+    var popup = window.open(
+      'about:blank',
+      'lacitis-' + launchId,
+      'popup=yes,width=' + popupWidth + ',height=' + popupHeight + ',left=' + popupLeft + ',top=' + popupTop + ',resizable=yes,scrollbars=yes,toolbar=no,location=no,menubar=no,status=no'
+    );
+
+    var base = await pickLacitisBase();
+    if (!base) {
+      if (popup) try { popup.close(); } catch (_e) {}
+      alert('Lācītis nav sasniedzams.');
+      return;
+    }
+    var url = buildLacitisUrl(base, names);
+    if (popup && writeLacitisLaunch(popup, launchId, names)) {
+      popup.location.href = url;
+      try { popup.focus(); } catch (_e) {}
+      return;
+    }
+    if (!popup) window.location.href = url;
+    else popup.location.href = url;
+  };
+
+  window.closeLacitisSheet = function closeLacitisSheet() {
+    var sheet = document.getElementById('lacitisSheet');
+    var frame = document.getElementById('lacitisSheetFrame');
+    var btn = document.getElementById('lacitisDockBtn');
+    if (sheet) {
+      sheet.style.display = 'none';
+      sheet.setAttribute('aria-hidden', 'true');
+    }
+    if (frame) {
+      frame.removeAttribute('srcdoc');
+      frame.src = 'about:blank';
+    }
+    if (btn) btn.classList.remove('lacitis-open');
+  };
+
+  window.openLacitisFull = function openLacitisFull(href) {
+    var full = document.getElementById('lacitisFull');
+    var frame = document.getElementById('lacitisFullFrame');
+    var panel = document.getElementById('lacitisFullPanel');
+    var phoneBtn = document.getElementById('lacitisPhoneBtn');
+    if (!full || !frame || !panel) {
+      window.location.href = href;
+      return;
+    }
+    panel.style.left = '50%';
+    panel.style.top = '50%';
+    panel.style.transform = 'translate(-50%, -50%)';
+    panel.style.width = 'min(1180px, calc(100vw - 44px))';
+    panel.style.height = 'min(820px, calc(100dvh - 44px))';
+    panel.style.maxWidth = 'calc(100vw - 24px)';
+    panel.style.maxHeight = 'calc(100dvh - 24px)';
+    panel.style.borderRadius = '22px';
+    panel.style.boxShadow = '0 22px 70px rgba(0,0,0,.68)';
+    frame.style.width = '100%';
+    frame.style.height = '100%';
+    if (phoneBtn) {
+      phoneBtn.textContent = '▣';
+      phoneBtn.title = 'Kompakts izmērs';
+      phoneBtn.setAttribute('aria-label', 'Kompakts izmērs');
+    }
+    frame.src = href;
+    full.style.display = 'block';
+    full.setAttribute('aria-hidden', 'false');
+  };
+
+  window.closeLacitisFull = function closeLacitisFull() {
+    var full = document.getElementById('lacitisFull');
+    var frame = document.getElementById('lacitisFullFrame');
+    if (full) {
+      full.style.display = 'none';
+      full.setAttribute('aria-hidden', 'true');
+    }
+    if (frame) frame.src = 'about:blank';
+  };
+
+  window.toggleLacitisPhoneSize = function toggleLacitisPhoneSize() {
+    var frame = document.getElementById('lacitisFullFrame');
+    var panel = document.getElementById('lacitisFullPanel');
+    var phoneBtn = document.getElementById('lacitisPhoneBtn');
+    if (!frame || !panel) return;
+    var phone = panel.style.width.indexOf('430px') === -1;
+    if (phone) {
+      panel.style.left = '50%';
+      panel.style.top = '50%';
+      panel.style.transform = 'translate(-50%, -50%)';
+      panel.style.width = 'min(430px, calc(100vw - 24px))';
+      panel.style.height = 'min(760px, calc(100dvh - 44px))';
+      panel.style.maxWidth = 'calc(100vw - 24px)';
+      panel.style.maxHeight = 'calc(100dvh - 24px)';
+      if (phoneBtn) {
+        phoneBtn.textContent = '▢';
+        phoneBtn.title = 'Pilns izmērs';
+        phoneBtn.setAttribute('aria-label', 'Pilns izmērs');
+      }
+    } else {
+      panel.style.left = '50%';
+      panel.style.top = '50%';
+      panel.style.transform = 'translate(-50%, -50%)';
+      panel.style.width = 'min(1180px, calc(100vw - 44px))';
+      panel.style.height = 'min(820px, calc(100dvh - 44px))';
+      panel.style.maxWidth = 'calc(100vw - 24px)';
+      panel.style.maxHeight = 'calc(100dvh - 24px)';
+      if (phoneBtn) {
+        phoneBtn.textContent = '▣';
+        phoneBtn.title = 'Kompakts izmērs';
+        phoneBtn.setAttribute('aria-label', 'Kompakts izmērs');
+      }
+    }
+  };
+
+  window.addEventListener('message', function(e) {
+    if (!e.data) return;
+    if (e.data.type === 'lacitis_dezura_ready') {
+      window.__lacitisSheetReady = true;
+      try { console.log('[lacitis] embedded ready'); } catch (_e) {}
+      return;
+    }
+    if (e.data.type === 'lacitis_dezura_logout') {
+      try { console.log('[lacitis] logout handoff received'); } catch (_e) {}
+      window.closeLacitisFull();
+      window.closeLacitisSheet();
+      return;
+    }
+    if (e.data.type !== 'lacitis_dezura_login') return;
+    try { console.log('[lacitis] login handoff received', e.data.href); } catch (_e) {}
+    window.__lacitisSheetReady = true;
+    window.closeLacitisSheet();
+    var href = e.data.href || 'https://lacitis.pages.dev/?mode=dezura';
+    window.openLacitisFull(href);
+  });
+
+  window.addEventListener('resize', positionLacitisSheet);
+})();
 
 function toggleNsFromParent() {
   _nsOpen = !_nsOpen;
@@ -2697,7 +3055,7 @@ window.addEventListener('message', function(e) {
 
 <script>
 if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-  const MINKA_APP_VERSION = '2026.04.08.4';
+  const MINKA_APP_VERSION = '2026.06.08.1';
   const MINKA_VERSION_KEY = 'minka_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {

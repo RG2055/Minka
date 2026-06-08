@@ -2126,10 +2126,9 @@ function closeFullListModal() {
   function g_updateLive(force) {
     const now = new Date();
     if (document.hidden) return;
-    // Countdown timers (updateTimers) keep ticking every second for smooth HH:MM:SS.
-    // The expensive full-data rescan + progress-bar/gradient recompute only needs to
-    // run ~once a minute — the bar fill moves <0.01%/sec, so this is imperceptible.
-    if (!force && __minkaLastLiveHeavyPaint && (now - __minkaLastLiveHeavyPaint) < 60000) {
+    // Live progress bar restored to original polling: full update every second in
+    // normal mode; only weak machines (low-perf) throttle the heavy paint to 5s.
+    if (!force && __minkaCalendarLowPerf() && __minkaLastLiveHeavyPaint && (now - __minkaLastLiveHeavyPaint) < 5000) {
       updateTimers();
       return;
     }
@@ -2151,7 +2150,9 @@ function closeFullListModal() {
       g_renderMonth();
     }
 
-    const displayNow = getDisplayNowForDate(activeDateStr || g_todayStr, now);
+    // Shift progress bar is pinned to the CURRENT shift day (g_todayStr), not the
+    // calendar day you click. It only rolls over when a new night shift begins (08:00).
+    const displayNow = getDisplayNowForDate(g_todayStr, now);
 
     // Try to find the currently active shift among today's workers
     let activeEnd = null;
@@ -2196,9 +2197,9 @@ function closeFullListModal() {
 
     activeStops.sort((a, b) => a.end - b.end || a.name.localeCompare(b.name));
 
-    const splitPlan = (activeDateStr && activeDateStr === g_todayStr) ? getNightSplitPlan(activeDateStr) : null;
+    const splitPlan = getNightSplitPlan(g_todayStr);
 
-    const fixedShiftRange = getNightSplitBarRange(activeDateStr || g_todayStr);
+    const fixedShiftRange = getNightSplitBarRange(g_todayStr);
     if (fixedShiftRange) {
       activeStart = fixedShiftRange.start;
       activeEnd = fixedShiftRange.end;
@@ -2228,7 +2229,7 @@ function closeFullListModal() {
     const elapsed = Math.max(0, displayNow - activeStart);
     const pct = Math.max(0, Math.min(100, (elapsed / totalDur) * 100));
     const splitOverlay = splitPlan ? mapNightSplitToRange(splitPlan, activeStart, activeEnd) : null;
-    const splitBarRange = splitPlan ? getNightSplitBarRange(activeDateStr) : null;
+    const splitBarRange = splitPlan ? getNightSplitBarRange(g_todayStr) : null;
     const splitBarOverlay = (splitPlan && splitBarRange)
       ? mapNightSplitToRange(splitPlan, splitBarRange.start, splitBarRange.end)
       : null;
