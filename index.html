@@ -2651,6 +2651,17 @@ if (window.MutationObserver) {
 function openStatsFromDock() {
   var iframe = document.getElementById("calIframe");
   if (!iframe || !iframe.contentWindow) return;
+  // Toggle: if the stats modal is already open, a second press closes it.
+  try {
+    var idoc = iframe.contentDocument || iframe.contentWindow.document;
+    var modal = idoc && idoc.getElementById('stats-modal');
+    if (modal && modal.style.display && modal.style.display !== 'none') {
+      if (typeof iframe.contentWindow.closeStatsModal === 'function') iframe.contentWindow.closeStatsModal();
+      else { modal.style.display = 'none'; }
+      setBuddyUiFlag('stats', false);
+      return;
+    }
+  } catch (_e) {}
   setBuddyUiFlag('stats', true);
   try {
     var doc = iframe.contentDocument || iframe.contentWindow.document;
@@ -4138,7 +4149,8 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
   var hudBusyCheckTimer = null;
   var hudOverlapBusy = false;
   function rightPropActive(){
-    return [SCVS, BOTCVS, COFCVS, PCVS, BCVS].some(function(el){
+    // Every right-side prop that can overlap the NOGURUMS / coffee HUD.
+    return [SCVS, BOTCVS, COFCVS, PCVS, BCVS, PHCVS, LCVS].some(function(el){
       return el && el.style.display && el.style.display !== 'none';
     });
   }
@@ -4147,13 +4159,18 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
     syncHudBusy();
   }
   function syncHudBusy(){
-    var active = !!hudOverlapBusy;
+    // Hide the fatigue/coffee HUD whenever a prop is on screen (auto-detected)
+    // or a behavior explicitly flagged overlap — so the text never shows
+    // through a sliding prop animation.
+    var active = !!hudOverlapBusy || rightPropActive();
     W.classList.toggle('hud-busy', active);
-    if(active && !hudBusyCheckTimer){
+    // Keep polling while a prop is up OR a behavior is running, so the HUD
+    // reappears only once the prop is fully gone.
+    if((active || bhvBusy) && !hudBusyCheckTimer){
       hudBusyCheckTimer = setTimeout(function(){
         hudBusyCheckTimer = null;
         syncHudBusy();
-      }, 180);
+      }, 150);
     }
   }
   function drawHudBuddyFrame(frameCanvas){
@@ -4648,7 +4665,7 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
   }
 
   function runWhenFree(fn, tries){
-    if(!isSleeping&&!bhvBusy){ fn(); return; }
+    if(!isSleeping&&!bhvBusy){ fn(); syncHudBusy(); return; }
     if(tries>0) setTimeout(function(){ runWhenFree(fn, tries-1); },700);
   }
 
@@ -5169,8 +5186,8 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
   }
 
   // ── Sequential behavior playlist ──────────────────────────────────────
-  var SEQ_GAP_MS = 18000;
-  var SEQ_GAP_LOW_MS = 21000;
+  var SEQ_GAP_MS = 12000;
+  var SEQ_GAP_LOW_MS = 15000;
   var seqIndex = 0;
   var seqRunCount = 0;
   var lowSeqIndex = 0;
@@ -5238,7 +5255,9 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
       return;
     }
     seqRunCount++;
-    var useLightLowSeq = buddyPerfLow && (seqRunCount % 3 !== 0);
+    // Low-perf: every 2nd run is a full (varied) animation instead of every 3rd,
+    // so the fun prop animations show more often — gaps below keep the PC light.
+    var useLightLowSeq = buddyPerfLow && (seqRunCount % 2 !== 0);
     var item;
     if(useLightLowSeq){
       item = LOW_SEQ[lowSeqIndex % LOW_SEQ.length];
@@ -5248,7 +5267,10 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
       seqIndex++;
     }
     var ran = item.fn();
-    var gap = buddyPerfLow ? (SEQ_GAP_LOW_MS + Math.random()*9000) : SEQ_GAP_MS;
+    // Start the HUD-overlap poll so the fatigue/coffee text hides while this
+    // behavior's prop is on screen (and reappears once it's gone).
+    syncHudBusy();
+    var gap = buddyPerfLow ? (SEQ_GAP_LOW_MS + Math.random()*5000) : SEQ_GAP_MS;
     scheduleSeq(ran === false ? (buddyPerfLow ? 6500 : 1000) : item.dur + gap);
   }
 
