@@ -5,6 +5,7 @@ test-results/
 *.orig
 
 cloudflare/phones.import.sql
+cloudflare/coffee-api/.wrangler/
 
 .DS_Store
 Thumbs.db

@@ -1,0 +1,8 @@
+name = "minka-coffee-api"
+main = "src/index.js"
+compatibility_date = "2026-06-09"
+
+[[d1_databases]]
+binding = "COFFEE_DB"
+database_name = "minka-coffee-db"
+database_id = "c3a19953-62d0-4aeb-9f2d-0223f83b7152"

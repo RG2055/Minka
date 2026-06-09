@@ -283,7 +283,25 @@
   function updateCardEmoji(card, name) {
     var emoji = _data[name] || null;
     var shiftIcons = card.querySelector('.shift-icons');
+    var midEl = card.querySelector('.mk-mid-person-emoji');
+    var statusRail = card.querySelector('.mk-mid-status-icons');
     var el = card.querySelector('.mk-emoji-badge');
+
+    if (statusRail) {
+      if (emoji) {
+        if (!midEl) {
+          midEl = document.createElement('span');
+          midEl.className = 'mk-mid-person-emoji';
+          midEl.setAttribute('data-mk-emoji-click', '1');
+          statusRail.insertBefore(midEl, statusRail.firstChild);
+        }
+        midEl.textContent = emoji;
+      } else if (midEl) {
+        midEl.remove();
+      }
+      if (shiftIcons) shiftIcons.style.display = '';
+      return;
+    }
 
     if (!emoji) {
       if (el) el.remove();
@@ -331,13 +349,27 @@
       if (_hookedCards.has(card)) return;
       _hookedCards.add(card);
       card.style.position = 'relative';
-      var btn = document.createElement('button');
-      btn.className = 'mk-emoji-edit-btn';
-      btn.title = 'Mainīt emoji';
-      btn.innerHTML = '✨';
-      btn.setAttribute('data-mk-edit', '1');
-      btn.style.cssText = 'position:absolute;bottom:22px;right:4px;z-index:10;';
-      card.appendChild(btn);
+      var btn = card.querySelector('.mk-emoji-edit-btn');
+      if (!btn) {
+        btn = document.createElement('button');
+        btn.className = 'mk-emoji-edit-btn';
+        btn.title = 'Mainīt emoji';
+        btn.innerHTML = '✨';
+        btn.setAttribute('data-mk-edit', '1');
+        if (card.classList.contains('mk-mid-card')) {
+          var rail = card.querySelector('.mk-mid-status-icons');
+          if (rail) {
+            btn.className += ' mk-mid-emoji-edit';
+            rail.appendChild(btn);
+          } else {
+            btn.style.cssText = 'position:absolute;bottom:22px;right:4px;z-index:10;';
+            card.appendChild(btn);
+          }
+        } else {
+          btn.style.cssText = 'position:absolute;bottom:22px;right:4px;z-index:10;';
+          card.appendChild(btn);
+        }
+      }
       updateCardEmoji(card, card.getAttribute('data-worker'));
 
       // No hover animation here: emoji updates stay static for low CPU/GPU usage.
