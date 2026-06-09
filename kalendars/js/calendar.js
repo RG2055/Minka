@@ -3396,6 +3396,191 @@ function closeFullListModal() {
       return total;
     }
 
+    const coffeeStoreKey = 'minkaCoffeeCountsV1';
+
+    function getCoffeeStore() {
+      try {
+        return JSON.parse(localStorage.getItem(coffeeStoreKey) || '{}') || {};
+      } catch(e) {
+        return {};
+      }
+    }
+
+    function saveCoffeeStore(data) {
+      try {
+        localStorage.setItem(coffeeStoreKey, JSON.stringify(data || {}));
+      } catch(e) {}
+    }
+
+    function getCoffeeDayKey() {
+      return activeDateStr || window.__activeDateStr || 'unknown';
+    }
+
+    function getCoffeePersonKey(name) {
+      return String(name || '').trim().toLocaleLowerCase('lv-LV');
+    }
+
+    function getCoffeeCount(name) {
+      const day = getCoffeeDayKey();
+      const key = getCoffeePersonKey(name);
+      const data = getCoffeeStore();
+      return Math.max(0, Number(data && data[day] && data[day][key]) || 0);
+    }
+
+    function setCoffeeCount(name, count) {
+      const day = getCoffeeDayKey();
+      const key = getCoffeePersonKey(name);
+      if (!key) return 0;
+      const data = getCoffeeStore();
+      if (!data[day]) data[day] = {};
+      data[day][key] = Math.max(0, Math.min(999, Number(count) || 0));
+      saveCoffeeStore(data);
+      return data[day][key];
+    }
+
+    function getCoffeeApiBase() {
+      return String(window.MINKA_COFFEE_API_BASE || 'https://minka-coffee-api.gamernr1elite.workers.dev').replace(/\/+$/, '');
+    }
+
+    function applyCoffeeCounts(day, counts) {
+      if (!day || !counts || typeof counts !== 'object') return;
+      const data = getCoffeeStore();
+      if (!data[day]) data[day] = {};
+      Object.keys(counts).forEach(name => {
+        const key = getCoffeePersonKey(name);
+        if (!key) return;
+        data[day][key] = Math.max(0, Math.min(999, Number(counts[name]) || 0));
+      });
+      saveCoffeeStore(data);
+    }
+
+    function refreshVisibleCoffeeRows(day) {
+      if (day && day !== getCoffeeDayKey()) return;
+      document.querySelectorAll('#grafiks-list.grid-view .mk-mid-card[data-worker]').forEach(card => {
+        updateCoffeeRow(card, card.getAttribute('data-worker') || '');
+      });
+      try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(e) {}
+    }
+
+    function getCoffeeSyncState() {
+      if (!window.__minkaCoffeeSync) {
+        window.__minkaCoffeeSync = { loadedDays: Object.create(null), loadingDays: Object.create(null) };
+      }
+      return window.__minkaCoffeeSync;
+    }
+
+    function syncCoffeeDay() {
+      const day = getCoffeeDayKey();
+      if (!day || day === 'unknown') return;
+      const state = getCoffeeSyncState();
+      if (state.loadedDays[day] || state.loadingDays[day]) return;
+      state.loadingDays[day] = true;
+      fetch(getCoffeeApiBase() + '/api/coffee?date=' + encodeURIComponent(day), { cache: 'no-store' })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (!data || !data.ok || data.date !== day) return;
+          applyCoffeeCounts(day, data.counts || {});
+          state.loadedDays[day] = true;
+          refreshVisibleCoffeeRows(day);
+        })
+        .catch(function(){})
+        .finally(() => { delete state.loadingDays[day]; });
+    }
+
+    function postCoffeeDelta(name, delta, card) {
+      const day = getCoffeeDayKey();
+      if (!day || day === 'unknown' || !name) return;
+      fetch(getCoffeeApiBase() + '/api/coffee', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        cache: 'no-store',
+        body: JSON.stringify({ date: day, worker: name, delta: delta })
+      })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (!data || !data.ok || data.date !== day || data.worker !== name) return;
+          setCoffeeCount(name, data.count);
+          updateCoffeeRow(card, name);
+          try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(_e) {}
+        })
+        .catch(function(){});
+    }
+
+    function buildCoffeeCup(mode) {
+      const filled = mode !== 'hint';
+      const body = filled ? '#c8842a' : 'rgba(160,166,184,.28)';
+      const crema = filled ? '#f0b860' : 'rgba(160,166,184,.24)';
+      return `<svg class="mk-coffee-cup${filled ? ' filled' : ' hint'}" width="13" height="13" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+        <rect x="3" y="4" width="8" height="8" fill="${body}"></rect>
+        <rect x="4" y="12" width="6" height="1" fill="${body}"></rect>
+        <rect x="11" y="5" width="2" height="1" fill="${body}"></rect>
+        <rect x="13" y="5" width="1" height="4" fill="${body}"></rect>
+        <rect x="11" y="8" width="2" height="1" fill="${body}"></rect>
+        <rect x="4" y="5" width="6" height="1" fill="${crema}"></rect>
+      </svg>`;
+    }
+
+    function buildCoffeeCups(count) {
+      const total = Math.max(0, Number(count) || 0);
+      const visible = Math.min(total, 6);
+      if (!visible) return buildCoffeeCup('hint');
+      return Array.from({ length: visible }, () => {
+        return buildCoffeeCup('filled');
+      }).join('');
+    }
+
+    function buildCoffeeRow(name) {
+      const count = getCoffeeCount(name);
+      const safeName = escapeHtml(name || '');
+      const overflow = Math.max(0, count - 6);
+      const buttonLabel = count ? String(count) : '+';
+      return `
+        <div class="mk-mid-coffee" data-coffee-name="${safeName}">
+          <span class="mk-coffee-lbl">KAFIJA</span>
+          <div class="mk-coffee-cups">${buildCoffeeCups(count)}</div>
+          ${overflow ? `<span class="mk-coffee-count">+${overflow}</span>` : ''}
+          <button class="mk-coffee-add" type="button" aria-label="Pievienot kafiju" title="Pievienot kafiju">
+            <span class="mk-coffee-plus">+</span>${buildCoffeeCup('filled')}<span class="mk-coffee-num">${count ? String(count) : ''}</span>
+          </button>
+        </div>`;
+    }
+
+    function updateCoffeeRow(card, name) {
+      const row = card && card.querySelector('.mk-mid-coffee');
+      if (!row) return;
+      const count = getCoffeeCount(name);
+      const cups = row.querySelector('.mk-coffee-cups');
+      const total = row.querySelector('.mk-coffee-count');
+      const numEl = row.querySelector('.mk-coffee-num');
+      if (cups) cups.innerHTML = buildCoffeeCups(count);
+      // "+" stays fixed on the left; the number on the right reflects the count.
+      if (numEl) numEl.textContent = count ? String(count) : '';
+      const overflow = Math.max(0, count - 6);
+      if (total) total.textContent = overflow ? '+' + overflow : '';
+      if (!total && overflow) {
+        const countEl = document.createElement('span');
+        countEl.className = 'mk-coffee-count';
+        countEl.textContent = '+' + overflow;
+        row.insertBefore(countEl, row.querySelector('.mk-coffee-add'));
+      } else if (total && !overflow) {
+        total.remove();
+      }
+    }
+
+    window.__minkaGetCoffeeCountForName = function(name) {
+      return getCoffeeCount(name);
+    };
+    window.__minkaGetCoffeeTotalForNames = function(names) {
+      const seen = new Set();
+      return (Array.isArray(names) ? names : []).reduce((sum, name) => {
+        const n = String(name || '').trim();
+        const key = getCoffeePersonKey(n);
+        if (!key || seen.has(key)) return sum;
+        seen.add(key);
+        return sum + getCoffeeCount(n);
+      }, 0);
+    };
+
     function buildFatigueSegments(score) {
       const filled = Math.max(0, Math.min(10, Math.ceil((Number(score) || 0) / 10)));
       return Array.from({ length: 10 }, (_, i) => {
@@ -3445,7 +3630,10 @@ function closeFullListModal() {
           <div class="mk-mid-top">
             <div class="mk-mid-left">
               <div class="mk-mid-initials">${initials}</div>
-              ${personEmoji ? `<div class="mk-mid-status-icons"><span class="mk-mid-person-emoji">${personEmoji}</span></div>` : ''}
+              <div class="mk-mid-status-icons">
+                ${personEmoji ? `<span class="mk-mid-person-emoji" data-mk-emoji-click="1">${personEmoji}</span>` : ''}
+                <button class="mk-emoji-edit-btn mk-mid-emoji-edit" type="button" title="Mainīt emoji" data-mk-edit="1">✨</button>
+              </div>
             </div>
             <div class="mk-mid-month">
               <div class="mk-mid-month-num">${monthHours || parseShiftHours(w.shift) || 0}h</div>
@@ -3461,11 +3649,25 @@ function closeFullListModal() {
               <span class="name-sub">${surname}</span>
             </div>
           </div>
-          <div class="card-fat-row mk-mid-fatigue">
-            <div class="mk-mid-fat-segs">${buildFatigueSegments(fatigueScore)}</div>
-            <span class="fat-pct mk-mid-fat-pct">${hasFatigueScore ? fatigueScore + '%' : ''}</span>
+          <div class="mk-mid-bottom">
+            <div class="card-fat-row mk-mid-fatigue">
+              <div class="mk-mid-fat-segs">${buildFatigueSegments(fatigueScore)}</div>
+              <span class="fat-pct mk-mid-fat-pct">${hasFatigueScore ? fatigueScore + '%' : ''}</span>
+            </div>
+            ${buildCoffeeRow(w.name)}
           </div>`;
 
+        const coffeeBtn = card.querySelector('.mk-coffee-add');
+        if (coffeeBtn) {
+          coffeeBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setCoffeeCount(w.name, getCoffeeCount(w.name) + 1);
+            updateCoffeeRow(card, w.name);
+            try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(_e) {}
+            postCoffeeDelta(w.name, 1, card);
+          };
+        }
         return card;
       } else {
         const row = document.createElement('div');
@@ -3535,6 +3737,8 @@ function closeFullListModal() {
           .forEach(w => { container.appendChild(buildCard(w, false)); });
       }
     }
+
+    syncCoffeeDay();
   }
 
   function g_adjustDutyNameFontSize() {
@@ -3708,8 +3912,45 @@ function closeFullListModal() {
         nextRg: Array.isArray(state && state.nextRg) ? state.nextRg : [],
         nextRd: Array.isArray(state && state.nextRd) ? state.nextRd : [],
         fatigue: Array.isArray(fatigue) ? fatigue : [],
-        rgHeartColors: Array.isArray(rgHeartColors) ? rgHeartColors : []
+        rgHeartColors: Array.isArray(rgHeartColors) ? rgHeartColors : [],
+        coffeeTotal: 0,
+        shiftFatigue: 0
       };
+
+      try {
+        const activeCoffeeNames = [];
+        const seenCoffee = new Set();
+        [ ...(payload.rg || []), ...(payload.rd || []) ].forEach(w => {
+          if (!w || w.done) return;
+          const n = String(w.name || '').trim();
+          const k = n.toLowerCase();
+          if (!n || seenCoffee.has(k)) return;
+          seenCoffee.add(k);
+          activeCoffeeNames.push(n);
+        });
+        if (typeof window.__minkaGetCoffeeTotalForNames === 'function') {
+          payload.coffeeTotal = Math.max(0, Number(window.__minkaGetCoffeeTotalForNames(activeCoffeeNames)) || 0);
+        }
+        const fatigueByName = {};
+        (payload.fatigue || []).forEach(f => {
+          const k = String((f && f.fullName) || '').trim().toLowerCase();
+          if (k) fatigueByName[k] = Math.max(0, Math.min(100, Number(f.score) || 0));
+        });
+        const activeRgNames = [];
+        const seenRg = new Set();
+        (payload.rg || []).forEach(w => {
+          if (!w || w.done) return;
+          const n = String(w.name || '').trim();
+          const k = n.toLowerCase();
+          if (!n || seenRg.has(k)) return;
+          seenRg.add(k);
+          activeRgNames.push(n);
+        });
+        const scores = activeRgNames.map(n => fatigueByName[n.toLowerCase()]).filter(v => Number.isFinite(v));
+        if (scores.length) {
+          payload.shiftFatigue = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+        }
+      } catch(e) {}
 
       // Dedupe repeated bridge posts (fatigue/card observers can fire multiple times for same state)
       try {
@@ -3721,7 +3962,9 @@ function closeFullListModal() {
           nrg: payload.nextRg || [],
           nrd: payload.nextRd || [],
           f: (payload.fatigue || []).map(x => [x && x.fullName, x && x.score]),
-          hc: (payload.rgHeartColors || []).map(x => [x && x.fullName, x && x.score, x && x.color])
+          hc: (payload.rgHeartColors || []).map(x => [x && x.fullName, x && x.score, x && x.color]),
+          cf: payload.coffeeTotal,
+          sf: payload.shiftFatigue
         });
         if (digest && digest === window.__minkaLastAssistantBridgeDigest) return;
         window.__minkaLastAssistantBridgeDigest = digest;
