@@ -56,6 +56,19 @@ export default {
     }
 
     if (request.method === 'GET') {
+      // All-time totals per worker (used by the stats leaderboard) — sums every
+      // day in D1 so past days logged on other devices are included.
+      if (url.searchParams.get('totals')) {
+        const rows = await env.COFFEE_DB
+          .prepare('SELECT worker, SUM(count) AS total FROM coffee_counts GROUP BY worker')
+          .all();
+        const totals = {};
+        for (const row of rows.results || []) {
+          totals[row.worker] = Math.max(0, Number(row.total) || 0);
+        }
+        return json({ ok: true, totals });
+      }
+
       const date = cleanDate(url.searchParams.get('date'));
       if (!date) return json({ ok: false, error: 'date required' }, 400);
 
