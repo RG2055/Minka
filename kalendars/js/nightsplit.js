@@ -1071,15 +1071,18 @@
       return {line:path, area:area};
     }
 
-    // SVG background per theme — unique IDs via card index to avoid conflicts
+    // SVG background per theme — unique IDs via card index to avoid conflicts.
+    // No SVG filters here: blur filters re-rasterize on every animation frame
+    // (very expensive on integrated GPUs), so all soft glows use radial
+    // gradients and line "glow" is a wide translucent under-stroke instead.
     function _nightSvg(theme, idx, workerName, accent){
       var u='nsc'+idx;
       var d='', bg='', deco='', gr='';
-      // Shared glow filter for graph lines — renders line twice: blurred under + crisp on top
-      var gf='<filter id="'+u+'-gl" x="-10%" y="-80%" width="120%" height="260%" color-interpolation-filters="sRGB">'
-        +'<feGaussianBlur in="SourceGraphic" stdDeviation="2" result="b"/>'
-        +'<feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>'
-        +'</filter>';
+      // Cheap glow: wide soft stroke under + crisp stroke on top (no filter)
+      function glowLine(path, color, w, op){
+        return '<path d="'+path+'" fill="none" stroke="'+color+'" stroke-width="'+(w*3)+'" opacity="'+(op*0.28).toFixed(2)+'" stroke-linecap="round"/>'
+          +'<path d="'+path+'" fill="none" stroke="'+color+'" stroke-width="'+w+'" opacity="'+op+'" stroke-linecap="round"/>';
+      }
 
       if(theme==='moon'){
         d='<linearGradient id="'+u+'-bg" x1="10%" y1="0%" x2="0%" y2="100%">'
@@ -1090,8 +1093,7 @@
           +'<stop offset="60%" stop-color="#9a8cff" stop-opacity="0.12"/>'
           +'<stop offset="100%" stop-color="#9a8cff" stop-opacity="0"/>'
           +'</linearGradient>'
-          +'<filter id="'+u+'-mf"><feGaussianBlur stdDeviation="12"/></filter>'
-          +gf;
+          +'<radialGradient id="'+u+'-halo"><stop offset="0%" stop-color="#d0c8ff" stop-opacity="0.16"/><stop offset="55%" stop-color="#b0a0ff" stop-opacity="0.07"/><stop offset="100%" stop-color="#b0a0ff" stop-opacity="0"/></radialGradient>';
         bg='url(#'+u+'-bg)';
         deco=// Nebula wash
              '<ellipse cx="90" cy="80" rx="110" ry="60" fill="#7050d0" opacity="0.06"/>'
@@ -1103,14 +1105,13 @@
             +'<circle cx="155" cy="26" r="1.1" fill="#fff" opacity="0.55"/>'
             +'<circle cx="60"  cy="52" r="0.8" fill="#fff" opacity="0.3"/>'
             +'</g>'
-            // Moon — grouped for CSS float animation
+            // Moon — grouped for CSS float animation (gradient halo, no blur filter)
             +'<g class="ns-moon-float">'
-            +'<circle cx="238" cy="36" r="64" fill="#b0a0ff" opacity="0.07" filter="url(#'+u+'-mf)"/>'
-            +'<circle cx="238" cy="36" r="40" fill="#d0c8ff" opacity="0.1"  filter="url(#'+u+'-mf)"/>'
+            +'<circle cx="238" cy="36" r="64" fill="url(#'+u+'-halo)"/>'
             +_moonSVG(238,36,27,_moonPhase(window.__activeDateStr))
             +'</g>';
         gr='<path d="M10 148 Q55 108 115 126 T232 134 L232 182 L10 182 Z" fill="url(#'+u+'-gr)"/>'
-          +'<path d="M10 148 Q55 108 115 126 T232 134" fill="none" stroke="#9a8cff" stroke-width="2" filter="url(#'+u+'-gl)" opacity="0.9"/>';
+          +glowLine('M10 148 Q55 108 115 126 T232 134', '#9a8cff', 2, 0.9);
 
       } else if(theme==='starry'){
         d='<linearGradient id="'+u+'-bg" x1="5%" y1="0%" x2="0%" y2="100%">'
@@ -1119,8 +1120,7 @@
           +'<linearGradient id="'+u+'-gr" x1="0%" y1="0%" x2="0%" y2="100%">'
           +'<stop offset="0%" stop-color="#f0e68c" stop-opacity="0.4"/>'
           +'<stop offset="100%" stop-color="#f0e68c" stop-opacity="0"/>'
-          +'</linearGradient>'
-          +gf;
+          +'</linearGradient>';
         bg='url(#'+u+'-bg)';
         deco=// Milky way subtle diagonal band
              '<ellipse cx="150" cy="55" rx="160" ry="28" fill="#5070c0" opacity="0.055" transform="rotate(-8,150,55)"/>'
@@ -1141,7 +1141,8 @@
             +'<circle cx="240" cy="55" r="1.1" fill="#ffe0a0" opacity="0.6"/>'
             +'</g>'; // warm tinted star
         gr='<path d="M10 155 Q42 126 82 144 T152 128 T222 146 L222 182 L10 182 Z" fill="url(#'+u+'-gr)"/>'
-          +'<path d="M10 155 Q42 126 82 144 T152 128 T222 146" fill="none" stroke="#f0e68c" stroke-width="1.8" stroke-dasharray="5,3" filter="url(#'+u+'-gl)" opacity="0.85"/>';
+          +'<path d="M10 155 Q42 126 82 144 T152 128 T222 146" fill="none" stroke="#f0e68c" stroke-width="5.4" opacity="0.22" stroke-linecap="round"/>'
+          +'<path d="M10 155 Q42 126 82 144 T152 128 T222 146" fill="none" stroke="#f0e68c" stroke-width="1.8" stroke-dasharray="5,3" opacity="0.85"/>';
 
       } else if(theme==='horizon'){
         d='<linearGradient id="'+u+'-bg" x1="5%" y1="0%" x2="0%" y2="100%">'
@@ -1156,19 +1157,16 @@
           +'<stop offset="60%" stop-color="#ffb380" stop-opacity="0.1"/>'
           +'<stop offset="100%" stop-color="#ffb380" stop-opacity="0"/>'
           +'</linearGradient>'
-          +'<filter id="'+u+'-mf"><feGaussianBlur stdDeviation="14"/></filter>'
-          +gf;
+          +'<radialGradient id="'+u+'-hg"><stop offset="0%" stop-color="#ffaa40" stop-opacity="0.2"/><stop offset="45%" stop-color="#ff7820" stop-opacity="0.12"/><stop offset="100%" stop-color="#ff5500" stop-opacity="0"/></radialGradient>';
         bg='url(#'+u+'-bg)';
         deco=// Warm atmosphere wash from bottom
              '<rect x="0" y="0" width="280" height="182" fill="url(#'+u+'-atm)"/>'
-            // Layered horizon glow — 3 ellipses for depth
-            +'<ellipse cx="140" cy="195" rx="180" ry="65" fill="#ff5500" opacity="0.12" filter="url(#'+u+'-mf)"/>'
-            +'<ellipse cx="140" cy="190" rx="130" ry="44" fill="#ff7820" opacity="0.14" filter="url(#'+u+'-mf)"/>'
-            +'<ellipse cx="140" cy="184" rx="80"  ry="24" fill="#ffaa40" opacity="0.1"  filter="url(#'+u+'-mf)"/>'
+            // Horizon glow — single gradient ellipse (no blur filter)
+            +'<ellipse cx="140" cy="192" rx="180" ry="62" fill="url(#'+u+'-hg)"/>'
             // Subtle horizon line
             +'<line x1="0" y1="155" x2="280" y2="155" stroke="#ff8030" stroke-width="0.6" opacity="0.2"/>';
         gr='<path d="M10 140 C50 140 68 162 108 154 C148 146 172 142 232 152 L232 182 L10 182 Z" fill="url(#'+u+'-gr)"/>'
-          +'<path d="M10 140 C50 140 68 162 108 154 C148 146 172 142 232 152" fill="none" stroke="#ffb380" stroke-width="2" filter="url(#'+u+'-gl)" opacity="0.9"/>';
+          +glowLine('M10 140 C50 140 68 162 108 154 C148 146 172 142 232 152', '#ffb380', 2, 0.9);
 
       } else { // sunrise
         d='<linearGradient id="'+u+'-bg" x1="5%" y1="0%" x2="0%" y2="100%">'
@@ -1184,18 +1182,15 @@
           +'<stop offset="60%" stop-color="#ff8ca3" stop-opacity="0.1"/>'
           +'<stop offset="100%" stop-color="#ff8ca3" stop-opacity="0"/>'
           +'</linearGradient>'
-          +'<filter id="'+u+'-sf"><feGaussianBlur stdDeviation="18"/></filter>'
-          +'<filter id="'+u+'-sm"><feGaussianBlur stdDeviation="8"/></filter>'
-          +gf;
+          +'<radialGradient id="'+u+'-sun"><stop offset="0%" stop-color="#ffe060" stop-opacity="0.5"/><stop offset="42%" stop-color="#ffcc40" stop-opacity="0.18"/><stop offset="100%" stop-color="#ffaa20" stop-opacity="0"/></radialGradient>';
         bg='url(#'+u+'-bg)';
         deco=// Dawn atmosphere radial wash
              '<rect x="0" y="0" width="280" height="182" fill="url(#'+u+'-sg)"/>'
-            // Sun — 3 glow layers for depth + solid disc
-            +'<circle cx="256" cy="172" r="88"  fill="#ffaa20" opacity="0.1"  filter="url(#'+u+'-sf)"/>'
-            +'<circle cx="256" cy="172" r="56"  fill="#ffcc40" opacity="0.2"  filter="url(#'+u+'-sm)"/>'
-            +'<circle cx="256" cy="172" r="36"  fill="#ffe060" opacity="0.82"/>';
+            // Sun — gradient halo + solid disc (no blur filters)
+            +'<circle cx="256" cy="172" r="88" fill="url(#'+u+'-sun)"/>'
+            +'<circle cx="256" cy="172" r="36" fill="#ffe060" opacity="0.82"/>';
         gr='<path d="M10 158 L36 146 L62 152 L88 132 L114 143 L140 118 L166 130 L192 108 L218 122 L232 98 L232 182 L10 182 Z" fill="url(#'+u+'-gr)"/>'
-          +'<path d="M10 158 L36 146 L62 152 L88 132 L114 143 L140 118 L166 130 L192 108 L218 122 L232 98" fill="none" stroke="#ff8ca3" stroke-width="2" filter="url(#'+u+'-gl)" opacity="0.9"/>';
+          +glowLine('M10 158 L36 146 L62 152 L88 132 L114 143 L140 118 L166 130 L192 108 L218 122 L232 98', '#ff8ca3', 2, 0.9);
       }
       // Embed real fatigue sparkline — x:10–262, y:118–175 (57px tall band)
       var spk=_sparkPaths(workerName, u, 10, 118, 252, 57);
@@ -1231,9 +1226,11 @@
       var theme=_nightTheme(i, st.sl.length, s.s, st.sl[0].s, st.sl[st.sl.length-1].e);
       var desc=_nightDescs[theme]||'';
       var checklist = lastSlotChecklist(i, st.sl.length);
+      var em=(window.MinkaEmoji&&window.MinkaEmoji.get)?(window.MinkaEmoji.get(s.w.name)||''):'';
       return '<div class="nsc-card-wrap" data-i="'+i+'">'
         +'<div class="nsc-full-card nsc-theme-'+theme+(rt.active?' nsc-active':'')+'" data-i="'+i+'" style="--nsc-accent:'+c.accent+';--nsc-grad:'+gradCss+'">'
         +'<div class="nsc-deco" aria-hidden="true">'+_nightSvg(theme,i,s.w.name,c.accent)+'</div>'
+        +(em?'<div class="nsc-bg-emoji" aria-hidden="true">'+em+'</div>':'')
         +'<div class="nsc-full-inner">'
         +'<div class="nsc-full-top">'
         +'<span class="nsc-full-name">'+nm+'</span>'

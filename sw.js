@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.4.00-coffee-buddy37';
+const CACHE = 'minka-4.4.00-coffee-buddy40';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
@@ -123,17 +123,24 @@ self.addEventListener('fetch', event => {
     url.endsWith('.css');
 
   if (isCodeAsset) {
+    // Stale-while-revalidate: serve from cache instantly (fast PWA wake even on
+    // slow/AV-scanned networks), refresh the cache in the background. New
+    // deploys still apply immediately via the CACHE version bump (precache on
+    // install + old-cache cleanup on activate).
     event.respondWith(
-      fetch(request)
-        .then(response => {
-          safeCachePut(request, response.clone());
-          return response;
-        })
-        .catch(async () => {
-          const cached = await caches.match(request);
-          if (cached) return cached;
-          return new Response('', { status: 503, statusText: 'Offline' });
-        })
+      caches.match(request).then(cached => {
+        const network = fetch(request)
+          .then(response => {
+            safeCachePut(request, response.clone());
+            return response;
+          })
+          .catch(() => cached || new Response('', { status: 503, statusText: 'Offline' }));
+        if (cached) {
+          event.waitUntil(network.catch(() => {}));
+          return cached;
+        }
+        return network;
+      })
     );
     return;
   }

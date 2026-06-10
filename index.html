@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="lv">
 <head>
+<!-- First paint must be dark: this runs before any blocking script/CSS, so a
+     PWA wake after tab discard never flashes a white screen. -->
+<style>html{background:#060b13;}body{background:#060b13;}</style>
 <script>
 (function() {
   var API_BASE = 'https://minka-api.gamernr1elite.workers.dev';
@@ -22,7 +25,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260609coffee-buddy37';
+  var CALENDAR_BUILD = '20260609coffee-buddy40';
 
   function withCalendarBuild(url) {
     try {
@@ -436,7 +439,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260609coffee-buddy37" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260609coffee-buddy37" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260609coffee-buddy40" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260609coffee-buddy40" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->

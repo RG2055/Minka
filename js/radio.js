@@ -2300,7 +2300,9 @@ function draw(ts = 0) {
     const radioWinEl = document.getElementById('radioWindow');
     const shouldSleep = document.hidden || audio.paused || !analyser || (radioWinEl && getComputedStyle(radioWinEl).display === 'none');
     if (shouldSleep) {
-        setTimeout(() => requestAnimationFrame(draw), 220);
+        // Idle poll: the 'play' listener restarts draw() instantly, so this
+        // only needs to catch visibility changes — 500ms is plenty.
+        setTimeout(() => requestAnimationFrame(draw), 500);
         return;
     }
     requestAnimationFrame(draw);

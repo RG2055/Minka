@@ -1,6 +1,8 @@
 ﻿<!DOCTYPE html>
 <html lang="lv">
 <head>
+<!-- Dark first paint: prevents white flash on PWA wake/reload. -->
+<style>html{background:#060b13;}body{background:#060b13;}</style>
 <script>
 (function() {
   var API_BASE = 'https://minka-api.gamernr1elite.workers.dev';
@@ -755,7 +757,7 @@ function _mkToast(msg, type) {
 <script src="js/calendar.js?v=20260609coffee-buddy37"></script>
 <script src="js/calendar_extras_v4.js?v=20260609coffee-buddy37"></script>
 <script src="js/fatigue.js?v=20260318d"></script>
-<script src="js/nightsplit.js?v=20260520a" defer></script>
+<script src="js/nightsplit.js?v=20260609coffee-buddy39" defer></script>
 <script src="js/design_v1.js" defer></script>
 <script src="js/theme.js" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
@@ -3279,11 +3281,13 @@ function nextNews(){
       </div>`;
     }
 
-    wrap.innerHTML = renderTable(radiografers, '● Radiogrāferi', '#00ff7f') +
-                     renderTable(radiologi, '● Radiologi', '#a78bfa');
-
-    if (window.MinkaLevels) {
-      setTimeout(function() { window.MinkaLevels.injectIntoStats(); }, 0);
+    // Render the gamified leaderboard synchronously so the legacy table never
+    // flashes. The plain table below is only a fallback if levels.js failed.
+    if (window.MinkaLevels && typeof window.MinkaLevels.injectIntoStats === 'function') {
+      window.MinkaLevels.injectIntoStats();
+    } else {
+      wrap.innerHTML = renderTable(radiografers, '● Radiogrāferi', '#00ff7f') +
+                       renderTable(radiologi, '● Radiologi', '#a78bfa');
     }
     modal.style.display = 'flex';
     try { window.parent && window.parent.postMessage({ type: 'mk_stats_opened' }, '*'); } catch(_e) {}
@@ -5484,6 +5488,22 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
   display: block !important;
 }
 .nsc-full-inner { position: relative !important; z-index: 1 !important; }
+/* Subtle worker emoji watermark — up in the card's "sky", plain text glyph */
+.nsc-bg-emoji {
+  position: absolute !important;
+  right: 52px !important;
+  top: 16px !important;
+  z-index: 0 !important;
+  font-size: 64px !important;
+  line-height: 1 !important;
+  opacity: .09 !important;
+  transform: rotate(-8deg) !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+/* Headroom for the hover lift (translateY(-5px)) — bundle.css row has
+   overflow-x:auto which otherwise clips the raised card's top edge */
+.ns-cards-row { padding-top: 8px !important; margin-top: -8px !important; }
 /* Override default card bg — SVG provides the background */
 .nsc-theme-moon    { background: transparent !important; border-color: rgba(154,140,255,0.22) !important; }
 .nsc-theme-starry  { background: transparent !important; border-color: rgba(240,230,140,0.18) !important; }
@@ -7774,7 +7794,13 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
   animation: ns-float-moon 4.2s ease-in-out infinite;
   transform-box: fill-box;
   transform-origin: center;
-  filter: drop-shadow(0 0 10px rgba(176,160,255,.45));
+  /* drop-shadow removed: animating a filtered group re-rasterizes every frame
+     (heavy on integrated GPUs) — the gradient halo in the SVG glows instead */
+}
+/* Weak machines: freeze the decorative star/moon animations entirely */
+html.mk-low-spec .nsc-deco .ns-stars circle,
+html.mk-low-spec .nsc-deco .ns-moon-float {
+  animation: none !important;
 }
 
 /* ── Timeline bar: slim + per-segment hover expand + time labels ── */
