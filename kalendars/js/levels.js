@@ -11,11 +11,11 @@
     { lvl: 2, xp: 120, color: '#6b7280' },
     { lvl: 3, xp: 300, color: '#60a5fa' },
     { lvl: 4, xp: 600, color: '#60a5fa' },
-    { lvl: 5, xp: 1000, color: '#a78bfa' },
-    { lvl: 6, xp: 1500, color: '#a78bfa' },
+    { lvl: 5, xp: 1000, color: '#38bdf8' },
+    { lvl: 6, xp: 1500, color: '#38bdf8' },
     { lvl: 7, xp: 2200, color: '#f59e0b' },
     { lvl: 8, xp: 3200, color: '#f59e0b' },
-    { lvl: 9, xp: 4500, color: '#ec4899' },
+    { lvl: 9, xp: 4500, color: '#0ea5e9' },
     { lvl: 10, xp: 6500, color: '#fbbf24' }
   ];
 
@@ -196,11 +196,66 @@
     return counts;
   }
 
+  function _coffeeKey(name) {
+    return String(name || '').trim().toLocaleLowerCase('lv-LV');
+  }
+  var _coffeeApiFetchedAt = 0;
+  function _fetchCoffeeTotalsFromApi() {
+    // The coffee API stores every day in D1; localStorage only has days this
+    // device synced. Pull all-time totals so yesterday's coffees show up too.
+    var now = Date.now();
+    if (now - _coffeeApiFetchedAt < 60000) return;
+    _coffeeApiFetchedAt = now;
+    try {
+      var base = String(window.MINKA_COFFEE_API_BASE || 'https://minka-coffee-api.gamernr1elite.workers.dev').replace(/\/+$/, '');
+      fetch(base + '/api/coffee?totals=1')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (!d || !d.ok || !d.totals) return;
+          var t = {};
+          Object.keys(d.totals).forEach(function(k) {
+            t[_coffeeKey(k)] = Math.max(0, Number(d.totals[k]) || 0);
+          });
+          window.__mkCoffeeTotalsApi = t;
+          var m = document.getElementById('stats-modal');
+          if (m && m.style.display && m.style.display !== 'none') {
+            window.MinkaLevels.injectIntoStats();
+          }
+        })
+        .catch(function() {});
+    } catch (_e) {}
+  }
+  function _coffeeTotalsPerPerson() {
+    var totals = {};
+    try {
+      var data = JSON.parse(localStorage.getItem('minkaCoffeeCountsV1') || 'null');
+      if (data && typeof data === 'object') {
+        Object.keys(data).forEach(function(day) {
+          var dayObj = data[day];
+          if (!dayObj || typeof dayObj !== 'object') return;
+          Object.keys(dayObj).forEach(function(key) {
+            totals[key] = (totals[key] || 0) + (Number(dayObj[key]) || 0);
+          });
+        });
+      }
+    } catch (_e) {}
+    // Merge with server totals (authoritative across devices/days) — take the
+    // larger value per person so fresh local clicks aren't lost either.
+    var api = window.__mkCoffeeTotalsApi;
+    if (api) {
+      Object.keys(api).forEach(function(key) {
+        totals[key] = Math.max(totals[key] || 0, api[key]);
+      });
+    }
+    return totals;
+  }
+
   function buildAllTimeStats() {
     var store = window.__grafiksStore || {};
     var storeRad = window.__grafiksStoreRad || {};
     var workers = {};
     var bolusCounts = _bolusChangesPerPerson();
+    var coffeeTotals = _coffeeTotalsPerPerson();
 
     function processStore(src, isRad) {
       Object.values(src).forEach(function(monthArr) {
@@ -293,6 +348,11 @@
       var bolusBonus = bolusCount * 20;
       xp += bolusBonus;
 
+      var coffeeCount = coffeeTotals[_coffeeKey(ws.name)] || 0;
+      var coffeeBonus = coffeeCount * 5;
+      xp += coffeeBonus;
+
+      ws.coffeeTotal = coffeeCount;
       ws.xp = Math.round(xp);
       ws.levelData = getLevelData(ws.xp);
       ws.longestStreak = calcLongestStreak(ws.dates);
@@ -305,7 +365,9 @@
         holidays: ws.holidays * 30,
         load: loadBonus,
         bolus: bolusBonus,
-        bolusCount: bolusCount
+        bolusCount: bolusCount,
+        coffee: coffeeBonus,
+        coffeeCount: coffeeCount
       };
     });
 
@@ -365,20 +427,34 @@
     return workerStats;
   }
 
+  var INFO_RULES = [
+    { tag: 'Stundu bāze',     color: '#1fe091', desc: 'katra nostrādātā stunda = 2 XP' },
+    { tag: 'Nakts maiņa',     color: '#3f9bff', desc: 'katra nakts +15 XP (papildus stundām)' },
+    { tag: 'Diennakts maiņa', color: '#f5b73f', desc: 'katra 24h +25 XP' },
+    { tag: 'Dažādība',        color: '#23cdcf', desc: 'diena + nakts + 24h: +200 XP; divas kategorijas: +80 XP' },
+    { tag: 'Regularitāte',    color: '#b6e84a', desc: 'jo stabilāk katru nedēļu, jo vairāk XP (max +150)' },
+    { tag: 'Svētku maiņas',   color: '#fb8a4c', desc: 'katra svētku diena +30 XP' },
+    { tag: 'Komandas slodze', color: '#1fe091', desc: 'virs komandas vidējā papildus līdz +100 XP' },
+    { tag: 'Bolusa maiņa',    color: '#ff5c5c', desc: 'katra bolusa maiņa +20 XP' },
+    { tag: 'Kafija ☕',        color: '#fb8a4c', desc: 'katra kafija +5 XP' }
+  ];
+
   function buildInfoBox() {
-    return '<div style="position:relative;margin-bottom:14px;padding:12px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.10);border-radius:16px;backdrop-filter:blur(16px) saturate(135%);-webkit-backdrop-filter:blur(16px) saturate(135%);box-shadow:0 18px 40px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.06);">' +
-        '<div style="font-size:10px;font-weight:800;color:#a78bfa;margin-bottom:6px;letter-spacing:.06em;">ℹ KA TIEK SKAITITS LVL</div>' +
-        '<div style="font-size:9px;color:rgba(255,255,255,0.56);line-height:1.7;">' +
-          '<span style="color:#60a5fa;">Stundu baze</span> — katra nostradāta stunda = 2 XP<br>' +
-          '<span style="color:#c084fc;">Nakts maina</span> — katra nakts +15 XP (papildus stundam)<br>' +
-          '<span style="color:#fb923c;">Diennakts maina</span> — katra 24h +25 XP<br>' +
-          '<span style="color:#34d399;">Dazadiba</span> — diena + nakts + 24h: +200 XP; divas kategorijas: +80 XP<br>' +
-          '<span style="color:#fbbf24;">Regularitate</span> — jo stabilak katru nedelu, jo vairak XP (max +150)<br>' +
-          '<span style="color:#f472b6;">Svetku mainas</span> — katra svetku diena +30 XP<br>' +
-          '<span style="color:#a3e635;">Komandas slodze</span> — virs komandas videja papildus lidz +100 XP<br>' +
-          '<span style="color:#f87171;">Bolusa maina</span> — katra bolusa maina +20 XP<br>' +
-        '</div>' +
-        '<div style="font-size:8px;color:rgba(255,255,255,0.26);margin-top:6px;">Hover uz rindas redzams detalizets XP sadalijums</div>' +
+    var open = !!window.__mkStatsInfoOpen;
+    return '<div class="mk-stx-info' + (open ? '' : ' collapsed') + '" id="mk-stx-info">' +
+      '<div class="mk-stx-info-head" onclick="mkStatsInfoToggle()">' +
+        '<span class="dot"></span>' +
+        '<h2>Kā tiek skaitīts LVL</h2>' +
+        '<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>' +
+      '</div>' +
+      (open
+        ? '<div class="mk-stx-info-grid">' +
+            INFO_RULES.map(function(r) {
+              return '<div class="rule"><span class="tag" style="color:' + r.color + ';">' + r.tag + '</span><span class="desc">— ' + r.desc + '</span></div>';
+            }).join('') +
+          '</div>' +
+          '<div class="mk-stx-info-hint">Turi kursoru uz rindas, lai redzētu detalizētu XP sadalījumu.</div>'
+        : '') +
     '</div>';
   }
 
@@ -396,7 +472,7 @@
         '</td>' +
         '<td style="padding:7px 8px;text-align:center;font-size:12px;font-weight:800;color:#00ff7f;">' + w.totalHrs + 'h</td>' +
         '<td style="padding:7px 8px;text-align:center;font-size:11px;color:#60a5fa;">' + (w.d12 || '-') + '</td>' +
-        '<td style="padding:7px 8px;text-align:center;font-size:11px;color:#c084fc;">' + (w.n12 || '-') + '</td>' +
+        '<td style="padding:7px 8px;text-align:center;font-size:11px;color:#67e8f9;">' + (w.n12 || '-') + '</td>' +
         '<td style="padding:7px 8px;text-align:center;font-size:11px;color:#fb923c;">' + (w.h24 || '-') + '</td>' +
         '<td style="padding:7px 8px;text-align:center;font-size:11px;color:rgba(255,255,255,0.35);">' + ((w.h8 || 0) > 0 ? w.h8 : '-') + '</td>' +
         '<td style="padding:7px 8px;min-width:70px;"><div style="height:3px;border-radius:99px;background:rgba(255,255,255,0.07);"><div style="height:100%;width:' + bar + '%;background:' + accent + ';border-radius:99px;"></div></div></td>' +
@@ -410,7 +486,7 @@
           '<th style="padding:5px 8px;text-align:left;font-size:9px;font-weight:700;color:rgba(255,255,255,0.3);letter-spacing:.08em;text-transform:uppercase;">Darbinieks</th>' +
           '<th style="padding:5px 8px;font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:.08em;text-transform:uppercase;">Kopa</th>' +
           '<th style="padding:5px 8px;font-size:9px;color:#60a5fa;letter-spacing:.08em;text-transform:uppercase;">12D</th>' +
-          '<th style="padding:5px 8px;font-size:9px;color:#c084fc;letter-spacing:.08em;text-transform:uppercase;">12N</th>' +
+          '<th style="padding:5px 8px;font-size:9px;color:#67e8f9;letter-spacing:.08em;text-transform:uppercase;">12N</th>' +
           '<th style="padding:5px 8px;font-size:9px;color:#fb923c;letter-spacing:.08em;text-transform:uppercase;">24H</th>' +
           '<th style="padding:5px 8px;font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:.08em;text-transform:uppercase;">Citas</th>' +
           '<th style="padding:5px 8px;font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:.08em;text-transform:uppercase;">Slodze</th>' +
@@ -437,87 +513,111 @@
       ? 'linear-gradient(135deg, rgba(226,232,240,0.92), rgba(148,163,184,0.88))'
       : idx === 2
       ? 'linear-gradient(135deg, rgba(251,146,60,0.92), rgba(180,83,9,0.88))'
-      : (ws.isRad ? 'linear-gradient(135deg, rgba(167,139,250,0.88), rgba(124,58,237,0.78))' : 'linear-gradient(135deg, rgba(52,211,153,0.88), rgba(5,150,105,0.78))');
+      : (ws.isRad ? 'linear-gradient(135deg, rgba(56,189,248,0.88), rgba(124,58,237,0.78))' : 'linear-gradient(135deg, rgba(52,211,153,0.88), rgba(5,150,105,0.78))');
     return '<div style="width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;background:' + gradient + ';box-shadow:inset 0 1px 0 rgba(255,255,255,0.22), 0 12px 22px rgba(0,0,0,0.22);flex-shrink:0;">' + getInitials(ws.name) + '</div>';
   }
 
-  function renderLeaderboardRow(ws, idx, topNightCount) {
+  var RANK_ACCENTS = ['#f3b94a', '#c4cad2', '#c98a57']; // gold / silver / bronze; rest ice-blue
+  function _accentFor(idx) { return RANK_ACCENTS[idx] || '#38bdf8'; }
+  function _hexRgba(hex, a) {
+    var n = parseInt(hex.slice(1), 16);
+    return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+  }
+  function _fmt(n) {
+    try { return Number(n || 0).toLocaleString('lv-LV'); } catch (_e) { return String(n || 0); }
+  }
+
+  function _bdItem(label, value, suffix) {
+    var zero = !value;
+    return '<div class="mk-stx-bi"><span>' + label + '</span><b class="' + (zero ? 'z' : '') + '">' +
+      (zero ? '+0' : '+' + _fmt(value)) + (suffix || '') + '</b></div>';
+  }
+
+  function renderBreakdown(ws) {
+    var b = ws.bonuses || {};
+    var total = (b.base || 0) + (b.nakts || 0) + (b.h24 || 0) + (b.diversity || 0) +
+      (b.regularity || 0) + (b.holidays || 0) + (b.load || 0) + (b.bolus || 0) + (b.coffee || 0);
+    return '<div class="mk-stx-bd">' +
+      '<h4>XP sadalījums</h4>' +
+      '<div class="mk-stx-bd-grid">' +
+        _bdItem('Bāze', b.base) +
+        _bdItem('Nakts', b.nakts) +
+        _bdItem('24h', b.h24) +
+        _bdItem('Dažādība', b.diversity) +
+        _bdItem('Regularitāte', b.regularity) +
+        _bdItem('Svētki', b.holidays) +
+        _bdItem('Slodze', b.load) +
+        _bdItem('Boluss', b.bolus, b.bolusCount ? ' (' + b.bolusCount + '×)' : '') +
+        _bdItem('Kafija', b.coffee, b.coffeeCount ? ' (' + b.coffeeCount + '×)' : '') +
+        '<div class="mk-stx-bi"><span>Streak</span><b class="' + ((ws.longestStreak || 0) ? '' : 'z') + '">' + (ws.longestStreak || 0) + ' d.</b></div>' +
+      '</div>' +
+      '<div class="mk-stx-bd-foot"><span>Kopā</span><span class="tot">' + _fmt(total) + ' XP</span></div>' +
+    '</div>';
+  }
+
+  function _metricTile(value, label, color) {
+    var on = (Number(value) || 0) > 0;
+    return '<div class="mk-stx-metric"><div class="v" style="color:' + (on ? color : 'var(--stx-t3)') + ';">' + value + '</div><div class="k">' + label + '</div></div>';
+  }
+
+  function renderLeaderboardRow(ws, idx) {
     var ld = ws.levelData || getLevelData(0);
+    var accent = _accentFor(idx);
     var name = shortName(ws.name);
     var emoji = window.MinkaEmoji ? (window.MinkaEmoji.get(ws.name) || '') : '';
-    var rank = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : ('<span style="font-size:10px;color:rgba(255,255,255,0.25);">#' + (idx + 1) + '</span>');
     var live = isCurrentlyOnDuty(ws.name);
-    var levelTitle = getLevelTitle(ld);
-    var progressColor = ld.progress >= 85 ? '#c4ff5a' : ld.progress >= 55 ? '#b77bff' : '#60a5fa';
-    var badges = renderBadges(ws, topNightCount);
-    var cardGlow = idx === 0
-      ? '0 0 0 1px rgba(251,191,36,0.34), 0 0 22px rgba(251,191,36,0.18), inset 0 0 0 1px rgba(255,255,255,0.04)'
-      : idx === 1
-      ? '0 0 0 1px rgba(226,232,240,0.26), 0 0 18px rgba(226,232,240,0.12), inset 0 0 0 1px rgba(255,255,255,0.04)'
-      : idx === 2
-      ? '0 0 0 1px rgba(251,146,60,0.28), 0 0 18px rgba(251,146,60,0.14), inset 0 0 0 1px rgba(255,255,255,0.04)'
-      : '0 0 0 1px rgba(255,255,255,0.05), inset 0 0 0 1px rgba(255,255,255,0.03)';
+    var pct = Math.max(0, Math.min(100, ld.progress || 0));
+    var cap = ld.next ? ld.next.xp : ws.xp;
+    var C = 2 * Math.PI * 26;
 
-    var b = ws.bonuses || {};
-    var tooltip = [
-      'Base: ' + (b.base || 0) + ' XP',
-      'Nakts: +' + (b.nakts || 0),
-      '24h: +' + (b.h24 || 0),
-      'Dazadiba: +' + (b.diversity || 0),
-      'Regularitate: +' + (b.regularity || 0),
-      'Svetki: +' + (b.holidays || 0),
-      'Slodze: +' + (b.load || 0),
-      'Boluss: +' + (b.bolus || 0) + ' (' + (b.bolusCount || 0) + 'x)',
-      'Streak: ' + (ws.longestStreak || 0) + ' dienas'
-    ].join(' | ');
-
-    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;margin-bottom:8px;background:' + (idx < 3 ? 'linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.025))' : 'rgba(255,255,255,0.025)') + ';cursor:default;border:1px solid rgba(255,255,255,0.06);box-shadow:' + cardGlow + ';" title="' + escapeAttr(tooltip) + '">' +
-      '<div style="width:24px;text-align:center;flex-shrink:0;">' + rank + '</div>' +
-      renderAvatarChip(ws, idx) +
-      '<div style="flex:1;min-width:0;">' +
-        '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px;">' +
-          '<span style="font-size:12px;font-weight:800;color:#f4f7ff;display:inline-flex;align-items:center;gap:6px;">' + name + (live ? '<span style="width:8px;height:8px;border-radius:50%;background:#4ade80;display:inline-block;box-shadow:0 0 10px rgba(74,222,128,0.55);"></span>' : '') + '</span>' +
-          '<span style="font-size:10px;font-weight:900;color:' + ld.current.color + ';background:rgba(255,255,255,0.06);border-radius:6px;padding:2px 6px;">Lv.' + ld.current.lvl + '</span>' +
-          '<span style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.64);">' + levelTitle + '</span>' +
-          (emoji ? '<span style="font-size:14px;line-height:1;">' + emoji + '</span>' : '') +
-          badges +
-        '</div>' +
-        '<div style="display:flex;align-items:center;gap:8px;">' +
-          '<div style="flex:1;height:4px;border-radius:999px;background:rgba(255,255,255,0.06);overflow:hidden;">' +
-            '<div style="height:100%;width:' + ld.progress + '%;background:linear-gradient(90deg, #60a5fa 0%, #b77bff 55%, ' + progressColor + ' 100%);border-radius:999px;' + (idx < 3 ? 'box-shadow:0 0 14px ' + progressColor + '55;' : '') + '"></div>' +
-          '</div>' +
-          '<span style="font-size:9px;color:rgba(255,255,255,0.72);white-space:nowrap;font-weight:700;">' + ws.xp + (ld.next ? ' / ' + ld.next.xp : ' XP') + '</span>' +
-        '</div>' +
-        (ld.next
-          ? '<div style="margin-top:5px;font-size:8px;color:rgba(255,255,255,0.34);">+' + Math.max(0, ld.next.xp - ws.xp) + ' XP lidz nakamajam LVL</div>'
-          : '<div style="margin-top:5px;font-size:8px;color:rgba(255,255,255,0.34);">Maksimalais LVL sasniegts</div>') +
+    return '<div class="mk-stx-row' + (idx < 3 ? ' top' : '') + '">' +
+      '<div class="mk-stx-rank" style="' + (idx < 3 ? 'color:' + accent : '') + '">' + (idx + 1) + '</div>' +
+      '<div class="mk-stx-av">' +
+        '<svg width="58" height="58" viewBox="0 0 58 58">' +
+          '<circle cx="29" cy="29" r="26" fill="none" stroke="#1c1e25" stroke-width="3.5"/>' +
+          '<circle cx="29" cy="29" r="26" fill="none" stroke="' + accent + '" stroke-width="3.5" stroke-linecap="round" ' +
+            'stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="' + (C - C * pct / 100).toFixed(1) + '" transform="rotate(-90 29 29)"/>' +
+        '</svg>' +
+        '<div class="mk-stx-avc" style="background:' + accent + '">' + getInitials(ws.name) + '</div>' +
       '</div>' +
-      '<div style="display:flex;gap:3px;flex-shrink:0;">' +
-        '<div style="text-align:center;padding:2px 6px;border-radius:5px;background:rgba(251,191,36,0.1);" title="24h mainas">' +
-          '<div style="font-size:10px;font-weight:800;color:#fbbf24;">' + (ws.h24 || 0) + '</div>' +
-          '<div style="font-size:6.5px;color:rgba(255,255,255,0.25);">24H</div>' +
+      '<div class="mk-stx-meta">' +
+        '<div class="mk-stx-nameline">' +
+          '<span class="mk-stx-name">' + name + '</span>' +
+          '<span class="mk-stx-lvl" style="color:' + accent + ';background:' + _hexRgba(accent, 0.13) + ';border-color:' + _hexRgba(accent, 0.26) + ';">Lv.' + ld.current.lvl + '</span>' +
+          (live ? '<span class="mk-stx-live" title="Šobrīd dežūrā"></span>' : '') +
         '</div>' +
-        '<div style="text-align:center;padding:2px 6px;border-radius:5px;background:rgba(167,139,250,0.1);" title="Nakts mainas">' +
-          '<div style="font-size:10px;font-weight:800;color:#a78bfa;">' + (ws.nakts || 0) + '</div>' +
-          '<div style="font-size:6.5px;color:rgba(255,255,255,0.25);">NAKTS</div>' +
-        '</div>' +
-        '<div style="text-align:center;padding:2px 6px;border-radius:5px;background:rgba(96,165,250,0.1);" title="Kopejas stundas">' +
-          '<div style="font-size:10px;font-weight:800;color:#60a5fa;">' + (ws.totalHrs || 0) + '</div>' +
-          '<div style="font-size:6.5px;color:rgba(255,255,255,0.25);">H</div>' +
+        '<div class="mk-stx-title">' + getLevelTitle(ld) + (emoji ? ' <span class="em">' + emoji + '</span>' : '') + '</div>' +
+      '</div>' +
+      '<div class="mk-stx-prog">' +
+        '<div class="mk-stx-bar"><div class="mk-stx-fill" style="width:' + pct + '%;background:linear-gradient(90deg,' + _hexRgba(accent, 0.65) + ',' + accent + ');"></div></div>' +
+        '<div class="mk-stx-pstat">' +
+          '<div class="frac">' + _fmt(ws.xp) + ' <small>/ ' + _fmt(cap) + ' XP</small></div>' +
+          '<div class="next">' + (ld.next ? '+' + _fmt(Math.max(0, ld.next.xp - ws.xp)) + ' XP līdz nākamajam' : 'Maks. līmenis') + '</div>' +
         '</div>' +
       '</div>' +
+      '<div class="mk-stx-metrics">' +
+        _metricTile((ws.totalHrs || 0) + 'h', 'Stundas', '#1fe091') +
+        _metricTile(ws.h24 || 0, '24H', '#f5b73f') +
+        _metricTile(ws.d12 || 0, '12 Diena', '#3f9bff') +
+        _metricTile(ws.n12 || 0, '12 Nakts', '#23cdcf') +
+        _metricTile(ws.bolusCount || 0, 'Boluss', '#ff5c5c') +
+        _metricTile(ws.coffeeTotal || 0, 'Kafija', '#fb8a4c') +
+      '</div>' +
+      renderBreakdown(ws) +
     '</div>';
   }
 
   function renderLeaderboardGroup(list, title, accent) {
     if (!list.length) return '';
-    var topNight = list.reduce(function(max, ws) { return Math.max(max, ws.nakts || 0); }, 0);
-    return '<div style="margin-bottom:12px;">' +
-      '<div style="font-size:8px;font-weight:800;letter-spacing:.14em;color:' + accent + ';text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:6px;">' +
-        '<span style="width:14px;height:1px;background:currentColor;display:inline-block;opacity:.5;"></span>' + title +
-        '<span style="flex:1;height:1px;background:currentColor;opacity:.12;display:inline-block;"></span>' +
+    return '<div class="mk-stx-section">' +
+      '<div class="mk-stx-sechead">' +
+        '<div class="lbl"><span class="dot" style="background:' + accent + ';box-shadow:0 0 0 4px ' + _hexRgba(accent, 0.13) + ';"></span>' + title + '</div>' +
+        '<div class="line"></div>' +
+        '<div class="count">' + list.length + ' dalībnieki</div>' +
       '</div>' +
-      list.map(function(item, idx) { return renderLeaderboardRow(item, idx, topNight); }).join('') +
+      '<div class="mk-stx-rows">' +
+        list.map(function(item, idx) { return renderLeaderboardRow(item, idx); }).join('') +
+      '</div>' +
     '</div>';
   }
 
@@ -533,72 +633,62 @@
       var monthStats = buildMonthStats(activeMonth);
       var allStats = buildAllTimeStats();
 
+      // Merge: MONTH numbers (hours, 12D, 12N, 24h — like the old clear table)
+      // + all-time level/XP + bolus/coffee totals onto one object per person.
       Object.keys(monthStats).forEach(function(name) {
-        monthStats[name].levelData = allStats[name] ? allStats[name].levelData : getLevelData(0);
-        monthStats[name].allTime = allStats[name] || null;
+        var at = allStats[name] || null;
+        var ms = monthStats[name];
+        ms.levelData = at ? at.levelData : getLevelData(0);
+        ms.xp = at ? at.xp : 0;
+        ms.bonuses = at ? at.bonuses : {};
+        ms.longestStreak = at ? at.longestStreak : 0;
+        ms.coffeeTotal = at ? (at.coffeeTotal || 0) : 0;
+        ms.bolusCount = at && at.bonuses ? (at.bonuses.bolusCount || 0) : 0;
+        ms.allTime = at;
       });
 
-      var rg = Object.values(monthStats).filter(function(item) { return !item.isRad; }).sort(function(a, b) { return b.totalHrs - a.totalHrs; });
-      var rd = Object.values(monthStats).filter(function(item) { return item.isRad; }).sort(function(a, b) { return b.totalHrs - a.totalHrs; });
+      var sortKey = window.__mkStatsSort || 'xp';
+      function cmp(a, b) {
+        if (sortKey === 'hours') return (b.totalHrs || 0) - (a.totalHrs || 0);
+        if (sortKey === 'bolus') return (b.bolusCount || 0) - (a.bolusCount || 0);
+        if (sortKey === 'coffee') return (b.coffeeTotal || 0) - (a.coffeeTotal || 0);
+        return (b.xp || 0) - (a.xp || 0);
+      }
+      var merged = Object.values(monthStats).sort(cmp);
+      var lbRG = merged.filter(function(item) { return !item.isRad; });
+      var lbRD = merged.filter(function(item) { return item.isRad; });
 
-      var lbAll = Object.values(allStats).sort(function(a, b) { return b.xp - a.xp; });
-      var lbRG = lbAll.filter(function(item) { return !item.isRad; });
-      var lbRD = lbAll.filter(function(item) { return item.isRad; });
-
-      var tabsHtml =
-        '<div id="mk-stats-tabs" style="display:flex;gap:6px;margin-bottom:14px;">' +
-          '<button id="mk-tab-month" onclick="mkStatsTab(\'month\')" style="flex:1;padding:7px 0;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.08);color:#fff;font-size:10px;font-weight:800;letter-spacing:.08em;cursor:pointer;transition:all .15s;">📅 ' + (activeMonth || 'Menesis') + '</button>' +
-          '<button id="mk-tab-levels" onclick="mkStatsTab(\'levels\')" style="flex:1;padding:7px 0;border-radius:10px;border:1px solid rgba(139,92,246,0.25);background:rgba(139,92,246,0.08);color:#a78bfa;font-size:10px;font-weight:800;letter-spacing:.08em;cursor:pointer;transition:all .15s;">🏆 Leaderboard</button>' +
+      function sortBtn(key, label) {
+        return '<button class="mk-stx-sortbtn' + (sortKey === key ? ' active' : '') + '" onclick="mkStatsSort(\'' + key + '\')">' + label + '</button>';
+      }
+      var sortBar =
+        '<div class="mk-stx-sort">' +
+          '<span class="mk-stx-sort-lbl">TOP PĒC</span>' +
+          sortBtn('xp', 'XP') +
+          sortBtn('hours', 'Stundām') +
+          sortBtn('bolus', 'Bolusa') +
+          sortBtn('coffee', 'Kafijas') +
         '</div>';
 
-      var monthHtml =
-        '<div id="mk-pane-month">' +
-          renderMonthTable(rg, '● Radiograferi', '#34d399') +
-          renderMonthTable(rd, '● Radiologi', '#a78bfa') +
-        '</div>';
+      wrap.innerHTML =
+        sortBar +
+        buildInfoBox() +
+        renderLeaderboardGroup(lbRG, 'Radiogrāferi', '#1fe091') +
+        renderLeaderboardGroup(lbRD, 'Radiologi', '#3f9bff');
 
-      var levelsHtml =
-        '<div id="mk-pane-levels" style="display:none;">' +
-          buildInfoBox() +
-          renderLeaderboardGroup(lbRG, '● Radiograferi', '#34d399') +
-          renderLeaderboardGroup(lbRD, '● Radiologi', '#a78bfa') +
-        '</div>';
+      // Pull cross-device coffee totals (yesterday's coffees etc.) — re-renders when ready.
+      _fetchCoffeeTotalsFromApi();
 
-      wrap.innerHTML = tabsHtml + monthHtml + levelsHtml;
-
-      window.mkStatsTab = function(tab) {
-        var monthPane = document.getElementById('mk-pane-month');
-        var levelsPane = document.getElementById('mk-pane-levels');
-        var monthBtn = document.getElementById('mk-tab-month');
-        var levelsBtn = document.getElementById('mk-tab-levels');
-        if (tab === 'month') {
-          if (monthPane) monthPane.style.display = '';
-          if (levelsPane) levelsPane.style.display = 'none';
-          if (monthBtn) {
-            monthBtn.style.background = 'rgba(255,255,255,0.08)';
-            monthBtn.style.color = '#fff';
-            monthBtn.style.borderColor = 'rgba(255,255,255,0.1)';
-          }
-          if (levelsBtn) {
-            levelsBtn.style.background = 'rgba(139,92,246,0.08)';
-            levelsBtn.style.color = '#a78bfa';
-            levelsBtn.style.borderColor = 'rgba(139,92,246,0.25)';
-          }
-        } else {
-          if (monthPane) monthPane.style.display = 'none';
-          if (levelsPane) levelsPane.style.display = '';
-          if (levelsBtn) {
-            levelsBtn.style.background = 'rgba(139,92,246,0.22)';
-            levelsBtn.style.color = '#c4b5fd';
-            levelsBtn.style.borderColor = 'rgba(139,92,246,0.6)';
-          }
-          if (monthBtn) {
-            monthBtn.style.background = 'transparent';
-            monthBtn.style.color = 'rgba(255,255,255,0.3)';
-            monthBtn.style.borderColor = 'rgba(255,255,255,0.06)';
-          }
-        }
+      window.mkStatsSort = function(key) {
+        window.__mkStatsSort = key;
+        window.MinkaLevels.injectIntoStats();
       };
+      window.mkStatsInfoToggle = function() {
+        window.__mkStatsInfoOpen = !window.__mkStatsInfoOpen;
+        window.MinkaLevels.injectIntoStats();
+      };
+      // Tabs removed — single unified view. Keep a no-op for any legacy callers.
+      window.mkStatsTab = function() {};
     }
   };
 

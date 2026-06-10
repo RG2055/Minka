@@ -182,7 +182,7 @@
       startCardObserver();
       // Delay initial apply so theme.js has time to set CSS vars first
       setTimeout(applyStaffAccents, 50);
-      setInterval(applyStaffAccents, 3000);
+      setInterval(applyStaffAccents, 10000);
       // Re-apply immediately when theme changes
       new MutationObserver(applyStaffAccents).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     });
@@ -190,7 +190,7 @@
     fixFullListModal();
     startCardObserver();
     setTimeout(applyStaffAccents, 50);
-    setInterval(applyStaffAccents, 3000);
+    setInterval(applyStaffAccents, 10000);
     new MutationObserver(applyStaffAccents).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   }
 })();
