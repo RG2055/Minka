@@ -31,7 +31,7 @@
   let lastRenderTs = 0;
   const PERF = window.__mkPerfProfile || {};
   const LOW_SPEC = !!PERF.lowSpec;
-  const FRAME_MS = LOW_SPEC ? 1000 / 24 : 0;
+  const FRAME_MS = LOW_SPEC ? 1000 / 24 : 1000 / 30; /* glow needs no 60fps — halves GPU work */
 
   const FALLBACK = [[138,43,226],[255,60,180],[75,0,200],[220,40,255],[100,20,180]];
 
