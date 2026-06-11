@@ -754,19 +754,19 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260609coffee-buddy37"></script>
-<script src="js/calendar_extras_v4.js?v=20260609coffee-buddy37"></script>
+<script src="js/calendar.js?v=20260611a"></script>
+<script src="js/calendar_extras_v4.js?v=20260611a"></script>
 <script src="js/fatigue.js?v=20260318d"></script>
-<script src="js/nightsplit.js?v=20260609coffee-buddy39" defer></script>
+<script src="js/nightsplit.js?v=20260611a" defer></script>
 <script src="js/design_v1.js" defer></script>
 <script src="js/theme.js" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
-<script src="js/emoji.js?v=20260609coffee-buddy37" defer></script>
-<script src="js/levels.js?v=20260609coffee-buddy37" defer></script>
+<script src="js/emoji.js?v=20260611a" defer></script>
+<script src="js/levels.js?v=20260611a" defer></script>
 <script src="js/radiologist_plan.js" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260609coffee-buddy37';
+window.__minkaLocalBuild = '20260611a';
 (function(){
   function norm(v){
     try { return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
@@ -3448,7 +3448,7 @@ window.addEventListener('message', function(e) {
 
 <script>
 if ('serviceWorker' in navigator) {
-  const MINKA_APP_VERSION = '2026.06.09.coffee-buddy37';
+  const MINKA_APP_VERSION = '2026.06.11a';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -9317,9 +9317,12 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   display: flex !important;
   align-items: center !important;
   gap: clamp(1px, 1cqw, 3px) !important;
-  flex: 0 1 auto !important;
+  /* basis 0 — the mug strip gives way FIRST so the stepper never clips,
+     even with a 2-digit count on narrow cards */
+  flex: 1 1 0 !important;
   min-width: 0 !important;
   overflow: hidden !important;
+  justify-content: flex-start !important;
 }
 #grafiks-list.grid-view .mk-coffee-cup {
   display: block !important;
@@ -9346,72 +9349,65 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   font: 900 clamp(7px, 3.5cqw, 11px)/1 Inter, system-ui, sans-serif !important;
   font-variant-numeric: tabular-nums !important;
 }
-/* Coffee button: no pill — just a larger tappable coffee mug. */
-#grafiks-list.grid-view .mk-coffee-add {
-  position: relative !important;
-  flex: 0 0 auto !important;
-  display: flex !important;
+/* ── Coffee stepper: [−] mug+count [+] — dummy-proof add/subtract ── */
+#grafiks-list.grid-view .mk-coffee-step {
+  display: inline-flex !important;
   align-items: center !important;
-  justify-content: center !important;
-  gap: 0 !important;
-  margin: 0 0 0 auto !important;
-  min-height: 0 !important;
-  padding: 2px !important;
-  gap: clamp(2px, 1.5cqw, 4px) !important;
-  cursor: pointer !important;
-  border-radius: 0 !important;
-  color: var(--mk-coffee) !important;
-  background: none !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  transition: transform .08s ease, filter .12s ease !important;
+  flex: 0 0 auto !important;
+  margin-left: auto !important;
+  border: 1px solid rgba(196, 132, 69, .38) !important;
+  background: rgba(196, 132, 69, .10) !important;
+  border-radius: 999px !important;
+  overflow: hidden !important;
 }
-#grafiks-list.grid-view .mk-coffee-add:hover {
-  filter: brightness(1.18) !important;
-}
-#grafiks-list.grid-view .mk-coffee-add:active {
-  transform: scale(.88) !important;
-}
-/* "+" on the LEFT of the mug (invites adding) — plain text, no background. */
-#grafiks-list.grid-view .mk-coffee-plus {
-  order: 0 !important;
-  position: static !important;
+#grafiks-list.grid-view .mk-coffee-sub,
+#grafiks-list.grid-view .mk-coffee-add {
+  flex: 0 0 auto !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  min-width: auto !important;
-  height: auto !important;
-  padding: 0 !important;
+  min-width: clamp(18px, 8cqw, 26px) !important;
+  min-height: clamp(16px, 7cqw, 22px) !important;
+  margin: 0 !important;
+  padding: 0 2px !important;
+  cursor: pointer !important;
+  border: 0 !important;
+  border-radius: 0 !important;
   background: none !important;
   box-shadow: none !important;
-  border-radius: 0 !important;
   color: var(--mk-coffee) !important;
-  font: 900 clamp(11px, 5cqw, 15px)/1 Inter, system-ui, sans-serif !important;
-  font-variant-numeric: tabular-nums !important;
+  font: 900 clamp(13px, 6cqw, 17px)/1 Inter, system-ui, sans-serif !important;
+  transition: background .1s ease !important;
+}
+#grafiks-list.grid-view .mk-coffee-sub:hover,
+#grafiks-list.grid-view .mk-coffee-add:hover { background: rgba(196,132,69,.22) !important; }
+#grafiks-list.grid-view .mk-coffee-sub:active,
+#grafiks-list.grid-view .mk-coffee-add:active { background: rgba(196,132,69,.34) !important; }
+#grafiks-list.grid-view .mk-coffee-mid {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: clamp(2px, 1cqw, 4px) !important;
+  padding: 1px clamp(2px, 1cqw, 4px) !important;
+  border-left: 1px solid rgba(196,132,69,.25) !important;
+  border-right: 1px solid rgba(196,132,69,.25) !important;
   pointer-events: none !important;
 }
-/* Bigger mug in the middle of the add button (row cups stay small). */
-#grafiks-list.grid-view .mk-coffee-add .mk-coffee-cup {
-  order: 1 !important;
-  width: clamp(18px, 9cqw, 26px) !important;
-  height: clamp(18px, 9cqw, 26px) !important;
+#grafiks-list.grid-view .mk-coffee-mid .mk-coffee-cup {
+  width: clamp(13px, 6cqw, 18px) !important;
+  height: clamp(13px, 6cqw, 18px) !important;
   opacity: 1 !important;
 }
-/* Coffee count on the RIGHT of the mug — plain text, only shown when > 0. */
 #grafiks-list.grid-view .mk-coffee-num {
-  order: 2 !important;
   display: inline-flex !important;
   align-items: center !important;
-  min-width: auto !important;
+  min-width: clamp(8px, 4cqw, 12px) !important;
+  justify-content: center !important;
   padding: 0 !important;
   background: none !important;
   color: var(--mk-coffee) !important;
   font: 900 clamp(11px, 5cqw, 15px)/1 Inter, system-ui, sans-serif !important;
   font-variant-numeric: tabular-nums !important;
   pointer-events: none !important;
-}
-#grafiks-list.grid-view .mk-coffee-num:empty {
-  display: none !important;
 }
 #grafiks-list.grid-view .mk-coffee-add-cup {
   font-size: 14px !important;
@@ -9498,13 +9494,18 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   min-width: auto !important;
   font-size: 9px !important;
 }
+:root.host-radio-open #grafiks-list.grid-view .mk-coffee-sub,
 :root.host-radio-open #grafiks-list.grid-view .mk-coffee-add {
-  min-height: 18px !important;
-  padding: 2px 7px !important;
-  border-radius: 10px !important;
-}
-:root.host-radio-open #grafiks-list.grid-view .mk-coffee-plus {
+  min-width: 16px !important;
+  min-height: 15px !important;
   font-size: 12px !important;
+}
+:root.host-radio-open #grafiks-list.grid-view .mk-coffee-mid .mk-coffee-cup {
+  width: 11px !important;
+  height: 11px !important;
+}
+:root.host-radio-open #grafiks-list.grid-view .mk-coffee-num {
+  font-size: 10px !important;
 }
 :root.host-radio-open #grafiks-list.grid-view .mk-coffee-add-cup {
   font-size: 11px !important;
@@ -9631,13 +9632,18 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   min-width: auto !important;
   font-size: 8px !important;
 }
+:root.mk-mobile-shell #grafiks-list.grid-view .mk-coffee-sub,
 :root.mk-mobile-shell #grafiks-list.grid-view .mk-coffee-add {
-  min-height: 17px !important;
-  padding: 2px 6px !important;
-  border-radius: 9px !important;
-}
-:root.mk-mobile-shell #grafiks-list.grid-view .mk-coffee-plus {
+  min-width: 15px !important;
+  min-height: 14px !important;
   font-size: 11px !important;
+}
+:root.mk-mobile-shell #grafiks-list.grid-view .mk-coffee-mid .mk-coffee-cup {
+  width: 10px !important;
+  height: 10px !important;
+}
+:root.mk-mobile-shell #grafiks-list.grid-view .mk-coffee-num {
+  font-size: 9px !important;
 }
 :root.mk-mobile-shell #grafiks-list.grid-view .mk-coffee-add-cup {
   font-size: 10px !important;

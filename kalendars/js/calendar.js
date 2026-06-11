@@ -961,9 +961,9 @@ function closeFullListModal() {
     g_updateList();
     g_updatePanelsForDate();
     g_adjustDutyNameFontSize();
-    // Force an immediate full live-update on day switch so the shift progress bar
-    // refreshes right away — the 60s throttle only applies to the idle background loop.
-    try { g_updateLive(true); } catch(_e) {}
+    // No forced g_updateLive here: the shift progress bar is pinned to the
+    // current shift day (not the clicked date), and the 1s interval keeps it
+    // live — the forced full rescan was costing ~0.5-1s per click on weak PCs.
     try { setTimeout(() => { try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(e) {} }, 40); } catch(e) {}
     try { setTimeout(() => { try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(e) {} }, 280); } catch(e) {}
     try { setTimeout(() => { try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(e) {} }, 900); } catch(e) {}
@@ -3532,16 +3532,14 @@ function closeFullListModal() {
     function buildCoffeeRow(name) {
       const count = getCoffeeCount(name);
       const safeName = escapeHtml(name || '');
-      const overflow = Math.max(0, count - 6);
-      const buttonLabel = count ? String(count) : '+';
       return `
         <div class="mk-mid-coffee" data-coffee-name="${safeName}">
           <span class="mk-coffee-lbl">KAFIJA</span>
-          <div class="mk-coffee-cups">${buildCoffeeCups(count)}</div>
-          ${overflow ? `<span class="mk-coffee-count">+${overflow}</span>` : ''}
-          <button class="mk-coffee-add" type="button" aria-label="Pievienot kafiju" title="Pievienot kafiju">
-            <span class="mk-coffee-plus">+</span>${buildCoffeeCup('filled')}<span class="mk-coffee-num">${count ? String(count) : ''}</span>
-          </button>
+          <div class="mk-coffee-step">
+            <button class="mk-coffee-sub" type="button" aria-label="Atņemt kafiju" title="Atņemt kafiju">−</button>
+            <span class="mk-coffee-mid">${buildCoffeeCup('filled')}<span class="mk-coffee-num">${count}</span></span>
+            <button class="mk-coffee-add" type="button" aria-label="Pievienot kafiju" title="Pievienot kafiju">+</button>
+          </div>
         </div>`;
     }
 
@@ -3550,21 +3548,10 @@ function closeFullListModal() {
       if (!row) return;
       const count = getCoffeeCount(name);
       const cups = row.querySelector('.mk-coffee-cups');
-      const total = row.querySelector('.mk-coffee-count');
       const numEl = row.querySelector('.mk-coffee-num');
       if (cups) cups.innerHTML = buildCoffeeCups(count);
       // "+" stays fixed on the left; the number on the right reflects the count.
-      if (numEl) numEl.textContent = count ? String(count) : '';
-      const overflow = Math.max(0, count - 6);
-      if (total) total.textContent = overflow ? '+' + overflow : '';
-      if (!total && overflow) {
-        const countEl = document.createElement('span');
-        countEl.className = 'mk-coffee-count';
-        countEl.textContent = '+' + overflow;
-        row.insertBefore(countEl, row.querySelector('.mk-coffee-add'));
-      } else if (total && !overflow) {
-        total.remove();
-      }
+      if (numEl) numEl.textContent = String(count); /* always show the number — dummy-proof */
     }
 
     window.__minkaGetCoffeeCountForName = function(name) {
@@ -3668,6 +3655,18 @@ function closeFullListModal() {
             postCoffeeDelta(w.name, 1, card);
           };
         }
+        const coffeeSub = card.querySelector('.mk-coffee-sub');
+        if (coffeeSub) {
+          coffeeSub.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (getCoffeeCount(w.name) <= 0) return;
+            setCoffeeCount(w.name, getCoffeeCount(w.name) - 1);
+            updateCoffeeRow(card, w.name);
+            try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(_e) {}
+            postCoffeeDelta(w.name, -1, card);
+          };
+        }
         return card;
       } else {
         const row = document.createElement('div');
@@ -3751,11 +3750,15 @@ function closeFullListModal() {
         if (!nameSpan) return;
         const parentWidth = block.clientWidth;
         nameSpan.style.fontSize = '24px';
-        if (nameSpan.scrollWidth > parentWidth) {
-          let fontSize = 24;
-          while (nameSpan.scrollWidth > parentWidth && fontSize > 12) {
-            fontSize -= 1;
-            nameSpan.style.fontSize = fontSize + 'px';
+        const w = nameSpan.scrollWidth;
+        if (w > parentWidth) {
+          // Proportional fit in one step instead of a -1px reflow loop
+          // (the old loop forced up to ~12 layout passes per name on weak PCs).
+          let fontSize = Math.max(12, Math.floor(24 * parentWidth / w));
+          nameSpan.style.fontSize = fontSize + 'px';
+          // Single verification nudge for rounding
+          if (nameSpan.scrollWidth > parentWidth && fontSize > 12) {
+            nameSpan.style.fontSize = (fontSize - 1) + 'px';
           }
         }
       });

@@ -96,13 +96,16 @@ export default {
       if (!delta) return json({ ok: false, error: 'delta required' }, 400);
 
       const now = Date.now();
+      // NOTE: the update must use the RAW delta (?3), not excluded.count —
+      // excluded.count is already clamped to max(0, delta), which silently
+      // turned negative deltas into +0 and made "minus a coffee" a no-op.
       await env.COFFEE_DB
         .prepare(`
           INSERT INTO coffee_counts (date, worker, count, updated_at)
-          VALUES (?, ?, max(0, ?), ?)
+          VALUES (?1, ?2, max(0, ?3), ?4)
           ON CONFLICT(date, worker) DO UPDATE SET
-            count = max(0, coffee_counts.count + excluded.count),
-            updated_at = excluded.updated_at
+            count = max(0, coffee_counts.count + ?3),
+            updated_at = ?4
         `)
         .bind(date, worker, delta, now)
         .run();

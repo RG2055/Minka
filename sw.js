@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.4.00-coffee-buddy40';
+const CACHE = 'minka-4.4.01b';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
@@ -52,10 +52,15 @@ self.addEventListener('install', event => {
       appUrl('kalendars/js/radiologist_plan.js'),
       appUrl('data/rg-logo.png'),
       appUrl('data/dolphin.webp'),
+      appUrl('data/rg-apple-touch-180.png'),
+      appUrl('data/rg-icon-192.png'),
+      appUrl('data/rg-icon-512.png'),
       appUrl('data/rg-any-192.png'),
       appUrl('data/rg-any-512.png'),
       appUrl('data/rg-maskable-192.png'),
       appUrl('data/rg-maskable-512.png'),
+      appUrl('data/icon-192.png'),
+      appUrl('data/icon-512.png'),
     ]))
   );
   self.skipWaiting();
