@@ -25,7 +25,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260611e';
+  var CALENDAR_BUILD = '20260612a';
 
   function withCalendarBuild(url) {
     try {
@@ -104,7 +104,7 @@
       + '<div class="mg-left">'
       + '<div class="mg-login">'
       // Pixel ghost logo (from the buddy sprite) + speed lanes.
-      + '<svg width="104" height="100" viewBox="0 0 10 9.6" aria-hidden="true" style="display:block;margin:0 auto;">'
+      + '<svg width="104" height="104" viewBox="0 0 10 10" aria-hidden="true" style="display:block;margin:0 auto;">'
       + '<g fill="#38bdf8" shape-rendering="crispEdges">'
       + '<rect x="3" y="0" width="4" height="1" fill="#7dd3fc"/>'
       + '<rect x="2" y="1" width="6" height="1"/>'
@@ -267,7 +267,7 @@
 <meta name="theme-color" content="#0a0a1a">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>RG</title>
-<link rel="icon" type="image/png" href="data/rg-any-192.png">
+<link rel="icon" type="image/png" href="data/rg-cal-192.png">
 <link rel="apple-touch-icon" href="data/rg-apple-touch-180.png">
 
 <!-- Preconnect to external origins so DNS/TLS is resolved before requests fire -->
@@ -561,7 +561,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260611e" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260611e" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260612a" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260612a" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -574,7 +574,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
   transition:opacity .9s ease;
 ">
   <!-- Pixel ghost (logo) — 2D pixel style, ice palette, stepped bob animation -->
-  <svg width="104" height="100" viewBox="0 0 10 9.6" aria-hidden="true" style="animation:mklBob 1.4s steps(2,end) infinite;">
+  <svg width="104" height="73" viewBox="0 0 10 7" aria-hidden="true" style="animation:mklBob 1.4s steps(2,end) infinite;">
     <g fill="#38bdf8" shape-rendering="crispEdges">
       <rect x="3" y="0" width="4" height="1" fill="#7dd3fc"/>
       <rect x="2" y="1" width="6" height="1"/>
@@ -582,9 +582,6 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
       <rect x="1" y="3" width="8" height="3"/>
       <rect x="1" y="6" width="1" height="1"/><rect x="3" y="6" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/>
     </g>
-    <rect x="1.4" y="7.5" width="4.6" height="0.62" rx="0.31" fill="#7dd3fc"/>
-    <rect x="2.6" y="8.42" width="5.8" height="0.62" rx="0.31" fill="#38bdf8"/>
-    <rect x="1.9" y="9.34" width="3.8" height="0.62" rx="0.31" fill="#0e74b2"/>
   </svg>
   <div style="font-size:0.68rem;font-weight:800;letter-spacing:.20em;color:rgba(125,211,252,0.60);text-transform:uppercase;" id="mkl-text">Lādē datus…</div>
   <div id="mkl-subtext" style="font-size:0.74rem;color:rgba(220,240,255,0.50);letter-spacing:.04em;">Sagatavo mekl&#275;&#353;anu, grafiku un iestat&#299;jumus</div>
