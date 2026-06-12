@@ -533,8 +533,8 @@
     var nowD = new Date();
     if (nowD.getFullYear() === year && nowD.getMonth() === mm - 1) todayIdx = nowD.getDate() - 1;
 
-    // ── SVG ── (taller so the curve is easier to read; wider-than-tall stays ~3:1)
-    var W = 640, H = 210, padL = 30, padR = 12, padT = 16, padB = 24;
+    // ── SVG ── (own tab now, so it can be properly tall)
+    var W = 640, H = 330, padL = 30, padR = 12, padT = 18, padB = 26;
     var gW = W - padL - padR, gH = H - padT - padB;
     var xp = function(i) { return padL + (i / (daysIn - 1)) * gW; };
     var yp = function(v) { return padT + gH - (v / 100) * gH; };
@@ -863,9 +863,16 @@
       var lbRG = merged.filter(function(item) { return !item.isRad; });
       var lbRD = merged.filter(function(item) { return item.isRad; });
 
+      var view = window.__mkStatsView || 'top';
       function sortBtn(key, label) {
-        return '<button class="mk-stx-sortbtn' + (sortKey === key ? ' active' : '') + '" onclick="mkStatsSort(\'' + key + '\')">' + label + '</button>';
+        return '<button class="mk-stx-sortbtn' + (view === 'top' && sortKey === key ? ' active' : '') + '" onclick="mkStatsSort(\'' + key + '\')">' + label + '</button>';
       }
+      // "Nogurums" is its own tab on the right so the tall chart never
+      // crowds the leaderboard view.
+      var fatigueBtn =
+        '<button class="mk-stx-sortbtn' + (view === 'fatigue' ? ' active' : '') + '" style="margin-left:auto;' +
+        (view === 'fatigue' ? 'border-color:rgba(56,189,248,.45);background:rgba(56,189,248,.12);color:#7dd3fc;' : '') +
+        '" onclick="mkStatsView(\'' + (view === 'fatigue' ? 'top' : 'fatigue') + '\')">Nogurums</button>';
       var sortBar =
         '<div class="mk-stx-sort">' +
           '<span class="mk-stx-sort-lbl">TOP PĒC</span>' +
@@ -873,20 +880,26 @@
           sortBtn('hours', 'Stundām') +
           sortBtn('bolus', 'Bolusa') +
           sortBtn('coffee', 'Kafijas') +
+          fatigueBtn +
         '</div>';
 
-      wrap.innerHTML =
-        sortBar +
-        buildInfoBox() +
-        buildFatigueChart(monthStats, activeMonth) +
-        renderLeaderboardGroup(lbRG, 'Radiogrāferi', '#1fe091') +
-        renderLeaderboardGroup(lbRD, 'Radiologi', '#3f9bff');
+      wrap.innerHTML = view === 'fatigue'
+        ? sortBar + buildFatigueChart(monthStats, activeMonth)
+        : sortBar +
+          buildInfoBox() +
+          renderLeaderboardGroup(lbRG, 'Radiogrāferi', '#1fe091') +
+          renderLeaderboardGroup(lbRD, 'Radiologi', '#3f9bff');
 
       // Pull cross-device coffee totals (yesterday's coffees etc.) — re-renders when ready.
       _fetchCoffeeTotalsFromApi();
 
       window.mkStatsSort = function(key) {
         window.__mkStatsSort = key;
+        window.__mkStatsView = 'top';
+        window.MinkaLevels.injectIntoStats();
+      };
+      window.mkStatsView = function(v) {
+        window.__mkStatsView = v;
         window.MinkaLevels.injectIntoStats();
       };
       window.mkStatsInfoToggle = function() {
