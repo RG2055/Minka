@@ -307,7 +307,7 @@
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
 <!-- App CSS: critical shell loads normally; radio extras load non-blocking -->
-<link rel="stylesheet" href="css/minka.css">
+<link rel="stylesheet" href="css/minka.css?v=20260613a">
 <link rel="stylesheet" href="css/radio-extra.css">
 <!-- Non-critical CSS loaded async -->
 <link rel="preload" as="style" href="css/improvements.css"
@@ -855,9 +855,9 @@ async function loadAny(urls) {
 async function loadRadioScripts() {
   if (_radioScriptsLoaded || _radioScriptsLoading) return _radioScriptsLoaded;
   _radioScriptsLoading = true;
-  await loadAny(['js/radio.js']);
-  await loadAny(['js/radio_extras_v4.js']);
-  await loadAny(['js/ambilight.js']);
+  await loadAny(['js/radio.js?v=20260613b']);
+  await loadAny(['js/radio_extras_v4.js?v=20260612e']);
+  await loadAny(['js/ambilight.js?v=20260612e']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;
   return true;
