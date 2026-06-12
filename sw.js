@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.4.03';
+const CACHE = 'minka-4.4.04';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
@@ -22,6 +22,12 @@ const safeCachePut = async (request, response) => {
 };
 
 self.addEventListener('install', event => {
+  // Precache only the entry shell. Everything else (scripts, css, images,
+  // icons) is runtime-cached on first request by the fetch handler below, so
+  // offline keeps working after one normal visit. The old ~35-file addAll
+  // downloaded everything in parallel with the page's own requests on every
+  // SW update — a noticeable morning-after-update stall on the slow,
+  // AV-scanned work machines.
   event.waitUntil(
     caches.open(CACHE).then(cache => cache.addAll([
       appUrl('./'),
@@ -29,55 +35,36 @@ self.addEventListener('install', event => {
       appUrl('mobile.html'),
       appUrl('manifest.json'),
       appUrl('manifest-mobile.json'),
-      appUrl('kalendars/index.html'),
-      appUrl('css/minka.css'),
-      appUrl('css/radio-extra.css'),
-      appUrl('css/improvements.css'),
-      appUrl('css/radio_extras_v4.css'),
-      appUrl('js/radio.js'),
-      appUrl('js/radio_extras_v4.js'),
-      appUrl('js/ambilight.js'),
-      appUrl('kalendars/css/bundle.css'),
-      appUrl('kalendars/data/cat_small.webp'),
-      appUrl('kalendars/data/namedays.local.js'),
-      appUrl('kalendars/js/calendar.js'),
-      appUrl('kalendars/js/calendar_extras_v4.js'),
-      appUrl('kalendars/js/fatigue.js'),
-      appUrl('kalendars/js/nightsplit.js'),
-      appUrl('kalendars/js/design_v1.js'),
-      appUrl('kalendars/js/theme.js'),
-      appUrl('kalendars/js/minka.sync.config.js'),
-      appUrl('kalendars/js/emoji.js'),
-      appUrl('kalendars/js/levels.js'),
-      appUrl('kalendars/js/radiologist_plan.js'),
-      appUrl('data/rg-logo.png'),
-      appUrl('data/gate-bg.webp'),
-      appUrl('data/rg-cal-192.png'),
-      appUrl('data/rg-cal-512.png'),
-      appUrl('data/rg-cal-maskable-192.png'),
-      appUrl('data/rg-cal-maskable-512.png'),
-      appUrl('data/dolphin.webp'),
-      appUrl('data/rg-apple-touch-180.png'),
-      appUrl('data/rg-icon-192.png'),
-      appUrl('data/rg-icon-512.png'),
-      appUrl('data/rg-any-192.png'),
-      appUrl('data/rg-any-512.png'),
-      appUrl('data/rg-maskable-192.png'),
-      appUrl('data/rg-maskable-512.png'),
-      appUrl('data/icon-192.png'),
-      appUrl('data/icon-512.png'),
     ]))
   );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)))
-    )
-  );
-  self.clients.claim();
+  // Migrate still-valid entries from old caches instead of deleting them
+  // outright: versioned (?v=) assets change URL when they change content, so
+  // carrying entries over is safe and avoids re-downloading the whole app
+  // after every update. Freshly precached shell entries are never overwritten.
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    const fresh = await caches.open(CACHE);
+    for (const key of keys) {
+      if (key === CACHE) continue;
+      try {
+        const old = await caches.open(key);
+        const reqs = await old.keys();
+        for (const req of reqs) {
+          if (await fresh.match(req)) continue;
+          const res = await old.match(req);
+          if (res) await fresh.put(req, res);
+        }
+      } catch (_e) {
+        // Best effort — worst case the asset is refetched on demand.
+      }
+      await caches.delete(key);
+    }
+    await self.clients.claim();
+  })());
 });
 
 self.addEventListener('message', event => {

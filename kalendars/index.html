@@ -160,8 +160,8 @@ html, body { overflow: hidden !important; }
 </style>
 <style id="minka_auth_overlay_css">
 html.minka-auth-locked body { overflow: hidden !important; }
-html.minka-auth-locked #grafiks-app { filter: blur(10px) saturate(.9); pointer-events: none !important; user-select: none !important; }
-#minka-auth-overlay { position: fixed; inset: 0; z-index: 200000; display: none; align-items: center; justify-content: center; background: rgba(4, 7, 14, 0.72); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 20px; }
+html.minka-auth-locked #grafiks-app { visibility: hidden !important; pointer-events: none !important; user-select: none !important; }
+#minka-auth-overlay { position: fixed; inset: 0; z-index: 200000; display: none; align-items: center; justify-content: center; background: #060b13; padding: 20px; }
 html.minka-auth-locked #minka-auth-overlay { display: flex; }
 .minka-auth-card { width: min(420px, calc(100vw - 32px)); border-radius: 22px; border: 1px solid rgba(255,255,255,0.10); background: #0d1118; box-shadow: 0 28px 80px rgba(0,0,0,0.55); padding: 22px 22px 18px; color: #eef2ff; }
 .minka-auth-head { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
