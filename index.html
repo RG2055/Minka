@@ -25,7 +25,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260611a';
+  var CALENDAR_BUILD = '20260611e';
 
   function withCalendarBuild(url) {
     try {
@@ -52,64 +52,186 @@
   }
 
   function showGate() {
-    document.documentElement.style.visibility = 'hidden';
-    document.addEventListener('DOMContentLoaded', function() {
-      document.documentElement.style.visibility = '';
-      var overlay = document.createElement('div');
-      overlay.id = 'minka-gate';
-      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(6,10,18,.84);display:flex;align-items:center;justify-content:center;z-index:999999;font-family:system-ui,sans-serif;backdrop-filter:blur(12px);padding:20px';
-      overlay.innerHTML = ''
-        + '<div style="background:#0d1118;border:1px solid rgba(255,255,255,0.10);border-radius:22px;padding:28px 28px 22px;text-align:left;width:min(420px,calc(100vw - 32px));box-shadow:0 28px 80px rgba(0,0,0,.55);color:#eef2ff;">'
-        + '<div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">'
-        + '<div style="width:52px;height:52px;border-radius:16px;border:1px solid rgba(139,92,246,0.28);background:radial-gradient(circle at 30% 30%, rgba(139,92,246,0.30), rgba(91,33,182,0.12) 60%, transparent 100%), #121722;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 1px 0 rgba(255,255,255,0.05),0 10px 24px rgba(0,0,0,0.22);font-size:24px;">&#128737;&#65039;</div>'
-        + '<div><div style="font-size:18px;font-weight:800;line-height:1.1;">Dro&#353;a piek&#316;uve RG</div><div style="margin-top:4px;font-size:12px;color:rgba(203,213,225,0.72);">Cloudflare aizsarg&#257;ta piek&#316;uve darba datiem un priv&#257;tajam sist&#275;mas saturam.</div></div>'
-        + '</div>'
-        + '<div style="font-size:12px;line-height:1.55;color:rgba(226,232,240,0.76);margin-bottom:16px;">Publiskaj&#257; versij&#257; sensit&#299;v&#257; inform&#257;cija netiek glab&#257;ta. Dati tiek iel&#257;d&#275;ti tikai p&#275;c autoriz&#257;cijas.</div>'
-        + '<input id="minka-pw" type="password" placeholder="Parole" autocomplete="current-password" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:12px 14px;color:#fff;font-size:14px;outline:none;margin-bottom:12px">'
-        + '<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(203,213,225,0.72);margin-bottom:14px;"><input id="minka-remember" type="checkbox" style="accent-color:#8b5cf6"> Atcer&#275;ties &#353;o ier&#299;ci</label>'
-        + '<button id="minka-btn" style="width:100%;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:14px;padding:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer">Ieiet</button>'
-        + '<div id="minka-err" style="color:#f87171;font-size:12px;margin-top:10px;min-height:16px"></div>'
-        + '</div>';
-      document.body.prepend(overlay);
-      var input = document.getElementById('minka-pw');
-      var btn = document.getElementById('minka-btn');
-      var err = document.getElementById('minka-err');
-      var remember = document.getElementById('minka-remember');
-      async function attempt() {
-        var password = String(input.value || '').trim();
-        err.textContent = '';
-        if (!password) {
-          err.textContent = 'Ievadi paroli';
-          return;
-        }
-        btn.disabled = true;
-        btn.textContent = 'P&#257;rbauda...';
-        try {
-          var res = await fetch(API_BASE + '/api/login', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ password: password })
-          });
-          var data = await res.json().catch(function(){ return {}; });
-          if (!res.ok || !data || !data.token) throw new Error((data && data.error) || 'Login failed');
-          setToken(data.token, !!(remember && remember.checked));
-          notifyIframeAuth();
-          overlay.style.transition = 'opacity 0.3s';
-          overlay.style.opacity = '0';
-          setTimeout(function(){ overlay.remove(); }, 300);
-        } catch (_e) {
-          err.textContent = 'Nepareiza parole vai API nav sasniedzams';
-          input.value = '';
-          input.focus();
-        } finally {
-          btn.disabled = false;
-          btn.textContent = 'Ieiet';
-        }
-      }
-      btn.addEventListener('click', attempt);
-      input.addEventListener('keydown', function(e){ if(e.key==='Enter') attempt(); });
+    // Mount immediately (script runs in <head>, before body exists) — the gate
+    // paints on first frame instead of waiting for DOMContentLoaded, and the
+    // solid background means nothing behind it needs hiding. No backdrop-filter:
+    // blur is the single most expensive compositor effect on the work iGPUs.
+    var overlay = document.createElement('div');
+    overlay.id = 'minka-gate';
+    overlay.innerHTML = ''
+      + '<style>'
+      + '#minka-gate{position:fixed;inset:0;z-index:999999;display:flex;align-items:stretch;overflow:auto;background:#060b13;font-family:Inter,system-ui,sans-serif;}'
+      + '#minka-gate .mg-left{flex:1 1 46%;min-width:320px;position:relative;display:flex;align-items:center;justify-content:center;padding:34px 28px;background:radial-gradient(800px 560px at 50% 40%,rgba(12,20,36,.55) 0%,rgba(6,11,19,.35) 75%),url(data/gate-bg.webp) center/cover no-repeat #060b13;}'
+      + '#minka-gate .mg-login{position:relative;width:min(360px,100%);text-align:center;color:#eef6ff;}'
+      + '#minka-gate .mg-title{font-size:30px;font-weight:800;letter-spacing:.01em;margin-top:20px;}'
+      + '#minka-gate .mg-bar{width:58px;height:3px;border-radius:2px;background:#38bdf8;margin:13px auto 14px;}'
+      + '#minka-gate .mg-sub{font-size:13.5px;color:rgba(176,200,224,.78);margin-bottom:26px;}'
+      + '#minka-gate .mg-field{position:relative;margin-bottom:14px;}'
+      + '#minka-gate .mg-lock{position:absolute;left:15px;top:50%;transform:translateY(-50%);opacity:.55;pointer-events:none;}'
+      + '#minka-gate input[type=password],#minka-gate input[type=text]{width:100%;box-sizing:border-box;background:rgba(13,22,38,.7);border:1.5px solid rgba(125,211,252,.22);border-radius:12px;padding:14px 46px 14px 42px;color:#fff;font-size:15px;outline:none;}'
+      // Global minka.css focus-visible paints a violet ring — force ice-blue here.
+      + '#minka-gate input:focus,#minka-gate input:focus-visible{outline:none!important;box-shadow:none!important;border-color:rgba(56,189,248,.55)!important;}'
+      + '#minka-gate button:focus-visible{outline:none!important;box-shadow:0 0 0 3px rgba(56,189,248,.3)!important;}'
+      + '#minka-gate .mg-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;padding:8px 10px;cursor:pointer;opacity:.55;color:#cfe6f7;}'
+      + '#minka-gate .mg-eye:hover{opacity:.95;}'
+      + '#minka-gate .mg-rem{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(176,200,224,.7);margin:0 2px 14px;}'
+      + '#minka-gate .mg-rem input{accent-color:#38bdf8;}'
+      + '#minka-gate .mg-btn{width:100%;display:flex;align-items:center;background:#1d6ae5;border:none;border-radius:12px;padding:15px 20px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;}'
+      + '#minka-gate .mg-btn span{flex:1;text-align:center;padding-left:17px;}'
+      + '#minka-gate .mg-btn:hover{background:#2674ef;}'
+      + '#minka-gate .mg-btn:disabled{opacity:.6;cursor:default;}'
+      + '#minka-gate .mg-err{color:#f87171;font-size:12px;margin-top:9px;min-height:15px;}'
+      + '#minka-gate .mg-note{display:flex;gap:13px;align-items:flex-start;text-align:left;margin-top:12px;}'
+      + '#minka-gate .mg-note b{display:block;font-size:14px;color:#eef6ff;}'
+      + '#minka-gate .mg-note span{display:block;font-size:12.5px;color:rgba(176,200,224,.7);margin-top:3px;}'
+      + '#minka-gate .mg-author{display:flex;align-items:center;gap:15px;text-align:left;margin-top:18px;padding-top:18px;border-top:1px solid rgba(255,255,255,.08);}'
+      + '#minka-gate .mg-rg{flex:0 0 auto;width:52px;height:52px;border-radius:50%;border:1.5px solid rgba(125,160,210,.45);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#3b82f6;letter-spacing:.05em;}'
+      + '#minka-gate .mg-author small{display:block;font-size:11.5px;color:rgba(176,200,224,.6);}'
+      + '#minka-gate .mg-author b{display:block;font-size:15px;color:#eef6ff;margin:2px 0;}'
+      + '#minka-gate .mg-info{flex:1 1 54%;background:#fff;border-radius:26px;margin:14px 14px 14px 0;padding:38px 46px;color:#16202c;overflow:auto;min-width:320px;}'
+      + '#minka-gate .mg-info h2{font-size:26px;font-weight:800;margin:0 0 18px;padding-bottom:16px;border-bottom:1px solid #e7ebf0;}'
+      + '#minka-gate .mg-item{display:flex;gap:16px;align-items:flex-start;padding:17px 0;border-bottom:1px solid #e7ebf0;}'
+      + '#minka-gate .mg-item:last-of-type{border-bottom:none;}'
+      + '#minka-gate .mg-num{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:#1d6ae5;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:8px;}'
+      + '#minka-gate .mg-ic{flex:0 0 auto;width:46px;height:46px;border-radius:10px;background:#f1f4f8;display:flex;align-items:center;justify-content:center;}'
+      + '#minka-gate .mg-item p{margin:0;font-size:14.5px;line-height:1.55;color:#2a3644;}'
+      + '#minka-gate .mg-blue{color:#1d6ae5;font-weight:700;}'
+      + '#minka-gate .mg-green{color:#0f9d58;font-weight:700;}'
+      + '#minka-gate .mg-red{color:#e2483d;font-weight:700;}'
+      + '#minka-gate .mg-foot{margin-top:16px;font-size:12px;color:#7a8794;}'
+      + '@media(max-width:920px){#minka-gate{flex-direction:column;}#minka-gate .mg-info{margin:0 12px 16px;padding:26px 22px;}#minka-gate .mg-left{padding:40px 22px 30px;}}'
+      + '</style>'
+      + '<div class="mg-left">'
+      + '<div class="mg-login">'
+      // Pixel ghost logo (from the buddy sprite) + speed lanes.
+      + '<svg width="104" height="100" viewBox="0 0 10 9.6" aria-hidden="true" style="display:block;margin:0 auto;">'
+      + '<g fill="#38bdf8" shape-rendering="crispEdges">'
+      + '<rect x="3" y="0" width="4" height="1" fill="#7dd3fc"/>'
+      + '<rect x="2" y="1" width="6" height="1"/>'
+      + '<rect x="1" y="2" width="1" height="1"/><rect x="4" y="2" width="2" height="1"/><rect x="8" y="2" width="1" height="1"/>'
+      + '<rect x="1" y="3" width="8" height="3"/>'
+      + '<rect x="1" y="6" width="1" height="1"/><rect x="3" y="6" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/>'
+      + '</g>'
+      + '<rect x="1.4" y="7.5" width="4.6" height="0.62" rx="0.31" fill="#7dd3fc"/>'
+      + '<rect x="2.6" y="8.42" width="5.8" height="0.62" rx="0.31" fill="#38bdf8"/>'
+      + '<rect x="1.9" y="9.34" width="3.8" height="0.62" rx="0.31" fill="#0e74b2"/>'
+      + '</svg>'
+      + '<div class="mg-title">Grafika p&#257;rskats</div>'
+      + '<div class="mg-bar"></div>'
+      + '<div class="mg-sub">Piek&#316;uve tikai autoriz&#275;tiem darbiniekiem</div>'
+      + '<div class="mg-field">'
+      + '<svg class="mg-lock" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cfe6f7" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>'
+      + '<input id="minka-pw" type="password" placeholder="Parole" autocomplete="current-password">'
+      + '<button class="mg-eye" id="minka-eye" type="button" tabindex="-1" aria-label="R&#257;d&#299;t paroli">'
+      + '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>'
+      + '</button>'
+      + '</div>'
+      + '<label class="mg-rem"><input id="minka-remember" type="checkbox"> Atcer&#275;ties &#353;o ier&#299;ci</label>'
+      + '<button id="minka-btn" class="mg-btn"><span>Piesl&#275;gties</span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>'
+      + '<div id="minka-err" class="mg-err"></div>'
+      + '<div class="mg-note">'
+      + '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7d9cc4" stroke-width="1.8" style="flex:0 0 auto;margin-top:2px;"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/><path d="M8.5 12l2.5 2.5 4.5-4.5" stroke="#3b82f6"/></svg>'
+      + '<div><b>Sist&#275;m&#257; netiek izmantoti pacientu dati.</b><span>Tiek att&#275;loti tikai de&#382;&#363;ru grafika dati.</span></div>'
+      + '</div>'
+      + '<div class="mg-author">'
+      + '<div class="mg-rg">RG</div>'
+      + '<div><small>Autors</small><b>Rihards Gavri&#316;enko</b><small>Radiogr&#257;fers</small></div>'
+      + '</div>'
+      + '</div>'
+      + '</div>'
+      + '<div class="mg-info">'
+      + '<h2>Inform&#257;cija</h2>'
+      + '<div class="mg-item"><div class="mg-num">1</div>'
+      + '<div class="mg-ic"><svg width="26" height="26" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2" fill="#fff" stroke="#c9d3de"/><rect x="2" y="4" width="20" height="5" rx="2" fill="#1d6ae5"/><circle cx="5" cy="6.5" r="0.9" fill="#fff"/><circle cx="8" cy="6.5" r="0.9" fill="#fff"/><rect x="5" y="12" width="10" height="1.6" fill="#c9d3de"/><rect x="5" y="15" width="13" height="1.6" fill="#c9d3de"/></svg></div>'
+      + '<p>&#352;&#299; nav instal&#275;jama programma; t&#257; ir p&#257;rl&#363;k&#257; atverama grafika p&#257;rskata <span class="mg-blue">t&#299;mek&#316;a lapa</span>.</p></div>'
+      + '<div class="mg-item"><div class="mg-num">2</div>'
+      + '<div class="mg-ic"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M5 2h9l5 5v15H5z" fill="#0f9d58"/><path d="M14 2l5 5h-5z" fill="#87cfa8"/><rect x="8" y="11" width="8" height="7" fill="none" stroke="#fff" stroke-width="1.3"/><path d="M8 14.5h8M12 11v7" stroke="#fff" stroke-width="1.3"/></svg></div>'
+      + '<p>Tiek att&#275;loti tikai de&#382;&#363;ru grafika dati no <span class="mg-green">Google Sheets</span>. Google Sheets tiek izmantots un apstiprin&#257;ts darba vajadz&#299;b&#257;m.</p></div>'
+      + '<div class="mg-item"><div class="mg-num">3</div>'
+      + '<div class="mg-ic"><svg width="26" height="26" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2" fill="#fff" stroke="#c9d3de"/><rect x="3" y="5" width="18" height="5" rx="2" fill="#1d6ae5"/><rect x="7" y="3" width="2" height="4" rx="1" fill="#16202c"/><rect x="15" y="3" width="2" height="4" rx="1" fill="#16202c"/>'
+      + '<g fill="#5a6b7d"><circle cx="8" cy="13.5" r="1"/><circle cx="12" cy="13.5" r="1"/><circle cx="16" cy="13.5" r="1"/><circle cx="8" cy="17" r="1"/><circle cx="12" cy="17" r="1"/><circle cx="16" cy="17" r="1"/></g></svg></div>'
+      + '<p>No Google Sheets datiem tiek izmantoti <span class="mg-blue">tikai de&#382;&#363;ru datumi un darba stundu ilgums</span>. &#352;ie dati tiek att&#275;loti &#275;rt&#257;k&#257; skat&#257; un izmantoti darbinieku <span class="mg-red">noslodzes/noguruma</span> apr&#275;&#311;inam.*</p></div>'
+      + '<div class="mg-item"><div class="mg-num">4</div>'
+      + '<div class="mg-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3a4757" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="15.5" r="1.4" fill="#3a4757" stroke="none"/></svg></div>'
+      + '<p>Piek&#316;uve lapai ir <span class="mg-blue">aizsarg&#257;ta ar paroli</span>; bez paroles grafika dati nav redzami.</p></div>'
+      + '<div class="mg-item"><div class="mg-num">5</div>'
+      + '<div class="mg-ic"><svg width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#16202c"/><path fill="#fff" d="M12 4.8a7.3 7.3 0 0 0-2.31 14.23c.37.07.5-.16.5-.35v-1.24c-2.03.44-2.46-.98-2.46-.98-.33-.85-.81-1.07-.81-1.07-.66-.45.05-.44.05-.44.73.05 1.12.75 1.12.75.65 1.12 1.71.8 2.13.61.07-.47.26-.8.46-.98-1.62-.18-3.33-.81-3.33-3.61 0-.8.29-1.45.75-1.96-.07-.18-.33-.93.07-1.93 0 0 .61-.2 2.01.75a7 7 0 0 1 3.66 0c1.4-.95 2.01-.75 2.01-.75.4 1 .15 1.75.07 1.93.47.51.75 1.16.75 1.96 0 2.81-1.71 3.43-3.34 3.61.26.23.5.67.5 1.35v2c0 .2.13.42.51.35A7.3 7.3 0 0 0 12 4.8z"/></svg></div>'
+      + '<p>Publiskaj&#257; GitHub repozitorij&#257; <span class="mg-blue">nav</span> grafika datu, Google Sheets piek&#316;uves datu vai parolu.</p></div>'
+      + '<div class="mg-foot">* Noguruma apr&#275;&#311;ins ir informat&#299;vs un balst&#299;ts uz de&#382;&#363;ru ilgumu un atp&#363;tas laiku.</div>'
+      + '</div>';
+    (document.body || document.documentElement).appendChild(overlay);
+    var input = document.getElementById('minka-pw');
+    var btn = document.getElementById('minka-btn');
+    var err = document.getElementById('minka-err');
+    var remember = document.getElementById('minka-remember');
+    var eye = document.getElementById('minka-eye');
+    eye.addEventListener('click', function() {
+      input.type = input.type === 'password' ? 'text' : 'password';
+      eye.style.opacity = input.type === 'text' ? '0.95' : '';
       input.focus();
-    }, { once: true });
+    });
+    async function attempt() {
+      var password = String(input.value || '').trim();
+      err.textContent = '';
+      if (!password) {
+        err.textContent = 'Ievadi paroli';
+        return;
+      }
+      btn.disabled = true;
+      btn.firstChild.textContent = 'P\u0101rbauda... ';
+      try {
+        var res = await fetch(API_BASE + '/api/login', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ password: password })
+        });
+        var data = await res.json().catch(function(){ return {}; });
+        if (!res.ok || !data || !data.token) throw new Error((data && data.error) || 'Login failed');
+        setToken(data.token, !!(remember && remember.checked));
+        notifyIframeAuth();
+        // Blue loading screen while the calendar reloads with the token —
+        // reuses the hospital loader, hides on the iframe's appReady signal.
+        var ldr = document.getElementById('mk-app-loader');
+        if (ldr) {
+          ldr.style.display = 'flex';
+          ldr.style.opacity = '1';
+          var ldrTxt = document.getElementById('mkl-text');
+          var ldrSub = document.getElementById('mkl-subtext');
+          var ldrFill = document.getElementById('mkl-progress-fill');
+          if (ldrTxt) ldrTxt.textContent = 'L\u0101d\u0113 datus\u2026';
+          if (ldrSub) ldrSub.textContent = 'Piesl\u0113dzas pie grafika skata';
+          if (ldrFill) ldrFill.style.width = '30%';
+          var ldrDone = false;
+          var hideLdr = function() {
+            if (ldrDone) return;
+            ldrDone = true;
+            if (ldrFill) ldrFill.style.width = '100%';
+            ldr.style.opacity = '0';
+            setTimeout(function(){ ldr.style.display = 'none'; }, 920);
+          };
+          window.addEventListener('message', function onReady(e) {
+            if (e.data && e.data.type === 'minka:appReady') {
+              window.removeEventListener('message', onReady);
+              hideLdr();
+            }
+          });
+          setTimeout(hideLdr, 12000);
+        }
+        overlay.style.transition = 'opacity 0.3s';
+        overlay.style.opacity = '0';
+        setTimeout(function(){ overlay.remove(); }, 300);
+      } catch (_e) {
+        err.textContent = 'Nepareiza parole vai API nav sasniedzams';
+        input.value = '';
+        input.focus();
+      } finally {
+        btn.disabled = false;
+        btn.firstChild.textContent = 'Piesl\u0113gties ';
+      }
+    }
+    btn.addEventListener('click', attempt);
+    input.addEventListener('keydown', function(e){ if(e.key==='Enter') attempt(); });
+    input.focus();
   }
 
   if (!getToken()) showGate();
@@ -439,7 +561,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260611a" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260611a" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260611e" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260611e" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -451,41 +573,30 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
   transition:opacity .9s ease;
 ">
-  <div style="display:flex;flex-direction:column;align-items:center;">
-    <div id="mkl-dot" style="width:6px;height:6px;border-radius:50%;background:#38bdf8;margin:0 auto;animation:mklBlink 1.2s ease-in-out infinite;"></div>
-    <div style="width:1px;height:14px;background:rgba(255,255,255,0.2);margin:0 auto;"></div>
-    <div style="display:flex;align-items:flex-end;">
-      <div style="width:24px;height:58px;background:rgba(255,255,255,0.03);border:1px solid rgba(56,189,248,0.15);border-bottom:none;border-radius:4px 4px 0 0;display:grid;grid-template-rows:repeat(4,1fr);gap:5px;padding:7px 5px 5px;">
-        <div class="mkl-win"></div><div class="mkl-win"></div><div class="mkl-win"></div><div class="mkl-win"></div>
-      </div>
-      <div style="width:110px;height:88px;background:rgba(255,255,255,0.035);border:1px solid rgba(56,189,248,0.22);border-bottom:none;border-radius:6px 6px 0 0;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(3,1fr);gap:7px;padding:10px 10px 8px;position:relative;">
-        <div class="mkl-win"></div><div class="mkl-win"></div><div class="mkl-win"></div><div class="mkl-win"></div>
-        <div class="mkl-win"></div><div class="mkl-win"></div><div class="mkl-win"></div><div class="mkl-win"></div>
-        <div class="mkl-win"></div><div class="mkl-win"></div><div class="mkl-win"></div><div class="mkl-win"></div>
-      </div>
-      <div style="width:24px;height:58px;background:rgba(255,255,255,0.03);border:1px solid rgba(56,189,248,0.15);border-bottom:none;border-radius:4px 4px 0 0;display:grid;grid-template-rows:repeat(4,1fr);gap:5px;padding:7px 5px 5px;">
-        <div class="mkl-win"></div><div class="mkl-win"></div><div class="mkl-win"></div><div class="mkl-win"></div>
-      </div>
-    </div>
-    <div style="width:158px;height:5px;background:rgba(56,189,248,0.18);border-radius:0 0 3px 3px;"></div>
-  </div>
+  <!-- Pixel ghost (logo) — 2D pixel style, ice palette, stepped bob animation -->
+  <svg width="104" height="100" viewBox="0 0 10 9.6" aria-hidden="true" style="animation:mklBob 1.4s steps(2,end) infinite;">
+    <g fill="#38bdf8" shape-rendering="crispEdges">
+      <rect x="3" y="0" width="4" height="1" fill="#7dd3fc"/>
+      <rect x="2" y="1" width="6" height="1"/>
+      <rect x="1" y="2" width="1" height="1"/><rect x="4" y="2" width="2" height="1"/><rect x="8" y="2" width="1" height="1"/>
+      <rect x="1" y="3" width="8" height="3"/>
+      <rect x="1" y="6" width="1" height="1"/><rect x="3" y="6" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/>
+    </g>
+    <rect x="1.4" y="7.5" width="4.6" height="0.62" rx="0.31" fill="#7dd3fc"/>
+    <rect x="2.6" y="8.42" width="5.8" height="0.62" rx="0.31" fill="#38bdf8"/>
+    <rect x="1.9" y="9.34" width="3.8" height="0.62" rx="0.31" fill="#0e74b2"/>
+  </svg>
   <div style="font-size:0.68rem;font-weight:800;letter-spacing:.20em;color:rgba(125,211,252,0.60);text-transform:uppercase;" id="mkl-text">Lādē datus…</div>
   <div id="mkl-subtext" style="font-size:0.74rem;color:rgba(220,240,255,0.50);letter-spacing:.04em;">Sagatavo mekl&#275;&#353;anu, grafiku un iestat&#299;jumus</div>
-  <div id="mkl-progress" style="width:min(320px,78vw);height:8px;border-radius:999px;background:rgba(255,255,255,0.06);overflow:hidden;border:1px solid rgba(56,189,248,0.10);box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);">
-    <div id="mkl-progress-fill" style="width:14%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#0ea5e9 0%,#38bdf8 50%,#7dd3fc 100%);box-shadow:0 0 16px rgba(56,189,248,.28);transition:width .6s cubic-bezier(.22,1,.36,1);position:relative;overflow:visible;">
-      <span id="mkl-progress-glow" style="position:absolute;right:-18px;top:50%;width:20px;height:20px;border-radius:999px;transform:translateY(-50%);background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.96) 0 14%,rgba(186,230,253,.92) 28%,rgba(56,189,248,.95) 68%,rgba(14,165,233,.96) 100%);box-shadow:0 0 0 5px rgba(56,189,248,.10),0 0 14px rgba(56,189,248,.30),0 6px 16px rgba(0,0,0,.20);animation:mklPulse 2.2s ease-in-out infinite;"></span>
-      <span id="mkl-progress-sheen" style="position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(100deg,transparent 0%,rgba(255,255,255,.10) 40%,rgba(255,255,255,.34) 52%,rgba(255,255,255,.10) 64%,transparent 100%);background-size:120px 100%;animation:mklSheen 1.8s linear infinite;"></span>
+  <div id="mkl-progress" style="width:min(320px,78vw);height:10px;border-radius:3px;background:rgba(125,211,252,0.08);overflow:hidden;border:1px solid rgba(56,189,248,0.18);">
+    <div id="mkl-progress-fill" style="width:14%;height:100%;border-radius:2px;background:linear-gradient(90deg,#0e74b2 0%,#38bdf8 55%,#7dd3fc 100%);transition:width .6s cubic-bezier(.22,1,.36,1);position:relative;overflow:hidden;">
+      <span id="mkl-progress-sheen" style="position:absolute;inset:0;pointer-events:none;background:linear-gradient(100deg,transparent 0%,rgba(255,255,255,.12) 42%,rgba(255,255,255,.30) 52%,rgba(255,255,255,.12) 62%,transparent 100%);background-size:120px 100%;animation:mklSheen 1.8s linear infinite;"></span>
     </div>
   </div>
 </div>
 <style>
-@keyframes mklBlink{0%,100%{opacity:.3;box-shadow:none;}50%{opacity:1;box-shadow:0 0 8px rgba(56,189,248,0.9);}}
 @keyframes mklSheen{0%{background-position:-120px 0;}100%{background-position:120px 0;}}
-@keyframes mklPulse{0%,100%{opacity:.88;transform:translateY(-50%) scale(.96);}50%{opacity:1;transform:translateY(-50%) scale(1.02);}}
-.mkl-win{border-radius:2px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);transition:background .35s ease,box-shadow .35s ease;}
-.mkl-win.lit-warm{background:rgba(255,205,100,0.82);box-shadow:0 0 6px rgba(255,190,80,0.65),0 0 14px rgba(255,190,80,0.28);border-color:rgba(255,205,100,0.5);}
-.mkl-win.lit-cool{background:rgba(120,200,255,0.72);box-shadow:0 0 6px rgba(100,190,255,0.55),0 0 14px rgba(100,190,255,0.26);border-color:rgba(120,200,255,0.45);}
-.mkl-win.lit-purple{background:rgba(125,211,252,0.72);box-shadow:0 0 6px rgba(56,189,248,0.55),0 0 14px rgba(56,189,248,0.28);border-color:rgba(125,211,252,0.45);}
+@keyframes mklBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
 </style>
 <script>
 (function(){
