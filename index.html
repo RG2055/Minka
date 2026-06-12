@@ -1663,10 +1663,160 @@ window.addEventListener('DOMContentLoaded', () => {
       animation: dockRise .45s cubic-bezier(.22,1,.36,1) both !important;
       animation-delay: .15s !important;
     }
+
+    /* ═══ Dock V3 — icon tiles (flat, uniform height, zero glow/anim) ═══ */
+    #bottomBtnBar {
+      background: #0d1726 !important;
+      border: 1px solid #20304d !important;
+      border-radius: 18px !important;
+      padding: 6px !important;
+      gap: 2px !important;
+    }
+    /* separators away — the pill itself groups the tiles */
+    #dockSep,
+    #bottomBtnBar > div[style*="width:1px"] { display: none !important; }
+
+    #nsToggleBtnParent,
+    #bolusDocBtn,
+    #mobileDockBtn,
+    #statsDocBtn,
+    #lacitisDockBtn,
+    #settingsDockBtn,
+    #radioIdleBtn,
+    #radioToggle {
+      flex: 0 0 86px !important;
+      width: 86px !important;
+      min-width: 86px !important;
+      max-width: 86px !important;
+      height: 58px !important;
+      min-height: 58px !important;
+      padding: 7px 0 6px !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+      gap: 6px !important;
+      background: transparent !important;
+      border: 1px solid transparent !important;
+      border-radius: 12px !important;
+      box-shadow: none !important;
+      text-shadow: none !important;
+      animation: none !important;
+      color: #8ba3c7 !important;
+      font: 700 8px/1 'Space Grotesk', system-ui !important;
+      letter-spacing: .14em !important;
+      transform: none !important;
+      transition: background .18s ease, border-color .18s ease, color .18s ease !important;
+    }
+    #nsToggleBtnParent::after,
+    #bolusDocBtn::after,
+    #mobileDockBtn::after,
+    #statsDocBtn::after,
+    #lacitisDockBtn::after,
+    #settingsDockBtn::after,
+    #radioIdleBtn::after,
+    #radioToggle::after { display: none !important; content: none !important; }
+    /* old star-field dots on NAKTS — gone in the tile look (bolus ::before stays: it's the live progress ring) */
+    #nsToggleBtnParent::before { display: none !important; content: none !important; }
+
+    #nsToggleBtnParent:hover,
+    #bolusDocBtn:hover,
+    #mobileDockBtn:hover,
+    #statsDocBtn:hover,
+    #lacitisDockBtn:hover,
+    #settingsDockBtn:hover,
+    #radioIdleBtn:hover,
+    #radioToggle:hover {
+      background: #101c30 !important;
+      border-color: #243a5c !important;
+      color: #c7d6ec !important;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+    #nsToggleBtnParent:active,
+    #bolusDocBtn:active,
+    #mobileDockBtn:active,
+    #statsDocBtn:active,
+    #lacitisDockBtn:active,
+    #settingsDockBtn:active,
+    #radioIdleBtn:active,
+    #radioToggle:active { transform: scale(.97) !important; }
+
+    #nsToggleBtnParent.ns-open,
+    #bolusDocBtn.bolus-open,
+    #statsDocBtn.stats-open,
+    #settingsDockBtn.settings-open,
+    #mobileDockBtn.mobile-open {
+      background: #13233c !important;
+      border-color: #2e4a73 !important;
+      color: #ffffff !important;
+      box-shadow: none !important;
+    }
+
+    .dock-px { width: 21px !important; height: auto !important; flex-shrink: 0; }
+    .dock-emoji { display: none !important; }
+    #radioToggle .fa-chevron-down { display: none !important; }
+
+    /* Bolus tile: icon + GE/PH chips on top row, label below */
+    #bolusDocBtn {
+      flex: 0 0 118px !important;
+      width: 118px !important;
+      min-width: 118px !important;
+      max-width: 118px !important;
+      overflow: visible !important;
+    }
+    #bolusDocBtn .bolus-pattern { display: none !important; }
+    #bolusDocBtn .bolus-top { display: inline-flex; align-items: center; gap: 6px; }
+    #bolusDocBtn .bolus-dock-title {
+      font: 700 8px/1 'Space Grotesk', system-ui !important;
+      letter-spacing: .14em !important;
+      color: inherit !important;
+      text-shadow: none !important;
+    }
+    #bolusDocBtn .bolus-room-row {
+      display: inline-flex !important;
+      width: auto !important;
+      flex: 0 0 auto !important;
+      gap: 3px !important;
+    }
+    #bolusDocBtn .bolus-room-seg {
+      height: 17px !important;
+      min-width: 25px !important;
+      padding: 0 4px !important;
+      border-radius: 5px !important;
+      font: 800 8px/1 'Space Grotesk', system-ui !important;
+      letter-spacing: .04em !important;
+      box-shadow: none !important;
+      background: #0b1322 !important;
+      border: 1px solid #2c3b55 !important;
+      color: #8ba3c7 !important;
+    }
+    #bolusDocBtn .bolus-room-seg.is-fresh {
+      background: #0f2e26 !important;
+      border-color: rgba(45,212,191,.6) !important;
+      color: #9ff0df !important;
+    }
+    #bolusDocBtn .bolus-room-seg.is-caution {
+      background: #33260a !important;
+      border-color: rgba(251,191,36,.6) !important;
+      color: #fde68a !important;
+    }
+    #bolusDocBtn .bolus-room-seg.is-warn {
+      background: #361a08 !important;
+      border-color: rgba(251,146,60,.65) !important;
+      color: #ffd9b3 !important;
+    }
+    #bolusDocBtn .bolus-room-seg.is-stale {
+      background: #3a1118 !important;
+      border-color: rgba(255,90,110,.7) !important;
+      color: #ffd6dc !important;
+      animation: bolusBlinkFlat 1.3s ease-in-out infinite !important;
+      box-shadow: none !important;
+    }
+    @keyframes bolusBlinkFlat { 50% { opacity: .55; } }
     </style>
 
     <button id="nsToggleBtnParent" onclick="toggleNsFromParent()" title="Nakts Sadalījums">
       <div id="nsLedParent" style="width:7px;height:7px;border-radius:50%;background:#6488ff;box-shadow:0 0 7px #6488ff;flex-shrink:0;animation:rledPulse 2.5s ease-in-out infinite;"></div>
+      <svg class="dock-px" width="17" height="15" viewBox="0 0 10 9" shape-rendering="crispEdges" aria-hidden="true"><rect x="3" y="0" width="4.04" height="1.04" fill="#c7d2fe"/><rect x="1" y="1" width="2.04" height="1.04" fill="#c7d2fe"/><rect x="3" y="1" width="2.04" height="1.04" fill="#818cf8"/><rect x="1" y="2" width="2.04" height="1.04" fill="#818cf8"/><rect x="8" y="2" width="1.04" height="1.04" fill="#fbbf24"/><rect x="0" y="3" width="2.04" height="1.04" fill="#818cf8"/><rect x="7" y="3" width="3.04" height="1.04" fill="#fbbf24"/><rect x="0" y="4" width="2.04" height="1.04" fill="#818cf8"/><rect x="8" y="4" width="1.04" height="1.04" fill="#fbbf24"/><rect x="0" y="5" width="2.04" height="1.04" fill="#818cf8"/><rect x="1" y="6" width="2.04" height="1.04" fill="#818cf8"/><rect x="7" y="6" width="1.04" height="1.04" fill="#fbbf24"/><rect x="1" y="7" width="3.04" height="1.04" fill="#818cf8"/><rect x="3" y="8" width="4.04" height="1.04" fill="#818cf8"/></svg>
       <span>NAKTS</span>
       <span class="dock-emoji" style="font-size:11px;">🌙</span>
     </button>
@@ -1675,23 +1825,26 @@ window.addEventListener('DOMContentLoaded', () => {
     <button id="bolusDocBtn" onclick="toggleBolus()" title="Bolusa maiņa">
       <div id="bolusLed" style="width:7px;height:7px;border-radius:50%;background:#00c8ff;box-shadow:0 0 7px #00c8ff;flex-shrink:0;animation:rledPulse 2.8s ease-in-out infinite;"></div>
       <span class="bolus-pattern" aria-hidden="true"></span>
-      <span class="bolus-dock-title">Bolus</span>
+      <span class="bolus-top" aria-hidden="true"><svg class="dock-px" width="17" height="17" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true"><rect x="4" y="0" width="1.04" height="1.04" fill="#2dd4bf"/><rect x="3" y="1" width="3.04" height="1.04" fill="#2dd4bf"/><rect x="3" y="2" width="3.04" height="1.04" fill="#2dd4bf"/><rect x="2" y="3" width="5.04" height="1.04" fill="#2dd4bf"/><rect x="1" y="4" width="7.04" height="1.04" fill="#2dd4bf"/><rect x="1" y="5" width="1.04" height="1.04" fill="#2dd4bf"/><rect x="2" y="5" width="1.04" height="1.04" fill="#99f6e4"/><rect x="3" y="5" width="5.04" height="1.04" fill="#2dd4bf"/><rect x="1" y="6" width="1.04" height="1.04" fill="#2dd4bf"/><rect x="2" y="6" width="1.04" height="1.04" fill="#99f6e4"/><rect x="3" y="6" width="5.04" height="1.04" fill="#2dd4bf"/><rect x="2" y="7" width="5.04" height="1.04" fill="#2dd4bf"/><rect x="3" y="8" width="3.04" height="1.04" fill="#2dd4bf"/></svg>
       <span class="bolus-room-row" aria-hidden="true">
         <span id="bolusSegGe" class="bolus-room-seg" data-room="ge">GE</span>
         <span id="bolusSegPh" class="bolus-room-seg" data-room="philips">PH</span>
-      </span>
+      </span></span>
+      <span class="bolus-dock-title">BOLUS</span>
     </button>
 
     <div id="dockSep" role="separator" aria-hidden="true"></div>
 
     <button id="statsDocBtn" onclick="openStatsFromDock()" title="Statistika &amp; Leaderboard">
       <div style="width:7px;height:7px;border-radius:50%;background:#a78bfa;box-shadow:0 0 7px #a78bfa;flex-shrink:0;animation:rledPulse 3s ease-in-out infinite;"></div>
+      <svg class="dock-px" width="17" height="15" viewBox="0 0 9 8" shape-rendering="crispEdges" aria-hidden="true"><rect x="6" y="0" width="2.04" height="1.04" fill="#a78bfa"/><rect x="6" y="1" width="2.04" height="1.04" fill="#a78bfa"/><rect x="3" y="2" width="2.04" height="1.04" fill="#c4b5fd"/><rect x="6" y="2" width="2.04" height="1.04" fill="#a78bfa"/><rect x="3" y="3" width="2.04" height="1.04" fill="#c4b5fd"/><rect x="6" y="3" width="2.04" height="1.04" fill="#a78bfa"/><rect x="0" y="4" width="2.04" height="1.04" fill="#a78bfa"/><rect x="3" y="4" width="2.04" height="1.04" fill="#c4b5fd"/><rect x="6" y="4" width="2.04" height="1.04" fill="#a78bfa"/><rect x="0" y="5" width="2.04" height="1.04" fill="#a78bfa"/><rect x="3" y="5" width="2.04" height="1.04" fill="#c4b5fd"/><rect x="6" y="5" width="2.04" height="1.04" fill="#a78bfa"/><rect x="0" y="6" width="2.04" height="1.04" fill="#a78bfa"/><rect x="3" y="6" width="2.04" height="1.04" fill="#c4b5fd"/><rect x="6" y="6" width="2.04" height="1.04" fill="#a78bfa"/><rect x="0" y="7" width="9.04" height="1.04" fill="#475569"/></svg>
       <span>STATISTIKA</span>
     </button>
 
     <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
     <button id="settingsDockBtn" onclick="openSettingsFromDock()" title="Iestatījumi">
       <div style="width:7px;height:7px;border-radius:50%;background:#ffd666;box-shadow:0 0 7px #ffd666;flex-shrink:0;animation:rledPulse 3.2s ease-in-out infinite;"></div>
+      <svg class="dock-px" width="17" height="17" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true"><rect x="4" y="0" width="1.04" height="1.04" fill="#fbbf24"/><rect x="1" y="1" width="1.04" height="1.04" fill="#fbbf24"/><rect x="3" y="1" width="3.04" height="1.04" fill="#fbbf24"/><rect x="7" y="1" width="1.04" height="1.04" fill="#fbbf24"/><rect x="2" y="2" width="5.04" height="1.04" fill="#fbbf24"/><rect x="1" y="3" width="2.04" height="1.04" fill="#fbbf24"/><rect x="6" y="3" width="2.04" height="1.04" fill="#fbbf24"/><rect x="0" y="4" width="3.04" height="1.04" fill="#fbbf24"/><rect x="4" y="4" width="1.04" height="1.04" fill="#fde68a"/><rect x="6" y="4" width="3.04" height="1.04" fill="#fbbf24"/><rect x="1" y="5" width="2.04" height="1.04" fill="#fbbf24"/><rect x="6" y="5" width="2.04" height="1.04" fill="#fbbf24"/><rect x="2" y="6" width="5.04" height="1.04" fill="#fbbf24"/><rect x="1" y="7" width="1.04" height="1.04" fill="#fbbf24"/><rect x="3" y="7" width="3.04" height="1.04" fill="#fbbf24"/><rect x="7" y="7" width="1.04" height="1.04" fill="#fbbf24"/><rect x="4" y="8" width="1.04" height="1.04" fill="#fbbf24"/></svg>
       <span>IESTATĪJUMI</span>
     </button>
 
@@ -1699,6 +1852,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     <button id="mobileDockBtn" onclick="toggleMobileQrModal()" title="Atvērt mobile QR">
       <div style="width:7px;height:7px;border-radius:50%;background:#b58cff;box-shadow:0 0 7px #b58cff;flex-shrink:0;animation:rledPulse 2.9s ease-in-out infinite;"></div>
+      <svg class="dock-px" width="17" height="22" viewBox="0 0 7 9" shape-rendering="crispEdges" aria-hidden="true"><rect x="1" y="0" width="5.04" height="1.04" fill="#c4b5fd"/><rect x="1" y="1" width="1.04" height="1.04" fill="#c4b5fd"/><rect x="2" y="1" width="3.04" height="1.04" fill="#ddd6fe"/><rect x="5" y="1" width="1.04" height="1.04" fill="#c4b5fd"/><rect x="1" y="2" width="1.04" height="1.04" fill="#c4b5fd"/><rect x="5" y="2" width="1.04" height="1.04" fill="#c4b5fd"/><rect x="1" y="3" width="1.04" height="1.04" fill="#c4b5fd"/><rect x="5" y="3" width="1.04" height="1.04" fill="#c4b5fd"/><rect x="1" y="4" width="1.04" height="1.04" fill="#c4b5fd"/><rect x="5" y="4" width="1.04" height="1.04" fill="#c4b5fd"/><rect x="1" y="5" width="1.04" height="1.04" fill="#c4b5fd"/><rect x="5" y="5" width="1.04" height="1.04" fill="#c4b5fd"/><rect x="1" y="6" width="1.04" height="1.04" fill="#c4b5fd"/><rect x="5" y="6" width="1.04" height="1.04" fill="#c4b5fd"/><rect x="1" y="7" width="1.04" height="1.04" fill="#c4b5fd"/><rect x="3" y="7" width="1.04" height="1.04" fill="#a78bfa"/><rect x="5" y="7" width="1.04" height="1.04" fill="#c4b5fd"/><rect x="1" y="8" width="5.04" height="1.04" fill="#c4b5fd"/></svg>
       <span>MOBILE</span>
     </button>
 
@@ -1706,6 +1860,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     <button id="lacitisDockBtn" onclick="openLacitisLauncher()" title="Lācītis dežūra">
       <div style="width:7px;height:7px;border-radius:50%;background:#f59e0b;box-shadow:0 0 7px #f59e0b;flex-shrink:0;animation:rledPulse 3.1s ease-in-out infinite;"></div>
+      <svg class="dock-px" width="17" height="15" viewBox="0 0 9 8" shape-rendering="crispEdges" aria-hidden="true"><rect x="0" y="0" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="7" y="0" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="0" y="1" width="1.04" height="1.04" fill="#e2e8f0"/><rect x="1" y="1" width="1.04" height="1.04" fill="#cbd5e1"/><rect x="2" y="1" width="1.04" height="1.04" fill="#e2e8f0"/><rect x="6" y="1" width="1.04" height="1.04" fill="#e2e8f0"/><rect x="7" y="1" width="1.04" height="1.04" fill="#cbd5e1"/><rect x="8" y="1" width="1.04" height="1.04" fill="#e2e8f0"/><rect x="1" y="2" width="7.04" height="1.04" fill="#e2e8f0"/><rect x="0" y="3" width="9.04" height="1.04" fill="#e2e8f0"/><rect x="0" y="4" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="3" y="4" width="3.04" height="1.04" fill="#e2e8f0"/><rect x="7" y="4" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="0" y="5" width="9.04" height="1.04" fill="#e2e8f0"/><rect x="1" y="6" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="3" y="6" width="1.04" height="1.04" fill="#cbd5e1"/><rect x="4" y="6" width="1.04" height="1.04" fill="#0b1220"/><rect x="5" y="6" width="1.04" height="1.04" fill="#cbd5e1"/><rect x="6" y="6" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="2" y="7" width="5.04" height="1.04" fill="#e2e8f0"/></svg>
       <span>LĀCĪTIS</span>
       <span class="dock-emoji" style="font-size:13px;">🐻‍❄️</span>
       <span class="dock-emoji" style="font-size:12px;">♫</span>
@@ -1715,11 +1870,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
     <button id="radioIdleBtn" onclick="radioIdleClick()" title="RG Radio" aria-label="RG Radio">
       <div class="rtog-led" style="background:#00ff88;box-shadow:none;"></div>
+      <svg class="dock-px" width="17" height="15" viewBox="0 0 9 8" shape-rendering="crispEdges" aria-hidden="true"><rect x="7" y="0" width="1.04" height="1.04" fill="#34d399"/><rect x="6" y="1" width="1.04" height="1.04" fill="#34d399"/><rect x="5" y="2" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="3" width="9.04" height="1.04" fill="#34d399"/><rect x="0" y="4" width="1.04" height="1.04" fill="#34d399"/><rect x="8" y="4" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="5" width="1.04" height="1.04" fill="#34d399"/><rect x="2" y="5" width="2.04" height="1.04" fill="#a7f3d0"/><rect x="6" y="5" width="1.04" height="1.04" fill="#a7f3d0"/><rect x="8" y="5" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="6" width="1.04" height="1.04" fill="#34d399"/><rect x="2" y="6" width="2.04" height="1.04" fill="#a7f3d0"/><rect x="8" y="6" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="7" width="9.04" height="1.04" fill="#34d399"/></svg>
       <span>RADIO</span>
       <span class="dock-emoji" style="font-size:11px;">♪</span>
     </button>
     <button id="radioToggle" onclick="toggleRadio()" title="Paslēpt/Rādīt Radio">
       <div class="rtog-led"></div>
+      <svg class="dock-px" width="17" height="15" viewBox="0 0 9 8" shape-rendering="crispEdges" aria-hidden="true"><rect x="7" y="0" width="1.04" height="1.04" fill="#34d399"/><rect x="6" y="1" width="1.04" height="1.04" fill="#34d399"/><rect x="5" y="2" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="3" width="9.04" height="1.04" fill="#34d399"/><rect x="0" y="4" width="1.04" height="1.04" fill="#34d399"/><rect x="8" y="4" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="5" width="1.04" height="1.04" fill="#34d399"/><rect x="2" y="5" width="2.04" height="1.04" fill="#a7f3d0"/><rect x="6" y="5" width="1.04" height="1.04" fill="#a7f3d0"/><rect x="8" y="5" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="6" width="1.04" height="1.04" fill="#34d399"/><rect x="2" y="6" width="2.04" height="1.04" fill="#a7f3d0"/><rect x="8" y="6" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="7" width="9.04" height="1.04" fill="#34d399"/></svg>
       <span id="radioToggleLabel">RADIO</span>
       <i class="fas fa-chevron-down" style="font-size:9px;opacity:.7;"></i>
     </button>
@@ -3437,8 +3594,8 @@ body::before {
   padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px)) !important;
 }
 #bottomBtnBar {
-  background: transparent !important;
-  border: 0 !important;
+  background: #0d1726 !important;
+  border: 1px solid #20304d !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -3450,7 +3607,7 @@ body::before {
 #settingsDockBtn,
 #radioIdleBtn,
 #radioToggle {
-  min-height: 46px !important;
+  min-height: 58px !important;
   border-radius: 12px !important;
 }
 @media (max-width: 1180px) {
