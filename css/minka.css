@@ -1694,7 +1694,7 @@ button:focus-visible, input:focus-visible, select:focus-visible{
   background: transparent !important;
   border-top: none !important;
   padding: 0 10px !important;
-  grid-template-columns: 270px minmax(240px, 1fr) minmax(280px, 340px) !important;
+  grid-template-columns: 270px minmax(180px, 1fr) minmax(280px, 432px) !important;
   gap: 16px !important;
 }
 #radioWindow .tech-panel{

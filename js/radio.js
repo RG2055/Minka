@@ -7,6 +7,11 @@ const _err  = (...a) => { if (RG_DEBUG) console.error(...a); };
 const MK_PERF = window.__mkPerfProfile || {};
 const MK_LOW_SPEC = !!MK_PERF.lowSpec;
 const MK_VIZ_FRAME_MS = MK_LOW_SPEC ? 1000 / 30 : 0;
+// Buddy visualizer: a ~4fps pixel ghost instead of the 30-60fps FFT spectrum.
+// Default on low-spec machines; the round dolphin button toggles spectrum back.
+const MK_BUDDY_VIZ = 11;
+let __mkLastSpectrum = 3;
+let __mkBuddyStep = 0;
 let aCtx, analyser, src, lowNode, highNode, hls, masterGain, dryGain, wetGain, delayNode, feedbackNode, convolverNode, compressorNode, vinylNoiseSrc, vinylLPF, vinylGain, depthSplitter, depthMerger, depthDelayR, depthDryGain, depthWetGain, depthSumGain;
 let stationsList = [];
 let recordStations = [];
@@ -39,7 +44,14 @@ function refreshCombinedStations(){
 }
 
 let currentIndex = 0;
-let vizStyle = 3; 
+let vizStyle = (function(){
+    try {
+        const s = localStorage.getItem('mkRadioViz');
+        if (s === 'buddy') return MK_BUDDY_VIZ;
+        if (s && s.indexOf('spectrum:') === 0) { const n = +s.slice(9); if (n >= 0 && n < 8) { __mkLastSpectrum = n; return n; } }
+    } catch(e){}
+    return MK_LOW_SPEC ? MK_BUDDY_VIZ : 3;
+})();
 let isAdjustingVol = false;
 let volTimeout;
 let isFirstPlay = true; 
@@ -81,6 +93,53 @@ audio.addEventListener('play', () => {
     document.addEventListener('keydown',     preWarm, { capture: true, once: true, passive: true });
 })();
 document.addEventListener('visibilitychange', () => { if (!document.hidden) requestAnimationFrame(draw); });
+
+// ── Buddy/Spectrum round toggle (sits over the viz screen) ───────────
+function mkUpdateVizToggle(){
+    const b = document.getElementById('mkVizToggle');
+    if (!b) return;
+    if (vizStyle === MK_BUDDY_VIZ) {
+        b.innerHTML = '<svg width="30" height="15" viewBox="0 0 16 8" shape-rendering="crispEdges" aria-hidden="true"><rect x="7" y="0" width="2" height="1" fill="#7dffc0"/><rect x="6" y="1" width="3" height="1" fill="#7dffc0"/><rect x="3" y="2" width="9" height="1" fill="#00ff88"/><rect x="2" y="3" width="12" height="1" fill="#00ff88"/><rect x="1" y="4" width="15" height="1" fill="#00ff88"/><rect x="0" y="5" width="2" height="1" fill="#00ff88"/><rect x="4" y="5" width="10" height="1" fill="#00ff88"/><rect x="0" y="6" width="1" height="1" fill="#00ff88"/><rect x="6" y="6" width="4" height="1" fill="#00ff88"/><rect x="7" y="7" width="2" height="1" fill="#00ff88"/></svg><span>SPECTRUM</span>';
+        b.title = 'Ieslēgt spektra vizualizāciju';
+    } else {
+        b.innerHTML = '<svg width="22" height="16" viewBox="0 0 10 7" shape-rendering="crispEdges" aria-hidden="true">'
+          + '<rect x="3" y="0" width="4" height="1" fill="#7dffc0"/><rect x="2" y="1" width="6" height="1" fill="#00ff88"/>'
+          + '<rect x="1" y="2" width="1" height="1" fill="#00ff88"/><rect x="4" y="2" width="2" height="1" fill="#00ff88"/><rect x="8" y="2" width="1" height="1" fill="#00ff88"/>'
+          + '<rect x="1" y="3" width="8" height="3" fill="#00ff88"/>'
+          + '<rect x="1" y="6" width="1" height="1" fill="#00ff88"/><rect x="3" y="6" width="1" height="1" fill="#00ff88"/><rect x="6" y="6" width="1" height="1" fill="#00ff88"/><rect x="8" y="6" width="1" height="1" fill="#00ff88"/>'
+          + '</svg><span>BUDDY</span>';
+        b.title = 'Buddy režīms (viegls, taupa resursus)';
+    }
+}
+function mkToggleBuddyViz(){
+    if (vizStyle === MK_BUDDY_VIZ) {
+        vizStyle = (__mkLastSpectrum >= 0 && __mkLastSpectrum < 8) ? __mkLastSpectrum : 3;
+    } else {
+        __mkLastSpectrum = vizStyle;
+        vizStyle = MK_BUDDY_VIZ;
+    }
+    try { localStorage.setItem('mkRadioViz', vizStyle === MK_BUDDY_VIZ ? 'buddy' : ('spectrum:' + vizStyle)); } catch(e){}
+    updateVizLabel(); applyVizMode(); updateVizPickerUI(); mkUpdateVizToggle();
+}
+(function mkVizToggleInit(){
+    // Lives on the radio chassis, right next to the stations-list button.
+    const stationsBtn = document.querySelector('.control-panel .station-btn');
+    const host = stationsBtn && stationsBtn.parentElement;
+    if (!host) return;
+    const st = document.createElement('style');
+    st.textContent = '#radioWindow .control-panel{flex-wrap:wrap;row-gap:6px;justify-content:flex-end;}'
+      + '#mkVizToggle{flex:0 0 auto;width:44px;height:44px;border-radius:50%;border:1px solid rgba(0,255,136,.45);background:rgba(6,14,10,.9);color:#9fffd0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;font:700 5.5px/1 "Space Grotesk",system-ui;letter-spacing:.1em;padding:0;}'
+      + '#mkVizToggle:hover{border-color:rgba(0,255,136,.85);background:rgba(8,20,14,.96);}'
+      + '#mkVizToggle svg{display:block;}'
+      + '@media (max-width:900px){#mkVizToggle{width:34px;height:34px;}#mkVizToggle span{display:none;}#mkVizToggle svg{width:22px;height:11px;}}';
+    document.head.appendChild(st);
+    const b = document.createElement('button');
+    b.id = 'mkVizToggle';
+    b.type = 'button';
+    stationsBtn.insertAdjacentElement('afterend', b);
+    b.addEventListener('click', (e) => { e.stopPropagation(); mkToggleBuddyViz(); });
+    mkUpdateVizToggle();
+})();
 
 
 const segContainer = document.getElementById('osd-segments');
@@ -171,16 +230,27 @@ function setNowUI(artist = "—", title = "—", coverUrl = ""){
     fitNowPlaying();
 
     if (!cover) return;
-    if (coverUrl) {
-        cover.crossOrigin = "anonymous";
-        cover.src = coverUrl;
-        cover.style.display = "block";
-        cover.style.opacity = "0.92";
-    } else {
-        cover.removeAttribute("src");
-        cover.style.display = "none";
+    // No crossOrigin on the visible cover: CORS-less art hosts made the image
+    // fail outright (broken icon). Ambilight samples colors via its own
+    // crossOrigin Image, so the visible img doesn't need it.
+    if (!cover._mkErrBound) {
+        cover._mkErrBound = true;
+        cover.addEventListener('error', () => {
+            if (cover.getAttribute('src') === MK_COVER_BUDDY) return;
+            cover.src = MK_COVER_BUDDY;
+            cover.style.display = "block";
+            cover.style.opacity = "0.92";
+        });
     }
+    cover.removeAttribute("crossorigin");
+    const nextSrc = coverUrl || MK_COVER_BUDDY;
+    if (cover.getAttribute('src') !== nextSrc) cover.src = nextSrc;
+    cover.style.display = "block";
+    cover.style.opacity = "0.92";
 }
+
+// Static pixel buddy shown when a station has no cover or the art fails to load.
+const MK_COVER_BUDDY = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Crect width='16' height='16' fill='%230a140d'/%3E%3Crect x='6' y='4' width='4' height='1' fill='%237dffc0'/%3E%3Crect x='5' y='5' width='6' height='1' fill='%2300ff88'/%3E%3Crect x='4' y='6' width='1' height='1' fill='%2300ff88'/%3E%3Crect x='7' y='6' width='2' height='1' fill='%2300ff88'/%3E%3Crect x='11' y='6' width='1' height='1' fill='%2300ff88'/%3E%3Crect x='4' y='7' width='8' height='3' fill='%2300ff88'/%3E%3Crect x='4' y='10' width='1' height='1' fill='%2300ff88'/%3E%3Crect x='6' y='10' width='1' height='1' fill='%2300ff88'/%3E%3Crect x='9' y='10' width='1' height='1' fill='%2300ff88'/%3E%3Crect x='11' y='10' width='1' height='1' fill='%2300ff88'/%3E%3C/svg%3E";
 
 // Re-fit Now Playing text when the window / radio panel changes size (debounced).
 window.addEventListener("resize", () => {
@@ -250,6 +320,7 @@ async function fetchNowForStation(st){
 }
 
 async function updateNowPlaying(st){
+    if (document.hidden) return; // resumes on the next tick when visible
     try {
         const hit = await fetchNowForStation(st);
         if (!hit) {
@@ -274,7 +345,7 @@ function startNowPlaying(st){
     if (!p) return;
 
     updateNowPlaying(st);
-    npTimer = setInterval(() => updateNowPlaying(st), 8000);
+    npTimer = setInterval(() => updateNowPlaying(st), MK_LOW_SPEC ? 20000 : 8000);
 }
 
 function toggleMenu() {
@@ -334,6 +405,7 @@ const VIZ_MODES = [
 ];
 
 function getVizMode(idx){
+    if (idx === MK_BUDDY_VIZ) return { idx: MK_BUDDY_VIZ, label: "BUDDY", hint: "pixel buddy" };
     return VIZ_MODES.find(m => m.idx === idx) || VIZ_MODES[3];
 }
 
@@ -785,26 +857,37 @@ function toggleMilkdrop(){
 function cycleVizMode(){
     // Next spectrum mode only
     vizStyle = (vizStyle + 1) % VIZ_MODES.length;
+    mkSaveVizPref();
     updateVizLabel();
     applyVizMode();
     updateVizPickerUI();
+    mkUpdateVizToggle();
 }
 
 function randomVizMode(){
     // Pick random among spectrum modes
     const candidates = VIZ_MODES.map(m => m.idx);
     vizStyle = candidates[Math.floor(Math.random() * candidates.length)];
+    mkSaveVizPref();
     updateVizLabel();
     applyVizMode();
     updateVizPickerUI();
+    mkUpdateVizToggle();
 }
 
 function setVizStyle(idx){
     // Spectrum only
     vizStyle = Math.max(0, Math.min(idx, VIZ_MODES.length - 1));
+    mkSaveVizPref();
     updateVizLabel();
     applyVizMode();
     updateVizPickerUI();
+    mkUpdateVizToggle();
+}
+
+function mkSaveVizPref(){
+    try { localStorage.setItem('mkRadioViz', vizStyle === MK_BUDDY_VIZ ? 'buddy' : ('spectrum:' + vizStyle)); } catch(e){}
+    if (vizStyle !== MK_BUDDY_VIZ) __mkLastSpectrum = vizStyle;
 }
 
 function updateVizPickerUI(forceWarn=false){
@@ -1888,7 +1971,7 @@ function setupAudio() {
     if (aCtx) return;
     aCtx = new (window.AudioContext || window.webkitAudioContext)();
     analyser = aCtx.createAnalyser();
-    analyser.fftSize = 256;
+    analyser.fftSize = MK_LOW_SPEC ? 128 : 256;
     lowNode = aCtx.createBiquadFilter();
     highNode = aCtx.createBiquadFilter();
 
@@ -2295,6 +2378,33 @@ function ensureCanvasSize(){
     }
 }
 
+// ── Buddy visualizer (green pixel ghost, ~4fps, no FFT) ──────────────
+const MK_BUDDY_FRAMES = [
+  ['...XXXX...','..XXXXXX..','.X..XX..X.','.XXXXXXXX.','.XXXXXXXX.','.XXXXXXXX.','.X.X..X.X.'],
+  ['...XXXX...','..XXXXXX..','.X..XX..X.','.XXXXXXXX.','.XXXXXXXX.','.XXXXXXXX.','..X.X.X.X.']
+];
+function mkDrawBuddyViz(ts) {
+    if (ts - __vizLastFrameTs < 240) return;
+    __vizLastFrameTs = ts;
+    ensureCanvasSize();
+    ctx.clearRect(0, 0, cvs.width, cvs.height);
+    __mkBuddyStep = (__mkBuddyStep + 1) % 4;
+    const st = [[0,0,0],[1,1,-1],[0,0,0],[1,-1,-1]][__mkBuddyStep];
+    const map = MK_BUDDY_FRAMES[st[0]];
+    const u = Math.max(2, Math.floor(Math.min(cvs.height / 9.5, cvs.width / 18)));
+    const w = map[0].length * u, h = map.length * u;
+    const ox = Math.floor((cvs.width - w) / 2 + st[1] * u * 0.5);
+    const oy = Math.floor((cvs.height - h) / 2 + st[2] * u * 0.4 + u * 0.4);
+    for (let r = 0; r < map.length; r++) {
+        const row = map[r];
+        for (let c = 0; c < row.length; c++) {
+            if (row[c] !== 'X') continue;
+            ctx.fillStyle = r < 1 ? '#7dffc0' : '#00ff88';
+            ctx.fillRect(ox + c * u, oy + r * u, u, u);
+        }
+    }
+}
+
 function draw(ts = 0) {
     // Reduce CPU when hidden / paused / radio hidden
     const radioWinEl = document.getElementById('radioWindow');
@@ -2306,6 +2416,11 @@ function draw(ts = 0) {
         return;
     }
     requestAnimationFrame(draw);
+    if (vizStyle === MK_BUDDY_VIZ) {
+        if (dGif) dGif.style.opacity = 0;
+        mkDrawBuddyViz(ts || performance.now());
+        return;
+    }
     if (MK_VIZ_FRAME_MS && ts && (ts - __vizLastFrameTs) < MK_VIZ_FRAME_MS) return;
     __vizLastFrameTs = ts || performance.now();
     if (!__vizFreqData || __vizFreqData.length !== analyser.frequencyBinCount) __vizFreqData = new Uint8Array(analyser.frequencyBinCount);
