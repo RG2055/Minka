@@ -860,7 +860,10 @@
       const col = d.score >= 75 ? 'rgba(255,61,90,0.9)' : d.score >= 50 ? 'rgba(255,140,66,0.85)' : 'rgba(245,197,24,0.7)';
       const glow = d.score >= 75 ? '#ff3d5a' : d.score >= 50 ? '#ff8c42' : '#f5c518';
       const r = d.score >= 70 ? 3 : 2.5;
-      return `<circle cx="${xp(i).toFixed(1)}" cy="${yp(d.score).toFixed(1)}" r="${r}" fill="${col}" style="filter:drop-shadow(0 0 3px ${glow})"/>`;
+      // No drop-shadow filter — SVG filters re-rasterize and are heavy on iGPUs;
+      // a soft halo ring gives the same accent for free.
+      return `<circle cx="${xp(i).toFixed(1)}" cy="${yp(d.score).toFixed(1)}" r="${r + 2}" fill="${glow}" opacity="0.22"/>`
+        + `<circle cx="${xp(i).toFixed(1)}" cy="${yp(d.score).toFixed(1)}" r="${r}" fill="${col}"/>`;
     }).join('');
 
     const todayX = xp(days - 1).toFixed(1);
