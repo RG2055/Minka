@@ -113,6 +113,7 @@
 <!-- External fonts/icons: non-blocking preload swap -->
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700;800&family=DM+Sans:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap">
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preload" as="style"
   href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -182,6 +183,25 @@ html.mk-low-spec #grafiks-app,
 html.mk-low-spec .side-panel,
 html.mk-low-spec .main-panel,
 html.mk-low-spec .mac-glass {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+/* Low-spec global kill: no backdrop blur, no neon text-shadow anywhere —
+   the two costliest always-on compositor effects on the work iGPUs. */
+html.mk-low-spec *, html.mk-low-spec *::before, html.mk-low-spec *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  text-shadow: none !important;
+}
+/* Full-screen feTurbulence noise + mix-blend-mode overlay from bundle.css */
+html.mk-low-spec body::after { display: none !important; }
+/* bundle.css blur panels — explicit ids so specificity can't resurrect them */
+html.mk-low-spec #worker-modal, html.mk-low-spec #worker-modal-backdrop,
+html.mk-low-spec #full-list-modal, html.mk-low-spec #minkaAiPanel,
+html.mk-low-spec #minkaAiMode, html.mk-low-spec #vizLabel,
+html.mk-low-spec #grafiks-app, html.mk-low-spec .side-panel,
+html.mk-low-spec .card, html.mk-low-spec .nsc,
+html.mk-low-spec .ns-arc-tip, html.mk-low-spec .next-box {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
@@ -5305,7 +5325,7 @@ window.addEventListener('message', function(e) {
   box-shadow: 0 0 12px var(--ghost-color, #8b5cf6) !important;
   transform: scale(1.12) rotate(-2deg) !important;
   transition: none !important;
-  backdrop-filter: blur(4px) !important;
+  backdrop-filter: none !important;
 }
 /* Name labels */
 .shift-progress-seg-label {
@@ -6134,8 +6154,8 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
   background: rgba(13,12,22,0.92) !important;
   box-shadow: 0 18px 42px rgba(0,0,0,0.42) !important;
   pointer-events: none !important;
-  backdrop-filter: blur(14px) saturate(140%) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(140%) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 #shift-stop-popover[hidden] {
   display: none !important;
@@ -6778,13 +6798,13 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
   padding: 0 8px 0 10px !important;
   border-radius: 16px !important;
   background:
-    linear-gradient(180deg, rgba(24,30,44,0.88), rgba(15,19,31,0.82)) !important;
+    linear-gradient(180deg, rgba(24,30,44,0.97), rgba(15,19,31,0.96)) !important;
   border: 1px solid rgba(255,255,255,0.08) !important;
   box-shadow:
     0 10px 24px rgba(0,0,0,0.18),
     inset 0 1px 0 rgba(255,255,255,0.08) !important;
-  backdrop-filter: blur(18px) saturate(1.15) !important;
-  -webkit-backdrop-filter: blur(18px) saturate(1.15) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   gap: 6px !important;
 }
 
@@ -6876,8 +6896,8 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
   margin-top: 6px !important;
   border-radius: 16px !important;
   background: rgba(10,14,24,0.96) !important;
-  backdrop-filter: blur(20px) saturate(1.08) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(1.08) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 :root.mk-mobile-shell .top-row {
