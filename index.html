@@ -25,7 +25,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260612d';
+  var CALENDAR_BUILD = '20260614a';
 
   function withCalendarBuild(url) {
     try {
@@ -568,7 +568,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260612d" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260612d" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260614a" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260614a" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -1120,6 +1120,7 @@ window.addEventListener('DOMContentLoaded', () => {
     #bolusDocBtn,
     #mobileDockBtn,
     #statsDocBtn,
+    #pusdienasDockBtn,
     #lacitisDockBtn,
     #settingsDockBtn,
     #radioIdleBtn,
@@ -1146,6 +1147,7 @@ window.addEventListener('DOMContentLoaded', () => {
     #nsLedParent,
     #bolusLed,
     #statsDocBtn > div,
+    #pusdienasDockBtn > div,
     #lacitisDockBtn > div,
     #settingsDockBtn > div,
     #mobileDockBtn > div,
@@ -1444,10 +1446,11 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     /* ── Unified dock sizing/style ── */
     #nsToggleBtnParent,
-    #bolusDocBtn,
-    #mobileDockBtn,
-    #statsDocBtn,
-    #lacitisDockBtn,
+	    #bolusDocBtn,
+	    #mobileDockBtn,
+	    #statsDocBtn,
+	    #pusdienasDockBtn,
+	    #lacitisDockBtn,
     #settingsDockBtn,
     #radioIdleBtn,
     #radioToggle {
@@ -1479,18 +1482,33 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     #nsToggleBtnParent { --dock-accent: #6f82ff; --dock-glow: rgba(111,130,255,.28); }
     #bolusDocBtn { --dock-accent: #34d7bf; --dock-glow: rgba(52,215,191,.28); }
-    #statsDocBtn { --dock-accent: #ff9856; --dock-glow: rgba(255,152,86,.26); }
-    #lacitisDockBtn { --dock-accent: #f59e0b; --dock-glow: rgba(245,158,11,.26); }
+	    #statsDocBtn { --dock-accent: #ff9856; --dock-glow: rgba(255,152,86,.26); }
+	    #pusdienasDockBtn { --dock-accent: #f59e0b; --dock-glow: rgba(245,158,11,.26); }
+	    #lacitisDockBtn { --dock-accent: #f59e0b; --dock-glow: rgba(245,158,11,.26); }
     #settingsDockBtn { --dock-accent: #ffd666; --dock-glow: rgba(255,214,102,.24); }
     #mobileDockBtn { --dock-accent: #39cfe3; --dock-glow: rgba(57,207,227,.26); }
-    #radioIdleBtn,
-    #radioToggle { --dock-accent: #5ee87d; --dock-glow: rgba(94,232,125,.24); }
+	    #radioIdleBtn,
+	    #radioToggle { --dock-accent: #5ee87d; --dock-glow: rgba(94,232,125,.24); }
+
+	    #pusdienasDockBtn.pusdienas-open {
+	      background: #13233c !important;
+	      border-color: rgba(245,158,11,.55) !important;
+	      color: #fff3d5 !important;
+	    }
+	    .pusdienas-pixel {
+	      display: block;
+	      width: 28px;
+	      height: 28px;
+	      image-rendering: pixelated;
+	      filter: drop-shadow(0 2px 0 rgba(0,0,0,.42));
+	    }
 
     #nsToggleBtnParent::after,
     #bolusDocBtn::after,
-    #mobileDockBtn::after,
-    #statsDocBtn::after,
-    #lacitisDockBtn::after,
+	    #mobileDockBtn::after,
+	    #statsDocBtn::after,
+	    #pusdienasDockBtn::after,
+	    #lacitisDockBtn::after,
     #settingsDockBtn::after,
     #radioIdleBtn::after,
     #radioToggle::after {
@@ -1507,9 +1525,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     #nsToggleBtnParent:hover,
     #bolusDocBtn:hover,
-    #mobileDockBtn:hover,
-    #statsDocBtn:hover,
-    #lacitisDockBtn:hover,
+	    #mobileDockBtn:hover,
+	    #statsDocBtn:hover,
+	    #pusdienasDockBtn:hover,
+	    #lacitisDockBtn:hover,
     #settingsDockBtn:hover,
     #radioIdleBtn:hover,
     #radioToggle:hover {
@@ -1555,9 +1574,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     #nsToggleBtnParent > *,
     #bolusDocBtn > *:not(.bolus-pattern),
-    #mobileDockBtn > *,
-    #statsDocBtn > *,
-    #lacitisDockBtn > *,
+	    #mobileDockBtn > *,
+	    #statsDocBtn > *,
+	    #pusdienasDockBtn > *,
+	    #lacitisDockBtn > *,
     #settingsDockBtn > *,
     #radioIdleBtn > *,
     #radioToggle > * {
@@ -1591,9 +1611,10 @@ window.addEventListener('DOMContentLoaded', () => {
     @media (max-width: 700px) {
       #nsToggleBtnParent,
       #bolusDocBtn,
-      #mobileDockBtn,
-      #statsDocBtn,
-      #lacitisDockBtn,
+	      #mobileDockBtn,
+	      #statsDocBtn,
+	      #pusdienasDockBtn,
+	      #lacitisDockBtn,
       #settingsDockBtn,
       #radioIdleBtn,
       #radioToggle {
@@ -1641,8 +1662,9 @@ window.addEventListener('DOMContentLoaded', () => {
       }
       #nsToggleBtnParent,
       #bolusDocBtn,
-      #mobileDockBtn,
-      #lacitisDockBtn,
+	      #mobileDockBtn,
+	      #pusdienasDockBtn,
+	      #lacitisDockBtn,
       #settingsDockBtn,
       #radioIdleBtn,
       #radioToggle {
@@ -1656,7 +1678,7 @@ window.addEventListener('DOMContentLoaded', () => {
     /* ── Responsive: very narrow (hide emoji labels) ── */
     @media (max-width: 320px) {
       .dock-emoji { display: none !important; }
-      #nsToggleBtnParent, #bolusDocBtn, #mobileDockBtn, #lacitisDockBtn, #settingsDockBtn, #radioIdleBtn, #radioToggle {
+	      #nsToggleBtnParent, #bolusDocBtn, #mobileDockBtn, #pusdienasDockBtn, #lacitisDockBtn, #settingsDockBtn, #radioIdleBtn, #radioToggle {
         padding: 6px 9px !important;
       }
     }
@@ -1684,10 +1706,11 @@ window.addEventListener('DOMContentLoaded', () => {
     #bottomBtnBar > div[style*="width:1px"] { display: none !important; }
 
     #nsToggleBtnParent,
-    #bolusDocBtn,
-    #mobileDockBtn,
-    #statsDocBtn,
-    #lacitisDockBtn,
+	    #bolusDocBtn,
+	    #mobileDockBtn,
+	    #statsDocBtn,
+	    #pusdienasDockBtn,
+	    #lacitisDockBtn,
     #settingsDockBtn,
     #radioIdleBtn,
     #radioToggle {
@@ -1715,9 +1738,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     #nsToggleBtnParent::after,
     #bolusDocBtn::after,
-    #mobileDockBtn::after,
-    #statsDocBtn::after,
-    #lacitisDockBtn::after,
+	    #mobileDockBtn::after,
+	    #statsDocBtn::after,
+	    #pusdienasDockBtn::after,
+	    #lacitisDockBtn::after,
     #settingsDockBtn::after,
     #radioIdleBtn::after,
     #radioToggle::after { display: none !important; content: none !important; }
@@ -1726,9 +1750,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
     #nsToggleBtnParent:hover,
     #bolusDocBtn:hover,
-    #mobileDockBtn:hover,
-    #statsDocBtn:hover,
-    #lacitisDockBtn:hover,
+	    #mobileDockBtn:hover,
+	    #statsDocBtn:hover,
+	    #pusdienasDockBtn:hover,
+	    #lacitisDockBtn:hover,
     #settingsDockBtn:hover,
     #radioIdleBtn:hover,
     #radioToggle:hover {
@@ -1739,18 +1764,20 @@ window.addEventListener('DOMContentLoaded', () => {
       box-shadow: none !important;
     }
     #nsToggleBtnParent:active,
-    #bolusDocBtn:active,
-    #mobileDockBtn:active,
-    #statsDocBtn:active,
-    #lacitisDockBtn:active,
+	    #bolusDocBtn:active,
+	    #mobileDockBtn:active,
+	    #statsDocBtn:active,
+	    #pusdienasDockBtn:active,
+	    #lacitisDockBtn:active,
     #settingsDockBtn:active,
     #radioIdleBtn:active,
     #radioToggle:active { transform: scale(.97) !important; }
 
     #nsToggleBtnParent.ns-open,
-    #bolusDocBtn.bolus-open,
-    #statsDocBtn.stats-open,
-    #settingsDockBtn.settings-open,
+	    #bolusDocBtn.bolus-open,
+	    #statsDocBtn.stats-open,
+	    #pusdienasDockBtn.pusdienas-open,
+	    #settingsDockBtn.settings-open,
     #mobileDockBtn.mobile-open {
       background: #13233c !important;
       border-color: #2e4a73 !important;
@@ -1760,7 +1787,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
     .dock-px { width: 21px !important; height: auto !important; flex-shrink: 0; }
     .dock-emoji { display: none !important; }
-    #radioToggle .fa-chevron-down { display: none !important; }
+	    #radioToggle .fa-chevron-down { display: none !important; }
+
+	    #pusdienasSheetPanel {
+	      transition: transform .14s ease, opacity .14s ease;
+	    }
+	    #pusdienasSheet[aria-hidden="false"] #pusdienasSheetPanel {
+	      opacity: 1;
+	      transform: translateY(0);
+	    }
 
     /* Bolus tile: icon + GE/PH chips on top row, label below */
     #bolusDocBtn {
@@ -1863,9 +1898,25 @@ window.addEventListener('DOMContentLoaded', () => {
       <span>MOBILE</span>
     </button>
 
-    <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
+	    <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
 
-    <button id="lacitisDockBtn" onclick="openLacitisLauncher()" title="Lācītis dežūra">
+	    <button id="pusdienasDockBtn" onclick="openPusdienasLauncher()" title="Pusdienas">
+	      <div style="width:7px;height:7px;border-radius:50%;background:#f59e0b;box-shadow:0 0 7px #f59e0b;flex-shrink:0;animation:rledPulse 3.4s ease-in-out infinite;"></div>
+	      <svg class="dock-px pusdienas-pixel" width="28" height="28" viewBox="0 0 14 14" shape-rendering="crispEdges" aria-hidden="true">
+	        <rect x="8" y="1" width="2" height="1" fill="#ffe8a3"/><rect x="10" y="2" width="2" height="1" fill="#ffe8a3"/>
+	        <rect x="7" y="2" width="4" height="1" fill="#fbbf24"/><rect x="6" y="3" width="6" height="1" fill="#f59e0b"/>
+	        <rect x="5" y="4" width="7" height="1" fill="#f59e0b"/><rect x="4" y="5" width="8" height="1" fill="#d97706"/>
+	        <rect x="4" y="6" width="7" height="1" fill="#d97706"/><rect x="3" y="7" width="7" height="1" fill="#b45309"/>
+	        <rect x="3" y="8" width="6" height="1" fill="#92400e"/><rect x="2" y="9" width="5" height="1" fill="#78350f"/>
+	        <rect x="1" y="10" width="4" height="1" fill="#fde68a"/><rect x="0" y="11" width="2" height="1" fill="#fff7cc"/>
+	        <rect x="2" y="11" width="2" height="1" fill="#fde68a"/><rect x="1" y="12" width="2" height="1" fill="#fff7cc"/>
+	      </svg>
+	      <span>PUSDIENAS</span>
+	    </button>
+
+	    <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
+
+	    <button id="lacitisDockBtn" onclick="openLacitisLauncher()" title="Lācītis dežūra">
       <div style="width:7px;height:7px;border-radius:50%;background:#f59e0b;box-shadow:0 0 7px #f59e0b;flex-shrink:0;animation:rledPulse 3.1s ease-in-out infinite;"></div>
       <svg class="dock-px" width="17" height="15" viewBox="0 0 9 8" shape-rendering="crispEdges" aria-hidden="true"><rect x="0" y="0" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="7" y="0" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="0" y="1" width="1.04" height="1.04" fill="#e2e8f0"/><rect x="1" y="1" width="1.04" height="1.04" fill="#cbd5e1"/><rect x="2" y="1" width="1.04" height="1.04" fill="#e2e8f0"/><rect x="6" y="1" width="1.04" height="1.04" fill="#e2e8f0"/><rect x="7" y="1" width="1.04" height="1.04" fill="#cbd5e1"/><rect x="8" y="1" width="1.04" height="1.04" fill="#e2e8f0"/><rect x="1" y="2" width="7.04" height="1.04" fill="#e2e8f0"/><rect x="0" y="3" width="9.04" height="1.04" fill="#e2e8f0"/><rect x="0" y="4" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="3" y="4" width="3.04" height="1.04" fill="#e2e8f0"/><rect x="7" y="4" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="0" y="5" width="9.04" height="1.04" fill="#e2e8f0"/><rect x="1" y="6" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="3" y="6" width="1.04" height="1.04" fill="#cbd5e1"/><rect x="4" y="6" width="1.04" height="1.04" fill="#0b1220"/><rect x="5" y="6" width="1.04" height="1.04" fill="#cbd5e1"/><rect x="6" y="6" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="2" y="7" width="5.04" height="1.04" fill="#e2e8f0"/></svg>
       <span>LĀCĪTIS</span>
@@ -1897,6 +1948,16 @@ window.addEventListener('DOMContentLoaded', () => {
       <button type="button" onclick="closeLacitisSheet()" aria-label="Aizvērt Lācīti" style="width:30px;height:30px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.24);color:#f7f7f7;font:900 18px/1 system-ui;cursor:pointer;">×</button>
     </div>
     <iframe id="lacitisSheetFrame" title="Lācītis dežūra" style="display:block;width:100%;height:calc(100% - 38px);border:0;background:#202020;" referrerpolicy="no-referrer"></iframe>
+  </section>
+</div>
+
+<div id="pusdienasSheet" aria-hidden="true" onclick="if(event.target===this) closePusdienasSheet()" style="display:none;position:fixed;inset:0;z-index:171190;pointer-events:auto;background:transparent;">
+  <section id="pusdienasSheetPanel" aria-label="Pusdienas" onclick="event.stopPropagation()" style="position:absolute;right:12px;bottom:86px;width:min(560px,calc(100vw - 24px));height:min(720px,calc(100dvh - 108px));min-height:500px;border-radius:18px;border:1px solid rgba(255,255,255,.18);background:#181818;box-shadow:0 18px 60px rgba(0,0,0,.58),0 0 0 1px rgba(255,255,255,.05) inset;overflow:hidden;pointer-events:auto;">
+    <div style="height:38px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 10px 0 14px;border-bottom:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.035);color:#f7f7f7;font:900 12px/1 'Space Grotesk',system-ui;letter-spacing:.08em;text-transform:uppercase;">
+      <span style="display:flex;align-items:center;gap:8px;"><span>🍗</span><span>Pusdienas</span></span>
+      <button type="button" onclick="closePusdienasSheet()" aria-label="Aizvērt Pusdienas" style="width:30px;height:30px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.24);color:#f7f7f7;font:900 18px/1 system-ui;cursor:pointer;">×</button>
+    </div>
+    <iframe id="pusdienasSheetFrame" title="Pusdienas" style="display:block;width:100%;height:calc(100% - 38px);border:0;background:#181818;" referrerpolicy="no-referrer"></iframe>
   </section>
 </div>
 
@@ -2902,9 +2963,10 @@ function updateBuddyUiSuppression() {
     cls.contains('mk-buddy-ui-stats') ||
     cls.contains('mk-buddy-ui-settings') ||
     isBuddyOverlayVisible('bolus-overlay') ||
-    isBuddyOverlayVisible('bolus-edit-modal') ||
-    isBuddyOverlayVisible('mobileQrModal') ||
-    isBuddyOverlayVisible('lacitisSheet') ||
+	    isBuddyOverlayVisible('bolus-edit-modal') ||
+	    isBuddyOverlayVisible('mobileQrModal') ||
+	    isBuddyOverlayVisible('pusdienasSheet') ||
+	    isBuddyOverlayVisible('lacitisSheet') ||
     isBuddyOverlayVisible('lacitisFull');
   cls.toggle('mk-buddy-ui-open', active);
 }
@@ -3276,7 +3338,74 @@ window.addEventListener('message', function(e) {
     window.openLacitisFull(href);
   });
 
-  window.addEventListener('resize', positionLacitisSheet);
+	  window.addEventListener('resize', positionLacitisSheet);
+	})();
+
+/* Pusdienas launcher: lightweight dock iframe for pusdieninas.pages.dev. */
+(function(){
+  var PUSDIENAS_URL = 'https://pusdieninas.pages.dev/';
+
+  function positionPusdienasSheet() {
+    var sheet = document.getElementById('pusdienasSheet');
+    var panel = document.getElementById('pusdienasSheetPanel');
+    var btn = document.getElementById('pusdienasDockBtn');
+    if (!sheet || !panel || !btn || sheet.style.display === 'none') return;
+
+    var rect = btn.getBoundingClientRect();
+    var margin = 12;
+    var gap = 10;
+    var width = Math.min(560, window.innerWidth - margin * 2);
+    var height = Math.min(720, window.innerHeight - rect.height - margin * 2 - gap);
+    height = Math.max(500, height);
+    if (height > window.innerHeight - margin * 2) height = window.innerHeight - margin * 2;
+
+    var left = rect.left + rect.width / 2 - width / 2;
+    left = Math.max(margin, Math.min(left, window.innerWidth - width - margin));
+    var bottom = window.innerHeight - rect.top + gap;
+    if (bottom + height > window.innerHeight - margin) {
+      bottom = Math.max(margin, window.innerHeight - height - margin);
+    }
+
+    panel.style.width = width + 'px';
+    panel.style.height = height + 'px';
+    panel.style.left = left + 'px';
+    panel.style.right = 'auto';
+    panel.style.bottom = bottom + 'px';
+  }
+
+  window.openPusdienasLauncher = function openPusdienasLauncher() {
+    var sheet = document.getElementById('pusdienasSheet');
+    var frame = document.getElementById('pusdienasSheetFrame');
+    var btn = document.getElementById('pusdienasDockBtn');
+    if (!sheet || !frame) {
+      window.open(PUSDIENAS_URL, 'pusdienas', 'popup=yes,width=560,height=760,resizable=yes,scrollbars=yes,toolbar=no,location=no,menubar=no,status=no');
+      return;
+    }
+    sheet.style.display = 'block';
+    sheet.setAttribute('aria-hidden', 'false');
+    if (btn) btn.classList.add('pusdienas-open');
+    positionPusdienasSheet();
+    if (frame.src !== PUSDIENAS_URL) {
+      frame.removeAttribute('srcdoc');
+      frame.src = PUSDIENAS_URL;
+    }
+    updateBuddyUiSuppression();
+  };
+
+  window.closePusdienasSheet = function closePusdienasSheet() {
+    var sheet = document.getElementById('pusdienasSheet');
+    var frame = document.getElementById('pusdienasSheetFrame');
+    var btn = document.getElementById('pusdienasDockBtn');
+    if (sheet) {
+      sheet.style.display = 'none';
+      sheet.setAttribute('aria-hidden', 'true');
+    }
+    if (frame) frame.src = 'about:blank';
+    if (btn) btn.classList.remove('pusdienas-open');
+    updateBuddyUiSuppression();
+  };
+
+  window.addEventListener('resize', positionPusdienasSheet);
 })();
 
 function toggleNsFromParent() {
@@ -3313,6 +3442,76 @@ window.addEventListener('message', function(e) {
     if (led) { led.style.background = '#6488ff'; led.style.boxShadow = '0 0 7px #6488ff'; led.style.animation = 'rledPulse 2.5s ease-in-out infinite'; }
   }
 });
+</script>
+
+<script>
+/* Pusdienas launcher fallback: keep it outside the large dock script so a legacy error cannot break the button. */
+(function(){
+  var PUSDIENAS_URL = 'https://pusdieninas.pages.dev/';
+
+  function suppressBuddy() {
+    if (typeof window.updateBuddyUiSuppression === 'function') window.updateBuddyUiSuppression();
+  }
+
+  function positionPusdienasSheet() {
+    var sheet = document.getElementById('pusdienasSheet');
+    var panel = document.getElementById('pusdienasSheetPanel');
+    var btn = document.getElementById('pusdienasDockBtn');
+    if (!sheet || !panel || !btn || sheet.style.display === 'none') return;
+    var rect = btn.getBoundingClientRect();
+    var margin = 12;
+    var gap = 10;
+    var width = Math.min(560, window.innerWidth - margin * 2);
+    var height = Math.min(720, window.innerHeight - rect.height - margin * 2 - gap);
+    height = Math.max(500, height);
+    if (height > window.innerHeight - margin * 2) height = window.innerHeight - margin * 2;
+    var left = rect.left + rect.width / 2 - width / 2;
+    left = Math.max(margin, Math.min(left, window.innerWidth - width - margin));
+    var bottom = window.innerHeight - rect.top + gap;
+    if (bottom + height > window.innerHeight - margin) {
+      bottom = Math.max(margin, window.innerHeight - height - margin);
+    }
+    panel.style.width = width + 'px';
+    panel.style.height = height + 'px';
+    panel.style.left = left + 'px';
+    panel.style.right = 'auto';
+    panel.style.bottom = bottom + 'px';
+  }
+
+  window.openPusdienasLauncher = function openPusdienasLauncher() {
+    var sheet = document.getElementById('pusdienasSheet');
+    var frame = document.getElementById('pusdienasSheetFrame');
+    var btn = document.getElementById('pusdienasDockBtn');
+    if (!sheet || !frame) {
+      window.open(PUSDIENAS_URL, 'pusdienas', 'popup=yes,width=560,height=760,resizable=yes,scrollbars=yes,toolbar=no,location=no,menubar=no,status=no');
+      return;
+    }
+    sheet.style.display = 'block';
+    sheet.setAttribute('aria-hidden', 'false');
+    if (btn) btn.classList.add('pusdienas-open');
+    positionPusdienasSheet();
+    if (frame.src !== PUSDIENAS_URL) {
+      frame.removeAttribute('srcdoc');
+      frame.src = PUSDIENAS_URL;
+    }
+    suppressBuddy();
+  };
+
+  window.closePusdienasSheet = function closePusdienasSheet() {
+    var sheet = document.getElementById('pusdienasSheet');
+    var frame = document.getElementById('pusdienasSheetFrame');
+    var btn = document.getElementById('pusdienasDockBtn');
+    if (sheet) {
+      sheet.style.display = 'none';
+      sheet.setAttribute('aria-hidden', 'true');
+    }
+    if (frame) frame.src = 'about:blank';
+    if (btn) btn.classList.remove('pusdienas-open');
+    suppressBuddy();
+  };
+
+  window.addEventListener('resize', positionPusdienasSheet);
+})();
 </script>
 
 <script>
