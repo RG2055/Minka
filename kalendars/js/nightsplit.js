@@ -45,6 +45,105 @@
   var NS_ROOM_KEY_PREFIX='nsrooms::';
   var NS_ROOM_API_PATH='/api/ns-rooms';
   var ROOM_BED_KEYS=['main_left_top','main_left_bottom','main_right_top','nmp_center'];
+
+  // ── Vēsturiskā nakts statistika (kurš ņem kuru daļu / kurā gultā guļ) ──
+  // Lasa apkopojumu caur Minka API; Google Apps Script URL paliek Cloudflare secretā.
+  var NS_STATS_API_PATH='/api/ns-stats';
+  var NS_STATS_CACHE_KEY='minkaNightStatsV1';
+  var NS_STATS_TTL=12*3600*1000;
+  var _nsStats=null, _nsStatsPromise=null;
+  var NS_BED_LABEL={main_left_top:'Galv. ↖',main_left_bottom:'Galv. ↙',main_right_top:'Galv. ▷',nmp_center:'NMP'};
+
+  function nsStatsFetch(){
+    if(_nsStats) return Promise.resolve(_nsStats);
+    if(_nsStatsPromise) return _nsStatsPromise;
+    // Keša mēģinājums
+    try{
+      var raw=localStorage.getItem(NS_STATS_CACHE_KEY);
+      if(raw){
+        var c=JSON.parse(raw);
+        if(c && c.at && (Date.now()-c.at)<NS_STATS_TTL && c.data){ _nsStats=c.data; return Promise.resolve(_nsStats); }
+      }
+    }catch(_e){}
+    var api=(window.MinkaApi && typeof window.MinkaApi.apiFetch==='function' && window.MinkaApi.getToken && window.MinkaApi.getToken())
+      ? window.MinkaApi
+      : null;
+    if(!api) return Promise.resolve(null);
+    _nsStatsPromise=api.apiFetch(NS_STATS_API_PATH).then(function(r){return r.json();}).then(function(j){
+      if(j && j.ok){ _nsStats=j; try{localStorage.setItem(NS_STATS_CACHE_KEY,JSON.stringify({at:Date.now(),data:j}));}catch(_e){} }
+      _nsStatsPromise=null;
+      return _nsStats;
+    }).catch(function(){ _nsStatsPromise=null; return null; });
+    return _nsStatsPromise;
+  }
+
+  // Mazs istabu plāns (mini-map): galvenā istaba (3 gultas) + NMP (1),
+  // iekrāso to gultu, kurā darbinieks guļ biežāk. Tāds pats izkārtojums kā
+  // lielajā istabu sadalījumā, ledus zilā stilā.
+  function nsBedMiniMap(favBed, bedMap, showTitle){
+    bedMap=(bedMap && typeof bedMap==='object') ? bedMap : {};
+    function cell(key){
+      var on=(key && key===favBed);
+      var count=key ? (Number(bedMap[key])||0) : 0;
+      return '<span class="ns-bm-cell'+(on?' on':'')+'" title="'+(key?(NS_BED_LABEL[key]||key):'')+': '+count+'×">'
+        +(count?'<span class="ns-bm-count">'+count+'</span>':'')+'</span>';
+    }
+    return '<div class="ns-bedwrap'+(showTitle?' has-title':'')+'">'
+      +(showTitle?'<div class="ns-bed-title">Gultas</div>':'')
+      +'<div class="ns-bedmap" title="'+(favBed?(NS_BED_LABEL[favBed]||favBed):'nav datu')+'">'
+        +'<div class="ns-bm-room ns-bm-main">'
+          +cell('main_left_top')+cell('main_right_top')
+          +cell('main_left_bottom')+'<span class="ns-bm-cell ns-bm-empty"></span>'
+        +'</div>'
+        +'<div class="ns-bm-room ns-bm-nmp">'+cell('nmp_center')+'</div>'
+      +'</div>'
+      +'</div>';
+  }
+
+  function nsStatsPanelHTML(){
+    // Tukšs konteiners — aizpildās asinhroni pēc fetch
+    return '<div class="ns-stats-box" id="nsStatsBox">'
+      +'<div class="ns-stats-head"><div class="ns-stats-title">Šīs maiņas vēsture</div><div class="ns-stats-bed-title">Gultas</div></div>'
+      +'<div class="ns-stats-body" id="nsStatsBody"><div class="ns-stats-load">Ielādē…</div></div>'
+      +'</div>';
+  }
+
+  function nsRenderStats(slots){
+    var box=document.getElementById('nsStatsBody');
+    if(!box) return;
+    var names=(slots||[]).map(function(s){return String((s&&s.w&&s.w.name)||'').trim();}).filter(Boolean);
+    if(!names.length){ box.innerHTML='<div class="ns-stats-load">Nav cilvēku</div>'; return; }
+    nsStatsFetch().then(function(stats){
+      if(!stats || !stats.parts){ box.innerHTML='<div class="ns-stats-load">Nav datu</div>'; return; }
+      var rows=names.map(function(nm, idx){
+        var p=stats.parts[nm]||[0,0,0,0];
+        var total=p[0]+p[1]+p[2]+p[3];
+        var maxP=Math.max(1,p[0],p[1],p[2],p[3]);
+        var favPart=total?(p.indexOf(Math.max.apply(null,p))+1):0;
+        // gulta
+        var bedMap=stats.beds[nm]||{};
+        var favBed='',favBedN=0;
+        Object.keys(bedMap).forEach(function(k){ if(bedMap[k]>favBedN){favBedN=bedMap[k];favBed=k;} });
+        var bars=p.map(function(v,i){
+          var h=Math.round((v/maxP)*100);
+          var on=(i+1===favPart && total);
+          return '<div class="ns-stbar" title="'+(i+1)+'. daļa: '+v+'×">'
+            +'<div class="ns-stbar-c">'+v+'</div>'
+            +'<div class="ns-stbar-fill'+(on?' on':'')+'" style="height:'+Math.max(6,h)+'%"></div>'
+            +'<div class="ns-stbar-n">'+(i+1)+'.</div></div>';
+        }).join('');
+        var short=nm.split(' ')[0];
+        var favTxt=favPart?('biežāk ņem <b>'+favPart+'. daļu</b>'):'nav datu';
+        return '<div class="ns-stat-row">'
+          +'<div class="ns-stat-name" title="'+nm+'">'+short+'</div>'
+          +'<div class="ns-stat-bars">'+bars+'</div>'
+          +'<div class="ns-stat-fav">'+favTxt+'</div>'
+          +'<div class="ns-stat-bed">'+nsBedMiniMap(favBed, bedMap, false)+'</div>'
+          +'</div>';
+      }).join('');
+      box.innerHTML=rows+'<div class="ns-stats-foot">Vēsture: '+stats.nights+' naktis</div>';
+    });
+  }
   var _roomBc=null;
   var _roomPolling=false;
   try{ _roomBc = new BroadcastChannel('minka-ns-rooms-sync'); }catch(_e){}
@@ -796,10 +895,17 @@
       + '</div>';
   }
 
+  function roomBedSvg(){
+    return '<svg class="ns-room-bed-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">'
+      +'<path fill-rule="evenodd" clip-rule="evenodd" d="M13.5 5.25H10.5C9.67157 5.25 9 5.92157 9 6.75H15C15 5.92157 14.3284 5.25 13.5 5.25ZM15 4.15135C14.5587 3.89609 14.0464 3.75 13.5 3.75H10.5C9.95357 3.75 9.44126 3.89609 9 4.15135V3.75H7.5V6.75V7.37829L5.25 14.1283V20.25H6.75V18H17.25V20.25H18.75V14.1283L16.5 7.37829V6.75V3.75H15V4.15135ZM15.2094 8.25H8.79057L7.04057 13.5H16.9594L15.2094 8.25ZM17.25 15H6.75V16.5H17.25V15Z"></path>'
+      +'</svg>';
+  }
+
   function roomBed(roomIdx, slot, posCls){
     if(!slot){
       return '<div class="ns-room-bed ns-room-bed-empty '+posCls+'" data-i="'+roomIdx+'" data-empty="1">'
         +'<div class="ns-room-bed-card">'
+        +roomBedSvg()
         +'<div class="ns-room-bed-pillow"></div>'
         +'<div class="ns-room-bed-blanket"><span class="ns-room-bed-main">Brīva</span></div>'
         +'</div>'
@@ -810,6 +916,7 @@
     var em=roomEmoji(slot.w.name);
     return '<div class="ns-room-bed '+posCls+'" data-i="'+roomIdx+'" data-name="'+escHtml(String(slot.w.name||''))+'" data-accent="'+c.accent+'">'
       +'<div class="ns-room-bed-card" style="--bed:'+c.accent+';--bed-border:'+c.border+'">'
+      +roomBedSvg()
       +roomDevices(slot)
       +(em?'<div class="ns-room-bed-head-emoji">'+escHtml(em)+'</div>':'')
       +'<div class="ns-room-bed-zzz" aria-hidden="true"><span>Z</span><span>Z</span><span>Z</span></div>'
@@ -921,6 +1028,7 @@
       +'<div class="ns-room-cat" aria-hidden="true">'
       +'<iframe src="../pikts_kakis.html?embed=1&nostats=1" class="ns-lamp-iframe" frameborder="0" scrolling="no" style="border:none;display:block;"></iframe>'
       +'</div>'
+      +nsStatsPanelHTML()
       +'</div>'
       +'</div>';
   }
@@ -1292,6 +1400,7 @@
       fitRoomBlocks(panel);
       requestAnimationFrame(function(){ fitRoomBlocks(panel); });
     });
+    nsRenderStats(st.sl);
 
     drag(panel);
     // Update toggle button LED if active worker exists
