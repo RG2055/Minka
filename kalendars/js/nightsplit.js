@@ -1025,10 +1025,10 @@
       +'</div>'
       +'</div>'
       +'</div>'
+      +nsStatsPanelHTML()
       +'<div class="ns-room-cat" aria-hidden="true">'
       +'<iframe src="../pikts_kakis.html?embed=1&nostats=1" class="ns-lamp-iframe" frameborder="0" scrolling="no" style="border:none;display:block;"></iframe>'
       +'</div>'
-      +nsStatsPanelHTML()
       +'</div>'
       +'</div>';
   }
@@ -1053,8 +1053,10 @@
         var naturalW = layout.scrollWidth || layout.offsetWidth || 1;
         var naturalH = layout.scrollHeight || layout.offsetHeight || 1;
         var catW = 320;
+        var stats = block.querySelector('.ns-stats-box');
+        var statsW = stats ? 360 : 0;
         var blockW = panel.clientWidth || block.clientWidth || naturalW;
-        var availW = Math.max(120, blockW - catW - 16);
+        var availW = Math.max(120, blockW - catW - statsW - 32);
         var panelRect = panel.getBoundingClientRect();
         var fitRect  = fit.getBoundingClientRect();
         var availH   = Math.max(80, panelRect.bottom - fitRect.top - 12);
@@ -1067,6 +1069,18 @@
         // These set width/height with no !important in CSS so JS wins
         fit.style.width  = roomsW + 'px';
         fit.style.height = roomsH + 'px';
+        if(stats) {
+          // Paceļam stats virsrakstu līdz sekcijas virsrakstam ("ISTABU SADALĪJUMS"),
+          // bet apakšu turam izlīdzinātu ar istabu kastēm. Tāpēc negatīvs top-margin
+          // (lift) + augstums = roomsH + lift. Rindas sadala šo augstumu.
+          var headEl = block.querySelector('.ns-room-head');
+          var lift = 0;
+          if(headEl){
+            lift = Math.max(0, Math.round(fit.getBoundingClientRect().top - headEl.getBoundingClientRect().top));
+          }
+          stats.style.marginTop = (-lift) + 'px';
+          stats.style.height = (roomsH + lift) + 'px';
+        }
         // Lamp: same height as rooms, width proportional to 500:420 scene ratio
         var lampH = roomsH;
         var lampW = Math.ceil(lampH * 500 / 420);
@@ -1398,7 +1412,7 @@
 
     requestAnimationFrame(function(){
       fitRoomBlocks(panel);
-      requestAnimationFrame(function(){ fitRoomBlocks(panel); });
+      requestAnimationFrame(function(){  fitRoomBlocks(panel); });
     });
     nsRenderStats(st.sl);
 
@@ -1414,7 +1428,7 @@
   }
 
   window.addEventListener('resize', function(){
-    requestAnimationFrame(function(){ fitRoomBlocks(document); });
+    requestAnimationFrame(function(){  fitRoomBlocks(document); });
   }, { passive:true });
 
   // ── Drag & Drop ── pure mouse + touch, zero HTML5 drag API ───────────────

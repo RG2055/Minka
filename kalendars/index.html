@@ -788,7 +788,7 @@ function _mkToast(msg, type) {
 <script src="js/calendar.js?v=20260611a"></script>
 <script src="js/calendar_extras_v4.js?v=20260611a"></script>
 <script src="js/fatigue.js?v=20260613d"></script>
-<script src="js/nightsplit.js?v=20260615b" defer></script>
+<script src="js/nightsplit.js?v=20260615c" defer></script>
 <script src="js/design_v1.js" defer></script>
 <script src="js/theme.js" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
@@ -5600,40 +5600,38 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
 }
 
 /* ── Šīs maiņas vēstures statistika (kurš ņem kuru daļu / gulta) ── */
-.ns-stats-box { flex: 1 1 auto; min-width: 0; align-self: stretch; max-height: 100%; padding: 7px 11px; display: flex; flex-direction: column;
-  background: rgba(10,16,26,.55); border: 1px solid rgba(125,211,252,.14); border-radius: 14px; overflow: hidden; }
-.ns-stats-head { flex: 0 0 auto; display: grid; grid-template-columns: 62px 54px minmax(72px,1fr) 58px; align-items: center; gap: 7px; margin-bottom: 3px; }
-.ns-stats-title { font: 800 9px/1 'Space Grotesk', system-ui; letter-spacing: .13em; text-transform: uppercase;
+/* Bez loga — statistika dzīvo brīvi telpā pa labi no istabām (caurspīdīga) */
+.ns-stats-box { flex: 0 0 360px; width: 360px; min-width: 360px; align-self: flex-start; padding: 2px 6px 2px 10px; display: flex; flex-direction: column;
+  background: transparent; border: none; box-shadow: none; box-sizing: border-box; overflow: hidden; }
+.ns-stats-head { flex: 0 0 auto; display: grid; grid-template-columns: 60px 58px minmax(96px, 1fr) 78px; align-items: center; gap: 8px; margin-bottom: 5px; }
+.ns-stats-title { font: 800 10px/1 'Space Grotesk', system-ui; letter-spacing: .13em; text-transform: uppercase;
   color: rgba(125,211,252,.85); grid-column: 1 / 4; min-width: 0; }
-.ns-stats-bed-title { grid-column: 4; text-align: center; font: 800 6.5px/1 'Space Grotesk', system-ui; letter-spacing: .12em; text-transform: uppercase; color: rgba(125,211,252,.58); }
-.ns-stats-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.ns-stats-bed-title { grid-column: 4; text-align: center; font: 800 7px/1 'Space Grotesk', system-ui; letter-spacing: .12em; text-transform: uppercase; color: rgba(125,211,252,.58); }
+.ns-stats-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
 .ns-stats-load { font-size: 11px; color: rgba(170,195,220,.55); padding: 8px 0; }
-.ns-stat-row { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: 62px 54px minmax(72px,1fr) 58px; align-items: center; gap: 7px;
-  border-bottom: 1px solid rgba(255,255,255,.05); }
+.ns-stat-row { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: 60px 58px minmax(96px, 1fr) 78px; align-items: center; gap: 8px;
+  border-bottom: 1px solid rgba(255,255,255,.06); }
 .ns-stat-row:last-of-type { border-bottom: none; }
-.ns-stat-name { min-width: 0; font: 700 10px/1.1 'Space Grotesk', system-ui; color: #e8f1fb;
+.ns-stat-name { min-width: 0; font: 700 10.5px/1.1 'Space Grotesk', system-ui; color: #e8f1fb;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ns-stat-bars { min-width: 0; display: flex; align-items: flex-end; gap: 3px; height: 74%; max-height: 30px; min-height: 18px; }
+.ns-stat-bars { min-width: 0; display: flex; align-items: flex-end; gap: 3px; height: 70%; max-height: 30px; min-height: 16px; }
 .ns-stbar { width: 11px; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
-.ns-stbar-c { height: 8px; font: 800 6px/1 'Space Grotesk', system-ui; color: rgba(125,211,252,.72); margin-bottom: 1px; }
+.ns-stbar-c { height: 8px; font: 800 6.5px/1 'Space Grotesk', system-ui; color: rgba(125,211,252,.72); margin-bottom: 1px; }
 .ns-stbar-fill { width: 100%; border-radius: 2px 2px 0 0; background: rgba(125,211,252,.3); min-height: 2px; }
 .ns-stbar-fill.on { background: #38bdf8; }
-.ns-stbar-n { font-size: 6.5px; color: rgba(170,195,220,.5); margin-top: 1px; line-height: 1; }
-.ns-stat-fav { min-width: 0; font-size: 9.5px; color: rgba(190,210,232,.7);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ns-stbar-n { font-size: 7px; color: rgba(170,195,220,.5); margin-top: 1px; line-height: 1; }
+.ns-stat-fav { min-width: 0; font-size: 9.5px; color: rgba(170,195,220,.66); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ns-stat-fav b { color: #7dd3fc; font-weight: 800; }
 .ns-stat-bed { min-width: 0; display: flex; justify-content: center; overflow: visible; }
-.ns-bedwrap { position: relative; display: flex; align-items: center; justify-content: center; width: 58px; }
-.ns-bed-title { position: absolute; left: 0; right: 0; top: -9px; text-align: center;
-  font: 800 6.5px/1 'Space Grotesk', system-ui; letter-spacing: .12em; text-transform: uppercase; color: rgba(125,211,252,.58); }
+.ns-bedwrap { position: relative; display: flex; align-items: center; justify-content: center; }
 .ns-bedmap { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0; }
-.ns-bm-room { display: grid; gap: 2.5px; padding: 2px; border: 1px solid rgba(125,211,252,.16); border-radius: 4px; }
-.ns-bm-main { grid-template-columns: repeat(2, 10px); grid-template-rows: repeat(2, 10px); }
-.ns-bm-nmp { grid-template-columns: 10px; align-items: center; justify-content: center; }
-.ns-bm-cell { width: 10px; height: 10px; border-radius: 2px; background: rgba(125,211,252,.06);
+.ns-bm-room { display: grid; gap: 3px; padding: 2.5px; border: 1px solid rgba(125,211,252,.18); border-radius: 4px; }
+.ns-bm-main { grid-template-columns: repeat(2, 13px); grid-template-rows: repeat(2, 13px); }
+.ns-bm-nmp { grid-template-columns: 13px; align-items: center; justify-content: center; }
+.ns-bm-cell { width: 13px; height: 13px; border-radius: 2px; background: rgba(125,211,252,.07);
   display: flex; align-items: center; justify-content: center; position: relative; }
 .ns-bm-cell.on { background: #38bdf8; box-shadow: 0 0 6px rgba(56,189,248,.7); }
-.ns-bm-count { font: 900 6px/1 'Space Grotesk', system-ui; color: rgba(205,232,252,.78); }
+.ns-bm-count { font: 900 7px/1 'Space Grotesk', system-ui; color: rgba(205,232,252,.8); }
 .ns-bm-cell.on .ns-bm-count { color: rgba(4,10,18,.95); text-shadow: 0 1px 0 rgba(255,255,255,.18); }
 .ns-bm-empty { background: transparent !important; box-shadow: none !important; }
 .ns-stats-foot { margin-top: 3px; font-size: 8px; color: rgba(170,195,220,.4); letter-spacing: .03em; flex: 0 0 auto; }
