@@ -341,12 +341,22 @@
     //  1) "TAGAD DEÅ½ÅªRÄ€"
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-    const domDuty = _getOnDutyFromDom(workerName);
+    // Dzīvo DOM dežūras taimeri lieto TIKAI šodienas skatā — tas atspoguļo
+    // reālo tagad. Pagātnes/nākotnes skatā tas nepareizi "pieliptu" citai
+    // dienai; tur dežūru nosakām pēc simulētā `now` un intervāliem.
+    const domDuty = (viewMode === 'today') ? _getOnDutyFromDom(workerName) : null;
 
     // MeklÄ“jam intervÄlu kurÄ iekrÄ«t NOW
     let currentInterval = null;
     for (const iv of allIntervals) {
       if (now >= iv.start && now < iv.end) {
+        // Alt intervāls no NĀKOTNES ieraksta nav īsta aktīva dežūra.
+        // (24h maiņas alt sniedzas dienu atpakaļ; rītdienas maiņa nedrīkst
+        //  padarīt cilvēku "dežūrā" šodien.) Tāds pats fikss kā 2./score sekcijās.
+        if (iv.alt) {
+          const ps = getShiftStartEnd(iv.entry);
+          if (ps.start && ps.start > now) continue;
+        }
         if (!currentInterval || iv.end > currentInterval.end) {
           currentInterval = iv;
         }
@@ -452,17 +462,23 @@
       ? selectedDate
       : today;
 
-    const dayOfWeek = contextDay.getDay();
-    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    const weekStart = new Date(contextDay);
-    weekStart.setDate(weekStart.getDate() - mondayOffset);
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekEnd.getDate() + 6); // svÄ“tdiena
-
-    const recentShifts = history.filter(e => e.date >= weekStart && e.date <= weekEnd);
+    // Ritošs 7 dienu logs, kas beidzas pie `now` (novērtējuma brīža), NEVIS
+    // kalendārā Pr–Sv nedēļa. Kalendārā nedēļa pirmdienā nullējas, tāpēc smags
+    // Pk–Sv tika ignorēts — ritošais logs godīgi rāda pēdējās 7×24h slodzi.
+    void contextDay;
+    const weekEndTs = now.getTime();
+    const weekStartTs = weekEndTs - 7 * 86400000;
+    const recentShifts = history.filter(e => {
+      const se = getShiftStartEnd(e);
+      const t = (se.start || e.date).getTime();
+      return t > weekStartTs && t <= weekEndTs;
+    });
     const weeklyHours = recentShifts.reduce((sum, e) => sum + e.hours, 0);
     const shiftsThisWeek = recentShifts.length;
-    const nightShiftsThisWeek = recentShifts.filter(e => e.isNight).length;
+    // TĪRĀS nakts maiņas (12h nakts) — 24h/diennakts ir atsevišķa kategorija un
+    // tām ir savs sods, citādi viena diennakts tiktu sodīta gan kā nakts, gan kā 24h.
+    const is24h = (e) => (e.hours >= 24) || String(e.type || '').toUpperCase() === 'DIENNAKTS';
+    const nightShiftsThisWeek = recentShifts.filter(e => e.isNight && !is24h(e)).length;
 
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     //  5) ATPÅªTAS PÄ€RBAUDE
@@ -515,7 +531,10 @@
 
     (function() {
       // PÄ“dÄ“jÄs 21 dienas, tikai primÄrie intervÄli, bez alt-dublikÄtiem
-      var cutoff = new Date(today);
+      // Pēdējās 21 dienas PIRMS `now` (ne reālā šodiena!). Pagātnes/nākotnes
+      // skatā `now` ir simulēts uz skatīto maiņu; ar `today` šeit tālāki datumi
+      // izkrita no loga un atpūtas komponente klusi pazuda.
+      var cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       cutoff.setDate(cutoff.getDate() - 21);
 
       var timeline = history
@@ -565,13 +584,16 @@
         }
       }
 
+      // Atpūtas sliekšņi (h). Balstīti pētījumos: pēc 24h diennakts pilna
+      // mentālā atveseļošanās notiek ~48h (2 naktis) — tāpēc ideāls 60h (ar
+      // buferi), minimums 36h. ES Darba laika direktīva: 11h dienas atpūta.
       function idealRestH(hrs, isNight) {
-        if (hrs >= 24) return 72;
+        if (hrs >= 24) return 60;   // bija 72 — pārāk stingri pret pierādījumiem
         if (isNight) return 24;
         return 16;
       }
       function minRestH(hrs, isNight) {
-        if (hrs >= 24) return 48;
+        if (hrs >= 24) return 36;   // bija 48
         if (isNight) return 16;
         return 11;
       }
@@ -594,7 +616,9 @@
             var needMore = Math.round(minR - restH);
             scoreReasons.push({ type: 'bad', text: '⚠ Pirms maiņas bija tikai ' + Math.round(restH) + 'h atpūta - vajag vismaz ' + minR + 'h (pietrūkst ' + needMore + 'h)', pts: '+' + rs });
           } else if (restH < ideal) {
-            var partial = Math.round(((ideal - restH) / (ideal - minR)) * 35);
+            // *25 (ne *35), lai pie minR sods (25) sakrīt ar "bad" zara minimumu
+            // un nerodas inversija (agrāk 48h tika sodīts vairāk nekā 47h).
+            var partial = Math.round(((ideal - restH) / (ideal - minR)) * 25);
             score += partial;
             scoreReasons.push({ type: 'warn', text: 'Pirms maiņas bija ' + Math.round(restH) + 'h atpūta - ieteicami ' + ideal + 'h', pts: partial > 0 ? '+' + partial : '0' });
           } else {
@@ -702,9 +726,7 @@
       }
 
       // Nakts/diennakts maiÅ†as (cirkadiÄna slodze)
-      var full24 = recentShifts.filter(function(e){
-        return (e.hours >= 24) || String(e.type || '').toUpperCase() === 'DIENNAKTS';
-      }).length;
+      var full24 = recentShifts.filter(is24h).length;
       var addNight = Math.min(12, nightShiftsThisWeek * 4);
       var add24 = Math.min(18, full24 * 6);
       if (addNight > 0) { add += addNight; scoreReasons.push({ type:'warn', text:'Nakts maiņas 7 dienās: ' + nightShiftsThisWeek, pts:'+' + addNight }); }
