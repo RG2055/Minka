@@ -25,7 +25,7 @@
     } catch (_e) {}
   }
 
-  var CALENDAR_BUILD = '20260611a';
+  var CALENDAR_BUILD = '20260615d';
 
   function withCalendarBuild(url) {
     try {
@@ -476,6 +476,15 @@ html.mk-low-spec #calendarEmbed {
   font-size: 12px;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
 }
+/* Pikseļu ikonas (SVG) — bez fona kastes, dabīgas proporcijas, asas */
+.dock-icon.dock-px {
+  width: 22px !important;
+  height: auto !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  image-rendering: pixelated;
+}
 
 .dock-btn.is-active {
   border-color: rgba(0,200,255,.40);
@@ -785,8 +794,8 @@ html.mk-low-spec #calendarEmbed {
 
   <div id="calendarEmbed">
     <iframe
-      src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260611a"
-      data-base-src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260611a"
+      src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260615d"
+      data-base-src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260615d"
       id="calIframe"
       loading="eager"
       allowtransparency="true"
@@ -796,7 +805,7 @@ html.mk-low-spec #calendarEmbed {
   <div class="mobile-dock" id="dockShelf">
     <div class="mobile-dock-grid" id="bottomBtnBar">
       <button id="nsToggleBtnParent" class="dock-btn" onclick="toggleNsFromParent()" title="Nakts sadalījums">
-        <span class="dock-icon">🌙</span>
+        <svg class="dock-icon dock-px" width="20" height="18" viewBox="0 0 10 9" shape-rendering="crispEdges" aria-hidden="true"><rect x="3" y="0" width="4.04" height="1.04" fill="#c7d2fe"/><rect x="1" y="1" width="2.04" height="1.04" fill="#c7d2fe"/><rect x="3" y="1" width="2.04" height="1.04" fill="#818cf8"/><rect x="1" y="2" width="2.04" height="1.04" fill="#818cf8"/><rect x="8" y="2" width="1.04" height="1.04" fill="#fbbf24"/><rect x="0" y="3" width="2.04" height="1.04" fill="#818cf8"/><rect x="7" y="3" width="3.04" height="1.04" fill="#fbbf24"/><rect x="0" y="4" width="2.04" height="1.04" fill="#818cf8"/><rect x="8" y="4" width="1.04" height="1.04" fill="#fbbf24"/><rect x="0" y="5" width="2.04" height="1.04" fill="#818cf8"/><rect x="1" y="6" width="2.04" height="1.04" fill="#818cf8"/><rect x="7" y="6" width="1.04" height="1.04" fill="#fbbf24"/><rect x="1" y="7" width="3.04" height="1.04" fill="#818cf8"/><rect x="3" y="8" width="4.04" height="1.04" fill="#818cf8"/></svg>
         <span>Nakts</span>
       </button>
       <button id="bolusDocBtn" class="dock-btn" onclick="toggleBolus()" title="Bolusa maiņa">
@@ -808,11 +817,11 @@ html.mk-low-spec #calendarEmbed {
         </span>
       </button>
       <button id="statsDocBtn" class="dock-btn" onclick="openStatsFromDock()" title="Statistika">
-        <span class="dock-icon">📊</span>
+        <svg class="dock-icon dock-px" width="20" height="18" viewBox="0 0 9 8" shape-rendering="crispEdges" aria-hidden="true"><rect x="6" y="0" width="2.04" height="1.04" fill="#a78bfa"/><rect x="6" y="1" width="2.04" height="1.04" fill="#a78bfa"/><rect x="3" y="2" width="2.04" height="1.04" fill="#c4b5fd"/><rect x="6" y="2" width="2.04" height="1.04" fill="#a78bfa"/><rect x="3" y="3" width="2.04" height="1.04" fill="#c4b5fd"/><rect x="6" y="3" width="2.04" height="1.04" fill="#a78bfa"/><rect x="0" y="4" width="2.04" height="1.04" fill="#a78bfa"/><rect x="3" y="4" width="2.04" height="1.04" fill="#c4b5fd"/><rect x="6" y="4" width="2.04" height="1.04" fill="#a78bfa"/><rect x="0" y="5" width="2.04" height="1.04" fill="#a78bfa"/><rect x="3" y="5" width="2.04" height="1.04" fill="#c4b5fd"/><rect x="6" y="5" width="2.04" height="1.04" fill="#a78bfa"/><rect x="0" y="6" width="2.04" height="1.04" fill="#a78bfa"/><rect x="3" y="6" width="2.04" height="1.04" fill="#c4b5fd"/><rect x="6" y="6" width="2.04" height="1.04" fill="#a78bfa"/><rect x="0" y="7" width="9.04" height="1.04" fill="#475569"/></svg>
         <span>Statistika</span>
       </button>
       <button id="settingsDockBtn" class="dock-btn" onclick="openSettingsFromDock()" title="Iestatījumi">
-        <span class="dock-icon">⚙️</span>
+        <svg class="dock-icon dock-px" width="20" height="20" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true"><rect x="4" y="0" width="1.04" height="1.04" fill="#fbbf24"/><rect x="1" y="1" width="1.04" height="1.04" fill="#fbbf24"/><rect x="3" y="1" width="3.04" height="1.04" fill="#fbbf24"/><rect x="7" y="1" width="1.04" height="1.04" fill="#fbbf24"/><rect x="2" y="2" width="5.04" height="1.04" fill="#fbbf24"/><rect x="1" y="3" width="2.04" height="1.04" fill="#fbbf24"/><rect x="6" y="3" width="2.04" height="1.04" fill="#fbbf24"/><rect x="0" y="4" width="3.04" height="1.04" fill="#fbbf24"/><rect x="4" y="4" width="1.04" height="1.04" fill="#fde68a"/><rect x="6" y="4" width="3.04" height="1.04" fill="#fbbf24"/><rect x="1" y="5" width="2.04" height="1.04" fill="#fbbf24"/><rect x="6" y="5" width="2.04" height="1.04" fill="#fbbf24"/><rect x="2" y="6" width="5.04" height="1.04" fill="#fbbf24"/><rect x="1" y="7" width="1.04" height="1.04" fill="#fbbf24"/><rect x="3" y="7" width="3.04" height="1.04" fill="#fbbf24"/><rect x="7" y="7" width="1.04" height="1.04" fill="#fbbf24"/><rect x="4" y="8" width="1.04" height="1.04" fill="#fbbf24"/></svg>
         <span>Iestatījumi</span>
       </button>
     </div>
@@ -1426,8 +1435,23 @@ html.mk-low-spec #calendarEmbed {
   }
 
   function openStatsFromDock() {
+    // Tiešs toggle (kā desktop) — NEVIS postMessage. Iframe klausās mk_open_stats
+    // ar DIVIEM handleriem (viens atver, otrs pārslēdz), kas viens otru atceļ →
+    // modālis uzreiz aizveras. Tieša izsaukšana to apiet.
     const iframe = document.getElementById('calIframe');
-    if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage({ type: 'mk_open_stats' }, '*');
+    const iwin = iframe && iframe.contentWindow;
+    const idoc = iframe && (iframe.contentDocument || (iwin && iwin.document));
+    if (!iwin || !idoc) return;
+    const modal = idoc.getElementById('stats-modal');
+    const isOpen = modal && modal.style.display && modal.style.display !== 'none';
+    try {
+      if (isOpen) {
+        if (typeof iwin.closeStatsModal === 'function') iwin.closeStatsModal();
+        else modal.style.display = 'none';
+      } else if (typeof iwin.openStatsModal === 'function') {
+        iwin.openStatsModal();
+      }
+    } catch (_e) {}
   }
 
   function openSettingsFromDock() {
