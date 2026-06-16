@@ -45,6 +45,8 @@
   var NS_ROOM_KEY_PREFIX='nsrooms::';
   var NS_ROOM_API_PATH='/api/ns-rooms';
   var ROOM_BED_KEYS=['main_left_top','main_left_bottom','main_right_top','nmp_center'];
+  var PKT_CAT_SVG = `<svg class="pkt-cat" viewBox="0 0 300 370" preserveAspectRatio="xMidYMid meet" shape-rendering="crispEdges" aria-hidden="true"><g><rect x="40" y="0" width="10" height="10" fill="#131316"/><rect x="180" y="0" width="10" height="10" fill="#131316"/><rect x="40" y="10" width="10" height="10" fill="#131316"/><rect x="180" y="10" width="10" height="10" fill="#131316"/><rect x="40" y="20" width="20" height="10" fill="#131316"/><rect x="170" y="20" width="20" height="10" fill="#131316"/><rect x="40" y="30" width="20" height="10" fill="#131316"/><rect x="60" y="30" width="10" height="10" fill="#2b211b"/><rect x="110" y="30" width="10" height="10" fill="#2b211b"/><rect x="160" y="30" width="10" height="10" fill="#2b211b"/><rect x="170" y="30" width="20" height="10" fill="#131316"/><rect x="40" y="40" width="30" height="10" fill="#131316"/><rect x="70" y="40" width="40" height="10" fill="#2b211b"/><rect x="110" y="40" width="10" height="10" fill="#131316"/><rect x="120" y="40" width="40" height="10" fill="#2b211b"/><rect x="160" y="40" width="30" height="10" fill="#131316"/><rect x="40" y="50" width="150" height="10" fill="#131316"/><rect x="40" y="60" width="150" height="10" fill="#131316"/><rect x="40" y="70" width="150" height="10" fill="#131316"/><rect x="40" y="80" width="150" height="10" fill="#131316"/><rect x="40" y="90" width="30" height="10" fill="#131316"/><rect x="100" y="90" width="30" height="10" fill="#131316"/><rect x="160" y="90" width="30" height="10" fill="#131316"/><rect x="30" y="100" width="10" height="10" fill="#131316"/><rect x="50" y="100" width="30" height="10" fill="#131316"/><rect x="100" y="100" width="30" height="10" fill="#131316"/><rect x="150" y="100" width="30" height="10" fill="#131316"/><rect x="190" y="100" width="10" height="10" fill="#131316"/><rect x="40" y="110" width="70" height="10" fill="#131316"/><rect x="110" y="110" width="10" height="10" fill="#5b3d39"/><rect x="120" y="110" width="70" height="10" fill="#131316"/><rect x="50" y="120" width="130" height="10" fill="#131316"/><rect x="50" y="130" width="130" height="10" fill="#131316"/><rect x="60" y="140" width="110" height="10" fill="#131316"/><rect x="60" y="150" width="110" height="10" fill="#131316"/><rect x="50" y="160" width="130" height="10" fill="#131316"/><rect x="50" y="170" width="130" height="10" fill="#131316"/><rect x="40" y="180" width="150" height="10" fill="#131316"/><rect x="50" y="190" width="130" height="10" fill="#131316"/><rect x="50" y="200" width="130" height="10" fill="#131316"/><rect x="60" y="210" width="110" height="10" fill="#131316"/><rect x="40" y="220" width="150" height="10" fill="#131316"/><rect x="30" y="230" width="170" height="10" fill="#131316"/><rect x="20" y="240" width="240" height="10" fill="#131316"/><rect x="10" y="250" width="260" height="10" fill="#131316"/><rect x="10" y="260" width="270" height="10" fill="#131316"/><rect x="10" y="270" width="270" height="10" fill="#131316"/><rect x="0" y="280" width="230" height="10" fill="#131316"/><rect x="240" y="280" width="50" height="10" fill="#131316"/><rect x="10" y="290" width="210" height="10" fill="#131316"/><rect x="240" y="290" width="50" height="10" fill="#131316"/><rect x="10" y="300" width="210" height="10" fill="#131316"/><rect x="250" y="300" width="50" height="10" fill="#131316"/><rect x="10" y="310" width="210" height="10" fill="#131316"/><rect x="260" y="310" width="40" height="10" fill="#131316"/><rect x="20" y="320" width="190" height="10" fill="#131316"/><rect x="260" y="320" width="40" height="10" fill="#131316"/><rect x="30" y="330" width="170" height="10" fill="#131316"/><rect x="270" y="330" width="30" height="10" fill="#131316"/><rect x="40" y="340" width="150" height="10" fill="#131316"/><rect x="60" y="350" width="110" height="10" fill="#131316"/><rect x="110" y="360" width="10" height="10" fill="#131316"/></g><g class="pkt-eyes"><rect x="70" y="90" width="30" height="10" fill="#f5b51e"/><rect x="130" y="90" width="30" height="10" fill="#f5b51e"/><rect x="80" y="100" width="20" height="10" fill="#f5b51e"/><rect x="130" y="100" width="20" height="10" fill="#f5b51e"/></g></svg>`;
+
 
   // ── Vēsturiskā nakts statistika (kurš ņem kuru daļu / kurā gultā guļ) ──
   // Lasa apkopojumu caur Minka API; Google Apps Script URL paliek Cloudflare secretā.
@@ -1027,7 +1029,7 @@
       +'</div>'
       +nsStatsPanelHTML()
       +'<div class="ns-room-cat" aria-hidden="true">'
-      +'<iframe src="../pikts_kakis.html?embed=1&nostats=1" class="ns-lamp-iframe" frameborder="0" scrolling="no" style="border:none;display:block;"></iframe>'
+      +PKT_CAT_SVG
       +'</div>'
       +'</div>'
       +'</div>';
@@ -1081,17 +1083,34 @@
           stats.style.marginTop = (-lift) + 'px';
           stats.style.height = (roomsH + lift) + 'px';
         }
-        // Lamp: same height as rooms, width proportional to 500:420 scene ratio
+        // Pixel cat: same height as rooms, width proportional to 300:370 cat ratio.
+        // SVG fills the box via CSS (width/height 100%), so no per-child sizing.
         var lampH = roomsH;
-        var lampW = Math.ceil(lampH * 500 / 420);
+        var lampW = Math.ceil(lampH * 300 / 370);
         if(cat) {
           cat.style.width  = lampW + 'px';
           cat.style.height = lampH + 'px';
-          var iframe = cat.querySelector('.ns-lamp-iframe');
-          if(iframe) { iframe.style.width = lampW + 'px'; iframe.style.height = lampH + 'px'; }
+          wirePixelCat(cat);
         }
       });
     }catch(_e){}
+  }
+
+  function wirePixelCat(cat){
+    if(!cat || cat.__pktCatWired) return;
+    cat.__pktCatWired = true;
+    cat.addEventListener('click', function(ev){
+      try{
+        ev.stopPropagation();
+        var svg = cat.querySelector('.pkt-cat');
+        if(!svg) return;
+        svg.classList.add('pkt-awake');
+        clearTimeout(cat.__pktCatSleepTimer);
+        cat.__pktCatSleepTimer = setTimeout(function(){
+          svg.classList.remove('pkt-awake');
+        }, 5200);
+      }catch(_e){}
+    });
   }
 
   // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
