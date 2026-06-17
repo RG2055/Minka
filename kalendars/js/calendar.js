@@ -3399,6 +3399,12 @@ function closeFullListModal() {
     }
 
     const coffeeStoreKey = 'minkaCoffeeCountsV1';
+    const coffeeDetailStoreKey = 'minkaCoffeeDetailsV1';
+    const coffeeSourceMeta = {
+      philips: { label: 'Philips', priceCents: 0 },
+      lofbergs: { label: 'LÖFBERGS', priceCents: 140 },
+      narvesen: { label: 'Narvesen', prices: { M: 200, L: 220, XL: 250 } }
+    };
 
     function getCoffeeStore() {
       try {
@@ -3414,12 +3420,59 @@ function closeFullListModal() {
       } catch(e) {}
     }
 
+    function getCoffeeDetailStore() {
+      try {
+        return JSON.parse(localStorage.getItem(coffeeDetailStoreKey) || '{}') || {};
+      } catch(e) {
+        return {};
+      }
+    }
+
+    function saveCoffeeDetailStore(data) {
+      try {
+        localStorage.setItem(coffeeDetailStoreKey, JSON.stringify(data || {}));
+      } catch(e) {}
+    }
+
     function getCoffeeDayKey() {
       return activeDateStr || window.__activeDateStr || 'unknown';
     }
 
     function getCoffeePersonKey(name) {
       return String(name || '').trim().toLocaleLowerCase('lv-LV');
+    }
+
+    function cleanCoffeeSource(source) {
+      const s = String(source || 'philips').trim().toLowerCase();
+      if (s === 'lofbergs' || s === 'löfbergs') return 'lofbergs';
+      if (s === 'narvesen') return 'narvesen';
+      return 'philips';
+    }
+
+    function emptyCoffeeDetail() {
+      return { sources: { philips: 0, lofbergs: 0, narvesen: 0 }, spendCents: 0 };
+    }
+
+    function normalizeCoffeeDetail(detail, count) {
+      const out = emptyCoffeeDetail();
+      const src = detail && detail.sources ? detail.sources : {};
+      Object.keys(out.sources).forEach(k => {
+        out.sources[k] = Math.max(0, Number(src[k]) || 0);
+      });
+      out.spendCents = Math.max(0, Number(detail && detail.spendCents) || 0);
+      const total = Object.values(out.sources).reduce((a, b) => a + b, 0);
+      const target = Math.max(0, Number(count) || 0);
+      if (total < target) out.sources.philips += target - total;
+      if (total > target) {
+        let extra = total - target;
+        ['philips', 'lofbergs', 'narvesen'].forEach(k => {
+          if (!extra) return;
+          const take = Math.min(out.sources[k], extra);
+          out.sources[k] -= take;
+          extra -= take;
+        });
+      }
+      return out;
     }
 
     function getCoffeeCount(name) {
@@ -3440,6 +3493,43 @@ function closeFullListModal() {
       return data[day][key];
     }
 
+    function getCoffeeDetail(name) {
+      const day = getCoffeeDayKey();
+      const key = getCoffeePersonKey(name);
+      const data = getCoffeeDetailStore();
+      return normalizeCoffeeDetail(data && data[day] && data[day][key], getCoffeeCount(name));
+    }
+
+    function setCoffeeDetail(name, detail) {
+      const day = getCoffeeDayKey();
+      const key = getCoffeePersonKey(name);
+      if (!day || !key) return;
+      const data = getCoffeeDetailStore();
+      if (!data[day]) data[day] = {};
+      data[day][key] = normalizeCoffeeDetail(detail, getCoffeeCount(name));
+      saveCoffeeDetailStore(data);
+    }
+
+    function addCoffeeDetail(name, entry) {
+      const d = getCoffeeDetail(name);
+      const source = cleanCoffeeSource(entry && entry.source);
+      d.sources[source] = (d.sources[source] || 0) + 1;
+      d.spendCents += Math.max(0, Number(entry && entry.priceCents) || 0);
+      setCoffeeDetail(name, d);
+      return d;
+    }
+
+    function removeCoffeeDetail(name) {
+      const d = getCoffeeDetail(name);
+      const pick = ['philips', 'lofbergs', 'narvesen']
+        .sort((a, b) => (d.sources[b] || 0) - (d.sources[a] || 0))[0];
+      let removed = '';
+      if (pick && d.sources[pick] > 0) { d.sources[pick] -= 1; removed = pick; }
+      setCoffeeDetail(name, d);
+      // Return the source that was decremented so the cloud delta can net it.
+      return removed;
+    }
+
     function getCoffeeApiBase() {
       return String(window.MINKA_COFFEE_API_BASE || 'https://minka-coffee-api.gamernr1elite.workers.dev').replace(/\/+$/, '');
     }
@@ -3454,6 +3544,19 @@ function closeFullListModal() {
         data[day][key] = Math.max(0, Math.min(999, Number(counts[name]) || 0));
       });
       saveCoffeeStore(data);
+    }
+
+    function applyCoffeeDetails(day, details) {
+      if (!day || !details || typeof details !== 'object') return;
+      const data = getCoffeeDetailStore();
+      if (!data[day]) data[day] = {};
+      Object.keys(details).forEach(name => {
+        const key = getCoffeePersonKey(name);
+        if (!key) return;
+        const count = getCoffeeStore()[day] && getCoffeeStore()[day][key];
+        data[day][key] = normalizeCoffeeDetail(details[name], count);
+      });
+      saveCoffeeDetailStore(data);
     }
 
     function refreshVisibleCoffeeRows(day) {
@@ -3482,6 +3585,7 @@ function closeFullListModal() {
         .then(data => {
           if (!data || !data.ok || data.date !== day) return;
           applyCoffeeCounts(day, data.counts || {});
+          applyCoffeeDetails(day, data.details || {});
           state.loadedDays[day] = true;
           refreshVisibleCoffeeRows(day);
         })
@@ -3489,14 +3593,23 @@ function closeFullListModal() {
         .finally(() => { delete state.loadingDays[day]; });
     }
 
-    function postCoffeeDelta(name, delta, card) {
+    function postCoffeeDelta(name, delta, card, entry) {
       const day = getCoffeeDayKey();
       if (!day || day === 'unknown' || !name) return;
+      const body = { date: day, worker: name, delta: delta };
+      if (delta > 0 && entry) {
+        body.source = cleanCoffeeSource(entry.source);
+        body.size = String(entry.size || '').toUpperCase();
+        body.priceCents = Math.max(0, Number(entry.priceCents) || 0);
+      } else if (delta < 0 && entry && entry.source) {
+        // Tell the server which source the minus removed, so its per-source total nets.
+        body.source = cleanCoffeeSource(entry.source);
+      }
       fetch(getCoffeeApiBase() + '/api/coffee', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         cache: 'no-store',
-        body: JSON.stringify({ date: day, worker: name, delta: delta })
+        body: JSON.stringify(body)
       })
         .then(r => r.ok ? r.json() : null)
         .then(data => {
@@ -3506,6 +3619,176 @@ function closeFullListModal() {
           try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(_e) {}
         })
         .catch(function(){});
+    }
+
+    function formatCoffeeEuro(cents) {
+      return (Math.max(0, Number(cents) || 0) / 100).toLocaleString('lv-LV', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }) + ' €';
+    }
+
+    function coffeeIcon(source) {
+      source = cleanCoffeeSource(source);
+      if (source === 'lofbergs') {
+        // Löfbergs — tall purple vending machine: header panel, white wordmark,
+        // a column of cream selection buttons, a side screen and the cup niche.
+        return '<svg viewBox="0 0 32 32" shape-rendering="crispEdges" aria-hidden="true">'
+          + '<rect x="7" y="2" width="18" height="27" fill="#461c69"/>'
+          + '<rect x="7" y="2" width="18" height="5" fill="#5a2880"/>'
+          + '<rect x="20" y="3" width="3" height="3" fill="#c79fe0"/>'
+          + '<rect x="9" y="8" width="14" height="2" fill="#f1ecf6"/>'
+          + '<rect x="9" y="11" width="7" height="2" fill="#e9d98f"/>'
+          + '<rect x="9" y="14" width="7" height="2" fill="#e9d98f"/>'
+          + '<rect x="9" y="17" width="7" height="2" fill="#e9d98f"/>'
+          + '<rect x="9" y="20" width="7" height="2" fill="#e9d98f"/>'
+          + '<rect x="18" y="11" width="5" height="6" fill="#16203a"/>'
+          + '<rect x="20" y="13" width="2" height="2" fill="#55c7dc"/>'
+          + '<rect x="13" y="23" width="8" height="6" fill="#2a1340"/>'
+          + '<rect x="14" y="24" width="6" height="4" fill="#eef2f8"/>'
+          + '<rect x="14" y="24" width="6" height="1" fill="#7a4a24"/>'
+          + '</svg>';
+      }
+      if (source === 'narvesen') {
+        // Narvesen takeaway cup — cream paper cup, red sleeve + lid, a little steam.
+        return '<svg viewBox="0 0 32 32" shape-rendering="crispEdges" aria-hidden="true">'
+          + '<rect x="13" y="2" width="1" height="2" fill="#aeb6c6"/>'
+          + '<rect x="16" y="1" width="1" height="2" fill="#aeb6c6"/>'
+          + '<rect x="19" y="2" width="1" height="2" fill="#aeb6c6"/>'
+          + '<rect x="14" y="5" width="5" height="2" fill="#b8312a"/>'
+          + '<rect x="9" y="7" width="15" height="3" fill="#d23b2b"/>'
+          + '<rect x="10" y="10" width="13" height="16" fill="#f3efe6"/>'
+          + '<rect x="10" y="15" width="13" height="5" fill="#d23b2b"/>'
+          + '<rect x="10" y="15" width="13" height="1" fill="#e6584a"/>'
+          + '<rect x="11" y="25" width="11" height="1" fill="#e7e1d4"/>'
+          + '</svg>';
+      }
+      // Philips bean-to-cup machine — body + blue display, dispenser spout and a cup.
+      return '<svg viewBox="0 0 32 32" shape-rendering="crispEdges" aria-hidden="true">'
+        + '<rect x="7" y="3" width="18" height="21" fill="#2b313c"/>'
+        + '<rect x="7" y="3" width="18" height="3" fill="#363d4a"/>'
+        + '<rect x="9" y="6" width="14" height="9" fill="#3c4452"/>'
+        + '<rect x="11" y="8" width="10" height="3" fill="#2f7fe0"/>'
+        + '<rect x="11" y="12" width="4" height="1" fill="#55c7dc"/>'
+        + '<rect x="13" y="15" width="6" height="2" fill="#1b1f27"/>'
+        + '<rect x="14" y="17" width="1" height="3" fill="#7a4a24"/>'
+        + '<rect x="17" y="17" width="1" height="3" fill="#7a4a24"/>'
+        + '<rect x="12" y="20" width="8" height="4" fill="#eef2f8"/>'
+        + '<rect x="13" y="20" width="6" height="1" fill="#7a4a24"/>'
+        + '<rect x="20" y="21" width="2" height="2" fill="#eef2f8"/>'
+        + '<rect x="8" y="24" width="16" height="2" fill="#1b1f27"/>'
+        + '</svg>';
+    }
+
+    function addCoffeeEntry(name, card, entry) {
+      const source = cleanCoffeeSource(entry && entry.source);
+      const size = String(entry && entry.size || '').toUpperCase();
+      let priceCents = Math.max(0, Number(entry && entry.priceCents) || 0);
+      if (source === 'lofbergs') priceCents = 140;
+      setCoffeeCount(name, getCoffeeCount(name) + 1);
+      addCoffeeDetail(name, { source, size, priceCents });
+      updateCoffeeRow(card, name);
+      try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(_e) {}
+      postCoffeeDelta(name, 1, card, { source, size, priceCents });
+    }
+
+    function closeCoffeePicker() {
+      document.querySelectorAll('.mk-coffee-picker').forEach(el => el.remove());
+      document.removeEventListener('pointerdown', onCoffeePickerOutside, true);
+      document.removeEventListener('keydown', onCoffeePickerKey, true);
+    }
+
+    function onCoffeePickerOutside(e) {
+      const picker = document.querySelector('.mk-coffee-picker');
+      if (!picker) return;
+      if (picker.contains(e.target) || (e.target && e.target.closest && e.target.closest('.mk-coffee-add'))) return;
+      closeCoffeePicker();
+    }
+
+    function onCoffeePickerKey(e) {
+      if (e.key === 'Escape') closeCoffeePicker();
+    }
+
+    function showCoffeePicker(name, card, anchor) {
+      closeCoffeePicker();
+      let selected = 'philips';
+      let size = 'M';
+      let priceCents = 0;
+      const picker = document.createElement('div');
+      picker.className = 'mk-coffee-picker';
+      picker.innerHTML = `
+        <div class="mk-coffee-picker-title">Kafija</div>
+        <div class="mk-coffee-source-row">
+          ${['philips', 'lofbergs', 'narvesen'].map(source => `
+            <button class="mk-coffee-source ${source === selected ? 'is-on' : ''}" type="button" data-source="${source}">
+              <span class="mk-coffee-source-icon">${coffeeIcon(source)}</span>
+              <span>${coffeeSourceMeta[source].label}</span>
+            </button>`).join('')}
+        </div>
+        <div class="mk-coffee-size-row" hidden>
+          ${['M', 'L', 'XL'].map(s => `<button type="button" class="${s === size ? 'is-on' : ''}" data-size="${s}">${s}</button>`).join('')}
+        </div>
+        <label class="mk-coffee-price-row">
+          <span>Cena</span>
+          <input class="mk-coffee-price" type="number" min="0" max="50" step="0.01" inputmode="decimal" value="0.00">
+        </label>
+        <button class="mk-coffee-save" type="button">Saglabāt</button>`;
+      document.body.appendChild(picker);
+
+      function sync() {
+        picker.querySelectorAll('.mk-coffee-source').forEach(btn => btn.classList.toggle('is-on', btn.dataset.source === selected));
+        const sizeRow = picker.querySelector('.mk-coffee-size-row');
+        if (sizeRow) sizeRow.hidden = selected !== 'narvesen';
+        picker.querySelectorAll('[data-size]').forEach(btn => btn.classList.toggle('is-on', btn.dataset.size === size));
+        const input = picker.querySelector('.mk-coffee-price');
+        if (!input) return;
+        if (selected === 'philips') priceCents = 0;
+        else if (selected === 'lofbergs') priceCents = 140;
+        else if (!priceCents) priceCents = coffeeSourceMeta.narvesen.prices[size] || 200;
+        input.value = (priceCents / 100).toFixed(2);
+        input.readOnly = selected !== 'narvesen';
+      }
+
+      picker.querySelectorAll('.mk-coffee-source').forEach(btn => {
+        btn.addEventListener('click', () => {
+          selected = cleanCoffeeSource(btn.dataset.source);
+          priceCents = selected === 'narvesen' ? (coffeeSourceMeta.narvesen.prices[size] || 200) : 0;
+          sync();
+        });
+      });
+      picker.querySelectorAll('[data-size]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          size = btn.dataset.size || 'M';
+          priceCents = coffeeSourceMeta.narvesen.prices[size] || 200;
+          sync();
+        });
+      });
+      const input = picker.querySelector('.mk-coffee-price');
+      if (input) {
+        input.addEventListener('input', () => {
+          const n = Number(String(input.value || '0').replace(',', '.'));
+          priceCents = Number.isFinite(n) ? Math.max(0, Math.round(n * 100)) : 0;
+        });
+      }
+      const save = picker.querySelector('.mk-coffee-save');
+      if (save) {
+        save.addEventListener('click', () => {
+          addCoffeeEntry(name, card, { source: selected, size: selected === 'narvesen' ? size : '', priceCents });
+          closeCoffeePicker();
+        });
+      }
+
+      sync();
+      const rect = anchor && anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : null;
+      const pw = 260;
+      const left = rect ? Math.max(8, Math.min(window.innerWidth - pw - 8, rect.right - pw)) : 20;
+      const top = rect ? Math.max(8, Math.min(window.innerHeight - 250, rect.bottom + 8)) : 20;
+      picker.style.left = left + 'px';
+      picker.style.top = top + 'px';
+      setTimeout(() => {
+        document.addEventListener('pointerdown', onCoffeePickerOutside, true);
+        document.addEventListener('keydown', onCoffeePickerKey, true);
+      }, 0);
     }
 
     function buildCoffeeCup(mode) {
@@ -3552,10 +3835,10 @@ function closeFullListModal() {
       const cups = row.querySelector('.mk-coffee-cups');
       const numEl = row.querySelector('.mk-coffee-num');
       if (cups) cups.innerHTML = buildCoffeeCups(count);
-      // "+" stays fixed on the left; the number on the right reflects the count.
-      if (numEl) numEl.textContent = String(count); /* always show the number — dummy-proof */
+      if (numEl) numEl.textContent = String(count);
     }
 
+    window.__minkaCoffeeIcon = coffeeIcon;
     window.__minkaGetCoffeeCountForName = function(name) {
       return getCoffeeCount(name);
     };
@@ -3568,6 +3851,62 @@ function closeFullListModal() {
         seen.add(key);
         return sum + getCoffeeCount(n);
       }, 0);
+    };
+    // The active day's coffee source breakdown for a set of people (deduped) —
+    // powers the buddy widget's per-day "which machines" icons.
+    window.__minkaGetCoffeeSourcesForNames = function(names) {
+      const out = { philips: 0, lofbergs: 0, narvesen: 0 };
+      const seen = new Set();
+      (Array.isArray(names) ? names : []).forEach(name => {
+        const n = String(name || '').trim();
+        const key = getCoffeePersonKey(n);
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+        const s = (getCoffeeDetail(n) || {}).sources || {};
+        out.philips += Math.max(0, Number(s.philips) || 0);
+        out.lofbergs += Math.max(0, Number(s.lofbergs) || 0);
+        out.narvesen += Math.max(0, Number(s.narvesen) || 0);
+      });
+      return out;
+    };
+    window.__minkaGetCoffeeLeaderboard = function(limit) {
+      // All-time Top 5: sum every day in the local store, then merge with the
+      // server's authoritative all-time totals (max per person) so it reflects the
+      // whole history across days/devices — not just today.
+      const totals = {};
+      const store = getCoffeeStore();
+      Object.keys(store).forEach(day => {
+        const dayObj = store[day];
+        if (!dayObj || typeof dayObj !== 'object') return;
+        Object.keys(dayObj).forEach(key => {
+          totals[key] = (totals[key] || 0) + Math.max(0, Number(dayObj[key]) || 0);
+        });
+      });
+      const api = window.__mkCoffeeTotalsApi;
+      if (api) {
+        Object.keys(api).forEach(key => {
+          totals[key] = Math.max(totals[key] || 0, Math.max(0, Number(api[key]) || 0));
+        });
+      }
+      const namesByKey = {};
+      document.querySelectorAll('#grafiks-list.grid-view .mk-mid-card[data-worker]').forEach(card => {
+        const n = String(card.getAttribute('data-worker') || '').trim();
+        const k = getCoffeePersonKey(n);
+        if (k && !namesByKey[k]) namesByKey[k] = n;
+      });
+      function prettyName(key) {
+        return String(key || '').split(/\s+/)
+          .map(p => p ? p.charAt(0).toLocaleUpperCase('lv-LV') + p.slice(1) : p)
+          .join(' ');
+      }
+      return Object.keys(totals)
+        .map(key => {
+          const count = Math.max(0, Number(totals[key]) || 0);
+          return { name: namesByKey[key] || prettyName(key), count };
+        })
+        .filter(x => x.count > 0)
+        .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'lv'))
+        .slice(0, Math.max(1, Number(limit) || 5));
     };
 
     function buildFatigueSegments(score) {
@@ -3651,10 +3990,7 @@ function closeFullListModal() {
           coffeeBtn.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
-            setCoffeeCount(w.name, getCoffeeCount(w.name) + 1);
-            updateCoffeeRow(card, w.name);
-            try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(_e) {}
-            postCoffeeDelta(w.name, 1, card);
+            showCoffeePicker(w.name, card, coffeeBtn);
           };
         }
         const coffeeSub = card.querySelector('.mk-coffee-sub');
@@ -3663,10 +3999,11 @@ function closeFullListModal() {
             e.preventDefault();
             e.stopPropagation();
             if (getCoffeeCount(w.name) <= 0) return;
+            const removedSrc = removeCoffeeDetail(w.name);
             setCoffeeCount(w.name, getCoffeeCount(w.name) - 1);
             updateCoffeeRow(card, w.name);
             try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(_e) {}
-            postCoffeeDelta(w.name, -1, card);
+            postCoffeeDelta(w.name, -1, card, removedSrc ? { source: removedSrc } : null);
           };
         }
         return card;
@@ -3919,6 +4256,8 @@ function closeFullListModal() {
         fatigue: Array.isArray(fatigue) ? fatigue : [],
         rgHeartColors: Array.isArray(rgHeartColors) ? rgHeartColors : [],
         coffeeTotal: 0,
+        coffeeSources: { philips: 0, lofbergs: 0, narvesen: 0 },
+        coffeeLeaderboard: [],
         shiftFatigue: 0
       };
 
@@ -3935,6 +4274,12 @@ function closeFullListModal() {
         });
         if (typeof window.__minkaGetCoffeeTotalForNames === 'function') {
           payload.coffeeTotal = Math.max(0, Number(window.__minkaGetCoffeeTotalForNames(activeCoffeeNames)) || 0);
+        }
+        if (typeof window.__minkaGetCoffeeSourcesForNames === 'function') {
+          payload.coffeeSources = window.__minkaGetCoffeeSourcesForNames(activeCoffeeNames) || payload.coffeeSources;
+        }
+        if (typeof window.__minkaGetCoffeeLeaderboard === 'function') {
+          payload.coffeeLeaderboard = window.__minkaGetCoffeeLeaderboard(5) || [];
         }
         const fatigueByName = {};
         (payload.fatigue || []).forEach(f => {
@@ -3969,6 +4314,7 @@ function closeFullListModal() {
           f: (payload.fatigue || []).map(x => [x && x.fullName, x && x.score]),
           hc: (payload.rgHeartColors || []).map(x => [x && x.fullName, x && x.score, x && x.color]),
           cf: payload.coffeeTotal,
+          cl: (payload.coffeeLeaderboard || []).map(x => [x && x.name, x && x.count]),
           sf: payload.shiftFatigue
         });
         if (digest && digest === window.__minkaLastAssistantBridgeDigest) return;

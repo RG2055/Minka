@@ -783,6 +783,7 @@
       // Atlikušais aktīvajā daļā: laiks (HH:MM:SS) pa kreisi, procenti pa labi.
       var timeEl=dot.querySelector('.ns-flow-time');
       var pctEl=dot.querySelector('.ns-flow-pct');
+      var workerEl=dot.querySelector('.ns-flow-worker');
       var cur=live.now, active=null;
       for(var i=0;i<st.sl.length;i++){ if(cur>=st.sl[i].s && cur<st.sl[i].e){ active=st.sl[i]; break; } }
       if(active){
@@ -795,9 +796,18 @@
         var hhmmss=(h>0?h+':':'')+pad(m)+':'+pad(sec);
         if(timeEl){ timeEl.textContent=hhmmss; timeEl.style.display='block'; }
         if(pctEl){ pctEl.textContent=remPct+'%'; pctEl.style.display='block'; }
+        if(workerEl){
+          var activeName=String((active.w&&active.w.name)||'').trim();
+          var activeFirst=activeName.split(/\s+/)[0]||'';
+          var activeEmoji=roomEmoji(activeName);
+          workerEl.innerHTML=(activeEmoji?'<span class="ns-flow-worker-emoji">'+escHtml(activeEmoji)+'</span>':'')
+            +'<span class="ns-flow-worker-name">'+escHtml(activeFirst)+'</span>';
+          workerEl.style.display=activeFirst?'inline-flex':'none';
+        }
       } else {
         if(timeEl) timeEl.style.display='none';
         if(pctEl) pctEl.style.display='none';
+        if(workerEl) workerEl.style.display='none';
       }
     }
   }
@@ -1433,7 +1443,7 @@
       flowBar='<div class="ns-flow-bar">'
         +_flowSegs
         +(live?'<div class="ns-flow-spent" style="width:'+live.pct.toFixed(3)+'%"></div>':'<div class="ns-flow-spent" style="width:0%"></div>')
-        +(live?'<div class="ns-flow-live" style="left:'+live.pct.toFixed(3)+'%"><span class="ns-flow-time"></span>'+NS_FLOW_GHOST+'<span class="ns-flow-pct"></span></div>':'')
+        +(live?'<div class="ns-flow-live" style="left:'+live.pct.toFixed(3)+'%"><span class="ns-flow-worker"></span><span class="ns-flow-time"></span>'+NS_FLOW_GHOST+'<span class="ns-flow-pct"></span></div>':'')
         +'</div>'
         +_flowLabels;
     }
