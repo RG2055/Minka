@@ -642,6 +642,25 @@ body.stars-active #stars-overlay{display:block;}
 .mk-stx-bd-foot { margin-top:10px; padding-top:9px; border-top:1px solid var(--stx-border-soft); display:flex; justify-content:space-between; font-size:12px; }
 .mk-stx-bd-foot span { color:var(--stx-t2); }
 .mk-stx-bd-foot .tot { font-weight:800; color:#f4f5f7; }
+.mk-stx-bi-full { grid-column:1 / -1; align-items:center; }
+.mk-stx-csrcs { display:inline-flex; align-items:center; gap:10px; }
+.mk-stx-csrc { display:inline-flex; align-items:center; gap:3px; }
+.mk-stx-csrc svg { width:16px; height:16px; display:block; }
+.mk-stx-csrc i { font-style:normal; font-weight:800; font-size:11px; color:#f4f5f7; }
+.mk-stx-csrc-none { color:var(--stx-t3); font-weight:600; }
+.mk-stx-coffee-sum { display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin:0 0 14px; padding:11px 15px; border-radius:13px; background:var(--stx-card2); border:1px solid var(--stx-border-soft); }
+.mk-stx-cs-head { font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#fb8a4c; }
+.mk-stx-cs-stats { display:flex; align-items:baseline; gap:16px; }
+.mk-stx-cs-stat b { font-size:17px; font-weight:800; color:#f4f5f7; }
+.mk-stx-cs-stat i { font-style:normal; font-size:9.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--stx-t3); margin-left:5px; }
+.mk-stx-cs-srcs { display:inline-flex; align-items:center; gap:12px; margin-left:auto; }
+.mk-stx-cs-srcs .mk-stx-csrc svg { width:20px; height:20px; }
+.mk-stx-cs-srcs .mk-stx-csrc i { font-size:12px; }
+.mk-stx-metric-coffee { width:auto; min-width:58px; padding-left:9px; padding-right:9px; }
+.mk-stx-mc-srcs { display:flex; align-items:center; justify-content:center; gap:7px; margin:5px 0 2px; }
+.mk-stx-mc-srcs .mk-stx-csrc { gap:2px; }
+.mk-stx-mc-srcs .mk-stx-csrc svg { width:15px; height:15px; display:block; }
+.mk-stx-mc-srcs .mk-stx-csrc i { font-style:normal; font-weight:800; font-size:10px; color:#f4f5f7; }
 
 @media (max-width:920px) {
   .mk-stx-meta { width:150px; }
@@ -785,15 +804,15 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260617a"></script>
+<script src="js/calendar.js?v=20260618a"></script>
 <script src="js/calendar_extras_v4.js?v=20260611a"></script>
 <script src="js/fatigue.js?v=20260613d"></script>
-<script src="js/nightsplit.js?v=20260617a" defer></script>
+<script src="js/nightsplit.js?v=20260618a" defer></script>
 <script src="js/design_v1.js" defer></script>
 <script src="js/theme.js" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
 <script src="js/emoji.js?v=20260611a" defer></script>
-<script src="js/levels.js?v=20260612a" defer></script>
+<script src="js/levels.js?v=20260618a" defer></script>
 <script src="js/radiologist_plan.js" defer></script>
 
 <script>
@@ -5496,11 +5515,51 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
    tieši pie buddy, pārvietojas līdzi. */
 .ns-flow-time, .ns-flow-pct {
   position: absolute; top: 50%; transform: translateY(-50%);
-  font: 800 9.5px/1 'JetBrains Mono', ui-monospace, monospace; letter-spacing: .02em;
-  white-space: nowrap; pointer-events: none; text-shadow: 0 1px 3px rgba(0,0,0,.75);
+  font: 900 9.5px/1 'JetBrains Mono', ui-monospace, monospace; letter-spacing: .02em;
+  white-space: nowrap; pointer-events: none;
+  padding: 2px 5px;
+  border-radius: 7px;
+  color: rgba(232,244,255,.98);
+  background: rgba(3,7,14,.78);
+  border: 1px solid rgba(205,226,244,.28);
+  box-shadow: 0 1px 5px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.07);
+  text-shadow: 0 1px 2px rgba(0,0,0,.92);
 }
-.ns-flow-time { right: 100%; margin-right: 5px; color: #cfe6f7; }
-.ns-flow-pct  { left: 100%;  margin-left: 5px; color: #7dd3fc; }
+.ns-flow-time { right: 100%; margin-right: 5px; }
+.ns-flow-pct  { left: 100%;  margin-left: 5px; color: #aeeeff; }
+.ns-flow-worker {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translate(-50%, -4px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  max-width: 86px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  color: rgba(232,244,255,.98);
+  background: rgba(3,7,14,.82);
+  border: 1px solid rgba(125,211,252,.28);
+  box-shadow: 0 1px 6px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.06);
+  font: 900 8.5px/1 Inter, system-ui, sans-serif;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgba(0,0,0,.95);
+}
+.ns-flow-worker-emoji {
+  font-size: 9px;
+  line-height: 1;
+  text-transform: none;
+}
+.ns-flow-worker-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .ns-panel-head { position: relative !important; }
 .ns-lamp-iframe {
   display: block !important;
@@ -9573,6 +9632,119 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   font-size: 14px !important;
   line-height: 1 !important;
   pointer-events: none !important;
+}
+.mk-coffee-picker {
+  position: fixed !important;
+  z-index: 2147483000 !important;
+  width: 260px !important;
+  padding: 10px !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(196,132,69,.42) !important;
+  background: rgba(11,12,18,.96) !important;
+  box-shadow: 0 16px 44px rgba(0,0,0,.48), inset 0 0 0 1px rgba(255,255,255,.05) !important;
+  color: #f8fafc !important;
+  font-family: Inter, system-ui, sans-serif !important;
+}
+.mk-coffee-picker-title {
+  color: rgba(248,250,252,.92) !important;
+  font: 900 11px/1 Inter, system-ui, sans-serif !important;
+  letter-spacing: .14em !important;
+  text-transform: uppercase !important;
+  margin: 0 0 8px !important;
+}
+.mk-coffee-source-row {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 6px !important;
+}
+.mk-coffee-source {
+  min-width: 0 !important;
+  padding: 4px 2px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: rgba(248,250,252,.6) !important;
+  cursor: pointer !important;
+  font: 850 9px/1.1 Inter, system-ui, sans-serif !important;
+  letter-spacing: .04em !important;
+}
+.mk-coffee-source.is-on {
+  color: #f5b73f !important;
+}
+.mk-coffee-source-icon {
+  display: block !important;
+  width: 46px !important;
+  height: 46px !important;
+  margin: 0 auto 6px !important;
+  opacity: .88 !important;
+  transition: transform .12s ease, opacity .12s ease !important;
+}
+.mk-coffee-source.is-on .mk-coffee-source-icon {
+  opacity: 1 !important;
+  transform: scale(1.08) !important;
+}
+.mk-coffee-source-icon svg {
+  display: block !important;
+  width: 46px !important;
+  height: 46px !important;
+  image-rendering: pixelated !important;
+}
+.mk-coffee-size-row {
+  display: flex !important;
+  gap: 6px !important;
+  margin: 9px 0 0 !important;
+}
+.mk-coffee-size-row[hidden] { display: none !important; }
+.mk-coffee-size-row button {
+  flex: 1 1 0 !important;
+  min-height: 26px !important;
+  border-radius: 9px !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  background: rgba(255,255,255,.04) !important;
+  color: rgba(248,250,252,.78) !important;
+  font: 900 11px/1 Inter, system-ui, sans-serif !important;
+  cursor: pointer !important;
+}
+.mk-coffee-size-row button.is-on {
+  border-color: rgba(56,189,248,.58) !important;
+  background: rgba(56,189,248,.14) !important;
+  color: #7dd3fc !important;
+}
+.mk-coffee-price-row {
+  display: grid !important;
+  grid-template-columns: 1fr 96px !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 10px 0 8px !important;
+  color: rgba(160,166,184,.78) !important;
+  font: 850 9px/1 Inter, system-ui, sans-serif !important;
+  letter-spacing: .12em !important;
+  text-transform: uppercase !important;
+}
+.mk-coffee-price {
+  width: 100% !important;
+  height: 30px !important;
+  padding: 0 8px !important;
+  border-radius: 9px !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  background: rgba(0,0,0,.45) !important;
+  color: #f8fafc !important;
+  font: 900 13px/1 Inter, system-ui, sans-serif !important;
+  text-align: right !important;
+}
+.mk-coffee-price:read-only {
+  color: #f5b73f !important;
+}
+.mk-coffee-save {
+  width: 100% !important;
+  min-height: 34px !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(196,132,69,.50) !important;
+  background: linear-gradient(180deg, rgba(196,132,69,.34), rgba(196,132,69,.18)) !important;
+  color: #fff !important;
+  font: 900 11px/1 Inter, system-ui, sans-serif !important;
+  letter-spacing: .12em !important;
+  text-transform: uppercase !important;
+  cursor: pointer !important;
 }
 :root.host-radio-open #grafiks-list.grid-view .card.mk-mid-card {
   padding: 7px !important;

@@ -217,6 +217,22 @@
             t[_coffeeKey(k)] = Math.max(0, Number(d.totals[k]) || 0);
           });
           window.__mkCoffeeTotalsApi = t;
+          if (d.details && typeof d.details === 'object') {
+            var detailMap = {};
+            Object.keys(d.details).forEach(function(k) {
+              var item = d.details[k] || {};
+              var src = item.sources || {};
+              detailMap[_coffeeKey(k)] = {
+                sources: {
+                  philips: Math.max(0, Number(src.philips) || 0),
+                  lofbergs: Math.max(0, Number(src.lofbergs) || 0),
+                  narvesen: Math.max(0, Number(src.narvesen) || 0)
+                },
+                spendCents: Math.max(0, Number(item.spendCents) || 0)
+              };
+            });
+            window.__mkCoffeeDetailsApi = detailMap;
+          }
           var m = document.getElementById('stats-modal');
           if (m && m.style.display && m.style.display !== 'none') {
             window.MinkaLevels.injectIntoStats();
@@ -249,6 +265,50 @@
     }
     return totals;
   }
+  function _emptyCoffeeDetail() {
+    return { sources: { philips: 0, lofbergs: 0, narvesen: 0 }, spendCents: 0 };
+  }
+  function _addCoffeeDetail(out, key, detail) {
+    if (!out[key]) out[key] = _emptyCoffeeDetail();
+    var src = detail && detail.sources ? detail.sources : {};
+    out[key].sources.philips += Math.max(0, Number(src.philips) || 0);
+    out[key].sources.lofbergs += Math.max(0, Number(src.lofbergs) || 0);
+    out[key].sources.narvesen += Math.max(0, Number(src.narvesen) || 0);
+    out[key].spendCents += Math.max(0, Number(detail && detail.spendCents) || 0);
+  }
+  function _coffeeDetailsPerPerson(coffeeTotals) {
+    var out = {};
+    try {
+      var data = JSON.parse(localStorage.getItem('minkaCoffeeDetailsV1') || 'null');
+      if (data && typeof data === 'object') {
+        Object.keys(data).forEach(function(day) {
+          var dayObj = data[day];
+          if (!dayObj || typeof dayObj !== 'object') return;
+          Object.keys(dayObj).forEach(function(key) {
+            _addCoffeeDetail(out, key, dayObj[key]);
+          });
+        });
+      }
+    } catch (_e) {}
+    var api = window.__mkCoffeeDetailsApi;
+    if (api) {
+      Object.keys(api).forEach(function(key) {
+        if (!out[key]) out[key] = api[key];
+        else {
+          var localTotal = Object.values(out[key].sources || {}).reduce(function(a, b) { return a + (Number(b) || 0); }, 0);
+          var apiTotal = Object.values((api[key] && api[key].sources) || {}).reduce(function(a, b) { return a + (Number(b) || 0); }, 0);
+          if (apiTotal >= localTotal) out[key] = api[key];
+        }
+      });
+    }
+    Object.keys(coffeeTotals || {}).forEach(function(key) {
+      if (!out[key]) out[key] = _emptyCoffeeDetail();
+      var total = Math.max(0, Number(coffeeTotals[key]) || 0);
+      var detailTotal = Object.values(out[key].sources || {}).reduce(function(a, b) { return a + (Number(b) || 0); }, 0);
+      if (detailTotal < total) out[key].sources.philips += total - detailTotal;
+    });
+    return out;
+  }
 
   function buildAllTimeStats() {
     var store = window.__grafiksStore || {};
@@ -256,6 +316,7 @@
     var workers = {};
     var bolusCounts = _bolusChangesPerPerson();
     var coffeeTotals = _coffeeTotalsPerPerson();
+    var coffeeDetails = _coffeeDetailsPerPerson(coffeeTotals);
 
     function processStore(src, isRad) {
       Object.values(src).forEach(function(monthArr) {
@@ -349,10 +410,13 @@
       xp += bolusBonus;
 
       var coffeeCount = coffeeTotals[_coffeeKey(ws.name)] || 0;
+      var coffeeDetail = coffeeDetails[_coffeeKey(ws.name)] || _emptyCoffeeDetail();
       var coffeeBonus = coffeeCount * 5;
       xp += coffeeBonus;
 
       ws.coffeeTotal = coffeeCount;
+      ws.coffeeSources = coffeeDetail.sources || _emptyCoffeeDetail().sources;
+      ws.coffeeSpendCents = Math.max(0, Number(coffeeDetail.spendCents) || 0);
       ws.xp = Math.round(xp);
       ws.levelData = getLevelData(ws.xp);
       ws.longestStreak = calcLongestStreak(ws.dates);
@@ -367,7 +431,8 @@
         bolus: bolusBonus,
         bolusCount: bolusCount,
         coffee: coffeeBonus,
-        coffeeCount: coffeeCount
+        coffeeCount: coffeeCount,
+        coffeeSpendCents: ws.coffeeSpendCents
       };
     });
 
@@ -731,6 +796,16 @@
   function _fmt(n) {
     try { return Number(n || 0).toLocaleString('lv-LV'); } catch (_e) { return String(n || 0); }
   }
+  function _fmtEur(cents) {
+    try {
+      return (Math.max(0, Number(cents) || 0) / 100).toLocaleString('lv-LV', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }) + ' €';
+    } catch (_e) {
+      return '0,00 €';
+    }
+  }
 
   function _bdItem(label, value, suffix) {
     var zero = !value;
@@ -738,8 +813,45 @@
       (zero ? '+0' : '+' + _fmt(value)) + (suffix || '') + '</b></div>';
   }
 
+  // Per-source coffee chips: the recognizable machine/cup icon + its count. Reuses
+  // the same icon set as the schedule cards (exposed from calendar.js). Falls back
+  // to plain abbreviations if the icon helper isn't available yet.
+  function _coffeeSourceChips(cs) {
+    cs = cs || {};
+    var icon = window.__minkaCoffeeIcon;
+    var defs = [['philips', 'Philips'], ['lofbergs', 'Löfbergs'], ['narvesen', 'Narvesen']];
+    var parts = defs.filter(function (d) { return (Number(cs[d[0]]) || 0) > 0; }).map(function (d) {
+      var n = Number(cs[d[0]]) || 0;
+      if (icon) return '<span class="mk-stx-csrc" title="' + d[1] + '">' + icon(d[0]) + '<i>' + n + '</i></span>';
+      return '<span class="mk-stx-csrc" title="' + d[1] + '">' + d[1] + ' ' + n + '</span>';
+    });
+    return parts.length ? parts.join('') : '<span class="mk-stx-csrc-none">—</span>';
+  }
+
+  function buildCoffeeSummary(list) {
+    var g = { cups: 0, cents: 0, philips: 0, lofbergs: 0, narvesen: 0 };
+    (list || []).forEach(function (w) {
+      g.cups += Math.max(0, Number(w.coffeeTotal) || 0);
+      g.cents += Math.max(0, Number(w.coffeeSpendCents) || 0);
+      var s = w.coffeeSources || {};
+      g.philips += Math.max(0, Number(s.philips) || 0);
+      g.lofbergs += Math.max(0, Number(s.lofbergs) || 0);
+      g.narvesen += Math.max(0, Number(s.narvesen) || 0);
+    });
+    if (!g.cups) return '';
+    return '<div class="mk-stx-coffee-sum">' +
+      '<div class="mk-stx-cs-head">Kafija kopā</div>' +
+      '<div class="mk-stx-cs-stats">' +
+        '<div class="mk-stx-cs-stat"><b>' + _fmt(g.cups) + '</b><i>tases</i></div>' +
+        '<div class="mk-stx-cs-stat"><b>' + _fmtEur(g.cents) + '</b><i>iztērēts</i></div>' +
+      '</div>' +
+      '<div class="mk-stx-cs-srcs">' + _coffeeSourceChips(g) + '</div>' +
+    '</div>';
+  }
+
   function renderBreakdown(ws) {
     var b = ws.bonuses || {};
+    var cs = ws.coffeeSources || {};
     var total = (b.base || 0) + (b.nakts || 0) + (b.h24 || 0) + (b.diversity || 0) +
       (b.regularity || 0) + (b.holidays || 0) + (b.load || 0) + (b.bolus || 0) + (b.coffee || 0);
     return '<div class="mk-stx-bd">' +
@@ -753,7 +865,8 @@
         _bdItem('Svētki', b.holidays) +
         _bdItem('Slodze', b.load) +
         _bdItem('Boluss', b.bolus, b.bolusCount ? ' (' + b.bolusCount + '×)' : '') +
-        _bdItem('Kafija', b.coffee, b.coffeeCount ? ' (' + b.coffeeCount + '×)' : '') +
+        _bdItem('Kafija', b.coffee, b.coffeeCount ? ' (' + b.coffeeCount + '×' + (b.coffeeSpendCents ? ' · ' + _fmtEur(b.coffeeSpendCents) : '') + ')' : '') +
+        '<div class="mk-stx-bi mk-stx-bi-full"><span>Kafijas avoti</span><b class="mk-stx-csrcs">' + _coffeeSourceChips(cs) + '</b></div>' +
         '<div class="mk-stx-bi"><span>Streak</span><b class="' + ((ws.longestStreak || 0) ? '' : 'z') + '">' + (ws.longestStreak || 0) + ' d.</b></div>' +
       '</div>' +
       '<div class="mk-stx-bd-foot"><span>Kopā</span><span class="tot">' + _fmt(total) + ' XP</span></div>' +
@@ -763,6 +876,19 @@
   function _metricTile(value, label, color) {
     var on = (Number(value) || 0) > 0;
     return '<div class="mk-stx-metric"><div class="v" style="color:' + (on ? color : 'var(--stx-t3)') + ';">' + value + '</div><div class="k">' + label + '</div></div>';
+  }
+
+  // Per-person coffee tile: always-visible count + which sources (icons) + spend,
+  // so each row shows "cik iztērēts un kādas dzertas" without needing to hover.
+  function _coffeeMetricTile(ws) {
+    var n = Math.max(0, Number(ws.coffeeTotal) || 0);
+    var cents = Math.max(0, Number(ws.coffeeSpendCents) || 0);
+    var on = n > 0;
+    return '<div class="mk-stx-metric mk-stx-metric-coffee">'
+      + '<div class="v" style="color:' + (on ? '#fb8a4c' : 'var(--stx-t3)') + ';">' + n + '</div>'
+      + (on ? '<div class="mk-stx-mc-srcs">' + _coffeeSourceChips(ws.coffeeSources) + '</div>' : '')
+      + '<div class="k">' + (cents ? _fmtEur(cents) : 'Kafija') + '</div>'
+      + '</div>';
   }
 
   function renderLeaderboardRow(ws, idx) {
@@ -806,7 +932,7 @@
         _metricTile(ws.d12 || 0, '12 Diena', '#3f9bff') +
         _metricTile(ws.n12 || 0, '12 Nakts', '#23cdcf') +
         _metricTile(ws.bolusCount || 0, 'Boluss', '#ff5c5c') +
-        _metricTile(ws.coffeeTotal || 0, 'Kafija', '#fb8a4c') +
+        _coffeeMetricTile(ws) +
       '</div>' +
       renderBreakdown(ws) +
     '</div>';
@@ -848,6 +974,8 @@
         ms.bonuses = at ? at.bonuses : {};
         ms.longestStreak = at ? at.longestStreak : 0;
         ms.coffeeTotal = at ? (at.coffeeTotal || 0) : 0;
+        ms.coffeeSources = at ? (at.coffeeSources || _emptyCoffeeDetail().sources) : _emptyCoffeeDetail().sources;
+        ms.coffeeSpendCents = at ? (at.coffeeSpendCents || 0) : 0;
         ms.bolusCount = at && at.bonuses ? (at.bonuses.bolusCount || 0) : 0;
         ms.allTime = at;
       });
@@ -887,6 +1015,7 @@
         ? sortBar + buildFatigueChart(monthStats, activeMonth)
         : sortBar +
           buildInfoBox() +
+          buildCoffeeSummary(merged) +
           renderLeaderboardGroup(lbRG, 'Radiogrāferi', '#1fe091') +
           renderLeaderboardGroup(lbRD, 'Radiologi', '#3f9bff');
 
@@ -923,4 +1052,9 @@
   });
 
   window.MinkaLevels.EMOJI_SECTIONS = EMOJI_SECTIONS;
+
+  // Warm the all-time coffee totals from the cloud shortly after load (not only
+  // when the stats modal opens), so the buddy "Top 5 kafijas" reflects other
+  // days/devices without first opening the full stats view. The fetch is throttled.
+  try { setTimeout(_fetchCoffeeTotalsFromApi, 1500); } catch (_e) {}
 })();
