@@ -785,10 +785,10 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260611a"></script>
+<script src="js/calendar.js?v=20260617a"></script>
 <script src="js/calendar_extras_v4.js?v=20260611a"></script>
 <script src="js/fatigue.js?v=20260613d"></script>
-<script src="js/nightsplit.js?v=20260616a" defer></script>
+<script src="js/nightsplit.js?v=20260617a" defer></script>
 <script src="js/design_v1.js" defer></script>
 <script src="js/theme.js" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
@@ -5473,6 +5473,34 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
 .nsh-num {
   text-shadow: none !important;
 }
+/* Live pozīcijas marķieris uz timeline = pikseļu buddy (nevis sarkans punkts).
+   Viegls, statisks (bez pulsa/glow) — vienkārši stāv un pārvietojas ar laiku. */
+.ns-flow-live {
+  background: transparent !important;
+  border: none !important;
+  width: auto !important;
+  height: auto !important;
+  box-shadow: none !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;  /* centrēts UZ pašas joslas */
+}
+.ns-flow-live::before, .ns-flow-live::after { display: none !important; content: none !important; }
+.ns-flow-ghost { width: 22px; height: 16px; display: block; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+/* Pagājušais laiks — tumšs pārklājs no sākuma līdz tagadnei (redz, ka pagāja). */
+.ns-flow-spent {
+  position: absolute !important; left: 0; top: 0; bottom: 0; z-index: 6;
+  background: rgba(2,4,9,.6); border-right: 1px solid rgba(125,211,252,.35);
+  pointer-events: none; border-radius: inherit;
+}
+/* Atlikušais aktīvajā daļā: laiks (HH:MM:SS) pa kreisi, procenti pa labi —
+   tieši pie buddy, pārvietojas līdzi. */
+.ns-flow-time, .ns-flow-pct {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  font: 800 9.5px/1 'JetBrains Mono', ui-monospace, monospace; letter-spacing: .02em;
+  white-space: nowrap; pointer-events: none; text-shadow: 0 1px 3px rgba(0,0,0,.75);
+}
+.ns-flow-time { right: 100%; margin-right: 5px; color: #cfe6f7; }
+.ns-flow-pct  { left: 100%;  margin-left: 5px; color: #7dd3fc; }
 .ns-panel-head { position: relative !important; }
 .ns-lamp-iframe {
   display: block !important;
