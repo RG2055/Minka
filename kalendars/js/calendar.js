@@ -1528,7 +1528,9 @@ function closeFullListModal() {
         try { if (window.__ns && window.__ns._update) window.__ns._update(); } catch(_e) {}
         try { if (window.__nsBarSync) window.__nsBarSync(); } catch(_e) {}
       });
-      // 30s cross-device poll
+      // Cross-device poll. pull() only fires the callback when the remote copy is
+      // genuinely newer, so a tighter interval just checks more often without forcing
+      // needless re-renders. 12s keeps cross-device updates snappy.
       setInterval(function() {
         var d = _activeDateStr();
         if (!d) return;
@@ -1536,7 +1538,7 @@ function closeFullListModal() {
           try { if (window.__ns && window.__ns._update) window.__ns._update(); } catch(_e) {}
           try { if (window.__nsBarSync) window.__nsBarSync(); } catch(_e) {}
         });
-      }, 30000);
+      }, 12000);
     }
 
     return { push: push, pull: pull, startPolling: startPolling };

@@ -40,11 +40,13 @@
   function resetColours(){_usedHashes={};}
   var st=null;
   var _actx=null;
+  var _nsLastRoomHtml='';
   var NS_STORE_KEY='minkaNightSplitByDateV1';
   var NS_ROOM_LEGACY_STORE_KEY='minkaNightRoomByDateV1';
   var NS_ROOM_KEY_PREFIX='nsrooms::';
   var NS_ROOM_API_PATH='/api/ns-rooms';
   var ROOM_BED_KEYS=['main_left_top','main_left_bottom','main_right_top','nmp_center'];
+  var NS_FLOW_GHOST = `<svg class="ns-flow-ghost" viewBox="0 0 10 7" shape-rendering="crispEdges" aria-hidden="true"><rect x="3" y="0" width="4" height="1" fill="#7dd3fc"/><rect x="2" y="1" width="6" height="1" fill="#38bdf8"/><rect x="1" y="2" width="1" height="1" fill="#38bdf8"/><rect x="4" y="2" width="2" height="1" fill="#38bdf8"/><rect x="8" y="2" width="1" height="1" fill="#38bdf8"/><rect x="2" y="2" width="2" height="1" fill="#07090f"/><rect x="6" y="2" width="2" height="1" fill="#07090f"/><rect x="1" y="3" width="8" height="3" fill="#38bdf8"/><rect x="1" y="6" width="1" height="1" fill="#38bdf8"/><rect x="3" y="6" width="1" height="1" fill="#38bdf8"/><rect x="6" y="6" width="1" height="1" fill="#38bdf8"/><rect x="8" y="6" width="1" height="1" fill="#38bdf8"/></svg>`;
   var PKT_CAT_SVG = `<svg class="pkt-cat" viewBox="0 0 300 370" preserveAspectRatio="xMidYMid meet" shape-rendering="crispEdges" aria-hidden="true"><g><rect x="40" y="0" width="10" height="10" fill="#131316"/><rect x="180" y="0" width="10" height="10" fill="#131316"/><rect x="40" y="10" width="10" height="10" fill="#131316"/><rect x="180" y="10" width="10" height="10" fill="#131316"/><rect x="40" y="20" width="20" height="10" fill="#131316"/><rect x="170" y="20" width="20" height="10" fill="#131316"/><rect x="40" y="30" width="20" height="10" fill="#131316"/><rect x="60" y="30" width="10" height="10" fill="#2b211b"/><rect x="110" y="30" width="10" height="10" fill="#2b211b"/><rect x="160" y="30" width="10" height="10" fill="#2b211b"/><rect x="170" y="30" width="20" height="10" fill="#131316"/><rect x="40" y="40" width="30" height="10" fill="#131316"/><rect x="70" y="40" width="40" height="10" fill="#2b211b"/><rect x="110" y="40" width="10" height="10" fill="#131316"/><rect x="120" y="40" width="40" height="10" fill="#2b211b"/><rect x="160" y="40" width="30" height="10" fill="#131316"/><rect x="40" y="50" width="150" height="10" fill="#131316"/><rect x="40" y="60" width="150" height="10" fill="#131316"/><rect x="40" y="70" width="150" height="10" fill="#131316"/><rect x="40" y="80" width="150" height="10" fill="#131316"/><rect x="40" y="90" width="30" height="10" fill="#131316"/><rect x="100" y="90" width="30" height="10" fill="#131316"/><rect x="160" y="90" width="30" height="10" fill="#131316"/><rect x="30" y="100" width="10" height="10" fill="#131316"/><rect x="50" y="100" width="30" height="10" fill="#131316"/><rect x="100" y="100" width="30" height="10" fill="#131316"/><rect x="150" y="100" width="30" height="10" fill="#131316"/><rect x="190" y="100" width="10" height="10" fill="#131316"/><rect x="40" y="110" width="70" height="10" fill="#131316"/><rect x="110" y="110" width="10" height="10" fill="#5b3d39"/><rect x="120" y="110" width="70" height="10" fill="#131316"/><rect x="50" y="120" width="130" height="10" fill="#131316"/><rect x="50" y="130" width="130" height="10" fill="#131316"/><rect x="60" y="140" width="110" height="10" fill="#131316"/><rect x="60" y="150" width="110" height="10" fill="#131316"/><rect x="50" y="160" width="130" height="10" fill="#131316"/><rect x="50" y="170" width="130" height="10" fill="#131316"/><rect x="40" y="180" width="150" height="10" fill="#131316"/><rect x="50" y="190" width="130" height="10" fill="#131316"/><rect x="50" y="200" width="130" height="10" fill="#131316"/><rect x="60" y="210" width="110" height="10" fill="#131316"/><rect x="40" y="220" width="150" height="10" fill="#131316"/><rect x="30" y="230" width="170" height="10" fill="#131316"/><rect x="20" y="240" width="240" height="10" fill="#131316"/><rect x="10" y="250" width="260" height="10" fill="#131316"/><rect x="10" y="260" width="270" height="10" fill="#131316"/><rect x="10" y="270" width="270" height="10" fill="#131316"/><rect x="0" y="280" width="230" height="10" fill="#131316"/><rect x="240" y="280" width="50" height="10" fill="#131316"/><rect x="10" y="290" width="210" height="10" fill="#131316"/><rect x="240" y="290" width="50" height="10" fill="#131316"/><rect x="10" y="300" width="210" height="10" fill="#131316"/><rect x="250" y="300" width="50" height="10" fill="#131316"/><rect x="10" y="310" width="210" height="10" fill="#131316"/><rect x="260" y="310" width="40" height="10" fill="#131316"/><rect x="20" y="320" width="190" height="10" fill="#131316"/><rect x="260" y="320" width="40" height="10" fill="#131316"/><rect x="30" y="330" width="170" height="10" fill="#131316"/><rect x="270" y="330" width="30" height="10" fill="#131316"/><rect x="40" y="340" width="150" height="10" fill="#131316"/><rect x="60" y="350" width="110" height="10" fill="#131316"/><rect x="110" y="360" width="10" height="10" fill="#131316"/></g><g class="pkt-eyes"><rect x="70" y="90" width="30" height="10" fill="#f5b51e"/><rect x="130" y="90" width="30" height="10" fill="#f5b51e"/><rect x="80" y="100" width="20" height="10" fill="#f5b51e"/><rect x="130" y="100" width="20" height="10" fill="#f5b51e"/></g></svg>`;
 
 
@@ -694,9 +696,9 @@
     if(i !== total - 1) return '';
     var note = 'Pirms pedejas dalas parliecinies par bolusa pieejamibu, oranzo maisu sagatavotibu un CT/RTG iekartu kalibracijas vai restarta statusu.';
     return '<div class="nsc-last-checklist" title="'+escHtml(note)+'" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px">'
-      + '<span style="display:inline-flex;justify-content:center;align-items:center;gap:4px;padding:4px 6px;border-radius:10px;background:rgba(59,130,246,.14);border:1px solid rgba(96,165,250,.35);color:#bfdbfe;font-size:10px;font-weight:700;line-height:1.05;text-align:center">&#128137; Bolus</span>'
-      + '<span style="display:inline-flex;justify-content:center;align-items:center;gap:4px;padding:4px 6px;border-radius:10px;background:rgba(249,115,22,.14);border:1px solid rgba(251,146,60,.38);color:#fdba74;font-size:10px;font-weight:700;line-height:1.05;text-align:center">&#128999; Maisi</span>'
-      + '<span style="display:inline-flex;justify-content:center;align-items:center;gap:4px;padding:4px 6px;border-radius:10px;background:rgba(244,63,94,.14);border:1px solid rgba(251,113,133,.36);color:#fda4af;font-size:10px;font-weight:700;line-height:1.05;text-align:center">&#9881; CT/RTG</span>'
+      + '<span style="display:inline-flex;justify-content:center;align-items:center;gap:5px;color:#bfdbfe;font-size:10px;font-weight:700;line-height:1.05;text-align:center"><svg width="11" height="13" viewBox="0 0 5 6" shape-rendering="crispEdges" style="display:block;flex:0 0 auto" aria-hidden="true"><rect x="2" y="0" width="1" height="1" fill="#93c5fd"/><rect x="2" y="1" width="1" height="1" fill="#93c5fd"/><rect x="1" y="2" width="3" height="1" fill="#93c5fd"/><rect x="0" y="3" width="5" height="1" fill="#93c5fd"/><rect x="0" y="4" width="5" height="1" fill="#93c5fd"/><rect x="1" y="5" width="3" height="1" fill="#93c5fd"/></svg> Bolus</span>'
+      + '<span style="display:inline-flex;justify-content:center;align-items:center;gap:5px;color:#fdba74;font-size:10px;font-weight:700;line-height:1.05;text-align:center"><svg width="11" height="15" viewBox="0 0 5 7" shape-rendering="crispEdges" style="display:block;flex:0 0 auto" aria-hidden="true"><rect x="0" y="0" width="1" height="1" fill="#fdba74"/><rect x="4" y="0" width="1" height="1" fill="#fdba74"/><rect x="1" y="1" width="1" height="1" fill="#fdba74"/><rect x="3" y="1" width="1" height="1" fill="#fdba74"/><rect x="1" y="2" width="3" height="1" fill="#fdba74"/><rect x="0" y="3" width="5" height="1" fill="#fdba74"/><rect x="0" y="4" width="5" height="1" fill="#fdba74"/><rect x="0" y="5" width="5" height="1" fill="#fdba74"/><rect x="1" y="6" width="3" height="1" fill="#fdba74"/></svg> Maisi</span>'
+      + '<span style="display:inline-flex;justify-content:center;align-items:center;gap:5px;color:#fda4af;font-size:10px;font-weight:700;line-height:1.05;text-align:center"><svg width="11" height="15" viewBox="0 0 5 7" shape-rendering="crispEdges" style="display:block;flex:0 0 auto" aria-hidden="true"><rect x="2" y="0" width="1" height="1" fill="#fda4af"/><rect x="1" y="1" width="3" height="1" fill="#fda4af"/><rect x="0" y="2" width="2" height="1" fill="#fda4af"/><rect x="3" y="2" width="2" height="1" fill="#fda4af"/><rect x="0" y="3" width="1" height="1" fill="#fda4af"/><rect x="2" y="3" width="1" height="1" fill="#fda4af"/><rect x="4" y="3" width="1" height="1" fill="#fda4af"/><rect x="0" y="4" width="2" height="1" fill="#fda4af"/><rect x="3" y="4" width="2" height="1" fill="#fda4af"/><rect x="1" y="5" width="3" height="1" fill="#fda4af"/><rect x="2" y="6" width="1" height="1" fill="#fda4af"/></svg> CT/RTG</span>'
       + '</div>';
   }
 
@@ -766,14 +768,38 @@
     var bar=document.querySelector('#nsPanelContent .ns-flow-bar');
     if(!bar || !st || !st.sl || !st.sl.length) return;
     var dot=bar.querySelector('.ns-flow-live');
-    if(!dot) return;
+    var spent=bar.querySelector('.ns-flow-spent');
     var live=getFlowLiveState(st.sl);
     if(!live){
-      dot.style.display='none';
+      if(dot) dot.style.display='none';
+      if(spent) spent.style.width='0%';
       return;
     }
-    dot.style.display='block';
-    dot.style.left=live.pct.toFixed(3)+'%';
+    // Pagājušais laiks — tumšāks pārklājs no sākuma līdz tagadnei
+    if(spent) spent.style.width=live.pct.toFixed(3)+'%';
+    if(dot){
+      dot.style.display='block';
+      dot.style.left=live.pct.toFixed(3)+'%';
+      // Atlikušais aktīvajā daļā: laiks (HH:MM:SS) pa kreisi, procenti pa labi.
+      var timeEl=dot.querySelector('.ns-flow-time');
+      var pctEl=dot.querySelector('.ns-flow-pct');
+      var cur=live.now, active=null;
+      for(var i=0;i<st.sl.length;i++){ if(cur>=st.sl[i].s && cur<st.sl[i].e){ active=st.sl[i]; break; } }
+      if(active){
+        var total=Math.max(1, active.e-active.s);
+        var leftMin=Math.max(0, active.e-cur);
+        var remPct=Math.round(leftMin/total*100);
+        var totSec=Math.max(0, Math.round(leftMin*60));
+        var h=Math.floor(totSec/3600), m=Math.floor((totSec%3600)/60), sec=totSec%60;
+        var pad=function(n){return (n<10?'0':'')+n;};
+        var hhmmss=(h>0?h+':':'')+pad(m)+':'+pad(sec);
+        if(timeEl){ timeEl.textContent=hhmmss; timeEl.style.display='block'; }
+        if(pctEl){ pctEl.textContent=remPct+'%'; pctEl.style.display='block'; }
+      } else {
+        if(timeEl) timeEl.style.display='none';
+        if(pctEl) pctEl.style.display='none';
+      }
+    }
   }
 
   function getPublicPlan(){
@@ -1114,7 +1140,7 @@
   }
 
   // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    function render(){
+    function render(reorder){
     // Target the nsPanel inside overlay, not the old bottom panel
     var panel = document.getElementById('nsPanelContent');
     if(!panel) return; // overlay not yet created
@@ -1406,7 +1432,8 @@
         +'</div>';
       flowBar='<div class="ns-flow-bar">'
         +_flowSegs
-        +(live?'<div class="ns-flow-live" style="left:'+live.pct.toFixed(3)+'%"></div>':'')
+        +(live?'<div class="ns-flow-spent" style="width:'+live.pct.toFixed(3)+'%"></div>':'<div class="ns-flow-spent" style="width:0%"></div>')
+        +(live?'<div class="ns-flow-live" style="left:'+live.pct.toFixed(3)+'%"><span class="ns-flow-time"></span>'+NS_FLOW_GHOST+'<span class="ns-flow-pct"></span></div>':'')
         +'</div>'
         +_flowLabels;
     }
@@ -1414,6 +1441,47 @@
     var nsGap=(nsCount>=4)?'4px':((nsCount===3)?'6px':'8px');
     var nsCardH=(nsCount>=4)?'136px':((nsCount===3)?'148px':'164px');
     var nsNameSize=(nsCount>=4)?'9px':((nsCount===3)?'10px':'11px');
+    var _roomHtml=roomLayout(st.sl);
+    var _metaHtml=sortReason(st.sl);
+
+    // Lightweight reorder path: only refresh the cards row + flow timeline + meta in
+    // place, leaving the rooms/stats DOM untouched unless the room layout actually
+    // changed. Avoids the full innerHTML rebuild + double fitRoomBlocks reflow + stats
+    // re-render on every drag — the heavy parts that lagged on weak PCs.
+    var _crEl = reorder ? panel.querySelector('.ns-cards-row') : null;
+    if(reorder && _crEl){
+      _crEl.style.setProperty('--ns-cols',nsCount);
+      _crEl.style.setProperty('--ns-gap',nsGap);
+      _crEl.style.setProperty('--ns-card-h',nsCardH);
+      _crEl.style.setProperty('--ns-name-size',nsNameSize);
+      _crEl.innerHTML=cards;
+      var _ob=panel.querySelector('.ns-flow-bar'); if(_ob) _ob.remove();
+      var _ol=panel.querySelector('.ns-flow-labels'); if(_ol) _ol.remove();
+      if(flowBar) _crEl.insertAdjacentHTML('afterend', flowBar);
+      var _me=panel.querySelector('.ns-flow-meta'); if(_me) _me.innerHTML=_metaHtml;
+      // Beds use the saved per-name arrangement, so a pure reorder leaves the room
+      // HTML identical → skip the costly room rebuild + reflow + stats re-render.
+      if(_roomHtml!==_nsLastRoomHtml){
+        var _rb=panel.querySelector('.ns-room-block');
+        if(_rb){ _rb.outerHTML=_roomHtml; }
+        _nsLastRoomHtml=_roomHtml;
+        requestAnimationFrame(function(){
+          fitRoomBlocks(panel);
+          requestAnimationFrame(function(){ fitRoomBlocks(panel); });
+        });
+        nsRenderStats(st.sl);
+      }
+      drag(panel);
+      try {
+        var hasActiveR=st.sl.some(function(s){return slotRealtime(s).active;});
+        var btnR=document.getElementById('nsToggleBtn');
+        if(btnR){btnR.style.borderColor=hasActiveR?'rgba(0,255,136,.55)':'';btnR.querySelector && btnR.querySelector('.ns-led') && (btnR.querySelector('.ns-led').style.background=hasActiveR?'#00ff88':'');}
+      }catch(e){}
+      refreshFlowLiveMarker();
+      publishPlan();
+      return;
+    }
+
     panel.innerHTML=
       '<div class="ns-panel-head">'
       +'<span class="ns-panel-title">🌙 Nakts sadalījums</span>'
@@ -1426,8 +1494,9 @@
       +'</div>'
       +'<div class="ns-cards-row" style="--ns-cols:'+nsCount+';--ns-gap:'+nsGap+';--ns-card-h:'+nsCardH+';--ns-name-size:'+nsNameSize+'">'+cards+'</div>'
       +flowBar
-      +roomLayout(st.sl)
-      +'<div class="ns-flow-meta">'+sortReason(st.sl)+'</div>';
+      +_roomHtml
+      +'<div class="ns-flow-meta">'+_metaHtml+'</div>';
+    _nsLastRoomHtml=_roomHtml;
 
     requestAnimationFrame(function(){
       fitRoomBlocks(panel);
@@ -1621,7 +1690,7 @@
     var t=w[a];w[a]=w[b];w[b]=t;
     st.sl=calc(w,st.sh,st.ei);
     saveCurrentDayState();
-    sndReorder(); render();
+    sndReorder(); render(true);
     try{ if(window.__nsBarSync) window.__nsBarSync(); }catch(_e){}
     setTimeout(function(){
       var c=document.querySelectorAll('#nsPanelContent .nsc-full-card');
@@ -1666,7 +1735,7 @@
     startRoomPolling();
     window.addEventListener('daySelected',function(){setTimeout(update,200);});
     setTimeout(update,600);setTimeout(update,1500);
-    setInterval(refreshFlowLiveMarker, 15000);
+    setInterval(refreshFlowLiveMarker, 1000);
   }
 
   function _cloneSlotsWithNewEndKeepStarts(oldSlots, ei){
