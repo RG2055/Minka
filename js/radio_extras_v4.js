@@ -124,7 +124,7 @@ function drawVU(ctx, W, H, data) {
     ctx.strokeStyle = val > 0.88 ? '#ff4040' : 'rgba(255,255,255,0.95)';
     ctx.lineWidth = 2.5;
     ctx.shadowColor = val > 0.88 ? '#ff3030' : 'rgba(255,255,255,0.4)';
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = RG_EXTRA_LOW_SPEC ? 0 : 8;
     ctx.stroke();
     ctx.restore();
 
@@ -172,11 +172,11 @@ function drawLEDBar(ctx, W, H, data) {
         else if (frac < 0.82) ctx.fillStyle = `rgba(255,155,0,${0.75 + frac*0.25})`;
         else                  ctx.fillStyle = `rgba(255,45,30,0.95)`;
         ctx.shadowColor = ctx.fillStyle;
-        ctx.shadowBlur = 5;
+        ctx.shadowBlur = RG_EXTRA_LOW_SPEC ? 0 : 5;
       } else if (isPk) {
         ctx.fillStyle = 'rgba(255,255,220,0.92)';
         ctx.shadowColor = 'rgba(255,255,255,0.7)';
-        ctx.shadowBlur = 7;
+        ctx.shadowBlur = RG_EXTRA_LOW_SPEC ? 0 : 7;
       } else {
         ctx.fillStyle = 'rgba(0,70,35,0.20)';
         ctx.shadowBlur = 0;
@@ -227,11 +227,11 @@ function drawDotMatrix(ctx, W, H, data) {
         const bright = 0.28 + (r/ROWS)*0.72;
         ctx.fillStyle = `rgba(0,255,136,${bright})`;
         ctx.shadowColor = 'rgba(0,255,136,0.55)';
-        ctx.shadowBlur = top ? dotR*4 : dotR*2;
+        ctx.shadowBlur = RG_EXTRA_LOW_SPEC ? 0 : (top ? dotR*4 : dotR*2);
       } else if (isPk) {
         ctx.fillStyle = 'rgba(220,255,200,0.85)';
         ctx.shadowColor = 'rgba(200,255,180,0.7)';
-        ctx.shadowBlur = dotR*3.5;
+        ctx.shadowBlur = RG_EXTRA_LOW_SPEC ? 0 : dotR*3.5;
       } else {
         ctx.fillStyle = 'rgba(0,255,136,0.04)';
         ctx.shadowBlur = 0;
@@ -661,7 +661,7 @@ function drawDotMatrix(ctx, W, H, data) {
       ctx.strokeStyle = `rgba(${r},${g},${b},${a})`;
       ctx.lineWidth = 1.8;
       ctx.shadowColor = `rgba(${r},${g},${b},${a * 0.8})`;
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur = RG_EXTRA_LOW_SPEC ? 0 : 10;
       ctx.stroke();
     });
   }
