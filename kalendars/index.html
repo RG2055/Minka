@@ -1512,18 +1512,11 @@ document.addEventListener('keydown', (e) => {
 
     if (!_text) { setMode('search'); closeAi(); closeResults(); startHints(); setTimeout(drainMsgs, 2000); return; }
 
-    const isAi = _text[0]==='?' || (
-      _text.length > 3 && /^(kur|kas|cik|vai|kÄpï¿½c|kÄdï¿½Ä¼|kÄ |kad |paskaidro|palÄ«dzi)/i.test(_text)
-    );
-    if (isAi && _text.replace('?','').trim().length >= 2) {
-      setMode('ai');
-      closeResults();
-      _aiDebounce = setTimeout(() => askAI(_text.replace(/^\?/,'').trim()), 550);
-    } else {
-      setMode('search');
-      closeAi();
-      doSearch(_text);
-    }
+    // AI Q&A removed — it was a broken direct api.anthropic.com call (no key,
+    // always failed). Typed text now always goes to search.
+    setMode('search');
+    closeAi();
+    doSearch(_text);
   });
 
   input.addEventListener('keydown', e => {
@@ -1723,86 +1716,6 @@ document.addEventListener('keydown', (e) => {
 
 
   /* ï¿½ï¿½ï¿½ï¿½ Ask AI ï¿½ï¿½ï¿½ï¿½ */
-  async function askAI(q) {
-    if (!q) return;
-    snd.ai();
-    aiMode.textContent = 'MINKA AI';
-    openAi();
-    aiText.innerHTML = '<span id="minkaAiCaret"></span>';
-
-    let ctx = '';
-    try {
-      const s = window.__minkaGetSelectedDayState ? window.__minkaGetSelectedDayState() : null;
-      if (s) {
-        ctx = 'Datums:' + s.dateStr +
-          '. RadiogrÄferi:' + (s.workers||[]).map(w=>w.name+'('+w.shift+'h)').join(',') +
-          '. Radiologi:' + (s.radiologists||[]).map(w=>w.name+'('+w.shift+'h)').join(',') + '.';
-      }
-    } catch(e) {}
-
-    // Enrich context with fatigue scores for all visible workers
-    try {
-      if (window.__fatigue && window.__fatigue.calculateFatigue) {
-        const allNames = new Set();
-        const s = window.__minkaGetSelectedDayState ? window.__minkaGetSelectedDayState() : null;
-        if (s) {
-          (s.workers||[]).forEach(w => allNames.add(w.name));
-          (s.radiologists||[]).forEach(w => allNames.add(w.name));
-        }
-        // Also include workers from next 7 days
-        const today = new Date();
-        const fatigueLines = [];
-        allNames.forEach(name => {
-          try {
-            const f = window.__fatigue.calculateFatigue(name);
-            if (f) {
-              const level = f.score >= 85 ? 'KRITISKS' : f.score >= 65 ? 'AUGSTS' : f.score >= 40 ? 'VIDĒJS' : 'ZEMS';
-              fatigueLines.push(`${name}: ${f.score}% (${level})`);
-            }
-          } catch(e){}
-        });
-        if (fatigueLines.length) {
-          ctx += ' Noguruma skori: ' + fatigueLines.join(', ') + '.';
-        }
-      }
-    } catch(e) {}
-
-    try {
-      const r = await fetch('https://api.anthropic.com/v1/messages', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
-          model:'claude-sonnet-4-20250514', max_tokens:200,
-          system: `Tu esi Minka - RAKUS Gaiļezera radioloģijas nodaļas asistents.
-
-Zini TIKAI šo:
-- Grafiku dati: kurš strādā, maiņu laiki, veidi (12h/24h/nakts)
-- Noguruma skori: aprēķināti pēc atpūtas starp maiņām
-- Šodienas maiņu progress un atlikušais laiks
-- Datums un izvēlētā diena
-
-NEATBILDI uz jautājumiem par: ārstēšanu, diagnozēm, medicīnas procedūrām, zālēm, citām nodaļām, laiku ārpus grafikā redzamā.
-
-Ja jautājums nav par grafiku vai nogurumu, atbildi: "Par to man nav informācijas."
-
-Atbild 1-3 teikumos latviski. Konkrēti skaitļi. Bez emojiem.
-
-Noguruma skoru interpretācija:
-0-39% = ZEMS (labi), 40-64% = VIDĒJS, 65-84% = AUGSTS (uzmanīgi), 85-100% = KRITISKS (risks).
-
-Skors aprēķināts pēc: atpūtas laika starp maiņām, maiņu biežuma, nakts maiņu skaita.
-
-Tu vari atbildēt uz: "Kurš ir visvairāk noguris?", "Vai kāds ir riskā?", "Kurš labāks rītdienas maiņai?", "Cik nogurusi ir [vārds]?"` + (ctx ? '\n\nAktuālie dati: ' + ctx : ''),
-          messages:[{role:'user',content:q}]
-        })
-      });
-      const data = await r.json();
-      const answer = data.content?.[0]?.text || 'Neizdevās atbildēt.';
-      await typewrite(aiText, answer);
-    } catch(e) {
-      await typewrite(aiText, 'Savienojuma kļūda.');
-    }
-  }
 
   /* ï¿½ï¿½ï¿½ï¿½ Proactive message queue ï¿½ï¿½ï¿½ï¿½ */
   function getModeLabel(mode) {
