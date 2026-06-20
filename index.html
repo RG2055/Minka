@@ -25,7 +25,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260618b';
+  var CALENDAR_BUILD = '20260618e';
 
   function withCalendarBuild(url) {
     try {
@@ -856,7 +856,7 @@ async function loadRadioScripts() {
   if (_radioScriptsLoaded || _radioScriptsLoading) return _radioScriptsLoaded;
   _radioScriptsLoading = true;
   await loadAny(['js/radio.js?v=20260613b']);
-  await loadAny(['js/radio_extras_v4.js?v=20260612e']);
+  await loadAny(['js/radio_extras_v4.js?v=20260618a']);
   await loadAny(['js/ambilight.js?v=20260612e']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;

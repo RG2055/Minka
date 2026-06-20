@@ -41,6 +41,7 @@
   var st=null;
   var _actx=null;
   var _nsLastRoomHtml='';
+  var _nsSortMode='fatigue'; // 'fatigue' (default) | 'freq' (by history stats)
   var NS_STORE_KEY='minkaNightSplitByDateV1';
   var NS_ROOM_LEGACY_STORE_KEY='minkaNightRoomByDateV1';
   var NS_ROOM_KEY_PREFIX='nsrooms::';
@@ -227,14 +228,15 @@
     var names=(slots||[]).map(function(s){ return String((s && s.w && s.w.name) || '').trim(); }).filter(Boolean);
     var dk=activeDateKey();
     var saved=dk ? loadRoomSavedState(dk) : null;
-    if(!saved) return names.slice(0,4);
+    // No manual arrangement → default to where each person usually sleeps (stats).
+    if(!saved) return statsBedOrder(names);
     if(saved.beds && typeof saved.beds==='object'){
       return roomBedsToOrder(saved.beds, names);
     }
     if(Array.isArray(saved.order) && saved.order.length){
       return roomBedsToOrder(orderToRoomBeds(saved.order), names);
     }
-    return names.slice(0,4);
+    return statsBedOrder(names);
   }
   function saveRoomOrder(order){
     try{
@@ -505,10 +507,8 @@
 
   // â”€â”€ Sort explanation in Latvian â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function sortReason(slots) {
-    if(!slots||slots.length<2) return '';
-    var highest=slots[0];
-    var nm=function(w){return String(w.name||'').split(/\s+/)[0];};
-    return '<div class="ns-reason" style="margin-top:8px;color:rgba(255,255,255,.72);font-size:11px;line-height:1.35">&#128161; <b style="color:#fff">'+nm(highest.w)+'</b> ielikts agr&#257;k, jo noguruma slodze ir augst&#257;ka un l&#299;dz r&#299;tam paliek vair&#257;k atp&#363;tas laika.</div>';
+    // The "X ielikts agrāk, jo..." explanation note was removed at the user's request.
+    return '';
   }
 
   // â”€â”€ Timeline bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -694,7 +694,7 @@
   }
   function lastSlotChecklist(i,total){
     if(i !== total - 1) return '';
-    var note = 'Pirms pedejas dalas parliecinies par bolusa pieejamibu, oranzo maisu sagatavotibu un CT/RTG iekartu kalibracijas vai restarta statusu.';
+    var note = 'Nepieciešams iznest un nomainīt visus sarkanos maisus, restartēt CT/RTG iekārtas, kā arī pārbaudīt bolusa gatavību, tīrību un darba kārtību.';
     return '<div class="nsc-last-checklist" title="'+escHtml(note)+'" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px">'
       + '<span style="display:inline-flex;justify-content:center;align-items:center;gap:5px;color:#bfdbfe;font-size:10px;font-weight:700;line-height:1.05;text-align:center"><svg width="11" height="13" viewBox="0 0 5 6" shape-rendering="crispEdges" style="display:block;flex:0 0 auto" aria-hidden="true"><rect x="2" y="0" width="1" height="1" fill="#93c5fd"/><rect x="2" y="1" width="1" height="1" fill="#93c5fd"/><rect x="1" y="2" width="3" height="1" fill="#93c5fd"/><rect x="0" y="3" width="5" height="1" fill="#93c5fd"/><rect x="0" y="4" width="5" height="1" fill="#93c5fd"/><rect x="1" y="5" width="3" height="1" fill="#93c5fd"/></svg> Bolus</span>'
       + '<span style="display:inline-flex;justify-content:center;align-items:center;gap:5px;color:#fdba74;font-size:10px;font-weight:700;line-height:1.05;text-align:center"><svg width="11" height="15" viewBox="0 0 5 7" shape-rendering="crispEdges" style="display:block;flex:0 0 auto" aria-hidden="true"><rect x="0" y="0" width="1" height="1" fill="#fdba74"/><rect x="4" y="0" width="1" height="1" fill="#fdba74"/><rect x="1" y="1" width="1" height="1" fill="#fdba74"/><rect x="3" y="1" width="1" height="1" fill="#fdba74"/><rect x="1" y="2" width="3" height="1" fill="#fdba74"/><rect x="0" y="3" width="5" height="1" fill="#fdba74"/><rect x="0" y="4" width="5" height="1" fill="#fdba74"/><rect x="0" y="5" width="5" height="1" fill="#fdba74"/><rect x="1" y="6" width="3" height="1" fill="#fdba74"/></svg> Maisi</span>'
@@ -711,6 +711,65 @@
       if(a<=b) out.push(arr[b--]);
     }
     return out;
+  }
+
+  function _fatScoreOf(name){
+    try{ if(window.__fatigue){ var f=window.__fatigue.calculateFatigue(name); if(f && isFinite(f.score)) return f.score; } }catch(_e){}
+    return 50;
+  }
+
+  // Greedy max-count assignment of N items to N positions from a counts matrix.
+  // cells: [{i,pos,c}], returns array posIndex -> itemIndex (or null). Unfilled
+  // positions are left null for the caller to fill (e.g. by fatigue order).
+  function _assignByCount(cells, nItems, nPos){
+    cells.sort(function(a,b){ return b.c-a.c; });
+    var posOf=new Array(nPos).fill(null);
+    var iDone=new Array(nItems).fill(false);
+    var pDone=new Array(nPos).fill(false);
+    cells.forEach(function(cell){
+      if(cell.c<=0) return;
+      if(iDone[cell.i]||pDone[cell.pos]) return;
+      posOf[cell.pos]=cell.i; iDone[cell.i]=true; pDone[cell.pos]=true;
+    });
+    return { posOf:posOf, iDone:iDone };
+  }
+
+  // Order workers so each lands in the part they take most often (history stats).
+  // No stats / no data → falls back to fatigue order.
+  function freqOrder(workers){
+    var N=(workers||[]).length;
+    if(!N) return [];
+    var stats=_nsStats;
+    if(!stats || !stats.parts) return fat(workers);
+    var people=workers.map(function(w){
+      var nm=String((w&&w.name)||'').trim();
+      return { w:w, counts:stats.parts[nm]||[] };
+    });
+    var cells=[];
+    people.forEach(function(p,pi){ for(var s=0;s<N;s++){ cells.push({i:pi,pos:s,c:Math.max(0,Number(p.counts[s])||0)}); } });
+    var res=_assignByCount(cells, people.length, N);
+    var rem=[]; for(var i=0;i<people.length;i++){ if(!res.iDone[i]) rem.push(i); }
+    rem.sort(function(a,b){ return _fatScoreOf(people[b].w.name)-_fatScoreOf(people[a].w.name); });
+    for(var s2=0;s2<N;s2++){ if(res.posOf[s2]===null && rem.length) res.posOf[s2]=rem.shift(); }
+    return res.posOf.map(function(pi){ return people[pi].w; });
+  }
+
+  // Bed positions (ROOM_BED_KEYS order) by each person's most-used bed in history.
+  // Used only as the default when no manual bed arrangement is saved for the date.
+  function statsBedOrder(names){
+    names=(names||[]).slice(0,4);
+    var stats=_nsStats;
+    if(!stats || !stats.beds) return names.slice(0,4);
+    var BK=ROOM_BED_KEYS;
+    var cells=[];
+    names.forEach(function(nm,pi){
+      var bm=stats.beds[String(nm||'').trim()]||{};
+      BK.forEach(function(bk,bi){ cells.push({i:pi,pos:bi,c:Math.max(0,Number(bm[bk])||0)}); });
+    });
+    var res=_assignByCount(cells, names.length, BK.length);
+    var rem=[]; for(var i=0;i<names.length;i++){ if(!res.iDone[i]) rem.push(i); }
+    for(var b=0;b<BK.length;b++){ if(res.posOf[b]===null && rem.length) res.posOf[b]=rem.shift(); }
+    return res.posOf.map(function(pi){ return pi===null?'':names[pi]; });
   }
 
   function getStatusSlots(slots){
@@ -794,8 +853,12 @@
         var h=Math.floor(totSec/3600), m=Math.floor((totSec%3600)/60), sec=totSec%60;
         var pad=function(n){return (n<10?'0':'')+n;};
         var hhmmss=(h>0?h+':':'')+pad(m)+':'+pad(sec);
-        if(timeEl){ timeEl.textContent=hhmmss; timeEl.style.display='block'; }
-        if(pctEl){ pctEl.textContent=remPct+'%'; pctEl.style.display='block'; }
+        // Near the bar's edges there's no room for the side labels: when the part
+        // has just started the buddy sits at the far left and the time (drawn to its
+        // left) would clip off-bar, so hide it until it moves far enough in. Same for
+        // the % near the right edge.
+        if(timeEl){ timeEl.textContent=hhmmss; timeEl.style.display = live.pct < 9 ? 'none' : 'block'; }
+        if(pctEl){ pctEl.textContent=remPct+'%'; pctEl.style.display = live.pct > 91 ? 'none' : 'block'; }
         if(workerEl){
           var activeName=String((active.w&&active.w.name)||'').trim();
           var activeFirst=activeName.split(/\s+/)[0]||'';
@@ -1500,7 +1563,10 @@
       +'<span style="color:rgba(255,255,255,.3)">—</span>'
       +'<select class="nss" onchange="__ns.se(this.value)">'+eo+'</select>'
       +'</div>'
-      +'<div class="ns-mode-btns"></div>'
+      +'<div class="ns-mode-btns">'
+      +'<button type="button" class="ns-mode-btn'+(_nsSortMode==='freq'?'':' is-on')+'" onclick="__ns.byFat()" title="Kārto pēc noguruma — nogurušākais pirmajā daļā">Nogurums</button>'
+      +'<button type="button" class="ns-mode-btn'+(_nsSortMode==='freq'?' is-on':'')+'" onclick="__ns.byFreq()" title="Kārto pēc statistikas — katrs savā biežākajā daļā">Biežums</button>'
+      +'</div>'
       +'</div>'
       +'<div class="ns-cards-row" style="--ns-cols:'+nsCount+';--ns-gap:'+nsGap+';--ns-card-h:'+nsCardH+';--ns-name-size:'+nsNameSize+'">'+cards+'</div>'
       +flowBar
@@ -1808,6 +1874,26 @@
       st.sl=calc(balanced,st.sh,st.ei);
       saveCurrentDayState();
       render();
+    },
+    byFat:function(){
+      if(!st)return;
+      _nsSortMode='fatigue';
+      sndReorder();
+      st.sl=calc(fat(st.sl.map(function(s){return s.w;})),st.sh,st.ei);
+      saveCurrentDayState();
+      render();
+    },
+    byFreq:function(){
+      if(!st)return;
+      _nsSortMode='freq';
+      sndReorder();
+      // Frequency needs the history stats — fetch (cached) then re-sort.
+      nsStatsFetch().then(function(){
+        if(!st)return;
+        st.sl=calc(freqOrder(st.sl.map(function(s){return s.w;})),st.sh,st.ei);
+        saveCurrentDayState();
+        render();
+      });
     }
   };
 })();
