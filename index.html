@@ -25,7 +25,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260618f';
+  var CALENDAR_BUILD = '20260618m';
 
   function withCalendarBuild(url) {
     try {
@@ -528,6 +528,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
   #nsToggleBtnParent,
   #mobileDockBtn,
   #statsDocBtn,
+  #monthCalDocBtn,
   #settingsDockBtn,
   #radioIdleBtn,
   #radioToggle {
@@ -1120,6 +1121,7 @@ window.addEventListener('DOMContentLoaded', () => {
     #bolusDocBtn,
     #mobileDockBtn,
     #statsDocBtn,
+    #monthCalDocBtn,
     #pusdienasDockBtn,
     #lacitisDockBtn,
     #settingsDockBtn,
@@ -1147,6 +1149,7 @@ window.addEventListener('DOMContentLoaded', () => {
     #nsLedParent,
     #bolusLed,
     #statsDocBtn > div,
+    #monthCalDocBtn > div,
     #pusdienasDockBtn > div,
     #lacitisDockBtn > div,
     #settingsDockBtn > div,
@@ -1449,6 +1452,7 @@ window.addEventListener('DOMContentLoaded', () => {
 	    #bolusDocBtn,
 	    #mobileDockBtn,
 	    #statsDocBtn,
+	    #monthCalDocBtn,
 	    #pusdienasDockBtn,
 	    #lacitisDockBtn,
     #settingsDockBtn,
@@ -1507,6 +1511,7 @@ window.addEventListener('DOMContentLoaded', () => {
     #bolusDocBtn::after,
 	    #mobileDockBtn::after,
 	    #statsDocBtn::after,
+	    #monthCalDocBtn::after,
 	    #pusdienasDockBtn::after,
 	    #lacitisDockBtn::after,
     #settingsDockBtn::after,
@@ -1527,6 +1532,7 @@ window.addEventListener('DOMContentLoaded', () => {
     #bolusDocBtn:hover,
 	    #mobileDockBtn:hover,
 	    #statsDocBtn:hover,
+	    #monthCalDocBtn:hover,
 	    #pusdienasDockBtn:hover,
 	    #lacitisDockBtn:hover,
     #settingsDockBtn:hover,
@@ -1576,6 +1582,7 @@ window.addEventListener('DOMContentLoaded', () => {
     #bolusDocBtn > *:not(.bolus-pattern),
 	    #mobileDockBtn > *,
 	    #statsDocBtn > *,
+	    #monthCalDocBtn > *,
 	    #pusdienasDockBtn > *,
 	    #lacitisDockBtn > *,
     #settingsDockBtn > *,
@@ -1613,6 +1620,7 @@ window.addEventListener('DOMContentLoaded', () => {
       #bolusDocBtn,
 	      #mobileDockBtn,
 	      #statsDocBtn,
+	      #monthCalDocBtn,
 	      #pusdienasDockBtn,
 	      #lacitisDockBtn,
       #settingsDockBtn,
@@ -1709,6 +1717,7 @@ window.addEventListener('DOMContentLoaded', () => {
 	    #bolusDocBtn,
 	    #mobileDockBtn,
 	    #statsDocBtn,
+	    #monthCalDocBtn,
 	    #pusdienasDockBtn,
 	    #lacitisDockBtn,
     #settingsDockBtn,
@@ -1740,6 +1749,7 @@ window.addEventListener('DOMContentLoaded', () => {
     #bolusDocBtn::after,
 	    #mobileDockBtn::after,
 	    #statsDocBtn::after,
+	    #monthCalDocBtn::after,
 	    #pusdienasDockBtn::after,
 	    #lacitisDockBtn::after,
     #settingsDockBtn::after,
@@ -1752,6 +1762,7 @@ window.addEventListener('DOMContentLoaded', () => {
     #bolusDocBtn:hover,
 	    #mobileDockBtn:hover,
 	    #statsDocBtn:hover,
+	    #monthCalDocBtn:hover,
 	    #pusdienasDockBtn:hover,
 	    #lacitisDockBtn:hover,
     #settingsDockBtn:hover,
@@ -1767,6 +1778,7 @@ window.addEventListener('DOMContentLoaded', () => {
 	    #bolusDocBtn:active,
 	    #mobileDockBtn:active,
 	    #statsDocBtn:active,
+	    #monthCalDocBtn:active,
 	    #pusdienasDockBtn:active,
 	    #lacitisDockBtn:active,
     #settingsDockBtn:active,
@@ -1776,6 +1788,7 @@ window.addEventListener('DOMContentLoaded', () => {
     #nsToggleBtnParent.ns-open,
 	    #bolusDocBtn.bolus-open,
 	    #statsDocBtn.stats-open,
+	    #monthCalDocBtn.stats-open,
 	    #pusdienasDockBtn.pusdienas-open,
 	    #settingsDockBtn.settings-open,
     #mobileDockBtn.mobile-open {
@@ -1876,6 +1889,14 @@ window.addEventListener('DOMContentLoaded', () => {
     </button>
 
     <div id="dockSep" role="separator" aria-hidden="true"></div>
+
+    <button id="monthCalDocBtn" onclick="openMonthCalFromDock()" title="Mēneša kalendārs">
+      <div style="width:7px;height:7px;border-radius:50%;background:#38bdf8;box-shadow:0 0 7px #38bdf8;flex-shrink:0;animation:rledPulse 3.1s ease-in-out infinite;"></div>
+      <svg class="dock-px" width="17" height="17" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="0" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="6" y="0" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="0" y="1" width="9.04" height="2.04" fill="#38bdf8"/><rect x="0" y="3" width="9.04" height="6.04" fill="#1b2740"/><rect x="1" y="4" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="3" y="4" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="5" y="4" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="7" y="4" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="1" y="6" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="3" y="6" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="5" y="6" width="1.04" height="1.04" fill="#38bdf8"/><rect x="7" y="6" width="1.04" height="1.04" fill="#7dd3fc"/></svg>
+      <span>KALEND&#256;RS</span>
+    </button>
+
+    <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
 
     <button id="statsDocBtn" onclick="openStatsFromDock()" title="Statistika &amp; Leaderboard">
       <div style="width:7px;height:7px;border-radius:50%;background:#a78bfa;box-shadow:0 0 7px #a78bfa;flex-shrink:0;animation:rledPulse 3s ease-in-out infinite;"></div>
@@ -2962,6 +2983,7 @@ function updateBuddyUiSuppression() {
     cls.contains('mk-buddy-ui-ns') ||
     cls.contains('mk-buddy-ui-stats') ||
     cls.contains('mk-buddy-ui-settings') ||
+    cls.contains('mk-buddy-ui-monthcal') ||
     isBuddyOverlayVisible('bolus-overlay') ||
 	    isBuddyOverlayVisible('bolus-edit-modal') ||
 	    isBuddyOverlayVisible('mobileQrModal') ||
@@ -3028,7 +3050,20 @@ function openSettingsFromDock() {
   iframe.contentWindow.postMessage({ type: "mk_open_settings" }, "*");
 }
 
+function openMonthCalFromDock() {
+  var iframe = document.getElementById("calIframe");
+  if (!iframe || !iframe.contentWindow) return;
+  try {
+    var mc = iframe.contentWindow.MinkaMonthCal;
+    if (mc && mc.open) { if (mc.isOpen()) mc.close(); else mc.open(); return; }
+  } catch (_e) {}
+  try { iframe.contentWindow.postMessage({ type: "mk_open_month_calendar" }, "*"); } catch (_e) {}
+}
+
 window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'mk_monthcal_state') {
+    setBuddyUiFlag('monthcal', !!e.data.open);
+  }
   if (e.data && e.data.type === 'minka-calendar-selected-day-state' && e.data.payload) {
     window.__minkaLastSelectedDayState = e.data.payload;
   }
@@ -3817,6 +3852,7 @@ body::before {
 #bolusDocBtn,
 #mobileDockBtn,
 #statsDocBtn,
+#monthCalDocBtn,
 #settingsDockBtn,
 #radioIdleBtn,
 #radioToggle {
