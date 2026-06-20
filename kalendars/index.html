@@ -807,7 +807,7 @@ function _mkToast(msg, type) {
 <script src="js/calendar.js?v=20260618a"></script>
 <script src="js/calendar_extras_v4.js?v=20260611a"></script>
 <script src="js/fatigue.js?v=20260613d"></script>
-<script src="js/nightsplit.js?v=20260618a" defer></script>
+<script src="js/nightsplit.js?v=20260618d" defer></script>
 <script src="js/design_v1.js" defer></script>
 <script src="js/theme.js" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
@@ -7847,6 +7847,23 @@ html.mk-low-spec .pkt-cat.pkt-awake .pkt-eyes { animation: pktAwakeEyes 1.45s ea
   font-weight: 800 !important;
   letter-spacing: .12em !important;
   font-size: 13px !important;
+}
+.ns-mode-btns { display:inline-flex; align-items:center; gap:6px; margin-left:10px; }
+.ns-mode-btn {
+  appearance:none; cursor:pointer;
+  padding:4px 11px; border-radius:999px;
+  border:1px solid rgba(125,211,252,.28);
+  background:rgba(125,211,252,.06);
+  color:rgba(207,230,247,.72);
+  font:800 10px/1 Inter, system-ui, sans-serif;
+  letter-spacing:.06em; text-transform:uppercase;
+  transition:background .12s ease, color .12s ease, border-color .12s ease;
+}
+.ns-mode-btn:hover { background:rgba(125,211,252,.12); color:#cfe6f7; }
+.ns-mode-btn.is-on {
+  border-color:rgba(56,189,248,.6);
+  background:rgba(56,189,248,.16);
+  color:#7dd3fc;
 }
 .ns-flow-labels {
   font-family: 'Space Mono', 'SF Mono', 'Menlo', monospace !important;
