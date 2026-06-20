@@ -33,6 +33,7 @@ if (url.pathname === "/api/ns-order" && method === "POST") {
     order: body.order || [],
     sh: typeof body.sh === "number" ? body.sh : 0,
     ei: typeof body.ei === "number" ? body.ei : 2,
+    mode: body.mode === "freq" ? "freq" : "fatigue",
     savedAt: body.savedAt || Date.now()
   }), { expirationTtl: ttl });
   return json(request, { ok: true });

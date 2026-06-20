@@ -1478,7 +1478,7 @@ function closeFullListModal() {
         var map = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
         var data = map[dateStr];
         if (!data) return;
-        var payload = { date: dateStr, order: data.order || [], sh: data.sh || 0, ei: data.ei !== undefined ? data.ei : 2, savedAt: data.savedAt || Date.now() };
+        var payload = { date: dateStr, order: data.order || [], sh: data.sh || 0, ei: data.ei !== undefined ? data.ei : 2, mode: data.mode || 'fatigue', savedAt: data.savedAt || Date.now() };
         api.apiFetch('/api/ns-order', { method: 'POST', json: payload }).catch(function(){});
         if (_bc) try { _bc.postMessage(payload); } catch(_e) {}
       } catch(e) {}
@@ -1494,7 +1494,7 @@ function closeFullListModal() {
           var map = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
           var local = map[dateStr];
           if (!local || !local.savedAt || (remote.savedAt && remote.savedAt > local.savedAt)) {
-            map[dateStr] = { sh: remote.sh || 0, ei: remote.ei !== undefined ? remote.ei : 2, order: remote.order, savedAt: remote.savedAt || Date.now() };
+            map[dateStr] = { sh: remote.sh || 0, ei: remote.ei !== undefined ? remote.ei : 2, order: remote.order, mode: remote.mode || 'fatigue', savedAt: remote.savedAt || Date.now() };
             localStorage.setItem(STORE_KEY, JSON.stringify(map));
             if (cb) cb();
           }
@@ -1512,7 +1512,7 @@ function closeFullListModal() {
             var map = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
             var local = map[p.date];
             if (!local || !local.savedAt || (p.savedAt && p.savedAt > local.savedAt)) {
-              map[p.date] = { sh: p.sh || 0, ei: p.ei !== undefined ? p.ei : 2, order: p.order, savedAt: p.savedAt || Date.now() };
+              map[p.date] = { sh: p.sh || 0, ei: p.ei !== undefined ? p.ei : 2, order: p.order, mode: p.mode || 'fatigue', savedAt: p.savedAt || Date.now() };
               localStorage.setItem(STORE_KEY, JSON.stringify(map));
               if (p.date === _activeDateStr()) {
                 try { if (window.__ns && window.__ns._update) window.__ns._update(); } catch(_e) {}
