@@ -332,6 +332,7 @@
         sh: Number(st.sh||0),
         ei: Number(st.ei||0),
         order: st.sl.map(function(s){ return String((s && s.w && s.w.name) || '').trim(); }).filter(Boolean),
+        mode: _nsSortMode,
         savedAt: Date.now()
       };
       saveSavedMap(map);
@@ -347,6 +348,9 @@
       if(!dk) return out;
       var saved = loadSavedMap()[dk];
       if(!saved || typeof saved!=='object') return out;
+      // Restore which sort mode produced this saved order, so the active button
+      // (and thus the highlight) is correct on every device, not just the one that set it.
+      _nsSortMode = (saved.mode === 'freq') ? 'freq' : 'fatigue';
       out.sh = (typeof saved.sh === 'number' && isFinite(saved.sh)) ? saved.sh : fallbackSh;
       out.ei = (typeof saved.ei === 'number' && isFinite(saved.ei)) ? saved.ei : fallbackEi;
       // Apply saved order — same logic as getNightSplitPlan in calendar.js
