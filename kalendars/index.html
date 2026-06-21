@@ -804,7 +804,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260621l"></script>
+<script src="js/calendar.js?v=20260621n"></script>
 <script src="js/calendar_extras_v4.js?v=20260611a"></script>
 <script src="js/fatigue.js?v=20260613d"></script>
 <script src="js/nightsplit.js?v=20260621f" defer></script>
@@ -5711,7 +5711,12 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
 /* Inline pixel cat (aizvieto smago pikts_kakis iframe + Lottie). Bez fona,
    bez float — dzīvas tikai acis. Klikšķis uz brīdi pamodina. */
 .ns-room-cat .pkt-cat { width: 100%; height: 100%; display: block; }
-.ns-room-cat { pointer-events: auto !important; cursor: pointer; }
+/* Cat is only clickable while the night-split overlay is actually open. Its old
+   unconditional `pointer-events:auto !important` overrode the closed overlay's
+   `pointer-events:none`, leaving an invisible (dark, opacity:0) clickable cat
+   floating over the main schedule. */
+.ns-room-cat { pointer-events: none; cursor: pointer; }
+#nsOverlay.open .ns-room-cat { pointer-events: auto !important; }
 .pkt-cat { transform: none !important; animation: none !important; will-change: auto; }
 .pkt-cat .pkt-eyes {
   transform-box: fill-box;
@@ -9708,11 +9713,17 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   line-height: 1 !important;
   pointer-events: none !important;
 }
+.mk-coffee-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147482990 !important;
+  background: transparent !important;
+}
 .mk-coffee-picker {
   position: fixed !important;
   z-index: 2147483000 !important;
-  width: 260px !important;
-  padding: 10px !important;
+  width: 258px !important;
+  padding: 9px 10px 10px !important;
   border-radius: 14px !important;
   border: 1px solid rgba(196,132,69,.42) !important;
   background: rgba(11,12,18,.96) !important;
@@ -9725,16 +9736,16 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   font: 900 11px/1 Inter, system-ui, sans-serif !important;
   letter-spacing: .14em !important;
   text-transform: uppercase !important;
-  margin: 0 0 8px !important;
+  margin: 0 0 7px !important;
 }
 .mk-coffee-source-row {
   display: grid !important;
   grid-template-columns: repeat(3, 1fr) !important;
-  gap: 6px !important;
+  gap: 5px 6px !important;
 }
 .mk-coffee-source {
   min-width: 0 !important;
-  padding: 4px 2px !important;
+  padding: 3px 2px !important;
   border: 0 !important;
   background: transparent !important;
   color: rgba(248,250,252,.6) !important;
@@ -9747,9 +9758,9 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 }
 .mk-coffee-source-icon {
   display: block !important;
-  width: 46px !important;
-  height: 46px !important;
-  margin: 0 auto 6px !important;
+  width: 42px !important;
+  height: 42px !important;
+  margin: 0 auto 4px !important;
   opacity: .88 !important;
   transition: transform .12s ease, opacity .12s ease !important;
 }
@@ -9759,14 +9770,14 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 }
 .mk-coffee-source-icon svg {
   display: block !important;
-  width: 46px !important;
-  height: 46px !important;
+  width: 42px !important;
+  height: 42px !important;
   image-rendering: pixelated !important;
 }
 .mk-coffee-size-row {
   display: flex !important;
   gap: 6px !important;
-  margin: 9px 0 0 !important;
+  margin: 7px 0 0 !important;
 }
 .mk-coffee-size-row[hidden] { display: none !important; }
 .mk-coffee-size-row button {
@@ -9789,7 +9800,7 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   grid-template-columns: 1fr 96px !important;
   align-items: center !important;
   gap: 8px !important;
-  margin: 10px 0 8px !important;
+  margin: 7px 0 4px !important;
   color: rgba(160,166,184,.78) !important;
   font: 850 9px/1 Inter, system-ui, sans-serif !important;
   letter-spacing: .12em !important;
@@ -9810,14 +9821,14 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   color: #f5b73f !important;
 }
 .mk-coffee-caf {
-  margin: 0 0 9px !important;
+  margin: 0 0 5px !important;
   color: rgba(160,200,230,.78) !important;
   font: 800 10px/1.2 Inter, system-ui, sans-serif !important;
   letter-spacing: .02em !important;
 }
 .mk-coffee-save {
   width: 100% !important;
-  min-height: 34px !important;
+  min-height: 32px !important;
   border-radius: 10px !important;
   border: 1px solid rgba(196,132,69,.50) !important;
   background: linear-gradient(180deg, rgba(196,132,69,.34), rgba(196,132,69,.18)) !important;
