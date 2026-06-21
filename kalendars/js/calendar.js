@@ -3393,11 +3393,21 @@ function closeFullListModal() {
 
     const coffeeStoreKey = 'minkaCoffeeCountsV1';
     const coffeeDetailStoreKey = 'minkaCoffeeDetailsV1';
+    // eq = caffeine-equivalent coffee cups (1 cup ≈ 80 mg). Energy drinks carry
+    // more caffeine, so they bump the coffee count by their equivalent: a 500ml
+    // Monster ≈160 mg ≈2 cups, a 250ml Red Bull ≈80 mg ≈1 cup. All coffee/drink
+    // totals are stored in these equivalent units; mg = units × 80.
+    const COFFEE_MG_PER_CUP = 80;
     const coffeeSourceMeta = {
-      philips: { label: 'Philips', priceCents: 0 },
-      lofbergs: { label: 'LÖFBERGS', priceCents: 140 },
-      narvesen: { label: 'Narvesen', prices: { M: 200, L: 220, XL: 250 } }
+      philips: { label: 'Philips', priceCents: 0, eq: 1 },
+      lofbergs: { label: 'LÖFBERGS', priceCents: 140, eq: 1 },
+      narvesen: { label: 'Narvesen', prices: { M: 200, L: 220, XL: 250 }, eq: 1 },
+      monster: { label: 'Monster', priceCents: 159, eq: 2 },
+      monsterultra: { label: 'Monster Ultra', priceCents: 159, eq: 2 },
+      redbull: { label: 'Red Bull', priceCents: 149, eq: 1 }
     };
+    const COFFEE_SOURCES = ['philips', 'lofbergs', 'narvesen', 'monster', 'monsterultra', 'redbull'];
+    function coffeeEq(source) { const m = coffeeSourceMeta[cleanCoffeeSource(source)]; return Math.max(1, (m && m.eq) || 1); }
 
     function getCoffeeStore() {
       try {
@@ -3439,11 +3449,14 @@ function closeFullListModal() {
       const s = String(source || 'philips').trim().toLowerCase();
       if (s === 'lofbergs' || s === 'löfbergs') return 'lofbergs';
       if (s === 'narvesen') return 'narvesen';
+      if (s === 'monster') return 'monster';
+      if (s === 'monsterultra' || s === 'monster-ultra' || s === 'monsterwhite' || s === 'ultra') return 'monsterultra';
+      if (s === 'redbull' || s === 'red-bull' || s === 'redbul') return 'redbull';
       return 'philips';
     }
 
     function emptyCoffeeDetail() {
-      return { sources: { philips: 0, lofbergs: 0, narvesen: 0 }, spendCents: 0 };
+      return { sources: { philips: 0, lofbergs: 0, narvesen: 0, monster: 0, monsterultra: 0, redbull: 0 }, spendCents: 0 };
     }
 
     function normalizeCoffeeDetail(detail, count) {
@@ -3458,7 +3471,7 @@ function closeFullListModal() {
       if (total < target) out.sources.philips += target - total;
       if (total > target) {
         let extra = total - target;
-        ['philips', 'lofbergs', 'narvesen'].forEach(k => {
+        COFFEE_SOURCES.forEach(k => {
           if (!extra) return;
           const take = Math.min(out.sources[k], extra);
           out.sources[k] -= take;
@@ -3506,7 +3519,8 @@ function closeFullListModal() {
     function addCoffeeDetail(name, entry) {
       const d = getCoffeeDetail(name);
       const source = cleanCoffeeSource(entry && entry.source);
-      d.sources[source] = (d.sources[source] || 0) + 1;
+      // Store equivalent units per source (1 drink = its eq); price is per drink.
+      d.sources[source] = (d.sources[source] || 0) + coffeeEq(source);
       d.spendCents += Math.max(0, Number(entry && entry.priceCents) || 0);
       setCoffeeDetail(name, d);
       return d;
@@ -3514,10 +3528,11 @@ function closeFullListModal() {
 
     function removeCoffeeDetail(name) {
       const d = getCoffeeDetail(name);
-      const pick = ['philips', 'lofbergs', 'narvesen']
+      const pick = COFFEE_SOURCES
+        .filter(s => (d.sources[s] || 0) > 0)
         .sort((a, b) => (d.sources[b] || 0) - (d.sources[a] || 0))[0];
       let removed = '';
-      if (pick && d.sources[pick] > 0) { d.sources[pick] -= 1; removed = pick; }
+      if (pick) { d.sources[pick] = Math.max(0, (d.sources[pick] || 0) - coffeeEq(pick)); removed = pick; }
       setCoffeeDetail(name, d);
       // Return the source that was decremented so the cloud delta can net it.
       return removed;
@@ -3656,6 +3671,47 @@ function closeFullListModal() {
           + '<rect x="11" y="25" width="11" height="1" fill="#e7e1d4"/>'
           + '</svg>';
       }
+      if (source === 'monster') {
+        // Monster Energy — black can with the green claw "M".
+        return '<svg viewBox="0 0 32 32" shape-rendering="crispEdges" aria-hidden="true">'
+          + '<rect x="13" y="2" width="6" height="1" fill="#5a615a"/>'
+          + '<rect x="11" y="3" width="10" height="1" fill="#3a3f3a"/>'
+          + '<rect x="10" y="4" width="12" height="25" fill="#0c0f0c"/>'
+          + '<rect x="12" y="8" width="2" height="12" fill="#7bdc3a"/>'
+          + '<rect x="15" y="7" width="2" height="13" fill="#7bdc3a"/>'
+          + '<rect x="18" y="8" width="2" height="12" fill="#7bdc3a"/>'
+          + '<rect x="12" y="8" width="8" height="2" fill="#7bdc3a"/>'
+          + '<rect x="11" y="24" width="10" height="2" fill="#e9f6df"/>'
+          + '</svg>';
+      }
+      if (source === 'monsterultra') {
+        // Monster Ultra (Zero Sugar White) — white can, soft grey claw.
+        return '<svg viewBox="0 0 32 32" shape-rendering="crispEdges" aria-hidden="true">'
+          + '<rect x="13" y="2" width="6" height="1" fill="#c4c9c4"/>'
+          + '<rect x="11" y="3" width="10" height="1" fill="#d6dbd6"/>'
+          + '<rect x="10" y="4" width="12" height="25" fill="#eef0ee"/>'
+          + '<rect x="12" y="8" width="2" height="12" fill="#aab2aa"/>'
+          + '<rect x="15" y="7" width="2" height="13" fill="#aab2aa"/>'
+          + '<rect x="18" y="8" width="2" height="12" fill="#aab2aa"/>'
+          + '<rect x="12" y="8" width="8" height="2" fill="#aab2aa"/>'
+          + '<rect x="11" y="24" width="10" height="2" fill="#9aa39a"/>'
+          + '</svg>';
+      }
+      if (source === 'redbull') {
+        // Red Bull — slim 250ml can. Real proportions ≈53mm × 134mm (h/w ≈2.5),
+        // so it's notably narrower than the chunky 500ml Monster cans.
+        return '<svg viewBox="0 0 32 32" shape-rendering="crispEdges" aria-hidden="true">'
+          + '<rect x="14" y="4" width="4" height="1" fill="#5a6170"/>'
+          + '<rect x="12" y="5" width="8" height="2" fill="#9aa0ad"/>'
+          + '<rect x="12" y="7" width="8" height="20" fill="#e2e6ec"/>'
+          + '<rect x="12" y="7" width="8" height="9" fill="#23337a"/>'
+          + '<rect x="12" y="16" width="5" height="2" fill="#23337a"/>'
+          + '<rect x="13" y="10" width="6" height="2" fill="#d61f26"/>'
+          + '<rect x="15" y="20" width="2" height="2" fill="#f4c20d"/>'
+          + '<rect x="14" y="21" width="2" height="1" fill="#d61f26"/>'
+          + '<rect x="16" y="21" width="2" height="1" fill="#d61f26"/>'
+          + '</svg>';
+      }
       // Philips bean-to-cup machine — body + blue display, dispenser spout and a cup.
       return '<svg viewBox="0 0 32 32" shape-rendering="crispEdges" aria-hidden="true">'
         + '<rect x="7" y="3" width="18" height="21" fill="#2b313c"/>'
@@ -3678,11 +3734,12 @@ function closeFullListModal() {
       const size = String(entry && entry.size || '').toUpperCase();
       let priceCents = Math.max(0, Number(entry && entry.priceCents) || 0);
       if (source === 'lofbergs') priceCents = 140;
-      setCoffeeCount(name, getCoffeeCount(name) + 1);
+      const eq = coffeeEq(source);
+      setCoffeeCount(name, getCoffeeCount(name) + eq);
       addCoffeeDetail(name, { source, size, priceCents });
       updateCoffeeRow(card, name);
       try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(_e) {}
-      postCoffeeDelta(name, 1, card, { source, size, priceCents });
+      postCoffeeDelta(name, eq, card, { source, size, priceCents });
     }
 
     function closeCoffeePicker() {
@@ -3712,7 +3769,7 @@ function closeFullListModal() {
       picker.innerHTML = `
         <div class="mk-coffee-picker-title">Kafija</div>
         <div class="mk-coffee-source-row">
-          ${['philips', 'lofbergs', 'narvesen'].map(source => `
+          ${COFFEE_SOURCES.map(source => `
             <button class="mk-coffee-source ${source === selected ? 'is-on' : ''}" type="button" data-source="${source}">
               <span class="mk-coffee-source-icon">${coffeeIcon(source)}</span>
               <span>${coffeeSourceMeta[source].label}</span>
@@ -3725,6 +3782,7 @@ function closeFullListModal() {
           <span>Cena</span>
           <input class="mk-coffee-price" type="number" min="0" max="50" step="0.01" inputmode="decimal" value="0.00">
         </label>
+        <div class="mk-coffee-caf"></div>
         <button class="mk-coffee-save" type="button">Saglabāt</button>`;
       document.body.appendChild(picker);
 
@@ -3737,15 +3795,30 @@ function closeFullListModal() {
         if (!input) return;
         if (selected === 'philips') priceCents = 0;
         else if (selected === 'lofbergs') priceCents = 140;
-        else if (!priceCents) priceCents = coffeeSourceMeta.narvesen.prices[size] || 200;
+        else if (selected === 'narvesen') { if (!priceCents) priceCents = coffeeSourceMeta.narvesen.prices[size] || 200; }
+        else if (!priceCents) priceCents = coffeeSourceMeta[selected].priceCents || 0;
         input.value = (priceCents / 100).toFixed(2);
-        input.readOnly = selected !== 'narvesen';
+        // Price editable for everything except the fixed-price machines.
+        input.readOnly = (selected === 'philips' || selected === 'lofbergs');
+        const caf = picker.querySelector('.mk-coffee-caf');
+        if (caf) {
+          const eq = coffeeEq(selected);
+          const mg = eq * COFFEE_MG_PER_CUP;
+          const cups = eq === 1 ? '1 tasīte' : eq + ' tasītes';
+          caf.textContent = '≈ ' + mg + ' mg kofeīna · ' + cups;
+        }
       }
 
+      function defaultPriceFor(src) {
+        if (src === 'philips') return 0;
+        if (src === 'lofbergs') return 140;
+        if (src === 'narvesen') return coffeeSourceMeta.narvesen.prices[size] || 200;
+        return coffeeSourceMeta[src].priceCents || 0;
+      }
       picker.querySelectorAll('.mk-coffee-source').forEach(btn => {
         btn.addEventListener('click', () => {
           selected = cleanCoffeeSource(btn.dataset.source);
-          priceCents = selected === 'narvesen' ? (coffeeSourceMeta.narvesen.prices[size] || 200) : 0;
+          priceCents = defaultPriceFor(selected);
           sync();
         });
       });
@@ -3848,7 +3921,9 @@ function closeFullListModal() {
     // The active day's coffee source breakdown for a set of people (deduped) —
     // powers the buddy widget's per-day "which machines" icons.
     window.__minkaGetCoffeeSourcesForNames = function(names) {
-      const out = { philips: 0, lofbergs: 0, narvesen: 0 };
+      // Sources are stored in caffeine-equivalent units; divide by each source's
+      // eq so the buddy breakdown shows the real number of drinks (1 Monster, not 2).
+      const equiv = {}; COFFEE_SOURCES.forEach(s => equiv[s] = 0);
       const seen = new Set();
       (Array.isArray(names) ? names : []).forEach(name => {
         const n = String(name || '').trim();
@@ -3856,11 +3931,17 @@ function closeFullListModal() {
         if (!key || seen.has(key)) return;
         seen.add(key);
         const s = (getCoffeeDetail(n) || {}).sources || {};
-        out.philips += Math.max(0, Number(s.philips) || 0);
-        out.lofbergs += Math.max(0, Number(s.lofbergs) || 0);
-        out.narvesen += Math.max(0, Number(s.narvesen) || 0);
+        COFFEE_SOURCES.forEach(k => { equiv[k] += Math.max(0, Number(s[k]) || 0); });
       });
+      const out = {};
+      COFFEE_SOURCES.forEach(k => { out[k] = Math.round(equiv[k] / coffeeEq(k)); });
       return out;
+    };
+    // Total caffeine (mg) for a set of people on the active day — count is in
+    // equivalent cups, so mg = units × per-cup mg.
+    window.__minkaGetCoffeeCaffeineForNames = function(names) {
+      const units = Math.max(0, Number(window.__minkaGetCoffeeTotalForNames(names)) || 0);
+      return Math.round(units * COFFEE_MG_PER_CUP);
     };
     window.__minkaGetCoffeeLeaderboard = function(limit) {
       // All-time Top 5: sum every day in the local store, then merge with the
@@ -3993,10 +4074,11 @@ function closeFullListModal() {
             e.stopPropagation();
             if (getCoffeeCount(w.name) <= 0) return;
             const removedSrc = removeCoffeeDetail(w.name);
-            setCoffeeCount(w.name, getCoffeeCount(w.name) - 1);
+            const remEq = removedSrc ? coffeeEq(removedSrc) : 1;
+            setCoffeeCount(w.name, Math.max(0, getCoffeeCount(w.name) - remEq));
             updateCoffeeRow(card, w.name);
             try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(_e) {}
-            postCoffeeDelta(w.name, -1, card, removedSrc ? { source: removedSrc } : null);
+            postCoffeeDelta(w.name, -remEq, card, removedSrc ? { source: removedSrc } : null);
           };
         }
         return card;

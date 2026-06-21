@@ -25,7 +25,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260621i';
+  var CALENDAR_BUILD = '20260621l';
 
   function withCalendarBuild(url) {
     try {
@@ -3664,7 +3664,7 @@ window.addEventListener('message', function(e) {
 
 <script>
 if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-  const MINKA_APP_VERSION = '2026.06.16a';
+  const MINKA_APP_VERSION = '2026.06.21a';
   const MINKA_VERSION_KEY = 'minka_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -4817,8 +4817,8 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
     if(COFFEE_TOTAL) COFFEE_TOTAL.textContent = '×' + buddyShiftCoffee;
     if(COFFEE_SRCS){
       var cs = (payload && payload.coffeeSources) || {};
-      var srcLabels = { philips:'Philips', lofbergs:'Löfbergs', narvesen:'Narvesen' };
-      COFFEE_SRCS.innerHTML = ['philips','lofbergs','narvesen'].filter(function(s){ return Number(cs[s])>0; }).map(function(s){
+      var srcLabels = { philips:'Philips', lofbergs:'Löfbergs', narvesen:'Narvesen', monster:'Monster', monsterultra:'Monster Ultra', redbull:'Red Bull' };
+      COFFEE_SRCS.innerHTML = ['philips','lofbergs','narvesen','monster','monsterultra','redbull'].filter(function(s){ return Number(cs[s])>0; }).map(function(s){
         var n = Math.max(0,Number(cs[s])||0);
         return '<span class="mk-buddy-coffee-src" title="'+srcLabels[s]+': '+n+'">'+coffeeSrcIcon(s)+'<i>'+n+'</i></span>';
       }).join('');
