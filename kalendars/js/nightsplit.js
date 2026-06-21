@@ -1,7 +1,7 @@
 ﻿/* NAKTS SADALÄªTÄ€JS v3 â€” timeline bar design with fatigue mini-graphs */
 (function(){
   var END=[{h:7,m:20,l:'07:20'},{h:7,m:30,l:'07:30'},{h:8,m:0,l:'08:00'}];
-  var START=[{v:0,l:'00:00'},{v:23,l:'23:00'},{v:23.5,l:'23:30'}];
+  var START=[{v:23,l:'23:00'},{v:23.5,l:'23:30'},{v:0,l:'00:00'},{v:0.5,l:'00:30'},{v:1,l:'01:00'}];
   // 8 hues, each ~45Â° apart on colour wheel â€” guaranteed visually distinct
   var COL=[
     {bg:'rgba(255,140,0,0.20)',   border:'rgba(255,165,50,0.60)',  accent:'#ffa032',glow:'rgba(255,160,50,0.35)'},  // 0 orange
@@ -867,6 +867,8 @@
           var activeName=String((active.w&&active.w.name)||'').trim();
           var activeFirst=activeName.split(/\s+/)[0]||'';
           var activeEmoji=roomEmoji(activeName);
+          workerEl.classList.toggle('is-left-edge', live.pct < 10);
+          workerEl.classList.toggle('is-right-edge', live.pct > 90);
           workerEl.innerHTML=(activeEmoji?'<span class="ns-flow-worker-emoji">'+escHtml(activeEmoji)+'</span>':'')
             +'<span class="ns-flow-worker-name">'+escHtml(activeFirst)+'</span>';
           workerEl.style.display=activeFirst?'inline-flex':'none';
@@ -874,7 +876,10 @@
       } else {
         if(timeEl) timeEl.style.display='none';
         if(pctEl) pctEl.style.display='none';
-        if(workerEl) workerEl.style.display='none';
+        if(workerEl) {
+          workerEl.classList.remove('is-left-edge','is-right-edge');
+          workerEl.style.display='none';
+        }
       }
     }
   }
@@ -1315,11 +1320,60 @@
       return {line:path, area:area};
     }
 
+    function _circadianValue(kind, n){
+      n=Math.max(0,Math.min(1,n));
+      if(kind==='mel'){
+        return Math.max(0.05, Math.min(0.86,
+          0.64 + 0.18*Math.exp(-Math.pow((n-0.14)/0.18,2))
+          - 0.18*n
+          - 0.44/(1+Math.exp(-(n-0.62)*12))
+        ));
+      }
+      if(kind==='cor'){
+        return Math.max(0.06, Math.min(0.88,
+          0.10 + 0.72/(1+Math.exp(-(n-0.70)*8))
+        ));
+      }
+      return Math.max(0.06, Math.min(0.82,
+        0.28 - 0.23*n + 0.62/(1+Math.exp(-(n-0.76)*10))
+      ));
+    }
+
+    function _circadianCardPaths(slot, axisStart, axisEnd, uid){
+      if(!slot || typeof axisStart!=='number' || typeof axisEnd!=='number' || axisEnd<=axisStart) return '';
+      var x0=8, y0=100, w=264, h=80, steps=34;
+      function pointPath(kind){
+        var d='', area='';
+        for(var i=0;i<=steps;i++){
+          var local=i/steps;
+          var t=slot.s+(slot.e-slot.s)*local;
+          var n=(t-axisStart)/(axisEnd-axisStart);
+          var x=x0+w*local;
+          var y=y0+(1-_circadianValue(kind,n))*h;
+          d+=(i?' L':'M')+x.toFixed(1)+' '+y.toFixed(1);
+        }
+        area=d+' L '+(x0+w).toFixed(1)+' '+(y0+h).toFixed(1)+' L '+x0.toFixed(1)+' '+(y0+h).toFixed(1)+' Z';
+        return { line:d, area:area };
+      }
+      var mel=pointPath('mel');
+      var cor=pointPath('cor');
+      var wake=pointPath('wake');
+      return '<g class="nsc-rhythm-lines">'
+        +'<path d="'+mel.area+'" fill="url(#'+uid+'-melFill)" opacity="0.68"/>'
+        +'<path d="'+mel.line+'" fill="none" stroke="#b26cff" stroke-width="5.5" opacity="0.20" stroke-linecap="round" stroke-linejoin="round"/>'
+        +'<path d="'+mel.line+'" fill="none" stroke="#b26cff" stroke-width="2.2" opacity="0.95" stroke-linecap="round" stroke-linejoin="round"/>'
+        +'<path d="'+cor.line+'" fill="none" stroke="#ffc629" stroke-width="4.8" opacity="0.18" stroke-dasharray="5 4" stroke-linecap="round" stroke-linejoin="round"/>'
+        +'<path d="'+cor.line+'" fill="none" stroke="#ffc629" stroke-width="2.1" stroke-dasharray="5 4" opacity="0.96" stroke-linecap="round" stroke-linejoin="round"/>'
+        +'<path d="'+wake.line+'" fill="none" stroke="#55e58b" stroke-width="5.2" opacity="0.18" stroke-linecap="round" stroke-linejoin="round"/>'
+        +'<path d="'+wake.line+'" fill="none" stroke="#55e58b" stroke-width="2.2" opacity="0.92" stroke-linecap="round" stroke-linejoin="round"/>'
+        +'</g>';
+    }
+
     // SVG background per theme — unique IDs via card index to avoid conflicts.
     // No SVG filters here: blur filters re-rasterize on every animation frame
     // (very expensive on integrated GPUs), so all soft glows use radial
     // gradients and line "glow" is a wide translucent under-stroke instead.
-    function _nightSvg(theme, idx, workerName, accent){
+    function _nightSvg(theme, idx, workerName, accent, slot, axisStart, axisEnd){
       var u='nsc'+idx;
       var d='', bg='', deco='', gr='';
       // Cheap glow: wide soft stroke under + crisp stroke on top (no filter)
@@ -1406,9 +1460,7 @@
         deco=// Warm atmosphere wash from bottom
              '<rect x="0" y="0" width="280" height="182" fill="url(#'+u+'-atm)"/>'
             // Horizon glow — single gradient ellipse (no blur filter)
-            +'<ellipse cx="140" cy="192" rx="180" ry="62" fill="url(#'+u+'-hg)"/>'
-            // Subtle horizon line
-            +'<line x1="0" y1="155" x2="280" y2="155" stroke="#ff8030" stroke-width="0.6" opacity="0.2"/>';
+            +'<ellipse cx="140" cy="192" rx="180" ry="62" fill="url(#'+u+'-hg)"/>';
         gr='<path d="M10 140 C50 140 68 162 108 154 C148 146 172 142 232 152 L232 182 L10 182 Z" fill="url(#'+u+'-gr)"/>'
           +glowLine('M10 140 C50 140 68 162 108 154 C148 146 172 142 232 152', '#ffb380', 2, 0.9);
 
@@ -1436,24 +1488,15 @@
         gr='<path d="M10 158 L36 146 L62 152 L88 132 L114 143 L140 118 L166 130 L192 108 L218 122 L232 98 L232 182 L10 182 Z" fill="url(#'+u+'-gr)"/>'
           +glowLine('M10 158 L36 146 L62 152 L88 132 L114 143 L140 118 L166 130 L192 108 L218 122 L232 98', '#ff8ca3', 2, 0.9);
       }
-      // Embed real fatigue sparkline — x:10–262, y:118–175 (57px tall band)
-      var spk=_sparkPaths(workerName, u, 10, 118, 252, 57);
-      var spkGrad='', spkPaths='';
-      if(spk){
-        spkGrad='<linearGradient id="'+u+'-spk" x1="0%" y1="0%" x2="0%" y2="100%">'
-          +'<stop offset="0%" stop-color="'+accent+'" stop-opacity="0.38"/>'
-          +'<stop offset="100%" stop-color="'+accent+'" stop-opacity="0"/>'
-          +'</linearGradient>';
-        spkPaths='<path d="'+spk.area+'" fill="url(#'+u+'-spk)"/>'
-          +'<path d="'+spk.line+'" fill="none" stroke="'+accent+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>';
-      } else {
-        // fallback static decorative line if no data
-        spkPaths=gr;
-      }
+      d+='<linearGradient id="'+u+'-melFill" x1="0%" y1="0%" x2="0%" y2="100%">'
+        +'<stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.34"/>'
+        +'<stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>'
+        +'</linearGradient>';
+      var rhythmPaths=_circadianCardPaths(slot, axisStart, axisEnd, u)||gr;
       return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 182" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">'
-        +'<defs>'+d+spkGrad+'</defs>'
+        +'<defs>'+d+'</defs>'
         +'<rect width="280" height="182" fill="'+bg+'"/>'
-        +deco+spkPaths
+        +deco+rhythmPaths
         +'</svg>';
     }
 
@@ -1464,7 +1507,8 @@
       var rt=slotRealtime(s);
       var tr=fatigueTrend(s.w.name);
       var dur=Math.floor(s.d/60)+'h'+(((s.d%60))?String(s.d%60).padStart(2,'0')+'m':'');
-      var spk=sparkline(s.w.name, c.accent);
+      var fatPct=s.w.fs||0;
+      var fatCol=fatPct>70?'#ff3b30':(fatPct>45?'#ff9500':(fatPct>20?'#ffd60a':'#30d158'));
       var statusCls=rt.active?'active':(rt.status==='NĀKAMĀ'?'upnext':'done');
       var gradCss='conic-gradient(from 0deg, transparent 0%, '+c.accent+' 30%, transparent 60%)';
       var theme=_nightTheme(i, st.sl.length, s.s, st.sl[0].s, st.sl[st.sl.length-1].e);
@@ -1473,7 +1517,7 @@
       var em=(window.MinkaEmoji&&window.MinkaEmoji.get)?(window.MinkaEmoji.get(s.w.name)||''):'';
       return '<div class="nsc-card-wrap" data-i="'+i+'">'
         +'<div class="nsc-full-card nsc-theme-'+theme+(rt.active?' nsc-active':'')+'" data-i="'+i+'" style="--nsc-accent:'+c.accent+';--nsc-grad:'+gradCss+'">'
-        +'<div class="nsc-deco" aria-hidden="true">'+_nightSvg(theme,i,s.w.name,c.accent)+'</div>'
+        +'<div class="nsc-deco" aria-hidden="true">'+_nightSvg(theme,i,s.w.name,c.accent,s,st.sl[0].s,st.sl[st.sl.length-1].e)+'</div>'
         +(em?'<div class="nsc-bg-emoji" aria-hidden="true">'+em+'</div>':'')
         +'<div class="nsc-full-inner">'
         +'<div class="nsc-full-top">'
@@ -1483,7 +1527,7 @@
         +(desc?'<div class="nsc-full-desc">'+desc+'</div>':'')
         +'<div class="nsc-full-meta">'
         +'<span class="nsc-full-dur">'+dur+'</span>'
-        +'<span class="nsc-full-fat '+tr.cls+'">'+(s.w.fs||0)+'% '+tr.icon+'</span>'
+        +'<span class="nsc-full-fat '+tr.cls+'"><span class="nsc-fat-label">Nogurums</span><span class="nsc-fat-value" style="color:'+fatCol+' !important">'+fatPct+'% '+tr.icon+'</span></span>'
         +'</div>'
         +(rt.active?'<div class="nsc-full-progress"><span style="width:'+rt.pct.toFixed(1)+'%;background:'+c.accent+'"></span></div>':'')
         +'</div>'
@@ -1567,9 +1611,17 @@
       +'<span style="color:rgba(255,255,255,.3)">—</span>'
       +'<select class="nss" onchange="__ns.se(this.value)">'+eo+'</select>'
       +'</div>'
+      +'<div class="ns-mode-group">'
+      +'<span class="ns-mode-glabel">Kārtot</span>'
       +'<div class="ns-mode-btns">'
       +'<button type="button" class="ns-mode-btn'+(_nsSortMode==='freq'?'':' is-on')+'" onclick="__ns.byFat()" title="Kārto pēc noguruma — nogurušākais pirmajā daļā">Nogurums</button>'
       +'<button type="button" class="ns-mode-btn'+(_nsSortMode==='freq'?' is-on':'')+'" onclick="__ns.byFreq()" title="Kārto pēc statistikas — katrs savā biežākajā daļā">Biežums</button>'
+      +'</div>'
+      +'</div>'
+      +'<div class="ns-rhythm-legend" aria-label="Nakts ritma līknes">'
+      +'<span class="is-mel">☾ Melatonīns<span class="ns-leg-desc">palīdz aizmigt</span></span>'
+      +'<span class="is-cor">Q Kortizols<span class="ns-leg-desc">palielina enerģiju</span></span>'
+      +'<span class="is-wake">● Modrība<span class="ns-leg-desc">cik možs jūties</span></span>'
       +'</div>'
       +'</div>'
       +'<div class="ns-cards-row" style="--ns-cols:'+nsCount+';--ns-gap:'+nsGap+';--ns-card-h:'+nsCardH+';--ns-name-size:'+nsNameSize+'">'+cards+'</div>'
