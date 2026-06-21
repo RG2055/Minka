@@ -44,6 +44,9 @@ function cleanSource(value) {
   const s = String(value || 'philips').trim().toLowerCase();
   if (s === 'lofbergs' || s === 'löfbergs') return 'lofbergs';
   if (s === 'narvesen') return 'narvesen';
+  if (s === 'monster') return 'monster';
+  if (s === 'monsterultra' || s === 'monster-ultra' || s === 'monsterwhite' || s === 'ultra') return 'monsterultra';
+  if (s === 'redbull' || s === 'red-bull' || s === 'redbul') return 'redbull';
   return 'philips';
 }
 
@@ -68,7 +71,7 @@ function cleanPriceCents(value) {
 function ensureDetail(details, worker) {
   if (!details[worker]) {
     details[worker] = {
-      sources: { philips: 0, lofbergs: 0, narvesen: 0 },
+      sources: { philips: 0, lofbergs: 0, narvesen: 0, monster: 0, monsterultra: 0, redbull: 0 },
       spendCents: 0
     };
   }
@@ -78,15 +81,15 @@ function ensureDetail(details, worker) {
 async function readCoffeeEvents(env, whereSql, binds) {
   try {
     // Net all deltas per source so a "minus" (logged with its source) reduces that
-    // source's count. Only the three real sources are aggregated — legacy
-    // source-less removals were logged as 'adjustment' and are ignored here.
-    const known = "source IN ('philips','lofbergs','narvesen')";
+    // source's count. Only the real sources are aggregated — legacy source-less
+    // removals were logged as 'adjustment' and are ignored here.
+    const known = "source IN ('philips','lofbergs','narvesen','monster','monsterultra','redbull')";
     const where = whereSql ? `${whereSql} AND ${known}` : `WHERE ${known}`;
     const rows = await env.COFFEE_DB
       .prepare(`
         SELECT worker, source,
           SUM(delta) AS total,
-          SUM(CASE WHEN delta > 0 THEN price_cents * delta ELSE 0 END) AS spend_cents
+          SUM(CASE WHEN delta > 0 THEN price_cents ELSE 0 END) AS spend_cents
         FROM coffee_events
         ${where}
         GROUP BY worker, source
