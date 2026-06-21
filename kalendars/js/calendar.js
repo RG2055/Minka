@@ -3744,15 +3744,23 @@ function closeFullListModal() {
 
     function closeCoffeePicker() {
       document.querySelectorAll('.mk-coffee-picker').forEach(el => el.remove());
-      document.removeEventListener('pointerdown', onCoffeePickerOutside, true);
+      document.querySelectorAll('.mk-coffee-backdrop').forEach(el => el.remove());
       document.removeEventListener('keydown', onCoffeePickerKey, true);
     }
 
-    function onCoffeePickerOutside(e) {
-      const picker = document.querySelector('.mk-coffee-picker');
-      if (!picker) return;
-      if (picker.contains(e.target) || (e.target && e.target.closest && e.target.closest('.mk-coffee-add'))) return;
+    // Outside clicks are caught by a transparent full-window backdrop that sits
+    // just under the picker (so it can't cover the picker itself). If the click
+    // actually landed on another card's "+" — even one the open picker was
+    // painting over — we reopen the picker for that person, so no + ever goes
+    // "dead" behind the popup.
+    function onCoffeePickerBackdrop(e) {
+      const backdrop = e.currentTarget;
+      backdrop.style.pointerEvents = 'none';
+      const under = document.elementFromPoint(e.clientX, e.clientY);
+      backdrop.style.pointerEvents = '';
+      const addBtn = under && under.closest ? under.closest('.mk-coffee-add') : null;
       closeCoffeePicker();
+      if (addBtn) setTimeout(() => addBtn.click(), 0);
     }
 
     function onCoffeePickerKey(e) {
@@ -3765,6 +3773,10 @@ function closeFullListModal() {
       let size = 'M';
       let priceCents = 0;
       const picker = document.createElement('div');
+      const backdrop = document.createElement('div');
+      backdrop.className = 'mk-coffee-backdrop';
+      backdrop.addEventListener('pointerdown', onCoffeePickerBackdrop, true);
+      document.body.appendChild(backdrop);
       picker.className = 'mk-coffee-picker';
       picker.innerHTML = `
         <div class="mk-coffee-picker-title">Kafija</div>
@@ -3785,6 +3797,19 @@ function closeFullListModal() {
         <div class="mk-coffee-caf"></div>
         <button class="mk-coffee-save" type="button">Saglabāt</button>`;
       document.body.appendChild(picker);
+
+      function placePicker() {
+        const rect = anchor && anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : null;
+        const pw = 258;
+        const ph = Math.ceil(picker.getBoundingClientRect().height || 270);
+        const mobileShell = document.documentElement.classList.contains('mk-mobile-shell') || window.innerWidth <= 760;
+        const bottomGuard = mobileShell ? 126 : 14;
+        const left = rect ? Math.max(8, Math.min(window.innerWidth - pw - 8, rect.right - pw)) : 20;
+        const preferredTop = rect ? rect.bottom + 8 : 20;
+        const top = Math.max(8, Math.min(window.innerHeight - bottomGuard - ph, preferredTop));
+        picker.style.left = left + 'px';
+        picker.style.top = top + 'px';
+      }
 
       function sync() {
         picker.querySelectorAll('.mk-coffee-source').forEach(btn => btn.classList.toggle('is-on', btn.dataset.source === selected));
@@ -3820,6 +3845,7 @@ function closeFullListModal() {
           selected = cleanCoffeeSource(btn.dataset.source);
           priceCents = defaultPriceFor(selected);
           sync();
+          placePicker();
         });
       });
       picker.querySelectorAll('[data-size]').forEach(btn => {
@@ -3827,6 +3853,7 @@ function closeFullListModal() {
           size = btn.dataset.size || 'M';
           priceCents = coffeeSourceMeta.narvesen.prices[size] || 200;
           sync();
+          placePicker();
         });
       });
       const input = picker.querySelector('.mk-coffee-price');
@@ -3845,14 +3872,8 @@ function closeFullListModal() {
       }
 
       sync();
-      const rect = anchor && anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : null;
-      const pw = 260;
-      const left = rect ? Math.max(8, Math.min(window.innerWidth - pw - 8, rect.right - pw)) : 20;
-      const top = rect ? Math.max(8, Math.min(window.innerHeight - 250, rect.bottom + 8)) : 20;
-      picker.style.left = left + 'px';
-      picker.style.top = top + 'px';
+      placePicker();
       setTimeout(() => {
-        document.addEventListener('pointerdown', onCoffeePickerOutside, true);
         document.addEventListener('keydown', onCoffeePickerKey, true);
       }, 0);
     }
