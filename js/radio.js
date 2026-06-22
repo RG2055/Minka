@@ -320,7 +320,10 @@ async function fetchNowForStation(st){
 }
 
 async function updateNowPlaying(st){
-    if (document.hidden) return; // resumes on the next tick when visible
+    // Skip the network poll when nobody can see the result: tab hidden, audio
+    // paused, or the radio panel hidden. The interval keeps ticking and resumes
+    // fetching on the next tick once visible/playing again.
+    if (document.hidden || audio.paused || document.body.classList.contains('radio-hidden')) return;
     try {
         const hit = await fetchNowForStation(st);
         if (!hit) {
@@ -2406,9 +2409,12 @@ function mkDrawBuddyViz(ts) {
 }
 
 function draw(ts = 0) {
-    // Reduce CPU when hidden / paused / radio hidden
-    const radioWinEl = document.getElementById('radioWindow');
-    const shouldSleep = document.hidden || audio.paused || !analyser || (radioWinEl && getComputedStyle(radioWinEl).display === 'none');
+    // Reduce CPU when hidden / paused / radio hidden. The radio panel hides via
+    // transform+opacity (not display:none), so the old getComputedStyle().display
+    // check never slept while hidden — and ran a style recalc every frame. A
+    // cheap classList check fixes both. Audio plays via the <audio> element, so
+    // sleeping the visualizer never stops the music.
+    const shouldSleep = document.hidden || audio.paused || !analyser || document.body.classList.contains('radio-hidden');
     if (shouldSleep) {
         // Idle poll: the 'play' listener restarts draw() instantly, so this
         // only needs to catch visibility changes — 500ms is plenty.
