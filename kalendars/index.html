@@ -109,11 +109,14 @@
 <meta name="theme-color" content="#0a0a1a">
 <title>RG Search OS - Clean Start</title>
 <!-- bundle.css is critical ï¿½ load normally -->
-<link rel="stylesheet" href="css/bundle.css">
+<link rel="stylesheet" href="css/bundle.css?v=20260621n">
 <!-- External fonts/icons: non-blocking preload swap -->
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700;800&family=DM+Sans:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap">
+<link rel="preload" as="style"
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700;800&family=DM+Sans:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap"
+  onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700;800&family=DM+Sans:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap"></noscript>
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preload" as="style"
   href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -340,7 +343,12 @@ body.stars-active #stars-overlay{display:block;}
 <!-- GRAFIKS ï¿½ draggable, resizable, glassy, with search inside -->
 <div id="grafiks-app">
 
-  <div id="grafiks-loader">
+  <!-- Removed: the parent app loader already covers startup. This in-iframe
+       building loader was redundant, overlapped the already-rendered schedule
+       while fading, showed an off-theme violet "LĀDĒ DATUS", and ran a
+       full-screen backdrop blur. Kept in the DOM but permanently hidden so the
+       existing retry-text lookups stay harmless. -->
+  <div id="grafiks-loader" hidden style="display:none">
     <div id="minka-loader-building">
       <div class="mlb-building">
         <div class="mlb-antenna">
@@ -804,7 +812,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260621n"></script>
+<script src="js/calendar.js?v=20260621r"></script>
 <script src="js/calendar_extras_v4.js?v=20260611a"></script>
 <script src="js/fatigue.js?v=20260613d"></script>
 <script src="js/nightsplit.js?v=20260621f" defer></script>
@@ -1224,7 +1232,10 @@ document.addEventListener('keydown', (e) => {
     var on = manualOn || isAutoNight();
     if(on) ensureStars();
     syncMoon();
-    syncMoonPlacement();
+    // Only measure card positions to place the moon when it's actually visible
+    // (night). In daytime the moon is hidden (opacity 0), so the per-second
+    // getBoundingClientRect collision work was pure waste.
+    if(on) syncMoonPlacement();
     document.body.classList.toggle('stars-active', on);
     applyStrength(on);
   }
@@ -6349,8 +6360,12 @@ html.mk-low-spec .pkt-cat.pkt-awake .pkt-eyes { animation: pktAwakeEyes 1.45s ea
 .mlb-antenna-dot {
   box-shadow: 0 0 10px rgba(56,189,248,0.50), 0 0 20px rgba(56,189,248,0.24) !important;
 }
+/* Loader windows: re-skin the violet "lit-purple" state to iceman teal so the
+   startup loader has no off-theme violet flash. */
 .mlb-win.lit-purple {
-  box-shadow: 0 0 10px rgba(183,123,255,0.72), 0 0 24px rgba(183,123,255,0.36) !important;
+  background: rgba(94,224,224,0.62) !important;
+  border-color: rgba(94,224,224,0.40) !important;
+  box-shadow: 0 0 10px rgba(94,224,224,0.60), 0 0 24px rgba(94,224,224,0.30) !important;
 }
 .mlb-title {
   text-shadow: 0 0 12px rgba(56,189,248,0.24) !important;

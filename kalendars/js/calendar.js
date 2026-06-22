@@ -379,6 +379,7 @@ function closeFullListModal() {
   let g_shiftStopGroups = new Map();
   let g_shiftStopExits = new Map();
   let g_shiftStopsRenderKey = '';
+  let _laneStructKey = '';
   let g_shiftStopPopoverData = Object.create(null);
   let g_shiftStopPopoverEl = null;
   let g_shiftStopPopoverHideTimer = null;
@@ -3070,12 +3071,52 @@ function closeFullListModal() {
     });
   }
 
+  // Cheap per-second refresh of only the values that actually move, so the full
+  // subtree (incl. the heavy night-split SVG) is not rebuilt every tick.
+  function _laneLiveUpdate(wrap, sorted, nowMs, axisStartMs, axisEndMs, axisDur, isNs, isToday) {
+    var scrubPct = Math.max(0, Math.min(100, (nowMs - axisStartMs) / axisDur * 100));
+    var rEl = wrap.querySelector('.sl-ruler-elapsed'); if (rEl) rEl.style.width = scrubPct.toFixed(2) + '%';
+    var rFut = wrap.querySelector('.sl-ruler-future'); if (rFut) rFut.style.left = scrubPct.toFixed(2) + '%';
+    var rPct = wrap.querySelector('.sl-ruler-pct'); if (rPct) { rPct.style.right = 'calc(' + (100 - Math.max(6, scrubPct)).toFixed(2) + '% + 6px)'; rPct.textContent = Math.round(scrubPct) + '%'; }
+    var rNow = wrap.querySelector('.sl-ruler-now');
+    if (rNow) {
+      var nd = new Date(nowMs);
+      rNow.style.left = scrubPct.toFixed(2) + '%';
+      rNow.style.transform = 'translateX(' + (scrubPct < 5 ? '0' : scrubPct > 95 ? '-100%' : '-50%') + ')';
+      rNow.textContent = String(nd.getHours()).padStart(2, '0') + ':' + String(nd.getMinutes()).padStart(2, '0');
+    }
+    var scr = wrap.querySelector('.sl-scrubber'); if (scr) scr.style.left = scrubPct.toFixed(2) + '%';
+    if (!isNs) {
+      var lanes = wrap.querySelectorAll('.sl-bars-wrap > .sl');
+      sorted.forEach(function (g, i) {
+        var lane = lanes[i]; if (!lane) return;
+        var laneStartMs = g.start instanceof Date ? g.start.getTime() : g.start;
+        var laneEndMs = g.end instanceof Date ? g.end.getTime() : g.end;
+        var laneDur = Math.max(1, laneEndMs - laneStartMs);
+        var pct = Math.max(0, Math.min(100, (nowMs - laneStartMs) / laneDur * 100));
+        var fill = lane.querySelector('.sl-fill'); if (fill) fill.style.width = pct.toFixed(1) + '%';
+        var pctEl = lane.querySelector('.sl-pct'); if (pctEl) pctEl.textContent = Math.round(pct) + '%';
+      });
+    }
+    if (isToday) {
+      var _elMs = Math.max(0, nowMs - axisStartMs), _reMs = Math.max(0, axisEndMs - nowMs);
+      var elEl = wrap.querySelector('.sl-ts-elapsed');
+      if (elEl) elEl.textContent = String(Math.floor(_elMs / 3600000)).padStart(2, '0') + ':' + String(Math.floor((_elMs % 3600000) / 60000)).padStart(2, '0');
+      var remEl = wrap.querySelector('.sl-ts-rem');
+      if (remEl) {
+        var _reH = Math.floor(_reMs / 3600000), _reM = Math.floor((_reMs % 3600000) / 60000), _reS = Math.floor((_reMs % 60000) / 1000);
+        remEl.textContent = String(_reH).padStart(2, '0') + ':' + String(_reM).padStart(2, '0') + ':' + String(_reS).padStart(2, '0');
+        remEl.style.color = _reMs > 14400000 ? 'rgba(139,92,246,0.95)' : _reMs > 7200000 ? 'rgba(251,191,36,0.95)' : 'rgba(239,68,68,0.95)';
+      }
+    }
+  }
+
   function buildShiftLanes(stops, axisStart, axisEnd, nowDate, nsOverlay) {
     const wrap = document.getElementById('shift-lanes-wrap');
     if (!wrap) return;
     // Wire NS bar drag once on the static wrap element (event delegation)
     initNsWrapDrag(wrap);
-    if (!stops || !stops.length) { wrap.innerHTML = ''; return; }
+    if (!stops || !stops.length) { wrap.innerHTML = ''; _laneStructKey = ''; return; }
 
     const nowMs = nowDate instanceof Date ? nowDate.getTime() : nowDate;
     const axisStartMs = axisStart instanceof Date ? axisStart.getTime() : axisStart;
@@ -3124,6 +3165,22 @@ function closeFullListModal() {
       if (b.shiftH !== a.shiftH) return b.shiftH - a.shiftH;
       return (a.isRadiologist ? 1 : 0) - (b.isRadiologist ? 1 : 0);
     });
+
+    // ── Render-key guard ──────────────────────────────────────────────
+    // Only rebuild the DOM (incl. the heavy night-split SVG) when the structure
+    // changes: roster, shift hours/order, day, axis — or, for the night-split
+    // chart, every 30s so its slow "now" line still advances (≈2px/30s on an 8h
+    // axis, so 1s rebuilds were pure waste). Otherwise just update the live
+    // values (scrubber, fills, %s, clock) in place. A swapped worker changes the
+    // signature below → full rebuild, so roster edits always show.
+    var _isToday = !activeDateStr || !g_todayStr || activeDateStr === g_todayStr;
+    var _stopsSig = sorted.map(function(g){ return (g.isRadiologist?'r':'g') + g.shiftH + ':' + g.workers.map(function(w){ return w.name; }).join('+'); }).join('|');
+    var _structKey = _stopsSig + '#' + axisStartMs + '#' + axisEndMs + '#' + (_isToday ? 't' : 'h') + '#' + (nsOverlay ? ('ns' + Math.floor(nowMs / 30000)) : 'n');
+    if (_structKey === _laneStructKey && wrap.children.length) {
+      _laneLiveUpdate(wrap, sorted, nowMs, axisStartMs, axisEndMs, axisDur, !!nsOverlay, _isToday);
+      return;
+    }
+    _laneStructKey = _structKey;
 
     // ── Ruler above bars ──
     const nowD = nowDate instanceof Date ? nowDate : new Date(nowDate);
