@@ -738,10 +738,76 @@ html.mk-low-spec #stats-table-wrap * { transition:none !important; }
 <div id="full-list-modal" onclick="event.stopPropagation()">
   <div class="full-list-header">
     <h2>📞 Visi numuri</h2>
-    <div class="full-list-close" onclick="closeFullListModal()"><span class="material-icons-round">close</span></div>
+    <button class="full-list-close" type="button" aria-label="Aizvērt" onclick="closeFullListModal()">✕</button>
   </div>
   <div class="full-list-content" id="full-list-content"></div>
 </div>
+<style id="fll-list-skin">
+  /* Phone directory: clean single-column list (was a card grid), close button
+     parked at the top-right corner. */
+  #full-list-modal { max-width: 920px !important; }
+  .full-list-header { justify-content: space-between !important; padding: 18px 22px 14px !important; }
+  .full-list-header h2 { margin: 0 !important; font-size: 18px !important; }
+  .full-list-close {
+    margin-left: auto !important;
+    width: 34px !important; height: 34px !important;
+    border-radius: 11px !important;
+    border: 1px solid rgba(255,255,255,.12) !important;
+    background: rgba(255,255,255,.05) !important;
+    color: rgba(255,255,255,.7) !important;
+    font: 600 16px/1 Inter, system-ui, sans-serif !important;
+    display: flex !important; align-items: center !important; justify-content: center !important;
+    cursor: pointer !important; transition: background .15s, color .15s, border-color .15s !important;
+  }
+  .full-list-close:hover { background: rgba(255,90,80,.18) !important; border-color: rgba(255,90,80,.4) !important; color: #fff !important; }
+  .full-list-content { padding: 8px 20px 18px !important; }
+  /* Category filter chips */
+  .fll-cats {
+    position: sticky !important; top: 0 !important; z-index: 4 !important;
+    display: flex !important; flex-wrap: wrap !important; gap: 7px !important;
+    padding: 4px 2px 12px !important; margin-bottom: 10px !important;
+    border-bottom: 1px solid rgba(255,255,255,.08) !important;
+    background: rgba(10,10,18,.97) !important;
+  }
+  .fll-cat {
+    display: inline-flex !important; align-items: center !important; gap: 5px !important;
+    padding: 5px 11px !important; border-radius: 999px !important;
+    border: 1px solid rgba(255,255,255,.12) !important; background: rgba(255,255,255,.04) !important;
+    color: rgba(255,255,255,.68) !important; font: 700 11px Inter, system-ui, sans-serif !important;
+    letter-spacing: .03em !important; text-transform: uppercase !important; cursor: pointer !important;
+    transition: background .14s, color .14s, border-color .14s !important; white-space: nowrap !important;
+  }
+  .fll-cat:hover { background: rgba(125,211,252,.10) !important; color: #cfe6f7 !important; }
+  .fll-cat.is-on { background: rgba(56,189,248,.16) !important; border-color: rgba(56,189,248,.5) !important; color: #7dd3fc !important; }
+  .fll-cat-ic { font-size: 12px !important; }
+  .fll-cat-n { opacity: .55 !important; font-size: 10px !important; font-weight: 800 !important; }
+  /* Dense 2-column masonry of de-boxed list sections — fills the full width. */
+  .fll-grid { display: block !important; columns: 2 !important; column-gap: 36px !important; }
+  .fll-group {
+    break-inside: avoid !important; -webkit-column-break-inside: avoid !important;
+    display: inline-block !important; width: 100% !important; margin: 0 0 16px !important;
+    background: transparent !important; border: 0 !important; border-radius: 0 !important; overflow: visible !important;
+  }
+  .fll-group-header {
+    position: static !important; background: transparent !important;
+    border: 0 !important; border-bottom: 1px solid rgba(255,255,255,.10) !important;
+    padding: 2px 4px 7px !important; backdrop-filter: none !important;
+  }
+  .fll-group-name { font-size: 11px !important; letter-spacing: .1em !important; text-transform: uppercase !important; color: rgba(160,180,205,.82) !important; font-weight: 800 !important; }
+  .fll-group-count { margin-left: auto !important; color: rgba(255,255,255,.4) !important; font-size: 11px !important; font-weight: 700 !important; }
+  .fll-group-items { padding: 2px 0 0 !important; }
+  .fll-item {
+    padding: 8px 6px !important;
+    border-radius: 9px !important;
+    border-bottom: 1px solid rgba(255,255,255,.05) !important;
+    gap: 10px !important;
+  }
+  .fll-item:last-child { border-bottom: 0 !important; }
+  .fll-item:hover { background: rgba(125,211,252,.06) !important; }
+  .fll-item-info { min-width: 0 !important; flex: 1 1 auto !important; }
+  .fll-item-name { font-size: 13.5px !important; }
+  .fll-item-phone { font-variant-numeric: tabular-nums !important; }
+</style>
 
 <script>
 function _mkToast(msg, type) {
@@ -812,11 +878,11 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260621r"></script>
+<script src="js/calendar.js?v=20260622d"></script>
 <script src="js/calendar_extras_v4.js?v=20260611a"></script>
 <script src="js/fatigue.js?v=20260613d"></script>
 <script src="js/nightsplit.js?v=20260621f" defer></script>
-<script src="js/monthcal.js?v=20260621h" defer></script>
+<script src="js/monthcal.js?v=20260621z" defer></script>
 <script src="js/design_v1.js" defer></script>
 <script src="js/theme.js" defer></script>
 <script src="js/minka.sync.config.js" defer></script>

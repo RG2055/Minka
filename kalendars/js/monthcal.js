@@ -123,6 +123,52 @@
   }
   function dkey(d){ var p = String(d).split('.'); return (+p[2]) * 10000 + (+p[1]) * 100 + (+p[0]); }
 
+  // ---- Colleague birthdays (date without year, DD.MM) -------------------
+  // From the printed "Svētku kalendārs". Uldis Pūķītis (19.07) is struck out.
+  var BIRTHDAYS = [
+    { d: '12.02', name: 'Reinis Dunda' },
+    { d: '22.02', name: 'Dmitrijs Alfjorovs' },
+    { d: '15.03', name: 'Kristīne Jansone' },
+    { d: '20.03', name: 'Marianna Kivriņa' },
+    { d: '27.03', name: 'Ilze Pūka' },
+    { d: '27.03', name: 'Daniils Stepanovs' },
+    { d: '09.04', name: 'Daiga Caune' },
+    { d: '12.04', name: 'Matīss Megnis' },
+    { d: '11.05', name: 'Darja Rižkova' },
+    { d: '13.05', name: 'Glorija Daņiļeviča' },
+    { d: '23.05', name: 'Santa Buliga' },
+    { d: '31.05', name: 'Viktorija Plisko' },
+    { d: '04.06', name: 'Jeļizaveta Baranova' },
+    { d: '07.06', name: 'Diāna Rozenberga' },
+    { d: '12.06', name: 'Sarmīte Siņakova' },
+    { d: '16.06', name: 'Diāna Minčonoka' },
+    { d: '15.08', name: 'Annija Lagzdiņa' },
+    { d: '16.08', name: 'Vladimirs Novožilovs' },
+    { d: '28.08', name: 'Sintija Rublīte' },
+    { d: '02.09', name: 'Viktorija Bērziņa' },
+    { d: '04.09', name: 'Dmitrijs Budņičenko' },
+    { d: '05.09', name: 'Anta Ozoliņa' },
+    { d: '09.09', name: 'Annija Paula Heiberga' },
+    { d: '10.09', name: 'Ance Bērziņa' },
+    { d: '13.09', name: 'Renda Līce' },
+    { d: '19.09', name: 'Betija Liepiņa' },
+    { d: '23.09', name: 'Inese Japina' },
+    { d: '05.10', name: 'Karīna Voronova' },
+    { d: '05.10', name: 'Rihards Gavriļenko' },
+    { d: '31.10', name: 'Jevgēnija Valenika' },
+    { d: '06.11', name: 'Raviks Priede' },
+    { d: '09.11', name: 'Violeta Majasina' },
+    { d: '30.11', name: 'Agita Pauliņa Melne' }
+  ];
+  var _bdayMap = null;
+  function birthdayMap(){
+    if (_bdayMap) return _bdayMap;
+    var m = {};
+    BIRTHDAYS.forEach(function(b){ (m[b.d] = m[b.d] || []).push(b.name); });
+    return (_bdayMap = m);
+  }
+  function bdkey(dd){ var p = String(dd).split('.'); return (+p[1]) * 100 + (+p[0]); } // sort by MM then DD
+
   function injectStyles(){
     if (document.getElementById('mcal-style')) return;
     var s = document.createElement('style');
@@ -166,6 +212,8 @@
       '.mcal-cell.is-today .mcal-daynum{color:#38bdf8;}',
       '.mcal-holidot{width:6px;height:6px;border-radius:50%;background:rgba(125,211,252,.6);flex:0 0 auto;}',
       '.mcal-holidot.is-free{background:#ffc454;box-shadow:0 0 5px rgba(255,196,84,.5);}',
+      '.mcal-bdaydot{width:6px;height:6px;border-radius:50%;background:#ff79c6;box-shadow:0 0 5px rgba(255,121,198,.55);flex:0 0 auto;}',
+      '.mcal-cell.is-bday{background:rgba(255,121,198,.06);}',
       '.mcal-body{position:relative;flex:1 1 auto;min-width:0;min-height:0;overflow:hidden;font-size:11px;line-height:1.18;}',
       '.mcal-grp{margin-bottom:3px;}',
       '.mcal-grp-h{font-weight:800;font-size:.72em;letter-spacing:.06em;opacity:.55;margin-bottom:1px;white-space:nowrap;}',
@@ -194,6 +242,8 @@
       '.mcal-hdate{font:800 12px "Space Mono","SF Mono",monospace;color:#cfe6f7;min-width:54px;flex:0 0 auto;}',
       '.mcal-hnm{flex:1 1 auto;color:#e6eef7;font-weight:600;font-size:13px;}',
       '.mcal-hbadge{flex:0 0 auto;font:800 9px Inter,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#ffc454;border:1px solid rgba(255,196,84,.4);border-radius:999px;padding:2px 8px;}',
+      '.mcal-bbadge{color:#ff79c6 !important;border-color:rgba(255,121,198,.5) !important;}',
+      '.mcal-hrow.is-bdaytoday .mcal-hdate{color:#ff79c6;}',
       '.mcal-soon{padding:34px 24px;text-align:center;color:rgba(190,205,225,.6);font-size:13px;line-height:1.5;}'
     ].join('');
     document.head.appendChild(s);
@@ -229,6 +279,7 @@
     var total = startW + daysIn;
     var today = String(window.__g_todayStr || window.__todayDateStr || '').trim();
     var holi = holidayMap(p.year);
+    var bday = birthdayMap();
 
     function cellFor(slot){
       var d = slot - startW + 1;
@@ -238,14 +289,17 @@
       var rd = dayWorkers(month, dateStr, rdStore());
       var wd = slot % 7;
       var hd = holi[dateStr];
+      var bdNames = bday[dateStr.slice(0, 5)];
       var body = '';
       if (rg.length) body += '<div class="mcal-grp mcal-rg"><div class="mcal-grp-h">RADIOGRĀFERI</div>' + workerRows(rg) + '</div>';
       if (rd.length) body += '<div class="mcal-grp mcal-rd"><div class="mcal-grp-h">RADIOLOGI</div>' + workerRows(rd) + '</div>';
       if (!body) body = '<div class="mcal-off">—</div>';
       var cls = 'mcal-cell' + (wd >= 5 ? ' is-weekend' : '') + (dateStr === today ? ' is-today' : '');
       if (hd) cls += hd.free ? ' is-holi is-holi-free' : ' is-holi';
+      if (bdNames) cls += ' is-bday';
       var rail = '<div class="mcal-rail"><span class="mcal-daynum">' + d + '</span>'
         + (hd ? '<span class="mcal-holidot' + (hd.free ? ' is-free' : '') + '" title="' + esc(hd.name) + '"></span>' : '')
+        + (bdNames ? '<span class="mcal-bdaydot" title="🎂 ' + esc(bdNames.join(', ')) + '"></span>' : '')
         + '</div>';
       return '<div class="' + cls + '">' + rail + '<div class="mcal-body">' + body + '</div></div>';
     }
@@ -339,8 +393,19 @@
           }).join('')
         + '</div></div>';
     } else {
+      var todayDM = (function(){ var t = String(window.__g_todayStr || window.__todayDateStr || '').trim().match(/^(\d{2})\.(\d{2})/); return t ? (t[1] + '.' + t[2]) : ''; })();
+      var bdays = BIRTHDAYS.slice().sort(function(a, b){ return bdkey(a.d) - bdkey(b.d); });
       html = '<div class="mcal-panel"><div class="mcal-panel-h"><span class="mcal-panel-t">🎂 Dzimšanas dienas</span><button class="mcal-panel-x" aria-label="Aizvērt">✕</button></div>'
-        + '<div class="mcal-panel-b"><div class="mcal-soon">Drīzumā — šeit būs kolēģu dzimšanas dienas (datums bez gada).</div></div></div>';
+        + '<div class="mcal-panel-b">'
+        + bdays.map(function(b){
+            var isToday = b.d === todayDM;
+            return '<div class="mcal-hrow' + (isToday ? ' is-bdaytoday' : '') + '">'
+              + '<span class="mcal-hdate">' + esc(b.d) + '</span>'
+              + '<span class="mcal-hnm">' + esc(b.name) + '</span>'
+              + (isToday ? '<span class="mcal-hbadge mcal-bbadge">Šodien</span>' : '')
+              + '</div>';
+          }).join('')
+        + '</div></div>';
     }
     wrap.innerHTML = html;
     wrap.classList.add('is-open');
@@ -422,12 +487,122 @@
   function close(){ if (_overlay){ closePanel(); _overlay.classList.remove('is-open'); } notifyParent(false); }
   function isOpen(){ return !!(_overlay && _overlay.classList.contains('is-open')); }
 
+  // ── Header "upcoming birthdays" badge ──────────────────────────────────
+  // Subtle count badge in the top bar; pink accent only when a birthday is
+  // imminent (≤3 days) or today. Click opens a popover of birthdays ordered by
+  // how soon they are.
+  function upcomingBirthdays(){
+    var now = new Date(); now.setHours(0,0,0,0);
+    var Y = now.getFullYear();
+    return BIRTHDAYS.map(function(b){
+      var p = b.d.split('.'), dd = +p[0], mm = +p[1] - 1;
+      var next = new Date(Y, mm, dd); next.setHours(0,0,0,0);
+      if (next < now) next = new Date(Y + 1, mm, dd);
+      return { name: b.name, d: b.d, days: Math.round((next - now) / 86400000) };
+    }).sort(function(a, b){ return a.days - b.days || bdkey(a.d) - bdkey(b.d); });
+  }
+  function bdayRelLabel(days, dd){
+    if (days === 0) return 'Šodien';
+    if (days === 1) return 'Rīt';
+    if (days <= 13) return 'Pēc ' + days + ' d.';
+    return dd;
+  }
+  function bdayRelLong(days){
+    if (days === 0) return 'Šodien';
+    if (days === 1) return 'Rīt';
+    return 'pēc ' + days + ' dienām';
+  }
+  var BDAY_NEAR_DAYS = 14; // only surface the countdown pill when this close
+  function injectBdayBadgeStyles(){
+    if (document.getElementById('mcal-bday-style')) return;
+    var s = document.createElement('style');
+    s.id = 'mcal-bday-style';
+    s.textContent = [
+      '.mk-bday-badge{display:inline-flex;align-items:center;gap:6px;height:23px;padding:0 5px;border-radius:8px;border:1px solid transparent;background:transparent;color:rgba(255,255,255,.5);cursor:pointer;transition:background .15s;flex:0 0 auto;}',
+      '#mkSearchDate .mk-search-date-main .mk-bday-badge{margin-left:auto;}',
+      '.mk-bday-badge:hover{background:rgba(125,211,252,.10);}',
+      '.mk-bday-badge .mk-bday-ic{font-size:15px;line-height:1;filter:grayscale(.5);opacity:.68;transition:filter .15s,opacity .15s;}',
+      '.mk-bday-badge.has-up .mk-bday-ic{filter:none;opacity:1;}',
+      '.mk-bday-pill{padding:2px 9px;border-radius:999px;background:rgba(236,224,245,.92);color:#2a2140;font:800 11px Inter,system-ui,sans-serif;white-space:nowrap;letter-spacing:.01em;}',
+      '.mk-bday-badge.is-today .mk-bday-pill{background:rgba(255,150,205,.96);color:#3a1024;}',
+      '.mk-bday-pop{position:fixed;z-index:240500;width:300px;max-height:60vh;display:flex;flex-direction:column;background:#0c1421;border:1px solid rgba(125,211,252,.22);border-radius:14px;box-shadow:0 22px 56px rgba(0,0,0,.6);overflow:hidden;font-family:Inter,system-ui,sans-serif;}',
+      '.mk-bday-pop-h{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.07);font:800 12px Inter,system-ui,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:#7dd3fc;}',
+      '.mk-bday-pop-b{overflow:auto;padding:6px;}',
+      '.mk-bday-row{display:flex;align-items:center;gap:10px;padding:7px 9px;border-radius:9px;}',
+      '.mk-bday-row:hover{background:rgba(125,211,252,.05);}',
+      '.mk-bday-row.is-today{background:rgba(255,121,198,.08);}',
+      '.mk-bday-when{flex:0 0 auto;min-width:62px;font:800 11px "Space Mono",monospace;color:rgba(160,180,205,.8);}',
+      '.mk-bday-row.is-soon .mk-bday-when{color:#ff9fd4;}',
+      '.mk-bday-nm{flex:1 1 auto;color:#e6eef7;font-weight:600;font-size:13px;}'
+    ].join('');
+    document.head.appendChild(s);
+  }
+  var _bdayPopEl = null;
+  function closeBdayPop(){ if (_bdayPopEl){ _bdayPopEl.remove(); _bdayPopEl = null; document.removeEventListener('pointerdown', bdayPopOutside, true); } }
+  function bdayPopOutside(e){
+    if (_bdayPopEl && !_bdayPopEl.contains(e.target) && !(e.target.closest && e.target.closest('#mkBdayBadge'))) closeBdayPop();
+  }
+  function toggleBdayPop(){
+    if (_bdayPopEl){ closeBdayPop(); return; }
+    var btn = document.getElementById('mkBdayBadge'); if (!btn) return;
+    var list = upcomingBirthdays();
+    var pop = document.createElement('div');
+    pop.className = 'mk-bday-pop';
+    pop.innerHTML = '<div class="mk-bday-pop-h">🎂 Tuvākās dzimšanas dienas</div><div class="mk-bday-pop-b">'
+      + list.map(function(x){
+          var soon = x.days <= 3;
+          return '<div class="mk-bday-row' + (x.days === 0 ? ' is-today' : '') + (soon ? ' is-soon' : '') + '">'
+            + '<span class="mk-bday-when">' + esc(bdayRelLabel(x.days, x.d)) + '</span>'
+            + '<span class="mk-bday-nm">' + esc(x.name) + '</span></div>';
+        }).join('')
+      + '</div>';
+    document.body.appendChild(pop);
+    var r = btn.getBoundingClientRect(), w = 300;
+    pop.style.top = (r.bottom + 8) + 'px';
+    pop.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.right - w)) + 'px';
+    _bdayPopEl = pop;
+    setTimeout(function(){ document.addEventListener('pointerdown', bdayPopOutside, true); }, 0);
+  }
+  function renderBdayBadge(){
+    var btn = document.getElementById('mkBdayBadge'); if (!btn) return;
+    var list = upcomingBirthdays();
+    var nearest = list[0];
+    // Always show the countdown to the nearest birthday.
+    btn.innerHTML = '<span class="mk-bday-ic">🎂</span>'
+      + (nearest ? '<span class="mk-bday-pill">' + esc(bdayRelLong(nearest.days)) + '</span>' : '');
+    btn.classList.toggle('has-up', !!nearest);
+    btn.classList.toggle('is-today', !!(nearest && nearest.days === 0));
+    btn.title = nearest
+      ? (nearest.days === 0 ? ('Šodien: ' + nearest.name)
+        : ('Tuvākā: ' + nearest.name + ' ' + bdayRelLong(nearest.days)))
+      : 'Dzimšanas dienas';
+  }
+  function initBdayBadge(){
+    injectBdayBadgeStyles();
+    // Put it on the weekday (top) row, pushed to the right — weekday left,
+    // birthday top-right, namedays below.
+    var host = document.querySelector('#mkSearchDate .mk-search-date-main') || document.getElementById('minkaBarInner');
+    if (!host) return;
+    if (!document.getElementById('mkBdayBadge')){
+      var btn = document.createElement('button');
+      btn.id = 'mkBdayBadge';
+      btn.className = 'mk-bday-badge';
+      btn.type = 'button';
+      host.appendChild(btn);
+      btn.addEventListener('click', function(e){ e.stopPropagation(); toggleBdayPop(); });
+    }
+    renderBdayBadge();
+    setInterval(renderBdayBadge, 60 * 60 * 1000); // refresh hourly (day rollover)
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initBdayBadge, { once: true });
+  else initBdayBadge();
+
   window.addEventListener('message', function(e){
     if (!e.data || e.data.type !== 'mk_open_month_calendar') return;
     if (isOpen()) close(); else open(e.data.month);
   });
   window.addEventListener('keydown', function(e){
-    if (e.key === 'Escape'){ if (panelOpen()){ closePanel(); } else if (isOpen()){ close(); } }
+    if (e.key === 'Escape'){ if (_bdayPopEl){ closeBdayPop(); } else if (panelOpen()){ closePanel(); } else if (isOpen()){ close(); } }
   });
   window.addEventListener('resize', function(){ if (isOpen()) scheduleFit(); });
 
