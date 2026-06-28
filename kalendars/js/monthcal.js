@@ -516,8 +516,7 @@
   function bdayRelLabel(days, dd){
     if (days === 0) return 'Šodien';
     if (days === 1) return 'Rīt';
-    if (days <= 13) return 'Pēc ' + days + ' d.';
-    return dd;
+    return 'Pēc ' + days + ' d.';
   }
   function bdayRelLong(days){
     if (days === 0) return 'Šodien';
@@ -537,15 +536,16 @@
       '.mk-bday-badge.has-up .mk-bday-ic{filter:none;opacity:1;}',
       '.mk-bday-pill{padding:2px 9px;border-radius:999px;background:rgba(236,224,245,.92);color:#2a2140;font:800 11px Inter,system-ui,sans-serif;white-space:nowrap;letter-spacing:.01em;}',
       '.mk-bday-badge.is-today .mk-bday-pill{background:rgba(255,150,205,.96);color:#3a1024;}',
-      '.mk-bday-pop{position:fixed;z-index:240500;width:300px;max-height:60vh;display:flex;flex-direction:column;background:#0c1421;border:1px solid rgba(125,211,252,.22);border-radius:14px;box-shadow:0 22px 56px rgba(0,0,0,.6);overflow:hidden;font-family:Inter,system-ui,sans-serif;}',
+      '.mk-bday-pop{position:fixed;z-index:240500;width:420px;max-height:60vh;display:flex;flex-direction:column;background:#0c1421;border:1px solid rgba(125,211,252,.22);border-radius:14px;box-shadow:0 22px 56px rgba(0,0,0,.6);overflow:hidden;font-family:Inter,system-ui,sans-serif;}',
       '.mk-bday-pop-h{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.07);font:800 12px Inter,system-ui,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:#7dd3fc;}',
       '.mk-bday-pop-b{overflow:auto;padding:6px;}',
       '.mk-bday-row{display:flex;align-items:center;gap:10px;padding:7px 9px;border-radius:9px;}',
       '.mk-bday-row:hover{background:rgba(125,211,252,.05);}',
       '.mk-bday-row.is-today{background:rgba(255,121,198,.08);}',
-      '.mk-bday-when{flex:0 0 auto;min-width:62px;font:800 11px "Space Mono",monospace;color:rgba(160,180,205,.8);}',
-      '.mk-bday-row.is-soon .mk-bday-when{color:#ff9fd4;}',
-      '.mk-bday-nm{flex:1 1 auto;color:#e6eef7;font-weight:600;font-size:13px;}'
+      '.mk-bday-when{flex:0 0 auto;min-width:48px;font:800 12px "Space Mono",monospace;color:rgba(160,180,205,.82);}',
+      '.mk-bday-nm{flex:1 1 auto;min-width:0;color:#e6eef7;font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
+      '.mk-bday-row .mk-bday-pill{flex:0 0 auto;margin-left:auto;}',
+      '.mk-bday-row.is-today .mk-bday-pill{background:rgba(255,150,205,.96);color:#3a1024;}'
     ].join('');
     document.head.appendChild(s);
   }
@@ -563,13 +563,16 @@
     pop.innerHTML = '<div class="mk-bday-pop-h">🎂 Tuvākās dzimšanas dienas</div><div class="mk-bday-pop-b">'
       + list.map(function(x){
           var soon = x.days <= 3;
+          // Left: the date (DD.MM). Right (after the name): a day-count pill in
+          // the same style as the header birthday badge.
           return '<div class="mk-bday-row' + (x.days === 0 ? ' is-today' : '') + (soon ? ' is-soon' : '') + '">'
-            + '<span class="mk-bday-when">' + esc(bdayRelLabel(x.days, x.d)) + '</span>'
-            + '<span class="mk-bday-nm">' + esc(x.name) + '</span></div>';
+            + '<span class="mk-bday-when">' + esc(x.d) + '</span>'
+            + '<span class="mk-bday-nm">' + esc(x.name) + '</span>'
+            + '<span class="mk-bday-pill">' + esc(bdayRelLong(x.days)) + '</span></div>';
         }).join('')
       + '</div>';
     document.body.appendChild(pop);
-    var r = btn.getBoundingClientRect(), w = 300;
+    var r = btn.getBoundingClientRect(), w = 420;
     pop.style.top = (r.bottom + 8) + 'px';
     pop.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.right - w)) + 'px';
     _bdayPopEl = pop;
