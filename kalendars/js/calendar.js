@@ -308,15 +308,23 @@ function openFullListModal(ev) {
     return '🏥';
   }
 
-  let html = '<div class="fll-grid">';
-  Object.keys(groups).sort((a,b) => {
+  const cats = Object.keys(groups).sort((a,b) => {
     // Put TRENDI first, then alphabetical
     if (a === 'TRENDI') return -1;
     if (b === 'TRENDI') return 1;
     return a.localeCompare(b, 'lv');
-  }).forEach(cat => {
+  });
+
+  // Category filter chips (Visi + one per category)
+  let html = '<div class="fll-cats">'
+    + '<button class="fll-cat is-on" type="button" data-cat="__all" onclick="filterFullList(this)">Visi</button>'
+    + cats.map(c => `<button class="fll-cat" type="button" data-cat="${escapeHtml(c)}" onclick="filterFullList(this)"><span class="fll-cat-ic">${catIcon(c)}</span>${escapeHtml(c)}<span class="fll-cat-n">${groups[c].length}</span></button>`).join('')
+    + '</div>';
+
+  html += '<div class="fll-grid">';
+  cats.forEach(cat => {
     html += `
-      <div class="fll-group">
+      <div class="fll-group" data-cat="${escapeHtml(cat)}">
         <div class="fll-group-header">
           <span class="fll-group-icon">${catIcon(cat)}</span>
           <span class="fll-group-name">${escapeHtml(cat)}</span>
@@ -361,6 +369,19 @@ function outsideFullListClose(e) {
 function closeFullListModal() {
   document.getElementById('full-list-modal').classList.remove('open');
   document.removeEventListener('click', outsideFullListClose);
+}
+function filterFullList(btn) {
+  if (!btn) return;
+  const content = btn.closest('.full-list-content') || document;
+  const cat = btn.getAttribute('data-cat');
+  content.querySelectorAll('.fll-cat').forEach(b => b.classList.toggle('is-on', b === btn));
+  content.querySelectorAll('.fll-group').forEach(g => {
+    const show = (cat === '__all' || g.getAttribute('data-cat') === cat);
+    // The group has `display:inline-block !important` from CSS, so a plain inline
+    // `display:none` is ignored — must set it !important to actually hide it.
+    if (show) g.style.removeProperty('display');
+    else g.style.setProperty('display', 'none', 'important');
+  });
 }
 
 // ------------------------------------------------------------
@@ -3658,6 +3679,31 @@ function closeFullListModal() {
         .finally(() => { delete state.loadingDays[day]; });
     }
 
+    // Cross-device live sync: re-fetch the active day's coffee on a timer so a
+    // cup added on one computer shows on the others without a reload (bolus and
+    // night-split already poll like this; coffee was only fetched once per day).
+    function pollCoffeeDay() {
+      if (document.hidden) return;
+      const day = getCoffeeDayKey();
+      if (!day || day === 'unknown') return;
+      fetch(getCoffeeApiBase() + '/api/coffee?date=' + encodeURIComponent(day), { cache: 'no-store' })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (!data || !data.ok || data.date !== day) return;
+          applyCoffeeCounts(day, data.counts || {});
+          applyCoffeeDetails(day, data.details || {});
+          getCoffeeSyncState().loadedDays[day] = true;
+          refreshVisibleCoffeeRows(day);
+        })
+        .catch(function(){});
+    }
+    function startCoffeePolling() {
+      if (window.__minkaCoffeePollStarted) return;
+      window.__minkaCoffeePollStarted = true;
+      setInterval(pollCoffeeDay, 12000);
+      document.addEventListener('visibilitychange', function(){ if (!document.hidden) pollCoffeeDay(); });
+    }
+
     function postCoffeeDelta(name, delta, card, entry) {
       const day = getCoffeeDayKey();
       if (!day || day === 'unknown' || !name) return;
@@ -4230,6 +4276,7 @@ function closeFullListModal() {
     }
 
     syncCoffeeDay();
+    startCoffeePolling();
   }
 
   function g_adjustDutyNameFontSize() {
