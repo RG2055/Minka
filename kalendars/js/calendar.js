@@ -1330,7 +1330,7 @@ function filterFullList(btn) {
     const saved = getNightSplitSavedMap()[dateStr];
     const order = Array.isArray(saved && saved.order) ? saved.order.map(function(v){ return String(v || '').trim(); }).filter(Boolean) : [];
     const startHour = typeof (saved && saved.sh) === 'number' && isFinite(saved.sh) ? saved.sh : 0;
-    const endOpt = NIGHT_SPLIT_ENDS[(typeof (saved && saved.ei) === 'number' && NIGHT_SPLIT_ENDS[saved.ei]) ? saved.ei : 2];
+    const endOpt = NIGHT_SPLIT_ENDS[(typeof (saved && saved.ei) === 'number' && NIGHT_SPLIT_ENDS[saved.ei]) ? saved.ei : 0];
 
     let ordered = workers.slice();
     if (order.length) {
@@ -1470,7 +1470,7 @@ function filterFullList(btn) {
     try {
       const map = getNightSplitSavedMap();
       const saved = map[dateStr] || {};
-      map[dateStr] = { sh: saved.sh || 0, ei: saved.ei !== undefined ? saved.ei : 2, order: newOrder, mode: saved.mode || 'fatigue', savedAt: Date.now() };
+      map[dateStr] = { sh: saved.sh || 0, ei: saved.ei !== undefined ? saved.ei : 0, order: newOrder, mode: saved.mode || 'fatigue', savedAt: Date.now() };
       localStorage.setItem(NIGHT_SPLIT_STORE_KEY, JSON.stringify(map));
       if (window.__nsKv) window.__nsKv.push(dateStr);
     } catch(e) {}
@@ -1514,7 +1514,7 @@ function filterFullList(btn) {
         var map = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
         var data = map[dateStr];
         if (!data) return;
-        var payload = { date: dateStr, order: data.order || [], sh: data.sh || 0, ei: data.ei !== undefined ? data.ei : 2, mode: data.mode || 'fatigue', savedAt: data.savedAt || Date.now() };
+        var payload = { date: dateStr, order: data.order || [], sh: data.sh || 0, ei: data.ei !== undefined ? data.ei : 0, mode: data.mode || 'fatigue', savedAt: data.savedAt || Date.now() };
         api.apiFetch('/api/ns-order', { method: 'POST', json: payload }).catch(function(){});
         if (_bc) try { _bc.postMessage(payload); } catch(_e) {}
       } catch(e) {}
@@ -1530,7 +1530,7 @@ function filterFullList(btn) {
           var map = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
           var local = map[dateStr];
           if (!local || !local.savedAt || (remote.savedAt && remote.savedAt > local.savedAt)) {
-            map[dateStr] = { sh: remote.sh || 0, ei: remote.ei !== undefined ? remote.ei : 2, order: remote.order, mode: remote.mode || 'fatigue', savedAt: remote.savedAt || Date.now() };
+            map[dateStr] = { sh: remote.sh || 0, ei: remote.ei !== undefined ? remote.ei : 0, order: remote.order, mode: remote.mode || 'fatigue', savedAt: remote.savedAt || Date.now() };
             localStorage.setItem(STORE_KEY, JSON.stringify(map));
             if (cb) cb();
           }
@@ -1548,7 +1548,7 @@ function filterFullList(btn) {
             var map = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
             var local = map[p.date];
             if (!local || !local.savedAt || (p.savedAt && p.savedAt > local.savedAt)) {
-              map[p.date] = { sh: p.sh || 0, ei: p.ei !== undefined ? p.ei : 2, order: p.order, mode: p.mode || 'fatigue', savedAt: p.savedAt || Date.now() };
+              map[p.date] = { sh: p.sh || 0, ei: p.ei !== undefined ? p.ei : 0, order: p.order, mode: p.mode || 'fatigue', savedAt: p.savedAt || Date.now() };
               localStorage.setItem(STORE_KEY, JSON.stringify(map));
               if (p.date === _activeDateStr()) {
                 try { if (window.__ns && window.__ns._update) window.__ns._update(); } catch(_e) {}
@@ -2784,6 +2784,12 @@ function filterFullList(btn) {
       }
     }
 
+    // Keep the elapsed/remaining counter tied to the full shift window. The
+    // night-split chart can zoom to 00:00-07:20, but "ATLIKUŠAS" should not
+    // jump away from the normal 08:00 shift countdown when the chart is opened.
+    const _counterAxisStart = _laneAxisStart;
+    const _counterAxisEnd = _laneAxisEnd;
+
     // Night-split: zoom lane axis to the actual night window (splitPlan.start → splitPlan.end)
     if (_nsBarOn && splitPlan && splitPlan.start && splitPlan.end &&
         (!activeDateStr || !g_todayStr || activeDateStr === g_todayStr)) {
@@ -2795,7 +2801,7 @@ function filterFullList(btn) {
     const _nsOverlay = (_nsBarOn && splitPlan && splitPlan.segments && splitPlan.segments.length)
       ? splitPlan : null;
 
-    buildShiftLanes(_laneStops, _laneAxisStart, _laneAxisEnd, _laneNow, _nsOverlay);
+    buildShiftLanes(_laneStops, _laneAxisStart, _laneAxisEnd, _laneNow, _nsOverlay, _counterAxisStart, _counterAxisEnd);
   }
 
   function buildCircadianChartHtml(axisStartMs, axisEndMs, nowMs, overlay) {
@@ -3094,7 +3100,7 @@ function filterFullList(btn) {
 
   // Cheap per-second refresh of only the values that actually move, so the full
   // subtree (incl. the heavy night-split SVG) is not rebuilt every tick.
-  function _laneLiveUpdate(wrap, sorted, nowMs, axisStartMs, axisEndMs, axisDur, isNs, isToday) {
+  function _laneLiveUpdate(wrap, sorted, nowMs, axisStartMs, axisEndMs, axisDur, isNs, isToday, counterStartMs, counterEndMs) {
     var scrubPct = Math.max(0, Math.min(100, (nowMs - axisStartMs) / axisDur * 100));
     var rEl = wrap.querySelector('.sl-ruler-elapsed'); if (rEl) rEl.style.width = scrubPct.toFixed(2) + '%';
     var rFut = wrap.querySelector('.sl-ruler-future'); if (rFut) rFut.style.left = scrubPct.toFixed(2) + '%';
@@ -3107,6 +3113,13 @@ function filterFullList(btn) {
       rNow.textContent = String(nd.getHours()).padStart(2, '0') + ':' + String(nd.getMinutes()).padStart(2, '0');
     }
     var scr = wrap.querySelector('.sl-scrubber'); if (scr) scr.style.left = scrubPct.toFixed(2) + '%';
+    // Re-evaluate ruler tick hiding as the now-pill moves (same ~4.2% rule as the
+    // full build) — otherwise a tick the pill drifts over stays visible and
+    // overlaps it until the next full rebuild.
+    wrap.querySelectorAll('.sl-rtick').forEach(function (t) {
+      var lp = parseFloat(t.style.left) || 0;
+      t.classList.toggle('sl-rtick-hidden', Math.abs(lp - scrubPct) < 4.2);
+    });
     if (!isNs) {
       var lanes = wrap.querySelectorAll('.sl-bars-wrap > .sl');
       sorted.forEach(function (g, i) {
@@ -3120,7 +3133,9 @@ function filterFullList(btn) {
       });
     }
     if (isToday) {
-      var _elMs = Math.max(0, nowMs - axisStartMs), _reMs = Math.max(0, axisEndMs - nowMs);
+      var _cStart = counterStartMs || axisStartMs;
+      var _cEnd = counterEndMs || axisEndMs;
+      var _elMs = Math.max(0, nowMs - _cStart), _reMs = Math.max(0, _cEnd - nowMs);
       var elEl = wrap.querySelector('.sl-ts-elapsed');
       if (elEl) elEl.textContent = String(Math.floor(_elMs / 3600000)).padStart(2, '0') + ':' + String(Math.floor((_elMs % 3600000) / 60000)).padStart(2, '0');
       var remEl = wrap.querySelector('.sl-ts-rem');
@@ -3132,7 +3147,7 @@ function filterFullList(btn) {
     }
   }
 
-  function buildShiftLanes(stops, axisStart, axisEnd, nowDate, nsOverlay) {
+  function buildShiftLanes(stops, axisStart, axisEnd, nowDate, nsOverlay, counterStart, counterEnd) {
     const wrap = document.getElementById('shift-lanes-wrap');
     if (!wrap) return;
     // Wire NS bar drag once on the static wrap element (event delegation)
@@ -3143,6 +3158,8 @@ function filterFullList(btn) {
     const axisStartMs = axisStart instanceof Date ? axisStart.getTime() : axisStart;
     const axisEndMs   = axisEnd   instanceof Date ? axisEnd.getTime()   : axisEnd;
     const axisDur = Math.max(1, axisEndMs - axisStartMs);
+    const counterStartMs = counterStart instanceof Date ? counterStart.getTime() : (counterStart || axisStartMs);
+    const counterEndMs   = counterEnd   instanceof Date ? counterEnd.getTime()   : (counterEnd || axisEndMs);
 
     // Group by [isRadiologist, shiftH, startHour] — separates day/night same-duration shifts
     const groups = new Map();
@@ -3196,9 +3213,14 @@ function filterFullList(btn) {
     // signature below → full rebuild, so roster edits always show.
     var _isToday = !activeDateStr || !g_todayStr || activeDateStr === g_todayStr;
     var _stopsSig = sorted.map(function(g){ return (g.isRadiologist?'r':'g') + g.shiftH + ':' + g.workers.map(function(w){ return w.name; }).join('+'); }).join('|');
-    var _structKey = _stopsSig + '#' + axisStartMs + '#' + axisEndMs + '#' + (_isToday ? 't' : 'h') + '#' + (nsOverlay ? ('ns' + Math.floor(nowMs / 30000)) : 'n');
+    // Time bucket forces a periodic full rebuild so any layout drift from the
+    // light-update path self-heals quickly instead of persisting until a manual
+    // refresh: 30s while the night-split chart is shown, 60s otherwise. Still
+    // far cheaper than the old once-per-second full rebuild.
+    var _timeBucket = Math.floor(nowMs / (nsOverlay ? 30000 : 60000));
+    var _structKey = _stopsSig + '#' + axisStartMs + '#' + axisEndMs + '#' + counterStartMs + '#' + counterEndMs + '#' + (_isToday ? 't' : 'h') + '#' + (nsOverlay ? 'ns' : 'n') + '#' + _timeBucket;
     if (_structKey === _laneStructKey && wrap.children.length) {
-      _laneLiveUpdate(wrap, sorted, nowMs, axisStartMs, axisEndMs, axisDur, !!nsOverlay, _isToday);
+      _laneLiveUpdate(wrap, sorted, nowMs, axisStartMs, axisEndMs, axisDur, !!nsOverlay, _isToday, counterStartMs, counterEndMs);
       return;
     }
     _laneStructKey = _structKey;
@@ -3227,8 +3249,8 @@ function filterFullList(btn) {
       rulerTicks += '<span class="sl-rtick' + (isSun?' sl-rtick-sun':'') + (isMoon?' sl-rtick-moon':'') + (hidden?' sl-rtick-hidden':'') + '" style="left:' + lp + '%;transform:' + xf + '">' + String(pair[1]).padStart(2,'0') + ':00</span>';
     });
     // Elapsed / remaining strip
-    var _elMs = Math.max(0, nowMs - axisStartMs);
-    var _reMs = Math.max(0, axisEndMs - nowMs);
+    var _elMs = Math.max(0, nowMs - counterStartMs);
+    var _reMs = Math.max(0, counterEndMs - nowMs);
     var _elStr = String(Math.floor(_elMs/3600000)).padStart(2,'0') + ':' + String(Math.floor((_elMs%3600000)/60000)).padStart(2,'0');
     var _reH = Math.floor(_reMs/3600000), _reM = Math.floor((_reMs%3600000)/60000), _reS = Math.floor((_reMs%60000)/1000);
     var _reStr = String(_reH).padStart(2,'0') + ':' + String(_reM).padStart(2,'0') + ':' + String(_reS).padStart(2,'0');
@@ -3248,11 +3270,11 @@ function filterFullList(btn) {
       '<span class="sl-ruler-now" style="left:' + scrubPctR.toFixed(2) + '%;transform:translateX(' + (scrubPctR < 5 ? '0' : scrubPctR > 95 ? '-100%' : '-50%') + ')">' + nowLabel + '</span>' +
     '</div>';
 
-    var _timesStrip = '<div class="sl-times-strip" data-start-ms="' + axisStartMs + '" data-end-ms="' + axisEndMs + '">' +
+    var _timesStrip = '<div class="sl-times-strip" data-start-ms="' + counterStartMs + '" data-end-ms="' + counterEndMs + '">' +
       '<span id="sl-ns-slot" class="sl-ns-slot"></span>' +
       '<span class="sl-ts-label">PAGĀJIS</span><strong class="sl-ts-val sl-ts-elapsed">' + _elStr + '</strong>' +
       '<span class="sl-ts-sep"></span>' +
-      '<span class="sl-ts-label">ATLIKUŠAS</span><strong class="sl-ts-val sl-ts-rem" data-end-ms="' + axisEndMs + '" style="color:' + _reColor + '">' + _reStr + '</strong>' +
+      '<span class="sl-ts-label">ATLIKUŠAS</span><strong class="sl-ts-val sl-ts-rem" data-end-ms="' + counterEndMs + '" style="color:' + _reColor + '">' + _reStr + '</strong>' +
     '</div>';
 
     // Night split overlay bar (shown when 🌙 is active)
