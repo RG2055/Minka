@@ -1108,19 +1108,37 @@ function filterFullList(btn) {
   }
 
   function getWorkersForDateWithDate(storeObj, dateStr) {
-    const day = g_findDay(storeObj, dateStr)?.day;
-    if (!day || !Array.isArray(day.workers)) return [];
+    // Gather workers for this date from ALL month buckets, not just the first match.
+    // Month-boundary data can place the same calendar date in two buckets (e.g. a
+    // June sheet's trailing "01.07" continuation vs the real July sheet). Reading only
+    // the first bucket (old single-g_findDay behaviour) dropped workers whose shift
+    // lived in the other bucket — e.g. a fresh 12h night starting on the 1st.
+    // Prefer the active-month bucket so its entry wins when a name appears in both.
+    const buckets = [];
+    for (const m of safeKeys(storeObj)) {
+      const arr = storeObj[m];
+      if (!Array.isArray(arr)) continue;
+      const day = arr.find(e => e && e.date === dateStr);
+      if (day && Array.isArray(day.workers)) {
+        buckets.push({ workers: day.workers, isActive: m === activeMonth });
+      }
+    }
+    if (!buckets.length) return [];
+    buckets.sort((a, b) => (b.isActive ? 1 : 0) - (a.isActive ? 1 : 0));
     // deduplicate by worker name (same worker cannot appear twice on same day)
     const seen = new Set();
-    return day.workers
-      .filter(w => isValidShift(w.shift))
-      .filter(w => !isPreviousShiftDayCarryover(w, dateStr))
-      .filter(w => {
-        if (seen.has(w.name)) return false;
-        seen.add(w.name);
-        return true;
-      })
-      .map(w => ({ ...w, date: dateStr }));
+    const out = [];
+    buckets.forEach(b => {
+      b.workers.forEach(w => {
+        if (!isValidShift(w.shift)) return;
+        if (isPreviousShiftDayCarryover(w, dateStr)) return;
+        const key = String((w && w.name) || '').trim().toLowerCase();
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+        out.push({ ...w, date: dateStr });
+      });
+    });
+    return out;
   }
 
   function getPrevDateStr(dateStr) {
