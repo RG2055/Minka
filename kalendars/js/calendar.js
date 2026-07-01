@@ -1097,6 +1097,12 @@ function filterFullList(btn) {
   function isPreviousShiftDayCarryover(worker, dateStr) {
     if (isKnownSplitNightCarryover(worker, dateStr)) return true;
     if (!worker || !worker.startTime) return false;
+    // A carryover is the leftover *fragment* of a night that began the day
+    // before, so it is always shorter than a full shift. A 12h (or longer)
+    // shift is a real standalone shift — most importantly a fresh evening
+    // night on the 1st that follows a 24h the day before — and must never be
+    // hidden, even if a continuation patch mistakenly flagged it.
+    if (parseShiftHours(worker.shift) >= 12) return false;
     const hour = parseInt(String(worker.startTime).split(':')[0], 10);
     if (!Number.isFinite(hour) || hour >= 8) return false;
     const type = String(worker.type || '').toUpperCase();
