@@ -641,6 +641,11 @@ function filterFullList(btn) {
         const name = String(w && w.name || '').trim().toLowerCase();
         if (!name || w.__minkaCarryover) return;
         const startHour = parseInt(String(w.startTime || '').split(':')[0], 10);
+        // A night's morning tail always starts in the early hours (00:00–07:xx).
+        // A shift that starts at/after 08:00 is a real same-day shift — a fresh
+        // evening night (e.g. 20:00) that follows a day the worker also worked is
+        // NOT the previous night's carryover, so it must never be hidden as one.
+        if (Number.isFinite(startHour) && startHour >= 8) return;
         const hrs = Math.round((w.hours || 0) || parseFloat(String(w.shift || '').replace(',', '.')) || 0);
         if (hrs < 1 || hrs > 12) return;
         const prevInfo = prevByName.get(name);
