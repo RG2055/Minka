@@ -68,7 +68,18 @@ const ledHalo = document.getElementById('ledHalo');
 const audio = new Audio();
 audio.crossOrigin = "anonymous";
 audio.preload = "none";
-audio.addEventListener('play', () => requestAnimationFrame(draw));
+// Single-instance draw loop. Both the 'play' listener and visibilitychange
+// used to call requestAnimationFrame(draw) directly; since draw() reschedules
+// itself forever, every minimize/restore or play added one more parallel loop
+// that never died — after a day of use dozens of loops were ticking at once.
+let __drawScheduled = false;
+function scheduleDraw(delayMs) {
+    if (__drawScheduled) return;
+    __drawScheduled = true;
+    if (delayMs) setTimeout(() => requestAnimationFrame(draw), delayMs);
+    else requestAnimationFrame(draw);
+}
+audio.addEventListener('play', () => scheduleDraw());
 // Idle the entire audio graph (EQ, reverb, compressor, vinyl noise, analyser)
 // while paused; resume it on play. Frees CPU and stops the looping vinyl source.
 audio.addEventListener('pause', () => {
@@ -92,7 +103,7 @@ audio.addEventListener('play', () => {
     document.addEventListener('pointerdown', preWarm, { capture: true, once: true, passive: true });
     document.addEventListener('keydown',     preWarm, { capture: true, once: true, passive: true });
 })();
-document.addEventListener('visibilitychange', () => { if (!document.hidden) requestAnimationFrame(draw); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) scheduleDraw(); });
 
 // ── Buddy/Spectrum round toggle (sits over the viz screen) ───────────
 function mkUpdateVizToggle(){
@@ -2414,14 +2425,15 @@ function draw(ts = 0) {
     // check never slept while hidden — and ran a style recalc every frame. A
     // cheap classList check fixes both. Audio plays via the <audio> element, so
     // sleeping the visualizer never stops the music.
+    __drawScheduled = false;
     const shouldSleep = document.hidden || audio.paused || !analyser || document.body.classList.contains('radio-hidden');
     if (shouldSleep) {
         // Idle poll: the 'play' listener restarts draw() instantly, so this
         // only needs to catch visibility changes — 500ms is plenty.
-        setTimeout(() => requestAnimationFrame(draw), 500);
+        scheduleDraw(500);
         return;
     }
-    requestAnimationFrame(draw);
+    scheduleDraw();
     if (vizStyle === MK_BUDDY_VIZ) {
         if (dGif) dGif.style.opacity = 0;
         mkDrawBuddyViz(ts || performance.now());

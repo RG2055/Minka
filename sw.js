@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.4.45';
+const CACHE = 'minka-4.4.46';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
@@ -13,6 +13,10 @@ const isHttpRequest = request => {
 
 const safeCachePut = async (request, response) => {
   if (!response || !response.ok || !isHttpRequest(request)) return;
+  // Never cache.put audio/stream bodies: a live Icecast/HLS response has no
+  // end, so put() would consume it forever and balloon memory.
+  const ctype = (response.headers.get('content-type') || '').toLowerCase();
+  if (ctype.startsWith('audio/') || ctype.includes('mpegurl') || ctype.includes('octet-stream')) return;
   try {
     const cache = await caches.open(CACHE);
     await cache.put(request, response);
@@ -86,6 +90,12 @@ self.addEventListener('fetch', event => {
   const url = request.url;
 
   if (request.method !== 'GET' || !isHttpRequest(request)) return;
+
+  // Live radio streams: never intercept. Piping an endless stream through the
+  // SW keeps it alive all session, and the generic branch below would
+  // clone()+cache.put the infinite body — unbounded memory growth that shows
+  // up as a multi-second freeze when the PWA returns to the foreground.
+  if (request.destination === 'audio' || request.destination === 'video') return;
 
   const isApiRequest = (() => {
     try {
