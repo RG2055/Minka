@@ -672,6 +672,39 @@ function filterFullList(btn) {
     });
   }
 
+  // Correct the start time of a full evening night whose source data carries a
+  // wrong early-morning start. A 12h NAKTS ends in the morning (e.g. 08:00), so
+  // by convention it must START in the evening (end − 12h = 20:00). Some sheet
+  // rows arrive as 00:00–08:00, which would place the shift on the morning side
+  // of the live timeline instead of at 20:00. Recompute start = end − hours for
+  // real (non-carryover) NAKTS shifts whose stored start is missing or 00:00–07:xx.
+  function patchNightStartTimes(storeRef) {
+    for (const month of Object.keys(storeRef || {})) {
+      const days = storeRef[month];
+      if (!Array.isArray(days)) continue;
+      days.forEach(day => {
+        if (!Array.isArray(day.workers)) return;
+        day.workers.forEach(w => {
+          if (String(w.type || '').toUpperCase() !== 'NAKTS') return;
+          if (w.__minkaCarryover === true) return; // genuine morning tail — leave as-is
+          const hrs = Math.round((w.hours || 0) || parseFloat(String(w.shift || '').replace(',', '.')) || 0);
+          if (hrs < 12 || hrs >= 24) return;
+          if (!w.endTime) return;
+          const em = String(w.endTime).split(':').map(Number);
+          if (!Number.isFinite(em[0])) return;
+          const startHour = w.startTime ? parseInt(String(w.startTime).split(':')[0], 10) : -1;
+          // A real night never *starts* between 00:00 and 07:59.
+          if (Number.isFinite(startHour) && startHour >= 8) return;
+          const endMin = em[0] * 60 + (em[1] || 0);
+          const startMin = ((endMin - hrs * 60) % 1440 + 1440) % 1440;
+          const sh = String(Math.floor(startMin / 60)).padStart(2, '0');
+          const sm = String(startMin % 60).padStart(2, '0');
+          w.startTime = sh + ':' + sm;
+        });
+      });
+    }
+  }
+
   function getAllMonths() {
     const monthsSet = new Set([...safeKeys(store), ...safeKeys(storeRad)]);
 
@@ -768,6 +801,8 @@ function filterFullList(btn) {
       patchCrossMonthContinuations(storeRad);
       patchAdjacentDayContinuations(store);
       patchAdjacentDayContinuations(storeRad);
+      patchNightStartTimes(store);
+      patchNightStartTimes(storeRad);
 
       window.__grafiksStore = store;
       window.__grafiksStoreRad = storeRad;
@@ -825,6 +860,8 @@ function filterFullList(btn) {
           patchCrossMonthContinuations(storeRad);
           patchAdjacentDayContinuations(store);
           patchAdjacentDayContinuations(storeRad);
+          patchNightStartTimes(store);
+          patchNightStartTimes(storeRad);
           window.__grafiksStore = store; window.__grafiksStoreRad = storeRad;
           document.dispatchEvent(new CustomEvent('minka:storeReady'));
           const picker = document.getElementById('grafiks-monthPicker');
