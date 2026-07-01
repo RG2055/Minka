@@ -642,7 +642,10 @@ function filterFullList(btn) {
         if (!name || w.__minkaCarryover) return;
         const startHour = parseInt(String(w.startTime || '').split(':')[0], 10);
         const hrs = Math.round((w.hours || 0) || parseFloat(String(w.shift || '').replace(',', '.')) || 0);
-        if (hrs < 1 || hrs > 12) return;
+        // A carryover is the leftover *fragment* of a night, always shorter than a
+        // full shift. A 12h (or longer) shift is a complete standalone night — even
+        // if its source start time is a wrong 00:00 — so never flag it as a tail.
+        if (hrs < 1 || hrs >= 12) return;
         const prevInfo = prevByName.get(name);
         if (!prevInfo) return;
         // A carryover is the *morning tail* of a night that started the evening
