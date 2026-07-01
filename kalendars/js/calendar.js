@@ -4909,6 +4909,33 @@ function showWorkerSchedule(workerName, currentShift) {
     return new Date(y1,m1-1,d1) - new Date(y2,m2-1,d2);
   });
 
+  // TEMP DIAGNOSTIC: dump raw 1st-of-month entries for this worker across all
+  // month buckets so we can see exactly why an evening night is hidden.
+  try {
+    const dbgLines = [];
+    const bothStores = [['RG', window.__grafiksStore || {}], ['RD', window.__grafiksStoreRad || {}]];
+    bothStores.forEach(([tag, st]) => {
+      for (const month in st) {
+        const days = st[month];
+        if (!Array.isArray(days)) continue;
+        days.forEach(day => {
+          if (parseInt(day.date, 10) !== 1 || !Array.isArray(day.workers)) return;
+          day.workers.forEach(w => {
+            if (w.name !== workerName) return;
+            dbgLines.push(
+              `${tag} ${month} | ${day.date}\n  shift=${JSON.stringify(w.shift)} type=${JSON.stringify(w.type)}\n  start=${JSON.stringify(w.startTime)} end=${JSON.stringify(w.endTime)}\n  carry=${w.__minkaCarryover===true} night=${w.isNight===true} hours=${JSON.stringify(w.hours)}`
+            );
+          });
+        });
+      }
+    });
+    if (dbgLines.length) {
+      alert('MINKA DEBUG build=4.4.33 — ' + workerName + ' (1. datums visos blokos)\n\n' + dbgLines.join('\n\n'));
+    } else {
+      alert('MINKA DEBUG — ' + workerName + ': nav neviena 1.-datuma ieraksta nevienā blokā');
+    }
+  } catch(_e) {}
+
   modalWorkerDates = allDates;
 
   const parts = workerName.trim().split(/\s+/);
