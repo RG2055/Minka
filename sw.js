@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.4.33';
+const CACHE = 'minka-4.4.34';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
@@ -54,6 +54,12 @@ self.addEventListener('activate', event => {
         const old = await caches.open(key);
         const reqs = await old.keys();
         for (const req of reqs) {
+          // Never carry over code assets: unversioned .js/.css/.html change in
+          // place between releases, so migrating the old copy would serve stale
+          // code for one extra reload after every update. Dropping them here
+          // forces a fresh network fetch on next request — the deploy lands
+          // immediately. Versioned images/fonts are still carried over below.
+          if (/\.(js|css|html)(\?|$)/i.test(req.url)) continue;
           if (await fresh.match(req)) continue;
           const res = await old.match(req);
           if (res) await fresh.put(req, res);
