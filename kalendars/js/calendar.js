@@ -4917,39 +4917,6 @@ function showWorkerSchedule(workerName, currentShift) {
 
   modalWorkerDates = allDates;
 
-  // QUIET DIAGNOSTIC (v4.4.37): render this worker's 1st-of-month raw entries
-  // + whether the roster function returns them, into a small on-modal readout.
-  try {
-    const lines = [];
-    const both = [['RG', window.__grafiksStore || {}], ['RD', window.__grafiksStoreRad || {}]];
-    both.forEach(([tag, st]) => {
-      for (const month in st) {
-        const days = st[month];
-        if (!Array.isArray(days)) continue;
-        days.forEach(day => {
-          if (parseInt(day.date, 10) !== 1 || !Array.isArray(day.workers)) return;
-          day.workers.forEach(w => {
-            if (w.name !== workerName) return;
-            let inRoster = '?';
-            try {
-              const r = getWorkersForDateWithDate(tag === 'RG' ? store : storeRad, day.date);
-              inRoster = r.some(x => x.name === workerName) ? 'YES' : 'NO';
-            } catch(_e) { inRoster = 'err'; }
-            lines.push(`${tag}·${month} ${day.date}: shift=${JSON.stringify(w.shift)} type=${JSON.stringify(w.type)} start=${JSON.stringify(w.startTime)} end=${JSON.stringify(w.endTime)} carry=${w.__minkaCarryover===true} night=${w.isNight===true} → roster=${inRoster}`);
-          });
-        });
-      }
-    });
-    let dbg = document.getElementById('mkWorkerDbg');
-    if (!dbg) {
-      dbg = document.createElement('div');
-      dbg.id = 'mkWorkerDbg';
-      dbg.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:2147483647;background:rgba(8,10,20,0.96);border:1px solid rgba(120,200,255,0.4);border-radius:10px;padding:8px 10px;font:600 10px/1.4 monospace;color:#9fe;white-space:pre-wrap;word-break:break-word;max-height:38vh;overflow:auto;';
-      document.body.appendChild(dbg);
-    }
-    dbg.textContent = 'DBG v4.4.37 · ' + workerName + '\n' + (lines.length ? lines.join('\n') : 'nav 1.-datuma ierakstu');
-  } catch(_e) {}
-
   const parts = workerName.trim().split(/\s+/);
   const firstName = parts[0] || '';
   const surname = parts.slice(1).join(' ') || '';
