@@ -582,7 +582,7 @@
           </label>
         </div>
 
-        <div class="tk-footer">Saglabājas automātiski · tikai kalendārs</div>
+        <div class="tk-footer">Saglabājas automātiski · tikai kalendārs<span id="tkBuildVer" style="opacity:.5;margin-left:6px;"></span></div>
       </div>`;
   }
 
@@ -806,6 +806,17 @@
     panel.classList.add('visible');
     if (gear) gear.classList.add('active');
     panelVisible = true;
+    // Show the active service-worker cache version so it's clear which build is
+    // actually running on this device (helps confirm updates have landed).
+    try {
+      const verEl = document.getElementById('tkBuildVer');
+      if (verEl && 'caches' in window && caches.keys) {
+        caches.keys().then(keys => {
+          const mk = keys.filter(k => /^minka-/.test(k)).sort();
+          verEl.textContent = mk.length ? '· ' + mk[mk.length - 1].replace('minka-', 'v') : '';
+        }).catch(() => {});
+      }
+    } catch (e) {}
     try { window.parent.postMessage({ type: 'mk_settings_opened' }, '*'); } catch (e) {}
   }
 
