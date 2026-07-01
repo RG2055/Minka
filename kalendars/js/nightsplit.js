@@ -432,6 +432,9 @@
     var shift=String(w.shift||'').replace(',','.');
     var m=shift.match(/(\d+(?:\.\d+)?)/);
     var hrs=m ? Math.round(parseFloat(m[1])||0) : Math.round(Number(w.hours||0)||0);
+    // A carryover is the short leftover fragment of the previous night; a full
+    // 12h+ shift is a real standalone night and must never be hidden here.
+    if(hrs>=12) return false;
     return w.__minkaCarryover===true || type==='NAKTS' || type==='DIENNAKTS' || w.isNight===true;
   }
   function getW(){
