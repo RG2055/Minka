@@ -4023,10 +4023,21 @@ function filterFullList(btn) {
         const pw = 258;
         const ph = Math.ceil(picker.getBoundingClientRect().height || 270);
         const mobileShell = document.documentElement.classList.contains('mk-mobile-shell') || window.innerWidth <= 760;
-        const bottomGuard = mobileShell ? 126 : 14;
+        // Both shells have a bottom nav bar overlaying this (iframed) calendar, so
+        // reserve room for it — otherwise the Saglabāt button can land behind the
+        // nav and be untappable.
+        const bottomGuard = mobileShell ? 126 : 96;
         const left = rect ? Math.max(8, Math.min(window.innerWidth - pw - 8, rect.right - pw)) : 20;
-        const preferredTop = rect ? rect.bottom + 8 : 20;
-        const top = Math.max(8, Math.min(window.innerHeight - bottomGuard - ph, preferredTop));
+        const safeBottom = window.innerHeight - bottomGuard;
+        let top;
+        if (rect) {
+          const below = rect.bottom + 8;
+          if (below + ph <= safeBottom) top = below;                 // fits below the "+"
+          else if (rect.top - ph - 8 >= 8) top = rect.top - ph - 8;  // else flip above it
+          else top = Math.max(8, safeBottom - ph);                   // else clamp fully in view
+        } else {
+          top = 20;
+        }
         picker.style.left = left + 'px';
         picker.style.top = top + 'px';
       }
