@@ -641,20 +641,27 @@ function filterFullList(btn) {
         const name = String(w && w.name || '').trim().toLowerCase();
         if (!name || w.__minkaCarryover) return;
         const startHour = parseInt(String(w.startTime || '').split(':')[0], 10);
-        // A night's morning tail always starts in the early hours (00:00–07:xx).
-        // A shift that starts at/after 08:00 is a real same-day shift — a fresh
-        // evening night (e.g. 20:00) that follows a day the worker also worked is
-        // NOT the previous night's carryover, so it must never be hidden as one.
-        if (Number.isFinite(startHour) && startHour >= 8) return;
         const hrs = Math.round((w.hours || 0) || parseFloat(String(w.shift || '').replace(',', '.')) || 0);
         if (hrs < 1 || hrs > 12) return;
         const prevInfo = prevByName.get(name);
         if (!prevInfo) return;
+        // A carryover is the *morning tail* of a night that started the evening
+        // before, so it can only ever start in the early hours (00:00–07:xx).
+        // A shift that starts at/after 08:00 — most importantly a fresh evening
+        // night like 20:00 — is a real same-day shift, never the previous night's
+        // tail, even when the worker also worked (e.g. a 24h) the day before.
+        // If there is no start time we fall back to the split-hours math below.
+        const currentIsMorningStart = Number.isFinite(startHour) && startHour <= 7;
+        if (Number.isFinite(startHour) && startHour >= 8) return;
         const prevIsNight = prevInfo.type === 'NAKTS' || prevInfo.type === 'DIENNAKTS';
         const splitTotal = (prevInfo.hrs || 0) + hrs;
         const splitFromEvening = Number.isFinite(prevInfo.startHour) && prevInfo.startHour >= 18 && [12, 15, 16, 24].includes(splitTotal);
-        const splitFromMorning = Number.isFinite(startHour) && startHour <= 7 && [12, 15, 16, 24].includes(splitTotal);
-        if (prevIsNight || splitFromEvening || splitFromMorning) {
+        const splitFromMorning = currentIsMorningStart && [12, 15, 16, 24].includes(splitTotal);
+        // prevIsNight alone is not enough: require this shift to actually look like
+        // a morning fragment (early start, or timeless with matching split hours).
+        const prevNightTail = prevIsNight && (currentIsMorningStart ||
+          (!Number.isFinite(startHour) && [12, 15, 16, 24].includes(splitTotal)));
+        if (prevNightTail || splitFromEvening || splitFromMorning) {
           w.type = 'NAKTS';
           w.isNight = true;
           w.__minkaCarryover = true;
