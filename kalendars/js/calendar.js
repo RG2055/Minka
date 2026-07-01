@@ -751,6 +751,25 @@ function filterFullList(btn) {
       return pa.m - pb.m;
     });
 
+    // Show only the previous month onward. This drops stale same-name months
+    // from an earlier year (e.g. "Septembris 2025" while 2026 is current, which
+    // would otherwise appear as a second confusing "SEPTEMBRIS" in the picker)
+    // and always keeps the immediately previous month as a selectable option.
+    let curIdx = null;
+    try {
+      let cy, cm;
+      const ts = String(window.__g_todayStr || '').split('.');
+      if (ts.length === 3 && ts[2] && ts[1]) { cy = parseInt(ts[2], 10); cm = parseInt(ts[1], 10) - 1; }
+      else { const n = new Date(); cy = n.getFullYear(); cm = n.getMonth(); }
+      if (Number.isFinite(cy) && Number.isFinite(cm)) curIdx = cy * 12 + cm;
+    } catch (e) { curIdx = null; }
+
+    if (curIdx !== null) {
+      const minIdx = curIdx - 1; // previous month and later
+      const kept = arr.filter(s => { const p = parseKey(s); return (p.y * 12 + p.m) >= minIdx; });
+      if (kept.length) return kept; // guard: never hide everything
+    }
+
     return arr;
   }
 
