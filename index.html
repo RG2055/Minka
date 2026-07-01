@@ -2984,6 +2984,7 @@ function updateBuddyUiSuppression() {
     cls.contains('mk-buddy-ui-stats') ||
     cls.contains('mk-buddy-ui-settings') ||
     cls.contains('mk-buddy-ui-monthcal') ||
+    cls.contains('mk-buddy-ui-coffee') ||
     isBuddyOverlayVisible('bolus-overlay') ||
 	    isBuddyOverlayVisible('bolus-edit-modal') ||
 	    isBuddyOverlayVisible('mobileQrModal') ||
@@ -3083,6 +3084,10 @@ window.addEventListener('message', function(e) {
     var sbtn = document.getElementById('settingsDockBtn');
     if (sbtn) sbtn.classList.add('settings-open');
     setBuddyUiFlag('settings', true);
+  } else if (e.data && e.data.type === 'mk_coffee_picker') {
+    // Hide the buddy while the in-calendar coffee picker is open so it can't
+    // cover the Saglabāt button; it reappears when the picker closes/saves.
+    setBuddyUiFlag('coffee', !!e.data.open);
   }
 });
 

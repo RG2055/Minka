@@ -3962,10 +3962,17 @@ function filterFullList(btn) {
       postCoffeeDelta(name, eq, card, { source, size, priceCents });
     }
 
+    function setCoffeePickerBuddyFlag(open) {
+      // The buddy mascot lives in the parent shell and can overlap the picker's
+      // Saglabāt button. Ask the shell to hide it while the picker is open.
+      try { window.parent && window.parent.postMessage({ type: 'mk_coffee_picker', open: !!open }, '*'); } catch (_e) {}
+    }
+
     function closeCoffeePicker() {
       document.querySelectorAll('.mk-coffee-picker').forEach(el => el.remove());
       document.querySelectorAll('.mk-coffee-backdrop').forEach(el => el.remove());
       document.removeEventListener('keydown', onCoffeePickerKey, true);
+      setCoffeePickerBuddyFlag(false);
     }
 
     // Outside clicks are caught by a transparent full-window backdrop that sits
@@ -3998,6 +4005,7 @@ function filterFullList(btn) {
       backdrop.addEventListener('pointerdown', onCoffeePickerBackdrop, true);
       document.body.appendChild(backdrop);
       picker.className = 'mk-coffee-picker';
+      setCoffeePickerBuddyFlag(true);
       picker.innerHTML = `
         <div class="mk-coffee-picker-title">Kafija</div>
         <div class="mk-coffee-source-row">
