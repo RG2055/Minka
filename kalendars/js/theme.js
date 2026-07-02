@@ -13,13 +13,6 @@
   }
   const AUTO_PERF = detectPerformanceTier();
 
-  function clampPx(value, fallback, max) {
-    const raw = String(value == null ? fallback : value).trim();
-    const num = parseFloat(raw);
-    const safe = Number.isFinite(num) ? num : fallback;
-    return Math.min(safe, max) + 'px';
-  }
-
   const THEMES = {
     aurora:   { label: 'Aurora',   accent:'#b77bff', accentRgb:'183,123,255', accentSoft:'rgba(183,123,255,0.12)', radAccent:'#ff5f57', orb1:'rgba(163,71,255,0.22)', orb2:'rgba(255,79,129,0.18)', orb3:'rgba(92,225,230,0.14)', bgBase:'#06070b', gridColor:'rgba(163,71,255,0.14)' },
     ice:      { label: 'Ice',      accent:'#64d2ff', accentRgb:'100,210,255', accentSoft:'rgba(100,210,255,0.12)', radAccent:'#ff9f0a', orb1:'rgba(60,160,255,0.20)', orb2:'rgba(170,240,255,0.14)', orb3:'rgba(80,200,240,0.14)', bgBase:'#04070d', gridColor:'rgba(80,160,255,0.12)' },
@@ -29,170 +22,25 @@
     mono:     { label: 'Mono',     accent:'#d7dbe8', accentRgb:'215,219,232', accentSoft:'rgba(215,219,232,0.08)', radAccent:'#ff5f57', orb1:'rgba(140,145,180,0.10)', orb2:'rgba(120,130,170,0.08)', orb3:'rgba(170,175,210,0.08)', bgBase:'#030305', gridColor:'rgba(160,165,190,0.08)' }
   };
 
-  // Full background themes — each sets ALL global CSS vars
+  // Single background: always pure black, no wallpapers, no glass blur.
+  // The old BACKGROUNDS gallery (Obsidian/Frosted/Aurora/mac wallpapers…) is
+  // gone by request — wallpaper JPGs + orb layers cost GPU/RAM for nothing.
   const BACKGROUNDS = {
     void: {
-      label: 'Void', orb: '0.08', grid: '0.02', noise: '0.02', motion: '0.20',
+      label: 'Void', orb: '0', grid: '0', noise: '0', motion: '0',
       bodyBg: '#000000',
       vars: {
         '--bg-color':'#000000','--panel':'#080809',
         '--search-bar-bg':'#0e0e10','--search-border':'#1e1e20','--search-hover':'#141416',
-        '--glass-bg':'rgba(10,10,12,0.96)','--glass-border':'rgba(255,255,255,0.06)',
-        '--glass-blur':'10px','--glass-shadow':'0 24px 60px rgba(0,0,0,0.90)',
-        '--mk-panel-bg':'rgba(6,6,8,0.98)','--mk-glass-bg':'rgba(8,8,10,0.97)','--mk-panel-blur':'8px',
+        '--glass-bg':'rgba(10,10,12,0.97)','--glass-border':'rgba(255,255,255,0.06)',
+        '--glass-blur':'0px','--glass-shadow':'0 24px 60px rgba(0,0,0,0.90)',
+        '--mk-panel-bg':'rgba(6,6,8,0.98)','--mk-glass-bg':'rgba(8,8,10,0.97)','--mk-panel-blur':'0px',
         '--tk-bg-base':'#000000','--tk-bg-deep':'#080809',
         '--tk-bg-panel':'rgba(6,6,8,0.98)','--tk-bg-card':'rgba(255,255,255,0.025)',
         '--tk-bg-side':'rgba(0,0,0,0.25)','--tk-bg-modal':'rgba(4,4,6,0.99)',
       }
     },
-    obsidian: {
-      label: 'Obsidian', orb: '0.20', grid: '0.04', noise: '0.03', motion: '0.45',
-      bodyBg: '#06070b',
-      vars: {
-        '--bg-color':'#06070b','--panel':'#0e0f15',
-        '--search-bar-bg':'#13141c','--search-border':'#282a36','--search-hover':'#1c1e28',
-        '--glass-bg':'rgba(14,15,22,0.92)','--glass-border':'rgba(255,255,255,0.09)',
-        '--glass-blur':'16px','--glass-shadow':'0 20px 48px rgba(0,0,0,0.65)',
-        '--mk-panel-bg':'rgba(10,11,18,0.95)','--mk-glass-bg':'rgba(10,11,18,0.92)','--mk-panel-blur':'14px',
-        '--tk-bg-base':'#06070b','--tk-bg-deep':'#0a0d15',
-        '--tk-bg-panel':'rgba(10,11,18,0.95)','--tk-bg-card':'rgba(255,255,255,0.035)',
-        '--tk-bg-side':'rgba(0,0,0,0.15)','--tk-bg-modal':'rgba(8,10,18,0.985)',
-      }
-    },
-    frosted: {
-      label: 'Frosted', orb: '0.38', grid: '0.09', noise: '0.06', motion: '0.65',
-      bodyBg: '#07080b',
-      vars: {
-        '--bg-color':'#07080b','--panel':'#0f1116',
-        '--search-bar-bg':'rgba(255,255,255,0.06)','--search-border':'rgba(255,255,255,0.14)','--search-hover':'rgba(255,255,255,0.08)',
-        '--glass-bg':'rgba(255,255,255,0.07)','--glass-border':'rgba(255,255,255,0.18)',
-        '--glass-blur':'24px','--glass-shadow':'0 8px 40px rgba(31,38,135,0.30)',
-        '--mk-panel-bg':'rgba(255,255,255,0.06)','--mk-glass-bg':'rgba(255,255,255,0.05)','--mk-panel-blur':'24px',
-        '--tk-bg-base':'#07080b','--tk-bg-deep':'rgba(255,255,255,0.04)',
-        '--tk-bg-panel':'rgba(255,255,255,0.06)','--tk-bg-card':'rgba(255,255,255,0.04)',
-        '--tk-bg-side':'rgba(255,255,255,0.04)','--tk-bg-modal':'rgba(10,12,20,0.90)',
-      }
-    },
-    aurora: {
-      label: 'Aurora', orb: '0.55', grid: '0.14', noise: '0.08', motion: '0.90',
-      bodyBg: '#060710',
-      vars: {
-        '--bg-color':'#060710','--panel':'#0d0e1a',
-        '--search-bar-bg':'rgba(183,123,255,0.07)','--search-border':'rgba(183,123,255,0.22)','--search-hover':'rgba(183,123,255,0.10)',
-        '--glass-bg':'rgba(20,16,38,0.90)','--glass-border':'rgba(183,123,255,0.18)',
-        '--glass-blur':'20px','--glass-shadow':'0 12px 48px rgba(100,60,200,0.30)',
-        '--mk-panel-bg':'rgba(16,12,30,0.94)','--mk-glass-bg':'rgba(14,10,26,0.91)','--mk-panel-blur':'18px',
-        '--tk-bg-base':'#060710','--tk-bg-deep':'#0d0e1a',
-        '--tk-bg-panel':'rgba(16,12,30,0.94)','--tk-bg-card':'rgba(183,123,255,0.04)',
-        '--tk-bg-side':'rgba(100,50,200,0.10)','--tk-bg-modal':'rgba(10,8,22,0.96)',
-      }
-    },
-    deep_sea: {
-      label: 'Deep Sea', orb: '0.42', grid: '0.10', noise: '0.05', motion: '0.55',
-      bodyBg: '#03070d',
-      vars: {
-        '--bg-color':'#03070d','--panel':'#08111a',
-        '--search-bar-bg':'rgba(0,150,255,0.06)','--search-border':'rgba(0,180,255,0.18)','--search-hover':'rgba(0,180,255,0.09)',
-        '--glass-bg':'rgba(8,18,32,0.91)','--glass-border':'rgba(0,180,255,0.14)',
-        '--glass-blur':'18px','--glass-shadow':'0 12px 44px rgba(0,80,160,0.35)',
-        '--mk-panel-bg':'rgba(6,14,28,0.96)','--mk-glass-bg':'rgba(5,12,24,0.93)','--mk-panel-blur':'16px',
-        '--tk-bg-base':'#03070d','--tk-bg-deep':'#08111a',
-        '--tk-bg-panel':'rgba(6,14,28,0.96)','--tk-bg-card':'rgba(0,140,255,0.04)',
-        '--tk-bg-side':'rgba(0,80,160,0.12)','--tk-bg-modal':'rgba(4,10,20,0.97)',
-      }
-    },
-    ember: {
-      label: 'Ember', orb: '0.45', grid: '0.08', noise: '0.06', motion: '0.60',
-      bodyBg: '#0a0604',
-      vars: {
-        '--bg-color':'#0a0604','--panel':'#140a06',
-        '--search-bar-bg':'rgba(255,120,40,0.07)','--search-border':'rgba(255,120,40,0.20)','--search-hover':'rgba(255,120,40,0.10)',
-        '--glass-bg':'rgba(28,14,8,0.91)','--glass-border':'rgba(255,120,40,0.16)',
-        '--glass-blur':'16px','--glass-shadow':'0 12px 44px rgba(180,60,0,0.32)',
-        '--mk-panel-bg':'rgba(22,10,6,0.95)','--mk-glass-bg':'rgba(20,8,4,0.93)','--mk-panel-blur':'14px',
-        '--tk-bg-base':'#0a0604','--tk-bg-deep':'#140a06',
-        '--tk-bg-panel':'rgba(22,10,6,0.95)','--tk-bg-card':'rgba(255,100,30,0.04)',
-        '--tk-bg-side':'rgba(180,60,0,0.12)','--tk-bg-modal':'rgba(14,6,2,0.97)',
-      }
-    },
-    // ── Mac Wallpapers ──
-    mac_sonoma: {
-      label: 'Sonoma', orb: '0.30', grid: '0.05', noise: '0.03', motion: '0.50',
-      wallpaper: 'https://raw.githubusercontent.com/LAYTAT/macOS-Wallpapers/main/14-Sonoma-Dark.jpg',
-      bodyBg: '#0a0d12',
-      vars: {
-        '--bg-color':'transparent','--panel':'rgba(10,13,18,0.55)',
-        '--search-bar-bg':'rgba(255,255,255,0.07)','--search-border':'rgba(255,255,255,0.15)','--search-hover':'rgba(255,255,255,0.10)',
-        '--glass-bg':'rgba(10,13,18,0.55)','--glass-border':'rgba(255,255,255,0.14)',
-        '--glass-blur':'28px','--glass-shadow':'0 8px 40px rgba(0,0,0,0.45)',
-        '--mk-panel-bg':'rgba(8,10,16,0.60)','--mk-glass-bg':'rgba(8,10,16,0.55)','--mk-panel-blur':'28px',
-        '--tk-bg-base':'transparent','--tk-bg-deep':'rgba(0,0,0,0.30)',
-        '--tk-bg-panel':'rgba(8,10,16,0.60)','--tk-bg-card':'rgba(255,255,255,0.05)',
-        '--tk-bg-side':'rgba(0,0,0,0.20)','--tk-bg-modal':'rgba(6,8,14,0.88)',
-      }
-    },
-    mac_ventura: {
-      label: 'Ventura', orb: '0.25', grid: '0.04', noise: '0.03', motion: '0.45',
-      wallpaper: 'https://raw.githubusercontent.com/LAYTAT/macOS-Wallpapers/main/13-Ventura-Dark.jpg',
-      bodyBg: '#080b10',
-      vars: {
-        '--bg-color':'transparent','--panel':'rgba(8,11,16,0.55)',
-        '--search-bar-bg':'rgba(255,255,255,0.07)','--search-border':'rgba(255,255,255,0.15)','--search-hover':'rgba(255,255,255,0.10)',
-        '--glass-bg':'rgba(8,11,16,0.55)','--glass-border':'rgba(255,255,255,0.14)',
-        '--glass-blur':'28px','--glass-shadow':'0 8px 40px rgba(0,0,0,0.45)',
-        '--mk-panel-bg':'rgba(6,9,14,0.60)','--mk-glass-bg':'rgba(6,9,14,0.55)','--mk-panel-blur':'28px',
-        '--tk-bg-base':'transparent','--tk-bg-deep':'rgba(0,0,0,0.30)',
-        '--tk-bg-panel':'rgba(6,9,14,0.60)','--tk-bg-card':'rgba(255,255,255,0.05)',
-        '--tk-bg-side':'rgba(0,0,0,0.20)','--tk-bg-modal':'rgba(4,6,12,0.88)',
-      }
-    },
-    mac_monterey: {
-      label: 'Monterey', orb: '0.20', grid: '0.04', noise: '0.03', motion: '0.40',
-      wallpaper: 'https://raw.githubusercontent.com/LAYTAT/macOS-Wallpapers/main/12-Dark.jpg',
-      bodyBg: '#060810',
-      vars: {
-        '--bg-color':'transparent','--panel':'rgba(6,8,16,0.55)',
-        '--search-bar-bg':'rgba(255,255,255,0.07)','--search-border':'rgba(255,255,255,0.15)','--search-hover':'rgba(255,255,255,0.10)',
-        '--glass-bg':'rgba(6,8,16,0.55)','--glass-border':'rgba(255,255,255,0.14)',
-        '--glass-blur':'28px','--glass-shadow':'0 8px 40px rgba(0,0,0,0.45)',
-        '--mk-panel-bg':'rgba(4,6,14,0.60)','--mk-glass-bg':'rgba(4,6,14,0.55)','--mk-panel-blur':'28px',
-        '--tk-bg-base':'transparent','--tk-bg-deep':'rgba(0,0,0,0.30)',
-        '--tk-bg-panel':'rgba(4,6,14,0.60)','--tk-bg-card':'rgba(255,255,255,0.05)',
-        '--tk-bg-side':'rgba(0,0,0,0.20)','--tk-bg-modal':'rgba(3,5,12,0.88)',
-      }
-    },
-    mac_bigsur: {
-      label: 'Big Sur', orb: '0.35', grid: '0.06', noise: '0.04', motion: '0.55',
-      wallpaper: 'https://raw.githubusercontent.com/LAYTAT/macOS-Wallpapers/main/11-0-Big-Sur-Color-Night.jpg',
-      bodyBg: '#05080e',
-      vars: {
-        '--bg-color':'transparent','--panel':'rgba(5,8,14,0.55)',
-        '--search-bar-bg':'rgba(255,255,255,0.07)','--search-border':'rgba(255,255,255,0.15)','--search-hover':'rgba(255,255,255,0.10)',
-        '--glass-bg':'rgba(5,8,14,0.55)','--glass-border':'rgba(255,255,255,0.14)',
-        '--glass-blur':'28px','--glass-shadow':'0 8px 40px rgba(0,0,0,0.45)',
-        '--mk-panel-bg':'rgba(4,6,12,0.60)','--mk-glass-bg':'rgba(4,6,12,0.55)','--mk-panel-blur':'28px',
-        '--tk-bg-base':'transparent','--tk-bg-deep':'rgba(0,0,0,0.30)',
-        '--tk-bg-panel':'rgba(4,6,12,0.60)','--tk-bg-card':'rgba(255,255,255,0.05)',
-        '--tk-bg-side':'rgba(0,0,0,0.20)','--tk-bg-modal':'rgba(3,5,11,0.88)',
-      }
-    },
-    mac_sequoia: {
-      label: 'Sequoia', orb: '0.28', grid: '0.05', noise: '0.03', motion: '0.48',
-      wallpaper: 'https://raw.githubusercontent.com/LAYTAT/macOS-Wallpapers/main/15-Sequoia-Dark-6K.jpg',
-      bodyBg: '#060a0e',
-      vars: {
-        '--bg-color':'transparent','--panel':'rgba(6,10,14,0.55)',
-        '--search-bar-bg':'rgba(255,255,255,0.07)','--search-border':'rgba(255,255,255,0.15)','--search-hover':'rgba(255,255,255,0.10)',
-        '--glass-bg':'rgba(6,10,14,0.55)','--glass-border':'rgba(255,255,255,0.14)',
-        '--glass-blur':'28px','--glass-shadow':'0 8px 40px rgba(0,0,0,0.45)',
-        '--mk-panel-bg':'rgba(4,8,12,0.60)','--mk-glass-bg':'rgba(4,8,12,0.55)','--mk-panel-blur':'28px',
-        '--tk-bg-base':'transparent','--tk-bg-deep':'rgba(0,0,0,0.30)',
-        '--tk-bg-panel':'rgba(4,8,12,0.60)','--tk-bg-card':'rgba(255,255,255,0.05)',
-        '--tk-bg-side':'rgba(0,0,0,0.20)','--tk-bg-modal':'rgba(3,6,11,0.88)',
-      }
-    },
   };
-
   const DENSITY = {
     compact:  { label:'Compact', cardPad:'12px', gap:'10px', radius:'18px', cardShift:'46px', fontStep:'0.96' },
     balanced: { label:'Balanced', cardPad:'15px', gap:'12px', radius:'22px', cardShift:'52px', fontStep:'1' },
@@ -215,14 +63,13 @@
 
   let state = {
     theme: 'aurora',
-    background: 'obsidian',
+    background: 'void',
     density: 'balanced',
     performance: 'low',
     speed: 'fast',
     fontIndex: 2,
     glow: 0,
-    glassOpacity: 0.55,
-    noBlur: false,
+    noBlur: true,   // blur is permanently off — glass effects removed app-wide
     noAnim: false
   };
 
@@ -230,14 +77,12 @@
     try {
       const saved = JSON.parse(localStorage.getItem('mk_theme_v4') || '{}');
       if (saved.theme && THEMES[saved.theme]) state.theme = saved.theme;
-      if (saved.background && BACKGROUNDS[saved.background]) state.background = saved.background; else state.background = 'obsidian';
+      state.background = 'void';
       if (saved.density && DENSITY[saved.density]) state.density = saved.density;
       if (saved.performance && PERFORMANCE[saved.performance]) state.performance = saved.performance;
       if (saved.speed && SPEED[saved.speed]) state.speed = saved.speed;
       if (Number.isInteger(saved.fontIndex) && saved.fontIndex >= 0 && saved.fontIndex < FONT_STEPS.length) state.fontIndex = saved.fontIndex;
       if (typeof saved.glow === 'number' && saved.glow >= 0 && saved.glow <= 1) state.glow = saved.glow;
-      if (typeof saved.glassOpacity === 'number') state.glassOpacity = saved.glassOpacity;
-      if (typeof saved.noBlur === 'boolean') state.noBlur = saved.noBlur;
       if (typeof saved.noAnim === 'boolean') state.noAnim = saved.noAnim;
     } catch (e) {}
   }
@@ -311,19 +156,14 @@
       setVar('--mk-stop-hover-shadow', '0 0 0 3px rgba(255,255,255,0.10), 0 0 14px rgba(255,255,255,0.12)');
       setVar('--mk-panel-enter-scale', '0.98');
     }
-    // Apply all vars from background theme
+    // Apply all vars from background theme (black, blur already 0px)
     Object.entries(bg.vars || {}).forEach(([k,v]) => setVar(k,v));
-    if (LOW_SPEC || perfMode === 'low') {
-      setVar('--glass-blur', clampPx((bg.vars || {})['--glass-blur'], 12, 10));
-      setVar('--mk-panel-blur', clampPx((bg.vars || {})['--mk-panel-blur'], 10, 8));
-    } else if (perfMode === 'medium') {
-      setVar('--glass-blur', clampPx((bg.vars || {})['--glass-blur'], 14, 14));
-      setVar('--mk-panel-blur', clampPx((bg.vars || {})['--mk-panel-blur'], 12, 12));
-    }
-    setVar('--ms-orb', (LOW_SPEC || perfMode === 'low') ? String(Math.min(parseFloat(bg.orb) || 0.30, 0.18)) : (perfMode === 'medium' ? String(Math.min(parseFloat(bg.orb) || 0.30, 0.30)) : bg.orb));
-    setVar('--ms-grid', (LOW_SPEC || perfMode === 'low') ? String(Math.min(parseFloat(bg.grid) || 0.04, 0.03)) : (perfMode === 'medium' ? String(Math.min(parseFloat(bg.grid) || 0.04, 0.06)) : bg.grid));
-    setVar('--ms-noise', (LOW_SPEC || perfMode === 'low') ? String(Math.min(parseFloat(bg.noise || '0.04') || 0.04, 0.015)) : (perfMode === 'medium' ? String(Math.min(parseFloat(bg.noise || '0.04') || 0.04, 0.03)) : (bg.noise || '0.04')));
-    setVar('--ms-motion', (LOW_SPEC || perfMode === 'low') ? '0' : (perfMode === 'medium' ? String(Math.min(parseFloat(bg.motion) || 0.45, 0.45)) : bg.motion));
+    // macscapeBg (orbs/grid/noise) is display:none now — keep its vars at 0
+    // so nothing animates even if a stale stylesheet still shows it.
+    setVar('--ms-orb', '0');
+    setVar('--ms-grid', '0');
+    setVar('--ms-noise', '0');
+    setVar('--ms-motion', '0');
 
     const glowShadow = (LOW_SPEC || perfMode === 'low')
       ? `0 0 0 1px rgba(${theme.accentRgb},0.08), 0 10px 28px rgba(0,0,0,0.44)`
@@ -335,33 +175,14 @@
     // Glow intensity
     setVar('--tk-glow', String(state.glow));
 
-    // ── Apply background: body base color + orb gradients on top ──
-    const orbV = (LOW_SPEC || perfMode === 'low')
-      ? Math.min(parseFloat(bg.orb) || 0.30, 0.18)
-      : perfMode === 'medium'
-      ? Math.min(parseFloat(bg.orb) || 0.30, 0.30)
-      : (parseFloat(bg.orb) || 0.30);
-    const alpha1 = (orbV * 0.55).toFixed(2);
-    const alpha2 = (orbV * 0.40).toFixed(2);
-    const alpha3 = (orbV * 0.30).toFixed(2);
-    const bodyBase = bg.bodyBg || theme.bgBase || '#06070b';
+    // ── Background: always black. No wallpaper, no orb overlay, no grid. ──
+    const bodyBase = '#000000';
+    const wpo = document.getElementById('wallpaperOrbOverlay');
+    if (wpo) wpo.remove();
 
-    const macBg = document.getElementById('macscapeBg');
-    let wpo = document.getElementById('wallpaperOrbOverlay');
-    if (!wpo) {
-      wpo = document.createElement('div');
-      wpo.id = 'wallpaperOrbOverlay';
-      wpo.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:-1;';
-      document.body.prepend(wpo);
-    }
-
-    // Notify parent to apply wallpaper (wallpaper div lives in parent)
+    // Tell the parent shell to stay black + pass perf flags along.
     try {
-      window.parent.postMessage({
-        type: 'mk_wallpaper',
-        wallpaper: bg.wallpaper || null,
-        bodyBase: bodyBase
-      }, '*');
+      window.parent.postMessage({ type: 'mk_wallpaper', wallpaper: null, bodyBase: bodyBase }, '*');
       window.parent.postMessage({
         type: 'mk_performance',
         performance: perfMode,
@@ -370,65 +191,29 @@
       }, '*');
     } catch(e) {}
 
-    // Keep iframe itself transparent
+    // Keep iframe itself transparent (parent body is black behind it)
     document.documentElement.style.backgroundImage = '';
     document.body.style.background = 'transparent';
     document.body.style.backgroundColor = 'transparent';
-
-    if (bg.wallpaper) {
-      document.documentElement.classList.add('has-wallpaper-bg');
-      wpo.style.background = `
-        radial-gradient(ellipse 70% 55% at 18% 14%, ${theme.orb1.replace(/[\d.]+\)$/, alpha1 + ')')}, transparent 60%),
-        radial-gradient(ellipse 65% 50% at 83% 17%, ${theme.orb2.replace(/[\d.]+\)$/, alpha2 + ')')}, transparent 62%),
-        radial-gradient(ellipse 70% 55% at 50% 88%, ${theme.orb3.replace(/[\d.]+\)$/, alpha3 + ')')}, transparent 64%)`;
-    } else {
-      document.documentElement.classList.remove('has-wallpaper-bg');
-      wpo.style.background = '';
-    }
+    document.documentElement.classList.remove('has-wallpaper-bg');
     document.documentElement.style.setProperty('--tk-bg-base', bodyBase);
-
-    const grid = document.querySelector('#macscapeBg .ms-grid');
-    if (grid) {
-      grid.style.backgroundImage = `
-        linear-gradient(${theme.gridColor} 1px, transparent 1px),
-        linear-gradient(90deg, ${theme.gridColor.replace(/0\.\d+\)/, '0.05)')} 1px, transparent 1px)`;
-    }
-
-    const orb1 = document.querySelector('#macscapeBg .orb1');
-    const orb2 = document.querySelector('#macscapeBg .orb2');
-    const orb3 = document.querySelector('#macscapeBg .orb3');
-    if (orb1) orb1.style.background = `radial-gradient(circle at 30% 30%, ${theme.orb1}, transparent 72%)`;
-    if (orb2) orb2.style.background = `radial-gradient(circle at 30% 30%, ${theme.orb2}, transparent 72%)`;
-    if (orb3) orb3.style.background = `radial-gradient(circle at 30% 30%, ${theme.orb3}, transparent 72%)`;
 
     root.setAttribute('data-theme', state.theme);
     root.setAttribute('data-bg', state.background);
     root.setAttribute('data-performance', perfMode);
     root.classList.toggle('mk-low-spec', perfMode === 'low');
     root.classList.toggle('mk-medium-spec', perfMode === 'medium');
-    // Apply glass opacity
-    const go = (LOW_SPEC || perfMode === 'low')
-      ? Math.min(state.glassOpacity ?? 0.55, 0.70)
-      : perfMode === 'medium'
-      ? Math.min(state.glassOpacity ?? 0.55, 0.62)
-      : (state.glassOpacity ?? 0.55);
-    root.style.setProperty('--glass-opacity', String(go));
-    root.style.setProperty('--glass-bg', `rgba(10,13,18,${go})`);
-    root.style.setProperty('--mk-panel-bg', `rgba(8,10,16,${Math.min(go + 0.05, 0.98)})`);
+    // Panels are always near-solid now — no glass, no blur.
+    root.style.setProperty('--glass-opacity', '0.96');
+    root.style.setProperty('--glass-bg', 'rgba(10,13,18,0.96)');
+    root.style.setProperty('--mk-panel-bg', 'rgba(8,10,16,0.98)');
     root.setAttribute('data-density', state.density);
     root.setAttribute('data-speed', state.speed);
 
-    root.classList.toggle('mk-no-blur', !!state.noBlur);
+    root.classList.add('mk-no-blur');
     root.classList.toggle('mk-no-anim', !!state.noAnim);
-    if (state.noBlur) {
-      setVar('--glass-blur', '0px');
-      setVar('--mk-panel-blur', '0px');
-      const app = document.getElementById('grafiks-app');
-      if (app) { app.style.removeProperty('backdrop-filter'); app.style.removeProperty('-webkit-backdrop-filter'); }
-      document.querySelectorAll('.side-panel').forEach(function(el){
-        el.style.removeProperty('backdrop-filter'); el.style.removeProperty('-webkit-backdrop-filter');
-      });
-    }
+    setVar('--glass-blur', '0px');
+    setVar('--mk-panel-blur', '0px');
 
     updateUI();
   }
@@ -440,19 +225,6 @@
         <span class="tk-swatch-label">${theme.label}</span>
       </button>
     `).join('');
-  }
-
-  function bgCardsHtml() {
-    return Object.entries(BACKGROUNDS).map(([key, bg]) => {
-      const wpStyle = bg.wallpaper
-        ? `background-image:url('${bg.wallpaper}');background-size:cover;background-position:center;`
-        : '';
-      return `
-      <button class="tk-bg-card ${state.background === key ? 'active' : ''}" data-bg="${key}">
-        <span class="tk-bg-preview tk-bg-${key}" style="${wpStyle}"></span>
-        <span class="tk-bg-title">${bg.label}</span>
-      </button>`;
-    }).join('');
   }
 
   function segHtml(source, attr, active) {
@@ -510,27 +282,6 @@
 
         <div class="tk-divider"></div>
 
-        <div class="tk-section">
-          <div class="tk-label-row"><span class="tk-section-label">Fons</span></div>
-          <div class="tk-bg-grid">${bgCardsHtml()}</div>
-        </div>
-
-        <div class="tk-divider"></div>
-
-        <div class="tk-section">
-          <div class="tk-label-row">
-            <span class="tk-section-label">🪟 Glass</span>
-            <span class="tk-value" id="tkGlassValue">${Math.round((1 - (state.glassOpacity ?? 0.55)) * 100)}%</span>
-          </div>
-          <div class="tk-font-row">
-            <span style="font-size:11px;opacity:0.4;color:#fff">▪</span>
-            <input id="tkGlassRange" class="tk-range" type="range" min="0.05" max="0.95" step="0.01" value="${state.glassOpacity ?? 0.55}">
-            <span style="font-size:11px;opacity:0.9;color:#fff">□</span>
-          </div>
-        </div>
-
-        <div class="tk-divider"></div>
-
         <div class="tk-section two-col">
           <div>
             <div class="tk-label-row"><span class="tk-section-label">Blīvums</span></div>
@@ -571,11 +322,6 @@
         <div class="tk-section">
           <div class="tk-label-row"><span class="tk-section-label">⚡ Optimizācija</span></div>
           <label class="tk-toggle">
-            <input type="checkbox" id="tkNoBlur" ${state.noBlur ? 'checked' : ''}>
-            <div style="flex:1"><div class="tk-toggle-label">Bez blur efekta</div><div class="tk-toggle-sub">Noņem stikla blur no visām panelēm — lielākais ieguvums vecam Intel GPU</div></div>
-            <span class="tk-toggle-track"></span>
-          </label>
-          <label class="tk-toggle" style="margin-top:8px">
             <input type="checkbox" id="tkNoAnim" ${state.noAnim ? 'checked' : ''}>
             <div style="flex:1"><div class="tk-toggle-label">Bez animācijām</div><div class="tk-toggle-sub">Aptur pulsēšanu, mirgoņu, fona kustību — karšu hover paliek</div></div>
             <span class="tk-toggle-track"></span>
@@ -639,12 +385,9 @@
 
   function updateUI() {
     document.querySelectorAll('.tk-swatch').forEach((el) => el.classList.toggle('active', el.dataset.theme === state.theme));
-    document.querySelectorAll('.tk-bg-card').forEach((el) => el.classList.toggle('active', el.dataset.bg === state.background));
     document.querySelectorAll('[data-density]').forEach((el) => el.classList.toggle('active', el.dataset.density === state.density));
     document.querySelectorAll('[data-performance]').forEach((el) => el.classList.toggle('active', el.dataset.performance === state.performance));
     document.querySelectorAll('[data-speed]').forEach((el) => el.classList.toggle('active', el.dataset.speed === state.speed));
-    const cbBlur = document.getElementById('tkNoBlur');
-    if (cbBlur) cbBlur.checked = !!state.noBlur;
     const cbAnim = document.getElementById('tkNoAnim');
     if (cbAnim) cbAnim.checked = !!state.noAnim;
     const range = document.getElementById('tkFontRange');
@@ -697,9 +440,6 @@
     wrap.querySelectorAll('.tk-swatch').forEach((el) => {
       el.addEventListener('click', () => { state.theme = el.dataset.theme; save(); applyThemeDebounced(); }, { passive: true });
     });
-    wrap.querySelectorAll('.tk-bg-card').forEach((el) => {
-      el.addEventListener('click', () => { state.background = el.dataset.bg; save(); applyThemeDebounced(); }, { passive: true });
-    });
     wrap.querySelectorAll('[data-density]').forEach((el) => {
       el.addEventListener('click', () => { state.density = el.dataset.density; save(); applyThemeDebounced(); }, { passive: true });
     });
@@ -719,37 +459,6 @@
       }, { passive: true });
     }
 
-    const glassRange = wrap.querySelector('#tkGlassRange');
-    if (glassRange) {
-      glassRange.addEventListener('input', () => {
-        const go = parseFloat(glassRange.value);
-        state.glassOpacity = go;
-        const pct = Math.round((1 - go) * 100);
-        const lbl = wrap.querySelector('#tkGlassValue');
-        if (lbl) lbl.textContent = pct + '%';
-        // Set glass opacity — same approach as radio
-        const blur = Math.round(8 + (1 - go) * 24);
-        document.documentElement.style.setProperty('--glass-bg',    `rgba(10,13,18,${go.toFixed(2)})`);
-        document.documentElement.style.setProperty('--glass-blur',  `${blur}px`);
-        document.documentElement.style.setProperty('--mk-panel-bg', `rgba(8,10,16,${Math.min(go+0.05,0.98).toFixed(2)})`);
-        const app = document.getElementById('grafiks-app');
-        if (app) {
-          app.style.setProperty('background', `rgba(10,13,18,${go.toFixed(2)})`, 'important');
-          if (!state.noBlur) {
-            app.style.setProperty('backdrop-filter',         `blur(${blur}px) saturate(180%)`, 'important');
-            app.style.setProperty('-webkit-backdrop-filter', `blur(${blur}px) saturate(180%)`, 'important');
-          }
-        }
-        document.querySelectorAll('.side-panel').forEach(el => {
-          el.style.setProperty('background', `rgba(4,6,14,${(go*0.85).toFixed(2)})`, 'important');
-          if (!state.noBlur) {
-            el.style.setProperty('backdrop-filter',         `blur(${blur}px) saturate(160%)`, 'important');
-            el.style.setProperty('-webkit-backdrop-filter', `blur(${blur}px) saturate(160%)`, 'important');
-          }
-        });
-        save();
-      });
-    }
     const glowRange = wrap.querySelector('#tkGlowRange');
     if (glowRange) {
       glowRange.addEventListener('input', () => {
@@ -761,7 +470,7 @@
       }, { passive: true });
     }
 
-    [['#tkNoBlur','noBlur'],['#tkNoAnim','noAnim']].forEach(function(pair){
+    [['#tkNoAnim','noAnim']].forEach(function(pair){
       const cb = wrap.querySelector(pair[0]);
       if (cb) cb.addEventListener('change', function(){
         state[pair[1]] = cb.checked;
@@ -794,11 +503,6 @@
 
   function showPanel() {
     mountPanel();
-    // Update slider values to current state each time panel opens
-    const glassR = document.getElementById('tkGlassRange');
-    if (glassR) glassR.value = state.glassOpacity ?? 0.55;
-    const glassV = document.getElementById('tkGlassValue');
-    if (glassV) glassV.textContent = Math.round((1-(state.glassOpacity??0.55))*100) + '%';
     const panel = document.getElementById('tk-panel');
     const gear = document.getElementById('tk-gear-btn');
     if (!panel) return;

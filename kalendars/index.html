@@ -878,13 +878,13 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260702a"></script>
+<script src="js/calendar.js?v=20260702b"></script>
 <script src="js/calendar_extras_v4.js?v=20260611a"></script>
 <script src="js/fatigue.js?v=20260613d"></script>
-<script src="js/nightsplit.js?v=20260621f" defer></script>
+<script src="js/nightsplit.js?v=20260702b" defer></script>
 <script src="js/monthcal.js?v=20260622h" defer></script>
 <script src="js/design_v1.js" defer></script>
-<script src="js/theme.js" defer></script>
+<script src="js/theme.js?v=20260702b" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
 <script src="js/emoji.js?v=20260611a" defer></script>
 <script src="js/levels.js?v=20260618a" defer></script>
@@ -919,10 +919,9 @@ window.__minkaLocalBuild = '20260702a';
       }
     });
   }
-  document.addEventListener('DOMContentLoaded', function(){
-    cleanupJuneFirstCarryovers();
-    setInterval(cleanupJuneFirstCarryovers, 350);
-  });
+  // No more 350ms forever-poll: the daySelected hook covers navigating onto
+  // 01.06.2026; anything else was wasted CPU three times a second.
+  document.addEventListener('DOMContentLoaded', cleanupJuneFirstCarryovers);
   window.addEventListener('daySelected', function(){ setTimeout(cleanupJuneFirstCarryovers, 0); setTimeout(cleanupJuneFirstCarryovers, 120); });
 })();
 </script>
@@ -2946,8 +2945,10 @@ function nextNews(){
           }
         }
       }
+      // Schedule at the paint rate (15fps), not raw rAF (60Hz) — the ticker
+      // only repaints every FRAME_MS anyway, so 3/4 of the wakeups were waste.
       if (document.hidden) setTimeout(function(){ requestAnimationFrame(tick); }, 1000);
-      else requestAnimationFrame(tick);
+      else setTimeout(function(){ requestAnimationFrame(tick); }, FRAME_MS);
 	    }
 	    requestAnimationFrame(tick);
 	  })();
@@ -9305,151 +9306,7 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 :root:not(.mk-mobile-shell) #minkaBar.search-open #minkaBarInner {
   border-radius: 6px !important;
 }
-:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic {
-  position: relative !important;
-  overflow: hidden !important;
-  isolation: isolate !important;
-  contain: paint !important;
-  background: rgba(7,12,20,0.72) !important;
-}
-:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic > :not(.mk-header-scenic-bg) {
-  position: relative !important;
-  z-index: 2 !important;
-}
-:root:not(.mk-mobile-shell) #minkaBarInner .mk-header-scenic-bg {
-  position: absolute !important;
-  inset: 3px !important;
-  width: auto !important;
-  border-radius: 5px !important;
-  overflow: hidden !important;
-  pointer-events: none !important;
-  z-index: 0 !important;
-  background: transparent !important;
-}
-:root:not(.mk-mobile-shell) #minkaBarInner .mk-header-scenic-bg::before,
-:root:not(.mk-mobile-shell) #minkaBarInner .mk-header-scenic-bg::after {
-  display: none !important;
-}
-:root:not(.mk-mobile-shell) #minkaBarInner .mk-header-scenic-img {
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
-  opacity: 0 !important;
-  filter: saturate(0.98) contrast(1.06) brightness(0.88) !important;
-  transition: opacity .22s ease !important;
-}
-:root:not(.mk-mobile-shell) #minkaBarInner .mk-header-scenic-bg.is-loaded .mk-header-scenic-img {
-  opacity: 1 !important;
-  filter: saturate(1.12) contrast(1.06) brightness(1.08) !important;
-}
-:root:not(.mk-mobile-shell) #minkaBarInner[data-header-period="day"] .mk-header-scenic-bg.is-loaded .mk-header-scenic-img {
-  opacity: 1 !important;
-  filter: saturate(1.06) contrast(1.04) brightness(1.04) !important;
-}
-:root:not(.mk-mobile-shell) #minkaBarInner[data-header-period="night"] .mk-header-scenic-bg.is-loaded .mk-header-scenic-img {
-  opacity: 1 !important;
-  filter: saturate(1.04) contrast(1.10) brightness(0.92) !important;
-}
-:root:not(.mk-mobile-shell) #minkaBarInner[data-header-period="sunset"] .mk-header-scenic-bg.is-loaded .mk-header-scenic-img,
-:root:not(.mk-mobile-shell) #minkaBarInner[data-header-period="morning"] .mk-header-scenic-bg.is-loaded .mk-header-scenic-img {
-  opacity: .98 !important;
-}
-:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic #minkaBarInput,
-:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-ticker-wrap,
-:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-ticker-scroll,
-:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-news-item {
-  background: transparent !important;
-  box-shadow: none !important;
-  border-color: transparent !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-bar-sep {
-  opacity: 0 !important;
-}
-:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-nameday-bar {
-  border-left-color: transparent !important;
-}
-:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-ticker-wrap {
-  margin-left: -12px !important;
-  margin-right: -4px !important;
-}
-:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic #mkSearchLaunch {
-  margin-right: -5px !important;
-}
-:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic #minkaBarMenu {
-  margin-left: -3px !important;
-}
-:root:not(.mk-mobile-shell) #minkaBar.focused #minkaBarInner.mk-header-scenic #mkSearchLaunch,
-:root:not(.mk-mobile-shell) #minkaBar.has-text #minkaBarInner.mk-header-scenic #mkSearchLaunch,
-:root:not(.mk-mobile-shell) #minkaBar.search-open #minkaBarInner.mk-header-scenic #mkSearchLaunch {
-  width: 0 !important;
-  min-width: 0 !important;
-  margin-right: 0 !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-  overflow: hidden !important;
-}
-:root:not(.mk-mobile-shell) #minkaBar.focused #minkaBarInner.mk-header-scenic #minkaBarMenu,
-:root:not(.mk-mobile-shell) #minkaBar.has-text #minkaBarInner.mk-header-scenic #minkaBarMenu,
-:root:not(.mk-mobile-shell) #minkaBar.search-open #minkaBarInner.mk-header-scenic #minkaBarMenu {
-  width: 0 !important;
-  min-width: 0 !important;
-  margin-left: 0 !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-  overflow: hidden !important;
-}
-:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-ticker-fade-l {
-  display: none !important;
-}
-:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-ticker-fade-r {
-  display: none !important;
-}
-:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-news-headline,
-:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-search-date,
-:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-search-date-meta {
-  text-shadow:
-    0 1px 2px rgba(0,0,0,0.72),
-    0 0 12px rgba(0,0,0,0.46) !important;
-}
-:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-bar-icon-btn {
-  background: transparent !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.82)) !important;
-}
-:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic #minkaBarMenu {
-  background: transparent !important;
-  box-shadow: none !important;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.70) !important;
-}
-@media (max-width: 900px) {
-  :root:not(.mk-mobile-shell) #minkaBarInner .mk-header-scenic-bg {
-    inset: 3px !important;
-    width: auto !important;
-  }
-  :root:not(.mk-mobile-shell) #minkaBarInner .mk-header-scenic-bg::before {
-    display: none !important;
-  }
-}
-@media (max-width: 760px), (prefers-reduced-motion: reduce) {
-  #minkaBarInner .mk-header-scenic-img {
-    transition: none !important;
-  }
-}
-:root.mk-mobile-shell #minkaBarInner .mk-header-scenic-bg {
-  display: none !important;
-}
-@media (max-width: 760px) {
-  #minkaBarInner .mk-header-scenic-bg {
-    display: none !important;
-  }
-}
+/* Scenic header CSS removed — plain black header. */
 :root.mk-mobile-shell .mk-search-date {
   gap: 6px !important;
 }
@@ -11045,5 +10902,17 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   document.addEventListener('touchend', openFromTap, { capture: true, passive: false });
 })();
 </script>
+
+<style id="mk-black-noglass">
+/* ══ Permanent: pure black background, zero glass ══
+   Loaded last so it wins the cascade. The animated macscape layer (3 blurred
+   orbs + grid + noise) and every backdrop-filter are gone for good — they were
+   the single biggest constant GPU cost on weak machines. */
+#macscapeBg, #wallpaperOrbOverlay { display: none !important; }
+*, *::before, *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+</style>
 </body>
 </html>
