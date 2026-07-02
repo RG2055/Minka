@@ -878,7 +878,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260702c"></script>
+<script src="js/calendar.js?v=20260702e"></script>
 <script src="js/calendar_extras_v4.js?v=20260611a"></script>
 <script src="js/fatigue.js?v=20260613d"></script>
 <script src="js/nightsplit.js?v=20260702b" defer></script>
@@ -11062,6 +11062,31 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   document.addEventListener('touchend', openFromTap, { capture: true, passive: false });
 })();
 </script>
+
+<style id="mk-duty-header">
+/* ── Duty header: ŠOBRĪD/NAKTĪ pill + readable status lines ── */
+.mk-shift-count-pill .mk-night-ok   { color: #7de8a5; }
+.mk-shift-count-pill .mk-night-drop { color: #ffb340; }
+.mk-shift-count-pill .mk-night-zero { color: #ff6b5f; }
+.mk-duty-strip {
+  display: flex; flex-direction: column; gap: 5px;
+  align-items: center; text-align: center;
+  margin: -12px 4px 14px;
+}
+.mk-duty-line {
+  font: 600 12px/1.5 Inter, system-ui, sans-serif;
+  letter-spacing: .015em; text-transform: none;
+  color: rgba(255,255,255,.62);
+}
+.mk-duty-line .mk-dl-ico { font-size: 11px; margin-right: 1px; }
+.mk-duty-line .mk-dl-t { color: #fff; font-weight: 700; }
+.mk-duty-line b { font-weight: 700; cursor: pointer; }
+.mk-duty-line b:hover { text-decoration: underline; }
+.mk-duty-line.dl-night b { color: #8ff0b5; }
+.mk-duty-line.dl-leave b { color: #ffcf8a; }
+.mk-duty-line.dl-later b { color: #9db8d8; }
+.mk-side-card.mk-dchip-flash { box-shadow: 0 0 0 2px rgba(125,232,165,.75) !important; }
+</style>
 
 <style id="mk-black-noglass">
 /* ══ Permanent: pure black background, zero glass ══

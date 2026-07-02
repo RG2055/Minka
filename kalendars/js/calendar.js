@@ -2086,6 +2086,105 @@ function filterFullList(btn) {
     el.title = `Dežūrā: ${count} ${count === 1 ? singular : plural}`;
   }
 
+  function mkEscAttr(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  }
+
+  // ── Duty header: "TAGAD n · NAKTĪ m" + per-person status chips ──────────
+  // Answers at a glance: how many are on now vs through the night, who leaves
+  // before the night and when (amber "→17"), who only arrives later (blue
+  // "17→"). Night reference = 23:00 of the active shift-day (or "now" once
+  // we're already past it).
+  const __dutyHeaderCache = {};
+
+  function renderDutyHeader(pillId, listId, workers, isToday, now, singular, plural) {
+    const pill = document.getElementById(pillId);
+    if (!pill) return;
+    __dutyHeaderCache[pillId] = isToday ? { listId, workers, singular, plural } : null;
+    let strip = document.getElementById(pillId + '-strip');
+    if (!isToday) {
+      updateShiftCountPill(pillId, workers.length, singular, plural);
+      if (strip) strip.remove();
+      return;
+    }
+    const nightRefBase = createDateFromDateTime(activeDateStr, '23:00');
+    const nightRef = (nightRefBase && nightRefBase > now) ? nightRefBase : now;
+    let nowCount = 0, nightCount = 0;
+    // Groups keyed by meaning + time, rendered as plain readable sentences:
+    // "🌙 Pa nakti: Annija, Anta" / "☀️ Līdz 17:00: Anna" / "🌙 No 17:00: Aelita"
+    const stay = [], leaveBy = {}, comeAt = {};
+    workers.forEach(function(w) {
+      const parts = String(w.name || '').trim().split(/\s+/).filter(Boolean);
+      const first = formatSideNamePart(parts[0], false) || String(w.name || '').trim();
+      const person = { first: first, name: w.name };
+      const start = w.startTime ? createDateFromDateTime(w.date || activeDateStr, w.startTime) : null;
+      const end = (w.startTime && w.endTime) ? getShiftEnd(w, w.date || activeDateStr) : null;
+      if (!start || !end) { nowCount++; stay.push(person); return; }
+      const active = now >= start && now < end;
+      const upcoming = now < start;
+      const coversNight = start <= nightRef && nightRef < end;
+      if (active) nowCount++;
+      if (coversNight) nightCount++;
+      if (active && coversNight) {
+        stay.push(person);
+      } else if (active) {
+        (leaveBy[w.endTime] = leaveBy[w.endTime] || []).push(person);
+      } else if (upcoming) {
+        (comeAt[w.startTime] = comeAt[w.startTime] || []).push(person);
+      }
+    });
+    const nCls = nightCount === 0 ? 'mk-night-zero' : (nightCount < nowCount ? 'mk-night-drop' : 'mk-night-ok');
+    pill.innerHTML = 'ŠOBRĪD ' + nowCount + '&ensp;·&ensp;<span class="' + nCls + '">NAKTĪ ' + nightCount + '</span>';
+    pill.title = 'Šobrīd dežūrā: ' + nowCount + ' · pa nakti paliks: ' + nightCount;
+    if (!strip) {
+      strip = document.createElement('div');
+      strip.className = 'mk-duty-strip';
+      strip.id = pillId + '-strip';
+      const list = document.getElementById(listId);
+      if (list && list.parentElement) list.parentElement.insertBefore(strip, list);
+    }
+    strip.dataset.list = listId;
+    const namesHtml = list => list.map(function(p) {
+      return '<b data-w="' + mkEscAttr(p.name) + '">' + mkEscAttr(p.first) + '</b>';
+    }).join(', ');
+    const lines = [];
+    if (stay.length) lines.push('<div class="mk-duty-line dl-night"><span class="mk-dl-ico">🌙</span> Pa nakti: ' + namesHtml(stay) + '</div>');
+    Object.keys(leaveBy).sort().forEach(function(t) {
+      lines.push('<div class="mk-duty-line dl-leave"><span class="mk-dl-ico">☀️</span> Līdz <span class="mk-dl-t">' + mkEscAttr(t) + '</span>: ' + namesHtml(leaveBy[t]) + '</div>');
+    });
+    Object.keys(comeAt).sort().forEach(function(t) {
+      lines.push('<div class="mk-duty-line dl-later"><span class="mk-dl-ico">🌙</span> Nāks <span class="mk-dl-t">' + mkEscAttr(t) + '</span>: ' + namesHtml(comeAt[t]) + '</div>');
+    });
+    strip.innerHTML = lines.join('');
+  }
+
+  // Name click → scroll that person's card into view with a short highlight
+  document.addEventListener('click', function(e) {
+    const nameEl = e.target && e.target.closest && e.target.closest('.mk-duty-strip [data-w]');
+    if (!nameEl) return;
+    const strip = nameEl.closest('.mk-duty-strip');
+    const list = strip && document.getElementById(strip.dataset.list || '');
+    const card = list && list.querySelector('.mk-side-card[data-worker="' + (window.CSS && CSS.escape ? CSS.escape(nameEl.dataset.w) : nameEl.dataset.w) + '"]');
+    if (!card) return;
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.classList.add('mk-dchip-flash');
+    setTimeout(function() { card.classList.remove('mk-dchip-flash'); }, 1400);
+  });
+
+  // Minute tick keeps "aiziet →17" / night counts honest without re-rendering
+  // the whole panel; cheap — two small innerHTML writes at most.
+  setInterval(function() {
+    for (const pid in __dutyHeaderCache) {
+      const c = __dutyHeaderCache[pid];
+      if (!c) continue;
+      const nowT = new Date();
+      const vis = c.workers.filter(function(w) {
+        return !(w.startTime && w.endTime) || !isWorkerShiftDone(w, w.date || activeDateStr, nowT);
+      });
+      renderDutyHeader(pid, c.listId, vis, true, nowT, c.singular, c.plural);
+    }
+  }, 60000);
+
   function formatSideNamePart(value, upper) {
     const text = String(value || '').trim();
     if (!text) return '';
@@ -2114,7 +2213,7 @@ function filterFullList(btn) {
       // That means we no longer need to merge "active yesterday" at midnight.
       // We simply render the selected date's roster.
       let workersToShow = filterVisibleWorkers(getWorkersForDateWithDate(store, activeDateStr), isToday, now);
-      updateShiftCountPill('radiographers-shift-count', workersToShow.length, 'radiogrāfers', 'radiogrāferi');
+      renderDutyHeader('radiographers-shift-count', 'radiographers-duty', workersToShow, isToday, now, 'radiogrāfers', 'radiogrāferi');
 
       radgContainer.innerHTML = "";
       workersToShow.forEach(w => {
@@ -2230,7 +2329,7 @@ function filterFullList(btn) {
         seen.add(w.name);
         return true;
       });
-      updateShiftCountPill('radiologists-shift-count', workersToShow.length, 'radiologs', 'radiologi');
+      renderDutyHeader('radiologists-shift-count', 'radiologists-duty', workersToShow, isToday, now, 'radiologs', 'radiologi');
 
       radlContainer.innerHTML = "";
       workersToShow.forEach(w => {
