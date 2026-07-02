@@ -17,7 +17,186 @@ window.__minkaGrafiksLoaderStartedAt = window.__minkaGrafiksLoaderStartedAt || D
 window.hospitalDatabase = Array.isArray(window.hospitalDatabase) ? window.hospitalDatabase : [];
 var hospitalDatabase = window.hospitalDatabase;
 
-// Scenic header backgrounds removed — plain black UI, no image loads.
+(function initMinkaHeaderScenicBackground() {
+  const assets = {
+    morning: {
+      src: 'data/header-backgrounds/header-morning-20260701.jpg',
+      position: '54% 46%',
+      next: 'day'
+    },
+    day: {
+      src: 'data/header-backgrounds/header-day-20260701.jpg',
+      position: '56% 48%',
+      next: 'sunset'
+    },
+    sunset: {
+      src: 'data/header-backgrounds/header-sunset-20260701.jpg',
+      position: '58% 48%',
+      next: 'night'
+    },
+    night: {
+      src: 'data/header-backgrounds/header-night-20260701.jpg',
+      position: '58% 48%',
+      next: 'morning'
+    }
+  };
+  const boundaries = [
+    { hour: 5, period: 'morning' },
+    { hour: 9, period: 'day' },
+    { hour: 17, period: 'sunset' },
+    { hour: 22, period: 'night' }
+  ];
+  let switchTimer = 0;
+  let preloadTimer = 0;
+  let preloadIdle = false;
+  let currentPeriod = '';
+  const preloaded = new Set();
+
+  function rigaTimeParts(date = new Date()) {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Europe/Riga',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hourCycle: 'h23'
+    }).formatToParts(date);
+    const read = type => Number(parts.find(part => part.type === type)?.value || 0);
+    return { hour: read('hour'), minute: read('minute'), second: read('second') };
+  }
+
+  function getHeaderPeriod(date = new Date()) {
+    const { hour } = rigaTimeParts(date);
+    if (hour >= 5 && hour < 9) return 'morning';
+    if (hour >= 9 && hour < 17) return 'day';
+    if (hour >= 17 && hour < 22) return 'sunset';
+    return 'night';
+  }
+
+  function getMillisecondsUntilNextPeriod(date = new Date()) {
+    const now = date.getTime();
+    const { hour, minute, second } = rigaTimeParts(date);
+    const secondsToday = hour * 3600 + minute * 60 + second;
+    const next = boundaries.find(boundary => boundary.hour * 3600 > secondsToday) || boundaries[0];
+    const nextSeconds = next.hour * 3600 + (next.hour <= hour ? 86400 : 0);
+    const deltaSeconds = Math.max(1, nextSeconds - secondsToday);
+    return Math.max(1000, deltaSeconds * 1000 - (now % 1000));
+  }
+
+  function shouldSkipScenic() {
+    return document.documentElement.classList.contains('mk-mobile-shell') ||
+      (window.matchMedia && window.matchMedia('(max-width: 760px)').matches);
+  }
+
+  function ensureLayer() {
+    const header = document.getElementById('minkaBarInner');
+    if (!header || shouldSkipScenic()) return null;
+    let layer = header.querySelector('.mk-header-scenic-bg');
+    if (!layer) {
+      layer = document.createElement('div');
+      layer.className = 'mk-header-scenic-bg';
+      layer.setAttribute('aria-hidden', 'true');
+      const img = document.createElement('img');
+      img.className = 'mk-header-scenic-img';
+      img.alt = '';
+      img.decoding = 'async';
+      img.loading = 'eager';
+      img.fetchPriority = 'low';
+      layer.appendChild(img);
+      header.prepend(layer);
+    }
+    header.classList.add('mk-header-scenic');
+    return layer;
+  }
+
+  function scheduleNextSwitch() {
+    clearTimeout(switchTimer);
+    switchTimer = setTimeout(() => {
+      applyPeriod(true);
+    }, getMillisecondsUntilNextPeriod());
+  }
+
+  function preloadNextPeriod(period) {
+    const next = assets[period]?.next;
+    const src = next && assets[next]?.src;
+    if (!src || preloaded.has(src)) return;
+    preloaded.add(src);
+    if (preloadTimer) {
+      if (preloadIdle && 'cancelIdleCallback' in window) window.cancelIdleCallback(preloadTimer);
+      else clearTimeout(preloadTimer);
+    }
+    preloadTimer = 0;
+    preloadIdle = false;
+    const run = () => {
+      const img = new Image();
+      img.decoding = 'async';
+      img.src = src;
+    };
+    if ('requestIdleCallback' in window) {
+      preloadTimer = window.requestIdleCallback(run, { timeout: 1800 });
+      preloadIdle = true;
+    } else {
+      preloadTimer = setTimeout(run, 1000);
+    }
+  }
+
+  function applyPeriod(force = false) {
+    if (shouldSkipScenic()) {
+      clearTimeout(switchTimer);
+      return;
+    }
+    const period = getHeaderPeriod();
+    const asset = assets[period];
+    const layer = ensureLayer();
+    const header = document.getElementById('minkaBarInner');
+    const img = layer?.querySelector('.mk-header-scenic-img');
+    if (!asset || !layer || !header || !img) return;
+
+    if (currentPeriod !== period || img.getAttribute('src') !== asset.src) {
+      currentPeriod = period;
+      layer.classList.remove('is-loaded');
+      header.dataset.headerPeriod = period;
+      document.documentElement.dataset.minkaHeaderPeriod = period;
+      img.style.objectPosition = asset.position;
+      img.onload = () => layer.classList.add('is-loaded');
+      img.onerror = () => layer.classList.remove('is-loaded');
+      img.src = asset.src;
+    }
+
+    preloadNextPeriod(period);
+    scheduleNextSwitch();
+  }
+
+  function refreshWhenVisible() {
+    if (!document.hidden) applyPeriod(true);
+  }
+
+  function start() {
+    applyPeriod(true);
+    document.addEventListener('visibilitychange', refreshWhenVisible, { passive: true });
+    window.addEventListener('pageshow', refreshWhenVisible, { passive: true });
+  }
+
+  window.MinkaHeaderScenic = {
+    getHeaderPeriod,
+    getMillisecondsUntilNextPeriod,
+    refresh: () => applyPeriod(true),
+    destroy() {
+      clearTimeout(switchTimer);
+      if (preloadTimer) {
+        if (preloadIdle && 'cancelIdleCallback' in window) window.cancelIdleCallback(preloadTimer);
+        else clearTimeout(preloadTimer);
+      }
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+      window.removeEventListener('pageshow', refreshWhenVisible);
+    }
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start, { once: true });
+  } else {
+    start();
+  }
+})();
 
 
 
