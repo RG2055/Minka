@@ -976,8 +976,21 @@ function filterFullList(btn) {
     return Array.from(daysMap.values()).sort((a,b) => parseInt(a.date) - parseInt(b.date));
   }
 
+  // Cold-start resilience: one blown retry chain must never leave the page
+  // blank forever (the old error screen lived in a permanently hidden loader).
+  let __gInitBusy = false;
+  let __gInitRetryTimer = 0;
+  let __gInitToasted = false;
+  function __gScheduleRetry(delayMs) {
+    clearTimeout(__gInitRetryTimer);
+    __gInitRetryTimer = setTimeout(function(){ g_init(0); }, delayMs);
+  }
+
   async function g_init(retryCount) {
     retryCount = retryCount || 0;
+    if (window.__gDataLoaded) return;
+    if (__gInitBusy) return;
+    __gInitBusy = true;
     const loader = document.getElementById('grafiks-loader');
     try {
       if (loader && retryCount > 0) {
@@ -1046,7 +1059,9 @@ function filterFullList(btn) {
       g_selectDay(todayExists ? g_todayStr : firstDate);
       g_updateLive();
       notifyHostAppReady();
-      setInterval(g_updateLive, 1000);
+      window.__gDataLoaded = true;
+      clearTimeout(__gInitRetryTimer);
+      if (!window.__minkaLiveStarted) { window.__minkaLiveStarted = true; setInterval(g_updateLive, 1000); }
       if (window.__nsKv) window.__nsKv.startPolling();
     } catch(e) {
       console.error('g_init fail:', e);
@@ -1095,12 +1110,18 @@ function filterFullList(btn) {
         if (loader) { const t = loader.querySelector('[style*="letter-spacing"]'); if(t) t.textContent = 'Savienojuma kļūda, mēģinu... (' + (retryCount+1) + '/2)'; }
         setTimeout(function(){ g_init(retryCount + 1); }, delay);
       } else {
-        if (loader) {
-          loader.style.pointerEvents = 'all';
-          loader.innerHTML = '<div style="text-align:center;padding:24px;max-width:320px"><div style="font-size:22px;margin-bottom:10px">⚠️</div><div style="color:rgba(255,120,80,0.9);font-size:11px;font-weight:700;letter-spacing:.1em">NEVAR IELĀDĒT DATUS</div><div style="font-size:9px;color:rgba(255,255,255,0.4);margin-top:8px;line-height:1.5">Pārbaudiet internetu. Ja grafiks reiz jau bija atvērts šajā pārlūkā, tiks izmantots lokālais kešs.</div><button onclick="g_init(0)" style="margin-top:14px;padding:7px 16px;border:1px solid rgba(255,120,80,0.35);background:rgba(255,80,50,0.1);color:#fff;border-radius:10px;cursor:pointer;font-size:10px;font-weight:700">🔄 Mēģināt vēlreiz</button></div>';
-          if (typeof _mkToast === 'function') _mkToast('Grafiku nevar ielādēt', 'error');
+        // Quick retries exhausted (typical PWA cold start: window opens
+        // before Wi-Fi is back). Keep retrying in the background instead of
+        // dying — the previous dead-end left a blank page until manual
+        // refresh, because the error screen lives in a hidden loader.
+        __gScheduleRetry(20000);
+        if (!__gInitToasted && typeof _mkToast === 'function') {
+          __gInitToasted = true;
+          _mkToast('Grafiku pagaidām nevar ielādēt — mēģinu automātiski', 'error');
         }
       }
+    } finally {
+      __gInitBusy = false;
     }
   }
 
@@ -4948,6 +4969,10 @@ function filterFullList(btn) {
   window.__minkaPostAssistantState = __minkaPostAssistantState;
 
   g_init(0);
+  // While nothing is rendered yet, jump on connectivity/visibility signals
+  // instead of waiting for the 20s background retry.
+  window.addEventListener('online', function(){ if (!window.__minkaLiveStarted) g_init(0); });
+  document.addEventListener('visibilitychange', function(){ if (!document.hidden && !window.__minkaLiveStarted) g_init(0); });
   try { setTimeout(() => { try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(e) {} }, 80); } catch(e) {}
   try { setTimeout(() => { try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(e) {} }, 650); } catch(e) {}
   g_installMobileDaySwipe();
