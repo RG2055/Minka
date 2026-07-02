@@ -20,10 +20,10 @@ function doGet(e) {
     ensureBolusHeader_(bolusSheet);
     var matchTs = Number(p.action === 'edit_entry' ? (p.oldTs || p.ts) : p.ts);
     var matchMin = Math.floor(matchTs / 60000);
-    var roomLabel2 = String(p.room).toUpperCase() === 'GE' ? 'GE kabinets' : 'PHILIPS kabinets';
+    var roomKey = normalizeBolusRoom_(p.room);
     var rows = bolusSheet.getDataRange().getValues();
     for (var k = rows.length - 1; k >= 1; k--) {
-      if (String(rows[k][0]).trim() !== roomLabel2) continue;
+      if (normalizeBolusRoom_(rows[k][0]) !== roomKey) continue;
       var rowTs = parseBolusTs_(rows[k][1]);
       if (!rowTs || Math.floor(rowTs / 60000) !== matchMin) continue;
       if (p.action === 'delete_entry') {
@@ -112,6 +112,13 @@ function parseBolusTs_(cell) {
   var tt = (dp[1] || '0:0').split(':');
   var ts = new Date(Number(dd[2]), Number(dd[1]) - 1, Number(dd[0]), Number(tt[0]), Number(tt[1])).getTime();
   return ts > 0 ? ts : null;
+}
+
+function normalizeBolusRoom_(value) {
+  var raw = String(value || '').toLowerCase().trim();
+  if (raw.indexOf('ge') !== -1) return 'ge';
+  if (raw.indexOf('philips') !== -1 || raw.indexOf('ph') !== -1) return 'philips';
+  return raw === 'ge' ? 'ge' : raw === 'ph' ? 'philips' : '';
 }
 
 function getOrCreateSheet_(ss, name) {
