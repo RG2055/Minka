@@ -878,7 +878,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260702b"></script>
+<script src="js/calendar.js?v=20260702c"></script>
 <script src="js/calendar_extras_v4.js?v=20260611a"></script>
 <script src="js/fatigue.js?v=20260613d"></script>
 <script src="js/nightsplit.js?v=20260702b" defer></script>
@@ -9306,7 +9306,167 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 :root:not(.mk-mobile-shell) #minkaBar.search-open #minkaBarInner {
   border-radius: 6px !important;
 }
-/* Scenic header CSS removed — plain black header. */
+:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic {
+  position: relative !important;
+  overflow: hidden !important;
+  isolation: isolate !important;
+  contain: paint !important;
+  background: rgba(7,12,20,0.72) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic > :not(.mk-header-scenic-bg) {
+  position: relative !important;
+  z-index: 2 !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner .mk-header-scenic-bg {
+  position: absolute !important;
+  inset: 3px !important;
+  width: auto !important;
+  border-radius: 5px !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+  background: transparent !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner .mk-header-scenic-bg::before {
+  display: none !important;
+}
+/* Readability scrim: darkens the photo under the header text, strongest on
+   the left where the date/nameday text sits, plus a soft bottom shade. */
+:root:not(.mk-mobile-shell) #minkaBarInner .mk-header-scenic-bg::after {
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+  background:
+    linear-gradient(90deg, rgba(3,6,12,0.72) 0%, rgba(3,6,12,0.50) 26%, rgba(3,6,12,0.30) 48%, rgba(3,6,12,0.42) 74%, rgba(3,6,12,0.55) 100%),
+    linear-gradient(180deg, rgba(3,6,12,0.10) 0%, rgba(3,6,12,0.00) 40%, rgba(3,6,12,0.34) 100%) !important;
+}
+/* Text over the photo gets a hard shadow so it stays readable on bright skies */
+:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic {
+  text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.55) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner .mk-header-scenic-img {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  opacity: 0 !important;
+  filter: saturate(0.98) contrast(1.06) brightness(0.88) !important;
+  transition: opacity .22s ease !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner .mk-header-scenic-bg.is-loaded .mk-header-scenic-img {
+  opacity: 1 !important;
+  filter: saturate(1.12) contrast(1.06) brightness(1.08) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner[data-header-period="day"] .mk-header-scenic-bg.is-loaded .mk-header-scenic-img {
+  opacity: 1 !important;
+  filter: saturate(1.06) contrast(1.04) brightness(1.04) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner[data-header-period="night"] .mk-header-scenic-bg.is-loaded .mk-header-scenic-img {
+  opacity: 1 !important;
+  filter: saturate(1.04) contrast(1.10) brightness(0.92) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner[data-header-period="sunset"] .mk-header-scenic-bg.is-loaded .mk-header-scenic-img,
+:root:not(.mk-mobile-shell) #minkaBarInner[data-header-period="morning"] .mk-header-scenic-bg.is-loaded .mk-header-scenic-img {
+  opacity: .98 !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic #minkaBarInput,
+:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-ticker-wrap,
+:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-ticker-scroll,
+:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-news-item {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-bar-sep {
+  opacity: 0 !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-nameday-bar {
+  border-left-color: transparent !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-ticker-wrap {
+  margin-left: -12px !important;
+  margin-right: -4px !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic #mkSearchLaunch {
+  margin-right: -5px !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic #minkaBarMenu {
+  margin-left: -3px !important;
+}
+:root:not(.mk-mobile-shell) #minkaBar.focused #minkaBarInner.mk-header-scenic #mkSearchLaunch,
+:root:not(.mk-mobile-shell) #minkaBar.has-text #minkaBarInner.mk-header-scenic #mkSearchLaunch,
+:root:not(.mk-mobile-shell) #minkaBar.search-open #minkaBarInner.mk-header-scenic #mkSearchLaunch {
+  width: 0 !important;
+  min-width: 0 !important;
+  margin-right: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+}
+:root:not(.mk-mobile-shell) #minkaBar.focused #minkaBarInner.mk-header-scenic #minkaBarMenu,
+:root:not(.mk-mobile-shell) #minkaBar.has-text #minkaBarInner.mk-header-scenic #minkaBarMenu,
+:root:not(.mk-mobile-shell) #minkaBar.search-open #minkaBarInner.mk-header-scenic #minkaBarMenu {
+  width: 0 !important;
+  min-width: 0 !important;
+  margin-left: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-ticker-fade-l {
+  display: none !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-ticker-fade-r {
+  display: none !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-news-headline,
+:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-search-date,
+:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-search-date-meta {
+  text-shadow:
+    0 1px 2px rgba(0,0,0,0.72),
+    0 0 12px rgba(0,0,0,0.46) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-bar-icon-btn {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.82)) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic #minkaBarMenu {
+  background: transparent !important;
+  box-shadow: none !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.70) !important;
+}
+@media (max-width: 900px) {
+  :root:not(.mk-mobile-shell) #minkaBarInner .mk-header-scenic-bg {
+    inset: 3px !important;
+    width: auto !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarInner .mk-header-scenic-bg::before {
+    display: none !important;
+  }
+}
+@media (max-width: 760px), (prefers-reduced-motion: reduce) {
+  #minkaBarInner .mk-header-scenic-img {
+    transition: none !important;
+  }
+}
+:root.mk-mobile-shell #minkaBarInner .mk-header-scenic-bg {
+  display: none !important;
+}
+@media (max-width: 760px) {
+  #minkaBarInner .mk-header-scenic-bg {
+    display: none !important;
+  }
+}
 :root.mk-mobile-shell .mk-search-date {
   gap: 6px !important;
 }
