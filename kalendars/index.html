@@ -11063,6 +11063,20 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 })();
 </script>
 
+<script>
+// Bolus shoutout: parent shell posts when someone logs a bolus change —
+// announce it in the news ticker so the whole team sees the thanks.
+window.addEventListener('message', function(e) {
+  var d = e && e.data;
+  if (!d || d.type !== 'mk_bolus_shout') return;
+  var nm = String(d.name || '').replace(/[<>&"]/g, '').slice(0, 24);
+  var room = d.room === 'GE' ? 'GE' : 'PHILIPS';
+  if (nm && typeof window.__minkaQueueMessage === 'function') {
+    window.__minkaQueueMessage('💉 <b>' + nm + '</b> tikko nomainīja ' + room + ' bolusu — paldies!', 'top');
+  }
+});
+</script>
+
 <style id="mk-duty-header">
 /* ── Duty header: ŠOBRĪD/NAKTĪ pill + readable status lines ── */
 .mk-shift-count-pill .mk-night-ok   { color: #7de8a5; }

@@ -14,6 +14,30 @@ function doGet(e) {
     return jsonOut_({ ok: true });
   }
 
+  // Edit or delete one bolus history row. Rows are matched by room + the
+  // stored timestamp at minute precision (that is what the sheet keeps).
+  if ((p.action === 'edit_entry' || p.action === 'delete_entry') && p.room && p.ts) {
+    ensureBolusHeader_(bolusSheet);
+    var matchTs = Number(p.action === 'edit_entry' ? (p.oldTs || p.ts) : p.ts);
+    var matchMin = Math.floor(matchTs / 60000);
+    var roomLabel2 = String(p.room).toUpperCase() === 'GE' ? 'GE kabinets' : 'PHILIPS kabinets';
+    var rows = bolusSheet.getDataRange().getValues();
+    for (var k = rows.length - 1; k >= 1; k--) {
+      if (String(rows[k][0]).trim() !== roomLabel2) continue;
+      var rowTs = parseBolusTs_(rows[k][1]);
+      if (!rowTs || Math.floor(rowTs / 60000) !== matchMin) continue;
+      if (p.action === 'delete_entry') {
+        bolusSheet.deleteRow(k + 1);
+      } else {
+        var newReadable = Utilities.formatDate(new Date(Number(p.ts)), Session.getScriptTimeZone(), 'dd.MM.yyyy HH:mm');
+        var newWho = p.name ? decodeURIComponent(p.name) : String(rows[k][2] || 'Anonīms');
+        bolusSheet.getRange(k + 1, 2, 1, 2).setValues([[newReadable, newWho]]);
+      }
+      return jsonOut_({ ok: true, action: p.action });
+    }
+    return jsonOut_({ ok: false, error: 'not_found' });
+  }
+
   if (p.action === 'rad_plan_get' && p.date) {
     ensureRadiologistPlanHeader_(planSheet);
     var dateStr = normalizeDate_(p.date);
@@ -79,6 +103,15 @@ function doGet(e) {
   result.philips.history.sort(function(a, b) { return b.ts - a.ts; });
 
   return jsonOut_(result);
+}
+
+function parseBolusTs_(cell) {
+  if (cell instanceof Date) return cell.getTime();
+  var dp = String(cell || '').trim().split(' ');
+  var dd = (dp[0] || '').split('.');
+  var tt = (dp[1] || '0:0').split(':');
+  var ts = new Date(Number(dd[2]), Number(dd[1]) - 1, Number(dd[0]), Number(tt[0]), Number(tt[1])).getTime();
+  return ts > 0 ? ts : null;
 }
 
 function getOrCreateSheet_(ss, name) {
