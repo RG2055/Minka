@@ -25,7 +25,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260702e';
+  var CALENDAR_BUILD = '20260702f';
 
   function withCalendarBuild(url) {
     try {
@@ -562,7 +562,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260702e" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260702e" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260702f" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260702f" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -1881,6 +1881,7 @@ window.addEventListener('DOMContentLoaded', () => {
         <span id="bolusSegPh" class="bolus-room-seg" data-room="philips">PH</span>
       </span></span>
       <span class="bolus-dock-title">BOLUS</span>
+      <span id="bolusCrownTag" class="bolus-crown" aria-hidden="true"></span>
     </button>
 
     <div id="dockSep" role="separator" aria-hidden="true"></div>
@@ -2057,6 +2058,11 @@ window.addEventListener('DOMContentLoaded', () => {
     philips: { changedAt: null }
   };
   var _lastLocalWriteAt = { ge: 0, philips: 0 };
+  // Local history edits/deletes: block remote history overwrite briefly and
+  // track inline editor state per room (-1 = nothing open)
+  var _lastLocalHistWriteAt = { ge: 0, philips: 0 };
+  var _histEdit = { ge: -1, philips: -1 };
+  var _histDel = { ge: -1, philips: -1 };
   var _history = { ge: [], philips: [] }; // entries: {ts, name}
   var _names = { ge: '', philips: '' };
   try { _names.ge      = localStorage.getItem('minkaBolusName_ge')      || ''; } catch(e) {}
@@ -2192,14 +2198,144 @@ window.addEventListener('DOMContentLoaded', () => {
   var _open = false, _tick = null, _bc = null;
   try { _bc = new BroadcastChannel('minka-bolus-sync'); } catch(e) {}
 
+  function _bcSync() {
+    if (_bc) try { _bc.postMessage({ type: 'bolus', state: JSON.parse(JSON.stringify(_state)), history: JSON.parse(JSON.stringify(_history)) }); } catch(e) {}
+  }
   function _kvPush(roomId) {
     var ts = _state[roomId] && _state[roomId].changedAt;
     var name = encodeURIComponent(_names[roomId] || 'Anonīms');
-    if (ts) fetch(GS_URL + '?action=write&room=' + roomId + '&ts=' + ts + '&name=' + name).then(function(){ _mkToast('Saglabāts ✓', 'ok'); }).catch(function(){ _mkToast('Bolusa saglabāšana neizdevās', 'error'); });
-    if (_bc) try { _bc.postMessage({ type: 'bolus', state: JSON.parse(JSON.stringify(_state)), history: JSON.parse(JSON.stringify(_history)) }); } catch(e) {}
+    if (ts) fetch(GS_URL + '?action=write&room=' + roomId + '&ts=' + ts + '&name=' + name).then(function(){
+      _mkToast(_pendingThanks || 'Saglabāts ✓', 'ok');
+      _pendingThanks = null;
+      // Public shoutout in the calendar news ticker
+      var shout = _prettyFirst(_names[roomId] || '');
+      if (shout) {
+        try {
+          var fr = document.getElementById('calIframe');
+          if (fr && fr.contentWindow) fr.contentWindow.postMessage({ type: 'mk_bolus_shout', name: shout, room: roomId === 'ge' ? 'GE' : 'PHILIPS' }, '*');
+        } catch(e) {}
+      }
+    }).catch(function(){ _pendingThanks = null; _mkToast('Bolusa saglabāšana neizdevās', 'error'); });
+    _bcSync();
+  }
+  // Edit/delete a single history entry on the server (Apps Script sheet).
+  // An old server deployment answers unknown actions with the full data dump
+  // (no `ok` field) — detect that and tell the user the change is local-only.
+  function _kvEntryOp(action, roomId, params) {
+    var q = GS_URL + '?action=' + action + '&room=' + roomId + '&ts=' + params.ts;
+    if (params.oldTs) q += '&oldTs=' + params.oldTs;
+    if (params.name !== undefined) q += '&name=' + encodeURIComponent(params.name || 'Anonīms');
+    fetch(q).then(function(r){ return r.json(); }).then(function(j) {
+      if (j && j.ok) _mkToast(action === 'delete_entry' ? 'Ieraksts dzēsts ✓' : 'Ieraksts izlabots ✓', 'ok');
+      else _mkToast('Serveris vēl neatbalsta labošanu — izmaiņa redzama tikai šajā ierīcē', 'error');
+    }).catch(function(){ _mkToast('Nav savienojuma — izmaiņa redzama tikai šajā ierīcē', 'error'); });
+  }
+  // The newest history entry drives the ring — recompute after edit/delete
+  function _recalcChangedAt(roomId) {
+    var top = _history[roomId] && _history[roomId][0];
+    _state[roomId].changedAt = top ? (top.ts || top) : null;
+  }
+  function _applyHistEdit(roomId, i, newTs, newName) {
+    var entry = _history[roomId] && _history[roomId][i];
+    if (!entry) return;
+    var oldTs = entry.ts || entry;
+    _history[roomId][i] = { ts: newTs, name: (newName || '').trim() || 'Anonīms' };
+    _history[roomId].sort(function(a, b) { return (b.ts || b) - (a.ts || a); });
+    _histEdit[roomId] = -1;
+    _recalcChangedAt(roomId);
+    _markLocalWrite(roomId); _markLocalHistWrite(roomId);
+    _save(); _saveHistory(); _render(); _updateLed();
+    _kvEntryOp('edit_entry', roomId, { oldTs: oldTs, ts: newTs, name: (newName || '').trim() || 'Anonīms' });
+    _bcSync();
+  }
+  function _applyHistDelete(roomId, i) {
+    var entry = _history[roomId] && _history[roomId][i];
+    if (!entry) return;
+    var ts = entry.ts || entry;
+    _history[roomId].splice(i, 1);
+    _histDel[roomId] = -1;
+    _recalcChangedAt(roomId);
+    _markLocalWrite(roomId); _markLocalHistWrite(roomId);
+    _save(); _saveHistory(); _render(); _updateLed();
+    _kvEntryOp('delete_entry', roomId, { ts: ts });
+    _bcSync();
   }
   function _markLocalWrite(roomId) {
     _lastLocalWriteAt[roomId] = Date.now();
+  }
+  function _markLocalHistWrite(roomId) {
+    _lastLocalHistWriteAt[roomId] = Date.now();
+  }
+  function _remoteHistOverwriteAllowed(roomId) {
+    return (Date.now() - (_lastLocalHistWriteAt[roomId] || 0)) > 90000;
+  }
+
+  // ── Gamification: month leaderboard, champion crown, personal thanks ──
+  var _pendingThanks = null;
+  function _escHtml(v) {
+    return String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  }
+  function _splitNames(raw) {
+    return String(raw || '').split(/[\/+&,]/).map(function(x){ return x.trim(); })
+      .filter(function(x){ return x && x.toLowerCase() !== 'anonīms'; });
+  }
+  function _monthTop(limit) {
+    var now = new Date(), y = now.getFullYear(), mo = now.getMonth();
+    var counts = {}, disp = {};
+    ROOMS.forEach(function(r) {
+      (_history[r.id] || []).forEach(function(e) {
+        var d = new Date(e.ts || e);
+        if (d.getFullYear() !== y || d.getMonth() !== mo) return;
+        _splitNames(e.name).forEach(function(n) {
+          var k = n.toUpperCase();
+          counts[k] = (counts[k] || 0) + 1;
+          if (!disp[k]) disp[k] = n;
+        });
+      });
+    });
+    return Object.keys(counts).map(function(k) { return { key: k, name: disp[k], count: counts[k] }; })
+      .sort(function(a, b) { return b.count - a.count || a.name.localeCompare(b.name); })
+      .slice(0, limit || 5);
+  }
+  var _champ = null, _champAt = 0;
+  function _updateChamp() {
+    var t = _monthTop(1);
+    _champ = (t[0] && t[0].count >= 2) ? t[0] : null;
+    _champAt = Date.now();
+  }
+  function _updateChampCached() { if (Date.now() - _champAt > 60000) _updateChamp(); }
+  function _isChamp(name) {
+    if (!_champ) return false;
+    if (String(name || '').trim().toUpperCase() === _champ.key) return true;
+    return _splitNames(name).some(function(n){ return n.toUpperCase() === _champ.key; });
+  }
+  function _prettyFirst(n) {
+    var f = String(n || '').trim().split(/\s+/)[0] || '';
+    return f ? f.charAt(0).toUpperCase() + f.slice(1).toLowerCase() : '';
+  }
+  function _thanksMsg(roomId) {
+    var nm = (_names[roomId] || '').trim();
+    if (!nm) return null;
+    var top = _monthTop(999), key = nm.toUpperCase(), idx = -1, cnt = 0;
+    top.forEach(function(t, i) { if (t.key === key) { idx = i; cnt = t.count; } });
+    if (cnt < 1) return null;
+    var place = idx === 0 ? ' — Tu esi TOP 1! 👑' : (idx > 0 && idx < 3 ? ' — ' + (idx + 1) + '. vieta nodaļā!' : '');
+    var rz = cnt === 1 ? '1. reize šomēnes' : 'šomēnes jau ' + cnt + '. reize';
+    return 'Paldies, ' + _prettyFirst(nm) + '! 💉 ' + rz + place;
+  }
+  function _renderTops() {
+    var p = document.getElementById('bolus-tops');
+    if (!p) return;
+    _updateChamp();
+    var MO = ['janvārī','februārī','martā','aprīlī','maijā','jūnijā','jūlijā','augustā','septembrī','oktobrī','novembrī','decembrī'];
+    var top = _monthTop(5), medals = ['👑','🥈','🥉','4.','5.'];
+    p.innerHTML = '<div class="btops-h">Čaklākie bolusa mainītāji ' + MO[new Date().getMonth()] + '</div>' +
+      (top.length ? top.map(function(t, i) {
+        return '<div class="btops-row' + (i === 0 ? ' btops-first' : '') + '">' +
+          '<span class="btops-medal">' + medals[i] + '</span>' +
+          '<span class="btops-name">' + _escHtml(t.name) + '</span>' +
+          '<span class="btops-cnt">' + t.count + '×</span></div>';
+      }).join('') : '<div class="btops-row">Šomēnes vēl nav ierakstu</div>');
   }
   function _remoteOverwriteAllowed(roomId) {
     return (Date.now() - (_lastLocalWriteAt[roomId] || 0)) > 15000;
@@ -2213,7 +2349,7 @@ window.addEventListener('DOMContentLoaded', () => {
         if (rem && rem.changedAt && _remoteOverwriteAllowed(r.id) && (!loc.changedAt || rem.changedAt > loc.changedAt)) {
           _state[r.id] = { changedAt: rem.changedAt }; changed = true;
         }
-        if (rem && rem.history) _history[r.id] = rem.history;
+        if (rem && rem.history && _remoteHistOverwriteAllowed(r.id)) _history[r.id] = rem.history;
       });
       if (changed) _save();
       _saveHistory();
@@ -2254,7 +2390,18 @@ window.addEventListener('DOMContentLoaded', () => {
     var h = Math.floor(ms / 3600000);
     var m = Math.floor((ms % 3600000) / 60000);
     var s = Math.floor((ms % 60000) / 1000);
+    // 100h+ elapsed: minutes/seconds carry no information — keep the screen
+    // text short so it always fits inside the injector display chip.
+    if (h >= 100) return { hm: h + 'h', s: ('0'+m).slice(-2) + 'm' };
     return { hm: h + 'h ' + ('0'+m).slice(-2) + 'm', s: ('0'+s).slice(-2) + 's' };
+  }
+  // Plain-language hours+minutes for the 24h progress bar caption
+  function _fmtHM(ms) {
+    if (ms < 0) ms = 0;
+    var h = Math.floor(ms / 3600000);
+    var m = Math.floor((ms % 3600000) / 60000);
+    if (h >= 100) return h + 'h';
+    return h + 'h ' + ('0'+m).slice(-2) + 'm';
   }
   // Room accent used when fresh (< 60%); warning colours take over as timer ages
   function _ringColor(pct, roomId) {
@@ -2311,24 +2458,46 @@ window.addEventListener('DOMContentLoaded', () => {
         workers.map(function(n){
           var first = n.split(/\s+/)[0];
           var sel   = curName === n;
-          return '<button class="bwc'+(sel?' bwsel':'')+'" data-room="'+r.id+'" data-name="'+n.replace(/"/g,'&quot;')+'">'+first+'</button>';
+          return '<button class="bwc'+(sel?' bwsel':'')+'" data-room="'+r.id+'" data-name="'+n.replace(/"/g,'&quot;')+'">'+(_isChamp(n)?'👑 ':'')+first+'</button>';
         }).join('')+
         '<button class="bwc bwcits'+(isCustom?' bwsel':'')+'" data-room="'+r.id+'">Cits</button>'+
         '<button class="bwc bwblank'+(curName===''?' bwsel':'')+'" data-room="'+r.id+'" data-name="">—</button>'+
       '</div>'+
       (isCustom ? '<input class="bname-inp bname-cits" data-room="'+r.id+'" type="text" placeholder="Ieraksti vārdu..." maxlength="24" autocomplete="off" value="'+curName.trim().replace(/"/g,'&quot;')+'">' : '');
+    var tubeC = r.color;
+    var injScene =
+      '<svg class="binj-svg" viewBox="0 0 220 78" aria-hidden="true">'+
+        '<rect x="8" y="24" width="204" height="34" rx="17" fill="rgba(255,255,255,0.06)"/>'+
+        [50, 110, 170].map(function(cx, bi){
+          var mid = bi === 1;
+          return '<rect x="'+(cx-14)+'" y="3" width="28" height="34" rx="5" fill="'+(mid?'#2c3a52':'#16264a')+'" stroke="rgba(255,255,255,0.20)" stroke-width="1"/>'+
+            '<rect x="'+(cx-9)+'" y="10" width="18" height="11" rx="2" fill="rgba(255,255,255,0.16)"/>'+
+            '<rect x="'+(cx-4)+'" y="37" width="8" height="6" rx="1.5" fill="#9fb0c8"/>'+
+            '<circle cx="'+cx+'" cy="48" r="4" fill="none" stroke="#9fb0c8" stroke-width="1.6"/>';
+        }).join('')+
+        '<path d="M50 52 C50 66 78 71 108 75" fill="none" stroke="'+tubeC+'" stroke-width="2.6" stroke-linecap="round" opacity="0.9"/>'+
+        '<path d="M170 52 C170 66 142 71 112 75" fill="none" stroke="'+tubeC+'" stroke-width="2.6" stroke-linecap="round" opacity="0.9"/>'+
+        '<path d="M110 52 L110 75" fill="none" stroke="#cfd9e6" stroke-width="2" stroke-linecap="round" opacity="0.85"/>'+
+      '</svg>';
+    var bodyFill = r.id === 'philips' ? '#0c3520' : '#0d2b52';
     return '<div class="brc'+(over?' brd':'')+'" data-room="'+r.id+'">'+
       '<div class="brn" style="color:'+r.color+'">'+r.label+'</div>'+
-      '<div class="bring-wrap">'+
-        '<svg class="bring-svg" viewBox="0 0 100 100">'+
-          '<circle class="bring-bg" cx="50" cy="50" r="'+R+'"/>'+
-          '<circle class="bring-arc" cx="50" cy="50" r="'+R+'" style="stroke:'+(elapsed !== null ? ringColor : 'transparent')+';stroke-dasharray:'+ringStroke.dasharray+';stroke-dashoffset:'+ringStroke.dashoffset+';stroke-linecap:'+ringStroke.cap+';'+(over?'animation:bring-pulse 1.2s ease-in-out infinite;':'')+'"/>'+
+      injScene+
+      '<div class="binj-body">'+
+        '<svg class="binj-shell" viewBox="0 0 220 150" preserveAspectRatio="none" aria-hidden="true">'+
+          '<path d="M32 4 L188 4 C195 4 200 9 201 16 L212 128 C213 139 204 146 194 146 L26 146 C16 146 7 139 8 128 L19 16 C20 9 25 4 32 4 Z" fill="'+bodyFill+'" stroke="'+r.color+'" stroke-opacity="0.45" stroke-width="1.6"/>'+
+          '<path d="M88 137 L132 137" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>'+
         '</svg>'+
-        '<div class="bring-inner">'+
-          '<div class="bring-time'+(over?' bring-over':'')+'">'+ringParts.hm+'</div>'+
-          '<div class="bring-secs'+(over?' bring-over':'')+'">'+ringParts.s+'</div>'+
-          '<div class="bring-label">/ 24h</div>'+
+        '<div class="bscreen'+(over?' bscreen-over':'')+'">'+
+          '<div class="bring-time">'+ringParts.hm+'</div>'+
+          '<div class="bring-secs">'+ringParts.s+'</div>'+
+          '<div class="bring-label">'+(over?'PĀRI 24h!':'kopš maiņas / 24h')+'</div>'+
         '</div>'+
+        '<div class="bbar" title="Cik daudz no 24h pagājis">'+
+          '<div class="bbar-fill" style="width:'+(elapsed !== null ? Math.min(pct,100).toFixed(1) : 0)+'%;background:'+(elapsed !== null ? ringColor : 'transparent')+';'+(over?'animation:bring-pulse-soft 1.6s ease-in-out infinite;':'')+'"></div>'+
+        '</div>'+
+        '<div class="bbar-scale"><span>0h</span><span>12h</span><span>24h</span></div>'+
+        '<div class="bbar-txt'+(over?' bbar-txt-over':'')+'">'+(elapsed === null ? 'nav ierakstu' : (over ? 'pāri par '+_fmtHM(elapsed - WARN_MS) : 'līdz 24h vēl '+_fmtHM(WARN_MS - elapsed)))+'</div>'+
       '</div>'+
       chipsHtml+
       (function(){
@@ -2351,16 +2520,40 @@ window.addEventListener('DOMContentLoaded', () => {
           calH+tpH+
         '</div>';
       })()+
-      '<div class="bhist-hdr"><span class="bhist-lbl">Vēsture</span>'+((_history[r.id]&&_history[r.id].length)?'<span class="bhist-cnt">'+_history[r.id].length+'</span>':'')+'</div>'+
+      '<div class="bhist-hdr"><span class="bhist-lbl">Vēsture</span>'+((_history[r.id]&&_history[r.id].length)?'<span class="bhist-cnt">'+_history[r.id].length+'</span>':'')+'<span class="bhist-hint">✏️ labot · 🗑️ dzēst</span></div>'+
       '<div class="bhist" id="bhist-'+r.id+'">'+
         (_history[r.id] && _history[r.id].length ?
           _history[r.id].map(function(entry,i){
             var ts = entry.ts || entry;
             var who = entry.name || 'Anonīms';
-            return '<div class="bhist-row'+(i===0?' bhist-latest':'')+'">'+
+            if (_histEdit[r.id] === i) {
+              return '<div class="bhist-row bhist-editing" data-i="'+i+'">'+
+                '<div class="bhe-head">✏️ Labo ierakstu nr. '+(i+1)+'</div>'+
+                '<input type="datetime-local" class="bhe-dt" data-room="'+r.id+'" data-i="'+i+'" value="'+_dtLocal(ts)+'">'+
+                '<input type="text" class="bhe-nm" data-room="'+r.id+'" data-i="'+i+'" maxlength="30" placeholder="Vārds" value="'+String(who).replace(/"/g,'&quot;')+'">'+
+                '<div class="bhe-btns">'+
+                  '<button class="bhe-save" data-room="'+r.id+'" data-i="'+i+'">Saglabāt ✓</button>'+
+                  '<button class="bhe-cancel" data-room="'+r.id+'" data-i="'+i+'">Atcelt</button>'+
+                '</div>'+
+              '</div>';
+            }
+            if (_histDel[r.id] === i) {
+              return '<div class="bhist-row bhist-deleting" data-i="'+i+'">'+
+                '<div class="bhx-q">🗑️ Dzēst "'+_fmt(ts)+' · '+who+'"?</div>'+
+                '<div class="bhe-btns">'+
+                  '<button class="bhx-yes" data-room="'+r.id+'" data-i="'+i+'">Jā, dzēst</button>'+
+                  '<button class="bhx-no" data-room="'+r.id+'" data-i="'+i+'">Nē, atstāt</button>'+
+                '</div>'+
+              '</div>';
+            }
+            return '<div class="bhist-row'+(i===0?' bhist-latest':'')+'" data-i="'+i+'">'+
               '<span class="bhist-num">'+(i+1)+'.</span>'+
               '<span class="bhist-time">'+_fmt(ts)+'</span>'+
-              '<span class="bhist-who">'+who+'</span>'+
+              '<span class="bhist-who">'+(_isChamp(who)?'👑 ':'')+who+'</span>'+
+              '<span class="bh-actions">'+
+                '<button class="bh-edit" data-room="'+r.id+'" data-i="'+i+'" title="Labot šo ierakstu">✏️</button>'+
+                '<button class="bh-del" data-room="'+r.id+'" data-i="'+i+'" title="Dzēst šo ierakstu">🗑️</button>'+
+              '</span>'+
             '</div>';
           }).join('') :
           '<div class="bhist-empty">Nav ierakstu. Nospied NOMAINĪTS.</div>')+
@@ -2392,6 +2585,7 @@ window.addEventListener('DOMContentLoaded', () => {
   function _render() {
     var rooms = document.getElementById('bolus-rooms');
     if (!rooms) return;
+    _updateChamp();
     rooms.innerHTML = ROOMS.map(_renderRoom).join('');
     function _saveName(room, val) {
       _names[room] = val;
@@ -2521,6 +2715,7 @@ window.addEventListener('DOMContentLoaded', () => {
         _state[room].changedAt=ts;
         _markLocalWrite(room);
         _history[room].unshift({ts:ts,name:_names[room]||'Anonīms'});
+        _pendingThanks = _thanksMsg(room);
         _save(); _saveHistory(); _kvPush(room); _render(); _updateLed(); _playMark();
       });
     });
@@ -2533,10 +2728,67 @@ window.addEventListener('DOMContentLoaded', () => {
         _markLocalWrite(room);
         _calOpen[room]=false; _tpOpen[room]=false; _calView[room]=null;
         _history[room].unshift({ts:ts,name:_names[room]||'Anonīms'});
+        _pendingThanks = _thanksMsg(room);
         _save(); _saveHistory(); _kvPush(room); _render(); _updateLed(); _playMark();
       });
     });
-    // History is always visible — no toggle button needed
+    // History: fade the bottom edge while there is more to scroll, so rows
+    // never look chopped mid-line; fade lifts at the end of the list.
+    rooms.querySelectorAll('.bhist').forEach(function(el) {
+      function updFade() {
+        el.classList.toggle('has-more', el.scrollHeight - el.scrollTop - el.clientHeight > 6);
+      }
+      el.addEventListener('scroll', updFade, { passive: true });
+      updFade();
+    });
+    // History: edit / delete per entry (inline, with explicit confirmation)
+    rooms.querySelectorAll('.bh-edit').forEach(function(btn) {
+      btn.addEventListener('click', function(e) { e.stopPropagation();
+        var room = btn.dataset.room;
+        _histDel[room] = -1;
+        _histEdit[room] = parseInt(btn.dataset.i);
+        _render();
+        setTimeout(function(){
+          var inp = rooms.querySelector('.bhe-dt[data-room="'+room+'"]');
+          if (inp) inp.focus();
+        }, 40);
+      });
+    });
+    rooms.querySelectorAll('.bh-del').forEach(function(btn) {
+      btn.addEventListener('click', function(e) { e.stopPropagation();
+        var room = btn.dataset.room;
+        _histEdit[room] = -1;
+        _histDel[room] = parseInt(btn.dataset.i);
+        _render();
+      });
+    });
+    rooms.querySelectorAll('.bhe-cancel').forEach(function(btn) {
+      btn.addEventListener('click', function(e) { e.stopPropagation();
+        _histEdit[btn.dataset.room] = -1;
+        _render();
+      });
+    });
+    rooms.querySelectorAll('.bhx-no').forEach(function(btn) {
+      btn.addEventListener('click', function(e) { e.stopPropagation();
+        _histDel[btn.dataset.room] = -1;
+        _render();
+      });
+    });
+    rooms.querySelectorAll('.bhe-save').forEach(function(btn) {
+      btn.addEventListener('click', function(e) { e.stopPropagation();
+        var room = btn.dataset.room, i = parseInt(btn.dataset.i);
+        var dtInp = rooms.querySelector('.bhe-dt[data-room="'+room+'"][data-i="'+i+'"]');
+        var nmInp = rooms.querySelector('.bhe-nm[data-room="'+room+'"][data-i="'+i+'"]');
+        var ts = dtInp ? _parseLocalDateTime(dtInp.value) : null;
+        if (ts === null) { _mkToast('Nederīgs datums/laiks — izmaiņa nav saglabāta', 'error'); return; }
+        _applyHistEdit(room, i, ts, nmInp ? nmInp.value : '');
+      });
+    });
+    rooms.querySelectorAll('.bhx-yes').forEach(function(btn) {
+      btn.addEventListener('click', function(e) { e.stopPropagation();
+        _applyHistDelete(btn.dataset.room, parseInt(btn.dataset.i));
+      });
+    });
     _updateLed();
   }
   function _openEditModal(roomId) {
@@ -2590,23 +2842,36 @@ window.addEventListener('DOMContentLoaded', () => {
       var ringStroke = _ringStrokeState(elapsed, pct, C);
       var card = document.querySelector('#bolus-rooms .brc[data-room="'+r.id+'"]');
       if (!card) return;
-      var arc = card.querySelector('.bring-arc');
-      if (arc) {
-        arc.style.stroke = elapsed !== null ? ringColor : 'transparent';
-        arc.style.strokeDasharray = ringStroke.dasharray;
-        arc.style.strokeDashoffset = ringStroke.dashoffset;
-        arc.style.strokeLinecap = ringStroke.cap;
-        arc.style.animation = over ? 'bring-pulse 1.2s ease-in-out infinite' : '';
+      var fill = card.querySelector('.bbar-fill');
+      if (fill) {
+        fill.style.width = (elapsed !== null ? Math.min(pct, 100).toFixed(1) : 0) + '%';
+        fill.style.background = elapsed !== null ? ringColor : 'transparent';
+        fill.style.animation = over ? 'bring-pulse-soft 1.6s ease-in-out infinite' : '';
+      }
+      var btxt = card.querySelector('.bbar-txt');
+      if (btxt) {
+        btxt.textContent = elapsed === null ? 'nav ierakstu' : (over ? 'pāri par ' + _fmtHM(elapsed - WARN_MS) : 'līdz 24h vēl ' + _fmtHM(WARN_MS - elapsed));
+        btxt.className = 'bbar-txt' + (over ? ' bbar-txt-over' : '');
       }
       var parts = _fmtRing(elapsed);
       var timeEl = card.querySelector('.bring-time');
-      if (timeEl) { timeEl.textContent = elapsed !== null ? parts.hm : '—'; timeEl.className = 'bring-time'+(over?' bring-over':''); }
+      if (timeEl) timeEl.textContent = elapsed !== null ? parts.hm : '—';
       var secsEl = card.querySelector('.bring-secs');
-      if (secsEl) { secsEl.textContent = elapsed !== null ? parts.s : ''; secsEl.className = 'bring-secs'+(over?' bring-over':''); }
+      if (secsEl) secsEl.textContent = elapsed !== null ? parts.s : '';
+      var lblEl = card.querySelector('.bring-label');
+      if (lblEl) lblEl.textContent = over ? 'PĀRI 24h!' : 'kopš maiņas / 24h';
+      var chipEl = card.querySelector('.bscreen');
+      if (chipEl) chipEl.classList.toggle('bscreen-over', over);
       if (over) card.classList.add('brd'); else card.classList.remove('brd');
     });
   }
   function _updateLed() {
+    var ct = document.getElementById('bolusCrownTag');
+    if (ct) {
+      _updateChampCached();
+      var txt = _champ ? '👑 ' + _prettyFirst(_champ.name) : '';
+      if (ct.textContent !== txt) ct.textContent = txt;
+    }
     var btn = document.getElementById('bolusDocBtn');
     var led = document.getElementById('bolusLed');
     if (!btn) return;
@@ -2720,32 +2985,67 @@ window.addEventListener('DOMContentLoaded', () => {
       /* Room name — small label, accent color comes from r.color inline */
       '.brn{font-size:clamp(11px,1.7dvh,14px);font-weight:900;letter-spacing:.26em;text-align:center;flex-shrink:0;opacity:1;text-shadow:0 0 18px currentColor;}'+
       /* ── Progress ring — HERO, fills most of card width ── */
-      '.bring-wrap{position:relative;width:min(75%,clamp(100px,16dvh,148px));aspect-ratio:1;flex-shrink:0;}'+
+      '.binj-svg{width:min(80%,222px);height:auto;display:block;margin:-2px auto -12px;flex-shrink:0;}'+
+      '.binj-body{position:relative;width:min(76%,212px);aspect-ratio:220/150;flex-shrink:0;}'+
+      '.binj-shell{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 6px 14px rgba(0,0,0,0.45));}'+
+      '.bbar{position:absolute;left:13%;right:13%;top:62%;height:8.5%;min-height:8px;border-radius:99px;background:rgba(255,255,255,0.16);overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,0.4);}'+
+      '.bbar-fill{height:100%;border-radius:99px;transition:width 1s linear;}'+
+      '.bbar-scale{position:absolute;left:13%;right:13%;top:71.5%;display:flex;justify-content:space-between;font-size:clamp(8px,1.1dvh,10px);font-weight:700;color:rgba(255,255,255,0.55);}'+
+      '.bbar-txt{position:absolute;left:7%;right:7%;top:80%;text-align:center;font-size:clamp(9.5px,1.4dvh,12px);font-weight:800;color:rgba(255,255,255,0.88);}'+
+      '.bbar-txt-over{color:#ff9d94;}'+
+      '.bring-wrap{position:relative;width:min(86%,clamp(148px,22dvh,204px));aspect-ratio:1;flex-shrink:0;}'+
       '.bring-svg{width:100%;height:100%;transform:rotate(-90deg);overflow:visible;}'+
-      '.bring-bg{fill:none;stroke:rgba(255,255,255,0.13);stroke-width:10;}'+
+      '.bring-bg{fill:none;stroke:rgba(255,255,255,0.24);stroke-width:10;}'+
       '.bring-arc{fill:none;stroke-width:10;stroke-linecap:round;vector-effect:non-scaling-stroke;shape-rendering:geometricPrecision;filter:drop-shadow(0 0 6px rgba(255,255,255,0.12));transition:stroke-dashoffset 1s,stroke 1s,stroke-dasharray 1s,stroke-linecap .18s;}'+
       '@keyframes bring-pulse{0%,100%{opacity:1}50%{opacity:.2}}'+
+      '@keyframes bring-pulse-soft{0%,100%{opacity:1}50%{opacity:.6}}'+
       '.bring-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0px;}'+
       /* "0h 50m" — hero timer, big white */
-      '.bring-time{font-size:clamp(16px,2.8dvh,22px);font-weight:900;font-variant-numeric:tabular-nums;color:#ffffff;line-height:1.1;letter-spacing:-.01em;white-space:nowrap;}'+
+      '.bscreen{position:absolute;left:13%;right:13%;top:9%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:6px 8px 5px;border-radius:11px;background:#eef3f9;box-shadow:inset 0 -2px 0 rgba(9,20,40,0.14),0 2px 8px rgba(0,0,0,0.4);}'+
+      '.bscreen .bring-time{color:#0d1b33!important;animation:none!important;font-size:clamp(15px,2.3dvh,21px);letter-spacing:-.02em;}'+
+      '.bscreen .bring-secs{color:#41618c!important;animation:none!important;}'+
+      '.bscreen .bring-label{color:#6d80a0!important;text-align:center;}'+
+      '.bscreen-over{background:#ffe7e4;}'+
+      '.bscreen-over .bring-time{color:#c21a10!important;}'+
+      '.bscreen-over .bring-secs{color:#d95048!important;}'+
+      '.bscreen-over .bring-label{color:#c21a10!important;font-weight:900!important;}'+
+      '.bring-time{font-size:clamp(16px,2.6dvh,23px);font-weight:900;font-variant-numeric:tabular-nums;color:#ffffff;line-height:1.1;letter-spacing:-.01em;white-space:nowrap;}'+
       /* "40s" — secondary, smaller */
       '.bring-secs{font-size:clamp(10px,1.5dvh,13px);font-weight:700;font-variant-numeric:tabular-nums;color:rgba(255,255,255,0.80);line-height:1.2;white-space:nowrap;}'+
-      '.bring-over{color:#ff453a!important;animation:bring-pulse 1.2s ease-in-out infinite;}'+
+      '.bring-over{color:#ff5b50!important;animation:bring-pulse-soft 1.6s ease-in-out infinite;}'+
       '.bring-label{font-size:clamp(7px,1.0dvh,9px);font-weight:700;color:rgba(255,255,255,0.60);letter-spacing:.04em;margin-top:1px;}'+
       /* ── History — always visible, no toggle button ── */
       '.bhist-hdr{width:100%;display:flex;align-items:center;gap:6px;flex-shrink:0;padding:0 2px;}'+
       '.bhist-lbl{font-size:9px;font-weight:800;letter-spacing:.12em;color:rgba(255,255,255,0.85);text-transform:uppercase;font-family:"Space Grotesk",system-ui;}'+
       '.bhist-cnt{font-size:9px;font-weight:700;color:rgba(255,255,255,0.75);background:rgba(255,255,255,0.12);border-radius:8px;padding:1px 5px;}'+
       /* History: flex:1 fills remaining card space, scrolls */
-      '.bhist{width:100%;background:rgba(0,0,0,0.22);border:1px solid rgba(255,255,255,0.06);border-radius:11px;padding:5px 6px;box-sizing:border-box;flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;-webkit-overflow-scrolling:touch;}'+
-      '.bhist-row{display:flex;flex-wrap:wrap;gap:2px 6px;align-items:baseline;font-size:10px;font-weight:600;color:rgba(255,255,255,0.82);padding:4px 2px;border-bottom:1px solid rgba(255,255,255,0.07);font-variant-numeric:tabular-nums;}'+
+      '.bhist{width:100%;background:rgba(0,0,0,0.22);border:1px solid rgba(255,255,255,0.06);border-radius:11px;padding:5px 6px 12px;box-sizing:border-box;flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;-webkit-overflow-scrolling:touch;}'+
+      '.bhist.has-more{-webkit-mask-image:linear-gradient(180deg,#000 calc(100% - 30px),transparent 100%);mask-image:linear-gradient(180deg,#000 calc(100% - 30px),transparent 100%);}'+
+      '.bhist-row{display:flex;flex-wrap:wrap;gap:2px 6px;align-items:baseline;font-size:11px;font-weight:600;color:rgba(255,255,255,0.85);padding:5px 2px;border-bottom:1px solid rgba(255,255,255,0.07);font-variant-numeric:tabular-nums;}'+
       '.bhist-row:last-child{border-bottom:none;}'+
       '.bhist-num{font-size:9px;color:rgba(255,255,255,0.50);min-width:12px;flex-shrink:0;}'+
       '.bhist-time{flex:1;color:rgba(255,255,255,0.90);font-weight:700;}'+
-      '.bhist-who{font-size:10px;color:rgba(180,230,255,0.95);background:rgba(0,180,255,0.14);border-radius:5px;padding:1px 5px;word-break:break-word;font-weight:700;}'+
+      '.bhist-who{font-size:11px;color:rgba(180,230,255,0.95);background:rgba(0,180,255,0.14);border-radius:5px;padding:1px 6px;word-break:break-word;font-weight:700;}'+
       '.bhist-latest .bhist-who{color:rgba(80,240,160,0.98);background:rgba(0,220,120,0.18);}'+
       '.bhist-latest{color:rgba(80,240,160,0.98)!important;font-weight:800;}'+
       '.bhist-empty{font-size:10px;color:rgba(255,255,255,0.55);text-align:center;padding:6px;}'+
+      '.bhist-hint{margin-left:auto;font-size:9px;font-weight:700;color:rgba(255,255,255,0.45);letter-spacing:.02em;white-space:nowrap;}'+
+      '.bh-actions{display:inline-flex;gap:4px;margin-left:auto;flex-shrink:0;}'+
+      '.bh-edit,.bh-del{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:6px;font-size:11px;line-height:1;padding:3px 5px;cursor:pointer;}'+
+      '.bh-edit:hover{background:rgba(10,132,255,0.28);}'+
+      '.bh-del:hover{background:rgba(255,69,58,0.28);}'+
+      '.bhist-editing,.bhist-deleting{display:flex;flex-direction:column;align-items:stretch;gap:6px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.18);border-radius:9px;padding:8px;margin:3px 0;}'+
+      '.bhe-head{font-size:10px;font-weight:800;color:rgba(255,255,255,0.88);}'+
+      '.bhx-q{font-size:11.5px;font-weight:800;color:#ffb4ad;line-height:1.35;word-break:break-word;}'+
+      '.bhe-dt,.bhe-nm{width:100%;box-sizing:border-box;background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.25);border-radius:7px;color:#fff;font-size:12px;font-weight:700;padding:6px;color-scheme:dark;}'+
+      '.bhe-btns{display:flex;gap:6px;}'+
+      '.bhe-save,.bhx-yes,.bhe-cancel,.bhx-no{flex:1;border-radius:7px;font-size:11px;font-weight:800;padding:7px 4px;cursor:pointer;}'+
+      '.bhe-save{background:rgba(0,210,90,0.18);border:1px solid rgba(0,230,110,0.45);color:#7df5a5;}'+
+      '.bhx-yes{background:rgba(255,69,58,0.20);border:1px solid rgba(255,69,58,0.60);color:#ffb4ad;}'+
+      '.bhe-cancel,.bhx-no{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.18);color:rgba(255,255,255,0.78);}'+
+      '.bhist::-webkit-scrollbar{width:6px;}'+
+      '.bhist::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.22);border-radius:3px;}'+
+      '.bring-label-over{color:#ff8d84!important;font-weight:900!important;letter-spacing:.03em;}'+
       /* ── NOMAINĪTS — ghost/minimal style ── */
       '.bnm-section{width:100%;background:rgba(0,0,0,0.18);border:1px solid rgba(255,255,255,0.08);border-radius:13px;padding:7px 9px 7px;box-sizing:border-box;flex-shrink:0;}'+
       '.brc[data-room="ge"] .bnm-section{border-color:rgba(10,132,255,0.22);}'+
@@ -2874,13 +3174,36 @@ window.addEventListener('DOMContentLoaded', () => {
       '.bhist-hdr{padding-top:2px!important;}'+
       '.bhist{flex:1 1 0!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;padding-bottom:26px!important;margin-bottom:0!important;}'+
 
-      '.bhist-row{font-size:9px!important;padding:3px 2px!important;}';
+      '.bhist-row{font-size:11px!important;padding:4px 2px!important;}'+
+      /* Sheet ends ABOVE the bottom dock (overlay gets padding-bottom at open
+         time, measured from the real dock height) — no more rows hiding
+         behind the toolbar. */
+      '#bolus-overlay{padding-top:10px;box-sizing:border-box;}'+
+      '#bolus-sheet{height:100%!important;max-height:100%!important;border-bottom:1px solid rgba(43,151,255,.42)!important;border-radius:12px!important;}'+
+      '#bolus-rooms{padding-bottom:max(env(safe-area-inset-bottom,0px),14px)!important;}'+
+      '#bolus-tops-btn{background:rgba(255,199,50,0.12);border:1px solid rgba(255,199,50,0.45);border-radius:9px;color:#ffd77a;font-size:11px;font-weight:800;padding:6px 10px;cursor:pointer;letter-spacing:.06em;white-space:nowrap;}'+
+      '#bolus-tops-btn.on{background:rgba(255,199,50,0.28);}'+
+      '#bolus-tops{flex-shrink:0;margin:8px 14px 0;padding:9px 12px;background:rgba(255,199,50,0.07);border:1px solid rgba(255,199,50,0.30);border-radius:12px;}'+
+      '.btops-h{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#ffd77a;margin-bottom:6px;}'+
+      '.btops-row{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:rgba(255,255,255,.88);padding:3px 0;}'+
+      '.btops-first{color:#ffe9a8;font-size:13px;}'+
+      '.btops-medal{width:24px;text-align:center;flex-shrink:0;}'+
+      '.btops-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}'+
+      '.btops-cnt{font-variant-numeric:tabular-nums;color:#ffd77a;flex-shrink:0;}'+
+      '#bolusDocBtn .bolus-crown{font-size:8px;font-weight:800;color:#ffd77a;line-height:1;display:block;text-align:center;margin-top:1px;white-space:nowrap;}';
     document.head.appendChild(s);
   }
   window.toggleBolus = function() {
     var ov = document.getElementById('bolus-overlay');
     if (!ov) return;
     _open = !_open;
+    if (_open) {
+      // Lift the sheet above the bottom dock, whatever its current height
+      var shelf = document.getElementById('dockShelf') || document.getElementById('bottomBtnBar');
+      var dockH = 0;
+      try { if (shelf) dockH = Math.ceil(shelf.getBoundingClientRect().height); } catch(e) {}
+      ov.style.paddingBottom = (dockH + 10) + 'px';
+    }
     ov.style.display = _open ? 'flex' : 'none';
     var btn = document.getElementById('bolusDocBtn');
     if (btn) btn.classList.toggle('bolus-open', _open);
@@ -2917,12 +3240,26 @@ window.addEventListener('DOMContentLoaded', () => {
         '<div id="bolus-handle"></div>'+
         '<div id="bolus-title-bar">'+
           '<span id="bolus-title"><i class="fas fa-syringe" style="font-size:10px;opacity:.7;"></i> BOLUSA MAIŅA</span>'+
-          '<button id="bolus-close-btn" onclick="toggleBolus()">✕</button>'+
+          '<span style="display:flex;gap:8px;align-items:center;">'+
+            '<button id="bolus-tops-btn" type="button" title="Mēneša čaklākie">🏆 TOPS</button>'+
+            '<button id="bolus-close-btn" onclick="toggleBolus()">✕</button>'+
+          '</span>'+
         '</div>'+
+        '<div id="bolus-tops" style="display:none"></div>'+
         '<div id="bolus-rooms"></div>'+
       '</div>';
     ov.addEventListener('click', function(e){ if(e.target===ov) toggleBolus(); });
     document.body.appendChild(ov);
+    var topsBtn = document.getElementById('bolus-tops-btn');
+    if (topsBtn) topsBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var p = document.getElementById('bolus-tops');
+      if (!p) return;
+      var opening = p.style.display === 'none';
+      if (opening) _renderTops();
+      p.style.display = opening ? 'block' : 'none';
+      topsBtn.classList.toggle('on', opening);
+    });
     // Edit modal
     var em = document.createElement('div');
     em.id = 'bolus-edit-modal';
@@ -3664,7 +4001,7 @@ window.addEventListener('message', function(e) {
 
 <script>
 if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-  const MINKA_APP_VERSION = '2026.07.02e';
+  const MINKA_APP_VERSION = '2026.07.02f';
   const MINKA_VERSION_KEY = 'minka_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
