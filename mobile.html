@@ -2,7 +2,7 @@
 <html lang="lv">
 <head>
 <!-- Dark first paint: prevents white flash on PWA wake/reload. -->
-<style>html{background:#060b13;}body{background:#060b13;}</style>
+<style>html{background:#000;}body{background:#000;}</style>
 <script>
 (function() {
   var API_BASE = 'https://minka-api.gamernr1elite.workers.dev';
@@ -25,7 +25,7 @@
     } catch (_e) {}
   }
 
-  var CALENDAR_BUILD = '20260618e';
+  var CALENDAR_BUILD = '20260702b';
 
   function withCalendarBuild(url) {
     try {
@@ -253,7 +253,7 @@ html, body {
   overflow: hidden;
   font-family: var(--font);
   color: var(--ink);
-  background: #040915;
+  background: #000;
 }
 
 body * { font-family: var(--font), inherit; }
@@ -794,8 +794,8 @@ html.mk-low-spec #calendarEmbed {
 
   <div id="calendarEmbed">
     <iframe
-      src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260615d"
-      data-base-src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260615d"
+      src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260702b"
+      data-base-src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260702b"
       id="calIframe"
       loading="eager"
       allowtransparency="true"
@@ -1534,7 +1534,7 @@ html.mk-low-spec #calendarEmbed {
 
   <script>
   if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-    const MINKA_APP_VERSION = '2026.06.11a.mobile';
+    const MINKA_APP_VERSION = '2026.07.02b.mobile';
     const MINKA_VERSION_KEY = 'minka_mobile_app_version';
     const MINKA_RELOAD_KEY = 'minka_mobile_sw_reloading';
     function clearMinkaRuntimeCaches() {
@@ -1578,5 +1578,12 @@ html.mk-low-spec #calendarEmbed {
     });
   }
   </script>
+<style id="mk-black-noglass">
+/* ══ Permanent: pure black shell, zero glass ══ (loaded last, wins cascade) */
+*, *::before, *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+</style>
 </body>
 </html>

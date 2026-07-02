@@ -25,7 +25,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260702a';
+  var CALENDAR_BUILD = '20260702b';
 
   function withCalendarBuild(url) {
     try {
@@ -331,15 +331,8 @@
 html, body {
   margin: 0; padding: 0; overflow: hidden;
   height: 100vh; width: 100vw;
-  background:
-    radial-gradient(1200px 700px at 8% 50%, rgba(0,95,255,.22), transparent 55%),
-    radial-gradient(1200px 700px at 92% 50%, rgba(0,255,180,.12), transparent 58%),
-    linear-gradient(180deg, #040812 0%, #050a14 55%, #060b13 100%);
-  transition: background-color 0.5s ease;
-}
-/* Wallpaper on body */
-body.has-wallpaper {
-  background-color: #060810;
+  /* Always pure black — wallpapers/gradients removed by request */
+  background: #000;
 }
 body * { font-family: var(--font), inherit; }
 
@@ -569,7 +562,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260702a" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260702a" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260702b" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260702b" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -610,7 +603,9 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
   var loaderText = document.getElementById('mkl-text');
   var loaderSub = document.getElementById('mkl-subtext');
   var startedAt = Date.now();
-  var minVisibleMs = 3200;
+  // Was 3200 — an artificial 3.2s brand-splash delay on every start. The
+  // loader now hides as soon as the calendar signals ready.
+  var minVisibleMs = 500;
   var litClasses = ['lit-warm','lit-cool','lit-purple'];
   var statusSteps = [
     { progress: 18, title: 'Lādē datus…', sub: 'Pieslēdzas pie grafika skata' },
@@ -3669,7 +3664,7 @@ window.addEventListener('message', function(e) {
 
 <script>
 if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-  const MINKA_APP_VERSION = '2026.07.02a';
+  const MINKA_APP_VERSION = '2026.07.02b';
   const MINKA_VERSION_KEY = 'minka_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -3726,24 +3721,10 @@ if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
 var _wpEl = null;
 
 function applyWallpaperToParent(wallpaper, bodyBase) {
-  if (wallpaper) {
-    // Set wallpaper directly as body background — overrides CSS gradient
-    document.body.style.backgroundImage = "url('" + wallpaper + "')";
-    document.body.style.backgroundSize = 'cover';
-    document.body.style.backgroundPosition = 'center';
-    document.body.style.backgroundAttachment = 'fixed';
-    document.body.style.backgroundColor = bodyBase || '#060810';
-    document.documentElement.classList.add('has-wallpaper-bg');
-  } else {
-    // Restore original CSS gradient background
-    document.body.style.backgroundImage = '';
-    document.body.style.backgroundSize = '';
-    document.body.style.backgroundPosition = '';
-    document.body.style.backgroundAttachment = '';
-    document.body.style.backgroundColor = '';
-    document.body.style.background = '';
-    document.documentElement.classList.remove('has-wallpaper-bg');
-  }
+  // Wallpapers removed: the shell is always pure black, whatever the iframe
+  // (possibly an older cached build) asks for.
+  document.body.style.background = '#000';
+  document.documentElement.classList.remove('has-wallpaper-bg');
 }
 
 window.__lastWallpaper = null;
@@ -6222,5 +6203,13 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
   });
 })();
 </script>
+
+<style id="mk-black-noglass">
+/* ══ Permanent: pure black shell, zero glass ══ (loaded last, wins cascade) */
+*, *::before, *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+</style>
 </body>
 </html>

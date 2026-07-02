@@ -641,8 +641,10 @@
         if(M) M.style.transform='rotate('+(mm*6)+'deg)';
         if(H) H.style.transform='rotate('+(hh*30)+'deg)';
       }
+      // Hands repaint at 4Hz (250ms gate above) — schedule at that rate
+      // instead of waking on every 60Hz frame.
       if(document.hidden) setTimeout(function(){ requestAnimationFrame(loop); }, 1000);
-      else requestAnimationFrame(loop);
+      else setTimeout(function(){ requestAnimationFrame(loop); }, 250);
     } requestAnimationFrame(loop);
     if(catPivot && cat && !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)){
       (function peek(){ var ang=160+Math.random()*40; catPivot.style.transform='rotate('+ang+'deg)'; setTimeout(function(){cat.style.transform='translate(-50%,-50%) translateY(-40px)';},60); setTimeout(function(){cat.style.transform='translate(-50%,-50%) translateY(0)';},1100+Math.random()*700); setTimeout(peek,3600+Math.random()*3800); })();
