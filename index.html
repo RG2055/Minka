@@ -2346,10 +2346,20 @@ window.addEventListener('DOMContentLoaded', () => {
       var changed = false;
       ROOMS.forEach(function(r) {
         var rem = remote[r.id], loc = _state[r.id];
-        if (rem && rem.changedAt && _remoteOverwriteAllowed(r.id) && (!loc.changedAt || rem.changedAt > loc.changedAt)) {
+        if (!rem) return;
+        if (rem.history && _remoteHistOverwriteAllowed(r.id) && _remoteOverwriteAllowed(r.id)) {
+          // History is the source of truth for the ring. After a delete/edit
+          // the newest entry can be OLDER than what this device remembers, so
+          // accept backward moves too — the old "only newer wins" rule kept a
+          // stale ring time forever once its entry was deleted elsewhere.
+          _history[r.id] = rem.history;
+          var top = rem.history[0];
+          var topTs = top ? (top.ts || top) : null;
+          if (topTs !== loc.changedAt) { _state[r.id] = { changedAt: topTs }; }
+          changed = true;
+        } else if (rem.changedAt && _remoteOverwriteAllowed(r.id) && (!loc.changedAt || rem.changedAt > loc.changedAt)) {
           _state[r.id] = { changedAt: rem.changedAt }; changed = true;
         }
-        if (rem && rem.history && _remoteHistOverwriteAllowed(r.id)) _history[r.id] = rem.history;
       });
       if (changed) _save();
       _saveHistory();
@@ -3225,7 +3235,19 @@ window.addEventListener('DOMContentLoaded', () => {
         var ch = false;
         ROOMS.forEach(function(r){
           var rem=d.state[r.id],loc=_state[r.id];
-          if(rem&&rem.changedAt&&_remoteOverwriteAllowed(r.id)&&(!loc.changedAt||rem.changedAt>loc.changedAt)){_state[r.id]={changedAt:rem.changedAt};if(d.history&&d.history[r.id])_history[r.id]=d.history[r.id];ch=true;}
+          if(!rem||!_remoteOverwriteAllowed(r.id)) return;
+          var remHist = d.history && d.history[r.id];
+          if (remHist) {
+            // Same rule as _kvPull: history is the source of truth, and after
+            // a delete in another tab the correct changedAt moves BACKWARD.
+            _history[r.id] = remHist;
+            var top = remHist[0];
+            var topTs = top ? (top.ts || top) : null;
+            if (topTs !== loc.changedAt) _state[r.id] = { changedAt: topTs };
+            ch = true;
+          } else if (rem.changedAt && (!loc.changedAt || rem.changedAt > loc.changedAt)) {
+            _state[r.id] = { changedAt: rem.changedAt }; ch = true;
+          }
         });
         if(ch){_save();_saveHistory();if(_open)_render();_updateLed();}
       } catch(e) {}
