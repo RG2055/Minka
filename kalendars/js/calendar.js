@@ -83,8 +83,8 @@ var hospitalDatabase = window.hospitalDatabase;
   }
 
   function shouldSkipScenic() {
-    return document.documentElement.classList.contains('mk-mobile-shell') ||
-      (window.matchMedia && window.matchMedia('(max-width: 760px)').matches);
+    // Scenic header now renders on mobile too (was desktop-only).
+    return false;
   }
 
   function ensureLayer() {

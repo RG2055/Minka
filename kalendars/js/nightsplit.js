@@ -1167,11 +1167,15 @@
 
         var naturalW = layout.scrollWidth || layout.offsetWidth || 1;
         var naturalH = layout.scrollHeight || layout.offsetHeight || 1;
-        var catW = 320;
         var stats = block.querySelector('.ns-stats-box');
-        var statsW = stats ? 360 : 0;
         var blockW = panel.clientWidth || block.clientWidth || naturalW;
-        var availW = Math.max(120, blockW - catW - statsW - 32);
+        // Narrow (phone) panel: cat + stats wrap BELOW the rooms instead of
+        // reserving 320+360px beside them — otherwise rooms hit the 120px
+        // floor and render as unreadable thumbnails.
+        var narrow = blockW < 640;
+        var catW = narrow ? 0 : 320;
+        var statsW = (stats && !narrow) ? 360 : 0;
+        var availW = Math.max(120, blockW - catW - statsW - (narrow ? 10 : 32));
         var panelRect = panel.getBoundingClientRect();
         var fitRect  = fit.getBoundingClientRect();
         var availH   = Math.max(80, panelRect.bottom - fitRect.top - 12);
@@ -1185,6 +1189,12 @@
         fit.style.width  = roomsW + 'px';
         fit.style.height = roomsH + 'px';
         if(stats) {
+          if (narrow) {
+            // Phone: stats flow below the rooms at natural size
+            stats.style.marginTop = '10px';
+            stats.style.height = 'auto';
+            stats.style.width = '100%';
+          } else {
           // Paceļam stats virsrakstu līdz sekcijas virsrakstam ("ISTABU SADALĪJUMS"),
           // bet apakšu turam izlīdzinātu ar istabu kastēm. Tāpēc negatīvs top-margin
           // (lift) + augstums = roomsH + lift. Rindas sadala šo augstumu.
@@ -1195,10 +1205,11 @@
           }
           stats.style.marginTop = (-lift) + 'px';
           stats.style.height = (roomsH + lift) + 'px';
+          }
         }
         // Pixel cat: same height as rooms, width proportional to 300:370 cat ratio.
         // SVG fills the box via CSS (width/height 100%), so no per-child sizing.
-        var lampH = roomsH;
+        var lampH = narrow ? Math.min(roomsH, 110) : roomsH;
         var lampW = Math.ceil(lampH * 300 / 370);
         if(cat) {
           cat.style.width  = lampW + 'px';

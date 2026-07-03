@@ -878,10 +878,10 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260702h"></script>
+<script src="js/calendar.js?v=20260703b"></script>
 <script src="js/calendar_extras_v4.js?v=20260611a"></script>
 <script src="js/fatigue.js?v=20260613d"></script>
-<script src="js/nightsplit.js?v=20260702b" defer></script>
+<script src="js/nightsplit.js?v=20260703a" defer></script>
 <script src="js/monthcal.js?v=20260622h" defer></script>
 <script src="js/design_v1.js" defer></script>
 <script src="js/theme.js?v=20260702b" defer></script>
@@ -7693,6 +7693,83 @@ html.mk-low-spec .pkt-cat.pkt-awake .pkt-eyes { animation: pktAwakeEyes 1.45s ea
   font-size: 8px !important;
 }
 
+/* Galvenes rinda bija 22px platāka par ekrānu — ≡ poga izspiedās ārā.
+   Datuma bloks drīkst saspiesties, pogas paliek pilnībā redzamas. */
+:root.mk-mobile-shell #mkSearchDate {
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+}
+/* Nedaudz kompaktāki izmēri, lai viss ietilpst bez apgriešanas */
+:root.mk-mobile-shell #mkSearchDateNum { font-size: 15px !important; }
+:root.mk-mobile-shell #mkSearchWeekday { font-size: 12px !important; }
+:root.mk-mobile-shell .mk-bday-badge { flex-shrink: 0 !important; }
+:root.mk-mobile-shell .mk-bday-pill { font-size: 10px !important; padding: 2px 7px !important; white-space: nowrap !important; }
+/* NAKTS SADALĪJUMS rinda bija ~30px par platu — mēness izgāja pa kreisi.
+   Tikai kompaktāki izmēri, izkārtojums nemainās. */
+:root.mk-mobile-shell #sl-ns-slot #ns-bar-toggle {
+  padding: 8px 9px !important;
+  font-size: 10px !important;
+  letter-spacing: 0.04em !important;
+}
+:root.mk-mobile-shell .sl-times-strip { gap: 4px !important; }
+:root.mk-mobile-shell .sl-times-strip .sl-ts-label { font-size: 9px !important; letter-spacing: 0.04em !important; }
+
+/* ── Scenic header on mobile: same panorama as desktop, with scrim ── */
+:root.mk-mobile-shell #minkaBarInner.mk-header-scenic {
+  position: relative !important;
+  height: auto !important;
+  min-height: 42px !important;
+  padding-bottom: 5px !important;
+  /* overflow un contain:paint nogrieza ŠODIEN pilulas apakšmalu — bildi
+     apgriež pats .mk-header-scenic-bg slānis, header drīkst būt visible */
+  overflow: visible !important;
+  isolation: isolate !important;
+  contain: none !important;
+  background: rgba(7,12,20,0.72) !important;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.55) !important;
+}
+:root.mk-mobile-shell #minkaBarInner.mk-header-scenic > :not(.mk-header-scenic-bg) {
+  position: relative !important;
+  z-index: 2 !important;
+}
+:root.mk-mobile-shell #minkaBarInner .mk-header-scenic-bg {
+  display: block !important;
+  position: absolute !important;
+  inset: 2px !important;
+  width: auto !important;
+  border-radius: inherit !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+  background: transparent !important;
+}
+:root.mk-mobile-shell #minkaBarInner .mk-header-scenic-bg::before {
+  display: none !important;
+}
+:root.mk-mobile-shell #minkaBarInner .mk-header-scenic-bg::after {
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+  background:
+    linear-gradient(90deg, rgba(3,6,12,0.42) 0%, rgba(3,6,12,0.26) 35%, rgba(3,6,12,0.18) 65%, rgba(3,6,12,0.30) 100%),
+    linear-gradient(180deg, rgba(3,6,12,0.10) 0%, rgba(3,6,12,0.00) 45%, rgba(3,6,12,0.24) 100%) !important;
+}
+:root.mk-mobile-shell #minkaBarInner .mk-header-scenic-img {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  opacity: 0 !important;
+  transition: opacity .22s ease !important;
+  filter: saturate(1.08) contrast(1.04) brightness(1.02) !important;
+}
+:root.mk-mobile-shell #minkaBarInner .mk-header-scenic-bg.is-loaded .mk-header-scenic-img {
+  opacity: 1 !important;
+}
 :root.mk-mobile-shell .ns-room-layout {
   grid-template-columns: 240px 150px !important;
   justify-content: start !important;
@@ -9459,14 +9536,7 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
     transition: none !important;
   }
 }
-:root.mk-mobile-shell #minkaBarInner .mk-header-scenic-bg {
-  display: none !important;
-}
-@media (max-width: 760px) {
-  #minkaBarInner .mk-header-scenic-bg {
-    display: none !important;
-  }
-}
+/* Scenic header enabled on mobile — see mk-mobile-fixes block. */
 :root.mk-mobile-shell .mk-search-date {
   gap: 6px !important;
 }
@@ -10835,15 +10905,30 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 :root.mk-mobile-shell .mk-stx-row {
   flex-wrap: wrap !important; gap: 7px 10px !important; padding: 11px 12px !important;
 }
-:root.mk-mobile-shell .mk-stx-av svg { width: 44px !important; height: 44px !important; }
-:root.mk-mobile-shell .mk-stx-avc { font-size: 13px !important; }
+/* Riņķa bugs: SVG tika samazināts uz 44px, bet konteiners palika 58px —
+   XP gredzens nobīdījās uz augšējo kreiso stūri un līda ārā aiz avatāra.
+   Samazinām VISU avatāru vienoti. */
+:root.mk-mobile-shell .mk-stx-av { width: 42px !important; height: 42px !important; }
+:root.mk-mobile-shell .mk-stx-av svg { width: 100% !important; height: 100% !important; inset: 0 !important; }
+:root.mk-mobile-shell .mk-stx-avc { inset: 4px !important; font-size: 12px !important; }
+:root.mk-mobile-shell .mk-stx-rank { width: 16px !important; font-size: 13px !important; }
 :root.mk-mobile-shell .mk-stx-meta { flex: 1 1 auto !important; min-width: 0 !important; }
+:root.mk-mobile-shell .mk-stx-name { font-size: 14px !important; }
+:root.mk-mobile-shell .mk-stx-title { font-size: 11px !important; margin-top: 1px !important; }
 :root.mk-mobile-shell .mk-stx-prog { flex: 1 1 100% !important; order: 5 !important; min-width: 0 !important; }
+:root.mk-mobile-shell .mk-stx-pstat { margin-top: 5px !important; }
+:root.mk-mobile-shell .mk-stx-pstat .frac { font-size: 11.5px !important; }
+:root.mk-mobile-shell .mk-stx-pstat .next { font-size: 10px !important; }
 :root.mk-mobile-shell .mk-stx-metrics {
   flex: 1 1 100% !important; order: 6 !important;
-  display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 6px !important;
+  display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 5px !important;
 }
 :root.mk-mobile-shell .mk-stx-metrics > * { min-width: 0 !important; }
+:root.mk-mobile-shell .mk-stx-metric { width: auto !important; padding: 5px 3px 5px !important; border-radius: 9px !important; }
+:root.mk-mobile-shell .mk-stx-metric .v { font-size: 13.5px !important; }
+:root.mk-mobile-shell .mk-stx-metric .k { font-size: 8px !important; margin-top: 3px !important; }
+:root.mk-mobile-shell .mk-stx-rows { gap: 8px !important; }
+:root.mk-mobile-shell .mk-stx-row { padding: 9px 10px !important; border-radius: 14px !important; }
 :root.mk-mobile-shell #grafiks-list.grid-view {
   padding-bottom: calc(210px + env(safe-area-inset-bottom, 0px)) !important;
   scroll-padding-bottom: calc(210px + env(safe-area-inset-bottom, 0px)) !important;
@@ -10858,9 +10943,10 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   min-width: 0 !important;
   max-width: none !important;
   height: auto !important;
-  min-height: 112px !important;
+  min-height: 120px !important;
   max-height: none !important;
-  aspect-ratio: 1 / .98 !important;
+  /* 1/.98 → 1/1.1: divrindu uzvārdi vairs nepazūd zem kafijas rindas */
+  aspect-ratio: 1 / 1.1 !important;
   padding: 7px !important;
   border-radius: 15px !important;
 }
@@ -10989,6 +11075,62 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 :root.mk-mobile-shell .ns-room-cat {
   display: none !important;
 }
+/* ── Scenic header on mobile: same panorama as desktop, with scrim ── */
+:root.mk-mobile-shell #minkaBarInner.mk-header-scenic {
+  position: relative !important;
+  height: auto !important;
+  min-height: 42px !important;
+  padding-bottom: 5px !important;
+  /* overflow un contain:paint nogrieza ŠODIEN pilulas apakšmalu — bildi
+     apgriež pats .mk-header-scenic-bg slānis, header drīkst būt visible */
+  overflow: visible !important;
+  isolation: isolate !important;
+  contain: none !important;
+  background: rgba(7,12,20,0.72) !important;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.55) !important;
+}
+:root.mk-mobile-shell #minkaBarInner.mk-header-scenic > :not(.mk-header-scenic-bg) {
+  position: relative !important;
+  z-index: 2 !important;
+}
+:root.mk-mobile-shell #minkaBarInner .mk-header-scenic-bg {
+  display: block !important;
+  position: absolute !important;
+  inset: 2px !important;
+  width: auto !important;
+  border-radius: inherit !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+  background: transparent !important;
+}
+:root.mk-mobile-shell #minkaBarInner .mk-header-scenic-bg::before {
+  display: none !important;
+}
+:root.mk-mobile-shell #minkaBarInner .mk-header-scenic-bg::after {
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+  background:
+    linear-gradient(90deg, rgba(3,6,12,0.42) 0%, rgba(3,6,12,0.26) 35%, rgba(3,6,12,0.18) 65%, rgba(3,6,12,0.30) 100%),
+    linear-gradient(180deg, rgba(3,6,12,0.10) 0%, rgba(3,6,12,0.00) 45%, rgba(3,6,12,0.24) 100%) !important;
+}
+:root.mk-mobile-shell #minkaBarInner .mk-header-scenic-img {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  opacity: 0 !important;
+  transition: opacity .22s ease !important;
+  filter: saturate(1.08) contrast(1.04) brightness(1.02) !important;
+}
+:root.mk-mobile-shell #minkaBarInner .mk-header-scenic-bg.is-loaded .mk-header-scenic-img {
+  opacity: 1 !important;
+}
 :root.mk-mobile-shell .ns-room-layout {
   grid-template-columns: 280px 180px !important;
   gap: 10px !important;
@@ -11044,10 +11186,19 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   function isStatsLauncher(el) {
     var node = el && el.closest && el.closest('button, [role="button"]');
     if (!node) return false;
-    var title = String(node.getAttribute('title') || node.getAttribute('aria-label') || '').toLowerCase();
-    if (title.indexOf('statistik') >= 0) return true;
-    var txt = String(node.textContent || '').toLowerCase();
-    if (txt.indexOf('statistik') >= 0) return true;
+    // Must be a real, visible, button-sized control — the old loose matching
+    // (any container containing the word/icon) hijacked stray taps elsewhere
+    // (e.g. around the night-split toggle) and opened the stats modal.
+    // Taps inside overlays (night split etc.) must never launch stats — a
+    // button there had "…pēc statistikas…" in its TITLE and the old substring
+    // match hijacked it into opening the stats modal.
+    if (node.closest('#nsOverlay, #stats-modal, #bolus-overlay')) return false;
+    var r = node.getBoundingClientRect ? node.getBoundingClientRect() : null;
+    if (!r || r.width === 0 || r.height === 0 || r.width > 220 || r.height > 120) return false;
+    var title = String(node.getAttribute('title') || node.getAttribute('aria-label') || '').trim().toLowerCase();
+    if (title === 'statistika') return true;
+    var txt = String(node.textContent || '').trim().toLowerCase();
+    if (txt === 'statistika') return true;
     var icon = node.querySelector && node.querySelector('.material-icons-round');
     return !!(icon && String(icon.textContent || '').trim() === 'bar_chart');
   }
@@ -11076,6 +11227,89 @@ window.addEventListener('message', function(e) {
   }
 });
 </script>
+
+<style id="mk-mobile-fixes">
+/* ── Mobile shell fixes (iPhone PWA) ── */
+:root.mk-mobile-shell .nsc-last-checklist {
+  width: 100% !important;
+  min-width: 0 !important;
+  font-size: 9px !important;
+  grid-auto-flow: row !important;
+  grid-template-columns: 1fr !important;
+  justify-items: start !important;
+  row-gap: 2px !important;
+  overflow: hidden !important;
+}
+/* ── Scenic header on mobile: same panorama as desktop, with scrim ── */
+:root.mk-mobile-shell #minkaBarInner.mk-header-scenic {
+  position: relative !important;
+  height: auto !important;
+  min-height: 42px !important;
+  padding-bottom: 5px !important;
+  /* overflow un contain:paint nogrieza ŠODIEN pilulas apakšmalu — bildi
+     apgriež pats .mk-header-scenic-bg slānis, header drīkst būt visible */
+  overflow: visible !important;
+  isolation: isolate !important;
+  contain: none !important;
+  background: rgba(7,12,20,0.72) !important;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.55) !important;
+}
+:root.mk-mobile-shell #minkaBarInner.mk-header-scenic > :not(.mk-header-scenic-bg) {
+  position: relative !important;
+  z-index: 2 !important;
+}
+:root.mk-mobile-shell #minkaBarInner .mk-header-scenic-bg {
+  display: block !important;
+  position: absolute !important;
+  inset: 2px !important;
+  width: auto !important;
+  border-radius: inherit !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+  background: transparent !important;
+}
+:root.mk-mobile-shell #minkaBarInner .mk-header-scenic-bg::before {
+  display: none !important;
+}
+:root.mk-mobile-shell #minkaBarInner .mk-header-scenic-bg::after {
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+  background:
+    linear-gradient(90deg, rgba(3,6,12,0.42) 0%, rgba(3,6,12,0.26) 35%, rgba(3,6,12,0.18) 65%, rgba(3,6,12,0.30) 100%),
+    linear-gradient(180deg, rgba(3,6,12,0.10) 0%, rgba(3,6,12,0.00) 45%, rgba(3,6,12,0.24) 100%) !important;
+}
+:root.mk-mobile-shell #minkaBarInner .mk-header-scenic-img {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  opacity: 0 !important;
+  transition: opacity .22s ease !important;
+  filter: saturate(1.08) contrast(1.04) brightness(1.02) !important;
+}
+:root.mk-mobile-shell #minkaBarInner .mk-header-scenic-bg.is-loaded .mk-header-scenic-img {
+  opacity: 1 !important;
+}
+:root.mk-mobile-shell .ns-room-layout {
+  grid-auto-flow: row !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  row-gap: 12px !important;
+}
+:root.mk-mobile-shell .ns-room-stage {
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  row-gap: 10px !important;
+}
+:root.mk-mobile-shell #stats-modal > div {
+  max-height: calc(100dvh - 24px) !important;
+}
+</style>
 
 <style id="mk-duty-header">
 /* ── Duty header: ŠOBRĪD/NAKTĪ pill + readable status lines ── */
