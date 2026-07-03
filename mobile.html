@@ -25,7 +25,7 @@
     } catch (_e) {}
   }
 
-  var CALENDAR_BUILD = '20260702h';
+  var CALENDAR_BUILD = '20260703b';
 
   function withCalendarBuild(url) {
     try {
@@ -82,28 +82,119 @@
   }
 
   function showGate() {
+    // Tas pats gate kā desktop versijā (foto fons, informācijas panelis),
+    // pielāgots telefonam: kolonnu izkārtojums, 16px input (iOS citādi zoomē).
     function mountGate() {
       document.documentElement.style.visibility = '';
       var overlay = document.createElement('div');
       overlay.id = 'minka-gate';
-      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(4,7,14,.86);display:flex;align-items:center;justify-content:center;z-index:999999;font-family:system-ui,sans-serif;backdrop-filter:blur(12px);padding:20px';
       overlay.innerHTML = ''
-        + '<div style="background:#0d1118;border:1px solid rgba(255,255,255,0.10);border-radius:22px;padding:24px 22px 18px;text-align:left;width:min(420px,calc(100vw - 28px));box-shadow:0 28px 80px rgba(0,0,0,.55);color:#eef2ff;">'
-        + '<div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">'
-        + '<div style="width:50px;height:50px;border-radius:16px;border:1px solid rgba(0,200,255,0.22);background:radial-gradient(circle at 30% 30%, rgba(0,200,255,0.26), rgba(0,91,182,0.11) 60%, transparent 100%), #121722;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 1px 0 rgba(255,255,255,0.05),0 10px 24px rgba(0,0,0,0.22);font-size:24px;">&#128241;</div>'
-        + '<div><div style="font-size:18px;font-weight:800;line-height:1.1;">RG Mobile</div><div style="margin-top:4px;font-size:12px;color:rgba(203,213,225,0.72);">Dro&#353;a piek&#316;uve kalend&#257;ram no telefona.</div></div>'
+        + '<style>'
+        + '#minka-gate{position:fixed;inset:0;z-index:999999;display:flex;flex-direction:column;align-items:stretch;overflow:auto;background:#060b13;font-family:Inter,system-ui,sans-serif;-webkit-overflow-scrolling:touch;}'
+        + '#minka-gate .mg-left{position:relative;display:flex;align-items:center;justify-content:center;padding:calc(30px + env(safe-area-inset-top,0px)) 18px 26px;background:radial-gradient(800px 560px at 50% 40%,rgba(12,20,36,.55) 0%,rgba(6,11,19,.35) 75%),url(data/gate-bg.webp) center/cover no-repeat #060b13;}'
+        + '#minka-gate .mg-login{position:relative;width:min(360px,100%);text-align:center;color:#eef6ff;}'
+        + '#minka-gate .mg-title{font-size:25px;font-weight:800;letter-spacing:.01em;margin-top:14px;}'
+        + '#minka-gate .mg-bar{width:58px;height:3px;border-radius:2px;background:#38bdf8;margin:12px auto 12px;}'
+        + '#minka-gate .mg-sub{font-size:13px;color:rgba(176,200,224,.78);margin-bottom:20px;}'
+        + '#minka-gate .mg-field{position:relative;margin-bottom:13px;}'
+        + '#minka-gate .mg-lock{position:absolute;left:15px;top:50%;transform:translateY(-50%);opacity:.55;pointer-events:none;}'
+        + '#minka-gate input[type=password],#minka-gate input[type=text]{width:100%;box-sizing:border-box;background:rgba(13,22,38,.7);border:1.5px solid rgba(125,211,252,.22);border-radius:12px;padding:14px 46px 14px 42px;color:#fff;font-size:16px;outline:none;}'
+        + '#minka-gate input:focus,#minka-gate input:focus-visible{outline:none!important;box-shadow:none!important;border-color:rgba(56,189,248,.55)!important;}'
+        + '#minka-gate button:focus-visible{outline:none!important;box-shadow:0 0 0 3px rgba(56,189,248,.3)!important;}'
+        + '#minka-gate .mg-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;padding:10px 12px;cursor:pointer;opacity:.55;color:#cfe6f7;touch-action:manipulation;}'
+        + '#minka-gate .mg-rem{display:flex;align-items:center;gap:8px;font-size:12.5px;color:rgba(176,200,224,.7);margin:0 2px 14px;}'
+        + '#minka-gate .mg-rem input{accent-color:#38bdf8;width:17px;height:17px;}'
+        + '#minka-gate .mg-btn{width:100%;display:flex;align-items:center;background:#1d6ae5;border:none;border-radius:12px;padding:15px 20px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;touch-action:manipulation;}'
+        + '#minka-gate .mg-btn span{flex:1;text-align:center;padding-left:17px;}'
+        + '#minka-gate .mg-btn:disabled{opacity:.6;cursor:default;}'
+        + '#minka-gate .mg-err{color:#f87171;font-size:12px;margin-top:9px;min-height:15px;}'
+        + '#minka-gate .mg-note{display:flex;gap:13px;align-items:flex-start;text-align:left;margin-top:10px;}'
+        + '#minka-gate .mg-note b{display:block;font-size:13.5px;color:#eef6ff;}'
+        + '#minka-gate .mg-note span{display:block;font-size:12px;color:rgba(176,200,224,.7);margin-top:3px;}'
+        + '#minka-gate .mg-author{display:flex;align-items:center;gap:15px;text-align:left;margin-top:15px;padding-top:15px;border-top:1px solid rgba(255,255,255,.08);}'
+        + '#minka-gate .mg-rg{flex:0 0 auto;width:48px;height:48px;border-radius:50%;border:1.5px solid rgba(125,160,210,.45);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#3b82f6;letter-spacing:.05em;}'
+        + '#minka-gate .mg-author small{display:block;font-size:11px;color:rgba(176,200,224,.6);}'
+        + '#minka-gate .mg-author b{display:block;font-size:14px;color:#eef6ff;margin:2px 0;}'
+        + '#minka-gate .mg-info{background:#fff;border-radius:22px;margin:0 12px calc(16px + env(safe-area-inset-bottom,0px));padding:24px 18px;color:#16202c;}'
+        + '#minka-gate .mg-info h2{font-size:21px;font-weight:800;margin:0 0 14px;padding-bottom:13px;border-bottom:1px solid #e7ebf0;}'
+        + '#minka-gate .mg-item{display:flex;gap:13px;align-items:flex-start;padding:14px 0;border-bottom:1px solid #e7ebf0;}'
+        + '#minka-gate .mg-item:last-of-type{border-bottom:none;}'
+        + '#minka-gate .mg-num{flex:0 0 auto;width:24px;height:24px;border-radius:50%;background:#1d6ae5;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:8px;}'
+        + '#minka-gate .mg-ic{flex:0 0 auto;width:42px;height:42px;border-radius:10px;background:#f1f4f8;display:flex;align-items:center;justify-content:center;}'
+        + '#minka-gate .mg-item p{margin:0;font-size:13.5px;line-height:1.5;color:#2a3644;}'
+        + '#minka-gate .mg-blue{color:#1d6ae5;font-weight:700;}'
+        + '#minka-gate .mg-green{color:#0f9d58;font-weight:700;}'
+        + '#minka-gate .mg-red{color:#e2483d;font-weight:700;}'
+        + '#minka-gate .mg-foot{margin-top:13px;font-size:11.5px;color:#7a8794;}'
+        + '</style>'
+        + '<div class="mg-left">'
+        + '<div class="mg-login">'
+        + '<svg width="88" height="88" viewBox="0 0 10 10" aria-hidden="true" style="display:block;margin:0 auto;">'
+        + '<g fill="#38bdf8" shape-rendering="crispEdges">'
+        + '<rect x="3" y="0" width="4" height="1" fill="#7dd3fc"/>'
+        + '<rect x="2" y="1" width="6" height="1"/>'
+        + '<rect x="1" y="2" width="1" height="1"/><rect x="4" y="2" width="2" height="1"/><rect x="8" y="2" width="1" height="1"/>'
+        + '<rect x="1" y="3" width="8" height="3"/>'
+        + '<rect x="1" y="6" width="1" height="1"/><rect x="3" y="6" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/>'
+        + '</g>'
+        + '<rect x="1.4" y="7.5" width="4.6" height="0.62" rx="0.31" fill="#7dd3fc"/>'
+        + '<rect x="2.6" y="8.42" width="5.8" height="0.62" rx="0.31" fill="#38bdf8"/>'
+        + '<rect x="1.9" y="9.34" width="3.8" height="0.62" rx="0.31" fill="#0e74b2"/>'
+        + '</svg>'
+        + '<div class="mg-title">Grafika p\u0101rskats</div>'
+        + '<div class="mg-bar"></div>'
+        + '<div class="mg-sub">Piek\u013cuve tikai autoriz\u0113tiem darbiniekiem</div>'
+        + '<div class="mg-field">'
+        + '<svg class="mg-lock" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cfe6f7" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>'
+        + '<input id="minka-pw" type="password" placeholder="Parole" autocomplete="current-password">'
+        + '<button class="mg-eye" id="minka-eye" type="button" tabindex="-1" aria-label="R\u0101d\u012bt paroli">'
+        + '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>'
+        + '</button>'
         + '</div>'
-        + '<div style="font-size:12px;line-height:1.55;color:rgba(226,232,240,0.76);margin-bottom:16px;">Sensit&#299;vie dati tiek iel&#257;d&#275;ti tikai p&#275;c autoriz&#257;cijas.</div>'
-        + '<input id="minka-pw" type="password" placeholder="Parole" autocomplete="current-password" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:12px 14px;color:#fff;font-size:14px;outline:none;margin-bottom:12px">'
-        + '<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(203,213,225,0.72);margin-bottom:14px;"><input id="minka-remember" type="checkbox" style="accent-color:#00c8ff"> Atcer&#275;ties &#353;o ier&#299;ci</label>'
-        + '<button id="minka-btn" style="width:100%;background:linear-gradient(135deg,#00b7ff,#4f46e5);border:none;border-radius:14px;padding:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer">Ieiet</button>'
-        + '<div id="minka-err" style="color:#f87171;font-size:12px;margin-top:10px;min-height:16px"></div>'
+        + '<label class="mg-rem"><input id="minka-remember" type="checkbox"> Atcer\u0113ties \u0161o ier\u012bci</label>'
+        + '<button id="minka-btn" class="mg-btn"><span>Piesl\u0113gties</span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>'
+        + '<div id="minka-err" class="mg-err"></div>'
+        + '<div class="mg-note">'
+        + '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7d9cc4" stroke-width="1.8" style="flex:0 0 auto;margin-top:2px;"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/><path d="M8.5 12l2.5 2.5 4.5-4.5" stroke="#3b82f6"/></svg>'
+        + '<div><b>Sist\u0113m\u0101 netiek izmantoti pacientu dati.</b><span>Tiek att\u0113loti tikai de\u017e\u016bru grafika dati.</span></div>'
+        + '</div>'
+        + '<div class="mg-author">'
+        + '<div class="mg-rg">RG</div>'
+        + '<div><small>Autors</small><b>Rihards Gavri\u013cenko</b><small>Radiogr\u0101fers</small></div>'
+        + '</div>'
+        + '</div>'
+        + '</div>'
+        + '<div class="mg-info">'
+        + '<h2>Inform\u0101cija</h2>'
+        + '<div class="mg-item"><div class="mg-num">1</div>'
+        + '<div class="mg-ic"><svg width="26" height="26" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2" fill="#fff" stroke="#c9d3de"/><rect x="2" y="4" width="20" height="5" rx="2" fill="#1d6ae5"/><circle cx="5" cy="6.5" r="0.9" fill="#fff"/><circle cx="8" cy="6.5" r="0.9" fill="#fff"/><rect x="5" y="12" width="10" height="1.6" fill="#c9d3de"/><rect x="5" y="15" width="13" height="1.6" fill="#c9d3de"/></svg></div>'
+        + '<p>\u0160\u012b nav instal\u0113jama programma; t\u0101 ir p\u0101rl\u016bk\u0101 atverama grafika p\u0101rskata <span class="mg-blue">t\u012bmek\u013ca lapa</span>.</p></div>'
+        + '<div class="mg-item"><div class="mg-num">2</div>'
+        + '<div class="mg-ic"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M5 2h9l5 5v15H5z" fill="#0f9d58"/><path d="M14 2l5 5h-5z" fill="#87cfa8"/><rect x="8" y="11" width="8" height="7" fill="none" stroke="#fff" stroke-width="1.3"/><path d="M8 14.5h8M12 11v7" stroke="#fff" stroke-width="1.3"/></svg></div>'
+        + '<p>Tiek att\u0113loti tikai de\u017e\u016bru grafika dati no <span class="mg-green">Google Sheets</span>. Google Sheets tiek izmantots un apstiprin\u0101ts darba vajadz\u012bb\u0101m.</p></div>'
+        + '<div class="mg-item"><div class="mg-num">3</div>'
+        + '<div class="mg-ic"><svg width="26" height="26" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2" fill="#fff" stroke="#c9d3de"/><rect x="3" y="5" width="18" height="5" rx="2" fill="#1d6ae5"/><rect x="7" y="3" width="2" height="4" rx="1" fill="#16202c"/><rect x="15" y="3" width="2" height="4" rx="1" fill="#16202c"/>'
+        + '<g fill="#5a6b7d"><circle cx="8" cy="13.5" r="1"/><circle cx="12" cy="13.5" r="1"/><circle cx="16" cy="13.5" r="1"/><circle cx="8" cy="17" r="1"/><circle cx="12" cy="17" r="1"/><circle cx="16" cy="17" r="1"/></g></svg></div>'
+        + '<p>No Google Sheets datiem tiek izmantoti <span class="mg-blue">tikai de\u017e\u016bru datumi un darba stundu ilgums</span>. \u0160ie dati tiek att\u0113loti \u0113rt\u0101k\u0101 skat\u0101 un izmantoti darbinieku <span class="mg-red">noslodzes/noguruma</span> apr\u0113\u0137inam.*</p></div>'
+        + '<div class="mg-item"><div class="mg-num">4</div>'
+        + '<div class="mg-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3a4757" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="15.5" r="1.4" fill="#3a4757" stroke="none"/></svg></div>'
+        + '<p>Piek\u013cuve lapai ir <span class="mg-blue">aizsarg\u0101ta ar paroli</span>; bez paroles grafika dati nav redzami.</p></div>'
+        + '<div class="mg-item"><div class="mg-num">5</div>'
+        + '<div class="mg-ic"><svg width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#16202c"/><path fill="#fff" d="M12 4.8a7.3 7.3 0 0 0-2.31 14.23c.37.07.5-.16.5-.35v-1.24c-2.03.44-2.46-.98-2.46-.98-.33-.85-.81-1.07-.81-1.07-.66-.45.05-.44.05-.44.73.05 1.12.75 1.12.75.65 1.12 1.71.8 2.13.61.07-.47.26-.8.46-.98-1.62-.18-3.33-.81-3.33-3.61 0-.8.29-1.45.75-1.96-.07-.18-.33-.93.07-1.93 0 0 .61-.2 2.01.75a7 7 0 0 1 3.66 0c1.4-.95 2.01-.75 2.01-.75.4 1 .15 1.75.07 1.93.47.51.75 1.16.75 1.96 0 2.81-1.71 3.43-3.34 3.61.26.23.5.67.5 1.35v2c0 .2.13.42.51.35A7.3 7.3 0 0 0 12 4.8z"/></svg></div>'
+        + '<p>Publiskaj\u0101 GitHub repozitorij\u0101 <span class="mg-blue">nav</span> grafika datu, Google Sheets piek\u013cuves datu vai paro\u013cu.</p></div>'
+        + '<div class="mg-foot">* Noguruma apr\u0113\u0137ins ir informat\u012bvs un balst\u012bts uz de\u017e\u016bru ilgumu un atp\u016btas laiku.</div>'
         + '</div>';
       document.body.prepend(overlay);
       var input = document.getElementById('minka-pw');
       var btn = document.getElementById('minka-btn');
       var err = document.getElementById('minka-err');
       var remember = document.getElementById('minka-remember');
+      var eye = document.getElementById('minka-eye');
+      eye.addEventListener('click', function() {
+        input.type = input.type === 'password' ? 'text' : 'password';
+        eye.style.opacity = input.type === 'text' ? '0.95' : '';
+        input.focus();
+      });
 
       async function attempt() {
         var password = String(input.value || '').trim();
@@ -113,7 +204,7 @@
           return;
         }
         btn.disabled = true;
-        btn.textContent = 'Pārbauda...';
+        btn.querySelector('span').textContent = 'P\u0101rbauda...';
         try {
           var res = await fetch(API_BASE + '/api/login', {
             method: 'POST',
@@ -133,13 +224,12 @@
           input.focus();
         } finally {
           btn.disabled = false;
-          btn.textContent = 'Ieiet';
+          btn.querySelector('span').textContent = 'Piesl\u0113gties';
         }
       }
 
       btn.addEventListener('click', attempt);
       input.addEventListener('keydown', function(e) { if (e.key === 'Enter') attempt(); });
-      input.focus();
     }
     document.documentElement.style.visibility = 'hidden';
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mountGate, { once: true });
@@ -441,6 +531,8 @@ html.mk-low-spec #calendarEmbed {
 
 .dock-btn {
   appearance: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   border: 1px solid rgba(255,255,255,.14);
   background:
     linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.05) 28%, rgba(255,255,255,.02)),
@@ -794,8 +886,8 @@ html.mk-low-spec #calendarEmbed {
 
   <div id="calendarEmbed">
     <iframe
-      src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260702h"
-      data-base-src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260702h"
+      src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260703b"
+      data-base-src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260703b"
       id="calIframe"
       loading="eager"
       allowtransparency="true"
@@ -847,6 +939,114 @@ html.mk-low-spec #calendarEmbed {
     ];
     var _state = { ge: { changedAt: null }, philips: { changedAt: null } };
     var _lastLocalWriteAt = { ge: 0, philips: 0 };
+    var _lastLocalHistWriteAt = { ge: 0, philips: 0 };
+    var _histEdit = { ge: -1, philips: -1 };
+    var _histDel = { ge: -1, philips: -1 };
+    var _pendingThanks = null;
+    function _markLocalHistWrite(roomId) { _lastLocalHistWriteAt[roomId] = Date.now(); }
+    function _remoteHistOverwriteAllowed(roomId) { return (Date.now() - (_lastLocalHistWriteAt[roomId] || 0)) > 90000; }
+    function _escHtml(v) { return String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+    function _splitNames(raw) {
+      return String(raw || '').split(/[\/+&,]/).map(function(x){ return x.trim(); })
+        .filter(function(x){ return x && x.toLowerCase() !== 'anonims' && x.toLowerCase() !== 'anonīms'; });
+    }
+    function _monthTop(limit) {
+      var now = new Date(), y = now.getFullYear(), mo = now.getMonth();
+      var counts = {}, disp = {};
+      ROOMS.forEach(function(r) {
+        (_history[r.id] || []).forEach(function(e) {
+          var d = new Date(e.ts || e);
+          if (d.getFullYear() !== y || d.getMonth() !== mo) return;
+          _splitNames(e.name).forEach(function(n) {
+            var k = n.toUpperCase();
+            counts[k] = (counts[k] || 0) + 1;
+            if (!disp[k]) disp[k] = n;
+          });
+        });
+      });
+      return Object.keys(counts).map(function(k) { return { key: k, name: disp[k], count: counts[k] }; })
+        .sort(function(a, b) { return b.count - a.count || a.name.localeCompare(b.name); })
+        .slice(0, limit || 5);
+    }
+    var _champ = null;
+    function _updateChamp() {
+      var t = _monthTop(1);
+      _champ = (t[0] && t[0].count >= 2) ? t[0] : null;
+    }
+    function _isChamp(name) {
+      if (!_champ) return false;
+      if (String(name || '').trim().toUpperCase() === _champ.key) return true;
+      return _splitNames(name).some(function(n){ return n.toUpperCase() === _champ.key; });
+    }
+    function _prettyFirst(n) {
+      var f = String(n || '').trim().split(/\s+/)[0] || '';
+      return f ? f.charAt(0).toUpperCase() + f.slice(1).toLowerCase() : '';
+    }
+    function _thanksMsg(roomId) {
+      var nm = (_names[roomId] || '').trim();
+      if (!nm) return null;
+      var top = _monthTop(999), key = nm.toUpperCase(), idx = -1, cnt = 0;
+      top.forEach(function(t, i) { if (t.key === key) { idx = i; cnt = t.count; } });
+      if (cnt < 1) return null;
+      var place = idx === 0 ? ' — Tu esi TOP 1! 👑' : (idx > 0 && idx < 3 ? ' — ' + (idx + 1) + '. vieta nodaļā!' : '');
+      var rz = cnt === 1 ? '1. reize šomēnes' : 'šomēnes jau ' + cnt + '. reize';
+      return 'Paldies, ' + _prettyFirst(nm) + '! 💉 ' + rz + place;
+    }
+    function _renderTops() {
+      var p = document.getElementById('bolus-tops');
+      if (!p) return;
+      _updateChamp();
+      var MO = ['janvārī','februārī','martā','aprīlī','maijā','jūnijā','jūlijā','augustā','septembrī','oktobrī','novembrī','decembrī'];
+      var top = _monthTop(5), medals = ['👑','🥈','🥉','4.','5.'];
+      p.innerHTML = '<div class="btops-h">Čaklākie bolusa mainītāji ' + MO[new Date().getMonth()] + '</div>' +
+        (top.length ? top.map(function(t, i) {
+          return '<div class="btops-row' + (i === 0 ? ' btops-first' : '') + '">' +
+            '<span class="btops-medal">' + medals[i] + '</span>' +
+            '<span class="btops-name">' + _escHtml(t.name) + '</span>' +
+            '<span class="btops-cnt">' + t.count + '×</span></div>';
+        }).join('') : '<div class="btops-row">Šomēnes vēl nav ierakstu</div>');
+    }
+    function _kvEntryOp(action, roomId, params) {
+      var q = GS_URL + '?action=' + action + '&room=' + roomId + '&ts=' + params.ts;
+      if (params.oldTs) q += '&oldTs=' + params.oldTs;
+      if (params.name !== undefined) q += '&name=' + encodeURIComponent(params.name || 'Anonims');
+      fetch(q).then(function(r){ return r.json(); }).then(function(j) {
+        if (j && j.ok) _mkToast(action === 'delete_entry' ? 'Ieraksts dzests' : 'Ieraksts izlabots', 'ok');
+        else _mkToast('Serveris vel neatbalsta labosanu — izmaina tikai saja ierice', 'error');
+      }).catch(function(){ _mkToast('Nav savienojuma — izmaina tikai saja ierice', 'error'); });
+    }
+    function _recalcChangedAt(roomId) {
+      var top = _history[roomId] && _history[roomId][0];
+      _state[roomId].changedAt = top ? (top.ts || top) : null;
+    }
+    function _applyHistEdit(roomId, i, newTs, newName) {
+      var entry = _history[roomId] && _history[roomId][i];
+      if (!entry) return;
+      var oldTs = entry.ts || entry;
+      _history[roomId][i] = { ts: newTs, name: (newName || '').trim() || 'Anonims' };
+      _history[roomId].sort(function(a, b) { return (b.ts || b) - (a.ts || a); });
+      _histEdit[roomId] = -1;
+      _recalcChangedAt(roomId);
+      _markLocalWrite(roomId); _markLocalHistWrite(roomId);
+      _save(); _saveHistory(); _render(); _updateLed();
+      _kvEntryOp('edit_entry', roomId, { oldTs: oldTs, ts: newTs, name: (newName || '').trim() || 'Anonims' });
+      _bcSync();
+    }
+    function _applyHistDelete(roomId, i) {
+      var entry = _history[roomId] && _history[roomId][i];
+      if (!entry) return;
+      var ts = entry.ts || entry;
+      _history[roomId].splice(i, 1);
+      _histDel[roomId] = -1;
+      _recalcChangedAt(roomId);
+      _markLocalWrite(roomId); _markLocalHistWrite(roomId);
+      _save(); _saveHistory(); _render(); _updateLed();
+      _kvEntryOp('delete_entry', roomId, { ts: ts });
+      _bcSync();
+    }
+    function _bcSync() {
+      if (_bc) try { _bc.postMessage({ type: 'bolus', state: JSON.parse(JSON.stringify(_state)), history: JSON.parse(JSON.stringify(_history)) }); } catch(e) {}
+    }
     var _history = { ge: [], philips: [] };
     var _names = { ge: '', philips: '' };
     try { _names.ge = localStorage.getItem('minkaBolusName_ge') || ''; } catch(e) {}
@@ -960,8 +1160,18 @@ html.mk-low-spec #calendarEmbed {
     function _kvPush(roomId) {
       var ts = _state[roomId] && _state[roomId].changedAt;
       var name = encodeURIComponent(_names[roomId] || 'Anonims');
-      if (ts) fetch(GS_URL + '?action=write&room=' + roomId + '&ts=' + ts + '&name=' + name).then(function(){ _mkToast('Saglabats', 'ok'); }).catch(function(){ _mkToast('Bolusa saglabasana neizdevas', 'error'); });
-      if (_bc) try { _bc.postMessage({ type: 'bolus', state: JSON.parse(JSON.stringify(_state)), history: JSON.parse(JSON.stringify(_history)) }); } catch(e) {}
+      if (ts) fetch(GS_URL + '?action=write&room=' + roomId + '&ts=' + ts + '&name=' + name).then(function(){
+        _mkToast(_pendingThanks || 'Saglabats', 'ok');
+        _pendingThanks = null;
+        var shout = _prettyFirst(_names[roomId] || '');
+        if (shout) {
+          try {
+            var fr = document.getElementById('calIframe');
+            if (fr && fr.contentWindow) fr.contentWindow.postMessage({ type: 'mk_bolus_shout', name: shout, room: roomId === 'ge' ? 'GE' : 'PHILIPS' }, '*');
+          } catch(e) {}
+        }
+      }).catch(function(){ _pendingThanks = null; _mkToast('Bolusa saglabasana neizdevas', 'error'); });
+      _bcSync();
     }
     function _kvPull(cb) {
       fetch(GS_URL + '?_=' + Date.now(), { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(remote) {
@@ -970,7 +1180,7 @@ html.mk-low-spec #calendarEmbed {
         ROOMS.forEach(function(r) {
           var rem = remote[r.id], loc = _state[r.id];
           if (!rem) return;
-          if (rem.history && _remoteOverwriteAllowed(r.id)) {
+          if (rem.history && _remoteOverwriteAllowed(r.id) && _remoteHistOverwriteAllowed(r.id)) {
             // History is the source of truth: after a delete on another device
             // the correct changedAt moves BACKWARD, so recompute from the top
             // entry instead of only accepting newer timestamps.
@@ -998,7 +1208,25 @@ html.mk-low-spec #calendarEmbed {
       var h = Math.floor(ms / 3600000);
       var m = Math.floor((ms % 3600000) / 60000);
       var s = Math.floor((ms % 60000) / 1000);
+      if (h >= 100) return { hm: h + 'h', s: ('0'+m).slice(-2) + 'm' };
       return { hm: h + 'h ' + ('0'+m).slice(-2) + 'm', s: ('0'+s).slice(-2) + 's' };
+    }
+    function _fmtHM(ms) {
+      if (ms < 0) ms = 0;
+      var h = Math.floor(ms / 3600000);
+      var m = Math.floor((ms % 3600000) / 60000);
+      if (h >= 100) return h + 'h';
+      return h + 'h ' + ('0'+m).slice(-2) + 'm';
+    }
+    function _dtLocal(ts) {
+      var d = ts ? new Date(ts) : new Date();
+      return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)+'T'+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+    }
+    function _parseLocalDateTime(value) {
+      var m = String(value || '').trim().match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+      if (!m) return null;
+      var dt = new Date(parseInt(m[1],10), parseInt(m[2],10)-1, parseInt(m[3],10), parseInt(m[4],10), parseInt(m[5],10), 0, 0);
+      return isNaN(dt.getTime()) ? null : dt.getTime();
     }
     function _ringColor(pct, roomId) {
       if (pct >= 95) return '#ff3b30';
@@ -1044,8 +1272,6 @@ html.mk-low-spec #calendarEmbed {
       var pct = elapsed !== null ? Math.min(elapsed / WARN_MS * 100, 100) : 0;
       var over = elapsed !== null && elapsed >= WARN_MS;
       var ringColor = elapsed !== null ? _ringColor(pct, r.id) : 'rgba(255,255,255,0.08)';
-      var R = 48, C = 2 * Math.PI * R;
-      var ringStroke = _ringStrokeState(elapsed, pct, C);
       var ringParts = elapsed !== null ? _fmtRing(elapsed) : { hm: '—', s: '' };
       var curName = _names[r.id] || '';
       var cdOffset = _chipDay[r.id] || 0;
@@ -1054,30 +1280,91 @@ html.mk-low-spec #calendarEmbed {
       var workers = _ensureWorkersForDate(cdStr);
       var cdLabel = cdOffset === 0 ? 'Sodien' : cdOffset === -1 ? 'Vakar' : cdOffset === 1 ? 'Rit' : cdStr;
       var isCustom = curName === ' ' || (!!curName && workers.indexOf(curName) === -1);
-      var chipsHtml = '<div class="bwd-nav"><button class="bwd-arr" data-room="'+r.id+'" data-dir="-1">‹</button><span class="bwd-lbl">'+cdLabel+'</span><button class="bwd-arr" data-room="'+r.id+'" data-dir="1">›</button></div><div class="bwrap">'+workers.map(function(n){ var first = n.split(/\s+/)[0]; var sel = curName === n; return '<button class="bwc'+(sel?' bwsel':'')+'" data-room="'+r.id+'" data-name="'+n.replace(/"/g,'&quot;')+'">'+first+'</button>'; }).join('')+'<button class="bwc bwcits'+(isCustom?' bwsel':'')+'" data-room="'+r.id+'">Cits</button><button class="bwc bwblank'+(curName===''?' bwsel':'')+'" data-room="'+r.id+'" data-name="">—</button></div>'+(isCustom ? '<input class="bname-inp bname-cits" data-room="'+r.id+'" type="text" placeholder="Ieraksti vardu..." maxlength="24" autocomplete="off" value="'+curName.trim().replace(/"/g,'&quot;')+'">' : '');
       var pts = _pickTs(r.id), pd = new Date(pts), dirty = _pick[r.id] !== null;
       var dStr = ('0'+pd.getDate()).slice(-2)+'.'+('0'+(pd.getMonth()+1)).slice(-2)+'.'+pd.getFullYear();
       var tStr = ('0'+pd.getHours()).slice(-2)+':'+('0'+pd.getMinutes()).slice(-2);
       var calH = _calOpen[r.id] ? _buildCal(r.id) : '';
       var tpH  = _tpOpen[r.id]  ? _buildTp(r.id)  : '';
+      var tubeC = r.color;
+      var bodyFill = r.id === 'philips' ? '#0c3520' : '#0d2b52';
+      var injScene =
+        '<svg class="binj-svg" viewBox="0 0 220 78" aria-hidden="true">'+
+          '<rect x="8" y="24" width="204" height="34" rx="17" fill="rgba(255,255,255,0.06)"/>'+
+          [50, 110, 170].map(function(cx, bi){
+            var mid = bi === 1;
+            return '<rect x="'+(cx-14)+'" y="3" width="28" height="34" rx="5" fill="'+(mid?'#2c3a52':'#16264a')+'" stroke="rgba(255,255,255,0.20)" stroke-width="1"/>'+
+              '<rect x="'+(cx-9)+'" y="10" width="18" height="11" rx="2" fill="rgba(255,255,255,0.16)"/>'+
+              '<rect x="'+(cx-4)+'" y="37" width="8" height="6" rx="1.5" fill="#9fb0c8"/>'+
+              '<circle cx="'+cx+'" cy="48" r="4" fill="none" stroke="#9fb0c8" stroke-width="1.6"/>';
+          }).join('')+
+          '<path d="M50 52 C50 66 78 71 108 75" fill="none" stroke="'+tubeC+'" stroke-width="2.6" stroke-linecap="round" opacity="0.9"/>'+
+          '<path d="M170 52 C170 66 142 71 112 75" fill="none" stroke="'+tubeC+'" stroke-width="2.6" stroke-linecap="round" opacity="0.9"/>'+
+          '<path d="M110 52 L110 75" fill="none" stroke="#cfd9e6" stroke-width="2" stroke-linecap="round" opacity="0.85"/>'+
+        '</svg>';
+      var barTxt = elapsed === null ? 'nav ierakstu' : (over ? 'pāri par ' + _fmtHM(elapsed - WARN_MS) : 'līdz 24h vēl ' + _fmtHM(WARN_MS - elapsed));
+      var histHtml = (_history[r.id] && _history[r.id].length ?
+        _history[r.id].map(function(entry, i) {
+          var ts = entry.ts || entry;
+          var who = entry.name || 'Anonims';
+          if (_histEdit[r.id] === i) {
+            return '<div class="bhist-row bhist-editing" data-i="'+i+'">'+
+              '<div class="bhe-head">✏️ Labo ierakstu nr. '+(i+1)+'</div>'+
+              '<input type="datetime-local" class="bhe-dt" data-room="'+r.id+'" data-i="'+i+'" value="'+_dtLocal(ts)+'">'+
+              '<input type="text" class="bhe-nm" data-room="'+r.id+'" data-i="'+i+'" maxlength="30" placeholder="Vards" value="'+_escHtml(who)+'">'+
+              '<div class="bhe-btns">'+
+                '<button class="bhe-save" data-room="'+r.id+'" data-i="'+i+'">Saglabat</button>'+
+                '<button class="bhe-cancel" data-room="'+r.id+'" data-i="'+i+'">Atcelt</button>'+
+              '</div>'+
+            '</div>';
+          }
+          if (_histDel[r.id] === i) {
+            return '<div class="bhist-row bhist-deleting" data-i="'+i+'">'+
+              '<div class="bhx-q">🗑️ Dzest "'+_fmt(ts)+' · '+_escHtml(who)+'"?</div>'+
+              '<div class="bhe-btns">'+
+                '<button class="bhx-yes" data-room="'+r.id+'" data-i="'+i+'">Ja, dzest</button>'+
+                '<button class="bhx-no" data-room="'+r.id+'" data-i="'+i+'">Ne, atstat</button>'+
+              '</div>'+
+            '</div>';
+          }
+          return '<div class="bhist-row'+(i===0?' bhist-latest':'')+'" data-i="'+i+'">'+
+            '<span class="bhist-num">'+(i+1)+'.</span>'+
+            '<span class="bhist-time">'+_fmt(ts)+'</span>'+
+            '<span class="bhist-who">'+(_isChamp(who)?'👑 ':'')+_escHtml(who)+'</span>'+
+            '<span class="bh-actions">'+
+              '<button class="bh-edit" data-room="'+r.id+'" data-i="'+i+'" title="Labot">✏️</button>'+
+              '<button class="bh-del" data-room="'+r.id+'" data-i="'+i+'" title="Dzest">🗑️</button>'+
+            '</span>'+
+          '</div>';
+        }).join('') : '<div class="bhist-empty">Nav ierakstu.</div>');
       return '<div class="brc'+(over?' brd':'')+'" data-room="'+r.id+'">'
         +'<div class="brn" style="color:'+r.color+'">'+r.label+'</div>'
-        +'<div class="bmain">'
-        +'<div class="bring-wrap"><svg class="bring-svg" viewBox="0 0 100 100"><circle class="bring-bg" cx="50" cy="50" r="'+R+'"/><circle class="bring-arc" cx="50" cy="50" r="'+R+'" style="stroke:'+(elapsed !== null ? ringColor : 'transparent')+';stroke-dasharray:'+ringStroke.dasharray+';stroke-dashoffset:'+ringStroke.dashoffset+';stroke-linecap:'+ringStroke.cap+';'+(over?'animation:bring-pulse 1.2s ease-in-out infinite;':'')+'"/></svg><div class="bring-inner"><div class="bring-time'+(over?' bring-over':'')+'">'+ringParts.hm+'</div><div class="bring-secs'+(over?' bring-over':'')+'">'+ringParts.s+'</div><div class="bring-label">/ 24h</div></div></div>'
-        +'<div class="bside">'
+        + injScene
+        +'<div class="binj-body">'
+          +'<svg class="binj-shell" viewBox="0 0 220 150" preserveAspectRatio="none" aria-hidden="true">'
+            +'<path d="M32 4 L188 4 C195 4 200 9 201 16 L212 128 C213 139 204 146 194 146 L26 146 C16 146 7 139 8 128 L19 16 C20 9 25 4 32 4 Z" fill="'+bodyFill+'" stroke="'+r.color+'" stroke-opacity="0.45" stroke-width="1.6"/>'
+            +'<path d="M88 137 L132 137" stroke="rgba(255,255,255,0.55)" stroke-width="7" stroke-linecap="round"/>'
+          +'</svg>'
+          +'<div class="bscreen'+(over?' bscreen-over':'')+'">'
+            +'<div class="bring-time">'+ringParts.hm+'</div>'
+            +'<div class="bring-secs">'+ringParts.s+'</div>'
+            +'<div class="bring-label">'+(over?'PĀRI 24h!':'kopš maiņas / 24h')+'</div>'
+          +'</div>'
+          +'<div class="bbar"><div class="bbar-fill" style="width:'+(elapsed !== null ? Math.min(pct,100).toFixed(1) : 0)+'%;background:'+(elapsed !== null ? ringColor : 'transparent')+';'+(over?'animation:bring-pulse-soft 1.6s ease-in-out infinite;':'')+'"></div></div>'
+          +'<div class="bbar-scale"><span>0h</span><span>12h</span><span>24h</span></div>'
+          +'<div class="bbar-txt'+(over?' bbar-txt-over':'')+'">'+barTxt+'</div>'
+        +'</div>'
         +'<div class="bwd-nav"><button class="bwd-arr" data-room="'+r.id+'" data-dir="-1">‹</button><span class="bwd-lbl">'+cdLabel+'</span><button class="bwd-arr" data-room="'+r.id+'" data-dir="1">›</button></div>'
-        +'<div class="bwrap">'+workers.map(function(n){ var first = n.split(/\s+/)[0]; var sel = curName === n; return '<button class="bwc'+(sel?' bwsel':'')+'" data-room="'+r.id+'" data-name="'+n.replace(/"/g,'&quot;')+'">'+first+'</button>'; }).join('')+'<button class="bwc bwcits'+(isCustom?' bwsel':'')+'" data-room="'+r.id+'">Cits</button><button class="bwc bwblank'+(curName===''?' bwsel':'')+'" data-room="'+r.id+'" data-name="">—</button></div>'
+        +'<div class="bwrap">'+workers.map(function(n){ var first = n.split(/\s+/)[0]; var sel = curName === n; return '<button class="bwc'+(sel?' bwsel':'')+'" data-room="'+r.id+'" data-name="'+n.replace(/"/g,'&quot;')+'">'+(_isChamp(n)?'👑 ':'')+first+'</button>'; }).join('')+'<button class="bwc bwcits'+(isCustom?' bwsel':'')+'" data-room="'+r.id+'">Cits</button><button class="bwc bwblank'+(curName===''?' bwsel':'')+'" data-room="'+r.id+'" data-name="">—</button></div>'
         +(isCustom ? '<input class="bname-inp bname-cits" data-room="'+r.id+'" type="text" placeholder="Ieraksti vardu..." maxlength="24" autocomplete="off" value="'+curName.trim().replace(/"/g,'&quot;')+'">' : '')
-        +'</div>'
-        +'</div>'
         +'<div class="bnm-section"><div class="bnm-label">Nomainits</div><div class="bnm-prow"><button class="bnm-dpick'+(_calOpen[r.id]?' bnm-pact':'')+'" data-room="'+r.id+'">📅 '+dStr+'</button><button class="bnm-tpick'+(_tpOpen[r.id]?' bnm-pact':'')+'" data-room="'+r.id+'">⏰ '+tStr+'</button>'+(dirty?'<button class="bnm-savepick" data-room="'+r.id+'">Saglabat</button>':'<button class="bnm-now" data-room="'+r.id+'">Tagad</button>')+'</div>'+calH+tpH+'</div>'
-        +'<div class="bhist-hdr"><span class="bhist-lbl">Vesture</span>'+((_history[r.id]&&_history[r.id].length)?'<span class="bhist-cnt">'+_history[r.id].length+'</span>':'')+'</div>'
-        +'<div class="bhist">'+(_history[r.id] && _history[r.id].length ? _history[r.id].map(function(entry,i){ var ts = entry.ts || entry; var who = entry.name || 'Anonims'; return '<div class="bhist-row'+(i===0?' bhist-latest':'')+'"><span class="bhist-num">'+(i+1)+'.</span><span class="bhist-time">'+_fmt(ts)+'</span><span class="bhist-who">'+who+'</span></div>'; }).join('') : '<div class="bhist-empty">Nav ierakstu.</div>')+'</div>'
+        +'<div class="bhist-hdr"><span class="bhist-lbl">Vesture</span>'+((_history[r.id]&&_history[r.id].length)?'<span class="bhist-cnt">'+_history[r.id].length+'</span>':'')+'<span class="bhist-hint">✏️ labot · 🗑️ dzest</span></div>'
+        +'<div class="bhist" id="bhist-'+r.id+'">'+histHtml+'</div>'
         +'</div>';
     }
     function _render() {
       var rooms = document.getElementById('bolus-rooms');
       if (!rooms) return;
+      _updateChamp();
       var isMobileBolus = window.matchMedia && window.matchMedia('(max-width: 720px)').matches;
       var activeRoom = ROOMS.some(function(r){ return r.id === _bolusActiveRoom; }) ? _bolusActiveRoom : ROOMS[0].id;
       if (isMobileBolus) {
@@ -1109,8 +1396,49 @@ html.mk-low-spec #calendarEmbed {
       rooms.querySelectorAll('.bnm-cnav').forEach(function(btn){ btn.addEventListener('click', function(e){ e.stopPropagation(); var room = btn.dataset.room, dir = parseInt(btn.dataset.dir,10), cv = _calView[room]; cv.m += dir; if (cv.m > 11) { cv.m = 0; cv.y++; } else if (cv.m < 0) { cv.m = 11; cv.y--; } _render(); }); });
       rooms.querySelectorAll('.bcd').forEach(function(btn){ btn.addEventListener('click', function(e){ e.stopPropagation(); var room=btn.dataset.room, y=parseInt(btn.dataset.y,10), m=parseInt(btn.dataset.m,10), d=parseInt(btn.dataset.d,10); var cur = new Date(_pickTs(room)); var nd = new Date(y,m,d,cur.getHours(),cur.getMinutes(),0,0); _pick[room] = nd.getTime(); _calOpen[room] = false; var todayMid = new Date(); todayMid.setHours(0,0,0,0); var pickMid = new Date(y,m,d,0,0,0,0); _chipDay[room] = Math.round((pickMid - todayMid) / 86400000); _render(); }); });
       rooms.querySelectorAll('.bnm-tpa').forEach(function(btn){ btn.addEventListener('click', function(e){ e.stopPropagation(); var room=btn.dataset.room, unit=btn.dataset.unit, dir=parseInt(btn.dataset.dir,10); var d = new Date(_pickTs(room)); if (unit==='h') d.setHours((d.getHours()+dir+24)%24); else d.setMinutes((d.getMinutes()+dir+60)%60); _pick[room] = d.getTime(); _render(); }); });
-      rooms.querySelectorAll('.bnm-now').forEach(function(btn){ btn.addEventListener('click', function(e){ e.stopPropagation(); var room=btn.dataset.room, ts=Date.now(); _pick[room]=null; _calOpen[room]=false; _tpOpen[room]=false; _calView[room]=null; _state[room].changedAt=ts; _markLocalWrite(room); _history[room].unshift({ts:ts,name:_names[room]||'Anonims'}); _save(); _saveHistory(); _kvPush(room); _render(); _updateLed(); }); });
-      rooms.querySelectorAll('.bnm-savepick').forEach(function(btn){ btn.addEventListener('click', function(e){ e.stopPropagation(); var room=btn.dataset.room, ts=_pick[room]; if (!ts) return; _state[room].changedAt=ts; _pick[room]=null; _markLocalWrite(room); _calOpen[room]=false; _tpOpen[room]=false; _calView[room]=null; _history[room].unshift({ts:ts,name:_names[room]||'Anonims'}); _save(); _saveHistory(); _kvPush(room); _render(); _updateLed(); }); });
+      rooms.querySelectorAll('.bnm-now').forEach(function(btn){ btn.addEventListener('click', function(e){ e.stopPropagation(); var room=btn.dataset.room, ts=Date.now(); _pick[room]=null; _calOpen[room]=false; _tpOpen[room]=false; _calView[room]=null; _state[room].changedAt=ts; _markLocalWrite(room); _history[room].unshift({ts:ts,name:_names[room]||'Anonims'}); _pendingThanks = _thanksMsg(room); _save(); _saveHistory(); _kvPush(room); _render(); _updateLed(); }); });
+      rooms.querySelectorAll('.bnm-savepick').forEach(function(btn){ btn.addEventListener('click', function(e){ e.stopPropagation(); var room=btn.dataset.room, ts=_pick[room]; if (!ts) return; _state[room].changedAt=ts; _pick[room]=null; _markLocalWrite(room); _calOpen[room]=false; _tpOpen[room]=false; _calView[room]=null; _history[room].unshift({ts:ts,name:_names[room]||'Anonims'}); _pendingThanks = _thanksMsg(room); _save(); _saveHistory(); _kvPush(room); _render(); _updateLed(); }); });
+      rooms.querySelectorAll('.bhist').forEach(function(el) {
+        function updFade() { el.classList.toggle('has-more', el.scrollHeight - el.scrollTop - el.clientHeight > 6); }
+        el.addEventListener('scroll', updFade, { passive: true });
+        updFade();
+      });
+      rooms.querySelectorAll('.bh-edit').forEach(function(btn) {
+        btn.addEventListener('click', function(e) { e.stopPropagation();
+          var room = btn.dataset.room;
+          _histDel[room] = -1;
+          _histEdit[room] = parseInt(btn.dataset.i, 10);
+          _render();
+          setTimeout(function(){ var inp = rooms.querySelector('.bhe-dt[data-room="'+room+'"]'); if (inp) inp.focus(); }, 40);
+        });
+      });
+      rooms.querySelectorAll('.bh-del').forEach(function(btn) {
+        btn.addEventListener('click', function(e) { e.stopPropagation();
+          var room = btn.dataset.room;
+          _histEdit[room] = -1;
+          _histDel[room] = parseInt(btn.dataset.i, 10);
+          _render();
+        });
+      });
+      rooms.querySelectorAll('.bhe-cancel').forEach(function(btn) {
+        btn.addEventListener('click', function(e) { e.stopPropagation(); _histEdit[btn.dataset.room] = -1; _render(); });
+      });
+      rooms.querySelectorAll('.bhx-no').forEach(function(btn) {
+        btn.addEventListener('click', function(e) { e.stopPropagation(); _histDel[btn.dataset.room] = -1; _render(); });
+      });
+      rooms.querySelectorAll('.bhe-save').forEach(function(btn) {
+        btn.addEventListener('click', function(e) { e.stopPropagation();
+          var room = btn.dataset.room, i = parseInt(btn.dataset.i, 10);
+          var dtInp = rooms.querySelector('.bhe-dt[data-room="'+room+'"][data-i="'+i+'"]');
+          var nmInp = rooms.querySelector('.bhe-nm[data-room="'+room+'"][data-i="'+i+'"]');
+          var ts = dtInp ? _parseLocalDateTime(dtInp.value) : null;
+          if (ts === null) { _mkToast('Nederigs datums/laiks', 'error'); return; }
+          _applyHistEdit(room, i, ts, nmInp ? nmInp.value : '');
+        });
+      });
+      rooms.querySelectorAll('.bhx-yes').forEach(function(btn) {
+        btn.addEventListener('click', function(e) { e.stopPropagation(); _applyHistDelete(btn.dataset.room, parseInt(btn.dataset.i, 10)); });
+      });
     }
     function _updateLed() {
       var btn = document.getElementById('bolusDocBtn');
@@ -1154,19 +1482,26 @@ html.mk-low-spec #calendarEmbed {
         var ringStroke = _ringStrokeState(elapsed, pct, C);
         var card = document.querySelector('#bolus-rooms .brc[data-room="'+r.id+'"]');
         if (!card) return;
-        var arc = card.querySelector('.bring-arc');
-        if (arc) {
-          arc.style.stroke = elapsed !== null ? ringColor : 'transparent';
-          arc.style.strokeDasharray = ringStroke.dasharray;
-          arc.style.strokeDashoffset = ringStroke.dashoffset;
-          arc.style.strokeLinecap = ringStroke.cap;
-          arc.style.animation = over ? 'bring-pulse 1.2s ease-in-out infinite' : '';
+        var fill = card.querySelector('.bbar-fill');
+        if (fill) {
+          fill.style.width = (elapsed !== null ? Math.min(pct, 100).toFixed(1) : 0) + '%';
+          fill.style.background = elapsed !== null ? ringColor : 'transparent';
+          fill.style.animation = over ? 'bring-pulse-soft 1.6s ease-in-out infinite' : '';
+        }
+        var btxt = card.querySelector('.bbar-txt');
+        if (btxt) {
+          btxt.textContent = elapsed === null ? 'nav ierakstu' : (over ? 'pāri par ' + _fmtHM(elapsed - WARN_MS) : 'līdz 24h vēl ' + _fmtHM(WARN_MS - elapsed));
+          btxt.className = 'bbar-txt' + (over ? ' bbar-txt-over' : '');
         }
         var parts = _fmtRing(elapsed);
         var timeEl = card.querySelector('.bring-time');
-        if (timeEl) { timeEl.textContent = elapsed !== null ? parts.hm : '—'; timeEl.className = 'bring-time'+(over?' bring-over':''); }
+        if (timeEl) timeEl.textContent = elapsed !== null ? parts.hm : '—';
         var secsEl = card.querySelector('.bring-secs');
-        if (secsEl) { secsEl.textContent = elapsed !== null ? parts.s : ''; secsEl.className = 'bring-secs'+(over?' bring-over':''); }
+        if (secsEl) secsEl.textContent = elapsed !== null ? parts.s : '';
+        var lblEl = card.querySelector('.bring-label');
+        if (lblEl) lblEl.textContent = over ? 'PĀRI 24h!' : 'kopš maiņas / 24h';
+        var chipEl = card.querySelector('.bscreen');
+        if (chipEl) chipEl.classList.toggle('bscreen-over', over);
       });
     }
     function _startTick() { _stopTick(); _tick = setInterval(function(){ if(_open) _updateRings(); _updateLed(); }, 1000); }
@@ -1344,6 +1679,51 @@ html.mk-low-spec #calendarEmbed {
         '#bolusDocBtn::before{content:"";position:absolute;inset:-2px;border-radius:18px;padding:1.5px;background:conic-gradient(from -90deg,var(--bp-col,transparent) var(--bp-pct,0%),rgba(255,255,255,0.04) 0%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:destination-out;mask-composite:exclude;pointer-events:none;z-index:0;opacity:var(--bp-vis,0);transition:opacity 1.2s;}'+
         '#bolusDocBtn.bolus-warn{border-color:rgba(255,150,0,0.7)!important;box-shadow:0 0 18px rgba(255,150,0,.25)!important;}'+
         '#bolusDocBtn.bolus-alert{border-color:rgba(255,59,48,0.62)!important;border-width:1.5px!important;}';
+      s.textContent +=
+        '@keyframes bring-pulse-soft{0%,100%{opacity:1}50%{opacity:.6}}'+
+        '.binj-svg{width:min(64%,225px);height:auto;display:block;margin:-2px auto -10px;flex-shrink:0;}'+
+        '.binj-body{position:relative;width:min(58%,205px);aspect-ratio:220/150;flex-shrink:0;margin:0 auto;}'+
+        '.binj-shell{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 6px 14px rgba(0,0,0,0.45));}'+
+        '.bscreen{position:absolute;left:13%;right:13%;top:9%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:6px 8px 5px;border-radius:11px;background:#eef3f9;box-shadow:inset 0 -2px 0 rgba(9,20,40,0.14),0 2px 8px rgba(0,0,0,0.4);}'+
+        '.bscreen .bring-time{color:#0d1b33!important;animation:none!important;font-size:clamp(16px,4.8vw,21px);letter-spacing:-.02em;}'+
+        '.bscreen .bring-secs{color:#41618c!important;animation:none!important;font-size:clamp(11px,3vw,13px);}'+
+        '.bscreen .bring-label{color:#6d80a0!important;text-align:center;font-size:clamp(8px,2.4vw,10px);font-weight:800;}'+
+        '.bscreen-over{background:#ffe7e4;}'+
+        '.bscreen-over .bring-time{color:#c21a10!important;}'+
+        '.bscreen-over .bring-secs{color:#d95048!important;}'+
+        '.bscreen-over .bring-label{color:#c21a10!important;font-weight:900!important;}'+
+        '.bbar{position:absolute;left:13%;right:13%;top:62%;height:8.5%;min-height:8px;border-radius:99px;background:rgba(255,255,255,0.16);overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,0.4);}'+
+        '.bbar-fill{height:100%;border-radius:99px;transition:width 1s linear;}'+
+        '.bbar-scale{position:absolute;left:13%;right:13%;top:71.5%;display:flex;justify-content:space-between;font-size:clamp(8px,2.2vw,10px);font-weight:700;color:rgba(255,255,255,0.55);}'+
+        '.bbar-txt{position:absolute;left:5%;right:5%;top:80%;text-align:center;font-size:clamp(10px,2.8vw,12px);font-weight:800;color:rgba(255,255,255,0.88);}'+
+        '.bbar-txt-over{color:#ff9d94;}'+
+        '.bhist-hint{margin-left:auto;font-size:9px;font-weight:700;color:rgba(255,255,255,0.40);white-space:nowrap;}'+
+        '.bh-actions{display:inline-flex;gap:5px;margin-left:auto;flex-shrink:0;}'+
+        '.bh-edit,.bh-del{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:13px;line-height:1;padding:6px 8px;cursor:pointer;touch-action:manipulation;}'+
+        '.bhist-editing,.bhist-deleting{display:flex;flex-direction:column;align-items:stretch;gap:7px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.18);border-radius:11px;padding:9px;margin:3px 0;}'+
+        '.bhe-head{font-size:11px;font-weight:800;color:rgba(255,255,255,0.88);}'+
+        '.bhx-q{font-size:12.5px;font-weight:800;color:#ffb4ad;line-height:1.35;word-break:break-word;}'+
+        '.bhe-dt,.bhe-nm{width:100%;box-sizing:border-box;background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.25);border-radius:9px;color:#fff;font-size:14px;font-weight:700;padding:9px;color-scheme:dark;}'+
+        '.bhe-btns{display:flex;gap:7px;}'+
+        '.bhe-save,.bhx-yes,.bhe-cancel,.bhx-no{flex:1;border-radius:9px;font-size:12px;font-weight:800;padding:10px 4px;cursor:pointer;touch-action:manipulation;}'+
+        '.bhe-save{background:rgba(0,210,90,0.18);border:1px solid rgba(0,230,110,0.45);color:#7df5a5;}'+
+        '.bhx-yes{background:rgba(255,69,58,0.20);border:1px solid rgba(255,69,58,0.60);color:#ffb4ad;}'+
+        '.bhe-cancel,.bhx-no{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.18);color:rgba(255,255,255,0.78);}'+
+        '.bhist{padding-bottom:12px;}'+
+        '.bhist.has-more{-webkit-mask-image:linear-gradient(180deg,#000 calc(100% - 28px),transparent 100%);mask-image:linear-gradient(180deg,#000 calc(100% - 28px),transparent 100%);}'+
+        '.bhist-row{font-size:12px;color:rgba(255,255,255,0.80);gap:3px 7px;padding:6px 2px;}'+
+        '.bhist-time{color:rgba(255,255,255,0.85);font-weight:700;}'+
+        '.bhist-who{font-size:12px;color:rgba(180,230,255,0.92);background:rgba(0,180,255,0.13);padding:2px 7px;font-weight:700;}'+
+        '.bhist-num{color:rgba(255,255,255,0.40);}'+
+        '#bolus-tops-btn{background:rgba(255,199,50,0.12);border:1px solid rgba(255,199,50,0.45);border-radius:11px;color:#ffd77a;font-size:12px;font-weight:800;padding:9px 12px;cursor:pointer;letter-spacing:.06em;white-space:nowrap;touch-action:manipulation;}'+
+        '#bolus-tops-btn.on{background:rgba(255,199,50,0.28);}'+
+        '#bolus-tops{flex-shrink:0;margin:8px 12px 0;padding:10px 12px;background:rgba(255,199,50,0.07);border:1px solid rgba(255,199,50,0.30);border-radius:14px;}'+
+        '.btops-h{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#ffd77a;margin-bottom:7px;}'+
+        '.btops-row{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:700;color:rgba(255,255,255,.9);padding:4px 0;}'+
+        '.btops-first{color:#ffe9a8;font-size:14px;}'+
+        '.btops-medal{width:26px;text-align:center;flex-shrink:0;}'+
+        '.btops-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}'+
+        '.btops-cnt{font-variant-numeric:tabular-nums;color:#ffd77a;flex-shrink:0;}';
       document.head.appendChild(s);
     }
     window.toggleBolus = function(forceState) {
@@ -1373,7 +1753,7 @@ html.mk-low-spec #calendarEmbed {
       _injectCss();
       var ov = document.createElement('div');
       ov.id = 'bolus-overlay';
-      ov.innerHTML = '<div id="bolus-sheet"><div id="bolus-handle"></div><div id="bolus-title-bar"><span id="bolus-title"><i class="fas fa-syringe" style="font-size:10px;opacity:.7;"></i> BOLUSA MAINA</span><button id="bolus-close-btn" type="button" aria-label="Aizvert bolus paneli">✕</button></div><div id="bolus-rooms"></div></div>';
+      ov.innerHTML = '<div id="bolus-sheet"><div id="bolus-handle"></div><div id="bolus-title-bar"><span id="bolus-title"><i class="fas fa-syringe" style="font-size:10px;opacity:.7;"></i> BOLUSA MAINA</span><span style="display:flex;gap:8px;align-items:center;"><button id="bolus-tops-btn" type="button" title="Menesa caklakie">🏆 TOPS</button><button id="bolus-close-btn" type="button" aria-label="Aizvert bolus paneli">✕</button></span></div><div id="bolus-tops" style="display:none"></div><div id="bolus-rooms"></div></div>';
       ov.addEventListener('click', function(e){
         var sheet = document.getElementById('bolus-sheet');
         if (!sheet) return;
@@ -1385,6 +1765,16 @@ html.mk-low-spec #calendarEmbed {
         if (!sheet.contains(e.target)) toggleBolus(false);
       });
       document.body.appendChild(ov);
+      var topsBtn = document.getElementById('bolus-tops-btn');
+      if (topsBtn) topsBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var p = document.getElementById('bolus-tops');
+        if (!p) return;
+        var opening = p.style.display === 'none';
+        if (opening) _renderTops();
+        p.style.display = opening ? 'block' : 'none';
+        topsBtn.classList.toggle('on', opening);
+      });
       var closeBtn = document.getElementById('bolus-close-btn');
       if (closeBtn) {
         closeBtn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); toggleBolus(false); });
@@ -1474,7 +1864,13 @@ html.mk-low-spec #calendarEmbed {
     if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage({ type: 'mk_open_settings' }, '*');
   }
 
+  var _nsToggleAt = 0;
   function toggleNsFromParent() {
+    // iOS var izšaut touchend + ghost click pēc ~300ms — bez šī sarga poga
+    // atver un tūlīt aizver pārklājumu, izskatās, ka "nekas nenotika".
+    var nowT = Date.now();
+    if (nowT - _nsToggleAt < 400) return;
+    _nsToggleAt = nowT;
     _nsOpen = !_nsOpen;
     const iframe = document.getElementById('calIframe');
     if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage({ type: 'toggleNs', open: _nsOpen }, '*');
