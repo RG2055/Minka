@@ -2155,7 +2155,7 @@ function filterFullList(btn) {
       }
     });
     const nCls = nightCount === 0 ? 'mk-night-zero' : (nightCount < nowCount ? 'mk-night-drop' : 'mk-night-ok');
-    pill.innerHTML = 'ŠOBRĪD ' + nowCount + '&ensp;·&ensp;<span class="' + nCls + '">NAKTĪ ' + nightCount + '</span>';
+    pill.innerHTML = 'ŠOBRĪD ' + nowCount + '<span class="' + nCls + '">NAKTĪ ' + nightCount + '</span>';
     pill.title = 'Šobrīd dežūrā: ' + nowCount + ' · pa nakti paliks: ' + nightCount;
     if (!strip) {
       strip = document.createElement('div');
