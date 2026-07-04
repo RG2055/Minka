@@ -389,7 +389,10 @@ body.stars-active #stars-overlay{display:block;}
   <div class="side-panel left-panel">
     <div>
       <div class="status-tag radiographers">
-        <span>RADIOGRĀFERI</span>
+        <span class="mk-role-title">
+          <img class="mk-role-title-icon mk-role-title-icon-rg" src="data/radiograferi.svg" alt="" aria-hidden="true">
+          <span>RADIOGRĀFERI</span>
+        </span>
         <span id="radiographers-shift-count" class="mk-shift-count-pill">DEŽŪRĀ 0</span>
       </div>
       <div id="radiographers-duty" class="duty-vertical"></div>
@@ -528,7 +531,10 @@ body.stars-active #stars-overlay{display:block;}
   <div class="side-panel right-panel">
     <div>
       <div class="status-tag radiologists">
-        <span>RADIOLOGI</span>
+        <span class="mk-role-title">
+          <img class="mk-role-title-icon mk-role-title-icon-rd" src="data/radiologi.svg" alt="" aria-hidden="true">
+          <span>RADIOLOGI</span>
+        </span>
         <span id="radiologists-shift-count" class="mk-shift-count-pill">DEŽŪRĀ 0</span>
       </div>
       <div id="radiologists-duty" class="duty-vertical"></div>
@@ -878,7 +884,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260703b"></script>
+<script src="js/calendar.js?v=20260703c"></script>
 <script src="js/calendar_extras_v4.js?v=20260611a"></script>
 <script src="js/fatigue.js?v=20260613d"></script>
 <script src="js/nightsplit.js?v=20260703a" defer></script>
@@ -6858,6 +6864,16 @@ html.mk-low-spec .pkt-cat.pkt-awake .pkt-eyes { animation: pktAwakeEyes 1.45s ea
   text-overflow: clip !important;
 }
 
+:root.mk-mobile-shell .mk-role-title {
+  gap: 4px !important;
+}
+
+:root.mk-mobile-shell .mk-role-title-icon {
+  width: 16px !important;
+  height: 16px !important;
+  flex-basis: 16px !important;
+}
+
 :root.mk-mobile-shell .today-badge {
   font-size: 6px !important;
   padding: 2px 4px !important;
@@ -8317,6 +8333,23 @@ html.mk-low-spec .nsc-deco .ns-moon-float {
 .status-tag.radiographers,
 .status-tag.radiologists {
   align-items: center !important;
+}
+.mk-role-title {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  max-width: 100% !important;
+  line-height: 1 !important;
+}
+.mk-role-title-icon {
+  width: 26px !important;
+  height: 26px !important;
+  flex: 0 0 26px !important;
+  object-fit: contain !important;
+  display: block !important;
+  transform: translateY(-1px) !important;
+  filter: drop-shadow(0 0 7px currentColor) !important;
 }
 .mk-shift-count-pill {
   display: inline-flex !important;
@@ -11312,6 +11345,17 @@ window.addEventListener('message', function(e) {
 </style>
 
 <style id="mk-duty-header">
+/* ── Sānu paneļu galvene: bez kapsulas, vienā līmenī ar header ── */
+:root:not(.mk-mobile-shell) .side-panel { padding-top: 18px !important; }
+.mk-shift-count-pill {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  font-size: 10px !important;
+  letter-spacing: .14em !important;
+}
+.mk-shift-count-pill > span { margin-left: 14px; }
+
 /* ── Duty header: ŠOBRĪD/NAKTĪ pill + readable status lines ── */
 .mk-shift-count-pill .mk-night-ok   { color: #7de8a5; }
 .mk-shift-count-pill .mk-night-drop { color: #ffb340; }
