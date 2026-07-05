@@ -3579,6 +3579,21 @@ function filterFullList(btn) {
       if (stop.end   > g.end)   g.end   = stop.end;
     });
 
+    // Long evening shifts (15h..<24h) are pinned to end at 08:00 by the
+    // hospital rule (see getShiftEnd). Their bar START must be derived from
+    // the declared duration, not the stored clock-in label: a 20H shift that
+    // ends 08:00 begins at 12:00, even if its record says startTime 20:00.
+    // Without this, the bar rendered from 20:00 (12h wide) instead of spanning
+    // the full 20h from noon.
+    groups.forEach(function(g) {
+      if (g.shiftH >= 15 && g.shiftH < 24) {
+        const endMs = g.end instanceof Date ? g.end.getTime() : g.end;
+        const derived = endMs - g.shiftH * 3600000;
+        const curStart = g.start instanceof Date ? g.start.getTime() : g.start;
+        if (derived < curStart) g.start = new Date(derived);
+      }
+    });
+
     // Colors: Radiographers = violet family, Radiologists = cyan family
     const COL_RG = {  // violet/purple
       24: { bg:'rgba(139,92,246,0.13)',  border:'rgba(139,92,246,0.38)',  fill:'linear-gradient(90deg,rgba(109,40,217,0.55),rgba(139,92,246,0.32))', ink:'rgba(221,214,254,0.95)', badge:'rgba(139,92,246,0.28)' },
