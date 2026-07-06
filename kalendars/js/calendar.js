@@ -858,12 +858,13 @@ function filterFullList(btn) {
     });
   }
 
-  // Correct the start time of a full evening night whose source data carries a
-  // wrong early-morning start. A 12h NAKTS ends in the morning (e.g. 08:00), so
-  // by convention it must START in the evening (end − 12h = 20:00). Some sheet
-  // rows arrive as 00:00–08:00, which would place the shift on the morning side
-  // of the live timeline instead of at 20:00. Recompute start = end − hours for
-  // real (non-carryover) NAKTS shifts whose stored start is missing or 00:00–07:xx.
+  // A night shift's start is fully determined by its end and its duration, so
+  // recompute it from those and ignore a wrong source start time. Sheet rows
+  // arrive with inconsistent starts: a 12h night stored as 00:00 (should be
+  // 20:00), or a 20h night stored as 20:00 (should be 12:00 — 20:00→08:00 is
+  // only 12h, not 20h). A wrong start makes the worker look "not on duty yet"
+  // and stops their live timer. Canonical end: long evening nights (15–23h)
+  // always finish at 08:00 by hospital rule; 12–14h nights end at their endTime.
   function patchNightStartTimes(storeRef) {
     for (const month of Object.keys(storeRef || {})) {
       const days = storeRef[month];
@@ -875,13 +876,16 @@ function filterFullList(btn) {
           if (w.__minkaCarryover === true) return; // genuine morning tail — leave as-is
           const hrs = Math.round((w.hours || 0) || parseFloat(String(w.shift || '').replace(',', '.')) || 0);
           if (hrs < 12 || hrs >= 24) return;
-          if (!w.endTime) return;
-          const em = String(w.endTime).split(':').map(Number);
-          if (!Number.isFinite(em[0])) return;
-          const startHour = w.startTime ? parseInt(String(w.startTime).split(':')[0], 10) : -1;
-          // A real night never *starts* between 00:00 and 07:59.
-          if (Number.isFinite(startHour) && startHour >= 8) return;
-          const endMin = em[0] * 60 + (em[1] || 0);
+          let endMin;
+          if (hrs >= 15) {
+            endMin = 8 * 60;
+            w.endTime = '08:00'; // align endTime with the getShiftEnd hospital rule
+          } else {
+            if (!w.endTime) return;
+            const em = String(w.endTime).split(':').map(Number);
+            if (!Number.isFinite(em[0])) return;
+            endMin = em[0] * 60 + (em[1] || 0);
+          }
           const startMin = ((endMin - hrs * 60) % 1440 + 1440) % 1440;
           const sh = String(Math.floor(startMin / 60)).padStart(2, '0');
           const sm = String(startMin % 60).padStart(2, '0');
@@ -2134,17 +2138,12 @@ function filterFullList(btn) {
     // Groups keyed by meaning + time, rendered as plain readable sentences:
     // "🌙 Pa nakti: Annija, Anta" / "☀️ Līdz 17:00: Anna" / "🌙 No 17:00: Aelita"
     const stay = [], leaveBy = {}, comeAt = {};
-    const __dbg = [];
     workers.forEach(function(w) {
       const parts = String(w.name || '').trim().split(/\s+/).filter(Boolean);
       const first = formatSideNamePart(parts[0], false) || String(w.name || '').trim();
       const person = { first: first, name: w.name };
       const start = w.startTime ? createDateFromDateTime(w.date || activeDateStr, w.startTime) : null;
       const end = (w.startTime && w.endTime) ? getShiftEnd(w, w.date || activeDateStr) : null;
-      if (pillId === 'radiologists-shift-count') {
-        const ee = end ? (String(end.getHours()).padStart(2,'0')+':'+String(end.getMinutes()).padStart(2,'0')+(end.getDate()!==now.getDate()?'+1':'')) : '—';
-        __dbg.push(first+': date='+(w.date||activeDateStr)+' shift='+JSON.stringify(w.shift)+' type='+JSON.stringify(w.type)+' st='+JSON.stringify(w.startTime)+' et='+JSON.stringify(w.endTime)+' →end='+ee+' active='+(start&&end?(now>=start&&now<end):'?'));
-      }
       if (!start || !end) { nowCount++; stay.push(person); return; }
       const active = now >= start && now < end;
       const upcoming = now < start;
@@ -2186,18 +2185,6 @@ function filterFullList(btn) {
       lines.push('<div class="mk-duty-line dl-later"><span class="mk-dl-ico">🌙</span> Nāks <span class="mk-dl-t">' + mkEscAttr(t) + '</span>: ' + namesHtml(comeAt[t]) + '</div>');
     });
     strip.innerHTML = lines.join('');
-    if (pillId === 'radiologists-shift-count') {
-      try {
-        let dbg = document.getElementById('mkDutyDbg');
-        if (!dbg) {
-          dbg = document.createElement('div');
-          dbg.id = 'mkDutyDbg';
-          dbg.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:2147483647;background:rgba(8,10,20,0.96);border:1px solid rgba(120,200,255,0.4);border-radius:10px;padding:8px 10px;font:600 10px/1.4 monospace;color:#9fe;white-space:pre-wrap;word-break:break-word;max-height:40vh;overflow:auto;';
-          document.body.appendChild(dbg);
-        }
-        dbg.textContent = 'DBG duty v4.4.58 · now=' + (String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')) + ' date=' + activeDateStr + '\n' + __dbg.join('\n');
-      } catch (_e) {}
-    }
   }
 
   // Name click → scroll that person's card into view with a short highlight
