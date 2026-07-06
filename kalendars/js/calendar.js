@@ -2149,7 +2149,11 @@ function filterFullList(btn) {
       if (active && coversNight) {
         stay.push(person);
       } else if (active) {
-        (leaveBy[w.endTime] = leaveBy[w.endTime] || []).push(person);
+        // Use the getShiftEnd-corrected end, not the raw endTime: a short shift
+        // (e.g. Aija's 4h) can carry a placeholder endTime of 20:00 while its
+        // real end is 12:00, which otherwise showed a wrong "Līdz 20:00".
+        const endLabel = String(end.getHours()).padStart(2, '0') + ':' + String(end.getMinutes()).padStart(2, '0');
+        (leaveBy[endLabel] = leaveBy[endLabel] || []).push(person);
       } else if (upcoming) {
         (comeAt[w.startTime] = comeAt[w.startTime] || []).push(person);
       }
