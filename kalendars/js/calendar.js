@@ -2134,12 +2134,17 @@ function filterFullList(btn) {
     // Groups keyed by meaning + time, rendered as plain readable sentences:
     // "🌙 Pa nakti: Annija, Anta" / "☀️ Līdz 17:00: Anna" / "🌙 No 17:00: Aelita"
     const stay = [], leaveBy = {}, comeAt = {};
+    const __dbg = [];
     workers.forEach(function(w) {
       const parts = String(w.name || '').trim().split(/\s+/).filter(Boolean);
       const first = formatSideNamePart(parts[0], false) || String(w.name || '').trim();
       const person = { first: first, name: w.name };
       const start = w.startTime ? createDateFromDateTime(w.date || activeDateStr, w.startTime) : null;
       const end = (w.startTime && w.endTime) ? getShiftEnd(w, w.date || activeDateStr) : null;
+      if (pillId === 'radiologists-shift-count') {
+        const ee = end ? (String(end.getHours()).padStart(2,'0')+':'+String(end.getMinutes()).padStart(2,'0')+(end.getDate()!==now.getDate()?'+1':'')) : '—';
+        __dbg.push(first+': date='+(w.date||activeDateStr)+' shift='+JSON.stringify(w.shift)+' type='+JSON.stringify(w.type)+' st='+JSON.stringify(w.startTime)+' et='+JSON.stringify(w.endTime)+' →end='+ee+' active='+(start&&end?(now>=start&&now<end):'?'));
+      }
       if (!start || !end) { nowCount++; stay.push(person); return; }
       const active = now >= start && now < end;
       const upcoming = now < start;
@@ -2181,6 +2186,18 @@ function filterFullList(btn) {
       lines.push('<div class="mk-duty-line dl-later"><span class="mk-dl-ico">🌙</span> Nāks <span class="mk-dl-t">' + mkEscAttr(t) + '</span>: ' + namesHtml(comeAt[t]) + '</div>');
     });
     strip.innerHTML = lines.join('');
+    if (pillId === 'radiologists-shift-count') {
+      try {
+        let dbg = document.getElementById('mkDutyDbg');
+        if (!dbg) {
+          dbg = document.createElement('div');
+          dbg.id = 'mkDutyDbg';
+          dbg.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:2147483647;background:rgba(8,10,20,0.96);border:1px solid rgba(120,200,255,0.4);border-radius:10px;padding:8px 10px;font:600 10px/1.4 monospace;color:#9fe;white-space:pre-wrap;word-break:break-word;max-height:40vh;overflow:auto;';
+          document.body.appendChild(dbg);
+        }
+        dbg.textContent = 'DBG duty v4.4.58 · now=' + (String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')) + ' date=' + activeDateStr + '\n' + __dbg.join('\n');
+      } catch (_e) {}
+    }
   }
 
   // Name click → scroll that person's card into view with a short highlight
