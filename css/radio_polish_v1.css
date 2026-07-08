@@ -1,0 +1,164 @@
+/* ============================================================
+   RADIO POLISH v1 — Spotify-flavored cleanup of the radio dock.
+   Pure CSS overrides loaded last; no markup/JS changes, so all
+   existing logic (drag, EQ, stations, viz) keeps working.
+   ============================================================ */
+
+/* ── 1. Remove the grey drag pill + strip gradient (the circled thing).
+      The 18px strip itself stays: the window is still draggable there. */
+.radio-drag-strip::after { display: none !important; }
+.radio-drag-strip { background: transparent !important; }
+
+/* ── 2. Cheaper dock surface: the full-width 32px backdrop blur re-samples
+      everything behind the dock every frame while the visualizer animates —
+      one of the biggest constant GPU costs on weak machines. A near-opaque
+      flat surface looks Spotify-clean and is ~free. */
+#radioWindow {
+  background: rgba(9, 10, 13, 0.97) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  box-shadow: 0 -14px 40px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* Inner panels: flat, subtle, one radius language */
+#radioWindow .tech-panel {
+  background: rgba(255, 255, 255, 0.028) !important;
+  border: 1px solid rgba(255, 255, 255, 0.055) !important;
+  border-radius: 14px !important;
+}
+#radioWindow .monitor-frame {
+  background: rgba(0, 0, 0, 0.42) !important;
+  border: 1px solid rgba(255, 255, 255, 0.055) !important;
+  border-radius: 14px !important;
+}
+
+/* ── 3. Typography — Spotify hierarchy: big bold title, muted secondary */
+#radioWindow #curStation {
+  font-weight: 900 !important;
+  letter-spacing: -0.02em !important;
+  color: #fff !important;
+  text-shadow: none !important;
+}
+#radioWindow .np-title { color: rgba(255,255,255,0.95) !important; font-weight: 700 !important; }
+#radioWindow .np-artist { color: rgba(255,255,255,0.55) !important; }
+#radioWindow .meta-status,
+#radioWindow .meta-status .meta-tag,
+#radioWindow #ui-codec,
+#radioWindow #ui-kbps {
+  color: rgba(255, 255, 255, 0.34) !important;
+  text-shadow: none !important;
+}
+
+/* ── 4. EQ preset chips → quiet rounded pills; active = filled accent
+      (Spotify "pill filter" look). LEDs off: color state carries meaning. */
+#radioWindow .eq-pioneer {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+#radioWindow .epb {
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  box-shadow: none !important;
+  padding: 2.5px 8px !important;
+}
+#radioWindow .epb .epb-led { display: none !important; }
+#radioWindow .epb .epb-label {
+  color: rgba(255, 255, 255, 0.52) !important;
+  font-size: 7px !important;
+  letter-spacing: 0.08em !important;
+}
+#radioWindow .epb:hover {
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  box-shadow: none !important;
+}
+#radioWindow .epb.active {
+  background: var(--radio-accent, #00ff88) !important;
+  border-color: var(--radio-accent, #00ff88) !important;
+  box-shadow: none !important;
+}
+#radioWindow .epb.active .epb-label { color: #04140a !important; font-weight: 900 !important; }
+/* SLOW keeps its special identity but same shape */
+#radioWindow .epb-special { border-style: dashed !important; }
+
+/* ── 5. Transport — Spotify layout language:
+      side buttons are quiet borderless glyphs, play is the one loud circle */
+#radioWindow .nav-btn,
+#radioWindow .station-btn,
+#radioWindow .viz-icon-btn {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: rgba(255, 255, 255, 0.62) !important;
+  transition: color .12s ease, transform .12s ease !important;
+}
+#radioWindow .nav-btn:hover,
+#radioWindow .station-btn:hover,
+#radioWindow .viz-icon-btn:hover {
+  color: #fff !important;
+  transform: scale(1.06);
+  background: transparent !important;
+  box-shadow: none !important;
+}
+#radioWindow .nav-btn:active,
+#radioWindow .station-btn:active,
+#radioWindow .viz-icon-btn:active { transform: scale(0.94); }
+
+#radioWindow .play-trigger {
+  width: 52px !important;
+  height: 52px !important;
+  background: var(--radio-accent, #00ff88) !important;
+  color: #04140a !important;
+  border: none !important;
+  box-shadow: 0 6px 22px -8px var(--radio-accent, #00ff88) !important;
+  transition: transform .12s ease, box-shadow .12s ease !important;
+}
+#radioWindow .play-trigger:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 26px -8px var(--radio-accent, #00ff88) !important;
+}
+#radioWindow .play-trigger:active { transform: scale(0.95); }
+
+/* ── 6. Volume — slim Spotify slider: hairline track, small round thumb */
+#radioWindow .fader {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 92px !important;
+  height: 4px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.18) !important;
+  outline: none !important;
+}
+#radioWindow .fader::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 50% !important;
+  background: #fff !important;
+  border: none !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5) !important;
+  cursor: pointer;
+}
+#radioWindow .fader:hover::-webkit-slider-thumb { background: var(--radio-accent, #00ff88) !important; }
+#radioWindow .fader::-moz-range-thumb {
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 50% !important;
+  background: #fff !important;
+  border: none !important;
+  cursor: pointer;
+}
+#radioWindow .fader:hover::-moz-range-thumb { background: var(--radio-accent, #00ff88) !important; }
+#radioWindow .fader::-moz-range-track {
+  height: 4px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.18) !important;
+}
+
+/* ── 7. Header row: calm the branding, kill glow text */
+#radioWindow #timeDisp { text-shadow: none !important; color: rgba(255,255,255,0.55) !important; }
+#radioWindow .brand-text { text-shadow: none !important; letter-spacing: 0.18em !important; }
