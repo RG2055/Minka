@@ -3692,6 +3692,7 @@ function filterFullList(btn) {
     '</div>';
 
     var _timesStrip = '<div class="sl-times-strip" data-start-ms="' + counterStartMs + '" data-end-ms="' + counterEndMs + '">' +
+      '<span id="sl-lanes-slot" class="sl-lanes-slot"></span>' +
       '<span id="sl-ns-slot" class="sl-ns-slot"></span>' +
       '<span class="sl-ts-label">PAGĀJIS</span><strong class="sl-ts-val sl-ts-elapsed">' + _elStr + '</strong>' +
       '<span class="sl-ts-sep"></span>' +
@@ -3745,17 +3746,19 @@ function filterFullList(btn) {
     var _isToday = !activeDateStr || !g_todayStr || activeDateStr === g_todayStr;
     if (_isToday) html += _timesStrip;
 
-    // Rescue the button from wrap BEFORE innerHTML destroys it
+    // Rescue the buttons from wrap BEFORE innerHTML destroys them
     var _nsBtn = document.getElementById('ns-bar-toggle');
-    if (_nsBtn && wrap.contains(_nsBtn)) {
-      var _nsBtnRow = document.querySelector('.ns-btn-row');
-      if (_nsBtnRow) _nsBtnRow.appendChild(_nsBtn);
-    }
+    var _lanesBtn = document.getElementById('lanes-mini-toggle');
+    var _nsBtnRow = document.querySelector('.ns-btn-row');
+    if (_nsBtn && wrap.contains(_nsBtn) && _nsBtnRow) _nsBtnRow.appendChild(_nsBtn);
+    if (_lanesBtn && wrap.contains(_lanesBtn) && _nsBtnRow) _nsBtnRow.appendChild(_lanesBtn);
     wrap.innerHTML = html;
 
-    // Re-slot the button into today's strip (keeps its event listener alive)
+    // Re-slot the buttons into today's strip (keeps their event listeners alive)
     var _nsSlot = wrap.querySelector('#sl-ns-slot');
     if (_nsSlot && _nsBtn) _nsSlot.appendChild(_nsBtn);
+    var _lanesSlot = wrap.querySelector('#sl-lanes-slot');
+    if (_lanesSlot && _lanesBtn) _lanesSlot.appendChild(_lanesBtn);
 
   }
 
