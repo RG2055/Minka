@@ -21,17 +21,28 @@
   box-shadow: 0 -14px 40px rgba(0, 0, 0, 0.45) !important;
 }
 
-/* Inner panels: flat, subtle, one radius language */
+/* Inner panels: SEAMLESS — no visible card edges, everything sits directly
+   on the dock surface (one flat plane, Spotify-style) */
 #radioWindow .tech-panel {
-  background: rgba(255, 255, 255, 0.028) !important;
-  border: 1px solid rgba(255, 255, 255, 0.055) !important;
-  border-radius: 14px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
 }
 #radioWindow .monitor-frame {
-  background: rgba(0, 0, 0, 0.42) !important;
-  border: 1px solid rgba(255, 255, 255, 0.055) !important;
-  border-radius: 14px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
 }
+#radioWindow .monitor-frame::after { display: none !important; }
+
+/* Clock + LED dot: gone (visual noise) */
+#radioWindow #timeDisp { display: none !important; }
+#radioWindow #ledPoint,
+#radioWindow #ledHalo,
+#radioWindow .led-core,
+#radioWindow .led-glow { display: none !important; }
 
 /* ── 3. Typography — Spotify hierarchy: big bold title, muted secondary */
 #radioWindow #curStation {
@@ -57,32 +68,39 @@
   border: none !important;
   box-shadow: none !important;
 }
+/* Quiet text chips: no boxes at rest — the row reads as one clean line.
+   Hover = soft pill, active = the single filled accent pill. */
 #radioWindow .epb {
   border-radius: 999px !important;
-  border: 1px solid rgba(255, 255, 255, 0.10) !important;
-  background: rgba(255, 255, 255, 0.03) !important;
+  border: none !important;
+  background: transparent !important;
   box-shadow: none !important;
-  padding: 2.5px 8px !important;
+  padding: 3px 8px !important;
 }
 #radioWindow .epb .epb-led { display: none !important; }
 #radioWindow .epb .epb-label {
-  color: rgba(255, 255, 255, 0.52) !important;
-  font-size: 7px !important;
-  letter-spacing: 0.08em !important;
+  color: rgba(255, 255, 255, 0.44) !important;
+  font-size: 7.5px !important;
+  letter-spacing: 0.09em !important;
+  transition: color .12s ease;
 }
 #radioWindow .epb:hover {
-  border-color: rgba(255, 255, 255, 0.28) !important;
-  background: rgba(255, 255, 255, 0.06) !important;
+  border: none !important;
+  background: rgba(255, 255, 255, 0.08) !important;
   box-shadow: none !important;
 }
+#radioWindow .epb:hover .epb-label { color: #fff !important; }
 #radioWindow .epb.active {
   background: var(--radio-accent, #00ff88) !important;
-  border-color: var(--radio-accent, #00ff88) !important;
+  border: none !important;
   box-shadow: none !important;
 }
 #radioWindow .epb.active .epb-label { color: #04140a !important; font-weight: 900 !important; }
-/* SLOW keeps its special identity but same shape */
-#radioWindow .epb-special { border-style: dashed !important; }
+/* SLOW/EQ+ special chip: same quiet shape, just an accent-tinted label */
+#radioWindow .epb-special { border: none !important; }
+#radioWindow .epb-special .epb-label { color: rgba(183, 123, 255, 0.75) !important; }
+#radioWindow .epb-special:hover .epb-label,
+#radioWindow .epb-special.active .epb-label { color: #fff !important; }
 
 /* ── 5. Transport — Spotify layout language:
       side buttons are quiet borderless glyphs, play is the one loud circle */
