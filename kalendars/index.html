@@ -493,6 +493,10 @@ body.stars-active #stars-overlay{display:block;}
     <div id="shift-progress-wrap" class="shift-progress-wrap" hidden>
       <div id="shift-progress-segments" class="shift-progress-segments" hidden></div>
       <div id="shift-lanes-wrap" class="shift-lanes-wrap"></div>
+      <button id="lanes-mini-toggle" class="lanes-mini-toggle" type="button"
+              title="Rādīt/paslēpt maiņu joslas" aria-label="Rādīt vai paslēpt maiņu joslas">
+        <span class="lmt-chev">⌄</span><span class="lmt-txt">JOSLAS</span>
+      </button>
       <div class="shift-bar-track" id="shift-bar-track" style="display:none!important">
         <div class="shift-bar-fill" id="shift-bar-fill"></div>
         <div id="shift-progress-stops" class="shift-progress-stops" aria-label="Maiņu beigu pieturas"></div>
@@ -3563,6 +3567,29 @@ window.addEventListener('message', function(e) {
 </script>
 
 <script>
+// Compact timeline toggle: collapsed (lanes hidden) is the default — team
+// feedback was that the per-shift lanes are clutter nobody reads, but the
+// day-progress ruler ("loading" feel) should stay. Choice persists per device.
+(function(){
+  var KEY = 'mk_lanes_mini_v1';
+  var wrap = document.getElementById('shift-progress-wrap');
+  var btn = document.getElementById('lanes-mini-toggle');
+  if (!wrap || !btn) return;
+  function apply(min) {
+    wrap.classList.toggle('lanes-collapsed', min);
+    btn.title = min ? 'Rādīt maiņu joslas' : 'Paslēpt maiņu joslas';
+    try { localStorage.setItem(KEY, min ? '1' : '0'); } catch (e) {}
+  }
+  var saved = null;
+  try { saved = localStorage.getItem(KEY); } catch (e) {}
+  apply(saved === null ? true : saved === '1');
+  btn.addEventListener('click', function(){
+    apply(!wrap.classList.contains('lanes-collapsed'));
+  });
+})();
+</script>
+
+<script>
 (function(){
   function ready(fn){
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn, { once:true });
@@ -4979,6 +5006,36 @@ window.addEventListener('message', function(e) {
   gap: 0;
   margin-bottom: 4px;
   overflow: visible;
+}
+/* ── Compact timeline: hide worker lanes, keep ruler % + elapsed/remaining ──
+   Users treat the per-shift lanes as clutter; collapsed is the default. The
+   night-split chart is NOT hidden — opening 🌙 is an explicit request. */
+#shift-progress-wrap.lanes-collapsed .sl-bars-wrap { display: none !important; }
+.lanes-mini-toggle {
+  margin: 0 auto 2px;
+  padding: 1px 14px 3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.38);
+  font: 700 8.5px/1.3 Inter, system-ui, sans-serif;
+  letter-spacing: 0.14em;
+  cursor: pointer;
+  transition: color .15s ease, background .15s ease, border-color .15s ease;
+}
+.lanes-mini-toggle:hover { color: rgba(255,255,255,0.72); background: rgba(255,255,255,0.07); }
+.lanes-mini-toggle:focus-visible { outline: 2px solid rgba(183,123,255,0.6); outline-offset: 2px; }
+.lanes-mini-toggle .lmt-chev {
+  font-size: 11px;
+  line-height: 1;
+  transform: translateY(-1px);
+  transition: transform .18s ease;
+}
+#shift-progress-wrap:not(.lanes-collapsed) .lanes-mini-toggle .lmt-chev {
+  transform: rotate(180deg) translateY(-1px);
 }
 /* Day/night color band between lanes and ruler */
 .sl-time-band {
