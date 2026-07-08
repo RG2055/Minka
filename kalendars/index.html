@@ -493,10 +493,6 @@ body.stars-active #stars-overlay{display:block;}
     <div id="shift-progress-wrap" class="shift-progress-wrap" hidden>
       <div id="shift-progress-segments" class="shift-progress-segments" hidden></div>
       <div id="shift-lanes-wrap" class="shift-lanes-wrap"></div>
-      <button id="lanes-mini-toggle" class="lanes-mini-toggle" type="button"
-              title="Rādīt/paslēpt maiņu joslas" aria-label="Rādīt vai paslēpt maiņu joslas">
-        <span class="lmt-chev">⌄</span><span class="lmt-txt">JOSLAS</span>
-      </button>
       <div class="shift-bar-track" id="shift-bar-track" style="display:none!important">
         <div class="shift-bar-fill" id="shift-bar-fill"></div>
         <div id="shift-progress-stops" class="shift-progress-stops" aria-label="Maiņu beigu pieturas"></div>
@@ -510,6 +506,18 @@ body.stars-active #stars-overlay{display:block;}
       <div class="ns-btn-row">
         <img src="data/cat_small.webp" class="ns-jiji-bg" alt="" aria-hidden="true">
         <button id="ns-bar-toggle" class="ns-bar-toggle" title="Rādīt/slēpt nakts sadalījumu uz progresa joslas" hidden><span class="ns-moon">🌙</span> NAKTS SADALĪJUMS</button>
+        <button id="lanes-mini-toggle" class="lanes-mini-toggle" type="button"
+                title="Parādīt katru maiņu detalizēti" aria-label="Rādīt vai paslēpt maiņu joslas">
+          <svg class="lmt-ic" width="12" height="10" viewBox="0 0 12 10" aria-hidden="true">
+            <rect x="0" y="0" width="12" height="2.4" rx="1.2" fill="currentColor"></rect>
+            <rect x="2" y="3.8" width="8" height="2.4" rx="1.2" fill="currentColor" opacity="0.75"></rect>
+            <rect x="1" y="7.6" width="10" height="2.4" rx="1.2" fill="currentColor" opacity="0.5"></rect>
+          </svg>
+          <span class="lmt-txt">DETALIZĒTI</span>
+          <svg class="lmt-chev" width="9" height="6" viewBox="0 0 9 6" aria-hidden="true">
+            <path d="M1 1.2 L4.5 4.8 L8 1.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        </button>
       </div>
     </div>
 
@@ -5011,32 +5019,36 @@ window.addEventListener('message', function(e) {
    Users treat the per-shift lanes as clutter; collapsed is the default. The
    night-split chart is NOT hidden — opening 🌙 is an explicit request. */
 #shift-progress-wrap.lanes-collapsed .sl-bars-wrap { display: none !important; }
+/* Pill matches #ns-bar-toggle so the times-strip row reads as one control set */
 .lanes-mini-toggle {
-  margin: 0 auto 2px;
-  padding: 1px 14px 3px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 999px;
-  background: rgba(255,255,255,0.04);
-  color: rgba(255,255,255,0.38);
-  font: 700 8.5px/1.3 Inter, system-ui, sans-serif;
-  letter-spacing: 0.14em;
+  margin: 0;
+  padding: 4px 11px 4px 10px;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 20px;
+  background: rgba(24,26,40,0.55);
+  color: rgba(255,255,255,0.42);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
   cursor: pointer;
   transition: color .15s ease, background .15s ease, border-color .15s ease;
 }
-.lanes-mini-toggle:hover { color: rgba(255,255,255,0.72); background: rgba(255,255,255,0.07); }
+.lanes-mini-toggle:hover { color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.26); }
 .lanes-mini-toggle:focus-visible { outline: 2px solid rgba(183,123,255,0.6); outline-offset: 2px; }
-.lanes-mini-toggle .lmt-chev {
-  font-size: 11px;
-  line-height: 1;
-  transform: translateY(-1px);
-  transition: transform .18s ease;
+/* Expanded state: lit like the ns toggle's .is-on so it's obvious it's active */
+#shift-progress-wrap:not(.lanes-collapsed) #lanes-mini-toggle {
+  color: #ddd6fe;
+  background: rgba(60,40,120,0.45);
+  border-color: rgba(167,139,250,0.55);
 }
-#shift-progress-wrap:not(.lanes-collapsed) .lanes-mini-toggle .lmt-chev {
-  transform: rotate(180deg) translateY(-1px);
-}
+.lanes-mini-toggle .lmt-ic { flex-shrink: 0; }
+.lanes-mini-toggle .lmt-chev { flex-shrink: 0; transition: transform .18s ease; }
+#shift-progress-wrap:not(.lanes-collapsed) .lanes-mini-toggle .lmt-chev { transform: rotate(180deg); }
+/* Hidden static home (.ns-btn-row) keeps it invisible on non-today views */
 /* Day/night color band between lanes and ruler */
 .sl-time-band {
   display: flex;
