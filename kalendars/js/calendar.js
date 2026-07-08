@@ -3639,7 +3639,12 @@ function filterFullList(btn) {
     // refresh: 30s while the night-split chart is shown, 60s otherwise. Still
     // far cheaper than the old once-per-second full rebuild.
     var _timeBucket = Math.floor(nowMs / (nsOverlay ? 30000 : 60000));
-    var _structKey = _stopsSig + '#' + axisStartMs + '#' + axisEndMs + '#' + counterStartMs + '#' + counterEndMs + '#' + (_isToday ? 't' : 'h') + '#' + (nsOverlay ? 'ns' : 'n') + '#' + _timeBucket;
+    // Collapsed mode: the lanes are hidden, so don't build their DOM at all —
+    // skipping construction (not just display:none) saves the per-rebuild work.
+    // The ns chart ignores this: opening 🌙 is an explicit request to see it.
+    var _wrapHost = document.getElementById('shift-progress-wrap');
+    var _lanesMin = !nsOverlay && !!(_wrapHost && _wrapHost.classList.contains('lanes-collapsed'));
+    var _structKey = _stopsSig + '#' + axisStartMs + '#' + axisEndMs + '#' + counterStartMs + '#' + counterEndMs + '#' + (_isToday ? 't' : 'h') + '#' + (nsOverlay ? 'ns' : 'n') + '#' + (_lanesMin ? 'min' : 'max') + '#' + _timeBucket;
     if (_structKey === _laneStructKey && wrap.children.length) {
       _laneLiveUpdate(wrap, sorted, nowMs, axisStartMs, axisEndMs, axisDur, !!nsOverlay, _isToday, counterStartMs, counterEndMs);
       return;
@@ -3702,6 +3707,8 @@ function filterFullList(btn) {
     // Night split overlay bar (shown when 🌙 is active)
     if (nsOverlay) {
       html += buildCircadianChartHtml(axisStartMs, axisEndMs, nowMs, nsOverlay);
+    } else if (_lanesMin) {
+      // Lanes collapsed: no bars DOM at all.
     } else {
       html += '<div class="sl-bars-wrap">';
       sorted.forEach(function(g) {
@@ -3761,6 +3768,16 @@ function filterFullList(btn) {
     if (_lanesSlot && _lanesBtn) _lanesSlot.appendChild(_lanesBtn);
 
   }
+
+  // Called by the lanes toggle: the collapsed flag is part of the lane render
+  // key, so clearing the key + one live tick rebuilds instantly on click
+  // instead of waiting for the next 1s interval.
+  window.__mkLanesRefresh = function() {
+    _laneStructKey = '';
+    // force=true: skip the low-perf 5s heavy-paint throttle — this runs on an
+    // explicit user click, so the rebuild must be immediate.
+    try { g_updateLive(true); } catch (e) {}
+  };
 
   function g_formatDate(date) { 
     return `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()}`; 
