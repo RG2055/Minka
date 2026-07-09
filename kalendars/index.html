@@ -909,7 +909,7 @@ function _mkToast(msg, type) {
 <script src="js/radiologist_plan.js" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260702a';
+window.__minkaLocalBuild = '20260709e';
 (function(){
   function norm(v){
     try { return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
@@ -3510,7 +3510,7 @@ window.addEventListener('message', function(e) {
 
 <script>
 if ('serviceWorker' in navigator) {
-  const MINKA_APP_VERSION = '2026.07.02a';
+  const MINKA_APP_VERSION = '2026.07.09c';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -11432,6 +11432,61 @@ window.addEventListener('message', function(e) {
 .mk-shift-count-pill .mk-night-ok   { color: #7de8a5; }
 .mk-shift-count-pill .mk-night-drop { color: #ffb340; }
 .mk-shift-count-pill .mk-night-zero { color: #ff6b5f; }
+.status-tag.radiographers .mk-shift-count-pill,
+.status-tag.radiologists .mk-shift-count-pill,
+.status-tag.radiographers .mk-shift-count-pill > span,
+.status-tag.radiologists .mk-shift-count-pill > span {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Shared card language: side duty cards and central shift cards belong to
+   the same product family, while their status indicators stay untouched. */
+:root {
+  --mk-card-surface: linear-gradient(145deg, #121926 0%, #0b1019 72%);
+  --mk-card-border: rgba(190, 204, 232, .15);
+  --mk-card-edge: rgba(255, 255, 255, .055);
+}
+/* Centra kartes pieņem sānu karšu valodu: 14px, kopīga virsma un rāmis.
+   Selektori dublē specifiskākos konkurentus (#grafiks-list.grid-view
+   .card.mk-mid-card u.c.), citādi tie uzvarēja un nekas nemainījās. */
+#grafiks-list.grid-view .card.mk-mid-card,
+#grafiks-list .card {
+  background: var(--mk-card-surface) !important;
+  border: 1px solid var(--mk-card-border) !important;
+  border-radius: 14px !important;
+  box-shadow: inset 0 1px 0 var(--mk-card-edge), 0 8px 18px rgba(0, 0, 0, .18) !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:hover,
+#grafiks-list .card:hover {
+  background: linear-gradient(145deg, #161f2e 0%, #0d131d 72%) !important;
+  border-color: rgba(178, 140, 255, .42) !important;
+}
+/* Sānu kartes: tikai vienotais rādiuss — fons paliek noguruma krāsās un
+   rāmi tām jau zīmē conic-gradient gredzens (::after), 1px border to dublētu. */
+#radiographers-duty .mk-side-card,
+#radiologists-duty .mk-side-card,
+.side-panel.compact-duty #radiographers-duty .mk-side-card,
+.side-panel.compact-duty #radiologists-duty .mk-side-card,
+.side-panel.mini-duty #radiographers-duty .mk-side-card,
+.side-panel.mini-duty #radiologists-duty .mk-side-card {
+  border-radius: 14px !important;
+}
+#grafiks-list .card .card-top {
+  border-bottom: 1px solid rgba(190, 204, 232, .075);
+}
+.mk-shift-count-pill > .mk-night-ok,
+.mk-shift-count-pill > .mk-night-drop,
+.mk-shift-count-pill > .mk-night-zero {
+  display: inline !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
 .mk-duty-strip {
   display: flex; flex-direction: column; gap: 5px;
   align-items: center; text-align: center;

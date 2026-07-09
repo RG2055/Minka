@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.4.65';
+const CACHE = 'minka-4.4.70';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
@@ -130,10 +130,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  const isCodeAsset =
-    url.endsWith('.js') ||
-    url.endsWith('.html') ||
-    url.endsWith('.css');
+  const isCodeAsset = /\.(js|html|css)$/i.test(new URL(url).pathname);
 
   if (isCodeAsset) {
     // Stale-while-revalidate: serve from cache instantly (fast PWA wake even on
