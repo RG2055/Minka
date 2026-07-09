@@ -2097,6 +2097,41 @@ function filterFullList(btn) {
     return out;
   }
 
+  // Emoji dominējošā krāsa kartes fona tonim. Zīmē emoji VIENREIZ uz 24px
+  // canvas un vidējo krāsu kešo — tālāk viss ir statisks CSS, nulle darbības
+  // laika izmaksu.
+  const __emojiTintCache = {};
+  function mkEmojiTint(emoji) {
+    if (emoji in __emojiTintCache) return __emojiTintCache[emoji];
+    let out = null;
+    try {
+      const c = document.createElement('canvas');
+      c.width = c.height = 24;
+      const x = c.getContext('2d', { willReadFrequently: true });
+      x.font = '20px sans-serif';
+      x.textBaseline = 'middle';
+      x.textAlign = 'center';
+      x.fillText(emoji, 12, 13);
+      const d = x.getImageData(0, 0, 24, 24).data;
+      let r = 0, g = 0, b = 0, n = 0;
+      for (let i = 0; i < d.length; i += 4) {
+        if (d[i + 3] > 128) { r += d[i]; g += d[i + 1]; b += d[i + 2]; n++; }
+      }
+      if (n > 8) {
+        r = Math.round(r / n); g = Math.round(g / n); b = Math.round(b / n);
+        // vidējā krāsa mēdz būt dubļaina — maigi izgaismo līdz dzīvam tonim
+        const mx = Math.max(r, g, b, 1);
+        const k = Math.min(2.4, 225 / mx);
+        r = Math.min(255, Math.round(r * k));
+        g = Math.min(255, Math.round(g * k));
+        b = Math.min(255, Math.round(b * k));
+        out = r + ',' + g + ',' + b;
+      }
+    } catch (e) {}
+    __emojiTintCache[emoji] = out;
+    return out;
+  }
+
   function getSideIconHtml(type) {
     if (type === 'DIENA') return '<span class="shift-icon-side sun-icon">☀️</span>';
     else if (type === 'NAKTS') return '<span class="shift-icon-side moon-icon">🌙</span>';
@@ -4664,6 +4699,14 @@ function filterFullList(btn) {
             </div>
             ${buildCoffeeRow(w.name)}
           </div>`;
+
+        if (bgEmoji) {
+          const _tint = mkEmojiTint(bgEmoji);
+          if (_tint) {
+            card.style.setProperty('--mk-emoji-tint', _tint);
+            card.style.setProperty('--mk-emoji-tint-a', '.11');
+          }
+        }
 
         const coffeeBtn = card.querySelector('.mk-coffee-add');
         if (coffeeBtn) {
