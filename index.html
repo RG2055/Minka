@@ -25,7 +25,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260710k';
+  var CALENDAR_BUILD = '20260710m';
 
   function withCalendarBuild(url) {
     try {
@@ -564,7 +564,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710k" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710k" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710m" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710m" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -2245,6 +2245,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return '<div class="bnm-tpdrop">'+col('h',h)+'<div class="bnm-tpsep">:</div>'+col('m',mn)+'</div>';
   }
   var _open = false, _tick = null, _bc = null;
+  var _syncTimer = null, _lastSyncAt = 0;
   try { _bc = new BroadcastChannel('minka-bolus-sync'); } catch(e) {}
 
   function _bcSync() {
@@ -2414,6 +2415,24 @@ window.addEventListener('DOMContentLoaded', () => {
       _saveHistory();
       if (cb) cb();
     }).catch(function(){ _mkToast('Bolusa datu ielāde neizdevās', 'error'); });
+  }
+  function _scheduleSync(delay) {
+    if (_syncTimer) { clearTimeout(_syncTimer); _syncTimer = null; }
+    if (document.hidden) return;
+    var wait = typeof delay === 'number' ? delay : (_open ? 30000 : 120000);
+    _syncTimer = setTimeout(_runSync, wait);
+  }
+  function _runSync() {
+    if (document.hidden) return;
+    _lastSyncAt = Date.now();
+    _kvPull(function(){ if (_open) _render(); _updateLed(); });
+    _scheduleSync();
+  }
+  function _refreshSync(force) {
+    if (document.hidden) return;
+    var maxAge = _open ? 30000 : 120000;
+    if (force || !_lastSyncAt || Date.now() - _lastSyncAt >= maxAge) _runSync();
+    else _scheduleSync(maxAge - (Date.now() - _lastSyncAt));
   }
   function _load() {
     try {
@@ -3267,8 +3286,8 @@ window.addEventListener('DOMContentLoaded', () => {
     var btn = document.getElementById('bolusDocBtn');
     if (btn) btn.classList.toggle('bolus-open', _open);
     if (window.updateBuddyUiSuppression) window.updateBuddyUiSuppression();
-    if (_open) { _playWelcome(); _kvPull(_render); _render(); _startTick(); }
-    else _stopTick();
+    if (_open) { _playWelcome(); _render(); _startTick(); _refreshSync(true); }
+    else { _stopTick(); _scheduleSync(); }
   };
   function _startTick() {
     _stopTick();
@@ -3355,8 +3374,14 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     setTimeout(_requestWorkers, 800);
     setTimeout(_requestWorkers, 3000); // second attempt in case iframe still loading
-    setTimeout(function(){ _kvPull(function(){_updateLed();}); }, 2000);
-    setInterval(function(){ _kvPull(function(){if(_open)_render();_updateLed();}); _updateLed(); }, 30000);
+    setTimeout(function(){ _refreshSync(true); }, 2000);
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden) {
+        if (_syncTimer) { clearTimeout(_syncTimer); _syncTimer = null; }
+      } else {
+        _refreshSync(Date.now() - _lastSyncAt >= 30000);
+      }
+    }, { passive: true });
   }
   if (document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){setTimeout(init,500);});
   else setTimeout(init, 500);

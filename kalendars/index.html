@@ -900,8 +900,8 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260710k"></script>
-<script src="js/calendar_extras_v4.js?v=20260611a"></script>
+<script src="js/calendar.js?v=20260710m"></script>
+<script src="js/calendar_extras_v4.js?v=20260710l"></script>
 <script src="js/fatigue.js?v=20260613d"></script>
 <script src="js/nightsplit.js?v=20260703a" defer></script>
 <script src="js/monthcal.js?v=20260622h" defer></script>
@@ -913,7 +913,7 @@ function _mkToast(msg, type) {
 <script src="js/radiologist_plan.js" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260710k';
+window.__minkaLocalBuild = '20260710m';
 (function(){
   function norm(v){
     try { return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
@@ -11633,12 +11633,16 @@ window.addEventListener('message', function(e) {
     var draft = cur ? JSON.parse(JSON.stringify(cur)) : {};
     var parts = name.split(/\s+/);
     var ini = ((parts[0]||'')[0]||'') + ((parts[1]||'')[0]||'');
+    var pvEmoji = '✨';
+    try {
+      if (window.MinkaEmoji && typeof window.MinkaEmoji.get === 'function') pvEmoji = window.MinkaEmoji.get(name) || '✨';
+    } catch (e) {}
     var emVal = draft.em != null ? Math.round(parseFloat(draft.em) * 100) : 13;
     var emShown = draft.em !== '0';
 
     var html = '<div class="mk-skin-top"><div class="mk-skin-preview" id="mkSkinPrev">'
       + '<span class="pv-ini">' + ini.toUpperCase() + '</span><span class="pv-hours">24h</span>'
-      + '<span class="pv-emoji">✨</span>'
+      + '<span class="pv-emoji">' + pvEmoji + '</span>'
       + '<div class="pv-num">24</div>'
       + '<div class="pv-name">' + (parts[0]||'') + '<br><small>' + (parts.slice(1).join(' ')||'') + '</small></div>'
       + '</div>';
