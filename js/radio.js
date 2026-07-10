@@ -2135,7 +2135,26 @@ function play(url, name) {
 
         const isHLS = url.includes('.m3u8');
 
-        if (isHLS && Hls.isSupported()) {
+        // hls.js ielādējas tikai uz pirmo HLS atskaņošanu (nevis katrā app startā)
+        if (isHLS && !window.Hls) {
+            let ld = document.getElementById('mk-hls-loader');
+            if (!ld) {
+                ld = document.createElement('script');
+                ld.id = 'mk-hls-loader';
+                ld.src = 'https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js';
+                document.head.appendChild(ld);
+            }
+            ld.addEventListener('load', doPlay, { once: true });
+            ld.addEventListener('error', () => {
+                // fallback: mēģinām tiešo straumi bez hls.js (Safari u.c. native HLS)
+                audio.src = url;
+                audio.load();
+                audio.play().catch(()=>{});
+            }, { once: true });
+            return;
+        }
+
+        if (isHLS && window.Hls && Hls.isSupported()) {
             hls = new Hls({
                 enableWorker: true,
                 lowLatencyMode: true,
