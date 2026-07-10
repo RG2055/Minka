@@ -985,6 +985,7 @@ function filterFullList(btn) {
   let __gInitBusy = false;
   let __gInitRetryTimer = 0;
   let __gInitToasted = false;
+  let __gCacheRendered = false;
   function __gScheduleRetry(delayMs) {
     clearTimeout(__gInitRetryTimer);
     __gInitRetryTimer = setTimeout(function(){ g_init(0); }, delayMs);
@@ -1065,13 +1066,17 @@ function filterFullList(btn) {
       notifyHostAppReady();
       window.__gDataLoaded = true;
       clearTimeout(__gInitRetryTimer);
-      if (!window.__minkaLiveStarted) { window.__minkaLiveStarted = true; setInterval(g_updateLive, 1000); }
+      ensureLiveUpdates();
       if (window.__nsKv) window.__nsKv.startPolling();
     } catch(e) {
       console.error('g_init fail:', e);
       const loader = document.getElementById('grafiks-loader');
       const cached = readCachedSchedule();
       if (cached) {
+        if (__gCacheRendered) {
+          __gScheduleRetry(60000);
+          return;
+        }
         try {
           const _now = new Date();
           const effective = new Date(_now);
@@ -1104,8 +1109,10 @@ function filterFullList(btn) {
           g_selectDay(todayExists ? g_todayStr : firstDate);
           g_updateLive();
           notifyHostAppReady();
-          if (!window.__minkaLiveStarted) { window.__minkaLiveStarted = true; setInterval(g_updateLive, 1000); }
+          __gCacheRendered = true;
+          ensureLiveUpdates();
           if (window.__nsKv) window.__nsKv.startPolling();
+          __gScheduleRetry(60000);
           return;
         } catch(_) {}
       }
@@ -1127,6 +1134,15 @@ function filterFullList(btn) {
     } finally {
       __gInitBusy = false;
     }
+  }
+
+  function ensureLiveUpdates() {
+    if (window.__minkaLiveStarted) return;
+    window.__minkaLiveStarted = true;
+    setInterval(function(){ if (!document.hidden) g_updateLive(); }, 1000);
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) g_updateLive(true);
+    }, { passive: true });
   }
 
   function g_scrollCal(dir) { document.getElementById('grafiks-scroller').scrollBy({ left: dir * 200, behavior: 'smooth' }); }

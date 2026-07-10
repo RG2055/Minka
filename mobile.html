@@ -25,7 +25,7 @@
     } catch (_e) {}
   }
 
-  var CALENDAR_BUILD = '20260710k';
+  var CALENDAR_BUILD = '20260710m';
 
   function withCalendarBuild(url) {
     try {
@@ -886,8 +886,8 @@ html.mk-low-spec #calendarEmbed {
 
   <div id="calendarEmbed">
     <iframe
-      src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710k"
-      data-base-src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710k"
+      src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710m"
+      data-base-src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710m"
       id="calIframe"
       loading="eager"
       allowtransparency="true"
@@ -1061,6 +1061,7 @@ html.mk-low-spec #calendarEmbed {
     var LAT_MONTHS = ['Janvaris','Februaris','Marts','Aprilis','Maijs','Junijs','Julijs','Augusts','Septembris','Oktobris','Novembris','Decembris'];
     var LAT_DAYS   = ['P','O','T','C','Pk','S','Sv'];
     var _open = false, _tick = null, _bc = null;
+    var _syncTimer = null, _lastSyncAt = 0;
     try { _bc = new BroadcastChannel('minka-bolus-sync'); } catch(e) {}
 
     function _tsToDateStr(ts) {
@@ -1197,6 +1198,24 @@ html.mk-low-spec #calendarEmbed {
         _saveHistory();
         if (cb) cb();
       }).catch(function(){ _mkToast('Bolusa datu ielade neizdevas', 'error'); });
+    }
+    function _scheduleSync(delay) {
+      if (_syncTimer) { clearTimeout(_syncTimer); _syncTimer = null; }
+      if (document.hidden) return;
+      var wait = typeof delay === 'number' ? delay : (_open ? 30000 : 120000);
+      _syncTimer = setTimeout(_runSync, wait);
+    }
+    function _runSync() {
+      if (document.hidden) return;
+      _lastSyncAt = Date.now();
+      _kvPull(function(){ if (_open) _render(); _updateLed(); });
+      _scheduleSync();
+    }
+    function _refreshSync(force) {
+      if (document.hidden) return;
+      var maxAge = _open ? 30000 : 120000;
+      if (force || !_lastSyncAt || Date.now() - _lastSyncAt >= maxAge) _runSync();
+      else _scheduleSync(maxAge - (Date.now() - _lastSyncAt));
     }
     function _fmt(ts) {
       if (!ts) return '—';
@@ -1741,12 +1760,12 @@ html.mk-low-spec #calendarEmbed {
             try { f.contentWindow.postMessage({ type: 'mk_request_workers_index' }, '*'); } catch(_e) {}
           });
         } catch(_e) {}
-        _kvPull(_render);
         _render();
         setTimeout(function(){ if (_open) _render(); }, 250);
         _startTick();
+        _refreshSync(true);
       }
-      else _stopTick();
+      else { _stopTick(); _scheduleSync(); }
     };
     function init() {
       _load();
@@ -1789,8 +1808,14 @@ html.mk-low-spec #calendarEmbed {
       }
       setTimeout(_requestWorkers, 800);
       setTimeout(_requestWorkers, 3000);
-      setTimeout(function(){ _kvPull(function(){ _updateLed(); }); }, 2000);
-      setInterval(function(){ _kvPull(function(){ if(_open) _render(); _updateLed(); }); _updateLed(); }, 30000);
+      setTimeout(function(){ _refreshSync(true); }, 2000);
+      document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+          if (_syncTimer) { clearTimeout(_syncTimer); _syncTimer = null; }
+        } else {
+          _refreshSync(Date.now() - _lastSyncAt >= 30000);
+        }
+      }, { passive: true });
     }
     if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(init,500); });
     else setTimeout(init, 500);
