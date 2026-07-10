@@ -5584,6 +5584,8 @@ function setWorkerModalBuddyFlag(open) {
 }
 
 function showModalView(view) {
+  const _wm = document.getElementById('worker-modal');
+  if (_wm) _wm.classList.toggle('mk-skin-mode', view === 'skin');
   const listView = document.getElementById('modal-list-view');
   const calendarView = document.getElementById('modal-calendar-view');
   const fatigueView = document.getElementById('modal-fatigue-view');
