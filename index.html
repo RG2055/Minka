@@ -25,7 +25,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260710n';
+  var CALENDAR_BUILD = '20260710o';
 
   function withCalendarBuild(url) {
     try {
@@ -284,13 +284,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
 </noscript>
 
-<!-- Font Awesome: non-blocking (icons appear after load, not critical) -->
-<link rel="preload" as="style"
-  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-  onload="this.onload=null;this.rel='stylesheet'">
-<noscript>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</noscript>
+<!-- Font Awesome ielādējas dinamiski līdz ar radio skriptiem (tikai radio to lieto) -->
 
 <!-- Digital-7 font: non-blocking (only used in radio clock display) -->
 <link rel="preload" as="style"
@@ -561,7 +555,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710n" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710n" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710o" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710o" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -850,6 +844,12 @@ async function loadAny(urls) {
 async function loadRadioScripts() {
   if (_radioScriptsLoaded || _radioScriptsLoading) return _radioScriptsLoaded;
   _radioScriptsLoading = true;
+  if (!document.getElementById('mk-fa-css')) {
+    var _fa = document.createElement('link');
+    _fa.id = 'mk-fa-css'; _fa.rel = 'stylesheet';
+    _fa.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
+    document.head.appendChild(_fa);
+  }
   await loadAny(['js/radio.js?v=20260710n']);
   await loadAny(['js/radio_extras_v4.js?v=20260618a']);
   await loadAny(['js/ambilight.js?v=20260612e']);
@@ -898,16 +898,12 @@ function toggleRadio() {
     if (rw) rw.style.display = '';
     // Update toggle label
     document.getElementById('radioToggleLabel').textContent = 'RADIO';
-    document.querySelector('#radioToggle .fas').className = 'fas fa-chevron-down';
-    document.querySelector('#radioToggle .fas').style.fontSize = '9px';
-    document.querySelector('#radioToggle .fas').style.opacity = '.7';
+    document.getElementById('radioToggleIcon').innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" style="opacity:.7;vertical-align:middle" aria-hidden="true"><path d="M4 8l8 8 8-8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     syncShellLayout();
   } else {
     // Hide radio
     document.body.classList.add('radio-hidden');
-    document.querySelector('#radioToggle .fas').className = 'fas fa-music';
-    document.querySelector('#radioToggle .fas').style.fontSize = '11px';
-    document.querySelector('#radioToggle .fas').style.opacity = '.85';
+    document.getElementById('radioToggleIcon').innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" style="opacity:.85;vertical-align:middle" aria-hidden="true"><path d="M9 18V5l12-2v13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="18" r="3" fill="currentColor"/><circle cx="18" cy="16" r="3" fill="currentColor"/></svg>';
     syncShellLayout();
   }
 }
@@ -1992,7 +1988,7 @@ window.addEventListener('DOMContentLoaded', () => {
       <div class="rtog-led"></div>
       <svg class="dock-px" width="17" height="15" viewBox="0 0 9 8" shape-rendering="crispEdges" aria-hidden="true"><rect x="7" y="0" width="1.04" height="1.04" fill="#34d399"/><rect x="6" y="1" width="1.04" height="1.04" fill="#34d399"/><rect x="5" y="2" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="3" width="9.04" height="1.04" fill="#34d399"/><rect x="0" y="4" width="1.04" height="1.04" fill="#34d399"/><rect x="8" y="4" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="5" width="1.04" height="1.04" fill="#34d399"/><rect x="2" y="5" width="2.04" height="1.04" fill="#a7f3d0"/><rect x="6" y="5" width="1.04" height="1.04" fill="#a7f3d0"/><rect x="8" y="5" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="6" width="1.04" height="1.04" fill="#34d399"/><rect x="2" y="6" width="2.04" height="1.04" fill="#a7f3d0"/><rect x="8" y="6" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="7" width="9.04" height="1.04" fill="#34d399"/></svg>
       <span id="radioToggleLabel">RADIO</span>
-      <i class="fas fa-chevron-down" style="font-size:9px;opacity:.7;"></i>
+      <span id="radioToggleIcon"><svg width="10" height="10" viewBox="0 0 24 24" style="opacity:.7;vertical-align:middle" aria-hidden="true"><path d="M4 8l8 8 8-8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
     </button>
   </div><!-- end #bottomBtnBar -->
 </div><!-- end #dockShelf -->
@@ -3329,7 +3325,7 @@ window.addEventListener('DOMContentLoaded', () => {
       '<div id="bolus-sheet" onclick="event.stopPropagation()">'+
         '<div id="bolus-handle"></div>'+
         '<div id="bolus-title-bar">'+
-          '<span id="bolus-title"><i class="fas fa-syringe" style="font-size:10px;opacity:.7;"></i> BOLUSA MAIŅA</span>'+
+          '<span id="bolus-title"><svg width="11" height="11" viewBox="0 0 24 24" style="opacity:.7;vertical-align:-1px" aria-hidden="true"><path d="M18 2l4 4M19 5l-2 2M6 18l-4 4M3 21l2-2M17 7l-10 10 3 3L20 10zM10 14l2 2M13 11l2 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> BOLUSA MAIŅA</span>'+
           '<span style="display:flex;gap:8px;align-items:center;">'+
             '<button id="bolus-tops-btn" type="button" title="Mēneša čaklākie">🏆 TOPS</button>'+
             '<button id="bolus-close-btn" onclick="toggleBolus()">✕</button>'+
