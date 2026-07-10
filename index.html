@@ -25,7 +25,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260710s';
+  var CALENDAR_BUILD = '20260710x';
 
   function withCalendarBuild(url) {
     try {
@@ -555,7 +555,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710s" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710s" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710x" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710x" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -4385,6 +4385,10 @@ body.mk-low-motion *::after {
 
 <!-- ── Buddy companion ── -->
 <style>
+#mk-buddy-menu{position:fixed;z-index:1300;display:flex;gap:8px;padding:10px;background:rgba(18,20,30,.96);border:1px solid rgba(255,255,255,.14);border-radius:14px;box-shadow:0 12px 30px rgba(0,0,0,.4);}
+.mk-buddy-menu-opt{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:7px 9px;cursor:pointer;color:rgba(255,255,255,.75);font-size:9px;font-weight:700;letter-spacing:.05em;display:flex;flex-direction:column;gap:5px;align-items:center;font-family:inherit;}
+.mk-buddy-menu-opt:hover{border-color:rgba(100,210,255,.5);}
+.mk-buddy-menu-opt.is-on{border-color:#64d2ff;color:#64d2ff;}
 #mk-buddy{position:fixed;z-index:1200;user-select:none;-webkit-user-select:none;visibility:hidden;opacity:1;transition:opacity .16s ease;}
 body:not(.radio-idle):not(.radio-hidden) #mk-buddy{opacity:0!important;visibility:hidden!important;pointer-events:none!important;}
 body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;pointer-events:none!important;}
@@ -4986,11 +4990,37 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
       ['...XXXX...','..XXXXXX..','.XEEXXEEX.','.XXXXXXXX.','.XXXXXXXX.','.XXXXXXXX.','.X.X..X.X.','..........'],
       ['...XXXX...','..XXXXXX..','.XEEXXEEX.','.XXXXXXXX.','.XXXXXXXX.','.XXXXXXXX.','..X.X.X.X.','..........'],
       ['...XXXXX..','..XXXXXXX.','.XEEXXEEX.','.XXXXXXXX.','.XXXXXXXX.','.XXXXXXXX.','.X.X..X.X.','..........'],
-      ['...XXXX...','X.XXXXXX..','XXEEXXEEX.','.XXXXXXXX.','.XXXXXXXX.','.XXXXXXXX.','..X.X.X.X.','..........'],
-      ['...XXXX...','..XXXXXX.X','.XEEXXEEXX','.XXXXXXXX.','.XXXXXXXX.','.XXXXXXXX.','.X.X.X.X..','..........'],
+      ['...XXXX...','..XXXXXX..','.XEEXXEEX.','.XXXXXXXX.','.XXXXXXXX.','.XXXXXXXX.','..X.X.X.X.','..........'],
+      ['...XXXX...','..XXXXXX..','.XEEXXEEX.','.XXXXXXXX.','.XXXXXXXX.','.XXXXXXXX.','.X.X.X.X..','..........'],
       ['..........','..........','....XXXX..','..XXXXXXX.','.XEEXXXEX.','.XXXXXXXX.','..XXXXXX..','..........']]},
+    cat:  {px:2, eyes:[[3,5],[16,5]], pal:{K:'#7a3b12',O:'#f59f45',L:'#ffe3c2',P:'#f77fb0',D:'#2b1a08'}, f:[['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOOK.','.KOOOOLLLLLLLLLLOOOK.KOK.','..KLLOOKKKKKKKKOOLLK..K..'],['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOK..','.KOOOOLLLLLLLLLLOOOK.KK..','..KLLOKKKKKKKKKOOLLK..K..'],['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOOK.','.KOOOOLLLLLLLLLLOOOK.KOK.','..KLLOOKKKKKKKKOOLLK..K..'],['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOK..','.KOOOOLLLLLLLLLLOOOK.KK..','..KLLOKKKKKKKKKOOLLK..K..'],['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOOK.','.KOOOOLLLLLLLLLLOOOK.KOK.','..KLLOOKKKKKKKKOOLLK..K..'],['.........................','.........................','.........................','.........................','.........................','.........................','.........................','.........................','..KK..........KK.........','.KOOK........KOOK........','.KOPOKKKKKKKKKOPOK.......','KOOOOOOOOOOOOOOOOOK......','KOOKKOOOOOOOOKKOOOK......','KOOOOOOOLPPLOOOOOOK......','KOOOOOOLLLLLLOOOOOOK.....','KOOOOOOOOOOOOOOOOOOOKK...','KOOOLLLLLLLLLLLOOOOOOOK..','KOOOLLLLLLLLLLLOOOOKOOK..','.KOOLLLLLLLLLLLOOOK.KOK..','..KKKKKKKKKKKKKKKKK..K...']]},
+    catg: {px:2, eyes:[[3,5],[16,5]], pal:{K:'#3a3f4d',O:'#9aa3b5',L:'#e6eaf2',P:'#f2a5c0',D:'#191b22'}, f:[['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOOK.','.KOOOOLLLLLLLLLLOOOK.KOK.','..KLLOOKKKKKKKKOOLLK..K..'],['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOK..','.KOOOOLLLLLLLLLLOOOK.KK..','..KLLOKKKKKKKKKOOLLK..K..'],['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOOK.','.KOOOOLLLLLLLLLLOOOK.KOK.','..KLLOOKKKKKKKKOOLLK..K..'],['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOK..','.KOOOOLLLLLLLLLLOOOK.KK..','..KLLOKKKKKKKKKOOLLK..K..'],['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOOK.','.KOOOOLLLLLLLLLLOOOK.KOK.','..KLLOOKKKKKKKKOOLLK..K..'],['.........................','.........................','.........................','.........................','.........................','.........................','.........................','.........................','..KK..........KK.........','.KOOK........KOOK........','.KOPOKKKKKKKKKOPOK.......','KOOOOOOOOOOOOOOOOOK......','KOOKKOOOOOOOOKKOOOK......','KOOOOOOOLPPLOOOOOOK......','KOOOOOOLLLLLLOOOOOOK.....','KOOOOOOOOOOOOOOOOOOOKK...','KOOOLLLLLLLLLLLOOOOOOOK..','KOOOLLLLLLLLLLLOOOOKOOK..','.KOOLLLLLLLLLLLOOOK.KOK..','..KKKKKKKKKKKKKKKKK..K...']]},
+    catb: {px:2, eyes:[[3,5],[16,5]], pal:{K:'#14161d',O:'#2e3340',L:'#f4f6fb',P:'#f2a5c0',D:'#0c0d12'}, f:[['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOOK.','.KOOOOLLLLLLLLLLOOOK.KOK.','..KLLOOKKKKKKKKOOLLK..K..'],['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOK..','.KOOOOLLLLLLLLLLOOOK.KK..','..KLLOKKKKKKKKKOOLLK..K..'],['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOOK.','.KOOOOLLLLLLLLLLOOOK.KOK.','..KLLOOKKKKKKKKOOLLK..K..'],['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOK..','.KOOOOLLLLLLLLLLOOOK.KK..','..KLLOKKKKKKKKKOOLLK..K..'],['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOOK.','.KOOOOLLLLLLLLLLOOOK.KOK.','..KLLOOKKKKKKKKOOLLK..K..'],['.........................','.........................','.........................','.........................','.........................','.........................','.........................','.........................','..KK..........KK.........','.KOOK........KOOK........','.KOPOKKKKKKKKKOPOK.......','KOOOOOOOOOOOOOOOOOK......','KOOKKOOOOOOOOKKOOOK......','KOOOOOOOLPPLOOOOOOK......','KOOOOOOLLLLLLOOOOOOK.....','KOOOOOOOOOOOOOOOOOOOKK...','KOOOLLLLLLLLLLLOOOOOOOK..','KOOOLLLLLLLLLLLOOOOKOOK..','.KOOLLLLLLLLLLLOOOK.KOK..','..KKKKKKKKKKKKKKKKK..K...']]},
   };
-  var curSp = 'ghost';
+  function buddyTodayStr(){ var d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+  function dailyRandomBuddy(){
+    var keys = ['ghost','cat','catg','catb'];
+    var d = new Date();
+    var seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+    return keys[seed % keys.length];
+  }
+  // Noklusējums: katru dienu cits tēls. Manuāla izvēle darbojas tikai tās dienas ietvaros.
+  function currentBuddyKind(){
+    try {
+      var raw = localStorage.getItem('mkBuddySpV1');
+      if (raw) {
+        var o = JSON.parse(raw);
+        if (o && o.k && SP[o.k] && o.d === buddyTodayStr()) return o.k;
+      }
+    } catch(e) {}
+    return dailyRandomBuddy();
+  }
+  var curSp = currentBuddyKind();
+  // dienas maiņā (stundas pārbaude) tēls nomainās pats
+  setInterval(function(){
+    var k = currentBuddyKind();
+    if (k !== curSp) { curSp = k; buddyFrameCache.clear(); try { drawFrame(curFi, curEyeOpen); } catch(e) {} }
+  }, 3600000);
 
   // ── State ─────────────────────────────────────────────────────────────
   var mood = '', extMood = '';
@@ -5077,7 +5107,7 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
   }
   function buddyFrameKey(fi, eyeOpen){
     return [
-      curSp, fi, eyeOpen ? 1 : 0, eyeDirX, isSleeping ? 1 : 0,
+      curSp, fi, eyeOpen ? 1 : 0, eyeDirX, eyeDirY, (mood === 'petted') ? 1 : 0, isSleeping ? 1 : 0,
       glassesOn ? 1 : 0, cuteFace ? 1 : 0, syringeOn ? 1 : 0,
       devilOn ? 1 : 0, surprisedOn ? 1 : 0, crazySmileOn ? 1 : 0,
       bigMouthOn ? 1 : 0, fatOn ? 1 : 0, tallOn ? 1 : 0,
@@ -5566,6 +5596,47 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
     var sp=SP[curSp]||SP.ghost;
     var frame=sp.f[Math.max(0,fi)]||sp.f[0];
     ctx.clearRect(0,0,CVS.width,CVS.height);
+    if (sp.pal) {
+      var ppx = sp.px || PX;
+      if (isSleeping) ctx.globalAlpha = 0.8;
+      for (var pr = 0; pr < frame.length; pr++) {
+        var prow = frame[pr];
+        for (var pc = 0; pc < prow.length; pc++) {
+          var pcol = sp.pal[prow[pc]];
+          if (pcol) { ctx.fillStyle = pcol; ctx.fillRect(pc * ppx, pr * ppx, ppx, ppx); }
+        }
+      }
+      // dzīvās kaķa acis: mirkšķina, seko kursoram, "Šreka runča" skatiens
+      if (sp.eyes && !isSleeping && fi !== 5) {
+        var big = (mood === 'petted' || surprisedOn || crazySmileOn || cuteFace);
+        var closed = !eyeOpen;
+        var dxx = Math.max(-1, Math.min(1, Math.round(eyeDirX)));
+        var dyy = Math.max(-1, Math.min(1, Math.round(eyeDirY)));
+        var dark = sp.pal.D || '#1c140a';
+        for (var ei = 0; ei < sp.eyes.length; ei++) {
+          var ex = sp.eyes[ei][0], ey = sp.eyes[ei][1];
+          if (closed) {
+            ctx.fillStyle = dark;
+            ctx.fillRect(ex * ppx, (ey + 2) * ppx, 3 * ppx, ppx);
+          } else if (big) {
+            // lielas spīdīgas acis (bet sejas robežās)
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect((ex - 1) * ppx, ey * ppx, 4 * ppx, 4 * ppx);
+            ctx.fillStyle = dark;
+            ctx.fillRect((ex + dxx) * ppx, (ey + (dyy > 0 ? 1 : 0)) * ppx, 2 * ppx, 3 * ppx);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect((ex + dxx) * ppx, (ey + (dyy > 0 ? 1 : 0)) * ppx, ppx, ppx);
+          } else {
+            ctx.fillStyle = dark;
+            ctx.fillRect((ex + (dxx > 0 ? 1 : 0)) * ppx, (ey + (dyy > 0 ? 1 : 0)) * ppx, 2 * ppx, 3 * ppx);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect((ex + (dxx > 0 ? 1 : 0)) * ppx, (ey + (dyy > 0 ? 1 : 0)) * ppx, ppx, ppx);
+          }
+        }
+      }
+      ctx.globalAlpha = 1;
+      return;
+    }
     var baseBuddyCol = buddyFatigueTint || sp.c;
     var bodyCol=devilOn?'#ef233c':(allergyOn?'#ff4d5e':((boredOn||disappointedOn)?'#7b8190':(isSleeping?dimColor(baseBuddyCol,0.28):baseBuddyCol)));
     var hiCol=devilOn?'#ff6b6b':(allergyOn?'#ff8a92':((boredOn||disappointedOn)?'#a4aab8':(isSleeping?dimColor(baseBuddyCol,0.34):dimColor(baseBuddyCol,1.16))));
@@ -5831,6 +5902,84 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
 
   // ── Bubble ────────────────────────────────────────────────────────────
   var bubbleTimer=null;
+  window.mkSetBuddy = function(kind){
+    curSp = SP[kind] ? kind : dailyRandomBuddy();
+    try { localStorage.setItem('mkBuddySpV1', JSON.stringify({ k: curSp, d: buddyTodayStr() })); } catch(e) {}
+    buddyFrameCache.clear();
+    try { drawFrame(curFi, curEyeOpen); } catch(e) {}
+    showBubble(curSp === 'ghost' ? 'Buu! 👻' : 'Ņau! 🐱');
+  };
+  function drawSpritePreview(cvsEl, key){
+    var sp = SP[key]; if (!sp) return;
+    var x = cvsEl.getContext('2d');
+    var f = sp.f[0];
+    if (sp.pal) {
+      var px = sp.px || PX;
+      for (var r = 0; r < f.length; r++) {
+        var row = f[r];
+        for (var c = 0; c < row.length; c++) {
+          var col = sp.pal[row[c]];
+          if (col) { x.fillStyle = col; x.fillRect(c * px, r * px, px, px); }
+        }
+      }
+      if (sp.eyes) {
+        for (var pe = 0; pe < sp.eyes.length; pe++) {
+          var pex = sp.eyes[pe][0], pey = sp.eyes[pe][1];
+          x.fillStyle = sp.pal.D || '#1c140a';
+          x.fillRect(pex * px, pey * px, 2 * px, 3 * px);
+          x.fillStyle = '#ffffff';
+          x.fillRect(pex * px, pey * px, px, px);
+        }
+      }
+    } else {
+      for (var r2 = 0; r2 < f.length; r2++) {
+        var row2 = f[r2];
+        for (var c2 = 0; c2 < row2.length; c2++) {
+          var ch = row2[c2];
+          if (ch === '.') continue;
+          x.fillStyle = (ch === 'E') ? '#1c1e2a' : sp.c;
+          x.fillRect(c2 * PX, r2 * PX, PX, PX);
+        }
+      }
+    }
+  }
+  function showBuddyChooser(){
+    var old = document.getElementById('mk-buddy-menu');
+    if (old) { old.remove(); return; }
+    var m = document.createElement('div');
+    m.id = 'mk-buddy-menu';
+    [['ghost','Spociņš'],['cat','Rudais'],['catg','Pelēkais'],['catb','Melnbaltais']].forEach(function(o){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'mk-buddy-menu-opt' + (curSp === o[0] ? ' is-on' : '');
+      var c = document.createElement('canvas');
+      c.width = CVS.width; c.height = CVS.height;
+      c.style.cssText = 'width:40px;height:32px;image-rendering:pixelated;display:block;';
+      drawSpritePreview(c, o[0]);
+      b.appendChild(c);
+      var lbl = document.createElement('span');
+      lbl.textContent = o[1];
+      b.appendChild(lbl);
+      b.addEventListener('click', function(ev){ ev.stopPropagation(); window.mkSetBuddy(o[0]); m.remove(); });
+      m.appendChild(b);
+    });
+    document.body.appendChild(m);
+    var r = W.getBoundingClientRect();
+    m.style.left = Math.max(8, Math.min(window.innerWidth - m.offsetWidth - 8, r.left + r.width/2 - m.offsetWidth/2)) + 'px';
+    m.style.top = Math.max(8, r.top - m.offsetHeight - 12) + 'px';
+    setTimeout(function(){
+      function closeMenu(){
+        if (m.parentNode) m.remove();
+        document.removeEventListener('pointerdown', onDown, true);
+        window.removeEventListener('blur', closeMenu);
+      }
+      function onDown(e){ if (!m.contains(e.target) && !W.contains(e.target)) closeMenu(); }
+      document.addEventListener('pointerdown', onDown, true);
+      window.addEventListener('blur', closeMenu);
+    }, 60);
+    setTimeout(function(){ if (m.parentNode) m.remove(); }, 30000);
+  }
+
   function showBubble(txt){
     BUBBLE.textContent=txt; BUBBLE.classList.add('show');
     clearTimeout(bubbleTimer);
@@ -6587,6 +6736,7 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
     for(var i=0;i<5;i++)(function(n){setTimeout(spawnHeart,n*110);})(i);
     clearTimeout(pettingTimer);
     pettingTimer=setTimeout(function(){setMood(extMood||'');},2600);
+    showBuddyChooser();
   });
 
   // ── Drag + spring ─────────────────────────────────────────────────────
