@@ -721,6 +721,7 @@ html.mk-low-spec #stats-table-wrap * { transition:none !important; }
     <button id="toggle-list" class="toggle-btn" onclick="showModalView('list')">📋 Saraksts</button>
     <button id="toggle-calendar" class="toggle-btn" onclick="showModalView('calendar')">🗓 Kalendārs</button>
     <button id="toggle-emoji" class="toggle-btn" onclick="showModalView('emoji')">Emoji</button>
+    <button id="toggle-skin" class="toggle-btn" onclick="showModalView('skin')">🎨 Izskats</button>
   </div>
   <div class="modal-content">
     <div id="modal-list-view" class="list-view-wrapper hide">
@@ -748,6 +749,9 @@ html.mk-low-spec #stats-table-wrap * { transition:none !important; }
     </div>
     <div id="modal-emoji-view" class="fatigue-view-wrapper hide" style="padding:8px;">
       <!-- Aizpilda emoji.js -->
+    </div>
+    <div id="modal-skin-view" class="fatigue-view-wrapper hide" style="padding:10px;">
+      <!-- Aizpilda MinkaSkins -->
     </div>
   </div>
 </div>
@@ -896,7 +900,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260709h"></script>
+<script src="js/calendar.js?v=20260709n"></script>
 <script src="js/calendar_extras_v4.js?v=20260611a"></script>
 <script src="js/fatigue.js?v=20260613d"></script>
 <script src="js/nightsplit.js?v=20260703a" defer></script>
@@ -909,7 +913,7 @@ function _mkToast(msg, type) {
 <script src="js/radiologist_plan.js" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260709h';
+window.__minkaLocalBuild = '20260709n';
 (function(){
   function norm(v){
     try { return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
@@ -9915,10 +9919,10 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   position: absolute !important;
   inset: 50% auto auto 50% !important;
   transform: translate(-50%, -54%) !important;
-  font-size: clamp(72px, 46cqw, 150px) !important;
+  font-size: clamp(84px, 56cqw, 175px) !important;
   line-height: 1 !important;
-  filter: invert(1) !important;
-  opacity: .09 !important;
+  filter: invert(1) hue-rotate(180deg) !important;
+  opacity: .13 !important;
   pointer-events: none !important;
   user-select: none !important;
   z-index: 0 !important;
@@ -11417,6 +11421,311 @@ window.addEventListener('message', function(e) {
 }
 </style>
 
+<script>
+/* ── MinkaSkins: per-darbinieka kartes izskats ──
+   Fons (attēls/krāsa) + cipara krāsa/caurspīdība + gatavie komplekti.
+   Viss statisks CSS, localStorage kešs, sinhronizācija caur /api/skins. */
+(function MinkaSkins() {
+  var KEY = 'mkWorkerSkinsV1';
+  var SKIN_IDS = ['1015','1016','1018','1035','1039','1043','1057','1069','110','1080',
+    '10','11','12','13','15','16','17','18','19','28','29','37','46','47','55','58',
+    '76','83','95','119','128','164','184','190','199','211'];
+  var SKINS = SKIN_IDS.map(function(id, i) { return { id: id, label: 'Aina ' + (i + 1) }; });
+  var HUES = [
+    { rgb: '100,210,255', hex: '#64d2ff' }, { rgb: '183,123,255', hex: '#b77bff' },
+    { rgb: '51,209,122',  hex: '#33d17a' }, { rgb: '45,212,191',  hex: '#2dd4bf' },
+    { rgb: '255,179,64',  hex: '#ffb340' }, { rgb: '255,107,95',  hex: '#ff6b5f' },
+    { rgb: '237,147,177', hex: '#ed93b1' }, { rgb: '255,214,10',  hex: '#ffd60a' }
+  ];
+  // Gatavie komplekti: fons + cipara krāsa, kas harmonē
+  var PRESETS = [
+    { label: 'Ledus',       bg: { t: 'hue', rgb: '100,210,255' }, num: '220,245,255', na: '0.95', sw: '#64d2ff' },
+    { label: 'Aurora',      bg: { t: 'hue', rgb: '183,123,255' }, num: '221,214,254', na: '0.95', sw: '#b77bff' },
+    { label: 'Kalnu ezers', bg: { t: 'img', id: '1018' },         num: '125,211,252', na: '0.95', sw: 'url(data/skins/skin-1018.webp)' },
+    { label: 'Zvaigznes',   bg: { t: 'img', id: '1043' },         num: '255,214,10',  na: '0.90', sw: 'url(data/skins/skin-1043.webp)' },
+    { label: 'Migla',       bg: { t: 'img', id: '1057' },         num: '255,255,255', na: '0.85', sw: 'url(data/skins/skin-1057.webp)' },
+    { label: 'Mežs',        bg: { t: 'img', id: '28' },           num: '134,239,172', na: '0.95', sw: 'url(data/skins/skin-28.webp)' },
+    { label: 'Krasts',      bg: { t: 'img', id: '110' },          num: '255,200,120', na: '0.95', sw: 'url(data/skins/skin-110.webp)' },
+    { label: 'Koraļļi',     bg: { t: 'hue', rgb: '255,107,95' },  num: '255,214,180', na: '0.95', sw: '#ff6b5f' }
+  ];
+
+  function loadAll() { try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; } }
+  function saveAll(o) { try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} }
+  function normName(n) { return String(n || '').trim().toUpperCase(); }
+  function hexToRgb(h) {
+    h = String(h || '').replace('#', '');
+    if (h.length !== 6) return '100,210,255';
+    return parseInt(h.substr(0,2),16) + ',' + parseInt(h.substr(2,2),16) + ',' + parseInt(h.substr(4,2),16);
+  }
+  function rgbToHex(rgb) {
+    try { return '#' + String(rgb).split(',').map(function(x){ return (+x).toString(16).padStart(2,'0'); }).join(''); }
+    catch (e) { return '#64d2ff'; }
+  }
+
+  // Skin objekts: { t:'img',id } | { t:'hue',rgb } | tikai { num, numA } | kombinācijas
+  window.mkGetWorkerSkin = function(name) {
+    var all = loadAll();
+    return all[normName(name)] || null;
+  };
+  window.mkApplySkinToEl = function(el, skin) {
+    el.classList.remove('mk-has-skin');
+    el.classList.remove('mk-has-num');
+    ['--mk-skin-img','--mk-emoji-tint','--mk-emoji-tint-a','--mk-num-color','--mk-num-alpha'].forEach(function(p){ el.style.removeProperty(p); });
+    if (!skin) return;
+    if (skin.t === 'img' && skin.id) {
+      el.classList.add('mk-has-skin');
+      el.style.setProperty('--mk-skin-img', "url('data/skins/skin-" + skin.id + ".webp')");
+    } else if (skin.t === 'hue' && skin.rgb) {
+      el.style.setProperty('--mk-emoji-tint', skin.rgb);
+      el.style.setProperty('--mk-emoji-tint-a', '.24');
+    }
+    if (skin.num) {
+      el.classList.add('mk-has-num');
+      el.style.setProperty('--mk-num-color', skin.num);
+      el.style.setProperty('--mk-num-alpha', skin.numA != null ? skin.numA : 1);
+    }
+  };
+  function applyToCards(k) {
+    var skin = loadAll()[k] || null;
+    document.querySelectorAll('#grafiks-list .card[data-worker]').forEach(function(c) {
+      if (normName(c.getAttribute('data-worker')) !== k) return;
+      window.mkApplySkinToEl(c, skin);
+    });
+  }
+  function setSkin(name, skin) {
+    var all = loadAll();
+    var k = normName(name);
+    if (skin && (skin.t || skin.num)) all[k] = skin; else delete all[k];
+    saveAll(all);
+    applyToCards(k);
+    cloudPush(name, skin);
+  }
+
+  // ── Cloudflare sync (formāts: "img:1018;num:255,255,255;na:0.9") ──
+  function packSkin(sk) {
+    if (!sk) return '';
+    var p = [];
+    if (sk.t === 'img' && sk.id) p.push('img:' + sk.id);
+    else if (sk.t === 'hue' && sk.rgb) p.push('hue:' + sk.rgb);
+    if (sk.num) p.push('num:' + sk.num);
+    if (sk.numA != null) p.push('na:' + sk.numA);
+    return p.join(';');
+  }
+  function unpackSkin(v) {
+    var sk = {};
+    String(v || '').split(';').forEach(function(part) {
+      if (part.indexOf('img:') === 0) { sk.t = 'img'; sk.id = part.slice(4); }
+      else if (part.indexOf('hue:') === 0) { sk.t = 'hue'; sk.rgb = part.slice(4); }
+      else if (part.indexOf('num:') === 0) { sk.num = part.slice(4); }
+      else if (part.indexOf('na:') === 0) { sk.numA = part.slice(3); }
+    });
+    return (sk.t || sk.num) ? sk : null;
+  }
+  function warnLocalOnly() {
+    if (typeof _mkToast === 'function') _mkToast('Mākonis vēl nav gatavs — izskats pagaidām tikai šajā ierīcē', 'error');
+  }
+  function cloudPush(name, sk) {
+    if (!window.MinkaApi || !window.MinkaApi.apiFetch) { warnLocalOnly(); return; }
+    window.MinkaApi.apiFetch('/api/skins', { method: 'POST', json: { worker: normName(name), skin: packSkin(sk) || null } })
+      .then(function(r) { if (!r.ok) throw 0; if (typeof _mkToast === 'function') _mkToast('Izskats saglabāts — redzēs visi', 'ok'); })
+      .catch(warnLocalOnly);
+  }
+  function cloudPull() {
+    if (!window.MinkaApi || !window.MinkaApi.apiFetch) return;
+    window.MinkaApi.apiFetch('/api/skins').then(function(r) {
+      if (!r.ok) throw 0;
+      return r.json();
+    }).then(function(map) {
+      if (!map || typeof map !== 'object') return;
+      var all = {};
+      Object.keys(map).forEach(function(k) {
+        var sk = unpackSkin(map[k]);
+        if (sk) all[normName(k)] = sk;
+      });
+      saveAll(all);
+      Object.keys(all).forEach(applyToCards);
+    }).catch(function() {});
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(cloudPull, 1500); }, { once: true });
+  else setTimeout(cloudPull, 1500);
+
+  function currentWorkerName() {
+    var f = (document.getElementById('modal-firstname') || {}).innerText || '';
+    var l = (document.getElementById('modal-surname') || {}).innerText || '';
+    return (f + ' ' + l).replace(/--/g, '').trim();
+  }
+
+  window.mkRenderSkinPicker = function(host) {
+    if (!host) return;
+    var name = currentWorkerName();
+    var cur = window.mkGetWorkerSkin(name);
+    var draft = cur ? JSON.parse(JSON.stringify(cur)) : {};
+    var parts = name.split(/\s+/);
+    var ini = ((parts[0]||'')[0]||'') + ((parts[1]||'')[0]||'');
+
+    var html = '<div class="mk-skin-top"><div class="mk-skin-preview" id="mkSkinPrev">'
+      + '<span class="pv-ini">' + ini.toUpperCase() + '</span><span class="pv-hours">24h</span>'
+      + '<div class="pv-num">24</div>'
+      + '<div class="pv-name">' + (parts[0]||'') + '<br><small>' + (parts.slice(1).join(' ')||'') + '</small></div>'
+      + '</div>';
+
+    html += '<div class="mk-skin-top-right"><div class="mk-skin-sec" style="margin-top:0;">Gatavie komplekti</div><div class="mk-skin-presets">';
+    PRESETS.forEach(function(p, i) {
+      var swStyle = p.sw.indexOf('url') === 0 ? 'background-image:' + p.sw + ';background-size:cover;' : 'background:' + p.sw + ';';
+      html += '<button type="button" class="mk-skin-preset" data-preset="' + i + '"><span class="mk-skin-preset-sw" style="' + swStyle + '"></span>' + p.label + '</button>';
+    });
+    html += '</div></div></div>';
+
+    html += '<div class="mk-skin-sec">Kartes attēls</div><div class="mk-skin-grid">';
+    SKINS.forEach(function(sk) {
+      var act = draft.t === 'img' && draft.id === sk.id;
+      html += '<button type="button" class="mk-skin-thumb' + (act ? ' is-active' : '') + '" data-skin="' + sk.id + '" title="' + sk.label + '" style="background-image:url(data/skins/skin-' + sk.id + '.webp)"></button>';
+    });
+    html += '</div><div class="mk-skin-row2"><div class="mk-skin-col"><div class="mk-skin-sec">Vai fona krāsa</div><div class="mk-skin-hues">';
+    HUES.forEach(function(h) {
+      var act = draft.t === 'hue' && draft.rgb === h.rgb;
+      html += '<button type="button" class="mk-skin-hue' + (act ? ' is-active' : '') + '" data-rgb="' + h.rgb + '" style="background:' + h.hex + '"></button>';
+    });
+    html += '<input type="color" class="mk-skin-color" value="' + (draft.t === 'hue' ? rgbToHex(draft.rgb) : '#64d2ff') + '" title="Sava fona krāsa">';
+    html += '</div></div>';
+
+    html += '<div class="mk-skin-col"><div class="mk-skin-sec">Cipara krāsa un caurspīdība</div>';
+    html += '<div class="mk-skin-custom">'
+      + '<input type="color" class="mk-num-color" value="' + (draft.num ? rgbToHex(draft.num) : '#a78bfa') + '" title="Cipara krāsa">'
+      + '<input type="range" class="mk-num-alpha" min="15" max="100" step="5" value="' + Math.round((draft.numA != null ? +draft.numA : 1) * 100) + '">'
+      + '<span class="mk-num-alpha-val">' + Math.round((draft.numA != null ? +draft.numA : 1) * 100) + '%</span>'
+      + '</div></div></div>';
+
+    html += '<div class="mk-skin-footer"><button type="button" class="mk-skin-clear">✕ Noņemt visu izskatu</button>'
+      + '<span class="mk-skin-note">Redzēs visi kolēģi · sinhronizējas caur mākoni</span></div>';
+    host.innerHTML = html;
+
+    var prev = host.querySelector('#mkSkinPrev');
+    function livePreview() {
+      window.mkApplySkinToEl(prev, (draft.t || draft.num) ? draft : null);
+      var k = normName(name);
+      document.querySelectorAll('#grafiks-list .card[data-worker]').forEach(function(c) {
+        if (normName(c.getAttribute('data-worker')) === k) window.mkApplySkinToEl(c, (draft.t || draft.num) ? draft : null);
+      });
+    }
+    function commit() {
+      setSkin(name, (draft.t || draft.num) ? draft : null);
+      window.mkRenderSkinPicker(host);
+    }
+    livePreview();
+
+    host.querySelectorAll('.mk-skin-preset').forEach(function(b) {
+      b.addEventListener('click', function() {
+        var p = PRESETS[+b.dataset.preset];
+        draft = JSON.parse(JSON.stringify(p.bg));
+        draft.num = p.num; draft.numA = p.na;
+        commit();
+      });
+    });
+    host.querySelectorAll('.mk-skin-thumb').forEach(function(b) {
+      b.addEventListener('click', function() {
+        draft.t = 'img'; draft.id = b.dataset.skin; delete draft.rgb;
+        commit();
+      });
+    });
+    host.querySelectorAll('.mk-skin-hue').forEach(function(b) {
+      b.addEventListener('click', function() {
+        draft.t = 'hue'; draft.rgb = b.dataset.rgb; delete draft.id;
+        commit();
+      });
+    });
+    var bgInp = host.querySelector('.mk-skin-color');
+    bgInp.addEventListener('input', function() { draft.t = 'hue'; draft.rgb = hexToRgb(bgInp.value); delete draft.id; livePreview(); });
+    bgInp.addEventListener('change', commit);
+    var numInp = host.querySelector('.mk-num-color');
+    numInp.addEventListener('input', function() { draft.num = hexToRgb(numInp.value); if (draft.numA == null) draft.numA = '0.95'; livePreview(); });
+    numInp.addEventListener('change', commit);
+    var aInp = host.querySelector('.mk-num-alpha');
+    var aVal = host.querySelector('.mk-num-alpha-val');
+    aInp.addEventListener('input', function() {
+      draft.numA = String((+aInp.value / 100).toFixed(2));
+      if (!draft.num) draft.num = '167,139,250';
+      aVal.textContent = aInp.value + '%';
+      livePreview();
+    });
+    aInp.addEventListener('change', commit);
+    host.querySelector('.mk-skin-clear').addEventListener('click', function() {
+      draft = {};
+      setSkin(name, null);
+      window.mkRenderSkinPicker(host);
+    });
+  };
+})();
+</script>
+
+<style id="mk-skins">
+/* ── Darbinieka kartes skins ── */
+#grafiks-list.grid-view .card.mk-mid-card.mk-has-skin,
+#grafiks-list .card.mk-has-skin {
+  background:
+    linear-gradient(180deg, rgba(7,10,17,.72) 0%, rgba(7,10,17,.55) 45%, rgba(7,10,17,.80) 100%),
+    var(--mk-skin-img) center/cover no-repeat,
+    #0b1019 !important;
+  background-blend-mode: normal !important;
+}
+#grafiks-list.grid-view .card.mk-has-num .mk-mid-hours.card-shift,
+#grafiks-list.grid-view .card.mk-mid-card-rd.mk-has-num .mk-mid-hours.card-shift {
+  color: rgba(var(--mk-num-color, 167,139,250), var(--mk-num-alpha, 1)) !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card.mk-has-skin:hover,
+#grafiks-list .card.mk-has-skin:hover {
+  background:
+    linear-gradient(180deg, rgba(7,10,17,.62) 0%, rgba(7,10,17,.45) 45%, rgba(7,10,17,.74) 100%),
+    var(--mk-skin-img) center/cover no-repeat,
+    #0b1019 !important;
+  background-blend-mode: normal !important;
+}
+.mk-skin-top { display: flex; gap: 14px; align-items: flex-start; padding-top: 2px; }
+.mk-skin-top-right { flex: 1; min-width: 0; }
+.mk-skin-preview {
+  position: relative; width: 128px; flex-shrink: 0; aspect-ratio: 1/1.05; border-radius: 14px;
+  border: 1px solid rgba(190,204,232,.15); overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  background:
+    radial-gradient(140% 110% at 28% 22%, rgba(var(--mk-emoji-tint, 0,0,0), var(--mk-emoji-tint-a, 0)) 0%, transparent 70%),
+    linear-gradient(145deg, #121926 0%, #0b1019 72%);
+  background-blend-mode: screen, normal;
+}
+.mk-skin-preview.mk-has-skin {
+  background:
+    linear-gradient(180deg, rgba(7,10,17,.72) 0%, rgba(7,10,17,.55) 45%, rgba(7,10,17,.80) 100%),
+    var(--mk-skin-img) center/cover no-repeat, #0b1019;
+  background-blend-mode: normal;
+}
+.mk-skin-preview .pv-ini { position: absolute; top: 8px; left: 11px; font: 900 16px Inter, sans-serif; color: rgba(255,255,255,.25); letter-spacing: .04em; }
+.mk-skin-preview .pv-hours { position: absolute; top: 9px; right: 11px; font: 800 12px Inter, sans-serif; color: #fff; }
+.mk-skin-preview .pv-num { font: 900 36px Inter, sans-serif; line-height: .9; color: rgba(var(--mk-num-color, 167,139,250), var(--mk-num-alpha, 1)); }
+.mk-skin-preview .pv-name { font: 700 12.5px Inter, sans-serif; color: #fff; text-align: center; line-height: 1.15; }
+.mk-skin-preview .pv-name small { font-size: 11px; color: rgba(255,255,255,.85); }
+.mk-skin-presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: 7px; }
+.mk-skin-preset { display: flex; align-items: center; gap: 7px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.11); border-radius: 10px; color: rgba(255,255,255,.85); font-size: 11px; font-weight: 700; padding: 6px 8px; cursor: pointer; }
+.mk-skin-preset:hover { border-color: rgba(100,210,255,.5); }
+.mk-skin-preset-sw { width: 22px; height: 22px; border-radius: 7px; flex-shrink: 0; border: 1px solid rgba(255,255,255,.18); }
+.mk-num-alpha { flex: 1; accent-color: #64d2ff; }
+.mk-num-alpha-val { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.7); min-width: 36px; text-align: right; }
+.mk-skin-sec { font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.45); margin: 10px 2px 7px; }
+.mk-skin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 7px; max-height: 152px; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; }
+.mk-skin-row2 { display: flex; gap: 18px; flex-wrap: wrap; }
+.mk-skin-row2 .mk-skin-col { flex: 1; min-width: 240px; }
+.mk-skin-footer { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+.mk-skin-thumb { aspect-ratio: 16/9; border-radius: 10px; border: 2px solid rgba(255,255,255,.10); background-size: cover; background-position: center; cursor: pointer; padding: 0; transition: border-color .15s; }
+.mk-skin-thumb:hover { border-color: rgba(100,210,255,.55); }
+.mk-skin-thumb.is-active { border-color: #64d2ff; box-shadow: 0 0 0 2px rgba(100,210,255,.35); }
+.mk-skin-hues { display: flex; flex-wrap: wrap; gap: 8px; }
+.mk-skin-hue { width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(255,255,255,.12); cursor: pointer; padding: 0; }
+.mk-skin-hue.is-active { border-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,.3); }
+.mk-skin-custom { display: flex; align-items: center; gap: 10px; }
+.mk-skin-color { width: 48px; height: 34px; border: 2px solid rgba(255,255,255,.15); border-radius: 10px; background: transparent; padding: 2px; cursor: pointer; }
+.mk-skin-custom-lbl { font-size: 11px; color: rgba(255,255,255,.55); }
+.mk-skin-clear { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.14); border-radius: 10px; color: rgba(255,255,255,.75); font-size: 11px; font-weight: 700; padding: 8px 14px; cursor: pointer; white-space: nowrap; }
+.mk-skin-note { font-size: 10px; color: rgba(255,255,255,.35); }
+</style>
+
 <style id="mk-duty-header">
 /* ── Sānu paneļu galvene: bez kapsulas, vienā līmenī ar header ── */
 :root:not(.mk-mobile-shell) .side-panel { padding-top: 18px !important; }
@@ -11456,8 +11765,9 @@ window.addEventListener('message', function(e) {
 #grafiks-list.grid-view .card.mk-mid-card,
 #grafiks-list .card {
   background:
-    radial-gradient(130% 95% at 50% 18%, rgba(var(--mk-emoji-tint, 0,0,0), var(--mk-emoji-tint-a, 0)) 0%, transparent 64%),
+    radial-gradient(140% 110% at 28% 22%, rgba(var(--mk-emoji-tint, 0,0,0), var(--mk-emoji-tint-a, 0)) 0%, transparent 70%),
     var(--mk-card-surface) !important;
+  background-blend-mode: screen, normal !important;
   border: 1px solid var(--mk-card-border) !important;
   border-radius: 14px !important;
   box-shadow: inset 0 1px 0 var(--mk-card-edge), 0 8px 18px rgba(0, 0, 0, .18) !important;
@@ -11465,8 +11775,9 @@ window.addEventListener('message', function(e) {
 #grafiks-list.grid-view .card.mk-mid-card:hover,
 #grafiks-list .card:hover {
   background:
-    radial-gradient(130% 95% at 50% 18%, rgba(var(--mk-emoji-tint, 0,0,0), var(--mk-emoji-tint-a, 0)) 0%, transparent 64%),
+    radial-gradient(140% 110% at 28% 22%, rgba(var(--mk-emoji-tint, 0,0,0), var(--mk-emoji-tint-a, 0)) 0%, transparent 70%),
     linear-gradient(145deg, #161f2e 0%, #0d131d 72%) !important;
+  background-blend-mode: screen, normal !important;
   /* hover rāmis vienmēr Ice zilā krāsā (lietotāja izvēle), neatkarīgi no tēmas */
   border-color: rgba(100, 210, 255, .48) !important;
 }
