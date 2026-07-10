@@ -900,7 +900,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260709q"></script>
+<script src="js/calendar.js?v=20260710e"></script>
 <script src="js/calendar_extras_v4.js?v=20260611a"></script>
 <script src="js/fatigue.js?v=20260613d"></script>
 <script src="js/nightsplit.js?v=20260703a" defer></script>
@@ -913,7 +913,7 @@ function _mkToast(msg, type) {
 <script src="js/radiologist_plan.js" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260709q';
+window.__minkaLocalBuild = '20260710e';
 (function(){
   function norm(v){
     try { return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
@@ -11423,31 +11423,53 @@ window.addEventListener('message', function(e) {
 
 <script>
 /* ── MinkaSkins: per-darbinieka kartes izskats ──
-   Fons (attēls/krāsa) + cipara krāsa/caurspīdība + gatavie komplekti.
-   Viss statisks CSS, localStorage kešs, sinhronizācija caur /api/skins. */
+   Fons (attēls/gradients/krāsa) + cipara/teksta krāsas + emoji kontrole + spīdumiņi.
+   Viss statisks CSS (bez animācijām), localStorage kešs, sinhronizācija caur /api/skins. */
 (function MinkaSkins() {
   var KEY = 'mkWorkerSkinsV1';
   var cloudTimers = Object.create(null);
-  var SKIN_IDS = ['1015','1016','1018','1035','1039','1043','1057','1069','110','1080',
-    '10','11','12','13','15','16','17','18','19','28','29','37','46','47','55','58',
-    '76','83','95','119','128','164','184','190','199','211'];
-  var SKINS = SKIN_IDS.map(function(id, i) { return { id: id, label: 'Aina ' + (i + 1) }; });
+  var IMG_GROUPS = [
+    { label: 'Rozā un maigi',      ids: ['360','25','888','867','56','788','866','923'] },
+    { label: 'Spilgti',            ids: ['1080','1069','211','76'] },
+    { label: 'Ūdens un zili',      ids: ['1015','1035','13','15','16','37','199'] },
+    { label: 'Zaļā daba',          ids: ['1018','1039','1043','10','11','17','18','28','128','190'] },
+    { label: 'Silti un saulaini',  ids: ['1016','1057','110','19','46','164'] },
+    { label: 'Tumši un mistiski',  ids: ['12','29','55','83','95','184'] },
+    { label: 'Melnbalti',          ids: ['47','58'] }
+  ];
+  var GRADS = [
+    { id: 'roza',    label: 'Rozā sapnis',  css: 'linear-gradient(150deg,#ff9a9e 0%,#fad0c4 100%)' },
+    { id: 'sakura',  label: 'Sakura',       css: 'linear-gradient(150deg,#fbc2eb 0%,#fed6e3 100%)' },
+    { id: 'konfe',   label: 'Konfektes',    css: 'linear-gradient(150deg,#ffafcc 0%,#cdb4db 100%)' },
+    { id: 'flami',   label: 'Flamingo',     css: 'linear-gradient(150deg,#f78ca0 0%,#fe9a8b 100%)' },
+    { id: 'persiks', label: 'Persiks',      css: 'linear-gradient(150deg,#ffecd2 0%,#fcb69f 100%)' },
+    { id: 'lavanda', label: 'Lavanda',      css: 'linear-gradient(150deg,#a18cd1 0%,#fbc2eb 100%)' },
+    { id: 'debess',  label: 'Debesis',      css: 'linear-gradient(150deg,#89f7fe 0%,#66a6ff 100%)' },
+    { id: 'menta',   label: 'Piparmētra',   css: 'linear-gradient(150deg,#d4fc79 0%,#96e6a1 100%)' },
+    { id: 'naktsr',  label: 'Nakts roze',   css: 'linear-gradient(150deg,#5f0a87 0%,#f80759 100%)' },
+    { id: 'zelts',   label: 'Zelta stunda', css: 'linear-gradient(150deg,#f6d365 0%,#fda085 100%)' }
+  ];
+  var GRAD_MAP = {};
+  GRADS.forEach(function(g){ GRAD_MAP[g.id] = g.css; });
   var HUES = [
     { rgb: '100,210,255', hex: '#64d2ff' }, { rgb: '183,123,255', hex: '#b77bff' },
-    { rgb: '51,209,122',  hex: '#33d17a' }, { rgb: '45,212,191',  hex: '#2dd4bf' },
-    { rgb: '255,179,64',  hex: '#ffb340' }, { rgb: '255,107,95',  hex: '#ff6b5f' },
-    { rgb: '237,147,177', hex: '#ed93b1' }, { rgb: '255,214,10',  hex: '#ffd60a' }
+    { rgb: '255,175,204', hex: '#ffafcc' }, { rgb: '51,209,122',  hex: '#33d17a' },
+    { rgb: '45,212,191',  hex: '#2dd4bf' }, { rgb: '255,179,64',  hex: '#ffb340' },
+    { rgb: '255,107,95',  hex: '#ff6b5f' }, { rgb: '237,147,177', hex: '#ed93b1' }
   ];
-  // Gatavie komplekti: fons + cipara krāsa, kas harmonē
   var PRESETS = [
+    { label: 'Sakura',      bg: { t: 'grad', id: 'sakura' },  num: '214,51,132',  na: '0.90', txt: '124,45,86',   fx: 'spark', sw: GRAD_MAP.sakura },
+    { label: 'Flamingo',    bg: { t: 'grad', id: 'flami' },   num: '255,255,255', na: '0.95', txt: '255,240,245', sw: GRAD_MAP.flami },
+    { label: 'Lavanda',     bg: { t: 'grad', id: 'lavanda' }, num: '255,255,255', na: '0.95', txt: '243,232,255', fx: 'spark', sw: GRAD_MAP.lavanda },
+    { label: 'Nakts roze',  bg: { t: 'grad', id: 'naktsr' },  num: '255,214,232', na: '0.95', txt: '255,228,240', fx: 'spark', sw: GRAD_MAP.naktsr },
+    { label: 'Zemenes',     bg: { t: 'img', id: '1080' },     num: '255,228,235', na: '0.95', txt: '255,228,235', sw: 'url(data/skins/skin-1080.webp)' },
     { label: 'Ledus',       bg: { t: 'hue', rgb: '100,210,255' }, num: '220,245,255', na: '0.95', sw: '#64d2ff' },
     { label: 'Aurora',      bg: { t: 'hue', rgb: '183,123,255' }, num: '221,214,254', na: '0.95', sw: '#b77bff' },
-    { label: 'Kalnu ezers', bg: { t: 'img', id: '1018' },         num: '125,211,252', na: '0.95', sw: 'url(data/skins/skin-1018.webp)' },
-    { label: 'Zvaigznes',   bg: { t: 'img', id: '1043' },         num: '255,214,10',  na: '0.90', sw: 'url(data/skins/skin-1043.webp)' },
-    { label: 'Migla',       bg: { t: 'img', id: '1057' },         num: '255,255,255', na: '0.85', sw: 'url(data/skins/skin-1057.webp)' },
-    { label: 'Mežs',        bg: { t: 'img', id: '28' },           num: '134,239,172', na: '0.95', sw: 'url(data/skins/skin-28.webp)' },
-    { label: 'Krasts',      bg: { t: 'img', id: '110' },          num: '255,200,120', na: '0.95', sw: 'url(data/skins/skin-110.webp)' },
-    { label: 'Koraļļi',     bg: { t: 'hue', rgb: '255,107,95' },  num: '255,214,180', na: '0.95', sw: '#ff6b5f' }
+    { label: 'Kalnu ezers', bg: { t: 'img', id: '1018' },     num: '125,211,252', na: '0.95', sw: 'url(data/skins/skin-1018.webp)' },
+    { label: 'Zvaigznes',   bg: { t: 'img', id: '1043' },     num: '255,214,10',  na: '0.90', fx: 'spark', sw: 'url(data/skins/skin-1043.webp)' },
+    { label: 'Mežs',        bg: { t: 'img', id: '28' },       num: '134,239,172', na: '0.95', sw: 'url(data/skins/skin-28.webp)' },
+    { label: 'Krasts',      bg: { t: 'img', id: '110' },      num: '255,200,120', na: '0.95', sw: 'url(data/skins/skin-110.webp)' },
+    { label: 'Zelta stunda',bg: { t: 'grad', id: 'zelts' },   num: '146,64,14',   na: '0.90', txt: '120,53,15',   sw: GRAD_MAP.zelts }
   ];
 
   function loadAll() { try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; } }
@@ -11463,7 +11485,6 @@ window.addEventListener('message', function(e) {
     catch (e) { return '#64d2ff'; }
   }
 
-  // Skin objekts: { t:'img',id } | { t:'hue',rgb } | tikai { num, numA } | kombinācijas
   window.mkGetWorkerSkin = function(name) {
     var all = loadAll();
     return all[normName(name)] || null;
@@ -11471,13 +11492,16 @@ window.addEventListener('message', function(e) {
   window.mkApplySkinToEl = function(el, skin) {
     var numEl = el.querySelector('.mk-mid-hours.card-shift') || el.querySelector('.pv-num');
     if (numEl) { numEl.style.removeProperty('color'); numEl.style.removeProperty('-webkit-text-fill-color'); }
-    el.classList.remove('mk-has-skin');
-    el.classList.remove('mk-has-num');
-    ['--mk-skin-img','--mk-emoji-tint','--mk-emoji-tint-a','--mk-num-color','--mk-num-alpha'].forEach(function(p){ el.style.removeProperty(p); });
+    ['mk-has-skin','mk-has-grad','mk-has-num','mk-has-txt','mk-has-spark','mk-fx-hearts','mk-fx-mirdz','mk-fx-burb','mk-emoji-custom','mk-emoji-normal'].forEach(function(c){ el.classList.remove(c); });
+    ['--mk-skin-img','--mk-emoji-tint','--mk-emoji-tint-a','--mk-num-color','--mk-num-alpha','--mk-txt-color','--mk-emoji-op'].forEach(function(p){ el.style.removeProperty(p); });
     if (!skin) return;
     if (skin.t === 'img' && skin.id) {
       el.classList.add('mk-has-skin');
       el.style.setProperty('--mk-skin-img', "url('data/skins/skin-" + skin.id + ".webp')");
+    } else if (skin.t === 'grad' && skin.id && GRAD_MAP[skin.id]) {
+      el.classList.add('mk-has-skin');
+      el.classList.add('mk-has-grad');
+      el.style.setProperty('--mk-skin-img', GRAD_MAP[skin.id]);
     } else if (skin.t === 'hue' && skin.rgb) {
       el.style.setProperty('--mk-emoji-tint', skin.rgb);
       el.style.setProperty('--mk-emoji-tint-a', '.24');
@@ -11493,6 +11517,17 @@ window.addEventListener('message', function(e) {
         numEl.style.setProperty('-webkit-text-fill-color', 'rgba(' + rgb + ',' + alpha + ')', 'important');
       }
     }
+    if (skin.txt && /^\d{1,3}(,\d{1,3}){2}$/.test(String(skin.txt))) {
+      el.classList.add('mk-has-txt');
+      el.style.setProperty('--mk-txt-color', skin.txt);
+    }
+    if (skin.em != null) {
+      el.classList.add('mk-emoji-custom');
+      el.style.setProperty('--mk-emoji-op', skin.em);
+    }
+    if (skin.emn === '0') el.classList.add('mk-emoji-normal');
+    if (skin.fx === 'spark') el.classList.add('mk-has-spark');
+    else if (skin.fx === 'hearts' || skin.fx === 'mirdz' || skin.fx === 'burb') el.classList.add('mk-fx-' + skin.fx);
   };
   function applyToCards(k) {
     var skin = loadAll()[k] || null;
@@ -11501,10 +11536,11 @@ window.addEventListener('message', function(e) {
       window.mkApplySkinToEl(c, skin);
     });
   }
+  function hasAny(sk) { return !!(sk && (sk.t || sk.num || sk.txt || sk.em != null || sk.emn != null || sk.fx)); }
   function setSkin(name, skin, debounceCloud) {
     var all = loadAll();
     var k = normName(name);
-    if (skin && (skin.t || skin.num)) all[k] = skin; else delete all[k];
+    if (hasAny(skin)) all[k] = skin; else delete all[k];
     saveAll(all);
     applyToCards(k);
     if (cloudTimers[k]) clearTimeout(cloudTimers[k]);
@@ -11520,25 +11556,35 @@ window.addEventListener('message', function(e) {
     }
   }
 
-  // ── Cloudflare sync (formāts: "img:1018;num:255,255,255;na:0.9") ──
+  // ── Cloudflare sync (formāts: "img:1018;txt:255,255,255;num:255,214,10;na:0.9;em:0.25;emn:0;fx:spark") ──
   function packSkin(sk) {
     if (!sk) return '';
     var p = [];
     if (sk.t === 'img' && sk.id) p.push('img:' + sk.id);
+    else if (sk.t === 'grad' && sk.id) p.push('grad:' + sk.id);
     else if (sk.t === 'hue' && sk.rgb) p.push('hue:' + sk.rgb);
+    if (sk.txt) p.push('txt:' + sk.txt);
     if (sk.num) p.push('num:' + sk.num);
     if (sk.numA != null) p.push('na:' + sk.numA);
+    if (sk.em != null) p.push('em:' + sk.em);
+    if (sk.emn != null) p.push('emn:' + sk.emn);
+    if (sk.fx) p.push('fx:' + sk.fx);
     return p.join(';');
   }
   function unpackSkin(v) {
     var sk = {};
     String(v || '').split(';').forEach(function(part) {
       if (part.indexOf('img:') === 0) { sk.t = 'img'; sk.id = part.slice(4); }
+      else if (part.indexOf('grad:') === 0) { sk.t = 'grad'; sk.id = part.slice(5); }
       else if (part.indexOf('hue:') === 0) { sk.t = 'hue'; sk.rgb = part.slice(4); }
+      else if (part.indexOf('txt:') === 0) { sk.txt = part.slice(4); }
       else if (part.indexOf('num:') === 0) { sk.num = part.slice(4); }
       else if (part.indexOf('na:') === 0) { sk.numA = part.slice(3); }
+      else if (part.indexOf('em:') === 0) { sk.em = part.slice(3); }
+      else if (part.indexOf('emn:') === 0) { sk.emn = part.slice(4); }
+      else if (part.indexOf('fx:') === 0) { sk.fx = part.slice(3); }
     });
-    return (sk.t || sk.num) ? sk : null;
+    return hasAny(sk) ? sk : null;
   }
   function warnLocalOnly() {
     if (typeof _mkToast === 'function') _mkToast('Mākonis vēl nav gatavs — izskats pagaidām tikai šajā ierīcē', 'error');
@@ -11581,9 +11627,12 @@ window.addEventListener('message', function(e) {
     var draft = cur ? JSON.parse(JSON.stringify(cur)) : {};
     var parts = name.split(/\s+/);
     var ini = ((parts[0]||'')[0]||'') + ((parts[1]||'')[0]||'');
+    var emVal = draft.em != null ? Math.round(parseFloat(draft.em) * 100) : 13;
+    var emShown = draft.em !== '0';
 
     var html = '<div class="mk-skin-top"><div class="mk-skin-preview" id="mkSkinPrev">'
       + '<span class="pv-ini">' + ini.toUpperCase() + '</span><span class="pv-hours">24h</span>'
+      + '<span class="pv-emoji">✨</span>'
       + '<div class="pv-num">24</div>'
       + '<div class="pv-name">' + (parts[0]||'') + '<br><small>' + (parts.slice(1).join(' ')||'') + '</small></div>'
       + '</div>';
@@ -11595,12 +11644,24 @@ window.addEventListener('message', function(e) {
     });
     html += '</div></div></div>';
 
-    html += '<div class="mk-skin-sec">Kartes attēls</div><div class="mk-skin-grid">';
-    SKINS.forEach(function(sk) {
-      var act = draft.t === 'img' && draft.id === sk.id;
-      html += '<button type="button" class="mk-skin-thumb' + (act ? ' is-active' : '') + '" data-skin="' + sk.id + '" title="' + sk.label + '" style="background-image:url(data/skins/skin-' + sk.id + '.webp)"></button>';
+    html += '<div class="mk-skin-sec">Krāsu foni</div><div class="mk-skin-grads">';
+    GRADS.forEach(function(g) {
+      var act = draft.t === 'grad' && draft.id === g.id;
+      html += '<button type="button" class="mk-skin-grad-sw' + (act ? ' is-active' : '') + '" data-grad="' + g.id + '" title="' + g.label + '" style="background:' + g.css + '"></button>';
     });
-    html += '</div><div class="mk-skin-row2"><div class="mk-skin-col"><div class="mk-skin-sec">Vai fona krāsa</div><div class="mk-skin-hues">';
+    html += '</div>';
+
+    html += '<div class="mk-skin-sec">Attēli</div><div class="mk-skin-grid">';
+    IMG_GROUPS.forEach(function(grp) {
+      html += '<div class="mk-skin-group-lbl">' + grp.label + '</div>';
+      grp.ids.forEach(function(id) {
+        var act = draft.t === 'img' && draft.id === id;
+        html += '<button type="button" class="mk-skin-thumb' + (act ? ' is-active' : '') + '" data-skin="' + id + '" style="background-image:url(data/skins/skin-' + id + '.webp)"></button>';
+      });
+    });
+    html += '</div>';
+
+    html += '<div class="mk-skin-row2"><div class="mk-skin-col"><div class="mk-skin-sec">Vai fona krāsa</div><div class="mk-skin-hues">';
     HUES.forEach(function(h) {
       var act = draft.t === 'hue' && draft.rgb === h.rgb;
       html += '<button type="button" class="mk-skin-hue' + (act ? ' is-active' : '') + '" data-rgb="' + h.rgb + '" style="background:' + h.hex + '"></button>';
@@ -11615,25 +11676,47 @@ window.addEventListener('message', function(e) {
       + '<span class="mk-num-alpha-val">' + Math.round((draft.numA != null ? +draft.numA : 1) * 100) + '%</span>'
       + '</div></div></div>';
 
-    html += '<div class="mk-skin-footer"><button type="button" class="mk-skin-clear">✕ Noņemt visu izskatu</button>'
+    html += '<div class="mk-skin-row2"><div class="mk-skin-col"><div class="mk-skin-sec">Teksta krāsa (vārds, iniciāļi)</div>';
+    html += '<div class="mk-skin-custom">'
+      + '<input type="color" class="mk-txt-color" value="' + (draft.txt ? rgbToHex(draft.txt) : '#ffffff') + '" title="Teksta krāsa">'
+      + '<button type="button" class="mk-txt-clear" title="Atiestatīt tekstu">↺</button>'
+      + '</div></div>';
+
+    html += '<div class="mk-skin-col"><div class="mk-skin-sec">Emoji fonā</div>';
+    html += '<div class="mk-skin-custom">'
+      + '<label class="mk-chk"><input type="checkbox" class="mk-emoji-show"' + (emShown ? ' checked' : '') + '> Rādīt</label>'
+      + '<input type="range" class="mk-emoji-op" min="4" max="60" step="2" value="' + (emShown ? emVal : 13) + '"' + (emShown ? '' : ' disabled') + '>'
+      + '<span class="mk-emoji-op-val">' + (emShown ? emVal : 0) + '%</span>'
+      + '<label class="mk-chk"><input type="checkbox" class="mk-emoji-neg"' + (draft.emn === '0' ? '' : ' checked') + '> Negatīvs</label>'
+      + '</div></div></div>';
+
+    html += '<div class="mk-skin-sec">Spīdīgie efekti</div><div class="mk-fx-row">';
+    [['','Nav'],['spark','✨ Zvaigznītes'],['mirdz','🌟 Mirdzums'],['hearts','💗 Sirsniņas'],['burb','🫧 Burbuļi']].forEach(function(fx) {
+      var act = (draft.fx || '') === fx[0];
+      html += '<button type="button" class="mk-skin-fx' + (act ? ' is-on' : '') + '" data-fx="' + fx[0] + '">' + fx[1] + '</button>';
+    });
+    html += '</div>';
+
+    html += '<div class="mk-skin-footer">'
+      + '<button type="button" class="mk-skin-clear">✕ Noņemt visu izskatu</button>'
       + '<span class="mk-skin-note">Redzēs visi kolēģi · sinhronizējas caur mākoni</span></div>';
     host.innerHTML = html;
 
     var prev = host.querySelector('#mkSkinPrev');
     function livePreview() {
-      window.mkApplySkinToEl(prev, (draft.t || draft.num) ? draft : null);
+      window.mkApplySkinToEl(prev, hasAny(draft) ? draft : null);
       var k = normName(name);
       document.querySelectorAll('#grafiks-list .card[data-worker]').forEach(function(c) {
-        if (normName(c.getAttribute('data-worker')) === k) window.mkApplySkinToEl(c, (draft.t || draft.num) ? draft : null);
+        if (normName(c.getAttribute('data-worker')) === k) window.mkApplySkinToEl(c, hasAny(draft) ? draft : null);
       });
     }
     function commit() {
-      setSkin(name, (draft.t || draft.num) ? draft : null);
+      setSkin(name, hasAny(draft) ? draft : null);
       window.mkRenderSkinPicker(host);
     }
     function persistLive() {
       livePreview();
-      setSkin(name, (draft.t || draft.num) ? draft : null, true);
+      setSkin(name, hasAny(draft) ? draft : null, true);
     }
     livePreview();
 
@@ -11642,6 +11725,14 @@ window.addEventListener('message', function(e) {
         var p = PRESETS[+b.dataset.preset];
         draft = JSON.parse(JSON.stringify(p.bg));
         draft.num = p.num; draft.numA = p.na;
+        if (p.txt) draft.txt = p.txt;
+        if (p.fx) draft.fx = p.fx;
+        commit();
+      });
+    });
+    host.querySelectorAll('.mk-skin-grad-sw').forEach(function(b) {
+      b.addEventListener('click', function() {
+        draft.t = 'grad'; draft.id = b.dataset.grad; delete draft.rgb;
         commit();
       });
     });
@@ -11672,6 +11763,34 @@ window.addEventListener('message', function(e) {
       persistLive();
     });
     aInp.addEventListener('change', commit);
+    var txtInp = host.querySelector('.mk-txt-color');
+    txtInp.addEventListener('input', function() { draft.txt = hexToRgb(txtInp.value); persistLive(); });
+    txtInp.addEventListener('change', commit);
+    host.querySelector('.mk-txt-clear').addEventListener('click', function() { delete draft.txt; commit(); });
+    var emShow = host.querySelector('.mk-emoji-show');
+    var emOp = host.querySelector('.mk-emoji-op');
+    var emOpVal = host.querySelector('.mk-emoji-op-val');
+    emShow.addEventListener('change', function() {
+      if (emShow.checked) { draft.em = String((+emOp.value / 100).toFixed(2)); }
+      else { draft.em = '0'; }
+      commit();
+    });
+    emOp.addEventListener('input', function() {
+      draft.em = String((+emOp.value / 100).toFixed(2));
+      emOpVal.textContent = emOp.value + '%';
+      persistLive();
+    });
+    emOp.addEventListener('change', commit);
+    host.querySelector('.mk-emoji-neg').addEventListener('change', function(ev) {
+      if (ev.target.checked) delete draft.emn; else draft.emn = '0';
+      commit();
+    });
+    host.querySelectorAll('.mk-skin-fx').forEach(function(b) {
+      b.addEventListener('click', function() {
+        if (b.dataset.fx) draft.fx = b.dataset.fx; else delete draft.fx;
+        commit();
+      });
+    });
     host.querySelector('.mk-skin-clear').addEventListener('click', function() {
       draft = {};
       setSkin(name, null);
@@ -11732,11 +11851,11 @@ window.addEventListener('message', function(e) {
 .mk-skin-preset-sw { width: 22px; height: 22px; border-radius: 7px; flex-shrink: 0; border: 1px solid rgba(255,255,255,.18); }
 .mk-num-alpha { flex: 1; accent-color: #64d2ff; }
 .mk-num-alpha-val { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.7); min-width: 36px; text-align: right; }
-.mk-skin-sec { font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.45); margin: 10px 2px 7px; }
-.mk-skin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 7px; max-height: 152px; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; }
+.mk-skin-sec { font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.45); margin: 8px 2px 5px; }
+.mk-skin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 6px; max-height: 128px; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; }
 .mk-skin-row2 { display: flex; gap: 18px; flex-wrap: wrap; }
 .mk-skin-row2 .mk-skin-col { flex: 1; min-width: 240px; }
-.mk-skin-footer { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+.mk-skin-footer { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
 .mk-skin-thumb { aspect-ratio: 16/9; border-radius: 10px; border: 2px solid rgba(255,255,255,.10); background-size: cover; background-position: center; cursor: pointer; padding: 0; transition: border-color .15s; }
 .mk-skin-thumb:hover { border-color: rgba(100,210,255,.55); }
 .mk-skin-thumb.is-active { border-color: #64d2ff; box-shadow: 0 0 0 2px rgba(100,210,255,.35); }
@@ -11748,6 +11867,105 @@ window.addEventListener('message', function(e) {
 .mk-skin-custom-lbl { font-size: 11px; color: rgba(255,255,255,.55); }
 .mk-skin-clear { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.14); border-radius: 10px; color: rgba(255,255,255,.75); font-size: 11px; font-weight: 700; padding: 8px 14px; cursor: pointer; white-space: nowrap; }
 .mk-skin-note { font-size: 10px; color: rgba(255,255,255,.35); }
+
+/* ── v3: gradientu foni (gaišāks scrim nekā foto, lai pasteļi dzīvo) ── */
+#grafiks-list.grid-view .card.mk-mid-card.mk-has-skin.mk-has-grad,
+#grafiks-list .card.mk-has-skin.mk-has-grad {
+  background:
+    linear-gradient(180deg, rgba(7,10,17,.28) 0%, rgba(7,10,17,.14) 45%, rgba(7,10,17,.40) 100%),
+    var(--mk-skin-img) !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card.mk-has-skin.mk-has-grad:hover,
+#grafiks-list .card.mk-has-skin.mk-has-grad:hover {
+  background:
+    linear-gradient(180deg, rgba(7,10,17,.20) 0%, rgba(7,10,17,.08) 45%, rgba(7,10,17,.32) 100%),
+    var(--mk-skin-img) !important;
+}
+.mk-skin-preview.mk-has-skin.mk-has-grad {
+  background:
+    linear-gradient(180deg, rgba(7,10,17,.28) 0%, rgba(7,10,17,.14) 45%, rgba(7,10,17,.40) 100%),
+    var(--mk-skin-img) !important;
+}
+/* ── v3: teksta krāsa (vārds, iniciāļi, mēneša stundas) ── */
+#grafiks-list.grid-view .card.mk-has-txt .name-main,
+#grafiks-list.grid-view .card.mk-has-txt .name-sub,
+#grafiks-list.grid-view .card.mk-has-txt .mk-mid-initials,
+#grafiks-list.grid-view .card.mk-has-txt .mk-mid-month-num,
+#grafiks-list.grid-view .card.mk-has-txt .mk-mid-month-label {
+  color: rgb(var(--mk-txt-color, 255,255,255)) !important;
+  -webkit-text-fill-color: rgb(var(--mk-txt-color, 255,255,255)) !important;
+}
+#grafiks-list.grid-view .card.mk-has-txt .name-sub { opacity: .85; }
+#grafiks-list.grid-view .card.mk-has-txt .mk-mid-initials { opacity: .38; }
+#grafiks-list.grid-view .card.mk-has-txt .mk-mid-month-label { opacity: .6; }
+.mk-skin-preview.mk-has-txt .pv-name,
+.mk-skin-preview.mk-has-txt .pv-ini,
+.mk-skin-preview.mk-has-txt .pv-hours {
+  color: rgb(var(--mk-txt-color, 255,255,255)) !important;
+  -webkit-text-fill-color: rgb(var(--mk-txt-color, 255,255,255)) !important;
+}
+.mk-skin-preview.mk-has-txt .pv-ini { opacity: .45; }
+/* ── v3: emoji ūdenszīmes kontrole ── */
+#grafiks-list.grid-view .card.mk-emoji-custom .mk-mid-bg-emoji { opacity: var(--mk-emoji-op, .13) !important; }
+#grafiks-list.grid-view .card.mk-emoji-normal .mk-mid-bg-emoji { filter: none !important; }
+.mk-skin-preview .pv-emoji {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%,-58%);
+  font-size: 58px; line-height: 1; pointer-events: none;
+  filter: invert(1) hue-rotate(180deg);
+  opacity: var(--mk-emoji-op, .13);
+}
+.mk-skin-preview.mk-emoji-normal .pv-emoji { filter: none; }
+/* ── v3: spīdumiņi — statisks SVG raksts, nulle animāciju ── */
+#grafiks-list.grid-view .card.mk-has-spark .mk-mid-center { position: relative; }
+#grafiks-list.grid-view .card.mk-has-spark .mk-mid-center::before,
+.mk-skin-preview.mk-has-spark::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .5; z-index: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cg fill='white'%3E%3Cpath d='M24 12l2 6 6 2-6 2-2 6-2-6-6-2 6-2z' opacity='.9'/%3E%3Cpath d='M96 60l1.5 4.5 4.5 1.5-4.5 1.5-1.5 4.5-1.5-4.5-4.5-1.5 4.5-1.5z' opacity='.7'/%3E%3Cpath d='M52 104l1.2 3.6 3.6 1.2-3.6 1.2-1.2 3.6-1.2-3.6-3.6-1.2 3.6-1.2z' opacity='.8'/%3E%3Ccircle cx='70' cy='24' r='1.3' opacity='.7'/%3E%3Ccircle cx='118' cy='102' r='1.6' opacity='.8'/%3E%3Ccircle cx='14' cy='72' r='1.1' opacity='.6'/%3E%3Ccircle cx='104' cy='16' r='1' opacity='.5'/%3E%3Ccircle cx='36' cy='58' r='.9' opacity='.5'/%3E%3Ccircle cx='128' cy='48' r='1.2' opacity='.6'/%3E%3Ccircle cx='84' cy='128' r='1' opacity='.6'/%3E%3Ccircle cx='20' cy='124' r='1.4' opacity='.7'/%3E%3C/g%3E%3C/svg%3E") repeat;
+}
+/* ── v3: picker jaunie elementi ── */
+.mk-skin-grads { display: flex; flex-wrap: wrap; gap: 7px; }
+.mk-skin-grad-sw { width: 46px; height: 30px; border-radius: 9px; border: 2px solid rgba(255,255,255,.12); cursor: pointer; padding: 0; transition: border-color .15s; }
+.mk-skin-grad-sw:hover { border-color: rgba(100,210,255,.55); }
+.mk-skin-grad-sw.is-active { border-color: #64d2ff; box-shadow: 0 0 0 2px rgba(100,210,255,.35); }
+.mk-skin-group-lbl { grid-column: 1/-1; font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.38); margin-top: 3px; }
+.mk-chk { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: rgba(255,255,255,.75); cursor: pointer; white-space: nowrap; }
+.mk-chk input { accent-color: #64d2ff; }
+.mk-emoji-op { flex: 1; min-width: 60px; accent-color: #64d2ff; }
+.mk-emoji-op-val { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.7); min-width: 32px; text-align: right; }
+.mk-txt-clear { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.14); border-radius: 9px; color: rgba(255,255,255,.7); font-size: 13px; padding: 6px 10px; cursor: pointer; }
+.mk-skin-fx { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.14); border-radius: 10px; color: rgba(255,255,255,.8); font-size: 11px; font-weight: 700; padding: 8px 12px; cursor: pointer; white-space: nowrap; }
+.mk-skin-fx.is-on { border-color: #ffd60a; color: #ffd60a; }
+
+/* ── v4: kompakta modāļa galva Izskats režīmā ── */
+#worker-modal.mk-skin-mode .modal-header { padding: 8px 16px 6px !important; min-height: 0 !important; }
+#worker-modal.mk-skin-mode .modal-avatar { font-size: 26px !important; width: auto !important; }
+#worker-modal.mk-skin-mode .modal-header-text h2 { font-size: 17px !important; line-height: 1.05 !important; margin: 0 !important; }
+#worker-modal.mk-skin-mode .modal-surname-line { font-size: 11px !important; }
+#worker-modal.mk-skin-mode #modal-total-hours { transform: scale(.82); }
+#worker-modal.mk-skin-mode .view-toggle { padding: 4px 12px !important; gap: 4px !important; margin: 0 !important; }
+#worker-modal.mk-skin-mode .modal-content { overflow-y: auto !important; min-height: 0 !important; scrollbar-width: thin; }
+#worker-modal.mk-skin-mode #modal-skin-view { padding-bottom: 14px !important; }
+#worker-modal.mk-skin-mode .view-toggle .toggle-btn { padding: 5px 10px !important; font-size: 11px !important; }
+/* ── v4: papildu spīdīgie efekti (visi statiski SVG, bez animācijām) ── */
+#grafiks-list.grid-view .card.mk-fx-hearts .mk-mid-center { position: relative; }
+#grafiks-list.grid-view .card.mk-fx-hearts .mk-mid-center::before,
+.mk-skin-preview.mk-fx-hearts::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .45; z-index: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cg fill='%23ffb6d5'%3E%3Cpath d='M30 22c-2-4-8-4-8 1 0 3 4 6 8 9 4-3 8-6 8-9 0-5-6-6-8-1z' opacity='.8'/%3E%3Cpath d='M104 64c-1.4-2.8-5.6-2.8-5.6.7 0 2.1 2.8 4.2 5.6 6.3 2.8-2.1 5.6-4.2 5.6-6.3 0-3.5-4.2-3.5-5.6-.7z' opacity='.6'/%3E%3Cpath d='M56 112c-1-2-4-2-4 .5 0 1.5 2 3 4 4.5 2-1.5 4-3 4-4.5 0-2.5-3-2.5-4-.5z' opacity='.7'/%3E%3Cpath d='M128 18c-1-2-4-2-4 .5 0 1.5 2 3 4 4.5 2-1.5 4-3 4-4.5 0-2.5-3-2.5-4-.5z' opacity='.5'/%3E%3Ccircle cx='78' cy='30' r='1.2' opacity='.5'/%3E%3Ccircle cx='16' cy='84' r='1.4' opacity='.5'/%3E%3Ccircle cx='130' cy='120' r='1.3' opacity='.6'/%3E%3C/g%3E%3C/svg%3E") repeat;
+}
+#grafiks-list.grid-view .card.mk-fx-mirdz .mk-mid-center { position: relative; }
+#grafiks-list.grid-view .card.mk-fx-mirdz .mk-mid-center::before,
+.mk-skin-preview.mk-fx-mirdz::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .55; z-index: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cdefs%3E%3CradialGradient id='g' r='.5'%3E%3Cstop offset='0' stop-color='white' stop-opacity='.9'/%3E%3Cstop offset='1' stop-color='white' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cg%3E%3Cpath fill='white' d='M40 14l1.2 8 8 1.2-8 1.2-1.2 8-1.2-8-8-1.2 8-1.2z' opacity='.9'/%3E%3Cpath fill='white' d='M118 78l.9 6 6 .9-6 .9-.9 6-.9-6-6-.9 6-.9z' opacity='.75'/%3E%3Cpath fill='white' d='M70 126l.7 4.6 4.6.7-4.6.7-.7 4.6-.7-4.6-4.6-.7 4.6-.7z' opacity='.8'/%3E%3Ccircle cx='40' cy='23' r='7' fill='url(%23g)'/%3E%3Ccircle cx='118' cy='85' r='6' fill='url(%23g)'/%3E%3Ccircle cx='70' cy='131' r='5' fill='url(%23g)'/%3E%3Ccircle cx='140' cy='24' r='1.1' fill='white' opacity='.6'/%3E%3Ccircle cx='14' cy='104' r='1.3' fill='white' opacity='.6'/%3E%3Ccircle cx='96' cy='40' r='.9' fill='white' opacity='.5'/%3E%3C/g%3E%3C/svg%3E") repeat;
+}
+#grafiks-list.grid-view .card.mk-fx-burb .mk-mid-center { position: relative; }
+#grafiks-list.grid-view .card.mk-fx-burb .mk-mid-center::before,
+.mk-skin-preview.mk-fx-burb::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .4; z-index: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cg fill='none' stroke='white'%3E%3Ccircle cx='30' cy='36' r='7' stroke-opacity='.55'/%3E%3Ccircle cx='104' cy='20' r='4' stroke-opacity='.4'/%3E%3Ccircle cx='126' cy='96' r='9' stroke-opacity='.5'/%3E%3Ccircle cx='58' cy='118' r='5' stroke-opacity='.45'/%3E%3Ccircle cx='84' cy='64' r='3' stroke-opacity='.35'/%3E%3Ccircle cx='16' cy='90' r='4' stroke-opacity='.4'/%3E%3C/g%3E%3Cg fill='white'%3E%3Ccircle cx='27' cy='33' r='1.6' opacity='.5'/%3E%3Ccircle cx='123' cy='92' r='2' opacity='.45'/%3E%3C/g%3E%3C/svg%3E") repeat;
+}
+.mk-fx-row { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
 </style>
 
 <style id="mk-duty-header">
