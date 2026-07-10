@@ -25,7 +25,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260710o';
+  var CALENDAR_BUILD = '20260710s';
 
   function withCalendarBuild(url) {
     try {
@@ -555,7 +555,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710o" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710o" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710s" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710s" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -4566,12 +4566,6 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
   .mk-buddy-mug-wrap,.mk-buddy-mug{width:34px;height:34px;}
   .mk-buddy-hud-canvas{width:38px;height:30px;}
 }
-@media (max-height: 940px) {
-  #mk-buddy-shift-stats{ gap:10px; padding:5px 11px; transform:translateX(-50%) translateY(6px) scale(.78); transform-origin:bottom center; }
-  #mk-buddy-shift-stats.is-ready{ transform:translateX(-50%) translateY(6px) scale(.78); }
-  .mk-buddy-stat-label{ font-size:7px; }
-  .mk-buddy-stat-value{ font-size:14px; }
-}
 @keyframes mkHF{0%{opacity:1;transform:translateY(0) scale(1.1)}100%{opacity:0;transform:translateY(-36px) scale(0.5)}}
 .mk-heart{position:absolute;font-size:13px;animation:mkHF 1.1s ease-out forwards;}
 @keyframes mkNoteFloat{0%{opacity:0;transform:translateY(0) translateX(0) scale(.7)}15%{opacity:1}100%{opacity:0;transform:translateY(-42px) translateX(var(--mx,0px)) scale(1.1)}}
@@ -6627,6 +6621,23 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
     var useRight = !forceAbove && leftRoom < 8 && rightRoom > leftRoom;
     W.classList.toggle('stats-above', forceAbove);
     W.classList.toggle('stats-right', useRight);
+    // josla vienmēr paliek doka robežās — nelien pāri apakšējo pogu malām
+    try{
+      var dockBar = document.getElementById('bottomBtnBar') || document.getElementById('dockShelf');
+      var srr = dockBar ? dockBar.getBoundingClientRect() : null;
+      if (srr && srr.width > 40 && !useRight) {
+        // joslas mala precīzi sakrīt ar doka malu: labajā pusē ar labo, kreisajā ar kreiso
+        var half = statsW / 2;
+        var shift;
+        if (home.x >= (srr.left + srr.right) / 2) shift = srr.right - (home.x + half);
+        else shift = srr.left - (home.x - half);
+        if (home.x + half + shift > srr.right) shift = srr.right - (home.x + half);
+        if (home.x - half + shift < srr.left) shift = srr.left - (home.x - half);
+        SHIFT_STATS.style.marginLeft = Math.round(shift) + 'px';
+      } else {
+        SHIFT_STATS.style.marginLeft = '';
+      }
+    }catch(e){}
   }
   function moveBuddyHome(){
     var anchor = getBuddyAnchorButton();
@@ -6656,6 +6667,10 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
   window.addEventListener('resize',function(){
     moveBuddyHome();
   });
+  // josla piepildās asinhroni (kafijas ikonas u.c.) — pārrēķinām novietojumu, kad mainās tās izmērs
+  if (window.ResizeObserver && SHIFT_STATS) {
+    try { new ResizeObserver(function(){ moveBuddyHome(); }).observe(SHIFT_STATS); } catch(e){}
+  }
   window.addEventListener('minka-bolus-status',function(e){
     moveBuddyHome();
     if(e && e.detail && e.detail.needsChange && !document.hidden && !isSleeping && !bhvBusy){
