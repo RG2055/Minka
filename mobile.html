@@ -25,7 +25,7 @@
     } catch (_e) {}
   }
 
-  var CALENDAR_BUILD = '20260710n';
+  var CALENDAR_BUILD = '20260710o';
 
   function withCalendarBuild(url) {
     try {
@@ -294,12 +294,7 @@
 <noscript>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
 </noscript>
-
-<link rel="preload" as="style"
-  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-  onload="this.onload=null;this.rel='stylesheet'">
 <noscript>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </noscript>
 
 <link rel="preload" as="style"
@@ -310,7 +305,7 @@
 </noscript>
 
 
-<link rel="stylesheet" href="css/minka.css">
+<link rel="stylesheet" href="css/minka.css?v=20260708a">
 <link rel="stylesheet" href="css/radio-extra.css">
 <link rel="preload" as="style" href="css/improvements.css" onload="this.onload=null;this.rel='stylesheet'">
 <link rel="preload" as="style" href="css/radio_extras_v4.css" onload="this.onload=null;this.rel='stylesheet'">
@@ -884,8 +879,8 @@ html.mk-low-spec #calendarEmbed {
 
   <div id="calendarEmbed">
     <iframe
-      src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710n"
-      data-base-src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710n"
+      src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710o"
+      data-base-src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710o"
       id="calIframe"
       loading="eager"
       allowtransparency="true"
@@ -1770,7 +1765,7 @@ html.mk-low-spec #calendarEmbed {
       _injectCss();
       var ov = document.createElement('div');
       ov.id = 'bolus-overlay';
-      ov.innerHTML = '<div id="bolus-sheet"><div id="bolus-handle"></div><div id="bolus-title-bar"><span id="bolus-title"><i class="fas fa-syringe" style="font-size:10px;opacity:.7;"></i> BOLUSA MAINA</span><span style="display:flex;gap:8px;align-items:center;"><button id="bolus-tops-btn" type="button" title="Menesa caklakie">🏆 TOPS</button><button id="bolus-close-btn" type="button" aria-label="Aizvert bolus paneli">✕</button></span></div><div id="bolus-tops" style="display:none"></div><div id="bolus-rooms"></div></div>';
+      ov.innerHTML = '<div id="bolus-sheet"><div id="bolus-handle"></div><div id="bolus-title-bar"><span id="bolus-title"><svg width="11" height="11" viewBox="0 0 24 24" style="opacity:.7;vertical-align:-1px" aria-hidden="true"><path d="M18 2l4 4M19 5l-2 2M6 18l-4 4M3 21l2-2M17 7l-10 10 3 3L20 10zM10 14l2 2M13 11l2 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> BOLUSA MAINA</span><span style="display:flex;gap:8px;align-items:center;"><button id="bolus-tops-btn" type="button" title="Menesa caklakie">🏆 TOPS</button><button id="bolus-close-btn" type="button" aria-label="Aizvert bolus paneli">✕</button></span></div><div id="bolus-tops" style="display:none"></div><div id="bolus-rooms"></div></div>';
       ov.addEventListener('click', function(e){
         var sheet = document.getElementById('bolus-sheet');
         if (!sheet) return;

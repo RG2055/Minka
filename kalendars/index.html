@@ -114,29 +114,18 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" as="style"
-  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700;800&family=DM+Sans:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap"
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;600;700;900&family=Space+Mono:wght@400;700&display=swap"
   onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700;800&family=DM+Sans:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap"></noscript>
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;600;700;900&family=Space+Mono:wght@400;700&display=swap"></noscript>
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-<link rel="preload" as="style"
-  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-  onload="this.onload=null;this.rel='stylesheet'">
 <link rel="preload" as="style"
   href="https://fonts.googleapis.com/icon?family=Material+Icons+Round"
   onload="this.onload=null;this.rel='stylesheet'">
 <link rel="preload" as="style"
-  href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
-  onload="this.onload=null;this.rel='stylesheet'">
-<link rel="preload" as="style"
   href="https://fonts.cdnfonts.com/css/digital-7-mono"
   onload="this.onload=null;this.rel='stylesheet'">
-<link rel="preload" as="style"
-  href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Space+Grotesk:wght@400;600;700;900&family=Space+Mono:wght@400;700&display=swap"
-  onload="this.onload=null;this.rel='stylesheet'">
 <noscript>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Round">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
   <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/digital-7-mono">
 </noscript>
 <link rel="icon" type="image/png" href="../data/rg-any-192.png">
@@ -732,8 +721,8 @@ html.mk-low-spec #stats-table-wrap * { transition:none !important; }
         <div class="calendar-header">
           <div class="current-date" id="modal-calendar-month-year">--</div>
           <div class="calendar-nav">
-            <span class="cal-nav-btn material-symbols-rounded" onclick="modalCalendarMonth(-1)">chevron_left</span>
-            <span class="cal-nav-btn material-symbols-rounded" onclick="modalCalendarMonth(1)">chevron_right</span>
+            <span class="cal-nav-btn material-icons-round" onclick="modalCalendarMonth(-1)">chevron_left</span>
+            <span class="cal-nav-btn material-icons-round" onclick="modalCalendarMonth(1)">chevron_right</span>
           </div>
         </div>
         <div class="calendar">
@@ -900,7 +889,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260710n"></script>
+<script src="js/calendar.js?v=20260710o"></script>
 <script src="js/calendar_extras_v4.js?v=20260710l"></script>
 <script src="js/fatigue.js?v=20260613d"></script>
 <script src="js/nightsplit.js?v=20260703a" defer></script>
@@ -913,7 +902,7 @@ function _mkToast(msg, type) {
 <script src="js/radiologist_plan.js" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260710n';
+window.__minkaLocalBuild = '20260710o';
 (function(){
   function norm(v){
     try { return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
