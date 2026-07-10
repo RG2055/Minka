@@ -2097,41 +2097,6 @@ function filterFullList(btn) {
     return out;
   }
 
-  // Emoji dominējošā krāsa kartes fona tonim. Zīmē emoji VIENREIZ uz 24px
-  // canvas un vidējo krāsu kešo — tālāk viss ir statisks CSS, nulle darbības
-  // laika izmaksu.
-  const __emojiTintCache = {};
-  function mkEmojiTint(emoji) {
-    if (emoji in __emojiTintCache) return __emojiTintCache[emoji];
-    let out = null;
-    try {
-      const c = document.createElement('canvas');
-      c.width = c.height = 24;
-      const x = c.getContext('2d', { willReadFrequently: true });
-      x.font = '20px sans-serif';
-      x.textBaseline = 'middle';
-      x.textAlign = 'center';
-      x.fillText(emoji, 12, 13);
-      const d = x.getImageData(0, 0, 24, 24).data;
-      let r = 0, g = 0, b = 0, n = 0;
-      for (let i = 0; i < d.length; i += 4) {
-        if (d[i + 3] > 128) { r += d[i]; g += d[i + 1]; b += d[i + 2]; n++; }
-      }
-      if (n > 8) {
-        r = Math.round(r / n); g = Math.round(g / n); b = Math.round(b / n);
-        // vidējā krāsa mēdz būt dubļaina — maigi izgaismo līdz dzīvam tonim
-        const mx = Math.max(r, g, b, 1);
-        const k = Math.min(2.4, 225 / mx);
-        r = Math.min(255, Math.round(r * k));
-        g = Math.min(255, Math.round(g * k));
-        b = Math.min(255, Math.round(b * k));
-        out = r + ',' + g + ',' + b;
-      }
-    } catch (e) {}
-    __emojiTintCache[emoji] = out;
-    return out;
-  }
-
   function getSideIconHtml(type) {
     if (type === 'DIENA') return '<span class="shift-icon-side sun-icon">☀️</span>';
     else if (type === 'NAKTS') return '<span class="shift-icon-side moon-icon">🌙</span>';
@@ -4700,13 +4665,8 @@ function filterFullList(btn) {
             ${buildCoffeeRow(w.name)}
           </div>`;
 
-        if (bgEmoji) {
-          const _tint = mkEmojiTint(bgEmoji);
-          if (_tint) {
-            card.style.setProperty('--mk-emoji-tint', _tint);
-            card.style.setProperty('--mk-emoji-tint-a', '.11');
-          }
-        }
+        const _wSkin = (typeof window.mkGetWorkerSkin === 'function') ? window.mkGetWorkerSkin(w.name) : null;
+        if (_wSkin && typeof window.mkApplySkinToEl === 'function') window.mkApplySkinToEl(card, _wSkin);
 
         const coffeeBtn = card.querySelector('.mk-coffee-add');
         if (coffeeBtn) {
@@ -5494,6 +5454,7 @@ function showWorkerSchedule(workerName, currentShift) {
   modal.classList.add('open');
   const bd = document.getElementById('worker-modal-backdrop');
   if (bd) bd.classList.add('open');
+  setWorkerModalBuddyFlag(true);
   showModalView('fatigue');
 
   setTimeout(() => {
@@ -5618,6 +5579,10 @@ function modalCalendarMonth(delta) {
   renderModalCalendar();
 }
 
+function setWorkerModalBuddyFlag(open) {
+  try { window.parent && window.parent.postMessage({ type: 'mk_worker_modal', open: !!open }, '*'); } catch (_e) {}
+}
+
 function showModalView(view) {
   const listView = document.getElementById('modal-list-view');
   const calendarView = document.getElementById('modal-calendar-view');
@@ -5637,6 +5602,10 @@ function showModalView(view) {
   if (toggleFatigue) toggleFatigue.classList.remove('active');
   const _toggleEmoji = document.getElementById('toggle-emoji');
   if (_toggleEmoji) _toggleEmoji.classList.remove('active');
+  const _skinView = document.getElementById('modal-skin-view');
+  if (_skinView) _skinView.classList.add('hide');
+  const _toggleSkin = document.getElementById('toggle-skin');
+  if (_toggleSkin) _toggleSkin.classList.remove('active');
 
   // Parādīt izvēlēto
   if (view === 'list') {
@@ -5657,10 +5626,17 @@ function showModalView(view) {
     if (window.MinkaEmoji && window.MinkaEmoji.renderInModal) {
       window.MinkaEmoji.renderInModal(emojiView);
     }
+  } else if (view === 'skin') {
+    const skinView = document.getElementById('modal-skin-view');
+    const toggleSkin = document.getElementById('toggle-skin');
+    if (skinView) skinView.classList.remove('hide');
+    if (toggleSkin) toggleSkin.classList.add('active');
+    if (typeof window.mkRenderSkinPicker === 'function') window.mkRenderSkinPicker(skinView);
   }
 }
 
 function closeWorkerModal() {
+  setWorkerModalBuddyFlag(false);
   const modal = document.getElementById('worker-modal');
   if (modal) {
     modal.classList.remove('open');
