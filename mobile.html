@@ -25,7 +25,7 @@
     } catch (_e) {}
   }
 
-  var CALENDAR_BUILD = '20260712a';
+  var CALENDAR_BUILD = '20260712b';
 
   function withCalendarBuild(url) {
     try {
@@ -52,10 +52,36 @@
   function stripAutoLoginParam() {
     try {
       var url = new URL(window.location.href);
-      if (!url.searchParams.has(AUTO_PW_KEY)) return;
+      if (!url.searchParams.has(AUTO_PW_KEY) && !url.searchParams.has('pair')) return;
       url.searchParams.delete(AUTO_PW_KEY);
+      url.searchParams.delete('pair');
       history.replaceState({}, '', url.toString());
     } catch (_e) {}
+  }
+
+  async function tryPairLoginFromQuery() {
+    var code = '';
+    try {
+      var url = new URL(window.location.href);
+      code = String(url.searchParams.get('pair') || '').trim();
+      if (code) { url.searchParams.delete('pair'); history.replaceState({}, '', url.toString()); }
+    } catch (_e) {}
+    if (!code) return false;
+    try {
+      var res = await fetch(API_BASE + '/api/pair/claim', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ code: code })
+      });
+      var data = await res.json().catch(function() { return {}; });
+      if (!res.ok || !data || !data.token) { window.__minkaPairExpired = true; return false; }
+      setToken(data.token, true);
+      notifyIframeAuth();
+      return true;
+    } catch (_e) {
+      window.__minkaPairExpired = true;
+      return false;
+    }
   }
 
   async function tryAutoLoginFromQuery() {
@@ -232,13 +258,20 @@
     document.documentElement.style.visibility = 'hidden';
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mountGate, { once: true });
     else mountGate();
+    if (window.__minkaPairExpired) setTimeout(function() {
+      var sub = document.querySelector('#minka-gate .mg-sub');
+      if (sub) { sub.textContent = 'QR kods beidzies vai jau izmantots — atver MOBILE datorā un noskenē svaigu.'; sub.style.color = '#fca5a5'; }
+    }, 250);
   }
 
   if (!getToken()) {
     document.addEventListener('DOMContentLoaded', function() {
-      tryAutoLoginFromQuery().then(function(ok) {
-        if (ok) return;
-        showGate();
+      tryPairLoginFromQuery().then(function(paired) {
+        if (paired) return;
+        return tryAutoLoginFromQuery().then(function(ok) {
+          if (ok) return;
+          showGate();
+        });
       });
     }, { once: true });
   } else {
@@ -877,8 +910,8 @@ html.mk-low-spec #calendarEmbed {
 
   <div id="calendarEmbed">
     <iframe
-      src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260712a"
-      data-base-src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260712a"
+      src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260712b"
+      data-base-src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260712b"
       id="calIframe"
       loading="eager"
       allowtransparency="true"
