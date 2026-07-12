@@ -25,7 +25,7 @@
     } catch (_e) {}
   }
 
-  var CALENDAR_BUILD = '20260712b';
+  var CALENDAR_BUILD = '20260712c';
 
   function withCalendarBuild(url) {
     try {
@@ -39,14 +39,21 @@
   }
 
   function notifyIframeAuth() {
-    setTimeout(function() {
+    function sendAuth() {
       var f = document.getElementById('calIframe');
       if (!f) return;
+      var token = getToken();
+      if (!token) return;
       var base = withCalendarBuild(f.getAttribute('data-base-src') || 'kalendars/index.html');
       var next = base;
       if (f.getAttribute('src') !== next) f.setAttribute('src', next);
-      if (f.contentWindow) f.contentWindow.postMessage({ type: 'minka_auth_ok' }, window.location.origin);
-    }, 180);
+      if (f.contentWindow) f.contentWindow.postMessage({ type: 'minka_auth_ok', token: token }, window.location.origin);
+    }
+    var frame = document.getElementById('calIframe');
+    if (frame) frame.addEventListener('load', sendAuth, { once: true });
+    setTimeout(sendAuth, 0);
+    setTimeout(sendAuth, 250);
+    setTimeout(sendAuth, 900);
   }
 
   function stripAutoLoginParam() {
@@ -76,6 +83,8 @@
       var data = await res.json().catch(function() { return {}; });
       if (!res.ok || !data || !data.token) { window.__minkaPairExpired = true; return false; }
       setToken(data.token, true);
+      var pairGate = document.getElementById('minka-pair-required');
+      if (pairGate) pairGate.remove();
       notifyIframeAuth();
       return true;
     } catch (_e) {
@@ -105,179 +114,53 @@
     }
   }
 
-  function showGate() {
-    // Tas pats gate kā desktop versijā (foto fons, informācijas panelis),
-    // pielāgots telefonam: kolonnu izkārtojums, 16px input (iOS citādi zoomē).
-    function mountGate() {
+  function showPairRequired() {
+    function mount() {
+      if (document.getElementById('minka-pair-required')) return;
       document.documentElement.style.visibility = '';
       var overlay = document.createElement('div');
-      overlay.id = 'minka-gate';
-      overlay.innerHTML = ''
-        + '<style>'
-        + '#minka-gate{position:fixed;inset:0;z-index:999999;display:flex;flex-direction:column;align-items:stretch;overflow:auto;background:#060b13;font-family:Inter,system-ui,sans-serif;-webkit-overflow-scrolling:touch;}'
-        + '#minka-gate .mg-left{position:relative;display:flex;align-items:center;justify-content:center;padding:calc(30px + env(safe-area-inset-top,0px)) 18px 26px;background:radial-gradient(800px 560px at 50% 40%,rgba(12,20,36,.55) 0%,rgba(6,11,19,.35) 75%),url(data/gate-bg.webp) center/cover no-repeat #060b13;}'
-        + '#minka-gate .mg-login{position:relative;width:min(360px,100%);text-align:center;color:#eef6ff;}'
-        + '#minka-gate .mg-title{font-size:25px;font-weight:800;letter-spacing:.01em;margin-top:14px;}'
-        + '#minka-gate .mg-bar{width:58px;height:3px;border-radius:2px;background:#38bdf8;margin:12px auto 12px;}'
-        + '#minka-gate .mg-sub{font-size:13px;color:rgba(176,200,224,.78);margin-bottom:20px;}'
-        + '#minka-gate .mg-field{position:relative;margin-bottom:13px;}'
-        + '#minka-gate .mg-lock{position:absolute;left:15px;top:50%;transform:translateY(-50%);opacity:.55;pointer-events:none;}'
-        + '#minka-gate input[type=password],#minka-gate input[type=text]{width:100%;box-sizing:border-box;background:rgba(13,22,38,.7);border:1.5px solid rgba(125,211,252,.22);border-radius:12px;padding:14px 46px 14px 42px;color:#fff;font-size:16px;outline:none;}'
-        + '#minka-gate input:focus,#minka-gate input:focus-visible{outline:none!important;box-shadow:none!important;border-color:rgba(56,189,248,.55)!important;}'
-        + '#minka-gate button:focus-visible{outline:none!important;box-shadow:0 0 0 3px rgba(56,189,248,.3)!important;}'
-        + '#minka-gate .mg-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;padding:10px 12px;cursor:pointer;opacity:.55;color:#cfe6f7;touch-action:manipulation;}'
-        + '#minka-gate .mg-rem{display:flex;align-items:center;gap:8px;font-size:12.5px;color:rgba(176,200,224,.7);margin:0 2px 14px;}'
-        + '#minka-gate .mg-rem input{accent-color:#38bdf8;width:17px;height:17px;}'
-        + '#minka-gate .mg-btn{width:100%;display:flex;align-items:center;background:#1d6ae5;border:none;border-radius:12px;padding:15px 20px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;touch-action:manipulation;}'
-        + '#minka-gate .mg-btn span{flex:1;text-align:center;padding-left:17px;}'
-        + '#minka-gate .mg-btn:disabled{opacity:.6;cursor:default;}'
-        + '#minka-gate .mg-err{color:#f87171;font-size:12px;margin-top:9px;min-height:15px;}'
-        + '#minka-gate .mg-note{display:flex;gap:13px;align-items:flex-start;text-align:left;margin-top:10px;}'
-        + '#minka-gate .mg-note b{display:block;font-size:13.5px;color:#eef6ff;}'
-        + '#minka-gate .mg-note span{display:block;font-size:12px;color:rgba(176,200,224,.7);margin-top:3px;}'
-        + '#minka-gate .mg-author{display:flex;align-items:center;gap:15px;text-align:left;margin-top:15px;padding-top:15px;border-top:1px solid rgba(255,255,255,.08);}'
-        + '#minka-gate .mg-rg{flex:0 0 auto;width:48px;height:48px;border-radius:50%;border:1.5px solid rgba(125,160,210,.45);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#3b82f6;letter-spacing:.05em;}'
-        + '#minka-gate .mg-author small{display:block;font-size:11px;color:rgba(176,200,224,.6);}'
-        + '#minka-gate .mg-author b{display:block;font-size:14px;color:#eef6ff;margin:2px 0;}'
-        + '#minka-gate .mg-info{background:#fff;border-radius:22px;margin:0 12px calc(16px + env(safe-area-inset-bottom,0px));padding:24px 18px;color:#16202c;}'
-        + '#minka-gate .mg-info h2{font-size:21px;font-weight:800;margin:0 0 14px;padding-bottom:13px;border-bottom:1px solid #e7ebf0;}'
-        + '#minka-gate .mg-item{display:flex;gap:13px;align-items:flex-start;padding:14px 0;border-bottom:1px solid #e7ebf0;}'
-        + '#minka-gate .mg-item:last-of-type{border-bottom:none;}'
-        + '#minka-gate .mg-num{flex:0 0 auto;width:24px;height:24px;border-radius:50%;background:#1d6ae5;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:8px;}'
-        + '#minka-gate .mg-ic{flex:0 0 auto;width:42px;height:42px;border-radius:10px;background:#f1f4f8;display:flex;align-items:center;justify-content:center;}'
-        + '#minka-gate .mg-item p{margin:0;font-size:13.5px;line-height:1.5;color:#2a3644;}'
-        + '#minka-gate .mg-blue{color:#1d6ae5;font-weight:700;}'
-        + '#minka-gate .mg-green{color:#0f9d58;font-weight:700;}'
-        + '#minka-gate .mg-red{color:#e2483d;font-weight:700;}'
-        + '#minka-gate .mg-foot{margin-top:13px;font-size:11.5px;color:#7a8794;}'
-        + '</style>'
-        + '<div class="mg-left">'
-        + '<div class="mg-login">'
-        + '<svg width="88" height="88" viewBox="0 0 10 10" aria-hidden="true" style="display:block;margin:0 auto;">'
-        + '<g fill="#38bdf8" shape-rendering="crispEdges">'
-        + '<rect x="3" y="0" width="4" height="1" fill="#7dd3fc"/>'
-        + '<rect x="2" y="1" width="6" height="1"/>'
-        + '<rect x="1" y="2" width="1" height="1"/><rect x="4" y="2" width="2" height="1"/><rect x="8" y="2" width="1" height="1"/>'
-        + '<rect x="1" y="3" width="8" height="3"/>'
-        + '<rect x="1" y="6" width="1" height="1"/><rect x="3" y="6" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/>'
-        + '</g>'
-        + '<rect x="1.4" y="7.5" width="4.6" height="0.62" rx="0.31" fill="#7dd3fc"/>'
-        + '<rect x="2.6" y="8.42" width="5.8" height="0.62" rx="0.31" fill="#38bdf8"/>'
-        + '<rect x="1.9" y="9.34" width="3.8" height="0.62" rx="0.31" fill="#0e74b2"/>'
-        + '</svg>'
-        + '<div class="mg-title">Grafika p\u0101rskats</div>'
-        + '<div class="mg-bar"></div>'
-        + '<div class="mg-sub">Piek\u013cuve tikai autoriz\u0113tiem darbiniekiem</div>'
-        + '<div class="mg-field">'
-        + '<svg class="mg-lock" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cfe6f7" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>'
-        + '<input id="minka-pw" type="password" placeholder="Parole" autocomplete="current-password">'
-        + '<button class="mg-eye" id="minka-eye" type="button" tabindex="-1" aria-label="R\u0101d\u012bt paroli">'
-        + '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>'
-        + '</button>'
-        + '</div>'
-        + '<label class="mg-rem"><input id="minka-remember" type="checkbox"> Atcer\u0113ties \u0161o ier\u012bci</label>'
-        + '<button id="minka-btn" class="mg-btn"><span>Piesl\u0113gties</span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>'
-        + '<div id="minka-err" class="mg-err"></div>'
-        + '<div class="mg-note">'
-        + '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7d9cc4" stroke-width="1.8" style="flex:0 0 auto;margin-top:2px;"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/><path d="M8.5 12l2.5 2.5 4.5-4.5" stroke="#3b82f6"/></svg>'
-        + '<div><b>Sist\u0113m\u0101 netiek izmantoti pacientu dati.</b><span>Tiek att\u0113loti tikai de\u017e\u016bru grafika dati.</span></div>'
-        + '</div>'
-        + '<div class="mg-author">'
-        + '<div class="mg-rg">RG</div>'
-        + '<div><small>Autors</small><b>Rihards Gavri\u013cenko</b><small>Radiogr\u0101fers</small></div>'
-        + '</div>'
-        + '</div>'
-        + '</div>'
-        + '<div class="mg-info">'
-        + '<h2>Inform\u0101cija</h2>'
-        + '<div class="mg-item"><div class="mg-num">1</div>'
-        + '<div class="mg-ic"><svg width="26" height="26" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2" fill="#fff" stroke="#c9d3de"/><rect x="2" y="4" width="20" height="5" rx="2" fill="#1d6ae5"/><circle cx="5" cy="6.5" r="0.9" fill="#fff"/><circle cx="8" cy="6.5" r="0.9" fill="#fff"/><rect x="5" y="12" width="10" height="1.6" fill="#c9d3de"/><rect x="5" y="15" width="13" height="1.6" fill="#c9d3de"/></svg></div>'
-        + '<p>\u0160\u012b nav instal\u0113jama programma; t\u0101 ir p\u0101rl\u016bk\u0101 atverama grafika p\u0101rskata <span class="mg-blue">t\u012bmek\u013ca lapa</span>.</p></div>'
-        + '<div class="mg-item"><div class="mg-num">2</div>'
-        + '<div class="mg-ic"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M5 2h9l5 5v15H5z" fill="#0f9d58"/><path d="M14 2l5 5h-5z" fill="#87cfa8"/><rect x="8" y="11" width="8" height="7" fill="none" stroke="#fff" stroke-width="1.3"/><path d="M8 14.5h8M12 11v7" stroke="#fff" stroke-width="1.3"/></svg></div>'
-        + '<p>Tiek att\u0113loti tikai de\u017e\u016bru grafika dati no <span class="mg-green">Google Sheets</span>. Google Sheets tiek izmantots un apstiprin\u0101ts darba vajadz\u012bb\u0101m.</p></div>'
-        + '<div class="mg-item"><div class="mg-num">3</div>'
-        + '<div class="mg-ic"><svg width="26" height="26" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2" fill="#fff" stroke="#c9d3de"/><rect x="3" y="5" width="18" height="5" rx="2" fill="#1d6ae5"/><rect x="7" y="3" width="2" height="4" rx="1" fill="#16202c"/><rect x="15" y="3" width="2" height="4" rx="1" fill="#16202c"/>'
-        + '<g fill="#5a6b7d"><circle cx="8" cy="13.5" r="1"/><circle cx="12" cy="13.5" r="1"/><circle cx="16" cy="13.5" r="1"/><circle cx="8" cy="17" r="1"/><circle cx="12" cy="17" r="1"/><circle cx="16" cy="17" r="1"/></g></svg></div>'
-        + '<p>No Google Sheets datiem tiek izmantoti <span class="mg-blue">tikai de\u017e\u016bru datumi un darba stundu ilgums</span>. \u0160ie dati tiek att\u0113loti \u0113rt\u0101k\u0101 skat\u0101 un izmantoti darbinieku <span class="mg-red">noslodzes/noguruma</span> apr\u0113\u0137inam.*</p></div>'
-        + '<div class="mg-item"><div class="mg-num">4</div>'
-        + '<div class="mg-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3a4757" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="15.5" r="1.4" fill="#3a4757" stroke="none"/></svg></div>'
-        + '<p>Piek\u013cuve lapai ir <span class="mg-blue">aizsarg\u0101ta ar paroli</span>; bez paroles grafika dati nav redzami.</p></div>'
-        + '<div class="mg-item"><div class="mg-num">5</div>'
-        + '<div class="mg-ic"><svg width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#16202c"/><path fill="#fff" d="M12 4.8a7.3 7.3 0 0 0-2.31 14.23c.37.07.5-.16.5-.35v-1.24c-2.03.44-2.46-.98-2.46-.98-.33-.85-.81-1.07-.81-1.07-.66-.45.05-.44.05-.44.73.05 1.12.75 1.12.75.65 1.12 1.71.8 2.13.61.07-.47.26-.8.46-.98-1.62-.18-3.33-.81-3.33-3.61 0-.8.29-1.45.75-1.96-.07-.18-.33-.93.07-1.93 0 0 .61-.2 2.01.75a7 7 0 0 1 3.66 0c1.4-.95 2.01-.75 2.01-.75.4 1 .15 1.75.07 1.93.47.51.75 1.16.75 1.96 0 2.81-1.71 3.43-3.34 3.61.26.23.5.67.5 1.35v2c0 .2.13.42.51.35A7.3 7.3 0 0 0 12 4.8z"/></svg></div>'
-        + '<p>Publiskaj\u0101 GitHub repozitorij\u0101 <span class="mg-blue">nav</span> grafika datu, Google Sheets piek\u013cuves datu vai paro\u013cu.</p></div>'
-        + '<div class="mg-foot">* Noguruma apr\u0113\u0137ins ir informat\u012bvs un balst\u012bts uz de\u017e\u016bru ilgumu un atp\u016btas laiku.</div>'
+      overlay.id = 'minka-pair-required';
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:1000000;display:flex;align-items:center;justify-content:center;padding:24px;background:#050910;font-family:Inter,system-ui,sans-serif;color:#f4f7ff;text-align:center;';
+      overlay.innerHTML = '<div style="width:min(360px,100%);padding:30px 24px;border:1px solid rgba(255,255,255,.10);border-radius:22px;background:#0b1019;box-shadow:0 24px 70px rgba(0,0,0,.45)">'
+        + '<div style="font-size:23px;font-weight:800;letter-spacing:-.03em">Piekļuve telefonā</div>'
+        + '<div style="margin-top:10px;font-size:14px;line-height:1.55;color:rgba(220,228,244,.68)">Atver <b style="color:#f4f7ff">MOBILE</b> datorā un noskenē jaunu QR kodu.</div>'
         + '</div>';
-      document.body.prepend(overlay);
-      var input = document.getElementById('minka-pw');
-      var btn = document.getElementById('minka-btn');
-      var err = document.getElementById('minka-err');
-      var remember = document.getElementById('minka-remember');
-      var eye = document.getElementById('minka-eye');
-      eye.addEventListener('click', function() {
-        input.type = input.type === 'password' ? 'text' : 'password';
-        eye.style.opacity = input.type === 'text' ? '0.95' : '';
-        input.focus();
-      });
-
-      async function attempt() {
-        var password = String(input.value || '').trim();
-        err.textContent = '';
-        if (!password) {
-          err.textContent = 'Ievadi paroli';
-          return;
-        }
-        btn.disabled = true;
-        btn.querySelector('span').textContent = 'P\u0101rbauda...';
-        try {
-          var res = await fetch(API_BASE + '/api/login', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ password: password })
-          });
-          var data = await res.json().catch(function() { return {}; });
-          if (!res.ok || !data || !data.token) throw new Error((data && data.error) || 'Login failed');
-          setToken(data.token, !!(remember && remember.checked));
-          notifyIframeAuth();
-          overlay.style.transition = 'opacity 0.3s';
-          overlay.style.opacity = '0';
-          setTimeout(function() { overlay.remove(); }, 300);
-        } catch (_e) {
-          err.textContent = 'Nepareiza parole vai API nav sasniedzams';
-          input.value = '';
-          input.focus();
-        } finally {
-          btn.disabled = false;
-          btn.querySelector('span').textContent = 'Piesl\u0113gties';
-        }
-      }
-
-      btn.addEventListener('click', attempt);
-      input.addEventListener('keydown', function(e) { if (e.key === 'Enter') attempt(); });
+      document.body.appendChild(overlay);
     }
-    document.documentElement.style.visibility = 'hidden';
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mountGate, { once: true });
-    else mountGate();
-    if (window.__minkaPairExpired) setTimeout(function() {
-      var sub = document.querySelector('#minka-gate .mg-sub');
-      if (sub) { sub.textContent = 'QR kods beidzies vai jau izmantots — atver MOBILE datorā un noskenē svaigu.'; sub.style.color = '#fca5a5'; }
-    }, 250);
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount, { once: true });
+    else mount();
   }
 
-  if (!getToken()) {
+  var hasPairCode = false;
+  try { hasPairCode = !!new URL(window.location.href).searchParams.get('pair'); } catch (_e) {}
+
+  if (hasPairCode) {
     document.addEventListener('DOMContentLoaded', function() {
       tryPairLoginFromQuery().then(function(paired) {
         if (paired) return;
-        return tryAutoLoginFromQuery().then(function(ok) {
-          if (ok) return;
-          showGate();
-        });
+        setToken('', false);
+        showPairRequired();
+      });
+    }, { once: true });
+  } else if (!getToken()) {
+    document.addEventListener('DOMContentLoaded', function() {
+      tryAutoLoginFromQuery().then(function(ok) {
+        if (ok) return;
+        showPairRequired();
       });
     }, { once: true });
   } else {
     stripAutoLoginParam();
     document.addEventListener('DOMContentLoaded', notifyIframeAuth, { once: true });
   }
+
+  window.addEventListener('message', function(event) {
+    if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka_auth_required') return;
+    var frame = document.getElementById('calIframe');
+    if (!frame || event.source !== frame.contentWindow) return;
+    setToken('', false);
+    showPairRequired();
+  });
 })();
 </script>
 <script>
@@ -900,7 +783,6 @@ html.mk-low-spec #calendarEmbed {
 <body>
   <div id="mobileLoader" aria-hidden="true">
     <div class="loader-shell">
-      <div class="loader-mark"><img src="data/rg-logo.png" alt="RG logo"></div>
       <div class="loader-title">RG Mobile</div>
       <div class="loader-sub">Ielādē kalendāru</div>
     </div>
@@ -910,8 +792,8 @@ html.mk-low-spec #calendarEmbed {
 
   <div id="calendarEmbed">
     <iframe
-      src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260712b"
-      data-base-src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260712b"
+      src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260712c"
+      data-base-src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260712c"
       id="calIframe"
       loading="eager"
       allowtransparency="true"
