@@ -25,7 +25,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260710x';
+  var CALENDAR_BUILD = '20260712a';
 
   function withCalendarBuild(url) {
     try {
@@ -43,11 +43,9 @@
       var f = document.getElementById('calIframe');
       if (!f) return;
       var base = withCalendarBuild(f.getAttribute('data-base-src') || 'kalendars/index.html');
-      var token = getToken();
       var next = base;
-      if (token) next += (next.indexOf('?') >= 0 ? '&' : '?') + 'token=' + encodeURIComponent(token);
       if (f.getAttribute('src') !== next) f.setAttribute('src', next);
-      if (f.contentWindow) f.contentWindow.postMessage({ type: 'minka_auth_ok' }, '*');
+      if (f.contentWindow) f.contentWindow.postMessage({ type: 'minka_auth_ok' }, window.location.origin);
     }, 180);
   }
 
@@ -555,7 +553,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710x" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710x" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260712a" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260712a" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -745,11 +743,11 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
           <div id="osd-num">00</div>
           <div id="osd-segments"></div>
         </div>
-        <img src="data/dolphin.webp" id="dolphin-bg" onerror="this.onerror=null;this.src='data/dolphin.gif'" alt="">
+        <img data-radio-src="data/dolphin.webp" data-fallback-src="data/dolphin.gif" id="dolphin-bg" loading="lazy" decoding="async" alt="">
         <canvas id="slowedWaveCanvas" class="slowed-wave-canvas"></canvas>
         <canvas id="vizCanvas"></canvas>
         <canvas id="milkdropCanvas"></canvas>
-        <img src="https://images.steamusercontent.com/ugc/1878591893790334004/B4176E21DAA54F881A29B455496699908EC6D290/" class="pixel-cat" onclick="changeVizStyle()" title="Change Style">
+        <img data-radio-src="https://images.steamusercontent.com/ugc/1878591893790334004/B4176E21DAA54F881A29B455496699908EC6D290/" class="pixel-cat" loading="lazy" decoding="async" onclick="changeVizStyle()" title="Change Style" alt="">
       </div>
 
       <div class="control-panel">
@@ -844,6 +842,16 @@ async function loadAny(urls) {
 async function loadRadioScripts() {
   if (_radioScriptsLoaded || _radioScriptsLoading) return _radioScriptsLoaded;
   _radioScriptsLoading = true;
+  document.querySelectorAll('[data-radio-src]').forEach(function(img) {
+    if (img.getAttribute('src')) return;
+    if (img.id === 'dolphin-bg') {
+      img.onerror = function() {
+        this.onerror = null;
+        this.src = this.getAttribute('data-fallback-src') || 'data/dolphin.gif';
+      };
+    }
+    img.src = img.getAttribute('data-radio-src');
+  });
   if (!document.getElementById('mk-fa-css')) {
     var _fa = document.createElement('link');
     _fa.id = 'mk-fa-css'; _fa.rel = 'stylesheet';
@@ -2162,15 +2170,17 @@ window.addEventListener('DOMContentLoaded', () => {
       return direct;
     }
     try {
-      var frames = document.querySelectorAll('iframe');
-      frames.forEach(function(f) {
-        try { f.contentWindow.postMessage({ type: 'mk_request_workers_for_date', date: dateStr }, '*'); } catch(_e) {}
-      });
+      var calendarFrame = document.getElementById('calIframe');
+      if (calendarFrame && calendarFrame.contentWindow) {
+        calendarFrame.contentWindow.postMessage({ type: 'mk_request_workers_for_date', date: dateStr }, window.location.origin);
+      }
     } catch(_e) {}
     return _workersCache[dateStr] || [];
   }
   // Receive full workers index pushed by calendar on load
   window.addEventListener('message', function(e) {
+    var calendarFrame = document.getElementById('calIframe');
+    if (e.origin !== window.location.origin || !calendarFrame || e.source !== calendarFrame.contentWindow) return;
     if (!e || !e.data) return;
     if (e.data.type === 'mk_workers_index' && e.data.data) {
       _workersCache = e.data.data;
@@ -3363,10 +3373,10 @@ window.addEventListener('DOMContentLoaded', () => {
     _updateLed();
     // Request workers index from calendar iframe (handles race condition on cached pages)
     function _requestWorkers() {
-      var frames = document.querySelectorAll('iframe');
-      frames.forEach(function(f) {
-        try { f.contentWindow.postMessage({ type: 'mk_request_workers_index' }, '*'); } catch(e) {}
-      });
+      var calendarFrame = document.getElementById('calIframe');
+      if (calendarFrame && calendarFrame.contentWindow) {
+        try { calendarFrame.contentWindow.postMessage({ type: 'mk_request_workers_index' }, window.location.origin); } catch(e) {}
+      }
     }
     setTimeout(_requestWorkers, 800);
     setTimeout(_requestWorkers, 3000); // second attempt in case iframe still loading

@@ -25,7 +25,7 @@
     } catch (_e) {}
   }
 
-  var CALENDAR_BUILD = '20260710x';
+  var CALENDAR_BUILD = '20260712a';
 
   function withCalendarBuild(url) {
     try {
@@ -43,11 +43,9 @@
       var f = document.getElementById('calIframe');
       if (!f) return;
       var base = withCalendarBuild(f.getAttribute('data-base-src') || 'kalendars/index.html');
-      var token = getToken();
       var next = base;
-      if (token) next += (next.indexOf('?') >= 0 ? '&' : '?') + 'token=' + encodeURIComponent(token);
       if (f.getAttribute('src') !== next) f.setAttribute('src', next);
-      if (f.contentWindow) f.contentWindow.postMessage({ type: 'minka_auth_ok' }, '*');
+      if (f.contentWindow) f.contentWindow.postMessage({ type: 'minka_auth_ok' }, window.location.origin);
     }, 180);
   }
 
@@ -879,8 +877,8 @@ html.mk-low-spec #calendarEmbed {
 
   <div id="calendarEmbed">
     <iframe
-      src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710x"
-      data-base-src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260710x"
+      src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260712a"
+      data-base-src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260712a"
       id="calIframe"
       loading="eager"
       allowtransparency="true"
@@ -1105,13 +1103,16 @@ html.mk-low-spec #calendarEmbed {
         return direct;
       }
       try {
-        document.querySelectorAll('iframe').forEach(function(f) {
-          try { f.contentWindow.postMessage({ type: 'mk_request_workers_for_date', date: dateStr }, '*'); } catch(_e) {}
-        });
+        var calendarFrame = document.getElementById('calIframe');
+        if (calendarFrame && calendarFrame.contentWindow) {
+          calendarFrame.contentWindow.postMessage({ type: 'mk_request_workers_for_date', date: dateStr }, window.location.origin);
+        }
       } catch(_e) {}
       return _workersCache[dateStr] || [];
     }
     window.addEventListener('message', function(e) {
+      var calendarFrame = document.getElementById('calIframe');
+      if (e.origin !== window.location.origin || !calendarFrame || e.source !== calendarFrame.contentWindow) return;
       if (!e || !e.data) return;
       if (e.data.type === 'mk_workers_index' && e.data.data) {
         _workersCache = e.data.data;
@@ -1749,9 +1750,10 @@ html.mk-low-spec #calendarEmbed {
       if (btn) btn.classList.toggle('is-active', _open);
       if (_open) {
         try {
-          document.querySelectorAll('iframe').forEach(function(f) {
-            try { f.contentWindow.postMessage({ type: 'mk_request_workers_index' }, '*'); } catch(_e) {}
-          });
+          var calendarFrame = document.getElementById('calIframe');
+          if (calendarFrame && calendarFrame.contentWindow) {
+            calendarFrame.contentWindow.postMessage({ type: 'mk_request_workers_index' }, window.location.origin);
+          }
         } catch(_e) {}
         _render();
         setTimeout(function(){ if (_open) _render(); }, 250);
@@ -1795,9 +1797,10 @@ html.mk-low-spec #calendarEmbed {
       _initBc();
       _updateLed();
       function _requestWorkers() {
-        document.querySelectorAll('iframe').forEach(function(f) {
-          try { f.contentWindow.postMessage({ type: 'mk_request_workers_index' }, '*'); } catch(e) {}
-        });
+        var calendarFrame = document.getElementById('calIframe');
+        if (calendarFrame && calendarFrame.contentWindow) {
+          try { calendarFrame.contentWindow.postMessage({ type: 'mk_request_workers_index' }, window.location.origin); } catch(e) {}
+        }
       }
       setTimeout(_requestWorkers, 800);
       setTimeout(_requestWorkers, 3000);
