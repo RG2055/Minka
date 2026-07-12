@@ -905,7 +905,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260712e"></script>
+<script src="js/calendar.js?v=20260713a"></script>
 <script src="js/calendar_extras_v4.js?v=20260710l"></script>
 <script src="js/fatigue.js?v=20260613d"></script>
 <script src="js/nightsplit.js?v=20260703a" defer></script>
@@ -918,7 +918,7 @@ function _mkToast(msg, type) {
 <script src="js/radiologist_plan.js" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260712e';
+window.__minkaLocalBuild = '20260713a';
 (function(){
   function norm(v){
     try { return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
@@ -7808,7 +7808,26 @@ html.mk-low-spec .pkt-cat.pkt-awake .pkt-eyes { animation: pktAwakeEyes 1.45s ea
   font-size: 10px !important;
   letter-spacing: 0.04em !important;
 }
-:root.mk-mobile-shell .sl-times-strip { gap: 4px !important; }
+:root.mk-mobile-shell .sl-times-strip {
+  gap: 4px !important;
+  justify-content: flex-start !important;
+  min-width: 0 !important;
+}
+:root.mk-mobile-shell .sl-lanes-slot {
+  display: inline-flex !important;
+  flex: 0 0 36px !important;
+  min-width: 36px !important;
+}
+:root.mk-mobile-shell .lanes-mini-toggle {
+  width: 36px !important;
+  max-width: 36px !important;
+  height: 34px !important;
+  padding: 0 !important;
+  gap: 2px !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+}
+:root.mk-mobile-shell .lanes-mini-toggle .lmt-txt { display: none !important; }
 :root.mk-mobile-shell .sl-times-strip .sl-ts-label { font-size: 9px !important; letter-spacing: 0.04em !important; }
 
 /* ── Scenic header on mobile: same panorama as desktop, with scrim ── */
