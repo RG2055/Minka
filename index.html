@@ -25,7 +25,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260712d';
+  var CALENDAR_BUILD = '20260712e';
 
   function withCalendarBuild(url) {
     try {
@@ -553,7 +553,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260712d" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260712d" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260712e" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260712e" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -2061,6 +2061,7 @@ window.addEventListener('DOMContentLoaded', () => {
     <div id="mobileQrBody" style="display:flex;flex-direction:column;align-items:center;padding:38px 30px 30px;text-align:center;">
       <div id="mobileQrTitle" style="font:750 24px/1.15 'Space Grotesk',system-ui;color:#f7f9ff;letter-spacing:-.035em;">Atvērt telefonā</div>
       <div style="margin-top:9px;font:500 13px/1.5 'Space Grotesk',system-ui;color:rgba(214,222,239,.68);">Noskenē QR kodu ar telefona kameru</div>
+      <div id="mobilePairCode" style="display:none;margin-top:18px;padding:9px 14px;border:1px solid rgba(255,255,255,.10);border-radius:12px;background:rgba(255,255,255,.045);font:750 15px/1 'Space Grotesk',ui-monospace,monospace;letter-spacing:.16em;color:#eef3ff;"></div>
       <div style="display:flex;align-items:center;justify-content:center;width:244px;height:244px;margin-top:24px;padding:12px;border-radius:20px;background:#fff;box-shadow:0 18px 44px rgba(0,0,0,.34);box-sizing:border-box;">
         <img id="mobileQrImage" alt="QR kods mobilajai piekļuvei" style="width:220px;height:220px;display:block;border-radius:8px;background:#fff;object-fit:contain;" />
       </div>
@@ -4060,6 +4061,14 @@ window.addEventListener('message', function(e) {
   var MOBILE_QR_PUBLIC_URL = 'https://rg2055.github.io/Minka/mobile.html';
   var _mobileQrUrl = '';
 
+  function showPairCode(code) {
+    var el = document.getElementById('mobilePairCode');
+    if (!el) return;
+    var clean = String(code || '').toUpperCase();
+    el.textContent = clean ? clean.slice(0, 4) + ' · ' + clean.slice(4) : '';
+    el.style.display = clean ? 'block' : 'none';
+  }
+
   function buildMobileBaseUrl() {
     var isLocal = /^(localhost|127(?:\.\d+){3}|\[?::1\]?)$/i.test(location.hostname || '');
     if (!isLocal && /^https:$/i.test(location.protocol) && location.origin && !/^(null|file:)/i.test(location.origin)) {
@@ -4113,6 +4122,7 @@ window.addEventListener('message', function(e) {
   async function refreshMobileQrModal() {
     var qrImage = document.getElementById('mobileQrImage');
     _mobileQrUrl = '';
+    showPairCode('');
     if (qrImage) qrImage.removeAttribute('src');
     setPairNote('Sagatavo QR kodu…', false);
 
@@ -4134,6 +4144,7 @@ window.addEventListener('message', function(e) {
       if (!response.ok || !data || !data.code) throw new Error('pairing unavailable');
       await ensureQrLib();
       _mobileQrUrl = buildMobilePairUrl(data.code);
+      showPairCode(data.code);
       if (qrImage) renderQrInto(qrImage, _mobileQrUrl);
       setPairNote('', false);
       return true;

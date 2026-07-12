@@ -6,13 +6,14 @@ function nsTtl(dateStr) {
 }
 
 const PAIR_TTL_SECONDS = 120;
+const PAIR_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 function createPairCode() {
-  const bytes = new Uint8Array(18);
+  const bytes = new Uint8Array(8);
   crypto.getRandomValues(bytes);
-  let binary = "";
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  let code = "";
+  for (const byte of bytes) code += PAIR_ALPHABET[byte & 31];
+  return code;
 }
 
 async function hashPairCode(code) {
@@ -106,7 +107,7 @@ const worker = {
     if (url.pathname === "/api/pair/claim" && method === "POST") {
       const body = await readJson(request);
       const code = String(body?.code || "").trim();
-      if (!/^[A-Za-z0-9_-]{24}$/.test(code)) {
+      if (!/^[A-Z2-9]{8}$/.test(code)) {
         return json(request, { ok: false, error: "Invalid or expired pairing code" }, 410);
       }
 
