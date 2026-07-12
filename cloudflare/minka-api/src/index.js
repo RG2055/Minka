@@ -20,15 +20,19 @@ async function hashPairCode(code) {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-async function ensurePairSchema(env) {
-  await env.DB.prepare(`
+function pairDatabase(env) {
+  return typeof env.DB.withSession === "function" ? env.DB.withSession("first-primary") : env.DB;
+}
+
+async function ensurePairSchema(db) {
+  await db.prepare(`
     CREATE TABLE IF NOT EXISTS pair_codes (
       code_hash TEXT PRIMARY KEY,
       expires_at INTEGER NOT NULL,
       used_at INTEGER
     )
   `).run();
-  await env.DB.prepare("CREATE INDEX IF NOT EXISTS pair_codes_expiry_idx ON pair_codes(expires_at)").run();
+  await db.prepare("CREATE INDEX IF NOT EXISTS pair_codes_expiry_idx ON pair_codes(expires_at)").run();
 }
 
 const SKINS_KEY = "skins:v1";
@@ -106,8 +110,9 @@ const worker = {
         return json(request, { ok: false, error: "Invalid or expired pairing code" }, 410);
       }
 
+      const db = pairDatabase(env);
       try {
-        await ensurePairSchema(env);
+        await ensurePairSchema(db);
       } catch (error) {
         console.log("Pairing storage unavailable:", String(error));
         return json(request, { ok: false, error: "Pairing storage unavailable" }, 500);
@@ -116,7 +121,7 @@ const worker = {
       let result;
       try {
         const codeHash = await hashPairCode(code);
-        result = await env.DB.prepare(`
+        result = await db.prepare(`
           UPDATE pair_codes
           SET used_at = ?1
           WHERE code_hash = ?2
@@ -140,14 +145,15 @@ const worker = {
     }
 
     if (url.pathname === "/api/pair/new" && method === "POST") {
-      await ensurePairSchema(env);
+      const db = pairDatabase(env);
+      await ensurePairSchema(db);
       const now = Math.floor(Date.now() / 1000);
       const code = createPairCode();
       const codeHash = await hashPairCode(code);
       const expiresAt = now + PAIR_TTL_SECONDS;
 
-      await env.DB.prepare("DELETE FROM pair_codes WHERE expires_at < ?1 OR used_at IS NOT NULL").bind(now).run();
-      await env.DB.prepare("INSERT INTO pair_codes (code_hash, expires_at, used_at) VALUES (?1, ?2, NULL)").bind(codeHash, expiresAt).run();
+      await db.prepare("DELETE FROM pair_codes WHERE expires_at < ?1 OR used_at IS NOT NULL").bind(now).run();
+      await db.prepare("INSERT INTO pair_codes (code_hash, expires_at, used_at) VALUES (?1, ?2, NULL)").bind(codeHash, expiresAt).run();
 
       return json(request, { ok: true, code, ttl: PAIR_TTL_SECONDS, expiresAt });
     }
