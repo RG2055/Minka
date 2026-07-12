@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.5.5';
+const CACHE = 'minka-4.5.6';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
@@ -12,7 +12,9 @@ const isHttpRequest = request => {
 };
 
 const safeCachePut = async (request, response) => {
-  if (!response || !response.ok || !isHttpRequest(request)) return;
+  if (!response || (!response.ok && response.type !== 'opaque') || !isHttpRequest(request)) return;
+  const requestUrl = new URL(request.url);
+  if (requestUrl.searchParams.has('token') || requestUrl.searchParams.has('pw')) return;
   // Never cache.put audio/stream bodies: a live Icecast/HLS response has no
   // end, so put() would consume it forever and balloon memory.
   const ctype = (response.headers.get('content-type') || '').toLowerCase();
@@ -111,6 +113,21 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // Always prefer the current HTML while online. Cached HTML remains the
+  // offline fallback, avoiding the old-shell-first / current-shell-on-reload
+  // behavior of stale-while-revalidate navigations.
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          event.waitUntil(safeCachePut(request, response.clone()));
+          return response;
+        })
+        .catch(async () => (await caches.match(request)) || (await caches.match(appUrl('index.html'))) || new Response('', { status: 503, statusText: 'Offline' }))
+    );
+    return;
+  }
+
   const isRemoteNetworkFirst =
     url.includes('cdn.') ||
     url.includes('fonts.') ||
@@ -125,7 +142,12 @@ self.addEventListener('fetch', event => {
 
   if (isRemoteNetworkFirst) {
     event.respondWith(
-      fetch(request).catch(() => caches.match(request))
+      fetch(request)
+        .then(response => {
+          event.waitUntil(safeCachePut(request, response.clone()));
+          return response;
+        })
+        .catch(() => caches.match(request))
     );
     return;
   }
@@ -141,7 +163,7 @@ self.addEventListener('fetch', event => {
       caches.match(request).then(cached => {
         const network = fetch(request)
           .then(response => {
-            safeCachePut(request, response.clone());
+            event.waitUntil(safeCachePut(request, response.clone()));
             return response;
           })
           .catch(() => cached || new Response('', { status: 503, statusText: 'Offline' }));
@@ -160,7 +182,7 @@ self.addEventListener('fetch', event => {
       if (cached) return cached;
       try {
         const response = await fetch(request);
-        safeCachePut(request, response.clone());
+        event.waitUntil(safeCachePut(request, response.clone()));
         return response;
       } catch (_e) {
         return new Response('', { status: 503, statusText: 'Offline' });

@@ -986,13 +986,21 @@ function filterFullList(btn) {
   let __gInitRetryTimer = 0;
   let __gInitToasted = false;
   let __gCacheRendered = false;
+  function __gHasAuth() {
+    return !window.MinkaApi || !window.MinkaApi.getToken || !!window.MinkaApi.getToken();
+  }
   function __gScheduleRetry(delayMs) {
     clearTimeout(__gInitRetryTimer);
+    if (!__gHasAuth()) return;
     __gInitRetryTimer = setTimeout(function(){ g_init(0); }, delayMs);
   }
 
   async function g_init(retryCount) {
     retryCount = retryCount || 0;
+    if (!__gHasAuth()) {
+      clearTimeout(__gInitRetryTimer);
+      return;
+    }
     if (window.__gDataLoaded) return;
     if (__gInitBusy) return;
     __gInitBusy = true;
@@ -1045,7 +1053,7 @@ function filterFullList(btn) {
             }
           });
         }
-        window.parent.postMessage({ type: 'mk_workers_index', data: _wIdx }, '*');
+        window.parent.postMessage({ type: 'mk_workers_index', data: _wIdx }, window.location.origin);
       } catch(_e) {}
 
       const picker = document.getElementById('grafiks-monthPicker');
@@ -5030,7 +5038,9 @@ function filterFullList(btn) {
   }
   window.__minkaPostAssistantState = __minkaPostAssistantState;
 
-  g_init(0);
+  if (__gHasAuth()) g_init(0);
+  document.addEventListener('minka:auth-ok', function(){ g_init(0); });
+  document.addEventListener('minka:auth-required', function(){ clearTimeout(__gInitRetryTimer); });
   // While nothing is rendered yet, jump on connectivity/visibility signals
   // instead of waiting for the 20s background retry.
   window.addEventListener('online', function(){ if (!window.__minkaLiveStarted) g_init(0); });
@@ -5279,7 +5289,8 @@ function filterFullList(btn) {
 
   // Bolus tracker: parent requests workers for a date
   window.addEventListener('message', function(e) {
-    if (!e || !e.data || e.data.type !== 'mk_get_workers') return;
+    if (e.origin !== window.location.origin || e.source !== window.parent) return;
+    if (!e || !e.data || (e.data.type !== 'mk_get_workers' && e.data.type !== 'mk_request_workers_for_date')) return;
     var dateStr = e.data.date;
     var workers = [];
     if (store) {
@@ -5297,11 +5308,12 @@ function filterFullList(btn) {
         }
       }
     }
-    try { e.source.postMessage({ type: 'mk_workers_result', date: dateStr, workers: workers }, '*'); } catch(_){}
+    try { e.source.postMessage({ type: 'mk_workers_result', date: dateStr, workers: workers }, window.location.origin); } catch(_){}
   });
 
   // Re-send full workers index on demand (handles race-condition where parent wasn't ready on first load)
   window.addEventListener('message', function(e) {
+    if (e.origin !== window.location.origin || e.source !== window.parent) return;
     if (!e || !e.data || e.data.type !== 'mk_request_workers_index') return;
     if (!store) return;
     try {
@@ -5317,7 +5329,7 @@ function filterFullList(btn) {
           }
         });
       }
-      window.parent.postMessage({ type: 'mk_workers_index', data: idx }, '*');
+      window.parent.postMessage({ type: 'mk_workers_index', data: idx }, window.location.origin);
     } catch(_e) {}
   });
 
