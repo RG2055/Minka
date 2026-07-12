@@ -8,6 +8,8 @@
   var API_BASE = 'https://minka-api.gamernr1elite.workers.dev';
   window.MINKA_COFFEE_API_BASE = 'https://minka-coffee-api.gamernr1elite.workers.dev';
   var TOKEN_KEY = 'minka_api_token_v1';
+  var IS_MOBILE_FRAME = new URLSearchParams(window.location.search).get('mobile') === '1';
+  if (IS_MOBILE_FRAME) document.documentElement.classList.add('minka-mobile-frame');
   window.MINKA_API_BASE = API_BASE;
   window.hospitalDatabase = Array.isArray(window.hospitalDatabase) ? window.hospitalDatabase : [];
 
@@ -40,6 +42,9 @@
 
   function clearToken() {
     setToken('', false);
+    if (IS_MOBILE_FRAME && window.parent !== window) {
+      try { window.parent.postMessage({ type: 'minka_auth_required' }, window.location.origin); } catch (_e) {}
+    }
   }
 
   async function apiFetch(path, options) {
@@ -70,7 +75,9 @@
   window.addEventListener('message', function(event) {
     if (event.source !== window.parent || event.origin !== window.location.origin) return;
     if (!event.data || event.data.type !== 'minka_auth_ok') return;
-    var token = getToken();
+    var incomingToken = typeof event.data.token === 'string' ? event.data.token : '';
+    if (incomingToken) setToken(incomingToken, true);
+    var token = incomingToken || getToken();
     document.documentElement.classList.toggle('minka-auth-locked', !token);
     document.dispatchEvent(new CustomEvent(token ? 'minka:auth-ok' : 'minka:auth-required'));
   });
@@ -164,6 +171,7 @@ html.minka-auth-locked body { overflow: hidden !important; }
 html.minka-auth-locked #grafiks-app { visibility: hidden !important; pointer-events: none !important; user-select: none !important; }
 #minka-auth-overlay { position: fixed; inset: 0; z-index: 200000; display: none; align-items: center; justify-content: center; background: #060b13; padding: 20px; }
 html.minka-auth-locked #minka-auth-overlay { display: flex; }
+html.minka-mobile-frame.minka-auth-locked #minka-auth-overlay { display: none; }
 .minka-auth-card { width: min(420px, calc(100vw - 32px)); border-radius: 22px; border: 1px solid rgba(255,255,255,0.10); background: #0d1118; box-shadow: 0 28px 80px rgba(0,0,0,0.55); padding: 22px 22px 18px; color: #eef2ff; }
 .minka-auth-head { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
 .minka-auth-icon { width: 52px; height: 52px; border-radius: 16px; border: 1px solid rgba(56,189,248,0.30); background: radial-gradient(circle at 30% 30%, rgba(56,189,248,0.28), rgba(14,116,178,0.12) 60%, transparent 100%), #0d1626; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 10px 24px rgba(0,0,0,0.22); flex: 0 0 52px; }
@@ -897,7 +905,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260712b"></script>
+<script src="js/calendar.js?v=20260712c"></script>
 <script src="js/calendar_extras_v4.js?v=20260710l"></script>
 <script src="js/fatigue.js?v=20260613d"></script>
 <script src="js/nightsplit.js?v=20260703a" defer></script>
@@ -910,7 +918,7 @@ function _mkToast(msg, type) {
 <script src="js/radiologist_plan.js" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260712b';
+window.__minkaLocalBuild = '20260712c';
 (function(){
   function norm(v){
     try { return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
