@@ -25,7 +25,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260713c';
+  var CALENDAR_BUILD = '20260713e';
 
   function withCalendarBuild(url) {
     try {
@@ -567,7 +567,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260713c" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260713c" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260713e" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260713e" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -5348,8 +5348,8 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
     if(COFFEE_TOTAL) COFFEE_TOTAL.textContent = '×' + buddyShiftCoffee;
     if(COFFEE_SRCS){
       var cs = (payload && payload.coffeeSources) || {};
-      var srcLabels = { philips:'Philips', lofbergs:'Löfbergs', narvesen:'Narvesen', monster:'Monster', monsterultra:'Monster Ultra', redbull:'Red Bull' };
-      COFFEE_SRCS.innerHTML = ['philips','lofbergs','narvesen','monster','monsterultra','redbull'].filter(function(s){ return Number(cs[s])>0; }).map(function(s){
+      var srcLabels = { philips:'Philips', lofbergs:'Löfbergs', narvesen:'Narvesen', monster:'Monster', monsterultra:'Monster Ultra', redbull:'Red Bull', cupcoffee:'Cita kafija' };
+      COFFEE_SRCS.innerHTML = ['philips','lofbergs','narvesen','monster','monsterultra','redbull','cupcoffee'].filter(function(s){ return Number(cs[s])>0; }).map(function(s){
         var n = Math.max(0,Number(cs[s])||0);
         return '<span class="mk-buddy-coffee-src" title="'+srcLabels[s]+': '+n+'">'+coffeeSrcIcon(s)+'<i>'+n+'</i></span>';
       }).join('');
