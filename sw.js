@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.1';
+const CACHE = 'minka-4.6.2';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
@@ -14,7 +14,7 @@ const isHttpRequest = request => {
 const safeCachePut = async (request, response) => {
   if (!response || (!response.ok && response.type !== 'opaque') || !isHttpRequest(request)) return;
   const requestUrl = new URL(request.url);
-  if (requestUrl.searchParams.has('token') || requestUrl.searchParams.has('pw')) return;
+  if (requestUrl.searchParams.has('token') || requestUrl.searchParams.has('pw') || requestUrl.searchParams.has('pair')) return;
   // Never cache.put audio/stream bodies: a live Icecast/HLS response has no
   // end, so put() would consume it forever and balloon memory.
   const ctype = (response.headers.get('content-type') || '').toLowerCase();
@@ -109,6 +109,24 @@ self.addEventListener('fetch', event => {
   })();
 
   if (isApiRequest) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // Respect callers that explicitly request fresh data. Without this guard,
+  // the generic cache-first branch below can return an old response even when
+  // fetch(..., { cache: 'no-store' }) was used.
+  if (request.cache === 'no-store') {
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // Cross-origin fetch()/XHR responses are live data (Google Apps Script,
+  // weather, RSS, Workers, radio metadata), not app-shell assets. Some of
+  // these URLs contain timestamp cache-busters, so caching them would create
+  // a new Cache Storage entry on every poll.
+  const parsedUrl = new URL(url);
+  if (!request.destination && parsedUrl.origin !== self.location.origin) {
     event.respondWith(fetch(request));
     return;
   }
