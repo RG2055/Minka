@@ -4236,6 +4236,7 @@ function filterFullList(btn) {
         .then(data => {
           if (!data || !data.ok || data.date !== day || data.worker !== name) return;
           setCoffeeCount(name, data.count);
+          getCoffeeSyncState().loadedDays[day] = true;
           updateCoffeeRow(card, name);
           try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(_e) {}
         })
@@ -5007,6 +5008,7 @@ function filterFullList(btn) {
         fatigue: Array.isArray(fatigue) ? fatigue : [],
         rgHeartColors: Array.isArray(rgHeartColors) ? rgHeartColors : [],
         coffeeTotal: 0,
+        coffeeReady: false,
         coffeeSources: { philips: 0, lofbergs: 0, narvesen: 0 },
         coffeeLeaderboard: [],
         shiftFatigue: 0
@@ -5026,6 +5028,7 @@ function filterFullList(btn) {
         if (typeof window.__minkaGetCoffeeTotalForNames === 'function') {
           payload.coffeeTotal = Math.max(0, Number(window.__minkaGetCoffeeTotalForNames(activeCoffeeNames)) || 0);
         }
+        payload.coffeeReady = !!(window.__minkaCoffeeSync && window.__minkaCoffeeSync.loadedDays && window.__minkaCoffeeSync.loadedDays[payload.activeDateStr]);
         if (typeof window.__minkaGetCoffeeSourcesForNames === 'function') {
           payload.coffeeSources = window.__minkaGetCoffeeSourcesForNames(activeCoffeeNames) || payload.coffeeSources;
         }
@@ -5065,6 +5068,7 @@ function filterFullList(btn) {
           f: (payload.fatigue || []).map(x => [x && x.fullName, x && x.score]),
           hc: (payload.rgHeartColors || []).map(x => [x && x.fullName, x && x.score, x && x.color]),
           cf: payload.coffeeTotal,
+          cr: payload.coffeeReady ? 1 : 0,
           cl: (payload.coffeeLeaderboard || []).map(x => [x && x.name, x && x.count]),
           sf: payload.shiftFatigue
         });
