@@ -324,7 +324,7 @@ body.stars-active #stars-overlay{display:block;}
       </div>
     </div>
     <p class="minka-auth-sub">Publiskajā versijā sensitīvā informācija netiek glabāta. Dati tiek ielādēti tikai pēc autorizācijas.</p>
-    <input id="minka-auth-password" type="password" placeholder="Parole">
+    <input id="minka-auth-password" type="password" placeholder="Parole" autocomplete="current-password">
     <div class="minka-auth-row">
       <label class="minka-auth-check"><input id="minka-auth-remember" type="checkbox"> Atcerēties šajā ierīcē</label>
       <button id="minka-auth-submit" type="button">Ieiet</button>
@@ -905,7 +905,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260713a"></script>
+<script src="js/calendar.js?v=20260713b"></script>
 <script src="js/calendar_extras_v4.js?v=20260710l"></script>
 <script src="js/fatigue.js?v=20260613d"></script>
 <script src="js/nightsplit.js?v=20260703a" defer></script>
@@ -918,7 +918,7 @@ function _mkToast(msg, type) {
 <script src="js/radiologist_plan.js" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260713a';
+window.__minkaLocalBuild = '20260713b';
 (function(){
   function norm(v){
     try { return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
@@ -2180,7 +2180,7 @@ document.addEventListener('keydown', (e) => {
   }
 
   function cleanList(arr){
-    return (Array.isArray(arr) ? arr : []).map(v => String(v || '').trim()).filter(v => v && v !== 'ï¿½' && v !== '-');
+    return (Array.isArray(arr) ? arr : []).map(v => String(v || '').trim()).filter(v => v && v !== '—' && v !== '–' && v !== '-');
   }
 
   function keyFromDateStr(dateStr){
@@ -3045,10 +3045,10 @@ function nextNews(){
   let activeIndex = -1;
   let currentNodes = [];
 
-  function getQuery(){ return String(input.textContent || '').replace(/Â /g, ' ').trim(); }
+  function getQuery(){ return String(input.textContent || '').replace(/\u00a0/g, ' ').trim(); }
   function isAiQuery(q){
     const s = String(q || '').trim();
-    return !!s && (s[0] === '?' || /^(kur|kas|cik|vai|kapec|kadel|kÄpï¿½c|kÄdï¿½Ä¼|kÄ |kad |paskaidro|palÄ«dzi)/i.test(s));
+    return !!s && (s[0] === '?' || /^(kur|kas|cik|vai|kāpēc|kapec|kādēļ|kadel|kā |kad |paskaidro|palīdzi|palidzi)/i.test(s));
   }
   function hide(){
     results.style.display = 'none';
@@ -3158,7 +3158,7 @@ function nextNews(){
         const name = String((item && item.name) || '');
         const phone = String((item && item.phone) || '');
         const cat = esc((item && item.cat) || '');
-        const sub = item && item.sub ? ' Â· ' + esc(item.sub) : '';
+        const sub = item && item.sub ? ' · ' + esc(item.sub) : '';
     const initials = name.split(' ').map(p => p[0] || '').slice(0,1).join('') || '📞';
         html += '<a class="search-item" href="#" data-kind="phone" data-phone="' + esc(phone) + '">'
           + '<div class="search-item-icon">' + esc(initials) + '</div>'
@@ -3519,7 +3519,7 @@ window.addEventListener('message', function(e) {
 
 <script>
 if ('serviceWorker' in navigator) {
-  const MINKA_APP_VERSION = '2026.07.09c';
+  const MINKA_APP_VERSION = '2026.07.13a';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {

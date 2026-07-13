@@ -318,6 +318,7 @@
     var d0=activeDateKey();
     if(d0) pullRoomState(d0, function(){ if(d0===activeDateKey()) render(); });
     setInterval(function(){
+      if(document.hidden) return;
       var d=activeDateKey();
       if(d) pullRoomState(d, function(){ if(d===activeDateKey()) render(); });
     }, 45000);

@@ -377,6 +377,7 @@
     if (_pollTimer) return;
     if (!getGsUrl()) return;
     _pollTimer = setInterval(function() {
+      if (document.hidden) return;
       if (isSaving) return;
       if (modal && modal.classList.contains('is-open')) return;
       var dateStr = getActiveDate();

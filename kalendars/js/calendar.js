@@ -261,8 +261,11 @@ if (typeof hospitalDatabase === 'undefined') {
   resultsArea.innerHTML = `<div style="padding:20px; text-align:center; color:#e15555; font-size:14px;">Kļūda: Fails 'numuri.js' nav atrasts!</div>`;
 }
 
+let hospitalDatabaseLoadInFlight = false;
 async function loadHospitalDatabaseFromApi() {
   if (!window.MinkaApi || typeof window.MinkaApi.apiFetch !== 'function') return false;
+  if (hospitalDatabaseLoadInFlight) return false;
+  hospitalDatabaseLoadInFlight = true;
   try {
     const res = await window.MinkaApi.apiFetch('/api/phones');
     if (!res.ok) return false;
@@ -278,6 +281,8 @@ async function loadHospitalDatabaseFromApi() {
   } catch (e) {
     console.warn('Minka phones API unavailable', e);
     return false;
+  } finally {
+    hospitalDatabaseLoadInFlight = false;
   }
 }
 
@@ -1077,7 +1082,7 @@ function filterFullList(btn) {
       ensureLiveUpdates();
       if (window.__nsKv) window.__nsKv.startPolling();
     } catch(e) {
-      console.error('g_init fail:', e);
+      console.warn('g_init retry:', e);
       const loader = document.getElementById('grafiks-loader');
       const cached = readCachedSchedule();
       if (cached) {
@@ -1895,6 +1900,7 @@ function filterFullList(btn) {
       // genuinely newer, so a tighter interval just checks more often without forcing
       // needless re-renders. 12s keeps cross-device updates snappy.
       setInterval(function() {
+        if (document.hidden) return;
         var d = _activeDateStr();
         if (!d) return;
         pull(d, function() {

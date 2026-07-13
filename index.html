@@ -25,7 +25,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260713a';
+  var CALENDAR_BUILD = '20260713b';
 
   function withCalendarBuild(url) {
     try {
@@ -50,6 +50,7 @@
   }
 
   function showGate() {
+    if (document.getElementById('minka-gate')) return;
     // Mount immediately (script runs in <head>, before body exists) — the gate
     // paints on first frame instead of waiting for DOMContentLoaded, and the
     // solid background means nothing behind it needs hiding. No backdrop-filter:
@@ -231,6 +232,19 @@
     input.addEventListener('keydown', function(e){ if(e.key==='Enter') attempt(); });
     input.focus();
   }
+
+  window.addEventListener('message', function(event) {
+    if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka_auth_required') return;
+    var frame = document.getElementById('calIframe');
+    if (!frame || event.source !== frame.contentWindow) return;
+    setToken('', false);
+    var loader = document.getElementById('mk-app-loader');
+    if (loader) {
+      loader.style.opacity = '0';
+      loader.style.display = 'none';
+    }
+    showGate();
+  });
 
   if (!getToken()) showGate();
   else document.addEventListener('DOMContentLoaded', notifyIframeAuth, { once: true });
@@ -553,7 +567,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260713a" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260713a" id="calIframe" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260713b" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260713b" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -3880,73 +3894,6 @@ window.addEventListener('message', function(e) {
   window.addEventListener('resize', positionPlanotajsSheet);
 })();
 
-/* Pusdienas launcher: lightweight dock iframe for pusdieninas.pages.dev. */
-(function(){
-  var PUSDIENAS_URL = 'https://pusdieninas.pages.dev/';
-
-  function positionPusdienasSheet() {
-    var sheet = document.getElementById('pusdienasSheet');
-    var panel = document.getElementById('pusdienasSheetPanel');
-    var btn = document.getElementById('pusdienasDockBtn');
-    if (!sheet || !panel || !btn || sheet.style.display === 'none') return;
-
-    var rect = btn.getBoundingClientRect();
-    var margin = 12;
-    var gap = 10;
-    var width = Math.min(560, window.innerWidth - margin * 2);
-    var height = Math.min(720, window.innerHeight - rect.height - margin * 2 - gap);
-    height = Math.max(500, height);
-    if (height > window.innerHeight - margin * 2) height = window.innerHeight - margin * 2;
-
-    var left = rect.left + rect.width / 2 - width / 2;
-    left = Math.max(margin, Math.min(left, window.innerWidth - width - margin));
-    var bottom = window.innerHeight - rect.top + gap;
-    if (bottom + height > window.innerHeight - margin) {
-      bottom = Math.max(margin, window.innerHeight - height - margin);
-    }
-
-    panel.style.width = width + 'px';
-    panel.style.height = height + 'px';
-    panel.style.left = left + 'px';
-    panel.style.right = 'auto';
-    panel.style.bottom = bottom + 'px';
-  }
-
-  window.openPusdienasLauncher = function openPusdienasLauncher() {
-    var sheet = document.getElementById('pusdienasSheet');
-    var frame = document.getElementById('pusdienasSheetFrame');
-    var btn = document.getElementById('pusdienasDockBtn');
-    if (!sheet || !frame) {
-      window.open(PUSDIENAS_URL, 'pusdienas', 'popup=yes,width=560,height=760,resizable=yes,scrollbars=yes,toolbar=no,location=no,menubar=no,status=no');
-      return;
-    }
-    sheet.style.display = 'block';
-    sheet.setAttribute('aria-hidden', 'false');
-    if (btn) btn.classList.add('pusdienas-open');
-    positionPusdienasSheet();
-    if (frame.src !== PUSDIENAS_URL) {
-      frame.removeAttribute('srcdoc');
-      frame.src = PUSDIENAS_URL;
-    }
-    updateBuddyUiSuppression();
-  };
-
-  window.closePusdienasSheet = function closePusdienasSheet() {
-    var sheet = document.getElementById('pusdienasSheet');
-    var frame = document.getElementById('pusdienasSheetFrame');
-    var btn = document.getElementById('pusdienasDockBtn');
-    if (sheet) {
-      sheet.style.display = 'none';
-      sheet.setAttribute('aria-hidden', 'true');
-    }
-    if (frame) frame.src = 'about:blank';
-    if (btn) btn.classList.remove('pusdienas-open');
-    updateBuddyUiSuppression();
-  };
-
-  window.addEventListener('resize', positionPusdienasSheet);
-})();
-
 function toggleNsFromParent() {
   _nsOpen = !_nsOpen;
   const iframe = document.getElementById('calIframe');
@@ -4232,7 +4179,7 @@ window.addEventListener('message', function(e) {
 
 <script>
 if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-  const MINKA_APP_VERSION = '2026.07.09d';
+  const MINKA_APP_VERSION = '2026.07.13a';
   const MINKA_VERSION_KEY = 'minka_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
