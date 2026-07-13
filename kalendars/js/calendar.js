@@ -3971,14 +3971,30 @@ function filterFullList(btn) {
     const COFFEE_MG_PER_CUP = 80;
     const coffeeSourceMeta = {
       philips: { label: 'Philips', priceCents: 0, eq: 1 },
-      lofbergs: { label: 'LÖFBERGS', priceCents: 140, eq: 1 },
+      lofbergs: { label: 'LÖFBERGS', priceCents: 100, eq: 1 },
       narvesen: { label: 'Narvesen', prices: { M: 200, L: 220, XL: 250 }, eq: 1 },
       monster: { label: 'Monster', priceCents: 159, eq: 2 },
       monsterultra: { label: 'Monster Ultra', priceCents: 159, eq: 2 },
-      redbull: { label: 'Red Bull', priceCents: 149, eq: 1 }
+      redbull: { label: 'Red Bull', priceCents: 149, eq: 1 },
+      cupcoffee: { label: 'Cita kafija', priceCents: 100, eq: 1 }
     };
-    const COFFEE_SOURCES = ['philips', 'lofbergs', 'narvesen', 'monster', 'monsterultra', 'redbull'];
+    const COFFEE_SOURCES = ['philips', 'lofbergs', 'narvesen', 'monster', 'monsterultra', 'redbull', 'cupcoffee'];
     function coffeeEq(source) { const m = coffeeSourceMeta[cleanCoffeeSource(source)]; return Math.max(1, (m && m.eq) || 1); }
+    // Fixed-price machines (Löfbergs, Cita kafija, energy drinks) can vary between
+    // vending machines/stores, so remember the last price the user typed per source
+    // on this device — avoids retyping it every single time for the same machine.
+    const coffeePriceOverrideKey = 'mkCoffeePriceOverridesV1';
+    function getCoffeePriceOverrides() {
+      try { return JSON.parse(localStorage.getItem(coffeePriceOverrideKey) || '{}') || {}; }
+      catch (_e) { return {}; }
+    }
+    function saveCoffeePriceOverride(source, cents) {
+      try {
+        const o = getCoffeePriceOverrides();
+        o[source] = cents;
+        localStorage.setItem(coffeePriceOverrideKey, JSON.stringify(o));
+      } catch (_e) {}
+    }
 
     function getCoffeeStore() {
       try {
@@ -4023,11 +4039,12 @@ function filterFullList(btn) {
       if (s === 'monster') return 'monster';
       if (s === 'monsterultra' || s === 'monster-ultra' || s === 'monsterwhite' || s === 'ultra') return 'monsterultra';
       if (s === 'redbull' || s === 'red-bull' || s === 'redbul') return 'redbull';
+      if (s === 'cupcoffee' || s === 'cup-coffee' || s === 'cita' || s === 'other') return 'cupcoffee';
       return 'philips';
     }
 
     function emptyCoffeeDetail() {
-      return { sources: { philips: 0, lofbergs: 0, narvesen: 0, monster: 0, monsterultra: 0, redbull: 0 }, spendCents: 0 };
+      return { sources: { philips: 0, lofbergs: 0, narvesen: 0, monster: 0, monsterultra: 0, redbull: 0, cupcoffee: 0 }, spendCents: 0 };
     }
 
     function normalizeCoffeeDetail(detail, count) {
@@ -4308,6 +4325,22 @@ function filterFullList(btn) {
           + '<rect x="16" y="21" width="2" height="1" fill="#d61f26"/>'
           + '</svg>';
       }
+      if (source === 'cupcoffee') {
+        // Generic vending-machine coffee — plain ribbed plastic cup, tapered
+        // narrower at the base, filled with coffee, a couple of steam wisps.
+        return '<svg viewBox="0 0 32 32" shape-rendering="crispEdges" aria-hidden="true">'
+          + '<rect x="14" y="2" width="1" height="2" fill="#b7bcc4"/>'
+          + '<rect x="18" y="3" width="1" height="2" fill="#b7bcc4"/>'
+          + '<rect x="9" y="10" width="14" height="2" fill="#8a5a2c"/>'
+          + '<rect x="9" y="12" width="14" height="5" fill="#e7e9ee"/>'
+          + '<rect x="9" y="14" width="14" height="1" fill="#c3c8d2"/>'
+          + '<rect x="10" y="17" width="12" height="5" fill="#dfe2e8"/>'
+          + '<rect x="10" y="19" width="12" height="1" fill="#c3c8d2"/>'
+          + '<rect x="11" y="22" width="10" height="4" fill="#d6dae1"/>'
+          + '<rect x="11" y="24" width="10" height="1" fill="#c3c8d2"/>'
+          + '<rect x="12" y="26" width="8" height="1" fill="#b7bcc4"/>'
+          + '</svg>';
+      }
       // Philips bean-to-cup machine — body + blue display, dispenser spout and a cup.
       return '<svg viewBox="0 0 32 32" shape-rendering="crispEdges" aria-hidden="true">'
         + '<rect x="7" y="3" width="18" height="21" fill="#2b313c"/>'
@@ -4328,8 +4361,7 @@ function filterFullList(btn) {
     function addCoffeeEntry(name, card, entry) {
       const source = cleanCoffeeSource(entry && entry.source);
       const size = String(entry && entry.size || '').toUpperCase();
-      let priceCents = Math.max(0, Number(entry && entry.priceCents) || 0);
-      if (source === 'lofbergs') priceCents = 140;
+      const priceCents = Math.max(0, Number(entry && entry.priceCents) || 0);
       const eq = coffeeEq(source);
       setCoffeeCount(name, getCoffeeCount(name) + eq);
       addCoffeeDetail(name, { source, size, priceCents });
@@ -4426,6 +4458,14 @@ function filterFullList(btn) {
         picker.style.top = top + 'px';
       }
 
+      function defaultPriceFor(src) {
+        if (src === 'philips') return 0;
+        if (src === 'narvesen') return coffeeSourceMeta.narvesen.prices[size] || 200;
+        const overrides = getCoffeePriceOverrides();
+        if (overrides[src] != null) return overrides[src];
+        return coffeeSourceMeta[src].priceCents || 0;
+      }
+
       function sync() {
         picker.querySelectorAll('.mk-coffee-source').forEach(btn => btn.classList.toggle('is-on', btn.dataset.source === selected));
         const sizeRow = picker.querySelector('.mk-coffee-size-row');
@@ -4434,12 +4474,12 @@ function filterFullList(btn) {
         const input = picker.querySelector('.mk-coffee-price');
         if (!input) return;
         if (selected === 'philips') priceCents = 0;
-        else if (selected === 'lofbergs') priceCents = 140;
-        else if (selected === 'narvesen') { if (!priceCents) priceCents = coffeeSourceMeta.narvesen.prices[size] || 200; }
-        else if (!priceCents) priceCents = coffeeSourceMeta[selected].priceCents || 0;
+        else if (selected === 'narvesen') { if (!priceCents) priceCents = defaultPriceFor('narvesen'); }
+        else if (!priceCents) priceCents = defaultPriceFor(selected);
         input.value = (priceCents / 100).toFixed(2);
-        // Price editable for everything except the fixed-price machines.
-        input.readOnly = (selected === 'philips' || selected === 'lofbergs');
+        // Vending-machine prices vary by location, so every source except the
+        // free company Philips machine has an editable price.
+        input.readOnly = (selected === 'philips');
         const caf = picker.querySelector('.mk-coffee-caf');
         if (caf) {
           const eq = coffeeEq(selected);
@@ -4447,13 +4487,6 @@ function filterFullList(btn) {
           const cups = eq === 1 ? '1 tasīte' : eq + ' tasītes';
           caf.textContent = '≈ ' + mg + ' mg kofeīna · ' + cups;
         }
-      }
-
-      function defaultPriceFor(src) {
-        if (src === 'philips') return 0;
-        if (src === 'lofbergs') return 140;
-        if (src === 'narvesen') return coffeeSourceMeta.narvesen.prices[size] || 200;
-        return coffeeSourceMeta[src].priceCents || 0;
       }
       picker.querySelectorAll('.mk-coffee-source').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -4481,6 +4514,9 @@ function filterFullList(btn) {
       const save = picker.querySelector('.mk-coffee-save');
       if (save) {
         save.addEventListener('click', () => {
+          // Remember this price as the new default for the source on this device
+          // (skips the free Philips machine and per-size Narvesen).
+          if (selected !== 'philips' && selected !== 'narvesen') saveCoffeePriceOverride(selected, priceCents);
           addCoffeeEntry(name, card, { source: selected, size: selected === 'narvesen' ? size : '', priceCents });
           closeCoffeePicker();
         });
