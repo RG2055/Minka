@@ -4577,6 +4577,8 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
 #mk-buddy[data-coffee-stage="3"] .mk-buddy-hud-canvas{filter:saturate(1.18) brightness(1.08) drop-shadow(0 0 3px rgba(255,216,77,.36)) drop-shadow(0 5px 0 rgba(0,0,0,.24));}
 #mk-buddy[data-coffee-stage="4"] #mk-buddy-canvas{filter:saturate(1.24) brightness(1.1) drop-shadow(0 0 4px rgba(255,214,70,.5));}
 #mk-buddy[data-coffee-stage="4"] .mk-buddy-hud-canvas{filter:saturate(1.24) brightness(1.1) drop-shadow(0 0 4px rgba(255,214,70,.5)) drop-shadow(0 5px 0 rgba(0,0,0,.24));}
+#mk-buddy.is-sleeping #mk-buddy-canvas{filter:none;}
+#mk-buddy.is-sleeping .mk-buddy-hud-canvas{filter:drop-shadow(0 5px 0 rgba(0,0,0,.24));}
 .mk-buddy-fatigue-part{transition:opacity .12s ease;}
 #mk-buddy.hud-busy .mk-buddy-fatigue-part{opacity:0;}
 #mk-buddy-fatigue-hud{display:none;}
@@ -5009,6 +5011,31 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
     drawHudHearts(count, cols);
   }
 
+  // Curled side-sleeping pose shared by every cat palette. The head rests
+  // against the front paws while the rounded body and tail close the shape.
+  var CAT_CURLED_SLEEP_FRAME = [
+    '.........................',
+    '.........................',
+    '...K.........K...........',
+    '..KDK.......KDK..........',
+    '..KLK.......KLK..........',
+    '.KOLDKKKKKKKOLDK.........',
+    '.KOOOOOOOOOOOOODKKKK.....',
+    '.KOOOOOOOOOOOOOOOOODKK...',
+    '.KOOOOOOOOOOOOOOOOOODDK..',
+    '.KOKOOKOOOKOOKOOOOOOODK..',
+    '.KOOKKOOOOOKKOOOOOOOODK..',
+    'KKOOOOOOOOOOOOKKOOOOOODK.',
+    '.KOOOOOOKOOOOOOOOOOOOOODK',
+    'KKOOOOOKOKOOOOKKOOOOOOODK',
+    '.KOOOOOOOOOOOOOOOOKKKKODK',
+    '.KKOOOOLLLOOOOOOOKOOOOODK',
+    '..KOOOLLLLLOOOOOKOOOOOODK',
+    '...KKKKKKKKKKKKKKKKKKKKK.',
+    '.........................',
+    '.........................'
+  ];
+
   // ── Species ────────────────────────────────────────────────────────────
   var SP = {
     ghost: {c:'#b58cff',f:[
@@ -5022,6 +5049,9 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
     catg: {px:2, eyes:[[3,5],[16,5]], pal:{K:'#3a3f4d',O:'#9aa3b5',L:'#e6eaf2',P:'#f2a5c0',D:'#191b22'}, f:[['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOOK.','.KOOOOLLLLLLLLLLOOOK.KOK.','..KLLOOKKKKKKKKOOLLK..K..'],['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOK..','.KOOOOLLLLLLLLLLOOOK.KK..','..KLLOKKKKKKKKKOOLLK..K..'],['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOOK.','.KOOOOLLLLLLLLLLOOOK.KOK.','..KLLOOKKKKKKKKOOLLK..K..'],['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOK..','.KOOOOLLLLLLLLLLOOOK.KK..','..KLLOKKKKKKKKKOOLLK..K..'],['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOOK.','.KOOOOLLLLLLLLLLOOOK.KOK.','..KLLOOKKKKKKKKOOLLK..K..'],['.........................','.........................','.........................','.........................','.........................','.........................','.........................','.........................','..KK..........KK.........','.KOOK........KOOK........','.KOPOKKKKKKKKKOPOK.......','KOOOOOOOOOOOOOOOOOK......','KOOKKOOOOOOOOKKOOOK......','KOOOOOOOLPPLOOOOOOK......','KOOOOOOLLLLLLOOOOOOK.....','KOOOOOOOOOOOOOOOOOOOKK...','KOOOLLLLLLLLLLLOOOOOOOK..','KOOOLLLLLLLLLLLOOOOKOOK..','.KOOLLLLLLLLLLLOOOK.KOK..','..KKKKKKKKKKKKKKKKK..K...']]},
     catb: {px:2, eyes:[[3,5],[16,5]], pal:{K:'#14161d',O:'#2e3340',L:'#f4f6fb',P:'#f2a5c0',D:'#0c0d12'}, f:[['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOOK.','.KOOOOLLLLLLLLLLOOOK.KOK.','..KLLOOKKKKKKKKOOLLK..K..'],['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOK..','.KOOOOLLLLLLLLLLOOOK.KK..','..KLLOKKKKKKKKKOOLLK..K..'],['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOOK.','.KOOOOLLLLLLLLLLOOOK.KOK.','..KLLOOKKKKKKKKOOLLK..K..'],['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOK..','.KOOOOLLLLLLLLLLOOOK.KK..','..KLLOKKKKKKKKKOOLLK..K..'],['...KK.............KK.....','..KOOK...........KOOK....','.KOPPOK.........KOPPOK...','.KOPPPOKKKKKKKKKOPPPOK...','.KOOOOOOOOOOOOOOOOOOOK...','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOOOOOOOOOOOOOK..','KOOOOOOOOOPPOOOOOOOOOOK..','.KOOOOOOOLPPLOOOOOOOOK...','.KOOOOOOLLLLLLOOOOOOOK...','..KOOOOOOLLLLOOOOOOOK....','..KOOOOOOOOOOOOOOOOK.....','.KOOOOOLLLLLLLLOOOOOK....','.KOOOOLLLLLLLLLLOOOOOKK..','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOOOOK.','KOOOOOLLLLLLLLLLOOOOKOOK.','.KOOOOLLLLLLLLLLOOOK.KOK.','..KLLOOKKKKKKKKOOLLK..K..'],['.........................','.........................','.........................','.........................','.........................','.........................','.........................','.........................','..KK..........KK.........','.KOOK........KOOK........','.KOPOKKKKKKKKKOPOK.......','KOOOOOOOOOOOOOOOOOK......','KOOKKOOOOOOOOKKOOOK......','KOOOOOOOLPPLOOOOOOK......','KOOOOOOLLLLLLOOOOOOK.....','KOOOOOOOOOOOOOOOOOOOKK...','KOOOLLLLLLLLLLLOOOOOOOK..','KOOOLLLLLLLLLLLOOOOKOOK..','.KOOLLLLLLLLLLLOOOK.KOK..','..KKKKKKKKKKKKKKKKK..K...']]},
   };
+  SP.cat.sleep=CAT_CURLED_SLEEP_FRAME;
+  SP.catg.sleep=CAT_CURLED_SLEEP_FRAME;
+  SP.catb.sleep=CAT_CURLED_SLEEP_FRAME;
   function buddyTodayStr(){ var d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
   function dailyRandomBuddy(){
     var keys = ['ghost','cat','catg','catb'];
@@ -5669,6 +5699,9 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
     targetCtx.fillRect(x, y, w, h);
   }
   function drawBuddyCoffeeEvolution(targetCtx, sp){
+    // Sleep has its own quiet sprite state. Coffee props and glow would make
+    // the night pose look awake even when the eyes are closed.
+    if(isSleeping) return;
     var stage = buddyCoffeeStage;
     if(stage === 0){
       // The original sprite stays intact; only the sleepy eyes and tiny Zs
@@ -5727,6 +5760,11 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
     }
   }
   function drawFrame(fi, eyeOpen){
+    var frameSpecies=SP[curSp]||SP.ghost;
+    if(isSleeping&&frameSpecies.pal){
+      fi=5;
+      eyeOpen=false;
+    }
     curFi=fi; curEyeOpen=eyeOpen;
     if(!renderingBuddyCache){
       var cacheKey = buddyFrameKey(fi, eyeOpen);
@@ -5741,12 +5779,11 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
       syncHudBusy();
       return;
     }
-    var sp=SP[curSp]||SP.ghost;
-    var frame=sp.f[Math.max(0,fi)]||sp.f[0];
+    var sp=frameSpecies;
+    var frame=(isSleeping&&sp.sleep)||sp.f[Math.max(0,fi)]||sp.f[0];
     ctx.clearRect(0,0,CVS.width,CVS.height);
     if (sp.pal) {
       var ppx = sp.px || PX;
-      if (isSleeping) ctx.globalAlpha = 0.8;
       for (var pr = 0; pr < frame.length; pr++) {
         var prow = frame[pr];
         for (var pc = 0; pc < prow.length; pc++) {
@@ -6764,6 +6801,14 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
 
   function runSleepAnim(){
     if(!isSleeping) return;
+    var sleepingSpecies=SP[curSp]||SP.ghost;
+    if(sleepingSpecies.pal){
+      // Cat frame 5 is the compact, curled-up pose with closed pixel eyes.
+      // Ghost keeps its existing gentle two-frame sleep animation below.
+      drawFrame(5,false);
+      animTimer=setTimeout(runSleepAnim,1900);
+      return;
+    }
     var s=sleepSeq[sleepSi++%sleepSeq.length];
     drawFrame(s===-1?0:s, s!==-1);
     animTimer=setTimeout(runSleepAnim, s===-1?950:1900);
@@ -6781,6 +6826,7 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
   function enterSleep(reason){
     if(isSleeping) return;
     isSleeping=true; sleepReason=reason;
+    W.classList.add('is-sleeping');
     bhvBusy=false;
     clearTimeout(animTimer);
     glassesOn=false;
@@ -6814,6 +6860,7 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
   function exitSleep(){
     if(!isSleeping||sleepReason==='night') return;
     isSleeping=false; sleepReason='';
+    W.classList.remove('is-sleeping');
     clearTimeout(zzzTimer); clearTimeout(animTimer);
     drawHearts(mood);
     drawFrame(0,true);
@@ -6828,6 +6875,7 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
     } else {
       if(isSleeping&&sleepReason==='night'){
         isSleeping=false; sleepReason='';
+        W.classList.remove('is-sleeping');
         clearTimeout(zzzTimer); clearTimeout(animTimer);
         drawHearts(mood); drawFrame(0,true);
         // Morning coffee greeting (once per day)
