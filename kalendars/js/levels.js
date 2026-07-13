@@ -222,12 +222,12 @@
             Object.keys(d.details).forEach(function(k) {
               var item = d.details[k] || {};
               var src = item.sources || {};
+              var mappedSources = {};
+              Object.keys(src).forEach(function (sk) {
+                mappedSources[sk] = Math.max(0, Number(src[sk]) || 0);
+              });
               detailMap[_coffeeKey(k)] = {
-                sources: {
-                  philips: Math.max(0, Number(src.philips) || 0),
-                  lofbergs: Math.max(0, Number(src.lofbergs) || 0),
-                  narvesen: Math.max(0, Number(src.narvesen) || 0)
-                },
+                sources: mappedSources,
                 spendCents: Math.max(0, Number(item.spendCents) || 0)
               };
             });
@@ -266,14 +266,15 @@
     return totals;
   }
   function _emptyCoffeeDetail() {
-    return { sources: { philips: 0, lofbergs: 0, narvesen: 0 }, spendCents: 0 };
+    return { sources: { philips: 0, lofbergs: 0, narvesen: 0, monster: 0, monsterultra: 0, redbull: 0, cupcoffee: 0 }, spendCents: 0 };
   }
   function _addCoffeeDetail(out, key, detail) {
     if (!out[key]) out[key] = _emptyCoffeeDetail();
     var src = detail && detail.sources ? detail.sources : {};
-    out[key].sources.philips += Math.max(0, Number(src.philips) || 0);
-    out[key].sources.lofbergs += Math.max(0, Number(src.lofbergs) || 0);
-    out[key].sources.narvesen += Math.max(0, Number(src.narvesen) || 0);
+    // Sum every source generically so new drink types never get silently dropped.
+    Object.keys(src).forEach(function (k) {
+      out[key].sources[k] = (out[key].sources[k] || 0) + Math.max(0, Number(src[k]) || 0);
+    });
     out[key].spendCents += Math.max(0, Number(detail && detail.spendCents) || 0);
   }
   function _coffeeDetailsPerPerson(coffeeTotals) {
@@ -819,7 +820,7 @@
   function _coffeeSourceChips(cs) {
     cs = cs || {};
     var icon = window.__minkaCoffeeIcon;
-    var defs = [['philips', 'Philips'], ['lofbergs', 'Löfbergs'], ['narvesen', 'Narvesen']];
+    var defs = [['philips', 'Philips'], ['lofbergs', 'Löfbergs'], ['narvesen', 'Narvesen'], ['monster', 'Monster'], ['monsterultra', 'Monster Ultra'], ['redbull', 'Red Bull'], ['cupcoffee', 'Cita kafija']];
     var parts = defs.filter(function (d) { return (Number(cs[d[0]]) || 0) > 0; }).map(function (d) {
       var n = Number(cs[d[0]]) || 0;
       if (icon) return '<span class="mk-stx-csrc" title="' + d[1] + '">' + icon(d[0]) + '<i>' + n + '</i></span>';
@@ -829,14 +830,15 @@
   }
 
   function buildCoffeeSummary(list) {
-    var g = { cups: 0, cents: 0, philips: 0, lofbergs: 0, narvesen: 0 };
+    var g = { cups: 0, cents: 0, philips: 0, lofbergs: 0, narvesen: 0, monster: 0, monsterultra: 0, redbull: 0, cupcoffee: 0 };
     (list || []).forEach(function (w) {
       g.cups += Math.max(0, Number(w.coffeeTotal) || 0);
       g.cents += Math.max(0, Number(w.coffeeSpendCents) || 0);
       var s = w.coffeeSources || {};
-      g.philips += Math.max(0, Number(s.philips) || 0);
-      g.lofbergs += Math.max(0, Number(s.lofbergs) || 0);
-      g.narvesen += Math.max(0, Number(s.narvesen) || 0);
+      Object.keys(s).forEach(function (k) {
+        if (g[k] === undefined) g[k] = 0;
+        g[k] += Math.max(0, Number(s[k]) || 0);
+      });
     });
     if (!g.cups) return '';
     return '<div class="mk-stx-coffee-sum">' +
