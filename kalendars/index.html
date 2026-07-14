@@ -742,6 +742,7 @@ html.mk-low-spec #stats-table-wrap * { transition:none !important; }
             <span class="cal-nav-btn material-icons-round" onclick="modalCalendarMonth(1)">chevron_right</span>
           </div>
         </div>
+        <div id="wm-norm-row" class="wm-norm-row" aria-live="polite"></div>
         <div class="calendar">
           <ul class="weeks">
             <li>P</li><li>O</li><li>T</li><li>C</li><li>P</li><li>S</li><li>Sv</li>
@@ -765,14 +766,20 @@ html.mk-low-spec #stats-table-wrap * { transition:none !important; }
 <style>
 /* ── Worker modal calendar v2: square cells + coworker popover ─────────── */
 #worker-modal .calendar .days li{
+  /* Square-ish but capped so a 6-week month always fits without scrolling */
   aspect-ratio:1/1 !important;
-  min-height:0 !important;
+  max-height:54px !important;
+  min-height:40px !important;
   height:auto !important;
-  margin:2px 0 !important;
-  padding:2px 0 !important;
-  border-radius:12px !important;
-  gap:1px;
+  margin:1px 0 !important;
+  padding:1px 0 !important;
+  border-radius:11px !important;
+  gap:0;
+  font-size:15px !important;   /* bigger, clearer day numbers */
+  font-weight:800 !important;
+  line-height:1.15 !important;
 }
+#worker-modal .calendar .days li.inactive{ font-weight:600 !important; }
 #worker-modal .calendar .days li.worked{
   background:linear-gradient(180deg,rgba(var(--accent-rgb,183,123,255),0.26),rgba(var(--accent-rgb,183,123,255),0.14)) !important;
   border:1px solid rgba(var(--accent-rgb,183,123,255),0.38) !important;
@@ -847,6 +854,29 @@ html.mk-low-spec #stats-table-wrap * { transition:none !important; }
   color:rgba(255,255,255,0.55);
 }
 #wmDayPop .wmdp-none{ font:600 10.5px/1.4 Inter,system-ui,sans-serif; color:rgba(255,255,255,0.35); }
+
+/* ── Month norm / overtime strip (LV darba stundu norma) ── */
+.wm-norm-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  margin:2px 0 6px;
+  padding:7px 10px;
+  border-radius:12px;
+  background:rgba(255,255,255,0.035);
+  border:1px solid rgba(255,255,255,0.07);
+  font:600 11px/1.2 Inter,system-ui,sans-serif;
+  color:rgba(255,255,255,0.55);
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.wm-norm-row b{ font-size:15px; font-weight:900; color:#fff; margin-left:4px; }
+.wm-norm-row .ot{ display:inline-flex; align-items:baseline; }
+.wm-norm-row .ot b{ font-size:17px; }
+.wm-norm-row .ot.plus b{ color:#ffb020; }
+.wm-norm-row .ot.zero b{ color:#3ddc84; }
+.wm-norm-row .ot.minus b{ color:rgba(255,255,255,0.75); }
 </style>
 
 <!-- FULL LIST MODAL -->

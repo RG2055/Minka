@@ -5537,6 +5537,43 @@ function showWorkerSchedule(workerName, currentShift) {
   }, 100);
 }
 
+// Latvian statutory month norm: 8h for every Mon–Fri, minus public holidays
+// that fall on a workday. Movable Easter days via the Gregorian computus;
+// 4 May / 18 Nov falling on a weekend move the day off to next Monday (LV law).
+function lvMonthNormHours(year, month) {
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function easterSunday(y) {
+    const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4,
+          f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3),
+          h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4,
+          l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451),
+          mo = Math.floor((h + l - 7 * m + 114) / 31), da = ((h + l - 7 * m + 114) % 31) + 1;
+    return new Date(y, mo - 1, da);
+  }
+  const holi = new Set(['01-01', '05-01', '05-04', '06-23', '06-24', '11-18', '12-24', '12-25', '12-26', '12-31']);
+  const es = easterSunday(year);
+  const gf = new Date(es); gf.setDate(es.getDate() - 2);  // Lielā Piektdiena
+  const em = new Date(es); em.setDate(es.getDate() + 1);  // Otrās Lieldienas
+  holi.add(pad2(gf.getMonth() + 1) + '-' + pad2(gf.getDate()));
+  holi.add(pad2(em.getMonth() + 1) + '-' + pad2(em.getDate()));
+  [[4, 4], [10, 18]].forEach(function (md) {                // 04.05 / 18.11 pārcelšana
+    const d = new Date(year, md[0], md[1]);
+    if (d.getDay() === 6) d.setDate(d.getDate() + 2);
+    else if (d.getDay() === 0) d.setDate(d.getDate() + 1);
+    else return;
+    holi.add(pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()));
+  });
+  let norm = 0;
+  const last = new Date(year, month + 1, 0).getDate();
+  for (let day = 1; day <= last; day++) {
+    const wd = new Date(year, month, day).getDay();
+    if (wd === 0 || wd === 6) continue;
+    if (holi.has(pad2(month + 1) + '-' + pad2(day))) continue;
+    norm += 8;
+  }
+  return norm;
+}
+
 function updateModalTotalHours() {
   const total = modalWorkerDates
     .filter(d => {
@@ -5553,6 +5590,20 @@ function updateModalTotalHours() {
       return acc;
     }, 0);
   document.getElementById('modal-total-hours').innerText = `${total}h`;
+
+  // Norm / overtime strip for the displayed month
+  const row = document.getElementById('wm-norm-row');
+  if (row) {
+    const norm = lvMonthNormHours(modalCurrentYear, modalCurrentMonth);
+    const diff = total - norm;
+    let ot;
+    if (diff > 0) ot = '<span class="ot plus">Virsstundas<b>+' + diff + 'h</b></span>';
+    else if (diff === 0) ot = '<span class="ot zero">Normā<b>±0h</b></span>';
+    else ot = '<span class="ot minus">Līdz normai<b>' + diff + 'h</b></span>';
+    row.innerHTML =
+      '<span>Norma<b>' + norm + 'h</b></span>' +
+      '<span>Nostrādāts<b>' + total + 'h</b></span>' + ot;
+  }
 }
 
 function outsideModalClose(e) {
