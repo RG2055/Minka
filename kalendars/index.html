@@ -723,7 +723,8 @@ html.mk-low-spec #stats-table-wrap * { transition:none !important; }
   </div>
   <div class="view-toggle">
     <button id="toggle-fatigue" class="toggle-btn active" onclick="showModalView('fatigue')">⚡ Nogurums</button>
-    <button id="toggle-list" class="toggle-btn" onclick="showModalView('list')">📋 Saraksts</button>
+    <!-- Saraksts tab removed: its hours now live on the calendar day cells,
+         and the coworker popover shows day detail on hover/tap. -->
     <button id="toggle-calendar" class="toggle-btn" onclick="showModalView('calendar')">🗓 Kalendārs</button>
     <button id="toggle-emoji" class="toggle-btn" onclick="showModalView('emoji')">Emoji</button>
     <button id="toggle-skin" class="toggle-btn" onclick="showModalView('skin')">🎨 Izskats</button>
@@ -760,6 +761,93 @@ html.mk-low-spec #stats-table-wrap * { transition:none !important; }
     </div>
   </div>
 </div>
+
+<style>
+/* ── Worker modal calendar v2: square cells + coworker popover ─────────── */
+#worker-modal .calendar .days li{
+  aspect-ratio:1/1 !important;
+  min-height:0 !important;
+  height:auto !important;
+  margin:2px 0 !important;
+  padding:2px 0 !important;
+  border-radius:12px !important;
+  gap:1px;
+}
+#worker-modal .calendar .days li.worked{
+  background:linear-gradient(180deg,rgba(var(--accent-rgb,183,123,255),0.26),rgba(var(--accent-rgb,183,123,255),0.14)) !important;
+  border:1px solid rgba(var(--accent-rgb,183,123,255),0.38) !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+}
+#worker-modal .calendar .days li.worked.shift-night{
+  background:linear-gradient(180deg,rgba(90,162,255,0.26),rgba(90,162,255,0.12)) !important;
+  border-color:rgba(90,162,255,0.42) !important;
+}
+#worker-modal .calendar .days li.worked.shift-allday{
+  background:linear-gradient(180deg,rgba(52,211,153,0.24),rgba(52,211,153,0.11)) !important;
+  border-color:rgba(52,211,153,0.40) !important;
+}
+#worker-modal .calendar .days li .shift-label{
+  font-size:9px !important;
+  font-weight:800 !important;
+  padding:1px 7px !important;
+  background:rgba(0,0,0,0.5) !important;
+  color:#fff !important;
+}
+#worker-modal .calendar .days li.worked{ cursor:pointer; }
+#worker-modal .calendar .days li.worked:hover{ filter:brightness(1.18); }
+
+/* Coworker popover — one reused element, shown on hover/tap of a worked day */
+#wmDayPop{
+  position:fixed;
+  z-index:2147483000;
+  width:min(280px,calc(100vw - 24px));
+  background:rgba(12,14,24,0.98);
+  border:1px solid rgba(255,255,255,0.14);
+  border-radius:14px;
+  padding:10px 12px 11px;
+  box-shadow:0 18px 50px rgba(0,0,0,0.6);
+  pointer-events:none;
+  display:none;
+  font-family:Inter,system-ui,sans-serif;
+}
+#wmDayPop.open{ display:block; }
+#wmDayPop .wmdp-date{
+  font:800 11px/1.2 Inter,system-ui,sans-serif;
+  color:#fff;
+  letter-spacing:.04em;
+  margin-bottom:2px;
+}
+#wmDayPop .wmdp-own{
+  font:700 10px/1.3 Inter,system-ui,sans-serif;
+  color:rgba(var(--accent-rgb,183,123,255),0.95);
+  margin-bottom:7px;
+}
+#wmDayPop .wmdp-sec{
+  font:800 8.5px/1 Inter,system-ui,sans-serif;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,0.38);
+  margin:7px 0 3px;
+}
+#wmDayPop .wmdp-row{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:10px;
+  font:600 11px/1.5 Inter,system-ui,sans-serif;
+  color:rgba(255,255,255,0.82);
+}
+#wmDayPop .wmdp-row b{ color:#fff; font-weight:800; }
+#wmDayPop .wmdp-row.me{ color:rgba(var(--accent-rgb,183,123,255),1); }
+#wmDayPop .wmdp-row .h{
+  flex-shrink:0;
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+  color:rgba(255,255,255,0.55);
+}
+#wmDayPop .wmdp-none{ font:600 10.5px/1.4 Inter,system-ui,sans-serif; color:rgba(255,255,255,0.35); }
+</style>
 
 <!-- FULL LIST MODAL -->
 <div id="full-list-modal" onclick="event.stopPropagation()">
