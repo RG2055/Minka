@@ -5731,32 +5731,56 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
       return;
     }
     if(stage === 3){
-      // Static pixel lightning: the energy comes from the frame itself,
-      // without adding another animation loop.
-      evoPixel(targetCtx, 1, 9, 5, 3, '#ffe04d');
-      evoPixel(targetCtx, 3, 12, 4, 3, '#ffe04d');
-      evoPixel(targetCtx, 1, 15, 4, 3, '#ffb82e');
-      evoPixel(targetCtx, 44, 7, 4, 3, '#ffe04d');
-      evoPixel(targetCtx, 42, 10, 5, 3, '#ffe04d');
-      evoPixel(targetCtx, 44, 13, 4, 3, '#ffb82e');
+      // Static pixel lightning — two recognizable diagonal bolts, one per
+      // side (the old stacked rectangles read as yellow blobs, not energy).
+      // Left bolt: staircase down-left with a darker lower half + bright tip.
+      evoPixel(targetCtx, 5, 5, 2, 1, '#fff7bf');
+      evoPixel(targetCtx, 5, 6, 3, 2, '#ffe04d');
+      evoPixel(targetCtx, 4, 8, 3, 2, '#ffe04d');
+      evoPixel(targetCtx, 3, 10, 3, 2, '#ffe04d');
+      evoPixel(targetCtx, 2, 12, 5, 2, '#ffe04d');
+      evoPixel(targetCtx, 3, 14, 3, 2, '#ffb82e');
+      evoPixel(targetCtx, 2, 16, 3, 2, '#ffb82e');
+      evoPixel(targetCtx, 1, 18, 2, 2, '#ffb82e');
+      // Right bolt: mirrored.
+      evoPixel(targetCtx, 43, 3, 2, 1, '#fff7bf');
+      evoPixel(targetCtx, 42, 4, 3, 2, '#ffe04d');
+      evoPixel(targetCtx, 43, 6, 3, 2, '#ffe04d');
+      evoPixel(targetCtx, 44, 8, 3, 2, '#ffe04d');
+      evoPixel(targetCtx, 43, 10, 5, 2, '#ffe04d');
+      evoPixel(targetCtx, 44, 12, 3, 2, '#ffb82e');
+      evoPixel(targetCtx, 45, 14, 3, 2, '#ffb82e');
+      evoPixel(targetCtx, 47, 16, 2, 2, '#ffb82e');
       evoPixel(targetCtx, 0, 28, 2, 2, '#72e8ff');
       evoPixel(targetCtx, 48, 25, 2, 2, '#72e8ff');
       return;
     }
     if(stage === 4){
-      // Crown and gold sparks form the final static evolution frame.
-      evoPixel(targetCtx, 17, 1, 4, 4, '#ffd84d');
-      evoPixel(targetCtx, 23, 0, 4, 5, '#fff07a');
-      evoPixel(targetCtx, 29, 1, 4, 4, '#ffd84d');
-      evoPixel(targetCtx, 17, 5, 16, 4, '#f4b82f');
-      evoPixel(targetCtx, 20, 6, 3, 2, '#fff3a3');
-      evoPixel(targetCtx, 27, 6, 3, 2, '#fff3a3');
-      evoPixel(targetCtx, 3, 5, 3, 3, '#ffd84d');
-      evoPixel(targetCtx, 5, 3, 2, 7, '#ffd84d');
-      evoPixel(targetCtx, 43, 4, 3, 3, '#fff07a');
-      evoPixel(targetCtx, 44, 2, 2, 7, '#fff07a');
-      evoPixel(targetCtx, 1, 27, 3, 3, '#f4b82f');
-      evoPixel(targetCtx, 46, 25, 3, 3, '#ffd84d');
+      // Proper pixel crown: three pointed teeth over a jeweled band (the old
+      // version was a flat gold slab that read as a weird hat), plus two
+      // small four-point star sparks at the sides.
+      evoPixel(targetCtx, 16, 3, 3, 4, '#ffd84d');
+      evoPixel(targetCtx, 23, 1, 4, 6, '#ffd84d');
+      evoPixel(targetCtx, 31, 3, 3, 4, '#ffd84d');
+      evoPixel(targetCtx, 17, 2, 1, 1, '#fff7bf');
+      evoPixel(targetCtx, 24, 0, 2, 1, '#fff7bf');
+      evoPixel(targetCtx, 32, 2, 1, 1, '#fff7bf');
+      evoPixel(targetCtx, 19, 5, 4, 2, '#f4b82f');
+      evoPixel(targetCtx, 27, 5, 4, 2, '#f4b82f');
+      evoPixel(targetCtx, 16, 7, 18, 3, '#f4b82f');
+      evoPixel(targetCtx, 16, 7, 18, 1, '#ffd84d');
+      evoPixel(targetCtx, 19, 8, 2, 2, '#ff5c73');
+      evoPixel(targetCtx, 25, 8, 2, 2, '#72e8ff');
+      evoPixel(targetCtx, 31, 8, 2, 2, '#a78bfa');
+      // Side sparks: little plus-shaped stars instead of gold bars.
+      evoPixel(targetCtx, 3, 13, 4, 2, '#ffe04d');
+      evoPixel(targetCtx, 4, 12, 2, 4, '#ffe04d');
+      evoPixel(targetCtx, 4, 13, 2, 2, '#fff7bf');
+      evoPixel(targetCtx, 43, 10, 4, 2, '#ffe04d');
+      evoPixel(targetCtx, 44, 9, 2, 4, '#ffe04d');
+      evoPixel(targetCtx, 44, 10, 2, 2, '#fff7bf');
+      evoPixel(targetCtx, 1, 27, 2, 2, '#f4b82f');
+      evoPixel(targetCtx, 47, 25, 2, 2, '#ffd84d');
     }
   }
   function drawFrame(fi, eyeOpen){
