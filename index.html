@@ -5704,18 +5704,13 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
     if(isSleeping) return;
     var stage = buddyCoffeeStage;
     if(stage === 0){
-      // The original sprite stays intact; only the sleepy eyes and tiny Zs
-      // distinguish the zero-coffee morning state.
+      // The original sprite stays intact; only the sleepy eyes distinguish
+      // the zero-coffee morning state. (The little grey Zs above the head
+      // were removed — they read as a weird hat on the cat sprites.)
       if(!sp.pal && !isSleeping && !cuteFace && !surprisedOn && !crazySmileOn && !glassesOn){
         evoPixel(targetCtx, 10, 15, 10, 3, '#171926');
         evoPixel(targetCtx, 30, 15, 10, 3, '#171926');
       }
-      evoPixel(targetCtx, 41, 3, 5, 2, '#8691aa');
-      evoPixel(targetCtx, 44, 5, 2, 2, '#8691aa');
-      evoPixel(targetCtx, 41, 7, 5, 2, '#8691aa');
-      evoPixel(targetCtx, 35, 0, 4, 2, '#626c83');
-      evoPixel(targetCtx, 37, 2, 2, 2, '#626c83');
-      evoPixel(targetCtx, 35, 4, 4, 2, '#626c83');
       return;
     }
     if(stage === 2){
