@@ -5389,6 +5389,7 @@ let modalCurrentYear = null, modalCurrentMonth = null;
 let modalWorkerDates = [];
 
 function showWorkerSchedule(workerName, currentShift) {
+  window.__wmWorkerName = String(workerName || '').trim();
   const stores = [window.__grafiksStore || {}, window.__grafiksStoreRad || {}];
   const allDates = [];
   const seenKeys = new Set();
@@ -5565,8 +5566,8 @@ function outsideModalClose(e) {
 function renderModalCalendar() {
   const year = modalCurrentYear;
   const month = modalCurrentMonth;
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-                      'July', 'August', 'September', 'October', 'November', 'December'];
+  const monthNames = ['Janvāris', 'Februāris', 'Marts', 'Aprīlis', 'Maijs', 'Jūnijs',
+                      'Jūlijs', 'Augusts', 'Septembris', 'Oktobris', 'Novembris', 'Decembris'];
   document.getElementById('modal-calendar-month-year').innerText = `${monthNames[month]} ${year}`;
 
   const daysContainer = document.getElementById('modal-calendar-days');
@@ -5614,14 +5615,14 @@ function renderModalCalendar() {
     const prevMonth = prevMonthDate.getMonth();
     const key = dateKey(dayNum, prevMonth, prevYear);
     const shift = shiftMap.get(key);
-    if (shift) liTag += `<li class="inactive worked shift-${shift.kind}">${dayNum}<span class="shift-label">${shift.label}</span></li>`;
+    if (shift) liTag += `<li class="inactive worked shift-${shift.kind}" data-dk="${key}">${dayNum}<span class="shift-label">${shift.label}</span></li>`;
     else liTag += `<li class="inactive">${dayNum}</li>`;
   }
 
   for (let i = 1; i <= lastDate; i++) {
     const key = dateKey(i, month, year);
     const shift = shiftMap.get(key);
-    if (shift) liTag += `<li class="worked shift-${shift.kind}">${i}<span class="shift-label">${shift.label}</span></li>`;
+    if (shift) liTag += `<li class="worked shift-${shift.kind}" data-dk="${key}">${i}<span class="shift-label">${shift.label}</span></li>`;
     else liTag += `<li>${i}</li>`;
   }
 
@@ -5632,12 +5633,119 @@ function renderModalCalendar() {
     const nextMonth = nextMonthDate.getMonth();
     const key = dateKey(dayNum, nextMonth, nextYear);
     const shift = shiftMap.get(key);
-    if (shift) liTag += `<li class="inactive worked shift-${shift.kind}">${dayNum}<span class="shift-label">${shift.label}</span></li>`;
+    if (shift) liTag += `<li class="inactive worked shift-${shift.kind}" data-dk="${key}">${dayNum}<span class="shift-label">${shift.label}</span></li>`;
     else liTag += `<li class="inactive">${dayNum}</li>`;
   }
 
   daysContainer.innerHTML = liTag;
+  initModalDayPopover(daysContainer);
   updateModalTotalHours();
+}
+
+// ── Worker-modal day popover: who works with this person on a given day ──
+// Cheap by design: ONE delegated listener pair on the grid (wired once), ONE
+// reused popover element, roster built lazily per day and cached until the
+// next month render. No per-cell listeners, timers, or observers.
+var __wmPopCache = new Map();
+function __wmEsc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+function __wmDayRosterHtml(dk) {
+  if (__wmPopCache.has(dk)) return __wmPopCache.get(dk);
+  var me = String(window.__wmWorkerName || '').trim().toLowerCase();
+  function collect(storeObj) {
+    var out = [], seen = new Set();
+    for (var m in (storeObj || {})) {
+      var days = storeObj[m];
+      if (!Array.isArray(days)) continue;
+      for (var i = 0; i < days.length; i++) {
+        if (!days[i] || days[i].date !== dk || !Array.isArray(days[i].workers)) continue;
+        days[i].workers.forEach(function (w) {
+          var name = String(w && w.name || '').trim();
+          var sh = String(w && w.shift || '').toUpperCase().trim();
+          if (!name || seen.has(name.toLowerCase())) return;
+          if (sh === 'N' || sh.indexOf('A') >= 0 || sh === 'B' || !sh || sh === '0') return;
+          seen.add(name.toLowerCase());
+          var hrs = (w.hours || parseInt(sh, 10) || 0);
+          out.push({ name: name, hrs: hrs });
+        });
+      }
+    }
+    out.sort(function (a, b) { return (b.hrs - a.hrs) || a.name.localeCompare(b.name); });
+    return out;
+  }
+  function rows(list) {
+    if (!list.length) return '<div class="wmdp-none">—</div>';
+    return list.map(function (p) {
+      var isMe = p.name.toLowerCase() === me;
+      var nm = p.name.split(/\s+/).slice(0, 2).join(' ');
+      return '<div class="wmdp-row' + (isMe ? ' me' : '') + '"><b>' + __wmEsc(nm) + '</b><span class="h">' + (p.hrs ? p.hrs + 'h' : '') + '</span></div>';
+    }).join('');
+  }
+  var rg = collect(window.__grafiksStore);
+  var rd = collect(window.__grafiksStoreRad);
+  var parts = dk.split('.');
+  var html = '<div class="wmdp-date">' + parts[0] + '.' + parts[1] + '.' + parts[2] + '</div>' +
+    '<div class="wmdp-sec">Radiogrāferi</div>' + rows(rg) +
+    '<div class="wmdp-sec">Radiologi</div>' + rows(rd);
+  __wmPopCache.set(dk, html);
+  return html;
+}
+function __wmPopEl() {
+  var el = document.getElementById('wmDayPop');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'wmDayPop';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+function __wmShowPop(cell) {
+  var dk = cell.getAttribute('data-dk');
+  if (!dk) return;
+  var pop = __wmPopEl();
+  pop.innerHTML = __wmDayRosterHtml(dk);
+  pop.classList.add('open');
+  var r = cell.getBoundingClientRect();
+  pop.style.left = '0px'; pop.style.top = '0px'; // reset before measuring
+  var pw = pop.offsetWidth, ph = pop.offsetHeight;
+  var left = Math.max(8, Math.min(window.innerWidth - pw - 8, r.left + r.width / 2 - pw / 2));
+  var top = r.top - ph - 8;
+  if (top < 8) top = Math.min(window.innerHeight - ph - 8, r.bottom + 8);
+  pop.style.left = left + 'px';
+  pop.style.top = top + 'px';
+}
+function __wmHidePop() {
+  var pop = document.getElementById('wmDayPop');
+  if (pop) pop.classList.remove('open');
+}
+function initModalDayPopover(container) {
+  __wmPopCache.clear(); // roster data may differ per worker/month render
+  __wmHidePop();
+  if (container.__wmPopWired) return;
+  container.__wmPopWired = true;
+  var scroller = container.closest ? container.closest('.modal-content') : null;
+  if (scroller) scroller.addEventListener('scroll', __wmHidePop, { passive: true });
+  container.addEventListener('mouseover', function (e) {
+    var cell = e.target && e.target.closest ? e.target.closest('li.worked[data-dk]') : null;
+    if (cell) __wmShowPop(cell);
+  });
+  container.addEventListener('mouseout', function (e) {
+    var toCell = e.relatedTarget && e.relatedTarget.closest ? e.relatedTarget.closest('li.worked[data-dk]') : null;
+    if (!toCell) __wmHidePop();
+  });
+  // Touch: tap toggles (no hover on phones)
+  container.addEventListener('click', function (e) {
+    var cell = e.target && e.target.closest ? e.target.closest('li.worked[data-dk]') : null;
+    var pop = document.getElementById('wmDayPop');
+    if (!cell) { __wmHidePop(); return; }
+    if (pop && pop.classList.contains('open') && pop.__forDk === cell.getAttribute('data-dk')) { __wmHidePop(); return; }
+    __wmShowPop(cell);
+    if (pop) pop.__forDk = cell.getAttribute('data-dk');
+    else __wmPopEl().__forDk = cell.getAttribute('data-dk');
+  });
 }
 
 function modalCalendarMonth(delta) {
@@ -5658,6 +5766,7 @@ function setWorkerModalBuddyFlag(open) {
 }
 
 function showModalView(view) {
+  if (typeof __wmHidePop === 'function') __wmHidePop();
   const _wm = document.getElementById('worker-modal');
   if (_wm) _wm.classList.toggle('mk-skin-mode', view === 'skin');
   const listView = document.getElementById('modal-list-view');
@@ -5712,6 +5821,7 @@ function showModalView(view) {
 }
 
 function closeWorkerModal() {
+  if (typeof __wmHidePop === 'function') __wmHidePop();
   setWorkerModalBuddyFlag(false);
   const modal = document.getElementById('worker-modal');
   if (modal) {
