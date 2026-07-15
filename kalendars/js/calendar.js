@@ -1152,9 +1152,16 @@ function filterFullList(btn) {
   function ensureLiveUpdates() {
     if (window.__minkaLiveStarted) return;
     window.__minkaLiveStarted = true;
+    let resumePaintTimer = 0;
     setInterval(function(){ if (!document.hidden) g_updateLive(); }, 1000);
     document.addEventListener('visibilitychange', function() {
-      if (!document.hidden) g_updateLive(true);
+      clearTimeout(resumePaintTimer);
+      // Let Chrome paint the restored window and accept input before the full
+      // calendar refresh. This matters on throttled/low-end workstations.
+      if (!document.hidden) resumePaintTimer = setTimeout(function(){
+        resumePaintTimer = 0;
+        g_updateLive(true);
+      }, 220);
     }, { passive: true });
   }
 

@@ -73,6 +73,11 @@ audio.preload = "none";
 // itself forever, every minimize/restore or play added one more parallel loop
 // that never died — after a day of use dozens of loops were ticking at once.
 let __drawScheduled = false;
+function radioVisualsInactive() {
+    return document.hidden ||
+        document.body.classList.contains('radio-hidden') ||
+        document.body.classList.contains('radio-idle');
+}
 function scheduleDraw(delayMs) {
     if (__drawScheduled) return;
     __drawScheduled = true;
@@ -89,6 +94,16 @@ audio.addEventListener('play', () => {
     try { if (aCtx && aCtx.state === 'suspended') aCtx.resume().catch(()=>{}); } catch(e) {}
 });
 
+function syncRadioVisualLoops() {
+    if (radioVisualsInactive()) {
+        try { if (typeof milkdropStop === 'function') milkdropStop(); } catch(e) {}
+        return;
+    }
+    scheduleDraw();
+    try { if (milkdropEnabled && typeof milkdropStart === 'function') milkdropStart(); } catch(e) {}
+}
+window.__mkSyncRadioVisuals = syncRadioVisualLoops;
+
 // Pre-warm AudioContext on first user gesture anywhere — eliminates the
 // "click twice" bug caused by suspended AudioContext on iOS/Chrome
 (function() {
@@ -103,7 +118,7 @@ audio.addEventListener('play', () => {
     document.addEventListener('pointerdown', preWarm, { capture: true, once: true, passive: true });
     document.addEventListener('keydown',     preWarm, { capture: true, once: true, passive: true });
 })();
-document.addEventListener('visibilitychange', () => { if (!document.hidden) scheduleDraw(); });
+document.addEventListener('visibilitychange', syncRadioVisualLoops, { passive: true });
 
 // ── Buddy/Spectrum round toggle (sits over the viz screen) ───────────
 function mkUpdateVizToggle(){
@@ -334,7 +349,7 @@ async function updateNowPlaying(st){
     // Skip the network poll when nobody can see the result: tab hidden, audio
     // paused, or the radio panel hidden. The interval keeps ticking and resumes
     // fetching on the next tick once visible/playing again.
-    if (document.hidden || audio.paused || document.body.classList.contains('radio-hidden')) return;
+    if (radioVisualsInactive() || audio.paused) return;
     try {
         const hit = await fetchNowForStation(st);
         if (!hit) {
@@ -1198,7 +1213,8 @@ function milkdropNextPreset() {
 }
 
 function milkdropRender() {
-    if (!milkdrop) return;
+    milkdropRaf = 0;
+    if (!milkdrop || !milkdropEnabled || radioVisualsInactive()) return;
     ensureMilkdropCanvas();
     try { milkdrop.render(); } catch(e) {}
     milkdropRaf = requestAnimationFrame(milkdropRender);
@@ -2445,11 +2461,10 @@ function draw(ts = 0) {
     // cheap classList check fixes both. Audio plays via the <audio> element, so
     // sleeping the visualizer never stops the music.
     __drawScheduled = false;
-    const shouldSleep = document.hidden || audio.paused || !analyser || document.body.classList.contains('radio-hidden');
+    const shouldSleep = radioVisualsInactive() || audio.paused || !analyser;
     if (shouldSleep) {
-        // Idle poll: the 'play' listener restarts draw() instantly, so this
-        // only needs to catch visibility changes — 500ms is plenty.
-        scheduleDraw(500);
+        // Visibility/radio-toggle/play events restart the loop. Do not leave an
+        // invisible 500 ms polling loop running for the whole minimized period.
         return;
     }
     scheduleDraw();

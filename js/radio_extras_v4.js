@@ -252,6 +252,9 @@ function drawDotMatrix(ctx, W, H, data) {
 
   function shouldRunExtraViz() {
     return !document.hidden &&
+      !document.body.classList.contains('radio-hidden') &&
+      !document.body.classList.contains('radio-idle') &&
+      typeof audio !== 'undefined' && !audio.paused &&
       typeof analyser !== 'undefined' && !!analyser &&
       typeof vizStyle !== 'undefined' && vizStyle >= 8 && vizStyle <= 10 &&
       !(typeof isAdjustingVol !== 'undefined' && isAdjustingVol);
