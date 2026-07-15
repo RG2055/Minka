@@ -1589,11 +1589,17 @@
     hookNewCards();
     refreshAllCards();
     var hookTimer = 0;
-    var mo = new MutationObserver(function() {
+    var queueCardHook = function() {
       clearTimeout(hookTimer);
       hookTimer = setTimeout(hookNewCards, 120);
+    };
+    ['grafiks-list', 'radiographers-duty', 'radiologists-duty'].forEach(function(id) {
+      var container = document.getElementById(id);
+      if (!container) return;
+      // Card containers are rebuilt at their top level. A body-wide subtree
+      // observer also reacted to every timer tick and unrelated UI update.
+      new MutationObserver(queueCardHook).observe(container, { childList: true });
     });
-    mo.observe(document.body, { childList: true, subtree: true });
     setTimeout(loadFromGist, 250);
     if (hasApiAuth() || GIST_ID) setInterval(loadFromGist, POLL_MS);
     document.addEventListener('minka:auth-ok', loadFromGist);

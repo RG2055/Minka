@@ -15,8 +15,8 @@
 
 /* ── App: improved entrance ── */
 @keyframes appReveal {
-  from { opacity: 0; transform: scale(0.985) translateY(12px); filter: blur(6px); }
-  to   { opacity: 1; transform: scale(1)     translateY(0);    filter: blur(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 #grafiks-app {
   animation: appReveal .5s var(--spring) both !important;

@@ -187,6 +187,12 @@ html.minka-mobile-frame.minka-auth-locked #minka-auth-overlay { display: none; }
 #minka-auth-status { margin-top: 12px; min-height: 18px; font-size: 12px; color: rgba(255,255,255,0.64); }
 #minka-auth-status.is-error { color: #fda4af; }
 #minka-auth-status.ok { color: #86efac; }
+/* Keep the reveal on compositor-friendly opacity/transform only. The bundled
+   version also animates blur, which repaints this large surface on startup. */
+@keyframes appReveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 html.mk-low-spec #grafiks-app,
 html.mk-low-spec .side-panel,
 html.mk-low-spec .main-panel,
@@ -395,7 +401,7 @@ body.stars-active #stars-overlay{display:block;}
     <div>
       <div class="status-tag radiographers">
         <span class="mk-role-title">
-          <img class="mk-role-title-icon mk-role-title-icon-rg" src="data/radiograferi.svg" alt="" aria-hidden="true">
+          <img class="mk-role-title-icon mk-role-title-icon-rg" src="data/radiograferi.svg" width="26" height="26" alt="" aria-hidden="true">
           <span>RADIOGRĀFERI</span>
         </span>
         <span id="radiographers-shift-count" class="mk-shift-count-pill">DEŽŪRĀ 0</span>
@@ -554,7 +560,7 @@ body.stars-active #stars-overlay{display:block;}
     <div>
       <div class="status-tag radiologists">
         <span class="mk-role-title">
-          <img class="mk-role-title-icon mk-role-title-icon-rd" src="data/radiologi.svg" alt="" aria-hidden="true">
+          <img class="mk-role-title-icon mk-role-title-icon-rd" src="data/radiologi.svg" width="26" height="26" alt="" aria-hidden="true">
           <span>RADIOLOGI</span>
         </span>
         <span id="radiologists-shift-count" class="mk-shift-count-pill">DEŽŪRĀ 0</span>
@@ -1034,14 +1040,14 @@ function _mkToast(msg, type) {
 </script>
 <script src="data/namedays.local.js"></script>
 <script src="js/calendar.js?v=20260715k"></script>
-<script src="js/calendar_extras_v4.js?v=20260710l"></script>
+<script src="js/calendar_extras_v4.js?v=20260715m"></script>
 <script src="js/fatigue.js?v=20260715e"></script>
 <script src="js/nightsplit.js?v=20260703a" defer></script>
 <script src="js/monthcal.js?v=20260622h" defer></script>
 <script src="js/design_v1.js" defer></script>
 <script src="js/theme.js?v=20260702b" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
-<script src="js/emoji.js?v=20260611a" defer></script>
+<script src="js/emoji.js?v=20260715b" defer></script>
 <script src="js/levels.js?v=20260713f" defer></script>
 <script src="js/radiologist_plan.js" defer></script>
 
@@ -2418,16 +2424,26 @@ document.addEventListener('keydown', (e) => {
     setTimeout(() => applyNamedayHighlight(), 1500);
   });
 
+  let namedayHighlightTimer = 0;
+  function queueNamedayHighlight(delay){
+    clearTimeout(namedayHighlightTimer);
+    namedayHighlightTimer = setTimeout(applyNamedayHighlight, delay || 40);
+  }
+
   if ('MutationObserver' in window) {
     const watchIds = ['radiographers-duty', 'radiologists-duty', 'grafiks-list'];
     watchIds.forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
-      new MutationObserver(() => setTimeout(applyNamedayHighlight, 40)).observe(el, { childList: true, subtree: true });
+      // Only a rebuilt card list needs another highlight pass. Watching the
+      // whole subtree also catches every one-second timer text replacement.
+      new MutationObserver(() => queueNamedayHighlight(40)).observe(el, { childList: true });
     });
   }
 
-  setInterval(applyNamedayHighlight, 30000);
+  setInterval(() => {
+    if (!document.hidden) applyNamedayHighlight();
+  }, 30000);
 })();
 </script>
 

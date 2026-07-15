@@ -47,7 +47,9 @@
   function fixFullListModal() {
     const btn   = document.querySelector('.full-list-btn');
     const modal = document.getElementById('full-list-modal');
-    if (!btn || !modal) { setTimeout(fixFullListModal, 300); return; }
+    // The current header intentionally has no full-list button. Do not poll
+    // forever for an optional control that may not exist in this layout.
+    if (!btn || !modal) return;
     if (btn.__v4fixed) return;
     btn.__v4fixed = true;
 
