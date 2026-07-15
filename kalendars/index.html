@@ -1033,7 +1033,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260715i"></script>
+<script src="js/calendar.js?v=20260715j"></script>
 <script src="js/calendar_extras_v4.js?v=20260710l"></script>
 <script src="js/fatigue.js?v=20260613d"></script>
 <script src="js/nightsplit.js?v=20260703a" defer></script>
@@ -12100,7 +12100,14 @@ window.addEventListener('message', function(e) {
 
 <style id="mk-duty-header">
 /* ── Sānu paneļu galvene: bez kapsulas, vienā līmenī ar header ── */
-:root:not(.mk-mobile-shell) .side-panel { padding-top: 18px !important; }
+:root:not(.mk-mobile-shell) .side-panel {
+  padding-top: 18px !important;
+  padding-bottom: 12px !important;
+}
+:root:not(.mk-mobile-shell) .left-panel > div:last-child,
+:root:not(.mk-mobile-shell) .right-panel > div:last-child {
+  margin-top: auto !important;
+}
 .mk-shift-count-pill {
   background: transparent !important;
   border: none !important;
@@ -12226,8 +12233,9 @@ window.addEventListener('message', function(e) {
 }
 .mk-next-shift-head {
   display: grid !important;
-  grid-template-columns: auto minmax(0, 1fr) !important;
+  grid-template-columns: auto auto !important;
   align-items: center !important;
+  justify-content: center !important;
   gap: 8px !important;
   min-width: 0 !important;
 }
@@ -12275,6 +12283,7 @@ window.addEventListener('message', function(e) {
   display: flex !important;
   flex-wrap: wrap !important;
   align-items: center !important;
+  justify-content: center !important;
   gap: 6px !important;
   width: 100% !important;
   min-width: 0 !important;
@@ -12330,15 +12339,16 @@ window.addEventListener('message', function(e) {
 .mk-next-person-hours.is-24h { color: #fb7185 !important; }
 .mk-next-shift-foot {
   display: flex !important;
-  align-items: flex-start !important;
-  justify-content: flex-start !important;
+  align-items: center !important;
+  justify-content: center !important;
   min-width: 0 !important;
   padding-top: 2px !important;
   border: 0 !important;
 }
 @container (max-width: 250px) {
   .mk-next-shift-head {
-    grid-template-columns: auto minmax(0, 1fr) !important;
+    grid-template-columns: auto auto !important;
+    justify-content: center !important;
   }
 }
 @container (max-width: 190px) {
@@ -12349,7 +12359,7 @@ window.addEventListener('message', function(e) {
     border-radius: 0 !important;
   }
   .mk-next-shift-icon { display: none !important; }
-  .mk-next-shift-head { grid-template-columns: 1fr !important; gap: 5px !important; }
+  .mk-next-shift-head { grid-template-columns: 1fr !important; justify-items: center !important; gap: 5px !important; }
   .mk-next-shift-crew { font-size: 10px !important; line-height: 1.65 !important; }
   .mk-next-shift-foot { padding-top: 1px !important; }
 }
