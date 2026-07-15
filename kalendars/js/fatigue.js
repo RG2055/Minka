@@ -1244,21 +1244,34 @@
     return null;
   }
 
+  // Kartīšu renderis atjauno taimeru tekstu katru sekundi. Novērojot visu
+  // subtree, katra teksta izmaiņa agrāk pārrēķināja visu fatigue/assistant
+  // stāvokli un izveidoja nepārtrauktu MutationObserver cilpu. Mums vajag
+  // reaģēt tikai tad, kad tiek nomainītas pašas augšējā līmeņa kartītes.
+  let bridgeNotifyTimer = 0;
+  function queueBridgeNotify(delay) {
+    clearTimeout(bridgeNotifyTimer);
+    bridgeNotifyTimer = setTimeout(() => {
+      bridgeNotifyTimer = 0;
+      if (!document.hidden) notifyMinkaBridge();
+    }, Math.max(80, Number(delay) || 120));
+  }
+
   // â”€â”€ NovÄ“rotÄji â”€â”€
   function observePanels() {
     ['radiographers-duty', 'radiologists-duty'].forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
-      new MutationObserver(() => requestAnimationFrame(() => { injectDutyBlockBars(); notifyMinkaBridge(); }))
-        .observe(el, { childList: true, subtree: true });
+      new MutationObserver(() => queueBridgeNotify(120))
+        .observe(el, { childList: true });
     });
   }
 
   function observeCards() {
     const el = document.getElementById('grafiks-list');
     if (!el) return;
-    new MutationObserver(() => requestAnimationFrame(() => { injectCardBars(); notifyMinkaBridge(); }))
-      .observe(el, { childList: true, subtree: true });
+    new MutationObserver(() => queueBridgeNotify(120))
+      .observe(el, { childList: true });
   }
 
   function notifyMinkaBridge() {
@@ -1276,6 +1289,9 @@
     }, 300);
     observePanels();
     observeCards();
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) queueBridgeNotify(500);
+    }, { passive: true });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

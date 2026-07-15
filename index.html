@@ -25,7 +25,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260715j';
+  var CALENDAR_BUILD = '20260715k';
 
   function withCalendarBuild(url) {
     try {
@@ -567,7 +567,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260715j" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260715j" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260715k" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260715k" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -872,8 +872,8 @@ async function loadRadioScripts() {
     _fa.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
     document.head.appendChild(_fa);
   }
-  await loadAny(['js/radio.js?v=20260710n']);
-  await loadAny(['js/radio_extras_v4.js?v=20260618a']);
+  await loadAny(['js/radio.js?v=20260715o']);
+  await loadAny(['js/radio_extras_v4.js?v=20260715b']);
   await loadAny(['js/ambilight.js?v=20260612e']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;
@@ -928,6 +928,7 @@ function toggleRadio() {
     document.getElementById('radioToggleIcon').innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" style="opacity:.85;vertical-align:middle" aria-hidden="true"><path d="M9 18V5l12-2v13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="18" r="3" fill="currentColor"/><circle cx="18" cy="16" r="3" fill="currentColor"/></svg>';
     syncShellLayout();
   }
+  try { if (typeof window.__mkSyncRadioVisuals === 'function') window.__mkSyncRadioVisuals(); } catch(e) {}
 }
 
 function radioIdleClick() {
@@ -940,6 +941,7 @@ function radioIdleClick() {
   document.body.classList.remove('radio-idle');
   document.body.classList.remove('radio-hidden');
   syncShellLayout();
+  try { if (typeof window.__mkSyncRadioVisuals === 'function') window.__mkSyncRadioVisuals(); } catch(e) {}
 
   loadRadioScripts().then(function() {
     try { wireVizLazyMilkdrop(); } catch(e) {}
