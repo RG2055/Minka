@@ -2207,7 +2207,7 @@ function filterFullList(btn) {
       return '<b data-w="' + mkEscAttr(p.name) + '">' + mkEscAttr(p.first) + '</b>';
     }).join(', ');
     const lines = [];
-    if (stay.length) lines.push('<div class="mk-duty-line dl-night"><span class="mk-dl-ico">🌙</span> Pa nakti: ' + namesHtml(stay) + '</div>');
+    if (stay.length) lines.push('<div class="mk-duty-line dl-night"><span class="mk-dl-ico">🌙</span> Naktī: ' + namesHtml(stay) + '</div>');
     Object.keys(leaveBy).sort().forEach(function(t) {
       lines.push('<div class="mk-duty-line dl-leave"><span class="mk-dl-ico">☀️</span> Līdz <span class="mk-dl-t">' + mkEscAttr(t) + '</span>: ' + namesHtml(leaveBy[t]) + '</div>');
     });
@@ -2258,6 +2258,44 @@ function filterFullList(btn) {
       if (!isToday || !w || !w.startTime || !w.endTime) return true;
       return !isWorkerShiftDone(w, w.date || activeDateStr, now);
     });
+  }
+
+  function renderNextShiftCard(target, summaryId, workers) {
+    if (!target) return;
+    const summary = document.getElementById(summaryId);
+    const crew = (Array.isArray(workers) ? workers : []).filter(function(w) {
+      return isValidShift(w && w.shift);
+    });
+
+    if (!crew.length) {
+      target.textContent = '--';
+      target.classList.add('is-empty');
+      if (summary) summary.textContent = '';
+      return;
+    }
+
+    target.classList.remove('is-empty');
+    const nightCount = crew.filter(function(w) {
+      const type = String(w && w.type || '').toUpperCase();
+      return type === 'NAKTS' || type === 'DIENNAKTS' || parseShiftHours(w && w.shift) >= 24;
+    }).length;
+    if (summary) {
+      summary.innerHTML = '<span>Dežūrā ' + crew.length + '</span><i>·</i><strong>Naktī ' + nightCount + '</strong>';
+    }
+
+    target.innerHTML = crew.map(function(w) {
+      const first = formatSideNamePart(String(w && w.name || '').trim().split(/\s+/)[0], false) || '--';
+      const hours = parseShiftHours(w && w.shift);
+      const type = String(w && w.type || '').toUpperCase();
+      const is24 = hours >= 24 || type === 'DIENNAKTS';
+      const isNight = type === 'NAKTS' || w.isNight === true;
+      const emoji = is24 ? '' : (isNight ? '🌙' : '☀️');
+      const kind = is24 ? 'is-24h' : (isNight ? 'is-night' : 'is-day');
+      const kindLabel = is24 ? '24 stundu maiņa' : (isNight ? 'Nakts maiņa' : 'Dienas maiņa');
+      const emojiHtml = emoji ? '<span class="mk-next-person-emoji" aria-hidden="true">' + emoji + '</span>' : '';
+      const hoursHtml = hours > 0 ? '<span class="mk-next-person-hours ' + kind + '">' + hours + 'h</span>' : '';
+      return '<span class="mk-next-person ' + kind + '" title="' + mkEscAttr(first + ' · ' + kindLabel) + '">' + emojiHtml + '<b>' + mkEscAttr(first) + '</b>' + hoursHtml + '</span>';
+    }).join('');
   }
 
   function g_updatePanelsForDate() {
@@ -2497,14 +2535,8 @@ function filterFullList(btn) {
         base.setDate(base.getDate() + 1);
         const tomorrowStr = g_formatDate(base);
         const dNext = g_findDay(store, tomorrowStr)?.day;
-        if (dNext && Array.isArray(dNext.workers)) {
-          const next = dNext.workers.filter(w => isValidShift(w.shift)).map(w => String(w.name || "").split(' ')[0].toUpperCase());
-          const txt = next.join(', ') || "--";
-          radgNext.innerText = txt;
-          // Auto-shrink font based on how many names
-          radgNext.style.fontSize = next.length <= 2 ? '14px' : next.length <= 4 ? '12px' : next.length <= 6 ? '10px' : '9px';
-        } else { radgNext.innerText = "--"; radgNext.style.fontSize = '14px'; }
-      } else { radgNext.innerText = "--"; radgNext.style.fontSize = '14px'; }
+        renderNextShiftCard(radgNext, 'radiographers-next-summary', dNext && Array.isArray(dNext.workers) ? dNext.workers : []);
+      } else { renderNextShiftCard(radgNext, 'radiographers-next-summary', []); }
     }
 
     if (radlNext) {
@@ -2514,14 +2546,8 @@ function filterFullList(btn) {
         base.setDate(base.getDate() + 1);
         const tomorrowStr = g_formatDate(base);
         const dNext = g_findDay(storeRad, tomorrowStr)?.day;
-        if (dNext && Array.isArray(dNext.workers)) {
-          const next = dNext.workers.filter(w => isValidShift(w.shift)).map(w => String(w.name || "").split(' ')[0].toUpperCase());
-          const maxShowL = 6;
-          const shownL = next.slice(0, maxShowL);
-          radlNext.innerText = shownL.join(', ') + (next.length > maxShowL ? '...' : '') || "--";
-          radlNext.style.fontSize = shownL.length <= 2 ? '13px' : shownL.length <= 4 ? '11px' : '10px';
-        } else { radlNext.innerText = "--"; radlNext.style.fontSize = '14px'; }
-      } else { radlNext.innerText = "--"; radlNext.style.fontSize = '14px'; }
+        renderNextShiftCard(radlNext, 'radiologists-next-summary', dNext && Array.isArray(dNext.workers) ? dNext.workers : []);
+      } else { renderNextShiftCard(radlNext, 'radiologists-next-summary', []); }
     }
   }
 
