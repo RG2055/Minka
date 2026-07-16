@@ -25,7 +25,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260715l';
+  var CALENDAR_BUILD = '20260716d';
 
   function withCalendarBuild(url) {
     try {
@@ -4413,13 +4413,18 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
 #mk-buddy-card{position:relative;width:50px;height:50px;background:transparent;border:none;padding:0;text-align:center;}
 #mk-buddy-status,#mk-buddy-canvas{position:absolute;left:50%;bottom:0;transform:translateX(-50%);opacity:0;pointer-events:none;image-rendering:pixelated;}
 #mk-buddy-canvas{width:44px;height:35px;}
-#mk-buddy-laptop{position:absolute;left:calc(50% + 58px);bottom:0;image-rendering:pixelated;display:none;pointer-events:none;z-index:2;}
-#mk-buddy-bolus{position:absolute;left:calc(50% + 58px);bottom:3px;image-rendering:pixelated;display:none;pointer-events:none;z-index:2;}
-#mk-buddy-syringe{position:absolute;left:calc(50% + 68px);bottom:0;image-rendering:pixelated;display:none;pointer-events:none;z-index:2;}
-#mk-buddy-bottle{position:absolute;left:calc(50% + 70px);bottom:2px;image-rendering:pixelated;display:none;pointer-events:none;z-index:2;}
-#mk-buddy-coffee{position:absolute;left:calc(50% + 72px);bottom:8px;image-rendering:pixelated;display:none;pointer-events:none;z-index:2;}
-#mk-buddy-phone{position:absolute;left:calc(50% + 72px);bottom:8px;image-rendering:pixelated;display:none;pointer-events:none;z-index:2;}
-#mk-buddy-prop{position:absolute;left:calc(50% + 66px);bottom:2px;image-rendering:pixelated;display:none;pointer-events:none;z-index:2;}
+/* Animation props live inside the NOGURUMS stat block: the fatigue text hides
+   while a prop is up (.hud-busy), so the prop takes exactly its slot next to
+   the mini buddy — coffee icons are never covered, and because the props are
+   anchored inside the stats pill they can never hang outside the window. */
+.mk-buddy-prop-cvs{position:absolute;bottom:-4px;image-rendering:pixelated;display:none;pointer-events:none;z-index:2;}
+#mk-buddy-laptop{right:12px;}
+#mk-buddy-bolus{right:4px;}
+#mk-buddy-syringe{right:16px;}
+#mk-buddy-bottle{right:18px;}
+#mk-buddy-coffee{right:18px;bottom:0;}
+#mk-buddy-phone{right:18px;bottom:0;}
+#mk-buddy-prop{right:12px;}
 #mk-buddy-bubble{
   position:absolute;bottom:calc(100% + 12px);left:50%;
   transform:translateX(-50%) translateY(5px);
@@ -4582,7 +4587,15 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
 #mk-buddy.is-sleeping #mk-buddy-canvas{filter:none;}
 #mk-buddy.is-sleeping .mk-buddy-hud-canvas{filter:drop-shadow(0 5px 0 rgba(0,0,0,.24));}
 .mk-buddy-fatigue-part{transition:opacity .12s ease;}
+/* While a prop animation is on screen it takes the NOGURUMS slot, so only the
+   fatigue text yields; the coffee icons live outside the prop zone entirely. */
+.mk-buddy-fatigue-part{transition:opacity .15s ease;}
 #mk-buddy.hud-busy .mk-buddy-fatigue-part{opacity:0;}
+/* Props used to pop in with a bare display flip, stacked on the still-visible
+   icons for a beat — now they fade/rise in while the icons fade out. */
+@keyframes mkPropIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+#mk-buddy-card canvas.mk-prop-in{animation:mkPropIn .22s ease-out;}
+body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
 #mk-buddy-fatigue-hud{display:none;}
 @media (max-width:760px){
   #mk-buddy-shift-stats{
@@ -4645,19 +4658,19 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
           <span class="mk-buddy-stat-label">NOGURUMS</span>
           <span class="mk-buddy-stat-value" id="mk-buddy-fatigue-total">0%</span>
         </div>
+        <canvas class="mk-buddy-prop-cvs" id="mk-buddy-laptop"></canvas>
+        <canvas class="mk-buddy-prop-cvs" id="mk-buddy-syringe"></canvas>
+        <canvas class="mk-buddy-prop-cvs" id="mk-buddy-bottle"></canvas>
+        <canvas class="mk-buddy-prop-cvs" id="mk-buddy-coffee"></canvas>
+        <canvas class="mk-buddy-prop-cvs" id="mk-buddy-phone"></canvas>
+        <canvas class="mk-buddy-prop-cvs" id="mk-buddy-prop"></canvas>
+        <canvas class="mk-buddy-prop-cvs" id="mk-buddy-bolus"></canvas>
       </div>
     </div>
-    <canvas id="mk-buddy-laptop"></canvas>
     <canvas id="mk-buddy-status"></canvas>
     <canvas id="mk-buddy-canvas"></canvas>
     <div id="mk-buddy-fatigue-hud" aria-hidden="true">
     </div>
-    <canvas id="mk-buddy-syringe"></canvas>
-    <canvas id="mk-buddy-bottle"></canvas>
-    <canvas id="mk-buddy-coffee"></canvas>
-    <canvas id="mk-buddy-phone"></canvas>
-    <canvas id="mk-buddy-prop"></canvas>
-    <canvas id="mk-buddy-bolus"></canvas>
   </div>
 </div>
 
@@ -5328,6 +5341,25 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
       }, 150);
     }
   }
+  function showProp(el){
+    // Central prop entry: play the rise-in animation and sync the HUD in the
+    // same frame — the old bare display flips left the prop sitting on the
+    // still-visible coffee icons until the next 150ms busy poll.
+    if(!el) return;
+    el.style.display='block';
+    if(!buddyPerfLow){
+      el.classList.remove('mk-prop-in');
+      void el.offsetWidth; // restart the animation when re-shown back-to-back
+      el.classList.add('mk-prop-in');
+    }
+    syncHudBusy();
+  }
+  function hideProp(el){
+    if(!el) return;
+    el.classList.remove('mk-prop-in');
+    el.style.display='none';
+    syncHudBusy();
+  }
   function drawHudBuddyFrame(frameCanvas){
     if(!hudCtx || !frameCanvas) return;
     hudCtx.clearRect(0,0,HUD_CVS.width,HUD_CVS.height);
@@ -5728,28 +5760,50 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
       return;
     }
     if(stage === 3){
-      // Static pixel lightning — two recognizable diagonal bolts, one per
-      // side (the old stacked rectangles read as yellow blobs, not energy).
-      // Left bolt: staircase down-left with a darker lower half + bright tip.
-      evoPixel(targetCtx, 5, 5, 2, 1, '#fff7bf');
-      evoPixel(targetCtx, 5, 6, 3, 2, '#ffe04d');
-      evoPixel(targetCtx, 4, 8, 3, 2, '#ffe04d');
-      evoPixel(targetCtx, 3, 10, 3, 2, '#ffe04d');
-      evoPixel(targetCtx, 2, 12, 5, 2, '#ffe04d');
-      evoPixel(targetCtx, 3, 14, 3, 2, '#ffb82e');
-      evoPixel(targetCtx, 2, 16, 3, 2, '#ffb82e');
-      evoPixel(targetCtx, 1, 18, 2, 2, '#ffb82e');
-      // Right bolt: mirrored.
-      evoPixel(targetCtx, 43, 3, 2, 1, '#fff7bf');
-      evoPixel(targetCtx, 42, 4, 3, 2, '#ffe04d');
-      evoPixel(targetCtx, 43, 6, 3, 2, '#ffe04d');
-      evoPixel(targetCtx, 44, 8, 3, 2, '#ffe04d');
-      evoPixel(targetCtx, 43, 10, 5, 2, '#ffe04d');
-      evoPixel(targetCtx, 44, 12, 3, 2, '#ffb82e');
-      evoPixel(targetCtx, 45, 14, 3, 2, '#ffb82e');
-      evoPixel(targetCtx, 47, 16, 2, 2, '#ffb82e');
-      evoPixel(targetCtx, 0, 28, 2, 2, '#72e8ff');
-      evoPixel(targetCtx, 48, 25, 2, 2, '#72e8ff');
+      // One classic ⚡ bolt worn on the chest like an energy emblem. The old
+      // pair of side bolts overlapped the ears/head (the sprite spans nearly
+      // the whole canvas), so they read as corrupted pixels, and the loose
+      // cyan sparks in the corners looked like rendering artifacts.
+      // W = white-hot tip, Y = gold, A = amber shading; a dark outline is
+      // drawn around the silhouette so it stays readable on any fur color.
+      var boltRows = [
+        '......WYYY',
+        '.....YYYY.',
+        '....YYYY..',
+        '...YYYY...',
+        '..YYYY....',
+        '.YYYYYYYY.',
+        '...AYYY...',
+        '..AYYY....',
+        '..AYY.....',
+        '.AYY......',
+        '.AA.......',
+        'AA........',
+        'A.........'
+      ];
+      var boltX = 17, boltY = 24;
+      var boltPal = { W:'#fff7bf', Y:'#ffe04d', A:'#ffb82e' };
+      var br, bc, bch;
+      // Outline pass: paint every empty cell that touches the silhouette.
+      targetCtx.fillStyle = '#241a05';
+      for(br = -1; br <= boltRows.length; br++){
+        for(bc = -1; bc <= 10; bc++){
+          if(boltPal[(boltRows[br] || '')[bc]]) continue;
+          var nearBolt = false;
+          for(var oy = -1; oy <= 1 && !nearBolt; oy++){
+            for(var ox = -1; ox <= 1; ox++){
+              if(boltPal[(boltRows[br + oy] || '')[bc + ox]]){ nearBolt = true; break; }
+            }
+          }
+          if(nearBolt) targetCtx.fillRect(boltX + bc, boltY + br, 1, 1);
+        }
+      }
+      for(br = 0; br < boltRows.length; br++){
+        for(bc = 0; bc < boltRows[br].length; bc++){
+          bch = boltPal[boltRows[br][bc]];
+          if(bch) evoPixel(targetCtx, boltX + bc, boltY + br, 1, 1, bch);
+        }
+      }
       return;
     }
     if(stage === 4){
@@ -6244,8 +6298,8 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
     bhvBusy=true;
     var phrases=['tak tak tak...','klik klik...','tip tap...','klak klak...'];
     showBubble(phrases[Math.floor(Math.random()*phrases.length)]);
-    eyeDirX=-1; drawFrame(0,true);
-    LCVS.style.display='block'; drawLaptop(1);
+    eyeDirX=1; drawFrame(0,true);
+    showProp(LCVS); drawLaptop(1);
     var strokes=7+Math.floor(Math.random()*6);
     var i=0;
     (function tick(){
@@ -6255,7 +6309,7 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
         animTimer=setTimeout(tick,140+Math.random()*90);
       } else {
         animTimer=setTimeout(function(){
-          LCVS.style.display='none';
+          hideProp(LCVS);
           eyeDirX=0; drawFrame(0,true);
           bhvBusy=false;
         },500);
@@ -6269,7 +6323,7 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
     var txt=['bolus','klik','gatavs'][Math.floor(Math.random()*3)];
     showBubble(txt);
     eyeDirX=1; drawFrame(1,true);
-    BCVS.style.display='block'; drawMachine(0);
+    showProp(BCVS); drawMachine(0);
     var clicks=4+Math.floor(Math.random()*3);
     var i=0;
     (function clk(){
@@ -6280,7 +6334,7 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
         animTimer=setTimeout(clk, 190+Math.random()*130);
       } else {
         animTimer=setTimeout(function(){
-          BCVS.style.display='none';
+          hideProp(BCVS);
           eyeDirX=0; drawFrame(0,true);
           setHudOverlapBusy(false);
           bhvBusy=false;
@@ -6386,7 +6440,7 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
     bigMouthOn=true;
     fatOn=true;
     tallOn=false;
-    BOTCVS.style.display='block';
+    showProp(BOTCVS);
     drawBottle();
     showBubble('svars?');
     drawFrame(0,true);
@@ -6397,7 +6451,7 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
       tallOn=true;
       drawFrame(0,true);
       animTimer=setTimeout(function(){
-        BOTCVS.style.display='none';
+        hideProp(BOTCVS);
         tallOn=false;
         drawFrame(0,true);
         bhvBusy=false;
@@ -6409,7 +6463,7 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
     bhvBusy=true;
     coffeeOn=true;
     eyeDirX=1;
-    COFCVS.style.display='block';
+    showProp(COFCVS);
     showBubble('kafija');
     drawCoffee(0);
     drawFrame(4,true);
@@ -6420,7 +6474,7 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
         drawCoffee(0);
         drawFrame(4,true);
         animTimer=setTimeout(function(){
-          COFCVS.style.display='none';
+          hideProp(COFCVS);
           coffeeOn=false;
           eyeDirX=0;
           drawFrame(0,true);
@@ -6484,8 +6538,8 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
   function doMobilePhone(){
     bhvBusy=true;
     phoneOn=true;
-    eyeDirX=-1;
-    PHCVS.style.display='block';
+    eyeDirX=1;
+    showProp(PHCVS);
     drawMobilePhone(0);
     showBubble('atbrauc uz veco lūdzu?');
     drawFrame(3,true);
@@ -6493,7 +6547,7 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
       drawMobilePhone(1);
       drawFrame(3,true);
       animTimer=setTimeout(function(){
-        PHCVS.style.display='none';
+        hideProp(PHCVS);
         phoneOn=false;
         eyeDirX=0;
         drawFrame(0,true);
@@ -6522,8 +6576,8 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
     bhvBusy=true;
     phoneOn=true;
     boredOn=true;
-    eyeDirX=-1;
-    PHCVS.style.display='block';
+    eyeDirX=1;
+    showProp(PHCVS);
     drawMobilePhone(0);
     showBubble('jāgaida 5 min');
     drawFrame(0,true);
@@ -6531,7 +6585,7 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
       drawMobilePhone(1);
       drawFrame(1,true);
       animTimer=setTimeout(function(){
-        PHCVS.style.display='none';
+        hideProp(PHCVS);
         phoneOn=false;
         boredOn=false;
         eyeDirX=0;
@@ -6545,7 +6599,7 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
     bhvBusy=true;
     boxOn=true;
     eyeDirX=1;
-    PCVS.style.display='block';
+    showProp(PCVS);
     showBubble('atveda noliktavu');
     var i=0;
     (function shove(){
@@ -6556,7 +6610,7 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
         animTimer=setTimeout(shove,260);
       } else {
         animTimer=setTimeout(function(){
-          PCVS.style.display='none';
+          hideProp(PCVS);
           boxOn=false;
           eyeDirX=0;
           drawFrame(0,true);
@@ -6570,7 +6624,7 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
     bhvBusy=true;
     eatingOn=true;
     eyeDirX=1;
-    PCVS.style.display='block';
+    showProp(PCVS);
     showBubble('es eju ēst');
     drawBurger(0);
     drawFrame(0,true);
@@ -6581,7 +6635,7 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
         drawBurger(1);
         drawFrame(4,false);
         animTimer=setTimeout(function(){
-          PCVS.style.display='none';
+          hideProp(PCVS);
           eatingOn=false;
           eyeDirX=0;
           drawFrame(0,true);
@@ -6673,14 +6727,14 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
     syringeOn=true;
     eyeDirX=1;
     showBubble('žanē šļirce');
-    SCVS.style.display='block';
+    showProp(SCVS);
     drawSyringe(0);
     drawFrame(4,true);
     animTimer=setTimeout(function(){
       drawSyringe(1);
       drawFrame(4,true);
       animTimer=setTimeout(function(){
-        SCVS.style.display='none';
+        hideProp(SCVS);
         syringeOn=false;
         eyeDirX=0;
         drawFrame(0,true);
@@ -6860,12 +6914,13 @@ body.mk-buddy-ui-open #mk-buddy{opacity:0!important;visibility:hidden!important;
     boxOn=false;
     phoneOn=false;
     sleepSi=0;
-    LCVS.style.display='none';
-    SCVS.style.display='none';
-    BOTCVS.style.display='none';
-    COFCVS.style.display='none';
-    PHCVS.style.display='none';
-    PCVS.style.display='none';
+    hideProp(LCVS);
+    hideProp(SCVS);
+    hideProp(BOTCVS);
+    hideProp(COFCVS);
+    hideProp(PHCVS);
+    hideProp(PCVS);
+    hideProp(BCVS);
     drawHearts('sleep');
     runSleepAnim();
     scheduleZzz();
