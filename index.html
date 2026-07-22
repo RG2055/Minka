@@ -2377,6 +2377,14 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   function todayWorkers(){
     var names=[];
     try{ if(typeof window.__lacitisTodayWorkers==='function') names=window.__lacitisTodayWorkers()||[]; }catch(e){}
+    if(!names.length){
+      try{
+        var state=window.__minkaLastSelectedDayState||null;
+        var rg=Array.isArray(state&&state.rg)?state.rg:[];
+        var live=rg.filter(function(worker){return worker&&worker.name&&!worker.done;});
+        names=(live.length?live:rg).map(function(worker){return worker&&worker.name;}).filter(Boolean);
+      }catch(e){}
+    }
     return names.map(function(name,index){
       var slug=String(name||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||'worker';
       return {id:'minka-'+slug+'-'+index,name:String(name||''),shift:'Dežūra'};
@@ -2715,8 +2723,16 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     var open=typeof force==='boolean'?force:!profileIsOpen();
     profilePanel.classList.toggle('open',open); profilePanel.setAttribute('aria-hidden',open?'false':'true');
     if(profileBtn) profileBtn.setAttribute('aria-expanded',open?'true':'false');
-    if(open) send('profile_init',{workers:todayWorkers()});
+    if(open){
+      send('profile_init',{workers:todayWorkers()});
+      setTimeout(function(){ if(profileIsOpen()) window.__lacitisMiniRefreshWorkers(); },700);
+      setTimeout(function(){ if(profileIsOpen()) window.__lacitisMiniRefreshWorkers(); },2200);
+    }
     updateQuickActions();
+  };
+  window.__lacitisMiniRefreshWorkers=function(){
+    var workers=todayWorkers();
+    if(profileIsOpen()&&workers.length) send('profile_init',{workers:workers});
   };
   window.lacMiniLogout=function(){ send('profile_logout'); };
   window.lacMiniQuickAction=function(){
@@ -4308,6 +4324,7 @@ window.addEventListener('message', function(e) {
   }
   if (e.data && e.data.type === 'minka-calendar-selected-day-state' && e.data.payload) {
     window.__minkaLastSelectedDayState = e.data.payload;
+    if (typeof window.__lacitisMiniRefreshWorkers === 'function') window.__lacitisMiniRefreshWorkers();
   }
   if (e.data && e.data.type === 'mk_stats_closed') {
     var btn = document.getElementById('statsDocBtn');
