@@ -394,6 +394,7 @@ html.mk-low-spec #calendarEmbed {
 }
 body.radio-hidden #calendarEmbed { bottom: calc(var(--btnbar-h) + 4px); }
 body.radio-idle #calendarEmbed { bottom: calc(var(--btnbar-h) + 4px) !important; }
+body.lacitis-docked #calendarEmbed { bottom: var(--calendar-bottom) !important; }
 
 #calendarEmbed iframe {
   position: relative;
@@ -914,6 +915,7 @@ function toggleRadio() {
   const isHidden = document.body.classList.contains('radio-hidden');
   if (isHidden) {
     // Show radio
+    try { if (typeof window.__hideLacMiniForRadio === 'function') window.__hideLacMiniForRadio(); } catch(e) {}
     document.body.classList.remove('radio-hidden');
     document.body.classList.remove('radio-idle');
     const rw = document.getElementById('radioWindow');
@@ -936,6 +938,7 @@ function radioIdleClick() {
   if (!btn || btn._loading) return;
   btn._loading = true;
 
+  try { if (typeof window.__hideLacMiniForRadio === 'function') window.__hideLacMiniForRadio(); } catch(e) {}
   const rw = document.getElementById('radioWindow');
   if (rw) rw.style.display = '';
   document.body.classList.remove('radio-idle');
@@ -1841,6 +1844,7 @@ window.addEventListener('DOMContentLoaded', () => {
 	    #statsDocBtn.stats-open,
 	    #monthCalDocBtn.stats-open,
 	    #pusdienasDockBtn.pusdienas-open,
+	    #lacitisDockBtn.lacitis-open,
 	    #settingsDockBtn.settings-open,
     #mobileDockBtn.mobile-open {
       background: #13233c !important;
@@ -1998,7 +2002,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 	    <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
 
-	    <button id="lacitisDockBtn" onclick="openLacMini()" title="Lācītis mūzika">
+	    <button id="lacitisDockBtn" onclick="toggleLacMini()" title="Paslēpt/Rādīt Lācīti" aria-label="Lācītis" aria-expanded="false">
       <div style="width:7px;height:7px;border-radius:50%;background:#f59e0b;box-shadow:0 0 7px #f59e0b;flex-shrink:0;animation:rledPulse 3.1s ease-in-out infinite;"></div>
       <svg class="dock-px" width="17" height="15" viewBox="0 0 9 8" shape-rendering="crispEdges" aria-hidden="true"><rect x="0" y="0" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="7" y="0" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="0" y="1" width="1.04" height="1.04" fill="#e2e8f0"/><rect x="1" y="1" width="1.04" height="1.04" fill="#cbd5e1"/><rect x="2" y="1" width="1.04" height="1.04" fill="#e2e8f0"/><rect x="6" y="1" width="1.04" height="1.04" fill="#e2e8f0"/><rect x="7" y="1" width="1.04" height="1.04" fill="#cbd5e1"/><rect x="8" y="1" width="1.04" height="1.04" fill="#e2e8f0"/><rect x="1" y="2" width="7.04" height="1.04" fill="#e2e8f0"/><rect x="0" y="3" width="9.04" height="1.04" fill="#e2e8f0"/><rect x="0" y="4" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="3" y="4" width="3.04" height="1.04" fill="#e2e8f0"/><rect x="7" y="4" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="0" y="5" width="9.04" height="1.04" fill="#e2e8f0"/><rect x="1" y="6" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="3" y="6" width="1.04" height="1.04" fill="#cbd5e1"/><rect x="4" y="6" width="1.04" height="1.04" fill="#0b1220"/><rect x="5" y="6" width="1.04" height="1.04" fill="#cbd5e1"/><rect x="6" y="6" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="2" y="7" width="5.04" height="1.04" fill="#e2e8f0"/></svg>
       <span>LĀCĪTIS</span>
@@ -2085,7 +2089,7 @@ window.addEventListener('DOMContentLoaded', () => {
   box-shadow:0 -14px 42px rgba(0,0,0,.6);color:#fff;font-family:'Space Grotesk',system-ui,sans-serif;
   flex-direction:column;padding:9px 16px 9px;box-sizing:border-box;
   transform:translateY(115%);opacity:0;pointer-events:none;
-  transition:transform .35s cubic-bezier(.4,0,.2,1),opacity .28s ease;will-change:transform,opacity;contain:layout style;}
+  transition:transform .35s cubic-bezier(.4,0,.2,1),opacity .28s ease;contain:layout style;}
 #lacMiniConsole.docked{transform:translateY(0);opacity:1;pointer-events:auto;}
 #lacMiniConsole .lm-head{display:flex;align-items:center;gap:10px;height:28px;flex-shrink:0;}
 #lacMiniConsole .lm-brand{display:flex;align-items:center;gap:7px;font:800 11px/1 'Space Grotesk',system-ui;letter-spacing:.12em;text-transform:uppercase;color:#e6e6e6;flex-shrink:0;}
@@ -2131,7 +2135,7 @@ window.addEventListener('DOMContentLoaded', () => {
 #lacMiniTrack.anim .lm-cover{transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s;}
 .lm-cover{position:absolute;left:50%;top:50%;width:var(--lac-cw,128px);height:var(--lac-cw,128px);margin:calc(var(--lac-cw,128px) / -2) 0 0 calc(var(--lac-cw,128px) / -2);
   border-radius:9px;overflow:hidden;cursor:pointer;background:#1c1c1e;box-shadow:0 6px 18px rgba(0,0,0,.6);
-  -webkit-box-reflect:below 3px linear-gradient(transparent,transparent 64%,rgba(255,255,255,.08));will-change:transform;}
+  -webkit-box-reflect:below 3px linear-gradient(transparent,transparent 64%,rgba(255,255,255,.08));}
 .lm-cover img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;-webkit-user-drag:none;}
 .lm-cover.active{box-shadow:0 8px 24px rgba(30,215,96,.34),0 0 0 2px rgba(30,215,96,.62);}
 #lacMiniEmpty{position:absolute;inset:0;display:grid;place-items:center;color:#8a8a8a;font:600 12px/1.4 'Space Grotesk',system-ui;text-align:center;pointer-events:none;}
@@ -2198,7 +2202,9 @@ window.addEventListener('DOMContentLoaded', () => {
   var MINI_URL=LAC_BASE+'/?embed=mini';
   var frame,cons,stage,deckEl,track,empty,titleEl,artistEl,fillEl,playIco,progEl,searchEl;
   var deck=[], pos=0, sel=0, curId=null, loaded=false, wired=false;
-  var spacing=44, snapTO=0, searchTO=0, autoTO=0;
+  var lastNpPayload=null, pendingDeck=null, pendingAppend=[];
+  var visibleFrom=0, visibleTo=-1;
+  var spacing=44, snapTO=0, searchTO=0, autoTO=0, openTO=0;
   var dragging=false, startX=0, startPos=0, moved=false;
   var morePending=false, moreCooldownUntil=0, DECK_CAP=150;
 
@@ -2211,10 +2217,21 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   function send(cmd,extra){ try{ frame&&frame.contentWindow&&frame.contentWindow.postMessage(Object.assign({type:'lac_mini_cmd',cmd:cmd},extra||{}),'*'); }catch(e){} }
   function coverUrl(t){ return t.thumbnail||('https://i.ytimg.com/vi/'+t.id+'/mqdefault.jpg'); }
-  function sync(){ try{ if(typeof syncShellLayout==='function') syncShellLayout(); }catch(e){} try{ if(typeof updateBuddyUiSuppression==='function') updateBuddyUiSuppression(); }catch(e){} }
+  function sync(){
+    if(document.body) document.body.classList.toggle('lacitis-docked',dockVisible());
+    try{ if(typeof syncShellLayout==='function') syncShellLayout(); }catch(e){}
+    try{ if(typeof updateBuddyUiSuppression==='function') updateBuddyUiSuppression(); }catch(e){}
+  }
+  function dockVisible(){ return !!(cons&&cons.classList.contains('docked')); }
+  function uiVisible(){ return dockVisible()||!!(stage&&stage.classList.contains('full')); }
+  function setDockButton(open){
+    var btn=$('lacitisDockBtn'); if(!btn) return;
+    btn.classList.toggle('lacitis-open',!!open);
+    btn.setAttribute('aria-expanded',open?'true':'false');
+  }
 
   function sizeCovers(){
-    if(!deckEl) return;
+    if(!deckEl||!dockVisible()) return;
     var h=deckEl.clientHeight||130;
     // Active cover scales ×1.16 and carries a 2px ring + glow — size it so the
     // scaled cover plus ~16px of air always fits inside the deck height.
@@ -2226,12 +2243,18 @@ window.addEventListener('DOMContentLoaded', () => {
   function layout(){
     if(!track) return;
     var covers=track.children;
-    for(var i=0;i<covers.length;i++){
+    var from=Math.max(0,Math.ceil(pos-4.3));
+    var to=Math.min(covers.length-1,Math.floor(pos+4.3));
+    var hide=function(el){
+      if(!el) return;
+      el.style.visibility='hidden'; el.style.opacity='0'; el.style.pointerEvents='none'; el.style.willChange='auto';
+      el.classList.remove('active');
+    };
+    for(var old=visibleFrom;old<=visibleTo;old++) if(old<from||old>to) hide(covers[old]);
+    for(var i=from;i<=to;i++){
       var el=covers[i], off=i-pos, abs=Math.abs(off), t=Math.max(0,1-abs), dir=off<0?-1:1;
-      // Far covers: fully hidden (visibility) so they cost no GPU/compositor
-      // work — keeps the deck cheap even when it grows into the hundreds.
-      if(abs>4.3){ if(el.style.visibility!=='hidden'){ el.style.visibility='hidden'; el.style.opacity='0'; el.style.pointerEvents='none'; } continue; }
       el.style.visibility='visible'; el.style.opacity='1'; el.style.pointerEvents='auto';
+      el.style.willChange=abs<=2.3?'transform':'auto';
       var x=off*spacing + dir*Math.min(abs,1)*(spacing*1.05);
       var rot=Math.max(-56,Math.min(56,-off*56));
       var z=t*72 - Math.min(abs,4)*30;
@@ -2240,6 +2263,7 @@ window.addEventListener('DOMContentLoaded', () => {
       el.style.zIndex=String(200-Math.round(abs*10));
       if(abs<0.5) el.classList.add('active'); else el.classList.remove('active');
     }
+    visibleFrom=from; visibleTo=to;
   }
   var lastLabelIdx=-1, lastNpId=null;
   function showLabel(i){ var t=deck[i]; if(!t||!titleEl) return; titleEl.textContent=t.title||'—'; artistEl.textContent=t.author||''; }
@@ -2276,6 +2300,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function addCover(t,i){
     var c=document.createElement('div'); c.className='lm-cover';
+    c.style.visibility='hidden'; c.style.opacity='0'; c.style.pointerEvents='none';
     var img=document.createElement('img'); img.loading='lazy'; img.decoding='async'; img.src=coverUrl(t);
     img.onerror=function(){ this.onerror=null; this.src='https://i.ytimg.com/vi/'+t.id+'/default.jpg'; };
     c.appendChild(img);
@@ -2296,6 +2321,7 @@ window.addEventListener('DOMContentLoaded', () => {
   function renderDeck(tracks,query){
     els(); deck=tracks||[];
     track.innerHTML='';
+    visibleFrom=0; visibleTo=-1;
     if(!deck.length){ empty.style.display=''; empty.textContent=query?'Nekas nav atrasts':'Ielādē mūziku…'; return; }
     empty.style.display='none';
     deck.forEach(function(t,i){ addCover(t,i); });
@@ -2307,9 +2333,11 @@ window.addEventListener('DOMContentLoaded', () => {
   function setPlayIco(p){ if(playIco) playIco.innerHTML=p?'<path d="M6 4h4v16H6zm8 0h4v16h-4z"/>':'<path d="M8 5v14l11-7z"/>'; }
   function applyNp(d){
     els();
+    lastNpPayload=d;
+    curId=d.id||null;
+    if(!uiVisible()) return;
     fillEl.style.width=((d.pct||0)*100)+'%';
     setPlayIco(!!d.playing);
-    curId=d.id||null;
     // Only recenter when the PLAYING track actually changes (e.g. auto-advance),
     // so manual browsing during playback isn't yanked back every tick.
     if(d.id && d.id!==lastNpId){
@@ -2340,9 +2368,15 @@ window.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('message',function(e){
     if(!frame||e.source!==frame.contentWindow) return;
     var d=e.data; if(!d||typeof d!=='object') return;
-    if(d.type==='lac_mini_ready'){ send('deck'); }
-    else if(d.type==='lac_mini_deck'){ renderDeck(d.tracks,d.query); }
-    else if(d.type==='lac_mini_append'){ appendDeck(d.tracks); }
+    if(d.type==='lac_mini_ready'){ if(uiVisible()) send('deck'); }
+    else if(d.type==='lac_mini_deck'){
+      if(uiVisible()) renderDeck(d.tracks,d.query);
+      else pendingDeck={tracks:d.tracks,query:d.query};
+    }
+    else if(d.type==='lac_mini_append'){
+      if(uiVisible()) appendDeck(d.tracks);
+      else if(d.tracks&&d.tracks.length) pendingAppend=pendingAppend.concat(d.tracks);
+    }
     else if(d.type==='lac_mini_np'){ applyNp(d); }
   });
 
@@ -2351,14 +2385,37 @@ window.addEventListener('DOMContentLoaded', () => {
     if(!loaded){ frame.src=MINI_URL; loaded=true; }
     // Claim the bottom-console slot: hide the radio so they never overlap.
     try{ var rw=document.getElementById('radioWindow'); if(rw){ rw.style.display='none'; document.body.classList.add('radio-hidden'); } }catch(e){}
+    try{ if(typeof window.__mkSyncRadioVisuals==='function') window.__mkSyncRadioVisuals(); }catch(e){}
     cons.classList.add('docked'); cons.setAttribute('aria-hidden','false');
     stage.classList.remove('full'); stage.setAttribute('aria-hidden','true');
+    setDockButton(true);
     sync();
-    setTimeout(function(){ sizeCovers(); send('deck'); },360);
+    clearTimeout(openTO);
+    openTO=setTimeout(function(){
+      openTO=0;
+      if(!dockVisible()) return;
+      sizeCovers();
+      var needsDeck=!deck.length;
+      if(pendingDeck){ var p=pendingDeck; pendingDeck=null; renderDeck(p.tracks,p.query); }
+      if(pendingAppend.length){ var a=pendingAppend; pendingAppend=[]; appendDeck(a); }
+      if(lastNpPayload) applyNp(lastNpPayload);
+      if(needsDeck&&!deck.length) send('deck');
+    },360);
   };
-  window.lacMiniClose=function(){ els(); cons.classList.remove('docked'); cons.setAttribute('aria-hidden','true'); stage.classList.remove('full'); stage.setAttribute('aria-hidden','true'); sync(); };
-  window.lacMiniMaximize=function(){ els(); cons.classList.remove('docked'); stage.classList.add('full'); stage.setAttribute('aria-hidden','false'); sync(); };
-  window.lacMiniMinimize=function(){ els(); stage.classList.remove('full'); stage.setAttribute('aria-hidden','true'); cons.classList.add('docked'); cons.setAttribute('aria-hidden','false'); sync(); setTimeout(sizeCovers,40); };
+  function hideLacMini(){
+    els();
+    clearTimeout(openTO); openTO=0;
+    cons.classList.remove('docked'); cons.setAttribute('aria-hidden','true');
+    stage.classList.remove('full'); stage.setAttribute('aria-hidden','true');
+    if(track){ for(var i=0;i<track.children.length;i++) track.children[i].style.willChange='auto'; }
+    setDockButton(false);
+    sync();
+  }
+  window.toggleLacMini=function(){ els(); if(uiVisible()) hideLacMini(); else window.openLacMini(); };
+  window.__hideLacMiniForRadio=function(){ els(); if(uiVisible()) hideLacMini(); };
+  window.lacMiniClose=hideLacMini;
+  window.lacMiniMaximize=function(){ els(); cons.classList.remove('docked'); cons.setAttribute('aria-hidden','true'); stage.classList.add('full'); stage.setAttribute('aria-hidden','false'); setDockButton(true); sync(); if(lastNpPayload) applyNp(lastNpPayload); };
+  window.lacMiniMinimize=function(){ els(); stage.classList.remove('full'); stage.setAttribute('aria-hidden','true'); cons.classList.add('docked'); cons.setAttribute('aria-hidden','false'); setDockButton(true); sync(); setTimeout(function(){ sizeCovers(); if(lastNpPayload) applyNp(lastNpPayload); },40); };
   window.lacMiniCmd=function(cmd){ if(cmd==='toggle'&&!curId&&deck.length){ playIdx(Math.round(pos)); return; } send(cmd); };
   window.lacMiniSeek=function(e){ els(); var r=progEl.getBoundingClientRect(); var p=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)); send('seek',{pct:p}); fillEl.style.width=(p*100)+'%'; };
   window.lacMiniVolume=function(v){ send('volume',{value:(+v)/100}); };
