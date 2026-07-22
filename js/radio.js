@@ -84,15 +84,33 @@ function scheduleDraw(delayMs) {
     if (delayMs) setTimeout(() => requestAnimationFrame(draw), delayMs);
     else requestAnimationFrame(draw);
 }
-audio.addEventListener('play', () => scheduleDraw());
+audio.addEventListener('play', () => {
+    if (window.__mkRadioSupersededByLacitis) {
+        audio.pause();
+        return;
+    }
+    scheduleDraw();
+});
 // Idle the entire audio graph (EQ, reverb, compressor, vinyl noise, analyser)
 // while paused; resume it on play. Frees CPU and stops the looping vinyl source.
 audio.addEventListener('pause', () => {
     try { if (aCtx && aCtx.state === 'running') aCtx.suspend().catch(()=>{}); } catch(e) {}
 });
 audio.addEventListener('play', () => {
+    if (window.__mkRadioSupersededByLacitis) return;
     try { if (aCtx && aCtx.state === 'suspended') aCtx.resume().catch(()=>{}); } catch(e) {}
 });
+window.__mkPauseRadioForLacitis = function() {
+    window.__mkRadioSupersededByLacitis = true;
+    const wasPlaying = !audio.paused;
+    try { audio.pause(); } catch(e) {}
+    const playButton = document.getElementById('playBtn');
+    if (playButton) playButton.innerHTML = '<i class="fas fa-play"></i>';
+    return wasPlaying;
+};
+window.__mkRadioPlaybackState = function() {
+    return { paused: audio.paused, context: aCtx ? aCtx.state : 'none' };
+};
 
 function syncRadioVisualLoops() {
     if (radioVisualsInactive()) {
@@ -2627,7 +2645,7 @@ document.getElementById('playBtn').onclick = () => {
         // First play: select once, then retry after 800ms if still not playing
         selectStation(startIdx);
         setTimeout(function() {
-            if (audio.paused) selectStation(startIdx);
+            if (!window.__mkRadioSupersededByLacitis && audio.paused) selectStation(startIdx);
         }, 800);
     } else {
         if (audio.paused) { 
@@ -2661,23 +2679,6 @@ function focusRadio(){
     win.style.zIndex = 65000;
     setTimeout(()=>win.classList.remove('attention'), 650);
 }
-
-// ------------------------------------------------------------
-//  TOPBAR OPTIONS (safe UI -> CSS variables) – but topbar hidden, so no need
-// ------------------------------------------------------------
-(function(){
-  const $ = (id) => document.getElementById(id);
-  // Topbar clock not needed, but keep for consistency
-  function tickTopbar(){
-    const d = new Date();
-    const t = d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-    const node = $('tbTime');
-    if (node) node.textContent = t;
-  }
-  setInterval(tickTopbar, 1000); tickTopbar();
-
-  // Open/close options – but topbar hidden, so skip
-})();
 
 // Draggable for grafiks (only)
 (function(){
