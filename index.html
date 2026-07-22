@@ -2044,8 +2044,8 @@ window.addEventListener('DOMContentLoaded', () => {
   </section>
 </div>
 
-<div id="planotajsSheet" aria-hidden="true" onclick="if(event.target===this) closePlanotajsSheet()" style="display:none;position:fixed;inset:0;z-index:171195;pointer-events:auto;background:transparent;">
-  <section id="planotajsSheetPanel" aria-label="Grafika plānotājs (tests)" onclick="event.stopPropagation()" style="position:absolute;right:12px;bottom:86px;width:min(1180px,calc(100vw - 24px));height:min(780px,calc(100dvh - 108px));min-height:500px;border-radius:18px;border:1px solid rgba(232,121,249,.35);background:#141019;box-shadow:0 18px 60px rgba(0,0,0,.58),0 0 0 1px rgba(255,255,255,.05) inset;overflow:hidden;pointer-events:auto;">
+<div id="planotajsSheet" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171195;pointer-events:auto;background:#0b0d12;">
+  <section id="planotajsSheetPanel" aria-label="Grafika plānotājs (tests)" style="position:absolute;inset:0;width:100%;height:100dvh;min-height:0;border:0;border-radius:0;background:#141019;box-shadow:none;overflow:hidden;pointer-events:auto;">
     <div style="height:38px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 10px 0 14px;border-bottom:1px solid rgba(255,255,255,.10);background:rgba(232,121,249,.07);color:#f7f7f7;font:900 12px/1 'Space Grotesk',system-ui;letter-spacing:.08em;text-transform:uppercase;">
       <span style="display:flex;align-items:center;gap:8px;"><span>🧪</span><span>Plānotājs</span><span style="padding:2px 6px;border-radius:6px;background:rgba(232,121,249,.16);border:1px solid rgba(232,121,249,.45);color:#f0abfc;font-size:9px;">Testa versija</span></span>
       <button type="button" onclick="closePlanotajsSheet()" aria-label="Aizvērt plānotāju" style="width:30px;height:30px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.24);color:#f7f7f7;font:900 18px/1 system-ui;cursor:pointer;">×</button>
@@ -4249,33 +4249,17 @@ window.addEventListener('message', function(e) {
 	  window.addEventListener('resize', positionLacitisSheet);
 	})();
 
-/* Plānotājs launcher (TESTS): dock iframe for grafika-planotajs.pages.dev —
-   same pattern as Pusdienas. Future home of radiographer shift-wish entry. */
+/* Plānotājs launcher (TESTS): lazy full-screen iframe. */
 (function(){
   var PLANOTAJS_URL = 'https://grafika-planotajs.pages.dev/';
+  var lastPlanotajsFocus = null;
 
   function positionPlanotajsSheet() {
     var sheet = document.getElementById('planotajsSheet');
     var panel = document.getElementById('planotajsSheetPanel');
-    var btn = document.getElementById('planotajsDockBtn');
-    if (!sheet || !panel || !btn || sheet.style.display === 'none') return;
-    var rect = btn.getBoundingClientRect();
-    var margin = 12, gap = 10;
-    var width = Math.min(1180, window.innerWidth - margin * 2);
-    var height = Math.min(780, window.innerHeight - rect.height - margin * 2 - gap);
-    height = Math.max(500, height);
-    if (height > window.innerHeight - margin * 2) height = window.innerHeight - margin * 2;
-    var left = rect.left + rect.width / 2 - width / 2;
-    left = Math.max(margin, Math.min(left, window.innerWidth - width - margin));
-    var bottom = window.innerHeight - rect.top + gap;
-    if (bottom + height > window.innerHeight - margin) {
-      bottom = Math.max(margin, window.innerHeight - height - margin);
-    }
-    panel.style.width = width + 'px';
-    panel.style.height = height + 'px';
-    panel.style.left = left + 'px';
-    panel.style.right = 'auto';
-    panel.style.bottom = bottom + 'px';
+    if (!sheet || !panel || sheet.style.display === 'none') return;
+    panel.style.width = '100%';
+    panel.style.height = (window.visualViewport ? window.visualViewport.height : window.innerHeight) + 'px';
   }
 
   window.openPlanotajsLauncher = function openPlanotajsLauncher() {
@@ -4286,6 +4270,11 @@ window.addEventListener('message', function(e) {
       window.open(PLANOTAJS_URL, 'planotajs', 'popup=yes,width=1180,height=800,resizable=yes,scrollbars=yes,toolbar=no,location=no,menubar=no,status=no');
       return;
     }
+    if (sheet.style.display !== 'none') {
+      window.closePlanotajsSheet();
+      return;
+    }
+    lastPlanotajsFocus = document.activeElement;
     sheet.style.display = 'block';
     sheet.setAttribute('aria-hidden', 'false');
     if (btn) btn.classList.add('planotajs-open');
@@ -4308,9 +4297,21 @@ window.addEventListener('message', function(e) {
     if (frame) frame.src = 'about:blank';
     if (btn) btn.classList.remove('planotajs-open');
     if (typeof window.updateBuddyUiSuppression === 'function') window.updateBuddyUiSuppression();
+    if (lastPlanotajsFocus && typeof lastPlanotajsFocus.focus === 'function') {
+      lastPlanotajsFocus.focus({ preventScroll: true });
+    }
+    lastPlanotajsFocus = null;
   };
 
   window.addEventListener('resize', positionPlanotajsSheet);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', positionPlanotajsSheet);
+  document.addEventListener('keydown', function(event) {
+    var sheet = document.getElementById('planotajsSheet');
+    if (event.key === 'Escape' && sheet && sheet.style.display !== 'none') {
+      event.preventDefault();
+      window.closePlanotajsSheet();
+    }
+  });
 })();
 
 function toggleNsFromParent() {
