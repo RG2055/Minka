@@ -2080,11 +2080,10 @@ window.addEventListener('DOMContentLoaded', () => {
   </button>
 </div>
 
-<!-- ═══ LĀCĪTIS MINI — Cover Flow music dock (drives one hidden embed=mini iframe) ═══ -->
+<!-- ═══ LĀCĪTIS MINI — lightweight horizontal music dock ═══ -->
 <style id="lacMiniStyles">
-/* Lācītis mini — docks full-width at the bottom like the radio console.
-   Spotify × Apple aesthetic: neutral dark, green accent, no orange. */
-#lacMiniConsole{display:flex;position:fixed;left:0;right:0;bottom:var(--btnbar-h);width:100%;height:clamp(216px,29vh,260px);z-index:500;
+/* Flat, event-driven mini player: no 3D scene, reflections, blur or idle animation. */
+#lacMiniConsole{display:flex;position:fixed;left:0;right:0;bottom:var(--btnbar-h);width:100%;height:clamp(188px,24vh,210px);z-index:500;
   background:#000;border-top:1px solid rgba(255,255,255,.08);
   box-shadow:0 -14px 42px rgba(0,0,0,.6);color:#fff;font-family:'Space Grotesk',system-ui,sans-serif;
   flex-direction:column;padding:9px 16px 9px;box-sizing:border-box;
@@ -2106,63 +2105,62 @@ window.addEventListener('DOMContentLoaded', () => {
 #lacMiniConsole .lm-login{display:flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:14px;border:1px solid rgba(30,215,96,.42);background:rgba(30,215,96,.1);color:#1ed760;font:700 10.5px/1 'Space Grotesk',system-ui;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:background .15s;}
 #lacMiniConsole .lm-login:hover{background:rgba(30,215,96,.2);}
 #lacMiniConsole .lm-login svg{width:14px;height:14px;fill:currentColor;flex-shrink:0;}
-/* body: now-playing info column (left) + cover flow (right) — Apple × Spotify.
-   Transport controls live in a centered row BELOW the covers, iPod-style. */
-#lacMiniConsole .lm-body{flex:1;min-height:0;display:flex;align-items:stretch;gap:20px;margin-top:6px;}
-#lacMiniInfo{flex:0 0 clamp(190px,28%,320px);min-width:0;display:flex;flex-direction:column;justify-content:center;gap:7px;}
+/* body: now-playing info (left) + a native horizontally scrolling result list. */
+#lacMiniConsole .lm-body{flex:1;min-height:0;display:flex;align-items:stretch;gap:14px;margin-top:6px;}
+#lacMiniInfo{flex:0 0 clamp(180px,22%,270px);min-width:0;display:flex;flex-direction:column;justify-content:center;gap:7px;padding-right:12px;border-right:1px solid rgba(255,255,255,.08);}
 #lacMiniNowLbl{display:flex;align-items:center;gap:6px;font:700 9.5px/1 'Space Grotesk',system-ui;letter-spacing:.15em;text-transform:uppercase;color:#1ed760;}
 #lacMiniNowLbl .dot{width:6px;height:6px;border-radius:50%;background:#1ed760;box-shadow:0 0 8px rgba(30,215,96,.85);}
 #lacMiniTitle{font:700 16px/1.22 'Space Grotesk',system-ui;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 #lacMiniArtist{font:500 12.5px/1.2 'Space Grotesk',system-ui;color:#a7a7a7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 #lacMiniProg{position:relative;height:4px;border-radius:2px;background:rgba(255,255,255,.14);cursor:pointer;flex-shrink:0;margin-top:7px;}
 #lacMiniProgFill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:2px;background:#1ed760;}
-#lacMiniBottom{position:relative;display:flex;align-items:center;justify-content:center;height:52px;flex-shrink:0;}
+#lacMiniBottom{position:relative;display:flex;align-items:center;justify-content:center;height:40px;margin-top:8px;flex-shrink:0;}
 #lacMiniCtrls{display:flex;align-items:center;gap:20px;}
 #lacMiniCtrls .lm-cbtn{width:34px;height:34px;border:0;background:none;color:#cfcfcf;cursor:pointer;display:grid;place-items:center;transition:color .15s,transform .1s;}
 #lacMiniCtrls .lm-cbtn:hover{color:#fff;}
 #lacMiniCtrls .lm-cbtn:active{transform:scale(.9);}
 #lacMiniCtrls .lm-cbtn svg{width:20px;height:20px;fill:currentColor;}
-#lacMiniPlay{width:44px !important;height:44px !important;border-radius:50% !important;background:#1ed760 !important;color:#000 !important;box-shadow:0 3px 12px rgba(30,215,96,.42);}
+#lacMiniPlay{width:40px !important;height:40px !important;border-radius:50% !important;background:#1ed760 !important;color:#000 !important;box-shadow:0 3px 12px rgba(30,215,96,.42);}
 #lacMiniPlay:hover{transform:scale(1.06);}
 #lacMiniPlay svg{width:22px;height:22px;}
 #lacMiniVol{position:absolute;right:4px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:7px;}
 #lacMiniVol svg{fill:#9a9a9a;flex-shrink:0;}
 #lacMiniVol input{width:76px;accent-color:#1DB954;}
-#lacMiniDeck{flex:1;position:relative;min-width:0;perspective:900px;overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:none;cursor:grab;
-  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 8%,#000 92%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 8%,#000 92%,transparent 100%);}
-#lacMiniDeck.grabbing{cursor:grabbing;}
-#lacMiniTrack{position:absolute;inset:0;transform-style:preserve-3d;}
-#lacMiniTrack.anim .lm-cover{transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s;}
-.lm-cover{position:absolute;left:50%;top:50%;width:var(--lac-cw,128px);height:var(--lac-cw,128px);margin:calc(var(--lac-cw,128px) / -2) 0 0 calc(var(--lac-cw,128px) / -2);
-  border-radius:9px;overflow:hidden;cursor:pointer;background:#1c1c1e;box-shadow:0 6px 18px rgba(0,0,0,.6);
-  -webkit-box-reflect:below 3px linear-gradient(transparent,transparent 64%,rgba(255,255,255,.08));}
-.lm-cover img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;-webkit-user-drag:none;}
-.lm-cover.active{box-shadow:0 8px 24px rgba(30,215,96,.34),0 0 0 2px rgba(30,215,96,.62);}
+#lacMiniConsole .lm-deck-shell{flex:1;min-width:0;display:flex;align-items:center;gap:6px;}
+#lacMiniConsole .lm-scroll-btn{width:30px;height:66px;flex:0 0 30px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.10);border-radius:8px;background:#181818;color:#d7d7d7;font:700 25px/1 system-ui;cursor:pointer;transition:background .15s,color .15s,border-color .15s;}
+#lacMiniConsole .lm-scroll-btn:hover:not(:disabled){background:#242424;color:#fff;border-color:rgba(255,255,255,.20);}
+#lacMiniConsole .lm-scroll-btn:focus-visible{outline:2px solid #1ed760;outline-offset:1px;}
+#lacMiniConsole .lm-scroll-btn:disabled{opacity:.22;cursor:default;}
+#lacMiniDeck{flex:1;position:relative;min-width:0;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.20) transparent;-webkit-user-select:none;user-select:none;touch-action:pan-x;}
+#lacMiniDeck::-webkit-scrollbar{height:6px}
+#lacMiniDeck::-webkit-scrollbar-thumb{background:rgba(255,255,255,.20);border-radius:3px}
+#lacMiniTrack{display:flex;align-items:center;gap:8px;height:100%;min-width:max-content;padding:3px 2px 7px;box-sizing:border-box;}
+.lm-cover{position:relative;display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:10px;flex:0 0 clamp(210px,22vw,290px);height:66px;padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:9px;overflow:hidden;cursor:pointer;background:#181818;color:#fff;text-align:left;font-family:'Space Grotesk',system-ui,sans-serif;box-sizing:border-box;}
+.lm-cover:hover{background:#222;border-color:rgba(255,255,255,.15)}
+.lm-cover:focus-visible{outline:2px solid #1ed760;outline-offset:1px}
+.lm-cover img{width:48px;height:48px;border-radius:6px;object-fit:cover;display:block;pointer-events:none;-webkit-user-drag:none;background:#262626;}
+.lm-cover-copy{min-width:0;display:flex;flex-direction:column;gap:4px;}
+.lm-cover-title{font:700 12.5px/1.15 'Space Grotesk',system-ui;color:#f5f5f5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lm-cover-artist{font:500 10.5px/1.15 'Space Grotesk',system-ui;color:#989898;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lm-cover-time{font:600 10px/1 ui-monospace,monospace;color:#8d8d8d;font-variant-numeric:tabular-nums;}
+.lm-cover.active{border-color:rgba(30,215,96,.72);background:#17231b;box-shadow:inset 3px 0 0 #1ed760;}
+.lm-cover.active .lm-cover-title{color:#42df79}
 #lacMiniEmpty{position:absolute;inset:0;display:grid;place-items:center;color:#8a8a8a;font:600 12px/1.4 'Space Grotesk',system-ui;text-align:center;pointer-events:none;}
-#lacMiniLite{display:none;flex:1;min-height:0;align-items:center;justify-content:center;gap:18px;}
-#lacMiniLite .lm-lite-icon{font-size:34px;line-height:1;image-rendering:pixelated;}
-#lacMiniLite .lm-lite-copy{display:flex;flex-direction:column;gap:4px;min-width:0;}
-#lacMiniLite strong{font:800 16px/1 'Space Grotesk',system-ui;color:#fff;}
-#lacMiniLite span{font:650 10px/1 'Space Grotesk',system-ui;letter-spacing:.12em;text-transform:uppercase;color:#9298a2;}
-#lacMiniLite .lm-lite-actions{display:flex;align-items:center;gap:8px;}
-#lacMiniLite .lm-lite-open{height:34px;padding:0 15px;border-radius:8px;border:1px solid rgba(30,215,96,.42);background:#12321e;color:#76e49b;font:800 11px/1 'Space Grotesk',system-ui;letter-spacing:.04em;cursor:pointer;}
-#lacMiniLite .lm-lite-open:hover{background:#184127;}
-#lacMiniConsole.lm-lite{height:112px;padding:10px 16px;}
-#lacMiniConsole.lm-lite>.lm-head,#lacMiniConsole.lm-lite>.lm-body,#lacMiniConsole.lm-lite>#lacMiniProg,#lacMiniConsole.lm-lite>#lacMiniBottom{display:none;}
-#lacMiniConsole.lm-lite>#lacMiniLite{display:flex;}
-@media(max-width:760px){#lacMiniInfo{flex-basis:150px;gap:5px;}#lacMiniTitle{font-size:14px;-webkit-line-clamp:2;}#lacMiniVol{display:none;}#lacMiniConsole .lm-login span:last-child{display:none;}#lacMiniConsole .lm-search{max-width:none;}#lacMiniConsole .lm-body{gap:14px;}}
-@media(max-width:520px){#lacMiniInfo{flex-basis:120px;}}
+@media(max-width:760px){#lacMiniInfo{flex-basis:145px;gap:5px;}#lacMiniTitle{font-size:14px;-webkit-line-clamp:2;}#lacMiniVol{display:none;}#lacMiniConsole .lm-login span:last-child{display:none;}#lacMiniConsole .lm-search{max-width:none;}#lacMiniConsole .lm-body{gap:10px;}.lm-cover{flex-basis:220px;}#lacMiniConsole .lm-scroll-btn{display:none;}}
+@media(max-width:520px){#lacMiniInfo{display:none}.lm-cover{flex-basis:205px}#lacMiniConsole{padding-left:10px;padding-right:10px}}
 #lacMiniStage{position:fixed;left:8px;bottom:8px;width:1px;height:1px;opacity:0;visibility:hidden;pointer-events:none;overflow:hidden;z-index:-1;background:#050609;display:flex;flex-direction:column;border:0;contain:strict;}
-#lacMiniStage.full{left:50%;top:50%;bottom:auto;transform:translate(-50%,-50%);width:min(1180px,calc(100vw - 44px));height:min(820px,calc(100dvh - 44px));opacity:1;visibility:visible;pointer-events:auto;z-index:171340;border-radius:22px;border:1px solid rgba(255,255,255,.16);box-shadow:0 22px 70px rgba(0,0,0,.68);contain:layout style paint;}
+#lacMiniStage.full{left:0;right:0;top:0;bottom:0;transform:none;width:100vw;height:100dvh;opacity:1;visibility:visible;pointer-events:auto;z-index:171340;border-radius:0;border:0;box-shadow:none;contain:layout style paint;}
+#lacMiniStage:fullscreen{width:100vw;height:100vh;background:#050609;}
 #lacMiniStageTop{display:none;height:42px;align-items:center;justify-content:space-between;gap:12px;padding:0 10px 0 14px;border-bottom:1px solid rgba(255,255,255,.10);background:#15171c;color:#f7f7f7;font:900 12px/1 'Space Grotesk',system-ui;letter-spacing:.08em;text-transform:uppercase;flex-shrink:0;}
 #lacMiniStage.full #lacMiniStageTop{display:flex;}
 #lacMiniStageTop .lm-hbtn{width:32px;height:32px;border-radius:11px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#f7f7f7;font:900 18px/1 system-ui;cursor:pointer;}
 #lacMiniFrame{flex:1;width:100%;height:100%;min-height:0;border:0;background:#050609;display:block;}
-body.lacitis-full #calendarEmbed{visibility:hidden;}
-html.mk-low-spec #lacMiniDeck,body.mk-low-spec #lacMiniDeck{perspective:none;-webkit-mask-image:none;mask-image:none;}
-html.mk-low-spec #lacMiniTrack,body.mk-low-spec #lacMiniTrack{transform-style:flat;}
-html.mk-low-spec .lm-cover,body.mk-low-spec .lm-cover{-webkit-box-reflect:none;box-shadow:none;}
-html.mk-low-spec .lm-cover.active,body.mk-low-spec .lm-cover.active{box-shadow:0 0 0 2px rgba(30,215,96,.72);}
+body.lacitis-full #calendarEmbed,
+body.lacitis-full #radioWindow,
+body.lacitis-full #dockShelf,
+body.lacitis-full #mk-buddy{display:none !important;}
+html.mk-low-spec .lm-cover,body.mk-low-spec .lm-cover{box-shadow:none;}
+html.mk-low-spec .lm-cover.active,body.mk-low-spec .lm-cover.active{box-shadow:inset 3px 0 0 #1ed760;}
 html.mk-low-spec #lacMiniNowLbl .dot,body.mk-low-spec #lacMiniNowLbl .dot{box-shadow:none;}
 html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
 </style>
@@ -2179,14 +2177,6 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
 </div>
 
 <div id="lacMiniConsole" aria-hidden="true">
-  <div id="lacMiniLite">
-    <span class="lm-lite-icon" aria-hidden="true">🐻‍❄️</span>
-    <span class="lm-lite-copy"><strong>Lācītis</strong><span>Mūzika</span></span>
-    <span class="lm-lite-actions">
-      <button class="lm-lite-open" onclick="lacMiniMaximize()">Atvērt</button>
-      <button class="lm-hbtn" onclick="lacMiniClose()" title="Aizvērt" aria-label="Aizvērt">×</button>
-    </span>
-  </div>
   <div class="lm-head">
     <span class="lm-brand"><span>🐻‍❄️</span><span>Lācītis</span></span>
     <label class="lm-search">
@@ -2195,7 +2185,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     </label>
     <span class="lm-head-btns">
       <button class="lm-login" onclick="openLacitisLauncher()" title="Ielogoties ar savu dežūru"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-4.1 0-8 2.1-8 5v1h16v-1c0-2.9-3.9-5-8-5z"/></svg><span>Ielogoties</span></button>
-      <button class="lm-hbtn" onclick="lacMiniMaximize()" title="Atvērt pilno Lācīti" aria-label="Maksimizēt">▣</button>
+      <button class="lm-hbtn" onclick="lacMiniMaximize()" title="Pilnekrāna režīms" aria-label="Pilnekrāna režīms">⛶</button>
       <button class="lm-hbtn" onclick="lacMiniClose()" title="Aizvērt" aria-label="Aizvērt">×</button>
     </span>
   </div>
@@ -2205,9 +2195,13 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       <div id="lacMiniTitle">—</div>
       <div id="lacMiniArtist"></div>
     </div>
-    <div id="lacMiniDeck">
-      <div id="lacMiniTrack"></div>
-      <div id="lacMiniEmpty">Ielādē mūziku…</div>
+    <div class="lm-deck-shell">
+      <button id="lacMiniDeckPrev" class="lm-scroll-btn" type="button" onclick="lacMiniScroll(-1)" title="Ritināt dziesmas pa kreisi" aria-label="Ritināt dziesmas pa kreisi">‹</button>
+      <div id="lacMiniDeck">
+        <div id="lacMiniTrack"></div>
+        <div id="lacMiniEmpty">Ielādē mūziku…</div>
+      </div>
+      <button id="lacMiniDeckNext" class="lm-scroll-btn" type="button" onclick="lacMiniScroll(1)" title="Ritināt dziesmas pa labi" aria-label="Ritināt dziesmas pa labi">›</button>
     </div>
   </div>
   <div id="lacMiniProg" onclick="lacMiniSeek(event)"><div id="lacMiniProgFill"></div></div>
@@ -2229,16 +2223,15 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   var useLocalLac=isLocal&&/[?&]lacLocal=1(?:&|$)/.test(location.search);
   var LAC_BASE=useLocalLac?'http://127.0.0.1:5174':'https://lacitis.pages.dev';
   var MINI_URL=LAC_BASE+'/?embed=mini';
-  var frame,cons,stage,deckEl,track,empty,titleEl,artistEl,fillEl,playIco,progEl,searchEl;
-  var deck=[], pos=0, sel=0, curId=null, loaded=false, wired=false;
+  var frame,cons,stage,deckEl,track,empty,titleEl,artistEl,fillEl,playIco,progEl,searchEl,deckPrev,deckNext;
+  var deck=[], sel=0, curId=null, loaded=false, wired=false;
   var lastNpPayload=null, pendingDeck=null, pendingAppend=[];
-  var visibleFrom=0, visibleTo=-1;
-  var spacing=44, snapTO=0, searchTO=0, autoTO=0, openTO=0;
-  var dragging=false, startX=0, startPos=0, moved=false;
+  var searchTO=0, openTO=0, pendingSearch=null;
+  var nativeFullRequested=false;
   var perfProfile=window.__mkPerfProfile||{};
   var lowSpec=!!(perfProfile.lowSpec||perfProfile.reducedMotion||document.documentElement.classList.contains('mk-low-spec'));
   var bridgeReady=false;
-  var morePending=false, moreCooldownUntil=0, DECK_CAP=lowSpec?36:80;
+  var morePending=false, moreCooldownUntil=0, DECK_CAP=lowSpec?16:32;
 
   function $(id){ return document.getElementById(id); }
   function els(){
@@ -2246,11 +2239,20 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     deckEl=$('lacMiniDeck'); track=$('lacMiniTrack'); empty=$('lacMiniEmpty');
     titleEl=$('lacMiniTitle'); artistEl=$('lacMiniArtist'); fillEl=$('lacMiniProgFill');
     playIco=$('lacMiniPlayIco'); progEl=$('lacMiniProg'); searchEl=$('lacMiniSearch');
+    deckPrev=$('lacMiniDeckPrev'); deckNext=$('lacMiniDeckNext');
   }
-  function send(cmd,extra){ try{ frame&&frame.contentWindow&&frame.contentWindow.postMessage(Object.assign({type:'lac_mini_cmd',cmd:cmd},extra||{}),'*'); }catch(e){} }
-  function coverUrl(t){ return t.thumbnail||('https://i.ytimg.com/vi/'+t.id+'/mqdefault.jpg'); }
+  function send(cmd,extra){
+    if(!bridgeReady&&cmd==='search'){ pendingSearch=(extra&&extra.q)||''; return; }
+    try{ frame&&frame.contentWindow&&frame.contentWindow.postMessage(Object.assign({type:'lac_mini_cmd',cmd:cmd},extra||{}),'*'); }catch(e){}
+  }
+  function coverUrl(t){ return 'https://i.ytimg.com/vi/'+encodeURIComponent(t.id)+'/default.jpg'; }
   function isLowSpec(){ return lowSpec||document.documentElement.classList.contains('mk-low-spec')||!!(document.body&&document.body.classList.contains('mk-low-spec')); }
-  function setLite(on){ if(cons) cons.classList.toggle('lm-lite',!!on); }
+  function updateDeckNav(){
+    if(!deckEl||!deckPrev||!deckNext) return;
+    var max=Math.max(0,deckEl.scrollWidth-deckEl.clientWidth);
+    deckPrev.disabled=deckEl.scrollLeft<=4;
+    deckNext.disabled=max<=4||deckEl.scrollLeft>=max-4;
+  }
   function unloadFrame(){
     if(!frame) return;
     frame.src='about:blank'; frame.removeAttribute('src'); loaded=false;
@@ -2258,6 +2260,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     deck=[]; pendingDeck=null; pendingAppend=[]; curId=null; lastNpPayload=null;
     if(track) track.innerHTML='';
     if(empty){ empty.style.display=''; empty.textContent='Ielādē mūziku…'; }
+    updateDeckNav();
   }
   function ensureFrame(){
     if(loaded||!frame) return;
@@ -2275,71 +2278,40 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     btn.classList.toggle('lacitis-open',!!open);
     btn.setAttribute('aria-expanded',open?'true':'false');
   }
-
-  function sizeCovers(){
-    if(!deckEl||!dockVisible()) return;
-    var h=deckEl.clientHeight||130;
-    // Active cover scales ×1.16 and carries a 2px ring + glow — size it so the
-    // scaled cover plus ~16px of air always fits inside the deck height.
-    var cw=Math.max(72,Math.min(150,Math.floor((h-26)/1.16)));
-    deckEl.style.setProperty('--lac-cw',cw+'px');
-    spacing=Math.round(cw*0.46);
-    layout();
+  function setFullShell(full){
+    if(document.body) document.body.classList.toggle('lacitis-full',!!full);
+    var calendar=$('calendarEmbed');
+    if(calendar){ calendar.setAttribute('aria-hidden',full?'true':'false'); calendar.inert=!!full; }
   }
-  function layout(){
-    if(!track) return;
-    var covers=track.children;
-    var from=Math.max(0,Math.ceil(pos-4.3));
-    var to=Math.min(covers.length-1,Math.floor(pos+4.3));
-    var hide=function(el){
-      if(!el) return;
-      el.style.visibility='hidden'; el.style.opacity='0'; el.style.pointerEvents='none'; el.style.willChange='auto';
-      el.classList.remove('active');
-    };
-    for(var old=visibleFrom;old<=visibleTo;old++) if(old<from||old>to) hide(covers[old]);
-    for(var i=from;i<=to;i++){
-      var el=covers[i], off=i-pos, abs=Math.abs(off), t=Math.max(0,1-abs), dir=off<0?-1:1;
-      el.style.visibility='visible'; el.style.opacity='1'; el.style.pointerEvents='auto';
-      el.style.willChange=abs<=2.3?'transform':'auto';
-      var x=off*spacing + dir*Math.min(abs,1)*(spacing*1.05);
-      var liteGpu=isLowSpec();
-      var sc=1+t*(liteGpu?0.08:0.16);
-      if(liteGpu){
-        el.style.transform='translateX('+x+'px) scale('+sc+')';
-      }else{
-        var rot=Math.max(-56,Math.min(56,-off*56));
-        var z=t*72 - Math.min(abs,4)*30;
-        el.style.transform='translateX('+x+'px) translateZ('+z+'px) rotateY('+rot+'deg) scale('+sc+')';
-      }
-      el.style.zIndex=String(200-Math.round(abs*10));
-      if(abs<0.5) el.classList.add('active'); else el.classList.remove('active');
+  function enterNativeFullscreen(){
+    if(!stage||!stage.requestFullscreen||document.fullscreenElement) return;
+    nativeFullRequested=true;
+    try{
+      var request=stage.requestFullscreen({navigationUI:'hide'});
+      if(request&&request.catch) request.catch(function(){ nativeFullRequested=false; });
+    }catch(e){ nativeFullRequested=false; }
+  }
+  function leaveNativeFullscreen(){
+    nativeFullRequested=false;
+    if(document.fullscreenElement===stage&&document.exitFullscreen){
+      try{ var exit=document.exitFullscreen(); if(exit&&exit.catch) exit.catch(function(){}); }catch(e){}
     }
-    visibleFrom=from; visibleTo=to;
   }
-  var lastLabelIdx=-1, lastNpId=null;
+  var lastNpId=null;
   function showLabel(i){ var t=deck[i]; if(!t||!titleEl) return; titleEl.textContent=t.title||'—'; artistEl.textContent=t.author||''; }
-  function setPos(p,animate){
-    var max=Math.max(0,deck.length-1);
-    pos=Math.max(0,Math.min(max,p));
-    if(track){ if(animate) track.classList.add('anim'); else track.classList.remove('anim'); }
-    layout();
-    // Live preview: title/artist follow the centered cover as you scroll.
-    var ri=Math.round(pos);
-    if(ri!==lastLabelIdx){ lastLabelIdx=ri; showLabel(ri); }
-    // Endless deck: nearing the end → quietly ask Lācītis for more tracks.
-    if(deck.length && pos>deck.length-6) maybeMore();
+  function selectIdx(i,scroll){
+    if(!deck.length||!track) return;
+    sel=Math.max(0,Math.min(deck.length-1,i));
+    for(var n=0;n<track.children.length;n++) track.children[n].classList.toggle('active',n===sel);
+    showLabel(sel);
+    var card=track.children[sel];
+    if(scroll&&card) card.scrollIntoView({behavior:isLowSpec()?'auto':'smooth',block:'nearest',inline:'center'});
   }
   function maybeMore(){
     if(morePending||deck.length>=DECK_CAP||Date.now()<moreCooldownUntil) return;
     morePending=true;
     send('more',{ids:deck.map(function(t){return t.id;})});
     setTimeout(function(){ morePending=false; },9000);
-  }
-  function snap(){
-    sel=Math.round(pos); setPos(sel,true);
-    // Auto-play the album you settled on (small delay so fast flicks don't spam).
-    clearTimeout(autoTO);
-    autoTO=setTimeout(function(){ var t=deck[sel]; if(t&&t.id!==curId) playIdx(sel); },420);
   }
   function playIdx(i){
     if(!deck.length) return;
@@ -2349,13 +2321,27 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     send('play',{id:t.id,index:i,list:list});
   }
 
+  function durationText(t){
+    if(t&&typeof t.duration==='string'&&t.duration) return t.duration;
+    var seconds=Number(t&&t.lengthSeconds||0);
+    if(!seconds) return '';
+    var minutes=Math.floor(seconds/60), rest=Math.floor(seconds%60);
+    return minutes+':'+String(rest).padStart(2,'0');
+  }
+
   function addCover(t,i){
-    var c=document.createElement('div'); c.className='lm-cover';
-    c.style.visibility='hidden'; c.style.opacity='0'; c.style.pointerEvents='none';
+    var c=document.createElement('button'); c.type='button'; c.className='lm-cover';
+    c.setAttribute('aria-label','Atskaņot '+(t.title||'dziesmu'));
     var img=document.createElement('img'); img.loading='lazy'; img.decoding='async'; img.src=coverUrl(t);
-    img.onerror=function(){ this.onerror=null; this.src='https://i.ytimg.com/vi/'+t.id+'/default.jpg'; };
+    img.alt='';
+    img.onerror=function(){ this.onerror=null; this.src='https://lacitis.pages.dev/logo192.png'; };
     c.appendChild(img);
-    c.addEventListener('click',function(){ if(moved) return; sel=i; setPos(i,true); playIdx(i); });
+    var copy=document.createElement('span'); copy.className='lm-cover-copy';
+    var title=document.createElement('span'); title.className='lm-cover-title'; title.textContent=t.title||'Nezināma dziesma';
+    var artist=document.createElement('span'); artist.className='lm-cover-artist'; artist.textContent=t.author||'';
+    copy.appendChild(title); copy.appendChild(artist); c.appendChild(copy);
+    var time=document.createElement('span'); time.className='lm-cover-time'; time.textContent=durationText(t); c.appendChild(time);
+    c.addEventListener('click',function(){ selectIdx(i,false); playIdx(i); });
     track.appendChild(c);
   }
   function appendDeck(tracks){
@@ -2367,19 +2353,18 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       if(!t||!t.id||have[t.id]||deck.length>=DECK_CAP) return;
       have[t.id]=1; deck.push(t); addCover(t,deck.length-1); added++;
     });
-    if(added) layout();
+    if(added){ selectIdx(sel,false); updateDeckNav(); }
   }
   function renderDeck(tracks,query){
     els(); deck=(tracks||[]).slice(0,DECK_CAP);
     track.innerHTML='';
-    visibleFrom=0; visibleTo=-1;
-    if(!deck.length){ empty.style.display=''; empty.textContent=query?'Nekas nav atrasts':'Ielādē mūziku…'; return; }
+    if(!deck.length){ empty.style.display=''; empty.textContent=query?'Nekas nav atrasts':'Ielādē mūziku…'; updateDeckNav(); return; }
     empty.style.display='none';
     deck.forEach(function(t,i){ addCover(t,i); });
-    sizeCovers();
     var start=0;
     if(!query&&curId){ var idx=deck.findIndex(function(t){return t.id===curId;}); if(idx>=0) start=idx; }
-    lastLabelIdx=-1; sel=start; setPos(start,false);
+    selectIdx(start,false);
+    updateDeckNav();
   }
   function setPlayIco(p){ if(playIco) playIco.innerHTML=p?'<path d="M6 4h4v16H6zm8 0h4v16h-4z"/>':'<path d="M8 5v14l11-7z"/>'; }
   function applyNp(d){
@@ -2394,26 +2379,25 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     if(d.id && d.id!==lastNpId){
       lastNpId=d.id;
       var idx=deck.findIndex(function(t){return t.id===d.id;});
-      if(idx>=0){ sel=idx; setPos(idx,true); }
-      else if(titleEl){ lastLabelIdx=-1; titleEl.textContent=d.title||'—'; artistEl.textContent=d.author||''; }
+      if(idx>=0) selectIdx(idx,true);
+      else if(titleEl){ titleEl.textContent=d.title||'—'; artistEl.textContent=d.author||''; }
     }
   }
 
   function wire(){
     if(wired||!deckEl) return; wired=true;
-    var gx=function(e){ return e.touches?e.touches[0].clientX:e.clientX; };
-    deckEl.addEventListener('mousedown',function(e){ dragging=true; moved=false; clearTimeout(autoTO); startX=gx(e); startPos=pos; deckEl.classList.add('grabbing'); e.preventDefault(); });
-    deckEl.addEventListener('touchstart',function(e){ dragging=true; moved=false; clearTimeout(autoTO); startX=gx(e); startPos=pos; },{passive:true});
-    window.addEventListener('mousemove',function(e){ if(!dragging) return; var dx=gx(e)-startX; if(Math.abs(dx)>3) moved=true; setPos(startPos-dx/spacing,false); });
-    window.addEventListener('touchmove',function(e){ if(!dragging) return; var dx=gx(e)-startX; if(Math.abs(dx)>3) moved=true; setPos(startPos-dx/spacing,false); },{passive:true});
-    var end=function(){ if(!dragging) return; dragging=false; deckEl.classList.remove('grabbing'); snap(); setTimeout(function(){ moved=false; },30); };
-    window.addEventListener('mouseup',end); window.addEventListener('touchend',end);
-    deckEl.addEventListener('wheel',function(e){ e.preventDefault(); clearTimeout(autoTO); setPos(pos+(e.deltaY>0?0.6:-0.6),false); clearTimeout(snapTO); snapTO=setTimeout(snap,130); },{passive:false});
+    deckEl.addEventListener('scroll',function(){
+      updateDeckNav();
+      if(deckEl.scrollLeft+deckEl.clientWidth>=deckEl.scrollWidth-180) maybeMore();
+    },{passive:true});
+    deckEl.addEventListener('wheel',function(e){
+      if(Math.abs(e.deltaY)<=Math.abs(e.deltaX)) return;
+      deckEl.scrollLeft+=e.deltaY; e.preventDefault();
+    },{passive:false});
     if(searchEl){
       searchEl.addEventListener('input',function(){ clearTimeout(searchTO); var q=searchEl.value.trim(); searchTO=setTimeout(function(){ send('search',{q:q}); }, q?360:0); });
       searchEl.addEventListener('keydown',function(e){ if(e.key==='Enter'){ clearTimeout(searchTO); send('search',{q:searchEl.value.trim()}); } });
     }
-    window.addEventListener('resize',sizeCovers);
   }
 
   window.addEventListener('message',function(e){
@@ -2421,8 +2405,9 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     var d=e.data; if(!d||typeof d!=='object') return;
     if(d.type==='lac_mini_ready'){
       bridgeReady=true;
-      if(!isLowSpec()) setLite(false);
-      if(uiVisible()) send('deck');
+      if(stage&&stage.classList.contains('full')) send('full');
+      if(pendingSearch!==null){ var q=pendingSearch; pendingSearch=null; send('search',{q:q}); }
+      else if(uiVisible()) send('deck');
     }
     else if(d.type==='lac_mini_deck'){
       if(uiVisible()) renderDeck(d.tracks,d.query);
@@ -2437,13 +2422,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
 
   window.openLacMini=function(){
     els(); wire();
-    var liteMode=isLowSpec();
-    if(liteMode) DECK_CAP=Math.min(DECK_CAP,36);
-    var richReady=bridgeReady&&!liteMode;
-    setLite(!richReady);
-    // The deployed Lācītis currently ignores embed=mini and renders its entire
-    // app. Keep the dock local on every machine and only load the iframe after
-    // the explicit full-view command.
+    ensureFrame();
     // Claim the bottom-console slot: hide the radio so they never overlap.
     try{ var rw=document.getElementById('radioWindow'); if(rw){ rw.style.display='none'; document.body.classList.add('radio-hidden'); } }catch(e){}
     try{ if(typeof window.__mkSyncRadioVisuals==='function') window.__mkSyncRadioVisuals(); }catch(e){}
@@ -2452,38 +2431,48 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     setDockButton(true);
     sync();
     clearTimeout(openTO);
-    if(!richReady) return;
     openTO=setTimeout(function(){
       openTO=0;
       if(!dockVisible()) return;
-      sizeCovers();
       var needsDeck=!deck.length;
       if(pendingDeck){ var p=pendingDeck; pendingDeck=null; renderDeck(p.tracks,p.query); }
       if(pendingAppend.length){ var a=pendingAppend; pendingAppend=[]; appendDeck(a); }
       if(lastNpPayload) applyNp(lastNpPayload);
-      if(needsDeck&&!deck.length) send('deck');
-    },360);
+      if(needsDeck&&!deck.length&&bridgeReady) send('deck');
+    },80);
   };
   function hideLacMini(){
     els();
     clearTimeout(openTO); openTO=0;
     cons.classList.remove('docked'); cons.setAttribute('aria-hidden','true');
     stage.classList.remove('full'); stage.setAttribute('aria-hidden','true');
-    if(document.body) document.body.classList.remove('lacitis-full');
-    if(track){ for(var i=0;i<track.children.length;i++) track.children[i].style.willChange='auto'; }
+    setFullShell(false);
+    leaveNativeFullscreen();
     setDockButton(false);
     sync();
   }
   window.toggleLacMini=function(){ els(); if(uiVisible()) hideLacMini(); else window.openLacMini(); };
   window.__hideLacMiniForRadio=function(){ els(); if(uiVisible()) hideLacMini(); unloadFrame(); };
   window.lacMiniClose=function(){ hideLacMini(); unloadFrame(); };
-  window.lacMiniMaximize=function(){ els(); ensureFrame(); cons.classList.remove('docked'); cons.setAttribute('aria-hidden','true'); stage.classList.add('full'); stage.setAttribute('aria-hidden','false'); if(document.body) document.body.classList.add('lacitis-full'); setDockButton(true); sync(); if(lastNpPayload) applyNp(lastNpPayload); };
-  window.lacMiniMinimize=function(){ els(); stage.classList.remove('full'); stage.setAttribute('aria-hidden','true'); if(document.body) document.body.classList.remove('lacitis-full'); setLite(isLowSpec()||!bridgeReady); cons.classList.add('docked'); cons.setAttribute('aria-hidden','false'); setDockButton(true); sync(); setTimeout(function(){ sizeCovers(); if(lastNpPayload) applyNp(lastNpPayload); },40); };
-  window.lacMiniCmd=function(cmd){ if(cmd==='toggle'&&!curId&&deck.length){ playIdx(Math.round(pos)); return; } send(cmd); };
+  window.lacMiniMaximize=function(){ els(); ensureFrame(); cons.classList.remove('docked'); cons.setAttribute('aria-hidden','true'); stage.classList.add('full'); stage.setAttribute('aria-hidden','false'); setFullShell(true); setDockButton(true); sync(); enterNativeFullscreen(); if(bridgeReady) send('full'); if(lastNpPayload) applyNp(lastNpPayload); };
+  window.lacMiniMinimize=function(){ els(); stage.classList.remove('full'); stage.setAttribute('aria-hidden','true'); setFullShell(false); leaveNativeFullscreen(); cons.classList.add('docked'); cons.setAttribute('aria-hidden','false'); setDockButton(true); sync(); if(bridgeReady&&!deck.length) send('deck'); if(lastNpPayload) applyNp(lastNpPayload); };
+  window.lacMiniCmd=function(cmd){ if(cmd==='toggle'&&!curId&&deck.length){ playIdx(sel); return; } send(cmd); };
   window.lacMiniSeek=function(e){ els(); var r=progEl.getBoundingClientRect(); var p=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)); send('seek',{pct:p}); fillEl.style.width=(p*100)+'%'; };
   window.lacMiniVolume=function(v){ send('volume',{value:(+v)/100}); };
+  window.lacMiniScroll=function(direction){
+    els(); if(!deckEl) return;
+    var amount=Math.max(240,Math.floor(deckEl.clientWidth*.72));
+    deckEl.scrollBy({left:(direction<0?-amount:amount),behavior:isLowSpec()?'auto':'smooth'});
+  };
 
-  els(); wire();
+  document.addEventListener('fullscreenchange',function(){
+    if(!document.fullscreenElement&&nativeFullRequested&&stage&&stage.classList.contains('full')){
+      nativeFullRequested=false;
+      window.lacMiniMinimize();
+    }
+  });
+
+  els(); wire(); updateDeckNav();
 })();
 </script>
 
