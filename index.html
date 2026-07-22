@@ -979,12 +979,18 @@ function _doSync() {
              : 52;
   const radioVisible = !!rw && !document.body.classList.contains('radio-hidden') && !document.body.classList.contains('radio-idle') && rw.style.display !== 'none';
   const radioH = radioVisible ? Math.max(0, Math.round(rw.getBoundingClientRect().height || rw.offsetHeight || 0)) : 0;
+  // Lācītis mini dock shares the same bottom-console slot as the radio.
+  const lac = document.getElementById('lacMiniConsole');
+  const lacVisible = !!lac && lac.classList.contains('docked');
+  const lacH = lacVisible ? Math.max(0, Math.round(lac.getBoundingClientRect().height || 0)) : 0;
+  const consoleH = Math.max(radioH, lacH);
+  const consoleVisible = radioVisible || lacVisible;
   root.style.setProperty('--btnbar-h', btnH + 'px');
-  const safeGap = radioVisible ? 10 : 6;
+  const safeGap = consoleVisible ? 10 : 6;
   root.style.setProperty('--calendar-safe-gap', safeGap + 'px');
-  root.style.setProperty('--calendar-bottom', (radioH + btnH + safeGap) + 'px');
+  root.style.setProperty('--calendar-bottom', (consoleH + btnH + safeGap) + 'px');
   if (iframe && iframe.contentWindow) {
-    try { iframe.contentWindow.postMessage({ type: 'hostLayoutChanged', radioVisible, radioHeight: radioH, buttonBarHeight: btnH }, '*'); } catch(e) {}
+    try { iframe.contentWindow.postMessage({ type: 'hostLayoutChanged', radioVisible: consoleVisible, radioHeight: consoleH, buttonBarHeight: btnH }, '*'); } catch(e) {}
   }
 }
 
@@ -1992,7 +1998,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 	    <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
 
-	    <button id="lacitisDockBtn" onclick="openLacitisLauncher()" title="Lācītis dežūra">
+	    <button id="lacitisDockBtn" onclick="openLacMini()" title="Lācītis mūzika">
       <div style="width:7px;height:7px;border-radius:50%;background:#f59e0b;box-shadow:0 0 7px #f59e0b;flex-shrink:0;animation:rledPulse 3.1s ease-in-out infinite;"></div>
       <svg class="dock-px" width="17" height="15" viewBox="0 0 9 8" shape-rendering="crispEdges" aria-hidden="true"><rect x="0" y="0" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="7" y="0" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="0" y="1" width="1.04" height="1.04" fill="#e2e8f0"/><rect x="1" y="1" width="1.04" height="1.04" fill="#cbd5e1"/><rect x="2" y="1" width="1.04" height="1.04" fill="#e2e8f0"/><rect x="6" y="1" width="1.04" height="1.04" fill="#e2e8f0"/><rect x="7" y="1" width="1.04" height="1.04" fill="#cbd5e1"/><rect x="8" y="1" width="1.04" height="1.04" fill="#e2e8f0"/><rect x="1" y="2" width="7.04" height="1.04" fill="#e2e8f0"/><rect x="0" y="3" width="9.04" height="1.04" fill="#e2e8f0"/><rect x="0" y="4" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="3" y="4" width="3.04" height="1.04" fill="#e2e8f0"/><rect x="7" y="4" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="0" y="5" width="9.04" height="1.04" fill="#e2e8f0"/><rect x="1" y="6" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="3" y="6" width="1.04" height="1.04" fill="#cbd5e1"/><rect x="4" y="6" width="1.04" height="1.04" fill="#0b1220"/><rect x="5" y="6" width="1.04" height="1.04" fill="#cbd5e1"/><rect x="6" y="6" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="2" y="7" width="5.04" height="1.04" fill="#e2e8f0"/></svg>
       <span>LĀCĪTIS</span>
@@ -2069,6 +2075,297 @@ window.addEventListener('DOMContentLoaded', () => {
     <span style="opacity:.75;">♫</span>
   </button>
 </div>
+
+<!-- ═══ LĀCĪTIS MINI — Cover Flow music dock (drives one hidden embed=mini iframe) ═══ -->
+<style id="lacMiniStyles">
+/* Lācītis mini — docks full-width at the bottom like the radio console.
+   Spotify × Apple aesthetic: neutral dark, green accent, no orange. */
+#lacMiniConsole{display:flex;position:fixed;left:0;right:0;bottom:var(--btnbar-h);width:100%;height:clamp(216px,29vh,260px);z-index:500;
+  background:#000;border-top:1px solid rgba(255,255,255,.08);
+  box-shadow:0 -14px 42px rgba(0,0,0,.6);color:#fff;font-family:'Space Grotesk',system-ui,sans-serif;
+  flex-direction:column;padding:9px 16px 9px;box-sizing:border-box;
+  transform:translateY(115%);opacity:0;pointer-events:none;
+  transition:transform .35s cubic-bezier(.4,0,.2,1),opacity .28s ease;will-change:transform,opacity;contain:layout style;}
+#lacMiniConsole.docked{transform:translateY(0);opacity:1;pointer-events:auto;}
+#lacMiniConsole .lm-head{display:flex;align-items:center;gap:10px;height:28px;flex-shrink:0;}
+#lacMiniConsole .lm-brand{display:flex;align-items:center;gap:7px;font:800 11px/1 'Space Grotesk',system-ui;letter-spacing:.12em;text-transform:uppercase;color:#e6e6e6;flex-shrink:0;}
+#lacMiniConsole .lm-search{flex:1;display:flex;align-items:center;gap:8px;max-width:360px;height:28px;padding:0 11px;border-radius:14px;background:rgba(255,255,255,.07);border:1px solid transparent;transition:background .15s,border-color .15s;}
+#lacMiniConsole .lm-search:focus-within{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.22);}
+#lacMiniConsole .lm-search svg{width:14px;height:14px;fill:#9a9a9a;flex-shrink:0;}
+#lacMiniConsole .lm-search input{flex:1;min-width:0;background:none;border:0;outline:0;color:#fff;caret-color:#1ed760;font:500 12.5px/1 'Space Grotesk',system-ui;-webkit-appearance:none;appearance:none;}
+#lacMiniConsole .lm-search input:focus,#lacMiniConsole .lm-search input:focus-visible,#lacMiniConsole .lm-search input:active{outline:none !important;box-shadow:none !important;border:0 !important;}
+#lacMiniConsole .lm-search input::placeholder{color:#8a8a8a;}
+#lacMiniConsole .lm-search input::-webkit-search-cancel-button{-webkit-appearance:none;}
+#lacMiniConsole .lm-head-btns{display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0;}
+#lacMiniConsole .lm-hbtn{width:28px;height:28px;border-radius:8px;border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.05);color:#e8e8e8;font:700 14px/1 system-ui;cursor:pointer;display:grid;place-items:center;transition:background .15s;}
+#lacMiniConsole .lm-hbtn:hover{background:rgba(255,255,255,.14);}
+#lacMiniConsole .lm-login{display:flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:14px;border:1px solid rgba(30,215,96,.42);background:rgba(30,215,96,.1);color:#1ed760;font:700 10.5px/1 'Space Grotesk',system-ui;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:background .15s;}
+#lacMiniConsole .lm-login:hover{background:rgba(30,215,96,.2);}
+#lacMiniConsole .lm-login svg{width:14px;height:14px;fill:currentColor;flex-shrink:0;}
+/* body: now-playing info column (left) + cover flow (right) — Apple × Spotify.
+   Transport controls live in a centered row BELOW the covers, iPod-style. */
+#lacMiniConsole .lm-body{flex:1;min-height:0;display:flex;align-items:stretch;gap:20px;margin-top:6px;}
+#lacMiniInfo{flex:0 0 clamp(190px,28%,320px);min-width:0;display:flex;flex-direction:column;justify-content:center;gap:7px;}
+#lacMiniNowLbl{display:flex;align-items:center;gap:6px;font:700 9.5px/1 'Space Grotesk',system-ui;letter-spacing:.15em;text-transform:uppercase;color:#1ed760;}
+#lacMiniNowLbl .dot{width:6px;height:6px;border-radius:50%;background:#1ed760;box-shadow:0 0 8px rgba(30,215,96,.85);}
+#lacMiniTitle{font:700 16px/1.22 'Space Grotesk',system-ui;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+#lacMiniArtist{font:500 12.5px/1.2 'Space Grotesk',system-ui;color:#a7a7a7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#lacMiniProg{position:relative;height:4px;border-radius:2px;background:rgba(255,255,255,.14);cursor:pointer;flex-shrink:0;margin-top:7px;}
+#lacMiniProgFill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:2px;background:#1ed760;}
+#lacMiniBottom{position:relative;display:flex;align-items:center;justify-content:center;height:52px;flex-shrink:0;}
+#lacMiniCtrls{display:flex;align-items:center;gap:20px;}
+#lacMiniCtrls .lm-cbtn{width:34px;height:34px;border:0;background:none;color:#cfcfcf;cursor:pointer;display:grid;place-items:center;transition:color .15s,transform .1s;}
+#lacMiniCtrls .lm-cbtn:hover{color:#fff;}
+#lacMiniCtrls .lm-cbtn:active{transform:scale(.9);}
+#lacMiniCtrls .lm-cbtn svg{width:20px;height:20px;fill:currentColor;}
+#lacMiniPlay{width:44px !important;height:44px !important;border-radius:50% !important;background:#1ed760 !important;color:#000 !important;box-shadow:0 3px 12px rgba(30,215,96,.42);}
+#lacMiniPlay:hover{transform:scale(1.06);}
+#lacMiniPlay svg{width:22px;height:22px;}
+#lacMiniVol{position:absolute;right:4px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:7px;}
+#lacMiniVol svg{fill:#9a9a9a;flex-shrink:0;}
+#lacMiniVol input{width:76px;accent-color:#1DB954;}
+#lacMiniDeck{flex:1;position:relative;min-width:0;perspective:900px;overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:none;cursor:grab;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 8%,#000 92%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 8%,#000 92%,transparent 100%);}
+#lacMiniDeck.grabbing{cursor:grabbing;}
+#lacMiniTrack{position:absolute;inset:0;transform-style:preserve-3d;}
+#lacMiniTrack.anim .lm-cover{transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s;}
+.lm-cover{position:absolute;left:50%;top:50%;width:var(--lac-cw,128px);height:var(--lac-cw,128px);margin:calc(var(--lac-cw,128px) / -2) 0 0 calc(var(--lac-cw,128px) / -2);
+  border-radius:9px;overflow:hidden;cursor:pointer;background:#1c1c1e;box-shadow:0 6px 18px rgba(0,0,0,.6);
+  -webkit-box-reflect:below 3px linear-gradient(transparent,transparent 64%,rgba(255,255,255,.08));will-change:transform;}
+.lm-cover img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;-webkit-user-drag:none;}
+.lm-cover.active{box-shadow:0 8px 24px rgba(30,215,96,.34),0 0 0 2px rgba(30,215,96,.62);}
+#lacMiniEmpty{position:absolute;inset:0;display:grid;place-items:center;color:#8a8a8a;font:600 12px/1.4 'Space Grotesk',system-ui;text-align:center;pointer-events:none;}
+@media(max-width:760px){#lacMiniInfo{flex-basis:150px;gap:5px;}#lacMiniTitle{font-size:14px;-webkit-line-clamp:2;}#lacMiniVol{display:none;}#lacMiniConsole .lm-login span:last-child{display:none;}#lacMiniConsole .lm-search{max-width:none;}#lacMiniConsole .lm-body{gap:14px;}}
+@media(max-width:520px){#lacMiniInfo{flex-basis:120px;}}
+#lacMiniStage{position:fixed;left:8px;bottom:8px;width:340px;height:1px;opacity:0;pointer-events:none;overflow:hidden;z-index:-1;background:#050609;display:flex;flex-direction:column;border:0;}
+#lacMiniStage.full{left:50%;top:50%;bottom:auto;transform:translate(-50%,-50%);width:min(1180px,calc(100vw - 44px));height:min(820px,calc(100dvh - 44px));opacity:1;pointer-events:auto;z-index:171340;border-radius:22px;border:1px solid rgba(255,255,255,.16);box-shadow:0 22px 70px rgba(0,0,0,.68);}
+#lacMiniStageTop{display:none;height:42px;align-items:center;justify-content:space-between;gap:12px;padding:0 10px 0 14px;border-bottom:1px solid rgba(255,255,255,.10);background:#15171c;color:#f7f7f7;font:900 12px/1 'Space Grotesk',system-ui;letter-spacing:.08em;text-transform:uppercase;flex-shrink:0;}
+#lacMiniStage.full #lacMiniStageTop{display:flex;}
+#lacMiniStageTop .lm-hbtn{width:32px;height:32px;border-radius:11px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#f7f7f7;font:900 18px/1 system-ui;cursor:pointer;}
+#lacMiniFrame{flex:1;width:100%;height:100%;min-height:0;border:0;background:#050609;display:block;}
+</style>
+
+<div id="lacMiniStage" aria-hidden="true">
+  <div id="lacMiniStageTop">
+    <span style="display:flex;align-items:center;gap:9px;"><img src="https://lacitis.pages.dev/lacitis-bear.png" alt="" style="width:24px;height:20px;object-fit:contain;image-rendering:pixelated;"><span>Lācītis</span><span style="opacity:.75;">♫</span></span>
+    <span style="display:flex;gap:8px;">
+      <button class="lm-hbtn" onclick="lacMiniMinimize()" title="Minimizēt" aria-label="Minimizēt">−</button>
+      <button class="lm-hbtn" onclick="lacMiniClose()" title="Aizvērt" aria-label="Aizvērt">×</button>
+    </span>
+  </div>
+  <iframe id="lacMiniFrame" title="Lācītis" referrerpolicy="no-referrer" allow="autoplay"></iframe>
+</div>
+
+<div id="lacMiniConsole" aria-hidden="true">
+  <div class="lm-head">
+    <span class="lm-brand"><span>🐻‍❄️</span><span>Lācītis</span></span>
+    <label class="lm-search">
+      <svg viewBox="0 0 24 24"><path d="M10.5 3a7.5 7.5 0 0 1 5.9 12.1l4.7 4.7-1.4 1.4-4.7-4.7A7.5 7.5 0 1 1 10.5 3zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11z"/></svg>
+      <input id="lacMiniSearch" type="search" placeholder="Meklēt mūziku…" autocomplete="off" spellcheck="false">
+    </label>
+    <span class="lm-head-btns">
+      <button class="lm-login" onclick="openLacitisLauncher()" title="Ielogoties ar savu dežūru"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-4.1 0-8 2.1-8 5v1h16v-1c0-2.9-3.9-5-8-5z"/></svg><span>Ielogoties</span></button>
+      <button class="lm-hbtn" onclick="lacMiniMaximize()" title="Atvērt pilno Lācīti" aria-label="Maksimizēt">▣</button>
+      <button class="lm-hbtn" onclick="lacMiniClose()" title="Aizvērt" aria-label="Aizvērt">×</button>
+    </span>
+  </div>
+  <div class="lm-body">
+    <div id="lacMiniInfo">
+      <div id="lacMiniNowLbl"><span class="dot"></span><span>Atskaņo</span></div>
+      <div id="lacMiniTitle">—</div>
+      <div id="lacMiniArtist"></div>
+    </div>
+    <div id="lacMiniDeck">
+      <div id="lacMiniTrack"></div>
+      <div id="lacMiniEmpty">Ielādē mūziku…</div>
+    </div>
+  </div>
+  <div id="lacMiniProg" onclick="lacMiniSeek(event)"><div id="lacMiniProgFill"></div></div>
+  <div id="lacMiniBottom">
+    <div id="lacMiniCtrls">
+      <button class="lm-cbtn" onclick="lacMiniCmd('prev')" title="Iepriekšējā"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+      <button class="lm-cbtn" id="lacMiniPlay" onclick="lacMiniCmd('toggle')" title="Atskaņot/Pauze"><svg viewBox="0 0 24 24" id="lacMiniPlayIco"><path d="M8 5v14l11-7z"/></svg></button>
+      <button class="lm-cbtn" onclick="lacMiniCmd('next')" title="Nākamā"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+    </div>
+    <span id="lacMiniVol"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3z"/></svg><input type="range" min="0" max="100" value="100" oninput="lacMiniVolume(this.value)" aria-label="Skaļums"></span>
+  </div>
+</div>
+
+<script>
+(function(){
+  var isLocal=/^(localhost|127\.0\.0\.1)$/.test(location.hostname)||location.protocol==='file:';
+  var LAC_BASE=isLocal?'http://127.0.0.1:5174':'https://lacitis.pages.dev';
+  var MINI_URL=LAC_BASE+'/?embed=mini';
+  var frame,cons,stage,deckEl,track,empty,titleEl,artistEl,fillEl,playIco,progEl,searchEl;
+  var deck=[], pos=0, sel=0, curId=null, loaded=false, wired=false;
+  var spacing=44, snapTO=0, searchTO=0, autoTO=0;
+  var dragging=false, startX=0, startPos=0, moved=false;
+  var morePending=false, moreCooldownUntil=0, DECK_CAP=150;
+
+  function $(id){ return document.getElementById(id); }
+  function els(){
+    frame=$('lacMiniFrame'); cons=$('lacMiniConsole'); stage=$('lacMiniStage');
+    deckEl=$('lacMiniDeck'); track=$('lacMiniTrack'); empty=$('lacMiniEmpty');
+    titleEl=$('lacMiniTitle'); artistEl=$('lacMiniArtist'); fillEl=$('lacMiniProgFill');
+    playIco=$('lacMiniPlayIco'); progEl=$('lacMiniProg'); searchEl=$('lacMiniSearch');
+  }
+  function send(cmd,extra){ try{ frame&&frame.contentWindow&&frame.contentWindow.postMessage(Object.assign({type:'lac_mini_cmd',cmd:cmd},extra||{}),'*'); }catch(e){} }
+  function coverUrl(t){ return t.thumbnail||('https://i.ytimg.com/vi/'+t.id+'/mqdefault.jpg'); }
+  function sync(){ try{ if(typeof syncShellLayout==='function') syncShellLayout(); }catch(e){} try{ if(typeof updateBuddyUiSuppression==='function') updateBuddyUiSuppression(); }catch(e){} }
+
+  function sizeCovers(){
+    if(!deckEl) return;
+    var h=deckEl.clientHeight||130;
+    // Active cover scales ×1.16 and carries a 2px ring + glow — size it so the
+    // scaled cover plus ~16px of air always fits inside the deck height.
+    var cw=Math.max(72,Math.min(150,Math.floor((h-26)/1.16)));
+    deckEl.style.setProperty('--lac-cw',cw+'px');
+    spacing=Math.round(cw*0.46);
+    layout();
+  }
+  function layout(){
+    if(!track) return;
+    var covers=track.children;
+    for(var i=0;i<covers.length;i++){
+      var el=covers[i], off=i-pos, abs=Math.abs(off), t=Math.max(0,1-abs), dir=off<0?-1:1;
+      // Far covers: fully hidden (visibility) so they cost no GPU/compositor
+      // work — keeps the deck cheap even when it grows into the hundreds.
+      if(abs>4.3){ if(el.style.visibility!=='hidden'){ el.style.visibility='hidden'; el.style.opacity='0'; el.style.pointerEvents='none'; } continue; }
+      el.style.visibility='visible'; el.style.opacity='1'; el.style.pointerEvents='auto';
+      var x=off*spacing + dir*Math.min(abs,1)*(spacing*1.05);
+      var rot=Math.max(-56,Math.min(56,-off*56));
+      var z=t*72 - Math.min(abs,4)*30;
+      var sc=1+t*0.16;
+      el.style.transform='translateX('+x+'px) translateZ('+z+'px) rotateY('+rot+'deg) scale('+sc+')';
+      el.style.zIndex=String(200-Math.round(abs*10));
+      if(abs<0.5) el.classList.add('active'); else el.classList.remove('active');
+    }
+  }
+  var lastLabelIdx=-1, lastNpId=null;
+  function showLabel(i){ var t=deck[i]; if(!t||!titleEl) return; titleEl.textContent=t.title||'—'; artistEl.textContent=t.author||''; }
+  function setPos(p,animate){
+    var max=Math.max(0,deck.length-1);
+    pos=Math.max(0,Math.min(max,p));
+    if(track){ if(animate) track.classList.add('anim'); else track.classList.remove('anim'); }
+    layout();
+    // Live preview: title/artist follow the centered cover as you scroll.
+    var ri=Math.round(pos);
+    if(ri!==lastLabelIdx){ lastLabelIdx=ri; showLabel(ri); }
+    // Endless deck: nearing the end → quietly ask Lācītis for more tracks.
+    if(deck.length && pos>deck.length-6) maybeMore();
+  }
+  function maybeMore(){
+    if(morePending||deck.length>=DECK_CAP||Date.now()<moreCooldownUntil) return;
+    morePending=true;
+    send('more',{ids:deck.map(function(t){return t.id;})});
+    setTimeout(function(){ morePending=false; },9000);
+  }
+  function snap(){
+    sel=Math.round(pos); setPos(sel,true);
+    // Auto-play the album you settled on (small delay so fast flicks don't spam).
+    clearTimeout(autoTO);
+    autoTO=setTimeout(function(){ var t=deck[sel]; if(t&&t.id!==curId) playIdx(sel); },420);
+  }
+  function playIdx(i){
+    if(!deck.length) return;
+    var t=deck[i]; if(!t) return;
+    // Send the whole deck as the queue so playback auto-advances (YouTube/Spotify style).
+    var list=deck.map(function(x){ return {id:x.id,title:x.title,author:x.author,thumbnail:x.thumbnail}; });
+    send('play',{id:t.id,index:i,list:list});
+  }
+
+  function addCover(t,i){
+    var c=document.createElement('div'); c.className='lm-cover';
+    var img=document.createElement('img'); img.loading='lazy'; img.decoding='async'; img.src=coverUrl(t);
+    img.onerror=function(){ this.onerror=null; this.src='https://i.ytimg.com/vi/'+t.id+'/default.jpg'; };
+    c.appendChild(img);
+    c.addEventListener('click',function(){ if(moved) return; sel=i; setPos(i,true); playIdx(i); });
+    track.appendChild(c);
+  }
+  function appendDeck(tracks){
+    morePending=false;
+    if(!tracks||!tracks.length){ moreCooldownUntil=Date.now()+30000; return; }
+    var have={}; deck.forEach(function(t){ have[t.id]=1; });
+    var added=0;
+    tracks.forEach(function(t){
+      if(!t||!t.id||have[t.id]||deck.length>=DECK_CAP) return;
+      have[t.id]=1; deck.push(t); addCover(t,deck.length-1); added++;
+    });
+    if(added) layout();
+  }
+  function renderDeck(tracks,query){
+    els(); deck=tracks||[];
+    track.innerHTML='';
+    if(!deck.length){ empty.style.display=''; empty.textContent=query?'Nekas nav atrasts':'Ielādē mūziku…'; return; }
+    empty.style.display='none';
+    deck.forEach(function(t,i){ addCover(t,i); });
+    sizeCovers();
+    var start=0;
+    if(!query&&curId){ var idx=deck.findIndex(function(t){return t.id===curId;}); if(idx>=0) start=idx; }
+    lastLabelIdx=-1; sel=start; setPos(start,false);
+  }
+  function setPlayIco(p){ if(playIco) playIco.innerHTML=p?'<path d="M6 4h4v16H6zm8 0h4v16h-4z"/>':'<path d="M8 5v14l11-7z"/>'; }
+  function applyNp(d){
+    els();
+    fillEl.style.width=((d.pct||0)*100)+'%';
+    setPlayIco(!!d.playing);
+    curId=d.id||null;
+    // Only recenter when the PLAYING track actually changes (e.g. auto-advance),
+    // so manual browsing during playback isn't yanked back every tick.
+    if(d.id && d.id!==lastNpId){
+      lastNpId=d.id;
+      var idx=deck.findIndex(function(t){return t.id===d.id;});
+      if(idx>=0){ sel=idx; setPos(idx,true); }
+      else if(titleEl){ lastLabelIdx=-1; titleEl.textContent=d.title||'—'; artistEl.textContent=d.author||''; }
+    }
+  }
+
+  function wire(){
+    if(wired||!deckEl) return; wired=true;
+    var gx=function(e){ return e.touches?e.touches[0].clientX:e.clientX; };
+    deckEl.addEventListener('mousedown',function(e){ dragging=true; moved=false; clearTimeout(autoTO); startX=gx(e); startPos=pos; deckEl.classList.add('grabbing'); e.preventDefault(); });
+    deckEl.addEventListener('touchstart',function(e){ dragging=true; moved=false; clearTimeout(autoTO); startX=gx(e); startPos=pos; },{passive:true});
+    window.addEventListener('mousemove',function(e){ if(!dragging) return; var dx=gx(e)-startX; if(Math.abs(dx)>3) moved=true; setPos(startPos-dx/spacing,false); });
+    window.addEventListener('touchmove',function(e){ if(!dragging) return; var dx=gx(e)-startX; if(Math.abs(dx)>3) moved=true; setPos(startPos-dx/spacing,false); },{passive:true});
+    var end=function(){ if(!dragging) return; dragging=false; deckEl.classList.remove('grabbing'); snap(); setTimeout(function(){ moved=false; },30); };
+    window.addEventListener('mouseup',end); window.addEventListener('touchend',end);
+    deckEl.addEventListener('wheel',function(e){ e.preventDefault(); clearTimeout(autoTO); setPos(pos+(e.deltaY>0?0.6:-0.6),false); clearTimeout(snapTO); snapTO=setTimeout(snap,130); },{passive:false});
+    if(searchEl){
+      searchEl.addEventListener('input',function(){ clearTimeout(searchTO); var q=searchEl.value.trim(); searchTO=setTimeout(function(){ send('search',{q:q}); }, q?360:0); });
+      searchEl.addEventListener('keydown',function(e){ if(e.key==='Enter'){ clearTimeout(searchTO); send('search',{q:searchEl.value.trim()}); } });
+    }
+    window.addEventListener('resize',sizeCovers);
+  }
+
+  window.addEventListener('message',function(e){
+    if(!frame||e.source!==frame.contentWindow) return;
+    var d=e.data; if(!d||typeof d!=='object') return;
+    if(d.type==='lac_mini_ready'){ send('deck'); }
+    else if(d.type==='lac_mini_deck'){ renderDeck(d.tracks,d.query); }
+    else if(d.type==='lac_mini_append'){ appendDeck(d.tracks); }
+    else if(d.type==='lac_mini_np'){ applyNp(d); }
+  });
+
+  window.openLacMini=function(){
+    els(); wire();
+    if(!loaded){ frame.src=MINI_URL; loaded=true; }
+    // Claim the bottom-console slot: hide the radio so they never overlap.
+    try{ var rw=document.getElementById('radioWindow'); if(rw){ rw.style.display='none'; document.body.classList.add('radio-hidden'); } }catch(e){}
+    cons.classList.add('docked'); cons.setAttribute('aria-hidden','false');
+    stage.classList.remove('full'); stage.setAttribute('aria-hidden','true');
+    sync();
+    setTimeout(function(){ sizeCovers(); send('deck'); },360);
+  };
+  window.lacMiniClose=function(){ els(); cons.classList.remove('docked'); cons.setAttribute('aria-hidden','true'); stage.classList.remove('full'); stage.setAttribute('aria-hidden','true'); sync(); };
+  window.lacMiniMaximize=function(){ els(); cons.classList.remove('docked'); stage.classList.add('full'); stage.setAttribute('aria-hidden','false'); sync(); };
+  window.lacMiniMinimize=function(){ els(); stage.classList.remove('full'); stage.setAttribute('aria-hidden','true'); cons.classList.add('docked'); cons.setAttribute('aria-hidden','false'); sync(); setTimeout(sizeCovers,40); };
+  window.lacMiniCmd=function(cmd){ if(cmd==='toggle'&&!curId&&deck.length){ playIdx(Math.round(pos)); return; } send(cmd); };
+  window.lacMiniSeek=function(e){ els(); var r=progEl.getBoundingClientRect(); var p=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)); send('seek',{pct:p}); fillEl.style.width=(p*100)+'%'; };
+  window.lacMiniVolume=function(v){ send('volume',{value:(+v)/100}); };
+
+  els(); wire();
+})();
+</script>
 
 <div id="mobileQrModal" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171000;background:rgba(2,4,8,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:20px;">
   <div id="mobileQrBackdrop" onclick="closeMobileQrModal()" style="position:absolute;inset:0;"></div>
@@ -3430,7 +3727,8 @@ function updateBuddyUiSuppression() {
 	    isBuddyOverlayVisible('pusdienasSheet') ||
 	    isBuddyOverlayVisible('planotajsSheet') ||
 	    isBuddyOverlayVisible('lacitisSheet') ||
-    isBuddyOverlayVisible('lacitisFull');
+    isBuddyOverlayVisible('lacitisFull') ||
+    (function(){ var m=document.getElementById('lacMiniConsole'); var s=document.getElementById('lacMiniStage'); return !!((m && m.classList.contains('docked')) || (s && s.classList.contains('full'))); })();
   cls.toggle('mk-buddy-ui-open', active);
 }
 window.updateBuddyUiSuppression = updateBuddyUiSuppression;
@@ -4616,6 +4914,42 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
 .mk-heart{position:absolute;font-size:13px;animation:mkHF 1.1s ease-out forwards;}
 @keyframes mkNoteFloat{0%{opacity:0;transform:translateY(0) translateX(0) scale(.7)}15%{opacity:1}100%{opacity:0;transform:translateY(-42px) translateX(var(--mx,0px)) scale(1.1)}}
 .mk-note{position:absolute;font-size:15px;font-weight:900;line-height:1;animation:mkNoteFloat 1.25s ease-out forwards;text-shadow:none;}
+
+/* ── Coffee stats: subtle pill button + today-RG strip + flat panel ──
+   Perf rules: no blur, no glow, no filters, no timers — render on demand. */
+#mk-buddy-stats-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:none;color:rgba(255,255,255,.44);cursor:pointer;padding:2px 4px;border-radius:8px;transition:color .15s,background .15s;}
+#mk-buddy-stats-btn:hover{color:#64d2ff;background:rgba(100,210,255,.08);}
+#mk-buddy-stats-btn svg{width:14px;height:14px;fill:currentColor;}
+#mk-buddy-stats-btn span{font:800 6.5px/1 'Space Grotesk',system-ui;letter-spacing:.1em;color:inherit;}
+#mk-buddy-rg-row{display:none;align-items:center;justify-content:center;gap:6px;position:absolute;left:50%;transform:translateX(-50%);bottom:-22px;white-space:nowrap;pointer-events:none;}
+#mk-buddy-rg-row.is-on{display:flex;}
+.mk-rgchip{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:9px;background:rgba(16,17,22,.85);border:1px solid rgba(255,255,255,.09);font:700 9px/1 'Space Grotesk',system-ui;color:rgba(255,255,255,.66);letter-spacing:.04em;}
+.mk-rgchip i{font-style:normal;font-size:10px;line-height:1;}
+.mk-rgchip b{font-weight:800;color:#64d2ff;font-variant-numeric:tabular-nums;}
+#mkCoffeeStats{display:none;position:fixed;right:18px;bottom:96px;z-index:172000;width:min(360px,calc(100vw - 28px));border-radius:16px;border:1px solid #21232c;background:#101116;color:#f2f4f8;font-family:'Space Grotesk',system-ui,sans-serif;padding:14px 14px 12px;box-shadow:0 16px 44px rgba(0,0,0,.55);}
+#mkCoffeeStats.open{display:block;}
+#mkCoffeeStats .cs-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+#mkCoffeeStats .cs-title{font:800 11px/1 'Space Grotesk',system-ui;letter-spacing:.12em;text-transform:uppercase;color:#9a9da6;}
+#mkCoffeeStats .cs-close{width:24px;height:24px;border-radius:8px;border:1px solid #21232c;background:#14161c;color:#c9ccd4;font:700 13px/1 system-ui;cursor:pointer;}
+#mkCoffeeStats .cs-bars{display:flex;align-items:flex-end;gap:2px;height:64px;margin-bottom:4px;}
+#mkCoffeeStats .cs-bar.fut i{background:#1b1d24;}
+#mkCoffeeStats .cs-sum .cs-month{margin-left:auto;color:#64d2ff;font-weight:800;font-variant-numeric:tabular-nums;}
+#mkCoffeeStats .cs-bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:0;cursor:pointer;background:none;border:0;padding:0;min-width:0;}
+#mkCoffeeStats .cs-bar i{display:block;width:100%;max-width:16px;border-radius:3px 3px 0 0;background:#2a2d38;min-height:2px;}
+#mkCoffeeStats .cs-bar.sel i{background:#64d2ff;}
+#mkCoffeeStats .cs-bar:hover i{background:#3d4150;}
+#mkCoffeeStats .cs-bar.sel:hover i{background:#64d2ff;}
+#mkCoffeeStats .cs-days{display:flex;gap:2px;margin-bottom:10px;}
+#mkCoffeeStats .cs-days span{flex:1;min-width:0;text-align:center;font:600 7px/1 'Space Grotesk',system-ui;color:#5e616b;font-variant-numeric:tabular-nums;overflow:visible;}
+#mkCoffeeStats .cs-days span.sel{color:#64d2ff;font-weight:800;}
+#mkCoffeeStats .cs-sum{display:flex;align-items:baseline;gap:8px;margin-bottom:8px;font:600 11px/1.2 'Space Grotesk',system-ui;color:#9a9da6;}
+#mkCoffeeStats .cs-sum b{font:800 18px/1 'Space Grotesk',system-ui;color:#fff;font-variant-numeric:tabular-nums;}
+#mkCoffeeStats .cs-rows{max-height:170px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;}
+#mkCoffeeStats .cs-row{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:9px;background:#14161c;font:600 11.5px/1.2 'Space Grotesk',system-ui;color:#d9dce3;}
+#mkCoffeeStats .cs-row .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#mkCoffeeStats .cs-row .e{width:14px;text-align:center;font-size:11px;}
+#mkCoffeeStats .cs-row b{color:#64d2ff;font-weight:800;font-variant-numeric:tabular-nums;}
+#mkCoffeeStats .cs-empty{padding:10px 8px;font:600 11px/1.4 'Space Grotesk',system-ui;color:#5e616b;text-align:center;}
 </style>
 
 <div id="mk-buddy">
@@ -4646,6 +4980,10 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
         <div class="mk-buddy-coffee-srcs" id="mk-buddy-coffee-srcs" aria-hidden="true"></div>
         <div class="mk-buddy-coffee-pop" id="mk-buddy-coffee-pop" aria-hidden="true"></div>
       </div>
+      <button id="mk-buddy-stats-btn" type="button" title="Kafijas statistika — šis mēnesis" aria-label="Kafijas statistika">
+        <svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="1" y="9" width="3" height="6"/><rect x="6" y="5" width="3" height="10"/><rect x="11" y="1" width="3" height="14"/></svg>
+        <span>STATISTIKA</span>
+      </button>
       <span class="mk-buddy-sep"></span>
       <div class="mk-buddy-stat">
         <div class="mk-buddy-v-stack">
@@ -4666,6 +5004,7 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
         <canvas class="mk-buddy-prop-cvs" id="mk-buddy-prop"></canvas>
         <canvas class="mk-buddy-prop-cvs" id="mk-buddy-bolus"></canvas>
       </div>
+      <div id="mk-buddy-rg-row" aria-hidden="true"></div>
     </div>
     <canvas id="mk-buddy-status"></canvas>
     <canvas id="mk-buddy-canvas"></canvas>
@@ -4673,6 +5012,161 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
     </div>
   </div>
 </div>
+
+<div id="mkCoffeeStats" aria-hidden="true">
+  <div class="cs-head">
+    <span class="cs-title">☕ Kafijas statistika</span>
+    <button class="cs-close" type="button" aria-label="Aizvērt">×</button>
+  </div>
+  <div class="cs-bars" id="mkCsBars"></div>
+  <div class="cs-days" id="mkCsDays"></div>
+  <div class="cs-sum" id="mkCsSum"></div>
+  <div class="cs-rows" id="mkCsRows"></div>
+</div>
+
+<script>
+/* ── Coffee stats panel + today-RG strip ──
+   Reads the same-origin localStorage the calendar iframe writes
+   (minkaCoffeeCountsV1 / minka_emoji_v2). Zero timers: the strip refreshes
+   only when the calendar posts day-state, the panel renders only on open. */
+(function(){
+  'use strict';
+  var API='https://minka-coffee-api.gamernr1elite.workers.dev';
+  var panel=null, selDay='', lastRowDigest='', fetchedOnce=false;
+  function $id(i){ return document.getElementById(i); }
+
+  function coffeeStore(){ try{ return JSON.parse(localStorage.getItem('minkaCoffeeCountsV1')||'{}')||{}; }catch(e){ return {}; } }
+  function emojiMap(){ try{ return JSON.parse(localStorage.getItem('minka_emoji_v2')||'{}')||{}; }catch(e){ return {}; } }
+  function dayKey(d){ return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear(); }
+  var MONTHS_LV=['Janvāris','Februāris','Marts','Aprīlis','Maijs','Jūnijs','Jūlijs','Augusts','Septembris','Oktobris','Novembris','Decembris'];
+  function monthDays(){
+    var n=new Date(), last=new Date(n.getFullYear(),n.getMonth()+1,0).getDate(), out=[];
+    for(var i=1;i<=last;i++) out.push(dayKey(new Date(n.getFullYear(),n.getMonth(),i)));
+    return out;
+  }
+  function pastMonthDays(){
+    var n=new Date(), out=[];
+    for(var i=1;i<=n.getDate();i++) out.push(dayKey(new Date(n.getFullYear(),n.getMonth(),i)));
+    return out;
+  }
+  function dayTotal(store,day){ var m=store[day]||{},s=0; for(var k in m) s+=Math.max(0,Number(m[k])||0); return s; }
+  function prettyName(k){ return String(k||'').split(/\s+/).map(function(w){ return w? w.charAt(0).toLocaleUpperCase('lv-LV')+w.slice(1):''; }).join(' '); }
+  function initials(name){ return String(name||'').trim().split(/\s+/).slice(0,2).map(function(w){ return (w[0]||'').toLocaleUpperCase('lv-LV'); }).join(''); }
+  function emojiFor(name){
+    var m=emojiMap(), key=String(name||'').trim();
+    if(m[key]) return m[key];
+    var lk=key.toLocaleLowerCase('lv-LV');
+    for(var k in m){ if(String(k).toLocaleLowerCase('lv-LV')===lk) return m[k]; }
+    return '';
+  }
+  function avgFor(name){
+    var store=coffeeStore(), key=String(name||'').trim().toLocaleLowerCase('lv-LV');
+    var sum=0, days=0;
+    for(var day in store){ var c=Number(store[day]&&store[day][key]); if(c>0){ sum+=c; days++; } }
+    return days? (sum/days):0;
+  }
+
+  /* Fill local store with any of the last 14 days missing from this device —
+     once per session, only while the panel is open, small parallel GETs. */
+  function fetchMissing(cb){
+    if(fetchedOnce){ cb(); return; }
+    fetchedOnce=true;
+    var store=coffeeStore();
+    var missing=pastMonthDays().filter(function(d){ return !store[d]; });
+    if(!missing.length){ cb(); return; }
+    Promise.all(missing.map(function(d){
+      return fetch(API+'/api/coffee?date='+encodeURIComponent(d),{cache:'no-store'})
+        .then(function(r){ return r.ok? r.json():null; }).catch(function(){ return null; });
+    })).then(function(res){
+      var s=coffeeStore(), changed=false;
+      res.forEach(function(data){
+        if(!data||!data.ok||!data.date||!data.counts) return;
+        var m={}; for(var n in data.counts){ var k=String(n).trim().toLocaleLowerCase('lv-LV'); if(k) m[k]=Math.max(0,Number(data.counts[n])||0); }
+        s[data.date]=Object.assign({},s[data.date]||{},m); changed=true;
+      });
+      if(changed){ try{ localStorage.setItem('minkaCoffeeCountsV1',JSON.stringify(s)); }catch(e){} }
+      cb();
+    }).catch(function(){ cb(); });
+  }
+
+  function renderPanel(){
+    var store=coffeeStore(), days=monthDays(), todayK=dayKey(new Date());
+    if(!selDay||days.indexOf(selDay)<0) selDay=todayK;
+    var title=panel.querySelector('.cs-title');
+    if(title) title.textContent='☕ Kafija — '+MONTHS_LV[new Date().getMonth()];
+    var totals=days.map(function(d){ return dayTotal(store,d); });
+    var max=Math.max.apply(null,totals.concat([1]));
+    var monthTot=totals.reduce(function(a,b){ return a+b; },0);
+    var todayNum=new Date().getDate();
+    $id('mkCsBars').innerHTML=days.map(function(d,i){
+      var fut=(i+1)>todayNum;
+      return '<button class="cs-bar'+(d===selDay?' sel':'')+(fut?' fut':'')+'" data-d="'+d+'" title="'+d+': '+totals[i]+'"><i style="height:'+Math.max(2,Math.round(totals[i]/max*60))+'px"></i></button>';
+    }).join('');
+    $id('mkCsDays').innerHTML=days.map(function(d,i){
+      var n=i+1, show=(d===selDay)||n===1||n%5===0;
+      return '<span class="'+(d===selDay?'sel':'')+'">'+(show?n:'')+'</span>';
+    }).join('');
+    var m=store[selDay]||{};
+    var rows=Object.keys(m).map(function(k){ return {k:k,c:Math.max(0,Number(m[k])||0)}; }).filter(function(r){ return r.c>0; }).sort(function(a,b){ return b.c-a.c; });
+    var tot=rows.reduce(function(a,r){ return a+r.c; },0);
+    $id('mkCsSum').innerHTML='<b>×'+tot+'</b><span>'+selDay+' · '+rows.length+' cilvēki</span><span class="cs-month">Mēnesī ×'+monthTot+'</span>';
+    $id('mkCsRows').innerHTML=rows.length? rows.map(function(r){
+      var nm=prettyName(r.k), em=emojiFor(nm);
+      return '<div class="cs-row"><span class="e">'+(em||'·')+'</span><span class="n">'+nm+'</span><b>×'+r.c+'</b></div>';
+    }).join('') : '<div class="cs-empty">Šajā dienā kafijas nav.</div>';
+  }
+
+  function openPanel(){
+    panel.classList.add('open'); panel.setAttribute('aria-hidden','false');
+    renderPanel();
+    fetchMissing(function(){ if(panel.classList.contains('open')) renderPanel(); });
+  }
+  function closePanel(){ panel.classList.remove('open'); panel.setAttribute('aria-hidden','true'); }
+
+  /* Today's radiographers strip: emoji + initials + avg cups/day. */
+  function renderRgRow(payload){
+    var row=$id('mk-buddy-rg-row'); if(!row) return;
+    var names=[], seen={};
+    (payload.rg||[]).forEach(function(w){
+      if(!w||w.done) return;
+      var n=String(w.name||'').trim(); if(!n) return;
+      var k=n.toLowerCase(); if(seen[k]) return; seen[k]=1; names.push(n);
+    });
+    var digest=names.join('|')+'@'+(payload.activeDateStr||'');
+    if(digest===lastRowDigest) return;
+    lastRowDigest=digest;
+    if(!names.length){ row.classList.remove('is-on'); row.innerHTML=''; return; }
+    row.innerHTML=names.slice(0,5).map(function(n){
+      var a=avgFor(n), em=emojiFor(n);
+      return '<span class="mk-rgchip" title="'+n+' · vidēji dienā">'+(em?'<i>'+em+'</i>':'')+initials(n)+(a?' <b>~'+(Math.round(a*10)/10)+'</b>':'')+'</span>';
+    }).join('');
+    row.classList.add('is-on');
+  }
+
+  function init(){
+    panel=$id('mkCoffeeStats'); if(!panel) return;
+    var btn=$id('mk-buddy-stats-btn');
+    if(btn) btn.addEventListener('click',function(e){ e.stopPropagation(); panel.classList.contains('open')? closePanel():openPanel(); });
+    panel.querySelector('.cs-close').addEventListener('click',closePanel);
+    $id('mkCsBars').addEventListener('click',function(e){
+      var b=e.target.closest('.cs-bar'); if(!b) return;
+      // Stop the bubble: renderPanel() replaces these bars, detaching e.target,
+      // which would make the document outside-click handler think we clicked out.
+      e.stopPropagation();
+      selDay=b.getAttribute('data-d'); renderPanel();
+    });
+    document.addEventListener('click',function(e){
+      if(panel.classList.contains('open') && !panel.contains(e.target) && e.target.id!=='mk-buddy-stats-btn' && !e.target.closest('#mk-buddy-stats-btn')) closePanel();
+    });
+    window.addEventListener('message',function(e){
+      var d=e.data;
+      if(d && d.type==='minka-calendar-selected-day-state' && d.payload) renderRgRow(d.payload);
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init,{once:true});
+  else init();
+})();
+</script>
 
 <script>
 (function(){
