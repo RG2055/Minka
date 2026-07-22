@@ -313,6 +313,12 @@ body.stars-active #stars-overlay{display:block;}
   100%{transform:translate3d(var(--dx, 0px), var(--dy, 0px), 0);}
 }
 </style>
+<style id="wm-cal-today-past">
+/* Worker-modal calendar: dim days already gone (dummy-proof). Opacity only —
+   no filters/blur, they cost GPU. Today's ring lives in #wm-cal-today-final. */
+#modal-calendar-days li.is-past{opacity:.38;}
+#modal-calendar-days li.is-past .shift-label{opacity:.8;}
+</style>
 </head>
 <body class="ai-collapsed">
 <noscript><div style="padding:40px;text-align:center;color:#ccc;font-family:sans-serif;background:#111;min-height:100vh;">JavaScript ir nepieciešams, lai šī lapa darbotos. / JavaScript is required.</div></noscript>
@@ -1039,7 +1045,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260715k"></script>
+<script src="js/calendar.js?v=20260722a"></script>
 <script src="js/calendar_extras_v4.js?v=20260715m"></script>
 <script src="js/fatigue.js?v=20260715e"></script>
 <script src="js/nightsplit.js?v=20260703a" defer></script>
@@ -12393,6 +12399,20 @@ window.addEventListener('message', function(e) {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
+</style>
+<style id="wm-cal-today-final">
+/* Worker-modal calendar TODAY highlight — loaded last so nothing outranks it.
+   Ice-blue, flat: no blur/glow shadows (GPU-cheap), inset ring only. */
+#worker-modal #modal-calendar-days li.is-today{
+  background:rgba(100,210,255,.16) !important;
+  box-shadow:inset 0 0 0 2.5px #64d2ff !important;
+  color:#fff !important;font-weight:800 !important;
+  opacity:1 !important;filter:none !important;
+}
+#worker-modal #modal-calendar-days li.is-today .shift-label{
+  background:#64d2ff !important;color:#06202e !important;font-weight:800 !important;
+}
+#worker-modal #modal-calendar-days li.is-past{opacity:.38 !important;}
 </style>
 </body>
 </html>

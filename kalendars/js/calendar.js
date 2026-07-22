@@ -5692,6 +5692,17 @@ function renderModalCalendar() {
     shiftMap.set(key, { label: shiftLabel, kind: shiftKind });
   });
 
+  // Today / past markers: today gets a highlight ring, days already gone are
+  // dimmed so the remaining month reads at a glance.
+  const _tn = new Date();
+  const _todayMid = new Date(_tn.getFullYear(), _tn.getMonth(), _tn.getDate()).getTime();
+  function dayFlags(dd, mmZeroBased, yy) {
+    const t = new Date(yy, mmZeroBased, dd).getTime();
+    if (t === _todayMid) return ' is-today';
+    if (t < _todayMid) return ' is-past';
+    return '';
+  }
+
   for (let i = firstDay; i > 0; i--) {
     const dayNum = lastDatePrev - i + 1;
     const prevMonthDate = new Date(year, month, 0);
@@ -5699,15 +5710,17 @@ function renderModalCalendar() {
     const prevMonth = prevMonthDate.getMonth();
     const key = dateKey(dayNum, prevMonth, prevYear);
     const shift = shiftMap.get(key);
-    if (shift) liTag += `<li class="inactive worked shift-${shift.kind}" data-dk="${key}">${dayNum}<span class="shift-label">${shift.label}</span></li>`;
-    else liTag += `<li class="inactive">${dayNum}</li>`;
+    const fl = dayFlags(dayNum, prevMonth, prevYear);
+    if (shift) liTag += `<li class="inactive worked shift-${shift.kind}${fl}" data-dk="${key}">${dayNum}<span class="shift-label">${shift.label}</span></li>`;
+    else liTag += `<li class="inactive${fl}">${dayNum}</li>`;
   }
 
   for (let i = 1; i <= lastDate; i++) {
     const key = dateKey(i, month, year);
     const shift = shiftMap.get(key);
-    if (shift) liTag += `<li class="worked shift-${shift.kind}" data-dk="${key}">${i}<span class="shift-label">${shift.label}</span></li>`;
-    else liTag += `<li>${i}</li>`;
+    const fl = dayFlags(i, month, year);
+    if (shift) liTag += `<li class="worked shift-${shift.kind}${fl}" data-dk="${key}">${i}<span class="shift-label">${shift.label}</span></li>`;
+    else liTag += `<li class="${fl.trim()}">${i}</li>`;
   }
 
   for (let i = lastDay; i < 6; i++) {
@@ -5717,8 +5730,9 @@ function renderModalCalendar() {
     const nextMonth = nextMonthDate.getMonth();
     const key = dateKey(dayNum, nextMonth, nextYear);
     const shift = shiftMap.get(key);
-    if (shift) liTag += `<li class="inactive worked shift-${shift.kind}" data-dk="${key}">${dayNum}<span class="shift-label">${shift.label}</span></li>`;
-    else liTag += `<li class="inactive">${dayNum}</li>`;
+    const fl = dayFlags(dayNum, nextMonth, nextYear);
+    if (shift) liTag += `<li class="inactive worked shift-${shift.kind}${fl}" data-dk="${key}">${dayNum}<span class="shift-label">${shift.label}</span></li>`;
+    else liTag += `<li class="inactive${fl}">${dayNum}</li>`;
   }
 
   daysContainer.innerHTML = liTag;
