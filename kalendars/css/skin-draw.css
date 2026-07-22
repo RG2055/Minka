@@ -1,0 +1,354 @@
+.mk-draw-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100000;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(2, 5, 10, .86);
+}
+
+.mk-skin-art-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 8px;
+}
+
+.mk-skin-art-open {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid rgba(45, 212, 191, .38);
+  border-radius: 7px;
+  background: #10201f;
+  color: #72e7d7;
+  font: inherit;
+  font-weight: 800;
+}
+
+.mk-skin-art-open.is-active { border-color: #2dd4bf; background: #12302c; }
+
+.mk-skin-art-current {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(129, 151, 181, .34);
+  border-radius: 6px;
+  background-position: center;
+  background-size: cover;
+}
+
+.mk-draw-dialog {
+  width: min(980px, 100%);
+  height: min(760px, calc(100dvh - 24px));
+  max-height: calc(100dvh - 24px);
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  border: 1px solid rgba(129, 151, 181, .28);
+  border-radius: 8px;
+  background: #0c1119;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .48);
+  color: #eef4fb;
+}
+
+.mk-draw-head,
+.mk-draw-actions,
+.mk-draw-toolbar {
+  display: flex;
+  align-items: center;
+}
+
+.mk-draw-subbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 9px 16px;
+  border-bottom: 1px solid rgba(129, 151, 181, .16);
+  background: #0a1017;
+}
+
+.mk-draw-subtitle {
+  margin-left: 5px;
+  color: #8395a8;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.mk-draw-spacer { flex: 1 1 auto; }
+
+.mk-draw-head {
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(129, 151, 181, .18);
+}
+
+.mk-draw-head h3 {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: 0;
+}
+
+.mk-draw-worker {
+  display: block;
+  margin-top: 3px;
+  color: #86a0b9;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.mk-draw-close,
+.mk-draw-icon {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid rgba(129, 151, 181, .24);
+  border-radius: 7px;
+  background: #111925;
+  color: #dbe8f5;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.mk-draw-toolbar {
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(129, 151, 181, .16);
+}
+
+.mk-draw-tools {
+  display: flex;
+  gap: 4px;
+}
+
+.mk-draw-tool,
+.mk-draw-action,
+.mk-draw-effect,
+.mk-draw-fill,
+.mk-draw-cancel,
+.mk-draw-save {
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid rgba(129, 151, 181, .26);
+  border-radius: 7px;
+  background: #111925;
+  color: #dbe8f5;
+  font: inherit;
+  font-weight: 750;
+}
+
+.mk-draw-tool[data-tool="rect"],
+.mk-draw-tool[data-tool="circle"],
+.mk-draw-tool[data-tool="star"],
+.mk-draw-tool[data-tool="heart"],
+.mk-draw-tool[data-tool="spark"] {
+  width: 38px;
+  padding: 0;
+  font-size: 18px;
+}
+
+.mk-draw-effect {
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.mk-draw-tool.is-active {
+  border-color: #2dd4bf;
+  background: #102824;
+  color: #6ee7d5;
+}
+
+.mk-draw-control {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 9px;
+  border: 1px solid rgba(129, 151, 181, .2);
+  border-radius: 7px;
+  color: #9fb0c2;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.mk-draw-control input[type="color"] {
+  width: 30px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.mk-draw-size-control input[type="range"] { width: 104px; }
+.mk-draw-size-value { min-width: 18px; color: #eef4fb; }
+
+.mk-draw-fill-shape { display: none; }
+.mk-draw-fill-shape.is-visible { display: flex; }
+
+.mk-draw-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  align-items: center;
+  gap: 22px;
+  padding: 16px;
+  background: #070b11;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mk-draw-editor {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.mk-draw-label {
+  margin-bottom: 8px;
+  color: #91a3b7;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.mk-draw-canvas {
+  display: block;
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 1;
+  margin: 0 auto;
+  border: 1px solid rgba(129, 151, 181, .32);
+  border-radius: 6px;
+  background: #0b1019;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.mk-draw-preview-wrap {
+  min-width: 0;
+  align-self: center;
+}
+
+.mk-draw-card-preview {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  overflow: hidden;
+  border: 2px solid rgba(113, 139, 171, .42);
+  border-radius: 8px;
+  background: #0b1019;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, .35);
+  color: #fff;
+}
+
+.mk-draw-card-preview.is-rd { border-color: rgba(255, 90, 85, .55); }
+
+.mk-draw-preview,
+.mk-draw-card-scrim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.mk-draw-card-scrim {
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(5, 9, 16, .25), rgba(5, 9, 16, .60) 58%, rgba(5, 9, 16, .86));
+}
+
+.mk-draw-card-initials,
+.mk-draw-card-month,
+.mk-draw-card-shift,
+.mk-draw-card-name,
+.mk-draw-card-last,
+.mk-draw-card-fatigue { position: absolute; z-index: 2; }
+
+.mk-draw-card-initials { left: 15px; top: 12px; color: rgba(205, 215, 231, .42); font-size: 31px; }
+.mk-draw-card-month { right: 13px; top: 13px; text-align: right; font-size: 17px; font-weight: 850; }
+.mk-draw-card-month b { display: block; }
+.mk-draw-card-month small { display: block; color: #a0aab7; font-size: 8px; }
+.mk-draw-card-shift { left: 50%; top: 58px; transform: translateX(-50%); color: #a78bfa; font-size: 48px; font-weight: 950; line-height: 1; }
+.mk-draw-card-name { left: 12px; right: 12px; top: 108px; text-align: center; font-size: 18px; font-weight: 900; }
+.mk-draw-card-last { left: 12px; right: 12px; top: 131px; text-align: center; font-size: 14px; font-weight: 800; text-transform: uppercase; }
+.mk-draw-card-fatigue { left: 14px; right: 14px; bottom: 18px; display: flex; align-items: center; gap: 8px; }
+.mk-draw-card-fatigue i { position: relative; height: 4px; flex: 1; overflow: hidden; border-radius: 2px; background: rgba(130,145,165,.22); }
+.mk-draw-card-fatigue em { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: #39d7ad; }
+.mk-draw-card-fatigue b { color: #45e2b6; font-size: 13px; }
+
+.mk-draw-preview-note {
+  max-width: 220px;
+  margin: 8px 0 0;
+  color: #788a9d;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.mk-draw-actions {
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid rgba(129, 151, 181, .16);
+}
+
+.mk-draw-status {
+  min-width: 0;
+  margin-right: auto;
+  color: #f3b35f;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mk-draw-save {
+  border-color: #1ea88f;
+  background: #126b5c;
+  color: #f4fffc;
+}
+
+.mk-draw-save:disabled,
+.mk-draw-icon:disabled {
+  cursor: default;
+  opacity: .42;
+}
+
+@media (max-width: 640px) {
+  .mk-draw-overlay { padding: 8px; }
+  .mk-draw-dialog { height: calc(100dvh - 16px); max-height: calc(100dvh - 16px); }
+  .mk-draw-head { padding: 11px 12px; }
+  .mk-draw-toolbar { padding: 9px 12px; }
+  .mk-draw-workspace { grid-template-columns: 1fr; padding: 10px; }
+  .mk-draw-preview-wrap { display: none; }
+  .mk-draw-actions { padding: 10px 12px; }
+  .mk-draw-size-control { flex: 1 1 150px; }
+  .mk-draw-subbar { padding: 8px 12px; }
+}
+
+@media (max-height: 760px) and (min-width: 641px) {
+  .mk-draw-overlay { padding: 6px; }
+  .mk-draw-dialog { height: calc(100dvh - 12px); max-height: calc(100dvh - 12px); }
+  .mk-draw-head { padding: 7px 12px; }
+  .mk-draw-head h3 { font-size: 15px; }
+  .mk-draw-worker { margin-top: 1px; font-size: 10px; }
+  .mk-draw-toolbar { gap: 5px; padding: 6px 12px; }
+  .mk-draw-subbar { gap: 5px; padding: 5px 12px; }
+  .mk-draw-tool,
+  .mk-draw-action,
+  .mk-draw-fill,
+  .mk-draw-cancel,
+  .mk-draw-save,
+  .mk-draw-control { min-height: 32px; }
+  .mk-draw-close,
+  .mk-draw-icon { width: 32px; height: 32px; }
+  .mk-draw-effect { min-height: 30px; }
+  .mk-draw-workspace { padding: 9px 14px; }
+  .mk-draw-actions { padding: 7px 12px; }
+  .mk-draw-preview-note { display: none; }
+}

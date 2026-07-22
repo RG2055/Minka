@@ -1,0 +1,13 @@
+name = "minka-api"
+main = "src/index.js"
+compatibility_date = "2026-03-18"
+account_id = "a678c2143bd64a6ef4b783aac9953e94"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "minka-db"
+database_id = "643ee348-1085-47f1-a2fb-46bc149f94bb"
+
+[[kv_namespaces]]
+binding = "MINKA_EMOJI"
+id = "72f5893dcfc44771bd2ab40913ae99b4"

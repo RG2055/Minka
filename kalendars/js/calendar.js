@@ -5048,22 +5048,23 @@ function filterFullList(btn) {
       };
 
       try {
-        const activeCoffeeNames = [];
+        // Keep the selected day's coffee total after a finished shift card disappears.
+        const scheduledCoffeeNames = [];
         const seenCoffee = new Set();
         [ ...(payload.rg || []), ...(payload.rd || []) ].forEach(w => {
-          if (!w || w.done) return;
+          if (!w) return;
           const n = String(w.name || '').trim();
           const k = n.toLowerCase();
           if (!n || seenCoffee.has(k)) return;
           seenCoffee.add(k);
-          activeCoffeeNames.push(n);
+          scheduledCoffeeNames.push(n);
         });
         if (typeof window.__minkaGetCoffeeTotalForNames === 'function') {
-          payload.coffeeTotal = Math.max(0, Number(window.__minkaGetCoffeeTotalForNames(activeCoffeeNames)) || 0);
+          payload.coffeeTotal = Math.max(0, Number(window.__minkaGetCoffeeTotalForNames(scheduledCoffeeNames)) || 0);
         }
         payload.coffeeReady = !!(window.__minkaCoffeeSync && window.__minkaCoffeeSync.loadedDays && window.__minkaCoffeeSync.loadedDays[payload.activeDateStr]);
         if (typeof window.__minkaGetCoffeeSourcesForNames === 'function') {
-          payload.coffeeSources = window.__minkaGetCoffeeSourcesForNames(activeCoffeeNames) || payload.coffeeSources;
+          payload.coffeeSources = window.__minkaGetCoffeeSourcesForNames(scheduledCoffeeNames) || payload.coffeeSources;
         }
         if (typeof window.__minkaGetCoffeeLeaderboard === 'function') {
           payload.coffeeLeaderboard = window.__minkaGetCoffeeLeaderboard(5) || [];
