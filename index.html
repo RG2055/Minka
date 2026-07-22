@@ -4874,17 +4874,12 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
 @keyframes mkNoteFloat{0%{opacity:0;transform:translateY(0) translateX(0) scale(.7)}15%{opacity:1}100%{opacity:0;transform:translateY(-42px) translateX(var(--mx,0px)) scale(1.1)}}
 .mk-note{position:absolute;font-size:15px;font-weight:900;line-height:1;animation:mkNoteFloat 1.25s ease-out forwards;text-shadow:none;}
 
-/* ── Coffee stats: subtle pill button + today-RG strip + flat panel ──
+/* ── Coffee stats: subtle pill button + flat panel ──
    Perf rules: no blur, no glow, no filters, no timers — render on demand. */
 #mk-buddy-stats-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:none;color:rgba(255,255,255,.44);cursor:pointer;padding:2px 4px;border-radius:8px;transition:color .15s,background .15s;}
 #mk-buddy-stats-btn:hover{color:#64d2ff;background:rgba(100,210,255,.08);}
 #mk-buddy-stats-btn svg{width:14px;height:14px;fill:currentColor;}
 #mk-buddy-stats-btn span{font:800 6.5px/1 'Space Grotesk',system-ui;letter-spacing:.1em;color:inherit;}
-#mk-buddy-rg-row{display:none;align-items:center;justify-content:center;gap:6px;position:absolute;left:50%;transform:translateX(-50%);bottom:-22px;white-space:nowrap;pointer-events:none;}
-#mk-buddy-rg-row.is-on{display:flex;}
-.mk-rgchip{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:9px;background:rgba(16,17,22,.85);border:1px solid rgba(255,255,255,.09);font:700 9px/1 'Space Grotesk',system-ui;color:rgba(255,255,255,.66);letter-spacing:.04em;}
-.mk-rgchip i{font-style:normal;font-size:10px;line-height:1;}
-.mk-rgchip b{font-weight:800;color:#64d2ff;font-variant-numeric:tabular-nums;}
 #mkCoffeeStats{display:none;position:fixed;left:12px;bottom:96px;z-index:172000;width:min(360px,calc(100vw - 28px));border-radius:16px;border:1px solid #21232c;background:#101116;color:#f2f4f8;font-family:'Space Grotesk',system-ui,sans-serif;padding:14px 14px 12px;box-shadow:0 16px 44px rgba(0,0,0,.55);}
 #mkCoffeeStats.open{display:block;}
 /* Little pointer tail to the STATISTIKA button. */
@@ -4910,9 +4905,16 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
 #mkCoffeeStats .cs-days span.sel{color:#64d2ff;font-weight:800;}
 #mkCoffeeStats .cs-sum{display:flex;align-items:baseline;gap:8px;margin-bottom:8px;font:600 11px/1.2 'Space Grotesk',system-ui;color:#9a9da6;}
 #mkCoffeeStats .cs-sum b{font:800 18px/1 'Space Grotesk',system-ui;color:#fff;font-variant-numeric:tabular-nums;}
+#mkCoffeeStats .cs-sum.cs-day-summary{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px 10px;padding:8px 0;border-top:1px solid #21232c;border-bottom:1px solid #21232c;}
+#mkCoffeeStats .cs-day-meta{min-width:0;}
+#mkCoffeeStats .cs-day-meta span{display:block;margin-top:2px;color:#747883;font-size:9px;}
+#mkCoffeeStats .cs-day-average{grid-column:1/-1;color:#d9dce3;font-size:11px;line-height:1.35;}
+#mkCoffeeStats .cs-day-average strong{color:#64d2ff;font-weight:800;font-variant-numeric:tabular-nums;}
 #mkCoffeeStats .cs-rows{max-height:170px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;}
 #mkCoffeeStats .cs-row{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:9px;background:#14161c;font:600 11.5px/1.2 'Space Grotesk',system-ui;color:#d9dce3;}
 #mkCoffeeStats .cs-row .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#mkCoffeeStats .cs-person-name{display:block;overflow:hidden;text-overflow:ellipsis;}
+#mkCoffeeStats .cs-person-average{display:block;margin-top:2px;color:#747883;font-size:9px;line-height:1.2;}
 #mkCoffeeStats .cs-row .e{width:14px;text-align:center;font-size:11px;}
 #mkCoffeeStats .cs-row b{color:#64d2ff;font-weight:800;font-variant-numeric:tabular-nums;}
 #mkCoffeeStats .cs-empty{padding:10px 8px;font:600 11px/1.4 'Space Grotesk',system-ui;color:#5e616b;text-align:center;}
@@ -4969,7 +4971,6 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
         <canvas class="mk-buddy-prop-cvs" id="mk-buddy-prop"></canvas>
         <canvas class="mk-buddy-prop-cvs" id="mk-buddy-bolus"></canvas>
       </div>
-      <div id="mk-buddy-rg-row" aria-hidden="true"></div>
     </div>
     <canvas id="mk-buddy-status"></canvas>
     <canvas id="mk-buddy-canvas"></canvas>
@@ -4994,14 +4995,14 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
 </div>
 
 <script>
-/* ── Coffee stats panel + today-RG strip ──
+/* ── Coffee stats panel ──
    Reads the same-origin localStorage the calendar iframe writes
-   (minkaCoffeeCountsV1 / minka_emoji_v2). Zero timers: the strip refreshes
-   only when the calendar posts day-state, the panel renders only on open. */
+   (minkaCoffeeCountsV1 / minka_emoji_v2). Zero timers: the panel renders
+   only when opened or when its selected view changes. */
 (function(){
   'use strict';
   var API='https://minka-coffee-api.gamernr1elite.workers.dev';
-  var panel=null, selDay='', lastRowDigest='', fetchedOnce=false, fetchInFlight=false, fetchWaiters=[], csView='day', anchorEl=null;
+  var panel=null, selDay='', fetchedOnce=false, fetchInFlight=false, fetchWaiters=[], csView='day', anchorEl=null;
   var FETCH_CONCURRENCY=4;
   function $id(i){ return document.getElementById(i); }
   function esc(v){
@@ -5026,7 +5027,6 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
   }
   function dayTotal(store,day){ var m=store[day]||{},s=0; for(var k in m) s+=Math.max(0,Number(m[k])||0); return s; }
   function prettyName(k){ return String(k||'').split(/\s+/).map(function(w){ return w? w.charAt(0).toLocaleUpperCase('lv-LV')+w.slice(1):''; }).join(' '); }
-  function initials(name){ return String(name||'').trim().split(/\s+/).slice(0,2).map(function(w){ return (w[0]||'').toLocaleUpperCase('lv-LV'); }).join(''); }
   function emojiFor(name){
     var m=emojiMap(), key=String(name||'').trim();
     if(m[key]) return m[key];
@@ -5034,10 +5034,16 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
     for(var k in m){ if(String(k).toLocaleLowerCase('lv-LV')===lk) return m[k]; }
     return '';
   }
-  function avgFor(name){
-    var store=coffeeStore(), key=String(name||'').trim().toLocaleLowerCase('lv-LV');
+  function avgFor(key,store){
+    var normalized=String(key||'').trim().toLocaleLowerCase('lv-LV');
     var sum=0, days=0;
-    for(var day in store){ var c=Number(store[day]&&store[day][key]); if(c>0){ sum+=c; days++; } }
+    for(var day in store){
+      var counts=store[day]||{}, value=0;
+      for(var name in counts){
+        if(String(name).trim().toLocaleLowerCase('lv-LV')===normalized){ value=Math.max(0,Number(counts[name])||0); break; }
+      }
+      if(value>0){ sum+=value; days++; }
+    }
     return days? (sum/days):0;
   }
   function monthTop(n){
@@ -5130,6 +5136,7 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
 
     if(csView==='top'){
       var top=monthTop(5);
+      $id('mkCsSum').classList.remove('cs-day-summary');
       $id('mkCsSum').innerHTML='<b>×'+monthTot+'</b><span>'+MONTHS_LV[new Date().getMonth()]+' · top 5</span>';
       $id('mkCsRows').innerHTML=top.length? top.map(function(r,i){
         var nm=prettyName(r.k), em=emojiFor(nm);
@@ -5140,10 +5147,12 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
     var m=store[selDay]||{};
     var rows=Object.keys(m).map(function(k){ return {k:k,c:Math.max(0,Number(m[k])||0)}; }).filter(function(r){ return r.c>0; }).sort(function(a,b){ return b.c-a.c; });
     var tot=rows.reduce(function(a,r){ return a+r.c; },0);
-    $id('mkCsSum').innerHTML='<b>×'+tot+'</b><span>'+selDay+' · '+rows.length+' cilvēki</span><span class="cs-month">Mēnesī ×'+monthTot+'</span>';
+    var avg=rows.length? (tot/rows.length).toFixed(1).replace('.',','):'0,0';
+    $id('mkCsSum').classList.add('cs-day-summary');
+    $id('mkCsSum').innerHTML='<b>×'+tot+'</b><div class="cs-day-meta">'+selDay+'<span>'+rows.length+' darbinieki atzīmēja kafiju</span></div><span class="cs-month">Mēnesī ×'+monthTot+'</span><div class="cs-day-average">Vidēji dežūrā viens darbinieks izdzer <strong>'+avg+' kafijas</strong>.</div>';
     $id('mkCsRows').innerHTML=rows.length? rows.map(function(r){
-      var nm=prettyName(r.k), em=emojiFor(nm);
-      return '<div class="cs-row"><span class="e">'+esc(em||'·')+'</span><span class="n">'+esc(nm)+'</span><b>×'+r.c+'</b></div>';
+      var nm=prettyName(r.k), em=emojiFor(nm), personAvg=avgFor(r.k,store).toFixed(1).replace('.',',');
+      return '<div class="cs-row"><span class="e">'+esc(em||'·')+'</span><span class="n"><span class="cs-person-name">'+esc(nm)+'</span><span class="cs-person-average">Vidēji dežūrā: '+personAvg+' kafijas</span></span><b>×'+r.c+'</b></div>';
     }).join('') : '<div class="cs-empty">Šajā dienā kafijas nav.</div>';
   }
 
@@ -5181,26 +5190,6 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
     if(panel.classList.contains('open')) closePanel();
     else openPanel(anchor);
   };
-
-  /* Today's radiographers strip: emoji + initials + avg cups/day. */
-  function renderRgRow(payload){
-    var row=$id('mk-buddy-rg-row'); if(!row) return;
-    var names=[], seen={};
-    (payload.rg||[]).forEach(function(w){
-      if(!w||w.done) return;
-      var n=String(w.name||'').trim(); if(!n) return;
-      var k=n.toLowerCase(); if(seen[k]) return; seen[k]=1; names.push(n);
-    });
-    var digest=names.join('|')+'@'+(payload.activeDateStr||'');
-    if(digest===lastRowDigest) return;
-    lastRowDigest=digest;
-    if(!names.length){ row.classList.remove('is-on'); row.innerHTML=''; return; }
-    row.innerHTML=names.slice(0,5).map(function(n){
-      var a=avgFor(n), em=emojiFor(n);
-      return '<span class="mk-rgchip" title="'+esc(n)+' · vidēji dienā">'+(em?'<i>'+esc(em)+'</i>':'')+esc(initials(n))+(a?' <b>~'+(Math.round(a*10)/10)+'</b>':'')+'</span>';
-    }).join('');
-    row.classList.add('is-on');
-  }
 
   function init(){
     panel=$id('mkCoffeeStats'); if(!panel) return;
@@ -5245,10 +5234,6 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
     var calendarFrame=$id('calIframe');
     if(calendarFrame) calendarFrame.addEventListener('load',attachCalendarClose);
     attachCalendarClose();
-    window.addEventListener('message',function(e){
-      var d=e.data;
-      if(d && d.type==='minka-calendar-selected-day-state' && d.payload) renderRgRow(d.payload);
-    });
     window.addEventListener('resize',function(){ if(panel.classList.contains('open')) positionPanel(); });
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init,{once:true});
