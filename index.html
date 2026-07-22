@@ -2139,14 +2139,32 @@ window.addEventListener('DOMContentLoaded', () => {
 .lm-cover img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;-webkit-user-drag:none;}
 .lm-cover.active{box-shadow:0 8px 24px rgba(30,215,96,.34),0 0 0 2px rgba(30,215,96,.62);}
 #lacMiniEmpty{position:absolute;inset:0;display:grid;place-items:center;color:#8a8a8a;font:600 12px/1.4 'Space Grotesk',system-ui;text-align:center;pointer-events:none;}
+#lacMiniLite{display:none;flex:1;min-height:0;align-items:center;justify-content:center;gap:18px;}
+#lacMiniLite .lm-lite-icon{font-size:34px;line-height:1;image-rendering:pixelated;}
+#lacMiniLite .lm-lite-copy{display:flex;flex-direction:column;gap:4px;min-width:0;}
+#lacMiniLite strong{font:800 16px/1 'Space Grotesk',system-ui;color:#fff;}
+#lacMiniLite span{font:650 10px/1 'Space Grotesk',system-ui;letter-spacing:.12em;text-transform:uppercase;color:#9298a2;}
+#lacMiniLite .lm-lite-actions{display:flex;align-items:center;gap:8px;}
+#lacMiniLite .lm-lite-open{height:34px;padding:0 15px;border-radius:8px;border:1px solid rgba(30,215,96,.42);background:#12321e;color:#76e49b;font:800 11px/1 'Space Grotesk',system-ui;letter-spacing:.04em;cursor:pointer;}
+#lacMiniLite .lm-lite-open:hover{background:#184127;}
+#lacMiniConsole.lm-lite{height:112px;padding:10px 16px;}
+#lacMiniConsole.lm-lite>.lm-head,#lacMiniConsole.lm-lite>.lm-body,#lacMiniConsole.lm-lite>#lacMiniProg,#lacMiniConsole.lm-lite>#lacMiniBottom{display:none;}
+#lacMiniConsole.lm-lite>#lacMiniLite{display:flex;}
 @media(max-width:760px){#lacMiniInfo{flex-basis:150px;gap:5px;}#lacMiniTitle{font-size:14px;-webkit-line-clamp:2;}#lacMiniVol{display:none;}#lacMiniConsole .lm-login span:last-child{display:none;}#lacMiniConsole .lm-search{max-width:none;}#lacMiniConsole .lm-body{gap:14px;}}
 @media(max-width:520px){#lacMiniInfo{flex-basis:120px;}}
-#lacMiniStage{position:fixed;left:8px;bottom:8px;width:340px;height:1px;opacity:0;pointer-events:none;overflow:hidden;z-index:-1;background:#050609;display:flex;flex-direction:column;border:0;}
-#lacMiniStage.full{left:50%;top:50%;bottom:auto;transform:translate(-50%,-50%);width:min(1180px,calc(100vw - 44px));height:min(820px,calc(100dvh - 44px));opacity:1;pointer-events:auto;z-index:171340;border-radius:22px;border:1px solid rgba(255,255,255,.16);box-shadow:0 22px 70px rgba(0,0,0,.68);}
+#lacMiniStage{position:fixed;left:8px;bottom:8px;width:1px;height:1px;opacity:0;visibility:hidden;pointer-events:none;overflow:hidden;z-index:-1;background:#050609;display:flex;flex-direction:column;border:0;contain:strict;}
+#lacMiniStage.full{left:50%;top:50%;bottom:auto;transform:translate(-50%,-50%);width:min(1180px,calc(100vw - 44px));height:min(820px,calc(100dvh - 44px));opacity:1;visibility:visible;pointer-events:auto;z-index:171340;border-radius:22px;border:1px solid rgba(255,255,255,.16);box-shadow:0 22px 70px rgba(0,0,0,.68);contain:layout style paint;}
 #lacMiniStageTop{display:none;height:42px;align-items:center;justify-content:space-between;gap:12px;padding:0 10px 0 14px;border-bottom:1px solid rgba(255,255,255,.10);background:#15171c;color:#f7f7f7;font:900 12px/1 'Space Grotesk',system-ui;letter-spacing:.08em;text-transform:uppercase;flex-shrink:0;}
 #lacMiniStage.full #lacMiniStageTop{display:flex;}
 #lacMiniStageTop .lm-hbtn{width:32px;height:32px;border-radius:11px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#f7f7f7;font:900 18px/1 system-ui;cursor:pointer;}
 #lacMiniFrame{flex:1;width:100%;height:100%;min-height:0;border:0;background:#050609;display:block;}
+body.lacitis-full #calendarEmbed{visibility:hidden;}
+html.mk-low-spec #lacMiniDeck,body.mk-low-spec #lacMiniDeck{perspective:none;-webkit-mask-image:none;mask-image:none;}
+html.mk-low-spec #lacMiniTrack,body.mk-low-spec #lacMiniTrack{transform-style:flat;}
+html.mk-low-spec .lm-cover,body.mk-low-spec .lm-cover{-webkit-box-reflect:none;box-shadow:none;}
+html.mk-low-spec .lm-cover.active,body.mk-low-spec .lm-cover.active{box-shadow:0 0 0 2px rgba(30,215,96,.72);}
+html.mk-low-spec #lacMiniNowLbl .dot,body.mk-low-spec #lacMiniNowLbl .dot{box-shadow:none;}
+html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
 </style>
 
 <div id="lacMiniStage" aria-hidden="true">
@@ -2161,6 +2179,14 @@ window.addEventListener('DOMContentLoaded', () => {
 </div>
 
 <div id="lacMiniConsole" aria-hidden="true">
+  <div id="lacMiniLite">
+    <span class="lm-lite-icon" aria-hidden="true">🐻‍❄️</span>
+    <span class="lm-lite-copy"><strong>Lācītis</strong><span>Mūzika</span></span>
+    <span class="lm-lite-actions">
+      <button class="lm-lite-open" onclick="lacMiniMaximize()">Atvērt</button>
+      <button class="lm-hbtn" onclick="lacMiniClose()" title="Aizvērt" aria-label="Aizvērt">×</button>
+    </span>
+  </div>
   <div class="lm-head">
     <span class="lm-brand"><span>🐻‍❄️</span><span>Lācītis</span></span>
     <label class="lm-search">
@@ -2198,7 +2224,10 @@ window.addEventListener('DOMContentLoaded', () => {
 <script>
 (function(){
   var isLocal=/^(localhost|127\.0\.0\.1)$/.test(location.hostname)||location.protocol==='file:';
-  var LAC_BASE=isLocal?'http://127.0.0.1:5174':'https://lacitis.pages.dev';
+  // Local Minka uses the deployed player by default, so it does not depend on
+  // a second dev server. Add ?lacLocal=1 only while developing Lācītis itself.
+  var useLocalLac=isLocal&&/[?&]lacLocal=1(?:&|$)/.test(location.search);
+  var LAC_BASE=useLocalLac?'http://127.0.0.1:5174':'https://lacitis.pages.dev';
   var MINI_URL=LAC_BASE+'/?embed=mini';
   var frame,cons,stage,deckEl,track,empty,titleEl,artistEl,fillEl,playIco,progEl,searchEl;
   var deck=[], pos=0, sel=0, curId=null, loaded=false, wired=false;
@@ -2206,7 +2235,10 @@ window.addEventListener('DOMContentLoaded', () => {
   var visibleFrom=0, visibleTo=-1;
   var spacing=44, snapTO=0, searchTO=0, autoTO=0, openTO=0;
   var dragging=false, startX=0, startPos=0, moved=false;
-  var morePending=false, moreCooldownUntil=0, DECK_CAP=150;
+  var perfProfile=window.__mkPerfProfile||{};
+  var lowSpec=!!(perfProfile.lowSpec||perfProfile.reducedMotion||document.documentElement.classList.contains('mk-low-spec'));
+  var bridgeReady=false;
+  var morePending=false, moreCooldownUntil=0, DECK_CAP=lowSpec?36:80;
 
   function $(id){ return document.getElementById(id); }
   function els(){
@@ -2217,6 +2249,20 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   function send(cmd,extra){ try{ frame&&frame.contentWindow&&frame.contentWindow.postMessage(Object.assign({type:'lac_mini_cmd',cmd:cmd},extra||{}),'*'); }catch(e){} }
   function coverUrl(t){ return t.thumbnail||('https://i.ytimg.com/vi/'+t.id+'/mqdefault.jpg'); }
+  function isLowSpec(){ return lowSpec||document.documentElement.classList.contains('mk-low-spec')||!!(document.body&&document.body.classList.contains('mk-low-spec')); }
+  function setLite(on){ if(cons) cons.classList.toggle('lm-lite',!!on); }
+  function unloadFrame(){
+    if(!frame) return;
+    frame.src='about:blank'; frame.removeAttribute('src'); loaded=false;
+    bridgeReady=false;
+    deck=[]; pendingDeck=null; pendingAppend=[]; curId=null; lastNpPayload=null;
+    if(track) track.innerHTML='';
+    if(empty){ empty.style.display=''; empty.textContent='Ielādē mūziku…'; }
+  }
+  function ensureFrame(){
+    if(loaded||!frame) return;
+    frame.src=MINI_URL; loaded=true;
+  }
   function sync(){
     if(document.body) document.body.classList.toggle('lacitis-docked',dockVisible());
     try{ if(typeof syncShellLayout==='function') syncShellLayout(); }catch(e){}
@@ -2256,10 +2302,15 @@ window.addEventListener('DOMContentLoaded', () => {
       el.style.visibility='visible'; el.style.opacity='1'; el.style.pointerEvents='auto';
       el.style.willChange=abs<=2.3?'transform':'auto';
       var x=off*spacing + dir*Math.min(abs,1)*(spacing*1.05);
-      var rot=Math.max(-56,Math.min(56,-off*56));
-      var z=t*72 - Math.min(abs,4)*30;
-      var sc=1+t*0.16;
-      el.style.transform='translateX('+x+'px) translateZ('+z+'px) rotateY('+rot+'deg) scale('+sc+')';
+      var liteGpu=isLowSpec();
+      var sc=1+t*(liteGpu?0.08:0.16);
+      if(liteGpu){
+        el.style.transform='translateX('+x+'px) scale('+sc+')';
+      }else{
+        var rot=Math.max(-56,Math.min(56,-off*56));
+        var z=t*72 - Math.min(abs,4)*30;
+        el.style.transform='translateX('+x+'px) translateZ('+z+'px) rotateY('+rot+'deg) scale('+sc+')';
+      }
       el.style.zIndex=String(200-Math.round(abs*10));
       if(abs<0.5) el.classList.add('active'); else el.classList.remove('active');
     }
@@ -2319,7 +2370,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if(added) layout();
   }
   function renderDeck(tracks,query){
-    els(); deck=tracks||[];
+    els(); deck=(tracks||[]).slice(0,DECK_CAP);
     track.innerHTML='';
     visibleFrom=0; visibleTo=-1;
     if(!deck.length){ empty.style.display=''; empty.textContent=query?'Nekas nav atrasts':'Ielādē mūziku…'; return; }
@@ -2368,7 +2419,11 @@ window.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('message',function(e){
     if(!frame||e.source!==frame.contentWindow) return;
     var d=e.data; if(!d||typeof d!=='object') return;
-    if(d.type==='lac_mini_ready'){ if(uiVisible()) send('deck'); }
+    if(d.type==='lac_mini_ready'){
+      bridgeReady=true;
+      if(!isLowSpec()) setLite(false);
+      if(uiVisible()) send('deck');
+    }
     else if(d.type==='lac_mini_deck'){
       if(uiVisible()) renderDeck(d.tracks,d.query);
       else pendingDeck={tracks:d.tracks,query:d.query};
@@ -2382,7 +2437,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
   window.openLacMini=function(){
     els(); wire();
-    if(!loaded){ frame.src=MINI_URL; loaded=true; }
+    var liteMode=isLowSpec();
+    if(liteMode) DECK_CAP=Math.min(DECK_CAP,36);
+    var richReady=bridgeReady&&!liteMode;
+    setLite(!richReady);
+    // The deployed Lācītis currently ignores embed=mini and renders its entire
+    // app. Keep the dock local on every machine and only load the iframe after
+    // the explicit full-view command.
     // Claim the bottom-console slot: hide the radio so they never overlap.
     try{ var rw=document.getElementById('radioWindow'); if(rw){ rw.style.display='none'; document.body.classList.add('radio-hidden'); } }catch(e){}
     try{ if(typeof window.__mkSyncRadioVisuals==='function') window.__mkSyncRadioVisuals(); }catch(e){}
@@ -2391,6 +2452,7 @@ window.addEventListener('DOMContentLoaded', () => {
     setDockButton(true);
     sync();
     clearTimeout(openTO);
+    if(!richReady) return;
     openTO=setTimeout(function(){
       openTO=0;
       if(!dockVisible()) return;
@@ -2407,15 +2469,16 @@ window.addEventListener('DOMContentLoaded', () => {
     clearTimeout(openTO); openTO=0;
     cons.classList.remove('docked'); cons.setAttribute('aria-hidden','true');
     stage.classList.remove('full'); stage.setAttribute('aria-hidden','true');
+    if(document.body) document.body.classList.remove('lacitis-full');
     if(track){ for(var i=0;i<track.children.length;i++) track.children[i].style.willChange='auto'; }
     setDockButton(false);
     sync();
   }
   window.toggleLacMini=function(){ els(); if(uiVisible()) hideLacMini(); else window.openLacMini(); };
-  window.__hideLacMiniForRadio=function(){ els(); if(uiVisible()) hideLacMini(); };
-  window.lacMiniClose=hideLacMini;
-  window.lacMiniMaximize=function(){ els(); cons.classList.remove('docked'); cons.setAttribute('aria-hidden','true'); stage.classList.add('full'); stage.setAttribute('aria-hidden','false'); setDockButton(true); sync(); if(lastNpPayload) applyNp(lastNpPayload); };
-  window.lacMiniMinimize=function(){ els(); stage.classList.remove('full'); stage.setAttribute('aria-hidden','true'); cons.classList.add('docked'); cons.setAttribute('aria-hidden','false'); setDockButton(true); sync(); setTimeout(function(){ sizeCovers(); if(lastNpPayload) applyNp(lastNpPayload); },40); };
+  window.__hideLacMiniForRadio=function(){ els(); if(uiVisible()) hideLacMini(); unloadFrame(); };
+  window.lacMiniClose=function(){ hideLacMini(); unloadFrame(); };
+  window.lacMiniMaximize=function(){ els(); ensureFrame(); cons.classList.remove('docked'); cons.setAttribute('aria-hidden','true'); stage.classList.add('full'); stage.setAttribute('aria-hidden','false'); if(document.body) document.body.classList.add('lacitis-full'); setDockButton(true); sync(); if(lastNpPayload) applyNp(lastNpPayload); };
+  window.lacMiniMinimize=function(){ els(); stage.classList.remove('full'); stage.setAttribute('aria-hidden','true'); if(document.body) document.body.classList.remove('lacitis-full'); setLite(isLowSpec()||!bridgeReady); cons.classList.add('docked'); cons.setAttribute('aria-hidden','false'); setDockButton(true); sync(); setTimeout(function(){ sizeCovers(); if(lastNpPayload) applyNp(lastNpPayload); },40); };
   window.lacMiniCmd=function(cmd){ if(cmd==='toggle'&&!curId&&deck.length){ playIdx(Math.round(pos)); return; } send(cmd); };
   window.lacMiniSeek=function(e){ els(); var r=progEl.getBoundingClientRect(); var p=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)); send('seek',{pct:p}); fillEl.style.width=(p*100)+'%'; };
   window.lacMiniVolume=function(v){ send('volume',{value:(+v)/100}); };
