@@ -37,7 +37,10 @@ async function ensurePairSchema(db) {
 }
 
 const SKINS_KEY = "skins:v1";
-const SKIN_PART_RE = /^(img:[\w-]{1,24}|grad:[a-z]{1,16}|hue:\d{1,3},\d{1,3},\d{1,3}|txt:\d{1,3},\d{1,3},\d{1,3}|num:\d{1,3},\d{1,3},\d{1,3}|na:(0(\.\d{1,2})?|1)|em:(0(\.\d{1,2})?|1)|emn:[01]|fx:[a-z]{1,12}|fxs:[0-3](\.\d{1,2})?)$/;
+const SKIN_ART_PREFIX = "skin-art::";
+const SKIN_ART_MAX_BYTES = 96 * 1024;
+const SKIN_ART_ID_RE = /^[a-f0-9]{32}$/;
+const SKIN_PART_RE = /^(img:[\w-]{1,24}|art:[a-f0-9]{32}|grad:[a-z]{1,16}|hue:\d{1,3},\d{1,3},\d{1,3}|txt:\d{1,3},\d{1,3},\d{1,3}|num:\d{1,3},\d{1,3},\d{1,3}|na:(0(\.\d{1,2})?|1)|em:(0(\.\d{1,2})?|1)|emn:[01]|fx:[a-z]{1,12}|fxs:[0-3](\.\d{1,2})?)$/;
 
 function cleanSkinWorker(value) {
   if (typeof value !== "string") return "";
@@ -46,19 +49,66 @@ function cleanSkinWorker(value) {
 }
 
 function cleanSkinValue(value) {
-  if (typeof value !== "string" || value.length > 160) return "";
+  if (typeof value !== "string" || value.length > 220) return "";
   const skin = value.trim();
   const parts = skin.split(";");
-  if (parts.length < 1 || parts.length > 9 || parts.some((part) => !SKIN_PART_RE.test(part))) return "";
+  if (parts.length < 1 || parts.length > 10 || parts.some((part) => !SKIN_PART_RE.test(part))) return "";
   return skin;
 }
 
-async function readSkins(env) {
+function skinArtId(skin) {
+  const match = String(skin || "").match(/(?:^|;)art:([a-f0-9]{32})(?:;|$)/);
+  return match ? match[1] : "";
+}
+
+function replaceSkinBackground(skin, backgroundPart) {
+  const parts = String(skin || "").split(";").filter(Boolean);
+  const rest = parts.filter((part) => !/^(?:img|art|grad|hue):/.test(part));
+  return [backgroundPart, ...rest].join(";");
+}
+
+function createSkinArtId() {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function ascii(bytes, offset, length) {
+  return String.fromCharCode(...bytes.subarray(offset, offset + length));
+}
+
+function webpDimensions(buffer) {
+  const bytes = new Uint8Array(buffer);
+  if (bytes.length < 30 || ascii(bytes, 0, 4) !== "RIFF" || ascii(bytes, 8, 4) !== "WEBP") return null;
+  const type = ascii(bytes, 12, 4);
+  if (type === "VP8X") {
+    return {
+      width: 1 + bytes[24] + (bytes[25] << 8) + (bytes[26] << 16),
+      height: 1 + bytes[27] + (bytes[28] << 8) + (bytes[29] << 16)
+    };
+  }
+  if (type === "VP8 " && bytes.length >= 30 && bytes[23] === 0x9d && bytes[24] === 0x01 && bytes[25] === 0x2a) {
+    return {
+      width: (bytes[26] | (bytes[27] << 8)) & 0x3fff,
+      height: (bytes[28] | (bytes[29] << 8)) & 0x3fff
+    };
+  }
+  if (type === "VP8L" && bytes.length >= 25 && bytes[20] === 0x2f) {
+    return {
+      width: 1 + bytes[21] + ((bytes[22] & 0x3f) << 8),
+      height: 1 + (bytes[22] >> 6) + (bytes[23] << 2) + ((bytes[24] & 0x0f) << 10)
+    };
+  }
+  return null;
+}
+
+async function readSkins(env, strict = false) {
   try {
     const raw = await env.MINKA_EMOJI.get(SKINS_KEY);
     const parsed = raw ? JSON.parse(raw) : {};
     return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
-  } catch (_e) {
+  } catch (error) {
+    if (strict) throw error;
     return {};
   }
 }
@@ -94,6 +144,18 @@ const worker = {
 
     if (method === "OPTIONS") {
       return new Response(null, { headers: cors(request) });
+    }
+
+    const skinAssetMatch = url.pathname.match(/^\/skin-assets\/([a-f0-9]{32})\.webp$/);
+    if (skinAssetMatch && method === "GET") {
+      const image = await env.MINKA_EMOJI.get(SKIN_ART_PREFIX + skinAssetMatch[1], { type: "arrayBuffer", cacheTtl: 86400 });
+      if (!image) return new Response("Not found", { status: 404 });
+      const headers = new Headers(cors(request));
+      headers.set("content-type", "image/webp");
+      headers.set("cache-control", "public, max-age=31536000, immutable");
+      headers.set("etag", '"' + skinAssetMatch[1] + '"');
+      headers.set("x-content-type-options", "nosniff");
+      return new Response(image, { headers });
     }
 
     if (url.pathname === "/api/login" && method === "POST") {
@@ -226,6 +288,66 @@ const worker = {
       return json(request, { ok: true });
     }
 
+    if (url.pathname === "/api/skin-art" && method === "POST") {
+      const contentLength = Number(request.headers.get("content-length") || 0);
+      if (contentLength > SKIN_ART_MAX_BYTES + 48 * 1024) {
+        return json(request, { ok: false, error: "image too large" }, 413);
+      }
+
+      let form;
+      try {
+        form = await request.formData();
+      } catch (_error) {
+        return json(request, { ok: false, error: "invalid form data" }, 400);
+      }
+      const workerName = cleanSkinWorker(form.get("worker"));
+      const image = form.get("image");
+      if (!workerName) {
+        return json(request, { ok: false, error: "worker must be 1-64 characters" }, 400);
+      }
+      if (!image || typeof image.arrayBuffer !== "function" || image.type !== "image/webp") {
+        return json(request, { ok: false, error: "384x384 WebP image required" }, 400);
+      }
+      if (image.size < 32 || image.size > SKIN_ART_MAX_BYTES) {
+        return json(request, { ok: false, error: "image must be at most 96 KB" }, 413);
+      }
+
+      const imageBuffer = await image.arrayBuffer();
+      const dimensions = webpDimensions(imageBuffer);
+      const isCurrentSquare = dimensions && dimensions.width === 384 && dimensions.height === 384;
+      const isLegacyWide = dimensions && dimensions.width === 480 && dimensions.height === 270;
+      if (!isCurrentSquare && !isLegacyWide) {
+        return json(request, { ok: false, error: "image must be exactly 384x384" }, 400);
+      }
+
+      const skins = await readSkins(env, true);
+      const previousSkin = skins[workerName] || "";
+      const previousArtId = skinArtId(previousSkin);
+      const artId = createSkinArtId();
+      const artKey = SKIN_ART_PREFIX + artId;
+      const nextSkin = cleanSkinValue(replaceSkinBackground(previousSkin, "art:" + artId));
+      if (!nextSkin) return json(request, { ok: false, error: "invalid resulting skin" }, 400);
+
+      await env.MINKA_EMOJI.put(artKey, imageBuffer, { metadata: { worker: workerName, contentType: "image/webp" } });
+      try {
+        skins[workerName] = nextSkin;
+        await env.MINKA_EMOJI.put(SKINS_KEY, JSON.stringify(skins));
+      } catch (error) {
+        await env.MINKA_EMOJI.delete(artKey);
+        throw error;
+      }
+      if (previousArtId && previousArtId !== artId) {
+        await env.MINKA_EMOJI.delete(SKIN_ART_PREFIX + previousArtId);
+      }
+      return json(request, {
+        ok: true,
+        worker: workerName,
+        skin: nextSkin,
+        artId,
+        asset: "/skin-assets/" + artId + ".webp"
+      });
+    }
+
     if (url.pathname === "/api/skins" && method === "GET") {
       return json(request, await readSkins(env));
     }
@@ -245,10 +367,15 @@ const worker = {
         return json(request, { ok: false, error: "invalid skin" }, 400);
       }
 
-      const skins = await readSkins(env);
+      const skins = await readSkins(env, true);
+      const previousArtId = skinArtId(skins[worker]);
+      const nextArtId = skinArtId(skin);
       if (skin === null) delete skins[worker];
       else skins[worker] = skin;
       await env.MINKA_EMOJI.put(SKINS_KEY, JSON.stringify(skins));
+      if (previousArtId && previousArtId !== nextArtId) {
+        await env.MINKA_EMOJI.delete(SKIN_ART_PREFIX + previousArtId);
+      }
       return json(request, { ok: true, worker, skin });
     }
 
