@@ -2135,7 +2135,7 @@ window.addEventListener('DOMContentLoaded', () => {
 #lacMiniProfilePanel .lmp-field{flex:1 1 150px;display:flex;flex-direction:column;gap:5px;}
 #lacMiniProfilePanel .lmp-field label{color:#929993;font:700 9px/1 'Space Grotesk',system-ui;text-transform:uppercase;letter-spacing:.08em;}
 #lacMiniProfilePanel .lmp-field input{height:36px;box-sizing:border-box;border:1px solid rgba(255,255,255,.12);border-radius:9px;background:#080909;color:#fff;padding:0 11px;outline:0;font:700 14px/1 ui-monospace,monospace;}
-#lacMiniProfilePanel .lmp-field input:focus{border-color:#1ed760;}
+#lacMiniProfilePanel .lmp-field input:focus,#lacMiniProfilePanel .lmp-field input:focus-visible{outline:none!important;border-color:#1ed760!important;box-shadow:0 0 0 3px rgba(30,215,96,.22)!important;}
 #lacMiniProfilePanel .lmp-btn{height:36px;padding:0 13px;border:1px solid rgba(255,255,255,.12);border-radius:9px;background:#222527;color:#f6f6f6;font:750 11px/1 'Space Grotesk',system-ui;cursor:pointer;}
 #lacMiniProfilePanel .lmp-btn:hover{background:#2b2e30;}
 #lacMiniProfilePanel .lmp-btn.primary{border-color:#1ed760;background:#1ed760;color:#06150b;}
@@ -2161,7 +2161,7 @@ window.addEventListener('DOMContentLoaded', () => {
 #lacMiniProfilePanel .lmp-empty{padding:22px 8px;text-align:center;color:#8e9590;font:600 11px/1.4 'Space Grotesk',system-ui;}
 #lacMiniProfilePanel .lmp-create{display:flex;gap:6px;margin-bottom:9px;}
 #lacMiniProfilePanel .lmp-create input{flex:1;min-width:0;height:34px;box-sizing:border-box;border:1px solid rgba(255,255,255,.12);border-radius:9px;background:#080909;color:#fff;padding:0 10px;outline:0;font:650 11px/1 'Space Grotesk',system-ui;}
-#lacMiniProfilePanel .lmp-create input:focus{border-color:#1ed760;}
+#lacMiniProfilePanel .lmp-create input:focus,#lacMiniProfilePanel .lmp-create input:focus-visible{outline:none!important;border-color:#1ed760!important;box-shadow:0 0 0 3px rgba(30,215,96,.22)!important;}
 #lacMiniProfilePanel .lmp-playlists{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;}
 #lacMiniProfilePanel .lmp-playlist-card{display:flex;align-items:center;gap:9px;min-width:0;padding:10px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:#191b1c;color:#f4f4f4;text-align:left;cursor:pointer;}
 #lacMiniProfilePanel .lmp-playlist-card:hover{border-color:rgba(30,215,96,.45);background:#202522;}
@@ -2176,6 +2176,7 @@ window.addEventListener('DOMContentLoaded', () => {
 #lacMiniActions .lm-quick{height:25px;min-width:32px;padding:0 8px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:#171919;color:#949a96;font:750 12px/1 system-ui;cursor:pointer;}
 #lacMiniActions .lm-quick:hover{color:#fff;border-color:rgba(255,255,255,.22);}
 #lacMiniActions .lm-quick.on{color:#1ed760;border-color:rgba(30,215,96,.4);background:rgba(30,215,96,.1);}
+#lacMiniConsole button:focus-visible,#lacMiniProfilePanel button:focus-visible{outline:none!important;box-shadow:0 0 0 3px rgba(30,215,96,.25)!important;}
 /* body: now-playing info (left) + a native horizontally scrolling result list. */
 #lacMiniConsole .lm-body{flex:1;min-height:0;display:flex;align-items:stretch;gap:14px;margin-top:6px;}
 #lacMiniInfo{flex:0 0 clamp(180px,22%,270px);min-width:0;display:flex;flex-direction:column;justify-content:center;gap:7px;padding-right:12px;border-right:1px solid rgba(255,255,255,.08);}
