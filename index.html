@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="lv">
 <head>
+<meta charset="utf-8">
 <!-- First paint must be dark: this runs before any blocking script/CSS, so a
      PWA wake after tab discard never flashes a white screen. -->
 <style>html{background:#060b13;}body{background:#060b13;}</style>
@@ -44,7 +45,8 @@
       if (!f) return;
       var base = withCalendarBuild(f.getAttribute('data-base-src') || 'kalendars/index.html');
       var next = base;
-      if (f.getAttribute('src') !== next) f.setAttribute('src', next);
+      var nextAbsolute = new URL(next, window.location.href).href;
+      if (f.src !== nextAbsolute) f.setAttribute('src', next);
       if (f.contentWindow) f.contentWindow.postMessage({ type: 'minka_auth_ok', token: getToken() }, window.location.origin);
     }, 180);
   }
@@ -328,7 +330,7 @@
 /* ═══ MINKA v11 Shell ═══ */
 :root {
   --rh: clamp(142px, 21vh, 170px);        /* fallback radio height */
-  --btnbar-h: 52px;
+  --btnbar-h: 78px;
   --calendar-safe-gap: 14px;
   --calendar-bottom: calc(var(--rh) + var(--btnbar-h) + var(--calendar-safe-gap));
   --font: 'Space Grotesk', system-ui, sans-serif;
@@ -377,6 +379,8 @@ html.mk-low-spec #calendarEmbed {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+  transition: none;
+  will-change: auto;
 }
 #calendarEmbed::before {
   content: '';
@@ -568,7 +572,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260715l" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260715l" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260716d" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260716d" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -873,7 +877,7 @@ async function loadRadioScripts() {
     _fa.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
     document.head.appendChild(_fa);
   }
-  await loadAny(['js/radio.js?v=20260715o']);
+  await loadAny(['js/radio.js?v=20260722b']);
   await loadAny(['js/radio_extras_v4.js?v=20260715b']);
   await loadAny(['js/ambilight.js?v=20260612e']);
   _radioScriptsLoaded = true;
@@ -915,6 +919,7 @@ function toggleRadio() {
   const isHidden = document.body.classList.contains('radio-hidden');
   if (isHidden) {
     // Show radio
+    window.__mkRadioSupersededByLacitis = false;
     try { if (typeof window.__hideLacMiniForRadio === 'function') window.__hideLacMiniForRadio(); } catch(e) {}
     document.body.classList.remove('radio-hidden');
     document.body.classList.remove('radio-idle');
@@ -937,6 +942,7 @@ function radioIdleClick() {
   const btn = document.getElementById('radioIdleBtn');
   if (!btn || btn._loading) return;
   btn._loading = true;
+  window.__mkRadioSupersededByLacitis = false;
 
   try { if (typeof window.__hideLacMiniForRadio === 'function') window.__hideLacMiniForRadio(); } catch(e) {}
   const rw = document.getElementById('radioWindow');
@@ -949,6 +955,7 @@ function radioIdleClick() {
   loadRadioScripts().then(function() {
     try { wireVizLazyMilkdrop(); } catch(e) {}
     function tryStart() {
+      if (window.__mkRadioSupersededByLacitis) { btn._loading = false; return; }
       if (typeof selectStation === 'function' && window.stationsList && window.stationsList.length) {
         btn._loading = false;
         selectStation(window.currentIndex || 0);
@@ -2196,12 +2203,12 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       <div id="lacMiniArtist"></div>
     </div>
     <div class="lm-deck-shell">
-      <button id="lacMiniDeckPrev" class="lm-scroll-btn" type="button" onclick="lacMiniScroll(-1)" title="Ritināt dziesmas pa kreisi" aria-label="Ritināt dziesmas pa kreisi">‹</button>
+      <button id="lacMiniDeckPrev" class="lm-scroll-btn" type="button" onclick="lacMiniScroll(-1)" title="Ritināt dziesmas pa kreisi" aria-label="Ritināt dziesmas pa kreisi" disabled>‹</button>
       <div id="lacMiniDeck">
         <div id="lacMiniTrack"></div>
         <div id="lacMiniEmpty">Ielādē mūziku…</div>
       </div>
-      <button id="lacMiniDeckNext" class="lm-scroll-btn" type="button" onclick="lacMiniScroll(1)" title="Ritināt dziesmas pa labi" aria-label="Ritināt dziesmas pa labi">›</button>
+      <button id="lacMiniDeckNext" class="lm-scroll-btn" type="button" onclick="lacMiniScroll(1)" title="Ritināt dziesmas pa labi" aria-label="Ritināt dziesmas pa labi" disabled>›</button>
     </div>
   </div>
   <div id="lacMiniProg" onclick="lacMiniSeek(event)"><div id="lacMiniProgFill"></div></div>
@@ -2260,7 +2267,8 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     deck=[]; pendingDeck=null; pendingAppend=[]; curId=null; lastNpPayload=null;
     if(track) track.innerHTML='';
     if(empty){ empty.style.display=''; empty.textContent='Ielādē mūziku…'; }
-    updateDeckNav();
+    if(deckPrev) deckPrev.disabled=true;
+    if(deckNext) deckNext.disabled=true;
   }
   function ensureFrame(){
     if(loaded||!frame) return;
@@ -2424,6 +2432,8 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     els(); wire();
     ensureFrame();
     // Claim the bottom-console slot: hide the radio so they never overlap.
+    window.__mkRadioSupersededByLacitis=true;
+    try{ if(typeof window.__mkPauseRadioForLacitis==='function') window.__mkPauseRadioForLacitis(); }catch(e){}
     try{ var rw=document.getElementById('radioWindow'); if(rw){ rw.style.display='none'; document.body.classList.add('radio-hidden'); } }catch(e){}
     try{ if(typeof window.__mkSyncRadioVisuals==='function') window.__mkSyncRadioVisuals(); }catch(e){}
     cons.classList.add('docked'); cons.setAttribute('aria-hidden','false');
@@ -2472,7 +2482,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     }
   });
 
-  els(); wire(); updateDeckNav();
+  els(); wire();
 })();
 </script>
 
@@ -4725,8 +4735,8 @@ body::before {
     0 26px 80px rgba(0,0,0,0.32) !important;
 }
 #mk-app-loader {
-  backdrop-filter: blur(18px) saturate(135%);
-  -webkit-backdrop-filter: blur(18px) saturate(135%);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 #mkl-progress {
   position: relative;
