@@ -2112,6 +2112,55 @@ window.addEventListener('DOMContentLoaded', () => {
 #lacMiniConsole .lm-login{display:flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:14px;border:1px solid rgba(30,215,96,.42);background:rgba(30,215,96,.1);color:#1ed760;font:700 10.5px/1 'Space Grotesk',system-ui;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:background .15s;}
 #lacMiniConsole .lm-login:hover{background:rgba(30,215,96,.2);}
 #lacMiniConsole .lm-login svg{width:14px;height:14px;fill:currentColor;flex-shrink:0;}
+#lacMiniConsole .lm-login.active{background:#1ed760;color:#06150b;border-color:#1ed760;}
+#lacMiniConsole .lm-login .lm-profile-avatar{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:currentColor;color:#07160c;font:900 10px/1 system-ui;}
+#lacMiniProfilePanel{display:none;position:absolute;right:12px;bottom:calc(100% + 9px);z-index:4;width:min(680px,calc(100vw - 24px));max-height:min(410px,calc(100dvh - 250px));overflow:hidden;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:#111315;box-shadow:0 24px 70px rgba(0,0,0,.72);color:#f4f4f4;flex-direction:column;}
+#lacMiniProfilePanel.open{display:flex;}
+#lacMiniProfilePanel .lmp-head{height:44px;display:flex;align-items:center;gap:10px;padding:0 12px 0 16px;border-bottom:1px solid rgba(255,255,255,.09);flex-shrink:0;}
+#lacMiniProfilePanel .lmp-title{font:800 13px/1 'Space Grotesk',system-ui;letter-spacing:.04em;}
+#lacMiniProfilePanel .lmp-status{margin-left:auto;color:#8d9690;font:600 10px/1 'Space Grotesk',system-ui;}
+#lacMiniProfilePanel .lmp-body{min-height:0;overflow:auto;padding:12px 14px 14px;}
+#lacMiniProfilePanel .lmp-note{color:#a8aca9;font:500 12px/1.45 'Space Grotesk',system-ui;margin-bottom:10px;}
+#lacMiniProfilePanel .lmp-workers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+#lacMiniProfilePanel .lmp-worker{min-width:0;display:flex;align-items:center;gap:9px;padding:10px;border:1px solid rgba(255,255,255,.09);border-radius:10px;background:#1b1d1f;color:#f5f5f5;cursor:pointer;text-align:left;}
+#lacMiniProfilePanel .lmp-worker:hover{border-color:rgba(30,215,96,.55);background:#202522;}
+#lacMiniProfilePanel .lmp-avatar{width:30px;height:30px;flex:0 0 30px;border-radius:50%;display:grid;place-items:center;background:#263029;color:#49df7e;font:900 12px/1 system-ui;}
+#lacMiniProfilePanel .lmp-worker-copy{min-width:0;display:flex;flex-direction:column;gap:3px;}
+#lacMiniProfilePanel .lmp-worker-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:750 12px/1.1 'Space Grotesk',system-ui;}
+#lacMiniProfilePanel .lmp-worker-pin{color:#8e9590;font:600 9.5px/1 'Space Grotesk',system-ui;}
+#lacMiniProfilePanel .lmp-pin-form{display:none;gap:8px;align-items:flex-end;flex-wrap:wrap;}
+#lacMiniProfilePanel .lmp-pin-form.show{display:flex;}
+#lacMiniProfilePanel .lmp-field{flex:1 1 150px;display:flex;flex-direction:column;gap:5px;}
+#lacMiniProfilePanel .lmp-field label{color:#929993;font:700 9px/1 'Space Grotesk',system-ui;text-transform:uppercase;letter-spacing:.08em;}
+#lacMiniProfilePanel .lmp-field input{height:36px;box-sizing:border-box;border:1px solid rgba(255,255,255,.12);border-radius:9px;background:#080909;color:#fff;padding:0 11px;outline:0;font:700 14px/1 ui-monospace,monospace;}
+#lacMiniProfilePanel .lmp-field input:focus{border-color:#1ed760;}
+#lacMiniProfilePanel .lmp-btn{height:36px;padding:0 13px;border:1px solid rgba(255,255,255,.12);border-radius:9px;background:#222527;color:#f6f6f6;font:750 11px/1 'Space Grotesk',system-ui;cursor:pointer;}
+#lacMiniProfilePanel .lmp-btn:hover{background:#2b2e30;}
+#lacMiniProfilePanel .lmp-btn.primary{border-color:#1ed760;background:#1ed760;color:#06150b;}
+#lacMiniProfilePanel .lmp-btn.danger{color:#ff777f;}
+#lacMiniProfilePanel .lmp-error{min-height:16px;margin-top:8px;color:#ff7078;font:650 11px/1.3 'Space Grotesk',system-ui;}
+#lacMiniProfilePanel .lmp-session{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+#lacMiniProfilePanel .lmp-session-copy{min-width:0;display:flex;flex-direction:column;gap:3px;}
+#lacMiniProfilePanel .lmp-session-name{font:800 13px/1.1 'Space Grotesk',system-ui;}
+#lacMiniProfilePanel .lmp-session-shift{color:#949a96;font:600 10px/1 'Space Grotesk',system-ui;}
+#lacMiniProfilePanel .lmp-tabs{display:flex;gap:5px;margin-bottom:9px;overflow-x:auto;}
+#lacMiniProfilePanel .lmp-tab{height:30px;white-space:nowrap;padding:0 11px;border:1px solid rgba(255,255,255,.09);border-radius:15px;background:#1b1d1f;color:#a9aeaa;font:700 10px/1 'Space Grotesk',system-ui;cursor:pointer;}
+#lacMiniProfilePanel .lmp-tab.active{border-color:rgba(30,215,96,.52);background:rgba(30,215,96,.14);color:#48df7e;}
+#lacMiniProfilePanel .lmp-library{display:flex;flex-direction:column;gap:6px;}
+#lacMiniProfilePanel .lmp-row{display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:9px;min-height:48px;padding:5px 7px;border:1px solid rgba(255,255,255,.07);border-radius:9px;background:#181a1b;}
+#lacMiniProfilePanel .lmp-row img{width:38px;height:38px;border-radius:6px;object-fit:cover;background:#242626;}
+#lacMiniProfilePanel .lmp-row-copy{min-width:0;cursor:pointer;}
+#lacMiniProfilePanel .lmp-row-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:720 11.5px/1.2 'Space Grotesk',system-ui;}
+#lacMiniProfilePanel .lmp-row-artist{margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#909692;font:550 9.5px/1.1 'Space Grotesk',system-ui;}
+#lacMiniProfilePanel .lmp-row-actions{display:flex;gap:4px;}
+#lacMiniProfilePanel .lmp-icon-btn{width:29px;height:29px;border:0;border-radius:8px;background:transparent;color:#8f9691;cursor:pointer;display:grid;place-items:center;font:800 14px/1 system-ui;}
+#lacMiniProfilePanel .lmp-icon-btn:hover{background:rgba(255,255,255,.08);color:#fff;}
+#lacMiniProfilePanel .lmp-icon-btn.on{color:#1ed760;}
+#lacMiniProfilePanel .lmp-empty{padding:22px 8px;text-align:center;color:#8e9590;font:600 11px/1.4 'Space Grotesk',system-ui;}
+#lacMiniActions{display:flex;align-items:center;gap:6px;}
+#lacMiniActions .lm-quick{height:25px;min-width:32px;padding:0 8px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:#171919;color:#949a96;font:750 12px/1 system-ui;cursor:pointer;}
+#lacMiniActions .lm-quick:hover{color:#fff;border-color:rgba(255,255,255,.22);}
+#lacMiniActions .lm-quick.on{color:#1ed760;border-color:rgba(30,215,96,.4);background:rgba(30,215,96,.1);}
 /* body: now-playing info (left) + a native horizontally scrolling result list. */
 #lacMiniConsole .lm-body{flex:1;min-height:0;display:flex;align-items:stretch;gap:14px;margin-top:6px;}
 #lacMiniInfo{flex:0 0 clamp(180px,22%,270px);min-width:0;display:flex;flex-direction:column;justify-content:center;gap:7px;padding-right:12px;border-right:1px solid rgba(255,255,255,.08);}
@@ -2153,7 +2202,7 @@ window.addEventListener('DOMContentLoaded', () => {
 .lm-cover.active{border-color:rgba(30,215,96,.72);background:#17231b;box-shadow:inset 3px 0 0 #1ed760;}
 .lm-cover.active .lm-cover-title{color:#42df79}
 #lacMiniEmpty{position:absolute;inset:0;display:grid;place-items:center;color:#8a8a8a;font:600 12px/1.4 'Space Grotesk',system-ui;text-align:center;pointer-events:none;}
-@media(max-width:760px){#lacMiniInfo{flex-basis:145px;gap:5px;}#lacMiniTitle{font-size:14px;-webkit-line-clamp:2;}#lacMiniVol{display:none;}#lacMiniConsole .lm-login span:last-child{display:none;}#lacMiniConsole .lm-search{max-width:none;}#lacMiniConsole .lm-body{gap:10px;}.lm-cover{flex-basis:220px;}#lacMiniConsole .lm-scroll-btn{display:none;}}
+@media(max-width:760px){#lacMiniInfo{flex-basis:145px;gap:5px;}#lacMiniTitle{font-size:14px;-webkit-line-clamp:2;}#lacMiniVol{display:none;}#lacMiniConsole .lm-login .lm-profile-label{display:none;}#lacMiniConsole .lm-search{max-width:none;}#lacMiniConsole .lm-body{gap:10px;}.lm-cover{flex-basis:220px;}#lacMiniConsole .lm-scroll-btn{display:none;}#lacMiniProfilePanel .lmp-workers{grid-template-columns:1fr;}}
 @media(max-width:520px){#lacMiniInfo{display:none}.lm-cover{flex-basis:205px}#lacMiniConsole{padding-left:10px;padding-right:10px}}
 #lacMiniStage{position:fixed;left:8px;bottom:8px;width:1px;height:1px;opacity:0;visibility:hidden;pointer-events:none;overflow:hidden;z-index:-1;background:#050609;display:flex;flex-direction:column;border:0;contain:strict;}
 #lacMiniStage.full{left:0;right:0;top:0;bottom:0;transform:none;width:100vw;height:100dvh;opacity:1;visibility:visible;pointer-events:auto;z-index:171340;border-radius:0;border:0;box-shadow:none;contain:layout style paint;}
@@ -2191,7 +2240,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       <input id="lacMiniSearch" type="search" placeholder="Meklēt mūziku…" autocomplete="off" spellcheck="false">
     </label>
     <span class="lm-head-btns">
-      <button class="lm-login" onclick="openLacitisLauncher()" title="Ielogoties ar savu dežūru"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-4.1 0-8 2.1-8 5v1h16v-1c0-2.9-3.9-5-8-5z"/></svg><span>Ielogoties</span></button>
+      <button class="lm-login" id="lacMiniProfileBtn" onclick="lacMiniToggleProfile()" title="Lācīša profils un bibliotēka" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-4.1 0-8 2.1-8 5v1h16v-1c0-2.9-3.9-5-8-5z"/></svg><span class="lm-profile-label">Ielogoties</span></button>
       <button class="lm-hbtn" onclick="lacMiniMaximize()" title="Pilnekrāna režīms" aria-label="Pilnekrāna režīms">⛶</button>
       <button class="lm-hbtn" onclick="lacMiniClose()" title="Aizvērt" aria-label="Aizvērt">×</button>
     </span>
@@ -2201,6 +2250,10 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       <div id="lacMiniNowLbl"><span class="dot"></span><span>Atskaņo</span></div>
       <div id="lacMiniTitle">—</div>
       <div id="lacMiniArtist"></div>
+      <div id="lacMiniActions">
+        <button id="lacMiniFavBtn" class="lm-quick" type="button" onclick="lacMiniQuickAction('favorite')" title="Pievienot/noņemt no iecienītajām" aria-label="Pievienot/noņemt no iecienītajām">♥</button>
+        <button id="lacMiniLaterBtn" class="lm-quick" type="button" onclick="lacMiniQuickAction('later')" title="Pievienot/noņemt klausīties vēlāk" aria-label="Pievienot/noņemt klausīties vēlāk">⏱</button>
+      </div>
     </div>
     <div class="lm-deck-shell">
       <button id="lacMiniDeckPrev" class="lm-scroll-btn" type="button" onclick="lacMiniScroll(-1)" title="Ritināt dziesmas pa kreisi" aria-label="Ritināt dziesmas pa kreisi" disabled>‹</button>
@@ -2220,6 +2273,39 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     </div>
     <span id="lacMiniVol"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3z"/></svg><input type="range" min="0" max="100" value="100" oninput="lacMiniVolume(this.value)" aria-label="Skaļums"></span>
   </div>
+  <section id="lacMiniProfilePanel" role="dialog" aria-modal="false" aria-label="Lācīša profils" aria-hidden="true">
+    <div class="lmp-head">
+      <span class="lmp-title">Profils un mūzikas bibliotēka</span>
+      <span class="lmp-status" id="lacMiniProfileStatus"></span>
+      <button class="lm-hbtn" type="button" onclick="lacMiniToggleProfile(false)" title="Aizvērt profilu" aria-label="Aizvērt profilu">×</button>
+    </div>
+    <div class="lmp-body">
+      <div id="lacMiniLoggedOut">
+        <div class="lmp-note">Izvēlies savu vārdu un ievadi PIN. Profils, iecienītās dziesmas un vēsture sinhronizēsies ar Lācīti.</div>
+        <div class="lmp-workers" id="lacMiniWorkers"><div class="lmp-empty">Ielādē darbiniekus…</div></div>
+        <div class="lmp-pin-form" id="lacMiniPinForm">
+          <button class="lmp-btn" type="button" onclick="lacMiniBackToWorkers()">‹ Atpakaļ</button>
+          <div class="lmp-field"><label id="lacMiniPinLabel">PIN</label><input id="lacMiniPin" type="password" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="4–8 cipari"></div>
+          <div class="lmp-field" id="lacMiniPinConfirmField" style="display:none"><label>Atkārto PIN</label><input id="lacMiniPinConfirm" type="password" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="Tas pats PIN"></div>
+          <button class="lmp-btn primary" id="lacMiniPinSubmit" type="button" onclick="lacMiniSubmitPin()">Ieiet</button>
+        </div>
+        <div class="lmp-error" id="lacMiniProfileError" role="status" aria-live="polite"></div>
+      </div>
+      <div id="lacMiniLoggedIn" style="display:none">
+        <div class="lmp-session">
+          <span class="lmp-avatar" id="lacMiniSessionAvatar">?</span>
+          <span class="lmp-session-copy"><span class="lmp-session-name" id="lacMiniSessionName"></span><span class="lmp-session-shift" id="lacMiniSessionShift"></span></span>
+          <button class="lmp-btn danger" type="button" onclick="lacMiniLogout()" style="margin-left:auto">Iziet</button>
+        </div>
+        <div class="lmp-tabs">
+          <button class="lmp-tab active" type="button" data-section="favorites" onclick="lacMiniLibrary('favorites')">Iecienītās <span id="lacMiniFavCount">0</span></button>
+          <button class="lmp-tab" type="button" data-section="history" onclick="lacMiniLibrary('history')">Vēsture <span id="lacMiniHistoryCount">0</span></button>
+          <button class="lmp-tab" type="button" data-section="later" onclick="lacMiniLibrary('later')">Vēlāk <span id="lacMiniLaterCount">0</span></button>
+        </div>
+        <div class="lmp-library" id="lacMiniLibrary"><div class="lmp-empty">Ielādē bibliotēku…</div></div>
+      </div>
+    </div>
+  </section>
 </div>
 
 <script>
@@ -2231,6 +2317,8 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   var LAC_BASE=useLocalLac?'http://127.0.0.1:5174':'https://lacitis.pages.dev';
   var MINI_URL=LAC_BASE+'/?embed=mini';
   var frame,cons,stage,deckEl,track,empty,titleEl,artistEl,fillEl,playIco,progEl,searchEl,deckPrev,deckNext;
+  var profilePanel,profileBtn,profileStatus,workersEl,pinForm,pinInput,pinConfirm,pinConfirmField,pinSubmit,profileError;
+  var loggedOut,loggedIn,libraryEl,favBtn,laterBtn;
   var deck=[], sel=0, curId=null, loaded=false, wired=false;
   var lastNpPayload=null, pendingDeck=null, pendingAppend=[];
   var searchTO=0, openTO=0, pendingSearch=null;
@@ -2239,6 +2327,9 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   var lowSpec=!!(perfProfile.lowSpec||perfProfile.reducedMotion||document.documentElement.classList.contains('mk-low-spec'));
   var bridgeReady=false;
   var morePending=false, moreCooldownUntil=0, DECK_CAP=lowSpec?16:32;
+  var pendingCommands=[];
+  var profileState={session:null,workers:[],favoriteIds:[],laterIds:[],counts:{favorites:0,history:0,later:0}};
+  var selectedWorker=null,profileSection='favorites',profileLibrary=[];
 
   function $(id){ return document.getElementById(id); }
   function els(){
@@ -2247,10 +2338,25 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     titleEl=$('lacMiniTitle'); artistEl=$('lacMiniArtist'); fillEl=$('lacMiniProgFill');
     playIco=$('lacMiniPlayIco'); progEl=$('lacMiniProg'); searchEl=$('lacMiniSearch');
     deckPrev=$('lacMiniDeckPrev'); deckNext=$('lacMiniDeckNext');
+    profilePanel=$('lacMiniProfilePanel'); profileBtn=$('lacMiniProfileBtn'); profileStatus=$('lacMiniProfileStatus');
+    workersEl=$('lacMiniWorkers'); pinForm=$('lacMiniPinForm'); pinInput=$('lacMiniPin');
+    pinConfirm=$('lacMiniPinConfirm'); pinConfirmField=$('lacMiniPinConfirmField'); pinSubmit=$('lacMiniPinSubmit');
+    profileError=$('lacMiniProfileError'); loggedOut=$('lacMiniLoggedOut'); loggedIn=$('lacMiniLoggedIn');
+    libraryEl=$('lacMiniLibrary'); favBtn=$('lacMiniFavBtn'); laterBtn=$('lacMiniLaterBtn');
   }
   function send(cmd,extra){
     if(!bridgeReady&&cmd==='search'){ pendingSearch=(extra&&extra.q)||''; return; }
+    if(!bridgeReady){ pendingCommands.push({cmd:cmd,extra:extra||{}}); return; }
     try{ frame&&frame.contentWindow&&frame.contentWindow.postMessage(Object.assign({type:'lac_mini_cmd',cmd:cmd},extra||{}),'*'); }catch(e){}
+  }
+  function profileIsOpen(){ return !!(profilePanel&&profilePanel.classList.contains('open')); }
+  function todayWorkers(){
+    var names=[];
+    try{ if(typeof window.__lacitisTodayWorkers==='function') names=window.__lacitisTodayWorkers()||[]; }catch(e){}
+    return names.map(function(name,index){
+      var slug=String(name||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||'worker';
+      return {id:'minka-'+slug+'-'+index,name:String(name||''),shift:'Dežūra'};
+    }).filter(function(worker){return worker.name;});
   }
   function coverUrl(t){ return 'https://i.ytimg.com/vi/'+encodeURIComponent(t.id)+'/default.jpg'; }
   function isLowSpec(){ return lowSpec||document.documentElement.classList.contains('mk-low-spec')||!!(document.body&&document.body.classList.contains('mk-low-spec')); }
@@ -2265,6 +2371,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     frame.src='about:blank'; frame.removeAttribute('src'); loaded=false;
     bridgeReady=false;
     deck=[]; pendingDeck=null; pendingAppend=[]; curId=null; lastNpPayload=null;
+    pendingCommands=[]; profileLibrary=[];
     if(track) track.innerHTML='';
     if(empty){ empty.style.display=''; empty.textContent='Ielādē mūziku…'; }
     if(deckPrev) deckPrev.disabled=true;
@@ -2390,7 +2497,154 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       if(idx>=0) selectIdx(idx,true);
       else if(titleEl){ titleEl.textContent=d.title||'—'; artistEl.textContent=d.author||''; }
     }
+    updateQuickActions();
   }
+
+  function currentTrack(){
+    var fromDeck=deck.find(function(item){return item&&item.id===curId;});
+    return fromDeck||(lastNpPayload&&lastNpPayload.id?lastNpPayload:null)||deck[sel]||null;
+  }
+  function hasId(list,id){ return !!id&&Array.isArray(list)&&list.indexOf(id)>=0; }
+  function updateQuickActions(){
+    var trackNow=currentTrack(), logged=!!profileState.session;
+    if(favBtn){ favBtn.classList.toggle('on',logged&&hasId(profileState.favoriteIds,trackNow&&trackNow.id)); favBtn.disabled=!trackNow; }
+    if(laterBtn){ laterBtn.classList.toggle('on',logged&&hasId(profileState.laterIds,trackNow&&trackNow.id)); laterBtn.disabled=!trackNow; }
+  }
+  function setProfileError(message,good){
+    if(!profileError) return;
+    profileError.textContent=message||'';
+    profileError.style.color=good?'#49df7e':'#ff7078';
+  }
+  function renderWorkers(){
+    if(!workersEl) return;
+    workersEl.innerHTML='';
+    var workers=profileState.workers||[];
+    if(!workers.length){ workersEl.innerHTML='<div class="lmp-empty">Nav atrasti šodienas darbinieki.</div>'; return; }
+    workers.forEach(function(worker){
+      var button=document.createElement('button'); button.type='button'; button.className='lmp-worker';
+      var avatar=document.createElement('span'); avatar.className='lmp-avatar'; avatar.textContent=(worker.name||'?').slice(0,1).toUpperCase();
+      var copy=document.createElement('span'); copy.className='lmp-worker-copy';
+      var name=document.createElement('span'); name.className='lmp-worker-name'; name.textContent=worker.name||'Darbinieks';
+      var pin=document.createElement('span'); pin.className='lmp-worker-pin';
+      pin.textContent=worker.hasPin===true?'PIN iestatīts':worker.hasPin===false?'Izveidot PIN':'Pārbauda PIN…';
+      copy.appendChild(name); copy.appendChild(pin); button.appendChild(avatar); button.appendChild(copy);
+      button.disabled=worker.hasPin===undefined;
+      button.addEventListener('click',function(){ selectProfileWorker(worker); });
+      workersEl.appendChild(button);
+    });
+  }
+  function selectProfileWorker(worker){
+    selectedWorker=worker; setProfileError('');
+    if(workersEl) workersEl.style.display='none';
+    if(pinForm) pinForm.classList.add('show');
+    if(pinConfirmField) pinConfirmField.style.display=worker.hasPin===false?'flex':'none';
+    if(pinSubmit) pinSubmit.textContent=worker.hasPin===false?'Izveidot PIN':'Ieiet';
+    var label=$('lacMiniPinLabel'); if(label) label.textContent=(worker.name||'')+' • PIN';
+    if(pinInput){ pinInput.value=''; setTimeout(function(){pinInput.focus();},20); }
+    if(pinConfirm) pinConfirm.value='';
+  }
+  window.lacMiniBackToWorkers=function(){
+    selectedWorker=null; setProfileError('');
+    if(workersEl) workersEl.style.display='grid';
+    if(pinForm) pinForm.classList.remove('show');
+  };
+  window.lacMiniSubmitPin=function(){
+    if(!selectedWorker) return;
+    var pin=String(pinInput&&pinInput.value||'').trim();
+    var confirm=String(pinConfirm&&pinConfirm.value||'').trim();
+    if(!/^\d{4,8}$/.test(pin)){ setProfileError('PIN jābūt 4 līdz 8 cipariem.'); return; }
+    if(selectedWorker.hasPin===false&&pin!==confirm){ setProfileError('PIN atkārtojums nesakrīt.'); return; }
+    if(pinSubmit){ pinSubmit.disabled=true; pinSubmit.textContent='Pārbauda…'; }
+    setProfileError('');
+    send('profile_login',{workerId:selectedWorker.id,pin:pin,confirm:confirm});
+  };
+  function profileTrackPayload(item){
+    return {id:item.id,title:item.title||'',author:item.author||'',thumbnail:item.thumbnail||'',duration:item.duration||'',lengthSeconds:item.lengthSeconds||0};
+  }
+  function renderLibrary(tracks,section){
+    if(!libraryEl) return;
+    profileLibrary=tracks||[]; libraryEl.innerHTML='';
+    if(!profileLibrary.length){
+      var labels={favorites:'Nav iecienīto dziesmu.',history:'Vēsture pagaidām ir tukša.',later:'Saraksts “Vēlāk” ir tukšs.'};
+      libraryEl.innerHTML='<div class="lmp-empty">'+labels[section]+'</div>'; return;
+    }
+    profileLibrary.forEach(function(item){
+      var row=document.createElement('div'); row.className='lmp-row';
+      var image=document.createElement('img'); image.loading='lazy'; image.alt=''; image.src=coverUrl(item);
+      image.onerror=function(){this.onerror=null;this.src='https://lacitis.pages.dev/logo192.png';};
+      var copy=document.createElement('div'); copy.className='lmp-row-copy'; copy.title='Atskaņot';
+      var title=document.createElement('div'); title.className='lmp-row-title'; title.textContent=item.title||'Nezināma dziesma';
+      var artist=document.createElement('div'); artist.className='lmp-row-artist'; artist.textContent=item.author||'';
+      copy.appendChild(title); copy.appendChild(artist);
+      copy.addEventListener('click',function(){send('profile_play',{section:profileSection,id:item.id});});
+      var actions=document.createElement('span'); actions.className='lmp-row-actions';
+      var play=document.createElement('button'); play.type='button'; play.className='lmp-icon-btn'; play.title='Atskaņot'; play.textContent='▶';
+      play.addEventListener('click',function(){send('profile_play',{section:profileSection,id:item.id});});
+      var favorite=document.createElement('button'); favorite.type='button'; favorite.className='lmp-icon-btn'; favorite.title='Iecienītās'; favorite.textContent='♥';
+      favorite.classList.toggle('on',hasId(profileState.favoriteIds,item.id));
+      favorite.addEventListener('click',function(){send('profile_favorite',profileTrackPayload(item));});
+      var later=document.createElement('button'); later.type='button'; later.className='lmp-icon-btn'; later.title='Vēlāk'; later.textContent='⏱';
+      later.classList.toggle('on',hasId(profileState.laterIds,item.id));
+      later.addEventListener('click',function(){send('profile_later',profileTrackPayload(item));});
+      actions.appendChild(play); actions.appendChild(favorite); actions.appendChild(later);
+      row.appendChild(image); row.appendChild(copy); row.appendChild(actions); libraryEl.appendChild(row);
+    });
+  }
+  function applyProfileState(data){
+    profileState=data||profileState;
+    var session=profileState.session;
+    if(profileBtn){
+      profileBtn.classList.toggle('active',!!session);
+      profileBtn.setAttribute('aria-label',session?'Profils '+session.name:'Ielogoties Lācīša profilā');
+      var label=profileBtn.querySelector('.lm-profile-label'); if(label) label.textContent=session?session.name:'Ielogoties';
+    }
+    if(profileStatus) profileStatus.textContent=session?'Sinhronizēts':'PIN profils';
+    if(loggedOut) loggedOut.style.display=session?'none':'block';
+    if(loggedIn) loggedIn.style.display=session?'block':'none';
+    if(session){
+      var avatar=$('lacMiniSessionAvatar'),name=$('lacMiniSessionName'),shift=$('lacMiniSessionShift');
+      if(avatar) avatar.textContent=(session.name||'?').slice(0,1).toUpperCase();
+      if(name) name.textContent=session.name||''; if(shift) shift.textContent=session.shift||'Dežūra';
+      var counts=profileState.counts||{};
+      if($('lacMiniFavCount')) $('lacMiniFavCount').textContent=counts.favorites||0;
+      if($('lacMiniHistoryCount')) $('lacMiniHistoryCount').textContent=counts.history||0;
+      if($('lacMiniLaterCount')) $('lacMiniLaterCount').textContent=counts.later||0;
+      if(profileIsOpen()) send('profile_library',{section:profileSection});
+    }else{
+      var selectedId=selectedWorker&&selectedWorker.id;
+      var refreshed=selectedId&&(profileState.workers||[]).find(function(worker){return worker.id===selectedId;});
+      renderWorkers();
+      if(refreshed){
+        selectedWorker=refreshed;
+        if(workersEl) workersEl.style.display='none';
+        if(pinForm) pinForm.classList.add('show');
+        if(pinConfirmField) pinConfirmField.style.display=refreshed.hasPin===false?'flex':'none';
+        if(pinSubmit&&!pinSubmit.disabled) pinSubmit.textContent=refreshed.hasPin===false?'Izveidot PIN':'Ieiet';
+      }else window.lacMiniBackToWorkers();
+    }
+    updateQuickActions();
+  }
+  window.lacMiniLibrary=function(section){
+    profileSection=section||'favorites';
+    var tabs=profilePanel?profilePanel.querySelectorAll('.lmp-tab'):[];
+    for(var i=0;i<tabs.length;i++) tabs[i].classList.toggle('active',tabs[i].getAttribute('data-section')===profileSection);
+    if(libraryEl) libraryEl.innerHTML='<div class="lmp-empty">Ielādē bibliotēku…</div>';
+    send('profile_library',{section:profileSection});
+  };
+  window.lacMiniToggleProfile=function(force){
+    els(); ensureFrame();
+    var open=typeof force==='boolean'?force:!profileIsOpen();
+    profilePanel.classList.toggle('open',open); profilePanel.setAttribute('aria-hidden',open?'false':'true');
+    if(profileBtn) profileBtn.setAttribute('aria-expanded',open?'true':'false');
+    if(open) send('profile_init',{workers:todayWorkers()});
+  };
+  window.lacMiniLogout=function(){ send('profile_logout'); };
+  window.lacMiniQuickAction=function(kind){
+    var item=currentTrack();
+    if(!item) return;
+    if(!profileState.session){ window.lacMiniToggleProfile(true); setProfileError('Vispirms ielogojies profilā.'); return; }
+    send(kind==='favorite'?'profile_favorite':'profile_later',profileTrackPayload(item));
+  };
 
   function wire(){
     if(wired||!deckEl) return; wired=true;
@@ -2406,6 +2660,8 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       searchEl.addEventListener('input',function(){ clearTimeout(searchTO); var q=searchEl.value.trim(); searchTO=setTimeout(function(){ send('search',{q:q}); }, q?360:0); });
       searchEl.addEventListener('keydown',function(e){ if(e.key==='Enter'){ clearTimeout(searchTO); send('search',{q:searchEl.value.trim()}); } });
     }
+    if(pinInput) pinInput.addEventListener('keydown',function(e){if(e.key==='Enter') window.lacMiniSubmitPin();});
+    if(pinConfirm) pinConfirm.addEventListener('keydown',function(e){if(e.key==='Enter') window.lacMiniSubmitPin();});
   }
 
   window.addEventListener('message',function(e){
@@ -2413,6 +2669,9 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     var d=e.data; if(!d||typeof d!=='object') return;
     if(d.type==='lac_mini_ready'){
       bridgeReady=true;
+      send('profile_init',{workers:todayWorkers()});
+      var queued=pendingCommands.slice(); pendingCommands=[];
+      queued.forEach(function(item){send(item.cmd,item.extra);});
       if(stage&&stage.classList.contains('full')) send('full');
       if(pendingSearch!==null){ var q=pendingSearch; pendingSearch=null; send('search',{q:q}); }
       else if(uiVisible()) send('deck');
@@ -2426,6 +2685,15 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       else if(d.tracks&&d.tracks.length) pendingAppend=pendingAppend.concat(d.tracks);
     }
     else if(d.type==='lac_mini_np'){ applyNp(d); }
+    else if(d.type==='lac_mini_profile'){ applyProfileState(d); }
+    else if(d.type==='lac_mini_library'){
+      if(d.section===profileSection) renderLibrary(d.tracks,d.section);
+    }
+    else if(d.type==='lac_mini_profile_result'){
+      if(pinSubmit){ pinSubmit.disabled=false; pinSubmit.textContent=selectedWorker&&selectedWorker.hasPin===false?'Izveidot PIN':'Ieiet'; }
+      if(d.ok){ setProfileError(d.action==='login'?'Profils ielādēts.':'',true); }
+      else setProfileError(d.error||'Darbība neizdevās.');
+    }
   });
 
   window.openLacMini=function(){
@@ -2456,6 +2724,8 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     clearTimeout(openTO); openTO=0;
     cons.classList.remove('docked'); cons.setAttribute('aria-hidden','true');
     stage.classList.remove('full'); stage.setAttribute('aria-hidden','true');
+    if(profilePanel){ profilePanel.classList.remove('open'); profilePanel.setAttribute('aria-hidden','true'); }
+    if(profileBtn) profileBtn.setAttribute('aria-expanded','false');
     setFullShell(false);
     leaveNativeFullscreen();
     setDockButton(false);
@@ -2480,6 +2750,9 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       nativeFullRequested=false;
       window.lacMiniMinimize();
     }
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&profileIsOpen()){ e.stopPropagation(); window.lacMiniToggleProfile(false); }
   });
 
   els(); wire();
@@ -3989,6 +4262,7 @@ window.addEventListener('message', function(e) {
         return true;
       });
   }
+  window.__lacitisTodayWorkers = uniqueTodayWorkers;
 
   function encodeLacitisLaunch(payload) {
     var json = JSON.stringify(payload);
