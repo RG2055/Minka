@@ -125,7 +125,7 @@
 <title>RG Search OS - Clean Start</title>
 <!-- bundle.css is critical ï¿½ load normally -->
 <link rel="stylesheet" href="css/bundle.css?v=20260621n">
-<link rel="stylesheet" href="css/skin-draw.css?v=20260722f">
+<link rel="stylesheet" href="css/skin-draw.css?v=20260723a">
 <!-- External fonts/icons: non-blocking preload swap -->
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1046,7 +1046,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260722f"></script>
+<script src="js/calendar.js?v=20260723a"></script>
 <script src="js/calendar_extras_v4.js?v=20260715m"></script>
 <script src="js/fatigue.js?v=20260715e"></script>
 <script src="js/nightsplit.js?v=20260703a" defer></script>
@@ -11523,7 +11523,7 @@ window.addEventListener('message', function(e) {
 }
 </style>
 
-<script src="js/skin-draw.js?v=20260722f"></script>
+<script src="js/skin-draw.js?v=20260723a"></script>
 <script>
 /* ── MinkaSkins: per-darbinieka kartes izskats ──
    Fons (attēls/gradients/krāsa) + cipara/teksta krāsas + emoji kontrole + spīdumiņi.
@@ -11532,6 +11532,7 @@ window.addEventListener('message', function(e) {
   var KEY = 'mkWorkerSkinsV1';
   var cloudTimers = Object.create(null);
   var IMG_GROUPS = [
+    { label: 'Aesthetic',           ids: ['aesthetic-bird','aesthetic-cyborg','aesthetic-face','aesthetic-flash','aesthetic-helmet','aesthetic-sunset','aesthetic-water'] },
     { label: 'Rozā un maigi',      ids: ['360','25','888','867','56','788','866','923','301','705','279','213','787','77','544'] },
     { label: 'Mīļi un jauki',      ids: ['146','798','219','790','248'] },
     { label: 'Spilgti',            ids: ['1080','1069','211','76'] },
@@ -11595,6 +11596,10 @@ window.addEventListener('message', function(e) {
     var base = (window.MinkaApi && window.MinkaApi.base) || window.MINKA_API_BASE || '';
     return base + '/skin-assets/' + id + '.webp';
   }
+  function stockSkinUrl(id) {
+    var cleanId = String(id || '');
+    return 'data/skins/skin-' + cleanId + '.webp' + (/^aesthetic-/.test(cleanId) ? '?v=2' : '');
+  }
 
   window.mkGetWorkerSkin = function(name) {
     var all = loadAll();
@@ -11603,7 +11608,7 @@ window.addEventListener('message', function(e) {
   window.mkApplySkinToEl = function(el, skin) {
     var numEl = el.querySelector('.mk-mid-hours.card-shift') || el.querySelector('.pv-num');
     if (numEl) { numEl.style.removeProperty('color'); numEl.style.removeProperty('-webkit-text-fill-color'); }
-    ['mk-has-skin','mk-has-grad','mk-has-num','mk-has-txt','mk-has-spark','mk-fx-hearts','mk-fx-mirdz','mk-fx-burb','mk-fx-ziedi','mk-fx-taur','mk-emoji-custom','mk-emoji-normal'].forEach(function(c){ el.classList.remove(c); });
+    ['mk-has-skin','mk-has-grad','mk-skin-fit','mk-has-num','mk-has-txt','mk-has-spark','mk-fx-hearts','mk-fx-mirdz','mk-fx-burb','mk-fx-ziedi','mk-fx-taur','mk-emoji-custom','mk-emoji-normal'].forEach(function(c){ el.classList.remove(c); });
     ['--mk-skin-img','--mk-emoji-tint','--mk-emoji-tint-a','--mk-num-color','--mk-num-alpha','--mk-txt-color','--mk-emoji-op','--mk-fx-scale'].forEach(function(p){ el.style.removeProperty(p); });
     if (!skin) return;
     if (skin.t === 'art' && skin.id && artUrl(skin.id)) {
@@ -11611,7 +11616,8 @@ window.addEventListener('message', function(e) {
       el.style.setProperty('--mk-skin-img', "url('" + artUrl(skin.id) + "')");
     } else if (skin.t === 'img' && skin.id) {
       el.classList.add('mk-has-skin');
-      el.style.setProperty('--mk-skin-img', "url('data/skins/skin-" + skin.id + ".webp')");
+      if (/^aesthetic-/.test(String(skin.id))) el.classList.add('mk-skin-fit');
+      el.style.setProperty('--mk-skin-img', "url('" + stockSkinUrl(skin.id) + "')");
     } else if (skin.t === 'grad' && skin.id && GRAD_MAP[skin.id]) {
       el.classList.add('mk-has-skin');
       el.classList.add('mk-has-grad');
@@ -11827,7 +11833,7 @@ window.addEventListener('message', function(e) {
       html += '<div class="mk-skin-group-lbl">' + grp.label + '</div>';
       grp.ids.forEach(function(id) {
         var act = draft.t === 'img' && draft.id === id;
-        html += '<button type="button" class="mk-skin-thumb' + (act ? ' is-active' : '') + '" data-skin="' + id + '" style="background-image:url(data/skins/skin-' + id + '.webp)"></button>';
+        html += '<button type="button" class="mk-skin-thumb' + (act ? ' is-active' : '') + '" data-skin="' + id + '" style="background-image:url(' + stockSkinUrl(id) + ')"></button>';
       });
     });
     html += '</div>';
@@ -12007,7 +12013,7 @@ window.addEventListener('message', function(e) {
 #grafiks-list.grid-view .card.mk-mid-card.mk-has-skin,
 #grafiks-list .card.mk-has-skin {
   background:
-    linear-gradient(180deg, rgba(7,10,17,.72) 0%, rgba(7,10,17,.55) 45%, rgba(7,10,17,.80) 100%),
+    linear-gradient(180deg, rgba(7,10,17,.62) 0%, rgba(7,10,17,.45) 45%, rgba(7,10,17,.74) 100%),
     var(--mk-skin-img) center/cover no-repeat,
     #0b1019 !important;
   background-blend-mode: normal !important;
@@ -12025,6 +12031,16 @@ window.addEventListener('message', function(e) {
     #0b1019 !important;
   background-blend-mode: normal !important;
 }
+#grafiks-list.grid-view .card.mk-mid-card.mk-has-skin.mk-skin-fit,
+#grafiks-list .card.mk-has-skin.mk-skin-fit,
+#grafiks-list.grid-view .card.mk-mid-card.mk-has-skin.mk-skin-fit:hover,
+#grafiks-list .card.mk-has-skin.mk-skin-fit:hover {
+  background:
+    linear-gradient(180deg, rgba(7,10,17,.62) 0%, rgba(7,10,17,.45) 45%, rgba(7,10,17,.74) 100%),
+    var(--mk-skin-img) center/100% 100% no-repeat,
+    #0b1019 !important;
+  background-blend-mode: normal !important;
+}
 .mk-skin-top { display: flex; gap: 14px; align-items: flex-start; padding-top: 2px; }
 .mk-skin-top-right { flex: 1; min-width: 0; }
 .mk-skin-preview {
@@ -12038,9 +12054,14 @@ window.addEventListener('message', function(e) {
 }
 .mk-skin-preview.mk-has-skin {
   background:
-    linear-gradient(180deg, rgba(7,10,17,.72) 0%, rgba(7,10,17,.55) 45%, rgba(7,10,17,.80) 100%),
+    linear-gradient(180deg, rgba(7,10,17,.62) 0%, rgba(7,10,17,.45) 45%, rgba(7,10,17,.74) 100%),
     var(--mk-skin-img) center/cover no-repeat, #0b1019;
   background-blend-mode: normal;
+}
+.mk-skin-preview.mk-has-skin.mk-skin-fit {
+  background:
+    linear-gradient(180deg, rgba(7,10,17,.62) 0%, rgba(7,10,17,.45) 45%, rgba(7,10,17,.74) 100%),
+    var(--mk-skin-img) center/100% 100% no-repeat, #0b1019;
 }
 .mk-skin-preview .pv-ini { position: absolute; top: 8px; left: 11px; font: 900 16px Inter, sans-serif; color: rgba(255,255,255,.25); letter-spacing: .04em; }
 .mk-skin-preview .pv-hours { position: absolute; top: 9px; right: 11px; font: 800 12px Inter, sans-serif; color: #fff; }
