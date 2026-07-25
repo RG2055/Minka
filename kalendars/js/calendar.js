@@ -393,7 +393,7 @@ function displayGroup(title, items, highlight = "") {
       <div class="item-icon-wrap">${getCatIcon(item.cat)}</div>
       <div class="item-body">
         <span class="item-name">${nameHtml}</span>
-        <span class="item-desc">${item.cat}${item.sub ? ' · ' + item.sub : ''}</span>
+        <span class="item-desc">${item.cat}${item.sub ? ' ' + item.sub : ''}</span>
       </div>
       <div class="item-phone">${item.phone}</div>`;
     a.addEventListener('click', () => saveHistory(item.name));
@@ -2191,7 +2191,7 @@ function filterFullList(btn) {
     return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   }
 
-  // ── Duty header: "TAGAD n · NAKTĪ m" + per-person status chips ──────────
+  // ── Duty header: "TAGAD n NAKTĪ m" + per-person status chips ──────────
   // Answers at a glance: how many are on now vs through the night, who leaves
   // before the night and when (amber "→17"), who only arrives later (blue
   // "17→"). Night reference = 23:00 of the active shift-day (or "now" once
@@ -2239,8 +2239,14 @@ function filterFullList(btn) {
       }
     });
     const nCls = nightCount === 0 ? 'mk-night-zero' : (nightCount < nowCount ? 'mk-night-drop' : 'mk-night-ok');
-    pill.innerHTML = 'ŠOBRĪD ' + nowCount + '<span class="' + nCls + '">NAKTĪ ' + nightCount + '</span>';
-    pill.title = 'Šobrīd dežūrā: ' + nowCount + ' · pa nakti paliks: ' + nightCount;
+    // Two identical numbers say nothing, so the night count only appears when
+    // it actually differs from the current one.
+    pill.innerHTML = (nightCount === nowCount)
+      ? 'ŠOBRĪD ' + nowCount
+      : 'ŠOBRĪD ' + nowCount + '<span class="' + nCls + '">NAKTĪ ' + nightCount + '</span>';
+    pill.title = (nightCount === nowCount)
+      ? 'Šobrīd dežūrā: ' + nowCount + ', visi paliek naktī'
+      : 'Šobrīd dežūrā: ' + nowCount + ', pa nakti paliks: ' + nightCount;
     if (!strip) {
       strip = document.createElement('div');
       strip.className = 'mk-duty-strip';
@@ -2326,7 +2332,7 @@ function filterFullList(btn) {
       return type === 'NAKTS' || type === 'DIENNAKTS' || parseShiftHours(w && w.shift) >= 24;
     }).length;
     if (summary) {
-      summary.innerHTML = '<span>Dežūrā ' + crew.length + '</span><i>·</i><strong>Naktī ' + nightCount + '</strong>';
+      summary.innerHTML = '<span>Dežūrā ' + crew.length + '</span><i></i><strong>Naktī ' + nightCount + '</strong>';
     }
 
     target.innerHTML = crew.map(function(w) {
@@ -2340,7 +2346,7 @@ function filterFullList(btn) {
       const kindLabel = is24 ? '24 stundu maiņa' : (isNight ? 'Nakts maiņa' : 'Dienas maiņa');
       const emojiHtml = emoji ? '<span class="mk-next-person-emoji" aria-hidden="true">' + emoji + '</span>' : '';
       const hoursHtml = hours > 0 ? '<span class="mk-next-person-hours ' + kind + '">' + hours + 'h</span>' : '';
-      return '<span class="mk-next-person ' + kind + '" title="' + mkEscAttr(first + ' · ' + kindLabel) + '">' + emojiHtml + '<b>' + mkEscAttr(first) + '</b>' + hoursHtml + '</span>';
+      return '<span class="mk-next-person ' + kind + '" title="' + mkEscAttr(first + ' ' + kindLabel) + '">' + emojiHtml + '<b>' + mkEscAttr(first) + '</b>' + hoursHtml + '</span>';
     }).join('');
   }
 
@@ -2405,8 +2411,8 @@ function filterFullList(btn) {
           nsArr.sort((a,b)=>a.n-b.n);
           if (nsArr[0]) {
             const [_nd,_nm]=nsArr[0].date.split('.');
-            const _ntime=nsArr[0].w.startTime?` · ${nsArr[0].w.startTime}`:'';
-            const _nhrs=nsArr[0].w.shift?` · ${nsArr[0].w.shift}h`:'';
+            const _ntime=nsArr[0].w.startTime?` ${nsArr[0].w.startTime}`:'';
+            const _nhrs=nsArr[0].w.shift?` ${nsArr[0].w.shift}h`:'';
             nsHtml=`<dt>Nākamā maiņa</dt><dd>${parseInt(_nd)}. ${_MO_SHORT[parseInt(_nm)-1]}${_ntime}${_nhrs}</dd>`;
           }
           // month count — match same YYYYMM (numeric, padding-safe)
@@ -2519,8 +2525,8 @@ function filterFullList(btn) {
           nsArrL.sort((a,b)=>a.n-b.n);
           if (nsArrL[0]) {
             const [_nd,_nm]=nsArrL[0].date.split('.');
-            const _ntime=nsArrL[0].w.startTime?` · ${nsArrL[0].w.startTime}`:'';
-            const _nhrs=nsArrL[0].w.shift?` · ${nsArrL[0].w.shift}h`:'';
+            const _ntime=nsArrL[0].w.startTime?` ${nsArrL[0].w.startTime}`:'';
+            const _nhrs=nsArrL[0].w.shift?` ${nsArrL[0].w.shift}h`:'';
             nsHtmlL=`<dt>Nākamā maiņa</dt><dd>${parseInt(_nd)}. ${_MO_SHORT_L[parseInt(_nm)-1]}${_ntime}${_nhrs}</dd>`;
           }
           // month count — match same YYYYMM (numeric, padding-safe)
@@ -3833,7 +3839,7 @@ function filterFullList(btn) {
             '<span class="swc-init" style="color:' + col.ink + ';">' + escapeHtml(init) + '</span>' +
             '<span class="swc-name">' + first + '</span>' +
             emoji + '</span>';
-        }).join('<span class="swc-dot">·</span>');
+        }).join('<span class="swc-dot"></span>');
 
         html += '<div class="sl" style="margin-left:' + leftPct.toFixed(2) + '%;width:' + widthPct.toFixed(2) + '%;background:' + col.bg + ';border-color:' + col.border + ';">' +
             '<div class="sl-fill" style="width:' + pct.toFixed(1) + '%;background:' + col.fill + ';"></div>' +
@@ -4558,7 +4564,7 @@ function filterFullList(btn) {
           const eq = coffeeEq(selected);
           const mg = eq * COFFEE_MG_PER_CUP;
           const cups = eq === 1 ? '1 tasīte' : eq + ' tasītes';
-          caf.textContent = '≈ ' + mg + ' mg kofeīna · ' + cups;
+          caf.textContent = '≈ ' + mg + ' mg kofeīna ' + cups;
         }
       }
       picker.querySelectorAll('.mk-coffee-source').forEach(btn => {

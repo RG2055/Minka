@@ -263,7 +263,7 @@
     } catch (e) {}
 
     const online = navigator.onLine !== false;
-    const dev = (PERF.deviceMemory ? PERF.deviceMemory + ' GB' : '?') + ' · ' + (PERF.hardwareConcurrency || '?') + ' kodoli';
+    const dev = (PERF.deviceMemory ? PERF.deviceMemory + ' GB' : '?') + '   ' + (PERF.hardwareConcurrency || '?') + ' kodoli';
 
     const items = [
       ['Savienojums', (online ? '<i class="ok"></i>tiešsaistē' : '<i class="off"></i>bezsaistē')],

@@ -117,7 +117,7 @@
       overlay.innerHTML = '<div style="width:min(360px,100%);padding:30px 24px;border:1px solid rgba(255,255,255,.10);border-radius:22px;background:#0b1019;box-shadow:0 24px 70px rgba(0,0,0,.45)">'
         + '<div style="font-size:23px;font-weight:800;letter-spacing:-.03em">Piekļuve telefonā</div>'
         + '<div style="margin-top:10px;font-size:14px;line-height:1.55;color:rgba(220,228,244,.68)">Ievadi vienreizējo kodu no <b style="color:#f4f7ff">MOBILE</b> loga datorā.</div>'
-        + '<input id="minka-pair-code" type="text" inputmode="text" autocomplete="one-time-code" autocapitalize="characters" maxlength="11" placeholder="XXXX · XXXX" style="width:100%;height:52px;margin-top:22px;box-sizing:border-box;border:1px solid rgba(255,255,255,.13);border-radius:14px;background:#111722;color:#fff;text-align:center;font:750 18px/1 ui-monospace,monospace;letter-spacing:.15em;outline:none;text-transform:uppercase">'
+        + '<input id="minka-pair-code" type="text" inputmode="text" autocomplete="one-time-code" autocapitalize="characters" maxlength="11" placeholder="XXXX XXXX" style="width:100%;height:52px;margin-top:22px;box-sizing:border-box;border:1px solid rgba(255,255,255,.13);border-radius:14px;background:#111722;color:#fff;text-align:center;font:750 18px/1 ui-monospace,monospace;letter-spacing:.15em;outline:none;text-transform:uppercase">'
         + '<button id="minka-pair-submit" type="button" style="width:100%;height:48px;margin-top:12px;border:0;border-radius:14px;background:linear-gradient(135deg,#2563eb,#0ea5e9);color:#fff;font:750 14px/1 Inter,system-ui,sans-serif">Savienot</button>'
         + '<div id="minka-pair-error" style="min-height:18px;margin-top:11px;color:#fca5a5;font-size:12px"></div>'
         + '</div>';
@@ -140,7 +140,7 @@
       }
       input.addEventListener('input', function() {
         var clean = input.value.toUpperCase().replace(/[^A-Z2-9]/g, '').slice(0, 8);
-        input.value = clean.length > 4 ? clean.slice(0, 4) + ' · ' + clean.slice(4) : clean;
+        input.value = clean.length > 4 ? clean.slice(0, 4) + ' ' + clean.slice(4) : clean;
       });
       input.addEventListener('keydown', function(e) { if (e.key === 'Enter') connect(); });
       submit.addEventListener('click', connect);
@@ -1157,7 +1157,7 @@ html.mk-low-spec #calendarEmbed {
           }
           if (_histDel[r.id] === i) {
             return '<div class="bhist-row bhist-deleting" data-i="'+i+'">'+
-              '<div class="bhx-q">🗑️ Dzest "'+_fmt(ts)+' · '+_escHtml(who)+'"?</div>'+
+              '<div class="bhx-q">🗑️ Dzest "'+_fmt(ts)+' '+_escHtml(who)+'"?</div>'+
               '<div class="bhe-btns">'+
                 '<button class="bhx-yes" data-room="'+r.id+'" data-i="'+i+'">Ja, dzest</button>'+
                 '<button class="bhx-no" data-room="'+r.id+'" data-i="'+i+'">Ne, atstat</button>'+
@@ -1195,7 +1195,7 @@ html.mk-low-spec #calendarEmbed {
         +'<div class="bwrap">'+workers.map(function(n){ var first = n.split(/\s+/)[0]; var sel = curName === n; return '<button class="bwc'+(sel?' bwsel':'')+'" data-room="'+r.id+'" data-name="'+n.replace(/"/g,'&quot;')+'">'+(_isChamp(n)?'👑 ':'')+first+'</button>'; }).join('')+'<button class="bwc bwcits'+(isCustom?' bwsel':'')+'" data-room="'+r.id+'">Cits</button><button class="bwc bwblank'+(curName===''?' bwsel':'')+'" data-room="'+r.id+'" data-name="">—</button></div>'
         +(isCustom ? '<input class="bname-inp bname-cits" data-room="'+r.id+'" type="text" placeholder="Ieraksti vardu..." maxlength="24" autocomplete="off" value="'+curName.trim().replace(/"/g,'&quot;')+'">' : '')
         +'<div class="bnm-section"><div class="bnm-label">Nomainits</div><div class="bnm-prow"><button class="bnm-dpick'+(_calOpen[r.id]?' bnm-pact':'')+'" data-room="'+r.id+'">📅 '+dStr+'</button><button class="bnm-tpick'+(_tpOpen[r.id]?' bnm-pact':'')+'" data-room="'+r.id+'">⏰ '+tStr+'</button>'+(dirty?'<button class="bnm-savepick" data-room="'+r.id+'">Saglabat</button>':'<button class="bnm-now" data-room="'+r.id+'">Tagad</button>')+'</div>'+calH+tpH+'</div>'
-        +'<div class="bhist-hdr"><span class="bhist-lbl">Vesture</span>'+((_history[r.id]&&_history[r.id].length)?'<span class="bhist-cnt">'+_history[r.id].length+'</span>':'')+'<span class="bhist-hint">✏️ labot · 🗑️ dzest</span></div>'
+        +'<div class="bhist-hdr"><span class="bhist-lbl">Vesture</span>'+((_history[r.id]&&_history[r.id].length)?'<span class="bhist-cnt">'+_history[r.id].length+'</span>':'')+'<span class="bhist-hint">✏️ labot 🗑️ dzest</span></div>'
         +'<div class="bhist" id="bhist-'+r.id+'">'+histHtml+'</div>'
         +'</div>';
     }

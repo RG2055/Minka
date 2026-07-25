@@ -3422,7 +3422,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
           calH+tpH+
         '</div>';
       })()+
-      '<div class="bhist-hdr"><span class="bhist-lbl">Vēsture</span>'+((_history[r.id]&&_history[r.id].length)?'<span class="bhist-cnt">'+_history[r.id].length+'</span>':'')+'<span class="bhist-hint">✏️ labot · 🗑️ dzēst</span></div>'+
+      '<div class="bhist-hdr"><span class="bhist-lbl">Vēsture</span>'+((_history[r.id]&&_history[r.id].length)?'<span class="bhist-cnt">'+_history[r.id].length+'</span>':'')+'<span class="bhist-hint">✏️ labot 🗑️ dzēst</span></div>'+
       '<div class="bhist" id="bhist-'+r.id+'">'+
         (_history[r.id] && _history[r.id].length ?
           _history[r.id].map(function(entry,i){
@@ -3441,7 +3441,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
             }
             if (_histDel[r.id] === i) {
               return '<div class="bhist-row bhist-deleting" data-i="'+i+'">'+
-                '<div class="bhx-q">🗑️ Dzēst "'+_fmt(ts)+' · '+who+'"?</div>'+
+                '<div class="bhx-q">🗑️ Dzēst "'+_fmt(ts)+' '+who+'"?</div>'+
                 '<div class="bhe-btns">'+
                   '<button class="bhx-yes" data-room="'+r.id+'" data-i="'+i+'">Jā, dzēst</button>'+
                   '<button class="bhx-no" data-room="'+r.id+'" data-i="'+i+'">Nē, atstāt</button>'+
@@ -4832,7 +4832,7 @@ window.addEventListener('message', function(e) {
     var el = document.getElementById('mobilePairCode');
     if (!el) return;
     var clean = String(code || '').toUpperCase();
-    el.textContent = clean ? clean.slice(0, 4) + ' · ' + clean.slice(4) : '';
+    el.textContent = clean ? clean.slice(0, 4) + ' ' + clean.slice(4) : '';
     el.style.display = clean ? 'block' : 'none';
   }
 
@@ -5663,10 +5663,10 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
     if(csView==='top'){
       var top=monthTop(5);
       $id('mkCsSum').classList.remove('cs-day-summary');
-      $id('mkCsSum').innerHTML='<b>×'+monthTot+'</b><span>'+MONTHS_LV[new Date().getMonth()]+' · top 5</span>';
+      $id('mkCsSum').innerHTML='<b>×'+monthTot+'</b><span>'+MONTHS_LV[new Date().getMonth()]+' top 5</span>';
       $id('mkCsRows').innerHTML=top.length? top.map(function(r,i){
         var nm=prettyName(r.k), em=emojiFor(nm);
-        return '<div class="cs-row"><span class="cs-rank">#'+(i+1)+'</span><span class="e">'+esc(em||'·')+'</span><span class="n">'+esc(nm)+'</span><b>×'+r.c+'</b></div>';
+        return '<div class="cs-row"><span class="cs-rank">#'+(i+1)+'</span><span class="e">'+esc(em||'')+'</span><span class="n">'+esc(nm)+'</span><b>×'+r.c+'</b></div>';
       }).join('') : '<div class="cs-empty">Šomēnes kafijas nav.</div>';
       return;
     }
@@ -5678,7 +5678,7 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
     $id('mkCsSum').innerHTML='<b>×'+tot+'</b><div class="cs-day-meta">'+selDay+'<span>'+rows.length+' darbinieki atzīmēja kafiju</span></div><span class="cs-month">Mēnesī ×'+monthTot+'</span><div class="cs-day-average">Vidēji dežūrā viens darbinieks izdzer <strong>'+avg+' kafijas</strong>.</div>';
     $id('mkCsRows').innerHTML=rows.length? rows.map(function(r){
       var nm=prettyName(r.k), em=emojiFor(nm), personAvg=avgFor(r.k,store).toFixed(1).replace('.',',');
-      return '<div class="cs-row"><span class="e">'+esc(em||'·')+'</span><span class="n"><span class="cs-person-name">'+esc(nm)+'</span><span class="cs-person-average">Vidēji dežūrā: '+personAvg+' kafijas</span></span><b>×'+r.c+'</b></div>';
+      return '<div class="cs-row"><span class="e">'+esc(em||'')+'</span><span class="n"><span class="cs-person-name">'+esc(nm)+'</span><span class="cs-person-average">Vidēji dežūrā: '+personAvg+' kafijas</span></span><b>×'+r.c+'</b></div>';
     }).join('') : '<div class="cs-empty">Šajā dienā kafijas nav.</div>';
   }
 
@@ -6552,7 +6552,7 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
     buddyCoffeeStage = nextStage;
     W.setAttribute('data-coffee-stage', String(nextStage));
     W.setAttribute('data-coffee-stage-label', BUDDY_COFFEE_STAGES[nextStage].label);
-    W.title = 'Buddy · ' + BUDDY_COFFEE_STAGES[nextStage].label;
+    W.title = 'Buddy ' + BUDDY_COFFEE_STAGES[nextStage].label;
     if(stageChanged){
       buddyFrameCache.clear();
       drawFrame(curFi || 0, curEyeOpen !== false);

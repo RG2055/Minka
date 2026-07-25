@@ -306,7 +306,7 @@
     else if (selectedDate && selectedDate.getTime() < today.getTime()) viewMode = 'past';
 
     // NÄkotnes/pagÄtnes skatÄ«jumÄ: simulÄ“ now = izvÄ“lÄ“tÄs maiÅ†as sÄkums
-    // Tas Ä¼auj aprÄ“Ä·inÄt "cik noguris bija/bÅ«s darbinieks TAJÄ€ dienÄ"
+    // Tas Ä¼auj aprÄ“ÄinÄt "cik noguris bija/bÅ«s darbinieks TAJÄ€ dienÄ"
     if ((viewMode === 'future' || viewMode === 'past') && selectedDate) {
       const targetEntry = history.find(function(e) { return e.dateStr === selectedDateStr; });
       if (targetEntry) {
@@ -453,7 +453,7 @@
 
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     //  4) NEDÄ’Ä»AS STATISTIKA
-    //     Ja skatÄmies nÄkotni/pagÄtni, rÄ“Ä·inÄm nedÄ“Ä¼u
+    //     Ja skatÄmies nÄkotni/pagÄtni, rÄ“ÄinÄm nedÄ“Ä¼u
     //     ap IZVÄ’LÄ’TO datumu, nevis Å¡odienu.
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -522,7 +522,7 @@
     //
     //  LoÄ£ika:
     //   1) Atrodam pÄ“dÄ“jo PABEIGTO maiÅ†u (pirms now)
-    //   2) AprÄ“Ä·inÄm atpÅ«tu no tÄs beigÄm lÄ«dz now (vai nÄkamÄs maiÅ†as sÄkumam)
+    //   2) AprÄ“ÄinÄm atpÅ«tu no tÄs beigÄm lÄ«dz now (vai nÄkamÄs maiÅ†as sÄkumam)
     //   3) Score balstÄs uz Å¡o atpÅ«tu
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
@@ -1085,7 +1085,7 @@
       rows.push(`<div class="fatigue-row">
         <span class="fatigue-ok">${nIcon}</span>
         <span class="fatigue-row-label">Nākamā maiņa</span>
-        <span class="fatigue-row-val">${formatDateShort(f.nextShift.dateStr)} · ${f.nextShift.hours}h (${nKind})</span>
+        <span class="fatigue-row-val">${formatDateShort(f.nextShift.dateStr)} ${f.nextShift.hours}h (${nKind})</span>
       </div>`);
     }
 
