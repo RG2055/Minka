@@ -167,7 +167,13 @@
             var start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), sh[0] || 0, sh[1] || 0, 0, 0);
             var end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), eh[0] || 0, eh[1] || 0, 0, 0);
             if (end <= start) end.setDate(end.getDate() + 1);
-            if (start > now) start.setDate(start.getDate() - 1);
+            // Rewinding a not-yet-started shift by a day must move BOTH ends, or
+            // the window stretches to 36h and the "on duty now" dot lights up for
+            // people who are off: day workers all night, night workers all day.
+            if (start > now) {
+              start.setDate(start.getDate() - 1);
+              end.setDate(end.getDate() - 1);
+            }
             if (now >= start && now < end) return true;
           }
         }
@@ -188,7 +194,10 @@
           arr.forEach(function(entry) {
             var name = (entry.name || '').trim();
             if (!name || name === 'Anonīms') return;
-            counts[name] = (counts[name] || 0) + 1;
+            // Key on the normalized name, exactly like the coffee totals do. The
+            // bolus name can be free text (the "Cits" field), so an entry typed in
+            // lower case used to miss the schedule name and silently award no XP.
+            counts[_nameKey(name)] = (counts[_nameKey(name)] || 0) + 1;
           });
         });
       }
@@ -196,8 +205,13 @@
     return counts;
   }
 
+  // Single canonical form for matching a person across data sources (schedule,
+  // coffee counts, bolus history). Latvian-aware lowercasing, collapsed spaces.
+  function _nameKey(name) {
+    return String(name || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase('lv-LV');
+  }
   function _coffeeKey(name) {
-    return String(name || '').trim().toLocaleLowerCase('lv-LV');
+    return _nameKey(name);
   }
   var _coffeeApiFetchedAt = 0;
   function _fetchCoffeeTotalsFromApi() {
@@ -406,7 +420,7 @@
       var loadBonus = ratio > 1 ? Math.min(100, Math.round((ratio - 1) * 150)) : 0;
       xp += loadBonus;
 
-      var bolusCount = bolusCounts[ws.name] || 0;
+      var bolusCount = bolusCounts[_nameKey(ws.name)] || 0;
       var bolusBonus = bolusCount * 20;
       xp += bolusBonus;
 
