@@ -79,7 +79,7 @@
       if (saved.theme && THEMES[saved.theme]) state.theme = saved.theme;
       state.background = 'void';
       if (saved.density && DENSITY[saved.density]) state.density = saved.density;
-      if (saved.performance && PERFORMANCE[saved.performance]) state.performance = saved.performance;
+      // performance is pinned to 'low'; any saved value is ignored
       if (saved.speed && SPEED[saved.speed]) state.speed = saved.speed;
       if (Number.isInteger(saved.fontIndex) && saved.fontIndex >= 0 && saved.fontIndex < FONT_STEPS.length) state.fontIndex = saved.fontIndex;
       if (typeof saved.glow === 'number' && saved.glow >= 0 && saved.glow <= 1) state.glow = saved.glow;
@@ -100,7 +100,7 @@
     const bg = BACKGROUNDS[state.background];
     const density = DENSITY[state.density];
     const speed = SPEED[state.speed];
-    const perfMode = state.performance === 'auto' ? AUTO_PERF : state.performance;
+    const perfMode = 'low'; // pinned: the app always runs in the light profile
     const fontScale = FONT_STEPS[state.fontIndex] * parseFloat(density.fontStep);
     const root = document.documentElement;
 
@@ -218,118 +218,71 @@
     updateUI();
   }
 
-  function swatchesHtml() {
-    return Object.entries(THEMES).map(([key, theme]) => `
-      <button class="tk-swatch ${state.theme === key ? 'active' : ''}" data-theme="${key}" title="${theme.label}" aria-label="${theme.label}">
-        <span class="tk-swatch-dot" style="--sw:${theme.accent}"></span>
-        <span class="tk-swatch-label">${theme.label}</span>
-      </button>
-    `).join('');
-  }
-
-  function segHtml(source, attr, active) {
-    return Object.entries(source).map(([key, val]) => `<button class="tk-seg-btn ${active === key ? 'active' : ''}" data-${attr}="${key}">${val.label}</button>`).join('');
-  }
-
   function buildPanel() {
     return `
-      <div id="tk-panel" role="dialog" aria-label="Display settings">
+      <div id="tk-panel" role="dialog" aria-label="Par sistēmu">
         <div class="tk-panel-header">
-          <div><div class="tk-heading">Iestatījumi</div><div class="tk-subheading">Kalendāra tēmas un izkārtojums</div></div>
+          <div><div class="tk-heading">Par sistēmu</div><div class="tk-subheading">Būvējums un stāvoklis</div></div>
           <button class="tk-close" id="tkClose" aria-label="Aizvērt">✕</button>
         </div>
 
-        <div class="tk-preview">
-          <div class="tk-preview-date">11.03.2026 · Šodien</div>
-          <div class="tk-preview-cards">
-            <div class="tk-preview-card">
-              <div class="tk-preview-badge">24H</div>
-              <div class="tk-preview-info">
-                <div class="tk-preview-role">Radiogrāfers</div>
-                <div class="tk-preview-name">Jānis Bērziņš</div>
-              </div>
-              <div class="tk-preview-dot"></div>
-            </div>
-            <div class="tk-preview-card rd">
-              <div class="tk-preview-badge">12H</div>
-              <div class="tk-preview-info">
-                <div class="tk-preview-role">Radiologs</div>
-                <div class="tk-preview-name">Anna Kalniņa</div>
-              </div>
-              <div class="tk-preview-dot"></div>
-            </div>
-          </div>
+        <div class="tk-build">
+          <div class="tk-build-label">Būvējums</div>
+          <div class="tk-build-ver" id="tkVer">–</div>
+          <div class="tk-build-sub" id="tkVerSub">–</div>
         </div>
 
-        <div class="tk-divider"></div>
+        <div class="tk-rows" id="tkRows"></div>
 
-        <div class="tk-section">
-          <div class="tk-label-row">
-            <span class="tk-section-label">Teksta izmērs</span>
-            <span class="tk-value" id="tkFontValue">${state.fontIndex + 1} / 5</span>
-          </div>
-          <div class="tk-font-row">
-            <span class="tk-font-a small">Aa</span>
-            <input id="tkFontRange" class="tk-range" type="range" min="0" max="4" step="1" value="${state.fontIndex}">
-            <span class="tk-font-a">Aa</span>
-          </div>
-        </div>
-
-        <div class="tk-section">
-          <div class="tk-label-row"><span class="tk-section-label">Krāsa</span></div>
-          <div class="tk-swatches">${swatchesHtml()}</div>
-        </div>
-
-        <div class="tk-divider"></div>
-
-        <div class="tk-section two-col">
-          <div>
-            <div class="tk-label-row"><span class="tk-section-label">Blīvums</span></div>
-            <div class="tk-seg">${segHtml(DENSITY, 'density', state.density)}</div>
-          </div>
-          <div>
-            <div class="tk-label-row"><span class="tk-section-label">Ātrums</span></div>
-            <div class="tk-seg">${segHtml(SPEED, 'speed', state.speed)}</div>
-          </div>
-        </div>
-
-        <div class="tk-divider"></div>
-
-        <div class="tk-section">
-          <div class="tk-label-row">
-            <span class="tk-section-label">Veiktspēja</span>
-            <span class="tk-value" id="tkPerfHint">Auto: ${AUTO_PERF.toUpperCase()} · ${PERF.deviceMemory || '?'}GB · ${PERF.hardwareConcurrency || '?'} cores</span>
-          </div>
-          <div class="tk-seg">${segHtml(PERFORMANCE, 'performance', state.performance)}</div>
-        </div>
-
-        <div class="tk-divider"></div>
-
-        <div class="tk-section">
-          <div class="tk-label-row">
-            <span class="tk-section-label">✦ Spīdums</span>
-            <span class="tk-value" id="tkGlowValue">${state.glow === 0 ? 'Izslēgts' : Math.round(state.glow * 100) + '%'}</span>
-          </div>
-          <div class="tk-font-row">
-            <span style="font-size:13px;opacity:0.28;color:#fff">◎</span>
-            <input id="tkGlowRange" class="tk-range" type="range" min="0" max="1" step="0.05" value="${state.glow}">
-            <span style="font-size:13px;color:var(--accent)">✦</span>
-          </div>
-        </div>
-
-        <div class="tk-divider"></div>
-
-        <div class="tk-section">
-          <div class="tk-label-row"><span class="tk-section-label">⚡ Optimizācija</span></div>
-          <label class="tk-toggle">
-            <input type="checkbox" id="tkNoAnim" ${state.noAnim ? 'checked' : ''}>
-            <div style="flex:1"><div class="tk-toggle-label">Bez animācijām</div><div class="tk-toggle-sub">Aptur pulsēšanu, mirgoņu, fona kustību — karšu hover paliek</div></div>
-            <span class="tk-toggle-track"></span>
-          </label>
-        </div>
-
-        <div class="tk-footer">Saglabājas automātiski · tikai kalendārs<span id="tkBuildVer" style="opacity:.5;margin-left:6px;"></span></div>
+        <button type="button" class="tk-reload" id="tkReload">Pārlādēt un atjaunot</button>
+        <div class="tk-note">Notīra saglabāto kopiju un ielādē jaunāko versiju.</div>
       </div>`;
+  }
+
+  // Values are read once per open — no timers, no polling.
+  function fillInfo() {
+    const rows = document.getElementById('tkRows');
+    const ver = document.getElementById('tkVer');
+    const sub = document.getElementById('tkVerSub');
+    if (!rows) return;
+
+    let build = '';
+    try {
+      const m = (document.querySelector('script[src*="calendar.js"]') || {}).src || '';
+      build = (m.match(/[?&]v=([\w.-]+)/) || [])[1] || '';
+    } catch (e) {}
+    if (sub) sub.textContent = build ? 'Kalendārs ' + build : '';
+
+    let months = 0, saved = '';
+    try { months = Object.keys(window.__grafiksStore || {}).length; } catch (e) {}
+    try {
+      const ts = Number(localStorage.getItem('minka_schedule_cache_ts_v2') || 0);
+      if (ts) {
+        const min = Math.round((Date.now() - ts) / 60000);
+        saved = min < 1 ? 'tikko' : min < 60 ? 'pirms ' + min + ' min' : 'pirms ' + Math.round(min / 60) + ' h';
+      }
+    } catch (e) {}
+
+    const online = navigator.onLine !== false;
+    const dev = (PERF.deviceMemory ? PERF.deviceMemory + ' GB' : '?') + ' · ' + (PERF.hardwareConcurrency || '?') + ' kodoli';
+
+    const items = [
+      ['Savienojums', (online ? '<i class="ok"></i>tiešsaistē' : '<i class="off"></i>bezsaistē')],
+      ['Grafiks', months ? months + (months === 1 ? ' mēnesis' : ' mēneši') : '–'],
+      ['Atjaunots', saved || '–'],
+      ['Ierīce', dev],
+      ['Režīms', 'Zema slodze']
+    ];
+    rows.innerHTML = items.map(function (it) {
+      return '<div class="tk-row"><span>' + it[0] + '</span><b>' + it[1] + '</b></div>';
+    }).join('');
+
+    if (ver && 'caches' in window && caches.keys) {
+      caches.keys().then(function (keys) {
+        const mk = keys.filter(function (k) { return /^minka-/.test(k); }).sort();
+        ver.textContent = mk.length ? mk[mk.length - 1].replace('minka-', 'v') : '–';
+      }).catch(function () { ver.textContent = '–'; });
+    }
   }
 
   let panelMounted = false;
@@ -341,32 +294,34 @@
     style.id = 'mk-theme-panel-inline-style';
     style.textContent = `
       #tk-wrap { position:fixed; inset:0; z-index:12000; pointer-events:none; }
-      #tk-wrap::before { content:''; position:absolute; inset:0; background:rgba(3,5,12,.52); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); opacity:0; transition:opacity 180ms ease; }
-      #tk-panel { position:fixed !important; top:50% !important; left:50% !important; right:auto !important; transform:translate(-50%,-48%) scale(var(--mk-panel-enter-scale, .98)); width:min(760px, calc(100vw - 32px)) !important; max-height:min(84vh, 980px); overflow:auto; border-radius:28px !important; padding:18px 18px 16px !important; pointer-events:auto; opacity:0; transition:transform 190ms ease, opacity 190ms ease; box-shadow:0 26px 80px rgba(0,0,0,.55) !important; background:#0d1220 !important; border:1px solid rgba(255,255,255,.08) !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
-      #tk-panel.visible { opacity:1; transform:translate(-50%,-50%) scale(1); }
+      /* Solid dim instead of backdrop-filter: a full-screen blur was the single
+         most expensive effect left in the app, and it only existed here. */
+      #tk-wrap::before { content:''; position:absolute; inset:0; background:rgba(3,5,12,.72); opacity:0; transition:opacity 150ms ease; }
+      #tk-panel { position:fixed !important; top:50% !important; left:50% !important; right:auto !important; transform:translate(-50%,-48%); width:min(400px, calc(100vw - 32px)) !important; max-height:min(84vh, 720px); overflow:auto; border-radius:14px !important; padding:20px !important; pointer-events:auto; opacity:0; transition:transform 150ms ease, opacity 150ms ease; box-shadow:0 24px 70px rgba(0,0,0,.6) !important; background:#0d1220 !important; border:1px solid rgba(255,255,255,.08) !important; }
+      #tk-panel.visible { opacity:1; transform:translate(-50%,-50%); }
       #tk-wrap:has(#tk-panel.visible)::before { opacity:1; }
-      .tk-panel-header { align-items:flex-start !important; }
-      .tk-heading { font-size:18px !important; font-weight:900 !important; letter-spacing:.02em; }
-      .tk-subheading { margin-top:4px; font-size:12px; color:rgba(255,255,255,.58); font-weight:600; }
-      .tk-section { border-radius:18px; padding:12px 12px 10px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.05); }
-      .tk-preview { border-radius:20px !important; }
-      .tk-swatches, .tk-bg-grid { gap:10px !important; }
-      .tk-close { width:38px; height:38px; border-radius:14px; }
-      .tk-value.is-auto-low { color:#fca5a5; }
-      .tk-value.is-auto-medium { color:#fcd34d; }
-      .tk-value.is-auto-high { color:#86efac; }
-      @media (max-width: 700px) {
-        #tk-panel { width:calc(100vw - 18px) !important; max-height:88vh; padding:14px 14px 12px !important; border-radius:22px !important; }
-        .tk-section.two-col { grid-template-columns:1fr !important; }
-      }
-      .tk-toggle { display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
-      .tk-toggle input { display:none; }
-      .tk-toggle-label { font-size:13px; font-weight:700; color:rgba(255,255,255,.9); }
-      .tk-toggle-sub { font-size:11px; color:rgba(255,255,255,.42); margin-top:2px; }
-      .tk-toggle-track { flex-shrink:0; width:36px; height:20px; border-radius:10px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.15); position:relative; transition:background .2s; }
-      .tk-toggle-track::after { content:''; position:absolute; top:2px; left:2px; width:14px; height:14px; border-radius:50%; background:#fff; transition:transform .2s; }
-      .tk-toggle input:checked ~ .tk-toggle-track { background:var(--accent,#b77bff); }
-      .tk-toggle input:checked ~ .tk-toggle-track::after { transform:translateX(16px); }
+      .tk-panel-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+      .tk-heading { font-size:16px !important; font-weight:700 !important; letter-spacing:.01em; color:#eef2f8; }
+      .tk-subheading { margin-top:3px; font-size:12px; color:rgba(255,255,255,.5); font-weight:600; }
+      .tk-close { width:32px; height:32px; border-radius:9px; flex:0 0 auto; border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.05); color:#cfe6f7; cursor:pointer; }
+      .tk-close:hover { background:rgba(255,90,80,.16); color:#fff; }
+      .tk-build { margin-top:16px; padding:14px 16px; border-radius:12px; background:rgba(255,255,255,.035); border:1px solid rgba(255,255,255,.06); }
+      .tk-build-label { font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:rgba(255,255,255,.38); }
+      .tk-build-ver { margin-top:5px; font:600 24px/1.1 ui-monospace,'SF Mono','JetBrains Mono',Menlo,monospace; letter-spacing:-.01em; color:#e9edf4; }
+      .tk-build-sub { margin-top:4px; font:500 11.5px/1 ui-monospace,'SF Mono',Menlo,monospace; color:rgba(255,255,255,.38); }
+      .tk-rows { margin-top:10px; border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,.05); }
+      .tk-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 14px; background:rgba(255,255,255,.025); }
+      .tk-row + .tk-row { border-top:1px solid rgba(255,255,255,.045); }
+      .tk-row span { font-size:12.5px; color:rgba(255,255,255,.55); }
+      .tk-row b { font-size:12.5px; font-weight:700; color:rgba(255,255,255,.9); display:inline-flex; align-items:center; gap:6px; font-variant-numeric:tabular-nums; }
+      .tk-row i { width:6px; height:6px; border-radius:50%; flex:0 0 auto; }
+      .tk-row i.ok { background:#4ba76a; }
+      .tk-row i.off { background:#ff453a; }
+      .tk-reload { width:100%; margin-top:12px; height:40px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.05); color:#dfe5ee; font:600 13px Inter,system-ui,sans-serif; letter-spacing:.01em; cursor:pointer; transition:background 120ms ease; }
+      .tk-reload:hover { background:rgba(255,255,255,.09); border-color:rgba(255,255,255,.18); }
+      .tk-reload:disabled { opacity:.6; cursor:default; }
+      .tk-note { margin-top:8px; font-size:11px; color:rgba(255,255,255,.34); text-align:center; }
+      @media (max-width: 700px) { #tk-panel { width:calc(100vw - 18px) !important; padding:14px !important; } }
     `;
     document.head.appendChild(style);
   }
@@ -384,29 +339,8 @@
   }
 
   function updateUI() {
-    document.querySelectorAll('.tk-swatch').forEach((el) => el.classList.toggle('active', el.dataset.theme === state.theme));
-    document.querySelectorAll('[data-density]').forEach((el) => el.classList.toggle('active', el.dataset.density === state.density));
-    document.querySelectorAll('[data-performance]').forEach((el) => el.classList.toggle('active', el.dataset.performance === state.performance));
-    document.querySelectorAll('[data-speed]').forEach((el) => el.classList.toggle('active', el.dataset.speed === state.speed));
-    const cbAnim = document.getElementById('tkNoAnim');
-    if (cbAnim) cbAnim.checked = !!state.noAnim;
-    const range = document.getElementById('tkFontRange');
-    if (range) range.value = String(state.fontIndex);
-    const val = document.getElementById('tkFontValue');
-    if (val) val.textContent = `${state.fontIndex + 1}/5`;
-    const perfHint = document.getElementById('tkPerfHint');
-    if (perfHint) {
-      const effective = state.performance === 'auto' ? AUTO_PERF : state.performance;
-      perfHint.textContent = state.performance === 'auto'
-        ? `Auto: ${AUTO_PERF.toUpperCase()} · ${PERF.deviceMemory || '?'}GB · ${PERF.hardwareConcurrency || '?'} cores`
-        : `Manual: ${effective.toUpperCase()}`;
-      perfHint.classList.remove('is-auto-low', 'is-auto-medium', 'is-auto-high');
-      perfHint.classList.add(
-        effective === 'low' ? 'is-auto-low' :
-        effective === 'medium' ? 'is-auto-medium' :
-        'is-auto-high'
-      );
-    }
+    // Nothing to sync — the panel is read-only now. Values are filled on open
+    // by fillInfo(), so there is no state to reflect back into controls.
   }
 
   function mountGearButton() {
@@ -417,8 +351,8 @@
     gear.id = 'tk-gear-btn';
     gear.className = 'tk-gear';
     gear.type = 'button';
-    gear.title = 'Display';
-    gear.setAttribute('aria-label', 'Display settings');
+    gear.title = 'Par sistēmu';
+    gear.setAttribute('aria-label', 'Par sistēmu');
     gear.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 10.5A2.5 2.5 0 1 0 8 5.5a2.5 2.5 0 0 0 0 5Z" stroke="currentColor" stroke-width="1.4"/><path d="M6.34 1.5a1.6 1.6 0 0 1 3.32 0l.2.72a5.4 5.4 0 0 1 1.14.66l.72-.2a1.6 1.6 0 0 1 1.66 2.66l-.5.58a5.5 5.5 0 0 1 0 1.32l.5.58a1.6 1.6 0 0 1-1.66 2.66l-.72-.2a5.4 5.4 0 0 1-1.14.66l-.2.72a1.6 1.6 0 0 1-3.32 0l-.2-.72a5.4 5.4 0 0 1-1.14-.66l-.72.2A1.6 1.6 0 0 1 2.62 7.52l.5-.58a5.5 5.5 0 0 1 0-1.32l-.5-.58A1.6 1.6 0 0 1 4.28 2.38l.72.2a5.4 5.4 0 0 1 1.14-.66l.2-.72Z" stroke="currentColor" stroke-width="1.4"/></svg>';
     const viewBtn = topRow.querySelector('.view-btn') || topRow.firstChild;
     if (viewBtn && viewBtn.parentNode === topRow) topRow.insertBefore(gear, viewBtn);
@@ -437,51 +371,35 @@
   }
 
   function bindPanelEvents(wrap) {
-    wrap.querySelectorAll('.tk-swatch').forEach((el) => {
-      el.addEventListener('click', () => { state.theme = el.dataset.theme; save(); applyThemeDebounced(); }, { passive: true });
-    });
-    wrap.querySelectorAll('[data-density]').forEach((el) => {
-      el.addEventListener('click', () => { state.density = el.dataset.density; save(); applyThemeDebounced(); }, { passive: true });
-    });
-    wrap.querySelectorAll('[data-performance]').forEach((el) => {
-      el.addEventListener('click', () => { state.performance = el.dataset.performance; save(); applyThemeDebounced(); }, { passive: true });
-    });
-    wrap.querySelectorAll('[data-speed]').forEach((el) => {
-      el.addEventListener('click', () => { state.speed = el.dataset.speed; save(); applyThemeDebounced(); }, { passive: true });
-    });
-
-    const range = wrap.querySelector('#tkFontRange');
-    if (range) {
-      range.addEventListener('input', () => {
-        state.fontIndex = Number(range.value);
-        save();
-        applyTheme();
-      }, { passive: true });
-    }
-
-    const glowRange = wrap.querySelector('#tkGlowRange');
-    if (glowRange) {
-      glowRange.addEventListener('input', () => {
-        state.glow = Number(glowRange.value);
-        setVar('--tk-glow', String(state.glow));
-        const val = document.getElementById('tkGlowValue');
-        if (val) val.textContent = state.glow === 0 ? 'Izslēgts' : Math.round(state.glow * 100) + '%';
-        save();
-      }, { passive: true });
-    }
-
-    [['#tkNoAnim','noAnim']].forEach(function(pair){
-      const cb = wrap.querySelector(pair[0]);
-      if (cb) cb.addEventListener('change', function(){
-        state[pair[1]] = cb.checked;
-        save();
-        applyTheme();
-      });
-    });
-
     const closeBtn = wrap.querySelector('#tkClose');
     if (closeBtn) closeBtn.addEventListener('click', hidePanel, { passive: true });
 
+    const reload = wrap.querySelector('#tkReload');
+    if (reload) reload.addEventListener('click', async function () {
+      reload.disabled = true;
+      reload.textContent = 'Atjauno...';
+      // Deliberately NOT destructive. The earlier version deleted every cache and
+      // unregistered the service worker before reloading — if the reload then
+      // failed or landed in the wrong frame, the app was left with nothing and no
+      // offline copy. Ask the worker to check for a new version instead; its own
+      // activate step already drops stale caches, so nothing is lost if the
+      // network is down.
+      try {
+        if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(function (r) {
+            try { if (r.waiting) r.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch (e) {}
+            return r.update().catch(function () {});
+          }));
+        }
+      } catch (e) {}
+      const target = (function () {
+        try { if (window.parent && window.parent !== window && window.parent.location.origin === window.location.origin) return window.parent; }
+        catch (e) {}
+        return window;
+      })();
+      try { target.location.reload(); } catch (e) { window.location.reload(); }
+    });
     // Outside-click and Escape are bound once globally (see initGlobalListeners)
   }
 
@@ -510,17 +428,7 @@
     panel.classList.add('visible');
     if (gear) gear.classList.add('active');
     panelVisible = true;
-    // Show the active service-worker cache version so it's clear which build is
-    // actually running on this device (helps confirm updates have landed).
-    try {
-      const verEl = document.getElementById('tkBuildVer');
-      if (verEl && 'caches' in window && caches.keys) {
-        caches.keys().then(keys => {
-          const mk = keys.filter(k => /^minka-/.test(k)).sort();
-          verEl.textContent = mk.length ? '· ' + mk[mk.length - 1].replace('minka-', 'v') : '';
-        }).catch(() => {});
-      }
-    } catch (e) {}
+    fillInfo();
     try { window.parent.postMessage({ type: 'mk_settings_opened' }, '*'); } catch (e) {}
   }
 
