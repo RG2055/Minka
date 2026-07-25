@@ -1524,22 +1524,11 @@ window.addEventListener('DOMContentLoaded', () => {
     #bolusDocBtn { --dock-accent: #34d7bf; --dock-glow: rgba(52,215,191,.28); }
 	    #statsDocBtn { --dock-accent: #ff9856; --dock-glow: rgba(255,152,86,.26); }
 	    #pusdienasDockBtn { --dock-accent: #f59e0b; --dock-glow: rgba(245,158,11,.26); }
-	    #planotajsDockBtn { --dock-accent: #e879f9; --dock-glow: rgba(232,121,249,.26); }
+	    #planotajsDockBtn { --dock-accent: #38bdf8; --dock-glow: rgba(56,189,248,.26); }
 	    #planotajsDockBtn.planotajs-open {
-	      background: #241333 !important;
-	      border-color: rgba(232,121,249,.55) !important;
-	      color: #fbe9ff !important;
-	    }
-	    /* TESTS badge — makes it obvious this is an experiment */
-	    #planotajsDockBtn .dock-beta {
-	      flex-shrink: 0;
-	      padding: 2px 4px;
-	      border-radius: 5px;
-	      background: rgba(232,121,249,.16);
-	      border: 1px solid rgba(232,121,249,.45);
-	      color: #f0abfc;
-	      font: 900 6.5px/1 'Space Grotesk', system-ui;
-	      letter-spacing: .1em;
+	      background: #101c2b !important;
+	      border-color: rgba(56,189,248,.55) !important;
+	      color: #e9f6ff !important;
 	    }
 	    #lacitisDockBtn { --dock-accent: #f59e0b; --dock-glow: rgba(245,158,11,.26); }
     #settingsDockBtn { --dock-accent: #ffd666; --dock-glow: rgba(255,214,102,.24); }
@@ -1961,11 +1950,19 @@ window.addEventListener('DOMContentLoaded', () => {
 
     <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
 
-    <button id="planotajsDockBtn" onclick="openPlanotajsLauncher()" title="Grafika plānotājs — testa versija">
-      <div style="width:7px;height:7px;border-radius:50%;background:#e879f9;box-shadow:0 0 7px #e879f9;flex-shrink:0;animation:rledPulse 3.3s ease-in-out infinite;"></div>
-      <svg class="dock-px" width="17" height="17" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="0" width="1.04" height="1.04" fill="#f0abfc"/><rect x="6" y="0" width="1.04" height="1.04" fill="#f0abfc"/><rect x="0" y="1" width="9.04" height="2.04" fill="#e879f9"/><rect x="0" y="3" width="9.04" height="6.04" fill="#241333"/><rect x="1" y="4" width="1.04" height="1.04" fill="#34d399"/><rect x="4" y="4" width="1.04" height="1.04" fill="#fbbf24"/><rect x="7" y="4" width="1.04" height="1.04" fill="#c084fc"/><rect x="1" y="6" width="1.04" height="1.04" fill="#fbbf24"/><rect x="4" y="6" width="1.04" height="1.04" fill="#e879f9"/><rect x="7" y="6" width="1.04" height="1.04" fill="#34d399"/></svg>
+    <button id="planotajsDockBtn" onclick="openPlanotajsLauncher()" title="Grafika plānotājs">
+      <!-- A board with three shifts already laid down, one empty slot, and a
+           piece hovering above it — reads as "there is something here for you to
+           place", which a plain calendar grid did not. -->
+      <svg class="dock-px" width="17" height="17" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true">
+        <rect x="5" y="0" width="3.04" height="1.04" fill="#7dd3fc"/>
+        <rect x="0" y="2" width="9.04" height="7.04" fill="#101c2b"/>
+        <rect x="1" y="3" width="4.04" height="1.04" fill="#34d399"/>
+        <rect x="2" y="5" width="5.04" height="1.04" fill="#fbbf24"/>
+        <rect x="1" y="7" width="3.04" height="1.04" fill="#38bdf8"/>
+        <rect x="5" y="7" width="3.04" height="1.04" fill="#22344a"/>
+      </svg>
       <span>PL&#256;NOT&#256;JS</span>
-      <span class="dock-beta">TESTS</span>
     </button>
 
     <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
@@ -2045,9 +2042,9 @@ window.addEventListener('DOMContentLoaded', () => {
 </div>
 
 <div id="planotajsSheet" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171195;pointer-events:auto;background:#0b0d12;">
-  <section id="planotajsSheetPanel" aria-label="Grafika plānotājs (tests)" style="position:absolute;inset:0;width:100%;height:100dvh;min-height:0;border:0;border-radius:0;background:#141019;box-shadow:none;overflow:hidden;pointer-events:auto;">
-    <div style="height:38px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 10px 0 14px;border-bottom:1px solid rgba(255,255,255,.10);background:rgba(232,121,249,.07);color:#f7f7f7;font:900 12px/1 'Space Grotesk',system-ui;letter-spacing:.08em;text-transform:uppercase;">
-      <span style="display:flex;align-items:center;gap:8px;"><span>🧪</span><span>Plānotājs</span><span style="padding:2px 6px;border-radius:6px;background:rgba(232,121,249,.16);border:1px solid rgba(232,121,249,.45);color:#f0abfc;font-size:9px;">Testa versija</span></span>
+  <section id="planotajsSheetPanel" aria-label="Grafika plānotājs" style="position:absolute;inset:0;width:100%;height:100dvh;min-height:0;border:0;border-radius:0;background:#141019;box-shadow:none;overflow:hidden;pointer-events:auto;">
+    <div style="height:38px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 10px 0 14px;border-bottom:1px solid rgba(255,255,255,.10);background:rgba(56,189,248,.07);color:#f7f7f7;font:900 12px/1 'Space Grotesk',system-ui;letter-spacing:.08em;text-transform:uppercase;">
+      <span style="display:flex;align-items:center;gap:8px;"><span>Plānotājs</span></span>
       <button type="button" onclick="closePlanotajsSheet()" aria-label="Aizvērt plānotāju" style="width:30px;height:30px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.24);color:#f7f7f7;font:900 18px/1 system-ui;cursor:pointer;">×</button>
     </div>
     <iframe id="planotajsSheetFrame" title="Grafika plānotājs" style="display:block;width:100%;height:calc(100% - 38px);border:0;background:#141019;" referrerpolicy="no-referrer"></iframe>
