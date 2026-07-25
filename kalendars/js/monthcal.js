@@ -360,7 +360,7 @@
       nextDis = idx >= months.length - 1;
     }
 
-    var titleTxt = esc(month) + (_viewMode === 'week' ? ' · ' + (_weekIdx + 1) + '. nedēļa' : '');
+    var titleTxt = esc(month) + (_viewMode === 'week' ? ' ' + (_weekIdx + 1) + '. nedēļa' : '');
     var seg = '<div class="mcal-seg">'
       + '<button data-view="month" class="' + (_viewMode === 'month' ? 'is-on' : '') + '">▦ Mēnesis</button>'
       + '<button data-view="week" class="' + (_viewMode === 'week' ? 'is-on' : '') + '">▤ Nedēļa</button>'

@@ -324,6 +324,10 @@ body.stars-active #stars-overlay{display:block;}
 .status-tag.radiographers .mk-role-title,
 .status-tag.radiographers .mk-role-title span { color: #b77bff !important; }
 .cards-section-label-rg { color: #b77bff !important; }
+/* Only the pill text is violet. The inner span keeps its own class colour
+   (mk-night-ok / mk-night-drop / mk-night-zero) because that colour carries
+   meaning — whether the headcount holds through the night or drops. */
+#radiographers-shift-count { color: #b77bff !important; }
 .cards-lbl-line-rg { background: #b77bff !important; }
 </style>
 </head>
@@ -460,7 +464,7 @@ body.stars-active #stars-overlay{display:block;}
         <div id="minkaBarHint"></div>
         <div id="minkaBarPill"></div>
         <button id="minkaBarClear" aria-label="Dzēst">×</button>
-        <!-- ── Bar info: weather · moon · nameday | news ticker ── -->
+        <!-- ── Bar info: weather moon nameday | news ticker ── -->
         <div class="mk-bar-sep" aria-hidden="true"></div>
         <div class="mk-ticker-wrap" id="mkTickerWrap">
           <div class="mk-ticker-label"><span class="mk-pulse"></span>Ziņas</div>
@@ -2678,7 +2682,7 @@ function getTauriInvoke(){
   function buildWeatherMessage(){
     const moon = currentMoon();
     if (weatherCache && weatherCache.desc) {
-      const text = `Rīgā ${weatherCache.desc} · ${weatherCache.temp}°C · sajūta ${weatherCache.feels}°C · vējš ${weatherCache.wind} m/s · ${moon.icon} ${moon.name.toLowerCase()} (${moon.illum}%).`;
+      const text = `Rīgā ${weatherCache.desc} ${weatherCache.temp}°C sajūta ${weatherCache.feels}°C vējš ${weatherCache.wind} m/s ${moon.icon} ${moon.name.toLowerCase()} (${moon.illum}%).`;
       return { text, sig: `${weatherCache.sig}|${moon.sig}` };
     }
     return { text: `${moon.icon} Mēness fāze: ${moon.name}.`, sig: `moon|${moon.sig}` };
@@ -3049,9 +3053,9 @@ function nextNews(){
     var wd = window.__mkBarWeatherData;
     if (wd && wd.desc && wd.t !== undefined) {
       var moon = (typeof window.currentMoon === 'function') ? window.currentMoon() : null;
-      var wText = 'Rīgā ' + wd.desc + ' · ' + wd.t + '°C'
-        + (wd.wind ? ' · vējš ' + wd.wind + ' m/s' : '')
-        + (moon ? ' · ' + moon.icon + ' ' + moon.name : '');
+      var wText = 'Rīgā ' + wd.desc + ' ' + wd.t + '°C'
+        + (wd.wind ? ' vējš ' + wd.wind + ' m/s' : '')
+        + (moon ? ' ' + moon.icon + ' ' + moon.name : '');
       items.push({ cat: 'Laiks', text: wText, link: '', time: '' });
     }
 
@@ -3061,7 +3065,7 @@ function nextNews(){
       var colon = raw.indexOf(': ');
       var cat = colon > 0 ? raw.slice(0, colon) : '';
       var headline = colon > 0 ? raw.slice(colon + 2) : raw;
-      headline = headline.replace(/^[•·●◦\s\-–]+/, '').trim();
+      headline = headline.replace(/^[•●◦\s\-–]+/, '').trim();
       if (headline) items.push({ cat: cat, text: headline, link: d.link || '', time: fmtPub(d.pub) });
     });
 
@@ -3315,7 +3319,7 @@ function nextNews(){
         const name = String((item && item.name) || '');
         const phone = String((item && item.phone) || '');
         const cat = esc((item && item.cat) || '');
-        const sub = item && item.sub ? ' · ' + esc(item.sub) : '';
+        const sub = item && item.sub ? ' ' + esc(item.sub) : '';
     const initials = name.split(' ').map(p => p[0] || '').slice(0,1).join('') || '📞';
         html += '<a class="search-item" href="#" data-kind="phone" data-phone="' + esc(phone) + '">'
           + '<div class="search-item-icon">' + esc(initials) + '</div>'
@@ -3324,7 +3328,7 @@ function nextNews(){
           + '</a>';
       });
     }
-    html += '<div class="search-hint-row">↓ ↑ pārvietošanās · Enter atvērt · Esc aizvērt</div>';
+    html += '<div class="search-hint-row">↓ ↑ pārvietošanās Enter atvērt Esc aizvērt</div>';
     results.innerHTML = html;
     results.style.display = 'block';
     activeIndex = -1;
@@ -4664,7 +4668,7 @@ window.addEventListener('message', function(e) {
 .mk-ticker-fade-l { left:  0; background: linear-gradient(90deg,  #0f1218, transparent); }
 .mk-ticker-fade-r { right: 0; background: linear-gradient(-90deg, #0f1218, transparent); }
 
-/* ── Info group: moon · temp · nameday ── */
+/* ── Info group: moon temp nameday ── */
 .mk-info-group {
   display: flex; align-items: center; gap: 6px;
   flex-shrink: 0; padding: 0 6px;
@@ -8235,7 +8239,7 @@ html.mk-low-spec .pkt-cat.pkt-awake .pkt-eyes { animation: pktAwakeEyes 1.45s ea
 
 /* ══════════════════════════════════════════════════════
    NAKTS SADALĪJUMS — Night Ops Visual Upgrade v2
-   Deep gradients · Glowing borders · Stars · Moon · Timeline
+   Deep gradients Glowing borders Stars Moon Timeline
    ══════════════════════════════════════════════════════ */
 
 /* ── Typography: monospace system fonts (no internet needed) ── */
@@ -11879,7 +11883,7 @@ window.addEventListener('message', function(e) {
 
     html += '<div class="mk-skin-footer">'
       + '<button type="button" class="mk-skin-clear">✕ Noņemt visu izskatu</button>'
-      + '<span class="mk-skin-note">Redzēs visi kolēģi · sinhronizējas caur mākoni</span></div>';
+      + '<span class="mk-skin-note">Redzēs visi kolēģi sinhronizējas caur mākoni</span></div>';
     host.innerHTML = html;
 
     var prev = host.querySelector('#mkSkinPrev');

@@ -421,7 +421,7 @@
       '<div class="mk-ctx-item" data-mk-ctx-emoji="1">✨ ' + (emoji ? 'Mainīt emoji' : 'Pievienot emoji') + '</div>' +
       (emoji ? '<div class="mk-ctx-item mk-ctx-remove" data-mk-ctx-remove="1">🗑️ Noņemt emoji</div>' : '') +
       '<div class="mk-ctx-sep"></div>' +
-      '<div class="mk-ctx-label">Lv.' + getWorkerLvl(workerName) + ' · ' + (workerName.split(' ')[0] || '') + '</div>';
+      '<div class="mk-ctx-label">Lv.' + getWorkerLvl(workerName) + ' ' + (workerName.split(' ')[0] || '') + '</div>';
 
     var vw = window.innerWidth, vh = window.innerHeight;
     var cx = Math.min(x, vw - 160), cy = Math.min(y, vh - 100);

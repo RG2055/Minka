@@ -670,7 +670,7 @@
 
     return '<div class="mk-stx-fat">' +
       '<div class="mk-stx-sechead" style="margin-bottom:10px;">' +
-        '<div class="lbl"><span class="dot" style="background:#38bdf8;box-shadow:0 0 0 4px rgba(56,189,248,.13);"></span>Nogurums · radiogrāferi — ' + escapeAttr(activeMonth) + '</div>' +
+        '<div class="lbl"><span class="dot" style="background:#38bdf8;box-shadow:0 0 0 4px rgba(56,189,248,.13);"></span>Nogurums radiogrāferi — ' + escapeAttr(activeMonth) + '</div>' +
         '<div class="line"></div>' +
         '<div class="mk-stx-fat-legend">' +
           '<i class="lg-line"></i><span>Komanda</span>' +
@@ -881,7 +881,7 @@
         _bdItem('Svētki', b.holidays) +
         _bdItem('Slodze', b.load) +
         _bdItem('Boluss', b.bolus, b.bolusCount ? ' (' + b.bolusCount + '×)' : '') +
-        _bdItem('Kafija', b.coffee, b.coffeeCount ? ' (' + b.coffeeCount + '×' + (b.coffeeSpendCents ? ' · ' + _fmtEur(b.coffeeSpendCents) : '') + ')' : '') +
+        _bdItem('Kafija', b.coffee, b.coffeeCount ? ' (' + b.coffeeCount + '×' + (b.coffeeSpendCents ? ' ' + _fmtEur(b.coffeeSpendCents) : '') + ')' : '') +
         '<div class="mk-stx-bi mk-stx-bi-full"><span>Kafijas avoti</span><b class="mk-stx-csrcs">' + _coffeeSourceChips(cs) + '</b></div>' +
         '<div class="mk-stx-bi"><span>Streak</span><b class="' + ((ws.longestStreak || 0) ? '' : 'z') + '">' + (ws.longestStreak || 0) + ' d.</b></div>' +
       '</div>' +
