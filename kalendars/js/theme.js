@@ -14,7 +14,6 @@
   const AUTO_PERF = detectPerformanceTier();
 
   const THEMES = {
-    aurora:   { label: 'Aurora',   accent:'#b77bff', accentRgb:'183,123,255', accentSoft:'rgba(183,123,255,0.12)', radAccent:'#ff5f57', orb1:'rgba(163,71,255,0.22)', orb2:'rgba(255,79,129,0.18)', orb3:'rgba(92,225,230,0.14)', bgBase:'#06070b', gridColor:'rgba(163,71,255,0.14)' },
     ice:      { label: 'Ice',      accent:'#64d2ff', accentRgb:'100,210,255', accentSoft:'rgba(100,210,255,0.12)', radAccent:'#ff9f0a', orb1:'rgba(60,160,255,0.20)', orb2:'rgba(170,240,255,0.14)', orb3:'rgba(80,200,240,0.14)', bgBase:'#04070d', gridColor:'rgba(80,160,255,0.12)' },
     mint:     { label: 'Mint',     accent:'#33d17a', accentRgb:'51,209,122', accentSoft:'rgba(51,209,122,0.12)', radAccent:'#ff7b54', orb1:'rgba(40,200,120,0.18)', orb2:'rgba(70,255,210,0.12)', orb3:'rgba(20,120,110,0.14)', bgBase:'#05080a', gridColor:'rgba(51,209,122,0.11)' },
     ember:    { label: 'Ember',    accent:'#ff8c42', accentRgb:'255,140,66', accentSoft:'rgba(255,140,66,0.12)', radAccent:'#ff4d6d', orb1:'rgba(255,100,30,0.18)', orb2:'rgba(255,70,120,0.12)', orb3:'rgba(255,180,40,0.10)', bgBase:'#09060a', gridColor:'rgba(255,100,30,0.12)' },
@@ -62,7 +61,7 @@
   const FONT_STEPS = [0.92, 0.97, 1.00, 1.06, 1.12];
 
   let state = {
-    theme: 'aurora',
+    theme: 'ice',   // pinned: no violet anywhere in the app
     background: 'void',
     density: 'balanced',
     performance: 'low',
@@ -76,7 +75,7 @@
   function load() {
     try {
       const saved = JSON.parse(localStorage.getItem('mk_theme_v4') || '{}');
-      if (saved.theme && THEMES[saved.theme]) state.theme = saved.theme;
+      // theme is pinned to 'ice'; a previously saved violet accent is ignored
       state.background = 'void';
       if (saved.density && DENSITY[saved.density]) state.density = saved.density;
       // performance is pinned to 'low'; any saved value is ignored
