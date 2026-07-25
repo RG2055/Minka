@@ -5470,9 +5470,15 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
         </div>
         <div class="mk-buddy-coffee-srcs" id="mk-buddy-coffee-srcs" aria-hidden="true"></div>
       </div>
-      <button id="mk-buddy-stats-btn" type="button" title="Kafijas statistika — šis mēnesis" aria-label="Kafijas statistika" aria-expanded="false">
-        <svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="1" y="9" width="3" height="6"/><rect x="6" y="5" width="3" height="10"/><rect x="11" y="1" width="3" height="14"/></svg>
-        <span>STATISTIKA</span>
+      <button id="mk-buddy-stats-btn" type="button" title="Kafijas tops — šis mēnesis" aria-label="Kafijas tops" aria-expanded="false">
+        <!-- Cups as bars: same "rising chart" reading as the dock icon, but with
+             a rim and a handle nub so it cannot be mistaken for it. -->
+        <svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+          <rect x="1" y="11" width="3" height="3"/><rect x="1" y="11" width="3" height="1" opacity=".45"/><rect x="4" y="12" width="1" height="1"/>
+          <rect x="6" y="11" width="3" height="3"/><rect x="6" y="11" width="3" height="1" opacity=".45"/><rect x="9" y="12" width="1" height="1"/><rect x="6" y="7" width="3" height="3"/><rect x="6" y="7" width="3" height="1" opacity=".45"/><rect x="9" y="8" width="1" height="1"/>
+          <rect x="11" y="11" width="3" height="3"/><rect x="11" y="11" width="3" height="1" opacity=".45"/><rect x="14" y="12" width="1" height="1"/><rect x="11" y="7" width="3" height="3"/><rect x="11" y="7" width="3" height="1" opacity=".45"/><rect x="14" y="8" width="1" height="1"/><rect x="11" y="3" width="3" height="3"/><rect x="11" y="3" width="3" height="1" opacity=".45"/><rect x="14" y="4" width="1" height="1"/>
+        </svg>
+        <span>KAFIJAS TOPS</span>
       </button>
       <span class="mk-buddy-sep"></span>
       <div class="mk-buddy-stat">
