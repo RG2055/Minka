@@ -25,7 +25,7 @@
     } catch (_e) {}
   }
 
-  var CALENDAR_BUILD = '20260723a';
+  var CALENDAR_BUILD = '20260724a';
 
   function withCalendarBuild(url) {
     try {
@@ -98,26 +98,14 @@
     return claimPairCode(code);
   }
 
-  async function tryAutoLoginFromQuery() {
-    try {
-      var url = new URL(window.location.href);
-      var password = String(url.searchParams.get(AUTO_PW_KEY) || '').trim();
-      if (!password) return false;
-      var res = await fetch(API_BASE + '/api/login', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ password: password })
-      });
-      var data = await res.json().catch(function() { return {}; });
-      if (!res.ok || !data || !data.token) return false;
-      setToken(data.token, true);
-      stripAutoLoginParam();
-      notifyIframeAuth();
-      return true;
-    } catch (_e) {
-      return false;
-    }
-  }
+  // Logging in from a ?pw= query parameter was removed on purpose. The shared
+  // password in a URL leaks into server access logs, browser history and the
+  // Referer header sent to the third-party font/CDN hosts this page preconnects
+  // to — and stripAutoLoginParam() only cleans the address bar afterwards, which
+  // is far too late. Phones pair with the one-time ?pair= code instead
+  // (claimPairCode above), which expires in two minutes and works only once.
+  // stripAutoLoginParam() still deletes a stray pw= so old bookmarks stop
+  // carrying the password around in the address bar.
 
   function showPairRequired() {
     function mount() {
@@ -174,10 +162,8 @@
     }, { once: true });
   } else if (!getToken()) {
     document.addEventListener('DOMContentLoaded', function() {
-      tryAutoLoginFromQuery().then(function(ok) {
-        if (ok) return;
-        showPairRequired();
-      });
+      stripAutoLoginParam();
+      showPairRequired();
     }, { once: true });
   } else {
     stripAutoLoginParam();
@@ -709,8 +695,8 @@ html.mk-low-spec #calendarEmbed {
 <body>
   <div id="calendarEmbed">
     <iframe
-      src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260715l"
-      data-base-src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260715l"
+      src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260724a"
+      data-base-src="kalendars/index.html?mobile=1&radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260724a"
       id="calIframe"
       title="Mobilais dežūru grafiks"
       loading="eager"

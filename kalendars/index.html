@@ -14,15 +14,13 @@
   window.hospitalDatabase = Array.isArray(window.hospitalDatabase) ? window.hospitalDatabase : [];
 
   function getToken() {
+    // The token is only ever read from storage. It is deliberately NOT accepted
+    // from a ?token= query parameter: the token equals the shared app password,
+    // and a URL carrying it leaks into server logs, browser history and the
+    // Referer sent to third-party font/CDN hosts. The parent frame hands the
+    // token over via postMessage instead (see the minka_auth_ok listener below).
     try {
-      var fromStorage = sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY) || '';
-      if (fromStorage) return fromStorage;
-      var qp = new URLSearchParams(window.location.search).get('token') || '';
-      if (qp) {
-        try { sessionStorage.setItem(TOKEN_KEY, qp); } catch(_e) {}
-        return qp;
-      }
-      return '';
+      return sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY) || '';
     }
     catch(e) { return ''; }
   }
@@ -1046,7 +1044,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260723a"></script>
+<script src="js/calendar.js?v=20260724a"></script>
 <script src="js/calendar_extras_v4.js?v=20260715m"></script>
 <script src="js/fatigue.js?v=20260715e"></script>
 <script src="js/nightsplit.js?v=20260703a" defer></script>
@@ -1055,7 +1053,7 @@ function _mkToast(msg, type) {
 <script src="js/theme.js?v=20260702b" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
 <script src="js/emoji.js?v=20260715b" defer></script>
-<script src="js/levels.js?v=20260713f" defer></script>
+<script src="js/levels.js?v=20260724a" defer></script>
 <script src="js/radiologist_plan.js" defer></script>
 
 <script>

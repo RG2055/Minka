@@ -1168,6 +1168,37 @@ function filterFullList(btn) {
   function g_scrollCal(dir) { document.getElementById('grafiks-scroller').scrollBy({ left: dir * 200, behavior: 'smooth' }); }
   function g_toggleView() { isGridView = !isGridView; document.getElementById('grafiks-viewIcon').innerText = isGridView ? 'format_list_bulleted' : 'grid_view'; g_updateList(); }
 
+  // Anonymous Gregorian computus — same algorithm monthcal.js uses, so the pill
+  // strip and the month grid can no longer disagree about when Lieldienas fall.
+  function lvEasterSunday(y) {
+    const a = y % 19, b = Math.floor(y / 100), c = y % 100;
+    const d = Math.floor(b / 4), e = b % 4;
+    const f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3);
+    const h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4), k = c % 4;
+    const l = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const mo = Math.floor((h + l - 7 * m + 114) / 31);
+    const da = ((h + l - 7 * m + 114) % 31) + 1;
+    return new Date(y, mo - 1, da);
+  }
+
+  const _lvHolidayCache = new Map();
+  function lvHolidaySet(year) {
+    if (_lvHolidayCache.has(year)) return _lvHolidayCache.get(year);
+    const mmdd = (dt) => String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
+    const shift = (dt, n) => { const x = new Date(dt); x.setDate(x.getDate() + n); return x; };
+    const easter = lvEasterSunday(year);
+    const set = new Set([
+      '01-01', '05-01', '05-04', '06-23', '06-24', '11-18', '12-24', '12-25', '12-26', '12-31',
+      mmdd(shift(easter, -2)), // Lielā Piektdiena
+      mmdd(easter),            // Pirmās Lieldienas
+      mmdd(shift(easter, 1))   // Otrās Lieldienas
+    ]);
+    _lvHolidayCache.set(year, set);
+    return set;
+  }
+
   function g_renderMonth() {
     const scroller = document.getElementById('grafiks-scroller');
     scroller.innerHTML = "";
@@ -1218,6 +1249,10 @@ function filterFullList(btn) {
     }
 
     const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+    // Built once per render, not once per day, and with Easter computed rather
+    // than hardcoded — the old inline list pinned Lieldienas to April 3/5/6 with
+    // an "(aprox)" note, which is only right for 2026.
+    const holidaySet = lvHolidaySet(year);
 
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = `${String(d).padStart(2,'0')}.${String(monthIndex+1).padStart(2,'0')}.${year}`;
@@ -1227,13 +1262,8 @@ function filterFullList(btn) {
       const dow = dateObj.getDay(); // 0=Sun, 6=Sat
       const isWeekend = (dow === 0 || dow === 6);
 
-      // Latvian public holidays (MM-DD format)
-      const LV_HOLIDAYS = new Set([
-        '01-01','05-01','05-04','06-23','06-24','11-18','12-24','12-25','12-26','12-31',
-        '04-03','04-05','04-06' // Lieldienas 2026 (aprox)
-      ]);
       const mmdd = String(monthIndex+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-      const isHoliday = LV_HOLIDAYS.has(mmdd);
+      const isHoliday = holidaySet.has(mmdd);
 
       const div = document.createElement('div');
       let pillClass = 'pill';
@@ -1964,7 +1994,16 @@ function filterFullList(btn) {
 
   function initNsBarDrag(segmentsEl) {
     if (!segmentsEl) return;
-    // Remove previous global handlers before registering new ones
+    // g_updateLive calls this on every repaint while the night-split bar is on,
+    // but #shift-progress-segments is a persistent node — only its innerHTML is
+    // replaced. Re-running the body stacked one more mousedown listener per
+    // repaint, so a single click fired every copy at once (measured: 14 drag
+    // ghosts and 14 pickup sounds from one click after ~1 minute). Wire the node
+    // once; the handlers below already look labels up at drag time, so they pick
+    // up whatever innerHTML currently holds.
+    if (segmentsEl.__nsDragInit) return;
+    segmentsEl.__nsDragInit = true;
+
     if (_nsDragMoveHandler) document.removeEventListener('mousemove', _nsDragMoveHandler);
     if (_nsDragUpHandler)   document.removeEventListener('mouseup',   _nsDragUpHandler);
 
