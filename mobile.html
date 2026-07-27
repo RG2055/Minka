@@ -1780,13 +1780,15 @@ html.mk-low-spec #calendarEmbed {
 
   <script>
   if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-    const MINKA_APP_VERSION = '2026.07.13b.mobile';
+    const MINKA_APP_VERSION = '2026.07.27a.mobile';
     const MINKA_VERSION_KEY = 'minka_mobile_app_version';
     const MINKA_RELOAD_KEY = 'minka_mobile_sw_reloading';
     function clearMinkaRuntimeCaches() {
       try {
         localStorage.removeItem('minka_schedule_cache_v2');
         localStorage.removeItem('minka_schedule_cache_ts_v2');
+        localStorage.removeItem('minka_schedule_cache_v3');
+        localStorage.removeItem('minka_schedule_cache_ts_v3');
         localStorage.removeItem('minka_emoji_v1');
       } catch (_e) {}
       return Promise.resolve();

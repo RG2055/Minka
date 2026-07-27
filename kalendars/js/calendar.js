@@ -577,8 +577,8 @@ function filterFullList(btn) {
 // ------------------------------------------------------------
 (function(){
   const API_URL = ((window.MinkaApi && window.MinkaApi.base) ? window.MinkaApi.base : "") + "/api/schedule";
-  const API_CACHE_KEY = "minka_schedule_cache_v2";
-  const API_CACHE_TS_KEY = "minka_schedule_cache_ts_v2";
+  const API_CACHE_KEY = "minka_schedule_cache_v3";
+  const API_CACHE_TS_KEY = "minka_schedule_cache_ts_v3";
   function readCachedSchedule(){ try{ const raw = localStorage.getItem(API_CACHE_KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; } }
   function writeCachedSchedule(data){ try{ localStorage.setItem(API_CACHE_KEY, JSON.stringify(data)); localStorage.setItem(API_CACHE_TS_KEY, String(Date.now())); }catch(e){} }
   let store = {}, storeRad = {}, activeMonth = "", activeDateStr = "", isGridView = true;
@@ -670,48 +670,117 @@ function filterFullList(btn) {
     return null;
   }
 
-  // Normalize month keys like "Aprīlis 26" / "MARTS 26" → "APRĪLIS 2026"
-  // Handles both "26" (short year) and "2026" (full year) formats, any case, with/without diacritics
-  // Normalize any month key to "MĒNESIS YYYY" format
-  // Handles "APRILIS 2026", "Aprilis 26", "Marts 26", mixed case, with/without diacritics
-  function normalizeMonthKey(raw) {
-    const s = String(raw || '').trim();
-    const lower = s.toLowerCase();
-    // Ordered by length desc to avoid prefix collisions (septembris before sept, etc)
-    const monthPairs = [
-      ['februāris','FEBRUĀRIS'],['februaris','FEBRUĀRIS'],
-      ['septembris','SEPTEMBRIS'],
-      ['novembris','NOVEMBRIS'],
-      ['decembris','DECEMBRIS'],
-      ['janvāris','JANVĀRIS'],['janvaris','JANVĀRIS'],
-      ['oktobris','OKTOBRIS'],
-      ['aprīlis','APRĪLIS'],['aprilis','APRĪLIS'],
-      ['augusts','AUGUSTS'],
-      ['jūnijs','JŪNIJS'],['junijs','JŪNIJS'],
-      ['jūlijs','JŪLIJS'],['julijs','JŪLIJS'],
-      ['maijs','MAIJS'],
-      ['marts','MARTS'],
-    ];
-    let monthOut = '';
-    for (const [k,v] of monthPairs) {
-      if (lower.includes(k)) { monthOut = v; break; }
-    }
-    if (!monthOut) return s;
-    // Extract year: 4-digit wins, else 2-digit → "20XX"
-    const m4 = s.match(/20\d{2}/);
-    if (m4) return monthOut + ' ' + m4[0];
-    const m2 = s.match(/(\d{2})/);
-    if (m2) return monthOut + ' 20' + m2[1];
-    return monthOut;
+  const MONTH_LABELS = {
+    1: "JANVĀRIS",
+    2: "FEBRUĀRIS",
+    3: "MARTS",
+    4: "APRĪLIS",
+    5: "MAIJS",
+    6: "JŪNIJS",
+    7: "JŪLIJS",
+    8: "AUGUSTS",
+    9: "SEPTEMBRIS",
+    10: "OKTOBRIS",
+    11: "NOVEMBRIS",
+    12: "DECEMBRIS"
+  };
+
+  const MONTH_ALIASES = {
+    "JANVARIS": 1,
+    "FEBRUARIS": 2,
+    "MARTS": 3,
+    "APRILIS": 4,
+    "MAIJS": 5,
+    "JUNIJS": 6,
+    "JULIJS": 7,
+    "AUGUSTS": 8,
+    "SEPTEMBRIS": 9,
+    "OKTOBRIS": 10,
+    "NOVEMBRIS": 11,
+    "DECEMBRIS": 12
+  };
+
+  function foldMonthText(value) {
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase();
   }
 
-  // Normalize all store keys so "Aprilis 26" and "APRĪLIS 2026" merge into one
+  function parseMonthYearKey(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return null;
+    const folded = foldMonthText(raw);
+    const tokens = folded.split(/[^A-Z0-9]+/).filter(Boolean);
+    let month = null;
+    for (const token of tokens) {
+      if (MONTH_ALIASES[token]) {
+        month = MONTH_ALIASES[token];
+        break;
+      }
+    }
+    if (!month) return null;
+
+    const year4 = tokens.find(token => /^20\d{2}$/.test(token));
+    const year2 = tokens.find(token => /^\d{2}$/.test(token));
+    const year = year4 ? parseInt(year4, 10) : (year2 ? 2000 + parseInt(year2, 10) : null);
+    if (!year) return null;
+    return { year, month };
+  }
+
+  function parseDateMonthYear(dateStr) {
+    const m = String(dateStr || '').trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+    if (!m) return null;
+    const month = parseInt(m[2], 10);
+    const year = parseInt(m[3], 10);
+    if (!Number.isFinite(month) || !Number.isFinite(year) || month < 1 || month > 12) return null;
+    return { year, month };
+  }
+
+  function sameMonthYear(a, b) {
+    return !!(a && b && a.year === b.year && a.month === b.month);
+  }
+
+  function resolveRequestedMonth(payload) {
+    return parseMonthYearKey(payload && payload.currentMonthName) || parseDateMonthYear(g_todayStr);
+  }
+
+  // Normalize any sheet month key to "MĒNESIS YYYY" format using exact month+year parsing.
+  function normalizeMonthKey(raw) {
+    const s = String(raw || '').trim();
+    const parsed = parseMonthYearKey(s);
+    return parsed ? (MONTH_LABELS[parsed.month] + ' ' + parsed.year) : s;
+  }
+
+  function normalizeDaysForMonthKey(days, monthYear) {
+    if (!Array.isArray(days) || !monthYear) return Array.isArray(days) ? days : [];
+    return days.map(day => {
+      if (!day || typeof day !== 'object') return day;
+      const dateMatch = String(day.date || '').trim().match(/^(\d{1,2})(?:\.(\d{1,2}))?(?:\.(\d{4}))?$/);
+      if (!dateMatch) return day;
+      const dayNumber = parseInt(dateMatch[1], 10);
+      if (!Number.isFinite(dayNumber) || dayNumber < 1 || dayNumber > 31) return day;
+      return {
+        ...day,
+        date: [
+          String(dayNumber).padStart(2, '0'),
+          String(monthYear.month).padStart(2, '0'),
+          monthYear.year
+        ].join('.'),
+        workers: Array.isArray(day.workers) ? day.workers.map(worker => ({ ...worker })) : day.workers
+      };
+    });
+  }
+
+  // Normalize store keys and dates by an exact sheet month+year pair.
   function normalizeStoreKeys(storeObj) {
     const result = {};
     for (const raw of Object.keys(storeObj || {})) {
-      const norm = normalizeMonthKey(raw);
-      if (!result[norm]) result[norm] = storeObj[raw];
-      else result[norm] = [...result[norm], ...storeObj[raw]];
+      const monthYear = parseMonthYearKey(raw);
+      const norm = monthYear ? (MONTH_LABELS[monthYear.month] + ' ' + monthYear.year) : normalizeMonthKey(raw);
+      const days = normalizeDaysForMonthKey(storeObj[raw], monthYear);
+      if (!result[norm]) result[norm] = days;
+      else result[norm] = [...result[norm], ...days];
     }
     return result;
   }
@@ -912,26 +981,11 @@ function filterFullList(btn) {
       if (!uniq.has(k)) uniq.set(k, s);
     }
 
-    const monthMap = {
-      "JANVĀRIS": 0, "JANVARIS": 0,
-      "FEBRUĀRIS": 1, "FEBRUARIS": 1,
-      "MARTS": 2,
-      "APRĪLIS": 3, "APRILIS": 3,
-      "MAIJS": 4,
-      "JŪNIJS": 5, "JUNIJS": 5,
-      "JŪLIJS": 6, "JULIJS": 6,
-      "AUGUSTS": 7,
-      "SEPTEMBRIS": 8,
-      "OKTOBRIS": 9,
-      "NOVEMBRIS": 10,
-      "DECEMBRIS": 11
-    };
-
     const parseKey = (s) => {
       const up = String(s || "").trim().toUpperCase();
-      const y = parseInt((up.match(/(20\d{2})/) || [])[1] || "0", 10);
-      const mName = Object.keys(monthMap).find(n => up.includes(n)) || "";
-      const m = (mName && monthMap[mName] !== undefined) ? monthMap[mName] : 99;
+      const parsed = parseMonthYearKey(up);
+      const y = parsed ? parsed.year : 0;
+      const m = parsed ? parsed.month - 1 : 99;
       return { y, m };
     };
 
@@ -1064,8 +1118,9 @@ function filterFullList(btn) {
       const picker = document.getElementById('grafiks-monthPicker');
       picker.innerHTML = "";
       const months = getAllMonths();
+      const requestedMonth = resolveRequestedMonth(d);
       months.forEach(m => {
-        const isCur = d.currentMonthName && m.toLowerCase().includes(d.currentMonthName.split(' ')[0].toLowerCase());
+        const isCur = sameMonthYear(parseMonthYearKey(m), requestedMonth);
         if (isCur) { activeMonth = m; window.__activeMonth = m; }
         picker.innerHTML += `<option value="${m}" ${isCur ? 'selected' : ''}>${m.replace(/\s+\d{4}\s*$/, '').toUpperCase()}</option>`;
       });
@@ -1109,8 +1164,9 @@ function filterFullList(btn) {
           const picker = document.getElementById('grafiks-monthPicker');
           picker.innerHTML = '';
           const months = getAllMonths();
+          const requestedMonth = resolveRequestedMonth(cached);
           months.forEach(m => {
-            const isCur = cached.currentMonthName && m.toLowerCase().includes(cached.currentMonthName.split(' ')[0].toLowerCase());
+            const isCur = sameMonthYear(parseMonthYearKey(m), requestedMonth);
             if (isCur) { activeMonth = m; window.__activeMonth = m; }
             picker.innerHTML += `<option value="${m}" ${isCur ? 'selected' : ''}>${m.replace(/\s+\d{4}\s*$/, '').toUpperCase()}</option>`;
           });
