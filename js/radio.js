@@ -10,7 +10,7 @@ const MK_VIZ_FRAME_MS = MK_LOW_SPEC ? 1000 / 30 : 0;
 // Buddy visualizer: an optional ~4fps pixel ghost instead of the spectrum.
 // The round Buddy button switches back to the saved spectrum when requested.
 const MK_BUDDY_VIZ = 11;
-const MK_DEFAULT_VIZ = 10;
+const MK_DEFAULT_VIZ = 7;
 let __mkLastSpectrum = MK_DEFAULT_VIZ;
 let __mkBuddyStep = 0;
 let aCtx, analyser, src, lowNode, highNode, hls, masterGain, dryGain, wetGain, delayNode, feedbackNode, convolverNode, compressorNode, vinylNoiseSrc, vinylLPF, vinylGain, depthSplitter, depthMerger, depthDelayR, depthDryGain, depthWetGain, depthSumGain;
@@ -47,7 +47,7 @@ function refreshCombinedStations(){
 let currentIndex = 0;
 let vizStyle = (function(){
     try {
-        const defaultsVersion = '2';
+        const defaultsVersion = '3';
         if (localStorage.getItem('mkRadioVizDefaultsVersion') !== defaultsVersion) {
             localStorage.setItem('mkRadioVizDefaultsVersion', defaultsVersion);
             localStorage.setItem('mkRadioViz', `spectrum:${MK_DEFAULT_VIZ}`);
@@ -2753,6 +2753,12 @@ function draw(ts = 0) {
         // invisible 500 ms polling loop running for the whole minimized period.
         return;
     }
+    if (isAdjustingVol) {
+        // The volume OSD owns the monitor while the slider is moving. Poll
+        // slowly instead of analysing and repainting audio behind it.
+        scheduleDraw(120);
+        return;
+    }
     scheduleDraw();
     if (vizStyle === MK_BUDDY_VIZ) {
         if (dGif) dGif.style.opacity = 0;
@@ -2800,8 +2806,7 @@ function draw(ts = 0) {
         ctx.clearRect(0, 0, cvs.width, cvs.height);
     }
 
-    if (!isAdjustingVol) {
-        if (vizStyle === 0) { 
+    if (vizStyle === 0) {
            const barW = 4; const barGap = 2; const pxH = 2; const pxGap = 1; for (let i = 0; i < data.length; i++) { const x = i * (barW + barGap); if (x > cvs.width) break; const val = (data[i] / 255) * cvs.height; for (let y = 0; y < val; y += (pxH + pxGap)) { ctx.fillStyle = `${`rgba(${vRgb},${(0.4 + y/cvs.height).toFixed(3)})`}`; ctx.fillRect(x, cvs.height - y - pxH, barW, pxH); } }
         } else if (vizStyle === 1) { 
            const barW = 12; const barGap = 4; const centerX = cvs.width / 2; for (let i = 0; i < 15; i++) { const val = (data[i*2] / 255) * cvs.height; ctx.fillStyle = `rgba(${vRgb},0.8)`; ctx.fillRect(centerX + (i * (barW + barGap)), cvs.height - val, barW, val); ctx.fillRect(centerX - ((i + 1) * (barW + barGap)), cvs.height - val, barW, val); }
@@ -2894,7 +2899,6 @@ function draw(ts = 0) {
                     }
                 }
             }
-        }
     }
 }
 
@@ -2929,11 +2933,18 @@ document.getElementById('playBtn').onclick = () => {
 document.getElementById('vol').oninput = (e) => {
     const val = e.target.value; audio.volume = val; isAdjustingVol = true;
     const osd = document.getElementById('volumeOSD'); const numDisplay = document.getElementById('osd-num');
+    const monitor = document.querySelector('#radioWindow .monitor-frame');
+    if (monitor) monitor.classList.add('volume-adjusting');
     const segs = document.querySelectorAll('.seg'); osd.style.display = 'flex';
     const displayVal = Math.floor(val * 100); numDisplay.textContent = displayVal.toString().padStart(2, '0');
     const litSegments = Math.floor(displayVal / 2);
     segs.forEach((s, i) => { if(i < litSegments) s.classList.add('on'); else s.classList.remove('on'); });
-    clearTimeout(volTimeout); volTimeout = setTimeout(() => { isAdjustingVol = false; osd.style.display = 'none'; }, 1200);
+    clearTimeout(volTimeout); volTimeout = setTimeout(() => {
+        isAdjustingVol = false;
+        osd.style.display = 'none';
+        if (monitor) monitor.classList.remove('volume-adjusting');
+        scheduleDraw();
+    }, 1200);
 };
 
 initStations();
