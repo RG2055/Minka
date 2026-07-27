@@ -59,6 +59,9 @@ let isFirstPlay = true;
 let peaks = Array(128).fill(0);
 let __vizFreqData = null;
 let __vizLastFrameTs = 0;
+let __radioVizAccentRGB = [30, 215, 96];
+let __radioImageSkin = false;
+window.__radioVizAccentRGB = __radioVizAccentRGB;
 
 const cvs = document.getElementById('vizCanvas');
 const ctx = cvs.getContext('2d');
@@ -143,14 +146,14 @@ function mkUpdateVizToggle(){
     const b = document.getElementById('mkVizToggle');
     if (!b) return;
     if (vizStyle === MK_BUDDY_VIZ) {
-        b.innerHTML = '<svg width="30" height="15" viewBox="0 0 16 8" shape-rendering="crispEdges" aria-hidden="true"><rect x="7" y="0" width="2" height="1" fill="#7dffc0"/><rect x="6" y="1" width="3" height="1" fill="#7dffc0"/><rect x="3" y="2" width="9" height="1" fill="#00ff88"/><rect x="2" y="3" width="12" height="1" fill="#00ff88"/><rect x="1" y="4" width="15" height="1" fill="#00ff88"/><rect x="0" y="5" width="2" height="1" fill="#00ff88"/><rect x="4" y="5" width="10" height="1" fill="#00ff88"/><rect x="0" y="6" width="1" height="1" fill="#00ff88"/><rect x="6" y="6" width="4" height="1" fill="#00ff88"/><rect x="7" y="7" width="2" height="1" fill="#00ff88"/></svg><span>SPECTRUM</span>';
+        b.innerHTML = '<svg width="30" height="15" viewBox="0 0 16 8" shape-rendering="crispEdges" aria-hidden="true"><rect x="7" y="0" width="2" height="1" fill="currentColor"/><rect x="6" y="1" width="3" height="1" fill="currentColor"/><rect x="3" y="2" width="9" height="1" fill="currentColor"/><rect x="2" y="3" width="12" height="1" fill="currentColor"/><rect x="1" y="4" width="15" height="1" fill="currentColor"/><rect x="0" y="5" width="2" height="1" fill="currentColor"/><rect x="4" y="5" width="10" height="1" fill="currentColor"/><rect x="0" y="6" width="1" height="1" fill="currentColor"/><rect x="6" y="6" width="4" height="1" fill="currentColor"/><rect x="7" y="7" width="2" height="1" fill="currentColor"/></svg><span>SPECTRUM</span>';
         b.title = 'Ieslēgt spektra vizualizāciju';
     } else {
         b.innerHTML = '<svg width="22" height="16" viewBox="0 0 10 7" shape-rendering="crispEdges" aria-hidden="true">'
-          + '<rect x="3" y="0" width="4" height="1" fill="#7dffc0"/><rect x="2" y="1" width="6" height="1" fill="#00ff88"/>'
-          + '<rect x="1" y="2" width="1" height="1" fill="#00ff88"/><rect x="4" y="2" width="2" height="1" fill="#00ff88"/><rect x="8" y="2" width="1" height="1" fill="#00ff88"/>'
-          + '<rect x="1" y="3" width="8" height="3" fill="#00ff88"/>'
-          + '<rect x="1" y="6" width="1" height="1" fill="#00ff88"/><rect x="3" y="6" width="1" height="1" fill="#00ff88"/><rect x="6" y="6" width="1" height="1" fill="#00ff88"/><rect x="8" y="6" width="1" height="1" fill="#00ff88"/>'
+          + '<rect x="3" y="0" width="4" height="1" fill="currentColor"/><rect x="2" y="1" width="6" height="1" fill="currentColor"/>'
+          + '<rect x="1" y="2" width="1" height="1" fill="currentColor"/><rect x="4" y="2" width="2" height="1" fill="currentColor"/><rect x="8" y="2" width="1" height="1" fill="currentColor"/>'
+          + '<rect x="1" y="3" width="8" height="3" fill="currentColor"/>'
+          + '<rect x="1" y="6" width="1" height="1" fill="currentColor"/><rect x="3" y="6" width="1" height="1" fill="currentColor"/><rect x="6" y="6" width="1" height="1" fill="currentColor"/><rect x="8" y="6" width="1" height="1" fill="currentColor"/>'
           + '</svg><span>BUDDY</span>';
         b.title = 'Buddy režīms (viegls, taupa resursus)';
     }
@@ -172,8 +175,8 @@ function mkToggleBuddyViz(){
     if (!host) return;
     const st = document.createElement('style');
     st.textContent = '#radioWindow .control-panel{flex-wrap:wrap;row-gap:6px;justify-content:flex-end;}'
-      + '#mkVizToggle{flex:0 0 auto;width:44px;height:44px;border-radius:50%;border:1px solid rgba(0,255,136,.45);background:rgba(6,14,10,.9);color:#9fffd0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;font:700 5.5px/1 "Space Grotesk",system-ui;letter-spacing:.1em;padding:0;}'
-      + '#mkVizToggle:hover{border-color:rgba(0,255,136,.85);background:rgba(8,20,14,.96);}'
+      + '#mkVizToggle{flex:0 0 auto;width:44px;height:44px;border-radius:50%;border:1px solid rgba(var(--radio-accent-rgb,30,215,96),.35);background:rgba(6,10,8,.62);color:var(--radio-accent,#1ed760);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;font:700 5.5px/1 "Space Grotesk",system-ui;letter-spacing:.1em;padding:0;}'
+      + '#mkVizToggle:hover{border-color:rgba(var(--radio-accent-rgb,30,215,96),.7);background:rgba(8,12,10,.78);}'
       + '#mkVizToggle svg{display:block;}'
       + '@media (max-width:900px){#mkVizToggle{width:34px;height:34px;}#mkVizToggle span{display:none;}#mkVizToggle svg{width:22px;height:11px;}}';
     document.head.appendChild(st);
@@ -2718,11 +2721,14 @@ function mkDrawBuddyViz(ts) {
     const w = map[0].length * u, h = map.length * u;
     const ox = Math.floor((cvs.width - w) / 2 + st[1] * u * 0.5);
     const oy = Math.floor((cvs.height - h) / 2 + st[2] * u * 0.4 + u * 0.4);
+    const buddyBright = __radioVizAccentRGB.map(value => Math.min(255, value + 42));
+    const buddyMain = `rgba(${__radioVizAccentRGB.join(',')},.74)`;
+    const buddyTop = `rgba(${buddyBright.join(',')},.82)`;
     for (let r = 0; r < map.length; r++) {
         const row = map[r];
         for (let c = 0; c < row.length; c++) {
             if (row[c] !== 'X') continue;
-            ctx.fillStyle = r < 1 ? '#7dffc0' : '#00ff88';
+            ctx.fillStyle = r < 1 ? buddyTop : buddyMain;
             ctx.fillRect(ox + c * u, oy + r * u, u, u);
         }
     }
@@ -2753,11 +2759,11 @@ function draw(ts = 0) {
     const data = __vizFreqData;
     analyser.getByteFrequencyData(data);
 
-    // Spectrum color: purple when SLOW mode, green otherwise
-    const _sl = window.__vizSlowed;
-    const vC  = _sl ? [180, 90, 255] : [0, 255, 136];  // [r, g, b]
+    // Spectrum follows the current album/theme accent. The cached value avoids
+    // reading computed styles on every animation frame.
+    const vC = __radioVizAccentRGB;
     const vRgb = `${vC[0]}, ${vC[1]}, ${vC[2]}`;
-    const vHex = _sl ? '#b45aff' : '#00ff88';
+    const vHex = `rgb(${vRgb})`;
 
     const bassSignal = data[2]; 
     const midSignal = data[10];
@@ -2781,7 +2787,7 @@ function draw(ts = 0) {
     if (vizStyle >= 8 && vizStyle <= 10) {
         return;
     }
-    if (vizStyle === 6 || vizStyle === 7) {
+    if ((vizStyle === 6 || vizStyle === 7) && !__radioImageSkin) {
         ctx.fillStyle = 'rgba(0,0,0,0.18)';
         ctx.fillRect(0,0,cvs.width,cvs.height);
     } else {
@@ -2796,7 +2802,7 @@ function draw(ts = 0) {
         } else if (vizStyle === 2) { 
            ctx.beginPath(); ctx.lineWidth = 3; ctx.strokeStyle = `rgba(${vRgb},0.8)`; for (let i = 0; i < data.length; i++) { const x = (i / data.length) * cvs.width; const y = cvs.height - (data[i] / 255) * cvs.height; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); } ctx.stroke();
         } else if (vizStyle === 3) { 
-           const barW = 8; const barGap = 2; for (let i = 0; i < data.length; i++) { const x = i * (barW + barGap); if (x > cvs.width) break; const val = (data[i] / 255) * cvs.height; ctx.fillStyle = `rgba(${vRgb},0.7)`; ctx.fillRect(x, cvs.height - val, barW, val); }
+           const barW = 8; const barGap = 2; for (let i = 0; i < data.length; i++) { const x = i * (barW + barGap); if (x > cvs.width) break; const val = (data[i] / 255) * cvs.height; ctx.fillStyle = `rgba(${vRgb},0.66)`; ctx.fillRect(x, cvs.height - val, barW, val); }
         } else if (vizStyle === 4) { 
            const centerY = cvs.height / 2; const barW = 6; const barGap = 3; for (let i = 0; i < data.length; i++) { const x = i * (barW + barGap); if (x > cvs.width) break; const val = (data[i] / 255) * (cvs.height * 0.4); ctx.fillStyle = `rgba(${vRgb},0.7)`; ctx.fillRect(x, centerY - val, barW, val); ctx.fillRect(x, centerY, barW, val); }
         } else if (vizStyle === 5) { 
@@ -3285,6 +3291,9 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
       const stationButtons = rw?.querySelectorAll('.station-btn, .viz-icon-btn, .nav-btn, .play-trigger, .md-mini-btn') || [];
 
       if (rw) {
+        __radioImageSkin = !!image;
+        rw.classList.toggle('radio-image-skin', __radioImageSkin);
+        rw.classList.toggle('radio-black-skin', !__radioImageSkin);
         rw.style.setProperty('background', solidWin, 'important');
         rw.style.setProperty(
           'background-image',
@@ -3310,9 +3319,17 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
         el.style.setProperty('-webkit-backdrop-filter', 'none', 'important');
       });
       monitorFrames.forEach(el => {
-        el.style.setProperty('background', solidMonitor, 'important');
-        el.style.setProperty('border-color', border, 'important');
-        el.style.setProperty('box-shadow', '0 12px 34px rgba(0,0,0,.28)', 'important');
+        el.style.setProperty('background', image ? 'rgba(0,0,0,.12)' : solidMonitor, 'important');
+        el.style.setProperty(
+          'border-color',
+          image ? 'rgba(var(--radio-accent-rgb,30,215,96),.13)' : border,
+          'important'
+        );
+        el.style.setProperty(
+          'box-shadow',
+          image ? 'none' : '0 12px 34px rgba(0,0,0,.28)',
+          'important'
+        );
       });
       controlPanels.forEach(el => {
         el.style.setProperty('background', 'transparent', 'important');
@@ -3352,6 +3369,8 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
   function applyAccent(color){
     if (!color) return;
     const rgb = parseColorToRGBStr(color);
+    __radioVizAccentRGB = rgb.split(',').map(Number);
+    window.__radioVizAccentRGB = __radioVizAccentRGB;
     [
       document.getElementById('radioWindow'),
       document.getElementById('milkdropPanel'),
