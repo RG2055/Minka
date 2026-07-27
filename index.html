@@ -2109,9 +2109,8 @@ window.addEventListener('DOMContentLoaded', () => {
 #lacMiniConsole .lm-login{display:flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:14px;border:1px solid rgba(30,215,96,.42);background:rgba(30,215,96,.1);color:#1ed760;font:700 10.5px/1 'Space Grotesk',system-ui;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:background .15s;}
 #lacMiniConsole .lm-login:hover{background:rgba(30,215,96,.2);}
 #lacMiniConsole .lm-login svg{width:14px;height:14px;fill:currentColor;flex-shrink:0;}
-#lacMiniConsole .lm-favorites,#lacMiniConsole .lm-sound{display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:9px;border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.05);color:#e9e9e9;font:750 10px/1 'Space Grotesk',system-ui;cursor:pointer;}
-#lacMiniConsole .lm-favorites:hover,#lacMiniConsole .lm-favorites.active,#lacMiniConsole .lm-sound:hover,#lacMiniConsole .lm-sound.active{border-color:rgba(30,215,96,.45);background:rgba(30,215,96,.12);color:#42df79;}
-#lacMiniConsole .lm-sound b{font:900 9px/1 ui-monospace,monospace;letter-spacing:-.08em;}
+#lacMiniConsole .lm-favorites{display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:9px;border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.05);color:#e9e9e9;font:750 10px/1 'Space Grotesk',system-ui;cursor:pointer;}
+#lacMiniConsole .lm-favorites:hover,#lacMiniConsole .lm-favorites.active{border-color:rgba(30,215,96,.45);background:rgba(30,215,96,.12);color:#42df79;}
 #lacMiniConsole .lm-login.active{background:#1ed760;color:#06150b;border-color:#1ed760;}
 #lacMiniConsole .lm-login .lm-profile-avatar{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:currentColor;color:#07160c;font:900 10px/1 system-ui;}
 #lacMiniProfilePanel{display:none;position:absolute;right:12px;bottom:calc(100% + 9px);z-index:4;width:min(680px,calc(100vw - 24px));max-height:min(410px,calc(100dvh - 250px));overflow:hidden;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:#111315;box-shadow:0 24px 70px rgba(0,0,0,.72);color:#f4f4f4;flex-direction:column;}
@@ -2175,6 +2174,8 @@ window.addEventListener('DOMContentLoaded', () => {
 #lacMiniActions .lm-quick:hover{color:#fff;border-color:rgba(255,255,255,.22);}
 #lacMiniActions .lm-quick.on{color:#1ed760;border-color:rgba(30,215,96,.4);background:rgba(30,215,96,.1);}
 #lacMiniActions .lm-lyrics{font:750 10px/1 'Space Grotesk',system-ui;}
+#lacMiniActions .lm-sound{font:900 9px/1 ui-monospace,monospace;letter-spacing:.02em;}
+#lacMiniActions .lm-sound.active{color:#1ed760;border-color:rgba(30,215,96,.4);background:rgba(30,215,96,.1);}
 #lacMiniLyricsPanel{display:none;position:absolute;left:12px;bottom:calc(100% + 9px);z-index:5;width:min(520px,calc(100vw - 24px));max-height:min(440px,calc(100dvh - 250px));overflow:hidden;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:#111315;box-shadow:0 24px 70px rgba(0,0,0,.72);color:#f4f4f4;flex-direction:column;}
 #lacMiniLyricsPanel.open{display:flex;}
 #lacMiniLyricsPanel .lml-head{height:48px;display:flex;align-items:center;gap:10px;padding:0 10px 0 16px;border-bottom:1px solid rgba(255,255,255,.09);flex-shrink:0;}
@@ -2287,7 +2288,6 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     </label>
     <span class="lm-head-btns">
       <button class="lm-favorites" id="lacMiniFavoritesBtn" type="button" onclick="lacMiniOpenFavorites()" title="Atvērt manas iecienītās dziesmas"><b>♥</b><span>Favorīti</span></button>
-      <button class="lm-sound" id="lacMiniSoundBtn" type="button" onclick="lacMiniToggleSound()" title="Skaņas uzlabojumi" aria-label="Skaņas uzlabojumi" aria-expanded="false"><b>EQ</b><span>Skaņa</span></button>
       <button class="lm-login" id="lacMiniProfileBtn" onclick="lacMiniToggleProfile()" title="Lācīša profils un bibliotēka" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-4.1 0-8 2.1-8 5v1h16v-1c0-2.9-3.9-5-8-5z"/></svg><span class="lm-profile-label">Ielogoties</span></button>
       <button class="lm-hbtn" onclick="lacMiniMaximize()" title="Pilnekrāna režīms" aria-label="Pilnekrāna režīms">⛶</button>
       <button class="lm-hbtn" onclick="lacMiniClose()" title="Aizvērt" aria-label="Aizvērt">×</button>
@@ -2302,6 +2302,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
         <button id="lacMiniFavBtn" class="lm-quick" type="button" onclick="lacMiniQuickAction('favorite')" title="Pievienot/noņemt no iecienītajām" aria-label="Pievienot/noņemt no iecienītajām">♥</button>
         <button id="lacMiniPlaylistBtn" class="lm-quick" type="button" onclick="lacMiniOpenPlaylists()" title="Pievienot dziesmu savai playlistei" aria-label="Pievienot dziesmu savai playlistei">+♫</button>
         <button id="lacMiniLyricsBtn" class="lm-quick lm-lyrics" type="button" onclick="lacMiniToggleLyrics()" title="Rādīt lyrics" aria-label="Rādīt lyrics" aria-expanded="false">Lyrics</button>
+        <button id="lacMiniSoundBtn" class="lm-quick lm-sound" type="button" onclick="lacMiniToggleSound()" title="Skaņas uzlabojumi" aria-label="Skaņas uzlabojumi" aria-expanded="false">EQ</button>
       </div>
     </div>
     <div class="lm-deck-shell">
@@ -2374,10 +2375,10 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       <button class="lm-hbtn" type="button" onclick="lacMiniToggleSound(false)" title="Aizvērt skaņas iestatījumus" aria-label="Aizvērt skaņas iestatījumus">×</button>
     </div>
     <div class="lms-body">
-      <p class="lms-note">Viegla apstrāde tikai dziesmām. Radio paliek oriģinālajā režīmā.</p>
+      <p class="lms-note">AirPods: dziesmas laikā pārslēdz Oriģināls ↔ Virtual Surround — efekts mainās uzreiz. Radio paliek oriģināls.</p>
       <div class="lms-options" id="lacMiniSoundOptions">
         <button class="lms-option" type="button" data-sound="off" onclick="lacMiniSetSound('off')"><span class="lms-check">✓</span><strong>Oriģināls</strong><small>Bez skaņas apstrādes</small></button>
-        <button class="lms-option" type="button" data-sound="surround" onclick="lacMiniSetSound('surround')"><span class="lms-check">✓</span><strong>Virtual Surround <i class="lms-rec">ieteicams</i></strong><small>Plašāks stereo, skaidrs centrs un limiteris</small></button>
+        <button class="lms-option" type="button" data-sound="surround" onclick="lacMiniSetSound('surround')"><span class="lms-check">✓</span><strong>Virtual Surround <i class="lms-rec">ieteicams</i></strong><small>AirPods un austiņām: plašāks stereo, skaidrs centrs</small></button>
         <button class="lms-option" type="button" data-sound="speakers" onclick="lacMiniSetSound('speakers')"><span class="lms-check">✓</span><strong>Mazās tumbas</strong><small>Vairāk sitiena un balss, mazāk dārdoņas</small></button>
         <button class="lms-option" type="button" data-sound="night" onclick="lacMiniSetSound('night')"><span class="lms-check">✓</span><strong>Nakts</strong><small>Vienmērīgāks un klusāks skaļums</small></button>
       </div>
@@ -2457,6 +2458,12 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     if(soundPanel){
       soundPanel.dataset.profile=soundState.profile;
       soundPanel.dataset.active=soundState.active?'1':'0';
+      soundPanel.dataset.context=soundState.contextState||'not-created';
+      soundPanel.dataset.width=String(Number(soundState.width||0));
+      soundPanel.dataset.lowGain=String(Number(soundState.lowGain||0));
+      soundPanel.dataset.voiceGain=String(Number(soundState.voiceGain||0));
+      soundPanel.dataset.airGain=String(Number(soundState.airGain||0));
+      soundPanel.dataset.masterGain=String(Number(soundState.masterGain||1));
     }
     if(soundBtn){
       var enhanced=soundState.profile!=='off';
@@ -2469,7 +2476,8 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       if(soundState.error) soundStatusEl.textContent='Nav pieejams';
       else if(soundState.supported===false) soundStatusEl.textContent='Pārlūks neatbalsta';
       else if(soundState.profile==='off') soundStatusEl.textContent='Native Web Audio • izslēgts';
-      else soundStatusEl.textContent='Zems CPU • '+(soundState.active?'aktīvs':'gatavs');
+      else if(soundState.active) soundStatusEl.textContent='Web Audio • aktīvs';
+      else soundStatusEl.textContent='Web Audio • gaida Play';
     }
   }
   function todayWorkers(){
