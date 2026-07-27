@@ -780,11 +780,21 @@ html #radioWindow #eqRow #ceqTriggerBtn:hover {
   overflow: hidden;
   line-height: 1.05;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-#themePanel .accent-mode-list b { font-size: 9.5px; }
-#themePanel .accent-mode-list small { color: rgba(255, 255, 255, .42); font-size: 7.5px; }
+#themePanel .accent-mode-list b {
+  overflow: visible;
+  font-size: 9.5px;
+  line-height: 1.08;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+#themePanel .accent-mode-list small {
+  color: rgba(255, 255, 255, .42);
+  font-size: 7.5px;
+  white-space: nowrap;
+}
 
 #themePanel button:focus,
 #themePanel input:focus {
