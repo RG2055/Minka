@@ -3577,7 +3577,10 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
       row.addEventListener('click', (e)=>{
         e.stopPropagation();
         setEnabled(true);
-        setSaved({name: t.name});
+        setSaved({
+          name: t.name,
+          accentMode: t.isDefault ? 'off' : 'album'
+        });
         applyTheme(t.name);
       });
       listEl.appendChild(row);
