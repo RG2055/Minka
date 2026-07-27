@@ -7,10 +7,11 @@ const _err  = (...a) => { if (RG_DEBUG) console.error(...a); };
 const MK_PERF = window.__mkPerfProfile || {};
 const MK_LOW_SPEC = !!MK_PERF.lowSpec;
 const MK_VIZ_FRAME_MS = MK_LOW_SPEC ? 1000 / 30 : 0;
-// Buddy visualizer: a ~4fps pixel ghost instead of the 30-60fps FFT spectrum.
-// Default on low-spec machines; the round dolphin button toggles spectrum back.
+// Buddy visualizer: an optional ~4fps pixel ghost instead of the spectrum.
+// The round Buddy button switches back to the saved spectrum when requested.
 const MK_BUDDY_VIZ = 11;
-let __mkLastSpectrum = 3;
+const MK_DEFAULT_VIZ = 10;
+let __mkLastSpectrum = MK_DEFAULT_VIZ;
 let __mkBuddyStep = 0;
 let aCtx, analyser, src, lowNode, highNode, hls, masterGain, dryGain, wetGain, delayNode, feedbackNode, convolverNode, compressorNode, vinylNoiseSrc, vinylLPF, vinylGain, depthSplitter, depthMerger, depthDelayR, depthDryGain, depthWetGain, depthSumGain;
 let stationsList = [];
@@ -46,11 +47,16 @@ function refreshCombinedStations(){
 let currentIndex = 0;
 let vizStyle = (function(){
     try {
+        const defaultsVersion = '2';
+        if (localStorage.getItem('mkRadioVizDefaultsVersion') !== defaultsVersion) {
+            localStorage.setItem('mkRadioVizDefaultsVersion', defaultsVersion);
+            localStorage.setItem('mkRadioViz', `spectrum:${MK_DEFAULT_VIZ}`);
+        }
         const s = localStorage.getItem('mkRadioViz');
         if (s === 'buddy') return MK_BUDDY_VIZ;
-        if (s && s.indexOf('spectrum:') === 0) { const n = +s.slice(9); if (n >= 0 && n < 8) { __mkLastSpectrum = n; return n; } }
+        if (s && s.indexOf('spectrum:') === 0) { const n = +s.slice(9); if (n >= 0 && n < MK_BUDDY_VIZ) { __mkLastSpectrum = n; return n; } }
     } catch(e){}
-    return MK_LOW_SPEC ? MK_BUDDY_VIZ : 3;
+    return MK_DEFAULT_VIZ;
 })();
 let isAdjustingVol = false;
 let volTimeout;
@@ -160,7 +166,7 @@ function mkUpdateVizToggle(){
 }
 function mkToggleBuddyViz(){
     if (vizStyle === MK_BUDDY_VIZ) {
-        vizStyle = (__mkLastSpectrum >= 0 && __mkLastSpectrum < 8) ? __mkLastSpectrum : 3;
+        vizStyle = (__mkLastSpectrum >= 0 && __mkLastSpectrum < MK_BUDDY_VIZ) ? __mkLastSpectrum : MK_DEFAULT_VIZ;
     } else {
         __mkLastSpectrum = vizStyle;
         vizStyle = MK_BUDDY_VIZ;
@@ -3179,7 +3185,6 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
       chip: '#1ed760',
       surfaceRGB: [5,7,6],
       image: '',
-      isDefault: true,
       vars: {
         '--bg-color': '#000000',
         '--panel': '#070908',
@@ -3210,6 +3215,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
       surfaceRGB: [5,16,20],
       image: 'kalendars/data/radio-skins/deep-ocean-2400x400.jpg',
       preview: 'kalendars/data/radio-skins/deep-ocean-preview.jpg',
+      isDefault: true,
       vars: {
         '--bg-color': '#030a0d',
         '--panel': '#081317',
@@ -3371,6 +3377,20 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     const rgb = parseColorToRGBStr(color);
     __radioVizAccentRGB = rgb.split(',').map(Number);
     window.__radioVizAccentRGB = __radioVizAccentRGB;
+    if (dGif) {
+      const [r, g, b] = __radioVizAccentRGB.map(value => value / 255);
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const delta = max - min;
+      let hue = 0;
+      if (delta) {
+        if (max === r) hue = 60 * (((g - b) / delta) % 6);
+        else if (max === g) hue = 60 * (((b - r) / delta) + 2);
+        else hue = 60 * (((r - g) / delta) + 4);
+      }
+      if (hue < 0) hue += 360;
+      dGif.style.filter = `grayscale(1) brightness(.68) sepia(1) saturate(8) hue-rotate(${Math.round(hue - 39)}deg)`;
+    }
     [
       document.getElementById('radioWindow'),
       document.getElementById('milkdropPanel'),
@@ -3384,9 +3404,9 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
 
   function getSaved(){
     return {
-      name: localStorage.getItem(STORAGE.name) || 'Melns',
+      name: localStorage.getItem(STORAGE.name) || 'Dziļais okeāns',
       accent: localStorage.getItem(STORAGE.accent) || '#1ed760',
-      accentMode: localStorage.getItem(STORAGE.accentMode) || 'off',
+      accentMode: localStorage.getItem(STORAGE.accentMode) || 'album',
       enabled: localStorage.getItem(STORAGE.enabled) === '1'
     };
   }
@@ -3408,12 +3428,12 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
   // Remove the old purple/glass presets once and start from the modern picker.
   (function themeMigration(){
     const VER_KEY = 'rg_theme_version';
-    const VER = '6';
+    const VER = '7';
     if (localStorage.getItem(VER_KEY) === VER) return;
     localStorage.setItem(VER_KEY, VER);
-    localStorage.setItem(STORAGE.name, 'Melns');
+    localStorage.setItem(STORAGE.name, 'Dziļais okeāns');
     localStorage.setItem(STORAGE.accent, '#1ed760');
-    localStorage.setItem(STORAGE.accentMode, 'off');
+    localStorage.setItem(STORAGE.accentMode, 'album');
     localStorage.removeItem('rg_theme_glass');
     localStorage.setItem(STORAGE.enabled, '1');
   })();
@@ -3598,7 +3618,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
         setEnabled(true);
         setSaved({
           name: t.name,
-          accentMode: t.isDefault ? 'off' : 'album'
+          accentMode: t.name === 'Melns' ? 'off' : 'album'
         });
         applyTheme(t.name);
       });
