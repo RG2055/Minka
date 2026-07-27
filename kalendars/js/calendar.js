@@ -1125,6 +1125,7 @@ function filterFullList(btn) {
         picker.innerHTML += `<option value="${m}" ${isCur ? 'selected' : ''}>${m.replace(/\s+\d{4}\s*$/, '').toUpperCase()}</option>`;
       });
       if(!activeMonth && months.length > 0) { activeMonth = months[0]; window.__activeMonth = months[0]; }
+      g_sizeMonthPicker();
       const _ldr=document.getElementById('grafiks-loader'); if(_ldr) hideGrafiksLoader(_ldr);
       g_renderMonth();
       const todayExists = getMergedDays(activeMonth).some(day => day.date === g_todayStr);
@@ -1171,6 +1172,7 @@ function filterFullList(btn) {
             picker.innerHTML += `<option value="${m}" ${isCur ? 'selected' : ''}>${m.replace(/\s+\d{4}\s*$/, '').toUpperCase()}</option>`;
           });
           if(!activeMonth && months.length > 0) { activeMonth = months[0]; window.__activeMonth = months[0]; }
+          g_sizeMonthPicker();
           if(loader) hideGrafiksLoader(loader);
           g_renderMonth();
           const todayExists = getMergedDays(activeMonth).some(day => day.date === g_todayStr);
@@ -1580,7 +1582,10 @@ function filterFullList(btn) {
       activeMonth = targetMonth;
       window.__activeMonth = targetMonth;
       const picker = document.getElementById('grafiks-monthPicker');
-      if (picker) picker.value = targetMonth;
+      if (picker) {
+        picker.value = targetMonth;
+        g_sizeMonthPicker();
+      }
       g_renderMonth();
     }
     g_selectDay(normalized);
@@ -3965,8 +3970,42 @@ function filterFullList(btn) {
     return idx >= 0 && idx < uniq.length - 1 ? uniq[idx + 1] : '';
   }
 
+  function g_sizeMonthPicker() {
+    const picker = document.getElementById('grafiks-monthPicker');
+    if (!picker || !picker.options.length) return;
+
+    const selected = picker.options[picker.selectedIndex] || picker.options[0];
+    const label = String(selected.textContent || selected.label || '').trim();
+    if (!label) return;
+
+    const isMobile = document.documentElement.classList.contains('mk-mobile-shell');
+    const minWidth = isMobile ? 102 : 118;
+    const maxWidth = isMobile ? 150 : 176;
+    let textWidth = 0;
+
+    // Measure the rendered label once per month change; the control itself
+    // stays a normal select and does not need a polling loop.
+    try {
+      g_sizeMonthPicker.canvas ||= document.createElement('canvas');
+      const ctx = g_sizeMonthPicker.canvas.getContext('2d');
+      if (ctx) {
+        ctx.font = getComputedStyle(picker).font;
+        textWidth = ctx.measureText(label).width;
+      }
+    } catch (_) {}
+
+    const css = getComputedStyle(picker);
+    const padding = (parseFloat(css.paddingLeft) || 0) + (parseFloat(css.paddingRight) || 0);
+    const arrowSpace = isMobile ? 6 : 8;
+    const width = Math.round(Math.max(minWidth, Math.min(maxWidth, textWidth + padding + arrowSpace)));
+    picker.style.setProperty('--mk-month-width', width + 'px');
+  }
+
   function g_changeMonth() {
-    activeMonth = document.getElementById('grafiks-monthPicker').value;
+    const picker = document.getElementById('grafiks-monthPicker');
+    if (!picker) return;
+    activeMonth = picker.value;
+    g_sizeMonthPicker();
     window.__activeMonth = activeMonth;
     // Rebuild pills for new month FIRST, then select day
     g_renderMonth();
@@ -5234,6 +5273,7 @@ function filterFullList(btn) {
   window.g_scrollCal = g_scrollCal;
   window.g_toggleView = g_toggleView;
   window.g_changeMonth = g_changeMonth;
+  window.g_sizeMonthPicker = g_sizeMonthPicker;
   window.g_updatePanelsForDate = g_updatePanelsForDate;
   window.g_selectDay = g_selectDay;
   window.g_stepDay = g_stepDay;
@@ -6304,6 +6344,7 @@ document.addEventListener('focusout', function(e) {
 });
 
 window.addEventListener('resize', function() {
+  if (typeof window.g_sizeMonthPicker === 'function') window.g_sizeMonthPicker();
   var pop = document.getElementById('miniCalPopup');
   if (pop && pop.style.display !== 'none') positionMiniCalPopup();
   if (typeof hideShiftStopPopover === 'function') hideShiftStopPopover();

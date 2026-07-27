@@ -6693,9 +6693,9 @@ html.mk-low-spec .pkt-cat.pkt-awake .pkt-eyes { animation: pktAwakeEyes 1.45s ea
   transition: border-color .18s ease, box-shadow .18s ease, background .18s ease, transform .18s ease !important;
 }
 .mk-date-controls .mk-month-control {
-  width: 122px !important;
-  min-width: 122px !important;
-  padding: 0 24px 0 14px !important;
+  width: var(--mk-month-width, 154px) !important;
+  min-width: var(--mk-month-width, 154px) !important;
+  padding: 0 30px 0 14px !important;
   font: 800 17px/1 'Space Grotesk', system-ui !important;
   letter-spacing: 0.02em !important;
 }
@@ -9819,11 +9819,11 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   order: initial !important;
   grid-column: auto !important;
   margin-top: 0 !important;
-  width: 122px !important;
-  min-width: 122px !important;
+  width: var(--mk-month-width, 154px) !important;
+  min-width: var(--mk-month-width, 154px) !important;
   height: 40px !important;
   min-height: 40px !important;
-  padding-right: 24px !important;
+  padding-right: 30px !important;
   font-size: 17px !important;
 }
 :root:not(.mk-mobile-shell) .scroll-row .mk-date-controls #miniCalBtn {
@@ -9837,8 +9837,8 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   margin-left: 6px !important;
 }
 :root.mk-mobile-shell .scroll-row .mk-date-controls .month-select {
-  width: 102px !important;
-  min-width: 102px !important;
+  width: var(--mk-month-width, 124px) !important;
+  min-width: var(--mk-month-width, 124px) !important;
   height: 34px !important;
   min-height: 34px !important;
   padding: 0 18px 0 10px !important;
