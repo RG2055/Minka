@@ -2188,7 +2188,7 @@ window.addEventListener('DOMContentLoaded', () => {
 #lacMiniLyricsPanel .lml-line[data-time]{cursor:pointer;}
 #lacMiniLyricsPanel .lml-line[data-time]:hover{color:#fff;background:rgba(255,255,255,.05);}
 #lacMiniLyricsPanel .lml-line.active{border-left-color:#1ed760;background:rgba(30,215,96,.08);color:#fff;}
-#lacMiniSoundPanel{display:none;position:absolute;right:12px;bottom:calc(100% + 9px);z-index:6;width:min(410px,calc(100vw - 24px));overflow:hidden;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:#111315;box-shadow:0 24px 70px rgba(0,0,0,.72);color:#f4f4f4;flex-direction:column;}
+#lacMiniSoundPanel{display:none;position:absolute;left:12px;bottom:calc(100% + 9px);z-index:6;width:min(380px,calc(100vw - 24px));overflow:hidden;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:#111315;box-shadow:0 24px 70px rgba(0,0,0,.72);color:#f4f4f4;flex-direction:column;}
 #lacMiniSoundPanel.open{display:flex;}
 #lacMiniSoundPanel .lms-head{height:48px;display:flex;align-items:center;gap:10px;padding:0 10px 0 16px;border-bottom:1px solid rgba(255,255,255,.09);}
 #lacMiniSoundPanel .lms-title{font:800 13px/1 'Space Grotesk',system-ui;}
@@ -2375,11 +2375,10 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       <button class="lm-hbtn" type="button" onclick="lacMiniToggleSound(false)" title="Aizvērt skaņas iestatījumus" aria-label="Aizvērt skaņas iestatījumus">×</button>
     </div>
     <div class="lms-body">
-      <p class="lms-note">AirPods: dziesmas laikā pārslēdz Oriģināls ↔ Virtual Surround — efekts mainās uzreiz. Radio paliek oriģināls.</p>
       <div class="lms-options" id="lacMiniSoundOptions">
         <button class="lms-option" type="button" data-sound="off" onclick="lacMiniSetSound('off')"><span class="lms-check">✓</span><strong>Oriģināls</strong><small>Bez skaņas apstrādes</small></button>
-        <button class="lms-option" type="button" data-sound="surround" onclick="lacMiniSetSound('surround')"><span class="lms-check">✓</span><strong>Virtual Surround <i class="lms-rec">ieteicams</i></strong><small>AirPods un austiņām: plašāks stereo, skaidrs centrs</small></button>
-        <button class="lms-option" type="button" data-sound="speakers" onclick="lacMiniSetSound('speakers')"><span class="lms-check">✓</span><strong>Mazās tumbas</strong><small>Vairāk sitiena un balss, mazāk dārdoņas</small></button>
+        <button class="lms-option" type="button" data-sound="surround" onclick="lacMiniSetSound('surround')"><span class="lms-check">✓</span><strong>Virtual Surround</strong><small>Plašāks stereo un skaidrs centrs</small></button>
+        <button class="lms-option" type="button" data-sound="speakers" onclick="lacMiniSetSound('speakers')"><span class="lms-check">✓</span><strong>Mazās tumbas <i class="lms-rec">ieteicams</i></strong><small>Pilnāks skanējums un skaidrāka balss</small></button>
         <button class="lms-option" type="button" data-sound="night" onclick="lacMiniSetSound('night')"><span class="lms-check">✓</span><strong>Nakts</strong><small>Vienmērīgāks un klusāks skaļums</small></button>
       </div>
     </div>
