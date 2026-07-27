@@ -2170,17 +2170,30 @@ window.addEventListener('DOMContentLoaded', () => {
 #lacMiniProfilePanel .lmp-playlist-toolbar.show{display:flex;}
 #lacMiniProfilePanel .lmp-playlist-toolbar strong{min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:800 12px/1 'Space Grotesk',system-ui;}
 #lacMiniActions{display:flex;align-items:center;gap:6px;}
-#lacMiniActions .lm-quick{height:25px;min-width:32px;padding:0 8px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:#171919;color:#949a96;font:750 12px/1 system-ui;cursor:pointer;}
+#lacMiniActions .lm-quick{height:24px;min-width:32px;padding:0 8px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:#171919;color:#949a96;font:750 12px/1 system-ui;cursor:pointer;}
 #lacMiniActions .lm-quick:hover{color:#fff;border-color:rgba(255,255,255,.22);}
 #lacMiniActions .lm-quick.on{color:#1ed760;border-color:rgba(30,215,96,.4);background:rgba(30,215,96,.1);}
-#lacMiniConsole button:focus-visible,#lacMiniProfilePanel button:focus-visible{outline:none!important;box-shadow:0 0 0 3px rgba(30,215,96,.25)!important;}
+#lacMiniActions .lm-lyrics{font:750 10px/1 'Space Grotesk',system-ui;}
+#lacMiniLyricsPanel{display:none;position:absolute;left:12px;bottom:calc(100% + 9px);z-index:5;width:min(520px,calc(100vw - 24px));max-height:min(440px,calc(100dvh - 250px));overflow:hidden;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:#111315;box-shadow:0 24px 70px rgba(0,0,0,.72);color:#f4f4f4;flex-direction:column;}
+#lacMiniLyricsPanel.open{display:flex;}
+#lacMiniLyricsPanel .lml-head{height:48px;display:flex;align-items:center;gap:10px;padding:0 10px 0 16px;border-bottom:1px solid rgba(255,255,255,.09);flex-shrink:0;}
+#lacMiniLyricsPanel .lml-meta{min-width:0;display:flex;flex:1;flex-direction:column;gap:3px;}
+#lacMiniLyricsPanel .lml-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:800 12.5px/1.1 'Space Grotesk',system-ui;}
+#lacMiniLyricsPanel .lml-artist{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#8f9691;font:600 9.5px/1 'Space Grotesk',system-ui;}
+#lacMiniLyricsPanel .lml-body{min-height:150px;overflow:auto;padding:12px 14px 18px;overscroll-behavior:contain;scroll-behavior:smooth;}
+#lacMiniLyricsPanel .lml-state{padding:30px 8px;text-align:center;color:#8e9590;font:600 11px/1.5 'Space Grotesk',system-ui;}
+#lacMiniLyricsPanel .lml-line{display:block;width:100%;padding:7px 10px;border:0;border-left:3px solid transparent;border-radius:0 8px 8px 0;background:transparent;color:#929794;text-align:left;font:700 14px/1.35 'Space Grotesk',system-ui;cursor:default;transition:color .12s,background .12s,border-color .12s;}
+#lacMiniLyricsPanel .lml-line[data-time]{cursor:pointer;}
+#lacMiniLyricsPanel .lml-line[data-time]:hover{color:#fff;background:rgba(255,255,255,.05);}
+#lacMiniLyricsPanel .lml-line.active{border-left-color:#1ed760;background:rgba(30,215,96,.08);color:#fff;}
+#lacMiniConsole button:focus-visible,#lacMiniProfilePanel button:focus-visible,#lacMiniLyricsPanel button:focus-visible{outline:none!important;box-shadow:0 0 0 3px rgba(30,215,96,.25)!important;}
 /* body: now-playing info (left) + a native horizontally scrolling result list. */
 #lacMiniConsole .lm-body{flex:1;min-height:0;display:flex;align-items:stretch;gap:14px;margin-top:6px;}
-#lacMiniInfo{flex:0 0 clamp(180px,22%,270px);min-width:0;display:flex;flex-direction:column;justify-content:center;gap:7px;padding-right:12px;border-right:1px solid rgba(255,255,255,.08);}
+#lacMiniInfo{flex:0 0 clamp(180px,22%,270px);min-width:0;overflow:hidden;display:flex;flex-direction:column;justify-content:center;gap:2px;padding-right:12px;border-right:1px solid rgba(255,255,255,.08);}
+#lacMiniNowLbl,#lacMiniTitle,#lacMiniArtist,#lacMiniActions{flex-shrink:0;}
 #lacMiniNowLbl{display:flex;align-items:center;gap:6px;font:700 9.5px/1 'Space Grotesk',system-ui;letter-spacing:.15em;text-transform:uppercase;color:#1ed760;}
-#lacMiniNowLbl .dot{width:6px;height:6px;border-radius:50%;background:#1ed760;box-shadow:0 0 8px rgba(30,215,96,.85);}
-#lacMiniTitle{font:700 16px/1.22 'Space Grotesk',system-ui;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-#lacMiniArtist{font:500 12.5px/1.2 'Space Grotesk',system-ui;color:#a7a7a7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#lacMiniTitle{min-height:18px;font:700 15px/1.15 'Space Grotesk',system-ui;color:#fff;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#lacMiniArtist{min-height:14px;font:500 11.5px/1.15 'Space Grotesk',system-ui;color:#a7a7a7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 #lacMiniProg{position:relative;height:4px;border-radius:2px;background:rgba(255,255,255,.14);cursor:pointer;flex-shrink:0;margin-top:7px;}
 #lacMiniProgFill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:2px;background:#1ed760;}
 #lacMiniBottom{position:relative;display:flex;align-items:center;justify-content:center;height:40px;margin-top:8px;flex-shrink:0;}
@@ -2215,8 +2228,9 @@ window.addEventListener('DOMContentLoaded', () => {
 .lm-cover.active{border-color:rgba(30,215,96,.72);background:#17231b;box-shadow:inset 3px 0 0 #1ed760;}
 .lm-cover.active .lm-cover-title{color:#42df79}
 #lacMiniEmpty{position:absolute;inset:0;display:grid;place-items:center;color:#8a8a8a;font:600 12px/1.4 'Space Grotesk',system-ui;text-align:center;pointer-events:none;}
-@media(max-width:760px){#lacMiniInfo{flex-basis:145px;gap:5px;}#lacMiniTitle{font-size:14px;-webkit-line-clamp:2;}#lacMiniVol{display:none;}#lacMiniConsole .lm-login .lm-profile-label,#lacMiniConsole .lm-favorites span{display:none;}#lacMiniConsole .lm-search{max-width:none;}#lacMiniConsole .lm-body{gap:10px;}.lm-cover{flex-basis:220px;}#lacMiniConsole .lm-scroll-btn{display:none;}#lacMiniProfilePanel .lmp-workers,#lacMiniProfilePanel .lmp-playlists{grid-template-columns:1fr;}}
+@media(max-width:760px){#lacMiniInfo{flex-basis:145px;}#lacMiniTitle{font-size:14px;}#lacMiniVol{display:none;}#lacMiniConsole .lm-login .lm-profile-label,#lacMiniConsole .lm-favorites span{display:none;}#lacMiniConsole .lm-search{max-width:none;}#lacMiniConsole .lm-body{gap:10px;}.lm-cover{flex-basis:220px;}#lacMiniConsole .lm-scroll-btn{display:none;}#lacMiniProfilePanel .lmp-workers,#lacMiniProfilePanel .lmp-playlists{grid-template-columns:1fr;}}
 @media(max-width:520px){#lacMiniInfo{display:none}.lm-cover{flex-basis:205px}#lacMiniConsole{padding-left:10px;padding-right:10px}}
+@media(prefers-reduced-motion:reduce){#lacMiniLyricsPanel .lml-body{scroll-behavior:auto;}#lacMiniLyricsPanel .lml-line{transition:none;}}
 #lacMiniStage{position:fixed;left:8px;bottom:8px;width:1px;height:1px;opacity:0;visibility:hidden;pointer-events:none;overflow:hidden;z-index:-1;background:#050609;display:flex;flex-direction:column;border:0;contain:strict;}
 #lacMiniStage.full{left:0;right:0;top:0;bottom:0;transform:none;width:100vw;height:100dvh;opacity:1;visibility:visible;pointer-events:auto;z-index:171340;border-radius:0;border:0;box-shadow:none;contain:layout style paint;}
 #lacMiniStage:fullscreen{width:100vw;height:100vh;background:#050609;}
@@ -2261,12 +2275,13 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   </div>
   <div class="lm-body">
     <div id="lacMiniInfo">
-      <div id="lacMiniNowLbl"><span class="dot"></span><span>Atskaņo</span></div>
+      <div id="lacMiniNowLbl"><span>Atskaņo</span></div>
       <div id="lacMiniTitle">—</div>
       <div id="lacMiniArtist"></div>
       <div id="lacMiniActions">
         <button id="lacMiniFavBtn" class="lm-quick" type="button" onclick="lacMiniQuickAction('favorite')" title="Pievienot/noņemt no iecienītajām" aria-label="Pievienot/noņemt no iecienītajām">♥</button>
         <button id="lacMiniPlaylistBtn" class="lm-quick" type="button" onclick="lacMiniOpenPlaylists()" title="Pievienot dziesmu savai playlistei" aria-label="Pievienot dziesmu savai playlistei">+♫</button>
+        <button id="lacMiniLyricsBtn" class="lm-quick lm-lyrics" type="button" onclick="lacMiniToggleLyrics()" title="Rādīt lyrics" aria-label="Rādīt lyrics" aria-expanded="false">Lyrics</button>
       </div>
     </div>
     <div class="lm-deck-shell">
@@ -2325,6 +2340,13 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       </div>
     </div>
   </section>
+  <section id="lacMiniLyricsPanel" role="dialog" aria-modal="false" aria-label="Dziesmas vārdi" aria-hidden="true">
+    <div class="lml-head">
+      <span class="lml-meta"><span class="lml-title" id="lacMiniLyricsTitle">Dziesmas vārdi</span><span class="lml-artist" id="lacMiniLyricsArtist"></span></span>
+      <button class="lm-hbtn" type="button" onclick="lacMiniToggleLyrics(false)" title="Aizvērt dziesmas vārdus" aria-label="Aizvērt dziesmas vārdus">×</button>
+    </div>
+    <div class="lml-body" id="lacMiniLyricsBody"><div class="lml-state">Izvēlies dziesmu.</div></div>
+  </section>
 </div>
 
 <script>
@@ -2338,6 +2360,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   var frame,cons,stage,deckEl,track,empty,titleEl,artistEl,fillEl,playIco,progEl,searchEl,deckPrev,deckNext;
   var profilePanel,profileBtn,profileStatus,workersEl,pinForm,pinInput,pinConfirm,pinConfirmField,pinSubmit,profileError;
   var loggedOut,loggedIn,libraryEl,favBtn,playlistQuickBtn,favoritesHeaderBtn;
+  var lyricsPanel,lyricsBtn,lyricsTitle,lyricsArtist,lyricsBody;
   var playlistArea,playlistsEl,playlistToolbar,playlistTitle,playlistNameInput;
   var deck=[], sel=0, curId=null, loaded=false, wired=false;
   var lastNpPayload=null, pendingDeck=null, pendingAppend=[];
@@ -2350,6 +2373,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   var pendingCommands=[];
   var profileState={session:null,workers:[],favoriteIds:[],playlists:[],counts:{favorites:0,history:0,playlists:0}};
   var selectedWorker=null,profileSection='favorites',profileLibrary=[],selectedPlaylistId=null,pendingPlaylistTrack=null;
+  var metaCache={},metaCacheKeys=[],lyricsCache={},activeLyrics=null,activeLyricIndex=-1;
 
   function $(id){ return document.getElementById(id); }
   function els(){
@@ -2363,6 +2387,8 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     pinConfirm=$('lacMiniPinConfirm'); pinConfirmField=$('lacMiniPinConfirmField'); pinSubmit=$('lacMiniPinSubmit');
     profileError=$('lacMiniProfileError'); loggedOut=$('lacMiniLoggedOut'); loggedIn=$('lacMiniLoggedIn');
     libraryEl=$('lacMiniLibrary'); favBtn=$('lacMiniFavBtn'); playlistQuickBtn=$('lacMiniPlaylistBtn'); favoritesHeaderBtn=$('lacMiniFavoritesBtn');
+    lyricsPanel=$('lacMiniLyricsPanel'); lyricsBtn=$('lacMiniLyricsBtn'); lyricsTitle=$('lacMiniLyricsTitle');
+    lyricsArtist=$('lacMiniLyricsArtist'); lyricsBody=$('lacMiniLyricsBody');
     playlistArea=$('lacMiniPlaylistArea'); playlistsEl=$('lacMiniPlaylists'); playlistToolbar=$('lacMiniPlaylistToolbar');
     playlistTitle=$('lacMiniPlaylistTitle'); playlistNameInput=$('lacMiniPlaylistName');
   }
@@ -2388,6 +2414,39 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       return {id:'minka-'+slug+'-'+index,name:String(name||''),shift:'Dežūra'};
     }).filter(function(worker){return worker.name;});
   }
+  function cleanMusicTrack(item){
+    item=item||{};
+    var rawTitle=String(item.title||'').replace(/\s+/g,' ').trim();
+    var rawAuthor=String(item.author||'').replace(/\s+/g,' ').trim();
+    var cacheKey=rawAuthor+'\u0000'+rawTitle;
+    var cached=metaCache[cacheKey];
+    if(!cached){
+      var title=rawTitle;
+      var author=rawAuthor.replace(/\s+-\s+Topic\s*$/i,'').replace(/\s+VEVO\s*$/i,'').trim();
+      var generic=/^(?:worldstar(?:hiphop)?|wshh|lyrical lemonade|trap nation|chill nation|rap nation|wave music|cloudkid|7clouds|proximity|majestic casual|mrsuicidesheep|selected|various artists)$/i;
+      title=title.replace(/\s*[\[(][^\])]{0,180}(?:official|music\s+video|lyrics?|visuali[sz]er|wshh\s+exclusive|audio\s+only|premiere|\b(?:audio|video|4k|hd|hq)\b)[^\])]{0,180}[\])]\s*/gi,' ');
+      title=title.replace(/\s*(?:[-–—|•]\s*)?(?:official(?:\s+music)?\s+(?:video|audio)|music\s+video|official\s+(?:video|audio)|lyrics?(?:\s+video)?|visuali[sz]er|wshh\s+exclusive|audio\s+only|premiere|\b(?:4k|hd|hq)\b)\s*$/gi,' ');
+      title=title.replace(/\s+/g,' ').trim();
+      var quoted=title.match(/^(.{2,80}?)\s+["“”]([^"“”]{1,180})["“”](?:\s|$)/);
+      if(quoted){ author=quoted[1].trim(); title=quoted[2].trim(); }
+      else{
+        var split=title.match(/^(.{2,90}?)\s+[-–—]\s+(.{1,200})$/);
+        if(split){
+          var inferred=split[1].trim(); title=split[2].trim();
+          if(!author||generic.test(author)||author.toLowerCase().indexOf(inferred.toLowerCase())>=0) author=inferred;
+        }
+      }
+      title=title.replace(/\s*[\[(]\s*[\])]\s*$/,'').replace(/^[\s"“”]+|[\s"“”]+$/g,'').replace(/\s+/g,' ').trim();
+      if(generic.test(author)){
+        var originalSplit=rawTitle.match(/^(.{2,90}?)\s+[-–—]\s+/);
+        if(originalSplit) author=originalSplit[1].trim();
+      }
+      cached={title:title||rawTitle||'Nezināma dziesma',author:author||rawAuthor};
+      metaCache[cacheKey]=cached; metaCacheKeys.push(cacheKey);
+      if(metaCacheKeys.length>128) delete metaCache[metaCacheKeys.shift()];
+    }
+    return Object.assign({},item,cached);
+  }
   function coverUrl(t){ return 'https://i.ytimg.com/vi/'+encodeURIComponent(t.id)+'/default.jpg'; }
   function isLowSpec(){ return lowSpec||document.documentElement.classList.contains('mk-low-spec')||!!(document.body&&document.body.classList.contains('mk-low-spec')); }
   function updateDeckNav(){
@@ -2401,11 +2460,12 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     frame.src='about:blank'; frame.removeAttribute('src'); loaded=false;
     bridgeReady=false;
     deck=[]; pendingDeck=null; pendingAppend=[]; curId=null; lastNpPayload=null;
-    pendingCommands=[]; profileLibrary=[];
+    pendingCommands=[]; profileLibrary=[]; activeLyrics=null; activeLyricIndex=-1;
     if(track) track.innerHTML='';
     if(empty){ empty.style.display=''; empty.textContent='Ielādē mūziku…'; }
     if(deckPrev) deckPrev.disabled=true;
     if(deckNext) deckNext.disabled=true;
+    if(lyricsPanel){ lyricsPanel.classList.remove('open'); lyricsPanel.setAttribute('aria-hidden','true'); }
   }
   function ensureFrame(){
     if(loaded||!frame) return;
@@ -2443,7 +2503,11 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     }
   }
   var lastNpId=null;
-  function showLabel(i){ var t=deck[i]; if(!t||!titleEl) return; titleEl.textContent=t.title||'—'; artistEl.textContent=t.author||''; }
+  function showLabel(i){
+    var t=cleanMusicTrack(deck[i]); if(!t||!titleEl) return;
+    titleEl.textContent=t.title||'—'; titleEl.title=t.title||'';
+    artistEl.textContent=t.author||''; artistEl.title=t.author||'';
+  }
   function selectIdx(i,scroll){
     if(!deck.length||!track) return;
     sel=Math.max(0,Math.min(deck.length-1,i));
@@ -2475,6 +2539,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   }
 
   function addCover(t,i){
+    t=cleanMusicTrack(t);
     var c=document.createElement('button'); c.type='button'; c.className='lm-cover';
     c.setAttribute('aria-label','Atskaņot '+(t.title||'dziesmu'));
     var img=document.createElement('img'); img.loading='lazy'; img.decoding='async'; img.src=coverUrl(t);
@@ -2482,8 +2547,8 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     img.onerror=function(){ this.onerror=null; this.src='https://lacitis.pages.dev/logo192.png'; };
     c.appendChild(img);
     var copy=document.createElement('span'); copy.className='lm-cover-copy';
-    var title=document.createElement('span'); title.className='lm-cover-title'; title.textContent=t.title||'Nezināma dziesma';
-    var artist=document.createElement('span'); artist.className='lm-cover-artist'; artist.textContent=t.author||'';
+    var title=document.createElement('span'); title.className='lm-cover-title'; title.textContent=t.title||'Nezināma dziesma'; title.title=t.title||'';
+    var artist=document.createElement('span'); artist.className='lm-cover-artist'; artist.textContent=t.author||''; artist.title=t.author||'';
     copy.appendChild(title); copy.appendChild(artist); c.appendChild(copy);
     var time=document.createElement('span'); time.className='lm-cover-time'; time.textContent=durationText(t); c.appendChild(time);
     c.addEventListener('click',function(){ selectIdx(i,false); playIdx(i); });
@@ -2496,12 +2561,12 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     var added=0;
     tracks.forEach(function(t){
       if(!t||!t.id||have[t.id]||deck.length>=DECK_CAP) return;
-      have[t.id]=1; deck.push(t); addCover(t,deck.length-1); added++;
+      t=cleanMusicTrack(t); have[t.id]=1; deck.push(t); addCover(t,deck.length-1); added++;
     });
     if(added){ selectIdx(sel,false); updateDeckNav(); }
   }
   function renderDeck(tracks,query){
-    els(); deck=(tracks||[]).slice(0,DECK_CAP);
+    els(); deck=(tracks||[]).slice(0,DECK_CAP).map(cleanMusicTrack);
     track.innerHTML='';
     if(!deck.length){ empty.style.display=''; empty.textContent=query?'Nekas nav atrasts':'Ielādē mūziku…'; updateDeckNav(); return; }
     empty.style.display='none';
@@ -2514,6 +2579,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   function setPlayIco(p){ if(playIco) playIco.innerHTML=p?'<path d="M6 4h4v16H6zm8 0h4v16h-4z"/>':'<path d="M8 5v14l11-7z"/>'; }
   function applyNp(d){
     els();
+    d=cleanMusicTrack(d);
     lastNpPayload=d;
     curId=d.id||null;
     if(!uiVisible()) return;
@@ -2525,8 +2591,13 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       lastNpId=d.id;
       var idx=deck.findIndex(function(t){return t.id===d.id;});
       if(idx>=0) selectIdx(idx,true);
-      else if(titleEl){ titleEl.textContent=d.title||'—'; artistEl.textContent=d.author||''; }
+      else if(titleEl){
+        titleEl.textContent=d.title||'—'; titleEl.title=d.title||'';
+        artistEl.textContent=d.author||''; artistEl.title=d.author||'';
+      }
+      if(lyricsIsOpen()&&(!activeLyrics||activeLyrics.id!==d.id)) requestLyrics(d);
     }
+    updateLyricsPosition(Number(d.position||0));
     updateQuickActions();
   }
 
@@ -2534,11 +2605,74 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     var fromDeck=deck.find(function(item){return item&&item.id===curId;});
     return fromDeck||(lastNpPayload&&lastNpPayload.id?lastNpPayload:null)||deck[sel]||null;
   }
+  function lyricsIsOpen(){ return !!(lyricsPanel&&lyricsPanel.classList.contains('open')); }
+  function renderLyrics(data){
+    if(!data||!data.id||!lyricsBody) return;
+    var lyricMeta=cleanMusicTrack({title:data.title,author:data.artist});
+    data.title=lyricMeta.title; data.artist=lyricMeta.author;
+    lyricsCache[data.id]=data; activeLyrics=data; activeLyricIndex=-1;
+    if(lyricsTitle){ lyricsTitle.textContent=data.title||'Dziesmas vārdi'; lyricsTitle.title=data.title||''; }
+    if(lyricsArtist){ lyricsArtist.textContent=data.artist||''; lyricsArtist.title=data.artist||''; }
+    lyricsBody.innerHTML='';
+    if(!Array.isArray(data.lines)||!data.lines.length){
+      var state=document.createElement('div'); state.className='lml-state'; state.textContent=data.error||'Šai dziesmai vārdi nav atrasti.';
+      lyricsBody.appendChild(state); return;
+    }
+    var fragment=document.createDocumentFragment();
+    data.lines.slice(0,300).forEach(function(line,index){
+      var timed=line.time!==null&&line.time!==''&&Number.isFinite(Number(line.time));
+      var el=document.createElement(timed?'button':'div');
+      if(timed){ el.type='button'; el.dataset.time=String(Number(line.time)); el.title='Pāriet uz šo dziesmas vietu'; }
+      el.className='lml-line'; el.dataset.index=String(index); el.textContent=line.text||'';
+      fragment.appendChild(el);
+    });
+    lyricsBody.appendChild(fragment);
+    updateLyricsPosition(Number(lastNpPayload&&lastNpPayload.position||0),true);
+  }
+  function requestLyrics(item){
+    item=cleanMusicTrack(item||currentTrack()); if(!item||!item.id) return;
+    if(lyricsCache[item.id]){ renderLyrics(lyricsCache[item.id]); return; }
+    activeLyrics={id:item.id,title:item.title,artist:item.author,lines:[]}; activeLyricIndex=-1;
+    if(lyricsTitle) lyricsTitle.textContent=item.title||'Dziesmas vārdi';
+    if(lyricsArtist) lyricsArtist.textContent=item.author||'';
+    if(lyricsBody) lyricsBody.innerHTML='<div class="lml-state">Meklē dziesmas vārdus…</div>';
+    send('lyrics',{id:item.id,title:item.title,author:item.author,lengthSeconds:item.lengthSeconds||item.duration||0});
+  }
+  function updateLyricsPosition(position,force){
+    if(!lyricsIsOpen()||!activeLyrics||!activeLyrics.synced||!Array.isArray(activeLyrics.lines)||!activeLyrics.lines.length||!lyricsBody) return;
+    var lines=activeLyrics.lines,lo=0,hi=lines.length-1,found=-1;
+    while(lo<=hi){
+      var mid=(lo+hi)>>1,time=Number(lines[mid]&&lines[mid].time);
+      if(Number.isFinite(time)&&time<=position+.08){ found=mid; lo=mid+1; }else hi=mid-1;
+    }
+    if(!force&&found===activeLyricIndex) return;
+    if(activeLyricIndex>=0){
+      var previous=lyricsBody.querySelector('[data-index="'+activeLyricIndex+'"]');
+      if(previous) previous.classList.remove('active');
+    }
+    activeLyricIndex=found;
+    if(found>=0){
+      var current=lyricsBody.querySelector('[data-index="'+found+'"]');
+      if(current){
+        current.classList.add('active');
+        current.scrollIntoView({behavior:isLowSpec()?'auto':'smooth',block:'center'});
+      }
+    }
+  }
+  window.lacMiniToggleLyrics=function(force){
+    els(); ensureFrame();
+    var open=typeof force==='boolean'?force:!lyricsIsOpen();
+    if(open&&profileIsOpen()) window.lacMiniToggleProfile(false);
+    lyricsPanel.classList.toggle('open',open); lyricsPanel.setAttribute('aria-hidden',open?'false':'true');
+    if(lyricsBtn){ lyricsBtn.classList.toggle('on',open); lyricsBtn.setAttribute('aria-expanded',open?'true':'false'); }
+    if(open) requestLyrics(currentTrack());
+  };
   function hasId(list,id){ return !!id&&Array.isArray(list)&&list.indexOf(id)>=0; }
   function updateQuickActions(){
     var trackNow=currentTrack(), logged=!!profileState.session;
     if(favBtn){ favBtn.classList.toggle('on',logged&&hasId(profileState.favoriteIds,trackNow&&trackNow.id)); favBtn.disabled=!trackNow; }
     if(playlistQuickBtn) playlistQuickBtn.disabled=!trackNow;
+    if(lyricsBtn) lyricsBtn.disabled=!trackNow;
     if(favoritesHeaderBtn) favoritesHeaderBtn.classList.toggle('active',profileIsOpen()&&profileSection==='favorites');
   }
   function setProfileError(message,good){
@@ -2590,11 +2724,12 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     send('profile_login',{workerId:selectedWorker.id,pin:pin,confirm:confirm});
   };
   function profileTrackPayload(item){
+    item=cleanMusicTrack(item);
     return {id:item.id,title:item.title||'',author:item.author||'',thumbnail:item.thumbnail||'',duration:item.duration||'',lengthSeconds:item.lengthSeconds||0};
   }
   function renderLibrary(tracks,section){
     if(!libraryEl) return;
-    profileLibrary=tracks||[]; libraryEl.innerHTML='';
+    profileLibrary=(tracks||[]).map(cleanMusicTrack); libraryEl.innerHTML='';
     if(!profileLibrary.length){
       var emptyText=section==='favorites'?'Nav iecienīto dziesmu.':section==='history'?'Vēsture pagaidām ir tukša.':'Šajā playlistē vēl nav dziesmu.';
       libraryEl.innerHTML='<div class="lmp-empty">'+emptyText+'</div>'; return;
@@ -2719,6 +2854,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   window.lacMiniToggleProfile=function(force){
     els(); ensureFrame();
     var open=typeof force==='boolean'?force:!profileIsOpen();
+    if(open&&lyricsIsOpen()) window.lacMiniToggleLyrics(false);
     profilePanel.classList.toggle('open',open); profilePanel.setAttribute('aria-hidden',open?'false':'true');
     if(profileBtn) profileBtn.setAttribute('aria-expanded',open?'true':'false');
     if(open){
@@ -2779,6 +2915,14 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     }
     if(pinInput) pinInput.addEventListener('keydown',function(e){if(e.key==='Enter') window.lacMiniSubmitPin();});
     if(pinConfirm) pinConfirm.addEventListener('keydown',function(e){if(e.key==='Enter') window.lacMiniSubmitPin();});
+    if(lyricsBody) lyricsBody.addEventListener('click',function(e){
+      var target=e.target;
+      while(target&&target!==lyricsBody&&!target.classList.contains('lml-line')) target=target.parentNode;
+      if(!target||target===lyricsBody||!target.dataset.time) return;
+      var seconds=Number(target.dataset.time);
+      var duration=Number(lastNpPayload&&lastNpPayload.duration||currentTrack()&&currentTrack().lengthSeconds||0);
+      if(Number.isFinite(seconds)&&duration>0) send('seek',{pct:Math.max(0,Math.min(1,seconds/duration))});
+    });
   }
 
   window.addEventListener('message',function(e){
@@ -2802,6 +2946,11 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       else if(d.tracks&&d.tracks.length) pendingAppend=pendingAppend.concat(d.tracks);
     }
     else if(d.type==='lac_mini_np'){ applyNp(d); }
+    else if(d.type==='lac_mini_lyrics'){
+      lyricsCache[d.id]=d;
+      var now=currentTrack();
+      if(lyricsIsOpen()&&now&&now.id===d.id) renderLyrics(d);
+    }
     else if(d.type==='lac_mini_profile'){ applyProfileState(d); }
     else if(d.type==='lac_mini_library'){
       if(d.section===profileSection) renderLibrary(d.tracks,d.section);
