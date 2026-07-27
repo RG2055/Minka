@@ -331,15 +331,20 @@ html #radioWindow #eqRow #ceqTriggerBtn:hover {
   color: #fff;
 }
 
-#stationOverlay button:focus,
-#stationOverlay input:focus {
+#stationOverlay button:focus {
   box-shadow: none !important;
 }
 
-#stationOverlay button:focus-visible,
-#stationOverlay input:focus-visible {
+#stationOverlay button:focus-visible {
   outline: 2px solid rgba(30, 215, 96, .72) !important;
   outline-offset: 2px !important;
+  box-shadow: none !important;
+}
+
+#stationOverlay input:focus,
+#stationOverlay input:focus-visible {
+  border: 0 !important;
+  outline: 0 !important;
   box-shadow: none !important;
 }
 

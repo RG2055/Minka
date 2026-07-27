@@ -418,7 +418,7 @@ function toggleMenu(forceOpen) {
 
         // Keep the picker visually balanced instead of pinning it to the
         // right edge like a side panel.
-        const left = Math.max(12, Math.round((window.innerWidth - ow) / 2));
+        const left = Math.max(12, (window.innerWidth - ow) / 2);
 
         const top = Math.max(12, overlayBottom - oh);
 
