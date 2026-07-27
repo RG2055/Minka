@@ -169,6 +169,32 @@ html #radioWindow #eqRow #ceqTriggerBtn:hover {
   box-shadow: inset 0 2px 14px rgba(0, 0, 0, .75) !important;
 }
 
+/* Image skins let the spectrum become part of the artwork instead of looking
+   like a separate black display. Static transparency only: no blur or glow. */
+#radioWindow.radio-image-skin .monitor-frame {
+  height: 64px !important;
+  background: rgba(0, 0, 0, .12) !important;
+  border-color: rgba(var(--radio-accent-rgb, 30, 215, 96), .13) !important;
+  box-shadow: none !important;
+}
+
+#radioWindow.radio-image-skin #vizCanvas {
+  opacity: .88;
+}
+
+#radioWindow.radio-image-skin .pixel-cat {
+  right: 6px !important;
+  bottom: 4px !important;
+  height: 28px !important;
+  opacity: .24 !important;
+}
+
+#radioWindow.radio-black-skin .pixel-cat {
+  right: 10px !important;
+  height: 42px !important;
+  opacity: .68 !important;
+}
+
 #radioWindow .control-panel {
   gap: 14px !important;
   justify-content: flex-end !important;

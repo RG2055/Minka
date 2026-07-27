@@ -32,6 +32,12 @@ const RG_EXTRA_FRAME_MS = RG_EXTRA_LOW_SPEC ? 1000 / 24 : 0;
 let RG_extraLastFrameTs = 0;
 let RG_extraFreqData = null;
 
+function rgVizAccent(alpha = 1, lift = 0) {
+  const source = window.__radioVizAccentRGB || [30, 215, 96];
+  const rgb = source.map(value => Math.max(0, Math.min(255, Math.round(value + lift))));
+  return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})`;
+}
+
 function updatePeaks(data, n) {
   for (let i = 0; i < n; i++) {
     const v = data[i] / 255;
@@ -67,14 +73,14 @@ function drawVU(ctx, W, H, data) {
     ctx.arc(cx, cy, r*0.55, 2*Math.PI, Math.PI, true);
     ctx.fillStyle = 'rgba(6,10,6,0.96)';
     ctx.fill();
-    ctx.strokeStyle = 'rgba(0,255,136,0.15)';
+    ctx.strokeStyle = rgVizAccent(.15);
     ctx.lineWidth = 1.5;
     ctx.stroke();
     ctx.restore();
 
     // Colored arc zones (green / orange / red)
     const zones = [
-      {s:0.00, e:0.80, c:'rgba(0,200,100,0.20)'},
+      {s:0.00, e:0.80, c:rgVizAccent(.20)},
       {s:0.80, e:0.92, c:'rgba(255,140,0,0.24)'},
       {s:0.92, e:1.00, c:'rgba(255,40,30,0.26)'},
     ];
@@ -100,13 +106,13 @@ function drawVU(ctx, W, H, data) {
       ctx.beginPath();
       ctx.moveTo(cx + cos*r*0.60, cy + sin*r*0.60);
       ctx.lineTo(cx + cos*r*0.73, cy + sin*r*0.73);
-      ctx.strokeStyle = isRed ? 'rgba(255,60,50,0.85)' : 'rgba(0,255,136,0.55)';
+      ctx.strokeStyle = isRed ? 'rgba(255,60,50,0.85)' : rgVizAccent(.55);
       ctx.lineWidth = isRed ? 2.5 : 1.5;
       ctx.stroke();
       // label only on major marks
       if (['-20','-10','-5','-1','0','+3'].includes(db)) {
         ctx.font = `bold ${Math.max(7, r*0.09)}px monospace`;
-        ctx.fillStyle = isRed ? 'rgba(255,80,60,0.80)' : 'rgba(0,255,136,0.60)';
+        ctx.fillStyle = isRed ? 'rgba(255,80,60,0.80)' : rgVizAccent(.60);
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(db, cx + cos*r*0.46, cy + sin*r*0.46);
@@ -123,20 +129,19 @@ function drawVU(ctx, W, H, data) {
     ctx.lineTo(cx + Math.cos(ang)*nLen, cy + Math.sin(ang)*nLen);
     ctx.strokeStyle = val > 0.88 ? '#ff4040' : 'rgba(255,255,255,0.95)';
     ctx.lineWidth = 2.5;
-    ctx.shadowColor = val > 0.88 ? '#ff3030' : 'rgba(255,255,255,0.4)';
-    ctx.shadowBlur = RG_EXTRA_LOW_SPEC ? 0 : 8;
+    ctx.shadowBlur = 0;
     ctx.stroke();
     ctx.restore();
 
     // Pivot
     ctx.beginPath();
     ctx.arc(cx, cy, r*0.046, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(0,255,136,0.75)';
+    ctx.fillStyle = rgVizAccent(.75);
     ctx.fill();
 
     // Label
     ctx.font = `900 ${Math.max(9, r*0.12)}px monospace`;
-    ctx.fillStyle = 'rgba(0,255,136,0.6)';
+    ctx.fillStyle = rgVizAccent(.60);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillText('VU', cx, H*0.03);
@@ -168,17 +173,15 @@ function drawLEDBar(ctx, W, H, data) {
 
       if (on) {
         const frac = r / (ROWS-1);
-        if (frac < 0.62)      ctx.fillStyle = `rgba(0,210,100,${0.65 + frac*0.35})`;
+        if (frac < 0.62)      ctx.fillStyle = rgVizAccent(0.65 + frac*0.35);
         else if (frac < 0.82) ctx.fillStyle = `rgba(255,155,0,${0.75 + frac*0.25})`;
         else                  ctx.fillStyle = `rgba(255,45,30,0.95)`;
-        ctx.shadowColor = ctx.fillStyle;
-        ctx.shadowBlur = RG_EXTRA_LOW_SPEC ? 0 : 5;
+        ctx.shadowBlur = 0;
       } else if (isPk) {
         ctx.fillStyle = 'rgba(255,255,220,0.92)';
-        ctx.shadowColor = 'rgba(255,255,255,0.7)';
-        ctx.shadowBlur = RG_EXTRA_LOW_SPEC ? 0 : 7;
+        ctx.shadowBlur = 0;
       } else {
-        ctx.fillStyle = 'rgba(0,70,35,0.20)';
+        ctx.fillStyle = rgVizAccent(.07);
         ctx.shadowBlur = 0;
       }
 
@@ -218,22 +221,19 @@ function drawDotMatrix(ctx, W, H, data) {
       const x = (c+0.5) * colW;
       const y = H - 4 - (r+0.5) * rowH;
       const on = r < lit, isPk = r === pk && pk > 0 && !on;
-      const top = r === lit-1;
 
       ctx.beginPath();
       ctx.arc(x, y, on ? (top ? dotR*1.25 : dotR) : (isPk ? dotR*1.1 : dotR*0.85), 0, Math.PI*2);
 
       if (on) {
         const bright = 0.28 + (r/ROWS)*0.72;
-        ctx.fillStyle = `rgba(0,255,136,${bright})`;
-        ctx.shadowColor = 'rgba(0,255,136,0.55)';
-        ctx.shadowBlur = RG_EXTRA_LOW_SPEC ? 0 : (top ? dotR*4 : dotR*2);
+        ctx.fillStyle = rgVizAccent(bright);
+        ctx.shadowBlur = 0;
       } else if (isPk) {
-        ctx.fillStyle = 'rgba(220,255,200,0.85)';
-        ctx.shadowColor = 'rgba(200,255,180,0.7)';
-        ctx.shadowBlur = RG_EXTRA_LOW_SPEC ? 0 : dotR*3.5;
+        ctx.fillStyle = rgVizAccent(.85, 45);
+        ctx.shadowBlur = 0;
       } else {
-        ctx.fillStyle = 'rgba(0,255,136,0.04)';
+        ctx.fillStyle = rgVizAccent(.04);
         ctx.shadowBlur = 0;
       }
       ctx.fill();
