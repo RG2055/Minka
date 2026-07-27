@@ -182,6 +182,11 @@ html #radioWindow #eqRow #ceqTriggerBtn:hover {
   opacity: .88;
 }
 
+#radioWindow .monitor-frame.volume-adjusting #vizCanvas,
+#radioWindow .monitor-frame.volume-adjusting #dolphin-bg {
+  opacity: 0 !important;
+}
+
 #radioWindow.radio-image-skin .pixel-cat {
   right: 6px !important;
   bottom: 4px !important;
