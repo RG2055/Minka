@@ -2424,6 +2424,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       var title=rawTitle;
       var author=rawAuthor.replace(/\s+-\s+Topic\s*$/i,'').replace(/\s+VEVO\s*$/i,'').trim();
       var generic=/^(?:worldstar(?:hiphop)?|wshh|lyrical lemonade|trap nation|chill nation|rap nation|wave music|cloudkid|7clouds|proximity|majestic casual|mrsuicidesheep|selected|various artists)$/i;
+      title=title.replace(/\b(?:official(?:\s+music)?\s+video|music\s+video|official\s+audio|lyrics?\s+video|visuali[sz]er)\b/gi,' ');
       title=title.replace(/\s*[\[(][^\])]{0,180}(?:official|music\s+video|lyrics?|visuali[sz]er|wshh\s+exclusive|audio\s+only|premiere|\b(?:audio|video|4k|hd|hq)\b)[^\])]{0,180}[\])]\s*/gi,' ');
       title=title.replace(/\s*(?:[-–—|•]\s*)?(?:official(?:\s+music)?\s+(?:video|audio)|music\s+video|official\s+(?:video|audio)|lyrics?(?:\s+video)?|visuali[sz]er|wshh\s+exclusive|audio\s+only|premiere|\b(?:4k|hd|hq)\b)\s*$/gi,' ');
       title=title.replace(/\s+/g,' ').trim();
