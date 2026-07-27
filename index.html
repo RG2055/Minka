@@ -2109,8 +2109,9 @@ window.addEventListener('DOMContentLoaded', () => {
 #lacMiniConsole .lm-login{display:flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:14px;border:1px solid rgba(30,215,96,.42);background:rgba(30,215,96,.1);color:#1ed760;font:700 10.5px/1 'Space Grotesk',system-ui;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:background .15s;}
 #lacMiniConsole .lm-login:hover{background:rgba(30,215,96,.2);}
 #lacMiniConsole .lm-login svg{width:14px;height:14px;fill:currentColor;flex-shrink:0;}
-#lacMiniConsole .lm-favorites{display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:9px;border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.05);color:#e9e9e9;font:750 10px/1 'Space Grotesk',system-ui;cursor:pointer;}
-#lacMiniConsole .lm-favorites:hover,#lacMiniConsole .lm-favorites.active{border-color:rgba(30,215,96,.45);background:rgba(30,215,96,.12);color:#42df79;}
+#lacMiniConsole .lm-favorites,#lacMiniConsole .lm-sound{display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:9px;border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.05);color:#e9e9e9;font:750 10px/1 'Space Grotesk',system-ui;cursor:pointer;}
+#lacMiniConsole .lm-favorites:hover,#lacMiniConsole .lm-favorites.active,#lacMiniConsole .lm-sound:hover,#lacMiniConsole .lm-sound.active{border-color:rgba(30,215,96,.45);background:rgba(30,215,96,.12);color:#42df79;}
+#lacMiniConsole .lm-sound b{font:900 9px/1 ui-monospace,monospace;letter-spacing:-.08em;}
 #lacMiniConsole .lm-login.active{background:#1ed760;color:#06150b;border-color:#1ed760;}
 #lacMiniConsole .lm-login .lm-profile-avatar{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:currentColor;color:#07160c;font:900 10px/1 system-ui;}
 #lacMiniProfilePanel{display:none;position:absolute;right:12px;bottom:calc(100% + 9px);z-index:4;width:min(680px,calc(100vw - 24px));max-height:min(410px,calc(100dvh - 250px));overflow:hidden;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:#111315;box-shadow:0 24px 70px rgba(0,0,0,.72);color:#f4f4f4;flex-direction:column;}
@@ -2186,7 +2187,24 @@ window.addEventListener('DOMContentLoaded', () => {
 #lacMiniLyricsPanel .lml-line[data-time]{cursor:pointer;}
 #lacMiniLyricsPanel .lml-line[data-time]:hover{color:#fff;background:rgba(255,255,255,.05);}
 #lacMiniLyricsPanel .lml-line.active{border-left-color:#1ed760;background:rgba(30,215,96,.08);color:#fff;}
-#lacMiniConsole button:focus-visible,#lacMiniProfilePanel button:focus-visible,#lacMiniLyricsPanel button:focus-visible{outline:none!important;box-shadow:0 0 0 3px rgba(30,215,96,.25)!important;}
+#lacMiniSoundPanel{display:none;position:absolute;right:12px;bottom:calc(100% + 9px);z-index:6;width:min(410px,calc(100vw - 24px));overflow:hidden;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:#111315;box-shadow:0 24px 70px rgba(0,0,0,.72);color:#f4f4f4;flex-direction:column;}
+#lacMiniSoundPanel.open{display:flex;}
+#lacMiniSoundPanel .lms-head{height:48px;display:flex;align-items:center;gap:10px;padding:0 10px 0 16px;border-bottom:1px solid rgba(255,255,255,.09);}
+#lacMiniSoundPanel .lms-title{font:800 13px/1 'Space Grotesk',system-ui;}
+#lacMiniSoundPanel .lms-status{margin-left:auto;color:#7f8882;font:650 9px/1 'Space Grotesk',system-ui;}
+#lacMiniSoundPanel .lms-body{padding:12px;}
+#lacMiniSoundPanel .lms-note{margin:0 3px 10px;color:#969c98;font:550 10px/1.4 'Space Grotesk',system-ui;}
+#lacMiniSoundPanel .lms-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;}
+#lacMiniSoundPanel .lms-option{position:relative;min-height:66px;padding:10px 10px 9px;border:1px solid rgba(255,255,255,.09);border-radius:10px;background:#191b1c;color:#f3f3f3;text-align:left;cursor:pointer;}
+#lacMiniSoundPanel .lms-option:hover{border-color:rgba(255,255,255,.2);background:#202223;}
+#lacMiniSoundPanel .lms-option.active{border-color:#1ed760;background:rgba(30,215,96,.11);box-shadow:inset 3px 0 0 #1ed760;}
+#lacMiniSoundPanel .lms-option strong{display:block;padding-right:18px;font:780 11.5px/1.15 'Space Grotesk',system-ui;}
+#lacMiniSoundPanel .lms-option small{display:block;margin-top:5px;color:#949a96;font:550 9.5px/1.3 'Space Grotesk',system-ui;}
+#lacMiniSoundPanel .lms-option.active small{color:#b2c9ba;}
+#lacMiniSoundPanel .lms-check{display:none;position:absolute;right:9px;top:9px;color:#1ed760;font:900 12px/1 system-ui;}
+#lacMiniSoundPanel .lms-option.active .lms-check{display:block;}
+#lacMiniSoundPanel .lms-rec{display:inline-block;margin-left:4px;color:#1ed760;font:800 7.5px/1 'Space Grotesk',system-ui;text-transform:uppercase;letter-spacing:.06em;}
+#lacMiniConsole button:focus-visible,#lacMiniProfilePanel button:focus-visible,#lacMiniLyricsPanel button:focus-visible,#lacMiniSoundPanel button:focus-visible{outline:none!important;box-shadow:0 0 0 3px rgba(30,215,96,.25)!important;}
 /* body: now-playing info (left) + a native horizontally scrolling result list. */
 #lacMiniConsole .lm-body{flex:1;min-height:0;display:flex;align-items:stretch;gap:14px;margin-top:6px;}
 #lacMiniInfo{flex:0 0 clamp(180px,22%,270px);min-width:0;overflow:hidden;display:flex;flex-direction:column;justify-content:center;gap:2px;padding-right:12px;border-right:1px solid rgba(255,255,255,.08);}
@@ -2228,8 +2246,9 @@ window.addEventListener('DOMContentLoaded', () => {
 .lm-cover.active{border-color:rgba(30,215,96,.72);background:#17231b;box-shadow:inset 3px 0 0 #1ed760;}
 .lm-cover.active .lm-cover-title{color:#42df79}
 #lacMiniEmpty{position:absolute;inset:0;display:grid;place-items:center;color:#8a8a8a;font:600 12px/1.4 'Space Grotesk',system-ui;text-align:center;pointer-events:none;}
-@media(max-width:760px){#lacMiniInfo{flex-basis:145px;}#lacMiniTitle{font-size:14px;}#lacMiniVol{display:none;}#lacMiniConsole .lm-login .lm-profile-label,#lacMiniConsole .lm-favorites span{display:none;}#lacMiniConsole .lm-search{max-width:none;}#lacMiniConsole .lm-body{gap:10px;}.lm-cover{flex-basis:220px;}#lacMiniConsole .lm-scroll-btn{display:none;}#lacMiniProfilePanel .lmp-workers,#lacMiniProfilePanel .lmp-playlists{grid-template-columns:1fr;}}
+@media(max-width:760px){#lacMiniInfo{flex-basis:145px;}#lacMiniTitle{font-size:14px;}#lacMiniVol{display:none;}#lacMiniConsole .lm-login .lm-profile-label,#lacMiniConsole .lm-favorites span,#lacMiniConsole .lm-sound span{display:none;}#lacMiniConsole .lm-search{max-width:none;}#lacMiniConsole .lm-body{gap:10px;}.lm-cover{flex-basis:220px;}#lacMiniConsole .lm-scroll-btn{display:none;}#lacMiniProfilePanel .lmp-workers,#lacMiniProfilePanel .lmp-playlists{grid-template-columns:1fr;}}
 @media(max-width:520px){#lacMiniInfo{display:none}.lm-cover{flex-basis:205px}#lacMiniConsole{padding-left:10px;padding-right:10px}}
+@media(max-width:430px){#lacMiniSoundPanel .lms-options{grid-template-columns:1fr;}}
 @media(prefers-reduced-motion:reduce){#lacMiniLyricsPanel .lml-body{scroll-behavior:auto;}#lacMiniLyricsPanel .lml-line{transition:none;}}
 #lacMiniStage{position:fixed;left:8px;bottom:8px;width:1px;height:1px;opacity:0;visibility:hidden;pointer-events:none;overflow:hidden;z-index:-1;background:#050609;display:flex;flex-direction:column;border:0;contain:strict;}
 #lacMiniStage.full{left:0;right:0;top:0;bottom:0;transform:none;width:100vw;height:100dvh;opacity:1;visibility:visible;pointer-events:auto;z-index:171340;border-radius:0;border:0;box-shadow:none;contain:layout style paint;}
@@ -2268,6 +2287,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     </label>
     <span class="lm-head-btns">
       <button class="lm-favorites" id="lacMiniFavoritesBtn" type="button" onclick="lacMiniOpenFavorites()" title="Atvērt manas iecienītās dziesmas"><b>♥</b><span>Favorīti</span></button>
+      <button class="lm-sound" id="lacMiniSoundBtn" type="button" onclick="lacMiniToggleSound()" title="Skaņas uzlabojumi" aria-label="Skaņas uzlabojumi" aria-expanded="false"><b>EQ</b><span>Skaņa</span></button>
       <button class="lm-login" id="lacMiniProfileBtn" onclick="lacMiniToggleProfile()" title="Lācīša profils un bibliotēka" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-4.1 0-8 2.1-8 5v1h16v-1c0-2.9-3.9-5-8-5z"/></svg><span class="lm-profile-label">Ielogoties</span></button>
       <button class="lm-hbtn" onclick="lacMiniMaximize()" title="Pilnekrāna režīms" aria-label="Pilnekrāna režīms">⛶</button>
       <button class="lm-hbtn" onclick="lacMiniClose()" title="Aizvērt" aria-label="Aizvērt">×</button>
@@ -2347,6 +2367,22 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     </div>
     <div class="lml-body" id="lacMiniLyricsBody"><div class="lml-state">Izvēlies dziesmu.</div></div>
   </section>
+  <section id="lacMiniSoundPanel" role="dialog" aria-modal="false" aria-label="Skaņas uzlabojumi" aria-hidden="true">
+    <div class="lms-head">
+      <span class="lms-title">Skaņa</span>
+      <span class="lms-status" id="lacMiniSoundStatus">Native Web Audio</span>
+      <button class="lm-hbtn" type="button" onclick="lacMiniToggleSound(false)" title="Aizvērt skaņas iestatījumus" aria-label="Aizvērt skaņas iestatījumus">×</button>
+    </div>
+    <div class="lms-body">
+      <p class="lms-note">Viegla apstrāde tikai dziesmām. Radio paliek oriģinālajā režīmā.</p>
+      <div class="lms-options" id="lacMiniSoundOptions">
+        <button class="lms-option" type="button" data-sound="off" onclick="lacMiniSetSound('off')"><span class="lms-check">✓</span><strong>Oriģināls</strong><small>Bez skaņas apstrādes</small></button>
+        <button class="lms-option" type="button" data-sound="surround" onclick="lacMiniSetSound('surround')"><span class="lms-check">✓</span><strong>Virtual Surround <i class="lms-rec">ieteicams</i></strong><small>Plašāks stereo, skaidrs centrs un limiteris</small></button>
+        <button class="lms-option" type="button" data-sound="speakers" onclick="lacMiniSetSound('speakers')"><span class="lms-check">✓</span><strong>Mazās tumbas</strong><small>Vairāk sitiena un balss, mazāk dārdoņas</small></button>
+        <button class="lms-option" type="button" data-sound="night" onclick="lacMiniSetSound('night')"><span class="lms-check">✓</span><strong>Nakts</strong><small>Vienmērīgāks un klusāks skaļums</small></button>
+      </div>
+    </div>
+  </section>
 </div>
 
 <script>
@@ -2361,6 +2397,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   var profilePanel,profileBtn,profileStatus,workersEl,pinForm,pinInput,pinConfirm,pinConfirmField,pinSubmit,profileError;
   var loggedOut,loggedIn,libraryEl,favBtn,playlistQuickBtn,favoritesHeaderBtn;
   var lyricsPanel,lyricsBtn,lyricsTitle,lyricsArtist,lyricsBody;
+  var soundPanel,soundBtn,soundStatusEl,soundOptions;
   var playlistArea,playlistsEl,playlistToolbar,playlistTitle,playlistNameInput;
   var deck=[], sel=0, curId=null, loaded=false, wired=false;
   var lastNpPayload=null, pendingDeck=null, pendingAppend=[];
@@ -2372,6 +2409,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   var morePending=false, moreCooldownUntil=0, DECK_CAP=lowSpec?16:32;
   var pendingCommands=[];
   var profileState={session:null,workers:[],favoriteIds:[],playlists:[],counts:{favorites:0,history:0,playlists:0}};
+  var soundState={profile:'off',supported:true,active:false,error:''};
   var selectedWorker=null,profileSection='favorites',profileLibrary=[],selectedPlaylistId=null,pendingPlaylistTrack=null;
   var metaCache={},metaCacheKeys=[],lyricsCache={},activeLyrics=null,activeLyricIndex=-1;
 
@@ -2389,6 +2427,8 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     libraryEl=$('lacMiniLibrary'); favBtn=$('lacMiniFavBtn'); playlistQuickBtn=$('lacMiniPlaylistBtn'); favoritesHeaderBtn=$('lacMiniFavoritesBtn');
     lyricsPanel=$('lacMiniLyricsPanel'); lyricsBtn=$('lacMiniLyricsBtn'); lyricsTitle=$('lacMiniLyricsTitle');
     lyricsArtist=$('lacMiniLyricsArtist'); lyricsBody=$('lacMiniLyricsBody');
+    soundPanel=$('lacMiniSoundPanel'); soundBtn=$('lacMiniSoundBtn');
+    soundStatusEl=$('lacMiniSoundStatus'); soundOptions=$('lacMiniSoundOptions');
     playlistArea=$('lacMiniPlaylistArea'); playlistsEl=$('lacMiniPlaylists'); playlistToolbar=$('lacMiniPlaylistToolbar');
     playlistTitle=$('lacMiniPlaylistTitle'); playlistNameInput=$('lacMiniPlaylistName');
   }
@@ -2398,6 +2438,40 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     try{ frame&&frame.contentWindow&&frame.contentWindow.postMessage(Object.assign({type:'lac_mini_cmd',cmd:cmd},extra||{}),'*'); }catch(e){}
   }
   function profileIsOpen(){ return !!(profilePanel&&profilePanel.classList.contains('open')); }
+  function soundIsOpen(){ return !!(soundPanel&&soundPanel.classList.contains('open')); }
+  function soundLabel(profile){
+    return {off:'Oriģināls',surround:'Virtual Surround',speakers:'Mazās tumbas',night:'Nakts'}[profile]||'Oriģināls';
+  }
+  function applySoundState(data){
+    els();
+    soundState=Object.assign({},soundState,data||{});
+    if(!soundState.profile) soundState.profile='off';
+    if(soundOptions){
+      var options=soundOptions.querySelectorAll('.lms-option');
+      for(var i=0;i<options.length;i++){
+        var profile=options[i].getAttribute('data-sound');
+        options[i].classList.toggle('active',profile===soundState.profile);
+        options[i].disabled=soundState.supported===false&&profile!=='off';
+      }
+    }
+    if(soundPanel){
+      soundPanel.dataset.profile=soundState.profile;
+      soundPanel.dataset.active=soundState.active?'1':'0';
+    }
+    if(soundBtn){
+      var enhanced=soundState.profile!=='off';
+      var label=soundLabel(soundState.profile);
+      soundBtn.classList.toggle('active',enhanced);
+      soundBtn.title='Skaņa: '+label;
+      soundBtn.setAttribute('aria-label','Skaņa: '+label);
+    }
+    if(soundStatusEl){
+      if(soundState.error) soundStatusEl.textContent='Nav pieejams';
+      else if(soundState.supported===false) soundStatusEl.textContent='Pārlūks neatbalsta';
+      else if(soundState.profile==='off') soundStatusEl.textContent='Native Web Audio • izslēgts';
+      else soundStatusEl.textContent='Zems CPU • '+(soundState.active?'aktīvs':'gatavs');
+    }
+  }
   function todayWorkers(){
     var names=[];
     try{ if(typeof window.__lacitisTodayWorkers==='function') names=window.__lacitisTodayWorkers()||[]; }catch(e){}
@@ -2467,6 +2541,8 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     if(deckPrev) deckPrev.disabled=true;
     if(deckNext) deckNext.disabled=true;
     if(lyricsPanel){ lyricsPanel.classList.remove('open'); lyricsPanel.setAttribute('aria-hidden','true'); }
+    if(soundPanel){ soundPanel.classList.remove('open'); soundPanel.setAttribute('aria-hidden','true'); }
+    if(soundBtn) soundBtn.setAttribute('aria-expanded','false');
   }
   function ensureFrame(){
     if(loaded||!frame) return;
@@ -2664,9 +2740,25 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     els(); ensureFrame();
     var open=typeof force==='boolean'?force:!lyricsIsOpen();
     if(open&&profileIsOpen()) window.lacMiniToggleProfile(false);
+    if(open&&soundIsOpen()) window.lacMiniToggleSound(false);
     lyricsPanel.classList.toggle('open',open); lyricsPanel.setAttribute('aria-hidden',open?'false':'true');
     if(lyricsBtn){ lyricsBtn.classList.toggle('on',open); lyricsBtn.setAttribute('aria-expanded',open?'true':'false'); }
     if(open) requestLyrics(currentTrack());
+  };
+  window.lacMiniToggleSound=function(force){
+    els(); ensureFrame();
+    var open=typeof force==='boolean'?force:!soundIsOpen();
+    if(open&&profileIsOpen()) window.lacMiniToggleProfile(false);
+    if(open&&lyricsIsOpen()) window.lacMiniToggleLyrics(false);
+    soundPanel.classList.toggle('open',open); soundPanel.setAttribute('aria-hidden',open?'false':'true');
+    if(soundBtn) soundBtn.setAttribute('aria-expanded',open?'true':'false');
+    if(open) send('sound_get');
+  };
+  window.lacMiniSetSound=function(profile){
+    profile=String(profile||'off');
+    if(!/^(?:off|surround|speakers|night)$/.test(profile)) profile='off';
+    applySoundState({profile:profile,active:profile!=='off'&&soundState.active});
+    send('sound_profile',{profile:profile});
   };
   function hasId(list,id){ return !!id&&Array.isArray(list)&&list.indexOf(id)>=0; }
   function updateQuickActions(){
@@ -2856,6 +2948,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     els(); ensureFrame();
     var open=typeof force==='boolean'?force:!profileIsOpen();
     if(open&&lyricsIsOpen()) window.lacMiniToggleLyrics(false);
+    if(open&&soundIsOpen()) window.lacMiniToggleSound(false);
     profilePanel.classList.toggle('open',open); profilePanel.setAttribute('aria-hidden',open?'false':'true');
     if(profileBtn) profileBtn.setAttribute('aria-expanded',open?'true':'false');
     if(open){
@@ -2932,6 +3025,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     if(d.type==='lac_mini_ready'){
       bridgeReady=true;
       send('profile_init',{workers:todayWorkers()});
+      send('sound_get');
       var queued=pendingCommands.slice(); pendingCommands=[];
       queued.forEach(function(item){send(item.cmd,item.extra);});
       if(stage&&stage.classList.contains('full')) send('full');
@@ -2952,6 +3046,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       var now=currentTrack();
       if(lyricsIsOpen()&&now&&now.id===d.id) renderLyrics(d);
     }
+    else if(d.type==='lac_mini_sound'){ applySoundState(d); }
     else if(d.type==='lac_mini_profile'){ applyProfileState(d); }
     else if(d.type==='lac_mini_library'){
       if(d.section===profileSection) renderLibrary(d.tracks,d.section);
@@ -3001,6 +3096,10 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     stage.classList.remove('full'); stage.setAttribute('aria-hidden','true');
     if(profilePanel){ profilePanel.classList.remove('open'); profilePanel.setAttribute('aria-hidden','true'); }
     if(profileBtn) profileBtn.setAttribute('aria-expanded','false');
+    if(lyricsPanel){ lyricsPanel.classList.remove('open'); lyricsPanel.setAttribute('aria-hidden','true'); }
+    if(lyricsBtn){ lyricsBtn.classList.remove('on'); lyricsBtn.setAttribute('aria-expanded','false'); }
+    if(soundPanel){ soundPanel.classList.remove('open'); soundPanel.setAttribute('aria-hidden','true'); }
+    if(soundBtn) soundBtn.setAttribute('aria-expanded','false');
     setFullShell(false);
     leaveNativeFullscreen();
     setDockButton(false);
@@ -3027,10 +3126,13 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     }
   });
   document.addEventListener('keydown',function(e){
-    if(e.key==='Escape'&&profileIsOpen()){ e.stopPropagation(); window.lacMiniToggleProfile(false); }
+    if(e.key!=='Escape') return;
+    if(soundIsOpen()){ e.stopPropagation(); window.lacMiniToggleSound(false); }
+    else if(lyricsIsOpen()){ e.stopPropagation(); window.lacMiniToggleLyrics(false); }
+    else if(profileIsOpen()){ e.stopPropagation(); window.lacMiniToggleProfile(false); }
   });
 
-  els(); wire();
+  els(); wire(); applySoundState(soundState);
 })();
 </script>
 
