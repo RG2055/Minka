@@ -395,7 +395,7 @@ function startNowPlaying(st){
     npTimer = setInterval(() => updateNowPlaying(st), MK_LOW_SPEC ? 20000 : 8000);
 }
 
-function toggleMenu() {
+function toggleMenu(forceOpen) {
     const el = document.getElementById('stationOverlay');
     if (!el) return;
     const iframe = document.getElementById('calIframe');
@@ -404,29 +404,47 @@ function toggleMenu() {
     const win = document.getElementById('radioWindow');
     if (win) {
         const r = win.getBoundingClientRect();
-        const ow = Math.max(420, Math.min(680, r.width - 30));
-        const oh = 350;
+        const ow = Math.max(300, Math.min(760, r.width - 24, window.innerWidth - 24));
+        const dock = document.getElementById('dockShelf');
+        const dockTop = dock?.getBoundingClientRect().top || window.innerHeight;
+        // The picker always lives above the radio/dock. Opening it below the
+        // player made its last rows disappear behind Minka's fixed toolbar.
+        const overlayBottom = Math.max(192, Math.min(r.top - 12, dockTop - 12, window.innerHeight - 12));
+        const oh = Math.max(180, Math.min(470, overlayBottom - 12));
         el.style.width = ow + "px";
         el.style.height = oh + "px";
         el.style.right = "auto";
         el.style.bottom = "auto";
 
-        // Prefer above the window, fallback below if needed
-        let left = r.left + r.width - ow - 16;
-        left = Math.max(12, Math.min(left, window.innerWidth - ow - 12));
+        // Keep the picker visually balanced instead of pinning it to the
+        // right edge like a side panel.
+        const left = Math.max(12, Math.round((window.innerWidth - ow) / 2));
 
-        let top = r.top - oh - 12;
-        if (top < 58) top = r.bottom + 12;
+        const top = Math.max(12, overlayBottom - oh);
 
         el.style.left = left + "px";
         el.style.top = top + "px";
     }
 
-    const isNowOpen = el.style.display !== 'grid';
+    const isNowOpen = typeof forceOpen === 'boolean' ? forceOpen : el.style.display !== 'grid';
+    if (isNowOpen) renderStationOverlay();
     el.style.display = isNowOpen ? 'grid' : 'none';
+    el.setAttribute('aria-hidden', isNowOpen ? 'false' : 'true');
     // Disable iframe pointer events while overlay is open (prevents click-through)
     if (iframe) iframe.style.pointerEvents = isNowOpen ? 'none' : '';
+    if (isNowOpen) {
+        requestAnimationFrame(() => {
+            const search = document.getElementById('stationPickerSearch');
+            if (search) search.focus({ preventScroll: true });
+        });
+    }
 }
+
+document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    const el = document.getElementById('stationOverlay');
+    if (el && el.style.display === 'grid') toggleMenu(false);
+});
 
 
 function changeVizStyle() {
@@ -1794,6 +1812,69 @@ const LATVIAN_STATIONS = [
   {title:"XOFM",group:"latvija",stream_128:"https://live.xo.fm/xofm128",stream_320:"https://live.xo.fm/xofm128",stream_hls:"",stream_64:"https://live.xo.fm/xofm128",prefix:"",id:""},
 ];
 
+// July 2026 stream audit: old Icecast ports and forced-HTTPS variants were
+// still shown as playable even though an HTTPS PWA cannot use them. Keep only
+// verified web-safe stations and replace the few services that have moved.
+const LV_STREAM_OVERRIDES = new Map([
+    ['LATVIJAS RADIO 1', 'https://muste.latvijasradio.lv/shoutcast/mp4:lr1a.stream/playlist.m3u8'],
+    ['LATVIJAS RADIO 2', 'https://muste.latvijasradio.lv/shoutcast/mp4:lr2a.stream/playlist.m3u8'],
+    ['LATVIJAS RADIO 3 (KLASIKA)', 'https://60766ff53d5e6.streamlock.net/liveALR3/mp4:klasika/playlist.m3u8'],
+    ['LATVIJAS KRISTIGAIS RADIO', 'https://radio.lkr.lv/;?type=http&nocache=40'],
+    ['MIX FM', 'https://live.relaxfm.lv/07'],
+    ['VATIKANS', 'https://radio.vaticannews.va/stream-lv']
+]);
+
+const LV_DISABLED_STATIONS = new Set([
+    'ALISE PLUS',
+    'DETSKOE',
+    'KURZEMES RADIO',
+    'LATGALES RADIO',
+    'LATVIJAS RADIO 4 (DOMA LAUKUMS)',
+    'LUSTIGS RADIO',
+    'MARIJA',
+    'MARUSJA FM',
+    'NORMA',
+    'PIK',
+    'RADIO 9',
+    'REZEKNE',
+    'ROMANTIKA',
+    'RUSSKIE PESNI',
+    'SCHLAGER TIME',
+    'SUNSHINE FM',
+    'TRANCE RADIO',
+    'X RADIO'
+]);
+
+const LV_STATION_ADDITIONS = [
+    { title:'NABA', group:'latvija', tooltip:'Latvijas radio', stream_128:'https://muste.latvijasradio.lv/shoutcast/mp4:naba.stream/playlist.m3u8', stream_320:'https://muste.latvijasradio.lv/shoutcast/mp4:naba.stream/playlist.m3u8', stream_hls:'https://muste.latvijasradio.lv/shoutcast/mp4:naba.stream/playlist.m3u8', stream_64:'', prefix:'', id:'lv-naba' },
+    { title:'NJOY RADIO', group:'latvija', tooltip:'Latvijas radio', stream_128:'https://live.njoyradio.lv/02', stream_320:'https://live.njoyradio.lv/02', stream_hls:'', stream_64:'https://live.njoyradio.lv/02', prefix:'', id:'lv-njoy' },
+    { title:'RADIO ROKS', group:'latvija', tooltip:'Latvijas radio', stream_128:'https://live.relaxfm.lv/06', stream_320:'https://live.relaxfm.lv/06', stream_hls:'', stream_64:'https://live.relaxfm.lv/06', prefix:'', id:'lv-roks' },
+    { title:'RADIO TEV', group:'latvija', tooltip:'Latvijas radio', stream_128:'https://stream.radiotev.lv:8443/radiov', stream_320:'https://stream.radiotev.lv:8443/radiov', stream_hls:'', stream_64:'https://stream.radiotev.lv:8443/radiov', prefix:'', id:'lv-tev' }
+];
+
+function buildLatvianStations() {
+    const stations = (Array.isArray(LATVIAN_STATIONS) ? LATVIAN_STATIONS : [])
+        .filter(station => !LV_DISABLED_STATIONS.has(normalizeStationText(station.title)))
+        .map(station => {
+            const key = normalizeStationText(station.title);
+            const next = { ...station, tooltip: station.tooltip || 'Latvijas radio' };
+            const replacement = LV_STREAM_OVERRIDES.get(key);
+            if (replacement) {
+                next.stream_128 = replacement;
+                next.stream_320 = replacement;
+                next.stream_64 = replacement;
+                next.stream_hls = replacement.includes('.m3u8') ? replacement : '';
+            }
+            if (key === 'BALTKOM RADIO') next.title = 'RADIO MELODIJA';
+            return next;
+        });
+    const known = new Set(stations.map(station => normalizeStationText(station.title)));
+    LV_STATION_ADDITIONS.forEach(station => {
+        if (!known.has(normalizeStationText(station.title))) stations.push(station);
+    });
+    return stations;
+}
+
 async function initStations() {
     // Load local JSON asynchronously first (non-blocking startup for page)
     await loadLocalStationsJSON();
@@ -1801,6 +1882,8 @@ async function initStations() {
     recordStations = (STATIONS_LOCAL || []).map(s => ({
         title: s.title,
         group: s.group || 'radiorecord',
+        tooltip: s.tooltip || 'Radio Record',
+        cover: s.cover || '',
         prefix: (() => {
             const stream = String(s.hls || s.url || '');
             const m = stream.match(/hostingradio\.ru\/([^\/\?]+)\//i);
@@ -1814,7 +1897,7 @@ async function initStations() {
     }));
 
     // Keep Latvian stations as a separate source (embedded, works offline/file://)
-    latvianStations = Array.isArray(LATVIAN_STATIONS) ? LATVIAN_STATIONS.slice() : [];
+    latvianStations = buildLatvianStations();
     refreshCombinedStations();
     renderStationOverlay();
 
@@ -1822,20 +1905,146 @@ async function initStations() {
     loadStationsFromWorker().catch(() => {});
 }
 
-function renderStationOverlay() {
-    const grid = document.getElementById('stationOverlay');
-    if (!grid) return;
+const LACITIS_RADIO_LOGO_BASE = 'https://lacitis.pages.dev/icons/radio/';
+const LACITIS_RADIO_FALLBACK = 'https://lacitis.pages.dev/icons/radio-default.svg';
+const LV_STATION_LOGO_RULES = [
+    ['SWH GOLD', 'swhgold.png'], ['SWH PLUS', 'swhplus.png'], ['SWH ROCK', 'swhrock.png'],
+    ['SWH SPIN', 'swhspin.png'], ['SWH LV', 'swhlv.jpg'], ['SKONTO PLUS', 'skontoplus.png'],
+    ['EHR ACCOUSTIC', 'ehr.png'], ['EHR DANCE', 'ehrdance.png'],
+    ['EHR FRESH', 'ehrfresh.png'], ['EHR LATVIESU', 'ehrlatviesu.png'],
+    ['EHR SUPERHITS', 'ehrsuperhits.png'], ['LATVIESU DEJU HITI', 'dejuhiti.png'],
+    ['LATVIESU REPA HITI', 'repahiti.png'], ['LATVIJAS RADIO 1', 'lr1.png'],
+    ['LATVIJAS RADIO 2', 'lr2.png'], ['LATVIJAS RADIO 3', 'lr3.png'],
+    ['ALISE PLUS', 'aliseplus.png'], ['AVTORADIO', 'avtoradio.png'],
+    ['COMEDY RADIO', 'comedy.png'], ['DIVU KRASTU', 'efei.png'],
+    ['EIROPAS HITU RADIO', 'ehr.png'], ['ENERGY', 'energyfm.png'],
+    ['FLASH SOUND', 'flashsound.webp'], ['GRADIO', 'gradio.png'],
+    ['JAZZ FM', 'jazzfm.jpg'], ['KURZEMES', 'kurzemes.png'],
+    ['LATGALES', 'latgales.png'], ['KRISTIGAIS', 'lkr.png'],
+    ['LOUNGE FM', 'loungefm.png'], ['LOVE RADIO', 'love.jpg'],
+    ['LUSTIGS', 'lustigs.png'], ['MARIJA', 'marija.png'],
+    ['MELODIJA', 'melodija.webp'], ['MIX FM', 'mixfm.png'],
+    ['NEMIERS', 'nemiers.png'], ['NJOY', 'njoy.webp'],
+    ['RADIO ROKS', 'radioroks.png'],
+    ['NORDIC BEAT', 'nordicbeat.jpg'], ['NORMA', 'norma.png'],
+    ['PIK', 'pikfm.png'], ['PASAULES MUZIKAS', 'pmr.png'],
+    ['POWER FM', 'powerfm.png'], ['RADIO 9', 'radio9.png'],
+    ['RELAX FM', 'relaxfm.png'], ['RETRO DISCO', 'retrodisco.png'],
+    ['RETRO FM', 'retrofm.png'], ['REZEKNE', 'rezekne.png'],
+    ['ROMANTIKA', 'romantika.jpg'], ['SHANSON', 'shanson.png'],
+    ['SCHLAGER', 'schlagertime.png'], ['SKONTO', 'skonto.png'],
+    ['STAR FM', 'starfm.png'], ['RADIO TEV', 'tev.png'],
+    ['TOP RADIO', 'topradio.png'], ['VATIKAN', 'vatikans.png'],
+    ['XOFM', 'xofm.png'], ['X RADIO', 'xradio.png'], ['SWH', 'swh.png'],
+    ['EHR', 'ehr.png']
+];
+let stationPickerSource = 'record';
+let stationPickerQuery = '';
+let stationPickerSearchTimer = 0;
 
-    grid.innerHTML = stationsList.map((s, index) => {
-        if (s.group === 'separator') {
-            return `<div class="station-separator"><span>${escapeHtml(s.title)}</span></div>`;
-        }
-        const isLV = s.group === 'latvija';
-        return `<button class="station-tile${isLV ? ' station-lv' : ''}" type="button" onclick="selectStation(${index})" title="${escapeHtml(s.title)}">
-            <div class="icon-box"><i class="fas ${getIcon(s.title)} fa-fw station-icon"></i></div>
-            <h3>${escapeHtml(s.title)}</h3>
+function normalizeStationText(value) {
+    return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+}
+
+function stationLogoUrl(station) {
+    const direct = String(station?.cover || station?.bg_image_mobile || station?.bg_image || '').trim();
+    if (direct) return direct;
+    if (station?.group !== 'latvija') return LACITIS_RADIO_FALLBACK;
+    const key = normalizeStationText(station.title);
+    const match = LV_STATION_LOGO_RULES.find(([needle]) => key.includes(needle));
+    return match ? LACITIS_RADIO_LOGO_BASE + match[1] : LACITIS_RADIO_FALLBACK;
+}
+
+function stationPickerItems() {
+    const query = normalizeStationText(stationPickerQuery);
+    return stationsList
+        .map((station, index) => ({ station, index }))
+        .filter(({ station }) => station && station.group !== 'separator')
+        .filter(({ station }) => stationPickerSource === 'latvija'
+            ? station.group === 'latvija'
+            : station.group !== 'latvija')
+        .filter(({ station }) => !query || normalizeStationText(
+            `${station.title || ''} ${station.tooltip || ''} ${station.prefix || ''}`
+        ).includes(query));
+}
+
+function renderStationPickerList() {
+    const list = document.getElementById('stationPickerList');
+    if (!list) return;
+    const items = stationPickerItems();
+    if (!items.length) {
+        list.innerHTML = '<div class="station-picker-empty">Neviena stacija neatbilst meklējumam.</div>';
+        return;
+    }
+    list.innerHTML = items.map(({ station, index }) => {
+        const isCurrent = index === currentIndex;
+        const title = escapeHtml(station.title || 'Radio');
+        const description = escapeHtml(station.tooltip || (station.group === 'latvija' ? 'Latvijas radio' : 'Radio Record'));
+        const logo = escapeHtml(stationLogoUrl(station));
+        return `<button class="station-tile${station.group === 'latvija' ? ' station-lv' : ''}${isCurrent ? ' is-current' : ''}"
+            type="button" data-station-index="${index}" aria-label="Atskaņot ${title}" aria-current="${isCurrent ? 'true' : 'false'}">
+            <span class="station-logo-wrap">
+                <img class="station-logo" src="${logo}" alt="" loading="lazy" decoding="async"
+                    onerror="this.onerror=null;this.src='${LACITIS_RADIO_FALLBACK}'">
+            </span>
+            <span class="station-copy"><strong>${title}</strong><small>${description}</small></span>
+            <span class="station-play-mark" aria-hidden="true">${isCurrent ? '▮▮' : '▶'}</span>
         </button>`;
     }).join('');
+}
+
+function renderStationOverlay() {
+    const overlay = document.getElementById('stationOverlay');
+    if (!overlay) return;
+    const recordCount = stationsList.filter(s => s && s.group !== 'latvija' && s.group !== 'separator').length;
+    const latviaCount = stationsList.filter(s => s && s.group === 'latvija').length;
+    overlay.innerHTML = `
+        <div class="station-picker-head">
+            <div class="station-picker-title"><strong>Stacijas</strong><span>Izvēlies tiešraidi</span></div>
+            <label class="station-picker-search">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"/></svg>
+                <input id="stationPickerSearch" type="search" placeholder="Meklēt staciju…" value="${escapeHtml(stationPickerQuery)}" autocomplete="off">
+            </label>
+            <button class="station-picker-close" type="button" aria-label="Aizvērt stacijas">×</button>
+        </div>
+        <div class="station-picker-tabs" role="tablist" aria-label="Staciju avots">
+            <button type="button" data-station-source="record" role="tab" aria-selected="${stationPickerSource === 'record'}"
+                class="${stationPickerSource === 'record' ? 'active' : ''}">Radio Record <span>${recordCount}</span></button>
+            <button type="button" data-station-source="latvija" role="tab" aria-selected="${stationPickerSource === 'latvija'}"
+                class="${stationPickerSource === 'latvija' ? 'active' : ''}">Latvija <span>${latviaCount}</span></button>
+        </div>
+        <div class="station-picker-list" id="stationPickerList"></div>`;
+    overlay.querySelector('.station-picker-close')?.addEventListener('click', () => toggleMenu(false));
+    overlay.querySelectorAll('[data-station-source]').forEach(button => {
+        button.addEventListener('click', () => {
+            stationPickerSource = button.dataset.stationSource === 'latvija' ? 'latvija' : 'record';
+            // A search that made sense for one catalogue often produces an
+            // apparently broken empty state in the other one. Source switches
+            // should start from the complete station list.
+            stationPickerQuery = '';
+            const search = overlay.querySelector('#stationPickerSearch');
+            if (search) search.value = '';
+            overlay.querySelectorAll('[data-station-source]').forEach(item => {
+                const active = item.dataset.stationSource === stationPickerSource;
+                item.classList.toggle('active', active);
+                item.setAttribute('aria-selected', active ? 'true' : 'false');
+            });
+            renderStationPickerList();
+        });
+    });
+    overlay.querySelector('#stationPickerSearch')?.addEventListener('input', event => {
+        clearTimeout(stationPickerSearchTimer);
+        stationPickerSearchTimer = setTimeout(() => {
+            stationPickerQuery = event.target.value || '';
+            renderStationPickerList();
+        }, 80);
+    });
+    overlay.querySelector('#stationPickerList')?.addEventListener('click', event => {
+        const button = event.target.closest('[data-station-index]');
+        if (!button) return;
+        selectStation(Number(button.dataset.stationIndex));
+    });
+    renderStationPickerList();
 }
 
 // Pull stations from the same Cloudflare Worker API used for "Now Playing".
@@ -1867,6 +2076,9 @@ async function loadStationsFromWorker() {
         return {
             id: String(s?.id ?? s?.station_id ?? "").trim(),
             title,
+            tooltip: String(s?.tooltip || s?.description || 'Radio Record').trim(),
+            cover: String(s?.bg_image_mobile || s?.bg_image || s?.cover || '').trim(),
+            group: 'radiorecord',
             prefix,
             stream_hls: streamHls || "",
             stream_320: String(s?.stream_320 || s?.stream_256 || s?.stream_192 || "").trim() || String(bestUrl).trim(),
@@ -1894,12 +2106,12 @@ async function loadStationsFromWorker() {
     }
 
     // Always append Latvian stations (embedded constant, always available)
-    stationsList = stationsList.concat(LATVIAN_STATIONS);
+    stationsList = stationsList.concat(latvianStations);
     renderStationOverlay();
 }
 
 
-window.__slowFx = window.__slowFx || { volume:106, pitch:0, speed:100, reverb:40, keepPitch:false, panelInit:false };
+window.__slowFx = window.__slowFx || { volume:100, pitch:0, speed:100, reverb:40, keepPitch:false, panelInit:false };
 
 function toggleSlowPanel(force){
     const p = document.getElementById('slowFxPanel');
@@ -1954,6 +2166,19 @@ function refreshSlowFxLabels(){
 function applySlowFxCustom(){
     try{ if(!audio) return; }catch(e){ return; }
     const eqMode = window.__eqMode || 'none';
+    // Every normal preset starts from the original-speed, unity-gain signal.
+    // Custom pitch/speed/boost belongs only to the explicit SLOW mode.
+    if (eqMode !== 'chilldeep') {
+      try{ if(masterGain) masterGain.gain.value = 1.0; }catch(e){}
+      try{
+        const rate = eqMode === 'chill' ? 0.92 : 1.0;
+        audio.preservesPitch = false;
+        audio.mozPreservesPitch = false;
+        audio.webkitPreservesPitch = false;
+        audio.playbackRate = rate;
+      }catch(e){}
+      return;
+    }
     // volume: keep user slider (audio.volume) as canonical value; apply preset boost only via post-gain
     const vol = Math.max(0, Math.min(200, +__slowFx.volume || 100));
     try{ if(masterGain) masterGain.gain.value = vol > 100 ? Math.min(1.6, vol / 100) : 1.0; }catch(e){}
@@ -2132,15 +2357,14 @@ function selectStation(index) {
     currentIndex = index;
     isFirstPlay = false; 
     const s = stationsList[index];
-    let url = s.stream_320 || s.stream_128;
-    let kbps = s.stream_320 ? '320 KBPS' : '128 KBPS';
-    let codec = 'MP3';
-    if (!url && s.stream_hls) { url = s.stream_hls; kbps = 'STREAM'; codec = 'AAC'; }
+    const url = s.stream_320 || s.stream_128 || s.stream_hls || s.stream_64;
+    if (!url) return;
+    const streamMeta = describeStationStream(url);
     
     document.getElementById('curStation').style.opacity = 1;
     document.getElementById('metaWrap').style.visibility = 'visible';
-    document.getElementById('ui-codec').textContent = codec;
-    document.getElementById('ui-kbps').textContent = kbps;
+    document.getElementById('ui-codec').textContent = streamMeta.codec;
+    document.getElementById('ui-kbps').textContent = streamMeta.quality;
     
     play(url, s.title);
     startNowPlaying(s);
@@ -2237,8 +2461,28 @@ function play(url, name) {
     document.getElementById('playBtn').innerHTML = '<i class="fas fa-pause"></i>';
 }
 
-function playNext() { selectStation((currentIndex + 1) % stationsList.length); }
-function playPrev() { selectStation((currentIndex - 1 + stationsList.length) % stationsList.length); }
+function describeStationStream(url) {
+    const value = String(url || '').toLowerCase();
+    if (value.includes('.m3u8')) return { codec: 'AAC', quality: 'HLS' };
+    const rate = value.match(/(?:^|[_-])(\d{2,3})(?=\.(?:aacp?|mp3)|(?:\?|$))/)?.[1];
+    if (value.includes('.aac')) return { codec: 'AAC', quality: rate ? `${rate} KBPS` : 'LIVE' };
+    if (value.includes('.mp3') || value.includes('stream.mp3')) return { codec: 'MP3', quality: rate ? `${rate} KBPS` : 'LIVE' };
+    return { codec: 'AUDIO', quality: 'LIVE' };
+}
+
+function stepStation(direction) {
+    if (!stationsList.length) return;
+    for (let step = 1; step <= stationsList.length; step++) {
+        const index = (currentIndex + direction * step + stationsList.length) % stationsList.length;
+        if (stationsList[index] && stationsList[index].group !== 'separator') {
+            selectStation(index);
+            return;
+        }
+    }
+}
+
+function playNext() { stepStation(1); }
+function playPrev() { stepStation(-1); }
 
 function setChill(preset){
     if(!aCtx) return;

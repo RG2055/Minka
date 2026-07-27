@@ -325,6 +325,7 @@
 </noscript>
 <!-- Radio polish overrides — must load after all other radio CSS -->
 <link rel="stylesheet" href="css/radio_polish_v1.css?v=20260708b">
+<link rel="stylesheet" href="css/radio_lacitis_v2.css?v=20260727b">
 
 <style>
 /* ═══ MINKA v11 Shell ═══ */
@@ -672,7 +673,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 })();
 </script>
 
-<div id="stationOverlay"></div>
+<div id="stationOverlay" role="dialog" aria-label="Radio stacijas" aria-hidden="true"></div>
 
 <!-- Radio window -->
 <div id="radioWindow" style="display:none;">
@@ -727,8 +728,8 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
             <div class="slowfx-row slowfx-vol">
               <div class="slowfx-ico">🔊</div>
               <div class="slowfx-main">
-                <div class="slowfx-top">VOLUME <span id="slowfxVolumeVal">106%</span></div>
-                <input id="slowfxVolume" type="range" min="50" max="160" step="1" value="106">
+                <div class="slowfx-top">VOLUME <span id="slowfxVolumeVal">100%</span></div>
+                <input id="slowfxVolume" type="range" min="50" max="160" step="1" value="100">
               </div>
             </div>
             <div class="slowfx-row slowfx-pitch">
@@ -877,7 +878,7 @@ async function loadRadioScripts() {
     _fa.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
     document.head.appendChild(_fa);
   }
-  await loadAny(['js/radio.js?v=20260722b']);
+  await loadAny(['js/radio.js?v=20260727e']);
   await loadAny(['js/radio_extras_v4.js?v=20260715b']);
   await loadAny(['js/ambilight.js?v=20260612e']);
   _radioScriptsLoaded = true;
@@ -5268,7 +5269,7 @@ window.addEventListener('message', function(e) {
 
 <script>
 if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-  const MINKA_APP_VERSION = '2026.07.27b';
+  const MINKA_APP_VERSION = '2026.07.27e';
   const MINKA_VERSION_KEY = 'minka_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
