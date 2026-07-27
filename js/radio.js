@@ -3183,73 +3183,78 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
       }
     },
     {
-      name: 'Nakts studija',
+      name: 'Neon pilsēta',
+      description: 'Tumšs kino neons',
+      chip: '#ef5f45',
+      surfaceRGB: [9,8,16],
+      image: 'kalendars/data/radio-skins/neon-city-2400x400.jpg',
+      preview: 'kalendars/data/radio-skins/neon-city-preview.jpg',
+      vars: {
+        '--bg-color': '#07060b',
+        '--panel': '#100d16',
+        '--search-bar-bg': '#17121d',
+        '--search-border': 'rgba(239,95,69,.16)',
+        '--search-hover': '#211827'
+      }
+    },
+    {
+      name: 'Dziļais okeāns',
       description: 'Tumšs un mierīgs',
-      chip: '#1ed760',
-      surfaceRGB: [10,14,12],
-      image: 'kalendars/data/skins/skin-aesthetic-helmet.webp',
+      chip: '#53c9e8',
+      surfaceRGB: [5,16,20],
+      image: 'kalendars/data/radio-skins/deep-ocean-2400x400.jpg',
+      preview: 'kalendars/data/radio-skins/deep-ocean-preview.jpg',
       vars: {
-        '--bg-color': '#070a08',
-        '--panel': '#101511',
-        '--search-bar-bg': '#141a16',
-        '--search-border': 'rgba(255,255,255,.10)',
-        '--search-hover': '#1b241e'
+        '--bg-color': '#030a0d',
+        '--panel': '#081317',
+        '--search-bar-bg': '#0d1b20',
+        '--search-border': 'rgba(83,201,232,.16)',
+        '--search-hover': '#12252b'
       }
     },
     {
-      name: 'Ledus ūdens',
-      description: 'Gaiši zils un tīrs',
-      chip: '#63c7ff',
-      surfaceRGB: [9,18,24],
-      image: 'kalendars/data/skins/skin-aesthetic-water.webp',
+      name: 'Miglas mežs',
+      description: 'Kluss un dziļš',
+      chip: '#66a58b',
+      surfaceRGB: [6,14,14],
+      image: 'kalendars/data/radio-skins/mist-forest-2400x400.jpg',
+      preview: 'kalendars/data/radio-skins/mist-forest-preview.jpg',
       vars: {
-        '--bg-color': '#050a0e',
-        '--panel': '#0c151b',
-        '--search-bar-bg': '#111d25',
-        '--search-border': 'rgba(99,199,255,.18)',
-        '--search-hover': '#162832'
+        '--bg-color': '#040a09',
+        '--panel': '#0a1412',
+        '--search-bar-bg': '#101c19',
+        '--search-border': 'rgba(102,165,139,.16)',
+        '--search-hover': '#15251f'
       }
     },
     {
-      name: 'Saulriets',
-      description: 'Silts vakara tonis',
-      chip: '#ff9a45',
-      surfaceRGB: [24,14,9],
-      image: 'kalendars/data/skins/skin-aesthetic-sunset.webp',
+      name: 'Zelta horizonts',
+      description: 'Silta vakara gaisma',
+      chip: '#f2ad62',
+      surfaceRGB: [20,13,7],
+      image: 'kalendars/data/radio-skins/golden-horizon-2400x400.jpg',
+      preview: 'kalendars/data/radio-skins/golden-horizon-preview.jpg',
       vars: {
-        '--bg-color': '#0c0805',
-        '--panel': '#19100a',
-        '--search-bar-bg': '#21160e',
-        '--search-border': 'rgba(255,154,69,.18)',
-        '--search-hover': '#2b1b11'
+        '--bg-color': '#0b0704',
+        '--panel': '#171008',
+        '--search-bar-bg': '#1e160e',
+        '--search-border': 'rgba(242,173,98,.16)',
+        '--search-hover': '#291d12'
       }
     },
     {
-      name: 'Brīvs lidojums',
-      description: 'Silti balts un kluss',
-      chip: '#f1b76f',
-      surfaceRGB: [18,16,12],
-      image: 'kalendars/data/skins/skin-aesthetic-bird.webp',
+      name: 'Sarkanā vētra',
+      description: 'Tumšs un dramatisks',
+      chip: '#e33d35',
+      surfaceRGB: [18,5,7],
+      image: 'kalendars/data/radio-skins/red-storm-2400x400.jpg',
+      preview: 'kalendars/data/radio-skins/red-storm-preview.jpg',
       vars: {
-        '--bg-color': '#0a0907',
-        '--panel': '#15130f',
-        '--search-bar-bg': '#1d1a14',
-        '--search-border': 'rgba(241,183,111,.16)',
-        '--search-hover': '#262219'
-      }
-    },
-    {
-      name: 'Chrome',
-      description: 'Metālisks un moderns',
-      chip: '#7dd4ff',
-      surfaceRGB: [10,16,22],
-      image: 'kalendars/data/skins/skin-aesthetic-cyborg.webp',
-      vars: {
-        '--bg-color': '#06090c',
-        '--panel': '#0d141b',
-        '--search-bar-bg': '#121c25',
-        '--search-border': 'rgba(125,212,255,.18)',
-        '--search-hover': '#182733'
+        '--bg-color': '#0b0304',
+        '--panel': '#160708',
+        '--search-bar-bg': '#1e0b0c',
+        '--search-border': 'rgba(227,61,53,.16)',
+        '--search-hover': '#2a0f11'
       }
     }
   ];
@@ -3284,7 +3289,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
         rw.style.setProperty(
           'background-image',
           image
-            ? `linear-gradient(100deg, rgba(${rgb[0]},${rgb[1]},${rgb[2]},.92), rgba(${rgb[0]},${rgb[1]},${rgb[2]},.79) 58%, rgba(${rgb[0]},${rgb[1]},${rgb[2]},.93)), url("${image}")`
+            ? `linear-gradient(100deg, rgba(${rgb[0]},${rgb[1]},${rgb[2]},.94), rgba(${rgb[0]},${rgb[1]},${rgb[2]},.84) 58%, rgba(${rgb[0]},${rgb[1]},${rgb[2]},.94)), url("${image}")`
             : 'none',
           'important'
         );
@@ -3384,7 +3389,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
   // Remove the old purple/glass presets once and start from the modern picker.
   (function themeMigration(){
     const VER_KEY = 'rg_theme_version';
-    const VER = '5';
+    const VER = '6';
     if (localStorage.getItem(VER_KEY) === VER) return;
     localStorage.setItem(VER_KEY, VER);
     localStorage.setItem(STORAGE.name, 'Melns');
@@ -3430,7 +3435,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     rw.style.setProperty(
       'background-image',
       image
-        ? `linear-gradient(112deg, rgba(${r},${g},${b},.38), rgba(${base[0]},${base[1]},${base[2]},.84) 58%, rgba(${r},${g},${b},.20)), url("${image}")`
+        ? `linear-gradient(112deg, rgba(${r},${g},${b},.28), rgba(${base[0]},${base[1]},${base[2]},.86) 58%, rgba(${r},${g},${b},.17)), url("${image}")`
         : `linear-gradient(112deg, rgba(${r},${g},${b},.34), rgba(${dark[0]},${dark[1]},${dark[2]},.96) 72%)`,
       'important'
     );
@@ -3558,7 +3563,8 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
       row.className = 'theme-item' + (saved.name === t.name ? ' active' : '');
       if (t.isDefault) row.classList.add('is-default');
       row.dataset.name = t.name;
-      const previewUrl = t.image ? new URL(t.image, document.baseURI).href : '';
+      const previewAsset = t.preview || t.image;
+      const previewUrl = previewAsset ? new URL(previewAsset, document.baseURI).href : '';
       row.style.setProperty('--theme-preview', previewUrl ? `url("${previewUrl}")` : 'none');
       row.innerHTML = `
         <span class="theme-card-shade"></span>
