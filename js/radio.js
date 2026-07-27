@@ -291,6 +291,9 @@ function setNowUI(artist = "—", title = "—", coverUrl = ""){
     if (cover.getAttribute('src') !== nextSrc) cover.src = nextSrc;
     cover.style.display = "block";
     cover.style.opacity = "0.92";
+    document.dispatchEvent(new CustomEvent('rg-now-playing-art', {
+        detail: { artist, title, coverUrl: nextSrc }
+    }));
 }
 
 // Static pixel buddy shown when a station has no cover or the art fails to load.
@@ -445,6 +448,15 @@ document.addEventListener('keydown', (event) => {
     const el = document.getElementById('stationOverlay');
     if (el && el.style.display === 'grid') toggleMenu(false);
 });
+
+document.addEventListener('pointerdown', (event) => {
+    const overlay = document.getElementById('stationOverlay');
+    if (!overlay || overlay.style.display !== 'grid') return;
+    const path = typeof event.composedPath === 'function' ? event.composedPath() : [];
+    const clickedOverlay = path.includes(overlay) || overlay.contains(event.target);
+    const clickedTrigger = path.some(node => node?.classList?.contains('station-btn'));
+    if (!clickedOverlay && !clickedTrigger) toggleMenu(false);
+}, true);
 
 
 function changeVizStyle() {
@@ -3142,165 +3154,102 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
   const panel = document.getElementById('themePanel');
   const closeBtn = document.getElementById('themeClose');
   const listEl = document.getElementById('themeList');
-  const searchEl = document.getElementById('themeSearch');
   const accentEl = document.getElementById('accentPicker');
-  const glassEl = document.getElementById('glassSlider');
+  const accentModeEl = document.getElementById('accentModeList');
 
-  if (!themeBtn || !panel || !listEl || !searchEl || !accentEl || !glassEl) return;
+  if (!themeBtn || !panel || !listEl || !accentEl || !accentModeEl) return;
 
   const STORAGE = {
     name: 'rg_theme_name',
     accent: 'rg_theme_accent',
-    glass: 'rg_theme_glass',
+    accentMode: 'rg_theme_accent_mode',
     enabled: 'rg_theme_enabled'
   };
 
   const THEMES = [
     {
-      name: 'WindowGlass',
-      chip: '#00ff88',
-      glassRGB: [28,28,30],
-      vars: {
-        '--bg-color': '#07070a',
-        '--panel': '#101012',
-        '--search-bar-bg': '#141416',
-        '--search-border': '#2b2b2f',
-        '--search-hover': '#1f1f23',
-        '--glass-border': 'rgba(255,255,255,0.10)',
-        '--glass-shadow': '0 20px 40px rgba(0,0,0,0.55)',
-      }
-    },
-
-    // --- CSS.GLASS inspired presets (https://css.glass/) ---
-    {
-      name: 'CSS Glass • Frosted',
-      chip: '#ffffff',
-      glassRGB: [255,255,255],
-      borderRGBA: [255,255,255,0.18],
-      shadowRGBA: [31,38,135,0.37],
-      vars: {
-        '--bg-color': '#07080b',
-        '--panel': '#0f1116',
-        '--search-bar-bg': 'rgba(255,255,255,0.06)',
-        '--search-border': 'rgba(255,255,255,0.14)',
-        '--search-hover': 'rgba(255,255,255,0.08)',
-        '--glass-shadow': '0 8px 32px rgba(31,38,135,0.37)',
-        '--glass-border': 'rgba(255,255,255,0.18)'
-      }
-    },
-    {
-      name: 'CSS Glass • Neon Green',
-      chip: '#00ff88',
-      glassRGB: [8,18,14],
-      borderRGBA: [0,255,136,0.22],
-      shadowRGBA: [0,255,136,0.18],
-      vars: {
-        '--bg-color': '#040606',
-        '--panel': '#081010',
-        '--search-bar-bg': 'rgba(0,255,136,0.06)',
-        '--search-border': 'rgba(0,255,136,0.22)',
-        '--search-hover': 'rgba(0,255,136,0.09)',
-        '--glass-border': 'rgba(0,255,136,0.22)'
-      }
-    },
-    {
-      name: 'CSS Glass • Purple Haze',
-      chip: '#bf5af2',
-      glassRGB: [40,16,56],
-      borderRGBA: [255,255,255,0.14],
-      shadowRGBA: [191,90,242,0.28],
-      vars: {
-        '--bg-color': '#06020a',
-        '--panel': '#12081a',
-        '--search-bar-bg': 'rgba(191,90,242,0.08)',
-        '--search-border': 'rgba(255,255,255,0.14)',
-        '--search-hover': 'rgba(191,90,242,0.12)',
-        '--accent': '#bf5af2',
-        '--search-accent': '#bf5af2'
-      }
-    },
-    {
-      name: 'CSS Glass • Ice Blue',
-      chip: '#64d2ff',
-      glassRGB: [10,22,34],
-      borderRGBA: [100,210,255,0.18],
-      shadowRGBA: [100,210,255,0.18],
-      vars: {
-        '--bg-color': '#04070a',
-        '--panel': '#08131a',
-        '--search-bar-bg': 'rgba(100,210,255,0.06)',
-        '--search-border': 'rgba(100,210,255,0.18)',
-        '--search-hover': 'rgba(100,210,255,0.09)'
-      }
-    },
-    {
-      name: 'Windows7',
-      chip: '#4cc9ff',
-      glassRGB: [12,18,28],
-      vars: {
-        '--bg-color': '#05070b',
-        '--panel': '#0d121a',
-        '--search-bar-bg': '#101722',
-        '--search-accent': '#4cc9ff',
-        '--glass-border': 'rgba(140,220,255,0.18)',
-      }
-    },
-    {
-      name: 'Aeris',
-      chip: '#64d2ff',
-      glassRGB: [6,15,22],
-      vars: {
-        '--bg-color': '#05080a',
-        '--panel': '#0b1418',
-        '--search-bar-bg': '#0f1b20',
-        '--glass-border': 'rgba(100,210,255,0.18)',
-      }
-    },
-    {
-      name: 'Plasma',
-      chip: '#bf5af2',
-      glassRGB: [20,10,28],
-      vars: {
-        '--bg-color': '#06020a',
-        '--panel': '#13091a',
-        '--search-bar-bg': '#1a0f24',
-        '--glass-border': 'rgba(191,90,242,0.18)',
-        '--search-accent': '#bf5af2',
-        '--accent': '#bf5af2',
-      }
-    },
-    {
-      name: 'xdark',
-      chip: '#9affc7',
-      glassRGB: [10,10,12],
+      name: 'Melns',
+      description: 'Klasiskais RG skats',
+      chip: '#1ed760',
+      surfaceRGB: [5,7,6],
+      image: '',
+      isDefault: true,
       vars: {
         '--bg-color': '#000000',
-        '--panel': '#0b0b0d',
-        '--search-bar-bg': '#121216',
-        '--glass-border': 'rgba(255,255,255,0.08)',
+        '--panel': '#070908',
+        '--search-bar-bg': '#101311',
+        '--search-border': 'rgba(255,255,255,.10)',
+        '--search-hover': '#171b18'
       }
     },
     {
-      name: 'TaskbarXII',
-      chip: '#00ff88',
-      glassRGB: [10,12,14],
+      name: 'Nakts studija',
+      description: 'Tumšs un mierīgs',
+      chip: '#1ed760',
+      surfaceRGB: [10,14,12],
+      image: 'kalendars/data/skins/skin-aesthetic-helmet.webp',
       vars: {
-        '--bg-color': '#030406',
-        '--panel': '#0a0c10',
-        '--search-bar-bg': '#0f1217',
-        '--glass-border': 'rgba(0,255,136,0.16)',
+        '--bg-color': '#070a08',
+        '--panel': '#101511',
+        '--search-bar-bg': '#141a16',
+        '--search-border': 'rgba(255,255,255,.10)',
+        '--search-hover': '#1b241e'
       }
     },
     {
-      name: 'BottomDense',
-      chip: '#30d158',
-      glassRGB: [18,18,22],
+      name: 'Ledus ūdens',
+      description: 'Gaiši zils un tīrs',
+      chip: '#63c7ff',
+      surfaceRGB: [9,18,24],
+      image: 'kalendars/data/skins/skin-aesthetic-water.webp',
       vars: {
-        '--bg-color': '#050507',
-        '--panel': '#0f0f12',
-        '--dock-h': '64px',
-        '--radio-h': '160px',
-        '--glass-border': 'rgba(0,255,136,0.12)',
+        '--bg-color': '#050a0e',
+        '--panel': '#0c151b',
+        '--search-bar-bg': '#111d25',
+        '--search-border': 'rgba(99,199,255,.18)',
+        '--search-hover': '#162832'
+      }
+    },
+    {
+      name: 'Saulriets',
+      description: 'Silts vakara tonis',
+      chip: '#ff9a45',
+      surfaceRGB: [24,14,9],
+      image: 'kalendars/data/skins/skin-aesthetic-sunset.webp',
+      vars: {
+        '--bg-color': '#0c0805',
+        '--panel': '#19100a',
+        '--search-bar-bg': '#21160e',
+        '--search-border': 'rgba(255,154,69,.18)',
+        '--search-hover': '#2b1b11'
+      }
+    },
+    {
+      name: 'Brīvs lidojums',
+      description: 'Silti balts un kluss',
+      chip: '#f1b76f',
+      surfaceRGB: [18,16,12],
+      image: 'kalendars/data/skins/skin-aesthetic-bird.webp',
+      vars: {
+        '--bg-color': '#0a0907',
+        '--panel': '#15130f',
+        '--search-bar-bg': '#1d1a14',
+        '--search-border': 'rgba(241,183,111,.16)',
+        '--search-hover': '#262219'
+      }
+    },
+    {
+      name: 'Chrome',
+      description: 'Metālisks un moderns',
+      chip: '#7dd4ff',
+      surfaceRGB: [10,16,22],
+      image: 'kalendars/data/skins/skin-aesthetic-cyborg.webp',
+      vars: {
+        '--bg-color': '#06090c',
+        '--panel': '#0d141b',
+        '--search-bar-bg': '#121c25',
+        '--search-border': 'rgba(125,212,255,.18)',
+        '--search-hover': '#182733'
       }
     }
   ];
@@ -3309,47 +3258,39 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
 
   function setVar(k,v){ document.documentElement.style.setProperty(k, v); }
 
-  function applyGlassIntensity(intensity, theme){
-    const t = clamp(Number(intensity)||0, 0, 100);
+  function applyGlassIntensity(_intensity, theme){
+    const rgb = theme?.surfaceRGB || [10,14,12];
+    const border = 'rgba(255,255,255,.12)';
+    const solidWin = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+    const solidMonitor = `rgb(${Math.max(0,rgb[0]-5)},${Math.max(0,rgb[1]-5)},${Math.max(0,rgb[2]-5)})`;
+    const image = theme?.image ? new URL(theme.image, document.baseURI).href : '';
 
-    // Slider semantics:
-    // 0 = almost no glass -> more solid / less transparent
-    // 100 = strong glass -> more blur / more transparency
-    const blur = Math.round(2 + (t/100)*34); // 2..36
-    const alpha = 0.86 - (t/100)*0.62; // 0.86..0.24
+    setVar('--glass-blur', '0px');
+    setVar('--glass-bg', solidWin);
+    setVar('--glass-border', border);
+    setVar('--glass-shadow', '0 24px 64px rgba(0,0,0,.58)');
 
-    const rgb = (theme && theme.glassRGB) ? theme.glassRGB : [28,28,30];
-    const glassBg = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha.toFixed(3)})`;
-    const panelAlpha = 0.72 - (t/100)*0.42;   // 0.72..0.30
-    const monitorAlpha = 0.82 - (t/100)*0.44; // 0.82..0.38
-    const controlAlpha = 0.68 - (t/100)*0.40; // 0.68..0.28
-    const borderAlpha = 0.14 + (t/100)*0.12;  // 0.14..0.26
-    const panelBg = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${panelAlpha.toFixed(3)})`;
-    const monitorBg = `rgba(${Math.max(0, rgb[0]-10)},${Math.max(0, rgb[1]-10)},${Math.max(0, rgb[2]-10)},${monitorAlpha.toFixed(3)})`;
-    const controlBg = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${controlAlpha.toFixed(3)})`;
-    const border = `rgba(255,255,255,${borderAlpha.toFixed(3)})`;
-
-    setVar('--glass-blur', blur + 'px');
-    setVar('--glass-bg', glassBg);
-
-    // Hard-apply with !important because several legacy rules already use !important.
     try {
       const rw = document.getElementById('radioWindow');
-      const body = rw ? rw.querySelector('.radio-win-body') : null;
-      const consoleEl = rw ? rw.querySelector('.bottom-console') : null;
-      const techPanels = rw ? rw.querySelectorAll('.tech-panel') : [];
-      const monitorFrames = rw ? rw.querySelectorAll('.monitor-frame') : [];
-      const controlPanels = rw ? rw.querySelectorAll('.control-panel') : [];
-      const stationButtons = rw ? rw.querySelectorAll('.station-btn, .viz-icon-btn, .nav-btn, .play-trigger, .md-mini-btn') : [];
-
-      // Glass removed: radio surfaces are solid & opaque (no blur), but still
-      // layered with subtle shade differences so it stays good-looking.
-      const solidWin     = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
-      const solidPanel   = `rgb(${Math.min(255,rgb[0]+6)},${Math.min(255,rgb[1]+7)},${Math.min(255,rgb[2]+9)})`;
-      const solidMonitor = `rgb(${Math.max(0,rgb[0]-10)},${Math.max(0,rgb[1]-10)},${Math.max(0,rgb[2]-8)})`;
+      const body = rw?.querySelector('.radio-win-body');
+      const consoleEl = rw?.querySelector('.bottom-console');
+      const techPanels = rw?.querySelectorAll('.tech-panel') || [];
+      const monitorFrames = rw?.querySelectorAll('.monitor-frame') || [];
+      const controlPanels = rw?.querySelectorAll('.control-panel') || [];
+      const stationButtons = rw?.querySelectorAll('.station-btn, .viz-icon-btn, .nav-btn, .play-trigger, .md-mini-btn') || [];
 
       if (rw) {
         rw.style.setProperty('background', solidWin, 'important');
+        rw.style.setProperty(
+          'background-image',
+          image
+            ? `linear-gradient(100deg, rgba(${rgb[0]},${rgb[1]},${rgb[2]},.92), rgba(${rgb[0]},${rgb[1]},${rgb[2]},.79) 58%, rgba(${rgb[0]},${rgb[1]},${rgb[2]},.93)), url("${image}")`
+            : 'none',
+          'important'
+        );
+        rw.style.setProperty('background-position', 'center', 'important');
+        rw.style.setProperty('background-size', 'cover', 'important');
+        rw.style.setProperty('background-repeat', 'no-repeat', 'important');
         rw.style.setProperty('border-color', border, 'important');
         rw.style.setProperty('backdrop-filter', 'none', 'important');
         rw.style.setProperty('-webkit-backdrop-filter', 'none', 'important');
@@ -3357,15 +3298,16 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
       if (body) body.style.setProperty('background', 'transparent', 'important');
       if (consoleEl) consoleEl.style.setProperty('background', 'transparent', 'important');
       techPanels.forEach(el => {
-        el.style.setProperty('background', solidPanel, 'important');
-        el.style.setProperty('border-color', border, 'important');
+        el.style.setProperty('background', 'transparent', 'important');
+        el.style.setProperty('border-color', 'transparent', 'important');
+        el.style.setProperty('box-shadow', 'none', 'important');
         el.style.setProperty('backdrop-filter', 'none', 'important');
         el.style.setProperty('-webkit-backdrop-filter', 'none', 'important');
       });
       monitorFrames.forEach(el => {
         el.style.setProperty('background', solidMonitor, 'important');
         el.style.setProperty('border-color', border, 'important');
-        el.style.setProperty('box-shadow', `0 12px 38px rgba(0,0,0,${(0.18 + t/100*0.20).toFixed(3)})`, 'important');
+        el.style.setProperty('box-shadow', '0 12px 34px rgba(0,0,0,.28)', 'important');
       });
       controlPanels.forEach(el => {
         el.style.setProperty('background', 'transparent', 'important');
@@ -3374,24 +3316,8 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
         el.style.setProperty('backdrop-filter', 'none', 'important');
         el.style.setProperty('-webkit-backdrop-filter', 'none', 'important');
       });
-      stationButtons.forEach(el => {
-        el.style.setProperty('border-color', border, 'important');
-      });
+      stationButtons.forEach(el => el.style.setProperty('border-color', border, 'important'));
     } catch(e) {}
-
-    // Optional: scale border + shadow like css.glass
-    if (theme && theme.borderRGBA) {
-      const [br,bg,bb,bo] = theme.borderRGBA; // base opacity 0..1
-      const borderA = clamp((bo || 0.18) * (0.75 + t/100*0.9), 0.06, 0.42);
-      setVar('--glass-border', `rgba(${br},${bg},${bb},${borderA.toFixed(3)})`);
-    }
-    if (theme && theme.shadowRGBA) {
-      const [sr,sg,sb,so] = theme.shadowRGBA;
-      const shadowA = clamp((so || 0.35) * (0.6 + t/100*0.9), 0.12, 0.75);
-      const y = Math.round(10 + (t/100)*16);       // 10..26
-      const blurS = Math.round(24 + (t/100)*44);   // 24..68
-      setVar('--glass-shadow', `0 ${y}px ${blurS}px rgba(${sr},${sg},${sb},${shadowA.toFixed(3)})`);
-    }
   }
 
   function parseColorToRGBStr(color){
@@ -3420,18 +3346,23 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
 
   function applyAccent(color){
     if (!color) return;
-    setVar('--radio-accent', color);
-    setVar('--radio-accent-rgb', parseColorToRGBStr(color));
-    setVar('--accent', color);
-    // keep some older alias vars in sync (safe no-ops if unused)
-    setVar('--search-accent', color);
+    const rgb = parseColorToRGBStr(color);
+    [
+      document.getElementById('radioWindow'),
+      document.getElementById('milkdropPanel'),
+      document.getElementById('ceqPanel')
+    ].filter(Boolean).forEach(target => {
+      target.style.setProperty('--radio-accent', color);
+      target.style.setProperty('--radio-accent-rgb', rgb);
+    });
+    accentEl.value = color;
   }
 
   function getSaved(){
     return {
-      name: localStorage.getItem(STORAGE.name) || 'WindowGlass',
-      accent: localStorage.getItem(STORAGE.accent) || '',
-      glass: localStorage.getItem(STORAGE.glass) || '72',
+      name: localStorage.getItem(STORAGE.name) || 'Melns',
+      accent: localStorage.getItem(STORAGE.accent) || '#1ed760',
+      accentMode: localStorage.getItem(STORAGE.accentMode) || 'off',
       enabled: localStorage.getItem(STORAGE.enabled) === '1'
     };
   }
@@ -3443,26 +3374,156 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     localStorage.setItem(STORAGE.enabled, v ? '1' : '0');
   }
 
-  function setSaved({name, accent, glass, enabled}){
+  function setSaved({name, accent, accentMode, enabled}){
     if (name) localStorage.setItem(STORAGE.name, name);
     if (accent != null) localStorage.setItem(STORAGE.accent, accent);
-    if (glass != null) localStorage.setItem(STORAGE.glass, String(glass));
+    if (accentMode != null) localStorage.setItem(STORAGE.accentMode, accentMode);
     if (enabled != null) localStorage.setItem(STORAGE.enabled, enabled ? '1' : '0');
   }
 
-  // one-time migration: ensure we start with the default RG green look
-  // (older bundles may have enabled skins in localStorage)
+  // Remove the old purple/glass presets once and start from the modern picker.
   (function themeMigration(){
     const VER_KEY = 'rg_theme_version';
-    const VER = '2';
+    const VER = '5';
     if (localStorage.getItem(VER_KEY) === VER) return;
     localStorage.setItem(VER_KEY, VER);
-    // reset all theme-related keys so the app boots with default colors
-    localStorage.removeItem(STORAGE.name);
-    localStorage.removeItem(STORAGE.accent);
-    localStorage.removeItem(STORAGE.glass);
-    localStorage.setItem(STORAGE.enabled, '0');
+    localStorage.setItem(STORAGE.name, 'Melns');
+    localStorage.setItem(STORAGE.accent, '#1ed760');
+    localStorage.setItem(STORAGE.accentMode, 'off');
+    localStorage.removeItem('rg_theme_glass');
+    localStorage.setItem(STORAGE.enabled, '1');
   })();
+
+  const FIXED_ACCENTS = {
+    green: '#1ed760',
+    warm: '#f59a45',
+    ice: '#58c7f3',
+    mono: '#d7ded9'
+  };
+  const FALLBACK_ALBUM_ACCENTS = ['#1ed760', '#35c6a4', '#58c7f3', '#f59a45', '#f2c14e', '#ef6f5b'];
+  let lastAlbumAccentKey = '';
+
+  function setAccentModeActive(mode){
+    accentModeEl.querySelectorAll('[data-accent-mode]').forEach(button => {
+      const active = button.dataset.accentMode === mode;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-checked', active ? 'true' : 'false');
+    });
+  }
+
+  function fallbackAlbumAccent(seed){
+    let hash = 0;
+    for (const char of String(seed || 'rg-radio')) hash = ((hash << 5) - hash + char.charCodeAt(0)) | 0;
+    return FALLBACK_ALBUM_ACCENTS[Math.abs(hash) % FALLBACK_ALBUM_ACCENTS.length];
+  }
+
+  function applyAlbumSurface(color){
+    const rw = document.getElementById('radioWindow');
+    if (!rw) return;
+    const values = parseColorToRGBStr(color).split(',').map(Number);
+    const [r, g, b] = values;
+    const theme = findTheme(getSaved().name);
+    const base = theme?.surfaceRGB || [5,7,6];
+    const image = theme?.image ? new URL(theme.image, document.baseURI).href : '';
+    const dark = values.map(value => Math.max(3, Math.round(value * .13)));
+    rw.style.setProperty('background-color', `rgb(${dark[0]},${dark[1]},${dark[2]})`, 'important');
+    rw.style.setProperty(
+      'background-image',
+      image
+        ? `linear-gradient(112deg, rgba(${r},${g},${b},.38), rgba(${base[0]},${base[1]},${base[2]},.84) 58%, rgba(${r},${g},${b},.20)), url("${image}")`
+        : `linear-gradient(112deg, rgba(${r},${g},${b},.34), rgba(${dark[0]},${dark[1]},${dark[2]},.96) 72%)`,
+      'important'
+    );
+    rw.style.setProperty('background-position', 'center', 'important');
+    rw.style.setProperty('background-size', 'cover', 'important');
+    rw.style.setProperty('background-repeat', 'no-repeat', 'important');
+  }
+
+  function applyAlbumColor(color){
+    applyAccent(color);
+    applyAlbumSurface(color);
+  }
+
+  function rgbToAccent(r, g, b){
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    if (max < 54 || max - min < 22) return '#1ed760';
+    const lift = max < 150 ? 150 / max : 1;
+    const values = [r, g, b].map(value => clamp(Math.round(value * lift), 48, 235));
+    return '#' + values.map(value => value.toString(16).padStart(2, '0')).join('');
+  }
+
+  function updateAlbumAccent(detail = {}){
+    if (getSaved().accentMode !== 'album') return;
+    const visibleCover = document.getElementById('npCover');
+    const coverUrl = String(detail.coverUrl || visibleCover?.currentSrc || visibleCover?.src || '');
+    const seed = `${detail.artist || ''}|${detail.title || ''}|${coverUrl}`;
+    if (seed === lastAlbumAccentKey) return;
+    lastAlbumAccentKey = seed;
+
+    const fallback = () => {
+      if (getSaved().accentMode === 'album') applyAlbumColor(fallbackAlbumAccent(seed));
+    };
+    if (!coverUrl) {
+      fallback();
+      return;
+    }
+
+    const probe = new Image();
+    probe.crossOrigin = 'anonymous';
+    probe.decoding = 'async';
+    probe.onload = () => {
+      if (getSaved().accentMode !== 'album') return;
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 8;
+        canvas.height = 8;
+        const context = canvas.getContext('2d', { willReadFrequently: true });
+        context.drawImage(probe, 0, 0, 8, 8);
+        const pixels = context.getImageData(0, 0, 8, 8).data;
+        let r = 0, g = 0, b = 0, weight = 0;
+        for (let i = 0; i < pixels.length; i += 4) {
+          if (pixels[i + 3] < 180) continue;
+          const brightness = (pixels[i] + pixels[i + 1] + pixels[i + 2]) / 3;
+          if (brightness < 28 || brightness > 238) continue;
+          const saturation = Math.max(pixels[i], pixels[i + 1], pixels[i + 2]) - Math.min(pixels[i], pixels[i + 1], pixels[i + 2]);
+          const sampleWeight = 1 + saturation / 80;
+          r += pixels[i] * sampleWeight;
+          g += pixels[i + 1] * sampleWeight;
+          b += pixels[i + 2] * sampleWeight;
+          weight += sampleWeight;
+        }
+        if (!weight) return fallback();
+        applyAlbumColor(rgbToAccent(r / weight, g / weight, b / weight));
+      } catch (_) {
+        fallback();
+      }
+    };
+    probe.onerror = fallback;
+    probe.src = coverUrl;
+  }
+
+  function applyAccentMode(mode, persist = true){
+    const nextMode = ['off', 'album', 'green', 'warm', 'ice', 'mono', 'custom'].includes(mode) ? mode : 'off';
+    if (persist) {
+      setEnabled(true);
+      setSaved({ accentMode: nextMode });
+    }
+    setAccentModeActive(nextMode);
+    if (nextMode === 'album') {
+      lastAlbumAccentKey = '';
+      updateAlbumAccent({
+        artist: document.getElementById('npArtist')?.textContent || '',
+        title: document.getElementById('npTitle')?.textContent || '',
+        coverUrl: document.getElementById('npCover')?.src || ''
+      });
+      return;
+    }
+    applyGlassIntensity(0, findTheme(getSaved().name));
+    applyAccent(nextMode === 'custom' ? getSaved().accent : (nextMode === 'off' ? '#1ed760' : FIXED_ACCENTS[nextMode]));
+  }
+
+  document.addEventListener('rg-now-playing-art', event => updateAlbumAccent(event.detail || {}));
 
   function findTheme(name){
     return THEMES.find(t => t.name.toLowerCase() === String(name||'').toLowerCase()) || THEMES[0];
@@ -3470,49 +3531,47 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
 
   function applyTheme(name){
     const theme = findTheme(name);
-    // Apply theme vars
     Object.entries(theme.vars || {}).forEach(([k,v]) => setVar(k,v));
-
-    // Glass intensity
     const saved = getSaved();
-    applyGlassIntensity(saved.glass, theme);
-
-    // Accent override (user-picked)
-    const accent = saved.accent || theme.chip;
-    applyAccent(accent);
-
-    // UI state
-    accentEl.value = accent;
-    glassEl.value = saved.glass;
+    applyGlassIntensity(0, theme);
     setSaved({name: theme.name});
     highlightActive(theme.name);
+    applyAccentMode(saved.accentMode, false);
   }
 
   function highlightActive(name){
     [...listEl.querySelectorAll('.theme-item')].forEach(el => {
-      el.classList.toggle('active', el.dataset.name === name);
+      const active = el.dataset.name === name;
+      el.classList.toggle('active', active);
+      el.setAttribute('aria-selected', active ? 'true' : 'false');
     });
   }
 
-  function renderList(filter=''){
-    const q = filter.trim().toLowerCase();
+  function renderList(){
     listEl.innerHTML = '';
     const saved = getSaved();
-    const items = THEMES.filter(t => !q || t.name.toLowerCase().includes(q));
 
-    items.forEach(t => {
-      const row = document.createElement('div');
+    THEMES.forEach(t => {
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.setAttribute('role', 'option');
       row.className = 'theme-item' + (saved.name === t.name ? ' active' : '');
+      if (t.isDefault) row.classList.add('is-default');
       row.dataset.name = t.name;
+      const previewUrl = t.image ? new URL(t.image, document.baseURI).href : '';
+      row.style.setProperty('--theme-preview', previewUrl ? `url("${previewUrl}")` : 'none');
       row.innerHTML = `
-        <div class="name">${t.name}</div>
-        <div class="chip" style="background:${t.chip}"></div>
+        <span class="theme-card-shade"></span>
+        <span class="theme-card-copy">
+          <strong>${t.name}</strong>
+          <small>${t.description}</small>
+        </span>
+        <span class="theme-check" aria-hidden="true">✓</span>
       `;
       row.addEventListener('click', (e)=>{
         e.stopPropagation();
         setEnabled(true);
-        const cur = getSaved();
-        setSaved({name: t.name, glass: cur.glass, accent: cur.accent});
+        setSaved({name: t.name});
         applyTheme(t.name);
       });
       listEl.appendChild(row);
@@ -3520,29 +3579,24 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
   }
 
   function positionPanel(){
-    const b = themeBtn.getBoundingClientRect();
-    const pw = 340;
-    const ph = 430;
+    const radio = document.getElementById('radioWindow');
+    const radioRect = radio?.getBoundingClientRect();
+    const pw = Math.min(680, window.innerWidth - 24);
     panel.style.width = pw + 'px';
-
-    let left = b.left + b.width - pw;
-    left = clamp(left, 12, window.innerWidth - pw - 12);
-
-    let top = b.top - ph - 12;
-    if (top < 58) top = b.bottom + 12;
-    top = clamp(top, 58, window.innerHeight - ph - 12);
-
-    panel.style.left = left + 'px';
+    const ph = Math.min(panel.scrollHeight || 520, window.innerHeight - 24);
+    const bottom = Math.min((radioRect?.top || window.innerHeight) - 12, window.innerHeight - 12);
+    const top = Math.max(12, bottom - ph);
+    panel.style.left = Math.max(12, (window.innerWidth - pw) / 2) + 'px';
     panel.style.top = top + 'px';
+    panel.style.maxHeight = Math.max(260, bottom - 12) + 'px';
   }
 
   function openPanel(){
-    positionPanel();
     panel.classList.add('open');
     panel.setAttribute('aria-hidden','false');
-    searchEl.value = '';
-    renderList('');
-    setTimeout(()=>searchEl.focus(), 0);
+    renderList();
+    setAccentModeActive(getSaved().accentMode);
+    requestAnimationFrame(positionPanel);
   }
   function closePanel(){
     panel.classList.remove('open');
@@ -3551,19 +3605,14 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
 
   // init
   const saved = getSaved();
-  renderList('');
+  renderList();
 
-  // IMPORTANT: keep the default look on start unless the user explicitly enabled skins.
   if (isEnabled()) {
     applyTheme(saved.name);
-    if (saved.glass) glassEl.value = saved.glass;
   } else {
-    // reflect current CSS defaults in controls (no visual changes on load)
-    const cs = getComputedStyle(document.documentElement);
-    const curAccent = (cs.getPropertyValue('--radio-accent') || '').trim() || '#00ff88';
-    accentEl.value = curAccent;
-    glassEl.value = saved.glass || '72';
+    accentEl.value = saved.accent;
     highlightActive(saved.name);
+    applyAccentMode(saved.accentMode, false);
   }
 
   // events
@@ -3574,23 +3623,19 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
   });
   closeBtn.addEventListener('click', (e)=>{ e.stopPropagation(); closePanel(); });
 
-  searchEl.addEventListener('input', ()=> renderList(searchEl.value));
-
   accentEl.addEventListener('input', ()=>{
     const color = accentEl.value;
     applyAccent(color);
     setEnabled(true);
-    const cur = getSaved();
-    setSaved({accent: color, name: cur.name, glass: cur.glass});
+    setSaved({accent: color, accentMode: 'custom'});
+    setAccentModeActive('custom');
   });
 
-  glassEl.addEventListener('input', ()=>{
-    const v = glassEl.value;
-    const theme = findTheme(getSaved().name);
-    applyGlassIntensity(v, theme);
-    setEnabled(true);
-    const cur = getSaved();
-    setSaved({glass: v, name: cur.name, accent: cur.accent});
+  accentModeEl.addEventListener('click', event => {
+    const button = event.target.closest('[data-accent-mode]');
+    if (!button) return;
+    event.stopPropagation();
+    applyAccentMode(button.dataset.accentMode);
   });
 
   document.addEventListener('pointerdown', (e)=>{

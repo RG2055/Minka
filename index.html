@@ -325,7 +325,7 @@
 </noscript>
 <!-- Radio polish overrides — must load after all other radio CSS -->
 <link rel="stylesheet" href="css/radio_polish_v1.css?v=20260708b">
-<link rel="stylesheet" href="css/radio_lacitis_v2.css?v=20260727c">
+<link rel="stylesheet" href="css/radio_lacitis_v2.css?v=20260727f">
 
 <style>
 /* ═══ MINKA v11 Shell ═══ */
@@ -813,23 +813,33 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <!-- Theme panel -->
 <div id="themePanel" class="theme-panel" aria-hidden="true">
   <div class="theme-head">
-    <div class="theme-title">THEME</div>
-    <button class="theme-close" id="themeClose" aria-label="Close">×</button>
+    <div>
+      <div class="theme-kicker">RG RADIO</div>
+      <div class="theme-title">Izvēlies skatu</div>
+      <div class="theme-subtitle">Fons ir viegls un nekustīgs — netērē liekus resursus.</div>
+    </div>
+    <button class="theme-close" id="themeClose" aria-label="Aizvērt skatu izvēli">×</button>
   </div>
-  <div class="theme-search-wrap">
-    <input id="themeSearch" type="text" placeholder="Search theme…" autocomplete="off"/>
-  </div>
-  <div id="themeList" class="theme-list"></div>
+  <div id="themeList" class="theme-list" role="listbox" aria-label="Radio skati"></div>
   <div class="theme-controls">
-    <label class="trow">
-      <span>Accent</span>
-      <input id="accentPicker" type="color" value="#00ff88"/>
-    </label>
-    <label class="trow">
-      <span>Glass</span>
-      <input id="glassSlider" type="range" min="0" max="100" value="72"/>
-    </label>
-    <div class="theme-hint">Tip: themes change variables only. Your layout stays the same.</div>
+    <div class="theme-control-head">
+      <div>
+        <strong>Krāsu efekts</strong>
+        <span>Maina radio akcentu, nevis visu Minka dizainu.</span>
+      </div>
+      <label class="theme-custom-color" title="Sava krāsa">
+        <span>Sava</span>
+        <input id="accentPicker" type="color" value="#1ed760"/>
+      </label>
+    </div>
+    <div id="accentModeList" class="accent-mode-list" role="radiogroup" aria-label="Radio krāsu efekts">
+      <button type="button" data-accent-mode="off"><span class="effect-swatch off-swatch"></span><b>Bez efekta</b><small>Noklusējums</small></button>
+      <button type="button" data-accent-mode="album"><span class="effect-swatch album-swatch"></span><b>Albuma krāsa</b><small>Automātiski</small></button>
+      <button type="button" data-accent-mode="green"><span class="effect-swatch green-swatch"></span><b>RG zaļš</b><small>Klasisks</small></button>
+      <button type="button" data-accent-mode="warm"><span class="effect-swatch warm-swatch"></span><b>Silts</b><small>Dzintars</small></button>
+      <button type="button" data-accent-mode="ice"><span class="effect-swatch ice-swatch"></span><b>Ledus</b><small>Vēss</small></button>
+      <button type="button" data-accent-mode="mono"><span class="effect-swatch mono-swatch"></span><b>Mono</b><small>Neitrāls</small></button>
+    </div>
   </div>
 </div>
 
@@ -878,9 +888,8 @@ async function loadRadioScripts() {
     _fa.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
     document.head.appendChild(_fa);
   }
-  await loadAny(['js/radio.js?v=20260727e']);
+  await loadAny(['js/radio.js?v=20260727l']);
   await loadAny(['js/radio_extras_v4.js?v=20260715b']);
-  await loadAny(['js/ambilight.js?v=20260612e']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;
   return true;
@@ -5269,7 +5278,7 @@ window.addEventListener('message', function(e) {
 
 <script>
 if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-  const MINKA_APP_VERSION = '2026.07.27f';
+  const MINKA_APP_VERSION = '2026.07.27n';
   const MINKA_VERSION_KEY = 'minka_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
