@@ -725,6 +725,16 @@ html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) 
   column-gap: 6px !important;
 }
 
+html body .left-panel #radiographers-duty .mk-side-clock-row:has(.mk-side-timer) {
+  grid-template-columns: 34px minmax(0, 1fr) !important;
+  gap: 2px !important;
+}
+
+html body .left-panel #radiographers-duty .mk-side-clock-row:has(.mk-side-timer) .mk-side-shift-chip {
+  min-width: 34px !important;
+  padding-inline: 3px !important;
+}
+
 html body .right-panel #radiologists-duty .mk-side-clock-row {
   gap: 2px !important;
 }
