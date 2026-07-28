@@ -1103,7 +1103,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260728swap2"></script>
+<script src="js/calendar.js?v=20260728opt1"></script>
 <script src="js/calendar_extras_v4.js?v=20260728f"></script>
 <script src="js/fatigue.js?v=20260728f"></script>
 <script src="js/nightsplit.js?v=20260728g" defer></script>
@@ -7504,50 +7504,19 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   animation: none !important;
 }
 
-:root.mk-mobile-shell .main-panel.mk-day-transition-next #shift-progress-wrap,
-:root.mk-mobile-shell .main-panel.mk-day-transition-next .scroll-row,
-:root.mk-mobile-shell .main-panel.mk-day-transition-next .mobile-swipe-hint,
-:root.mk-mobile-shell .main-panel.mk-day-transition-next #grafiks-list,
-:root.mk-mobile-shell .main-panel.mk-day-transition-next .side-panel,
-:root.mk-mobile-shell .main-panel.mk-day-transition-prev #shift-progress-wrap,
-:root.mk-mobile-shell .main-panel.mk-day-transition-prev .scroll-row,
-:root.mk-mobile-shell .main-panel.mk-day-transition-prev .mobile-swipe-hint,
-:root.mk-mobile-shell .main-panel.mk-day-transition-prev #grafiks-list,
-:root.mk-mobile-shell .main-panel.mk-day-transition-prev .side-panel {
-  animation-duration: .24s !important;
-  animation-timing-function: cubic-bezier(.2,.7,.2,1) !important;
-  animation-fill-mode: both !important;
-}
-
-:root.mk-mobile-shell .main-panel.mk-day-transition-next #shift-progress-wrap,
-:root.mk-mobile-shell .main-panel.mk-day-transition-next .scroll-row,
-:root.mk-mobile-shell .main-panel.mk-day-transition-next .mobile-swipe-hint,
-:root.mk-mobile-shell .main-panel.mk-day-transition-next #grafiks-list,
-:root.mk-mobile-shell .main-panel.mk-day-transition-next .side-panel {
-  animation-name: mkDaySlideNext !important;
-}
-
-:root.mk-mobile-shell .main-panel.mk-day-transition-prev #shift-progress-wrap,
-:root.mk-mobile-shell .main-panel.mk-day-transition-prev .scroll-row,
-:root.mk-mobile-shell .main-panel.mk-day-transition-prev .mobile-swipe-hint,
-:root.mk-mobile-shell .main-panel.mk-day-transition-prev #grafiks-list,
-:root.mk-mobile-shell .main-panel.mk-day-transition-prev .side-panel {
-  animation-name: mkDaySlidePrev !important;
-}
-
 @keyframes mkSwipeHintPulse {
   0%, 100% { transform: translateY(0); box-shadow: 0 8px 22px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.08); }
   50% { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(91,132,255,0.16), inset 0 1px 0 rgba(255,255,255,0.08); }
 }
 
-@keyframes mkDaySlideNext {
-  0% { opacity: .72; transform: translate3d(14px, 0, 0) scale(.992); filter: saturate(.92); }
-  100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: saturate(1); }
-}
-
-@keyframes mkDaySlidePrev {
-  0% { opacity: .72; transform: translate3d(-14px, 0, 0) scale(.992); filter: saturate(.92); }
-  100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: saturate(1); }
+@supports (text-fit: shrink) {
+  .duty-block:not(.mk-side-card) .duty-name {
+    display: block;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    white-space: nowrap;
+    text-fit: shrink;
+  }
 }
 
 :root.mk-mobile-shell .scroller {

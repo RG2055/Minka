@@ -13,6 +13,8 @@ const input = document.getElementById('minkaBarInput');
 const resultsArea = document.getElementById('minkaResults');
 const clearBtn = document.getElementById('searchClearBtn');
 const GRAFIKS_LOADER_MIN_MS = document.documentElement.classList.contains('mk-mobile-shell') ? 450 : 2600;
+const G_DAY_PERF_ENABLED = location.search.includes('dayperf=1');
+const G_HAS_NATIVE_TEXT_FIT = !!(window.CSS && CSS.supports('text-fit', 'shrink'));
 window.__minkaGrafiksLoaderStartedAt = window.__minkaGrafiksLoaderStartedAt || Date.now();
 window.hospitalDatabase = Array.isArray(window.hospitalDatabase) ? window.hospitalDatabase : [];
 var hospitalDatabase = window.hospitalDatabase;
@@ -1362,36 +1364,23 @@ function filterFullList(btn) {
   }
 
   function g_selectDay(date) {
+    const dayPerfStartedAt = (window.__minkaMeasureDaySwitches || G_DAY_PERF_ENABLED)
+      ? performance.now()
+      : 0;
     const prevDate = normalizeDateStr(activeDateStr);
     date = normalizeDateStr(date);
     if(!date) return;
     window.__minkaUiBusyUntil = Date.now() + 650;
     activeDateStr = date;
     window.__activeDateStr = date;
-    try {
-      const panel = document.querySelector('.main-panel');
-      if (panel && document.documentElement.classList.contains('mk-mobile-shell')) {
-        let dir = 0;
-        if (prevDate && prevDate !== date) {
-          const [pd, pm, py] = prevDate.split('.').map(Number);
-          const [nd, nm, ny] = date.split('.').map(Number);
-          dir = new Date(ny, nm - 1, nd) > new Date(py, pm - 1, pd) ? 1 : -1;
-        }
-        panel.classList.remove('mk-day-transition-next', 'mk-day-transition-prev');
-        void panel.offsetWidth;
-        panel.classList.add(dir >= 0 ? 'mk-day-transition-next' : 'mk-day-transition-prev');
-        clearTimeout(window.__minkaDayFxTimer);
-        window.__minkaDayFxTimer = setTimeout(() => {
-          panel.classList.remove('mk-day-transition-next', 'mk-day-transition-prev');
-        }, 260);
-      }
-    } catch(_e) {}
     try{window.dispatchEvent(new CustomEvent('daySelected', {detail:{date}}))}catch(e){}
-    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
     const safeId = 'p-' + date.replace(/\./g, '-');
+    const previousPill = document.querySelector('.pill.active');
+    if (previousPill && previousPill.id !== safeId) previousPill.classList.remove('active');
     const p = document.getElementById(safeId);
     if(p) { p.classList.add('active'); p.scrollIntoView({inline:'center', behavior:'smooth', block: 'nearest'}); }
-    document.getElementById('grafiks-dateTitle').innerText = date;
+    const dateTitle = document.getElementById('grafiks-dateTitle');
+    if (dateTitle) dateTitle.textContent = date;
     g_applyTodayUI();
     g_updateList();
     g_updatePanelsForDate();
@@ -1409,6 +1398,20 @@ function filterFullList(btn) {
       if (isToday) box.classList.remove('hidden');
       else box.classList.add('hidden');
     });
+
+    if (dayPerfStartedAt) {
+      const sample = {
+        from: prevDate,
+        to: date,
+        syncMs: +(performance.now() - dayPerfStartedAt).toFixed(2),
+        frameMs: null
+      };
+      (window.__minkaDaySwitchMetrics ||= []).push(sample);
+      requestAnimationFrame(() => {
+        sample.frameMs = +(performance.now() - dayPerfStartedAt).toFixed(2);
+        document.documentElement.dataset.minkaDayPerf = JSON.stringify(window.__minkaDaySwitchMetrics.slice(-20));
+      });
+    }
   }
 
   function g_applyTodayUI(){
@@ -2535,6 +2538,9 @@ function filterFullList(btn) {
       const firstName = formatSideNamePart(nameParts[0], false);
       const surname = formatSideNamePart(nameParts.slice(1).join(' '), true);
       const initials = (nameParts[0]?.[0] || '') + (nameParts[1]?.[0] || '');
+      const personEmoji = window.MinkaEmoji && window.MinkaEmoji.get
+        ? (window.MinkaEmoji.get(workerName) || '')
+        : '';
       const uiState = getWorkerUiState(worker, worker.date, options.now);
       const fatigue = getSideFatigue(workerName);
       const iconHtml = getSideIconHtml(worker.type);
@@ -2561,7 +2567,10 @@ function filterFullList(btn) {
       return `
         <article class="duty-block mk-side-card ${options.roleClass}${iconHtml ? ' has-shift-icon' : ''}${isDone ? ' duty-done' : ''}" style="${sideVars}" data-worker="${workerAttr}" data-shift="${shiftAttr}" data-type="${typeAttr}" data-fatigue="${fatigue.key}">
           <div class="mk-side-card-main">
-            <div class="mk-side-icon-rail"><span class="mk-side-initials" aria-hidden="true">${mkEscAttr(initials)}</span></div>
+            <div class="mk-side-icon-rail">
+              ${personEmoji ? `<span class="mk-emoji-side" data-mk-emoji-click="1">${mkEscAttr(personEmoji)}</span>` : ''}
+              <span class="mk-side-initials" aria-hidden="true"${personEmoji ? ' hidden' : ''}>${mkEscAttr(initials)}</span>
+            </div>
             <div class="mk-side-card-body">
               <div class="name-row mk-side-name-row">
                 <div class="mk-side-name-wrap">
@@ -5015,6 +5024,7 @@ function filterFullList(btn) {
   }
 
   function g_adjustDutyNameFontSize() {
+    if (G_HAS_NATIVE_TEXT_FIT) return;
     const containers = [document.getElementById('radiographers-duty'), document.getElementById('radiologists-duty')];
     containers.forEach(container => {
       if (!container) return;
