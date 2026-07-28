@@ -151,6 +151,7 @@
   }
   var _roomBc=null;
   var _roomPolling=false;
+  var _roomPulling={};
   try{ _roomBc = new BroadcastChannel('minka-ns-rooms-sync'); }catch(_e){}
 
   function activeDateKey(){
@@ -284,7 +285,8 @@
   }
   function pullRoomState(dateStr, cb){
     var api=activeRoomApi();
-    if(!api || !dateStr) return;
+    if(!api || !dateStr || _roomPulling[dateStr]) return;
+    _roomPulling[dateStr]=true;
     api.apiFetch(NS_ROOM_API_PATH + '?date=' + encodeURIComponent(dateStr))
       .then(function(r){ return r.json(); })
       .then(function(remote){
@@ -295,11 +297,16 @@
           saveRoomSavedState(dateStr, payload);
           if(cb) cb(payload);
         }
-      }).catch(function(){});
+      }).catch(function(){})
+      .finally(function(){ delete _roomPulling[dateStr]; });
   }
   function startRoomPolling(){
     if(_roomPolling) return;
     _roomPolling=true;
+    function refreshActiveRooms(){
+      var d=activeDateKey();
+      if(d) pullRoomState(d, function(){ if(d===activeDateKey()) render(); });
+    }
     if(_roomBc){
       _roomBc.onmessage=function(evt){
         try{
@@ -315,13 +322,14 @@
         }catch(_e){}
       };
     }
-    var d0=activeDateKey();
-    if(d0) pullRoomState(d0, function(){ if(d0===activeDateKey()) render(); });
+    refreshActiveRooms();
     setInterval(function(){
       if(document.hidden) return;
-      var d=activeDateKey();
-      if(d) pullRoomState(d, function(){ if(d===activeDateKey()) render(); });
-    }, 45000);
+      refreshActiveRooms();
+    }, 12000);
+    document.addEventListener('visibilitychange', function(){
+      if(!document.hidden) refreshActiveRooms();
+    });
   }
   function saveCurrentDayState(){
     try{

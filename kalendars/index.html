@@ -1,8 +1,14 @@
 ﻿<!DOCTYPE html>
 <html lang="lv">
 <head>
-<!-- Dark first paint: prevents white flash on PWA wake/reload. -->
-<style>html{background:#060b13;}body{background:#060b13;}</style>
+<!-- Dark first paint: prevents white flash and hides the incomplete data layout. -->
+<style>html{background:#060b13;}body{background:#060b13;}html.mk-schedule-booting #grafiks-app{visibility:hidden!important;}</style>
+<script>
+document.documentElement.classList.add('mk-schedule-booting');
+window.setTimeout(function () {
+  document.documentElement.classList.remove('mk-schedule-booting');
+}, 5000);
+</script>
 <script>
 (function() {
   var API_BASE = 'https://minka-api.gamernr1elite.workers.dev';
@@ -124,6 +130,7 @@
 <!-- bundle.css is critical ï¿½ load normally -->
 <link rel="stylesheet" href="css/bundle.css?v=20260621n">
 <link rel="stylesheet" href="css/skin-draw.css?v=20260723a">
+<link rel="stylesheet" href="css/side-cards-v2.css?v=20260728k">
 <!-- External fonts/icons: non-blocking preload swap -->
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1056,10 +1063,10 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260727a"></script>
-<script src="js/calendar_extras_v4.js?v=20260715m"></script>
-<script src="js/fatigue.js?v=20260715e"></script>
-<script src="js/nightsplit.js?v=20260703a" defer></script>
+<script src="js/calendar.js?v=20260728g"></script>
+<script src="js/calendar_extras_v4.js?v=20260728f"></script>
+<script src="js/fatigue.js?v=20260728f"></script>
+<script src="js/nightsplit.js?v=20260728g" defer></script>
 <script src="js/monthcal.js?v=20260622h" defer></script>
 <script src="js/design_v1.js" defer></script>
 <script src="js/theme.js?v=20260724f" defer></script>
@@ -6001,6 +6008,18 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
 html.mk-low-spec .pkt-cat { animation: none !important; }
 html.mk-low-spec .pkt-cat .pkt-eyes { animation: pktSleepEyes 8.8s ease-in-out infinite !important; }
 html.mk-low-spec .pkt-cat.pkt-awake .pkt-eyes { animation: pktAwakeEyes 1.45s ease-in-out infinite !important; }
+
+/* Closed night-split content must not keep animating behind the schedule.
+   Low-spec mode keeps these purely decorative details static even when open. */
+#nsOverlay:not(.open) .ns-room-bed-zzz span,
+#nsOverlay:not(.open) .pkt-cat .pkt-eyes {
+  animation-play-state: paused !important;
+}
+html.mk-low-spec #nsOverlay .ns-room-bed-zzz span,
+html.mk-low-spec #nsOverlay .pkt-cat .pkt-eyes,
+html.mk-low-spec #ns-bar-toggle .ns-moon {
+  animation: none !important;
+}
 
 .ns-room-fit {
   position: relative !important;
