@@ -259,7 +259,9 @@
     if (!window.MinkaLevels || !window.MinkaLevels.buildAllTimeStats) return 1;
     try {
       var stats = window.MinkaLevels.buildAllTimeStats();
-      var ws = stats[name];
+      var ws = window.MinkaLevels.findWorkerStats
+        ? window.MinkaLevels.findWorkerStats(stats, name)
+        : stats[name];
       if (!ws || !ws.levelData) return 1;
       return ws.levelData.current.lvl || 1;
     } catch(e) { return 1; }

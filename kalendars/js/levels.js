@@ -22,20 +22,49 @@
   const LEVEL_TITLES = {
     1: 'Kadets',
     2: 'Operators',
-    3: 'Specialists',
+    3: 'Speciālists',
     4: 'Eksperts',
     5: 'Meistars',
     6: 'Virsnieks',
     7: 'Komandieris',
     8: 'Elite',
-    9: 'Legenda',
-    10: 'Veterans'
+    9: 'Leģenda',
+    10: 'Veterāns'
   };
 
-  const HOLIDAYS = new Set([
-    '01.01', '18.11', '24.06', '23.06', '04.05', '15.05',
-    '25.12', '26.12', '31.12', '01.05', '14.06', '11.11'
+  const FIXED_PUBLIC_HOLIDAYS = new Set([
+    '01.01', '01.05', '04.05', '23.06', '24.06', '18.11',
+    '24.12', '25.12', '26.12', '31.12'
   ]);
+
+  function dateKey(date) {
+    return String(date.getDate()).padStart(2, '0') + '.' + String(date.getMonth() + 1).padStart(2, '0');
+  }
+
+  function addDays(date, days) {
+    var copy = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    copy.setDate(copy.getDate() + days);
+    return copy;
+  }
+
+  // Gregorian Easter (Meeus/Jones/Butcher), used for Latvia's movable holidays.
+  function easterSunday(year) {
+    var a = year % 19;
+    var b = Math.floor(year / 100);
+    var c = year % 100;
+    var d = Math.floor(b / 4);
+    var e = b % 4;
+    var f = Math.floor((b + 8) / 25);
+    var g = Math.floor((b - f + 1) / 3);
+    var h = (19 * a + b - d - g + 15) % 30;
+    var i = Math.floor(c / 4);
+    var k = c % 4;
+    var l = (32 + 2 * e + 2 * i - h - k) % 7;
+    var m = Math.floor((a + 11 * h + 22 * l) / 451);
+    var month = Math.floor((h + l - 7 * m + 114) / 31);
+    var day = ((h + l - 7 * m + 114) % 31) + 1;
+    return new Date(year, month - 1, day);
+  }
 
   const EMOJI_SECTIONS = [
     { label: 'Medicina', emoji: ['🩻','💉','🏥','⚕️','🔬','💊','🩺','🩹','🧬','🫀','🧠','🦷','🩸','🧪','🔭','🫁','🧲','⚗️','🩼','🦺','🥼','🚑','🏋️‍♂️','💪','🧘','🫶','💆','🛌','🏃','🧑‍⚕️'] },
@@ -48,9 +77,30 @@
   ];
 
   function isHoliday(dateStr) {
-    var p = String(dateStr || '').split('.');
-    if (p.length < 2) return false;
-    return HOLIDAYS.has(p[0] + '.' + p[1]);
+    var date = normalizeDateObj(dateStr);
+    if (!date) return false;
+    var key = dateKey(date);
+    if (FIXED_PUBLIC_HOLIDAYS.has(key)) return true;
+
+    var year = date.getFullYear();
+    var easter = easterSunday(year);
+    var movable = [
+      addDays(easter, -2), // Lielā Piektdiena
+      easter,
+      addDays(easter, 1),  // Otrās Lieldienas
+      addDays(easter, 49)  // Vasarsvētki
+    ];
+    // Mother's Day: second Sunday in May.
+    var may1 = new Date(year, 4, 1);
+    var firstSunday = 1 + ((7 - may1.getDay()) % 7);
+    movable.push(new Date(year, 4, firstSunday + 7));
+
+    // If 4 May or 18 November falls on a weekend, the next Monday is a holiday.
+    [new Date(year, 4, 4), new Date(year, 10, 18)].forEach(function(publicHoliday) {
+      if (publicHoliday.getDay() === 6) movable.push(addDays(publicHoliday, 2));
+      if (publicHoliday.getDay() === 0) movable.push(addDays(publicHoliday, 1));
+    });
+    return movable.some(function(candidate) { return dateKey(candidate) === key; });
   }
 
   function getLevelData(xp) {
@@ -98,8 +148,15 @@
   function normalizeDateObj(dateStr) {
     var p = String(dateStr || '').split('.');
     if (p.length < 3) return null;
-    var d = new Date(+p[2], +p[1] - 1, +p[0]);
-    return isNaN(d.getTime()) ? null : d;
+    var day = +p[0];
+    var month = +p[1];
+    var year = +p[2];
+    var d = new Date(year, month - 1, day);
+    if (isNaN(d.getTime()) ||
+        d.getFullYear() !== year ||
+        d.getMonth() !== month - 1 ||
+        d.getDate() !== day) return null;
+    return d;
   }
 
   function calcLongestStreak(dates) {
@@ -124,18 +181,18 @@
 
   function getWeekKey(dateStr) {
     var p = String(dateStr || '').split('.');
-    if (p.length < 3) return '0000-00';
-    var d = new Date(+p[2], +p[1] - 1, +p[0]);
-    var jan1 = new Date(d.getFullYear(), 0, 1);
-    var week = Math.ceil((((d - jan1) / 86400000) + jan1.getDay() + 1) / 7);
-    return d.getFullYear() + '-' + String(week).padStart(2, '0');
+    if (p.length < 3) return '';
+    var d = new Date(Date.UTC(+p[2], +p[1] - 1, +p[0]));
+    if (isNaN(d.getTime())) return '';
+    // A stable Monday index avoids the 52/53-week rollover bug at New Year.
+    var daysFromMonday = (d.getUTCDay() + 6) % 7;
+    d.setUTCDate(d.getUTCDate() - daysFromMonday);
+    return String(Math.floor(d.getTime() / 604800000));
   }
 
   function weekDiff(wk1, wk2) {
     if (!wk1 || !wk2) return 0;
-    var p1 = wk1.split('-');
-    var p2 = wk2.split('-');
-    return Math.abs((+p2[0] - +p1[0]) * 52 + (+p2[1] - +p1[1]));
+    return Math.abs(Number(wk2) - Number(wk1));
   }
 
   function getEffectiveTodayStr() {
@@ -145,13 +202,23 @@
     return String(eff.getDate()).padStart(2, '0') + '.' + String(eff.getMonth() + 1).padStart(2, '0') + '.' + eff.getFullYear();
   }
 
-  function isCurrentlyOnDuty(workerName) {
+  function isEarnedScheduleDate(dateStr) {
+    var date = normalizeDateObj(dateStr);
+    var today = normalizeDateObj(getEffectiveTodayStr());
+    return !!date && !!today && date <= today;
+  }
+
+  function buildCurrentDutySet() {
     var now = new Date();
     var today = getEffectiveTodayStr();
-    var stores = [window.__grafiksStore || {}, window.__grafiksStoreRad || {}];
+    var duty = new Set();
+    var stores = [
+      { data: window.__grafiksStore || {}, isRad: false },
+      { data: window.__grafiksStoreRad || {}, isRad: true }
+    ];
 
     for (var s = 0; s < stores.length; s++) {
-      var store = stores[s];
+      var store = stores[s].data;
       for (var monthKey in store) {
         if (!Object.prototype.hasOwnProperty.call(store, monthKey)) continue;
         var monthArr = store[monthKey];
@@ -161,7 +228,7 @@
           if (!day || day.date !== today || !Array.isArray(day.workers)) continue;
           for (var j = 0; j < day.workers.length; j++) {
             var w = day.workers[j];
-            if (!w || w.name !== workerName || !w.startTime || !w.endTime) continue;
+            if (!w || !w.name || !w.startTime || !w.endTime) continue;
             var sh = String(w.startTime).split(':').map(Number);
             var eh = String(w.endTime).split(':').map(Number);
             var start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), sh[0] || 0, sh[1] || 0, 0, 0);
@@ -174,13 +241,15 @@
               start.setDate(start.getDate() - 1);
               end.setDate(end.getDate() - 1);
             }
-            if (now >= start && now < end) return true;
+            if (now >= start && now < end) {
+              duty.add(_workerKey(w.name, stores[s].isRad));
+            }
           }
         }
       }
     }
 
-    return false;
+    return duty;
   }
 
   function _bolusChangesPerPerson() {
@@ -209,6 +278,9 @@
   // coffee counts, bolus history). Latvian-aware lowercasing, collapsed spaces.
   function _nameKey(name) {
     return String(name || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase('lv-LV');
+  }
+  function _workerKey(name, isRad) {
+    return (isRad ? 'RD|' : 'RG|') + _nameKey(name);
   }
   function _coffeeKey(name) {
     return _nameKey(name);
@@ -334,15 +406,29 @@
     var coffeeDetails = _coffeeDetailsPerPerson(coffeeTotals);
 
     function processStore(src, isRad) {
+      var seen = new Set();
       Object.values(src).forEach(function(monthArr) {
         if (!Array.isArray(monthArr)) return;
         monthArr.forEach(function(day) {
           if (!day || !Array.isArray(day.workers)) return;
           day.workers.forEach(function(w) {
             if (!w.name || !w.shift) return;
+            var scheduleDate = String(w.date || day.date || '');
+            if (!isEarnedScheduleDate(scheduleDate)) return;
+            var dedupeKey = [
+              scheduleDate,
+              _nameKey(w.name),
+              String(w.shift || ''),
+              String(w.type || '').toUpperCase(),
+              String(w.startTime || ''),
+              String(w.endTime || '')
+            ].join('|');
+            if (seen.has(dedupeKey)) return;
+            seen.add(dedupeKey);
             var name = w.name;
-            if (!workers[name]) {
-              workers[name] = {
+            var workerId = _workerKey(name, isRad);
+            if (!workers[workerId]) {
+              workers[workerId] = {
                 name: name,
                 isRad: isRad,
                 totalHrs: 0,
@@ -356,16 +442,14 @@
             }
             var hrs = parseInt(String(w.shift || '').replace(/\D/g, ''), 10) || 8;
             var type = String(w.type || '').toUpperCase();
-            workers[name].totalHrs += hrs;
-            if (type === 'NAKTS') workers[name].nakts++;
-            else if (type === 'DIENNAKTS' || hrs >= 24) workers[name].h24++;
-            else workers[name].diena++;
-            if (w.date && isHoliday(w.date)) workers[name].holidays++;
-            if (w.date) {
-              workers[name].dates.push(w.date);
-              var wk = getWeekKey(w.date);
-              workers[name].weeks[wk] = (workers[name].weeks[wk] || 0) + hrs;
-            }
+            workers[workerId].totalHrs += hrs;
+            if (type === 'NAKTS') workers[workerId].nakts++;
+            else if (type === 'DIENNAKTS' || hrs >= 24) workers[workerId].h24++;
+            else workers[workerId].diena++;
+            if (isHoliday(scheduleDate)) workers[workerId].holidays++;
+            workers[workerId].dates.push(scheduleDate);
+            var wk = getWeekKey(scheduleDate);
+            if (wk) workers[workerId].weeks[wk] = (workers[workerId].weeks[wk] || 0) + hrs;
           });
         });
       });
@@ -400,14 +484,14 @@
       if (hasAll) xp += 200;
       else if (has2) xp += 80;
 
-      var weekKeys = Object.keys(ws.weeks);
+      var weekKeys = Object.keys(ws.weeks).map(Number).filter(Number.isFinite).sort(function(a, b) { return a - b; });
       var regularityBonus = 0;
       if (weekKeys.length > 0) {
-        var minWk = weekKeys.reduce(function(a, b) { return a < b ? a : b; });
-        var maxWk = weekKeys.reduce(function(a, b) { return a > b ? a : b; });
+        var minWk = weekKeys[0];
+        var maxWk = weekKeys[weekKeys.length - 1];
         var totalWeeks = Math.max(1, weekDiff(minWk, maxWk) + 1);
-        var regularity = weekKeys.length / totalWeeks;
-        regularityBonus = Math.round(regularity * 150);
+        var regularity = Math.min(1, weekKeys.length / totalWeeks);
+        regularityBonus = Math.min(150, Math.round(regularity * 150));
         xp += regularityBonus;
       }
 
@@ -465,6 +549,7 @@
       'JŪLIJS':7,'JULIJS':7,'AUGUSTS':8,'SEPTEMBRIS':9,'OKTOBRIS':10,'NOVEMBRIS':11,'DECEMBRIS':12};
     var mKey = Object.keys(mNums).find(function(k){ return amUp.indexOf(k) !== -1; });
     var amMM = mKey ? mNums[mKey] : null;
+    if (!amMM || !amYear) return workerStats;
 
     function process(src, isRad) {
       var seen = new Set();
@@ -478,25 +563,33 @@
           var dp = String(day.date || '').split('.');
           if (dp.length !== 3) continue;
           var dd = Number(dp[0]), mm = Number(dp[1]), yy = Number(dp[2]);
-          if (amMM && amYear && (mm !== amMM || String(yy) !== amYear)) continue;
+          if (mm !== amMM || String(yy) !== amYear) continue;
           for (var j = 0; j < day.workers.length; j++) {
             var w = day.workers[j];
             if (!w.name || !w.shift) continue;
-            var dedupKey = day.date + '|' + w.name + '|' + w.shift;
+            var dedupKey = [
+              day.date,
+              _nameKey(w.name),
+              String(w.shift || ''),
+              String(w.type || '').toUpperCase(),
+              String(w.startTime || ''),
+              String(w.endTime || '')
+            ].join('|');
             if (seen.has(dedupKey)) continue;
             seen.add(dedupKey);
             var name = w.name;
-            if (!workerStats[name]) {
-              workerStats[name] = { name: name, isRad: isRad, d12: 0, n12: 0, h24: 0, h8: 0, total: 0, totalHrs: 0 };
+            var workerId = _workerKey(name, isRad);
+            if (!workerStats[workerId]) {
+              workerStats[workerId] = { name: name, isRad: isRad, d12: 0, n12: 0, h24: 0, h8: 0, total: 0, totalHrs: 0 };
             }
             var hrs = parseInt(String(w.shift || '').replace(/\D/g, ''), 10) || 0;
             var type = String(w.type || '').toUpperCase();
-            workerStats[name].totalHrs += hrs;
-            workerStats[name].total++;
-            if (type === 'DIENNAKTS' || hrs >= 24) workerStats[name].h24++;
-            else if (type === 'NAKTS') workerStats[name].n12++;
-            else if (hrs >= 12) workerStats[name].d12++;
-            else workerStats[name].h8++;
+            workerStats[workerId].totalHrs += hrs;
+            workerStats[workerId].total++;
+            if (type === 'DIENNAKTS' || hrs >= 24) workerStats[workerId].h24++;
+            else if (type === 'NAKTS') workerStats[workerId].n12++;
+            else if (hrs >= 12) workerStats[workerId].d12++;
+            else workerStats[workerId].h8++;
           }
         }
       }
@@ -552,14 +645,25 @@
       return amUp.indexOf(_strip(k)) !== -1;
     });
     var mm = mKey ? MONTH_NUMS[mKey] : 0;
-    // Radiographers only (RG = !isRad). Falls back to everyone if flags absent.
-    var names = Object.keys(monthStats).filter(function(n) { return monthStats[n].isRad !== true; });
-    if (!names.length) names = Object.keys(monthStats);
+    // Radiographers only (RG = !isRad). Stats are keyed by role+name, while the
+    // fatigue engine accepts the actual display name.
+    var people = Object.values(monthStats).filter(function(person) { return person.isRad !== true; });
+    if (!people.length) people = Object.values(monthStats);
+    var names = Array.from(new Set(people.map(function(person) { return person.name; }).filter(Boolean)));
     if (!year || !mm || !names.length) return '';
 
     var daysIn = new Date(year, mm, 0).getDate();
-    var hists = {};
-    names.forEach(function(n) { hists[n] = window.__fatigue.gatherWorkerHistory(n) || []; });
+    var eventsByDay = {};
+    names.forEach(function(n) {
+      var map = new Map();
+      (window.__fatigue.gatherWorkerHistory(n) || []).forEach(function(entry) {
+        if (!entry || !entry.date) return;
+        var key = entry.date.getFullYear() + '-' + entry.date.getMonth() + '-' + entry.date.getDate();
+        if (!map.has(key)) map.set(key, []);
+        map.get(key).push(entry);
+      });
+      eventsByDay[n] = map;
+    });
 
     // Warm-up: start the accumulation 12 days before the 1st so the early-month
     // values reflect real prior load instead of starting cold at 0.
@@ -571,11 +675,8 @@
       var F = 0, arr = [];
       for (var off = -warm; off < daysIn; off++) {
         var d = new Date(year, mm - 1, 1 + off);
-        var todays = hists[n].filter(function(e) {
-          return e.date.getFullYear() === d.getFullYear() &&
-                 e.date.getMonth() === d.getMonth() &&
-                 e.date.getDate() === d.getDate();
-        });
+        var dayKey = d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
+        var todays = eventsByDay[n].get(dayKey) || [];
         if (todays.length) {
           var load = todays.reduce(function(s, e) { return s + _dayLoad(e); }, 0);
           F = Math.min(100, F * 0.78 + load);   // carry some, add new
@@ -591,7 +692,7 @@
       var sum = 0, cnt = 0;
       names.forEach(function(n) {
         var v = fatByDay[n][day - 1];
-        if (v > 0.5) { sum += v; cnt++; }
+        if (Number.isFinite(v)) { sum += v; cnt++; }
       });
       team.push(cnt ? Math.round(sum / cnt) : 0);
       moon.push(Math.round(_moonIllum(new Date(year, mm - 1, day, 12)) * 100));
@@ -738,7 +839,7 @@
               return '<div class="rule"><span class="tag" style="color:' + r.color + ';">' + r.tag + '</span><span class="desc">— ' + r.desc + '</span></div>';
             }).join('') +
           '</div>' +
-          '<div class="mk-stx-info-hint">Turi kursoru uz rindas, lai redzētu detalizētu XP sadalījumu.</div>'
+          '<div class="mk-stx-info-hint">Nospied uz rindas, lai redzētu detalizētu XP sadalījumu.</div>'
         : '') +
     '</div>';
   }
@@ -910,14 +1011,20 @@
   function renderLeaderboardRow(ws, idx) {
     var ld = ws.levelData || getLevelData(0);
     var accent = _accentFor(idx);
-    var name = shortName(ws.name);
+    var name = escapeAttr(shortName(ws.name));
     var emoji = window.MinkaEmoji ? (window.MinkaEmoji.get(ws.name) || '') : '';
-    var live = isCurrentlyOnDuty(ws.name);
+    var live = (window.__mkCurrentDutySet || new Set()).has(_workerKey(ws.name, ws.isRad));
     var pct = Math.max(0, Math.min(100, ld.progress || 0));
-    var cap = ld.next ? ld.next.xp : ws.xp;
+    var levelStart = ld.current ? ld.current.xp : 0;
+    var levelSpan = ld.next ? Math.max(1, ld.next.xp - levelStart) : 0;
+    var levelEarned = Math.max(0, ws.xp - levelStart);
+    var breakdownKey = 'worker-' + Object.keys(window.__mkStatsBreakdownMap).length;
+    window.__mkStatsBreakdownMap[breakdownKey] = ws;
     var C = 2 * Math.PI * 26;
 
-    return '<div class="mk-stx-row' + (idx < 3 ? ' top' : '') + '">' +
+    return '<div class="mk-stx-row' + (idx < 3 ? ' top' : '') + '" tabindex="0" role="button" aria-expanded="false" ' +
+      'onclick="mkStatsBreakdownToggle(this,\'' + breakdownKey + '\')" ' +
+      'onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click();}">' +
       '<div class="mk-stx-rank" style="' + (idx < 3 ? 'color:' + accent : '') + '">' + (idx + 1) + '</div>' +
       '<div class="mk-stx-av">' +
         '<svg width="58" height="58" viewBox="0 0 58 58">' +
@@ -938,8 +1045,12 @@
       '<div class="mk-stx-prog">' +
         '<div class="mk-stx-bar"><div class="mk-stx-fill" style="width:' + pct + '%;background:linear-gradient(90deg,' + _hexRgba(accent, 0.65) + ',' + accent + ');"></div></div>' +
         '<div class="mk-stx-pstat">' +
-          '<div class="frac">' + _fmt(ws.xp) + ' <small>/ ' + _fmt(cap) + ' XP</small></div>' +
-          '<div class="next">' + (ld.next ? '+' + _fmt(Math.max(0, ld.next.xp - ws.xp)) + ' XP līdz nākamajam' : 'Maks. līmenis') + '</div>' +
+          '<div class="frac">' + (ld.next
+            ? _fmt(levelEarned) + ' <small>/ ' + _fmt(levelSpan) + ' XP līmenī</small>'
+            : _fmt(ws.xp) + ' <small>XP kopā</small>') + '</div>' +
+          '<div class="next">' + (ld.next
+            ? _fmt(ws.xp) + ' XP kopā · +' + _fmt(Math.max(0, ld.next.xp - ws.xp)) + ' līdz Lv.' + ld.next.lvl
+            : 'Maks. līmenis') + '</div>' +
         '</div>' +
       '</div>' +
       '<div class="mk-stx-metrics">' +
@@ -950,7 +1061,7 @@
         _metricTile(ws.bolusCount || 0, 'Boluss', '#ff5c5c') +
         _coffeeMetricTile(ws) +
       '</div>' +
-      renderBreakdown(ws) +
+      '<div class="mk-stx-bd-slot"></div>' +
     '</div>';
   }
 
@@ -971,20 +1082,38 @@
   window.MinkaLevels = {
     getLevelData: getLevelData,
     buildAllTimeStats: buildAllTimeStats,
+    findWorkerStats: function(stats, name, isRad) {
+      if (!stats) return null;
+      if (typeof isRad === 'boolean') return stats[_workerKey(name, isRad)] || null;
+      var target = _nameKey(name);
+      return Object.values(stats)
+        .filter(function(ws) { return ws && _nameKey(ws.name) === target; })
+        .sort(function(a, b) { return (b.xp || 0) - (a.xp || 0); })[0] || null;
+    },
 
     injectIntoStats: function() {
       var wrap = document.getElementById('stats-table-wrap');
       if (!wrap) return;
 
-      var activeMonth = window.__activeMonth || '';
+      var picker = document.getElementById('grafiks-monthPicker');
+      var activeMonth = window.__activeMonth || (picker && picker.value) || '';
+      if (!activeMonth) {
+        wrap.innerHTML =
+          '<div style="min-height:180px;display:grid;place-items:center;color:#a9acb6;' +
+          'font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">' +
+          'Ielādē statistiku…</div>';
+        return;
+      }
       var monthStats = buildMonthStats(activeMonth);
       var allStats = buildAllTimeStats();
+      window.__mkCurrentDutySet = buildCurrentDutySet();
+      window.__mkStatsBreakdownMap = {};
 
       // Merge: MONTH numbers (hours, 12D, 12N, 24h — like the old clear table)
       // + all-time level/XP + bolus/coffee totals onto one object per person.
-      Object.keys(monthStats).forEach(function(name) {
-        var at = allStats[name] || null;
-        var ms = monthStats[name];
+      Object.keys(monthStats).forEach(function(workerId) {
+        var at = allStats[workerId] || null;
+        var ms = monthStats[workerId];
         ms.levelData = at ? at.levelData : getLevelData(0);
         ms.xp = at ? at.xp : 0;
         ms.bonuses = at ? at.bonuses : {};
@@ -1051,6 +1180,22 @@
         window.__mkStatsInfoOpen = !window.__mkStatsInfoOpen;
         window.MinkaLevels.injectIntoStats();
       };
+      window.mkStatsBreakdownToggle = function(row, key) {
+        var wasOpen = row.classList.contains('open');
+        document.querySelectorAll('.mk-stx-row.open').forEach(function(other) {
+          other.classList.remove('open');
+          other.setAttribute('aria-expanded', 'false');
+          var otherSlot = other.querySelector('.mk-stx-bd-slot');
+          if (otherSlot) otherSlot.innerHTML = '';
+        });
+        if (wasOpen) return;
+        var ws = (window.__mkStatsBreakdownMap || {})[key];
+        var slot = row.querySelector('.mk-stx-bd-slot');
+        if (!ws || !slot) return;
+        slot.innerHTML = renderBreakdown(ws);
+        row.classList.add('open');
+        row.setAttribute('aria-expanded', 'true');
+      };
       // Tabs removed — single unified view. Keep a no-op for any legacy callers.
       window.mkStatsTab = function() {};
     }
@@ -1064,6 +1209,13 @@
       if (window.closeStatsModal) window.closeStatsModal();
     } else {
       if (window.openStatsModal) window.openStatsModal();
+    }
+  });
+
+  document.addEventListener('minka:monthReady', function() {
+    var modal = document.getElementById('stats-modal');
+    if (modal && modal.style.display && modal.style.display !== 'none') {
+      window.MinkaLevels.injectIntoStats();
     }
   });
 
