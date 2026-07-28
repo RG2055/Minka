@@ -696,31 +696,31 @@ html body :is(.side-panel.compact-duty, .side-panel.mini-duty)
   font-size: 16px !important;
 }
 
-/* The right rail has the same width as the left rail, so its two-card state
-   must keep the same compact internals instead of expanding and clipping. */
-html body .right-panel #radiologists-duty .mk-side-card {
+/* Keep both rails compact regardless of viewport height or selected date. */
+html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) .mk-side-card {
   min-height: 78px !important;
   padding: 8px 9px 7px !important;
 }
 
-html body .right-panel #radiologists-duty .mk-side-card::before {
+html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) .mk-side-card::before {
   content: none !important;
   display: none !important;
 }
 
-html body .right-panel #radiologists-duty .mk-side-card-main {
+html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) .mk-side-card-main {
   grid-template-columns: 44px minmax(0, 1fr) !important;
   gap: 7px !important;
 }
 
-html body .right-panel #radiologists-duty .mk-side-card-main > .mk-side-icon-rail {
+html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty)
+  .mk-side-card-main > .mk-side-icon-rail {
   width: 44px !important;
   min-width: 44px !important;
   max-width: 44px !important;
   height: 52px !important;
 }
 
-html body .right-panel #radiologists-duty .mk-side-card-body {
+html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) .mk-side-card-body {
   grid-template-columns: minmax(0, 1fr) 44px !important;
   column-gap: 6px !important;
 }
@@ -740,42 +740,42 @@ html body .right-panel #radiologists-duty .mk-side-shift-chip .shift-icon-side {
   font-size: 8px !important;
 }
 
-html body .right-panel #radiologists-duty .mk-side-fatigue {
+html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) .mk-side-fatigue {
   width: 44px !important;
   min-width: 44px !important;
 }
 
-html body .right-panel #radiologists-duty .mk-side-ring {
+html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) .mk-side-ring {
   width: 40px !important;
   height: 40px !important;
 }
 
-html body .right-panel #radiologists-duty .mk-side-ring::after {
+html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) .mk-side-ring::after {
   inset: 5px !important;
 }
 
-html body .right-panel #radiologists-duty .mk-side-ring span {
+html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) .mk-side-ring span {
   font-size: 12px !important;
 }
 
-html body .right-panel #radiologists-duty .mk-side-fatigue-caption {
+html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) .mk-side-fatigue-caption {
   margin-top: 4px !important;
   font-size: 5.5px !important;
 }
 
-html body .right-panel #radiologists-duty .mk-side-card .duty-name {
+html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) .mk-side-card .duty-name {
   font-size: 15px !important;
 }
 
-html body .right-panel #radiologists-duty .mk-side-card .duty-surname {
+html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) .mk-side-card .duty-surname {
   font-size: 8.6px !important;
 }
 
-html body .right-panel #radiologists-duty .mk-side-initials {
+html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) .mk-side-initials {
   font-size: 16px !important;
 }
 
-html body .right-panel #radiologists-duty .mk-side-nfoot {
+html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) .mk-side-nfoot {
   grid-template-columns: 1fr !important;
   align-items: stretch !important;
   gap: 3px !important;
@@ -783,13 +783,13 @@ html body .right-panel #radiologists-duty .mk-side-nfoot {
   padding-top: 6px !important;
 }
 
-html body .right-panel #radiologists-duty .mk-side-nfoot-row {
+html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) .mk-side-nfoot-row {
   width: 100% !important;
   grid-template-columns: 65px minmax(0, 1fr) !important;
   gap: 4px !important;
 }
 
-html body .right-panel #radiologists-duty .mk-side-nfoot dd {
+html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) .mk-side-nfoot dd {
   width: auto !important;
   min-width: 0 !important;
 }
