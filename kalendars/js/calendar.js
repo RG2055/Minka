@@ -2550,7 +2550,7 @@ function filterFullList(btn) {
       }
 
       const shiftChip = uiState.shiftHours
-        ? `<span class="mk-side-shift-chip">${uiState.shiftHours}H</span>`
+        ? `<span class="mk-side-shift-chip">${uiState.shiftHours}H${iconHtml}</span>`
         : uiState.shiftBadge;
       const footer = options.isToday ? renderSideFooter(scheduleIndex.get(workerName), fatigue) : '';
       const sideVars = `--mk-side-fat:${fatigue.score}%;--mk-side-fat-color:${fatigue.color};`;
@@ -2558,19 +2558,19 @@ function filterFullList(btn) {
       return `
         <article class="duty-block mk-side-card ${options.roleClass}${iconHtml ? ' has-shift-icon' : ''}${isDone ? ' duty-done' : ''}" style="${sideVars}" data-worker="${workerAttr}" data-shift="${shiftAttr}" data-type="${typeAttr}" data-fatigue="${fatigue.key}">
           <div class="mk-side-card-main">
-            <div class="mk-side-fatigue">
-              <div class="mk-side-ring" role="img" aria-label="Nogurums ${fatigue.score} procenti, ${fatigue.label}"><span>${fatigue.score}<small>${fatigue.label}</small></span></div>
-              <span class="mk-side-fatigue-caption">Nogurums</span>
-            </div>
+            <div class="mk-side-icon-rail"><span class="mk-side-initials" aria-hidden="true">${mkEscAttr(initials)}</span></div>
             <div class="mk-side-card-body">
               <div class="name-row mk-side-name-row">
                 <div class="mk-side-name-wrap">
                   <span class="duty-name">${mkEscAttr(firstName)}</span>
                   ${surname ? `<span class="duty-surname">${mkEscAttr(surname)}</span>` : ''}
                 </div>
-                <div class="mk-side-icon-rail">${iconHtml}</div>
               </div>
               <div class="badge-row mk-side-clock-row">${shiftChip}${timerHtml}</div>
+              <div class="mk-side-fatigue">
+                <div class="mk-side-ring" role="img" aria-label="Nogurums ${fatigue.score} procenti, ${fatigue.label}"><span>${fatigue.score}<small>${fatigue.label}</small></span></div>
+                <span class="mk-side-fatigue-caption">Nogurums</span>
+              </div>
             </div>
           </div>
           ${footer}

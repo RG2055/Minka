@@ -329,7 +329,13 @@
   function updateSideEmoji(block, name) {
     var emoji = _data[name] || null;
     var el = block.querySelector('.mk-emoji-side');
-    if (!emoji) { if (el) el.remove(); return; }
+    var initials = block.querySelector('.mk-side-initials');
+    if (!emoji) {
+      if (el) el.remove();
+      if (initials) initials.hidden = false;
+      return;
+    }
+    if (initials) initials.hidden = true;
     if (!el) {
       el = document.createElement('span');
       el.className = 'mk-emoji-side';
