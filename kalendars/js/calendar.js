@@ -2509,6 +2509,28 @@ function filterFullList(btn) {
     return { score, key: 'low', label: 'Zems', color: '#42d991' };
   }
 
+  let sideEmojiCacheRaw = null;
+  let sideEmojiCache = {};
+  function getSidePersonEmoji(workerName) {
+    if (window.MinkaEmoji && typeof window.MinkaEmoji.get === 'function') {
+      const liveEmoji = window.MinkaEmoji.get(workerName);
+      if (liveEmoji) return liveEmoji;
+    }
+
+    try {
+      const raw = localStorage.getItem('minka_emoji_v2') || localStorage.getItem('minka_emoji_v1') || '';
+      if (raw !== sideEmojiCacheRaw) {
+        sideEmojiCacheRaw = raw;
+        sideEmojiCache = raw ? JSON.parse(raw) : {};
+      }
+      return sideEmojiCache[workerName] || '';
+    } catch (_e) {
+      sideEmojiCacheRaw = '';
+      sideEmojiCache = {};
+      return '';
+    }
+  }
+
   function renderSideFooter(meta, fatigue) {
     if (!meta) return '';
     let nextHtml = '';
@@ -2538,9 +2560,7 @@ function filterFullList(btn) {
       const firstName = formatSideNamePart(nameParts[0], false);
       const surname = formatSideNamePart(nameParts.slice(1).join(' '), true);
       const initials = (nameParts[0]?.[0] || '') + (nameParts[1]?.[0] || '');
-      const personEmoji = window.MinkaEmoji && window.MinkaEmoji.get
-        ? (window.MinkaEmoji.get(workerName) || '')
-        : '';
+      const personEmoji = getSidePersonEmoji(workerName);
       const uiState = getWorkerUiState(worker, worker.date, options.now);
       const fatigue = getSideFatigue(workerName);
       const iconHtml = getSideIconHtml(worker.type);
