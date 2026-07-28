@@ -80,15 +80,15 @@
     const grids = Array.from(container.querySelectorAll('.cards-subgrid'));
     if (!grids.length) return;
 
-    grids.forEach(grid => {
+    const plans = grids.map(grid => {
       const cards = Array.from(grid.querySelectorAll('.card'));
-      if (!cards.length) return;
+      if (!cards.length) return null;
 
       const count = cards.length;
       const containerW = Math.max(0, grid.clientWidth || container.clientWidth || 0);
       const containerH = Math.max(0, grid.clientHeight || container.clientHeight || 0);
       const gap = 9;
-      if (!containerW) return;
+      if (!containerW) return null;
 
       let cols = Math.max(1, Math.min(count, Math.floor((containerW + gap) / 145)));
       if (containerH > 0 && count > cols) {
@@ -99,7 +99,13 @@
       const cardW = (containerW - gap * Math.max(0, cols - 1)) / cols;
       const cardH = Math.max(136, Math.min(182, Math.round(cardW * 0.82)));
       const shiftFontSize = Math.max(24, Math.min(56, Math.round(cardH * 0.34)));
+      return { grid, cards, cols, cardH, shiftFontSize };
+    }).filter(Boolean);
 
+    plans.forEach(({ grid, cards, cols, cardH, shiftFontSize }) => {
+      const signature = [cols, cardH, shiftFontSize, cards.length].join('|');
+      if (grid.dataset.mkSizeSignature === signature) return;
+      grid.dataset.mkSizeSignature = signature;
       grid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
       cards.forEach(card => {
         card.style.aspectRatio = '1 / 0.82';
@@ -144,11 +150,13 @@
 
   function applyStaffAccents() {
     const activeNames = new Set();
+    const rgAccent = staffPalette('rg');
+    const rdAccent = staffPalette('rd');
 
     document.querySelectorAll('.duty-block').forEach((block) => {
       const name = block.getAttribute('data-worker') || '';
       const isRdBlock = !!block.closest('#radiologists-duty');
-      const accent = staffPalette(isRdBlock ? 'rd' : 'rg');
+      const accent = isRdBlock ? rdAccent : rgAccent;
       block.style.setProperty('--staff-accent', accent);
       block.classList.remove('is-active-duty', 'is-up-next-duty');
       const timer = block.querySelector('.duty-timer');

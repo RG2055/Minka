@@ -213,6 +213,12 @@ function hideGrafiksLoader(loader) {
   }, delay);
 }
 
+function revealGrafiksApp() {
+  requestAnimationFrame(() => {
+    document.documentElement.classList.remove('mk-schedule-booting');
+  });
+}
+
 function notifyHostAppReady() {
   let attempts = 0;
   const tryNotify = () => {
@@ -1132,6 +1138,7 @@ function filterFullList(btn) {
       const firstDate = getMergedDays(activeMonth)[0]?.date || null;
       g_selectDay(todayExists ? g_todayStr : firstDate);
       g_updateLive();
+      revealGrafiksApp();
       notifyHostAppReady();
       window.__gDataLoaded = true;
       clearTimeout(__gInitRetryTimer);
@@ -1179,6 +1186,7 @@ function filterFullList(btn) {
           const firstDate = getMergedDays(activeMonth)[0]?.date || null;
           g_selectDay(todayExists ? g_todayStr : firstDate);
           g_updateLive();
+          revealGrafiksApp();
           notifyHostAppReady();
           __gCacheRendered = true;
           ensureLiveUpdates();
@@ -1927,6 +1935,7 @@ function filterFullList(btn) {
     var STORE_KEY = 'minkaNightSplitByDateV1';
     var _bc = null;
     var _polling = false;
+    var _pullingDates = Object.create(null);
     try { _bc = new BroadcastChannel('minka-ns-sync'); } catch(e) {}
 
     function _api() {
@@ -1953,6 +1962,8 @@ function filterFullList(btn) {
     function pull(dateStr, cb) {
       var api = _api();
       if (!api || !dateStr) return;
+      if (_pullingDates[dateStr]) return;
+      _pullingDates[dateStr] = true;
       api.apiFetch('/api/ns-order?date=' + encodeURIComponent(dateStr))
         .then(function(r) { return r.json(); })
         .then(function(remote) {
@@ -1964,12 +1975,21 @@ function filterFullList(btn) {
             localStorage.setItem(STORE_KEY, JSON.stringify(map));
             if (cb) cb();
           }
-        }).catch(function(){});
+        }).catch(function(){})
+        .finally(function(){ delete _pullingDates[dateStr]; });
     }
 
     function startPolling() {
       if (_polling) return;
       _polling = true;
+      function refreshActiveOrder() {
+        var d = _activeDateStr();
+        if (!d) return;
+        pull(d, function() {
+          try { if (window.__ns && window.__ns._update) window.__ns._update(); } catch(_e) {}
+          try { if (window.__nsBarSync) window.__nsBarSync(); } catch(_e) {}
+        });
+      }
       if (_bc) {
         _bc.onmessage = function(evt) {
           try {
@@ -1989,23 +2009,16 @@ function filterFullList(btn) {
         };
       }
       // Initial pull
-      var d0 = _activeDateStr();
-      if (d0) pull(d0, function() {
-        try { if (window.__ns && window.__ns._update) window.__ns._update(); } catch(_e) {}
-        try { if (window.__nsBarSync) window.__nsBarSync(); } catch(_e) {}
-      });
-      // Cross-device poll. pull() only fires the callback when the remote copy is
-      // genuinely newer, so a tighter interval just checks more often without forcing
-      // needless re-renders. 12s keeps cross-device updates snappy.
+      refreshActiveOrder();
+      // Cross-device poll. Background tabs remain fully paused, while a visible
+      // workstation gets updates quickly enough for live handovers.
       setInterval(function() {
         if (document.hidden) return;
-        var d = _activeDateStr();
-        if (!d) return;
-        pull(d, function() {
-          try { if (window.__ns && window.__ns._update) window.__ns._update(); } catch(_e) {}
-          try { if (window.__nsBarSync) window.__nsBarSync(); } catch(_e) {}
-        });
+        refreshActiveOrder();
       }, 12000);
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) refreshActiveOrder();
+      });
     }
 
     return { push: push, pull: pull, startPolling: startPolling };
@@ -2302,9 +2315,10 @@ function filterFullList(btn) {
     const nCls = nightCount === 0 ? 'mk-night-zero' : (nightCount < nowCount ? 'mk-night-drop' : 'mk-night-ok');
     // Two identical numbers say nothing, so the night count only appears when
     // it actually differs from the current one.
-    pill.innerHTML = (nightCount === nowCount)
-      ? 'ŠOBRĪD ' + nowCount
-      : 'ŠOBRĪD ' + nowCount + '<span class="' + nCls + '">NAKTĪ ' + nightCount + '</span>';
+    pill.innerHTML = '<span class="mk-count-item"><small>ŠOBRĪD</small><strong>' + nowCount + '</strong></span>'
+      + (nightCount === nowCount
+        ? ''
+        : '<span class="mk-count-item ' + nCls + '"><small>NAKTĪ</small><strong>' + nightCount + '</strong></span>');
     pill.title = (nightCount === nowCount)
       ? 'Šobrīd dežūrā: ' + nowCount + ', visi paliek naktī'
       : 'Šobrīd dežūrā: ' + nowCount + ', pa nakti paliks: ' + nightCount;
@@ -2411,6 +2425,161 @@ function filterFullList(btn) {
     }).join('');
   }
 
+  const SIDE_MONTH_NAMES = ['janvāris','februāris','marts','aprīlis','maijs','jūnijs','jūlijs','augusts','septembris','oktobris','novembris','decembris'];
+  const SIDE_MONTH_LOCATIVE = ['janvārī','februārī','martā','aprīlī','maijā','jūnijā','jūlijā','augustā','septembrī','oktobrī','novembrī','decembrī'];
+
+  function sideDateNumber(dateStr) {
+    const parts = String(dateStr || '').split('.').map(Number);
+    return parts.length === 3 && parts.every(Number.isFinite)
+      ? parts[2] * 10000 + parts[1] * 100 + parts[0]
+      : 0;
+  }
+
+  function sideShiftStartTime(dateStr, startTime) {
+    const parts = String(dateStr || '').split('.').map(Number);
+    if (parts.length !== 3 || !parts.every(Number.isFinite)) return 0;
+    const timeParts = String(startTime || '08:00').split(':').map(Number);
+    const hours = Number.isFinite(timeParts[0]) ? timeParts[0] : 8;
+    const minutes = Number.isFinite(timeParts[1]) ? timeParts[1] : 0;
+    return new Date(parts[2], parts[1] - 1, parts[0], hours, minutes, 0, 0).getTime();
+  }
+
+  function buildSideScheduleIndex(sourceStore, selectedDateStr, now) {
+    const selectedDateNumber = sideDateNumber(selectedDateStr);
+    const selectedYearMonth = Math.floor(selectedDateNumber / 100);
+    const nowTime = now instanceof Date ? now.getTime() : Date.now();
+    const index = new Map();
+    const seen = new Set();
+
+    Object.values(sourceStore || {}).forEach(days => {
+      if (!Array.isArray(days)) return;
+      days.forEach(day => {
+        const dateNumber = sideDateNumber(day && day.date);
+        if (!dateNumber || !Array.isArray(day.workers)) return;
+        day.workers.forEach(worker => {
+          const workerName = String(worker && worker.name || '').trim();
+          if (!workerName || !isValidShift(worker.shift)) return;
+          const dedupeKey = [workerName, day.date, worker.shift || '', worker.startTime || '', worker.endTime || ''].join('|');
+          if (seen.has(dedupeKey)) return;
+          seen.add(dedupeKey);
+          const shiftStartTime = sideShiftStartTime(day.date, worker.startTime);
+
+          let meta = index.get(workerName);
+          if (!meta) {
+            meta = { done: 0, total: 0, next: null };
+            index.set(workerName, meta);
+          }
+          if (Math.floor(dateNumber / 100) === selectedYearMonth) {
+            meta.total += 1;
+            if (dateNumber < selectedDateNumber || (dateNumber === selectedDateNumber && shiftStartTime <= nowTime)) {
+              meta.done += 1;
+            }
+          }
+          const isUpcoming = dateNumber > selectedDateNumber ||
+            (dateNumber === selectedDateNumber && shiftStartTime > nowTime);
+          if (isUpcoming && (!meta.next || shiftStartTime < meta.next.shiftStartTime)) {
+            meta.next = { dateNumber, shiftStartTime, date: day.date, worker };
+          }
+        });
+      });
+    });
+    return index;
+  }
+
+  function getSideFatigue(workerName) {
+    let result = null;
+    try {
+      if (window.__fatigue) result = window.__fatigue.calculateFatigue(workerName);
+    } catch (_e) {}
+    const score = result && Number.isFinite(result.score)
+      ? Math.max(0, Math.min(100, Math.round(result.score)))
+      : 0;
+    if (window.__fatigue && typeof window.__fatigue.getPresentation === 'function') {
+      return window.__fatigue.getPresentation(score);
+    }
+    if (score > 70) return { score, key: 'crit', label: 'Kritisks', color: '#ff5c70' };
+    if (score > 45) return { score, key: 'high', label: 'Augsts', color: '#ff9f43' };
+    if (score > 20) return { score, key: 'mid', label: 'Vidējs', color: '#e7d34b' };
+    return { score, key: 'low', label: 'Zems', color: '#42d991' };
+  }
+
+  function renderSideFooter(meta, fatigue) {
+    if (!meta) return '';
+    let nextHtml = '';
+    if (meta.next) {
+      const parts = String(meta.next.date || '').split('.').map(Number);
+      const start = meta.next.worker.startTime ? ` · ${mkEscAttr(meta.next.worker.startTime)}` : '';
+      const hours = meta.next.worker.shift ? ` · ${mkEscAttr(meta.next.worker.shift)}h` : '';
+      nextHtml = `<div class="mk-side-nfoot-row"><dt>Nākamā maiņa</dt><dd>${parts[0]}. ${SIDE_MONTH_NAMES[parts[1] - 1]}${start}${hours}</dd></div>`;
+    }
+
+    let monthHtml = '';
+    if (meta.total > 0) {
+      const remaining = meta.total - meta.done;
+      const selectedMonth = Math.floor(sideDateNumber(activeDateStr) / 100) % 100;
+      const segments = Array.from({ length: meta.total }, (_, index) => `<i${index < meta.done ? ' class="on"' : ''}></i>`).join('');
+      monthHtml = `<div class="mk-side-nfoot-row"><dt>Maiņas ${SIDE_MONTH_LOCATIVE[selectedMonth - 1]}</dt><dd>${meta.done} / ${meta.total}${remaining > 0 ? ` <em>(vēl ${remaining})</em>` : ''}<span class="mk-nfoot-seg" style="--mk-side-fat-color:${fatigue.color}">${segments}</span></dd></div>`;
+    }
+    return nextHtml || monthHtml ? `<dl class="mk-side-nfoot">${nextHtml}${monthHtml}</dl>` : '';
+  }
+
+  function renderSideDutyCards(container, workers, options) {
+    if (!container) return;
+    const scheduleIndex = options.isToday ? buildSideScheduleIndex(options.sourceStore, activeDateStr, options.now) : new Map();
+    const cards = workers.map(worker => {
+      const workerName = String(worker.name || '').trim();
+      const nameParts = workerName.split(/\s+/).filter(Boolean);
+      const firstName = formatSideNamePart(nameParts[0], false);
+      const surname = formatSideNamePart(nameParts.slice(1).join(' '), true);
+      const initials = (nameParts[0]?.[0] || '') + (nameParts[1]?.[0] || '');
+      const uiState = getWorkerUiState(worker, worker.date, options.now);
+      const fatigue = getSideFatigue(workerName);
+      const iconHtml = getSideIconHtml(worker.type);
+      const workerAttr = mkEscAttr(workerName);
+      const dateAttr = mkEscAttr(worker.date || '');
+      const shiftAttr = mkEscAttr(worker.shift || '');
+      const typeAttr = mkEscAttr(worker.type || '');
+      let timerHtml = '';
+      let isDone = false;
+
+      if (options.isToday && worker.startTime && worker.endTime) {
+        isDone = uiState.isDone;
+        if (uiState.isActive && uiState.remainingMs > 0) {
+          timerHtml = `<span class="duty-timer mk-side-timer" data-worker="${workerAttr}" data-date="${dateAttr}" data-start="${mkEscAttr(worker.startTime)}" data-end="${mkEscAttr(worker.endTime)}" data-shift="${shiftAttr}"><span class="ghost">88:88:88</span><span class="val">${mkEscAttr(uiState.timerText)}</span></span>`;
+        }
+      }
+
+      const shiftChip = uiState.shiftHours
+        ? `<span class="mk-side-shift-chip">${uiState.shiftHours}H</span>`
+        : uiState.shiftBadge;
+      const footer = options.isToday ? renderSideFooter(scheduleIndex.get(workerName), fatigue) : '';
+      const sideVars = `--mk-side-fat:${fatigue.score}%;--mk-side-fat-color:${fatigue.color};`;
+
+      return `
+        <article class="duty-block mk-side-card ${options.roleClass}${iconHtml ? ' has-shift-icon' : ''}${isDone ? ' duty-done' : ''}" style="${sideVars}" data-worker="${workerAttr}" data-shift="${shiftAttr}" data-type="${typeAttr}" data-fatigue="${fatigue.key}">
+          <div class="mk-side-card-main">
+            <div class="mk-side-fatigue">
+              <div class="mk-side-ring" role="img" aria-label="Nogurums ${fatigue.score} procenti, ${fatigue.label}"><span>${fatigue.score}<small>${fatigue.label}</small></span></div>
+              <span class="mk-side-fatigue-caption">Nogurums</span>
+            </div>
+            <div class="mk-side-card-body">
+              <div class="name-row mk-side-name-row">
+                <div class="mk-side-name-wrap">
+                  <span class="duty-name">${mkEscAttr(firstName)}</span>
+                  ${surname ? `<span class="duty-surname">${mkEscAttr(surname)}</span>` : ''}
+                </div>
+                <div class="mk-side-icon-rail">${iconHtml}</div>
+              </div>
+              <div class="badge-row mk-side-clock-row">${shiftChip}${timerHtml}</div>
+            </div>
+          </div>
+          ${footer}
+          ${initials ? `<span class="mk-side-wm" aria-hidden="true">${mkEscAttr(initials)}</span>` : ''}
+        </article>`;
+    });
+    container.innerHTML = cards.length ? cards.join('') : '<span class="mk-duty-empty">ATPŪTA</span>';
+  }
+
   function g_updatePanelsForDate() {
     const isToday = (activeDateStr === g_todayStr);
     const now = new Date();
@@ -2425,101 +2594,12 @@ function filterFullList(btn) {
       let workersToShow = filterVisibleWorkers(getWorkersForDateWithDate(store, activeDateStr), isToday, now);
       renderDutyHeader('radiographers-shift-count', 'radiographers-duty', workersToShow, isToday, now, 'radiogrāfers', 'radiogrāferi');
 
-      radgContainer.innerHTML = "";
-      workersToShow.forEach(w => {
-        const nameParts = String(w.name || "").trim().split(/\s+/).filter(Boolean);
-        const firstName = formatSideNamePart(nameParts[0], false);
-        const surname = formatSideNamePart(nameParts.slice(1).join(' '), true);
-        const uiState = getWorkerUiState(w, w.date, now);
-        const shiftBadge = uiState.shiftBadge;
-        let sideTimerHtml = '';
-        let isDone = false;
-        if (isToday && w.startTime && w.endTime) {
-          isDone = uiState.isDone;
-          if (uiState.isActive && uiState.remainingMs > 0) {
-            sideTimerHtml = `<span class="duty-timer mk-side-timer" data-worker="${w.name}" data-date="${w.date}" data-start="${w.startTime}" data-end="${w.endTime}" data-shift="${w.shift || ''}"><span class="ghost">88:88:88</span><span class="val">${uiState.timerText}</span></span>`;
-          }
-        }
-
-        const iconHtml = getSideIconHtml(w.type);
-
-        // Get fatigue for side panel
-        let sideFatScore = 0, sideFatColor = '#30d158';
-        try { if(window.__fatigue){ const sf=window.__fatigue.calculateFatigue(w.name); if(sf){ sideFatScore=sf.score; if(sideFatScore>70)sideFatColor='#ff6b5f'; else if(sideFatScore>45)sideFatColor='#e59b42'; else if(sideFatScore>20)sideFatColor='#d8c64a'; else sideFatColor='#35d07f'; } } }catch(e){}
-        const fatLevel = sideFatScore > 70 ? 'crit' : sideFatScore > 45 ? 'high' : sideFatScore > 20 ? 'mid' : 'low';
-        const fatLevelLabel = fatLevel === 'crit' ? 'Kritisks' : fatLevel === 'high' ? 'Augsts' : fatLevel === 'mid' ? 'Vidējs' : 'Zems';
-        const shiftChip = uiState.shiftHours ? `<span class="mk-side-shift-chip">${uiState.shiftHours}H</span>` : shiftBadge;
-        const sideVars = `--mk-side-fat:${sideFatScore}%;--mk-side-fat-color:${sideFatColor};`;
-        const sideFatRing = `<div class="mk-side-ring" aria-label="Nogurums ${sideFatScore}%"><span>${sideFatScore}<small>${fatLevelLabel}</small></span></div>`;
-        const sideFatBar = `<div class="mk-side-progress"><div class="side-fat-bar-wrap"><div></div></div><span class="side-fat-pct">${sideFatScore}%</span></div>`;
-        // ── nfoot: next shift + month count (today only) ──
-        // dates in store are DD.MM.YYYY — convert to YYYYMMDD number for safe comparison
-        const _MO_SHORT=['janvāris','februāris','marts','aprīlis','maijs','jūnijs','jūlijs','augusts','septembris','oktobris','novembris','decembris'];
-        const _MO_LOC=['janvārī','februārī','martā','aprīlī','maijā','jūnijā','jūlijā','augustā','septembrī','oktobrī','novembrī','decembrī'];
-        const _dnum=(ds)=>{const p=(ds||'').split('.');return p.length===3?parseInt(p[2])*10000+parseInt(p[1])*100+parseInt(p[0]):0;};
-        let nfootHtml = '';
-        if (isToday) { try {
-          const _activeNum=_dnum(activeDateStr);
-          const _wn=String(w.name||'').trim();
-          // next shift
-          let nsHtml = '';
-          const nsArr = [];
-          for (const _mo in store) { const _days=store[_mo]; if(!Array.isArray(_days)) continue;
-            for (const _d of _days) { if(!_d||!_d.date||_dnum(_d.date)<=_activeNum) continue;
-              for (const _nw of (_d.workers||[])) { if(String(_nw.name||'').trim()===_wn) nsArr.push({n:_dnum(_d.date),date:_d.date,w:_nw}); }
-            }
-          }
-          nsArr.sort((a,b)=>a.n-b.n);
-          if (nsArr[0]) {
-            const [_nd,_nm]=nsArr[0].date.split('.');
-            const _ntime=nsArr[0].w.startTime?` ${nsArr[0].w.startTime}`:'';
-            const _nhrs=nsArr[0].w.shift?` ${nsArr[0].w.shift}h`:'';
-            nsHtml=`<dt>Nākamā maiņa</dt><dd>${parseInt(_nd)}. ${_MO_SHORT[parseInt(_nm)-1]}${_ntime}${_nhrs}</dd>`;
-          }
-          // month count — match same YYYYMM (numeric, padding-safe)
-          const _activeYM=Math.floor(_activeNum/100);
-          let mHtml = '';
-          let _done=0,_tot=0;
-          for (const _mo in store) { const _days=store[_mo]; if(!Array.isArray(_days)) continue;
-            for (const _d of _days) { if(!_d||!_d.date) continue;
-              if(Math.floor(_dnum(_d.date)/100)!==_activeYM) continue;
-              for (const _mw of (_d.workers||[])) { if(String(_mw.name||'').trim()===_wn){ _tot++; if(_dnum(_d.date)<=_activeNum)_done++; } }
-            }
-          }
-          if (_tot > 0) {
-            const _rem=_tot-_done;
-            const _segs=(()=>{const MAX=8;const n=Math.min(_tot,MAX);let s='<span class="mk-nfoot-seg">';for(let i=0;i<n;i++)s+=`<i${i<Math.min(_done,MAX)?' class="on"':''}></i>`;return s+'</span>';})();
-            const _mlbl=_MO_LOC[(_activeYM%100)-1];
-            mHtml=`<dt>Maiņas ${_mlbl}</dt><dd style="--mk-side-fat-color:${sideFatColor}">${_done} / ${_tot}${_rem>0?` <em>(vēl ${_rem})</em>`:''} ${_segs}</dd>`;
-          }
-          if (nsHtml||mHtml) nfootHtml=`<dl class="mk-side-nfoot">${nsHtml}${mHtml}</dl>`;
-        } catch(e){} }
-        const initials = (nameParts[0]?.[0]||'')+(nameParts[1]?.[0]||'');
-        radgContainer.innerHTML += `
-          <div class="duty-block mk-side-card mk-side-radiographer${iconHtml ? ' has-shift-icon' : ''}${isDone ? ' duty-done' : ''}" style="${sideVars}" data-worker="${w.name}" data-shift="${w.shift}" data-type="${w.type || ''}" data-fatigue="${fatLevel}">
-            <div class="mk-side-shimmer" aria-hidden="true"></div>
-            <div class="mk-side-card-main">
-              ${sideFatRing}
-              <div class="mk-side-card-body">
-                <div class="name-row mk-side-name-row">
-                  <div class="mk-side-name-wrap">
-                    <span class="duty-name">${firstName}</span>
-                    ${surname ? `<span class="duty-surname">${surname}</span>` : ''}
-                  </div>
-                  <div class="mk-side-icon-rail">${iconHtml}</div>
-                </div>
-                <div class="badge-row mk-side-clock-row">
-                  ${shiftChip}
-                  ${sideTimerHtml}
-                </div>
-              </div>
-            </div>
-            ${sideFatBar}
-            ${nfootHtml}
-            ${initials ? `<span class="mk-side-wm" aria-hidden="true">${initials}</span>` : ''}
-          </div>`;
+      renderSideDutyCards(radgContainer, workersToShow, {
+        sourceStore: store,
+        isToday,
+        now,
+        roleClass: 'mk-side-radiographer'
       });
-      if (!radgContainer.innerHTML) radgContainer.innerHTML = "<span style='color:#666'>ATPŪTA</span>";
     }
     // Hide next-card when not today
     const radgNextCard = radgNext && (radgNext.closest('.mk-next-card') || radgNext.closest('.next-box'));
@@ -2541,99 +2621,12 @@ function filterFullList(btn) {
       });
       renderDutyHeader('radiologists-shift-count', 'radiologists-duty', workersToShow, isToday, now, 'radiologs', 'radiologi');
 
-      radlContainer.innerHTML = "";
-      workersToShow.forEach(w => {
-        const nameParts = String(w.name || "").trim().split(/\s+/).filter(Boolean);
-        const firstName = formatSideNamePart(nameParts[0], false);
-        const surname = formatSideNamePart(nameParts.slice(1).join(' '), true);
-        const uiState = getWorkerUiState(w, w.date, now);
-        const shiftBadge = uiState.shiftBadge;
-        let sideTimerHtmlL = '';
-        let isDone = false;
-        if (isToday && w.startTime && w.endTime) {
-          isDone = uiState.isDone;
-          if (uiState.isActive && uiState.remainingMs > 0) {
-            sideTimerHtmlL = `<span class="duty-timer mk-side-timer" data-worker="${w.name}" data-date="${w.date}" data-start="${w.startTime}" data-end="${w.endTime}" data-shift="${w.shift || ''}"><span class="ghost">88:88:88</span><span class="val">${uiState.timerText}</span></span>`;
-          }
-        }
-
-        const iconHtml = getSideIconHtml(w.type);
-
-        let sideFatScoreL = 0, sideFatColorL = '#30d158';
-        try { if(window.__fatigue){ const sf=window.__fatigue.calculateFatigue(w.name); if(sf){ sideFatScoreL=sf.score; if(sideFatScoreL>70)sideFatColorL='#ff6b5f'; else if(sideFatScoreL>45)sideFatColorL='#e59b42'; else if(sideFatScoreL>20)sideFatColorL='#d8c64a'; else sideFatColorL='#35d07f'; } } }catch(e){}
-        const fatLevelL = sideFatScoreL > 70 ? 'crit' : sideFatScoreL > 45 ? 'high' : sideFatScoreL > 20 ? 'mid' : 'low';
-        const fatLevelLabelL = fatLevelL === 'crit' ? 'Kritisks' : fatLevelL === 'high' ? 'Augsts' : fatLevelL === 'mid' ? 'Vidējs' : 'Zems';
-        const shiftChipL = uiState.shiftHours ? `<span class="mk-side-shift-chip">${uiState.shiftHours}H</span>` : shiftBadge;
-        const sideVarsL = `--mk-side-fat:${sideFatScoreL}%;--mk-side-fat-color:${sideFatColorL};`;
-        const sideFatRingL = `<div class="mk-side-ring" aria-label="Nogurums ${sideFatScoreL}%"><span>${sideFatScoreL}<small>${fatLevelLabelL}</small></span></div>`;
-        const sideFatBarL = `<div class="mk-side-progress"><div class="side-fat-bar-wrap"><div></div></div><span class="side-fat-pct">${sideFatScoreL}%</span></div>`;
-        // ── nfoot: next shift + month count (today only) ──
-        // dates in store are DD.MM.YYYY — convert to YYYYMMDD number for safe comparison
-        const _dnumL=(ds)=>{const p=(ds||'').split('.');return p.length===3?parseInt(p[2])*10000+parseInt(p[1])*100+parseInt(p[0]):0;};
-        const _MO_SHORT_L=['janvāris','februāris','marts','aprīlis','maijs','jūnijs','jūlijs','augusts','septembris','oktobris','novembris','decembris'];
-        const _MO_LOC_L=['janvārī','februārī','martā','aprīlī','maijā','jūnijā','jūlijā','augustā','septembrī','oktobrī','novembrī','decembrī'];
-        let nfootHtmlL = '';
-        if (isToday) { try {
-          const _activeNumL=_dnumL(activeDateStr);
-          // next shift
-          let nsHtmlL = '';
-          const nsArrL = [];
-          for (const _mo in storeRad) { const _days=storeRad[_mo]; if(!Array.isArray(_days)) continue;
-            for (const _d of _days) { if(!_d||!_d.date||_dnumL(_d.date)<=_activeNumL) continue;
-              for (const _nw of (_d.workers||[])) { if(_nw.name===w.name) nsArrL.push({n:_dnumL(_d.date),date:_d.date,w:_nw}); }
-            }
-          }
-          nsArrL.sort((a,b)=>a.n-b.n);
-          if (nsArrL[0]) {
-            const [_nd,_nm]=nsArrL[0].date.split('.');
-            const _ntime=nsArrL[0].w.startTime?` ${nsArrL[0].w.startTime}`:'';
-            const _nhrs=nsArrL[0].w.shift?` ${nsArrL[0].w.shift}h`:'';
-            nsHtmlL=`<dt>Nākamā maiņa</dt><dd>${parseInt(_nd)}. ${_MO_SHORT_L[parseInt(_nm)-1]}${_ntime}${_nhrs}</dd>`;
-          }
-          // month count — match same YYYYMM (numeric, padding-safe)
-          const _activeYML=Math.floor(_activeNumL/100);
-          let mHtmlL = '';
-          let _doneL=0,_totL=0;
-          for (const _mo in storeRad) { const _days=storeRad[_mo]; if(!Array.isArray(_days)) continue;
-            for (const _d of _days) { if(!_d||!_d.date) continue;
-              if(Math.floor(_dnumL(_d.date)/100)!==_activeYML) continue;
-              for (const _mw of (_d.workers||[])) { if(String(_mw.name||'').trim()===String(w.name||'').trim()){ _totL++; if(_dnumL(_d.date)<=_activeNumL)_doneL++; } }
-            }
-          }
-          if (_totL > 0) {
-            const _remL=_totL-_doneL;
-            const _segsL=(()=>{const MAX=8;const n=Math.min(_totL,MAX);let s='<span class="mk-nfoot-seg">';for(let i=0;i<n;i++)s+=`<i${i<Math.min(_doneL,MAX)?' class="on"':''}></i>`;return s+'</span>';})();
-            const _mlblL=_MO_LOC_L[(_activeYML%100)-1];
-            mHtmlL=`<dt>Maiņas ${_mlblL}</dt><dd style="--mk-side-fat-color:${sideFatColorL}">${_doneL} / ${_totL}${_remL>0?` <em>(vēl ${_remL})</em>`:''} ${_segsL}</dd>`;
-          }
-          if (nsHtmlL||mHtmlL) nfootHtmlL=`<dl class="mk-side-nfoot">${nsHtmlL}${mHtmlL}</dl>`;
-        } catch(e){} }
-        const initialsL = (nameParts[0]?.[0]||'')+(nameParts[1]?.[0]||'');
-        radlContainer.innerHTML += `
-          <div class="duty-block mk-side-card mk-side-radiologist${iconHtml ? ' has-shift-icon' : ''}${isDone ? ' duty-done' : ''}" style="${sideVarsL}" data-worker="${w.name}" data-shift="${w.shift}" data-type="${w.type || ''}" data-fatigue="${fatLevelL}">
-            <div class="mk-side-shimmer" aria-hidden="true"></div>
-            <div class="mk-side-card-main">
-              ${sideFatRingL}
-              <div class="mk-side-card-body">
-                <div class="name-row mk-side-name-row">
-                  <div class="mk-side-name-wrap">
-                    <span class="duty-name">${firstName}</span>
-                    ${surname ? `<span class="duty-surname">${surname}</span>` : ''}
-                  </div>
-                  <div class="mk-side-icon-rail">${iconHtml}</div>
-                </div>
-                <div class="badge-row mk-side-clock-row">
-                  ${shiftChipL}
-                  ${sideTimerHtmlL}
-                </div>
-              </div>
-            </div>
-            ${sideFatBarL}
-            ${nfootHtmlL}
-            ${initialsL ? `<span class="mk-side-wm" aria-hidden="true">${initialsL}</span>` : ''}
-          </div>`;
+      renderSideDutyCards(radlContainer, workersToShow, {
+        sourceStore: storeRad,
+        isToday,
+        now,
+        roleClass: 'mk-side-radiologist'
       });
-      if (!radlContainer.innerHTML) radlContainer.innerHTML = "<span style='color:#666'>ATPŪTA</span>";
     }
     // Hide next-card when not today
     const radlNextCard = radlNext && (radlNext.closest('.mk-next-card') || radlNext.closest('.next-box'));
@@ -4033,7 +4026,12 @@ function filterFullList(btn) {
         if (!f || !Number.isFinite(f.score)) return;
         const score = Math.max(0, f.score);
         if (card.classList.contains('mk-mid-card')) {
-          const level = score > 66 ? 'hi' : score >= 33 ? 'mid' : 'low';
+          const presentation = typeof window.__fatigue.getPresentation === 'function'
+            ? window.__fatigue.getPresentation(score)
+            : { key: score > 70 ? 'crit' : score > 45 ? 'high' : score > 20 ? 'mid' : 'low' };
+          const level = presentation.key === 'crit' || presentation.key === 'high'
+            ? 'hi'
+            : presentation.key === 'mid' ? 'mid' : 'low';
           card.classList.remove('mk-mid-fat-none', 'mk-mid-fat-low', 'mk-mid-fat-mid', 'mk-mid-fat-hi');
           card.classList.add('mk-mid-fat-' + level);
           const filled = Math.max(0, Math.min(10, Math.ceil(score / 10)));
@@ -4046,20 +4044,20 @@ function filterFullList(btn) {
           return;
         }
         // Krāsas: zaļš→dzeltens→oranžs→sarkans, katram līmenim skaidri atšķirīgs
-        let color, glowColor, borderColor;
+        let color, borderColor;
         if (score > 70) {
-          color = '#ff3b30'; glowColor = 'rgba(255,59,48,0.25)'; borderColor = 'rgba(255,59,48,0.6)';
+          color = '#ff5c70'; borderColor = 'rgba(255,92,112,0.55)';
         } else if (score > 45) {
-          color = '#ff9500'; glowColor = 'rgba(255,149,0,0.20)'; borderColor = 'rgba(255,149,0,0.5)';
+          color = '#ff9f43'; borderColor = 'rgba(255,159,67,0.46)';
         } else if (score > 20) {
-          color = '#ffd60a'; glowColor = 'rgba(255,214,10,0.15)'; borderColor = 'rgba(255,214,10,0.4)';
+          color = '#e7d34b'; borderColor = 'rgba(231,211,75,0.40)';
         } else {
-          color = '#30d158'; glowColor = 'rgba(48,209,88,0.12)'; borderColor = 'rgba(48,209,88,0.3)';
+          color = '#42d991'; borderColor = 'rgba(66,217,145,0.30)';
         }
 
         // Kartes border krāsa pēc noguruma līmeņa
         card.style.borderColor = borderColor;
-        card.style.boxShadow = score > 45 ? `0 0 12px ${glowColor}, inset 0 0 20px ${glowColor}` : '';
+        card.style.boxShadow = '';
 
         // Update bar fill — targets .fat-fill and .fat-pct classes
         const existingBar = card.querySelector('.card-fat-row');
@@ -4338,7 +4336,11 @@ function filterFullList(btn) {
 
     function getCoffeeSyncState() {
       if (!window.__minkaCoffeeSync) {
-        window.__minkaCoffeeSync = { loadedDays: Object.create(null), loadingDays: Object.create(null) };
+        window.__minkaCoffeeSync = {
+          loadedDays: Object.create(null),
+          loadingDays: Object.create(null),
+          pollingDays: Object.create(null)
+        };
       }
       return window.__minkaCoffeeSync;
     }
@@ -4369,16 +4371,20 @@ function filterFullList(btn) {
       if (document.hidden) return;
       const day = getCoffeeDayKey();
       if (!day || day === 'unknown') return;
+      const state = getCoffeeSyncState();
+      if (state.loadingDays[day] || state.pollingDays[day]) return;
+      state.pollingDays[day] = true;
       fetch(getCoffeeApiBase() + '/api/coffee?date=' + encodeURIComponent(day), { cache: 'no-store' })
         .then(r => r.ok ? r.json() : null)
         .then(data => {
           if (!data || !data.ok || data.date !== day) return;
           applyCoffeeCounts(day, data.counts || {});
           applyCoffeeDetails(day, data.details || {});
-          getCoffeeSyncState().loadedDays[day] = true;
+          state.loadedDays[day] = true;
           refreshVisibleCoffeeRows(day);
         })
-        .catch(function(){});
+        .catch(function(){})
+        .finally(function(){ delete state.pollingDays[day]; });
     }
     function startCoffeePolling() {
       if (window.__minkaCoffeePollStarted) return;
@@ -5010,6 +5016,7 @@ function filterFullList(btn) {
       if (!container) return;
       const dutyBlocks = container.querySelectorAll('.duty-block');
       dutyBlocks.forEach(block => {
+        if (block.classList.contains('mk-side-card')) return;
         const nameSpan = block.querySelector('.duty-name');
         if (!nameSpan) return;
         const parentWidth = block.clientWidth;

@@ -1,0 +1,597 @@
+/* Side duty cards: compact medical UI with plain role-aware headings. */
+html body .side-panel.left-panel {
+  --mk-role-accent: #b77bff;
+  --mk-role-rgb: 183, 123, 255;
+}
+
+html body .side-panel.right-panel {
+  --mk-role-accent: #ff7467;
+  --mk-role-rgb: 255, 116, 103;
+}
+
+html body .side-panel:is(.left-panel, .right-panel) {
+  padding-top: 14px !important;
+}
+
+html body .side-panel .status-tag:is(.radiographers, .radiologists) {
+  display: flex !important;
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 4px !important;
+  flex: 0 0 auto !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 0 3px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+  text-align: center !important;
+}
+
+html body .side-panel .mk-role-title {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+  color: inherit !important;
+  font: 850 13.5px/1 Inter, system-ui, sans-serif !important;
+  letter-spacing: .11em !important;
+  white-space: nowrap !important;
+}
+
+html body .side-panel .mk-role-title-icon {
+  display: block !important;
+  flex: 0 0 20px !important;
+  width: 20px !important;
+  height: 20px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  object-fit: contain !important;
+  opacity: .96 !important;
+  filter: none !important;
+  transform: none !important;
+}
+
+html body .side-panel .mk-shift-count-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  flex: 0 0 auto !important;
+  height: auto !important;
+  min-height: 12px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #c5ccda !important;
+  white-space: nowrap !important;
+}
+
+html body .side-panel .mk-count-item {
+  display: inline-grid !important;
+  grid-template-columns: auto auto !important;
+  align-items: baseline !important;
+  gap: 3px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+html body .side-panel .mk-count-item + .mk-count-item {
+  margin-left: 1px !important;
+  padding-left: 7px !important;
+  border-left: 1px solid rgba(166, 181, 207, .22) !important;
+}
+
+html body .side-panel .mk-count-item small {
+  color: #969fb0 !important;
+  font: 800 7px/1 Inter, system-ui, sans-serif !important;
+  letter-spacing: .11em !important;
+}
+
+html body .side-panel .mk-count-item strong {
+  color: var(--mk-role-accent) !important;
+  font: 900 12px/1 "JetBrains Mono", monospace !important;
+  letter-spacing: 0 !important;
+}
+
+html body .side-panel .mk-count-item.mk-night-ok strong { color: #65e7a3 !important; }
+html body .side-panel .mk-count-item.mk-night-drop strong { color: #ffbe61 !important; }
+html body .side-panel .mk-count-item.mk-night-zero strong { color: #ff7467 !important; }
+
+html body .side-panel .mk-duty-strip {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 1px !important;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 5px 6px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+  text-align: center !important;
+}
+
+html body .side-panel .mk-duty-strip:empty {
+  display: none !important;
+}
+
+html body .side-panel .mk-duty-line {
+  max-width: 100% !important;
+  color: #aeb7c8 !important;
+  font: 650 9.5px/1.18 Inter, system-ui, sans-serif !important;
+  letter-spacing: 0 !important;
+  overflow-wrap: break-word !important;
+}
+
+html body .side-panel .mk-duty-line .mk-dl-ico {
+  display: inline-block !important;
+  width: 13px !important;
+  height: auto !important;
+  margin-right: 3px !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  font-size: 9px !important;
+  text-align: center !important;
+  vertical-align: 0 !important;
+}
+
+html body .side-panel .mk-duty-line .mk-dl-t {
+  color: #f2f5fa !important;
+  font-weight: 800 !important;
+}
+
+html body .side-panel .mk-duty-line b {
+  font-weight: 800 !important;
+  text-decoration: none !important;
+}
+
+html body .side-panel .mk-duty-line.dl-night b { color: #79e8ae !important; }
+html body .side-panel .mk-duty-line.dl-leave b { color: #ffd08a !important; }
+html body .side-panel .mk-duty-line.dl-later b { color: #a9c3e4 !important; }
+
+html body :is(#radiographers-duty, #radiologists-duty) {
+  gap: 10px !important;
+  padding-top: 0 !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-card {
+  --mk-card-surface: color-mix(in srgb, var(--mk-side-fat-color) 6%, #0c1017);
+  position: relative !important;
+  isolation: isolate !important;
+  contain: layout paint style;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-height: 112px !important;
+  padding: 11px 11px 9px !important;
+  border: 1px solid rgba(166, 181, 207, .13) !important;
+  border-radius: 14px !important;
+  background: linear-gradient(145deg, var(--mk-card-surface), #080b10 78%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .035) !important;
+  filter: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-card::before {
+  content: none !important;
+  display: none !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-card::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 4 !important;
+  box-sizing: border-box !important;
+  padding: 1px !important;
+  border-radius: inherit !important;
+  background: conic-gradient(from -90deg, var(--mk-side-fat-color) var(--mk-side-fat), rgba(166, 181, 207, .08) 0) !important;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
+  -webkit-mask-composite: xor !important;
+  mask-composite: exclude !important;
+  opacity: .9 !important;
+  pointer-events: none !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-card:hover {
+  background: linear-gradient(145deg, var(--mk-card-surface), #080b10 78%) !important;
+  border-color: rgba(166, 181, 207, .13) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .035) !important;
+  transform: none !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-card-main {
+  position: relative !important;
+  z-index: 2 !important;
+  display: grid !important;
+  grid-template-columns: 58px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-fatigue {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 58px !important;
+  min-width: 58px !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-ring {
+  position: relative !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 54px !important;
+  height: 54px !important;
+  margin: 0 !important;
+  border-radius: 50% !important;
+  background: conic-gradient(from 0deg, var(--mk-side-fat-color) var(--mk-side-fat), #242a36 0) !important;
+  box-shadow: none !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-ring::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 7px !important;
+  border: 1px solid rgba(255, 255, 255, .025) !important;
+  border-radius: inherit !important;
+  background: #090c12 !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-ring span {
+  position: relative !important;
+  z-index: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #f5f7fb !important;
+  font: 900 17px/.9 Inter, system-ui, sans-serif !important;
+  letter-spacing: 0 !important;
+  text-shadow: none !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-ring span small {
+  margin-top: 4px !important;
+  color: var(--mk-side-fat-color) !important;
+  font: 850 5.5px/1 Inter, system-ui, sans-serif !important;
+  letter-spacing: 0 !important;
+  text-transform: uppercase !important;
+  text-shadow: none !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-fatigue-caption {
+  margin-top: 6px !important;
+  color: #8c96a9 !important;
+  font: 800 6.5px/1 Inter, system-ui, sans-serif !important;
+  letter-spacing: .13em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-card-body,
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-name-wrap {
+  min-width: 0 !important;
+  max-width: none !important;
+  overflow: visible !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-name-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) max-content !important;
+  align-items: start !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+  margin: 0 0 8px !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-card .duty-name {
+  display: block !important;
+  max-width: 100% !important;
+  color: #f4f6fa !important;
+  -webkit-text-fill-color: #f4f6fa !important;
+  font: 850 18px/1 Inter, system-ui, sans-serif !important;
+  letter-spacing: 0 !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  text-shadow: none !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-card .duty-surname {
+  display: block !important;
+  max-width: 100% !important;
+  margin-top: 4px !important;
+  padding: 0 !important;
+  color: #aeb7c8 !important;
+  font: 800 9.5px/1.08 Inter, system-ui, sans-serif !important;
+  letter-spacing: .04em !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  text-overflow: clip !important;
+  text-transform: uppercase !important;
+  text-shadow: none !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-icon-rail {
+  position: static !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 4px !important;
+  min-width: 20px !important;
+  max-width: 48px !important;
+  height: 20px !important;
+  pointer-events: none !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-icon-rail:empty {
+  display: none !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) :is(.mk-emoji-side, .shift-icon-side) {
+  position: static !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: auto !important;
+  min-width: 18px !important;
+  height: 20px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+  opacity: 1 !important;
+  filter: none !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-clock-row {
+  display: grid !important;
+  grid-template-columns: max-content minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  overflow: visible !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-shift-chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 40px !important;
+  height: 25px !important;
+  padding: 0 7px !important;
+  border: 1px solid color-mix(in srgb, var(--mk-side-fat-color) 42%, transparent) !important;
+  border-radius: 7px !important;
+  background: color-mix(in srgb, var(--mk-side-fat-color) 18%, #0b1017) !important;
+  color: color-mix(in srgb, var(--mk-side-fat-color) 80%, white) !important;
+  font: 900 12px/1 Inter, system-ui, sans-serif !important;
+  letter-spacing: .01em !important;
+  box-shadow: none !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-card .mk-side-timer.duty-timer {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  height: 25px !important;
+  padding: 0 5px !important;
+  border: 1px solid rgba(166, 181, 207, .14) !important;
+  border-radius: 7px !important;
+  background: #05070b !important;
+  color: #dfe4ec !important;
+  font: 750 10px/1 "JetBrains Mono", ui-monospace, monospace !important;
+  letter-spacing: .045em !important;
+  white-space: nowrap !important;
+  box-shadow: none !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-timer :is(.ghost) {
+  display: none !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot {
+  position: relative !important;
+  z-index: 2 !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 5px !important;
+  margin: 9px 0 0 !important;
+  padding: 8px 0 0 !important;
+  border-top: 1px solid rgba(166, 181, 207, .13) !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot-row {
+  display: grid !important;
+  grid-template-columns: 70px minmax(0, 1fr) !important;
+  align-items: baseline !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot dt {
+  color: #8993a6 !important;
+  font: 800 6.8px/1.1 Inter, system-ui, sans-serif !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+  text-shadow: none !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot dd {
+  display: flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  color: #e8ecf3 !important;
+  font: 750 9px/1.15 Inter, system-ui, sans-serif !important;
+  letter-spacing: 0 !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  overflow-wrap: normal !important;
+  text-overflow: clip !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot dd em {
+  color: #aeb7c8 !important;
+  font: inherit !important;
+  font-style: normal !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-nfoot-seg {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  align-items: center !important;
+  gap: 2px !important;
+  min-width: 0 !important;
+  margin-left: 1px !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-nfoot-seg i {
+  flex: 1 1 3px !important;
+  width: auto !important;
+  min-width: 2px !important;
+  max-width: 5px !important;
+  height: 3px !important;
+  border: 0 !important;
+  border-radius: 2px !important;
+  background: #29303b !important;
+  box-shadow: none !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-nfoot-seg i.on {
+  background: var(--mk-side-fat-color) !important;
+  box-shadow: none !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-wm {
+  position: absolute !important;
+  right: 7px !important;
+  bottom: -4px !important;
+  z-index: 0 !important;
+  color: rgba(224, 232, 246, .035) !important;
+  font: 900 56px/1 Inter, system-ui, sans-serif !important;
+  letter-spacing: -.06em !important;
+  text-shadow: none !important;
+  pointer-events: none !important;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-duty-empty {
+  display: block;
+  padding: 12px;
+  color: #778194;
+  font: 700 10px/1 Inter, system-ui, sans-serif;
+  letter-spacing: .12em;
+  text-align: center;
+}
+
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-card.duty-done {
+  opacity: .45 !important;
+  filter: none !important;
+}
+
+html body :is(.side-panel.compact-duty, .side-panel.mini-duty) :is(#radiographers-duty, #radiologists-duty) .mk-side-card {
+  min-height: 78px !important;
+  padding: 8px 9px 7px !important;
+}
+
+html body :is(.side-panel.compact-duty, .side-panel.mini-duty) :is(#radiographers-duty, #radiologists-duty) .mk-side-card::before {
+  content: none !important;
+  display: none !important;
+}
+
+html body :is(.side-panel.compact-duty, .side-panel.mini-duty) :is(#radiographers-duty, #radiologists-duty) .mk-side-card-main {
+  grid-template-columns: 44px minmax(0, 1fr) !important;
+  gap: 7px !important;
+}
+
+html body :is(.side-panel.compact-duty, .side-panel.mini-duty) :is(#radiographers-duty, #radiologists-duty) .mk-side-fatigue {
+  width: 44px !important;
+  min-width: 44px !important;
+}
+
+html body :is(.side-panel.compact-duty, .side-panel.mini-duty) :is(#radiographers-duty, #radiologists-duty) .mk-side-ring {
+  width: 40px !important;
+  height: 40px !important;
+}
+
+html body :is(.side-panel.compact-duty, .side-panel.mini-duty) :is(#radiographers-duty, #radiologists-duty) .mk-side-ring::after {
+  inset: 5px !important;
+}
+
+html body :is(.side-panel.compact-duty, .side-panel.mini-duty) :is(#radiographers-duty, #radiologists-duty) .mk-side-ring span {
+  font-size: 12px !important;
+}
+
+html body :is(.side-panel.compact-duty, .side-panel.mini-duty) :is(#radiographers-duty, #radiologists-duty) .mk-side-fatigue-caption {
+  margin-top: 4px !important;
+  font-size: 5.5px !important;
+}
+
+html body :is(.side-panel.compact-duty, .side-panel.mini-duty) :is(#radiographers-duty, #radiologists-duty) .mk-side-card .duty-name {
+  font-size: 15px !important;
+}
+
+html body :is(.side-panel.compact-duty, .side-panel.mini-duty) :is(#radiographers-duty, #radiologists-duty) .mk-side-card .duty-surname {
+  font-size: 8.6px !important;
+}
+
+html body :is(.side-panel.compact-duty, .side-panel.mini-duty) :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot {
+  grid-template-columns: 1fr !important;
+  align-items: stretch !important;
+  gap: 3px !important;
+  margin-top: 6px !important;
+  padding-top: 6px !important;
+}
+
+html body :is(.side-panel.compact-duty, .side-panel.mini-duty) :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot-row {
+  width: 100% !important;
+  grid-template-columns: 65px minmax(0, 1fr) !important;
+  gap: 4px !important;
+}
+
+html body :is(.side-panel.compact-duty, .side-panel.mini-duty) :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot dd {
+  width: auto !important;
+  min-width: 0 !important;
+}

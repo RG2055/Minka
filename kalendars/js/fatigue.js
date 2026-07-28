@@ -28,6 +28,45 @@
     minRestHours: 11,
   };
 
+  const FATIGUE_LEVELS = [
+    { max: 20, key: 'low', label: 'Zems', level: 'ZEMS', className: 'fatigue-low', color: '#42d991' },
+    { max: 45, key: 'mid', label: 'Vidējs', level: 'VIDĒJS', className: 'fatigue-moderate', color: '#e7d34b' },
+    { max: 70, key: 'high', label: 'Augsts', level: 'AUGSTS', className: 'fatigue-high', color: '#ff9f43' },
+    { max: 100, key: 'crit', label: 'Kritisks', level: 'KRITISKS', className: 'fatigue-critical', color: '#ff5c70' },
+  ];
+  const historyCache = new Map();
+  const resultCache = new Map();
+  let cachedGrafiksStore = null;
+  let cachedGrafiksStoreRad = null;
+
+  function clearFatigueCache() {
+    historyCache.clear();
+    resultCache.clear();
+    cachedGrafiksStore = window.__grafiksStore || null;
+    cachedGrafiksStoreRad = window.__grafiksStoreRad || null;
+  }
+
+  function syncFatigueCache() {
+    const nextGrafiks = window.__grafiksStore || null;
+    const nextRadiologists = window.__grafiksStoreRad || null;
+    if (nextGrafiks !== cachedGrafiksStore || nextRadiologists !== cachedGrafiksStoreRad) {
+      clearFatigueCache();
+    }
+  }
+
+  function getPresentation(value) {
+    const score = Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
+    const level = FATIGUE_LEVELS.find(item => score <= item.max) || FATIGUE_LEVELS[FATIGUE_LEVELS.length - 1];
+    return {
+      score,
+      key: level.key,
+      label: level.label,
+      level: level.level,
+      levelClass: level.className,
+      color: level.color,
+    };
+  }
+
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   //  UTILÄªTAS
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -165,9 +204,9 @@
 
   /** FormatÄ“ ilgumu stundÄs cilvÄ“kiem saprotamÄ veidÄ */
   function formatDuration(totalHours) {
-    if (totalHours < 0) return 'â€”';
+    if (totalHours < 0) return '—';
     const hrs = Math.floor(totalHours);
-    if (hrs < 1) return 'mazÄk par stundu';
+    if (hrs < 1) return 'mazāk par stundu';
     if (hrs < 24) return pluralHours(hrs);
     const days = Math.floor(hrs / 24);
     const rem = hrs % 24;
@@ -185,6 +224,9 @@
   //  DATU VĀKŠANA
 
   function gatherWorkerHistory(workerName) {
+    syncFatigueCache();
+    const cacheKey = String(workerName || '').trim();
+    if (historyCache.has(cacheKey)) return historyCache.get(cacheKey);
     const stores = [window.__grafiksStore, window.__grafiksStoreRad];
     const entries = [];
 
@@ -249,6 +291,7 @@
       }
       if (!isDupe) keep.push(entry);
     }
+    historyCache.set(cacheKey, keep);
     return keep;
   }
 
@@ -291,6 +334,11 @@
   }
 
   function calculateFatigue(workerName) {
+    syncFatigueCache();
+    const requestedDateStr = _getSelectedDateStr() || '';
+    const timeBucket = Math.floor(Date.now() / 30000);
+    const cacheKey = [String(workerName || '').trim(), requestedDateStr, timeBucket].join('|');
+    if (resultCache.has(cacheKey)) return resultCache.get(cacheKey);
     const history = gatherWorkerHistory(workerName);
     if (!history.length) return null;
 
@@ -502,9 +550,10 @@
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     let nextDayOff = null;
-    const futureShifts = history.filter(e => e.date > today);
+    const dayOffBase = selectedDate && viewMode !== 'today' ? selectedDate : today;
+    const futureShifts = history.filter(e => e.date > dayOffBase);
     for (let i = 1; i <= 14; i++) {
-      const checkDate = new Date(today);
+      const checkDate = new Date(dayOffBase);
       checkDate.setDate(checkDate.getDate() + i);
       const has = futureShifts.some(e =>
         e.date.getFullYear() === checkDate.getFullYear() &&
@@ -767,15 +816,10 @@
     })();
 
 
-    var level, levelClass;
-    if (score <= 20) { level = 'ZEMS'; levelClass = 'fatigue-low'; }
-    else if (score <= 45) { level = 'VIDĒJS'; levelClass = 'fatigue-moderate'; }
-    else if (score <= 70) { level = 'AUGSTS'; levelClass = 'fatigue-high'; }
-    else { level = 'KRITISKS'; levelClass = 'fatigue-critical'; }
-
-    return {
+    const presentation = getPresentation(score);
+    const result = {
       workerName,
-      score, level, levelClass, scoreReasons,
+      score, level: presentation.level, levelClass: presentation.levelClass, scoreReasons,
       weeklyHours, shiftsThisWeek, nightShiftsThisWeek,
       lastShift, lastShiftEnd, hoursSinceLastShift,
       onDuty, currentShift, currentShiftEnd, hoursToShiftEnd,
@@ -783,6 +827,12 @@
       nextShift, nextDayOff, recentShifts,
       viewMode, selectedDateStr, selectedShift,
     };
+    resultCache.set(cacheKey, result);
+    if (resultCache.size > 200) {
+      const oldestKey = resultCache.keys().next().value;
+      resultCache.delete(oldestKey);
+    }
+    return result;
   }
 
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -896,9 +946,9 @@
     const lastWeekAvg = dailyData.slice(-7).reduce((s, d) => s + d.score, 0) / 7;
     const diff = lastWeekAvg - firstWeekAvg;
     let trendText = '', trendClass = '';
-    if (diff > 8) { trendText = 'â†— Tendence augÅ¡upejoÅ¡a'; trendClass = 'fatigue-trend-up'; }
-    else if (diff < -8) { trendText = 'â†˜ Tendence lejupejoÅ¡a'; trendClass = 'fatigue-trend-down'; }
-    else { trendText = 'â†’ Stabils'; trendClass = 'fatigue-trend-stable'; }
+    if (diff > 8) { trendText = '↗ Tendence augšupejoša'; trendClass = 'fatigue-trend-up'; }
+    else if (diff < -8) { trendText = '↘ Tendence lejupejoša'; trendClass = 'fatigue-trend-down'; }
+    else { trendText = '→ Stabils'; trendClass = 'fatigue-trend-stable'; }
 
     const dataAttr = encodeURIComponent(JSON.stringify(dailyData.map(d => ({
       s: d.score, l: d.label, k: d.shift ? shiftKind(d.shift) : null
@@ -907,8 +957,8 @@
     return `
     <div class="fatigue-tendency">
       <div class="fatigue-tendency-header">
-        <span class="fatigue-tendency-title">ðŸ“Š TENDENCE</span>
-        <span class="fatigue-tendency-period">${startStr} â€” ${endStr}</span>
+        <span class="fatigue-tendency-title">TENDENCE</span>
+        <span class="fatigue-tendency-period">${startStr} — ${endStr}</span>
       </div>
       <div class="fatigue-tendency-chart" data-chart="${dataAttr}">
         <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:${H}px">
@@ -946,9 +996,9 @@
         </svg>
       </div>
       <div class="fatigue-tendency-legend">
-        <span class="fatigue-tendency-dot" style="background:rgba(255,160,50,0.8)"></span><span>â˜€ï¸ Diena</span>
-        <span class="fatigue-tendency-dot" style="background:rgba(92,154,255,0.8)"></span><span>ðŸŒ™ Nakts</span>
-        <span class="fatigue-tendency-dot" style="background:rgba(183,123,255,0.8)"></span><span>ðŸ•› Diennakts</span>
+        <span class="fatigue-tendency-dot" style="background:rgba(255,160,50,0.8)"></span><span>☀️ Diena</span>
+        <span class="fatigue-tendency-dot" style="background:rgba(92,154,255,0.8)"></span><span>🌙 Nakts</span>
+        <span class="fatigue-tendency-dot" style="background:rgba(183,123,255,0.8)"></span><span>🕛 Diennakts</span>
       </div>
       <div class="fatigue-tendency-trend ${trendClass}">${trendText}</div>
     </div>`;
@@ -978,7 +1028,7 @@
         const d = data[idx(e.clientX)];
         if (!d) return;
         const col = d.s>=75?'#ff3d5a':d.s>=50?'#ff8c42':d.s>=25?'#f5c518':'#00e67a';
-        const shift = d.k ? (d.k==='nakts'?'ðŸŒ™ Nakts maiÅ†a':d.k==='diennakts'?'ðŸ•› Diennakts':'â˜€ï¸ Dienas maiÅ†a') : 'â€” BrÄ«vdiena';
+        const shift = d.k ? (d.k === 'nakts' ? '🌙 Nakts maiņa' : d.k === 'diennakts' ? '🕛 Diennakts' : '☀️ Dienas maiņa') : '— Brīvdiena';
         _tt.innerHTML = `<div class="ft-tt-date">${d.l}</div><div class="ft-tt-score" style="color:${col}">${d.s}<span>/100</span></div><div class="ft-tt-shift">${shift}</div>`;
         _tt.style.cssText = `left:${e.clientX}px;top:${e.clientY}px`;
         _tt.classList.add('visible');
@@ -1297,7 +1347,7 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else setTimeout(init, 300);
 
-  window.__fatigue = { calculateFatigue, gatherWorkerHistory };
+  window.__fatigue = { calculateFatigue, gatherWorkerHistory, getPresentation, clearCache: clearFatigueCache };
   window.__fatigueRenderModal = renderModalFatigue;
   setTimeout(notifyMinkaBridge, 50);
   setTimeout(notifyMinkaBridge, 500);
