@@ -1131,6 +1131,7 @@ function filterFullList(btn) {
         picker.innerHTML += `<option value="${m}" ${isCur ? 'selected' : ''}>${m.replace(/\s+\d{4}\s*$/, '').toUpperCase()}</option>`;
       });
       if(!activeMonth && months.length > 0) { activeMonth = months[0]; window.__activeMonth = months[0]; }
+      document.dispatchEvent(new CustomEvent('minka:monthReady', { detail: { month: activeMonth } }));
       g_sizeMonthPicker();
       const _ldr=document.getElementById('grafiks-loader'); if(_ldr) hideGrafiksLoader(_ldr);
       g_renderMonth();
@@ -1179,6 +1180,7 @@ function filterFullList(btn) {
             picker.innerHTML += `<option value="${m}" ${isCur ? 'selected' : ''}>${m.replace(/\s+\d{4}\s*$/, '').toUpperCase()}</option>`;
           });
           if(!activeMonth && months.length > 0) { activeMonth = months[0]; window.__activeMonth = months[0]; }
+          document.dispatchEvent(new CustomEvent('minka:monthReady', { detail: { month: activeMonth } }));
           g_sizeMonthPicker();
           if(loader) hideGrafiksLoader(loader);
           g_renderMonth();
@@ -1589,6 +1591,7 @@ function filterFullList(btn) {
     if (targetMonth !== activeMonth) {
       activeMonth = targetMonth;
       window.__activeMonth = targetMonth;
+      document.dispatchEvent(new CustomEvent('minka:monthReady', { detail: { month: activeMonth } }));
       const picker = document.getElementById('grafiks-monthPicker');
       if (picker) {
         picker.value = targetMonth;
@@ -4000,6 +4003,7 @@ function filterFullList(btn) {
     activeMonth = picker.value;
     g_sizeMonthPicker();
     window.__activeMonth = activeMonth;
+    document.dispatchEvent(new CustomEvent('minka:monthReady', { detail: { month: activeMonth } }));
     // Rebuild pills for new month FIRST, then select day
     g_renderMonth();
     document.getElementById('grafiks-scroller').scrollLeft = 0;
