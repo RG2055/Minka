@@ -406,6 +406,9 @@ html body :is(#radiographers-duty, #radiologists-duty) .mk-side-shift-chip {
   font: 900 12px/1 Inter, system-ui, sans-serif !important;
   letter-spacing: .01em !important;
   box-shadow: none !important;
+  /* The hour label is one unit: never let a narrow track break it up */
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
 }
 
 html body :is(#radiographers-duty, #radiologists-duty) .mk-side-shift-chip .shift-icon-side {
@@ -725,14 +728,32 @@ html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) 
   column-gap: 6px !important;
 }
 
+/* Timer present: the chip column must still size to its own content.
+   A hard 34px track squeezed "12H☀️" until the label broke one character per
+   line ("1" / "2" / "H"); the timer already has the flexible second track. */
 html body .left-panel #radiographers-duty .mk-side-clock-row:has(.mk-side-timer) {
-  grid-template-columns: 34px minmax(0, 1fr) !important;
+  grid-template-columns: max-content minmax(0, 1fr) !important;
   gap: 2px !important;
 }
 
 html body .left-panel #radiographers-duty .mk-side-clock-row:has(.mk-side-timer) .mk-side-shift-chip {
-  min-width: 34px !important;
-  padding-inline: 3px !important;
+  min-width: 0 !important;
+  padding-inline: 4px !important;
+}
+
+/* With a live countdown beside it the row only has ~94px. The full HH:MM:SS
+   must stay readable, so while the shift is running the chip carries just the
+   hour label; the day/night icon returns as soon as the timer stops. Hiding it
+   (rather than shrinking it) keeps the width independent of emoji metrics,
+   which differ per platform. */
+html body .left-panel #radiographers-duty .mk-side-clock-row:has(.mk-side-timer) .mk-side-shift-chip .shift-icon-side {
+  display: none !important;
+}
+
+html body .left-panel #radiographers-duty .mk-side-clock-row:has(.mk-side-timer) .mk-side-timer.duty-timer {
+  padding-inline: 4px !important;
+  font-size: 9px !important;
+  letter-spacing: .02em !important;
 }
 
 html body .right-panel #radiologists-duty .mk-side-clock-row {
