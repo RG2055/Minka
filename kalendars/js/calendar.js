@@ -750,7 +750,10 @@ function filterFullList(btn) {
   }
 
   function resolveRequestedMonth(payload) {
-    return parseMonthYearKey(payload && payload.currentMonthName) || parseDateMonthYear(g_todayStr);
+    // The duty-day rolls at 08:00. Just after midnight on the first, the API
+    // already reports the new calendar month while the active duty still
+    // belongs to the previous month.
+    return parseDateMonthYear(g_todayStr) || parseMonthYearKey(payload && payload.currentMonthName);
   }
 
   // Normalize any sheet month key to "MĒNESIS YYYY" format using exact month+year parsing.
@@ -791,6 +794,49 @@ function filterFullList(btn) {
       else result[norm] = [...result[norm], ...days];
     }
     return result;
+  }
+
+  function getScheduleChannel(payload, channel) {
+    if (!payload || typeof payload !== 'object') return {};
+    if (channel === 'radiologists') {
+      return payload.radiologists && typeof payload.radiologists === 'object'
+        ? payload.radiologists
+        : (payload.radiologi || {});
+    }
+    return payload.radiographers && typeof payload.radiographers === 'object'
+      ? payload.radiographers
+      : (payload.allMonths || {});
+  }
+
+  // SOURCE_URL may stop returning the old month as soon as the calendar flips
+  // at 00:00. Keep only the cached duty month and its immediate predecessor so
+  // an overnight shift can still show 31 July until 08:00 and July remains
+  // selectable in August. Exact year+month matching prevents stale same-name
+  // months from another year being merged. Fresh API months always win.
+  function mergeCachedDutyMonths(freshStore, cachedStore, dutyDateStr) {
+    const fresh = normalizeStoreKeys(freshStore || {});
+    const cached = normalizeStoreKeys(cachedStore || {});
+    const dutyMonth = parseDateMonthYear(dutyDateStr);
+    if (!dutyMonth) return fresh;
+
+    const dutyIndex = dutyMonth.year * 12 + (dutyMonth.month - 1);
+    const keepIndexes = new Set([dutyIndex - 1, dutyIndex]);
+    const freshIndexes = new Set(
+      Object.keys(fresh)
+        .map(parseMonthYearKey)
+        .filter(Boolean)
+        .map(part => part.year * 12 + (part.month - 1))
+    );
+
+    Object.keys(cached).forEach(key => {
+      const part = parseMonthYearKey(key);
+      if (!part) return;
+      const index = part.year * 12 + (part.month - 1);
+      if (!keepIndexes.has(index) || freshIndexes.has(index)) return;
+      fresh[key] = cached[key];
+      freshIndexes.add(index);
+    });
+    return fresh;
   }
 
   // Infer NAKTS type for cross-month night continuations.
@@ -940,6 +986,60 @@ function filterFullList(btn) {
     });
   }
 
+  // Join a split physical duty without changing the hours that belong to each
+  // accounting month. Example: 31 July 16h + 1 August 8h is one 24h duty for
+  // live UI/timers, while monthly totals still remain 16h and 8h.
+  function patchSplitDutyContinuations(storeRef) {
+    const daysByTime = new Map();
+    for (const month of Object.keys(storeRef || {})) {
+      const days = storeRef[month];
+      if (!Array.isArray(days)) continue;
+      days.forEach(day => {
+        const parts = String(day && day.date || '').split('.').map(Number);
+        if (parts.length !== 3 || !parts[0] || !parts[1] || !parts[2] || !Array.isArray(day.workers)) return;
+        const key = Date.UTC(parts[2], parts[1] - 1, parts[0]);
+        if (!daysByTime.has(key)) daysByTime.set(key, []);
+        daysByTime.get(key).push(day);
+      });
+    }
+
+    const workerKey = worker => {
+      const raw = String(worker && worker.name || '').trim().toLowerCase();
+      return raw.normalize ? raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : raw;
+    };
+    const sourceHours = worker =>
+      Math.round((worker && worker.hours || 0) || parseFloat(String(worker && worker.shift || '').replace(',', '.')) || 0);
+
+    for (const [currentKey, currentDays] of daysByTime) {
+      const previousDays = daysByTime.get(currentKey - 86400000);
+      if (!previousDays) continue;
+      const previousWorkers = previousDays.flatMap(day => day.workers || []);
+      const previousByName = new Map(previousWorkers.map(worker => [workerKey(worker), worker]));
+
+      currentDays.flatMap(day => day.workers || []).forEach(current => {
+        const currentHours = sourceHours(current);
+        const startHour = parseInt(String(current && current.startTime || '').split(':')[0], 10);
+        const isMorningTail = current && current.__minkaCarryover === true ||
+          (Number.isFinite(startHour) && startHour >= 0 && startHour < 8);
+        if (!isMorningTail || currentHours < 1 || currentHours >= 12) return;
+
+        const previous = previousByName.get(workerKey(current));
+        if (!previous) return;
+        const previousHours = sourceHours(previous);
+        const dutyHours = previousHours + currentHours;
+        if (previousHours < 1 || ![12, 15, 16, 24].includes(dutyHours)) return;
+
+        current.__minkaCarryover = true;
+        current.__minkaContinuesDutyFrom = previousDays[0].date;
+        previous.__minkaDutyHours = dutyHours;
+        previous.__minkaDutyStartTime = previous.startTime || (dutyHours >= 24 ? '08:00' : '');
+        previous.__minkaDutyEndTime = current.endTime || '08:00';
+        previous.__minkaDutyType = dutyHours >= 24 ? 'DIENNAKTS' : 'NAKTS';
+        previous.__minkaContinuesInto = currentDays[0].date;
+      });
+    }
+  }
+
   // A night shift's start is fully determined by its end and its duration, so
   // recompute it from those and ignore a wrong source start time. Sheet rows
   // arrive with inconsistent starts: a 12h night stored as 00:00 (should be
@@ -1085,7 +1185,7 @@ function filterFullList(btn) {
       if (timeoutId) clearTimeout(timeoutId);
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const d = await r.json();
-      writeCachedSchedule(d);
+      const cachedBeforeRefresh = readCachedSchedule();
       // Our shift "day" changes at 08:00 (not at midnight).
       // Before 08:00, we still consider the active shift to belong to the previous calendar day.
       const _now = new Date();
@@ -1093,12 +1193,27 @@ function filterFullList(btn) {
       if (effective.getHours() < 8) effective.setDate(effective.getDate() - 1);
       g_todayStr = `${String(effective.getDate()).padStart(2,'0')}.${String(effective.getMonth()+1).padStart(2,'0')}.${effective.getFullYear()}`;
       window.__g_todayStr = g_todayStr;
-      store = normalizeStoreKeys((d.radiographers && typeof d.radiographers === "object") ? d.radiographers : (d.allMonths || {}));
-      storeRad = normalizeStoreKeys((d.radiologists && typeof d.radiologists === "object") ? d.radiologists : (d.radiologi || {}));
+      store = mergeCachedDutyMonths(
+        getScheduleChannel(d, 'radiographers'),
+        getScheduleChannel(cachedBeforeRefresh, 'radiographers'),
+        g_todayStr
+      );
+      storeRad = mergeCachedDutyMonths(
+        getScheduleChannel(d, 'radiologists'),
+        getScheduleChannel(cachedBeforeRefresh, 'radiologists'),
+        g_todayStr
+      );
+      writeCachedSchedule({
+        ...d,
+        radiographers: store,
+        radiologists: storeRad
+      });
       patchCrossMonthContinuations(store);
       patchCrossMonthContinuations(storeRad);
       patchAdjacentDayContinuations(store);
       patchAdjacentDayContinuations(storeRad);
+      patchSplitDutyContinuations(store);
+      patchSplitDutyContinuations(storeRad);
       patchNightStartTimes(store);
       patchNightStartTimes(storeRad);
 
@@ -1168,6 +1283,8 @@ function filterFullList(btn) {
           patchCrossMonthContinuations(storeRad);
           patchAdjacentDayContinuations(store);
           patchAdjacentDayContinuations(storeRad);
+          patchSplitDutyContinuations(store);
+          patchSplitDutyContinuations(storeRad);
           patchNightStartTimes(store);
           patchNightStartTimes(storeRad);
           window.__grafiksStore = store; window.__grafiksStoreRad = storeRad;
@@ -1428,14 +1545,32 @@ function filterFullList(btn) {
     return new Date(year, month-1, day, hours, minutes, 0, 0);
   }
 
+  function getDutyShiftHours(worker) {
+    const effective = Number(worker && worker.__minkaDutyHours);
+    return Number.isFinite(effective) && effective > 0 ? effective : parseShiftHours(worker && worker.shift);
+  }
+
+  function getDutyStartTime(worker) {
+    return String(worker && worker.__minkaDutyStartTime || worker && worker.startTime || '');
+  }
+
+  function getDutyEndTime(worker) {
+    return String(worker && worker.__minkaDutyEndTime || worker && worker.endTime || '');
+  }
+
+  function getDutyShiftType(worker) {
+    return String(worker && worker.__minkaDutyType || worker && worker.type || '').toUpperCase();
+  }
 
   // Compute real shift end — if endTime == startTime or end <= start,
   // use shift duration (hours) instead of blindly adding +1 day.
   function getShiftEnd(worker, dateStr) {
-    if (!worker.startTime || !worker.endTime) return null;
-    const start = createDateFromDateTime(dateStr, worker.startTime);
-    let end = createDateFromDateTime(dateStr, worker.endTime);
-    const shiftHours = parseFloat(String(worker.shift || '').replace(/[^0-9.]/g, '')) || 0;
+    const startTime = getDutyStartTime(worker);
+    const endTime = getDutyEndTime(worker);
+    if (!startTime || !endTime) return null;
+    const start = createDateFromDateTime(dateStr, startTime);
+    let end = createDateFromDateTime(dateStr, endTime);
+    const shiftHours = getDutyShiftHours(worker);
     if (shiftHours >= 15 && shiftHours < 24) {
       // Hospital rule: the long evening shifts shown as 15h/16h always belong
       // to the current shift-day and finish at 08:00 the following morning.
@@ -1474,8 +1609,9 @@ function filterFullList(btn) {
   }
 
   function isWorkerActive(worker, dateStr, now) {
-    if (!worker.startTime || !worker.endTime) return false;
-    const start = createDateFromDateTime(dateStr, worker.startTime);
+    const startTime = getDutyStartTime(worker);
+    if (!startTime || !getDutyEndTime(worker)) return false;
+    const start = createDateFromDateTime(dateStr, startTime);
     const end = getShiftEnd(worker, dateStr);
     if (!end) return false;
     return now >= start && now < end;
@@ -1483,7 +1619,7 @@ function filterFullList(btn) {
 
   // Shift has completely ended (end time is in the past)
   function isWorkerShiftDone(worker, dateStr, now) {
-    if (!worker.startTime || !worker.endTime) return false;
+    if (!getDutyStartTime(worker) || !getDutyEndTime(worker)) return false;
     const end = getShiftEnd(worker, dateStr);
     if (!end) return false;
     return now >= end;
@@ -1514,7 +1650,7 @@ function filterFullList(btn) {
   }
 
   function getRemainingMs(worker, dateStr, now) {
-    if (!worker.startTime || !worker.endTime) return 0;
+    if (!getDutyStartTime(worker) || !getDutyEndTime(worker)) return 0;
     const end = getShiftEnd(worker, dateStr);
     if (!end) return 0;
     return end - now;
@@ -1742,10 +1878,11 @@ function filterFullList(btn) {
             if (isPreviousShiftDayCarryover(w, dateStr)) return;
             const sh = String((w && w.shift) || '').toUpperCase().trim();
             if (sh === 'N' || sh.indexOf('A') >= 0 || sh === 'B' || !sh || sh === '0') return;
-            const hrs = w.hours || parseInt(sh, 10) || 0;
+            const hrs = getDutyShiftHours(w);
             if (hrs < 12) return;
-            const sH = w.startTime ? parseInt(String(w.startTime).split(':')[0], 10) : -1;
-            const tp = String((w && w.type) || '').toUpperCase();
+            const dutyStart = getDutyStartTime(w);
+            const sH = dutyStart ? parseInt(dutyStart.split(':')[0], 10) : -1;
+            const tp = getDutyShiftType(w);
             let night = hrs >= 24 || tp === 'NAKTS' || tp === 'DIENNAKTS';
             if (!night && sH >= 0 && (sH >= 18 || sH <= 5)) night = true;
             if (!night && sH === -1 && hrs >= 12) night = true;
@@ -2215,7 +2352,7 @@ function filterFullList(btn) {
   }
 
   function getShiftBadgeHtml(worker) {
-    const hours = parseShiftHours(worker && worker.shift);
+    const hours = getDutyShiftHours(worker);
     if (hours > 0) {
       const cls = hours >= 24 ? 'duty-24h' : hours >= 15 ? 'duty-15h' : hours >= 12 ? 'duty-12h' : hours >= 9 ? 'duty-9h' : 'duty-8h';
       return `<span class="${cls}">${hours}h</span>`;
@@ -2226,7 +2363,7 @@ function filterFullList(btn) {
 
   function getWorkerUiState(worker, dateStr, now) {
     const out = {
-      shiftHours: parseShiftHours(worker && worker.shift),
+      shiftHours: getDutyShiftHours(worker),
       shiftBadge: getShiftBadgeHtml(worker),
       isDone: false,
       isActive: false,
@@ -2235,8 +2372,10 @@ function filterFullList(btn) {
       timerText: '',
       statusText: 'Brīvs'
     };
-    if (!worker || !worker.startTime || !worker.endTime || !dateStr || !(now instanceof Date)) return out;
-    const start = createDateFromDateTime(dateStr, worker.startTime);
+    const startTime = getDutyStartTime(worker);
+    const endTime = getDutyEndTime(worker);
+    if (!worker || !startTime || !endTime || !dateStr || !(now instanceof Date)) return out;
+    const start = createDateFromDateTime(dateStr, startTime);
     const end = getShiftEnd(worker, dateStr);
     if (!start || !end) return out;
     out.isDone = now >= end;
@@ -2409,8 +2548,8 @@ function filterFullList(btn) {
 
     target.classList.remove('is-empty');
     const nightCount = crew.filter(function(w) {
-      const type = String(w && w.type || '').toUpperCase();
-      return type === 'NAKTS' || type === 'DIENNAKTS' || parseShiftHours(w && w.shift) >= 24;
+      const type = getDutyShiftType(w);
+      return type === 'NAKTS' || type === 'DIENNAKTS' || getDutyShiftHours(w) >= 24;
     }).length;
     if (summary) {
       summary.innerHTML = '<span>Dežūrā ' + crew.length + '</span><i></i><strong>Naktī ' + nightCount + '</strong>';
@@ -2418,8 +2557,8 @@ function filterFullList(btn) {
 
     target.innerHTML = crew.map(function(w) {
       const first = formatSideNamePart(String(w && w.name || '').trim().split(/\s+/)[0], false) || '--';
-      const hours = parseShiftHours(w && w.shift);
-      const type = String(w && w.type || '').toUpperCase();
+      const hours = getDutyShiftHours(w);
+      const type = getDutyShiftType(w);
       const is24 = hours >= 24 || type === 'DIENNAKTS';
       const isNight = type === 'NAKTS' || w.isNight === true;
       const emoji = is24 ? '' : (isNight ? '🌙' : '☀️');
@@ -2465,6 +2604,7 @@ function filterFullList(btn) {
         day.workers.forEach(worker => {
           const workerName = String(worker && worker.name || '').trim();
           if (!workerName || !isValidShift(worker.shift)) return;
+          if (isPreviousShiftDayCarryover(worker, day.date)) return;
           const dedupeKey = [workerName, day.date, worker.shift || '', worker.startTime || '', worker.endTime || ''].join('|');
           if (seen.has(dedupeKey)) return;
           seen.add(dedupeKey);
@@ -2563,18 +2703,21 @@ function filterFullList(btn) {
       const personEmoji = getSidePersonEmoji(workerName);
       const uiState = getWorkerUiState(worker, worker.date, options.now);
       const fatigue = getSideFatigue(workerName);
-      const iconHtml = getSideIconHtml(worker.type);
+      const dutyType = getDutyShiftType(worker);
+      const dutyStartTime = getDutyStartTime(worker);
+      const dutyEndTime = getDutyEndTime(worker);
+      const iconHtml = getSideIconHtml(dutyType);
       const workerAttr = mkEscAttr(workerName);
       const dateAttr = mkEscAttr(worker.date || '');
-      const shiftAttr = mkEscAttr(worker.shift || '');
-      const typeAttr = mkEscAttr(worker.type || '');
+      const shiftAttr = mkEscAttr(uiState.shiftHours || worker.shift || '');
+      const typeAttr = mkEscAttr(dutyType);
       let timerHtml = '';
       let isDone = false;
 
-      if (options.isToday && worker.startTime && worker.endTime) {
+      if (options.isToday && dutyStartTime && dutyEndTime) {
         isDone = uiState.isDone;
         if (uiState.isActive && uiState.remainingMs > 0) {
-          timerHtml = `<span class="duty-timer mk-side-timer" data-worker="${workerAttr}" data-date="${dateAttr}" data-start="${mkEscAttr(worker.startTime)}" data-end="${mkEscAttr(worker.endTime)}" data-shift="${shiftAttr}"><span class="ghost">88:88:88</span><span class="val">${mkEscAttr(uiState.timerText)}</span></span>`;
+          timerHtml = `<span class="duty-timer mk-side-timer" data-worker="${workerAttr}" data-date="${dateAttr}" data-start="${mkEscAttr(dutyStartTime)}" data-end="${mkEscAttr(dutyEndTime)}" data-shift="${shiftAttr}"><span class="ghost">88:88:88</span><span class="val">${mkEscAttr(uiState.timerText)}</span></span>`;
         }
       }
 
@@ -2672,8 +2815,7 @@ function filterFullList(btn) {
         const base = new Date(yy, (mm||1) - 1, dd||1);
         base.setDate(base.getDate() + 1);
         const tomorrowStr = g_formatDate(base);
-        const dNext = g_findDay(store, tomorrowStr)?.day;
-        renderNextShiftCard(radgNext, 'radiographers-next-summary', dNext && Array.isArray(dNext.workers) ? dNext.workers : []);
+        renderNextShiftCard(radgNext, 'radiographers-next-summary', getWorkersForDateWithDate(store, tomorrowStr));
       } else { renderNextShiftCard(radgNext, 'radiographers-next-summary', []); }
     }
 
@@ -2683,8 +2825,7 @@ function filterFullList(btn) {
         const base = new Date(yy, (mm||1) - 1, dd||1);
         base.setDate(base.getDate() + 1);
         const tomorrowStr = g_formatDate(base);
-        const dNext = g_findDay(storeRad, tomorrowStr)?.day;
-        renderNextShiftCard(radlNext, 'radiologists-next-summary', dNext && Array.isArray(dNext.workers) ? dNext.workers : []);
+        renderNextShiftCard(radlNext, 'radiologists-next-summary', getWorkersForDateWithDate(storeRad, tomorrowStr));
       } else { renderNextShiftCard(radlNext, 'radiologists-next-summary', []); }
     }
   }
@@ -2779,12 +2920,12 @@ function filterFullList(btn) {
     if (_eff.getHours() < 8) _eff.setDate(_eff.getDate() - 1);
     const _newToday = `${String(_eff.getDate()).padStart(2,'0')}.${String(_eff.getMonth()+1).padStart(2,'0')}.${_eff.getFullYear()}`;
     if (_newToday !== g_todayStr) {
+      const wasViewingToday = activeDateStr === g_todayStr;
       g_todayStr = _newToday;
-      // If user was viewing the old "today", switch to the new one
-      if (activeDateStr !== _newToday) {
-        const mergedDays = getMergedDays(activeMonth);
-        if (mergedDays.some(d => d.date === _newToday)) g_selectDay(_newToday);
-      }
+      window.__g_todayStr = g_todayStr;
+      // Follow the rollover only when the user was on the live duty-day. This
+      // also changes the month picker at 08:00 across a month boundary.
+      if (wasViewingToday) g_selectDateWithMonthSync(_newToday);
       g_updatePanelsForDate();
       g_renderMonth();
     }
@@ -2806,12 +2947,13 @@ function filterFullList(btn) {
         const today = days.find(d => d.date === g_todayStr);
         if (!today || !Array.isArray(today.workers)) continue;
         for (const w of today.workers) {
-          if (!w.startTime || !w.endTime) continue;
+          const dutyStartTime = getDutyStartTime(w);
+          if (!dutyStartTime || !getDutyEndTime(w)) continue;
           if (isPreviousShiftDayCarryover(w, g_todayStr)) continue;
           if (!isWorkerActive(w, g_todayStr, now)) continue;
           const end = getShiftEnd(w, g_todayStr);
           if (!end) continue;
-          const [sh, sm] = w.startTime.split(':').map(Number);
+          const [sh, sm] = dutyStartTime.split(':').map(Number);
           const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), sh, sm, 0);
           if (start > now) start.setDate(start.getDate() - 1);
           const dur = end - start;
@@ -2827,7 +2969,7 @@ function filterFullList(btn) {
             end: end,
             endLabel: `${String(end.getHours()).padStart(2,'0')}:${String(end.getMinutes()).padStart(2,'0')}`,
             start: start,
-            shiftH: parseShiftHours(w.shift) || Math.round((end - start) / 3600000),
+            shiftH: getDutyShiftHours(w) || Math.round((end - start) / 3600000),
             isRadiologist: s === storeRad
           });
         }
@@ -3273,9 +3415,10 @@ function filterFullList(btn) {
           const _day = _days.find(function(d) { return d.date === g_todayStr; });
           if (!_day || !Array.isArray(_day.workers)) continue;
           _day.workers.forEach(function(_w) {
-            if (!_w.startTime || !_w.endTime) return;
+            const _dutyStart = getDutyStartTime(_w);
+            if (!_dutyStart || !getDutyEndTime(_w)) return;
             if (isPreviousShiftDayCarryover(_w, g_todayStr)) return;
-            const [_wh, _wm] = _w.startTime.split(':').map(Number);
+            const [_wh, _wm] = _dutyStart.split(':').map(Number);
             // Use g_todayStr date, not now.getDate() — avoids midnight date-rollover bug
             // where now is already May 16 00:xx but duty date is still May 15
             const _tdp = g_todayStr.split('.');
@@ -3291,7 +3434,7 @@ function filterFullList(btn) {
               name: _w.name || '',
               emoji: window.MinkaEmoji && window.MinkaEmoji.get ? (window.MinkaEmoji.get(_w.name || '') || '') : '',
               end: _wEnd, start: _wStart,
-              shiftH: parseShiftHours(_w.shift) || Math.round((_wEnd - _wStart) / 3600000),
+              shiftH: getDutyShiftHours(_w) || Math.round((_wEnd - _wStart) / 3600000),
               isRadiologist: _src === storeRad
             });
           });
@@ -3321,17 +3464,18 @@ function filterFullList(btn) {
             const _day = _days.find(function(d) { return d.date === activeDateStr; });
             if (!_day || !Array.isArray(_day.workers)) continue;
             _day.workers.forEach(function(_w) {
-              if (!_w.startTime || !_w.endTime) return;
+              const _dutyStart = getDutyStartTime(_w);
+              if (!_dutyStart || !getDutyEndTime(_w)) return;
               if (isPreviousShiftDayCarryover(_w, activeDateStr)) return;
               const _wEnd = getShiftEnd(_w, activeDateStr);
               if (!_wEnd) return;
-              const _wp = _w.startTime.split(':').map(Number);
+              const _wp = _dutyStart.split(':').map(Number);
               const _wStart = new Date(+_sp[2], +_sp[1]-1, +_sp[0], _wp[0], _wp[1], 0);
               _laneStops.push({
                 name: _w.name || '',
                 emoji: window.MinkaEmoji && window.MinkaEmoji.get ? (window.MinkaEmoji.get(_w.name || '') || '') : '',
                 end: _wEnd, start: _wStart,
-                shiftH: parseShiftHours(_w.shift) || Math.round((_wEnd - _wStart) / 3600000),
+                shiftH: getDutyShiftHours(_w) || Math.round((_wEnd - _wStart) / 3600000),
                 isRadiologist: _src === storeRad
               });
             });
@@ -3358,17 +3502,18 @@ function filterFullList(btn) {
             const _day = _days.find(function(d) { return d.date === activeDateStr; });
             if (!_day || !Array.isArray(_day.workers)) continue;
             _day.workers.forEach(function(_w) {
-              if (!_w.startTime || !_w.endTime) return;
+              const _dutyStart = getDutyStartTime(_w);
+              if (!_dutyStart || !getDutyEndTime(_w)) return;
               if (isPreviousShiftDayCarryover(_w, activeDateStr)) return;
               const _wEnd = getShiftEnd(_w, activeDateStr);
               if (!_wEnd) return;
-              const _wp = _w.startTime.split(':').map(Number);
+              const _wp = _dutyStart.split(':').map(Number);
               const _wStart = new Date(+_sp[2], +_sp[1]-1, +_sp[0], _wp[0], _wp[1], 0);
               _laneStops.push({
                 name: _w.name || '',
                 emoji: window.MinkaEmoji && window.MinkaEmoji.get ? (window.MinkaEmoji.get(_w.name || '') || '') : '',
                 end: _wEnd, start: _wStart,
-                shiftH: parseShiftHours(_w.shift) || Math.round((_wEnd - _wStart) / 3600000),
+                shiftH: getDutyShiftHours(_w) || Math.round((_wEnd - _wStart) / 3600000),
                 isRadiologist: _src === storeRad
               });
             });
@@ -4140,7 +4285,7 @@ function filterFullList(btn) {
     }
 
     function getShiftEmoji(worker) {
-      const type = String(worker && worker.type || '').toUpperCase();
+      const type = getDutyShiftType(worker);
       if (type === 'DIENA') return '☀️';
       if (type === 'NAKTS') return '🌙';
       return '';
@@ -4923,14 +5068,14 @@ function filterFullList(btn) {
               </div>
             </div>
             <div class="mk-mid-month">
-              <div class="mk-mid-month-num">${monthHours || parseShiftHours(w.shift) || 0}h</div>
+              <div class="mk-mid-month-num">${monthHours || getDutyShiftHours(w) || 0}h</div>
               <div class="mk-mid-month-label">MĒNESĪ</div>
               ${shiftEmoji ? `<div class="mk-mid-shift-icons"><span class="mk-mid-shift-emoji">${shiftEmoji}</span></div>` : ''}
             </div>
           </div>
           <div class="mk-mid-center">
             ${bgEmoji ? `<div class="mk-mid-bg-emoji">${bgEmoji}</div>` : ''}
-            <div class="card-shift mk-mid-hours">${parseShiftHours(w.shift) || w.shift}</div>
+            <div class="card-shift mk-mid-hours">${getDutyShiftHours(w) || w.shift}</div>
             <div class="card-name-wrap mk-mid-name-wrap">
               <span class="name-main">${firstName}</span>
               <span class="name-sub">${surname}</span>
