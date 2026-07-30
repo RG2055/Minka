@@ -38,11 +38,25 @@
   }
   function monthSortKey(name){ var p = monthParts(name); return (p.year || 0) * 12 + (p.idx == null ? 0 : p.idx); }
 
+  function dutyMonthIndex(){
+    var value = String(window.__g_todayStr || window.__todayDateStr || '').trim();
+    var match = value.match(/^\d{2}\.(\d{2})\.(\d{4})$/);
+    if (match) return parseInt(match[2], 10) * 12 + parseInt(match[1], 10) - 1;
+    var now = new Date();
+    return now.getFullYear() * 12 + now.getMonth();
+  }
+
   function allMonths(){
     var set = {};
     Object.keys(rgStore()).forEach(function(m){ set[m] = 1; });
     Object.keys(rdStore()).forEach(function(m){ set[m] = 1; });
-    return Object.keys(set).sort(function(a, b){ return monthSortKey(a) - monthSortKey(b); });
+    var minMonth = dutyMonthIndex() - 1;
+    return Object.keys(set)
+      .filter(function(name){
+        var p = monthParts(name);
+        return p.year != null && p.idx != null && (p.year * 12 + p.idx) >= minMonth;
+      })
+      .sort(function(a, b){ return monthSortKey(a) - monthSortKey(b); });
   }
 
   function hoursOf(w){
@@ -344,7 +358,10 @@
   function render(month){
     var months = allMonths();
     if (!months.length){ _overlay.querySelector('.mcal-inner').innerHTML = '<div class="mcal-empty">Nav grafika datu.</div>'; return; }
-    if (months.indexOf(month) < 0) month = window.__activeMonth || months[months.length - 1];
+    if (months.indexOf(month) < 0) {
+      var active = window.__activeMonth;
+      month = months.indexOf(active) >= 0 ? active : months[months.length - 1];
+    }
     _curMonth = month;
     var idx = months.indexOf(month);
     var p = monthParts(month);

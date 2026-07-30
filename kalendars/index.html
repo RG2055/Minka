@@ -1103,11 +1103,11 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260728opt2"></script>
+<script src="js/calendar.js?v=20260730shiftday1"></script>
 <script src="js/calendar_extras_v4.js?v=20260728f"></script>
 <script src="js/fatigue.js?v=20260728f"></script>
 <script src="js/nightsplit.js?v=20260728g" defer></script>
-<script src="js/monthcal.js?v=20260622h" defer></script>
+<script src="js/monthcal.js?v=20260730year1" defer></script>
 <script src="js/design_v1.js" defer></script>
 <script src="js/theme.js?v=20260724f" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
@@ -11571,6 +11571,7 @@ window.addEventListener('message', function(e) {
 (function MinkaSkins() {
   var KEY = 'mkWorkerSkinsV1';
   var cloudTimers = Object.create(null);
+  var activeImageGroup = 0;
   var IMG_GROUPS = [
     { label: 'Aesthetic',           ids: ['aesthetic-bird','aesthetic-cyborg','aesthetic-face','aesthetic-flash','aesthetic-helmet','aesthetic-sunset','aesthetic-water'] },
     { label: 'Rozā un maigi',      ids: ['360','25','888','867','56','788','866','923','301','705','279','213','787','77','544'] },
@@ -11581,7 +11582,8 @@ window.addEventListener('message', function(e) {
     { label: 'Silti un saulaini',  ids: ['1016','1057','110','19','46','164'] },
     { label: 'Tumši un mistiski',  ids: ['12','29','55','83','95','184'] },
     { label: 'Melnbalti',          ids: ['47','58'] },
-    { label: 'Barbie rozā',        ids: ['bb1','bb2','bb3','bb4','bd1','bd2','bd3','bd4'] }
+    { label: 'Barbie rozā',        ids: ['bb1','bb2','bb3','bb4','bd1','bd2','bd3','bd4'] },
+    { label: 'Kaķi',               ids: ['cat-01','cat-02','cat-03','cat-04','cat-05','cat-06','cat-07','cat-08','cat-09','cat-10','cat-11','cat-12','cat-13','cat-14'] }
   ];
   var GRADS = [
     { id: 'roza',    label: 'Rozā sapnis',  css: 'linear-gradient(150deg,#ff9a9e 0%,#fad0c4 100%)' },
@@ -11833,6 +11835,13 @@ window.addEventListener('message', function(e) {
     } catch (e) {}
     var emVal = draft.em != null ? Math.round(parseFloat(draft.em) * 100) : 13;
     var emShown = draft.em !== '0';
+    if (draft.t === 'img' && draft.id) {
+      IMG_GROUPS.some(function(group, index) {
+        if (group.ids.indexOf(draft.id) < 0) return false;
+        activeImageGroup = index;
+        return true;
+      });
+    }
 
     var html = '<div class="mk-skin-top"><div class="mk-skin-preview" id="mkSkinPrev">'
       + '<span class="pv-ini">' + ini.toUpperCase() + '</span><span class="pv-hours">24h</span>'
@@ -11848,7 +11857,49 @@ window.addEventListener('message', function(e) {
     });
     html += '</div></div></div>';
 
-    html += '<div class="mk-skin-sec">Fona krāsa</div><div class="mk-skin-grads">';
+    html += '<div class="mk-skin-tools">';
+    html += '<div class="mk-skin-tool"><div class="mk-skin-tool-head">Cipars</div><div class="mk-skin-custom">'
+      + '<input type="color" class="mk-num-color" value="' + (draft.num ? rgbToHex(draft.num) : '#a78bfa') + '" title="Cipara krāsa">'
+      + '<input type="range" class="mk-num-alpha" min="15" max="100" step="5" value="' + Math.round((draft.numA != null ? +draft.numA : 1) * 100) + '">'
+      + '<span class="mk-num-alpha-val">' + Math.round((draft.numA != null ? +draft.numA : 1) * 100) + '%</span>'
+      + '</div></div>';
+    html += '<div class="mk-skin-tool mk-skin-tool-text"><div class="mk-skin-tool-head">Teksts</div><div class="mk-skin-custom">'
+      + '<input type="color" class="mk-txt-color" value="' + (draft.txt ? rgbToHex(draft.txt) : '#ffffff') + '" title="Vārda un iniciāļu krāsa">'
+      + '<button type="button" class="mk-txt-clear" title="Atiestatīt teksta krāsu">↺</button>'
+      + '</div></div>';
+    html += '<div class="mk-skin-tool mk-skin-tool-emoji"><div class="mk-skin-tool-head">Emoji fonā</div><div class="mk-skin-custom">'
+      + '<label class="mk-switch"><input type="checkbox" class="mk-emoji-show"' + (emShown ? ' checked' : '') + '><span></span><b>Rādīt</b></label>'
+      + '<input type="range" class="mk-emoji-op" min="4" max="60" step="2" value="' + (emShown ? emVal : 13) + '"' + (emShown ? '' : ' disabled') + '>'
+      + '<span class="mk-emoji-op-val">' + (emShown ? emVal : 0) + '%</span>'
+      + '<label class="mk-chk"><input type="checkbox" class="mk-emoji-neg"' + (draft.emn === '0' ? '' : ' checked') + '> Negatīvs</label>'
+      + '</div></div>';
+    html += '</div>';
+
+    html += '<div class="mk-skin-effects"><div class="mk-skin-effects-head"><span>Efekts</span><div class="mk-fx-size-wrap">'
+      + '<span>Izmērs</span>'
+      + '<input type="range" class="mk-fx-size" min="50" max="300" step="10" value="' + Math.round((draft.fxs != null ? +draft.fxs : 1) * 100) + '"' + (draft.fx ? '' : ' disabled') + '>'
+      + '<b class="mk-fx-size-val">' + Math.round((draft.fxs != null ? +draft.fxs : 1) * 100) + '%</b>'
+      + '</div></div><div class="mk-fx-row">';
+    [['','Nav'],['spark','✨ Zvaigznītes'],['mirdz','🌟 Mirdzums'],['hearts','💗 Sirsniņas'],['ziedi','🌸 Ziedlapiņas'],['taur','🦋 Tauriņi'],['burb','🫧 Burbuļi']].forEach(function(fx) {
+      var act = (draft.fx || '') === fx[0];
+      html += '<button type="button" class="mk-skin-fx' + (act ? ' is-on' : '') + '" data-fx="' + fx[0] + '">' + fx[1] + '</button>';
+    });
+    html += '</div></div>';
+
+    var activeBgMode = draft.t === 'img' ? 'image' : (draft.t === 'art' ? 'draw' : 'color');
+    html += '<div class="mk-bg-workspace"><div class="mk-bg-toolbar">'
+      + '<div class="mk-skin-sec">Fons</div><div class="mk-bg-mode-tabs" role="tablist" aria-label="Fona veids">'
+      + '<button type="button" class="mk-bg-mode' + (activeBgMode === 'image' ? ' is-active' : '') + '" data-bg-mode="image" role="tab" aria-selected="' + (activeBgMode === 'image') + '">Attēls</button>'
+      + '<button type="button" class="mk-bg-mode' + (activeBgMode === 'color' ? ' is-active' : '') + '" data-bg-mode="color" role="tab" aria-selected="' + (activeBgMode === 'color') + '">Krāsa</button>'
+      + '<button type="button" class="mk-bg-mode' + (activeBgMode === 'draw' ? ' is-active' : '') + '" data-bg-mode="draw" role="tab" aria-selected="' + (activeBgMode === 'draw') + '">Zīmējums</button>'
+      + '</div>';
+    html += '<label class="mk-bg-group-wrap' + (activeBgMode === 'image' ? '' : ' is-hidden') + '"><span>Kategorija</span><select class="mk-skin-group-select">';
+    IMG_GROUPS.forEach(function(grp, groupIndex) {
+      html += '<option value="' + groupIndex + '"' + (groupIndex === activeImageGroup ? ' selected' : '') + '>' + grp.label + '</option>';
+    });
+    html += '</select></label></div>';
+
+    html += '<div class="mk-bg-panel mk-bg-colors' + (activeBgMode === 'color' ? ' is-active' : '') + '" data-bg-panel="color"><div class="mk-skin-grads">';
     GRADS.forEach(function(g) {
       var act = draft.t === 'grad' && draft.id === g.id;
       html += '<button type="button" class="mk-skin-grad-sw' + (act ? ' is-active' : '') + '" data-grad="' + g.id + '" title="' + g.label + '" style="background:' + g.css + '"></button>';
@@ -11858,62 +11909,30 @@ window.addEventListener('message', function(e) {
       html += '<button type="button" class="mk-skin-hue' + (act ? ' is-active' : '') + '" data-rgb="' + h.rgb + '" style="background:' + h.hex + '"></button>';
     });
     html += '<input type="color" class="mk-skin-color" value="' + (draft.t === 'hue' ? rgbToHex(draft.rgb) : '#64d2ff') + '" title="Sava fona krāsa">';
-    html += '</div>';
+    html += '</div></div>';
 
-    html += '<div class="mk-skin-sec">Savs zīmējums</div><div class="mk-skin-art-row">'
+    html += '<div class="mk-bg-panel mk-bg-draw' + (activeBgMode === 'draw' ? ' is-active' : '') + '" data-bg-panel="draw"><div class="mk-skin-art-row">'
       + '<button type="button" class="mk-skin-art-open' + (draft.t === 'art' ? ' is-active' : '') + '">'
       + (draft.t === 'art' ? 'Rediģēt savu fonu' : 'Uzzīmēt savu fonu') + '</button>';
     if (draft.t === 'art' && artUrl(draft.id)) {
       html += '<span class="mk-skin-art-current" style="background-image:url(' + artUrl(draft.id) + ')" aria-label="Pašreizējais zīmējums"></span>';
     }
-    html += '</div>';
+    html += '<span class="mk-bg-draw-note">Zīmējums tiek optimizēts un saglabāts kā viegls WebP fons.</span></div></div>';
 
-    html += '<div class="mk-skin-sec">Attēli</div><div class="mk-skin-grid">';
-    IMG_GROUPS.forEach(function(grp) {
-      html += '<div class="mk-skin-group-lbl">' + grp.label + '</div>';
+    html += '<div class="mk-bg-panel mk-bg-images' + (activeBgMode === 'image' ? ' is-active' : '') + '" data-bg-panel="image"><div class="mk-skin-gallery">';
+    IMG_GROUPS.forEach(function(grp, groupIndex) {
+      html += '<div class="mk-skin-grid' + (groupIndex === activeImageGroup ? ' is-active' : '') + '" data-group-panel="' + groupIndex + '">';
       grp.ids.forEach(function(id) {
         var act = draft.t === 'img' && draft.id === id;
-        html += '<button type="button" class="mk-skin-thumb' + (act ? ' is-active' : '') + '" data-skin="' + id + '" style="background-image:url(' + stockSkinUrl(id) + ')"></button>';
+        html += '<button type="button" class="mk-skin-thumb' + (act ? ' is-active' : '') + '" data-skin="' + id + '" title="' + grp.label + '" style="background-image:url(' + stockSkinUrl(id) + ')"></button>';
       });
+      html += '</div>';
     });
-    html += '</div>';
-
-    html += '<div class="mk-skin-row2"><div class="mk-skin-col"><div class="mk-skin-sec">Cipara krāsa un caurspīdība</div>';
-    html += '<div class="mk-skin-custom">'
-      + '<input type="color" class="mk-num-color" value="' + (draft.num ? rgbToHex(draft.num) : '#a78bfa') + '" title="Cipara krāsa">'
-      + '<input type="range" class="mk-num-alpha" min="15" max="100" step="5" value="' + Math.round((draft.numA != null ? +draft.numA : 1) * 100) + '">'
-      + '<span class="mk-num-alpha-val">' + Math.round((draft.numA != null ? +draft.numA : 1) * 100) + '%</span>'
-      + '</div></div>';
-
-    html += '<div class="mk-skin-col"><div class="mk-skin-sec">Teksta krāsa (vārds, iniciāļi)</div>';
-    html += '<div class="mk-skin-custom">'
-      + '<input type="color" class="mk-txt-color" value="' + (draft.txt ? rgbToHex(draft.txt) : '#ffffff') + '" title="Teksta krāsa">'
-      + '<button type="button" class="mk-txt-clear" title="Atiestatīt tekstu">↺</button>'
-      + '</div></div></div>';
-
-    html += '<div class="mk-skin-row2"><div class="mk-skin-col"><div class="mk-skin-sec">Emoji fonā</div>';
-    html += '<div class="mk-skin-custom">'
-      + '<label class="mk-chk"><input type="checkbox" class="mk-emoji-show"' + (emShown ? ' checked' : '') + '> Rādīt</label>'
-      + '<input type="range" class="mk-emoji-op" min="4" max="60" step="2" value="' + (emShown ? emVal : 13) + '"' + (emShown ? '' : ' disabled') + '>'
-      + '<span class="mk-emoji-op-val">' + (emShown ? emVal : 0) + '%</span>'
-      + '<label class="mk-chk"><input type="checkbox" class="mk-emoji-neg"' + (draft.emn === '0' ? '' : ' checked') + '> Negatīvs</label>'
-      + '</div></div>';
-
-    html += '<div class="mk-skin-col"><div class="mk-skin-sec">Spīdīgie efekti</div><div class="mk-fx-row">';
-    [['','Nav'],['spark','✨ Zvaigznītes'],['mirdz','🌟 Mirdzums'],['hearts','💗 Sirsniņas'],['ziedi','🌸 Ziedlapiņas'],['taur','🦋 Tauriņi'],['burb','🫧 Burbuļi']].forEach(function(fx) {
-      var act = (draft.fx || '') === fx[0];
-      html += '<button type="button" class="mk-skin-fx' + (act ? ' is-on' : '') + '" data-fx="' + fx[0] + '">' + fx[1] + '</button>';
-    });
-    html += '</div>';
-    html += '<div class="mk-skin-custom" style="margin-top:6px;">'
-      + '<span class="mk-fx-size-lbl">Izmērs</span>'
-      + '<input type="range" class="mk-fx-size" min="50" max="300" step="10" value="' + Math.round((draft.fxs != null ? +draft.fxs : 1) * 100) + '"' + (draft.fx ? '' : ' disabled') + '>'
-      + '<span class="mk-fx-size-val">' + Math.round((draft.fxs != null ? +draft.fxs : 1) * 100) + '%</span>'
-      + '</div></div></div>';
+    html += '</div></div></div>';
 
     html += '<div class="mk-skin-footer">'
       + '<button type="button" class="mk-skin-clear">✕ Noņemt visu izskatu</button>'
-      + '<span class="mk-skin-note">Redzēs visi kolēģi sinhronizējas caur mākoni</span></div>';
+      + '<span class="mk-skin-note">Izmaiņas redzēs visi kolēģi — tās sinhronizējas automātiski.</span></div>';
     host.innerHTML = html;
 
     var prev = host.querySelector('#mkSkinPrev');
@@ -11974,6 +11993,27 @@ window.addEventListener('message', function(e) {
         draft.t = 'grad'; draft.id = b.dataset.grad; delete draft.rgb;
         commit();
       });
+    });
+    host.querySelectorAll('.mk-bg-mode').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        activeBgMode = tab.dataset.bgMode;
+        host.querySelectorAll('.mk-bg-mode').forEach(function(item) {
+          var selected = item === tab;
+          item.classList.toggle('is-active', selected);
+          item.setAttribute('aria-selected', String(selected));
+        });
+        host.querySelectorAll('[data-bg-panel]').forEach(function(panel) {
+          panel.classList.toggle('is-active', panel.dataset.bgPanel === activeBgMode);
+        });
+        host.querySelector('.mk-bg-group-wrap').classList.toggle('is-hidden', activeBgMode !== 'image');
+      });
+    });
+    var groupSelect = host.querySelector('.mk-skin-group-select');
+    groupSelect.addEventListener('change', function() {
+        activeImageGroup = +groupSelect.value || 0;
+        host.querySelectorAll('[data-group-panel]').forEach(function(panel) {
+          panel.classList.toggle('is-active', +panel.dataset.groupPanel === activeImageGroup);
+        });
     });
     host.querySelectorAll('.mk-skin-thumb').forEach(function(b) {
       b.addEventListener('click', function() {
@@ -12081,10 +12121,10 @@ window.addEventListener('message', function(e) {
     #0b1019 !important;
   background-blend-mode: normal !important;
 }
-.mk-skin-top { display: flex; gap: 14px; align-items: flex-start; padding-top: 2px; }
+.mk-skin-top { display: flex; gap: 12px; align-items: stretch; padding-top: 2px; }
 .mk-skin-top-right { flex: 1; min-width: 0; }
 .mk-skin-preview {
-  position: relative; width: 128px; flex-shrink: 0; aspect-ratio: 1/1.05; border-radius: 14px;
+  position: relative; width: 118px; flex-shrink: 0; aspect-ratio: 1/1.05; border-radius: 12px;
   border: 1px solid rgba(190,204,232,.15); overflow: hidden;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
   background:
@@ -12108,27 +12148,28 @@ window.addEventListener('message', function(e) {
 .mk-skin-preview .pv-num { font: 900 36px Inter, sans-serif; line-height: .9; color: rgba(var(--mk-num-color, 167,139,250), var(--mk-num-alpha, 1)); }
 .mk-skin-preview .pv-name { font: 700 12.5px Inter, sans-serif; color: #fff; text-align: center; line-height: 1.15; }
 .mk-skin-preview .pv-name small { font-size: 11px; color: rgba(255,255,255,.85); }
-.mk-skin-presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: 7px; }
-.mk-skin-preset { display: flex; align-items: center; gap: 7px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.11); border-radius: 10px; color: rgba(255,255,255,.85); font-size: 11px; font-weight: 700; padding: 6px 8px; cursor: pointer; }
+.mk-skin-presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(102px, 1fr)); gap: 5px; }
+.mk-skin-preset { display: flex; align-items: center; gap: 6px; min-height: 31px; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.10); border-radius: 8px; color: rgba(255,255,255,.84); font-size: 10.5px; font-weight: 700; padding: 4px 7px; cursor: pointer; }
 .mk-skin-preset:hover { border-color: rgba(100,210,255,.5); }
-.mk-skin-preset-sw { width: 22px; height: 22px; border-radius: 7px; flex-shrink: 0; border: 1px solid rgba(255,255,255,.18); }
+.mk-skin-preset-sw { width: 20px; height: 20px; border-radius: 6px; flex-shrink: 0; border: 1px solid rgba(255,255,255,.18); }
 .mk-num-alpha { flex: 1; accent-color: #64d2ff; }
 .mk-num-alpha-val { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.7); min-width: 36px; text-align: right; }
-.mk-skin-sec { font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.45); margin: 8px 2px 5px; }
-.mk-skin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 6px; max-height: 128px; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; }
+.mk-skin-sec { font-size: 9px; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; color: rgba(255,255,255,.48); margin: 7px 2px 4px; }
+.mk-skin-grid { display: none; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 6px; }
+.mk-skin-grid.is-active { display: grid; }
 .mk-skin-row2 { display: flex; gap: 18px; flex-wrap: wrap; }
 .mk-skin-row2 .mk-skin-col { flex: 1; min-width: 240px; }
-.mk-skin-footer { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
-.mk-skin-thumb { aspect-ratio: 16/9; border-radius: 10px; border: 2px solid rgba(255,255,255,.10); background-size: cover; background-position: center; cursor: pointer; padding: 0; transition: border-color .15s; }
+.mk-skin-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; padding-top: 7px; border-top: 1px solid rgba(255,255,255,.07); }
+.mk-skin-thumb { aspect-ratio: 16/9; min-height: 42px; border-radius: 8px; border: 2px solid rgba(255,255,255,.10); background-size: cover; background-position: center; cursor: pointer; padding: 0; transition: border-color .15s; }
 .mk-skin-thumb:hover { border-color: rgba(100,210,255,.55); }
 .mk-skin-thumb.is-active { border-color: #64d2ff; box-shadow: 0 0 0 2px rgba(100,210,255,.35); }
-.mk-skin-hues { display: flex; flex-wrap: wrap; gap: 8px; }
-.mk-skin-hue { width: 34px; height: 34px; border-radius: 9px; border: 2px solid rgba(255,255,255,.12); cursor: pointer; padding: 0; }
+.mk-skin-hues { display: flex; flex-wrap: wrap; gap: 6px; }
+.mk-skin-hue { width: 30px; height: 30px; border-radius: 8px; border: 2px solid rgba(255,255,255,.12); cursor: pointer; padding: 0; }
 .mk-skin-hue.is-active { border-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,.3); }
 .mk-skin-custom { display: flex; align-items: center; gap: 10px; }
-.mk-skin-color { width: 34px; height: 34px; border: 2px solid rgba(255,255,255,.15); border-radius: 9px; background: transparent; padding: 2px; cursor: pointer; }
+.mk-skin-color { width: 30px; height: 30px; border: 2px solid rgba(255,255,255,.15); border-radius: 8px; background: transparent; padding: 2px; cursor: pointer; }
 .mk-skin-custom-lbl { font-size: 11px; color: rgba(255,255,255,.55); }
-.mk-skin-clear { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.14); border-radius: 10px; color: rgba(255,255,255,.75); font-size: 11px; font-weight: 700; padding: 8px 14px; cursor: pointer; white-space: nowrap; }
+.mk-skin-clear { background: transparent; border: 1px solid rgba(255,255,255,.13); border-radius: 8px; color: rgba(255,255,255,.68); font-size: 10.5px; font-weight: 700; padding: 6px 10px; cursor: pointer; white-space: nowrap; }
 .mk-skin-note { font-size: 10px; color: rgba(255,255,255,.35); }
 
 /* ── v3: gradientu foni (gaišāks scrim nekā foto, lai pasteļi dzīvo) ── */
@@ -12179,18 +12220,179 @@ window.addEventListener('message', function(e) {
 }
 .mk-skin-preview.mk-emoji-normal .pv-emoji { filter: none; }
 /* ── v3: picker jaunie elementi ── */
-.mk-skin-grads { display: flex; flex-wrap: wrap; gap: 7px; }
-.mk-skin-grad-sw { width: 34px; height: 34px; border-radius: 9px; border: 2px solid rgba(255,255,255,.12); cursor: pointer; padding: 0; transition: border-color .15s; }
+.mk-skin-grads { display: flex; flex-wrap: wrap; gap: 6px; }
+.mk-skin-grad-sw { width: 30px; height: 30px; border-radius: 8px; border: 2px solid rgba(255,255,255,.12); cursor: pointer; padding: 0; transition: border-color .15s; }
 .mk-skin-grad-sw:hover { border-color: rgba(100,210,255,.55); }
 .mk-skin-grad-sw.is-active { border-color: #64d2ff; box-shadow: 0 0 0 2px rgba(100,210,255,.35); }
-.mk-skin-group-lbl { grid-column: 1/-1; font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.38); margin-top: 3px; }
 .mk-chk { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: rgba(255,255,255,.75); cursor: pointer; white-space: nowrap; }
 .mk-chk input { accent-color: #64d2ff; }
 .mk-emoji-op { flex: 1; min-width: 60px; accent-color: #64d2ff; }
 .mk-emoji-op-val { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.7); min-width: 32px; text-align: right; }
-.mk-txt-clear { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.14); border-radius: 9px; color: rgba(255,255,255,.7); font-size: 13px; padding: 6px 10px; cursor: pointer; }
-.mk-skin-fx { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.14); border-radius: 10px; color: rgba(255,255,255,.8); font-size: 11px; font-weight: 700; padding: 8px 12px; cursor: pointer; white-space: nowrap; }
+.mk-txt-clear { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.13); border-radius: 8px; color: rgba(255,255,255,.7); font-size: 12px; padding: 5px 9px; cursor: pointer; }
+.mk-skin-fx { background: transparent; border: 1px solid rgba(255,255,255,.12); border-radius: 8px; color: rgba(255,255,255,.72); font-size: 10px; font-weight: 700; padding: 5px 8px; cursor: pointer; white-space: nowrap; }
 .mk-skin-fx.is-on { border-color: #ffd60a; color: #ffd60a; }
+.mk-skin-tools {
+  display: grid;
+  grid-template-columns: minmax(190px,1fr) auto minmax(280px,1.35fr);
+  gap: 10px;
+  align-items: center;
+  margin-top: 8px;
+  padding: 8px 2px;
+  border-top: 1px solid rgba(255,255,255,.07);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.mk-skin-tool { min-width: 0; }
+.mk-skin-tool-head,
+.mk-skin-effects-head > span {
+  display: block;
+  margin-bottom: 4px;
+  color: rgba(255,255,255,.42);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+.mk-skin-tool input[type="color"],
+.mk-num-color,
+.mk-txt-color {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 8px;
+  background: transparent;
+  padding: 2px;
+  cursor: pointer;
+}
+.mk-skin-tool-text .mk-skin-custom { gap: 6px; }
+.mk-switch { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; white-space: nowrap; }
+.mk-switch input { position: absolute; opacity: 0; pointer-events: none; }
+.mk-switch span {
+  position: relative;
+  width: 28px;
+  height: 16px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.13);
+  transition: background .15s;
+}
+.mk-switch span::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.72);
+  transition: transform .15s;
+}
+.mk-switch input:checked + span { background: rgba(100,210,255,.52); }
+.mk-switch input:checked + span::after { transform: translateX(12px); background: #fff; }
+.mk-switch b { color: rgba(255,255,255,.72); font-size: 10px; }
+.mk-skin-effects { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: end; padding: 7px 2px 1px; }
+.mk-skin-effects-head { min-width: 174px; }
+.mk-skin-effects-head > span { margin-bottom: 5px; }
+.mk-fx-size-wrap { display: flex; align-items: center; gap: 6px; color: rgba(255,255,255,.48); font-size: 9px; }
+.mk-fx-size-wrap .mk-fx-size { width: 90px; flex: 0 1 90px; }
+.mk-fx-size-wrap b { min-width: 30px; font-size: 9px; }
+.mk-bg-workspace {
+  margin-top: 7px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.mk-bg-toolbar {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 2px;
+}
+.mk-bg-toolbar > .mk-skin-sec {
+  flex: 0 0 auto;
+  width: 34px;
+  margin: 0;
+}
+.mk-bg-mode-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 8px;
+  background: rgba(255,255,255,.025);
+}
+.mk-bg-mode {
+  min-height: 25px;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(255,255,255,.52);
+  font: 700 9.5px/1 Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+.mk-bg-mode.is-active {
+  background: rgba(100,210,255,.12);
+  color: #8bdcff;
+}
+.mk-bg-group-wrap {
+  min-width: 0;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: rgba(255,255,255,.40);
+  font: 800 8px/1 Inter, system-ui, sans-serif;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+.mk-bg-group-wrap.is-hidden { visibility: hidden; pointer-events: none; }
+.mk-skin-group-select {
+  width: 148px;
+  height: 28px;
+  padding: 0 28px 0 9px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 7px;
+  background-color: #121722;
+  color: rgba(255,255,255,.78);
+  font: 700 9.5px/1 Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+.mk-bg-panel { display: none; padding: 5px 2px 7px; }
+.mk-bg-panel.is-active { display: block; }
+.mk-bg-colors .mk-skin-grads { min-height: 30px; align-items: center; }
+.mk-bg-draw .mk-skin-art-row {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.mk-bg-draw-note {
+  min-width: 0;
+  color: rgba(255,255,255,.40);
+  font: 600 9.5px/1.3 Inter, system-ui, sans-serif;
+}
+.mk-bg-images { padding-top: 3px; }
+.mk-skin-gallery { min-height: 42px; padding: 0; }
+.mk-bg-images .mk-skin-grid {
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 5px;
+}
+.mk-bg-images .mk-skin-thumb {
+  min-height: 38px;
+  border-radius: 7px;
+}
+@media (max-width: 760px) {
+  .mk-skin-tools { grid-template-columns: minmax(150px,1fr) auto; }
+  .mk-skin-tool-emoji { grid-column: 1 / -1; }
+  .mk-skin-effects { grid-template-columns: 1fr; }
+  .mk-skin-effects-head { display: flex; align-items: center; justify-content: space-between; min-width: 0; }
+  .mk-skin-effects-head > span { margin: 0; }
+  .mk-bg-toolbar { flex-wrap: wrap; }
+  .mk-bg-group-wrap { width: 100%; margin-left: 44px; justify-content: space-between; }
+  .mk-skin-group-select { flex: 1; width: auto; }
+  .mk-bg-draw .mk-skin-art-row { align-items: flex-start; flex-wrap: wrap; }
+}
 
 /* ── v4: kompakta modāļa galva Izskats režīmā ── */
 #worker-modal.mk-skin-mode .modal-header { padding: 8px 16px 6px !important; min-height: 0 !important; }
