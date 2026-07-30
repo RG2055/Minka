@@ -741,13 +741,17 @@ html body .left-panel #radiographers-duty .mk-side-clock-row:has(.mk-side-timer)
   padding-inline: 4px !important;
 }
 
-/* With a live countdown beside it the row only has ~94px. The full HH:MM:SS
-   must stay readable, so while the shift is running the chip carries just the
-   hour label; the day/night icon returns as soon as the timer stops. Hiding it
-   (rather than shrinking it) keeps the width independent of emoji metrics,
-   which differ per platform. */
+/* With a live countdown beside it the row only has ~94px, so the chip and its
+   day/night icon step down a size — same treatment the radiologist panel
+   already uses — instead of dropping the icon. Both the "12H ☀️" label and the
+   full HH:MM:SS stay visible. */
+html body .left-panel #radiographers-duty .mk-side-clock-row:has(.mk-side-timer) .mk-side-shift-chip {
+  font-size: 10px !important;
+}
+
 html body .left-panel #radiographers-duty .mk-side-clock-row:has(.mk-side-timer) .mk-side-shift-chip .shift-icon-side {
-  display: none !important;
+  margin-left: 2px !important;
+  font-size: 8px !important;
 }
 
 html body .left-panel #radiographers-duty .mk-side-clock-row:has(.mk-side-timer) .mk-side-timer.duty-timer {
