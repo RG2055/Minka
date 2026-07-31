@@ -1077,6 +1077,36 @@ function filterFullList(btn) {
     }
   }
 
+  // ── TEMPORARY WORKAROUND ────────────────────────────────────────────────
+  // The upstream Apps Script emits a phantom shift for these people: their
+  // sheet cell is empty, but a leftover fill colour makes the parser report a
+  // full shift (Reinis Laguns → "12h DIENA" on 01.08.2026, though row 28 of the
+  // August radiologist sheet has no text and 0 planned hours). Nothing in the
+  // JSON distinguishes it from a real shift, so it is dropped here by name.
+  // Remove the name from this list once the sheet cell / script is fixed.
+  const PHANTOM_WORKER_NAMES = ['REINIS LAGUNS'];
+
+  function normalizePersonName(value) {
+    let s = String(value || '').trim().toUpperCase().replace(/\s+/g, ' ');
+    if (s.normalize) s = s.normalize('NFD').replace(/[̀-ͯ]/g, '');
+    return s;
+  }
+
+  const PHANTOM_WORKER_SET = new Set(PHANTOM_WORKER_NAMES.map(normalizePersonName));
+
+  function stripPhantomWorkers(storeRef) {
+    if (!PHANTOM_WORKER_SET.size) return;
+    for (const month of safeKeys(storeRef)) {
+      const days = storeRef[month];
+      if (!Array.isArray(days)) continue;
+      days.forEach(day => {
+        if (!day || !Array.isArray(day.workers)) return;
+        const kept = day.workers.filter(w => !PHANTOM_WORKER_SET.has(normalizePersonName(w && w.name)));
+        if (kept.length !== day.workers.length) day.workers = kept;
+      });
+    }
+  }
+
   function getAllMonths() {
     const monthsSet = new Set([...safeKeys(store), ...safeKeys(storeRad)]);
 
@@ -1216,6 +1246,8 @@ function filterFullList(btn) {
       patchSplitDutyContinuations(storeRad);
       patchNightStartTimes(store);
       patchNightStartTimes(storeRad);
+      stripPhantomWorkers(store);
+      stripPhantomWorkers(storeRad);
 
       window.__grafiksStore = store;
       window.__grafiksStoreRad = storeRad;
@@ -1287,6 +1319,8 @@ function filterFullList(btn) {
           patchSplitDutyContinuations(storeRad);
           patchNightStartTimes(store);
           patchNightStartTimes(storeRad);
+          stripPhantomWorkers(store);
+          stripPhantomWorkers(storeRad);
           window.__grafiksStore = store; window.__grafiksStoreRad = storeRad;
           document.dispatchEvent(new CustomEvent('minka:storeReady'));
           const picker = document.getElementById('grafiks-monthPicker');
