@@ -1666,21 +1666,30 @@ function filterFullList(btn) {
   }
 
   function getWorkersForDateWithDate(storeObj, dateStr) {
-    // Gather workers for this date from ALL month buckets, not just the first match.
-    // Month-boundary data can place the same calendar date in two buckets (e.g. a
-    // June sheet's trailing "01.07" continuation vs the real July sheet). Reading only
-    // the first bucket (old single-g_findDay behaviour) dropped workers whose shift
-    // lived in the other bucket — e.g. a fresh 12h night starting on the 1st.
-    // Prefer the active-month bucket so its entry wins when a name appears in both.
-    const buckets = [];
+    // A date can appear in two month buckets: its own sheet and the previous
+    // month's trailing continuation column. The owning sheet (the one whose
+    // month/year matches the date) is authoritative for WHO is on duty — a
+    // leftover name in the previous month's trailing column must never add a
+    // person to the new month. Only when no owning bucket carries the date do
+    // we fall back to merging whatever buckets do, so a shift that exists only
+    // in a continuation column is still shown rather than lost.
+    const dp = String(dateStr || '').split('.').map(Number);
+    const dMonth = dp.length === 3 ? dp[1] : 0;
+    const dYear = dp.length === 3 ? dp[2] : 0;
+
+    const owning = [];
+    const others = [];
     for (const m of safeKeys(storeObj)) {
       const arr = storeObj[m];
       if (!Array.isArray(arr)) continue;
       const day = arr.find(e => e && e.date === dateStr);
-      if (day && Array.isArray(day.workers)) {
-        buckets.push({ workers: day.workers, isActive: m === activeMonth });
-      }
+      if (!day || !Array.isArray(day.workers)) continue;
+      const parsed = parseMonthYearKey(m);
+      const owns = !!(parsed && parsed.month === dMonth && parsed.year === dYear);
+      (owns ? owning : others).push({ workers: day.workers, isActive: m === activeMonth });
     }
+
+    let buckets = owning.length ? owning : others;
     if (!buckets.length) return [];
     buckets.sort((a, b) => (b.isActive ? 1 : 0) - (a.isActive ? 1 : 0));
     // deduplicate by worker name (same worker cannot appear twice on same day)
