@@ -211,7 +211,8 @@
             setTimeout(function(){ ldr.style.display = 'none'; }, 920);
           };
           window.addEventListener('message', function onReady(e) {
-            if (e.data && e.data.type === 'minka:appReady') {
+            var readyFrame = document.getElementById('calIframe');
+            if (e.origin === window.location.origin && readyFrame && e.source === readyFrame.contentWindow && e.data && e.data.type === 'minka:appReady') {
               window.removeEventListener('message', onReady);
               hideLdr();
             }
@@ -573,7 +574,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260730skin2" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260730skin2" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260801release1" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260801release1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -666,7 +667,8 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
   }
   // Hide only when iframe signals data is fully ready
   window.addEventListener('message', function(e){
-    if(e.data && e.data.type === 'minka:appReady') hideLoader();
+    var readyFrame = document.getElementById('calIframe');
+    if(e.origin === window.location.origin && readyFrame && e.source === readyFrame.contentWindow && e.data && e.data.type === 'minka:appReady') hideLoader();
   });
   // Fallback: hide after 18s regardless
   setTimeout(hideLoader, 18000);
@@ -889,7 +891,7 @@ async function loadRadioScripts() {
     document.head.appendChild(_fa);
   }
   await loadAny(['js/radio.js?v=20260727u']);
-  await loadAny(['js/radio_extras_v4.js?v=20260727c']);
+  await loadAny(['js/radio_extras_v4.js?v=20260801release1']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;
   return true;
@@ -1010,7 +1012,7 @@ function _doSync() {
   root.style.setProperty('--calendar-safe-gap', safeGap + 'px');
   root.style.setProperty('--calendar-bottom', (consoleH + btnH + safeGap) + 'px');
   if (iframe && iframe.contentWindow) {
-    try { iframe.contentWindow.postMessage({ type: 'hostLayoutChanged', radioVisible: consoleVisible, radioHeight: consoleH, buttonBarHeight: btnH }, '*'); } catch(e) {}
+    try { iframe.contentWindow.postMessage({ type: 'hostLayoutChanged', radioVisible: consoleVisible, radioHeight: consoleH, buttonBarHeight: btnH }, window.location.origin); } catch(e) {}
   }
 }
 
@@ -2412,6 +2414,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   // a second dev server. Add ?lacLocal=1 only while developing Lācītis itself.
   var useLocalLac=isLocal&&/[?&]lacLocal=1(?:&|$)/.test(location.search);
   var LAC_BASE=useLocalLac?'http://127.0.0.1:5174':'https://lacitis.pages.dev';
+  var LAC_ORIGIN=new URL(LAC_BASE, location.href).origin;
   var MINI_URL=LAC_BASE+'/?embed=mini';
   var frame,cons,stage,deckEl,track,empty,titleEl,artistEl,fillEl,playIco,progEl,searchEl,deckPrev,deckNext;
   var profilePanel,profileBtn,profileStatus,workersEl,pinForm,pinInput,pinConfirm,pinConfirmField,pinSubmit,profileError;
@@ -2455,7 +2458,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   function send(cmd,extra){
     if(!bridgeReady&&cmd==='search'){ pendingSearch=(extra&&extra.q)||''; return; }
     if(!bridgeReady){ pendingCommands.push({cmd:cmd,extra:extra||{}}); return; }
-    try{ frame&&frame.contentWindow&&frame.contentWindow.postMessage(Object.assign({type:'lac_mini_cmd',cmd:cmd},extra||{}),'*'); }catch(e){}
+    try{ frame&&frame.contentWindow&&frame.contentWindow.postMessage(Object.assign({type:'lac_mini_cmd',cmd:cmd},extra||{}),LAC_ORIGIN); }catch(e){}
   }
   function profileIsOpen(){ return !!(profilePanel&&profilePanel.classList.contains('open')); }
   function soundIsOpen(){ return !!(soundPanel&&soundPanel.classList.contains('open')); }
@@ -3047,7 +3050,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   }
 
   window.addEventListener('message',function(e){
-    if(!frame||e.source!==frame.contentWindow) return;
+    if(e.origin!==LAC_ORIGIN||!frame||e.source!==frame.contentWindow) return;
     var d=e.data; if(!d||typeof d!=='object') return;
     if(d.type==='lac_mini_ready'){
       bridgeReady=true;
@@ -3065,7 +3068,11 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     }
     else if(d.type==='lac_mini_append'){
       if(uiVisible()) appendDeck(d.tracks);
-      else if(d.tracks&&d.tracks.length) pendingAppend=pendingAppend.concat(d.tracks);
+      else if(Array.isArray(d.tracks)&&d.tracks.length){
+        // The hidden mini-player can receive many incremental pages. Keep only a
+        // bounded tail so a trusted-but-buggy player cannot grow this queue forever.
+        pendingAppend=pendingAppend.concat(d.tracks.slice(0,DECK_CAP)).slice(-DECK_CAP*2);
+      }
     }
     else if(d.type==='lac_mini_np'){ applyNp(d); }
     else if(d.type==='lac_mini_lyrics'){
@@ -3309,7 +3316,11 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     if (!saved) return Date.now();
     if (saved < _shiftStart()) {
       var d = new Date(saved), t = new Date();
-      return new Date(t.getFullYear(), t.getMonth(), t.getDate(), d.getHours(), d.getMinutes(), 0).getTime();
+      var candidate = new Date(t.getFullYear(), t.getMonth(), t.getDate(), d.getHours(), d.getMinutes(), 0);
+      // Before today's saved clock time, the matching past event was yesterday.
+      // Never synthesize a future bolus timestamp from an old saved value.
+      if (candidate.getTime() > Date.now()) candidate.setDate(candidate.getDate() - 1);
+      return candidate.getTime();
     }
     return saved;
   }
@@ -3365,7 +3376,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       if (shout) {
         try {
           var fr = document.getElementById('calIframe');
-          if (fr && fr.contentWindow) fr.contentWindow.postMessage({ type: 'mk_bolus_shout', name: shout, room: roomId === 'ge' ? 'GE' : 'PHILIPS' }, '*');
+          if (fr && fr.contentWindow) fr.contentWindow.postMessage({ type: 'mk_bolus_shout', name: shout, room: roomId === 'ge' ? 'GE' : 'PHILIPS' }, window.location.origin);
         } catch(e) {}
       }
     }).catch(function(){ _pendingThanks = null; _mkToast('Bolusa saglabāšana neizdevās', 'error'); });
@@ -3392,13 +3403,14 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     var entry = _history[roomId] && _history[roomId][i];
     if (!entry) return;
     var oldTs = entry.ts || entry;
-    _history[roomId][i] = { ts: newTs, name: (newName || '').trim() || 'Anonīms' };
+    var safeName = String(newName || '').trim().slice(0, 60) || 'Anonīms';
+    _history[roomId][i] = { ts: newTs, name: safeName };
     _history[roomId].sort(function(a, b) { return (b.ts || b) - (a.ts || a); });
     _histEdit[roomId] = -1;
     _recalcChangedAt(roomId);
     _markLocalWrite(roomId); _markLocalHistWrite(roomId);
     _save(); _saveHistory(); _render(); _updateLed();
-    _kvEntryOp('edit_entry', roomId, { oldTs: oldTs, ts: newTs, name: (newName || '').trim() || 'Anonīms' });
+    _kvEntryOp('edit_entry', roomId, { oldTs: oldTs, ts: newTs, name: safeName });
     _bcSync();
   }
   function _applyHistDelete(roomId, i) {
@@ -3426,7 +3438,8 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   // ── Gamification: month leaderboard, champion crown, personal thanks ──
   var _pendingThanks = null;
   function _escHtml(v) {
-    return String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+    return String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
   function _splitNames(raw) {
     return String(raw || '').split(/[\/+&,]/).map(function(x){ return x.trim(); })
@@ -3629,22 +3642,24 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     var cdLabel  = cdOffset === 0 ? 'Šodien' : cdOffset === -1 ? 'Vakar' : cdOffset === 1 ? 'Rīt' : cdStr;
     // Show custom input whenever "Cits" mode is active or current name is not in the worker list
     var isCustom = curName === ' ' || (!!curName && workers.indexOf(curName) === -1);
+    var safeRoomId = _escHtml(r.id);
+    var safeCdLabel = _escHtml(cdLabel);
     var chipsHtml =
       '<div class="bwd-nav">'+
-        '<button class="bwd-arr" data-room="'+r.id+'" data-dir="-1">‹</button>'+
-        '<span class="bwd-lbl">'+cdLabel+'</span>'+
-        '<button class="bwd-arr" data-room="'+r.id+'" data-dir="1">›</button>'+
+        '<button class="bwd-arr" data-room="'+safeRoomId+'" data-dir="-1">‹</button>'+
+        '<span class="bwd-lbl">'+safeCdLabel+'</span>'+
+        '<button class="bwd-arr" data-room="'+safeRoomId+'" data-dir="1">›</button>'+
       '</div>'+
       '<div class="bwrap">'+
         workers.map(function(n){
           var first = n.split(/\s+/)[0];
           var sel   = curName === n;
-          return '<button class="bwc'+(sel?' bwsel':'')+'" data-room="'+r.id+'" data-name="'+n.replace(/"/g,'&quot;')+'">'+(_isChamp(n)?'👑 ':'')+first+'</button>';
+          return '<button class="bwc'+(sel?' bwsel':'')+'" data-room="'+safeRoomId+'" data-name="'+_escHtml(n)+'">'+(_isChamp(n)?'👑 ':'')+_escHtml(first)+'</button>';
         }).join('')+
-        '<button class="bwc bwcits'+(isCustom?' bwsel':'')+'" data-room="'+r.id+'">Cits</button>'+
-        '<button class="bwc bwblank'+(curName===''?' bwsel':'')+'" data-room="'+r.id+'" data-name="">—</button>'+
+        '<button class="bwc bwcits'+(isCustom?' bwsel':'')+'" data-room="'+safeRoomId+'">Cits</button>'+
+        '<button class="bwc bwblank'+(curName===''?' bwsel':'')+'" data-room="'+safeRoomId+'" data-name="">—</button>'+
       '</div>'+
-      (isCustom ? '<input class="bname-inp bname-cits" data-room="'+r.id+'" type="text" placeholder="Ieraksti vārdu..." maxlength="24" autocomplete="off" value="'+curName.trim().replace(/"/g,'&quot;')+'">' : '');
+      (isCustom ? '<input class="bname-inp bname-cits" data-room="'+safeRoomId+'" type="text" placeholder="Ieraksti vārdu..." maxlength="24" autocomplete="off" value="'+_escHtml(curName.trim())+'">' : '');
     var tubeC = r.color;
     var injScene =
       '<svg class="binj-svg" viewBox="0 0 220 78" aria-hidden="true">'+
@@ -3707,11 +3722,12 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
           _history[r.id].map(function(entry,i){
             var ts = entry.ts || entry;
             var who = entry.name || 'Anonīms';
+            var safeWho = _escHtml(who);
             if (_histEdit[r.id] === i) {
               return '<div class="bhist-row bhist-editing" data-i="'+i+'">'+
                 '<div class="bhe-head">✏️ Labo ierakstu nr. '+(i+1)+'</div>'+
                 '<input type="datetime-local" class="bhe-dt" data-room="'+r.id+'" data-i="'+i+'" value="'+_dtLocal(ts)+'">'+
-                '<input type="text" class="bhe-nm" data-room="'+r.id+'" data-i="'+i+'" maxlength="30" placeholder="Vārds" value="'+String(who).replace(/"/g,'&quot;')+'">'+
+                '<input type="text" class="bhe-nm" data-room="'+r.id+'" data-i="'+i+'" maxlength="30" placeholder="Vārds" value="'+safeWho+'">'+
                 '<div class="bhe-btns">'+
                   '<button class="bhe-save" data-room="'+r.id+'" data-i="'+i+'">Saglabāt ✓</button>'+
                   '<button class="bhe-cancel" data-room="'+r.id+'" data-i="'+i+'">Atcelt</button>'+
@@ -3720,7 +3736,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
             }
             if (_histDel[r.id] === i) {
               return '<div class="bhist-row bhist-deleting" data-i="'+i+'">'+
-                '<div class="bhx-q">🗑️ Dzēst "'+_fmt(ts)+' '+who+'"?</div>'+
+                '<div class="bhx-q">🗑️ Dzēst "'+_fmt(ts)+' '+safeWho+'"?</div>'+
                 '<div class="bhe-btns">'+
                   '<button class="bhx-yes" data-room="'+r.id+'" data-i="'+i+'">Jā, dzēst</button>'+
                   '<button class="bhx-no" data-room="'+r.id+'" data-i="'+i+'">Nē, atstāt</button>'+
@@ -3730,7 +3746,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
             return '<div class="bhist-row'+(i===0?' bhist-latest':'')+'" data-i="'+i+'">'+
               '<span class="bhist-num">'+(i+1)+'.</span>'+
               '<span class="bhist-time">'+_fmt(ts)+'</span>'+
-              '<span class="bhist-who">'+(_isChamp(who)?'👑 ':'')+who+'</span>'+
+              '<span class="bhist-who">'+(_isChamp(who)?'👑 ':'')+safeWho+'</span>'+
               '<span class="bh-actions">'+
                 '<button class="bh-edit" data-room="'+r.id+'" data-i="'+i+'" title="Labot šo ierakstu">✏️</button>'+
                 '<button class="bh-del" data-room="'+r.id+'" data-i="'+i+'" title="Dzēst šo ierakstu">🗑️</button>'+
@@ -4572,7 +4588,7 @@ function openStatsFromDock() {
     }
   } catch (_e) {}
   try {
-    iframe.contentWindow.postMessage({ type: "mk_open_stats" }, "*");
+    iframe.contentWindow.postMessage({ type: "mk_open_stats" }, window.location.origin);
   } catch (_e) {
     setBuddyUiFlag('stats', false);
   }
@@ -4582,7 +4598,7 @@ function openSettingsFromDock() {
   var iframe = document.getElementById("calIframe");
   if (!iframe || !iframe.contentWindow) return;
   setBuddyUiFlag('settings', true);
-  iframe.contentWindow.postMessage({ type: "mk_open_settings" }, "*");
+  iframe.contentWindow.postMessage({ type: "mk_open_settings" }, window.location.origin);
 }
 
 function openMonthCalFromDock() {
@@ -4592,10 +4608,12 @@ function openMonthCalFromDock() {
     var mc = iframe.contentWindow.MinkaMonthCal;
     if (mc && mc.open) { if (mc.isOpen()) mc.close(); else mc.open(); return; }
   } catch (_e) {}
-  try { iframe.contentWindow.postMessage({ type: "mk_open_month_calendar" }, "*"); } catch (_e) {}
+  try { iframe.contentWindow.postMessage({ type: "mk_open_month_calendar" }, window.location.origin); } catch (_e) {}
 }
 
 window.addEventListener('message', function(e) {
+  var calendarFrame = document.getElementById('calIframe');
+  if (e.origin !== window.location.origin || !calendarFrame || e.source !== calendarFrame.contentWindow) return;
   if (e.data && e.data.type === 'mk_monthcal_state') {
     setBuddyUiFlag('monthcal', !!e.data.open);
   }
@@ -4898,7 +4916,12 @@ window.addEventListener('message', function(e) {
   };
 
   window.addEventListener('message', function(e) {
-    if (!e.data) return;
+    var allowedOrigin = 'https://lacitis.pages.dev';
+    var sheetFrame = document.getElementById('lacitisSheetFrame');
+    var fullFrame = document.getElementById('lacitisFullFrame');
+    var knownSource = (sheetFrame && e.source === sheetFrame.contentWindow) ||
+      (fullFrame && e.source === fullFrame.contentWindow);
+    if (e.origin !== allowedOrigin || !knownSource || !e.data) return;
     if (e.data.type === 'lacitis_dezura_ready') {
       window.__lacitisSheetReady = true;
       try { console.log('[lacitis] embedded ready'); } catch (_e) {}
@@ -4997,7 +5020,7 @@ function toggleNsFromParent() {
   _nsOpen = !_nsOpen;
   const iframe = document.getElementById('calIframe');
   if (iframe && iframe.contentWindow) {
-    iframe.contentWindow.postMessage({ type: 'toggleNs', open: _nsOpen }, '*');
+    iframe.contentWindow.postMessage({ type: 'toggleNs', open: _nsOpen }, window.location.origin);
   }
   const btn = document.getElementById('nsToggleBtnParent');
   const led = document.getElementById('nsLedParent');
@@ -5018,7 +5041,8 @@ function toggleNsFromParent() {
 }
 // Listen for NS close from iframe
 window.addEventListener('message', function(e) {
-  if (e.data && e.data.type === 'nsClosed') {
+  var calendarFrame = document.getElementById('calIframe');
+  if (e.origin === window.location.origin && calendarFrame && e.source === calendarFrame.contentWindow && e.data && e.data.type === 'nsClosed') {
     _nsOpen = false;
     setBuddyUiFlag('ns', false);
     const btn = document.getElementById('nsToggleBtnParent');
@@ -5347,7 +5371,8 @@ window.__lastWallpaper = null;
 window.__lastWallpaperBase = null;
 
 window.addEventListener('message', function(e) {
-  if (!e.data) return;
+  var calendarFrame = document.getElementById('calIframe');
+  if (e.origin !== window.location.origin || !calendarFrame || e.source !== calendarFrame.contentWindow || !e.data) return;
 
   if (e.data.type === 'mk_wallpaper') {
     window.__lastWallpaper = e.data.wallpaper || null;
@@ -5378,7 +5403,7 @@ function setCalGlass(opacity) {
   }
   var iframe = document.getElementById('calIframe');
   if (iframe && iframe.contentWindow) {
-    iframe.contentWindow.postMessage({type: 'mk_glass_opacity', opacity: opacity}, '*');
+    iframe.contentWindow.postMessage({type: 'mk_glass_opacity', opacity: opacity}, window.location.origin);
   }
   try { localStorage.setItem('mk_cal_glass', String(opacity)); } catch(e) {}
 }
@@ -5817,6 +5842,13 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];
     });
   }
+  function coffeeFetch(path, options){
+    options=options||{};
+    var headers=new Headers(options.headers||{}), token='';
+    try{ token=sessionStorage.getItem('minka_api_token_v1')||localStorage.getItem('minka_api_token_v1')||''; }catch(e){}
+    if(token) headers.set('authorization','Bearer '+token);
+    return fetch(API+path,Object.assign({},options,{headers:headers}));
+  }
 
   function coffeeStore(){ try{ return JSON.parse(localStorage.getItem('minkaCoffeeCountsV1')||'{}')||{}; }catch(e){ return {}; } }
   function emojiMap(){ try{ return JSON.parse(localStorage.getItem('minka_emoji_v2')||'{}')||{}; }catch(e){ return {}; } }
@@ -5903,7 +5935,7 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
       while(active<FETCH_CONCURRENCY && next<missing.length){
         (function(index,day){
           next++; active++;
-          fetch(API+'/api/coffee?date='+encodeURIComponent(day),{cache:'no-store'})
+          coffeeFetch('/api/coffee?date='+encodeURIComponent(day),{cache:'no-store'})
             .then(function(r){
               if(!r.ok){ settle(index,null,true); return null; }
               return r.json().then(function(data){
@@ -7030,7 +7062,8 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
   }
   window.addEventListener('message', function(e){
     var data = e && e.data;
-    if(!data) return;
+    var calendarFrame = document.getElementById('calIframe');
+    if(e.origin !== window.location.origin || !calendarFrame || e.source !== calendarFrame.contentWindow || !data) return;
     if(data.type === 'nightSplitPlan' && data.plan && data.plan.segments && data.plan.segments.length){
       lastNightSplitPlan = data.plan;
       setTimeout(triggerNightSplitBrief, 250);
@@ -7038,11 +7071,11 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
     }
     if(data.type === 'minka-calendar-selected-day-state' && data.payload){
       updateBuddyShiftStats(data.payload);
-      var heartData = Array.isArray(data.payload.rgHeartColors) ? data.payload.rgHeartColors : [];
+      var heartData = Array.isArray(data.payload.rgHeartColors) ? data.payload.rgHeartColors.slice(0, 32) : [];
       lastBuddyHeartData = heartData.map(function(item){
         var color = String((item && item.color) || '').trim();
-        if(!color) return null;
-        return { color: color, score: Math.max(0, Number((item && item.score) || 0) || 0) };
+        if(!/^(?:#[0-9a-f]{3,8}|rgba?\([0-9\s.,%]+\)|hsla?\([0-9\s.,%a-z]+\)|[a-z]{1,20})$/i.test(color)) return null;
+        return { color: color, score: Math.max(0, Math.min(100, Number((item && item.score) || 0) || 0)) };
       }).filter(Boolean);
       drawHearts(isSleeping ? 'sleep' : (extMood || mood));
       return;

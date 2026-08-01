@@ -294,7 +294,20 @@
     _coffeeApiFetchedAt = now;
     try {
       var base = String(window.MINKA_COFFEE_API_BASE || 'https://minka-coffee-api.gamernr1elite.workers.dev').replace(/\/+$/, '');
-      fetch(base + '/api/coffee?totals=1')
+      var coffeeFetch = typeof window.__minkaCoffeeFetch === 'function'
+        ? window.__minkaCoffeeFetch
+        : function(path, options) {
+            options = options || {};
+            var headers = new Headers(options.headers || {});
+            var token = '';
+            try {
+              token = (window.MinkaApi && window.MinkaApi.getToken && window.MinkaApi.getToken()) ||
+                sessionStorage.getItem('minka_api_token_v1') || localStorage.getItem('minka_api_token_v1') || '';
+            } catch (_e) {}
+            if (token) headers.set('authorization', 'Bearer ' + token);
+            return fetch(base + path, Object.assign({}, options, { headers: headers }));
+          };
+      coffeeFetch('/api/coffee?totals=1', { cache: 'no-store' })
         .then(function(r) { return r.json(); })
         .then(function(d) {
           if (!d || !d.ok || !d.totals) return;

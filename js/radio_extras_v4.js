@@ -221,6 +221,7 @@ function drawDotMatrix(ctx, W, H, data) {
       const x = (c+0.5) * colW;
       const y = H - 4 - (r+0.5) * rowH;
       const on = r < lit, isPk = r === pk && pk > 0 && !on;
+      const top = on && r === lit - 1;
 
       ctx.beginPath();
       ctx.arc(x, y, on ? (top ? dotR*1.25 : dotR) : (isPk ? dotR*1.1 : dotR*0.85), 0, Math.PI*2);

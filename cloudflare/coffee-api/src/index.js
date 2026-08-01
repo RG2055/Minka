@@ -1,7 +1,7 @@
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-  'Access-Control-Allow-Headers': 'content-type',
+  'Access-Control-Allow-Headers': 'authorization,content-type',
   'Access-Control-Max-Age': '86400'
 };
 
@@ -16,28 +16,46 @@ function json(body, status = 200) {
   });
 }
 
-async function readJson(request) {
+async function readJson(request, maxBytes = 16 * 1024) {
+  const declared = Number(request.headers.get('content-length') || 0);
+  if (declared > maxBytes) return null;
   try {
-    return await request.json();
+    const text = await request.text();
+    if (new TextEncoder().encode(text).byteLength > maxBytes) return null;
+    return JSON.parse(text);
   } catch (_e) {
-    return {};
+    return null;
   }
 }
 
 function cleanDate(value) {
   const s = String(value || '').trim();
-  return /^\d{2}\.\d{2}\.\d{4}$/.test(s) ? s : '';
+  const match = s.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+  if (!match) return '';
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = Number(match[3]);
+  if (year < 2020 || year > 2100) return '';
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day ? s : '';
 }
 
 function cleanWorker(value) {
-  return String(value || '').trim().replace(/\s+/g, ' ').slice(0, 120);
+  const worker = String(value || '').trim().replace(/\s+/g, ' ');
+  if (!worker || worker.length > 64 || /[<>&"'`\\\u0000-\u001f\u007f]/.test(worker)) return '';
+  return worker;
 }
 
 function cleanDelta(value) {
   const n = Math.trunc(Number(value) || 0);
-  if (n > 20) return 20;
-  if (n < -20) return -20;
-  return n;
+  return n === -2 || n === -1 || n === 1 || n === 2 ? n : 0;
+}
+
+function isAuthorized(request, env) {
+  // Keep existing deployments working until APP_PASSWORD is configured. Once
+  // present, the coffee API uses the same Bearer token as the main Minka API.
+  if (!env.APP_PASSWORD) return true;
+  return request.headers.get('authorization') === `Bearer ${env.APP_PASSWORD}`;
 }
 
 function cleanSource(value) {
@@ -47,6 +65,7 @@ function cleanSource(value) {
   if (s === 'monster') return 'monster';
   if (s === 'monsterultra' || s === 'monster-ultra' || s === 'monsterwhite' || s === 'ultra') return 'monsterultra';
   if (s === 'redbull' || s === 'red-bull' || s === 'redbul') return 'redbull';
+  if (s === 'cupcoffee' || s === 'cup-coffee' || s === 'cita' || s === 'other') return 'cupcoffee';
   return 'philips';
 }
 
@@ -71,7 +90,7 @@ function cleanPriceCents(value) {
 function ensureDetail(details, worker) {
   if (!details[worker]) {
     details[worker] = {
-      sources: { philips: 0, lofbergs: 0, narvesen: 0, monster: 0, monsterultra: 0, redbull: 0 },
+      sources: { philips: 0, lofbergs: 0, narvesen: 0, monster: 0, monsterultra: 0, redbull: 0, cupcoffee: 0 },
       spendCents: 0
     };
   }
@@ -83,7 +102,7 @@ async function readCoffeeEvents(env, whereSql, binds) {
     // Net all deltas per source so a "minus" (logged with its source) reduces that
     // source's count. Only the real sources are aggregated — legacy source-less
     // removals were logged as 'adjustment' and are ignored here.
-    const known = "source IN ('philips','lofbergs','narvesen','monster','monsterultra','redbull')";
+    const known = "source IN ('philips','lofbergs','narvesen','monster','monsterultra','redbull','cupcoffee')";
     const where = whereSql ? `${whereSql} AND ${known}` : `WHERE ${known}`;
     const rows = await env.COFFEE_DB
       .prepare(`
@@ -113,6 +132,10 @@ export default {
     const url = new URL(request.url);
     if (url.pathname !== '/api/coffee') {
       return json({ ok: false, error: 'not found' }, 404);
+    }
+
+    if (!isAuthorized(request, env)) {
+      return json({ ok: false, error: 'unauthorized' }, 401);
     }
 
     if (!env.COFFEE_DB) {
@@ -180,13 +203,16 @@ export default {
 
     if (request.method === 'POST') {
       const body = await readJson(request);
+      if (!body) return json({ ok: false, error: 'invalid body' }, 400);
       const date = cleanDate(body.date);
       const worker = cleanWorker(body.worker);
       const delta = cleanDelta(body.delta);
       const hasSource = body.source !== undefined && body.source !== null && body.source !== '';
       const source = cleanSource(body.source);
       const size = cleanSize(body.size);
-      const priceCents = source === 'lofbergs' ? 140 : cleanPriceCents(body.priceCents ?? body.price);
+      // The picker owns the current price (including local overrides), so persist
+      // exactly the validated cents it sent instead of silently changing Löfbergs.
+      const priceCents = cleanPriceCents(body.priceCents ?? body.price);
       if (!date) return json({ ok: false, error: 'date required' }, 400);
       if (!worker) return json({ ok: false, error: 'worker required' }, 400);
       if (!delta) return json({ ok: false, error: 'delta required' }, 400);

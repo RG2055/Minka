@@ -15,6 +15,40 @@
   var GIST_FILE  = 'minka_emoji.json';
   var POLL_MS    = 300000; /* 5 min (was 60s) — lighter background polling */
   var LOCAL_KEY  = 'minka_emoji_v2';
+
+  function escapeHtml(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function safeWorkerName(value) {
+    var name = typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : '';
+    if (!name || name.length > 64 || /[<>&"'`\\\u0000-\u001f\u007f]/.test(name)) return '';
+    return name;
+  }
+
+  function safeEmoji(value) {
+    if (value == null || value === '') return '';
+    var emoji = typeof value === 'string' ? value.trim() : '';
+    if (!emoji || emoji.length > 64 || /[<>&"'`\\\u0000-\u001f\u007f]/.test(emoji)) return '';
+    return emoji;
+  }
+
+  function sanitizeEmojiMap(value) {
+    var clean = {};
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return clean;
+    Object.keys(value).forEach(function(rawName) {
+      if (/^(?:skins:|skin-art::)/.test(rawName)) return;
+      var name = safeWorkerName(rawName);
+      var emoji = safeEmoji(value[rawName]);
+      if (name && emoji) clean[name] = emoji;
+    });
+    return clean;
+  }
   function hasApiAuth() {
     return !!(window.MinkaApi && typeof window.MinkaApi.apiFetch === 'function' && window.MinkaApi.getToken && window.MinkaApi.getToken());
   }
@@ -188,7 +222,7 @@
         var apiRes = await window.MinkaApi.apiFetch('/api/emoji?_=' + Date.now());
         if (apiRes.ok) {
           var apiJson = await apiRes.json();
-          _data = (apiJson && typeof apiJson === 'object') ? apiJson : {};
+          _data = sanitizeEmojiMap(apiJson);
           try {
             localStorage.setItem(LOCAL_KEY, JSON.stringify(_data));
             localStorage.removeItem('minka_emoji_v1');
@@ -207,7 +241,7 @@
       var j = await r.json();
       var raw = j.files && j.files[GIST_FILE] && j.files[GIST_FILE].content;
       if (raw) {
-        _data = JSON.parse(raw);
+        _data = sanitizeEmojiMap(JSON.parse(raw));
         try {
           localStorage.setItem(LOCAL_KEY, JSON.stringify(_data));
           localStorage.removeItem('minka_emoji_v1');
@@ -250,7 +284,7 @@
   function loadLocal() {
     try {
       var s = localStorage.getItem(LOCAL_KEY) || localStorage.getItem('minka_emoji_v1');
-      if (s) _data = JSON.parse(s);
+      if (s) _data = sanitizeEmojiMap(JSON.parse(s));
     } catch(e) {}
   }
 
@@ -283,7 +317,7 @@
   }
 
   function updateCardEmoji(card, name) {
-    var emoji = _data[name] || null;
+    var emoji = safeEmoji(_data[name]) || null;
     var shiftIcons = card.querySelector('.shift-icons');
     var midEl = card.querySelector('.mk-mid-person-emoji');
     var statusRail = card.querySelector('.mk-mid-status-icons');
@@ -329,7 +363,7 @@
   }
 
   function updateSideEmoji(block, name) {
-    var emoji = _data[name] || null;
+    var emoji = safeEmoji(_data[name]) || null;
     var el = block.querySelector('.mk-emoji-side');
     var initials = block.querySelector('.mk-side-initials');
     if (!emoji) {
@@ -424,12 +458,12 @@
     closeCtxMenu();
     var cm = document.createElement('div');
     cm.id = 'mk-ctx-menu';
-    var emoji = _data[workerName] || null;
+    var emoji = safeEmoji(_data[workerName]) || null;
     cm.innerHTML =
       '<div class="mk-ctx-item" data-mk-ctx-emoji="1">✨ ' + (emoji ? 'Mainīt emoji' : 'Pievienot emoji') + '</div>' +
       (emoji ? '<div class="mk-ctx-item mk-ctx-remove" data-mk-ctx-remove="1">🗑️ Noņemt emoji</div>' : '') +
       '<div class="mk-ctx-sep"></div>' +
-      '<div class="mk-ctx-label">Lv.' + getWorkerLvl(workerName) + ' ' + (workerName.split(' ')[0] || '') + '</div>';
+      '<div class="mk-ctx-label">Lv.' + getWorkerLvl(workerName) + ' ' + escapeHtml(workerName.split(' ')[0] || '') + '</div>';
 
     var vw = window.innerWidth, vh = window.innerHeight;
     var cx = Math.min(x, vw - 160), cy = Math.min(y, vh - 100);
@@ -474,7 +508,7 @@
     var gridHtml = buildEmojiGroupsHtml(workerLvl, currentEmoji);
 
     // ── Live preview ──
-    var previewEmoji = currentEmoji || '';
+    var previewEmoji = safeEmoji(currentEmoji) || '';
     var workerFirst = (_activeWorker || '').split(' ')[0] || '';
     var workerSur   = (_activeWorker || '').split(' ').slice(1).join(' ') || '';
     var initials    = ((workerFirst[0] || '') + (workerSur[0] || '')).toUpperCase() || '??';
@@ -484,18 +518,18 @@
         '<div class="mkp-preview-label">Dzīvais priekšskatījums</div>' +
         '<div class="mkp-preview-card" id="mkp-preview-card">' +
           '<div class="mkp-prev-top">' +
-            '<div><div class="mkp-prev-init">' + initials + '</div><div class="mkp-prev-side-emoji" id="mkp-preview-emoji">' + previewEmoji + '</div></div>' +
+            '<div><div class="mkp-prev-init">' + escapeHtml(initials) + '</div><div class="mkp-prev-side-emoji" id="mkp-preview-emoji">' + escapeHtml(previewEmoji) + '</div></div>' +
             '<div class="mkp-prev-month"><span>132h</span><em>Mēnesī</em></div>' +
           '</div>' +
           '<div class="mkp-prev-center">' +
-            '<span class="mkp-prev-bg-emoji" id="mkp-preview-bg-emoji">' + previewEmoji + '</span>' +
+            '<span class="mkp-prev-bg-emoji" id="mkp-preview-bg-emoji">' + escapeHtml(previewEmoji) + '</span>' +
             '<div class="mkp-prev-shift" id="mkp-preview-shift">24</div>' +
-            '<div class="mkp-prev-name">' + workerFirst + '</div>' +
-            '<div class="mkp-prev-sub">' + workerSur + '</div>' +
+            '<div class="mkp-prev-name">' + escapeHtml(workerFirst) + '</div>' +
+            '<div class="mkp-prev-sub">' + escapeHtml(workerSur) + '</div>' +
           '</div>' +
           '<div class="mkp-prev-segs"><span class="on"></span><span class="on"></span><span class="on-s"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>' +
         '</div>' +
-        '<div class="mkp-picked-meta"><div class="mkp-picked-big" id="mkp-picked-big">' + (previewEmoji || '—') + '</div><div><div id="mkp-picked-name">' + (previewEmoji ? getEmojiName(previewEmoji) : 'Nav izvēlēts') + '</div><span id="mkp-picked-cat">' + (previewEmoji ? (SECTION_TITLES[emojiCat] || '') : '') + '</span></div></div>' +
+        '<div class="mkp-picked-meta"><div class="mkp-picked-big" id="mkp-picked-big">' + escapeHtml(previewEmoji || '—') + '</div><div><div id="mkp-picked-name">' + escapeHtml(previewEmoji ? getEmojiName(previewEmoji) : 'Nav izvēlēts') + '</div><span id="mkp-picked-cat">' + escapeHtml(previewEmoji ? (SECTION_TITLES[emojiCat] || '') : '') + '</span></div></div>' +
       '</div>';
 
     // ── Footer ──
@@ -1640,12 +1674,12 @@
     if (!container || !_modalWorker) return;
     var workerName = _modalWorker;
     var workerLvl = getWorkerLvl(workerName);
-    var current = _data[workerName] || null;
+    var current = safeEmoji(_data[workerName]) || null;
     if (_activeWorker !== workerName) {
       _activeWorker = workerName;
       _selectedEmoji = current;
     }
-    var _sel = _selectedEmoji;
+    var _sel = safeEmoji(_selectedEmoji);
     var workerFirst = workerName.split(' ')[0] || '';
     var workerSur   = workerName.split(' ').slice(1).join(' ') || '';
     var initials    = ((workerFirst[0]||'') + (workerSur[0]||'')).toUpperCase();
@@ -1665,18 +1699,18 @@
         '<div class="mkp-preview-label">Dzīvais priekšskatījums</div>' +
         '<div class="mkp-preview-card">' +
           '<div class="mkp-prev-top">' +
-            '<div><div class="mkp-prev-init">' + initials + '</div><div class="mkp-prev-side-emoji" id="mkp-modal-prev-emoji">' + (_sel||'') + '</div></div>' +
+            '<div><div class="mkp-prev-init">' + escapeHtml(initials) + '</div><div class="mkp-prev-side-emoji" id="mkp-modal-prev-emoji">' + escapeHtml(_sel||'') + '</div></div>' +
             '<div class="mkp-prev-month"><span>132h</span><em>Mēnesī</em></div>' +
           '</div>' +
           '<div class="mkp-prev-center">' +
-            '<span class="mkp-prev-bg-emoji" id="mkp-modal-bg-emoji">' + (_sel||'') + '</span>' +
+            '<span class="mkp-prev-bg-emoji" id="mkp-modal-bg-emoji">' + escapeHtml(_sel||'') + '</span>' +
             '<div class="mkp-prev-shift">24</div>' +
-            '<div class="mkp-prev-name">' + workerFirst + '</div>' +
-            '<div class="mkp-prev-sub">' + workerSur + '</div>' +
+            '<div class="mkp-prev-name">' + escapeHtml(workerFirst) + '</div>' +
+            '<div class="mkp-prev-sub">' + escapeHtml(workerSur) + '</div>' +
           '</div>' +
           '<div class="mkp-prev-segs"><span class="on"></span><span class="on"></span><span class="on-s"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>' +
         '</div>' +
-        '<div class="mkp-picked-meta"><div class="mkp-picked-big" id="mkp-modal-picked-big">' + (_sel || '—') + '</div><div><div id="mkp-modal-picked-name">' + (_sel ? getEmojiName(_sel) : 'Nav izvēlēts') + '</div><span id="mkp-modal-picked-cat">' + (_sel ? (SECTION_TITLES[emojiCat] || '') : '') + '</span></div></div>' +
+        '<div class="mkp-picked-meta"><div class="mkp-picked-big" id="mkp-modal-picked-big">' + escapeHtml(_sel || '—') + '</div><div><div id="mkp-modal-picked-name">' + escapeHtml(_sel ? getEmojiName(_sel) : 'Nav izvēlēts') + '</div><span id="mkp-modal-picked-cat">' + escapeHtml(_sel ? (SECTION_TITLES[emojiCat] || '') : '') + '</span></div></div>' +
       '</div>';
 
     container.innerHTML =
@@ -1795,7 +1829,8 @@
   }
 
   window.MinkaEmoji = {
-    get: function(name) { return _data[name] || null; },
+    get: function(name) { return safeEmoji(_data[name]) || null; },
+    safe: safeEmoji,
     refresh: refreshAllCards,
     reload: loadFromGist,
     renderInModal: renderInModal

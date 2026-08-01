@@ -6,10 +6,13 @@ function doGet(e) {
 
   if (p.action === 'write' && p.room && p.ts) {
     ensureBolusHeader_(bolusSheet);
-    var d = new Date(Number(p.ts));
+    var writeTs = normalizeBolusTs_(p.ts);
+    var roomKey = normalizeBolusRoom_(p.room);
+    if (!writeTs || !roomKey) return jsonOut_({ ok: false, error: 'invalid_bolus' });
+    var d = new Date(writeTs);
     var readable = Utilities.formatDate(d, Session.getScriptTimeZone(), 'dd.MM.yyyy HH:mm');
-    var who = p.name ? decodeURIComponent(p.name) : 'Anonīms';
-    var roomLabel = String(p.room).toUpperCase() === 'GE' ? 'GE kabinets' : 'PHILIPS kabinets';
+    var who = normalizeBolusName_(p.name) || 'Anonīms';
+    var roomLabel = roomKey === 'ge' ? 'GE kabinets' : 'PHILIPS kabinets';
     bolusSheet.appendRow([roomLabel, readable, who]);
     return jsonOut_({ ok: true });
   }
@@ -18,7 +21,9 @@ function doGet(e) {
   // stored timestamp at minute precision (that is what the sheet keeps).
   if ((p.action === 'edit_entry' || p.action === 'delete_entry') && p.room && p.ts) {
     ensureBolusHeader_(bolusSheet);
-    var matchTs = Number(p.action === 'edit_entry' ? (p.oldTs || p.ts) : p.ts);
+    var matchTs = normalizeBolusTs_(p.action === 'edit_entry' ? (p.oldTs || p.ts) : p.ts);
+    var nextTs = normalizeBolusTs_(p.ts);
+    if (!matchTs || !nextTs) return jsonOut_({ ok: false, error: 'invalid_timestamp' });
     var matchMin = Math.floor(matchTs / 60000);
     var roomKey = normalizeBolusRoom_(p.room);
     var rows = bolusSheet.getDataRange().getValues();
@@ -29,8 +34,8 @@ function doGet(e) {
       if (p.action === 'delete_entry') {
         bolusSheet.deleteRow(k + 1);
       } else {
-        var newReadable = Utilities.formatDate(new Date(Number(p.ts)), Session.getScriptTimeZone(), 'dd.MM.yyyy HH:mm');
-        var newWho = p.name ? decodeURIComponent(p.name) : String(rows[k][2] || 'Anonīms');
+        var newReadable = Utilities.formatDate(new Date(nextTs), Session.getScriptTimeZone(), 'dd.MM.yyyy HH:mm');
+        var newWho = normalizeBolusName_(p.name) || normalizeBolusName_(rows[k][2]) || 'Anonīms';
         bolusSheet.getRange(k + 1, 2, 1, 2).setValues([[newReadable, newWho]]);
       }
       return jsonOut_({ ok: true, action: p.action });
@@ -121,6 +126,22 @@ function normalizeBolusRoom_(value) {
   return raw === 'ge' ? 'ge' : raw === 'ph' ? 'philips' : '';
 }
 
+function normalizeBolusTs_(value) {
+  var ts = Math.floor(Number(value));
+  if (!isFinite(ts)) return null;
+  var min = new Date(2020, 0, 1).getTime();
+  // Bolus entries can be corrected later from a phone, including entries
+  // from previous days or months. Keep only a practical future guard.
+  var max = Date.now() + 366 * 24 * 60 * 60 * 1000;
+  return ts >= min && ts <= max ? ts : null;
+}
+
+function normalizeBolusName_(value) {
+  var text = String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
+  if (!text || text.length > 64) return '';
+  return text.replace(/[<>&`\u0000-\u001f\u007f]/g, '').trim();
+}
+
 function getOrCreateSheet_(ss, name) {
   var sheet = ss.getSheetByName(name);
   if (!sheet) sheet = ss.insertSheet(name);
@@ -144,7 +165,14 @@ function ensureRadiologistPlanHeader_(sheet) {
 function normalizeDate_(value) {
   var str = String(value || '').trim();
   var m = str.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
-  return m ? m[1] + '.' + m[2] + '.' + m[3] : '';
+  if (!m) return '';
+  var day = Number(m[1]);
+  var month = Number(m[2]);
+  var year = Number(m[3]);
+  if (year < 2020 || year > 2100) return '';
+  var d = new Date(Date.UTC(year, month - 1, day));
+  if (d.getUTCFullYear() !== year || d.getUTCMonth() !== month - 1 || d.getUTCDate() !== day) return '';
+  return m[1] + '.' + m[2] + '.' + m[3];
 }
 
 function currentShiftDate_() {
