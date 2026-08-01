@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.113-release-audit-raffle';
+const CACHE = 'minka-4.6.114-weather-link';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
