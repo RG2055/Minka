@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.111-phantom-filter';
+const CACHE = 'minka-4.6.112-restore-laguns';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
