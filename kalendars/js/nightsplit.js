@@ -42,6 +42,7 @@
   var _actx=null;
   var _nsLastRoomHtml='';
   var _nsSortMode='fatigue'; // 'fatigue' (default) | 'freq' (by history stats)
+  var _nsRaffle={open:false,workers:[],selected:-1,parts:[],results:[],revealing:false,revealIndex:-1,revealPart:null,revealToken:0};
   var NS_STORE_KEY='minkaNightSplitByDateV1';
   var NS_ROOM_LEGACY_STORE_KEY='minkaNightRoomByDateV1';
   var NS_ROOM_KEY_PREFIX='nsrooms::';
@@ -120,13 +121,17 @@
     if(!names.length){ box.innerHTML='<div class="ns-stats-load">Nav cilvēku</div>'; return; }
     nsStatsFetch().then(function(stats){
       if(!stats || !stats.parts){ box.innerHTML='<div class="ns-stats-load">Nav datu</div>'; return; }
-      var rows=names.map(function(nm, idx){
-        var p=stats.parts[nm]||[0,0,0,0];
+      var rows=names.map(function(nm){
+        var rawParts=stats.parts[nm];
+        var p=[0,1,2,3].map(function(i){
+          var value=Number(rawParts && rawParts[i]);
+          return Number.isFinite(value) ? Math.max(0, Math.min(100000, Math.round(value))) : 0;
+        });
         var total=p[0]+p[1]+p[2]+p[3];
         var maxP=Math.max(1,p[0],p[1],p[2],p[3]);
         var favPart=total?(p.indexOf(Math.max.apply(null,p))+1):0;
         // gulta
-        var bedMap=stats.beds[nm]||{};
+        var bedMap=(stats.beds && stats.beds[nm] && typeof stats.beds[nm]==='object') ? stats.beds[nm] : {};
         var favBed='',favBedN=0;
         Object.keys(bedMap).forEach(function(k){ if(bedMap[k]>favBedN){favBedN=bedMap[k];favBed=k;} });
         var bars=p.map(function(v,i){
@@ -140,14 +145,16 @@
         var short=nm.split(' ')[0];
         var favTxt=favPart?('biežāk ņem <b>'+favPart+'. daļu</b>'):'nav datu';
         return '<div class="ns-stat-row">'
-          +'<div class="ns-stat-name" title="'+nm+'">'+short+'</div>'
+          +'<div class="ns-stat-name" title="'+escHtml(nm)+'">'+escHtml(short)+'</div>'
           +'<div class="ns-stat-bars">'+bars+'</div>'
           +'<div class="ns-stat-fav">'+favTxt+'</div>'
           +'<div class="ns-stat-bed">'+nsBedMiniMap(favBed, bedMap, false)+'</div>'
           +'</div>';
       }).join('');
-      box.innerHTML=rows+'<div class="ns-stats-foot">Vēsture: '+stats.nights+' naktis</div>';
-    });
+      var nights=Number(stats.nights);
+      nights=Number.isFinite(nights) ? Math.max(0, Math.min(100000, Math.round(nights))) : 0;
+      box.innerHTML=rows+'<div class="ns-stats-foot">Vēsture: '+nights+' naktis</div>';
+    }).catch(function(){ box.innerHTML='<div class="ns-stats-load">Nav datu</div>'; });
   }
   var _roomBc=null;
   var _roomPolling=false;
@@ -434,7 +441,9 @@
     var m0=sh0.match(/(\d+(?:\.\d+)?)/);
     var hrs0=m0 ? Math.round(parseFloat(m0[1])||0) : Math.round(Number(w&&w.hours||0)||0);
     if(ds==='01.06.2026' && hrs0===8 && (cn.indexOf('karina')>=0 || cn.indexOf('renda')>=0)) return true;
-    if(!w || !w.startTime) return false;
+    if(!w) return false;
+    if(w.__minkaCarryover===true) return true;
+    if(!w.startTime) return false;
     var hour=parseInt(String(w.startTime).split(':')[0],10);
     if(!isFinite(hour) || hour>=8) return false;
     var type=String(w.type||'').toUpperCase();
@@ -444,7 +453,7 @@
     // A carryover is the short leftover fragment of the previous night; a full
     // 12h+ shift is a real standalone night and must never be hidden here.
     if(hrs>=12) return false;
-    return w.__minkaCarryover===true || type==='NAKTS' || type==='DIENNAKTS' || w.isNight===true;
+    return type==='NAKTS' || type==='DIENNAKTS' || w.isNight===true;
   }
   function getW(){
     // Get workers from BOTH radiographers store AND radiologists store
@@ -585,7 +594,8 @@
           fs:(s.w&&s.w.fs)||0, accent:getCol((s.w&&s.w.name)||'').accent,
           s:Math.max(0,s.s||0), e:Math.max(0,s.e||0)
         };
-      })).replace(/"/g,'&quot;');
+      }));
+      slotDataEsc = escHtml(slotDataEsc);
     }catch(_e){}
     var cx=48, cy=48, r=43;
     function polar(aDeg, rr){ var rad=(aDeg-90)*Math.PI/180; return {x:cx+Math.cos(rad)*(rr||r), y:cy+Math.sin(rad)*(rr||r)}; }
@@ -611,8 +621,10 @@
       var d=arcPathAbs(st,en); if(!d) return;
       var col=getCol((s.w&&s.w.name)||'').accent || ['#66d9ff','#a855f7','#ffae3d','#63f7b7'][i%4];
       var nm=String((s.w&&s.w.name)||'').split(/\s+/)[0]||'â€”';
+      var tm=String((s.ss||'')+'â€“'+(s.es||''));
+      var safeNm=escHtml(nm), safeTm=escHtml(tm);
       segs += '<path class="nsh-ringseg" d="'+d+'" stroke="'+col+'"></path>';
-      hits += '<path class="nsh-hitseg nscw-arc-hit" data-wi="'+i+'" data-name="'+nm.replace(/"/g,'&quot;')+'" data-time="'+String((s.ss||'')+'â€“'+(s.es||'')).replace(/"/g,'&quot;')+'" d="'+d+'"><title>'+nm+' '+String((s.ss||'')+'â€“'+(s.es||''))+'</title></path>';
+      hits += '<path class="nsh-hitseg nscw-arc-hit" data-wi="'+i+'" data-name="'+safeNm+'" data-time="'+safeTm+'" d="'+d+'"><title>'+safeNm+' '+safeTm+'</title></path>';
       try{
         var saMid = mod(st, 720) * 0.5;
         var eaMid = mod(en, 720) * 0.5;
@@ -622,7 +634,7 @@
         var initials = (String((s.w&&s.w.name)||'').trim().split(/\s+/).slice(0,2).map(function(w){return (w||'').charAt(0).toUpperCase();}).join('') || nm.slice(0,2).toUpperCase());
         if(false) lbls += '<g class="nsh-arc-label" transform="translate('+lp.x.toFixed(2)+' '+lp.y.toFixed(2)+')">'
           + '<circle r="6.8" fill="rgba(6,10,20,.78)" stroke="'+col+'" stroke-width="1.1"></circle>'
-          + '<text text-anchor="middle" dominant-baseline="central" y="0.6" fill="#fff">'+initials.replace(/</g,'&lt;')+'</text>'
+          + '<text text-anchor="middle" dominant-baseline="central" y="0.6" fill="#fff">'+escHtml(initials)+'</text>'
           + '</g>';
       }catch(_e){}
     });
@@ -706,8 +718,8 @@
 
 
   function escHtml(v){
-    return String(v==null?"":v).replace(/[&<>"]/g,function(ch){
-      return ch==='&'?'&amp;':ch==='<'?'&lt;':ch==='>'?'&gt;':'&quot;';
+    return String(v==null?"":v).replace(/[&<>"']/g,function(ch){
+      return ch==='&'?'&amp;':ch==='<'?'&lt;':ch==='>'?'&gt;':ch==='"'?'&quot;':'&#39;';
     });
   }
   function lastSlotChecklist(i,total){
@@ -918,7 +930,7 @@
   function publishPlan(){
     try{
       if(window.parent && window.parent !== window){
-        window.parent.postMessage({type:'nightSplitPlan', plan:getPublicPlan()}, '*');
+        window.parent.postMessage({type:'nightSplitPlan', plan:getPublicPlan()}, window.location.origin);
       }
     }catch(e){}
   }
@@ -1543,7 +1555,7 @@
       return '<div class="nsc-card-wrap" data-i="'+i+'">'
         +'<div class="nsc-full-card nsc-theme-'+theme+(rt.active?' nsc-active':'')+'" data-i="'+i+'" style="--nsc-accent:'+c.accent+';--nsc-grad:'+gradCss+'">'
         +'<div class="nsc-deco" aria-hidden="true">'+_nightSvg(theme,i,s.w.name,c.accent,s,st.sl[0].s,st.sl[st.sl.length-1].e)+'</div>'
-        +(em?'<div class="nsc-bg-emoji" aria-hidden="true">'+em+'</div>':'')
+        +(em?'<div class="nsc-bg-emoji" aria-hidden="true">'+escHtml(em)+'</div>':'')
         +'<div class="nsc-full-inner">'
         +'<div class="nsc-full-top">'
         +'<span class="nsc-full-name">'+nm+'</span>'
@@ -1641,6 +1653,10 @@
       +'<div class="ns-mode-btns">'
       +'<button type="button" class="ns-mode-btn'+(_nsSortMode==='freq'?'':' is-on')+'" onclick="__ns.byFat()" title="Kārto pēc noguruma — nogurušākais pirmajā daļā">Nogurums</button>'
       +'<button type="button" class="ns-mode-btn'+(_nsSortMode==='freq'?' is-on':'')+'" onclick="__ns.byFreq()" title="Kārto pēc statistikas — katrs savā biežākajā daļā">Biežums</button>'
+      +'<button type="button" class="ns-raffle-trigger" data-ns-raffle-action="open" title="Atvērt nakts daļu izlozi" aria-label="Atvērt nakts izlozi">'
+      +'<span class="ns-raffle-cat" aria-hidden="true"></span>'
+      +'<span>Izloze</span>'
+      +'</button>'
       +'</div>'
       +'</div>'
       +'<div class="ns-rhythm-legend" aria-label="Nakts ritma līknes">'
@@ -1654,6 +1670,9 @@
       +_roomHtml
       +'<div class="ns-flow-meta">'+_metaHtml+'</div>';
     _nsLastRoomHtml=_roomHtml;
+
+    var raffleTrigger=panel.querySelector('.ns-raffle-trigger');
+    if(raffleTrigger)raffleTrigger.addEventListener('click',openRaffle);
 
     requestAnimationFrame(function(){
       fitRoomBlocks(panel);
@@ -1874,6 +1893,197 @@
     },40);
   }
 
+  function raffleEscape(value){
+    return String(value==null?'':value).replace(/[&<>"']/g,function(ch){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];
+    });
+  }
+
+  function raffleName(worker){
+    return String(worker && (worker.name||worker.fullName||worker.label)||'Kolēģis').trim();
+  }
+
+  function raffleRandomIndex(max){
+    if(max<=1)return 0;
+    try{
+      if(window.crypto && window.crypto.getRandomValues){
+        var range=0x100000000;
+        var limit=range-(range%max);
+        var value=new Uint32Array(1);
+        do{window.crypto.getRandomValues(value);}while(value[0]>=limit);
+        return value[0]%max;
+      }
+    }catch(_e){}
+    return Math.floor(Math.random()*max);
+  }
+
+  function raffleShuffle(values){
+    var out=values.slice();
+    for(var i=out.length-1;i>0;i--){
+      var j=raffleRandomIndex(i+1),tmp=out[i];
+      out[i]=out[j];out[j]=tmp;
+    }
+    return out;
+  }
+
+  function raffleRemainingWorkers(){
+    return _nsRaffle.workers.filter(function(worker){
+      return !_nsRaffle.results.some(function(result){return result.worker===worker;});
+    });
+  }
+
+  function closeRaffle(){
+    _nsRaffle.open=false;
+    _nsRaffle.selected=-1;
+    _nsRaffle.revealing=false;
+    _nsRaffle.revealToken++;
+    var layer=document.getElementById('nsRaffleLayer');
+    if(layer)layer.remove();
+  }
+
+  function renderRaffle(){
+    if(!_nsRaffle.open)return;
+    var layer=document.getElementById('nsRaffleLayer');
+    if(!layer){
+      layer=document.createElement('div');
+      layer.id='nsRaffleLayer';
+      layer.className='ns-raffle-layer';
+      layer.addEventListener('click',function(event){
+        if(event.target===layer){closeRaffle();return;}
+        var control=event.target&&event.target.closest?event.target.closest('[data-ns-raffle-action]'):null;
+        if(!control||!layer.contains(control))return;
+        handleRaffleControl(control);
+      });
+      var host=document.getElementById('nsPanel')||document.getElementById('night-split-panel')||document.body;
+      host.appendChild(layer);
+    }
+
+    var remaining=raffleRemainingWorkers();
+    if(_nsRaffle.selected>=remaining.length)_nsRaffle.selected=-1;
+    var complete=_nsRaffle.results.length===_nsRaffle.workers.length;
+    var people=remaining.map(function(worker,index){
+      var selected=index===_nsRaffle.selected;
+      return '<button type="button" class="ns-raffle-person'+(selected?' is-selected':'')+'" data-ns-raffle-action="person" data-ns-raffle-index="'+index+'" aria-pressed="'+selected+'">'
+        +raffleEscape(raffleName(worker))
+        +'</button>';
+    }).join('');
+    var papers=_nsRaffle.parts.map(function(part,index){
+      var revealed=_nsRaffle.revealing&&index===_nsRaffle.revealIndex;
+      return '<button type="button" class="ns-raffle-paper'+(revealed?' is-revealed':'')+'" data-ns-raffle-action="part" data-ns-raffle-index="'+index+'"'+(_nsRaffle.selected<0||_nsRaffle.revealing?' disabled':'')+' aria-label="Izvēlēties aizklāto nakts daļu">'
+        +(revealed?'<span class="ns-raffle-reveal" aria-live="polite">'+raffleEscape(_nsRaffle.revealPart)+'.</span>':'<span class="ns-raffle-question" aria-hidden="true">?</span>')
+        +'</button>';
+    }).join('');
+    var results=_nsRaffle.results.slice().sort(function(a,b){return a.part-b.part;}).map(function(result){
+      return '<li><strong>'+raffleEscape(raffleName(result.worker))+'</strong><span class="ns-raffle-result-part">'+result.part+'. daļa</span></li>';
+    }).join('');
+    var remainingParts=_nsRaffle.parts.slice().sort(function(a,b){return a-b;}).join(', ');
+
+    layer.innerHTML='<section class="ns-raffle-dialog" role="dialog" aria-modal="true" aria-labelledby="nsRaffleTitle">'
+      +'<header class="ns-raffle-topbar"><div class="ns-raffle-title"><h2 id="nsRaffleTitle">Nakts izloze 🐾</h2></div>'
+      +'<div class="ns-raffle-top-actions"><button type="button" class="ns-raffle-reset" data-ns-raffle-action="reset" aria-label="Sākt izlozi no jauna">Sākt no jauna</button><button type="button" class="ns-raffle-close" data-ns-raffle-action="close" aria-label="Aizvērt nakts izlozi">×</button></div></header>'
+      +'<div class="ns-raffle-paper-stage" style="--paper-count:'+Math.max(1,_nsRaffle.parts.length)+'">'+papers+'</div>'
+      +'<div class="ns-raffle-remaining">Atlikušās daļas: <strong>'+(remainingParts||'nav')+'</strong></div>'
+      +'<section class="ns-raffle-panel"><div class="ns-raffle-step">1. Izvēlies darbinieku</div><div class="ns-raffle-people">'+(people||'<span class="ns-raffle-step">Visi darbinieki ir izlozēti.</span>')+'</div>'
+      +'<div class="ns-raffle-results"><div class="ns-raffle-results-head"><span class="ns-raffle-step">Rezultāti</span>'+(complete?'<button type="button" class="ns-raffle-apply" data-ns-raffle-action="apply">Lietot sadalījumu</button>':'')+'</div><ol>'+(results||'<li class="is-empty">Vēl neviens nav izlozējis.</li>')+'</ol></div></section>'
+      +'</section>';
+    var close=layer.querySelector('.ns-raffle-close');
+    if(close)close.focus({preventScroll:true});
+  }
+
+  function openRaffle(){
+    if(!st||!st.sl||st.sl.length<2)return;
+    _nsRaffle={
+      open:true,
+      workers:st.sl.map(function(slot){return slot.w;}),
+      selected:-1,
+      parts:raffleShuffle(st.sl.map(function(_slot,index){return index+1;})),
+      results:[],
+      revealing:false,
+      revealIndex:-1,
+      revealPart:null,
+      revealToken:0
+    };
+    renderRaffle();
+  }
+
+  function resetRaffle(){
+    if(!_nsRaffle.open)return;
+    _nsRaffle.selected=-1;
+    _nsRaffle.parts=raffleShuffle(_nsRaffle.workers.map(function(_worker,index){return index+1;}));
+    _nsRaffle.results=[];
+    _nsRaffle.revealing=false;
+    _nsRaffle.revealIndex=-1;
+    _nsRaffle.revealPart=null;
+    _nsRaffle.revealToken++;
+    renderRaffle();
+  }
+
+  function selectRafflePerson(index){
+    var remaining=raffleRemainingWorkers();
+    if(index<0||index>=remaining.length)return;
+    _nsRaffle.selected=index;
+    renderRaffle();
+  }
+
+  function revealRafflePart(worker,index){
+    if(_nsRaffle.revealing||!worker||index<0||index>=_nsRaffle.parts.length)return;
+    var part=_nsRaffle.parts[index];
+    var token=++_nsRaffle.revealToken;
+    _nsRaffle.revealing=true;
+    _nsRaffle.revealIndex=index;
+    _nsRaffle.revealPart=part;
+    renderRaffle();
+    setTimeout(function(){
+      if(!_nsRaffle.open||token!==_nsRaffle.revealToken)return;
+      _nsRaffle.results.push({worker:worker,part:part});
+      _nsRaffle.parts.splice(index,1);
+      _nsRaffle.parts=raffleShuffle(_nsRaffle.parts);
+      _nsRaffle.selected=-1;
+      _nsRaffle.revealing=false;
+      _nsRaffle.revealIndex=-1;
+      _nsRaffle.revealPart=null;
+      var finalWorkers=raffleRemainingWorkers();
+      if(_nsRaffle.parts.length===1&&finalWorkers.length===1){
+        _nsRaffle.selected=0;
+        renderRaffle();
+        revealRafflePart(finalWorkers[0],0);
+        return;
+      }
+      renderRaffle();
+    },420);
+  }
+
+  function selectRafflePart(index){
+    var remaining=raffleRemainingWorkers();
+    if(_nsRaffle.revealing||_nsRaffle.selected<0||_nsRaffle.selected>=remaining.length||index<0||index>=_nsRaffle.parts.length)return;
+    revealRafflePart(remaining[_nsRaffle.selected],index);
+  }
+
+  function applyRaffle(){
+    if(!st||_nsRaffle.results.length!==_nsRaffle.workers.length)return;
+    var ordered=_nsRaffle.results.slice().sort(function(a,b){return a.part-b.part;}).map(function(result){return result.worker;});
+    st.sl=calc(ordered,st.sh,st.ei);
+    saveCurrentDayState();
+    sndReorder();
+    closeRaffle();
+    render(true);
+    try{if(window.__nsBarSync)window.__nsBarSync();}catch(_e){}
+  }
+
+  function handleRaffleControl(control){
+    var action=control.getAttribute('data-ns-raffle-action');
+    var index=parseInt(control.getAttribute('data-ns-raffle-index'),10);
+    if(action==='close')closeRaffle();
+    else if(action==='reset')resetRaffle();
+    else if(action==='person')selectRafflePerson(index);
+    else if(action==='part')selectRafflePart(index);
+    else if(action==='apply')applyRaffle();
+  }
+
+  document.addEventListener('keydown',function(event){
+    if(event.key==='Escape'&&_nsRaffle.open){event.preventDefault();closeRaffle();}
+  });
+
   function update(){
     var el=document.getElementById('night-split-panel');if(!el)return;
     try{ window.__todayDateStr = (window.__grafiksTodayStr || window.__todayDateStr || ''); }catch(e){}
@@ -1931,6 +2141,12 @@
     _render: render,
     _update: update,
     getPlan:getPublicPlan,
+    openRaffle:openRaffle,
+    closeRaffle:closeRaffle,
+    resetRaffle:resetRaffle,
+    rafflePerson:selectRafflePerson,
+    rafflePart:selectRafflePart,
+    applyRaffle:applyRaffle,
     ss:function(v){if(!st)return;st.sh=parseFloat(v);st.sl=calc(st.sl.map(function(s){return s.w;}),st.sh,st.ei);saveCurrentDayState();render();},
     se:function(v){if(!st)return;st.ei=parseInt(v); st.sl=calc(st.sl.map(function(s){return s.w;}),st.sh,st.ei); saveCurrentDayState(); render();},
     eq:function(){

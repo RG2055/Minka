@@ -5,6 +5,47 @@ function nsTtl(dateStr) {
   return Math.max(ttl, 120);
 }
 
+function cleanNsDate(value) {
+  if (typeof value !== "string") return "";
+  const match = value.trim().match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+  if (!match) return "";
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = Number(match[3]);
+  if (year < 2020 || year > 2100) return "";
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return "";
+  return `${String(day).padStart(2, "0")}.${String(month).padStart(2, "0")}.${year}`;
+}
+
+function cleanNsName(value) {
+  if (typeof value !== "string") return "";
+  const name = value.trim().replace(/\s+/g, " ");
+  if (!name || name.length > 64 || /[<>&"'`\\\u0000-\u001f\u007f]/.test(name)) return "";
+  return name;
+}
+
+function cleanNsOrder(value) {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set();
+  const result = [];
+  for (const entry of value.slice(0, 16)) {
+    const name = cleanNsName(entry);
+    const key = name.toLocaleUpperCase("lv-LV");
+    if (!name || seen.has(key)) continue;
+    seen.add(key);
+    result.push(name);
+  }
+  return result;
+}
+
+function cleanNsSavedAt(value) {
+  const now = Date.now();
+  const timestamp = Math.trunc(Number(value));
+  if (!Number.isFinite(timestamp) || timestamp <= 0) return now;
+  return Math.min(timestamp, now + 5 * 60 * 1000);
+}
+
 const PAIR_TTL_SECONDS = 120;
 const PAIR_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
@@ -46,6 +87,21 @@ function cleanSkinWorker(value) {
   if (typeof value !== "string") return "";
   const worker = value.trim().replace(/\s+/g, " ").toUpperCase();
   return worker.length >= 1 && worker.length <= 64 ? worker : "";
+}
+
+function cleanEmojiWorker(value) {
+  if (typeof value !== "string") return "";
+  const worker = value.trim().replace(/\s+/g, " ");
+  if (!worker || worker.length > 64 || /[<>&"'`\\\u0000-\u001f\u007f]/.test(worker)) return "";
+  return worker;
+}
+
+function cleanEmojiValue(value) {
+  if (value == null || value === "") return null;
+  if (typeof value !== "string") return undefined;
+  const emoji = value.trim();
+  if (!emoji || emoji.length > 64 || /[<>&"'`\\\u0000-\u001f\u007f]/.test(emoji)) return undefined;
+  return emoji;
 }
 
 function cleanSkinValue(value) {
@@ -262,29 +318,37 @@ const worker = {
     }
 
     if (url.pathname === "/api/emoji" && method === "GET") {
-      const worker = url.searchParams.get("worker");
+      const worker = cleanEmojiWorker(url.searchParams.get("worker"));
       if (worker) {
         const one = await env.MINKA_EMOJI.get(worker);
-        return json(request, { worker, emoji: one || null });
+        return json(request, { worker, emoji: cleanEmojiValue(one) || null });
       }
       const list = await env.MINKA_EMOJI.list();
       const out = {};
       for (const key of list.keys) {
-        out[key.name] = await env.MINKA_EMOJI.get(key.name);
+        if (/^(?:skins:|skin-art::)/.test(key.name)) continue;
+        const name = cleanEmojiWorker(key.name);
+        const emoji = cleanEmojiValue(await env.MINKA_EMOJI.get(key.name));
+        if (name && emoji) out[name] = emoji;
       }
       return json(request, out);
     }
 
     if (url.pathname === "/api/emoji" && method === "POST") {
       const body = await readJson(request);
-      if (!body?.worker) {
-        return json(request, { ok: false, error: "worker required" }, 400);
+      const worker = cleanEmojiWorker(body?.worker);
+      const emoji = cleanEmojiValue(body?.emoji);
+      if (!worker) {
+        return json(request, { ok: false, error: "invalid worker" }, 400);
       }
-      if (!body.emoji) {
-        await env.MINKA_EMOJI.delete(body.worker);
+      if (emoji === undefined) {
+        return json(request, { ok: false, error: "invalid emoji" }, 400);
+      }
+      if (!emoji) {
+        await env.MINKA_EMOJI.delete(worker);
         return json(request, { ok: true, removed: true });
       }
-      await env.MINKA_EMOJI.put(body.worker, body.emoji);
+      await env.MINKA_EMOJI.put(worker, emoji);
       return json(request, { ok: true });
     }
 
@@ -380,33 +444,34 @@ const worker = {
     }
 
     if (url.pathname === "/api/ns-order" && method === "GET") {
-      const date = url.searchParams.get("date");
-      if (!date) return json(request, { ok: false, error: "date required" }, 400);
+      const date = cleanNsDate(url.searchParams.get("date"));
+      if (!date) return json(request, { ok: false, error: "valid date required" }, 400);
       const val = await env.MINKA_EMOJI.get("ns::" + date);
       return json(request, val ? JSON.parse(val) : {});
     }
 
     if (url.pathname === "/api/ns-order" && method === "POST") {
-      const body = await readJson(request);
-      if (!body?.date) return json(request, { ok: false, error: "date required" }, 400);
+      const body = await readJson(request, 16 * 1024);
+      const date = cleanNsDate(body?.date);
+      if (!date) return json(request, { ok: false, error: "valid date required" }, 400);
 
-      const ttl = nsTtl(body.date);
+      const ttl = nsTtl(date);
       const orderPayload = {
-        order: body.order || [],
-        sh: typeof body.sh === "number" ? body.sh : 0,
-        ei: typeof body.ei === "number" ? body.ei : 2,
+        order: cleanNsOrder(body.order),
+        sh: Math.max(0, Math.min(23, Math.trunc(Number(body.sh) || 0))),
+        ei: Math.max(0, Math.min(3, Math.trunc(Number(body.ei) || 0))),
         mode: body.mode === "freq" ? "freq" : "fatigue",
-        savedAt: body.savedAt || Date.now()
+        savedAt: cleanNsSavedAt(body.savedAt)
       };
 
       await env.MINKA_EMOJI.put(
-        "ns::" + body.date,
+        "ns::" + date,
         JSON.stringify(orderPayload),
         { expirationTtl: ttl }
       );
 
       await pushNightStats(env, {
-        date: body.date,
+        date,
         savedAt: orderPayload.savedAt,
         order: orderPayload.order,
         sh: orderPayload.sh,
@@ -417,37 +482,38 @@ const worker = {
     }
 
     if (url.pathname === "/api/ns-rooms" && method === "GET") {
-      const date = url.searchParams.get("date");
-      if (!date) return json(request, { ok: false, error: "date required" }, 400);
+      const date = cleanNsDate(url.searchParams.get("date"));
+      if (!date) return json(request, { ok: false, error: "valid date required" }, 400);
       const val = await env.MINKA_EMOJI.get("nsrooms::" + date);
       return json(request, val ? JSON.parse(val) : {});
     }
 
     if (url.pathname === "/api/ns-rooms" && method === "POST") {
-      const body = await readJson(request);
-      if (!body?.date) return json(request, { ok: false, error: "date required" }, 400);
+      const body = await readJson(request, 16 * 1024);
+      const date = cleanNsDate(body?.date);
+      if (!date) return json(request, { ok: false, error: "valid date required" }, 400);
 
       const beds = (body.beds && typeof body.beds === "object") ? body.beds : {};
-      const ttl = nsTtl(body.date);
+      const ttl = nsTtl(date);
 
       const roomsPayload = {
         beds: {
-          main_left_top: typeof beds.main_left_top === "string" ? beds.main_left_top : "",
-          main_left_bottom: typeof beds.main_left_bottom === "string" ? beds.main_left_bottom : "",
-          main_right_top: typeof beds.main_right_top === "string" ? beds.main_right_top : "",
-          nmp_center: typeof beds.nmp_center === "string" ? beds.nmp_center : ""
+          main_left_top: cleanNsName(beds.main_left_top),
+          main_left_bottom: cleanNsName(beds.main_left_bottom),
+          main_right_top: cleanNsName(beds.main_right_top),
+          nmp_center: cleanNsName(beds.nmp_center)
         },
-        savedAt: body.savedAt || Date.now()
+        savedAt: cleanNsSavedAt(body.savedAt)
       };
 
       await env.MINKA_EMOJI.put(
-        "nsrooms::" + body.date,
+        "nsrooms::" + date,
         JSON.stringify(roomsPayload),
         { expirationTtl: ttl }
       );
 
       await pushNightStats(env, {
-        date: body.date,
+        date,
         savedAt: roomsPayload.savedAt,
         beds: roomsPayload.beds
       });
@@ -540,6 +606,14 @@ function json(request, data, status = 200) {
   });
 }
 
-async function readJson(request) {
-  try { return await request.json(); } catch { return null; }
+async function readJson(request, maxBytes = 64 * 1024) {
+  const declared = Number(request.headers.get("content-length") || 0);
+  if (declared > maxBytes) return null;
+  try {
+    const text = await request.text();
+    if (new TextEncoder().encode(text).byteLength > maxBytes) return null;
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
 }

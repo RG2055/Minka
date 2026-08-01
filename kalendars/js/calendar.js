@@ -230,7 +230,7 @@ function notifyHostAppReady() {
     const hasCards = !!document.querySelector('#grafiks-list .card, #radiographers-duty .duty-block, #radiologists-duty .duty-block');
     const hasMonth = !!document.getElementById('grafiks-monthPicker')?.value;
     if ((hasTitle && hasCards && hasMonth) || attempts >= 20) {
-      try { window.parent && window.parent.postMessage({ type: 'minka:appReady' }, '*'); } catch(_e) {}
+      try { window.parent && window.parent.postMessage({ type: 'minka:appReady' }, window.location.origin); } catch(_e) {}
       return;
     }
     setTimeout(tryNotify, 90);
@@ -318,7 +318,16 @@ function getCatIcon(cat) {
   return '🏥';
 }
 function escapeHtml(str) {
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function safeEmojiText(value) {
+  try {
+    if (window.MinkaEmoji && typeof window.MinkaEmoji.safe === 'function') {
+      return window.MinkaEmoji.safe(value);
+    }
+  } catch (_e) {}
+  const text = String(value || '');
+  return /^[^<>&"'`\\\u0000-\u001f\u007f]{1,64}$/.test(text) ? text : '';
 }
 // Latvian accusative → nominative for -e stem names:
 // "Inesi" → "Inese", "Kristīni" → "Kristīne", "Anci" → "Ance"
@@ -398,12 +407,12 @@ function displayGroup(title, items, highlight = "") {
       nameHtml = nameHtml.replace(regex, "<b>$1</b>");
     }
     a.innerHTML = `
-      <div class="item-icon-wrap">${getCatIcon(item.cat)}</div>
+      <div class="item-icon-wrap">${escapeHtml(getCatIcon(item.cat))}</div>
       <div class="item-body">
         <span class="item-name">${nameHtml}</span>
-        <span class="item-desc">${item.cat}${item.sub ? ' ' + item.sub : ''}</span>
+        <span class="item-desc">${escapeHtml(item.cat)}${item.sub ? ' ' + escapeHtml(item.sub) : ''}</span>
       </div>
-      <div class="item-phone">${item.phone}</div>`;
+      <div class="item-phone">${escapeHtml(item.phone)}</div>`;
     a.addEventListener('click', () => saveHistory(item.name));
     resultsArea.appendChild(a);
   });
@@ -860,6 +869,9 @@ function filterFullList(btn) {
     monthOrder.sort((a, b) => a.sort - b.sort);
 
     for (let i = 1; i < monthOrder.length; i++) {
+      // A continuation is only possible across adjacent calendar months.
+      // Never bridge missing buckets (for example September 2025 -> July 2026).
+      if (monthOrder[i].sort - monthOrder[i - 1].sort !== 1) continue;
       const curKey  = monthOrder[i].key;
       const prevKey = monthOrder[i - 1].key;
       const curDays  = storeRef[curKey]  || [];
@@ -893,6 +905,8 @@ function filterFullList(btn) {
         const hrs = Math.round((w.hours || 0) || parseFloat(String(w.shift || '').replace(',', '.')) || 0);
         if (hrs < 1 || hrs > 12) return;
         const name = String(w.name || '').trim().toLowerCase();
+        const prev = prevWorkerMap.get(name);
+        if (!prev) return;
 
         // Signal 1: startTime in early morning (00:00–07:xx) → definitive night continuation
         // Overrides even explicit DIENA type because the time is the ground truth
@@ -906,8 +920,6 @@ function filterFullList(btn) {
         }
 
         // Signal 2: previous month pattern (skip only if already correct)
-        const prev = prevWorkerMap.get(name);
-        if (!prev) return;
         // Condition A: prev month entry is explicitly NAKTS
         const isNakts = prev.type === 'NAKTS';
         // Condition B: prev entry has short unknown/day-coded hours that sum to standard shift
@@ -1636,7 +1648,11 @@ function filterFullList(btn) {
 
   function isPreviousShiftDayCarryover(worker, dateStr) {
     if (isKnownSplitNightCarryover(worker, dateStr)) return true;
-    if (!worker || !worker.startTime) return false;
+    if (!worker) return false;
+    // Explicitly inferred carryovers are authoritative. The duration guard
+    // below only protects unmarked standalone shifts from heuristic matching.
+    if (worker.__minkaCarryover === true) return true;
+    if (!worker.startTime) return false;
     // A carryover is the leftover *fragment* of a night that began the day
     // before, so it is always shorter than a full shift. A 12h (or longer)
     // shift is a real standalone shift — most importantly a fresh evening
@@ -1646,7 +1662,7 @@ function filterFullList(btn) {
     const hour = parseInt(String(worker.startTime).split(':')[0], 10);
     if (!Number.isFinite(hour) || hour >= 8) return false;
     const type = String(worker.type || '').toUpperCase();
-    return worker.__minkaCarryover === true || type === 'NAKTS' || type === 'DIENNAKTS' || worker.isNight === true;
+    return type === 'NAKTS' || type === 'DIENNAKTS' || worker.isNight === true;
   }
 
   function getRemainingMs(worker, dateStr, now) {
@@ -1723,6 +1739,16 @@ function filterFullList(btn) {
   function g_getMonthForDate(dateStr) {
     const normalized = normalizeDateStr(dateStr);
     const months = getAllMonths();
+    const dateParts = normalized && normalized.split('.').map(Number);
+    if (dateParts && dateParts.length === 3 && dateParts.every(Number.isFinite)) {
+      const requestedMonth = dateParts[1];
+      const requestedYear = dateParts[2];
+      const exactMonth = months.find(function(month) {
+        const parsed = parseMonthYearKey(month);
+        return parsed && parsed.year === requestedYear && parsed.month === requestedMonth;
+      });
+      if (exactMonth) return exactMonth;
+    }
     for (const month of months) {
       if (getMergedDays(month).some(day => normalizeDateStr(day.date) === normalized)) {
         return month;
@@ -2001,7 +2027,7 @@ function filterFullList(btn) {
       const firstName = String(seg.name || '').split(/\s+/)[0] || '—';
       const widthPct = Math.max(0, to - from);
       const cls = widthPct < 10 ? ' is-hidden' : (widthPct < 16 ? ' is-tight' : '');
-      return '<span class="shift-progress-seg-label' + cls + '" style="left:' + mid.toFixed(3) + '%;--seg-color:' + seg.color.accent + '">' + firstName + '</span>';
+      return '<span class="shift-progress-seg-label' + cls + '" style="left:' + mid.toFixed(3) + '%;--seg-color:' + seg.color.accent + '">' + escapeHtml(firstName) + '</span>';
     }).join('');
   }
 
@@ -2026,8 +2052,8 @@ function filterFullList(btn) {
       parts.push(
         '<span class="shift-progress-seg-label' + cls + '"' +
           ' style="left:' + anchor.toFixed(2) + '%;--seg-color:' + seg.color.accent + '"' +
-          ' data-seg-name="' + firstName + '" data-seg-idx="' + index + '">' +
-          firstName +
+          ' data-seg-name="' + mkEscAttr(firstName) + '" data-seg-idx="' + index + '">' +
+          escapeHtml(firstName) +
         '</span>'
       );
       if (index < segments.length - 1) {
@@ -2416,7 +2442,7 @@ function filterFullList(btn) {
   }
 
   function mkEscAttr(s) {
-    return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
   // ── Duty header: "TAGAD n NAKTĪ m" + per-person status chips ──────────
@@ -2439,6 +2465,7 @@ function filterFullList(btn) {
     const nightRefBase = createDateFromDateTime(activeDateStr, '23:00');
     const nightRef = (nightRefBase && nightRefBase > now) ? nightRefBase : now;
     let nowCount = 0, nightCount = 0;
+    const nowNames = new Set(), nightNames = new Set();
     // Groups keyed by meaning + time, rendered as plain readable sentences:
     // "🌙 Pa nakti: Annija, Anta" / "☀️ Līdz 17:00: Anna" / "🌙 No 17:00: Aelita"
     const stay = [], leaveBy = {}, comeAt = {};
@@ -2446,14 +2473,20 @@ function filterFullList(btn) {
       const parts = String(w.name || '').trim().split(/\s+/).filter(Boolean);
       const first = formatSideNamePart(parts[0], false) || String(w.name || '').trim();
       const person = { first: first, name: w.name };
+      const identity = String(w.name || '').trim().toLocaleLowerCase('lv-LV');
       const start = w.startTime ? createDateFromDateTime(w.date || activeDateStr, w.startTime) : null;
       const end = (w.startTime && w.endTime) ? getShiftEnd(w, w.date || activeDateStr) : null;
-      if (!start || !end) { nowCount++; stay.push(person); return; }
+      if (!start || !end) {
+        nowCount++; nightCount++;
+        nowNames.add(identity); nightNames.add(identity);
+        stay.push(person);
+        return;
+      }
       const active = now >= start && now < end;
       const upcoming = now < start;
       const coversNight = start <= nightRef && nightRef < end;
-      if (active) nowCount++;
-      if (coversNight) nightCount++;
+      if (active) { nowCount++; nowNames.add(identity); }
+      if (coversNight) { nightCount++; nightNames.add(identity); }
       if (active && coversNight) {
         stay.push(person);
       } else if (active) {
@@ -2466,14 +2499,16 @@ function filterFullList(btn) {
         (comeAt[w.startTime] = comeAt[w.startTime] || []).push(person);
       }
     });
+    const sameNightRoster = nowCount === nightCount && nowNames.size === nightNames.size &&
+      Array.from(nowNames).every(function(name) { return nightNames.has(name); });
     const nCls = nightCount === 0 ? 'mk-night-zero' : (nightCount < nowCount ? 'mk-night-drop' : 'mk-night-ok');
     // Two identical numbers say nothing, so the night count only appears when
     // it actually differs from the current one.
     pill.innerHTML = '<span class="mk-count-item"><small>ŠOBRĪD</small><strong>' + nowCount + '</strong></span>'
-      + (nightCount === nowCount
+      + (sameNightRoster
         ? ''
         : '<span class="mk-count-item ' + nCls + '"><small>NAKTĪ</small><strong>' + nightCount + '</strong></span>');
-    pill.title = (nightCount === nowCount)
+    pill.title = sameNightRoster
       ? 'Šobrīd dežūrā: ' + nowCount + ', visi paliek naktī'
       : 'Šobrīd dežūrā: ' + nowCount + ', pa nakti paliks: ' + nightCount;
     if (!strip) {
@@ -2672,7 +2707,11 @@ function filterFullList(btn) {
         sideEmojiCacheRaw = raw;
         sideEmojiCache = raw ? JSON.parse(raw) : {};
       }
-      return sideEmojiCache[workerName] || '';
+      const cachedEmoji = sideEmojiCache[workerName] || '';
+      if (window.MinkaEmoji && typeof window.MinkaEmoji.safe === 'function') {
+        return window.MinkaEmoji.safe(cachedEmoji);
+      }
+      return /^[^<>&"'`\\\u0000-\u001f\u007f]{1,64}$/.test(String(cachedEmoji)) ? String(cachedEmoji) : '';
     } catch (_e) {
       sideEmojiCacheRaw = '';
       sideEmojiCache = {};
@@ -3252,9 +3291,11 @@ function filterFullList(btn) {
       if (scrubber && effectiveOverlay && effectiveOverlay.segments && effectiveOverlay.segments.length) {
         let currentSeg = effectiveOverlay.segments.find(function(seg) { return displayNow >= seg.start && displayNow < seg.end; }) || null;
         if (currentSeg && currentSeg.color) {
+          const segBg = currentSeg.color.bg || 'rgba(255,255,255,0.14)';
+          const segGlow = currentSeg.color.glow || segBg;
           scrubber.style.setProperty('background', 'transparent', 'important');
           scrubber.style.setProperty('border', '2px solid rgba(255,255,255,0.92)', 'important');
-          scrubber.style.setProperty('box-shadow', '0 0 0 3px ' + currentSeg.color.bg + ', 0 0 18px ' + currentSeg.color.glow, 'important');
+          scrubber.style.setProperty('box-shadow', '0 0 0 3px ' + segBg + ', 0 0 18px ' + segGlow, 'important');
         } else {
           scrubber.style.setProperty('background', 'transparent', 'important');
           scrubber.style.setProperty('border', '2px solid rgba(255,255,255,0.9)', 'important');
@@ -3348,7 +3389,7 @@ function filterFullList(btn) {
                 })
               };
               return `<div class="shift-stop${tone}${dept}${group.exiting ? ' is-exiting' : ''}">
-                <button class="shift-stop-pin" type="button" data-stop-key="${group.key}" style="left:${stopPct}%" aria-label="${group.endLabel}">
+                <button class="shift-stop-pin" type="button" data-stop-key="${mkEscAttr(group.key)}" style="left:${stopPct}%" aria-label="${mkEscAttr(group.endLabel)}">
                   <span class="shift-stop-dot"></span>
                 </button>
               </div>`;
@@ -3582,6 +3623,11 @@ function filterFullList(btn) {
     }
     var startHour = new Date(axisStartMs).getHours() + new Date(axisStartMs).getMinutes() / 60;
     var axisHours = axisDur / 3600000;
+    function axisHour(hour) {
+      var absolute = hour;
+      while (absolute < startHour) absolute += 24;
+      return absolute;
+    }
     function hourToX(hAbs){ return PX0 + (hAbs - startHour) / axisHours * plotW; }
     function X(ms){ return PX0 + (ms - axisStartMs) / axisDur * plotW; }
     function Y(v){ return PY_B - (v / 100) * plotH; }
@@ -3600,15 +3646,16 @@ function filterFullList(btn) {
     var pkd = new Date(peakMs), pkHHMM = pad(pkd.getHours()) + ':' + pad(pkd.getMinutes());
 
     // Recommended sleep window 02:00-06:00 (clamped to axis)
-    var szX0 = Math.max(PX0, Math.min(PX1, hourToX(2)));
-    var szX1 = Math.max(PX0, Math.min(PX1, hourToX(6)));
+    var sleepStartHour = axisHour(2), sleepEndHour = axisHour(6);
+    var szX0 = Math.max(PX0, Math.min(PX1, hourToX(sleepStartHour)));
+    var szX1 = Math.max(PX0, Math.min(PX1, hourToX(sleepEndHour)));
     var sleepRect = (szX1 > szX0 + 4) ?
       ('<rect x="' + szX0.toFixed(1) + '" y="0" width="' + (szX1 - szX0).toFixed(1) + '" height="350" rx="16" fill="url(#mc-sleep)"/>' +
        '<line x1="' + szX0.toFixed(1) + '" y1="30" x2="' + szX1.toFixed(1) + '" y2="30" stroke="#3c4fa3" stroke-width="2" stroke-dasharray="10 8"/>' +
        '<text x="' + ((szX0 + szX1) / 2).toFixed(1) + '" y="20" text-anchor="middle" font-size="24" font-weight="700" fill="#c7cff2">&#128719;  Ieteicamais miega logs</text>') : '';
 
     // 06:00 alertness marker
-    var x6 = hourToX(6), y6 = Y(getVal(axisStartMs + (6 - startHour) * 3600000, 3));
+    var x6 = hourToX(sleepEndHour), y6 = Y(getVal(axisStartMs + (sleepEndHour - startHour) * 3600000, 3));
     var marker6 = (x6 > PX0 + 12 && x6 < PX1 - 12) ?
       ('<line x1="' + x6.toFixed(1) + '" y1="' + y6.toFixed(1) + '" x2="' + x6.toFixed(1) + '" y2="365" stroke="#52c97b" stroke-dasharray="3 6"/>' +
        '<circle cx="' + x6.toFixed(1) + '" cy="' + y6.toFixed(1) + '" r="14" fill="#61df8b" opacity="0.18"/>' +
@@ -3982,6 +4029,14 @@ function filterFullList(btn) {
     // signature below → full rebuild, so roster edits always show.
     var _isToday = !activeDateStr || !g_todayStr || activeDateStr === g_todayStr;
     var _stopsSig = sorted.map(function(g){ return (g.isRadiologist?'r':'g') + g.shiftH + ':' + g.workers.map(function(w){ return w.name; }).join('+'); }).join('|');
+    var _overlaySig = nsOverlay && Array.isArray(nsOverlay.segments)
+      ? nsOverlay.segments.map(function(seg) {
+          var start = seg.start instanceof Date ? seg.start.getTime() : new Date(seg.start).getTime();
+          var end = seg.end instanceof Date ? seg.end.getTime() : new Date(seg.end).getTime();
+          var color = seg.color && typeof seg.color === 'object' ? (seg.color.hex || seg.color.bg || '') : (seg.color || '');
+          return String(seg.name || '') + ':' + start + ':' + end + ':' + color;
+        }).join('|')
+      : '';
     // Time bucket forces a periodic full rebuild so any layout drift from the
     // light-update path self-heals quickly instead of persisting until a manual
     // refresh: 30s while the night-split chart is shown, 60s otherwise. Still
@@ -3992,7 +4047,7 @@ function filterFullList(btn) {
     // The ns chart ignores this: opening 🌙 is an explicit request to see it.
     var _wrapHost = document.getElementById('shift-progress-wrap');
     var _lanesMin = !nsOverlay && !!(_wrapHost && _wrapHost.classList.contains('lanes-collapsed'));
-    var _structKey = _stopsSig + '#' + axisStartMs + '#' + axisEndMs + '#' + counterStartMs + '#' + counterEndMs + '#' + (_isToday ? 't' : 'h') + '#' + (nsOverlay ? 'ns' : 'n') + '#' + (_lanesMin ? 'min' : 'max') + '#' + _timeBucket;
+    var _structKey = _stopsSig + '#' + _overlaySig + '#' + axisStartMs + '#' + axisEndMs + '#' + counterStartMs + '#' + counterEndMs + '#' + (_isToday ? 't' : 'h') + '#' + (nsOverlay ? 'ns' : 'n') + '#' + (_lanesMin ? 'min' : 'max') + '#' + _timeBucket;
     if (_structKey === _laneStructKey && wrap.children.length) {
       _laneLiveUpdate(wrap, sorted, nowMs, axisStartMs, axisEndMs, axisDur, !!nsOverlay, _isToday, counterStartMs, counterEndMs);
       return;
@@ -4074,7 +4129,8 @@ function filterFullList(btn) {
           const parts = String(w.name || '').trim().split(/\s+/);
           const init  = ((parts[0] || '').charAt(0) + (parts[1] || '').charAt(0)).toUpperCase();
           const first = escapeHtml(normalizeLvName(parts[0] || w.name || ''));
-          const emoji = w.emoji ? '<span class="swc-emoji">' + w.emoji + '</span>' : '';
+          const workerEmoji = safeEmojiText(w.emoji);
+          const emoji = workerEmoji ? '<span class="swc-emoji">' + escapeHtml(workerEmoji) + '</span>' : '';
           return '<span class="swc">' +
             '<span class="swc-init" style="color:' + col.ink + ';">' + escapeHtml(init) + '</span>' +
             '<span class="swc-name">' + first + '</span>' +
@@ -4287,7 +4343,7 @@ function filterFullList(btn) {
       try {
         if (window.MinkaEmoji && typeof window.MinkaEmoji.get === 'function') {
           const saved = window.MinkaEmoji.get(worker.name || '');
-          if (saved) return saved;
+          if (saved) return safeEmojiText(saved);
         }
       } catch(e) {}
       return '';
@@ -4488,6 +4544,15 @@ function filterFullList(btn) {
       return String(window.MINKA_COFFEE_API_BASE || 'https://minka-coffee-api.gamernr1elite.workers.dev').replace(/\/+$/, '');
     }
 
+    function coffeeApiFetch(path, options) {
+      options = options || {};
+      const headers = new Headers(options.headers || {});
+      const token = window.MinkaApi && window.MinkaApi.getToken ? window.MinkaApi.getToken() : '';
+      if (token) headers.set('authorization', 'Bearer ' + token);
+      return fetch(getCoffeeApiBase() + path, Object.assign({}, options, { headers }));
+    }
+    window.__minkaCoffeeFetch = coffeeApiFetch;
+
     function applyCoffeeCounts(day, counts) {
       if (!day || !counts || typeof counts !== 'object') return;
       const data = getCoffeeStore();
@@ -4538,7 +4603,7 @@ function filterFullList(btn) {
       const state = getCoffeeSyncState();
       if (state.loadedDays[day] || state.loadingDays[day]) return;
       state.loadingDays[day] = true;
-      fetch(getCoffeeApiBase() + '/api/coffee?date=' + encodeURIComponent(day), { cache: 'no-store' })
+      coffeeApiFetch('/api/coffee?date=' + encodeURIComponent(day), { cache: 'no-store' })
         .then(r => r.ok ? r.json() : null)
         .then(data => {
           if (!data || !data.ok || data.date !== day) return;
@@ -4561,7 +4626,7 @@ function filterFullList(btn) {
       const state = getCoffeeSyncState();
       if (state.loadingDays[day] || state.pollingDays[day]) return;
       state.pollingDays[day] = true;
-      fetch(getCoffeeApiBase() + '/api/coffee?date=' + encodeURIComponent(day), { cache: 'no-store' })
+      coffeeApiFetch('/api/coffee?date=' + encodeURIComponent(day), { cache: 'no-store' })
         .then(r => r.ok ? r.json() : null)
         .then(data => {
           if (!data || !data.ok || data.date !== day) return;
@@ -4592,7 +4657,7 @@ function filterFullList(btn) {
         // Tell the server which source the minus removed, so its per-source total nets.
         body.source = cleanCoffeeSource(entry.source);
       }
-      fetch(getCoffeeApiBase() + '/api/coffee', {
+      coffeeApiFetch('/api/coffee', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         cache: 'no-store',
@@ -4740,7 +4805,7 @@ function filterFullList(btn) {
     function setCoffeePickerBuddyFlag(open) {
       // The buddy mascot lives in the parent shell and can overlap the picker's
       // Saglabāt button. Ask the shell to hide it while the picker is open.
-      try { window.parent && window.parent.postMessage({ type: 'mk_coffee_picker', open: !!open }, '*'); } catch (_e) {}
+      try { window.parent && window.parent.postMessage({ type: 'mk_coffee_picker', open: !!open }, window.location.origin); } catch (_e) {}
     }
 
     function closeCoffeePicker() {
@@ -5035,8 +5100,8 @@ function filterFullList(btn) {
       const initials = ((parts[0]?.[0] || "") + (parts[1]?.[0] || "")).toUpperCase();
       const firstName = capitalize(parts[0] || "");
       const surname = parts.slice(1).map(n => capitalize(n)).join(' ');
-      const personEmoji = getPersonEmoji(w);
-      const shiftEmoji = getShiftEmoji(w);
+      const personEmoji = safeEmojiText(getPersonEmoji(w));
+      const shiftEmoji = safeEmojiText(getShiftEmoji(w));
       const bgEmoji = personEmoji || shiftEmoji;
       const isDoneCard = isToday && w.startTime && w.endTime && isWorkerShiftDone(w, activeDateStr, now);
 
@@ -5065,29 +5130,33 @@ function filterFullList(btn) {
         card.onclick = (e) => { e.stopPropagation(); showWorkerSchedule(w.name, w.shift); };
         const roleClass = isRd ? ' mk-mid-card-rd' : ' mk-mid-card-rg';
         const fatigueLevel = !hasFatigueScore ? 'none' : fatigueScore > 66 ? 'hi' : fatigueScore >= 33 ? 'mid' : 'low';
-        const monthHours = getMonthHoursForWorker(w.name, isRd);
+        const monthHours = Math.max(0, Math.min(1000, Number(getMonthHoursForWorker(w.name, isRd)) || 0));
+        const dutyHours = Math.max(0, Math.min(48, Number(getDutyShiftHours(w)) || 0));
+        const safeInitials = escapeHtml(initials);
+        const safeFirstName = escapeHtml(firstName);
+        const safeSurname = escapeHtml(surname);
         card.className += ` mk-mid-card${roleClass} mk-mid-fat-${fatigueLevel}`;
         card.innerHTML = `
           <div class="mk-mid-top">
             <div class="mk-mid-left">
-              <div class="mk-mid-initials">${initials}</div>
+              <div class="mk-mid-initials">${safeInitials}</div>
               <div class="mk-mid-status-icons">
-                ${personEmoji ? `<span class="mk-mid-person-emoji" data-mk-emoji-click="1">${personEmoji}</span>` : ''}
+                ${personEmoji ? `<span class="mk-mid-person-emoji" data-mk-emoji-click="1">${escapeHtml(personEmoji)}</span>` : ''}
                 <button class="mk-emoji-edit-btn mk-mid-emoji-edit" type="button" title="Mainīt emoji" data-mk-edit="1">✨</button>
               </div>
             </div>
             <div class="mk-mid-month">
-              <div class="mk-mid-month-num">${monthHours || getDutyShiftHours(w) || 0}h</div>
+              <div class="mk-mid-month-num">${monthHours || dutyHours}h</div>
               <div class="mk-mid-month-label">MĒNESĪ</div>
-              ${shiftEmoji ? `<div class="mk-mid-shift-icons"><span class="mk-mid-shift-emoji">${shiftEmoji}</span></div>` : ''}
+              ${shiftEmoji ? `<div class="mk-mid-shift-icons"><span class="mk-mid-shift-emoji">${escapeHtml(shiftEmoji)}</span></div>` : ''}
             </div>
           </div>
           <div class="mk-mid-center">
-            ${bgEmoji ? `<div class="mk-mid-bg-emoji">${bgEmoji}</div>` : ''}
-            <div class="card-shift mk-mid-hours">${getDutyShiftHours(w) || w.shift}</div>
+            ${bgEmoji ? `<div class="mk-mid-bg-emoji">${escapeHtml(bgEmoji)}</div>` : ''}
+            <div class="card-shift mk-mid-hours">${dutyHours || escapeHtml(w.shift)}</div>
             <div class="card-name-wrap mk-mid-name-wrap">
-              <span class="name-main">${firstName}</span>
-              <span class="name-sub">${surname}</span>
+              <span class="name-main">${safeFirstName}</span>
+              <span class="name-sub">${safeSurname}</span>
             </div>
           </div>
           <div class="mk-mid-bottom">
@@ -5130,7 +5199,7 @@ function filterFullList(btn) {
         row.setAttribute('data-worker', w.name);
         row.setAttribute('data-shift', w.shift);
         row.onclick = (e) => { e.stopPropagation(); showWorkerSchedule(w.name, w.shift); };
-        row.innerHTML = `<b style="font-size:16px;">${isRd?'<span style="color:#ff6b6b;font-size:10px;margin-right:4px;">RD</span>':''}${firstName} ${surname}</b><span style="font-weight:900;color:${isRd?'#ff6b6b':'var(--accent)'};font-size:18px;">${w.shift}</span>`;
+        row.innerHTML = `<b style="font-size:16px;">${isRd?'<span style="color:#ff6b6b;font-size:10px;margin-right:4px;">RD</span>':''}${escapeHtml(firstName)} ${escapeHtml(surname)}</b><span style="font-weight:900;color:${isRd?'#ff6b6b':'var(--accent)'};font-size:18px;">${escapeHtml(w.shift)}</span>`;
         return row;
       }
     }
@@ -5448,7 +5517,7 @@ function filterFullList(btn) {
       window.parent && window.parent.postMessage({
         type: 'minka-calendar-selected-day-state',
         payload
-      }, '*');
+      }, window.location.origin);
     } catch(e) {}
   }
   window.__minkaPostAssistantState = __minkaPostAssistantState;
@@ -5850,7 +5919,7 @@ function showWorkerSchedule(workerName, currentShift) {
           </div>
           <div class="wl-center">
             <span class="wl-type-icon">${typeIcon}</span>
-            ${item.type ? `<span class="wl-type">${item.type}</span>` : ''}
+            ${item.type ? `<span class="wl-type">${escapeHtml(item.type)}</span>` : ''}
             ${isToday ? '<span class="wl-today-tag">ŠODIEN</span>' : ''}
           </div>
           <div class="wl-shift-col">
@@ -6103,7 +6172,8 @@ function __wmDayRosterHtml(dk) {
           if (!name || seen.has(name.toLowerCase())) return;
           if (sh === 'N' || sh.indexOf('A') >= 0 || sh === 'B' || !sh || sh === '0') return;
           seen.add(name.toLowerCase());
-          var hrs = (w.hours || parseInt(sh, 10) || 0);
+          var hrs = Number(w.hours || parseInt(sh, 10) || 0);
+          hrs = Number.isFinite(hrs) ? Math.max(0, Math.min(48, Math.round(hrs * 10) / 10)) : 0;
           out.push({ name: name, hrs: hrs });
         });
       }
@@ -6197,7 +6267,7 @@ function modalCalendarMonth(delta) {
 }
 
 function setWorkerModalBuddyFlag(open) {
-  try { window.parent && window.parent.postMessage({ type: 'mk_worker_modal', open: !!open }, '*'); } catch (_e) {}
+  try { window.parent && window.parent.postMessage({ type: 'mk_worker_modal', open: !!open }, window.location.origin); } catch (_e) {}
 }
 
 function showModalView(view) {
@@ -6546,6 +6616,7 @@ window.addEventListener('resize', function() {
 });
 
 window.addEventListener('message', function(e) {
+  if (e.origin !== window.location.origin || e.source !== window.parent) return;
   if (!e || !e.data || e.data.type !== 'hostLayoutChanged') return;
   var data = e.data || {};
   var root = document.documentElement;
