@@ -4125,6 +4125,13 @@ function filterFullList(btn) {
       '<span class="sl-ts-sep"></span>' +
       '<span class="sl-ts-label sl-ts-remaining-label">ATLIKUŠAS</span><strong class="sl-ts-val sl-ts-rem" data-end-ms="' + counterEndMs + '" style="color:' + _reColor + '">' + _reStr + '</strong>' +
     '</div>';
+    // On another selected day the live elapsed/remaining clock is intentionally
+    // hidden, but Buddy still needs a real header row. Without this placeholder
+    // his parent overlay keeps the previous day's coordinates and lands on top
+    // of the date scroller.
+    var _buddyOnlyStrip = '<div class="sl-times-strip sl-times-strip-buddy-only" aria-hidden="true">' +
+      '<span id="sl-buddy-slot" class="sl-buddy-slot"></span>' +
+    '</div>';
 
     // Night split overlay bar (shown when 🌙 is active)
     if (nsOverlay) {
@@ -4172,9 +4179,10 @@ function filterFullList(btn) {
       html += '</div>'; // close sl-bars-wrap
     }
 
-    // Only show elapsed/remaining for today
+    // Only show elapsed/remaining for today; preserve Buddy's header slot on
+    // every other selected day so the unified header never collapses under him.
     var _isToday = !activeDateStr || !g_todayStr || activeDateStr === g_todayStr;
-    if (_isToday) html += _timesStrip;
+    html += _isToday ? _timesStrip : _buddyOnlyStrip;
 
     // Rescue the buttons from wrap BEFORE innerHTML destroys them
     var _nsBtn = document.getElementById('ns-bar-toggle');
