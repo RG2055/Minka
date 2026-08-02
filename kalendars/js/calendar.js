@@ -92,19 +92,24 @@ var hospitalDatabase = window.hospitalDatabase;
   function ensureLayer() {
     const header = document.getElementById('minkaBarInner');
     if (!header || shouldSkipScenic()) return null;
-    let layer = header.querySelector('.mk-header-scenic-bg');
+    const mobileShell = document.documentElement.classList.contains('mk-mobile-shell');
+    const host = mobileShell ? header : (document.getElementById('minkaBarWrap') || header);
+    let layer = host.querySelector(':scope > .mk-header-scenic-bg');
     if (!layer) {
-      layer = document.createElement('div');
-      layer.className = 'mk-header-scenic-bg';
-      layer.setAttribute('aria-hidden', 'true');
-      const img = document.createElement('img');
-      img.className = 'mk-header-scenic-img';
-      img.alt = '';
-      img.decoding = 'async';
-      img.loading = 'eager';
-      img.fetchPriority = 'low';
-      layer.appendChild(img);
-      header.prepend(layer);
+      layer = document.querySelector('.mk-header-scenic-bg');
+      if (!layer) {
+        layer = document.createElement('div');
+        layer.className = 'mk-header-scenic-bg';
+        layer.setAttribute('aria-hidden', 'true');
+        const img = document.createElement('img');
+        img.className = 'mk-header-scenic-img';
+        img.alt = '';
+        img.decoding = 'async';
+        img.loading = 'eager';
+        img.fetchPriority = 'low';
+        layer.appendChild(img);
+      }
+      host.prepend(layer);
     }
     header.classList.add('mk-header-scenic');
     return layer;
@@ -470,6 +475,16 @@ if (typeof hospitalDatabase !== 'undefined') { resultsArea.style.display = 'none
 // ------------------------------------------------------------
 //  FULL LIST MODAL
 // ------------------------------------------------------------
+function notifyBuddyNumbers(open){
+  try {
+    if (window.parent && window.parent !== window) window.parent.postMessage({
+      type: 'mk_numbers_state',
+      open: !!open
+    }, window.location.origin);
+  } catch(e) {}
+}
+notifyBuddyNumbers(false);
+
 function toggleFullListModal(ev){
   const modal = document.getElementById('full-list-modal');
   if(!modal) return;
@@ -556,6 +571,7 @@ function openFullListModal(ev) {
   content.innerHTML = html;
 
   modal.classList.add('open');
+  notifyBuddyNumbers(true);
   setTimeout(() => {
     document.addEventListener('click', outsideFullListClose);
   }, 0);
@@ -573,6 +589,7 @@ function outsideFullListClose(e) {
 }
 function closeFullListModal() {
   document.getElementById('full-list-modal').classList.remove('open');
+  notifyBuddyNumbers(false);
   document.removeEventListener('click', outsideFullListClose);
 }
 function filterFullList(btn) {
@@ -4100,11 +4117,13 @@ function filterFullList(btn) {
     '</div>';
 
     var _timesStrip = '<div class="sl-times-strip" data-start-ms="' + counterStartMs + '" data-end-ms="' + counterEndMs + '">' +
+      '<span id="sl-buddy-slot" class="sl-buddy-slot" aria-hidden="true"></span>' +
+      '<span id="sl-buddy-speech" class="sl-buddy-speech" aria-live="polite"></span>' +
       '<span id="sl-lanes-slot" class="sl-lanes-slot"></span>' +
       '<span id="sl-ns-slot" class="sl-ns-slot"></span>' +
-      '<span class="sl-ts-label">PAGĀJIS</span><strong class="sl-ts-val sl-ts-elapsed">' + _elStr + '</strong>' +
+      '<span class="sl-ts-label sl-ts-elapsed-label">PAGĀJIS</span><strong class="sl-ts-val sl-ts-elapsed">' + _elStr + '</strong>' +
       '<span class="sl-ts-sep"></span>' +
-      '<span class="sl-ts-label">ATLIKUŠAS</span><strong class="sl-ts-val sl-ts-rem" data-end-ms="' + counterEndMs + '" style="color:' + _reColor + '">' + _reStr + '</strong>' +
+      '<span class="sl-ts-label sl-ts-remaining-label">ATLIKUŠAS</span><strong class="sl-ts-val sl-ts-rem" data-end-ms="' + counterEndMs + '" style="color:' + _reColor + '">' + _reStr + '</strong>' +
     '</div>';
 
     // Night split overlay bar (shown when 🌙 is active)

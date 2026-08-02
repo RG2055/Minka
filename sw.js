@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.115-coffee-sync-restore';
+const CACHE = 'minka-4.6.116-header-buddy-polish';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
