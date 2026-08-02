@@ -1,7 +1,7 @@
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-  'Access-Control-Allow-Headers': 'authorization,content-type',
+  'Access-Control-Allow-Headers': 'content-type',
   'Access-Control-Max-Age': '86400'
 };
 
@@ -49,13 +49,6 @@ function cleanWorker(value) {
 function cleanDelta(value) {
   const n = Math.trunc(Number(value) || 0);
   return n === -2 || n === -1 || n === 1 || n === 2 ? n : 0;
-}
-
-function isAuthorized(request, env) {
-  // Keep existing deployments working until APP_PASSWORD is configured. Once
-  // present, the coffee API uses the same Bearer token as the main Minka API.
-  if (!env.APP_PASSWORD) return true;
-  return request.headers.get('authorization') === `Bearer ${env.APP_PASSWORD}`;
 }
 
 function cleanSource(value) {
@@ -132,10 +125,6 @@ export default {
     const url = new URL(request.url);
     if (url.pathname !== '/api/coffee') {
       return json({ ok: false, error: 'not found' }, 404);
-    }
-
-    if (!isAuthorized(request, env)) {
-      return json({ ok: false, error: 'unauthorized' }, 401);
     }
 
     if (!env.COFFEE_DB) {

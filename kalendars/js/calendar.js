@@ -4545,11 +4545,7 @@ function filterFullList(btn) {
     }
 
     function coffeeApiFetch(path, options) {
-      options = options || {};
-      const headers = new Headers(options.headers || {});
-      const token = window.MinkaApi && window.MinkaApi.getToken ? window.MinkaApi.getToken() : '';
-      if (token) headers.set('authorization', 'Bearer ' + token);
-      return fetch(getCoffeeApiBase() + path, Object.assign({}, options, { headers }));
+      return fetch(getCoffeeApiBase() + path, options || {});
     }
     window.__minkaCoffeeFetch = coffeeApiFetch;
 
