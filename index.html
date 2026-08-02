@@ -26,7 +26,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260802bolusfit2';
+  var CALENDAR_BUILD = '20260802buddyfuture3';
 
   function withCalendarBuild(url) {
     try {
@@ -6909,7 +6909,10 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
       requestAnimationFrame(positionBuddyBubble);
     }
     if(MUG_FILL && MUG_FOAM) {
-      var fillPct = Math.max(0, Math.min(1, buddyShiftCoffee / 30));
+      // The HUD cup is a quick visual for a single shift, not a monthly scale.
+      // Ten coffees fills its seven interior pixels; ×9 therefore reads as
+      // nearly full instead of the old barely-visible 30% level.
+      var fillPct = Math.max(0, Math.min(1, buddyShiftCoffee / 10));
       var fillH = Math.round(fillPct * 7);
       var fillY = 12 - fillH;
       MUG_FILL.setAttribute('y', String(fillY));
@@ -8493,9 +8496,10 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
     if(!SHIFT_STATS) return;
     if(getBuddyInlineSlotRect()||lastBuddyInlineRect){
       W.classList.remove('stats-above','stats-right');
-      SHIFT_STATS.style.marginLeft='';
+      SHIFT_STATS.style.removeProperty('margin-left');
       return;
     }
+    SHIFT_STATS.style.removeProperty('margin-left');
     var forceAbove = !!window.__minkaBolusNeedsChange;
     var statsW = 206;
     try{
@@ -8763,11 +8767,11 @@ body.mk-buddy-header-home #mk-buddy-bubble::after {
 body.mk-buddy-header-home #mk-buddy-shift-stats,
 body.mk-buddy-header-home #mk-buddy.stats-above #mk-buddy-shift-stats,
 body.mk-buddy-header-home #mk-buddy.stats-right #mk-buddy-shift-stats {
-  left:50% !important;
+  left:-121px !important;
   bottom:1px !important;
   width:max-content !important;
   min-width:0 !important;
-  max-width:370px !important;
+  max-width:520px !important;
   height:44px !important;
   min-height:44px !important;
   margin-left:0 !important;
@@ -8778,7 +8782,7 @@ body.mk-buddy-header-home #mk-buddy.stats-right #mk-buddy-shift-stats {
   background:transparent !important;
   box-shadow:none !important;
   opacity:1 !important;
-  transform:translateX(-50%) !important;
+  transform:none !important;
 }
 body.mk-buddy-header-home #mk-buddy-stats-btn {
   display:flex !important;
@@ -8810,7 +8814,7 @@ body.mk-buddy-header-home #mk-buddy-coffee-stat {
   display:flex !important;
   flex:0 0 auto;
   width:auto;
-  max-width:245px;
+  max-width:390px;
   height:44px;
   gap:5px;
   overflow:hidden;
@@ -8844,7 +8848,7 @@ body.mk-buddy-header-home .mk-buddy-coffee-srcs {
   align-items:center;
   gap:3px;
   width:auto;
-  max-width:190px;
+  max-width:310px;
   height:40px;
   margin-left:0;
   overflow:hidden;
@@ -8861,26 +8865,18 @@ body.mk-buddy-header-home .mk-buddy-coffee-src i {
   font-size:11px;
   line-height:1;
 }
-body.mk-buddy-header-home .mk-buddy-coffee-srcs:is([data-source-count="3"],[data-source-count="4"]) .mk-buddy-coffee-src svg {
-  width:28px;
-  height:28px;
-}
-body.mk-buddy-header-home .mk-buddy-coffee-srcs:is([data-source-count="3"],[data-source-count="4"]) .mk-buddy-coffee-src i {
-  font-size:9px;
-}
 body.mk-buddy-header-home .mk-buddy-coffee-srcs:is([data-source-count="5"],[data-source-count="6"],[data-source-count="7"]) {
-  display:grid !important;
-  grid-template-columns:repeat(4,max-content);
-  grid-auto-rows:22px;
-  align-content:center;
-  gap:1px 3px;
+  display:inline-flex !important;
+  align-items:center;
+  max-width:310px;
+  gap:3px;
 }
 body.mk-buddy-header-home .mk-buddy-coffee-srcs:is([data-source-count="5"],[data-source-count="6"],[data-source-count="7"]) .mk-buddy-coffee-src svg {
-  width:22px;
-  height:22px;
+  width:30px;
+  height:30px;
 }
 body.mk-buddy-header-home .mk-buddy-coffee-srcs:is([data-source-count="5"],[data-source-count="6"],[data-source-count="7"]) .mk-buddy-coffee-src i {
-  font-size:8px;
+  font-size:10px;
 }
 body.mk-buddy-header-home #mk-buddy-shift-stats > .mk-buddy-stat:last-child {
   display:flex !important;
