@@ -297,15 +297,7 @@
       var coffeeFetch = typeof window.__minkaCoffeeFetch === 'function'
         ? window.__minkaCoffeeFetch
         : function(path, options) {
-            options = options || {};
-            var headers = new Headers(options.headers || {});
-            var token = '';
-            try {
-              token = (window.MinkaApi && window.MinkaApi.getToken && window.MinkaApi.getToken()) ||
-                sessionStorage.getItem('minka_api_token_v1') || localStorage.getItem('minka_api_token_v1') || '';
-            } catch (_e) {}
-            if (token) headers.set('authorization', 'Bearer ' + token);
-            return fetch(base + path, Object.assign({}, options, { headers: headers }));
+            return fetch(base + path, options || {});
           };
       coffeeFetch('/api/coffee?totals=1', { cache: 'no-store' })
         .then(function(r) { return r.json(); })

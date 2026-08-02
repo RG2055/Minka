@@ -5843,11 +5843,7 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
     });
   }
   function coffeeFetch(path, options){
-    options=options||{};
-    var headers=new Headers(options.headers||{}), token='';
-    try{ token=sessionStorage.getItem('minka_api_token_v1')||localStorage.getItem('minka_api_token_v1')||''; }catch(e){}
-    if(token) headers.set('authorization','Bearer '+token);
-    return fetch(API+path,Object.assign({},options,{headers:headers}));
+    return fetch(API+path,options||{});
   }
 
   function coffeeStore(){ try{ return JSON.parse(localStorage.getItem('minkaCoffeeCountsV1')||'{}')||{}; }catch(e){ return {}; } }
