@@ -26,7 +26,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260801restore';
+  var CALENDAR_BUILD = '20260802bolusfit2';
 
   function withCalendarBuild(url) {
     try {
@@ -4531,6 +4531,7 @@ function updateBuddyUiSuppression() {
     cls.contains('mk-buddy-ui-stats') ||
     cls.contains('mk-buddy-ui-settings') ||
     cls.contains('mk-buddy-ui-monthcal') ||
+    cls.contains('mk-buddy-ui-numbers') ||
     cls.contains('mk-buddy-ui-coffee') ||
     cls.contains('mk-buddy-ui-workermodal') ||
     isBuddyOverlayVisible('bolus-overlay') ||
@@ -4616,6 +4617,9 @@ window.addEventListener('message', function(e) {
   if (e.origin !== window.location.origin || !calendarFrame || e.source !== calendarFrame.contentWindow) return;
   if (e.data && e.data.type === 'mk_monthcal_state') {
     setBuddyUiFlag('monthcal', !!e.data.open);
+  }
+  if (e.data && e.data.type === 'mk_numbers_state') {
+    setBuddyUiFlag('numbers', !!e.data.open);
   }
   if (e.data && e.data.type === 'minka-calendar-selected-day-state' && e.data.payload) {
     window.__minkaLastSelectedDayState = e.data.payload;
@@ -5710,6 +5714,7 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
 #mkCoffeeStats.open{display:block;}
 /* Little pointer tail to the STATISTIKA button. */
 #mkCoffeeStats::after{content:'';position:absolute;bottom:-7px;left:var(--cs-arrow,50%);transform:translateX(-50%);width:14px;height:14px;background:#101116;border-right:1px solid #21232c;border-bottom:1px solid #21232c;rotate:45deg;}
+#mkCoffeeStats.under-anchor::after{top:-7px;bottom:auto;border:0;border-left:1px solid #21232c;border-top:1px solid #21232c;}
 #mkCoffeeStats .cs-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
 #mkCoffeeStats .cs-title{font:800 11px/1 'Space Grotesk',system-ui;letter-spacing:.12em;text-transform:uppercase;color:#9a9da6;}
 #mkCoffeeStats .cs-close{width:24px;height:24px;border-radius:8px;border:1px solid #21232c;background:#14161c;color:#c9ccd4;font:700 13px/1 system-ui;cursor:pointer;}
@@ -5748,7 +5753,7 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
 
 <div id="mk-buddy">
   <div id="mk-buddy-card">
-    <div id="mk-buddy-bubble"></div>
+    <div id="mk-buddy-bubble"><span id="mk-buddy-bubble-text"></span></div>
     <div id="mk-buddy-hearts"></div>
     <div id="mk-buddy-shift-stats" aria-hidden="true">
       <div class="mk-buddy-stat is-clickable" id="mk-buddy-coffee-stat" role="button" tabindex="0" aria-label="Kafijas statistika" aria-expanded="false" title="Kafijas statistika">
@@ -5998,11 +6003,21 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
     var pw=Math.min(360, window.innerWidth-24);
     var left=Math.round(r.left + r.width/2 - pw/2);
     left=Math.max(12, Math.min(left, window.innerWidth-pw-12));
-    var bottom=Math.round(window.innerHeight - r.top + 12); // sit above the button
     panel.style.width=pw+'px';
     panel.style.left=left+'px';
     panel.style.right='auto';
-    panel.style.bottom=bottom+'px';
+    if(r.top < window.innerHeight/2){
+      // Buddy now lives in the header: open the statistics downwards and clamp
+      // the entire panel to the viewport instead of sending it above the screen.
+      panel.classList.add('under-anchor');
+      var ph=Math.ceil(panel.getBoundingClientRect().height||300);
+      panel.style.top=Math.max(12,Math.min(Math.round(r.bottom+12),window.innerHeight-ph-12))+'px';
+      panel.style.bottom='auto';
+    }else{
+      panel.classList.remove('under-anchor');
+      panel.style.top='auto';
+      panel.style.bottom=Math.round(window.innerHeight-r.top+12)+'px';
+    }
     // Point the arrow tail at the button's centre.
     var arrow=Math.round(r.left + r.width/2 - left);
     panel.style.setProperty('--cs-arrow', Math.max(14, Math.min(pw-14, arrow))+'px');
@@ -6083,6 +6098,7 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
   var CVS    = document.getElementById('mk-buddy-canvas');
   var STS    = document.getElementById('mk-buddy-status');
   var BUBBLE = document.getElementById('mk-buddy-bubble');
+  var BUBBLE_TEXT = document.getElementById('mk-buddy-bubble-text');
   var HEARTS = document.getElementById('mk-buddy-hearts');
   var SHIFT_STATS = document.getElementById('mk-buddy-shift-stats');
   var HUD_HEARTS = document.querySelector('.mk-buddy-hud-hearts');
@@ -6882,10 +6898,15 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
     if(COFFEE_SRCS){
       var cs = (payload && payload.coffeeSources) || {};
       var srcLabels = { philips:'Philips', lofbergs:'Löfbergs', narvesen:'Narvesen', monster:'Monster', monsterultra:'Monster Ultra', redbull:'Red Bull', cupcoffee:'Cita kafija' };
-      COFFEE_SRCS.innerHTML = ['philips','lofbergs','narvesen','monster','monsterultra','redbull','cupcoffee'].filter(function(s){ return Number(cs[s])>0; }).map(function(s){
+      var activeSources = ['philips','lofbergs','narvesen','monster','monsterultra','redbull','cupcoffee'].filter(function(s){ return Number(cs[s])>0; });
+      COFFEE_SRCS.setAttribute('data-source-count',String(activeSources.length));
+      COFFEE_SRCS.innerHTML = activeSources.map(function(s){
         var n = Math.max(0,Number(cs[s])||0);
         return '<span class="mk-buddy-coffee-src" title="'+srcLabels[s]+': '+n+'">'+coffeeSrcIcon(s)+'<i>'+n+'</i></span>';
       }).join('');
+      /* The time block is docked beside the right-side controls. Coffee source
+         count must never resize its slot or push the timer around. */
+      requestAnimationFrame(positionBuddyBubble);
     }
     if(MUG_FILL && MUG_FOAM) {
       var fillPct = Math.max(0, Math.min(1, buddyShiftCoffee / 30));
@@ -7067,6 +7088,9 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
     }
     if(data.type === 'minka-calendar-selected-day-state' && data.payload){
       updateBuddyShiftStats(data.payload);
+      // A day switch rebuilds the timer row. Keep Buddy on the last valid
+      // header coordinate during that short gap, then remeasure the new slot.
+      scheduleBuddyHeaderReanchor();
       var heartData = Array.isArray(data.payload.rgHeartColors) ? data.payload.rgHeartColors.slice(0, 32) : [];
       lastBuddyHeartData = heartData.map(function(item){
         var color = String((item && item.color) || '').trim();
@@ -7074,6 +7098,26 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
         return { color: color, score: Math.max(0, Math.min(100, Number((item && item.score) || 0) || 0)) };
       }).filter(Boolean);
       drawHearts(isSleeping ? 'sleep' : (extMood || mood));
+      return;
+    }
+    if(data.type === 'mk-buddy-detail-visibility'){
+      var hideForDetail=!!data.hidden;
+      if(document.body) document.body.classList.toggle('mk-buddy-detail-hidden',hideForDetail);
+      if(hideForDetail){
+        BUBBLE.classList.remove('show');
+        var buddyMenu=document.getElementById('mk-buddy-menu');
+        if(buddyMenu && buddyMenu.parentNode) buddyMenu.parentNode.removeChild(buddyMenu);
+      }
+      return;
+    }
+    if(data.type === 'mk-buddy-birthday-visibility'){
+      var hideForBirthday=!!data.hidden;
+      if(document.body) document.body.classList.toggle('mk-buddy-birthday-hidden',hideForBirthday);
+      if(hideForBirthday){
+        BUBBLE.classList.remove('show');
+        var birthdayBuddyMenu=document.getElementById('mk-buddy-menu');
+        if(birthdayBuddyMenu && birthdayBuddyMenu.parentNode) birthdayBuddyMenu.parentNode.removeChild(birthdayBuddyMenu);
+      }
       return;
     }
     if(data.type === 'mk_performance'){
@@ -7601,10 +7645,32 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
     setTimeout(function(){ if (m.parentNode) m.remove(); }, 30000);
   }
 
+  function buddyFrameElement(id){
+    try{
+      var frame=document.getElementById('calIframe');
+      return frame&&frame.contentDocument?frame.contentDocument.getElementById(id):null;
+    }catch(e){ return null; }
+  }
+
   function showBubble(txt){
-    BUBBLE.textContent=txt; BUBBLE.classList.add('show');
+    var message=String(txt||'').trim();
+    var inline=buddyFrameElement('sl-buddy-speech');
+    /* Speech belongs to Buddy, not to the timer's flex row.  Keeping it in the
+       parent overlay also means that date changes cannot reflow or move it. */
+    if(inline){ inline.classList.remove('show'); inline.textContent=''; inline.title=''; }
+    (BUBBLE_TEXT||BUBBLE).textContent=message;
+    BUBBLE.title=message;
+    positionBuddyBubble();
+    BUBBLE.classList.toggle('show',!!message);
+    if(message) requestAnimationFrame(positionBuddyBubble);
     clearTimeout(bubbleTimer);
-    bubbleTimer=setTimeout(function(){BUBBLE.classList.remove('show');},3000);
+    var duration=Math.max(3400,Math.min(7600,1900+message.length*58));
+    bubbleTimer=setTimeout(function(){
+      BUBBLE.classList.remove('show');
+      BUBBLE.title='';
+      var liveInline=buddyFrameElement('sl-buddy-speech');
+      if(liveInline){ liveInline.classList.remove('show'); liveInline.textContent=''; liveInline.title=''; }
+    },duration);
   }
 
   function runWhenFree(fn, tries){
@@ -8178,6 +8244,8 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
   function buddyVisible(){
     // Buddy is CSS-hidden while the radio panel is open (body has neither
     // radio-idle nor radio-hidden). No point animating an invisible companion.
+    if(document.body.classList.contains('mk-buddy-detail-hidden') ||
+       document.body.classList.contains('mk-buddy-birthday-hidden')) return false;
     return document.body.classList.contains('radio-idle') || document.body.classList.contains('radio-hidden');
   }
 
@@ -8391,8 +8459,43 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
       usableAnchorButton('radioIdleBtn') ||
       usableAnchorButton('bolusDocBtn');
   }
+  var lastBuddyInlineRect=null;
+  var buddyHeaderReanchorTimers=[];
+  function scheduleBuddyHeaderReanchor(){
+    buddyHeaderReanchorTimers.forEach(function(timer){clearTimeout(timer);});
+    buddyHeaderReanchorTimers=[];
+    [0,60,160,360,700].forEach(function(delay){
+      buddyHeaderReanchorTimers.push(setTimeout(moveBuddyHome,delay));
+    });
+  }
+  function getBuddyInlineSlotRect(){
+    try{
+      var frame=document.getElementById('calIframe');
+      var win=frame&&frame.contentWindow;
+      var doc=frame&&frame.contentDocument;
+      var slot=doc&&doc.getElementById('sl-buddy-slot');
+      if(!frame||!win||!slot) return null;
+      var fr=frame.getBoundingClientRect();
+      var sr=slot.getBoundingClientRect();
+      if(fr.width<20||fr.height<20||sr.width<20||sr.height<10) return null;
+      var sx=fr.width/Math.max(1,Number(win.innerWidth)||fr.width);
+      var sy=fr.height/Math.max(1,Number(win.innerHeight)||fr.height);
+      lastBuddyInlineRect={
+        left:fr.left+sr.left*sx,
+        right:fr.left+sr.right*sx,
+        top:fr.top+sr.top*sy,
+        bottom:fr.top+sr.bottom*sy
+      };
+      return lastBuddyInlineRect;
+    }catch(e){ return null; }
+  }
   function updateBuddyStatsPlacement(anchor){
     if(!SHIFT_STATS) return;
+    if(getBuddyInlineSlotRect()||lastBuddyInlineRect){
+      W.classList.remove('stats-above','stats-right');
+      SHIFT_STATS.style.marginLeft='';
+      return;
+    }
     var forceAbove = !!window.__minkaBolusNeedsChange;
     var statsW = 206;
     try{
@@ -8425,11 +8528,75 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
   function moveBuddyHome(){
     var anchor = getBuddyAnchorButton();
     home=homePos();
+    if(document.body) document.body.classList.toggle('mk-buddy-header-home',!!home.inline);
     W.style.left=(home.x-W2)+'px';
     W.style.top=(home.y-H2)+'px';
     updateBuddyStatsPlacement(anchor);
+    positionBuddyBubble();
+  }
+  function positionBuddyBubble(){
+    if(!BUBBLE || !W || !HUD_CVS) return;
+    try{
+      var wr=W.getBoundingClientRect();
+      var hr=HUD_CVS.getBoundingClientRect();
+      if(wr.width<4 || hr.width<4) return;
+      BUBBLE.style.setProperty('--mk-bubble-gap','2px');
+      /* Centre the tail over the actual pixel buddy. W itself also contains
+         coffee and fatigue controls, so centring on W would look offset. */
+      var targetX=hr.left+(hr.width/2);
+      var br=BUBBLE.getBoundingClientRect();
+      var bubbleWidth=Math.min(Math.max(1,br.width),Math.max(1,window.innerWidth-24));
+      var half=bubbleWidth/2;
+      var safeCenter=Math.max(12+half,Math.min(window.innerWidth-12-half,targetX));
+      var tailX=Math.max(12,Math.min(bubbleWidth-12,targetX-(safeCenter-half)));
+      BUBBLE.style.left=Math.round(safeCenter-wr.left)+'px';
+      BUBBLE.style.setProperty('--mk-bubble-tail-x',Math.round(tailX)+'px');
+
+      /* Keep both one- and two-line speech below the nameday text. The iframe
+         scales with the centre panel, so translate its local rect first. */
+      var frame=document.getElementById('calIframe');
+      var frameDoc=frame&&frame.contentDocument;
+      var frameWin=frame&&frame.contentWindow;
+      var nameday=frameDoc&&frameDoc.getElementById('mkNamedayBar');
+      if(frame&&frameWin&&nameday){
+        var fr=frame.getBoundingClientRect();
+        var nr=nameday.getBoundingClientRect();
+        if(nr.width>2&&nr.height>2){
+          var sx=fr.width/Math.max(1,Number(frameWin.innerWidth)||fr.width);
+          var sy=fr.height/Math.max(1,Number(frameWin.innerHeight)||fr.height);
+          var namedayRect={
+            left:fr.left+nr.left*sx,
+            right:fr.left+nr.right*sx,
+            top:fr.top+nr.top*sy,
+            bottom:fr.top+nr.bottom*sy
+          };
+          var bubbleLeft=safeCenter-half;
+          var bubbleRight=safeCenter+half;
+          var bubbleBottom=wr.top-2;
+          var bubbleTop=bubbleBottom-br.height;
+          var overlapsX=bubbleRight>namedayRect.left-4&&bubbleLeft<namedayRect.right+4;
+          if(overlapsX&&bubbleTop<namedayRect.bottom+5&&bubbleBottom>namedayRect.top){
+            var desiredBottom=namedayRect.bottom+5+br.height;
+            var maxBottom=hr.top-4;
+            var safeBottom=Math.min(desiredBottom,maxBottom);
+            var safeGap=Math.max(-14,Math.min(2,wr.top-safeBottom));
+            BUBBLE.style.setProperty('--mk-bubble-gap',Math.round(safeGap)+'px');
+          }
+        }
+      }
+    }catch(e){}
   }
   function homePos(){
+    var inlineRect=getBuddyInlineSlotRect()||lastBuddyInlineRect;
+    if(inlineRect){
+      return {
+        x:(inlineRect.left+inlineRect.right)/2,
+        // Use the timer panel's lower breathing room so HUD hearts never sit
+        // on top of the progress bar.
+        y:(inlineRect.top+inlineRect.bottom)/2+3,
+        inline:true
+      };
+    }
     var shelf=document.getElementById('dockShelf');
     var anchor=getBuddyAnchorButton();
     var sr=shelf?shelf.getBoundingClientRect():null;
@@ -8439,7 +8606,7 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
     var cx=ar?(ar.left+ar.width/2):(window.innerWidth-W2-14);
     cx=Math.max(W2+8,cx);
     cx=Math.min(cx,window.innerWidth-W2-8);
-    return {x:cx,y:cy};
+    return {x:cx,y:cy,inline:false};
   }
   window.addEventListener('pointermove',function(e){
     mx=e.clientX;
@@ -8449,21 +8616,15 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
   }, { passive: true });
   window.addEventListener('resize',function(){
     moveBuddyHome();
+    scheduleBuddyHeaderReanchor();
   });
-  // josla piepildās asinhroni (kafijas ikonas u.c.) — pārrēķinām novietojumu, kad mainās tās izmērs
-  if (window.ResizeObserver && SHIFT_STATS) {
-    try { new ResizeObserver(function(){ moveBuddyHome(); }).observe(SHIFT_STATS); } catch(e){}
-  }
+  var buddyCalendarFrame=document.getElementById('calIframe');
+  if(buddyCalendarFrame) buddyCalendarFrame.addEventListener('load',scheduleBuddyHeaderReanchor);
   window.addEventListener('minka-bolus-status',function(e){
-    moveBuddyHome();
     if(e && e.detail && e.detail.needsChange && !document.hidden && !isSleeping && !bhvBusy){
       scheduleSeq(buddyPerfLow ? 5000 : 2500);
     }
   });
-  if(window.MutationObserver && document.body){
-    new MutationObserver(function(){ moveBuddyHome(); })
-      .observe(document.body,{attributes:true,attributeFilter:['class']});
-  }
 
   // ── Watchers ──────────────────────────────────────────────────────────
   var bBtn=document.getElementById('bolusDocBtn');
@@ -8512,6 +8673,264 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
 *, *::before, *::after {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+}
+</style>
+<style id="mk-buddy-header-home-style">
+/* Buddy now lives inside the unified timer panel.  Keep only the compact
+   character artwork: the panel itself already supplies the visual container. */
+body.mk-buddy-header-home:not(.mk-buddy-ui-open) #mk-buddy {
+  opacity:1 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+}
+body.mk-buddy-header-home.mk-buddy-detail-hidden #mk-buddy {
+  opacity:0 !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+  transition:opacity .16s ease,visibility 0s linear .16s !important;
+}
+body.mk-buddy-header-home.mk-buddy-birthday-hidden #mk-buddy {
+  opacity:0 !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+  transition:opacity .16s ease,visibility 0s linear .16s !important;
+}
+body.mk-buddy-header-home #mk-buddy-card {
+  width:50px;
+  height:50px;
+  overflow:visible;
+}
+body.mk-buddy-header-home #mk-buddy-bubble {
+  display:block !important;
+  bottom:calc(100% + var(--mk-bubble-gap,2px)) !important;
+  width:max-content;
+  min-width:0;
+  max-width:min(230px,calc(100vw - 24px));
+  max-height:none;
+  padding:0;
+  overflow:visible;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  color:#f7f9fc;
+  z-index:10;
+  opacity:0;
+  visibility:hidden;
+  transform:translateX(-50%) translateY(4px);
+  transition:opacity .16s ease,transform .16s ease,visibility 0s linear .16s;
+}
+body.mk-buddy-header-home #mk-buddy-bubble-text {
+  display:-webkit-box;
+  width:max-content;
+  min-width:0;
+  max-width:min(230px,calc(100vw - 24px));
+  max-height:38px;
+  box-sizing:border-box;
+  padding:6px 10px 7px;
+  overflow:hidden;
+  border:1px solid rgba(129,202,241,.24);
+  border-radius:10px;
+  background:#0c1520;
+  box-shadow:0 6px 16px rgba(0,0,0,.28);
+  color:#f7f9fc;
+  font:650 10.5px/1.2 "Space Grotesk",system-ui,sans-serif;
+  letter-spacing:.01em;
+  white-space:normal;
+  text-align:center;
+  text-overflow:ellipsis;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+}
+body.mk-buddy-header-home #mk-buddy-bubble.show {
+  opacity:1;
+  visibility:visible;
+  transform:translateX(-50%) translateY(0);
+  transition-delay:0s;
+}
+body.mk-buddy-header-home #mk-buddy-bubble::after {
+  content:"";
+  position:absolute;
+  left:var(--mk-bubble-tail-x,50%);
+  bottom:-4px;
+  width:9px;
+  height:9px;
+  background:#0c1520;
+  border-right:1px solid rgba(129,202,241,.24);
+  border-bottom:1px solid rgba(129,202,241,.24);
+  transform:translateX(-50%) rotate(45deg);
+}
+body.mk-buddy-header-home #mk-buddy-shift-stats,
+body.mk-buddy-header-home #mk-buddy.stats-above #mk-buddy-shift-stats,
+body.mk-buddy-header-home #mk-buddy.stats-right #mk-buddy-shift-stats {
+  left:50% !important;
+  bottom:1px !important;
+  width:max-content !important;
+  min-width:0 !important;
+  max-width:370px !important;
+  height:44px !important;
+  min-height:44px !important;
+  margin-left:0 !important;
+  padding:0 4px !important;
+  gap:6px !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  opacity:1 !important;
+  transform:translateX(-50%) !important;
+}
+body.mk-buddy-header-home #mk-buddy-stats-btn {
+  display:flex !important;
+  flex:0 0 22px;
+  width:22px;
+  height:34px;
+  padding:1px !important;
+  gap:2px;
+}
+body.mk-buddy-header-home #mk-buddy-stats-btn svg {
+  width:13px;
+  height:13px;
+}
+body.mk-buddy-header-home #mk-buddy-stats-btn span {
+  font-size:5.5px;
+  letter-spacing:.06em;
+}
+body.mk-buddy-header-home #mk-buddy-stats-btn:focus,
+body.mk-buddy-header-home #mk-buddy-stats-btn:focus-visible,
+body.mk-buddy-header-home #mk-buddy-stats-btn[aria-expanded="true"],
+body.mk-buddy-header-home #mk-buddy-coffee-stat:focus,
+body.mk-buddy-header-home #mk-buddy-coffee-stat:focus-visible,
+body.mk-buddy-header-home #mk-buddy-coffee-stat[aria-expanded="true"] {
+  outline:none !important;
+  border-color:transparent !important;
+  box-shadow:none !important;
+}
+body.mk-buddy-header-home #mk-buddy-coffee-stat {
+  display:flex !important;
+  flex:0 0 auto;
+  width:auto;
+  max-width:245px;
+  height:44px;
+  gap:5px;
+  overflow:hidden;
+}
+body.mk-buddy-header-home #mk-buddy-shift-stats > .mk-buddy-sep {
+  display:none !important;
+  flex:0 0 0;
+  width:0;
+  height:0;
+}
+body.mk-buddy-header-home .mk-buddy-mug-wrap,
+body.mk-buddy-header-home .mk-buddy-mug {
+  flex:0 0 34px;
+  width:34px;
+  height:34px;
+}
+body.mk-buddy-header-home #mk-buddy-coffee-stat > .mk-buddy-stat-text {
+  flex:0 0 31px;
+}
+body.mk-buddy-header-home #mk-buddy-coffee-stat .mk-buddy-stat-label,
+body.mk-buddy-header-home #mk-buddy-shift-stats .mk-buddy-fatigue-part .mk-buddy-stat-label {
+  font-size:6.5px;
+  letter-spacing:.08em;
+}
+body.mk-buddy-header-home #mk-buddy-coffee-stat .mk-buddy-stat-value,
+body.mk-buddy-header-home #mk-buddy-shift-stats .mk-buddy-fatigue-part .mk-buddy-stat-value {
+  font-size:14px;
+}
+body.mk-buddy-header-home .mk-buddy-coffee-srcs {
+  display:inline-flex !important;
+  align-items:center;
+  gap:3px;
+  width:auto;
+  max-width:190px;
+  height:40px;
+  margin-left:0;
+  overflow:hidden;
+}
+body.mk-buddy-header-home .mk-buddy-coffee-src {
+  gap:1px;
+  min-width:0;
+}
+body.mk-buddy-header-home .mk-buddy-coffee-src svg {
+  width:34px;
+  height:34px;
+}
+body.mk-buddy-header-home .mk-buddy-coffee-src i {
+  font-size:11px;
+  line-height:1;
+}
+body.mk-buddy-header-home .mk-buddy-coffee-srcs:is([data-source-count="3"],[data-source-count="4"]) .mk-buddy-coffee-src svg {
+  width:28px;
+  height:28px;
+}
+body.mk-buddy-header-home .mk-buddy-coffee-srcs:is([data-source-count="3"],[data-source-count="4"]) .mk-buddy-coffee-src i {
+  font-size:9px;
+}
+body.mk-buddy-header-home .mk-buddy-coffee-srcs:is([data-source-count="5"],[data-source-count="6"],[data-source-count="7"]) {
+  display:grid !important;
+  grid-template-columns:repeat(4,max-content);
+  grid-auto-rows:22px;
+  align-content:center;
+  gap:1px 3px;
+}
+body.mk-buddy-header-home .mk-buddy-coffee-srcs:is([data-source-count="5"],[data-source-count="6"],[data-source-count="7"]) .mk-buddy-coffee-src svg {
+  width:22px;
+  height:22px;
+}
+body.mk-buddy-header-home .mk-buddy-coffee-srcs:is([data-source-count="5"],[data-source-count="6"],[data-source-count="7"]) .mk-buddy-coffee-src i {
+  font-size:8px;
+}
+body.mk-buddy-header-home #mk-buddy-shift-stats > .mk-buddy-stat:last-child {
+  display:flex !important;
+  flex:0 0 92px;
+  width:92px !important;
+  height:44px !important;
+  gap:4px !important;
+  overflow:visible;
+}
+body.mk-buddy-header-home .mk-buddy-v-stack {
+  flex:0 0 38px;
+  width:38px;
+  height:44px;
+  justify-content:center;
+  gap:0;
+}
+body.mk-buddy-header-home #mk-buddy-shift-stats .mk-buddy-fatigue-part {
+  display:flex !important;
+  flex:0 0 50px;
+  width:50px;
+  height:44px;
+  align-items:center;
+  justify-content:center;
+}
+body.mk-buddy-header-home .mk-buddy-hud-hearts {
+  position:absolute;
+  top:0;
+  left:19px;
+  transform:translateX(-50%);
+  z-index:3;
+}
+body.mk-buddy-header-home .mk-buddy-hud-canvas {
+  width:38px;
+  height:30px;
+  filter:none;
+}
+body.mk-buddy-header-home .mk-buddy-prop-cvs {
+  right:1px !important;
+  bottom:-2px !important;
+  max-width:48px;
+  max-height:48px;
+  transform:none !important;
+}
+body.mk-buddy-header-home #mk-buddy-bolus {
+  width:32px !important;
+  height:32px !important;
+  max-width:32px !important;
+  max-height:32px !important;
+  right:4px !important;
+  bottom:12px !important;
 }
 </style>
 </body>

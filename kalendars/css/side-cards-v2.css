@@ -610,8 +610,8 @@ html body :is(.side-panel.compact-duty, .side-panel.mini-duty) :is(#radiographer
 
 html body :is(.side-panel.compact-duty, .side-panel.mini-duty) :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot-row {
   width: 100% !important;
-  grid-template-columns: 65px minmax(0, 1fr) !important;
-  gap: 4px !important;
+  grid-template-columns: max-content minmax(0, 1fr) !important;
+  gap: 7px !important;
 }
 
 html body :is(.side-panel.compact-duty, .side-panel.mini-duty) :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot dd {
@@ -820,8 +820,8 @@ html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) 
 
 html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) .mk-side-nfoot-row {
   width: 100% !important;
-  grid-template-columns: 65px minmax(0, 1fr) !important;
-  gap: 4px !important;
+  grid-template-columns: max-content minmax(0, 1fr) !important;
+  gap: 7px !important;
 }
 
 html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) .mk-side-nfoot dd {

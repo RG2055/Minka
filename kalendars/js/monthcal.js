@@ -567,7 +567,22 @@
     document.head.appendChild(s);
   }
   var _bdayPopEl = null;
-  function closeBdayPop(){ if (_bdayPopEl){ _bdayPopEl.remove(); _bdayPopEl = null; document.removeEventListener('pointerdown', bdayPopOutside, true); } }
+  function notifyBuddyBirthday(hidden){
+    try {
+      if (window.parent && window.parent !== window) window.parent.postMessage({
+        type: 'mk-buddy-birthday-visibility',
+        hidden: !!hidden
+      }, window.location.origin);
+    } catch(e) {}
+  }
+  function closeBdayPop(){
+    if (_bdayPopEl){
+      _bdayPopEl.remove();
+      _bdayPopEl = null;
+      document.removeEventListener('pointerdown', bdayPopOutside, true);
+    }
+    notifyBuddyBirthday(false);
+  }
   function bdayPopOutside(e){
     if (_bdayPopEl && !_bdayPopEl.contains(e.target) && !(e.target.closest && e.target.closest('#mkBdayBadge'))) closeBdayPop();
   }
@@ -593,6 +608,7 @@
     pop.style.top = (r.bottom + 8) + 'px';
     pop.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.right - w)) + 'px';
     _bdayPopEl = pop;
+    notifyBuddyBirthday(true);
     setTimeout(function(){ document.addEventListener('pointerdown', bdayPopOutside, true); }, 0);
   }
   function renderBdayBadge(){
@@ -612,6 +628,7 @@
       : 'Dzimšanas dienas';
   }
   function initBdayBadge(){
+    notifyBuddyBirthday(false);
     injectBdayBadgeStyles();
     // Put it on the weekday (top) row, pushed to the right — weekday left,
     // birthday top-right, namedays below.

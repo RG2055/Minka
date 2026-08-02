@@ -130,7 +130,7 @@ window.setTimeout(function () {
 <!-- bundle.css is critical ï¿½ load normally -->
 <link rel="stylesheet" href="css/bundle.css?v=20260621n">
 <link rel="stylesheet" href="css/skin-draw.css?v=20260723a">
-<link rel="stylesheet" href="css/side-cards-v2.css?v=20260728swap10">
+<link rel="stylesheet" href="css/side-cards-v2.css?v=20260802textfit2">
 <!-- External fonts/icons: non-blocking preload swap -->
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -505,31 +505,9 @@ body.stars-active #stars-overlay{display:block;}
       <span id="minkaNamedayChipIcon">📅</span>
       <span id="minkaNamedayChipText">Ielādē...</span>
     </div>
-    </div><!-- /minkaBarWrap -->
 
-    <div class="top-row">
-      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-        <div class="date-title-wrap">
-          <h1 id="grafiks-dateTitle">...</h1>
-          <span id="grafiks-todayTag" class="today-tag" hidden>ŠODIEN</span>
-        </div>
-        <div id="mk-times-under-date"></div>
-        <!-- LIVE badge -->
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <button class="view-btn" onclick="g_toggleView()">
-          <span class="material-icons-round" id="grafiks-viewIcon">format_list_bulleted</span>
-        </button>
-        <button class="view-btn" onclick="openStatsModal()" title="Maiņu statistika">
-          <span class="material-icons-round">bar_chart</span>
-        </button>
-        <button id="mkSettingsBtn" class="view-btn" type="button" title="Iestatījumi" aria-label="Iestatījumi">
-          <span class="material-icons-round">settings</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- YouTube-style shift progress bar -->
+    <!-- Unified header timer: its existing live ruler is kept intact, but it
+         now belongs to the same top surface as the date/weather/news bar. -->
     <div id="shift-progress-wrap" class="shift-progress-wrap" hidden>
       <div id="shift-progress-segments" class="shift-progress-segments" hidden></div>
       <div id="shift-lanes-wrap" class="shift-lanes-wrap"></div>
@@ -557,6 +535,29 @@ body.stars-active #stars-overlay{display:block;}
           <svg class="lmt-chev" width="9" height="6" viewBox="0 0 9 6" aria-hidden="true">
             <path d="M1 1.2 L4.5 4.8 L8 1.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
           </svg>
+        </button>
+      </div>
+    </div>
+    </div><!-- /minkaBarWrap -->
+
+    <div class="top-row">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div class="date-title-wrap">
+          <h1 id="grafiks-dateTitle">...</h1>
+          <span id="grafiks-todayTag" class="today-tag" hidden>ŠODIEN</span>
+        </div>
+        <div id="mk-times-under-date"></div>
+        <!-- LIVE badge -->
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="view-btn" onclick="g_toggleView()">
+          <span class="material-icons-round" id="grafiks-viewIcon">format_list_bulleted</span>
+        </button>
+        <button class="view-btn" onclick="openStatsModal()" title="Maiņu statistika">
+          <span class="material-icons-round">bar_chart</span>
+        </button>
+        <button id="mkSettingsBtn" class="view-btn" type="button" title="Iestatījumi" aria-label="Iestatījumi">
+          <span class="material-icons-round">settings</span>
         </button>
       </div>
     </div>
@@ -1103,11 +1104,11 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260802coffee1"></script>
+<script src="js/calendar.js?v=20260802numbershide1"></script>
 <script src="js/calendar_extras_v4.js?v=20260728f"></script>
 <script src="js/fatigue.js?v=20260728f"></script>
 <script src="js/nightsplit.js?v=20260801release1" defer></script>
-<script src="js/monthcal.js?v=20260730year1" defer></script>
+<script src="js/monthcal.js?v=20260802bdayhide1" defer></script>
 <script src="js/design_v1.js" defer></script>
 <script src="js/theme.js?v=20260724f" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
@@ -3178,13 +3179,45 @@ function nextNews(){
     /* If nothing loaded yet, keep fallback visible */
     if (!items.length) items = FALLBACK_ITEMS;
 
-	    var half = items.map(renderTickerItem).join('');
-	    track.innerHTML = half + half;
-	    if (window.__mkTickerState) {
-	      window.__mkTickerState.x = 0;
-	      window.__mkTickerState.half = 0;
-	      window.__mkTickerState.needsMeasure = true;
-	    }
+    var baseHtml = items.map(renderTickerItem).join('');
+    track._mkBaseHtml = baseHtml;
+
+    /* Build two equal cycles, but repeat the item set inside each cycle until
+       one cycle is wider than the visible ticker. Two bare copies leave a long
+       blank tail whenever the feed is shorter than the viewport. */
+    function fillTickerCycles() {
+      var source = track._mkBaseHtml || '';
+      if (!source) { track.innerHTML = ''; return; }
+      track.innerHTML = '<span class="mk-ticker-cycle">' + source + '</span>';
+      var probe = track.firstElementChild;
+      var baseWidth = Math.max(1, Math.ceil(probe.getBoundingClientRect().width || probe.scrollWidth || 1));
+      var viewport = Math.max(1, Math.ceil((track.parentElement && track.parentElement.clientWidth) || 1));
+      var repeats = Math.max(1, Math.min(8, Math.ceil((viewport + 24) / baseWidth)));
+      var filled = new Array(repeats + 1).join(source);
+      track.innerHTML = '<span class="mk-ticker-cycle">' + filled + '</span>'
+        + '<span class="mk-ticker-cycle" aria-hidden="true">' + filled + '</span>';
+      if (window.__mkTickerState) {
+        window.__mkTickerState.x = 0;
+        window.__mkTickerState.half = 0;
+        window.__mkTickerState.needsMeasure = true;
+      }
+    }
+    track._mkFillCycles = fillTickerCycles;
+    fillTickerCycles();
+
+    if (!track._mkResizeWatch) {
+      track._mkResizeWatch = true;
+      var scroll = track.parentElement;
+      if (scroll && 'ResizeObserver' in window) {
+        var lastTickerWidth = Math.round(scroll.clientWidth || 0);
+        new ResizeObserver(function() {
+          var nextWidth = Math.round(scroll.clientWidth || 0);
+          if (Math.abs(nextWidth - lastTickerWidth) < 16) return;
+          lastTickerWidth = nextWidth;
+          if (track._mkFillCycles) track._mkFillCycles();
+        }).observe(scroll);
+      }
+    }
 
     /* Click to open news link — no hover-pause, ticker runs continuously */
     if (!track._mkEvt) {
@@ -3208,7 +3241,7 @@ function nextNews(){
       lastPaint: 0,
 	      paused: false
 	    };
-	    var SPEED = 14;       /* px/s — visible, but very light on work PCs */
+	    var SPEED = 14;       /* px/s — original reading pace; still only 15 FPS */
 	    var FRAME_MS = 1000 / 15;
 
     /* Pause on hover — attach to the static wrapper, not the moving track */
@@ -3790,6 +3823,21 @@ window.addEventListener('message', function(e) {
   var wrap = document.getElementById('shift-progress-wrap');
   var btn = document.getElementById('lanes-mini-toggle');
   if (!wrap || !btn) return;
+  function syncBuddyDetailVisibility() {
+    var detailOpen = !wrap.classList.contains('lanes-collapsed');
+    var nightOpen = wrap.classList.contains('ns-bar-active');
+    try {
+      window.parent.postMessage({
+        type: 'mk-buddy-detail-visibility',
+        hidden: detailOpen || nightOpen
+      }, window.location.origin);
+    } catch (e) {}
+  }
+  window.__mkSyncBuddyDetailVisibility = syncBuddyDetailVisibility;
+  new MutationObserver(syncBuddyDetailVisibility).observe(wrap, {
+    attributes: true,
+    attributeFilter: ['class']
+  });
   function apply(min) {
     wrap.classList.toggle('lanes-collapsed', min);
     btn.title = min ? 'Rādīt maiņu joslas' : 'Paslēpt maiņu joslas';
@@ -3801,6 +3849,7 @@ window.addEventListener('message', function(e) {
   var saved = null;
   try { saved = localStorage.getItem(KEY); } catch (e) {}
   apply(saved === null ? true : saved === '1');
+  syncBuddyDetailVisibility();
   btn.addEventListener('click', function(){
     apply(!wrap.classList.contains('lanes-collapsed'));
   });
@@ -4737,10 +4786,16 @@ window.addEventListener('message', function(e) {
   /* JS drives the transform — no CSS animation */
 }
 #mkTickerTrack:empty { opacity: 0; }
+.mk-ticker-cycle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  height: 100%;
+}
 /* Each news item */
 .mk-news-item {
   display: inline-flex; align-items: center; gap: 9px;
-  padding: 0 28px 0 0;
+  padding: 0 14px 0 0;
   cursor: default;
 }
 .mk-news-item[data-href] { cursor: pointer; }
@@ -13042,6 +13097,444 @@ window.addEventListener('message', function(e) {
   background:#64d2ff !important;color:#06202e !important;font-weight:800 !important;
 }
 #worker-modal #modal-calendar-days li.is-past{opacity:.38 !important;}
+</style>
+<style id="mk-mid-card-corners">
+/* One clean clipping curve for both artwork and edge. A separate CSS border
+   plus padding-box clip produced two arcs and a dark crescent in the corners. */
+#grafiks-list.grid-view .card.mk-mid-card {
+  border: 0 !important;
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  background-clip: border-box !important;
+  -webkit-background-clip: border-box !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(190, 204, 232, .15),
+    inset 0 1px 0 rgba(255, 255, 255, .055),
+    0 8px 18px rgba(0, 0, 0, .18) !important;
+}
+/* The original photo scrim was darker at the very top (.62 -> .45), which
+   appeared as a horizontal dark band. Keep the upper half even and retain
+   only the useful bottom contrast behind the controls. */
+#grafiks-list.grid-view .card.mk-mid-card.mk-has-skin:not(.mk-has-grad),
+#grafiks-list.grid-view .card.mk-mid-card.mk-has-skin:not(.mk-has-grad):hover {
+  background-image:
+    linear-gradient(180deg, rgba(7,10,17,.45) 0%, rgba(7,10,17,.45) 45%, rgba(7,10,17,.74) 100%),
+    var(--mk-skin-img),
+    none !important;
+}
+</style>
+<style id="mk-unified-header-v1">
+/* Unified scenic header + existing work timer.
+   Static surfaces only: no backdrop blur, animated glow or noise layer. */
+:root:not(.mk-mobile-shell) #minkaBarWrap {
+  container-type: inline-size !important;
+  position: relative !important;
+  isolation: isolate !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 0 5px !important;
+  padding: 3px !important;
+  overflow: visible !important;
+  border: 1px solid rgba(91, 170, 224, .38) !important;
+  border-radius: 18px !important;
+  background: #07101b !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(164, 214, 244, .055),
+    0 8px 24px rgba(0, 0, 0, .22) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap::after {
+  content: none !important;
+  display: none !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap > .mk-header-scenic-bg {
+  position: absolute !important;
+  inset: 3px !important;
+  z-index: 0 !important;
+  overflow: hidden !important;
+  border-radius: 14px !important;
+  pointer-events: none !important;
+  background: #07101b !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap > .mk-header-scenic-bg::before {
+  display: none !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap > .mk-header-scenic-bg::after {
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+  background:
+    linear-gradient(90deg, rgba(3,7,13,.76) 0%, rgba(3,7,13,.48) 30%, rgba(3,7,13,.28) 62%, rgba(3,7,13,.52) 100%),
+    linear-gradient(180deg, rgba(3,7,13,.08) 0%, rgba(3,7,13,.12) 42%, rgba(3,9,16,.68) 100%) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap > .mk-header-scenic-bg .mk-header-scenic-img {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  opacity: 0 !important;
+  filter: none !important;
+  transition: opacity .18s ease !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap > .mk-header-scenic-bg.is-loaded .mk-header-scenic-img {
+  opacity: 1 !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap #minkaBar {
+  position: relative !important;
+  z-index: 8 !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap #minkaBarInner,
+:root:not(.mk-mobile-shell) #minkaBarWrap #minkaBarInner:focus-within,
+:root:not(.mk-mobile-shell) #minkaBarWrap #minkaBar.focused #minkaBarInner,
+:root:not(.mk-mobile-shell) #minkaBarWrap #minkaBar.has-text #minkaBarInner,
+:root:not(.mk-mobile-shell) #minkaBarWrap #minkaBar.search-open #minkaBarInner {
+  width: 100% !important;
+  height: 80px !important;
+  min-height: 80px !important;
+  padding: 0 12px !important;
+  gap: 10px !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  border-radius: 14px 14px 8px 8px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner .mk-header-scenic-bg {
+  inset: 0 !important;
+  border-radius: 14px 14px 8px 8px !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner .mk-header-scenic-img {
+  filter: none !important;
+  transition: opacity .18s ease !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner .mk-header-scenic-bg::after {
+  background:
+    linear-gradient(90deg, rgba(3,7,13,.80) 0%, rgba(3,7,13,.61) 31%, rgba(3,7,13,.34) 62%, rgba(3,7,13,.58) 100%),
+    linear-gradient(180deg, rgba(3,7,13,.10) 0%, rgba(3,7,13,.03) 40%, rgba(3,7,13,.48) 100%) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner #mkSearchDate {
+  flex: 0 1 auto !important;
+  width: max-content !important;
+  min-width: 0 !important;
+  max-width: 50% !important;
+  height: 100% !important;
+  padding: 10px 2px 8px 8px !important;
+  justify-content: center !important;
+  gap: 6px !important;
+}
+:root:not(.mk-mobile-shell) #mkSearchDate .mk-search-date-main {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  width: max-content !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  gap: clamp(8px, 1.1vw, 14px) !important;
+}
+:root:not(.mk-mobile-shell) #mkSearchDate .mk-search-date-num {
+  flex: 0 0 auto !important;
+  font-size: clamp(25px, 2.25vw, 34px) !important;
+  line-height: 1 !important;
+  font-weight: 450 !important;
+  letter-spacing: -.035em !important;
+  white-space: nowrap !important;
+}
+:root:not(.mk-mobile-shell) #mkSearchDate .mk-search-weekday {
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  font-size: clamp(14px, 1.22vw, 19px) !important;
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+}
+:root:not(.mk-mobile-shell) #mkSearchDate .mk-bday-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  max-width: 172px !important;
+  height: 28px !important;
+  margin: 0 0 0 2px !important;
+  padding: 0 10px 0 8px !important;
+  gap: 5px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(233, 217, 244, .36) !important;
+  border-radius: 999px !important;
+  background: rgba(236, 224, 245, .92) !important;
+  color: #2a2140 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.42) !important;
+  text-shadow: none !important;
+}
+:root:not(.mk-mobile-shell) #mkSearchDate .mk-bday-badge:hover {
+  background: rgba(244, 234, 250, .97) !important;
+}
+:root:not(.mk-mobile-shell) #mkSearchDate .mk-bday-ic {
+  flex: 0 0 auto !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+  opacity: .92 !important;
+  filter: none !important;
+}
+:root:not(.mk-mobile-shell) #mkSearchDate .mk-bday-pill {
+  min-width: 0 !important;
+  max-width: 140px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: inherit !important;
+  font-size: 10px !important;
+  line-height: 1 !important;
+}
+:root:not(.mk-mobile-shell) #mkSearchDate .mk-search-date-meta {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  width: max-content !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  gap: 8px !important;
+  overflow: hidden !important;
+}
+:root:not(.mk-mobile-shell) #mkSearchDate .mk-search-date-meta > * {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+}
+:root:not(.mk-mobile-shell) #mkSearchDate .mk-nameday-bar {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner .mk-bar-sep {
+  flex: 0 0 1px !important;
+  margin: 0 2px !important;
+  opacity: .35 !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner .mk-ticker-wrap {
+  flex: 1 1 260px !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 80px !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner #mkSearchLaunch,
+:root:not(.mk-mobile-shell) #minkaBarInner #minkaBarMenu {
+  flex: 0 0 36px !important;
+  width: 36px !important;
+  min-width: 36px !important;
+  height: 36px !important;
+  margin: 0 !important;
+  border-radius: 11px !important;
+  border-color: rgba(157, 211, 246, .16) !important;
+  background: rgba(4, 10, 18, .42) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap > #shift-progress-wrap {
+  position: relative !important;
+  z-index: 3 !important;
+  display: flex !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 10px 0 !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 0 14px 14px !important;
+  background: linear-gradient(180deg, rgba(5,14,24,.34) 0%, rgba(4,12,21,.58) 100%) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap #shift-lanes-wrap,
+:root:not(.mk-mobile-shell) #minkaBarWrap .shift-lanes-wrap {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin-bottom: 0 !important;
+}
+/* Buddy is rendered by the parent shell over #sl-buddy-slot. The slot makes
+   him a real member of this row, so elapsed time never sits underneath him. */
+:root:not(.mk-mobile-shell) #minkaBarWrap .sl-times-strip {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: auto minmax(12px,1fr) auto minmax(6.5ch,auto) auto auto !important;
+  grid-template-rows: 16px 16px !important;
+  align-items: center !important;
+  justify-content: stretch !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  column-gap: 6px !important;
+  row-gap: 2px !important;
+  margin-top: 1px !important;
+  padding: 2px 4px 0 !important;
+  border-top: 0 !important;
+}
+:root:not(.mk-mobile-shell) #sl-buddy-slot {
+  order: 0 !important;
+  display: block !important;
+  grid-column: 1 !important;
+  grid-row: 1 / 3 !important;
+  flex: 0 0 232px !important;
+  width: 232px !important;
+  height: 34px !important;
+}
+/* Detail modes hide Buddy in the parent shell. Reclaim his reserved slot so
+   elapsed and remaining time stay together instead of following empty space. */
+:root:not(.mk-mobile-shell) #shift-progress-wrap:not(.lanes-collapsed) #sl-buddy-slot,
+:root:not(.mk-mobile-shell) #shift-progress-wrap.ns-bar-active #sl-buddy-slot {
+  display: none !important;
+  flex: 0 0 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+:root:not(.mk-mobile-shell) .sl-ts-elapsed-label {
+  order: 1 !important;
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+}
+:root:not(.mk-mobile-shell) .sl-ts-elapsed {
+  order: 2 !important;
+  grid-column: 4 !important;
+  grid-row: 1 !important;
+}
+:root:not(.mk-mobile-shell) .sl-ts-sep {
+  order: 3 !important;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+}
+:root:not(.mk-mobile-shell) .sl-ts-remaining-label {
+  order: 4 !important;
+  grid-column: 3 !important;
+  grid-row: 2 !important;
+}
+:root:not(.mk-mobile-shell) .sl-ts-rem {
+  order: 5 !important;
+  grid-column: 4 !important;
+  grid-row: 2 !important;
+}
+:root:not(.mk-mobile-shell) .sl-ts-elapsed,
+:root:not(.mk-mobile-shell) .sl-ts-rem {
+  flex: 0 0 auto !important;
+}
+:root:not(.mk-mobile-shell) #sl-buddy-speech {
+  order: 6 !important;
+  display: none !important;
+  flex: 0 0 0 !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  margin: 0 !important;
+}
+:root:not(.mk-mobile-shell) #sl-buddy-speech.show {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+:root:not(.mk-mobile-shell) #sl-lanes-slot {
+  order: 7 !important;
+  grid-column: 5 !important;
+  grid-row: 1 / 3 !important;
+  flex: 0 0 auto !important;
+  margin-left: 10px !important;
+}
+:root:not(.mk-mobile-shell) #sl-ns-slot {
+  order: 8 !important;
+  grid-column: 6 !important;
+  grid-row: 1 / 3 !important;
+  flex: 0 0 auto !important;
+  margin-right: 0 !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap .sl-ts-label {
+  color: #f7f9fc !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap .sl-ts-val {
+  color: #dceeff !important;
+  text-shadow: none !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap .sl-ts-val.sl-ts-rem {
+  color: #38bdf8 !important;
+  text-shadow: none !important;
+}
+:root:not(.mk-mobile-shell) .main-panel > .top-row {
+  display: none !important;
+}
+:root:not(.mk-mobile-shell) .main-panel > .scroll-row {
+  margin-top: 0 !important;
+}
+
+/* When the center panel is narrow, protect the real information first:
+   date, weekday, birthday and utility buttons. The ticker yields the space. */
+@container (max-width: 720px) {
+  :root:not(.mk-mobile-shell) #minkaBarInner #mkSearchDate {
+    flex-basis: calc(100% - 88px) !important;
+    max-width: calc(100% - 88px) !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarInner .mk-bar-sep,
+  :root:not(.mk-mobile-shell) #minkaBarInner .mk-ticker-wrap {
+    display: none !important;
+  }
+  :root:not(.mk-mobile-shell) #mkSearchDate .mk-search-date-num {
+    font-size: clamp(21px, 5cqw, 27px) !important;
+  }
+  :root:not(.mk-mobile-shell) #mkSearchDate .mk-search-weekday {
+    font-size: clamp(12px, 2.8cqw, 15px) !important;
+  }
+  :root:not(.mk-mobile-shell) #mkSearchDate .mk-bday-badge {
+    max-width: 136px !important;
+  }
+  :root:not(.mk-mobile-shell) #mkSearchDate .mk-bday-pill {
+    max-width: 105px !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarWrap .sl-ts-label {
+    display: none !important;
+  }
+  :root:not(.mk-mobile-shell) #sl-buddy-slot {
+    flex-basis: 214px !important;
+    width: 214px !important;
+  }
+  :root:not(.mk-mobile-shell) #sl-buddy-speech {
+    flex-basis: 28px !important;
+    max-width: 72px !important;
+    margin: 0 2px !important;
+  }
+}
+
+/* The DOM is shared with mobile; keep its former compact layout after the
+   structural move, without applying the desktop shell treatment. */
+:root.mk-mobile-shell #minkaBarWrap {
+  height: auto !important;
+  overflow: visible !important;
+}
+:root.mk-mobile-shell #minkaBarWrap > #shift-progress-wrap {
+  width: 100% !important;
+  max-width: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  #minkaBarInner .mk-header-scenic-img { transition: none !important; }
+}
 </style>
 </body>
 </html>
