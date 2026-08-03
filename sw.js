@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.131-wco-ready-refresh';
+const CACHE = 'minka-4.6.132-wco-manifest-refresh';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
@@ -128,6 +128,26 @@ self.addEventListener('fetch', event => {
   const parsedUrl = new URL(url);
   if (!request.destination && parsedUrl.origin !== self.location.origin) {
     event.respondWith(fetch(request));
+    return;
+  }
+
+  // The installed desktop app reads display_override from the web app
+  // manifest. Never pin that metadata behind cache-first: otherwise an
+  // existing standalone installation can miss a newly enabled display mode
+  // such as window-controls-overlay indefinitely.
+  const isAppManifest =
+    request.destination === 'manifest' ||
+    (parsedUrl.origin === self.location.origin && /\/manifest(?:-mobile)?\.json$/i.test(parsedUrl.pathname));
+
+  if (isAppManifest) {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          event.waitUntil(safeCachePut(request, response.clone()));
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
     return;
   }
 
