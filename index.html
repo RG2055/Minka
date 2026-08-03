@@ -5,6 +5,146 @@
 <!-- First paint must be dark: this runs before any blocking script/CSS, so a
      PWA wake after tab discard never flashes a white screen. -->
 <style>html{background:#060b13;}body{background:#060b13;}</style>
+<!-- Window Controls Overlay must be resolved before the shell and iframe can
+     paint. Keeping this in <head> avoids a browser-mode frame followed by an
+     edge-to-edge jump during PWA refresh. -->
+<style id="mk-wco-titlebar-v2">
+:root{
+  --wco-x: env(titlebar-area-x, 0px);
+  --wco-y: env(titlebar-area-y, 0px);
+  --wco-w: env(titlebar-area-width, 100%);
+  --wco-h: env(titlebar-area-height, 0px);
+}
+:root.mk-wco-on #calendarEmbed,
+:root.mk-edge-on #calendarEmbed{
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+  border-top: 0 !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  box-shadow: none !important;
+}
+:root.mk-wco-on #calendarEmbed::before,
+:root.mk-edge-on #calendarEmbed::before{
+  background: none !important;
+  mix-blend-mode: normal !important;
+  opacity: 0 !important;
+}
+#mk-wco-drag{
+  position: fixed;
+  left: var(--wco-x);
+  top: var(--wco-y);
+  width: max(0px, min(52%, calc(var(--wco-w) - 320px)));
+  height: var(--wco-h);
+  display: none;
+  z-index: 2147483000;
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+:root.mk-wco-on #mk-wco-drag{ display: block; }
+</style>
+<script id="mk-wco-bootstrap-v2">
+(function(){
+  if (window.__mkWcoBooted) return;
+  window.__mkWcoBooted = true;
+
+  var root = document.documentElement;
+  var wco = window.navigator && window.navigator.windowControlsOverlay;
+
+  function isInstalled(){
+    if (document.fullscreenElement) return true;
+    try {
+      return ['window-controls-overlay','standalone','fullscreen','minimal-ui']
+        .some(function(mode){
+          return window.matchMedia('(display-mode: ' + mode + ')').matches;
+        });
+    } catch (_e) {
+      return false;
+    }
+  }
+
+  function geometry(){
+    if (!wco || !wco.visible || typeof wco.getTitlebarAreaRect !== 'function') {
+      return { on: false, h: 0, leftCtlW: 0, rightCtlW: 0 };
+    }
+    try {
+      var rect = wco.getTitlebarAreaRect();
+      return {
+        on: true,
+        h: Math.max(0, Math.round(rect.height) || 0),
+        leftCtlW: Math.max(0, Math.round(rect.x) || 0),
+        rightCtlW: Math.max(0, Math.round(window.innerWidth - rect.x - rect.width) || 0)
+      };
+    } catch (_e) {
+      return { on: false, h: 0, leftCtlW: 0, rightCtlW: 0 };
+    }
+  }
+
+  function setModeClasses(state){
+    root.classList.toggle('mk-wco-on', state.on);
+    root.classList.toggle('mk-edge-on', state.edge);
+    if (document.body) {
+      document.body.classList.toggle('mk-wco-on', state.on);
+      document.body.classList.toggle('mk-edge-on', state.edge);
+    }
+    var usableWidth = Math.max(0, window.innerWidth - state.leftCtlW - state.rightCtlW);
+    root.style.setProperty('--wco-x', state.leftCtlW + 'px');
+    root.style.setProperty('--wco-y', '0px');
+    root.style.setProperty('--wco-w', usableWidth + 'px');
+    root.style.setProperty('--wco-h', state.h + 'px');
+  }
+
+  function ensureDragRegion(){
+    if (!document.body || document.getElementById('mk-wco-drag')) return;
+    var drag = document.createElement('div');
+    drag.id = 'mk-wco-drag';
+    drag.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(drag);
+  }
+
+  function push(){
+    var state = geometry();
+    state.edge = isInstalled();
+    window.__mkWcoState = state;
+    setModeClasses(state);
+    ensureDragRegion();
+    var frame = document.getElementById('calIframe');
+    if (frame && frame.contentWindow) {
+      try {
+        frame.contentWindow.postMessage(Object.assign({ type: 'mk_wco_state' }, state), window.location.origin);
+      } catch (_e) {}
+    }
+  }
+
+  window.addEventListener('message', function(event){
+    if (event.origin !== window.location.origin || !event.data) return;
+    if (event.data.type !== 'mk_wco_ready' && event.data.type !== 'minka:appReady') return;
+    var frame = document.getElementById('calIframe');
+    if (!frame || event.source !== frame.contentWindow) return;
+    push();
+  });
+  if (wco && typeof wco.addEventListener === 'function') {
+    wco.addEventListener('geometrychange', push);
+  }
+  window.addEventListener('resize', push);
+  window.addEventListener('pageshow', push);
+  document.addEventListener('fullscreenchange', push);
+  ['window-controls-overlay','standalone','fullscreen','minimal-ui','browser'].forEach(function(mode){
+    try {
+      var query = window.matchMedia('(display-mode: ' + mode + ')');
+      if (typeof query.addEventListener === 'function') query.addEventListener('change', push);
+      else if (typeof query.addListener === 'function') query.addListener(push);
+    } catch (_e) {}
+  });
+  document.addEventListener('DOMContentLoaded', push, { once: true });
+  push();
+  window.setTimeout(push, 250);
+  window.__mkWcoPush = push;
+})();
+</script>
 <script>
 (function() {
   var API_BASE = 'https://minka-api.gamernr1elite.workers.dev';
@@ -574,7 +714,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260801weather1" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260801weather1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260802buddyfuture3" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260802buddyfuture3" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -5306,7 +5446,7 @@ window.addEventListener('message', function(e) {
 
 <script>
 if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-  const MINKA_APP_VERSION = '2026.07.28a';
+  const MINKA_APP_VERSION = '2026.08.03-wco2';
   const MINKA_VERSION_KEY = 'minka_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -8929,5 +9069,6 @@ body.mk-buddy-header-home #mk-buddy-bolus {
   bottom:12px !important;
 }
 </style>
+
 </body>
 </html>

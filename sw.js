@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.117-buddy-future-day-fix';
+const CACHE = 'minka-4.6.131-wco-ready-refresh';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
