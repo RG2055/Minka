@@ -3816,7 +3816,7 @@ window.addEventListener('message', function(e) {
 // worker from this iframe added a second controllerchange reload listener with
 // a different app version, which could make PWA updates visibly reload twice.
 if ('serviceWorker' in navigator && window.top === window) {
-  const MINKA_APP_VERSION = '2026.08.03-wco2.calendar';
+  const MINKA_APP_VERSION = '2026.08.07-winui1.calendar';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -6939,11 +6939,17 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   transition: border-color .18s ease, box-shadow .18s ease, background .18s ease, transform .18s ease !important;
 }
 .mk-date-controls .mk-month-control {
-  width: var(--mk-month-width, 154px) !important;
-  min-width: var(--mk-month-width, 154px) !important;
-  padding: 0 30px 0 14px !important;
+  width: var(--mk-month-width, 164px) !important;
+  min-width: var(--mk-month-width, 164px) !important;
+  padding: 0 34px 0 14px !important;
   font: 800 17px/1 'Space Grotesk', system-ui !important;
   letter-spacing: 0.02em !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1.25 7 7.25 13 1.25' fill='none' stroke='%23dcebfa' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  background-size: 14px 9px !important;
 }
 .mk-date-controls .mk-calendar-control {
   width: 44px !important;
@@ -8608,11 +8614,21 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   letter-spacing:.04em;
 }
 .ns-raffle-cat {
-  width:27px;
-  height:25px;
-  flex:0 0 27px;
+  width:28px;
+  height:28px;
+  flex:0 0 28px;
   display:block;
-  background:url("assets/night-raffle-scene.webp") 50% 50% / auto 100% no-repeat;
+  overflow:visible;
+  color:#ffe29b;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.65;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  filter:drop-shadow(0 0 4px rgba(246,190,74,.22));
+}
+.ns-raffle-cat .ns-raffle-cat-head {
+  fill:rgba(246,190,74,.10);
 }
 .ns-raffle-trigger:hover { border-color:#ffd66f; background:#261e0d; color:#ffe29b; }
 .ns-mode-btn:focus-visible,
@@ -10267,12 +10283,16 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   order: initial !important;
   grid-column: auto !important;
   margin-top: 0 !important;
-  width: var(--mk-month-width, 154px) !important;
-  min-width: var(--mk-month-width, 154px) !important;
+  width: var(--mk-month-width, 164px) !important;
+  min-width: var(--mk-month-width, 164px) !important;
   height: 40px !important;
   min-height: 40px !important;
-  padding-right: 30px !important;
+  padding-right: 34px !important;
   font-size: 17px !important;
+}
+:root:not(.mk-mobile-shell) .scroll-row .scroller {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
 }
 :root:not(.mk-mobile-shell) .scroll-row .mk-date-controls #miniCalBtn {
   width: 44px !important;
