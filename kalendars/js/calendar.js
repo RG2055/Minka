@@ -4241,8 +4241,8 @@ function filterFullList(btn) {
     if (!label) return;
 
     const isMobile = document.documentElement.classList.contains('mk-mobile-shell');
-    const minWidth = isMobile ? 102 : 118;
-    const maxWidth = isMobile ? 150 : 176;
+    const minWidth = isMobile ? 104 : 124;
+    const maxWidth = isMobile ? 154 : 192;
     let textWidth = 0;
 
     // Measure the rendered label once per month change; the control itself
@@ -4258,7 +4258,10 @@ function filterFullList(btn) {
 
     const css = getComputedStyle(picker);
     const padding = (parseFloat(css.paddingLeft) || 0) + (parseFloat(css.paddingRight) || 0);
-    const arrowSpace = isMobile ? 6 : 8;
+    // The select uses our own SVG chevron, so its footprint is stable across
+    // macOS and Windows. Keep a small extra buffer for font rasterisation and
+    // non-integer Windows display scaling (125%/150%).
+    const arrowSpace = isMobile ? 8 : 14;
     const width = Math.round(Math.max(minWidth, Math.min(maxWidth, textWidth + padding + arrowSpace)));
     picker.style.setProperty('--mk-month-width', width + 'px');
   }
@@ -5561,6 +5564,15 @@ function filterFullList(btn) {
   window.g_toggleView = g_toggleView;
   window.g_changeMonth = g_changeMonth;
   window.g_sizeMonthPicker = g_sizeMonthPicker;
+  // Google/system font metrics can change after the schedule has rendered.
+  // Re-measure once the final font is available so Windows never keeps the
+  // narrower fallback-font width calculated during startup.
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function(){ requestAnimationFrame(g_sizeMonthPicker); }).catch(function(){});
+    if (document.fonts.addEventListener) {
+      document.fonts.addEventListener('loadingdone', function(){ requestAnimationFrame(g_sizeMonthPicker); });
+    }
+  }
   window.g_updatePanelsForDate = g_updatePanelsForDate;
   window.g_selectDay = g_selectDay;
   window.g_stepDay = g_stepDay;

@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.132-wco-manifest-refresh';
+const CACHE = 'minka-4.6.133-win-dpi-icons';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
