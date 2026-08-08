@@ -14607,6 +14607,7 @@ window.addEventListener('message', function(e) {
   font: 800 clamp(11px, 8cqw, 15px)/1.12 Inter, system-ui, sans-serif;
   letter-spacing: -.02em;
   text-align: center;
+  transform: translateY(-3px);
   white-space: nowrap;
 }
 .rg-feedback-card .rg-pulse-taps {
@@ -14647,15 +14648,24 @@ window.addEventListener('message', function(e) {
 .rg-feedback-card [data-rg-pulse="good"]     { --rg-reaction-accent: #5eead4; --rg-reaction-rgb: 45,212,191; }
 .rg-feedback-card [data-rg-pulse="excellent"] { --rg-reaction-accent: #86efac; --rg-reaction-rgb: 74,222,128; }
 .rg-feedback-card .rg-pulse-tap.is-selected {
-  background: rgba(var(--rg-reaction-rgb),.18);
-  outline: 1px solid rgba(var(--rg-reaction-rgb),.52);
-  outline-offset: 1px;
-  box-shadow: none;
-  transform: translateY(-2px) scale(1.16);
+  background: rgba(var(--rg-reaction-rgb),.20);
+  outline: 0;
+  outline-offset: 0;
+  box-shadow: 0 0 0 2px rgba(var(--rg-reaction-rgb),.24);
+  transform: none;
+}
+.rg-feedback-card .rg-pulse-tap.is-selected > span:first-child {
+  transform: translateY(-1px) scale(1.12);
+  transform-origin: center;
 }
 .rg-feedback-card .rg-pulse-tap:focus-visible {
   outline: 2px solid var(--rg-card-accent);
   outline-offset: 2px;
+}
+.rg-feedback-card .rg-pulse-tap.is-selected:focus-visible {
+  outline: 0 !important;
+  outline-offset: 0 !important;
+  box-shadow: 0 0 0 2px rgba(var(--rg-reaction-rgb),.24);
 }
 .rg-feedback-card .rg-pulse-count {
   right: -5px;
@@ -14670,8 +14680,7 @@ window.addEventListener('message', function(e) {
   font: 850 7px/11px Inter, system-ui, sans-serif;
 }
 .rg-feedback-card .rg-pulse-tap.is-selected .rg-pulse-count {
-  transform: scale(.86);
-  transform-origin: center;
+  transform: none;
 }
 .rg-feedback-card .rg-pulse-name {
   display: none;
