@@ -166,7 +166,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260808avatars37';
+  var CALENDAR_BUILD = '20260808feedback31';
 
   function withCalendarBuild(url) {
     try {
@@ -714,7 +714,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260808avatars37" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260808avatars37" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260808feedback31" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260808feedback31" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -4674,6 +4674,7 @@ function updateBuddyUiSuppression() {
     cls.contains('mk-buddy-ui-numbers') ||
     cls.contains('mk-buddy-ui-coffee') ||
     cls.contains('mk-buddy-ui-workermodal') ||
+    cls.contains('mk-buddy-ui-feedback') ||
     cls.contains('mk-buddy-ui-search') ||
     isBuddyOverlayVisible('bolus-overlay') ||
 	    isBuddyOverlayVisible('bolus-edit-modal') ||
@@ -4794,6 +4795,10 @@ window.addEventListener('message', function(e) {
     // Hide the buddy while the worker modal (Nogurums/Saraksts/Kalendārs/
     // Emoji/Izskats) is open — it overlaps the modal's bottom controls.
     setBuddyUiFlag('workermodal', !!e.data.open);
+  } else if (e.data && e.data.type === 'mk_feedback_modal') {
+    // Feedback is rendered inside the calendar iframe while Buddy belongs to
+    // this parent shell, so explicitly suppress him until the modal closes.
+    setBuddyUiFlag('feedback', !!e.data.open);
   }
 });
 
@@ -7255,6 +7260,8 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
         BUBBLE.classList.remove('show');
         var buddyMenu=document.getElementById('mk-buddy-menu');
         if(buddyMenu && buddyMenu.parentNode) buddyMenu.parentNode.removeChild(buddyMenu);
+      } else {
+        scheduleBuddyHeaderReanchor();
       }
       return;
     }
@@ -8612,7 +8619,9 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
   function scheduleBuddyHeaderReanchor(){
     buddyHeaderReanchorTimers.forEach(function(timer){clearTimeout(timer);});
     buddyHeaderReanchorTimers=[];
-    [0,60,160,360,700].forEach(function(delay){
+    // Cold PWA starts can rebuild the calendar header for a few seconds.
+    // These are one-shot checks, not a permanent polling timer.
+    [0,60,160,360,700,1400,3000,6000].forEach(function(delay){
       buddyHeaderReanchorTimers.push(setTimeout(moveBuddyHome,delay));
     });
   }
@@ -8678,8 +8687,14 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
     var anchor = getBuddyAnchorButton();
     home=homePos();
     if(document.body) document.body.classList.toggle('mk-buddy-header-home',!!home.inline);
+    if(document.body) document.body.classList.toggle('mk-buddy-home-pending',!!home.pending);
+    if(home.pending){
+      W.style.visibility='hidden';
+      return;
+    }
     W.style.left=(home.x-W2)+'px';
     W.style.top=(home.y-H2)+'px';
+    W.style.visibility='visible';
     updateBuddyStatsPlacement(anchor);
     positionBuddyBubble();
   }
@@ -8773,6 +8788,12 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
         inline:true
       };
     }
+    // The calendar iframe owns Buddy's valid home. Its slot can briefly be
+    // missing or 0×0 while the header is rebuilt. Wait hidden through that
+    // gap instead of falling back above the bottom navigation.
+    if(document.getElementById('calIframe')){
+      return {x:0,y:0,inline:true,pending:true};
+    }
     var shelf=document.getElementById('dockShelf');
     var anchor=getBuddyAnchorButton();
     var sr=shelf?shelf.getBoundingClientRect():null;
@@ -8858,6 +8879,13 @@ body.mk-buddy-header-home:not(.mk-buddy-ui-open) #mk-buddy {
   opacity:1 !important;
   visibility:visible !important;
   pointer-events:auto !important;
+}
+/* The iframe briefly has no measurable header slot while loading/rebuilding.
+   Never expose the obsolete bottom-dock fallback during that gap. */
+body.mk-buddy-header-home.mk-buddy-home-pending #mk-buddy {
+  opacity:0 !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
 }
 body.mk-buddy-header-home.mk-buddy-detail-hidden #mk-buddy {
   opacity:0 !important;

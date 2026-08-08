@@ -79,6 +79,7 @@ window.setTimeout(function () {
 (function() {
   var API_BASE = 'https://minka-api.gamernr1elite.workers.dev';
   window.MINKA_COFFEE_API_BASE = 'https://minka-coffee-api.gamernr1elite.workers.dev';
+  window.MINKA_FEEDBACK_API_BASE = 'https://minka-feedback-api.gamernr1elite.workers.dev';
   var TOKEN_KEY = 'minka_api_token_v1';
   var IS_MOBILE_FRAME = new URLSearchParams(window.location.search).get('mobile') === '1';
   if (IS_MOBILE_FRAME) document.documentElement.classList.add('minka-mobile-frame');
@@ -14192,6 +14193,1157 @@ window.addEventListener('message', function(e) {
      #minkaBarWrap .lanes-mini-toggle { backdrop-filter: blur(8px); }
 */
 </style>
+
+<style id="mk-rg-pulse-v2">
+/* Reakcijas dzīvo RADIOGRĀFERI virsraksta brīvajā daļā, nevis kartīšu gridā.
+   Tāpēc arī pilnā dienā netiek pievienota jauna rinda un kartītes nekustas. */
+#grafiks-list.grid-view .cards-section-label-rg {
+  position: relative !important;
+  min-height: 49px !important;
+  align-items: flex-start !important;
+}
+.rg-pulse-inline {
+  position: absolute;
+  right: 0;
+  top: 0;
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 3px;
+  height: 49px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.rg-pulse-question {
+  margin: 0;
+  color: #f8fbff;
+  font: 750 13px/1 'Space Grotesk', system-ui, sans-serif;
+  letter-spacing: -.01em;
+  text-transform: none;
+  white-space: nowrap;
+}
+.rg-pulse-taps { display: flex; align-items: center; gap: 5px; }
+.rg-pulse-tap {
+  position: relative;
+  width: 31px;
+  height: 31px;
+  min-width: 31px;
+  min-height: 31px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font: 400 23px/1 system-ui, sans-serif;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+.rg-pulse-tap:hover { background: transparent; border-color: transparent; transform: translateY(-2px) scale(1.08); }
+.rg-pulse-tap:active { transform: scale(.88); }
+.rg-pulse-count {
+  position: absolute;
+  right: -2px;
+  top: -3px;
+  min-width: 12px;
+  height: 12px;
+  padding: 0 3px;
+  border-radius: 99px;
+  background: #dff4ff;
+  color: #07121d;
+  font: 800 7px/12px Inter, system-ui, sans-serif;
+  text-align: center;
+  letter-spacing: 0;
+}
+.rg-pulse-count:empty { display: none; }
+.rg-pulse-write {
+  position: absolute;
+  right: calc(100% + 16px);
+  bottom: 2px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0 2px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #d8ccff;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: 700 11px/1 'Space Grotesk', system-ui, sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.rg-pulse-write:hover { background: transparent; color: #f0ebff; }
+.rg-pulse-burst {
+  position: absolute;
+  left: 50%;
+  top: 3px;
+  z-index: 4;
+  pointer-events: none;
+  font: 400 17px/1 system-ui, sans-serif;
+  animation: rgPulseFly .64s cubic-bezier(.15,.75,.25,1) forwards;
+}
+@keyframes rgPulseFly {
+  0%   { opacity: 1; transform: translate(-50%,0) scale(.72) rotate(-8deg); }
+  60%  { opacity: 1; transform: translate(calc(-50% + var(--rg-fly-x)), -30px) scale(1.18) rotate(8deg); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--rg-fly-x)), -47px) scale(.92) rotate(12deg); }
+}
+
+#rgFeedbackModal {
+  position: fixed;
+  inset: 0;
+  z-index: 230000;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(2,5,10,.72);
+}
+#rgFeedbackModal[hidden] { display: none !important; }
+.rg-feedback-dialog {
+  width: min(440px, calc(100vw - 28px));
+  max-height: min(86vh, 680px);
+  padding: 20px;
+  border: 1px solid rgba(160,190,220,.17);
+  border-radius: 22px;
+  background: #111823;
+  box-shadow: 0 24px 70px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.05);
+  color: #f4f7fb;
+  overflow: hidden;
+}
+.rg-feedback-head { display: flex; align-items: flex-start; gap: 12px; }
+.rg-feedback-title-wrap { flex: 1; min-width: 0; }
+.rg-feedback-dialog h2 {
+  margin: 0;
+  color: #fff;
+  font: 800 19px/1.18 Inter, system-ui, sans-serif;
+  letter-spacing: -.02em;
+}
+.rg-feedback-days {
+  display: flex;
+  gap: 7px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 7px 4px 5px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+.rg-feedback-day-tab {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 74px;
+  height: 36px;
+  padding: 0 22px 0 11px;
+  border: 1px solid rgba(148,163,184,.15);
+  border-radius: 12px;
+  background: rgba(15,23,35,.72);
+  color: rgba(226,234,243,.66);
+  font: 760 10px/1 Inter, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.rg-feedback-day-tab:hover { border-color: rgba(125,211,252,.30); color: #fff; }
+.rg-feedback-day-tab.is-active {
+  border-color: rgba(125,211,252,.48);
+  background: rgba(14,116,144,.18);
+  color: #e6f7ff;
+}
+.rg-feedback-day-count {
+  position: absolute;
+  top: -5px;
+  right: -4px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border: 2px solid #111823;
+  border-radius: 99px;
+  background: #67e8f9;
+  color: #061019;
+  font: 850 8px/13px Inter, system-ui, sans-serif;
+  text-align: center;
+}
+#rgFeedbackModal[data-kind="suggestion"] .rg-feedback-day-tab.is-active {
+  border-color: rgba(134,239,172,.46);
+  background: rgba(34,197,94,.14);
+}
+#rgFeedbackModal[data-kind="suggestion"] .rg-feedback-day-count { background: #86efac; }
+.rg-feedback-list {
+  display: grid;
+  gap: 9px;
+  max-height: min(31vh, 210px);
+  margin-top: 8px;
+  padding: 3px 5px 3px 2px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.rg-feedback-entry {
+  position: relative;
+  justify-self: start;
+  width: fit-content;
+  max-width: 88%;
+  padding: 10px 12px 8px;
+  border: 1px solid rgba(103,232,249,.22);
+  border-radius: 17px 17px 17px 5px;
+  background: rgba(8,145,178,.20);
+}
+.rg-feedback-entry:nth-child(4n + 2) {
+  justify-self: end;
+  border-color: rgba(167,139,250,.24);
+  border-radius: 17px 17px 5px 17px;
+  background: rgba(124,58,237,.19);
+}
+.rg-feedback-entry:nth-child(4n + 3) {
+  border-color: rgba(94,234,212,.22);
+  background: rgba(13,148,136,.19);
+}
+.rg-feedback-entry:nth-child(4n) {
+  justify-self: end;
+  border-color: rgba(251,146,60,.22);
+  border-radius: 17px 17px 5px 17px;
+  background: rgba(194,65,12,.18);
+}
+.rg-feedback-entry.is-pending { padding-right: 30px; }
+.rg-feedback-entry-remove {
+  position: absolute;
+  top: 6px;
+  right: 7px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 99px;
+  background: rgba(2,6,12,.28);
+  color: rgba(240,247,255,.62);
+  font: 700 12px/18px system-ui, sans-serif;
+  cursor: pointer;
+}
+#rgFeedbackModal[data-kind="suggestion"] .rg-feedback-entry {
+  border-color: rgba(134,239,172,.22);
+  background: rgba(22,163,74,.17);
+}
+#rgFeedbackModal[data-kind="suggestion"] .rg-feedback-entry:nth-child(4n + 2) {
+  border-color: rgba(192,132,252,.24);
+  background: rgba(126,34,206,.18);
+}
+#rgFeedbackModal[data-kind="suggestion"] .rg-feedback-entry:nth-child(4n + 3) {
+  border-color: rgba(250,204,21,.20);
+  background: rgba(161,98,7,.17);
+}
+#rgFeedbackModal[data-kind="suggestion"] .rg-feedback-entry:nth-child(4n) {
+  border-color: rgba(45,212,191,.22);
+  background: rgba(15,118,110,.18);
+}
+.rg-feedback-entry-text {
+  margin: 0;
+  color: #edf4fb;
+  font: 560 12px/1.4 Inter, system-ui, sans-serif;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.rg-feedback-entry-meta {
+  display: block;
+  margin-top: 5px;
+  color: rgba(225,235,245,.50);
+  font: 650 9px/1.2 Inter, system-ui, sans-serif;
+}
+.rg-feedback-empty {
+  margin: 0;
+  padding: 18px 8px;
+  color: rgba(205,216,230,.42);
+  font: 600 11px/1.35 Inter, system-ui, sans-serif;
+  text-align: center;
+}
+.rg-feedback-more {
+  display: block;
+  min-height: 30px;
+  margin: 8px auto 0;
+  padding: 0 13px;
+  border: 1px solid rgba(125,211,252,.16);
+  border-radius: 10px;
+  background: rgba(125,211,252,.06);
+  color: #bae6fd;
+  font: 700 10px/1 Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+.rg-feedback-more[hidden] { display: none; }
+.rg-feedback-close {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 10px;
+  background: rgba(255,255,255,.05);
+  color: rgba(255,255,255,.72);
+  font: 500 18px/1 system-ui, sans-serif;
+  cursor: pointer;
+}
+#rgFeedbackText {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  min-height: 116px;
+  max-height: 220px;
+  resize: vertical;
+  padding: 12px 13px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 14px;
+  outline: none;
+  background: #0a1018;
+  color: #f4f7fb;
+  font: 500 13px/1.45 Inter, system-ui, sans-serif;
+}
+#rgFeedbackText:focus { border-color: rgba(125,211,252,.38); box-shadow: 0 0 0 3px rgba(56,189,248,.07); }
+#rgFeedbackText::placeholder { color: rgba(205,216,230,.30); }
+.rg-feedback-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 8px 2px 14px;
+  color: rgba(203,213,225,.38);
+  font: 600 9px/1.2 Inter, system-ui, sans-serif;
+}
+.rg-feedback-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.rg-feedback-cancel,
+.rg-feedback-save {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 11px;
+  font: 750 11px/1 Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+.rg-feedback-cancel { border: 1px solid rgba(255,255,255,.09); background: transparent; color: rgba(235,240,247,.62); }
+.rg-feedback-save { border: 1px solid rgba(125,211,252,.22); background: #dff4ff; color: #07121d; }
+.rg-feedback-save:disabled { opacity: .38; cursor: default; }
+
+:root.mk-mobile-shell #grafiks-list.grid-view .cards-section-label-rg { min-height: 40px !important; }
+:root.mk-mobile-shell .rg-pulse-inline { top: 0; height: 38px; padding: 0; gap: 1px; }
+:root.mk-mobile-shell .rg-pulse-question { display: block; font-size: 8px; }
+:root.mk-mobile-shell .rg-pulse-tap { width: 24px; height: 24px; min-width: 24px; min-height: 24px; font-size: 17px; }
+:root.mk-mobile-shell .rg-pulse-write { width: 22px; min-width: 22px; height: 22px; min-height: 22px; padding: 0; justify-content: center; }
+:root.mk-mobile-shell .rg-pulse-write span { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .rg-pulse-burst { animation: none; opacity: 0; }
+  .rg-pulse-tap:active { transform: none; }
+}
+
+/* Feedback is a real RADIOLOGI grid card. It inherits the exact employee-card
+   column width and height, so crowded days wrap naturally without overlap. */
+#grafiks-list.grid-view .cards-section-label-rg {
+  min-height: 0 !important;
+  align-items: center !important;
+}
+#grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card {
+  position: relative !important;
+  cursor: default !important;
+  padding: clamp(10px, 4cqw, 14px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  overflow: hidden !important;
+  contain: paint;
+  --rg-card-accent: #86efac;
+  --rg-card-rgb: 74, 222, 128;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  transition: none !important;
+}
+#grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card:hover,
+#grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card:active {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.rg-feedback-cloud {
+  position: absolute;
+  inset: 8% 0 4%;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center,
+    rgba(var(--rg-card-rgb),.14) 0%,
+    rgba(var(--rg-card-rgb),.06) 46%,
+    transparent 74%);
+}
+.rg-feedback-card > :not(.rg-feedback-cloud) {
+  position: relative;
+  z-index: 1;
+}
+#grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card[data-mood="terrible"] { --rg-card-accent: #fb7185; --rg-card-rgb: 244,63,94; }
+#grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card[data-mood="bad"]      { --rg-card-accent: #fb923c; --rg-card-rgb: 249,115,22; }
+#grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card[data-mood="ok"]       { --rg-card-accent: #94a3b8; --rg-card-rgb: 100,116,139; }
+#grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card[data-mood="good"]     { --rg-card-accent: #5eead4; --rg-card-rgb: 45,212,191; }
+#grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card[data-mood="excellent"] { --rg-card-accent: #86efac; --rg-card-rgb: 74,222,128; }
+.rg-feedback-card-head-spacer {
+  flex: 0 0 clamp(8px, 5.8cqw, 11px);
+  width: 100%;
+  pointer-events: none;
+}
+.rg-feedback-card-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+.rg-feedback-card-title {
+  color: #f8fbff;
+  font: 800 clamp(11px, 8cqw, 15px)/1.12 Inter, system-ui, sans-serif;
+  letter-spacing: -.02em;
+  text-align: center;
+  white-space: nowrap;
+}
+.rg-feedback-card .rg-pulse-taps {
+  width: 100%;
+  margin-top: clamp(7px, 5cqw, 10px);
+  padding-bottom: clamp(17px, 12cqw, 21px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0,1fr));
+  gap: 2px;
+}
+.rg-feedback-card .rg-pulse-tap {
+  width: 100%;
+  height: clamp(24px, 18cqw, 30px);
+  min-width: 0;
+  min-height: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 8px;
+  font-size: clamp(23px, 15.5cqw, 28px);
+}
+.rg-feedback-card .rg-pulse-tap:hover {
+  background: rgba(255,255,255,.055);
+  transform: translateY(-2px) scale(1.08);
+}
+.rg-feedback-card [data-rg-pulse="terrible"] { --rg-reaction-accent: #fb7185; --rg-reaction-rgb: 244,63,94; }
+.rg-feedback-card [data-rg-pulse="bad"]      { --rg-reaction-accent: #fb923c; --rg-reaction-rgb: 249,115,22; }
+.rg-feedback-card [data-rg-pulse="ok"]       { --rg-reaction-accent: #cbd5e1; --rg-reaction-rgb: 148,163,184; }
+.rg-feedback-card [data-rg-pulse="good"]     { --rg-reaction-accent: #5eead4; --rg-reaction-rgb: 45,212,191; }
+.rg-feedback-card [data-rg-pulse="excellent"] { --rg-reaction-accent: #86efac; --rg-reaction-rgb: 74,222,128; }
+.rg-feedback-card .rg-pulse-tap.is-selected {
+  background: rgba(var(--rg-reaction-rgb),.18);
+  outline: 1px solid rgba(var(--rg-reaction-rgb),.52);
+  outline-offset: 1px;
+  box-shadow: none;
+  transform: translateY(-2px) scale(1.16);
+}
+.rg-feedback-card .rg-pulse-tap:focus-visible {
+  outline: 2px solid var(--rg-card-accent);
+  outline-offset: 2px;
+}
+.rg-feedback-card .rg-pulse-count {
+  right: -1px;
+  top: -4px;
+  min-width: 13px;
+  height: 13px;
+  padding: 0 3px;
+  border: 1px solid rgba(255,255,255,.24);
+  background: var(--rg-reaction-accent);
+  color: #081018;
+  font: 850 7px/11px Inter, system-ui, sans-serif;
+}
+.rg-feedback-card .rg-pulse-name {
+  display: none;
+  position: absolute;
+  z-index: 12;
+  top: calc(100% + 5px);
+  left: 50%;
+  width: max-content;
+  max-width: 64px;
+  padding: 3px 5px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 7px;
+  background: #080c0a;
+  color: #f7fbf8;
+  font: 650 clamp(6.5px, 4.8cqw, 8px)/1 Inter, system-ui, sans-serif;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.rg-feedback-card .rg-pulse-tap.is-selected .rg-pulse-name { display: block; }
+.rg-feedback-card .rg-pulse-tap:first-child .rg-pulse-name {
+  left: 0;
+  transform: none;
+}
+.rg-feedback-card .rg-pulse-tap:last-child .rg-pulse-name {
+  right: 0;
+  left: auto;
+  transform: none;
+}
+.rg-feedback-card-reaction-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.rg-feedback-card-actions {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) clamp(46px, 30cqw, 52px);
+  gap: 5px;
+  width: 100%;
+}
+.rg-feedback-card .rg-pulse-write--suggestion {
+  padding: 0 4px;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: clamp(9.5px, 7.2cqw, 11px);
+}
+.rg-feedback-card .rg-pulse-write--suggestion img {
+  display: block;
+  position: static;
+  width: clamp(15px, 10.5cqw, 17px);
+  height: clamp(15px, 10.5cqw, 17px);
+  object-fit: contain;
+  transform: none;
+  flex: 0 0 auto;
+}
+.rg-feedback-card .rg-pulse-write {
+  position: relative;
+  inset: auto !important;
+  width: 100%;
+  height: clamp(32px, 23cqw, 36px);
+  min-height: 32px;
+  padding: 0 1px;
+  border: 1px solid rgba(var(--rg-card-rgb),.22);
+  border-radius: 10px;
+  background: rgba(var(--rg-card-rgb),.09);
+  color: #e7f5ff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font: 750 clamp(9.5px, 7.2cqw, 11.5px)/1 Inter, system-ui, sans-serif;
+}
+.rg-feedback-card .rg-pulse-write > span {
+  position: static;
+  flex: 0 0 auto;
+  line-height: 1;
+  transform: none;
+  pointer-events: none;
+}
+.rg-feedback-card .rg-pulse-write--comment {
+  gap: 3px;
+  min-width: 0;
+  overflow: hidden;
+}
+.rg-feedback-card .rg-pulse-write--comment > span {
+  min-width: 0;
+  letter-spacing: -0.25px;
+  white-space: nowrap;
+}
+.rg-feedback-card .rg-pulse-write--comment b {
+  position: static;
+  width: auto;
+  font-size: clamp(13px, 9.2cqw, 15px);
+  line-height: 1;
+  text-align: center;
+  transform: none;
+  flex: 0 0 auto;
+}
+.rg-feedback-action-count {
+  position: absolute;
+  top: -5px;
+  right: -4px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: 99px;
+  background: #67e8f9;
+  color: #061019;
+  font: 850 7px/12px Inter, system-ui, sans-serif;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.rg-pulse-write--suggestion .rg-feedback-action-count { background: #86efac; }
+.rg-feedback-action-count:empty { display: none; }
+.rg-feedback-card .rg-pulse-write:hover {
+  background: rgba(var(--rg-card-rgb),.18);
+  color: #fff;
+}
+:root.mk-mobile-shell #grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card {
+  min-height: 120px !important;
+}
+</style>
+
+<script>
+(function () {
+  var list = document.getElementById('grafiks-list');
+  if (!list) return;
+  var PULSE_KEY = 'minkaShiftPulseV2';
+  var PENDING_PULSE_KEY = 'minkaShiftPulsePendingV2';
+  var TEXT_KEY = 'minkaRgFeedbackV2';
+  var ENTRY_COUNT_KEY = 'minkaRgFeedbackCountsV2';
+  var lastWriteButton = null;
+  var ratingFlushTimer = 0;
+  var ratingSyncs = {};
+  var ratingsLoadedAt = {};
+  var reactions = [
+    { key: 'excellent', emoji: '😍', label: 'Lieliski' },
+    { key: 'good', emoji: '🙂', label: 'Labi' },
+    { key: 'ok', emoji: '😐', label: 'Normāli' },
+    { key: 'bad', emoji: '😞', label: 'Slikti' },
+    { key: 'terrible', emoji: '😠', label: 'Ļoti slikti' }
+  ];
+
+  function shiftDayKey() {
+    var selected = String(window.__activeDateStr || '').trim();
+    var selectedMatch = selected.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    if (selectedMatch) return selectedMatch[3] + '-' + selectedMatch[2] + '-' + selectedMatch[1];
+    var d = new Date();
+    if (d.getHours() < 8) d.setDate(d.getDate() - 1);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function displayDay(day) {
+    var parts = String(day || '').split('-');
+    return parts.length === 3 ? parts[2] + '.' + parts[1] + '.' + parts[0] + '.' : String(day || '');
+  }
+  function compactDay(day) {
+    var parts = String(day || '').split('-');
+    return parts.length === 3 ? parts[2] + '.' + parts[1] + '.' + parts[0].slice(-2) : String(day || '');
+  }
+  function displayEntryTime(item) {
+    var date = new Date(Number(item.createdAt) || item.createdAt || Date.now());
+    var time = String(date.getHours()).padStart(2, '0') + ':' + String(date.getMinutes()).padStart(2, '0');
+    return displayDay(item.date || item.shiftDay) + ' · ' + time;
+  }
+  function feedbackUrl(path) {
+    var base = String(window.MINKA_FEEDBACK_API_BASE || '').replace(/\/$/, '');
+    return base ? base + path : '';
+  }
+  function newClientId() {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+    return 'rg_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 12);
+  }
+  function readJson(key, fallback) {
+    try { return JSON.parse(localStorage.getItem(key) || '') || fallback; }
+    catch (_e) { return fallback; }
+  }
+  function writeJson(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); }
+    catch (_e) {}
+  }
+  function saveServerEntryCounts(day, counts) {
+    var all = readJson(ENTRY_COUNT_KEY, {});
+    var current = all[day] || { comment: 0, suggestion: 0 };
+    ['comment', 'suggestion'].forEach(function (kind) {
+      if (counts && counts[kind] != null) current[kind] = Math.max(0, Number(counts[kind]) || 0);
+    });
+    all[day] = current;
+    writeJson(ENTRY_COUNT_KEY, all);
+  }
+  function paintEntryCounts() {
+    var day = shiftDayKey();
+    var allServer = readJson(ENTRY_COUNT_KEY, {});
+    var server = allServer[day] || {};
+    var local = { comment: 0, suggestion: 0 };
+    var localItems = readJson(TEXT_KEY, []);
+    if (Array.isArray(localItems)) {
+      localItems.forEach(function (item) {
+        if (item && item.shiftDay === day && (item.type === 'comment' || item.type === 'suggestion')) local[item.type] += 1;
+      });
+    }
+    list.querySelectorAll('[data-rg-action-count]').forEach(function (badge) {
+      var kind = badge.dataset.rgActionCount;
+      var count = Math.max(0, Number(server[kind]) || 0) + Math.max(0, Number(local[kind]) || 0);
+      badge.textContent = count ? String(count) : '';
+      badge.setAttribute('aria-label', count ? count + ' ieraksti' : 'Nav ierakstu');
+    });
+  }
+  function pulseCounts() {
+    var all = readJson(PULSE_KEY, {});
+    return all[shiftDayKey()] || {};
+  }
+  function pendingPulseCounts(day) {
+    var all = readJson(PENDING_PULSE_KEY, {});
+    return all[day] || {};
+  }
+  async function fetchFeedback(path, options) {
+    var url = feedbackUrl(path);
+    if (!url) throw new Error('Feedback API nav konfigurēts');
+    var response = await fetch(url, Object.assign({ cache: 'no-store' }, options || {}));
+    if (!response.ok) throw new Error('Feedback API ' + response.status);
+    var data = await response.json();
+    if (!data || data.ok !== true) throw new Error('Nederīga Feedback API atbilde');
+    return data;
+  }
+  function reactionButtons() {
+    return reactions.map(function (item) {
+      return '<button class="rg-pulse-tap" type="button" data-rg-pulse="' + item.key + '" data-emoji="' + item.emoji + '" aria-label="' + item.label + '" aria-pressed="false" title="' + item.label + ' — spied vairākas reizes">'
+        + '<span aria-hidden="true">' + item.emoji + '</span><small class="rg-pulse-count" data-rg-count="' + item.key + '"></small><small class="rg-pulse-name" aria-hidden="true">' + item.label + '</small></button>';
+    }).join('');
+  }
+  function mount() {
+    var label = list.querySelector('.cards-section-label-rd');
+    var section = label && label.closest('.cards-section');
+    var grid = section && section.querySelector('.cards-subgrid');
+    if (!grid || grid.querySelector('.rg-feedback-card')) return;
+    var pulse = document.createElement('div');
+    pulse.className = 'card mk-mid-card mk-mid-card-rd rg-feedback-card';
+    pulse.setAttribute('aria-label', 'Novērtē maiņu');
+    pulse.innerHTML = '<div class="rg-feedback-cloud" aria-hidden="true"></div><div class="rg-feedback-card-head-spacer" aria-hidden="true"></div>'
+      + '<div class="rg-feedback-card-main"><strong class="rg-feedback-card-title">Novērtē maiņu</strong>'
+      + '<span class="rg-pulse-taps" role="group" aria-label="Ātrās reakcijas">' + reactionButtons() + '</span>'
+      + '<small class="rg-feedback-card-reaction-label" aria-live="polite">Izvēlies sajūtu</small></div>'
+      + '<div class="rg-feedback-card-actions"><button class="rg-pulse-write rg-pulse-write--comment" type="button" data-rg-write="comment" title="Atstāt komentāru"><b aria-hidden="true">💬</b><span>Komentārs</span><small class="rg-feedback-action-count" data-rg-action-count="comment"></small></button>'
+      + '<button class="rg-pulse-write rg-pulse-write--suggestion" type="button" data-rg-write="suggestion" aria-label="Ieteikums RG lietotnei" title="Ieteikums RG lietotnei"><img src="../data/rg-cal-192.png" alt=""><span>Ideja</span><small class="rg-feedback-action-count" data-rg-action-count="suggestion"></small></button></div>';
+    grid.appendChild(pulse);
+    paintCounts();
+    loadRatings(shiftDayKey());
+  }
+  function paintCounts() {
+    var counts = pulseCounts();
+    list.querySelectorAll('[data-rg-count]').forEach(function (item) {
+      var count = Math.max(0, Number(counts[item.dataset.rgCount]) || 0);
+      item.textContent = count ? String(count) : '';
+    });
+    var card = list.querySelector('.rg-feedback-card');
+    if (!card) return;
+    var selected = reactions.find(function (item) { return item.key === counts._last; });
+    var dominant = null;
+    var dominantCount = 0;
+    reactions.forEach(function (item) {
+      var count = Math.max(0, Number(counts[item.key]) || 0);
+      if (count > dominantCount || (count === dominantCount && count > 0 && item.key === counts._last)) {
+        dominant = item;
+        dominantCount = count;
+      }
+    });
+    if (dominant) card.dataset.mood = dominant.key;
+    else card.removeAttribute('data-mood');
+    var reactionLabel = card.querySelector('.rg-feedback-card-reaction-label');
+    if (reactionLabel) reactionLabel.textContent = selected ? selected.label : 'Izvēlies sajūtu';
+    card.querySelectorAll('[data-rg-pulse]').forEach(function (button) {
+      var isSelected = !!selected && button.dataset.rgPulse === selected.key;
+      button.classList.toggle('is-selected', isSelected);
+      button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+    });
+    paintEntryCounts();
+  }
+  function addBurst(button, emoji) {
+    var burst = document.createElement('span');
+    burst.className = 'rg-pulse-burst';
+    burst.textContent = emoji;
+    burst.style.setProperty('--rg-fly-x', (Math.round(Math.random() * 22) - 11) + 'px');
+    button.appendChild(burst);
+    burst.addEventListener('animationend', function () { burst.remove(); }, { once: true });
+  }
+  function addReaction(button) {
+    var key = button.dataset.rgPulse;
+    var all = readJson(PULSE_KEY, {});
+    var day = shiftDayKey();
+    var counts = all[day] || {};
+    counts[key] = Math.max(0, Number(counts[key]) || 0) + 1;
+    counts._last = key;
+    all[day] = counts;
+    writeJson(PULSE_KEY, all);
+    var pending = readJson(PENDING_PULSE_KEY, {});
+    var dayPending = pending[day] || {};
+    dayPending[key] = Math.max(0, Number(dayPending[key]) || 0) + 1;
+    pending[day] = dayPending;
+    writeJson(PENDING_PULSE_KEY, pending);
+    paintCounts();
+    addBurst(button, button.dataset.emoji || '❤️');
+    var reaction = reactions.find(function (item) { return item.key === key; });
+    var label = button.closest('.rg-feedback-card') && button.closest('.rg-feedback-card').querySelector('.rg-feedback-card-reaction-label');
+    if (label) label.textContent = reaction ? reaction.label : 'Paldies!';
+    window.clearTimeout(ratingFlushTimer);
+    ratingFlushTimer = window.setTimeout(function () { flushRatings(day); }, 320);
+  }
+
+  function updateLocalRating(day, key, serverCount, pendingCount) {
+    var all = readJson(PULSE_KEY, {});
+    var counts = all[day] || {};
+    counts[key] = Math.max(Number(counts[key]) || 0, Math.max(0, Number(serverCount) || 0) + Math.max(0, Number(pendingCount) || 0));
+    all[day] = counts;
+    writeJson(PULSE_KEY, all);
+    if (day === shiftDayKey()) paintCounts();
+  }
+  function flushRatings(day) {
+    if (ratingSyncs[day]) return ratingSyncs[day];
+    ratingSyncs[day] = (async function () {
+      var snapshot = Object.assign({}, pendingPulseCounts(day));
+      var keys = reactions.map(function (item) { return item.key; }).filter(function (key) { return Number(snapshot[key]) > 0; });
+      for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        var sent = Math.min(1000, Math.max(1, Math.trunc(Number(snapshot[key]) || 0)));
+        try {
+          var data = await fetchFeedback('/api/feedback/rating', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ date: day, reaction: key, delta: sent })
+          });
+          var allPending = readJson(PENDING_PULSE_KEY, {});
+          var currentDayPending = allPending[day] || {};
+          var remaining = Math.max(0, (Number(currentDayPending[key]) || 0) - sent);
+          if (remaining) currentDayPending[key] = remaining;
+          else delete currentDayPending[key];
+          if (Object.keys(currentDayPending).length) allPending[day] = currentDayPending;
+          else delete allPending[day];
+          writeJson(PENDING_PULSE_KEY, allPending);
+          updateLocalRating(day, key, data.count, remaining);
+        } catch (_error) {
+          break;
+        }
+      }
+    })().finally(function () { delete ratingSyncs[day]; });
+    return ratingSyncs[day];
+  }
+  async function loadRatings(day, force) {
+    var now = Date.now();
+    if (!force && ratingsLoadedAt[day] && now - ratingsLoadedAt[day] < 15000) return;
+    ratingsLoadedAt[day] = now;
+    await flushRatings(day);
+    try {
+      var data = await fetchFeedback('/api/feedback?date=' + encodeURIComponent(day) + '&messages=0');
+      var all = readJson(PULSE_KEY, {});
+      var counts = all[day] || {};
+      var pending = pendingPulseCounts(day);
+      reactions.forEach(function (item) {
+        counts[item.key] = Math.max(0, Number(data.ratings && data.ratings[item.key]) || 0) + Math.max(0, Number(pending[item.key]) || 0);
+      });
+      all[day] = counts;
+      writeJson(PULSE_KEY, all);
+      saveServerEntryCounts(day, data.entryCounts || { comment: 0, suggestion: 0 });
+      if (day === shiftDayKey()) paintCounts();
+    } catch (_error) {}
+  }
+
+  var modal = document.createElement('div');
+  modal.id = 'rgFeedbackModal';
+  modal.hidden = true;
+  modal.innerHTML = '<section class="rg-feedback-dialog" role="dialog" aria-modal="true" aria-labelledby="rgFeedbackTitle">'
+    + '<div class="rg-feedback-head"><div class="rg-feedback-title-wrap"><h2 id="rgFeedbackTitle">Idejas RG lietotnei</h2></div><button class="rg-feedback-close" type="button" data-rg-close="1" aria-label="Aizvērt">×</button></div>'
+    + '<div class="rg-feedback-days" id="rgFeedbackDays" role="tablist" aria-label="Datumi"></div>'
+    + '<div class="rg-feedback-list" id="rgFeedbackList" aria-live="polite"></div><button class="rg-feedback-more" id="rgFeedbackMore" type="button" hidden>Rādīt vēl</button>'
+    + '<textarea id="rgFeedbackText" maxlength="700" placeholder="Ko vajadzētu uzlabot vai pievienot?"></textarea>'
+    + '<div class="rg-feedback-meta"><span id="rgFeedbackTargetDay"></span><span id="rgFeedbackChars">0 / 700</span></div>'
+    + '<div class="rg-feedback-actions"><button class="rg-feedback-cancel" type="button" data-rg-close="1">Atcelt</button><button class="rg-feedback-save" id="rgFeedbackSave" type="button" disabled>Saglabāt</button></div>'
+    + '</section>';
+  document.body.appendChild(modal);
+  var textarea = modal.querySelector('#rgFeedbackText');
+  var save = modal.querySelector('#rgFeedbackSave');
+  var chars = modal.querySelector('#rgFeedbackChars');
+  var daysList = modal.querySelector('#rgFeedbackDays');
+  var targetDay = modal.querySelector('#rgFeedbackTargetDay');
+  var messageList = modal.querySelector('#rgFeedbackList');
+  var moreButton = modal.querySelector('#rgFeedbackMore');
+  var modalDay = '';
+  var remoteMessages = [];
+  var nextBefore = null;
+  var messagesLoading = false;
+  var remoteDays = [];
+  var daysLoading = false;
+  var dayRequestId = 0;
+  var messageRequestId = 0;
+
+  function syncFeedbackModalState(open) {
+    if (window.parent === window) return;
+    try {
+      window.parent.postMessage({ type: 'mk_feedback_modal', open: !!open }, window.location.origin);
+    } catch (_e) {}
+  }
+
+  function updateTextState() {
+    var length = textarea.value.length;
+    chars.textContent = length + ' / 700';
+    save.disabled = !textarea.value.trim();
+  }
+  function openModal(kind, trigger) {
+    var isComment = kind === 'comment';
+    lastWriteButton = trigger || null;
+    modal.dataset.kind = isComment ? 'comment' : 'suggestion';
+    modalDay = shiftDayKey();
+    modal.querySelector('#rgFeedbackTitle').textContent = isComment ? 'Komentāri' : 'Idejas RG lietotnei';
+    targetDay.textContent = 'Par ' + displayDay(modalDay);
+    textarea.placeholder = isComment ? 'Uzraksti komentāru…' : 'Ko RG lietotnē vajadzētu uzlabot vai pievienot?';
+    modal.hidden = false;
+    syncFeedbackModalState(true);
+    textarea.value = '';
+    updateTextState();
+    remoteMessages = [];
+    remoteDays = [];
+    nextBefore = null;
+    daysLoading = false;
+    messagesLoading = false;
+    dayRequestId += 1;
+    messageRequestId += 1;
+    renderDayGroups('Ielādē datumus…');
+    loadDayGroups();
+    loadMessages(true);
+  }
+  function closeModal() {
+    modal.hidden = true;
+    syncFeedbackModalState(false);
+    dayRequestId += 1;
+    messageRequestId += 1;
+    daysLoading = false;
+    messagesLoading = false;
+  }
+  function localMessages(day, kind) {
+    var items = readJson(TEXT_KEY, []);
+    if (!Array.isArray(items)) return [];
+    return items.filter(function (item) { return item && item.shiftDay === day && item.type === kind; });
+  }
+  function renderDayGroups(loadingText) {
+    daysList.replaceChildren();
+    if (loadingText && !remoteDays.length && !localMessages(modalDay, modal.dataset.kind).length) {
+      var loading = document.createElement('span');
+      loading.className = 'rg-feedback-empty';
+      loading.textContent = loadingText;
+      daysList.appendChild(loading);
+      return;
+    }
+    var counts = {};
+    remoteDays.forEach(function (item) {
+      if (item && item.date) counts[item.date] = Math.max(0, Number(item.count) || 0);
+    });
+    var allLocal = readJson(TEXT_KEY, []);
+    if (Array.isArray(allLocal)) {
+      allLocal.forEach(function (item) {
+        if (item && item.type === modal.dataset.kind && item.shiftDay) counts[item.shiftDay] = (counts[item.shiftDay] || 0) + 1;
+      });
+    }
+    if (!(modalDay in counts)) counts[modalDay] = 0;
+    Object.keys(counts).sort(function (a, b) {
+      if (a === modalDay) return -1;
+      if (b === modalDay) return 1;
+      return b.localeCompare(a);
+    }).forEach(function (day) {
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'rg-feedback-day-tab' + (day === modalDay ? ' is-active' : '');
+      button.dataset.rgDay = day;
+      button.setAttribute('role', 'tab');
+      button.setAttribute('aria-selected', day === modalDay ? 'true' : 'false');
+      button.title = displayDay(day);
+      button.appendChild(document.createTextNode(compactDay(day)));
+      if (counts[day] > 0) {
+        var count = document.createElement('small');
+        count.className = 'rg-feedback-day-count';
+        count.textContent = String(counts[day]);
+        count.setAttribute('aria-label', counts[day] + ' ieraksti');
+        button.appendChild(count);
+      }
+      daysList.appendChild(button);
+    });
+  }
+  async function loadDayGroups() {
+    if (daysLoading) return;
+    daysLoading = true;
+    var requestId = ++dayRequestId;
+    var requestedKind = modal.dataset.kind;
+    try {
+      var data = await fetchFeedback('/api/feedback/days?kind=' + encodeURIComponent(requestedKind) + '&limit=90');
+      if (requestId !== dayRequestId || requestedKind !== modal.dataset.kind) return;
+      remoteDays = Array.isArray(data.days) ? data.days : [];
+      var storedCounts = readJson(ENTRY_COUNT_KEY, {});
+      remoteDays.forEach(function (item) {
+        if (!item || !item.date) return;
+        var dayCounts = storedCounts[item.date] || { comment: 0, suggestion: 0 };
+        dayCounts[requestedKind] = Math.max(0, Number(item.count) || 0);
+        storedCounts[item.date] = dayCounts;
+      });
+      writeJson(ENTRY_COUNT_KEY, storedCounts);
+    } catch (_error) {
+      if (requestId !== dayRequestId) return;
+      remoteDays = [];
+    } finally {
+      if (requestId !== dayRequestId) return;
+      daysLoading = false;
+      renderDayGroups();
+      paintEntryCounts();
+    }
+  }
+  function selectMessageDay(day) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(day || ''))) return;
+    modalDay = day;
+    targetDay.textContent = 'Par ' + displayDay(modalDay);
+    remoteMessages = [];
+    nextBefore = null;
+    messageRequestId += 1;
+    messagesLoading = false;
+    renderDayGroups();
+    loadMessages(true);
+  }
+  function removePendingMessage(clientId) {
+    var all = readJson(TEXT_KEY, []);
+    if (!Array.isArray(all)) return;
+    writeJson(TEXT_KEY, all.filter(function (item) { return item && item.clientId !== clientId; }));
+    renderDayGroups();
+    renderMessages();
+    paintEntryCounts();
+  }
+  function renderMessages(loadingText) {
+    messageList.replaceChildren();
+    var kind = modal.dataset.kind || 'suggestion';
+    var local = localMessages(modalDay, kind);
+    var seen = {};
+    remoteMessages.forEach(function (item) { if (item.clientId) seen[item.clientId] = true; });
+    var combined = remoteMessages.concat(local.filter(function (item) { return !item.clientId || !seen[item.clientId]; }));
+    combined.sort(function (a, b) { return (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0); });
+    if (!combined.length) {
+      var empty = document.createElement('p');
+      empty.className = 'rg-feedback-empty';
+      empty.textContent = loadingText || (kind === 'comment' ? 'Šajā datumā vēl nav komentāru.' : 'Šajā datumā vēl nav ideju.');
+      messageList.appendChild(empty);
+    } else {
+      combined.forEach(function (item) {
+        var entry = document.createElement('article');
+        entry.className = 'rg-feedback-entry' + (item.pending ? ' is-pending' : '');
+        var textNode = document.createElement('p');
+        textNode.className = 'rg-feedback-entry-text';
+        textNode.textContent = item.text;
+        var meta = document.createElement('time');
+        meta.className = 'rg-feedback-entry-meta';
+        meta.textContent = displayEntryTime(item) + (item.pending ? ' · gaida savienojumu' : '');
+        entry.append(textNode, meta);
+        if (item.pending && item.clientId) {
+          var remove = document.createElement('button');
+          remove.type = 'button';
+          remove.className = 'rg-feedback-entry-remove';
+          remove.dataset.rgRemovePending = item.clientId;
+          remove.setAttribute('aria-label', 'Dzēst nesinhronizēto ierakstu');
+          remove.textContent = '×';
+          entry.appendChild(remove);
+        }
+        messageList.appendChild(entry);
+      });
+    }
+    moreButton.hidden = !nextBefore;
+    moreButton.disabled = messagesLoading;
+  }
+  async function postPendingMessages(day, kind) {
+    var all = readJson(TEXT_KEY, []);
+    if (!Array.isArray(all)) return;
+    var targets = all.filter(function (item) { return item && item.pending && item.shiftDay === day && item.type === kind; });
+    for (var i = 0; i < targets.length; i++) {
+      var item = targets[i];
+      try {
+        await fetchFeedback('/api/feedback/message', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ date: item.shiftDay, kind: item.type, text: item.text, clientId: item.clientId })
+        });
+        all = readJson(TEXT_KEY, []);
+        all = Array.isArray(all) ? all.filter(function (saved) { return saved.clientId !== item.clientId; }) : [];
+        writeJson(TEXT_KEY, all);
+      } catch (_error) {
+        break;
+      }
+    }
+  }
+  async function loadMessages(reset) {
+    if ((messagesLoading && !reset) || !modalDay) return;
+    messagesLoading = true;
+    var requestId = ++messageRequestId;
+    var requestedDay = modalDay;
+    var requestedKind = modal.dataset.kind;
+    if (reset) {
+      remoteMessages = [];
+      nextBefore = null;
+      renderMessages('Ielādē…');
+    }
+    try {
+      await postPendingMessages(requestedDay, requestedKind);
+      var path = '/api/feedback?date=' + encodeURIComponent(requestedDay) + '&kind=' + encodeURIComponent(requestedKind) + '&limit=50';
+      if (!reset && nextBefore) path += '&before=' + encodeURIComponent(nextBefore);
+      var data = await fetchFeedback(path);
+      if (requestId !== messageRequestId || requestedDay !== modalDay || requestedKind !== modal.dataset.kind) return;
+      remoteMessages = reset ? (data.messages || []) : remoteMessages.concat(data.messages || []);
+      nextBefore = data.hasMore ? data.nextBefore : null;
+    } catch (_error) {
+      if (requestId !== messageRequestId) return;
+      nextBefore = null;
+    } finally {
+      if (requestId !== messageRequestId) return;
+      messagesLoading = false;
+      renderMessages();
+    }
+  }
+  async function saveText() {
+    var text = textarea.value.trim();
+    if (!text) return;
+    var items = readJson(TEXT_KEY, []);
+    if (!Array.isArray(items)) items = [];
+    items.unshift({ clientId: newClientId(), type: modal.dataset.kind || 'suggestion', text: text, shiftDay: modalDay, createdAt: Date.now(), pending: true });
+    writeJson(TEXT_KEY, items.slice(0, 500));
+    paintEntryCounts();
+    textarea.value = '';
+    updateTextState();
+    renderMessages();
+    await postPendingMessages(modalDay, modal.dataset.kind);
+    await loadMessages(true);
+    await loadDayGroups();
+    var writeButton = lastWriteButton;
+    if (writeButton) {
+      var original = writeButton.innerHTML;
+      writeButton.innerHTML = '<b aria-hidden="true">✓</b><span>Saglabāts</span>';
+      window.setTimeout(function () { if (writeButton.isConnected) writeButton.innerHTML = original; }, 1300);
+    }
+  }
+
+  list.addEventListener('click', function (event) {
+    var tap = event.target.closest('[data-rg-pulse]');
+    if (tap) { event.preventDefault(); event.stopPropagation(); addReaction(tap); return; }
+    var writeButton = event.target.closest('[data-rg-write]');
+    if (writeButton) { event.preventDefault(); event.stopPropagation(); openModal(writeButton.dataset.rgWrite, writeButton); }
+  });
+  modal.addEventListener('click', function (event) {
+    if (event.target === modal || event.target.closest('[data-rg-close]')) closeModal();
+    var dayButton = event.target.closest('[data-rg-day]');
+    if (dayButton) selectMessageDay(dayButton.dataset.rgDay);
+    var removePending = event.target.closest('[data-rg-remove-pending]');
+    if (removePending) removePendingMessage(removePending.dataset.rgRemovePending);
+  });
+  textarea.addEventListener('input', updateTextState);
+  save.addEventListener('click', saveText);
+  moreButton.addEventListener('click', function () { loadMessages(false); });
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && !modal.hidden) closeModal();
+  });
+  window.addEventListener('storage', function () { paintCounts(); });
+  window.addEventListener('daySelected', function () {
+    window.setTimeout(function () {
+      var day = shiftDayKey();
+      paintCounts();
+      loadRatings(day, true);
+    }, 0);
+  });
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) loadRatings(shiftDayKey(), true);
+  });
+  new MutationObserver(mount).observe(list, { childList: true, subtree: true });
+  syncFeedbackModalState(false);
+  mount();
+  paintCounts();
+})();
+</script>
 
 </body>
 </html>
