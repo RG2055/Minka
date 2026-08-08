@@ -1201,17 +1201,23 @@ function filterFullList(btn) {
     if (__gInitBusy) return;
     __gInitBusy = true;
     const loader = document.getElementById('grafiks-loader');
+    let timeoutId = null;
     try {
       if (loader && retryCount > 0) {
         const loaderText = loader.querySelector('div[style*="letter-spacing"]');
         if (loaderText) loaderText.textContent = `Mēģinu vēlreiz... (${retryCount})`;
       }
       const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-      const timeoutId = controller ? setTimeout(() => controller.abort(), 12000) : null;
+      // With a cached snapshot we can fail over quickly. Without one (first
+      // launch or a previously cleared cache), give the Sheets proxy enough
+      // time to finish instead of aborting every request at 12 seconds and
+      // leaving the installed PWA permanently blank.
+      const requestTimeoutMs = readCachedSchedule() ? 5000 : 60000;
+      timeoutId = controller ? setTimeout(() => controller.abort(), requestTimeoutMs) : null;
       const r = window.MinkaApi
         ? await window.MinkaApi.apiFetch('/api/schedule', { signal: controller ? controller.signal : undefined })
         : await fetch(API_URL, { cache: 'no-store', signal: controller ? controller.signal : undefined });
-      if (timeoutId) clearTimeout(timeoutId);
+      if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const d = await r.json();
       const cachedBeforeRefresh = readCachedSchedule();
@@ -1361,6 +1367,7 @@ function filterFullList(btn) {
         }
       }
     } finally {
+      if (timeoutId) clearTimeout(timeoutId);
       __gInitBusy = false;
     }
   }
