@@ -166,7 +166,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260807windpi1';
+  var CALENDAR_BUILD = '20260808pwarecovery1';
 
   function withCalendarBuild(url) {
     try {
@@ -714,7 +714,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260807windpi1" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260807windpi1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260808pwarecovery1" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260808pwarecovery1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -5446,15 +5446,15 @@ window.addEventListener('message', function(e) {
 
 <script>
 if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-  const MINKA_APP_VERSION = '2026.08.07-winui1';
+  const MINKA_APP_VERSION = '2026.08.08-pwa-recovery1';
   const MINKA_VERSION_KEY = 'minka_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
     try {
-      localStorage.removeItem('minka_schedule_cache_v2');
-      localStorage.removeItem('minka_schedule_cache_ts_v2');
-      localStorage.removeItem('minka_schedule_cache_v3');
-      localStorage.removeItem('minka_schedule_cache_ts_v3');
+      // Schedule data is the offline/cold-start fallback. A UI or Service
+      // Worker release must never delete it: the upstream Sheets proxy can be
+      // slow or temporarily unavailable, especially when an installed PWA
+      // wakes before the network is ready.
       localStorage.removeItem('minka_emoji_v1');
     } catch (e) {}
     return Promise.resolve();

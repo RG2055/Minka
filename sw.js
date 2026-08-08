@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.133-win-dpi-icons';
+const CACHE = 'minka-4.6.144-pwa-recovery1';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 

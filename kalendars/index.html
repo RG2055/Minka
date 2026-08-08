@@ -1170,7 +1170,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260802numbershide1"></script>
+<script src="js/calendar.js?v=20260808pwarecovery1"></script>
 <script src="js/calendar_extras_v4.js?v=20260728f"></script>
 <script src="js/fatigue.js?v=20260728f"></script>
 <script src="js/nightsplit.js?v=20260801release1" defer></script>
@@ -3816,15 +3816,13 @@ window.addEventListener('message', function(e) {
 // worker from this iframe added a second controllerchange reload listener with
 // a different app version, which could make PWA updates visibly reload twice.
 if ('serviceWorker' in navigator && window.top === window) {
-  const MINKA_APP_VERSION = '2026.08.07-winui1.calendar';
+  const MINKA_APP_VERSION = '2026.08.08-pwa-recovery1.calendar';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
     try {
-      localStorage.removeItem('minka_schedule_cache_v2');
-      localStorage.removeItem('minka_schedule_cache_ts_v2');
-      localStorage.removeItem('minka_schedule_cache_v3');
-      localStorage.removeItem('minka_schedule_cache_ts_v3');
+      // Keep the schedule snapshot across releases. It is the only useful
+      // fallback when the upstream schedule proxy is slow or offline.
       localStorage.removeItem('minka_emoji_v1');
     } catch (e) {}
     return Promise.resolve();
