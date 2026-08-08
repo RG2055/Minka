@@ -1,0 +1,25 @@
+{
+  "name": "minka-feedback-api",
+  "main": "src/index.js",
+  "compatibility_date": "2026-08-08",
+  "compatibility_flags": ["nodejs_compat"],
+  "account_id": "a678c2143bd64a6ef4b783aac9953e94",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "minka-feedback-db",
+      "database_id": "db63f47f-8757-4399-b039-ee7181595b07",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "head_sampling_rate": 1
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.05
+    }
+  }
+}
