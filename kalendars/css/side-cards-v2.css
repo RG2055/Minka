@@ -113,6 +113,19 @@ html body .side-panel .mk-count-item.mk-night-ok strong { color: #65e7a3 !import
 html body .side-panel .mk-count-item.mk-night-drop strong { color: #ffbe61 !important; }
 html body .side-panel .mk-count-item.mk-night-zero strong { color: #ff7467 !important; }
 
+html body .side-panel .mk-count-item.has-avatars {
+  grid-template-columns: auto auto auto !important;
+  align-items: center !important;
+}
+
+html body .side-panel .mk-count-avatars {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  height: 14px !important;
+  margin-left: 1px !important;
+}
+
 html body .side-panel .mk-duty-strip {
   display: flex !important;
   flex-direction: column !important;
@@ -892,6 +905,13 @@ html body .side-panel .mk-duty-person-avatar {
   overflow: visible !important;
 }
 
+html body .side-panel .mk-duty-person-avatar.is-initials {
+  flex-basis: 20px !important;
+  width: 20px !important;
+  font-size: 10.5px !important;
+  letter-spacing: -.03em !important;
+}
+
 html body .side-panel .mk-duty-avatar-names,
 html body .side-panel .mk-duty-avatar-time {
   display: block !important;
@@ -927,6 +947,165 @@ html body .side-panel .mk-duty-avatar-group.dl-night .mk-duty-avatar-names { col
 html body .side-panel .mk-duty-avatar-group.dl-leave .mk-duty-avatar-names { color: #e0bd7e !important; }
 html body .side-panel .mk-duty-avatar-group.dl-later .mk-duty-avatar-names { color: #9bb5d6 !important; }
 
+/* Night summaries use the same reading order for both professions:
+   status icon, people, status label, names. */
+html body .side-panel .mk-duty-avatar-group.is-night-summary {
+  grid-template-columns: max-content max-content max-content minmax(0, 1fr) !important;
+  justify-content: stretch !important;
+  column-gap: 4px !important;
+}
+
+html body .side-panel .mk-duty-night-icon {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  display: block !important;
+  font-size: 14px !important;
+  line-height: 14.5px !important;
+}
+
+html body .side-panel .mk-duty-avatar-group.is-night-summary .mk-duty-avatar-stack {
+  grid-column: 3 !important;
+}
+
+html body .side-panel .mk-duty-night-label {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  color: #aeb8c8 !important;
+  font: 750 12px/14.5px Inter, system-ui, sans-serif !important;
+  white-space: nowrap !important;
+}
+
+html body .side-panel .mk-duty-avatar-group.is-night-summary .mk-duty-avatar-names {
+  grid-column: 4 !important;
+}
+
+html body .side-panel .mk-duty-avatar-group.is-status-sentence {
+  grid-template-columns: max-content max-content minmax(0, max-content) !important;
+  justify-content: center !important;
+  column-gap: 4px !important;
+}
+
+html body .side-panel .mk-duty-sentence-icon {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  display: block !important;
+  font-size: 14px !important;
+  line-height: 14.5px !important;
+}
+
+html body .side-panel .mk-duty-sentence-label {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  color: #aeb8c8 !important;
+  font: 750 12px/14.5px Inter, system-ui, sans-serif !important;
+  white-space: nowrap !important;
+}
+
+html body .side-panel .mk-duty-avatar-group.is-status-sentence .mk-duty-avatar-names {
+  grid-column: 3 !important;
+  width: auto !important;
+}
+
+html body .side-panel .mk-duty-avatar-group.is-status-sentence .mk-duty-avatar-names b {
+  color: inherit !important;
+  font: inherit !important;
+  cursor: pointer !important;
+}
+
+html body .side-panel .mk-duty-avatar-group.is-status-sentence.has-inline-avatars {
+  grid-template-columns: max-content max-content max-content minmax(0, max-content) !important;
+  column-gap: 2px !important;
+}
+
+html body .side-panel .mk-duty-avatar-group.is-status-sentence.has-inline-avatars .mk-duty-avatar-stack {
+  grid-column: 3 !important;
+}
+
+html body .side-panel .mk-duty-avatar-group.is-status-sentence.has-inline-avatars .mk-duty-avatar-names {
+  grid-column: 4 !important;
+  font-size: 14px !important;
+}
+
+/* A single person should read as one compact sentence, not as two labels
+   pinned to opposite sides of the panel. */
+html body .side-panel .mk-duty-avatar-group.is-single {
+  grid-template-columns: max-content max-content max-content !important;
+  justify-content: center !important;
+  column-gap: 6px !important;
+}
+
+html body .side-panel .mk-duty-avatar-group.is-night-summary.is-single {
+  grid-template-columns: max-content max-content max-content max-content !important;
+  column-gap: 4px !important;
+}
+
+html body .side-panel .mk-duty-avatar-group.is-status-sentence.has-inline-avatars.is-single {
+  grid-template-columns: max-content max-content max-content max-content !important;
+  column-gap: 2px !important;
+}
+
+/* A crowded status (3+ people) flows as one sentence across two lines, so
+   full names remain visible without ellipses or a smaller font. */
+html body .side-panel .mk-duty-avatar-group.is-crowded {
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-rows: 14.5px 14.5px !important;
+  grid-row: span 2 !important;
+  align-items: center !important;
+  justify-items: center !important;
+  column-gap: 0 !important;
+  row-gap: 1px !important;
+  height: 30px !important;
+}
+
+html body .side-panel .mk-duty-crowded-icon {
+  display: block !important;
+  flex: 0 0 auto !important;
+  font-size: 14px !important;
+  line-height: 14.5px !important;
+  text-align: center !important;
+}
+
+html body .side-panel .mk-duty-crowded-copy {
+  grid-column: 1 !important;
+  grid-row: 1 / 3 !important;
+  display: block !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  color: #aeb8c8 !important;
+  font: 750 12px/14.5px Inter, system-ui, sans-serif !important;
+  text-align: center !important;
+  white-space: normal !important;
+  overflow: visible !important;
+}
+
+html body .side-panel .mk-duty-crowded-copy .mk-duty-crowded-icon,
+html body .side-panel .mk-duty-crowded-copy small,
+html body .side-panel .mk-duty-crowded-copy .mk-duty-avatar-names {
+  display: inline !important;
+  line-height: inherit !important;
+  white-space: normal !important;
+  overflow: visible !important;
+}
+
+html body .side-panel .mk-duty-crowded-copy small {
+  font: inherit !important;
+}
+
+html body .side-panel .mk-duty-crowded-copy .mk-duty-avatar-names {
+  display: contents !important;
+  grid-column: auto !important;
+  grid-row: auto !important;
+  width: auto !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+}
+
+html body .side-panel .mk-duty-crowded-copy .mk-duty-avatar-names b {
+  color: inherit !important;
+  font: inherit !important;
+  cursor: pointer !important;
+}
+
 /* The full PWA uses the larger three-column header above. If the resizable app
    is narrowed, fall back to the compact natural-width row instead of clipping
    names or times. */
@@ -948,6 +1127,11 @@ html body .side-panel .mk-duty-avatar-group.dl-later .mk-duty-avatar-names { col
   html body .side-panel .mk-duty-avatar-stack { height: 12px !important; }
   html body .side-panel .mk-duty-avatar-names { font-size: 11px !important; }
   html body .side-panel .mk-duty-avatar-time { font-size: 7.8px !important; }
+  html body .side-panel .mk-duty-person-avatar.is-initials {
+    flex-basis: 18px !important;
+    width: 18px !important;
+    font-size: 9px !important;
+  }
 }
 
 html body .mk-next-person.mk-next-person-avatar-card {
