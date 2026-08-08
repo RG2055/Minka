@@ -14630,6 +14630,13 @@ window.addEventListener('message', function(e) {
   border-radius: 8px;
   font-size: clamp(23px, 15.5cqw, 28px);
 }
+.rg-feedback-card .rg-pulse-tap > span:first-child {
+  display: block;
+  width: 1em;
+  flex: 0 0 1em;
+  line-height: 1;
+  text-align: center;
+}
 .rg-feedback-card .rg-pulse-tap:hover {
   background: rgba(255,255,255,.055);
   transform: translateY(-2px) scale(1.08);
@@ -14701,13 +14708,13 @@ window.addEventListener('message', function(e) {
 }
 .rg-feedback-card-actions {
   display: grid;
-  grid-template-columns: minmax(0,1fr) clamp(46px, 30cqw, 52px);
+  grid-template-columns: minmax(0,1fr) clamp(42px, 28cqw, 48px);
   gap: 5px;
   width: 100%;
 }
 .rg-feedback-card .rg-pulse-write--suggestion {
   padding: 0 4px;
-  gap: 4px;
+  gap: 2px;
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
@@ -14716,8 +14723,8 @@ window.addEventListener('message', function(e) {
 .rg-feedback-card .rg-pulse-write--suggestion img {
   display: block;
   position: static;
-  width: clamp(15px, 10.5cqw, 17px);
-  height: clamp(15px, 10.5cqw, 17px);
+  width: clamp(13px, 9cqw, 15px);
+  height: clamp(13px, 9cqw, 15px);
   object-fit: contain;
   transform: none;
   flex: 0 0 auto;
@@ -14746,8 +14753,12 @@ window.addEventListener('message', function(e) {
   transform: none;
   pointer-events: none;
 }
+.rg-feedback-card .rg-pulse-write.rg-pulse-write--suggestion {
+  gap: 1px;
+  font-size: clamp(9px, 6.8cqw, 10.5px);
+}
 .rg-feedback-card .rg-pulse-write--comment {
-  gap: 3px;
+  gap: 2px;
   min-width: 0;
   overflow: hidden;
 }
@@ -14756,14 +14767,57 @@ window.addEventListener('message', function(e) {
   letter-spacing: -0.25px;
   white-space: nowrap;
 }
-.rg-feedback-card .rg-pulse-write--comment b {
-  position: static;
-  width: auto;
-  font-size: clamp(13px, 9.2cqw, 15px);
-  line-height: 1;
-  text-align: center;
-  transform: none;
-  flex: 0 0 auto;
+.rg-feedback-card .rg-comment-icon {
+  position: relative;
+  display: block;
+  width: 12px;
+  height: 9px;
+  border-radius: 5px;
+  background: currentColor;
+  flex: 0 0 12px;
+}
+.rg-feedback-card .rg-comment-icon::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  bottom: -2px;
+  width: 0;
+  height: 0;
+  border-top: 3px solid currentColor;
+  border-right: 3px solid transparent;
+}
+@container (max-width: 120px) {
+  .rg-feedback-card .rg-pulse-taps {
+    width: calc(100% + 8px);
+    margin-inline: -4px;
+    gap: 3px;
+  }
+  .rg-feedback-card .rg-pulse-tap {
+    font-size: 19px;
+  }
+  .rg-feedback-card-actions {
+    grid-template-columns: minmax(0,1fr) 38px;
+    gap: 4px;
+  }
+  .rg-feedback-card .rg-pulse-write--comment {
+    gap: 2px;
+  }
+  .rg-feedback-card .rg-pulse-write--comment > span {
+    font-size: 8.75px;
+  }
+  .rg-feedback-card .rg-comment-icon {
+    width: 10px;
+    height: 8px;
+    flex-basis: 10px;
+  }
+  .rg-feedback-card .rg-pulse-write.rg-pulse-write--suggestion {
+    gap: 1px;
+    font-size: 8.5px;
+  }
+  .rg-feedback-card .rg-pulse-write--suggestion img {
+    width: 11px;
+    height: 11px;
+  }
 }
 .rg-feedback-action-count {
   position: absolute;
@@ -14910,7 +14964,7 @@ window.addEventListener('message', function(e) {
       + '<div class="rg-feedback-card-main"><strong class="rg-feedback-card-title">Novērtē maiņu</strong>'
       + '<span class="rg-pulse-taps" role="group" aria-label="Ātrās reakcijas">' + reactionButtons() + '</span>'
       + '<small class="rg-feedback-card-reaction-label" aria-live="polite">Izvēlies sajūtu</small></div>'
-      + '<div class="rg-feedback-card-actions"><button class="rg-pulse-write rg-pulse-write--comment" type="button" data-rg-write="comment" title="Atstāt komentāru"><b aria-hidden="true">💬</b><span>Komentārs</span><small class="rg-feedback-action-count" data-rg-action-count="comment"></small></button>'
+      + '<div class="rg-feedback-card-actions"><button class="rg-pulse-write rg-pulse-write--comment" type="button" data-rg-write="comment" title="Atstāt komentāru"><b class="rg-comment-icon" aria-hidden="true"></b><span>Komentārs</span><small class="rg-feedback-action-count" data-rg-action-count="comment"></small></button>'
       + '<button class="rg-pulse-write rg-pulse-write--suggestion" type="button" data-rg-write="suggestion" aria-label="Ieteikums RG lietotnei" title="Ieteikums RG lietotnei"><img src="../data/rg-cal-192.png" alt=""><span>Ideja</span><small class="rg-feedback-action-count" data-rg-action-count="suggestion"></small></button></div>';
     grid.appendChild(pulse);
     paintCounts();
