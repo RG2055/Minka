@@ -2490,6 +2490,7 @@ function filterFullList(btn) {
     const nightRef = (nightRefBase && nightRefBase > now) ? nightRefBase : now;
     let nowCount = 0, nightCount = 0;
     const nowNames = new Set(), nightNames = new Set();
+    const nowPeople = [];
     // Groups keyed by meaning + time, rendered as plain readable sentences:
     // "🌙 Pa nakti: Annija, Anta" / "☀️ Līdz 17:00: Anna" / "🌙 No 17:00: Aelita"
     const stay = [], leaveBy = {}, comeAt = {};
@@ -2503,13 +2504,14 @@ function filterFullList(btn) {
       if (!start || !end) {
         nowCount++; nightCount++;
         nowNames.add(identity); nightNames.add(identity);
+        nowPeople.push(person);
         stay.push(person);
         return;
       }
       const active = now >= start && now < end;
       const upcoming = now < start;
       const coversNight = start <= nightRef && nightRef < end;
-      if (active) { nowCount++; nowNames.add(identity); }
+      if (active) { nowCount++; nowNames.add(identity); nowPeople.push(person); }
       if (coversNight) { nightCount++; nightNames.add(identity); }
       if (active && coversNight) {
         stay.push(person);
@@ -2526,9 +2528,32 @@ function filterFullList(btn) {
     const sameNightRoster = nowCount === nightCount && nowNames.size === nightNames.size &&
       Array.from(nowNames).every(function(name) { return nightNames.has(name); });
     const nCls = nightCount === 0 ? 'mk-night-zero' : (nightCount < nowCount ? 'mk-night-drop' : 'mk-night-ok');
+    const renderDutyAvatars = function(list) {
+      return list.map(function(p, index) {
+        const personEmoji = getSidePersonEmoji(p.name);
+        const initials = String(p.name || p.first || '--').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(function(part) {
+          return part.charAt(0);
+        }).join('').toUpperCase();
+        const avatar = personEmoji || initials;
+        const avatarClass = personEmoji ? '' : ' is-initials';
+        return '<b class="mk-duty-person-avatar' + avatarClass + '" data-w="' + mkEscAttr(p.name) + '" title="' + mkEscAttr(p.first) + '" style="--mk-avatar-i:' + index + '">' + mkEscAttr(avatar) + '</b>';
+      }).join('');
+    };
+    const counterPeople = nowPeople.length > 1 ? nowPeople : [];
+    const counterNames = new Set(counterPeople.map(function(p) {
+      return String(p.name || '').trim().toLocaleLowerCase('lv-LV');
+    }));
+    const avatarsAreInCounter = function(list) {
+      return counterPeople.length > 0 && list.length > 0 && list.every(function(p) {
+        return counterNames.has(String(p.name || '').trim().toLocaleLowerCase('lv-LV'));
+      });
+    };
+    const counterAvatars = counterPeople.length
+      ? '<span class="mk-count-avatars" aria-label="' + mkEscAttr(counterPeople.map(function(p) { return p.first; }).join(', ')) + '">' + renderDutyAvatars(counterPeople) + '</span>'
+      : '';
     // Two identical numbers say nothing, so the night count only appears when
     // it actually differs from the current one.
-    pill.innerHTML = '<span class="mk-count-item"><small>ŠOBRĪD</small><strong>' + nowCount + '</strong></span>'
+    pill.innerHTML = '<span class="mk-count-item' + (counterAvatars ? ' has-avatars' : '') + '"><small>ŠOBRĪD</small><strong>' + nowCount + '</strong>' + counterAvatars + '</span>'
       + (sameNightRoster
         ? ''
         : '<span class="mk-count-item ' + nCls + '"><small>NAKTĪ</small><strong>' + nightCount + '</strong></span>');
@@ -2543,37 +2568,49 @@ function filterFullList(btn) {
       if (list && list.parentElement) list.parentElement.insertBefore(strip, list);
     }
     strip.dataset.list = listId;
+    const getDutySentenceLabel = (timeLabel) => {
+      if (timeLabel === 'Naktī') return 'Naktī';
+      if (timeLabel.indexOf('Līdz ') === 0) return timeLabel;
+      return 'No ' + timeLabel.replace(/^(?:Līdz|Nāks)\s+/, '');
+    };
+    const groupNeedsWrap = (kind, timeLabel, list) => {
+      return list.length > 2;
+    };
     const groupHtml = (kind, icon, timeLabel, list) => {
-      const timeOnly = timeLabel.replace(/^(?:Līdz|Nāks)\s+/, '');
-      const compactTimeLabel = timeLabel === 'Naktī'
-        ? 'naktī'
-        : (timeLabel.indexOf('Līdz ') === 0 ? 'līdz ' : 'no ') + timeOnly;
-      const avatars = list.map(function(p, index) {
-        const personEmoji = getSidePersonEmoji(p.name);
-        // A single initial stays legible at this deliberately tiny size and
-        // leaves the person's full first name enough room beside it.
-        const initials = String(p.name || p.first || '--').trim().charAt(0).toUpperCase();
-        const avatar = personEmoji || initials;
-        return '<b class="mk-duty-person-avatar" data-w="' + mkEscAttr(p.name) + '" title="' + mkEscAttr(p.first + ' · ' + timeLabel) + '" style="--mk-avatar-i:' + index + '">' + mkEscAttr(avatar) + '</b>';
-      }).join('');
+      const sentenceLabel = getDutySentenceLabel(timeLabel);
       const names = list.map(function(p) { return mkEscAttr(p.first); }).join(', ');
-      return '<div class="mk-duty-avatar-group ' + kind + '">'
-        + '<span class="mk-duty-avatar-stack" aria-label="' + mkEscAttr(names) + '">' + avatars + '</span>'
-        + '<span class="mk-duty-avatar-names">' + names + '</span>'
-        + '<small class="mk-duty-avatar-time" title="' + mkEscAttr(icon + ' ' + timeLabel) + '">' + mkEscAttr(compactTimeLabel) + '</small>'
+      const linkedNames = list.map(function(p) {
+        return '<b data-w="' + mkEscAttr(p.name) + '">' + mkEscAttr(p.first) + '</b>';
+      }).join(', ');
+      if (groupNeedsWrap(kind, timeLabel, list)) {
+        return '<div class="mk-duty-avatar-group ' + kind + ' is-crowded is-counter-avatars">'
+          + '<span class="mk-duty-crowded-copy"><span class="mk-duty-crowded-icon" aria-hidden="true">' + icon + '</span> '
+          + '<small>' + mkEscAttr(sentenceLabel) + ':</small> '
+          + '<span class="mk-duty-avatar-names" aria-label="' + mkEscAttr(names) + '">' + linkedNames + '</span></span>'
+          + '</div>';
+      }
+      return '<div class="mk-duty-avatar-group ' + kind + ' is-status-sentence' + (list.length === 1 ? ' is-single' : '') + '">'
+        + '<span class="mk-duty-sentence-icon" aria-hidden="true">' + icon + '</span>'
+        + '<small class="mk-duty-sentence-label">' + mkEscAttr(sentenceLabel) + ':</small>'
+        + '<span class="mk-duty-avatar-names" aria-label="' + mkEscAttr(names) + '">' + linkedNames + '</span>'
         + '</div>';
     };
     const lines = [];
-    if (stay.length) lines.push(groupHtml('dl-night', '🌙', 'Naktī', stay));
+    let visualRows = 0;
+    const addGroup = (kind, icon, timeLabel, list) => {
+      lines.push(groupHtml(kind, icon, timeLabel, list));
+      visualRows += groupNeedsWrap(kind, timeLabel, list) ? 2 : 1;
+    };
+    if (stay.length) addGroup('dl-night', '🌙', 'Naktī', stay);
     Object.keys(leaveBy).sort().forEach(function(t) {
-      lines.push(groupHtml('dl-leave', '☀️', 'Līdz ' + t, leaveBy[t]));
+      addGroup('dl-leave', '☀️', 'Līdz ' + t, leaveBy[t]);
     });
     Object.keys(comeAt).sort().forEach(function(t) {
-      lines.push(groupHtml('dl-later', '🌙', 'Nāks ' + t, comeAt[t]));
+      addGroup('dl-later', '🌙', 'Nāks ' + t, comeAt[t]);
     });
     // Give the larger header typography a real line box; squeezing 14px text
     // into the former 11.2px rows caused emoji and time labels to merge.
-    const fixedStripHeight = lines.length ? (lines.length * 14.5 + Math.max(0, lines.length - 1)) : 0;
+    const fixedStripHeight = visualRows ? (visualRows * 14.5 + Math.max(0, visualRows - 1)) : 0;
     strip.classList.add('mk-duty-avatar-strip');
     strip.style.setProperty('--mk-duty-group-count', Math.max(1, lines.length));
     strip.style.setProperty('--mk-duty-fixed-height', fixedStripHeight.toFixed(2) + 'px');
@@ -5615,6 +5652,7 @@ function filterFullList(btn) {
   window.g_updatePanelsForDate = g_updatePanelsForDate;
   window.g_selectDay = g_selectDay;
   window.g_stepDay = g_stepDay;
+
 })();
 
 /* =============================
