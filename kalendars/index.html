@@ -14639,7 +14639,7 @@ window.addEventListener('message', function(e) {
   text-align: center;
 }
 .rg-feedback-card .rg-pulse-tap:hover {
-  background: rgba(255,255,255,.055);
+  background: transparent;
   transform: translateY(-2px) scale(1.08);
 }
 .rg-feedback-card [data-rg-pulse="terrible"] { --rg-reaction-accent: #fb7185; --rg-reaction-rgb: 244,63,94; }
@@ -14648,15 +14648,14 @@ window.addEventListener('message', function(e) {
 .rg-feedback-card [data-rg-pulse="good"]     { --rg-reaction-accent: #5eead4; --rg-reaction-rgb: 45,212,191; }
 .rg-feedback-card [data-rg-pulse="excellent"] { --rg-reaction-accent: #86efac; --rg-reaction-rgb: 74,222,128; }
 .rg-feedback-card .rg-pulse-tap.is-selected {
-  background: rgba(var(--rg-reaction-rgb),.20);
+  background: transparent;
   outline: 0;
   outline-offset: 0;
-  box-shadow: 0 0 0 2px rgba(var(--rg-reaction-rgb),.24);
+  box-shadow: none;
   transform: none;
 }
 .rg-feedback-card .rg-pulse-tap.is-selected > span:first-child {
-  transform: translateY(-1px) scale(1.12);
-  transform-origin: center;
+  transform: none;
 }
 .rg-feedback-card .rg-pulse-tap:focus-visible {
   outline: 2px solid var(--rg-card-accent);
@@ -14665,7 +14664,7 @@ window.addEventListener('message', function(e) {
 .rg-feedback-card .rg-pulse-tap.is-selected:focus-visible {
   outline: 0 !important;
   outline-offset: 0 !important;
-  box-shadow: 0 0 0 2px rgba(var(--rg-reaction-rgb),.24);
+  box-shadow: none !important;
 }
 .rg-feedback-card .rg-pulse-count {
   right: -5px;
