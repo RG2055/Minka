@@ -166,7 +166,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260808glass5';
+  var CALENDAR_BUILD = '20260807windpi1';
 
   function withCalendarBuild(url) {
     try {
@@ -714,7 +714,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260808glass5" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260808glass5" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260807windpi1" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260807windpi1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -4674,7 +4674,6 @@ function updateBuddyUiSuppression() {
     cls.contains('mk-buddy-ui-numbers') ||
     cls.contains('mk-buddy-ui-coffee') ||
     cls.contains('mk-buddy-ui-workermodal') ||
-    cls.contains('mk-buddy-ui-search') ||
     isBuddyOverlayVisible('bolus-overlay') ||
 	    isBuddyOverlayVisible('bolus-edit-modal') ||
 	    isBuddyOverlayVisible('mobileQrModal') ||
@@ -4761,10 +4760,6 @@ window.addEventListener('message', function(e) {
   }
   if (e.data && e.data.type === 'mk_numbers_state') {
     setBuddyUiFlag('numbers', !!e.data.open);
-  }
-  /* Meklēšana pārņem visu joslu — Buddy tur sēž virsū, tāpēc paslēpjam. */
-  if (e.data && e.data.type === 'mk_search_state') {
-    setBuddyUiFlag('search', !!e.data.open);
   }
   if (e.data && e.data.type === 'minka-calendar-selected-day-state' && e.data.payload) {
     window.__minkaLastSelectedDayState = e.data.payload;
@@ -5451,7 +5446,7 @@ window.addEventListener('message', function(e) {
 
 <script>
 if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-  const MINKA_APP_VERSION = '2026.08.08-glass5';
+  const MINKA_APP_VERSION = '2026.08.07-winui1';
   const MINKA_VERSION_KEY = 'minka_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -8689,7 +8684,6 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
       var wr=W.getBoundingClientRect();
       var hr=HUD_CVS.getBoundingClientRect();
       if(wr.width<4 || hr.width<4) return;
-      var sideMode=false;
       BUBBLE.style.setProperty('--mk-bubble-gap','2px');
       /* Centre the tail over the actual pixel buddy. W itself also contains
          coffee and fatigue controls, so centring on W would look offset. */
@@ -8726,40 +8720,14 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
           var bubbleTop=bubbleBottom-br.height;
           var overlapsX=bubbleRight>namedayRect.left-4&&bubbleLeft<namedayRect.right+4;
           if(overlapsX&&bubbleTop<namedayRect.bottom+5&&bubbleBottom>namedayRect.top){
-            /* Kopš lineāls ir joslas apakšmalā, virs Buddy vairs nav vietas
-               burbulim — tas uzkāptu virsū vārda dienām. Galvenes rindā pa labi
-               no kafijas/noguruma bloka ir tukšums, tāpēc burbuli liekam turp,
-               blakus Buddy. Ja arī tur nepietiek vietas, atgriežamies pie
-               vecās uzvedības un tikai nolaižam to, cik atļauts. */
-            var statsRight=null;
-            try{
-              var sr2=SHIFT_STATS&&SHIFT_STATS.getBoundingClientRect();
-              if(sr2&&sr2.width>20) statsRight=sr2.right;
-            }catch(_e){}
-            var sideLeftPage=(statsRight!=null?statsRight:wr.right)+12;
-            /* Pa labi burbulis nedrīkst aizlīst zem "Detalizēti" pogas. */
-            var limitRight=window.innerWidth-12;
-            try{
-              var lanesBtn=frameDoc.getElementById('lanes-mini-toggle');
-              var lbr=lanesBtn&&lanesBtn.getBoundingClientRect();
-              if(lbr&&lbr.width>10) limitRight=Math.min(limitRight,fr.left+lbr.left*sx-10);
-            }catch(_e2){}
-            var roomRight=limitRight-sideLeftPage;
-            if(roomRight>=120){
-              sideMode=true;
-              BUBBLE.style.setProperty('--mk-bubble-side-x',Math.round(sideLeftPage-wr.left)+'px');
-              BUBBLE.style.setProperty('--mk-bubble-side-max',Math.round(roomRight)+'px');
-            } else {
-              var desiredBottom=namedayRect.bottom+5+br.height;
-              var maxBottom=hr.top+10;
-              var safeBottom=Math.min(desiredBottom,maxBottom);
-              var safeGap=Math.max(-24,Math.min(2,wr.top-safeBottom));
-              BUBBLE.style.setProperty('--mk-bubble-gap',Math.round(safeGap)+'px');
-            }
+            var desiredBottom=namedayRect.bottom+5+br.height;
+            var maxBottom=hr.top-4;
+            var safeBottom=Math.min(desiredBottom,maxBottom);
+            var safeGap=Math.max(-14,Math.min(2,wr.top-safeBottom));
+            BUBBLE.style.setProperty('--mk-bubble-gap',Math.round(safeGap)+'px');
           }
         }
       }
-      BUBBLE.classList.toggle('mk-bubble-side',sideMode);
     }catch(e){}
   }
   function homePos(){
@@ -8935,27 +8903,6 @@ body.mk-buddy-header-home #mk-buddy-bubble::after {
   border-right:1px solid rgba(129,202,241,.24);
   border-bottom:1px solid rgba(129,202,241,.24);
   transform:translateX(-50%) rotate(45deg);
-}
-/* Blakus režīms: virs Buddy nav vietas (lineāls ir joslas apakšmalā), tāpēc
-   burbulis stāv pa labi no kafijas/noguruma bloka, rindas tukšajā daļā, un
-   astīte rāda pa kreisi uz Buddy. Nekas vairs neuzkāpj galvenes tekstam. */
-body.mk-buddy-header-home #mk-buddy-bubble.mk-bubble-side,
-body.mk-buddy-header-home #mk-buddy-bubble.mk-bubble-side.show {
-  bottom:auto !important;
-  top:50% !important;
-  left:var(--mk-bubble-side-x,230px) !important;
-  transform:translate(0,-50%) !important;
-  max-width:min(230px,var(--mk-bubble-side-max,230px)) !important;
-}
-body.mk-buddy-header-home #mk-buddy-bubble.mk-bubble-side #mk-buddy-bubble-text {
-  max-width:min(230px,var(--mk-bubble-side-max,230px)) !important;
-}
-body.mk-buddy-header-home #mk-buddy-bubble.mk-bubble-side::after {
-  left:-4px !important;
-  right:auto !important;
-  bottom:auto !important;
-  top:50% !important;
-  transform:translateY(-50%) rotate(135deg) !important;
 }
 body.mk-buddy-header-home #mk-buddy-shift-stats,
 body.mk-buddy-header-home #mk-buddy.stats-above #mk-buddy-shift-stats,
