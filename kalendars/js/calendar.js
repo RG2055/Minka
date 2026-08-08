@@ -2543,17 +2543,40 @@ function filterFullList(btn) {
       if (list && list.parentElement) list.parentElement.insertBefore(strip, list);
     }
     strip.dataset.list = listId;
-    const namesHtml = list => list.map(function(p) {
-      return '<b data-w="' + mkEscAttr(p.name) + '">' + mkEscAttr(p.first) + '</b>';
-    }).join(', ');
+    const groupHtml = (kind, icon, timeLabel, list) => {
+      const timeOnly = timeLabel.replace(/^(?:Līdz|Nāks)\s+/, '');
+      const compactTimeLabel = timeLabel === 'Naktī'
+        ? 'naktī'
+        : (timeLabel.indexOf('Līdz ') === 0 ? 'līdz ' : 'no ') + timeOnly;
+      const avatars = list.map(function(p, index) {
+        const personEmoji = getSidePersonEmoji(p.name);
+        // A single initial stays legible at this deliberately tiny size and
+        // leaves the person's full first name enough room beside it.
+        const initials = String(p.name || p.first || '--').trim().charAt(0).toUpperCase();
+        const avatar = personEmoji || initials;
+        return '<b class="mk-duty-person-avatar" data-w="' + mkEscAttr(p.name) + '" title="' + mkEscAttr(p.first + ' · ' + timeLabel) + '" style="--mk-avatar-i:' + index + '">' + mkEscAttr(avatar) + '</b>';
+      }).join('');
+      const names = list.map(function(p) { return mkEscAttr(p.first); }).join(', ');
+      return '<div class="mk-duty-avatar-group ' + kind + '">'
+        + '<span class="mk-duty-avatar-stack" aria-label="' + mkEscAttr(names) + '">' + avatars + '</span>'
+        + '<span class="mk-duty-avatar-names">' + names + '</span>'
+        + '<small class="mk-duty-avatar-time" title="' + mkEscAttr(icon + ' ' + timeLabel) + '">' + mkEscAttr(compactTimeLabel) + '</small>'
+        + '</div>';
+    };
     const lines = [];
-    if (stay.length) lines.push('<div class="mk-duty-line dl-night"><span class="mk-dl-ico">🌙</span> Naktī: ' + namesHtml(stay) + '</div>');
+    if (stay.length) lines.push(groupHtml('dl-night', '🌙', 'Naktī', stay));
     Object.keys(leaveBy).sort().forEach(function(t) {
-      lines.push('<div class="mk-duty-line dl-leave"><span class="mk-dl-ico">☀️</span> Līdz <span class="mk-dl-t">' + mkEscAttr(t) + '</span>: ' + namesHtml(leaveBy[t]) + '</div>');
+      lines.push(groupHtml('dl-leave', '☀️', 'Līdz ' + t, leaveBy[t]));
     });
     Object.keys(comeAt).sort().forEach(function(t) {
-      lines.push('<div class="mk-duty-line dl-later"><span class="mk-dl-ico">🌙</span> Nāks <span class="mk-dl-t">' + mkEscAttr(t) + '</span>: ' + namesHtml(comeAt[t]) + '</div>');
+      lines.push(groupHtml('dl-later', '🌙', 'Nāks ' + t, comeAt[t]));
     });
+    // Give the larger header typography a real line box; squeezing 14px text
+    // into the former 11.2px rows caused emoji and time labels to merge.
+    const fixedStripHeight = lines.length ? (lines.length * 14.5 + Math.max(0, lines.length - 1)) : 0;
+    strip.classList.add('mk-duty-avatar-strip');
+    strip.style.setProperty('--mk-duty-group-count', Math.max(1, lines.length));
+    strip.style.setProperty('--mk-duty-fixed-height', fixedStripHeight.toFixed(2) + 'px');
     strip.innerHTML = lines.join('');
   }
 
@@ -2634,7 +2657,16 @@ function filterFullList(btn) {
       const kindLabel = is24 ? '24 stundu maiņa' : (isNight ? 'Nakts maiņa' : 'Dienas maiņa');
       const emojiHtml = emoji ? '<span class="mk-next-person-emoji" aria-hidden="true">' + emoji + '</span>' : '';
       const hoursHtml = hours > 0 ? '<span class="mk-next-person-hours ' + kind + '">' + hours + 'h</span>' : '';
-      return '<span class="mk-next-person ' + kind + '" title="' + mkEscAttr(first + ' ' + kindLabel) + '">' + emojiHtml + '<b>' + mkEscAttr(first) + '</b>' + hoursHtml + '</span>';
+      const personEmoji = getSidePersonEmoji(String(w && w.name || '').trim());
+      const initials = String(w && w.name || first || '--').trim().charAt(0).toUpperCase();
+      const avatar = personEmoji || initials;
+      const avatarClass = personEmoji ? '' : ' is-initial';
+      const compactTime = hours > 0 ? hours + 'H' + emoji : emoji;
+      return '<span class="mk-next-person ' + kind + ' mk-next-person-avatar-card" title="' + mkEscAttr(first + ' ' + kindLabel) + '">'
+        + '<span class="mk-next-size-proxy" aria-hidden="true">' + emojiHtml + '<b>' + mkEscAttr(first) + '</b>' + hoursHtml + '</span>'
+        + '<span class="mk-next-person-visual"><span class="mk-next-person-avatar' + avatarClass + '" aria-hidden="true">' + mkEscAttr(avatar) + '</span>'
+        + '<span class="mk-next-person-copy"><b>' + mkEscAttr(first) + '</b><small>' + mkEscAttr(compactTime) + '</small></span></span>'
+        + '</span>';
     }).join('');
   }
 

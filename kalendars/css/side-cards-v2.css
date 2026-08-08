@@ -828,3 +828,222 @@ html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) 
   width: auto !important;
   min-width: 0 !important;
 }
+
+/* Compact person avatars in the existing header/footer geometry.
+   Do not set dimensions on panels, duty cards or next-shift containers here. */
+html body .side-panel .mk-duty-strip.mk-duty-avatar-strip {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-auto-rows: 14.5px !important;
+  align-items: center !important;
+  justify-content: stretch !important;
+  gap: 1px !important;
+  height: var(--mk-duty-fixed-height) !important;
+  min-height: var(--mk-duty-fixed-height) !important;
+  max-height: var(--mk-duty-fixed-height) !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  overflow: visible !important;
+  container-type: inline-size !important;
+}
+
+html body .side-panel .mk-duty-avatar-group {
+  display: grid !important;
+  grid-template-columns: max-content minmax(0, 1fr) max-content !important;
+  grid-template-rows: 14.5px !important;
+  align-items: center !important;
+  justify-content: stretch !important;
+  column-gap: 5px !important;
+  row-gap: 0 !important;
+  min-width: 0 !important;
+  height: 14.5px !important;
+  overflow: visible !important;
+}
+
+html body .side-panel .mk-duty-avatar-stack {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  min-width: 0 !important;
+  height: 14px !important;
+  padding-left: 1px !important;
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+}
+
+html body .side-panel .mk-duty-person-avatar {
+  position: relative !important;
+  z-index: calc(10 - var(--mk-avatar-i)) !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  box-sizing: border-box !important;
+  flex: 0 0 14px !important;
+  width: 14px !important;
+  height: 14px !important;
+  margin-left: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #eaf0f8 !important;
+  font: 800 14px/14px Inter, system-ui, sans-serif !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
+  cursor: pointer !important;
+  overflow: visible !important;
+}
+
+html body .side-panel .mk-duty-avatar-names,
+html body .side-panel .mk-duty-avatar-time {
+  display: block !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+  text-shadow: none !important;
+}
+
+html body .side-panel .mk-duty-avatar-names {
+  color: #dce3ed !important;
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  font: 800 14px/14.5px Inter, system-ui, sans-serif !important;
+  letter-spacing: -.03em !important;
+  text-align: left !important;
+}
+
+html body .side-panel .mk-duty-avatar-time {
+  color: #8895a8 !important;
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+  font: 800 10px/14.5px Inter, system-ui, sans-serif !important;
+  letter-spacing: -.015em !important;
+  text-align: right !important;
+}
+
+html body .side-panel .mk-duty-avatar-group.dl-night .mk-duty-avatar-time { color: #70d6a3 !important; }
+html body .side-panel .mk-duty-avatar-group.dl-leave .mk-duty-avatar-time { color: #d8b16f !important; }
+html body .side-panel .mk-duty-avatar-group.dl-later .mk-duty-avatar-time { color: #8da9ce !important; }
+html body .side-panel .mk-duty-avatar-group.dl-night .mk-duty-avatar-names { color: #70d6a3 !important; }
+html body .side-panel .mk-duty-avatar-group.dl-leave .mk-duty-avatar-names { color: #e0bd7e !important; }
+html body .side-panel .mk-duty-avatar-group.dl-later .mk-duty-avatar-names { color: #9bb5d6 !important; }
+
+/* The full PWA uses the larger three-column header above. If the resizable app
+   is narrowed, fall back to the compact natural-width row instead of clipping
+   names or times. */
+@container (max-width: 170px) {
+  html body .side-panel .mk-duty-avatar-group {
+    grid-template-columns: max-content max-content max-content !important;
+    justify-content: start !important;
+    column-gap: 2px !important;
+  }
+
+  html body .side-panel .mk-duty-person-avatar {
+    flex-basis: 12px !important;
+    width: 12px !important;
+    height: 12px !important;
+    font-size: 12px !important;
+    line-height: 12px !important;
+  }
+
+  html body .side-panel .mk-duty-avatar-stack { height: 12px !important; }
+  html body .side-panel .mk-duty-avatar-names { font-size: 11px !important; }
+  html body .side-panel .mk-duty-avatar-time { font-size: 7.8px !important; }
+}
+
+html body .mk-next-person.mk-next-person-avatar-card {
+  position: relative !important;
+  isolation: isolate !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+html body .mk-next-size-proxy {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  visibility: hidden !important;
+  white-space: nowrap !important;
+}
+
+html body .mk-next-person-visual {
+  position: absolute !important;
+  inset: 2px 4px !important;
+  z-index: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+}
+
+html body .mk-next-person-avatar {
+  display: inline-grid !important;
+  place-items: center !important;
+  flex: 0 0 18px !important;
+  width: 18px !important;
+  height: 18px !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  color: #eef3fa !important;
+  font: 800 13.5px/1 Inter, system-ui, sans-serif !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+html body .mk-next-person-avatar.is-initial {
+  flex-basis: 12px !important;
+  width: 12px !important;
+  font-size: 10px !important;
+}
+
+html body .mk-next-person-copy {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  min-width: 0 !important;
+  line-height: 1 !important;
+}
+
+html body .mk-next-person-copy b {
+  display: block !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  color: #f1f4f8 !important;
+  font: 800 8.5px/9px Inter, system-ui, sans-serif !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+}
+
+html body .mk-next-person-copy small {
+  display: block !important;
+  color: #8996a8 !important;
+  font: 750 6px/7px "JetBrains Mono", ui-monospace, monospace !important;
+  letter-spacing: .01em !important;
+  white-space: nowrap !important;
+}
+
+html body .mk-next-person.is-day .mk-next-person-copy small { color: #d5aa58 !important; }
+html body .mk-next-person.is-night .mk-next-person-copy small { color: #79b9d8 !important; }
+html body .mk-next-person.is-24h .mk-next-person-copy small { color: #cf7585 !important; }
+
+/* The next crew is four people, so use the compact 2 × 2 pattern instead of
+   stretching four mostly-empty pills across the full side panel. */
+html body .side-panel .mk-next-shift-card {
+  grid-template-rows: 25px 53px 13px !important;
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+html body #radiographers-next.mk-next-shift-crew,
+html body #radiologists-next.mk-next-shift-crew {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  grid-template-rows: repeat(2, 25px) !important;
+  gap: 3px !important;
+  height: 53px !important;
+  min-height: 53px !important;
+}
