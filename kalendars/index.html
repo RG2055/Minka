@@ -14658,15 +14658,20 @@ window.addEventListener('message', function(e) {
   outline-offset: 2px;
 }
 .rg-feedback-card .rg-pulse-count {
-  right: -1px;
-  top: -4px;
+  right: -5px;
+  top: -7px;
   min-width: 13px;
   height: 13px;
-  padding: 0 3px;
+  padding: 0 2px;
+  box-sizing: border-box;
   border: 1px solid rgba(255,255,255,.24);
   background: var(--rg-reaction-accent);
   color: #081018;
   font: 850 7px/11px Inter, system-ui, sans-serif;
+}
+.rg-feedback-card .rg-pulse-tap.is-selected .rg-pulse-count {
+  transform: scale(.86);
+  transform-origin: center;
 }
 .rg-feedback-card .rg-pulse-name {
   display: none;
@@ -14760,7 +14765,7 @@ window.addEventListener('message', function(e) {
 .rg-feedback-card .rg-pulse-write--comment {
   gap: 2px;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 .rg-feedback-card .rg-pulse-write--comment > span {
   min-width: 0;
@@ -14821,8 +14826,8 @@ window.addEventListener('message', function(e) {
 }
 .rg-feedback-action-count {
   position: absolute;
-  top: -5px;
-  right: -4px;
+  top: -6px;
+  right: -2px;
   min-width: 14px;
   height: 14px;
   padding: 0 3px;
