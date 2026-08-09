@@ -5899,15 +5899,10 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
 #mkCoffeeStats .cs-row .e{width:14px;text-align:center;font-size:11px;}
 #mkCoffeeStats .cs-row b{color:#64d2ff;font-weight:800;font-variant-numeric:tabular-nums;}
 #mkCoffeeStats .cs-empty{padding:10px 8px;font:600 11px/1.4 'Space Grotesk',system-ui;color:#5e616b;text-align:center;}
-/* Coffee, the coffee top and the fatigue readout moved to the shift-rating
-   card in the calendar, where they have room to breathe. Hidden rather than
-   deleted: the buddy's own scripts still look these nodes up and guard on
-   them, and hiding keeps every one of those guards true. The header loses two
-   stacked blocks and gets noticeably shorter. */
-#mk-buddy-coffee-stat,
-#mk-buddy-stats-btn,
-#mk-buddy-shift-stats .mk-buddy-sep,
-#mk-buddy-shift-stats .mk-buddy-fatigue-part { display: none !important; }
+/* Coffee, the coffee top and the fatigue readout now live on the shift-rating
+   card in the calendar and have been removed from this header outright. Every
+   script that looked them up already guarded on the lookup, so the getElementById
+   calls simply return null and those branches no longer run. */
 </style>
 
 <div id="mk-buddy">
@@ -5915,49 +5910,12 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
     <div id="mk-buddy-bubble"><span id="mk-buddy-bubble-text"></span></div>
     <div id="mk-buddy-hearts"></div>
     <div id="mk-buddy-shift-stats" aria-hidden="true">
-      <div class="mk-buddy-stat is-clickable" id="mk-buddy-coffee-stat" role="button" tabindex="0" aria-label="Kafijas statistika" aria-expanded="false" title="Kafijas statistika">
-        <div class="mk-buddy-mug-wrap">
-          <svg class="mk-buddy-mug" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
-            <rect x="5" y="1" width="1" height="2" fill="#f0b860" opacity=".5"></rect>
-            <rect x="8" y="1" width="1" height="2" fill="#f0b860" opacity=".5"></rect>
-            <rect class="mk-buddy-mug-fill" id="mk-buddy-mug-fill" x="4" y="12" width="6" height="0" fill="#c8842a"></rect>
-            <rect class="mk-buddy-mug-fill" id="mk-buddy-mug-foam" x="4" y="12" width="6" height="0" fill="#f0b860"></rect>
-            <rect x="3" y="4" width="1" height="9" fill="#c8842a"></rect>
-            <rect x="10" y="4" width="1" height="9" fill="#c8842a"></rect>
-            <rect x="3" y="4" width="8" height="1" fill="#c8842a"></rect>
-            <rect x="3" y="12" width="8" height="1" fill="#c8842a"></rect>
-            <rect x="11" y="5" width="2" height="1" fill="#c8842a"></rect>
-            <rect x="13" y="5" width="1" height="4" fill="#c8842a"></rect>
-            <rect x="11" y="8" width="2" height="1" fill="#c8842a"></rect>
-          </svg>
-        </div>
-        <div class="mk-buddy-stat-text">
-          <span class="mk-buddy-stat-label">KAFIJA</span>
-          <span class="mk-buddy-stat-value" id="mk-buddy-coffee-total">×0</span>
-        </div>
-        <div class="mk-buddy-coffee-srcs" id="mk-buddy-coffee-srcs" aria-hidden="true"></div>
-      </div>
-      <button id="mk-buddy-stats-btn" type="button" title="Kafijas tops — šis mēnesis" aria-label="Kafijas tops" aria-expanded="false">
-        <!-- Cups as bars: same "rising chart" reading as the dock icon, but with
-             a rim and a handle nub so it cannot be mistaken for it. -->
-        <svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
-          <rect x="1" y="11" width="3" height="3"/><rect x="1" y="11" width="3" height="1" opacity=".45"/><rect x="4" y="12" width="1" height="1"/>
-          <rect x="6" y="11" width="3" height="3"/><rect x="6" y="11" width="3" height="1" opacity=".45"/><rect x="9" y="12" width="1" height="1"/><rect x="6" y="7" width="3" height="3"/><rect x="6" y="7" width="3" height="1" opacity=".45"/><rect x="9" y="8" width="1" height="1"/>
-          <rect x="11" y="11" width="3" height="3"/><rect x="11" y="11" width="3" height="1" opacity=".45"/><rect x="14" y="12" width="1" height="1"/><rect x="11" y="7" width="3" height="3"/><rect x="11" y="7" width="3" height="1" opacity=".45"/><rect x="14" y="8" width="1" height="1"/><rect x="11" y="3" width="3" height="3"/><rect x="11" y="3" width="3" height="1" opacity=".45"/><rect x="14" y="4" width="1" height="1"/>
-        </svg>
-        <span>KAFIJAS TOPS</span>
-      </button>
-      <span class="mk-buddy-sep"></span>
       <div class="mk-buddy-stat">
         <div class="mk-buddy-v-stack">
           <div class="mk-buddy-hud-hearts">
             <canvas class="mk-buddy-hud-heart-canvas" id="mk-buddy-hud-heart-canvas"></canvas>
           </div>
           <canvas class="mk-buddy-hud-canvas" id="mk-buddy-hud-canvas"></canvas>
-        </div>
-        <div class="mk-buddy-stat-text mk-buddy-fatigue-part">
-          <span class="mk-buddy-stat-label">NOGURUMS</span>
-          <span class="mk-buddy-stat-value" id="mk-buddy-fatigue-total">0%</span>
         </div>
         <canvas class="mk-buddy-prop-cvs" id="mk-buddy-laptop"></canvas>
         <canvas class="mk-buddy-prop-cvs" id="mk-buddy-syringe"></canvas>
