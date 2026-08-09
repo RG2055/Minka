@@ -3817,7 +3817,7 @@ window.addEventListener('message', function(e) {
 // worker from this iframe added a second controllerchange reload listener with
 // a different app version, which could make PWA updates visibly reload twice.
 if ('serviceWorker' in navigator && window.top === window) {
-  const MINKA_APP_VERSION = '2026.08.09-moodblob2.calendar';
+  const MINKA_APP_VERSION = '2026.08.09-moodblob3.calendar';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -14861,27 +14861,29 @@ window.addEventListener('message', function(e) {
    Presentation only. The blob renders whatever mood the existing pulse state
    already holds (localStorage `minkaShiftPulseV2` + the Cloudflare counts
    loaded into it); it never stores, sends or derives a mood of its own. */
-/* Own full-width row, centred: the card sits symmetrically between the
-   RADIOLOGI and RADIOGRĀFERI blocks instead of trailing the last employee
-   card with dead space beside it. Being alone on its row also means it can
-   never stretch a neighbour, so no :has() guard is needed — that selector
-   made the browser re-evaluate the whole subgrid on every card mutation,
-   which is exactly what a day switch does. */
+/* Parked at the right edge of the section, still inside the normal card row:
+   `span 2 / -1` ends the card on the last column line, so it fills the dead
+   space beside the employee cards without opening a row of its own and
+   without leaving holes between the cards. */
 #grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card,
 :root.host-radio-open #grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card,
 :root.mk-mobile-shell #grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card {
-  grid-column: 1 / -1 !important;
-  justify-self: center !important;
+  grid-column: span 2 / -1 !important;
+  justify-self: stretch !important;
   align-self: start !important;
-  width: min(280px, 100%) !important;
+  width: auto !important;
   min-width: 0 !important;
   max-width: none !important;
   height: auto !important;
   aspect-ratio: auto !important;
-  min-height: 0 !important;
+  min-height: clamp(184px, 88cqw, 240px) !important;
   max-height: none !important;
-  margin: clamp(4px, 1.4vw, 10px) 0 clamp(2px, 0.8vw, 6px) !important;
+  margin: 0 !important;
 }
+/* The taller card must not stretch the employee cards sharing its row. The
+   class is set in mount() rather than with :has(), so the style engine never
+   has to re-check an ancestor while the grid is being rebuilt. */
+.cards-subgrid.rg-has-mood-card > .card.mk-mid-card { align-self: start; }
 
 /* The blob label already names the selected mood, so the per-emoji tooltip
    below the row would just repeat it — and its reserved space made the card
@@ -15471,7 +15473,9 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     var label = list.querySelector('.cards-section-label-rd');
     var section = label && label.closest('.cards-section');
     var grid = section && section.querySelector('.cards-subgrid');
-    if (!grid || grid.querySelector('.rg-feedback-card')) return;
+    if (!grid) return;
+    grid.classList.add('rg-has-mood-card');
+    if (grid.querySelector('.rg-feedback-card')) return;
     var pulse = document.createElement('div');
     pulse.className = 'card mk-mid-card mk-mid-card-rd rg-feedback-card';
     pulse.setAttribute('aria-label', 'Novērtē maiņu');
