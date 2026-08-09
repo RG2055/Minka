@@ -14983,24 +14983,95 @@ window.addEventListener('message', function(e) {
   white-space: nowrap;
   transition: color 440ms ease;
 }
-/* Coffee lives on a ring around the face instead of in a row: cups are placed
-   on an arc that skips the bottom, where the mood label sits. Each cup is a
-   single rotate/translate pair, so adding one costs nothing to lay out. */
+/* Each coffee source floats free in the space beside the blob: bare icon plus
+   its count, no box, no border, no glow. Fixed slots keep them clear of the
+   blob, the title above and the mood row below. */
 .rg-mood-ring {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
-.rg-mood-cup {
+.rg-mood-src {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: clamp(15px, 6.4cqw, 19px);
-  height: clamp(15px, 6.4cqw, 19px);
-  margin: calc(clamp(15px, 6.4cqw, 19px) / -2);
-  transform: rotate(var(--rg-a)) translateY(calc(-1 * var(--rg-ring-r))) rotate(calc(-1 * var(--rg-a)));
+  display: inline-flex;
+  align-items: center;
+  gap: clamp(3px, 1.4cqw, 6px);
+  white-space: nowrap;
+  transform: rotate(-3deg);
+  animation: rg-src-float 5.6s ease-in-out infinite;
 }
-.rg-mood-cup svg { display: block; width: 100%; height: 100%; }
+.rg-mood-src svg {
+  display: block;
+  width: clamp(28px, 13.5cqw, 36px);
+  height: clamp(28px, 13.5cqw, 36px);
+}
+.rg-mood-src b {
+  color: #f2ddba;
+  font: 700 clamp(15px, 7.4cqw, 21px)/1 Inter, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+/* Slots are anchored to the wrapper's corners; the wrapper's padding is the
+   free ring of space around the blob, so nothing can overlap the face. */
+.rg-mood-src--tl { top: 4%;  left: 0; }
+.rg-mood-src--tr { top: 4%;  right: 0; }
+.rg-mood-src--l  { top: 44%; left: 0; }
+.rg-mood-src--r  { top: 44%; right: 0; }
+.rg-mood-src--bl { bottom: 26%; left: 0; }
+.rg-mood-src--br { bottom: 26%; right: 0; }
+.rg-mood-src--tr, .rg-mood-src--r, .rg-mood-src--br { animation-delay: -2.8s; }
+@keyframes rg-src-float {
+  0%, 100% { transform: rotate(-3deg) translateY(0); }
+  50%      { transform: rotate(-3deg) translateY(-3px); }
+}
+
+/* Coffee top is behind a small text button — no permanent list of initials. */
+.rg-mood-topbtn {
+  position: relative;
+  /* The stage is pointer-events: none so the badges never eat a tap; the one
+     real control inside it has to opt back in. */
+  pointer-events: auto;
+  margin-top: clamp(4px, 2cqw, 7px);
+  padding: 3px clamp(6px, 2.6cqw, 9px);
+  border: 1px solid rgba(196,132,69,.26);
+  border-radius: 8px;
+  background: rgba(196,132,69,.10);
+  color: #e8c79a;
+  font: 800 clamp(8.5px, 3.8cqw, 10px)/1 Inter, system-ui, sans-serif;
+  letter-spacing: .04em;
+  cursor: pointer;
+}
+.rg-mood-topbtn[hidden] { display: none; }
+.rg-mood-topbtn:hover { background: rgba(196,132,69,.18); }
+/* Opens as an overlay over the blob, not as extra rows: the card has a fixed
+   place in the grid, so growing it would push the whole section around. */
+.rg-mood-top {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 6px);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: clamp(7px, 3cqw, 10px) clamp(9px, 3.6cqw, 13px);
+  border: 1px solid rgba(196,132,69,.24);
+  border-radius: 12px;
+  background: rgba(10,13,20,.94);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.rg-mood-top[hidden] { display: none; }
+.rg-mood-top-row {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  white-space: nowrap;
+  font: 700 clamp(8.5px, 3.8cqw, 10.5px)/1 Inter, system-ui, sans-serif;
+}
+.rg-mood-top-row i { font-style: normal; color: rgba(240,211,168,.5); }
+.rg-mood-top-row b { color: #e7edf6; font-weight: 700; }
+.rg-mood-top-row b { flex: 1 1 auto; }
+.rg-mood-top-row u { color: #f0d3a8; text-decoration: none; font-variant-numeric: tabular-nums; }
 
 .rg-mood-chip {
   position: absolute;
@@ -15039,28 +15110,7 @@ window.addEventListener('message', function(e) {
   color: var(--rg-fat, #35d07f);
 }
 
-/* Coffee top: rank, initials and count, compact enough to sit under the label. */
-.rg-mood-top {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(4px, 2cqw, 7px);
-  margin-top: clamp(4px, 2cqw, 7px);
-}
-.rg-mood-top.is-mounted { display: inline-flex; }
-.rg-mood-top-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 3px clamp(4px, 1.8cqw, 6px);
-  border: 1px solid rgba(196,132,69,.20);
-  border-radius: 8px;
-  background: rgba(196,132,69,.08);
-  font: 800 clamp(8.5px, 3.8cqw, 10px)/1 Inter, system-ui, sans-serif;
-}
-.rg-mood-top-item .rg-mood-top-rank { font-style: normal; color: rgba(240,211,168,.55); }
-.rg-mood-top-item b { color: #e7edf6; }
-.rg-mood-top-item u { color: #f0d3a8; text-decoration: none; font-variant-numeric: tabular-nums; }
+
 /* On the two-column card the action row has real room, so the narrow icon-only
    Ideja slot becomes a proper button and both labels sit optically centred. */
 .rg-feedback-card .rg-feedback-card-actions {
@@ -15127,11 +15177,13 @@ window.addEventListener('message', function(e) {
 /* The work iGPUs run the app in mk-low-spec, where always-on compositor work
    is deliberately killed. The blob keeps its looks and its mood transitions —
    only the never-ending idle motion stops. */
+html.mk-low-spec .rg-mood-src,
 html.mk-low-spec .rg-mood-blob,
 html.mk-low-spec .rg-mood-eyes,
 html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !important; }
 
 @media (prefers-reduced-motion: reduce) {
+  .rg-mood-src,
   .rg-mood-blob,
   .rg-mood-eyes,
   .rg-mood-blob-wrap.is-pop,
@@ -15410,7 +15462,8 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       + '<i>NOG</i><b data-rg-fatigue-num>0%</b></span>'
       + '</span>'
       + '<span class="rg-mood-label">' + (base.label || '&nbsp;') + '</span>'
-      + '<span class="rg-mood-top" data-rg-top></span>'
+      + '<button class="rg-mood-topbtn" type="button" data-rg-topbtn hidden>Kafijas tops'
+      + '<span class="rg-mood-top" data-rg-top hidden></span></button>'
       + '</div>';
   }
   function moodCupSvg() {
@@ -15440,10 +15493,13 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       var name = String(card.getAttribute('data-worker') || '').trim();
       if (name) names.push(name);
     });
-    var data = { total: null, top: [], fatigue: null };
+    var data = { total: null, top: [], fatigue: null, sources: {} };
     if (names.length && typeof window.__minkaGetCoffeeTotalForNames === 'function') {
       try { data.total = Math.max(0, Number(window.__minkaGetCoffeeTotalForNames(names)) || 0); }
       catch (_error) {}
+    }
+    if (names.length && typeof window.__minkaGetCoffeeSourcesForNames === 'function') {
+      try { data.sources = window.__minkaGetCoffeeSourcesForNames(names) || {}; } catch (_error) {}
     }
     if (typeof window.__minkaGetCoffeeLeaderboard === 'function') {
       try { data.top = window.__minkaGetCoffeeLeaderboard(3) || []; } catch (_error) {}
@@ -15469,23 +15525,30 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     if (score > 20) return '#d8c64a';
     return '#35d07f';
   }
-  // Cups are laid out on a circle around the face rather than in a row. The
-  // arc skips the bottom, where the mood label sits.
-  var MOOD_RING_MAX = 10;
+  // Each coffee source floats free beside the blob: its own icon, the count to
+  // its right, no box and no border. Slots are fixed so the badges never land
+  // on the blob, the title or the mood row.
+  var MOOD_SLOTS = ['tl', 'tr', 'bl', 'br', 'l', 'r'];
+  var MOOD_SOURCES = ['philips', 'lofbergs', 'narvesen', 'monster', 'monsterultra', 'redbull', 'cupcoffee'];
   function paintMoodCoffee(force) {
     var refs = moodRefs();
     if (!refs) return;
     var stats = moodStats(force);
     var ring = refs.ring;
-    var cups = Math.max(0, Math.min(MOOD_RING_MAX, Number(stats.total) || 0));
-    if (ring && ring.dataset.rgCups !== String(cups)) {
-      ring.dataset.rgCups = String(cups);
-      var html = '';
-      for (var i = 0; i < cups; i++) {
-        var angle = -122 + (cups === 1 ? 122 : (244 / (cups - 1)) * i);
-        html += '<span class="rg-mood-cup" style="--rg-a:' + angle.toFixed(1) + 'deg">' + moodCupSvg() + '</span>';
+    if (ring) {
+      var used = MOOD_SOURCES
+        .map(function (key) { return { key: key, n: Math.max(0, Number(stats.sources[key]) || 0) }; })
+        .filter(function (item) { return item.n > 0; })
+        .sort(function (a, b) { return b.n - a.n; })
+        .slice(0, MOOD_SLOTS.length);
+      var signature = used.map(function (item) { return item.key + ':' + item.n; }).join('|');
+      if (ring.dataset.rgSrc !== signature) {
+        ring.dataset.rgSrc = signature;
+        ring.innerHTML = used.map(function (item, index) {
+          return '<span class="rg-mood-src rg-mood-src--' + MOOD_SLOTS[index] + '">'
+            + (moodSourceIcon(item.key) || '') + '<b>' + item.n + '</b></span>';
+        }).join('');
       }
-      ring.innerHTML = html;
     }
     var coffee = refs.chips.coffee;
     if (coffee) {
@@ -15503,20 +15566,29 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
         fatigue.style.setProperty('--rg-fat', moodFatigueColor(stats.fatigue));
       }
     }
+    var button = refs.topbtn;
     var top = refs.top;
-    if (top) {
+    if (button) button.hidden = !stats.top.length;
+    if (top && stats.top.length) {
       var key = stats.top.map(function (x) { return x.name + ':' + x.count; }).join('|');
       if (top.dataset.rgKey !== key) {
         top.dataset.rgKey = key;
         top.innerHTML = stats.top.map(function (item, index) {
-          return '<span class="rg-mood-top-item" title="' + item.name + ': ' + item.count + '">'
-            + '<i class="rg-mood-top-rank">' + (index + 1) + '</i>'
-            + '<b>' + moodInitials(item.name) + '</b>'
-            + '<u>' + item.count + '</u></span>';
+          return '<span class="rg-mood-top-row"><i>' + (index + 1) + '</i>'
+            + '<b>' + moodShortName(item.name) + '</b><u>' + item.count + '</u></span>';
         }).join('');
       }
-      top.classList.toggle('is-mounted', stats.top.length > 0);
     }
+  }
+  function moodSourceIcon(key) {
+    if (typeof window.__minkaCoffeeIcon !== 'function') return '';
+    try { return window.__minkaCoffeeIcon(key) || ''; } catch (_error) { return ''; }
+  }
+  // "Rihards Gavriļenko" -> "Rihards G." — readable, and never a bare initial.
+  function moodShortName(name) {
+    var parts = String(name || '').trim().split(/\s+/);
+    if (parts.length < 2) return parts[0] || '';
+    return parts[0] + ' ' + parts[1].charAt(0).toLocaleUpperCase('lv-LV') + '.';
   }
   // The card is rebuilt whenever the schedule re-renders, so the lookups are
   // cached against the live stage and re-resolved once it is replaced.
@@ -15534,6 +15606,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
         label: stage.querySelector('.rg-mood-label'),
         ring: stage.querySelector('[data-rg-ring]'),
         top: stage.querySelector('[data-rg-top]'),
+        topbtn: stage.querySelector('[data-rg-topbtn]'),
         chips: {
           coffee: stage.querySelector('[data-rg-chip="coffee"]'),
           fatigue: stage.querySelector('[data-rg-chip="fatigue"]')
@@ -16039,6 +16112,12 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   });
   // Hover/press preview. Purely visual — it renders the mood under the pointer
   // and rolls back on leave; only the real click commits anything.
+  list.addEventListener('click', function (event) {
+    var topButton = event.target.closest('[data-rg-topbtn]');
+    if (!topButton) return;
+    var refs = moodRefs();
+    if (refs && refs.top) refs.top.hidden = !refs.top.hidden;
+  });
   list.addEventListener('pointerover', function (event) {
     var tap = event.target.closest('[data-rg-pulse]');
     if (tap) previewMoodBlob(tap.dataset.rgPulse);
