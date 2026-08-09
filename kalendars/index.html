@@ -3817,7 +3817,7 @@ window.addEventListener('message', function(e) {
 // worker from this iframe added a second controllerchange reload listener with
 // a different app version, which could make PWA updates visibly reload twice.
 if ('serviceWorker' in navigator && window.top === window) {
-  const MINKA_APP_VERSION = '2026.08.09-stats1.calendar';
+  const MINKA_APP_VERSION = '2026.08.09-stats2.calendar';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -15050,6 +15050,14 @@ window.addEventListener('message', function(e) {
 .rg-mood-side.is-mounted { display: inline-flex; }
 .rg-mood-side--left { left: 0; align-items: center; }
 .rg-mood-side--right { right: 0; align-items: center; }
+/* Out of flow, so the button never shifts the coffee pill off the fatigue
+   pill's line — the two counters have to read as one row. */
+.rg-mood-side--right .rg-mood-topbtn {
+  position: absolute;
+  top: calc(100% + clamp(4px, 1.8cqw, 6px));
+  left: 50%;
+  transform: translateX(-50%);
+}
 /* The blob's own ring only has to clear the corner badges now. */
 
 /* Fatigue reads like the watch badge: a solid pill that shifts colour with the
@@ -15089,23 +15097,23 @@ window.addEventListener('message', function(e) {
   position: relative;
   pointer-events: auto;
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: clamp(4px, 2cqw, 7px);
-  margin-top: clamp(4px, 2cqw, 7px);
-  padding: clamp(4px, 1.8cqw, 6px) clamp(8px, 3.4cqw, 12px);
+  gap: 2px;
+  margin-top: clamp(4px, 2cqw, 6px);
+  padding: clamp(3px, 1.4cqw, 5px) clamp(4px, 1.8cqw, 6px);
   border: 1px solid rgba(196,132,69,.24);
-  border-radius: 10px;
+  border-radius: 9px;
   background: rgba(196,132,69,.10);
   color: #e8c79a;
-  font: 800 clamp(8.5px, 3.8cqw, 10.5px)/1 Inter, system-ui, sans-serif;
-  letter-spacing: .03em;
-  white-space: nowrap;
+  font: 800 clamp(6px, 2.7cqw, 7.5px)/1.15 Inter, system-ui, sans-serif;
+  letter-spacing: .02em;
+  text-align: center;
   cursor: pointer;
 }
 .rg-mood-topbtn[hidden] { display: none; }
 .rg-mood-topbtn:hover { background: rgba(196,132,69,.20); }
-.rg-mood-topbtn svg { display: block; width: clamp(13px, 5.6cqw, 16px); height: clamp(13px, 5.6cqw, 16px); flex: 0 0 auto; }
+.rg-mood-topbtn svg { display: block; width: clamp(11px, 4.8cqw, 14px); height: clamp(11px, 4.8cqw, 14px); flex: 0 0 auto; }
 
 /* Both side stacks sit vertically centred on the blob, on opposite sides. */
 .rg-mood-side {
@@ -15121,6 +15129,14 @@ window.addEventListener('message', function(e) {
 .rg-mood-side.is-mounted { display: inline-flex; }
 .rg-mood-side--left { left: 0; align-items: center; }
 .rg-mood-side--right { right: 0; align-items: center; }
+/* Out of flow, so the button never shifts the coffee pill off the fatigue
+   pill's line — the two counters have to read as one row. */
+.rg-mood-side--right .rg-mood-topbtn {
+  position: absolute;
+  top: calc(100% + clamp(4px, 1.8cqw, 6px));
+  left: 50%;
+  transform: translateX(-50%);
+}
 /* The blob's own ring only has to clear the corner badges now. */
 
 /* Fatigue reads like the watch badge: a solid pill that shifts colour with the
@@ -15160,23 +15176,23 @@ window.addEventListener('message', function(e) {
   position: relative;
   pointer-events: auto;
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: clamp(4px, 2cqw, 7px);
-  margin-top: clamp(4px, 2cqw, 7px);
-  padding: clamp(4px, 1.8cqw, 6px) clamp(8px, 3.4cqw, 12px);
+  gap: 2px;
+  margin-top: clamp(4px, 2cqw, 6px);
+  padding: clamp(3px, 1.4cqw, 5px) clamp(4px, 1.8cqw, 6px);
   border: 1px solid rgba(196,132,69,.24);
-  border-radius: 10px;
+  border-radius: 9px;
   background: rgba(196,132,69,.10);
   color: #e8c79a;
-  font: 800 clamp(8.5px, 3.8cqw, 10.5px)/1 Inter, system-ui, sans-serif;
-  letter-spacing: .03em;
-  white-space: nowrap;
+  font: 800 clamp(6px, 2.7cqw, 7.5px)/1.15 Inter, system-ui, sans-serif;
+  letter-spacing: .02em;
+  text-align: center;
   cursor: pointer;
 }
 .rg-mood-topbtn[hidden] { display: none; }
 .rg-mood-topbtn:hover { background: rgba(196,132,69,.20); }
-.rg-mood-topbtn svg { display: block; width: clamp(13px, 5.6cqw, 16px); height: clamp(13px, 5.6cqw, 16px); flex: 0 0 auto; }
+.rg-mood-topbtn svg { display: block; width: clamp(11px, 4.8cqw, 14px); height: clamp(11px, 4.8cqw, 14px); flex: 0 0 auto; }
 /* Opens as an overlay, not as extra rows: the card has a fixed place in the
    grid, so growing it would push the whole section around. */
 .rg-mood-top {
@@ -15562,11 +15578,11 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       + '<span class="rg-mood-pill rg-mood-pill--coffee" data-rg-chip="coffee">'
       + moodPillCupSvg() + '<b data-rg-coffee-num>0</b></span>'
       + '<span class="rg-mood-side-label">Kafija</span>'
-      + '</span>'
-      + '<span class="rg-mood-label">' + (base.label || '&nbsp;') + '</span>'
       + '<button class="rg-mood-topbtn" type="button" data-rg-topbtn hidden'
       + ' title="Kafijas statistika">' + moodTopSvg()
-      + '<span>Kafijas statistika</span></button>'
+      + '<span>Kafijas<br>statistika</span></button>'
+      + '</span>'
+      + '<span class="rg-mood-label">' + (base.label || '&nbsp;') + '</span>'
       + '</div>';
   }
   function moodCupSvg() {
