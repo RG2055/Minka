@@ -3817,7 +3817,7 @@ window.addEventListener('message', function(e) {
 // worker from this iframe added a second controllerchange reload listener with
 // a different app version, which could make PWA updates visibly reload twice.
 if ('serviceWorker' in navigator && window.top === window) {
-  const MINKA_APP_VERSION = '2026.08.09-moodblob1.calendar';
+  const MINKA_APP_VERSION = '2026.08.09-moodblob2.calendar';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -14861,25 +14861,33 @@ window.addEventListener('message', function(e) {
    Presentation only. The blob renders whatever mood the existing pulse state
    already holds (localStorage `minkaShiftPulseV2` + the Cloudflare counts
    loaded into it); it never stores, sends or derives a mood of its own. */
+/* Own full-width row, centred: the card sits symmetrically between the
+   RADIOLOGI and RADIOGRĀFERI blocks instead of trailing the last employee
+   card with dead space beside it. Being alone on its row also means it can
+   never stretch a neighbour, so no :has() guard is needed — that selector
+   made the browser re-evaluate the whole subgrid on every card mutation,
+   which is exactly what a day switch does. */
 #grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card,
 :root.host-radio-open #grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card,
 :root.mk-mobile-shell #grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card {
-  grid-column: span 2 !important;
+  grid-column: 1 / -1 !important;
+  justify-self: center !important;
   align-self: start !important;
+  width: min(280px, 100%) !important;
+  min-width: 0 !important;
+  max-width: none !important;
   height: auto !important;
   aspect-ratio: auto !important;
-  min-height: clamp(184px, 88cqw, 240px) !important;
+  min-height: 0 !important;
   max-height: none !important;
+  margin: clamp(4px, 1.4vw, 10px) 0 clamp(2px, 0.8vw, 6px) !important;
 }
-/* The taller feedback card must not stretch the employee cards sharing its
-   grid row — they keep their own aspect ratio and align to the row start. */
-.cards-subgrid:has(.rg-feedback-card) > .card.mk-mid-card { align-self: start; }
 
 /* The blob label already names the selected mood, so the per-emoji tooltip
    below the row would just repeat it — and its reserved space made the card
    taller than it needs to be. */
-.rg-feedback-card:has(.rg-mood-stage) .rg-pulse-tap.is-selected .rg-pulse-name { display: none; }
-.rg-feedback-card:has(.rg-mood-stage) .rg-pulse-taps { padding-bottom: clamp(2px, 1.5cqw, 4px); }
+.rg-feedback-card .rg-pulse-tap.is-selected .rg-pulse-name { display: none; }
+.rg-feedback-card .rg-pulse-taps { padding-bottom: clamp(2px, 1.5cqw, 4px); }
 
 .rg-mood-stage {
   position: relative;
@@ -14965,38 +14973,40 @@ window.addEventListener('message', function(e) {
 }
 .rg-mood-coffee {
   position: absolute;
-  right: clamp(0px, 2cqw, 6px);
+  right: clamp(2px, 1.4cqw, 8px);
   top: 50%;
   display: none;
+  flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 3px 7px 3px 5px;
-  border: 1px solid rgba(196,132,69,.26);
-  border-radius: 99px;
-  background: rgba(196,132,69,.11);
-  color: #e8c79a;
-  font: 850 clamp(9px, 5.2cqw, 11px)/1 Inter, system-ui, sans-serif;
+  gap: 2px;
+  padding: clamp(7px, 3.2cqw, 10px) clamp(6px, 2.6cqw, 9px);
+  border: 1px solid rgba(196,132,69,.30);
+  border-radius: 14px;
+  background: rgba(196,132,69,.13);
+  color: #f0d3a8;
+  font: 850 clamp(12px, 5.6cqw, 15px)/1 Inter, system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
-  transform: translateY(-62%);
-  opacity: .5;
+  transform: translateY(-58%);
+  opacity: .55;
   transition: opacity 300ms ease;
 }
 .rg-mood-coffee.is-mounted { display: inline-flex; }
 .rg-mood-coffee.is-on { opacity: 1; }
 .rg-mood-coffee svg {
   display: block;
-  width: 12px;
-  height: 12px;
-  flex: 0 0 12px;
+  width: clamp(20px, 9cqw, 26px);
+  height: clamp(20px, 9cqw, 26px);
+  flex: 0 0 auto;
 }
+.rg-mood-coffee b { display: block; }
 /* On the two-column card the action row has real room, so the narrow icon-only
    Ideja slot becomes a proper button and both labels sit optically centred. */
-.rg-feedback-card:has(.rg-mood-stage) .rg-feedback-card-actions {
+.rg-feedback-card .rg-feedback-card-actions {
   grid-template-columns: minmax(0, 1fr) minmax(0, .74fr);
   gap: 7px;
   margin-top: clamp(4px, 2.4cqw, 8px);
 }
-.rg-feedback-card:has(.rg-mood-stage) .rg-pulse-write {
+.rg-feedback-card .rg-pulse-write {
   height: clamp(34px, 15.5cqw, 42px);
   padding: 0 clamp(6px, 3cqw, 12px);
   gap: clamp(5px, 2.6cqw, 8px);
@@ -15007,24 +15017,24 @@ window.addEventListener('message', function(e) {
   letter-spacing: -.01em;
   transition: background 200ms ease, border-color 200ms ease, transform 140ms ease;
 }
-.rg-feedback-card:has(.rg-mood-stage) .rg-pulse-write.rg-pulse-write--suggestion {
+.rg-feedback-card .rg-pulse-write.rg-pulse-write--suggestion {
   gap: clamp(4px, 2.2cqw, 7px);
   font-size: clamp(10px, 5cqw, 12px);
 }
-.rg-feedback-card:has(.rg-mood-stage) .rg-pulse-write--suggestion img {
+.rg-feedback-card .rg-pulse-write--suggestion img {
   width: clamp(14px, 6.6cqw, 17px);
   height: clamp(14px, 6.6cqw, 17px);
 }
-.rg-feedback-card:has(.rg-mood-stage) .rg-comment-icon {
+.rg-feedback-card .rg-comment-icon {
   width: clamp(12px, 5.6cqw, 15px);
   height: clamp(9px, 4.2cqw, 11px);
   flex-basis: clamp(12px, 5.6cqw, 15px);
 }
-.rg-feedback-card:has(.rg-mood-stage) .rg-pulse-write:hover {
+.rg-feedback-card .rg-pulse-write:hover {
   background: rgba(var(--rg-card-rgb), .22);
   border-color: rgba(var(--rg-card-rgb), .44);
 }
-.rg-feedback-card:has(.rg-mood-stage) .rg-pulse-write:active { transform: translateY(1px); }
+.rg-feedback-card .rg-pulse-write:active { transform: translateY(1px); }
 
 /* Nothing picked yet: the halo swells slowly so the card catches the eye and
    the emoji row reads as the thing to touch. Opacity only — compositor work. */
@@ -15052,6 +15062,13 @@ window.addEventListener('message', function(e) {
   0%, 100% { opacity: .62; }
   50%      { opacity: 1; }
 }
+/* The work iGPUs run the app in mk-low-spec, where always-on compositor work
+   is deliberately killed. The blob keeps its looks and its mood transitions —
+   only the never-ending idle motion stops. */
+html.mk-low-spec .rg-mood-blob,
+html.mk-low-spec .rg-mood-eyes,
+html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !important; }
+
 @media (prefers-reduced-motion: reduce) {
   .rg-mood-blob,
   .rg-mood-eyes,
@@ -15063,7 +15080,7 @@ window.addEventListener('message', function(e) {
   .rg-mood-glow,
   .rg-mood-label,
   .rg-mood-coffee,
-  .rg-feedback-card:has(.rg-mood-stage) .rg-pulse-write { transition: none; }
+  .rg-feedback-card .rg-pulse-write { transition: none; }
 }
 </style>
 
@@ -15335,56 +15352,88 @@ window.addEventListener('message', function(e) {
   }
   // Read-only: reuses the coffee total the schedule already computes for the
   // active day. Never writes coffee state and stays silent if it is not ready.
-  function moodCoffeeTotal() {
+  //
+  // Cached on purpose. getCoffeeCount() re-parses the whole coffee store out of
+  // localStorage once per name, and paintCounts() can run many times while the
+  // grid is rebuilt on a day switch — recomputing there was pure waste.
+  var moodCoffeeCache = { at: 0, day: null, total: null };
+  function moodCoffeeTotal(force) {
     if (typeof window.__minkaGetCoffeeTotalForNames !== 'function') return null;
+    var day = String(window.__activeDateStr || '');
+    var now = Date.now();
+    if (!force && moodCoffeeCache.day === day && now - moodCoffeeCache.at < 900) return moodCoffeeCache.total;
     var names = [];
     list.querySelectorAll('.card[data-worker]').forEach(function (card) {
       var name = String(card.getAttribute('data-worker') || '').trim();
       if (name) names.push(name);
     });
-    if (!names.length) return null;
-    try { return Math.max(0, Number(window.__minkaGetCoffeeTotalForNames(names)) || 0); }
-    catch (_error) { return null; }
+    var total = null;
+    if (names.length) {
+      try { total = Math.max(0, Number(window.__minkaGetCoffeeTotalForNames(names)) || 0); }
+      catch (_error) { total = null; }
+    }
+    moodCoffeeCache = { at: now, day: day, total: total };
+    return total;
   }
-  function paintMoodCoffee() {
-    var chip = list.querySelector('.rg-mood-coffee');
+  function paintMoodCoffee(force) {
+    var chip = moodRefs('coffee');
     if (!chip) return;
-    var total = moodCoffeeTotal();
+    var total = moodCoffeeTotal(force);
     chip.classList.toggle('is-mounted', total !== null);
     if (total === null) return;
     var num = chip.querySelector('[data-rg-coffee-num]');
     if (num) num.textContent = '×' + total;
     chip.classList.toggle('is-on', total > 0);
   }
+  // The card is rebuilt whenever the schedule re-renders, so the lookups are
+  // cached against the live stage and re-resolved once it is replaced.
+  var moodNodes = null;
+  function moodRefs(what) {
+    if (!moodNodes || !moodNodes.stage || !moodNodes.stage.isConnected) {
+      var stage = list.querySelector('.rg-mood-stage');
+      if (!stage) { moodNodes = null; return null; }
+      moodNodes = {
+        stage: stage,
+        wrap: stage.querySelector('.rg-mood-blob-wrap'),
+        shapes: stage.querySelectorAll('.rg-mood-blob-shape, .rg-mood-blob-sheen'),
+        stops: stage.querySelectorAll('.rg-mood-blob-stop'),
+        glow: stage.querySelector('.rg-mood-glow'),
+        label: stage.querySelector('.rg-mood-label'),
+        coffee: stage.querySelector('.rg-mood-coffee'),
+        face: {}
+      };
+      moodFaceParts.forEach(function (part) {
+        moodNodes.face[part] = stage.querySelector('[data-rg-face="' + part + '"]');
+      });
+    }
+    return what ? moodNodes[what] : moodNodes;
+  }
   // Visual only — called from paintCounts() once the existing mood state has
   // already been read, changed or reloaded. Touches nothing but the blob.
   // `preview` renders a mood the finger/cursor is hovering without committing
   // it, so nothing is stored, sent or counted until the tap actually lands.
   function updateMoodBlob(key, preview) {
-    var stage = list.querySelector('.rg-mood-stage');
-    if (!stage) return;
+    var refs = moodRefs();
+    if (!refs) return;
+    var stage = refs.stage;
     if (!preview) {
-      if (moodBlobKey !== key && (moodBlobKey || key)) popMoodBlob(stage);
+      if (moodBlobKey !== key && (moodBlobKey || key)) popMoodBlob(refs);
       moodBlobKey = key || null;
     }
     stage.classList.toggle('is-idle', !moodBlobKey && !preview);
     stage.classList.toggle('is-preview', !!preview);
     var visual = moodVisuals[key] || moodVisuals._none;
-    stage.querySelectorAll('.rg-mood-blob-shape, .rg-mood-blob-sheen').forEach(function (el) {
-      el.setAttribute('d', visual.path);
-    });
-    stage.querySelectorAll('.rg-mood-blob-stop').forEach(function (stop) {
+    refs.shapes.forEach(function (el) { el.setAttribute('d', visual.path); });
+    refs.stops.forEach(function (stop) {
       stop.style.stopColor = stop.dataset.rgStop === 'c1' ? visual.color1 : visual.color2;
     });
-    var glow = stage.querySelector('.rg-mood-glow');
-    if (glow) glow.style.color = visual.glow;
-    var label = stage.querySelector('.rg-mood-label');
-    if (label) {
-      label.textContent = visual.label;
-      label.style.color = key ? visual.color1 : '';
+    if (refs.glow) refs.glow.style.color = visual.glow;
+    if (refs.label) {
+      refs.label.textContent = visual.label;
+      refs.label.style.color = key ? visual.color1 : '';
     }
     moodFaceParts.forEach(function (part) {
-      var el = stage.querySelector('[data-rg-face="' + part + '"]');
+      var el = refs.face[part];
       if (!el) return;
       el.setAttribute('d', visual.face[part]);
       el.setAttribute('opacity', moodPartOpacity(part, visual));
@@ -15400,8 +15449,8 @@ window.addEventListener('message', function(e) {
     if (part === 'mouthOpen' || part === 'teeth') return visual.openMouth ? '1' : '0';
     return visual.lids ? '0' : '1';   // eye whites, pupils, glints
   }
-  function popMoodBlob(stage) {
-    var wrap = stage.querySelector('.rg-mood-blob-wrap');
+  function popMoodBlob(refs) {
+    var wrap = refs && refs.wrap;
     if (!wrap) return;
     wrap.classList.remove('is-pop');
     void wrap.offsetWidth;   // restart the animation on repeated taps
@@ -15412,10 +15461,10 @@ window.addEventListener('message', function(e) {
   }
   function endMoodBlobPreview() {
     updateMoodBlob(moodBlobKey, true);
-    var stage = list.querySelector('.rg-mood-stage');
-    if (stage) {
-      stage.classList.toggle('is-idle', !moodBlobKey);
-      stage.classList.remove('is-preview');
+    var refs = moodRefs();
+    if (refs) {
+      refs.stage.classList.toggle('is-idle', !moodBlobKey);
+      refs.stage.classList.remove('is-preview');
     }
   }
   function mount() {
@@ -15841,8 +15890,8 @@ window.addEventListener('message', function(e) {
     if (writeButton) { event.preventDefault(); event.stopPropagation(); openModal(writeButton.dataset.rgWrite, writeButton); }
     // Passive: let the card's own coffee handler run, then re-read the total.
     if (event.target.closest('.mk-coffee-add, .mk-coffee-sub, .mk-coffee-picker')) {
-      window.setTimeout(paintMoodCoffee, 0);
-      window.setTimeout(paintMoodCoffee, 500);
+      window.setTimeout(function () { paintMoodCoffee(true); }, 0);
+      window.setTimeout(function () { paintMoodCoffee(true); }, 500);
     }
   });
   // Hover/press preview. Purely visual — it renders the mood under the pointer
