@@ -3817,7 +3817,7 @@ window.addEventListener('message', function(e) {
 // worker from this iframe added a second controllerchange reload listener with
 // a different app version, which could make PWA updates visibly reload twice.
 if ('serviceWorker' in navigator && window.top === window) {
-  const MINKA_APP_VERSION = '2026.08.09-orbit2.calendar';
+  const MINKA_APP_VERSION = '2026.08.09-orbit3.calendar';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -15816,8 +15816,40 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     badges.forEach(function (el, i) { el.style.opacity = (1 - 0.28 * depths[i]).toFixed(2); });
     if (!open.length) return false;
 
+    // Spacing the badges evenly along the open part of the ring still leaves a
+    // choice of where the sequence starts, and it matters a lot. The ring is
+    // open across a wide arc at the top and a narrower one at the bottom, so
+    // starting right at the top both puts a badge there and hands the spare one
+    // to the top as well — five above the blob and two below. Lay the sequence
+    // out at a few starting offsets and keep the most balanced one.
+    var slots = null;
+    var bestScore = Infinity;
+    // Only these two offsets keep the ring mirrored left to right: the open
+    // angles are symmetric about the top, and a pick set stays symmetric only
+    // when the offset is a whole or a half step. A quarter step balances the
+    // halves better but tips the whole ring to one side, which is worse.
+    [0, 0.5].forEach(function (phase) {
+      var picks = [];
+      for (var j = 0; j < count; j++) {
+        picks.push(open[Math.round((j + phase) * open.length / count) % open.length]);
+      }
+      var above = 0;
+      picks.forEach(function (deg) { if (deg < 90 || deg > 270) above++; });
+      var sorted = picks.slice().sort(function (a, b) { return a - b; });
+      var spread = 0;
+      for (var k = 0; k < sorted.length; k++) {
+        var gap = k + 1 < sorted.length ? sorted[k + 1] - sorted[k] : 360 - sorted[k] + sorted[0];
+        spread += gap * gap;
+      }
+      // Above/below evenness first — that is what reads as wrong. Gaps between
+      // neighbours only break the tie; squaring them punishes one big empty
+      // stretch harder than several slightly uneven ones.
+      var score = Math.abs(above - (count - above)) * 1e6 + spread;
+      if (score < bestScore - 0.5) { bestScore = score; slots = picks; }
+    });
+
     for (var i = 0; i < count; i++) {
-      var slot = open[Math.round(i * open.length / count) % open.length];
+      var slot = slots[i];
       var a2 = slot * Math.PI / 180;
       var r2 = ring360[slot / 2];
       badges[i].style.setProperty('--rg-x', Math.round(Math.sin(a2) * r2) + 'px');
