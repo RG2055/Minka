@@ -13472,8 +13472,8 @@ window.addEventListener('message', function(e) {
 :root:not(.mk-mobile-shell) #minkaBarWrap .sl-times-strip {
   position: relative !important;
   display: grid !important;
-  grid-template-columns: auto minmax(12px,1fr) auto minmax(6.5ch,auto) auto minmax(8ch,auto) auto auto !important;
-  grid-template-rows: 18px !important;
+  grid-template-columns: auto minmax(12px,1fr) auto minmax(6.5ch,auto) auto auto !important;
+  grid-template-rows: 16px 16px !important;
   align-items: center !important;
   justify-content: stretch !important;
   width: 100% !important;
@@ -13493,7 +13493,7 @@ window.addEventListener('message', function(e) {
   position: relative !important;
   left: 16px !important;
   grid-column: 1 !important;
-  grid-row: 1 !important;
+  grid-row: 1 / 3 !important;
   flex: 0 0 232px !important;
   width: 232px !important;
   height: 34px !important;
@@ -13527,14 +13527,13 @@ window.addEventListener('message', function(e) {
 }
 :root:not(.mk-mobile-shell) .sl-ts-remaining-label {
   order: 4 !important;
-  grid-column: 5 !important;
-  grid-row: 1 !important;
-  margin-left: 10px !important;
+  grid-column: 3 !important;
+  grid-row: 2 !important;
 }
 :root:not(.mk-mobile-shell) .sl-ts-rem {
   order: 5 !important;
-  grid-column: 6 !important;
-  grid-row: 1 !important;
+  grid-column: 4 !important;
+  grid-row: 2 !important;
 }
 :root:not(.mk-mobile-shell) .sl-ts-elapsed,
 :root:not(.mk-mobile-shell) .sl-ts-rem {
@@ -13555,15 +13554,15 @@ window.addEventListener('message', function(e) {
 }
 :root:not(.mk-mobile-shell) #sl-lanes-slot {
   order: 7 !important;
-  grid-column: 7 !important;
-  grid-row: 1 !important;
+  grid-column: 5 !important;
+  grid-row: 1 / 3 !important;
   flex: 0 0 auto !important;
   margin-left: 10px !important;
 }
 :root:not(.mk-mobile-shell) #sl-ns-slot {
   order: 8 !important;
-  grid-column: 8 !important;
-  grid-row: 1 !important;
+  grid-column: 6 !important;
+  grid-row: 1 / 3 !important;
   flex: 0 0 auto !important;
   margin-right: 0 !important;
 }
@@ -13745,7 +13744,7 @@ window.addEventListener('message', function(e) {
 /* Compact live time/actions row; the ruler remains the unified header's
    bottom edge instead of becoming a separate card. */
 :root:not(.mk-mobile-shell) #minkaBarWrap .sl-times-strip {
-  grid-template-rows: 16px !important;
+  grid-template-rows: 14px 14px !important;
   column-gap: 6px !important;
   row-gap: 0 !important;
   margin-top: 0 !important;
@@ -13883,11 +13882,10 @@ window.addEventListener('message', function(e) {
   margin-bottom: 0 !important;
   padding-bottom: 0 !important;
 }
-/* Rindai rezervētais augstums bija 42px tāpēc, ka buddy rindā bija arī kafija
-   un nogurums. Tie tagad dzīvo pie maiņas vērtējuma kartītes, tāpēc rindai
-   pietiek ar buddy slota paša augstumu. */
+/* Buddy rinda ir 44px augsta (kafija + nogurums), bet slots bija 28px, tāpēc
+   tā ielīda atzīmju rindā. Rezervējam rindai īsto augstumu. */
 :root:not(.mk-mobile-shell) #minkaBarWrap .sl-times-strip {
-  min-height: 34px !important;
+  min-height: 42px !important;
   align-items: center !important;
 }
 :root:not(.mk-mobile-shell) #minkaBarWrap .sl-ruler {
