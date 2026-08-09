@@ -13472,8 +13472,8 @@ window.addEventListener('message', function(e) {
 :root:not(.mk-mobile-shell) #minkaBarWrap .sl-times-strip {
   position: relative !important;
   display: grid !important;
-  grid-template-columns: auto minmax(12px,1fr) auto minmax(6.5ch,auto) auto auto !important;
-  grid-template-rows: 16px 16px !important;
+  grid-template-columns: auto minmax(12px,1fr) auto minmax(6.5ch,auto) auto minmax(8ch,auto) auto auto !important;
+  grid-template-rows: 18px !important;
   align-items: center !important;
   justify-content: stretch !important;
   width: 100% !important;
@@ -13493,7 +13493,7 @@ window.addEventListener('message', function(e) {
   position: relative !important;
   left: 16px !important;
   grid-column: 1 !important;
-  grid-row: 1 / 3 !important;
+  grid-row: 1 !important;
   flex: 0 0 232px !important;
   width: 232px !important;
   height: 34px !important;
@@ -13527,13 +13527,14 @@ window.addEventListener('message', function(e) {
 }
 :root:not(.mk-mobile-shell) .sl-ts-remaining-label {
   order: 4 !important;
-  grid-column: 3 !important;
-  grid-row: 2 !important;
+  grid-column: 5 !important;
+  grid-row: 1 !important;
+  margin-left: 10px !important;
 }
 :root:not(.mk-mobile-shell) .sl-ts-rem {
   order: 5 !important;
-  grid-column: 4 !important;
-  grid-row: 2 !important;
+  grid-column: 6 !important;
+  grid-row: 1 !important;
 }
 :root:not(.mk-mobile-shell) .sl-ts-elapsed,
 :root:not(.mk-mobile-shell) .sl-ts-rem {
@@ -13554,15 +13555,15 @@ window.addEventListener('message', function(e) {
 }
 :root:not(.mk-mobile-shell) #sl-lanes-slot {
   order: 7 !important;
-  grid-column: 5 !important;
-  grid-row: 1 / 3 !important;
+  grid-column: 7 !important;
+  grid-row: 1 !important;
   flex: 0 0 auto !important;
   margin-left: 10px !important;
 }
 :root:not(.mk-mobile-shell) #sl-ns-slot {
   order: 8 !important;
-  grid-column: 6 !important;
-  grid-row: 1 / 3 !important;
+  grid-column: 8 !important;
+  grid-row: 1 !important;
   flex: 0 0 auto !important;
   margin-right: 0 !important;
 }
@@ -13744,7 +13745,7 @@ window.addEventListener('message', function(e) {
 /* Compact live time/actions row; the ruler remains the unified header's
    bottom edge instead of becoming a separate card. */
 :root:not(.mk-mobile-shell) #minkaBarWrap .sl-times-strip {
-  grid-template-rows: 14px 14px !important;
+  grid-template-rows: 16px !important;
   column-gap: 6px !important;
   row-gap: 0 !important;
   margin-top: 0 !important;
@@ -15105,46 +15106,176 @@ window.addEventListener('message', function(e) {
 
 /* Fatigue reads like the watch badge: a solid pill that shifts colour with the
    value, with the word underneath. */
-.rg-mood-fat-pill {
+.rg-mood-pill {
   display: inline-flex;
   align-items: center;
   gap: 2px;
   padding: clamp(3px, 1.4cqw, 5px) clamp(6px, 2.6cqw, 9px);
   border-radius: 99px;
-  background: var(--rg-fat, #35d07f);
-  color: var(--rg-fat-ink, #0b1a10);
   font: 850 clamp(11px, 4.8cqw, 13px)/1 Inter, system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
-  transition: background 300ms ease, color 300ms ease;
+  transition: background 300ms ease, color 300ms ease, opacity 300ms ease;
 }
-.rg-mood-fat-pill svg { display: block; width: clamp(9px, 4cqw, 12px); height: clamp(9px, 4cqw, 12px); }
-.rg-mood-fat-label {
+.rg-mood-pill svg { display: block; width: clamp(11px, 4.8cqw, 14px); height: clamp(11px, 4.8cqw, 14px); }
+.rg-mood-pill--fatigue {
+  background: var(--rg-fat, #35d07f);
+  color: var(--rg-fat-ink, #0b1a10);
+}
+.rg-mood-pill--coffee {
+  gap: 3px;
+  background: #c8842a;
+  color: #17110a;
+  opacity: .55;
+}
+.rg-mood-pill--coffee.is-on { opacity: 1; }
+.rg-mood-side-label {
   color: rgba(214,224,238,.62);
   font: 800 clamp(6px, 2.7cqw, 7.5px)/1 Inter, system-ui, sans-serif;
   letter-spacing: .06em;
   text-transform: uppercase;
 }
 
-.rg-mood-chip {
+
+/* Coffee top: icon-only button directly under the coffee counter. */
+.rg-mood-topbtn {
+  position: relative;
+  pointer-events: auto;
+  display: inline-flex;
+  padding: clamp(4px, 1.8cqw, 6px);
+  border: 1px solid rgba(196,132,69,.24);
+  border-radius: 10px;
+  background: rgba(196,132,69,.10);
+  color: #e8c79a;
+  cursor: pointer;
+}
+.rg-mood-topbtn[hidden] { display: none; }
+.rg-mood-topbtn:hover { background: rgba(196,132,69,.20); }
+.rg-mood-topbtn svg { display: block; width: clamp(15px, 6.4cqw, 19px); height: clamp(15px, 6.4cqw, 19px); }
+/* A real sheet centred over the card, not a tooltip hanging off the button:
+   it holds the day's total, the per-machine split and the all-time top. The
+   card keeps its size, so nothing in the grid moves when it opens. */
+.rg-mood-stats {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 6;
+  width: min(232px, 94%);
+  max-height: 88%;
+  overflow-y: auto;
+  padding: clamp(9px, 3.4cqw, 13px);
+  border: 1px solid rgba(196,132,69,.26);
+  border-radius: 14px;
+  background: rgba(8,11,17,.97);
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  text-align: left;
+}
+.rg-mood-stats[hidden] { display: none; }
+.rg-mood-stats-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 7px;
+  color: #f0d3a8;
+  font: 850 clamp(9px, 4cqw, 11px)/1 Inter, system-ui, sans-serif;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.rg-mood-stats-x {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(255,255,255,.07);
+  color: #e7edf6;
+  font: 700 13px/1 Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+.rg-mood-stats-x:hover { background: rgba(255,255,255,.14); }
+.rg-mood-stats-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  color: rgba(214,224,238,.65);
+  font: 700 clamp(9px, 3.8cqw, 10.5px)/1 Inter, system-ui, sans-serif;
+}
+.rg-mood-stats-total b {
+  color: #f0d3a8;
+  font: 850 clamp(15px, 6.4cqw, 19px)/1 Inter, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.rg-mood-stats-sec {
+  margin: 8px 0 4px;
+  color: rgba(214,224,238,.45);
+  font: 800 clamp(7px, 3cqw, 8.5px)/1 Inter, system-ui, sans-serif;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.rg-mood-stats-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  font: 700 clamp(9px, 3.8cqw, 10.5px)/1.2 Inter, system-ui, sans-serif;
+  color: #e7edf6;
+}
+.rg-mood-stats-row svg { display: block; width: 17px; height: 17px; flex: 0 0 17px; }
+.rg-mood-stats-row i { font-style: normal; width: 10px; color: rgba(240,211,168,.5); }
+.rg-mood-stats-row span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rg-mood-stats-row u { color: #f0d3a8; text-decoration: none; font-variant-numeric: tabular-nums; }
+
+/* Both side stacks sit vertically centred on the blob, on opposite sides. */
+.rg-mood-side {
+  position: absolute;
+  top: calc(50% - clamp(9px, 4cqw, 14px));
   display: none;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
-  padding: clamp(4px, 2cqw, 7px) clamp(5px, 2.2cqw, 8px);
-  border-radius: 12px;
+  gap: clamp(4px, 1.8cqw, 7px);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.rg-mood-side.is-mounted { display: inline-flex; }
+.rg-mood-side--left { left: 0; align-items: flex-start; }
+.rg-mood-side--right { right: 0; align-items: flex-end; }
+/* The blob's own ring only has to clear the corner badges now. */
+
+/* Fatigue reads like the watch badge: a solid pill that shifts colour with the
+   value, with the word underneath. */
+.rg-mood-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: clamp(3px, 1.4cqw, 5px) clamp(6px, 2.6cqw, 9px);
+  border-radius: 99px;
   font: 850 clamp(11px, 4.8cqw, 13px)/1 Inter, system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
+  transition: background 300ms ease, color 300ms ease, opacity 300ms ease;
 }
-.rg-mood-chip.is-mounted { display: inline-flex; }
-.rg-mood-chip svg { display: block; width: clamp(17px, 7.4cqw, 22px); height: clamp(17px, 7.4cqw, 22px); }
-.rg-mood-chip--coffee {
-  border: 1px solid rgba(196,132,69,.30);
-  background: rgba(196,132,69,.13);
-  color: #f0d3a8;
+.rg-mood-pill svg { display: block; width: clamp(11px, 4.8cqw, 14px); height: clamp(11px, 4.8cqw, 14px); }
+.rg-mood-pill--fatigue {
+  background: var(--rg-fat, #35d07f);
+  color: var(--rg-fat-ink, #0b1a10);
+}
+.rg-mood-pill--coffee {
+  gap: 3px;
+  background: #c8842a;
+  color: #17110a;
   opacity: .55;
-  transition: opacity 300ms ease;
 }
-.rg-mood-chip--coffee.is-on { opacity: 1; }
+.rg-mood-pill--coffee.is-on { opacity: 1; }
+.rg-mood-side-label {
+  color: rgba(214,224,238,.62);
+  font: 800 clamp(6px, 2.7cqw, 7.5px)/1 Inter, system-ui, sans-serif;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
 
 /* Coffee top: icon-only button directly under the coffee counter. */
 .rg-mood-topbtn {
@@ -15538,16 +15669,21 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       + '<span class="rg-mood-ring" data-rg-ring></span>'
       + '</span>'
       + '<span class="rg-mood-side rg-mood-side--left" data-rg-chip="fatigue">'
-      + '<span class="rg-mood-fat-pill"><svg viewBox="0 0 24 24" aria-hidden="true">'
+      + '<span class="rg-mood-pill rg-mood-pill--fatigue"><svg viewBox="0 0 24 24" aria-hidden="true">'
       + '<path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="currentColor"></path></svg>'
       + '<b data-rg-fatigue-num>0%</b></span>'
-      + '<span class="rg-mood-fat-label">Nogurums</span></span>'
+      + '<span class="rg-mood-side-label">Nogurums</span></span>'
       + '<span class="rg-mood-side rg-mood-side--right">'
-      + '<span class="rg-mood-chip rg-mood-chip--coffee" data-rg-chip="coffee">'
-      + moodCupSvg() + '<b data-rg-coffee-num>0</b></span>'
+      + '<span class="rg-mood-pill rg-mood-pill--coffee" data-rg-chip="coffee">'
+      + moodPillCupSvg() + '<b data-rg-coffee-num>0</b></span>'
+      + '<span class="rg-mood-side-label">Kafija</span>'
       + '<button class="rg-mood-topbtn" type="button" data-rg-topbtn hidden'
-      + ' aria-label="Kafijas tops" title="Kafijas tops">' + moodTopSvg()
-      + '<span class="rg-mood-top" data-rg-top hidden></span></button></span>'
+      + ' aria-label="Kafijas statistika" title="Kafijas statistika">' + moodTopSvg()
+      + '</button></span>'
+      + '<div class="rg-mood-stats" data-rg-top hidden>'
+      + '<div class="rg-mood-stats-head">Kafijas statistika'
+      + '<button class="rg-mood-stats-x" type="button" aria-label="Aizvērt">×</button></div>'
+      + '<div class="rg-mood-stats-body" data-rg-stats-body></div></div>'
       + '<span class="rg-mood-label">' + (base.label || '&nbsp;') + '</span>'
       + '</div>';
   }
@@ -15556,6 +15692,15 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       + '<rect x="3" y="4" width="8" height="8" fill="#c8842a"></rect><rect x="4" y="12" width="6" height="1" fill="#c8842a"></rect>'
       + '<rect x="11" y="5" width="2" height="1" fill="#c8842a"></rect><rect x="13" y="5" width="1" height="4" fill="#c8842a"></rect>'
       + '<rect x="11" y="8" width="2" height="1" fill="#c8842a"></rect><rect x="4" y="5" width="6" height="1" fill="#f0b860"></rect>'
+      + '</svg>';
+  }
+  // Solid single-colour cup for the pill, where the full-colour mug would
+  // disappear against the warm background.
+  function moodPillCupSvg() {
+    return '<svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" fill="currentColor">'
+      + '<rect x="2" y="4" width="9" height="8"></rect><rect x="3" y="12" width="7" height="1"></rect>'
+      + '<rect x="11" y="5" width="2" height="1"></rect><rect x="13" y="5" width="1" height="4"></rect>'
+      + '<rect x="11" y="8" width="2" height="1"></rect>'
       + '</svg>';
   }
   function moodTopSvg() {
@@ -15627,6 +15772,10 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   // on the blob, the title or the mood row.
   var MOOD_SLOTS = ['tl', 'tr', 'bl', 'br'];
   var MOOD_SOURCES = ['philips', 'lofbergs', 'narvesen', 'monster', 'monsterultra', 'redbull', 'cupcoffee'];
+  var MOOD_SOURCE_NAMES = {
+    philips: 'Philips', lofbergs: 'Löfbergs', narvesen: 'Narvesen', monster: 'Monster',
+    monsterultra: 'Monster Ultra', redbull: 'Red Bull', cupcoffee: 'Cita kafija'
+  };
   function paintMoodCoffee(force) {
     var refs = moodRefs();
     if (!refs) return;
@@ -15650,6 +15799,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     var coffee = refs.chips.coffee;
     if (coffee) {
       coffee.classList.toggle('is-mounted', stats.total !== null);
+      coffee.classList.toggle('rg-mood-pill', true);
       var num = coffee.querySelector('[data-rg-coffee-num]');
       if (num) num.textContent = String(stats.total === null ? 0 : stats.total);
       coffee.classList.toggle('is-on', (stats.total || 0) > 0);
@@ -15668,16 +15818,37 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       }
     }
     var button = refs.topbtn;
-    var top = refs.top;
-    if (button) button.hidden = !stats.top.length;
-    if (top && stats.top.length) {
-      var key = stats.top.map(function (x) { return x.name + ':' + x.count; }).join('|');
-      if (top.dataset.rgKey !== key) {
-        top.dataset.rgKey = key;
-        top.innerHTML = stats.top.map(function (item, index) {
-          return '<span class="rg-mood-top-row"><i>' + (index + 1) + '</i>'
-            + '<b>' + moodShortName(item.name) + '</b><u>' + item.count + '</u></span>';
-        }).join('');
+    var panel = refs.top;
+    var body = panel && panel.querySelector('[data-rg-stats-body]');
+    var hasStats = stats.top.length > 0 || stats.total !== null;
+    if (button) button.hidden = !hasStats;
+    if (body && hasStats) {
+      var sourceRows = MOOD_SOURCES
+        .map(function (key) { return { key: key, n: Math.max(0, Number(stats.sources[key]) || 0) }; })
+        .filter(function (item) { return item.n > 0; })
+        .sort(function (a, b) { return b.n - a.n; });
+      var key = (stats.total || 0) + '#'
+        + sourceRows.map(function (x) { return x.key + x.n; }).join(',') + '#'
+        + stats.top.map(function (x) { return x.name + x.count; }).join(',');
+      if (body.dataset.rgKey !== key) {
+        body.dataset.rgKey = key;
+        var html = '<div class="rg-mood-stats-total"><span>Šodien</span><b>'
+          + (stats.total === null ? 0 : stats.total) + '</b></div>';
+        if (sourceRows.length) {
+          html += '<div class="rg-mood-stats-sec">Avoti</div>'
+            + sourceRows.map(function (item) {
+              return '<div class="rg-mood-stats-row">' + (moodSourceIcon(item.key) || '')
+                + '<span>' + MOOD_SOURCE_NAMES[item.key] + '</span><u>' + item.n + '</u></div>';
+            }).join('');
+        }
+        if (stats.top.length) {
+          html += '<div class="rg-mood-stats-sec">Tops</div>'
+            + stats.top.map(function (item, index) {
+              return '<div class="rg-mood-stats-row"><i>' + (index + 1) + '</i>'
+                + '<span>' + moodShortName(item.name) + '</span><u>' + item.count + '</u></div>';
+            }).join('');
+        }
+        body.innerHTML = html;
       }
     }
   }
@@ -16214,9 +16385,15 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   // Hover/press preview. Purely visual — it renders the mood under the pointer
   // and rolls back on leave; only the real click commits anything.
   list.addEventListener('click', function (event) {
-    var topButton = event.target.closest('[data-rg-topbtn]');
-    if (!topButton) return;
-    var refs = moodRefs();
+    var refs = null;
+    // The open sheet covers the button, so a tap anywhere on it closes again.
+    if (event.target.closest('[data-rg-top]')) {
+      refs = moodRefs();
+      if (refs && refs.top) refs.top.hidden = true;
+      return;
+    }
+    if (!event.target.closest('[data-rg-topbtn]')) return;
+    refs = moodRefs();
     if (refs && refs.top) refs.top.hidden = !refs.top.hidden;
   });
   list.addEventListener('pointerover', function (event) {
