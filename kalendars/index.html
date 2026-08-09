@@ -3817,7 +3817,7 @@ window.addEventListener('message', function(e) {
 // worker from this iframe added a second controllerchange reload listener with
 // a different app version, which could make PWA updates visibly reload twice.
 if ('serviceWorker' in navigator && window.top === window) {
-  const MINKA_APP_VERSION = '2026.08.09-cofsrc1.calendar';
+  const MINKA_APP_VERSION = '2026.08.09-ring7.calendar';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -14932,117 +14932,66 @@ window.addEventListener('message', function(e) {
   white-space: nowrap;
   transition: color 440ms ease;
 }
-/* Each coffee source floats free in the space beside the blob: bare icon plus
-   its count, no box, no border, no glow. Fixed slots keep them clear of the
-   blob, the title above and the mood row below. */
+/* Every coffee source floats free around the blob: bare icon plus its count,
+   no box, no border, no glow. The ring fills the blob wrapper, so its centre
+   is the blob's centre and JS can lay the badges out by angle from there. */
 .rg-mood-ring {
   position: absolute;
   inset: 0;
+  --rg-ring-r: calc(clamp(78px, 52cqw, 132px) / 2 + clamp(20px, 8cqw, 26px));
   pointer-events: none;
 }
 .rg-mood-src {
   position: absolute;
+  left: 50%;
+  top: 50%;
   display: inline-flex;
   align-items: center;
-  gap: clamp(3px, 1.4cqw, 6px);
+  gap: clamp(2px, 1.2cqw, 5px);
   white-space: nowrap;
-  transform: rotate(-3deg);
+  /* Position comes from --rg-x/--rg-y, worked out in JS from the badge's angle
+     and the blob's measured radius. Composing rotate+translate in CSS put the
+     badges on the blob's face, because the percentage translate resolved
+     against an already-rotated frame. */
+  transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px))) rotate(-3deg);
   animation: rg-src-float 5.6s ease-in-out infinite;
 }
 .rg-mood-src svg {
   display: block;
-  width: clamp(28px, 13.5cqw, 36px);
-  height: clamp(28px, 13.5cqw, 36px);
-}
-.rg-mood-src--rest i {
-  color: rgba(242,221,186,.7);
-  font: 700 clamp(14px, 6.6cqw, 19px)/1 Inter, system-ui, sans-serif;
-  font-style: normal;
+  width: var(--rg-src-icon, clamp(25px, 11.5cqw, 31px));
+  height: var(--rg-src-icon, clamp(25px, 11.5cqw, 31px));
 }
 .rg-mood-src b {
   color: #f2ddba;
-  font: 700 clamp(15px, 7.4cqw, 21px)/1 Inter, system-ui, sans-serif;
+  font: 700 var(--rg-src-num, clamp(14px, 6.6cqw, 19px))/1 Inter, system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
 }
-/* Slots are anchored to the wrapper's corners; the wrapper's padding is the
-   free ring of space around the blob, so nothing can overlap the face. */
-.rg-mood-src--tl { top: 4%;  left: 0; }
-.rg-mood-src--tr { top: 4%;  right: 0; }
-.rg-mood-src--bl { bottom: 2%; left: 0; }
-.rg-mood-src--br { bottom: 2%; right: 0; }
+[data-rg-dense="mid"] { --rg-src-icon: clamp(21px, 9.5cqw, 26px); --rg-src-num: clamp(12px, 5.6cqw, 16px); }
+[data-rg-dense="hi"]  { --rg-src-icon: clamp(18px, 8cqw, 22px);   --rg-src-num: clamp(11px, 5cqw, 14px); }
+
+/* Four drift patterns, handed out round-robin so neighbouring badges never
+   bob in lockstep. Each keyframe re-states the base offset, otherwise the
+   animation would drop the badge back onto the blob for its whole run. */
 .rg-mood-f0 { animation-name: rg-src-f0; animation-duration: 5.6s; }
 .rg-mood-f1 { animation-name: rg-src-f1; animation-duration: 7.1s; animation-delay: -1.9s; }
 .rg-mood-f2 { animation-name: rg-src-f2; animation-duration: 6.3s; animation-delay: -3.4s; }
 .rg-mood-f3 { animation-name: rg-src-f3; animation-duration: 8s;   animation-delay: -0.8s; }
 @keyframes rg-src-f0 {
-  0%, 100% { transform: rotate(-3deg) translate(0, 0); }
-  50%      { transform: rotate(-3deg) translate(0, -4px); }
+  0%, 100% { transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px))) rotate(-3deg); }
+  50%      { transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px))) translateY(-4px) rotate(-3deg); }
 }
 @keyframes rg-src-f1 {
-  0%, 100% { transform: rotate(-3deg) translate(0, 0); }
-  50%      { transform: rotate(-1deg) translate(3px, 2px); }
+  0%, 100% { transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px))) rotate(-3deg); }
+  50%      { transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px))) translate(3px, 2px) rotate(-1deg); }
 }
 @keyframes rg-src-f2 {
-  0%, 100% { transform: rotate(-3deg) translate(0, 0); }
-  33%      { transform: rotate(-5deg) translate(-3px, -2px); }
-  66%      { transform: rotate(-2deg) translate(2px, -3px); }
+  0%, 100% { transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px))) rotate(-3deg); }
+  33%      { transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px))) translate(-3px, -2px) rotate(-5deg); }
+  66%      { transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px))) translate(2px, -3px) rotate(-2deg); }
 }
 @keyframes rg-src-f3 {
-  0%, 100% { transform: rotate(-3deg) translate(0, 0); }
-  50%      { transform: rotate(-4deg) translate(-3px, 3px); }
-}
-
-/* Coffee top is behind a small text button — no permanent list of initials. */
-/* Opens as an overlay over the blob, not as extra rows: the card has a fixed
-   place in the grid, so growing it would push the whole section around. */
-
-/* Both side stacks sit vertically centred on the blob, on opposite sides. */
-.rg-mood-side {
-  position: absolute;
-  top: calc(50% - clamp(9px, 4cqw, 14px));
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  gap: clamp(4px, 1.8cqw, 7px);
-  transform: translateY(-50%);
-  pointer-events: none;
-}
-.rg-mood-side.is-mounted { display: inline-flex; }
-.rg-mood-side--left { left: 0; align-items: center; }
-.rg-mood-side--right { right: 0; align-items: center; }
-/* Out of flow, so the button never shifts the coffee pill off the fatigue
-   pill's line — the two counters have to read as one row. */
-/* The blob's own ring only has to clear the corner badges now. */
-
-/* Fatigue reads like the watch badge: a solid pill that shifts colour with the
-   value, with the word underneath. */
-.rg-mood-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: clamp(3px, 1.4cqw, 5px) clamp(6px, 2.6cqw, 9px);
-  border-radius: 99px;
-  font: 850 clamp(11px, 4.8cqw, 13px)/1 Inter, system-ui, sans-serif;
-  font-variant-numeric: tabular-nums;
-  transition: background 300ms ease, color 300ms ease, opacity 300ms ease;
-}
-.rg-mood-pill svg { display: block; width: clamp(12px, 5.4cqw, 16px); height: clamp(12px, 5.4cqw, 16px); }
-.rg-mood-pill--fatigue {
-  background: var(--rg-fat, #35d07f);
-  color: var(--rg-fat-ink, #0b1a10);
-}
-.rg-mood-pill--coffee {
-  gap: 3px;
-  background: #c8842a;
-  color: #17110a;
-  opacity: .55;
-}
-.rg-mood-pill--coffee.is-on { opacity: 1; }
-.rg-mood-side-label {
-  color: rgba(214,224,238,.62);
-  font: 800 clamp(6px, 2.7cqw, 7.5px)/1 Inter, system-ui, sans-serif;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  0%, 100% { transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px))) rotate(-3deg); }
+  50%      { transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px))) translate(-3px, 3px) rotate(-4deg); }
 }
 
 /* Coffee statistics: a bare icon-and-label control tucked under the coffee
@@ -15098,9 +15047,6 @@ window.addEventListener('message', function(e) {
 .rg-mood-side.is-mounted { display: inline-flex; }
 .rg-mood-side--left { left: 0; align-items: center; }
 .rg-mood-side--right { right: 0; align-items: center; }
-/* Out of flow, so the button never shifts the coffee pill off the fatigue
-   pill's line — the two counters have to read as one row. */
-/* The blob's own ring only has to clear the corner badges now. */
 
 /* Fatigue reads like the watch badge: a solid pill that shifts colour with the
    value, with the word underneath. */
@@ -15584,47 +15530,61 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     if (score > 20) return '#d8c64a';
     return '#35d07f';
   }
-  // Each coffee source floats free beside the blob: its own icon, the count to
-  // its right, no box and no border. Slots are fixed so the badges never land
-  // on the blob, the title or the mood row.
-  var MOOD_SLOTS = ['tl', 'tr', 'bl', 'br'];
+  // Every source gets its own place on the ring — nothing is ever collapsed
+  // into a "+N". The angles are hand-placed per count so the badges stay clear
+  // of the two pills, which sit at the middle of the left and right sides.
+  var MOOD_ANGLES = {
+    1: [0],
+    2: [-38, 38],
+    3: [-52, 0, 52],
+    4: [-58, -21, 21, 58],
+    5: [-60, -28, 0, 28, 60],
+    6: [-62, -30, 30, 62, -142, 142],
+    7: [-64, -32, 0, 32, 64, -142, 142]
+  };
   var MOOD_SOURCES = ['philips', 'lofbergs', 'narvesen', 'monster', 'monsterultra', 'redbull', 'cupcoffee'];
   var MOOD_SOURCE_NAMES = {
     philips: 'Philips', lofbergs: 'Löfbergs', narvesen: 'Narvesen', monster: 'Monster',
     monsterultra: 'Monster Ultra', redbull: 'Red Bull', cupcoffee: 'Cita kafija'
   };
+  // Badge sizes follow the card's container queries, so a resize moves the
+  // ring. Re-place from the last known angles instead of rebuilding the DOM.
+  var moodRingAngles = [];
+  var moodRingResize = 0;
+  window.addEventListener('resize', function () {
+    window.clearTimeout(moodRingResize);
+    moodRingResize = window.setTimeout(function () {
+      var refs = moodRefs();
+      if (refs && refs.ring && refs.ring.firstChild) placeMoodSources(refs.ring, moodRingAngles);
+    }, 180);
+  }, { passive: true });
   function paintMoodCoffee(force) {
     var refs = moodRefs();
     if (!refs) return;
     var stats = moodStats(force);
     var ring = refs.ring;
     if (ring) {
-      var active = MOOD_SOURCES
+      var used = MOOD_SOURCES
         .map(function (key) { return { key: key, n: Math.max(0, Number(stats.sources[key]) || 0) }; })
         .filter(function (item) { return item.n > 0; })
-        .sort(function (a, b) { return b.n - a.n; });
-      // There are four corners and up to seven sources. Rather than silently
-      // dropping the smallest ones, the last corner sums whatever did not fit.
-      var used = active.slice(0, MOOD_SLOTS.length);
-      var restCount = 0;
-      if (active.length > MOOD_SLOTS.length) {
-        used = active.slice(0, MOOD_SLOTS.length - 1);
-        restCount = active.slice(MOOD_SLOTS.length - 1)
-          .reduce(function (sum, item) { return sum + item.n; }, 0);
-      }
-      var signature = used.map(function (item) { return item.key + ':' + item.n; }).join('|') + '#' + restCount;
+        .sort(function (a, b) { return b.n - a.n; })
+        .slice(0, 7);
+      var angles = MOOD_ANGLES[used.length] || [];
+      var signature = used.map(function (item) { return item.key + ':' + item.n; }).join('|');
       if (ring.dataset.rgSrc !== signature) {
-        ring.dataset.rgSrc = signature;
-        var html = used.map(function (item, index) {
-          return '<span class="rg-mood-src rg-mood-src--' + MOOD_SLOTS[index] + ' rg-mood-f' + (index % 4) + '">'
+        // Badges shrink as the ring fills up, so seven still fit without the
+        // card growing or anything landing on the blob.
+        ring.dataset.rgDense = used.length >= 6 ? 'hi' : (used.length >= 4 ? 'mid' : 'lo');
+        ring.innerHTML = used.map(function (item, index) {
+          return '<span class="rg-mood-src rg-mood-f' + (index % 4) + '"'
+            + ' title="' + MOOD_SOURCE_NAMES[item.key] + ': ' + item.n + '">'
             + (moodSourceIcon(item.key) || '') + '<b>' + item.n + '</b></span>';
         }).join('');
-        if (restCount) {
-          html += '<span class="rg-mood-src rg-mood-src--' + MOOD_SLOTS[MOOD_SLOTS.length - 1]
-            + ' rg-mood-f3 rg-mood-src--rest" title="Pārējie avoti">'
-            + '<i>+</i><b>' + restCount + '</b></span>';
-        }
-        ring.innerHTML = html;
+        moodRingAngles = angles;
+        // Only remember the signature once the badges really landed; while the
+        // card is still unpainted the measurements are zero, so the next paint
+        // has to try again rather than leave them stacked on the blob.
+        ring.dataset.rgSrc = placeMoodSources(ring, angles) ? signature : '';
       }
     }
     var coffee = refs.chips.coffee;
@@ -15650,6 +15610,39 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     }
     var button = refs.topbtn;
     if (button) button.hidden = !(stats.top.length || stats.total !== null);
+  }
+  // The ring radius follows the blob's real painted size, and each badge is
+  // pushed out far enough that its own box clears the circle too.
+  var MOOD_SRC_GAP = 9;
+  function placeMoodSources(ring, angles) {
+    var wrap = ring.parentElement;
+    var blob = wrap && wrap.querySelector('.rg-mood-blob');
+    // <svg> is an SVGElement, so it has no offsetWidth — reading it gave NaN
+    // and every badge collapsed onto the blob's face. Measure the painted box.
+    var radius = (blob ? blob.getBoundingClientRect().width : 0) / 2;
+    if (!(radius > 0)) return false;
+    var list = ring.querySelectorAll('.rg-mood-src');
+    for (var i = 0; i < list.length; i++) {
+      var el = list[i];
+      var w = el.offsetWidth / 2;
+      var h = el.offsetHeight / 2;
+      var a = (angles[i] || 0) * Math.PI / 180;
+      var dx = Math.sin(a);
+      var dy = -Math.cos(a);
+      // Distance from the blob's centre to the nearest corner/edge of the
+      // badge box must stay above radius + gap. Solved by stepping outwards:
+      // a closed form for a rotated box is not worth the code here.
+      var r = radius + MOOD_SRC_GAP;
+      for (var step = 0; step < 64; step++) {
+        var gapX = Math.max(0, Math.abs(dx * r) - w);
+        var gapY = Math.max(0, Math.abs(dy * r) - h);
+        if (Math.sqrt(gapX * gapX + gapY * gapY) >= radius + MOOD_SRC_GAP) break;
+        r += 3;
+      }
+      el.style.setProperty('--rg-x', Math.round(dx * r) + 'px');
+      el.style.setProperty('--rg-y', Math.round(dy * r) + 'px');
+    }
+    return true;
   }
   function moodSourceIcon(key) {
     if (typeof window.__minkaCoffeeIcon !== 'function') return '';
