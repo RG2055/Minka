@@ -14922,6 +14922,9 @@ window.addEventListener('message', function(e) {
 .rg-mood-blob-wrap {
   position: relative;
   display: block;
+  /* The ring is centred on the blob, so the wrapper has to grow to hold it. */
+  --rg-ring-r: clamp(52px, 34cqw, 86px);
+  padding: calc(var(--rg-ring-r) - clamp(78px, 52cqw, 132px) / 2 + clamp(11px, 4.5cqw, 14px));
 }
 /* The tap acknowledgement lives on the wrapper so it never fights with the
    idle breathing animation running on the <svg> itself. */
@@ -14980,34 +14983,84 @@ window.addEventListener('message', function(e) {
   white-space: nowrap;
   transition: color 440ms ease;
 }
-.rg-mood-coffee {
+/* Coffee lives on a ring around the face instead of in a row: cups are placed
+   on an arc that skips the bottom, where the mood label sits. Each cup is a
+   single rotate/translate pair, so adding one costs nothing to lay out. */
+.rg-mood-ring {
   position: absolute;
-  right: clamp(2px, 1.4cqw, 8px);
+  inset: 0;
+  pointer-events: none;
+}
+.rg-mood-cup {
+  position: absolute;
   top: 50%;
+  left: 50%;
+  width: clamp(15px, 6.4cqw, 19px);
+  height: clamp(15px, 6.4cqw, 19px);
+  margin: calc(clamp(15px, 6.4cqw, 19px) / -2);
+  transform: rotate(var(--rg-a)) translateY(calc(-1 * var(--rg-ring-r))) rotate(calc(-1 * var(--rg-a)));
+}
+.rg-mood-cup svg { display: block; width: 100%; height: 100%; }
+
+.rg-mood-chip {
+  position: absolute;
+  bottom: 0;
   display: none;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: clamp(7px, 3.2cqw, 10px) clamp(6px, 2.6cqw, 9px);
+  gap: 1px;
+  padding: clamp(4px, 2cqw, 7px) clamp(5px, 2.2cqw, 8px);
+  border-radius: 12px;
+  font: 850 clamp(11px, 4.8cqw, 13px)/1 Inter, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+.rg-mood-chip.is-mounted { display: inline-flex; }
+.rg-mood-chip i {
+  font: 850 clamp(6px, 2.6cqw, 7.5px)/1 Inter, system-ui, sans-serif;
+  font-style: normal;
+  letter-spacing: .1em;
+  opacity: .72;
+}
+.rg-mood-chip svg { display: block; width: clamp(17px, 7.4cqw, 22px); height: clamp(17px, 7.4cqw, 22px); }
+.rg-mood-chip--coffee {
+  right: 0;
   border: 1px solid rgba(196,132,69,.30);
-  border-radius: 14px;
   background: rgba(196,132,69,.13);
   color: #f0d3a8;
-  font: 850 clamp(12px, 5.6cqw, 15px)/1 Inter, system-ui, sans-serif;
-  font-variant-numeric: tabular-nums;
-  transform: translateY(-58%);
   opacity: .55;
   transition: opacity 300ms ease;
 }
-.rg-mood-coffee.is-mounted { display: inline-flex; }
-.rg-mood-coffee.is-on { opacity: 1; }
-.rg-mood-coffee svg {
-  display: block;
-  width: clamp(20px, 9cqw, 26px);
-  height: clamp(20px, 9cqw, 26px);
-  flex: 0 0 auto;
+.rg-mood-chip--coffee.is-on { opacity: 1; }
+.rg-mood-chip--fatigue {
+  left: 0;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  color: var(--rg-fat, #35d07f);
 }
-.rg-mood-coffee b { display: block; }
+
+/* Coffee top: rank, initials and count, compact enough to sit under the label. */
+.rg-mood-top {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(4px, 2cqw, 7px);
+  margin-top: clamp(4px, 2cqw, 7px);
+}
+.rg-mood-top.is-mounted { display: inline-flex; }
+.rg-mood-top-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px clamp(4px, 1.8cqw, 6px);
+  border: 1px solid rgba(196,132,69,.20);
+  border-radius: 8px;
+  background: rgba(196,132,69,.08);
+  font: 800 clamp(8.5px, 3.8cqw, 10px)/1 Inter, system-ui, sans-serif;
+}
+.rg-mood-top-item .rg-mood-top-rank { font-style: normal; color: rgba(240,211,168,.55); }
+.rg-mood-top-item b { color: #e7edf6; }
+.rg-mood-top-item u { color: #f0d3a8; text-decoration: none; font-variant-numeric: tabular-nums; }
 /* On the two-column card the action row has real room, so the narrow icon-only
    Ideja slot becomes a proper button and both labels sit optically centred. */
 .rg-feedback-card .rg-feedback-card-actions {
@@ -15350,49 +15403,120 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       + facePath('lidL') + facePath('lidR') + '</g>'
       + facePath('mouth') + facePath('mouthOpen') + facePath('teeth') + '</g>'
       + '</svg>'
+      + '<span class="rg-mood-ring" data-rg-ring></span>'
+      + '<span class="rg-mood-chip rg-mood-chip--coffee" data-rg-chip="coffee">'
+      + moodCupSvg() + '<b data-rg-coffee-num>0</b></span>'
+      + '<span class="rg-mood-chip rg-mood-chip--fatigue" data-rg-chip="fatigue">'
+      + '<i>NOG</i><b data-rg-fatigue-num>0%</b></span>'
       + '</span>'
       + '<span class="rg-mood-label">' + (base.label || '&nbsp;') + '</span>'
-      + '<span class="rg-mood-coffee"><svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">'
+      + '<span class="rg-mood-top" data-rg-top></span>'
+      + '</div>';
+  }
+  function moodCupSvg() {
+    return '<svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">'
       + '<rect x="3" y="4" width="8" height="8" fill="#c8842a"></rect><rect x="4" y="12" width="6" height="1" fill="#c8842a"></rect>'
       + '<rect x="11" y="5" width="2" height="1" fill="#c8842a"></rect><rect x="13" y="5" width="1" height="4" fill="#c8842a"></rect>'
       + '<rect x="11" y="8" width="2" height="1" fill="#c8842a"></rect><rect x="4" y="5" width="6" height="1" fill="#f0b860"></rect>'
-      + '</svg><b data-rg-coffee-num>×0</b></span>'
-      + '</div>';
+      + '</svg>';
   }
-  // Read-only: reuses the coffee total the schedule already computes for the
-  // active day. Never writes coffee state and stays silent if it is not ready.
+  function moodInitials(name) {
+    return String(name || '').trim().split(/\s+/).slice(0, 2)
+      .map(function (part) { return part.charAt(0).toLocaleUpperCase('lv-LV'); }).join('');
+  }
+  // Read-only snapshot of what the buddy header used to show: the day's coffee
+  // total, the all-time coffee top and the shift's average fatigue.
   //
   // Cached on purpose. getCoffeeCount() re-parses the whole coffee store out of
   // localStorage once per name, and paintCounts() can run many times while the
   // grid is rebuilt on a day switch — recomputing there was pure waste.
-  var moodCoffeeCache = { at: 0, day: null, total: null };
-  function moodCoffeeTotal(force) {
-    if (typeof window.__minkaGetCoffeeTotalForNames !== 'function') return null;
+  var moodStatsCache = { at: 0, day: null, data: null };
+  function moodStats(force) {
     var day = String(window.__activeDateStr || '');
     var now = Date.now();
-    if (!force && moodCoffeeCache.day === day && now - moodCoffeeCache.at < 900) return moodCoffeeCache.total;
+    if (!force && moodStatsCache.day === day && now - moodStatsCache.at < 900) return moodStatsCache.data;
     var names = [];
     list.querySelectorAll('.card[data-worker]').forEach(function (card) {
       var name = String(card.getAttribute('data-worker') || '').trim();
       if (name) names.push(name);
     });
-    var total = null;
-    if (names.length) {
-      try { total = Math.max(0, Number(window.__minkaGetCoffeeTotalForNames(names)) || 0); }
-      catch (_error) { total = null; }
+    var data = { total: null, top: [], fatigue: null };
+    if (names.length && typeof window.__minkaGetCoffeeTotalForNames === 'function') {
+      try { data.total = Math.max(0, Number(window.__minkaGetCoffeeTotalForNames(names)) || 0); }
+      catch (_error) {}
     }
-    moodCoffeeCache = { at: now, day: day, total: total };
-    return total;
+    if (typeof window.__minkaGetCoffeeLeaderboard === 'function') {
+      try { data.top = window.__minkaGetCoffeeLeaderboard(3) || []; } catch (_error) {}
+    }
+    // The fatigue percentage is already rendered on every employee card, so it
+    // is read straight off the DOM rather than recomputed.
+    var label = list.querySelector('.cards-section-label-rg');
+    var section = label && label.closest('.cards-section');
+    var scores = [];
+    (section || list).querySelectorAll('.mk-mid-fat-pct').forEach(function (el) {
+      var value = parseInt(String(el.textContent || '').replace('%', ''), 10);
+      if (Number.isFinite(value)) scores.push(value);
+    });
+    if (scores.length) {
+      data.fatigue = Math.round(scores.reduce(function (a, b) { return a + b; }, 0) / scores.length);
+    }
+    moodStatsCache = { at: now, day: day, data: data };
+    return data;
   }
+  function moodFatigueColor(score) {
+    if (score > 70) return '#ff6b5f';
+    if (score > 45) return '#e59b42';
+    if (score > 20) return '#d8c64a';
+    return '#35d07f';
+  }
+  // Cups are laid out on a circle around the face rather than in a row. The
+  // arc skips the bottom, where the mood label sits.
+  var MOOD_RING_MAX = 10;
   function paintMoodCoffee(force) {
-    var chip = moodRefs('coffee');
-    if (!chip) return;
-    var total = moodCoffeeTotal(force);
-    chip.classList.toggle('is-mounted', total !== null);
-    if (total === null) return;
-    var num = chip.querySelector('[data-rg-coffee-num]');
-    if (num) num.textContent = '×' + total;
-    chip.classList.toggle('is-on', total > 0);
+    var refs = moodRefs();
+    if (!refs) return;
+    var stats = moodStats(force);
+    var ring = refs.ring;
+    var cups = Math.max(0, Math.min(MOOD_RING_MAX, Number(stats.total) || 0));
+    if (ring && ring.dataset.rgCups !== String(cups)) {
+      ring.dataset.rgCups = String(cups);
+      var html = '';
+      for (var i = 0; i < cups; i++) {
+        var angle = -122 + (cups === 1 ? 122 : (244 / (cups - 1)) * i);
+        html += '<span class="rg-mood-cup" style="--rg-a:' + angle.toFixed(1) + 'deg">' + moodCupSvg() + '</span>';
+      }
+      ring.innerHTML = html;
+    }
+    var coffee = refs.chips.coffee;
+    if (coffee) {
+      coffee.classList.toggle('is-mounted', stats.total !== null);
+      var num = coffee.querySelector('[data-rg-coffee-num]');
+      if (num) num.textContent = String(stats.total === null ? 0 : stats.total);
+      coffee.classList.toggle('is-on', (stats.total || 0) > 0);
+    }
+    var fatigue = refs.chips.fatigue;
+    if (fatigue) {
+      fatigue.classList.toggle('is-mounted', stats.fatigue !== null);
+      if (stats.fatigue !== null) {
+        var fnum = fatigue.querySelector('[data-rg-fatigue-num]');
+        if (fnum) fnum.textContent = stats.fatigue + '%';
+        fatigue.style.setProperty('--rg-fat', moodFatigueColor(stats.fatigue));
+      }
+    }
+    var top = refs.top;
+    if (top) {
+      var key = stats.top.map(function (x) { return x.name + ':' + x.count; }).join('|');
+      if (top.dataset.rgKey !== key) {
+        top.dataset.rgKey = key;
+        top.innerHTML = stats.top.map(function (item, index) {
+          return '<span class="rg-mood-top-item" title="' + item.name + ': ' + item.count + '">'
+            + '<i class="rg-mood-top-rank">' + (index + 1) + '</i>'
+            + '<b>' + moodInitials(item.name) + '</b>'
+            + '<u>' + item.count + '</u></span>';
+        }).join('');
+      }
+      top.classList.toggle('is-mounted', stats.top.length > 0);
+    }
   }
   // The card is rebuilt whenever the schedule re-renders, so the lookups are
   // cached against the live stage and re-resolved once it is replaced.
@@ -15408,7 +15532,12 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
         stops: stage.querySelectorAll('.rg-mood-blob-stop'),
         glow: stage.querySelector('.rg-mood-glow'),
         label: stage.querySelector('.rg-mood-label'),
-        coffee: stage.querySelector('.rg-mood-coffee'),
+        ring: stage.querySelector('[data-rg-ring]'),
+        top: stage.querySelector('[data-rg-top]'),
+        chips: {
+          coffee: stage.querySelector('[data-rg-chip="coffee"]'),
+          fatigue: stage.querySelector('[data-rg-chip="fatigue"]')
+        },
         face: {}
       };
       moodFaceParts.forEach(function (part) {
