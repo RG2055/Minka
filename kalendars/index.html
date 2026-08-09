@@ -3817,7 +3817,7 @@ window.addEventListener('message', function(e) {
 // worker from this iframe added a second controllerchange reload listener with
 // a different app version, which could make PWA updates visibly reload twice.
 if ('serviceWorker' in navigator && window.top === window) {
-  const MINKA_APP_VERSION = '2026.08.09-moodblob6.calendar';
+  const MINKA_APP_VERSION = '2026.08.09-nobuddy1.calendar';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -13487,26 +13487,6 @@ window.addEventListener('message', function(e) {
 :root:not(.mk-mobile-shell) #minkaBarWrap .sl-times-strip-buddy-only {
   min-height: 48px !important;
 }
-:root:not(.mk-mobile-shell) #sl-buddy-slot {
-  order: 0 !important;
-  display: block !important;
-  position: relative !important;
-  left: 16px !important;
-  grid-column: 1 !important;
-  grid-row: 1 / 3 !important;
-  flex: 0 0 232px !important;
-  width: 232px !important;
-  height: 34px !important;
-}
-/* Detail modes hide Buddy in the parent shell. Reclaim his reserved slot so
-   elapsed and remaining time stay together instead of following empty space. */
-:root:not(.mk-mobile-shell) #shift-progress-wrap:not(.lanes-collapsed) #sl-buddy-slot,
-:root:not(.mk-mobile-shell) #shift-progress-wrap.ns-bar-active #sl-buddy-slot {
-  display: none !important;
-  flex: 0 0 0 !important;
-  width: 0 !important;
-  height: 0 !important;
-}
 :root:not(.mk-mobile-shell) .sl-ts-elapsed-label {
   order: 1 !important;
   grid-column: 3 !important;
@@ -13538,19 +13518,6 @@ window.addEventListener('message', function(e) {
 :root:not(.mk-mobile-shell) .sl-ts-elapsed,
 :root:not(.mk-mobile-shell) .sl-ts-rem {
   flex: 0 0 auto !important;
-}
-:root:not(.mk-mobile-shell) #sl-buddy-speech {
-  order: 6 !important;
-  display: none !important;
-  flex: 0 0 0 !important;
-  width: 0 !important;
-  min-width: 0 !important;
-  max-width: 0 !important;
-  margin: 0 !important;
-}
-:root:not(.mk-mobile-shell) #sl-buddy-speech.show {
-  opacity: 1 !important;
-  transform: translateY(0) !important;
 }
 :root:not(.mk-mobile-shell) #sl-lanes-slot {
   order: 7 !important;
@@ -13609,15 +13576,6 @@ window.addEventListener('message', function(e) {
   }
   :root:not(.mk-mobile-shell) #minkaBarWrap .sl-ts-label {
     display: none !important;
-  }
-  :root:not(.mk-mobile-shell) #sl-buddy-slot {
-    flex-basis: 214px !important;
-    width: 214px !important;
-  }
-  :root:not(.mk-mobile-shell) #sl-buddy-speech {
-    flex-basis: 28px !important;
-    max-width: 72px !important;
-    margin: 0 2px !important;
   }
 }
 
@@ -13764,11 +13722,6 @@ window.addEventListener('message', function(e) {
   padding: 0 11px !important;
   border-radius: 999px !important;
   font-size: 10px !important;
-}
-:root:not(.mk-mobile-shell) #sl-buddy-slot {
-  left: 10px !important;
-  width: 214px !important;
-  height: 30px !important;
 }
 
 @container (max-width: 820px) {
@@ -13922,10 +13875,6 @@ window.addEventListener('message', function(e) {
    platāka par pašu slotu — sākas ~146px pa kreisi no slota centra. Ar 214px
    slotu centrs ir par tālu pa kreisi un rinda izlien ārpus kartes. Platāks
    slots pabīda centru pa labi, un rinda paliek iekšpusē. */
-:root:not(.mk-mobile-shell) #minkaBarWrap #sl-buddy-slot {
-  flex: 0 0 280px !important;
-  width: 280px !important;
-}
 :root:not(.mk-mobile-shell) #minkaBarWrap .sl-ruler-elapsed {
   background: linear-gradient(90deg, rgba(14,116,160,.90), rgba(56,189,248,.80)) !important;
 }

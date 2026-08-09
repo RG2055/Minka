@@ -4193,21 +4193,14 @@ function filterFullList(btn) {
     '</div>';
 
     var _timesStrip = '<div class="sl-times-strip" data-start-ms="' + counterStartMs + '" data-end-ms="' + counterEndMs + '">' +
-      '<span id="sl-buddy-slot" class="sl-buddy-slot" aria-hidden="true"></span>' +
-      '<span id="sl-buddy-speech" class="sl-buddy-speech" aria-live="polite"></span>' +
       '<span id="sl-lanes-slot" class="sl-lanes-slot"></span>' +
       '<span id="sl-ns-slot" class="sl-ns-slot"></span>' +
       '<span class="sl-ts-label sl-ts-elapsed-label">PAGĀJIS</span><strong class="sl-ts-val sl-ts-elapsed">' + _elStr + '</strong>' +
       '<span class="sl-ts-sep"></span>' +
       '<span class="sl-ts-label sl-ts-remaining-label">ATLIKUŠAS</span><strong class="sl-ts-val sl-ts-rem" data-end-ms="' + counterEndMs + '" style="color:' + _reColor + '">' + _reStr + '</strong>' +
     '</div>';
-    // On another selected day the live elapsed/remaining clock is intentionally
-    // hidden, but Buddy still needs a real header row. Without this placeholder
-    // his parent overlay keeps the previous day's coordinates and lands on top
-    // of the date scroller.
-    var _buddyOnlyStrip = '<div class="sl-times-strip sl-times-strip-buddy-only" aria-hidden="true">' +
-      '<span id="sl-buddy-slot" class="sl-buddy-slot"></span>' +
-    '</div>';
+    // Buddy is gone, so the placeholder row he needed on other days is gone too.
+    var _buddyOnlyStrip = '';
 
     // Night split overlay bar (shown when 🌙 is active)
     if (nsOverlay) {
