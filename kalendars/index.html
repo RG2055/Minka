@@ -3817,7 +3817,7 @@ window.addEventListener('message', function(e) {
 // worker from this iframe added a second controllerchange reload listener with
 // a different app version, which could make PWA updates visibly reload twice.
 if ('serviceWorker' in navigator && window.top === window) {
-  const MINKA_APP_VERSION = '2026.08.09-orbit3.calendar';
+  const MINKA_APP_VERSION = '2026.08.09-orbit4.calendar';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -15550,6 +15550,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   // whole ring. Lay it out again instead of rebuilding the DOM.
   var moodRingResize = 0;
   var moodRingRetry = 0;
+  var moodRingTries = 0;
   window.addEventListener('resize', function () {
     window.clearTimeout(moodRingResize);
     moodRingResize = window.setTimeout(function () {
@@ -15579,19 +15580,22 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
             + (moodSourceIcon(item.key) || '') + '<b>' + item.n + '</b></span>';
         }).join('');
         // Only remember the signature once the badges really landed. While the
-        // card is still settling the measurements are zero or nonsensical, and
-        // caching that would leave the icons stacked on the blob's face until
-        // something else happened to repaint them — so try again next frame.
+        // card is still settling the measurements are not usable yet, so try
+        // again on the next frame — but a bounded number of times, otherwise a
+        // card that never settles would repaint every single frame forever.
+        // The badges are on a plain ring either way; the retry only refines it.
         if (placeMoodSources(ring)) {
           ring.dataset.rgSrc = signature;
-        } else {
+          moodRingTries = 0;
+        } else if (moodRingTries < 12 && !moodRingRetry) {
+          moodRingTries++;
           ring.dataset.rgSrc = '';
-          if (!moodRingRetry) {
-            moodRingRetry = window.requestAnimationFrame(function () {
-              moodRingRetry = 0;
-              paintMoodCoffee(false);
-            });
-          }
+          moodRingRetry = window.requestAnimationFrame(function () {
+            moodRingRetry = 0;
+            paintMoodCoffee(false);
+          });
+        } else {
+          ring.dataset.rgSrc = signature;
         }
       }
     }
@@ -15707,16 +15711,43 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     var badges = [].slice.call(ring.querySelectorAll('.rg-mood-src'));
     if (!badges.length) return true;
 
+    // Lay a plain even ring down first, and only improve on it below. Every
+    // badge therefore always has a position that clears the blob, whatever the
+    // measurements turn out to be. Without this, any bail-out left the badges
+    // with no offset at all, and an unpositioned badge sits at the ring's
+    // centre — printed straight onto the blob's face, which is exactly what
+    // showed up in the app.
+    var safeRing = function () {
+      badges.forEach(function (el, i) {
+        var a = i * (2 * Math.PI / badges.length);
+        // Half the diagonal clears the blob whichever way the badge is turned,
+        // and a little slack covers the float drift.
+        var reach = Math.sqrt(el.offsetWidth * el.offsetWidth + el.offsetHeight * el.offsetHeight) / 2;
+        var r = blobR + MOOD_SRC_GAP + reach + 4;
+        el.style.setProperty('--rg-x', Math.round(Math.sin(a) * r) + 'px');
+        el.style.setProperty('--rg-y', Math.round(-Math.cos(a) * r) + 'px');
+      });
+    };
+    safeRing();
+
     // The card's padding box, not its border box: a badge pushed right up to
     // the card's edge sits on the rounded border and reads as falling out.
+    // getComputedStyle can hand back something parseFloat cannot read while the
+    // card is still settling, and a single NaN here poisons every later test,
+    // so anything unusable is treated as no padding.
+    var px = function (value) {
+      var n = parseFloat(value);
+      return n > 0 ? n : 0;
+    };
     var cardRect = card.getBoundingClientRect();
     var cardPad = window.getComputedStyle(card);
     var bounds = {
-      l: cardRect.left + parseFloat(cardPad.paddingLeft || 0) - cx,
-      r: cardRect.right - parseFloat(cardPad.paddingRight || 0) - cx,
-      t: cardRect.top + parseFloat(cardPad.paddingTop || 0) - cy,
-      b: cardRect.bottom - parseFloat(cardPad.paddingBottom || 0) - cy
+      l: cardRect.left + px(cardPad.paddingLeft) - cx,
+      r: cardRect.right - px(cardPad.paddingRight) - cx,
+      t: cardRect.top + px(cardPad.paddingTop) - cy,
+      b: cardRect.bottom - px(cardPad.paddingBottom) - cy
     };
+    if (!(bounds.r > bounds.l && bounds.b > bounds.t)) return false;
     var blocked = moodObstacles(card, cx, cy);
     // Mirror every obstacle onto the other side. The statistics button only
     // exists on the right, so without this the ring would be pushed out there
@@ -15814,7 +15845,9 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       fit *= span / needed;
     }
     badges.forEach(function (el, i) { el.style.opacity = (1 - 0.28 * depths[i]).toFixed(2); });
-    if (!open.length) return false;
+    // The badges were resized since the safe ring was laid down, so redo it at
+    // the size they are now before giving up on the proper one.
+    if (!open.length) { safeRing(); return false; }
 
     // Spacing the badges evenly along the open part of the ring still leaves a
     // choice of where the sequence starts, and it matters a lot. The ring is
