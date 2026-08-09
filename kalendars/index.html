@@ -3817,7 +3817,7 @@ window.addEventListener('message', function(e) {
 // worker from this iframe added a second controllerchange reload listener with
 // a different app version, which could make PWA updates visibly reload twice.
 if ('serviceWorker' in navigator && window.top === window) {
-  const MINKA_APP_VERSION = '2026.08.09-stats3.calendar';
+  const MINKA_APP_VERSION = '2026.08.09-tight1.calendar';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -14871,9 +14871,11 @@ window.addEventListener('message', function(e) {
 .rg-mood-blob-wrap {
   position: relative;
   display: block;
-  /* The ring is centred on the blob, so the wrapper has to grow to hold it. */
+  /* Source badges sit in the corners, so the ring only needs width there —
+     vertically they clear the blob on their own. Keeping the tall uniform
+     padding just made the whole card, and the grid row it lives in, taller. */
   --rg-ring-r: clamp(52px, 34cqw, 86px);
-  padding: calc(var(--rg-ring-r) - clamp(78px, 52cqw, 132px) / 2 + clamp(11px, 4.5cqw, 14px));
+  padding: clamp(10px, 4cqw, 14px) clamp(40px, 21cqw, 56px);
 }
 /* The tap acknowledgement lives on the wrapper so it never fights with the
    idle breathing animation running on the <svg> itself. */
@@ -14951,12 +14953,12 @@ window.addEventListener('message', function(e) {
 }
 .rg-mood-src svg {
   display: block;
-  width: clamp(28px, 13.5cqw, 36px);
-  height: clamp(28px, 13.5cqw, 36px);
+  width: clamp(25px, 11.5cqw, 31px);
+  height: clamp(25px, 11.5cqw, 31px);
 }
 .rg-mood-src b {
   color: #f2ddba;
-  font: 700 clamp(15px, 7.4cqw, 21px)/1 Inter, system-ui, sans-serif;
+  font: 700 clamp(14px, 6.6cqw, 19px)/1 Inter, system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
 }
 /* Slots are anchored to the wrapper's corners; the wrapper's padding is the
