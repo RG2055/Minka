@@ -13883,10 +13883,11 @@ window.addEventListener('message', function(e) {
   margin-bottom: 0 !important;
   padding-bottom: 0 !important;
 }
-/* Buddy rinda ir 44px augsta (kafija + nogurums), bet slots bija 28px, tāpēc
-   tā ielīda atzīmju rindā. Rezervējam rindai īsto augstumu. */
+/* Rindai rezervētais augstums bija 42px tāpēc, ka buddy rindā bija arī kafija
+   un nogurums. Tie tagad dzīvo pie maiņas vērtējuma kartītes, tāpēc rindai
+   pietiek ar buddy slota paša augstumu. */
 :root:not(.mk-mobile-shell) #minkaBarWrap .sl-times-strip {
-  min-height: 42px !important;
+  min-height: 34px !important;
   align-items: center !important;
 }
 :root:not(.mk-mobile-shell) #minkaBarWrap .sl-ruler {
