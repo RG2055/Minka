@@ -3817,7 +3817,7 @@ window.addEventListener('message', function(e) {
 // worker from this iframe added a second controllerchange reload listener with
 // a different app version, which could make PWA updates visibly reload twice.
 if ('serviceWorker' in navigator && window.top === window) {
-  const MINKA_APP_VERSION = '2026.08.09-moodblob4.calendar';
+  const MINKA_APP_VERSION = '2026.08.09-moodblob5.calendar';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -14861,54 +14861,32 @@ window.addEventListener('message', function(e) {
    Presentation only. The blob renders whatever mood the existing pulse state
    already holds (localStorage `minkaShiftPulseV2` + the Cloudflare counts
    loaded into it); it never stores, sends or derives a mood of its own. */
-/* Right-hand side, straddling the seam between the two sections: the card is
-   lifted out of the card flow and centred on the RADIOLOGI section's bottom
-   edge, so exactly half of it sits above the seam and half below. Each half
-   gets its own reserved space — padding on the section above, margin on the
-   section below — so it can never land on top of an employee card.
-   The section class is set in mount() rather than with :has(), so the style
-   engine never has to re-check an ancestor while the grid is rebuilt. */
-/* Declared on the list, not on the section: custom properties inherit to
-   descendants but never to siblings, and the section below needs them too. */
-#grafiks-list.grid-view {
-  --rg-mood-w: min(288px, 100%);
-  --rg-mood-h: 296px;
-}
-/* Both need !important and the #grafiks-list prefix: the base rule is
-   `#grafiks-list.grid-view .cards-section { margin: 0 0 24px !important }`,
-   whose shorthand also pins margin-top to 0. */
-#grafiks-list.grid-view .cards-section.rg-has-mood-section {
-  position: relative !important;
-  padding-bottom: calc(var(--rg-mood-h) / 2 + 8px) !important;
-}
-#grafiks-list.grid-view .cards-section.rg-has-mood-section + .cards-section {
-  margin-top: calc(var(--rg-mood-h) / 2 + 8px) !important;
-}
+/* Right edge of the RADIOLOGI row, as an ordinary grid item. Taking it out of
+   the flow to centre it on the seam between the sections cost far more than it
+   was worth: the half hanging below the section got clipped, and the space
+   reserved for both halves pushed the two blocks ~310px apart. In the flow the
+   card can never be clipped and only ever adds the difference between its own
+   height and an employee card's. */
 #grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card,
 :root.host-radio-open #grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card,
 :root.mk-mobile-shell #grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card {
-  position: absolute !important;
-  right: 0 !important;
-  left: auto !important;
-  top: var(--rg-mood-top, 100%) !important;
-  /* Centred with a negative margin, not translateY: the card already has a
-     `:hover { transform: none !important }` rule, which would drop a transform
-     the moment the pointer arrives and make the card jump half its height. */
-  margin-top: calc(var(--rg-mood-h) / -2) !important;
-  grid-column: auto !important;
-  justify-self: auto !important;
-  align-self: auto !important;
-  width: var(--rg-mood-w) !important;
+  position: relative !important;
+  grid-column: span 2 / -1 !important;
+  justify-self: stretch !important;
+  align-self: start !important;
+  width: auto !important;
   min-width: 0 !important;
   max-width: none !important;
-  height: var(--rg-mood-h) !important;
-  min-height: 0 !important;
+  height: auto !important;
+  min-height: clamp(184px, 84cqw, 232px) !important;
   max-height: none !important;
   aspect-ratio: auto !important;
-  margin-right: 0 !important;
-  margin-bottom: 0 !important;
-  margin-left: 0 !important;
+  margin: 0 !important;
 }
+/* The taller card must not stretch the employee cards sharing its row. The
+   class is set in mount() rather than with :has(), so the style engine never
+   has to re-check an ancestor while the grid is rebuilt. */
+.cards-subgrid.rg-has-mood-card > .card.mk-mid-card { align-self: start; }
 
 /* The blob label already names the selected mood, so the per-emoji tooltip
    below the row would just repeat it — and its reserved space made the card
@@ -15483,29 +15461,6 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     if (part === 'mouthOpen' || part === 'teeth') return visual.openMouth ? '1' : '0';
     return visual.lids ? '0' : '1';   // eye whites, pupils, glints
   }
-  // The seam between the two sections is not the midpoint of the visible gap —
-  // the RADIOGRĀFERI heading sits in there, and its height differs between the
-  // desktop and mobile shells. Measuring beats arithmetic: the card is absolute,
-  // so it does not influence either edge and there is no circular dependency.
-  var moodPlaceQueued = false;
-  function placeMoodCard() {
-    moodPlaceQueued = false;
-    var card = list.querySelector('.rg-feedback-card');
-    var section = card && card.closest('.cards-section');
-    var ownGrid = section && section.querySelector('.cards-subgrid');
-    if (!card || !section || !ownGrid) return;
-    var next = section.nextElementSibling;
-    var nextGrid = next && next.querySelector('.cards-subgrid');
-    var top = section.getBoundingClientRect().top;
-    var above = ownGrid.getBoundingClientRect().bottom;
-    var below = nextGrid ? nextGrid.getBoundingClientRect().top : above + card.offsetHeight;
-    section.style.setProperty('--rg-mood-top', ((above + below) / 2 - top) + 'px');
-  }
-  function queueMoodPlacement() {
-    if (moodPlaceQueued) return;
-    moodPlaceQueued = true;
-    window.requestAnimationFrame(placeMoodCard);
-  }
   function popMoodBlob(refs) {
     var wrap = refs && refs.wrap;
     if (!wrap) return;
@@ -15529,7 +15484,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     var section = label && label.closest('.cards-section');
     var grid = section && section.querySelector('.cards-subgrid');
     if (!grid) return;
-    section.classList.add('rg-has-mood-section');
+    grid.classList.add('rg-has-mood-card');
     if (grid.querySelector('.rg-feedback-card')) return;
     var pulse = document.createElement('div');
     pulse.className = 'card mk-mid-card mk-mid-card-rd rg-feedback-card';
@@ -15542,7 +15497,6 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       + '<div class="rg-feedback-card-actions"><button class="rg-pulse-write rg-pulse-write--comment" type="button" data-rg-write="comment" title="Atstāt komentāru"><b class="rg-comment-icon" aria-hidden="true"></b><span>Komentārs</span><small class="rg-feedback-action-count" data-rg-action-count="comment"></small></button>'
       + '<button class="rg-pulse-write rg-pulse-write--suggestion" type="button" data-rg-write="suggestion" aria-label="Ieteikums RG lietotnei" title="Ieteikums RG lietotnei"><img src="../data/rg-cal-192.png" alt=""><span>Ideja</span><small class="rg-feedback-action-count" data-rg-action-count="suggestion"></small></button></div>';
     grid.appendChild(pulse);
-    queueMoodPlacement();
     paintCounts();
     loadRatings(shiftDayKey());
   }
@@ -15979,12 +15933,10 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     if (event.key === 'Escape' && !modal.hidden) closeModal();
   });
   window.addEventListener('storage', function () { paintCounts(); });
-  window.addEventListener('resize', queueMoodPlacement);
   window.addEventListener('daySelected', function () {
     window.setTimeout(function () {
       var day = shiftDayKey();
       paintCounts();
-      queueMoodPlacement();
       loadRatings(day, true);
     }, 0);
   });
