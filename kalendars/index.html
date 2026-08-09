@@ -14906,13 +14906,27 @@ window.addEventListener('message', function(e) {
   transition: color 420ms ease;
   pointer-events: none;
 }
+.rg-mood-blob-wrap {
+  position: relative;
+  display: block;
+}
+/* The tap acknowledgement lives on the wrapper so it never fights with the
+   idle breathing animation running on the <svg> itself. */
+.rg-mood-blob-wrap.is-pop { animation: rg-blob-pop 460ms cubic-bezier(.3, .8, .3, 1); }
 .rg-mood-blob {
   position: relative;
   display: block;
   width: clamp(62px, 40cqw, 100px);
   height: clamp(62px, 40cqw, 100px);
   overflow: visible;
-  animation: rg-blob-breathe 6.5s ease-in-out infinite;
+  animation: rg-blob-breathe 7.4s ease-in-out infinite;
+}
+/* Blinking is what makes the blob read as alive rather than as an icon.
+   view-box keeps the origin stable even for the dot-shaped neutral eyes. */
+.rg-mood-eyes {
+  transform-box: view-box;
+  transform-origin: 50px 46px;
+  animation: rg-blink 7.2s ease-in-out infinite;
 }
 .rg-mood-blob-shape {
   transition: d 440ms cubic-bezier(.4, 0, .2, 1);
@@ -14930,6 +14944,7 @@ window.addEventListener('message', function(e) {
 }
 .rg-mood-label {
   margin-top: clamp(3px, 2.4cqw, 6px);
+  min-height: 1em;
   color: #cbd5e1;
   font: 800 clamp(9px, 5.4cqw, 12px)/1 Inter, system-ui, sans-serif;
   letter-spacing: -.01em;
@@ -14963,12 +14978,37 @@ window.addEventListener('message', function(e) {
   height: 12px;
   flex: 0 0 12px;
 }
+/* Nothing picked yet: the halo swells slowly so the card catches the eye and
+   the emoji row reads as the thing to touch. Opacity only — compositor work. */
+.rg-mood-stage.is-idle .rg-mood-glow { animation: rg-idle-glow 4.2s ease-in-out infinite; }
+.rg-mood-stage.is-idle .rg-mood-blob { animation-duration: 5.4s; }
+/* Previewing the mood under the finger/cursor before it is committed. */
+.rg-mood-stage.is-preview .rg-mood-blob { animation-play-state: paused; }
+
 @keyframes rg-blob-breathe {
-  0%, 100% { transform: scale(1) translateY(0); }
-  50%      { transform: scale(1.018) translateY(-2px); }
+  0%, 100% { transform: scale(1) translateY(0) rotate(0deg); }
+  34%      { transform: scale(1.016) translateY(-2px) rotate(1.3deg); }
+  67%      { transform: scale(1.009) translateY(-1px) rotate(-1.1deg); }
+}
+@keyframes rg-blink {
+  0%, 93%, 100% { transform: scaleY(1); }
+  95.2%         { transform: scaleY(.08); }
+  97.4%         { transform: scaleY(1); }
+}
+@keyframes rg-blob-pop {
+  0%   { transform: scale(1); }
+  38%  { transform: scale(1.058); }
+  100% { transform: scale(1); }
+}
+@keyframes rg-idle-glow {
+  0%, 100% { opacity: .62; }
+  50%      { opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .rg-mood-blob { animation: none; }
+  .rg-mood-blob,
+  .rg-mood-eyes,
+  .rg-mood-blob-wrap.is-pop,
+  .rg-mood-stage.is-idle .rg-mood-glow { animation: none; }
   .rg-mood-blob-shape,
   .rg-mood-blob-stop,
   .rg-mood-face path,
@@ -15054,16 +15094,17 @@ window.addEventListener('message', function(e) {
     },
     _none: {
       path: 'M50 18.3C61.7 18.3 79.7 31.4 83.3 42.5C86.9 53.6 80 74.8 70.6 81.7C61.1 88.5 38.9 88.5 29.4 81.7C20 74.8 13.1 53.6 16.7 42.5C20.3 31.4 38.3 18.3 50 18.3Z',
-      color1: '#cbd5e1', color2: '#64748b', glow: 'rgba(148,163,184,.16)', label: 'Izvēlies sajūtu',
+      color1: '#e6ecfb', color2: '#8393c2', glow: 'rgba(139,157,201,.24)', label: '',
       face: {
         browL: 'M31 36C34 35 38 35 42 35', browR: 'M69 36C66 35 62 35 58 35',
         eyeL: 'M37 46C37 46 37 46 37 46', eyeR: 'M63 46C63 46 63 46 63 46',
-        mouth: 'M41 62C44 62 56 62 59 62'
+        mouth: 'M41.5 61C44.5 64.6 55.5 64.6 58.5 61'
       },
       brows: false
     }
   };
   var moodFaceParts = ['browL', 'browR', 'eyeL', 'eyeR', 'mouth'];
+  var moodBlobKey = null;   // last committed mood, so a preview can be undone
 
   function shiftDayKey() {
     var selected = String(window.__activeDateStr || '').trim();
@@ -15154,19 +15195,23 @@ window.addEventListener('message', function(e) {
   }
   function moodBlobMarkup() {
     var base = moodVisuals._none;
-    var faces = moodFaceParts.map(function (part) {
+    var facePath = function (part) {
       return '<path data-rg-face="' + part + '" d="' + base.face[part] + '" opacity="' + (part.indexOf('brow') === 0 ? '0' : '1') + '"></path>';
-    }).join('');
-    return '<div class="rg-mood-stage" aria-hidden="true">'
+    };
+    return '<div class="rg-mood-stage is-idle" aria-hidden="true">'
       + '<span class="rg-mood-glow" style="color:' + base.glow + '"></span>'
+      + '<span class="rg-mood-blob-wrap">'
       + '<svg class="rg-mood-blob" viewBox="0 0 100 100" focusable="false">'
       + '<defs><radialGradient id="rgMoodBlobGrad" cx="36%" cy="28%" r="82%">'
       + '<stop class="rg-mood-blob-stop" data-rg-stop="1" offset="0%" style="stop-color:' + base.color1 + '"></stop>'
       + '<stop class="rg-mood-blob-stop" data-rg-stop="2" offset="100%" style="stop-color:' + base.color2 + '"></stop>'
       + '</radialGradient></defs>'
       + '<path class="rg-mood-blob-shape" fill="url(#rgMoodBlobGrad)" d="' + base.path + '"></path>'
-      + '<g class="rg-mood-face">' + faces + '</g>'
+      + '<g class="rg-mood-face">' + facePath('browL') + facePath('browR')
+      + '<g class="rg-mood-eyes">' + facePath('eyeL') + facePath('eyeR') + '</g>'
+      + facePath('mouth') + '</g>'
       + '</svg>'
+      + '</span>'
       + '<span class="rg-mood-label">' + base.label + '</span>'
       + '<span class="rg-mood-coffee"><svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">'
       + '<rect x="3" y="4" width="8" height="8" fill="#c8842a"></rect><rect x="4" y="12" width="6" height="1" fill="#c8842a"></rect>'
@@ -15200,9 +15245,17 @@ window.addEventListener('message', function(e) {
   }
   // Visual only — called from paintCounts() once the existing mood state has
   // already been read, changed or reloaded. Touches nothing but the blob.
-  function updateMoodBlob(key) {
+  // `preview` renders a mood the finger/cursor is hovering without committing
+  // it, so nothing is stored, sent or counted until the tap actually lands.
+  function updateMoodBlob(key, preview) {
     var stage = list.querySelector('.rg-mood-stage');
     if (!stage) return;
+    if (!preview) {
+      if (moodBlobKey !== key && (moodBlobKey || key)) popMoodBlob(stage);
+      moodBlobKey = key || null;
+    }
+    stage.classList.toggle('is-idle', !moodBlobKey && !preview);
+    stage.classList.toggle('is-preview', !!preview);
     var visual = moodVisuals[key] || moodVisuals._none;
     var shape = stage.querySelector('.rg-mood-blob-shape');
     if (shape) shape.setAttribute('d', visual.path);
@@ -15223,6 +15276,24 @@ window.addEventListener('message', function(e) {
       el.setAttribute('opacity', (part.indexOf('brow') === 0 && !visual.brows) ? '0' : '1');
     });
     paintMoodCoffee();
+  }
+  function popMoodBlob(stage) {
+    var wrap = stage.querySelector('.rg-mood-blob-wrap');
+    if (!wrap) return;
+    wrap.classList.remove('is-pop');
+    void wrap.offsetWidth;   // restart the animation on repeated taps
+    wrap.classList.add('is-pop');
+  }
+  function previewMoodBlob(key) {
+    if (key && key !== moodBlobKey) updateMoodBlob(key, true);
+  }
+  function endMoodBlobPreview() {
+    updateMoodBlob(moodBlobKey, true);
+    var stage = list.querySelector('.rg-mood-stage');
+    if (stage) {
+      stage.classList.toggle('is-idle', !moodBlobKey);
+      stage.classList.remove('is-preview');
+    }
   }
   function mount() {
     var label = list.querySelector('.cards-section-label-rd');
@@ -15651,6 +15722,17 @@ window.addEventListener('message', function(e) {
       window.setTimeout(paintMoodCoffee, 500);
     }
   });
+  // Hover/press preview. Purely visual — it renders the mood under the pointer
+  // and rolls back on leave; only the real click commits anything.
+  list.addEventListener('pointerover', function (event) {
+    var tap = event.target.closest('[data-rg-pulse]');
+    if (tap) previewMoodBlob(tap.dataset.rgPulse);
+  });
+  list.addEventListener('pointerout', function (event) {
+    var tap = event.target.closest('[data-rg-pulse]');
+    if (tap && !tap.contains(event.relatedTarget)) endMoodBlobPreview();
+  });
+  list.addEventListener('pointercancel', endMoodBlobPreview);
   modal.addEventListener('click', function (event) {
     if (event.target === modal || event.target.closest('[data-rg-close]')) closeModal();
     var dayButton = event.target.closest('[data-rg-day]');
