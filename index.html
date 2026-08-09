@@ -166,7 +166,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260809nobuddy1';
+  var CALENDAR_BUILD = '20260809stats1';
 
   function withCalendarBuild(url) {
     try {
@@ -714,7 +714,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260809nobuddy1" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260809nobuddy1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260809stats1" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260809stats1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -4770,6 +4770,27 @@ window.addEventListener('message', function(e) {
   if (e.data && e.data.type === 'minka-calendar-selected-day-state' && e.data.payload) {
     window.__minkaLastSelectedDayState = e.data.payload;
     if (typeof window.__lacitisMiniRefreshWorkers === 'function') window.__lacitisMiniRefreshWorkers();
+  }
+  /* The coffee statistics button now lives on the shift-rating card inside the
+     calendar frame. It sends the button's rect in frame coordinates; we shift
+     it into viewport space so the panel still opens anchored to the button. */
+  if (e.data && e.data.type === 'minka-open-coffee-stats') {
+    if (typeof window.__mkCoffeeStatsToggle !== 'function') return;
+    var anchor = null;
+    try {
+      var frame = document.getElementById('calIframe');
+      var fr = frame && frame.getBoundingClientRect();
+      var r = e.data.rect;
+      if (fr && r) {
+        var box = {
+          left: fr.left + r.left, top: fr.top + r.top,
+          width: r.width, height: r.height,
+          right: fr.left + r.left + r.width, bottom: fr.top + r.top + r.height
+        };
+        anchor = { getBoundingClientRect: function () { return box; } };
+      }
+    } catch (_e) {}
+    window.__mkCoffeeStatsToggle(anchor);
   }
   if (e.data && e.data.type === 'mk_stats_closed') {
     var btn = document.getElementById('statsDocBtn');

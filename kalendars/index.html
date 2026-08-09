@@ -3817,7 +3817,7 @@ window.addEventListener('message', function(e) {
 // worker from this iframe added a second controllerchange reload listener with
 // a different app version, which could make PWA updates visibly reload twice.
 if ('serviceWorker' in navigator && window.top === window) {
-  const MINKA_APP_VERSION = '2026.08.09-nobuddy1.calendar';
+  const MINKA_APP_VERSION = '2026.08.09-stats1.calendar';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -15048,15 +15048,8 @@ window.addEventListener('message', function(e) {
   pointer-events: none;
 }
 .rg-mood-side.is-mounted { display: inline-flex; }
-.rg-mood-side--left { left: 0; align-items: flex-start; }
-.rg-mood-side--right { right: 0; align-items: flex-end; }
-/* Out of flow, so the extra control never shifts the pill off the fatigue
-   pill's line — the two counters have to read as one row. */
-.rg-mood-side--right .rg-mood-topbtn {
-  position: absolute;
-  top: calc(100% + clamp(5px, 2.2cqw, 8px));
-  right: 0;
-}
+.rg-mood-side--left { left: 0; align-items: center; }
+.rg-mood-side--right { right: 0; align-items: center; }
 /* The blob's own ring only has to clear the corner badges now. */
 
 /* Fatigue reads like the watch badge: a solid pill that shifts colour with the
@@ -15096,93 +15089,23 @@ window.addEventListener('message', function(e) {
   position: relative;
   pointer-events: auto;
   display: inline-flex;
-  padding: clamp(4px, 1.8cqw, 6px);
+  align-items: center;
+  justify-content: center;
+  gap: clamp(4px, 2cqw, 7px);
+  margin-top: clamp(4px, 2cqw, 7px);
+  padding: clamp(4px, 1.8cqw, 6px) clamp(8px, 3.4cqw, 12px);
   border: 1px solid rgba(196,132,69,.24);
   border-radius: 10px;
   background: rgba(196,132,69,.10);
   color: #e8c79a;
+  font: 800 clamp(8.5px, 3.8cqw, 10.5px)/1 Inter, system-ui, sans-serif;
+  letter-spacing: .03em;
+  white-space: nowrap;
   cursor: pointer;
 }
 .rg-mood-topbtn[hidden] { display: none; }
 .rg-mood-topbtn:hover { background: rgba(196,132,69,.20); }
-.rg-mood-topbtn svg { display: block; width: clamp(15px, 6.4cqw, 19px); height: clamp(15px, 6.4cqw, 19px); }
-/* A real sheet centred over the card, not a tooltip hanging off the button:
-   it holds the day's total, the per-machine split and the all-time top. The
-   card keeps its size, so nothing in the grid moves when it opens. */
-.rg-mood-stats {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  z-index: 6;
-  width: min(232px, 94%);
-  max-height: 88%;
-  overflow-y: auto;
-  padding: clamp(9px, 3.4cqw, 13px);
-  border: 1px solid rgba(196,132,69,.26);
-  border-radius: 14px;
-  background: rgba(8,11,17,.97);
-  transform: translate(-50%, -50%);
-  pointer-events: auto;
-  text-align: left;
-}
-.rg-mood-stats[hidden] { display: none; }
-.rg-mood-stats-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 7px;
-  color: #f0d3a8;
-  font: 850 clamp(9px, 4cqw, 11px)/1 Inter, system-ui, sans-serif;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-}
-.rg-mood-stats-x {
-  flex: 0 0 auto;
-  width: 18px;
-  height: 18px;
-  padding: 0;
-  border: 0;
-  border-radius: 6px;
-  background: rgba(255,255,255,.07);
-  color: #e7edf6;
-  font: 700 13px/1 Inter, system-ui, sans-serif;
-  cursor: pointer;
-}
-.rg-mood-stats-x:hover { background: rgba(255,255,255,.14); }
-.rg-mood-stats-total {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding-bottom: 6px;
-  border-bottom: 1px solid rgba(255,255,255,.07);
-  color: rgba(214,224,238,.65);
-  font: 700 clamp(9px, 3.8cqw, 10.5px)/1 Inter, system-ui, sans-serif;
-}
-.rg-mood-stats-total b {
-  color: #f0d3a8;
-  font: 850 clamp(15px, 6.4cqw, 19px)/1 Inter, system-ui, sans-serif;
-  font-variant-numeric: tabular-nums;
-}
-.rg-mood-stats-sec {
-  margin: 8px 0 4px;
-  color: rgba(214,224,238,.45);
-  font: 800 clamp(7px, 3cqw, 8.5px)/1 Inter, system-ui, sans-serif;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-}
-.rg-mood-stats-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 2px 0;
-  font: 700 clamp(9px, 3.8cqw, 10.5px)/1.2 Inter, system-ui, sans-serif;
-  color: #e7edf6;
-}
-.rg-mood-stats-row svg { display: block; width: 17px; height: 17px; flex: 0 0 17px; }
-.rg-mood-stats-row i { font-style: normal; width: 10px; color: rgba(240,211,168,.5); }
-.rg-mood-stats-row span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rg-mood-stats-row u { color: #f0d3a8; text-decoration: none; font-variant-numeric: tabular-nums; }
+.rg-mood-topbtn svg { display: block; width: clamp(13px, 5.6cqw, 16px); height: clamp(13px, 5.6cqw, 16px); flex: 0 0 auto; }
 
 /* Both side stacks sit vertically centred on the blob, on opposite sides. */
 .rg-mood-side {
@@ -15196,15 +15119,8 @@ window.addEventListener('message', function(e) {
   pointer-events: none;
 }
 .rg-mood-side.is-mounted { display: inline-flex; }
-.rg-mood-side--left { left: 0; align-items: flex-start; }
-.rg-mood-side--right { right: 0; align-items: flex-end; }
-/* Out of flow, so the extra control never shifts the pill off the fatigue
-   pill's line — the two counters have to read as one row. */
-.rg-mood-side--right .rg-mood-topbtn {
-  position: absolute;
-  top: calc(100% + clamp(5px, 2.2cqw, 8px));
-  right: 0;
-}
+.rg-mood-side--left { left: 0; align-items: center; }
+.rg-mood-side--right { right: 0; align-items: center; }
 /* The blob's own ring only has to clear the corner badges now. */
 
 /* Fatigue reads like the watch badge: a solid pill that shifts colour with the
@@ -15244,16 +15160,23 @@ window.addEventListener('message', function(e) {
   position: relative;
   pointer-events: auto;
   display: inline-flex;
-  padding: clamp(4px, 1.8cqw, 6px);
+  align-items: center;
+  justify-content: center;
+  gap: clamp(4px, 2cqw, 7px);
+  margin-top: clamp(4px, 2cqw, 7px);
+  padding: clamp(4px, 1.8cqw, 6px) clamp(8px, 3.4cqw, 12px);
   border: 1px solid rgba(196,132,69,.24);
   border-radius: 10px;
   background: rgba(196,132,69,.10);
   color: #e8c79a;
+  font: 800 clamp(8.5px, 3.8cqw, 10.5px)/1 Inter, system-ui, sans-serif;
+  letter-spacing: .03em;
+  white-space: nowrap;
   cursor: pointer;
 }
 .rg-mood-topbtn[hidden] { display: none; }
 .rg-mood-topbtn:hover { background: rgba(196,132,69,.20); }
-.rg-mood-topbtn svg { display: block; width: clamp(15px, 6.4cqw, 19px); height: clamp(15px, 6.4cqw, 19px); }
+.rg-mood-topbtn svg { display: block; width: clamp(13px, 5.6cqw, 16px); height: clamp(13px, 5.6cqw, 16px); flex: 0 0 auto; }
 /* Opens as an overlay, not as extra rows: the card has a fixed place in the
    grid, so growing it would push the whole section around. */
 .rg-mood-top {
@@ -15639,14 +15562,11 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       + '<span class="rg-mood-pill rg-mood-pill--coffee" data-rg-chip="coffee">'
       + moodPillCupSvg() + '<b data-rg-coffee-num>0</b></span>'
       + '<span class="rg-mood-side-label">Kafija</span>'
-      + '<button class="rg-mood-topbtn" type="button" data-rg-topbtn hidden'
-      + ' aria-label="Kafijas statistika" title="Kafijas statistika">' + moodTopSvg()
-      + '</button></span>'
-      + '<div class="rg-mood-stats" data-rg-top hidden>'
-      + '<div class="rg-mood-stats-head">Kafijas statistika'
-      + '<button class="rg-mood-stats-x" type="button" aria-label="Aizvērt">×</button></div>'
-      + '<div class="rg-mood-stats-body" data-rg-stats-body></div></div>'
+      + '</span>'
       + '<span class="rg-mood-label">' + (base.label || '&nbsp;') + '</span>'
+      + '<button class="rg-mood-topbtn" type="button" data-rg-topbtn hidden'
+      + ' title="Kafijas statistika">' + moodTopSvg()
+      + '<span>Kafijas statistika</span></button>'
       + '</div>';
   }
   function moodCupSvg() {
@@ -15667,14 +15587,13 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       + '<path fill="currentColor" opacity=".45" d="M4.4 3.1a1 1 0 0 1 1 1v.6h-2v-.6a1 1 0 0 1 1-1Zm3.6 0a1 1 0 0 1 1 1v.6h-2v-.6a1 1 0 0 1 1-1Zm3.6 0a1 1 0 0 1 1 1v.6h-2v-.6a1 1 0 0 1 1-1Z"></path>'
       + '</svg>';
   }
+  // The old pixel-art mark was unreadable at this size. Three rising bars is
+  // the plainest "statistics" symbol there is.
   function moodTopSvg() {
-    return '<svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" fill="currentColor">'
-      + '<rect x="1" y="11" width="3" height="3"></rect><rect x="1" y="11" width="3" height="1" opacity=".45"></rect><rect x="4" y="12" width="1" height="1"></rect>'
-      + '<rect x="6" y="11" width="3" height="3"></rect><rect x="6" y="11" width="3" height="1" opacity=".45"></rect><rect x="9" y="12" width="1" height="1"></rect>'
-      + '<rect x="6" y="7" width="3" height="3"></rect><rect x="6" y="7" width="3" height="1" opacity=".45"></rect><rect x="9" y="8" width="1" height="1"></rect>'
-      + '<rect x="11" y="11" width="3" height="3"></rect><rect x="11" y="11" width="3" height="1" opacity=".45"></rect><rect x="14" y="12" width="1" height="1"></rect>'
-      + '<rect x="11" y="7" width="3" height="3"></rect><rect x="11" y="7" width="3" height="1" opacity=".45"></rect><rect x="14" y="8" width="1" height="1"></rect>'
-      + '<rect x="11" y="3" width="3" height="3"></rect><rect x="11" y="3" width="3" height="1" opacity=".45"></rect><rect x="14" y="4" width="1" height="1"></rect>'
+    return '<svg viewBox="0 0 20 20" aria-hidden="true" fill="currentColor">'
+      + '<rect x="2" y="11" width="4" height="7" rx="1.2"></rect>'
+      + '<rect x="8" y="7" width="4" height="11" rx="1.2"></rect>'
+      + '<rect x="14" y="3" width="4" height="15" rx="1.2"></rect>'
       + '</svg>';
   }
   function moodInitials(name) {
@@ -15782,39 +15701,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       }
     }
     var button = refs.topbtn;
-    var panel = refs.top;
-    var body = panel && panel.querySelector('[data-rg-stats-body]');
-    var hasStats = stats.top.length > 0 || stats.total !== null;
-    if (button) button.hidden = !hasStats;
-    if (body && hasStats) {
-      var sourceRows = MOOD_SOURCES
-        .map(function (key) { return { key: key, n: Math.max(0, Number(stats.sources[key]) || 0) }; })
-        .filter(function (item) { return item.n > 0; })
-        .sort(function (a, b) { return b.n - a.n; });
-      var key = (stats.total || 0) + '#'
-        + sourceRows.map(function (x) { return x.key + x.n; }).join(',') + '#'
-        + stats.top.map(function (x) { return x.name + x.count; }).join(',');
-      if (body.dataset.rgKey !== key) {
-        body.dataset.rgKey = key;
-        var html = '<div class="rg-mood-stats-total"><span>Šodien</span><b>'
-          + (stats.total === null ? 0 : stats.total) + '</b></div>';
-        if (sourceRows.length) {
-          html += '<div class="rg-mood-stats-sec">Avoti</div>'
-            + sourceRows.map(function (item) {
-              return '<div class="rg-mood-stats-row">' + (moodSourceIcon(item.key) || '')
-                + '<span>' + MOOD_SOURCE_NAMES[item.key] + '</span><u>' + item.n + '</u></div>';
-            }).join('');
-        }
-        if (stats.top.length) {
-          html += '<div class="rg-mood-stats-sec">Tops</div>'
-            + stats.top.map(function (item, index) {
-              return '<div class="rg-mood-stats-row"><i>' + (index + 1) + '</i>'
-                + '<span>' + moodShortName(item.name) + '</span><u>' + item.count + '</u></div>';
-            }).join('');
-        }
-        body.innerHTML = html;
-      }
-    }
+    if (button) button.hidden = !(stats.top.length || stats.total !== null);
   }
   function moodSourceIcon(key) {
     if (typeof window.__minkaCoffeeIcon !== 'function') return '';
@@ -16348,17 +16235,19 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   });
   // Hover/press preview. Purely visual — it renders the mood under the pointer
   // and rolls back on leave; only the real click commits anything.
+  // Opens the shell's own coffee statistics panel — the one with the per-person
+  // and per-day views — instead of a second, poorer copy inside this card.
   list.addEventListener('click', function (event) {
-    var refs = null;
-    // The open sheet covers the button, so a tap anywhere on it closes again.
-    if (event.target.closest('[data-rg-top]')) {
-      refs = moodRefs();
-      if (refs && refs.top) refs.top.hidden = true;
-      return;
-    }
-    if (!event.target.closest('[data-rg-topbtn]')) return;
-    refs = moodRefs();
-    if (refs && refs.top) refs.top.hidden = !refs.top.hidden;
+    var button = event.target.closest('[data-rg-topbtn]');
+    if (!button) return;
+    event.preventDefault();
+    var rect = button.getBoundingClientRect();
+    try {
+      window.parent.postMessage({
+        type: 'minka-open-coffee-stats',
+        rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height }
+      }, window.location.origin);
+    } catch (_error) {}
   });
   list.addEventListener('pointerover', function (event) {
     var tap = event.target.closest('[data-rg-pulse]');
