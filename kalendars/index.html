@@ -14948,7 +14948,11 @@ window.addEventListener('message', function(e) {
 .rg-mood-fill { stroke: none; }
 .rg-mood-eyeWhite { fill: #fbfdff; }
 .rg-mood-pupil    { fill: #141b24; }
-.rg-mood-glint    { fill: #ffffff; opacity: .92; }
+.rg-mood-glint    { fill: #ffffff; }
+.rg-mood-mouthOpen { fill: #141b24; }
+.rg-mood-teeth     { fill: #fbfdff; }
+.rg-mood-blob-shape,
+.rg-mood-blob-sheen { transition: d 440ms cubic-bezier(.4, 0, .2, 1); }
 .rg-mood-label {
   margin-top: clamp(3px, 2.4cqw, 6px);
   min-height: 1em;
@@ -15089,97 +15093,115 @@ window.addEventListener('message', function(e) {
   var moodVisuals = {
     excellent: {
       path: 'M48.2 14.8C60.7 13.7 81.1 30.6 85.5 42C89.9 53.3 82 72.1 73.4 79.6C64.7 87.2 46.4 90.6 36.1 85.2C25.8 79.7 12.4 60.8 14.5 48.5C16.6 36.2 35.8 16 48.2 14.8Z',
-      color1: '#a7f3d0', color2: '#34d399', glow: 'rgba(74,222,128,.32)', label: 'Lieliski',
-      brows: false,
+      color1: '#a7f3d0', color2: '#34d399', glow: 'rgba(74,222,128,.34)', label: 'Lieliski',
+      brows: false, lids: true, openMouth: true,
       face: {
         browL: 'M30 34C33.5 33 38 33 42.5 33', browR: 'M70 34C66.5 33 62 33 57.5 33',
-        eyeWhiteL: 'M36.5 34.3C41.36 34.3 45.3 38.73 45.3 44.2C45.3 49.67 41.36 54.1 36.5 54.1C31.64 54.1 27.7 49.67 27.7 44.2C27.7 38.73 31.64 34.3 36.5 34.3Z',
-        eyeWhiteR: 'M63.5 34.3C68.36 34.3 72.3 38.73 72.3 44.2C72.3 49.67 68.36 54.1 63.5 54.1C58.64 54.1 54.7 49.67 54.7 44.2C54.7 38.73 58.64 34.3 63.5 34.3Z',
-        pupilL: 'M36.8 40.4C39.4 40.4 41.5 42.5 41.5 45.1C41.5 47.7 39.4 49.8 36.8 49.8C34.2 49.8 32.1 47.7 32.1 45.1C32.1 42.5 34.2 40.4 36.8 40.4Z',
-        pupilR: 'M63.2 40.4C65.8 40.4 67.9 42.5 67.9 45.1C67.9 47.7 65.8 49.8 63.2 49.8C60.6 49.8 58.5 47.7 58.5 45.1C58.5 42.5 60.6 40.4 63.2 40.4Z',
-        glintL: 'M34.6 40.8C35.54 40.8 36.3 41.56 36.3 42.5C36.3 43.44 35.54 44.2 34.6 44.2C33.66 44.2 32.9 43.44 32.9 42.5C32.9 41.56 33.66 40.8 34.6 40.8Z',
-        glintR: 'M61 40.8C61.94 40.8 62.7 41.56 62.7 42.5C62.7 43.44 61.94 44.2 61 44.2C60.06 44.2 59.3 43.44 59.3 42.5C59.3 41.56 60.06 40.8 61 40.8Z',
-        mouth: 'M35 59.5C40 70.5 60 70.5 65 59.5'
-      }
-    },
-    good: {
-      path: 'M49.9 16.5C62.7 17.3 84.1 33.4 86.5 45.1C89 56.9 74.7 77.8 64.1 83.5C53.6 89.2 35.1 85.3 26.3 77.8C17.4 70.2 9.3 51 13.5 40.3C17.6 29.6 37.1 15.7 49.9 16.5Z',
-      color1: '#99f6e4', color2: '#2dd4bf', glow: 'rgba(45,212,191,.30)', label: 'Labi',
-      brows: false,
-      face: {
-        browL: 'M30 34C33.5 33 38 33 42.5 33', browR: 'M70 34C66.5 33 62 33 57.5 33',
+        lidL: 'M27.5 48C31 41 42 41 45.5 48', lidR: 'M54.5 48C58 41 69 41 72.5 48',
         eyeWhiteL: 'M36.5 35.8C41.03 35.8 44.7 39.83 44.7 44.8C44.7 49.77 41.03 53.8 36.5 53.8C31.97 53.8 28.3 49.77 28.3 44.8C28.3 39.83 31.97 35.8 36.5 35.8Z',
         eyeWhiteR: 'M63.5 35.8C68.03 35.8 71.7 39.83 71.7 44.8C71.7 49.77 68.03 53.8 63.5 53.8C58.97 53.8 55.3 49.77 55.3 44.8C55.3 39.83 58.97 35.8 63.5 35.8Z',
         pupilL: 'M36.8 41.1C39.17 41.1 41.1 43.03 41.1 45.4C41.1 47.77 39.17 49.7 36.8 49.7C34.43 49.7 32.5 47.77 32.5 45.4C32.5 43.03 34.43 41.1 36.8 41.1Z',
         pupilR: 'M63.2 41.1C65.57 41.1 67.5 43.03 67.5 45.4C67.5 47.77 65.57 49.7 63.2 49.7C60.83 49.7 58.9 47.77 58.9 45.4C58.9 43.03 60.83 41.1 63.2 41.1Z',
         glintL: 'M34.7 41.4C35.58 41.4 36.3 42.12 36.3 43C36.3 43.88 35.58 44.6 34.7 44.6C33.82 44.6 33.1 43.88 33.1 43C33.1 42.12 33.82 41.4 34.7 41.4Z',
         glintR: 'M61.1 41.4C61.98 41.4 62.7 42.12 62.7 43C62.7 43.88 61.98 44.6 61.1 44.6C60.22 44.6 59.5 43.88 59.5 43C59.5 42.12 60.22 41.4 61.1 41.4Z',
-        mouth: 'M39 61C43.5 67 56.5 67 61 61'
+        mouth: 'M39 61C43.5 67 56.5 67 61 61',
+        mouthOpen: 'M33 57C33 57 67 57 67 57C67 68.5 59.4 76 50 76C40.6 76 33 68.5 33 57Z',
+        teeth: 'M36.5 58.2C36.5 58.2 63.5 58.2 63.5 58.2C63.5 64.6 57.4 68.4 50 68.4C42.6 68.4 36.5 64.6 36.5 58.2Z'
+      }
+    },
+    good: {
+      path: 'M49.9 16.5C62.7 17.3 84.1 33.4 86.5 45.1C89 56.9 74.7 77.8 64.1 83.5C53.6 89.2 35.1 85.3 26.3 77.8C17.4 70.2 9.3 51 13.5 40.3C17.6 29.6 37.1 15.7 49.9 16.5Z',
+      color1: '#99f6e4', color2: '#2dd4bf', glow: 'rgba(45,212,191,.32)', label: 'Labi',
+      brows: false, lids: false, openMouth: false,
+      face: {
+        browL: 'M30 34C33.5 33 38 33 42.5 33', browR: 'M70 34C66.5 33 62 33 57.5 33',
+        lidL: 'M27.5 48C31 41 42 41 45.5 48', lidR: 'M54.5 48C58 41 69 41 72.5 48',
+        eyeWhiteL: 'M36.5 35.8C41.03 35.8 44.7 39.83 44.7 44.8C44.7 49.77 41.03 53.8 36.5 53.8C31.97 53.8 28.3 49.77 28.3 44.8C28.3 39.83 31.97 35.8 36.5 35.8Z',
+        eyeWhiteR: 'M63.5 35.8C68.03 35.8 71.7 39.83 71.7 44.8C71.7 49.77 68.03 53.8 63.5 53.8C58.97 53.8 55.3 49.77 55.3 44.8C55.3 39.83 58.97 35.8 63.5 35.8Z',
+        pupilL: 'M36.8 41.1C39.17 41.1 41.1 43.03 41.1 45.4C41.1 47.77 39.17 49.7 36.8 49.7C34.43 49.7 32.5 47.77 32.5 45.4C32.5 43.03 34.43 41.1 36.8 41.1Z',
+        pupilR: 'M63.2 41.1C65.57 41.1 67.5 43.03 67.5 45.4C67.5 47.77 65.57 49.7 63.2 49.7C60.83 49.7 58.9 47.77 58.9 45.4C58.9 43.03 60.83 41.1 63.2 41.1Z',
+        glintL: 'M34.7 41.4C35.58 41.4 36.3 42.12 36.3 43C36.3 43.88 35.58 44.6 34.7 44.6C33.82 44.6 33.1 43.88 33.1 43C33.1 42.12 33.82 41.4 34.7 41.4Z',
+        glintR: 'M61.1 41.4C61.98 41.4 62.7 42.12 62.7 43C62.7 43.88 61.98 44.6 61.1 44.6C60.22 44.6 59.5 43.88 59.5 43C59.5 42.12 60.22 41.4 61.1 41.4Z',
+        mouth: 'M39 61C43.5 67 56.5 67 61 61',
+        mouthOpen: 'M33 57C33 57 67 57 67 57C67 68.5 59.4 76 50 76C40.6 76 33 68.5 33 57Z',
+        teeth: 'M36.5 58.2C36.5 58.2 63.5 58.2 63.5 58.2C63.5 64.6 57.4 68.4 50 68.4C42.6 68.4 36.5 64.6 36.5 58.2Z'
       }
     },
     ok: {
       path: 'M48.6 17.9C60.4 17.8 80.3 30.6 83.8 41.5C87.3 52.4 78.4 73.3 68.6 80.4C58.7 87.5 36.6 88.7 27.4 82.1C18.3 75.4 12.5 53.7 16.2 42.4C19.9 31.2 36.8 18.1 48.6 17.9Z',
-      color1: '#e2e8f0', color2: '#94a3b8', glow: 'rgba(148,163,184,.24)', label: 'Normāli',
-      brows: false,
+      color1: '#e2e8f0', color2: '#94a3b8', glow: 'rgba(148,163,184,.26)', label: 'Normāli',
+      brows: false, lids: false, openMouth: false,
       face: {
         browL: 'M30 34C33.5 33 38 33 42.5 33', browR: 'M70 34C66.5 33 62 33 57.5 33',
-        eyeWhiteL: 'M36.5 38.8C40.92 38.8 44.5 41.75 44.5 45.4C44.5 49.05 40.92 52 36.5 52C32.08 52 28.5 49.05 28.5 45.4C28.5 41.75 32.08 38.8 36.5 38.8Z',
-        eyeWhiteR: 'M63.5 38.8C67.92 38.8 71.5 41.75 71.5 45.4C71.5 49.05 67.92 52 63.5 52C59.08 52 55.5 49.05 55.5 45.4C55.5 41.75 59.08 38.8 63.5 38.8Z',
-        pupilL: 'M36.5 41.4C38.71 41.4 40.5 43.19 40.5 45.4C40.5 47.61 38.71 49.4 36.5 49.4C34.29 49.4 32.5 47.61 32.5 45.4C32.5 43.19 34.29 41.4 36.5 41.4Z',
-        pupilR: 'M63.5 41.4C65.71 41.4 67.5 43.19 67.5 45.4C67.5 47.61 65.71 49.4 63.5 49.4C61.29 49.4 59.5 47.61 59.5 45.4C59.5 43.19 61.29 41.4 63.5 41.4Z',
-        glintL: 'M34.5 42.1C35.33 42.1 36 42.77 36 43.6C36 44.43 35.33 45.1 34.5 45.1C33.67 45.1 33 44.43 33 43.6C33 42.77 33.67 42.1 34.5 42.1Z',
-        glintR: 'M61.5 42.1C62.33 42.1 63 42.77 63 43.6C63 44.43 62.33 45.1 61.5 45.1C60.67 45.1 60 44.43 60 43.6C60 42.77 60.67 42.1 61.5 42.1Z',
-        mouth: 'M41 63C44 63 56 63 59 63'
+        lidL: 'M27.5 48C31 41 42 41 45.5 48', lidR: 'M54.5 48C58 41 69 41 72.5 48',
+        eyeWhiteL: 'M36.5 38C40.92 38 44.5 41.22 44.5 45.2C44.5 49.18 40.92 52.4 36.5 52.4C32.08 52.4 28.5 49.18 28.5 45.2C28.5 41.22 32.08 38 36.5 38Z',
+        eyeWhiteR: 'M63.5 38C67.92 38 71.5 41.22 71.5 45.2C71.5 49.18 67.92 52.4 63.5 52.4C59.08 52.4 55.5 49.18 55.5 45.2C55.5 41.22 59.08 38 63.5 38Z',
+        pupilL: 'M36.5 41.2C38.71 41.2 40.5 42.99 40.5 45.2C40.5 47.41 38.71 49.2 36.5 49.2C34.29 49.2 32.5 47.41 32.5 45.2C32.5 42.99 34.29 41.2 36.5 41.2Z',
+        pupilR: 'M63.5 41.2C65.71 41.2 67.5 42.99 67.5 45.2C67.5 47.41 65.71 49.2 63.5 49.2C61.29 49.2 59.5 47.41 59.5 45.2C59.5 42.99 61.29 41.2 63.5 41.2Z',
+        glintL: 'M34.5 41.9C35.33 41.9 36 42.57 36 43.4C36 44.23 35.33 44.9 34.5 44.9C33.67 44.9 33 44.23 33 43.4C33 42.57 33.67 41.9 34.5 41.9Z',
+        glintR: 'M61.5 41.9C62.33 41.9 63 42.57 63 43.4C63 44.23 62.33 44.9 61.5 44.9C60.67 44.9 60 44.23 60 43.4C60 42.57 60.67 41.9 61.5 41.9Z',
+        mouth: 'M41 63C44 63 56 63 59 63',
+        mouthOpen: 'M33 57C33 57 67 57 67 57C67 68.5 59.4 76 50 76C40.6 76 33 68.5 33 57Z',
+        teeth: 'M36.5 58.2C36.5 58.2 63.5 58.2 63.5 58.2C63.5 64.6 57.4 68.4 50 68.4C42.6 68.4 36.5 64.6 36.5 58.2Z'
       }
     },
     bad: {
       path: 'M48.1 18.9C58.9 18.1 76 25.9 80.8 36.5C85.7 47.1 84.8 71.7 75.9 79.5C67.1 87.3 40 87.8 30.1 81.1C20.2 74.4 16 52 19.2 41.1C22.3 30.2 37.3 19.7 48.1 18.9Z',
-      color1: '#fed7aa', color2: '#f97316', glow: 'rgba(249,115,22,.28)', label: 'Slikti',
-      brows: true,
+      color1: '#fed7aa', color2: '#f97316', glow: 'rgba(249,115,22,.30)', label: 'Slikti',
+      brows: false, lids: true, openMouth: false,
       face: {
         browL: 'M29.5 36.5C33 35 38 32.8 42.5 31.5', browR: 'M70.5 36.5C67 35 62 32.8 57.5 31.5',
+        lidL: 'M28 44C31.5 45.2 42 46.8 45.5 47.6', lidR: 'M72 44C68.5 45.2 58 46.8 54.5 47.6',
         eyeWhiteL: 'M36.5 38.6C40.81 38.6 44.3 42 44.3 46.2C44.3 50.4 40.81 53.8 36.5 53.8C32.19 53.8 28.7 50.4 28.7 46.2C28.7 42 32.19 38.6 36.5 38.6Z',
         eyeWhiteR: 'M63.5 38.6C67.81 38.6 71.3 42 71.3 46.2C71.3 50.4 67.81 53.8 63.5 53.8C59.19 53.8 55.7 50.4 55.7 46.2C55.7 42 59.19 38.6 63.5 38.6Z',
         pupilL: 'M36.5 43.5C38.76 43.5 40.6 45.34 40.6 47.6C40.6 49.86 38.76 51.7 36.5 51.7C34.24 51.7 32.4 49.86 32.4 47.6C32.4 45.34 34.24 43.5 36.5 43.5Z',
         pupilR: 'M63.5 43.5C65.76 43.5 67.6 45.34 67.6 47.6C67.6 49.86 65.76 51.7 63.5 51.7C61.24 51.7 59.4 49.86 59.4 47.6C59.4 45.34 61.24 43.5 63.5 43.5Z',
         glintL: 'M34.5 45.2C35.27 45.2 35.9 45.83 35.9 46.6C35.9 47.37 35.27 48 34.5 48C33.73 48 33.1 47.37 33.1 46.6C33.1 45.83 33.73 45.2 34.5 45.2Z',
         glintR: 'M61.5 45.2C62.27 45.2 62.9 45.83 62.9 46.6C62.9 47.37 62.27 48 61.5 48C60.73 48 60.1 47.37 60.1 46.6C60.1 45.83 60.73 45.2 61.5 45.2Z',
-        mouth: 'M40 67.5C44 60.5 56 60.5 60 67.5'
+        mouth: 'M40 67.5C44 60.5 56 60.5 60 67.5',
+        mouthOpen: 'M33 57C33 57 67 57 67 57C67 68.5 59.4 76 50 76C40.6 76 33 68.5 33 57Z',
+        teeth: 'M36.5 58.2C36.5 58.2 63.5 58.2 63.5 58.2C63.5 64.6 57.4 68.4 50 68.4C42.6 68.4 36.5 64.6 36.5 58.2Z'
       }
     },
     terrible: {
       path: 'M58.6 14.9C68.7 17.2 79.2 38.6 80.2 50.9C81.1 63.2 74.7 79.7 64.1 85.1C53.6 90.4 27.1 89.7 19.8 81.5C12.6 73.2 15.8 49.7 22.6 38C29.4 26.4 48.6 12.7 58.6 14.9Z',
-      color1: '#fecdd3', color2: '#ef4444', glow: 'rgba(244,63,94,.30)', label: 'Ļoti slikti',
-      brows: true,
+      color1: '#fecdd3', color2: '#ef4444', glow: 'rgba(244,63,94,.32)', label: 'Ļoti slikti',
+      brows: true, lids: false, openMouth: false,
       face: {
         browL: 'M29.5 31.5C33 33 38 35.4 42.5 37', browR: 'M70.5 31.5C67 33 62 35.4 57.5 37',
-        eyeWhiteL: 'M36.5 39.7C41.03 39.7 44.7 42.43 44.7 45.8C44.7 49.17 41.03 51.9 36.5 51.9C31.97 51.9 28.3 49.17 28.3 45.8C28.3 42.43 31.97 39.7 36.5 39.7Z',
-        eyeWhiteR: 'M63.5 39.7C68.03 39.7 71.7 42.43 71.7 45.8C71.7 49.17 68.03 51.9 63.5 51.9C58.97 51.9 55.3 49.17 55.3 45.8C55.3 42.43 58.97 39.7 63.5 39.7Z',
+        lidL: 'M27.5 48C31 41 42 41 45.5 48', lidR: 'M54.5 48C58 41 69 41 72.5 48',
+        eyeWhiteL: 'M36.5 39.2C41.03 39.2 44.7 42.15 44.7 45.8C44.7 49.45 41.03 52.4 36.5 52.4C31.97 52.4 28.3 49.45 28.3 45.8C28.3 42.15 31.97 39.2 36.5 39.2Z',
+        eyeWhiteR: 'M63.5 39.2C68.03 39.2 71.7 42.15 71.7 45.8C71.7 49.45 68.03 52.4 63.5 52.4C58.97 52.4 55.3 49.45 55.3 45.8C55.3 42.15 58.97 39.2 63.5 39.2Z',
         pupilL: 'M36.5 42C38.76 42 40.6 43.84 40.6 46.1C40.6 48.36 38.76 50.2 36.5 50.2C34.24 50.2 32.4 48.36 32.4 46.1C32.4 43.84 34.24 42 36.5 42Z',
         pupilR: 'M63.5 42C65.76 42 67.6 43.84 67.6 46.1C67.6 48.36 65.76 50.2 63.5 50.2C61.24 50.2 59.4 48.36 59.4 46.1C59.4 43.84 61.24 42 63.5 42Z',
         glintL: 'M34.5 43.4C35.22 43.4 35.8 43.98 35.8 44.7C35.8 45.42 35.22 46 34.5 46C33.78 46 33.2 45.42 33.2 44.7C33.2 43.98 33.78 43.4 34.5 43.4Z',
         glintR: 'M61.5 43.4C62.22 43.4 62.8 43.98 62.8 44.7C62.8 45.42 62.22 46 61.5 46C60.78 46 60.2 45.42 60.2 44.7C60.2 43.98 60.78 43.4 61.5 43.4Z',
-        mouth: 'M38.5 68.5C43 60 57 60 61.5 68.5'
+        mouth: 'M38.5 68.5C43 60 57 60 61.5 68.5',
+        mouthOpen: 'M33 57C33 57 67 57 67 57C67 68.5 59.4 76 50 76C40.6 76 33 68.5 33 57Z',
+        teeth: 'M36.5 58.2C36.5 58.2 63.5 58.2 63.5 58.2C63.5 64.6 57.4 68.4 50 68.4C42.6 68.4 36.5 64.6 36.5 58.2Z'
       }
     },
     _none: {
       path: 'M50 18.3C61.7 18.3 79.7 31.4 83.3 42.5C86.9 53.6 80 74.8 70.6 81.7C61.1 88.5 38.9 88.5 29.4 81.7C20 74.8 13.1 53.6 16.7 42.5C20.3 31.4 38.3 18.3 50 18.3Z',
-      color1: '#e6ecfb', color2: '#8393c2', glow: 'rgba(139,157,201,.24)', label: '',
-      brows: false,
+      color1: '#e6ecfb', color2: '#8393c2', glow: 'rgba(139,157,201,.26)', label: '',
+      brows: false, lids: false, openMouth: false,
       face: {
         browL: 'M30 34C33.5 33 38 33 42.5 33', browR: 'M70 34C66.5 33 62 33 57.5 33',
+        lidL: 'M27.5 48C31 41 42 41 45.5 48', lidR: 'M54.5 48C58 41 69 41 72.5 48',
         eyeWhiteL: 'M36.5 35.8C41.14 35.8 44.9 39.83 44.9 44.8C44.9 49.77 41.14 53.8 36.5 53.8C31.86 53.8 28.1 49.77 28.1 44.8C28.1 39.83 31.86 35.8 36.5 35.8Z',
         eyeWhiteR: 'M63.5 35.8C68.14 35.8 71.9 39.83 71.9 44.8C71.9 49.77 68.14 53.8 63.5 53.8C58.86 53.8 55.1 49.77 55.1 44.8C55.1 39.83 58.86 35.8 63.5 35.8Z',
         pupilL: 'M36.5 40.9C38.93 40.9 40.9 42.87 40.9 45.3C40.9 47.73 38.93 49.7 36.5 49.7C34.07 49.7 32.1 47.73 32.1 45.3C32.1 42.87 34.07 40.9 36.5 40.9Z',
         pupilR: 'M63.5 40.9C65.93 40.9 67.9 42.87 67.9 45.3C67.9 47.73 65.93 49.7 63.5 49.7C61.07 49.7 59.1 47.73 59.1 45.3C59.1 42.87 61.07 40.9 63.5 40.9Z',
         glintL: 'M34.4 41.3C35.28 41.3 36 42.02 36 42.9C36 43.78 35.28 44.5 34.4 44.5C33.52 44.5 32.8 43.78 32.8 42.9C32.8 42.02 33.52 41.3 34.4 41.3Z',
         glintR: 'M61.4 41.3C62.28 41.3 63 42.02 63 42.9C63 43.78 62.28 44.5 61.4 44.5C60.52 44.5 59.8 43.78 59.8 42.9C59.8 42.02 60.52 41.3 61.4 41.3Z',
-        mouth: 'M41 62C44.5 66 55.5 66 59 62'
+        mouth: 'M41 62C44.5 66 55.5 66 59 62',
+        mouthOpen: 'M33 57C33 57 67 57 67 57C67 68.5 59.4 76 50 76C40.6 76 33 68.5 33 57Z',
+        teeth: 'M36.5 58.2C36.5 58.2 63.5 58.2 63.5 58.2C63.5 64.6 57.4 68.4 50 68.4C42.6 68.4 36.5 64.6 36.5 58.2Z'
       }
     }
   };
-  var moodFaceParts = ['browL', 'browR', 'eyeWhiteL', 'eyeWhiteR', 'pupilL', 'pupilR', 'glintL', 'glintR', 'mouth'];
-  var moodFillParts = ['eyeWhiteL', 'eyeWhiteR', 'pupilL', 'pupilR', 'glintL', 'glintR'];
+  var moodFaceParts = ['browL', 'browR', 'lidL', 'lidR', 'eyeWhiteL', 'eyeWhiteR', 'pupilL', 'pupilR', 'glintL', 'glintR', 'mouth', 'mouthOpen', 'teeth'];
+  var moodFillParts = ['eyeWhiteL', 'eyeWhiteR', 'pupilL', 'pupilR', 'glintL', 'glintR', 'mouthOpen', 'teeth'];
   var moodBlobKey = null;   // last committed mood, so a preview can be undone
 
   function shiftDayKey() {
@@ -15273,23 +15295,34 @@ window.addEventListener('message', function(e) {
     var base = moodVisuals._none;
     var facePath = function (part) {
       var kind = moodFillParts.indexOf(part) >= 0 ? 'rg-mood-fill rg-mood-' + part.replace(/[LR]$/, '') : 'rg-mood-line';
-      return '<path class="' + kind + '" data-rg-face="' + part + '" d="' + base.face[part] + '" opacity="' + (part.indexOf('brow') === 0 ? '0' : '1') + '"></path>';
+      return '<path class="' + kind + '" data-rg-face="' + part + '" d="' + base.face[part] + '" opacity="' + moodPartOpacity(part, base) + '"></path>';
     };
     return '<div class="rg-mood-stage is-idle" aria-hidden="true">'
       + '<span class="rg-mood-glow" style="color:' + base.glow + '"></span>'
       + '<span class="rg-mood-blob-wrap">'
       + '<svg class="rg-mood-blob" viewBox="0 0 100 100" focusable="false">'
-      + '<defs><radialGradient id="rgMoodBlobGrad" cx="36%" cy="28%" r="82%">'
-      + '<stop class="rg-mood-blob-stop" data-rg-stop="1" offset="0%" style="stop-color:' + base.color1 + '"></stop>'
-      + '<stop class="rg-mood-blob-stop" data-rg-stop="2" offset="100%" style="stop-color:' + base.color2 + '"></stop>'
+      // The fill fades out before the outline, so the blob melts into the card
+      // instead of ending on a hard vector edge — no blur filter needed.
+      + '<defs><radialGradient id="rgMoodBlobGrad" cx="47%" cy="43%" r="56%">'
+      + '<stop class="rg-mood-blob-stop" data-rg-stop="c1" offset="0%" style="stop-color:' + base.color1 + '"></stop>'
+      + '<stop class="rg-mood-blob-stop" data-rg-stop="c1" offset="34%" style="stop-color:' + base.color1 + '"></stop>'
+      + '<stop class="rg-mood-blob-stop" data-rg-stop="c2" offset="68%" style="stop-color:' + base.color2 + '"></stop>'
+      + '<stop class="rg-mood-blob-stop" data-rg-stop="c2" offset="86%" stop-opacity=".58" style="stop-color:' + base.color2 + '"></stop>'
+      + '<stop class="rg-mood-blob-stop" data-rg-stop="c2" offset="100%" stop-opacity="0" style="stop-color:' + base.color2 + '"></stop>'
+      + '</radialGradient>'
+      + '<radialGradient id="rgMoodBlobSheen" cx="34%" cy="24%" r="54%">'
+      + '<stop offset="0%" stop-color="#ffffff" stop-opacity=".40"></stop>'
+      + '<stop offset="62%" stop-color="#ffffff" stop-opacity="0"></stop>'
       + '</radialGradient></defs>'
       + '<path class="rg-mood-blob-shape" fill="url(#rgMoodBlobGrad)" d="' + base.path + '"></path>'
+      + '<path class="rg-mood-blob-sheen" fill="url(#rgMoodBlobSheen)" d="' + base.path + '"></path>'
       + '<g class="rg-mood-face">' + facePath('browL') + facePath('browR')
       + '<g class="rg-mood-eyes">'
       + facePath('eyeWhiteL') + facePath('eyeWhiteR')
       + facePath('pupilL') + facePath('pupilR')
-      + facePath('glintL') + facePath('glintR') + '</g>'
-      + facePath('mouth') + '</g>'
+      + facePath('glintL') + facePath('glintR')
+      + facePath('lidL') + facePath('lidR') + '</g>'
+      + facePath('mouth') + facePath('mouthOpen') + facePath('teeth') + '</g>'
       + '</svg>'
       + '</span>'
       + '<span class="rg-mood-label">' + base.label + '</span>'
@@ -15337,11 +15370,12 @@ window.addEventListener('message', function(e) {
     stage.classList.toggle('is-idle', !moodBlobKey && !preview);
     stage.classList.toggle('is-preview', !!preview);
     var visual = moodVisuals[key] || moodVisuals._none;
-    var shape = stage.querySelector('.rg-mood-blob-shape');
-    if (shape) shape.setAttribute('d', visual.path);
-    var stops = stage.querySelectorAll('.rg-mood-blob-stop');
-    if (stops[0]) stops[0].style.stopColor = visual.color1;
-    if (stops[1]) stops[1].style.stopColor = visual.color2;
+    stage.querySelectorAll('.rg-mood-blob-shape, .rg-mood-blob-sheen').forEach(function (el) {
+      el.setAttribute('d', visual.path);
+    });
+    stage.querySelectorAll('.rg-mood-blob-stop').forEach(function (stop) {
+      stop.style.stopColor = stop.dataset.rgStop === 'c1' ? visual.color1 : visual.color2;
+    });
     var glow = stage.querySelector('.rg-mood-glow');
     if (glow) glow.style.color = visual.glow;
     var label = stage.querySelector('.rg-mood-label');
@@ -15353,9 +15387,18 @@ window.addEventListener('message', function(e) {
       var el = stage.querySelector('[data-rg-face="' + part + '"]');
       if (!el) return;
       el.setAttribute('d', visual.face[part]);
-      el.setAttribute('opacity', (part.indexOf('brow') === 0 && !visual.brows) ? '0' : '1');
+      el.setAttribute('opacity', moodPartOpacity(part, visual));
     });
     paintMoodCoffee();
+  }
+  // Closed lids cross-fade against the open eyes, and the toothy open mouth
+  // against the drawn one, so each mood can wear the face from the reference.
+  function moodPartOpacity(part, visual) {
+    if (part === 'browL' || part === 'browR') return visual.brows ? '1' : '0';
+    if (part === 'lidL' || part === 'lidR') return visual.lids ? '1' : '0';
+    if (part === 'mouth') return visual.openMouth ? '0' : '1';
+    if (part === 'mouthOpen' || part === 'teeth') return visual.openMouth ? '1' : '0';
+    return visual.lids ? '0' : '1';   // eye whites, pupils, glints
   }
   function popMoodBlob(stage) {
     var wrap = stage.querySelector('.rg-mood-blob-wrap');
