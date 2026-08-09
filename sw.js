@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.180-moodblob6';
+const CACHE = 'minka-4.6.181-nobuddy1';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
