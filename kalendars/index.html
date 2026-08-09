@@ -15014,14 +15014,28 @@ window.addEventListener('message', function(e) {
    free ring of space around the blob, so nothing can overlap the face. */
 .rg-mood-src--tl { top: 4%;  left: 0; }
 .rg-mood-src--tr { top: 4%;  right: 0; }
-.rg-mood-src--l  { top: 44%; left: 0; }
-.rg-mood-src--r  { top: 44%; right: 0; }
-.rg-mood-src--bl { bottom: 26%; left: 0; }
-.rg-mood-src--br { bottom: 26%; right: 0; }
-.rg-mood-src--tr, .rg-mood-src--r, .rg-mood-src--br { animation-delay: -2.8s; }
-@keyframes rg-src-float {
-  0%, 100% { transform: rotate(-3deg) translateY(0); }
-  50%      { transform: rotate(-3deg) translateY(-3px); }
+.rg-mood-src--bl { bottom: 2%; left: 0; }
+.rg-mood-src--br { bottom: 2%; right: 0; }
+.rg-mood-f0 { animation-name: rg-src-f0; animation-duration: 5.6s; }
+.rg-mood-f1 { animation-name: rg-src-f1; animation-duration: 7.1s; animation-delay: -1.9s; }
+.rg-mood-f2 { animation-name: rg-src-f2; animation-duration: 6.3s; animation-delay: -3.4s; }
+.rg-mood-f3 { animation-name: rg-src-f3; animation-duration: 8s;   animation-delay: -0.8s; }
+@keyframes rg-src-f0 {
+  0%, 100% { transform: rotate(-3deg) translate(0, 0); }
+  50%      { transform: rotate(-3deg) translate(0, -4px); }
+}
+@keyframes rg-src-f1 {
+  0%, 100% { transform: rotate(-3deg) translate(0, 0); }
+  50%      { transform: rotate(-1deg) translate(3px, 2px); }
+}
+@keyframes rg-src-f2 {
+  0%, 100% { transform: rotate(-3deg) translate(0, 0); }
+  33%      { transform: rotate(-5deg) translate(-3px, -2px); }
+  66%      { transform: rotate(-2deg) translate(2px, -3px); }
+}
+@keyframes rg-src-f3 {
+  0%, 100% { transform: rotate(-3deg) translate(0, 0); }
+  50%      { transform: rotate(-4deg) translate(-3px, 3px); }
 }
 
 /* Coffee top is behind a small text button — no permanent list of initials. */
@@ -15073,9 +15087,45 @@ window.addEventListener('message', function(e) {
 .rg-mood-top-row b { flex: 1 1 auto; }
 .rg-mood-top-row u { color: #f0d3a8; text-decoration: none; font-variant-numeric: tabular-nums; }
 
-.rg-mood-chip {
+/* Both side stacks sit vertically centred on the blob, on opposite sides. */
+.rg-mood-side {
   position: absolute;
-  bottom: 0;
+  top: calc(50% - clamp(9px, 4cqw, 14px));
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(4px, 1.8cqw, 7px);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.rg-mood-side.is-mounted { display: inline-flex; }
+.rg-mood-side--left { left: 0; align-items: flex-start; }
+.rg-mood-side--right { right: 0; align-items: flex-end; }
+/* The blob's own ring only has to clear the corner badges now. */
+
+/* Fatigue reads like the watch badge: a solid pill that shifts colour with the
+   value, with the word underneath. */
+.rg-mood-fat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: clamp(3px, 1.4cqw, 5px) clamp(6px, 2.6cqw, 9px);
+  border-radius: 99px;
+  background: var(--rg-fat, #35d07f);
+  color: var(--rg-fat-ink, #0b1a10);
+  font: 850 clamp(11px, 4.8cqw, 13px)/1 Inter, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  transition: background 300ms ease, color 300ms ease;
+}
+.rg-mood-fat-pill svg { display: block; width: clamp(9px, 4cqw, 12px); height: clamp(9px, 4cqw, 12px); }
+.rg-mood-fat-label {
+  color: rgba(214,224,238,.62);
+  font: 800 clamp(6px, 2.7cqw, 7.5px)/1 Inter, system-ui, sans-serif;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.rg-mood-chip {
   display: none;
   flex-direction: column;
   align-items: center;
@@ -15084,18 +15134,10 @@ window.addEventListener('message', function(e) {
   border-radius: 12px;
   font: 850 clamp(11px, 4.8cqw, 13px)/1 Inter, system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
-  pointer-events: none;
 }
 .rg-mood-chip.is-mounted { display: inline-flex; }
-.rg-mood-chip i {
-  font: 850 clamp(6px, 2.6cqw, 7.5px)/1 Inter, system-ui, sans-serif;
-  font-style: normal;
-  letter-spacing: .1em;
-  opacity: .72;
-}
 .rg-mood-chip svg { display: block; width: clamp(17px, 7.4cqw, 22px); height: clamp(17px, 7.4cqw, 22px); }
 .rg-mood-chip--coffee {
-  right: 0;
   border: 1px solid rgba(196,132,69,.30);
   background: rgba(196,132,69,.13);
   color: #f0d3a8;
@@ -15103,12 +15145,50 @@ window.addEventListener('message', function(e) {
   transition: opacity 300ms ease;
 }
 .rg-mood-chip--coffee.is-on { opacity: 1; }
-.rg-mood-chip--fatigue {
-  left: 0;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.06);
-  color: var(--rg-fat, #35d07f);
+
+/* Coffee top: icon-only button directly under the coffee counter. */
+.rg-mood-topbtn {
+  position: relative;
+  pointer-events: auto;
+  display: inline-flex;
+  padding: clamp(4px, 1.8cqw, 6px);
+  border: 1px solid rgba(196,132,69,.24);
+  border-radius: 10px;
+  background: rgba(196,132,69,.10);
+  color: #e8c79a;
+  cursor: pointer;
 }
+.rg-mood-topbtn[hidden] { display: none; }
+.rg-mood-topbtn:hover { background: rgba(196,132,69,.20); }
+.rg-mood-topbtn svg { display: block; width: clamp(15px, 6.4cqw, 19px); height: clamp(15px, 6.4cqw, 19px); }
+/* Opens as an overlay, not as extra rows: the card has a fixed place in the
+   grid, so growing it would push the whole section around. */
+.rg-mood-top {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: clamp(7px, 3cqw, 10px) clamp(9px, 3.6cqw, 13px);
+  border: 1px solid rgba(196,132,69,.24);
+  border-radius: 12px;
+  background: rgba(10,13,20,.94);
+  pointer-events: none;
+}
+.rg-mood-top[hidden] { display: none; }
+.rg-mood-top-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  font: 700 clamp(8.5px, 3.8cqw, 10.5px)/1 Inter, system-ui, sans-serif;
+}
+.rg-mood-top-row i { font-style: normal; color: rgba(240,211,168,.5); }
+.rg-mood-top-row b { flex: 1 1 auto; color: #e7edf6; font-weight: 700; }
+.rg-mood-top-row u { color: #f0d3a8; text-decoration: none; font-variant-numeric: tabular-nums; }
+
 
 
 /* On the two-column card the action row has real room, so the narrow icon-only
@@ -15456,14 +15536,19 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       + facePath('mouth') + facePath('mouthOpen') + facePath('teeth') + '</g>'
       + '</svg>'
       + '<span class="rg-mood-ring" data-rg-ring></span>'
+      + '</span>'
+      + '<span class="rg-mood-side rg-mood-side--left" data-rg-chip="fatigue">'
+      + '<span class="rg-mood-fat-pill"><svg viewBox="0 0 24 24" aria-hidden="true">'
+      + '<path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="currentColor"></path></svg>'
+      + '<b data-rg-fatigue-num>0%</b></span>'
+      + '<span class="rg-mood-fat-label">Nogurums</span></span>'
+      + '<span class="rg-mood-side rg-mood-side--right">'
       + '<span class="rg-mood-chip rg-mood-chip--coffee" data-rg-chip="coffee">'
       + moodCupSvg() + '<b data-rg-coffee-num>0</b></span>'
-      + '<span class="rg-mood-chip rg-mood-chip--fatigue" data-rg-chip="fatigue">'
-      + '<i>NOG</i><b data-rg-fatigue-num>0%</b></span>'
-      + '</span>'
+      + '<button class="rg-mood-topbtn" type="button" data-rg-topbtn hidden'
+      + ' aria-label="Kafijas tops" title="Kafijas tops">' + moodTopSvg()
+      + '<span class="rg-mood-top" data-rg-top hidden></span></button></span>'
       + '<span class="rg-mood-label">' + (base.label || '&nbsp;') + '</span>'
-      + '<button class="rg-mood-topbtn" type="button" data-rg-topbtn hidden>Kafijas tops'
-      + '<span class="rg-mood-top" data-rg-top hidden></span></button>'
       + '</div>';
   }
   function moodCupSvg() {
@@ -15471,6 +15556,16 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       + '<rect x="3" y="4" width="8" height="8" fill="#c8842a"></rect><rect x="4" y="12" width="6" height="1" fill="#c8842a"></rect>'
       + '<rect x="11" y="5" width="2" height="1" fill="#c8842a"></rect><rect x="13" y="5" width="1" height="4" fill="#c8842a"></rect>'
       + '<rect x="11" y="8" width="2" height="1" fill="#c8842a"></rect><rect x="4" y="5" width="6" height="1" fill="#f0b860"></rect>'
+      + '</svg>';
+  }
+  function moodTopSvg() {
+    return '<svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" fill="currentColor">'
+      + '<rect x="1" y="11" width="3" height="3"></rect><rect x="1" y="11" width="3" height="1" opacity=".45"></rect><rect x="4" y="12" width="1" height="1"></rect>'
+      + '<rect x="6" y="11" width="3" height="3"></rect><rect x="6" y="11" width="3" height="1" opacity=".45"></rect><rect x="9" y="12" width="1" height="1"></rect>'
+      + '<rect x="6" y="7" width="3" height="3"></rect><rect x="6" y="7" width="3" height="1" opacity=".45"></rect><rect x="9" y="8" width="1" height="1"></rect>'
+      + '<rect x="11" y="11" width="3" height="3"></rect><rect x="11" y="11" width="3" height="1" opacity=".45"></rect><rect x="14" y="12" width="1" height="1"></rect>'
+      + '<rect x="11" y="7" width="3" height="3"></rect><rect x="11" y="7" width="3" height="1" opacity=".45"></rect><rect x="14" y="8" width="1" height="1"></rect>'
+      + '<rect x="11" y="3" width="3" height="3"></rect><rect x="11" y="3" width="3" height="1" opacity=".45"></rect><rect x="14" y="4" width="1" height="1"></rect>'
       + '</svg>';
   }
   function moodInitials(name) {
@@ -15519,6 +15614,8 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     moodStatsCache = { at: now, day: day, data: data };
     return data;
   }
+  // Dark ink on the light end of the scale, light ink on the red end.
+  function moodFatigueInk(score) { return score > 45 ? '#12161d' : '#0b1a10'; }
   function moodFatigueColor(score) {
     if (score > 70) return '#ff6b5f';
     if (score > 45) return '#e59b42';
@@ -15528,7 +15625,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   // Each coffee source floats free beside the blob: its own icon, the count to
   // its right, no box and no border. Slots are fixed so the badges never land
   // on the blob, the title or the mood row.
-  var MOOD_SLOTS = ['tl', 'tr', 'bl', 'br', 'l', 'r'];
+  var MOOD_SLOTS = ['tl', 'tr', 'bl', 'br'];
   var MOOD_SOURCES = ['philips', 'lofbergs', 'narvesen', 'monster', 'monsterultra', 'redbull', 'cupcoffee'];
   function paintMoodCoffee(force) {
     var refs = moodRefs();
@@ -15545,7 +15642,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       if (ring.dataset.rgSrc !== signature) {
         ring.dataset.rgSrc = signature;
         ring.innerHTML = used.map(function (item, index) {
-          return '<span class="rg-mood-src rg-mood-src--' + MOOD_SLOTS[index] + '">'
+          return '<span class="rg-mood-src rg-mood-src--' + MOOD_SLOTS[index] + ' rg-mood-f' + (index % 4) + '">'
             + (moodSourceIcon(item.key) || '') + '<b>' + item.n + '</b></span>';
         }).join('');
       }
@@ -15556,14 +15653,18 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       var num = coffee.querySelector('[data-rg-coffee-num]');
       if (num) num.textContent = String(stats.total === null ? 0 : stats.total);
       coffee.classList.toggle('is-on', (stats.total || 0) > 0);
+      var rightSide = coffee.closest('.rg-mood-side');
+      if (rightSide) rightSide.classList.toggle('is-mounted', stats.total !== null);
     }
     var fatigue = refs.chips.fatigue;
     if (fatigue) {
       fatigue.classList.toggle('is-mounted', stats.fatigue !== null);
+      fatigue.classList.add('rg-mood-side');
       if (stats.fatigue !== null) {
         var fnum = fatigue.querySelector('[data-rg-fatigue-num]');
         if (fnum) fnum.textContent = stats.fatigue + '%';
         fatigue.style.setProperty('--rg-fat', moodFatigueColor(stats.fatigue));
+        fatigue.style.setProperty('--rg-fat-ink', moodFatigueInk(stats.fatigue));
       }
     }
     var button = refs.topbtn;
