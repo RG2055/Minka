@@ -3817,7 +3817,7 @@ window.addEventListener('message', function(e) {
 // worker from this iframe added a second controllerchange reload listener with
 // a different app version, which could make PWA updates visibly reload twice.
 if ('serviceWorker' in navigator && window.top === window) {
-  const MINKA_APP_VERSION = '2026.08.09-ring7.calendar';
+  const MINKA_APP_VERSION = '2026.08.09-orbit1.calendar';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -14966,8 +14966,10 @@ window.addEventListener('message', function(e) {
   font: 700 var(--rg-src-num, clamp(14px, 6.6cqw, 19px))/1 Inter, system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
 }
-[data-rg-dense="mid"] { --rg-src-icon: clamp(21px, 9.5cqw, 26px); --rg-src-num: clamp(12px, 5.6cqw, 16px); }
-[data-rg-dense="hi"]  { --rg-src-icon: clamp(18px, 8cqw, 22px);   --rg-src-num: clamp(11px, 5cqw, 14px); }
+/* Base size per how full the ring is; JS then scales each badge around this
+   from its own depth, so the two work together rather than fight. */
+[data-rg-dense="mid"] { --rg-src-icon: clamp(23px, 10.5cqw, 29px); --rg-src-num: clamp(13px, 6cqw, 17px); }
+[data-rg-dense="hi"]  { --rg-src-icon: clamp(21px, 9.5cqw, 26px); --rg-src-num: clamp(12px, 5.6cqw, 16px); }
 
 /* Four drift patterns, handed out round-robin so neighbouring badges never
    bob in lockstep. Each keyframe re-states the base offset, otherwise the
@@ -15530,32 +15532,28 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     if (score > 20) return '#d8c64a';
     return '#35d07f';
   }
-  // Every source gets its own place on the ring — nothing is ever collapsed
-  // into a "+N". The angles are hand-placed per count so the badges stay clear
-  // of the two pills, which sit at the middle of the left and right sides.
-  var MOOD_ANGLES = {
-    1: [0],
-    2: [-38, 38],
-    3: [-52, 0, 52],
-    4: [-58, -21, 21, 58],
-    5: [-60, -28, 0, 28, 60],
-    6: [-62, -30, 30, 62, -142, 142],
-    7: [-64, -32, 0, 32, 64, -142, 142]
-  };
+  // Every source gets its own place all the way around the blob — nothing is
+  // ever collapsed into a "+N". Depth is what makes it read as an orbit rather
+  // than a clock face: a badge sitting close to the blob is drawn bigger and
+  // fully opaque, one pushed further out is drawn smaller and dimmer. The
+  // depths come from a fixed scatter sequence, so the ring looks unordered but
+  // never reshuffles between renders, and it keeps working for any number of
+  // sources added later — nothing here is written per source count.
+  var MOOD_DEPTHS = [0.06, 0.66, 0.28, 0.92, 0.44, 0.14, 0.78, 0.36, 0.58, 0.22];
+  var MOOD_SRC_GAP = 10;
   var MOOD_SOURCES = ['philips', 'lofbergs', 'narvesen', 'monster', 'monsterultra', 'redbull', 'cupcoffee'];
   var MOOD_SOURCE_NAMES = {
     philips: 'Philips', lofbergs: 'Löfbergs', narvesen: 'Narvesen', monster: 'Monster',
     monsterultra: 'Monster Ultra', redbull: 'Red Bull', cupcoffee: 'Cita kafija'
   };
   // Badge sizes follow the card's container queries, so a resize moves the
-  // ring. Re-place from the last known angles instead of rebuilding the DOM.
-  var moodRingAngles = [];
+  // whole ring. Lay it out again instead of rebuilding the DOM.
   var moodRingResize = 0;
   window.addEventListener('resize', function () {
     window.clearTimeout(moodRingResize);
     moodRingResize = window.setTimeout(function () {
       var refs = moodRefs();
-      if (refs && refs.ring && refs.ring.firstChild) placeMoodSources(refs.ring, moodRingAngles);
+      if (refs && refs.ring && refs.ring.firstChild) placeMoodSources(refs.ring);
     }, 180);
   }, { passive: true });
   function paintMoodCoffee(force) {
@@ -15569,7 +15567,6 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
         .filter(function (item) { return item.n > 0; })
         .sort(function (a, b) { return b.n - a.n; })
         .slice(0, 7);
-      var angles = MOOD_ANGLES[used.length] || [];
       var signature = used.map(function (item) { return item.key + ':' + item.n; }).join('|');
       if (ring.dataset.rgSrc !== signature) {
         // Badges shrink as the ring fills up, so seven still fit without the
@@ -15580,11 +15577,10 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
             + ' title="' + MOOD_SOURCE_NAMES[item.key] + ': ' + item.n + '">'
             + (moodSourceIcon(item.key) || '') + '<b>' + item.n + '</b></span>';
         }).join('');
-        moodRingAngles = angles;
         // Only remember the signature once the badges really landed; while the
         // card is still unpainted the measurements are zero, so the next paint
         // has to try again rather than leave them stacked on the blob.
-        ring.dataset.rgSrc = placeMoodSources(ring, angles) ? signature : '';
+        ring.dataset.rgSrc = placeMoodSources(ring) ? signature : '';
       }
     }
     var coffee = refs.chips.coffee;
@@ -15611,36 +15607,152 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     var button = refs.topbtn;
     if (button) button.hidden = !(stats.top.length || stats.total !== null);
   }
-  // The ring radius follows the blob's real painted size, and each badge is
-  // pushed out far enough that its own box clears the circle too.
-  var MOOD_SRC_GAP = 9;
-  function placeMoodSources(ring, angles) {
+  // Everything the badges have to stay off, in blob-centre coordinates. The
+  // boxes are read rather than hard-coded, so the ring re-solves itself if the
+  // pills, the title or the mood row ever move.
+  function moodObstacles(card, cx, cy) {
+    var boxes = [];
+    var add = function (rect, padX, padY) {
+      if (!rect || !rect.width || !rect.height) return;
+      boxes.push({
+        l: rect.left - cx - padX, r: rect.right - cx + padX,
+        t: rect.top - cy - padY, b: rect.bottom - cy + padY
+      });
+    };
+    card.querySelectorAll('.rg-feedback-card-title, .rg-mood-pill, .rg-mood-side-label,'
+      + ' .rg-mood-topbtn, .rg-pulse-taps').forEach(function (node) {
+      add(node.getBoundingClientRect(), 5, 5);
+    });
+    // The mood name under the blob is empty until a mood is picked and grows to
+    // "Ļoti slikti" once it is, so reserve the widest line it ever shows —
+    // otherwise a later tap would slide text under a badge.
+    var label = card.querySelector('.rg-mood-label');
+    if (label) {
+      var r = label.getBoundingClientRect();
+      boxes.push({ l: -68, r: 68, t: r.top - cy - 5, b: r.bottom - cy + 5 });
+    }
+    return boxes;
+  }
+  function moodBoxHits(box, boxes) {
+    for (var i = 0; i < boxes.length; i++) {
+      var o = boxes[i];
+      if (box.l < o.r && o.l < box.r && box.t < o.b && o.t < box.b) return true;
+    }
+    return false;
+  }
+  // Distance from the blob's centre to the nearest edge or corner of the badge.
+  function moodBoxDistance(box) {
+    var dx = Math.max(box.l, 0, -box.r);
+    var dy = Math.max(box.t, 0, -box.b);
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+  // Lays the badges out around the blob. Angles are spread evenly over the full
+  // circle; each badge then looks for the first free spot near its own angle,
+  // starting from the radius its depth asks for. Because the fit is solved
+  // against measured boxes rather than a table of angles, the ring copes with
+  // any number of sources — an eighth icon needs no new code here.
+  function placeMoodSources(ring) {
     var wrap = ring.parentElement;
     var blob = wrap && wrap.querySelector('.rg-mood-blob');
-    // <svg> is an SVGElement, so it has no offsetWidth — reading it gave NaN
-    // and every badge collapsed onto the blob's face. Measure the painted box.
-    var radius = (blob ? blob.getBoundingClientRect().width : 0) / 2;
-    if (!(radius > 0)) return false;
-    var list = ring.querySelectorAll('.rg-mood-src');
-    for (var i = 0; i < list.length; i++) {
-      var el = list[i];
+    var card = ring.closest('.rg-feedback-card');
+    if (!blob || !card) return false;
+    var bb = blob.getBoundingClientRect();
+    if (!(bb.width > 0)) return false;
+    var cx = bb.left + bb.width / 2;
+    var cy = bb.top + bb.height / 2;
+    // <svg> is an SVGElement and has no offsetWidth — reading it gave NaN and
+    // every badge collapsed onto the blob's face. Measure the painted box, and
+    // note the gradient fades out well before that box's edge, so the circle
+    // the badges actually have to clear is smaller than the box.
+    var blobR = bb.width / 2 * 0.86;
+    var badges = [].slice.call(ring.querySelectorAll('.rg-mood-src'));
+    if (!badges.length) return true;
+
+    // Depth is applied before anything is measured: a badge drawn bigger needs
+    // a wider berth, so its final size has to be settled first. Clearing, then
+    // reading, then writing keeps this to two layout passes instead of one per
+    // badge — a re-place would otherwise scale the already-scaled size.
+    badges.forEach(function (el) {
+      el.style.removeProperty('--rg-src-icon');
+      el.style.removeProperty('--rg-src-num');
+    });
+    var base = badges.map(function (el) {
+      var icon = el.querySelector('svg');
+      var num = el.querySelector('b');
+      return {
+        icon: icon ? icon.getBoundingClientRect().width : 0,
+        num: num ? parseFloat(window.getComputedStyle(num).fontSize) : 0
+      };
+    });
+    var depths = badges.map(function (el, i) {
+      var t = MOOD_DEPTHS[i % MOOD_DEPTHS.length];
+      var scale = 1.24 - 0.48 * t;
+      if (base[i].icon > 0) el.style.setProperty('--rg-src-icon', (base[i].icon * scale).toFixed(1) + 'px');
+      if (base[i].num > 0) el.style.setProperty('--rg-src-num', (base[i].num * scale).toFixed(1) + 'px');
+      el.style.opacity = (1 - 0.28 * t).toFixed(2);
+      return t;
+    });
+
+    var cardRect = card.getBoundingClientRect();
+    var bounds = {
+      l: cardRect.left - cx + 6, r: cardRect.right - cx - 6,
+      t: cardRect.top - cy + 6, b: cardRect.bottom - cy - 6
+    };
+    var blocked = moodObstacles(card, cx, cy);
+    var taken = [];
+    var count = badges.length;
+
+    for (var i = 0; i < count; i++) {
+      var el = badges[i];
       var w = el.offsetWidth / 2;
       var h = el.offsetHeight / 2;
-      var a = (angles[i] || 0) * Math.PI / 180;
-      var dx = Math.sin(a);
-      var dy = -Math.cos(a);
-      // Distance from the blob's centre to the nearest corner/edge of the
-      // badge box must stay above radius + gap. Solved by stepping outwards:
-      // a closed form for a rotated box is not worth the code here.
-      var r = radius + MOOD_SRC_GAP;
-      for (var step = 0; step < 64; step++) {
-        var gapX = Math.max(0, Math.abs(dx * r) - w);
-        var gapY = Math.max(0, Math.abs(dy * r) - h);
-        if (Math.sqrt(gapX * gapX + gapY * gapY) >= radius + MOOD_SRC_GAP) break;
-        r += 3;
+      var t = depths[i];
+      var ideal = i * (360 / count);
+      var spot = null;
+      var relaxed = null;
+      // Walk outwards from the wanted angle in both directions, and at each
+      // angle outwards and inwards from the wanted radius, so a badge lands as
+      // close to its intended place and depth as the free space allows.
+      for (var da = 0; da <= 60 && !spot; da += 4) {
+        var angles = da ? [ideal + da, ideal - da] : [ideal];
+        for (var k = 0; k < angles.length && !spot; k++) {
+          var rad = angles[k] * Math.PI / 180;
+          var ux = Math.sin(rad);
+          var uy = -Math.cos(rad);
+          var reach = Math.abs(ux) * w + Math.abs(uy) * h;
+          var floor = blobR + MOOD_SRC_GAP + reach;
+          var want = floor + t * 26;
+          for (var dr = 0; dr <= 30 && !spot; dr += 3) {
+            var radii = dr ? [want + dr, want - dr] : [want];
+            for (var m = 0; m < radii.length && !spot; m++) {
+              var r = radii[m];
+              if (r < floor) continue;
+              var x = ux * r, y = uy * r;
+              var box = { l: x - w, r: x + w, t: y - h, b: y + h };
+              if (moodBoxDistance(box) < blobR + MOOD_SRC_GAP) continue;
+              if (box.l < bounds.l || box.r > bounds.r || box.t < bounds.t || box.b > bounds.b) continue;
+              if (moodBoxHits(box, blocked)) continue;
+              // A spot that only clashes with another badge is worth keeping as
+              // a fallback: overlapping a sibling looks far better than landing
+              // on the fatigue pill or under the title.
+              if (moodBoxHits(box, taken)) { if (!relaxed) relaxed = { x: x, y: y, box: box }; continue; }
+              spot = { x: x, y: y, box: box };
+            }
+          }
+        }
       }
-      el.style.setProperty('--rg-x', Math.round(dx * r) + 'px');
-      el.style.setProperty('--rg-y', Math.round(dy * r) + 'px');
+      if (!spot) spot = relaxed;
+      if (!spot) {
+        var fa = ideal * Math.PI / 180;
+        var fx = Math.sin(fa), fy = -Math.cos(fa);
+        var fr = blobR + MOOD_SRC_GAP + Math.abs(fx) * w + Math.abs(fy) * h;
+        spot = { x: fx * fr, y: fy * fr, box: { l: fx * fr - w, r: fx * fr + w, t: fy * fr - h, b: fy * fr + h } };
+      }
+      // Badges drift by a few pixels while floating, so they are reserved a
+      // little larger than they are drawn.
+      taken.push({ l: spot.box.l - 6, r: spot.box.r + 6, t: spot.box.t - 6, b: spot.box.b + 6 });
+      el.style.setProperty('--rg-x', Math.round(spot.x) + 'px');
+      el.style.setProperty('--rg-y', Math.round(spot.y) + 'px');
     }
     return true;
   }
