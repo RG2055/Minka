@@ -5899,6 +5899,15 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
 #mkCoffeeStats .cs-row .e{width:14px;text-align:center;font-size:11px;}
 #mkCoffeeStats .cs-row b{color:#64d2ff;font-weight:800;font-variant-numeric:tabular-nums;}
 #mkCoffeeStats .cs-empty{padding:10px 8px;font:600 11px/1.4 'Space Grotesk',system-ui;color:#5e616b;text-align:center;}
+/* Coffee, the coffee top and the fatigue readout moved to the shift-rating
+   card in the calendar, where they have room to breathe. Hidden rather than
+   deleted: the buddy's own scripts still look these nodes up and guard on
+   them, and hiding keeps every one of those guards true. The header loses two
+   stacked blocks and gets noticeably shorter. */
+#mk-buddy-coffee-stat,
+#mk-buddy-stats-btn,
+#mk-buddy-shift-stats .mk-buddy-sep,
+#mk-buddy-shift-stats .mk-buddy-fatigue-part { display: none !important; }
 </style>
 
 <div id="mk-buddy">
