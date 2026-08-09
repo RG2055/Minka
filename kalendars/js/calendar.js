@@ -4617,6 +4617,38 @@ function filterFullList(btn) {
       saveCoffeeDetailStore(data);
     }
 
+    // The minus button has to undo the last thing that was added, otherwise
+    // adding a Red Bull and immediately taking it back removes whichever source
+    // happens to have the biggest count instead. The order can't live in
+    // minkaCoffeeDetailsV1 — normalizeCoffeeDetail rebuilds that object from
+    // sources+spendCents and would drop it — so it gets its own local key. It is
+    // a device-side hint only: nothing about the stored counts, the detail
+    // structure or the cloud payload changes.
+    const coffeeAddOrderKey = 'minkaCoffeeAddOrderV1';
+    function getCoffeeAddOrderStore() {
+      try { return JSON.parse(localStorage.getItem(coffeeAddOrderKey) || '{}') || {}; }
+      catch (_e) { return {}; }
+    }
+    function getCoffeeAddOrder(name) {
+      const data = getCoffeeAddOrderStore();
+      const day = data[getCoffeeDayKey()];
+      const list = day && day[getCoffeePersonKey(name)];
+      return Array.isArray(list) ? list.filter(s => COFFEE_SOURCES.indexOf(s) >= 0) : [];
+    }
+    function setCoffeeAddOrder(name, list) {
+      const day = getCoffeeDayKey();
+      const key = getCoffeePersonKey(name);
+      if (!day || !key) return;
+      try {
+        const data = getCoffeeAddOrderStore();
+        // Keep only the recent days so this hint can never grow without bound.
+        Object.keys(data).sort().slice(0, -14).forEach(k => { delete data[k]; });
+        if (!data[day]) data[day] = {};
+        data[day][key] = (list || []).slice(-64);
+        localStorage.setItem(coffeeAddOrderKey, JSON.stringify(data));
+      } catch (_e) {}
+    }
+
     function addCoffeeDetail(name, entry) {
       const d = getCoffeeDetail(name);
       const source = cleanCoffeeSource(entry && entry.source);
@@ -4624,14 +4656,27 @@ function filterFullList(btn) {
       d.sources[source] = (d.sources[source] || 0) + coffeeEq(source);
       d.spendCents += Math.max(0, Number(entry && entry.priceCents) || 0);
       setCoffeeDetail(name, d);
+      setCoffeeAddOrder(name, getCoffeeAddOrder(name).concat(source));
       return d;
     }
 
     function removeCoffeeDetail(name) {
       const d = getCoffeeDetail(name);
-      const pick = COFFEE_SOURCES
-        .filter(s => (d.sources[s] || 0) > 0)
-        .sort((a, b) => (d.sources[b] || 0) - (d.sources[a] || 0))[0];
+      // Newest first: undo what was added last, as long as it is still there.
+      const order = getCoffeeAddOrder(name);
+      let pick = '';
+      for (let i = order.length - 1; i >= 0; i--) {
+        if ((d.sources[order[i]] || 0) > 0) { pick = order[i]; order.splice(i, 1); break; }
+        order.splice(i, 1);
+      }
+      if (pick) setCoffeeAddOrder(name, order);
+      // Nothing remembered (counts synced from another device, older day, or a
+      // fresh install) — fall back to the previous largest-first behaviour.
+      if (!pick) {
+        pick = COFFEE_SOURCES
+          .filter(s => (d.sources[s] || 0) > 0)
+          .sort((a, b) => (d.sources[b] || 0) - (d.sources[a] || 0))[0] || '';
+      }
       let removed = '';
       if (pick) { d.sources[pick] = Math.max(0, (d.sources[pick] || 0) - coffeeEq(pick)); removed = pick; }
       setCoffeeDetail(name, d);
