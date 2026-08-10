@@ -73,20 +73,25 @@
   }
 
   /* ── 3. CARDS AUTO-RESIZE (square, fill grid neatly) ── */
-  function autoSizeCards() {
+  function autoSizeCards(widthHint) {
     const container = document.getElementById('grafiks-list');
     if (!container || !container.classList.contains('grid-view')) return;
 
     const grids = Array.from(container.querySelectorAll('.cards-subgrid'));
     if (!grids.length) return;
+    const hintedWidth = Math.max(0, Number(widthHint) || 0);
+    const sharedWidth = hintedWidth || Math.max(0, container.clientWidth || 0);
 
     const plans = grids.map(grid => {
       const cards = Array.from(grid.querySelectorAll('.card'));
       if (!cards.length) return null;
 
       const count = cards.length;
-      const containerW = Math.max(0, grid.clientWidth || container.clientWidth || 0);
-      const containerH = Math.max(0, grid.clientHeight || container.clientHeight || 0);
+      const containerW = sharedWidth;
+      // During a day switch the old roster supplied a stable width, so avoid a
+      // second geometry read from the freshly mutated DOM. Resize/legacy paths
+      // still retain the height-aware fallback.
+      const containerH = hintedWidth ? 0 : Math.max(0, grid.clientHeight || container.clientHeight || 0);
       const gap = 9;
       if (!containerW) return null;
 
@@ -116,6 +121,11 @@
     });
   }
 
+  // Day navigation rebuilds the whole roster synchronously. Expose the same
+  // sizing pass so calendar.js can finish the new grid before the browser gets
+  // a chance to paint its temporary default-column layout.
+  window.__minkaAutoSizeCardsNow = autoSizeCards;
+
   // Observe grafiks-list for changes and run auto-size
   function startCardObserver() {
     const container = document.getElementById('grafiks-list');
@@ -125,7 +135,12 @@
     ro.observe(container);
 
     const mo = new MutationObserver(() => {
-      requestAnimationFrame(autoSizeCards);
+      // The normal day-switch path now sizes every new grid synchronously.
+      // Only queue another layout pass for legacy/initial renders whose grids
+      // do not yet carry the sizing signature.
+      const needsSizing = Array.from(container.querySelectorAll('.cards-subgrid'))
+        .some(grid => !grid.dataset.mkSizeSignature);
+      if (needsSizing) requestAnimationFrame(autoSizeCards);
       requestAnimationFrame(applyStaffAccents);
     });
     mo.observe(container, { childList: true, subtree: false });
