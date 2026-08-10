@@ -5318,9 +5318,11 @@ function filterFullList(btn) {
         const fatigueLevel = !hasFatigueScore ? 'none' : fatigueScore > 66 ? 'hi' : fatigueScore >= 33 ? 'mid' : 'low';
         const monthHours = Math.max(0, Math.min(1000, Number(getMonthHoursForWorker(w.name, isRd)) || 0));
         const dutyHours = Math.max(0, Math.min(48, Number(getDutyShiftHours(w)) || 0));
+        card.setAttribute('data-duty-hours', String(dutyHours || String(w.shift || '').replace(/[^0-9]/g, '') || ''));
         const safeInitials = escapeHtml(initials);
         const safeFirstName = escapeHtml(firstName);
         const safeSurname = escapeHtml(surname);
+        const nameSizeClass = firstName.length > 9 ? ' mk-name-long' : '';
         card.className += ` mk-mid-card${roleClass} mk-mid-fat-${fatigueLevel}`;
         card.innerHTML = `
           <div class="mk-mid-top">
@@ -5340,7 +5342,7 @@ function filterFullList(btn) {
           <div class="mk-mid-center">
             ${bgEmoji ? `<div class="mk-mid-bg-emoji">${escapeHtml(bgEmoji)}</div>` : ''}
             <div class="card-shift mk-mid-hours">${dutyHours || escapeHtml(w.shift)}</div>
-            <div class="card-name-wrap mk-mid-name-wrap">
+            <div class="card-name-wrap mk-mid-name-wrap${nameSizeClass}">
               <span class="name-main">${safeFirstName}</span>
               <span class="name-sub">${safeSurname}</span>
             </div>
