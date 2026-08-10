@@ -3891,21 +3891,6 @@ window.addEventListener('message', function(e) {
   var wrap = document.getElementById('shift-progress-wrap');
   var btn = document.getElementById('lanes-mini-toggle');
   if (!wrap || !btn) return;
-  function syncBuddyDetailVisibility() {
-    var detailOpen = !wrap.classList.contains('lanes-collapsed');
-    var nightOpen = wrap.classList.contains('ns-bar-active');
-    try {
-      window.parent.postMessage({
-        type: 'mk-buddy-detail-visibility',
-        hidden: detailOpen || nightOpen
-      }, window.location.origin);
-    } catch (e) {}
-  }
-  window.__mkSyncBuddyDetailVisibility = syncBuddyDetailVisibility;
-  new MutationObserver(syncBuddyDetailVisibility).observe(wrap, {
-    attributes: true,
-    attributeFilter: ['class']
-  });
   function apply(min) {
     wrap.classList.toggle('lanes-collapsed', min);
     btn.title = min ? 'Rādīt maiņu joslas' : 'Paslēpt maiņu joslas';
@@ -3917,7 +3902,6 @@ window.addEventListener('message', function(e) {
   var saved = null;
   try { saved = localStorage.getItem(KEY); } catch (e) {}
   apply(saved === null ? true : saved === '1');
-  syncBuddyDetailVisibility();
   btn.addEventListener('click', function(){
     apply(!wrap.classList.contains('lanes-collapsed'));
   });
@@ -13923,33 +13907,6 @@ window.addEventListener('message', function(e) {
 }
 </style>
 
-<script>
-/* Buddy zīmē vecāku čaula virs šīs joslas. Kad atveras meklēšana, josla
-   pārtop par ievades lauku un Buddy paliek ceļā, tāpēc paziņojam čaulai
-   par meklēšanas stāvokli — tā viņu paslēpj ar esošo mk-buddy-ui karodziņu. */
-(function () {
-  if (window.parent === window) return;
-  var bar = document.getElementById('minkaBar');
-  if (!bar) return;
-  var last = null;
-  function isOpen() {
-    return bar.classList.contains('focused')
-        || bar.classList.contains('has-text')
-        || bar.classList.contains('search-open');
-  }
-  function send() {
-    var open = isOpen();
-    if (open === last) return;
-    last = open;
-    try {
-      window.parent.postMessage({ type: 'mk_search_state', open: open }, window.location.origin);
-    } catch (_e) {}
-  }
-  new MutationObserver(send).observe(bar, { attributes: true, attributeFilter: ['class'] });
-  send();
-})();
-</script>
-
 <style id="mk-header-glass-v1">
 /* ── Galvenes vadīklu caurspīdīgais pārklājums ─────────────────────────────
    TIKAI stils. Šeit apzināti NAV neviena īpašība, kas maina izkārtojumu:
@@ -14141,6 +14098,96 @@ window.addEventListener('message', function(e) {
    dažām mazajām vadīklām, nekad uz visas joslas:
      #minkaBarWrap .lanes-mini-toggle { backdrop-filter: blur(8px); }
 */
+</style>
+
+<style id="mk-header-compact-no-buddy-v1">
+/* Buddy no longer exists, so the desktop header does not reserve his two-row
+   slot. Elapsed and remaining time share one calm line; the mobile shell keeps
+   its existing layout. */
+:root:not(.mk-mobile-shell) #minkaBarWrap #minkaBarInner,
+:root:not(.mk-mobile-shell) #minkaBarWrap #minkaBarInner:focus-within,
+:root:not(.mk-mobile-shell) #minkaBarWrap #minkaBar.focused #minkaBarInner,
+:root:not(.mk-mobile-shell) #minkaBarWrap #minkaBar.has-text #minkaBarInner,
+:root:not(.mk-mobile-shell) #minkaBarWrap #minkaBar.search-open #minkaBarInner {
+  height: 56px !important;
+  min-height: 56px !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner #mkSearchDate,
+:root:not(.mk-mobile-shell) #minkaBarInner .mk-ticker-wrap {
+  height: 56px !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner #mkSearchDate {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+:root:not(.mk-mobile-shell) #mkSearchDate .mk-search-date-main .mk-bday-badge,
+:root:not(.mk-mobile-shell) #mkSearchDate .mk-search-date-main .mk-nameday-bar {
+  height: 20px !important;
+  min-height: 20px !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap .sl-times-strip {
+  grid-template-columns: minmax(10px, 1fr) auto auto 1px auto minmax(7ch, auto) auto auto !important;
+  grid-template-rows: 26px !important;
+  min-height: 28px !important;
+  height: 28px !important;
+  column-gap: 7px !important;
+  row-gap: 0 !important;
+  margin: 0 !important;
+  padding: 1px 4px !important;
+}
+:root:not(.mk-mobile-shell) .sl-ts-elapsed-label {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+}
+:root:not(.mk-mobile-shell) .sl-ts-elapsed {
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+}
+:root:not(.mk-mobile-shell) .sl-ts-sep {
+  display: block !important;
+  grid-column: 4 !important;
+  grid-row: 1 !important;
+  width: 1px !important;
+  height: 15px !important;
+  margin: 0 !important;
+  background: rgba(203, 220, 236, .22) !important;
+}
+:root:not(.mk-mobile-shell) .sl-ts-remaining-label {
+  grid-column: 5 !important;
+  grid-row: 1 !important;
+}
+:root:not(.mk-mobile-shell) .sl-ts-rem {
+  grid-column: 6 !important;
+  grid-row: 1 !important;
+}
+:root:not(.mk-mobile-shell) #sl-lanes-slot {
+  grid-column: 7 !important;
+  grid-row: 1 !important;
+  margin-left: 5px !important;
+}
+:root:not(.mk-mobile-shell) #sl-ns-slot {
+  grid-column: 8 !important;
+  grid-row: 1 !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap .sl-ruler {
+  --sl-ruler-band-top: 10px;
+  height: 24px !important;
+  padding-top: var(--sl-ruler-band-top) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap .sl-ruler-band {
+  height: 14px !important;
+}
+@container (max-width: 760px) {
+  :root:not(.mk-mobile-shell) #minkaBarWrap .sl-ts-label,
+  :root:not(.mk-mobile-shell) #minkaBarWrap .sl-ts-sep { display: none !important; }
+  :root:not(.mk-mobile-shell) #minkaBarWrap .sl-times-strip {
+    grid-template-columns: minmax(8px, 1fr) auto auto auto auto !important;
+  }
+  :root:not(.mk-mobile-shell) .sl-ts-elapsed { grid-column: 2 !important; }
+  :root:not(.mk-mobile-shell) .sl-ts-rem { grid-column: 3 !important; }
+  :root:not(.mk-mobile-shell) #sl-lanes-slot { grid-column: 4 !important; margin-left: 2px !important; }
+  :root:not(.mk-mobile-shell) #sl-ns-slot { grid-column: 5 !important; }
+}
 </style>
 
 <style id="mk-rg-pulse-v2">
@@ -14552,14 +14599,18 @@ window.addEventListener('message', function(e) {
   min-height: 0;
 }
 .rg-feedback-card-title {
+  order: 2;
+  margin-top: clamp(3px, 2cqw, 6px);
   color: #f8fbff;
   font: 800 clamp(11px, 8cqw, 15px)/1.12 Inter, system-ui, sans-serif;
   letter-spacing: -.02em;
   text-align: center;
-  transform: translateY(-3px);
+  transform: none;
   white-space: nowrap;
 }
+.rg-feedback-card .rg-mood-stage { order: 1; }
 .rg-feedback-card .rg-pulse-taps {
+  order: 3;
   width: 100%;
   margin-top: clamp(7px, 5cqw, 10px);
   padding-bottom: clamp(17px, 12cqw, 21px);
@@ -14570,6 +14621,7 @@ window.addEventListener('message', function(e) {
   grid-template-columns: repeat(5, minmax(0,1fr));
   gap: 2px;
 }
+.rg-feedback-card .rg-feedback-card-reaction-label { order: 4; }
 .rg-feedback-card .rg-pulse-tap {
   width: 100%;
   height: clamp(24px, 18cqw, 30px);
@@ -14578,7 +14630,7 @@ window.addEventListener('message', function(e) {
   overflow: visible;
   border: 0;
   border-radius: 8px;
-  font-size: clamp(23px, 15.5cqw, 28px);
+  font-size: clamp(20px, 13.5cqw, 25px);
 }
 .rg-feedback-card .rg-pulse-tap > span:first-child {
   display: block;
@@ -14586,11 +14638,15 @@ window.addEventListener('message', function(e) {
   flex: 0 0 1em;
   line-height: 1;
   text-align: center;
+  transform: scale(1);
+  transition: transform 150ms ease;
 }
 .rg-feedback-card .rg-pulse-tap:hover {
   background: transparent;
-  transform: translateY(-2px) scale(1.08);
+  transform: none;
 }
+.rg-feedback-card .rg-pulse-tap:hover > span:first-child,
+.rg-feedback-card .rg-pulse-tap.is-selected > span:first-child { transform: scale(1.16); }
 .rg-feedback-card [data-rg-pulse="terrible"] { --rg-reaction-accent: #fb7185; --rg-reaction-rgb: 244,63,94; }
 .rg-feedback-card [data-rg-pulse="bad"]      { --rg-reaction-accent: #fb923c; --rg-reaction-rgb: 249,115,22; }
 .rg-feedback-card [data-rg-pulse="ok"]       { --rg-reaction-accent: #cbd5e1; --rg-reaction-rgb: 148,163,184; }
@@ -14604,7 +14660,7 @@ window.addEventListener('message', function(e) {
   transform: none;
 }
 .rg-feedback-card .rg-pulse-tap.is-selected > span:first-child {
-  transform: none;
+  transform: scale(1.16);
 }
 .rg-feedback-card .rg-pulse-tap:focus-visible {
   outline: 2px solid var(--rg-card-accent);
@@ -14616,8 +14672,9 @@ window.addEventListener('message', function(e) {
   box-shadow: none !important;
 }
 .rg-feedback-card .rg-pulse-count {
-  right: -5px;
-  top: -7px;
+  right: auto;
+  left: calc(50% + 5px);
+  top: -3px;
   min-width: 13px;
   height: 13px;
   padding: 0 2px;
@@ -14837,6 +14894,22 @@ window.addEventListener('message', function(e) {
    has to re-check an ancestor while the grid is rebuilt. */
 .cards-subgrid.rg-has-mood-card > .card.mk-mid-card { align-self: start; }
 
+/* On a six-column desktop grid the feedback module occupies the last two
+   columns and is taller than one employee card. Pull the following
+   RADIOGRAFĒRI section into that otherwise empty vertical space; JS assigns
+   only its first row to the free columns on the left, while overflow starts
+   on row two below the module. `top` changes only the visual position and the
+   matching negative bottom margin removes the old blank space from the flow. */
+.cards-section.rg-mood-pullup {
+  position: relative;
+  top: var(--rg-mood-pullup, 0px);
+  margin-bottom: var(--rg-mood-pullup, 0px) !important;
+  /* The visually moved section still owns a full-width transparent box. Let
+     clicks pass through that empty area to the feedback controls beneath it. */
+  pointer-events: none;
+}
+.cards-section.rg-mood-pullup .cards-subgrid > .card { pointer-events: auto; }
+
 /* The blob label already names the selected mood, so the per-emoji tooltip
    below the row would just repeat it — and its reserved space made the card
    taller than it needs to be. */
@@ -14884,14 +14957,14 @@ window.addEventListener('message', function(e) {
   width: clamp(78px, 52cqw, 132px);
   height: clamp(78px, 52cqw, 132px);
   overflow: visible;
-  animation: rg-blob-breathe 7.4s ease-in-out infinite;
+  animation: none;
 }
 /* Blinking is what makes the blob read as alive rather than as an icon.
    view-box keeps the origin stable even for the dot-shaped neutral eyes. */
 .rg-mood-eyes {
   transform-box: view-box;
   transform-origin: 50px 45px;
-  animation: rg-blink 7.2s ease-in-out infinite;
+  animation: none;
 }
 .rg-mood-blob-shape {
   transition: d 440ms cubic-bezier(.4, 0, .2, 1);
@@ -14918,6 +14991,35 @@ window.addEventListener('message', function(e) {
 .rg-mood-teeth     { fill: #fbfdff; }
 .rg-mood-blob-shape,
 .rg-mood-blob-sheen { transition: d 440ms cubic-bezier(.4, 0, .2, 1); }
+.rg-mood-blob-fatigue {
+  fill: var(--rg-fatigue-wash, transparent);
+  opacity: var(--rg-fatigue-alpha, 0);
+  transition: d 440ms cubic-bezier(.4, 0, .2, 1), fill 300ms ease, opacity 300ms ease;
+}
+.rg-mood-glass-shell {
+  fill: url(#rgMoodGlassShell);
+  stroke: url(#rgMoodGlassRim);
+  stroke-width: 1.35;
+}
+.rg-mood-glass-inner {
+  fill: none;
+  stroke: rgba(230, 244, 255, .18);
+  stroke-width: .65;
+}
+.rg-mood-glass-highlight {
+  fill: none;
+  stroke: rgba(255,255,255,.58);
+  stroke-width: 2.1;
+  stroke-linecap: round;
+  opacity: .62;
+}
+.rg-mood-glass-shadowline {
+  fill: none;
+  stroke: rgba(4, 12, 23, .55);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  opacity: .60;
+}
 .rg-mood-label {
   /* Must be a block: min-height is ignored on inline boxes, so while the label
      was empty it took no space and the emoji row jumped the moment a hover
@@ -14940,6 +15042,145 @@ window.addEventListener('message', function(e) {
   inset: 0;
   --rg-ring-r: calc(clamp(78px, 52cqw, 132px) / 2 + clamp(20px, 8cqw, 26px));
   pointer-events: none;
+}
+.rg-mood-person {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: var(--rg-person-z, 1);
+  width: var(--rg-person-size, 28px);
+  height: var(--rg-person-size, 28px);
+  transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px)));
+  opacity: var(--rg-person-opacity, 1);
+  pointer-events: none;
+}
+.rg-mood-person-glass {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1px solid rgba(214, 235, 255, .20);
+  border-radius: 38% 46% 42% 50%;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,.06) 32%, rgba(8,17,29,.82) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.22),
+    inset 0 -1px 0 rgba(0,0,0,.26),
+    0 4px 10px rgba(0,0,0,.26);
+  color: #eef7ff;
+  font: 850 calc(var(--rg-person-size, 28px) * .34)/1 Inter, system-ui, sans-serif;
+  letter-spacing: -.04em;
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0,0,0,.70);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.rg-mood-person-glass::before {
+  content: '';
+  position: absolute;
+  inset: 2px 3px auto;
+  height: 34%;
+  border-radius: 999px 999px 45% 45%;
+  background: linear-gradient(180deg, rgba(255,255,255,.18), transparent);
+  pointer-events: none;
+}
+.rg-mood-person.is-rd .rg-mood-person-glass {
+  border-color: rgba(255, 120, 128, .24);
+  background: linear-gradient(145deg, rgba(255,148,154,.16), rgba(255,255,255,.04) 35%, rgba(29,10,18,.84));
+}
+.rg-mood-person-emoji {
+  position: relative;
+  z-index: 1;
+  display: block;
+  font-size: calc(var(--rg-person-size, 28px) * .62);
+  line-height: 1;
+  transform: translateY(-1px);
+}
+.rg-mood-person.is-initials .rg-mood-person-glass {
+  border-radius: 50%;
+  border-color: rgba(var(--rg-person-fatigue-rgb, 255, 201, 79), .38);
+  background:
+    radial-gradient(circle at 32% 22%, rgba(255,255,255,.26), transparent 35%),
+    linear-gradient(145deg, rgba(var(--rg-person-fatigue-rgb, 255, 201, 79), .22), rgba(111,148,184,.07) 42%, rgba(6,18,34,.68));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.30),
+    inset -1px -2px 0 rgba(3,10,20,.24),
+    0 4px 10px rgba(0,0,0,.22);
+}
+.rg-mood-person.is-initials .rg-mood-person-emoji {
+  font-size: calc(var(--rg-person-size, 28px) * .54);
+  color: var(--rg-person-fatigue, #ffc94f);
+  letter-spacing: -.06em;
+  text-shadow:
+    0 1px 0 rgba(91, 52, 0, .92),
+    0 0 5px rgba(var(--rg-person-fatigue-rgb, 255, 201, 79), .30);
+}
+.rg-mood-person-coffee {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 16px;
+  padding: 0 3px;
+  box-sizing: border-box;
+  border: 1px solid rgba(229, 174, 91, .34);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(74, 49, 24, .96), rgba(27, 19, 12, .98));
+  box-shadow: inset 0 1px 0 rgba(255, 226, 178, .12), 0 2px 5px rgba(0,0,0,.28);
+  color: #f2c06f;
+  gap: 2px;
+  font: 800 8px/1 Inter, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.02em;
+  white-space: nowrap;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.rg-mood-person-coffee-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+.rg-mood-person-coffee-source svg {
+  display: block;
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+}
+.rg-mood-person-coffee-source b {
+  color: #f4c875;
+  font: inherit;
+}
+.rg-mood-coffee-orbit {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: var(--rg-coffee-z, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px)));
+  opacity: var(--rg-coffee-opacity, .92);
+  color: #f2c36f;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.rg-mood-coffee-orbit svg {
+  display: block;
+  width: var(--rg-coffee-size, 24px);
+  height: var(--rg-coffee-size, 24px);
+}
+.rg-mood-coffee-orbit b {
+  font: 800 calc(var(--rg-coffee-size, 24px) * .48)/1 Inter, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgba(0,0,0,.70);
 }
 .rg-mood-src {
   position: absolute;
@@ -15126,10 +15367,10 @@ window.addEventListener('message', function(e) {
 }
 .rg-feedback-card .rg-pulse-write:active { transform: translateY(1px); }
 
-/* Nothing picked yet: the halo swells slowly so the card catches the eye and
-   the emoji row reads as the thing to touch. Opacity only — compositor work. */
-.rg-mood-stage.is-idle .rg-mood-glow { animation: rg-idle-glow 4.2s ease-in-out infinite; }
-.rg-mood-stage.is-idle .rg-mood-blob { animation-duration: 5.4s; }
+/* The stage is deliberately static between interactions. This keeps the soft
+   glass look without maintaining compositor layers on older Windows GPUs. */
+.rg-mood-stage.is-idle .rg-mood-glow,
+.rg-mood-stage.is-idle .rg-mood-blob { animation: none; }
 /* Previewing the mood under the finger/cursor before it is committed. */
 .rg-mood-stage.is-preview .rg-mood-blob { animation-play-state: paused; }
 
@@ -15422,9 +15663,26 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       + '<radialGradient id="rgMoodBlobSheen" cx="34%" cy="24%" r="54%">'
       + '<stop offset="0%" stop-color="#ffffff" stop-opacity=".40"></stop>'
       + '<stop offset="62%" stop-color="#ffffff" stop-opacity="0"></stop>'
-      + '</radialGradient></defs>'
+      + '</radialGradient>'
+      + '<radialGradient id="rgMoodGlassShell" cx="34%" cy="24%" r="72%">'
+      + '<stop offset="0%" stop-color="#ffffff" stop-opacity=".20"></stop>'
+      + '<stop offset="42%" stop-color="#bfe8ff" stop-opacity=".06"></stop>'
+      + '<stop offset="78%" stop-color="#07111f" stop-opacity=".16"></stop>'
+      + '<stop offset="100%" stop-color="#020712" stop-opacity=".48"></stop>'
+      + '</radialGradient>'
+      + '<linearGradient id="rgMoodGlassRim" x1="16%" y1="10%" x2="82%" y2="92%">'
+      + '<stop offset="0%" stop-color="#ffffff" stop-opacity=".80"></stop>'
+      + '<stop offset="38%" stop-color="#bfe8ff" stop-opacity=".28"></stop>'
+      + '<stop offset="72%" stop-color="#17263a" stop-opacity=".70"></stop>'
+      + '<stop offset="100%" stop-color="#f5fbff" stop-opacity=".46"></stop>'
+      + '</linearGradient></defs>'
+      + '<circle class="rg-mood-glass-shell" cx="50" cy="50" r="44"></circle>'
+      + '<circle class="rg-mood-glass-inner" cx="50" cy="50" r="41.5"></circle>'
       + '<path class="rg-mood-blob-shape" fill="url(#rgMoodBlobGrad)" d="' + base.path + '"></path>'
       + '<path class="rg-mood-blob-sheen" fill="url(#rgMoodBlobSheen)" d="' + base.path + '"></path>'
+      + '<path class="rg-mood-blob-shape rg-mood-blob-fatigue" d="' + base.path + '"></path>'
+      + '<path class="rg-mood-glass-highlight" d="M18 38 C22 22 35 12 51 11"></path>'
+      + '<path class="rg-mood-glass-shadowline" d="M27 84 C45 92 67 87 79 72"></path>'
       + '<g class="rg-mood-face">' + facePath('browL') + facePath('browR')
       + '<g class="rg-mood-eyes">'
       + facePath('eyeWhiteL') + facePath('eyeWhiteR')
@@ -15482,8 +15740,9 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     return String(name || '').trim().split(/\s+/).slice(0, 2)
       .map(function (part) { return part.charAt(0).toLocaleUpperCase('lv-LV'); }).join('');
   }
-  // Read-only snapshot of what the buddy header used to show: the day's coffee
-  // total, the all-time coffee top and the shift's average fatigue.
+  // Read-only snapshot of what the feedback card needs: today's staff, each
+  // person's coffee count, the day's total, the all-time coffee top and the
+  // shift's average fatigue.
   //
   // Cached on purpose. getCoffeeCount() re-parses the whole coffee store out of
   // localStorage once per name, and paintCounts() can run many times while the
@@ -15494,30 +15753,77 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     var now = Date.now();
     if (!force && moodStatsCache.day === day && now - moodStatsCache.at < 900) return moodStatsCache.data;
     var names = [];
-    list.querySelectorAll('.card[data-worker]').forEach(function (card) {
+    var seen = {};
+    var scores = [];
+    var data = { total: null, top: [], fatigue: null, staff: [], sources: [] };
+    list.querySelectorAll('.card.mk-mid-card[data-worker]').forEach(function (card) {
       var name = String(card.getAttribute('data-worker') || '').trim();
-      if (name) names.push(name);
+      var key = name.toLocaleLowerCase('lv-LV');
+      if (!name || seen[key]) return;
+      seen[key] = true;
+      names.push(name);
+      var emojiNode = card.querySelector('.mk-mid-person-emoji');
+      var emoji = String(emojiNode && emojiNode.textContent || '').trim();
+      data.staff.push({
+        name: name,
+        key: key,
+        emoji: emoji,
+        initials: moodInitials(name),
+        role: card.classList.contains('mk-mid-card-rd') ? 'rd' : 'rg',
+        fatigue: null,
+        coffee: 0,
+        coffeeSources: []
+      });
+      var fatigueNode = card.querySelector('.mk-mid-fat-pct');
+      var value = parseInt(String(fatigueNode && fatigueNode.textContent || '').replace('%', ''), 10);
+      if (Number.isFinite(value)) {
+        data.staff[data.staff.length - 1].fatigue = value;
+        scores.push(value);
+      }
     });
-    var data = { total: null, top: [], fatigue: null, sources: {} };
-    if (names.length && typeof window.__minkaGetCoffeeTotalForNames === 'function') {
-      try { data.total = Math.max(0, Number(window.__minkaGetCoffeeTotalForNames(names)) || 0); }
-      catch (_error) {}
+    if (names.length && typeof window.__minkaGetCoffeeDetailsForNames === 'function') {
+      try {
+        var details = window.__minkaGetCoffeeDetailsForNames(names) || {};
+        data.total = 0;
+        data.staff.forEach(function (person) {
+          var detail = details[person.key] || {};
+          person.coffee = Math.max(0, Number(detail.count) || 0);
+          person.coffeeSources = Array.isArray(detail.sources) ? detail.sources : [];
+          data.total += person.coffee;
+        });
+      } catch (_error) {}
+    } else if (names.length && typeof window.__minkaGetCoffeeCountsForNames === 'function') {
+      try {
+        var counts = window.__minkaGetCoffeeCountsForNames(names) || {};
+        data.total = 0;
+        data.staff.forEach(function (person) {
+          person.coffee = Math.max(0, Number(counts[person.key]) || 0);
+          data.total += person.coffee;
+        });
+      } catch (_error) {}
+    } else if (names.length && typeof window.__minkaGetCoffeeCountForName === 'function') {
+      data.total = 0;
+      data.staff.forEach(function (person) {
+        try { person.coffee = Math.max(0, Number(window.__minkaGetCoffeeCountForName(person.name)) || 0); }
+        catch (_error) { person.coffee = 0; }
+        data.total += person.coffee;
+      });
     }
-    if (names.length && typeof window.__minkaGetCoffeeSourcesForNames === 'function') {
-      try { data.sources = window.__minkaGetCoffeeSourcesForNames(names) || {}; } catch (_error) {}
-    }
+    var sourceTotals = {};
+    data.staff.forEach(function (person) {
+      (person.coffeeSources || []).forEach(function (source) {
+        sourceTotals[source.key] = (sourceTotals[source.key] || 0) + Math.max(0, Number(source.count) || 0);
+      });
+    });
+    data.sources = Object.keys(sourceTotals).map(function (key) {
+      return { key: key, count: sourceTotals[key] };
+    }).filter(function (source) { return source.count > 0; })
+      .sort(function (a, b) { return b.count - a.count; });
     if (typeof window.__minkaGetCoffeeLeaderboard === 'function') {
       try { data.top = window.__minkaGetCoffeeLeaderboard(3) || []; } catch (_error) {}
     }
     // The fatigue percentage is already rendered on every employee card, so it
     // is read straight off the DOM rather than recomputed.
-    var label = list.querySelector('.cards-section-label-rg');
-    var section = label && label.closest('.cards-section');
-    var scores = [];
-    (section || list).querySelectorAll('.mk-mid-fat-pct').forEach(function (el) {
-      var value = parseInt(String(el.textContent || '').replace('%', ''), 10);
-      if (Number.isFinite(value)) scores.push(value);
-    });
     if (scores.length) {
       data.fatigue = Math.round(scores.reduce(function (a, b) { return a + b; }, 0) / scores.length);
     }
@@ -15531,6 +15837,282 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     if (score > 45) return '#e59b42';
     if (score > 20) return '#d8c64a';
     return '#35d07f';
+  }
+  function moodFatigueRgb(score) {
+    if (score > 70) return '255,107,95';
+    if (score > 45) return '229,155,66';
+    if (score > 20) return '216,198,74';
+    return '53,208,127';
+  }
+  // Static staff constellation. It is laid out once per render with one blob
+  // measurement: no collision solver, no requestAnimationFrame retry loop and
+  // no perpetual floating animation. The depth sequence controls both size and
+  // distance — near people are larger/clearer, far people smaller/quieter.
+  var MOOD_PERSON_DEPTHS = [0.04, 0.68, 0.24, 0.88, 0.43, 0.12, 0.76, 0.34, 0.58, 0.19, 0.82, 0.49];
+  function moodScatterSeed(text) {
+    var hash = 2166136261;
+    String(text || '').split('').forEach(function (char) {
+      hash ^= char.charCodeAt(0);
+      hash = Math.imul(hash, 16777619);
+    });
+    return hash >>> 0;
+  }
+  function placeMoodStaff(ring) {
+    var wrap = ring && ring.parentElement;
+    var blob = wrap && wrap.querySelector('.rg-mood-blob');
+    var people = ring ? [].slice.call(ring.querySelectorAll('.rg-mood-person')) : [];
+    if (!blob || !people.length) return;
+    var blobRect = blob.getBoundingClientRect();
+    var blobSize = blobRect.width || 100;
+    var card = ring.closest('.rg-feedback-card');
+    var cardRect = card.getBoundingClientRect();
+    var cx = blobRect.left + blobRect.width / 2;
+    var cy = blobRect.top + blobRect.height / 2;
+    var bounds = {
+      l: cardRect.left - cx + 7, r: cardRect.right - cx - 7,
+      t: cardRect.top - cy + 7, b: cardRect.bottom - cy - 7
+    };
+    var count = people.length;
+    var baseSize = Math.max(23, Math.min(37, blobSize * (count > 9 ? .21 : count > 6 ? .245 : .285)));
+    // Leave the horizontal centre clear for Nogurums and Kafija. People are
+    // distributed over two open arcs instead of colliding with those pills.
+    var topCount = Math.ceil(count / 2);
+    var bottomCount = count - topCount;
+    // Alternate between the outer left/right slots first. Keeping the two
+    // inner-bottom slots for last leaves a real gap under the face for the
+    // selected mood label and its counters.
+    var bottomAngles = [42, 138, 68, 112, 24, 156, 90];
+    var staffOccupied = [];
+    function nodeBox(node, pad) {
+      if (!node) return null;
+      var rect = node.getBoundingClientRect();
+      if (!rect.width || !rect.height) return null;
+      return {
+        l: rect.left - cx - pad, r: rect.right - cx + pad,
+        t: rect.top - cy - pad, b: rect.bottom - cy + pad
+      };
+    }
+    function hitsAny(box, boxes) {
+      if (box.l < bounds.l || box.r > bounds.r || box.t < bounds.t || box.b > bounds.b) return true;
+      return boxes.some(function (other) {
+        return box.l < other.r && other.l < box.r && box.t < other.b && other.t < box.b;
+      });
+    }
+    card.querySelectorAll('.rg-feedback-card-title, .rg-mood-side, .rg-mood-topbtn, .rg-mood-label, .rg-pulse-taps, .rg-feedback-card-actions')
+      .forEach(function (node) {
+        var box = nodeBox(node, 5);
+        if (box) staffOccupied.push(box);
+      });
+    var faceBox = nodeBox(blob, 5);
+    if (faceBox) staffOccupied.push(faceBox);
+    people.forEach(function (person, index) {
+      var depth = MOOD_PERSON_DEPTHS[index % MOOD_PERSON_DEPTHS.length];
+      var onTop = index < topCount;
+      var arcIndex = onTop ? index : index - topCount;
+      var arcCount = onTop ? topCount : bottomCount;
+      var degrees;
+      if (onTop) {
+        degrees = arcCount < 2 ? -90 : -150 + 120 * arcIndex / (arcCount - 1);
+      } else {
+        // Leave the bottom centre empty for the selected mood label/counters.
+        degrees = bottomAngles[arcIndex % bottomAngles.length];
+      }
+      var size = baseSize * (1.18 - depth * .34);
+      var baseRadius = blobSize * .48 + size * .56 + 8 + depth * 11;
+      var coffeeExtra = person.querySelector('.rg-mood-person-coffee') ? 7 : 2;
+      var chosen = null;
+      var angleOffsets = [0, -8, 8, -16, 16, -24, 24];
+      var radiusOffsets = [0, 9, 18, -5, 27, 36, 45];
+      for (var ri = 0; ri < radiusOffsets.length && !chosen; ri++) {
+        for (var ai = 0; ai < angleOffsets.length; ai++) {
+          var candidateAngle = (degrees + angleOffsets[ai]) * Math.PI / 180;
+          var candidateRadius = baseRadius + radiusOffsets[ri];
+          var x = Math.cos(candidateAngle) * candidateRadius;
+          var y = Math.sin(candidateAngle) * candidateRadius;
+          var halfW = size / 2 + coffeeExtra;
+          var halfH = size / 2 + coffeeExtra;
+          var candidateBox = { l: x - halfW, r: x + halfW, t: y - halfH, b: y + halfH };
+          if (!hitsAny(candidateBox, staffOccupied)) {
+            chosen = { x: x, y: y, box: candidateBox };
+            break;
+          }
+        }
+      }
+      if (!chosen) {
+        // Nine-person days can fill every regular orbit slot. Use a seeded
+        // free-space search inside the same card instead of falling back onto
+        // another employee or the heading.
+        var personSeed = moodScatterSeed(person.title || index);
+        for (var personAttempt = 0; personAttempt < 720; personAttempt++) {
+          personSeed = (Math.imul(personSeed, 1664525) + 1013904223) >>> 0;
+          var personRx = personSeed / 4294967296;
+          personSeed = (Math.imul(personSeed, 1664525) + 1013904223) >>> 0;
+          var personRy = personSeed / 4294967296;
+          var personHalf = size / 2 + coffeeExtra;
+          var personX = bounds.l + personHalf + personRx * Math.max(1, bounds.r - bounds.l - personHalf * 2);
+          var personY = bounds.t + personHalf + personRy * Math.max(1, bounds.b - bounds.t - personHalf * 2);
+          var freeBox = {
+            l: personX - personHalf, r: personX + personHalf,
+            t: personY - personHalf, b: personY + personHalf
+          };
+          if (!hitsAny(freeBox, staffOccupied)) {
+            chosen = { x: personX, y: personY, box: freeBox };
+            break;
+          }
+        }
+      }
+      if (!chosen) {
+        var angle = degrees * Math.PI / 180;
+        chosen = {
+          x: Math.cos(angle) * baseRadius,
+          y: Math.sin(angle) * baseRadius,
+          box: null
+        };
+      }
+      person.style.setProperty('--rg-person-size', size.toFixed(1) + 'px');
+      person.style.setProperty('--rg-x', chosen.x.toFixed(1) + 'px');
+      person.style.setProperty('--rg-y', chosen.y.toFixed(1) + 'px');
+      person.style.setProperty('--rg-person-opacity', (1 - depth * .22).toFixed(2));
+      person.style.setProperty('--rg-person-z', String(Math.round((1 - depth) * 8) + 1));
+      if (chosen.box) staffOccupied.push(chosen.box);
+    });
+    var coffeeSources = [].slice.call(ring.querySelectorAll('.rg-mood-coffee-orbit'));
+    if (!coffeeSources.length) return;
+    var occupied = [];
+    function addOccupied(node, pad) {
+      if (!node) return;
+      var rect = node.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      var box = {
+        l: rect.left - cx - pad, r: rect.right - cx + pad,
+        t: rect.top - cy - pad, b: rect.bottom - cy + pad
+      };
+      occupied.push(box);
+    }
+    people.forEach(function (person) { addOccupied(person, 6); });
+    card.querySelectorAll('.rg-feedback-card-title, .rg-mood-side, .rg-mood-topbtn, .rg-mood-label, .rg-pulse-taps, .rg-feedback-card-actions')
+      .forEach(function (node) { addOccupied(node, 4); });
+    addOccupied(blob, 4);
+    function collidesWith(box, boxes) {
+      if (box.l < bounds.l || box.r > bounds.r || box.t < bounds.t || box.b > bounds.b) return true;
+      return boxes.some(function (other) {
+        return box.l < other.r && other.l < box.r && box.t < other.b && other.t < box.b;
+      });
+    }
+    var placements = [];
+    coffeeSources.forEach(function (source, index) {
+      var depth = MOOD_PERSON_DEPTHS[(index + 4) % MOOD_PERSON_DEPTHS.length];
+      var seed = moodScatterSeed(source.dataset.rgCoffeeKey || index);
+      var chosen = null;
+      // Search the whole free card, not only a thin ring. A busy shift can
+      // have nine people plus seven coffee sources; restricting everything to
+      // one circumference inevitably forced badges on top of each other.
+      // The seeded coordinates remain stable between renders and still look
+      // naturally scattered. Nearer sources are a little larger.
+      for (var attempt = 0; attempt < 640; attempt++) {
+        seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+        var rx = seed / 4294967296;
+        seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+        var ry = seed / 4294967296;
+        var x = bounds.l + 22 + rx * Math.max(1, bounds.r - bounds.l - 44);
+        var y = bounds.t + 18 + ry * Math.max(1, bounds.b - bounds.t - 36);
+        var distance = Math.sqrt(x * x + y * y);
+        var near = Math.max(0, Math.min(1, 1 - (distance - blobSize * .56) / (blobSize * .92)));
+        var size = Math.max(21, Math.min(29, 21 + near * 8));
+        // The count sits just beside the SVG; this envelope matches the real
+        // rendered badge closely without wasting most of the available gaps.
+        var halfW = size / 2 + 10;
+        var halfH = size / 2 + 4;
+        var box = { l: x - halfW, r: x + halfW, t: y - halfH, b: y + halfH };
+        if (!collidesWith(box, occupied)) {
+          chosen = { x: x, y: y, box: box, size: size };
+          break;
+        }
+      }
+      if (!chosen) {
+        // Preserve every source on the very fullest days: retry only that
+        // badge a little smaller before considering it impossible to place.
+        for (var compactAttempt = 0; compactAttempt < 720; compactAttempt++) {
+          seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+          var compactRx = seed / 4294967296;
+          seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+          var compactRy = seed / 4294967296;
+          var compactSize = 19;
+          var compactHalfW = compactSize / 2 + 9;
+          var compactHalfH = compactSize / 2 + 4;
+          var compactX = bounds.l + 20 + compactRx * Math.max(1, bounds.r - bounds.l - 40);
+          var compactY = bounds.t + 16 + compactRy * Math.max(1, bounds.b - bounds.t - 32);
+          var compactBox = {
+            l: compactX - compactHalfW, r: compactX + compactHalfW,
+            t: compactY - compactHalfH, b: compactY + compactHalfH
+          };
+          if (!collidesWith(compactBox, occupied)) {
+            chosen = { x: compactX, y: compactY, box: compactBox, size: compactSize };
+            break;
+          }
+        }
+      }
+      if (!chosen) {
+        source.hidden = true;
+        return;
+      }
+      source.hidden = false;
+      occupied.push(chosen.box);
+      placements.push({ source: source, size: chosen.size, depth: depth, x: chosen.x, y: chosen.y });
+    });
+    placements.forEach(function (placement) {
+      var source = placement.source;
+      source.style.setProperty('--rg-coffee-size', placement.size.toFixed(1) + 'px');
+      source.style.setProperty('--rg-x', placement.x.toFixed(1) + 'px');
+      source.style.setProperty('--rg-y', placement.y.toFixed(1) + 'px');
+      source.style.setProperty('--rg-coffee-opacity', (.98 - placement.depth * .18).toFixed(2));
+      source.style.setProperty('--rg-coffee-z', String(Math.round((1 - placement.depth) * 5) + 1));
+    });
+  }
+  function buildMoodStaff(ring, staff, coffeeSources) {
+    var fragment = document.createDocumentFragment();
+    (staff || []).slice(0, 14).forEach(function (person) {
+      var item = document.createElement('span');
+      item.className = 'rg-mood-person' + (person.role === 'rd' ? ' is-rd' : '') + (!person.emoji ? ' is-initials' : '');
+      item.title = person.name + (person.coffee ? ' · kafija ×' + person.coffee : '');
+      if (Number.isFinite(person.fatigue)) {
+        item.style.setProperty('--rg-person-fatigue', moodFatigueColor(person.fatigue));
+        item.style.setProperty('--rg-person-fatigue-rgb', moodFatigueRgb(person.fatigue));
+      }
+      var glass = document.createElement('span');
+      glass.className = 'rg-mood-person-glass';
+      var identity = document.createElement('span');
+      identity.className = 'rg-mood-person-emoji';
+      identity.textContent = person.emoji || person.initials || '?';
+      glass.appendChild(identity);
+      item.appendChild(glass);
+      if (person.coffee > 0) {
+        var coffee = document.createElement('small');
+        coffee.className = 'rg-mood-person-coffee';
+        var cup = document.createElement('span');
+        cup.className = 'rg-mood-person-coffee-source';
+        cup.innerHTML = moodCupSvg();
+        var cupCount = document.createElement('b');
+        cupCount.textContent = String(person.coffee);
+        cup.appendChild(cupCount);
+        coffee.appendChild(cup);
+        item.appendChild(coffee);
+      }
+      fragment.appendChild(item);
+    });
+    (coffeeSources || []).slice(0, 7).forEach(function (source) {
+      var item = document.createElement('span');
+      item.className = 'rg-mood-coffee-orbit';
+      item.dataset.rgCoffeeKey = source.key;
+      item.title = (MOOD_SOURCE_NAMES[source.key] || source.key) + ': ' + source.count;
+      item.innerHTML = moodSourceIcon(source.key);
+      var count = document.createElement('b');
+      count.textContent = String(source.count);
+      item.appendChild(count);
+      fragment.appendChild(item);
+    });
+    ring.replaceChildren(fragment);
+    placeMoodStaff(ring);
   }
   // Every source gets its own place all the way around the blob — nothing is
   // ever collapsed into a "+N". Depth is what makes it read as an orbit rather
@@ -15555,48 +16137,38 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     window.clearTimeout(moodRingResize);
     moodRingResize = window.setTimeout(function () {
       var refs = moodRefs();
-      if (refs && refs.ring && refs.ring.firstChild) placeMoodSources(refs.ring);
+      if (refs && refs.ring && refs.ring.firstChild) placeMoodStaff(refs.ring);
     }, 180);
   }, { passive: true });
   function paintMoodCoffee(force) {
     var refs = moodRefs();
     if (!refs) return;
     var stats = moodStats(force);
+    var button = refs.topbtn;
+    if (button) button.hidden = !(stats.top.length || stats.total !== null);
+    // Mount the fixed side furniture before measuring the scatter field. If it
+    // is revealed afterwards, a perfectly valid coffee position can suddenly
+    // sit under the counter or statistics button.
+    var preCoffee = refs.chips.coffee;
+    if (preCoffee) {
+      preCoffee.classList.toggle('is-mounted', stats.total !== null);
+      var preRight = preCoffee.closest('.rg-mood-side');
+      if (preRight) preRight.classList.toggle('is-mounted', stats.total !== null);
+    }
+    var preFatigue = refs.chips.fatigue;
+    if (preFatigue) {
+      preFatigue.classList.toggle('is-mounted', stats.fatigue !== null);
+      preFatigue.classList.add('rg-mood-side');
+    }
     var ring = refs.ring;
     if (ring) {
-      var used = MOOD_SOURCES
-        .map(function (key) { return { key: key, n: Math.max(0, Number(stats.sources[key]) || 0) }; })
-        .filter(function (item) { return item.n > 0; })
-        .sort(function (a, b) { return b.n - a.n; })
-        .slice(0, 7);
-      var signature = used.map(function (item) { return item.key + ':' + item.n; }).join('|');
-      if (ring.dataset.rgSrc !== signature) {
-        // Badges shrink as the ring fills up, so seven still fit without the
-        // card growing or anything landing on the blob.
-        ring.dataset.rgDense = used.length >= 6 ? 'hi' : (used.length >= 4 ? 'mid' : 'lo');
-        ring.innerHTML = used.map(function (item, index) {
-          return '<span class="rg-mood-src rg-mood-f' + (index % 4) + '"'
-            + ' title="' + MOOD_SOURCE_NAMES[item.key] + ': ' + item.n + '">'
-            + (moodSourceIcon(item.key) || '') + '<b>' + item.n + '</b></span>';
-        }).join('');
-        // Only remember the signature once the badges really landed. While the
-        // card is still settling the measurements are not usable yet, so try
-        // again on the next frame — but a bounded number of times, otherwise a
-        // card that never settles would repaint every single frame forever.
-        // The badges are on a plain ring either way; the retry only refines it.
-        if (placeMoodSources(ring)) {
-          ring.dataset.rgSrc = signature;
-          moodRingTries = 0;
-        } else if (moodRingTries < 12 && !moodRingRetry) {
-          moodRingTries++;
-          ring.dataset.rgSrc = '';
-          moodRingRetry = window.requestAnimationFrame(function () {
-            moodRingRetry = 0;
-            paintMoodCoffee(false);
-          });
-        } else {
-          ring.dataset.rgSrc = signature;
-        }
+      var signature = stats.staff.map(function (person) {
+        var sources = (person.coffeeSources || []).map(function (source) { return source.key + source.count; }).join(',');
+        return [person.key, person.emoji, person.role, person.fatigue, person.coffee, sources].join(':');
+      }).join('|') + '::' + stats.sources.map(function (source) { return source.key + source.count; }).join(',');
+      if (ring.dataset.rgStaff !== signature) {
+        buildMoodStaff(ring, stats.staff, stats.sources);
+        ring.dataset.rgStaff = signature;
       }
     }
     var coffee = refs.chips.coffee;
@@ -15618,10 +16190,13 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
         if (fnum) fnum.textContent = stats.fatigue + '%';
         fatigue.style.setProperty('--rg-fat', moodFatigueColor(stats.fatigue));
         fatigue.style.setProperty('--rg-fat-ink', moodFatigueInk(stats.fatigue));
+        refs.stage.style.setProperty('--rg-fatigue-wash', moodFatigueColor(stats.fatigue));
+        refs.stage.style.setProperty('--rg-fatigue-alpha', (.12 + Math.min(100, stats.fatigue) * .0022).toFixed(3));
+      } else {
+        refs.stage.style.removeProperty('--rg-fatigue-wash');
+        refs.stage.style.removeProperty('--rg-fatigue-alpha');
       }
     }
-    var button = refs.topbtn;
-    if (button) button.hidden = !(stats.top.length || stats.total !== null);
   }
   // Everything the badges have to stay off, in blob-centre coordinates. The
   // boxes are read rather than hard-coded, so the ring re-solves itself if the
@@ -15991,13 +16566,77 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       refs.stage.classList.remove('is-preview');
     }
   }
+  var moodSectionLayoutTimer = 0;
+  var moodSectionResizeTimer = 0;
+  function clearMoodSectionLayout(section, grid) {
+    if (section) {
+      section.classList.remove('rg-mood-pullup');
+      section.style.removeProperty('--rg-mood-pullup');
+    }
+    if (grid) {
+      [].slice.call(grid.children).forEach(function (card) {
+        card.style.removeProperty('grid-row');
+        card.style.removeProperty('grid-column');
+      });
+    }
+  }
+  function layoutMoodSections() {
+    var mood = list.querySelector('.rg-feedback-card');
+    var rdLabel = list.querySelector('.cards-section-label-rd');
+    var rgLabel = list.querySelector('.cards-section-label-rg');
+    var rdSection = rdLabel && rdLabel.closest('.cards-section');
+    var rgSection = rgLabel && rgLabel.closest('.cards-section');
+    var rdGrid = rdSection && rdSection.querySelector('.cards-subgrid');
+    var rgGrid = rgSection && rgSection.querySelector('.cards-subgrid');
+    if (!mood || !rdGrid || !rgGrid || !rgSection) {
+      clearMoodSectionLayout(rgSection, rgGrid);
+      return;
+    }
+    var columns = String(getComputedStyle(rdGrid).gridTemplateColumns || '')
+      .trim().split(/\s+/).filter(Boolean).length;
+    var mobile = document.documentElement.classList.contains('mk-mobile-shell');
+    var employee = rdGrid.querySelector('.card:not(.rg-feedback-card)')
+      || rgGrid.querySelector('.card');
+    if (mobile || columns < 6 || !employee) {
+      clearMoodSectionLayout(rgSection, rgGrid);
+      return;
+    }
+    var pullup = Math.max(0, mood.getBoundingClientRect().height - employee.getBoundingClientRect().height);
+    if (pullup < 12) {
+      clearMoodSectionLayout(rgSection, rgGrid);
+      return;
+    }
+    var firstRowSlots = Math.max(1, columns - 2);
+    var cards = [].slice.call(rgGrid.children).filter(function (card) {
+      return card.classList.contains('card');
+    });
+    cards.forEach(function (card, index) {
+      var row = index < firstRowSlots ? 1 : 2 + Math.floor((index - firstRowSlots) / columns);
+      var column = index < firstRowSlots ? index + 1 : ((index - firstRowSlots) % columns) + 1;
+      card.style.setProperty('grid-row', String(row));
+      card.style.setProperty('grid-column', String(column));
+    });
+    rgSection.style.setProperty('--rg-mood-pullup', (-pullup).toFixed(2) + 'px');
+    rgSection.classList.add('rg-mood-pullup');
+  }
+  function scheduleMoodSectionLayout() {
+    window.clearTimeout(moodSectionLayoutTimer);
+    moodSectionLayoutTimer = window.setTimeout(layoutMoodSections, 0);
+  }
+  window.addEventListener('resize', function () {
+    window.clearTimeout(moodSectionResizeTimer);
+    moodSectionResizeTimer = window.setTimeout(layoutMoodSections, 180);
+  }, { passive: true });
   function mount() {
     var label = list.querySelector('.cards-section-label-rd');
     var section = label && label.closest('.cards-section');
     var grid = section && section.querySelector('.cards-subgrid');
     if (!grid) return;
     grid.classList.add('rg-has-mood-card');
-    if (grid.querySelector('.rg-feedback-card')) return;
+    if (grid.querySelector('.rg-feedback-card')) {
+      scheduleMoodSectionLayout();
+      return;
+    }
     var pulse = document.createElement('div');
     pulse.className = 'card mk-mid-card mk-mid-card-rd rg-feedback-card';
     pulse.setAttribute('aria-label', 'Novērtē maiņu');
@@ -16009,6 +16648,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       + '<div class="rg-feedback-card-actions"><button class="rg-pulse-write rg-pulse-write--comment" type="button" data-rg-write="comment" title="Atstāt komentāru"><b class="rg-comment-icon" aria-hidden="true"></b><span>Komentārs</span><small class="rg-feedback-action-count" data-rg-action-count="comment"></small></button>'
       + '<button class="rg-pulse-write rg-pulse-write--suggestion" type="button" data-rg-write="suggestion" aria-label="Ieteikums RG lietotnei" title="Ieteikums RG lietotnei"><img src="../data/rg-cal-192.png" alt=""><span>Ideja</span><small class="rg-feedback-action-count" data-rg-action-count="suggestion"></small></button></div>';
     grid.appendChild(pulse);
+    scheduleMoodSectionLayout();
     paintCounts();
     loadRatings(shiftDayKey());
   }

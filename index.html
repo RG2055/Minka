@@ -166,7 +166,7 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260809orbit4';
+  var CALENDAR_BUILD = '20260810moodstaff1';
 
   function withCalendarBuild(url) {
     try {
@@ -714,7 +714,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260809orbit4" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260809orbit4" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260810moodstaff1" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260810moodstaff1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
@@ -4651,55 +4651,14 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
 var _nsOpen = false;
 
 function setBuddyUiFlag(name, open) {
-  if (!document.body) return;
-  document.body.classList.toggle('mk-buddy-ui-' + name, !!open);
-  updateBuddyUiSuppression();
-}
-
-function isBuddyOverlayVisible(id) {
-  var el = document.getElementById(id);
-  if (!el) return false;
-  var cs = getComputedStyle(el);
-  return cs.display !== 'none' && cs.visibility !== 'hidden' && cs.opacity !== '0';
+  /* Buddy no longer exists. Keep this compatibility hook because older UI
+     handlers still call it, but do not mutate body classes or force styles. */
 }
 
 function updateBuddyUiSuppression() {
-  if (!document.body) return;
-  var cls = document.body.classList;
-  var active =
-    cls.contains('mk-buddy-ui-ns') ||
-    cls.contains('mk-buddy-ui-stats') ||
-    cls.contains('mk-buddy-ui-settings') ||
-    cls.contains('mk-buddy-ui-monthcal') ||
-    cls.contains('mk-buddy-ui-numbers') ||
-    cls.contains('mk-buddy-ui-coffee') ||
-    cls.contains('mk-buddy-ui-workermodal') ||
-    cls.contains('mk-buddy-ui-feedback') ||
-    cls.contains('mk-buddy-ui-search') ||
-    isBuddyOverlayVisible('bolus-overlay') ||
-	    isBuddyOverlayVisible('bolus-edit-modal') ||
-	    isBuddyOverlayVisible('mobileQrModal') ||
-	    isBuddyOverlayVisible('pusdienasSheet') ||
-	    isBuddyOverlayVisible('planotajsSheet') ||
-	    isBuddyOverlayVisible('lacitisSheet') ||
-    isBuddyOverlayVisible('lacitisFull') ||
-    (function(){ var m=document.getElementById('lacMiniConsole'); var s=document.getElementById('lacMiniStage'); return !!((m && m.classList.contains('docked')) || (s && s.classList.contains('full'))); })();
-  cls.toggle('mk-buddy-ui-open', active);
+  /* Intentionally empty after Buddy removal. */
 }
 window.updateBuddyUiSuppression = updateBuddyUiSuppression;
-if (window.MutationObserver) {
-  var buddyUiSuppressionRaf = 0;
-  var buddyUiObserver = new MutationObserver(function() {
-    if (buddyUiSuppressionRaf) return;
-    buddyUiSuppressionRaf = requestAnimationFrame(function() {
-      buddyUiSuppressionRaf = 0;
-      updateBuddyUiSuppression();
-    });
-  });
-  if (document.body) {
-    buddyUiObserver.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['style', 'class', 'aria-hidden'] });
-  }
-}
 
 function openStatsFromDock() {
   var iframe = document.getElementById("calIframe");

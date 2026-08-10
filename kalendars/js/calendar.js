@@ -5152,6 +5152,52 @@ function filterFullList(btn) {
     window.__minkaGetCoffeeCountForName = function(name) {
       return getCoffeeCount(name);
     };
+    // One localStorage parse for the whole visible shift. The feedback card
+    // needs each person's count, and calling getCoffeeCount once per card would
+    // re-parse the same store for every employee.
+    window.__minkaGetCoffeeCountsForNames = function(names) {
+      const day = getCoffeeDayKey();
+      const store = getCoffeeStore();
+      const dayStore = store && store[day] && typeof store[day] === 'object' ? store[day] : {};
+      const seen = new Set();
+      const out = {};
+      (Array.isArray(names) ? names : []).forEach(name => {
+        const n = String(name || '').trim();
+        const key = getCoffeePersonKey(n);
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+        out[key] = Math.max(0, Number(dayStore[key]) || 0);
+      });
+      return out;
+    };
+    // Same one-pass snapshot, with the existing source keys used by
+    // __minkaCoffeeIcon. This lets compact UI reuse the real Philips/Löfbergs/
+    // Narvesen/energy-drink SVG instead of substituting a generic cup emoji.
+    window.__minkaGetCoffeeDetailsForNames = function(names) {
+      const day = getCoffeeDayKey();
+      const countStore = getCoffeeStore();
+      const detailStore = getCoffeeDetailStore();
+      const dayCounts = countStore && countStore[day] && typeof countStore[day] === 'object' ? countStore[day] : {};
+      const dayDetails = detailStore && detailStore[day] && typeof detailStore[day] === 'object' ? detailStore[day] : {};
+      const seen = new Set();
+      const out = {};
+      (Array.isArray(names) ? names : []).forEach(name => {
+        const n = String(name || '').trim();
+        const key = getCoffeePersonKey(n);
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+        const count = Math.max(0, Number(dayCounts[key]) || 0);
+        const detail = normalizeCoffeeDetail(dayDetails[key], count);
+        out[key] = {
+          count: count,
+          sources: COFFEE_SOURCES.map(source => ({
+            key: source,
+            count: Math.round(Math.max(0, Number(detail.sources[source]) || 0) / coffeeEq(source))
+          })).filter(item => item.count > 0)
+        };
+      });
+      return out;
+    };
     window.__minkaGetCoffeeTotalForNames = function(names) {
       const seen = new Set();
       return (Array.isArray(names) ? names : []).reduce((sum, name) => {
