@@ -1171,7 +1171,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260810cardframe2"></script>
+<script src="js/calendar.js?v=20260810community8"></script>
 <script src="js/calendar_extras_v4.js?v=20260728f"></script>
 <script src="js/fatigue.js?v=20260728f"></script>
 <script src="js/nightsplit.js?v=20260801release1" defer></script>
@@ -14569,6 +14569,427 @@ window.addEventListener('message', function(e) {
 .rg-feedback-save { border: 1px solid rgba(125,211,252,.22); background: #dff4ff; color: #07121d; }
 .rg-feedback-save:disabled { opacity: .38; cursor: default; }
 
+/* ── Saziņas centrs ---------------------------------------------------------
+   Zulip-inspired topic chat, adapted to the existing lightweight feedback API.
+   Solid translucent colours create a glass feel without backdrop-filter. */
+#rgFeedbackModal {
+  padding: clamp(8px, 2vw, 22px);
+  background: rgba(1, 5, 12, .84);
+}
+.rg-feedback-dialog.rg-comms {
+  width: min(980px, calc(100vw - 24px));
+  height: min(760px, calc(100vh - 28px));
+  max-height: none;
+  padding: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  border: 1px solid rgba(141, 188, 222, .18);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(56, 189, 248, .10), transparent 30%),
+    linear-gradient(145deg, #101923, #0a111a 72%);
+  box-shadow: 0 30px 100px rgba(0, 0, 0, .72), inset 0 1px 0 rgba(255, 255, 255, .055);
+  overflow: hidden;
+}
+.rg-comms-head {
+  min-height: 66px;
+  padding: 12px 14px 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  border-bottom: 1px solid rgba(148, 184, 213, .12);
+  background: rgba(15, 25, 36, .92);
+}
+.rg-comms-logo {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(94, 234, 212, .22);
+  border-radius: 13px;
+  background: linear-gradient(145deg, rgba(45, 212, 191, .20), rgba(16, 185, 129, .07));
+  color: #d3fff4;
+  font-size: 18px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .10);
+}
+.rg-comms-heading { min-width: 0; margin-right: auto; }
+.rg-comms-heading h2 {
+  margin: 0;
+  font: 800 18px/1.1 Inter, system-ui, sans-serif;
+  letter-spacing: -.025em;
+}
+.rg-comms-heading p {
+  margin: 4px 0 0;
+  color: rgba(205, 220, 234, .52);
+  font: 620 10px/1.2 Inter, system-ui, sans-serif;
+}
+.rg-comms-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid rgba(148, 184, 213, .12);
+  border-radius: 12px;
+  background: rgba(4, 10, 17, .52);
+}
+.rg-comms-tab {
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(211, 224, 237, .55);
+  font: 760 10px/1 Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+.rg-comms-tab.is-active {
+  background: rgba(94, 234, 212, .12);
+  color: #e9fff9;
+  box-shadow: inset 0 0 0 1px rgba(94, 234, 212, .18);
+}
+.rg-comms-new-topic {
+  height: 38px;
+  padding: 0 13px;
+  border: 1px solid rgba(251, 191, 36, .28);
+  border-radius: 11px;
+  background: #f4d28b;
+  color: #241705;
+  font: 800 10px/1 Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+.rg-comms .rg-feedback-close {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 11px;
+}
+.rg-comms-body {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+}
+.rg-comms-sidebar {
+  min-height: 0;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(148, 184, 213, .10);
+  background: rgba(7, 14, 22, .54);
+}
+.rg-comms-search {
+  width: 100%;
+  height: 36px;
+  padding: 0 11px 0 31px;
+  border: 1px solid rgba(148, 184, 213, .13);
+  border-radius: 11px;
+  outline: 0;
+  background:
+    linear-gradient(rgba(10, 18, 27, .9), rgba(10, 18, 27, .9)),
+    radial-gradient(circle, #8aa0b4 1.5px, transparent 2px);
+  color: #edf8ff;
+  font: 600 11px/1 Inter, system-ui, sans-serif;
+}
+.rg-comms-search::placeholder { color: rgba(204, 219, 233, .34); }
+.rg-comms-nav { margin-top: 10px; display: grid; gap: 4px; }
+.rg-comms-nav-button,
+.rg-comms-topic {
+  width: 100%;
+  min-height: 39px;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(218, 231, 242, .68);
+  display: grid;
+  grid-template-columns: 25px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  text-align: left;
+  font: 720 10.5px/1.2 Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+.rg-comms-nav-button:hover,
+.rg-comms-topic:hover { background: rgba(148, 184, 213, .07); color: #f5fbff; }
+.rg-comms-nav-button.is-active,
+.rg-comms-topic.is-active {
+  background: rgba(45, 212, 191, .10);
+  color: #e8fff9;
+  box-shadow: inset 0 0 0 1px rgba(94, 234, 212, .15);
+}
+.rg-comms-nav-icon {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(148, 184, 213, .08);
+  font-size: 12px;
+}
+.rg-comms-count {
+  min-width: 20px;
+  height: 19px;
+  padding: 0 6px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 99px;
+  background: rgba(94, 234, 212, .11);
+  color: #baf8e9;
+  font: 800 8px/1 Inter, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.rg-comms-section-label {
+  margin: 17px 8px 7px;
+  color: rgba(186, 205, 222, .34);
+  font: 800 8px/1 Inter, system-ui, sans-serif;
+  letter-spacing: .10em;
+  text-transform: uppercase;
+}
+.rg-comms-topic-list {
+  min-height: 0;
+  padding-right: 2px;
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+.rg-comms-topic-copy { min-width: 0; }
+.rg-comms-topic-copy strong,
+.rg-comms-topic-copy small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rg-comms-topic-copy strong { color: inherit; font: inherit; }
+.rg-comms-topic-copy small { margin-top: 3px; color: rgba(190, 208, 224, .38); font-size: 8px; }
+.rg-comms-main {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  background: rgba(6, 12, 19, .32);
+}
+.rg-comms-feed-head {
+  min-height: 55px;
+  padding: 10px 17px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid rgba(148, 184, 213, .09);
+}
+.rg-comms-feed-head div { min-width: 0; }
+.rg-comms-feed-head strong { display: block; color: #f5fbff; font: 800 13px/1.2 Inter, system-ui, sans-serif; }
+.rg-comms-feed-head small { display: block; margin-top: 4px; color: rgba(195, 213, 229, .42); font: 620 9px/1 Inter, system-ui, sans-serif; }
+.rg-feedback-list.rg-comms-feed {
+  min-height: 0;
+  max-height: none;
+  margin: 0;
+  padding: 14px 18px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+.rg-comms-message {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px;
+}
+.rg-comms-avatar {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(94, 234, 212, .18);
+  border-radius: 11px;
+  background: linear-gradient(145deg, rgba(45, 212, 191, .17), rgba(16, 185, 129, .07));
+  color: #dcfff6;
+  font: 850 9px/1 Inter, system-ui, sans-serif;
+}
+.rg-comms-message-main { min-width: 0; }
+.rg-comms-message-head { display: flex; align-items: baseline; gap: 7px; min-width: 0; }
+.rg-comms-message-head strong { color: #edf7fd; font: 800 11px/1.2 Inter, system-ui, sans-serif; }
+.rg-comms-message-head time { color: rgba(190, 207, 222, .38); font: 620 8.5px/1 Inter, system-ui, sans-serif; }
+.rg-comms-topic-chip {
+  max-width: 180px;
+  padding: 3px 7px;
+  border-radius: 7px;
+  background: rgba(45, 212, 191, .09);
+  color: #aef3e2;
+  font: 760 8px/1 Inter, system-ui, sans-serif;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rg-comms-bubble {
+  width: fit-content;
+  max-width: min(650px, 96%);
+  margin-top: 5px;
+  padding: 9px 11px;
+  border: 1px solid rgba(148, 184, 213, .12);
+  border-radius: 5px 14px 14px 14px;
+  background: rgba(18, 30, 42, .78);
+  color: #eaf3fa;
+  font: 540 11.5px/1.45 Inter, system-ui, sans-serif;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.rg-comms-message.is-own .rg-comms-bubble {
+  border-color: rgba(94, 234, 212, .18);
+  background: rgba(15, 118, 110, .20);
+}
+.rg-comms-reply-quote {
+  display: block;
+  margin-bottom: 7px;
+  padding: 6px 8px;
+  border-left: 2px solid rgba(125, 211, 252, .42);
+  border-radius: 0 7px 7px 0;
+  background: rgba(3, 9, 15, .38);
+  color: rgba(205, 222, 236, .58);
+  font-size: 9px;
+}
+.rg-comms-message-actions { display: flex; gap: 5px; margin-top: 4px; opacity: .62; }
+.rg-comms-message:hover .rg-comms-message-actions { opacity: 1; }
+.rg-comms-message-actions button {
+  height: 23px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(191, 210, 226, .55);
+  font: 700 8px/1 Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+.rg-comms-message-actions button:hover { background: rgba(148, 184, 213, .08); color: #e9f8ff; }
+.rg-comms-empty { margin: auto; padding: 28px; text-align: center; color: rgba(196, 214, 230, .42); font: 650 11px/1.5 Inter, system-ui, sans-serif; }
+.rg-comms-composer {
+  margin: 0 14px 14px;
+  padding: 9px;
+  border: 1px solid rgba(94, 234, 212, .14);
+  border-radius: 15px;
+  background: rgba(10, 18, 27, .92);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .18), inset 0 1px 0 rgba(255, 255, 255, .035);
+}
+.rg-comms-compose-context { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; }
+.rg-comms-author-wrap {
+  height: 30px;
+  max-width: 190px;
+  padding: 0 4px 0 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 1 auto;
+  border: 1px solid rgba(94, 234, 212, .16);
+  border-radius: 9px;
+  background: rgba(45, 212, 191, .055);
+  color: rgba(176, 226, 215, .54);
+}
+.rg-comms-author-wrap > span {
+  flex: 0 0 auto;
+  font: 760 7.5px/1 Inter, system-ui, sans-serif;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+.rg-comms-author {
+  min-width: 0;
+  max-width: 118px;
+  height: 24px;
+  border: 0;
+  outline: 0;
+  box-shadow: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  color: #d9fff5;
+  font: 760 9px/1 Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+.rg-comms-author:focus,
+.rg-comms-author:focus-visible {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+.rg-comms-author-wrap:focus-within {
+  border-color: rgba(94, 234, 212, .32);
+  box-shadow: inset 0 0 0 1px rgba(94, 234, 212, .06);
+}
+.rg-comms-author option { background: #101923; color: #edf8f5; }
+.rg-comms-topic-input {
+  width: min(280px, 62%);
+  height: 28px;
+  padding: 0 9px;
+  border: 1px solid rgba(251, 191, 36, .16);
+  border-radius: 8px;
+  outline: 0;
+  background: rgba(245, 158, 11, .055);
+  color: #ffe8b3;
+  font: 700 9px/1 Inter, system-ui, sans-serif;
+}
+.rg-comms-topic-input::placeholder { color: rgba(236, 205, 143, .35); }
+.rg-comms-replying { min-width: 0; color: rgba(188, 208, 224, .48); font: 650 8.5px/1 Inter, system-ui, sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rg-comms-cancel-reply { margin-left: auto; border: 0; background: transparent; color: rgba(202, 219, 233, .45); cursor: pointer; }
+.rg-comms-compose-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 8px; }
+#rgFeedbackText {
+  width: 100%;
+  min-height: 44px;
+  max-height: 120px;
+  margin: 0;
+  padding: 11px 12px;
+  resize: none;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(2, 8, 14, .48);
+  font-size: 11px;
+}
+#rgFeedbackText:focus { border: 0; box-shadow: inset 0 0 0 1px rgba(125, 211, 252, .15); }
+.rg-comms-send {
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 12px;
+  background: #bdf3df;
+  color: #071a14;
+  display: grid;
+  place-items: center;
+  font: 900 17px/1 system-ui, sans-serif;
+  cursor: pointer;
+}
+.rg-comms-send:disabled { opacity: .32; cursor: default; }
+.rg-comms-tools { display: flex; align-items: center; gap: 3px; margin-top: 7px; }
+.rg-comms-emoji {
+  width: 28px;
+  height: 25px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  font-size: 13px;
+  cursor: pointer;
+}
+.rg-comms-emoji:hover { background: rgba(148, 184, 213, .08); }
+.rg-comms-char-count { margin-left: auto; color: rgba(190, 207, 222, .30); font: 700 8px/1 Inter, system-ui, sans-serif; }
+.rg-comms-status { color: rgba(190, 207, 222, .38); font: 650 8px/1 Inter, system-ui, sans-serif; }
+
+@media (max-width: 720px) {
+  #rgFeedbackModal { padding: 0; }
+  .rg-feedback-dialog.rg-comms { width: 100vw; height: 100dvh; border: 0; border-radius: 0; }
+  .rg-comms-head { min-height: 58px; padding: 9px 10px; }
+  .rg-comms-heading p, .rg-comms-new-topic { display: none; }
+  .rg-comms-tab { padding: 0 8px; }
+  .rg-comms-body { grid-template-columns: 1fr; }
+  .rg-comms-sidebar { display: none; }
+  #rgFeedbackModal[data-mobile-panel="topics"] .rg-comms-sidebar { display: flex; }
+  #rgFeedbackModal[data-mobile-panel="topics"] .rg-comms-main { display: none; }
+  .rg-feedback-list.rg-comms-feed { padding: 12px 11px 20px; }
+  .rg-comms-composer { margin: 0 8px 8px; }
+  .rg-comms-compose-context { flex-wrap: wrap; }
+  .rg-comms-author-wrap { width: calc(48% - 4px); max-width: none; }
+  .rg-comms-author { max-width: none; flex: 1; }
+  .rg-comms-topic-input { width: calc(52% - 4px); }
+  .rg-comms-replying { order: 3; flex: 1; }
+  .rg-comms-cancel-reply { order: 4; }
+}
+
 :root.mk-mobile-shell #grafiks-list.grid-view .cards-section-label-rg { min-height: 40px !important; }
 :root.mk-mobile-shell .rg-pulse-inline { top: 0; height: 38px; padding: 0; gap: 1px; }
 :root.mk-mobile-shell .rg-pulse-question { display: block; font-size: 8px; }
@@ -15373,11 +15794,10 @@ window.addEventListener('message', function(e) {
 
 
 
-/* On the two-column card the action row has real room, so the narrow icon-only
-   Ideja slot becomes a proper button and both labels sit optically centred. */
+/* One clear entry point for the complete communication centre. */
 .rg-feedback-card .rg-feedback-card-actions {
-  grid-template-columns: minmax(0, 1fr) minmax(0, .74fr);
-  gap: 7px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
   margin-top: clamp(4px, 2.4cqw, 8px);
 }
 .rg-feedback-card .rg-pulse-write {
@@ -15409,6 +15829,35 @@ window.addEventListener('message', function(e) {
   border-color: rgba(var(--rg-card-rgb), .44);
 }
 .rg-feedback-card .rg-pulse-write:active { transform: translateY(1px); }
+.rg-feedback-card .rg-pulse-write.rg-pulse-write--comment {
+  width: 100%;
+  height: clamp(44px, 19cqw, 50px);
+  min-height: 44px;
+  gap: clamp(7px, 3cqw, 10px);
+  border-radius: 14px;
+  background: rgba(var(--rg-card-rgb), .17);
+  font-size: clamp(12px, 5.8cqw, 14px);
+  font-weight: 820;
+}
+.rg-feedback-card .rg-pulse-write--comment .rg-comment-icon {
+  width: clamp(16px, 7cqw, 19px);
+  height: clamp(12px, 5.2cqw, 14px);
+  flex-basis: clamp(16px, 7cqw, 19px);
+}
+:root.mk-mobile-shell .rg-feedback-card .rg-feedback-card-actions {
+  grid-template-columns: minmax(0, 1fr);
+}
+:root.mk-mobile-shell .rg-feedback-card .rg-pulse-write.rg-pulse-write--comment {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+}
+:root.mk-mobile-shell .rg-feedback-card .rg-pulse-write--comment > span {
+  display: inline;
+  font-size: 12px;
+}
 
 /* The stage is deliberately static between interactions. This keeps the soft
    glass look without maintaining compositor layers on older Windows GPUs. */
@@ -16688,8 +17137,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       + moodBlobMarkup()
       + '<span class="rg-pulse-taps" role="group" aria-label="Ātrās reakcijas">' + reactionButtons() + '</span>'
       + '<small class="rg-feedback-card-reaction-label" aria-live="polite">Izvēlies sajūtu</small></div>'
-      + '<div class="rg-feedback-card-actions"><button class="rg-pulse-write rg-pulse-write--comment" type="button" data-rg-write="comment" title="Atstāt komentāru"><b class="rg-comment-icon" aria-hidden="true"></b><span>Komentārs</span><small class="rg-feedback-action-count" data-rg-action-count="comment"></small></button>'
-      + '<button class="rg-pulse-write rg-pulse-write--suggestion" type="button" data-rg-write="suggestion" aria-label="Ieteikums RG lietotnei" title="Ieteikums RG lietotnei"><img src="../data/rg-cal-192.png" alt=""><span>Ideja</span><small class="rg-feedback-action-count" data-rg-action-count="suggestion"></small></button></div>';
+      + '<div class="rg-feedback-card-actions"><button class="rg-pulse-write rg-pulse-write--comment" type="button" data-rg-write="comment" title="Atvērt komentārus"><b class="rg-comment-icon" aria-hidden="true"></b><span>Komentāri</span><small class="rg-feedback-action-count" data-rg-action-count="comment"></small></button></div>';
     grid.appendChild(pulse);
     scheduleMoodSectionLayout();
     paintCounts();
@@ -16821,13 +17269,23 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   var modal = document.createElement('div');
   modal.id = 'rgFeedbackModal';
   modal.hidden = true;
-  modal.innerHTML = '<section class="rg-feedback-dialog" role="dialog" aria-modal="true" aria-labelledby="rgFeedbackTitle">'
-    + '<div class="rg-feedback-head"><div class="rg-feedback-title-wrap"><h2 id="rgFeedbackTitle">Idejas RG lietotnei</h2></div><button class="rg-feedback-close" type="button" data-rg-close="1" aria-label="Aizvērt">×</button></div>'
-    + '<div class="rg-feedback-days" id="rgFeedbackDays" role="tablist" aria-label="Datumi"></div>'
-    + '<div class="rg-feedback-list" id="rgFeedbackList" aria-live="polite"></div><button class="rg-feedback-more" id="rgFeedbackMore" type="button" hidden>Rādīt vēl</button>'
-    + '<textarea id="rgFeedbackText" maxlength="700" placeholder="Ko vajadzētu uzlabot vai pievienot?"></textarea>'
-    + '<div class="rg-feedback-meta"><span id="rgFeedbackTargetDay"></span><span id="rgFeedbackChars">0 / 700</span></div>'
-    + '<div class="rg-feedback-actions"><button class="rg-feedback-cancel" type="button" data-rg-close="1">Atcelt</button><button class="rg-feedback-save" id="rgFeedbackSave" type="button" disabled>Saglabāt</button></div>'
+  modal.innerHTML = '<section class="rg-feedback-dialog rg-comms" role="dialog" aria-modal="true" aria-labelledby="rgFeedbackTitle">'
+    + '<header class="rg-comms-head"><span class="rg-comms-logo" aria-hidden="true">💬</span>'
+    + '<div class="rg-comms-heading"><h2 id="rgFeedbackTitle">Saziņa</h2><p>Komandas čats un tēmu sarunas</p></div>'
+    + '<div class="rg-comms-tabs" role="tablist"><button class="rg-comms-tab is-active" type="button" data-rg-comms-mode="all">Visi</button><button class="rg-comms-tab" type="button" data-rg-comms-mode="topics">Tēmas</button></div>'
+    + '<button class="rg-comms-new-topic" id="rgCommsNewTopic" type="button">＋ Jauna tēma</button>'
+    + '<button class="rg-feedback-close" type="button" data-rg-close="1" aria-label="Aizvērt">×</button></header>'
+    + '<div class="rg-comms-body"><aside class="rg-comms-sidebar">'
+    + '<input class="rg-comms-search" id="rgCommsSearch" type="search" placeholder="Meklēt sarunās…" autocomplete="off">'
+    + '<nav class="rg-comms-nav"><button class="rg-comms-nav-button is-active" type="button" data-rg-comms-view="all"><span class="rg-comms-nav-icon">☰</span><span>Visi komentāri</span><small class="rg-comms-count" id="rgCommsAllCount">0</small></button>'
+    + '<button class="rg-comms-nav-button" type="button" data-rg-comms-view="today"><span class="rg-comms-nav-icon">●</span><span>Šodien</span><small class="rg-comms-count" id="rgCommsTodayCount">0</small></button></nav>'
+    + '<p class="rg-comms-section-label">Tēmas</p><div class="rg-comms-topic-list" id="rgCommsTopics"></div></aside>'
+    + '<main class="rg-comms-main"><div class="rg-comms-feed-head"><div><strong id="rgCommsFeedTitle">Visi komentāri</strong><small id="rgCommsFeedSubtitle">Visa komandas sarakste vienuviet</small></div></div>'
+    + '<div class="rg-feedback-list rg-comms-feed" id="rgFeedbackList" aria-live="polite"></div><button class="rg-feedback-more" id="rgFeedbackMore" type="button" hidden>Rādīt vēl</button>'
+    + '<div class="rg-comms-composer"><div class="rg-comms-compose-context"><label class="rg-comms-author-wrap"><span>Autors</span><select class="rg-comms-author" id="rgCommsAuthor" aria-label="Izvēlies komentāra autoru"><option value="">Anonīmi</option></select></label><input class="rg-comms-topic-input" id="rgCommsTopicInput" maxlength="44" placeholder="Tēma" autocomplete="off"><span class="rg-comms-replying" id="rgCommsReplying"></span><button class="rg-comms-cancel-reply" id="rgCommsCancelReply" type="button" hidden aria-label="Atcelt atbildi">×</button></div>'
+    + '<div class="rg-comms-compose-row"><textarea id="rgFeedbackText" maxlength="560" placeholder="Raksti ziņu…"></textarea><button class="rg-comms-send" id="rgFeedbackSave" type="button" disabled aria-label="Nosūtīt">↑</button></div>'
+    + '<div class="rg-comms-tools" aria-label="Ātrie emoji"><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="👍">👍</button><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="😂">😂</button><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="❤️">❤️</button><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="🔥">🔥</button><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="☕">☕</button><span class="rg-comms-status" id="rgCommsStatus"></span><span class="rg-comms-char-count" id="rgFeedbackChars">0 / 560</span></div></div>'
+    + '</main></div><div id="rgFeedbackDays" hidden></div><span id="rgFeedbackTargetDay" hidden></span>'
     + '</section>';
   document.body.appendChild(modal);
   var textarea = modal.querySelector('#rgFeedbackText');
@@ -16837,6 +17295,17 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   var targetDay = modal.querySelector('#rgFeedbackTargetDay');
   var messageList = modal.querySelector('#rgFeedbackList');
   var moreButton = modal.querySelector('#rgFeedbackMore');
+  var commsSearch = modal.querySelector('#rgCommsSearch');
+  var commsTopics = modal.querySelector('#rgCommsTopics');
+  var commsTopicInput = modal.querySelector('#rgCommsTopicInput');
+  var commsAuthor = modal.querySelector('#rgCommsAuthor');
+  var commsFeedTitle = modal.querySelector('#rgCommsFeedTitle');
+  var commsFeedSubtitle = modal.querySelector('#rgCommsFeedSubtitle');
+  var commsAllCount = modal.querySelector('#rgCommsAllCount');
+  var commsTodayCount = modal.querySelector('#rgCommsTodayCount');
+  var commsReplying = modal.querySelector('#rgCommsReplying');
+  var commsCancelReply = modal.querySelector('#rgCommsCancelReply');
+  var commsStatus = modal.querySelector('#rgCommsStatus');
   var modalDay = '';
   var remoteMessages = [];
   var nextBefore = null;
@@ -17091,6 +17560,493 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       window.setTimeout(function () { if (writeButton.isConnected) writeButton.innerHTML = original; }, 1300);
     }
   }
+
+  /* Topic chat layer. The API remains date-based; the client combines those
+     pages into one inbox and stores the optional topic/reply metadata inside
+     the message body, so existing comments stay readable and no data is lost. */
+  var COMMUNITY_OWNED_KEY = 'minkaCommunityOwnedV1';
+  var COMMUNITY_AUTHOR_KEY = 'minkaCommunityAuthorV1';
+  var communityMessages = [];
+  var communityMode = 'all';
+  var communityView = 'all';
+  var communityTopic = '';
+  var communityReply = null;
+  var communityEditing = null;
+  var communityLoadId = 0;
+
+  function communityOwnedIds() {
+    var value = readJson(COMMUNITY_OWNED_KEY, []);
+    return Array.isArray(value) ? value : [];
+  }
+  function rememberCommunityId(clientId) {
+    var items = communityOwnedIds();
+    if (items.indexOf(clientId) < 0) items.push(clientId);
+    writeJson(COMMUNITY_OWNED_KEY, items.slice(-500));
+  }
+  function communityEncode(topic, parent, author, body) {
+    var cleanTopic = String(topic || '').trim().slice(0, 44) || 'Vispārīgi';
+    var cleanParent = String(parent || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80);
+    var cleanAuthor = String(author || '').trim().slice(0, 60);
+    return '[[rgchat;topic=' + encodeURIComponent(cleanTopic) + ';parent=' + cleanParent + ';author=' + encodeURIComponent(cleanAuthor) + ']]\n' + String(body || '').trim();
+  }
+  function communityDecode(item) {
+    var raw = String(item && item.text || '');
+    var match = raw.match(/^\[\[rgchat;topic=([^;\]]*);parent=([^;\]]*)(?:;author=([^\]]*))?\]\]\n?/);
+    var topic = item && item.kind === 'suggestion' ? 'Idejas' : 'Vispārīgi';
+    var parent = '';
+    var author = '';
+    if (match) {
+      try { topic = decodeURIComponent(match[1]) || topic; } catch (_error) {}
+      parent = match[2] || '';
+      try { author = decodeURIComponent(match[3] || ''); } catch (_error) {}
+      raw = raw.slice(match[0].length);
+    }
+    return Object.assign({}, item, {
+      topic: String(topic || 'Vispārīgi').slice(0, 44),
+      parent: parent,
+      author: String(author || '').slice(0, 60),
+      body: raw,
+      key: String(item && (item.id || item.clientId) || '')
+    });
+  }
+  function communityInitials(name) {
+    var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return 'A';
+    return (parts[0].charAt(0) + (parts.length > 1 ? parts[parts.length - 1].charAt(0) : '')).toLocaleUpperCase('lv-LV');
+  }
+  function refreshCommunityAuthors() {
+    var selected = localStorage.getItem(COMMUNITY_AUTHOR_KEY) || '';
+    var names = [];
+    var nameKeys = {};
+    function add(name) {
+      var clean = String(name || '').trim().replace(/\s+/g, ' ').slice(0, 60);
+      if (clean && clean === clean.toLocaleUpperCase('lv-LV')) {
+        clean = clean.split(' ').map(function (part) {
+          var lower = part.toLocaleLowerCase('lv-LV');
+          return lower.charAt(0).toLocaleUpperCase('lv-LV') + lower.slice(1);
+        }).join(' ');
+      }
+      var key = clean.toLocaleLowerCase('lv-LV');
+      if (clean && !nameKeys[key]) {
+        nameKeys[key] = true;
+        names.push(clean);
+      }
+    }
+    try {
+      var stats = moodStats(true);
+      (stats.staff || []).forEach(function (person) { add(person.name); });
+    } catch (_error) {}
+    list.querySelectorAll('.mk-mid-name-wrap').forEach(function (node) {
+      var first = node.querySelector('.name-main');
+      var last = node.querySelector('.name-sub');
+      add(((first && first.textContent) || '') + ' ' + ((last && last.textContent) || ''));
+    });
+    if (selected) add(selected);
+    names.sort(function (a, b) { return a.localeCompare(b, 'lv'); });
+    commsAuthor.replaceChildren();
+    var anonymous = document.createElement('option');
+    anonymous.value = '';
+    anonymous.textContent = 'Anonīmi';
+    commsAuthor.appendChild(anonymous);
+    names.forEach(function (name) {
+      var option = document.createElement('option');
+      option.value = name;
+      option.textContent = name;
+      commsAuthor.appendChild(option);
+    });
+    var selectedKey = selected.toLocaleLowerCase('lv-LV');
+    var canonicalSelected = names.find(function (name) { return name.toLocaleLowerCase('lv-LV') === selectedKey; }) || '';
+    commsAuthor.value = canonicalSelected;
+  }
+  function communityMessageTime(item) {
+    var stamp = Number(item.createdAt) || 0;
+    var time = stamp ? new Date(stamp).toLocaleTimeString('lv-LV', { hour: '2-digit', minute: '2-digit' }) : '';
+    var day = item.date || item.shiftDay || '';
+    return (day ? compactDay(day) : '') + (day && time ? ' · ' : '') + time;
+  }
+  function communityTopicStats() {
+    var stats = {};
+    communityMessages.forEach(function (item) {
+      var topic = item.topic || 'Vispārīgi';
+      if (!stats[topic]) stats[topic] = { topic: topic, count: 0, latest: 0 };
+      stats[topic].count += 1;
+      stats[topic].latest = Math.max(stats[topic].latest, Number(item.createdAt) || 0);
+    });
+    return Object.keys(stats).map(function (key) { return stats[key]; }).sort(function (a, b) { return b.latest - a.latest; });
+  }
+  function setCommunityMode(mode) {
+    communityMode = mode === 'topics' ? 'topics' : 'all';
+    modal.querySelectorAll('[data-rg-comms-mode]').forEach(function (button) {
+      button.classList.toggle('is-active', button.dataset.rgCommsMode === communityMode);
+    });
+    if (communityMode === 'all') {
+      communityView = 'all';
+      communityTopic = '';
+      modal.removeAttribute('data-mobile-panel');
+    } else {
+      var mobileTopics = window.matchMedia && window.matchMedia('(max-width: 720px)').matches;
+      if (mobileTopics) {
+        modal.dataset.mobilePanel = 'topics';
+      } else {
+        var topics = communityTopicStats();
+        if (!communityTopic || !topics.some(function (item) { return item.topic === communityTopic; })) {
+          communityTopic = topics.length ? topics[0].topic : 'Vispārīgi';
+        }
+        communityView = 'topic';
+        commsTopicInput.value = communityTopic === 'Vispārīgi' ? '' : communityTopic;
+        modal.removeAttribute('data-mobile-panel');
+      }
+    }
+    renderCommunity();
+  }
+  function selectCommunityTopic(topic) {
+    communityMode = 'topics';
+    communityView = 'topic';
+    communityTopic = topic || 'Vispārīgi';
+    commsTopicInput.value = communityTopic === 'Vispārīgi' ? '' : communityTopic;
+    modal.removeAttribute('data-mobile-panel');
+    modal.querySelectorAll('[data-rg-comms-mode]').forEach(function (button) {
+      button.classList.toggle('is-active', button.dataset.rgCommsMode === 'topics');
+    });
+    renderCommunity();
+  }
+  function renderCommunityTopics() {
+    commsTopics.replaceChildren();
+    communityTopicStats().forEach(function (item) {
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'rg-comms-topic' + (communityView === 'topic' && communityTopic === item.topic ? ' is-active' : '');
+      button.dataset.rgCommunityTopic = item.topic;
+      var icon = document.createElement('span');
+      icon.className = 'rg-comms-nav-icon';
+      icon.textContent = item.topic === 'Idejas' ? '✦' : '#';
+      var copy = document.createElement('span');
+      copy.className = 'rg-comms-topic-copy';
+      var title = document.createElement('strong');
+      title.textContent = item.topic;
+      var activity = document.createElement('small');
+      activity.textContent = item.latest ? new Date(item.latest).toLocaleDateString('lv-LV', { day: '2-digit', month: 'short' }) : '';
+      copy.append(title, activity);
+      var count = document.createElement('small');
+      count.className = 'rg-comms-count';
+      count.textContent = String(item.count);
+      button.append(icon, copy, count);
+      commsTopics.appendChild(button);
+    });
+  }
+  function renderCommunity(loadingText) {
+    renderCommunityTopics();
+    var today = shiftDayKey();
+    commsAllCount.textContent = String(communityMessages.length);
+    commsTodayCount.textContent = String(communityMessages.filter(function (item) { return (item.date || item.shiftDay) === today; }).length);
+    modal.querySelectorAll('[data-rg-comms-view]').forEach(function (button) {
+      button.classList.toggle('is-active', communityView === button.dataset.rgCommsView);
+    });
+    var query = String(commsSearch.value || '').trim().toLocaleLowerCase('lv-LV');
+    var items = communityMessages.filter(function (item) {
+      if (communityView === 'today' && (item.date || item.shiftDay) !== today) return false;
+      if (communityView === 'topic' && item.topic !== communityTopic) return false;
+      if (query && (item.body + ' ' + item.topic + ' ' + (item.date || item.shiftDay || '')).toLocaleLowerCase('lv-LV').indexOf(query) < 0) return false;
+      return true;
+    }).sort(function (a, b) { return (Number(a.createdAt) || 0) - (Number(b.createdAt) || 0); });
+    if (communityView === 'topic') {
+      commsFeedTitle.textContent = '# ' + communityTopic;
+      commsFeedSubtitle.textContent = items.length + ' ziņas šajā tēmā';
+    } else if (communityView === 'today') {
+      commsFeedTitle.textContent = 'Šodien';
+      commsFeedSubtitle.textContent = displayDay(today) + ' · ' + items.length + ' ziņas';
+    } else {
+      commsFeedTitle.textContent = query ? 'Meklēšanas rezultāti' : 'Visi komentāri';
+      commsFeedSubtitle.textContent = query ? items.length + ' atrasti ieraksti' : 'Visa komandas sarakste vienuviet';
+    }
+    messageList.replaceChildren();
+    if (!items.length) {
+      var empty = document.createElement('p');
+      empty.className = 'rg-comms-empty';
+      empty.textContent = loadingText || (query ? 'Nekas netika atrasts.' : 'Te vēl ir kluss. Uzraksti pirmo ziņu.');
+      messageList.appendChild(empty);
+      return;
+    }
+    var byKey = {};
+    communityMessages.forEach(function (item) { if (item.key) byKey[item.key] = item; });
+    var owned = communityOwnedIds();
+    items.forEach(function (item) {
+      var own = !!item.pending || owned.indexOf(item.clientId) >= 0;
+      var authorName = item.author || 'Anonīms';
+      var article = document.createElement('article');
+      article.className = 'rg-comms-message' + (own ? ' is-own' : '');
+      article.dataset.rgMessageKey = item.key;
+      var avatar = document.createElement('span');
+      avatar.className = 'rg-comms-avatar';
+      avatar.textContent = communityInitials(authorName);
+      var main = document.createElement('div');
+      main.className = 'rg-comms-message-main';
+      var head = document.createElement('div');
+      head.className = 'rg-comms-message-head';
+      var author = document.createElement('strong');
+      author.textContent = authorName;
+      var time = document.createElement('time');
+      time.textContent = communityMessageTime(item) + (item.pending ? ' · gaida savienojumu' : '');
+      var chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'rg-comms-topic-chip';
+      chip.dataset.rgCommunityTopic = item.topic;
+      chip.textContent = '# ' + item.topic;
+      head.append(author, time, chip);
+      var bubble = document.createElement('div');
+      bubble.className = 'rg-comms-bubble';
+      if (item.parent && byKey[item.parent]) {
+        var quote = document.createElement('span');
+        quote.className = 'rg-comms-reply-quote';
+        quote.textContent = '↳ ' + byKey[item.parent].body.slice(0, 110);
+        bubble.appendChild(quote);
+      }
+      bubble.appendChild(document.createTextNode(item.body));
+      var actions = document.createElement('div');
+      actions.className = 'rg-comms-message-actions';
+      var reply = document.createElement('button');
+      reply.type = 'button';
+      reply.dataset.rgCommunityReply = item.key;
+      reply.textContent = '↩ Atbildēt';
+      actions.appendChild(reply);
+      if (own && item.clientId) {
+        var edit = document.createElement('button');
+        edit.type = 'button';
+        edit.dataset.rgCommunityEdit = item.key;
+        edit.textContent = 'Rediģēt';
+        var remove = document.createElement('button');
+        remove.type = 'button';
+        remove.dataset.rgCommunityDelete = item.key;
+        remove.textContent = 'Dzēst';
+        actions.append(edit, remove);
+      }
+      main.append(head, bubble, actions);
+      article.append(avatar, main);
+      messageList.appendChild(article);
+    });
+    window.requestAnimationFrame(function () { messageList.scrollTop = messageList.scrollHeight; });
+  }
+  async function flushAllCommunityPending() {
+    var pending = readJson(TEXT_KEY, []);
+    var seen = {};
+    if (!Array.isArray(pending)) return;
+    for (var i = 0; i < pending.length; i++) {
+      var item = pending[i];
+      if (!item || !item.pending) continue;
+      var key = item.shiftDay + '|' + item.type;
+      if (seen[key]) continue;
+      seen[key] = true;
+      await postPendingMessages(item.shiftDay, item.type);
+    }
+  }
+  async function loadCommunity() {
+    var requestId = ++communityLoadId;
+    commsStatus.textContent = 'Ielādē saraksti…';
+    renderCommunity('Ielādē saraksti…');
+    try {
+      await flushAllCommunityPending();
+      var groups = await Promise.all(['comment', 'suggestion'].map(function (kind) {
+        return fetchFeedback('/api/feedback/days?kind=' + kind + '&limit=180').then(function (data) {
+          return (data.days || []).map(function (day) { return { date: day.date, kind: kind }; });
+        }).catch(function () { return []; });
+      }));
+      var pairs = [].concat.apply([], groups);
+      ['comment', 'suggestion'].forEach(function (kind) {
+        if (!pairs.some(function (pair) { return pair.date === shiftDayKey() && pair.kind === kind; })) pairs.push({ date: shiftDayKey(), kind: kind });
+      });
+      var pages = await Promise.all(pairs.map(function (pair) {
+        return fetchFeedback('/api/feedback?date=' + encodeURIComponent(pair.date) + '&kind=' + pair.kind + '&limit=100')
+          .then(function (data) { return data.messages || []; }).catch(function () { return []; });
+      }));
+      if (requestId !== communityLoadId) return;
+      var combined = [].concat.apply([], pages);
+      var local = readJson(TEXT_KEY, []);
+      if (Array.isArray(local)) combined = combined.concat(local);
+      var seen = {};
+      communityMessages = combined.filter(function (item) {
+        var key = item.clientId || ('id-' + item.id);
+        if (seen[key]) return false;
+        seen[key] = true;
+        return item && (item.text || '').trim();
+      }).map(communityDecode);
+      remoteMessages = communityMessages;
+      commsStatus.textContent = '';
+      renderCommunity();
+    } catch (_error) {
+      if (requestId !== communityLoadId) return;
+      var localOnly = readJson(TEXT_KEY, []);
+      communityMessages = (Array.isArray(localOnly) ? localOnly : []).map(communityDecode);
+      commsStatus.textContent = 'Bezsaistes režīms';
+      renderCommunity();
+    }
+  }
+
+  updateTextState = function () {
+    var length = textarea.value.length;
+    chars.textContent = length + ' / 560';
+    save.disabled = !textarea.value.trim();
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(120, Math.max(44, textarea.scrollHeight)) + 'px';
+  };
+  openModal = function (kind, trigger) {
+    lastWriteButton = trigger || null;
+    modal.dataset.kind = 'comment';
+    modalDay = shiftDayKey();
+    modal.hidden = false;
+    syncFeedbackModalState(true);
+    textarea.value = '';
+    commsSearch.value = '';
+    refreshCommunityAuthors();
+    commsTopicInput.value = kind === 'suggestion' ? 'Idejas' : '';
+    commsTopicInput.placeholder = 'Tēma';
+    communityReply = null;
+    communityEditing = null;
+    commsReplying.textContent = '';
+    commsCancelReply.hidden = true;
+    communityView = kind === 'suggestion' ? 'topic' : 'all';
+    communityTopic = kind === 'suggestion' ? 'Idejas' : '';
+    communityMode = kind === 'suggestion' ? 'topics' : 'all';
+    modal.removeAttribute('data-mobile-panel');
+    updateTextState();
+    setCommunityMode(communityMode);
+    loadCommunity();
+    window.setTimeout(function () { textarea.focus(); }, 80);
+  };
+  closeModal = function () {
+    modal.hidden = true;
+    communityLoadId += 1;
+    syncFeedbackModalState(false);
+  };
+  renderMessages = renderCommunity;
+  loadMessages = function () { return loadCommunity(); };
+  loadDayGroups = function () { return loadCommunity(); };
+  selectMessageDay = function (day) {
+    communityView = day === shiftDayKey() ? 'today' : 'all';
+    renderCommunity();
+  };
+  saveText = async function () {
+    var body = textarea.value.trim();
+    if (!body) return;
+    var topic = commsTopicInput.value.trim() || (communityView === 'topic' ? communityTopic : 'Vispārīgi');
+    var parent = communityReply && communityReply.key || '';
+    var encoded = communityEncode(topic, parent, commsAuthor.value, body);
+    save.disabled = true;
+    commsStatus.textContent = communityEditing ? 'Saglabā izmaiņas…' : 'Nosūta…';
+    if (communityEditing && communityEditing.clientId) {
+      try {
+        await fetchFeedback('/api/feedback/message', {
+          method: 'PATCH', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ clientId: communityEditing.clientId, text: encoded })
+        });
+      } catch (_error) {
+        commsStatus.textContent = 'Neizdevās rediģēt';
+        save.disabled = false;
+        return;
+      }
+    } else {
+      var clientId = newClientId();
+      rememberCommunityId(clientId);
+      var items = readJson(TEXT_KEY, []);
+      if (!Array.isArray(items)) items = [];
+      items.unshift({ clientId: clientId, type: 'comment', text: encoded, shiftDay: shiftDayKey(), createdAt: Date.now(), pending: true });
+      writeJson(TEXT_KEY, items.slice(0, 500));
+      await postPendingMessages(shiftDayKey(), 'comment');
+    }
+    textarea.value = '';
+    communityReply = null;
+    communityEditing = null;
+    commsReplying.textContent = '';
+    commsCancelReply.hidden = true;
+    updateTextState();
+    await loadCommunity();
+  };
+
+  modal.addEventListener('click', function (event) {
+    var mode = event.target.closest('[data-rg-comms-mode]');
+    if (mode) { setCommunityMode(mode.dataset.rgCommsMode); return; }
+    var view = event.target.closest('[data-rg-comms-view]');
+    if (view) {
+      communityView = view.dataset.rgCommsView;
+      communityTopic = '';
+      modal.removeAttribute('data-mobile-panel');
+      renderCommunity();
+      return;
+    }
+    var topic = event.target.closest('[data-rg-community-topic]');
+    if (topic) { selectCommunityTopic(topic.dataset.rgCommunityTopic); return; }
+    var emoji = event.target.closest('[data-rg-chat-emoji]');
+    if (emoji) {
+      textarea.value += emoji.dataset.rgChatEmoji;
+      updateTextState();
+      textarea.focus();
+      return;
+    }
+    var reply = event.target.closest('[data-rg-community-reply]');
+    if (reply) {
+      communityReply = communityMessages.find(function (item) { return item.key === reply.dataset.rgCommunityReply; }) || null;
+      if (communityReply) {
+        commsTopicInput.value = communityReply.topic === 'Vispārīgi' ? '' : communityReply.topic;
+        commsReplying.textContent = 'Atbilde: ' + communityReply.body.slice(0, 75);
+        commsCancelReply.hidden = false;
+        textarea.focus();
+      }
+      return;
+    }
+    var edit = event.target.closest('[data-rg-community-edit]');
+    if (edit) {
+      communityEditing = communityMessages.find(function (item) { return item.key === edit.dataset.rgCommunityEdit; }) || null;
+      if (communityEditing) {
+        textarea.value = communityEditing.body;
+        commsTopicInput.value = communityEditing.topic === 'Vispārīgi' ? '' : communityEditing.topic;
+        if (communityEditing.author && ![].slice.call(commsAuthor.options).some(function (option) { return option.value === communityEditing.author; })) {
+          var authorOption = document.createElement('option');
+          authorOption.value = communityEditing.author;
+          authorOption.textContent = communityEditing.author;
+          commsAuthor.appendChild(authorOption);
+        }
+        commsAuthor.value = communityEditing.author || '';
+        commsReplying.textContent = 'Rediģē ziņu';
+        commsCancelReply.hidden = false;
+        updateTextState();
+        textarea.focus();
+      }
+      return;
+    }
+    var remove = event.target.closest('[data-rg-community-delete]');
+    if (remove) {
+      var item = communityMessages.find(function (entry) { return entry.key === remove.dataset.rgCommunityDelete; });
+      if (!item || !item.clientId || !window.confirm('Dzēst šo ziņu?')) return;
+      fetchFeedback('/api/feedback/message', {
+        method: 'DELETE', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ clientId: item.clientId })
+      }).then(loadCommunity).catch(function () { commsStatus.textContent = 'Neizdevās izdzēst'; });
+    }
+  });
+  modal.querySelector('#rgCommsNewTopic').addEventListener('click', function () {
+    communityMode = 'topics';
+    communityView = 'all';
+    communityTopic = '';
+    modal.removeAttribute('data-mobile-panel');
+    commsTopicInput.value = '';
+    commsTopicInput.placeholder = 'Nosauc jauno tēmu…';
+    commsTopicInput.focus();
+    renderCommunity();
+  });
+  commsCancelReply.addEventListener('click', function () {
+    communityReply = null;
+    communityEditing = null;
+    commsReplying.textContent = '';
+    commsCancelReply.hidden = true;
+    textarea.value = '';
+    updateTextState();
+  });
+  commsSearch.addEventListener('input', function () { renderCommunity(); });
+  commsAuthor.addEventListener('change', function () {
+    localStorage.setItem(COMMUNITY_AUTHOR_KEY, commsAuthor.value);
+  });
+  textarea.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) { event.preventDefault(); saveText(); }
+  });
 
   list.addEventListener('click', function (event) {
     var tap = event.target.closest('[data-rg-pulse]');

@@ -2574,7 +2574,10 @@ function filterFullList(btn) {
       return 'No ' + timeLabel.replace(/^(?:Līdz|Nāks)\s+/, '');
     };
     const groupNeedsWrap = (kind, timeLabel, list) => {
-      return list.length > 2;
+      // Two names plus a time label already exceed the narrow side panel on
+      // common PWA widths. Give every multi-person group two real lines so no
+      // name is clipped at the panel edge.
+      return list.length > 1;
     };
     const groupHtml = (kind, icon, timeLabel, list) => {
       const sentenceLabel = getDutySentenceLabel(timeLabel);
