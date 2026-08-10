@@ -1171,7 +1171,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260808avatars37"></script>
+<script src="js/calendar.js?v=20260810cards1"></script>
 <script src="js/calendar_extras_v4.js?v=20260728f"></script>
 <script src="js/fatigue.js?v=20260728f"></script>
 <script src="js/nightsplit.js?v=20260801release1" defer></script>
@@ -12264,6 +12264,8 @@ window.addEventListener('message', function(e) {
     var draft = cur ? JSON.parse(JSON.stringify(cur)) : {};
     var parts = name.split(/\s+/);
     var ini = ((parts[0]||'')[0]||'') + ((parts[1]||'')[0]||'');
+    var pvMonthMatch = String((document.getElementById('modal-total-hours') || {}).innerText || '').match(/\d+/);
+    var pvMonthHours = pvMonthMatch ? pvMonthMatch[0] : '24';
     var pvEmoji = '✨';
     try {
       if (window.MinkaEmoji && typeof window.MinkaEmoji.get === 'function') pvEmoji = window.MinkaEmoji.get(name) || '✨';
@@ -12279,10 +12281,12 @@ window.addEventListener('message', function(e) {
     }
 
     var html = '<div class="mk-skin-top"><div class="mk-skin-preview" id="mkSkinPrev">'
-      + '<span class="pv-ini">' + skinEsc(ini.toUpperCase()) + '</span><span class="pv-hours">24h</span>'
+      + '<div class="pv-name-tab"><span class="pv-name-main">' + skinEsc(parts[0]||'') + '</span><span class="pv-name-sub">' + skinEsc(parts.slice(1).join(' ')||'') + '</span></div>'
+      + '<span class="pv-hours"><b>' + skinEsc(pvMonthHours) + 'h</b><small>MĒNESĪ</small></span>'
       + '<span class="pv-emoji">' + skinEsc(pvEmoji) + '</span>'
       + '<div class="pv-num">24</div>'
-      + '<div class="pv-name">' + skinEsc(parts[0]||'') + '<br><small>' + skinEsc(parts.slice(1).join(' ')||'') + '</small></div>'
+      + '<div class="pv-fatigue"><i></i><i></i><i></i><i></i><i></i><i></i><strong>24%</strong></div>'
+      + '<div class="pv-coffee"><b>−</b><span>☕ 0</span><b>+</b></div>'
       + '</div>';
 
     html += '<div class="mk-skin-top-right"><div class="mk-skin-sec" style="margin-top:0;">Gatavie komplekti</div><div class="mk-skin-presets">';
@@ -12559,9 +12563,10 @@ window.addEventListener('message', function(e) {
 .mk-skin-top { display: flex; gap: 12px; align-items: stretch; padding-top: 2px; }
 .mk-skin-top-right { flex: 1; min-width: 0; }
 .mk-skin-preview {
+  --pv-tab-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 50' preserveAspectRatio='none'%3E%3Cpath fill='%23fff' d='M0 0H100C93 0 91 12 86 24C81 37 78 50 68 50H0Z'/%3E%3C/svg%3E");
   position: relative; width: 118px; flex-shrink: 0; aspect-ratio: 1/1.05; border-radius: 12px;
   border: 1px solid rgba(190,204,232,.15); overflow: hidden;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  display: block;
   background:
     radial-gradient(140% 110% at 28% 22%, rgba(var(--mk-emoji-tint, 0,0,0), var(--mk-emoji-tint-a, 0)) 0%, transparent 70%),
     linear-gradient(145deg, #121926 0%, #0b1019 72%);
@@ -12578,11 +12583,52 @@ window.addEventListener('message', function(e) {
     linear-gradient(180deg, rgba(7,10,17,.62) 0%, rgba(7,10,17,.45) 45%, rgba(7,10,17,.74) 100%),
     var(--mk-skin-img) center/100% 100% no-repeat, #0b1019;
 }
-.mk-skin-preview .pv-ini { position: absolute; top: 8px; left: 11px; font: 900 16px Inter, sans-serif; color: rgba(255,255,255,.25); letter-spacing: .04em; }
-.mk-skin-preview .pv-hours { position: absolute; top: 9px; right: 11px; font: 800 12px Inter, sans-serif; color: #fff; }
-.mk-skin-preview .pv-num { font: 900 36px Inter, sans-serif; line-height: .9; color: rgba(var(--mk-num-color, 167,139,250), var(--mk-num-alpha, 1)); }
-.mk-skin-preview .pv-name { font: 700 12.5px Inter, sans-serif; color: #fff; text-align: center; line-height: 1.15; }
-.mk-skin-preview .pv-name small { font-size: 11px; color: rgba(255,255,255,.85); }
+.mk-skin-preview:not(.mk-has-skin)::after {
+  content: "24"; position: absolute; z-index: 0; left: -4px; top: 27px;
+  color: rgba(var(--mk-num-color,167,139,250),.09);
+  font: 950 78px/.72 Inter,sans-serif; letter-spacing: -.09em;
+  transform: rotate(-7deg); pointer-events: none;
+}
+.mk-skin-preview .pv-name-tab {
+  position: absolute; z-index: 4; inset: 0 auto auto 0; width: 65%; height: 23%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  box-sizing: border-box; padding: 3px 15% 3px 5%; overflow: hidden;
+  background: linear-gradient(120deg, rgba(var(--mk-num-color,167,139,250),.78), rgba(var(--mk-num-color,167,139,250),.50) 70%, rgba(255,255,255,.16));
+  -webkit-mask: var(--pv-tab-mask) 0 0/100% 100% no-repeat;
+  mask: var(--pv-tab-mask) 0 0/100% 100% no-repeat;
+}
+.mk-skin-preview .pv-name-main,
+.mk-skin-preview .pv-name-sub {
+  display: block; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: #fff; -webkit-text-fill-color: #fff; text-align: center; text-transform: uppercase;
+  text-shadow: 0 1px 2px rgba(0,0,0,.65);
+}
+.mk-skin-preview .pv-name-main { font: 900 9px/1 Inter, sans-serif; letter-spacing: .02em; }
+.mk-skin-preview .pv-name-sub { margin-top: 1px; font: 800 7px/1 Inter, sans-serif; opacity: .86; }
+.mk-skin-preview .pv-hours {
+  position: absolute; z-index: 3; top: 8px; right: 9px; color: #fff; text-align: right;
+  font-family: Inter, sans-serif; line-height: 1;
+}
+.mk-skin-preview .pv-hours b { display: block; font-size: 12px; font-weight: 900; }
+.mk-skin-preview .pv-hours small { display: block; margin-top: 2px; color: rgba(255,255,255,.58); font-size: 5.5px; font-weight: 800; letter-spacing: .08em; }
+.mk-skin-preview .pv-num {
+  position: absolute; z-index: 2; left: 50%; top: 47%; transform: translate(-50%,-50%);
+  font: 900 36px/.9 Inter, sans-serif; color: rgba(var(--mk-num-color, 167,139,250), var(--mk-num-alpha, 1));
+}
+.mk-skin-preview .pv-fatigue {
+  position: absolute; z-index: 3; left: 10px; right: 10px; bottom: 34px;
+  display: grid; grid-template-columns: repeat(6,1fr) auto; align-items: center; gap: 2px;
+}
+.mk-skin-preview .pv-fatigue i { height: 3px; border-radius: 5px; background: rgba(255,255,255,.13); }
+.mk-skin-preview .pv-fatigue i:nth-child(-n+2) { background: rgba(var(--mk-num-color,167,139,250),.75); }
+.mk-skin-preview .pv-fatigue strong { margin-left: 2px; color: rgba(var(--mk-num-color,167,139,250),1); font: 900 8px/1 Inter,sans-serif; }
+.mk-skin-preview .pv-coffee {
+  position: absolute; z-index: 3; left: 50%; bottom: 8px; transform: translateX(-50%);
+  width: 82px; height: 21px; display: grid; grid-template-columns: 24px 1fr 24px; align-items: center;
+  overflow: hidden; border: 1px solid rgba(196,132,69,.58); border-radius: 999px;
+  background: rgba(34,23,14,.82); color: #c48445; text-align: center; font: 900 10px/1 Inter,sans-serif;
+}
+.mk-skin-preview .pv-coffee span { height: 100%; display: flex; align-items: center; justify-content: center; border-inline: 1px solid rgba(196,132,69,.26); font-size: 8px; }
 .mk-skin-presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(102px, 1fr)); gap: 5px; }
 .mk-skin-preset { display: flex; align-items: center; gap: 6px; min-height: 31px; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.10); border-radius: 8px; color: rgba(255,255,255,.84); font-size: 10.5px; font-weight: 700; padding: 4px 7px; cursor: pointer; }
 .mk-skin-preset:hover { border-color: rgba(100,210,255,.5); }
@@ -12637,13 +12683,10 @@ window.addEventListener('message', function(e) {
 #grafiks-list.grid-view .card.mk-has-txt .name-sub { opacity: .85; }
 #grafiks-list.grid-view .card.mk-has-txt .mk-mid-initials { opacity: .38; }
 #grafiks-list.grid-view .card.mk-has-txt .mk-mid-month-label { opacity: .6; }
-.mk-skin-preview.mk-has-txt .pv-name,
-.mk-skin-preview.mk-has-txt .pv-ini,
 .mk-skin-preview.mk-has-txt .pv-hours {
   color: rgb(var(--mk-txt-color, 255,255,255)) !important;
   -webkit-text-fill-color: rgb(var(--mk-txt-color, 255,255,255)) !important;
 }
-.mk-skin-preview.mk-has-txt .pv-ini { opacity: .45; }
 /* ── v3: emoji ūdenszīmes kontrole ── */
 #grafiks-list.grid-view .card.mk-emoji-custom .mk-mid-bg-emoji { opacity: var(--mk-emoji-op, .13) !important; }
 #grafiks-list.grid-view .card.mk-emoji-normal .mk-mid-bg-emoji { filter: none !important; }
@@ -12651,7 +12694,7 @@ window.addEventListener('message', function(e) {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%,-58%);
   font-size: 58px; line-height: 1; pointer-events: none;
   filter: invert(1) hue-rotate(180deg);
-  opacity: var(--mk-emoji-op, .13);
+  opacity: var(--mk-emoji-op, .13); z-index: 1;
 }
 .mk-skin-preview.mk-emoji-normal .pv-emoji { filter: none; }
 /* ── v3: picker jaunie elementi ── */
@@ -17130,6 +17173,300 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   paintCounts();
 })();
 </script>
+
+<style id="mk-mid-card-focus-v1">
+/* Employee cards: quiet, static surfaces with one clear focal value.
+   This layer deliberately keeps the existing DOM/data/actions untouched. */
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) {
+  --mk-card-accent: var(--mk-num-color, 167, 139, 250);
+  --mk-tab-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 50' preserveAspectRatio='none'%3E%3Cpath fill='%23fff' d='M0 0H100C93 0 91 12 86 24C81 37 78 50 68 50H0Z'/%3E%3C/svg%3E");
+  isolation: isolate !important;
+  padding: clamp(9px, 3.4cqw, 14px) !important;
+  border-radius: clamp(18px, 7cqw, 24px) !important;
+  filter: none !important;
+  transform: none !important;
+  transition: none !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .22),
+    inset 0 0 0 2px rgba(var(--mk-card-accent), .58),
+    inset 0 2px 0 rgba(255, 255, 255, .12) !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card-rd:not(.rg-feedback-card) {
+  --mk-card-accent: var(--mk-num-color, 255, 107, 122);
+}
+
+/* Saved artwork remains exactly the selected image. Only a restrained,
+   non-blurred readability wash is placed above it. */
+#grafiks-list.grid-view .card.mk-mid-card.mk-has-skin:not(.rg-feedback-card):not(.mk-has-grad),
+#grafiks-list.grid-view .card.mk-mid-card.mk-has-skin:not(.rg-feedback-card):not(.mk-has-grad):hover {
+  background:
+    linear-gradient(180deg, rgba(5, 9, 16, .30) 0%, rgba(5, 9, 16, .12) 52%, rgba(5, 9, 16, .60) 100%),
+    var(--mk-skin-img) center/cover no-repeat,
+    #0b1019 !important;
+  background-blend-mode: normal !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card.mk-has-skin.mk-skin-fit:not(.rg-feedback-card):not(.mk-has-grad),
+#grafiks-list.grid-view .card.mk-mid-card.mk-has-skin.mk-skin-fit:not(.rg-feedback-card):not(.mk-has-grad):hover {
+  background:
+    linear-gradient(180deg, rgba(5, 9, 16, .30) 0%, rgba(5, 9, 16, .12) 52%, rgba(5, 9, 16, .60) 100%),
+    var(--mk-skin-img) center/100% 100% no-repeat,
+    #0b1019 !important;
+}
+
+/* No saved skin: a cheap static abstract surface. The oversized shift value
+   becomes part of the artwork; no image request, blur or runtime animation. */
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):not(.mk-has-skin) {
+  background:
+    radial-gradient(85% 72% at 84% 18%, rgba(var(--mk-card-accent), .24) 0%, transparent 70%),
+    radial-gradient(95% 120% at 5% 106%, rgba(var(--mk-card-accent), .17) 0%, transparent 66%),
+    linear-gradient(150deg, #121a27 0%, #09111c 56%, #070c14 100%) !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):not(.mk-has-skin)::before {
+  content: attr(data-duty-hours) !important;
+  position: absolute !important;
+  z-index: 0 !important;
+  left: -3% !important;
+  top: 22% !important;
+  transform: rotate(-7deg) !important;
+  color: rgba(var(--mk-card-accent), .085) !important;
+  font: 950 clamp(92px, 68cqw, 190px)/.74 Inter, system-ui, sans-serif !important;
+  letter-spacing: -.09em !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):not(.mk-has-skin)::after {
+  content: "" !important;
+  position: absolute !important;
+  z-index: 1 !important;
+  width: 78% !important;
+  aspect-ratio: 1 !important;
+  right: -35% !important;
+  bottom: -44% !important;
+  border: clamp(18px, 10cqw, 36px) solid rgba(var(--mk-card-accent), .055) !important;
+  border-radius: 50% !important;
+  pointer-events: none !important;
+}
+
+/* Remove the old central emoji artwork and duplicate initials. Identity lives
+   in one compact corner block; the centre contains only the shift duration. */
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-initials,
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-bg-emoji {
+  display: none !important;
+}
+/* Every card keeps the worker's chosen emoji as quiet background identity.
+   It stays static, behind the main value, and needs no new image, animation
+   or backdrop processing. */
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):not(.mk-has-skin) .mk-mid-bg-emoji,
+#grafiks-list.grid-view .card.mk-mid-card.mk-has-skin:not(.rg-feedback-card) .mk-mid-bg-emoji {
+  display: block !important;
+  left: 55% !important;
+  top: 49% !important;
+  transform: translate(-50%, -54%) rotate(-7deg) !important;
+  font-size: clamp(72px, 47cqw, 148px) !important;
+  opacity: var(--mk-emoji-op, .12) !important;
+  z-index: 0 !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-top {
+  z-index: 4 !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-left {
+  width: min(58%, 142px) !important;
+  padding: 0 !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-status-icons {
+  left: clamp(1px, .8cqw, 3px) !important;
+  top: clamp(43px, 17cqw, 58px) !important;
+  flex-direction: row !important;
+  justify-content: flex-start !important;
+  gap: clamp(3px, 1.4cqw, 5px) !important;
+  max-width: 100% !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-person-emoji,
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-status-emoji {
+  font-size: clamp(13px, 6.5cqw, 21px) !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-emoji-edit {
+  width: clamp(15px, 6.4cqw, 21px) !important;
+  height: clamp(14px, 5.8cqw, 19px) !important;
+  border-color: rgba(255,255,255,.10) !important;
+  background: rgba(5,9,15,.68) !important;
+}
+
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-center {
+  inset: 0 !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  transform: none !important;
+  display: block !important;
+  text-align: left !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-name-wrap {
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: min(65%, 166px) !important;
+  max-width: min(65%, 166px) !important;
+  height: clamp(31px, 19cqw, 56px) !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  padding: clamp(4px, 1.8cqw, 6px) 15% clamp(4px, 1.8cqw, 6px) 5% !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0 !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background:
+    linear-gradient(120deg, rgba(var(--mk-card-accent), .78), rgba(var(--mk-card-accent), .50) 70%, rgba(255,255,255,.16)) !important;
+  -webkit-mask-image: var(--mk-tab-mask) !important;
+  mask-image: var(--mk-tab-mask) !important;
+  -webkit-mask-size: 100% 100% !important;
+  mask-size: 100% 100% !important;
+  -webkit-mask-repeat: no-repeat !important;
+  mask-repeat: no-repeat !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-name-wrap::before {
+  content: none !important;
+  display: none !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-name-wrap .name-main,
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-name-wrap .name-sub {
+  position: relative !important;
+  z-index: 1 !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-name-wrap .name-main {
+  width: 100% !important;
+  max-width: 100% !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  font: 900 clamp(9.5px, 4.7cqw, 15px)/1.02 Inter, system-ui, sans-serif !important;
+  letter-spacing: .025em !important;
+  text-transform: uppercase !important;
+  text-align: center !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,.72) !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-name-wrap.mk-name-long .name-main {
+  font-size: clamp(8.5px, 4.1cqw, 13.5px) !important;
+  letter-spacing: .005em !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-name-wrap .name-sub {
+  width: 100% !important;
+  max-width: 100% !important;
+  color: rgba(255,255,255,.84) !important;
+  -webkit-text-fill-color: rgba(255,255,255,.84) !important;
+  font: 800 clamp(7.5px, 3.5cqw, 11.5px)/1.02 Inter, system-ui, sans-serif !important;
+  letter-spacing: .015em !important;
+  text-transform: uppercase !important;
+  text-align: center !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,.72) !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card.mk-has-txt:not(.rg-feedback-card) .mk-mid-name-wrap .name-main,
+#grafiks-list.grid-view .card.mk-mid-card.mk-has-txt:not(.rg-feedback-card) .mk-mid-name-wrap .name-sub {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-hours.card-shift {
+  position: absolute !important;
+  z-index: 2 !important;
+  left: 50% !important;
+  top: 47% !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  color: rgb(var(--mk-card-accent)) !important;
+  -webkit-text-fill-color: rgb(var(--mk-card-accent)) !important;
+  font-size: clamp(35px, 23cqw, 72px) !important;
+  line-height: .82 !important;
+  letter-spacing: -.055em !important;
+  white-space: nowrap !important;
+  text-shadow: none !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-hours.card-shift::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* Secondary month total stays in the corner; it no longer competes with the
+   shift duration. */
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-month-num {
+  font-size: clamp(10px, 5.2cqw, 17px) !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-month-label {
+  font-size: clamp(5px, 2.4cqw, 8px) !important;
+  opacity: .68 !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-shift-icons {
+  margin-top: clamp(3px, 1.3cqw, 5px) !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-shift-emoji {
+  font-size: clamp(14px, 6.8cqw, 22px) !important;
+}
+
+/* Larger, centred and easier-to-hit coffee control. The label remains a quiet
+   left anchor, while the real controls form a single stable centre pill. */
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-bottom {
+  z-index: 5 !important;
+  gap: clamp(5px, 2cqw, 8px) !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-coffee {
+  position: relative !important;
+  min-height: clamp(25px, 10cqw, 34px) !important;
+  justify-content: center !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-lbl {
+  display: none !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-cups,
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-count {
+  display: none !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-step {
+  min-height: clamp(24px, 9.4cqw, 32px) !important;
+  width: clamp(96px, 49cqw, 126px) !important;
+  margin: 0 auto !important;
+  border-color: rgba(196, 132, 69, .62) !important;
+  background: rgba(34, 23, 14, .84) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.07) !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-sub,
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-add {
+  flex: 0 0 clamp(27px, 11cqw, 35px) !important;
+  min-width: 0 !important;
+  min-height: clamp(24px, 9.4cqw, 32px) !important;
+  font-size: clamp(14px, 6cqw, 20px) !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-mid {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  min-height: clamp(24px, 9.4cqw, 32px) !important;
+  gap: clamp(3px, 1.4cqw, 5px) !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-mid svg {
+  width: clamp(16px, 7cqw, 22px) !important;
+  height: clamp(16px, 7cqw, 22px) !important;
+  transform: translateX(3px) !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-num {
+  font-size: clamp(10px, 4.4cqw, 15px) !important;
+}
+
+/* The mobile shell keeps the same hierarchy without stealing vertical room. */
+@media (max-width: 700px) {
+  #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-hours.card-shift {
+    top: 46% !important;
+  }
+}
+</style>
 
 </body>
 </html>
