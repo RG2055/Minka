@@ -88,6 +88,60 @@ function cleanClientId(value) {
   return /^[a-zA-Z0-9_-]{8,80}$/.test(clientId) ? clientId : "";
 }
 
+function cleanEditToken(value, optional = false) {
+  const token = String(value || "").trim();
+  if (!token && optional) return "";
+  // 32 random bytes encoded as unpadded base64url are exactly 43 characters.
+  return /^[a-zA-Z0-9_-]{43}$/.test(token) ? token : "";
+}
+
+function bytesToHex(bytes) {
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function hexToBytes(value) {
+  const hex = String(value || "").trim().toLowerCase();
+  if (!/^[a-f0-9]{64}$/.test(hex)) return null;
+  const bytes = new Uint8Array(32);
+  for (let index = 0; index < bytes.length; index += 1) {
+    bytes[index] = Number.parseInt(hex.slice(index * 2, index * 2 + 2), 16);
+  }
+  return bytes;
+}
+
+async function digestEditToken(token) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
+  return new Uint8Array(digest);
+}
+
+async function hashEditToken(token) {
+  return bytesToHex(await digestEditToken(token));
+}
+
+function timingSafeEqual(left, right) {
+  if (!(left instanceof Uint8Array) || !(right instanceof Uint8Array) || left.byteLength !== right.byteLength) {
+    return false;
+  }
+  if (typeof crypto.subtle.timingSafeEqual === "function") {
+    return crypto.subtle.timingSafeEqual(left, right);
+  }
+  // Node's Web Crypto used by local tests does not expose the Workers-only
+  // timingSafeEqual extension. Both inputs are fixed-size SHA-256 digests.
+  let difference = 0;
+  for (let index = 0; index < left.byteLength; index += 1) difference |= left[index] ^ right[index];
+  return difference === 0;
+}
+
+async function ownsMessage(env, clientId, editToken) {
+  const result = await env.DB.prepare(
+    "SELECT edit_token_hash FROM feedback_messages WHERE client_id = ?1"
+  ).bind(clientId).all();
+  const row = (result.results || [])[0];
+  const expected = hexToBytes(row && row.edit_token_hash);
+  if (!expected) return false;
+  return timingSafeEqual(await digestEditToken(editToken), expected);
+}
+
 function mapMessage(row) {
   return {
     id: Number(row.id),
@@ -231,18 +285,23 @@ async function addMessage(request, env) {
   const kind = cleanKind(body?.kind);
   const text = cleanText(body?.text);
   const clientId = cleanClientId(body?.clientId);
+  // Optional during rollout so an older cached PWA can still post. Such a
+  // legacy message is readable but intentionally cannot be edited or deleted.
+  const editToken = cleanEditToken(body?.editToken, true);
   if (!date) return json(request, { ok: false, error: "valid date required" }, 400);
   if (!kind) return json(request, { ok: false, error: "invalid kind" }, 400);
   if (!text) return json(request, { ok: false, error: "text must be 1-700 characters" }, 400);
   if (!clientId) return json(request, { ok: false, error: "valid clientId required" }, 400);
+  if (body?.editToken && !editToken) return json(request, { ok: false, error: "invalid editToken" }, 400);
 
   const createdAt = Date.now();
+  const editTokenHash = editToken ? await hashEditToken(editToken) : null;
   const results = await env.DB.batch([
     env.DB.prepare(`
-      INSERT INTO feedback_messages (client_id, shift_day, kind, body, created_at)
-      VALUES (?1, ?2, ?3, ?4, ?5)
+      INSERT INTO feedback_messages (client_id, shift_day, kind, body, created_at, edit_token_hash)
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6)
       ON CONFLICT(client_id) DO NOTHING
-    `).bind(clientId, date, kind, text, createdAt),
+    `).bind(clientId, date, kind, text, createdAt, editTokenHash),
     env.DB.prepare(`
       SELECT id, client_id, shift_day, kind, body, created_at
       FROM feedback_messages WHERE client_id = ?1
@@ -256,9 +315,14 @@ async function addMessage(request, env) {
 async function editMessage(request, env) {
   const body = await readLimitedJson(request);
   const clientId = cleanClientId(body?.clientId);
+  const editToken = cleanEditToken(body?.editToken);
   const text = cleanText(body?.text);
   if (!clientId) return json(request, { ok: false, error: "valid clientId required" }, 400);
+  if (!editToken) return json(request, { ok: false, error: "valid editToken required" }, 400);
   if (!text) return json(request, { ok: false, error: "text must be 1-700 characters" }, 400);
+  if (!await ownsMessage(env, clientId, editToken)) {
+    return json(request, { ok: false, error: "message mutation not authorized" }, 403);
+  }
   const result = await env.DB.prepare(`
     UPDATE feedback_messages SET body = ?1 WHERE client_id = ?2
     RETURNING id, client_id, shift_day, kind, body, created_at
@@ -271,7 +335,12 @@ async function editMessage(request, env) {
 async function deleteMessage(request, env) {
   const body = await readLimitedJson(request);
   const clientId = cleanClientId(body?.clientId);
+  const editToken = cleanEditToken(body?.editToken);
   if (!clientId) return json(request, { ok: false, error: "valid clientId required" }, 400);
+  if (!editToken) return json(request, { ok: false, error: "valid editToken required" }, 400);
+  if (!await ownsMessage(env, clientId, editToken)) {
+    return json(request, { ok: false, error: "message mutation not authorized" }, 403);
+  }
   const result = await env.DB.prepare(
     "DELETE FROM feedback_messages WHERE client_id = ?1 RETURNING id"
   ).bind(clientId).all();

@@ -16078,6 +16078,14 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
     return 'rg_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 12);
   }
+  function newEditToken() {
+    if (!window.crypto || typeof window.crypto.getRandomValues !== 'function' || typeof window.btoa !== 'function') return '';
+    var bytes = new Uint8Array(32);
+    window.crypto.getRandomValues(bytes);
+    var binary = '';
+    bytes.forEach(function (byte) { binary += String.fromCharCode(byte); });
+    return window.btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  }
   function readJson(key, fallback) {
     try { return JSON.parse(localStorage.getItem(key) || '') || fallback; }
     catch (_e) { return fallback; }
@@ -17538,6 +17546,9 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     var all = readJson(TEXT_KEY, []);
     if (!Array.isArray(all)) return;
     writeJson(TEXT_KEY, all.filter(function (item) { return item && item.clientId !== clientId; }));
+    if (Array.isArray(communityMessages)) {
+      communityMessages = communityMessages.filter(function (item) { return item && item.clientId !== clientId; });
+    }
     renderDayGroups();
     renderMessages();
     paintEntryCounts();
@@ -17589,11 +17600,19 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     for (var i = 0; i < targets.length; i++) {
       var item = targets[i];
       try {
+        var editToken = item.editToken || communityEditToken(item.clientId);
         await fetchFeedback('/api/feedback/message', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ date: item.shiftDay, kind: item.type, text: item.text, clientId: item.clientId })
+          body: JSON.stringify({
+            date: item.shiftDay,
+            kind: item.type,
+            text: item.text,
+            clientId: item.clientId,
+            editToken: editToken || undefined
+          })
         });
+        if (editToken) rememberCommunityToken(item.clientId, editToken);
         all = readJson(TEXT_KEY, []);
         all = Array.isArray(all) ? all.filter(function (saved) { return saved.clientId !== item.clientId; }) : [];
         writeJson(TEXT_KEY, all);
@@ -17658,6 +17677,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
      pages into one inbox and stores the optional topic/reply metadata inside
      the message body, so existing comments stay readable and no data is lost. */
   var COMMUNITY_OWNED_KEY = 'minkaCommunityOwnedV1';
+  var COMMUNITY_EDIT_TOKEN_KEY = 'minkaCommunityEditTokensV1';
   var COMMUNITY_AUTHOR_KEY = 'minkaCommunityAuthorV1';
   var communityMessages = [];
   var communityMode = 'all';
@@ -17675,6 +17695,29 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     var items = communityOwnedIds();
     if (items.indexOf(clientId) < 0) items.push(clientId);
     writeJson(COMMUNITY_OWNED_KEY, items.slice(-500));
+  }
+  function communityEditTokens() {
+    var value = readJson(COMMUNITY_EDIT_TOKEN_KEY, {});
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  }
+  function communityEditToken(clientId) {
+    var token = communityEditTokens()[String(clientId || '')];
+    return /^[a-zA-Z0-9_-]{43}$/.test(String(token || '')) ? token : '';
+  }
+  function rememberCommunityToken(clientId, editToken) {
+    if (!clientId || !/^[a-zA-Z0-9_-]{43}$/.test(String(editToken || ''))) return;
+    var tokens = communityEditTokens();
+    delete tokens[clientId];
+    tokens[clientId] = editToken;
+    var keys = Object.keys(tokens);
+    while (keys.length > 500) delete tokens[keys.shift()];
+    writeJson(COMMUNITY_EDIT_TOKEN_KEY, tokens);
+  }
+  function forgetCommunityOwnership(clientId) {
+    var tokens = communityEditTokens();
+    delete tokens[clientId];
+    writeJson(COMMUNITY_EDIT_TOKEN_KEY, tokens);
+    writeJson(COMMUNITY_OWNED_KEY, communityOwnedIds().filter(function (item) { return item !== clientId; }));
   }
   function communityEncode(topic, parent, author, body) {
     var cleanTopic = String(topic || '').trim().slice(0, 44) || 'Vispārīgi';
@@ -17864,7 +17907,9 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     communityMessages.forEach(function (item) { if (item.key) byKey[item.key] = item; });
     var owned = communityOwnedIds();
     items.forEach(function (item) {
-      var own = !!item.pending || owned.indexOf(item.clientId) >= 0;
+      var editToken = communityEditToken(item.clientId);
+      var own = !!item.pending || !!editToken || owned.indexOf(item.clientId) >= 0;
+      var canMutate = !!item.pending || !!editToken;
       var authorName = item.author || 'Anonīms';
       var article = document.createElement('article');
       article.className = 'rg-comms-message' + (own ? ' is-own' : '');
@@ -17902,7 +17947,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       reply.dataset.rgCommunityReply = item.key;
       reply.textContent = '↩ Atbildēt';
       actions.appendChild(reply);
-      if (own && item.clientId) {
+      if (canMutate && item.clientId) {
         var edit = document.createElement('button');
         edit.type = 'button';
         edit.dataset.rgCommunityEdit = item.key;
@@ -17932,6 +17977,22 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       await postPendingMessages(item.shiftDay, item.type);
     }
   }
+  async function loadCommunityPair(pair) {
+    var messages = [];
+    var before = null;
+    var seenCursors = {};
+    while (true) {
+      var path = '/api/feedback?date=' + encodeURIComponent(pair.date)
+        + '&kind=' + encodeURIComponent(pair.kind) + '&limit=100';
+      if (before != null) path += '&before=' + encodeURIComponent(before);
+      var data = await fetchFeedback(path);
+      messages = messages.concat(data.messages || []);
+      if (!data.hasMore || data.nextBefore == null || seenCursors[data.nextBefore]) break;
+      seenCursors[data.nextBefore] = true;
+      before = data.nextBefore;
+    }
+    return messages;
+  }
   async function loadCommunity() {
     var requestId = ++communityLoadId;
     commsStatus.textContent = 'Ielādē saraksti…';
@@ -17948,8 +18009,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
         if (!pairs.some(function (pair) { return pair.date === shiftDayKey() && pair.kind === kind; })) pairs.push({ date: shiftDayKey(), kind: kind });
       });
       var pages = await Promise.all(pairs.map(function (pair) {
-        return fetchFeedback('/api/feedback?date=' + encodeURIComponent(pair.date) + '&kind=' + pair.kind + '&limit=100')
-          .then(function (data) { return data.messages || []; }).catch(function () { return []; });
+        return loadCommunityPair(pair).catch(function () { return []; });
       }));
       if (requestId !== communityLoadId) return;
       var combined = [].concat.apply([], pages);
@@ -18021,27 +18081,44 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     var body = textarea.value.trim();
     if (!body) return;
     var topic = commsTopicInput.value.trim() || (communityView === 'topic' ? communityTopic : 'Vispārīgi');
-    var parent = communityReply && communityReply.key || '';
+    var parent = communityEditing ? (communityEditing.parent || '') : (communityReply && communityReply.key || '');
     var encoded = communityEncode(topic, parent, commsAuthor.value, body);
     save.disabled = true;
     commsStatus.textContent = communityEditing ? 'Saglabā izmaiņas…' : 'Nosūta…';
     if (communityEditing && communityEditing.clientId) {
-      try {
-        await fetchFeedback('/api/feedback/message', {
-          method: 'PATCH', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ clientId: communityEditing.clientId, text: encoded })
+      if (communityEditing.pending) {
+        var pendingItems = readJson(TEXT_KEY, []);
+        if (!Array.isArray(pendingItems)) pendingItems = [];
+        pendingItems = pendingItems.map(function (item) {
+          if (!item || item.clientId !== communityEditing.clientId) return item;
+          return Object.assign({}, item, { text: encoded });
         });
-      } catch (_error) {
-        commsStatus.textContent = 'Neizdevās rediģēt';
-        save.disabled = false;
-        return;
+        writeJson(TEXT_KEY, pendingItems);
+      } else {
+        var ownedToken = communityEditToken(communityEditing.clientId);
+        if (!ownedToken) {
+          commsStatus.textContent = 'Šī vecā ziņa ir tikai lasāma';
+          save.disabled = false;
+          return;
+        }
+        try {
+          await fetchFeedback('/api/feedback/message', {
+            method: 'PATCH', headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ clientId: communityEditing.clientId, editToken: ownedToken, text: encoded })
+          });
+        } catch (_error) {
+          commsStatus.textContent = 'Neizdevās rediģēt';
+          save.disabled = false;
+          return;
+        }
       }
     } else {
       var clientId = newClientId();
+      var editToken = newEditToken();
       rememberCommunityId(clientId);
       var items = readJson(TEXT_KEY, []);
       if (!Array.isArray(items)) items = [];
-      items.unshift({ clientId: clientId, type: 'comment', text: encoded, shiftDay: shiftDayKey(), createdAt: Date.now(), pending: true });
+      items.unshift({ clientId: clientId, editToken: editToken, type: 'comment', text: encoded, shiftDay: shiftDayKey(), createdAt: Date.now(), pending: true });
       writeJson(TEXT_KEY, items.slice(0, 500));
       await postPendingMessages(shiftDayKey(), 'comment');
     }
@@ -18109,10 +18186,23 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     if (remove) {
       var item = communityMessages.find(function (entry) { return entry.key === remove.dataset.rgCommunityDelete; });
       if (!item || !item.clientId || !window.confirm('Dzēst šo ziņu?')) return;
+      if (item.pending) {
+        removePendingMessage(item.clientId);
+        commsStatus.textContent = '';
+        return;
+      }
+      var editToken = communityEditToken(item.clientId);
+      if (!editToken) {
+        commsStatus.textContent = 'Šī vecā ziņa ir tikai lasāma';
+        return;
+      }
       fetchFeedback('/api/feedback/message', {
         method: 'DELETE', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ clientId: item.clientId })
-      }).then(function () { return loadGlobalEntryCount('comment', true); })
+        body: JSON.stringify({ clientId: item.clientId, editToken: editToken })
+      }).then(function () {
+        forgetCommunityOwnership(item.clientId);
+        return loadGlobalEntryCount('comment', true);
+      })
         .then(loadCommunity).catch(function () { commsStatus.textContent = 'Neizdevās izdzēst'; });
     }
   });
