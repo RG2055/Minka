@@ -4425,7 +4425,19 @@ function filterFullList(btn) {
 
   function g_updateList() {
     const container = document.getElementById('grafiks-list');
-    container.innerHTML = "";
+    // Read the stable width before invalidating the old roster. The synchronous
+    // finalizer can then size the replacement grid without forcing an extra
+    // layout read after dozens of new nodes have been inserted.
+    const rosterWidth = Math.max(0, container.clientWidth || 0);
+    // The feedback card contains the largest DOM/SVG subtree in the roster and
+    // does not belong to a specific employee. Reuse it across day changes
+    // instead of parsing and constructing the same markup on every click.
+    const reusableFeedbackCard = container.querySelector('.rg-feedback-card');
+    if (reusableFeedbackCard) {
+      reusableFeedbackCard.remove();
+      window.__minkaReusableFeedbackCard = reusableFeedbackCard;
+    }
+    container.replaceChildren();
     container.className = isGridView ? 'grid-view' : 'list-view';
 
     const isToday = (activeDateStr === g_todayStr);
@@ -5452,6 +5464,19 @@ function filterFullList(btn) {
           .forEach(w => { container.appendChild(buildCard(w, false)); });
       }
     }
+
+    // The mood card, auto-sized columns and cross-section pull-up used to run
+    // from MutationObserver/requestAnimationFrame/setTimeout in three separate
+    // paints. On a day switch that briefly pushed the radiographer cards down
+    // before snapping them back. When the integration hook is available,
+    // finalize the complete roster atomically inside this render.
+    try {
+      if (typeof window.__minkaFinalizeRosterCards === 'function') {
+        window.__minkaFinalizeRosterCards(rosterWidth);
+      } else if (typeof window.__minkaAutoSizeCardsNow === 'function') {
+        window.__minkaAutoSizeCardsNow(rosterWidth);
+      }
+    } catch (_layoutError) {}
 
     syncCoffeeDay();
     startCoffeePolling();

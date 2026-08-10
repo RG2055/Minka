@@ -1171,8 +1171,8 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260810community8"></script>
-<script src="js/calendar_extras_v4.js?v=20260728f"></script>
+<script src="js/calendar.js?v=20260810layout2"></script>
+<script src="js/calendar_extras_v4.js?v=20260810layout2"></script>
 <script src="js/fatigue.js?v=20260728f"></script>
 <script src="js/nightsplit.js?v=20260801release1" defer></script>
 <script src="js/monthcal.js?v=20260802bdayhide1" defer></script>
@@ -17094,6 +17094,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   }
   var moodSectionLayoutTimer = 0;
   var moodSectionResizeTimer = 0;
+  var moodPullupCache = new Map();
   function clearMoodSectionLayout(section, grid) {
     if (section) {
       section.classList.remove('rg-mood-pullup');
@@ -17106,7 +17107,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       });
     }
   }
-  function layoutMoodSections() {
+  function layoutMoodSections(rosterWidth) {
     var mood = list.querySelector('.rg-feedback-card');
     var rdLabel = list.querySelector('.cards-section-label-rd');
     var rgLabel = list.querySelector('.cards-section-label-rg');
@@ -17118,16 +17119,41 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       clearMoodSectionLayout(rgSection, rgGrid);
       return;
     }
-    var columns = String(getComputedStyle(rdGrid).gridTemplateColumns || '')
-      .trim().split(/\s+/).filter(Boolean).length;
     var mobile = document.documentElement.classList.contains('mk-mobile-shell');
+    var knownWidth = Math.max(0, Number(rosterWidth) || 0);
+    var columns;
+    if (knownWidth) {
+      // These values mirror the final authoritative grid rules: 3 columns on
+      // mobile, 7 on the large-monitor layout, otherwise desktop auto-fill at
+      // 132px + 16px gap (radio-open uses its compact 96px + 7px rule).
+      if (mobile) columns = 3;
+      else if (window.innerWidth >= 1800 && window.innerHeight >= 880) columns = 7;
+      else if (document.documentElement.classList.contains('host-radio-open')) {
+        columns = Math.max(1, Math.floor((knownWidth + 7) / 103));
+      } else {
+        columns = Math.max(1, Math.floor((knownWidth + 16) / 148));
+      }
+    } else {
+      columns = String(getComputedStyle(rdGrid).gridTemplateColumns || '')
+        .trim().split(/\s+/).filter(Boolean).length;
+      knownWidth = Math.max(0, Math.round(rdGrid.clientWidth || list.clientWidth || 0));
+    }
     var employee = rdGrid.querySelector('.card:not(.rg-feedback-card)')
       || rgGrid.querySelector('.card');
     if (mobile || columns < 6 || !employee) {
       clearMoodSectionLayout(rgSection, rgGrid);
       return;
     }
-    var pullup = Math.max(0, mood.getBoundingClientRect().height - employee.getBoundingClientRect().height);
+    var cacheKey = [
+      Math.round(knownWidth), columns, mobile ? 1 : 0,
+      document.documentElement.classList.contains('host-radio-open') ? 1 : 0,
+      document.fonts ? document.fonts.status : 'ready'
+    ].join('|');
+    var pullup = moodPullupCache.get(cacheKey);
+    if (!Number.isFinite(pullup)) {
+      pullup = Math.max(0, mood.getBoundingClientRect().height - employee.getBoundingClientRect().height);
+      moodPullupCache.set(cacheKey, pullup);
+    }
     if (pullup < 12) {
       clearMoodSectionLayout(rgSection, rgGrid);
       return;
@@ -17153,30 +17179,59 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     window.clearTimeout(moodSectionResizeTimer);
     moodSectionResizeTimer = window.setTimeout(layoutMoodSections, 180);
   }, { passive: true });
-  function mount() {
+  function mount(deferLayout, skipRatings) {
     var label = list.querySelector('.cards-section-label-rd');
     var section = label && label.closest('.cards-section');
     var grid = section && section.querySelector('.cards-subgrid');
     if (!grid) return;
     grid.classList.add('rg-has-mood-card');
     if (grid.querySelector('.rg-feedback-card')) {
-      scheduleMoodSectionLayout();
+      if (!deferLayout) scheduleMoodSectionLayout();
       return;
     }
-    var pulse = document.createElement('div');
-    pulse.className = 'card mk-mid-card mk-mid-card-rd rg-feedback-card';
-    pulse.setAttribute('aria-label', 'Novērtē maiņu');
-    pulse.innerHTML = '<div class="rg-feedback-cloud" aria-hidden="true"></div><div class="rg-feedback-card-head-spacer" aria-hidden="true"></div>'
-      + '<div class="rg-feedback-card-main"><strong class="rg-feedback-card-title">Novērtē maiņu</strong>'
-      + moodBlobMarkup()
-      + '<span class="rg-pulse-taps" role="group" aria-label="Ātrās reakcijas">' + reactionButtons() + '</span>'
-      + '<small class="rg-feedback-card-reaction-label" aria-live="polite">Izvēlies sajūtu</small></div>'
-      + '<div class="rg-feedback-card-actions"><button class="rg-pulse-write rg-pulse-write--comment" type="button" data-rg-write="comment" title="Atvērt komentārus"><b class="rg-comment-icon" aria-hidden="true"></b><span>Komentāri</span><small class="rg-feedback-action-count" data-rg-action-count="comment"></small></button></div>';
+    var pulse = window.__minkaReusableFeedbackCard;
+    if (pulse && pulse.nodeType === 1) {
+      window.__minkaReusableFeedbackCard = null;
+    } else {
+      pulse = document.createElement('div');
+      pulse.className = 'card mk-mid-card mk-mid-card-rd rg-feedback-card';
+      pulse.setAttribute('aria-label', 'Novērtē maiņu');
+      pulse.innerHTML = '<div class="rg-feedback-cloud" aria-hidden="true"></div><div class="rg-feedback-card-head-spacer" aria-hidden="true"></div>'
+        + '<div class="rg-feedback-card-main"><strong class="rg-feedback-card-title">Novērtē maiņu</strong>'
+        + moodBlobMarkup()
+        + '<span class="rg-pulse-taps" role="group" aria-label="Ātrās reakcijas">' + reactionButtons() + '</span>'
+        + '<small class="rg-feedback-card-reaction-label" aria-live="polite">Izvēlies sajūtu</small></div>'
+        + '<div class="rg-feedback-card-actions"><button class="rg-pulse-write rg-pulse-write--comment" type="button" data-rg-write="comment" title="Atvērt komentārus"><b class="rg-comment-icon" aria-hidden="true"></b><span>Komentāri</span><small class="rg-feedback-action-count" data-rg-action-count="comment"></small></button></div>';
+    }
     grid.appendChild(pulse);
-    scheduleMoodSectionLayout();
+    if (!deferLayout) scheduleMoodSectionLayout();
     paintCounts();
-    loadRatings(shiftDayKey());
+    // A selected-day render already has one forced refresh queued by the
+    // daySelected listener below. Avoid issuing the same API request twice.
+    if (!skipRatings) loadRatings(shiftDayKey());
   }
+
+  // calendar.js calls this while rebuilding a selected day. Mounting the mood
+  // card, sizing every column and applying the pull-up before returning keeps
+  // the browser from ever painting the intermediate "cards moved down" state.
+  window.__minkaFinalizeRosterCards = function (rosterWidth) {
+    var measure = !!window.__minkaMeasureDaySwitches;
+    var startedAt = measure ? performance.now() : 0;
+    mount(true, true);
+    var mountedAt = measure ? performance.now() : 0;
+    if (typeof window.__minkaAutoSizeCardsNow === 'function') {
+      window.__minkaAutoSizeCardsNow(rosterWidth);
+    }
+    var sizedAt = measure ? performance.now() : 0;
+    layoutMoodSections(rosterWidth);
+    if (measure) {
+      (window.__minkaRosterFinalizeMetrics ||= []).push({
+        mountMs: +(mountedAt - startedAt).toFixed(2),
+        sizeMs: +(sizedAt - mountedAt).toFixed(2),
+        layoutMs: +(performance.now() - sizedAt).toFixed(2)
+      });
+    }
+  };
   function paintCounts() {
     var counts = pulseCounts();
     list.querySelectorAll('[data-rg-count]').forEach(function (item) {
@@ -18150,7 +18205,16 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       loadGlobalEntryCount('comment', true);
     }
   });
-  new MutationObserver(mount).observe(list, { childList: true, subtree: true });
+  new MutationObserver(function () {
+    // Most subtree changes are counters, emoji or card text and cannot alter
+    // the feedback card's grid placement. Re-running mount() for all of them
+    // scheduled a needless forced layout after every day switch. Only recover
+    // the card when the roster was rebuilt without one.
+    var label = list.querySelector('.cards-section-label-rd');
+    var section = label && label.closest('.cards-section');
+    var grid = section && section.querySelector('.cards-subgrid');
+    if (grid && !grid.querySelector('.rg-feedback-card')) mount();
+  }).observe(list, { childList: true, subtree: true });
   // Coffee can change without this card hearing about it: the source picker is
   // a body-level overlay outside #grafiks-list, and the server sync rewrites the
   // counts on its own. A click listener would miss both, so watch the numbers
@@ -18463,6 +18527,43 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
 @media (max-width: 700px) {
   #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-hours.card-shift {
     top: 46% !important;
+  }
+}
+</style>
+
+<!-- Large desktop preview: keep the MacBook composition unchanged, but stop
+     wide Windows displays from turning the centre into ten tiny columns. -->
+<style id="mk-large-monitor-layout-v1">
+@media (min-width: 1800px) and (min-height: 880px) {
+  .main-panel {
+    padding-inline: clamp(18px, 1.35vw, 28px) !important;
+  }
+  #grafiks-list.grid-view {
+    padding-top: 8px !important;
+  }
+  #grafiks-list.grid-view .cards-section {
+    margin-bottom: 18px !important;
+  }
+  #grafiks-list.grid-view .cards-section-label {
+    min-height: 38px !important;
+    padding: 8px 4px 9px !important;
+    font-size: 11px !important;
+    letter-spacing: .16em !important;
+  }
+  #grafiks-list.grid-view .cards-subgrid {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    gap: clamp(17px, 1vw, 22px) !important;
+  }
+  #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) {
+    border-radius: clamp(20px, 1.3vw, 26px) !important;
+  }
+  #grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card {
+    padding: clamp(15px, 1.05vw, 20px) !important;
+  }
+  .rg-feedback-card .rg-pulse-write.rg-pulse-write--comment {
+    min-height: 52px !important;
+    border-radius: 16px !important;
+    font-size: 15px !important;
   }
 }
 </style>
