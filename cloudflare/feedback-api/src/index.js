@@ -10,7 +10,7 @@ const FEEDBACK_PATHS = new Set([
 function corsHeaders(request) {
   const headers = new Headers({
     "access-control-allow-origin": request.headers.get("origin") || "*",
-    "access-control-allow-methods": "GET,POST,OPTIONS",
+    "access-control-allow-methods": "GET,POST,PATCH,DELETE,OPTIONS",
     "access-control-allow-headers": "content-type",
     "access-control-max-age": "86400",
     "cache-control": "no-store",
@@ -247,6 +247,32 @@ async function addMessage(request, env) {
   return json(request, { ok: true, message: mapMessage(row) }, 201);
 }
 
+async function editMessage(request, env) {
+  const body = await readLimitedJson(request);
+  const clientId = cleanClientId(body?.clientId);
+  const text = cleanText(body?.text);
+  if (!clientId) return json(request, { ok: false, error: "valid clientId required" }, 400);
+  if (!text) return json(request, { ok: false, error: "text must be 1-700 characters" }, 400);
+  const result = await env.DB.prepare(`
+    UPDATE feedback_messages SET body = ?1 WHERE client_id = ?2
+    RETURNING id, client_id, shift_day, kind, body, created_at
+  `).bind(text, clientId).all();
+  const row = (result.results || [])[0];
+  if (!row) return json(request, { ok: false, error: "message not found" }, 404);
+  return json(request, { ok: true, message: mapMessage(row) });
+}
+
+async function deleteMessage(request, env) {
+  const body = await readLimitedJson(request);
+  const clientId = cleanClientId(body?.clientId);
+  if (!clientId) return json(request, { ok: false, error: "valid clientId required" }, 400);
+  const result = await env.DB.prepare(
+    "DELETE FROM feedback_messages WHERE client_id = ?1 RETURNING id"
+  ).bind(clientId).all();
+  if (!(result.results || []).length) return json(request, { ok: false, error: "message not found" }, 404);
+  return json(request, { ok: true, deleted: true });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -262,6 +288,8 @@ export default {
       if (url.pathname === "/api/feedback" && request.method === "GET") return await getFeedback(request, env, url);
       if (url.pathname === "/api/feedback/rating" && request.method === "POST") return await addRating(request, env);
       if (url.pathname === "/api/feedback/message" && request.method === "POST") return await addMessage(request, env);
+      if (url.pathname === "/api/feedback/message" && request.method === "PATCH") return await editMessage(request, env);
+      if (url.pathname === "/api/feedback/message" && request.method === "DELETE") return await deleteMessage(request, env);
       if (FEEDBACK_PATHS.has(url.pathname)) return json(request, { ok: false, error: "Method not allowed" }, 405);
       return json(request, { ok: false, error: "Not found" }, 404);
     } catch (error) {

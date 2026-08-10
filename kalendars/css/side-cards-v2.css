@@ -1044,7 +1044,7 @@ html body .side-panel .mk-duty-avatar-group.is-status-sentence.has-inline-avatar
   column-gap: 2px !important;
 }
 
-/* A crowded status (3+ people) flows as one sentence across two lines, so
+/* A multi-person status flows as one sentence across two lines, so
    full names remain visible without ellipses or a smaller font. */
 html body .side-panel .mk-duty-avatar-group.is-crowded {
   grid-template-columns: minmax(0, 1fr) !important;
