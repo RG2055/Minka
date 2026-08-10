@@ -15921,6 +15921,9 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   var ratingFlushTimer = 0;
   var ratingSyncs = {};
   var ratingsLoadedAt = {};
+  var globalEntryCounts = { comment: null, suggestion: null };
+  var globalEntryCountsLoadedAt = {};
+  var globalEntryCountLoads = {};
   var reactions = [
     { key: 'excellent', emoji: '😍', label: 'Lieliski' },
     { key: 'good', emoji: '🙂', label: 'Labi' },
@@ -16093,22 +16096,53 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     writeJson(ENTRY_COUNT_KEY, all);
   }
   function paintEntryCounts() {
-    var day = shiftDayKey();
     var allServer = readJson(ENTRY_COUNT_KEY, {});
-    var server = allServer[day] || {};
     var local = { comment: 0, suggestion: 0 };
     var localItems = readJson(TEXT_KEY, []);
     if (Array.isArray(localItems)) {
       localItems.forEach(function (item) {
-        if (item && item.shiftDay === day && (item.type === 'comment' || item.type === 'suggestion')) local[item.type] += 1;
+        if (item && item.pending && (item.type === 'comment' || item.type === 'suggestion')) local[item.type] += 1;
       });
     }
     list.querySelectorAll('[data-rg-action-count]').forEach(function (badge) {
       var kind = badge.dataset.rgActionCount;
-      var count = Math.max(0, Number(server[kind]) || 0) + Math.max(0, Number(local[kind]) || 0);
+      var cachedTotal = Object.keys(allServer).reduce(function (sum, day) {
+        return sum + Math.max(0, Number(allServer[day] && allServer[day][kind]) || 0);
+      }, 0);
+      var serverTotal = globalEntryCounts[kind] == null
+        ? cachedTotal
+        : Math.max(0, Number(globalEntryCounts[kind]) || 0);
+      var count = serverTotal + Math.max(0, Number(local[kind]) || 0);
       badge.textContent = count ? String(count) : '';
-      badge.setAttribute('aria-label', count ? count + ' ieraksti' : 'Nav ierakstu');
+      badge.setAttribute('aria-label', count ? count + ' ieraksti visās dienās' : 'Nav ierakstu');
     });
+  }
+  function loadGlobalEntryCount(kind, force) {
+    var now = Date.now();
+    if (!force && globalEntryCountsLoadedAt[kind] && now - globalEntryCountsLoadedAt[kind] < 15000) {
+      return globalEntryCountLoads[kind] || Promise.resolve();
+    }
+    if (globalEntryCountLoads[kind]) return globalEntryCountLoads[kind];
+    globalEntryCountsLoadedAt[kind] = now;
+    globalEntryCountLoads[kind] = fetchFeedback('/api/feedback/days?kind=' + encodeURIComponent(kind) + '&limit=180')
+      .then(function (data) {
+        var days = Array.isArray(data.days) ? data.days : [];
+        globalEntryCounts[kind] = data.total != null
+          ? Math.max(0, Number(data.total) || 0)
+          : days.reduce(function (sum, item) { return sum + Math.max(0, Number(item && item.count) || 0); }, 0);
+        var storedCounts = readJson(ENTRY_COUNT_KEY, {});
+        days.forEach(function (item) {
+          if (!item || !item.date) return;
+          var dayCounts = storedCounts[item.date] || { comment: 0, suggestion: 0 };
+          dayCounts[kind] = Math.max(0, Number(item.count) || 0);
+          storedCounts[item.date] = dayCounts;
+        });
+        writeJson(ENTRY_COUNT_KEY, storedCounts);
+        paintEntryCounts();
+      }).catch(function () {}).finally(function () {
+        delete globalEntryCountLoads[kind];
+      });
+    return globalEntryCountLoads[kind];
   }
   function pulseCounts() {
     var all = readJson(PULSE_KEY, {});
@@ -17415,6 +17449,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       var data = await fetchFeedback('/api/feedback/days?kind=' + encodeURIComponent(requestedKind) + '&limit=90');
       if (requestId !== dayRequestId || requestedKind !== modal.dataset.kind) return;
       remoteDays = Array.isArray(data.days) ? data.days : [];
+      if (data.total != null) globalEntryCounts[requestedKind] = Math.max(0, Number(data.total) || 0);
       var storedCounts = readJson(ENTRY_COUNT_KEY, {});
       remoteDays.forEach(function (item) {
         if (!item || !item.date) return;
@@ -17495,6 +17530,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     var all = readJson(TEXT_KEY, []);
     if (!Array.isArray(all)) return;
     var targets = all.filter(function (item) { return item && item.pending && item.shiftDay === day && item.type === kind; });
+    var postedAny = false;
     for (var i = 0; i < targets.length; i++) {
       var item = targets[i];
       try {
@@ -17506,10 +17542,12 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
         all = readJson(TEXT_KEY, []);
         all = Array.isArray(all) ? all.filter(function (saved) { return saved.clientId !== item.clientId; }) : [];
         writeJson(TEXT_KEY, all);
+        postedAny = true;
       } catch (_error) {
         break;
       }
     }
+    if (postedAny) await loadGlobalEntryCount(kind, true);
   }
   async function loadMessages(reset) {
     if ((messagesLoading && !reset) || !modalDay) return;
@@ -18019,7 +18057,8 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       fetchFeedback('/api/feedback/message', {
         method: 'DELETE', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ clientId: item.clientId })
-      }).then(loadCommunity).catch(function () { commsStatus.textContent = 'Neizdevās izdzēst'; });
+      }).then(function () { return loadGlobalEntryCount('comment', true); })
+        .then(loadCommunity).catch(function () { commsStatus.textContent = 'Neizdevās izdzēst'; });
     }
   });
   modal.querySelector('#rgCommsNewTopic').addEventListener('click', function () {
@@ -18106,7 +18145,10 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     }, 0);
   });
   document.addEventListener('visibilitychange', function () {
-    if (!document.hidden) loadRatings(shiftDayKey(), true);
+    if (!document.hidden) {
+      loadRatings(shiftDayKey(), true);
+      loadGlobalEntryCount('comment', true);
+    }
   });
   new MutationObserver(mount).observe(list, { childList: true, subtree: true });
   // Coffee can change without this card hearing about it: the source picker is
@@ -18127,6 +18169,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   syncFeedbackModalState(false);
   mount();
   paintCounts();
+  loadGlobalEntryCount('comment');
 })();
 </script>
 

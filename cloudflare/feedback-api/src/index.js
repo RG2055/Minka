@@ -104,17 +104,23 @@ async function getDayGroups(request, env, url) {
   if (!kind) return json(request, { ok: false, error: "valid kind required" }, 400);
   const requestedLimit = Math.trunc(Number(url.searchParams.get("limit")) || 90);
   const limit = Math.min(180, Math.max(1, requestedLimit));
-  const result = await env.DB.prepare(`
+  const [result, totalResult] = await env.DB.batch([env.DB.prepare(`
     SELECT shift_day, COUNT(*) AS entry_count, MAX(created_at) AS last_activity
     FROM feedback_messages
     WHERE kind = ?1
     GROUP BY shift_day
     ORDER BY shift_day DESC
     LIMIT ?2
-  `).bind(kind, limit).all();
+  `).bind(kind, limit), env.DB.prepare(`
+    SELECT COUNT(*) AS entry_count
+    FROM feedback_messages
+    WHERE kind = ?1
+  `).bind(kind)]);
+  const totalRow = (totalResult.results || [])[0];
   return json(request, {
     ok: true,
     kind,
+    total: Math.max(0, Number(totalRow && totalRow.entry_count) || 0),
     days: (result.results || []).map((row) => ({
       date: row.shift_day,
       count: Math.max(0, Number(row.entry_count) || 0),
