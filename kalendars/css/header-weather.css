@@ -1,0 +1,585 @@
+/* Premium, low-cost header weather.
+   Cloud/fog textures adapted from greywen/web-weather (MIT); particle ideas
+   rewritten for Minka as fixed vanilla DOM pools. No React, canvas, WebGL,
+   audio, per-frame JavaScript, animated blur or backdrop-filter. */
+
+#minkaBarWrap {
+  position: relative;
+  isolation: isolate;
+}
+
+html:root body #minkaBarWrap > .mk-weather-layer.mk-weather-layer {
+  position: absolute !important;
+  inset: -1px !important;
+  width: auto !important;
+  height: auto !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+  border-radius: 18px !important;
+  contain: strict !important;
+  opacity: 1;
+}
+
+html body #minkaBarWrap > #minkaBar,
+html body #minkaBarWrap > #minkaNamedayChip { z-index: 2; }
+
+.mk-weather-atmosphere,
+.mk-weather-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.mk-weather-atmosphere { z-index: 0; }
+.mk-weather-particles { z-index: 1; }
+
+/* Static state tint plus one subtle animated highlight for clear weather. */
+.mk-weather-atmosphere::before,
+.mk-weather-atmosphere::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+.mk-weather-atmosphere::before {
+  inset: -35% -18%;
+  background: radial-gradient(ellipse at 55% 28%, rgba(211,239,255,.20), rgba(87,176,225,.06) 34%, transparent 64%);
+  transform: translate3d(-7%,0,0);
+}
+.mk-weather-layer[data-weather-state='clear'] .mk-weather-atmosphere::before {
+  opacity: .44;
+  animation: mkWeatherLight 32s ease-in-out infinite alternate;
+}
+.mk-weather-atmosphere::after {
+  display: none;
+}
+.mk-weather-layer[data-weather-state='cloudy'] .mk-weather-atmosphere::after,
+.mk-weather-layer[data-weather-state='rain'] .mk-weather-atmosphere::after { opacity: .16; }
+.mk-weather-layer[data-weather-state='heavy-rain'] .mk-weather-atmosphere::after,
+.mk-weather-layer[data-weather-state='hail'] .mk-weather-atmosphere::after { opacity: .24; }
+.mk-weather-layer[data-weather-state='thunderstorm'] .mk-weather-atmosphere::after { opacity: .33; }
+.mk-weather-layer[data-weather-state='fog'] .mk-weather-atmosphere::after {
+  opacity: .14;
+  background: linear-gradient(90deg, rgba(210,224,232,.08), rgba(236,242,246,.18), rgba(198,216,228,.07));
+}
+
+/* Night reuses exactly the same DOM and animations. Only static colours and
+   opacity change, derived from OpenWeather's `n` icon suffix. */
+.mk-weather-layer[data-weather-period='night'] .mk-weather-atmosphere::before {
+  background: radial-gradient(ellipse at 58% 25%, rgba(151,190,233,.15), rgba(64,102,160,.06) 36%, transparent 66%);
+}
+.mk-weather-layer[data-weather-period='night'][data-weather-state='clear'] .mk-weather-atmosphere::before { opacity: .25; }
+
+/* One 47 KB texture is reused by both cloud nodes. Only transform/opacity
+   change, unlike the original background-position animation that repaints. */
+.mk-weather-cloud {
+  display: none;
+  position: absolute;
+  top: -5px;
+  left: -20%;
+  width: 140%;
+  height: calc(100% + 10px);
+  opacity: 0;
+  background: url('../data/weather/greywen-clouds.png') 0 54% / auto 82px repeat-x;
+  mix-blend-mode: screen;
+  filter: none;
+  transform: translate3d(0,0,0) scale(var(--cloud-scale,1));
+  transform-origin: 50% 50%;
+}
+.mk-weather-cloud:nth-child(1) {
+  z-index: 2;
+  --cloud-scale: 1;
+  animation: mkWeatherCloudDrift 150s ease-in-out -91s infinite alternate;
+}
+.mk-weather-cloud:nth-child(2) {
+  z-index: 0;
+  top: -8px;
+  left: -15%;
+  width: 130%;
+  height: calc(100% + 16px);
+  --cloud-scale: 1.04;
+  background: url('../data/weather/greywen-clouds.png') 48% 48% / auto 94px repeat-x;
+  animation: mkWeatherCloudDriftBack 210s ease-in-out -124s infinite alternate;
+}
+.mk-weather-layer[data-weather-state='partly-cloudy'] .mk-weather-cloud:nth-child(1) {
+  display: block;
+  opacity: .46;
+}
+.mk-weather-layer[data-weather-state='cloudy'] .mk-weather-cloud,
+.mk-weather-layer[data-weather-state='rain'] .mk-weather-cloud,
+.mk-weather-layer[data-weather-state='heavy-rain'] .mk-weather-cloud,
+.mk-weather-layer[data-weather-state='snow'] .mk-weather-cloud,
+.mk-weather-layer[data-weather-state='sleet'] .mk-weather-cloud,
+.mk-weather-layer[data-weather-state='hail'] .mk-weather-cloud,
+.mk-weather-layer[data-weather-state='thunderstorm'] .mk-weather-cloud {
+  display: block;
+}
+.mk-weather-layer[data-weather-state='cloudy'] .mk-weather-cloud { opacity: .58; }
+.mk-weather-layer[data-weather-state='cloudy'] .mk-weather-cloud:nth-child(2) { opacity: .28; }
+.mk-weather-layer[data-weather-state='rain'] .mk-weather-cloud { opacity: .36; }
+.mk-weather-layer[data-weather-state='rain'] .mk-weather-cloud:nth-child(2) { opacity: .16; }
+.mk-weather-layer[data-weather-state='heavy-rain'] .mk-weather-cloud,
+.mk-weather-layer[data-weather-state='hail'] .mk-weather-cloud { opacity: .44; }
+.mk-weather-layer[data-weather-state='heavy-rain'] .mk-weather-cloud:nth-child(2),
+.mk-weather-layer[data-weather-state='hail'] .mk-weather-cloud:nth-child(2) { opacity: .20; }
+.mk-weather-layer[data-weather-state='snow'] .mk-weather-cloud { opacity: .34; }
+.mk-weather-layer[data-weather-state='snow'] .mk-weather-cloud:nth-child(2) { opacity: .16; }
+.mk-weather-layer[data-weather-state='sleet'] .mk-weather-cloud { opacity: .38; }
+.mk-weather-layer[data-weather-state='sleet'] .mk-weather-cloud:nth-child(2) { opacity: .18; }
+.mk-weather-layer[data-weather-state='thunderstorm'] .mk-weather-cloud { opacity: .52; }
+.mk-weather-layer[data-weather-state='thunderstorm'] .mk-weather-cloud:nth-child(2) { opacity: .24; }
+
+.mk-weather-layer[data-weather-period='night'][data-weather-state='partly-cloudy'] .mk-weather-cloud:nth-child(1) { opacity: .38; }
+.mk-weather-layer[data-weather-period='night'][data-weather-state='cloudy'] .mk-weather-cloud { opacity: .46; }
+.mk-weather-layer[data-weather-period='night'][data-weather-state='cloudy'] .mk-weather-cloud:nth-child(2) { opacity: .20; }
+.mk-weather-layer[data-weather-period='night'][data-weather-state='rain'] .mk-weather-cloud { opacity: .30; }
+.mk-weather-layer[data-weather-period='night'][data-weather-state='rain'] .mk-weather-cloud:nth-child(2) { opacity: .12; }
+.mk-weather-layer[data-weather-period='night'][data-weather-state='heavy-rain'] .mk-weather-cloud,
+.mk-weather-layer[data-weather-period='night'][data-weather-state='hail'] .mk-weather-cloud { opacity: .36; }
+.mk-weather-layer[data-weather-period='night'][data-weather-state='heavy-rain'] .mk-weather-cloud:nth-child(2),
+.mk-weather-layer[data-weather-period='night'][data-weather-state='hail'] .mk-weather-cloud:nth-child(2) { opacity: .16; }
+.mk-weather-layer[data-weather-period='night'][data-weather-state='snow'] .mk-weather-cloud,
+.mk-weather-layer[data-weather-period='night'][data-weather-state='sleet'] .mk-weather-cloud { opacity: .30; }
+.mk-weather-layer[data-weather-period='night'][data-weather-state='snow'] .mk-weather-cloud:nth-child(2),
+.mk-weather-layer[data-weather-period='night'][data-weather-state='sleet'] .mk-weather-cloud:nth-child(2) { opacity: .12; }
+.mk-weather-layer[data-weather-period='night'][data-weather-state='thunderstorm'] .mk-weather-cloud { opacity: .42; }
+.mk-weather-layer[data-weather-period='night'][data-weather-state='thunderstorm'] .mk-weather-cloud:nth-child(2) { opacity: .18; }
+
+/* Reāla izvēlētās dienas mēness fāze. Tā dzīvo starp aizmugures un priekšējo
+   mākoņu vienā jau esošajā atmosfēras slānī; nav jauna animāciju konteinera. */
+.mk-weather-moon {
+  display: none;
+  position: absolute;
+  z-index: 1;
+  top: 2px;
+  left: 330px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: none;
+  filter: brightness(1.18) contrast(1.08);
+  transition: opacity .45s ease;
+}
+.mk-weather-moon svg { display: block; width: 100%; height: 100%; }
+.mk-weather-moon.is-dark-phase { display: none !important; }
+.mk-weather-layer[data-weather-period='night'] .mk-weather-moon { display: block; opacity: .92; }
+.mk-weather-layer[data-weather-period='night'][data-weather-state='clear'] .mk-weather-moon { opacity: 1; }
+.mk-weather-layer[data-weather-period='night'][data-weather-state='partly-cloudy'] .mk-weather-moon { opacity: .90; }
+.mk-weather-layer[data-weather-period='night'][data-weather-state='cloudy'] .mk-weather-moon { opacity: .65; }
+.mk-weather-layer[data-weather-period='night'][data-weather-state='rain'] .mk-weather-moon { opacity: .48; }
+.mk-weather-layer[data-weather-period='night'][data-weather-state='heavy-rain'] .mk-weather-moon,
+.mk-weather-layer[data-weather-period='night'][data-weather-state='hail'] .mk-weather-moon,
+.mk-weather-layer[data-weather-period='night'][data-weather-state='thunderstorm'] .mk-weather-moon { opacity: .32; }
+.mk-weather-layer[data-weather-period='night'][data-weather-state='snow'] .mk-weather-moon { opacity: .70; }
+.mk-weather-layer[data-weather-period='night'][data-weather-state='sleet'] .mk-weather-moon,
+.mk-weather-layer[data-weather-period='night'][data-weather-state='fog'] .mk-weather-moon { opacity: .45; }
+
+/* At night reserve a real sky slot between the compact date block and news.
+   The moon no longer sits underneath ticker text at any desktop width. */
+@media (min-width: 761px) {
+  #minkaBarWrap[data-weather-period='night'] #minkaBarInner .mk-ticker-wrap {
+    margin-left: 30px !important;
+  }
+}
+.mk-weather-layer[data-weather-state='snow'] .mk-weather-cloud,
+.mk-weather-layer[data-weather-state='sleet'] .mk-weather-cloud { filter: none; }
+.mk-weather-layer[data-weather-period='night'] .mk-weather-cloud { filter: brightness(.72) saturate(.54); }
+
+/* A 23 KB downscaled source texture; screen blend makes the JPEG black level
+   act transparent. Two slow copies create depth without blur animation. */
+.mk-weather-fog {
+  display: none;
+  position: absolute;
+  inset: -18px -18% -18px -18%;
+  width: 136%;
+  height: calc(100% + 36px);
+  opacity: 0;
+  background: url('../data/weather/greywen-fog.jpg') center 52% / cover no-repeat;
+  mix-blend-mode: screen;
+}
+.mk-weather-fog:nth-of-type(3) { animation: mkWeatherFog 44s ease-in-out -17s infinite alternate; }
+.mk-weather-fog:nth-of-type(4) { background-position: 72% 42%; animation: mkWeatherFogBack 61s ease-in-out -43s infinite alternate; }
+.mk-weather-layer[data-weather-state='fog'] .mk-weather-fog { display: block; opacity: .13; }
+.mk-weather-layer[data-weather-state='fog'] .mk-weather-fog:nth-of-type(4) { opacity: .075; }
+.mk-weather-layer[data-weather-period='night'][data-weather-state='fog'] .mk-weather-fog { opacity: .09; }
+.mk-weather-layer[data-weather-period='night'][data-weather-state='fog'] .mk-weather-fog:nth-of-type(4) { opacity: .05; }
+
+/* Two larger lens droplets for heavy rain, still inside the atmosphere layer. */
+.mk-weather-glass-drop {
+  display: none;
+  position: absolute;
+  top: -16px;
+  width: 7px;
+  height: 12px;
+  border: 1px solid rgba(220,241,255,.26);
+  border-radius: 58% 42% 62% 38% / 72% 50% 50% 28%;
+  background: linear-gradient(150deg, rgba(255,255,255,.18), rgba(142,198,231,.04));
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,.12);
+  opacity: .34;
+}
+.mk-weather-glass-drop:nth-of-type(5) { left: 27%; animation: mkWeatherGlassDrop 5.2s linear -1.7s infinite; }
+.mk-weather-glass-drop:nth-of-type(6) { left: 78%; animation: mkWeatherGlassDrop 6.1s linear -4.2s infinite; }
+.mk-weather-layer[data-weather-state='heavy-rain'] .mk-weather-glass-drop { display: block; }
+
+/* Fixed pool: 18 spans are reused for rain, snow and hail. */
+.mk-weather-particle {
+  display: none;
+  position: absolute;
+  left: var(--particle-x);
+  top: -30px;
+  pointer-events: none;
+}
+
+/* Adapted from web-weather's tapered rain geometry, reduced from as many as
+   600 Canvas drops to 12/18 compositor-only DOM streaks. */
+.mk-weather-layer[data-weather-state='rain'] .mk-weather-particle,
+.mk-weather-layer[data-weather-state='heavy-rain'] .mk-weather-particle,
+.mk-weather-layer[data-weather-state='thunderstorm'] .mk-weather-particle {
+  display: block;
+  width: var(--rain-width);
+  height: var(--rain-size);
+  border-radius: 999px 999px 65% 65%;
+  clip-path: polygon(42% 0,58% 0,100% 100%,0 100%);
+  opacity: var(--rain-opacity);
+  background: linear-gradient(180deg, rgba(230,244,255,.15), rgba(188,220,243,.70));
+  transform-origin: 50% 100%;
+  animation: mkWeatherRain var(--rain-duration) linear var(--particle-delay) infinite;
+}
+.mk-weather-layer[data-weather-period='night'][data-weather-state='rain'] .mk-weather-particle,
+.mk-weather-layer[data-weather-period='night'][data-weather-state='heavy-rain'] .mk-weather-particle,
+.mk-weather-layer[data-weather-period='night'][data-weather-state='thunderstorm'] .mk-weather-particle {
+  background: linear-gradient(180deg, rgba(190,221,250,.12), rgba(116,169,218,.68));
+}
+.mk-weather-layer[data-weather-state='rain'] .mk-weather-particle:nth-child(n+13) { display: none; }
+.mk-weather-layer[data-weather-state='heavy-rain'] .mk-weather-particle,
+.mk-weather-layer[data-weather-state='thunderstorm'] .mk-weather-particle {
+  height: var(--heavy-rain-size);
+  opacity: var(--heavy-rain-opacity);
+  animation-duration: var(--heavy-rain-duration);
+}
+.mk-weather-layer[data-weather-state='rain'] .mk-weather-particle:nth-child(-n+6)::after,
+.mk-weather-layer[data-weather-state='heavy-rain'] .mk-weather-particle:nth-child(-n+6)::after,
+.mk-weather-layer[data-weather-state='thunderstorm'] .mk-weather-particle:nth-child(-n+6)::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -2px;
+  width: 7px;
+  height: 2px;
+  border: 1px solid rgba(196,226,246,.38);
+  border-top-color: transparent;
+  border-radius: 50%;
+  transform: translateX(-50%) scale(.2);
+  opacity: 0;
+  animation: mkWeatherSplash var(--rain-duration) linear var(--particle-delay) infinite;
+}
+
+.mk-weather-layer[data-weather-state='snow'] .mk-weather-particle {
+  display: block;
+  width: var(--snow-size);
+  height: var(--snow-size);
+  border-radius: 50%;
+  opacity: var(--snow-opacity);
+  background: radial-gradient(circle at 34% 28%, rgba(255,255,255,.98) 0 16%, rgba(238,248,255,.90) 38%, rgba(198,225,244,.58) 100%);
+  box-shadow: 0 0 3px rgba(214,237,252,.24);
+  animation: mkWeatherSnow var(--snow-duration) linear var(--particle-delay) infinite;
+}
+.mk-weather-layer[data-weather-state='snow'] .mk-weather-particle:nth-child(n+16) { display: none; }
+.mk-weather-layer[data-weather-period='night'][data-weather-state='snow'] .mk-weather-particle,
+.mk-weather-layer[data-weather-period='night'][data-weather-state='sleet'] .mk-weather-particle:nth-child(odd) {
+  background: radial-gradient(circle at 34% 28%, rgba(248,253,255,.98) 0 16%, rgba(221,239,255,.88) 42%, rgba(150,192,225,.52) 100%);
+}
+.mk-weather-layer[data-weather-state='snow'] .mk-weather-particle:nth-child(4n+1),
+.mk-weather-layer[data-weather-state='sleet'] .mk-weather-particle:nth-child(4n+1) {
+  box-shadow: 0 0 5px rgba(224,243,255,.34);
+}
+
+/* OpenWeather sleet/rain-and-snow codes: one shared pool, half soft snow and
+   half tapered rain. No extra nodes or animation loop. */
+.mk-weather-layer[data-weather-state='sleet'] .mk-weather-particle:nth-child(odd) {
+  display: block;
+  width: var(--snow-size);
+  height: var(--snow-size);
+  border-radius: 50%;
+  opacity: var(--snow-opacity);
+  background: radial-gradient(circle at 34% 28%, rgba(255,255,255,.98) 0 16%, rgba(238,248,255,.90) 38%, rgba(198,225,244,.58) 100%);
+  box-shadow: 0 0 3px rgba(220,241,255,.24);
+  animation: mkWeatherSnow var(--snow-duration) linear var(--particle-delay) infinite;
+}
+.mk-weather-layer[data-weather-state='sleet'] .mk-weather-particle:nth-child(even) {
+  display: block;
+  width: var(--rain-width);
+  height: var(--rain-size);
+  border-radius: 999px 999px 65% 65%;
+  clip-path: polygon(42% 0,58% 0,100% 100%,0 100%);
+  opacity: var(--rain-opacity);
+  background: linear-gradient(180deg, rgba(230,244,255,.12), rgba(188,220,243,.64));
+  animation: mkWeatherRain var(--rain-duration) linear var(--particle-delay) infinite;
+}
+
+/* Krusa parasti nāk kopā ar lietu: pirmie 10 elementi ir neregulāri ledus
+   graudi, atlikušie 8 ir viegls fona lietus. Graudi izkrīt ārpus kadra un
+   neatlec pret virtuālu headera malu. */
+.mk-weather-layer[data-weather-state='hail'] .mk-weather-particle:nth-child(-n+10) {
+  display: block;
+  width: var(--hail-size);
+  height: var(--hail-size);
+  border-radius: 48% 56% 43% 58% / 54% 42% 61% 47%;
+  opacity: var(--hail-opacity);
+  background: radial-gradient(circle at 31% 25%, rgba(255,255,255,.98) 0 17%, rgba(215,235,250,.86) 38%, rgba(129,174,209,.52) 74%, rgba(86,137,179,.28) 100%);
+  box-shadow: inset -1px -1px 0 rgba(68,117,157,.18), 0 0 2px rgba(220,241,255,.26);
+  animation: mkWeatherHail var(--hail-duration) linear var(--particle-delay) infinite;
+}
+.mk-weather-layer[data-weather-state='hail'] .mk-weather-particle:nth-child(3n+1) { border-radius: 62% 38% 57% 43% / 47% 58% 42% 53%; }
+.mk-weather-layer[data-weather-state='hail'] .mk-weather-particle:nth-child(3n+2) { border-radius: 41% 59% 46% 54% / 63% 38% 62% 37%; }
+.mk-weather-layer[data-weather-state='hail'] .mk-weather-particle:nth-child(n+11) {
+  display: block;
+  width: var(--rain-width);
+  height: var(--rain-size);
+  border-radius: 999px 999px 65% 65%;
+  clip-path: polygon(42% 0,58% 0,100% 100%,0 100%);
+  opacity: .32;
+  background: linear-gradient(180deg, rgba(230,244,255,.10), rgba(188,220,243,.58));
+  animation: mkWeatherRain var(--rain-duration) linear var(--particle-delay) infinite;
+}
+
+/* One fixed bolt plus a very rare flash. Both are children of the existing
+   precipitation layer, never a third active effect layer. */
+.mk-weather-particles::before,
+.mk-weather-particles::after {
+  content: '';
+  display: none;
+  position: absolute;
+  pointer-events: none;
+  opacity: 0;
+}
+.mk-weather-particles::before {
+  top: 2px;
+  left: 73%;
+  width: 13px;
+  height: 41px;
+  background: linear-gradient(180deg, #f7fbff, #bddcff 64%, rgba(169,207,243,.34));
+  clip-path: polygon(58% 0,100% 0,68% 38%,96% 38%,19% 100%,42% 53%,12% 53%);
+}
+.mk-weather-particles::after {
+  inset: 0;
+  background: linear-gradient(104deg, transparent 25%, rgba(220,239,255,.38) 53%, transparent 77%);
+}
+.mk-weather-layer[data-weather-state='thunderstorm'] .mk-weather-particles::before {
+  display: block;
+  animation: mkWeatherBolt 19s linear -6s infinite;
+}
+.mk-weather-layer[data-weather-state='thunderstorm'] .mk-weather-particles::after {
+  display: block;
+  animation: mkWeatherLightning 19s linear -6s infinite;
+}
+.mk-weather-layer[data-weather-period='night'][data-weather-state='thunderstorm'] .mk-weather-particles::before {
+  background: linear-gradient(180deg, #fff, #cde4ff 62%, rgba(149,194,239,.42));
+}
+.mk-weather-layer[data-weather-period='night'][data-weather-state='thunderstorm'] .mk-weather-particles::after {
+  background: linear-gradient(104deg, transparent 23%, rgba(183,217,250,.34) 53%, transparent 78%);
+}
+
+#mkTempChip.mk-weather-temp {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+}
+.mk-weather-temp-icon {
+  display: block;
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  object-fit: contain;
+}
+.mk-weather-temp-value { line-height: inherit; }
+
+/* Query-only preview UI: ?weatherfx=demo. */
+.mk-weather-demo-controls {
+  position: fixed;
+  left: 50%;
+  top: 77px;
+  z-index: 2147480000;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 36px;
+  padding: 4px 6px;
+  border: 1px solid rgba(108,211,245,.34);
+  border-radius: 999px;
+  background: rgba(5,13,22,.94);
+  box-shadow: 0 8px 24px rgba(0,0,0,.36);
+  transform: translateX(-50%);
+  color: #eaf7ff;
+  font: 700 12px/1.1 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  letter-spacing: .01em;
+}
+.mk-weather-demo-controls select {
+  height: 28px;
+  min-width: 142px;
+  padding: 0 24px 0 9px;
+  border: 1px solid rgba(113,205,238,.18);
+  border-radius: 999px;
+  outline: 0;
+  background: #0d1b29;
+  color: #eaf7ff;
+  font: 750 11px/28px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  cursor: pointer;
+}
+.mk-weather-demo-controls .mk-weather-demo-moon-select { min-width: 148px; }
+.mk-weather-demo-controls .mk-weather-demo-period-select { min-width: 94px; }
+.mk-weather-demo-controls select:focus-visible { outline: 2px solid #70d5f4; outline-offset: 2px; }
+.mk-weather-demo-controls button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(113,205,238,.12);
+  color: #dff6ff;
+  font: 800 18px/28px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  cursor: pointer;
+}
+.mk-weather-demo-controls button:focus-visible { outline: 2px solid #70d5f4; outline-offset: 2px; }
+
+html.mk-weather-paused .mk-weather-layer *,
+html.mk-weather-paused .mk-weather-layer *::before,
+html.mk-weather-paused .mk-weather-layer *::after { animation-play-state: paused !important; }
+
+@keyframes mkWeatherLight {
+  from { transform: translate3d(-7%,0,0); opacity: .28; }
+  to { transform: translate3d(8%,0,0); opacity: .48; }
+}
+@keyframes mkWeatherCloudDrift {
+  from { transform: translate3d(-2.5%,0,0) scale(var(--cloud-scale,1)); }
+  to { transform: translate3d(2.5%,0,0) scale(var(--cloud-scale,1)); }
+}
+@keyframes mkWeatherCloudDriftBack {
+  from { transform: translate3d(2%,1px,0) scale(var(--cloud-scale,1)); }
+  to { transform: translate3d(-2%,0,0) scale(var(--cloud-scale,1)); }
+}
+@keyframes mkWeatherFog {
+  from { transform: translate3d(-4%,0,0) scale(1.03); }
+  to { transform: translate3d(7%,1px,0) scale(1.03); }
+}
+@keyframes mkWeatherFogBack {
+  from { transform: translate3d(5%,1px,0) scale(1.08); }
+  to { transform: translate3d(-5%,0,0) scale(1.08); }
+}
+@keyframes mkWeatherGlassDrop {
+  0% { transform: translate3d(0,-9px,0) rotate(4deg); opacity: 0; }
+  16% { opacity: .34; }
+  82% { opacity: .27; }
+  100% { transform: translate3d(2px,var(--mk-weather-height,64px),0) rotate(4deg); opacity: 0; }
+}
+@keyframes mkWeatherRain {
+  0% { transform: translate3d(0,-24px,0) rotate(-2deg); opacity: 0; }
+  9% { opacity: var(--rain-opacity); }
+  86% { opacity: var(--rain-opacity); }
+  100% { transform: translate3d(var(--rain-drift),calc(var(--mk-weather-height,64px) + 30px),0) rotate(-2deg); opacity: 0; }
+}
+@keyframes mkWeatherSplash {
+  0%, 86% { transform: translateX(-50%) scale(.2); opacity: 0; }
+  94% { transform: translateX(-50%) scale(1); opacity: .36; }
+  100% { transform: translateX(-50%) scale(1.45); opacity: 0; }
+}
+@keyframes mkWeatherSnow {
+  0% { transform: translate3d(0,-10px,0) rotate(0); opacity: 0; }
+  9% { opacity: var(--snow-opacity); }
+  27% { transform: translate3d(var(--snow-drift-a),12px,0) rotate(var(--snow-spin-a)); }
+  53% { transform: translate3d(var(--snow-drift-b),31px,0) rotate(var(--snow-spin-b)); }
+  76% { transform: translate3d(var(--snow-drift-c),49px,0) rotate(var(--snow-spin-c)); opacity: var(--snow-opacity); }
+  100% { transform: translate3d(var(--snow-drift-a),calc(var(--mk-weather-height,64px) + 12px),0) rotate(var(--snow-spin)); opacity: 0; }
+}
+@keyframes mkWeatherHail {
+  0% { transform: translate3d(0,-12px,0) rotate(0); opacity: 0; }
+  8% { opacity: var(--hail-opacity); }
+  42% { transform: translate3d(var(--hail-drift-a),18px,0) rotate(var(--hail-spin-a)); }
+  76% { transform: translate3d(var(--hail-drift-b),46px,0) rotate(var(--hail-spin-b)); opacity: var(--hail-opacity); }
+  92% { opacity: .48; }
+  100% { transform: translate3d(var(--hail-drift),calc(var(--mk-weather-height,64px) + 18px),0) rotate(var(--hail-spin)); opacity: 0; }
+}
+@keyframes mkWeatherBolt {
+  0%, 89.8%, 90.15%, 90.55%, 100% { opacity: 0; }
+  89.9% { opacity: .88; }
+  90.02% { opacity: .10; }
+  90.28% { opacity: .72; }
+  90.43% { opacity: .06; }
+}
+@keyframes mkWeatherLightning {
+  0%, 89.8%, 90.15%, 90.55%, 100% { opacity: 0; }
+  89.9% { opacity: .18; }
+  90.02% { opacity: .02; }
+  90.28% { opacity: .27; }
+  90.43% { opacity: .04; }
+}
+
+/* Minka keeps the whole UI in low-spec mode. These scoped exceptions are the
+   only deliberate animations, all fixed-size and compositor-friendly. */
+html.mk-low-spec:not(.mk-no-anim) .mk-weather-layer[data-weather-state='clear'] .mk-weather-atmosphere::before { animation: mkWeatherLight 32s ease-in-out infinite alternate !important; }
+html.mk-low-spec:not(.mk-no-anim) .mk-weather-layer .mk-weather-cloud:nth-child(1) { animation: mkWeatherCloudDrift 150s ease-in-out -91s infinite alternate !important; }
+html.mk-low-spec:not(.mk-no-anim) .mk-weather-layer .mk-weather-cloud:nth-child(2) { animation: mkWeatherCloudDriftBack 210s ease-in-out -124s infinite alternate !important; }
+html.mk-low-spec:not(.mk-no-anim) .mk-weather-layer[data-weather-state='fog'] .mk-weather-fog:nth-of-type(3) { animation: mkWeatherFog 44s ease-in-out -17s infinite alternate !important; }
+html.mk-low-spec:not(.mk-no-anim) .mk-weather-layer[data-weather-state='fog'] .mk-weather-fog:nth-of-type(4) { animation: mkWeatherFogBack 61s ease-in-out -43s infinite alternate !important; }
+html.mk-low-spec:not(.mk-no-anim) .mk-weather-layer[data-weather-state='heavy-rain'] .mk-weather-glass-drop:nth-of-type(5) { animation: mkWeatherGlassDrop 5.2s linear -1.7s infinite !important; }
+html.mk-low-spec:not(.mk-no-anim) .mk-weather-layer[data-weather-state='heavy-rain'] .mk-weather-glass-drop:nth-of-type(6) { animation: mkWeatherGlassDrop 6.1s linear -4.2s infinite !important; }
+html.mk-low-spec:not(.mk-no-anim) .mk-weather-layer[data-weather-state='rain'] .mk-weather-particle { animation: mkWeatherRain var(--rain-duration) linear var(--particle-delay) infinite !important; }
+html.mk-low-spec:not(.mk-no-anim) .mk-weather-layer[data-weather-state='heavy-rain'] .mk-weather-particle,
+html.mk-low-spec:not(.mk-no-anim) .mk-weather-layer[data-weather-state='thunderstorm'] .mk-weather-particle { animation: mkWeatherRain var(--heavy-rain-duration) linear var(--particle-delay) infinite !important; }
+html.mk-low-spec:not(.mk-no-anim) .mk-weather-layer[data-weather-state='rain'] .mk-weather-particle:nth-child(-n+6)::after { animation: mkWeatherSplash var(--rain-duration) linear var(--particle-delay) infinite !important; }
+html.mk-low-spec:not(.mk-no-anim) .mk-weather-layer[data-weather-state='heavy-rain'] .mk-weather-particle:nth-child(-n+6)::after,
+html.mk-low-spec:not(.mk-no-anim) .mk-weather-layer[data-weather-state='thunderstorm'] .mk-weather-particle:nth-child(-n+6)::after { animation: mkWeatherSplash var(--heavy-rain-duration) linear var(--particle-delay) infinite !important; }
+html.mk-low-spec:not(.mk-no-anim) .mk-weather-layer[data-weather-state='snow'] .mk-weather-particle { animation: mkWeatherSnow var(--snow-duration) linear var(--particle-delay) infinite !important; }
+html.mk-low-spec:not(.mk-no-anim) .mk-weather-layer[data-weather-state='sleet'] .mk-weather-particle:nth-child(odd) { animation: mkWeatherSnow var(--snow-duration) linear var(--particle-delay) infinite !important; }
+html.mk-low-spec:not(.mk-no-anim) .mk-weather-layer[data-weather-state='sleet'] .mk-weather-particle:nth-child(even) { animation: mkWeatherRain var(--rain-duration) linear var(--particle-delay) infinite !important; }
+html.mk-low-spec:not(.mk-no-anim) .mk-weather-layer[data-weather-state='hail'] .mk-weather-particle:nth-child(-n+10) { animation: mkWeatherHail var(--hail-duration) linear var(--particle-delay) infinite !important; }
+html.mk-low-spec:not(.mk-no-anim) .mk-weather-layer[data-weather-state='hail'] .mk-weather-particle:nth-child(n+11) { animation: mkWeatherRain var(--rain-duration) linear var(--particle-delay) infinite !important; }
+html.mk-low-spec:not(.mk-no-anim) .mk-weather-layer[data-weather-state='thunderstorm'] .mk-weather-particles::before { animation: mkWeatherBolt 19s linear -6s infinite !important; }
+html.mk-low-spec:not(.mk-no-anim) .mk-weather-layer[data-weather-state='thunderstorm'] .mk-weather-particles::after { animation: mkWeatherLightning 19s linear -6s infinite !important; }
+
+@media (max-width: 760px) {
+  .mk-weather-moon { top: 2px; left: 70%; width: 18px; height: 18px; }
+  .mk-weather-particle:nth-child(n+11) { display: none !important; }
+  .mk-weather-layer[data-weather-state='hail'] .mk-weather-particle:nth-child(-n+6) {
+    display: block !important;
+    width: var(--hail-size);
+    height: var(--hail-size);
+    border-radius: 48% 56% 43% 58% / 54% 42% 61% 47%;
+    animation-name: mkWeatherHail !important;
+  }
+  .mk-weather-layer[data-weather-state='hail'] .mk-weather-particle:nth-child(n+7):nth-child(-n+10) {
+    display: block !important;
+    width: var(--rain-width);
+    height: var(--rain-size);
+    border-radius: 999px;
+    clip-path: polygon(42% 0,58% 0,100% 100%,0 100%);
+    opacity: .32;
+    background: linear-gradient(180deg, rgba(230,244,255,.10), rgba(188,220,243,.58));
+    animation-name: mkWeatherRain !important;
+  }
+  html.mk-low-spec:not(.mk-no-anim) .mk-weather-layer[data-weather-state='hail'] .mk-weather-particle:nth-child(n+7):nth-child(-n+10) {
+    animation: mkWeatherRain var(--rain-duration) linear var(--particle-delay) infinite !important;
+  }
+  .mk-weather-cloud:nth-child(2),
+  .mk-weather-fog:nth-of-type(4) { display: none !important; }
+  .mk-weather-layer[data-weather-state='partly-cloudy'] .mk-weather-cloud:nth-child(1) { opacity: .28; }
+  .mk-weather-demo-controls { top: 72px; }
+  .mk-weather-demo-controls { max-width: calc(100vw - 12px); gap: 3px; padding: 3px 4px; }
+  .mk-weather-demo-controls select { min-width: 112px; max-width: 31vw; }
+  .mk-weather-demo-controls .mk-weather-demo-moon-select { min-width: 108px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:root .mk-weather-layer *,
+  html:root .mk-weather-layer *::before,
+  html:root .mk-weather-layer *::after { animation: none !important; }
+  .mk-weather-particles { display: none !important; }
+  .mk-weather-cloud { left: 45% !important; transform: scale(var(--cloud-scale,1)) !important; }
+  .mk-weather-cloud:nth-child(2),
+  .mk-weather-fog:nth-of-type(4) { display: none !important; }
+  .mk-weather-temp-icon { display: none !important; }
+}

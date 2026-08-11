@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.206-feedbackauth';
+const CACHE = 'minka-4.6.278-header-weather-four-period-demo';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
