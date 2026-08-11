@@ -19199,15 +19199,17 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
 :root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic .mk-ticker-wrap {
   margin: 0 !important;
 }
-:root:not(.mk-mobile-shell) #minkaBarInner #mkTickerTrack,
-:root:not(.mk-mobile-shell) #minkaBarInner .mk-news-item {
+:root:not(.mk-mobile-shell) #minkaBarInner #mkTickerTrack {
   align-items: flex-start !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner .mk-news-item {
+  align-items: center !important;
 }
 :root:not(.mk-mobile-shell) #minkaBarInner .mk-news-headline {
   display: -webkit-box !important;
   height: auto !important;
   max-height: 30px !important;
-  margin-top: 1px !important;
+  margin-top: 0 !important;
   padding: 0 !important;
   overflow: hidden !important;
   white-space: normal !important;
@@ -19218,10 +19220,10 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   line-height: 15px !important;
 }
 :root:not(.mk-mobile-shell) #minkaBarInner .mk-tick-time {
-  margin-top: 4px !important;
+  margin-top: 0 !important;
 }
 :root:not(.mk-mobile-shell) #minkaBarInner .mk-ticker-cat {
-  margin-top: 3px !important;
+  margin-top: 0 !important;
 }
 /* Current-time pill may cover the fixed 14:00/02:00 labels. They are utility
    markers, so hide/show them instantly: an opacity tween creates a coloured

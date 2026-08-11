@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.278-header-weather-four-period-demo';
+const CACHE = 'minka-4.6.282-header-ticker-flex-center';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
