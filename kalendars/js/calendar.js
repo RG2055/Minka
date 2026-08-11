@@ -52,6 +52,7 @@ var hospitalDatabase = window.hospitalDatabase;
   let preloadTimer = 0;
   let preloadIdle = false;
   let currentPeriod = '';
+  let previewPeriod = '';
   const preloaded = new Set();
 
   function rigaTimeParts(date = new Date()) {
@@ -67,6 +68,7 @@ var hospitalDatabase = window.hospitalDatabase;
   }
 
   function getHeaderPeriod(date = new Date()) {
+    if (previewPeriod) return previewPeriod;
     const { hour } = rigaTimeParts(date);
     if (hour >= 5 && hour < 9) return 'morning';
     if (hour >= 9 && hour < 17) return 'day';
@@ -187,6 +189,11 @@ var hospitalDatabase = window.hospitalDatabase;
     getHeaderPeriod,
     getMillisecondsUntilNextPeriod,
     refresh: () => applyPeriod(true),
+    setPreviewPeriod(period) {
+      previewPeriod = ['morning', 'day', 'sunset', 'night'].includes(period) ? period : '';
+      applyPeriod(true);
+      return previewPeriod;
+    },
     destroy() {
       clearTimeout(switchTimer);
       if (preloadTimer) {
@@ -3032,6 +3039,21 @@ function filterFullList(btn) {
         const s = Math.floor((remainingMs % 60000) / 1000);
         remainEl.textContent = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
         remainEl.style.color = remainingMs > 14400000 ? 'rgba(139,92,246,0.95)' : remainingMs > 7200000 ? 'rgba(251,191,36,0.95)' : 'rgba(239,68,68,0.95)';
+
+        // Low-performance mode skips the heavy ruler rebuild for four out of
+        // five ticks. Keep the lightweight pill clock/countdown truly live.
+        const wrap = strip.closest('#shift-progress-wrap');
+        const rNow = wrap && wrap.querySelector('.sl-ruler-now');
+        if (rNow) {
+          const clockEl = rNow.querySelector('.sl-rn-clock');
+          const remainingEl = rNow.querySelector('.sl-rn-remaining');
+          if (clockEl) {
+            const current = new Date(t);
+            clockEl.textContent = String(current.getHours()).padStart(2, '0') + ':' + String(current.getMinutes()).padStart(2, '0');
+          }
+          if (remainingEl) remainingEl.textContent = remainEl.textContent;
+          rNow.setAttribute('aria-label', 'Tagad ' + (clockEl ? clockEl.textContent : '') + ', atlicis ' + (remainingEl ? remainingEl.textContent : ''));
+        }
       }
     });
   }
@@ -3995,6 +4017,37 @@ function filterFullList(btn) {
     });
   }
 
+  function _layoutCompactRulerNow(wrap, rNow, scrubPct) {
+    if (!wrap || !rNow) return;
+    var ruler = rNow.closest('.sl-ruler');
+    if (!ruler) return;
+    var rulerWidth = ruler.clientWidth || 0;
+    var pillWidth = rNow.offsetWidth || 0;
+    if (!rulerWidth || !pillWidth) return;
+
+    // Keep the wider combined pill inside the ruler even near 08:00/08:00.
+    var center = rulerWidth * Math.max(0, Math.min(100, scrubPct)) / 100;
+    var left = Math.max(0, Math.min(rulerWidth - pillWidth, center - pillWidth / 2));
+    rNow.style.left = left.toFixed(1) + 'px';
+    rNow.style.transform = 'none';
+
+    // Hide only tick labels that the pill physically covers. Width reads are
+    // batched before class writes, so this remains a tiny once-per-second job.
+    var ticks = Array.from(ruler.querySelectorAll('.sl-rtick'));
+    var metrics = ticks.map(function(tick) {
+      var pct = parseFloat(tick.style.left) || 0;
+      var x = rulerWidth * pct / 100;
+      var width = tick.offsetWidth || 0;
+      var transform = String(tick.style.transform || '');
+      var tickLeft = transform.indexOf('-100%') >= 0 ? x - width
+        : transform.indexOf('-50%') >= 0 ? x - width / 2 : x;
+      return { tick: tick, left: tickLeft, right: tickLeft + width };
+    });
+    metrics.forEach(function(metric) {
+      metric.tick.classList.toggle('sl-rtick-hidden', metric.right > left - 5 && metric.left < left + pillWidth + 5);
+    });
+  }
+
   // Cheap per-second refresh of only the values that actually move, so the full
   // subtree (incl. the heavy night-split SVG) is not rebuilt every tick.
   function _laneLiveUpdate(wrap, sorted, nowMs, axisStartMs, axisEndMs, axisDur, isNs, isToday, counterStartMs, counterEndMs) {
@@ -4005,18 +4058,14 @@ function filterFullList(btn) {
     var rNow = wrap.querySelector('.sl-ruler-now');
     if (rNow) {
       var nd = new Date(nowMs);
-      rNow.style.left = scrubPct.toFixed(2) + '%';
-      rNow.style.transform = 'translateX(' + (scrubPct < 5 ? '0' : scrubPct > 95 ? '-100%' : '-50%') + ')';
-      rNow.textContent = String(nd.getHours()).padStart(2, '0') + ':' + String(nd.getMinutes()).padStart(2, '0');
+      var clockEl = rNow.querySelector('.sl-rn-clock');
+      if (clockEl) clockEl.textContent = String(nd.getHours()).padStart(2, '0') + ':' + String(nd.getMinutes()).padStart(2, '0');
+      else rNow.textContent = String(nd.getHours()).padStart(2, '0') + ':' + String(nd.getMinutes()).padStart(2, '0');
     }
     var scr = wrap.querySelector('.sl-scrubber'); if (scr) scr.style.left = scrubPct.toFixed(2) + '%';
-    // Re-evaluate ruler tick hiding as the now-pill moves (same ~4.2% rule as the
-    // full build) — otherwise a tick the pill drifts over stays visible and
-    // overlaps it until the next full rebuild.
-    wrap.querySelectorAll('.sl-rtick').forEach(function (t) {
-      var lp = parseFloat(t.style.left) || 0;
-      t.classList.toggle('sl-rtick-hidden', Math.abs(lp - scrubPct) < 4.2);
-    });
+    // Tick visibility is resolved once, from real pixel bounds, below in
+    // _layoutCompactRulerNow. A second percentage-based pass here could briefly
+    // unhide the yellow 14:00 label before the exact pass hid it again.
     if (!isNs) {
       var lanes = wrap.querySelectorAll('.sl-bars-wrap > .sl');
       sorted.forEach(function (g, i) {
@@ -4032,16 +4081,18 @@ function filterFullList(btn) {
     if (isToday) {
       var _cStart = counterStartMs || axisStartMs;
       var _cEnd = counterEndMs || axisEndMs;
-      var _elMs = Math.max(0, nowMs - _cStart), _reMs = Math.max(0, _cEnd - nowMs);
-      var elEl = wrap.querySelector('.sl-ts-elapsed');
-      if (elEl) elEl.textContent = String(Math.floor(_elMs / 3600000)).padStart(2, '0') + ':' + String(Math.floor((_elMs % 3600000) / 60000)).padStart(2, '0');
+      var _reMs = Math.max(0, _cEnd - nowMs);
       var remEl = wrap.querySelector('.sl-ts-rem');
       if (remEl) {
         var _reH = Math.floor(_reMs / 3600000), _reM = Math.floor((_reMs % 3600000) / 60000), _reS = Math.floor((_reMs % 60000) / 1000);
         remEl.textContent = String(_reH).padStart(2, '0') + ':' + String(_reM).padStart(2, '0') + ':' + String(_reS).padStart(2, '0');
         remEl.style.color = _reMs > 14400000 ? 'rgba(139,92,246,0.95)' : _reMs > 7200000 ? 'rgba(251,191,36,0.95)' : 'rgba(239,68,68,0.95)';
+        var rnRemaining = rNow && rNow.querySelector('.sl-rn-remaining');
+        if (rnRemaining) rnRemaining.textContent = remEl.textContent;
       }
+      if (rNow) rNow.setAttribute('aria-label', 'Tagad ' + (clockEl ? clockEl.textContent : '') + ', atlicis ' + (rNow.querySelector('.sl-rn-remaining') ? rNow.querySelector('.sl-rn-remaining').textContent : ''));
     }
+    if (rNow) _layoutCompactRulerNow(wrap, rNow, scrubPct);
   }
 
   function buildShiftLanes(stops, axisStart, axisEnd, nowDate, nsOverlay, counterStart, counterEnd) {
@@ -4174,9 +4225,7 @@ function filterFullList(btn) {
       rulerTicks += '<span class="sl-rtick' + (isSun?' sl-rtick-sun':'') + (isMoon?' sl-rtick-moon':'') + (hidden?' sl-rtick-hidden':'') + '" style="left:' + lp + '%;transform:' + xf + '">' + String(pair[1]).padStart(2,'0') + ':00</span>';
     });
     // Elapsed / remaining strip
-    var _elMs = Math.max(0, nowMs - counterStartMs);
     var _reMs = Math.max(0, counterEndMs - nowMs);
-    var _elStr = String(Math.floor(_elMs/3600000)).padStart(2,'0') + ':' + String(Math.floor((_elMs%3600000)/60000)).padStart(2,'0');
     var _reH = Math.floor(_reMs/3600000), _reM = Math.floor((_reMs%3600000)/60000), _reS = Math.floor((_reMs%60000)/1000);
     var _reStr = String(_reH).padStart(2,'0') + ':' + String(_reM).padStart(2,'0') + ':' + String(_reS).padStart(2,'0');
     var _reColor = _reMs > 14400000 ? 'rgba(139,92,246,0.95)' : _reMs > 7200000 ? 'rgba(251,191,36,0.95)' : 'rgba(239,68,68,0.95)';
@@ -4192,14 +4241,15 @@ function filterFullList(btn) {
       '</div>' +
       '<span class="sl-ruler-pct" style="right:' + _pctRight + '">' + _pctInt + '%</span>' +
       rulerTicks +
-      '<span class="sl-ruler-now" style="left:' + scrubPctR.toFixed(2) + '%;transform:translateX(' + (scrubPctR < 5 ? '0' : scrubPctR > 95 ? '-100%' : '-50%') + ')">' + nowLabel + '</span>' +
+      '<span class="sl-ruler-now" aria-label="Tagad ' + nowLabel + ', atlicis ' + _reStr + '">' +
+        '<strong class="sl-rn-clock">' + nowLabel + '</strong>' +
+        '<span class="sl-rn-word">atlicis</span><strong class="sl-rn-remaining">' + _reStr + '</strong>' +
+      '</span>' +
     '</div>';
 
     var _timesStrip = '<div class="sl-times-strip" data-start-ms="' + counterStartMs + '" data-end-ms="' + counterEndMs + '">' +
       '<span id="sl-lanes-slot" class="sl-lanes-slot"></span>' +
       '<span id="sl-ns-slot" class="sl-ns-slot"></span>' +
-      '<span class="sl-ts-label sl-ts-elapsed-label">PAGĀJIS</span><strong class="sl-ts-val sl-ts-elapsed">' + _elStr + '</strong>' +
-      '<span class="sl-ts-sep"></span>' +
       '<span class="sl-ts-label sl-ts-remaining-label">ATLIKUŠAS</span><strong class="sl-ts-val sl-ts-rem" data-end-ms="' + counterEndMs + '" style="color:' + _reColor + '">' + _reStr + '</strong>' +
     '</div>';
     // Buddy is gone, so the placeholder row he needed on other days is gone too.
@@ -4269,6 +4319,12 @@ function filterFullList(btn) {
     if (_nsSlot && _nsBtn) _nsSlot.appendChild(_nsBtn);
     var _lanesSlot = wrap.querySelector('#sl-lanes-slot');
     if (_lanesSlot && _lanesBtn) _lanesSlot.appendChild(_lanesBtn);
+
+    var _rulerNow = wrap.querySelector('.sl-ruler-now');
+    // Position the pill and resolve covered tick labels before the browser can
+    // paint this freshly rebuilt ruler. Deferring this by one animation frame
+    // exposed the yellow 14:00 label for a single frame.
+    if (_rulerNow) _layoutCompactRulerNow(wrap, _rulerNow, scrubPctR);
 
   }
 

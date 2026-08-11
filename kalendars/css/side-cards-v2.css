@@ -1205,7 +1205,7 @@ html body .mk-next-person-copy b {
 html body .mk-next-person-copy small {
   display: block !important;
   color: #8996a8 !important;
-  font: 750 6px/7px "JetBrains Mono", ui-monospace, monospace !important;
+  font: 800 8.5px/9px "JetBrains Mono", ui-monospace, monospace !important;
   letter-spacing: .01em !important;
   white-space: nowrap !important;
 }
@@ -1217,7 +1217,7 @@ html body .mk-next-person.is-24h .mk-next-person-copy small { color: #cf7585 !im
 /* The next crew is four people, so use the compact 2 × 2 pattern instead of
    stretching four mostly-empty pills across the full side panel. */
 html body .side-panel .mk-next-shift-card {
-  grid-template-rows: 25px 53px 13px !important;
+  grid-template-rows: 25px auto 13px !important;
   height: auto !important;
   min-height: 0 !important;
 }
@@ -1226,8 +1226,9 @@ html body #radiographers-next.mk-next-shift-crew,
 html body #radiologists-next.mk-next-shift-crew {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  grid-template-rows: repeat(2, 25px) !important;
+  grid-template-rows: none !important;
+  grid-auto-rows: 25px !important;
   gap: 3px !important;
-  height: 53px !important;
+  height: auto !important;
   min-height: 53px !important;
 }
