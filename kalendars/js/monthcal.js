@@ -611,19 +611,30 @@
     notifyBuddyBirthday(true);
     setTimeout(function(){ document.addEventListener('pointerdown', bdayPopOutside, true); }, 0);
   }
+  function birthdayNames(items){
+    var names = (items || []).map(function(x){
+      return String(x && x.name || '').trim().split(/\s+/)[0];
+    }).filter(Boolean);
+    if (!names.length) return '';
+    return names.length > 1
+      ? names.slice(0, -1).join(', ') + ' un ' + names[names.length - 1]
+      : names[0];
+  }
   function renderBdayBadge(){
     var btn = document.getElementById('mkBdayBadge'); if (!btn) return;
     if (!_bdayLoaded) loadBirthdays();
     var list = upcomingBirthdays();
     var nearest = list[0];
+    var today = list.filter(function(x){ return x.days === 0; });
+    var isToday = today.length > 0;
     btn.style.display = nearest ? '' : 'none';
-    // Always show the countdown to the nearest birthday.
+    // On the birthday replace the countdown with a compact congratulations.
     btn.innerHTML = '<span class="mk-bday-ic">🎂</span>'
-      + (nearest ? '<span class="mk-bday-pill">' + esc(bdayRelLong(nearest.days)) + '</span>' : '');
+      + (nearest ? '<span class="mk-bday-pill">' + esc(isToday ? birthdayNames(today) : bdayRelLong(nearest.days)) + '</span>' : '');
     btn.classList.toggle('has-up', !!nearest);
-    btn.classList.toggle('is-today', !!(nearest && nearest.days === 0));
+    btn.classList.toggle('is-today', isToday);
     btn.title = nearest
-      ? (nearest.days === 0 ? ('Šodien: ' + nearest.name)
+      ? (isToday ? ('Šodien: ' + today.map(function(x){ return x.name; }).join(', '))
         : ('Tuvākā: ' + nearest.name + ' ' + bdayRelLong(nearest.days)))
       : 'Dzimšanas dienas';
   }

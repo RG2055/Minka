@@ -390,11 +390,7 @@ html body #minkaBarWrap > #minkaNamedayChip { z-index: 2; }
   gap: 2px !important;
 }
 .mk-weather-temp-icon {
-  display: block;
-  width: 12px;
-  height: 12px;
-  flex: 0 0 12px;
-  object-fit: contain;
+  display: none !important;
 }
 .mk-weather-temp-value { line-height: inherit; }
 

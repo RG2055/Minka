@@ -295,18 +295,15 @@
       return;
     }
 
-    var icon = chip.querySelector('.mk-weather-temp-icon');
     var value = chip.querySelector('.mk-weather-temp-value');
-    if (!icon || !value) {
-      icon = document.createElement('img');
-      icon.className = 'mk-weather-temp-icon';
-      icon.src = 'data/meteocons/partly-cloudy-day.svg';
-      icon.alt = '';
-      icon.setAttribute('aria-hidden', 'true');
-      icon.decoding = 'async';
+    if (!value) {
       value = document.createElement('span');
       value.className = 'mk-weather-temp-value';
-      chip.replaceChildren(icon, value);
+      chip.replaceChildren(value);
+    } else if (chip.children.length !== 1 || chip.firstElementChild !== value) {
+      // Remove the old decorative weather icon if this page was updated in
+      // place from a build that still rendered it.
+      chip.replaceChildren(value);
     }
     value.textContent = weather.t + '°C';
     chip.classList.add('mk-weather-temp');
@@ -316,8 +313,6 @@
 
   function visibilityChanged() {
     document.documentElement.classList.toggle('mk-weather-paused', document.hidden);
-    var icon = document.querySelector('.mk-weather-temp-icon');
-    if (icon) icon.hidden = document.hidden;
   }
   visibilityChanged();
   document.addEventListener('visibilitychange', visibilityChanged, { passive: true });
