@@ -2862,14 +2862,15 @@ function filterFullList(btn) {
       const dateAttr = mkEscAttr(worker.date || '');
       const shiftAttr = mkEscAttr(uiState.shiftHours || worker.shift || '');
       const typeAttr = mkEscAttr(dutyType);
-      let timerHtml = '';
+      /* Taimeris tagad dzīvo vidus kartītes joslā (mk-mid-timer). Sānos to
+         vairs nerādām — divi vienādi pulksteņi vienam cilvēkam bija troksnis,
+         un sānu kartītē vietu labāk aizņem vārds un noguruma gredzens.
+         isDone joprojām vajadzīgs, lai beigusies maiņa paliktu pieklusināta. */
+      const timerHtml = '';
       let isDone = false;
 
       if (options.isToday && dutyStartTime && dutyEndTime) {
         isDone = uiState.isDone;
-        if (uiState.isActive && uiState.remainingMs > 0) {
-          timerHtml = `<span class="duty-timer mk-side-timer" data-worker="${workerAttr}" data-date="${dateAttr}" data-start="${mkEscAttr(dutyStartTime)}" data-end="${mkEscAttr(dutyEndTime)}" data-shift="${shiftAttr}"><span class="ghost">88:88:88</span><span class="val">${mkEscAttr(uiState.timerText)}</span></span>`;
-        }
       }
 
       const shiftChip = uiState.shiftHours
@@ -2998,6 +2999,15 @@ function filterFullList(btn) {
         const secsLeft = Math.floor(uiState.remainingMs / 1000);
         timer.classList.toggle('warning-critical', secsLeft <= 300);
         timer.classList.toggle('warning-low', secsLeft > 300 && secsLeft <= 900);
+        return;
+      }
+      /* Vidus kartītes taimeris nav atsevišķs elements, ko var izmest — tas ir
+         joslas vidējā aile. Beidzoties maiņai, atņemam tam .duty-timer (lai
+         nākamajos tikšķos to vairs neķer) un palaižam pārzīmēšanu, kas ailē
+         ieliks statisko maiņas logu. */
+      if (timer.classList.contains('mk-mid-timer')) {
+        timer.classList.remove('duty-timer');
+        shouldRefresh = true;
         return;
       }
       const block = timer.closest('.duty-block');
@@ -4442,6 +4452,18 @@ function filterFullList(btn) {
           });
           const pct = card.querySelector('.mk-mid-fat-pct');
           if (pct) pct.textContent = score + '%';
+          /* Jaunā apakšējā josla: procenti + krāsa. Bultiņu neaiztiekam —
+             tendenci rēķina no vēstures, un tā nemainās ar šo atsvaidzinājumu. */
+          const metaVal = card.querySelector('.mk-mid-meta-value');
+          if (metaVal) {
+            const arrow = (metaVal.textContent.match(/[↗↘→]/) || [''])[0];
+            metaVal.textContent = score + '%' + (arrow ? ' ' + arrow : '');
+            const meta = card.querySelector('.mk-mid-meta');
+            if (meta) {
+              meta.style.setProperty('--mk-mid-fat-color',
+                score > 70 ? '#ff3b30' : score > 45 ? '#ff9500' : score > 20 ? '#ffd60a' : '#30d158');
+            }
+          }
           return;
         }
         // Krāsas: zaļš→dzeltens→oranžs→sarkans, katram līmenim skaidri atšķirīgs
@@ -5198,12 +5220,13 @@ function filterFullList(btn) {
     function buildCoffeeRow(name) {
       const count = getCoffeeCount(name);
       const safeName = escapeHtml(name || '');
+      /* Skaitlis parādās tikai tad, kad kafija ir atzīmēta; citādi pilulī
+         paliek tikai krūze. Uzraksta “KAFIJA” nav. */
       return `
-        <div class="mk-mid-coffee" data-coffee-name="${safeName}">
-          <span class="mk-coffee-lbl">KAFIJA</span>
+        <div class="mk-mid-coffee${count > 0 ? '' : ' is-empty'}" data-coffee-name="${safeName}">
           <div class="mk-coffee-step">
             <button class="mk-coffee-sub" type="button" aria-label="Atņemt kafiju" title="Atņemt kafiju">−</button>
-            <span class="mk-coffee-mid">${buildCoffeeCup('filled')}<span class="mk-coffee-num">${count}</span></span>
+            <span class="mk-coffee-mid">${buildCoffeeCup('filled')}<span class="mk-coffee-copy"><span class="mk-coffee-num">${count}</span></span></span>
             <button class="mk-coffee-add" type="button" aria-label="Pievienot kafiju" title="Pievienot kafiju">+</button>
           </div>
         </div>`;
@@ -5217,6 +5240,8 @@ function filterFullList(btn) {
       const numEl = row.querySelector('.mk-coffee-num');
       if (cups) cups.innerHTML = buildCoffeeCups(count);
       if (numEl) numEl.textContent = String(count);
+      /* Bez atzīmētas kafijas rāda tikai krūzi — ne skaitli, ne uzrakstu. */
+      row.classList.toggle('is-empty', count <= 0);
     }
 
     window.__minkaCoffeeIcon = coffeeIcon;
@@ -5352,6 +5377,74 @@ function filterFullList(btn) {
       }).join('');
     }
 
+    // Noguruma tendence pēdējā nedēļā pret iepriekšējo — tāda pati loģika kā
+    // nakts sadalījuma kartītēm (nightsplit.js fatigueTrend), lai viena un tā
+    // pati bultiņa nozīmētu vienu un to pašu abās vietās.
+    function midFatigueTrend(workerName) {
+      const flat = { icon: '→', cls: 'is-flat' };
+      if (!window.__fatigue || typeof window.__fatigue.gatherWorkerHistory !== 'function') return flat;
+      let hist;
+      try { hist = window.__fatigue.gatherWorkerHistory(workerName); } catch (e) { return flat; }
+      if (!hist || !hist.length) return flat;
+      const now = new Date();
+      let recent = 0, prev = 0;
+      hist.forEach(e => {
+        const d = e && e.date instanceof Date ? e.date : new Date(e && e.date);
+        if (!(d instanceof Date) || isNaN(d)) return;
+        const days = Math.floor((now - d) / 86400000);
+        const weight = (Number(e.hours || 0) || 0) + ((e.isNight || e.type === 'NAKTS' || e.type === 'DIENNAKTS') ? 4 : 0);
+        if (days >= 0 && days < 7) recent += weight;
+        else if (days >= 7 && days < 14) prev += weight;
+      });
+      const delta = recent - prev;
+      if (delta > 4) return { icon: '↗', cls: 'is-up' };
+      if (delta < -4) return { icon: '↘', cls: 'is-down' };
+      return flat;
+    }
+
+    /* Vidus kartītes apakšējā josla: nogurums · maiņas laiks · emoji.
+       Aizstāj veco 10 segmentu noguruma līkni — tā aizņēma visu rindu un
+       neteica neko par to, KAD cilvēks strādā. Trīs kolonnas ar dalītājiem,
+       tāpat kā nakts sadalījuma kartītēm, lai valoda ir viena. */
+    function buildMidMeta(w, fatigueScore, hasFatigueScore, fatigueColor, dutyHours, bgEmoji, initials) {
+      const trend = midFatigueTrend(w && w.name);
+      const start = getDutyStartTime(w);
+      const end = getDutyEndTime(w);
+      /* Kompakts logs: “20:00–08:00” neietilpst joslas trešdaļā un lien pāri
+         emoji ailei, tāpēc pilnas stundas rāda bez “:00” → “20–08”. */
+      const shortTime = t => /^\d{1,2}:00$/.test(t) ? t.slice(0, t.indexOf(':')) : t;
+      const timeLabel = (start && end) ? (shortTime(start) + '–' + shortTime(end)) : (dutyHours ? dutyHours + 'h' : '—');
+      const fatText = hasFatigueScore ? (fatigueScore + '% ' + trend.icon) : '—';
+
+      /* Vidū — tā paša cilvēka taimeris, kas agrāk tikšķēja sānu panelī.
+         Elementam paliek klase .duty-timer, tāpēc to atjauno tas pats
+         updateTimers() cikls — otrs pulkstenis nav vajadzīgs. Ja maiņa nav
+         aktīva (cita diena vai jau beigusies), vietā stājas maiņas logs. */
+      let timeCell = `<span class="mk-mid-meta-time">${escapeHtml(timeLabel)}</span>`;
+      if (isToday && start && end) {
+        const uiState = getWorkerUiState(w, activeDateStr, now);
+        if (uiState && uiState.isActive && uiState.remainingMs > 0) {
+          timeCell = `<span class="mk-mid-meta-time duty-timer mk-mid-timer"`
+            + ` data-worker="${escapeHtml(String(w.name || ''))}"`
+            + ` data-date="${escapeHtml(activeDateStr)}"`
+            + ` data-start="${escapeHtml(start)}"`
+            + ` data-end="${escapeHtml(end)}"`
+            + ` data-shift="${escapeHtml(String(uiState.shiftHours || w.shift || ''))}">`
+            + `<span class="val">${escapeHtml(uiState.timerText)}</span></span>`;
+        }
+      }
+
+      return `
+            <div class="mk-mid-meta ${trend.cls}" style="--mk-mid-fat-color:${fatigueColor}">
+              <span class="mk-mid-meta-fat">
+                <span class="mk-mid-meta-label">Nogurums</span>
+                <span class="mk-mid-meta-value">${escapeHtml(fatText)}</span>
+              </span>
+              ${timeCell}
+              <span class="mk-mid-meta-emoji${bgEmoji ? '' : ' is-initials'}" data-mk-emoji-click="1" title="Mainīt emoji">${bgEmoji ? escapeHtml(bgEmoji) : escapeHtml(initials || '')}</span>
+            </div>`;
+    }
+
     function buildCard(w, isRd) {
       const parts = String(w.name || "").trim().split(/\s+/).filter(Boolean);
       const initials = ((parts[0]?.[0] || "") + (parts[1]?.[0] || "")).toUpperCase();
@@ -5401,7 +5494,6 @@ function filterFullList(btn) {
               <div class="mk-mid-initials">${safeInitials}</div>
               <div class="mk-mid-status-icons">
                 ${personEmoji ? `<span class="mk-mid-person-emoji" data-mk-emoji-click="1">${escapeHtml(personEmoji)}</span>` : ''}
-                <button class="mk-emoji-edit-btn mk-mid-emoji-edit" type="button" title="Mainīt emoji" data-mk-edit="1">✨</button>
               </div>
             </div>
             <div class="mk-mid-month">
@@ -5417,13 +5509,10 @@ function filterFullList(btn) {
               <span class="name-main">${safeFirstName}</span>
               <span class="name-sub">${safeSurname}</span>
             </div>
+            ${buildCoffeeRow(w.name)}
           </div>
           <div class="mk-mid-bottom">
-            <div class="card-fat-row mk-mid-fatigue">
-              <div class="mk-mid-fat-segs">${buildFatigueSegments(fatigueScore)}</div>
-              <span class="fat-pct mk-mid-fat-pct">${hasFatigueScore ? fatigueScore + '%' : ''}</span>
-            </div>
-            ${buildCoffeeRow(w.name)}
+            ${buildMidMeta(w, fatigueScore, hasFatigueScore, fatigueColor, dutyHours, bgEmoji, initials)}
           </div>`;
 
         const _wSkin = (typeof window.mkGetWorkerSkin === 'function') ? window.mkGetWorkerSkin(w.name) : null;
