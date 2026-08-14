@@ -224,6 +224,8 @@
       '.mcal-grid{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:1fr;gap:6px;flex:1 1 auto;min-height:0;}',
       // left date rail layout (no overlapping watermark)
       '.mcal-cell{position:relative;border-radius:11px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.018);padding:5px 7px 5px 5px;overflow:hidden;display:flex;flex-direction:row;gap:6px;min-height:0;}',
+      '.mcal-grid:not(.is-week) .mcal-cell:not(.mcal-blank){cursor:pointer;}',
+      '.mcal-grid:not(.is-week) .mcal-cell:not(.mcal-blank):hover{border-color:rgba(125,211,252,.28);background:rgba(125,211,252,.065);}',
       '.mcal-cell.is-weekend{background:rgba(125,211,252,.045);}',
       '.mcal-cell.is-today{border-color:rgba(56,189,248,.6);box-shadow:inset 0 0 0 1px rgba(56,189,248,.3);}',
       '.mcal-cell.is-holi{background:rgba(125,211,252,.05);}',
@@ -240,6 +242,8 @@
       '.mcal-body{position:relative;flex:1 1 auto;min-width:0;min-height:0;overflow:hidden;font-size:11px;line-height:1.18;}',
       '.mcal-grp{margin-bottom:3px;}',
       '.mcal-grp-h{font-weight:800;font-size:.72em;letter-spacing:.06em;opacity:.55;margin-bottom:1px;white-space:nowrap;}',
+      '.mcal-grid:not(.is-week) .mcal-grp-h{display:none;}',
+      '.mcal-grid:not(.is-week) .mcal-rd{margin-top:2px;padding-top:2px;border-top:1px solid rgba(63,155,255,.18);}',
       '.mcal-rg .mcal-grp-h{color:#1fe091;}',
       '.mcal-rd .mcal-grp-h{color:#3f9bff;}',
       '.mcal-w{display:flex;align-items:baseline;gap:4px;white-space:nowrap;}',
@@ -247,6 +251,7 @@
       '.mcal-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
       '.mcal-nf{font-weight:800;color:#eef4fb;}',
       '.mcal-ns{font-size:.82em;font-weight:600;color:rgba(190,205,225,.62);margin-left:3px;}',
+      '.mcal-grid:not(.is-week) .mcal-ns{display:none;}',
       '.mcal-wh{margin-left:auto;color:rgba(160,180,205,.72);font-weight:700;padding-left:6px;flex:0 0 auto;}',
       '.mcal-off{opacity:.25;font-size:.9em;}',
       '.mcal-empty{margin:auto;opacity:.5;}',
@@ -324,7 +329,7 @@
         + (hd ? '<span class="mcal-holidot' + (hd.free ? ' is-free' : '') + '" title="' + esc(hd.name) + '"></span>' : '')
         + (bdNames ? '<span class="mcal-bdaydot" title="🎂 ' + esc(bdNames.join(', ')) + '"></span>' : '')
         + '</div>';
-      return '<div class="' + cls + '">' + rail + '<div class="mcal-body">' + body + '</div></div>';
+      return '<div class="' + cls + '" data-day="' + d + '" title="Atvērt šīs nedēļas detalizēto skatu">' + rail + '<div class="mcal-body">' + body + '</div></div>';
     }
 
     var cells = '';
@@ -339,8 +344,8 @@
       + '<div class="mcal-grid' + (_viewMode === 'week' ? ' is-week' : '') + '">' + cells + '</div>';
   }
 
-  // No scrollbars: shrink each cell body's font so its content fits. One read
-  // pass + one write pass (cheap on weak PCs), re-run on resize.
+  // Month view is an overview, not micro-print. Dense days keep first names
+  // readable and open their full week on click instead of shrinking to 5px.
   function fitAll(){
     if (!_overlay) return;
     var bodies = [].slice.call(_overlay.querySelectorAll('.mcal-body'));
@@ -349,7 +354,8 @@
     jobs.forEach(function(o){
       if (o.sh > o.ch + 1 && o.ch > 0){
         var base = parseFloat(getComputedStyle(o.b).fontSize) || 11;
-        o.b.style.fontSize = Math.max(5, base * (o.ch / o.sh) * 0.94).toFixed(2) + 'px';
+        var floor = _viewMode === 'week' ? 10 : 7.5;
+        o.b.style.fontSize = Math.max(floor, base * (o.ch / o.sh) * 0.94).toFixed(2) + 'px';
       }
     });
   }
@@ -467,6 +473,18 @@
 
       var act = t.closest && t.closest('.mcal-actbtn');
       if (act){ openPanel(act.getAttribute('data-panel')); return; }
+
+      var dayCell = t.closest && t.closest('.mcal-cell[data-day]');
+      if (dayCell && _viewMode === 'month'){
+        var day = parseInt(dayCell.getAttribute('data-day'), 10);
+        var dayMonth = monthParts(_curMonth);
+        if (day > 0 && dayMonth.idx != null){
+          _weekIdx = weekOfDay(dayMonth, day);
+          _viewMode = 'week';
+          render(_curMonth);
+        }
+        return;
+      }
 
       var seg = t.closest && t.closest('.mcal-seg button');
       if (seg){

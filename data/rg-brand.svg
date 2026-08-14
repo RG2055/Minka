@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="RG kalendārs">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="72%">
+      <stop offset="0" stop-color="#101b34"/>
+      <stop offset="0.58" stop-color="#080d18"/>
+      <stop offset="1" stop-color="#05080e"/>
+    </radialGradient>
+    <radialGradient id="aura" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#547eff" stop-opacity="0.48"/>
+      <stop offset="0.56" stop-color="#48bfff" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#48bfff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="body" x1="128" y1="78" x2="395" y2="442" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#96ebff"/>
+      <stop offset="0.34" stop-color="#43bdff"/>
+      <stop offset="0.72" stop-color="#478cff"/>
+      <stop offset="1" stop-color="#7b67ef"/>
+    </linearGradient>
+    <linearGradient id="top" x1="157" y1="96" x2="348" y2="234" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#e0faff" stop-opacity="0.78"/>
+      <stop offset="1" stop-color="#79ccff" stop-opacity="0.08"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="150" y1="88" x2="361" y2="411" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9eeaff" stop-opacity="0.74"/>
+      <stop offset="1" stop-color="#7265ff" stop-opacity="0.08"/>
+    </linearGradient>
+    <filter id="blur20" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="20"/>
+    </filter>
+    <filter id="shadow" x="-35%" y="-30%" width="170%" height="190%">
+      <feDropShadow dx="0" dy="28" stdDeviation="24" flood-color="#02040c" flood-opacity="0.72"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="10" flood-color="#479fff" flood-opacity="0.26"/>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <circle cx="256" cy="258" r="205" fill="url(#aura)" filter="url(#blur20)"/>
+  <circle cx="256" cy="256" r="178" fill="none" stroke="url(#ring)" stroke-width="3" opacity="0.34"/>
+  <ellipse cx="256" cy="438" rx="118" ry="23" fill="#4e91ff" opacity="0.23" filter="url(#blur20)"/>
+
+  <g filter="url(#shadow)">
+    <rect x="93" y="86" width="326" height="340" rx="90" fill="url(#body)"/>
+    <path d="M93 192c0-63 0-106 90-106h146c90 0 90 43 90 106v13H93Z" fill="url(#top)"/>
+    <path d="M97 209h318" fill="none" stroke="#e7f9ff" stroke-opacity="0.3" stroke-width="6"/>
+
+    <rect x="150" y="48" width="45" height="87" rx="22.5" fill="#cbf4ff"/>
+    <rect x="317" y="48" width="45" height="87" rx="22.5" fill="#cbf4ff"/>
+    <path d="M161 62c7-5 15-7 22-5" fill="none" stroke="#fff" stroke-opacity="0.46" stroke-width="8" stroke-linecap="round"/>
+    <path d="M328 62c7-5 15-7 22-5" fill="none" stroke="#fff" stroke-opacity="0.46" stroke-width="8" stroke-linecap="round"/>
+
+    <rect x="141" y="238" width="64" height="48" rx="18" fill="#edfbff" fill-opacity="0.76"/>
+    <rect x="224" y="238" width="64" height="48" rx="18" fill="#daf7ff" fill-opacity="0.5"/>
+    <rect x="307" y="238" width="64" height="48" rx="18" fill="#edfbff" fill-opacity="0.76"/>
+
+    <circle cx="205" cy="347" r="16" fill="#102540"/>
+    <circle cx="307" cy="347" r="16" fill="#102540"/>
+    <circle cx="211" cy="341" r="5.5" fill="#fff"/>
+    <circle cx="313" cy="341" r="5.5" fill="#fff"/>
+    <path d="M221 385c20 22 50 22 70 0" fill="none" stroke="#102540" stroke-width="13" stroke-linecap="round"/>
+    <ellipse cx="166" cy="376" rx="20" ry="8" fill="#ff9fd0" fill-opacity="0.58"/>
+    <ellipse cx="346" cy="376" rx="20" ry="8" fill="#ff9fd0" fill-opacity="0.58"/>
+
+    <path d="M130 139c33-34 77-43 126-43" fill="none" stroke="#fff" stroke-opacity="0.4" stroke-width="13" stroke-linecap="round"/>
+    <path d="M122 318c8 45 31 72 68 88" fill="none" stroke="#b7e9ff" stroke-opacity="0.14" stroke-width="9" stroke-linecap="round"/>
+  </g>
+</svg>
