@@ -392,11 +392,16 @@
       _hookedCards.add(card);
       card.style.position = 'relative';
       var btn = card.querySelector('.mk-emoji-edit-btn');
-      if (!btn) {
+      /* Vidus kartītēm zīmuļa pogas vairs nav — emoji maina, uzspiežot uz pašas
+         emoji joslas ailē (data-mk-emoji-click). */
+      if (!btn && !card.classList.contains('mk-mid-card')) {
         btn = document.createElement('button');
         btn.className = 'mk-emoji-edit-btn';
         btn.title = 'Mainīt emoji';
-        btn.innerHTML = '✨';
+        btn.setAttribute('aria-label', 'Mainīt emoji');
+        /* Zīmulis, nevis ✨: apaļa, tikko manāma stikla poga saka “šo var
+           rediģēt”, kamēr zvaigznītes izskatījās pēc dekora. */
+        btn.innerHTML = '<svg class="mk-emoji-edit-ic" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>';
         btn.setAttribute('data-mk-edit', '1');
         if (card.classList.contains('mk-mid-card')) {
           var rail = card.querySelector('.mk-mid-status-icons');
