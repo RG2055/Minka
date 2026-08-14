@@ -545,8 +545,7 @@
   align-self: flex-end !important;
   opacity: .88;
   filter: none !important;
-  /* Reserve a real right gutter in installed PWA windows. */
-  transform: translateX(-22px) !important;
+  transform: none !important;
 }
 #nsPanel .ns-room-cat .pkt-cat {
   max-width: 200px !important;
@@ -607,6 +606,8 @@
   width: 26px !important;
   height: 25px !important;
   overflow: visible !important;
+  /* The cuts rise from the three claw tips; their lower ends meet the paw. */
+  transform: translateY(-10px) !important;
   transform-origin: center !important;
 }
 #nsPanel .ns-cat-rhythm-key .ns-claw-cut { color: inherit !important; }

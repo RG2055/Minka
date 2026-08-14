@@ -1288,7 +1288,10 @@
         // reserving 320+360px beside them — otherwise rooms hit the 120px
         // floor and render as unreadable thumbnails.
         var narrow = blockW < 640;
-        var catW = narrow ? 0 : 205;
+        // Reserve the cat plus its right-side rhythm labels as one real column.
+        // This keeps labels inside the panel without visually translating the
+        // cat over the adjacent history statistics.
+        var catW = narrow ? 0 : 249;
         var statsW = (stats && !narrow) ? 350 : 0;
         var availW = Math.max(120, blockW - catW - statsW - (narrow ? 10 : 28));
         var panelRect = panel.getBoundingClientRect();
