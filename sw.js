@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.292-nightsplit-labels';
+const CACHE = 'minka-4.6.293-nightsplit-gutter';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 

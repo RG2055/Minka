@@ -540,7 +540,14 @@
 }
 
 /* Cat stays recognisable and clickable, but sits quietly in the material. */
-#nsPanel .ns-room-cat { position: relative !important; align-self: flex-end !important; opacity: .88; filter: none !important; }
+#nsPanel .ns-room-cat {
+  position: relative !important;
+  align-self: flex-end !important;
+  opacity: .88;
+  filter: none !important;
+  /* Reserve a real right gutter in installed PWA windows. */
+  transform: translateX(-22px) !important;
+}
 #nsPanel .ns-room-cat .pkt-cat {
   max-width: 200px !important;
   margin-left: 0 !important;
