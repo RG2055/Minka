@@ -226,7 +226,9 @@
       + '#minka-gate .mg-note b{display:block;font-size:14px;color:#eef6ff;}'
       + '#minka-gate .mg-note span{display:block;font-size:12.5px;color:rgba(176,200,224,.7);margin-top:3px;}'
       + '#minka-gate .mg-author{display:flex;align-items:center;gap:15px;text-align:left;margin-top:18px;padding-top:18px;border-top:1px solid rgba(255,255,255,.08);}'
-      + '#minka-gate .mg-rg{flex:0 0 auto;width:52px;height:52px;border-radius:50%;border:1.5px solid rgba(125,160,210,.45);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#3b82f6;letter-spacing:.05em;}'
+      + '#minka-gate .mg-brand-logo{display:block;width:104px;height:104px;margin:0 auto;filter:drop-shadow(0 14px 28px rgba(46,118,255,.22));}'
+      + '#minka-gate .mg-rg{flex:0 0 auto;width:52px;height:52px;border-radius:15px;overflow:hidden;box-shadow:0 8px 22px rgba(33,98,214,.22);}'
+      + '#minka-gate .mg-rg img{display:block;width:100%;height:100%;}'
       + '#minka-gate .mg-author small{display:block;font-size:11.5px;color:rgba(176,200,224,.6);}'
       + '#minka-gate .mg-author b{display:block;font-size:15px;color:#eef6ff;margin:2px 0;}'
       + '#minka-gate .mg-info{flex:1 1 54%;background:#fff;border-radius:26px;margin:14px 14px 14px 0;padding:38px 46px;color:#16202c;overflow:auto;min-width:320px;}'
@@ -244,19 +246,7 @@
       + '</style>'
       + '<div class="mg-left">'
       + '<div class="mg-login">'
-      // Pixel ghost logo (from the buddy sprite) + speed lanes.
-      + '<svg width="104" height="104" viewBox="0 0 10 10" aria-hidden="true" style="display:block;margin:0 auto;">'
-      + '<g fill="#38bdf8" shape-rendering="crispEdges">'
-      + '<rect x="3" y="0" width="4" height="1" fill="#7dd3fc"/>'
-      + '<rect x="2" y="1" width="6" height="1"/>'
-      + '<rect x="1" y="2" width="1" height="1"/><rect x="4" y="2" width="2" height="1"/><rect x="8" y="2" width="1" height="1"/>'
-      + '<rect x="1" y="3" width="8" height="3"/>'
-      + '<rect x="1" y="6" width="1" height="1"/><rect x="3" y="6" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/>'
-      + '</g>'
-      + '<rect x="1.4" y="7.5" width="4.6" height="0.62" rx="0.31" fill="#7dd3fc"/>'
-      + '<rect x="2.6" y="8.42" width="5.8" height="0.62" rx="0.31" fill="#38bdf8"/>'
-      + '<rect x="1.9" y="9.34" width="3.8" height="0.62" rx="0.31" fill="#0e74b2"/>'
-      + '</svg>'
+      + '<img class="mg-brand-logo" src="data/rg-brand.svg?v=20260814brand1" alt="RG">'
       + '<div class="mg-title">Grafika p&#257;rskats</div>'
       + '<div class="mg-bar"></div>'
       + '<div class="mg-sub">Piek&#316;uve tikai autoriz&#275;tiem darbiniekiem</div>'
@@ -275,7 +265,7 @@
       + '<div><b>Sist&#275;m&#257; netiek izmantoti pacientu dati.</b><span>Tiek att&#275;loti tikai de&#382;&#363;ru grafika dati.</span></div>'
       + '</div>'
       + '<div class="mg-author">'
-      + '<div class="mg-rg">RG</div>'
+      + '<div class="mg-rg"><img src="data/rg-brand.svg?v=20260814brand1" alt=""></div>'
       + '<div><small>Autors</small><b>Rihards Gavri&#316;enko</b><small>Radiogr&#257;fers</small></div>'
       + '</div>'
       + '</div>'
@@ -330,25 +320,17 @@
         if (!res.ok || !data || !data.token) throw new Error((data && data.error) || 'Login failed');
         setToken(data.token, !!(remember && remember.checked));
         notifyIframeAuth();
-        // Blue loading screen while the calendar reloads with the token —
-        // reuses the hospital loader, hides on the iframe's appReady signal.
+        // Reuse the compact brand loader while the authenticated schedule paints.
         var ldr = document.getElementById('mk-app-loader');
         if (ldr) {
-          ldr.style.display = 'flex';
+          ldr.style.display = 'grid';
           ldr.style.opacity = '1';
-          var ldrTxt = document.getElementById('mkl-text');
-          var ldrSub = document.getElementById('mkl-subtext');
-          var ldrFill = document.getElementById('mkl-progress-fill');
-          if (ldrTxt) ldrTxt.textContent = 'L\u0101d\u0113 datus\u2026';
-          if (ldrSub) ldrSub.textContent = 'Piesl\u0113dzas pie grafika skata';
-          if (ldrFill) ldrFill.style.width = '30%';
           var ldrDone = false;
           var hideLdr = function() {
             if (ldrDone) return;
             ldrDone = true;
-            if (ldrFill) ldrFill.style.width = '100%';
             ldr.style.opacity = '0';
-            setTimeout(function(){ ldr.style.display = 'none'; }, 920);
+            setTimeout(function(){ ldr.style.display = 'none'; }, 180);
           };
           window.addEventListener('message', function onReady(e) {
             var readyFrame = document.getElementById('calIframe');
@@ -422,8 +404,9 @@
 <meta name="theme-color" content="#09091a">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>RG</title>
-<link rel="icon" type="image/png" href="data/rg-cal-192.png">
-<link rel="apple-touch-icon" href="data/rg-apple-touch-180.png">
+<link rel="icon" type="image/svg+xml" href="data/rg-brand.svg?v=20260814brand1">
+<link rel="icon" type="image/png" sizes="192x192" href="data/rg-cal-192.png?v=20260814brand1">
+<link rel="apple-touch-icon" href="data/rg-apple-touch-180.png?v=20260814brand1">
 
 <!-- Preconnect to external origins so DNS/TLS is resolved before requests fire -->
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
@@ -714,104 +697,156 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260813birthdaylayout1" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260813birthdaylayout1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260814uxpass1" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260814uxpass1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
-<!-- App loading overlay — same hospital building as rezidenti, hides when iframe loads -->
-<div id="mk-app-loader" style="
-  position:fixed;inset:0;z-index:9999;
-  background:radial-gradient(1200px 700px at 8% 50%,rgba(0,95,255,.22),transparent 55%),
-             radial-gradient(1200px 700px at 92% 50%,rgba(0,255,180,.12),transparent 58%),
-             linear-gradient(180deg,#040812 0%,#050a14 55%,#060b13 100%);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
-  transition:opacity .9s ease;
-">
-  <!-- Pixel ghost (logo) — 2D pixel style, ice palette, stepped bob animation -->
-  <svg width="104" height="73" viewBox="0 0 10 7" aria-hidden="true" style="animation:mklBob 1.4s steps(2,end) infinite;">
-    <g fill="#38bdf8" shape-rendering="crispEdges">
-      <rect x="3" y="0" width="4" height="1" fill="#7dd3fc"/>
-      <rect x="2" y="1" width="6" height="1"/>
-      <rect x="1" y="2" width="1" height="1"/><rect x="4" y="2" width="2" height="1"/><rect x="8" y="2" width="1" height="1"/>
-      <rect x="1" y="3" width="8" height="3"/>
-      <rect x="1" y="6" width="1" height="1"/><rect x="3" y="6" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/>
-    </g>
-  </svg>
-  <div style="font-size:0.68rem;font-weight:800;letter-spacing:.20em;color:rgba(125,211,252,0.60);text-transform:uppercase;" id="mkl-text">Lādē datus…</div>
-  <div id="mkl-subtext" style="font-size:0.74rem;color:rgba(220,240,255,0.50);letter-spacing:.04em;">Sagatavo mekl&#275;&#353;anu, grafiku un iestat&#299;jumus</div>
-  <div id="mkl-progress" style="width:min(320px,78vw);height:10px;border-radius:3px;background:rgba(125,211,252,0.08);overflow:hidden;border:1px solid rgba(56,189,248,0.18);">
-    <div id="mkl-progress-fill" style="width:14%;height:100%;border-radius:2px;background:linear-gradient(90deg,#0e74b2 0%,#38bdf8 55%,#7dd3fc 100%);transition:width .6s cubic-bezier(.22,1,.36,1);position:relative;overflow:hidden;">
-      <span id="mkl-progress-sheen" style="position:absolute;inset:0;pointer-events:none;background:linear-gradient(100deg,transparent 0%,rgba(255,255,255,.12) 42%,rgba(255,255,255,.30) 52%,rgba(255,255,255,.12) 62%,transparent 100%);background-size:120px 100%;animation:mklSheen 1.8s linear infinite;"></span>
-    </div>
+<!-- Compact brand loader. It stays up until the embedded schedule has painted. -->
+<div id="mk-app-loader" role="status" aria-label="Ielādē grafiku">
+  <div class="mkl-brand-motion" aria-hidden="true">
+    <span class="mkl-aura"></span>
+    <svg class="mkl-blob-mark" viewBox="0 0 160 150" focusable="false">
+      <defs>
+        <linearGradient id="mkl-blob-blue" x1="25" y1="12" x2="132" y2="139" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#8de2ff"/>
+          <stop offset=".38" stop-color="#3caeff"/>
+          <stop offset=".72" stop-color="#537cff"/>
+          <stop offset="1" stop-color="#8a62e8"/>
+        </linearGradient>
+        <linearGradient id="mkl-blob-rg" x1="48" y1="55" x2="116" y2="101" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#ffffff"/>
+          <stop offset="1" stop-color="#d9e7ff"/>
+        </linearGradient>
+      </defs>
+      <path class="mkl-blob-body" fill="url(#mkl-blob-blue)" d="M36 28c5-14 16-19 29-10 10-4 24-4 34 0 14-9 25-3 28 12 14 13 20 32 17 54-4 34-26 55-62 56-37 1-62-20-66-54-3-24 4-44 20-58Z"/>
+      <path class="mkl-blob-gloss" d="M38 40c16-20 56-27 79-5"/>
+      <ellipse class="mkl-blob-floor" cx="80" cy="125" rx="35" ry="7"/>
+      <g class="mkl-blob-rg">
+        <path d="M48 101V56h18c12 0 19 6 19 15s-7 15-19 15H48m20 0 18 15"/>
+        <path d="M116 66c-4-7-10-10-18-10-14 0-23 10-23 23s9 23 23 23c8 0 14-3 18-8V81h-17"/>
+      </g>
+    </svg>
+    <span class="mkl-burst">
+      <i class="mkl-drop mkl-drop-1"></i><i class="mkl-drop mkl-drop-2"></i>
+      <i class="mkl-drop mkl-drop-3"></i><i class="mkl-drop mkl-drop-4"></i>
+      <i class="mkl-drop mkl-drop-5"></i><i class="mkl-drop mkl-drop-6"></i>
+      <i class="mkl-drop mkl-drop-7"></i><i class="mkl-drop mkl-drop-8"></i>
+    </span>
+    <svg class="mkl-pwa-mark" viewBox="0 0 160 160" focusable="false">
+      <defs>
+        <linearGradient id="mkl-app-blue" x1="37" y1="21" x2="127" y2="139" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#91e8ff"/>
+          <stop offset=".34" stop-color="#42bcff"/>
+          <stop offset=".72" stop-color="#468cff"/>
+          <stop offset="1" stop-color="#7969ee"/>
+        </linearGradient>
+        <linearGradient id="mkl-app-top" x1="52" y1="27" x2="105" y2="71" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#d0f6ff" stop-opacity=".72"/>
+          <stop offset="1" stop-color="#74c9ff" stop-opacity=".08"/>
+        </linearGradient>
+        <filter id="mkl-app-shadow" x="-45%" y="-45%" width="190%" height="210%">
+          <feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#121b68" flood-opacity=".55"/>
+        </filter>
+      </defs>
+      <ellipse class="mkl-app-ground" cx="80" cy="142" rx="39" ry="8"/>
+      <g class="mkl-app-shell" filter="url(#mkl-app-shadow)">
+        <rect x="29" y="27" width="102" height="106" rx="28" fill="url(#mkl-app-blue)"/>
+        <path d="M29 56c0-16 0-29 28-29h46c28 0 28 13 28 29v4H29Z" fill="url(#mkl-app-top)"/>
+        <path d="M30 61h100" fill="none" stroke="#e4f8ff" stroke-opacity=".28" stroke-width="2"/>
+        <rect x="47" y="15" width="14" height="27" rx="7" fill="#c7f2ff"/>
+        <rect x="99" y="15" width="14" height="27" rx="7" fill="#c7f2ff"/>
+        <rect x="44" y="70" width="20" height="15" rx="6" fill="#eafaff" fill-opacity=".72"/>
+        <rect x="70" y="70" width="20" height="15" rx="6" fill="#d4f6ff" fill-opacity=".48"/>
+        <rect x="96" y="70" width="20" height="15" rx="6" fill="#eafaff" fill-opacity=".72"/>
+        <circle cx="64" cy="104" r="5" fill="#102540"/>
+        <circle cx="96" cy="104" r="5" fill="#102540"/>
+        <circle cx="66" cy="102" r="1.7" fill="#fff"/>
+        <circle cx="98" cy="102" r="1.7" fill="#fff"/>
+        <path d="M69 116c6 7 16 7 22 0" fill="none" stroke="#102540" stroke-width="4" stroke-linecap="round"/>
+        <ellipse cx="52" cy="113" rx="6" ry="2.5" fill="#ff9fd0" fill-opacity=".56"/>
+        <ellipse cx="108" cy="113" rx="6" ry="2.5" fill="#ff9fd0" fill-opacity=".56"/>
+        <path d="M40 43c10-10 24-13 39-13" fill="none" stroke="#fff" stroke-opacity=".38" stroke-width="4" stroke-linecap="round"/>
+      </g>
+    </svg>
   </div>
 </div>
 <style>
-@keyframes mklSheen{0%{background-position:-120px 0;}100%{background-position:120px 0;}}
-@keyframes mklBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
+#mk-app-loader{position:fixed;inset:0;z-index:900000;display:grid;place-items:center;overflow:hidden;background:#06090e;transition:opacity .16s ease}
+.mkl-brand-motion{--mkl-seq:1.28s;position:relative;width:176px;height:176px;isolation:isolate}
+.mkl-aura{position:absolute;inset:42px;border-radius:50%;background:radial-gradient(circle,#5cbfff 0,#695fff 48%,transparent 72%);filter:blur(22px);opacity:0;animation:mklAura var(--mkl-seq) ease-out both}
+.mkl-blob-mark,.mkl-pwa-mark{position:absolute;inset:8px;width:160px;height:160px;overflow:visible;transform-origin:50% 54%;will-change:transform,opacity,filter}
+.mkl-blob-mark{z-index:2;animation:mklBlobIntro var(--mkl-seq) cubic-bezier(.22,1,.36,1) both}
+.mkl-blob-body{filter:drop-shadow(0 16px 22px rgba(24,50,134,.42)) drop-shadow(0 0 18px rgba(73,177,255,.25))}
+.mkl-blob-gloss{fill:none;stroke:#fff;stroke-width:6;stroke-linecap:round;stroke-opacity:.31}
+.mkl-blob-floor{fill:#d5f7ff;fill-opacity:.28;filter:blur(2px)}
+.mkl-blob-rg{fill:none;stroke:url(#mkl-blob-rg);stroke-width:7.5;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 2px 2px rgba(29,67,146,.35))}
+.mkl-burst{position:absolute;inset:0;z-index:3;pointer-events:none}
+.mkl-burst::before{content:"";position:absolute;left:50%;top:50%;width:72px;height:72px;border:3px solid rgba(163,226,255,.8);border-radius:50%;opacity:0;animation:mklBurstRing var(--mkl-seq) cubic-bezier(.2,.8,.2,1) both}
+.mkl-drop{position:absolute;left:calc(50% - 4px);top:calc(50% - 4px);width:8px;height:8px;border-radius:52% 48% 56% 44%;background:linear-gradient(145deg,#a6efff,#5a8eff 58%,#a168ef);box-shadow:0 0 10px rgba(105,179,255,.48);opacity:0;animation:mklDrop var(--mkl-seq) cubic-bezier(.2,.75,.25,1) both}
+.mkl-drop-1{--dx:-8px;--dy:-88px;width:7px;height:11px}.mkl-drop-2{--dx:55px;--dy:-65px;width:6px;height:6px}.mkl-drop-3{--dx:91px;--dy:-7px;width:10px;height:7px}.mkl-drop-4{--dx:65px;--dy:53px;width:6px;height:10px}.mkl-drop-5{--dx:9px;--dy:89px;width:9px;height:6px}.mkl-drop-6{--dx:-67px;--dy:56px;width:7px;height:11px}.mkl-drop-7{--dx:-92px;--dy:-5px;width:10px;height:7px}.mkl-drop-8{--dx:-54px;--dy:-69px;width:6px;height:9px}
+.mkl-pwa-mark{z-index:4;opacity:0;animation:mklLogoReveal var(--mkl-seq) cubic-bezier(.16,1,.3,1) both,mklLogoFloat 2.4s var(--mkl-seq) ease-in-out infinite}
+.mkl-app-ground{fill:#509cff;fill-opacity:.28;filter:blur(5px)}
+.mkl-app-shell{transform-origin:80px 80px}
+@keyframes mklAura{0%,10%{opacity:0;transform:scale(.55)}28%{opacity:.56;transform:scale(1)}54%{opacity:.72;transform:scale(.86)}72%{opacity:.3;transform:scale(1.55)}100%{opacity:.22;transform:scale(1.08)}}
+@keyframes mklBlobIntro{0%{opacity:0;transform:translateY(9px) scale(.58);filter:blur(8px)}15%{opacity:1;transform:translateY(0) scale(1.06);filter:blur(0)}30%{transform:scale(.98)}43%{transform:scale(1.1,.9) rotate(-1.5deg)}51%{opacity:1;transform:scale(.82,1.12) rotate(1deg);filter:blur(0)}64%,100%{opacity:0;transform:scale(1.58);filter:blur(9px)}}
+@keyframes mklBurstRing{0%,48%{opacity:0;transform:translate(-50%,-50%) scale(.35)}55%{opacity:.82}76%,100%{opacity:0;transform:translate(-50%,-50%) scale(2.3)}}
+@keyframes mklDrop{0%,49%{opacity:0;transform:translate(0,0) scale(.35)}55%{opacity:1}76%,100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.9) rotate(95deg)}}
+@keyframes mklLogoReveal{0%,54%{opacity:0;transform:scale(.5) rotate(-5deg);filter:blur(9px)}66%{opacity:1;transform:scale(1.08) rotate(1deg);filter:blur(0)}78%{transform:scale(.97) rotate(0)}88%,100%{opacity:1;transform:scale(1);filter:blur(0)}}
+@keyframes mklLogoFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-3px) scale(1.012)}}
+@media(prefers-reduced-motion:reduce){.mkl-aura,.mkl-blob-mark,.mkl-burst,.mkl-pwa-mark{animation:none}.mkl-aura{opacity:.22}.mkl-blob-mark,.mkl-burst{display:none}.mkl-pwa-mark{opacity:1}}
 </style>
 <script>
 (function(){
   var loader = document.getElementById('mk-app-loader');
-  var loaderFill = document.getElementById('mkl-progress-fill');
-  var loaderText = document.getElementById('mkl-text');
-  var loaderSub = document.getElementById('mkl-subtext');
   var startedAt = Date.now();
-  // Was 3200 — an artificial 3.2s brand-splash delay on every start. The
-  // loader now hides as soon as the calendar signals ready.
-  var minVisibleMs = 500;
-  var litClasses = ['lit-warm','lit-cool','lit-purple'];
-  var statusSteps = [
-    { progress: 18, title: 'Lādē datus…', sub: 'Pieslēdzas pie grafika skata' },
-        { progress: 38, title: 'Sak\u0101rto skatu\u2026', sub: 'Ielasa \u0161odienas mai\u0146as un mekl\u0113\u0161anu' },
-    { progress: 64, title: 'Sagatavo PWA…', sub: 'Pielāgo kešu, izskatu un shell elementus' },
-    { progress: 86, title: 'Gandrīz gatavs…', sub: 'Palaiž interaktīvos elementus' }
-  ];
-  var statusIndex = 0;
-  function paintStatus(step){
-    if (!step) return;
-    if (loaderFill) loaderFill.style.width = step.progress + '%';
-    if (loaderText) loaderText.textContent = step.title;
-    if (loaderSub) loaderSub.textContent = step.sub;
-  }
-  function animWins(){
-    if (document.hidden) return;
-    var wins = Array.from(document.querySelectorAll('.mkl-win'));
-    if(!wins.length) return;
-    wins.forEach(function(w){ w.classList.remove('lit-warm','lit-cool','lit-purple'); });
-    var count = 3 + Math.floor(Math.random()*4);
-    wins.slice().sort(function(){return Math.random()-.5;}).slice(0,count)
-      .forEach(function(w){ w.classList.add(litClasses[Math.floor(Math.random()*litClasses.length)]); });
-  }
-  var winTimer = setInterval(animWins, window.matchMedia('(pointer: coarse)').matches ? 900 : 650);
-  var statusTimer = setInterval(function(){
-    if (document.hidden) return;
-    statusIndex = Math.min(statusIndex + 1, statusSteps.length - 1);
-    paintStatus(statusSteps[statusIndex]);
-  }, 1100);
-  animWins();
-  paintStatus(statusSteps[0]);
+  var minVisibleMs = 1240;
   var hidden = false;
+  var paintTimer = 0;
   function hideLoader(){
     if(hidden) return;
     var delay = Math.max(0, minVisibleMs - (Date.now() - startedAt));
     hidden = true;
     setTimeout(function(){
-      clearInterval(winTimer);
-      clearInterval(statusTimer);
-      if (loaderFill) loaderFill.style.width = '100%';
-      if (loaderText) loaderText.textContent = 'Gatavs';
-      if (loaderSub) loaderSub.textContent = 'Atveram RG vidi';
+      if (paintTimer) clearInterval(paintTimer);
       if(!loader) return;
       loader.style.opacity = '0';
-      setTimeout(function(){ loader.style.display = 'none'; }, 920);
+      setTimeout(function(){ loader.style.display = 'none'; }, 180);
     }, delay);
   }
-  // Hide only when iframe signals data is fully ready
+  function calendarHasPainted(){
+    var frame = document.getElementById('calIframe');
+    try {
+      var doc = frame && frame.contentDocument;
+      var win = frame && frame.contentWindow;
+      var app = doc && doc.getElementById('grafiks-app');
+      var dateTitle = doc && doc.getElementById('grafiks-dateTitle');
+      var schedule = doc && doc.getElementById('grafiks-list');
+      var rgDuty = doc && doc.getElementById('radiographers-duty');
+      var rdDuty = doc && doc.getElementById('radiologists-duty');
+      if (!doc || !win || !app || win.getComputedStyle(app).visibility === 'hidden') return false;
+      var dateReady = dateTitle && dateTitle.textContent.trim() && dateTitle.textContent.trim() !== '...';
+      var dataReady = [schedule, rgDuty, rdDuty].some(function(node){
+        return node && (node.children.length > 0 || node.textContent.trim().length > 3);
+      });
+      return !!(dateReady && dataReady);
+    } catch (_e) {
+      return false;
+    }
+  }
+  function checkPaint(){
+    if (calendarHasPainted()) hideLoader();
+  }
+  // The calendar sends this only after its data/render pass has completed.
   window.addEventListener('message', function(e){
     var readyFrame = document.getElementById('calIframe');
     if(e.origin === window.location.origin && readyFrame && e.source === readyFrame.contentWindow && e.data && e.data.type === 'minka:appReady') hideLoader();
   });
-  // Fallback: hide after 18s regardless
-  setTimeout(hideLoader, 18000);
+  // Also observe the same-origin frame, so a message received too early or from
+  // an older cached script can never create an empty interval between screens.
+  var readyFrame = document.getElementById('calIframe');
+  if (readyFrame) readyFrame.addEventListener('load', checkPaint, { once:true });
+  paintTimer = setInterval(checkPaint, 100);
+  checkPaint();
+  setTimeout(hideLoader, 12000);
 })();
 </script>
 
@@ -2134,10 +2169,10 @@ window.addEventListener('DOMContentLoaded', () => {
     </button>
 
     <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
-    <button id="settingsDockBtn" onclick="openSettingsFromDock()" title="Iestatījumi">
+    <button id="settingsDockBtn" onclick="openSettingsFromDock()" title="Par sistēmu un atjauninājumiem">
       <div style="width:7px;height:7px;border-radius:50%;background:#ffd666;box-shadow:0 0 7px #ffd666;flex-shrink:0;animation:rledPulse 3.2s ease-in-out infinite;"></div>
       <svg class="dock-px" width="17" height="17" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true"><rect x="4" y="0" width="1.04" height="1.04" fill="#fbbf24"/><rect x="1" y="1" width="1.04" height="1.04" fill="#fbbf24"/><rect x="3" y="1" width="3.04" height="1.04" fill="#fbbf24"/><rect x="7" y="1" width="1.04" height="1.04" fill="#fbbf24"/><rect x="2" y="2" width="5.04" height="1.04" fill="#fbbf24"/><rect x="1" y="3" width="2.04" height="1.04" fill="#fbbf24"/><rect x="6" y="3" width="2.04" height="1.04" fill="#fbbf24"/><rect x="0" y="4" width="3.04" height="1.04" fill="#fbbf24"/><rect x="4" y="4" width="1.04" height="1.04" fill="#fde68a"/><rect x="6" y="4" width="3.04" height="1.04" fill="#fbbf24"/><rect x="1" y="5" width="2.04" height="1.04" fill="#fbbf24"/><rect x="6" y="5" width="2.04" height="1.04" fill="#fbbf24"/><rect x="2" y="6" width="5.04" height="1.04" fill="#fbbf24"/><rect x="1" y="7" width="1.04" height="1.04" fill="#fbbf24"/><rect x="3" y="7" width="3.04" height="1.04" fill="#fbbf24"/><rect x="7" y="7" width="1.04" height="1.04" fill="#fbbf24"/><rect x="4" y="8" width="1.04" height="1.04" fill="#fbbf24"/></svg>
-      <span>IESTATĪJUMI</span>
+      <span>SISTĒMA</span>
     </button>
 
     <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
@@ -2187,8 +2222,85 @@ window.addEventListener('DOMContentLoaded', () => {
       <span id="radioToggleLabel">RADIO</span>
       <span id="radioToggleIcon"><svg width="10" height="10" viewBox="0 0 24 24" style="opacity:.7;vertical-align:middle" aria-hidden="true"><path d="M4 8l8 8 8-8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
     </button>
+    <button id="dockMoreBtn" type="button" aria-expanded="false" aria-controls="dockMoreMenu" title="Pārējie rīki">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+      <span>VAIRĀK</span>
+      <i aria-hidden="true"></i>
+    </button>
   </div><!-- end #bottomBtnBar -->
 </div><!-- end #dockShelf -->
+
+<section id="dockMoreMenu" aria-hidden="true" aria-label="Pārējie rīki">
+  <div class="dock-more-head">
+    <span>Pārējie rīki</span>
+  </div>
+  <div id="dockMoreItems"></div>
+</section>
+
+<style>
+/* 2026 navigation pass: one calm work dock, optional utilities in an overflow panel. */
+#dockShelf{padding-bottom:10px!important}
+#dockShelf #bottomBtnBar{gap:4px!important;padding:5px!important;border:1px solid rgba(144,171,210,.16)!important;border-radius:18px!important;background:rgba(9,13,21,.94)!important;box-shadow:0 14px 40px rgba(0,0,0,.46),inset 0 1px 0 rgba(255,255,255,.045)!important;backdrop-filter:blur(18px) saturate(125%)!important;-webkit-backdrop-filter:blur(18px) saturate(125%)!important}
+#bottomBtnBar>div[style*="width:1px"],#bottomBtnBar>#dockSep{display:none!important}
+#dockShelf #bottomBtnBar>#nsToggleBtnParent,
+#dockShelf #bottomBtnBar>#monthCalDocBtn,
+#dockShelf #bottomBtnBar>#planotajsDockBtn,
+#dockShelf #bottomBtnBar>#statsDocBtn,
+#dockShelf #bottomBtnBar>#radioIdleBtn,
+#dockShelf #bottomBtnBar>#radioToggle,
+#dockShelf #bottomBtnBar>#dockMoreBtn{position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;width:auto!important;min-width:96px!important;min-height:46px!important;padding:0 14px!important;border:1px solid transparent!important;border-radius:13px!important;background:transparent!important;box-shadow:none!important;color:#aebbd0!important;font:750 10.5px/1 'Space Grotesk',system-ui!important;letter-spacing:.075em!important;transition:background .16s,border-color .16s,color .16s,transform .16s!important}
+body.radio-idle #dockShelf #bottomBtnBar>#radioToggle{display:none!important}
+body:not(.radio-idle) #dockShelf #bottomBtnBar>#radioIdleBtn{display:none!important}
+#dockShelf #bottomBtnBar #radioToggleIcon{display:none!important}
+#dockShelf #bottomBtnBar>.ns-open,#dockShelf #bottomBtnBar>.stats-open,#dockShelf #bottomBtnBar>#monthCalDocBtn.stats-open,#dockShelf #bottomBtnBar>#planotajsDockBtn.planotajs-open{background:rgba(80,116,170,.16)!important;border-color:rgba(111,164,236,.32)!important;color:#edf5ff!important}
+#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):hover{background:rgba(255,255,255,.065)!important;border-color:rgba(255,255,255,.09)!important;color:#f2f6fd!important;transform:translateY(-1px)!important}
+#dockShelf #bottomBtnBar .dock-px{width:21px!important;max-height:22px!important;filter:saturate(.78) brightness(1.08)}
+#dockMoreBtn svg{width:21px;height:21px;fill:currentColor}
+#dockMoreBtn i{position:absolute;right:8px;top:8px;width:6px;height:6px;border-radius:50%;background:#67e8f9;box-shadow:0 0 10px rgba(103,232,249,.65);opacity:0;transition:opacity .16s}
+#dockMoreBtn.has-active i{opacity:1}
+#dockMoreBtn[aria-expanded="true"]{background:rgba(103,232,249,.10)!important;border-color:rgba(103,232,249,.25)!important;color:#dffbff!important}
+#dockMoreMenu{position:fixed;left:50%;bottom:76px;z-index:171420;width:min(520px,calc(100vw - 24px));padding:10px;border:1px solid rgba(148,178,218,.18);border-radius:20px;background:rgba(9,13,21,.97);box-shadow:0 24px 70px rgba(0,0,0,.62),inset 0 1px 0 rgba(255,255,255,.045);backdrop-filter:blur(22px) saturate(125%);-webkit-backdrop-filter:blur(22px) saturate(125%);opacity:0;visibility:hidden;transform:translate(-50%,10px) scale(.98);transform-origin:50% 100%;transition:opacity .17s,transform .17s,visibility .17s}
+#dockMoreMenu.is-open{opacity:1;visibility:visible;transform:translate(-50%,0) scale(1)}
+.dock-more-head{display:flex;align-items:center;padding:6px 8px 11px;color:#edf4ff;font:800 12px/1 'Space Grotesk',system-ui;letter-spacing:.04em}
+#dockMoreItems{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+#dockMoreItems>button{position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:9px!important;width:100%!important;min-width:0!important;min-height:48px!important;padding:0 8px!important;border:0!important;border-radius:12px!important;background:transparent!important;box-shadow:none!important;color:#c8d3e2!important;font:750 10px/1 'Space Grotesk',system-ui!important;letter-spacing:.055em!important;animation:none!important;transform:none!important}
+#dockMoreItems>button:hover{border:0!important;background:rgba(125,211,252,.075)!important;color:#f3f7fd!important;transform:none!important}
+#dockMoreItems>button::before,#dockMoreItems>button::after{display:none!important}
+#dockMoreItems>button .dock-px{width:22px!important;max-height:23px!important;flex:0 0 22px}
+#dockMoreItems>button>div,#dockMoreItems>button .dock-emoji,#dockMoreItems>button .bolus-pattern{display:none!important}
+#dockMoreItems>button.settings-open,#dockMoreItems>button.mobile-open,#dockMoreItems>button.pusdienas-open,#dockMoreItems>button.lacitis-open{border:0!important;background:rgba(32,93,116,.22)!important;color:#e8fbff!important}
+@media(max-width:720px){#dockShelf #bottomBtnBar>button{min-width:48px!important;padding:0 10px!important}#dockShelf #bottomBtnBar>button>span:not(.bolus-top){display:none!important}#dockShelf #bottomBtnBar>#bolusDocBtn{min-width:76px!important}#dockMoreItems{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+<script>
+(function(){
+  var moreBtn = document.getElementById('dockMoreBtn');
+  var menu = document.getElementById('dockMoreMenu');
+  var items = document.getElementById('dockMoreItems');
+  if (!moreBtn || !menu || !items) return;
+  ['settingsDockBtn','mobileDockBtn','pusdienasDockBtn','lacitisDockBtn'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) items.appendChild(el);
+  });
+  function syncActive(){
+    var active = !!menu.querySelector('.settings-open,.mobile-open,.pusdienas-open,.lacitis-open');
+    moreBtn.classList.toggle('has-active', active);
+  }
+  function setOpen(open){
+    menu.classList.toggle('is-open', !!open);
+    menu.setAttribute('aria-hidden', open ? 'false' : 'true');
+    moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  moreBtn.addEventListener('click', function(e){ e.stopPropagation(); setOpen(!menu.classList.contains('is-open')); });
+  menu.addEventListener('click', function(e){
+    if (e.target.closest('button')) setTimeout(function(){ setOpen(false); syncActive(); }, 40);
+  });
+  document.addEventListener('click', function(e){ if (!menu.contains(e.target) && !moreBtn.contains(e.target)) setOpen(false); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') setOpen(false); });
+  document.body.addEventListener('click', function(){ setTimeout(syncActive, 80); }, true);
+  syncActive();
+  if (typeof syncShellLayout === 'function') requestAnimationFrame(syncShellLayout);
+})();
+</script>
 
 <div id="lacitisSheet" aria-hidden="true" onclick="if(event.target===this) closeLacitisSheet()" style="display:none;position:fixed;inset:0;z-index:171200;pointer-events:auto;background:transparent;">
   <section id="lacitisSheetPanel" aria-label="Lācītis dežūra" onclick="event.stopPropagation()" style="position:absolute;right:12px;bottom:86px;width:min(430px,calc(100vw - 24px));height:min(680px,calc(100dvh - 108px));min-height:500px;border-radius:18px;border:1px solid rgba(255,255,255,.18);background:#202020;box-shadow:0 18px 60px rgba(0,0,0,.58),0 0 0 1px rgba(255,255,255,.05) inset;overflow:hidden;pointer-events:auto;">
@@ -3318,13 +3430,21 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       <div id="mobileQrTitle" style="font:750 24px/1.15 'Space Grotesk',system-ui;color:#f7f9ff;letter-spacing:-.035em;">Atvērt telefonā</div>
       <div style="margin-top:9px;font:500 13px/1.5 'Space Grotesk',system-ui;color:rgba(214,222,239,.68);">Noskenē QR kodu ar telefona kameru</div>
       <div id="mobilePairCode" style="display:none;margin-top:18px;padding:9px 14px;border:1px solid rgba(255,255,255,.10);border-radius:12px;background:rgba(255,255,255,.045);font:750 15px/1 'Space Grotesk',ui-monospace,monospace;letter-spacing:.16em;color:#eef3ff;"></div>
-      <div style="display:flex;align-items:center;justify-content:center;width:244px;height:244px;margin-top:24px;padding:12px;border-radius:20px;background:#fff;box-shadow:0 18px 44px rgba(0,0,0,.34);box-sizing:border-box;">
-        <img id="mobileQrImage" alt="QR kods mobilajai piekļuvei" style="width:220px;height:220px;display:block;border-radius:8px;background:#fff;object-fit:contain;" />
+      <div id="mobileQrCanvas" style="position:relative;display:flex;align-items:center;justify-content:center;width:244px;height:244px;margin-top:24px;padding:12px;border-radius:20px;background:#f8fafc;box-shadow:0 18px 44px rgba(0,0,0,.34);box-sizing:border-box;overflow:hidden;">
+        <div id="mobileQrLoading" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;background:linear-gradient(145deg,#f8fafc,#e9eef5);color:#334155;font:750 12px/1.2 'Space Grotesk',system-ui;letter-spacing:.025em;">
+          <span class="mobile-qr-spinner" aria-hidden="true"></span>
+          <span id="mobileQrLoadingText">Sagatavo savienojumu…</span>
+        </div>
+        <img id="mobileQrImage" alt="QR kods mobilajai piekļuvei" style="width:220px;height:220px;display:block;border-radius:8px;background:#fff;object-fit:contain;opacity:0;transition:opacity .18s;" />
       </div>
       <div id="mobileQrPairNote" role="status" aria-live="polite" style="display:none;margin-top:16px;font:600 12px/1.5 'Space Grotesk',system-ui;"></div>
     </div>
   </div>
 </div>
+<style>
+.mobile-qr-spinner{width:28px;height:28px;border:3px solid rgba(51,65,85,.18);border-top-color:#0ea5e9;border-radius:50%;animation:mobileQrSpin .72s linear infinite}
+@keyframes mobileQrSpin{to{transform:rotate(360deg)}}
+</style>
 
 <script>
 // ============================================================
@@ -5265,6 +5385,15 @@ window.addEventListener('message', function(e) {
   var MOBILE_QR_PUBLIC_URL = 'https://rg2055.github.io/Minka/mobile.html';
   var _mobileQrUrl = '';
 
+  function setQrLoading(loading, message) {
+    var holder = document.getElementById('mobileQrLoading');
+    var label = document.getElementById('mobileQrLoadingText');
+    var image = document.getElementById('mobileQrImage');
+    if (label && message) label.textContent = message;
+    if (holder) holder.style.display = loading ? 'flex' : 'none';
+    if (image) image.style.opacity = loading ? '0' : '1';
+  }
+
   function showPairCode(code) {
     var el = document.getElementById('mobilePairCode');
     if (!el) return;
@@ -5328,11 +5457,13 @@ window.addEventListener('message', function(e) {
     _mobileQrUrl = '';
     showPairCode('');
     if (qrImage) qrImage.removeAttribute('src');
+    setQrLoading(true, 'Sagatavo savienojumu…');
     setPairNote('Sagatavo QR kodu…', false);
 
     var token = '';
     try { token = sessionStorage.getItem(MOBILE_QR_TOKEN_KEY) || localStorage.getItem(MOBILE_QR_TOKEN_KEY) || ''; } catch (_e) {}
     if (!token) {
+      setQrLoading(false);
       setPairNote('Vispirms pieslēdzies datorā.', true);
       return false;
     }
@@ -5349,11 +5480,15 @@ window.addEventListener('message', function(e) {
       await ensureQrLib();
       _mobileQrUrl = buildMobilePairUrl(data.code);
       showPairCode(data.code);
-      if (qrImage) renderQrInto(qrImage, _mobileQrUrl);
+      if (qrImage) {
+        qrImage.onload = function(){ setQrLoading(false); };
+        renderQrInto(qrImage, _mobileQrUrl);
+      } else setQrLoading(false);
       setPairNote('', false);
       return true;
     } catch (_e) {
       _mobileQrUrl = '';
+      setQrLoading(false);
       setPairNote('Neizdevās izveidot QR kodu. Aizver un mēģini vēlreiz.', true);
       return false;
     }
@@ -5436,7 +5571,7 @@ window.addEventListener('message', function(e) {
 
 <script>
 if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-  const MINKA_APP_VERSION = '2026.08.13-birthdaylayout1';
+  const MINKA_APP_VERSION = '2026.08.14-brand1';
   const MINKA_VERSION_KEY = 'minka_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -5578,26 +5713,6 @@ body::before {
 #mk-app-loader {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-}
-#mkl-progress {
-  position: relative;
-}
-#mkl-progress::after {
-  content: "";
-  position: absolute;
-  inset: 1px;
-  border-radius: inherit;
-  pointer-events: none;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
-}
-#mkl-progress-fill {
-  min-width: 18px;
-}
-#mkl-progress-glow {
-  transition: transform .6s cubic-bezier(.22,1,.36,1), box-shadow .6s cubic-bezier(.22,1,.36,1), opacity .24s ease;
-}
-#mkl-progress-fill[style*="100%"] #mkl-progress-glow {
-  transform: translateY(-50%) scale(.96);
 }
 #dockShelf {
   padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px)) !important;
@@ -6446,6 +6561,18 @@ body.mk-buddy-header-home #mk-buddy-bolus {
   right:4px !important;
   bottom:12px !important;
 }
+
+/* Compact media mode: keep playback controls without hiding the schedule. */
+#lacMiniConsole{height:clamp(150px,19vh,166px)!important;padding:8px 12px 7px!important}
+#lacMiniConsole .lm-head{height:28px!important}
+#lacMiniConsole .lm-body{gap:9px!important;margin-top:4px!important}
+#lacMiniInfo{flex-basis:clamp(165px,19%,230px)!important;padding-right:9px!important}
+.lm-cover{height:54px!important;grid-template-columns:38px minmax(0,1fr) auto!important;padding:6px!important;gap:8px!important}
+.lm-cover img{width:38px!important;height:38px!important}
+#lacMiniConsole .lm-scroll-btn{height:54px!important}
+#lacMiniBottom{height:34px!important;margin-top:4px!important}
+#lacMiniCtrls .lm-cbtn{width:30px!important;height:30px!important}
+#lacMiniPlay{width:34px!important;height:34px!important}
 </style>
 
 </body>
