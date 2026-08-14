@@ -489,10 +489,10 @@
   position: relative !important;
   margin-top: 6px !important;
   padding: 11px 12px 16px !important;
-  border: 1px solid #2b3941 !important;
-  border-radius: 18px !important;
-  background: linear-gradient(145deg, #1c252b, #0f1519) !important;
-  box-shadow: 7px 8px 16px rgba(0, 0, 0, .34), -1px -1px 3px rgba(183, 218, 228, .06), inset 1px 1px 0 rgba(232, 247, 250, .045) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
   overflow: visible !important;
 }
 #nsPanel .ns-room-head { margin-bottom: 10px !important; color: rgba(233, 242, 247, .86) !important; font-size: 11px !important; letter-spacing: .14em !important; }
