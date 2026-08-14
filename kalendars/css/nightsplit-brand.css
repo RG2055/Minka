@@ -575,7 +575,8 @@
   /* Keep the three fresh cuts at the animated paw tip; labels travel with them. */
   top: 30% !important;
   right: auto !important;
-  left: 88% !important;
+  /* Cuts overlap the paw; labels continue into the clear space on its right. */
+  left: calc(88% - 12px) !important;
   display: inline-flex !important;
   flex-direction: row !important;
   align-items: center !important;
