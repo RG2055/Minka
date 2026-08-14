@@ -1164,7 +1164,7 @@ function _mkToast(msg, type) {
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260810layout2"></script>
 <script src="js/fatigue.js?v=20260728f"></script>
-<script src="js/nightsplit.js?v=20260801release1" defer></script>
+<script src="js/nightsplit.js?v=20260814skeuo67" defer></script>
 <script src="js/monthcal.js?v=20260814uxpass1" defer></script>
 <script src="js/design_v1.js" defer></script>
 <script src="js/theme.js?v=20260724f" defer></script>
@@ -1294,10 +1294,27 @@ document.addEventListener('keydown', (e) => {
   var _nsOpen=false;
   window.__nsOverlayOpen = false;
 
+  function setNightWalkerMotion(running){
+    try{
+      overlay.querySelectorAll('.ns-room-walker').forEach(function(svg){
+        if(!running){
+          // Removing the declarative SMIL scene is the only reliable way to
+          // stop its timeline and paint work in every Chromium version. The
+          // normal overlay render recreates it on the next open.
+          svg.remove();
+        } else if(typeof svg.unpauseAnimations==='function') {
+          svg.unpauseAnimations();
+        }
+      });
+    }catch(_e){}
+  }
+  window.__nsSyncWalkerMotion = setNightWalkerMotion;
+
   window.toggleNsOverlay=function(forceOpen){
     _nsOpen = (typeof forceOpen === 'boolean') ? !!forceOpen : !_nsOpen;
     overlay.classList.toggle('open',_nsOpen);
     window.__nsOverlayOpen = _nsOpen;
+    setNightWalkerMotion(_nsOpen);
     if(_nsOpen && window.__ns) {
       requestAnimationFrame(function(){
         if(typeof window.__ns._update==='function') window.__ns._update();
@@ -12196,7 +12213,9 @@ window.addEventListener('message', function(e) {
   }
   function stockSkinUrl(id) {
     var cleanId = String(id || '');
-    return 'data/skins/skin-' + cleanId + '.webp' + (/^aesthetic-/.test(cleanId) ? '?v=2' : '');
+    var path = 'data/skins/skin-' + cleanId + '.webp' + (/^aesthetic-/.test(cleanId) ? '?v=2' : '');
+    try { return new URL(path, document.baseURI).href; }
+    catch (e) { return path; }
   }
 
   window.mkGetWorkerSkin = function(name) {
@@ -12204,17 +12223,19 @@ window.addEventListener('message', function(e) {
     return all[normName(name)] || null;
   };
   window.mkApplySkinToEl = function(el, skin) {
-    var numEl = el.querySelector('.mk-mid-hours.card-shift') || el.querySelector('.pv-num');
+    var numEl = el.querySelector('.mk-mid-hours.card-shift') || el.querySelector('.pv-num') || el.querySelector('.nsc-full-dur');
     if (numEl) { numEl.style.removeProperty('color'); numEl.style.removeProperty('-webkit-text-fill-color'); }
-    ['mk-has-skin','mk-has-grad','mk-skin-fit','mk-has-num','mk-has-txt','mk-has-spark','mk-fx-hearts','mk-fx-mirdz','mk-fx-burb','mk-fx-ziedi','mk-fx-taur','mk-emoji-custom','mk-emoji-normal'].forEach(function(c){ el.classList.remove(c); });
+    ['mk-has-skin','mk-has-grad','mk-skin-fit','mk-has-num','mk-has-txt','mk-has-spark','mk-fx-hearts','mk-fx-mirdz','mk-fx-burb','mk-fx-ziedi','mk-fx-taur','mk-emoji-custom','mk-emoji-normal','nsc-worker-skinned','nsc-skin-hue','nsc-skin-contain'].forEach(function(c){ el.classList.remove(c); });
     ['--mk-skin-img','--mk-emoji-tint','--mk-emoji-tint-a','--mk-num-color','--mk-num-alpha','--mk-txt-color','--mk-emoji-op','--mk-fx-scale'].forEach(function(p){ el.style.removeProperty(p); });
     if (!skin) return;
+    if (el.classList.contains('nsc-full-card')) el.classList.add('nsc-worker-skinned');
     if (skin.t === 'art' && skin.id && artUrl(skin.id)) {
       el.classList.add('mk-has-skin');
       el.style.setProperty('--mk-skin-img', "url('" + artUrl(skin.id) + "')");
     } else if (skin.t === 'img' && skin.id) {
       el.classList.add('mk-has-skin');
       if (/^aesthetic-/.test(String(skin.id))) el.classList.add('mk-skin-fit');
+      if (el.classList.contains('nsc-full-card') && /^cat-/.test(String(skin.id))) el.classList.add('nsc-skin-contain');
       el.style.setProperty('--mk-skin-img', "url('" + stockSkinUrl(skin.id) + "')");
     } else if (skin.t === 'grad' && skin.id && GRAD_MAP[skin.id]) {
       el.classList.add('mk-has-skin');
@@ -12223,6 +12244,7 @@ window.addEventListener('message', function(e) {
     } else if (skin.t === 'hue' && skin.rgb) {
       el.style.setProperty('--mk-emoji-tint', skin.rgb);
       el.style.setProperty('--mk-emoji-tint-a', '.24');
+      if (el.classList.contains('nsc-full-card')) el.classList.add('nsc-skin-hue');
     }
     if (skin.num) {
       el.classList.add('mk-has-num');
@@ -12231,6 +12253,7 @@ window.addEventListener('message', function(e) {
       var rgb = String(skin.num).trim();
       if (numEl && /^\d{1,3}(,\d{1,3}){2}$/.test(rgb)) {
         var alpha = Math.max(0, Math.min(1, Number(skin.numA != null ? skin.numA : 1) || 0));
+        if (el.classList.contains('nsc-full-card')) alpha = Math.max(.72, alpha);
         numEl.style.setProperty('color', 'rgba(' + rgb + ',' + alpha + ')', 'important');
         numEl.style.setProperty('-webkit-text-fill-color', 'rgba(' + rgb + ',' + alpha + ')', 'important');
       }
@@ -12250,7 +12273,7 @@ window.addEventListener('message', function(e) {
   };
   function applyToCards(k) {
     var skin = loadAll()[k] || null;
-    document.querySelectorAll('#grafiks-list .card[data-worker]').forEach(function(c) {
+    document.querySelectorAll('#grafiks-list .card[data-worker], #nsPanel .nsc-full-card[data-worker]').forEach(function(c) {
       if (normName(c.getAttribute('data-worker')) !== k) return;
       window.mkApplySkinToEl(c, skin);
     });
@@ -19269,6 +19292,10 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
 .side-panel .duty-meta dd{font-size:10.3px!important;line-height:1.1!important}
 .side-panel .mk-shift-count-pill small{font-size:8px!important}
 </style>
+
+<!-- Loaded last on purpose: the night split is an overlay and this small,
+     local stylesheet replaces the older visual layers without touching logic. -->
+<link rel="stylesheet" href="css/nightsplit-brand.css?v=20260814skeuo67">
 
 </body>
 </html>
