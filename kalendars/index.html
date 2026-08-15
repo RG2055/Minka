@@ -3886,7 +3886,7 @@ window.addEventListener('message', function(e) {
 // worker from this iframe added a second controllerchange reload listener with
 // a different app version, which could make PWA updates visibly reload twice.
 if ('serviceWorker' in navigator && window.top === window) {
-  const MINKA_APP_VERSION = '2026.08.15-nstitle.calendar';
+  const MINKA_APP_VERSION = '2026.08.15-nsclip.calendar';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -6212,12 +6212,17 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
 .ns-stats-box { flex: 0 0 360px; width: 360px; min-width: 360px; align-self: flex-start; padding: 2px 6px 2px 10px; display: flex; flex-direction: column;
   background: transparent; border: none; box-shadow: none; box-sizing: border-box; overflow: hidden; }
 .ns-stats-head { flex: 0 0 auto; display: grid; grid-template-columns: 60px 58px minmax(96px, 1fr) 78px; align-items: center; gap: 8px; margin-bottom: 5px; }
-/* 12px, not 10px: at ten pixels a Latvian macron is a single pixel line, so
-   "ŠĪS MAIŅAS VĒSTURE" read as "SIS MAINAS VESTURE" on the wall display.
-   Nothing was clipping them — they were simply too fine to see. The
-   letter-spacing comes down a notch so the line stays about as wide as before,
-   and the line-height stays at 1 so the header grows by two pixels, not six. */
-.ns-stats-title { font: 800 12px/1 'Space Grotesk', system-ui; letter-spacing: .10em; text-transform: uppercase;
+/* "ŠĪS MAIŅAS VĒSTURE" read as "SIS MAINAS VESTURE" on the wall display, and
+   the reason is the line-height, not the font or the size. At line-height 1 the
+   line box is exactly as tall as the font size, so the caron and the macrons —
+   which sit above the capitals — are painted one pixel outside it. This is the
+   first line inside .ns-stats-box, which has overflow:hidden and only 2px of
+   top padding, so that pixel is precisely what gets cut. Ņ survived because its
+   mark hangs below the letter, where there is room.
+   Giving the line box some leading puts the marks back inside it. The size is
+   12px rather than the original 10px because this is read from across a room;
+   the letter-spacing comes down a notch so the line stays about as wide. */
+.ns-stats-title { font: 800 12px/1.35 'Space Grotesk', system-ui; letter-spacing: .10em; text-transform: uppercase;
   color: rgba(125,211,252,.85); grid-column: 1 / 4; min-width: 0; }
 .ns-stats-bed-title { grid-column: 4; text-align: center; font: 800 7px/1 'Space Grotesk', system-ui; letter-spacing: .12em; text-transform: uppercase; color: rgba(125,211,252,.58); }
 .ns-stats-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
