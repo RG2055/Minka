@@ -3886,7 +3886,7 @@ window.addEventListener('message', function(e) {
 // worker from this iframe added a second controllerchange reload listener with
 // a different app version, which could make PWA updates visibly reload twice.
 if ('serviceWorker' in navigator && window.top === window) {
-  const MINKA_APP_VERSION = '2026.08.15-coffeehover.calendar';
+  const MINKA_APP_VERSION = '2026.08.15-coffeehit.calendar';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -19848,6 +19848,22 @@ html body .side-panel .mk-duty-strip.mk-duty-avatar-strip {
   padding: 0 1px !important;
   opacity: 1 !important;
   pointer-events: auto !important;
+}
+/* Redzamā poga paliek 17x17px, bet klikšķināmais laukums ir lielāks. Pilulis ir
+   centrēts, tāpēc, atveroties, tas izaug uz abām pusēm un + parādās septiņpadsmit
+   pikseļus tālāk uz āru, nekā bija pilula mala — nomērķēt iepriekš nevar, un
+   septiņpadsmit pikseļi ir mazs mērķis, lai to noķertu pirmajā reizē.
+   Laukums izplešas ar pseidoelementu, tāpēc izkārtojums nemainās, un miera
+   stāvoklī tas neklausās, jo mantojumā saņem pogas pointer-events: none. */
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-sub,
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-add {
+  position: relative !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-sub::after,
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-add::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: -7px -5px !important;
 }
 </style>
 
