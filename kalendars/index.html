@@ -3886,7 +3886,7 @@ window.addEventListener('message', function(e) {
 // worker from this iframe added a second controllerchange reload listener with
 // a different app version, which could make PWA updates visibly reload twice.
 if ('serviceWorker' in navigator && window.top === window) {
-  const MINKA_APP_VERSION = '2026.08.15-nsclip.calendar';
+  const MINKA_APP_VERSION = '2026.08.15-namecut.calendar';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -10613,6 +10613,13 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   min-width: 0 !important;
   max-width: 100% !important;
 }
+/* Par garumzīmēm uz vārdiem: rindas augstums .98 ir mazāks par pašu fontu,
+   tāpēc burtu augšdaļa tiek zīmēta ārpus rindas kastes, un overflow:hidden —
+   kas šeit ir vajadzīgs, lai gari vārdi beigtos ar daudzpunkti — to nogriež.
+   "MĀRIS" kļuva par "MARIS", "GORBAČA" par "GORBACA". Zīmes zem burtiem, kā Ņ,
+   palika, jo tām vietas pietiek.
+   Atkāpe augšā paplašina apgriešanas laukumu, un tikpat liela negatīva ārmala
+   to atņem atpakaļ, tāpēc kartītes izkārtojums nemainās ne par pikseli. */
 #grafiks-list.grid-view .mk-mid-name-wrap .name-main {
   color: #fff !important;
   font: 900 clamp(14px, 7.4cqw, 24px)/.98 Inter, system-ui, sans-serif !important;
@@ -10622,6 +10629,8 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
+  padding-top: .18em !important;
+  margin-top: -.18em !important;
 }
 #grafiks-list.grid-view .mk-mid-name-wrap .name-sub {
   color: #fff !important;
@@ -10632,6 +10641,8 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
+  padding-top: .18em !important;
+  margin-top: -.18em !important;
 }
 #grafiks-list.grid-view .mk-mid-fatigue.card-fat-row {
   position: relative !important;
