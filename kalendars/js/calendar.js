@@ -4602,33 +4602,61 @@ function filterFullList(btn) {
       } catch (_e) {}
     }
 
+    // Both stores keep every day ever recorded, so they only grow, and reading
+    // one meant parsing the whole history again. The batched lookups above cut
+    // most of the per-card reads, but the assistant payload still asks for the
+    // total, the source breakdown and the leaderboard — one parse per person
+    // each — and it runs three times per day switch. After a year of use that
+    // was over a second of pure JSON.parse on every click.
+    //
+    // They are parsed once and held in memory instead. Every writer goes
+    // through the save functions below, so the cache is replaced at the moment
+    // the data changes and can never fall behind what is stored; another tab
+    // writing is picked up through the storage event.
+    let coffeeStoreCache = null;
+    let coffeeDetailCache = null;
+
     function getCoffeeStore() {
+      if (coffeeStoreCache) return coffeeStoreCache;
       try {
-        return JSON.parse(localStorage.getItem(coffeeStoreKey) || '{}') || {};
+        coffeeStoreCache = JSON.parse(localStorage.getItem(coffeeStoreKey) || '{}') || {};
       } catch(e) {
-        return {};
+        coffeeStoreCache = {};
       }
+      return coffeeStoreCache;
     }
 
     function saveCoffeeStore(data) {
+      coffeeStoreCache = data || {};
       try {
-        localStorage.setItem(coffeeStoreKey, JSON.stringify(data || {}));
+        localStorage.setItem(coffeeStoreKey, JSON.stringify(coffeeStoreCache));
       } catch(e) {}
     }
 
     function getCoffeeDetailStore() {
+      if (coffeeDetailCache) return coffeeDetailCache;
       try {
-        return JSON.parse(localStorage.getItem(coffeeDetailStoreKey) || '{}') || {};
+        coffeeDetailCache = JSON.parse(localStorage.getItem(coffeeDetailStoreKey) || '{}') || {};
       } catch(e) {
-        return {};
+        coffeeDetailCache = {};
       }
+      return coffeeDetailCache;
     }
 
     function saveCoffeeDetailStore(data) {
+      coffeeDetailCache = data || {};
       try {
-        localStorage.setItem(coffeeDetailStoreKey, JSON.stringify(data || {}));
+        localStorage.setItem(coffeeDetailStoreKey, JSON.stringify(coffeeDetailCache));
       } catch(e) {}
     }
+
+    try {
+      window.addEventListener('storage', function (event) {
+        if (!event || !event.key) return;
+        if (event.key === coffeeStoreKey) coffeeStoreCache = null;
+        else if (event.key === coffeeDetailStoreKey) coffeeDetailCache = null;
+      });
+    } catch(e) {}
 
     function getCoffeeDayKey() {
       return activeDateStr || window.__activeDateStr || 'unknown';
