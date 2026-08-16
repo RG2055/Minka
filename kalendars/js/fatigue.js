@@ -336,7 +336,22 @@
   function calculateFatigue(workerName) {
     syncFatigueCache();
     const requestedDateStr = _getSelectedDateStr() || '';
-    const timeBucket = Math.floor(Date.now() / 30000);
+    // A past or future view below replaces `now` with a time simulated from the
+    // selected shift and never reads the live duty timer, so its score cannot
+    // change until the calendar day itself rolls over. Only today's view has to
+    // expire with the clock. Bucketing every date by 30 seconds meant that
+    // stepping back onto a day that was already on screen recomputed the whole
+    // score for every person again — the single most expensive piece of a day
+    // switch on a slow machine.
+    const clock = new Date();
+    const todayStr = [
+      String(clock.getDate()).padStart(2, '0'),
+      String(clock.getMonth() + 1).padStart(2, '0'),
+      clock.getFullYear()
+    ].join('.');
+    const timeBucket = requestedDateStr === todayStr
+      ? Math.floor(clock.getTime() / 30000)
+      : todayStr;
     const cacheKey = [String(workerName || '').trim(), requestedDateStr, timeBucket].join('|');
     if (resultCache.has(cacheKey)) return resultCache.get(cacheKey);
     const history = gatherWorkerHistory(workerName);

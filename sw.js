@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.342-moodburst';
+const CACHE = 'minka-4.6.362-sideglass';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
@@ -99,6 +99,23 @@ self.addEventListener('fetch', event => {
   // up as a multi-second freeze when the PWA returns to the foreground.
   if (request.destination === 'audio' || request.destination === 'video') return;
 
+  // A plain fetch() inside a service worker still reads the browser's HTTP
+  // cache. The host serves the shell with `cache-control: max-age=600`, so
+  // after a deploy the worker could update, re-fetch the HTML, and still be
+  // handed the previous copy out of the HTTP cache — the new inline code did
+  // not run for up to ten minutes and only a manual cache clear helped.
+  // `no-cache` forces a conditional request instead: unchanged files come back
+  // as a 304 with no body, so this costs a round trip, not a re-download.
+  const revalidatingFetch = req => {
+    try {
+      return fetch(new Request(req, { cache: 'no-cache' }));
+    } catch (_e) {
+      // Some engines refuse to rebuild a navigation request. Freshness is a
+      // best effort here — never lose the response over it.
+      return fetch(req);
+    }
+  };
+
   const isApiRequest = (() => {
     try {
       const parsed = new URL(url);
@@ -156,7 +173,7 @@ self.addEventListener('fetch', event => {
   // behavior of stale-while-revalidate navigations.
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
+      revalidatingFetch(request)
         .then(response => {
           event.waitUntil(safeCachePut(request, response.clone()));
           return response;
@@ -197,9 +214,15 @@ self.addEventListener('fetch', event => {
     // slow/AV-scanned networks), refresh the cache in the background. New
     // deploys still apply immediately via the CACHE version bump (precache on
     // install + old-cache cleanup on activate).
+    // Versioned assets get a new URL when their content changes, so the HTTP
+    // cache can never hand back the wrong body for them. Everything else is
+    // unversioned and must be revalidated against the server, or the
+    // background refresh silently re-reads the same stale HTTP-cached copy and
+    // the deploy never lands.
+    const isVersioned = /[?&]v=/.test(url);
     event.respondWith(
       caches.match(request).then(cached => {
-        const network = fetch(request)
+        const network = (isVersioned ? fetch(request) : revalidatingFetch(request))
           .then(response => {
             event.waitUntil(safeCachePut(request, response.clone()));
             return response;
