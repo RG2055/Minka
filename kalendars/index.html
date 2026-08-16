@@ -1160,7 +1160,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260816sideglass1"></script>
+<script src="js/calendar.js?v=20260816sideglass2"></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260810layout2"></script>
 <script src="js/fatigue.js?v=20260816fatcache1"></script>
@@ -3886,7 +3886,7 @@ window.addEventListener('message', function(e) {
 // worker from this iframe added a second controllerchange reload listener with
 // a different app version, which could make PWA updates visibly reload twice.
 if ('serviceWorker' in navigator && window.top === window) {
-  const MINKA_APP_VERSION = '2026.08.16-sideglass.release1.calendar';
+  const MINKA_APP_VERSION = '2026.08.16-sideglass.release2.calendar';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -7869,7 +7869,7 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
 
 :root.mk-mobile-shell .mk-emoji-side {
   top: 4px !important;
-  right: 4px !important;
+  right: 34px !important;
   font-size: 10px !important;
 }
 
@@ -8376,7 +8376,7 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
 
 :root.mk-mobile-shell .ns-room-bed-zzz {
   top: 5px !important;
-  right: 4px !important;
+  right: 34px !important;
 }
 
 :root.mk-mobile-shell .ns-room-bed-zzz span {
@@ -19622,6 +19622,257 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   :root:not(.mk-mobile-shell) #minkaBarWrap .sl-rn-remaining.sl-rn-remaining.sl-rn-remaining {
     font-size: clamp(9.5px, .633vw, 12.5px) !important;
   }
+}
+
+/* ── Tintētais saturs (Apple tinted icons princips) ──────────────────────
+   iOS tinted ikonās viss glifs ir vienā tonī uz tumša pamata, un atšķirību
+   dod tikai gaišums. Šeit tāpat: kartītes pamats paliek tumšs, un viss
+   saturs — vārds, uzraksti, plāksnīte, punktiņi — ir vienā un tajā pašā
+   tonī, ko jau padod JS kā --mk-side-fat-color. Tāpēc katra kartīte pati
+   pasaka noguruma līmeni, pirms vēl skaitlis ir izlasīts.
+
+   Tikai krāsa, nekādu papildu slāņu — ātrumam nekāda ietekme. */
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-card,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-card {
+  --mk-tint: var(--mk-side-fat-color, #7fe3b0);
+  background-color: color-mix(in srgb, var(--mk-tint) 7%, #080b10) !important;
+  background-image:
+    linear-gradient(180deg, color-mix(in srgb, var(--mk-tint) 16%, transparent) 0%, transparent 34%),
+    linear-gradient(180deg, transparent 58%, color-mix(in srgb, var(--mk-tint) 9%, transparent) 100%) !important;
+  border-color: color-mix(in srgb, var(--mk-tint) 26%, rgba(255,255,255,.06)) !important;
+  border-top-color: color-mix(in srgb, var(--mk-tint) 42%, rgba(255,255,255,.10)) !important;
+}
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-card .duty-name,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-card .duty-name {
+  color: color-mix(in srgb, var(--mk-tint) 62%, #ffffff 38%) !important;
+  -webkit-text-fill-color: color-mix(in srgb, var(--mk-tint) 62%, #ffffff 38%) !important;
+}
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-card .duty-surname,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-card .duty-surname {
+  color: color-mix(in srgb, var(--mk-tint) 52%, transparent) !important;
+  -webkit-text-fill-color: color-mix(in srgb, var(--mk-tint) 52%, transparent) !important;
+}
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-initials,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-initials {
+  color: color-mix(in srgb, var(--mk-tint) 72%, #ffffff 28%) !important;
+  -webkit-text-fill-color: color-mix(in srgb, var(--mk-tint) 72%, #ffffff 28%) !important;
+}
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-nfoot dt,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-nfoot dt {
+  color: color-mix(in srgb, var(--mk-tint) 46%, transparent) !important;
+}
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-nfoot dd,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-nfoot dd {
+  color: color-mix(in srgb, var(--mk-tint) 40%, #ffffff 60%) !important;
+}
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-nfoot dd em,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-nfoot dd em {
+  color: color-mix(in srgb, var(--mk-tint) 55%, transparent) !important;
+}
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-nfoot,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-nfoot {
+  border-top-color: color-mix(in srgb, var(--mk-tint) 22%, transparent) !important;
+}
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-nfoot-seg i,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-nfoot-seg i {
+  background: color-mix(in srgb, var(--mk-tint) 22%, transparent) !important;
+}
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-shift-chip,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-shift-chip {
+  color: color-mix(in srgb, var(--mk-tint) 70%, #ffffff 30%) !important;
+  background-color: color-mix(in srgb, var(--mk-tint) 12%, transparent) !important;
+  background-image: none !important;
+  border-color: color-mix(in srgb, var(--mk-tint) 40%, transparent) !important;
+}
+
+/* ── Emoji: priekšplānā īstajās krāsās, fonā tintēta ūdenszīme ───────────
+   Cilvēki emoji izvēlas arī tās krāsas dēļ, tāpēc pati emoji paliek neskarta.
+   Toni kartītei dod tā pati emoji vēlreiz — liela, caurspīdīga un pārkrāsota
+   noguruma krāsā — fonā aiz teksta.
+
+   Emoji ir krāsains bitmap glifs, tāpēc `color` uz to neiedarbojas; vienīgā
+   tehnika, kas strādā, ir filtru virkne: grayscale to padara vienkrāsainu,
+   sepia iedod bāzes toni (~40°), hue-rotate pagriež uz vajadzīgo, saturate
+   atgriež piesātinājumu. Pagrieziens katram noguruma līmenim ir savs.
+
+   Cena: viens papildu statisks elements uz kartītes, kas pārzīmējas reizi uz
+   dienas maiņu. Filtrs šajā appā jau reiz ir bijis lagu cēlonis, tāpēc, ja
+   šeit kādreiz parādās animācija vai elementu skaits aug, to mērīt no jauna. */
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-card .mk-emoji-side,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-card .mk-emoji-side {
+  filter: none !important;
+}
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-wm.is-emoji,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-wm.is-emoji {
+  --mk-emoji-rot: 96deg;
+  display: block !important;
+  position: absolute !important;
+  /* Īsts fona elements: liels, kartītes malā pieskarts un apgriezts, tāpēc
+     tas lasās kā grafika aiz teksta, nevis kā vēl viena maza ikona. */
+  right: 34px !important;
+  top: 50% !important;
+  bottom: auto !important;
+  transform: translateY(-50%) rotate(-8deg) !important;
+  z-index: 0 !important;
+  font-size: 86px !important;
+  line-height: 1 !important;
+  /* Tonis viens pats te nepietiek: pārkrāsota emoji tajā pašā tonī, kas ir
+     kartītes fonam, saplūst ar to. Brightness to paceļ virs fona, un tikai
+     tad tas lasās kā fona elements. */
+  opacity: 1 !important;
+  /* Divi apsvērumi šajā virknē:
+     1. Secība. Vispirms pagriež toni, tikai tad piesātina un izgaismo.
+        Otrādi — brightness pirms hue-rotate — krāsa tiek nogriezta pie baltā
+        un pagriešana no tās izdod blāvu, izbalējušu toni.
+     2. Piesātinājums pret spilgtumu. Kartītes fons pats ir tajā pašā tonī,
+        tāpēc piesātināta krāsa uz tā nelasās, lai cik to izgaismo — acs
+        salīdzina arī toni. Redzamību dod zemāks piesātinājums un augstāks
+        spilgtums: gaišs, pieklusināts tonis, kas atšķiras pēc gaišuma. */
+  filter: grayscale(1) sepia(1) hue-rotate(var(--mk-emoji-rot)) saturate(1.5) brightness(4.2) !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-card[data-fatigue="mid"] .mk-side-wm.is-emoji,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-card[data-fatigue="mid"] .mk-side-wm.is-emoji {
+  --mk-emoji-rot: 8deg;
+}
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-card[data-fatigue="high"] .mk-side-wm.is-emoji,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-card[data-fatigue="high"] .mk-side-wm.is-emoji {
+  --mk-emoji-rot: 342deg;
+}
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-card[data-fatigue="crit"] .mk-side-wm.is-emoji,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-card[data-fatigue="crit"] .mk-side-wm.is-emoji {
+  --mk-emoji-rot: 313deg;
+}
+/* Saturam jāpaliek virs ūdenszīmes. */
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-card-main,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-card-main,
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-nfoot,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-nfoot {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+/* ── Stikls, kam ir ko rādīt cauri ───────────────────────────────────────
+   Līdzšinējā problēma nebija kartītēs, bet fonā: uz gluži melna fona stikls
+   nav redzams, jo caurspīdīgumam nav ko atklāt. Tāpēc te ir divas daļas:
+
+     1) aiz kartītēm sānu panelī ir mīksti gaismas laukumi — statiski radiāli
+        gradienti, kas nekustas un neko nemaksā;
+     2) pašas kartītes ir daļēji caurspīdīgas, tāpēc tie laukumi cauri tām
+        parādās un mala ar gaišo šķautni beidzot lasās kā stikls.
+
+   Par liquidGL: tas izskatās tieši tā, kā Tu gribi, bet tas ir WebGL slānis,
+   kas katrā kadrā nolasa fonu un to lauž. Tas ir nepārtraukts GPU darbs
+   katram kadram — tieši tā klase, kas vecajā darba datorā maksā. Šeit tā
+   pati sajūta ir panākta ar statisku krāsu, ko pārlūks uzzīmē vienreiz.
+
+   Noguruma loks ap kartītes malu paliek neskarts — to zīmē .mk-side-card::after
+   un šis bloks tam netiek klāt. */
+.side-panel.side-panel.side-panel #radiographers-duty,
+.side-panel.side-panel.side-panel #radiologists-duty {
+  position: relative !important;
+  background-image:
+    radial-gradient(150px 120px at 22% 12%, rgba(96,150,190,.16), transparent 70%),
+    radial-gradient(180px 150px at 84% 46%, rgba(120,190,170,.13), transparent 72%),
+    radial-gradient(160px 140px at 30% 88%, rgba(140,130,200,.12), transparent 70%) !important;
+  background-repeat: no-repeat !important;
+}
+/* Kartīte kļūst par stiklu: tonis paliek, bet daudz klusāks, un caur to redz
+   fona gaismu. */
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-card,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-card {
+  background-color: color-mix(in srgb, var(--mk-tint) 5%, rgba(9,12,17,.66)) !important;
+  /* Grauda tile te bija, bet uz šitik mazas kartītes ar tik daudz teksta tas
+     strādā pret lasāmību: tekstūra iet arī zem burtiem un padara tos netīrus.
+     Uz lielas virsmas tā ir laba doma, šeit ne. Tāpēc virsma ir tīra, un
+     stikla sajūtu nes caurspīdīgums, gaišā šķautne pa augšu un tas, kas ir
+     aiz kartītes. */
+  background-image:
+    linear-gradient(150deg, rgba(255,255,255,.13), rgba(255,255,255,.035) 38%, transparent 68%),
+    linear-gradient(180deg, transparent 62%, color-mix(in srgb, var(--mk-tint) 7%, transparent) 100%) !important;
+  background-size: 100% 100%, 100% 100% !important;
+  background-position: center, center !important;
+  background-repeat: no-repeat, no-repeat !important;
+  border-color: color-mix(in srgb, var(--mk-tint) 18%, rgba(255,255,255,.10)) !important;
+  border-top-color: color-mix(in srgb, var(--mk-tint) 26%, rgba(255,255,255,.20)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.16),
+    inset 0 -1px 0 rgba(0,0,0,.42) !important;
+}
+/* Teksts atpakaļ tuvāk baltam: uz klusāka tonis pilnā tintē tas kļūtu blāvs. */
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-card .duty-name,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-card .duty-name {
+  color: color-mix(in srgb, var(--mk-tint) 30%, #ffffff 70%) !important;
+  -webkit-text-fill-color: color-mix(in srgb, var(--mk-tint) 30%, #ffffff 70%) !important;
+}
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-nfoot dd,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-nfoot dd {
+  color: color-mix(in srgb, var(--mk-tint) 18%, #ffffff 82%) !important;
+}
+
+/* ── Nogurums kā gaisma uz stikla ────────────────────────────────────────
+   Agrāk tā bija plāna līnija ap malu. Tagad kartītes tonis arī izgaismo pašu
+   stiklu no iekšpuses: mīksts gaismas nokrāsojums gar malu, kura stiprums aug
+   līdz ar noguruma līmeni. Uz stikla tas lasās kā atspīdums, nevis kā rāmis.
+
+   Tā ir viena inset ēna uz kartītes — nekāda ārējā mirdzuma, kas plūstu pāri
+   fonam, un nekāda filtra. */
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-card,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-card {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.16),
+    inset 0 -1px 0 rgba(0,0,0,.42),
+    inset 0 0 22px -4px color-mix(in srgb, var(--mk-tint) 26%, transparent) !important;
+}
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-card[data-fatigue="mid"],
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-card[data-fatigue="mid"] {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.16),
+    inset 0 -1px 0 rgba(0,0,0,.42),
+    inset 0 0 24px -3px color-mix(in srgb, var(--mk-tint) 34%, transparent) !important;
+}
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-card[data-fatigue="high"],
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-card[data-fatigue="high"] {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.16),
+    inset 0 -1px 0 rgba(0,0,0,.42),
+    inset 0 0 26px -2px color-mix(in srgb, var(--mk-tint) 42%, transparent) !important;
+}
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-card[data-fatigue="crit"],
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-card[data-fatigue="crit"] {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.16),
+    inset 0 -1px 0 rgba(0,0,0,.42),
+    inset 0 0 28px -1px color-mix(in srgb, var(--mk-tint) 52%, transparent) !important;
+}
+/* Nogurums kā migla, nevis kā gredzens. Divas lietas to panāk bez neviena
+   izplūduma filtra:
+     1. koniskajam gradientam ir mīkstas alfa pakāpes, tāpēc gar loku nekur
+        nav cietas malas;
+     2. maska ir radiāls gradients, kas ir caurspīdīgs kartītes vidū un pilns
+        pie malām, tāpēc migla izgaist uz iekšu — tieši tas agrāk pietrūka,
+        jo vecā maska deva joslu ar asu iekšējo robežu.
+   Migla neaizsniedzas visapkārt: tā beidzas pie noguruma vērtības un aiz tās
+   izgaist, tāpēc tā joprojām ir rādītājs, nevis rāmis. */
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-card::after,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-card::after {
+  inset: 0 !important;
+  padding: 0 !important;
+  border-radius: inherit !important;
+  background:
+    conic-gradient(from -90deg,
+      color-mix(in srgb, var(--mk-tint) 10%, transparent) 0deg,
+      color-mix(in srgb, var(--mk-tint) 46%, transparent) calc(var(--mk-side-fat, 0%) * .40),
+      color-mix(in srgb, var(--mk-tint) 78%, transparent) calc(var(--mk-side-fat, 0%) * .80),
+      color-mix(in srgb, var(--mk-tint) 34%, transparent) var(--mk-side-fat, 0%),
+      transparent calc(var(--mk-side-fat, 0%) + 16%)) !important;
+  -webkit-mask-image: radial-gradient(112% 130% at 50% 50%, transparent 46%, #000 96%) !important;
+  mask-image: radial-gradient(112% 130% at 50% 50%, transparent 46%, #000 96%) !important;
+  -webkit-mask-composite: source-over !important;
+  mask-composite: add !important;
+  opacity: .95 !important;
+  z-index: 1 !important;
 }
 </style>
 
