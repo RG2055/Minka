@@ -1545,18 +1545,33 @@ function filterFullList(btn) {
       // makes an otherwise quick day change feel sticky. Keep the animated
       // centering on capable machines, but make the selected pill immediate on
       // older hardware.
-      p.scrollIntoView({
-        inline: 'center',
-        behavior: document.documentElement.classList.contains('mk-low-spec') ? 'auto' : 'smooth',
-        block: 'nearest'
+      // scrollIntoView forces a synchronous layout. Running it here meant that
+      // layout was computed for the roster that g_updateList() throws away a
+      // fraction of a millisecond later — the work was paid for and then
+      // discarded. Centering the pill needs nothing from this task, so do it in
+      // the next frame, where the layout has to be produced anyway.
+      requestAnimationFrame(() => {
+        if (!p.classList.contains('active')) return;   // a newer click won
+        p.scrollIntoView({
+          inline: 'center',
+          behavior: document.documentElement.classList.contains('mk-low-spec') ? 'auto' : 'smooth',
+          block: 'nearest'
+        });
       });
     }
     const dateTitle = document.getElementById('grafiks-dateTitle');
     if (dateTitle) dateTitle.textContent = date;
     g_applyTodayUI();
+    // Per-phase timings, so "the day switch is slow" can always be pinned on a
+    // specific call instead of guessed at. Same flag as the totals below.
+    const phaseMark = dayPerfStartedAt ? () => performance.now() : () => 0;
+    const tScrollDone = phaseMark();
     g_updateList();
+    const tListDone = phaseMark();
     g_updatePanelsForDate();
+    const tPanelsDone = phaseMark();
     g_adjustDutyNameFontSize();
+    const tFontDone = phaseMark();
     // No forced g_updateLive here: the shift progress bar is pinned to the
     // current shift day (not the clicked date), and the 1s interval keeps it
     // live — the forced full rescan was costing ~0.5-1s per click on weak PCs.
@@ -1576,6 +1591,10 @@ function filterFullList(btn) {
         from: prevDate,
         to: date,
         syncMs: +(performance.now() - dayPerfStartedAt).toFixed(2),
+        headMs: +(tScrollDone - dayPerfStartedAt).toFixed(2),
+        listMs: +(tListDone - tScrollDone).toFixed(2),
+        panelsMs: +(tPanelsDone - tListDone).toFixed(2),
+        fontMs: +(tFontDone - tPanelsDone).toFixed(2),
         frameMs: null
       };
       (window.__minkaDaySwitchMetrics ||= []).push(sample);
@@ -2907,7 +2926,7 @@ function filterFullList(btn) {
               </div>
               <div class="badge-row mk-side-clock-row">${shiftChip}${timerHtml}</div>
               <div class="mk-side-fatigue">
-                <div class="mk-side-ring" role="img" aria-label="Nogurums ${fatigue.score} procenti, ${fatigue.label}"><span>${fatigue.score}<small>${fatigue.label}</small></span></div>
+                <div class="mk-side-ring" role="img" aria-label="Nogurums ${fatigue.score} procenti, ${fatigue.label}"><span class="liquid-fill" aria-hidden="true"></span><span>${fatigue.score}<small>${fatigue.label}</small></span></div>
                 <span class="mk-side-fatigue-caption">Nogurums</span>
               </div>
             </div>
@@ -4533,8 +4552,15 @@ function filterFullList(btn) {
     const isToday = (activeDateStr === g_todayStr);
     const now = new Date();
 
+    const probe = (window.__minkaMeasureDaySwitches || G_DAY_PERF_ENABLED) ? (window.__minkaListProbe ||= {}) : null;
+    const pt0 = probe ? performance.now() : 0;
     const visibleRgWorkers = filterVisibleWorkers(getWorkersForDateWithDate(store, activeDateStr), isToday, now);
     const visibleRdWorkers = filterVisibleWorkers(getWorkersForDateWithDate(storeRad, activeDateStr), isToday, now);
+    if (probe) {
+      probe.fatigueMs = 0;
+      probe.monthHoursMs = 0;
+      probe.dataMs = +(performance.now() - pt0).toFixed(2);
+    }
     const hasRg = visibleRgWorkers.length > 0;
     const hasRd = visibleRdWorkers.length > 0;
 
@@ -5496,6 +5522,7 @@ function filterFullList(btn) {
       const isDoneCard = isToday && w.startTime && w.endTime && isWorkerShiftDone(w, activeDateStr, now);
 
       // Get fatigue score
+      const bcFat = probe ? performance.now() : 0;
       let fatigueScore = 0, fatigueColor = 'rgba(0,255,136,0.7)', hasFatigueScore = false;
       try {
         if (window.__fatigue) {
@@ -5510,6 +5537,7 @@ function filterFullList(btn) {
           }
         }
       } catch(e) {}
+      if (probe) probe.fatigueMs = +((probe.fatigueMs || 0) + (performance.now() - bcFat)).toFixed(2);
 
       if (isGridView) {
         const card = document.createElement('div');
@@ -5520,7 +5548,9 @@ function filterFullList(btn) {
         card.onclick = (e) => { e.stopPropagation(); showWorkerSchedule(w.name, w.shift); };
         const roleClass = isRd ? ' mk-mid-card-rd' : ' mk-mid-card-rg';
         const fatigueLevel = !hasFatigueScore ? 'none' : fatigueScore > 66 ? 'hi' : fatigueScore >= 33 ? 'mid' : 'low';
+        const bcHours = probe ? performance.now() : 0;
         const monthHours = Math.max(0, Math.min(1000, Number(getMonthHoursForWorker(w.name, isRd)) || 0));
+        if (probe) probe.monthHoursMs = +((probe.monthHoursMs || 0) + (performance.now() - bcHours)).toFixed(2);
         const dutyHours = Math.max(0, Math.min(48, Number(getDutyShiftHours(w)) || 0));
         card.setAttribute('data-duty-hours', String(dutyHours || String(w.shift || '').replace(/[^0-9]/g, '') || ''));
         const safeInitials = escapeHtml(initials);
@@ -5606,6 +5636,7 @@ function filterFullList(btn) {
       container.appendChild(d);
     }
 
+    const pt1 = probe ? performance.now() : 0;
     // Radiologists FIRST (above)
     if (hasRd) {
       if (isGridView) {
@@ -5655,6 +5686,7 @@ function filterFullList(btn) {
     // paints. On a day switch that briefly pushed the radiographer cards down
     // before snapping them back. When the integration hook is available,
     // finalize the complete roster atomically inside this render.
+    const pt2 = probe ? performance.now() : 0;
     try {
       if (typeof window.__minkaFinalizeRosterCards === 'function') {
         window.__minkaFinalizeRosterCards(rosterWidth);
@@ -5662,9 +5694,16 @@ function filterFullList(btn) {
         window.__minkaAutoSizeCardsNow(rosterWidth);
       }
     } catch (_layoutError) {}
+    const pt3 = probe ? performance.now() : 0;
 
     syncCoffeeDay();
     startCoffeePolling();
+    if (probe) {
+      probe.cardsMs = +(pt2 - pt1).toFixed(2);
+      probe.finalizeMs = +(pt3 - pt2).toFixed(2);
+      probe.coffeeMs = +(performance.now() - pt3).toFixed(2);
+      (window.__minkaListProbeLog ||= []).push(Object.assign({}, probe));
+    }
   }
 
   function g_adjustDutyNameFontSize() {
