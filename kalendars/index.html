@@ -1160,7 +1160,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260814midmeta36"></script>
+<script src="js/calendar.js?v=20260816moodburst2"></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260810layout2"></script>
 <script src="js/fatigue.js?v=20260728f"></script>
@@ -3886,7 +3886,7 @@ window.addEventListener('message', function(e) {
 // worker from this iframe added a second controllerchange reload listener with
 // a different app version, which could make PWA updates visibly reload twice.
 if ('serviceWorker' in navigator && window.top === window) {
-  const MINKA_APP_VERSION = '2026.08.15-coffeehit.calendar';
+  const MINKA_APP_VERSION = '2026.08.16-moodburst2.calendar';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -15450,7 +15450,9 @@ window.addEventListener('message', function(e) {
   flex-direction: column !important;
   justify-content: space-between !important;
   overflow: hidden !important;
-  contain: paint;
+  /* Keep the expensive mood subtree from invalidating layout/style outside
+     this grid item while its people and coffee badges are refreshed. */
+  contain: layout paint style;
   --rg-card-accent: #86efac;
   --rg-card-rgb: 74, 222, 128;
   background: transparent !important;
@@ -15825,6 +15827,12 @@ window.addEventListener('message', function(e) {
   justify-content: center;
   margin-top: clamp(2px, 1.6cqw, 5px);
   pointer-events: none;
+  /* Layout and style containment keep the badge refresh from invalidating the
+     rest of the card. Paint containment must NOT be added here: the staff
+     badges are placed by offset from the blob's centre and the topmost ones
+     legitimately reach ~10px above the stage box, so a paint clip cuts their
+     top edge off. The card itself already owns a paint clip. */
+  contain: layout style;
 }
 .rg-mood-glow {
   position: absolute;
@@ -17542,6 +17550,108 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   var moodSectionLayoutTimer = 0;
   var moodSectionResizeTimer = 0;
   var moodPullupCache = new Map();
+  var moodDayRefreshToken = 0;
+  var moodDayRefreshFrame = 0;
+  var moodDayRefreshIdle = 0;
+  var moodDayRefreshTimer = 0;
+
+  function cancelMoodDayRefresh() {
+    if (moodDayRefreshFrame) cancelAnimationFrame(moodDayRefreshFrame);
+    if (moodDayRefreshIdle && typeof cancelIdleCallback === 'function') cancelIdleCallback(moodDayRefreshIdle);
+    if (moodDayRefreshTimer) clearTimeout(moodDayRefreshTimer);
+    moodDayRefreshFrame = 0;
+    moodDayRefreshIdle = 0;
+    moodDayRefreshTimer = 0;
+  }
+
+  // A day switch replaces the whole constellation at once, which without a
+  // transition reads as a hard cut. Play the badges out from behind the face
+  // instead. The individual `scale` property is the point: the placement
+  // solver owns `transform`, and since `scale` is applied to the already
+  // translated badge, scaling it scales its offset from the centre too — one
+  // compositor-only property produces the radial burst without the animation
+  // ever touching the layout geometry. It runs after placement and is never
+  // read back, so it cannot slow the day switch down.
+  //
+  // mk-low-spec is pinned on for every device, so the class cannot tell a work
+  // PC from a fast one — the real hardware numbers behind it can. The burst is
+  // a one-shot 420ms scale/opacity play on at most ~21 small badges: the same
+  // class of interaction-time compositor work as the mood transitions that stay
+  // enabled on those machines, and nothing like the endless idle animations the
+  // profile exists to kill. Skip it only on genuinely tiny hardware, and
+  // whenever the OS asks for less motion.
+  function moodBurstAllowed() {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
+    var profile = window.__mkPerfProfile || {};
+    var cores = Number(profile.hardwareConcurrency || navigator.hardwareConcurrency || 0);
+    var memory = Number(profile.deviceMemory || navigator.deviceMemory || 0);
+    if (cores && cores <= 2) return false;
+    if (memory && memory <= 2) return false;
+    return true;
+  }
+  function playMoodBurst() {
+    if (!moodBurstAllowed()) return;
+    var ring = moodRefs('ring');
+    if (!ring || typeof ring.animate !== 'function') return;
+    [].forEach.call(ring.children, function (badge, index) {
+      // Clicking through days fast can leave an unfinished burst on a badge
+      // that survived the rebuild. Drop only our own animations — a CSS one
+      // (CSSAnimation) always carries an animationName, scripted ones do not.
+      if (typeof badge.getAnimations === 'function') {
+        badge.getAnimations().forEach(function (anim) {
+          if (!anim.animationName) anim.cancel();
+        });
+      }
+      badge.animate([
+        { scale: '.34', opacity: 0, offset: 0 },
+        { scale: '1.05', offset: .62 },
+        { scale: '1', offset: 1 }
+      ], {
+        // No closing opacity keyframe on purpose: the badges carry their own
+        // depth opacity in --rg-person-opacity / --rg-coffee-opacity, and an
+        // implicit final keyframe fades them up to exactly that value.
+        duration: 420,
+        delay: Math.min(index, 12) * 24,
+        easing: 'cubic-bezier(.22, .9, .3, 1)',
+        fill: 'backwards'
+      });
+    });
+  }
+
+  // Staff/source placement is the expensive part of the mood card: it reads
+  // real geometry and runs collision searches for every badge. It used to run
+  // inside the day-click task, consuming most of that interaction's frame on
+  // older Windows CPUs. Let the new roster paint first, then refresh the mood
+  // module in idle time. A token cancels stale work when days are clicked fast.
+  function scheduleMoodDayRefresh() {
+    cancelMoodDayRefresh();
+    var token = ++moodDayRefreshToken;
+    var day = shiftDayKey();
+
+    moodDayRefreshFrame = requestAnimationFrame(function () {
+      moodDayRefreshFrame = requestAnimationFrame(function () {
+        moodDayRefreshFrame = 0;
+        var run = function () {
+          moodDayRefreshIdle = 0;
+          moodDayRefreshTimer = 0;
+          if (token !== moodDayRefreshToken || day !== shiftDayKey()) return;
+          try {
+            // paintCounts() rebuilds and places the constellation synchronously
+            // (paintCounts → updateMoodBlob → paintMoodCoffee → buildMoodStaff),
+            // so by this line the badges already sit at their final spots.
+            paintCounts();
+            playMoodBurst();
+            loadRatings(day, true);
+          } catch (_error) {}
+        };
+        if (typeof requestIdleCallback === 'function') {
+          moodDayRefreshIdle = requestIdleCallback(run, { timeout: 140 });
+        } else {
+          moodDayRefreshTimer = setTimeout(run, 0);
+        }
+      });
+    });
+  }
   function clearMoodSectionLayout(section, grid) {
     if (section) {
       section.classList.remove('rg-mood-pullup');
@@ -17626,7 +17736,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     window.clearTimeout(moodSectionResizeTimer);
     moodSectionResizeTimer = window.setTimeout(layoutMoodSections, 180);
   }, { passive: true });
-  function mount(deferLayout, skipRatings) {
+  function mount(deferLayout, skipRatings, skipMoodPaint) {
     var label = list.querySelector('.cards-section-label-rd');
     var section = label && label.closest('.cards-section');
     var grid = section && section.querySelector('.cards-subgrid');
@@ -17652,7 +17762,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     }
     grid.appendChild(pulse);
     if (!deferLayout) scheduleMoodSectionLayout();
-    paintCounts();
+    if (!skipMoodPaint) paintCounts();
     // A selected-day render already has one forced refresh queued by the
     // daySelected listener below. Avoid issuing the same API request twice.
     if (!skipRatings) loadRatings(shiftDayKey());
@@ -17664,7 +17774,9 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   window.__minkaFinalizeRosterCards = function (rosterWidth) {
     var measure = !!window.__minkaMeasureDaySwitches;
     var startedAt = measure ? performance.now() : 0;
-    mount(true, true);
+    // The mood's geometry solver is deliberately excluded from the click
+    // frame. scheduleMoodDayRefresh() updates it after the roster is visible.
+    mount(true, true, true);
     var mountedAt = measure ? performance.now() : 0;
     if (typeof window.__minkaAutoSizeCardsNow === 'function') {
       window.__minkaAutoSizeCardsNow(rosterWidth);
@@ -18721,13 +18833,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     if (event.key === 'Escape' && !modal.hidden) closeModal();
   });
   window.addEventListener('storage', function () { paintCounts(); });
-  window.addEventListener('daySelected', function () {
-    window.setTimeout(function () {
-      var day = shiftDayKey();
-      paintCounts();
-      loadRatings(day, true);
-    }, 0);
-  });
+  window.addEventListener('daySelected', scheduleMoodDayRefresh);
   document.addEventListener('visibilitychange', function () {
     if (!document.hidden) {
       loadRatings(shiftDayKey(), true);
