@@ -2932,7 +2932,7 @@ function filterFullList(btn) {
             </div>
           </div>
           ${footer}
-          ${initials ? `<span class="mk-side-wm" aria-hidden="true">${mkEscAttr(initials)}</span>` : ''}
+          ${personEmoji || initials ? `<span class="mk-side-wm${personEmoji ? ' is-emoji' : ''}" aria-hidden="true">${mkEscAttr(personEmoji || initials)}</span>` : ''}
         </article>`;
     });
     container.innerHTML = cards.length ? cards.join('') : '<span class="mk-duty-empty">ATPŪTA</span>';
