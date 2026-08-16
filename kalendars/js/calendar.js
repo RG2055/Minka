@@ -1538,7 +1538,19 @@ function filterFullList(btn) {
     const previousPill = document.querySelector('.pill.active');
     if (previousPill && previousPill.id !== safeId) previousPill.classList.remove('active');
     const p = document.getElementById(safeId);
-    if(p) { p.classList.add('active'); p.scrollIntoView({inline:'center', behavior:'smooth', block: 'nearest'}); }
+    if(p) {
+      p.classList.add('active');
+      // The work PCs already use the low-spec profile. A scripted smooth
+      // scroll competes with the roster rebuild on the same interaction and
+      // makes an otherwise quick day change feel sticky. Keep the animated
+      // centering on capable machines, but make the selected pill immediate on
+      // older hardware.
+      p.scrollIntoView({
+        inline: 'center',
+        behavior: document.documentElement.classList.contains('mk-low-spec') ? 'auto' : 'smooth',
+        block: 'nearest'
+      });
+    }
     const dateTitle = document.getElementById('grafiks-dateTitle');
     if (dateTitle) dateTitle.textContent = date;
     g_applyTodayUI();
