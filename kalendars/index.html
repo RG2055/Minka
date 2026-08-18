@@ -385,7 +385,7 @@ window.setTimeout(function () {
        Marķieris te ir burtisks, nevis `window.__minkaLocalBuild`: tas tiek
        uzstādīts krietni tālāk failā nekā šis skripts, tāpēc te tas vēl būtu
        tukšs. Bumpo to kopā ar pārējiem. */
-    fetch(BASE + 'manifest.json?v=20260818noto10')
+    fetch(BASE + 'manifest.json?v=20260818noto13')
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (m) { manifest = m || { emoji: {} }; applyStatics(); })
       .catch(function () { manifest = { emoji: {} }; });
@@ -464,13 +464,6 @@ window.setTimeout(function () {
       box.style.visibility = '';
     };
 
-    film.src = BASE + info.file;
-    /* decode() gaida, līdz bilde ir ne tikai saņemta, bet arī atkodēta un gatava
-       zīmēšanai; onload to negarantē. Ja tā nav pieejama, atkāpjamies uz onload. */
-    if (film.decode) film.decode().then(reveal, reveal);
-    else if (film.complete) reveal();
-    else film.onload = reveal;
-
     /* `position` tiek aiztikts TIKAI tad, ja elements ir statisks. Ja tas jau ir
        absolūts vai fiksēts, `relative` to ievilktu plūsmā un izjauktu kartītes
        izkārtojumu. */
@@ -481,6 +474,16 @@ window.setTimeout(function () {
     el.style.setProperty('--mk-anim-frames', info.frames);
     box.appendChild(film);
     el.appendChild(box);
+
+    /* Avots tiek uzstādīts un atklāšana pārbaudīta TIKAI PĒC tam, kad kaste jau
+       ir kokā. Iepriekš tas notika pirms tam, tāpēc reveal() savā pārbaudē
+       `box.parentNode !== el` izgāja tukšā, un kešotai bildei nekas nenostrādāja —
+       glifs palika redzams vēl vienu kadru. Tas arī bija tas palēciens,
+       pārslēdzot dienu. */
+    film.src = BASE + info.file;
+    if (film.complete && film.naturalWidth) reveal();
+    else if (film.decode) film.decode().then(reveal, reveal);
+    else film.onload = reveal;
     return film;
   }
 
@@ -582,12 +585,13 @@ window.setTimeout(function () {
 
   var pending = false;
   var observer = new MutationObserver(function () {
+    /* Sinhrona izsaukšana te bija kļūda: appa maina DOM nepārtraukti (pulkstenis
+       tikšķ katru sekundi), un applyStatics pati pievieno mezglus, tāpēc lapa
+       nokārās. Paliek rAF ar `pending` slēdzi — viena pārbaude uz kadru. */
     if (pending) return;
     pending = true;
     requestAnimationFrame(function () {
       pending = false;
-      /* Statiskie kadri jāuzliek KATRĀ pārzīmēšanā, arī tad, kad kaut kas jau
-         spēlē: pārzīmētās kartītes atnāk ar tīriem emoji elementiem. */
       applyStatics();
       if (playing && document.contains(playing)) return;
       if (nudging && document.contains(nudging)) return;
@@ -600,9 +604,18 @@ window.setTimeout(function () {
 
   /* Dīkstāvē klusi ievelkam tikai to emoji, kas šobrīd ir ekrānā — tā pirmā
      uzejšana nesākas ar tukšu vietu un tīkla gaidīšanu. */
+  /* Atkārtotas ieiešanas aizsargs. applyStatics pati pievieno mezglus, tos
+     pamana MutationObserver un izsauc to vēlreiz — un, tā kā tagad tas notiek
+     sinhroni, bez šī karoga sanāca bezgalīgs cikls, kas nokāra lapu. */
+  var applying = false;
   function applyStatics() {
-    if (!manifest || !manifest.emoji) return;
-    document.querySelectorAll('.' + HOVER_ON.join(', .')).forEach(ensureStatic);
+    if (applying || !manifest || !manifest.emoji) return;
+    applying = true;
+    try {
+      document.querySelectorAll('.' + HOVER_ON.join(', .')).forEach(ensureStatic);
+    } finally {
+      applying = false;
+    }
   }
 
   function prefetchVisible() {
@@ -1608,7 +1621,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260818noto10"></script>
+<script src="js/calendar.js?v=20260818noto13"></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260810layout2"></script>
 <script src="js/fatigue.js?v=20260816fatcache1"></script>
@@ -1622,7 +1635,7 @@ function _mkToast(msg, type) {
 <script src="js/radiologist_plan.js" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260818noto10';
+window.__minkaLocalBuild = '20260818noto13';
 (function(){
   function norm(v){
     try { return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
