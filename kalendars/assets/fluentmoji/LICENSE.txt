@@ -1,0 +1,8 @@
+Fluent Emoji webfonts — fluentmoji
+https://github.com/MARTYR-X-LTD/fluentmoji   (MIT)
+
+Glifi: Microsoft Fluent Emoji
+https://github.com/microsoft/fluentui-emoji  (MIT)
+
+Fonti ir sadalīti unicode-range gabalos, tāpēc pārlūks lejupielādē tikai tos
+gabalus, kuros ir lapā reāli lietotie simboli.
