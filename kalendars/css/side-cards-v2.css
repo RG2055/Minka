@@ -624,7 +624,7 @@ html body :is(.side-panel.compact-duty, .side-panel.mini-duty) :is(#radiographer
 html body :is(.side-panel.compact-duty, .side-panel.mini-duty) :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot-row {
   width: 100% !important;
   grid-template-columns: max-content minmax(0, 1fr) !important;
-  gap: 7px !important;
+  gap: 5px !important;  /* sk. komentāru zemāk pie left-panel varianta */
 }
 
 html body :is(.side-panel.compact-duty, .side-panel.mini-duty) :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot dd {
@@ -834,7 +834,10 @@ html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) 
 html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) .mk-side-nfoot-row {
   width: 100% !important;
   grid-template-columns: max-content minmax(0, 1fr) !important;
-  gap: 7px !important;
+  /* Bija 7px. Vērtības kolonnai tad palika 122.3px, bet "5. septembris · 20:00 ·
+     12h" prasa 123px — pietrūka mazāk par vienu pikseli, un "12h" aizlēca otrā
+     rindā. 5px dod ~2px rezervi arī garākiem datumiem. */
+  gap: 5px !important;
 }
 
 html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) .mk-side-nfoot dd {

@@ -1,0 +1,1043 @@
+{
+ "size": 72,
+ "emoji": {
+  "🩻": {
+   "file": "x-ray.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "🤧": {
+   "file": "sneezing-face.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "🫀": {
+   "file": "anatomical-heart.webp",
+   "frames": 13,
+   "ms": 546
+  },
+  "🧠": {
+   "file": "brain.webp",
+   "frames": 28,
+   "ms": 1176
+  },
+  "🦷": {
+   "file": "tooth.webp",
+   "frames": 57,
+   "ms": 2394
+  },
+  "🫁": {
+   "file": "lungs.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🤲": {
+   "file": "palms-up-together.webp",
+   "frames": 68,
+   "ms": 2856
+  },
+  "🩼": {
+   "file": "crutch.webp",
+   "frames": 49,
+   "ms": 2058
+  },
+  "🚑": {
+   "file": "ambulance.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "💪": {
+   "file": "flexed-biceps.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🧘": {
+   "file": "person-in-lotus-position.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🫶": {
+   "file": "heart-hands.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "💆": {
+   "file": "person-getting-massage.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🛌": {
+   "file": "person-in-bed.webp",
+   "frames": 57,
+   "ms": 2394
+  },
+  "🏃": {
+   "file": "person-running.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🧑‍⚕️": {
+   "file": "health-worker.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "😴": {
+   "file": "sleeping-face.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "😎": {
+   "file": "smiling-face-with-sunglasses.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "🤯": {
+   "file": "exploding-head.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "💀": {
+   "file": "skull.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "👻": {
+   "file": "ghost.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "🤖": {
+   "file": "robot.webp",
+   "frames": 52,
+   "ms": 2184
+  },
+  "🦾": {
+   "file": "mechanical-arm.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "😤": {
+   "file": "face-with-steam-from-nose.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "🥱": {
+   "file": "yawning-face.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "😵": {
+   "file": "face-with-crossed-out-eyes.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "🤪": {
+   "file": "zany-face.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "🧐": {
+   "file": "face-with-monocle.webp",
+   "frames": 64,
+   "ms": 2688
+  },
+  "😏": {
+   "file": "smirking-face.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "🥳": {
+   "file": "partying-face.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "🫡": {
+   "file": "saluting-face.webp",
+   "frames": 53,
+   "ms": 2226
+  },
+  "🥶": {
+   "file": "cold-face.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🥵": {
+   "file": "hot-face.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "😈": {
+   "file": "smiling-face-with-horns.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "👾": {
+   "file": "alien-monster.webp",
+   "frames": 63,
+   "ms": 2646
+  },
+  "🙃": {
+   "file": "upside-down-face.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "😬": {
+   "file": "grimacing-face.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "🫤": {
+   "file": "face-with-diagonal-mouth.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "😒": {
+   "file": "unamused-face.webp",
+   "frames": 76,
+   "ms": 4032
+  },
+  "🥺": {
+   "file": "pleading-face.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🫂": {
+   "file": "people-hugging.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "💤": {
+   "file": "zzz.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "😔": {
+   "file": "pensive-face.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🫥": {
+   "file": "dotted-line-face.webp",
+   "frames": 58,
+   "ms": 3024
+  },
+  "⚡": {
+   "file": "high-voltage.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "❄️": {
+   "file": "snowflake.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🌊": {
+   "file": "water-wave.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🌪️": {
+   "file": "tornado.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "☀️": {
+   "file": "sun.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "⛈️": {
+   "file": "cloud-with-lightning-and-rain.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🚀": {
+   "file": "rocket.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "🌟": {
+   "file": "glowing-star.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "⭐": {
+   "file": "star.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "☄️": {
+   "file": "comet.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "🌤️": {
+   "file": "sun-behind-small-cloud.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🌧️": {
+   "file": "cloud-with-rain.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🌬️": {
+   "file": "wind-face.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🔮": {
+   "file": "crystal-ball.webp",
+   "frames": 64,
+   "ms": 2688
+  },
+  "🌈": {
+   "file": "rainbow.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🌠": {
+   "file": "shooting-star.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🌀": {
+   "file": "cyclone.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🦊": {
+   "file": "fox.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "🐺": {
+   "file": "wolf.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🐱": {
+   "file": "cat-face.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🦁": {
+   "file": "lion.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🐉": {
+   "file": "dragon.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🦋": {
+   "file": "butterfly.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🦅": {
+   "file": "eagle.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🐻": {
+   "file": "bear.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🐼": {
+   "file": "panda.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🦝": {
+   "file": "raccoon.webp",
+   "frames": 66,
+   "ms": 2772
+  },
+  "🐸": {
+   "file": "frog.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🦎": {
+   "file": "lizard.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🦈": {
+   "file": "shark.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🐬": {
+   "file": "dolphin.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🦌": {
+   "file": "deer.webp",
+   "frames": 64,
+   "ms": 2688
+  },
+  "🦩": {
+   "file": "flamingo.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🦚": {
+   "file": "peacock.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🐙": {
+   "file": "octopus.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🐝": {
+   "file": "honeybee.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "🦔": {
+   "file": "hedgehog.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🐧": {
+   "file": "penguin.webp",
+   "frames": 48,
+   "ms": 2016
+  },
+  "🦜": {
+   "file": "parrot.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🐊": {
+   "file": "crocodile.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🦭": {
+   "file": "seal.webp",
+   "frames": 66,
+   "ms": 2772
+  },
+  "🐋": {
+   "file": "whale.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🦘": {
+   "file": "kangaroo.webp",
+   "frames": 48,
+   "ms": 2016
+  },
+  "🐓": {
+   "file": "rooster.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🦂": {
+   "file": "scorpion.webp",
+   "frames": 57,
+   "ms": 2394
+  },
+  "🐆": {
+   "file": "leopard.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🪸": {
+   "file": "coral.webp",
+   "frames": 76,
+   "ms": 3234
+  },
+  "🫧": {
+   "file": "bubbles.webp",
+   "frames": 76,
+   "ms": 4032
+  },
+  "🐚": {
+   "file": "spiral-shell.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "☕": {
+   "file": "hot-beverage.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🏂": {
+   "file": "snowboarder.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "🪩": {
+   "file": "mirror-ball.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🧸": {
+   "file": "teddy-bear.webp",
+   "frames": 69,
+   "ms": 2898
+  },
+  "🔥": {
+   "file": "fire.webp",
+   "frames": 48,
+   "ms": 2016
+  },
+  "😷": {
+   "file": "face-with-medical-mask.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🤒": {
+   "file": "face-with-thermometer.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "🤕": {
+   "file": "face-with-head-bandage.webp",
+   "frames": 71,
+   "ms": 2982
+  },
+  "🦴": {
+   "file": "bone.webp",
+   "frames": 69,
+   "ms": 2898
+  },
+  "👨‍⚕️": {
+   "file": "man-health-worker.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "👩‍⚕️": {
+   "file": "woman-health-worker.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "😍": {
+   "file": "smiling-face-with-heart-eyes.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🥰": {
+   "file": "smiling-face-with-hearts.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🤩": {
+   "file": "star-struck.webp",
+   "frames": 71,
+   "ms": 2982
+  },
+  "😊": {
+   "file": "smiling-face-with-smiling-eyes.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "😌": {
+   "file": "relieved-face.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "🤔": {
+   "file": "thinking-face.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "😇": {
+   "file": "smiling-face-with-halo.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "😜": {
+   "file": "winking-face-with-tongue.webp",
+   "frames": 55,
+   "ms": 2310
+  },
+  "🤗": {
+   "file": "smiling-face-with-open-hands.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "😺": {
+   "file": "grinning-cat.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "🌞": {
+   "file": "sun-with-face.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🌛": {
+   "file": "first-quarter-moon-face.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🌩️": {
+   "file": "cloud-with-lightning.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🌫️": {
+   "file": "fog.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "💣": {
+   "file": "bomb.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🐶": {
+   "file": "dog-face.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🐰": {
+   "file": "rabbit-face.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🐹": {
+   "file": "hamster.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🐮": {
+   "file": "cow-face.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "🐴": {
+   "file": "horse-face.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🦉": {
+   "file": "owl.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🦄": {
+   "file": "unicorn.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🐑": {
+   "file": "ewe.webp",
+   "frames": 65,
+   "ms": 2730
+  },
+  "🦆": {
+   "file": "duck.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🐯": {
+   "file": "tiger-face.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🐈": {
+   "file": "cat.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🐈‍⬛": {
+   "file": "black-cat.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "😸": {
+   "file": "grinning-cat-with-smiling-eyes.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "🦕": {
+   "file": "sauropod.webp",
+   "frames": 24,
+   "ms": 1008
+  },
+  "🦖": {
+   "file": "t-rex.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🫎": {
+   "file": "moose.webp",
+   "frames": 76,
+   "ms": 5082
+  },
+  "🐻‍❄️": {
+   "file": "polar-bear.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🦬": {
+   "file": "bison.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🦤": {
+   "file": "dodo.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🪼": {
+   "file": "jellyfish.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "🐾": {
+   "file": "paw-prints.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🌥️": {
+   "file": "sun-behind-large-cloud.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🌦️": {
+   "file": "sun-behind-rain-cloud.webp",
+   "frames": 36,
+   "ms": 1512
+  },
+  "🌨️": {
+   "file": "cloud-with-snow.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🪵": {
+   "file": "wood.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🛸": {
+   "file": "flying-saucer.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🧑‍🔬": {
+   "file": "scientist.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "👩‍🔬": {
+   "file": "woman-scientist.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "👨‍🔬": {
+   "file": "man-scientist.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🦠": {
+   "file": "microbe.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🦿": {
+   "file": "mechanical-leg.webp",
+   "frames": 71,
+   "ms": 2982
+  },
+  "🫢": {
+   "file": "face-with-open-eyes-and-hand-over-mouth.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🫣": {
+   "file": "face-with-peeking-eye.webp",
+   "frames": 57,
+   "ms": 2394
+  },
+  "🫨": {
+   "file": "shaking-face.webp",
+   "frames": 46,
+   "ms": 1932
+  },
+  "😶‍🌫️": {
+   "file": "face-in-clouds.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "😮‍💨": {
+   "file": "face-exhaling.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "😵‍💫": {
+   "file": "face-with-spiral-eyes.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "❤️‍🔥": {
+   "file": "heart-on-fire.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "❤️‍🩹": {
+   "file": "mending-heart.webp",
+   "frames": 35,
+   "ms": 1470
+  },
+  "🫰": {
+   "file": "hand-with-index-finger-and-thumb-crossed.webp",
+   "frames": 53,
+   "ms": 2226
+  },
+  "🫱": {
+   "file": "rightwards-hand.webp",
+   "frames": 45,
+   "ms": 1890
+  },
+  "🫲": {
+   "file": "leftwards-hand.webp",
+   "frames": 45,
+   "ms": 1890
+  },
+  "🧭": {
+   "file": "compass.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🪫": {
+   "file": "low-battery.webp",
+   "frames": 76,
+   "ms": 3528
+  },
+  "🪿": {
+   "file": "goose.webp",
+   "frames": 76,
+   "ms": 5082
+  },
+  "🫏": {
+   "file": "donkey.webp",
+   "frames": 50,
+   "ms": 2100
+  },
+  "🪲": {
+   "file": "beetle.webp",
+   "frames": 61,
+   "ms": 2562
+  },
+  "🪱": {
+   "file": "worm.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🦥": {
+   "file": "sloth.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🦦": {
+   "file": "otter.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🦧": {
+   "file": "orangutan.webp",
+   "frames": 68,
+   "ms": 2856
+  },
+  "🦣": {
+   "file": "mammoth.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🦛": {
+   "file": "hippopotamus.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🦏": {
+   "file": "rhinoceros.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "🦓": {
+   "file": "zebra.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🦒": {
+   "file": "giraffe.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🐿️": {
+   "file": "chipmunk.webp",
+   "frames": 72,
+   "ms": 3024
+  },
+  "🌌": {
+   "file": "milky-way.webp",
+   "frames": 34,
+   "ms": 1428
+  },
+  "🪇": {
+   "file": "maracas.webp",
+   "frames": 73,
+   "ms": 3066
+  },
+  "🪬": {
+   "file": "hamsa.webp",
+   "frames": 72,
+   "ms": 3024
+  }
+ },
+ "staticOnly": [
+  "💉",
+  "🏥",
+  "🔬",
+  "💊",
+  "🩺",
+  "🧬",
+  "🩸",
+  "🧪",
+  "🔭",
+  "🧴",
+  "🦺",
+  "🥼",
+  "🌡️",
+  "😑",
+  "🌙",
+  "💥",
+  "✨",
+  "🎯",
+  "💫",
+  "🌑",
+  "🌕",
+  "🌋",
+  "🗻",
+  "💡",
+  "🕯️",
+  "🪔",
+  "🎆",
+  "🌵",
+  "🌿",
+  "🍀",
+  "🌱",
+  "🍁",
+  "🍂",
+  "🌸",
+  "🌺",
+  "🌻",
+  "🌹",
+  "🪨",
+  "🌲",
+  "🌴",
+  "🎋",
+  "🌾",
+  "🍄",
+  "🪴",
+  "🧊",
+  "🌍",
+  "🏔️",
+  "🏕️",
+  "🏜️",
+  "🏞️",
+  "🌅",
+  "🌄",
+  "🌁",
+  "🌃",
+  "🍕",
+  "🎸",
+  "🎮",
+  "🤿",
+  "🧩",
+  "🪄",
+  "🎪",
+  "🎭",
+  "🎨",
+  "🎵",
+  "🎺",
+  "🥊",
+  "🎳",
+  "🎱",
+  "🏹",
+  "🔑",
+  "📡",
+  "🔦",
+  "🛠️",
+  "🪓",
+  "🎤",
+  "🎧",
+  "📷",
+  "🎁",
+  "🃏",
+  "🎲",
+  "🏆",
+  "💎",
+  "👑",
+  "🧫",
+  "🧼",
+  "🦽",
+  "🔋",
+  "🔌",
+  "🎇",
+  "🧨",
+  "🌼",
+  "🪻",
+  "🌳",
+  "👓",
+  "🕹️",
+  "🏓",
+  "🏀",
+  "⚽",
+  "🎰",
+  "🎬",
+  "📚",
+  "📎",
+  "🪀",
+  "🧋",
+  "🍜",
+  "🪆",
+  "🎻",
+  "🧯",
+  "🧵",
+  "🧷",
+  "🧻",
+  "🧽",
+  "🪥",
+  "🛰️",
+  "📟",
+  "📈",
+  "🧲",
+  "⚙️",
+  "🚨",
+  "🟢",
+  "🟡",
+  "🟠",
+  "🔴",
+  "🫛",
+  "🌘",
+  "🌗",
+  "🌖",
+  "🌔",
+  "🌓",
+  "🌒",
+  "🪭",
+  "🪈",
+  "🛜",
+  "🫙",
+  "🧿",
+  "🧰",
+  "🖥️",
+  "⌨️",
+  "🖱️",
+  "📱",
+  "💻"
+ ]
+}

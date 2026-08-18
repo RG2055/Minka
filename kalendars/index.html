@@ -197,8 +197,344 @@ window.setTimeout(function () {
 <!-- bundle.css is critical ï¿½ load normally -->
 <link rel="stylesheet" href="css/bundle.css?v=20260621n">
 <link rel="stylesheet" href="css/skin-draw.css?v=20260723a">
-<link rel="stylesheet" href="css/side-cards-v2.css?v=20260811nextshift1">
+<link rel="stylesheet" href="css/side-cards-v2.css?v=20260818nfootgap1">
 <link rel="stylesheet" href="css/header-weather.css?v=20260813headerfix1">
+
+<!-- Fluent Emoji webfont (fluentmoji, MIT) — neblokējoši, tāpat kā pārējie fonti.
+     Fails ir sadalīts unicode-range gabalos, tāpēc pārlūks lejupielādē tikai tos
+     ~25 KB gabalus, kuros ir lapā reāli lietotie emoji. Nav ne attēlu, ne papildu
+     DOM mezglu — emoji paliek teksts, mainās tikai fonts. -->
+<link rel="preload" as="style" href="assets/fluentmoji/FluentEmojiColor.css?v=20260818fm1"
+  onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="assets/fluentmoji/FluentEmojiColor.css?v=20260818fm1"></noscript>
+<style id="mk-fluentmoji-v1">
+  /* Divi robi šajā fonta laidienā: 🍀 (U+1F340) un 🪴 (U+1FAB4) ir unicode-range
+     iekšpusē, tāpēc pārlūks tos NEnodod tālāk sistēmas fontam, bet pats fonts tiem
+     glifu nezīmē — rezultātā tukša vieta. Šis bloks tieši tos divus koda punktus
+     aizved atpakaļ uz sistēmas emoji, pārējos neskarot. */
+  @font-face {
+    font-family: 'Fluent Emoji Gaps';
+    src: local('Apple Color Emoji'), local('Segoe UI Emoji'), local('Noto Color Emoji');
+    unicode-range: U+1F340, U+1FAB4;
+  }
+  /* Fonts tiek likts TIKAI uz emoji elementiem, nevis globāli.
+     Iemesls: fonta chunk-000 satur arī ciparus un dažas pieturzīmes (tie vajadzīgi
+     keycap sekvencēm ⃣), tāpēc globāls "emoji fonts pirmais" pārzīmētu pulksteņa
+     ciparus un salauztu tabular-nums izlīdzinājumu. */
+  /* Visas vietas, kur appā tiek zīmēts emoji. Saraksts ir garš ar nolūku:
+     globāls noteikums te neder, jo fonta pirmais gabals satur arī ciparus un
+     dažas pieturzīmes (tie vajadzīgi keycap sekvencēm ⃣), un tas pārzīmētu
+     pulksteņa ciparus, salaužot tabular-nums izlīdzinājumu. */
+  .mk-emoji-side,
+  .mk-side-wm.is-emoji,
+  .mk-emoji-badge,
+  .mk-emoji-show,
+  .mk-mid-person-emoji,
+  .mk-mid-bg-emoji,
+  .mk-mid-shift-emoji,
+  .mk-mid-meta-emoji,
+  .mk-next-person-emoji,
+  .mk-skin-tool-emoji,
+  .swc-emoji,
+  .shift-stop-popover-emoji,
+  .pv-emoji,
+  .rg-comms-emoji,
+  .ns-flow-worker-emoji,
+  .ns-room-bed-head-emoji,
+  .ns-room-pill-emoji,
+  .nsc-duration-emoji,
+  .mkp-emoji-btn,
+  .mkp-tab,
+  .mkp-lock-emoji,
+  .mkp-prev-side-emoji,
+  .mkp-prev-bg-emoji {
+    font-family: 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+    /* Fluent glifi ir zīmēti kvadrātā; bez šī tie dažviet sēž mazliet augstāk
+       nekā sistēmas emoji, kurus tie aizstāj. */
+    font-variant-emoji: emoji;
+  }
+</style>
+
+<style id="mk-emoji-anim-v1">
+  /* Kāpēc bērnelements, nevis fons uz paša emoji:
+     appā ir noteikums ar ID selektorā —
+       html body :is(#radiographers-duty,#radiologists-duty) :is(.mk-emoji-side,…)
+         { background: initial !important }
+     Tas fiksē arī background-position, un CSS animācija `!important` deklarāciju
+     pārsist nevar. Uz jaunu bērnu appai noteikumu nav, tāpēc tur transform ir brīvs. */
+  /* Ligzda ir KVADRĀTS un centrēta. Bez tā: .mk-emoji-side ir 32x34 px, josla
+     32 px plata, tātad kadrs 32 px augsts — un atlikušajos 2 pikseļos apakšā
+     ielīda nākamais kadrs. Tieši tā izskatījās kā emoji atkārtojums. */
+  .mk-emoji-film-box {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    overflow: hidden; pointer-events: none;
+    line-height: 0;
+  }
+  .mk-emoji-film {
+    position: absolute; left: 0; top: 0; width: 100%; height: auto;
+    display: block; pointer-events: none;
+  }
+  /* Animācija tiek ieslēgta tikai tad, kad tā tiešām vajadzīga. Statiskajam
+     kadram `will-change` nav vajadzīgs un tas tikai patērētu atmiņu. */
+  .mk-emoji-film.is-playing { will-change: transform; }
+  /* `html.mk-low-spec *` uzliek animation-duration:0.01ms !important visam, un šī
+     klase te ir ieslēgta vienmēr; divkārša klase ar !important to pārsit. */
+  html.mk-low-spec .mk-emoji-film.is-playing.is-playing,
+  .mk-emoji-film.is-playing.is-playing {
+    animation-name: mk-emoji-frames !important;
+    animation-duration: var(--mk-anim-dur, 3s) !important;
+    animation-timing-function: steps(var(--mk-anim-frames, 24)) !important;
+    animation-iteration-count: infinite !important;
+  }
+  @keyframes mk-emoji-frames { from { transform: translate3d(0,0,0); } to { transform: translate3d(0,-100%,0); } }
+  @media (prefers-reduced-motion: reduce) { .mk-emoji-film { display: none !important; } }
+</style>
+<script>
+(function () {
+  'use strict';
+  /* Klases, kurās stāv DARBINIEKA emoji. Izvēlnes režģis te apzināti nav —
+     tur emoji ir simti, un animēt tos, kad pele slīd pāri, būtu tieši tā
+     nepārtrauktā slodze, no kuras izvairāmies. */
+  /* `mk-side-wm` te apzināti NAV: tā ir kartītes fona ūdenszīme, absolūti
+     pozicionēta un ar nolūku blāva. Kad tā bija sarakstā, tā dabūja gan
+     statisko kadru, gan `position: relative`, ielēca plūsmā un pastūma tekstu —
+     kartītes apakšā parādījās milzīgs kaķis. */
+  var HOVER_ON = ['mk-emoji-side', 'mk-mid-person-emoji', 'mk-emoji-badge'];
+  /* Kartītēm virsū ir savs slānis, tāpēc pele emoji elementu neaizsniedz —
+     notikuma mērķis vienmēr ir tas virsslānis. Tāpēc meklējam arī kartīti un
+     paņemam emoji no tās iekšienes; blakus efekts ir labs — animācija sākas,
+     uzejot jebkur uz kartītes. */
+  var CARDS = ['mk-side-card', 'duty-block', 'mk-mid-card', 'swc-card'];
+  /* Animāciju joslas nāk no tā paša domēna, kur appa. Vietne dzīvo uz GitHub
+     Pages, tāpēc iekomitētie faili JAU ir GitHub — atsevišķs CDN te neko nedod,
+     tikai pieliek svešu atkarību, ko darba tīkls var bloķēt. Vienāda izcelsme
+     turklāt nozīmē, ka service worker tos kešo parastajā ceļā un tie strādā
+     bezsaistē. */
+  var BASE = 'assets/emoji-anim/';
+  var manifest = null, loading = false, playing = null;
+
+  function loadManifest() {
+    if (manifest || loading) return;
+    loading = true;
+    fetch(BASE + 'manifest.json')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (m) { manifest = m || { emoji: {} }; applyStatics(); })
+      .catch(function () { manifest = { emoji: {} }; });
+  }
+
+  function targetOf(node) {
+    while (node && node.nodeType === 1) {
+      if (node.classList) {
+        for (var i = 0; i < HOVER_ON.length; i++) {
+          if (node.classList.contains(HOVER_ON[i])) return node;
+        }
+        for (var j = 0; j < CARDS.length; j++) {
+          if (node.classList.contains(CARDS[j])) {
+            var inner = node.querySelector('.' + HOVER_ON.join(', .'));
+            if (inner) return inner;
+          }
+        }
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  /* Vai Fluent fonts šo emoji tiešām uzzīmēja. Saliktas secības (🐈‍⬛ = kaķis +
+     savienotājs + melns kvadrāts) sadalīts fonts salīmēt nevar, ja daļas nokļuvušas
+     dažādos gabalos, un tad klusi atkāpjas uz sistēmas emoji. Pazīme ir platums:
+     Fluent glifam tas atšķiras no sistēmas glifa. Mērām vienu reizi uz emoji. */
+  /* Kuriem emoji fonts nepalīdz.
+
+     Vienīgais gadījums ir saliktas secības: 🐈‍⬛ ir kaķis + savienotājs U+200D +
+     melns kvadrāts. Fonts ir sadalīts unicode-range gabalos, secības daļas
+     nokļūst dažādos gabalos, un pārlūks ligatūru salikt nevar — tāpēc klusi
+     atkāpjas uz sistēmas emoji.
+
+     Sākotnēji es to noteicu, mērot glifa platumu, un tas bija nepareizi: mērījums
+     atkarīgs no tā, vai fonta gabals TAJĀ brīdī jau ir ielādēts, tāpēc statiskās
+     bildes tika uzliktas arī 🦖, 😈, 🚑 — visiem, un vienā skatā tas nozīmētu ap
+     megabaitu lieku lejupielādes. Pazīme ir nosakāma tieši, bez mērīšanas. */
+  function needsStatic(text) { return text.indexOf('\u200D') >= 0; }
+
+  function makeBox(el, info) {
+    var fs = parseFloat(getComputedStyle(el).fontSize) || 24;
+    /* Kaste ir centrēta un absolūta, tāpēc drīkst mazliet pārkarāties pāri
+       elementa robežām — griežot to līdz elementa kastei, zīmējums iznāktu
+       manāmi mazāks par glifu, ko tas aizstāj. */
+    var side = Math.round(fs * 1.18);
+    var box = document.createElement('span');
+    box.className = 'mk-emoji-film-box';
+    box.style.width = side + 'px';
+    box.style.height = side + 'px';
+    /* Kaste sākumā ir neredzama, un glifs paliek. Ja glifu paslēptu uzreiz,
+       starp tā pazušanu un bildes pirmo uzzīmēšanu paliktu viens tukšs kadrs —
+       tas ir tas mirkļa uzplaiksnījums, ko redz uzejot. */
+    box.style.visibility = 'hidden';
+
+    var film = document.createElement('img');
+    film.className = 'mk-emoji-film';
+    film.alt = '';
+
+    var reveal = function () {
+      if (!el.isConnected || box.parentNode !== el) return;
+      /* Kadru skaits tiek ņemts no paša attēla, nevis no manifesta: ja kešā ir
+         vecāka josla ar citu kadru skaitu, steps() nesakristu ar joslas garumu un
+         animācija vienmērīgi slīdētu, nevis pārslēgtos pa kadriem. */
+      var n = film.naturalWidth ? Math.max(1, Math.round(film.naturalHeight / film.naturalWidth)) : info.frames;
+      el.style.setProperty('--mk-anim-frames', n);
+      /* Glifs un bilde nomainās vienā un tajā pašā kadrā. */
+      el.style.setProperty('color', 'transparent', 'important');
+      el.style.setProperty('-webkit-text-fill-color', 'transparent', 'important');
+      box.style.visibility = '';
+    };
+
+    film.src = BASE + info.file;
+    /* decode() gaida, līdz bilde ir ne tikai saņemta, bet arī atkodēta un gatava
+       zīmēšanai; onload to negarantē. Ja tā nav pieejama, atkāpjamies uz onload. */
+    if (film.decode) film.decode().then(reveal, reveal);
+    else if (film.complete) reveal();
+    else film.onload = reveal;
+
+    /* `position` tiek aiztikts TIKAI tad, ja elements ir statisks. Ja tas jau ir
+       absolūts vai fiksēts, `relative` to ievilktu plūsmā un izjauktu kartītes
+       izkārtojumu. */
+    if (getComputedStyle(el).position === 'static') {
+      el.style.setProperty('position', 'relative', 'important');
+    }
+    el.style.setProperty('--mk-anim-dur', info.ms + 'ms');
+    el.style.setProperty('--mk-anim-frames', info.frames);
+    box.appendChild(film);
+    el.appendChild(box);
+    return film;
+  }
+
+  /* Emoji, ko fonts nesalīmē, dabū statisku Fluent kadru arī miera stāvoklī —
+     citādi kartītē sēž vecais sistēmas emoji, un uzejot tas pēkšņi nomainītos
+     pret citu zīmējumu. */
+  function ensureStatic(el) {
+    if (!manifest || el.querySelector('.mk-emoji-film-box')) return;
+    var text = (el.textContent || '').trim();
+    if (!text || !needsStatic(text)) return;
+    var info = manifest.emoji && manifest.emoji[text];
+    if (info) makeBox(el, info);
+  }
+
+  function stop() {
+    if (!playing) return;
+    var film = playing.querySelector('.mk-emoji-film');
+    if (film) film.classList.remove('is-playing');
+    var text = (playing.textContent || '').trim();
+    /* Statiskais kadrs paliek; parastajam emoji ligzdu noņemam pavisam. */
+    if (!needsStatic(text)) {
+      var box = playing.querySelector('.mk-emoji-film-box');
+      if (box) box.remove();
+      ['position', 'color', '-webkit-text-fill-color', '--mk-anim-frames', '--mk-anim-dur']
+        .forEach(function (k) { playing.style.removeProperty(k); });
+    }
+    playing = null;
+  }
+
+  function start(el) {
+    if (!manifest || el === playing) return;
+    var text = (el.textContent || '').trim();
+    var info = manifest.emoji && manifest.emoji[text];
+    if (!info) { stop(); return; }
+    stop();
+    var film = el.querySelector('.mk-emoji-film') || makeBox(el, info);
+    film.classList.add('is-playing');
+    playing = el;
+  }
+
+  document.addEventListener('mouseover', function (e) {
+    loadManifest();
+    var el = targetOf(e.target);
+    if (el) start(el); else stop();
+  }, { passive: true });
+
+  document.addEventListener('mouseout', function (e) {
+    if (!playing) return;
+    if (targetOf(e.relatedTarget) !== playing) stop();
+  }, { passive: true });
+  window.addEventListener('blur', stop);
+  document.addEventListener('visibilitychange', function () { if (document.hidden) stop(); });
+
+  /* Kartītes pārzīmējas reizi sekundē (pulkstenis), un tad animētais elements
+     tiek izmests no DOM. Pele nekustas, tāpēc jauns mouseover nenotiek, un
+     animācija pazustu līdz nākamajai kustībai. Tāpēc atceramies kursora vietu
+     un pēc pārzīmēšanas paņemam to elementu, kas tagad ir zem tā.
+     Pārbaude ir lēta: strādā tikai tad, kad kaut kas tiešām spēlēja un pazuda. */
+  var lastX = -1, lastY = -1;
+  document.addEventListener('mousemove', function (e) { lastX = e.clientX; lastY = e.clientY; },
+                            { passive: true });
+
+  var pending = false;
+  var observer = new MutationObserver(function () {
+    if (pending) return;
+    pending = true;
+    requestAnimationFrame(function () {
+      pending = false;
+      /* Statiskie kadri jāuzliek KATRĀ pārzīmēšanā, arī tad, kad kaut kas jau
+         spēlē: pārzīmētās kartītes atnāk ar tīriem emoji elementiem. */
+      applyStatics();
+      if (playing && document.contains(playing)) return;
+      playing = null;                       /* vecais mezgls ir atdalīts */
+      if (lastX < 0) return;
+      var el = targetOf(document.elementFromPoint(lastX, lastY));
+      if (el) start(el);
+    });
+  });
+
+  /* Dīkstāvē klusi ievelkam tikai to emoji, kas šobrīd ir ekrānā — tā pirmā
+     uzejšana nesākas ar tukšu vietu un tīkla gaidīšanu. */
+  function applyStatics() {
+    if (!manifest || !manifest.emoji) return;
+    document.querySelectorAll('.' + HOVER_ON.join(', .')).forEach(ensureStatic);
+  }
+
+  function prefetchVisible() {
+    if (!manifest || !manifest.emoji) return;
+    var seen = {}, n = 0;
+    document.querySelectorAll('.' + HOVER_ON.join(', .')).forEach(function (el) {
+      /* Bija 12, kas nozīmēja 1,2 MB dīkstāvē. Kopš glifs paliek redzams, līdz
+         bilde ir atkodēta, priekšielāde vairs nav vajadzīga uzplaiksnījuma dēļ —
+         tā tikai saīsina gaidīšanu pirmajai uzejšanai. Četri pietiek. */
+      if (n >= 4) return;
+      var t = (el.textContent || '').trim();
+      if (!t || seen[t] || !manifest.emoji[t]) return;
+      seen[t] = 1; n++;
+      (new Image()).src = BASE + manifest.emoji[t].file;
+    });
+  }
+  function idle(fn) {
+    if (window.requestIdleCallback) requestIdleCallback(fn, { timeout: 4000 });
+    else setTimeout(fn, 2500);
+  }
+  /* Manifests (mazs JSON) tiek prasīts uzreiz, nevis dīkstāvē: no tā ir atkarīgs,
+     vai emoji, ko fonts nesalīmē, jau pirmajā mirklī parādās kā Fluent. Gaidot
+     `load`+idle, tie brīdi mirgotu kā vecie sistēmas emoji.
+     Pašas joslas (~80 KB) joprojām tiek vilktas tikai dīkstāvē. */
+  loadManifest();
+
+  /* Šis skripts atrodas <head>, tāpēc `document.body` vēl neeksistē. Agrāk
+     observer.observe(document.body) te meta izņēmumu, un tas pārtrauca visu, kas
+     rakstīts tālāk — arī periodisko pārbaudi. Tāpēc viss, kas prasa body, tiek
+     palaists tikai tad, kad tas ir. */
+  function boot() {
+    observer.observe(document.body, { childList: true, subtree: true });
+    /* Kartītes pārzīmējas reizi sekundē, un tad statiskie kadri pazūd līdz ar
+       visu kartītes saturu. Novērotājs to ne vienmēr noķer — pārzīmēšana un
+       novērotāja rāmis var sakrist tā, ka pārbaude notiek pirms jaunā satura.
+       Šī pārbaude ir lēta (ap 12 elementu, mērījumi kešoti) un neatkarīga. */
+    setInterval(applyStatics, 1200);
+    applyStatics();
+    idle(prefetchVisible);
+  }
+  if (document.body) boot();
+  else document.addEventListener('DOMContentLoaded', boot, { once: true });
+})();
+</script>
 <!-- External fonts/icons: non-blocking preload swap -->
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1160,7 +1496,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260816sideglass2"></script>
+<script src="js/calendar.js?v=20260818fluentmoji"></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260810layout2"></script>
 <script src="js/fatigue.js?v=20260816fatcache1"></script>
@@ -1174,7 +1510,7 @@ function _mkToast(msg, type) {
 <script src="js/radiologist_plan.js" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260713g';
+window.__minkaLocalBuild = '20260818fluentmoji';
 (function(){
   function norm(v){
     try { return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
