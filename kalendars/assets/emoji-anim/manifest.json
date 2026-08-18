@@ -895,6 +895,342 @@
    "file": "hamsa.webp",
    "frames": 72,
    "ms": 3024
+  },
+  "🩺": {
+   "file": "noto-1fa7a.webp",
+   "frames": 76,
+   "ms": 2340,
+   "noto": true
+  },
+  "🩸": {
+   "file": "noto-1fa78.webp",
+   "frames": 37,
+   "ms": 1110,
+   "noto": true
+  },
+  "😑": {
+   "file": "noto-1f611.webp",
+   "frames": 35,
+   "ms": 2250,
+   "noto": true
+  },
+  "💥": {
+   "file": "noto-1f4a5.webp",
+   "frames": 38,
+   "ms": 1140,
+   "noto": true
+  },
+  "✨": {
+   "file": "noto-2728.webp",
+   "frames": 61,
+   "ms": 1830,
+   "noto": true
+  },
+  "🎯": {
+   "file": "noto-1f3af.webp",
+   "frames": 51,
+   "ms": 2110,
+   "noto": true
+  },
+  "🌋": {
+   "file": "noto-1f30b.webp",
+   "frames": 36,
+   "ms": 1080,
+   "noto": true
+  },
+  "💡": {
+   "file": "noto-1f4a1.webp",
+   "frames": 16,
+   "ms": 872,
+   "noto": true
+  },
+  "🪔": {
+   "file": "noto-1fa94.webp",
+   "frames": 76,
+   "ms": 2430,
+   "noto": true
+  },
+  "🎆": {
+   "file": "noto-1f386.webp",
+   "frames": 56,
+   "ms": 1860,
+   "noto": true
+  },
+  "🌵": {
+   "file": "noto-1f335.webp",
+   "frames": 76,
+   "ms": 2730,
+   "noto": true
+  },
+  "🌿": {
+   "file": "noto-1f33f.webp",
+   "frames": 60,
+   "ms": 1800,
+   "noto": true
+  },
+  "🍀": {
+   "file": "noto-1f340.webp",
+   "frames": 51,
+   "ms": 1620,
+   "noto": true
+  },
+  "🌱": {
+   "file": "noto-1f331.webp",
+   "frames": 76,
+   "ms": 5190,
+   "noto": true
+  },
+  "🍁": {
+   "file": "noto-1f341.webp",
+   "frames": 52,
+   "ms": 1621,
+   "noto": true
+  },
+  "🍂": {
+   "file": "noto-1f342.webp",
+   "frames": 76,
+   "ms": 3180,
+   "noto": true
+  },
+  "🌸": {
+   "file": "noto-1f338.webp",
+   "frames": 76,
+   "ms": 3210,
+   "noto": true
+  },
+  "🌹": {
+   "file": "noto-1f339.webp",
+   "frames": 72,
+   "ms": 2160,
+   "noto": true
+  },
+  "🪨": {
+   "file": "noto-1faa8.webp",
+   "frames": 76,
+   "ms": 2911,
+   "noto": true
+  },
+  "🌲": {
+   "file": "noto-1f332.webp",
+   "frames": 69,
+   "ms": 2070,
+   "noto": true
+  },
+  "🍄": {
+   "file": "noto-1f344.webp",
+   "frames": 75,
+   "ms": 2432,
+   "noto": true
+  },
+  "🌍": {
+   "file": "noto-1f30d.webp",
+   "frames": 76,
+   "ms": 2430,
+   "noto": true
+  },
+  "🌅": {
+   "file": "noto-1f305.webp",
+   "frames": 76,
+   "ms": 4500,
+   "noto": true
+  },
+  "🌄": {
+   "file": "noto-1f304.webp",
+   "frames": 31,
+   "ms": 930,
+   "noto": true
+  },
+  "🍕": {
+   "file": "noto-1f355.webp",
+   "frames": 29,
+   "ms": 2100,
+   "noto": true
+  },
+  "🎸": {
+   "file": "noto-1f3b8.webp",
+   "frames": 76,
+   "ms": 2700,
+   "noto": true
+  },
+  "🪄": {
+   "file": "noto-1fa84.webp",
+   "frames": 41,
+   "ms": 1444,
+   "noto": true
+  },
+  "🎭": {
+   "file": "noto-1f3ad.webp",
+   "frames": 66,
+   "ms": 1980,
+   "noto": true
+  },
+  "🎺": {
+   "file": "noto-1f3ba.webp",
+   "frames": 53,
+   "ms": 1833,
+   "noto": true
+  },
+  "🎳": {
+   "file": "noto-1f3b3.webp",
+   "frames": 37,
+   "ms": 1110,
+   "noto": true
+  },
+  "🎱": {
+   "file": "noto-1f3b1.webp",
+   "frames": 26,
+   "ms": 780,
+   "noto": true
+  },
+  "📷": {
+   "file": "noto-1f4f7.webp",
+   "frames": 76,
+   "ms": 3090,
+   "noto": true
+  },
+  "🎁": {
+   "file": "noto-1f381.webp",
+   "frames": 69,
+   "ms": 2130,
+   "noto": true
+  },
+  "🎲": {
+   "file": "noto-1f3b2.webp",
+   "frames": 48,
+   "ms": 1592,
+   "noto": true
+  },
+  "🏆": {
+   "file": "noto-1f3c6.webp",
+   "frames": 68,
+   "ms": 2040,
+   "noto": true
+  },
+  "💎": {
+   "file": "noto-1f48e.webp",
+   "frames": 40,
+   "ms": 1200,
+   "noto": true
+  },
+  "👑": {
+   "file": "noto-1f451.webp",
+   "frames": 54,
+   "ms": 1711,
+   "noto": true
+  },
+  "🔋": {
+   "file": "noto-1f50b.webp",
+   "frames": 52,
+   "ms": 1560,
+   "noto": true
+  },
+  "🔌": {
+   "file": "noto-1f50c.webp",
+   "frames": 76,
+   "ms": 3030,
+   "noto": true
+  },
+  "🌼": {
+   "file": "noto-1f33c.webp",
+   "frames": 76,
+   "ms": 3450,
+   "noto": true
+  },
+  "🪻": {
+   "file": "noto-1fabb.webp",
+   "frames": 76,
+   "ms": 3360,
+   "noto": true
+  },
+  "🏓": {
+   "file": "noto-1f3d3.webp",
+   "frames": 26,
+   "ms": 934,
+   "noto": true
+  },
+  "🏀": {
+   "file": "noto-1f3c0.webp",
+   "frames": 76,
+   "ms": 3060,
+   "noto": true
+  },
+  "⚽": {
+   "file": "noto-26bd.webp",
+   "frames": 60,
+   "ms": 1800,
+   "noto": true
+  },
+  "🎰": {
+   "file": "noto-1f3b0.webp",
+   "frames": 45,
+   "ms": 1380,
+   "noto": true
+  },
+  "🎬": {
+   "file": "noto-1f3ac.webp",
+   "frames": 42,
+   "ms": 1351,
+   "noto": true
+  },
+  "📚": {
+   "file": "noto-1f4da.webp",
+   "frames": 68,
+   "ms": 2191,
+   "noto": true
+  },
+  "🧋": {
+   "file": "noto-1f9cb.webp",
+   "frames": 76,
+   "ms": 2887,
+   "noto": true
+  },
+  "🍜": {
+   "file": "noto-1f35c.webp",
+   "frames": 53,
+   "ms": 1620,
+   "noto": true
+  },
+  "🎻": {
+   "file": "noto-1f3bb.webp",
+   "frames": 76,
+   "ms": 5670,
+   "noto": true
+  },
+  "📟": {
+   "file": "noto-1f4df.webp",
+   "frames": 68,
+   "ms": 2040,
+   "noto": true
+  },
+  "📈": {
+   "file": "noto-1f4c8.webp",
+   "frames": 23,
+   "ms": 784,
+   "noto": true
+  },
+  "🚨": {
+   "file": "noto-1f6a8.webp",
+   "frames": 50,
+   "ms": 1500,
+   "noto": true
+  },
+  "🫛": {
+   "file": "noto-1fadb.webp",
+   "frames": 38,
+   "ms": 1140,
+   "noto": true
+  },
+  "🪭": {
+   "file": "noto-1faad.webp",
+   "frames": 61,
+   "ms": 1830,
+   "noto": true
+  },
+  "💻": {
+   "file": "noto-1f4bb.webp",
+   "frames": 66,
+   "ms": 2954,
+   "noto": true
   }
  },
  "staticOnly": [
@@ -902,70 +1238,39 @@
   "🏥",
   "🔬",
   "💊",
-  "🩺",
   "🧬",
-  "🩸",
   "🧪",
   "🔭",
   "🧴",
   "🦺",
   "🥼",
   "🌡️",
-  "😑",
   "🌙",
-  "💥",
-  "✨",
-  "🎯",
   "💫",
   "🌑",
   "🌕",
-  "🌋",
   "🗻",
-  "💡",
   "🕯️",
-  "🪔",
-  "🎆",
-  "🌵",
-  "🌿",
-  "🍀",
-  "🌱",
-  "🍁",
-  "🍂",
-  "🌸",
   "🌺",
   "🌻",
-  "🌹",
-  "🪨",
-  "🌲",
   "🌴",
   "🎋",
   "🌾",
-  "🍄",
   "🪴",
   "🧊",
-  "🌍",
   "🏔️",
   "🏕️",
   "🏜️",
   "🏞️",
-  "🌅",
-  "🌄",
   "🌁",
   "🌃",
-  "🍕",
-  "🎸",
   "🎮",
   "🤿",
   "🧩",
-  "🪄",
   "🎪",
-  "🎭",
   "🎨",
   "🎵",
-  "🎺",
   "🥊",
-  "🎳",
-  "🎱",
   "🏹",
   "🔑",
   "📡",
@@ -974,37 +1279,18 @@
   "🪓",
   "🎤",
   "🎧",
-  "📷",
-  "🎁",
   "🃏",
-  "🎲",
-  "🏆",
-  "💎",
-  "👑",
   "🧫",
   "🧼",
   "🦽",
-  "🔋",
-  "🔌",
   "🎇",
   "🧨",
-  "🌼",
-  "🪻",
   "🌳",
   "👓",
   "🕹️",
-  "🏓",
-  "🏀",
-  "⚽",
-  "🎰",
-  "🎬",
-  "📚",
   "📎",
   "🪀",
-  "🧋",
-  "🍜",
   "🪆",
-  "🎻",
   "🧯",
   "🧵",
   "🧷",
@@ -1012,23 +1298,18 @@
   "🧽",
   "🪥",
   "🛰️",
-  "📟",
-  "📈",
   "🧲",
   "⚙️",
-  "🚨",
   "🟢",
   "🟡",
   "🟠",
   "🔴",
-  "🫛",
   "🌘",
   "🌗",
   "🌖",
   "🌔",
   "🌓",
   "🌒",
-  "🪭",
   "🪈",
   "🛜",
   "🫙",
@@ -1037,7 +1318,6 @@
   "🖥️",
   "⌨️",
   "🖱️",
-  "📱",
-  "💻"
+  "📱"
  ]
 }

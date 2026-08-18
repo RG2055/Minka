@@ -288,6 +288,52 @@ window.setTimeout(function () {
     animation-iteration-count: infinite !important;
   }
   @keyframes mk-emoji-frames { from { transform: translate3d(0,0,0); } to { transform: translate3d(0,-100%,0); } }
+
+  /* ── Kustība tiem, kam animācijas nav ────────────────────────────────────
+     85 emoji animētas versijas nav ne Microsoft, ne Noto. Tiem tiek dota paša
+     glifa kustība: nekādu attēlu, nekādu papildu mezglu — tikai `transform` uz
+     jau esošā elementa, tātad kompozitora darbs un nulle CPU uz kadru.
+
+     Forma ir klasiskā "tada": īss paliecums ar vairākiem sīkiem pagriezieniem
+     uz abām pusēm. Pirmā versija bija 1,5 s lēns šūpojums ar 7° un 1.07 — to
+     vienkārši nevarēja pamanīt. Mikro-mijiedarbībai ieteicamais ilgums ir
+     150–300 ms; te tas ir 700 ms, jo pēc "tada" seko pauze, lai atkārtošanās
+     nekļūtu par vibrēšanu. */
+  /* Kustība iet BĒRNELEMENTĀ, ne uz paša emoji. Appā ir noteikums ar ID
+     selektorā — `:is(#radiographers-duty,#radiologists-duty) .mk-emoji-side
+     { transform: none !important }` — un CSS animācija `!important` deklarāciju
+     pārrakstīt nevar. Uz jaunu bērnu appai noteikumu nav. */
+  .mk-emoji-nudge-box {
+    position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font: inherit; line-height: 1; pointer-events: none;
+    transform-origin: 50% 50%;
+    will-change: transform;
+  }
+  html.mk-low-spec .mk-emoji-nudge-box.mk-emoji-nudge-box,
+  .mk-emoji-nudge-box.mk-emoji-nudge-box {
+    animation-name: mk-emoji-tada !important;
+    animation-duration: 1.9s !important;
+    animation-timing-function: ease-in-out !important;
+    animation-iteration-count: infinite !important;
+  }
+  @keyframes mk-emoji-tada {
+    /* Pilns apgrieziens ar nelielu ieskrējienu un piezemēšanos. Iepriekšējās
+       versijas bija šūpošanās — vispirms par kautru, tad par ātru, un abas
+       izskatījās pēc raustīšanās. Apgrieziens lasās kā apzināta kustība, un
+       vienam glifam tas ir tikpat lēts: viens `transform`, kompozitora darbs.
+       Z ass, nevis Y, jo plakans glifs, griežoties ap Y, pusceļā apgrieztos
+       spoguļattēlā. */
+    0%    { transform: rotate(0deg) scale3d(1, 1, 1); }
+    12%   { transform: rotate(-12deg) scale3d(.93, .93, 1); }   /* ieskrējiens */
+    52%   { transform: rotate(348deg) scale3d(1.1, 1.1, 1); }
+    64%   { transform: rotate(360deg) scale3d(1.04, 1.04, 1); } /* neliela pārsviešanās */
+    72%   { transform: rotate(360deg) scale3d(1, 1, 1); }
+    100%  { transform: rotate(360deg) scale3d(1, 1, 1); }       /* pauze */
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mk-emoji-nudge-box.mk-emoji-nudge-box { animation: none !important; }
+  }
   @media (prefers-reduced-motion: reduce) { .mk-emoji-film { display: none !important; } }
 </style>
 <script>
@@ -312,7 +358,7 @@ window.setTimeout(function () {
      turklāt nozīmē, ka service worker tos kešo parastajā ceļā un tie strādā
      bezsaistē. */
   var BASE = 'assets/emoji-anim/';
-  var manifest = null, loading = false, playing = null;
+  var manifest = null, loading = false, playing = null, nudging = null;
 
   function loadManifest() {
     if (manifest || loading) return;
@@ -356,7 +402,13 @@ window.setTimeout(function () {
      atkarīgs no tā, vai fonta gabals TAJĀ brīdī jau ir ielādēts, tāpēc statiskās
      bildes tika uzliktas arī 🦖, 😈, 🚑 — visiem, un vienā skatā tas nozīmētu ap
      megabaitu lieku lejupielādes. Pazīme ir nosakāma tieši, bez mērīšanas. */
-  function needsStatic(text) { return text.indexOf('\u200D') >= 0; }
+  function needsStatic(text) {
+    if (text.indexOf('\u200D') >= 0) return true;
+    /* Noto emoji: Fluent fontā tie ir citā stilā, tāpēc, ja mierā rādītu fontu,
+       bet uzejot Noto, sanāktu redzams krāsas lēciens. Rādām Noto abos. */
+    var i = manifest && manifest.emoji && manifest.emoji[text];
+    return !!(i && i.noto);
+  }
 
   function makeBox(el, info) {
     var fs = parseFloat(getComputedStyle(el).fontSize) || 24;
@@ -422,6 +474,13 @@ window.setTimeout(function () {
   }
 
   function stop() {
+    if (nudging) {
+      var nb = nudging.querySelector('.mk-emoji-nudge-box');
+      /* Atdodam tekstu atpakaļ vecākam tieši tādu, kāds tas bija. */
+      if (nb) { var t = nb.textContent; nb.remove(); nudging.textContent = t; }
+      nudging.style.removeProperty('position');
+      nudging = null;
+    }
     if (!playing) return;
     var film = playing.querySelector('.mk-emoji-film');
     if (film) film.classList.remove('is-playing');
@@ -440,8 +499,25 @@ window.setTimeout(function () {
     if (!manifest || el === playing) return;
     var text = (el.textContent || '').trim();
     var info = manifest.emoji && manifest.emoji[text];
-    if (!info) { stop(); return; }
     stop();
+    if (!info) {
+      /* Animācijas šim emoji nav nekur — dodam paša glifa kustību. */
+      if (!text) return;
+      var nb = document.createElement('span');
+      nb.className = 'mk-emoji-nudge-box';
+      nb.textContent = text;
+      if (getComputedStyle(el).position === 'static') {
+        el.style.setProperty('position', 'relative', 'important');
+      }
+      /* Teksts tiek PĀRVIETOTS bērnā, nevis dublēts. Pirmajā versijā bērns tika
+         pielikts klāt, bet vecāka glifs palika — un kartītē bija divi vienādi
+         emoji. Krāsas slēpšana te neder, jo krāsu fonta glifs pats nes savas
+         krāsas. */
+      el.textContent = '';
+      el.appendChild(nb);
+      nudging = el;
+      return;
+    }
     var film = el.querySelector('.mk-emoji-film') || makeBox(el, info);
     film.classList.add('is-playing');
     playing = el;
@@ -1496,7 +1572,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260818fluentmoji"></script>
+<script src="js/calendar.js?v=20260818noto6"></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260810layout2"></script>
 <script src="js/fatigue.js?v=20260816fatcache1"></script>
@@ -1510,7 +1586,7 @@ function _mkToast(msg, type) {
 <script src="js/radiologist_plan.js" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260818fluentmoji';
+window.__minkaLocalBuild = '20260818noto6';
 (function(){
   function norm(v){
     try { return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
