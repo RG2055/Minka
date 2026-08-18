@@ -360,6 +360,20 @@ window.setTimeout(function () {
   var BASE = 'assets/emoji-anim/';
   var manifest = null, loading = false, playing = null, nudging = null;
 
+  /* Kartītes pārzīmējas reizi sekundē (pulkstenis), un tad animētais elements
+     tiek izmests un uzlikts no jauna. Animācija sāktos no nulles katru sekundi,
+     tāpēc 1,9 s apgrieziens nekad nepaspētu pabeigties — uz ekrāna izskatījās,
+     ka nekas nenotiek. Tāpēc atceramies, kad kustība sākās, un jaunajam
+     elementam uzliekam negatīvu animation-delay: tas turpina no tās pašas
+     vietas, kur vecais palika. */
+  var motionStart = {}, MOTION_KEEP_MS = 4000;
+  function motionDelay(key, durMs) {
+    var now = Date.now();
+    var t0 = motionStart[key];
+    if (!t0 || now - t0 > durMs + MOTION_KEEP_MS) { motionStart[key] = now; return 0; }
+    return -((now - t0) % durMs);
+  }
+
   function loadManifest() {
     if (manifest || loading) return;
     loading = true;
@@ -496,7 +510,12 @@ window.setTimeout(function () {
   }
 
   function start(el) {
-    if (!manifest || el === playing) return;
+    /* `nudging` jāpārbauda tāpat kā `playing`. Bez tā: kustības elementa
+       pievienošana ir DOM izmaiņa, novērotājs to pamana, redz, ka `playing` ir
+       tukšs, un izsauc start() vēlreiz — tas noņem elementu un uzliek atpakaļ.
+       Katrā kadrā. Animācija sākās no nulles un nekad neaizgāja tālāk par
+       pirmo kadru, tāpēc uz ekrāna nekas nekustējās. */
+    if (!manifest || el === playing || el === nudging) return;
     var text = (el.textContent || '').trim();
     var info = manifest.emoji && manifest.emoji[text];
     stop();
@@ -513,12 +532,14 @@ window.setTimeout(function () {
          pielikts klāt, bet vecāka glifs palika — un kartītē bija divi vienādi
          emoji. Krāsas slēpšana te neder, jo krāsu fonta glifs pats nes savas
          krāsas. */
+      nb.style.animationDelay = motionDelay('nudge:' + text, 1900) + 'ms';
       el.textContent = '';
       el.appendChild(nb);
       nudging = el;
       return;
     }
     var film = el.querySelector('.mk-emoji-film') || makeBox(el, info);
+    film.style.animationDelay = motionDelay('film:' + text, info.ms || 3000) + 'ms';
     film.classList.add('is-playing');
     playing = el;
   }
@@ -555,6 +576,7 @@ window.setTimeout(function () {
          spēlē: pārzīmētās kartītes atnāk ar tīriem emoji elementiem. */
       applyStatics();
       if (playing && document.contains(playing)) return;
+      if (nudging && document.contains(nudging)) return;
       playing = null;                       /* vecais mezgls ir atdalīts */
       if (lastX < 0) return;
       var el = targetOf(document.elementFromPoint(lastX, lastY));
@@ -1572,7 +1594,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260818noto6"></script>
+<script src="js/calendar.js?v=20260818noto8"></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260810layout2"></script>
 <script src="js/fatigue.js?v=20260816fatcache1"></script>
@@ -1586,7 +1608,7 @@ function _mkToast(msg, type) {
 <script src="js/radiologist_plan.js" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260818noto6';
+window.__minkaLocalBuild = '20260818noto8';
 (function(){
   function norm(v){
     try { return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
