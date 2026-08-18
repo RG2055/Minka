@@ -358,7 +358,7 @@ window.setTimeout(function () {
      turklāt nozīmē, ka service worker tos kešo parastajā ceļā un tie strādā
      bezsaistē. */
   var BASE = 'assets/emoji-anim/';
-  var manifest = null, loading = false, playing = null, nudging = null;
+  var manifest = null, loading = false, playing = null, nudging = null, activeText = '';
 
   /* Kartītes pārzīmējas reizi sekundē (pulkstenis), un tad animētais elements
      tiek izmests un uzlikts no jauna. Animācija sāktos no nulles katru sekundi,
@@ -377,7 +377,15 @@ window.setTimeout(function () {
   function loadManifest() {
     if (manifest || loading) return;
     loading = true;
-    fetch(BASE + 'manifest.json')
+    /* Versija URL beigās ar nolūku: manifests ir DATU fails, un service worker
+       to kešo kā jebkuru citu resursu. Bez versijas pārlūks paņēma jauno kodu,
+       bet veco sarakstu — un visi tikko pievienotie emoji izskatījās tā, it kā
+       animācijas tiem nebūtu (apgriezās, nevis spēlēja savu animāciju).
+
+       Marķieris te ir burtisks, nevis `window.__minkaLocalBuild`: tas tiek
+       uzstādīts krietni tālāk failā nekā šis skripts, tāpēc te tas vēl būtu
+       tukšs. Bumpo to kopā ar pārējiem. */
+    fetch(BASE + 'manifest.json?v=20260818noto10')
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (m) { manifest = m || { emoji: {} }; applyStatics(); })
       .catch(function () { manifest = { emoji: {} }; });
@@ -507,6 +515,7 @@ window.setTimeout(function () {
         .forEach(function (k) { playing.style.removeProperty(k); });
     }
     playing = null;
+    activeText = '';
   }
 
   function start(el) {
@@ -515,10 +524,15 @@ window.setTimeout(function () {
        tukšs, un izsauc start() vēlreiz — tas noņem elementu un uzliek atpakaļ.
        Katrā kadrā. Animācija sākās no nulles un nekad neaizgāja tālāk par
        pirmo kadru, tāpēc uz ekrāna nekas nekustējās. */
-    if (!manifest || el === playing || el === nudging) return;
     var text = (el.textContent || '').trim();
+    /* Pārbaudām arī TEKSTU, ne tikai elementu: kartītes pārzīmēšana var atstāt
+       to pašu mezglu, bet nomainīt tajā emoji. Ar pārbaudi tikai pēc elementa
+       jaunais emoji paliktu bez animācijas. */
+    if (!manifest) return;
+    if ((el === playing || el === nudging) && text === activeText) return;
     var info = manifest.emoji && manifest.emoji[text];
     stop();
+    activeText = text;
     if (!info) {
       /* Animācijas šim emoji nav nekur — dodam paša glifa kustību. */
       if (!text) return;
@@ -1594,7 +1608,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260818noto8"></script>
+<script src="js/calendar.js?v=20260818noto10"></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260810layout2"></script>
 <script src="js/fatigue.js?v=20260816fatcache1"></script>
@@ -1608,7 +1622,7 @@ function _mkToast(msg, type) {
 <script src="js/radiologist_plan.js" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260818noto8';
+window.__minkaLocalBuild = '20260818noto10';
 (function(){
   function norm(v){
     try { return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
