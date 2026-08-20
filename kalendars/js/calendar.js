@@ -6280,7 +6280,7 @@ let modalWorkerDates = [];
 function showWorkerSchedule(workerName, currentShift) {
   window.__wmWorkerName = String(workerName || '').trim();
   const stores = [window.__grafiksStore || {}, window.__grafiksStoreRad || {}];
-  const allDates = [];
+  let allDates = [];
   const seenKeys = new Set();
 
   for (const store of stores) {
@@ -6309,6 +6309,28 @@ function showWorkerSchedule(workerName, currentShift) {
     const [d2,m2,y2] = b.date.split('.').map(Number);
     return new Date(y1,m1-1,d1) - new Date(y2,m2-1,d2);
   });
+
+  // Keep the same visible month window as the main calendar: the previous
+  // duty month onward. This prevents a stale archive month from another year
+  // (for example September 2025) becoming the worker modal's initial month.
+  // If a legacy-only worker has no recent rows, keep the archive as a fallback
+  // instead of turning an otherwise useful profile into an empty calendar.
+  let visibleMonthFloor = null;
+  try {
+    const dutyParts = String(window.__g_todayStr || '').split('.').map(Number);
+    const dutyDate = dutyParts.length === 3 && dutyParts.every(Number.isFinite)
+      ? new Date(dutyParts[2], dutyParts[1] - 1, dutyParts[0])
+      : new Date();
+    visibleMonthFloor = dutyDate.getFullYear() * 12 + dutyDate.getMonth() - 1;
+  } catch (_error) {}
+  if (visibleMonthFloor !== null) {
+    const recentDates = allDates.filter(item => {
+      const parts = String(item.date || '').split('.').map(Number);
+      if (parts.length !== 3 || !parts.every(Number.isFinite)) return false;
+      return parts[2] * 12 + (parts[1] - 1) >= visibleMonthFloor;
+    });
+    if (recentDates.length) allDates = recentDates;
+  }
 
   modalWorkerDates = allDates;
 
