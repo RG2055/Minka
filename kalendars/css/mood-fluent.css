@@ -1,0 +1,303 @@
+/* Fluent mood face ---------------------------------------------------------
+   Visual-only layer for the existing shift-feedback module. Data, ratings,
+   fatigue, coffee and staff placement continue to be owned by the existing
+   mood code in kalendars/index.html. */
+
+.rg-mood-stage {
+  --rg-mood-primary: #e6ecfb;
+  --rg-mood-secondary: #8393c2;
+  --rg-mood-glow-color: rgba(139, 157, 201, .26);
+  --rg-coffee-fill: 0%;
+  --rg-fatigue-fill: 0%;
+}
+
+.rg-feedback-cloud {
+  inset: 4% -2% 0;
+  background:
+    radial-gradient(ellipse at 50% 42%, color-mix(in srgb, var(--rg-card-accent) 15%, transparent) 0%, transparent 62%),
+    radial-gradient(ellipse at 50% 76%, rgba(var(--rg-card-rgb), .07) 0%, transparent 68%);
+}
+
+.rg-mood-glow {
+  width: clamp(132px, 84cqw, 218px);
+  height: clamp(132px, 84cqw, 218px);
+  color: var(--rg-mood-glow-color);
+  background:
+    radial-gradient(circle at 50% 47%, currentColor 0%, color-mix(in srgb, currentColor 48%, transparent) 38%, transparent 70%);
+  opacity: .92;
+}
+
+.rg-mood-blob-wrap {
+  isolation: isolate;
+}
+
+/* No opaque backplate: the generated lens has a real alpha channel and the
+   Fluent glyph must remain clean against the liquid/card beneath it. */
+.rg-mood-blob-wrap::before {
+  content: none;
+}
+
+.rg-mood-blob {
+  z-index: 1;
+  border-radius: 50%;
+  opacity: 0;
+  box-shadow: none;
+}
+
+/* Keep the morphing SVG as the colour/material layer. The expression itself
+   comes from the already bundled Microsoft Fluent Emoji webfont. */
+.rg-mood-face {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.rg-mood-blob-shape {
+  opacity: .56;
+}
+
+.rg-mood-blob-sheen {
+  opacity: .38;
+}
+
+.rg-mood-glass-shell {
+  stroke-width: 1.8;
+}
+
+.rg-mood-glass-inner {
+  stroke: rgba(235, 247, 255, .26);
+  stroke-width: .8;
+}
+
+.rg-mood-glass-highlight {
+  stroke-width: 2.5;
+  opacity: .72;
+}
+
+.rg-mood-liquid-vessel {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 5;
+  display: block;
+  width: clamp(82px, 42cqw, 104px);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 220ms ease;
+  pointer-events: none;
+}
+
+.rg-mood-stage.is-sloshing .rg-mood-liquid-vessel {
+  animation: rg-liquid-slosh 720ms cubic-bezier(.2, .72, .18, 1);
+}
+
+@keyframes rg-liquid-slosh {
+  0%   { transform: translate(-50%, -50%) rotate(0deg) scaleY(1); }
+  24%  { transform: translate(-50%, -50%) rotate(-2.8deg) scaleY(1.018); }
+  52%  { transform: translate(-50%, -50%) rotate(1.9deg) scaleY(.992); }
+  76%  { transform: translate(-50%, -50%) rotate(-.8deg) scaleY(1.004); }
+  100% { transform: translate(-50%, -50%) rotate(0deg) scaleY(1); }
+}
+
+.rg-mood-stage.has-liquid .rg-mood-liquid-vessel {
+  opacity: 1;
+}
+
+.rg-mood-liquid {
+  position: absolute;
+  inset-inline: 0;
+  display: block;
+  overflow: hidden;
+  color: rgba(226, 247, 255, .68);
+  transition: height 460ms cubic-bezier(.2, .8, .2, 1), bottom 460ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.rg-mood-liquid::before {
+  content: '';
+  position: absolute;
+  inset: 0 6px auto;
+  z-index: 2;
+  height: 3px;
+  border: 0;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, .38), currentColor 58%, transparent 76%);
+  box-shadow: none;
+  opacity: .62;
+}
+
+.rg-mood-liquid::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, .22), transparent 22%, transparent 72%, rgba(0, 10, 28, .18)),
+    radial-gradient(ellipse at 32% 18%, rgba(255, 255, 255, .22), transparent 36%);
+  pointer-events: none;
+}
+
+.rg-mood-liquid--coffee {
+  bottom: 0;
+  z-index: 2;
+  height: var(--rg-coffee-fill);
+  color: rgba(255, 210, 160, .68);
+  background:
+    radial-gradient(ellipse at 34% 12%, rgba(255, 229, 193, .26), transparent 34%),
+    linear-gradient(180deg, rgba(180, 94, 38, .42) 0%, rgba(107, 45, 21, .50) 48%, rgba(38, 11, 5, .64) 100%);
+  border-top: 0;
+  box-shadow:
+    inset 10px 0 16px rgba(255, 196, 129, .10),
+    inset -11px 0 17px rgba(31, 7, 2, .20);
+}
+
+.rg-mood-liquid--fatigue {
+  bottom: var(--rg-coffee-fill);
+  z-index: 1;
+  height: var(--rg-fatigue-fill);
+  color: rgba(var(--rg-fatigue-liquid-rgb, 45, 212, 191), .72);
+  background:
+    radial-gradient(ellipse at 34% 12%, rgba(230, 248, 255, .22), transparent 34%),
+    linear-gradient(180deg,
+      rgba(var(--rg-fatigue-liquid-rgb, 45, 212, 191), .30) 0%,
+      rgba(var(--rg-fatigue-liquid-rgb, 45, 212, 191), .45) 100%);
+  border-top: 0;
+  box-shadow:
+    inset 9px 0 14px rgba(218, 249, 255, .10),
+    inset -10px 0 15px rgba(10, 35, 55, .12);
+}
+
+.rg-mood-glass-lens {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 6;
+  display: block;
+  width: clamp(104px, 55cqw, 136px);
+  height: auto;
+  /* The visible alpha bounds sit ~1px above the WebP canvas centre. */
+  transform: translate(-50%, calc(-50% + 1px));
+  transform-origin: 50% 50%;
+  clip-path: ellipse(44.6% 43.2% at 50% 48%);
+  filter: saturate(.22) brightness(1.035);
+  pointer-events: none;
+  user-select: none;
+}
+
+.rg-mood-fluent-face {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: clamp(68px, 37cqw, 92px);
+  height: clamp(68px, 37cqw, 92px);
+  color: #fff;
+  font-family: 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  font-size: clamp(64px, 36cqw, 88px);
+  font-variant-emoji: emoji;
+  line-height: 1;
+  text-align: center;
+  text-shadow: none;
+  transform: translate(calc(-50% - clamp(6px, 3cqw, 8px)), calc(-50% + 2px));
+  transform-origin: 50% 50%;
+  pointer-events: none;
+  user-select: none;
+}
+
+.rg-mood-blob-wrap.is-pop .rg-mood-fluent-face {
+  animation: rg-fluent-face-in 460ms cubic-bezier(.2, .85, .24, 1);
+}
+
+.rg-mood-blob-wrap.is-pop .rg-mood-glass-lens {
+  animation: rg-fluent-glass-in 520ms cubic-bezier(.2, .82, .22, 1);
+}
+
+@keyframes rg-fluent-face-in {
+  0%   { scale: .86; opacity: .28; }
+  58%  { scale: 1.04; opacity: 1; }
+  100% { scale: 1; opacity: 1; }
+}
+
+@keyframes rg-fluent-glass-in {
+  0%   { scale: .94; opacity: .62; }
+  62%  { scale: 1.025; opacity: 1; }
+  100% { scale: 1; opacity: 1; }
+}
+
+/* With no ratings for the selected shift, the face becomes Fluent's sleeping
+   face after the JS idle delay. Its built-in Zzz stays in gentle motion while
+   the heavier raster glass remains perfectly static. */
+.rg-mood-stage.is-bored .rg-mood-fluent-face {
+  animation: rg-fluent-bored 3.8s ease-in-out infinite;
+}
+
+@keyframes rg-fluent-bored {
+  0%, 100% { scale: 1; rotate: 0deg; translate: 0 0; }
+  50%      { scale: .965; rotate: -1.5deg; translate: 0 2px; }
+}
+
+.rg-mood-label {
+  display: block;
+  min-width: clamp(56px, 36cqw, 88px);
+  min-height: 1em;
+  margin-top: clamp(3px, 2.4cqw, 6px);
+  padding: clamp(3px, 2cqw, 5px) clamp(8px, 5cqw, 12px);
+  border: 1px solid color-mix(in srgb, var(--rg-mood-primary) 24%, transparent);
+  border-radius: 999px;
+  color: #cbd5e1;
+  background: color-mix(in srgb, var(--rg-mood-secondary) 10%, rgba(4, 9, 17, .54));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
+  font: 800 clamp(9px, 5.4cqw, 12px)/1 Inter, system-ui, sans-serif;
+  letter-spacing: -.01em;
+  text-align: center;
+  white-space: nowrap;
+  transition: color 440ms ease;
+}
+
+.rg-mood-stage[data-rg-mood="none"] .rg-mood-label {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  opacity: 0;
+}
+
+/* The central face, the five reaction choices and the staff constellation now
+   share the same Fluent source instead of mixing platform emoji styles. */
+.rg-feedback-card .rg-pulse-tap > span:first-child,
+.rg-mood-person-emoji {
+  font-family: 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  font-variant-emoji: emoji;
+}
+
+.rg-mood-person-glass,
+.rg-mood-person.is-initials .rg-mood-person-glass {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 31% 24%, rgba(255, 255, 255, .28), transparent 31%),
+    linear-gradient(145deg, rgba(157, 215, 255, .18), rgba(255, 255, 255, .05) 40%, rgba(5, 14, 27, .84));
+}
+
+.rg-mood-person.is-rd .rg-mood-person-glass {
+  background:
+    radial-gradient(circle at 31% 24%, rgba(255, 255, 255, .24), transparent 31%),
+    linear-gradient(145deg, rgba(255, 132, 143, .18), rgba(255, 255, 255, .04) 40%, rgba(29, 8, 18, .86));
+}
+
+html.mk-low-spec .rg-mood-blob-wrap.is-pop .rg-mood-fluent-face {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rg-mood-blob-wrap.is-pop .rg-mood-fluent-face {
+    animation: none;
+  }
+
+  .rg-mood-blob-wrap.is-pop .rg-mood-glass-lens,
+  .rg-mood-stage.is-bored .rg-mood-fluent-face,
+  .rg-mood-stage.is-sloshing .rg-mood-liquid-vessel {
+    animation: none;
+  }
+}

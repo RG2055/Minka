@@ -199,6 +199,7 @@ window.setTimeout(function () {
 <link rel="stylesheet" href="css/skin-draw.css?v=20260723a">
 <link rel="stylesheet" href="css/side-cards-v2.css?v=20260818nfootgap1">
 <link rel="stylesheet" href="css/header-weather.css?v=20260813headerfix1">
+<link rel="stylesheet" href="css/mood-fluent.css?v=20260820fmood16">
 
 <!-- Fluent Emoji webfont (fluentmoji, MIT) — neblokējoši, tāpat kā pārējie fonti.
      Fails ir sadalīts unicode-range gabalos, tāpēc pārlūks lejupielādē tikai tos
@@ -16388,20 +16389,6 @@ window.addEventListener('message', function(e) {
   stroke-linecap: round;
   opacity: .60;
 }
-.rg-mood-label {
-  /* Must be a block: min-height is ignored on inline boxes, so while the label
-     was empty it took no space and the emoji row jumped the moment a hover
-     preview filled it in — moving the button out from under the pointer. */
-  display: block;
-  margin-top: clamp(3px, 2.4cqw, 6px);
-  min-height: 1em;
-  color: #cbd5e1;
-  font: 800 clamp(9px, 5.4cqw, 12px)/1 Inter, system-ui, sans-serif;
-  letter-spacing: -.01em;
-  text-align: center;
-  white-space: nowrap;
-  transition: color 440ms ease;
-}
 /* Every coffee source floats free around the blob: bare icon plus its count,
    no box, no border, no glow. The ring fills the blob wrapper, so its centre
    is the blob's centre and JS can lay the badges out by angle from there. */
@@ -16806,7 +16793,6 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   .rg-mood-blob-stop,
   .rg-mood-face path,
   .rg-mood-glow,
-  .rg-mood-label,
   .rg-mood-coffee,
   .rg-feedback-card .rg-pulse-write { transition: none; }
 }
@@ -16841,7 +16827,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   var moodVisuals = {
     excellent: {
       path: 'M50 14C69.88 14 86 30.12 86 50C86 69.88 69.88 86 50 86C30.12 86 14 69.88 14 50C14 30.12 30.12 14 50 14Z',
-      color1: '#a7f3d0', color2: '#34d399', glow: 'rgba(74,222,128,.34)', label: 'Lieliski',
+      emoji: '😍', color1: '#a7f3d0', color2: '#34d399', glow: 'rgba(74,222,128,.34)', label: 'Lieliski',
       brows: false, lids: true, openMouth: true,
       face: {
         browL: 'M30 34C33.5 33 38 33 42.5 33', browR: 'M70 34C66.5 33 62 33 57.5 33',
@@ -16859,7 +16845,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     },
     good: {
       path: 'M50 14C69.88 14 86 30.12 86 50C86 69.88 69.88 86 50 86C30.12 86 14 69.88 14 50C14 30.12 30.12 14 50 14Z',
-      color1: '#99f6e4', color2: '#2dd4bf', glow: 'rgba(45,212,191,.32)', label: 'Labi',
+      emoji: '🙂', color1: '#99f6e4', color2: '#2dd4bf', glow: 'rgba(45,212,191,.32)', label: 'Labi',
       brows: false, lids: false, openMouth: false,
       face: {
         browL: 'M30 34C33.5 33 38 33 42.5 33', browR: 'M70 34C66.5 33 62 33 57.5 33',
@@ -16877,7 +16863,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     },
     ok: {
       path: 'M50 14C69.88 14 86 30.12 86 50C86 69.88 69.88 86 50 86C30.12 86 14 69.88 14 50C14 30.12 30.12 14 50 14Z',
-      color1: '#e2e8f0', color2: '#94a3b8', glow: 'rgba(148,163,184,.26)', label: 'Normāli',
+      emoji: '😐', color1: '#e2e8f0', color2: '#94a3b8', glow: 'rgba(148,163,184,.26)', label: 'Normāli',
       brows: false, lids: false, openMouth: false,
       face: {
         browL: 'M30 34C33.5 33 38 33 42.5 33', browR: 'M70 34C66.5 33 62 33 57.5 33',
@@ -16895,7 +16881,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     },
     bad: {
       path: 'M50 14C69.88 14 86 30.12 86 50C86 69.88 69.88 86 50 86C30.12 86 14 69.88 14 50C14 30.12 30.12 14 50 14Z',
-      color1: '#fed7aa', color2: '#f97316', glow: 'rgba(249,115,22,.30)', label: 'Slikti',
+      emoji: '😞', color1: '#fed7aa', color2: '#f97316', glow: 'rgba(249,115,22,.30)', label: 'Slikti',
       brows: false, lids: true, openMouth: false,
       face: {
         browL: 'M29.5 36.5C33 35 38 32.8 42.5 31.5', browR: 'M70.5 36.5C67 35 62 32.8 57.5 31.5',
@@ -16913,7 +16899,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     },
     terrible: {
       path: 'M50 14C69.88 14 86 30.12 86 50C86 69.88 69.88 86 50 86C30.12 86 14 69.88 14 50C14 30.12 30.12 14 50 14Z',
-      color1: '#fecdd3', color2: '#ef4444', glow: 'rgba(244,63,94,.32)', label: 'Ļoti slikti',
+      emoji: '😠', color1: '#fecdd3', color2: '#ef4444', glow: 'rgba(244,63,94,.32)', label: 'Ļoti slikti',
       brows: true, lids: false, openMouth: false,
       face: {
         browL: 'M29.5 31.5C33 33 38 35.4 42.5 37', browR: 'M70.5 31.5C67 33 62 35.4 57.5 37',
@@ -16931,7 +16917,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     },
     _none: {
       path: 'M50 14C69.88 14 86 30.12 86 50C86 69.88 69.88 86 50 86C30.12 86 14 69.88 14 50C14 30.12 30.12 14 50 14Z',
-      color1: '#e6ecfb', color2: '#8393c2', glow: 'rgba(139,157,201,.26)', label: '',
+      emoji: '🙂', color1: '#e6ecfb', color2: '#8393c2', glow: 'rgba(139,157,201,.26)', label: '',
       brows: false, lids: false, openMouth: false,
       face: {
         browL: 'M30 34C33.5 33 38 33 42.5 33', browR: 'M70 34C66.5 33 62 33 57.5 33',
@@ -16952,6 +16938,11 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   var moodFillParts = ['eyeWhiteL', 'eyeWhiteR', 'pupilL', 'pupilR', 'glintL', 'glintR', 'mouthOpen', 'teeth'];
   var moodBlobKey = null;   // last committed mood, so a preview can be undone
   var moodRenderedKey = null;
+  var moodBoredTimer = 0;
+  var moodBoredSince = 0;
+  var moodBoredDay = '';
+  var moodLiquidTimer = 0;
+  var MOOD_BORED_DELAY = 18000;
 
   function shiftDayKey() {
     var selected = String(window.__activeDateStr || '').trim();
@@ -17129,6 +17120,12 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       + facePath('lidL') + facePath('lidR') + '</g>'
       + facePath('mouth') + facePath('mouthOpen') + facePath('teeth') + '</g>'
       + '</svg>'
+      + '<span class="rg-mood-liquid-vessel" aria-hidden="true">'
+      + '<i class="rg-mood-liquid rg-mood-liquid--coffee"></i>'
+      + '<i class="rg-mood-liquid rg-mood-liquid--fatigue"></i>'
+      + '</span>'
+      + '<span class="rg-mood-fluent-face" data-rg-fluent-face aria-hidden="true">' + base.emoji + '</span>'
+      + '<img class="rg-mood-glass-lens" src="assets/mood-glass-premium.webp?v=20260820b" width="512" height="512" alt="" aria-hidden="true" decoding="async">'
       + '<span class="rg-mood-ring" data-rg-ring></span>'
       + '</span>'
       + '<span class="rg-mood-side rg-mood-side--left" data-rg-chip="fatigue">'
@@ -17279,6 +17276,29 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     if (score > 20) return '#d8c64a';
     return '#35d07f';
   }
+  // The liquid intentionally avoids yellow/amber, which reads as urine next
+  // to transparent glass. Mint → violet → coral remains ordered and stays
+  // visually separate from the brown coffee layer.
+  function moodFatigueLiquidRgb(score) {
+    var value = Math.max(0, Math.min(100, Number(score) || 0));
+    var from, to, progress;
+    if (value <= 35) {
+      from = [52, 211, 153];
+      to = [45, 212, 191];
+      progress = value / 35;
+    } else if (value <= 65) {
+      from = [45, 212, 191];
+      to = [139, 92, 246];
+      progress = (value - 35) / 30;
+    } else {
+      from = [139, 92, 246];
+      to = [251, 113, 133];
+      progress = (value - 65) / 35;
+    }
+    return from.map(function (channel, index) {
+      return Math.round(channel + (to[index] - channel) * progress);
+    }).join(',');
+  }
   function moodFatigueRgb(score) {
     if (score > 70) return '255,107,95';
     if (score > 45) return '229,155,66';
@@ -17320,8 +17340,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     var topCount = Math.ceil(count / 2);
     var bottomCount = count - topCount;
     // Alternate between the outer left/right slots first. Keeping the two
-    // inner-bottom slots for last leaves a real gap under the face for the
-    // selected mood label and its counters.
+    // inner-bottom slots for last leaves a clean gap under the face.
     var bottomAngles = [42, 138, 68, 112, 24, 156, 90];
     var staffOccupied = [];
     function nodeBox(node, pad) {
@@ -17355,7 +17374,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       if (onTop) {
         degrees = arcCount < 2 ? -90 : -150 + 120 * arcIndex / (arcCount - 1);
       } else {
-        // Leave the bottom centre empty for the selected mood label/counters.
+        // Leave the bottom centre visually open under the face.
         degrees = bottomAngles[arcIndex % bottomAngles.length];
       }
       var size = baseSize * (1.18 - depth * .34);
@@ -17585,6 +17604,30 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     var refs = moodRefs();
     if (!refs) return;
     var stats = moodStats(force);
+    var coffeeTotal = stats.total === null ? 0 : Math.max(0, Number(stats.total) || 0);
+    var coffeeFill = coffeeTotal > 0 ? Math.min(28, 8 + Math.log(coffeeTotal + 1) / Math.LN2 * 5.5) : 0;
+    var fatigueValue = stats.fatigue === null ? 0 : Math.max(0, Number(stats.fatigue) || 0);
+    var fatigueFill = fatigueValue > 0 ? Math.min(53, 8 + fatigueValue * .45) : 0;
+    refs.stage.style.setProperty('--rg-coffee-fill', coffeeFill.toFixed(1) + '%');
+    refs.stage.style.setProperty('--rg-fatigue-fill', fatigueFill.toFixed(1) + '%');
+    refs.stage.style.setProperty('--rg-fatigue-liquid-rgb', moodFatigueLiquidRgb(fatigueValue));
+    refs.stage.classList.toggle('has-liquid', coffeeFill > .4 || fatigueFill > .4);
+    var liquidSignature = coffeeFill.toFixed(1) + ':' + fatigueFill.toFixed(1);
+    var previousLiquidSignature = refs.stage.dataset.rgLiquidLevel || '';
+    refs.stage.dataset.rgLiquidLevel = liquidSignature;
+    if (previousLiquidSignature && previousLiquidSignature !== liquidSignature) {
+      refs.stage.classList.remove('is-sloshing');
+      window.clearTimeout(moodLiquidTimer);
+      requestAnimationFrame(function () {
+        var live = moodRefs();
+        if (!live || live.stage.dataset.rgLiquidLevel !== liquidSignature) return;
+        live.stage.classList.add('is-sloshing');
+        moodLiquidTimer = window.setTimeout(function () {
+          var current = moodRefs();
+          if (current) current.stage.classList.remove('is-sloshing');
+        }, 760);
+      });
+    }
     var button = refs.topbtn;
     if (button) button.hidden = !(stats.top.length || stats.total !== null);
     // Mount the fixed side furniture before measuring the scatter field. If it
@@ -17655,9 +17698,6 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       + ' .rg-mood-topbtn, .rg-pulse-taps').forEach(function (node) {
       add(node.getBoundingClientRect(), 5, 5);
     });
-    // The mood name under the blob is empty until a mood is picked and grows to
-    // "Ļoti slikti" once it is, so reserve the widest line it ever shows —
-    // otherwise a later tap would slide text under a badge.
     var label = card.querySelector('.rg-mood-label');
     if (label) {
       var r = label.getBoundingClientRect();
@@ -17929,6 +17969,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
         shapes: stage.querySelectorAll('.rg-mood-blob-shape, .rg-mood-blob-sheen'),
         stops: stage.querySelectorAll('.rg-mood-blob-stop'),
         glow: stage.querySelector('.rg-mood-glow'),
+        fluentFace: stage.querySelector('[data-rg-fluent-face]'),
         label: stage.querySelector('.rg-mood-label'),
         ring: stage.querySelector('[data-rg-ring]'),
         top: stage.querySelector('[data-rg-top]'),
@@ -17960,16 +18001,19 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     }
     stage.classList.toggle('is-idle', !moodBlobKey && !preview);
     stage.classList.toggle('is-preview', !!preview);
+    stage.classList.remove('is-bored');
     var visual = moodVisuals[key] || moodVisuals._none;
+    stage.dataset.rgMood = key || 'none';
+    stage.style.setProperty('--rg-mood-primary', visual.color1);
+    stage.style.setProperty('--rg-mood-secondary', visual.color2);
+    stage.style.setProperty('--rg-mood-glow-color', visual.glow);
     refs.shapes.forEach(function (el) { el.setAttribute('d', visual.path); });
     refs.stops.forEach(function (stop) {
       stop.style.stopColor = stop.dataset.rgStop === 'c1' ? visual.color1 : visual.color2;
     });
     if (refs.glow) refs.glow.style.color = visual.glow;
+    if (refs.fluentFace) refs.fluentFace.textContent = visual.emoji || moodVisuals._none.emoji;
     if (refs.label) {
-      // Non-breaking space when there is no mood name: an empty text node
-      // collapses the line box, and the emoji row below would shift by a few
-      // pixels the moment a hover preview fills the label in.
       refs.label.textContent = visual.label || '\u00a0';
       refs.label.style.color = key ? visual.color1 : '';
     }
@@ -17979,7 +18023,42 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       el.setAttribute('d', visual.face[part]);
       el.setAttribute('opacity', moodPartOpacity(part, visual));
     });
+    syncMoodBoredState(key, preview, refs);
     paintMoodCoffee();
+  }
+  function syncMoodBoredState(key, preview, refs) {
+    var day = shiftDayKey();
+    if (key) {
+      window.clearTimeout(moodBoredTimer);
+      moodBoredTimer = 0;
+      moodBoredSince = 0;
+      moodBoredDay = day;
+      refs.stage.classList.remove('is-bored');
+      return;
+    }
+    if (moodBoredDay !== day) {
+      window.clearTimeout(moodBoredTimer);
+      moodBoredTimer = 0;
+      moodBoredDay = day;
+      moodBoredSince = Date.now();
+    }
+    if (!moodBoredSince) moodBoredSince = Date.now();
+    if (preview) return;
+
+    var showBored = function () {
+      moodBoredTimer = 0;
+      var live = moodRefs();
+      if (!live || moodBlobKey || shiftDayKey() !== moodBoredDay) return;
+      if (live.stage.classList.contains('is-preview')) {
+        moodBoredTimer = window.setTimeout(showBored, 700);
+        return;
+      }
+      live.stage.classList.add('is-bored');
+      if (live.fluentFace) live.fluentFace.textContent = '😴';
+    };
+    var remaining = MOOD_BORED_DELAY - (Date.now() - moodBoredSince);
+    if (remaining <= 0) showBored();
+    else if (!moodBoredTimer) moodBoredTimer = window.setTimeout(showBored, remaining);
   }
   // Closed lids cross-fade against the open eyes, and the toothy open mouth
   // against the drawn one, so each mood can wear the face from the reference.
@@ -18001,12 +18080,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     if (key && key !== moodBlobKey) updateMoodBlob(key, true);
   }
   function endMoodBlobPreview() {
-    updateMoodBlob(moodBlobKey, true);
-    var refs = moodRefs();
-    if (refs) {
-      refs.stage.classList.toggle('is-idle', !moodBlobKey);
-      refs.stage.classList.remove('is-preview');
-    }
+    updateMoodBlob(moodBlobKey, false);
   }
   var moodSectionLayoutTimer = 0;
   var moodSectionResizeTimer = 0;
