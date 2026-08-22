@@ -1622,8 +1622,8 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/emoji-particles.js?v=20260822bubblefatigue31"></script>
-<script src="js/calendar.js?v=20260822bubblefatigue31"></script>
+<script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
+<script src="js/calendar.js?v=20260822bubblefatigue37"></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260810layout2"></script>
 <script src="js/fatigue.js?v=20260816fatcache1"></script>
@@ -15983,6 +15983,11 @@ window.addEventListener('message', function(e) {
      on dates where four or more people carry those extra badges. */
   min-height: clamp(340px, 105cqw, 380px);
 }
+.rg-feedback-card.rg-six-staff .rg-mood-stage {
+  /* Six tokens fit cleanly on a tighter orbit; the generic busy height leaves
+     a large empty belt between the face and reactions in the full PWA. */
+  min-height: 230px;
+}
 .rg-feedback-card .rg-pulse-taps {
   order: 3;
   width: 100%;
@@ -16735,7 +16740,12 @@ window.addEventListener('message', function(e) {
 }
 .rg-mood-side.is-mounted { display: inline-flex; }
 .rg-mood-side--left { left: 0; align-items: center; }
-.rg-mood-side--right { right: 0; align-items: center; }
+.rg-mood-side--right {
+  /* Its coffee pill is narrower than the fatigue pill. Pull the whole stack
+     inward so both pills have the same visual gap from the central glass. */
+  right: 21px;
+  align-items: center;
+}
 
 /* Fatigue reads like the watch badge: a solid pill that shifts colour with the
    value, with the word underneath. */
@@ -17448,7 +17458,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
        shrinking or hiding the final tokens. A deliberately uneven, fixed
        constellation uses the safe space around the face: everyone remains
        visible without turning the bubbles into obvious rows. */
-    var useBusyRows = count >= 8;
+    var useBusyRows = count >= 6;
     var busyRowMax = Math.max(topCount, bottomCount);
     var busyBaseSize = useBusyRows
       ? Math.max(30, Math.min(38, (bounds.r - bounds.l) / Math.max(1, busyRowMax * 1.42)))
@@ -17507,21 +17517,21 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       var coffeeExtra = person.querySelector('.rg-mood-person-coffee') ? 7 : 2;
       var chosen = null;
       if (useBusyRows) {
-        size = Math.max(33, Math.min(41, busyBaseSize * (1.12 - depth * .24)));
+        size = Math.max(32, Math.min(46, busyBaseSize * (1.25 - depth * .48)));
         var busyVisualHalf = size * .59 + (coffeeExtra > 2 ? 4 : 0);
         var busyHalfWidth = Math.max(1, Math.min(-bounds.l, bounds.r) - busyVisualHalf);
         var busyTopX = arcCount === 5
           ? [-1, -.58, -.15, .38, 1]
-          : arcCount === 4 ? [-1, -.35, .35, 1] : [-1, 0, 1];
+          : arcCount === 4 ? [-1, -.35, .35, 1] : [-.78, 0, .78];
         var busyTopY = arcCount === 5
           ? [58, 0, 4, 10, 62]
           : arcCount === 4 ? [58, 0, 10, 62] : [44, 0, 48];
         var busyBottomX = arcCount === 4
           ? [-1, -.64, .64, 1]
-          : arcCount === 3 ? [-1, 0, 1] : [-1, 1];
+          : arcCount === 3 ? [-.84, -.52, .55] : [-1, 1];
         var busyBottomY = arcCount === 4
           ? [-34, 12, 2, 16]
-          : arcCount === 3 ? [-24, 14, 6] : [-18, 12];
+          : arcCount === 3 ? [-31, -10, -10] : [-18, 12];
         var busyXFactor = onTop
           ? busyTopX[Math.min(arcIndex, busyTopX.length - 1)]
           : busyBottomX[Math.min(arcIndex, busyBottomX.length - 1)];
@@ -17770,7 +17780,11 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     var moodCard = ring && ring.closest('.rg-feedback-card');
     var staffList = staff || [];
     if (moodCard) {
-      moodCard.classList.toggle('rg-busy-staff', staffList.length >= 7);
+      /* Six people already consume every safe slot around the face at the
+         wide full-PWA breakpoint. Expand here too, instead of relegating the
+         final cat/wand tokens to the 30px emergency fallback. */
+      moodCard.classList.toggle('rg-busy-staff', staffList.length >= 6);
+      moodCard.classList.toggle('rg-six-staff', staffList.length === 6);
       moodCard.classList.toggle('rg-super-busy-staff', staffList.length >= 7
         && staffList.filter(function (person) { return Number(person.coffee) > 0; }).length >= 4);
     }
