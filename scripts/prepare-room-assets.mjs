@@ -5,8 +5,8 @@
  *
  * Usage:
  *   NODE_PATH=/path/to/node_modules node scripts/prepare-room-assets.mjs \
- *     --bed /path/to/bed.png --main /path/to/main-room.png \
- *     --nmp /path/to/nmp-room.png
+ *     --main /path/to/main-room.png --nmp /path/to/nmp-room.png \
+ *     [--bed /path/to/bed.png]
  *
  * Sharp is intentionally development-only. None of this code is loaded by the
  * PWA; generated AVIF/WebP files are committed under kalendars/assets/rooms.
@@ -33,8 +33,8 @@ function argsToObject(argv) {
 }
 
 const args = argsToObject(process.argv.slice(2));
-if (!args.bed || !args.main || !args.nmp) {
-  console.error('Required: --bed <png> --main <png> --nmp <png> [--out <dir>]');
+if (!args.main || !args.nmp) {
+  console.error('Required: --main <png> --nmp <png> [--bed <png>] [--out <dir>]');
   process.exit(1);
 }
 
@@ -222,22 +222,33 @@ async function writeBedVariants(source) {
 
 async function writeRoomSet(source, kind) {
   const isMain = kind === 'main';
-  const crop = isMain
-    ? { left: 45, top: 20, width: 1495, height: 950 }
-    : { left: 42, top: 95, width: 1038, height: 1270 };
-  const widths = isMain ? [600, 1200] : [320, 640];
+  // Room plates are supplied as RGBA cut-outs. Trim from the alpha channel,
+  // then contain the complete silhouette in the exact ratios used by the UI.
+  // This avoids both the old studio-background rectangle and object-fit
+  // stretching while keeping enough transparent breathing room for shadows.
+  const sizes = isMain
+    ? [{ width: 600, height: 381 }, { width: 1200, height: 762 }]
+    : [{ width: 320, height: 392 }, { width: 640, height: 784 }];
   const generated = [];
-  for (const width of widths) {
-    const height = Math.round(width * crop.height / crop.width);
+  for (const { width, height } of sizes) {
     for (const format of ['avif', 'webp']) {
       const filename = `room-${kind}-${width}.${format}`;
       const output = path.join(OUT, filename);
       let pipeline = sharp(source)
-        .extract(crop)
-        .resize({ width, height, withoutEnlargement: true, kernel: sharp.kernel.lanczos3 });
+        .ensureAlpha()
+        .trim({ background: { r: 0, g: 0, b: 0, alpha: 0 }, threshold: 1 })
+        .resize({
+          width,
+          height,
+          fit: 'contain',
+          position: 'centre',
+          background: { r: 0, g: 0, b: 0, alpha: 0 },
+          withoutEnlargement: false,
+          kernel: sharp.kernel.lanczos3,
+        });
       pipeline = format === 'avif'
-        ? pipeline.avif({ quality: 54, effort: 6, chromaSubsampling: '4:2:0' })
-        : pipeline.webp({ quality: 80, smartSubsample: true, effort: 6 });
+        ? pipeline.avif({ quality: 56, effort: 6, chromaSubsampling: '4:4:4' })
+        : pipeline.webp({ quality: 82, alphaQuality: 95, smartSubsample: true, effort: 6 });
       await pipeline.toFile(output);
       generated.push(output);
     }
@@ -246,7 +257,7 @@ async function writeRoomSet(source, kind) {
 }
 
 const generated = [
-  ...await writeBedVariants(path.resolve(args.bed)),
+  ...(args.bed ? await writeBedVariants(path.resolve(args.bed)) : []),
   ...await writeRoomSet(path.resolve(args.main), 'main'),
   ...await writeRoomSet(path.resolve(args.nmp), 'nmp'),
 ];

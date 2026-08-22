@@ -67,6 +67,8 @@
     +'<rect x="259" y="145" width="11" height="6" fill="#a18c76"/>'
     +'<rect x="260" y="153" width="13" height="6" fill="#a18c76"/>'
     +'<rect x="258" y="161" width="11" height="6" fill="#a18c76"/>'
+    +'<path class="pkt-caught-mouse-tail" d="M267 160 C274 166 276 174 271 183"/>'
+    +'<text class="pkt-caught-mouse" x="262" y="199" text-anchor="middle" dominant-baseline="central" transform="translate(0 398) scale(1 -1)">🐁</text>'
     +'</g>';
   PKT_CAT_SVG=PKT_CAT_SVG
     .replace('class="pkt-cat"','class="pkt-cat pkt-scratching"')
@@ -1083,7 +1085,7 @@
     var large=main?1200:640;
     var height=main?381:392;
     var base='assets/rooms/room-'+roomType+'-';
-    var rev='?v=20260822roomassets23';
+    var rev='?v=20260822roomassets28';
     return '<picture class="ns-room-image ns-room-image-'+layer+'" aria-hidden="true">'
       +'<source type="image/avif" srcset="'+base+small+'.avif'+rev+' 1x, '+base+large+'.avif'+rev+' 2x">'
       +'<img src="'+base+small+'.webp'+rev+'" srcset="'+base+small+'.webp'+rev+' 1x, '+base+large+'.webp'+rev+' 2x" width="'+small+'" height="'+height+'" alt="" decoding="async" draggable="false">'
@@ -1384,7 +1386,10 @@
         }
         // Pixel cat: same height as rooms, width proportional to 300:370 cat ratio.
         // SVG fills the box via CSS (width/height 100%), so no per-child sizing.
-        var lampH = narrow ? Math.min(roomsH, 110) : roomsH;
+        // Keep the mascot secondary to the room/history information. The SVG
+        // remains bottom-aligned, while the caught mouse stays attached to the
+        // animated paw because both live in the same SVG transform group.
+        var lampH = narrow ? Math.min(Math.round(roomsH * .82), 96) : Math.round(roomsH * .82);
         var lampW = Math.ceil(lampH * 300 / 370);
         if(cat) {
           cat.style.width  = lampW + 'px';

@@ -546,6 +546,11 @@
 #nsPanel .ns-room-cat {
   position: relative !important;
   align-self: flex-end !important;
+  /* The rhythm labels sit beyond the SVG's right edge. Give that overhang a
+     real flex-layout gutter so Windows/DPI layouts cannot clip it at the
+     panel's overflow boundary; the SVG itself keeps its existing size. */
+  box-sizing: content-box !important;
+  padding-right: 58px !important;
   opacity: .88;
   filter: none !important;
   transform: none !important;
@@ -560,6 +565,21 @@
   transform-origin: 164px 174px !important;
   animation: pktScratchPaw 1.05s steps(2, end) infinite !important;
   will-change: transform !important;
+}
+#nsPanel .pkt-caught-mouse {
+  font-family: 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif !important;
+  font-size: 48px !important;
+  font-variant-emoji: emoji !important;
+  shape-rendering: auto !important;
+  filter: drop-shadow(0 3px 3px rgba(0,0,0,.46)) !important;
+  pointer-events: none !important;
+}
+#nsPanel .pkt-caught-mouse-tail {
+  fill: none !important;
+  stroke: #c9a8a4 !important;
+  stroke-width: 3.2px !important;
+  stroke-linecap: round !important;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,.48)) !important;
 }
 #nsPanel .pkt-cat.pkt-scratching .pkt-eyes {
   animation: pktScratchLook 5.8s steps(1, end) infinite !important;
@@ -585,7 +605,9 @@
   top: 30% !important;
   right: auto !important;
   /* Cuts overlap the paw; labels continue into the clear space on its right. */
-  left: calc(88% - 12px) !important;
+  /* Compensate for the reserved 58px gutter, preserving the original visual
+     anchor at the scratching paw on MacBook and Windows alike. */
+  left: calc(88% - 63px) !important;
   display: inline-flex !important;
   flex-direction: row !important;
   align-items: center !important;
