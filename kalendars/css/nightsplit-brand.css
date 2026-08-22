@@ -16,7 +16,9 @@
   overflow: hidden !important;
   border: 1px solid #2b3941 !important;
   border-radius: 25px !important;
-  background: linear-gradient(145deg, #202a31 0%, #11171c 46%, #0c1115 100%) !important;
+  /* Same studio-black as the static room plates. Their outer matte now melts
+     into the complete Night Split surface instead of drawing rectangles. */
+  background: #060b12 !important;
   box-shadow: 16px 20px 46px rgba(0, 0, 0, .68), -2px -2px 7px rgba(177, 220, 235, .08), inset 1px 1px 0 rgba(222, 244, 250, .08), inset -2px -2px 5px rgba(0, 0, 0, .44) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -44,6 +46,7 @@
   overflow-y: hidden !important;
   overscroll-behavior: contain;
   scrollbar-gutter: auto;
+  background: #060b12 !important;
 }
 
 /* Header and every control share one material language. */
@@ -491,7 +494,7 @@
   padding: 11px 12px 16px !important;
   border: 0 !important;
   border-radius: 0 !important;
-  background: transparent !important;
+  background: #060b12 !important;
   box-shadow: none !important;
   overflow: visible !important;
 }
@@ -649,8 +652,8 @@
   gap: 8px !important;
   margin: 0 0 7px !important;
 }
-#nsPanel .ns-stats-title { color: rgba(205, 232, 242, .90) !important; grid-column: 1 / 4 !important; font-size: 10.5px !important; }
-#nsPanel .ns-stats-bed-title { color: rgba(181, 199, 211, .68) !important; grid-column: 4 !important; text-align: center !important; font-size: 8px !important; }
+#nsPanel .ns-stats-title { color: rgba(205, 232, 242, .90) !important; grid-column: 1 / -1 !important; grid-row: 1 !important; font-size: 10.5px !important; text-align: center !important; }
+#nsPanel .ns-stats-bed-title { color: rgba(181, 199, 211, .68) !important; grid-column: 4 !important; grid-row: 1 !important; z-index: 1 !important; text-align: center !important; font-size: 8px !important; }
 #nsPanel .ns-stat-row {
   flex: 1 1 0 !important;
   display: grid !important;
@@ -776,4 +779,295 @@ html.mk-low-spec #nsOverlay.open #nsPanel .pkt-cat.pkt-awake .pkt-eyes { animati
 }
 @media (prefers-reduced-motion: reduce) {
   #nsPanel *, #nsPanel *::before, #nsPanel *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+}
+
+/* Image-composited rooms --------------------------------------------------
+   Static AVIF/WebP plates provide the perspective and lighting. Interactive
+   beds stay as the original .ns-room-bed[data-i] nodes, so drag/drop and room
+   persistence remain independent from the visual treatment. */
+#nsPanel .ns-room-layout {
+  grid-template-columns: 560px 300px !important;
+  gap: 14px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+#nsPanel .ns-room-main .ns-room-shell {
+  width: 560px !important;
+  height: 360px !important;
+  aspect-ratio: auto !important;
+}
+#nsPanel .ns-room-nmp .ns-room-shell {
+  width: 300px !important;
+  height: 360px !important;
+  aspect-ratio: auto !important;
+}
+#nsPanel .ns-room-shell,
+#nsPanel .ns-room-block.ns-room-lit .ns-room-shell,
+#nsPanel .ns-room-block.ns-room-lit .ns-room-main .ns-room-shell,
+#nsPanel .ns-room-block.ns-room-lit .ns-room-nmp .ns-room-shell {
+  position: relative !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  isolation: isolate !important;
+  overflow: hidden !important;
+}
+#nsPanel .ns-room-main .ns-room-shell {
+  clip-path: none !important;
+}
+#nsPanel .ns-room-nmp .ns-room-shell {
+  clip-path: none !important;
+}
+#nsPanel .ns-room-image {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+#nsPanel .ns-room-image img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: fill !important;
+}
+#nsPanel .ns-room-image-base { z-index: 1 !important; }
+#nsPanel .ns-room-scene-content {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 2 !important;
+  overflow: visible !important;
+}
+#nsPanel .ns-room-image-foreground {
+  z-index: 60 !important;
+  clip-path: inset(85% 0 0 0) !important;
+}
+#nsPanel .ns-room {
+  position: relative !important;
+  padding-top: 17px !important;
+}
+#nsPanel .ns-room-titlebar {
+  position: absolute !important;
+  left: 50% !important;
+  top: -7px !important;
+  z-index: 80 !important;
+  width: min(58%, 410px) !important;
+  min-height: 34px !important;
+  margin: 0 !important;
+  padding: 8px 22px 7px !important;
+  border: 1px solid rgba(82,105,126,.72) !important;
+  border-bottom-color: rgba(35,51,64,.55) !important;
+  border-radius: 999px 999px 18px 18px !important;
+  background: linear-gradient(180deg, #182531, #0c141b) !important;
+  box-shadow: inset 0 1px 0 rgba(230,243,250,.08), 0 7px 16px rgba(0,0,0,.30) !important;
+  transform: translateX(-50%) !important;
+  font-size: 20px !important;
+  line-height: 1 !important;
+}
+#nsPanel .ns-room-nmp .ns-room-image-foreground {
+  clip-path: inset(88% 0 0 0) !important;
+}
+#nsPanel .ns-room-walker {
+  z-index: 2 !important;
+  pointer-events: none !important;
+}
+#nsPanel .ns-room-bed {
+  position: absolute !important;
+  left: var(--room-x) !important;
+  top: var(--room-y) !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: var(--room-bed-w) !important;
+  height: auto !important;
+  z-index: var(--room-bed-z) !important;
+  transform: translate(-50%, -50%) scale(var(--room-bed-scale)) !important;
+  transform-origin: 50% 86% !important;
+  isolation: isolate !important;
+  overflow: visible !important;
+  touch-action: none !important;
+}
+#nsPanel .ns-room-bed.is-left,
+#nsPanel .ns-room-bed.is-right-top,
+#nsPanel .ns-room-bed.is-right-bottom,
+#nsPanel .ns-room-bed.is-center {
+  left: var(--room-x) !important;
+  top: var(--room-y) !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) scale(var(--room-bed-scale)) !important;
+}
+#nsPanel .ns-room-bed-card,
+#nsPanel .ns-room-block.ns-room-lit .ns-room-bed-card {
+  position: relative !important;
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+#nsPanel .ns-room-bed-picture,
+#nsPanel .ns-room-bed-picture img {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+#nsPanel .ns-room-bed-picture img {
+  filter: drop-shadow(0 5px 7px rgba(0,0,0,.42)) !important;
+}
+#nsPanel .ns-room-bed-empty .ns-room-bed-picture { opacity: .42 !important; }
+
+/* A worker's existing card skin becomes quiet bedding, not a second card.
+   Both pieces are static cropped layers: no canvas, blur or animation. */
+#nsPanel .ns-room-bed-skin {
+  position: absolute !important;
+  display: none !important;
+  pointer-events: none !important;
+  user-select: none !important;
+  background-color: rgba(12, 17, 22, .28) !important;
+  background-image:
+    linear-gradient(180deg, rgba(8, 12, 17, .18), rgba(8, 12, 17, .46)),
+    var(--mk-skin-img) !important;
+  background-repeat: no-repeat, no-repeat !important;
+  background-size: 100% 100%, cover !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), inset 0 -2px 5px rgba(0,0,0,.30) !important;
+  opacity: .78 !important;
+}
+#nsPanel .ns-room-bed.mk-has-skin .ns-room-bed-skin,
+#nsPanel .ns-room-bed.ns-room-bed-skin-hue .ns-room-bed-skin {
+  display: block !important;
+}
+#nsPanel .ns-room-bed.ns-room-bed-skin-hue .ns-room-bed-skin {
+  background-image:
+    linear-gradient(145deg,
+      rgba(var(--mk-emoji-tint, 100,210,255), .78),
+      rgba(var(--mk-emoji-tint, 100,210,255), .38) 58%,
+      rgba(7, 11, 16, .74)) !important;
+}
+#nsPanel .ns-room-bed-skin.is-pillow {
+  left: 20.5% !important;
+  top: 9.2% !important;
+  z-index: 5 !important;
+  width: 59% !important;
+  height: 23.5% !important;
+  border-radius: 24% 24% 28% 28% / 30% 30% 34% 34% !important;
+  clip-path: polygon(6% 4%, 94% 4%, 100% 78%, 91% 97%, 9% 97%, 0 78%) !important;
+  background-position: center, center 24% !important;
+}
+#nsPanel .ns-room-bed-skin.is-blanket {
+  left: 9% !important;
+  top: 43.5% !important;
+  z-index: 5 !important;
+  width: 82% !important;
+  height: 28.5% !important;
+  border-radius: 8% 8% 17% 17% / 9% 9% 15% 15% !important;
+  clip-path: polygon(3% 0, 97% 0, 100% 92%, 96% 100%, 4% 100%, 0 92%) !important;
+  background-position: center, center 68% !important;
+}
+#nsPanel .ns-room-bed-svg,
+#nsPanel .ns-room-bed-pillow { display: none !important; }
+#nsPanel .ns-room-bed-blanket {
+  position: absolute !important;
+  left: 50% !important;
+  bottom: 5.8% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 78% !important;
+  height: 15% !important;
+  margin: 0 !important;
+  padding: 1% 3% 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: translateX(-50%) !important;
+  overflow: visible !important;
+  z-index: 8 !important;
+  pointer-events: none !important;
+}
+#nsPanel .ns-room-bed-main {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  color: rgba(7,12,17,.88) !important;
+  font-family: Inter, "SF Pro Text", "Helvetica Neue", Arial, sans-serif !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+  text-overflow: unset !important;
+  text-shadow: 0 1px 0 rgba(255,255,255,.22), 0 -1px 0 rgba(0,0,0,.10) !important;
+  letter-spacing: .015em !important;
+  line-height: 1.35 !important;
+  padding-top: 0 !important;
+  transform: none !important;
+}
+#nsPanel .ns-room-bed-head-emoji {
+  top: 20.5% !important;
+  z-index: 12 !important;
+  font-size: clamp(18px, 2vw, 25px) !important;
+  transform: translate(-50%, -50%) rotate(-5deg) scaleX(1.04) !important;
+  }
+#nsPanel .ns-room-bed-zzz {
+  top: 2% !important;
+  right: -8% !important;
+  z-index: 13 !important;
+}
+#nsPanel .ns-room-bed-devices {
+  inset: 12% 3% auto 3% !important;
+  z-index: 14 !important;
+}
+#nsPanel .ns-room-bed[data-i].nsover .ns-room-bed-card {
+  filter: brightness(1.14) drop-shadow(0 0 9px rgba(86,215,230,.55)) !important;
+  box-shadow: none !important;
+}
+#nsPanel .ns-room-bed[data-i].nsdrag {
+  opacity: .38 !important;
+  filter: none !important;
+}
+
+/* On narrow layouts the existing fit code scales the complete two-room scene;
+   the source ratios remain fixed, so neither room nor bed can stretch. */
+@media (max-width: 640px) {
+  #nsPanel .ns-room-layout {
+    grid-template-columns: 330px !important;
+    justify-items: center !important;
+    gap: 12px !important;
+    padding: 20px 8px 10px !important;
+  }
+  #nsPanel .ns-room-main .ns-room-shell {
+    width: 330px !important;
+    height: 210px !important;
+  }
+  #nsPanel .ns-room-nmp .ns-room-shell {
+    width: 270px !important;
+    height: 331px !important;
+  }
+  #nsPanel .ns-stats-box {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  #nsPanel .ns-room-titlebar {
+    width: min(68%, 230px) !important;
+    min-height: 28px !important;
+    padding: 6px 12px !important;
+    font-size: 14px !important;
+  }
+  #nsPanel .ns-room-cat {
+    width: 150px !important;
+    min-width: 150px !important;
+  }
 }

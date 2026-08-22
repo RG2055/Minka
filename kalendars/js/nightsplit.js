@@ -4,14 +4,14 @@
   var START=[{v:23,l:'23:00'},{v:23.5,l:'23:30'},{v:0,l:'00:00'},{v:0.5,l:'00:30'},{v:1,l:'01:00'}];
   // 8 hues, each ~45Â° apart on colour wheel â€” guaranteed visually distinct
   var COL=[
-    {bg:'rgba(255,140,0,0.20)',   border:'rgba(255,165,50,0.60)',  accent:'#ffa032',glow:'rgba(255,160,50,0.35)'},  // 0 orange
-    {bg:'rgba(0,170,255,0.18)',   border:'rgba(30,200,255,0.60)',  accent:'#1ec8ff',glow:'rgba(0,200,255,0.30)'},   // 1 cyan
-    {bg:'rgba(55,135,220,0.18)',  border:'rgba(85,170,245,0.60)',  accent:'#55aaf5',glow:'rgba(70,155,235,0.30)'},  // 2 steel blue
-    {bg:'rgba(0,220,80,0.18)',    border:'rgba(0,240,100,0.60)',   accent:'#00f064',glow:'rgba(0,230,100,0.30)'},   // 3 green
-    {bg:'rgba(255,30,90,0.18)',   border:'rgba(255,60,110,0.60)',  accent:'#ff3c6e',glow:'rgba(255,60,110,0.30)'},  // 4 red-pink
-    {bg:'rgba(240,210,0,0.18)',   border:'rgba(255,230,40,0.60)',  accent:'#ffe628',glow:'rgba(255,220,40,0.30)'},  // 5 yellow
-    {bg:'rgba(0,210,190,0.18)',   border:'rgba(0,235,215,0.60)',   accent:'#00ebd7',glow:'rgba(0,225,200,0.30)'},   // 6 teal
-    {bg:'rgba(195,120,70,0.18)',  border:'rgba(220,145,90,0.60)',  accent:'#dc915a',glow:'rgba(205,130,80,0.30)'}   // 7 copper
+    {bg:'rgba(255,140,0,0.20)',   border:'rgba(255,165,50,0.60)',  accent:'#ffa032',glow:'rgba(255,160,50,0.35)',bed:'orange'},  // 0 orange
+    {bg:'rgba(0,170,255,0.18)',   border:'rgba(30,200,255,0.60)',  accent:'#1ec8ff',glow:'rgba(0,200,255,0.30)',bed:'cyan'},   // 1 cyan
+    {bg:'rgba(55,135,220,0.18)',  border:'rgba(85,170,245,0.60)',  accent:'#55aaf5',glow:'rgba(70,155,235,0.30)',bed:'steel'},  // 2 steel blue
+    {bg:'rgba(0,220,80,0.18)',    border:'rgba(0,240,100,0.60)',   accent:'#00f064',glow:'rgba(0,230,100,0.30)',bed:'green'},   // 3 green
+    {bg:'rgba(255,30,90,0.18)',   border:'rgba(255,60,110,0.60)',  accent:'#ff3c6e',glow:'rgba(255,60,110,0.30)',bed:'pink'},  // 4 red-pink
+    {bg:'rgba(240,210,0,0.18)',   border:'rgba(255,230,40,0.60)',  accent:'#ffe628',glow:'rgba(255,220,40,0.30)',bed:'yellow'},  // 5 yellow
+    {bg:'rgba(0,210,190,0.18)',   border:'rgba(0,235,215,0.60)',   accent:'#00ebd7',glow:'rgba(0,225,200,0.30)',bed:'teal'},   // 6 teal
+    {bg:'rgba(195,120,70,0.18)',  border:'rgba(220,145,90,0.60)',  accent:'#dc915a',glow:'rgba(205,130,80,0.30)',bed:'copper'}   // 7 copper
   ];
   // Hash full name to colour index â€” SAME person always gets SAME colour, no duplicates
   function _nameHash(name){
@@ -48,6 +48,12 @@
   var NS_ROOM_KEY_PREFIX='nsrooms::';
   var NS_ROOM_API_PATH='/api/ns-rooms';
   var ROOM_BED_KEYS=['main_left_top','main_left_bottom','main_right_top','nmp_center'];
+  var ROOM_SLOTS={
+    'is-left':{x:19,y:25,w:14.5,scale:.94,z:24},
+    'is-right-top':{x:19,y:63,w:15.5,scale:1,z:28},
+    'is-right-bottom':{x:81,y:27,w:13.5,scale:.9,z:22},
+    'is-center':{x:51,y:48,w:34,scale:.96,z:25}
+  };
   var NS_FLOW_GHOST = `<svg class="ns-flow-ghost" viewBox="0 0 10 7" shape-rendering="crispEdges" aria-hidden="true"><rect x="3" y="0" width="4" height="1" fill="#7dd3fc"/><rect x="2" y="1" width="6" height="1" fill="#38bdf8"/><rect x="1" y="2" width="1" height="1" fill="#38bdf8"/><rect x="4" y="2" width="2" height="1" fill="#38bdf8"/><rect x="8" y="2" width="1" height="1" fill="#38bdf8"/><rect x="2" y="2" width="2" height="1" fill="#07090f"/><rect x="6" y="2" width="2" height="1" fill="#07090f"/><rect x="1" y="3" width="8" height="3" fill="#38bdf8"/><rect x="1" y="6" width="1" height="1" fill="#38bdf8"/><rect x="3" y="6" width="1" height="1" fill="#38bdf8"/><rect x="6" y="6" width="1" height="1" fill="#38bdf8"/><rect x="8" y="6" width="1" height="1" fill="#38bdf8"/></svg>`;
   var PKT_CAT_SVG = `<svg class="pkt-cat" viewBox="0 0 300 370" preserveAspectRatio="xMidYMid meet" shape-rendering="crispEdges" aria-hidden="true"><g><rect x="40" y="0" width="10" height="10" fill="#131316"/><rect x="180" y="0" width="10" height="10" fill="#131316"/><rect x="40" y="10" width="10" height="10" fill="#131316"/><rect x="180" y="10" width="10" height="10" fill="#131316"/><rect x="40" y="20" width="20" height="10" fill="#131316"/><rect x="170" y="20" width="20" height="10" fill="#131316"/><rect x="40" y="30" width="20" height="10" fill="#131316"/><rect x="60" y="30" width="10" height="10" fill="#2b211b"/><rect x="110" y="30" width="10" height="10" fill="#2b211b"/><rect x="160" y="30" width="10" height="10" fill="#2b211b"/><rect x="170" y="30" width="20" height="10" fill="#131316"/><rect x="40" y="40" width="30" height="10" fill="#131316"/><rect x="70" y="40" width="40" height="10" fill="#2b211b"/><rect x="110" y="40" width="10" height="10" fill="#131316"/><rect x="120" y="40" width="40" height="10" fill="#2b211b"/><rect x="160" y="40" width="30" height="10" fill="#131316"/><rect x="40" y="50" width="150" height="10" fill="#131316"/><rect x="40" y="60" width="150" height="10" fill="#131316"/><rect x="40" y="70" width="150" height="10" fill="#131316"/><rect x="40" y="80" width="150" height="10" fill="#131316"/><rect x="40" y="90" width="30" height="10" fill="#131316"/><rect x="100" y="90" width="30" height="10" fill="#131316"/><rect x="160" y="90" width="30" height="10" fill="#131316"/><rect x="30" y="100" width="10" height="10" fill="#131316"/><rect x="50" y="100" width="30" height="10" fill="#131316"/><rect x="100" y="100" width="30" height="10" fill="#131316"/><rect x="150" y="100" width="30" height="10" fill="#131316"/><rect x="190" y="100" width="10" height="10" fill="#131316"/><rect x="40" y="110" width="70" height="10" fill="#131316"/><rect x="110" y="110" width="10" height="10" fill="#5b3d39"/><rect x="120" y="110" width="70" height="10" fill="#131316"/><rect x="50" y="120" width="130" height="10" fill="#131316"/><rect x="50" y="130" width="130" height="10" fill="#131316"/><rect x="60" y="140" width="110" height="10" fill="#131316"/><rect x="60" y="150" width="110" height="10" fill="#131316"/><rect x="50" y="160" width="130" height="10" fill="#131316"/><rect x="50" y="170" width="130" height="10" fill="#131316"/><rect x="40" y="180" width="150" height="10" fill="#131316"/><rect x="50" y="190" width="130" height="10" fill="#131316"/><rect x="50" y="200" width="130" height="10" fill="#131316"/><rect x="60" y="210" width="110" height="10" fill="#131316"/><rect x="40" y="220" width="150" height="10" fill="#131316"/><rect x="30" y="230" width="170" height="10" fill="#131316"/><rect x="20" y="240" width="240" height="10" fill="#131316"/><rect x="10" y="250" width="260" height="10" fill="#131316"/><rect x="10" y="260" width="270" height="10" fill="#131316"/><rect x="10" y="270" width="270" height="10" fill="#131316"/><rect x="0" y="280" width="230" height="10" fill="#131316"/><rect x="240" y="280" width="50" height="10" fill="#131316"/><rect x="10" y="290" width="210" height="10" fill="#131316"/><rect x="240" y="290" width="50" height="10" fill="#131316"/><rect x="10" y="300" width="210" height="10" fill="#131316"/><rect x="250" y="300" width="50" height="10" fill="#131316"/><rect x="10" y="310" width="210" height="10" fill="#131316"/><rect x="260" y="310" width="40" height="10" fill="#131316"/><rect x="20" y="320" width="190" height="10" fill="#131316"/><rect x="260" y="320" width="40" height="10" fill="#131316"/><rect x="30" y="330" width="170" height="10" fill="#131316"/><rect x="270" y="330" width="30" height="10" fill="#131316"/><rect x="40" y="340" width="150" height="10" fill="#131316"/><rect x="60" y="350" width="110" height="10" fill="#131316"/><rect x="110" y="360" width="10" height="10" fill="#131316"/></g><g class="pkt-eyes"><rect x="70" y="90" width="30" height="10" fill="#f5b51e"/><rect x="130" y="90" width="30" height="10" fill="#f5b51e"/><rect x="80" y="100" width="20" height="10" fill="#f5b51e"/><rect x="130" y="100" width="20" height="10" fill="#f5b51e"/></g></svg>`;
   var PKT_SCRATCH_ARM='<g class="pkt-scratch-arm">'
@@ -757,9 +763,9 @@
   }
   function applyWorkerSkinsToNightCards(scope){
     if(typeof window.mkGetWorkerSkin!=='function' || typeof window.mkApplySkinToEl!=='function') return;
-    (scope||document).querySelectorAll('.nsc-full-card[data-worker]').forEach(function(card){
-      var worker=card.getAttribute('data-worker')||'';
-      window.mkApplySkinToEl(card, window.mkGetWorkerSkin(worker));
+    (scope||document).querySelectorAll('.nsc-full-card[data-worker], .ns-room-bed[data-worker]').forEach(function(el){
+      var worker=el.getAttribute('data-worker')||'';
+      window.mkApplySkinToEl(el, window.mkGetWorkerSkin(worker));
     });
   }
   function lastSlotChecklist(i,total){
@@ -1022,17 +1028,16 @@
   function roomNames(name){
     var parts=String(name||'').trim().split(/\s+/).filter(Boolean);
     var main=(parts[0]||'Brīva').toUpperCase();
-    var size='30px';
+    var size='14px';
     var scale='1';
-    if(main.length >= 13){ size='12px'; scale='.78'; }
-    else if(main.length >= 12){ size='13px'; scale='.82'; }
-    else if(main.length >= 11){ size='14px'; scale='.86'; }
-    else if(main.length >= 10){ size='15px'; scale='.89'; }
-    else if(main.length >= 9){ size='16px'; scale='.91'; }
-    else if(main.length >= 8){ size='18px'; scale='.93'; }
-    else if(main.length >= 7){ size='20px'; scale='.96'; }
-    else if(main.length >= 6) size='23px';
-    else if(main.length >= 5) size='26px';
+    if(main.length >= 13){ size='8.5px'; scale='.88'; }
+    else if(main.length >= 12){ size='9px'; scale='.90'; }
+    else if(main.length >= 11){ size='9.5px'; scale='.92'; }
+    else if(main.length >= 10){ size='10px'; scale='.94'; }
+    else if(main.length >= 9){ size='10.5px'; scale='.96'; }
+    else if(main.length >= 8){ size='11px'; scale='.98'; }
+    else if(main.length >= 7) size='12px';
+    else if(main.length >= 6) size='13px';
     return {
       main: escHtml(main),
       sub: escHtml(parts.slice(1).join(' ')),
@@ -1072,32 +1077,51 @@
       + '</div>';
   }
 
-  function roomBedSvg(){
-    return '<svg class="ns-room-bed-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">'
-      +'<path fill-rule="evenodd" clip-rule="evenodd" d="M13.5 5.25H10.5C9.67157 5.25 9 5.92157 9 6.75H15C15 5.92157 14.3284 5.25 13.5 5.25ZM15 4.15135C14.5587 3.89609 14.0464 3.75 13.5 3.75H10.5C9.95357 3.75 9.44126 3.89609 9 4.15135V3.75H7.5V6.75V7.37829L5.25 14.1283V20.25H6.75V18H17.25V20.25H18.75V14.1283L16.5 7.37829V6.75V3.75H15V4.15135ZM15.2094 8.25H8.79057L7.04057 13.5H16.9594L15.2094 8.25ZM17.25 15H6.75V16.5H17.25V15Z"></path>'
-      +'</svg>';
+  function roomPicture(roomType,layer){
+    var main=roomType==='main';
+    var small=main?600:320;
+    var large=main?1200:640;
+    var height=main?381:392;
+    var base='assets/rooms/room-'+roomType+'-';
+    var rev='?v=20260822roomassets23';
+    return '<picture class="ns-room-image ns-room-image-'+layer+'" aria-hidden="true">'
+      +'<source type="image/avif" srcset="'+base+small+'.avif'+rev+' 1x, '+base+large+'.avif'+rev+' 2x">'
+      +'<img src="'+base+small+'.webp'+rev+'" srcset="'+base+small+'.webp'+rev+' 1x, '+base+large+'.webp'+rev+' 2x" width="'+small+'" height="'+height+'" alt="" decoding="async" draggable="false">'
+      +'</picture>';
+  }
+
+  function roomBedPicture(tone){
+    var safe=tone||'neutral';
+    var base='assets/rooms/bed-'+safe+'-';
+    return '<picture class="ns-room-bed-picture" aria-hidden="true">'
+      +'<img src="'+base+'256.webp" srcset="'+base+'256.webp 1x, '+base+'512.webp 2x" width="256" height="364" alt="" decoding="async" draggable="false">'
+      +'</picture>';
+  }
+
+  function roomSlotStyle(posCls){
+    var p=ROOM_SLOTS[posCls]||ROOM_SLOTS['is-center'];
+    return '--room-x:'+p.x+'%;--room-y:'+p.y+'%;--room-bed-w:'+p.w+'%;--room-bed-scale:'+p.scale+';--room-bed-z:'+p.z;
   }
 
   function roomBed(roomIdx, slot, posCls){
     if(!slot){
-      return '<div class="ns-room-bed ns-room-bed-empty '+posCls+'" data-i="'+roomIdx+'" data-empty="1">'
+      return '<div class="ns-room-bed ns-room-bed-empty '+posCls+'" data-i="'+roomIdx+'" data-empty="1" style="'+roomSlotStyle(posCls)+'">'
         +'<div class="ns-room-bed-card">'
-        +roomBedSvg()
-        +'<div class="ns-room-bed-pillow"></div>'
-        +'<div class="ns-room-bed-blanket"><span class="ns-room-bed-main">Brīva</span></div>'
+        +roomBedPicture('neutral')
         +'</div>'
         +'</div>';
     }
     var c=getCol(slot.w.name);
     var nm=roomNames(slot.w.name);
     var em=roomEmoji(slot.w.name);
-    return '<div class="ns-room-bed '+posCls+'" data-i="'+roomIdx+'" data-name="'+escHtml(String(slot.w.name||''))+'" data-accent="'+c.accent+'">'
+    return '<div class="ns-room-bed '+posCls+'" data-i="'+roomIdx+'" data-name="'+escHtml(String(slot.w.name||''))+'" data-worker="'+escHtml(String(slot.w.name||''))+'" data-accent="'+c.accent+'" style="'+roomSlotStyle(posCls)+'">'
       +'<div class="ns-room-bed-card" style="--bed:'+c.accent+';--bed-border:'+c.border+'">'
-      +roomBedSvg()
+      +roomBedPicture(c.bed)
+      +'<span class="ns-room-bed-skin is-pillow" aria-hidden="true"></span>'
+      +'<span class="ns-room-bed-skin is-blanket" aria-hidden="true"></span>'
       +roomDevices(slot)
       +(em?'<div class="ns-room-bed-head-emoji">'+escHtml(em)+'</div>':'')
       +'<div class="ns-room-bed-zzz" aria-hidden="true"><span>Z</span><span>Z</span><span>Z</span></div>'
-      +'<div class="ns-room-bed-pillow"></div>'
       +'<div class="ns-room-bed-blanket"><span class="ns-room-bed-main" style="font-size:'+nm.size+';--ns-room-name-scale:'+nm.scale+'">'+nm.main+'</span></div>'
       +'</div>'
       +'</div>';
@@ -1230,23 +1254,30 @@
     var picked=roomOrder.map(function(name){ return byName[name] || null; });
     while(picked.length<4) picked.push(null);
     return '<div class="ns-room-block">'
-      +'<div class="ns-room-head">Istabu sadalījums</div>'
       +'<div class="ns-room-stage">'
       +'<div class="ns-room-fit"><div class="ns-room-layout">'
       +'<div class="ns-room ns-room-main">'
       +'<div class="ns-room-titlebar">Galvenā istaba</div>'
       +'<div class="ns-room-shell">'
+      +roomPicture('main','base')
+      +'<div class="ns-room-scene-content">'
       +roomWalker('main')
       +roomBed(0, picked[0], 'is-left')
       +roomBed(1, picked[1], 'is-right-top')
       +roomBed(2, picked[2], 'is-right-bottom')
       +'</div>'
+      +roomPicture('main','foreground')
+      +'</div>'
       +'</div>'
       +'<div class="ns-room ns-room-nmp">'
       +'<div class="ns-room-titlebar">Jaunais NMP</div>'
       +'<div class="ns-room-shell">'
+      +roomPicture('nmp','base')
+      +'<div class="ns-room-scene-content">'
       +roomWalker('nmp')
       +roomBed(3, picked[3], 'is-center')
+      +'</div>'
+      +roomPicture('nmp','foreground')
       +'</div>'
       +'</div>'
       +'</div>'
@@ -1299,7 +1330,7 @@
         // Keep a real bottom safety zone for the whole rooms panel (including
         // its border and shadow). macOS Chrome fullscreen must fit in one view;
         // there is intentionally no internal scroller to rescue overflow.
-        var bottomReserve = 44;
+        var bottomReserve = 35;
         var availH   = Math.max(80, panelRect.bottom - fitRect.top - bottomReserve);
         var widthScale = Math.min(1, availW / naturalW);
         var scale = Math.min(widthScale, availH / naturalH);
@@ -1325,6 +1356,11 @@
         // These set width/height with no !important in CSS so JS wins
         fit.style.width  = roomsW + 'px';
         fit.style.height = roomsH + 'px';
+        var roomsHead = block.querySelector('.ns-room-head');
+        if(roomsHead){
+          roomsHead.style.width = roomsW + 'px';
+          roomsHead.style.textAlign = 'center';
+        }
         if(stats) {
           if (narrow) {
             // Phone: stats flow below the rooms at natural size
@@ -1774,6 +1810,7 @@
       if(_roomHtml!==_nsLastRoomHtml || _walkersMissing){
         if(_rb){ _rb.outerHTML=_roomHtml; }
         _nsLastRoomHtml=_roomHtml;
+        applyWorkerSkinsToNightCards(panel);
         requestAnimationFrame(function(){
           fitRoomBlocks(panel);
           requestAnimationFrame(function(){ fitRoomBlocks(panel); });
