@@ -1839,6 +1839,13 @@ function filterFullList(btn) {
     return true;
   }
 
+  function g_refreshTodayPill(previousToday, nextToday) {
+    const previous = previousToday && document.getElementById('p-' + previousToday.replace(/\./g, '-'));
+    const next = nextToday && document.getElementById('p-' + nextToday.replace(/\./g, '-'));
+    if (previous && previous !== next) previous.classList.remove('today-pill');
+    if (next) next.classList.add('today-pill');
+  }
+
   function g_stepDay(dir) {
     const current = normalizeDateStr(activeDateStr || window.__activeDateStr || '');
     if (!current) return false;
@@ -3110,6 +3117,153 @@ function filterFullList(btn) {
 
   window.__nsBarSync = function() { try { g_updateLive(true); } catch(_e){} };
 
+  let __minkaRolloverTimers = [];
+  function g_clearRolloverTimers() {
+    __minkaRolloverTimers.forEach(function(timer) { window.clearTimeout(timer); });
+    __minkaRolloverTimers = [];
+  }
+
+  function g_playRolloverShiftEmojis() {
+    if (!window.MinkaEmojiParticles) return;
+    g_clearRolloverTimers();
+    const moodTarget = document.querySelector('.rg-feedback-card .rg-mood-glass-lens')
+      || document.querySelector('.rg-feedback-card .rg-mood-blob-wrap');
+    if (!moodTarget) return;
+
+    const workerKey = function(value) {
+      return String(value || '').trim().toLocaleUpperCase('lv-LV');
+    };
+    const moodPeople = Array.from(document.querySelectorAll('.rg-feedback-card .rg-mood-person[data-rg-worker]'));
+    const moodPersonByWorker = new Map(moodPeople.map(function(person) {
+      return [workerKey(person.getAttribute('data-rg-worker')), person];
+    }));
+
+    // The roster is already rendered. Use the incoming workers' real card
+    // identity and land it on that same worker's place around the mood orb.
+    const flights = [];
+    document.querySelectorAll('#grafiks-list .mk-mid-card[data-worker], #grafiks-list .list-row[data-worker]').forEach(function(card) {
+      const worker = workerKey(card.getAttribute('data-worker'));
+      if (!worker) return;
+      const target = moodPersonByWorker.get(worker);
+      if (!target) return;
+      const sourceEmoji = card.querySelector('.mk-mid-bg-emoji')
+        || card.querySelector('.mk-mid-person-emoji')
+        || card.querySelector('.mk-mid-meta-emoji');
+      const targetIdentity = target.querySelector && target.querySelector('.rg-mood-person-emoji');
+      const source = sourceEmoji || card;
+      const glyph = safeEmojiText(
+        (sourceEmoji && sourceEmoji.textContent && sourceEmoji.textContent.trim())
+        || (targetIdentity && targetIdentity.textContent && targetIdentity.textContent.trim())
+      );
+      const textMode = /^[\p{L}\p{N}]{1,3}$/u.test(glyph);
+      if (source && glyph) flights.push({
+        worker: worker,
+        source: source,
+        target: target,
+        glyph: glyph,
+        textMode: textMode
+      });
+    });
+    if (!flights.length) return;
+
+    const confettiGlyphs = flights.map(function(flight) { return flight.glyph; });
+    const liveFlightParts = function(flight) {
+      const liveCard = Array.from(document.querySelectorAll('#grafiks-list .mk-mid-card[data-worker], #grafiks-list .list-row[data-worker]'))
+        .find(function(card) { return workerKey(card.getAttribute('data-worker')) === flight.worker; });
+      const liveTarget = Array.from(document.querySelectorAll('.rg-feedback-card .rg-mood-person[data-rg-worker]'))
+        .find(function(person) { return workerKey(person.getAttribute('data-rg-worker')) === flight.worker; });
+      if (!liveCard || !liveTarget) return null;
+      return {
+        source: liveCard.querySelector('.mk-mid-bg-emoji')
+          || liveCard.querySelector('.mk-mid-person-emoji')
+          || liveCard.querySelector('.mk-mid-meta-emoji')
+          || liveCard,
+        target: liveTarget
+      };
+    };
+    let confettiEngine = window.MinkaEmojiParticles;
+    try {
+      if (window.parent && window.parent !== window && window.parent.MinkaEmojiParticles) {
+        confettiEngine = window.parent.MinkaEmojiParticles;
+      }
+    } catch (_error) {}
+    const lowPerf = __minkaCalendarLowPerf();
+    const confettiWait = lowPerf ? 3200 : 3900;
+    const flightDuration = lowPerf ? 1320 : 1580;
+    const flightStagger = lowPerf ? 440 : 520;
+
+    // Phase 1: the whole PWA celebrates first. Particle quality scales the 76
+    // requested pieces down to ~26 on a 2-core/2-GB workstation, while capable
+    // machines get the denser full-screen shower.
+    confettiEngine.confetti(confettiGlyphs, {
+      count: 76,
+      delaySpread: 220,
+      duration: lowPerf ? 2300 : 2800,
+      durationSpread: lowPerf ? 600 : 800
+    });
+
+    // Phase 2: only after the final confetti has cleared, incoming people travel
+    // into their own place around the mood. Starts are deliberately staggered so
+    // each identity reads as one clean arrival rather than a fast swarm.
+    flights.forEach(function(flight, index) {
+      const startAt = confettiWait + index * flightStagger;
+      const flyTimer = window.setTimeout(function() {
+        const live = liveFlightParts(flight);
+        if (!live) return;
+        window.MinkaEmojiParticles.flyTo(live.source, live.target, flight.glyph, {
+          count: 1,
+          size: flight.textMode ? 30 : 40,
+          textMode: flight.textMode,
+          color: '#ecffff',
+          duration: flightDuration,
+          targetSpread: 5,
+          endScale: .2,
+          peakScale: 1.42,
+          peakAt: .34,
+          arcSpread: 72,
+          lift: 104,
+          trail: true,
+          onComplete: function() {
+            const landed = liveFlightParts(flight);
+            if (!landed) return;
+            if (typeof window.MinkaEmojiParticles.fusion === 'function') {
+              window.MinkaEmojiParticles.fusion(landed.target);
+            }
+            const landing = landed.target.querySelector('.rg-mood-person-glass');
+            if (!landing || typeof landing.animate !== 'function') return;
+            landing.animate([
+              { transform: 'scale(1)' },
+              { transform: 'scale(1.2)', offset: .34 },
+              { transform: 'scale(.96)', offset: .7 },
+              { transform: 'scale(1)' }
+            ], { duration: lowPerf ? 360 : 440, easing: 'cubic-bezier(.2,.85,.3,1)' });
+          }
+        });
+      }, startAt);
+      __minkaRolloverTimers.push(flyTimer);
+    });
+    window.MinkaEmojiParticles.haptic('success');
+  }
+
+  let __minkaRolloverPreviewStarted = false;
+  function g_maybePreviewRollover() {
+    if (__minkaRolloverPreviewStarted || !g_todayStr) return;
+    try {
+      if (new URLSearchParams(window.location.search).get('previewRollover') !== '1') return;
+    } catch (_error) { return; }
+    __minkaRolloverPreviewStarted = true;
+    window.setTimeout(function() {
+      const parts = String(g_todayStr).split('.').map(Number);
+      const next = new Date(parts[2], Math.max(0, parts[1] - 1), parts[0]);
+      next.setDate(next.getDate() + 1);
+      const switched = g_selectDateWithMonthSync(g_formatDate(next));
+      if (!switched) return;
+      requestAnimationFrame(function() {
+        window.setTimeout(g_playRolloverShiftEmojis, 460);
+      });
+    }, 700);
+  }
+
   function g_updateLive(force) {
     const now = new Date();
     if (document.hidden) return;
@@ -3128,13 +3282,31 @@ function filterFullList(btn) {
     const _newToday = `${String(_eff.getDate()).padStart(2,'0')}.${String(_eff.getMonth()+1).padStart(2,'0')}.${_eff.getFullYear()}`;
     if (_newToday !== g_todayStr) {
       const wasViewingToday = activeDateStr === g_todayStr;
+      const previousToday = g_todayStr;
       g_todayStr = _newToday;
       window.__g_todayStr = g_todayStr;
       // Follow the rollover only when the user was on the live duty-day. This
       // also changes the month picker at 08:00 across a month boundary.
-      if (wasViewingToday) g_selectDateWithMonthSync(_newToday);
-      g_updatePanelsForDate();
-      g_renderMonth();
+      // Do not rebuild the month strip and side panels a second time:
+      // g_selectDateWithMonthSync() already owns those updates when following
+      // the live day. Within one month only the two `today-pill` classes need
+      // changing; at a month boundary the helper renders the new strip once.
+      const targetMonth = wasViewingToday ? g_getMonthForDate(_newToday) : '';
+      const changesMonth = !!(targetMonth && targetMonth !== activeMonth);
+      if (!changesMonth) g_refreshTodayPill(previousToday, _newToday);
+      const followed = wasViewingToday && g_selectDateWithMonthSync(_newToday);
+      if (!followed) {
+        g_applyTodayUI();
+        if (activeDateStr === _newToday) g_updatePanelsForDate();
+      }
+      requestAnimationFrame(function () {
+        if (followed) g_playRolloverShiftEmojis();
+        try {
+          window.dispatchEvent(new CustomEvent('minka:auto-day-rollover', {
+            detail: { from: previousToday, to: _newToday, followed: !!followed }
+          }));
+        } catch (_error) {}
+      });
     }
 
     // Shift progress bar is pinned to the CURRENT shift day (g_todayStr), not the
@@ -5114,6 +5286,41 @@ function filterFullList(btn) {
       setCoffeePickerBuddyFlag(false);
     }
 
+    function playCoffeeAddedEffect(card) {
+      if (!window.MinkaEmojiParticles) return;
+      // The coffee was added to this worker, so the visual must originate from
+      // that worker's card (not from the temporary picker UI).
+      const source = (card && card.querySelector('.mk-coffee-mid')) || card;
+      const moodCoffeeNumber = document.querySelector('.rg-feedback-card [data-rg-coffee-num]');
+      const target = (moodCoffeeNumber && moodCoffeeNumber.closest('[data-rg-chip="coffee"]'))
+        || moodCoffeeNumber
+        || (card && card.querySelector('.mk-coffee-num'))
+        || (card && card.querySelector('.mk-coffee-mid'));
+      window.MinkaEmojiParticles.flyTo(source, target, '☕', {
+        count: 1,
+        size: 44,
+        duration: 1050,
+        targetSpread: 4,
+        endScale: .3,
+        peakScale: 1.55,
+        peakAt: .32,
+        arcSpread: 74,
+        lift: 92,
+        trail: true
+      });
+      if (target && typeof target.animate === 'function') {
+        window.setTimeout(() => {
+          if (!target.isConnected) return;
+          target.animate([
+            { scale: '1' },
+            { scale: '1.2', offset: .42 },
+            { scale: '1' }
+          ], { duration: 360, easing: 'cubic-bezier(.2,.85,.3,1)' });
+        }, 900);
+      }
+      window.MinkaEmojiParticles.haptic('light');
+    }
+
     // Outside clicks are caught by a transparent full-window backdrop that sits
     // just under the picker (so it can't cover the picker itself). If the click
     // actually landed on another card's "+" — even one the open picker was
@@ -5249,6 +5456,7 @@ function filterFullList(btn) {
           // (skips the free Philips machine and per-size Narvesen).
           if (selected !== 'philips' && selected !== 'narvesen') saveCoffeePriceOverride(selected, priceCents);
           addCoffeeEntry(name, card, { source: selected, size: selected === 'narvesen' ? size : '', priceCents });
+          playCoffeeAddedEffect(card);
           closeCoffeePicker();
         });
       }
@@ -5704,6 +5912,7 @@ function filterFullList(btn) {
       probe.coffeeMs = +(performance.now() - pt3).toFixed(2);
       (window.__minkaListProbeLog ||= []).push(Object.assign({}, probe));
     }
+    g_maybePreviewRollover();
   }
 
   function g_adjustDutyNameFontSize() {

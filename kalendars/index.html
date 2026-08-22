@@ -1622,7 +1622,8 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/calendar.js?v=20260821workerfilter1"></script>
+<script src="js/emoji-particles.js?v=20260822particles20"></script>
+<script src="js/calendar.js?v=20260822particles20"></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260810layout2"></script>
 <script src="js/fatigue.js?v=20260816fatcache1"></script>
@@ -17534,6 +17535,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     (staff || []).slice(0, 14).forEach(function (person) {
       var item = document.createElement('span');
       item.className = 'rg-mood-person' + (person.role === 'rd' ? ' is-rd' : '') + (!person.emoji ? ' is-initials' : '');
+      item.setAttribute('data-rg-worker', person.name || '');
       item.title = person.name + (person.coffee ? ' · kafija ×' + person.coffee : '');
       if (Number.isFinite(person.fatigue)) {
         item.style.setProperty('--rg-person-fatigue', moodFatigueColor(person.fatigue));
@@ -18361,6 +18363,25 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     updateMoodBlob((selected && selected.key) || (dominant && dominant.key) || null);
   }
   function addBurst(button, emoji) {
+    var particles = window.MinkaEmojiParticles;
+    var card = button && button.closest('.rg-feedback-card');
+    var target = card && (card.querySelector('.rg-mood-glass-lens') || card.querySelector('.rg-mood-blob-wrap'));
+    if (particles && target) {
+      particles.flyTo(button, target, emoji, {
+        count: 4 + Math.floor(Math.random() * 4),
+        size: 38,
+        duration: 1080,
+        targetSpread: 16,
+        endScale: .18,
+        peakScale: 1.45,
+        peakAt: .3,
+        arcSpread: 150,
+        lift: 72,
+        trail: true
+      });
+      particles.haptic('selection');
+      return;
+    }
     var burst = document.createElement('span');
     burst.className = 'rg-pulse-burst';
     burst.textContent = emoji;
