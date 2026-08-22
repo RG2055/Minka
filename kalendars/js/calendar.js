@@ -3123,6 +3123,26 @@ function filterFullList(btn) {
     __minkaRolloverTimers = [];
   }
 
+  function g_rolloverPreviewTrace(message) {
+    let enabled = false;
+    try { enabled = new URLSearchParams(window.location.search).get('previewRollover') === '1'; }
+    catch (_error) {}
+    if (!enabled) return;
+    let output = document.getElementById('minkaRolloverPreviewTrace');
+    if (!output) {
+      output = document.createElement('output');
+      output.id = 'minkaRolloverPreviewTrace';
+      output.hidden = true;
+      document.body.appendChild(output);
+    }
+    output.textContent += (output.textContent ? '\n' : '') + String(message || '');
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'minka:rollover-preview-trace', message: String(message || '') }, window.location.origin);
+      }
+    } catch (_error) {}
+  }
+
   function g_playRolloverShiftEmojis() {
     if (!window.MinkaEmojiParticles) return;
     g_clearRolloverTimers();
@@ -3133,7 +3153,13 @@ function filterFullList(btn) {
     const workerKey = function(value) {
       return String(value || '').trim().toLocaleUpperCase('lv-LV');
     };
-    const moodPeople = Array.from(document.querySelectorAll('.rg-feedback-card .rg-mood-person[data-rg-worker]'));
+    const isLiveMoodTarget = function(person) {
+      if (!person || person.hidden || !person.isConnected) return false;
+      const rect = person.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0;
+    };
+    const moodPeople = Array.from(document.querySelectorAll('.rg-feedback-card .rg-mood-person[data-rg-worker]'))
+      .filter(isLiveMoodTarget);
     const moodPersonByWorker = new Map(moodPeople.map(function(person) {
       return [workerKey(person.getAttribute('data-rg-worker')), person];
     }));
@@ -3164,6 +3190,7 @@ function filterFullList(btn) {
         textMode: textMode
       });
     });
+    g_rolloverPreviewTrace('targets:' + flights.length + '/' + moodPeople.length);
     if (!flights.length) return;
 
     const confettiGlyphs = flights.map(function(flight) { return flight.glyph; });
@@ -3171,7 +3198,9 @@ function filterFullList(btn) {
       const liveCard = Array.from(document.querySelectorAll('#grafiks-list .mk-mid-card[data-worker], #grafiks-list .list-row[data-worker]'))
         .find(function(card) { return workerKey(card.getAttribute('data-worker')) === flight.worker; });
       const liveTarget = Array.from(document.querySelectorAll('.rg-feedback-card .rg-mood-person[data-rg-worker]'))
-        .find(function(person) { return workerKey(person.getAttribute('data-rg-worker')) === flight.worker; });
+        .find(function(person) {
+          return workerKey(person.getAttribute('data-rg-worker')) === flight.worker && isLiveMoodTarget(person);
+        });
       if (!liveCard || !liveTarget) return null;
       return {
         source: liveCard.querySelector('.mk-mid-bg-emoji')
@@ -3201,6 +3230,7 @@ function filterFullList(btn) {
       duration: lowPerf ? 2300 : 2800,
       durationSpread: lowPerf ? 600 : 800
     });
+    g_rolloverPreviewTrace('confetti:' + confettiGlyphs.length);
 
     // Phase 2: only after the final confetti has cleared, incoming people travel
     // into their own place around the mood. Starts are deliberately staggered so
@@ -3209,7 +3239,11 @@ function filterFullList(btn) {
       const startAt = confettiWait + index * flightStagger;
       const flyTimer = window.setTimeout(function() {
         const live = liveFlightParts(flight);
-        if (!live) return;
+        if (!live) {
+          g_rolloverPreviewTrace('missing:' + flight.worker);
+          return;
+        }
+        g_rolloverPreviewTrace('flight:' + flight.worker);
         window.MinkaEmojiParticles.flyTo(live.source, live.target, flight.glyph, {
           count: 1,
           size: flight.textMode ? 30 : 40,
@@ -3225,17 +3259,23 @@ function filterFullList(btn) {
           trail: true,
           onComplete: function() {
             const landed = liveFlightParts(flight);
-            if (!landed) return;
+            if (!landed) {
+              g_rolloverPreviewTrace('landing-missing:' + flight.worker);
+              return;
+            }
+            g_rolloverPreviewTrace('landed:' + flight.worker);
             if (typeof window.MinkaEmojiParticles.fusion === 'function') {
               window.MinkaEmojiParticles.fusion(landed.target);
             }
             const landing = landed.target.querySelector('.rg-mood-person-glass');
             if (!landing || typeof landing.animate !== 'function') return;
+            // Animate the individual scale property so the staff bubble keeps
+            // its fixed glass angle/foreshortening from --rg-bubble-*.
             landing.animate([
-              { transform: 'scale(1)' },
-              { transform: 'scale(1.2)', offset: .34 },
-              { transform: 'scale(.96)', offset: .7 },
-              { transform: 'scale(1)' }
+              { scale: '1' },
+              { scale: '1.2', offset: .34 },
+              { scale: '.96', offset: .7 },
+              { scale: '1' }
             ], { duration: lowPerf ? 360 : 440, easing: 'cubic-bezier(.2,.85,.3,1)' });
           }
         });
@@ -3252,6 +3292,11 @@ function filterFullList(btn) {
       if (new URLSearchParams(window.location.search).get('previewRollover') !== '1') return;
     } catch (_error) { return; }
     __minkaRolloverPreviewStarted = true;
+    let previewDelay = 700;
+    try {
+      previewDelay = Math.max(300, Math.min(30000,
+        Number(new URLSearchParams(window.location.search).get('previewRolloverDelay')) || 700));
+    } catch (_error) {}
     window.setTimeout(function() {
       const parts = String(g_todayStr).split('.').map(Number);
       const next = new Date(parts[2], Math.max(0, parts[1] - 1), parts[0]);
@@ -3261,7 +3306,7 @@ function filterFullList(btn) {
       requestAnimationFrame(function() {
         window.setTimeout(g_playRolloverShiftEmojis, 460);
       });
-    }, 700);
+    }, previewDelay);
   }
 
   function g_updateLive(force) {

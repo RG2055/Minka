@@ -1622,8 +1622,8 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="js/emoji-particles.js?v=20260822particles20"></script>
-<script src="js/calendar.js?v=20260822particles20"></script>
+<script src="js/emoji-particles.js?v=20260822bubblefatigue31"></script>
+<script src="js/calendar.js?v=20260822bubblefatigue31"></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260810layout2"></script>
 <script src="js/fatigue.js?v=20260816fatcache1"></script>
@@ -15973,6 +15973,16 @@ window.addEventListener('message', function(e) {
   white-space: nowrap;
 }
 .rg-feedback-card .rg-mood-stage { order: 1; }
+.rg-feedback-card.rg-busy-staff .rg-mood-stage {
+  /* Dense days need real space, not smaller or overlapping tokens. The extra
+     height moves the reaction controls down and leaves a clean lower orbit. */
+  min-height: clamp(286px, 88cqw, 314px);
+}
+.rg-feedback-card.rg-super-busy-staff .rg-mood-stage {
+  /* Coffee counters extend beyond their lenses. Reserve the larger orbit only
+     on dates where four or more people carry those extra badges. */
+  min-height: clamp(340px, 105cqw, 380px);
+}
 .rg-feedback-card .rg-pulse-taps {
   order: 3;
   width: 100%;
@@ -16434,6 +16444,74 @@ window.addEventListener('message', function(e) {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
+/* The staff tokens reuse the same pre-rendered transparent glass lens as the
+   main mood orb. Different fixed aspect ratios read as camera angles while
+   staying a single static image layer — no canvas, WebGL or idle animation. */
+.rg-mood-person .rg-mood-person-glass {
+  overflow: visible;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(7, 14, 24, .34);
+  box-shadow: none;
+  /* Keep the vessel itself perfectly round. Perspective belongs to the glass
+     highlight; squeezing the vessel makes its liquid look stretched. */
+  transform: none;
+  transform-origin: 50% 50%;
+}
+.rg-mood-person .rg-mood-person-glass::after {
+  content: '';
+  position: absolute;
+  inset: -9%;
+  z-index: 2;
+  background: url('assets/mood-glass-premium.webp?v=20260820b') center / contain no-repeat;
+  transform: rotate(var(--rg-bubble-roll, 0deg));
+  transform-origin: 50% 50%;
+  pointer-events: none;
+}
+/* Each worker carries their own fatigue level inside the lens. The fill is a
+   clipped, static layer: only its height transitions when fresh data arrives,
+   so there is no idle animation or continuous paint cost. */
+.rg-mood-person-liquid-vessel {
+  position: absolute;
+  inset: 5%;
+  z-index: 1;
+  display: block;
+  overflow: hidden;
+  border-radius: 50%;
+  pointer-events: none;
+  contain: paint;
+}
+.rg-mood-person-liquid {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: block;
+  height: var(--rg-person-fatigue-level, 0%);
+  min-height: 0;
+  border-radius: 48% 48% 50% 50% / 3px 3px 50% 50%;
+  background:
+    radial-gradient(ellipse at 28% 12%, rgba(240, 252, 255, .26), transparent 40%),
+    linear-gradient(180deg,
+      rgba(var(--rg-person-liquid-rgb, 46, 214, 145), .48),
+      rgba(var(--rg-person-liquid-rgb, 46, 214, 145), .72));
+  box-shadow:
+    inset 4px 0 7px rgba(226, 250, 255, .08),
+    inset -5px 0 8px rgba(4, 11, 23, .14);
+  transition: height 480ms cubic-bezier(.22, .78, .22, 1);
+}
+.rg-mood-person-liquid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 4%;
+  left: 4%;
+  height: 2px;
+  border-radius: 50%;
+  background: rgba(244, 253, 255, .72);
+  box-shadow: 0 1px 0 rgba(var(--rg-person-liquid-rgb, 46, 214, 145), .70);
+  pointer-events: none;
+}
 .rg-mood-person-glass::before {
   content: '';
   position: absolute;
@@ -16449,10 +16527,22 @@ window.addEventListener('message', function(e) {
 }
 .rg-mood-person-emoji {
   position: relative;
-  z-index: 1;
+  z-index: 3;
   display: block;
   font-size: calc(var(--rg-person-size, 28px) * .62);
   line-height: 1;
+  transform: translateY(-1px);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .54);
+}
+.rg-mood-person .rg-mood-person-emoji {
+  transform: translateY(-1px);
+}
+.rg-mood-person.is-initials .rg-mood-person-glass {
+  /* Initials are labels, not pictograms: a strongly foreshortened oval makes
+     them look crooked. Keep their glass shell round and readable. */
+  transform: none;
+}
+.rg-mood-person.is-initials .rg-mood-person-emoji {
   transform: translateY(-1px);
 }
 .rg-mood-person.is-initials .rg-mood-person-glass {
@@ -16478,7 +16568,7 @@ window.addEventListener('message', function(e) {
   position: absolute;
   right: -5px;
   bottom: -5px;
-  z-index: 3;
+  z-index: 4;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -17273,8 +17363,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   function moodFatigueInk(score) { return score > 45 ? '#12161d' : '#0b1a10'; }
   function moodFatigueColor(score) {
     if (score > 70) return '#ff6b5f';
-    if (score > 45) return '#e59b42';
-    if (score > 20) return '#d8c64a';
+    if (score > 20) return '#f5df4d';
     return '#35d07f';
   }
   // The liquid intentionally avoids yellow/amber, which reads as urine next
@@ -17302,15 +17391,24 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   }
   function moodFatigueRgb(score) {
     if (score > 70) return '255,107,95';
-    if (score > 45) return '229,155,66';
-    if (score > 20) return '216,198,74';
+    if (score > 20) return '245,223,77';
     return '53,208,127';
   }
-  // Static staff constellation. It is laid out once per render with one blob
-  // measurement: no collision solver, no requestAnimationFrame retry loop and
-  // no perpetual floating animation. The depth sequence controls both size and
-  // distance — near people are larger/clearer, far people smaller/quieter.
+  // Worker bubbles use three deliberately clean traffic-light colours. The
+  // middle band is a bright lemon yellow rather than amber/brown, so it stays
+  // fresh inside transparent glass.
+  function moodPersonLiquidRgb(score) {
+    if (score > 70) return '255,92,113';
+    if (score > 20) return '245,229,72';
+    return '46,214,145';
+  }
+  // Static staff constellation. It is laid out once per render and depth is
+  // expressed with size, distance, opacity and stacking only — no idle motion.
   var MOOD_PERSON_DEPTHS = [0.04, 0.68, 0.24, 0.88, 0.43, 0.12, 0.76, 0.34, 0.58, 0.19, 0.82, 0.49];
+  var MOOD_BUBBLE_VIEWS = [
+    [0.94, -5], [0.98, 3], [0.90, 6], [0.96, -4],
+    [0.92, 5], [1, 0], [0.95, -6], [0.91, 4]
+  ];
   function moodScatterSeed(text) {
     var hash = 2166136261;
     String(text || '').split('').forEach(function (char) {
@@ -17340,9 +17438,21 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     // distributed over two open arcs instead of colliding with those pills.
     var topCount = Math.ceil(count / 2);
     var bottomCount = count - topCount;
+    // No staff token may touch the central mood face. Depth is expressed with
+    // size/opacity only; the centre remains an absolute exclusion zone.
+    var centreTouchIndex = -1;
     // Alternate between the outer left/right slots first. Keeping the two
     // inner-bottom slots for last leaves a clean gap under the face.
     var bottomAngles = [42, 138, 68, 112, 24, 156, 90];
+    /* A busy nine-person shift does not fit on one circular orbit without
+       shrinking or hiding the final tokens. A deliberately uneven, fixed
+       constellation uses the safe space around the face: everyone remains
+       visible without turning the bubbles into obvious rows. */
+    var useBusyRows = count >= 8;
+    var busyRowMax = Math.max(topCount, bottomCount);
+    var busyBaseSize = useBusyRows
+      ? Math.max(30, Math.min(38, (bounds.r - bounds.l) / Math.max(1, busyRowMax * 1.42)))
+      : 0;
     var staffOccupied = [];
     function nodeBox(node, pad) {
       if (!node) return null;
@@ -17361,13 +17471,14 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     }
     card.querySelectorAll('.rg-feedback-card-title, .rg-mood-side, .rg-mood-topbtn, .rg-mood-label, .rg-pulse-taps, .rg-feedback-card-actions')
       .forEach(function (node) {
-        var box = nodeBox(node, 5);
+        var protectedText = node.classList.contains('rg-mood-label') || node.classList.contains('rg-feedback-card-title');
+        var box = nodeBox(node, protectedText ? 12 : 6);
         if (box) staffOccupied.push(box);
       });
     var faceBox = nodeBox(blob, 5);
-    if (faceBox) staffOccupied.push(faceBox);
     people.forEach(function (person, index) {
       var depth = MOOD_PERSON_DEPTHS[index % MOOD_PERSON_DEPTHS.length];
+      var view = MOOD_BUBBLE_VIEWS[index % MOOD_BUBBLE_VIEWS.length];
       var onTop = index < topCount;
       var arcIndex = onTop ? index : index - topCount;
       var arcCount = onTop ? topCount : bottomCount;
@@ -17378,10 +17489,73 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
         // Leave the bottom centre visually open under the face.
         degrees = bottomAngles[arcIndex % bottomAngles.length];
       }
-      var size = baseSize * (1.18 - depth * .34);
-      var baseRadius = blobSize * .48 + size * .56 + 8 + depth * 11;
+      // Static perspective comes from size and distance, not motion. Keep the
+      // foreground/background contrast strong but below the point where the
+      // larger glass rims consume every free slot on a busy shift.
+      var size = Math.max(28, Math.min(48, baseSize * (2.00 - depth * .75)));
+      // Three deliberate depth planes use size, opacity and stacking. Only the
+      // single selected token above the orb may graze its outer rim; side and
+      // bottom tokens must stay completely visible.
+      var isFar = depth >= .62;
+      var isNear = depth <= .15;
+      var canTouchCentre = index === centreTouchIndex;
+      var baseRadius = canTouchCentre
+        ? blobSize * .50 + size * .50 - 1
+        : isNear
+          ? blobSize * .50 + size * .54 + 9
+          : blobSize * .50 + size * .54 + 11 + depth * 5;
       var coffeeExtra = person.querySelector('.rg-mood-person-coffee') ? 7 : 2;
       var chosen = null;
+      if (useBusyRows) {
+        size = Math.max(33, Math.min(41, busyBaseSize * (1.12 - depth * .24)));
+        var busyVisualHalf = size * .59 + (coffeeExtra > 2 ? 4 : 0);
+        var busyHalfWidth = Math.max(1, Math.min(-bounds.l, bounds.r) - busyVisualHalf);
+        var busyTopX = arcCount === 5
+          ? [-1, -.58, -.15, .38, 1]
+          : arcCount === 4 ? [-1, -.35, .35, 1] : [-1, 0, 1];
+        var busyTopY = arcCount === 5
+          ? [58, 0, 4, 10, 62]
+          : arcCount === 4 ? [58, 0, 10, 62] : [44, 0, 48];
+        var busyBottomX = arcCount === 4
+          ? [-1, -.64, .64, 1]
+          : arcCount === 3 ? [-1, 0, 1] : [-1, 1];
+        var busyBottomY = arcCount === 4
+          ? [-34, 12, 2, 16]
+          : arcCount === 3 ? [-24, 14, 6] : [-18, 12];
+        var busyXFactor = onTop
+          ? busyTopX[Math.min(arcIndex, busyTopX.length - 1)]
+          : busyBottomX[Math.min(arcIndex, busyBottomX.length - 1)];
+        var busyYOffset = onTop
+          ? busyTopY[Math.min(arcIndex, busyTopY.length - 1)]
+          : busyBottomY[Math.min(arcIndex, busyBottomY.length - 1)];
+        var busyX = busyXFactor * busyHalfWidth;
+        var busyY = onTop
+          ? bounds.t + busyVisualHalf + busyYOffset
+          : blobSize * .50 + busyVisualHalf + busyYOffset;
+        /* The constellation is only an anchor map. Validate each anchor
+           against controls and already placed people, then nudge locally.
+           This keeps the organic layout without ever stacking glass or
+           hiding a coffee count behind the fatigue pill. */
+        var busyNudges = [
+          [0, 0], [0, -14], [-14, 0], [14, 0], [0, 14],
+          [-18, -12], [18, -12], [-22, 14], [22, 14],
+          [0, -28], [-34, 0], [34, 0], [0, 28]
+        ];
+        for (var busyAttempt = 0; busyAttempt < busyNudges.length && !chosen; busyAttempt++) {
+          var busyCandidateX = busyX + busyNudges[busyAttempt][0];
+          var busyCandidateY = busyY + busyNudges[busyAttempt][1];
+          var busyBox = {
+            l: busyCandidateX - busyVisualHalf, r: busyCandidateX + busyVisualHalf,
+            t: busyCandidateY - busyVisualHalf, b: busyCandidateY + busyVisualHalf
+          };
+          var busyHitsCentre = faceBox
+            && busyBox.l < faceBox.r && faceBox.l < busyBox.r
+            && busyBox.t < faceBox.b && faceBox.t < busyBox.b;
+          if (!busyHitsCentre && !hitsAny(busyBox, staffOccupied)) {
+            chosen = { x: busyCandidateX, y: busyCandidateY, box: busyBox };
+          }
+        }
+      }
       var angleOffsets = [0, -8, 8, -16, 16, -24, 24];
       var radiusOffsets = [0, 9, 18, -5, 27, 36, 45];
       for (var ri = 0; ri < radiusOffsets.length && !chosen; ri++) {
@@ -17390,10 +17564,15 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
           var candidateRadius = baseRadius + radiusOffsets[ri];
           var x = Math.cos(candidateAngle) * candidateRadius;
           var y = Math.sin(candidateAngle) * candidateRadius;
-          var halfW = size / 2 + coffeeExtra;
-          var halfH = size / 2 + coffeeExtra;
+          // The transparent lens extends beyond the token box. Reserve that
+          // visible rim here so two glass shells never overlap.
+          var halfW = size * .66 + coffeeExtra + 3;
+          var halfH = size * .66 + coffeeExtra + 3;
           var candidateBox = { l: x - halfW, r: x + halfW, t: y - halfH, b: y + halfH };
-          if (!hitsAny(candidateBox, staffOccupied)) {
+          var hitsCentre = !canTouchCentre && faceBox
+            && candidateBox.l < faceBox.r && faceBox.l < candidateBox.r
+            && candidateBox.t < faceBox.b && faceBox.t < candidateBox.b;
+          if (!hitsCentre && !hitsAny(candidateBox, staffOccupied)) {
             chosen = { x: x, y: y, box: candidateBox };
             break;
           }
@@ -17409,32 +17588,86 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
           var personRx = personSeed / 4294967296;
           personSeed = (Math.imul(personSeed, 1664525) + 1013904223) >>> 0;
           var personRy = personSeed / 4294967296;
-          var personHalf = size / 2 + coffeeExtra;
+          var personHalf = size * .66 + coffeeExtra + 3;
           var personX = bounds.l + personHalf + personRx * Math.max(1, bounds.r - bounds.l - personHalf * 2);
           var personY = bounds.t + personHalf + personRy * Math.max(1, bounds.b - bounds.t - personHalf * 2);
           var freeBox = {
             l: personX - personHalf, r: personX + personHalf,
             t: personY - personHalf, b: personY + personHalf
           };
-          if (!hitsAny(freeBox, staffOccupied)) {
+          var freeHitsCentre = !canTouchCentre && faceBox
+            && freeBox.l < faceBox.r && faceBox.l < freeBox.r
+            && freeBox.t < faceBox.b && faceBox.t < freeBox.b;
+          if (!freeHitsCentre && !hitsAny(freeBox, staffOccupied)) {
             chosen = { x: personX, y: personY, box: freeBox };
             break;
           }
         }
       }
       if (!chosen) {
-        var angle = degrees * Math.PI / 180;
-        chosen = {
-          x: Math.cos(angle) * baseRadius,
-          y: Math.sin(angle) * baseRadius,
-          box: null
-        };
+        // Never fall back to a colliding orbit slot. On a packed shift, retry
+        // this token compactly over the whole card; overlap is worse than a
+        // slightly smaller far-away object.
+        size = Math.min(size, 32);
+        var compactSeed = moodScatterSeed((person.title || index) + ':compact');
+        for (var compactPersonAttempt = 0; compactPersonAttempt < 1200; compactPersonAttempt++) {
+          compactSeed = (Math.imul(compactSeed, 1664525) + 1013904223) >>> 0;
+          var compactPersonRx = compactSeed / 4294967296;
+          compactSeed = (Math.imul(compactSeed, 1664525) + 1013904223) >>> 0;
+          var compactPersonRy = compactSeed / 4294967296;
+          var compactPersonHalf = size * .68 + coffeeExtra + 3;
+          var compactPersonX = bounds.l + compactPersonHalf + compactPersonRx * Math.max(1, bounds.r - bounds.l - compactPersonHalf * 2);
+          var compactPersonY = bounds.t + compactPersonHalf + compactPersonRy * Math.max(1, bounds.b - bounds.t - compactPersonHalf * 2);
+          var compactPersonBox = {
+            l: compactPersonX - compactPersonHalf, r: compactPersonX + compactPersonHalf,
+            t: compactPersonY - compactPersonHalf, b: compactPersonY + compactPersonHalf
+          };
+          var compactHitsCentre = !canTouchCentre && faceBox
+            && compactPersonBox.l < faceBox.r && faceBox.l < compactPersonBox.r
+            && compactPersonBox.t < faceBox.b && faceBox.t < compactPersonBox.b;
+          if (!compactHitsCentre && !hitsAny(compactPersonBox, staffOccupied)) {
+            chosen = { x: compactPersonX, y: compactPersonY, box: compactPersonBox };
+            break;
+          }
+        }
       }
+      if (!chosen) {
+        /* Deterministic exhaustive fallback. It is intentionally allowed to
+           reduce to 30px, but never to overlap another token or the face. */
+        size = 30;
+        var fallbackHalf = size * .68 + coffeeExtra + 3;
+        for (var fallbackY = bounds.t + fallbackHalf; fallbackY <= bounds.b - fallbackHalf && !chosen; fallbackY += 5) {
+          for (var fallbackX = bounds.l + fallbackHalf; fallbackX <= bounds.r - fallbackHalf; fallbackX += 5) {
+            var fallbackBox = {
+              l: fallbackX - fallbackHalf, r: fallbackX + fallbackHalf,
+              t: fallbackY - fallbackHalf, b: fallbackY + fallbackHalf
+            };
+            var fallbackHitsCentre = faceBox
+              && fallbackBox.l < faceBox.r && faceBox.l < fallbackBox.r
+              && fallbackBox.t < faceBox.b && faceBox.t < fallbackBox.b;
+            if (!fallbackHitsCentre && !hitsAny(fallbackBox, staffOccupied)) {
+              chosen = { x: fallbackX, y: fallbackY, box: fallbackBox };
+              break;
+            }
+          }
+        }
+      }
+      if (!chosen) {
+        /* Safety invariant: an impossible layout must never cover the face or
+           another person. The busy-card height makes this unreachable for the
+           supported 14-person maximum; QA checks every calendar date. */
+        person.hidden = true;
+        return;
+      }
+      person.hidden = false;
       person.style.setProperty('--rg-person-size', size.toFixed(1) + 'px');
       person.style.setProperty('--rg-x', chosen.x.toFixed(1) + 'px');
       person.style.setProperty('--rg-y', chosen.y.toFixed(1) + 'px');
-      person.style.setProperty('--rg-person-opacity', (1 - depth * .22).toFixed(2));
-      person.style.setProperty('--rg-person-z', String(Math.round((1 - depth) * 8) + 1));
+      person.style.setProperty('--rg-person-opacity', (.98 - depth * .24).toFixed(2));
+      person.style.setProperty('--rg-person-z', String(canTouchCentre || isNear ? 9 : isFar ? 2 : 5));
+      person.style.setProperty('--rg-bubble-squash', String(view[0]));
+      person.style.setProperty('--rg-bubble-roll', view[1] + 'deg');
+      person.style.setProperty('--rg-bubble-content-x', (1 / Math.sqrt(view[0])).toFixed(3));
       if (chosen.box) staffOccupied.push(chosen.box);
     });
     var coffeeSources = [].slice.call(ring.querySelectorAll('.rg-mood-coffee-orbit'));
@@ -17450,7 +17683,9 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       };
       occupied.push(box);
     }
-    people.forEach(function (person) { addOccupied(person, 6); });
+    people.forEach(function (person) {
+      addOccupied(person, Math.max(8, person.getBoundingClientRect().width * .18));
+    });
     card.querySelectorAll('.rg-feedback-card-title, .rg-mood-side, .rg-mood-topbtn, .rg-mood-label, .rg-pulse-taps, .rg-feedback-card-actions')
       .forEach(function (node) { addOccupied(node, 4); });
     addOccupied(blob, 4);
@@ -17469,7 +17704,8 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       // have nine people plus seven coffee sources; restricting everything to
       // one circumference inevitably forced badges on top of each other.
       // The seeded coordinates remain stable between renders and still look
-      // naturally scattered. Nearer sources are a little larger.
+      // naturally scattered. The fixed depth sequence, not animation, makes
+      // foreground coffee larger and background coffee smaller.
       for (var attempt = 0; attempt < 640; attempt++) {
         seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
         var rx = seed / 4294967296;
@@ -17479,7 +17715,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
         var y = bounds.t + 18 + ry * Math.max(1, bounds.b - bounds.t - 36);
         var distance = Math.sqrt(x * x + y * y);
         var near = Math.max(0, Math.min(1, 1 - (distance - blobSize * .56) / (blobSize * .92)));
-        var size = Math.max(21, Math.min(29, 21 + near * 8));
+        var size = Math.max(17, Math.min(40, 39 - depth * 23 + near));
         // The count sits just beside the SVG; this envelope matches the real
         // rendered badge closely without wasting most of the available gaps.
         var halfW = size / 2 + 10;
@@ -17526,26 +17762,42 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       source.style.setProperty('--rg-coffee-size', placement.size.toFixed(1) + 'px');
       source.style.setProperty('--rg-x', placement.x.toFixed(1) + 'px');
       source.style.setProperty('--rg-y', placement.y.toFixed(1) + 'px');
-      source.style.setProperty('--rg-coffee-opacity', (.98 - placement.depth * .18).toFixed(2));
-      source.style.setProperty('--rg-coffee-z', String(Math.round((1 - placement.depth) * 5) + 1));
+      source.style.setProperty('--rg-coffee-opacity', (.99 - placement.depth * .42).toFixed(2));
+      source.style.setProperty('--rg-coffee-z', String(Math.round((1 - placement.depth) * 8) + 1));
     });
   }
   function buildMoodStaff(ring, staff, coffeeSources) {
+    var moodCard = ring && ring.closest('.rg-feedback-card');
+    var staffList = staff || [];
+    if (moodCard) {
+      moodCard.classList.toggle('rg-busy-staff', staffList.length >= 7);
+      moodCard.classList.toggle('rg-super-busy-staff', staffList.length >= 7
+        && staffList.filter(function (person) { return Number(person.coffee) > 0; }).length >= 4);
+    }
     var fragment = document.createDocumentFragment();
-    (staff || []).slice(0, 14).forEach(function (person) {
+    staffList.slice(0, 14).forEach(function (person) {
       var item = document.createElement('span');
       item.className = 'rg-mood-person' + (person.role === 'rd' ? ' is-rd' : '') + (!person.emoji ? ' is-initials' : '');
       item.setAttribute('data-rg-worker', person.name || '');
       item.title = person.name + (person.coffee ? ' · kafija ×' + person.coffee : '');
       if (Number.isFinite(person.fatigue)) {
+        var fatigueLevel = Math.max(0, Math.min(100, Number(person.fatigue) || 0));
         item.style.setProperty('--rg-person-fatigue', moodFatigueColor(person.fatigue));
         item.style.setProperty('--rg-person-fatigue-rgb', moodFatigueRgb(person.fatigue));
+        item.style.setProperty('--rg-person-fatigue-level', fatigueLevel.toFixed(1) + '%');
+        item.style.setProperty('--rg-person-liquid-rgb', moodPersonLiquidRgb(person.fatigue));
       }
       var glass = document.createElement('span');
       glass.className = 'rg-mood-person-glass';
+      var liquidVessel = document.createElement('i');
+      liquidVessel.className = 'rg-mood-person-liquid-vessel';
+      var liquid = document.createElement('i');
+      liquid.className = 'rg-mood-person-liquid';
+      liquidVessel.appendChild(liquid);
       var identity = document.createElement('span');
       identity.className = 'rg-mood-person-emoji';
       identity.textContent = person.emoji || person.initials || '?';
+      glass.appendChild(liquidVessel);
       glass.appendChild(identity);
       item.appendChild(glass);
       if (person.coffee > 0) {
