@@ -1627,7 +1627,7 @@ function _mkToast(msg, type) {
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260810layout2"></script>
 <script src="js/fatigue.js?v=20260816fatcache1"></script>
-<script src="js/nightsplit.js?v=20260814skeuo111" defer></script>
+<script src="js/nightsplit.js?v=20260822roomassets23" defer></script>
 <script src="js/monthcal.js?v=20260814uxpass1" defer></script>
 <script src="js/design_v1.js" defer></script>
 <script src="js/theme.js?v=20260724f" defer></script>
@@ -12717,7 +12717,7 @@ window.addEventListener('message', function(e) {
   window.mkApplySkinToEl = function(el, skin) {
     var numEl = el.querySelector('.mk-mid-hours.card-shift') || el.querySelector('.pv-num') || el.querySelector('.nsc-full-dur');
     if (numEl) { numEl.style.removeProperty('color'); numEl.style.removeProperty('-webkit-text-fill-color'); }
-    ['mk-has-skin','mk-has-grad','mk-skin-fit','mk-has-num','mk-has-txt','mk-has-spark','mk-fx-hearts','mk-fx-mirdz','mk-fx-burb','mk-fx-ziedi','mk-fx-taur','mk-emoji-custom','mk-emoji-normal','nsc-worker-skinned','nsc-skin-hue','nsc-skin-contain'].forEach(function(c){ el.classList.remove(c); });
+    ['mk-has-skin','mk-has-grad','mk-skin-fit','mk-has-num','mk-has-txt','mk-has-spark','mk-fx-hearts','mk-fx-mirdz','mk-fx-burb','mk-fx-ziedi','mk-fx-taur','mk-emoji-custom','mk-emoji-normal','nsc-worker-skinned','nsc-skin-hue','nsc-skin-contain','ns-room-bed-skin-hue'].forEach(function(c){ el.classList.remove(c); });
     ['--mk-skin-img','--mk-emoji-tint','--mk-emoji-tint-a','--mk-num-color','--mk-num-alpha','--mk-txt-color','--mk-emoji-op','--mk-fx-scale'].forEach(function(p){ el.style.removeProperty(p); });
     if (!skin) return;
     if (el.classList.contains('nsc-full-card')) el.classList.add('nsc-worker-skinned');
@@ -12737,6 +12737,7 @@ window.addEventListener('message', function(e) {
       el.style.setProperty('--mk-emoji-tint', skin.rgb);
       el.style.setProperty('--mk-emoji-tint-a', '.24');
       if (el.classList.contains('nsc-full-card')) el.classList.add('nsc-skin-hue');
+      if (el.classList.contains('ns-room-bed')) el.classList.add('ns-room-bed-skin-hue');
     }
     if (skin.num) {
       el.classList.add('mk-has-num');
@@ -12765,7 +12766,7 @@ window.addEventListener('message', function(e) {
   };
   function applyToCards(k) {
     var skin = loadAll()[k] || null;
-    document.querySelectorAll('#grafiks-list .card[data-worker], #nsPanel .nsc-full-card[data-worker]').forEach(function(c) {
+    document.querySelectorAll('#grafiks-list .card[data-worker], #nsPanel .nsc-full-card[data-worker], #nsPanel .ns-room-bed[data-worker]').forEach(function(c) {
       if (normName(c.getAttribute('data-worker')) !== k) return;
       window.mkApplySkinToEl(c, skin);
     });
@@ -21437,7 +21438,7 @@ html body .side-panel .mk-duty-strip.mk-duty-avatar-strip {
 
 <!-- Loaded last on purpose: the night split is an overlay and this small,
      local stylesheet replaces the older visual layers without touching logic. -->
-<link rel="stylesheet" href="css/nightsplit-brand.css?v=20260814skeuo111">
+<link rel="stylesheet" href="css/nightsplit-brand.css?v=20260822roomassets23">
 
 </body>
 </html>
