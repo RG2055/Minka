@@ -13,7 +13,21 @@ function doGet(e) {
     var readable = Utilities.formatDate(d, Session.getScriptTimeZone(), 'dd.MM.yyyy HH:mm');
     var who = normalizeBolusName_(p.name) || 'Anonīms';
     var roomLabel = roomKey === 'ge' ? 'GE kabinets' : 'PHILIPS kabinets';
-    bolusSheet.appendRow([roomLabel, readable, who]);
+    var leftConc = normalizeBolusConcentration_(p.leftConc);
+    var leftMl = normalizeBolusContrastMl_(p.leftMl);
+    var naclMl = normalizeBolusNaclMl_(p.naclMl);
+    var rightConc = normalizeBolusConcentration_(p.rightConc);
+    var rightMl = normalizeBolusContrastMl_(p.rightMl);
+    bolusSheet.appendRow([
+      roomLabel,
+      readable,
+      who,
+      leftConc && leftMl ? 'Ultravist ' + leftConc : '',
+      leftConc && leftMl ? leftMl : '',
+      naclMl || '',
+      rightConc && rightMl ? 'Ultravist ' + rightConc : '',
+      rightConc && rightMl ? rightMl : ''
+    ]);
     return jsonOut_({ ok: true });
   }
 
@@ -100,7 +114,7 @@ function doGet(e) {
     var tt = (dp[1] || '0:0').split(':');
     var ts = new Date(Number(dd[2]), Number(dd[1]) - 1, Number(dd[0]), Number(tt[0]), Number(tt[1])).getTime();
     if (ts > 0) {
-      result[room].history.push({ ts: ts, name: whoRead });
+      result[room].history.push({ ts: ts, name: whoRead, media: bolusMediaFromRow_(data[j]) });
       if (!result[room].changedAt || ts > result[room].changedAt) result[room].changedAt = ts;
     }
   }
@@ -142,6 +156,34 @@ function normalizeBolusName_(value) {
   return text.replace(/[<>&`\u0000-\u001f\u007f]/g, '').trim();
 }
 
+function normalizeBolusConcentration_(value) {
+  var match = String(value == null ? '' : value).match(/(?:^|\D)(300|370)(?:\D|$)/);
+  return match ? Number(match[1]) : null;
+}
+
+function normalizeBolusContrastMl_(value) {
+  var ml = Number(value);
+  return ml === 200 || ml === 500 ? ml : null;
+}
+
+function normalizeBolusNaclMl_(value) {
+  return Number(value) === 500 ? 500 : null;
+}
+
+function bolusMediaFromRow_(row) {
+  var leftConc = normalizeBolusConcentration_(row[3]);
+  var leftMl = normalizeBolusContrastMl_(row[4]);
+  var naclMl = normalizeBolusNaclMl_(row[5]);
+  var rightConc = normalizeBolusConcentration_(row[6]);
+  var rightMl = normalizeBolusContrastMl_(row[7]);
+  if (!leftConc && !naclMl && !rightConc) return null;
+  return {
+    left: { enabled: !!(leftConc && leftMl), concentration: leftConc || 370, volumeMl: leftMl || 500 },
+    nacl: { enabled: !!naclMl, volumeMl: 500 },
+    right: { enabled: !!(rightConc && rightMl), concentration: rightConc || 300, volumeMl: rightMl || 500 }
+  };
+}
+
 function getOrCreateSheet_(ss, name) {
   var sheet = ss.getSheetByName(name);
   if (!sheet) sheet = ss.insertSheet(name);
@@ -149,9 +191,21 @@ function getOrCreateSheet_(ss, name) {
 }
 
 function ensureBolusHeader_(sheet) {
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['Kabinets', 'Datums un laiks', 'Nomainīja']);
-    sheet.getRange(1, 1, 1, 3).setFontWeight('bold').setBackground('#d9e1f2');
+  var headers = [
+    'Kabinets',
+    'Datums un laiks',
+    'Nomainīja',
+    'Kreisais kontrasts',
+    'Kreisais tilpums ml',
+    'NaCl ml',
+    'Labais kontrasts',
+    'Labais tilpums ml'
+  ];
+  // Existing installations already have the first three columns. Extend the
+  // header once, without turning every periodic GET into a Sheet write.
+  if (sheet.getLastRow() === 0 || sheet.getLastColumn() < headers.length) {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#d9e1f2');
   }
 }
 

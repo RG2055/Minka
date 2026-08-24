@@ -18244,60 +18244,6 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     moodDayRefreshTimer = 0;
   }
 
-  // A day switch replaces the whole constellation at once, which without a
-  // transition reads as a hard cut. Play the badges out from behind the face
-  // instead. The individual `scale` property is the point: the placement
-  // solver owns `transform`, and since `scale` is applied to the already
-  // translated badge, scaling it scales its offset from the centre too — one
-  // compositor-only property produces the radial burst without the animation
-  // ever touching the layout geometry. It runs after placement and is never
-  // read back, so it cannot slow the day switch down.
-  //
-  // mk-low-spec is pinned on for every device, so the class cannot tell a work
-  // PC from a fast one — the real hardware numbers behind it can. The burst is
-  // a one-shot 420ms scale/opacity play on at most ~21 small badges: the same
-  // class of interaction-time compositor work as the mood transitions that stay
-  // enabled on those machines, and nothing like the endless idle animations the
-  // profile exists to kill. Skip it only on genuinely tiny hardware, and
-  // whenever the OS asks for less motion.
-  function moodBurstAllowed() {
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
-    var profile = window.__mkPerfProfile || {};
-    var cores = Number(profile.hardwareConcurrency || navigator.hardwareConcurrency || 0);
-    var memory = Number(profile.deviceMemory || navigator.deviceMemory || 0);
-    if (cores && cores <= 2) return false;
-    if (memory && memory <= 2) return false;
-    return true;
-  }
-  function playMoodBurst() {
-    if (!moodBurstAllowed()) return;
-    var ring = moodRefs('ring');
-    if (!ring || typeof ring.animate !== 'function') return;
-    [].forEach.call(ring.children, function (badge, index) {
-      // Clicking through days fast can leave an unfinished burst on a badge
-      // that survived the rebuild. Drop only our own animations — a CSS one
-      // (CSSAnimation) always carries an animationName, scripted ones do not.
-      if (typeof badge.getAnimations === 'function') {
-        badge.getAnimations().forEach(function (anim) {
-          if (!anim.animationName) anim.cancel();
-        });
-      }
-      badge.animate([
-        { scale: '.34', opacity: 0, offset: 0 },
-        { scale: '1.05', offset: .62 },
-        { scale: '1', offset: 1 }
-      ], {
-        // No closing opacity keyframe on purpose: the badges carry their own
-        // depth opacity in --rg-person-opacity / --rg-coffee-opacity, and an
-        // implicit final keyframe fades them up to exactly that value.
-        duration: 420,
-        delay: Math.min(index, 12) * 24,
-        easing: 'cubic-bezier(.22, .9, .3, 1)',
-        fill: 'backwards'
-      });
-    });
-  }
-
   // Staff/source placement is the expensive part of the mood card: it reads
   // real geometry and runs collision searches for every badge. It used to run
   // inside the day-click task, consuming most of that interaction's frame on
@@ -18319,8 +18265,10 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
             // paintCounts() rebuilds and places the constellation synchronously
             // (paintCounts → updateMoodBlob → paintMoodCoffee → buildMoodStaff),
             // so by this line the badges already sit at their final spots.
+            // The constellation is already complete when this idle refresh
+            // finishes. Keep it static: replaying a staggered 420ms burst here
+            // made every day switch look like the emoji rendered twice.
             paintCounts();
-            playMoodBurst();
             loadRatings(day, true);
           } catch (_error) {}
         };
