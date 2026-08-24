@@ -26,7 +26,7 @@
   }
 
   applyAmbientHue();
-  setInterval(applyAmbientHue, 60_000); // update once per minute, CSS transition smooths it
+  setInterval(() => { if (!document.hidden) applyAmbientHue(); }, 60_000);
 
 
   /* ──────────────────────────────────────────────────────────────
@@ -98,14 +98,17 @@
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => {
         setTimeout(applyLiveClasses, 800); // after calendar renders
-        setInterval(applyLiveClasses, 60_000);
+        setInterval(() => { if (!document.hidden) applyLiveClasses(); }, 60_000);
       });
     } else {
       setTimeout(applyLiveClasses, 800);
-      setInterval(applyLiveClasses, 60_000);
+      setInterval(() => { if (!document.hidden) applyLiveClasses(); }, 60_000);
     }
   }
   scheduleLive();
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) { applyAmbientHue(); applyLiveClasses(); }
+  }, { passive: true });
 
   // Also re-run whenever the calendar re-renders (grafiks-list changes)
   if (window.MutationObserver) {

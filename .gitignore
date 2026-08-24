@@ -3,6 +3,12 @@ test-results/
 *.tmp
 *.old
 *.orig
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+!.env.example
+!.dev.vars.example
 
 cloudflare/phones.import.sql
 cloudflare/coffee-api/.wrangler/

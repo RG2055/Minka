@@ -1673,7 +1673,7 @@
     if (_origShowWorker) _origShowWorker.call(this, workerName, shift);
   }
   patchShowWorker(); /* patch immediately on load */
-  setInterval(patchShowWorker, 5000); /* keeper poll — 5s is plenty for a monkey-patch guard */
+  setInterval(function(){ if(!document.hidden) patchShowWorker(); }, 30000);
 
   function renderInModal(container) {
     if (!container || !_modalWorker) return;

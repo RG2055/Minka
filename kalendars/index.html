@@ -386,7 +386,7 @@ window.setTimeout(function () {
        Marķieris te ir burtisks, nevis `window.__minkaLocalBuild`: tas tiek
        uzstādīts krietni tālāk failā nekā šis skripts, tāpēc te tas vēl būtu
        tukšs. Bumpo to kopā ar pārējiem. */
-    fetch(BASE + 'manifest.json?v=20260824rolloverfix5')
+    fetch(BASE + 'manifest.json?v=20260824perfaudit2')
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (m) { manifest = m || { emoji: {} }; applyStatics(); })
       .catch(function () { manifest = { emoji: {} }; });
@@ -653,7 +653,8 @@ window.setTimeout(function () {
        visu kartītes saturu. Novērotājs to ne vienmēr noķer — pārzīmēšana un
        novērotāja rāmis var sakrist tā, ka pārbaude notiek pirms jaunā satura.
        Šī pārbaude ir lēta (ap 12 elementu, mērījumi kešoti) un neatkarīga. */
-    setInterval(applyStatics, 1200);
+    setInterval(function(){ if(!document.hidden) applyStatics(); }, 5000);
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden) applyStatics(); }, { passive:true });
     applyStatics();
     idle(prefetchVisible);
   }
@@ -1623,21 +1624,21 @@ function _mkToast(msg, type) {
 </script>
 <script src="data/namedays.local.js"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
-<script src="js/calendar.js?v=20260824rolloverfix5"></script>
+<script src="js/calendar.js?v=20260824perfaudit2"></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260810layout2"></script>
 <script src="js/fatigue.js?v=20260816fatcache1"></script>
-<script src="js/nightsplit.js?v=20260822roomassets28" defer></script>
+<script src="js/nightsplit.js?v=20260824perfaudit2" defer></script>
 <script src="js/monthcal.js?v=20260814uxpass1" defer></script>
-<script src="js/design_v1.js" defer></script>
+<script src="js/design_v1.js?v=20260824perfaudit2" defer></script>
 <script src="js/theme.js?v=20260724f" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
 <script src="js/emoji.js?v=20260814midmeta36" defer></script>
 <script src="js/levels.js?v=20260802coffee1" defer></script>
-<script src="js/radiologist_plan.js" defer></script>
+<script src="js/radiologist_plan.js?v=20260824perfaudit2" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260824rolloverfix5';
+window.__minkaLocalBuild = '20260824perfaudit2';
 (function(){
   function norm(v){
     try { return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
@@ -2069,7 +2070,7 @@ document.addEventListener('keydown', (e) => {
   } else {
     apply();
   }
-  setInterval(apply, 20 * 1000);
+  setInterval(function(){ if(!document.hidden) apply(); }, 20 * 1000);
   window.addEventListener('focus', apply);
   window.addEventListener('resize', apply);
   document.addEventListener('visibilitychange', function(){ if(!document.hidden) apply(); });
@@ -2221,10 +2222,6 @@ document.addEventListener('keydown', (e) => {
   const FEEDS_LABELS = {v:'Veselība',l:'Latvija',r:'Rīga',sv:'Sabiedrība',ek:'Ekonomika',pa:'Pasaule',sp:'Sports'};
   const DESCMAP = {'clear sky':'Skaidrs','few clouds':'Daži mākoņi','scattered clouds':'Mainīgi mākoņains','broken clouds':'Mākoņains','overcast clouds':'Apmācies','light rain':'Viegls lietus','moderate rain':'Lietus','heavy intensity rain':'Stiprs lietus','rain':'Lietus','thunderstorm':'Pērkona negaiss','snow':'Sniegs','light snow':'Viegls sniegs','mist':'Migla','fog':'Bieza migla','drizzle':'Smidzina','sleet':'Slapjš sniegs'};
   /* VARDA ï¿½ tiek izmantots no data/varda.js (window.LATVIAN_NAMEDAYS) */
-  const h = new Date().getHours();
-  const GREET = h<5?'Nakts rit':h<11?'Labrīt':h<17?'Labdien':'Labvakar';
-
-
   function openExternalLink(url) {
     const target = String(url || '').trim();
     if (!target) return;
@@ -2757,126 +2754,6 @@ document.addEventListener('keydown', (e) => {
     return null;
   }
 
-  /* ï¿½ï¿½ï¿½ï¿½ VÄrdadienas (no data/varda.js ï¿½  window.LATVIAN_NAMEDAYS) ï¿½ï¿½ï¿½ï¿½ */
-  function todayVarda() {
-    const db = window.LATVIAN_NAMEDAYS;
-  if (!db) { console.warn('[MINKA] LATVIAN_NAMEDAYS nav ielādēts!'); return []; }
-    let mm = '', dd = '';
-    try {
-      const parts = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Europe/Riga', month: '2-digit', day: '2-digit'
-      }).formatToParts(new Date());
-      mm = parts.find(p => p.type === 'month')?.value || '';
-      dd = parts.find(p => p.type === 'day')?.value || '';
-    } catch(_e) {}
-    if (!mm || !dd) {
-      const d = new Date();
-      mm = String(d.getMonth()+1).padStart(2,'0');
-      dd = String(d.getDate()).padStart(2,'0');
-    }
-    const key = mm + '-' + dd;
-    const names = db[key] || [];
-  console.log('[MINKA] Vārdadienas:', key, '→', names);
-  return names.filter(n => n && n.trim() && n.trim() !== '–' && n.trim() !== '-');
-  }
-
-  /* ï¿½ï¿½ï¿½ï¿½ Fatigue warning ï¿½ï¿½ï¿½ï¿½ */
-  function getFatigueWarning() {
-    try {
-      if (!window.__fatigue || !window.__minkaGetSelectedDayState) return null;
-      const st = window.__minkaGetSelectedDayState();
-      if (!st) return null;
-      let worst=null, top=0;
-      [...(st.workers||[]),...(st.radiologists||[])].forEach(w=>{
-        try { const f=window.__fatigue.calculateFatigue(w.name); if(f&&f.score>top){top=f.score;worst=w;} } catch(e){}
-      });
-      if (worst&&top>=60) return {name:worst.name.split(' ')[0], score:top, isCrit:top>=80};
-    } catch(e) {}
-    return null;
-  }
-
-  function buildFatigueMsg(fw) {
-    if (!fw) return null;
-    return fw.isCrit
-      ? `Kritiski: ${fw.name} noguruma līmenis ${fw.score}%. Ieteicams pārrunāt ar kolēģiem.`
-      : `${fw.name} noguruma līmenis paaugstināts (${fw.score}%).`;
-  }
-
-  /* ï¿½ï¿½ï¿½ï¿½ Init proactive cycle ï¿½ï¿½ï¿½ï¿½ */
-  async function startProactive() {
-    await Promise.all([fetchWeather(), fetchNews()]);
-    const msgs = [];
-
-    if (_weatherData) {
-      msgs.push({text:`${GREET}! Rīgā: ${_weatherData.desc}, ${_weatherData.t}°C (sajūta ${_weatherData.tf}°C), vējš ${_weatherData.wind} m/s. Saule ${_weatherData.sr}–${_weatherData.ss}.`, mode:'weather'});
-    }
-    const varda = todayVarda();
-    if (varda.length) msgs.push({text:`Šodien vārdadienu svin ${(varda.length > 1 ? varda.slice(0,-1).join(', ') + ' un ' + varda[varda.length-1] : varda[0])}.`, mode:'info'});
-    const fw = getFatigueWarning();
-    const fwMsg = buildFatigueMsg(fw);
-    if (fwMsg) msgs.push({text: fwMsg, mode:'warning'});
-    if (!isLowPerformance()) {
-      // Show 3 news at startup (after weather/varda msgs)
-      for (let ni = 0; ni < 3; ni++) {
-        const n = nextNews();
-        if (n) msgs.push({text: n, mode:'news', link: _lastNewsLink});
-      }
-
-      // Bolus reminder
-      msgs.push({text: 'Samaini un atzīmē <span style="color:#ff3b30;font-weight:800;">bolusu</span> nomaiņu statistikai — saņem +20 XP! 💉', mode:'bolus'});
-    }
-
-    msgs.forEach((m,i) => setTimeout(()=>qMsg(m.text, m.mode, m.link||''), 2000 + i*13000));
-
-    // Top 5 — poll until __grafiksStore has data (max 60s)
-    let _top5Done = false;
-    function _tryTop5() {
-      if (isLowPerformance()) { _top5Done = true; return; }
-      if (_top5Done) return;
-      try {
-        const store = window.__grafiksStore || {};
-        if (!Object.keys(store).length) return; // not ready yet
-        const allW = window.MinkaLevels && typeof window.MinkaLevels.buildAllTimeStats === 'function'
-          ? window.MinkaLevels.buildAllTimeStats() : {};
-        const top5 = Object.values(allW)
-          .filter(w => !w.isRad && w.xp > 0)
-          .sort((a,b) => b.xp - a.xp)
-          .slice(0,5);
-        if (!top5.length) return;
-        _top5Done = true;
-        const medals = ['🥇','🥈','🥉','4)','5)'];
-        const html = top5.map((w,i) => {
-          const lvl = w.levelData && w.levelData.current ? w.levelData.current.lvl : '?';
-          const col = (w.levelData && w.levelData.current && w.levelData.current.color) || '#a78bfa';
-          const safeName = tickerEsc(String(w.name || '').split(' ')[0]);
-          const safeCol = /^#[0-9a-f]{3,8}$/i.test(String(col)) ? col : '#a78bfa';
-          const safeXp = Math.max(0, Math.round(Number(w.xp) || 0));
-          const safeLvl = tickerEsc(String(lvl));
-          return medals[i] + ' <b>' + safeName + '</b> <span style="color:' + safeCol + ';font-weight:700;">' + safeXp + ' XP</span> <span style="font-size:10px;opacity:.45">Lv.' + safeLvl + '</span>';
-        }).join('&ensp;&ensp;');
-        qMsg('🏆 ' + html, 'top');
-      } catch(_e) {}
-    }
-    const _top5Interval = setInterval(() => { _tryTop5(); if (_top5Done) clearInterval(_top5Interval); }, 2000);
-    setTimeout(() => clearInterval(_top5Interval), 60000);
-
-    // News every 4 min ï¿½ 2 items each refresh cycle
-    setInterval(async () => {
-      await fetchNews();
-      if (isLowPerformance()) return;
-      const n1 = nextNews(); if (n1) qMsg(n1, 'news', _lastNewsLink);
-      setTimeout(() => { const n2 = nextNews(); if (n2) qMsg(n2, 'news', _lastNewsLink); }, 11000);
-    }, 15*60*1000);
-
-    // Weather + fatigue every 30 min
-    setInterval(async () => {
-      await fetchWeather();
-      if (_weatherData) qMsg(`Rīgā: ${_weatherData.desc}, ${_weatherData.t}°C, vējš ${_weatherData.wind} m/s.`, 'weather');
-      const fw2 = getFatigueWarning();
-      if (fw2 && fw2.score>=65) qMsg(`${fw2.name} nogurums: ${fw2.score}%. Ievērojiet piesardzību.`, 'warning');
-    }, 30*60*1000);
-  }
-
   /* ï¿½ï¿½ï¿½ï¿½ Also expose searchInput alias for old code ï¿½ï¿½ï¿½ï¿½ */
   Object.defineProperty(window, '__minkaBarGetText', {get:()=>getText});
   // Legacy: if calendar.js uses #searchInput ID directly for results rendering
@@ -2905,7 +2782,6 @@ document.addEventListener('keydown', (e) => {
   /* ï¿½ï¿½ï¿½ï¿½ Start ï¿½ï¿½ï¿½ï¿½ */
   setMode('idle');
   startHints();
-  /* Legacy proactive loop disabled ï¿½ v34 is the single recurring scheduler */
 })();
 </script>
 

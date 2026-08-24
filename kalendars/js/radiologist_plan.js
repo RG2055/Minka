@@ -13,6 +13,7 @@
   var isSaving = false;
   var _pollTimer = null;
   var POLL_MS = 300000; /* 5 min (was 30s) — lighter background polling */
+  var remotePlanCache = Object.create(null);
 
   function getActiveDate() {
     return String(window.__activeDateStr || '').trim();
@@ -146,9 +147,17 @@
     return '';
   }
 
-  async function fetchRemotePlan(dateStr) {
+  async function fetchRemotePlan(dateStr, force) {
     var gsUrl = getGsUrl();
     if (!gsUrl || !dateStr) return null;
+    var cached = remotePlanCache[dateStr];
+    if (!force && cached) {
+      if (cached.promise) return cached.promise;
+      if (Date.now() - cached.at < 8000) return cached.value;
+    }
+    var entry = cached || { at: 0, value: null, promise: null };
+    remotePlanCache[dateStr] = entry;
+    entry.promise = (async function() {
     try {
       var url = gsUrl + '?action=' + encodeURIComponent(GET_ACTION) + '&date=' + encodeURIComponent(dateStr) + '&_=' + Date.now();
       var res = await fetch(url, { cache: 'no-store' });
@@ -158,6 +167,12 @@
     } catch (_e) {
       return null;
     }
+    })();
+    var value = await entry.promise;
+    entry.promise = null;
+    entry.value = value;
+    entry.at = Date.now();
+    return value;
   }
 
   async function writeRemotePlan(dateStr, text, extra) {
@@ -254,7 +269,7 @@
 
     if (opts.localOnly) return;
 
-    var remoteText = await fetchRemotePlan(dateStr);
+    var remoteText = await fetchRemotePlan(dateStr, !!opts.forceRemote);
     if (token !== currentLoadToken) return;
     if (remoteText !== null) {
       setLocalPlan(dateStr, remoteText);
@@ -335,7 +350,7 @@
       : (getGsUrl() ? 'Saglabāts lokāli. Nav sinhronizēts.' : 'Saglabāts lokāli.');
     isSaving = false;
     closeEditor();
-    loadPlan(dateStr);
+    loadPlan(dateStr, { forceRemote: true });
   }
 
   function bindUi() {
