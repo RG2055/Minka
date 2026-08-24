@@ -7330,6 +7330,102 @@ body.mk-buddy-header-home #mk-buddy-bolus {
 @container bolus-history (min-height:215px){
   .bhist:not(.is-all) .bhist-row:nth-child(-n+7){display:grid!important}
 }
+/* History edit/delete states need their own geometry. The compact 28px row
+   used by normal history entries must never constrain these controls. */
+#bolus-sheet .bhist-row.bhist-editing{
+  display:grid!important;
+  grid-template-columns:minmax(190px,1.35fr) minmax(120px,.65fr) auto!important;
+  grid-template-rows:auto auto!important;
+  gap:7px 8px!important;
+  align-items:center!important;
+  min-height:0!important;
+  padding:8px!important;
+  background:#07375a!important;
+  border:1px solid #00a9db!important;
+  border-radius:4px!important;
+}
+#bolus-sheet .bhist-row.bhist-editing .bhe-head{
+  grid-column:1/-1!important;
+  grid-row:1!important;
+  min-width:0!important;
+}
+#bolus-sheet .bhist-row.bhist-editing .bhe-dt{grid-column:1!important;grid-row:2!important}
+#bolus-sheet .bhist-row.bhist-editing .bhe-nm{grid-column:2!important;grid-row:2!important}
+#bolus-sheet .bhist-row.bhist-editing .bhe-btns{grid-column:3!important;grid-row:2!important}
+#bolus-sheet .bhist-row.bhist-deleting{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  grid-template-rows:auto!important;
+  gap:10px!important;
+  align-items:center!important;
+  min-height:54px!important;
+  padding:7px 8px!important;
+  background:#07375a!important;
+  border:1px solid #00a9db!important;
+  border-radius:4px!important;
+}
+#bolus-sheet .bhist-row.bhist-deleting .bhx-q{
+  grid-column:1!important;
+  grid-row:1!important;
+  min-width:0!important;
+  overflow-wrap:anywhere!important;
+}
+#bolus-sheet .bhist-row.bhist-deleting .bhe-btns{
+  grid-column:2!important;
+  grid-row:1!important;
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  gap:7px!important;
+}
+#bolus-sheet .bhist-editing .bhe-dt,
+#bolus-sheet .bhist-editing .bhe-nm{
+  min-width:0!important;
+  height:38px!important;
+  padding:5px 9px!important;
+  background:#062a48!important;
+  border:1px solid #5ac7d2!important;
+  border-radius:4px!important;
+  color:#fff!important;
+  box-shadow:none!important;
+  outline:none!important;
+}
+#bolus-sheet .bhist-editing .bhe-dt:focus,
+#bolus-sheet .bhist-editing .bhe-dt:focus-visible,
+#bolus-sheet .bhist-editing .bhe-nm:focus,
+#bolus-sheet .bhist-editing .bhe-nm:focus-visible{
+  border-color:#8ce7eb!important;
+  outline:2px solid #00a9db!important;
+  outline-offset:1px!important;
+  box-shadow:none!important;
+}
+#bolus-sheet .bhist-editing button:focus,
+#bolus-sheet .bhist-editing button:focus-visible,
+#bolus-sheet .bhist-deleting button:focus,
+#bolus-sheet .bhist-deleting button:focus-visible{
+  outline:2px solid #00a9db!important;
+  outline-offset:1px!important;
+  box-shadow:none!important;
+}
+#bolus-sheet .bhist-editing .bhe-btns>button,
+#bolus-sheet .bhist-deleting .bhe-btns>button{
+  flex:0 0 auto!important;
+  min-width:84px!important;
+  min-height:38px!important;
+  padding:7px 11px!important;
+  white-space:nowrap!important;
+}
+@media(max-width:700px){
+  #bolus-sheet .bhist-row.bhist-editing{
+    grid-template-columns:1fr 1fr!important;
+  }
+  #bolus-sheet .bhist-row.bhist-editing .bhe-head{grid-column:1/-1!important}
+  #bolus-sheet .bhist-row.bhist-editing .bhe-dt{grid-column:1/-1!important;grid-row:2!important}
+  #bolus-sheet .bhist-row.bhist-editing .bhe-nm{grid-column:1/-1!important;grid-row:3!important}
+  #bolus-sheet .bhist-row.bhist-editing .bhe-btns{grid-column:1/-1!important;grid-row:4!important}
+  #bolus-sheet .bhist-row.bhist-deleting{grid-template-columns:1fr!important}
+  #bolus-sheet .bhist-row.bhist-deleting .bhx-q{grid-column:1!important;grid-row:1!important}
+  #bolus-sheet .bhist-row.bhist-deleting .bhe-btns{grid-column:1!important;grid-row:2!important}
+}
 /* Flat, visual bottle connection reminder. */
 #bolus-guide{
   inset:0!important;
