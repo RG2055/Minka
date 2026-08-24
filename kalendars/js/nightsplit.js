@@ -198,6 +198,7 @@
   var _roomBc=null;
   var _roomPolling=false;
   var _roomPulling={};
+  var _roomLastPulledAt={};
   try{ _roomBc = new BroadcastChannel('minka-ns-rooms-sync'); }catch(_e){}
 
   function activeDateKey(){
@@ -332,6 +333,11 @@
   function pullRoomState(dateStr, cb){
     var api=activeRoomApi();
     if(!api || !dateStr || _roomPulling[dateStr]) return;
+    var now=Date.now();
+    // init() performs an immediate pull and two staged paints. Those paints
+    // must not turn into three identical API requests on every startup.
+    if(now-(_roomLastPulledAt[dateStr]||0)<8000) return;
+    _roomLastPulledAt[dateStr]=now;
     _roomPulling[dateStr]=true;
     api.apiFetch(NS_ROOM_API_PATH + '?date=' + encodeURIComponent(dateStr))
       .then(function(r){ return r.json(); })
@@ -694,6 +700,8 @@
     var H=clockWrap.querySelector('.nsh-h'), M=clockWrap.querySelector('.nsh-m'), S=clockWrap.querySelector('.nsh-s');
     var catPivot=clockWrap.querySelector('.nsh-catPivot'), cat=clockWrap.querySelector('.nsh-cat');
     var lastPaint=0;
+    var lowMotion=!!(document.documentElement.classList.contains('mk-low-spec') ||
+      (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches));
     function loop(){
       if(!document.body.contains(clockWrap)) return;
       if(!document.hidden && performance.now()-lastPaint>=250){
@@ -705,11 +713,19 @@
       }
       // Hands repaint at 4Hz (250ms gate above) — schedule at that rate
       // instead of waking on every 60Hz frame.
-      if(document.hidden) setTimeout(function(){ requestAnimationFrame(loop); }, 1000);
+      if(document.hidden || lowMotion) setTimeout(function(){ requestAnimationFrame(loop); }, 1000);
       else setTimeout(function(){ requestAnimationFrame(loop); }, 250);
     } requestAnimationFrame(loop);
-    if(catPivot && cat && !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)){
-      (function peek(){ var ang=160+Math.random()*40; catPivot.style.transform='rotate('+ang+'deg)'; setTimeout(function(){cat.style.transform='translate(-50%,-50%) translateY(-40px)';},60); setTimeout(function(){cat.style.transform='translate(-50%,-50%) translateY(0)';},1100+Math.random()*700); setTimeout(peek,3600+Math.random()*3800); })();
+    if(catPivot && cat && !lowMotion){
+      (function peek(){
+        if(!document.body.contains(clockWrap)) return;
+        if(document.hidden){ setTimeout(peek,5000); return; }
+        var ang=160+Math.random()*40;
+        catPivot.style.transform='rotate('+ang+'deg)';
+        setTimeout(function(){ if(document.body.contains(clockWrap)) cat.style.transform='translate(-50%,-50%) translateY(-40px)'; },60);
+        setTimeout(function(){ if(document.body.contains(clockWrap)) cat.style.transform='translate(-50%,-50%) translateY(0)'; },1100+Math.random()*700);
+        setTimeout(peek,3600+Math.random()*3800);
+      })();
     }
   }
 

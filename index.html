@@ -165,8 +165,9 @@
       }
     } catch(e) {}
   }
+  window.__minkaHasApiAuth = function() { return !!getToken(); };
 
-  var CALENDAR_BUILD = '20260824rolloverfix5';
+  var CALENDAR_BUILD = '20260824perfaudit2';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -211,7 +212,7 @@
       var nextAbsolute = new URL(next, window.location.href).href;
       if (f.src !== nextAbsolute) f.setAttribute('src', next);
       if (f.contentWindow) f.contentWindow.postMessage({ type: 'minka_auth_ok', token: getToken() }, window.location.origin);
-    }, 180);
+    }, 0);
   }
 
   function showGate() {
@@ -342,12 +343,15 @@
         var data = await res.json().catch(function(){ return {}; });
         if (!res.ok || !data || !data.token) throw new Error((data && data.error) || 'Login failed');
         setToken(data.token, !!(remember && remember.checked));
+        document.dispatchEvent(new CustomEvent('minka:auth-ok'));
         notifyIframeAuth();
         // Reuse the compact brand loader while the authenticated schedule paints.
         var ldr = document.getElementById('mk-app-loader');
         if (ldr) {
-          ldr.style.display = 'grid';
+          ldr.style.display = 'flex';
           ldr.style.opacity = '1';
+          var ldrStatus = document.getElementById('mklLoadStatus');
+          if (ldrStatus) ldrStatus.textContent = 'Iel\u0101d\u0113 grafiku\u2026';
           var ldrDone = false;
           var hideLdr = function() {
             if (ldrDone) return;
@@ -362,7 +366,6 @@
               hideLdr();
             }
           });
-          setTimeout(hideLdr, 12000);
         }
         overlay.style.transition = 'opacity 0.3s';
         overlay.style.opacity = '0';
@@ -395,7 +398,10 @@
   });
 
   if (!getToken()) showGate();
-  else document.addEventListener('DOMContentLoaded', notifyIframeAuth, { once: true });
+  else document.addEventListener('DOMContentLoaded', function() {
+    document.dispatchEvent(new CustomEvent('minka:auth-ok'));
+    notifyIframeAuth();
+  }, { once: true });
 })();
 </script>
 <script>
@@ -720,7 +726,9 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260824rolloverfix5" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260824rolloverfix5" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <!-- Keep the expensive calendar document dormant behind the password gate.
+       Authenticated startup assigns data-base-src immediately. -->
+  <iframe src="about:blank" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260824perfaudit2" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- Compact brand loader. It stays up until the embedded schedule has painted. -->
@@ -791,9 +799,11 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
       </g>
     </svg>
   </div>
+  <div class="mkl-load-status" id="mklLoadStatus" aria-live="polite">Ielādē grafiku…</div>
 </div>
 <style>
-#mk-app-loader{position:fixed;inset:0;z-index:900000;display:grid;place-items:center;overflow:hidden;background:#06090e;transition:opacity .16s ease}
+#mk-app-loader{position:fixed;inset:0;z-index:900000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;overflow:hidden;background:#06090e;transition:opacity .16s ease}
+.mkl-load-status{min-height:18px;max-width:min(440px,82vw);color:rgba(224,238,255,.78);font:600 13px/1.4 Inter,system-ui,sans-serif;letter-spacing:.02em;text-align:center}
 .mkl-brand-motion{--mkl-seq:1.28s;position:relative;width:176px;height:176px;isolation:isolate}
 .mkl-aura{position:absolute;inset:42px;border-radius:50%;background:radial-gradient(circle,#5cbfff 0,#695fff 48%,transparent 72%);filter:blur(22px);opacity:0;animation:mklAura var(--mkl-seq) ease-out both}
 .mkl-blob-mark,.mkl-pwa-mark{position:absolute;inset:8px;width:160px;height:160px;overflow:visible;transform-origin:50% 54%;will-change:transform,opacity,filter}
@@ -858,6 +868,26 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
   function checkPaint(){
     if (calendarHasPainted()) hideLoader();
   }
+  function setLoadStatus(text){
+    var status = document.getElementById('mklLoadStatus');
+    if (status) status.textContent = text;
+    if (loader) loader.setAttribute('aria-label', text);
+  }
+  function startPaintWatch(){
+    if (hidden || paintTimer) return;
+    paintTimer = setInterval(checkPaint, 200);
+    checkPaint();
+    setTimeout(function(){
+      if (!hidden && !calendarHasPainted()) {
+        setLoadStatus('Pirmajā ielādē grafika dati var aizņemt nedaudz ilgāk…');
+      }
+    }, 12000);
+    setTimeout(function(){
+      if (!hidden && !calendarHasPainted()) {
+        setLoadStatus('Savienojums ir lēns — grafiku turpinu ielādēt automātiski…');
+      }
+    }, 35000);
+  }
   // The calendar sends this only after its data/render pass has completed.
   window.addEventListener('message', function(e){
     var readyFrame = document.getElementById('calIframe');
@@ -866,10 +896,12 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
   // Also observe the same-origin frame, so a message received too early or from
   // an older cached script can never create an empty interval between screens.
   var readyFrame = document.getElementById('calIframe');
-  if (readyFrame) readyFrame.addEventListener('load', checkPaint, { once:true });
-  paintTimer = setInterval(checkPaint, 100);
-  checkPaint();
-  setTimeout(hideLoader, 12000);
+  if (readyFrame) readyFrame.addEventListener('load', checkPaint);
+  if (window.__minkaHasApiAuth && window.__minkaHasApiAuth()) {
+    startPaintWatch();
+  } else {
+    document.addEventListener('minka:auth-ok', startPaintWatch, { once:true });
+  }
 })();
 </script>
 
@@ -3790,6 +3822,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     return (Date.now() - (_lastLocalWriteAt[roomId] || 0)) > 15000;
   }
   function _kvPull(cb) {
+    if (window.__minkaHasApiAuth && !window.__minkaHasApiAuth()) return;
     fetch(GS_URL + '?_=' + Date.now(), { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(remote) {
       if (!remote || typeof remote !== 'object') return;
       var changed = false;
@@ -3817,7 +3850,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   }
   function _scheduleSync(delay) {
     if (_syncTimer) { clearTimeout(_syncTimer); _syncTimer = null; }
-    if (document.hidden) return;
+    if (document.hidden || (window.__minkaHasApiAuth && !window.__minkaHasApiAuth())) return;
     var wait = typeof delay === 'number' ? delay : (_open ? 30000 : 120000);
     _syncTimer = setTimeout(_runSync, wait);
   }
@@ -4784,6 +4817,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
         _refreshSync(Date.now() - _lastSyncAt >= 30000);
       }
     }, { passive: true });
+    document.addEventListener('minka:auth-ok', function() { _refreshSync(true); });
   }
   if (document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){setTimeout(init,500);});
   else setTimeout(init, 500);
@@ -6598,7 +6632,20 @@ body.mk-buddy-header-home #mk-buddy-bolus {
 #lacMiniPlay{width:34px!important;height:34px!important}
 </style>
 
-<script src="kalendars/js/emoji-particles.js?v=20260822bubblefatigue37"></script>
+<script>
+(function(){
+  var loaded=false;
+  function loadParticles(){
+    if(loaded || window.MinkaEmojiParticles) return;
+    loaded=true;
+    var script=document.createElement('script');
+    script.src='kalendars/js/emoji-particles.js?v=20260822bubblefatigue37';
+    document.head.appendChild(script);
+  }
+  if(window.__minkaHasApiAuth && window.__minkaHasApiAuth()) loadParticles();
+  else document.addEventListener('minka:auth-ok', loadParticles, { once:true });
+})();
+</script>
 
 </body>
 </html>

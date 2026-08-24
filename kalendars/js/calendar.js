@@ -2791,6 +2791,7 @@ function filterFullList(btn) {
   // Minute tick keeps "aiziet →17" / night counts honest without re-rendering
   // the whole panel; cheap — two small innerHTML writes at most.
   setInterval(function() {
+    if (document.hidden) return;
     for (const pid in __dutyHeaderCache) {
       const c = __dutyHeaderCache[pid];
       if (!c) continue;
@@ -3482,10 +3483,12 @@ function filterFullList(btn) {
       g_init(0, true);
     }
 
-    // Live progress bar restored to original polling: full update every second in
-    // normal mode; only weak machines (low-perf) throttle the heavy paint to 5s.
-    // The rollover check intentionally runs before this guard.
-    if (!force && __minkaCalendarLowPerf() && __minkaLastLiveHeavyPaint && (now - __minkaLastLiveHeavyPaint) < 5000) {
+    // Keep clocks live every second, but do not rebuild gradients, rulers,
+    // night lanes and stop markers every second. A 2 s visual step is
+    // imperceptible on a 24 h bar; weak machines use 5 s. The 08:00 rollover
+    // check intentionally runs before this guard and therefore remains exact.
+    const heavyPaintInterval = __minkaCalendarLowPerf() ? 5000 : 2000;
+    if (!force && __minkaLastLiveHeavyPaint && (now - __minkaLastLiveHeavyPaint) < heavyPaintInterval) {
       updateTimers();
       return;
     }
@@ -5245,10 +5248,16 @@ function filterFullList(btn) {
         window.__minkaCoffeeSync = {
           loadedDays: Object.create(null),
           loadingDays: Object.create(null),
-          pollingDays: Object.create(null)
+          pollingDays: Object.create(null),
+          fingerprints: Object.create(null)
         };
       }
       return window.__minkaCoffeeSync;
+    }
+
+    function coffeeResponseFingerprint(data) {
+      try { return JSON.stringify([data.counts || {}, data.details || {}]); }
+      catch (_e) { return ''; }
     }
 
     function syncCoffeeDay() {
@@ -5261,6 +5270,7 @@ function filterFullList(btn) {
         .then(r => r.ok ? r.json() : null)
         .then(data => {
           if (!data || !data.ok || data.date !== day) return;
+          state.fingerprints[day] = coffeeResponseFingerprint(data);
           applyCoffeeCounts(day, data.counts || {});
           applyCoffeeDetails(day, data.details || {});
           state.loadedDays[day] = true;
@@ -5284,6 +5294,9 @@ function filterFullList(btn) {
         .then(r => r.ok ? r.json() : null)
         .then(data => {
           if (!data || !data.ok || data.date !== day) return;
+          const fingerprint = coffeeResponseFingerprint(data);
+          if (fingerprint && fingerprint === state.fingerprints[day]) return;
+          state.fingerprints[day] = fingerprint;
           applyCoffeeCounts(day, data.counts || {});
           applyCoffeeDetails(day, data.details || {});
           state.loadedDays[day] = true;
@@ -5295,7 +5308,7 @@ function filterFullList(btn) {
     function startCoffeePolling() {
       if (window.__minkaCoffeePollStarted) return;
       window.__minkaCoffeePollStarted = true;
-      setInterval(pollCoffeeDay, 12000);
+      setInterval(pollCoffeeDay, 30000);
       document.addEventListener('visibilitychange', function(){ if (!document.hidden) pollCoffeeDay(); });
     }
 

@@ -189,12 +189,12 @@ async function pushNightStats(env, payload) {
       })
     });
   } catch (err) {
-    console.log("NS stats push failed:", String(err));
+    console.error(JSON.stringify({ message: "NS stats push failed", error: String(err) }));
   }
 }
 
 const worker = {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const method = request.method;
 
@@ -233,7 +233,7 @@ const worker = {
       try {
         await ensurePairSchema(db);
       } catch (error) {
-        console.log("Pairing storage unavailable:", String(error));
+        console.error(JSON.stringify({ message: "Pairing storage unavailable", error: String(error) }));
         return json(request, { ok: false, error: "Pairing storage unavailable" }, 500);
       }
       const now = Math.floor(Date.now() / 1000);
@@ -248,7 +248,7 @@ const worker = {
             AND expires_at >= ?1
         `).bind(now, codeHash).run();
       } catch (error) {
-        console.log("Pairing claim failed:", String(error));
+        console.error(JSON.stringify({ message: "Pairing claim failed", error: String(error) }));
         return json(request, { ok: false, error: "Pairing claim failed" }, 500);
       }
 
@@ -325,11 +325,14 @@ const worker = {
       }
       const list = await env.MINKA_EMOJI.list();
       const out = {};
-      for (const key of list.keys) {
-        if (/^(?:skins:|skin-art::)/.test(key.name)) continue;
+      const emojiKeys = list.keys.filter((key) => !/^(?:skins:|skin-art::)/.test(key.name));
+      const emojiEntries = await Promise.all(emojiKeys.map(async (key) => {
         const name = cleanEmojiWorker(key.name);
         const emoji = cleanEmojiValue(await env.MINKA_EMOJI.get(key.name));
-        if (name && emoji) out[name] = emoji;
+        return name && emoji ? [name, emoji] : null;
+      }));
+      for (const entry of emojiEntries) {
+        if (entry) out[entry[0]] = entry[1];
       }
       return json(request, out);
     }
@@ -470,13 +473,13 @@ const worker = {
         { expirationTtl: ttl }
       );
 
-      await pushNightStats(env, {
+      ctx.waitUntil(pushNightStats(env, {
         date,
         savedAt: orderPayload.savedAt,
         order: orderPayload.order,
         sh: orderPayload.sh,
         ei: orderPayload.ei
-      });
+      }));
 
       return json(request, { ok: true });
     }
@@ -512,11 +515,11 @@ const worker = {
         { expirationTtl: ttl }
       );
 
-      await pushNightStats(env, {
+      ctx.waitUntil(pushNightStats(env, {
         date,
         savedAt: roomsPayload.savedAt,
         beds: roomsPayload.beds
-      });
+      }));
 
       return json(request, { ok: true });
     }
