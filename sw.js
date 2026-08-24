@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.460-perf-audit3';
+const CACHE = 'minka-4.6.461-bolus-media1';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
