@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.462-bolus-history-layout1';
+const CACHE = 'minka-4.6.463-bolus-empty-markers1';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 

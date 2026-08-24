@@ -4023,7 +4023,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       var amount = side === 'nacl' ? '500 ml' : slot.volumeMl + ' ml';
       var statusHtml = slot.enabled
         ? '<span class="ctmotion-piece-status"><b>'+main+'</b><small>'+amount+'</small></span>'
-        : '';
+        : '<span class="ctmotion-piece-empty" aria-hidden="true"><b>+</b></span>';
       var aria = title + (slot.enabled ? ': ' + main + ', ' + amount : ': nav atzīmēts');
       return '<button class="ctmotion-piece ctmotion-piece-'+side+' bmedia-toggle'+(slot.enabled?' is-loaded':'')+(active?' is-active':'')+'" type="button" data-room="'+roomId+'" data-side="'+side+'" aria-pressed="'+(slot.enabled?'true':'false')+'" aria-label="'+aria+'">'+
         '<img src="'+src+'" alt="">'+
@@ -4063,8 +4063,8 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     var hasMedia = !!_mediaSnapshot(roomId);
     return '<div class="bmedia-panel" data-room="'+roomId+'">'+
       '<div class="ctmotion-media-stage'+(_mediaChooserOpen[roomId]?' is-choosing':'')+'">'+
-        '<div class="ctmotion-toolbar"><button type="button" class="bmedia-preset" data-room="'+roomId+'" title="Atzīmēt standarta komplektu">VISI</button>'+
-        '<button type="button" class="bmedia-clear" data-room="'+roomId+'" title="Noņemt visas pudeles"'+(hasMedia?'':' disabled')+'>×</button></div>'+
+        '<div class="ctmotion-toolbar"><button type="button" class="bmedia-preset" data-room="'+roomId+'" title="Atzīmēt standarta komplektu" aria-label="Atzīmēt visas pudeles"><b aria-hidden="true">+</b> VISI</button>'+
+        '<button type="button" class="bmedia-clear" data-room="'+roomId+'" title="Noņemt visas pudeles" aria-label="Noņemt visas pudeles"'+(hasMedia?'':' disabled')+'><b aria-hidden="true">×</b> NOTĪRĪT</button></div>'+
         '<figure class="ctmotion-reference">'+_mediaAssembly(roomId, changedAt)+'</figure>'+
         _mediaQuickbar(roomId)+
       '</div>'+
@@ -7220,6 +7220,55 @@ body.mk-buddy-header-home #mk-buddy-bolus {
 .ctmotion-piece-nacl .ctmotion-piece-status{top:46%!important;width:62%!important;height:30%!important;background:transparent!important}
 .ctmotion-piece-nacl .ctmotion-piece-status b{font-size:11px!important;letter-spacing:0!important}
 .ctmotion-piece-nacl .ctmotion-piece-status small{font-size:8px!important}
+.ctmotion-piece-empty{
+  position:absolute!important;
+  left:50%!important;
+  top:43%!important;
+  z-index:4!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:70%!important;
+  transform:translate(-50%,-50%)!important;
+  color:#00325c!important;
+  text-align:center!important;
+  pointer-events:none!important;
+}
+.ctmotion-piece-empty b{
+  display:grid!important;
+  place-items:center!important;
+  width:22px!important;
+  height:22px!important;
+  border:2px solid #00325c!important;
+  border-radius:50%!important;
+  font:900 19px/17px Arial,system-ui,sans-serif!important;
+}
+.ctmotion-piece-left .ctmotion-piece-empty{left:52%!important}
+.ctmotion-piece-right .ctmotion-piece-empty{left:47%!important}
+.ctmotion-piece-nacl .ctmotion-piece-empty{top:46%!important;width:76%!important}
+.ctmotion-piece-nacl .ctmotion-piece-empty b{width:20px!important;height:20px!important;font-size:17px!important}
+.ctmotion-toolbar{top:-1px!important;gap:12px!important}
+.ctmotion-toolbar .bmedia-preset,.ctmotion-toolbar .bmedia-clear{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:3px!important;
+  width:auto!important;
+  height:22px!important;
+  padding:0!important;
+  border:0!important;
+  border-bottom:1px solid currentColor!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:#00a9db!important;
+  font:800 8px/1 Arial,system-ui,sans-serif!important;
+  letter-spacing:.04em!important;
+  text-decoration:none!important;
+  white-space:nowrap!important;
+  box-shadow:none!important;
+}
+.ctmotion-toolbar .bmedia-preset b,.ctmotion-toolbar .bmedia-clear b{font-size:12px!important;line-height:1!important}
+.ctmotion-toolbar .bmedia-clear:disabled{opacity:.32!important;cursor:default!important}
 .ctmotion-piece,.ctmotion-piece:hover,.ctmotion-piece:focus-visible,.ctmotion-piece.is-active{filter:none!important;transform:none!important;transition:none!important}
 .ctmotion-piece:focus-visible,.ctmotion-piece.is-active{outline:0!important}
 .ctmotion-time-control,.ctmotion-time-control:hover,.ctmotion-time-control:focus-visible{filter:none!important;transform:none!important;transition:none!important}
