@@ -1364,6 +1364,8 @@
 
   window.__fatigue = { calculateFatigue, gatherWorkerHistory, getPresentation, clearCache: clearFatigueCache };
   window.__fatigueRenderModal = renderModalFatigue;
+  window.__minkaFatigueReady = true;
+  document.dispatchEvent(new CustomEvent('minka:fatigue-ready'));
   setTimeout(notifyMinkaBridge, 50);
   setTimeout(notifyMinkaBridge, 500);
 })();

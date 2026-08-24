@@ -241,7 +241,14 @@ function notifyHostAppReady() {
     const hasTitle = !!title && title !== '...';
     const hasCards = !!document.querySelector('#grafiks-list .card, #radiographers-duty .duty-block, #radiologists-duty .duty-block');
     const hasMonth = !!document.getElementById('grafiks-monthPicker')?.value;
-    if ((hasTitle && hasCards && hasMonth) || attempts >= 20) {
+    // A cached schedule can paint before fatigue.js has evaluated. In that
+    // provisional frame side cards use 0/ZEMS and center cards can miss their
+    // cached person emoji. Do not tell the host to uncover the iframe until
+    // the one-time decoration pass has rebuilt that initial frame.
+    const decorationsReady = typeof window.__minkaEnsureInitialDecorations === 'function'
+      ? window.__minkaEnsureInitialDecorations()
+      : false;
+    if ((hasTitle && hasCards && hasMonth && decorationsReady) || attempts >= 80) {
       try { window.parent && window.parent.postMessage({ type: 'minka:appReady' }, window.location.origin); } catch(_e) {}
       return;
     }
@@ -3529,7 +3536,7 @@ function filterFullList(btn) {
           }
           activeStops.push({
             name: w.name || '',
-            emoji: window.MinkaEmoji && window.MinkaEmoji.get ? (window.MinkaEmoji.get(w.name || '') || '') : '',
+            emoji: getSidePersonEmoji(w.name || ''),
             end: end,
             endLabel: `${String(end.getHours()).padStart(2,'0')}:${String(end.getMinutes()).padStart(2,'0')}`,
             start: start,
@@ -3998,7 +4005,7 @@ function filterFullList(btn) {
             _seen.add(_key);
             _extra.push({
               name: _w.name || '',
-              emoji: window.MinkaEmoji && window.MinkaEmoji.get ? (window.MinkaEmoji.get(_w.name || '') || '') : '',
+              emoji: getSidePersonEmoji(_w.name || ''),
               end: _wEnd, start: _wStart,
               shiftH: getDutyShiftHours(_w) || Math.round((_wEnd - _wStart) / 3600000),
               isRadiologist: _src === storeRad
@@ -4039,7 +4046,7 @@ function filterFullList(btn) {
               const _wStart = new Date(+_sp[2], +_sp[1]-1, +_sp[0], _wp[0], _wp[1], 0);
               _laneStops.push({
                 name: _w.name || '',
-                emoji: window.MinkaEmoji && window.MinkaEmoji.get ? (window.MinkaEmoji.get(_w.name || '') || '') : '',
+                emoji: getSidePersonEmoji(_w.name || ''),
                 end: _wEnd, start: _wStart,
                 shiftH: getDutyShiftHours(_w) || Math.round((_wEnd - _wStart) / 3600000),
                 isRadiologist: _src === storeRad
@@ -4077,7 +4084,7 @@ function filterFullList(btn) {
               const _wStart = new Date(+_sp[2], +_sp[1]-1, +_sp[0], _wp[0], _wp[1], 0);
               _laneStops.push({
                 name: _w.name || '',
-                emoji: window.MinkaEmoji && window.MinkaEmoji.get ? (window.MinkaEmoji.get(_w.name || '') || '') : '',
+                emoji: getSidePersonEmoji(_w.name || ''),
                 end: _wEnd, start: _wStart,
                 shiftH: getDutyShiftHours(_w) || Math.round((_wEnd - _wStart) / 3600000),
                 isRadiologist: _src === storeRad
@@ -4889,6 +4896,33 @@ function filterFullList(btn) {
     });
   };
 
+  function ensureInitialDecorations() {
+    if (window.__minkaInitialDecorationsReady) return true;
+    if (!window.__fatigue || !activeDateStr) return false;
+    const hasCards = !!document.querySelector('#grafiks-list .card, #radiographers-duty .duty-block, #radiologists-duty .duty-block');
+    if (!hasCards) return false;
+    // Fatigue and person emoji are baked into several parts of the center and
+    // side markup. Rebuild both once, now that all synchronous decoration data
+    // exists, instead of exposing a partial frame and fixing it two seconds later.
+    try {
+      g_updateList();
+      g_updatePanelsForDate();
+    } catch (_e) { return false; }
+    try { window.__refreshFatigueBars(); } catch (_e) {}
+    try {
+      if (window.MinkaEmoji && typeof window.MinkaEmoji.refresh === 'function') {
+        window.MinkaEmoji.refresh();
+      }
+    } catch (_e) {}
+    window.__minkaInitialDecorationsReady = true;
+    document.dispatchEvent(new CustomEvent('minka:initial-decorations-ready'));
+    return true;
+  }
+  window.__minkaEnsureInitialDecorations = ensureInitialDecorations;
+  document.addEventListener('minka:fatigue-ready', function() {
+    requestAnimationFrame(ensureInitialDecorations);
+  });
+
   function g_updateList() {
     const container = document.getElementById('grafiks-list');
     // Read the stable width before invalidating the old roster. The synchronous
@@ -4934,7 +4968,10 @@ function filterFullList(btn) {
           if (saved) return safeEmojiText(saved);
         }
       } catch(e) {}
-      return '';
+      // emoji.js is deferred, but its persisted map is already available.
+      // Reuse the sanitized side-card cache so the first center-card render
+      // never falls back to initials for a person who has an emoji.
+      return safeEmojiText(getSidePersonEmoji(worker.name || ''));
     }
 
     function getShiftEmoji(worker) {
