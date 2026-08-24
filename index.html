@@ -167,7 +167,7 @@
   }
   window.__minkaHasApiAuth = function() { return !!getToken(); };
 
-  var CALENDAR_BUILD = '20260824perfaudit2';
+  var CALENDAR_BUILD = '20260824perfaudit3';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -728,7 +728,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <div id="calendarEmbed">
   <!-- Keep the expensive calendar document dormant behind the password gate.
        Authenticated startup assigns data-base-src immediately. -->
-  <iframe src="about:blank" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260824perfaudit2" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="about:blank" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260824perfaudit3" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- Compact brand loader. It stays up until the embedded schedule has painted. -->

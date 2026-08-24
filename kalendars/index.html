@@ -386,7 +386,7 @@ window.setTimeout(function () {
        Marķieris te ir burtisks, nevis `window.__minkaLocalBuild`: tas tiek
        uzstādīts krietni tālāk failā nekā šis skripts, tāpēc te tas vēl būtu
        tukšs. Bumpo to kopā ar pārējiem. */
-    fetch(BASE + 'manifest.json?v=20260824perfaudit2')
+    fetch(BASE + 'manifest.json?v=20260824perfaudit3')
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (m) { manifest = m || { emoji: {} }; applyStatics(); })
       .catch(function () { manifest = { emoji: {} }; });
@@ -1624,10 +1624,10 @@ function _mkToast(msg, type) {
 </script>
 <script src="data/namedays.local.js"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
-<script src="js/calendar.js?v=20260824perfaudit2"></script>
+<script src="js/calendar.js?v=20260824perfaudit3"></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260810layout2"></script>
-<script src="js/fatigue.js?v=20260816fatcache1"></script>
+<script src="js/fatigue.js?v=20260824perfaudit3"></script>
 <script src="js/nightsplit.js?v=20260824perfaudit2" defer></script>
 <script src="js/monthcal.js?v=20260814uxpass1" defer></script>
 <script src="js/design_v1.js?v=20260824perfaudit2" defer></script>
@@ -1638,7 +1638,7 @@ function _mkToast(msg, type) {
 <script src="js/radiologist_plan.js?v=20260824perfaudit2" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260824perfaudit2';
+window.__minkaLocalBuild = '20260824perfaudit3';
 (function(){
   function norm(v){
     try { return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
