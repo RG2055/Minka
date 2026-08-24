@@ -1189,22 +1189,52 @@ function filterFullList(btn) {
   let __gInitRetryTimer = 0;
   let __gInitToasted = false;
   let __gCacheRendered = false;
+  let __gLastFreshAt = 0;
+  let __gLastRemoteFingerprint = '';
+  let __gPreviewClockStartedAt = 0;
+  let __gPreviewClockBase = 0;
+  function g_now() {
+    const realNow = new Date();
+    let preview = false;
+    try { preview = new URLSearchParams(window.location.search).get('previewClockRollover') === '1'; }
+    catch (_error) {}
+    if (!preview) return realNow;
+    if (!__gPreviewClockStartedAt) {
+      __gPreviewClockStartedAt = Date.now();
+      const base = new Date(realNow);
+      base.setHours(7, 59, 57, 0);
+      __gPreviewClockBase = base.getTime();
+    }
+    // Freeze after twelve seconds so a diagnostic tab remains on the freshly
+    // rolled shift instead of drifting away from the boundary under test.
+    return new Date(__gPreviewClockBase + Math.min(12000, Date.now() - __gPreviewClockStartedAt));
+  }
+  function __gScheduleFingerprint(payload) {
+    try {
+      return JSON.stringify([
+        getScheduleChannel(payload, 'radiographers'),
+        getScheduleChannel(payload, 'radiologists')
+      ]);
+    } catch (_error) {
+      return '';
+    }
+  }
   function __gHasAuth() {
     return !window.MinkaApi || !window.MinkaApi.getToken || !!window.MinkaApi.getToken();
   }
   function __gScheduleRetry(delayMs) {
     clearTimeout(__gInitRetryTimer);
     if (!__gHasAuth()) return;
-    __gInitRetryTimer = setTimeout(function(){ g_init(0); }, delayMs);
+    __gInitRetryTimer = setTimeout(function(){ g_init(0, true); }, delayMs);
   }
 
-  async function g_init(retryCount) {
+  async function g_init(retryCount, refreshOnly) {
     retryCount = retryCount || 0;
     if (!__gHasAuth()) {
       clearTimeout(__gInitRetryTimer);
       return;
     }
-    if (window.__gDataLoaded) return;
+    if (window.__gDataLoaded && !refreshOnly) return;
     if (__gInitBusy) return;
     __gInitBusy = true;
     const loader = document.getElementById('grafiks-loader');
@@ -1214,23 +1244,83 @@ function filterFullList(btn) {
         const loaderText = loader.querySelector('div[style*="letter-spacing"]');
         if (loaderText) loaderText.textContent = `Mēģinu vēlreiz... (${retryCount})`;
       }
+      const cachedAtStart = readCachedSchedule();
+      // A cache is only a first paint, never a reason to give the live request a
+      // shorter deadline. The old 5 s deadline meant a normal profile with a
+      // cache repeatedly aborted the Sheets proxy while an incognito profile
+      // (no cache, 60 s deadline) received the edited roster.
+      if (cachedAtStart && !__gCacheRendered && !refreshOnly) {
+        try {
+          const _now = g_now();
+          const effective = new Date(_now);
+          if (effective.getHours() < 8) effective.setDate(effective.getDate() - 1);
+          g_todayStr = `${String(effective.getDate()).padStart(2,'0')}.${String(effective.getMonth()+1).padStart(2,'0')}.${effective.getFullYear()}`;
+          window.__g_todayStr = g_todayStr;
+          store = normalizeStoreKeys(getScheduleChannel(cachedAtStart, 'radiographers'));
+          storeRad = normalizeStoreKeys(getScheduleChannel(cachedAtStart, 'radiologists'));
+          patchCrossMonthContinuations(store);
+          patchCrossMonthContinuations(storeRad);
+          patchAdjacentDayContinuations(store);
+          patchAdjacentDayContinuations(storeRad);
+          patchSplitDutyContinuations(store);
+          patchSplitDutyContinuations(storeRad);
+          patchNightStartTimes(store);
+          patchNightStartTimes(storeRad);
+          window.__grafiksStore = store;
+          window.__grafiksStoreRad = storeRad;
+          document.dispatchEvent(new CustomEvent('minka:storeReady'));
+
+          const picker = document.getElementById('grafiks-monthPicker');
+          picker.innerHTML = '';
+          activeMonth = '';
+          const months = getAllMonths();
+          const requestedMonth = resolveRequestedMonth(cachedAtStart);
+          months.forEach(m => {
+            const isCur = sameMonthYear(parseMonthYearKey(m), requestedMonth);
+            if (isCur) { activeMonth = m; window.__activeMonth = m; }
+            picker.innerHTML += `<option value="${m}" ${isCur ? 'selected' : ''}>${m.replace(/\s+\d{4}\s*$/, '').toUpperCase()}</option>`;
+          });
+          if (!activeMonth && months.length) { activeMonth = months[0]; window.__activeMonth = activeMonth; }
+          document.dispatchEvent(new CustomEvent('minka:monthReady', { detail: { month: activeMonth } }));
+          g_sizeMonthPicker();
+          if (loader) hideGrafiksLoader(loader);
+          g_renderMonth();
+          const cachedDays = getMergedDays(activeMonth);
+          g_selectDay(cachedDays.some(day => day.date === g_todayStr) ? g_todayStr : (cachedDays[0]?.date || null));
+          g_updateLive(true);
+          revealGrafiksApp();
+          notifyHostAppReady();
+          __gCacheRendered = true;
+          ensureLiveUpdates();
+        } catch (cacheError) {
+          console.warn('Cached schedule first paint failed:', cacheError);
+        }
+      }
+
       const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-      // With a cached snapshot we can fail over quickly. Without one (first
-      // launch or a previously cleared cache), give the Sheets proxy enough
-      // time to finish instead of aborting every request at 12 seconds and
-      // leaving the installed PWA permanently blank.
-      const requestTimeoutMs = readCachedSchedule() ? 5000 : 60000;
+      const requestTimeoutMs = 60000;
       timeoutId = controller ? setTimeout(() => controller.abort(), requestTimeoutMs) : null;
       const r = window.MinkaApi
-        ? await window.MinkaApi.apiFetch('/api/schedule', { signal: controller ? controller.signal : undefined })
-        : await fetch(API_URL, { cache: 'no-store', signal: controller ? controller.signal : undefined });
+        ? await window.MinkaApi.apiFetch('/api/schedule?_=' + Date.now(), { signal: controller ? controller.signal : undefined })
+        : await fetch(API_URL + '?_=' + Date.now(), { cache: 'no-store', signal: controller ? controller.signal : undefined });
       if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const d = await r.json();
-      const cachedBeforeRefresh = readCachedSchedule();
+      const remoteFingerprint = __gScheduleFingerprint(d);
+      // Background freshness checks are intentionally cheap. Waiting for a
+      // small fetch is asynchronous and does not block painting; the expensive
+      // part was rebuilding every card even when the response was identical.
+      // Once the first live response has been rendered, unchanged schedules
+      // only advance the freshness timestamp and leave the DOM untouched.
+      if (window.__gDataLoaded && __gLastRemoteFingerprint && remoteFingerprint === __gLastRemoteFingerprint) {
+        __gLastFreshAt = Date.now();
+        clearTimeout(__gInitRetryTimer);
+        return;
+      }
+      const cachedBeforeRefresh = cachedAtStart || readCachedSchedule();
       // Our shift "day" changes at 08:00 (not at midnight).
       // Before 08:00, we still consider the active shift to belong to the previous calendar day.
-      const _now = new Date();
+      const _now = g_now();
       const effective = new Date(_now);
       if (effective.getHours() < 8) effective.setDate(effective.getDate() - 1);
       g_todayStr = `${String(effective.getDate()).padStart(2,'0')}.${String(effective.getMonth()+1).padStart(2,'0')}.${effective.getFullYear()}`;
@@ -1280,8 +1370,10 @@ function filterFullList(btn) {
         window.parent.postMessage({ type: 'mk_workers_index', data: _wIdx }, window.location.origin);
       } catch(_e) {}
 
+      const selectedBeforeRefresh = normalizeDateStr(activeDateStr || '');
       const picker = document.getElementById('grafiks-monthPicker');
       picker.innerHTML = "";
+      activeMonth = '';
       const months = getAllMonths();
       const requestedMonth = resolveRequestedMonth(d);
       months.forEach(m => {
@@ -1294,13 +1386,24 @@ function filterFullList(btn) {
       g_sizeMonthPicker();
       const _ldr=document.getElementById('grafiks-loader'); if(_ldr) hideGrafiksLoader(_ldr);
       g_renderMonth();
+      const selectedMonth = selectedBeforeRefresh && g_getMonthForDate(selectedBeforeRefresh);
+      const selectedStillExists = !!selectedMonth;
+      if (selectedStillExists && selectedMonth !== activeMonth) {
+        activeMonth = selectedMonth;
+        window.__activeMonth = selectedMonth;
+        picker.value = selectedMonth;
+        g_renderMonth();
+      }
       const todayExists = getMergedDays(activeMonth).some(day => day.date === g_todayStr);
       const firstDate = getMergedDays(activeMonth)[0]?.date || null;
-      g_selectDay(todayExists ? g_todayStr : firstDate);
+      g_selectDay(selectedStillExists ? selectedBeforeRefresh : (todayExists ? g_todayStr : firstDate));
       g_updateLive();
       revealGrafiksApp();
       notifyHostAppReady();
       window.__gDataLoaded = true;
+      __gCacheRendered = true;
+      __gLastFreshAt = Date.now();
+      __gLastRemoteFingerprint = remoteFingerprint;
       clearTimeout(__gInitRetryTimer);
       ensureLiveUpdates();
       if (window.__nsKv) window.__nsKv.startPolling();
@@ -1314,7 +1417,7 @@ function filterFullList(btn) {
           return;
         }
         try {
-          const _now = new Date();
+          const _now = g_now();
           const effective = new Date(_now);
           if (effective.getHours() < 8) effective.setDate(effective.getDate() - 1);
           g_todayStr = `${String(effective.getDate()).padStart(2,'0')}.${String(effective.getMonth()+1).padStart(2,'0')}.${effective.getFullYear()}`;
@@ -1384,6 +1487,12 @@ function filterFullList(btn) {
     window.__minkaLiveStarted = true;
     let resumePaintTimer = 0;
     setInterval(function(){ if (!document.hidden) g_updateLive(); }, 1000);
+    // The schedule itself is small, but it may be edited while this installed
+    // PWA stays open for days. Revalidate quietly every two minutes; the current
+    // cards remain mounted until a complete response is ready.
+    setInterval(function(){
+      if (!document.hidden && Date.now() - __gLastFreshAt >= 120000) g_init(0, true);
+    }, 30000);
     document.addEventListener('visibilitychange', function() {
       clearTimeout(resumePaintTimer);
       // Let Chrome paint the restored window and accept input before the full
@@ -1391,6 +1500,7 @@ function filterFullList(btn) {
       if (!document.hidden) resumePaintTimer = setTimeout(function(){
         resumePaintTimer = 0;
         g_updateLive(true);
+        if (Date.now() - __gLastFreshAt >= 60000) g_init(0, true);
       }, 220);
     }, { passive: true });
   }
@@ -2947,7 +3057,7 @@ function filterFullList(btn) {
 
   function g_updatePanelsForDate() {
     const isToday = (activeDateStr === g_todayStr);
-    const now = new Date();
+    const now = g_now();
 
     // RADIOGRAPHERS
     const radgContainer = document.getElementById('radiographers-duty');
@@ -3021,7 +3131,7 @@ function filterFullList(btn) {
   }
 
   function updateTimers() {
-    const now = new Date();
+    const now = g_now();
     let shouldRefresh = false;
     updateShiftStripTimers(now);
     document.querySelectorAll('.duty-timer').forEach(timer => {
@@ -3125,7 +3235,10 @@ function filterFullList(btn) {
 
   function g_rolloverPreviewTrace(message) {
     let enabled = false;
-    try { enabled = new URLSearchParams(window.location.search).get('previewRollover') === '1'; }
+    try {
+      const params = new URLSearchParams(window.location.search);
+      enabled = params.get('previewRollover') === '1' || params.get('previewClockRollover') === '1';
+    }
     catch (_error) {}
     if (!enabled) return;
     let output = document.getElementById('minkaRolloverPreviewTrace');
@@ -3144,11 +3257,14 @@ function filterFullList(btn) {
   }
 
   function g_playRolloverShiftEmojis() {
-    if (!window.MinkaEmojiParticles) return;
+    let confettiEngine = window.MinkaEmojiParticles;
+    try {
+      if (window.parent && window.parent !== window && window.parent.MinkaEmojiParticles) {
+        confettiEngine = window.parent.MinkaEmojiParticles;
+      }
+    } catch (_error) {}
+    if (!confettiEngine || typeof confettiEngine.confetti !== 'function') return;
     g_clearRolloverTimers();
-    const moodTarget = document.querySelector('.rg-feedback-card .rg-mood-glass-lens')
-      || document.querySelector('.rg-feedback-card .rg-mood-blob-wrap');
-    if (!moodTarget) return;
 
     const workerKey = function(value) {
       return String(value || '').trim().toLocaleUpperCase('lv-LV');
@@ -3160,40 +3276,44 @@ function filterFullList(btn) {
     };
     const moodPeople = Array.from(document.querySelectorAll('.rg-feedback-card .rg-mood-person[data-rg-worker]'))
       .filter(isLiveMoodTarget);
-    const moodPersonByWorker = new Map(moodPeople.map(function(person) {
-      return [workerKey(person.getAttribute('data-rg-worker')), person];
-    }));
-
-    // The roster is already rendered. Use the incoming workers' real card
-    // identity and land it on that same worker's place around the mood orb.
-    const flights = [];
-    document.querySelectorAll('#grafiks-list .mk-mid-card[data-worker], #grafiks-list .list-row[data-worker]').forEach(function(card) {
-      const worker = workerKey(card.getAttribute('data-worker'));
-      if (!worker) return;
-      const target = moodPersonByWorker.get(worker);
-      if (!target) return;
+    const incomingCards = Array.from(document.querySelectorAll(
+      '#grafiks-list .mk-mid-card[data-worker], #grafiks-list .list-row[data-worker]'
+    ));
+    const cardIdentity = function(card) {
       const sourceEmoji = card.querySelector('.mk-mid-bg-emoji')
         || card.querySelector('.mk-mid-person-emoji')
         || card.querySelector('.mk-mid-meta-emoji');
-      const targetIdentity = target.querySelector && target.querySelector('.rg-mood-person-emoji');
-      const source = sourceEmoji || card;
       const glyph = safeEmojiText(
         (sourceEmoji && sourceEmoji.textContent && sourceEmoji.textContent.trim())
-        || (targetIdentity && targetIdentity.textContent && targetIdentity.textContent.trim())
+        || workerKey(card.getAttribute('data-worker')).split(/\s+/).map(function(part) { return part.charAt(0); }).join('').slice(0, 2)
       );
+      return { source: sourceEmoji || card, glyph: glyph };
+    };
+
+    // Confetti depends only on the incoming roster. The constellation around
+    // the mood orb is painted in idle time and often does not exist during the
+    // first rollover frame; tying confetti to those targets made the whole
+    // celebration silently disappear.
+    const confettiGlyphs = incomingCards.map(function(card) { return cardIdentity(card).glyph; }).filter(Boolean);
+    if (!confettiGlyphs.length) confettiGlyphs.push('✨', '🎉', '⭐');
+
+    // Plan every incoming identity now, but resolve its mood destination only
+    // when that flight actually starts. The mood constellation is mounted in
+    // idle time and is commonly still empty in this first rollover frame.
+    const flights = [];
+    incomingCards.forEach(function(card) {
+      const worker = workerKey(card.getAttribute('data-worker'));
+      if (!worker) return;
+      const identity = cardIdentity(card);
+      const glyph = safeEmojiText(identity.glyph);
       const textMode = /^[\p{L}\p{N}]{1,3}$/u.test(glyph);
-      if (source && glyph) flights.push({
+      if (glyph) flights.push({
         worker: worker,
-        source: source,
-        target: target,
         glyph: glyph,
         textMode: textMode
       });
     });
-    g_rolloverPreviewTrace('targets:' + flights.length + '/' + moodPeople.length);
-    if (!flights.length) return;
-
-    const confettiGlyphs = flights.map(function(flight) { return flight.glyph; });
+    g_rolloverPreviewTrace('targets-ready:' + moodPeople.length + ':planned=' + flights.length);
     const liveFlightParts = function(flight) {
       const liveCard = Array.from(document.querySelectorAll('#grafiks-list .mk-mid-card[data-worker], #grafiks-list .list-row[data-worker]'))
         .find(function(card) { return workerKey(card.getAttribute('data-worker')) === flight.worker; });
@@ -3210,12 +3330,6 @@ function filterFullList(btn) {
         target: liveTarget
       };
     };
-    let confettiEngine = window.MinkaEmojiParticles;
-    try {
-      if (window.parent && window.parent !== window && window.parent.MinkaEmojiParticles) {
-        confettiEngine = window.parent.MinkaEmojiParticles;
-      }
-    } catch (_error) {}
     const lowPerf = __minkaCalendarLowPerf();
     const confettiWait = lowPerf ? 3200 : 3900;
     const flightDuration = lowPerf ? 1320 : 1580;
@@ -3235,54 +3349,66 @@ function filterFullList(btn) {
     // Phase 2: only after the final confetti has cleared, incoming people travel
     // into their own place around the mood. Starts are deliberately staggered so
     // each identity reads as one clean arrival rather than a fast swarm.
+    const launchFlight = function(flight, attempt) {
+      const live = liveFlightParts(flight);
+      if (!live) {
+        // Usually one retry is enough; keep a short bounded window for a busy
+        // machine where the idle mood paint lands after the confetti clears.
+        if (attempt < 8) {
+          const retryTimer = window.setTimeout(function() { launchFlight(flight, attempt + 1); }, 180);
+          __minkaRolloverTimers.push(retryTimer);
+          return;
+        }
+        g_rolloverPreviewTrace('missing:' + flight.worker);
+        return;
+      }
+      g_rolloverPreviewTrace('flight:' + flight.worker);
+      const flightEngine = window.MinkaEmojiParticles || confettiEngine;
+      if (!flightEngine || typeof flightEngine.flyTo !== 'function') return;
+      flightEngine.flyTo(live.source, live.target, flight.glyph, {
+        count: 1,
+        size: flight.textMode ? 30 : 40,
+        textMode: flight.textMode,
+        color: '#ecffff',
+        duration: flightDuration,
+        targetSpread: 5,
+        endScale: .2,
+        peakScale: 1.42,
+        peakAt: .34,
+        arcSpread: 72,
+        lift: 104,
+        trail: true,
+        onComplete: function() {
+          const landed = liveFlightParts(flight);
+          if (!landed) {
+            g_rolloverPreviewTrace('landing-missing:' + flight.worker);
+            return;
+          }
+          g_rolloverPreviewTrace('landed:' + flight.worker);
+          if (typeof flightEngine.fusion === 'function') {
+            flightEngine.fusion(landed.target);
+          }
+          const landing = landed.target.querySelector('.rg-mood-person-glass');
+          if (!landing || typeof landing.animate !== 'function') return;
+          // Animate the individual scale property so the staff bubble keeps
+          // its fixed glass angle/foreshortening from --rg-bubble-*.
+          landing.animate([
+            { scale: '1' },
+            { scale: '1.2', offset: .34 },
+            { scale: '.96', offset: .7 },
+            { scale: '1' }
+          ], { duration: lowPerf ? 360 : 440, easing: 'cubic-bezier(.2,.85,.3,1)' });
+        }
+      });
+    };
     flights.forEach(function(flight, index) {
       const startAt = confettiWait + index * flightStagger;
       const flyTimer = window.setTimeout(function() {
-        const live = liveFlightParts(flight);
-        if (!live) {
-          g_rolloverPreviewTrace('missing:' + flight.worker);
-          return;
-        }
-        g_rolloverPreviewTrace('flight:' + flight.worker);
-        window.MinkaEmojiParticles.flyTo(live.source, live.target, flight.glyph, {
-          count: 1,
-          size: flight.textMode ? 30 : 40,
-          textMode: flight.textMode,
-          color: '#ecffff',
-          duration: flightDuration,
-          targetSpread: 5,
-          endScale: .2,
-          peakScale: 1.42,
-          peakAt: .34,
-          arcSpread: 72,
-          lift: 104,
-          trail: true,
-          onComplete: function() {
-            const landed = liveFlightParts(flight);
-            if (!landed) {
-              g_rolloverPreviewTrace('landing-missing:' + flight.worker);
-              return;
-            }
-            g_rolloverPreviewTrace('landed:' + flight.worker);
-            if (typeof window.MinkaEmojiParticles.fusion === 'function') {
-              window.MinkaEmojiParticles.fusion(landed.target);
-            }
-            const landing = landed.target.querySelector('.rg-mood-person-glass');
-            if (!landing || typeof landing.animate !== 'function') return;
-            // Animate the individual scale property so the staff bubble keeps
-            // its fixed glass angle/foreshortening from --rg-bubble-*.
-            landing.animate([
-              { scale: '1' },
-              { scale: '1.2', offset: .34 },
-              { scale: '.96', offset: .7 },
-              { scale: '1' }
-            ], { duration: lowPerf ? 360 : 440, easing: 'cubic-bezier(.2,.85,.3,1)' });
-          }
-        });
+        launchFlight(flight, 0);
       }, startAt);
       __minkaRolloverTimers.push(flyTimer);
     });
-    window.MinkaEmojiParticles.haptic('success');
+    if (typeof confettiEngine.haptic === 'function') confettiEngine.haptic('success');
   }
 
   let __minkaRolloverPreviewStarted = false;
@@ -3310,15 +3436,8 @@ function filterFullList(btn) {
   }
 
   function g_updateLive(force) {
-    const now = new Date();
+    const now = g_now();
     if (document.hidden) return;
-    // Live progress bar restored to original polling: full update every second in
-    // normal mode; only weak machines (low-perf) throttle the heavy paint to 5s.
-    if (!force && __minkaCalendarLowPerf() && __minkaLastLiveHeavyPaint && (now - __minkaLastLiveHeavyPaint) < 5000) {
-      updateTimers();
-      return;
-    }
-    __minkaLastLiveHeavyPaint = now;
 
     // Recompute g_todayStr every tick — fixes month-boundary bug where page loaded
     // before 08:00 kept showing previous day's workers after the 08:00 rollover
@@ -3326,6 +3445,10 @@ function filterFullList(btn) {
     if (_eff.getHours() < 8) _eff.setDate(_eff.getDate() - 1);
     const _newToday = `${String(_eff.getDate()).padStart(2,'0')}.${String(_eff.getMonth()+1).padStart(2,'0')}.${_eff.getFullYear()}`;
     if (_newToday !== g_todayStr) {
+      // A day boundary is never allowed through the low-spec 5 s throttle. The
+      // previous order expired every old timer first (rendering “Nav datu”), then
+      // waited up to four more seconds before selecting the incoming roster.
+      force = true;
       const wasViewingToday = activeDateStr === g_todayStr;
       const previousToday = g_todayStr;
       g_todayStr = _newToday;
@@ -3340,6 +3463,7 @@ function filterFullList(btn) {
       const changesMonth = !!(targetMonth && targetMonth !== activeMonth);
       if (!changesMonth) g_refreshTodayPill(previousToday, _newToday);
       const followed = wasViewingToday && g_selectDateWithMonthSync(_newToday);
+      g_rolloverPreviewTrace('clock-boundary:' + previousToday + '>' + _newToday + ':followed=' + (followed ? '1' : '0'));
       if (!followed) {
         g_applyTodayUI();
         if (activeDateStr === _newToday) g_updatePanelsForDate();
@@ -3352,7 +3476,20 @@ function filterFullList(btn) {
           }));
         } catch (_error) {}
       });
+      // Revalidate after the atomic local rollover as well. Existing cards stay
+      // visible while the request is in flight, and any last-minute sheet edit
+      // replaces them only after a complete response arrives.
+      g_init(0, true);
     }
+
+    // Live progress bar restored to original polling: full update every second in
+    // normal mode; only weak machines (low-perf) throttle the heavy paint to 5s.
+    // The rollover check intentionally runs before this guard.
+    if (!force && __minkaCalendarLowPerf() && __minkaLastLiveHeavyPaint && (now - __minkaLastLiveHeavyPaint) < 5000) {
+      updateTimers();
+      return;
+    }
+    __minkaLastLiveHeavyPaint = now;
 
     // Shift progress bar is pinned to the CURRENT shift day (g_todayStr), not the
     // calendar day you click. It only rolls over when a new night shift begins (08:00).
@@ -4767,7 +4904,7 @@ function filterFullList(btn) {
     container.className = isGridView ? 'grid-view' : 'list-view';
 
     const isToday = (activeDateStr === g_todayStr);
-    const now = new Date();
+    const now = g_now();
 
     const probe = (window.__minkaMeasureDaySwitches || G_DAY_PERF_ENABLED) ? (window.__minkaListProbe ||= {}) : null;
     const pt0 = probe ? performance.now() : 0;
@@ -4780,6 +4917,7 @@ function filterFullList(btn) {
     }
     const hasRg = visibleRgWorkers.length > 0;
     const hasRd = visibleRdWorkers.length > 0;
+    g_rolloverPreviewTrace('list:' + activeDateStr + ':rg=' + visibleRgWorkers.length + ':rd=' + visibleRdWorkers.length + ':empty=' + ((!hasRg && !hasRd) ? '1' : '0'));
 
     if (!hasRg && !hasRd) {
       container.innerHTML = "<div style='color:#666;width:100%;text-align:center;margin-top:50px;'>Nav datu</div>";
@@ -5992,7 +6130,7 @@ function filterFullList(btn) {
   function __minkaGetSelectedDayState() {
     const dateStr = activeDateStr || window.__activeDateStr || '';
     const isToday = !!(dateStr && g_todayStr && dateStr === g_todayStr);
-    const now = new Date();
+    const now = g_now();
 
     function normalizeWorkers(list) {
       return (Array.isArray(list) ? list : []).map(w => {

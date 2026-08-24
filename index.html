@@ -166,11 +166,12 @@
     } catch(e) {}
   }
 
-  var CALENDAR_BUILD = '20260822roomassets28';
+  var CALENDAR_BUILD = '20260824rolloverfix5';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
-    if (new URLSearchParams(window.location.search).get('previewRollover') !== '1') return;
+    var traceParams = new URLSearchParams(window.location.search);
+    if (traceParams.get('previewRollover') !== '1' && traceParams.get('previewClockRollover') !== '1') return;
     var output = document.getElementById('minkaRolloverPreviewTrace');
     if (!output) {
       output = document.createElement('output');
@@ -190,6 +191,9 @@
         u.searchParams.set('previewRollover', '1');
         var previewDelay = previewParams.get('previewRolloverDelay');
         if (previewDelay) u.searchParams.set('previewRolloverDelay', previewDelay);
+      }
+      if (previewParams.get('previewClockRollover') === '1') {
+        u.searchParams.set('previewClockRollover', '1');
       }
       return u.pathname + u.search + u.hash;
     } catch (_e) {
@@ -716,7 +720,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 
 <!-- Calendar embed -->
 <div id="calendarEmbed">
-  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260822roomassets28" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260822roomassets28" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260824rolloverfix5" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260824rolloverfix5" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- Compact brand loader. It stays up until the embedded schedule has painted. -->
@@ -5590,7 +5594,7 @@ window.addEventListener('message', function(e) {
 
 <script>
 if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-  const MINKA_APP_VERSION = '2026.08.16-sideglass.release2';
+  const MINKA_APP_VERSION = '2026.08.24-rollover-fix5';
   const MINKA_VERSION_KEY = 'minka_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {

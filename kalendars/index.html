@@ -386,7 +386,7 @@ window.setTimeout(function () {
        Marķieris te ir burtisks, nevis `window.__minkaLocalBuild`: tas tiek
        uzstādīts krietni tālāk failā nekā šis skripts, tāpēc te tas vēl būtu
        tukšs. Bumpo to kopā ar pārējiem. */
-    fetch(BASE + 'manifest.json?v=20260818noto13')
+    fetch(BASE + 'manifest.json?v=20260824rolloverfix5')
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (m) { manifest = m || { emoji: {} }; applyStatics(); })
       .catch(function () { manifest = { emoji: {} }; });
@@ -1623,7 +1623,7 @@ function _mkToast(msg, type) {
 </script>
 <script src="data/namedays.local.js"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
-<script src="js/calendar.js?v=20260822bubblefatigue37"></script>
+<script src="js/calendar.js?v=20260824rolloverfix5"></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260810layout2"></script>
 <script src="js/fatigue.js?v=20260816fatcache1"></script>
@@ -1637,7 +1637,7 @@ function _mkToast(msg, type) {
 <script src="js/radiologist_plan.js" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260818noto13';
+window.__minkaLocalBuild = '20260824rolloverfix5';
 (function(){
   function norm(v){
     try { return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
@@ -4349,7 +4349,7 @@ window.addEventListener('message', function(e) {
 // worker from this iframe added a second controllerchange reload listener with
 // a different app version, which could make PWA updates visibly reload twice.
 if ('serviceWorker' in navigator && window.top === window) {
-  const MINKA_APP_VERSION = '2026.08.16-sideglass.release2.calendar';
+  const MINKA_APP_VERSION = '2026.08.24-rollover-fix5.calendar';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -18481,6 +18481,15 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       return;
     }
     var mobile = document.documentElement.classList.contains('mk-mobile-shell');
+    // Radio mode uses one compact, shared roster grid (see the final style
+    // block). The old cross-section pull-up was designed for two tall desktop
+    // rows; in the shortened radio viewport it moved RADIOGRĀFERI over the
+    // RADIOLOGI cards and left most of the centre panel empty.
+    if (document.documentElement.classList.contains('host-radio-open')) {
+      clearMoodSectionLayout(rdSection, rdGrid);
+      clearMoodSectionLayout(rgSection, rgGrid);
+      return;
+    }
     var knownWidth = Math.max(0, Number(rosterWidth) || 0);
     var columns;
     if (knownWidth) {
@@ -21433,6 +21442,54 @@ html body .side-panel .mk-duty-strip.mk-duty-avatar-strip {
   content: '' !important;
   position: absolute !important;
   inset: -7px -5px !important;
+}
+</style>
+
+<!-- Radio-open roster: one dense flow instead of two full-width section grids.
+     This is intentionally last so it replaces the several historical compact
+     rules above (including the large-monitor seven-column override). -->
+<style id="mk-radio-roster-flow-v1">
+html.host-radio-open body #grafiks-list.grid-view {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(clamp(112px, 8.5vw, 148px), 1fr)) !important;
+  align-content: start !important;
+  align-items: start !important;
+  gap: 10px !important;
+  padding-top: 5px !important;
+}
+html.host-radio-open body #grafiks-list.grid-view > .cards-section,
+html.host-radio-open body #grafiks-list.grid-view > .cards-section > .cards-subgrid {
+  display: contents !important;
+}
+html.host-radio-open body #grafiks-list.grid-view .cards-section-label {
+  display: none !important;
+}
+html.host-radio-open body #grafiks-list.grid-view .cards-section.rg-mood-pullup {
+  position: static !important;
+  top: auto !important;
+  margin: 0 !important;
+  pointer-events: auto !important;
+}
+html.host-radio-open body #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 112px !important;
+  max-height: 132px !important;
+  aspect-ratio: 1 / .86 !important;
+}
+html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card {
+  display: none !important;
+  grid-column: auto !important;
+}
+@media (max-width: 980px) {
+  html.host-radio-open body #grafiks-list.grid-view {
+    grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)) !important;
+    gap: 8px !important;
+  }
+  html.host-radio-open body #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) {
+    min-height: 104px !important;
+    max-height: 112px !important;
+  }
 }
 </style>
 
