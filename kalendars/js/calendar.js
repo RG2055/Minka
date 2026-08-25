@@ -4130,185 +4130,53 @@ function filterFullList(btn) {
   }
 
   function buildCircadianChartHtml(axisStartMs, axisEndMs, nowMs, overlay) {
-    // Hourly circadian data: [melatonin, cortisol, bodytemp, alertness] 0-100 normalised
-    var CIRC = [
-      [92,5,48,22],[100,4,43,15],[96,4,37,11],[86,5,31,7],[68,9,27,5],[44,26,27,8],
-      [20,52,34,20],[8,78,44,40],[3,95,56,60],[3,100,64,74],[3,82,70,82],[2,68,76,88],
-      [2,58,82,86],[2,52,85,82],[2,46,88,82],[2,40,88,80],[3,36,86,78],[5,30,82,74],
-      [8,25,78,70],[15,20,73,62],[30,15,66,54],[52,10,59,44],[74,7,52,34],[88,5,49,27]
-    ];
     var axisDur = Math.max(1, axisEndMs - axisStartMs);
-    // Plot geometry in the SVG coordinate space. Keep the axis wide so the
-    // integrated night-split header lines up with the chart below it.
-    var PX0 = 0, PX1 = 1800, PY_T = 28, PY_B = 350;
-    var plotW = PX1 - PX0, plotH = PY_B - PY_T;
     function pad(n){ return (n < 10 ? '0' : '') + n; }
-    function getVal(ms, col){
-      var sd = new Date(axisStartMs);
-      var sh = sd.getHours() + sd.getMinutes() / 60;
-      var ah = sh + (ms - axisStartMs) / 3600000;
-      var h = Math.floor(ah) % 24; if (h < 0) h += 24;
-      var f = ah - Math.floor(ah);
-      return CIRC[h][col] * (1 - f) + CIRC[(h + 1) % 24][col] * f;
-    }
-    var startHour = new Date(axisStartMs).getHours() + new Date(axisStartMs).getMinutes() / 60;
-    var axisHours = axisDur / 3600000;
-    function axisHour(hour) {
-      var absolute = hour;
-      while (absolute < startHour) absolute += 24;
-      return absolute;
-    }
-    function hourToX(hAbs){ return PX0 + (hAbs - startHour) / axisHours * plotW; }
-    function X(ms){ return PX0 + (ms - axisStartMs) / axisDur * plotW; }
-    function Y(v){ return PY_B - (v / 100) * plotH; }
-    var SAMPLES = 64;
-    function pts(col){ var a = []; for (var i = 0; i <= SAMPLES; i++){ var t = axisStartMs + axisDur * i / SAMPLES; a.push([X(t), Y(getVal(t, col))]); } return a; }
-    function path(p){ var d = 'M' + p[0][0].toFixed(1) + ' ' + p[0][1].toFixed(1); for (var i = 0; i < p.length - 1; i++){ var mx = (p[i][0] + p[i+1][0]) / 2, my = (p[i][1] + p[i+1][1]) / 2; d += ' Q' + p[i][0].toFixed(1) + ' ' + p[i][1].toFixed(1) + ' ' + mx.toFixed(1) + ' ' + my.toFixed(1); } return d + ' L' + p[p.length-1][0].toFixed(1) + ' ' + p[p.length-1][1].toFixed(1); }
-    function area(p){ return path(p) + ' L' + p[p.length-1][0].toFixed(1) + ' ' + PY_B + ' L' + p[0][0].toFixed(1) + ' ' + PY_B + ' Z'; }
-
-    var mp = pts(0), cp = pts(1), ap = pts(3);
-    var melPath = path(mp), corPath = path(cp), alertPath = path(ap), melArea = area(mp);
-
-    // Melatonin peak
-    var peakMs = axisStartMs, pv = -1;
-    for (var qi = 0; qi <= SAMPLES; qi++){ var qt = axisStartMs + axisDur * qi / SAMPLES, qv = getVal(qt, 0); if (qv > pv){ pv = qv; peakMs = qt; } }
-    var pkx = X(peakMs), pky = Y(pv);
-    var pkd = new Date(peakMs), pkHHMM = pad(pkd.getHours()) + ':' + pad(pkd.getMinutes());
-
-    // Recommended sleep window 02:00-06:00 (clamped to axis)
-    var sleepStartHour = axisHour(2), sleepEndHour = axisHour(6);
-    var szX0 = Math.max(PX0, Math.min(PX1, hourToX(sleepStartHour)));
-    var szX1 = Math.max(PX0, Math.min(PX1, hourToX(sleepEndHour)));
-    var sleepRect = (szX1 > szX0 + 4) ?
-      ('<rect x="' + szX0.toFixed(1) + '" y="0" width="' + (szX1 - szX0).toFixed(1) + '" height="350" rx="16" fill="url(#mc-sleep)"/>' +
-       '<line x1="' + szX0.toFixed(1) + '" y1="30" x2="' + szX1.toFixed(1) + '" y2="30" stroke="#3c4fa3" stroke-width="2" stroke-dasharray="10 8"/>' +
-       '<text x="' + ((szX0 + szX1) / 2).toFixed(1) + '" y="20" text-anchor="middle" font-size="24" font-weight="700" fill="#c7cff2">&#128719;  Ieteicamais miega logs</text>') : '';
-
-    // 06:00 alertness marker
-    var x6 = hourToX(sleepEndHour), y6 = Y(getVal(axisStartMs + (sleepEndHour - startHour) * 3600000, 3));
-    var marker6 = (x6 > PX0 + 12 && x6 < PX1 - 12) ?
-      ('<line x1="' + x6.toFixed(1) + '" y1="' + y6.toFixed(1) + '" x2="' + x6.toFixed(1) + '" y2="365" stroke="#52c97b" stroke-dasharray="3 6"/>' +
-       '<circle cx="' + x6.toFixed(1) + '" cy="' + y6.toFixed(1) + '" r="14" fill="#61df8b" opacity="0.18"/>' +
-       '<circle cx="' + x6.toFixed(1) + '" cy="' + y6.toFixed(1) + '" r="8" fill="#fff"/>' +
-       '<circle cx="' + x6.toFixed(1) + '" cy="' + y6.toFixed(1) + '" r="5" fill="#61df8b"/>' +
-       '<rect x="' + (Math.max(PX0, Math.min(PX1 - 282, x6 - 141))).toFixed(1) + '" y="410" width="282" height="58" rx="11" fill="#0c211b" stroke="#3f9d66"/>' +
-       '<text x="' + (Math.max(PX0 + 141, Math.min(PX1 - 141, x6))).toFixed(1) + '" y="433" text-anchor="middle" font-size="17" fill="#d9f9e3"><tspan x="' + (Math.max(PX0 + 141, Math.min(PX1 - 141, x6))).toFixed(1) + '" dy="0">&#9728; Ap 06:00 modr&#299;ba s&#257;k</tspan><tspan x="' + (Math.max(PX0 + 141, Math.min(PX1 - 141, x6))).toFixed(1) + '" dy="22">pieaugt, melaton&#299;ns ir zems</tspan></text>') : '';
-
-    // Grid + axis hour labels
-    var grid = '', axisLabels = '';
-    var sH = Math.ceil(startHour);
-    for (var gh = sH; ; gh++){
-      var gx = hourToX(gh);
-      if (gx > PX1 + 1) break;
-      if (gx < PX0 - 1) continue;
-      grid += '<line x1="' + gx.toFixed(1) + '" y1="28" x2="' + gx.toFixed(1) + '" y2="350" stroke="#1c3049" stroke-width="1" stroke-dasharray="3 8"/>';
-      axisLabels += '<text x="' + gx.toFixed(1) + '" y="382" text-anchor="middle" font-size="22" fill="#edf3fb">' + pad((((gh % 24) + 24) % 24)) + ':00</text>';
-    }
-
-    // Melatonin peak callout
-    var calloutX = Math.max(PX0 + 130, Math.min(PX1 - 130, pkx));
-    var calloutY = -70;
-    var peakCallout =
-      '<line x1="' + pkx.toFixed(1) + '" y1="' + (calloutY + 62).toFixed(1) + '" x2="' + pkx.toFixed(1) + '" y2="' + pky.toFixed(1) + '" stroke="#6e57b4" stroke-dasharray="3 6"/>' +
-      '<rect x="' + (calloutX - 124).toFixed(1) + '" y="' + calloutY + '" width="248" height="62" rx="11" fill="#191735" stroke="#7249c4"/>' +
-      '<text x="' + calloutX.toFixed(1) + '" y="' + (calloutY + 26) + '" text-anchor="middle" font-size="19" fill="#c5a8ff"><tspan x="' + calloutX.toFixed(1) + '" dy="0">Melaton&#299;na maksimums</tspan><tspan x="' + calloutX.toFixed(1) + '" dy="23">ap ' + pkHHMM + '</tspan></text>' +
-      '<line x1="' + pkx.toFixed(1) + '" y1="' + pky.toFixed(1) + '" x2="' + pkx.toFixed(1) + '" y2="348" stroke="#6e57b4" stroke-dasharray="3 6"/>' +
-      '<circle cx="' + pkx.toFixed(1) + '" cy="' + pky.toFixed(1) + '" r="13" fill="#a77cff" opacity="0.18"/>' +
-      '<circle cx="' + pkx.toFixed(1) + '" cy="' + pky.toFixed(1) + '" r="8" fill="#fff"/>' +
-      '<circle cx="' + pkx.toFixed(1) + '" cy="' + pky.toFixed(1) + '" r="5" fill="#a77cff"/>';
-
-    // Now: pill always; faint now-line only if now within the axis window
     var nowIn = nowMs >= axisStartMs && nowMs <= axisEndMs;
     var nd = new Date(nowMs), nowHHMM = pad(nd.getHours()) + ':' + pad(nd.getMinutes());
-    var nowLineSvg = nowIn ? ('<line x1="' + X(nowMs).toFixed(1) + '" y1="28" x2="' + X(nowMs).toFixed(1) + '" y2="350" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-dasharray="2 4"/>') : '';
-
-    var segHeader = '';
+    var nowPct = Math.max(0, Math.min(100, (nowMs - axisStartMs) / axisDur * 100));
+    var segmentsHtml = '';
+    var segmentCount = 1;
     if (overlay && overlay.segments && overlay.segments.length) {
-      var segDefs = [
-        ['mc-seg1', '#07334b', '#0b1d33'],
-        ['mc-seg2', '#27184e', '#17162b'],
-        ['mc-seg3', '#401530', '#1c1626'],
-        ['mc-seg4', '#3a3212', '#1d1b17']
-      ];
+      segmentCount = overlay.segments.length;
       function fmtTime(d){ return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
-      function segIcon(i){ return i < 2 ? '&#9790;' : '&#9728;'; }
-      var segX = 58, segY = 164, segW = 1800, segH = 88;
-      segHeader += '<rect x="' + segX + '" y="' + segY + '" width="' + segW + '" height="' + segH + '" rx="20" fill="#0a1626" stroke="#1b3652"/>';
-      var dragLabels = '';
-      var segFills = '', segMarks = '', segPills = '';
       overlay.segments.forEach(function(seg, i) {
-        var from = Math.max(0, Math.min(1, (seg.start - axisStartMs) / axisDur));
-        var to = Math.max(0, Math.min(1, (seg.end - axisStartMs) / axisDur));
-        var x = segX + from * segW;
-        var w = Math.max(1, (to - from) * segW);
-        var cx = x + w / 2;
         var color = (seg.color && seg.color.accent) || ['#58d2ff', '#b274ff', '#ff67b0', '#ffd94d'][i % 4];
         var firstName = normalizeLvName(String(seg.name || '').split(/\s+/)[0] || '');
         var startText = fmtTime(new Date(seg.start));
         var endText = fmtTime(new Date(seg.end));
         var segActive = nowIn && seg.start <= nowMs && nowMs < seg.end;
-        // Fills are clipped to the rounded container so first/last corners match.
-        segFills += '<rect x="' + x.toFixed(1) + '" y="' + segY + '" width="' + w.toFixed(1) + '" height="' + segH + '" fill="url(#' + segDefs[i % segDefs.length][0] + ')"/>';
-        if (segActive) {
-          // Live "buddy" highlight — this person's part is happening right now
-          segFills += '<rect x="' + (x + 1.6).toFixed(1) + '" y="' + (segY + 1.6) + '" width="' + (w - 3.2).toFixed(1) + '" height="' + (segH - 3.2) + '" rx="18" fill="' + color + '" fill-opacity="0.10" stroke="' + color + '" stroke-width="2.6">' +
-            '<animate attributeName="stroke-opacity" values="0.92;0.32;0.92" dur="2.2s" repeatCount="indefinite"/></rect>';
-          var pillW = 104, pillH = 30, pillX = cx - pillW / 2, pillY = segY - 15;
-          segPills += '<rect x="' + pillX.toFixed(1) + '" y="' + pillY + '" width="' + pillW + '" height="' + pillH + '" rx="15" fill="' + color + '"/>' +
-            '<text x="' + cx.toFixed(1) + '" y="' + (pillY + 20) + '" text-anchor="middle" font-size="16" font-weight="800" letter-spacing="1.2" fill="#0a1626">TAGAD</text>';
-        }
-        dragLabels += '<span class="sl-ns-name shift-progress-seg-label" style="left:' + ((from + (to - from) / 2) * 100).toFixed(2) + '%;--seg-color:' + color + '" data-seg-idx="' + i + '" data-seg-name="' + escapeHtml(firstName) + '">' + escapeHtml(firstName) + '</span>';
-        if (i > 0) {
-          segMarks += '<line x1="' + x.toFixed(1) + '" y1="' + segY + '" x2="' + x.toFixed(1) + '" y2="' + (segY + segH) + '" stroke="#55708f" stroke-dasharray="3 5"/>';
-          var gx = PX0 + from * plotW;
-          grid += '<line x1="' + gx.toFixed(1) + '" y1="-28" x2="' + gx.toFixed(1) + '" y2="350" stroke="#55708f" stroke-opacity="0.38" stroke-width="1" stroke-dasharray="3 7"/>';
-        }
-        segMarks += '<text x="' + cx.toFixed(1) + '" y="' + (segY + 38) + '" text-anchor="middle" font-size="22" font-weight="800" fill="' + color + '">' + segIcon(i) + '  ' + escapeHtml(firstName).toUpperCase() + '</text>';
-        segMarks += '<text x="' + cx.toFixed(1) + '" y="' + (segY + 67) + '" text-anchor="middle" font-size="19" fill="#d7e5f1">' + startText + ' &#8211; ' + endText + '</text>';
+        var segPast = nowMs >= seg.end;
+        var stateClass = segActive ? ' is-current' : (segPast ? ' is-past' : ' is-upcoming');
+        var stateText = segActive ? 'Tagad' : '';
+        var workerEmoji = '';
+        try { workerEmoji = safeEmojiText(getSidePersonEmoji(seg.name || '')); } catch (_e) {}
+        if (!workerEmoji) workerEmoji = ['🌙','😴','🌅','☀️'][i % 4];
+        segmentsHtml += '<button type="button" class="ns-mini-segment shift-progress-seg-label' + stateClass + '"' +
+          ' style="--seg-color:' + color + '" data-seg-idx="' + i + '" data-seg-name="' + escapeHtml(firstName) + '"' +
+          ' title="Velc, lai mainītu secību">' +
+          '<span class="ns-mini-emoji" aria-hidden="true">' + escapeHtml(workerEmoji) + '</span>' +
+          '<span class="ns-mini-person"><strong>' + escapeHtml(firstName) + '</strong><small>' + startText + '–' + endText + '</small></span>' +
+          (stateText ? '<span class="ns-mini-state">' + stateText + '</span>' : '') +
+        '</button>';
       });
-      segHeader += '<g clip-path="url(#mc-seg-clip)">' + segFills + '</g>' + segMarks + segPills;
     }
-
-    var svg = '<svg viewBox="0 0 1916 930" width="100%" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" font-family="Inter,system-ui,sans-serif">' +
-      '<defs>' +
-        '<clipPath id="mc-seg-clip"><rect x="58" y="164" width="1800" height="88" rx="20"/></clipPath>' +
-        '<linearGradient id="mc-card" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#081426"/><stop offset="1" stop-color="#071120"/></linearGradient>' +
-        '<linearGradient id="mc-mel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9c72ff" stop-opacity="0.40"/><stop offset="1" stop-color="#9c72ff" stop-opacity="0.03"/></linearGradient>' +
-        '<linearGradient id="mc-sleep" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#182557" stop-opacity="0.78"/><stop offset="1" stop-color="#111a3d" stop-opacity="0.40"/></linearGradient>' +
-        '<linearGradient id="mc-seg1" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#07334b" stop-opacity=".75"/><stop offset="1" stop-color="#0b1d33" stop-opacity=".22"/></linearGradient>' +
-        '<linearGradient id="mc-seg2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#27184e" stop-opacity=".72"/><stop offset="1" stop-color="#17162b" stop-opacity=".25"/></linearGradient>' +
-        '<linearGradient id="mc-seg3" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#401530" stop-opacity=".65"/><stop offset="1" stop-color="#1c1626" stop-opacity=".22"/></linearGradient>' +
-        '<linearGradient id="mc-seg4" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3a3212" stop-opacity=".56"/><stop offset="1" stop-color="#1d1b17" stop-opacity=".20"/></linearGradient>' +
-      '</defs>' +
-      '<rect x="0" y="20" width="1916" height="890" rx="28" fill="url(#mc-card)" stroke="#183a5b" stroke-width="1.5"/>' +
-      '<text x="40" y="90" font-size="42" font-weight="800" fill="#f4f7fb">Nakts ritms: miegs, modr&#299;ba un kortizols</text>' +
-      '<text x="40" y="130" font-size="24" fill="#9fb0cb">Vienk&#257;r&#353;s p&#257;rskats, k&#257; tavs &#311;ermenis darbojas no pusnakts l&#299;dz r&#299;tam</text>' +
-      '<rect x="1624" y="55" width="245" height="58" rx="29" fill="#0b1729" stroke="#294261"/>' +
-      '<text x="1649" y="92" font-size="25" fill="#bfc9d9">&#9719; Tagad <tspan font-weight="800" fill="#ffffff">' + nowHHMM + '</tspan></text>' +
-      segHeader +
-      '<g transform="translate(58 330)">' +
-        sleepRect + grid +
-        '<path d="' + melArea + '" fill="url(#mc-mel)"/>' +
-        '<path d="' + melPath + '" fill="none" stroke="#a77cff" stroke-width="11" stroke-opacity="0.18" stroke-linecap="round" stroke-linejoin="round"/>' +
-        '<path d="' + melPath + '" fill="none" stroke="#a77cff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>' +
-        '<path d="' + corPath + '" fill="none" stroke="#ffc21c" stroke-width="4" stroke-linecap="round" stroke-dasharray="13 9"/>' +
-        '<path d="' + alertPath + '" fill="none" stroke="#61df8b" stroke-width="10" stroke-opacity="0.16" stroke-linecap="round" stroke-linejoin="round"/>' +
-        '<path d="' + alertPath + '" fill="none" stroke="#61df8b" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>' +
-        nowLineSvg + marker6 + peakCallout +
-        '<line x1="0" y1="350" x2="' + PX1 + '" y2="350" stroke="#27405f"/>' +
-        axisLabels +
-      '</g>' +
-      '<rect x="40" y="800" width="1260" height="62" rx="14" fill="#081526" stroke="#18334f"/>' +
-      '<text x="75" y="840" font-size="22" font-weight="800" fill="#b07cff">&#9790; Melaton&#299;ns</text><text x="243" y="840" font-size="18" fill="#aab6c8">pal&#299;dz aizmigt</text>' +
-      '<line x1="500" y1="815" x2="500" y2="848" stroke="#2b405b"/>' +
-      '<text x="575" y="840" font-size="22" font-weight="800" fill="#ffc21c">&#984; Kortizols</text><text x="725" y="840" font-size="18" fill="#aab6c8">palielina ener&#291;iju</text>' +
-      '<line x1="960" y1="815" x2="960" y2="848" stroke="#2b405b"/>' +
-      '<text x="1030" y="840" font-size="22" font-weight="800" fill="#62df8b">&#9679; Modr&#299;ba</text><text x="1165" y="840" font-size="18" fill="#aab6c8">cik mo&#382;s j&#363;ties</text>' +
-      '<text x="958" y="895" text-anchor="middle" font-size="16" fill="#71839e">&#9432; Katrs cilv&#275;ks ir at&#353;&#311;ir&#299;gs. &#352;is ir visp&#257;r&#299;gs paraugs, nevis medic&#299;nisks ieteikums.</text>' +
-    '</svg>';
-
-    var dragHtml = (typeof dragLabels !== 'undefined' && dragLabels) ? '<div class="sl-ns-labels sl-circ-drag-labels">' + dragLabels + '</div>' : '';
-    return '<div class="sl-circ-chart">' + svg + dragHtml + '</div>';
+    return '<section class="sl-circ-chart sl-circ-compact" aria-label="Nakts sadalījums">' +
+      '<div class="ns-mini-head">' +
+        '<span class="ns-mini-title"><span class="ns-mini-title-emoji" aria-hidden="true">🌙</span><span><strong>Nakts sadalījums</strong><small>Velc kartītes, lai mainītu secību</small></span></span>' +
+        '<span class="ns-mini-now"><span aria-hidden="true">🕐</span> ' + nowHHMM + '</span>' +
+        '<button type="button" class="ns-mini-close" aria-label="Aizvērt nakts sadalījumu" title="Aizvērt" onclick="document.getElementById(\'ns-bar-toggle\').click()">×</button>' +
+      '</div>' +
+      '<div class="sl-ns-labels ns-mini-segments" style="--ns-count:' + segmentCount + '">' + segmentsHtml + '</div>' +
+      '<div class="ns-mini-rail" aria-hidden="true"><span class="ns-mini-rail-fill" style="width:' + nowPct.toFixed(2) + '%"></span>' +
+        (nowIn ? '<i class="ns-mini-rail-now" style="left:' + nowPct.toFixed(2) + '%"></i>' : '') +
+      '</div>' +
+      '<div class="ns-mini-guide" aria-label="Nakts ritma īss skaidrojums">' +
+        '<span><b aria-hidden="true">😴</b><strong>Melatonīns</strong><small>augstāks nakts sākumā</small></span>' +
+        '<span><b aria-hidden="true">🛏️</b><strong>Miega logs</strong><small>visdziļākais nakts vidū</small></span>' +
+        '<span><b aria-hidden="true">🌅</b><strong>Modrība</strong><small>pieaug rīta pusē</small></span>' +
+      '</div>' +
+    '</section>';
   }
 
   function buildNightSplitLaneHtml(overlay, nowMs) {
