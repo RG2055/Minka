@@ -134,6 +134,7 @@ window.setTimeout(function () {
 <link rel="stylesheet" href="css/side-cards-v2.css?v=20260818nfootgap1">
 <link rel="stylesheet" href="css/header-weather.css?v=20260813headerfix1">
 <link rel="stylesheet" href="css/mood-fluent.css?v=20260820fmood16">
+<link rel="stylesheet" href="css/daily-cat.css?v=20260825petposition2">
 
 <!-- Fluent Emoji webfont (fluentmoji, MIT) — neblokējoši, tāpat kā pārējie fonti.
      Fails ir sadalīts unicode-range gabalos, tāpēc pārlūks lejupielādē tikai tos
@@ -1558,7 +1559,8 @@ function _mkToast(msg, type) {
 </script>
 <script src="data/namedays.local.js"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
-<script src="js/calendar.js?v=20260825b3"></script>
+<script src="js/calendar.js?v=20260825moodcoffee4"></script>
+<script src="js/daily-cat.js?v=20260825petposition2" defer></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260810layout2"></script>
 <script src="js/fatigue.js?v=20260824perfaudit3"></script>
@@ -17555,7 +17557,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
        shrinking or hiding the final tokens. A deliberately uneven, fixed
        constellation uses the safe space around the face: everyone remains
        visible without turning the bubbles into obvious rows. */
-    var useBusyRows = count >= 6;
+    var useBusyRows = count >= 5;
     var busyRowMax = Math.max(topCount, bottomCount);
     var busyBaseSize = useBusyRows
       ? Math.max(30, Math.min(38, (bounds.r - bounds.l) / Math.max(1, busyRowMax * 1.42)))
@@ -17803,36 +17805,60 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       });
     }
     var placements = [];
+    /* Keep the scatter organic without allowing a seeded random run to dump
+       every coffee source into one half of the card. Each source first gets a
+       deterministic, pseudo-random quadrant; if that quadrant is full it may
+       use the rest of the same half, and only then the whole free card. */
+    var spreadSeed = moodScatterSeed(coffeeSources.map(function (source) {
+      return source.dataset.rgCoffeeKey || '';
+    }).join('|') + ':' + people.length);
+    var verticalPhase = spreadSeed & 1;
+    var horizontalPhase = (spreadSeed >>> 1) & 1;
     coffeeSources.forEach(function (source, index) {
       var depth = MOOD_PERSON_DEPTHS[(index + 4) % MOOD_PERSON_DEPTHS.length];
       var seed = moodScatterSeed(source.dataset.rgCoffeeKey || index);
       var chosen = null;
-      // Search the whole free card, not only a thin ring. A busy shift can
-      // have nine people plus seven coffee sources; restricting everything to
-      // one circumference inevitably forced badges on top of each other.
-      // The seeded coordinates remain stable between renders and still look
-      // naturally scattered. The fixed depth sequence, not animation, makes
-      // foreground coffee larger and background coffee smaller.
-      for (var attempt = 0; attempt < 640; attempt++) {
-        seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
-        var rx = seed / 4294967296;
-        seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
-        var ry = seed / 4294967296;
-        var x = bounds.l + 22 + rx * Math.max(1, bounds.r - bounds.l - 44);
-        var y = bounds.t + 18 + ry * Math.max(1, bounds.b - bounds.t - 36);
-        var distance = Math.sqrt(x * x + y * y);
-        var near = Math.max(0, Math.min(1, 1 - (distance - blobSize * .56) / (blobSize * .92)));
-        var size = Math.max(17, Math.min(40, 39 - depth * 23 + near));
-        // The count sits just beside the SVG; this envelope matches the real
-        // rendered badge closely without wasting most of the available gaps.
-        var halfW = size / 2 + 10;
-        var halfH = size / 2 + 4;
-        var box = { l: x - halfW, r: x + halfW, t: y - halfH, b: y + halfH };
-        if (!collidesWith(box, occupied)) {
-          chosen = { x: x, y: y, box: box, size: size };
-          break;
+      function findCoffeeSlot(xMin, xMax, yMin, yMax, attempts, fixedSize) {
+        if (!(xMax > xMin && yMax > yMin)) return null;
+        for (var attempt = 0; attempt < attempts; attempt++) {
+          seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+          var rx = seed / 4294967296;
+          seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+          var ry = seed / 4294967296;
+          var x = xMin + rx * (xMax - xMin);
+          var y = yMin + ry * (yMax - yMin);
+          var distance = Math.sqrt(x * x + y * y);
+          var near = Math.max(0, Math.min(1, 1 - (distance - blobSize * .56) / (blobSize * .92)));
+          var size = fixedSize || Math.max(17, Math.min(40, 39 - depth * 23 + near));
+          // The count sits just beside the SVG; this envelope matches the real
+          // rendered badge closely without wasting most of the available gaps.
+          var halfW = size / 2 + 10;
+          var halfH = size / 2 + 4;
+          var box = { l: x - halfW, r: x + halfW, t: y - halfH, b: y + halfH };
+          if (!collidesWith(box, occupied)) return { x: x, y: y, box: box, size: size };
         }
+        return null;
       }
+      var xAllMin = bounds.l + 22;
+      var xAllMax = bounds.r - 22;
+      var yAllMin = bounds.t + 18;
+      var yAllMax = bounds.b - 18;
+      var wantsTop = (index + verticalPhase) % 2 === 0;
+      var wantsLeft = (Math.floor(index / 2) + horizontalPhase) % 2 === 0;
+      var xHalfMin = wantsLeft ? xAllMin : Math.max(8, xAllMin);
+      var xHalfMax = wantsLeft ? Math.min(-8, xAllMax) : xAllMax;
+      var yHalfMin = wantsTop ? yAllMin : Math.max(10, yAllMin);
+      var yHalfMax = wantsTop ? Math.min(-10, yAllMax) : yAllMax;
+      chosen = findCoffeeSlot(xHalfMin, xHalfMax, yHalfMin, yHalfMax, 180);
+      if (!chosen) {
+        chosen = findCoffeeSlot(xAllMin, xAllMax, yHalfMin, yHalfMax, 320);
+      }
+      if (!chosen) {
+        chosen = findCoffeeSlot(xAllMin, xAllMax, yHalfMin, yHalfMax, 480, 19);
+      }
+      // Packed shifts may exhaust their assigned half. The final pass keeps
+      // every source visible, but clustering is now the fallback, not default.
+      if (!chosen) chosen = findCoffeeSlot(xAllMin, xAllMax, yAllMin, yAllMax, 640);
       if (!chosen) {
         // Preserve every source on the very fullest days: retry only that
         // badge a little smaller before considering it impossible to place.
@@ -17877,10 +17903,10 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     var moodCard = ring && ring.closest('.rg-feedback-card');
     var staffList = staff || [];
     if (moodCard) {
-      /* Six people already consume every safe slot around the face at the
-         wide full-PWA breakpoint. Expand here too, instead of relegating the
-         final cat/wand tokens to the 30px emergency fallback. */
-      moodCard.classList.toggle('rg-busy-staff', staffList.length >= 6);
+      /* Five people already consume every safe corner around the face at the
+         wide full-PWA breakpoint. Expand from five onward so the fifth worker
+         always receives a real slot instead of reaching the hidden fallback. */
+      moodCard.classList.toggle('rg-busy-staff', staffList.length >= 5);
       moodCard.classList.toggle('rg-six-staff', staffList.length === 6);
       moodCard.classList.toggle('rg-super-busy-staff', staffList.length >= 7
         && staffList.filter(function (person) { return Number(person.coffee) > 0; }).length >= 4);
