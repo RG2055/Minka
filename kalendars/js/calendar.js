@@ -1202,6 +1202,13 @@ function filterFullList(btn) {
   let __gPreviewClockBase = 0;
   function g_now() {
     const realNow = new Date();
+    try {
+      const previewNow = new URLSearchParams(window.location.search).get('previewNow');
+      if (previewNow) {
+        const simulated = new Date(previewNow);
+        if (!Number.isNaN(simulated.getTime())) return simulated;
+      }
+    } catch (_error) {}
     let preview = false;
     try { preview = new URLSearchParams(window.location.search).get('previewClockRollover') === '1'; }
     catch (_error) {}
