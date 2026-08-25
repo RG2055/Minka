@@ -879,6 +879,74 @@ function filterFullList(btn) {
     return fresh;
   }
 
+  // Stable identities for declared name changes. The mapping uses irreversible
+  // hashes so private roster names never become part of the source repository.
+  const WORKER_IDENTITY_ALIASES = Object.freeze({
+    '3vftwm': 'worker-identity-01',
+    'bdyfi3': 'worker-identity-01'
+  });
+  const WORKER_CANONICAL_HASHES = Object.freeze({
+    'worker-identity-01': 'bdyfi3'
+  });
+
+  function rawWorkerIdentity(name) {
+    const raw = String(name || '').trim().toLowerCase();
+    return raw.normalize ? raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : raw;
+  }
+
+  function workerIdentityHash(rawIdentity) {
+    let hash = 2166136261;
+    for (let i = 0; i < rawIdentity.length; i++) {
+      hash ^= rawIdentity.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0).toString(36);
+  }
+
+  function workerIdentity(name) {
+    const raw = rawWorkerIdentity(name);
+    return WORKER_IDENTITY_ALIASES[workerIdentityHash(raw)] || raw;
+  }
+
+  function isExplicitWorkerRename(previousName, currentName) {
+    const previousHash = workerIdentityHash(rawWorkerIdentity(previousName));
+    const currentHash = workerIdentityHash(rawWorkerIdentity(currentName));
+    return previousHash !== currentHash &&
+      Object.prototype.hasOwnProperty.call(WORKER_IDENTITY_ALIASES, previousHash) &&
+      Object.prototype.hasOwnProperty.call(WORKER_IDENTITY_ALIASES, currentHash) &&
+      WORKER_IDENTITY_ALIASES[previousHash] === WORKER_IDENTITY_ALIASES[currentHash];
+  }
+
+  function patchWorkerCanonicalNames(storeRef) {
+    const canonicalNames = Object.create(null);
+    Object.keys(storeRef || {}).forEach(month => {
+      const days = storeRef[month];
+      if (!Array.isArray(days)) return;
+      days.forEach(day => {
+        if (!Array.isArray(day && day.workers)) return;
+        day.workers.forEach(worker => {
+          const raw = rawWorkerIdentity(worker && worker.name);
+          const hash = workerIdentityHash(raw);
+          const identity = WORKER_IDENTITY_ALIASES[hash];
+          if (identity && WORKER_CANONICAL_HASHES[identity] === hash && !canonicalNames[identity]) {
+            canonicalNames[identity] = worker.name;
+          }
+        });
+      });
+    });
+    Object.keys(storeRef || {}).forEach(month => {
+      const days = storeRef[month];
+      if (!Array.isArray(days)) return;
+      days.forEach(day => {
+        if (!Array.isArray(day && day.workers)) return;
+        day.workers.forEach(worker => {
+          const canonicalName = canonicalNames[workerIdentity(worker && worker.name)];
+          if (canonicalName) worker.name = canonicalName;
+        });
+      });
+    });
+  }
+
   // Infer NAKTS type for cross-month night continuations.
   // When a worker has an unknown-type short shift on the 1st of a month
   // and the same worker had a NAKTS shift on the last day of the previous month,
@@ -918,12 +986,12 @@ function filterFullList(btn) {
       prevEntry.workers.forEach(w => {
         const tp = String(w.type || '').toUpperCase();
         if (tp === 'NAKTS' || tp === 'DIENNAKTS') {
-          prevWorkerMap.set(String(w.name || '').trim().toLowerCase(), { type: tp, hrs: 999 });
+          prevWorkerMap.set(workerIdentity(w.name), { type: tp, hrs: 999, name: w.name });
           return;
         }
         const hrs = Math.round((w.hours || 0) || parseFloat(String(w.shift || '').replace(',', '.')) || 0);
         if (hrs < 1) return;
-        prevWorkerMap.set(String(w.name || '').trim().toLowerCase(), { type: tp, hrs });
+        prevWorkerMap.set(workerIdentity(w.name), { type: tp, hrs, name: w.name });
       });
       if (!prevWorkerMap.size) continue;
 
@@ -935,7 +1003,7 @@ function filterFullList(btn) {
 
         const hrs = Math.round((w.hours || 0) || parseFloat(String(w.shift || '').replace(',', '.')) || 0);
         if (hrs < 1 || hrs > 12) return;
-        const name = String(w.name || '').trim().toLowerCase();
+        const name = workerIdentity(w.name);
         const prev = prevWorkerMap.get(name);
         if (!prev) return;
 
@@ -952,12 +1020,18 @@ function filterFullList(btn) {
 
         // Signal 2: previous month pattern (skip only if already correct)
         // Condition A: prev month entry is explicitly NAKTS
-        const isNakts = prev.type === 'NAKTS';
+        const isNakts = prev.type === 'NAKTS' || prev.type === 'DIENNAKTS';
         // Condition B: prev entry has short unknown/day-coded hours that sum to standard shift
         // e.g. 4h (May 31) + 8h (Jun 1) = 12h night
         const isContinuation = !isNakts && prev.hrs <= 8 &&
           [12, 16, 24].includes(prev.hrs + hrs);
-        if (isNakts || isContinuation) {
+        // A declared surname change can sit exactly on the month boundary. In
+        // that case the sheet may encode a 24h duty as 16h on the last day and
+        // an apparently daytime 8h row on the 1st. The explicit identity alias
+        // is the missing evidence that this is one duty, not two employees.
+        const isRenamed24hTail = isExplicitWorkerRename(prev.name, w.name) &&
+          prev.hrs === 16 && hrs === 8;
+        if (isNakts || isContinuation || isRenamed24hTail) {
           w.type = 'NAKTS'; w.isNight = true; w.__minkaCarryover = true;
           w.startTime = '00:00';
           w.endTime = '08:00';
@@ -984,7 +1058,7 @@ function filterFullList(btn) {
       if (!prev || !Array.isArray(prev.workers)) return;
       const prevByName = new Map();
       prev.workers.forEach(w => {
-        const name = String(w && w.name || '').trim().toLowerCase();
+        const name = workerIdentity(w && w.name);
         if (!name) return;
         const hrs = Math.round((w.hours || 0) || parseFloat(String(w.shift || '').replace(',', '.')) || 0);
         const type = String(w.type || '').toUpperCase();
@@ -992,7 +1066,7 @@ function filterFullList(btn) {
         prevByName.set(name, { hrs, type, startHour });
       });
       day.workers.forEach(w => {
-        const name = String(w && w.name || '').trim().toLowerCase();
+        const name = workerIdentity(w && w.name);
         if (!name || w.__minkaCarryover) return;
         const startHour = parseInt(String(w.startTime || '').split(':')[0], 10);
         const hrs = Math.round((w.hours || 0) || parseFloat(String(w.shift || '').replace(',', '.')) || 0);
@@ -1046,10 +1120,9 @@ function filterFullList(btn) {
       });
     }
 
-    const workerKey = worker => {
-      const raw = String(worker && worker.name || '').trim().toLowerCase();
-      return raw.normalize ? raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : raw;
-    };
+    // Join a declared surname change into the same physical duty. The card then
+    // shows the real 24h shift, while source/month totals stay split as 16h + 8h.
+    const workerKey = worker => workerIdentity(worker && worker.name);
     const sourceHours = worker =>
       Math.round((worker && worker.hours || 0) || parseFloat(String(worker && worker.shift || '').replace(',', '.')) || 0);
 
@@ -1274,6 +1347,8 @@ function filterFullList(btn) {
           storeRad = normalizeStoreKeys(getScheduleChannel(cachedAtStart, 'radiologists'));
           patchCrossMonthContinuations(store);
           patchCrossMonthContinuations(storeRad);
+          patchWorkerCanonicalNames(store);
+          patchWorkerCanonicalNames(storeRad);
           patchAdjacentDayContinuations(store);
           patchAdjacentDayContinuations(storeRad);
           patchSplitDutyContinuations(store);
@@ -1349,13 +1424,15 @@ function filterFullList(btn) {
         getScheduleChannel(cachedBeforeRefresh, 'radiologists'),
         g_todayStr
       );
+      patchCrossMonthContinuations(store);
+      patchCrossMonthContinuations(storeRad);
+      patchWorkerCanonicalNames(store);
+      patchWorkerCanonicalNames(storeRad);
       writeCachedSchedule({
         ...d,
         radiographers: store,
         radiologists: storeRad
       });
-      patchCrossMonthContinuations(store);
-      patchCrossMonthContinuations(storeRad);
       patchAdjacentDayContinuations(store);
       patchAdjacentDayContinuations(storeRad);
       patchSplitDutyContinuations(store);
@@ -1440,6 +1517,8 @@ function filterFullList(btn) {
           storeRad = normalizeStoreKeys((cached.radiologists && typeof cached.radiologists === "object") ? cached.radiologists : (cached.radiologi || {}));
           patchCrossMonthContinuations(store);
           patchCrossMonthContinuations(storeRad);
+          patchWorkerCanonicalNames(store);
+          patchWorkerCanonicalNames(storeRad);
           patchAdjacentDayContinuations(store);
           patchAdjacentDayContinuations(storeRad);
           patchSplitDutyContinuations(store);

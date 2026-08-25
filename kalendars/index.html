@@ -1558,7 +1558,7 @@ function _mkToast(msg, type) {
 </script>
 <script src="data/namedays.local.js"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
-<script src="js/calendar.js?v=20260825compactfluent2"></script>
+<script src="js/calendar.js?v=20260825b3"></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260810layout2"></script>
 <script src="js/fatigue.js?v=20260824perfaudit3"></script>
@@ -1567,7 +1567,7 @@ function _mkToast(msg, type) {
 <script src="js/design_v1.js?v=20260824perfaudit2" defer></script>
 <script src="js/theme.js?v=20260724f" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
-<script src="js/emoji.js?v=20260814midmeta36" defer></script>
+<script src="js/emoji.js?v=20260825b3" defer></script>
 <script src="js/levels.js?v=20260802coffee1" defer></script>
 <script src="js/radiologist_plan.js?v=20260824perfaudit2" defer></script>
 
@@ -12762,9 +12762,29 @@ window.addEventListener('message', function(e) {
     { label: 'Zelta stunda',bg: { t: 'grad', id: 'zelts' },   num: '146,64,14',   na: '0.90', txt: '120,53,15',   sw: GRAD_MAP.zelts }
   ];
 
-  function loadAll() { try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; } }
+  function loadAll() {
+    try {
+      var stored = JSON.parse(localStorage.getItem(KEY) || '{}') || {};
+      var merged = {};
+      Object.keys(stored).forEach(function(k){ merged[normName(k)] = stored[k]; });
+      return merged;
+    } catch (e) { return {}; }
+  }
   function saveAll(o) { try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} }
-  function normName(n) { return String(n || '').trim().toUpperCase(); }
+  function normName(n) {
+    var name = String(n || '').trim().toUpperCase();
+    var raw = name.toLowerCase();
+    if (raw.normalize) raw = raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    var hash = 2166136261;
+    for (var i = 0; i < raw.length; i++) {
+      hash ^= raw.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    var identityHash = (hash >>> 0).toString(36);
+    if (identityHash === '3vftwm' || identityHash === 'bdyfi3') return 'WORKER-IDENTITY-01';
+    return name;
+  }
+  function cloudWorkerName(n) { return String(n || '').trim().toUpperCase(); }
   function hexToRgb(h) {
     h = String(h || '').replace('#', '');
     if (h.length !== 6) return '100,210,255';
@@ -12915,7 +12935,7 @@ window.addEventListener('message', function(e) {
   }
   function cloudPush(name, sk) {
     if (!window.MinkaApi || !window.MinkaApi.apiFetch) { warnLocalOnly(); return; }
-    window.MinkaApi.apiFetch('/api/skins', { method: 'POST', json: { worker: normName(name), skin: packSkin(sk) || null } })
+    window.MinkaApi.apiFetch('/api/skins', { method: 'POST', json: { worker: cloudWorkerName(name), skin: packSkin(sk) || null } })
       .then(function(r) { if (!r.ok) throw 0; if (typeof _mkToast === 'function') _mkToast('Izskats saglabāts — redzēs visi', 'ok'); })
       .catch(warnLocalOnly);
   }
@@ -12924,7 +12944,7 @@ window.addEventListener('message', function(e) {
       throw new Error('Nav savienojuma ar mākoni');
     }
     var form = new FormData();
-    form.append('worker', normName(name));
+    form.append('worker', cloudWorkerName(name));
     form.append('image', blob, 'skin.webp');
     var response = await window.MinkaApi.apiFetch('/api/skin-art', { method: 'POST', body: form });
     var data = await response.json().catch(function(){ return {}; });
