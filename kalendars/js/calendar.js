@@ -1271,8 +1271,6 @@ function filterFullList(btn) {
   let __gCacheRendered = false;
   let __gLastFreshAt = 0;
   let __gLastRemoteFingerprint = '';
-  let __gPreviewClockStartedAt = 0;
-  let __gPreviewClockBase = 0;
   function g_now() {
     const realNow = new Date();
     try {
@@ -1282,20 +1280,9 @@ function filterFullList(btn) {
         if (!Number.isNaN(simulated.getTime())) return simulated;
       }
     } catch (_error) {}
-    let preview = false;
-    try { preview = new URLSearchParams(window.location.search).get('previewClockRollover') === '1'; }
-    catch (_error) {}
-    if (!preview) return realNow;
-    if (!__gPreviewClockStartedAt) {
-      __gPreviewClockStartedAt = Date.now();
-      const base = new Date(realNow);
-      base.setHours(7, 59, 57, 0);
-      __gPreviewClockBase = base.getTime();
-    }
-    // Freeze after twelve seconds so a diagnostic tab remains on the freshly
-    // rolled shift instead of drifting away from the boundary under test.
-    return new Date(__gPreviewClockBase + Math.min(12000, Date.now() - __gPreviewClockStartedAt));
+    return realNow;
   }
+  window.__minkaNow = g_now;
   function __gScheduleFingerprint(payload) {
     try {
       return JSON.stringify([
@@ -3331,7 +3318,7 @@ function filterFullList(btn) {
     let enabled = false;
     try {
       const params = new URLSearchParams(window.location.search);
-      enabled = params.get('previewRollover') === '1' || params.get('previewClockRollover') === '1';
+      enabled = params.get('previewRollover') === '1';
     }
     catch (_error) {}
     if (!enabled) return;

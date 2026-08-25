@@ -27,12 +27,12 @@
   }
   window.__minkaHasApiAuth = function() { return !!getToken(); };
 
-  var CALENDAR_BUILD = '20260825b3';
+  var CALENDAR_BUILD = '20260825petposition2';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
     var traceParams = new URLSearchParams(window.location.search);
-    if (traceParams.get('previewRollover') !== '1' && traceParams.get('previewClockRollover') !== '1') return;
+    if (traceParams.get('previewRollover') !== '1') return;
     var output = document.getElementById('minkaRolloverPreviewTrace');
     if (!output) {
       output = document.createElement('output');
@@ -52,9 +52,6 @@
         u.searchParams.set('previewRollover', '1');
         var previewDelay = previewParams.get('previewRolloverDelay');
         if (previewDelay) u.searchParams.set('previewRolloverDelay', previewDelay);
-      }
-      if (previewParams.get('previewClockRollover') === '1') {
-        u.searchParams.set('previewClockRollover', '1');
       }
       return u.pathname + u.search + u.hash;
     } catch (_e) {
