@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.465-today-date-marker';
+const CACHE = 'minka-4.6.466-remove-window-controls-overlay';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
@@ -148,10 +148,9 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // The installed desktop app reads display_override from the web app
-  // manifest. Never pin that metadata behind cache-first: otherwise an
-  // existing standalone installation can miss a newly enabled display mode
-  // such as window-controls-overlay indefinitely.
+  // The installed app reads its presentation metadata from the web app
+  // manifest. Never pin that metadata behind cache-first, so installation
+  // settings and icons update without requiring a manual cache clear.
   const isAppManifest =
     request.destination === 'manifest' ||
     (parsedUrl.origin === self.location.origin && /\/manifest(?:-mobile)?\.json$/i.test(parsedUrl.pathname));
