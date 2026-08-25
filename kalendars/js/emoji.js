@@ -38,6 +38,33 @@
     return emoji;
   }
 
+  function canonicalWorkerIdentityName(value) {
+    var raw = safeWorkerName(value).toLowerCase();
+    if (raw.normalize) raw = raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    var hash = 2166136261;
+    for (var i = 0; i < raw.length; i++) {
+      hash ^= raw.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    var identityHash = (hash >>> 0).toString(36);
+    if (identityHash === '3vftwm' || identityHash === 'bdyfi3') return 'worker-identity-01';
+    return raw;
+  }
+
+  function getEmojiForWorker(name) {
+    var exact = safeEmoji(_data[name]);
+    if (exact) return exact;
+    var identity = canonicalWorkerIdentityName(name);
+    if (!identity) return null;
+    var keys = Object.keys(_data || {});
+    for (var i = 0; i < keys.length; i++) {
+      if (canonicalWorkerIdentityName(keys[i]) !== identity) continue;
+      var aliased = safeEmoji(_data[keys[i]]);
+      if (aliased) return aliased;
+    }
+    return null;
+  }
+
   function sanitizeEmojiMap(value) {
     var clean = {};
     if (!value || typeof value !== 'object' || Array.isArray(value)) return clean;
@@ -1834,7 +1861,7 @@
   }
 
   window.MinkaEmoji = {
-    get: function(name) { return safeEmoji(_data[name]) || null; },
+    get: getEmojiForWorker,
     safe: safeEmoji,
     refresh: refreshAllCards,
     reload: loadFromGist,
