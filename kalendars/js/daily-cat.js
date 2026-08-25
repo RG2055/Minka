@@ -3,7 +3,6 @@
 
   var CATALOG_URL = 'data/codex-cats.json?v=20260825dailycat1';
   var CHOICE_KEY = 'minka:daily-agent-pet:choice';
-  var POSITION_KEY = 'minka:daily-agent-pet:position:v2';
   var DAY_MS = 86400000;
   var DAY_START_HOUR = 8;
   var PET_SIZE = 96;
@@ -35,6 +34,9 @@
   var midnightTimer = 0;
   var positionObserver = null;
   var positionTimer = 0;
+  var anchorFrame = 0;
+  var anchorObserver = null;
+  var anchorTarget = null;
   var dragFrame = 0;
   var dragState = null;
   var skipClick = false;
@@ -45,6 +47,7 @@
   var actionToken = 0;
   var switchToken = 0;
   var rolloverDutyDay = '';
+  var activePetDayKey = '';
   var positionMode = 'auto';
 
   function pad(value) { return String(value).padStart(2, '0'); }
@@ -132,6 +135,8 @@
     if (next.getTime() <= now.getTime()) next.setDate(next.getDate() + 1);
     midnightTimer = setTimeout(function () {
       try { localStorage.removeItem(CHOICE_KEY); } catch (_error) {}
+      activePetDayKey = petDayKey(new Date());
+      resetAutoPosition();
       transitionToPet(automaticIndex(new Date()), false);
       scheduleDayChange();
     }, Math.max(1000, next.getTime() - now.getTime()));
@@ -160,7 +165,7 @@
     var moodRect = mood && mood.getBoundingClientRect();
     var blockers = [].slice.call(list.querySelectorAll(
       '.card, .cards-section-label, button, a, input, textarea, select, [role="button"]'
-    )).filter(function (node) { return node !== petButton; }).map(function (node) {
+    )).filter(function (node) { return node !== petButton && node !== mood; }).map(function (node) {
       return node.getBoundingClientRect();
     }).filter(function (rect) { return rect.width > 0 && rect.height > 0; });
     function overlaps(a, b, pad) {
@@ -180,6 +185,21 @@
         right: innerWidth - candidate.right,
         bottom: innerHeight - candidate.bottom
       });
+    }
+    var commentBubble = list.querySelector('.rg-feedback-card .rg-comment-icon');
+    if (commentBubble) {
+      var bubbleRect = commentBubble.getBoundingClientRect();
+      if (bubbleRect.width > 0 && bubbleRect.height > 0) {
+        // Anchor to the white bubble itself, not its full-width button. The
+        // tail begins about one fifth into the bubble; the pet's centre sits
+        // directly beneath it so the bubble reads as the pet speaking.
+        var tailX = bubbleRect.left + Math.max(18, Math.min(28, bubbleRect.width * 0.2));
+        var speechCandidate = makeCandidate(
+          tailX - PET_SIZE / 2,
+          bubbleRect.bottom
+        );
+        return asPosition(speechCandidate);
+      }
     }
     var rows = [];
     rects.slice().sort(function (a, b) { return a.top - b.top || a.left - b.left; })
@@ -246,6 +266,38 @@
     position = clampPosition(position);
     petButton.style.right = Math.round(position.right) + 'px';
     petButton.style.bottom = Math.round(position.bottom) + 'px';
+  }
+  function currentPosition() {
+    if (!petButton) return null;
+    var rect = petButton.getBoundingClientRect();
+    return clampPosition({ right: innerWidth - rect.right, bottom: innerHeight - rect.bottom });
+  }
+  function observeAnchor() {
+    if (!petButton || typeof ResizeObserver !== 'function') return;
+    var nextTarget = document.querySelector('.rg-feedback-card .rg-comment-icon');
+    if (nextTarget === anchorTarget) return;
+    if (anchorObserver) anchorObserver.disconnect();
+    anchorTarget = nextTarget;
+    if (!anchorTarget) return;
+    anchorObserver = new ResizeObserver(scheduleAutoPosition);
+    anchorObserver.observe(anchorTarget);
+  }
+  function syncAutoPosition() {
+    anchorFrame = 0;
+    if (!petButton || positionMode !== 'auto' || dragState) return;
+    observeAnchor();
+    var position = defaultPosition();
+    if (position) applyPosition(position);
+    if (pickerOpen) positionPicker();
+  }
+  function scheduleAutoPosition() {
+    if (!petButton || positionMode !== 'auto' || dragState || anchorFrame) return;
+    anchorFrame = requestAnimationFrame(syncAutoPosition);
+  }
+  function resetAutoPosition() {
+    positionMode = 'auto';
+    if (petButton) petButton.dataset.positionMode = positionMode;
+    scheduleAutoPosition();
   }
   function framePosition(row, frame) {
     return (frame / (SPRITE_COLS - 1) * 100) + '% ' + (row / (SPRITE_ROWS - 1) * 100) + '%';
@@ -379,7 +431,7 @@
   function onPointerDown(event) {
     if (event.button !== 0 || dragState) return;
     closePicker();
-    var start = clampPosition(safeRead(POSITION_KEY) || defaultPosition() || { right: 24, bottom: 24 });
+    var start = currentPosition() || defaultPosition() || clampPosition({ right: 24, bottom: 24 });
     dragState = { id: event.pointerId, x: event.clientX, y: event.clientY,
       right: start.right, bottom: start.bottom, nextRight: start.right, nextBottom: start.bottom,
       dx: 0, dy: 0, moved: false, action: '' };
@@ -409,16 +461,16 @@
   function onPointerEnd(event) {
     if (!dragState || event.pointerId !== dragState.id) return;
     if (dragFrame) cancelAnimationFrame(dragFrame);
+    var moved = dragState.moved;
     var position = { right: dragState.nextRight, bottom: dragState.nextBottom };
-    skipClick = event.type === 'pointerup' && dragState.moved;
+    skipClick = event.type === 'pointerup' && moved;
     dragState = null;
     dragFrame = 0;
     petButton.style.transform = '';
     petButton.classList.remove('is-dragging');
     applyPosition(position);
-    positionMode = 'manual';
+    if (moved) positionMode = 'manual';
     petButton.dataset.positionMode = positionMode;
-    safeWrite(POSITION_KEY, position);
     if (petButton.hasPointerCapture(event.pointerId)) petButton.releasePointerCapture(event.pointerId);
     startIdle();
   }
@@ -442,6 +494,7 @@
     petButton.appendChild(spriteWrap);
     document.body.appendChild(petButton);
     applyPosition(position);
+    observeAnchor();
     updatePet();
     petButton.addEventListener('pointerdown', onPointerDown);
     petButton.addEventListener('pointermove', onPointerMove);
@@ -466,9 +519,8 @@
   }
   function mountWhenReady() {
     if (petButton || isCompact() || !catalog.length) return;
-    var saved = safeRead(POSITION_KEY);
-    positionMode = saved ? 'manual' : 'auto';
-    var position = saved ? clampPosition(saved) : defaultPosition();
+    positionMode = 'auto';
+    var position = defaultPosition();
     if (position) { stopPositionWait(); createPet(position); return; }
     if (!positionObserver) {
       positionObserver = new MutationObserver(mountWhenReady);
@@ -640,6 +692,7 @@
       if (!catalog.length) throw new Error('Daily cat catalog is empty');
       var rolloverIndex = indexForDutyDay(rolloverDutyDay);
       selectedIndex = rolloverIndex >= 0 ? rolloverIndex : indexForToday();
+      activePetDayKey = petDayKey(currentDate());
       pickerPage = Math.floor(selectedIndex / PAGE_SIZE);
       createPicker();
       mountWhenReady();
@@ -651,11 +704,11 @@
     });
   }
   function init() {
+    addEventListener('scroll', scheduleAutoPosition, { passive: true, capture: true });
     addEventListener('resize', function () {
       if (!petButton && !isCompact()) mountWhenReady();
       if (petButton) {
-        var saved = safeRead(POSITION_KEY);
-        var position = saved ? clampPosition(saved) : defaultPosition();
+        var position = positionMode === 'manual' ? currentPosition() : defaultPosition();
         if (position) applyPosition(position);
       }
       syncVisibility();
@@ -665,8 +718,8 @@
       if (pickerOpen) requestAnimationFrame(positionPicker);
       if (petButton && positionMode === 'auto') {
         setTimeout(function () {
-          var position = defaultPosition();
-          if (position) applyPosition(position);
+          observeAnchor();
+          scheduleAutoPosition();
         }, 220);
       }
     });
@@ -676,6 +729,8 @@
       var nextIndex = indexForDutyDay(rolloverDutyDay);
       if (nextIndex < 0) nextIndex = automaticIndex(new Date());
       try { localStorage.removeItem(CHOICE_KEY); } catch (_error) {}
+      activePetDayKey = petDayKey(currentDate());
+      resetAutoPosition();
       transitionToPet(nextIndex, false);
     });
     document.addEventListener('pointerdown', function (event) {
@@ -688,6 +743,12 @@
       if (document.hidden) {
         clearAnimationTimers();
       } else if (catalog.length) {
+        var currentPetDay = petDayKey(currentDate());
+        if (currentPetDay !== activePetDayKey) {
+          activePetDayKey = currentPetDay;
+          try { localStorage.removeItem(CHOICE_KEY); } catch (_error) {}
+          resetAutoPosition();
+        }
         var previewIndex = indexForDutyDay(rolloverDutyDay);
         var index = previewIndex >= 0 ? previewIndex : indexForToday();
         if (index !== selectedIndex) transitionToPet(index, false);
