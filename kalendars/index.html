@@ -22527,6 +22527,29 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
   align-self: center !important;
   min-width: 0 !important;
 }
+
+/* The selected day and the real current day are two independent states.
+   When the user browses away, today keeps a quiet cyan ring and soft tint;
+   the stronger filled outline remains reserved for the selected date. */
+:root:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row .scroller .pill.today-pill {
+  position: relative !important;
+  border-color: rgba(109, 220, 255, .46) !important;
+  background: rgba(70, 187, 226, .075) !important;
+  color: #d7f5ff !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(148, 229, 255, .08),
+    0 0 11px rgba(44, 187, 235, .14) !important;
+}
+:root:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row .scroller .pill.today-pill .weekday {
+  color: rgba(150, 228, 252, .88) !important;
+}
+:root:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row .scroller .pill.today-pill.active {
+  border-color: rgba(90, 200, 245, .72) !important;
+  background: rgba(16, 132, 180, .20) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(195, 238, 255, .13),
+    0 0 16px rgba(56, 189, 248, .22) !important;
+}
 </style>
 
 <script id="mk-integrated-duty-header-js-v1">
