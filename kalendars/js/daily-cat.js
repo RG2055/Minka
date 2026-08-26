@@ -49,6 +49,7 @@
   var rolloverDutyDay = '';
   var activePetDayKey = '';
   var positionMode = 'auto';
+  var manualPosition = null;
 
   function pad(value) { return String(value).padStart(2, '0'); }
   function currentDate() {
@@ -268,9 +269,24 @@
     petButton.style.bottom = Math.round(position.bottom) + 'px';
   }
   function currentPosition() {
-    if (!petButton) return null;
+    // A hidden pet (radio open, compact layout) reports an empty rect, so the
+    // measured position would collapse into the top-left corner. Report
+    // nothing instead and let the stored manual position stand.
+    if (!petButton || petButton.hidden) return null;
     var rect = petButton.getBoundingClientRect();
+    if (!rect.width || !rect.height) return null;
     return clampPosition({ right: innerWidth - rect.right, bottom: innerHeight - rect.bottom });
+  }
+  function restorePosition() {
+    if (!petButton || petButton.hidden || dragState) return;
+    if (positionMode === 'manual') {
+      // Keep the dropped position unclamped so the pet returns to its own spot
+      // once the viewport grows back after the radio closes.
+      if (manualPosition) applyPosition(manualPosition);
+      return;
+    }
+    var position = defaultPosition();
+    if (position) applyPosition(position);
   }
   function observeAnchor() {
     if (!petButton || typeof ResizeObserver !== 'function') return;
@@ -296,6 +312,7 @@
   }
   function resetAutoPosition() {
     positionMode = 'auto';
+    manualPosition = null;
     if (petButton) petButton.dataset.positionMode = positionMode;
     scheduleAutoPosition();
   }
@@ -395,13 +412,18 @@
   }
   function syncVisibility() {
     if (!petButton) return;
+    var wasHidden = petButton.hidden;
     petButton.hidden = isCompact();
     if (petButton.hidden) {
       closePicker();
       clearAnimationTimers();
-    } else if (!frameTimer) {
-      startIdle();
+      return;
     }
+    if (wasHidden) {
+      restorePosition();
+      if (positionMode === 'auto') scheduleAutoPosition();
+    }
+    if (!frameTimer) startIdle();
   }
   function updatePet() {
     var pet = catalog[selectedIndex];
@@ -431,7 +453,8 @@
   function onPointerDown(event) {
     if (event.button !== 0 || dragState) return;
     closePicker();
-    var start = currentPosition() || defaultPosition() || clampPosition({ right: 24, bottom: 24 });
+    var start = currentPosition() || manualPosition ||
+      defaultPosition() || clampPosition({ right: 24, bottom: 24 });
     dragState = { id: event.pointerId, x: event.clientX, y: event.clientY,
       right: start.right, bottom: start.bottom, nextRight: start.right, nextBottom: start.bottom,
       dx: 0, dy: 0, moved: false, action: '' };
@@ -469,7 +492,10 @@
     petButton.style.transform = '';
     petButton.classList.remove('is-dragging');
     applyPosition(position);
-    if (moved) positionMode = 'manual';
+    if (moved) {
+      positionMode = 'manual';
+      manualPosition = clampPosition(position);
+    }
     petButton.dataset.positionMode = positionMode;
     if (petButton.hasPointerCapture(event.pointerId)) petButton.releasePointerCapture(event.pointerId);
     startIdle();
@@ -707,11 +733,8 @@
     addEventListener('scroll', scheduleAutoPosition, { passive: true, capture: true });
     addEventListener('resize', function () {
       if (!petButton && !isCompact()) mountWhenReady();
-      if (petButton) {
-        var position = positionMode === 'manual' ? currentPosition() : defaultPosition();
-        if (position) applyPosition(position);
-      }
       syncVisibility();
+      restorePosition();
       if (pickerOpen) positionPicker();
     }, { passive: true });
     addEventListener('daySelected', function () {
