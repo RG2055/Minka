@@ -3412,7 +3412,9 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   var MEDIA_SYNC_KEY = 'minkaBolusMediaSyncV1';
   var _mediaSyncTs = { ge: 0, philips: 0 };
   var _lastMediaTouchAt = { ge: 0, philips: 0 };
-  function _sanitizeMedia(value) {
+  // keepNaclVolume is for history text only: past records keep the volume they
+  // were saved with, while the live rack always shows the current 1000 ml bag.
+  function _sanitizeMedia(value, keepNaclVolume) {
     var src = value && typeof value === 'object' ? value : {};
     var clean = _newMediaDraft();
     ['left', 'right'].forEach(function(side) {
@@ -3426,8 +3428,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     });
     var nacl = src.nacl && typeof src.nacl === 'object' ? src.nacl : {};
     clean.nacl.enabled = nacl.enabled === true || nacl.enabled === 1 || nacl.enabled === '1';
-    // 1000 ml is the standard bag; older records that stored 500 ml keep it.
-    clean.nacl.volumeMl = Number(nacl.volumeMl) === 500 ? 500 : 1000;
+    clean.nacl.volumeMl = keepNaclVolume && Number(nacl.volumeMl) === 500 ? 500 : 1000;
     return clean;
   }
   function _mediaSnapshot(roomId) {
@@ -3463,7 +3464,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     return true;
   }
   function _mediaSummary(media) {
-    var m = _sanitizeMedia(media);
+    var m = _sanitizeMedia(media, true);
     var parts = [];
     if (m.left.enabled) parts.push('K: U' + m.left.concentration + ' · ' + m.left.volumeMl + ' ml');
     if (m.nacl.enabled) parts.push('NaCl · ' + m.nacl.volumeMl + ' ml');
