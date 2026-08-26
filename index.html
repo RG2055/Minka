@@ -4045,15 +4045,17 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
         }
         var pts = _pick[r.id] !== null ? _pick[r.id] : Date.now();
         var pd = new Date(pts);
-        var dStr = pd.getFullYear()+'-'+('0'+(pd.getMonth()+1)).slice(-2)+'-'+('0'+pd.getDate()).slice(-2);
-        var tStr = ('0'+pd.getHours()).slice(-2)+':'+('0'+pd.getMinutes()).slice(-2);
+        var dStr = _dateText(pd.getTime());
+        var tStr = _timeText(pd.getTime());
         return '<div class="bnm-section">'+
           '<div class="bnm-label">IERAKSTA LAIKS</div>'+
           '<div class="bnm-prow">'+
-            '<label class="bnm-native-field"><span>DATUMS</span><input class="bnm-date-input" data-room="'+r.id+'" type="date" value="'+dStr+'"><button class="bnm-picker-btn" data-room="'+r.id+'" data-kind="date" type="button" aria-label="Atvērt kalendāru">'+_bolusIcon('calendar')+'</button></label>'+
-            '<label class="bnm-native-field bnm-time-field"><span>PRECĪZS LAIKS</span><input class="bnm-time-input" data-room="'+r.id+'" type="time" step="60" value="'+tStr+'"><button class="bnm-picker-btn" data-room="'+r.id+'" data-kind="time" type="button" aria-label="Atvērt stundu un minūšu izvēli">'+_bolusIcon('clock')+'</button></label>'+
+            '<label class="bnm-native-field"><span>DATUMS</span><input class="bnm-date-input" data-room="'+r.id+'" type="text" inputmode="numeric" maxlength="10" placeholder="DD.MM.GGGG" value="'+dStr+'"><button class="bnm-picker-btn bnm-dpick" data-room="'+r.id+'" type="button" aria-label="Atvērt kalendāru">'+_bolusIcon('calendar')+'</button></label>'+
+            '<label class="bnm-native-field bnm-time-field"><span>PRECĪZS LAIKS</span><input class="bnm-time-input" data-room="'+r.id+'" type="text" inputmode="numeric" maxlength="5" placeholder="HH:MM" value="'+tStr+'"><button class="bnm-picker-btn bnm-tpick" data-room="'+r.id+'" type="button" aria-label="Atvērt stundu un minūšu izvēli">'+_bolusIcon('clock')+'</button></label>'+
             '<button class="bnm-savepick" data-room="'+r.id+'" type="button">SAGLABĀT</button>'+
           '</div>'+
+          (_calOpen[r.id] ? _buildCal(r.id) : '')+
+          (_tpOpen[r.id] ? _buildTp(r.id) : '')+
           '<small class="bnm-last">'+_escHtml(changedStr)+'</small>'+
         '</div>';
       })()+
@@ -4068,7 +4070,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
             if (_histEdit[r.id] === i) {
               return '<div class="bhist-row bhist-editing" data-i="'+i+'">'+
                 '<div class="bhe-head">'+_bolusIcon('edit')+' Labo ierakstu nr. '+(i+1)+'</div>'+
-                '<input type="datetime-local" class="bhe-dt" data-room="'+r.id+'" data-i="'+i+'" value="'+_dtLocal(ts)+'">'+
+                '<input type="text" class="bhe-dt" data-room="'+r.id+'" data-i="'+i+'" inputmode="numeric" maxlength="16" placeholder="DD.MM.GGGG HH:MM" value="'+_dtText(ts)+'">'+
                 '<input type="text" class="bhe-nm" data-room="'+r.id+'" data-i="'+i+'" maxlength="30" placeholder="Vārds" value="'+safeWho+'">'+
                 '<div class="bhe-btns">'+
                   '<button class="bhe-save" data-room="'+r.id+'" data-i="'+i+'">'+_bolusIcon('check')+' Saglabāt</button>'+
@@ -4100,9 +4102,28 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       '</div>'+
     '</div>';
   }
-  function _dtLocal(ts) {
+  // Native date/time inputs follow the browser locale — on an English system
+  // they render mm/dd/yyyy and a 12h clock with AM/PM. Every bolus field is a
+  // plain text box instead, so the date stays dd.mm.yyyy and the clock 24h.
+  function _pad2(value) { return ('0' + value).slice(-2); }
+  function _dateText(ts) {
     var d = ts ? new Date(ts) : new Date();
-    return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)+'T'+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+    return _pad2(d.getDate())+'.'+_pad2(d.getMonth()+1)+'.'+d.getFullYear();
+  }
+  function _timeText(ts) {
+    var d = ts ? new Date(ts) : new Date();
+    return _pad2(d.getHours())+':'+_pad2(d.getMinutes());
+  }
+  function _dtText(ts) { return _dateText(ts)+' '+_timeText(ts); }
+  function _parseDateTimeText(dateValue, timeValue) {
+    var dm = String(dateValue || '').trim().match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})\.?$/);
+    var tm = String(timeValue || '').trim().match(/^(\d{1,2})[:.](\d{2})$/);
+    if (!dm || !tm) return null;
+    return _parseLocalDateTime(dm[3]+'-'+_pad2(dm[2])+'-'+_pad2(dm[1])+'T'+_pad2(tm[1])+':'+tm[2]);
+  }
+  function _parseDtText(value) {
+    var parts = String(value || '').trim().split(/[\s,]+/);
+    return parts.length === 2 ? _parseDateTimeText(parts[0], parts[1]) : null;
   }
   function _parseLocalDateTime(value) {
     var m = String(value || '').trim().match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
@@ -4135,24 +4156,13 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       var dateInput = rooms.querySelector('.bnm-date-input[data-room="'+room+'"]');
       var timeInput = rooms.querySelector('.bnm-time-input[data-room="'+room+'"]');
       if (!dateInput || !timeInput) return null;
-      var ts = _parseLocalDateTime(dateInput.value + 'T' + timeInput.value);
+      var ts = _parseDateTimeText(dateInput.value, timeInput.value);
       if (ts !== null) _pick[room] = ts;
       return ts;
     }
     rooms.querySelectorAll('.bnm-date-input,.bnm-time-input').forEach(function(input) {
       input.addEventListener('change', function() { _readExactInputs(input.dataset.room); });
       input.addEventListener('input', function() { _readExactInputs(input.dataset.room); });
-    });
-    rooms.querySelectorAll('.bnm-picker-btn').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.preventDefault(); e.stopPropagation();
-        var cls = btn.dataset.kind === 'date' ? '.bnm-date-input' : '.bnm-time-input';
-        var input = rooms.querySelector(cls+'[data-room="'+btn.dataset.room+'"]');
-        if (!input) return;
-        input.focus({ preventScroll: true });
-        try { if (input.showPicker) input.showPicker(); else input.click(); }
-        catch(err) { input.click(); }
-      });
     });
     rooms.querySelectorAll('.bmedia-toggle').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
@@ -4461,7 +4471,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
         var room = btn.dataset.room, i = parseInt(btn.dataset.i);
         var dtInp = rooms.querySelector('.bhe-dt[data-room="'+room+'"][data-i="'+i+'"]');
         var nmInp = rooms.querySelector('.bhe-nm[data-room="'+room+'"][data-i="'+i+'"]');
-        var ts = dtInp ? _parseLocalDateTime(dtInp.value) : null;
+        var ts = dtInp ? _parseDtText(dtInp.value) : null;
         if (ts === null) { _mkToast('Nederīgs datums/laiks — izmaiņa nav saglabāta', 'error'); return; }
         _applyHistEdit(room, i, ts, nmInp ? nmInp.value : '');
       });
@@ -4479,10 +4489,10 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     var roomLabel = roomId === 'ge' ? 'GE' : 'PHILIPS';
     document.getElementById('bolus-edit-title').textContent = 'Labot laiku — ' + roomLabel;
     var inp = document.getElementById('bolus-edit-inp');
-    inp.value = _dtLocal(_state[roomId].changedAt);
+    inp.value = _dtText(_state[roomId].changedAt);
     modal.style.display = 'flex';
     if (window.updateBuddyUiSuppression) window.updateBuddyUiSuppression();
-    setTimeout(function(){ inp.focus(); try { inp.showPicker(); } catch(ex) {} }, 100);
+    setTimeout(function(){ inp.focus(); try { inp.select(); } catch(ex) {} }, 100);
     // Clone buttons to remove old listeners
     var saveBtn   = document.getElementById('bolus-edit-save');
     var cancelBtn = document.getElementById('bolus-edit-cancel');
@@ -4491,7 +4501,8 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     saveBtn.parentNode.replaceChild(newSave, saveBtn);
     cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
     newSave.addEventListener('click', function() {
-      var ts = _parseLocalDateTime(document.getElementById('bolus-edit-inp').value);
+      var ts = _parseDtText(document.getElementById('bolus-edit-inp').value);
+      if (ts === null) { _mkToast('Nederīgs datums vai laiks — gaida DD.MM.GGGG HH:MM', 'error'); return; }
       if (ts !== null) {
         _state[roomId].changedAt = ts;
         _markLocalWrite(roomId);
@@ -5183,7 +5194,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     em.innerHTML =
       '<div id="bolus-edit-box">'+
         '<div id="bolus-edit-title">Labot laiku</div>'+
-        '<input type="datetime-local" id="bolus-edit-inp">'+
+        '<input type="text" id="bolus-edit-inp" inputmode="numeric" maxlength="16" placeholder="DD.MM.GGGG HH:MM">'+
         '<div style="display:flex;gap:10px;margin-top:4px;">'+
           '<button id="bolus-edit-cancel">Atcelt</button>'+
           '<button id="bolus-edit-save">SAGLABĀT</button>'+
