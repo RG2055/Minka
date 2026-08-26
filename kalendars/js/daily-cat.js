@@ -50,6 +50,15 @@
   var activePetDayKey = '';
   var positionMode = 'auto';
   var manualPosition = null;
+  // The comment bubble is the pet's home, but every few minutes it wanders off
+  // to sit on somebody's card. Only the choice is random — the placement itself
+  // is derived from the anchor, so scrolling still follows it exactly.
+  var ANCHOR_ROTATE_MIN = 150000;
+  var ANCHOR_ROTATE_MAX = 300000;
+  var COMMENT_ANCHOR_CHANCE = 0.45;
+  var anchorChoice = { kind: 'comment', worker: '' };
+  var anchorTimer = 0;
+  var hopTimer = 0;
 
   function pad(value) { return String(value).padStart(2, '0'); }
   function currentDate() {
@@ -154,21 +163,108 @@
       bottom: Math.max(8, Math.min(innerHeight - PET_SIZE - 8, Number(position.bottom) || 8))
     };
   }
+  function reducedMotion() {
+    return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+  function nameSeed(value) {
+    var seed = 0;
+    for (var i = 0; i < value.length; i++) seed = (seed * 31 + value.charCodeAt(i)) % 9973;
+    return seed;
+  }
+  function commentAnchorNode() {
+    return document.querySelector('.rg-feedback-card .rg-comment-icon');
+  }
+  function workerCards() {
+    var list = document.getElementById('grafiks-list');
+    if (!list) return [];
+    return [].slice.call(list.querySelectorAll('.card.mk-mid-card[data-worker]:not(.rg-feedback-card)'))
+      .filter(function (card) {
+        var rect = card.getBoundingClientRect();
+        return card.dataset.worker && rect.width > 0 && rect.height > 0;
+      });
+  }
+  function anchorElement() {
+    if (anchorChoice.kind !== 'card') return commentAnchorNode();
+    var cards = workerCards();
+    for (var i = 0; i < cards.length; i++) {
+      if (cards[i].dataset.worker === anchorChoice.worker) return cards[i];
+    }
+    return null;
+  }
+  function pickAnchor() {
+    var bubble = commentAnchorNode();
+    var cards = workerCards();
+    if (!cards.length) return bubble ? { kind: 'comment', worker: '' } : anchorChoice;
+    // Coming back to the bubble is the most likely single move; otherwise the
+    // pet picks a card it is not already sitting on.
+    if (bubble && anchorChoice.kind !== 'comment' && Math.random() < COMMENT_ANCHOR_CHANCE) {
+      return { kind: 'comment', worker: '' };
+    }
+    var pool = cards.filter(function (card) {
+      return anchorChoice.kind !== 'card' || card.dataset.worker !== anchorChoice.worker;
+    });
+    if (!pool.length) return bubble ? { kind: 'comment', worker: '' } : anchorChoice;
+    return { kind: 'card', worker: pool[Math.floor(Math.random() * pool.length)].dataset.worker };
+  }
+  function hopToAnchor() {
+    observeAnchor();
+    if (petButton && !petButton.hidden && !reducedMotion()) {
+      petButton.classList.add('is-hopping');
+      if (hopTimer) clearTimeout(hopTimer);
+      hopTimer = setTimeout(function () {
+        hopTimer = 0;
+        if (petButton) petButton.classList.remove('is-hopping');
+      }, 700);
+      playAction('jumping', 1);
+    }
+    scheduleAutoPosition();
+  }
+  function rotateAnchor() {
+    anchorTimer = 0;
+    if (petButton && !petButton.hidden && positionMode === 'auto' &&
+        !dragState && !pickerOpen && !document.hidden) {
+      var next = pickAnchor();
+      if (next.kind !== anchorChoice.kind || next.worker !== anchorChoice.worker) {
+        anchorChoice = next;
+        hopToAnchor();
+      }
+    }
+    scheduleAnchorRotation();
+  }
+  function scheduleAnchorRotation() {
+    if (anchorTimer) clearTimeout(anchorTimer);
+    anchorTimer = setTimeout(rotateAnchor,
+      ANCHOR_ROTATE_MIN + Math.random() * (ANCHOR_ROTATE_MAX - ANCHOR_ROTATE_MIN));
+  }
   function defaultPosition() {
     var list = document.getElementById('grafiks-list');
     if (!list) return null;
     var workers = [].slice.call(list.querySelectorAll('.card.mk-mid-card[data-worker]:not(.rg-feedback-card)'));
     var mood = list.querySelector('.rg-feedback-card');
     if (!workers.length) return null;
-    var rects = workers.map(function (card) { return card.getBoundingClientRect(); })
-      .filter(function (rect) { return rect.width > 0 && rect.height > 0; });
-    if (!rects.length) return null;
+    var cardRectCache = null;
+    function cardRects() {
+      if (!cardRectCache) {
+        cardRectCache = workers.map(function (card) { return card.getBoundingClientRect(); })
+          .filter(function (rect) { return rect.width > 0 && rect.height > 0; });
+      }
+      return cardRectCache;
+    }
     var moodRect = mood && mood.getBoundingClientRect();
-    var blockers = [].slice.call(list.querySelectorAll(
-      '.card, .cards-section-label, button, a, input, textarea, select, [role="button"]'
-    )).filter(function (node) { return node !== petButton && node !== mood; }).map(function (node) {
-      return node.getBoundingClientRect();
-    }).filter(function (rect) { return rect.width > 0 && rect.height > 0; });
+    // Measuring every card, heading and control is only needed by the search
+    // fallback below. Anchored placement runs on every scroll frame, so the
+    // list is built on demand instead of up front.
+    var blockers = null;
+    function blockerRects() {
+      if (!blockers) {
+        blockers = [].slice.call(list.querySelectorAll(
+          '.card, .cards-section-label, button, a, input, textarea, select, [role="button"]'
+        )).filter(function (node) { return node !== petButton && node !== mood; }).map(function (node) {
+          return node.getBoundingClientRect();
+        }).filter(function (rect) { return rect.width > 0 && rect.height > 0; });
+      }
+      return blockers;
+    }
     function overlaps(a, b, pad) {
       return a.left < b.right + pad && b.left - pad < a.right &&
         a.top < b.bottom + pad && b.top - pad < a.bottom;
@@ -176,7 +272,7 @@
     function isFree(candidate) {
       if (candidate.left < 8 || candidate.top < 8 ||
           candidate.right > innerWidth - 8 || candidate.bottom > innerHeight - 8) return false;
-      return !blockers.some(function (rect) { return overlaps(candidate, rect, 8); });
+      return !blockerRects().some(function (rect) { return overlaps(candidate, rect, 8); });
     }
     function makeCandidate(left, top) {
       return { left: left, top: top, right: left + PET_SIZE, bottom: top + PET_SIZE };
@@ -186,6 +282,22 @@
         right: innerWidth - candidate.right,
         bottom: innerHeight - candidate.bottom
       });
+    }
+    if (anchorChoice.kind === 'card') {
+      var perchCard = null;
+      for (var c = 0; c < workers.length; c++) {
+        if (workers[c].dataset.worker === anchorChoice.worker) { perchCard = workers[c]; break; }
+      }
+      var cardRect = perchCard && perchCard.getBoundingClientRect();
+      // Sit on the card's top edge with the paws just overlapping it. The spot
+      // along the edge comes from the name, so the pet keeps still while the
+      // page scrolls instead of jittering between frames.
+      if (cardRect && cardRect.width > 0 && cardRect.height > 0 && cardRect.top - PET_SIZE + 10 >= 8) {
+        var spread = 0.28 + (nameSeed(anchorChoice.worker) % 45) / 100;
+        var perchLeft = cardRect.left + cardRect.width * spread - PET_SIZE / 2;
+        perchLeft = Math.max(cardRect.left - 12, Math.min(cardRect.right - PET_SIZE + 12, perchLeft));
+        return asPosition(makeCandidate(perchLeft, cardRect.top - PET_SIZE + 10));
+      }
     }
     var commentBubble = list.querySelector('.rg-feedback-card .rg-comment-icon');
     if (commentBubble) {
@@ -202,6 +314,8 @@
         return asPosition(speechCandidate);
       }
     }
+    var rects = cardRects();
+    if (!rects.length) return null;
     var rows = [];
     rects.slice().sort(function (a, b) { return a.top - b.top || a.left - b.left; })
       .forEach(function (rect) {
@@ -290,7 +404,7 @@
   }
   function observeAnchor() {
     if (!petButton || typeof ResizeObserver !== 'function') return;
-    var nextTarget = document.querySelector('.rg-feedback-card .rg-comment-icon');
+    var nextTarget = anchorElement();
     if (nextTarget === anchorTarget) return;
     if (anchorObserver) anchorObserver.disconnect();
     anchorTarget = nextTarget;
@@ -313,6 +427,7 @@
   function resetAutoPosition() {
     positionMode = 'auto';
     manualPosition = null;
+    anchorChoice = { kind: 'comment', worker: '' };
     if (petButton) petButton.dataset.positionMode = positionMode;
     scheduleAutoPosition();
   }
@@ -521,6 +636,7 @@
     document.body.appendChild(petButton);
     applyPosition(position);
     observeAnchor();
+    scheduleAnchorRotation();
     updatePet();
     petButton.addEventListener('pointerdown', onPointerDown);
     petButton.addEventListener('pointermove', onPointerMove);
@@ -741,6 +857,9 @@
       if (pickerOpen) requestAnimationFrame(positionPicker);
       if (petButton && positionMode === 'auto') {
         setTimeout(function () {
+          if (anchorChoice.kind === 'card' && !anchorElement()) {
+            anchorChoice = { kind: 'comment', worker: '' };
+          }
           observeAnchor();
           scheduleAutoPosition();
         }, 220);
