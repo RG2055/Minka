@@ -3398,13 +3398,20 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   function _newMediaDraft() {
     return {
       left:  { enabled: false, concentration: 370, volumeMl: 500 },
-      nacl:  { enabled: false, volumeMl: 500 },
+      nacl:  { enabled: false, volumeMl: 1000 },
       right: { enabled: false, concentration: 300, volumeMl: 500 }
     };
   }
   var _mediaDraft = { ge: _newMediaDraft(), philips: _newMediaDraft() };
   var _mediaFocus = { ge: 'left', philips: 'left' };
   var _mediaChooserOpen = { ge: false, philips: false };
+  // The rack is not device-local state: it must show what the newest logged
+  // change actually carried, so a selection made on one computer is visible
+  // on every other one. MEDIA_SYNC_KEY remembers which history entry the
+  // local rack already mirrors.
+  var MEDIA_SYNC_KEY = 'minkaBolusMediaSyncV1';
+  var _mediaSyncTs = { ge: 0, philips: 0 };
+  var _lastMediaTouchAt = { ge: 0, philips: 0 };
   function _sanitizeMedia(value) {
     var src = value && typeof value === 'object' ? value : {};
     var clean = _newMediaDraft();
@@ -3419,7 +3426,8 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     });
     var nacl = src.nacl && typeof src.nacl === 'object' ? src.nacl : {};
     clean.nacl.enabled = nacl.enabled === true || nacl.enabled === 1 || nacl.enabled === '1';
-    clean.nacl.volumeMl = 500;
+    // 1000 ml is the standard bag; older records that stored 500 ml keep it.
+    clean.nacl.volumeMl = Number(nacl.volumeMl) === 500 ? 500 : 1000;
     return clean;
   }
   function _mediaSnapshot(roomId) {
@@ -3430,11 +3438,35 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   function _saveMediaDraft() {
     try { localStorage.setItem(MEDIA_DRAFT_KEY, JSON.stringify(_mediaDraft)); } catch(e) {}
   }
+  function _saveMediaSync() {
+    try { localStorage.setItem(MEDIA_SYNC_KEY, JSON.stringify(_mediaSyncTs)); } catch(e) {}
+  }
+  function _markMediaTouch(roomId) {
+    _lastMediaTouchAt[roomId] = Date.now();
+  }
+  // Adopt the media of the newest history entry — that is the set currently in
+  // the machine, whichever device recorded it. Someone who is picking bottles
+  // right now keeps their own draft until they save it.
+  function _syncMediaFromHistory(roomId) {
+    var top = (_history[roomId] || [])[0];
+    var ts = top ? (top.ts || top) : 0;
+    if (!ts || ts === _mediaSyncTs[roomId]) return false;
+    if (_mediaChooserOpen[roomId] || _recordStep[roomId] ||
+        Date.now() - (_lastMediaTouchAt[roomId] || 0) < 90000) return false;
+    _mediaSyncTs[roomId] = ts;
+    _saveMediaSync();
+    // An entry logged without media (older app, phone) must not wipe the rack —
+    // only a recorded set replaces what is shown.
+    if (!top.media) return false;
+    _mediaDraft[roomId] = _sanitizeMedia(top.media);
+    _saveMediaDraft();
+    return true;
+  }
   function _mediaSummary(media) {
     var m = _sanitizeMedia(media);
     var parts = [];
     if (m.left.enabled) parts.push('K: U' + m.left.concentration + ' · ' + m.left.volumeMl + ' ml');
-    if (m.nacl.enabled) parts.push('NaCl · 500 ml');
+    if (m.nacl.enabled) parts.push('NaCl · ' + m.nacl.volumeMl + ' ml');
     if (m.right.enabled) parts.push('L: U' + m.right.concentration + ' · ' + m.right.volumeMl + ' ml');
     return parts.join(' | ');
   }
@@ -3591,7 +3623,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     var mediaQuery = '';
     if (media) {
       if (media.left.enabled) mediaQuery += '&leftConc=' + media.left.concentration + '&leftMl=' + media.left.volumeMl;
-      if (media.nacl.enabled) mediaQuery += '&naclMl=500';
+      if (media.nacl.enabled) mediaQuery += '&naclMl=' + media.nacl.volumeMl;
       if (media.right.enabled) mediaQuery += '&rightConc=' + media.right.concentration + '&rightMl=' + media.right.volumeMl;
     }
     if (ts) fetch(GS_URL + '?action=write&room=' + roomId + '&ts=' + ts + '&name=' + name + mediaQuery).then(function(){
@@ -3750,6 +3782,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
           _state[r.id] = { changedAt: rem.changedAt }; changed = true;
         }
       });
+      ROOMS.forEach(function(r) { if (_syncMediaFromHistory(r.id)) changed = true; });
       if (changed) _save();
       _saveHistory();
       if (cb) cb();
@@ -3792,6 +3825,13 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
         _mediaDraft[r.id] = _sanitizeMedia(media[r.id]);
       });
     } catch(e) {}
+    try {
+      var mediaSync = JSON.parse(localStorage.getItem(MEDIA_SYNC_KEY) || 'null');
+      if (mediaSync && typeof mediaSync === 'object') ROOMS.forEach(function(r) {
+        _mediaSyncTs[r.id] = Number(mediaSync[r.id]) || 0;
+      });
+    } catch(e) {}
+    ROOMS.forEach(function(r) { _syncMediaFromHistory(r.id); });
   }
   function _save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(_state)); } catch(e) {} }
   function _saveHistory() { try { localStorage.setItem(HISTORY_KEY, JSON.stringify(_history)); } catch(e) {} }
@@ -3877,7 +3917,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       var slot = media[side];
       var active = side !== 'nacl' && _mediaFocus[roomId] === side && _mediaChooserOpen[roomId];
       var main = side === 'nacl' ? 'NaCl' : 'U' + slot.concentration;
-      var amount = side === 'nacl' ? '500 ml' : slot.volumeMl + ' ml';
+      var amount = slot.volumeMl + ' ml';
       var statusHtml = slot.enabled
         ? '<span class="ctmotion-piece-status"><b>'+main+'</b><small>'+amount+'</small></span>'
         : '<span class="ctmotion-piece-empty" aria-hidden="true"><b>+</b></span>';
@@ -3890,7 +3930,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     return '<div class="ctmotion-assembly" role="group" aria-label="Ulrich CT motion interaktīvais boluss">'+
       '<img class="ctmotion-orthographic" src="assets/ct-motion-orthographic-v2.png?v=20260824grid3" alt="" aria-hidden="true">'+
       bottle('left','assets/ct-motion-left.png','Kreisais kontrasts')+
-      bottle('nacl','assets/ct-motion-nacl.png','NaCl 500 ml')+
+      bottle('nacl','assets/ct-motion-nacl.png','NaCl 1000 ml')+
       bottle('right','assets/ct-motion-right.png','Labais kontrasts')+
       '<img class="ctmotion-body" src="assets/ct-motion-body.png" alt="" aria-hidden="true">'+
       '<button class="ctmotion-time-control" type="button" data-room="'+roomId+'" aria-label="Kopš nomaiņas '+_escHtml(_fmtElapsedClock(changedAt))+'. Spied, lai mainītu laiku">'+
@@ -4117,6 +4157,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
         var room = btn.dataset.room, side = btn.dataset.side;
+        _markMediaTouch(room);
         _mediaDraft[room] = _sanitizeMedia(_mediaDraft[room]);
         if (side === 'nacl') {
           _mediaDraft[room].nacl.enabled = !_mediaDraft[room].nacl.enabled;
@@ -4141,6 +4182,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
         var room = btn.dataset.room, side = btn.dataset.side, kind = btn.dataset.kind;
+        _markMediaTouch(room);
         _mediaDraft[room] = _sanitizeMedia(_mediaDraft[room]);
         _mediaFocus[room] = side;
         _mediaDraft[room][side][kind] = Number(btn.dataset.value);
@@ -4158,6 +4200,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
         var room = btn.dataset.room, side = btn.dataset.side;
+        _markMediaTouch(room);
         _mediaDraft[room] = _sanitizeMedia(_mediaDraft[room]);
         _mediaDraft[room][side].enabled = true;
         _mediaChooserOpen[room] = false;
@@ -4168,6 +4211,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
         var room = btn.dataset.room, side = btn.dataset.side;
+        _markMediaTouch(room);
         _mediaDraft[room] = _sanitizeMedia(_mediaDraft[room]);
         _mediaDraft[room][side].enabled = false;
         _mediaChooserOpen[room] = false;
@@ -4178,9 +4222,10 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
         var room = btn.dataset.room;
+        _markMediaTouch(room);
         _mediaDraft[room] = {
           left: { enabled: true, concentration: 370, volumeMl: 500 },
-          nacl: { enabled: true, volumeMl: 500 },
+          nacl: { enabled: true, volumeMl: 1000 },
           right: { enabled: true, concentration: 300, volumeMl: 500 }
         };
         _mediaFocus[room] = 'left';
@@ -4191,6 +4236,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     rooms.querySelectorAll('.bmedia-clear').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
+        _markMediaTouch(btn.dataset.room);
         _mediaDraft[btn.dataset.room] = _newMediaDraft();
         _mediaChooserOpen[btn.dataset.room] = false;
         _saveMediaDraft(); _render();
@@ -4352,6 +4398,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
         _markLocalWrite(room);
         _calOpen[room]=false; _tpOpen[room]=false; _calView[room]=null;
         _history[room].unshift({ts:ts,name:_names[room]||'Anonīms',media:_mediaSnapshot(room)});
+        _mediaSyncTs[room] = ts; _saveMediaSync();
         _recordStep[room]=0;
         _save(); _saveHistory(); _kvPush(room); _render(); _updateLed(); _playMark();
       });
@@ -4448,6 +4495,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
         _state[roomId].changedAt = ts;
         _markLocalWrite(roomId);
         _history[roomId].unshift({ ts: ts, name: _names[roomId] || 'Anonīms', media: _mediaSnapshot(roomId) });
+        _mediaSyncTs[roomId] = ts; _saveMediaSync();
         _save(); _saveHistory(); _kvPush(roomId); _render(); _updateLed(); _playMark();
       }
       modal.style.display = 'none';
@@ -5036,6 +5084,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
             _state[r.id] = { changedAt: rem.changedAt }; ch = true;
           }
         });
+        ROOMS.forEach(function(r) { if (_syncMediaFromHistory(r.id)) ch = true; });
         if(ch){_save();_saveHistory();if(_open)_render();_updateLed();}
       } catch(e) {}
     };
