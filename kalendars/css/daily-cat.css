@@ -244,3 +244,14 @@
     animation: none !important;
   }
 }
+
+/* Deliberate anchor hops glide across; scroll-driven following stays instant so
+   the pet never lags behind the card it sits on. */
+.mk-daily-cat-pet.is-hopping {
+  transition: right 520ms cubic-bezier(.32, .78, .32, 1),
+              bottom 520ms cubic-bezier(.32, .78, .32, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-daily-cat-pet.is-hopping { transition: none; }
+}
