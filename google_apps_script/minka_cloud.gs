@@ -167,7 +167,9 @@ function normalizeBolusContrastMl_(value) {
 }
 
 function normalizeBolusNaclMl_(value) {
-  return Number(value) === 500 ? 500 : null;
+  // 1000 ml is the standard bag; 500 ml stays valid for older rows.
+  var ml = Number(value);
+  return ml === 500 || ml === 1000 ? ml : null;
 }
 
 function bolusMediaFromRow_(row) {
@@ -179,7 +181,7 @@ function bolusMediaFromRow_(row) {
   if (!leftConc && !naclMl && !rightConc) return null;
   return {
     left: { enabled: !!(leftConc && leftMl), concentration: leftConc || 370, volumeMl: leftMl || 500 },
-    nacl: { enabled: !!naclMl, volumeMl: 500 },
+    nacl: { enabled: !!naclMl, volumeMl: naclMl || 1000 },
     right: { enabled: !!(rightConc && rightMl), concentration: rightConc || 300, volumeMl: rightMl || 500 }
   };
 }
