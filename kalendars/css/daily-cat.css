@@ -1,6 +1,10 @@
 /* Daily pet renderer: one spritesheet, two 96px layers for soft frame blends. */
 .mk-daily-cat-pet {
   position: fixed;
+  top: 0;
+  left: 0;
+  right: auto;
+  bottom: auto;
   z-index: 9999;
   display: block;
   width: 96px;
@@ -16,6 +20,7 @@
   -webkit-user-select: none;
   -webkit-touch-callout: none;
   contain: layout paint style;
+  transform: translate3d(0, 0, 0);
 }
 
 .mk-daily-cat-pet[hidden] {
@@ -248,8 +253,8 @@
 /* Deliberate anchor hops glide across; scroll-driven following stays instant so
    the pet never lags behind the card it sits on. */
 .mk-daily-cat-pet.is-hopping {
-  transition: right 520ms cubic-bezier(.32, .78, .32, 1),
-              bottom 520ms cubic-bezier(.32, .78, .32, 1);
+  will-change: transform;
+  transition: transform 520ms cubic-bezier(.32, .78, .32, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {
