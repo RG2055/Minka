@@ -50,6 +50,7 @@
   var activePetDayKey = '';
   var positionMode = 'auto';
   var manualPosition = null;
+  var renderedPosition = null;
   // The comment bubble is the pet's home, but every few minutes it wanders off
   // to sit on somebody's card. Only the choice is random — the placement itself
   // is derived from the anchor, so scrolling still follows it exactly.
@@ -174,26 +175,35 @@
   function commentAnchorNode() {
     return document.querySelector('.rg-feedback-card .rg-comment-icon');
   }
-  function workerCards() {
+  function workerCardNodes() {
     var list = document.getElementById('grafiks-list');
     if (!list) return [];
-    return [].slice.call(list.querySelectorAll('.card.mk-mid-card[data-worker]:not(.rg-feedback-card)'))
-      .filter(function (card) {
-        var rect = card.getBoundingClientRect();
-        return card.dataset.worker && rect.width > 0 && rect.height > 0;
-      });
+    return [].slice.call(list.querySelectorAll('.card.mk-mid-card[data-worker]:not(.rg-feedback-card)'));
   }
-  function anchorElement() {
-    if (anchorChoice.kind !== 'card') return commentAnchorNode();
-    var cards = workerCards();
+  function visibleWorkerCards() {
+    return workerCardNodes().filter(function (card) {
+      var rect = card.getBoundingClientRect();
+      return card.dataset.worker && rect.width > 0 && rect.height > 0;
+    });
+  }
+  // Resolving a worker name may scan the cards, but this runs only when the
+  // anchor deliberately changes (every few minutes or after a date change).
+  // Scroll/resize frames use the cached anchorTarget directly.
+  function resolveAnchorElement(choice) {
+    if (!choice || choice.kind !== 'card') return commentAnchorNode();
+    var cards = workerCardNodes();
     for (var i = 0; i < cards.length; i++) {
-      if (cards[i].dataset.worker === anchorChoice.worker) return cards[i];
+      if (cards[i].dataset.worker === choice.worker) return cards[i];
     }
     return null;
   }
+  function setAnchorChoice(choice) {
+    anchorChoice = choice || { kind: 'comment', worker: '' };
+    observeAnchor(resolveAnchorElement(anchorChoice));
+  }
   function pickAnchor() {
     var bubble = commentAnchorNode();
-    var cards = workerCards();
+    var cards = visibleWorkerCards();
     if (!cards.length) return bubble ? { kind: 'comment', worker: '' } : anchorChoice;
     // Coming back to the bubble is the most likely single move; otherwise the
     // pet picks a card it is not already sitting on.
@@ -207,7 +217,6 @@
     return { kind: 'card', worker: pool[Math.floor(Math.random() * pool.length)].dataset.worker };
   }
   function hopToAnchor() {
-    observeAnchor();
     if (petButton && !petButton.hidden && !reducedMotion()) {
       petButton.classList.add('is-hopping');
       if (hopTimer) clearTimeout(hopTimer);
@@ -225,7 +234,7 @@
         !dragState && !pickerOpen && !document.hidden) {
       var next = pickAnchor();
       if (next.kind !== anchorChoice.kind || next.worker !== anchorChoice.worker) {
-        anchorChoice = next;
+        setAnchorChoice(next);
         hopToAnchor();
       }
     }
@@ -236,35 +245,65 @@
     anchorTimer = setTimeout(rotateAnchor,
       ANCHOR_ROTATE_MIN + Math.random() * (ANCHOR_ROTATE_MAX - ANCHOR_ROTATE_MIN));
   }
-  function defaultPosition() {
+  function candidatePosition(left, top) {
+    return clampPosition({
+      right: innerWidth - left - PET_SIZE,
+      bottom: innerHeight - top - PET_SIZE
+    });
+  }
+  // Hot path: one cached element and one rect. No card lists, collision scans
+  // or mood measurements are allowed here because scroll calls it every frame.
+  function anchorPosition(target) {
+    if (!target || !target.isConnected) return null;
+    var rect = target.getBoundingClientRect();
+    if (!rect.width || !rect.height) return null;
+    if (anchorChoice.kind === 'card') {
+      if (rect.top - PET_SIZE + 10 >= 8) {
+        var spread = 0.28 + (nameSeed(anchorChoice.worker) % 45) / 100;
+        var perchLeft = rect.left + rect.width * spread - PET_SIZE / 2;
+        perchLeft = Math.max(rect.left - 12, Math.min(rect.right - PET_SIZE + 12, perchLeft));
+        return candidatePosition(perchLeft, rect.top - PET_SIZE + 10);
+      }
+      // If the chosen card is too close to the viewport edge, the bubble is a
+      // cheap O(1) fallback until scrolling makes the card perch visible again.
+      var bubbleFallback = commentAnchorNode();
+      if (!bubbleFallback) return null;
+      rect = bubbleFallback.getBoundingClientRect();
+      if (!rect.width || !rect.height) return null;
+    }
+    var tailX = rect.left + Math.max(18, Math.min(28, rect.width * 0.2));
+    return candidatePosition(tailX - PET_SIZE / 2, rect.bottom);
+  }
+  function activeAnchorElement() {
+    if (anchorTarget && anchorTarget.isConnected) return anchorTarget;
+    // A removed worker card must not trigger a list scan from a scroll frame.
+    // Fall home to the comment bubble; the rare daySelected handler can later
+    // resolve a new card explicitly.
+    if (anchorChoice.kind === 'card') anchorChoice = { kind: 'comment', worker: '' };
+    var target = commentAnchorNode();
+    observeAnchor(target);
+    return target;
+  }
+  function fastAutoPosition() {
+    return anchorPosition(activeAnchorElement());
+  }
+  // Cold fallback: this may inspect many elements, so it is used only if the
+  // normal anchor did not exist while the pet was being mounted.
+  function fallbackPosition() {
     var list = document.getElementById('grafiks-list');
     if (!list) return null;
     var workers = [].slice.call(list.querySelectorAll('.card.mk-mid-card[data-worker]:not(.rg-feedback-card)'));
     var mood = list.querySelector('.rg-feedback-card');
     if (!workers.length) return null;
-    var cardRectCache = null;
-    function cardRects() {
-      if (!cardRectCache) {
-        cardRectCache = workers.map(function (card) { return card.getBoundingClientRect(); })
-          .filter(function (rect) { return rect.width > 0 && rect.height > 0; });
-      }
-      return cardRectCache;
-    }
+    var rects = workers.map(function (card) { return card.getBoundingClientRect(); })
+      .filter(function (rect) { return rect.width > 0 && rect.height > 0; });
+    if (!rects.length) return null;
     var moodRect = mood && mood.getBoundingClientRect();
-    // Measuring every card, heading and control is only needed by the search
-    // fallback below. Anchored placement runs on every scroll frame, so the
-    // list is built on demand instead of up front.
-    var blockers = null;
-    function blockerRects() {
-      if (!blockers) {
-        blockers = [].slice.call(list.querySelectorAll(
-          '.card, .cards-section-label, button, a, input, textarea, select, [role="button"]'
-        )).filter(function (node) { return node !== petButton && node !== mood; }).map(function (node) {
-          return node.getBoundingClientRect();
-        }).filter(function (rect) { return rect.width > 0 && rect.height > 0; });
-      }
-      return blockers;
-    }
+    var blockers = [].slice.call(list.querySelectorAll(
+      '.card, .cards-section-label, button, a, input, textarea, select, [role="button"]'
+    )).filter(function (node) { return node !== petButton && node !== mood; }).map(function (node) {
+      return node.getBoundingClientRect();
+    }).filter(function (rect) { return rect.width > 0 && rect.height > 0; });
     function overlaps(a, b, pad) {
       return a.left < b.right + pad && b.left - pad < a.right &&
         a.top < b.bottom + pad && b.top - pad < a.bottom;
@@ -272,7 +311,7 @@
     function isFree(candidate) {
       if (candidate.left < 8 || candidate.top < 8 ||
           candidate.right > innerWidth - 8 || candidate.bottom > innerHeight - 8) return false;
-      return !blockerRects().some(function (rect) { return overlaps(candidate, rect, 8); });
+      return !blockers.some(function (rect) { return overlaps(candidate, rect, 8); });
     }
     function makeCandidate(left, top) {
       return { left: left, top: top, right: left + PET_SIZE, bottom: top + PET_SIZE };
@@ -283,39 +322,6 @@
         bottom: innerHeight - candidate.bottom
       });
     }
-    if (anchorChoice.kind === 'card') {
-      var perchCard = null;
-      for (var c = 0; c < workers.length; c++) {
-        if (workers[c].dataset.worker === anchorChoice.worker) { perchCard = workers[c]; break; }
-      }
-      var cardRect = perchCard && perchCard.getBoundingClientRect();
-      // Sit on the card's top edge with the paws just overlapping it. The spot
-      // along the edge comes from the name, so the pet keeps still while the
-      // page scrolls instead of jittering between frames.
-      if (cardRect && cardRect.width > 0 && cardRect.height > 0 && cardRect.top - PET_SIZE + 10 >= 8) {
-        var spread = 0.28 + (nameSeed(anchorChoice.worker) % 45) / 100;
-        var perchLeft = cardRect.left + cardRect.width * spread - PET_SIZE / 2;
-        perchLeft = Math.max(cardRect.left - 12, Math.min(cardRect.right - PET_SIZE + 12, perchLeft));
-        return asPosition(makeCandidate(perchLeft, cardRect.top - PET_SIZE + 10));
-      }
-    }
-    var commentBubble = list.querySelector('.rg-feedback-card .rg-comment-icon');
-    if (commentBubble) {
-      var bubbleRect = commentBubble.getBoundingClientRect();
-      if (bubbleRect.width > 0 && bubbleRect.height > 0) {
-        // Anchor to the white bubble itself, not its full-width button. The
-        // tail begins about one fifth into the bubble; the pet's centre sits
-        // directly beneath it so the bubble reads as the pet speaking.
-        var tailX = bubbleRect.left + Math.max(18, Math.min(28, bubbleRect.width * 0.2));
-        var speechCandidate = makeCandidate(
-          tailX - PET_SIZE / 2,
-          bubbleRect.bottom
-        );
-        return asPosition(speechCandidate);
-      }
-    }
-    var rects = cardRects();
-    if (!rects.length) return null;
     var rows = [];
     rects.slice().sort(function (a, b) { return a.top - b.top || a.left - b.left; })
       .forEach(function (rect) {
@@ -376,20 +382,27 @@
     }
     return best ? asPosition(best.candidate) : null;
   }
+  function defaultPosition() {
+    return fastAutoPosition() || fallbackPosition();
+  }
   function applyPosition(position) {
     if (!petButton) return;
     position = clampPosition(position);
-    petButton.style.right = Math.round(position.right) + 'px';
-    petButton.style.bottom = Math.round(position.bottom) + 'px';
+    renderedPosition = { right: position.right, bottom: position.bottom };
+    var x = innerWidth - PET_SIZE - position.right;
+    var y = innerHeight - PET_SIZE - position.bottom;
+    petButton.style.transform = 'translate3d(' + Math.round(x) + 'px,' + Math.round(y) + 'px,0)';
+  }
+  function paintPosition(position) {
+    if (!petButton) return;
+    position = clampPosition(position);
+    var x = innerWidth - PET_SIZE - position.right;
+    var y = innerHeight - PET_SIZE - position.bottom;
+    petButton.style.transform = 'translate3d(' + Math.round(x) + 'px,' + Math.round(y) + 'px,0)';
   }
   function currentPosition() {
-    // A hidden pet (radio open, compact layout) reports an empty rect, so the
-    // measured position would collapse into the top-left corner. Report
-    // nothing instead and let the stored manual position stand.
-    if (!petButton || petButton.hidden) return null;
-    var rect = petButton.getBoundingClientRect();
-    if (!rect.width || !rect.height) return null;
-    return clampPosition({ right: innerWidth - rect.right, bottom: innerHeight - rect.bottom });
+    if (!petButton || !renderedPosition) return null;
+    return clampPosition(renderedPosition);
   }
   function restorePosition() {
     if (!petButton || petButton.hidden || dragState) return;
@@ -399,26 +412,23 @@
       if (manualPosition) applyPosition(manualPosition);
       return;
     }
-    var position = defaultPosition();
-    if (position) applyPosition(position);
+    scheduleAutoPosition();
   }
-  function observeAnchor() {
-    if (!petButton || typeof ResizeObserver !== 'function') return;
-    var nextTarget = anchorElement();
+  function observeAnchor(nextTarget) {
+    if (!petButton) return;
     if (nextTarget === anchorTarget) return;
     if (anchorObserver) anchorObserver.disconnect();
     anchorTarget = nextTarget;
-    if (!anchorTarget) return;
+    if (!anchorTarget || typeof ResizeObserver !== 'function') return;
     anchorObserver = new ResizeObserver(scheduleAutoPosition);
     anchorObserver.observe(anchorTarget);
   }
   function syncAutoPosition() {
     anchorFrame = 0;
     if (!petButton || positionMode !== 'auto' || dragState) return;
-    observeAnchor();
-    var position = defaultPosition();
+    var position = fastAutoPosition();
     if (position) applyPosition(position);
-    if (pickerOpen) positionPicker();
+    if (pickerOpen) requestAnimationFrame(positionPicker);
   }
   function scheduleAutoPosition() {
     if (!petButton || positionMode !== 'auto' || dragState || anchorFrame) return;
@@ -427,8 +437,18 @@
   function resetAutoPosition() {
     positionMode = 'auto';
     manualPosition = null;
-    anchorChoice = { kind: 'comment', worker: '' };
+    setAnchorChoice({ kind: 'comment', worker: '' });
     if (petButton) petButton.dataset.positionMode = positionMode;
+    scheduleAutoPosition();
+  }
+  function scheduleScrollPosition() {
+    // A deliberate hop may animate, but once the user scrolls the pet must
+    // follow its anchor immediately instead of easing behind it.
+    if (petButton && petButton.classList.contains('is-hopping')) {
+      petButton.classList.remove('is-hopping');
+      if (hopTimer) clearTimeout(hopTimer);
+      hopTimer = 0;
+    }
     scheduleAutoPosition();
   }
   function framePosition(row, frame) {
@@ -562,8 +582,7 @@
   function paintDrag() {
     dragFrame = 0;
     if (!dragState || !petButton) return;
-    petButton.style.transform = 'translate3d(' + Math.round(dragState.dx) + 'px,' +
-      Math.round(dragState.dy) + 'px,0)';
+    paintPosition({ right: dragState.nextRight, bottom: dragState.nextBottom });
   }
   function onPointerDown(event) {
     if (event.button !== 0 || dragState) return;
@@ -604,7 +623,6 @@
     skipClick = event.type === 'pointerup' && moved;
     dragState = null;
     dragFrame = 0;
-    petButton.style.transform = '';
     petButton.classList.remove('is-dragging');
     applyPosition(position);
     if (moved) {
@@ -635,7 +653,7 @@
     petButton.appendChild(spriteWrap);
     document.body.appendChild(petButton);
     applyPosition(position);
-    observeAnchor();
+    observeAnchor(resolveAnchorElement(anchorChoice));
     scheduleAnchorRotation();
     updatePet();
     petButton.addEventListener('pointerdown', onPointerDown);
@@ -662,7 +680,10 @@
   function mountWhenReady() {
     if (petButton || isCompact() || !catalog.length) return;
     positionMode = 'auto';
-    var position = defaultPosition();
+    // MutationObserver may call this many times while cards render. Keep that
+    // callback O(1): only try the comment anchor, never the collision search.
+    var target = commentAnchorNode();
+    var position = anchorPosition(target);
     if (position) { stopPositionWait(); createPet(position); return; }
     if (!positionObserver) {
       positionObserver = new MutationObserver(mountWhenReady);
@@ -670,7 +691,9 @@
         { childList: true, subtree: true });
       positionTimer = setTimeout(function () {
         positionTimer = 0;
-        var latePosition = defaultPosition();
+        // The expensive empty-space search is allowed only in this one rare
+        // six-second fallback when no normal anchor appeared at all.
+        var latePosition = fallbackPosition();
         if (latePosition) {
           stopPositionWait();
           createPet(latePosition);
@@ -796,7 +819,16 @@
   }
   function positionPicker() {
     if (!pickerOpen || !petButton) return;
-    var petRect = petButton.getBoundingClientRect();
+    var petPosition = currentPosition();
+    if (!petPosition) return;
+    var petLeft = innerWidth - PET_SIZE - petPosition.right;
+    var petTop = innerHeight - PET_SIZE - petPosition.bottom;
+    var petRect = {
+      left: petLeft,
+      right: petLeft + PET_SIZE,
+      top: petTop,
+      bottom: petTop + PET_SIZE
+    };
     var list = document.getElementById('grafiks-list');
     var listRect = list && list.getBoundingClientRect();
     var pickerRect = picker.getBoundingClientRect();
@@ -846,21 +878,23 @@
     });
   }
   function init() {
-    addEventListener('scroll', scheduleAutoPosition, { passive: true, capture: true });
+    addEventListener('scroll', scheduleScrollPosition, { passive: true, capture: true });
     addEventListener('resize', function () {
       if (!petButton && !isCompact()) mountWhenReady();
       syncVisibility();
       restorePosition();
-      if (pickerOpen) positionPicker();
+      if (pickerOpen) requestAnimationFrame(positionPicker);
     }, { passive: true });
     addEventListener('daySelected', function () {
       if (pickerOpen) requestAnimationFrame(positionPicker);
       if (petButton && positionMode === 'auto') {
         setTimeout(function () {
-          if (anchorChoice.kind === 'card' && !anchorElement()) {
-            anchorChoice = { kind: 'comment', worker: '' };
+          var nextTarget = resolveAnchorElement(anchorChoice);
+          if (anchorChoice.kind === 'card' && !nextTarget) {
+            setAnchorChoice({ kind: 'comment', worker: '' });
+          } else {
+            observeAnchor(nextTarget);
           }
-          observeAnchor();
           scheduleAutoPosition();
         }, 220);
       }
