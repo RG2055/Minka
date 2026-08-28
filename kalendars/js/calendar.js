@@ -5889,7 +5889,7 @@ function filterFullList(btn) {
                 <span class="mk-mid-meta-value">${escapeHtml(fatText)}</span>
               </span>
               ${timeCell}
-              <span class="mk-mid-meta-emoji${bgEmoji ? '' : ' is-initials'}" data-mk-emoji-click="1" title="Mainīt emoji">${bgEmoji ? escapeHtml(bgEmoji) : escapeHtml(initials || '')}</span>
+              <span class="mk-mid-meta-emoji${bgEmoji ? '' : ' is-initials'}" data-mk-emoji-click="1" data-mk-emoji-home="${bgEmoji ? escapeHtml(bgEmoji) : escapeHtml(initials || '')}" title="Mainīt emoji"><span class="mk-mid-meta-emoji-fly">${bgEmoji ? escapeHtml(bgEmoji) : escapeHtml(initials || '')}</span></span>
             </div>`;
     }
 

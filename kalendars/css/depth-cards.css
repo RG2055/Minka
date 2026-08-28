@@ -1,0 +1,143 @@
+/* Lightweight layered depth for the middle employee cards.
+   Only the one card under a fine pointer gets a compositor layer. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  html:not(.mk-mobile-shell) body #grafiks-list.grid-view .card.mk-mid-card.mk-depth-live:not(.rg-feedback-card) {
+    --mk-depth-rx: 0deg;
+    --mk-depth-ry: 0deg;
+    --mk-depth-far-x: 0px;
+    --mk-depth-far-y: 0px;
+    z-index: 5 !important;
+    /* Keep every internal layer inside the card's real rounded silhouette.
+       Visible overflow exposed the rectangular name/background layer as a
+       white corner when that layer moved toward the viewer. */
+    overflow: hidden !important;
+    contain: layout paint style !important;
+    transform-style: preserve-3d !important;
+    /* Perspective belongs to this card, never to the whole grid. A grid-level
+       vanishing point drags edge-card layers toward the row centre. */
+    transform: perspective(820px) rotateX(var(--mk-depth-rx)) rotateY(var(--mk-depth-ry)) translate3d(0, 0, 0) !important;
+    transform-origin: 50% 50% !important;
+    transition: transform 105ms cubic-bezier(.2, .78, .2, 1) !important;
+    backface-visibility: hidden;
+  }
+
+  html:not(.mk-mobile-shell) body #grafiks-list.grid-view .card.mk-mid-card.mk-depth-live .mk-mid-top {
+    /* Keep the corner metadata anchored. Depth alone is enough here; lateral
+       motion makes the month badge appear detached from the card. */
+    transform: translate3d(0, 0, 8px) !important;
+    transform-style: preserve-3d !important;
+    backface-visibility: hidden;
+  }
+
+  html:not(.mk-mobile-shell) body #grafiks-list.grid-view .card.mk-mid-card.mk-depth-live .mk-mid-center {
+    /* This layer is already inset:0 in the card CSS. Applying the old
+       translate(-50%, -50%) here shifted every child (hours, name and coffee)
+       by half a card on hover. Preserve that established coordinate system. */
+    transform: translate3d(0, 0, 0) !important;
+    transform-style: preserve-3d !important;
+  }
+
+  html:not(.mk-mobile-shell) body #grafiks-list.grid-view .card.mk-mid-card.mk-depth-live .mk-mid-bg-emoji {
+    transform: translate(-50%, -54%) rotate(-7deg) translate3d(var(--mk-depth-far-x), var(--mk-depth-far-y), 2px) !important;
+    backface-visibility: hidden;
+    transition: transform 105ms cubic-bezier(.2, .78, .2, 1), opacity 145ms ease-out !important;
+  }
+
+  html:not(.mk-mobile-shell) body #grafiks-list.grid-view .card.mk-mid-card.mk-depth-live .mk-mid-hours.card-shift {
+    /* The main value is an anchor, not a floating layer: it stays exactly in
+       its normal centre while the complete card tilts around it. */
+    transform: translate(-50%, -50%) !important;
+    backface-visibility: hidden;
+    transition: opacity 155ms ease-out !important;
+  }
+
+  /* Hover story: the small worker emoji flies from its real metadata slot to
+     the central value. The existing Fluent Emoji system animates its child;
+     this layer only changes transform/opacity and performs no layout reads. */
+  html:not(.mk-mobile-shell) body #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):has(.mk-mid-meta-emoji:not(.is-initials)) .mk-mid-meta {
+    overflow: visible !important;
+  }
+
+  html:not(.mk-mobile-shell) body #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-meta-emoji:not(.is-initials) {
+    position: relative !important;
+    overflow: visible !important;
+  }
+
+  /* The source cell keeps a quiet imprint while its real emoji is visiting
+     the centre. This is a static pseudo-element: no DOM clone and no loop. */
+  html:not(.mk-mobile-shell) body #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-meta-emoji:not(.is-initials)::after {
+    content: attr(data-mk-emoji-home);
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    font: inherit;
+    line-height: 1;
+    opacity: 0;
+    transition: opacity 80ms ease-out;
+  }
+
+  html:not(.mk-mobile-shell) body #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):hover .mk-mid-meta-emoji:not(.is-initials)::after {
+    opacity: .16;
+    transition-delay: 95ms;
+  }
+
+  html:not(.mk-mobile-shell) body #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-meta-emoji-fly {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    position: relative !important;
+    z-index: 12 !important;
+    overflow: visible !important;
+    pointer-events: none !important;
+    font: inherit !important;
+    line-height: 1 !important;
+    transform: translate3d(0, 0, 0) scale(1) !important;
+    transform-origin: 50% 50% !important;
+    transition: transform 310ms cubic-bezier(.22, 1, .36, 1) !important;
+    backface-visibility: hidden;
+  }
+
+  html:not(.mk-mobile-shell) body #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):hover:has(.mk-mid-meta-emoji:not(.is-initials)) .mk-mid-hours.card-shift,
+  html:not(.mk-mobile-shell) body #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):hover:has(.mk-mid-meta-emoji:not(.is-initials)) .mk-mid-bg-emoji {
+    opacity: 0 !important;
+  }
+
+  html:not(.mk-mobile-shell) body #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):hover .mk-mid-meta-emoji:not(.is-initials) .mk-mid-meta-emoji-fly {
+    /* Container units keep the flight proportional on every card size.
+       Destination: the same 50%/47% point used by .mk-mid-hours. */
+    transform: translate3d(-29cqw, -38cqw, 0) scale(2.15) !important;
+  }
+
+  html:not(.mk-mobile-shell) body #grafiks-list.grid-view .card.mk-mid-card.mk-depth-live .mk-mid-name-wrap {
+    transform: translate3d(0, 0, 7px) !important;
+    backface-visibility: hidden;
+  }
+
+  html:not(.mk-mobile-shell) body #grafiks-list.grid-view .card.mk-mid-card.mk-depth-live .mk-mid-bottom {
+    transform: translate3d(0, 0, 6px) !important;
+    transform-style: preserve-3d !important;
+    backface-visibility: hidden;
+  }
+
+  html:not(.mk-mobile-shell) body #grafiks-list.grid-view .card.mk-mid-card.mk-depth-live .mk-mid-coffee {
+    /* The control must remain exactly under the name tab so its hit target and
+       visible pill never separate while the card tilts. */
+    transform: translate3d(0, 0, 7px) !important;
+    backface-visibility: hidden;
+  }
+
+  /* Controls remain on the card itself: no wrapper intercepts clicks. */
+  html:not(.mk-mobile-shell) body #grafiks-list.grid-view .card.mk-mid-card.mk-depth-live .mk-coffee-step,
+  html:not(.mk-mobile-shell) body #grafiks-list.grid-view .card.mk-mid-card.mk-depth-live button {
+    pointer-events: auto !important;
+  }
+}
+
+/* On touch/reduced-motion devices the script never adds .mk-depth-live, so the
+   original card transforms remain completely untouched. */
