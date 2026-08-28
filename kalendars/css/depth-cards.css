@@ -96,8 +96,13 @@
     overflow: visible !important;
     pointer-events: none !important;
     font: inherit !important;
+    /* Render at the largest on-screen size from the first frame. Previously
+       Chrome rasterised the 12–20px source layer and then enlarged that cached
+       texture 2.15× on hover, which looked soft on Windows/DPR 1 displays.
+       The resting inverse scale keeps the visible small emoji unchanged. */
+    font-size: clamp(25.8px, 19.35cqw, 43px) !important;
     line-height: 1 !important;
-    transform: translate3d(0, 0, 0) scale(1) !important;
+    transform: translate3d(0, 0, 0) scale(.465116) !important;
     transform-origin: 50% 50% !important;
     transition: transform 310ms cubic-bezier(.22, 1, .36, 1) !important;
     backface-visibility: hidden;
@@ -111,7 +116,7 @@
   html:not(.mk-mobile-shell) body #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):hover .mk-mid-meta-emoji:not(.is-initials) .mk-mid-meta-emoji-fly {
     /* Container units keep the flight proportional on every card size.
        Destination: the same 50%/47% point used by .mk-mid-hours. */
-    transform: translate3d(-29cqw, -38cqw, 0) scale(2.15) !important;
+    transform: translate3d(-29cqw, -38cqw, 0) scale(1) !important;
   }
 
   html:not(.mk-mobile-shell) body #grafiks-list.grid-view .card.mk-mid-card.mk-depth-live .mk-mid-name-wrap {
