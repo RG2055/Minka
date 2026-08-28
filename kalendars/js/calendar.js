@@ -6027,7 +6027,9 @@ function filterFullList(btn) {
         const lbl = document.createElement('div');
         lbl.className = 'cards-section-label cards-section-label-rd';
         lbl.style.cssText = '';
-        lbl.innerHTML = `<span class="cards-lbl-line cards-lbl-line-rd"></span>RADIOLOGI`;
+        lbl.innerHTML = `<span class="cards-role-mark" aria-hidden="true"><img src="data/radiologi.svg" alt=""></span>`
+          + `<span class="cards-role-name">Radiologi</span>`
+          + `<span class="cards-role-rule" aria-hidden="true"></span>`;
         sec.appendChild(lbl);
         const grid = document.createElement('div');
         grid.className = 'cards-subgrid';
@@ -6049,7 +6051,9 @@ function filterFullList(btn) {
         const lbl = document.createElement('div');
         lbl.className = 'cards-section-label cards-section-label-rg';
         lbl.style.cssText = '';
-        lbl.innerHTML = `<span class="cards-lbl-line cards-lbl-line-rg"></span>RADIOGRĀFERI`;
+        lbl.innerHTML = `<span class="cards-role-mark" aria-hidden="true"><img src="data/radiograferi.svg" alt=""></span>`
+          + `<span class="cards-role-name">Radiogrāferi</span>`
+          + `<span class="cards-role-rule" aria-hidden="true"></span>`;
         sec.appendChild(lbl);
         const grid = document.createElement('div');
         grid.className = 'cards-subgrid';

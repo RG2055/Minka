@@ -1567,7 +1567,7 @@ function _mkToast(msg, type) {
 </script>
 <script src="data/namedays.local.js"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
-<script src="js/calendar.js?v=20260828emojifly2"></script>
+<script src="js/calendar.js?v=20260828rolehead2"></script>
 <script src="js/depth-cards.js?v=20260828local10" defer></script>
 <script src="js/daily-cat.js?v=20260827petperf1" defer></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
@@ -18754,7 +18754,16 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     ].join('|');
     var pullup = moodPullupCache.get(cacheKey);
     if (!Number.isFinite(pullup)) {
-      pullup = Math.max(0, mood.getBoundingClientRect().height - employee.getBoundingClientRect().height);
+      // Keep one complete role-heading row between the upper employee cards
+      // and the pulled-up radiographer grid. Previously the whole height
+      // difference was removed, so on months with a tall mood card the
+      // RADIOGRĀFERI label landed inside the radiologist cards.
+      var roleHeadingClearance = 44;
+      pullup = Math.max(0,
+        mood.getBoundingClientRect().height
+        - employee.getBoundingClientRect().height
+        - roleHeadingClearance
+      );
       moodPullupCache.set(cacheKey, pullup);
     }
     if (pullup < 12) {
@@ -23127,6 +23136,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
 <!-- Loaded last on purpose: the night split is an overlay and this small,
      local stylesheet replaces the older visual layers without touching logic. -->
 <link rel="stylesheet" href="css/nightsplit-brand.css?v=20260822roomassets28">
+<link rel="stylesheet" href="css/role-headings.css?v=20260828rolehead4">
 
 </body>
 </html>
