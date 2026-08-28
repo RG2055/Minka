@@ -1,0 +1,136 @@
+/* Roster role headings.
+   Loaded last so this one small layer wins over the historical label rules. */
+#grafiks-list.grid-view .cards-section-label {
+  --mk-role-rgb: 103, 232, 249;
+  --mk-role-color: #8be9f7;
+  box-sizing: border-box !important;
+  position: relative !important;
+  z-index: 2 !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  margin: 0 0 10px !important;
+  padding: 0 4px 0 2px !important;
+  gap: 8px !important;
+  overflow: hidden !important;
+  color: var(--mk-role-color) !important;
+  opacity: 1 !important;
+  font-family: 'Space Grotesk', Inter, system-ui, sans-serif !important;
+  line-height: 1 !important;
+  text-transform: none !important;
+}
+
+#grafiks-list.grid-view .cards-section-label-rd {
+  --mk-role-rgb: 255, 118, 105;
+  --mk-role-color: #ff8a80;
+}
+
+#grafiks-list.grid-view .cards-role-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 27px;
+  width: 27px;
+  height: 27px;
+  border: 1px solid rgba(var(--mk-role-rgb), .20);
+  border-radius: 9px;
+  background: rgba(var(--mk-role-rgb), .09);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .045);
+}
+
+#grafiks-list.grid-view .cards-role-mark img {
+  display: none;
+}
+
+#grafiks-list.grid-view .cards-role-mark::before {
+  content: '';
+  display: block;
+  width: 16px;
+  height: 16px;
+  background: var(--mk-role-color);
+  -webkit-mask: center / contain no-repeat;
+  mask: center / contain no-repeat;
+}
+
+#grafiks-list.grid-view .cards-section-label-rg .cards-role-mark::before {
+  -webkit-mask-image: url('../data/radiograferi.svg');
+  mask-image: url('../data/radiograferi.svg');
+}
+
+#grafiks-list.grid-view .cards-section-label-rd .cards-role-mark::before {
+  -webkit-mask-image: url('../data/radiologi.svg');
+  mask-image: url('../data/radiologi.svg');
+}
+
+#grafiks-list.grid-view .cards-role-name {
+  flex: 0 0 auto;
+  color: var(--mk-role-color) !important;
+  font-size: 12px !important;
+  font-weight: 750 !important;
+  letter-spacing: .115em !important;
+  line-height: 1 !important;
+  text-transform: uppercase !important;
+  white-space: nowrap;
+}
+
+#grafiks-list.grid-view .cards-role-rule {
+  display: block;
+  flex: 0 1 160px;
+  width: min(18vw, 160px);
+  max-width: 160px;
+  min-width: 18px;
+  height: 1px;
+  margin-left: 2px;
+  background: linear-gradient(90deg,
+    rgba(var(--mk-role-rgb), .30),
+    rgba(var(--mk-role-rgb), .075) 54%,
+    transparent 100%);
+}
+
+/* The pull-up remains compact, but its heading is now an explicit protected
+   row. The JS solver reserves exactly this 34px row plus its 10px gap. */
+#grafiks-list.grid-view .cards-section.rg-mood-pullup .cards-section-label-rg {
+  isolation: isolate !important;
+}
+
+/* Radio mode intentionally uses one merged compact grid. */
+html.host-radio-open body #grafiks-list.grid-view .cards-section-label {
+  display: none !important;
+}
+
+:root.mk-mobile-shell #grafiks-list.grid-view .cards-section-label {
+  height: 30px !important;
+  min-height: 30px !important;
+  margin-bottom: 7px !important;
+  gap: 6px !important;
+}
+
+:root.mk-mobile-shell #grafiks-list.grid-view .cards-role-mark {
+  flex-basis: 23px;
+  width: 23px;
+  height: 23px;
+  border-radius: 8px;
+}
+
+:root.mk-mobile-shell #grafiks-list.grid-view .cards-role-mark img {
+  width: 14px;
+  height: 14px;
+}
+
+:root.mk-mobile-shell #grafiks-list.grid-view .cards-role-mark::before {
+  width: 14px;
+  height: 14px;
+}
+
+:root.mk-mobile-shell #grafiks-list.grid-view .cards-role-name {
+  font-size: 10px !important;
+  letter-spacing: .09em !important;
+}
+
+:root.mk-mobile-shell #grafiks-list.grid-view .cards-role-rule {
+  flex-basis: 72px;
+  width: 72px;
+  max-width: 72px;
+}
