@@ -83,7 +83,8 @@
   position: fixed;
   z-index: 10050;
   box-sizing: border-box;
-  width: min(326px, calc(100vw - 16px));
+  width: min(360px, calc(100vw - 16px));
+  max-height: calc(100vh - 16px);
   padding: 12px;
   overflow: hidden;
   border: 1px solid rgba(103, 232, 249, .30);
@@ -110,21 +111,11 @@
   min-width: 0;
 }
 
-.mk-daily-cat-picker-head strong,
-.mk-daily-cat-picker-head small {
-  display: block;
-}
+.mk-daily-cat-picker-head strong { display: block; }
 
 .mk-daily-cat-picker-head strong {
   font-size: 14px;
   line-height: 1.15;
-}
-
-.mk-daily-cat-picker-head small {
-  margin-top: 3px;
-  color: rgba(203, 213, 225, .62);
-  font-size: 9px;
-  line-height: 1.2;
 }
 
 .mk-daily-cat-picker-close,
@@ -149,15 +140,15 @@
 
 .mk-daily-cat-picker-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 7px;
 }
 
 .mk-daily-cat-picker-item {
   display: flex;
   min-width: 0;
-  min-height: 78px;
-  padding: 5px 4px;
+  min-height: 92px;
+  padding: 6px 5px;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
@@ -167,14 +158,19 @@
   background: rgba(255, 255, 255, .035);
   color: rgba(241, 245, 249, .82);
   cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .mk-daily-cat-picker-item:hover,
 .mk-daily-cat-picker-item:focus-visible {
-  border-color: rgba(103, 232, 249, .50);
-  background: rgba(103, 232, 249, .08);
+  border-color: rgba(255, 255, 255, .18);
+  background: rgba(255, 255, 255, .065);
   outline: 0;
 }
+
+.mk-daily-cat-picker-item.is-pressing { background: rgba(103, 232, 249, .11); }
 
 .mk-daily-cat-picker-item.is-selected {
   border-color: #67e8f9;
@@ -184,8 +180,8 @@
 
 .mk-daily-cat-picker-item img {
   display: block;
-  width: 54px;
-  height: 58px;
+  width: 62px;
+  height: 62px;
   object-fit: contain;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
@@ -194,13 +190,15 @@
 .mk-daily-cat-picker-item span {
   display: block;
   width: 100%;
-  overflow: hidden;
-  font-size: 8px;
+  min-height: 2.2em;
+  overflow: visible;
+  font-size: 9px;
   font-weight: 750;
   line-height: 1.1;
   text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .mk-daily-cat-picker-nav {
@@ -230,14 +228,6 @@
   font: 750 10px/1 Inter, system-ui, sans-serif;
   text-align: center;
   font-variant-numeric: tabular-nums;
-}
-
-.mk-daily-cat-picker-foot {
-  margin-top: 8px;
-  color: rgba(148, 163, 184, .58);
-  font-size: 8px;
-  line-height: 1.2;
-  text-align: center;
 }
 
 @media (max-width: 899px), (max-height: 559px) {
