@@ -811,14 +811,12 @@
     picker.hidden = true;
     picker.setAttribute('role', 'dialog');
     picker.setAttribute('aria-label', 'Izvēlies dienas kaķi');
-    picker.innerHTML = '<div class="mk-daily-cat-picker-head"><div><strong>Izvēlies kaķi</strong>' +
-      '<small>viegli, nekustīgi priekšskatījumi</small></div>' +
+    picker.innerHTML = '<div class="mk-daily-cat-picker-head"><div><strong>Izvēlies kaķi</strong></div>' +
       '<button type="button" class="mk-daily-cat-picker-close" aria-label="Aizvērt">×</button></div>' +
       '<div class="mk-daily-cat-picker-grid"></div><div class="mk-daily-cat-picker-nav">' +
       '<button type="button" data-cat-page="prev" aria-label="Iepriekšējie kaķi">‹</button>' +
       '<span class="mk-daily-cat-picker-page"></span>' +
-      '<button type="button" data-cat-page="next" aria-label="Nākamie kaķi">›</button></div>' +
-      '<div class="mk-daily-cat-picker-foot">Katru dienu plkst. 08:00 ieslēdzas jaunās dienas kaķis</div>';
+      '<button type="button" data-cat-page="next" aria-label="Nākamie kaķi">›</button></div>';
     document.body.appendChild(picker);
     pickerGrid = picker.querySelector('.mk-daily-cat-picker-grid');
     pickerPageLabel = picker.querySelector('.mk-daily-cat-picker-page');
@@ -831,13 +829,41 @@
       pickerPage = (pickerPage + 1) % Math.ceil(catalog.length / PAGE_SIZE);
       renderPickerPage();
     });
-    pickerGrid.addEventListener('click', function (event) {
-      var button = event.target.closest('[data-cat-index]');
-      if (!button) return;
-      selectPet(Number(button.dataset.catIndex), true);
-      closePicker();
+  }
+
+  function choosePickerPet(button) {
+    if (!pickerOpen || !button) return;
+    var index = Number(button.dataset.catIndex);
+    if (!Number.isFinite(index)) return;
+    selectPet(index, true);
+    closePicker();
+  }
+
+  function wirePickerItem(button) {
+    button.addEventListener('pointerdown', function (event) {
+      if (event.button !== 0) return;
+      button.classList.add('is-pressing');
+      try { button.setPointerCapture(event.pointerId); } catch (_error) {}
+    });
+    button.addEventListener('pointerup', function (event) {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      event.stopPropagation();
+      button.classList.remove('is-pressing');
+      choosePickerPet(button);
+    });
+    button.addEventListener('pointercancel', function () {
+      button.classList.remove('is-pressing');
+    });
+    // Keyboard activation emits click with detail=0. Pointer selection is
+    // already committed on pointerup, so it never depends on hover state.
+    button.addEventListener('click', function (event) {
+      if (event.detail !== 0) return;
+      event.preventDefault();
+      choosePickerPet(button);
     });
   }
+
   function renderPickerPage() {
     if (!pickerOpen || !catalog.length) return;
     var pages = Math.ceil(catalog.length / PAGE_SIZE);
@@ -864,6 +890,7 @@
       name.textContent = pet.displayName;
       button.appendChild(image);
       button.appendChild(name);
+      wirePickerItem(button);
       fragment.appendChild(button);
     });
     pickerGrid.replaceChildren(fragment);
