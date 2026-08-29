@@ -209,6 +209,37 @@
 #nsPanel .ns-raffle-trigger { color: #ffd787 !important; border-color: #5c4d2e !important; }
 #nsPanel .ns-raffle-cat { width: 23px !important; height: 23px !important; flex-basis: 23px !important; color: #ffd787 !important; filter: none !important; }
 
+#nsPanel .ns-bedcare-popover {
+  position: absolute !important;
+  z-index: 30 !important;
+  left: 82px !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: 166px !important;
+  width: 264px !important;
+  padding: 10px !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  border-radius: 10px !important;
+  background: rgba(36,36,36,.96) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.48), inset 0 1px rgba(255,255,255,.06) !important;
+  transform: translateX(-50%) !important;
+  contain: layout paint !important;
+}
+#nsPanel .ns-bedcare-form { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; }
+#nsPanel .ns-bedcare-quick-head { grid-column: 1 / -1; display: grid; grid-template-columns: 30px minmax(0,1fr) 28px; align-items: center; gap: 8px; }
+#nsPanel .ns-bedcare-quick-head > span:nth-child(2) { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+#nsPanel .ns-bedcare-quick-head b { color: #f5f5f5; font: 700 12px/1.15 "Segoe UI",Inter,system-ui,sans-serif; }
+#nsPanel .ns-bedcare-quick-head small { color: #b8b8b8; font: 500 9px/1.15 "Segoe UI",Inter,system-ui,sans-serif; }
+#nsPanel .ns-bedcare-close { width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: #c8c8c8; font: 400 19px/1 "Segoe UI",system-ui,sans-serif; cursor: pointer; }
+#nsPanel .ns-bedcare-close:hover { background: rgba(255,255,255,.08); color: #fff; }
+#nsPanel .ns-bedcare-icon { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.14); border-radius: 6px; background: #303030; color: #e6e6e6; font: 700 16px/1 "Segoe UI Symbol",system-ui,sans-serif; }
+#nsPanel .ns-bedcare-date { min-width: 0; display: flex; flex-direction: column; gap: 4px; color: #c8c8c8; font: 600 9px/1 "Segoe UI",Inter,system-ui,sans-serif; }
+#nsPanel .ns-bedcare-date input { box-sizing: border-box; width: 100%; height: 32px; padding: 0 8px; border: 1px solid rgba(255,255,255,.22); border-radius: 6px; background: #1f1f1f; color: #f5f5f5; color-scheme: dark; font: 600 11px/1 "Segoe UI",Inter,system-ui,sans-serif; }
+#nsPanel .ns-bedcare-date input:focus { outline: 2px solid rgba(255,255,255,.28); outline-offset: 1px; border-color: rgba(255,255,255,.45); }
+#nsPanel .ns-bedcare-save { align-self: end; min-width: 78px; height: 32px; padding: 0 12px; border: 1px solid rgba(255,255,255,.26); border-radius: 6px; background: #3b3b3b; color: #fff; font: 700 10px/1 "Segoe UI",Inter,system-ui,sans-serif; cursor: pointer; }
+#nsPanel .ns-bedcare-save:hover { background: #484848; }
+#nsPanel .ns-bedcare-note { grid-column: 1 / -1; min-height: 0; color: #d6a43b; font: 600 8.5px/1.15 "Segoe UI",Inter,system-ui,sans-serif; }
+
 #nsPanel .ns-rhythm-legend {
   margin-left: auto !important;
   padding: 7px 10px !important;
@@ -430,6 +461,55 @@
   pointer-events: none !important;
 }
 #nsPanel .nsc-rhythm-overlay svg { display: block !important; width: 100% !important; height: 100% !important; }
+#nsPanel .nsc-rhythm-help {
+  position: absolute !important;
+  z-index: 10 !important;
+  top: 8px !important;
+  right: 8px !important;
+  width: 20px !important;
+  height: 20px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(255,255,255,.30) !important;
+  border-radius: 50% !important;
+  background: rgba(8,13,20,.66) !important;
+  color: rgba(244,248,251,.88) !important;
+  font: 800 11px/1 Georgia,serif !important;
+  cursor: pointer !important;
+}
+#nsPanel .nsc-rhythm-help:hover,
+#nsPanel .nsc-rhythm-help[aria-expanded="true"] { background: rgba(238,244,248,.92) !important; color: #18212a !important; }
+#nsPanel .nsc-rhythm-help-pop {
+  position: absolute !important;
+  z-index: 9 !important;
+  top: 32px !important;
+  right: 7px !important;
+  left: 7px !important;
+  display: none !important;
+  grid-template-columns: 1fr !important;
+  gap: 4px !important;
+  padding: 7px 8px !important;
+  border: 1px solid rgba(255,255,255,.20) !important;
+  border-radius: 8px !important;
+  background: rgba(12,18,25,.96) !important;
+  box-shadow: 0 8px 18px rgba(0,0,0,.42) !important;
+  color: #eef4f7 !important;
+  font-family: "Segoe UI",Inter,system-ui,sans-serif !important;
+}
+#nsPanel .nsc-full-card.is-rhythm-help-open .nsc-rhythm-help-pop { display: grid !important; }
+#nsPanel .nsc-rhythm-help-pop > b { font: 750 9.5px/1.1 "Segoe UI",Inter,system-ui,sans-serif !important; }
+#nsPanel .nsc-rhythm-help-pop > span {
+  display: grid !important;
+  grid-template-columns: 10px 56px minmax(0,1fr) !important;
+  align-items: center !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+}
+#nsPanel .nsc-rhythm-help-pop span > i { width: 9px !important; height: 3px !important; border-radius: 2px !important; background: currentColor !important; box-shadow: 0 0 4px currentColor !important; }
+#nsPanel .nsc-rhythm-help-pop span > strong { color: currentColor !important; font: 750 7.5px/1 "Segoe UI",Inter,system-ui,sans-serif !important; }
+#nsPanel .nsc-rhythm-help-pop span > small { min-width: 0 !important; color: currentColor !important; opacity: .94 !important; font: 700 7.5px/1 "Segoe UI",Inter,system-ui,sans-serif !important; }
+#nsPanel .nsc-rhythm-help-pop .is-mel { color: #62b7ff !important; }
+#nsPanel .nsc-rhythm-help-pop .is-cor { color: #ffc629 !important; }
+#nsPanel .nsc-rhythm-help-pop .is-wake { color: #55e58b !important; }
 #nsPanel .nsc-moon-overlay {
   position: absolute !important;
   z-index: 1 !important;
@@ -545,20 +625,128 @@
 /* Cat stays recognisable and clickable, but sits quietly in the material. */
 #nsPanel .ns-room-cat {
   position: relative !important;
-  align-self: flex-end !important;
-  /* The rhythm labels sit beyond the SVG's right edge. Give that overhang a
-     real flex-layout gutter so Windows/DPI layouts cannot clip it at the
-     panel's overflow boundary; the SVG itself keeps its existing size. */
-  box-sizing: content-box !important;
-  padding-right: 58px !important;
+  flex: 0 0 220px !important;
+  align-self: flex-start !important;
+  box-sizing: border-box !important;
+  width: 220px !important;
+  min-width: 220px !important;
+  height: 250px !important;
+  padding: 0 !important;
   opacity: .88;
   filter: none !important;
   transform: none !important;
 }
+#nsPanel .ns-bedcare-perch {
+  position: absolute !important;
+  z-index: auto !important;
+  left: 18px !important;
+  bottom: 2px !important;
+  width: 184px !important;
+  height: 138px !important;
+  transform: none !important;
+  cursor: pointer !important;
+  outline: none !important;
+}
+#nsPanel .ns-bedcare-bed {
+  position: absolute !important;
+  z-index: 1 !important;
+  inset: 0 !important;
+  display: block !important;
+  transition: opacity .12s ease !important;
+}
+#nsPanel .ns-bedcare-bed .ns-room-bed-picture,
+#nsPanel .ns-bedcare-bed .ns-room-bed-picture img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+#nsPanel .ns-bedcare-bed .ns-room-bed-picture img {
+  object-fit: fill !important;
+  transform: scaleX(1.07) !important;
+  transform-origin: center bottom !important;
+  filter: drop-shadow(0 6px 7px rgba(0,0,0,.38)) !important;
+}
+#nsPanel .ns-bedcare-bed .ns-room-bed-devices {
+  inset: 9px 8px auto 8px !important;
+  z-index: 3 !important;
+  height: 52px !important;
+  opacity: .94 !important;
+}
+#nsPanel .ns-bedcare-bed .ns-room-device {
+  --bed: #d8e0e2 !important;
+}
+#nsPanel .ns-bedcare-perch-copy {
+  position: absolute !important;
+  z-index: 4 !important;
+  left: 50% !important;
+  bottom: 5px !important;
+  width: max-content !important;
+  max-width: 95% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 1px !important;
+  min-width: 154px !important;
+  padding: 3px 8px 4px !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+  border-radius: 7px !important;
+  background: rgba(40,40,40,.94) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.38), inset 0 1px rgba(255,255,255,.07) !important;
+  transform: translateX(-50%) !important;
+  color: #f2f2f2 !important;
+  text-shadow: none !important;
+  white-space: nowrap !important;
+  pointer-events: auto !important;
+}
+#nsPanel .ns-bedcare-perch-copy small {
+  background: none !important;
+  color: #d4d4d4 !important;
+  -webkit-text-fill-color: currentColor !important;
+  font: 950 9.5px/1 Inter,system-ui,sans-serif !important;
+  letter-spacing: .035em !important;
+  filter: none !important;
+  text-shadow: none !important;
+}
+#nsPanel .ns-bedcare-date-line {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  line-height: 1 !important;
+}
+#nsPanel .ns-bedcare-calendar {
+  font-family: "Segoe UI Symbol","Segoe UI",sans-serif !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  filter: none !important;
+}
+#nsPanel .ns-bedcare-perch-copy b {
+  color: #f2f2f2 !important;
+  font: 950 13.5px/1 "JetBrains Mono",ui-monospace,monospace !important;
+  text-shadow: none !important;
+}
+#nsPanel .ns-bedcare-age {
+  margin-left: 2px !important;
+  padding-left: 5px !important;
+  border-left: 1px solid rgba(255,255,255,.24) !important;
+  color: #d8d8d8 !important;
+  font: 850 8px/1 "Segoe UI",Inter,system-ui,sans-serif !important;
+  letter-spacing: .025em !important;
+  text-shadow: none !important;
+}
+#nsPanel .ns-bedcare-perch:hover .ns-bedcare-bed,
+#nsPanel .ns-bedcare-perch:focus-visible .ns-bedcare-bed,
+#nsPanel .ns-bedcare-perch[aria-expanded="true"] .ns-bedcare-bed { opacity: .86 !important; }
 #nsPanel .ns-room-cat .pkt-cat {
-  max-width: 200px !important;
+  position: relative !important;
+  z-index: 2 !important;
+  width: 112px !important;
+  height: auto !important;
+  max-width: 112px !important;
   margin-left: 0 !important;
   margin-right: auto !important;
+  transform: translate(44px,-18px) !important;
 }
 #nsPanel .pkt-cat.pkt-scratching .pkt-scratch-arm {
   transform-box: view-box !important;
@@ -601,69 +789,67 @@
 #nsPanel .ns-cat-rhythm-key {
   position: absolute !important;
   z-index: 3 !important;
-  /* Keep the three fresh cuts at the animated paw tip; labels travel with them. */
-  top: 30% !important;
   right: auto !important;
-  /* Cuts overlap the paw; labels continue into the clear space on its right. */
-  /* Compensate for the reserved 58px gutter, preserving the original visual
-     anchor at the scratching paw on MacBook and Windows alike. */
-  left: calc(88% - 63px) !important;
-  display: inline-flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  gap: 3px !important;
-  width: max-content !important;
+  bottom: auto !important;
+  top: 0 !important;
+  left: 30px !important;
+  display: block !important;
+  width: 160px !important;
+  height: 96px !important;
   padding: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: none !important;
-  box-shadow: none !important;
-  color: rgba(220,233,241,.78) !important;
-  font: 800 8px/1 Inter,system-ui,sans-serif !important;
-  letter-spacing: .02em !important;
-  text-shadow: 0 1px 2px rgba(0,0,0,.78) !important;
-  transform: none !important;
+  overflow: hidden !important;
+  border: 4px solid #786a58 !important;
+  border-radius: 3px !important;
+  background:
+    radial-gradient(circle at 16% 24%,rgba(255,255,255,.055) 0 1px,transparent 1.5px),
+    radial-gradient(circle at 72% 68%,rgba(255,255,255,.045) 0 1px,transparent 1.5px),
+    #17211f !important;
+  background-size: 19px 17px,23px 21px,100% 100% !important;
+  box-shadow: 0 7px 13px rgba(0,0,0,.50), inset 0 0 0 2px #0b1110, inset 0 0 12px rgba(0,0,0,.58), 0 0 0 1px #28231d !important;
+  box-sizing: border-box !important;
+  color: rgba(244,244,235,.78) !important;
+  cursor: pointer !important;
+  transform: rotate(-2.6deg) !important;
+  transform-origin: center !important;
+  transition: opacity .12s ease, transform .12s ease, filter .12s ease !important;
+}
+#nsPanel .ns-cat-rhythm-key::before,
+#nsPanel .ns-cat-rhythm-key::after { content: none !important; display: none !important; }
+#nsPanel .ns-chalkboard-art {
+  position: absolute !important;
+  z-index: 1 !important;
+  inset: 2px !important;
+  display: block !important;
+  border-radius: 1px !important;
+  background-position: center !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+}
+#nsPanel .ns-chalkboard-empty {
+  position: absolute !important;
+  z-index: 2 !important;
+  inset: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0 !important;
+  color: rgba(244,244,235,.76) !important;
+  font-family: "Comic Sans MS","Bradley Hand",cursive !important;
+  text-shadow: 0 0 1px rgba(255,255,255,.45) !important;
   white-space: nowrap !important;
 }
-#nsPanel .ns-cat-rhythm-key .ns-claw-mark {
-  display: block !important;
-  flex: 0 0 auto !important;
-  width: 26px !important;
-  height: 25px !important;
-  overflow: visible !important;
-  /* The cuts rise from the three claw tips; their lower ends meet the paw. */
-  transform: translateY(-10px) !important;
-  transform-origin: center !important;
+#nsPanel .ns-chalkboard-empty b { font: 700 28px/1 "Segoe UI Symbol",sans-serif !important; }
+#nsPanel .ns-cat-rhythm-key.has-art .ns-chalkboard-empty { display: none !important; }
+#nsPanel .ns-cat-rhythm-key:hover,
+#nsPanel .ns-cat-rhythm-key:focus-visible {
+  filter: brightness(1.13) !important;
+  transform: rotate(-1.4deg) scale(1.015) !important;
+  outline: none !important;
 }
-#nsPanel .ns-cat-rhythm-key .ns-claw-cut { color: inherit !important; }
-#nsPanel .ns-cat-rhythm-key .ns-scratch-shadow { fill: rgba(2, 4, 7, .82) !important; }
-#nsPanel .ns-cat-rhythm-key .ns-scratch-cut {
-  fill: currentColor !important;
-  stroke: rgba(0, 0, 0, .56) !important;
-  stroke-width: 1.1 !important;
-  paint-order: stroke fill !important;
+#nsPanel .ns-bedcare-perch[aria-expanded="true"] ~ .ns-cat-rhythm-key {
+  opacity: .08 !important;
+  transform: translateY(4px) rotate(-2.6deg) !important;
 }
-#nsPanel .ns-cat-rhythm-key .ns-scratch-glint {
-  fill: none !important;
-  stroke: rgba(255, 255, 255, .32) !important;
-  stroke-width: .75 !important;
-  stroke-linecap: round !important;
-}
-#nsPanel .ns-cat-rhythm-key .ns-claw-labels {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: flex-start !important;
-  justify-content: center !important;
-  gap: 2px !important;
-}
-#nsPanel .ns-cat-rhythm-key .ns-claw-labels span {
-  display: block !important;
-  min-height: 0 !important;
-  line-height: 1.05 !important;
-}
-#nsPanel .ns-cat-rhythm-key .is-mel { color: #62b7ff !important; }
-#nsPanel .ns-cat-rhythm-key .is-cor { color: #ffc629 !important; }
-#nsPanel .ns-cat-rhythm-key .is-wake { color: #55e58b !important; }
 
 /* Compact history structure: usual part → person → four counts → beds. */
 #nsPanel .ns-stats-box { flex-basis: 370px !important; width: 370px !important; min-width: 370px !important; padding: 0 2px 2px 6px !important; }
@@ -776,6 +962,7 @@ html.mk-low-spec #nsOverlay.open #nsPanel .pkt-cat.pkt-awake .pkt-eyes { animati
   #nsPanel .nss-display { font-size: 13px !important; }
   #nsPanel .ns-mode-btn,
   #nsPanel .ns-raffle-trigger { padding-inline: 8px !important; font-size: 10px !important; }
+  #nsPanel .ns-bedcare-popover { width: min(264px, calc(100vw - 24px)) !important; }
 }
 @media (max-height: 760px) {
   #nsPanel .ns-room-block { padding: 7px 9px 6px !important; }
@@ -790,6 +977,18 @@ html.mk-low-spec #nsOverlay.open #nsPanel .pkt-cat.pkt-awake .pkt-eyes { animati
   #nsPanel .ns-bm-nmp { grid-template-columns: 12px !important; }
   #nsPanel .ns-bm-cell { width: 12px !important; height: 12px !important; }
   #nsPanel .ns-stats-foot { margin-top: 0 !important; }
+  #nsPanel .ns-room-cat { height: 225px !important; }
+  #nsPanel .ns-cat-rhythm-key {
+    left: 35px !important;
+    width: 150px !important;
+    height: 90px !important;
+  }
+  #nsPanel .ns-bedcare-perch {
+    left: 25px !important;
+    bottom: 0 !important;
+    width: 170px !important;
+    height: 128px !important;
+  }
 }
 @media (max-width: 640px) {
   #nsPanel { border-radius: 17px !important; }
@@ -1089,7 +1288,29 @@ html.mk-low-spec #nsOverlay.open #nsPanel .pkt-cat.pkt-awake .pkt-eyes { animati
     font-size: 14px !important;
   }
   #nsPanel .ns-room-cat {
+    flex-basis: 150px !important;
     width: 150px !important;
     min-width: 150px !important;
+    height: 210px !important;
   }
+  #nsPanel .ns-cat-rhythm-key {
+    top: 0 !important;
+    left: 10px !important;
+    width: 130px !important;
+    height: 78px !important;
+  }
+  #nsPanel .ns-bedcare-perch {
+    left: 0 !important;
+    bottom: 4px !important;
+    width: 150px !important;
+    height: 112px !important;
+  }
+  #nsPanel .ns-bedcare-perch-copy {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    padding-inline: 5px !important;
+  }
+  #nsPanel .ns-bedcare-perch-copy small { font-size: 8.5px !important; }
+  #nsPanel .ns-bedcare-perch-copy b { font-size: 11.5px !important; }
+  #nsPanel .ns-bedcare-age { font-size: 7px !important; }
 }

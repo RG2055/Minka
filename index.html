@@ -27,7 +27,7 @@
   }
   window.__minkaHasApiAuth = function() { return !!getToken(); };
 
-  var CALENDAR_BUILD = '20260829coffee1';
+  var CALENDAR_BUILD = '20260829bedcare1';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -585,7 +585,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <div id="calendarEmbed">
   <!-- Keep the expensive calendar document dormant behind the password gate.
        Authenticated startup assigns data-base-src immediately. -->
-  <iframe src="about:blank" data-base-src="kalendars/index.html?radPlanUrl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ%2Fexec&cv=20260829coffee1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260829bedcare1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- Compact brand loader. It stays up until the embedded schedule has painted. -->
@@ -3374,8 +3374,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   var STORE_KEY = 'minkaBolusV3';
   var HISTORY_KEY = 'minkaBolusHistoryV1';
   var GS_URL    = 'https://script.google.com/macros/s/AKfycbxmGL8uDYdOOb4hsegNu_eBQm0CdthdewIdJAQBLIoEIJhc4q-sV_sVQRSeorvmTvDG/exec';
-  var RAD_PLAN_GS_URL = 'https://script.google.com/macros/s/AKfycbzYQ76F65up_d9Otw216oLG8UEfM_w9i0lAc1bqsk7x6EScmf2i7X_CgSMUpvIeANKcdQ/exec';
-  window.__minkaCloud = Object.assign(window.__minkaCloud || {}, { gsUrl: GS_URL, radPlanUrl: RAD_PLAN_GS_URL });
+  window.__minkaCloud = Object.assign(window.__minkaCloud || {}, { gsUrl: GS_URL });
   var WARN_MS   = 24 * 60 * 60 * 1000; // 24h
   // Divi kabineti — GE un PHILIPS
   var ROOMS = [

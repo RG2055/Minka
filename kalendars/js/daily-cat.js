@@ -60,6 +60,7 @@
   var anchorChoice = { kind: 'comment', worker: '' };
   var anchorTimer = 0;
   var hopTimer = 0;
+  var nightPerchTarget = null;
 
   function pad(value) { return String(value).padStart(2, '0'); }
   function currentDate() {
@@ -230,7 +231,7 @@
   }
   function rotateAnchor() {
     anchorTimer = 0;
-    if (petButton && !petButton.hidden && positionMode === 'auto' &&
+    if (petButton && !petButton.hidden && !nightPerchTarget && positionMode === 'auto' &&
         !dragState && !pickerOpen && !document.hidden) {
       var next = pickAnchor();
       if (next.kind !== anchorChoice.kind || next.worker !== anchorChoice.worker) {
@@ -250,6 +251,17 @@
       right: innerWidth - left - PET_SIZE,
       bottom: innerHeight - top - PET_SIZE
     });
+  }
+  function nightPerchPosition(target) {
+    if (!target || !target.isConnected) return null;
+    var rect = target.getBoundingClientRect();
+    if (!rect.width || !rect.height) return null;
+    return candidatePosition(
+      rect.left + rect.width * 0.47 - PET_SIZE / 2,
+      // Sit above the care plaque: the paws stay on the mattress instead of
+      // covering the "Gultas veļa mainīta" text on shorter viewports.
+      rect.top - 12
+    );
   }
   // Hot path: one cached element and one rect. No card lists, collision scans
   // or mood measurements are allowed here because scroll calls it every frame.
@@ -285,6 +297,10 @@
     return target;
   }
   function fastAutoPosition() {
+    if (nightPerchTarget) {
+      var perch = nightPerchPosition(nightPerchTarget);
+      if (perch) return perch;
+    }
     return anchorPosition(activeAnchorElement());
   }
   // Cold fallback: this may inspect many elements, so it is used only if the
@@ -548,7 +564,7 @@
   function syncVisibility() {
     if (!petButton) return;
     var wasHidden = petButton.hidden;
-    petButton.hidden = isCompact();
+    petButton.hidden = isCompact() && !nightPerchTarget;
     if (petButton.hidden) {
       closePicker();
       clearAnimationTimers();
@@ -585,7 +601,7 @@
     paintPosition({ right: dragState.nextRight, bottom: dragState.nextBottom });
   }
   function onPointerDown(event) {
-    if (event.button !== 0 || dragState) return;
+    if (event.button !== 0 || dragState || nightPerchTarget) return;
     closePicker();
     var start = currentPosition() || manualPosition ||
       defaultPosition() || clampPosition({ right: 24, bottom: 24 });
@@ -634,7 +650,7 @@
     startIdle();
   }
   function createPet(position) {
-    if (petButton || isCompact()) return;
+    if (petButton || (isCompact() && !nightPerchTarget)) return;
     position = clampPosition(position);
     petButton = document.createElement('button');
     petButton.id = 'mkDailyCatPet';
@@ -670,6 +686,42 @@
       if (skipClick) { skipClick = false; return; }
       openPicker();
     });
+    if (nightPerchTarget) {
+      petButton.classList.add('is-night-perched');
+      observeAnchor(nightPerchTarget);
+      scheduleAutoPosition();
+    }
+  }
+
+  function enterNightSplit(target) {
+    if (!target || !target.isConnected) return false;
+    var sameTarget = nightPerchTarget === target;
+    nightPerchTarget = target;
+    closePicker();
+    positionMode = 'auto';
+    manualPosition = null;
+    if (!petButton) {
+      mountWhenReady();
+      return true;
+    }
+    petButton.hidden = false;
+    petButton.dataset.positionMode = 'night';
+    petButton.classList.add('is-night-perched');
+    observeAnchor(target);
+    scheduleAutoPosition();
+    if (!sameTarget) playAction('jumping', 1);
+    return true;
+  }
+
+  function exitNightSplit() {
+    if (!nightPerchTarget) return;
+    nightPerchTarget = null;
+    if (petButton) {
+      petButton.classList.remove('is-night-perched');
+      petButton.dataset.positionMode = 'auto';
+    }
+    resetAutoPosition();
+    if (petButton) playAction('jumping', 1);
   }
   function stopPositionWait() {
     if (positionObserver) positionObserver.disconnect();
@@ -678,7 +730,7 @@
     positionTimer = 0;
   }
   function mountWhenReady() {
-    if (petButton || isCompact() || !catalog.length) return;
+    if (petButton || (isCompact() && !nightPerchTarget) || !catalog.length) return;
     positionMode = 'auto';
     // MutationObserver may call this many times while cards render. Keep that
     // callback O(1): only try the comment anchor, never the collision search.
@@ -934,6 +986,8 @@
     window.__minkaDailyCat = {
       open: openPicker,
       close: closePicker,
+      enterNightSplit: enterNightSplit,
+      exitNightSplit: exitNightSplit,
       getCurrent: function () {
         var pet = catalog[selectedIndex];
         return pet ? { index: selectedIndex, id: pet.id, displayName: pet.displayName } : null;

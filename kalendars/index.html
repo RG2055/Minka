@@ -130,11 +130,11 @@ window.setTimeout(function () {
 <title>RG Search OS - Clean Start</title>
 <!-- bundle.css is critical ï¿½ load normally -->
 <link rel="stylesheet" href="css/bundle.css?v=20260621n">
-<link rel="stylesheet" href="css/skin-draw.css?v=20260723a">
+<link rel="stylesheet" href="css/skin-draw.css?v=20260829chalk1">
 <link rel="stylesheet" href="css/side-cards-v2.css?v=20260818nfootgap1">
 <link rel="stylesheet" href="css/header-weather.css?v=20260813headerfix1">
 <link rel="stylesheet" href="css/mood-fluent.css?v=20260820fmood16">
-<link rel="stylesheet" href="css/daily-cat.css?v=20260827petperf1">
+<link rel="stylesheet" href="css/daily-cat.css?v=20260829nightpet2">
 <link rel="stylesheet" href="css/depth-cards.css?v=20260828emojiquality1">
 
 <!-- Fluent Emoji webfont (fluentmoji, MIT) — neblokējoši, tāpat kā pārējie fonti.
@@ -1055,14 +1055,6 @@ body.stars-active #stars-overlay{display:block;}
       <div id="radiologists-duty" class="duty-vertical"></div>
     </div>
     <div>
-      <div id="radiologists-plan-container" class="next-box radiologists-plan-box">
-        <div class="radiologists-plan-head">
-          <div class="next-box-label" style="color:#ff7c6e;">SADALĪJUMS</div>
-          <button id="radiologists-plan-edit" class="radiologists-plan-edit" type="button">Rediģēt</button>
-        </div>
-        <div id="radiologists-plan-date" class="radiologists-plan-date">--</div>
-        <div id="radiologists-plan-content" class="radiologists-plan-content">Nav ievadīts.</div>
-      </div>
       <div id="radiologists-next-container" class="next-box mk-next-shift-card">
         <div class="mk-next-shift-head">
           <span class="material-icons-round mk-next-shift-icon" aria-hidden="true">schedule</span>
@@ -1569,18 +1561,17 @@ function _mkToast(msg, type) {
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/calendar.js?v=20260829coffee1"></script>
 <script src="js/depth-cards.js?v=20260828local10" defer></script>
-<script src="js/daily-cat.js?v=20260827petperf1" defer></script>
+<script src="js/daily-cat.js?v=20260829nightpet2" defer></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260810layout2"></script>
 <script src="js/fatigue.js?v=20260824perfaudit3"></script>
-<script src="js/nightsplit.js?v=20260824perfaudit2" defer></script>
+<script src="js/nightsplit.js?v=20260829cloudsync3" defer></script>
 <script src="js/monthcal.js?v=20260814uxpass1" defer></script>
 <script src="js/design_v1.js?v=20260824perfaudit2" defer></script>
 <script src="js/theme.js?v=20260724f" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
 <script src="js/emoji.js?v=20260825b3" defer></script>
 <script src="js/levels.js?v=20260802coffee1" defer></script>
-<script src="js/radiologist_plan.js?v=20260824perfaudit2" defer></script>
 
 <script>
 window.__minkaLocalBuild = '20260824perfaudit3';
@@ -1707,10 +1698,10 @@ document.addEventListener('keydown', (e) => {
     try{
       overlay.querySelectorAll('.ns-room-walker').forEach(function(svg){
         if(!running){
-          // Removing the declarative SMIL scene is the only reliable way to
-          // stop its timeline and paint work in every Chromium version. The
-          // normal overlay render recreates it on the next open.
-          svg.remove();
+          // Keep the already-built room DOM so reopening does not rebuild the
+          // whole modal. Chromium pauses SVG SMIL here; CSS is paused by the
+          // closed-overlay rule below as a second guard.
+          if(typeof svg.pauseAnimations==='function') svg.pauseAnimations();
         } else if(typeof svg.unpauseAnimations==='function') {
           svg.unpauseAnimations();
         }
@@ -1728,9 +1719,19 @@ document.addEventListener('keydown', (e) => {
       requestAnimationFrame(function(){
         if(typeof window.__ns._update==='function') window.__ns._update();
         else if(typeof window.__ns._render==='function') window.__ns._render();
+        requestAnimationFrame(function(){
+          try {
+            var bed = document.querySelector('#nsPanel .ns-bedcare-perch');
+            if(bed && window.__minkaDailyCat && typeof window.__minkaDailyCat.enterNightSplit==='function') {
+              window.__minkaDailyCat.enterNightSplit(bed);
+            }
+          } catch(e) {}
+        });
       });
     }
     if(!_nsOpen) {
+      try { if(window.__ns && typeof window.__ns.closeBedCare==='function') window.__ns.closeBedCare(); } catch(e) {}
+      try { if(window.__minkaDailyCat && typeof window.__minkaDailyCat.exitNightSplit==='function') window.__minkaDailyCat.exitNightSplit(); } catch(e) {}
       // notify parent
       try { window.parent.postMessage({type:'nsClosed'}, window.location.origin); } catch(e) {}
     }
@@ -1874,7 +1875,6 @@ document.addEventListener('keydown', (e) => {
     try{
       var app = document.getElementById('grafiks-app');
       var rightPanel = document.querySelector('.side-panel.right-panel');
-      var plan = document.getElementById('radiologists-plan-container');
       var nextBox = document.getElementById('radiologists-next-container');
       if(!app){
         moonNode.style.left = 'calc(100vw - 180px)';
@@ -1906,7 +1906,7 @@ document.addEventListener('keydown', (e) => {
 
       var occupied = [];
       Array.prototype.forEach.call(document.querySelectorAll(
-        '.duty-block, #grafiks-list .card, #radiologists-plan-container, #radiologists-next-container, #shift-progress-wrap, .scroll-row, .top-row'
+        '.duty-block, #grafiks-list .card, #radiologists-next-container, #shift-progress-wrap, .scroll-row, .top-row'
       ), function(el){
         if(!el || !el.offsetParent) return;
         var r = rectOf(el);
@@ -1914,14 +1914,6 @@ document.addEventListener('keydown', (e) => {
       });
 
       var candidates = [];
-      if (plan) {
-        var pr = rectOf(plan);
-        if (pr) {
-          candidates.push({ left: pr.left + pr.width * 0.34 - w * 0.5, top: pr.top - h - 18 });
-          candidates.push({ left: pr.left - w - 18, top: pr.top + 8 });
-          candidates.push({ left: pr.left - w - 18, top: pr.top - h * 0.12 });
-        }
-      }
       if (nextBox) {
         var nr = rectOf(nextBox);
         if (nr) {
@@ -4507,163 +4499,8 @@ window.addEventListener('message', function(e) {
   overflow: hidden !important;
   z-index: 0 !important;
 }
-#radiologists-plan-container {
-  padding: 11px 12px 12px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 7px !important;
-  flex: 0 0 auto !important;
-  min-height: 124px !important;
-}
-.radiologists-plan-box {
-  border-color: rgba(255,110,90,0.16) !important;
-  background: linear-gradient(180deg, rgba(255,90,70,0.06), rgba(12,18,30,0.72)) !important;
-}
-.radiologists-plan-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-.radiologists-plan-edit {
-  appearance: none;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.72);
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: .06em;
-  padding: 5px 9px;
-  cursor: pointer;
-  transition: background .15s ease, border-color .15s ease, color .15s ease;
-}
-.radiologists-plan-edit:hover {
-  background: rgba(255,110,90,0.12);
-  border-color: rgba(255,110,90,0.28);
-  color: #fff;
-}
-.radiologists-plan-date {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.34);
-}
-.radiologists-plan-content {
-  font-size: 12px;
-  line-height: 1.45;
-  color: rgba(255,255,255,0.82);
-  white-space: pre-wrap;
-  word-break: break-word;
-  min-height: 44px;
-  max-height: 150px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
-.radiologists-plan-content.is-empty {
-  color: rgba(255,255,255,0.34);
-}
 #radiologists-next-container {
   flex: 0 0 auto !important;
-}
-.radiologists-plan-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 10050;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0,0,0,0.68);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  padding: 20px;
-}
-.radiologists-plan-modal.is-open {
-  display: flex;
-}
-.radiologists-plan-sheet {
-  width: min(560px, 96vw);
-  background: #0c1220;
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 20px;
-  box-shadow: 0 24px 70px rgba(0,0,0,0.52);
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.radiologists-plan-modal-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-.radiologists-plan-modal-title {
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: .12em;
-  color: rgba(255,255,255,0.88);
-  text-transform: uppercase;
-}
-.radiologists-plan-modal-date {
-  font-size: 11px;
-  color: rgba(255,255,255,0.48);
-  font-weight: 700;
-}
-.radiologists-plan-textarea {
-  width: 100%;
-  min-height: 220px;
-  resize: vertical;
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 16px;
-  background: rgba(255,255,255,0.04);
-  color: #eef3ff;
-  padding: 14px 16px;
-  box-sizing: border-box;
-  outline: none;
-  font: 600 14px/1.5 "JetBrains Mono", "SF Mono", monospace;
-}
-.radiologists-plan-textarea:focus {
-  border-color: rgba(255,110,90,0.35);
-  box-shadow: 0 0 0 1px rgba(255,110,90,0.16);
-}
-.radiologists-plan-help {
-  font-size: 11px;
-  color: rgba(255,255,255,0.42);
-  line-height: 1.45;
-}
-.radiologists-plan-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-.radiologists-plan-status {
-  font-size: 11px;
-  color: rgba(255,255,255,0.50);
-}
-.radiologists-plan-btns {
-  display: flex;
-  gap: 8px;
-}
-.radiologists-plan-btn {
-  appearance: none;
-  border-radius: 12px;
-  padding: 10px 14px;
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-  border: 1px solid rgba(255,255,255,0.10);
-}
-.radiologists-plan-btn.secondary {
-  background: rgba(255,255,255,0.05);
-  color: rgba(255,255,255,0.72);
-}
-.radiologists-plan-btn.primary {
-  background: rgba(255,110,90,0.16);
-  border-color: rgba(255,110,90,0.30);
-  color: #ffd7cf;
 }
 .side-panel.compact-duty .duty-vertical {
   gap: 8px !important;
@@ -8009,70 +7846,17 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
 
 :root.mk-mobile-shell .next-box,
 :root.mk-mobile-shell #radiographers-next-container,
-:root.mk-mobile-shell #radiologists-next-container,
-:root.mk-mobile-shell #radiologists-plan-container {
+:root.mk-mobile-shell #radiologists-next-container {
   margin-top: 4px !important;
   padding: 6px 5px !important;
   border-radius: 12px !important;
 }
 
 :root.mk-mobile-shell .next-box-label,
-:root.mk-mobile-shell .radiologists-plan-date,
-:root.mk-mobile-shell .radiologists-plan-content,
 :root.mk-mobile-shell .next-names,
-:root.mk-mobile-shell .next-box-countdown,
-:root.mk-mobile-shell .radiologists-plan-edit {
+:root.mk-mobile-shell .next-box-countdown {
   font-size: 7px !important;
   line-height: 1.18 !important;
-}
-
-:root.mk-mobile-shell #radiologists-plan-container,
-:root.mk-mobile-shell .radiologists-plan-box {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: stretch !important;
-  justify-content: flex-start !important;
-}
-
-:root.mk-mobile-shell .radiologists-plan-head {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: stretch !important;
-  justify-content: flex-start !important;
-  gap: 5px !important;
-}
-
-:root.mk-mobile-shell #radiologists-plan-container .next-box-label,
-:root.mk-mobile-shell #radiologists-plan-container .radiologists-plan-date,
-:root.mk-mobile-shell #radiologists-plan-container .radiologists-plan-content {
-  writing-mode: horizontal-tb !important;
-  text-orientation: mixed !important;
-  display: block !important;
-  width: 100% !important;
-  white-space: normal !important;
-  word-break: normal !important;
-  overflow-wrap: anywhere !important;
-}
-
-:root.mk-mobile-shell #radiologists-plan-container .next-box-label {
-  font-size: 6px !important;
-  line-height: 1.15 !important;
-  letter-spacing: .04em !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  overflow-wrap: normal !important;
-}
-
-:root.mk-mobile-shell #radiologists-plan-container .radiologists-plan-edit {
-  align-self: flex-start !important;
-  font-size: 6px !important;
-  padding: 3px 7px !important;
-}
-
-:root.mk-mobile-shell #radiologists-plan-container {
-  padding: 5px 6px !important;
-  min-height: 0 !important;
 }
 
 :root.mk-mobile-shell #minkaBarWrap {
@@ -12710,7 +12494,7 @@ window.addEventListener('message', function(e) {
 }
 </style>
 
-<script src="js/skin-draw.js?v=20260723a"></script>
+<script src="js/skin-draw.js?v=20260829chalk1"></script>
 <script>
 /* ── MinkaSkins: per-darbinieka kartes izskats ──
    Fons (attēls/gradients/krāsa) + cipara/teksta krāsas + emoji kontrole + spīdumiņi.
@@ -21198,7 +20982,6 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
 .mk-coffee-sub,.mk-coffee-add{width:32px!important;height:28px!important;min-width:32px!important;min-height:28px!important}
 .rg-mood-topbtn{width:42px!important;height:40px!important;min-width:42px!important;min-height:40px!important;font-size:8.5px!important}
 .rg-pulse-tap{min-height:40px!important}
-#radiologists-plan-edit{min-height:32px!important;padding-inline:12px!important}
 #nsCloseBtn,.mcal-close{min-width:38px!important;min-height:38px!important}
 .ns-mode-btn,.ns-raffle-trigger{min-height:40px!important}
 .side-panel .duty-surname{font-size:9.5px!important}
@@ -23166,7 +22949,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
 
 <!-- Loaded last on purpose: the night split is an overlay and this small,
      local stylesheet replaces the older visual layers without touching logic. -->
-<link rel="stylesheet" href="css/nightsplit-brand.css?v=20260822roomassets28">
+<link rel="stylesheet" href="css/nightsplit-brand.css?v=20260829carelayout3">
 <link rel="stylesheet" href="css/role-headings.css?v=20260828rolehead4">
 
 </body>

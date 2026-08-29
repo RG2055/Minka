@@ -252,6 +252,24 @@
 
 .mk-draw-card-preview.is-rd { border-color: rgba(255, 90, 85, .55); }
 
+.mk-draw-overlay.is-chalkboard .mk-draw-dialog {
+  width: min(900px, 100%);
+  height: min(700px, calc(100dvh - 24px));
+}
+
+.mk-draw-overlay.is-chalkboard .mk-draw-workspace {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.mk-draw-overlay.is-chalkboard .mk-draw-preview-wrap { display: none; }
+
+.mk-draw-overlay.is-chalkboard .mk-draw-canvas {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  background: #17211f;
+}
+
 .mk-draw-preview,
 .mk-draw-card-scrim {
   position: absolute;
