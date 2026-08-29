@@ -29,6 +29,9 @@
 
   function open(options) {
     options = options || {};
+    var chalkboardMode = options.mode === 'chalkboard';
+    var DRAW_W = chalkboardMode ? 480 : SIZE;
+    var DRAW_H = chalkboardMode ? 270 : SIZE;
     var old = document.querySelector('.mk-draw-overlay');
     if (old) old.remove();
 
@@ -37,10 +40,10 @@
     var firstName = nameParts.shift() || 'Darbinieks';
     var lastName = nameParts.join(' ');
     var overlay = document.createElement('div');
-    overlay.className = 'mk-draw-overlay';
+    overlay.className = 'mk-draw-overlay' + (chalkboardMode ? ' is-chalkboard' : '');
     overlay.innerHTML = ''
       + '<section class="mk-draw-dialog" role="dialog" aria-modal="true" aria-labelledby="mkDrawTitle">'
-      + '  <header class="mk-draw-head"><div><h3 id="mkDrawTitle">Kartes zīmējums</h3><span class="mk-draw-worker"></span></div><button type="button" class="mk-draw-close" aria-label="Aizvērt" title="Aizvērt">×</button></header>'
+      + '  <header class="mk-draw-head"><div><h3 id="mkDrawTitle">' + (chalkboardMode ? 'Nakts tāfele' : 'Kartes zīmējums') + '</h3><span class="mk-draw-worker"></span></div><button type="button" class="mk-draw-close" aria-label="Aizvērt" title="Aizvērt">×</button></header>'
       + '  <div class="mk-draw-toolbar">'
       + '    <div class="mk-draw-tools" role="group" aria-label="Zīmēšanas rīki">'
       + '      <button type="button" class="mk-draw-tool is-active" data-tool="pen" title="Brīva līnija">✎ Zīmulis</button>'
@@ -52,7 +55,7 @@
       + '      <button type="button" class="mk-draw-tool" data-tool="heart" title="Sirds zīmogs">♥</button>'
       + '      <button type="button" class="mk-draw-tool" data-tool="spark" title="Dzirksts zīmogs">✦</button>'
       + '    </div>'
-      + '    <label class="mk-draw-control"><span>Krāsa</span><input type="color" class="mk-draw-color" value="#f8fafc"></label>'
+      + '    <label class="mk-draw-control mk-draw-color-control"><span>Krāsa</span><input type="color" class="mk-draw-color" value="#f8fafc"></label>'
       + '    <label class="mk-draw-control mk-draw-size-control"><span>Ota</span><input type="range" class="mk-draw-size" min="2" max="36" step="1" value="7"><output class="mk-draw-size-value">7</output></label>'
       + '    <label class="mk-draw-control mk-draw-fill-shape"><input type="checkbox" class="mk-draw-shape-fill"> Pildīts</label>'
       + '  </div>'
@@ -69,7 +72,7 @@
       + '    <button type="button" class="mk-draw-icon mk-draw-clear" aria-label="Notīrīt" title="Notīrīt">⌧</button>'
       + '  </div>'
       + '  <div class="mk-draw-workspace">'
-      + '    <div class="mk-draw-editor"><div class="mk-draw-label">Zīmējums 1:1</div><canvas class="mk-draw-canvas" width="384" height="384"></canvas></div>'
+      + '    <div class="mk-draw-editor"><div class="mk-draw-label">' + (chalkboardMode ? 'Zīmē uz tāfeles' : 'Zīmējums 1:1') + '</div><canvas class="mk-draw-canvas" width="' + DRAW_W + '" height="' + DRAW_H + '"></canvas></div>'
       + '    <aside class="mk-draw-preview-wrap"><div class="mk-draw-label">Priekšskatījums kartē</div><div class="mk-draw-card-preview">'
       + '      <canvas class="mk-draw-preview" width="220" height="220"></canvas><div class="mk-draw-card-scrim"></div>'
       + '      <strong class="mk-draw-card-initials"></strong><span class="mk-draw-card-month"><b></b><small>MĒNESĪ</small></span>'
@@ -77,7 +80,7 @@
       + '      <span class="mk-draw-card-fatigue"><i><em></em></i><b></b></span>'
       + '    </div><p class="mk-draw-preview-note">Fons ar kartes tumšo pārklājumu un īstajiem maiņas datiem.</p></aside>'
       + '  </div>'
-      + '  <footer class="mk-draw-actions"><span class="mk-draw-status" role="status"></span><button type="button" class="mk-draw-cancel">Atcelt</button><button type="button" class="mk-draw-save">Saglabāt zīmējumu</button></footer>'
+      + '  <footer class="mk-draw-actions"><span class="mk-draw-status" role="status"></span><button type="button" class="mk-draw-cancel">Atcelt</button><button type="button" class="mk-draw-save">' + (chalkboardMode ? 'Saglabāt tāfeli' : 'Saglabāt zīmējumu') + '</button></footer>'
       + '</section>';
     document.body.appendChild(overlay);
 
@@ -96,8 +99,8 @@
     var preview = overlay.querySelector('.mk-draw-preview');
     var previewCtx = preview.getContext('2d', { alpha: false });
     var base = document.createElement('canvas');
-    base.width = SIZE;
-    base.height = SIZE;
+    base.width = DRAW_W;
+    base.height = DRAW_H;
     var baseCtx = base.getContext('2d', { alpha: true });
     var strokes = [];
     var current = null;
@@ -134,18 +137,21 @@
     function drawEffect(target, stroke) {
       target.save();
       if (stroke.effect === 'vignette') {
-        var gradient = target.createRadialGradient(SIZE / 2, SIZE / 2, SIZE * 0.2, SIZE / 2, SIZE / 2, SIZE * 0.72);
+        var maxSide = Math.max(DRAW_W, DRAW_H);
+        var gradient = target.createRadialGradient(DRAW_W / 2, DRAW_H / 2, maxSide * 0.2, DRAW_W / 2, DRAW_H / 2, maxSide * 0.72);
         gradient.addColorStop(0, 'rgba(0,0,0,0)');
         gradient.addColorStop(1, 'rgba(0,0,0,.68)');
         target.fillStyle = gradient;
-        target.fillRect(0, 0, SIZE, SIZE);
+        target.fillRect(0, 0, DRAW_W, DRAW_H);
       } else if (stroke.effect === 'grid') {
         target.strokeStyle = stroke.color;
         target.globalAlpha = .24;
         target.lineWidth = 1;
-        for (var g = 24; g < SIZE; g += 24) {
-          target.beginPath(); target.moveTo(g, 0); target.lineTo(g, SIZE); target.stroke();
-          target.beginPath(); target.moveTo(0, g); target.lineTo(SIZE, g); target.stroke();
+        for (var gx = 24; gx < DRAW_W; gx += 24) {
+          target.beginPath(); target.moveTo(gx, 0); target.lineTo(gx, DRAW_H); target.stroke();
+        }
+        for (var gy = 24; gy < DRAW_H; gy += 24) {
+          target.beginPath(); target.moveTo(0, gy); target.lineTo(DRAW_W, gy); target.stroke();
         }
       } else {
         target.fillStyle = stroke.color;
@@ -215,7 +221,7 @@
     }
 
     function redraw() {
-      ctx.clearRect(0, 0, SIZE, SIZE);
+      ctx.clearRect(0, 0, DRAW_W, DRAW_H);
       ctx.drawImage(base, 0, 0);
       strokes.forEach(function(stroke) { drawStroke(ctx, stroke); });
       if (current) drawStroke(ctx, current);
@@ -243,7 +249,7 @@
       baseCtx.save();
       baseCtx.globalCompositeOperation = 'source-over';
       baseCtx.fillStyle = bg;
-      baseCtx.fillRect(0, 0, SIZE, SIZE);
+      baseCtx.fillRect(0, 0, DRAW_W, DRAW_H);
       baseCtx.restore();
       if (resetStrokes) strokes = [];
       dirty = true;
@@ -253,8 +259,8 @@
     function pointFromEvent(event) {
       var rect = canvas.getBoundingClientRect();
       return {
-        x: Math.max(0, Math.min(SIZE, (event.clientX - rect.left) * SIZE / rect.width)),
-        y: Math.max(0, Math.min(SIZE, (event.clientY - rect.top) * SIZE / rect.height))
+        x: Math.max(0, Math.min(DRAW_W, (event.clientX - rect.left) * DRAW_W / rect.width)),
+        y: Math.max(0, Math.min(DRAW_H, (event.clientY - rect.top) * DRAW_H / rect.height))
       };
     }
 
@@ -291,7 +297,7 @@
       var points = [];
       var seed = (Date.now() >>> 0) || 1;
       function random() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
-      for (var i = 0; i < count; i++) points.push({ x: random() * SIZE, y: random() * SIZE, r: 1.5 + random() * 5, a: .22 + random() * .58 });
+      for (var i = 0; i < count; i++) points.push({ x: random() * DRAW_W, y: random() * DRAW_H, r: 1.5 + random() * 5, a: .22 + random() * .58 });
       return points;
     }
 
@@ -382,17 +388,17 @@
       overlay.querySelector('.mk-draw-card-initials').style.color = options.textColor;
     }
     baseCtx.fillStyle = bg;
-    baseCtx.fillRect(0, 0, SIZE, SIZE);
+    baseCtx.fillRect(0, 0, DRAW_W, DRAW_H);
     redraw();
     if (options.initialUrl) {
       var image = new Image();
       image.crossOrigin = 'anonymous';
       image.onload = function() {
         if (closed || dirty) return;
-        var scale = Math.max(SIZE / image.width, SIZE / image.height);
+        var scale = Math.max(DRAW_W / image.width, DRAW_H / image.height);
         var width = image.width * scale, height = image.height * scale;
-        baseCtx.clearRect(0, 0, SIZE, SIZE);
-        baseCtx.drawImage(image, (SIZE - width) / 2, (SIZE - height) / 2, width, height);
+        baseCtx.clearRect(0, 0, DRAW_W, DRAW_H);
+        baseCtx.drawImage(image, (DRAW_W - width) / 2, (DRAW_H - height) / 2, width, height);
         redraw();
       };
       image.src = options.initialUrl;

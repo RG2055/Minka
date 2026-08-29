@@ -47,33 +47,30 @@
   var NS_ROOM_LEGACY_STORE_KEY='minkaNightRoomByDateV1';
   var NS_ROOM_KEY_PREFIX='nsrooms::';
   var NS_ROOM_API_PATH='/api/ns-rooms';
+  var NS_BED_CARE_API_PATH='/api/bed-care';
+  var NS_BED_CARE_STORE_KEY='minkaBedCareV1';
+  var NS_BED_CARE_ITEMS=[{key:'all',label:'Gultas veļa',icon:'▤'}];
+  var _nsBedCareState=null;
+  var _nsBedCareLoading=null;
+  var _nsBedCareOutside=null;
+  var _nsBedCareKeydown=null;
+  var NS_CHALKBOARD_WORKER='SYSTEM-CHALKBOARD';
+  var NS_CHALKBOARD_STORE_KEY='minkaNightChalkboardV1';
+  var _nsChalkboardState=null;
+  var _nsChalkboardLoading=null;
+  var _nsSharedCloudPulledAt=0;
+  var _nsFitRaf=0;
+  var _nsIdleRender=0;
+  var _nsPendingRenderKey='';
+  var _nsLastRenderKey='';
   var ROOM_BED_KEYS=['main_left_top','main_left_bottom','main_right_top','nmp_center'];
   var ROOM_SLOTS={
-    'is-left':{x:19,y:25,w:14.5,scale:.94,z:24},
-    'is-right-top':{x:19,y:63,w:15.5,scale:1,z:28},
-    'is-right-bottom':{x:81,y:27,w:13.5,scale:.9,z:22},
-    'is-center':{x:51,y:48,w:34,scale:.96,z:25}
+    'is-left':{x:19,y:25,w:13.7,scale:.94,z:24},
+    'is-right-top':{x:19,y:63,w:14.6,scale:1,z:28},
+    'is-right-bottom':{x:81,y:27,w:12.8,scale:.9,z:22},
+    'is-center':{x:51,y:48,w:32,scale:.96,z:25}
   };
   var NS_FLOW_GHOST = `<svg class="ns-flow-ghost" viewBox="0 0 10 7" shape-rendering="crispEdges" aria-hidden="true"><rect x="3" y="0" width="4" height="1" fill="#7dd3fc"/><rect x="2" y="1" width="6" height="1" fill="#38bdf8"/><rect x="1" y="2" width="1" height="1" fill="#38bdf8"/><rect x="4" y="2" width="2" height="1" fill="#38bdf8"/><rect x="8" y="2" width="1" height="1" fill="#38bdf8"/><rect x="2" y="2" width="2" height="1" fill="#07090f"/><rect x="6" y="2" width="2" height="1" fill="#07090f"/><rect x="1" y="3" width="8" height="3" fill="#38bdf8"/><rect x="1" y="6" width="1" height="1" fill="#38bdf8"/><rect x="3" y="6" width="1" height="1" fill="#38bdf8"/><rect x="6" y="6" width="1" height="1" fill="#38bdf8"/><rect x="8" y="6" width="1" height="1" fill="#38bdf8"/></svg>`;
-  var PKT_CAT_SVG = `<svg class="pkt-cat" viewBox="0 0 300 370" preserveAspectRatio="xMidYMid meet" shape-rendering="crispEdges" aria-hidden="true"><g><rect x="40" y="0" width="10" height="10" fill="#131316"/><rect x="180" y="0" width="10" height="10" fill="#131316"/><rect x="40" y="10" width="10" height="10" fill="#131316"/><rect x="180" y="10" width="10" height="10" fill="#131316"/><rect x="40" y="20" width="20" height="10" fill="#131316"/><rect x="170" y="20" width="20" height="10" fill="#131316"/><rect x="40" y="30" width="20" height="10" fill="#131316"/><rect x="60" y="30" width="10" height="10" fill="#2b211b"/><rect x="110" y="30" width="10" height="10" fill="#2b211b"/><rect x="160" y="30" width="10" height="10" fill="#2b211b"/><rect x="170" y="30" width="20" height="10" fill="#131316"/><rect x="40" y="40" width="30" height="10" fill="#131316"/><rect x="70" y="40" width="40" height="10" fill="#2b211b"/><rect x="110" y="40" width="10" height="10" fill="#131316"/><rect x="120" y="40" width="40" height="10" fill="#2b211b"/><rect x="160" y="40" width="30" height="10" fill="#131316"/><rect x="40" y="50" width="150" height="10" fill="#131316"/><rect x="40" y="60" width="150" height="10" fill="#131316"/><rect x="40" y="70" width="150" height="10" fill="#131316"/><rect x="40" y="80" width="150" height="10" fill="#131316"/><rect x="40" y="90" width="30" height="10" fill="#131316"/><rect x="100" y="90" width="30" height="10" fill="#131316"/><rect x="160" y="90" width="30" height="10" fill="#131316"/><rect x="30" y="100" width="10" height="10" fill="#131316"/><rect x="50" y="100" width="30" height="10" fill="#131316"/><rect x="100" y="100" width="30" height="10" fill="#131316"/><rect x="150" y="100" width="30" height="10" fill="#131316"/><rect x="190" y="100" width="10" height="10" fill="#131316"/><rect x="40" y="110" width="70" height="10" fill="#131316"/><rect x="110" y="110" width="10" height="10" fill="#5b3d39"/><rect x="120" y="110" width="70" height="10" fill="#131316"/><rect x="50" y="120" width="130" height="10" fill="#131316"/><rect x="50" y="130" width="130" height="10" fill="#131316"/><rect x="60" y="140" width="110" height="10" fill="#131316"/><rect x="60" y="150" width="110" height="10" fill="#131316"/><rect x="50" y="160" width="130" height="10" fill="#131316"/><rect x="50" y="170" width="130" height="10" fill="#131316"/><rect x="40" y="180" width="150" height="10" fill="#131316"/><rect x="50" y="190" width="130" height="10" fill="#131316"/><rect x="50" y="200" width="130" height="10" fill="#131316"/><rect x="60" y="210" width="110" height="10" fill="#131316"/><rect x="40" y="220" width="150" height="10" fill="#131316"/><rect x="30" y="230" width="170" height="10" fill="#131316"/><rect x="20" y="240" width="240" height="10" fill="#131316"/><rect x="10" y="250" width="260" height="10" fill="#131316"/><rect x="10" y="260" width="270" height="10" fill="#131316"/><rect x="10" y="270" width="270" height="10" fill="#131316"/><rect x="0" y="280" width="230" height="10" fill="#131316"/><rect x="240" y="280" width="50" height="10" fill="#131316"/><rect x="10" y="290" width="210" height="10" fill="#131316"/><rect x="240" y="290" width="50" height="10" fill="#131316"/><rect x="10" y="300" width="210" height="10" fill="#131316"/><rect x="250" y="300" width="50" height="10" fill="#131316"/><rect x="10" y="310" width="210" height="10" fill="#131316"/><rect x="260" y="310" width="40" height="10" fill="#131316"/><rect x="20" y="320" width="190" height="10" fill="#131316"/><rect x="260" y="320" width="40" height="10" fill="#131316"/><rect x="30" y="330" width="170" height="10" fill="#131316"/><rect x="270" y="330" width="30" height="10" fill="#131316"/><rect x="40" y="340" width="150" height="10" fill="#131316"/><rect x="60" y="350" width="110" height="10" fill="#131316"/><rect x="110" y="360" width="10" height="10" fill="#131316"/></g><g class="pkt-eyes"><rect x="70" y="90" width="30" height="10" fill="#f5b51e"/><rect x="130" y="90" width="30" height="10" fill="#f5b51e"/><rect x="80" y="100" width="20" height="10" fill="#f5b51e"/><rect x="130" y="100" width="20" height="10" fill="#f5b51e"/></g></svg>`;
-  var PKT_SCRATCH_ARM='<g class="pkt-scratch-arm">'
-    +'<rect x="160" y="166" width="34" height="20" fill="#131316"/>'
-    +'<rect x="188" y="158" width="32" height="20" fill="#131316"/>'
-    +'<rect x="214" y="150" width="32" height="20" fill="#131316"/>'
-    +'<rect x="240" y="143" width="25" height="24" fill="#131316"/>'
-    +'<rect x="190" y="159" width="13" height="5" fill="#2b211b"/>'
-    +'<rect x="218" y="151" width="13" height="5" fill="#2b211b"/>'
-    +'<rect x="244" y="145" width="11" height="5" fill="#2b211b"/>'
-    +'<rect x="259" y="145" width="11" height="6" fill="#a18c76"/>'
-    +'<rect x="260" y="153" width="13" height="6" fill="#a18c76"/>'
-    +'<rect x="258" y="161" width="11" height="6" fill="#a18c76"/>'
-    +'<path class="pkt-caught-mouse-tail" d="M267 160 C274 166 276 174 271 183"/>'
-    +'<text class="pkt-caught-mouse" x="262" y="199" text-anchor="middle" dominant-baseline="central" transform="translate(0 398) scale(1 -1)">🐁</text>'
-    +'</g>';
-  PKT_CAT_SVG=PKT_CAT_SVG
-    .replace('class="pkt-cat"','class="pkt-cat pkt-scratching"')
-    .replace('</g><g class="pkt-eyes">','</g>'+PKT_SCRATCH_ARM+'<g class="pkt-eyes">');
-
   // ── Vēsturiskā nakts statistika (kurš ņem kuru daļu / kurā gultā guļ) ──
   // Lasa apkopojumu caur Minka API; Google Apps Script URL paliek Cloudflare secretā.
   var NS_STATS_API_PATH='/api/ns-stats';
@@ -194,6 +191,430 @@
       nights=Number.isFinite(nights) ? Math.max(0, Math.min(100000, Math.round(nights))) : 0;
       box.innerHTML=rows+'<div class="ns-stats-foot">Vēsture: '+nights+' naktis</div>';
     }).catch(function(){ box.innerHTML='<div class="ns-stats-load">Nav datu</div>'; });
+  }
+
+  function bedCareNormalize(raw){
+    var out={};
+    var src=(raw && raw.items && typeof raw.items==='object') ? raw.items : raw;
+    NS_BED_CARE_ITEMS.forEach(function(item){
+      var value=src && src[item.key];
+      var changedAt=Number(value && typeof value==='object' ? value.changedAt : value);
+      var updatedAt=Number(value && typeof value==='object' ? value.updatedAt : changedAt);
+      if(Number.isFinite(changedAt) && changedAt>0) out[item.key]={
+        changedAt:Math.trunc(changedAt),
+        updatedAt:Number.isFinite(updatedAt) && updatedAt>0 ? Math.trunc(updatedAt) : Math.trunc(changedAt)
+      };
+    });
+    return out;
+  }
+
+  function bedCareLoadLocal(){
+    if(_nsBedCareState) return _nsBedCareState;
+    try{ _nsBedCareState=bedCareNormalize(JSON.parse(localStorage.getItem(NS_BED_CARE_STORE_KEY)||'{}')); }
+    catch(_e){ _nsBedCareState={}; }
+    return _nsBedCareState;
+  }
+
+  function bedCareSaveLocal(state){
+    _nsBedCareState=bedCareNormalize(state||{});
+    try{ localStorage.setItem(NS_BED_CARE_STORE_KEY,JSON.stringify({items:_nsBedCareState,savedAt:Date.now()})); }catch(_e){}
+  }
+
+  function bedCareApi(){
+    function ready(api){
+      return api && typeof api.apiFetch==='function' && api.getToken && api.getToken();
+    }
+    try{ if(ready(window.MinkaApi)) return window.MinkaApi; }catch(_e0){}
+    /* The full calendar lives in a same-origin iframe. During a cold PWA load
+       the parent can already be authenticated while the iframe is still
+       receiving its token, so use the parent's API as a safe fallback. */
+    try{ if(window.parent!==window && ready(window.parent.MinkaApi)) return window.parent.MinkaApi; }catch(_e1){}
+    return null;
+  }
+
+  function bedCareMerge(local,remote){
+    var merged=bedCareNormalize(local||{});
+    var cloud=bedCareNormalize(remote||{});
+    NS_BED_CARE_ITEMS.forEach(function(item){
+      var a=Number(merged[item.key]&&merged[item.key].updatedAt)||0;
+      var b=Number(cloud[item.key]&&cloud[item.key].updatedAt)||0;
+      if(b>a) merged[item.key]=cloud[item.key];
+    });
+    return merged;
+  }
+
+  function bedCareFetch(){
+    var local=bedCareLoadLocal();
+    var api=bedCareApi();
+    if(!api) return Promise.resolve(local);
+    if(_nsBedCareLoading) return _nsBedCareLoading;
+    _nsBedCareLoading=api.apiFetch(NS_BED_CARE_API_PATH).then(function(r){
+      if(!r.ok) throw new Error('bed care unavailable');
+      return r.json();
+    }).then(function(data){
+      var remote=bedCareNormalize(data||{});
+      var merged=bedCareMerge(local,remote);
+      bedCareSaveLocal(merged);
+      /* If a date was saved while offline, publish that newer local change as
+         soon as Cloudflare becomes reachable again. */
+      NS_BED_CARE_ITEMS.forEach(function(item){
+        var localItem=local[item.key];
+        var remoteItem=remote[item.key];
+        var localUpdated=Number(localItem&&localItem.updatedAt)||0;
+        var remoteUpdated=Number(remoteItem&&remoteItem.updatedAt)||0;
+        if(localItem&&localUpdated>remoteUpdated){
+          api.apiFetch(NS_BED_CARE_API_PATH,{
+            method:'POST',
+            headers:{'content-type':'application/json'},
+            body:JSON.stringify({item:item.key,changedAt:localItem.changedAt,updatedAt:localUpdated})
+          }).then(function(r){ return r.ok?r.json():null; }).then(function(next){
+            if(!next) return;
+            var synced=bedCareMerge(bedCareLoadLocal(),next);
+            bedCareSaveLocal(synced);
+            bedCareRenderPerch(synced);
+          }).catch(function(){});
+        }
+      });
+      return merged;
+    }).catch(function(){ return local; }).finally(function(){ _nsBedCareLoading=null; });
+    return _nsBedCareLoading;
+  }
+
+  function bedCareDateLabel(ts){
+    ts=Number(ts)||0;
+    if(!ts) return 'Vēl nav atzīmēts';
+    var d=new Date(ts), now=new Date();
+    var sameDay=d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth() && d.getDate()===now.getDate();
+    var yesterday=new Date(now.getFullYear(),now.getMonth(),now.getDate()-1);
+    var wasYesterday=d.getFullYear()===yesterday.getFullYear() && d.getMonth()===yesterday.getMonth() && d.getDate()===yesterday.getDate();
+    if(sameDay) return 'Šodien';
+    if(wasYesterday) return 'Vakar';
+    return d.toLocaleDateString('lv-LV',{day:'2-digit',month:'2-digit',year:'numeric'});
+  }
+
+  function bedCareExactDateLabel(ts){
+    var d=new Date(Number(ts)||0);
+    if(!Number(ts) || Number.isNaN(d.getTime())) return 'NAV ATZĪMĒTS';
+    return d.toLocaleDateString('lv-LV',{day:'2-digit',month:'2-digit',year:'numeric'});
+  }
+
+  function bedCareDaysSince(ts){
+    var changed=new Date(Number(ts)||0);
+    if(!Number(ts) || Number.isNaN(changed.getTime())) return null;
+    var now=new Date();
+    try{
+      if(typeof window.__minkaNow==='function'){
+        var simulated=new Date(window.__minkaNow());
+        if(!Number.isNaN(simulated.getTime())) now=simulated;
+      }
+    }catch(_e){}
+    var changedDay=Date.UTC(changed.getFullYear(),changed.getMonth(),changed.getDate());
+    var today=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate());
+    return Math.max(0,Math.floor((today-changedDay)/86400000));
+  }
+
+  function bedCareAgeLabel(ts){
+    var days=bedCareDaysSince(ts);
+    if(days===null) return '';
+    if(days===0) return 'ŠODIEN';
+    if(days===1) return '1 DIENA';
+    return days+' DIENAS';
+  }
+
+  function bedCareAriaLabel(ts){
+    var days=bedCareDaysSince(ts);
+    var age=days===null ? '' : (days===0 ? ' Mainīta šodien.' : ' Nav mainīta '+days+(days===1?' dienu.':' dienas.'));
+    return 'Gultas veļa pēdējo reizi mainīta: '+bedCareDateLabel(ts)+'.'+age+' Nospied, lai mainītu.';
+  }
+
+  function bedCareInputDate(ts){
+    var d=new Date(Number(ts)||Date.now());
+    var year=d.getFullYear();
+    var month=String(d.getMonth()+1).padStart(2,'0');
+    var day=String(d.getDate()).padStart(2,'0');
+    return year+'-'+month+'-'+day;
+  }
+
+  function bedCareTimestamp(value){
+    var match=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value||''));
+    if(!match) return 0;
+    var d=new Date(Number(match[1]),Number(match[2])-1,Number(match[3]),12,0,0,0);
+    if(d.getFullYear()!==Number(match[1]) || d.getMonth()!==Number(match[2])-1 || d.getDate()!==Number(match[3])) return 0;
+    return d.getTime();
+  }
+
+  function bedCareRenderEditor(state,notice){
+    var pop=document.getElementById('nsBedCarePopover');
+    if(!pop) return;
+    state=bedCareNormalize(state||{});
+    var ts=Number(state.all&&state.all.changedAt)||0;
+    var last=pop.querySelector('.ns-bedcare-last');
+    var note=pop.querySelector('.ns-bedcare-note');
+    if(last) last.textContent='Iepriekš: '+bedCareDateLabel(ts);
+    if(note) note.textContent=notice||'';
+  }
+
+  function bedCarePerchHTML(){
+    var state=bedCareLoadLocal();
+    var ts=Number(state.all&&state.all.changedAt)||0;
+    return '<div class="ns-bedcare-perch" role="button" tabindex="0" aria-expanded="false" aria-label="'+escHtml(bedCareAriaLabel(ts))+'">'
+      +'<span class="ns-bedcare-bed" aria-hidden="true">'+roomBedPicture('neutral')
+      +'<span class="ns-room-bed-devices"><span class="ns-room-device is-feature dev-0"></span><span class="ns-room-device is-smart dev-1"></span><span class="ns-room-device is-feature dev-2"></span><span class="ns-room-device is-smart dev-3"></span></span>'
+      +'</span>'
+      +'<span class="ns-bedcare-perch-copy"><small>GULTAS VEĻA MAINĪTA</small><span class="ns-bedcare-date-line"><span class="ns-bedcare-calendar" aria-hidden="true">▦</span><b>'+escHtml(bedCareExactDateLabel(ts))+'</b><span class="ns-bedcare-age">'+escHtml(bedCareAgeLabel(ts))+'</span></span></span>'
+      +'</div>';
+  }
+
+  function bedCareRenderPerch(state){
+    state=bedCareNormalize(state||{});
+    var ts=Number(state.all&&state.all.changedAt)||0;
+    document.querySelectorAll('#nsPanel .ns-bedcare-perch').forEach(function(perch){
+      var value=perch.querySelector('b');
+      var age=perch.querySelector('.ns-bedcare-age');
+      if(value) value.textContent=bedCareExactDateLabel(ts);
+      if(age) age.textContent=bedCareAgeLabel(ts);
+      perch.setAttribute('aria-label',bedCareAriaLabel(ts));
+    });
+  }
+
+  function closeBedCare(){
+    var pop=document.getElementById('nsBedCarePopover');
+    if(pop) pop.remove();
+    if(_nsBedCareOutside){ document.removeEventListener('pointerdown',_nsBedCareOutside); _nsBedCareOutside=null; }
+    if(_nsBedCareKeydown){ document.removeEventListener('keydown',_nsBedCareKeydown); _nsBedCareKeydown=null; }
+    var trigger=document.querySelector('#nsPanel .ns-bedcare-perch');
+    if(trigger) trigger.setAttribute('aria-expanded','false');
+  }
+
+  function markBedCare(itemKey,changedAt){
+    if(!NS_BED_CARE_ITEMS.some(function(item){return item.key===itemKey;})) return;
+    changedAt=Math.trunc(Number(changedAt));
+    if(!Number.isFinite(changedAt) || changedAt<=0) return;
+    var state=bedCareLoadLocal();
+    var updatedAt=Date.now();
+    state[itemKey]={changedAt:changedAt,updatedAt:updatedAt};
+    bedCareSaveLocal(state);
+    bedCareRenderPerch(state);
+    var api=bedCareApi();
+    if(!api) return;
+    api.apiFetch(NS_BED_CARE_API_PATH,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({item:itemKey,changedAt:changedAt,updatedAt:updatedAt})})
+      .then(function(r){ if(!r.ok) throw new Error('save failed'); return r.json(); })
+      .then(function(data){
+        var merged=bedCareMerge(state,data);
+        bedCareSaveLocal(merged);
+        bedCareRenderPerch(merged);
+      })
+      .catch(function(){});
+  }
+
+  function openBedCare(anchor){
+    var existing=document.getElementById('nsBedCarePopover');
+    if(existing){ closeBedCare(); return; }
+    var trigger=anchor && anchor.closest ? anchor.closest('.ns-bedcare-perch') : document.querySelector('#nsPanel .ns-bedcare-perch');
+    var host=trigger && trigger.parentElement;
+    if(!host) return;
+    var pop=document.createElement('section');
+    pop.id='nsBedCarePopover';
+    pop.className='ns-bedcare-popover';
+    pop.setAttribute('role','dialog');
+    pop.setAttribute('aria-label','Norādi gultas veļas nomaiņas datumu');
+    pop.innerHTML='<form class="ns-bedcare-form">'
+      +'<div class="ns-bedcare-quick-head"><span class="ns-bedcare-icon" aria-hidden="true">▤</span><span><b>Gultas veļa</b><small class="ns-bedcare-last"></small></span><button type="button" class="ns-bedcare-close" aria-label="Aizvērt">×</button></div>'
+      +'<label class="ns-bedcare-date"><span>Nomaiņas datums</span><input id="nsBedCareDate" type="date" required max="'+bedCareInputDate(Date.now())+'" value="'+bedCareInputDate(Date.now())+'"></label>'
+      +'<button type="submit" class="ns-bedcare-save">Saglabāt</button>'
+      +'<div class="ns-bedcare-note" aria-live="polite"></div>'
+      +'</form>';
+    host.appendChild(pop);
+    if(trigger) trigger.setAttribute('aria-expanded','true');
+    pop.querySelector('.ns-bedcare-close').addEventListener('click',closeBedCare);
+    pop.addEventListener('click',function(event){ event.stopPropagation(); });
+    pop.querySelector('form').addEventListener('submit',function(event){
+      event.preventDefault();
+      var input=pop.querySelector('#nsBedCareDate');
+      var changedAt=bedCareTimestamp(input&&input.value);
+      if(!changedAt){ bedCareRenderEditor(bedCareLoadLocal(),'Norādi derīgu datumu.'); return; }
+      markBedCare('all',changedAt);
+      closeBedCare();
+    });
+    bedCareRenderEditor(bedCareLoadLocal());
+    bedCareFetch().then(function(state){
+      bedCareRenderPerch(state);
+      if(document.body.contains(pop)) bedCareRenderEditor(state);
+    });
+    _nsBedCareKeydown=function(event){ if(event.key==='Escape') closeBedCare(); };
+    document.addEventListener('keydown',_nsBedCareKeydown);
+    setTimeout(function(){
+      if(!document.body.contains(pop)) return;
+      _nsBedCareOutside=function(event){
+        if(!pop.contains(event.target) && !trigger.contains(event.target)) closeBedCare();
+      };
+      document.addEventListener('pointerdown',_nsBedCareOutside);
+    },0);
+    requestAnimationFrame(function(){ var input=pop.querySelector('#nsBedCareDate'); if(input) input.focus({preventScroll:true}); });
+  }
+
+  function wireBedCarePerch(scope){
+    var perch=(scope||document).querySelector('.ns-bedcare-perch');
+    if(!perch || perch.__bedCareWired) return;
+    perch.__bedCareWired=true;
+    perch.addEventListener('click',function(event){ event.stopPropagation(); openBedCare(perch); });
+    perch.addEventListener('keydown',function(event){
+      if(event.key==='Enter' || event.key===' '){ event.preventDefault(); openBedCare(perch); }
+    });
+    bedCareFetch().then(bedCareRenderPerch);
+    if(window.__nsOverlayOpen===true && window.__minkaDailyCat && typeof window.__minkaDailyCat.enterNightSplit==='function') {
+      window.__minkaDailyCat.enterNightSplit(perch);
+    }
+  }
+
+  function chalkboardArtId(value){
+    var match=String(value||'').match(/(?:^|;)art:([a-f0-9]{32})(?:;|$)/);
+    return match ? match[1] : '';
+  }
+
+  function chalkboardLoadLocal(){
+    if(_nsChalkboardState) return _nsChalkboardState;
+    try{
+      var raw=JSON.parse(localStorage.getItem(NS_CHALKBOARD_STORE_KEY)||'{}');
+      _nsChalkboardState={id:/^[a-f0-9]{32}$/.test(String(raw.id||''))?String(raw.id):'',updatedAt:Number(raw.updatedAt)||0};
+    }catch(_e){ _nsChalkboardState={id:'',updatedAt:0}; }
+    return _nsChalkboardState;
+  }
+
+  function chalkboardSaveLocal(state){
+    _nsChalkboardState={id:/^[a-f0-9]{32}$/.test(String(state&&state.id||''))?String(state.id):'',updatedAt:Number(state&&state.updatedAt)||Date.now()};
+    try{ localStorage.setItem(NS_CHALKBOARD_STORE_KEY,JSON.stringify(_nsChalkboardState)); }catch(_e){}
+    return _nsChalkboardState;
+  }
+
+  function chalkboardArtUrl(id){
+    if(!/^[a-f0-9]{32}$/.test(String(id||''))) return '';
+    var api=bedCareApi();
+    var parentBase='';
+    try{ parentBase=window.parent&&window.parent.MINKA_API_BASE||''; }catch(_e){}
+    var base=(api&&api.base)||window.MINKA_API_BASE||parentBase||'';
+    return base+'/skin-assets/'+id+'.webp';
+  }
+
+  function chalkboardRender(state){
+    state=state||chalkboardLoadLocal();
+    var url=chalkboardArtUrl(state.id);
+    document.querySelectorAll('#nsPanel .ns-cat-rhythm-key').forEach(function(board){
+      board.classList.toggle('has-art',!!url);
+      var art=board.querySelector('.ns-chalkboard-art');
+      if(art) art.style.backgroundImage=url?'url("'+url+'")':'';
+      board.setAttribute('aria-label',url?'Atvērt un rediģēt kopīgo nakts tāfeli':'Atvērt kopīgo nakts tāfeli un sākt zīmēt');
+    });
+  }
+
+  function chalkboardFetch(){
+    var local=chalkboardLoadLocal();
+    var api=bedCareApi();
+    if(!api) return Promise.resolve(local);
+    if(_nsChalkboardLoading) return _nsChalkboardLoading;
+    _nsChalkboardLoading=api.apiFetch('/api/skins').then(function(r){
+      if(!r.ok) throw new Error('chalkboard unavailable');
+      return r.json();
+    }).then(function(data){
+      var map=(data&&data.skins&&typeof data.skins==='object')?data.skins:data;
+      var skin='';
+      Object.keys(map||{}).some(function(key){
+        if(String(key).trim().toUpperCase()===NS_CHALKBOARD_WORKER){ skin=map[key]; return true; }
+        return false;
+      });
+      var id=chalkboardArtId(skin);
+      /* A successful Cloudflare response is authoritative. This also clears a
+         stale browser cache if the shared board was reset elsewhere. */
+      if(!id){
+        var empty=chalkboardSaveLocal({id:'',updatedAt:Date.now()});
+        chalkboardRender(empty);
+        return empty;
+      }
+      var state=chalkboardSaveLocal({id:id,updatedAt:Date.now()});
+      chalkboardRender(state);
+      return state;
+    }).catch(function(){ return local; }).finally(function(){ _nsChalkboardLoading=null; });
+    return _nsChalkboardLoading;
+  }
+
+  function chalkboardUpload(blob){
+    var api=bedCareApi();
+    if(!api) return Promise.reject(new Error('Nav savienojuma ar mākoni'));
+    var form=new FormData();
+    form.append('worker',NS_CHALKBOARD_WORKER);
+    form.append('image',blob,'chalkboard.webp');
+    return api.apiFetch('/api/skin-art',{method:'POST',body:form}).then(function(r){
+      return r.json().catch(function(){return {};}).then(function(data){
+        if(!r.ok) throw new Error(data.error||'Neizdevās saglabāt tāfeli');
+        var id=chalkboardArtId(data.skin);
+        if(!id) throw new Error('Serveris neatgrieza tāfeles zīmējumu');
+        var state=chalkboardSaveLocal({id:id,updatedAt:Date.now()});
+        chalkboardRender(state);
+        return state;
+      });
+    });
+  }
+
+  function openChalkboard(){
+    if(!window.MinkaSkinDraw || typeof window.MinkaSkinDraw.open!=='function') return;
+    /* Always resolve the server version before editing, so an older computer
+       cannot accidentally overwrite a drawing it had not loaded yet. */
+    chalkboardFetch().catch(function(){ return chalkboardLoadLocal(); }).then(function(state){
+      window.MinkaSkinDraw.open({
+        mode:'chalkboard',
+        name:'Kopīgā nakts tāfele',
+        initialUrl:chalkboardArtUrl(state&&state.id),
+        onSave:chalkboardUpload
+      });
+    });
+  }
+
+  function wireChalkboard(scope){
+    var board=(scope||document).querySelector('.ns-cat-rhythm-key');
+    if(!board||board.__chalkboardWired) return;
+    board.__chalkboardWired=true;
+    board.addEventListener('click',function(event){ event.stopPropagation(); openChalkboard(); });
+    board.addEventListener('keydown',function(event){
+      if(event.key==='Enter'||event.key===' '){ event.preventDefault(); openChalkboard(); }
+    });
+    chalkboardRender(chalkboardLoadLocal());
+    chalkboardFetch().then(chalkboardRender);
+  }
+
+  function refreshSharedCloud(force){
+    if(document.hidden || window.__nsOverlayOpen!==true) return;
+    var now=Date.now();
+    if(!force && now-_nsSharedCloudPulledAt<30000) return;
+    _nsSharedCloudPulledAt=now;
+    bedCareFetch().then(bedCareRenderPerch);
+    chalkboardFetch().then(chalkboardRender);
+  }
+
+  function rhythmHelpHTML(){
+    return '<button type="button" class="nsc-rhythm-help" aria-label="Ko nozīmē krāsainās līnijas?" aria-expanded="false">i</button>'
+      +'<div class="nsc-rhythm-help-pop" role="tooltip">'
+      +'<b>Ko rāda līnijas?</b>'
+      +'<span class="is-mel"><i></i><strong>Melatonīns</strong><small>Miegs</small></span>'
+      +'<span class="is-cor"><i></i><strong>Kortizols</strong><small>Enerģija</small></span>'
+      +'<span class="is-wake"><i></i><strong>Modrība</strong><small>Možums</small></span>'
+      +'</div>';
+  }
+
+  function wireRhythmHelp(scope){
+    (scope||document).querySelectorAll('.nsc-rhythm-help').forEach(function(button){
+      if(button.__rhythmHelpWired) return;
+      button.__rhythmHelpWired=true;
+      button.addEventListener('click',function(event){
+        event.preventDefault(); event.stopPropagation();
+        var card=button.closest('.nsc-full-card');
+        var open=card&&!card.classList.contains('is-rhythm-help-open');
+        (scope||document).querySelectorAll('.nsc-full-card.is-rhythm-help-open').forEach(function(item){
+          item.classList.remove('is-rhythm-help-open');
+          var other=item.querySelector('.nsc-rhythm-help'); if(other) other.setAttribute('aria-expanded','false');
+        });
+        if(card&&open){ card.classList.add('is-rhythm-help-open'); button.setAttribute('aria-expanded','true'); }
+      });
+    });
   }
   var _roomBc=null;
   var _roomPolling=false;
@@ -360,6 +781,7 @@
       if(d) pullRoomState(d, function(){
         if(d===activeDateKey() && window.__nsOverlayOpen===true) render();
       });
+      refreshSharedCloud(false);
     }
     if(_roomBc){
       _roomBc.onmessage=function(evt){
@@ -382,8 +804,12 @@
       refreshActiveRooms();
     }, 12000);
     document.addEventListener('visibilitychange', function(){
-      if(!document.hidden && window.__nsOverlayOpen===true) refreshActiveRooms();
+      if(!document.hidden && window.__nsOverlayOpen===true){
+        refreshActiveRooms();
+        refreshSharedCloud(true);
+      }
     });
+    window.addEventListener('focus',function(){ refreshSharedCloud(true); });
   }
   function saveCurrentDayState(){
     try{
@@ -1256,13 +1682,6 @@
 
   function roomLayout(slots){
     if(!slots||!slots.length) return '';
-    var scratchPath='M2 44 6.2 37 5.1 32 9.5 27 8.2 22 13 16 11.8 11.2 18.5 0 16.1 10.4 17.8 14.1 13.2 21 14.3 25.4 9.9 31.6 10 37.2Z';
-    var scratchGlint='M5.2 38 7.3 34 6.8 31.2 10.8 26.4 9.8 22.7 14.5 15.7';
-    var scratchMark='<svg class="ns-claw-mark" viewBox="0 0 60 56" aria-hidden="true" focusable="false">'
-      +'<g class="ns-claw-cut is-mel" transform="translate(4 10) rotate(17 10 22) scale(.78)"><path class="ns-scratch-shadow" d="'+scratchPath+'" transform="translate(2 1.4)"/><path class="ns-scratch-cut" d="'+scratchPath+'"/><path class="ns-scratch-glint" d="'+scratchGlint+'"/></g>'
-      +'<g class="ns-claw-cut is-cor" transform="translate(20 0) rotate(17 10 22)"><path class="ns-scratch-shadow" d="'+scratchPath+'" transform="translate(2 1.4)"/><path class="ns-scratch-cut" d="'+scratchPath+'"/><path class="ns-scratch-glint" d="'+scratchGlint+'"/></g>'
-      +'<g class="ns-claw-cut is-wake" transform="translate(37 12) rotate(17 10 22) scale(.74)"><path class="ns-scratch-shadow" d="'+scratchPath+'" transform="translate(2 1.4)"/><path class="ns-scratch-cut" d="'+scratchPath+'"/><path class="ns-scratch-glint" d="'+scratchGlint+'"/></g>'
-      +'</svg>';
     var byName={};
     slots.forEach(function(s, idx){
       var nm=String((s && s.w && s.w.name) || '').trim();
@@ -1301,11 +1720,11 @@
       +'</div>'
       +'</div>'
       +nsStatsPanelHTML()
-      +'<div class="ns-room-cat" aria-hidden="true">'
-      +PKT_CAT_SVG
-      +'<div class="ns-cat-rhythm-key">'
-      +scratchMark
-      +'<div class="ns-claw-labels"><span class="is-mel">Melatonīns</span><span class="is-cor">Kortizols</span><span class="is-wake">Modrība</span></div>'
+      +'<div class="ns-room-cat">'
+      +bedCarePerchHTML()
+      +'<div class="ns-cat-rhythm-key" role="button" tabindex="0" aria-label="Atvērt kopīgo nakts tāfeli un sākt zīmēt">'
+      +'<span class="ns-chalkboard-art" aria-hidden="true"></span>'
+      +'<span class="ns-chalkboard-empty"><b>✎</b></span>'
       +'</div>'
       +'</div>'
       +'</div>'
@@ -1316,121 +1735,86 @@
     try{
       var scope = root || document;
       var panel = document.getElementById('nsPanelContent');
-      if(!panel) return;
+      if(!panel || window.__nsOverlayOpen!==true) return;
       var blocks = scope.querySelectorAll('.ns-room-block');
       blocks.forEach(function(block){
         var fit = block.querySelector('.ns-room-fit');
         var layout = fit && fit.querySelector('.ns-room-layout');
-        var stage = block.querySelector('.ns-room-stage');
         var cat = block.querySelector('.ns-room-cat');
         if(!fit || !layout) return;
-
-        // Reset to measure natural size
-        layout.style.transform = 'none';
-        layout.style.zoom = '';
-
+        // READ PHASE. scrollWidth/scrollHeight are pre-transform dimensions, so
+        // we do not need to reset styles and force a preliminary layout first.
         var naturalW = layout.scrollWidth || layout.offsetWidth || 1;
         var naturalH = layout.scrollHeight || layout.offsetHeight || 1;
         var stats = block.querySelector('.ns-stats-box');
         var blockW = panel.clientWidth || block.clientWidth || naturalW;
-        // Narrow (phone) panel: cat + stats wrap BELOW the rooms instead of
-        // reserving 320+360px beside them — otherwise rooms hit the 120px
-        // floor and render as unreadable thumbnails.
         var narrow = blockW < 640;
-        // Reserve the cat plus its right-side rhythm labels as one real column.
-        // This keeps labels inside the panel without visually translating the
-        // cat over the adjacent history statistics.
-        var catW = narrow ? 0 : 249;
+        var catW = narrow ? 0 : 220;
         var statsW = (stats && !narrow) ? 350 : 0;
         var availW = Math.max(120, blockW - catW - statsW - (narrow ? 10 : 28));
         var panelRect = panel.getBoundingClientRect();
         var fitRect  = fit.getBoundingClientRect();
-        // Keep a real bottom safety zone for the whole rooms panel (including
-        // its border and shadow). macOS Chrome fullscreen must fit in one view;
-        // there is intentionally no internal scroller to rescue overflow.
+        var headEl = block.querySelector('.ns-room-head');
+        var headRect = headEl ? headEl.getBoundingClientRect() : null;
         var bottomReserve = 35;
         var availH   = Math.max(80, panelRect.bottom - fitRect.top - bottomReserve);
         var widthScale = Math.min(1, availW / naturalW);
         var scale = Math.min(widthScale, availH / naturalH);
         if(!isFinite(scale) || scale <= 0) scale = 1;
-
-        layout.style.transform = 'scale(' + scale + ')';
         var roomsW = Math.ceil(naturalW * scale);
         var roomsH = Math.ceil(naturalH * scale);
-        // The modal itself can clamp to max-height only after the first room
-        // measurement. Re-read the final visible content box and refine once,
-        // so a macOS Chrome fullscreen window never needs an internal scrollbar.
+        var lift = (!narrow && headRect) ? Math.max(0, Math.round(fitRect.top-headRect.top)) : 0;
+
+        // WRITE PHASE. All geometry reads above are complete; this single batch
+        // avoids read → write → read forced reflow on old CPUs.
+        layout.style.transform = 'scale(' + scale + ')';
         fit.style.width  = roomsW + 'px';
         fit.style.height = roomsH + 'px';
-        var visiblePanelRect = panel.getBoundingClientRect();
-        var visibleFitTop = fit.getBoundingClientRect().top;
-        var visibleAvailH = Math.max(80, visiblePanelRect.bottom - visibleFitTop - bottomReserve);
-        if(roomsH > visibleAvailH){
-          scale = scale * (visibleAvailH / roomsH);
-          roomsW = Math.ceil(naturalW * scale);
-          roomsH = Math.ceil(naturalH * scale);
-          layout.style.transform = 'scale(' + scale + ')';
-        }
-        // These set width/height with no !important in CSS so JS wins
-        fit.style.width  = roomsW + 'px';
-        fit.style.height = roomsH + 'px';
-        var roomsHead = block.querySelector('.ns-room-head');
-        if(roomsHead){
-          roomsHead.style.width = roomsW + 'px';
-          roomsHead.style.textAlign = 'center';
+        if(headEl){
+          headEl.style.width = roomsW + 'px';
+          headEl.style.textAlign = 'center';
         }
         if(stats) {
           if (narrow) {
-            // Phone: stats flow below the rooms at natural size
             stats.style.marginTop = '10px';
             stats.style.height = 'auto';
             stats.style.width = '100%';
           } else {
-          // Paceļam stats virsrakstu līdz sekcijas virsrakstam ("ISTABU SADALĪJUMS"),
-          // bet apakšu turam izlīdzinātu ar istabu kastēm. Tāpēc negatīvs top-margin
-          // (lift) + augstums = roomsH + lift. Rindas sadala šo augstumu.
-          var headEl = block.querySelector('.ns-room-head');
-          var lift = 0;
-          if(headEl){
-            lift = Math.max(0, Math.round(fit.getBoundingClientRect().top - headEl.getBoundingClientRect().top));
-          }
-          stats.style.marginTop = (-lift) + 'px';
-          // A few pixels of inner breathing room keep the history total's
-          // glyphs inside the clipped stats box at Chrome fullscreen scales.
-          stats.style.height = (roomsH + lift + 4) + 'px';
+            stats.style.marginTop = (-lift) + 'px';
+            stats.style.height = (roomsH + lift + 4) + 'px';
           }
         }
-        // Pixel cat: same height as rooms, width proportional to 300:370 cat ratio.
-        // SVG fills the box via CSS (width/height 100%), so no per-child sizing.
-        // Keep the mascot secondary to the room/history information. The SVG
-        // remains bottom-aligned, while the caught mouse stays attached to the
-        // animated paw because both live in the same SVG transform group.
-        var lampH = narrow ? Math.min(Math.round(roomsH * .82), 96) : Math.round(roomsH * .82);
-        var lampW = Math.ceil(lampH * 300 / 370);
         if(cat) {
-          cat.style.width  = lampW + 'px';
-          cat.style.height = lampH + 'px';
-          wirePixelCat(cat);
+          cat.style.width  = (narrow ? 150 : 220) + 'px';
+          cat.style.height = (narrow ? 210 : 250) + 'px';
         }
       });
     }catch(_e){}
   }
 
-  function wirePixelCat(cat){
-    if(!cat || cat.__pktCatWired) return;
-    cat.__pktCatWired = true;
-    cat.addEventListener('click', function(ev){
-      try{
-        ev.stopPropagation();
-        var svg = cat.querySelector('.pkt-cat');
-        if(!svg) return;
-        svg.classList.add('pkt-awake');
-        clearTimeout(cat.__pktCatSleepTimer);
-        cat.__pktCatSleepTimer = setTimeout(function(){
-          svg.classList.remove('pkt-awake');
-        }, 5200);
-      }catch(_e){}
+  function scheduleFitRoomBlocks(root){
+    cancelAnimationFrame(_nsFitRaf);
+    _nsFitRaf=requestAnimationFrame(function(){
+      _nsFitRaf=0;
+      fitRoomBlocks(root||document);
     });
+  }
+
+  function scheduleIdleRender(renderKey){
+    _nsPendingRenderKey=renderKey;
+    if(_nsIdleRender){
+      if(window.cancelIdleCallback) window.cancelIdleCallback(_nsIdleRender);
+      else clearTimeout(_nsIdleRender);
+    }
+    var run=function(){
+      _nsIdleRender=0;
+      if(window.__nsOverlayOpen===true || _nsPendingRenderKey!==renderKey || !st) return;
+      _nsLastRenderKey=renderKey;
+      render();
+    };
+    _nsIdleRender=window.requestIdleCallback
+      ? window.requestIdleCallback(run,{timeout:1400})
+      : setTimeout(run,650);
   }
 
   // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -1775,6 +2159,7 @@
         +(rt.active?'<div class="nsc-full-progress"><span style="width:'+rt.pct.toFixed(1)+'%;background:'+c.accent+'"></span></div>':'')
         +'</div>'
         +(checklist?'<div class="nsc-card-checklist">'+checklist+'</div>':'')
+        +rhythmHelpHTML()
         +'</div>'
         +'</div>';
     }).join('');
@@ -1820,6 +2205,7 @@
       _crEl.style.setProperty('--ns-name-size',nsNameSize);
       _crEl.innerHTML=cards;
       applyWorkerSkinsToNightCards(_crEl);
+      wireRhythmHelp(_crEl);
       var _ob=panel.querySelector('.ns-flow-bar'); if(_ob) _ob.remove();
       var _ol=panel.querySelector('.ns-flow-labels'); if(_ol) _ol.remove();
       if(flowBar) _crEl.insertAdjacentHTML('afterend', flowBar);
@@ -1832,10 +2218,9 @@
         if(_rb){ _rb.outerHTML=_roomHtml; }
         _nsLastRoomHtml=_roomHtml;
         applyWorkerSkinsToNightCards(panel);
-        requestAnimationFrame(function(){
-          fitRoomBlocks(panel);
-          requestAnimationFrame(function(){ fitRoomBlocks(panel); });
-        });
+        wireBedCarePerch(panel);
+        wireChalkboard(panel);
+        scheduleFitRoomBlocks(panel);
         nsRenderStats(st.sl);
       }
       drag(panel);
@@ -1879,14 +2264,14 @@
       +'<div class="ns-flow-meta">'+_metaHtml+'</div>';
     _nsLastRoomHtml=_roomHtml;
     applyWorkerSkinsToNightCards(panel);
+    wireBedCarePerch(panel);
+    wireChalkboard(panel);
+    wireRhythmHelp(panel);
 
     var raffleTrigger=panel.querySelector('.ns-raffle-trigger');
     if(raffleTrigger)raffleTrigger.addEventListener('click',openRaffle);
 
-    requestAnimationFrame(function(){
-      fitRoomBlocks(panel);
-      requestAnimationFrame(function(){  fitRoomBlocks(panel); });
-    });
+    scheduleFitRoomBlocks(panel);
     nsRenderStats(st.sl);
     requestAnimationFrame(function(){
       try{
@@ -1907,9 +2292,7 @@
     publishPlan();
   }
 
-  window.addEventListener('resize', function(){
-    requestAnimationFrame(function(){  fitRoomBlocks(document); });
-  }, { passive:true });
+  window.addEventListener('resize', function(){ scheduleFitRoomBlocks(document); }, { passive:true });
 
   // ── Drag & Drop ── pure mouse + touch, zero HTML5 drag API ───────────────
   function drag(el){
@@ -1994,6 +2377,7 @@
 
     // ── Mouse ──────────────────────────────────────────────────────────────
     el.addEventListener('mousedown',function(e){
+      if(e.target.closest('.nsc-rhythm-help,.nsc-rhythm-help-pop')) return;
       var c=e.target.closest('.nsc-full-card, .ns-room-bed[data-i]'); if(!c||e.button!==0)return;
       e.preventDefault();
       dragging=c; mx=e.clientX; my=e.clientY;
@@ -2021,6 +2405,7 @@
 
     // ── Touch ──────────────────────────────────────────────────────────────
     el.addEventListener('touchstart',function(e){
+      if(e.target.closest('.nsc-rhythm-help,.nsc-rhythm-help-pop')) return;
       var c=e.target.closest('.nsc-full-card, .ns-room-bed[data-i]'); if(!c)return;
       touching=c;
       touchDragReady=false;
@@ -2307,13 +2692,36 @@
     var el=document.getElementById('night-split-panel');if(!el)return;
     try{ window.__todayDateStr = (window.__grafiksTodayStr || window.__todayDateStr || ''); }catch(e){}
     var dk=activeDateKey();
-    if(dk) pullRoomState(dk, function(){ if(dk===activeDateKey()) render(); });
+    if(dk) pullRoomState(dk, function(){ if(dk===activeDateKey() && window.__nsOverlayOpen===true) render(); });
     resetColours(); // reset colour map each time we re-compute for new day
     var wk=getW();
-    if(wk.length<2){st=null;render();return;}
+    if(wk.length<2){st=null;_nsLastRenderKey='';render();return;}
     var fallbackSh=st?st.sh:0, fallbackEi=st?(st.ei||0):0;
     var applied=applySavedDayState(fat(wk), fallbackSh, fallbackEi);
-    st={sh:applied.sh,ei:applied.ei,sl:calc(applied.workers,applied.sh,applied.ei)};render();
+    var next={sh:applied.sh,ei:applied.ei,sl:calc(applied.workers,applied.sh,applied.ei)};
+    var nextKey=[activeDateKey(),next.sh,next.ei,_nsSortMode,next.sl.map(function(slot){
+      return [String((slot.w&&slot.w.name)||''),Number(slot.w&&slot.w.fs)||0,slot.s,slot.e].join(':');
+    }).join('|')].join('::');
+    var panel=document.getElementById('nsPanelContent');
+    st=next;
+    if(nextKey===_nsLastRenderKey && panel && panel.querySelector('.ns-panel-head')){
+      scheduleFitRoomBlocks(panel);
+      bedCareFetch().then(bedCareRenderPerch);
+      refreshFlowLiveMarker();
+      publishPlan();
+      return;
+    }
+    if(window.__nsOverlayOpen!==true){
+      scheduleIdleRender(nextKey);
+      return;
+    }
+    if(_nsIdleRender){
+      if(window.cancelIdleCallback) window.cancelIdleCallback(_nsIdleRender);
+      else clearTimeout(_nsIdleRender);
+      _nsIdleRender=0;
+    }
+    _nsLastRenderKey=nextKey;
+    render();
   }
 
   function init(){
@@ -2362,6 +2770,8 @@
     getPlan:getPublicPlan,
     openRaffle:openRaffle,
     closeRaffle:closeRaffle,
+    openBedCare:openBedCare,
+    closeBedCare:closeBedCare,
     resetRaffle:resetRaffle,
     rafflePerson:selectRafflePerson,
     rafflePart:selectRafflePart,

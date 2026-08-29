@@ -2,7 +2,6 @@ function doGet(e) {
   var p = e ? (e.parameter || {}) : {};
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var bolusSheet = getOrCreateSheet_(ss, 'Bolus');
-  var planSheet = getOrCreateSheet_(ss, 'RadiologistPlan');
 
   if (p.action === 'write' && p.room && p.ts) {
     ensureBolusHeader_(bolusSheet);
@@ -55,47 +54,6 @@ function doGet(e) {
       return jsonOut_({ ok: true, action: p.action });
     }
     return jsonOut_({ ok: false, error: 'not_found' });
-  }
-
-  if (p.action === 'rad_plan_get' && p.date) {
-    ensureRadiologistPlanHeader_(planSheet);
-    var dateStr = normalizeDate_(p.date);
-    var data = planSheet.getDataRange().getValues();
-    for (var i = data.length - 1; i >= 1; i--) {
-      if (normalizeDate_(data[i][0]) === dateStr) {
-        return jsonOut_({
-          ok: true,
-          date: dateStr,
-          text: String(data[i][1] || ''),
-          updatedAt: data[i][2] || '',
-          clearedAtShift: String(data[i][3] || '')
-        });
-      }
-    }
-    return jsonOut_({ ok: true, date: dateStr, text: '' });
-  }
-
-  if (p.action === 'rad_plan_write' && p.date) {
-    ensureRadiologistPlanHeader_(planSheet);
-    var writeDate = normalizeDate_(p.date);
-    var text = String(p.text || '').replace(/\r\n/g, '\n');
-    var shiftDate = normalizeDate_(p.shiftDate) || currentShiftDate_();
-    var row = findPlanRow_(planSheet, writeDate);
-    var values = [[writeDate, text, new Date(), text ? '' : shiftDate]];
-
-    if (row > 0) {
-      planSheet.getRange(row, 1, 1, 4).setValues(values);
-    } else {
-      planSheet.appendRow(values[0]);
-    }
-
-    return jsonOut_({
-      ok: true,
-      date: writeDate,
-      text: text,
-      cleared: !String(text).trim(),
-      clearedAtShift: !String(text).trim() ? shiftDate : ''
-    });
   }
 
   ensureBolusHeader_(bolusSheet);
@@ -209,40 +167,6 @@ function ensureBolusHeader_(sheet) {
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#d9e1f2');
   }
-}
-
-function ensureRadiologistPlanHeader_(sheet) {
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['Datums', 'Teksts', 'Atjaunots', 'Notīrīts maiņā']);
-    sheet.getRange(1, 1, 1, 4).setFontWeight('bold').setBackground('#f4cccc');
-  }
-}
-
-function normalizeDate_(value) {
-  var str = String(value || '').trim();
-  var m = str.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
-  if (!m) return '';
-  var day = Number(m[1]);
-  var month = Number(m[2]);
-  var year = Number(m[3]);
-  if (year < 2020 || year > 2100) return '';
-  var d = new Date(Date.UTC(year, month - 1, day));
-  if (d.getUTCFullYear() !== year || d.getUTCMonth() !== month - 1 || d.getUTCDate() !== day) return '';
-  return m[1] + '.' + m[2] + '.' + m[3];
-}
-
-function currentShiftDate_() {
-  var now = new Date();
-  if (now.getHours() < 8) now.setDate(now.getDate() - 1);
-  return Utilities.formatDate(now, Session.getScriptTimeZone(), 'dd.MM.yyyy');
-}
-
-function findPlanRow_(sheet, dateStr) {
-  var data = sheet.getDataRange().getValues();
-  for (var i = data.length - 1; i >= 1; i--) {
-    if (normalizeDate_(data[i][0]) === dateStr) return i + 1;
-  }
-  return -1;
 }
 
 function jsonOut_(obj) {

@@ -46,6 +46,40 @@ function cleanNsSavedAt(value) {
   return Math.min(timestamp, now + 5 * 60 * 1000);
 }
 
+const BED_CARE_KEY = "bed-care:v1";
+const BED_CARE_ITEMS = new Set(["all"]);
+
+function cleanBedCareItem(value) {
+  const item = typeof value === "string" ? value.trim() : "";
+  return BED_CARE_ITEMS.has(item) ? item : "";
+}
+
+function cleanBedCareState(value) {
+  const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  const items = {};
+  for (const item of BED_CARE_ITEMS) {
+    const raw = source[item];
+    const changedAt = Math.trunc(Number(raw && typeof raw === "object" ? raw.changedAt : raw));
+    const rawUpdatedAt = Math.trunc(Number(raw && typeof raw === "object" ? raw.updatedAt : changedAt));
+    if (Number.isFinite(changedAt) && changedAt > 0) {
+      items[item] = {
+        changedAt,
+        updatedAt: Number.isFinite(rawUpdatedAt) && rawUpdatedAt > 0 ? rawUpdatedAt : changedAt,
+      };
+    }
+  }
+  return items;
+}
+
+async function readBedCare(env) {
+  try {
+    const raw = await env.MINKA_EMOJI.get(BED_CARE_KEY);
+    return cleanBedCareState(raw ? JSON.parse(raw) : {});
+  } catch {
+    return {};
+  }
+}
+
 const PAIR_TTL_SECONDS = 120;
 const PAIR_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
@@ -325,7 +359,7 @@ const worker = {
       }
       const list = await env.MINKA_EMOJI.list();
       const out = {};
-      const emojiKeys = list.keys.filter((key) => !/^(?:skins:|skin-art::)/.test(key.name));
+      const emojiKeys = list.keys.filter((key) => !/^(?:skins:|skin-art::|bed-care:)/.test(key.name));
       const emojiEntries = await Promise.all(emojiKeys.map(async (key) => {
         const name = cleanEmojiWorker(key.name);
         const emoji = cleanEmojiValue(await env.MINKA_EMOJI.get(key.name));
@@ -444,6 +478,26 @@ const worker = {
         await env.MINKA_EMOJI.delete(SKIN_ART_PREFIX + previousArtId);
       }
       return json(request, { ok: true, worker, skin });
+    }
+
+    if (url.pathname === "/api/bed-care" && method === "GET") {
+      return json(request, { ok: true, items: await readBedCare(env) });
+    }
+
+    if (url.pathname === "/api/bed-care" && method === "POST") {
+      const body = await readJson(request, 8 * 1024);
+      const item = cleanBedCareItem(body?.item);
+      if (!item) return json(request, { ok: false, error: "invalid item" }, 400);
+
+      const now = Date.now();
+      const requestedAt = Math.trunc(Number(body?.changedAt));
+      const changedAt = Number.isFinite(requestedAt) && requestedAt > 0
+        ? Math.min(requestedAt, now + 5 * 60 * 1000)
+        : now;
+      const items = await readBedCare(env);
+      items[item] = { changedAt, updatedAt: now };
+      await env.MINKA_EMOJI.put(BED_CARE_KEY, JSON.stringify(items));
+      return json(request, { ok: true, items });
     }
 
     if (url.pathname === "/api/ns-order" && method === "GET") {
