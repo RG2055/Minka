@@ -580,6 +580,12 @@
 }
 #nsPanel .ns-room-head { margin-bottom: 10px !important; color: rgba(233, 242, 247, .86) !important; font-size: 11px !important; letter-spacing: .14em !important; }
 #nsPanel .ns-room-stage { padding-bottom: 3px !important; }
+@media (min-width: 641px) {
+  #nsPanel .ns-room-stage {
+    box-sizing: border-box !important;
+    padding-right: 14px !important;
+  }
+}
 #nsPanel .ns-room-fit { margin-bottom: 2px !important; }
 #nsPanel .ns-room-fit > .ns-room-layout { will-change: auto !important; }
 #nsPanel .ns-room-layout { grid-template-columns: 560px 300px !important; gap: 14px !important; }
