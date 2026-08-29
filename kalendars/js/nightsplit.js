@@ -1747,11 +1747,21 @@
         var naturalW = layout.scrollWidth || layout.offsetWidth || 1;
         var naturalH = layout.scrollHeight || layout.offsetHeight || 1;
         var stats = block.querySelector('.ns-stats-box');
-        var blockW = panel.clientWidth || block.clientWidth || naturalW;
+        var stage = block.querySelector('.ns-room-stage');
+        var stageStyle = stage && window.getComputedStyle ? getComputedStyle(stage) : null;
+        var stagePad = stageStyle ? ((parseFloat(stageStyle.paddingLeft)||0)+(parseFloat(stageStyle.paddingRight)||0)) : 0;
+        var blockW = Math.max(0,(stage && stage.clientWidth ? stage.clientWidth-stagePad : 0)) || panel.clientWidth || block.clientWidth || naturalW;
         var narrow = blockW < 640;
-        var catW = narrow ? 0 : 220;
-        var statsW = (stats && !narrow) ? 350 : 0;
-        var availW = Math.max(120, blockW - catW - statsW - (narrow ? 10 : 28));
+        var catW = (cat && !narrow) ? (cat.offsetWidth || 220) : 0;
+        var statsW = (stats && !narrow) ? (stats.offsetWidth || 370) : 0;
+        var stageGap = stageStyle ? (parseFloat(stageStyle.columnGap)||parseFloat(stageStyle.gap)||16) : 16;
+        var occupiedColumns = 1 + (statsW ? 1 : 0) + (catW ? 1 : 0);
+        var gapW = Math.max(0,occupiedColumns-1)*stageGap;
+        // Keep a small inner reserve for Windows display scaling/rounding. The
+        // former hard-coded 350px stats width under-counted the real 370px
+        // column and pushed the bed/board behind the panel's clipped edge.
+        var edgeReserve = narrow ? 0 : 10;
+        var availW = Math.max(120, blockW - catW - statsW - gapW - edgeReserve);
         var panelRect = panel.getBoundingClientRect();
         var fitRect  = fit.getBoundingClientRect();
         var headEl = block.querySelector('.ns-room-head');
