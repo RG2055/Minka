@@ -1976,6 +1976,28 @@ function filterFullList(btn) {
     return out;
   }
 
+  // A compact, read-only roster for summaries that must outlive the visible
+  // cards. The grid may hide a worker after their shift ends, but day totals
+  // still include everybody assigned to the 08:00–08:00 duty window.
+  window.__minkaGetDutyRosterForDate = function(dateStr) {
+    const date = normalizeDateStr(dateStr || activeDateStr || window.__activeDateStr || '');
+    if (!date) return [];
+    const seen = new Set();
+    const roster = [];
+    const append = (source, role) => {
+      getWorkersForDateWithDate(source, date).forEach(worker => {
+        const name = String(worker && worker.name || '').trim();
+        const key = workerIdentity(name);
+        if (!name || seen.has(key)) return;
+        seen.add(key);
+        roster.push({ name, role });
+      });
+    };
+    append(store, 'rg');
+    append(storeRad, 'rd');
+    return roster;
+  };
+
   function getPrevDateStr(dateStr) {
     const [d, m, y] = dateStr.split('.').map(Number);
     const prevDate = new Date(y, m-1, d-1);

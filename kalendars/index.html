@@ -1567,7 +1567,7 @@ function _mkToast(msg, type) {
 </script>
 <script src="data/namedays.local.js"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
-<script src="js/calendar.js?v=20260828rolehead2"></script>
+<script src="js/calendar.js?v=20260829coffee1"></script>
 <script src="js/depth-cards.js?v=20260828local10" defer></script>
 <script src="js/daily-cat.js?v=20260827petperf1" defer></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
@@ -17499,7 +17499,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       + '<span class="rg-mood-side rg-mood-side--right">'
       + '<span class="rg-mood-pill rg-mood-pill--coffee" data-rg-chip="coffee">'
       + moodPillCupSvg() + '<b data-rg-coffee-num>0</b></span>'
-      + '<span class="rg-mood-side-label">Kafija</span>'
+      + '<span class="rg-mood-side-label" title="Šīs dežūras kafija">Dežūrā</span>'
       + '<button class="rg-mood-topbtn" type="button" data-rg-topbtn hidden'
       + ' title="Kafijas statistika">' + moodTopSvg()
       + '<span>Kafijas<br>statistika</span></button>'
@@ -17582,36 +17582,67 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
         scores.push(value);
       }
     });
-    if (names.length && typeof window.__minkaGetCoffeeDetailsForNames === 'function') {
+    // Visible cards drive the worker bubbles. Coffee totals use the complete
+    // duty roster, so a finished 12h worker can leave the constellation without
+    // erasing what they drank from the 08:00–08:00 total.
+    var coffeeNames = names.slice();
+    var coffeeSeen = Object.assign({}, seen);
+    if (typeof window.__minkaGetDutyRosterForDate === 'function') {
       try {
-        var details = window.__minkaGetCoffeeDetailsForNames(names) || {};
+        (window.__minkaGetDutyRosterForDate(day) || []).forEach(function (worker) {
+          var name = String(worker && worker.name || '').trim();
+          var key = name.toLocaleLowerCase('lv-LV');
+          if (!name || coffeeSeen[key]) return;
+          coffeeSeen[key] = true;
+          coffeeNames.push(name);
+        });
+      } catch (_error) {}
+    }
+    var coffeePeople = coffeeNames.map(function (name) {
+      return { name: name, key: name.toLocaleLowerCase('lv-LV'), coffee: 0, coffeeSources: [] };
+    });
+    if (coffeeNames.length && typeof window.__minkaGetCoffeeDetailsForNames === 'function') {
+      try {
+        var details = window.__minkaGetCoffeeDetailsForNames(coffeeNames) || {};
         data.total = 0;
-        data.staff.forEach(function (person) {
+        coffeePeople.forEach(function (person) {
           var detail = details[person.key] || {};
           person.coffee = Math.max(0, Number(detail.count) || 0);
           person.coffeeSources = Array.isArray(detail.sources) ? detail.sources : [];
           data.total += person.coffee;
         });
-      } catch (_error) {}
-    } else if (names.length && typeof window.__minkaGetCoffeeCountsForNames === 'function') {
-      try {
-        var counts = window.__minkaGetCoffeeCountsForNames(names) || {};
-        data.total = 0;
         data.staff.forEach(function (person) {
+          var detail = details[person.key] || {};
+          person.coffee = Math.max(0, Number(detail.count) || 0);
+          person.coffeeSources = Array.isArray(detail.sources) ? detail.sources : [];
+        });
+      } catch (_error) {}
+    } else if (coffeeNames.length && typeof window.__minkaGetCoffeeCountsForNames === 'function') {
+      try {
+        var counts = window.__minkaGetCoffeeCountsForNames(coffeeNames) || {};
+        data.total = 0;
+        coffeePeople.forEach(function (person) {
           person.coffee = Math.max(0, Number(counts[person.key]) || 0);
           data.total += person.coffee;
         });
+        data.staff.forEach(function (person) {
+          person.coffee = Math.max(0, Number(counts[person.key]) || 0);
+        });
       } catch (_error) {}
-    } else if (names.length && typeof window.__minkaGetCoffeeCountForName === 'function') {
+    } else if (coffeeNames.length && typeof window.__minkaGetCoffeeCountForName === 'function') {
       data.total = 0;
-      data.staff.forEach(function (person) {
+      coffeePeople.forEach(function (person) {
         try { person.coffee = Math.max(0, Number(window.__minkaGetCoffeeCountForName(person.name)) || 0); }
         catch (_error) { person.coffee = 0; }
         data.total += person.coffee;
       });
+      data.staff.forEach(function (person) {
+        try { person.coffee = Math.max(0, Number(window.__minkaGetCoffeeCountForName(person.name)) || 0); }
+        catch (_error) { person.coffee = 0; }
+      });
     }
     var sourceTotals = {};
-    data.staff.forEach(function (person) {
+    coffeePeople.forEach(function (person) {
       (person.coffeeSources || []).forEach(function (source) {
         sourceTotals[source.key] = (sourceTotals[source.key] || 0) + Math.max(0, Number(source.count) || 0);
       });
