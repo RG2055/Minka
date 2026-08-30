@@ -2,7 +2,7 @@
   'use strict';
 
   var STORAGE_KEY = 'mkWorkerCardAddonsV1';
-  var CACHE_BUST = '20260831d';
+  var CACHE_BUST = '20260831e';
   var activeGroup = 'topper';
   var scanFrame = 0;
   var sectionFrame = 0;
@@ -217,7 +217,11 @@
 
   function syncSectionClearance() {
     sectionFrame = 0;
-    document.querySelectorAll('#grafiks-list.grid-view .cards-section').forEach(function(section) {
+    var list = document.querySelector('#grafiks-list.grid-view');
+    if (!list) return;
+    var sections = Array.prototype.slice.call(list.querySelectorAll(':scope > .cards-section'));
+    var topReserveCap = document.documentElement.classList.contains('mk-mobile-shell') ? 24 : 36;
+    sections.forEach(function(section) {
       var maxTopOverflow = 0;
       section.querySelectorAll('.cards-subgrid > .card.mk-addon-active').forEach(function(card) {
         var addon = card.querySelector(':scope > .mk-card-addon[data-addon-group="topper"]');
@@ -227,11 +231,33 @@
         maxTopOverflow = Math.max(maxTopOverflow, cardRect.top - addonRect.top);
       });
       if (maxTopOverflow > 0) {
-        section.style.setProperty('--mk-addon-section-top-clearance', Math.ceil(maxTopOverflow + 12) + 'px');
+        /* The topper may float through the existing heading gap. Reserving its
+           full height produced 100+ px dead zones on scaled Windows screens. */
+        section.style.setProperty(
+          '--mk-addon-section-top-clearance',
+          Math.ceil(Math.min(maxTopOverflow + 8, topReserveCap)) + 'px'
+        );
       } else {
         section.style.removeProperty('--mk-addon-section-top-clearance');
       }
     });
+
+    var maxBottomOverflow = 0;
+    var lastSection = sections[sections.length - 1];
+    if (lastSection) {
+      lastSection.querySelectorAll('.cards-subgrid > .card.mk-addon-active').forEach(function(card) {
+        var charm = card.querySelector(':scope > .mk-card-addon[data-addon-group="charm"]');
+        if (!charm) return;
+        var cardRect = card.getBoundingClientRect();
+        var charmRect = charm.getBoundingClientRect();
+        maxBottomOverflow = Math.max(maxBottomOverflow, charmRect.bottom - cardRect.bottom);
+      });
+    }
+    if (maxBottomOverflow > 0) {
+      list.style.setProperty('--mk-addon-list-bottom-clearance', Math.ceil(maxBottomOverflow + 12) + 'px');
+    } else {
+      list.style.removeProperty('--mk-addon-list-bottom-clearance');
+    }
   }
 
   function scheduleSectionClearance() {

@@ -64,15 +64,41 @@ html body #grafiks-app #grafiks-list.grid-view .cards-section
   .cards-subgrid > .card.mk-addon-active {
   overflow: visible !important;
   contain: none !important;
+  min-width: 0 !important;
   background: transparent !important;
   background-image: none !important;
   box-shadow: none !important;
   z-index: 40 !important;
 }
 
+/* Decorations are paint outside the card, never part of the grid sizing.
+   Chromium on Windows otherwise re-runs the old card hover translation after
+   contain/overflow changes and the whole second row visibly jumps. */
+html body #grafiks-app #grafiks-list.grid-view .cards-section
+  .cards-subgrid > .card,
+html body #grafiks-app #grafiks-list.grid-view .cards-section
+  .cards-subgrid > .card:hover,
+html body #grafiks-app #grafiks-list.grid-view .cards-section
+  .cards-subgrid > .card:active {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  transform: none !important;
+  translate: none !important;
+}
+
 html body #grafiks-app #grafiks-list.grid-view .cards-section:has(.mk-card-addon[data-addon-group="topper"])
   > .cards-subgrid {
-  padding-top: var(--mk-addon-section-top-clearance, 42px) !important;
+  padding-top: var(--mk-addon-section-top-clearance, 32px) !important;
+}
+
+/* A charm on the final row may extend past the scrollable content box. Keep
+   only the measured tail scrollable; this does not push either card row. */
+html body #grafiks-app #grafiks-list.grid-view {
+  padding-bottom: max(
+    42px,
+    var(--host-safe-bottom, 42px),
+    var(--mk-addon-list-bottom-clearance, 0px)
+  ) !important;
 }
 
 .mk-skin-preview-slot:has(.mk-card-addon) {

@@ -146,3 +146,23 @@
 
 /* On touch/reduced-motion devices the script never adds .mk-depth-live, so the
    original card transforms remain completely untouched. */
+
+/* Card add-ons legitimately paint outside the rounded card. On fine-pointer
+   Windows devices .mk-depth-live is added during hover; its paint containment
+   used to clip a hanging charm exactly at the bottom edge (only the clasp's
+   first few pixels remained visible) and made the card jump. Decorations take
+   precedence over the optional 3D tilt. */
+@media (hover: hover) and (pointer: fine) {
+  html:not(.mk-mobile-shell) body #grafiks-list.grid-view
+    .card.mk-mid-card.mk-depth-live.mk-addon-active:not(.rg-feedback-card),
+  html:not(.mk-mobile-shell) body #grafiks-list.grid-view
+    .card.mk-mid-card.mk-depth-live.mk-addon-active:not(.rg-feedback-card):hover {
+    overflow: visible !important;
+    contain: none !important;
+    transform: none !important;
+    translate: none !important;
+    transform-style: flat !important;
+    transition: none !important;
+    backface-visibility: visible !important;
+  }
+}
