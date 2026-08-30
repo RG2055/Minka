@@ -12590,34 +12590,35 @@ window.addEventListener('message', function(e) {
       });
     });
   })();
-  /* Vieglas, statiskas daudzslāņu ainavas. Tās ir tikai CSS gradienti — nav
-     jaunu bilžu, tīkla pieprasījumu vai animāciju. */
+  /* Ainavas ir tādi paši lokāli WebP attēli kā visi pārējie foni. */
   var SCENIC_SKINS = [
-    { id: 'slani-zili', label: 'Zilie slāņi', css: 'radial-gradient(circle at 24% 23%,#ffd0a1 0 10%,transparent 10.5%),linear-gradient(166deg,transparent 0 39%,#b9ccef 40% 51%,#78a8ef 52% 63%,#3877dc 64% 75%,#1f6d91 76%)', num: '224,244,255', txt: '238,248,255' },
-    { id: 'persiku-kalni', label: 'Persiku kalni', css: 'radial-gradient(circle at 78% 18%,#ffe3ae 0 12%,transparent 12.5%),linear-gradient(158deg,transparent 0 35%,#f4b5a7 36% 49%,#dc8e9e 50% 62%,#8f7abd 63% 75%,#4f668d 76%)', num: '255,244,235', txt: '255,247,241' },
-    { id: 'miglas-ezers', label: 'Miglas ezers', css: 'radial-gradient(ellipse at 68% 24%,rgba(255,255,255,.62) 0 13%,transparent 14%),linear-gradient(172deg,#b9d7df 0 37%,#7bb2bd 38% 51%,#467f8f 52% 65%,#24556b 66% 78%,#173b50 79%)', num: '225,250,255', txt: '235,250,252' },
-    { id: 'lavandas-ieleja', label: 'Lavandas ieleja', css: 'radial-gradient(circle at 18% 25%,#ffe0d2 0 11%,transparent 11.5%),linear-gradient(165deg,#d8b8db 0 36%,#aa8fc8 37% 49%,#7a6ab2 50% 63%,#554b8d 64% 76%,#343563 77%)', num: '255,238,255', txt: '250,239,255' },
-    { id: 'piparmetru-laguna', label: 'Piparmētru lagūna', css: 'radial-gradient(circle at 72% 20%,#fff0b7 0 10%,transparent 10.5%),linear-gradient(170deg,#b9ead4 0 37%,#79ceb9 38% 51%,#3ca7a1 52% 65%,#247888 66% 78%,#195266 79%)', num: '229,255,246', txt: '236,255,250' },
-    { id: 'roza-kanjons', label: 'Rozā kanjons', css: 'radial-gradient(ellipse at 80% 22%,#ffd1bc 0 12%,transparent 12.5%),linear-gradient(154deg,#f4c0c9 0 34%,#e68fa6 35% 48%,#bc668b 49% 62%,#7e4d78 63% 76%,#493957 77%)', num: '255,236,242', txt: '255,241,246' },
-    { id: 'arktikas-gaisma', label: 'Arktikas gaisma', css: 'radial-gradient(circle at 22% 19%,rgba(255,255,255,.85) 0 8%,transparent 8.5%),linear-gradient(168deg,#d8f4ff 0 35%,#9ed8ef 36% 49%,#63add2 50% 63%,#3a77aa 64% 77%,#294c78 78%)', num: '240,252,255', txt: '243,252,255' },
-    { id: 'zelta-plava', label: 'Zelta pļava', css: 'radial-gradient(circle at 75% 22%,#fff0a8 0 12%,transparent 12.5%),linear-gradient(167deg,#f4d58a 0 36%,#d9b760 37% 50%,#a7974c 51% 64%,#647b4a 65% 77%,#3e5941 78%)', num: '255,248,218', txt: '255,248,224' },
-    { id: 'korallu-krasts', label: 'Koraļļu krasts', css: 'radial-gradient(circle at 25% 20%,#ffe0b8 0 10%,transparent 10.5%),linear-gradient(162deg,#ffc0ae 0 35%,#f08f8d 36% 49%,#d5667f 50% 63%,#754f7e 64% 76%,#32546f 77%)', num: '255,239,227', txt: '255,241,236' },
-    { id: 'nakts-aurora', label: 'Nakts aurora', css: 'radial-gradient(ellipse at 70% 19%,rgba(113,255,207,.38) 0 15%,transparent 16%),linear-gradient(165deg,#172840 0 34%,#174b58 35% 48%,#1e716a 49% 61%,#405f82 62% 74%,#382d5e 75%)', num: '183,255,232', txt: '225,255,247' },
-    { id: 'meness-ezera', label: 'Mēness ezerā', css: 'radial-gradient(circle at 76% 20%,#fff8d0 0 9%,transparent 9.5%),linear-gradient(170deg,#27385f 0 37%,#344e79 38% 50%,#315d7f 51% 63%,#244763 64% 77%,#172f48 78%)', num: '255,248,210', txt: '238,244,255' },
-    { id: 'ogu-debesis', label: 'Ogu debesis', css: 'radial-gradient(circle at 20% 21%,#ffc9df 0 10%,transparent 10.5%),linear-gradient(163deg,#d9a5cc 0 35%,#b577b1 36% 49%,#895584 50% 63%,#654568 64% 76%,#3d344f 77%)', num: '255,226,244', txt: '255,237,248' },
-    { id: 'opala-vilni', label: 'Opāla viļņi', css: 'radial-gradient(ellipse at 25% 18%,rgba(255,238,218,.70) 0 12%,transparent 13%),linear-gradient(169deg,#d9c5dc 0 34%,#a9bfd5 35% 48%,#76b6c6 49% 62%,#5a94a8 63% 76%,#466579 77%)', num: '246,245,255', txt: '247,249,255' },
-    { id: 'meza-ausma', label: 'Meža ausma', css: 'radial-gradient(circle at 74% 19%,#ffe0a6 0 11%,transparent 11.5%),linear-gradient(166deg,#b8c994 0 35%,#7da67d 36% 49%,#4f806b 50% 63%,#356151 64% 76%,#263f3b 77%)', num: '238,255,220', txt: '241,255,229' },
-    { id: 'smilsu-dunas', label: 'Smilšu kāpas', css: 'radial-gradient(circle at 22% 20%,#fff0bd 0 11%,transparent 11.5%),linear-gradient(164deg,#ecd5a6 0 35%,#d7b882 36% 49%,#bc9668 50% 63%,#8e7459 64% 76%,#5d554c 77%)', num: '255,246,218', txt: '255,249,231' },
-    { id: 'ledus-fjords', label: 'Ledus fjords', css: 'radial-gradient(ellipse at 72% 17%,rgba(255,255,255,.78) 0 10%,transparent 11%),linear-gradient(166deg,#d3e9f4 0 34%,#a1cada 35% 48%,#68a5bd 49% 62%,#487c9a 63% 76%,#36586f 77%)', num: '239,252,255', txt: '243,253,255' },
-    { id: 'konfeksu-ieleja', label: 'Konfekšu ieleja', css: 'radial-gradient(circle at 78% 19%,#fff0c7 0 10%,transparent 10.5%),linear-gradient(160deg,#f2bfd3 0 35%,#d9a4cd 36% 49%,#aaa1d2 50% 63%,#7898c5 64% 76%,#5879a6 77%)', num: '255,243,250', txt: '255,245,251' },
-    { id: 'vara-saullekts', label: 'Vara saullēkts', css: 'radial-gradient(circle at 24% 21%,#ffd29b 0 11%,transparent 11.5%),linear-gradient(166deg,#d89b7f 0 35%,#bb765f 36% 49%,#8f594e 50% 63%,#62474a 64% 76%,#413946 77%)', num: '255,226,203', txt: '255,235,222' },
-    { id: 'lietus-pilseta', label: 'Lietus pilsēta', css: 'radial-gradient(ellipse at 72% 18%,rgba(199,226,255,.42) 0 12%,transparent 13%),linear-gradient(168deg,#6c7e91 0 35%,#526b80 36% 49%,#40596f 50% 63%,#304658 64% 76%,#263540 77%)', num: '214,235,255', txt: '228,241,255' },
-    { id: 'saules-koralli', label: 'Saules koraļļi', css: 'radial-gradient(circle at 77% 18%,#fff2b3 0 12%,transparent 12.5%),linear-gradient(162deg,#f7b99a 0 35%,#e88472 36% 49%,#c66067 50% 63%,#824f67 64% 76%,#4b405b 77%)', num: '255,241,215', txt: '255,244,226' },
-    { id: 'ziemelblazmas-kalni', label: 'Auroras kalni', css: 'radial-gradient(ellipse at 24% 18%,rgba(103,255,204,.45) 0 13%,transparent 14%),linear-gradient(164deg,#243b59 0 34%,#27606a 35% 48%,#367f75 49% 62%,#4d6782 63% 75%,#3e4268 76%)', num: '191,255,228', txt: '225,255,244' },
-    { id: 'zilgana-migla', label: 'Zilganā migla', css: 'radial-gradient(ellipse at 75% 19%,rgba(255,255,255,.50) 0 13%,transparent 14%),linear-gradient(170deg,#b6c3d1 0 36%,#8fa5b9 37% 50%,#697f98 51% 64%,#52677c 65% 77%,#3d4c5f 78%)', num: '239,247,255', txt: '242,248,255' },
-    { id: 'kirsu-horizonts', label: 'Ķiršu horizonts', css: 'radial-gradient(circle at 23% 20%,#ffe2cf 0 10%,transparent 10.5%),linear-gradient(164deg,#e8a8b5 0 35%,#c97d91 36% 49%,#a45c77 50% 63%,#76465f 64% 76%,#493647 77%)', num: '255,232,237', txt: '255,240,243' },
-    { id: 'tirkiza-salas', label: 'Tirkīza salas', css: 'radial-gradient(circle at 76% 20%,#fff2bb 0 11%,transparent 11.5%),linear-gradient(168deg,#a9ded4 0 35%,#6bc2b7 36% 49%,#3ca59e 50% 63%,#2b7e83 64% 76%,#255b69 77%)', num: '230,255,250', txt: '235,255,252' }
+    { id: 'slani-zili', label: 'Zilie slāņi' },
+    { id: 'persiku-kalni', label: 'Persiku kalni' },
+    { id: 'miglas-ezers', label: 'Miglas ezers' },
+    { id: 'lavandas-ieleja', label: 'Lavandas ieleja' },
+    { id: 'piparmetru-laguna', label: 'Piparmētru lagūna' },
+    { id: 'roza-kanjons', label: 'Rozā kanjons' },
+    { id: 'arktikas-gaisma', label: 'Arktikas gaisma' },
+    { id: 'zelta-plava', label: 'Zelta pļava' },
+    { id: 'korallu-krasts', label: 'Koraļļu krasts' },
+    { id: 'nakts-aurora', label: 'Nakts aurora' },
+    { id: 'meness-ezera', label: 'Mēness ezerā' },
+    { id: 'ogu-debesis', label: 'Ogu debesis' },
+    { id: 'opala-vilni', label: 'Opāla viļņi' },
+    { id: 'meza-ausma', label: 'Meža ausma' },
+    { id: 'smilsu-dunas', label: 'Smilšu kāpas' },
+    { id: 'ledus-fjords', label: 'Ledus fjords' },
+    { id: 'konfeksu-ieleja', label: 'Konfekšu ieleja' },
+    { id: 'vara-saullekts', label: 'Vara saullēkts' },
+    { id: 'lietus-pilseta', label: 'Lietus pilsēta' },
+    { id: 'saules-koralli', label: 'Saules koraļļi' },
+    { id: 'ziemelblazmas-kalni', label: 'Auroras kalni' },
+    { id: 'zilgana-migla', label: 'Zilganā migla' },
+    { id: 'kirsu-horizonts', label: 'Ķiršu horizonts' },
+    { id: 'tirkiza-salas', label: 'Tirkīza salas' }
   ];
+  var SCENIC_IDS = Object.create(null);
+  SCENIC_SKINS.forEach(function(skin){ SCENIC_IDS[skin.id] = true; });
   var GRADS = [
     { id: 'roza',    label: 'Rozā sapnis',  css: 'linear-gradient(150deg,#ff9a9e 0%,#fad0c4 100%)' },
     { id: 'sakura',  label: 'Sakura',       css: 'linear-gradient(150deg,#fbc2eb 0%,#fed6e3 100%)' },
@@ -12631,7 +12632,7 @@ window.addEventListener('message', function(e) {
     { id: 'zelts',   label: 'Zelta stunda', css: 'linear-gradient(150deg,#f6d365 0%,#fda085 100%)' }
   ];
   var GRAD_MAP = {};
-  GRADS.concat(SCENIC_SKINS).forEach(function(g){ GRAD_MAP[g.id] = g.css; });
+  GRADS.forEach(function(g){ GRAD_MAP[g.id] = g.css; });
   var HUES = [
     { rgb: '100,210,255', hex: '#64d2ff' }, { rgb: '183,123,255', hex: '#b77bff' },
     { rgb: '255,175,204', hex: '#ffafcc' }, { rgb: '51,209,122',  hex: '#33d17a' },
@@ -12658,7 +12659,16 @@ window.addEventListener('message', function(e) {
     try {
       var stored = JSON.parse(localStorage.getItem(KEY) || '{}') || {};
       var merged = {};
-      Object.keys(stored).forEach(function(k){ merged[normName(k)] = stored[k]; });
+      var migrated = false;
+      Object.keys(stored).forEach(function(k){
+        var skin = stored[k];
+        if (skin && skin.t === 'grad' && SCENIC_IDS[skin.id]) {
+          skin = Object.assign({}, skin, { t: 'img' });
+          migrated = true;
+        }
+        merged[normName(k)] = skin;
+      });
+      if (migrated) localStorage.setItem(KEY, JSON.stringify(merged));
       return merged;
     } catch (e) { return {}; }
   }
@@ -12801,11 +12811,7 @@ window.addEventListener('message', function(e) {
   }
   function suggestedPalette(skin) {
     if (!skin) return Promise.resolve(paletteFromRgb([100, 210, 255]));
-    if (skin.t === 'grad') {
-      var scenic = SCENIC_SKINS.find(function(item) { return item.id === skin.id; });
-      if (scenic) return Promise.resolve(paletteFromCss(scenic.css));
-      return Promise.resolve(paletteFromCss(GRAD_MAP[skin.id]));
-    }
+    if (skin.t === 'grad') return Promise.resolve(paletteFromCss(GRAD_MAP[skin.id]));
     if (skin.t === 'hue' && skin.rgb) return Promise.resolve(paletteFromRgb(String(skin.rgb).split(',').map(Number)));
     if (skin.t === 'img' && skin.id) return sampleImagePalette(stockSkinUrl(skin.id));
     if (skin.t === 'art' && skin.id && artUrl(skin.id)) return sampleImagePalette(artUrl(skin.id));
@@ -12934,6 +12940,7 @@ window.addEventListener('message', function(e) {
       else if (part.indexOf('fx:') === 0) { sk.fx = part.slice(3); }
       else if (part.indexOf('fxs:') === 0) { sk.fxs = part.slice(4); }
     });
+    if (sk.t === 'grad' && SCENIC_IDS[sk.id]) sk.t = 'img';
     return hasAny(sk) ? sk : null;
   }
   function warnLocalOnly() {
@@ -13006,7 +13013,7 @@ window.addEventListener('message', function(e) {
     });
     var emVal = draft.em != null ? Math.round(parseFloat(draft.em) * 100) : 13;
     var emShown = draft.em !== '0';
-    if (draft.t === 'grad' && SCENIC_SKINS.some(function(skin) { return skin.id === draft.id; })) {
+    if (draft.t === 'img' && SCENIC_IDS[draft.id]) {
       activeImageGroup = 0;
     } else if (draft.t === 'img' && draft.id) {
       IMG_GROUPS.some(function(group, index) {
@@ -13063,8 +13070,7 @@ window.addEventListener('message', function(e) {
     });
     html += '</div></div></section>';
 
-    var isScenicBackground = draft.t === 'grad' && SCENIC_SKINS.some(function(skin) { return skin.id === draft.id; });
-    var activeBgMode = (draft.t === 'img' || isScenicBackground) ? 'image' : (draft.t === 'art' ? 'draw' : 'color');
+    var activeBgMode = draft.t === 'img' ? 'image' : (draft.t === 'art' ? 'draw' : 'color');
     html += '<section class="mk-skin-section' + (activeSkinSection === 'background' ? ' is-active' : '') + '" data-skin-panel="background"><div class="mk-skin-section-head"><strong>Izvēlies fonu</strong></div><div class="mk-bg-workspace"><div class="mk-bg-toolbar">'
       + '<div class="mk-bg-mode-tabs" role="tablist" aria-label="Fona veids">'
       + '<button type="button" class="mk-bg-mode' + (activeBgMode === 'image' ? ' is-active' : '') + '" data-bg-mode="image" role="tab" aria-selected="' + (activeBgMode === 'image') + '">Attēli</button>'
@@ -13105,8 +13111,9 @@ window.addEventListener('message', function(e) {
     html += '</div></div><div class="mk-skin-gallery">';
     html += '<div class="mk-skin-grid' + (activeImageGroup === 0 ? ' is-active' : '') + '" data-group-panel="0">';
     SCENIC_SKINS.forEach(function(scene) {
-      var act = draft.t === 'grad' && draft.id === scene.id;
-      html += '<button type="button" class="mk-skin-thumb mk-skin-scene-choice' + (act ? ' is-active' : '') + '" data-grad="' + scene.id + '" title="' + skinEsc(scene.label) + '" aria-label="' + skinEsc(scene.label) + '" aria-pressed="' + act + '" style="background:' + scene.css + '"><span>' + skinEsc(scene.label) + '</span></button>';
+      var act = draft.t === 'img' && draft.id === scene.id;
+      var imageUrl = stockSkinUrl(scene.id);
+      html += '<button type="button" class="mk-skin-thumb' + (act ? ' is-active' : '') + '" data-skin="' + scene.id + '" data-src="' + skinEsc(imageUrl) + '" title="' + skinEsc(scene.label) + '" aria-label="' + skinEsc(scene.label) + '" aria-pressed="' + act + '" style="background-image:url(&quot;' + skinEsc(imageUrl) + '&quot;)"><span>' + skinEsc(scene.label) + '</span></button>';
     });
     html += '</div>';
     IMG_GROUPS.forEach(function(grp, groupIndex) {
@@ -13239,12 +13246,6 @@ window.addEventListener('message', function(e) {
       });
     });
     host.querySelectorAll('.mk-skin-grad-sw').forEach(function(b) {
-      b.addEventListener('click', function() {
-        draft.t = 'grad'; draft.id = b.dataset.grad; delete draft.rgb;
-        applySuggestedPaletteThenCommit();
-      });
-    });
-    host.querySelectorAll('.mk-skin-scene-choice').forEach(function(b) {
       b.addEventListener('click', function() {
         draft.t = 'grad'; draft.id = b.dataset.grad; delete draft.rgb;
         applySuggestedPaletteThenCommit();
