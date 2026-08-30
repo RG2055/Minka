@@ -1,0 +1,380 @@
+.card[data-worker],
+.nsc-full-card[data-worker],
+.ns-room-bed[data-worker],
+.mk-skin-preview-real {
+  position: relative;
+}
+
+.mk-addon-active {
+  overflow: visible !important;
+  contain: none !important;
+  isolation: isolate;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.mk-card-addon-surface {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: -1 !important;
+  display: block !important;
+  overflow: hidden !important;
+  border-radius: inherit !important;
+  pointer-events: none !important;
+}
+
+html body #grafiks-app #grafiks-list .card.mk-addon-active::before,
+html body #grafiks-app #grafiks-list .card.mk-addon-active::after,
+html body #worker-modal .card.mk-addon-active::before,
+html body #worker-modal .card.mk-addon-active::after {
+  border-radius: var(--mk-addon-card-radius, 24px) !important;
+}
+
+html body #grafiks-app #grafiks-list .card.mk-addon-active .mk-mid-name-wrap,
+html body #worker-modal .card.mk-addon-active .mk-mid-name-wrap {
+  --mk-addon-rounded-tab-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 50' preserveAspectRatio='none'%3E%3Cpath fill='%23fff' d='M20 0H100C93 0 91 12 86 24C81 37 78 50 68 50H0V38C0 17 8 0 20 0Z'/%3E%3C/svg%3E");
+  border-top-left-radius: var(--mk-addon-card-radius, 24px) !important;
+  -webkit-mask-image: var(--mk-addon-rounded-tab-mask) !important;
+  mask-image: var(--mk-addon-rounded-tab-mask) !important;
+}
+
+html body #worker-modal #modal-skin-view #grafiks-list.mk-skin-preview-list
+  .card.mk-skin-preview-real.mk-addon-active .mk-mid-name-wrap {
+  border-top-left-radius: var(--mk-addon-card-radius, 24px) !important;
+  -webkit-mask-image: var(--mk-addon-rounded-tab-mask) !important;
+  mask-image: var(--mk-addon-rounded-tab-mask) !important;
+}
+
+html body #worker-modal #modal-skin-view .mk-skin-shell
+  #grafiks-list.mk-skin-preview-list .card.mk-skin-preview-real.mk-addon-active {
+  overflow: visible !important;
+  contain: none !important;
+}
+
+html body #worker-modal.mk-skin-mode #modal-skin-view {
+  overflow: visible !important;
+}
+
+html body #worker-modal.mk-skin-mode .modal-content {
+  overflow-anchor: none;
+}
+
+html body #grafiks-app #grafiks-list.grid-view .cards-section
+  .cards-subgrid > .card.mk-addon-active {
+  overflow: visible !important;
+  contain: none !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  z-index: 40 !important;
+}
+
+html body #grafiks-app #grafiks-list.grid-view .cards-section:has(.mk-card-addon[data-addon-group="topper"])
+  > .cards-subgrid {
+  padding-top: var(--mk-addon-section-top-clearance, 42px) !important;
+}
+
+.mk-skin-preview-slot:has(.mk-card-addon) {
+  margin-top: var(--mk-addon-preview-top-clearance, 0px);
+  margin-bottom: var(--mk-addon-preview-bottom-clearance, 0px);
+}
+
+.mk-card-addon {
+  --mk-addon-scale: 1;
+  position: absolute !important;
+  z-index: 24 !important;
+  display: block !important;
+  max-width: none !important;
+  pointer-events: none !important;
+  user-select: none !important;
+  object-fit: contain !important;
+  filter: drop-shadow(0 8px 9px rgba(0,0,0,.42));
+  transform-origin: center;
+  scale: var(--mk-addon-scale);
+  translate: var(--mk-addon-offset-x, 0px) var(--mk-addon-offset-y, 0px);
+}
+
+.mk-skin-preview-real > .mk-card-addon {
+  pointer-events: auto !important;
+  cursor: grab !important;
+  touch-action: none !important;
+}
+
+.mk-skin-preview-real > .mk-card-addon.is-dragging {
+  cursor: grabbing !important;
+}
+
+.mk-card-addon[data-addon-group="topper"] {
+  width: 52%;
+  height: auto;
+  top: auto;
+  bottom: calc(100% - var(--mk-addon-dock-y, 3px));
+  left: 50%;
+  transform: translateX(-50%);
+  transform-origin: bottom center;
+}
+
+.mk-card-addon[data-addon-group="sticker"] {
+  width: 34%;
+  height: 38%;
+  top: -10%;
+  right: -9%;
+  object-position: top right;
+  transform: rotate(5deg);
+  transform-origin: center;
+  z-index: 1 !important;
+}
+
+.mk-card-addon[data-addon-group="charm"] {
+  width: 28%;
+  height: 66%;
+  top: calc(100% - 7px);
+  right: -8%;
+  object-position: top center;
+  transform-origin: top center;
+}
+
+.mk-card-addon[data-addon-group="strip"] {
+  width: 16%;
+  height: 88%;
+  top: 6%;
+  right: -6%;
+  object-position: center;
+  transform-origin: center right;
+}
+
+.mk-card-addon[data-addon-group="tape"] {
+  width: 48%;
+  height: auto;
+  top: -7%;
+  left: 50%;
+  transform: translateX(-50%) rotate(-3deg);
+  transform-origin: center;
+}
+
+.mk-card-addon[data-addon-id="tape-botanical-leaves"] {
+  width: 92%;
+  top: -8%;
+}
+
+.mk-card-addon[data-addon-group="object"] {
+  width: 50%;
+  height: 78%;
+  right: -10%;
+  bottom: -4%;
+  object-position: bottom right;
+  transform-origin: bottom right;
+  z-index: 3 !important;
+}
+
+html body #grafiks-app #grafiks-list .card.mk-addon-active:has(> .mk-card-addon[data-addon-group="object"]) .mk-mid-bottom,
+html body #grafiks-app #grafiks-list .card.mk-addon-active:has(> .mk-card-addon[data-addon-group="object"]) .mk-mid-meta-emoji-fly,
+html body #grafiks-app #grafiks-list .card.mk-addon-active:has(> .mk-card-addon[data-addon-group="object"]) .mk-mid-meta-emoji {
+  position: relative !important;
+  z-index: 8 !important;
+}
+
+html body #worker-modal .card.mk-addon-active:has(> .mk-card-addon[data-addon-group="object"]) .mk-mid-bottom,
+html body #worker-modal .card.mk-addon-active:has(> .mk-card-addon[data-addon-group="object"]) .mk-mid-meta-emoji-fly,
+html body #worker-modal .card.mk-addon-active:has(> .mk-card-addon[data-addon-group="object"]) .mk-mid-meta-emoji {
+  position: relative !important;
+  z-index: 8 !important;
+}
+
+.mk-card-addon[data-addon-side="left"][data-addon-group="sticker"],
+.mk-card-addon[data-addon-side="left"][data-addon-group="charm"],
+.mk-card-addon[data-addon-side="left"][data-addon-group="strip"],
+.mk-card-addon[data-addon-side="left"][data-addon-group="object"] {
+  left: -10%;
+  right: auto;
+}
+
+.mk-card-addon[data-addon-side="left"][data-addon-group="strip"] { left: -6%; }
+
+.mk-card-addon[data-addon-side="left"][data-addon-group="sticker"] { transform: rotate(-5deg); }
+.mk-card-addon[data-addon-side="left"][data-addon-group="sticker"] { object-position: top left; }
+.mk-card-addon[data-addon-side="left"][data-addon-group="strip"] { transform-origin: center left; }
+.mk-card-addon[data-addon-side="left"][data-addon-group="object"] {
+  object-position: bottom left;
+  transform-origin: bottom left;
+}
+
+.mk-skin-main-tabs {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.mk-addon-section .mk-skin-section-head small {
+  color: rgba(255,255,255,.43);
+}
+
+.mk-addon-drag-hint {
+  margin: -2px 0 7px;
+  color: #8fdcff;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.mk-addon-groups {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 0 8px;
+  scrollbar-width: thin;
+}
+
+.mk-addon-group,
+.mk-addon-remove,
+.mk-addon-reset-position,
+.mk-addon-side button {
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.035);
+  color: rgba(255,255,255,.72);
+  border-radius: 9px;
+  font: 750 10px/1 Inter,system-ui,sans-serif;
+  cursor: pointer;
+}
+
+.mk-addon-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
+.mk-addon-group span {
+  color: rgba(255,255,255,.36);
+  font-size: 9px;
+}
+
+.mk-addon-group:hover,
+.mk-addon-group.is-active,
+.mk-addon-side button:hover,
+.mk-addon-side button.is-active {
+  border-color: rgba(100,210,255,.52);
+  background: rgba(56,189,248,.13);
+  color: #9fe6ff;
+}
+
+.mk-addon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
+  gap: 7px;
+}
+
+.mk-addon-choice {
+  min-width: 0;
+  min-height: 96px;
+  padding: 5px;
+  border: 2px solid rgba(255,255,255,.09);
+  border-radius: 11px;
+  background: rgba(255,255,255,.025);
+  color: rgba(255,255,255,.76);
+  cursor: pointer;
+}
+
+.mk-addon-choice:hover { border-color: rgba(100,210,255,.46); }
+.mk-addon-choice.is-active {
+  border-color: #64d2ff;
+  box-shadow: 0 0 0 2px rgba(100,210,255,.25);
+}
+
+.mk-addon-choice > span {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 62px;
+  border-radius: 7px;
+  overflow: hidden;
+  background-color: #0b1018;
+  background-image:
+    linear-gradient(45deg,#182131 25%,transparent 25%),
+    linear-gradient(-45deg,#182131 25%,transparent 25%),
+    linear-gradient(45deg,transparent 75%,#182131 75%),
+    linear-gradient(-45deg,transparent 75%,#182131 75%);
+  background-size: 14px 14px;
+  background-position: 0 0,0 7px,7px -7px,-7px 0;
+}
+
+.mk-addon-choice:not(.is-ready):not(.is-error) > span::after {
+  content: '';
+  width: 17px;
+  height: 17px;
+  border: 2px solid rgba(143,220,255,.22);
+  border-top-color: #8fdcff;
+  border-radius: 50%;
+  animation: mk-addon-spin .7s linear infinite;
+}
+
+.mk-addon-choice.is-error > span::after {
+  content: '!';
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(255,90,105,.18);
+  color: #ff8e9a;
+  font: 800 13px/1 Inter,system-ui,sans-serif;
+}
+
+@keyframes mk-addon-spin { to { transform: rotate(360deg); } }
+
+.mk-addon-section .mk-addon-grid .mk-addon-choice > span > img {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  aspect-ratio: auto !important;
+}
+
+.mk-addon-choice b {
+  display: block;
+  overflow: hidden;
+  margin-top: 5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 9px;
+}
+
+.mk-addon-controls {
+  display: grid;
+  grid-template-columns: auto minmax(160px,1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  margin-top: 9px;
+  padding-top: 9px;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+.mk-addon-remove { min-height: 32px; padding: 0 11px; }
+.mk-addon-remove:hover { border-color: rgba(255,110,120,.48); color: #ff9ba3; }
+.mk-addon-reset-position { min-height: 32px; padding: 0 10px; white-space: nowrap; }
+.mk-addon-reset-position:hover { border-color: rgba(100,210,255,.48); color: #9fe6ff; }
+
+.mk-addon-controls label {
+  display: grid;
+  grid-template-columns: auto minmax(80px,1fr) 38px;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255,255,255,.52);
+  font-size: 10px;
+}
+
+.mk-addon-controls input[type="range"] { width: 100%; }
+.mk-addon-scale-value { color: rgba(255,255,255,.72); text-align: right; }
+.mk-addon-side { display: flex; gap: 4px; }
+.mk-addon-side button { min-height: 32px; padding: 0 9px; }
+
+@media (max-width: 780px) {
+  .mk-addon-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .mk-addon-controls { grid-template-columns: 1fr; }
+  .mk-addon-side button { flex: 1; }
+}

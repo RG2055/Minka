@@ -131,6 +131,8 @@ window.setTimeout(function () {
 <!-- bundle.css is critical ï¿½ load normally -->
 <link rel="stylesheet" href="css/bundle.css?v=20260621n">
 <link rel="stylesheet" href="css/skin-draw.css?v=20260829chalk1">
+<link rel="stylesheet" href="css/card-addons.css?v=20260831t">
+<script src="js/card-addons.js?v=20260831t" defer></script>
 <link rel="stylesheet" href="css/side-cards-v2.css?v=20260818nfootgap1">
 <link rel="stylesheet" href="css/header-weather.css?v=20260813headerfix1">
 <link rel="stylesheet" href="css/mood-fluent.css?v=20260820fmood16">
@@ -4163,7 +4165,7 @@ window.addEventListener('message', function(e) {
 // worker from this iframe added a second controllerchange reload listener with
 // a different app version, which could make PWA updates visibly reload twice.
 if ('serviceWorker' in navigator && window.top === window) {
-  const MINKA_APP_VERSION = '2026.08.24-rollover-fix5.calendar';
+  const MINKA_APP_VERSION = '2026.08.31-card-addons-sync1.calendar';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -12909,30 +12911,48 @@ window.addEventListener('message', function(e) {
     }
   }
 
-  // ── Cloudflare sync (formāts: "img:1018;txt:255,255,255;num:255,214,10;na:0.9;em:0.25;emn:0;fx:spark") ──
+  // ── Cloudflare sync (skins + dekors vienā /api/skins ierakstā) ──
   // Kanonizē decimālskaitli servera regex vajadzībām: "1.00"→"1", "0.70"→"0.7", "0.95"→"0.95".
   function numStr(v) {
     var n = parseFloat(v);
     return isNaN(n) ? '0' : String(n);
   }
-  function packSkin(sk) {
-    if (!sk) return '';
+  function cleanAddonConfig(value) {
+    if (!value || !/^[a-z0-9-]{1,40}$/.test(String(value.id || ''))) return null;
+    return {
+      id: String(value.id),
+      scale: Math.round(Math.max(.6, Math.min(1.4, Number(value.scale) || 1)) * 100),
+      side: value.side === 'left' ? 'l' : 'r',
+      x: Math.round(Math.max(-100, Math.min(100, Number(value.x) || 0)) * 10),
+      y: Math.round(Math.max(-100, Math.min(100, Number(value.y) || 0)) * 10)
+    };
+  }
+  function packSkin(sk, name) {
     var p = [];
-    if (sk.t === 'art' && sk.id) p.push('art:' + sk.id);
-    else if (sk.t === 'img' && sk.id) p.push('img:' + sk.id);
-    else if (sk.t === 'grad' && sk.id) p.push('grad:' + sk.id);
-    else if (sk.t === 'hue' && sk.rgb) p.push('hue:' + sk.rgb);
-    if (sk.txt) p.push('txt:' + sk.txt);
-    if (sk.num) p.push('num:' + sk.num);
-    if (sk.numA != null) p.push('na:' + numStr(sk.numA));
-    if (sk.em != null) p.push('em:' + numStr(sk.em));
-    if (sk.emn != null) p.push('emn:' + sk.emn);
-    if (sk.fx) p.push('fx:' + sk.fx);
-    if (sk.fx && sk.fxs != null) p.push('fxs:' + numStr(sk.fxs));
+    if (sk) {
+      if (sk.t === 'art' && sk.id) p.push('art:' + sk.id);
+      else if (sk.t === 'img' && sk.id) p.push('img:' + sk.id);
+      else if (sk.t === 'grad' && sk.id) p.push('grad:' + sk.id);
+      else if (sk.t === 'hue' && sk.rgb) p.push('hue:' + sk.rgb);
+      if (sk.txt) p.push('txt:' + sk.txt);
+      if (sk.num) p.push('num:' + sk.num);
+      if (sk.numA != null) p.push('na:' + numStr(sk.numA));
+      if (sk.em != null) p.push('em:' + numStr(sk.em));
+      if (sk.emn != null) p.push('emn:' + sk.emn);
+      if (sk.fx) p.push('fx:' + sk.fx);
+      if (sk.fx && sk.fxs != null) p.push('fxs:' + numStr(sk.fxs));
+    }
+    if (window.MinkaCardAddons && typeof window.MinkaCardAddons.get === 'function') {
+      p.push('av:1');
+      var addon = cleanAddonConfig(window.MinkaCardAddons.get(name));
+      if (addon) p.push('ad:' + [addon.id, addon.scale, addon.side, addon.x, addon.y].join(','));
+    }
     return p.join(';');
   }
-  function unpackSkin(v) {
+  function unpackAppearance(v) {
     var sk = {};
+    var addon = null;
+    var addonVersion = 0;
     String(v || '').split(';').forEach(function(part) {
       if (part.indexOf('art:') === 0) { sk.t = 'art'; sk.id = part.slice(4); }
       else if (part.indexOf('img:') === 0) { sk.t = 'img'; sk.id = part.slice(4); }
@@ -12945,19 +12965,48 @@ window.addEventListener('message', function(e) {
       else if (part.indexOf('emn:') === 0) { sk.emn = part.slice(4); }
       else if (part.indexOf('fx:') === 0) { sk.fx = part.slice(3); }
       else if (part.indexOf('fxs:') === 0) { sk.fxs = part.slice(4); }
+      else if (part === 'av:1') { addonVersion = 1; }
+      else if (part.indexOf('ad:') === 0) {
+        var fields = part.slice(3).split(',');
+        var clean = fields.length === 5 ? cleanAddonConfig({
+          id: fields[0],
+          scale: Number(fields[1]) / 100,
+          side: fields[2] === 'l' ? 'left' : 'right',
+          x: Number(fields[3]) / 10,
+          y: Number(fields[4]) / 10
+        }) : null;
+        if (clean) addon = { id: clean.id, scale: clean.scale / 100, side: clean.side === 'l' ? 'left' : 'right', x: clean.x / 10, y: clean.y / 10 };
+      }
     });
     if (sk.t === 'grad' && SCENIC_IDS[sk.id]) sk.t = 'img';
-    return hasAny(sk) ? sk : null;
+    return { skin: hasAny(sk) ? sk : null, addon: addon, addonVersion: addonVersion };
+  }
+  function unpackSkin(v) {
+    return unpackAppearance(v).skin;
   }
   function warnLocalOnly() {
     if (typeof _mkToast === 'function') _mkToast('Mākonis vēl nav gatavs — izskats pagaidām tikai šajā ierīcē', 'error');
   }
-  function cloudPush(name, sk) {
+  function cloudPush(name, sk, silent) {
     if (!window.MinkaApi || !window.MinkaApi.apiFetch) { warnLocalOnly(); return; }
-    window.MinkaApi.apiFetch('/api/skins', { method: 'POST', json: { worker: cloudWorkerName(name), skin: packSkin(sk) || null } })
-      .then(function(r) { if (!r.ok) throw 0; if (typeof _mkToast === 'function') _mkToast('Izskats saglabāts — redzēs visi', 'ok'); })
+    window.MinkaApi.apiFetch('/api/skins', { method: 'POST', json: { worker: cloudWorkerName(name), skin: packSkin(sk, name) || null } })
+      .then(function(r) { if (!r.ok) throw 0; if (!silent && typeof _mkToast === 'function') _mkToast('Izskats saglabāts — redzēs visi', 'ok'); })
       .catch(warnLocalOnly);
   }
+  window.mkSyncWorkerAppearance = function(name, debounceCloud) {
+    var key = normName(name);
+    var skin = loadAll()[key] || null;
+    if (cloudTimers[key]) clearTimeout(cloudTimers[key]);
+    if (debounceCloud) {
+      cloudTimers[key] = setTimeout(function() {
+        delete cloudTimers[key];
+        cloudPush(name, skin, true);
+      }, 300);
+    } else {
+      delete cloudTimers[key];
+      cloudPush(name, skin, true);
+    }
+  };
   async function uploadArt(name, blob) {
     if (!window.MinkaApi || !window.MinkaApi.apiFetch || !window.MinkaApi.getToken || !window.MinkaApi.getToken()) {
       throw new Error('Nav savienojuma ar mākoni');
@@ -12987,12 +13036,32 @@ window.addEventListener('message', function(e) {
     }).then(function(map) {
       if (!map || typeof map !== 'object') return;
       var all = {};
+      var localAddons = window.MinkaCardAddons && typeof window.MinkaCardAddons.getAll === 'function'
+        ? window.MinkaCardAddons.getAll() : {};
+      var cloudAddons = {};
+      var addonAuthority = {};
       Object.keys(map).forEach(function(k) {
-        var sk = unpackSkin(map[k]);
-        if (sk) all[normName(k)] = sk;
+        var key = normName(k);
+        var appearance = unpackAppearance(map[k]);
+        if (appearance.skin) all[key] = appearance.skin;
+        if (appearance.addonVersion) {
+          addonAuthority[key] = true;
+          if (appearance.addon) cloudAddons[key] = appearance.addon;
+        } else if (localAddons[key]) {
+          cloudAddons[key] = localAddons[key];
+        }
+      });
+      Object.keys(localAddons).forEach(function(key) {
+        if (!addonAuthority[key] && !cloudAddons[key]) cloudAddons[key] = localAddons[key];
       });
       saveAll(all);
       Object.keys(all).forEach(applyToCards);
+      if (window.MinkaCardAddons && typeof window.MinkaCardAddons.replaceFromCloud === 'function') {
+        window.MinkaCardAddons.replaceFromCloud(cloudAddons);
+      }
+      Object.keys(localAddons).forEach(function(key) {
+        if (!addonAuthority[key]) cloudPush(key, all[key] || null, true);
+      });
     }).catch(function() {
       if (attempt < 2 && window.MinkaApi.getToken && window.MinkaApi.getToken()) {
         scheduleCloudPull(900 * (attempt + 1), attempt + 1);
