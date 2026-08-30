@@ -12494,6 +12494,7 @@ window.addEventListener('message', function(e) {
 }
 </style>
 
+<script src="vendor/color-thief.global.js?v=3"></script>
 <script src="js/skin-draw.js?v=20260829chalk1"></script>
 <script>
 /* ── MinkaSkins: per-darbinieka kartes izskats ──
@@ -12503,42 +12504,79 @@ window.addEventListener('message', function(e) {
   var KEY = 'mkWorkerSkinsV1';
   var cloudTimers = Object.create(null);
   var activeImageGroup = 0;
+  var activeSkinSection = 'background';
+  var autoPaletteEnabled = true;
   function skinEsc(value) {
     return String(value == null ? '' : value)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
   var IMG_GROUPS = [
-    { label: 'Aesthetic',           ids: ['gnome-glass-chip','open-aesthetic','aesthetic-bird','aesthetic-cyborg','aesthetic-face','aesthetic-flash','aesthetic-helmet','aesthetic-sunset','aesthetic-water'] },
-    { label: 'Rozā un maigi',      ids: ['gnome-pills','open-pink','360','25','888','867','56','788','866','923','301','705','279','213','787','77','544'] },
-    { label: 'Mīļi un jauki',      ids: ['gnome-balls','open-cute','146','798','219','790','248'] },
-    { label: 'Spilgti',            ids: ['gnome-blendpills','open-bright','1080','1069','211','76'] },
-    { label: 'Ūdens, sniegs un zili', ids: ['gnome-adwaita','open-blue','1015','1036','1035','13','15','16','37','199'] },
-    { label: 'Zaļā daba',          ids: ['gnome-tarka','open-green','1018','1039','1043','10','11','17','18','28','128','190'] },
-    { label: 'Silti un saulaini',  ids: ['gnome-fold','open-warm','1016','1057','110','19','46','164'] },
-    { label: 'Tumši un mistiski',  ids: ['gnome-tubes','open-dark','1019','1022','12','29','55','83','95','184'] },
-    { label: 'Pilsēta un arhitektūra', ids: ['gnome-curvaturingster','1029','1033'] },
-    { label: 'Melnbalti',          ids: ['gnome-curvy','open-bw','47','58'] },
-    { label: 'Barbie rozā',        ids: ['gnome-dithered-sun','open-barbie','bb1','bb2','bb3','bb4','bd1','bd2','bd3','bd4'] },
+    { label: 'Abstrakti',          ids: ['abstract-color-wave','abstract-blue-liquid','abstract-pastel-orbit','abstract-sun-glow','abstract-neon-folds','abstract-white-flow','abstract-copper-web','abstract-paper-geometry'] },
+    { label: 'Aesthetic',           ids: ['gnome-glass-chip-d','gnome-lcd-rainbow-d','gnome-pixels-d','gnome-tarka-d','open-aesthetic','aesthetic-bird','aesthetic-cyborg','aesthetic-face','aesthetic-flash','aesthetic-helmet','aesthetic-sunset','aesthetic-water'] },
+    { label: 'Rozā un maigi',      ids: ['gnome-blobs-l','gnome-pills-d','open-pink','360','25','888','867','56','788','866','923','301','705','279','213','787','77','544'] },
+    { label: 'Mīļi un jauki',      ids: ['gnome-balls-l','open-cute','146','798','219','790','248'] },
+    { label: 'Spilgti',            ids: ['gnome-blendpills-d','gnome-drool-d','gnome-progress-d','open-bright','1080','1069','211','76'] },
+    { label: 'Ūdens, sniegs un zili', ids: ['gnome-adwaita-d','gnome-sheet-d','gnome-symbolic-d','open-blue','1015','1036','1035','13','15','16','37','199'] },
+    { label: 'Zaļā daba',          ids: ['open-green','1018','1039','1043','10','11','17','18','28','128','190'] },
+    { label: 'Silti un saulaini',  ids: ['gnome-amber-d','gnome-fold-l','gnome-pixel-pusher-d','gnome-glass-stripes-l','open-warm','1016','1057','110','19','46','164'] },
+    { label: 'Tumši un mistiski',  ids: ['gnome-morphogenesis-d','gnome-tubes-d','open-dark','1019','1022','12','29','55','83','95','184'] },
+    { label: 'Pilsēta un arhitektūra', ids: ['gnome-curvaturingster-d','gnome-map-d','1029','1033'] },
+    { label: 'Melnbalti',          ids: ['gnome-curvy-d','open-bw','47','58'] },
+    { label: 'Barbie rozā',        ids: ['gnome-dithered-sun-l','open-barbie','bb2','bb3','bb4','bd1','bd2','bd3'] },
     { label: 'Kaķi',               ids: ['open-cat','cat-01','cat-02','cat-03','cat-04','cat-05','cat-06','cat-07','cat-08','cat-09','cat-10','cat-11','cat-12','cat-13','cat-14'] }
   ];
   var IMG_LABELS = {
+    'abstract-color-wave': 'Krāsu viļņi', 'abstract-blue-liquid': 'Zilā plūsma',
+    'abstract-pastel-orbit': 'Pasteļu orbīta', 'abstract-sun-glow': 'Saules mirdzums',
+    'abstract-neon-folds': 'Neona locījumi', 'abstract-white-flow': 'Baltā plūsma',
+    'abstract-copper-web': 'Vara pinums', 'abstract-paper-geometry': 'Papīra ģeometrija',
     '1015': 'Zilais fjords', '1016': 'Saulainais kanjons', '1018': 'Miglas kalni',
     '1019': 'Vētras krasts', '1022': 'Ziemeļblāzma', '1029': 'Pilsētas parks',
     '1033': 'Modernā arhitektūra', '1036': 'Sniega kalni',
     '1039': 'Meža ūdenskritums', '1043': 'Kalnu ezers',
+    '1035': 'Varavīksnes ūdenskritums', '13': 'Meža avots',
+    '15': 'Tirkīza līcis', '16': 'Ledus lagūna', '37': 'Ziemeļu jūra',
+    '199': 'Pilsētas krasts',
     'open-aesthetic': 'Pasteļu ģeometrija', 'open-pink': 'Rozā ziedi',
     'open-cute': 'Mazie pīlēni', 'open-bright': 'Krāsains gleznojums',
     'open-blue': 'Zilā pludmale', 'open-green': 'Palmu mežs',
     'open-warm': 'Zelta kanjons', 'open-dark': 'Miglas mežs',
     'open-bw': 'Melnbaltā pilsēta',
     'open-barbie': 'Rozā spīdumi', 'open-cat': 'Saulainais kaķis',
+    'bb2': 'Rozā sirsniņas', 'bb3': 'Rozā punktiņi', 'bb4': 'Rozā zīds',
+    'bd1': 'Rozā palmas', 'bd2': 'Rozā tilts', 'bd3': 'Rozā kāpas',
     'gnome-glass-chip': 'Šķidrais stikls', 'gnome-pills': 'Rozā kapsulas',
     'gnome-balls': 'Krāsu lodītes', 'gnome-blendpills': 'Krāsu lentes',
     'gnome-adwaita': 'Zilais dziļums', 'gnome-tarka': 'Maigās formas',
     'gnome-fold': 'Siltais zīds', 'gnome-tubes': 'Nakts caurules',
     'gnome-curvaturingster': 'Telpiskā arhitektūra', 'gnome-curvy': 'Baltais reljefs',
-    'gnome-dithered-sun': 'Pasteļu saule'
+    'gnome-dithered-sun': 'Pasteļu saule',
+    'gnome-adwaita-d': 'Zilais dziļums', 'gnome-adwaita-l': 'Zilais dziļums — gaišs',
+    'gnome-amber-d': 'Dzintara plūsma', 'gnome-amber-l': 'Dzintara plūsma — gaiša',
+    'gnome-balls-d': 'Krāsu lodītes — tumšas', 'gnome-balls-l': 'Krāsu lodītes',
+    'gnome-blendpills-d': 'Krāsu lentes', 'gnome-blendpills-l': 'Krāsu lentes — gaišas',
+    'gnome-blobs-d': 'Plūstošās salas — tumšas', 'gnome-blobs-l': 'Plūstošās salas — gaišas',
+    'gnome-curvaturingster-d': 'Telpiskā arhitektūra', 'gnome-curvaturingster-l': 'Telpiskā arhitektūra — gaiša',
+    'gnome-curvy-d': 'Reljefa līnijas', 'gnome-curvy-l': 'Reljefa līnijas — gaišas',
+    'gnome-dithered-sun-d': 'Pasteļu saule — tumša', 'gnome-dithered-sun-l': 'Pasteļu saule',
+    'gnome-drool-d': 'Krāsu pilieni', 'gnome-drool-l': 'Krāsu pilieni — zili',
+    'gnome-fold-d': 'Zīda locījumi — tumši', 'gnome-fold-l': 'Zīda locījumi',
+    'gnome-glass-chip-d': 'Šķidrais stikls', 'gnome-glass-chip-l': 'Šķidrais stikls — gaišs',
+    'gnome-glass-stripes-d': 'Stikla svītras — tumšas', 'gnome-glass-stripes-l': 'Stikla svītras',
+    'gnome-lcd-rainbow-d': 'Pikseļu zīmes', 'gnome-lcd-rainbow-l': 'Pikseļu zīmes — gaišas',
+    'gnome-map-d': 'Metro līnijas', 'gnome-map-l': 'Metro līnijas — gaišas',
+    'gnome-morphogenesis-d': 'Smalka tekstūra', 'gnome-morphogenesis-l': 'Smalka tekstūra — gaiša',
+    'gnome-pills-d': 'Rozā kapsulas', 'gnome-pills-l': 'Rozā kapsulas — gaišas',
+    'gnome-pixel-pusher-d': 'Lavas plūsma', 'gnome-pixel-pusher-l': 'Lavas plūsma — gaiša',
+    'gnome-pixels-d': 'Pikseļu debesis', 'gnome-pixels-l': 'Pikseļu debesis — gaišas',
+    'gnome-progress-d': 'Krāsu ceļi', 'gnome-progress-l': 'Krāsu ceļi — gaiši',
+    'gnome-sheet-d': 'Zilais zīds', 'gnome-sheet-l': 'Zilais zīds — gaišs',
+    'gnome-symbolic-d': 'Smalkie punkti', 'gnome-symbolic-l': 'Smalkie punkti — gaiši',
+    'gnome-tarka-d': 'Maigās formas', 'gnome-tarka-l': 'Maigās formas — gaišas',
+    'gnome-tarkov-pills-d': 'Krāsu stienīši — tumši', 'gnome-tarkov-pills-l': 'Krāsu stienīši — gaiši',
+    'gnome-tubes-d': 'Nakts caurules', 'gnome-tubes-l': 'Nakts caurules — gaišas',
+    'gnome-vnc-d': 'Vienkrāsains — tumšs', 'gnome-vnc-l': 'Vienkrāsains — gaišs'
   };
   /* Viena bilde drīkst būt tikai vienā kategorijā. Šis aizsargs neļauj
      nejaušam nākamajam papildinājumam izvēlnē radīt dublikātus. */
@@ -12552,6 +12590,34 @@ window.addEventListener('message', function(e) {
       });
     });
   })();
+  /* Vieglas, statiskas daudzslāņu ainavas. Tās ir tikai CSS gradienti — nav
+     jaunu bilžu, tīkla pieprasījumu vai animāciju. */
+  var SCENIC_SKINS = [
+    { id: 'slani-zili', label: 'Zilie slāņi', css: 'radial-gradient(circle at 24% 23%,#ffd0a1 0 10%,transparent 10.5%),linear-gradient(166deg,transparent 0 39%,#b9ccef 40% 51%,#78a8ef 52% 63%,#3877dc 64% 75%,#1f6d91 76%)', num: '224,244,255', txt: '238,248,255' },
+    { id: 'persiku-kalni', label: 'Persiku kalni', css: 'radial-gradient(circle at 78% 18%,#ffe3ae 0 12%,transparent 12.5%),linear-gradient(158deg,transparent 0 35%,#f4b5a7 36% 49%,#dc8e9e 50% 62%,#8f7abd 63% 75%,#4f668d 76%)', num: '255,244,235', txt: '255,247,241' },
+    { id: 'miglas-ezers', label: 'Miglas ezers', css: 'radial-gradient(ellipse at 68% 24%,rgba(255,255,255,.62) 0 13%,transparent 14%),linear-gradient(172deg,#b9d7df 0 37%,#7bb2bd 38% 51%,#467f8f 52% 65%,#24556b 66% 78%,#173b50 79%)', num: '225,250,255', txt: '235,250,252' },
+    { id: 'lavandas-ieleja', label: 'Lavandas ieleja', css: 'radial-gradient(circle at 18% 25%,#ffe0d2 0 11%,transparent 11.5%),linear-gradient(165deg,#d8b8db 0 36%,#aa8fc8 37% 49%,#7a6ab2 50% 63%,#554b8d 64% 76%,#343563 77%)', num: '255,238,255', txt: '250,239,255' },
+    { id: 'piparmetru-laguna', label: 'Piparmētru lagūna', css: 'radial-gradient(circle at 72% 20%,#fff0b7 0 10%,transparent 10.5%),linear-gradient(170deg,#b9ead4 0 37%,#79ceb9 38% 51%,#3ca7a1 52% 65%,#247888 66% 78%,#195266 79%)', num: '229,255,246', txt: '236,255,250' },
+    { id: 'roza-kanjons', label: 'Rozā kanjons', css: 'radial-gradient(ellipse at 80% 22%,#ffd1bc 0 12%,transparent 12.5%),linear-gradient(154deg,#f4c0c9 0 34%,#e68fa6 35% 48%,#bc668b 49% 62%,#7e4d78 63% 76%,#493957 77%)', num: '255,236,242', txt: '255,241,246' },
+    { id: 'arktikas-gaisma', label: 'Arktikas gaisma', css: 'radial-gradient(circle at 22% 19%,rgba(255,255,255,.85) 0 8%,transparent 8.5%),linear-gradient(168deg,#d8f4ff 0 35%,#9ed8ef 36% 49%,#63add2 50% 63%,#3a77aa 64% 77%,#294c78 78%)', num: '240,252,255', txt: '243,252,255' },
+    { id: 'zelta-plava', label: 'Zelta pļava', css: 'radial-gradient(circle at 75% 22%,#fff0a8 0 12%,transparent 12.5%),linear-gradient(167deg,#f4d58a 0 36%,#d9b760 37% 50%,#a7974c 51% 64%,#647b4a 65% 77%,#3e5941 78%)', num: '255,248,218', txt: '255,248,224' },
+    { id: 'korallu-krasts', label: 'Koraļļu krasts', css: 'radial-gradient(circle at 25% 20%,#ffe0b8 0 10%,transparent 10.5%),linear-gradient(162deg,#ffc0ae 0 35%,#f08f8d 36% 49%,#d5667f 50% 63%,#754f7e 64% 76%,#32546f 77%)', num: '255,239,227', txt: '255,241,236' },
+    { id: 'nakts-aurora', label: 'Nakts aurora', css: 'radial-gradient(ellipse at 70% 19%,rgba(113,255,207,.38) 0 15%,transparent 16%),linear-gradient(165deg,#172840 0 34%,#174b58 35% 48%,#1e716a 49% 61%,#405f82 62% 74%,#382d5e 75%)', num: '183,255,232', txt: '225,255,247' },
+    { id: 'meness-ezera', label: 'Mēness ezerā', css: 'radial-gradient(circle at 76% 20%,#fff8d0 0 9%,transparent 9.5%),linear-gradient(170deg,#27385f 0 37%,#344e79 38% 50%,#315d7f 51% 63%,#244763 64% 77%,#172f48 78%)', num: '255,248,210', txt: '238,244,255' },
+    { id: 'ogu-debesis', label: 'Ogu debesis', css: 'radial-gradient(circle at 20% 21%,#ffc9df 0 10%,transparent 10.5%),linear-gradient(163deg,#d9a5cc 0 35%,#b577b1 36% 49%,#895584 50% 63%,#654568 64% 76%,#3d344f 77%)', num: '255,226,244', txt: '255,237,248' },
+    { id: 'opala-vilni', label: 'Opāla viļņi', css: 'radial-gradient(ellipse at 25% 18%,rgba(255,238,218,.70) 0 12%,transparent 13%),linear-gradient(169deg,#d9c5dc 0 34%,#a9bfd5 35% 48%,#76b6c6 49% 62%,#5a94a8 63% 76%,#466579 77%)', num: '246,245,255', txt: '247,249,255' },
+    { id: 'meza-ausma', label: 'Meža ausma', css: 'radial-gradient(circle at 74% 19%,#ffe0a6 0 11%,transparent 11.5%),linear-gradient(166deg,#b8c994 0 35%,#7da67d 36% 49%,#4f806b 50% 63%,#356151 64% 76%,#263f3b 77%)', num: '238,255,220', txt: '241,255,229' },
+    { id: 'smilsu-dunas', label: 'Smilšu kāpas', css: 'radial-gradient(circle at 22% 20%,#fff0bd 0 11%,transparent 11.5%),linear-gradient(164deg,#ecd5a6 0 35%,#d7b882 36% 49%,#bc9668 50% 63%,#8e7459 64% 76%,#5d554c 77%)', num: '255,246,218', txt: '255,249,231' },
+    { id: 'ledus-fjords', label: 'Ledus fjords', css: 'radial-gradient(ellipse at 72% 17%,rgba(255,255,255,.78) 0 10%,transparent 11%),linear-gradient(166deg,#d3e9f4 0 34%,#a1cada 35% 48%,#68a5bd 49% 62%,#487c9a 63% 76%,#36586f 77%)', num: '239,252,255', txt: '243,253,255' },
+    { id: 'konfeksu-ieleja', label: 'Konfekšu ieleja', css: 'radial-gradient(circle at 78% 19%,#fff0c7 0 10%,transparent 10.5%),linear-gradient(160deg,#f2bfd3 0 35%,#d9a4cd 36% 49%,#aaa1d2 50% 63%,#7898c5 64% 76%,#5879a6 77%)', num: '255,243,250', txt: '255,245,251' },
+    { id: 'vara-saullekts', label: 'Vara saullēkts', css: 'radial-gradient(circle at 24% 21%,#ffd29b 0 11%,transparent 11.5%),linear-gradient(166deg,#d89b7f 0 35%,#bb765f 36% 49%,#8f594e 50% 63%,#62474a 64% 76%,#413946 77%)', num: '255,226,203', txt: '255,235,222' },
+    { id: 'lietus-pilseta', label: 'Lietus pilsēta', css: 'radial-gradient(ellipse at 72% 18%,rgba(199,226,255,.42) 0 12%,transparent 13%),linear-gradient(168deg,#6c7e91 0 35%,#526b80 36% 49%,#40596f 50% 63%,#304658 64% 76%,#263540 77%)', num: '214,235,255', txt: '228,241,255' },
+    { id: 'saules-koralli', label: 'Saules koraļļi', css: 'radial-gradient(circle at 77% 18%,#fff2b3 0 12%,transparent 12.5%),linear-gradient(162deg,#f7b99a 0 35%,#e88472 36% 49%,#c66067 50% 63%,#824f67 64% 76%,#4b405b 77%)', num: '255,241,215', txt: '255,244,226' },
+    { id: 'ziemelblazmas-kalni', label: 'Auroras kalni', css: 'radial-gradient(ellipse at 24% 18%,rgba(103,255,204,.45) 0 13%,transparent 14%),linear-gradient(164deg,#243b59 0 34%,#27606a 35% 48%,#367f75 49% 62%,#4d6782 63% 75%,#3e4268 76%)', num: '191,255,228', txt: '225,255,244' },
+    { id: 'zilgana-migla', label: 'Zilganā migla', css: 'radial-gradient(ellipse at 75% 19%,rgba(255,255,255,.50) 0 13%,transparent 14%),linear-gradient(170deg,#b6c3d1 0 36%,#8fa5b9 37% 50%,#697f98 51% 64%,#52677c 65% 77%,#3d4c5f 78%)', num: '239,247,255', txt: '242,248,255' },
+    { id: 'kirsu-horizonts', label: 'Ķiršu horizonts', css: 'radial-gradient(circle at 23% 20%,#ffe2cf 0 10%,transparent 10.5%),linear-gradient(164deg,#e8a8b5 0 35%,#c97d91 36% 49%,#a45c77 50% 63%,#76465f 64% 76%,#493647 77%)', num: '255,232,237', txt: '255,240,243' },
+    { id: 'tirkiza-salas', label: 'Tirkīza salas', css: 'radial-gradient(circle at 76% 20%,#fff2bb 0 11%,transparent 11.5%),linear-gradient(168deg,#a9ded4 0 35%,#6bc2b7 36% 49%,#3ca59e 50% 63%,#2b7e83 64% 76%,#255b69 77%)', num: '230,255,250', txt: '235,255,252' }
+  ];
   var GRADS = [
     { id: 'roza',    label: 'Rozā sapnis',  css: 'linear-gradient(150deg,#ff9a9e 0%,#fad0c4 100%)' },
     { id: 'sakura',  label: 'Sakura',       css: 'linear-gradient(150deg,#fbc2eb 0%,#fed6e3 100%)' },
@@ -12565,7 +12631,7 @@ window.addEventListener('message', function(e) {
     { id: 'zelts',   label: 'Zelta stunda', css: 'linear-gradient(150deg,#f6d365 0%,#fda085 100%)' }
   ];
   var GRAD_MAP = {};
-  GRADS.forEach(function(g){ GRAD_MAP[g.id] = g.css; });
+  GRADS.concat(SCENIC_SKINS).forEach(function(g){ GRAD_MAP[g.id] = g.css; });
   var HUES = [
     { rgb: '100,210,255', hex: '#64d2ff' }, { rgb: '183,123,255', hex: '#b77bff' },
     { rgb: '255,175,204', hex: '#ffafcc' }, { rgb: '51,209,122',  hex: '#33d17a' },
@@ -12630,6 +12696,120 @@ window.addEventListener('message', function(e) {
     var path = 'data/skins/skin-' + cleanId + '.webp' + (/^aesthetic-/.test(cleanId) ? '?v=2' : '');
     try { return new URL(path, document.baseURI).href; }
     catch (e) { return path; }
+  }
+
+  var paletteCache = Object.create(null);
+  function clampByte(value) { return Math.max(0, Math.min(255, Math.round(value || 0))); }
+  function rgbToHsl(rgb) {
+    var r = clampByte(rgb[0]) / 255, g = clampByte(rgb[1]) / 255, b = clampByte(rgb[2]) / 255;
+    var max = Math.max(r, g, b), min = Math.min(r, g, b);
+    var h = 0, s = 0, l = (max + min) / 2;
+    if (max !== min) {
+      var d = max - min;
+      s = l > .5 ? d / (2 - max - min) : d / (max + min);
+      if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+      else if (max === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h /= 6;
+    }
+    return { h: h * 360, s: s * 100, l: l * 100 };
+  }
+  function hslToRgb(h, s, l) {
+    h = ((+h % 360) + 360) % 360 / 360;
+    s = Math.max(0, Math.min(100, +s || 0)) / 100;
+    l = Math.max(0, Math.min(100, +l || 0)) / 100;
+    if (!s) {
+      var grey = clampByte(l * 255);
+      return [grey, grey, grey];
+    }
+    function hue2rgb(p, q, t) {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+      return p;
+    }
+    var q = l < .5 ? l * (1 + s) : l + s - l * s;
+    var p = 2 * l - q;
+    return [hue2rgb(p, q, h + 1 / 3), hue2rgb(p, q, h), hue2rgb(p, q, h - 1 / 3)].map(function(v) { return clampByte(v * 255); });
+  }
+  function paletteFromRgb(rgb) {
+    var c = (rgb || [100, 210, 255]).map(clampByte);
+    var lum = (c[0] * .2126 + c[1] * .7152 + c[2] * .0722) / 255;
+    var hsl = rgbToHsl(c);
+    /* Material tipa tonālā palete: saglabājam fona nokrāsu, bet ciparam un
+       tekstam izvēlamies pretējo gaišuma pusi, nevis vienmēr baltu. */
+    var lightBackground = lum > .58;
+    var contrast = hslToRgb(hsl.h, Math.max(42, hsl.s), lightBackground ? 24 : 80);
+    var text = hslToRgb(hsl.h, Math.min(26, Math.max(10, hsl.s * .28)), lightBackground ? 13 : 94);
+    return {
+      num: contrast.join(','),
+      txt: text.join(','),
+      na: '0.98'
+    };
+  }
+  function paletteFromCss(css) {
+    var colors = String(css || '').match(/#[0-9a-f]{6}/ig) || [];
+    if (!colors.length) return paletteFromRgb([100, 210, 255]);
+    var sums = [0, 0, 0];
+    colors.forEach(function(hex) {
+      sums[0] += parseInt(hex.slice(1, 3), 16);
+      sums[1] += parseInt(hex.slice(3, 5), 16);
+      sums[2] += parseInt(hex.slice(5, 7), 16);
+    });
+    return paletteFromRgb(sums.map(function(v) { return v / colors.length; }));
+  }
+  function sampleImagePalette(url) {
+    if (paletteCache[url]) return Promise.resolve(paletteCache[url]);
+    return new Promise(function(resolve) {
+      var image = new Image();
+      image.crossOrigin = 'anonymous';
+      image.decoding = 'async';
+      image.onload = function() {
+        try {
+          if (!window.ColorThief || typeof window.ColorThief.getSwatchesSync !== 'function') throw new Error('ColorThief nav ielādēts');
+          /* Analizējam nelielu, centrāli apgrieztu kartes kopiju. Tas atbilst
+             reālajam background-size:cover un neapstrādā miljoniem pikseļu. */
+          var sample = document.createElement('canvas');
+          sample.width = 96; sample.height = 96;
+          var sampleCtx = sample.getContext('2d', { alpha: false, willReadFrequently: true });
+          var sourceSide = Math.min(image.naturalWidth || image.width, image.naturalHeight || image.height);
+          var sourceX = Math.max(0, ((image.naturalWidth || image.width) - sourceSide) / 2);
+          var sourceY = Math.max(0, ((image.naturalHeight || image.height) - sourceSide) / 2);
+          sampleCtx.drawImage(image, sourceX, sourceY, sourceSide, sourceSide, 0, 0, 96, 96);
+          var swatches = window.ColorThief.getSwatchesSync(sample, {
+            colorCount: 12,
+            quality: 2,
+            ignoreWhite: true
+          });
+          var picked = swatches.LightVibrant || swatches.Vibrant || swatches.LightMuted || swatches.Muted || swatches.DarkVibrant || swatches.DarkMuted;
+          if (!picked || !picked.color) throw new Error('Attēlam neizdevās iegūt paleti');
+          var source = picked.color.array();
+          var hsl = picked.color.hsl();
+          /* Kartes foto jau ir aptumšots ar scrim. Saglabājam attēla nokrāsu,
+             bet ceļam to līdz salasāmam Material tonim; teksts ir viegli tonēts. */
+          var accent = hslToRgb(hsl.h, Math.max(50, hsl.s), 80);
+          var text = hslToRgb(hsl.h, Math.min(24, Math.max(10, hsl.s * .24)), 94);
+          paletteCache[url] = { num: accent.join(','), txt: text.join(','), na: '0.98', source: source.join(',') };
+          resolve(paletteCache[url]);
+        } catch (_error) { resolve(paletteFromRgb([100, 210, 255])); }
+      };
+      image.onerror = function() { resolve(paletteFromRgb([100, 210, 255])); };
+      image.src = url;
+    });
+  }
+  function suggestedPalette(skin) {
+    if (!skin) return Promise.resolve(paletteFromRgb([100, 210, 255]));
+    if (skin.t === 'grad') {
+      var scenic = SCENIC_SKINS.find(function(item) { return item.id === skin.id; });
+      if (scenic) return Promise.resolve(paletteFromCss(scenic.css));
+      return Promise.resolve(paletteFromCss(GRAD_MAP[skin.id]));
+    }
+    if (skin.t === 'hue' && skin.rgb) return Promise.resolve(paletteFromRgb(String(skin.rgb).split(',').map(Number)));
+    if (skin.t === 'img' && skin.id) return sampleImagePalette(stockSkinUrl(skin.id));
+    if (skin.t === 'art' && skin.id && artUrl(skin.id)) return sampleImagePalette(artUrl(skin.id));
+    return Promise.resolve(paletteFromRgb([100, 210, 255]));
   }
 
   window.mkGetWorkerSkin = function(name) {
@@ -12821,41 +13001,40 @@ window.addEventListener('message', function(e) {
     var name = currentWorkerName();
     var cur = window.mkGetWorkerSkin(name);
     var draft = cur ? JSON.parse(JSON.stringify(cur)) : {};
-    var parts = name.split(/\s+/);
-    var ini = ((parts[0]||'')[0]||'') + ((parts[1]||'')[0]||'');
-    var pvMonthMatch = String((document.getElementById('modal-total-hours') || {}).innerText || '').match(/\d+/);
-    var pvMonthHours = pvMonthMatch ? pvMonthMatch[0] : '24';
-    var pvEmoji = '✨';
-    try {
-      if (window.MinkaEmoji && typeof window.MinkaEmoji.get === 'function') pvEmoji = window.MinkaEmoji.get(name) || '✨';
-    } catch (e) {}
+    var previewSource = Array.prototype.find.call(document.querySelectorAll('#grafiks-list .card[data-worker]'), function(card) {
+      return normName(card.getAttribute('data-worker')) === normName(name);
+    });
     var emVal = draft.em != null ? Math.round(parseFloat(draft.em) * 100) : 13;
     var emShown = draft.em !== '0';
-    if (draft.t === 'img' && draft.id) {
+    if (draft.t === 'grad' && SCENIC_SKINS.some(function(skin) { return skin.id === draft.id; })) {
+      activeImageGroup = 0;
+    } else if (draft.t === 'img' && draft.id) {
       IMG_GROUPS.some(function(group, index) {
         if (group.ids.indexOf(draft.id) < 0) return false;
-        activeImageGroup = index;
+        activeImageGroup = index + 1;
         return true;
       });
     }
 
-    var html = '<div class="mk-skin-top"><div class="mk-skin-preview" id="mkSkinPrev">'
-      + '<div class="pv-name-tab"><span class="pv-name-main">' + skinEsc(parts[0]||'') + '</span><span class="pv-name-sub">' + skinEsc(parts.slice(1).join(' ')||'') + '</span></div>'
-      + '<span class="pv-hours"><b>' + skinEsc(pvMonthHours) + 'h</b><small>MĒNESĪ</small></span>'
-      + '<span class="pv-emoji">' + skinEsc(pvEmoji) + '</span>'
-      + '<div class="pv-num">24</div>'
-      + '<div class="pv-fatigue"><i></i><i></i><i></i><i></i><i></i><i></i><strong>24%</strong></div>'
-      + '<div class="pv-coffee"><b>−</b><span>☕ 0</span><b>+</b></div>'
+    var html = '<div class="mk-skin-shell"><aside class="mk-skin-aside"><div class="mk-skin-preview-slot">'
+      + '<div id="grafiks-list" class="grid-view mk-skin-preview-list" aria-hidden="true"></div></div>'
+      + '<div class="mk-auto-palette"><div><strong>Auto krāsas</strong></div>'
+      + '<label class="mk-auto-toggle"><input type="checkbox" class="mk-auto-palette-toggle"' + (autoPaletteEnabled ? ' checked' : '') + '><span></span><b>Auto</b></label>'
+      + '<button type="button" class="mk-auto-palette-now">Pieskaņot</button></div>'
+      + '</aside><div class="mk-skin-editor"><div class="mk-skin-main-tabs" role="tablist" aria-label="Izskata sadaļas">'
+      + '<button type="button" class="mk-skin-main-tab' + (activeSkinSection === 'background' ? ' is-active' : '') + '" data-skin-section="background" role="tab" aria-selected="' + (activeSkinSection === 'background') + '">Fons</button>'
+      + '<button type="button" class="mk-skin-main-tab' + (activeSkinSection === 'details' ? ' is-active' : '') + '" data-skin-section="details" role="tab" aria-selected="' + (activeSkinSection === 'details') + '">Pieskaņot</button>'
+      + '<button type="button" class="mk-skin-main-tab' + (activeSkinSection === 'presets' ? ' is-active' : '') + '" data-skin-section="presets" role="tab" aria-selected="' + (activeSkinSection === 'presets') + '">Komplekti</button>'
       + '</div>';
 
-    html += '<div class="mk-skin-top-right"><div class="mk-skin-sec" style="margin-top:0;">Gatavie komplekti</div><div class="mk-skin-presets">';
+    html += '<section class="mk-skin-section' + (activeSkinSection === 'presets' ? ' is-active' : '') + '" data-skin-panel="presets"><div class="mk-skin-section-head"><strong>Gatavie komplekti</strong></div><div class="mk-skin-presets">';
     PRESETS.forEach(function(p, i) {
       var swStyle = p.sw.indexOf('url') === 0 ? 'background-image:' + p.sw + ';background-size:cover;' : 'background:' + p.sw + ';';
       html += '<button type="button" class="mk-skin-preset" data-preset="' + i + '"><span class="mk-skin-preset-sw" style="' + swStyle + '"></span>' + p.label + '</button>';
     });
-    html += '</div></div></div>';
+    html += '</div></section>';
 
-    html += '<div class="mk-skin-tools">';
+    html += '<section class="mk-skin-section' + (activeSkinSection === 'details' ? ' is-active' : '') + '" data-skin-panel="details"><div class="mk-skin-section-head"><strong>Krāsas un efekti</strong></div><div class="mk-skin-tools">';
     html += '<div class="mk-skin-tool"><div class="mk-skin-tool-head">Cipars</div><div class="mk-skin-custom">'
       + '<input type="color" class="mk-num-color" value="' + (draft.num ? rgbToHex(draft.num) : '#a78bfa') + '" title="Cipara krāsa">'
       + '<input type="range" class="mk-num-alpha" min="15" max="100" step="5" value="' + Math.round((draft.numA != null ? +draft.numA : 1) * 100) + '">'
@@ -12880,14 +13059,15 @@ window.addEventListener('message', function(e) {
       + '</div></div><div class="mk-fx-row">';
     [['','Nav'],['spark','✨ Zvaigznītes'],['mirdz','🌟 Mirdzums'],['hearts','💗 Sirsniņas'],['ziedi','🌸 Ziedlapiņas'],['taur','🦋 Tauriņi'],['burb','🫧 Burbuļi']].forEach(function(fx) {
       var act = (draft.fx || '') === fx[0];
-      html += '<button type="button" class="mk-skin-fx' + (act ? ' is-on' : '') + '" data-fx="' + fx[0] + '">' + fx[1] + '</button>';
+      html += '<button type="button" class="mk-skin-fx' + (act ? ' is-on' : '') + '" data-fx="' + fx[0] + '" aria-pressed="' + act + '">' + fx[1] + '</button>';
     });
-    html += '</div></div>';
+    html += '</div></div></section>';
 
-    var activeBgMode = draft.t === 'img' ? 'image' : (draft.t === 'art' ? 'draw' : 'color');
-    html += '<div class="mk-bg-workspace"><div class="mk-bg-toolbar">'
-      + '<div class="mk-skin-sec">Fons</div><div class="mk-bg-mode-tabs" role="tablist" aria-label="Fona veids">'
-      + '<button type="button" class="mk-bg-mode' + (activeBgMode === 'image' ? ' is-active' : '') + '" data-bg-mode="image" role="tab" aria-selected="' + (activeBgMode === 'image') + '">Attēls</button>'
+    var isScenicBackground = draft.t === 'grad' && SCENIC_SKINS.some(function(skin) { return skin.id === draft.id; });
+    var activeBgMode = (draft.t === 'img' || isScenicBackground) ? 'image' : (draft.t === 'art' ? 'draw' : 'color');
+    html += '<section class="mk-skin-section' + (activeSkinSection === 'background' ? ' is-active' : '') + '" data-skin-panel="background"><div class="mk-skin-section-head"><strong>Izvēlies fonu</strong></div><div class="mk-bg-workspace"><div class="mk-bg-toolbar">'
+      + '<div class="mk-bg-mode-tabs" role="tablist" aria-label="Fona veids">'
+      + '<button type="button" class="mk-bg-mode' + (activeBgMode === 'image' ? ' is-active' : '') + '" data-bg-mode="image" role="tab" aria-selected="' + (activeBgMode === 'image') + '">Attēli</button>'
       + '<button type="button" class="mk-bg-mode' + (activeBgMode === 'color' ? ' is-active' : '') + '" data-bg-mode="color" role="tab" aria-selected="' + (activeBgMode === 'color') + '">Krāsa</button>'
       + '<button type="button" class="mk-bg-mode' + (activeBgMode === 'draw' ? ' is-active' : '') + '" data-bg-mode="draw" role="tab" aria-selected="' + (activeBgMode === 'draw') + '">Zīmējums</button>'
       + '</div>';
@@ -12896,11 +13076,11 @@ window.addEventListener('message', function(e) {
     html += '<div class="mk-bg-panel mk-bg-colors' + (activeBgMode === 'color' ? ' is-active' : '') + '" data-bg-panel="color"><div class="mk-skin-grads">';
     GRADS.forEach(function(g) {
       var act = draft.t === 'grad' && draft.id === g.id;
-      html += '<button type="button" class="mk-skin-grad-sw' + (act ? ' is-active' : '') + '" data-grad="' + g.id + '" title="' + g.label + '" style="background:' + g.css + '"></button>';
+      html += '<button type="button" class="mk-skin-grad-sw' + (act ? ' is-active' : '') + '" data-grad="' + g.id + '" title="' + g.label + '" aria-label="' + g.label + '" aria-pressed="' + act + '" style="background:' + g.css + '"></button>';
     });
     HUES.forEach(function(h) {
       var act = draft.t === 'hue' && draft.rgb === h.rgb;
-      html += '<button type="button" class="mk-skin-hue' + (act ? ' is-active' : '') + '" data-rgb="' + h.rgb + '" style="background:' + h.hex + '"></button>';
+      html += '<button type="button" class="mk-skin-hue' + (act ? ' is-active' : '') + '" data-rgb="' + h.rgb + '" aria-label="Fona krāsa ' + h.hex + '" aria-pressed="' + act + '" style="background:' + h.hex + '"></button>';
     });
     html += '<input type="color" class="mk-skin-color" value="' + (draft.t === 'hue' ? rgbToHex(draft.rgb) : '#64d2ff') + '" title="Sava fona krāsa">';
     html += '</div></div>';
@@ -12911,39 +13091,62 @@ window.addEventListener('message', function(e) {
     if (draft.t === 'art' && artUrl(draft.id)) {
       html += '<span class="mk-skin-art-current" style="background-image:url(' + artUrl(draft.id) + ')" aria-label="Pašreizējais zīmējums"></span>';
     }
-    html += '<span class="mk-bg-draw-note">Zīmējums tiek optimizēts un saglabāts kā viegls WebP fons.</span></div></div>';
+    html += '</div></div>';
 
     html += '<div class="mk-bg-panel mk-bg-images' + (activeBgMode === 'image' ? ' is-active' : '') + '" data-bg-panel="image">'
       + '<div class="mk-skin-category-nav">'
-      + '<button type="button" class="mk-skin-category-arrow is-prev" aria-label="Iepriekšējās attēlu kategorijas">‹</button>'
       + '<div class="mk-skin-category-bar" role="tablist" aria-label="Attēlu kategorijas">';
+    html += '<button type="button" class="mk-skin-category' + (activeImageGroup === 0 ? ' is-active' : '') + '" data-group="0" role="tab" aria-selected="' + (activeImageGroup === 0) + '">Ainavas<span>' + SCENIC_SKINS.length + '</span></button>';
     IMG_GROUPS.forEach(function(grp, groupIndex) {
-      html += '<button type="button" class="mk-skin-category' + (groupIndex === activeImageGroup ? ' is-active' : '') + '" data-group="' + groupIndex + '" role="tab" aria-selected="' + (groupIndex === activeImageGroup) + '">'
+      var categoryIndex = groupIndex + 1;
+      html += '<button type="button" class="mk-skin-category' + (categoryIndex === activeImageGroup ? ' is-active' : '') + '" data-group="' + categoryIndex + '" role="tab" aria-selected="' + (categoryIndex === activeImageGroup) + '">'
         + skinEsc(grp.label) + '<span>' + grp.ids.length + '</span></button>';
     });
-    html += '</div>'
-      + '<button type="button" class="mk-skin-category-arrow is-next" aria-label="Nākamās attēlu kategorijas">›</button>'
-      + '</div><div class="mk-skin-gallery">';
+    html += '</div></div><div class="mk-skin-gallery">';
+    html += '<div class="mk-skin-grid' + (activeImageGroup === 0 ? ' is-active' : '') + '" data-group-panel="0">';
+    SCENIC_SKINS.forEach(function(scene) {
+      var act = draft.t === 'grad' && draft.id === scene.id;
+      html += '<button type="button" class="mk-skin-thumb mk-skin-scene-choice' + (act ? ' is-active' : '') + '" data-grad="' + scene.id + '" title="' + skinEsc(scene.label) + '" aria-label="' + skinEsc(scene.label) + '" aria-pressed="' + act + '" style="background:' + scene.css + '"><span>' + skinEsc(scene.label) + '</span></button>';
+    });
+    html += '</div>';
     IMG_GROUPS.forEach(function(grp, groupIndex) {
-      html += '<div class="mk-skin-grid' + (groupIndex === activeImageGroup ? ' is-active' : '') + '" data-group-panel="' + groupIndex + '">';
+      var categoryIndex = groupIndex + 1;
+      html += '<div class="mk-skin-grid' + (categoryIndex === activeImageGroup ? ' is-active' : '') + '" data-group-panel="' + categoryIndex + '">';
       grp.ids.forEach(function(id) {
         var act = draft.t === 'img' && draft.id === id;
         var label = IMG_LABELS[id] || grp.label;
         var imageUrl = stockSkinUrl(id);
         html += '<button type="button" class="mk-skin-thumb' + (act ? ' is-active' : '') + '" data-skin="' + id + '" data-src="' + skinEsc(imageUrl) + '" title="' + skinEsc(label) + '" aria-label="' + skinEsc(label) + '"'
-          + (groupIndex === activeImageGroup ? ' style="background-image:url(&quot;' + skinEsc(imageUrl) + '&quot;)"' : '')
+          + ' aria-pressed="' + act + '"'
+          + (categoryIndex === activeImageGroup ? ' style="background-image:url(&quot;' + skinEsc(imageUrl) + '&quot;)"' : '')
           + '><span>' + skinEsc(label) + '</span></button>';
       });
       html += '</div>';
     });
-    html += '</div></div></div>';
+    html += '</div></div></div></section></div></div>';
 
     html += '<div class="mk-skin-footer">'
-      + '<button type="button" class="mk-skin-clear">✕ Noņemt visu izskatu</button>'
-      + '<span class="mk-skin-note">Izmaiņas redzēs visi kolēģi — tās sinhronizējas automātiski.</span></div>';
+      + '<button type="button" class="mk-skin-clear">✕ Noņemt visu izskatu</button></div>';
     host.innerHTML = html;
 
-    var prev = host.querySelector('#mkSkinPrev');
+    var previewList = host.querySelector('.mk-skin-preview-list');
+    var prev;
+    if (previewSource && previewList) {
+      prev = previewSource.cloneNode(true);
+      prev.removeAttribute('data-worker');
+      prev.removeAttribute('id');
+      prev.classList.add('mk-skin-preview-real');
+      prev.querySelectorAll('[id]').forEach(function(node) { node.removeAttribute('id'); });
+      prev.querySelectorAll('button, input, select, textarea, a').forEach(function(node) {
+        node.setAttribute('tabindex', '-1');
+        node.setAttribute('aria-hidden', 'true');
+      });
+      previewList.appendChild(prev);
+    } else {
+      prev = document.createElement('div');
+      prev.className = 'mk-skin-preview mk-skin-preview-real';
+      if (previewList) previewList.appendChild(prev);
+    }
     function livePreview() {
       window.mkApplySkinToEl(prev, hasAny(draft) ? draft : null);
       var k = normName(name);
@@ -12959,7 +13162,46 @@ window.addEventListener('message', function(e) {
       livePreview();
       setSkin(name, hasAny(draft) ? draft : null, true);
     }
+    function disableAutoPalette() {
+      autoPaletteEnabled = false;
+      var toggle = host.querySelector('.mk-auto-palette-toggle');
+      if (toggle) toggle.checked = false;
+    }
+    function applySuggestedPaletteThenCommit() {
+      if (!autoPaletteEnabled) { commit(); return; }
+      suggestedPalette(draft).then(function(palette) {
+        if (palette) {
+          draft.num = palette.num;
+          draft.numA = palette.na || '0.96';
+          draft.txt = palette.txt;
+        }
+        commit();
+      }).catch(commit);
+    }
     livePreview();
+
+    host.querySelectorAll('.mk-skin-main-tab').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        activeSkinSection = tab.dataset.skinSection;
+        host.querySelectorAll('.mk-skin-main-tab').forEach(function(item) {
+          var selected = item === tab;
+          item.classList.toggle('is-active', selected);
+          item.setAttribute('aria-selected', String(selected));
+        });
+        host.querySelectorAll('[data-skin-panel]').forEach(function(panel) {
+          panel.classList.toggle('is-active', panel.dataset.skinPanel === activeSkinSection);
+        });
+      });
+    });
+    var autoToggle = host.querySelector('.mk-auto-palette-toggle');
+    autoToggle.addEventListener('change', function() {
+      autoPaletteEnabled = autoToggle.checked;
+    });
+    host.querySelector('.mk-auto-palette-now').addEventListener('click', function() {
+      autoPaletteEnabled = true;
+      autoToggle.checked = true;
+      applySuggestedPaletteThenCommit();
+    });
 
     host.querySelector('.mk-skin-art-open').addEventListener('click', function() {
       if (!window.MinkaSkinDraw || typeof window.MinkaSkinDraw.open !== 'function') {
@@ -12980,8 +13222,8 @@ window.addEventListener('message', function(e) {
         textColor: draft.txt ? 'rgb(' + draft.txt + ')' : '#ffffff',
         onSave: async function(blob) {
           draft = await uploadArt(name, blob);
-          livePreview();
-          window.mkRenderSkinPicker(host);
+          if (autoPaletteEnabled) applySuggestedPaletteThenCommit();
+          else { livePreview(); window.mkRenderSkinPicker(host); }
         }
       });
     });
@@ -12999,7 +13241,13 @@ window.addEventListener('message', function(e) {
     host.querySelectorAll('.mk-skin-grad-sw').forEach(function(b) {
       b.addEventListener('click', function() {
         draft.t = 'grad'; draft.id = b.dataset.grad; delete draft.rgb;
-        commit();
+        applySuggestedPaletteThenCommit();
+      });
+    });
+    host.querySelectorAll('.mk-skin-scene-choice').forEach(function(b) {
+      b.addEventListener('click', function() {
+        draft.t = 'grad'; draft.id = b.dataset.grad; delete draft.rgb;
+        applySuggestedPaletteThenCommit();
       });
     });
     host.querySelectorAll('.mk-bg-mode').forEach(function(tab) {
@@ -13017,13 +13265,11 @@ window.addEventListener('message', function(e) {
       });
     });
     function showImageGroup(index) {
-      activeImageGroup = Math.max(0, Math.min(IMG_GROUPS.length - 1, +index || 0));
-      var selectedCategory = null;
+      activeImageGroup = Math.max(0, Math.min(IMG_GROUPS.length, +index || 0));
       host.querySelectorAll('.mk-skin-category').forEach(function(button) {
         var selected = +button.dataset.group === activeImageGroup;
         button.classList.toggle('is-active', selected);
         button.setAttribute('aria-selected', String(selected));
-        if (selected) selectedCategory = button;
       });
       host.querySelectorAll('[data-group-panel]').forEach(function(panel) {
         var selected = +panel.dataset.groupPanel === activeImageGroup;
@@ -13033,57 +13279,34 @@ window.addEventListener('message', function(e) {
           if (!thumb.style.backgroundImage) thumb.style.backgroundImage = 'url("' + thumb.dataset.src + '")';
         });
       });
-      if (selectedCategory) selectedCategory.scrollIntoView({
-        behavior: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
-        block: 'nearest',
-        inline: 'center'
-      });
     }
-    var categoryBar = host.querySelector('.mk-skin-category-bar');
-    host.querySelectorAll('.mk-skin-category-arrow').forEach(function(arrow) {
-      arrow.addEventListener('click', function() {
-        if (!categoryBar) return;
-        var amount = Math.max(180, Math.round(categoryBar.clientWidth * .72));
-        categoryBar.scrollBy({
-          left: arrow.classList.contains('is-prev') ? -amount : amount,
-          behavior: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
-        });
-      });
-    });
-    if (categoryBar) categoryBar.addEventListener('wheel', function(event) {
-      if (Math.abs(event.deltaX) >= Math.abs(event.deltaY) || !event.deltaY) return;
-      var max = categoryBar.scrollWidth - categoryBar.clientWidth;
-      var canMove = event.deltaY < 0 ? categoryBar.scrollLeft > 0 : categoryBar.scrollLeft < max - 1;
-      if (!canMove) return;
-      event.preventDefault();
-      categoryBar.scrollLeft += event.deltaY;
-    }, { passive: false });
     host.querySelectorAll('.mk-skin-category').forEach(function(button) {
       button.addEventListener('click', function() {
         showImageGroup(button.dataset.group);
       });
     });
-    host.querySelectorAll('.mk-skin-thumb').forEach(function(b) {
+    host.querySelectorAll('.mk-skin-thumb[data-skin]').forEach(function(b) {
       b.addEventListener('click', function() {
         draft.t = 'img'; draft.id = b.dataset.skin; delete draft.rgb;
-        commit();
+        applySuggestedPaletteThenCommit();
       });
     });
     host.querySelectorAll('.mk-skin-hue').forEach(function(b) {
       b.addEventListener('click', function() {
         draft.t = 'hue'; draft.rgb = b.dataset.rgb; delete draft.id;
-        commit();
+        applySuggestedPaletteThenCommit();
       });
     });
     var bgInp = host.querySelector('.mk-skin-color');
     bgInp.addEventListener('input', function() { draft.t = 'hue'; draft.rgb = hexToRgb(bgInp.value); delete draft.id; persistLive(); });
-    bgInp.addEventListener('change', commit);
+    bgInp.addEventListener('change', applySuggestedPaletteThenCommit);
     var numInp = host.querySelector('.mk-num-color');
-    numInp.addEventListener('input', function() { draft.num = hexToRgb(numInp.value); if (draft.numA == null) draft.numA = '0.95'; persistLive(); });
+    numInp.addEventListener('input', function() { disableAutoPalette(); draft.num = hexToRgb(numInp.value); if (draft.numA == null) draft.numA = '0.95'; persistLive(); });
     numInp.addEventListener('change', commit);
     var aInp = host.querySelector('.mk-num-alpha');
     var aVal = host.querySelector('.mk-num-alpha-val');
     aInp.addEventListener('input', function() {
+      disableAutoPalette();
       draft.numA = String((+aInp.value / 100).toFixed(2));
       if (!draft.num) draft.num = '167,139,250';
       aVal.textContent = aInp.value + '%';
@@ -13091,9 +13314,9 @@ window.addEventListener('message', function(e) {
     });
     aInp.addEventListener('change', commit);
     var txtInp = host.querySelector('.mk-txt-color');
-    txtInp.addEventListener('input', function() { draft.txt = hexToRgb(txtInp.value); persistLive(); });
+    txtInp.addEventListener('input', function() { disableAutoPalette(); draft.txt = hexToRgb(txtInp.value); persistLive(); });
     txtInp.addEventListener('change', commit);
-    host.querySelector('.mk-txt-clear').addEventListener('click', function() { delete draft.txt; commit(); });
+    host.querySelector('.mk-txt-clear').addEventListener('click', function() { disableAutoPalette(); delete draft.txt; commit(); });
     var emShow = host.querySelector('.mk-emoji-show');
     var emOp = host.querySelector('.mk-emoji-op');
     var emOpVal = host.querySelector('.mk-emoji-op-val');
@@ -13171,6 +13394,174 @@ window.addEventListener('message', function(e) {
 }
 .mk-skin-top { display: flex; gap: 12px; align-items: stretch; padding-top: 2px; }
 .mk-skin-top-right { flex: 1; min-width: 0; }
+.mk-skin-shell {
+  --mk-ui-accent: 100, 210, 255;
+  --mk-ui-surface: rgba(255,255,255,.028);
+  --mk-ui-surface-hover: rgba(255,255,255,.055);
+  --mk-ui-stroke: rgba(255,255,255,.10);
+  --mk-ui-text: rgba(255,255,255,.86);
+  --mk-ui-muted: rgba(255,255,255,.52);
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.mk-skin-aside {
+  position: sticky;
+  top: 0;
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+}
+.mk-skin-aside .mk-skin-preview {
+  width: 100%;
+  aspect-ratio: 1 / .82;
+}
+.mk-skin-editor { min-width: 0; }
+.mk-skin-main-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 3px;
+  margin-bottom: 11px;
+  padding: 3px;
+  border: 1px solid var(--mk-ui-stroke);
+  border-radius: 11px;
+  background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.018));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+}
+.mk-skin-main-tab {
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255,255,255,.55);
+  font: 750 10.5px/1 Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+.mk-skin-main-tab:hover {
+  background: rgba(255,255,255,.04);
+  color: rgba(255,255,255,.84);
+}
+.mk-skin-main-tab.is-active {
+  background: linear-gradient(180deg, rgba(var(--mk-ui-accent),.17), rgba(var(--mk-ui-accent),.10));
+  color: #c9f1ff;
+  box-shadow: inset 0 0 0 1px rgba(var(--mk-ui-accent),.32), 0 1px 2px rgba(0,0,0,.18);
+}
+.mk-skin-main-tab:focus-visible,
+.mk-auto-palette-now:focus-visible,
+.mk-bg-mode:focus-visible,
+.mk-skin-category:focus-visible,
+.mk-skin-thumb:focus-visible,
+.mk-skin-preset:focus-visible,
+.mk-skin-fx:focus-visible,
+.mk-skin-clear:focus-visible,
+.mk-txt-clear:focus-visible,
+.mk-skin-art-open:focus-visible {
+  outline: 2px solid rgba(100,210,255,.72);
+  outline-offset: 2px;
+}
+.mk-skin-section { display: none; min-height: 328px; }
+.mk-skin-section.is-active { display: block; }
+.mk-skin-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 24px;
+  padding: 1px 2px 6px;
+}
+.mk-skin-section-head strong {
+  color: rgba(255,255,255,.88);
+  font: 800 11px/1.1 Inter, system-ui, sans-serif;
+}
+.mk-skin-section-head small {
+  color: rgba(255,255,255,.35);
+  font: 600 9px/1.2 Inter, system-ui, sans-serif;
+  text-align: right;
+}
+.mk-auto-palette {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 6px;
+  padding: 9px;
+  border: 1px solid rgba(var(--mk-ui-accent),.18);
+  border-radius: 11px;
+  background: linear-gradient(145deg, rgba(var(--mk-ui-accent),.065), rgba(255,255,255,.018));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+}
+.mk-auto-palette > div { min-width: 0; }
+.mk-auto-palette strong,
+.mk-auto-palette small { display: block; }
+.mk-auto-palette strong {
+  color: rgba(255,255,255,.84);
+  font: 750 9.5px/1.15 Inter, system-ui, sans-serif;
+}
+.mk-auto-palette small {
+  margin-top: 3px;
+  color: rgba(255,255,255,.38);
+  font: 600 7.5px/1.25 Inter, system-ui, sans-serif;
+}
+.mk-auto-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+.mk-auto-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.mk-auto-toggle span {
+  position: relative;
+  width: 25px;
+  height: 15px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.14);
+}
+.mk-auto-toggle span::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.68);
+  transition: transform .15s ease;
+}
+.mk-auto-toggle input:checked + span { background: rgba(52,211,153,.55); }
+.mk-auto-toggle input:checked + span::after { transform: translateX(10px); background: #fff; }
+.mk-auto-toggle b { color: rgba(255,255,255,.68); font: 750 8px/1 Inter, system-ui, sans-serif; }
+.mk-auto-palette-now {
+  grid-column: 1 / -1;
+  min-height: 27px;
+  border: 1px solid rgba(var(--mk-ui-accent),.22);
+  border-radius: 8px;
+  background: rgba(var(--mk-ui-accent),.075);
+  color: #d8f6ff;
+  font: 750 8.5px/1 Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+.mk-auto-palette-now:hover { border-color: rgba(100,210,255,.34); background: rgba(100,210,255,.09); color: #b9edff; }
+.mk-skin-preview-slot {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+}
+#grafiks-list.mk-skin-preview-list {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  overflow: visible !important;
+}
+#grafiks-list.mk-skin-preview-list .card.mk-skin-preview-real {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  pointer-events: none !important;
+}
 .mk-skin-preview {
   --pv-tab-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 50' preserveAspectRatio='none'%3E%3Cpath fill='%23fff' d='M0 0H100C93 0 91 12 86 24C81 37 78 50 68 50H0Z'/%3E%3C/svg%3E");
   position: relative; width: 118px; flex-shrink: 0; aspect-ratio: 1/1.05; border-radius: 12px;
@@ -13239,7 +13630,7 @@ window.addEventListener('message', function(e) {
 }
 .mk-skin-preview .pv-coffee span { height: 100%; display: flex; align-items: center; justify-content: center; border-inline: 1px solid rgba(196,132,69,.26); font-size: 8px; }
 .mk-skin-presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(102px, 1fr)); gap: 5px; }
-.mk-skin-preset { display: flex; align-items: center; gap: 6px; min-height: 31px; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.10); border-radius: 8px; color: rgba(255,255,255,.84); font-size: 10.5px; font-weight: 700; padding: 4px 7px; cursor: pointer; }
+.mk-skin-preset { display: flex; align-items: center; gap: 7px; min-height: 38px; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.10); border-radius: 9px; color: rgba(255,255,255,.84); font-size: 10.5px; font-weight: 700; padding: 5px 8px; cursor: pointer; }
 .mk-skin-preset:hover { border-color: rgba(100,210,255,.5); }
 .mk-skin-preset-sw { width: 20px; height: 20px; border-radius: 6px; flex-shrink: 0; border: 1px solid rgba(255,255,255,.18); }
 .mk-num-alpha { flex: 1; accent-color: #64d2ff; }
@@ -13328,6 +13719,42 @@ window.addEventListener('message', function(e) {
   border-top: 1px solid rgba(255,255,255,.07);
   border-bottom: 1px solid rgba(255,255,255,.07);
 }
+.mk-skin-section[data-skin-panel="details"] .mk-skin-tools {
+  grid-template-columns: minmax(0, 1fr) minmax(120px, .56fr);
+  align-items: start;
+  margin-top: 0;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 11px;
+  background: rgba(255,255,255,.02);
+}
+.mk-skin-section[data-skin-panel="details"] .mk-skin-tool-emoji {
+  grid-column: 1 / -1;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,.07);
+}
+.mk-skin-section[data-skin-panel="details"] .mk-skin-tool-emoji .mk-skin-custom {
+  display: grid;
+  grid-template-columns: auto minmax(120px, 1fr) 36px auto;
+  gap: 10px;
+}
+.mk-skin-section[data-skin-panel="details"] .mk-skin-effects {
+  display: block;
+  margin-top: 9px;
+  padding: 11px 12px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 11px;
+  background: rgba(255,255,255,.02);
+}
+.mk-skin-section[data-skin-panel="details"] .mk-skin-effects-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+.mk-skin-section[data-skin-panel="details"] .mk-skin-effects-head > span { margin: 0; }
+.mk-skin-section[data-skin-panel="details"] .mk-fx-row { margin-top: 10px; }
 .mk-skin-tool { min-width: 0; }
 .mk-skin-tool-head,
 .mk-skin-effects-head > span {
@@ -13383,9 +13810,8 @@ window.addEventListener('message', function(e) {
 .mk-fx-size-wrap .mk-fx-size { width: 90px; flex: 0 1 90px; }
 .mk-fx-size-wrap b { min-width: 30px; font-size: 9px; }
 .mk-bg-workspace {
-  margin-top: 7px;
-  border-top: 1px solid rgba(255,255,255,.08);
-  border-bottom: 1px solid rgba(255,255,255,.08);
+  margin-top: 0;
+  border: 0;
 }
 .mk-bg-toolbar {
   min-height: 38px;
@@ -13404,9 +13830,9 @@ window.addEventListener('message', function(e) {
   align-items: center;
   gap: 2px;
   padding: 2px;
-  border: 1px solid rgba(255,255,255,.10);
+  border: 1px solid var(--mk-ui-stroke);
   border-radius: 8px;
-  background: rgba(255,255,255,.025);
+  background: var(--mk-ui-surface);
 }
 .mk-bg-mode {
   min-height: 25px;
@@ -13419,11 +13845,56 @@ window.addEventListener('message', function(e) {
   cursor: pointer;
 }
 .mk-bg-mode.is-active {
-  background: rgba(100,210,255,.12);
-  color: #8bdcff;
+  background: rgba(var(--mk-ui-accent),.14);
+  color: #bcecff;
+  box-shadow: inset 0 0 0 1px rgba(var(--mk-ui-accent),.20);
 }
 .mk-bg-panel { display: none; padding: 5px 2px 7px; }
 .mk-bg-panel.is-active { display: block; }
+.mk-skin-scene-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 7px;
+}
+.mk-skin-scene {
+  position: relative;
+  min-height: 0;
+  aspect-ratio: 1 / .82;
+  overflow: hidden;
+  padding: 0;
+  border: 2px solid rgba(255,255,255,.10);
+  border-radius: 10px;
+  background-position: center !important;
+  background-size: cover !important;
+  cursor: pointer;
+}
+.mk-skin-scene:hover { border-color: rgba(100,210,255,.55); }
+.mk-skin-scene.is-active { border-color: #64d2ff; box-shadow: 0 0 0 2px rgba(100,210,255,.30); }
+.mk-skin-scene::after {
+  content: '✓';
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: none;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 50%;
+  background: #64d2ff;
+  color: #071018;
+  font: 900 11px/1 Inter, system-ui, sans-serif;
+}
+.mk-skin-scene.is-active::after { display: grid; }
+.mk-skin-scene > span {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 18px 7px 6px;
+  background: linear-gradient(transparent, rgba(5,8,14,.82));
+  color: rgba(255,255,255,.92);
+  font: 750 9px/1.1 Inter, system-ui, sans-serif;
+  text-align: left;
+  pointer-events: none;
+}
 .mk-bg-colors .mk-skin-grads { min-height: 30px; align-items: center; }
 .mk-bg-draw .mk-skin-art-row {
   min-height: 34px;
@@ -13438,56 +13909,25 @@ window.addEventListener('message', function(e) {
 }
 .mk-bg-images { padding-top: 3px; }
 .mk-skin-category-nav {
-  display: grid;
-  grid-template-columns: 29px minmax(0, 1fr) 29px;
-  align-items: center;
-  gap: 5px;
-}
-.mk-skin-category-arrow {
-  display: grid;
-  width: 29px;
-  height: 29px;
-  padding: 0 0 2px;
-  place-items: center;
-  border: 1px solid rgba(255,255,255,.13);
-  border-radius: 9px;
-  background: rgba(255,255,255,.045);
-  color: rgba(255,255,255,.72);
-  font: 700 20px/1 Inter, system-ui, sans-serif;
-  cursor: pointer;
-}
-.mk-skin-category-arrow:hover {
-  border-color: rgba(100,210,255,.48);
-  background: rgba(100,210,255,.11);
-  color: #a7e7ff;
-}
-.mk-skin-category-arrow:focus-visible {
-  outline: 2px solid rgba(100,210,255,.70);
-  outline-offset: 2px;
+  display: block;
 }
 .mk-skin-category-bar {
   display: flex;
+  flex-wrap: wrap;
   gap: 5px;
-  overflow-x: auto;
   padding: 2px 1px;
-  scrollbar-width: none;
-  overscroll-behavior-inline: contain;
-  scroll-behavior: smooth;
-  scroll-snap-type: x proximity;
 }
-.mk-skin-category-bar::-webkit-scrollbar { display: none; }
 .mk-skin-category {
   flex: 0 0 auto;
   min-height: 27px;
   padding: 5px 8px;
-  border: 1px solid rgba(255,255,255,.10);
+  border: 1px solid var(--mk-ui-stroke);
   border-radius: 999px;
-  background: rgba(255,255,255,.025);
-  color: rgba(255,255,255,.58);
+  background: var(--mk-ui-surface);
+  color: var(--mk-ui-muted);
   font: 750 9px/1 Inter, system-ui, sans-serif;
   cursor: pointer;
   white-space: nowrap;
-  scroll-snap-align: center;
 }
 .mk-skin-category span {
   margin-left: 5px;
@@ -13496,24 +13936,28 @@ window.addEventListener('message', function(e) {
 }
 .mk-skin-category:hover { border-color: rgba(100,210,255,.38); color: rgba(255,255,255,.82); }
 .mk-skin-category.is-active {
-  border-color: rgba(100,210,255,.58);
-  background: rgba(100,210,255,.12);
-  color: #9ee3ff;
+  border-color: rgba(var(--mk-ui-accent),.52);
+  background: rgba(var(--mk-ui-accent),.13);
+  color: #c4efff;
+  box-shadow: inset 0 0 0 1px rgba(var(--mk-ui-accent),.10);
 }
 .mk-skin-category.is-active span { color: rgba(158,227,255,.64); }
 .mk-skin-gallery { min-height: 74px; padding: 0; }
 .mk-bg-images .mk-skin-grid {
-  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
-  gap: 7px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
 }
 .mk-bg-images .mk-skin-thumb {
   position: relative;
-  min-height: 62px;
+  min-height: 0;
+  aspect-ratio: 4 / 3;
   overflow: hidden;
   border-radius: 9px;
   background-color: #0e131d;
   background-position: center;
   background-size: cover;
+  contain: layout paint;
+  touch-action: manipulation;
 }
 .mk-bg-images .mk-skin-thumb::after {
   content: '✓';
@@ -13533,17 +13977,28 @@ window.addEventListener('message', function(e) {
 .mk-bg-images .mk-skin-thumb > span {
   position: absolute;
   inset: auto 0 0;
+  display: -webkit-box;
   overflow: hidden;
-  padding: 13px 6px 5px;
-  background: linear-gradient(transparent, rgba(5,8,14,.80));
-  color: rgba(255,255,255,.86);
-  font: 700 8.5px/1.1 Inter, system-ui, sans-serif;
+  min-height: 29px;
+  padding: 13px 7px 5px;
+  background: linear-gradient(transparent, rgba(5,8,14,.92));
+  color: rgba(255,255,255,.96);
+  font: 750 9.5px/1.08 Inter, system-ui, sans-serif;
   text-align: left;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  text-shadow: 0 1px 2px rgba(0,0,0,.9);
   pointer-events: none;
 }
 @media (max-width: 760px) {
+  .mk-skin-shell { grid-template-columns: 1fr; gap: 11px; }
+  .mk-skin-aside { position: static; grid-template-columns: 112px minmax(0, 1fr); align-items: stretch; }
+  .mk-skin-preview-slot { width: 112px; }
+  .mk-auto-palette { align-content: center; }
+  .mk-skin-section { min-height: 0; }
+  .mk-skin-section-head { align-items: flex-start; }
   .mk-skin-tools { grid-template-columns: minmax(150px,1fr) auto; }
   .mk-skin-tool-emoji { grid-column: 1 / -1; }
   .mk-skin-effects { grid-template-columns: 1fr; }
@@ -13551,7 +14006,20 @@ window.addEventListener('message', function(e) {
   .mk-skin-effects-head > span { margin: 0; }
   .mk-bg-toolbar { flex-wrap: wrap; }
   .mk-bg-images .mk-skin-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mk-skin-scene-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .mk-bg-draw .mk-skin-art-row { align-items: flex-start; flex-wrap: wrap; }
+}
+@media (max-width: 470px) {
+  .mk-skin-aside { grid-template-columns: 94px minmax(0, 1fr); }
+  .mk-skin-preview-slot { width: 94px; }
+  .mk-skin-section[data-skin-panel="details"] .mk-skin-tools { grid-template-columns: 1fr; }
+  .mk-skin-section[data-skin-panel="details"] .mk-skin-tool-emoji { grid-column: auto; }
+  .mk-skin-section[data-skin-panel="details"] .mk-skin-tool-emoji .mk-skin-custom { grid-template-columns: auto minmax(76px, 1fr) 34px; }
+  .mk-skin-section[data-skin-panel="details"] .mk-emoji-neg { grid-column: 1 / -1; }
+  .mk-skin-main-tab { padding-inline: 6px; font-size: 9.5px; }
+  .mk-skin-section-head small { display: none; }
+  .mk-bg-images .mk-skin-grid,
+  .mk-skin-scene-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* ── v4: kompakta modāļa galva Izskats režīmā ── */

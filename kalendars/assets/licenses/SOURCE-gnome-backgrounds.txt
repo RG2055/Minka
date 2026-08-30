@@ -1,0 +1,8 @@
+Source: https://github.com/GNOME/gnome-backgrounds
+Revision: 4b1c8f4046218c0f0c0e66e9bf510151e20b02a7
+Imported: 2026-08-30
+
+The 50 files named skin-gnome-*-d.webp and skin-gnome-*-l.webp are
+optimized, square WebP derivatives of the corresponding current GNOME
+backgrounds. See AUTHORS-gnome-backgrounds.txt for authors and
+LICENSE-gnome-backgrounds-CC-BY-SA-3.0.txt for the license text.
