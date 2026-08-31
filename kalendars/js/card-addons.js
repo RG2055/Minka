@@ -220,8 +220,11 @@
     var list = document.querySelector('#grafiks-list.grid-view');
     if (!list) return;
     var sections = Array.prototype.slice.call(list.querySelectorAll(':scope > .cards-section'));
-    var topReserveCap = document.documentElement.classList.contains('mk-mobile-shell') ? 24 : 36;
-    sections.forEach(function(section) {
+    var mobileShell = document.documentElement.classList.contains('mk-mobile-shell');
+    sections.forEach(function(section, sectionIndex) {
+      /* Only the first section needs protection from the list's top clipping
+         edge. Later toppers can safely use the open inter-section area. */
+      var topReserveCap = sectionIndex === 0 ? (mobileShell ? 24 : 36) : 8;
       var maxTopOverflow = 0;
       section.querySelectorAll('.cards-subgrid > .card.mk-addon-active').forEach(function(card) {
         var addon = card.querySelector(':scope > .mk-card-addon[data-addon-group="topper"]');
