@@ -91,6 +91,15 @@ html body #grafiks-app #grafiks-list.grid-view .cards-section:has(.mk-card-addon
   padding-top: var(--mk-addon-section-top-clearance, 32px) !important;
 }
 
+/* A hanging charm already occupies the visual gap below its row. Reclaim the
+   historical section margin instead of stacking another empty strip on top of
+   the following heading. The charm remains above both sections via z-index. */
+html body #grafiks-app #grafiks-list.grid-view
+  .cards-section:has(.mk-card-addon[data-addon-group="charm"])
+  + .cards-section {
+  margin-top: -12px !important;
+}
+
 /* A charm on the final row may extend past the scrollable content box. Keep
    only the measured tail scrollable; this does not push either card row. */
 html body #grafiks-app #grafiks-list.grid-view {
