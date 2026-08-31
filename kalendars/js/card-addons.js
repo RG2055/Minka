@@ -686,7 +686,7 @@
       removeButton.setAttribute('aria-disabled', String(removeButton.disabled));
       grid.innerHTML = ITEMS.filter(function(item) { return item.group === activeGroup; }).map(function(item) {
         var selected = config && config.id === item.id;
-        return '<button type="button" class="mk-addon-choice' + (selected ? ' is-active' : '') + '" data-addon-id="' + esc(item.id) + '" aria-pressed="' + selected + '" title="' + esc(item.label) + '">'
+        return '<button type="button" class="mk-addon-choice' + (selected ? ' is-active' : '') + '" data-addon-id="' + esc(item.id) + '" aria-label="' + esc(item.label) + '" aria-pressed="' + selected + '" title="' + esc(item.label) + '">'
           + '<span><img loading="eager" decoding="async" draggable="false" src="' + esc(assetUrl(item)) + '" alt=""></span><b>' + esc(item.label) + '</b></button>';
       }).join('');
       grid.querySelectorAll('.mk-addon-choice').forEach(function(button) {
