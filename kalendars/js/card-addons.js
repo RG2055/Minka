@@ -427,11 +427,14 @@
     var list = document.querySelector('#grafiks-list.grid-view');
     if (!list) return;
     var sections = Array.prototype.slice.call(list.querySelectorAll(':scope > .cards-section'));
-    var precedingClearance = 0;
-    sections.forEach(function(section) {
+    var header = document.getElementById('minkaBarWrap');
+    var headerRect = header ? header.getBoundingClientRect() : null;
+    var listTop = list.getBoundingClientRect().top;
+    /* Read every rectangle first, then update styles. Keeping these phases
+       separate avoids a forced page layout for each decorated section. */
+    var plans = sections.map(function(section, sectionIndex) {
       var style = getComputedStyle(section);
       var current = parseFloat(style.getPropertyValue('--mk-addon-section-top-clearance')) || 0;
-      var currentPullup = parseFloat(style.getPropertyValue('--mk-addon-label-pullup')) || 0;
       var label = section.querySelector(':scope > .cards-section-label');
       var toppers = Array.prototype.slice.call(section.querySelectorAll(
         ':scope > .cards-subgrid > .card > .mk-card-addon[data-addon-group="topper"]'
@@ -439,26 +442,55 @@
       var desired = 0;
       if (toppers.length) {
         var labelRect = label ? label.getBoundingClientRect() : null;
-        var header = document.getElementById('minkaBarWrap');
-        var headerRect = header ? header.getBoundingClientRect() : null;
         var requiredTop = labelRect && labelRect.height
-          ? labelRect.bottom + currentPullup
-          : (headerRect ? headerRect.bottom : list.getBoundingClientRect().top);
+          ? labelRect.bottom
+          : (headerRect ? headerRect.bottom : listTop);
         var minTop = Math.min.apply(null, toppers.map(function(topper) {
           return topper.getBoundingClientRect().top;
         }));
         desired = Math.ceil(current + requiredTop - minTop + 8);
         desired = Math.max(0, Math.min(desired, 220));
       }
-      if (Math.abs(current - desired) >= 1) {
-        if (desired) section.style.setProperty('--mk-addon-section-top-clearance', desired + 'px');
+      var bottomClearance = 0;
+      if (sectionIndex === sections.length - 1) {
+        var charms = Array.prototype.slice.call(section.querySelectorAll(
+          ':scope > .cards-subgrid > .card > .mk-card-addon[data-addon-group="charm"]'
+        ));
+        charms.forEach(function(charm) {
+          var card = charm.parentElement;
+          if (!card) return;
+          bottomClearance = Math.max(bottomClearance,
+            Math.ceil(charm.offsetTop + charm.offsetHeight - card.clientHeight + 10));
+        });
+        bottomClearance = Math.max(0, Math.min(bottomClearance, 150));
+      }
+      return {
+        section: section,
+        current: current,
+        desired: desired,
+        bottomClearance: bottomClearance
+      };
+    });
+    plans.forEach(function(plan) {
+      var section = plan.section;
+      if (Math.abs(plan.current - plan.desired) >= 1) {
+        if (plan.desired) section.style.setProperty('--mk-addon-section-top-clearance', plan.desired + 'px');
         else section.style.removeProperty('--mk-addon-section-top-clearance');
       }
-      section.style.setProperty('--mk-addon-label-pullup', precedingClearance + 'px');
-      precedingClearance += desired;
+      if (plan.bottomClearance) {
+        section.style.setProperty('--mk-addon-section-bottom-clearance', plan.bottomClearance + 'px');
+      } else {
+        section.style.removeProperty('--mk-addon-section-bottom-clearance');
+      }
+      // Each role heading belongs to its own section and must remain in normal
+      // flow. Pulling it up by all previous topper clearances made the second
+      // heading overlap the upper row (or disappear behind a topper) on wide
+      // Windows layouts.
+      section.style.removeProperty('--mk-addon-label-pullup');
     });
     list.style.removeProperty('--mk-addon-list-bottom-clearance');
     scheduleTopperClearance();
+    scheduleAddonPortals(80);
   }
 
   function scheduleSectionClearance() {

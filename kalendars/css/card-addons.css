@@ -7,7 +7,10 @@
 
 .mk-addon-active {
   overflow: visible !important;
-  contain: layout style !important;
+  /* Chromium/Windows can clip transformed descendants at a layout-containment
+     boundary even when overflow computes to visible. Style containment keeps
+     invalidation local without creating that native add-on paint boundary. */
+  contain: style !important;
   isolation: isolate;
   background: transparent !important;
   background-image: none !important;
@@ -49,7 +52,7 @@ html body #worker-modal #modal-skin-view #grafiks-list.mk-skin-preview-list
 html body #worker-modal #modal-skin-view .mk-skin-shell
   #grafiks-list.mk-skin-preview-list .card.mk-skin-preview-real.mk-addon-active {
   overflow: visible !important;
-  contain: layout style !important;
+  contain: style !important;
 }
 
 html body #worker-modal.mk-skin-mode #modal-skin-view {
@@ -63,7 +66,7 @@ html body #worker-modal.mk-skin-mode .modal-content {
 html body #grafiks-app #grafiks-list.grid-view .cards-section
   .cards-subgrid > .card.mk-addon-active {
   overflow: visible !important;
-  contain: layout style !important;
+  contain: style !important;
   min-width: 0 !important;
   background: transparent !important;
   background-image: none !important;
@@ -82,16 +85,11 @@ html body #grafiks-app #grafiks-list.grid-view .cards-section
   max-width: 100% !important;
 }
 
-/* The role heading keeps its original position. Only the cards below it move
-   enough to make a native topper fit between the heading and its card. */
+/* The role heading stays in normal flow. Only the cards below it move enough
+   to make a native topper fit between the heading and its card. */
 html body #grafiks-app #grafiks-list.grid-view .cards-section
   > .cards-subgrid {
   padding-top: var(--mk-addon-section-top-clearance, 0px) !important;
-}
-
-html body #grafiks-app #grafiks-list.grid-view .cards-section
-  > .cards-section-label {
-  transform: translateY(calc(-1 * var(--mk-addon-label-pullup, 0px))) !important;
 }
 
 /* A charm on the final row may extend past the scrollable content box. Keep
@@ -101,6 +99,13 @@ html body #grafiks-app #grafiks-list.grid-view {
     42px,
     var(--host-safe-bottom, 42px)
   ) !important;
+}
+
+/* Keep the last row's native charm inside the roster's own scroll geometry.
+   This adds space only after the final cards; it never opens a gap between the
+   profession rows or changes any card position. */
+html body #grafiks-app #grafiks-list.grid-view .cards-section:last-child {
+  padding-bottom: var(--mk-addon-section-bottom-clearance, 0px) !important;
 }
 
 /* The desktop list's original clip starts exactly at the first card row,
