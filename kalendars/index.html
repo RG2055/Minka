@@ -131,13 +131,13 @@ window.setTimeout(function () {
 <!-- bundle.css is critical ï¿½ load normally -->
 <link rel="stylesheet" href="css/bundle.css?v=20260621n">
 <link rel="stylesheet" href="css/skin-draw.css?v=20260829chalk1">
-<link rel="stylesheet" href="css/card-addons.css?v=20260831perf17">
-<script src="js/card-addons.js?v=20260831perf17" defer></script>
+<link rel="stylesheet" href="css/card-addons.css?v=20260831perf20">
+<script src="js/card-addons.js?v=20260831perf20" defer></script>
 <link rel="stylesheet" href="css/side-cards-v2.css?v=20260818nfootgap1">
 <link rel="stylesheet" href="css/header-weather.css?v=20260813headerfix1">
 <link rel="stylesheet" href="css/mood-fluent.css?v=20260820fmood16">
 <link rel="stylesheet" href="css/daily-cat.css?v=20260829catpicker1">
-<link rel="stylesheet" href="css/depth-cards.css?v=20260831addonswin2">
+<link rel="stylesheet" href="css/depth-cards.css?v=20260831addonswin3">
 
 <!-- Fluent Emoji webfont (fluentmoji, MIT) — neblokējoši, tāpat kā pārējie fonti.
      Fails ir sadalīts unicode-range gabalos, tāpēc pārlūks lejupielādē tikai tos
@@ -1565,7 +1565,7 @@ function _mkToast(msg, type) {
 <script src="js/depth-cards.js?v=20260828local10" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
-<script src="js/calendar_extras_v4.js?v=20260810layout2"></script>
+<script src="js/calendar_extras_v4.js?v=20260831autofit1"></script>
 <script src="js/fatigue.js?v=20260824perfaudit3"></script>
 <script src="js/nightsplit.js?v=20260829winlayout1" defer></script>
 <script src="js/monthcal.js?v=20260814uxpass1" defer></script>
@@ -4165,7 +4165,7 @@ window.addEventListener('message', function(e) {
 // worker from this iframe added a second controllerchange reload listener with
 // a different app version, which could make PWA updates visibly reload twice.
 if ('serviceWorker' in navigator && window.top === window) {
-  const MINKA_APP_VERSION = '2026.08.31-card-addons-layout17.calendar';
+  const MINKA_APP_VERSION = '2026.08.31-card-addons-layout20.calendar';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -19083,46 +19083,41 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       return;
     }
     var knownWidth = Math.max(0, Number(rosterWidth) || 0);
-    var columns;
-    if (knownWidth) {
-      // These values mirror the final authoritative grid rules: 3 columns on
-      // mobile, 7 on the large-monitor layout, otherwise desktop auto-fill at
-      // 132px + 16px gap (radio-open uses its compact 96px + 7px rule).
-      if (mobile) columns = 3;
-      else if (window.innerWidth >= 1800 && window.innerHeight >= 880) columns = 7;
-      else if (document.documentElement.classList.contains('host-radio-open')) {
-        columns = Math.max(1, Math.floor((knownWidth + 7) / 103));
-      } else {
-        columns = Math.max(1, Math.floor((knownWidth + 16) / 148));
-      }
-    } else {
-      columns = String(getComputedStyle(rdGrid).gridTemplateColumns || '')
-        .trim().split(/\s+/).filter(Boolean).length;
-      knownWidth = Math.max(0, Math.round(rdGrid.clientWidth || list.clientWidth || 0));
-    }
+    // autoSizeCards() has already written the authoritative tracks. Read
+    // those actual tracks instead of rebuilding a second, approximate column
+    // count from viewport breakpoints. The two guesses diverged on Windows
+    // scaling/zoom and assigned following cards to non-existent columns.
+    var columns = String(getComputedStyle(rdGrid).gridTemplateColumns || '')
+      .trim().split(/\s+/).filter(Boolean).length;
+    knownWidth = Math.max(knownWidth, Math.round(rdGrid.clientWidth || list.clientWidth || 0));
     var employee = rdGrid.querySelector('.card:not(.rg-feedback-card)')
       || rgGrid.querySelector('.card');
-    if (mobile || columns < 6 || !employee) {
+    if (mobile || columns < 3 || !employee) {
+      clearMoodSectionLayout(rgSection, rgGrid);
+      return;
+    }
+    var moodRect = mood.getBoundingClientRect();
+    var employeeRect = employee.getBoundingClientRect();
+    // Pull the next profession into the free tracks only when the feedback
+    // module really shares the employee row. On narrow layouts it wraps below
+    // the workers; pulling there would create an overlap.
+    if (Math.abs(moodRect.top - employeeRect.top) > 4) {
       clearMoodSectionLayout(rgSection, rgGrid);
       return;
     }
     var cacheKey = [
       Math.round(knownWidth), columns, mobile ? 1 : 0,
       document.documentElement.classList.contains('host-radio-open') ? 1 : 0,
+      Math.round(moodRect.height), Math.round(employeeRect.height),
       document.fonts ? document.fonts.status : 'ready'
     ].join('|');
     var pullup = moodPullupCache.get(cacheKey);
     if (!Number.isFinite(pullup)) {
-      // Keep one complete role-heading row between the upper employee cards
-      // and the pulled-up radiographer grid. Previously the whole height
-      // difference was removed, so on months with a tall mood card the
-      // RADIOGRĀFERI label landed inside the radiologist cards.
-      var roleHeadingClearance = 44;
-      pullup = Math.max(0,
-        mood.getBoundingClientRect().height
-        - employee.getBoundingClientRect().height
-        - roleHeadingClearance
-      );
+      // The next section already owns its label and normal section gap. Remove
+      // only the height by which the feedback module extends below the worker
+      // cards. This keeps RADIOGRĀFERI visible directly below the upper cards
+      // while its first row fills the genuinely empty tracks on the left.
+      pullup = Math.max(0, moodRect.bottom - employeeRect.bottom);
       moodPullupCache.set(cacheKey, pullup);
     }
     if (pullup < 12) {

@@ -87,6 +87,11 @@
       if (!cards.length) return null;
 
       const count = cards.length;
+      // The feedback module spans two tracks, so it consumes one more grid
+      // slot than its DOM node count suggests. Counting only elements made a
+      // wide roster choose four columns for three workers + feedback; the
+      // feedback then wrapped to a second row and left a large empty band.
+      const occupiedSlots = count + (grid.querySelector('.rg-feedback-card') ? 1 : 0);
       const containerW = sharedWidth;
       // During a day switch the old roster supplied a stable width, so avoid a
       // second geometry read from the freshly mutated DOM. Resize/legacy paths
@@ -95,20 +100,20 @@
       const gap = 9;
       if (!containerW) return null;
 
-      let cols = Math.max(1, Math.min(count, Math.floor((containerW + gap) / 145)));
-      if (containerH > 0 && count > cols) {
+      let cols = Math.max(1, Math.min(occupiedSlots, Math.floor((containerW + gap) / 145)));
+      if (containerH > 0 && occupiedSlots > cols) {
         const maxRows = Math.max(1, Math.floor(containerH / 136));
-        cols = Math.max(cols, Math.ceil(count / maxRows));
+        cols = Math.max(cols, Math.ceil(occupiedSlots / maxRows));
       }
 
       const cardW = (containerW - gap * Math.max(0, cols - 1)) / cols;
       const cardH = Math.max(136, Math.min(182, Math.round(cardW * 0.82)));
       const shiftFontSize = Math.max(24, Math.min(56, Math.round(cardH * 0.34)));
-      return { grid, cards, cols, cardH, shiftFontSize };
+      return { grid, cards, cols, cardH, shiftFontSize, occupiedSlots };
     }).filter(Boolean);
 
-    plans.forEach(({ grid, cards, cols, cardH, shiftFontSize }) => {
-      const signature = [cols, cardH, shiftFontSize, cards.length].join('|');
+    plans.forEach(({ grid, cards, cols, cardH, shiftFontSize, occupiedSlots }) => {
+      const signature = [cols, cardH, shiftFontSize, occupiedSlots].join('|');
       if (grid.dataset.mkSizeSignature === signature) return;
       grid.dataset.mkSizeSignature = signature;
       grid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
