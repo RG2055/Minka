@@ -21,7 +21,9 @@
     'ns-room-bed-skin-hue'
   ];
   var SURFACE_PROPS = ['--mk-skin-img', '--mk-emoji-tint', '--mk-emoji-tint-a'];
-  var CARD_SELECTOR = '.card[data-worker], .nsc-full-card[data-worker], .ns-room-bed[data-worker]';
+  // Decorations belong to the main roster only. Night distribution reuses
+  // worker skins, but its operational cards must stay clean and uncluttered.
+  var CARD_SELECTOR = '#grafiks-list .card[data-worker]';
 
   var GROUPS = [
     { id: 'topper', label: 'Topperi' },
@@ -203,8 +205,6 @@
     geometryFrame = 0;
     var images = Array.prototype.slice.call(document.querySelectorAll(
       '#grafiks-list .card > .mk-card-addon:not(.mk-card-addon-portal),'
-      + '#nsPanel .nsc-full-card > .mk-card-addon:not(.mk-card-addon-portal),'
-      + '#nsPanel .ns-room-bed > .mk-card-addon:not(.mk-card-addon-portal),'
       + '.mk-skin-preview-real > .mk-card-addon:not(.mk-card-addon-portal)'
     ));
     var measurements = images.map(function(image) {
@@ -332,7 +332,7 @@
   function applyWorker(name) {
     var key = normName(name);
     var config = getConfig(name);
-    document.querySelectorAll('#grafiks-list .card[data-worker], #nsPanel .nsc-full-card[data-worker], #nsPanel .ns-room-bed[data-worker]').forEach(function(card) {
+    document.querySelectorAll('#grafiks-list .card[data-worker]').forEach(function(card) {
       if (normName(card.getAttribute('data-worker')) === key) applyToCard(card, config);
     });
     scheduleSectionClearance();
@@ -510,7 +510,7 @@
     scanFrame = 0;
     observeCardRoots();
     var all = readAll();
-    document.querySelectorAll('#grafiks-list .card[data-worker], #nsPanel .nsc-full-card[data-worker], #nsPanel .ns-room-bed[data-worker]').forEach(function(card) {
+    document.querySelectorAll('#grafiks-list .card[data-worker]').forEach(function(card) {
       applyToCard(card, all[normName(card.getAttribute('data-worker'))] || null);
     });
     scheduleSectionClearance();
@@ -559,7 +559,7 @@
   }
 
   function observeCardRoots() {
-    ['#grafiks-list', '#nsPanel'].forEach(function(selector) {
+    ['#grafiks-list'].forEach(function(selector) {
       var root = document.querySelector(selector);
       if (!root || observedRoots.has(root)) return;
       observedRoots.add(root);
