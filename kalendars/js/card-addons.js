@@ -2,10 +2,15 @@
   'use strict';
 
   var STORAGE_KEY = 'mkWorkerCardAddonsV1';
-  var CACHE_BUST = '20260831e';
+  var CACHE_BUST = '20260831g';
   var activeGroup = 'topper';
   var scanFrame = 0;
   var sectionFrame = 0;
+  var portalFrame = 0;
+  var portalMonitorTimer = 0;
+  var portalBurstUntil = 0;
+  var portalMap = new Map();
+  var portalScrollList = null;
 
   var GROUPS = [
     { id: 'topper', label: 'Topperi' },
@@ -171,10 +176,21 @@
       && existing.dataset.addonScale === String(scale)
       && existing.dataset.addonX === String(offsetX)
       && existing.dataset.addonY === String(offsetY)) {
+      /* Calendar/radio re-renders may rebuild card.className while preserving
+         child nodes. Restore the add-on surface and active overflow class even
+         when the matching image already exists. Without this, only the few
+         pixels inside the card (a clasp or paws) survive overflow:hidden. */
+      if (!surface) {
+        surface = document.createElement('span');
+        surface.className = 'mk-card-addon-surface';
+        surface.setAttribute('aria-hidden', 'true');
+        card.insertBefore(surface, card.firstChild);
+      }
       existing.style.setProperty('--mk-addon-offset-x', (offsetX * card.clientWidth / 100) + 'px');
       existing.style.setProperty('--mk-addon-offset-y', (offsetY * card.clientHeight / 100) + 'px');
       existing.style.setProperty('--mk-addon-dock-y', (Number(item.dockY) || 3) + 'px');
-      if (surface) syncCardSurface(card, surface);
+      syncCardSurface(card, surface);
+      card.classList.add('mk-addon-active');
       return;
     }
     if (existing) existing.remove();
@@ -213,6 +229,84 @@
       if (normName(card.getAttribute('data-worker')) === key) applyToCard(card, config);
     });
     scheduleSectionClearance();
+    scheduleAddonPortals(260);
+  }
+
+  /* A CSS z-index cannot escape the clipping edge of a scroll container.
+     Topper/charm copies therefore live at the document level while their
+     invisible source nodes keep the exact card-relative geometry. This keeps
+     the layout compact and lets the decorations paint over the list edge. */
+  function syncAddonPortals() {
+    var selector = '#grafiks-list.grid-view .cards-section > .cards-subgrid'
+      + ' > .card.mk-addon-active > .mk-card-addon[data-addon-group="topper"],'
+      + '#grafiks-list.grid-view .cards-section > .cards-subgrid'
+      + ' > .card.mk-addon-active > .mk-card-addon[data-addon-group="charm"]';
+    var sources = Array.prototype.slice.call(document.querySelectorAll(selector));
+    var live = new Set(sources);
+
+    portalMap.forEach(function(clone, source) {
+      if (source.isConnected && live.has(source)) return;
+      source.classList.remove('mk-card-addon-portaled');
+      clone.remove();
+      portalMap.delete(source);
+    });
+
+    var list = document.querySelector('#grafiks-list.grid-view');
+    if (!list) return;
+    if (portalScrollList !== list) {
+      if (portalScrollList) portalScrollList.removeEventListener('scroll', handlePortalScroll);
+      portalScrollList = list;
+      portalScrollList.addEventListener('scroll', handlePortalScroll, { passive: true });
+    }
+    var listRect = list.getBoundingClientRect();
+    sources.forEach(function(source) {
+      var clone = portalMap.get(source);
+      if (!clone) {
+        clone = source.cloneNode(false);
+        clone.removeAttribute('id');
+        clone.classList.add('mk-card-addon-portal');
+        clone.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(clone);
+        portalMap.set(source, clone);
+        source.classList.add('mk-card-addon-portaled');
+      }
+
+      var card = source.parentElement;
+      var cardRect = card.getBoundingClientRect();
+      var sourceRect = source.getBoundingClientRect();
+      var cardInView = cardRect.bottom > listRect.top && cardRect.top < listRect.bottom;
+      clone.classList.toggle('is-visible', cardInView);
+      if (!cardInView) return;
+      clone.style.left = sourceRect.left + 'px';
+      clone.style.top = sourceRect.top + 'px';
+      clone.style.width = sourceRect.width + 'px';
+      clone.style.height = sourceRect.height + 'px';
+    });
+    if (portalMap.size && !portalMonitorTimer) {
+      portalMonitorTimer = window.setTimeout(monitorAddonPortals, 160);
+    }
+  }
+
+  function monitorAddonPortals() {
+    portalMonitorTimer = 0;
+    if (!portalMap.size) return;
+    syncAddonPortals();
+  }
+
+  function scheduleAddonPortals(duration) {
+    portalBurstUntil = Math.max(portalBurstUntil, Date.now() + (duration || 0));
+    if (portalFrame) return;
+    portalFrame = requestAnimationFrame(function portalStep() {
+      portalFrame = 0;
+      syncAddonPortals();
+      if (Date.now() < portalBurstUntil) {
+        portalFrame = requestAnimationFrame(portalStep);
+      }
+    });
+  }
+
+  function handlePortalScroll() {
+    scheduleAddonPortals(260);
   }
 
   function syncSectionClearance() {
@@ -220,47 +314,10 @@
     var list = document.querySelector('#grafiks-list.grid-view');
     if (!list) return;
     var sections = Array.prototype.slice.call(list.querySelectorAll(':scope > .cards-section'));
-    var mobileShell = document.documentElement.classList.contains('mk-mobile-shell');
-    sections.forEach(function(section, sectionIndex) {
-      /* Only the first section needs protection from the list's top clipping
-         edge. Later toppers can safely use the open inter-section area. */
-      var topReserveCap = sectionIndex === 0 ? (mobileShell ? 24 : 36) : 8;
-      var maxTopOverflow = 0;
-      section.querySelectorAll('.cards-subgrid > .card.mk-addon-active').forEach(function(card) {
-        var addon = card.querySelector(':scope > .mk-card-addon[data-addon-group="topper"]');
-        if (!addon) return;
-        var cardRect = card.getBoundingClientRect();
-        var addonRect = addon.getBoundingClientRect();
-        maxTopOverflow = Math.max(maxTopOverflow, cardRect.top - addonRect.top);
-      });
-      if (maxTopOverflow > 0) {
-        /* The topper may float through the existing heading gap. Reserving its
-           full height produced 100+ px dead zones on scaled Windows screens. */
-        section.style.setProperty(
-          '--mk-addon-section-top-clearance',
-          Math.ceil(Math.min(maxTopOverflow + 8, topReserveCap)) + 'px'
-        );
-      } else {
-        section.style.removeProperty('--mk-addon-section-top-clearance');
-      }
+    sections.forEach(function(section) {
+      section.style.removeProperty('--mk-addon-section-top-clearance');
     });
-
-    var maxBottomOverflow = 0;
-    var lastSection = sections[sections.length - 1];
-    if (lastSection) {
-      lastSection.querySelectorAll('.cards-subgrid > .card.mk-addon-active').forEach(function(card) {
-        var charm = card.querySelector(':scope > .mk-card-addon[data-addon-group="charm"]');
-        if (!charm) return;
-        var cardRect = card.getBoundingClientRect();
-        var charmRect = charm.getBoundingClientRect();
-        maxBottomOverflow = Math.max(maxBottomOverflow, charmRect.bottom - cardRect.bottom);
-      });
-    }
-    if (maxBottomOverflow > 0) {
-      list.style.setProperty('--mk-addon-list-bottom-clearance', Math.ceil(maxBottomOverflow + 12) + 'px');
-    } else {
-      list.style.removeProperty('--mk-addon-list-bottom-clearance');
-    }
+    list.style.removeProperty('--mk-addon-list-bottom-clearance');
   }
 
   function scheduleSectionClearance() {
@@ -275,6 +332,7 @@
       applyToCard(card, all[normName(card.getAttribute('data-worker'))] || null);
     });
     scheduleSectionClearance();
+    scheduleAddonPortals(260);
   }
 
   function scheduleScan() {
@@ -511,7 +569,51 @@
   waitForPicker();
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', scanCards, { once: true });
   else scanCards();
-  new MutationObserver(scheduleScan).observe(document.documentElement, { childList: true, subtree: true });
+  new MutationObserver(function(mutations) {
+    for (var i = 0; i < mutations.length; i += 1) {
+      var mutation = mutations[i];
+      if (mutation.type === 'childList') {
+        scheduleScan();
+        return;
+      }
+      var target = mutation.target;
+      if (!target || !target.matches || !target.matches('.card')) continue;
+      if (mutation.attributeName === 'data-worker') {
+        scheduleScan();
+        return;
+      }
+      /* Some calendar modes preserve the add-on node but replace the whole
+         card className. Watch only that broken state; ordinary hover/depth
+         class changes keep mk-addon-active and therefore do not rescan. */
+      if (mutation.attributeName === 'class'
+        && target.querySelector(':scope > .mk-card-addon')
+        && !target.classList.contains('mk-addon-active')) {
+        scheduleScan();
+        return;
+      }
+    }
+  }).observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['class', 'data-worker']
+  });
   document.addEventListener('minka:monthReady', scheduleScan);
-  window.addEventListener('resize', scheduleScan, { passive: true });
+  document.addEventListener('scroll', function() { scheduleAddonPortals(180); }, true);
+  document.addEventListener('pointermove', function(event) {
+    if (event.target && event.target.closest
+      && event.target.closest('#grafiks-list .card.mk-addon-active')) {
+      scheduleAddonPortals(260);
+    }
+  }, { passive: true });
+  document.addEventListener('pointerout', function(event) {
+    if (event.target && event.target.closest
+      && event.target.closest('#grafiks-list .card.mk-addon-active')) {
+      scheduleAddonPortals(260);
+    }
+  }, { passive: true });
+  window.addEventListener('resize', function() {
+    scheduleScan();
+    scheduleAddonPortals(320);
+  }, { passive: true });
 })();

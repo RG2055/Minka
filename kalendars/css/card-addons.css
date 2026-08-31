@@ -71,9 +71,7 @@ html body #grafiks-app #grafiks-list.grid-view .cards-section
   z-index: 40 !important;
 }
 
-/* Decorations are paint outside the card, never part of the grid sizing.
-   Chromium on Windows otherwise re-runs the old card hover translation after
-   contain/overflow changes and the whole second row visibly jumps. */
+/* Decorations are paint outside the card, never part of the grid sizing. */
 html body #grafiks-app #grafiks-list.grid-view .cards-section
   .cards-subgrid > .card,
 html body #grafiks-app #grafiks-list.grid-view .cards-section
@@ -82,13 +80,6 @@ html body #grafiks-app #grafiks-list.grid-view .cards-section
   .cards-subgrid > .card:active {
   min-width: 0 !important;
   max-width: 100% !important;
-  transform: none !important;
-  translate: none !important;
-}
-
-html body #grafiks-app #grafiks-list.grid-view .cards-section:has(.mk-card-addon[data-addon-group="topper"])
-  > .cards-subgrid {
-  padding-top: var(--mk-addon-section-top-clearance, 32px) !important;
 }
 
 /* A hanging charm already occupies the visual gap below its row. Reclaim the
@@ -105,8 +96,7 @@ html body #grafiks-app #grafiks-list.grid-view
 html body #grafiks-app #grafiks-list.grid-view {
   padding-bottom: max(
     42px,
-    var(--host-safe-bottom, 42px),
-    var(--mk-addon-list-bottom-clearance, 0px)
+    var(--host-safe-bottom, 42px)
   ) !important;
 }
 
@@ -164,10 +154,37 @@ html body #grafiks-app #grafiks-list.grid-view {
 .mk-card-addon[data-addon-group="charm"] {
   width: 28%;
   height: 66%;
-  top: calc(100% - 7px);
+  top: calc(100% - 13px);
   right: -8%;
   object-position: top center;
   transform-origin: top center;
+}
+
+/* The calendar grid is a scroll container, so z-index alone cannot let a
+   topper/charm cross its viewport edge. The source keeps card geometry while
+   this document-level copy paints above the scroll clip. */
+.mk-card-addon.mk-card-addon-portaled {
+  visibility: hidden !important;
+}
+
+html body > .mk-card-addon.mk-card-addon-portal {
+  display: none !important;
+  position: fixed !important;
+  right: auto !important;
+  bottom: auto !important;
+  max-width: none !important;
+  transform: none !important;
+  transform-origin: center !important;
+  translate: none !important;
+  scale: 1 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: none !important;
+  z-index: 500000 !important;
+}
+
+html body > .mk-card-addon.mk-card-addon-portal.is-visible {
+  display: block !important;
 }
 
 .mk-card-addon[data-addon-group="strip"] {
