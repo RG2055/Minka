@@ -2,15 +2,26 @@
   'use strict';
 
   var STORAGE_KEY = 'mkWorkerCardAddonsV1';
-  var CACHE_BUST = '20260831g';
+  var CACHE_BUST = '20260831h';
   var activeGroup = 'topper';
   var scanFrame = 0;
   var sectionFrame = 0;
   var portalFrame = 0;
-  var portalMonitorTimer = 0;
   var portalBurstUntil = 0;
   var portalMap = new Map();
   var portalScrollList = null;
+  var geometryFrame = 0;
+  var topperClearanceFrame = 0;
+  var observedRoots = new WeakSet();
+
+  var SURFACE_CLASSES = [
+    'card-rd', 'mk-mid-card-rd', 'mk-mid-card-rg',
+    'mk-has-skin', 'mk-has-grad', 'mk-skin-fit',
+    'nsc-worker-skinned', 'nsc-skin-hue', 'nsc-skin-contain',
+    'ns-room-bed-skin-hue'
+  ];
+  var SURFACE_PROPS = ['--mk-skin-img', '--mk-emoji-tint', '--mk-emoji-tint-a'];
+  var CARD_SELECTOR = '.card[data-worker], .nsc-full-card[data-worker], .ns-room-bed[data-worker]';
 
   var GROUPS = [
     { id: 'topper', label: 'Topperi' },
@@ -143,17 +154,102 @@
     catch (_error) { return item.src + '?v=' + CACHE_BUST; }
   }
 
-  function syncCardSurface(card, surface) {
+  function surfaceSignature(card) {
+    var classes = SURFACE_CLASSES.filter(function(name) {
+      return card.classList.contains(name);
+    }).join(',');
+    var properties = SURFACE_PROPS.map(function(name) {
+      return card.style.getPropertyValue(name);
+    }).join('|');
+    return classes + '|' + properties;
+  }
+
+  function syncCardSurface(card, surface, force) {
+    var signature = surfaceSignature(card);
+    if (!force && surface.dataset.surfaceSignature === signature) return;
     var wasActive = card.classList.contains('mk-addon-active');
     if (wasActive) card.classList.remove('mk-addon-active');
     var style = getComputedStyle(card);
-    card.style.setProperty('--mk-addon-card-radius', style.borderRadius);
-    surface.style.setProperty('background', style.background, 'important');
-    surface.style.setProperty('background-blend-mode', style.backgroundBlendMode, 'important');
-    surface.style.setProperty('box-shadow', style.boxShadow, 'important');
-    surface.style.setProperty('border-radius', style.borderRadius, 'important');
-    surface.style.setProperty('clip-path', 'inset(0 round ' + style.borderRadius + ')', 'important');
+    var values = {
+      background: style.background,
+      blendMode: style.backgroundBlendMode,
+      boxShadow: style.boxShadow,
+      borderRadius: style.borderRadius
+    };
     if (wasActive) card.classList.add('mk-addon-active');
+    card.style.setProperty('--mk-addon-card-radius', values.borderRadius);
+    surface.style.setProperty('background', values.background, 'important');
+    surface.style.setProperty('background-blend-mode', values.blendMode, 'important');
+    surface.style.setProperty('box-shadow', values.boxShadow, 'important');
+    surface.style.setProperty('border-radius', values.borderRadius, 'important');
+    surface.style.setProperty('clip-path', 'inset(0 round ' + values.borderRadius + ')', 'important');
+    surface.dataset.surfaceSignature = signature;
+  }
+
+  function setAddonGroupClass(card, group) {
+    GROUPS.forEach(function(item) {
+      card.classList.toggle('mk-addon-group-' + item.id, item.id === group);
+    });
+  }
+
+  function writeAddonGeometry(image, cardWidth, cardHeight) {
+    var offsetX = Number(image.dataset.addonX) || 0;
+    var offsetY = Number(image.dataset.addonY) || 0;
+    image.style.setProperty('--mk-addon-offset-x', (offsetX * cardWidth / 100) + 'px');
+    image.style.setProperty('--mk-addon-offset-y', (offsetY * cardHeight / 100) + 'px');
+  }
+
+  function refreshAddonGeometry() {
+    geometryFrame = 0;
+    var images = Array.prototype.slice.call(document.querySelectorAll(
+      '#grafiks-list .card > .mk-card-addon:not(.mk-card-addon-portal),'
+      + '#nsPanel .nsc-full-card > .mk-card-addon:not(.mk-card-addon-portal),'
+      + '#nsPanel .ns-room-bed > .mk-card-addon:not(.mk-card-addon-portal),'
+      + '.mk-skin-preview-real > .mk-card-addon:not(.mk-card-addon-portal)'
+    ));
+    var measurements = images.map(function(image) {
+      var card = image.parentElement;
+      return { image: image, width: card.clientWidth, height: card.clientHeight };
+    });
+    measurements.forEach(function(entry) {
+      writeAddonGeometry(entry.image, entry.width, entry.height);
+    });
+    scheduleAddonPortals(80);
+  }
+
+  function scheduleAddonGeometry() {
+    if (geometryFrame) return;
+    geometryFrame = requestAnimationFrame(refreshAddonGeometry);
+  }
+
+  function syncTopperClearance() {
+    topperClearanceFrame = 0;
+    var list = document.querySelector('#grafiks-list.grid-view');
+    if (!list || document.documentElement.classList.contains('mk-mobile-shell')) return;
+    var toppers = Array.prototype.slice.call(list.querySelectorAll(
+      '.cards-section > .cards-subgrid > .card > .mk-card-addon[data-addon-group="topper"]'
+    ));
+    var style = getComputedStyle(list);
+    var current = parseFloat(style.getPropertyValue('--mk-addon-top-clearance')) || 72;
+    var desired = 72;
+    if (toppers.length) {
+      var listRect = list.getBoundingClientRect();
+      var panel = list.closest('.main-panel');
+      var panelTop = panel ? panel.getBoundingClientRect().top : 0;
+      var minTopAtScrollStart = Math.min.apply(null, toppers.map(function(topper) {
+        return topper.getBoundingClientRect().top + list.scrollTop;
+      }));
+      desired = Math.ceil(current + listRect.top - minTopAtScrollStart + 10);
+      desired = Math.max(72, Math.min(desired, current + listRect.top - panelTop - 4));
+    }
+    if (Math.abs(current - desired) >= 1) {
+      list.style.setProperty('--mk-addon-top-clearance', desired + 'px');
+    }
+  }
+
+  function scheduleTopperClearance() {
+    if (topperClearanceFrame) return;
+    topperClearanceFrame = requestAnimationFrame(syncTopperClearance);
   }
 
   function applyToCard(card, config) {
@@ -163,6 +259,7 @@
       if (existing) existing.remove();
       if (surface) surface.remove();
       card.classList.remove('mk-addon-active');
+      setAddonGroupClass(card, '');
       card.style.removeProperty('--mk-addon-card-radius');
       return;
     }
@@ -180,16 +277,18 @@
          child nodes. Restore the add-on surface and active overflow class even
          when the matching image already exists. Without this, only the few
          pixels inside the card (a clasp or paws) survive overflow:hidden. */
+      var needsGeometry = !card.classList.contains('mk-addon-active');
       if (!surface) {
         surface = document.createElement('span');
         surface.className = 'mk-card-addon-surface';
         surface.setAttribute('aria-hidden', 'true');
         card.insertBefore(surface, card.firstChild);
+        needsGeometry = true;
       }
-      existing.style.setProperty('--mk-addon-offset-x', (offsetX * card.clientWidth / 100) + 'px');
-      existing.style.setProperty('--mk-addon-offset-y', (offsetY * card.clientHeight / 100) + 'px');
+      if (needsGeometry) writeAddonGeometry(existing, card.clientWidth, card.clientHeight);
       existing.style.setProperty('--mk-addon-dock-y', (Number(item.dockY) || 3) + 'px');
       syncCardSurface(card, surface);
+      setAddonGroupClass(card, item.group);
       card.classList.add('mk-addon-active');
       return;
     }
@@ -205,6 +304,7 @@
     image.className = 'mk-card-addon';
     image.alt = '';
     image.draggable = false;
+    image.decoding = 'async';
     image.setAttribute('aria-hidden', 'true');
     image.dataset.addonId = item.id;
     image.dataset.addonGroup = item.group;
@@ -214,10 +314,14 @@
     image.dataset.addonY = String(offsetY);
     image.style.setProperty('--mk-addon-scale', scale);
     image.style.setProperty('--mk-addon-dock-y', (Number(item.dockY) || 3) + 'px');
-    image.style.setProperty('--mk-addon-offset-x', (offsetX * card.clientWidth / 100) + 'px');
-    image.style.setProperty('--mk-addon-offset-y', (offsetY * card.clientHeight / 100) + 'px');
-    image.addEventListener('load', scheduleSectionClearance, { once: true });
+    writeAddonGeometry(image, card.clientWidth, card.clientHeight);
+    image.addEventListener('load', function() {
+      scheduleSectionClearance();
+      scheduleTopperClearance();
+      scheduleAddonPortals(80);
+    }, { once: true });
     image.src = assetUrl(item);
+    setAddonGroupClass(card, item.group);
     card.classList.add('mk-addon-active');
     card.appendChild(image);
   }
@@ -229,17 +333,15 @@
       if (normName(card.getAttribute('data-worker')) === key) applyToCard(card, config);
     });
     scheduleSectionClearance();
-    scheduleAddonPortals(260);
+    scheduleAddonPortals(100);
   }
 
-  /* A CSS z-index cannot escape the clipping edge of a scroll container.
-     Topper/charm copies therefore live at the document level while their
-     invisible source nodes keep the exact card-relative geometry. This keeps
-     the layout compact and lets the decorations paint over the list edge. */
+  /* Toppers stay in the card's native layer; the list gets an expanded top
+     viewport in CSS so they are never clipped. Only a charm crossing the
+     bottom scroll edge needs a temporary document-level fallback. */
   function syncAddonPortals() {
+    if (document.hidden) return;
     var selector = '#grafiks-list.grid-view .cards-section > .cards-subgrid'
-      + ' > .card.mk-addon-active > .mk-card-addon[data-addon-group="topper"],'
-      + '#grafiks-list.grid-view .cards-section > .cards-subgrid'
       + ' > .card.mk-addon-active > .mk-card-addon[data-addon-group="charm"]';
     var sources = Array.prototype.slice.call(document.querySelectorAll(selector));
     var live = new Set(sources);
@@ -258,55 +360,66 @@
       portalScrollList = list;
       portalScrollList.addEventListener('scroll', handlePortalScroll, { passive: true });
     }
-    var listRect = list.getBoundingClientRect();
     sources.forEach(function(source) {
       var clone = portalMap.get(source);
       if (!clone) {
         clone = source.cloneNode(false);
         clone.removeAttribute('id');
         clone.classList.add('mk-card-addon-portal');
+        clone.decoding = 'async';
         clone.setAttribute('aria-hidden', 'true');
         document.body.appendChild(clone);
         portalMap.set(source, clone);
-        source.classList.add('mk-card-addon-portaled');
       }
+    });
 
+    /* All geometry reads happen before any positioning writes. This avoids a
+       forced full-page layout for every decorated card. */
+    var listRect = list.getBoundingClientRect();
+    var radioOpen = document.documentElement.classList.contains('host-radio-open');
+    var measurements = sources.map(function(source) {
+      var clone = portalMap.get(source);
       var card = source.parentElement;
       var cardRect = card.getBoundingClientRect();
       var sourceRect = source.getBoundingClientRect();
-      var cardInView = cardRect.bottom > listRect.top && cardRect.top < listRect.bottom;
-      clone.classList.toggle('is-visible', cardInView);
-      if (!cardInView) return;
-      clone.style.left = sourceRect.left + 'px';
-      clone.style.top = sourceRect.top + 'px';
-      clone.style.width = sourceRect.width + 'px';
-      clone.style.height = sourceRect.height + 'px';
+      var visibleHeight = Math.max(0,
+        Math.min(cardRect.bottom, listRect.bottom) - Math.max(cardRect.top, listRect.top));
+      var needsPortal = sourceRect.top < listRect.top || sourceRect.bottom > listRect.bottom
+        || (radioOpen && sourceRect.bottom > cardRect.bottom);
+      return {
+        source: source,
+        clone: clone,
+        rect: sourceRect,
+        portaled: needsPortal,
+        visible: needsPortal && visibleHeight >= Math.min(32, cardRect.height * .25)
+      };
     });
-    if (portalMap.size && !portalMonitorTimer) {
-      portalMonitorTimer = window.setTimeout(monitorAddonPortals, 160);
-    }
-  }
-
-  function monitorAddonPortals() {
-    portalMonitorTimer = 0;
-    if (!portalMap.size) return;
-    syncAddonPortals();
+    measurements.forEach(function(entry) {
+      entry.source.classList.toggle('mk-card-addon-portaled', entry.portaled);
+      entry.clone.classList.toggle('is-visible', entry.visible);
+      if (!entry.visible) return;
+      entry.clone.style.setProperty('--mk-addon-portal-x', entry.rect.left + 'px');
+      entry.clone.style.setProperty('--mk-addon-portal-y', entry.rect.top + 'px');
+      entry.clone.style.width = entry.rect.width + 'px';
+      entry.clone.style.height = entry.rect.height + 'px';
+    });
   }
 
   function scheduleAddonPortals(duration) {
+    if (document.hidden) return;
     portalBurstUntil = Math.max(portalBurstUntil, Date.now() + (duration || 0));
     if (portalFrame) return;
     portalFrame = requestAnimationFrame(function portalStep() {
       portalFrame = 0;
       syncAddonPortals();
-      if (Date.now() < portalBurstUntil) {
+      if (portalMap.size && Date.now() < portalBurstUntil) {
         portalFrame = requestAnimationFrame(portalStep);
       }
     });
   }
 
   function handlePortalScroll() {
-    scheduleAddonPortals(260);
+    scheduleAddonPortals(32);
   }
 
   function syncSectionClearance() {
@@ -314,10 +427,38 @@
     var list = document.querySelector('#grafiks-list.grid-view');
     if (!list) return;
     var sections = Array.prototype.slice.call(list.querySelectorAll(':scope > .cards-section'));
+    var precedingClearance = 0;
     sections.forEach(function(section) {
-      section.style.removeProperty('--mk-addon-section-top-clearance');
+      var style = getComputedStyle(section);
+      var current = parseFloat(style.getPropertyValue('--mk-addon-section-top-clearance')) || 0;
+      var currentPullup = parseFloat(style.getPropertyValue('--mk-addon-label-pullup')) || 0;
+      var label = section.querySelector(':scope > .cards-section-label');
+      var toppers = Array.prototype.slice.call(section.querySelectorAll(
+        ':scope > .cards-subgrid > .card > .mk-card-addon[data-addon-group="topper"]'
+      ));
+      var desired = 0;
+      if (toppers.length) {
+        var labelRect = label ? label.getBoundingClientRect() : null;
+        var header = document.getElementById('minkaBarWrap');
+        var headerRect = header ? header.getBoundingClientRect() : null;
+        var requiredTop = labelRect && labelRect.height
+          ? labelRect.bottom + currentPullup
+          : (headerRect ? headerRect.bottom : list.getBoundingClientRect().top);
+        var minTop = Math.min.apply(null, toppers.map(function(topper) {
+          return topper.getBoundingClientRect().top;
+        }));
+        desired = Math.ceil(current + requiredTop - minTop + 8);
+        desired = Math.max(0, Math.min(desired, 220));
+      }
+      if (Math.abs(current - desired) >= 1) {
+        if (desired) section.style.setProperty('--mk-addon-section-top-clearance', desired + 'px');
+        else section.style.removeProperty('--mk-addon-section-top-clearance');
+      }
+      section.style.setProperty('--mk-addon-label-pullup', precedingClearance + 'px');
+      precedingClearance += desired;
     });
     list.style.removeProperty('--mk-addon-list-bottom-clearance');
+    scheduleTopperClearance();
   }
 
   function scheduleSectionClearance() {
@@ -327,17 +468,60 @@
 
   function scanCards() {
     scanFrame = 0;
+    observeCardRoots();
     var all = readAll();
     document.querySelectorAll('#grafiks-list .card[data-worker], #nsPanel .nsc-full-card[data-worker], #nsPanel .ns-room-bed[data-worker]').forEach(function(card) {
       applyToCard(card, all[normName(card.getAttribute('data-worker'))] || null);
     });
     scheduleSectionClearance();
-    scheduleAddonPortals(260);
+    scheduleTopperClearance();
+    scheduleAddonPortals(80);
   }
 
   function scheduleScan() {
     if (scanFrame) return;
     scanFrame = requestAnimationFrame(scanCards);
+  }
+
+  function nodeTouchesCards(node) {
+    if (!node || node.nodeType !== 1 || !node.matches) return false;
+    return node.matches(CARD_SELECTOR + ', .mk-card-addon')
+      || !!node.querySelector(CARD_SELECTOR + ', .mk-card-addon');
+  }
+
+  function handleCardMutations(mutations) {
+    for (var i = 0; i < mutations.length; i += 1) {
+      var mutation = mutations[i];
+      if (mutation.type === 'childList') {
+        var changed = Array.prototype.some.call(mutation.addedNodes, nodeTouchesCards)
+          || Array.prototype.some.call(mutation.removedNodes, nodeTouchesCards);
+        if (changed) { scheduleScan(); return; }
+        continue;
+      }
+      var target = mutation.target;
+      if (!target || !target.matches || !target.matches(CARD_SELECTOR)) continue;
+      if (mutation.attributeName === 'data-worker') { scheduleScan(); return; }
+      if (mutation.attributeName === 'class'
+        && target.querySelector(':scope > .mk-card-addon')
+        && !target.classList.contains('mk-addon-active')) {
+        scheduleScan();
+        return;
+      }
+    }
+  }
+
+  function observeCardRoots() {
+    ['#grafiks-list', '#nsPanel'].forEach(function(selector) {
+      var root = document.querySelector(selector);
+      if (!root || observedRoots.has(root)) return;
+      observedRoots.add(root);
+      new MutationObserver(handleCardMutations).observe(root, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class', 'data-worker']
+      });
+    });
   }
 
   function enhancePicker(host) {
@@ -411,6 +595,7 @@
     function applyPreview() {
       if (preview) applyToCard(preview, config && config.id ? config : null);
       var previewAddon = preview && preview.querySelector(':scope > .mk-card-addon');
+      if (previewSlot) previewSlot.classList.toggle('mk-has-addon', !!previewAddon);
       syncPreviewClearance();
       if (previewAddon && !previewAddon.complete) {
         previewAddon.addEventListener('load', syncPreviewClearance, { once: true });
@@ -543,10 +728,29 @@
     return true;
   }
 
+  function installSkinHook() {
+    if (typeof window.mkApplySkinToEl !== 'function' || window.mkApplySkinToEl.__addonsWrapped) return false;
+    var original = window.mkApplySkinToEl;
+    var wrapped = function(element) {
+      var result = original.apply(this, arguments);
+      if (element && element.matches && element.matches(CARD_SELECTOR + ', .mk-skin-preview-real')) {
+        var surface = element.querySelector(':scope > .mk-card-addon-surface');
+        if (surface) syncCardSurface(element, surface, true);
+        scheduleAddonPortals(100);
+      }
+      return result;
+    };
+    wrapped.__addonsWrapped = true;
+    window.mkApplySkinToEl = wrapped;
+    return true;
+  }
+
   var hookAttempts = 0;
-  function waitForPicker() {
-    if (installPickerHook() || hookAttempts++ > 100) return;
-    setTimeout(waitForPicker, 50);
+  function waitForHooks() {
+    var pickerReady = installPickerHook() || (window.mkRenderSkinPicker && window.mkRenderSkinPicker.__addonsWrapped);
+    var skinReady = installSkinHook() || (window.mkApplySkinToEl && window.mkApplySkinToEl.__addonsWrapped);
+    if ((pickerReady && skinReady) || hookAttempts++ > 100) return;
+    setTimeout(waitForHooks, 50);
   }
 
   window.MinkaCardAddons = {
@@ -566,54 +770,41 @@
     clear: function(name) { saveConfig(name, null); }
   };
 
-  waitForPicker();
+  waitForHooks();
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', scanCards, { once: true });
   else scanCards();
-  new MutationObserver(function(mutations) {
-    for (var i = 0; i < mutations.length; i += 1) {
-      var mutation = mutations[i];
-      if (mutation.type === 'childList') {
-        scheduleScan();
-        return;
-      }
-      var target = mutation.target;
-      if (!target || !target.matches || !target.matches('.card')) continue;
-      if (mutation.attributeName === 'data-worker') {
-        scheduleScan();
-        return;
-      }
-      /* Some calendar modes preserve the add-on node but replace the whole
-         card className. Watch only that broken state; ordinary hover/depth
-         class changes keep mk-addon-active and therefore do not rescan. */
-      if (mutation.attributeName === 'class'
-        && target.querySelector(':scope > .mk-card-addon')
-        && !target.classList.contains('mk-addon-active')) {
-        scheduleScan();
-        return;
-      }
-    }
-  }).observe(document.documentElement, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: ['class', 'data-worker']
+  document.addEventListener('minka:monthReady', function() {
+    observeCardRoots();
+    scheduleScan();
   });
-  document.addEventListener('minka:monthReady', scheduleScan);
-  document.addEventListener('scroll', function() { scheduleAddonPortals(180); }, true);
+  document.addEventListener('pointerover', function(event) {
+    if (event.target && event.target.closest
+      && event.target.closest('#grafiks-list .card.mk-addon-group-charm')) {
+      scheduleAddonPortals(180);
+    }
+  }, { passive: true });
   document.addEventListener('pointermove', function(event) {
     if (event.target && event.target.closest
-      && event.target.closest('#grafiks-list .card.mk-addon-active')) {
-      scheduleAddonPortals(260);
+      && event.target.closest('#grafiks-list .card.mk-addon-group-charm')) {
+      scheduleAddonPortals(0);
     }
   }, { passive: true });
   document.addEventListener('pointerout', function(event) {
     if (event.target && event.target.closest
-      && event.target.closest('#grafiks-list .card.mk-addon-active')) {
-      scheduleAddonPortals(260);
+      && event.target.closest('#grafiks-list .card.mk-addon-group-charm')) {
+      scheduleAddonPortals(180);
     }
   }, { passive: true });
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) scheduleAddonPortals(80);
+  });
   window.addEventListener('resize', function() {
+    document.querySelectorAll('.mk-card-addon-surface').forEach(function(surface) {
+      delete surface.dataset.surfaceSignature;
+    });
+    scheduleAddonGeometry();
+    scheduleTopperClearance();
     scheduleScan();
-    scheduleAddonPortals(320);
+    scheduleAddonPortals(120);
   }, { passive: true });
 })();

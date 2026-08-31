@@ -7,7 +7,7 @@
 
 .mk-addon-active {
   overflow: visible !important;
-  contain: none !important;
+  contain: layout style !important;
   isolation: isolate;
   background: transparent !important;
   background-image: none !important;
@@ -49,7 +49,7 @@ html body #worker-modal #modal-skin-view #grafiks-list.mk-skin-preview-list
 html body #worker-modal #modal-skin-view .mk-skin-shell
   #grafiks-list.mk-skin-preview-list .card.mk-skin-preview-real.mk-addon-active {
   overflow: visible !important;
-  contain: none !important;
+  contain: layout style !important;
 }
 
 html body #worker-modal.mk-skin-mode #modal-skin-view {
@@ -63,7 +63,7 @@ html body #worker-modal.mk-skin-mode .modal-content {
 html body #grafiks-app #grafiks-list.grid-view .cards-section
   .cards-subgrid > .card.mk-addon-active {
   overflow: visible !important;
-  contain: none !important;
+  contain: layout style !important;
   min-width: 0 !important;
   background: transparent !important;
   background-image: none !important;
@@ -82,13 +82,16 @@ html body #grafiks-app #grafiks-list.grid-view .cards-section
   max-width: 100% !important;
 }
 
-/* A hanging charm already occupies the visual gap below its row. Reclaim the
-   historical section margin instead of stacking another empty strip on top of
-   the following heading. The charm remains above both sections via z-index. */
-html body #grafiks-app #grafiks-list.grid-view
-  .cards-section:has(.mk-card-addon[data-addon-group="charm"])
-  + .cards-section {
-  margin-top: -12px !important;
+/* The role heading keeps its original position. Only the cards below it move
+   enough to make a native topper fit between the heading and its card. */
+html body #grafiks-app #grafiks-list.grid-view .cards-section
+  > .cards-subgrid {
+  padding-top: var(--mk-addon-section-top-clearance, 0px) !important;
+}
+
+html body #grafiks-app #grafiks-list.grid-view .cards-section
+  > .cards-section-label {
+  transform: translateY(calc(-1 * var(--mk-addon-label-pullup, 0px))) !important;
 }
 
 /* A charm on the final row may extend past the scrollable content box. Keep
@@ -100,7 +103,17 @@ html body #grafiks-app #grafiks-list.grid-view {
   ) !important;
 }
 
-.mk-skin-preview-slot:has(.mk-card-addon) {
+/* The desktop list's original clip starts exactly at the first card row,
+   which cuts native toppers. Pull only the scroll viewport upward and replace
+   the same distance as inner padding: cards do not move and no empty gap is
+   added, while toppers remain true children of the card's GPU layer. */
+html:not(.mk-mobile-shell) body #grafiks-app .main-panel #grafiks-list.grid-view {
+  --mk-addon-top-clearance: 72px;
+  margin-top: calc(-1 * var(--mk-addon-top-clearance)) !important;
+  padding-top: var(--mk-addon-top-clearance) !important;
+}
+
+.mk-skin-preview-slot.mk-has-addon {
   margin-top: var(--mk-addon-preview-top-clearance, 0px);
   margin-bottom: var(--mk-addon-preview-bottom-clearance, 0px);
 }
@@ -160,9 +173,8 @@ html body #grafiks-app #grafiks-list.grid-view {
   transform-origin: top center;
 }
 
-/* The calendar grid is a scroll container, so z-index alone cannot let a
-   topper/charm cross its viewport edge. The source keeps card geometry while
-   this document-level copy paints above the scroll clip. */
+/* A charm can cross the grid's bottom scroll edge. Its source keeps exact card
+   geometry while this temporary document-level copy clears that outer clip. */
 .mk-card-addon.mk-card-addon-portaled {
   visibility: hidden !important;
 }
@@ -170,17 +182,24 @@ html body #grafiks-app #grafiks-list.grid-view {
 html body > .mk-card-addon.mk-card-addon-portal {
   display: none !important;
   position: fixed !important;
+  left: 0 !important;
+  top: 0 !important;
   right: auto !important;
   bottom: auto !important;
   max-width: none !important;
-  transform: none !important;
+  transform: translate3d(
+    var(--mk-addon-portal-x, 0px),
+    var(--mk-addon-portal-y, 0px),
+    0
+  ) !important;
   transform-origin: center !important;
   translate: none !important;
   scale: 1 !important;
   visibility: visible !important;
   opacity: 1 !important;
   pointer-events: none !important;
-  z-index: 500000 !important;
+  z-index: 60000 !important;
+  will-change: transform;
 }
 
 html body > .mk-card-addon.mk-card-addon-portal.is-visible {
@@ -220,16 +239,16 @@ html body > .mk-card-addon.mk-card-addon-portal.is-visible {
   z-index: 3 !important;
 }
 
-html body #grafiks-app #grafiks-list .card.mk-addon-active:has(> .mk-card-addon[data-addon-group="object"]) .mk-mid-bottom,
-html body #grafiks-app #grafiks-list .card.mk-addon-active:has(> .mk-card-addon[data-addon-group="object"]) .mk-mid-meta-emoji-fly,
-html body #grafiks-app #grafiks-list .card.mk-addon-active:has(> .mk-card-addon[data-addon-group="object"]) .mk-mid-meta-emoji {
+html body #grafiks-app #grafiks-list .card.mk-addon-active.mk-addon-group-object .mk-mid-bottom,
+html body #grafiks-app #grafiks-list .card.mk-addon-active.mk-addon-group-object .mk-mid-meta-emoji-fly,
+html body #grafiks-app #grafiks-list .card.mk-addon-active.mk-addon-group-object .mk-mid-meta-emoji {
   position: relative !important;
   z-index: 8 !important;
 }
 
-html body #worker-modal .card.mk-addon-active:has(> .mk-card-addon[data-addon-group="object"]) .mk-mid-bottom,
-html body #worker-modal .card.mk-addon-active:has(> .mk-card-addon[data-addon-group="object"]) .mk-mid-meta-emoji-fly,
-html body #worker-modal .card.mk-addon-active:has(> .mk-card-addon[data-addon-group="object"]) .mk-mid-meta-emoji {
+html body #worker-modal .card.mk-addon-active.mk-addon-group-object .mk-mid-bottom,
+html body #worker-modal .card.mk-addon-active.mk-addon-group-object .mk-mid-meta-emoji-fly,
+html body #worker-modal .card.mk-addon-active.mk-addon-group-object .mk-mid-meta-emoji {
   position: relative !important;
   z-index: 8 !important;
 }
