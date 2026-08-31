@@ -27,7 +27,7 @@
   }
   window.__minkaHasApiAuth = function() { return !!getToken(); };
 
-  var CALENDAR_BUILD = '20260831addons15';
+  var CALENDAR_BUILD = '20260831addons17';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -6030,7 +6030,7 @@ window.addEventListener('message', function(e) {
 
 <script>
 if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-  const MINKA_APP_VERSION = '2026.08.31-card-addons-layout20';
+  const MINKA_APP_VERSION = '2026.08.31-card-addons-layout22';
   const MINKA_VERSION_KEY = 'minka_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {

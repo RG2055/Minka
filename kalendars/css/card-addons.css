@@ -151,6 +151,7 @@ html:not(.mk-mobile-shell) body #grafiks-app .main-panel #grafiks-list.grid-view
 .mk-card-addon[data-addon-group="topper"] {
   width: 52%;
   height: auto;
+  aspect-ratio: var(--mk-addon-aspect, auto);
   top: auto;
   bottom: calc(100% - var(--mk-addon-dock-y, 3px));
   left: 50%;
