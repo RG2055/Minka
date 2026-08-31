@@ -285,6 +285,16 @@ html body #worker-modal .card.mk-addon-active.mk-addon-group-object .mk-mid-meta
   color: rgba(255,255,255,.43);
 }
 
+.mk-addon-section-head {
+  align-items: center;
+}
+
+.mk-addon-section-head > span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
 .mk-addon-drag-hint {
   margin: -2px 0 7px;
   color: #8fdcff;
@@ -423,7 +433,7 @@ html body #worker-modal .card.mk-addon-active.mk-addon-group-object .mk-mid-meta
 
 .mk-addon-controls {
   display: grid;
-  grid-template-columns: auto minmax(160px,1fr) auto auto;
+  grid-template-columns: minmax(160px,1fr) auto auto;
   align-items: center;
   gap: 10px;
   margin-top: 9px;
@@ -431,8 +441,26 @@ html body #worker-modal .card.mk-addon-active.mk-addon-group-object .mk-mid-meta
   border-top: 1px solid rgba(255,255,255,.08);
 }
 
-.mk-addon-remove { min-height: 32px; padding: 0 11px; }
-.mk-addon-remove:hover { border-color: rgba(255,110,120,.48); color: #ff9ba3; }
+.mk-addon-remove {
+  flex: 0 0 auto;
+  min-height: 32px;
+  padding: 0 11px;
+  border-color: rgba(255,110,120,.30);
+  background: rgba(255,90,105,.09);
+  color: #ffadb4;
+  white-space: nowrap;
+}
+.mk-addon-remove:hover:not(:disabled) {
+  border-color: rgba(255,110,120,.62);
+  background: rgba(255,90,105,.16);
+  color: #ffd0d4;
+}
+.mk-addon-remove:disabled {
+  border-color: rgba(255,255,255,.08);
+  background: rgba(255,255,255,.025);
+  color: rgba(255,255,255,.28);
+  cursor: default;
+}
 .mk-addon-reset-position { min-height: 32px; padding: 0 10px; white-space: nowrap; }
 .mk-addon-reset-position:hover { border-color: rgba(100,210,255,.48); color: #9fe6ff; }
 

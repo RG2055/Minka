@@ -599,12 +599,11 @@
       return '<button type="button" class="mk-addon-group' + (activeGroup === group.id ? ' is-active' : '')
         + '" data-addon-group="' + group.id + '">' + esc(group.label) + '<span>' + count + '</span></button>';
     }).join('');
-    panel.innerHTML = '<div class="mk-skin-section-head"><strong>Kartītes dekors</strong><small>Viens dekors vienlaikus — bez pārblīvējuma</small></div>'
+    panel.innerHTML = '<div class="mk-skin-section-head mk-addon-section-head"><span><strong>Kartītes dekors</strong><small>Viens dekors vienlaikus — bez pārblīvējuma</small></span><button type="button" class="mk-addon-remove" aria-label="Noņemt kartītes dekoru">✕ Noņemt dekoru</button></div>'
       + '<div class="mk-addon-drag-hint">Satver dekoru uz kartītes un velc uz jebkuru vietu</div>'
       + '<div class="mk-addon-groups">' + groupsHtml + '</div>'
       + '<div class="mk-addon-grid"></div>'
       + '<div class="mk-addon-controls">'
-      + '<button type="button" class="mk-addon-remove">Bez dekora</button>'
       + '<label><span>Izmērs</span><input class="mk-addon-scale" type="range" min="60" max="140" step="5" value="' + Math.round((Number(config.scale) || 1) * 100) + '"><b class="mk-addon-scale-value">' + Math.round((Number(config.scale) || 1) * 100) + '%</b></label>'
       + '<div class="mk-addon-side" role="group" aria-label="Dekora puse"><button type="button" data-addon-side="left" class="' + (config.side === 'left' ? 'is-active' : '') + '">Kreisā</button><button type="button" data-addon-side="right" class="' + (config.side !== 'left' ? 'is-active' : '') + '">Labā</button></div>'
       + '<button type="button" class="mk-addon-reset-position">↺ Pozīcija</button>'
@@ -682,6 +681,9 @@
 
     function renderGrid() {
       var grid = panel.querySelector('.mk-addon-grid');
+      var removeButton = panel.querySelector('.mk-addon-remove');
+      removeButton.disabled = !(config && config.id);
+      removeButton.setAttribute('aria-disabled', String(removeButton.disabled));
       grid.innerHTML = ITEMS.filter(function(item) { return item.group === activeGroup; }).map(function(item) {
         var selected = config && config.id === item.id;
         return '<button type="button" class="mk-addon-choice' + (selected ? ' is-active' : '') + '" data-addon-id="' + esc(item.id) + '" aria-pressed="' + selected + '" title="' + esc(item.label) + '">'
