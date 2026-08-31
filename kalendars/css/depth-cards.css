@@ -156,6 +156,6 @@
   html:not(.mk-mobile-shell) body #grafiks-list.grid-view
     .card.mk-mid-card.mk-depth-live.mk-addon-active:not(.rg-feedback-card):hover {
     overflow: visible !important;
-    contain: none !important;
+    contain: layout style !important;
   }
 }
