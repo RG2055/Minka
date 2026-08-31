@@ -35,14 +35,14 @@
   function optimized(file) { return 'data/card-addons/optimized/' + file; }
 
   var ITEMS = [
-    { id: 'topper-happy-tabby', label: 'Priecīgais kaķis', group: 'topper', dockY: 5, src: optimized('topper-happy-tabby.webp') },
-    { id: 'topper-space-cat', label: 'Kosmosa kaķis', group: 'topper', dockY: 5, src: optimized('topper-space-cat.webp') },
-    { id: 'topper-neon-black-cat', label: 'Neona melnais kaķis', group: 'topper', dockY: 5, src: optimized('topper-neon-black-cat.webp') },
-    { id: 'topper-flower-white-cat', label: 'Ziedu baltais kaķis', group: 'topper', dockY: 5, src: optimized('topper-flower-white-cat.webp') },
-    { id: 'topper-music-orange-cat', label: 'Mūzikas rudais kaķis', group: 'topper', dockY: 6, src: optimized('topper-music-orange-cat.webp') },
-    { id: 'topper-medic-tuxedo-cat', label: 'Mediķa kaķis', group: 'topper', dockY: 6, src: optimized('topper-medic-tuxedo-cat.webp') },
-    { id: 'topper-night-nurse-cat', label: 'Nakts mediķa kaķis', group: 'topper', dockY: 5, src: optimized('topper-night-nurse-cat.webp') },
-    { id: 'topper-cosmic-moon', label: 'Kosmiskais mēness', group: 'topper', dockY: 7, src: optimized('topper-cosmic-moon.webp') },
+    { id: 'topper-happy-tabby', label: 'Priecīgais kaķis', group: 'topper', dockY: 5, aspect: '640 / 513', src: optimized('topper-happy-tabby.webp') },
+    { id: 'topper-space-cat', label: 'Kosmosa kaķis', group: 'topper', dockY: 5, aspect: '640 / 527', src: optimized('topper-space-cat.webp') },
+    { id: 'topper-neon-black-cat', label: 'Neona melnais kaķis', group: 'topper', dockY: 5, aspect: '640 / 610', src: optimized('topper-neon-black-cat.webp') },
+    { id: 'topper-flower-white-cat', label: 'Ziedu baltais kaķis', group: 'topper', dockY: 5, aspect: '640 / 523', src: optimized('topper-flower-white-cat.webp') },
+    { id: 'topper-music-orange-cat', label: 'Mūzikas rudais kaķis', group: 'topper', dockY: 6, aspect: '640 / 544', src: optimized('topper-music-orange-cat.webp') },
+    { id: 'topper-medic-tuxedo-cat', label: 'Mediķa kaķis', group: 'topper', dockY: 6, aspect: '601 / 640', src: optimized('topper-medic-tuxedo-cat.webp') },
+    { id: 'topper-night-nurse-cat', label: 'Nakts mediķa kaķis', group: 'topper', dockY: 5, aspect: '640 / 501', src: optimized('topper-night-nurse-cat.webp') },
+    { id: 'topper-cosmic-moon', label: 'Kosmiskais mēness', group: 'topper', dockY: 7, aspect: '640 / 404', src: optimized('topper-cosmic-moon.webp') },
 
     { id: 'sticker-good-vibes', label: 'Good Vibes', group: 'sticker', src: optimized('sticker-good-vibes.webp') },
     { id: 'sticker-night-mode', label: 'Night Mode', group: 'sticker', src: optimized('sticker-night-mode.webp') },
@@ -287,6 +287,8 @@
       }
       if (needsGeometry) writeAddonGeometry(existing, card.clientWidth, card.clientHeight);
       existing.style.setProperty('--mk-addon-dock-y', (Number(item.dockY) || 3) + 'px');
+      if (item.aspect) existing.style.setProperty('--mk-addon-aspect', item.aspect);
+      else existing.style.removeProperty('--mk-addon-aspect');
       syncCardSurface(card, surface);
       setAddonGroupClass(card, item.group);
       card.classList.add('mk-addon-active');
@@ -314,6 +316,7 @@
     image.dataset.addonY = String(offsetY);
     image.style.setProperty('--mk-addon-scale', scale);
     image.style.setProperty('--mk-addon-dock-y', (Number(item.dockY) || 3) + 'px');
+    if (item.aspect) image.style.setProperty('--mk-addon-aspect', item.aspect);
     writeAddonGeometry(image, card.clientWidth, card.clientHeight);
     image.addEventListener('load', function() {
       scheduleSectionClearance();
@@ -422,7 +425,7 @@
     scheduleAddonPortals(32);
   }
 
-  function syncSectionClearance() {
+  function syncSectionClearance(skipMoodLayout) {
     sectionFrame = 0;
     var list = document.querySelector('#grafiks-list.grid-view');
     if (!list) return;
@@ -471,11 +474,13 @@
         bottomClearance: bottomClearance
       };
     });
+    var sectionGeometryChanged = false;
     plans.forEach(function(plan) {
       var section = plan.section;
       if (Math.abs(plan.current - plan.desired) >= 1) {
         if (plan.desired) section.style.setProperty('--mk-addon-section-top-clearance', plan.desired + 'px');
         else section.style.removeProperty('--mk-addon-section-top-clearance');
+        sectionGeometryChanged = true;
       }
       if (plan.bottomClearance) {
         section.style.setProperty('--mk-addon-section-bottom-clearance', plan.bottomClearance + 'px');
@@ -491,6 +496,9 @@
     list.style.removeProperty('--mk-addon-list-bottom-clearance');
     scheduleTopperClearance();
     scheduleAddonPortals(80);
+    if (!skipMoodLayout && sectionGeometryChanged && typeof window.__minkaScheduleMoodSectionLayout === 'function') {
+      window.__minkaScheduleMoodSectionLayout();
+    }
   }
 
   function scheduleSectionClearance() {
@@ -513,6 +521,14 @@
   function scheduleScan() {
     if (scanFrame) return;
     scanFrame = requestAnimationFrame(scanCards);
+  }
+
+  function applyRosterNow() {
+    var all = readAll();
+    document.querySelectorAll('#grafiks-list .card[data-worker]').forEach(function(card) {
+      applyToCard(card, all[normName(card.getAttribute('data-worker'))] || null);
+    });
+    syncSectionClearance(true);
   }
 
   function nodeTouchesCards(node) {
@@ -790,6 +806,7 @@
     applyWorker: applyWorker,
     get: getConfig,
     getAll: function() { return readAll(); },
+    applyRosterNow: applyRosterNow,
     replaceFromCloud: function(value) {
       var clean = {};
       Object.keys(value && typeof value === 'object' ? value : {}).forEach(function(name) {
