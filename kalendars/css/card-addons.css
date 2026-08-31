@@ -431,6 +431,16 @@ html body #worker-modal .card.mk-addon-active.mk-addon-group-object .mk-mid-meta
   font-size: 9px;
 }
 
+/* Topperi are visual characters; their invented names added noise without
+   helping selection. Other decorator groups keep their useful labels. */
+.mk-addon-choice[data-addon-id^="topper-"] {
+  min-height: 74px;
+}
+
+.mk-addon-choice[data-addon-id^="topper-"] b {
+  display: none;
+}
+
 .mk-addon-controls {
   display: grid;
   grid-template-columns: minmax(160px,1fr) auto auto;
