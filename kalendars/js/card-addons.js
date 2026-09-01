@@ -10,6 +10,7 @@
   var portalBurstUntil = 0;
   var portalMap = new Map();
   var portalScrollList = null;
+  var portalSettleTimer = 0;
   var geometryFrame = 0;
   var topperClearanceFrame = 0;
   var observedRoots = new WeakSet();
@@ -401,6 +402,13 @@
       entry.source.classList.toggle('mk-card-addon-portaled', entry.portaled);
       entry.clone.classList.toggle('is-visible', entry.visible);
       if (!entry.visible) return;
+      /* A burst re-measures every frame but the card usually stands still.
+         Writing the same four properties again would dirty the compositor for
+         nothing, so only a real move is written. */
+      var signature = entry.rect.left + '|' + entry.rect.top
+        + '|' + entry.rect.width + '|' + entry.rect.height;
+      if (entry.clone.dataset.portalSignature === signature) return;
+      entry.clone.dataset.portalSignature = signature;
       entry.clone.style.setProperty('--mk-addon-portal-x', entry.rect.left + 'px');
       entry.clone.style.setProperty('--mk-addon-portal-y', entry.rect.top + 'px');
       entry.clone.style.width = entry.rect.width + 'px';
@@ -417,8 +425,23 @@
       syncAddonPortals();
       if (portalMap.size && Date.now() < portalBurstUntil) {
         portalFrame = requestAnimationFrame(portalStep);
+        return;
       }
+      schedulePortalSettle();
     });
+  }
+
+  /* A clone is placed from a measurement, so a layout pass that lands after
+     the burst has ended leaves it stranded in empty space — the charm keeps
+     the coordinates its card had before the row moved. Callers that move the
+     roster say so themselves (refreshPortals); this single deferred pass is
+     the net for the ones that cannot, such as an image decoding late. */
+  function schedulePortalSettle() {
+    if (portalSettleTimer || !portalMap.size) return;
+    portalSettleTimer = setTimeout(function() {
+      portalSettleTimer = 0;
+      if (!document.hidden && portalMap.size) syncAddonPortals();
+    }, 260);
   }
 
   function handlePortalScroll() {
@@ -809,6 +832,12 @@
     get: getConfig,
     getAll: function() { return readAll(); },
     applyRosterNow: applyRosterNow,
+    /* For anything that moves a decorated card without touching the DOM the
+       card observer watches — the roster pull-up rewrites grid tracks and a
+       section class, neither of which is observed here. */
+    refreshPortals: function(duration) {
+      scheduleAddonPortals(typeof duration === 'number' ? duration : 160);
+    },
     replaceFromCloud: function(value) {
       var clean = {};
       Object.keys(value && typeof value === 'object' ? value : {}).forEach(function(name) {

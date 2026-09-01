@@ -132,7 +132,7 @@ window.setTimeout(function () {
 <link rel="stylesheet" href="css/bundle.css?v=20260621n">
 <link rel="stylesheet" href="css/skin-draw.css?v=20260829chalk1">
 <link rel="stylesheet" href="css/card-addons.css?v=20260831perf25">
-<script src="js/card-addons.js?v=20260831perf25" defer></script>
+<script src="js/card-addons.js?v=20260901portal1" defer></script>
 <link rel="stylesheet" href="css/side-cards-v2.css?v=20260818nfootgap1">
 <link rel="stylesheet" href="css/header-weather.css?v=20260813headerfix1">
 <link rel="stylesheet" href="css/mood-fluent.css?v=20260820fmood16">
@@ -4162,7 +4162,7 @@ window.addEventListener('message', function(e) {
 // worker from this iframe added a second controllerchange reload listener with
 // a different app version, which could make PWA updates visibly reload twice.
 if ('serviceWorker' in navigator && window.top === window) {
-  const MINKA_APP_VERSION = '2026.08.31-card-addons-layout25.calendar';
+  const MINKA_APP_VERSION = '2026.09.01-card-addons-portal1.calendar';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -18992,7 +18992,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   function endMoodBlobPreview() {
     updateMoodBlob(moodBlobKey, false);
   }
-  var moodSectionLayoutTimer = 0;
+  var moodSectionLayoutFrame = 0;
   var moodSectionResizeTimer = 0;
   var moodDayRefreshToken = 0;
   var moodDayRefreshFrame = 0;
@@ -19056,7 +19056,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       });
     }
   }
-  function layoutMoodSections(rosterWidth) {
+  function layoutMoodSections() {
     var mood = list.querySelector('.rg-feedback-card');
     var rdLabel = list.querySelector('.cards-section-label-rd');
     var rgLabel = list.querySelector('.cards-section-label-rg');
@@ -19129,9 +19129,32 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     rgSection.style.setProperty('--rg-mood-pullup', (-pullup).toFixed(2) + 'px');
     rgSection.classList.add('rg-mood-pullup');
   }
+  // The pull-up moves the whole RADIOGRĀFERI row. A charm that crosses the
+  // grid's bottom scroll edge is drawn by a fixed-position copy living outside
+  // the list, and that copy is positioned from a measurement — so every solve
+  // has to tell the add-ons to re-read the geometry. Without it the copy keeps
+  // its pre-pull-up coordinates and is left hanging in empty space far below
+  // its card. Only the portals are refreshed here: section clearance feeds
+  // back into this very layout, so requesting it would loop.
+  function runMoodSectionLayout() {
+    if (moodSectionLayoutFrame) {
+      cancelAnimationFrame(moodSectionLayoutFrame);
+      moodSectionLayoutFrame = 0;
+    }
+    layoutMoodSections();
+    var addons = window.MinkaCardAddons;
+    if (addons && typeof addons.refreshPortals === 'function') addons.refreshPortals();
+  }
   function scheduleMoodSectionLayout() {
-    window.clearTimeout(moodSectionLayoutTimer);
-    moodSectionLayoutTimer = window.setTimeout(layoutMoodSections, 0);
+    if (moodSectionLayoutFrame) return;
+    // requestAnimationFrame, not setTimeout(0): a timeout can land after the
+    // browser has already painted the roster at its natural position, which
+    // reads as the radiographer row dropping to the bottom and snapping back
+    // up. A frame callback writes the pull-up before that paint.
+    moodSectionLayoutFrame = requestAnimationFrame(function () {
+      moodSectionLayoutFrame = 0;
+      runMoodSectionLayout();
+    });
   }
   // Card add-ons calculate topper clearance after their images have decoded.
   // Let that one geometry change request a fresh mood/roster placement without
@@ -19139,7 +19162,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   window.__minkaScheduleMoodSectionLayout = scheduleMoodSectionLayout;
   window.addEventListener('resize', function () {
     window.clearTimeout(moodSectionResizeTimer);
-    moodSectionResizeTimer = window.setTimeout(layoutMoodSections, 180);
+    moodSectionResizeTimer = window.setTimeout(runMoodSectionLayout, 180);
   }, { passive: true });
   function mount(deferLayout, skipRatings, skipMoodPaint) {
     var label = list.querySelector('.cards-section-label-rd');
@@ -19190,7 +19213,9 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       window.MinkaCardAddons.applyRosterNow();
     }
     var sizedAt = measure ? performance.now() : 0;
-    layoutMoodSections(rosterWidth);
+    // Synchronous, and it drops any solve queued for the next frame — the day
+    // switch must not pay for the same geometry pass twice.
+    runMoodSectionLayout();
     if (measure) {
       (window.__minkaRosterFinalizeMetrics ||= []).push({
         mountMs: +(mountedAt - startedAt).toFixed(2),
