@@ -129,7 +129,7 @@ window.setTimeout(function () {
 <meta name="theme-color" content="#0a0a1a">
 <title>RG Search OS - Clean Start</title>
 <!-- bundle.css is critical ï¿½ load normally -->
-<link rel="stylesheet" href="css/bundle.css?v=20260621n">
+<link rel="stylesheet" href="css/bundle.css?v=20260901nojump1">
 <link rel="stylesheet" href="css/skin-draw.css?v=20260829chalk1">
 <link rel="stylesheet" href="css/card-addons.css?v=20260831perf25">
 <script src="js/card-addons.js?v=20260901portal1" defer></script>
@@ -4162,7 +4162,7 @@ window.addEventListener('message', function(e) {
 // worker from this iframe added a second controllerchange reload listener with
 // a different app version, which could make PWA updates visibly reload twice.
 if ('serviceWorker' in navigator && window.top === window) {
-  const MINKA_APP_VERSION = '2026.09.01-card-addons-portal1.calendar';
+  const MINKA_APP_VERSION = '2026.09.01-roster-nojump1.calendar';
   const MINKA_VERSION_KEY = 'minka_calendar_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
   function clearMinkaRuntimeCaches() {
@@ -18993,6 +18993,9 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     updateMoodBlob(moodBlobKey, false);
   }
   var moodSectionLayoutFrame = 0;
+  var moodSectionLayoutBusy = false;
+  var moodCardResizeObserver = null;
+  var moodCardObserved = null;
   var moodSectionResizeTimer = 0;
   var moodDayRefreshToken = 0;
   var moodDayRefreshFrame = 0;
@@ -19141,9 +19144,34 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       cancelAnimationFrame(moodSectionLayoutFrame);
       moodSectionLayoutFrame = 0;
     }
-    layoutMoodSections();
-    var addons = window.MinkaCardAddons;
-    if (addons && typeof addons.refreshPortals === 'function') addons.refreshPortals();
+    if (moodSectionLayoutBusy) return;
+    moodSectionLayoutBusy = true;
+    try {
+      layoutMoodSections();
+      watchMoodCardSize();
+      var addons = window.MinkaCardAddons;
+      if (addons && typeof addons.refreshPortals === 'function') addons.refreshPortals();
+    } finally {
+      moodSectionLayoutBusy = false;
+    }
+  }
+  /* The feedback card is reused across day switches, so it carries the previous
+     day's rendered height until the deferred paintCounts() rebuilds its
+     illustration — a change of ~80px. A ResizeObserver callback runs after
+     layout and before paint, so the pull-up is corrected in the same frame the
+     card resizes; scheduling it left the radiographer row visibly misplaced for
+     a frame or two. Only the card is observed, and the pull-up moves the
+     section below it, so this cannot feed back into itself. */
+  function watchMoodCardSize() {
+    if (typeof ResizeObserver !== 'function') return;
+    var mood = list.querySelector('.rg-feedback-card');
+    if (!mood || mood === moodCardObserved) return;
+    if (!moodCardResizeObserver) {
+      moodCardResizeObserver = new ResizeObserver(function () { runMoodSectionLayout(); });
+    }
+    if (moodCardObserved) moodCardResizeObserver.unobserve(moodCardObserved);
+    moodCardObserved = mood;
+    moodCardResizeObserver.observe(mood);
   }
   function scheduleMoodSectionLayout() {
     if (moodSectionLayoutFrame) return;
@@ -19259,9 +19287,12 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     updateMoodBlob((selected && selected.key) || (dominant && dominant.key) || null);
     // updateMoodBlob() also rebuilds the responsive feedback illustration.
     // Its final height is only known after that synchronous rebuild, so place
-    // the following profession once more. This is event-driven (day/rating
+    // the following profession once more. Synchronously: the rebuild and the
+    // pull-up it invalidates then land in the same frame. Deferring it to the
+    // next frame painted the radiographer row against the new card height but
+    // the old pull-up, which is a visible jump. Event-driven (day/rating
     // changes only), not a polling loop.
-    scheduleMoodSectionLayout();
+    runMoodSectionLayout();
   }
   function addBurst(button, emoji) {
     var particles = window.MinkaEmojiParticles;
