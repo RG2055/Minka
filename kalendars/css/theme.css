@@ -38,9 +38,13 @@
 .month-select,.view-btn,.toggle-btn,.item-name,.item-desc,.search-item-title,
 .search-item-sub,.next-box,.next-names{ font-size: calc(1em * var(--mk-font-scale)); }
 
-.cards-section,.calendar-view-wrapper,.list-view-wrapper,.fatigue-view-wrapper,
+/* The view wrappers below are whole screens that sit off-view until they are
+   opened, so skipping their layout is free. A roster section is not: it is
+   always on screen, and content-visibility made every day switch lay it out
+   twice — first at the 340px placeholder, then for real. The radiographer
+   row below it visibly dropped ~215px and snapped back each time. */
+.calendar-view-wrapper,.list-view-wrapper,.fatigue-view-wrapper,
 .side-panel{ content-visibility:auto; }
-.cards-section{ contain-intrinsic-size: 340px; }
 .side-panel{ contain-intrinsic-size: 620px; }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
