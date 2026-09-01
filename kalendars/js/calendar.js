@@ -1889,13 +1889,18 @@ function filterFullList(btn) {
     return now >= end;
   }
 
+  // The known-carryover list and the generic morning-tail rule both live in
+  // js/known-carryovers.js, so the schedule grid, the night split and the
+  // 1st-of-month DOM cleanup all judge a tail the same way.
+  function knownCarryovers() {
+    return window.MinkaKnownCarryovers || null;
+  }
+
   function isKnownSplitNightCarryover(worker, dateStr) {
+    const api = knownCarryovers();
+    if (!api) return false;
     const date = normalizeDateStr(dateStr || activeDateStr || window.__activeDateStr || '');
-    if (date !== '01.06.2026') return false;
-    const name = String(worker && worker.name || '').toLowerCase();
-    const compactName = name.normalize ? name.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : name;
-    const hours = parseShiftHours(worker && worker.shift);
-    return hours === 8 && (compactName.includes('karina') || compactName.includes('renda'));
+    return api.isKnownNightCarryover(worker && worker.name, parseShiftHours(worker && worker.shift), date);
   }
 
   function isPreviousShiftDayCarryover(worker, dateStr) {
@@ -1914,7 +1919,13 @@ function filterFullList(btn) {
     const hour = parseInt(String(worker.startTime).split(':')[0], 10);
     if (!Number.isFinite(hour) || hour >= 8) return false;
     const type = String(worker.type || '').toUpperCase();
-    return type === 'NAKTS' || type === 'DIENNAKTS' || worker.isNight === true;
+    if (type === 'NAKTS' || type === 'DIENNAKTS' || worker.isNight === true) return true;
+    // The row can also arrive typed as a day shift when the previous month is
+    // no longer in the store and nothing could mark it. A short block that
+    // ends exactly at the 08:00 roster rollover is a night tail regardless of
+    // the type the sheet gave it — no day shift finishes when the day starts.
+    const api = knownCarryovers();
+    return !!(api && api.isMorningTailShift(worker));
   }
 
   function getRemainingMs(worker, dateStr, now) {

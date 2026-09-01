@@ -908,12 +908,11 @@
   }
   function isPreviousShiftDayCarryover(w){
     var ds=String(window.__activeDateStr||'').trim();
-    var nm=String(w&&w.name||'').toLowerCase();
-    var cn=nm.normalize ? nm.normalize('NFD').replace(/[\u0300-\u036f]/g,'') : nm;
     var sh0=String(w&&w.shift||'').replace(',','.');
     var m0=sh0.match(/(\d+(?:\.\d+)?)/);
     var hrs0=m0 ? Math.round(parseFloat(m0[1])||0) : Math.round(Number(w&&w.hours||0)||0);
-    if(ds==='01.06.2026' && hrs0===8 && (cn.indexOf('karina')>=0 || cn.indexOf('renda')>=0)) return true;
+    var known=window.MinkaKnownCarryovers||null;
+    if(known && known.isKnownNightCarryover(w&&w.name,hrs0,ds)) return true;
     if(!w) return false;
     if(w.__minkaCarryover===true) return true;
     if(!w.startTime) return false;
@@ -926,7 +925,10 @@
     // A carryover is the short leftover fragment of the previous night; a full
     // 12h+ shift is a real standalone night and must never be hidden here.
     if(hrs>=12) return false;
-    return type==='NAKTS' || type==='DIENNAKTS' || w.isNight===true;
+    if(type==='NAKTS' || type==='DIENNAKTS' || w.isNight===true) return true;
+    // Same fallback as the grid: a short block ending at the 08:00 rollover is
+    // last night's tail even when the sheet typed it as a day shift.
+    return !!(known && known.isMorningTailShift(w));
   }
   function getW(){
     // Get workers from BOTH radiographers store AND radiologists store
