@@ -2,7 +2,7 @@
   'use strict';
 
   var STORAGE_KEY = 'mkWorkerCardAddonsV1';
-  var CACHE_BUST = '20260831h';
+  var CACHE_BUST = '20260903holo4';
   var activeGroup = 'topper';
   var scanFrame = 0;
   var sectionFrame = 0;
@@ -65,6 +65,8 @@
     { id: 'charm-white-bone', label: 'Baltais kauliņš', group: 'charm', src: optimized('charm-white-bone.webp') },
     { id: 'charm-night-nurse-skull', label: 'Nakts māsiņa', group: 'charm', src: optimized('charm-night-nurse-skull.webp') },
     { id: 'charm-masked-night-skull', label: 'Mediķis maskā', group: 'charm', src: optimized('charm-masked-night-skull.webp') },
+    { id: 'charm-holo-dice', label: 'Holo kauliņi', group: 'charm', src: optimized('charm-holo-dice.webp') },
+    { id: 'charm-holo-heart', label: 'Holo sirds', group: 'charm', src: optimized('charm-holo-heart.webp') },
 
     { id: 'strip-night-shift', label: 'Night Shift', group: 'strip', src: optimized('strip-night-shift.webp') },
     { id: 'strip-ct-ramp', label: 'CT Ramp', group: 'strip', src: optimized('strip-ct-ramp.webp') },
@@ -96,7 +98,12 @@
     { id: 'object-owl', label: 'Baltā pūce', group: 'object', src: optimized('object-owl.webp') },
     { id: 'object-radiology-cat', label: 'Radioloģijas kaķis', group: 'object', src: optimized('object-radiology-cat.webp') },
     { id: 'object-new-floral-statue', label: 'Liliju statuja', group: 'object', src: optimized('object-new-floral-statue.webp') },
-    { id: 'object-skeleton-peace', label: 'Skeleta miera zīme', group: 'object', src: optimized('object-skeleton-peace.webp') }
+    { id: 'object-skeleton-peace', label: 'Skeleta miera zīme', group: 'object', src: optimized('object-skeleton-peace.webp') },
+    { id: 'object-holo-helmet', label: 'Holo ķivere', group: 'object', src: optimized('object-holo-helmet.webp') },
+    { id: 'object-holo-skull', label: 'Holo galvaskauss', group: 'object', src: optimized('object-holo-skull.webp') },
+    { id: 'object-strawberry', label: 'Zemene', group: 'object', src: optimized('object-strawberry.webp') },
+    { id: 'object-green-glitter-bear', label: 'Zaļais spīdumu lācis', group: 'object', src: optimized('object-green-glitter-bear.webp') },
+    { id: 'object-cloud-cat', label: 'Kaķis uz mākoņa', group: 'object', src: optimized('object-cloud-cat.webp') }
   ];
 
   var ITEM_BY_ID = Object.create(null);
@@ -132,7 +139,7 @@
     if (!config || !ITEM_BY_ID[config.id]) return null;
     return {
       id: config.id,
-      scale: Math.round(Math.max(.6, Math.min(1.4, Number(config.scale) || 1)) * 100) / 100,
+      scale: Math.round(Math.max(.25, Math.min(1.4, Number(config.scale) || 1)) * 100) / 100,
       side: config.side === 'left' ? 'left' : 'right',
       x: Math.round(Math.max(-100, Math.min(100, Number(config.x) || 0)) * 100) / 100,
       y: Math.round(Math.max(-100, Math.min(100, Number(config.y) || 0)) * 100) / 100
@@ -265,7 +272,7 @@
       return;
     }
     var item = ITEM_BY_ID[config.id];
-    var scale = Math.max(.6, Math.min(1.4, Number(config.scale) || 1));
+    var scale = Math.max(.25, Math.min(1.4, Number(config.scale) || 1));
     var side = config.side === 'left' ? 'left' : 'right';
     var offsetX = Math.max(-100, Math.min(100, Number(config.x) || 0));
     var offsetY = Math.max(-100, Math.min(100, Number(config.y) || 0));
@@ -627,7 +634,7 @@
       + '<div class="mk-addon-groups">' + groupsHtml + '</div>'
       + '<div class="mk-addon-grid"></div>'
       + '<div class="mk-addon-controls">'
-      + '<label><span>Izmērs</span><input class="mk-addon-scale" type="range" min="60" max="140" step="5" value="' + Math.round((Number(config.scale) || 1) * 100) + '"><b class="mk-addon-scale-value">' + Math.round((Number(config.scale) || 1) * 100) + '%</b></label>'
+      + '<label><span>Izmērs</span><input class="mk-addon-scale" type="range" min="25" max="140" step="5" value="' + Math.round((Number(config.scale) || 1) * 100) + '"><b class="mk-addon-scale-value">' + Math.round((Number(config.scale) || 1) * 100) + '%</b></label>'
       + '<div class="mk-addon-side" role="group" aria-label="Dekora puse"><button type="button" data-addon-side="left" class="' + (config.side === 'left' ? 'is-active' : '') + '">Kreisā</button><button type="button" data-addon-side="right" class="' + (config.side !== 'left' ? 'is-active' : '') + '">Labā</button></div>'
       + '<button type="button" class="mk-addon-reset-position">↺ Pozīcija</button>'
       + '</div>';
