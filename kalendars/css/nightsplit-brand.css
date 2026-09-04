@@ -1,6 +1,6 @@
 /* RG Night Split — lightweight dark skeuomorphism.
    Raised graphite controls, recessed channels and tiny LED accents. No live
-   blur, texture images or animated filters, so the material stays low-cost. */
+   blur or animated filters. The bed-care glass uses one static image. */
 
 #nsPanel {
   --ns-ink: #070a0f;
@@ -212,33 +212,40 @@
 #nsPanel .ns-bedcare-popover {
   position: absolute !important;
   z-index: 30 !important;
-  left: 82px !important;
+  left: 50% !important;
   right: auto !important;
-  top: auto !important;
-  bottom: 166px !important;
+  top: calc(100% + 10px) !important;
+  bottom: auto !important;
+  box-sizing: border-box !important;
   width: 264px !important;
-  padding: 10px !important;
-  border: 1px solid rgba(255,255,255,.18) !important;
-  border-radius: 10px !important;
-  background: rgba(36,36,36,.96) !important;
-  box-shadow: 0 8px 24px rgba(0,0,0,.48), inset 0 1px rgba(255,255,255,.06) !important;
+  padding: 18px !important;
+  border: 0 !important;
+  border-radius: 16px !important;
+  background: url('../assets/bedcare-glass-v1.webp') center / 100% 100% no-repeat !important;
+  box-shadow: none !important;
   transform: translateX(-50%) !important;
   contain: layout paint !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
 }
-#nsPanel .ns-bedcare-form { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; }
+#nsPanel .ns-bedcare-form { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 12px 8px; }
 #nsPanel .ns-bedcare-quick-head { grid-column: 1 / -1; display: grid; grid-template-columns: 30px minmax(0,1fr) 28px; align-items: center; gap: 8px; }
-#nsPanel .ns-bedcare-quick-head > span:nth-child(2) { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-#nsPanel .ns-bedcare-quick-head b { color: #f5f5f5; font: 700 12px/1.15 "Segoe UI",Inter,system-ui,sans-serif; }
-#nsPanel .ns-bedcare-quick-head small { color: #b8b8b8; font: 500 9px/1.15 "Segoe UI",Inter,system-ui,sans-serif; }
-#nsPanel .ns-bedcare-close { width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: #c8c8c8; font: 400 19px/1 "Segoe UI",system-ui,sans-serif; cursor: pointer; }
-#nsPanel .ns-bedcare-close:hover { background: rgba(255,255,255,.08); color: #fff; }
-#nsPanel .ns-bedcare-icon { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.14); border-radius: 6px; background: #303030; color: #e6e6e6; font: 700 16px/1 "Segoe UI Symbol",system-ui,sans-serif; }
-#nsPanel .ns-bedcare-date { min-width: 0; display: flex; flex-direction: column; gap: 4px; color: #c8c8c8; font: 600 9px/1 "Segoe UI",Inter,system-ui,sans-serif; }
-#nsPanel .ns-bedcare-date input { box-sizing: border-box; width: 100%; height: 32px; padding: 0 8px; border: 1px solid rgba(255,255,255,.22); border-radius: 6px; background: #1f1f1f; color: #f5f5f5; color-scheme: dark; font: 600 11px/1 "Segoe UI",Inter,system-ui,sans-serif; }
-#nsPanel .ns-bedcare-date input:focus { outline: 2px solid rgba(255,255,255,.28); outline-offset: 1px; border-color: rgba(255,255,255,.45); }
-#nsPanel .ns-bedcare-save { align-self: end; min-width: 78px; height: 32px; padding: 0 12px; border: 1px solid rgba(255,255,255,.26); border-radius: 6px; background: #3b3b3b; color: #fff; font: 700 10px/1 "Segoe UI",Inter,system-ui,sans-serif; cursor: pointer; }
-#nsPanel .ns-bedcare-save:hover { background: #484848; }
-#nsPanel .ns-bedcare-note { grid-column: 1 / -1; min-height: 0; color: #d6a43b; font: 600 8.5px/1.15 "Segoe UI",Inter,system-ui,sans-serif; }
+#nsPanel .ns-bedcare-quick-head > span:nth-child(2) { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+#nsPanel .ns-bedcare-quick-head b { color: #f0faff; font: 650 12px/1.25 Inter,system-ui,sans-serif; }
+#nsPanel .ns-bedcare-quick-head small { color: #c3dbe9; font: 400 9px/1.4 Inter,system-ui,sans-serif; }
+#nsPanel .ns-bedcare-close { width: 28px; height: 28px; border: 1px solid rgba(196,228,247,.2); border-radius: 50%; background: #243e52; color: #d5eaf6; font: 400 19px/1 system-ui,sans-serif; cursor: pointer; }
+#nsPanel .ns-bedcare-close:hover { background: #385a72; color: #fff; }
+#nsPanel .ns-bedcare-icon { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid #90b8ce; border-radius: 9px; background: linear-gradient(#92bed5,#4b7c9e 48%,#305a7a 49%,#477ba1); box-shadow: inset 0 1px #ddf7ff; color: #e8fbff; font: 700 16px/1 "Segoe UI Symbol",system-ui,sans-serif; }
+#nsPanel .ns-bedcare-date { min-width: 0; display: flex; flex-direction: column; gap: 6px; color: #d1e4ef; font: 500 10px/1.2 Inter,system-ui,sans-serif; }
+#nsPanel .ns-bedcare-date input { box-sizing: border-box; width: 100%; height: 36px; padding: 0 8px; border: 1px solid #698aa1; border-radius: 8px; background: #10273a; box-shadow: inset 0 2px 3px #0b1e2f; color: #f2fbff; color-scheme: dark; font: 500 11px/1 Inter,system-ui,sans-serif; }
+#nsPanel .ns-bedcare-date input:focus,
+#nsPanel .ns-bedcare-save:focus-visible,
+#nsPanel .ns-bedcare-close:focus-visible { outline: 2px solid #a8e5ff; outline-offset: 3px; }
+#nsPanel .ns-bedcare-save { align-self: end; min-width: 78px; height: 36px; padding: 0 12px; border: 1px solid #b7e3f7; border-radius: 8px; background: linear-gradient(#d8f3ff,#98cde8 48%,#78b5d6 49%,#afdcef); box-shadow: inset 0 1px #fff, 0 2px #081b2b; color: #102f48; font: 650 11px/1 Inter,system-ui,sans-serif; cursor: pointer; }
+#nsPanel .ns-bedcare-save:hover { background: linear-gradient(#edfbff,#b5e2f8 48%,#94cbe8 49%,#d0f0fc); }
+#nsPanel .ns-bedcare-note { grid-column: 1 / -1; min-height: 0; color: #ffda9d; font: 500 10px/1.4 Inter,system-ui,sans-serif; }
+#nsPanel .ns-bedcare-note:empty { display: none; }
 
 #nsPanel .ns-rhythm-legend {
   margin-left: auto !important;
@@ -637,6 +644,7 @@
   width: 220px !important;
   min-width: 220px !important;
   height: 250px !important;
+  margin-bottom: 118px !important;
   padding: 0 !important;
   opacity: .88;
   filter: none !important;
@@ -653,12 +661,13 @@
   cursor: pointer !important;
   outline: none !important;
 }
+/* Keep the bed clear; the glass information panel sits below it. */
 #nsPanel .ns-bedcare-bed {
   position: absolute !important;
   z-index: 1 !important;
   inset: 0 !important;
   display: block !important;
-  transition: opacity .12s ease !important;
+  transition: none !important;
 }
 #nsPanel .ns-bedcare-bed .ns-room-bed-picture,
 #nsPanel .ns-bedcare-bed .ns-room-bed-picture img {
@@ -670,7 +679,7 @@
   object-fit: fill !important;
   transform: scaleX(1.07) !important;
   transform-origin: center bottom !important;
-  filter: drop-shadow(0 6px 7px rgba(0,0,0,.38)) !important;
+  filter: none !important;
 }
 #nsPanel .ns-bedcare-bed .ns-room-bed-devices {
   inset: 9px 8px auto 8px !important;
@@ -678,72 +687,100 @@
   height: 52px !important;
   opacity: .94 !important;
 }
-#nsPanel .ns-bedcare-bed .ns-room-device {
-  --bed: #d8e0e2 !important;
-}
+#nsPanel .ns-bedcare-bed .ns-room-device { --bed: #d8e0e2 !important; }
 #nsPanel .ns-bedcare-perch-copy {
   position: absolute !important;
   z-index: 4 !important;
   left: 50% !important;
-  bottom: 5px !important;
-  width: max-content !important;
-  max-width: 95% !important;
+  top: calc(100% + 12px) !important;
+  bottom: auto !important;
+  box-sizing: border-box !important;
+  width: 220px !important;
+  min-height: 92px !important;
+  max-width: none !important;
+  min-width: 0 !important;
   display: flex !important;
   flex-direction: column !important;
-  align-items: center !important;
+  align-items: stretch !important;
   justify-content: center !important;
-  gap: 1px !important;
-  min-width: 154px !important;
-  padding: 3px 8px 4px !important;
-  border: 1px solid rgba(255,255,255,.22) !important;
-  border-radius: 7px !important;
-  background: rgba(40,40,40,.94) !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,.38), inset 0 1px rgba(255,255,255,.07) !important;
+  gap: 5px !important;
+  padding: 13px 18px !important;
+  border: 0 !important;
+  border-radius: 18px !important;
+  background: url('../assets/bedcare-glass-v1.webp') center / 100% 100% no-repeat !important;
+  box-shadow: none !important;
   transform: translateX(-50%) !important;
-  color: #f2f2f2 !important;
+  color: #eefaff !important;
   text-shadow: none !important;
   white-space: nowrap !important;
   pointer-events: auto !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+  animation: none !important;
 }
 #nsPanel .ns-bedcare-perch-copy small {
   background: none !important;
-  color: #d4d4d4 !important;
+  color: #d6eaf7 !important;
   -webkit-text-fill-color: currentColor !important;
-  font: 950 9.5px/1 Inter,system-ui,sans-serif !important;
-  letter-spacing: .035em !important;
+  font: 500 11px/1.2 Inter,system-ui,sans-serif !important;
+  letter-spacing: .025em !important;
+  text-transform: none !important;
+  text-align: center !important;
   filter: none !important;
   text-shadow: none !important;
 }
 #nsPanel .ns-bedcare-date-line {
-  display: inline-flex !important;
+  display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 3px !important;
-  line-height: 1 !important;
+  gap: 6px !important;
+  line-height: 1.2 !important;
 }
 #nsPanel .ns-bedcare-calendar {
-  font-family: "Segoe UI Symbol","Segoe UI",sans-serif !important;
-  font-size: 12px !important;
-  line-height: 1 !important;
+  width: 14px !important;
+  height: 14px !important;
+  flex: 0 0 14px !important;
+  color: #96d8f3 !important;
   filter: none !important;
 }
 #nsPanel .ns-bedcare-perch-copy b {
-  color: #f2f2f2 !important;
-  font: 950 13.5px/1 "JetBrains Mono",ui-monospace,monospace !important;
-  text-shadow: none !important;
-}
-#nsPanel .ns-bedcare-age {
-  margin-left: 2px !important;
-  padding-left: 5px !important;
-  border-left: 1px solid rgba(255,255,255,.24) !important;
-  color: #d8d8d8 !important;
-  font: 850 8px/1 "Segoe UI",Inter,system-ui,sans-serif !important;
+  color: #f1fbff !important;
+  font: 650 19px/1.2 Inter,system-ui,sans-serif !important;
+  font-variant-numeric: tabular-nums !important;
   letter-spacing: .025em !important;
   text-shadow: none !important;
 }
-#nsPanel .ns-bedcare-perch:hover .ns-bedcare-bed,
-#nsPanel .ns-bedcare-perch:focus-visible .ns-bedcare-bed,
-#nsPanel .ns-bedcare-perch[aria-expanded="true"] .ns-bedcare-bed { opacity: .86 !important; }
+#nsPanel .ns-bedcare-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-top: 0;
+  border-top: 0;
+  font: 500 10px/1.3 Inter,system-ui,sans-serif;
+  text-transform: none;
+}
+#nsPanel .ns-bedcare-age {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  color: #c6dbea !important;
+  font: inherit !important;
+  letter-spacing: 0 !important;
+  text-shadow: none !important;
+}
+#nsPanel .ns-bedcare-action { color: #a9e7ff; font-weight: 650; }
+#nsPanel .ns-bedcare-action > span { font: inherit; }
+#nsPanel .ns-bedcare-perch:hover .ns-bedcare-perch-copy,
+#nsPanel .ns-bedcare-perch[aria-expanded="true"] .ns-bedcare-perch-copy {
+  color: #fff !important;
+}
+#nsPanel .ns-bedcare-perch:hover .ns-bedcare-action { text-decoration: underline; }
+#nsPanel .ns-bedcare-perch:focus-visible .ns-bedcare-perch-copy {
+  outline: 2px solid #a8e5ff !important;
+  outline-offset: 3px !important;
+}
 #nsPanel .ns-room-cat .pkt-cat {
   position: relative !important;
   z-index: 2 !important;
@@ -852,26 +889,32 @@
   transform: rotate(-1.4deg) scale(1.015) !important;
   outline: none !important;
 }
-#nsPanel .ns-bedcare-perch[aria-expanded="true"] ~ .ns-cat-rhythm-key {
-  opacity: .08 !important;
-  transform: translateY(4px) rotate(-2.6deg) !important;
-}
 
-/* Compact history structure: usual part → person → four counts → beds. */
-#nsPanel .ns-stats-box { flex-basis: 370px !important; width: 370px !important; min-width: 370px !important; padding: 0 2px 2px 6px !important; }
+/* Generated glass surface; statistics remain live HTML above the static image. */
+#nsPanel .ns-stats-box {
+  flex-basis: 390px !important;
+  width: 390px !important;
+  min-width: 390px !important;
+  padding: 28px 26px 24px !important;
+  border-radius: 24px;
+  background: url('../assets/night-stats-glass-v1.webp') center / 100% 100% no-repeat !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  filter: none !important;
+}
 #nsPanel .ns-stats-head {
   display: grid !important;
-  grid-template-columns: 54px minmax(82px, 1fr) 90px 70px !important;
+  grid-template-columns: 48px minmax(78px, 1fr) 84px 66px !important;
   align-items: center !important;
   gap: 8px !important;
   margin: 0 0 7px !important;
 }
-#nsPanel .ns-stats-title { color: rgba(205, 232, 242, .90) !important; grid-column: 1 / -1 !important; grid-row: 1 !important; font-size: 10.5px !important; text-align: center !important; }
+#nsPanel .ns-stats-title { color: #e2f3ff !important; grid-column: 1 / -1 !important; grid-row: 1 !important; font-size: 12px !important; text-align: center !important; letter-spacing: .04em; }
 #nsPanel .ns-stats-bed-title { color: rgba(181, 199, 211, .68) !important; grid-column: 4 !important; grid-row: 1 !important; z-index: 1 !important; text-align: center !important; font-size: 8px !important; }
 #nsPanel .ns-stat-row {
   flex: 1 1 0 !important;
   display: grid !important;
-  grid-template-columns: 54px minmax(82px, 1fr) 90px 70px !important;
+  grid-template-columns: 48px minmax(78px, 1fr) 84px 66px !important;
   align-items: center !important;
   gap: 8px !important;
   min-height: 47px !important;
@@ -898,7 +941,7 @@
 #nsPanel .ns-stat-part span { position: relative; top: 2px; font-size: 7px; font-weight: 850; letter-spacing: .08em; }
 #nsPanel .ns-stat-part.is-empty { color: rgba(151,168,185,.48); }
 #nsPanel .ns-stat-person { min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 3px; }
-#nsPanel .ns-stat-name { font-size: 11.5px !important; font-weight: 800 !important; color: #f1f7fa !important; }
+#nsPanel .ns-stat-name { font-size: 12.5px !important; font-weight: 700 !important; color: #f1f7fa !important; }
 #nsPanel .ns-stat-bars {
   justify-content: center !important;
   gap: 4px !important;
@@ -915,7 +958,7 @@
 #nsPanel .ns-stbar-fill { width: 100% !important; min-height: 3px !important; border: 1px solid rgba(148,198,218,.18); border-radius: 4px 4px 2px 2px !important; background: linear-gradient(180deg, rgba(95,139,157,.92), rgba(29,53,66,.94)) !important; box-shadow: inset 1px 1px 0 rgba(255,255,255,.08) !important; }
 #nsPanel .ns-stbar-fill.on { border-color: rgba(183,247,255,.52) !important; background: linear-gradient(180deg, #d5fbff 0%, #69dce9 45%, #238ba9 100%) !important; box-shadow: inset 1px 1px 0 rgba(255,255,255,.42) !important; }
 #nsPanel .ns-stbar-n { color: rgba(174, 201, 215, .72) !important; font-size: 7.5px !important; }
-#nsPanel .ns-stat-fav { min-width: 0; color: rgba(191, 207, 217, .74) !important; font-size: 9.5px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#nsPanel .ns-stat-fav { min-width: 0; color: #bdcedc !important; font-size: 10px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #nsPanel .ns-stat-fav b { color: #8cedf7 !important; font-weight: 850 !important; }
 #nsPanel .ns-stat-bed { display: flex !important; align-items: center !important; justify-content: center !important; }
 #nsPanel .ns-bedmap { gap: 7px !important; }
@@ -933,6 +976,7 @@
   color: rgba(174, 191, 205, .72) !important;
   font-size: 8.5px !important;
   line-height: 11px !important;
+  text-align: center;
 }
 
 /* Preserve tiny character motions; nothing else keeps animating. */
@@ -1314,9 +1358,60 @@ html.mk-low-spec #nsOverlay.open #nsPanel .pkt-cat.pkt-awake .pkt-eyes { animati
   #nsPanel .ns-bedcare-perch-copy {
     min-width: 0 !important;
     max-width: 100% !important;
-    padding-inline: 5px !important;
+    padding-inline: 12px !important;
   }
-  #nsPanel .ns-bedcare-perch-copy small { font-size: 8.5px !important; }
-  #nsPanel .ns-bedcare-perch-copy b { font-size: 11.5px !important; }
-  #nsPanel .ns-bedcare-age { font-size: 7px !important; }
+  #nsPanel .ns-bedcare-perch-copy b { font-size: 16px !important; }
+  #nsPanel .ns-bedcare-footer { flex-direction: column; gap: 3px; }
+}
+
+/* Fit the complete scene, including open bed controls, without a scroll area. */
+@media (min-width: 641px) {
+  #nsPanel .ns-room-main .ns-room-shell,
+  #nsPanel .ns-room-nmp .ns-room-shell { height: var(--ns-room-height, 360px) !important; }
+}
+#nsPanelContent {
+  overflow: hidden !important;
+  overflow: clip !important;
+  flex: 0 1 auto !important;
+  box-sizing: border-box;
+}
+#nsPanelContent > .ns-panel-canvas {
+  display: flow-root;
+  transform-origin: 0 0;
+}
+.mk-daily-cat-pet.is-night-perched .mk-daily-cat-sprite-wrap {
+  transform: translateY(calc(12px * (1 - var(--ns-scene-scale, 1)))) scale(var(--ns-scene-scale, 1));
+  transform-origin: 50% 0;
+  transition: none;
+}
+
+/* Reserve visible space for the separate bed-care panel in short desktop windows. */
+@media (min-width: 641px) and (max-height: 820px) {
+  #nsPanel { --ns-card-height: clamp(160px, calc(100vh - 560px), 229px); }
+  #nsPanel .ns-panel-head { margin-bottom: 3px !important; }
+  #nsPanel .ns-cards-row { min-height: calc(var(--ns-card-height) + 4px) !important; }
+  #nsPanel .nsc-full-card,
+  #nsPanel .nsc-full-card.nsc-has-checklist {
+    height: var(--ns-card-height) !important;
+    min-height: var(--ns-card-height) !important;
+  }
+  #nsPanel .nsc-full-inner {
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 8px 15px 4px !important;
+  }
+  #nsPanel .nsc-full-time { margin-top: 6px !important; }
+  #nsPanel .nsc-full-desc,
+  #nsPanel .nsc-full-meta { margin-top: 4px !important; }
+}
+@media (min-width: 641px) and (max-height: 760px) {
+  #nsPanel { --ns-card-height: clamp(160px, calc(100vh - 535px), 229px); }
+}
+@media (min-width: 641px) and (max-height: 680px) {
+  #nsPanel { --ns-card-height: 150px; padding-top: 8px !important; padding-bottom: 10px !important; }
+  #nsPanel .ns-panel-head { min-height: 38px; padding-bottom: 3px !important; }
+  #nsPanel .ns-cards-row { padding-top: 2px !important; }
+  #nsPanel .ns-flow-bar { margin-top: 5px !important; }
+  #nsPanel .ns-flow-labels { margin: 4px 0 !important; }
+  #nsPanel .ns-room-block { margin-top: 2px !important; padding-top: 4px !important; }
 }
