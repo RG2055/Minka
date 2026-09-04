@@ -294,7 +294,7 @@
 
   function bedCareExactDateLabel(ts){
     var d=new Date(Number(ts)||0);
-    if(!Number(ts) || Number.isNaN(d.getTime())) return 'NAV ATZĪMĒTS';
+    if(!Number(ts) || Number.isNaN(d.getTime())) return 'Nav atzīmēts';
     return d.toLocaleDateString('lv-LV',{day:'2-digit',month:'2-digit',year:'numeric'});
   }
 
@@ -315,16 +315,14 @@
 
   function bedCareAgeLabel(ts){
     var days=bedCareDaysSince(ts);
-    if(days===null) return '';
-    if(days===0) return 'ŠODIEN';
-    if(days===1) return '1 DIENA';
-    return days+' DIENAS';
+    if(days===null) return 'Pievieno datumu';
+    if(days===0) return 'Mainīta šodien';
+    if(days===1) return 'Mainīta vakar';
+    return 'Pirms '+days+(days%10===1 && days%100!==11 ? ' dienas' : ' dienām');
   }
 
   function bedCareAriaLabel(ts){
-    var days=bedCareDaysSince(ts);
-    var age=days===null ? '' : (days===0 ? ' Mainīta šodien.' : ' Nav mainīta '+days+(days===1?' dienu.':' dienas.'));
-    return 'Gultas veļa pēdējo reizi mainīta: '+bedCareDateLabel(ts)+'.'+age+' Nospied, lai mainītu.';
+    return 'Gultas veļa. Pēdējā nomaiņa: '+bedCareDateLabel(ts)+'. '+bedCareAgeLabel(ts)+'. Atzīmēt gultas veļas nomaiņu.';
   }
 
   function bedCareInputDate(ts){
@@ -350,8 +348,9 @@
     var ts=Number(state.all&&state.all.changedAt)||0;
     var last=pop.querySelector('.ns-bedcare-last');
     var note=pop.querySelector('.ns-bedcare-note');
-    if(last) last.textContent='Iepriekš: '+bedCareDateLabel(ts);
+    if(last) last.textContent='Pēdējā nomaiņa: '+bedCareDateLabel(ts);
     if(note) note.textContent=notice||'';
+    scheduleFitRoomBlocks(document);
   }
 
   function bedCarePerchHTML(){
@@ -361,7 +360,7 @@
       +'<span class="ns-bedcare-bed" aria-hidden="true">'+roomBedPicture('neutral')
       +'<span class="ns-room-bed-devices"><span class="ns-room-device is-feature dev-0"></span><span class="ns-room-device is-smart dev-1"></span><span class="ns-room-device is-feature dev-2"></span><span class="ns-room-device is-smart dev-3"></span></span>'
       +'</span>'
-      +'<span class="ns-bedcare-perch-copy"><small>GULTAS VEĻA MAINĪTA</small><span class="ns-bedcare-date-line"><span class="ns-bedcare-calendar" aria-hidden="true">▦</span><b>'+escHtml(bedCareExactDateLabel(ts))+'</b><span class="ns-bedcare-age">'+escHtml(bedCareAgeLabel(ts))+'</span></span></span>'
+      +'<span class="ns-bedcare-perch-copy"><small>Gultas veļa</small><span class="ns-bedcare-date-line"><svg class="ns-bedcare-calendar" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="4"/><path d="M7 3v4m10-4v4M3 11h18m-13 4h3m2 0h3"/></svg><b>'+escHtml(bedCareExactDateLabel(ts))+'</b></span><span class="ns-bedcare-footer"><span class="ns-bedcare-age">'+escHtml(bedCareAgeLabel(ts))+'</span><span class="ns-bedcare-action">Atzīmēt <span aria-hidden="true">↗</span></span></span></span>'
       +'</div>';
   }
 
@@ -384,6 +383,7 @@
     if(_nsBedCareKeydown){ document.removeEventListener('keydown',_nsBedCareKeydown); _nsBedCareKeydown=null; }
     var trigger=document.querySelector('#nsPanel .ns-bedcare-perch');
     if(trigger) trigger.setAttribute('aria-expanded','false');
+    if(pop) scheduleFitRoomBlocks(document);
   }
 
   function markBedCare(itemKey,changedAt){
@@ -417,10 +417,10 @@
     pop.id='nsBedCarePopover';
     pop.className='ns-bedcare-popover';
     pop.setAttribute('role','dialog');
-    pop.setAttribute('aria-label','Norādi gultas veļas nomaiņas datumu');
+    pop.setAttribute('aria-label','Atzīmēt gultas veļas nomaiņu');
     pop.innerHTML='<form class="ns-bedcare-form">'
-      +'<div class="ns-bedcare-quick-head"><span class="ns-bedcare-icon" aria-hidden="true">▤</span><span><b>Gultas veļa</b><small class="ns-bedcare-last"></small></span><button type="button" class="ns-bedcare-close" aria-label="Aizvērt">×</button></div>'
-      +'<label class="ns-bedcare-date"><span>Nomaiņas datums</span><input id="nsBedCareDate" type="date" required max="'+bedCareInputDate(Date.now())+'" value="'+bedCareInputDate(Date.now())+'"></label>'
+      +'<div class="ns-bedcare-quick-head"><span class="ns-bedcare-icon" aria-hidden="true">▤</span><span><b>Veļas nomaiņa</b><small class="ns-bedcare-last"></small></span><button type="button" class="ns-bedcare-close" aria-label="Aizvērt">×</button></div>'
+      +'<label class="ns-bedcare-date"><span>Kad nomainīji?</span><input id="nsBedCareDate" type="date" required max="'+bedCareInputDate(Date.now())+'" value="'+bedCareInputDate(Date.now())+'"></label>'
       +'<button type="submit" class="ns-bedcare-save">Saglabāt</button>'
       +'<div class="ns-bedcare-note" aria-live="polite"></div>'
       +'</form>';
@@ -450,7 +450,10 @@
       };
       document.addEventListener('pointerdown',_nsBedCareOutside);
     },0);
-    requestAnimationFrame(function(){ var input=pop.querySelector('#nsBedCareDate'); if(input) input.focus({preventScroll:true}); });
+    requestAnimationFrame(function(){
+      var input=pop.querySelector('#nsBedCareDate');
+      if(input) input.focus({preventScroll:true});
+    });
   }
 
   function wireBedCarePerch(scope){
@@ -1733,11 +1736,47 @@
       +'</div>';
   }
 
+  function fitNightCanvas(panel,canvas){
+    if(!canvas) return;
+    var shell=panel.parentElement;
+    var shellStyle=getComputedStyle(shell);
+    var panelStyle=getComputedStyle(panel);
+    var shellChrome=['paddingTop','paddingBottom','borderTopWidth','borderBottomWidth'].reduce(function(sum,key){ return sum+(parseFloat(shellStyle[key])||0); },0);
+    var paddingY=(parseFloat(panelStyle.paddingTop)||0)+(parseFloat(panelStyle.paddingBottom)||0);
+    var paddingX=(parseFloat(panelStyle.paddingLeft)||0)+(parseFloat(panelStyle.paddingRight)||0);
+    var viewportHeight=window.visualViewport ? window.visualViewport.height : innerHeight;
+    var availableH=Math.max(1,viewportHeight-24-shellChrome-paddingY-12);
+    var availableW=Math.max(1,panel.clientWidth-paddingX);
+    // Measure visible controls rather than transformed room artwork's overflow.
+    var bounds=canvas.getBoundingClientRect();
+    var naturalH=canvas.offsetHeight;
+    var naturalW=canvas.offsetWidth;
+    canvas.querySelectorAll('.ns-bedcare-perch-copy,.ns-bedcare-popover,.ns-panel-head').forEach(function(el){
+      var rect=el.getBoundingClientRect();
+      naturalH=Math.max(naturalH,rect.bottom-bounds.top);
+      naturalW=Math.max(naturalW,rect.right-bounds.left);
+    });
+    var scale=Math.min(1,availableH/Math.max(1,naturalH),availableW/Math.max(1,naturalW));
+    var offset=Math.max(0,(availableW-naturalW*scale)/2);
+    canvas.style.transform='translateX('+offset+'px) scale('+scale+')';
+    panel.style.height=Math.ceil(naturalH*scale+paddingY+12)+'px';
+    panel.scrollTop=0;
+    panel.scrollLeft=0;
+    document.documentElement.style.setProperty('--ns-scene-scale',String(scale));
+    var perch=canvas.querySelector('.ns-bedcare-perch');
+    if(perch && window.__minkaDailyCat && typeof window.__minkaDailyCat.enterNightSplit==='function') {
+      window.__minkaDailyCat.enterNightSplit(perch);
+    }
+  }
+
   function fitRoomBlocks(root){
     try{
       var scope = root || document;
       var panel = document.getElementById('nsPanelContent');
       if(!panel || window.__nsOverlayOpen!==true) return;
+      var canvas=panel.querySelector('.ns-panel-canvas');
+      if(canvas) canvas.style.transform='none';
+      panel.style.height='';
       var blocks = scope.querySelectorAll('.ns-room-block');
       blocks.forEach(function(block){
         var fit = block.querySelector('.ns-room-fit');
@@ -1772,6 +1811,17 @@
         var availH   = Math.max(80, panelRect.bottom - fitRect.top - bottomReserve);
         var widthScale = Math.min(1, availW / naturalW);
         var scale = Math.min(widthScale, availH / naturalH);
+        var roomHeight=null;
+        if(!narrow && cat){
+          var plaque=cat.querySelector('.ns-bedcare-perch-copy');
+          var columnHeight=plaque ? plaque.getBoundingClientRect().bottom-cat.getBoundingClientRect().top : cat.offsetHeight;
+          var shell=layout.querySelector('.ns-room-shell');
+          var titleHeight=shell ? layout.offsetHeight-shell.offsetHeight : 17;
+          // Use the empty floor area below the rooms; keep beds at their own scale.
+          scale=widthScale;
+          roomHeight=Math.max(360,columnHeight/scale-titleHeight);
+          naturalH=roomHeight+titleHeight;
+        }
         if(!isFinite(scale) || scale <= 0) scale = 1;
         var roomsW = Math.ceil(naturalW * scale);
         var roomsH = Math.ceil(naturalH * scale);
@@ -1779,6 +1829,8 @@
 
         // WRITE PHASE. All geometry reads above are complete; this single batch
         // avoids read → write → read forced reflow on old CPUs.
+        if(roomHeight!==null) layout.style.setProperty('--ns-room-height',roomHeight+'px');
+        else layout.style.removeProperty('--ns-room-height');
         layout.style.transform = 'scale(' + scale + ')';
         fit.style.width  = roomsW + 'px';
         fit.style.height = roomsH + 'px';
@@ -1793,7 +1845,7 @@
             stats.style.width = '100%';
           } else {
             stats.style.marginTop = (-lift) + 'px';
-            stats.style.height = (roomsH + lift + 4) + 'px';
+            stats.style.height = (roomsH + lift) + 'px';
           }
         }
         if(cat) {
@@ -1801,6 +1853,7 @@
           cat.style.height = (narrow ? 210 : 250) + 'px';
         }
       });
+      fitNightCanvas(panel,canvas);
     }catch(_e){}
   }
 
@@ -2247,7 +2300,7 @@
     }
 
     panel.innerHTML=
-      '<div class="ns-panel-head">'
+      '<div class="ns-panel-canvas"><div class="ns-panel-head">'
       +'<span class="ns-panel-title"><img class="ns-brand-mark" src="../data/rg-brand.svg" width="35" height="35" alt="" aria-hidden="true"><span>Nakts sadalījums</span></span>'
       +'<div class="ns-panel-controls">'
       +'<label class="nss-shell"><select class="nss" aria-label="Nakts sākuma laiks" onchange="__ns.ss(this.value)">'+so+'</select><span class="nss-display" aria-hidden="true">'+escHtml(startLabel)+'</span><span class="nss-chevron" aria-hidden="true"></span></label>'
@@ -2273,7 +2326,7 @@
       +'<div class="ns-cards-row" style="--ns-cols:'+nsCount+';--ns-gap:'+nsGap+';--ns-card-h:'+nsCardH+';--ns-name-size:'+nsNameSize+'">'+cards+'</div>'
       +flowBar
       +_roomHtml
-      +'<div class="ns-flow-meta">'+_metaHtml+'</div>';
+      +'<div class="ns-flow-meta">'+_metaHtml+'</div></div>';
     _nsLastRoomHtml=_roomHtml;
     applyWorkerSkinsToNightCards(panel);
     wireBedCarePerch(panel);
@@ -2305,6 +2358,8 @@
   }
 
   window.addEventListener('resize', function(){ scheduleFitRoomBlocks(document); }, { passive:true });
+  if(window.visualViewport) window.visualViewport.addEventListener('resize', function(){ scheduleFitRoomBlocks(document); }, { passive:true });
+  if(document.fonts) document.fonts.ready.then(function(){ scheduleFitRoomBlocks(document); });
 
   // ── Drag & Drop ── pure mouse + touch, zero HTML5 drag API ───────────────
   function drag(el){
