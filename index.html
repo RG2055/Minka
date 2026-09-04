@@ -4,7 +4,17 @@
 <meta charset="utf-8">
 <!-- First paint must be dark: this runs before any blocking script/CSS, so a
      PWA wake after tab discard never flashes a white screen. -->
-<style>html{background:#060b13;}body{background:#060b13;}</style>
+<style>html{background:#060b13;}body{background:#060b13;}
+/* Loader geometry must be known before the loader markup is parsed. Its own
+   <style> sits ~4 KB further down the document, so on a slow machine the
+   parser can paint the loader first: the two inline SVGs carry only a
+   viewBox, and an unsized inline SVG fills 100% of the page width, which
+   flashed a full-screen brand mark for a frame. These rules repeat the
+   later ones verbatim, so nothing about the finished loader changes. */
+#mk-app-loader{position:fixed;inset:0;z-index:900000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;overflow:hidden;background:#06090e}
+.mkl-brand-motion{position:relative;width:176px;height:176px}
+.mkl-blob-mark,.mkl-pwa-mark{position:absolute;inset:8px;width:160px;height:160px}
+</style>
 <script>
 (function() {
   var API_BASE = 'https://minka-api.gamernr1elite.workers.dev';
@@ -27,7 +37,7 @@
   }
   window.__minkaHasApiAuth = function() { return !!getToken(); };
 
-  var CALENDAR_BUILD = '20260901nojump1';
+  var CALENDAR_BUILD = '20260904loadflash1';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -585,14 +595,14 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <div id="calendarEmbed">
   <!-- Keep the expensive calendar document dormant behind the password gate.
        Authenticated startup assigns data-base-src immediately. -->
-  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260830photos2" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260904loadflash1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- Compact brand loader. It stays up until the embedded schedule has painted. -->
 <div id="mk-app-loader" role="status" aria-label="Ielādē grafiku">
   <div class="mkl-brand-motion" aria-hidden="true">
     <span class="mkl-aura"></span>
-    <svg class="mkl-blob-mark" viewBox="0 0 160 150" focusable="false">
+    <svg class="mkl-blob-mark" width="160" height="160" viewBox="0 0 160 150" focusable="false">
       <defs>
         <linearGradient id="mkl-blob-blue" x1="25" y1="12" x2="132" y2="139" gradientUnits="userSpaceOnUse">
           <stop offset="0" stop-color="#8de2ff"/>
@@ -619,7 +629,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
       <i class="mkl-drop mkl-drop-5"></i><i class="mkl-drop mkl-drop-6"></i>
       <i class="mkl-drop mkl-drop-7"></i><i class="mkl-drop mkl-drop-8"></i>
     </span>
-    <svg class="mkl-pwa-mark" viewBox="0 0 160 160" focusable="false">
+    <svg class="mkl-pwa-mark" width="160" height="160" viewBox="0 0 160 160" focusable="false">
       <defs>
         <linearGradient id="mkl-app-blue" x1="37" y1="21" x2="127" y2="139" gradientUnits="userSpaceOnUse">
           <stop offset="0" stop-color="#91e8ff"/>

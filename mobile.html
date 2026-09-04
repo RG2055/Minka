@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="lv">
 <head>
+<meta charset="UTF-8">
 <!-- Dark first paint: prevents white flash on PWA wake/reload. -->
 <style>html{background:#000;}body{background:#000;}</style>
 <script>
@@ -25,7 +26,7 @@
     } catch (_e) {}
   }
 
-  var CALENDAR_BUILD = '20260901nojump1';
+  var CALENDAR_BUILD = '20260904loadflash1';
 
   function withCalendarBuild(url) {
     try {
@@ -46,7 +47,8 @@
       if (!token) return;
       var base = withCalendarBuild(f.getAttribute('data-base-src') || 'kalendars/index.html');
       var next = base;
-      if (f.getAttribute('src') !== next) f.setAttribute('src', next);
+      var nextAbsolute = new URL(next, window.location.href).href;
+      if (f.src !== nextAbsolute) f.setAttribute('src', next);
       if (f.contentWindow) f.contentWindow.postMessage({ type: 'minka_auth_ok', token: token }, window.location.origin);
     }
     var frame = document.getElementById('calIframe');
@@ -201,7 +203,6 @@
 })();
 </script>
 
-<meta charset="UTF-8">
 <link rel="manifest" href="manifest-mobile.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -693,8 +694,8 @@ html.mk-low-spec #calendarEmbed {
 <body>
   <div id="calendarEmbed">
     <iframe
-      src="kalendars/index.html?mobile=1&cv=20260829cloudsync2"
-      data-base-src="kalendars/index.html?mobile=1&cv=20260829cloudsync2"
+      src="kalendars/index.html?mobile=1&cv=20260904loadflash1"
+      data-base-src="kalendars/index.html?mobile=1&cv=20260904loadflash1"
       id="calIframe"
       title="Mobilais dežūru grafiks"
       loading="eager"
