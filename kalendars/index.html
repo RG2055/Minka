@@ -132,7 +132,7 @@ window.setTimeout(function () {
 <link rel="stylesheet" href="css/bundle.css?v=20260901nojump1">
 <link rel="stylesheet" href="css/skin-draw.css?v=20260829chalk1">
 <link rel="stylesheet" href="css/card-addons.css?v=20260831perf25">
-<script src="js/card-addons.js?v=20260907dream1" defer></script>
+<script src="js/card-addons.js?v=20260908identity2" defer></script>
 <link rel="stylesheet" href="css/side-cards-v2.css?v=20260818nfootgap1">
 <link rel="stylesheet" href="css/header-weather.css?v=20260813headerfix1">
 <link rel="stylesheet" href="css/mood-fluent.css?v=20260820fmood16">
@@ -1772,6 +1772,7 @@ function _mkToast(msg, type) {
     if (identityHash === '3vftwm' || identityHash === 'bdyfi3') return 'WORKER-IDENTITY-01';
     return name;
   }
+  window.mkAppearanceIdentity = normName;
   function cloudWorkerName(n) { return String(n || '').trim().toUpperCase(); }
   function hexToRgb(h) {
     h = String(h || '').replace('#', '');

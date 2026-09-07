@@ -115,10 +115,22 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
-  function normName(value) { return String(value || '').trim().toUpperCase(); }
+  function normName(value) {
+    return typeof window.mkAppearanceIdentity === 'function'
+      ? window.mkAppearanceIdentity(value) : String(value || '').trim().toUpperCase();
+  }
 
   function readAll() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {}; }
+    try {
+      var stored=JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {}, result={};
+      // Read legacy display-name keys through the same identity used by skins.
+      // An explicit canonical cloud value takes precedence over a legacy copy.
+      Object.keys(stored).forEach(function(name){
+        var key=normName(name);
+        if(!Object.prototype.hasOwnProperty.call(result,key) || name===key) result[key]=stored[name];
+      });
+      return result;
+    }
     catch (_error) { return {}; }
   }
 
