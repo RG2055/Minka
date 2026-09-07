@@ -37,7 +37,7 @@
   }
   window.__minkaHasApiAuth = function() { return !!getToken(); };
 
-  var CALENDAR_BUILD = '20260907modal1';
+  var CALENDAR_BUILD = '20260907smooth1';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -390,8 +390,8 @@ html.has-wallpaper-bg #macscapeBg {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
-  transition: bottom .35s cubic-bezier(.4,0,.2,1), background .2s ease, backdrop-filter .2s ease;
-  /* GPU compositing layer — avoids layout thrashing on bottom transition */
+  transition: background .2s ease;
+  /* Resize the iframe once; animating bottom forces layout on every frame. */
   will-change: bottom;
   contain: layout style;
 }
@@ -595,7 +595,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <div id="calendarEmbed">
   <!-- Keep the expensive calendar document dormant behind the password gate.
        Authenticated startup assigns data-base-src immediately. -->
-  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260907modal1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260907smooth1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- Compact brand loader. It stays up until the embedded schedule has painted. -->
@@ -1082,6 +1082,7 @@ function radioIdleClick() {
 
 // Keep calendar area synced to the actual radio height
 let _syncRaf = 0;
+let _lastShellLayout = null;
 function syncShellLayout() {
   cancelAnimationFrame(_syncRaf);
   _syncRaf = requestAnimationFrame(_doSync);
@@ -1104,8 +1105,11 @@ function _doSync() {
   const lacH = lacVisible ? Math.max(0, Math.round(lac.getBoundingClientRect().height || 0)) : 0;
   const consoleH = Math.max(radioH, lacH);
   const consoleVisible = radioVisible || lacVisible;
-  root.style.setProperty('--btnbar-h', btnH + 'px');
   const safeGap = consoleVisible ? 10 : 6;
+  const layoutKey = [btnH, consoleH, consoleVisible, window.innerWidth, window.innerHeight].join(':');
+  if (layoutKey === _lastShellLayout) return;
+  _lastShellLayout = layoutKey;
+  root.style.setProperty('--btnbar-h', btnH + 'px');
   root.style.setProperty('--calendar-safe-gap', safeGap + 'px');
   root.style.setProperty('--calendar-bottom', (consoleH + btnH + safeGap) + 'px');
   if (iframe && iframe.contentWindow) {
@@ -1146,7 +1150,7 @@ function initApp() {
     ro.observe(rw);
   }
   const cal = document.getElementById('calIframe');
-  if (cal) cal.addEventListener('load', () => setTimeout(syncShellLayout, 80));
+  if (cal) cal.addEventListener('load', () => { _lastShellLayout = null; setTimeout(syncShellLayout, 80); });
   setTimeout(syncShellLayout, 80);
 
   // Keyboard shortcut: Space = play, arrows = next/prev, M = mute

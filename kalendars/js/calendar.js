@@ -6783,15 +6783,13 @@ function showWorkerSchedule(workerName, currentShift) {
   modalListReady = false;
   modalCalendarReady = false;
 
-  if (allDates.length > 0) {
-    const [d,m,y] = allDates[0].date.split('.').map(Number);
-    modalCurrentYear = y;
-    modalCurrentMonth = m-1;
-  } else {
-    const now = new Date();
-    modalCurrentYear = now.getFullYear();
-    modalCurrentMonth = now.getMonth();
-  }
+  // Open in the selected roster month, including months without shifts.
+  const selectedParts = String(window.__g_todayStr || '').split('.').map(Number);
+  const selectedDate = selectedParts.length === 3 && selectedParts.every(Number.isFinite)
+    ? new Date(selectedParts[2], selectedParts[1] - 1, selectedParts[0])
+    : new Date();
+  modalCurrentYear = selectedDate.getFullYear();
+  modalCurrentMonth = selectedDate.getMonth();
   updateModalTotalHours();
 
   __workerModalRestore();

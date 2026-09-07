@@ -1561,7 +1561,7 @@ function _mkToast(msg, type) {
 </script>
 <script src="data/namedays.local.js"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
-<script src="js/known-carryovers.js?v=20260907modal1"></script>
+<script src="js/known-carryovers.js?v=20260907smooth1"></script>
 <!-- Saved worker skins must be ready before the cached roster is rendered. -->
 <script>
 /* ── MinkaSkins: per-darbinieka kartes izskats ──
@@ -2552,7 +2552,7 @@ function _mkToast(msg, type) {
   };
 })();
 </script>
-<script src="js/calendar.js?v=20260907modal1"></script>
+<script src="js/calendar.js?v=20260907smooth1"></script>
 <script src="js/depth-cards.js?v=20260828local10" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
@@ -12568,6 +12568,12 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
     display: none !important;
   }
 }
+
+/* Layout changes settle once instead of animating card/text dimensions. */
+#grafiks-list .card {
+  transition: transform .15s ease, opacity .15s ease !important;
+}
+#grafiks-list .card-shift { transition: transform .15s ease !important; }
 
 /* Worker detail modal: neutral dark device sheet, no purple UI tint */
 /* Keep opening to one short fade; hidden tabs are built on demand. */
