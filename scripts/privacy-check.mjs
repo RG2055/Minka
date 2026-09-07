@@ -31,15 +31,32 @@ else {
   const treeIndex = args.indexOf('--tree');
   const tree = treeIndex >= 0 ? args[treeIndex + 1] : 'HEAD';
   const paths = git(...(staged ? ['diff', '--cached', '--name-only', '--diff-filter=ACMR', '-z'] : ['ls-tree', '-r', '--name-only', '-z', tree])).toString().split('\0').filter(Boolean);
+  const textFiles = [];
   for (const file of paths) {
     // Public name-day dictionaries are unrelated to the private staff roster.
     if (/(^|\/)(varda\.js|[^/]*nameday[^/]*)$/i.test(file)) continue;
     inspect('file path', Buffer.from(file));
-    inspect(file, git('show', staged ? ':' + file : tree + ':' + file));
+    if (/\.(png|jpe?g|webp|gif|ico|avif|woff2?|ttf|mp3|mp4|wav|ogg|pdf|zip|gz|bundle)$/i.test(file)) continue;
+    textFiles.push(file);
+  }
+  if (textFiles.length) {
+    const input = textFiles.map(file => staged ? ':' + file : tree + ':' + file).join('\n') + '\n';
+    const blobs = execFileSync('git', ['cat-file', '--batch'], { input, maxBuffer: 128 * 1024 * 1024 });
+    let offset = 0;
+    for (const file of textFiles) {
+      const end = blobs.indexOf(10, offset);
+      const fields = blobs.subarray(offset, end).toString().split(' ');
+      if (fields[1] !== 'blob') throw new Error('Cannot inspect staged file');
+      const size = Number(fields[2]);
+      inspect(file, blobs.subarray(end + 1, end + 1 + size));
+      offset = end + size + 2;
+    }
   }
   if (args[0] === '--range') {
-    const revisions = git('rev-list', args[1]).toString().trim().split('\n').filter(Boolean);
-    for (const sha of revisions) inspect(`commit ${sha.slice(0, 8)}`, git('show', '-s', '--format=%B', sha));
+    const messages = git('log', '--format=%H%x00%B%x00', args[1]).toString().split('\0');
+    for (let i = 0; i + 1 < messages.length; i += 2) {
+      inspect(`commit ${messages[i].trim().slice(0, 8)}`, Buffer.from(messages[i + 1]));
+    }
   }
 }
 if (failed) process.exit(1);
