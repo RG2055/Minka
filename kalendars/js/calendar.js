@@ -3171,7 +3171,7 @@ function filterFullList(btn) {
               <div class="badge-row mk-side-clock-row">${shiftChip}${timerHtml}</div>
               <div class="mk-side-fatigue">
                 <div class="mk-side-ring" role="img" aria-label="Nogurums ${fatigue.score} procenti, ${fatigue.label}"><span class="liquid-fill" aria-hidden="true"></span><span>${fatigue.score}<small>${fatigue.label}</small></span></div>
-                <span class="mk-side-fatigue-caption" title="${mkEscAttr(fatigue.contextLabel || 'Tagad')}">${fatigue.contextLabel === 'Prognoze maiņas sākumā' ? 'Sākumā ≈' : 'Tagad'}</span>
+                <span class="mk-side-fatigue-caption" title="${mkEscAttr(fatigue.contextLabel || 'Tagad')}">Nogurums</span>
               </div>
             </div>
           </div>
@@ -5934,7 +5934,7 @@ function filterFullList(btn) {
       return `
             <div class="mk-mid-meta ${trend.cls}" style="--mk-mid-fat-color:${fatigueColor}">
               <span class="mk-mid-meta-fat">
-                <span class="mk-mid-meta-label" title="${escapeHtml(window.__fatigue?.calculateFatigue(w.name)?.contextLabel || 'Tagad')}">${window.__fatigue?.calculateFatigue(w.name)?.viewMode !== 'today' ? 'Sākumā ≈' : 'Tagad'}</span>
+                <span class="mk-mid-meta-label" title="${escapeHtml(window.__fatigue?.calculateFatigue(w.name)?.contextLabel || 'Tagad')}">Nogurums</span>
                 <span class="mk-mid-meta-value">${escapeHtml(fatText)}</span>
               </span>
               ${timeCell}

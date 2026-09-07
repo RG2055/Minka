@@ -1623,10 +1623,12 @@
     return '--room-x:'+p.x+'%;--room-y:'+p.y+'%;--room-bed-w:'+p.w+'%;--room-bed-scale:'+p.scale+';--room-bed-z:'+p.z;
   }
 
+  // Rotate fallback dreams on the existing room refresh, at most hourly.
+  // Personal decorations always win; no extra timer or animation.
   function dreamContents(name){
     var api=window.MinkaCardAddons;
     var item=api && api.getDecoration ? api.getDecoration(name) : null;
-    var object=item ? '<img src="'+escHtml(item.src)+'" alt="" decoding="async" draggable="false">' : '<span class="ns-dream-default">'+['🌙','✨','☁️','⭐'][_nameHash(name)%4]+'</span>';
+    var object=item ? '<img src="'+escHtml(item.src)+'" alt="" decoding="async" draggable="false">' : '<span class="ns-dream-default">'+['📱','⏰'][(_nameHash(name)+Math.floor(Date.now()/3600000))%2]+'</span>';
     return '<svg class="ns-dream-cloud" viewBox="0 0 80 64" aria-hidden="true"><path d="M18 47C3 48 1 30 12 25C8 12 23 7 31 12C38 0 55 5 58 14C72 10 82 24 73 34C82 47 62 55 54 49C44 57 28 55 25 47Z"/><circle cx="18" cy="56" r="4"/><circle cx="11" cy="62" r="2"/></svg><span class="ns-dream-object">'+object+'</span>';
   }
   function refreshBedDream(el){
