@@ -1,0 +1,79 @@
+/* One radio shell; music is loaded only when selected. No live blur or size tween. */
+#radioWindow .radio-source-bar {
+  position: absolute;
+  z-index: 10010;
+  right: 12px;
+  top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid #34404d;
+  border-radius: 10px;
+  background: #101720;
+  font: 700 11px system-ui, sans-serif;
+}
+.radio-source-bar button {
+  border: 0;
+  border-radius: 7px;
+  padding: 6px 10px;
+  color: #aebdcc;
+  background: transparent;
+  cursor: pointer;
+}
+.radio-source-bar button[aria-pressed="true"] { color: #b5ffe4; background: #1e3b35; }
+#radioSourceStatus:empty { display: none; }
+#radioSourceStatus { max-width: 180px; color: #bdd0db; }
+#radioWindow.music-source { height: 190px !important; background: #0d131b; border-top: 1px solid #34404d; }
+#radioWindow.music-source .radio-win-body { display: none; }
+#radioWindow #lacMiniConsole.docked {
+  position: absolute;
+  inset: 6px 0 6px;
+  width: 100%;
+  height: auto !important;
+  max-height: none;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none;
+  transform: none;
+}
+#radioWindow #lacMiniConsole .lm-brand svg { display: none; }
+#radioWindow #lacMiniConsole .lm-brand { color: #aec7d6; }
+#radioWindow #lacMiniConsole .lm-cover { background: #18212c; box-shadow: none; }
+#radioWindow #lacMiniConsole .lm-cover.active { background: #19342e; }
+@media (max-width: 650px) {
+  #radioWindow.music-source { height: 230px !important; }
+  #radioWindow .radio-source-bar { right: 8px; }
+}
+
+#radioWindow.music-source .radio-source-bar { position: static; flex-shrink: 0; }
+#radioWindow #lacMiniConsole .lm-head { height: 36px !important; padding-left: 0; }
+#radioWindow #lacMiniConsole .lm-brand { display: none; }
+#radioWindow #lacMiniConsole .lm-search { max-width: none; border-radius: 7px !important; background: rgba(6,16,23,.45); }
+#radioWindow #lacMiniConsole .lm-login,
+#radioWindow #lacMiniConsole .lm-favorites,
+#radioWindow #lacMiniConsole .lm-quick,
+#radioWindow #lacMiniConsole .lm-hbtn,
+#radioWindow #lacMiniConsole .lm-scroll-btn {
+  border-radius: 7px !important;
+  border: 1px solid rgba(170,210,220,.22) !important;
+  background: rgba(8,20,28,.46) !important;
+  box-shadow: none !important;
+}
+#radioWindow #lacMiniConsole .lm-cover { background: rgba(8,20,28,.45) !important; }
+#radioWindow #lacMiniConsole .lm-cover.active { background: rgba(25,65,55,.55) !important; border-color: #62cbb0; }
+#radioWindow #lacMiniInfo { justify-content: center; overflow: hidden; }
+#radioWindow #lacMiniActions { margin-top: 4px; }
+#radioWindow #lacMiniConsole .lm-body { min-height: 76px; }
+#radioWindow #lacMiniConsole #lacMiniPlay { box-shadow: none; }
+@media (max-width: 650px) {
+  #radioWindow #lacMiniConsole .lm-head { height: auto !important; flex-wrap: wrap; gap: 6px; }
+  #radioWindow #lacMiniConsole .lm-search { order: 3; flex: 1 0 100%; }
+  #radioWindow #lacMiniConsole .lm-head-btns { gap: 4px; }
+}
+
+#radioWindow.music-source { overflow: visible !important; }
+
+#radioWindow #lacMiniNowLbl { display: none; }

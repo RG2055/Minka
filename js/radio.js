@@ -83,7 +83,7 @@ audio.preload = "none";
 // that never died — after a day of use dozens of loops were ticking at once.
 let __drawScheduled = false;
 function radioVisualsInactive() {
-    return document.hidden ||
+    return document.hidden || window.__mkRadioSupersededByLacitis ||
         document.body.classList.contains('radio-hidden') ||
         document.body.classList.contains('radio-idle');
 }
@@ -113,6 +113,8 @@ window.__mkPauseRadioForLacitis = function() {
     window.__mkRadioSupersededByLacitis = true;
     const wasPlaying = !audio.paused;
     try { audio.pause(); } catch(e) {}
+    syncRadioVisualLoops();
+    if (milkdropExpanded) milkdropCollapse();
     const playButton = document.getElementById('playBtn');
     if (playButton) playButton.innerHTML = '<i class="fas fa-play"></i>';
     return wasPlaying;
