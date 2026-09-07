@@ -1562,7 +1562,7 @@ function _mkToast(msg, type) {
 <script src="data/namedays.local.js"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/known-carryovers.js?v=20260901carryover1"></script>
-<script src="js/calendar.js?v=20260904loadflash1"></script>
+<script src="js/calendar.js?v=20260906livesync2"></script>
 <script src="js/depth-cards.js?v=20260828local10" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
@@ -12502,6 +12502,8 @@ window.addEventListener('message', function(e) {
 (function MinkaSkins() {
   var KEY = 'mkWorkerSkinsV1';
   var cloudTimers = Object.create(null);
+  var cloudRevision = 0;
+  var cloudWrites = 0;
   var activeImageGroup = 0;
   var activeSkinSection = 'background';
   var autoPaletteEnabled = true;
@@ -12897,6 +12899,7 @@ window.addEventListener('message', function(e) {
   }
   function hasAny(sk) { return !!(sk && (sk.t || sk.num || sk.txt || sk.em != null || sk.emn != null || sk.fx)); }
   function storeSkinLocal(name, skin) {
+    cloudRevision++;
     var all = loadAll();
     var k = normName(name);
     if (hasAny(skin)) all[k] = skin; else delete all[k];
@@ -12997,11 +13000,15 @@ window.addEventListener('message', function(e) {
   }
   function cloudPush(name, sk, silent) {
     if (!window.MinkaApi || !window.MinkaApi.apiFetch) { warnLocalOnly(); return; }
-    window.MinkaApi.apiFetch('/api/skins', { method: 'POST', json: { worker: cloudWorkerName(name), skin: packSkin(sk, name) || null } })
+    cloudRevision++;
+    cloudWrites++;
+    return window.MinkaApi.apiFetch('/api/skins', { method: 'POST', json: { worker: cloudWorkerName(name), skin: packSkin(sk, name) || null } })
       .then(function(r) { if (!r.ok) throw 0; if (!silent && typeof _mkToast === 'function') _mkToast('Izskats saglabāts — redzēs visi', 'ok'); })
-      .catch(warnLocalOnly);
+      .catch(warnLocalOnly)
+      .finally(function(){ cloudWrites--; });
   }
   window.mkSyncWorkerAppearance = function(name, debounceCloud) {
+    cloudRevision++;
     var key = normName(name);
     var skin = loadAll()[key] || null;
     if (cloudTimers[key]) clearTimeout(cloudTimers[key]);
@@ -13022,7 +13029,11 @@ window.addEventListener('message', function(e) {
     var form = new FormData();
     form.append('worker', cloudWorkerName(name));
     form.append('image', blob, 'skin.webp');
-    var response = await window.MinkaApi.apiFetch('/api/skin-art', { method: 'POST', body: form });
+    cloudRevision++;
+    cloudWrites++;
+    var response;
+    try { response = await window.MinkaApi.apiFetch('/api/skin-art', { method: 'POST', body: form }); }
+    finally { cloudWrites--; }
     var data = await response.json().catch(function(){ return {}; });
     if (!response.ok || !data.skin) throw new Error(data.error || 'Neizdevās saglabāt zīmējumu');
     var skin = unpackSkin(data.skin);
@@ -13031,18 +13042,35 @@ window.addEventListener('message', function(e) {
     return skin;
   }
   var cloudPullTimer = 0;
+  var cloudPullInFlight = false;
+  function sameAppearanceMap(a, b) {
+    var keys = Object.keys(a);
+    return keys.length === Object.keys(b).length && keys.every(function(key) {
+      return JSON.stringify(a[key]) === JSON.stringify(b[key]);
+    });
+  }
   function scheduleCloudPull(delay, attempt) {
     clearTimeout(cloudPullTimer);
+    if (document.hidden) return;
     cloudPullTimer = setTimeout(function(){ cloudPull(attempt || 0); }, Math.max(0, delay || 0));
   }
   function cloudPull(attempt) {
+    if (document.hidden || cloudPullInFlight) return;
     if (!window.MinkaApi || !window.MinkaApi.apiFetch) return;
     if (window.MinkaApi.getToken && !window.MinkaApi.getToken()) return;
-    window.MinkaApi.apiFetch('/api/skins').then(function(r) {
+    if (cloudWrites || Object.keys(cloudTimers).length) { scheduleCloudPull(30000, 0); return; }
+    cloudPullInFlight = true;
+    var revision = cloudRevision;
+    var nextDelay = 30000;
+    var nextAttempt = 0;
+    return window.MinkaApi.apiFetch('/api/skins', { cache: 'no-store' }).then(function(r) {
       if (!r.ok) throw 0;
       return r.json();
     }).then(function(map) {
-      if (!map || typeof map !== 'object') return;
+      if (!map || typeof map !== 'object' || Array.isArray(map)) return;
+      // A response started before a local edit must never restore the old skin.
+      if (revision !== cloudRevision || cloudWrites || Object.keys(cloudTimers).length) return;
+      var previous = loadAll();
       var all = {};
       var localAddons = window.MinkaCardAddons && typeof window.MinkaCardAddons.getAll === 'function'
         ? window.MinkaCardAddons.getAll() : {};
@@ -13062,9 +13090,14 @@ window.addEventListener('message', function(e) {
       Object.keys(localAddons).forEach(function(key) {
         if (!addonAuthority[key] && !cloudAddons[key]) cloudAddons[key] = localAddons[key];
       });
-      saveAll(all);
-      Object.keys(all).forEach(applyToCards);
-      if (window.MinkaCardAddons && typeof window.MinkaCardAddons.replaceFromCloud === 'function') {
+      var changed = Object.keys(Object.assign({}, previous, all)).filter(function(key) {
+        return JSON.stringify(previous[key] || null) !== JSON.stringify(all[key] || null);
+      });
+      if (changed.length) {
+        saveAll(all);
+        changed.forEach(applyToCards);
+      }
+      if (!sameAppearanceMap(localAddons, cloudAddons) && window.MinkaCardAddons && typeof window.MinkaCardAddons.replaceFromCloud === 'function') {
         window.MinkaCardAddons.replaceFromCloud(cloudAddons);
       }
       Object.keys(localAddons).forEach(function(key) {
@@ -13072,10 +13105,19 @@ window.addEventListener('message', function(e) {
       });
     }).catch(function() {
       if (attempt < 2 && window.MinkaApi.getToken && window.MinkaApi.getToken()) {
-        scheduleCloudPull(900 * (attempt + 1), attempt + 1);
+        nextDelay = 900 * (attempt + 1);
+        nextAttempt = attempt + 1;
       }
+    }).finally(function() {
+      cloudPullInFlight = false;
+      scheduleCloudPull(nextDelay, nextAttempt);
     });
   }
+  document.addEventListener('visibilitychange', function(){
+    if (document.hidden) clearTimeout(cloudPullTimer);
+    else scheduleCloudPull(100, 0);
+  });
+  window.addEventListener('online', function(){ scheduleCloudPull(100, 0); });
   document.addEventListener('minka:auth-ok', function(){ scheduleCloudPull(50, 0); });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ scheduleCloudPull(1500, 0); }, { once: true });
   else scheduleCloudPull(1500, 0);
@@ -20287,11 +20329,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     if (tap) { event.preventDefault(); event.stopPropagation(); addReaction(tap); return; }
     var writeButton = event.target.closest('[data-rg-write]');
     if (writeButton) { event.preventDefault(); event.stopPropagation(); openModal(writeButton.dataset.rgWrite, writeButton); }
-    // Passive: let the card's own coffee handler run, then re-read the total.
-    if (event.target.closest('.mk-coffee-add, .mk-coffee-sub, .mk-coffee-picker')) {
-      window.setTimeout(function () { paintMoodCoffee(true); }, 0);
-      window.setTimeout(function () { paintMoodCoffee(true); }, 500);
-    }
+
   });
   // Hover/press preview. Purely visual — it renders the mood under the pointer
   // and rolls back on leave; only the real click commits anything.
@@ -20349,21 +20387,22 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     var grid = section && section.querySelector('.cards-subgrid');
     if (grid && !grid.querySelector('.rg-feedback-card')) mount();
   }).observe(list, { childList: true, subtree: true });
-  // Coffee can change without this card hearing about it: the source picker is
-  // a body-level overlay outside #grafiks-list, and the server sync rewrites the
-  // counts on its own. A click listener would miss both, so watch the numbers
-  // the employee cards already render instead — that covers every path.
+  // The data owner signals one completed snapshot, including source-only changes.
+  // No whole-roster DOM observer or extra network polling is needed here.
   var moodCoffeeWatch = 0;
-  new MutationObserver(function (records) {
-    for (var i = 0; i < records.length; i++) {
-      var node = records[i].target;
-      var el = node.nodeType === 1 ? node : node.parentElement;
-      if (!el || !el.closest || !el.closest('.mk-coffee-num, .mk-coffee-cups, .mk-mid-coffee')) continue;
-      window.clearTimeout(moodCoffeeWatch);
-      moodCoffeeWatch = window.setTimeout(function () { paintMoodCoffee(true); }, 120);
-      return;
-    }
-  }).observe(list, { childList: true, subtree: true, characterData: true });
+  function scheduleMoodCoffeeRefresh() {
+    window.clearTimeout(moodCoffeeWatch);
+    moodStatsCache.at = 0;
+    if (document.hidden) return;
+    moodCoffeeWatch = window.setTimeout(function () { paintMoodCoffee(true); }, 120);
+  }
+  document.addEventListener('minka:coffee-changed', function (event) {
+    if (event.detail && event.detail.day && event.detail.day !== String(window.__activeDateStr || '')) return;
+    scheduleMoodCoffeeRefresh();
+  });
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) scheduleMoodCoffeeRefresh();
+  });
   syncFeedbackModalState(false);
   mount();
   paintCounts();

@@ -2760,7 +2760,7 @@ function filterFullList(btn) {
     const nowNames = new Set(), nightNames = new Set();
     const nowPeople = [];
     // Groups keyed by meaning + time, rendered as plain readable sentences:
-    // Example status labels: night, leaving, arriving.
+    // "🌙 Pa nakti: A, B" / "☀️ Līdz 17:00: C" / "🌙 No 17:00: D"
     const stay = [], leaveBy = {}, comeAt = {};
     workers.forEach(function(w) {
       const parts = String(w.name || '').trim().split(/\s+/).filter(Boolean);
@@ -4897,6 +4897,13 @@ function filterFullList(btn) {
     requestAnimationFrame(ensureInitialDecorations);
   });
 
+  // Roster renders replace the public coffee readers, while polling keeps its
+  // first callback. Share caches across renders so both always see the same data.
+  let coffeeStoreCache = null;
+  let coffeeDetailCache = null;
+  let coffeeStorageRefresh = 0;
+  let coffeeStorageListening = false;
+
   function g_updateList() {
     const container = document.getElementById('grafiks-list');
     // Read the stable width before invalidating the old roster. The synchronous
@@ -5009,20 +5016,7 @@ function filterFullList(btn) {
       } catch (_e) {}
     }
 
-    // Both stores keep every day ever recorded, so they only grow, and reading
-    // one meant parsing the whole history again. The batched lookups above cut
-    // most of the per-card reads, but the assistant payload still asks for the
-    // total, the source breakdown and the leaderboard — one parse per person
-    // each — and it runs three times per day switch. After a year of use that
-    // was over a second of pure JSON.parse on every click.
-    //
-    // They are parsed once and held in memory instead. Every writer goes
-    // through the save functions below, so the cache is replaced at the moment
-    // the data changes and can never fall behind what is stored; another tab
-    // writing is picked up through the storage event.
-    let coffeeStoreCache = null;
-    let coffeeDetailCache = null;
-
+    // Parse growing histories once; all render closures share these caches.
     function getCoffeeStore() {
       if (coffeeStoreCache) return coffeeStoreCache;
       try {
@@ -5057,12 +5051,16 @@ function filterFullList(btn) {
       } catch(e) {}
     }
 
-    try {
+    if (!coffeeStorageListening) try {
       window.addEventListener('storage', function (event) {
         if (!event || !event.key) return;
         if (event.key === coffeeStoreKey) coffeeStoreCache = null;
         else if (event.key === coffeeDetailStoreKey) coffeeDetailCache = null;
+        else return;
+        clearTimeout(coffeeStorageRefresh);
+        coffeeStorageRefresh = setTimeout(() => refreshVisibleCoffeeRows(getCoffeeDayKey()), 0);
       });
+      coffeeStorageListening = true;
     } catch(e) {}
 
     function getCoffeeDayKey() {
@@ -5246,12 +5244,18 @@ function filterFullList(btn) {
       saveCoffeeDetailStore(data);
     }
 
+    function notifyCoffeeChanged(day) {
+      if (day && day !== getCoffeeDayKey()) return;
+      document.dispatchEvent(new CustomEvent('minka:coffee-changed', { detail: { day: day || getCoffeeDayKey() } }));
+      try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(e) {}
+    }
+
     function refreshVisibleCoffeeRows(day) {
       if (day && day !== getCoffeeDayKey()) return;
       document.querySelectorAll('#grafiks-list.grid-view .mk-mid-card[data-worker]').forEach(card => {
         updateCoffeeRow(card, card.getAttribute('data-worker') || '');
       });
-      try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(e) {}
+      notifyCoffeeChanged(day);
     }
 
     function getCoffeeSyncState() {
@@ -5344,10 +5348,9 @@ function filterFullList(btn) {
         .then(r => r.ok ? r.json() : null)
         .then(data => {
           if (!data || !data.ok || data.date !== day || data.worker !== name) return;
-          setCoffeeCount(name, data.count);
+          applyCoffeeCounts(day, { [name]: data.count });
           getCoffeeSyncState().loadedDays[day] = true;
-          updateCoffeeRow(card, name);
-          try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(_e) {}
+          refreshVisibleCoffeeRows(day);
         })
         .catch(function(){});
     }
@@ -5476,7 +5479,7 @@ function filterFullList(btn) {
       setCoffeeCount(name, getCoffeeCount(name) + eq);
       addCoffeeDetail(name, { source, size, priceCents });
       updateCoffeeRow(card, name);
-      try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(_e) {}
+      notifyCoffeeChanged();
       postCoffeeDelta(name, eq, card, { source, size, priceCents });
     }
 
@@ -6021,7 +6024,7 @@ function filterFullList(btn) {
             const remEq = removedSrc ? coffeeEq(removedSrc) : 1;
             setCoffeeCount(w.name, Math.max(0, getCoffeeCount(w.name) - remEq));
             updateCoffeeRow(card, w.name);
-            try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(_e) {}
+            notifyCoffeeChanged();
             postCoffeeDelta(w.name, -remEq, card, removedSrc ? { source: removedSrc } : null);
           };
         }

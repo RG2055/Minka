@@ -8,9 +8,12 @@ new Function("window", source)(scope);
 const carryovers = scope.MinkaKnownCarryovers;
 
 test("names on a listed month boundary are recognised", () => {
+  // The assertions use only the token fragments that known-carryovers.js
+  // already stores, never a full roster name: this file is published.
   assert.equal(carryovers.isKnownNightCarryover("sample11 sample01", 8, "01.09.2026"), true);
   assert.equal(carryovers.isKnownNightCarryover("sample14 sample02", 8, "01.09.2026"), true);
-  // The sheet is inconsistent about the second N and about diacritics.
+  // The sheet is inconsistent about case and about diacritics, and norm()
+  // strips both before matching.
   assert.equal(carryovers.isKnownNightCarryover("sample14 sample02", 8, "1.9.2026"), true);
   assert.equal(carryovers.isKnownNightCarryover("sample11 sample01", 8, "01.09.2026"), true);
 });
@@ -21,13 +24,19 @@ test("a listed name is only a carryover on its own date and hours", () => {
 });
 
 test("colleagues on the same day are untouched", () => {
-  assert.equal(carryovers.isKnownNightCarryover("DARJA sample03", 8, "01.09.2026"), false);
+  assert.equal(carryovers.isKnownNightCarryover("TESTA PERSONA", 8, "01.09.2026"), false);
   assert.equal(carryovers.isKnownNightCarryover("", 8, "01.09.2026"), false);
 });
 
+test("a single matching token is not enough", () => {
+  // Both tokens must appear, so a shared first name cannot catch someone else.
+  assert.equal(carryovers.isKnownNightCarryover("sample11", 8, "01.09.2026"), false);
+  assert.equal(carryovers.isKnownNightCarryover("sample02", 8, "01.09.2026"), false);
+});
+
 test("the June boundary keeps working", () => {
-  assert.equal(carryovers.isKnownNightCarryover("sample06 B", 8, "01.06.2026"), true);
-  assert.equal(carryovers.isKnownNightCarryover("sample13 C", 8, "01.06.2026"), true);
+  assert.equal(carryovers.isKnownNightCarryover("sample06", 8, "01.06.2026"), true);
+  assert.equal(carryovers.isKnownNightCarryover("sample13", 8, "01.06.2026"), true);
   assert.equal(carryovers.hasKnownCarryovers("01.06.2026"), true);
   assert.equal(carryovers.hasKnownCarryovers("03.06.2026"), false);
 });
