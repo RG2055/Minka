@@ -1287,7 +1287,8 @@ function filterFullList(btn) {
     try {
       return JSON.stringify([
         getScheduleChannel(payload, 'radiographers'),
-        getScheduleChannel(payload, 'radiologists')
+        getScheduleChannel(payload, 'radiologists'),
+        payload.knownCarryovers || {}
       ]);
     } catch (_error) {
       return '';

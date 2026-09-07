@@ -37,3 +37,13 @@ test('missing or invalid secret fails explicitly rather than showing incorrect s
   }
   assert.equal(calls, 1);
 });
+
+test('exception-only updates invalidate the schedule render fingerprint', async () => {
+  const calendar = await readFile(new URL('../js/calendar.js', import.meta.url), 'utf8');
+  const start = calendar.indexOf('  function __gScheduleFingerprint(');
+  const code = calendar.slice(start, calendar.indexOf('  function __gHasAuth()', start));
+  const fingerprint = new Function('getScheduleChannel', code + '; return __gScheduleFingerprint;')((data, channel) => data[channel]);
+  const before = { radiographers: {}, radiologists: {}, knownCarryovers: {} };
+  assert.notEqual(fingerprint(before), fingerprint({ ...before, knownCarryovers: fixture }));
+  assert.equal(fingerprint(before), fingerprint(JSON.parse(JSON.stringify(before))));
+});
