@@ -1624,12 +1624,12 @@
     return '--room-x:'+p.x+'%;--room-y:'+p.y+'%;--room-bed-w:'+p.w+'%;--room-bed-scale:'+p.scale+';--room-bed-z:'+p.z;
   }
 
-  // Upcoming and active duty dream about the same four handsets as the bed.
-  // Other slots retain their personal dream, including immediately after duty.
+  // Only the upcoming slot dreams about the same four handsets as the bed.
+  // The personal dream returns as soon as that slot starts.
   function dreamPhones(name){
     if(!st || !Array.isArray(st.sl)) return false;
     var active=st.sl.findIndex(function(slot){return slotRealtime(slot).active;});
-    return active>=0 && (st.sl[active].w.name===name || (!!st.sl[active+1] && st.sl[active+1].w.name===name));
+    return active>=0 && !!st.sl[active+1] && st.sl[active+1].w.name===name;
   }
   function dreamContents(name){
     var api=window.MinkaCardAddons;
