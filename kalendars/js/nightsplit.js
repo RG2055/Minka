@@ -1628,7 +1628,18 @@
   // The personal dream returns as soon as that slot starts.
   function dreamPhones(name){
     if(!st || !Array.isArray(st.sl)) return false;
-    var active=st.sl.findIndex(function(slot){return slotRealtime(slot).active;});
+    // The roster date remains the previous day after midnight. Anchor the
+    // actual night to that date instead of comparing it with today's date.
+    var parts=activeDateKey().match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    if(!parts || !st.sl.length) return false;
+    var base=new Date(+parts[3],+parts[2]-1,+parts[1]);
+    if(st.sl[0].s<12*60) base.setDate(base.getDate()+1);
+    var now=Date.now();
+    var active=st.sl.findIndex(function(slot){
+      var start=new Date(base),end=new Date(base);
+      start.setMinutes(slot.s);end.setMinutes(slot.e);
+      return now>=+start && now<+end;
+    });
     return active>=0 && !!st.sl[active+1] && st.sl[active+1].w.name===name;
   }
   function dreamContents(name){
