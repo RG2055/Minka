@@ -606,6 +606,13 @@ const worker = {
       if (!env.SOURCE_URL) {
         return json(request, { ok: false, error: "SOURCE_URL missing" }, 500);
       }
+      let knownCarryovers;
+      try {
+        knownCarryovers = JSON.parse(env.KNOWN_CARRYOVERS_JSON || 'null');
+        if (!knownCarryovers || typeof knownCarryovers !== 'object' || Array.isArray(knownCarryovers)) throw new Error();
+      } catch (_) {
+        return json(request, { ok: false, error: "Schedule exceptions unavailable" }, 503);
+      }
       const upstream = await fetch(env.SOURCE_URL, {
         method: "GET",
         headers: { accept: "application/json" }
@@ -614,7 +621,7 @@ const worker = {
         return json(request, { ok: false, error: "Upstream schedule fetch failed", status: upstream.status }, 502);
       }
       const data = await upstream.json();
-      return json(request, data);
+      return json(request, { ...data, knownCarryovers });
     }
 
     if (url.pathname === "/api/residents" && method === "GET") {
@@ -640,7 +647,7 @@ export default worker;
 
 function isAuthed(request, env) {
   const auth = request.headers.get("authorization") || "";
-  return auth === `Bearer ${env.APP_PASSWORD}`;
+  return typeof env.APP_PASSWORD === "string" && env.APP_PASSWORD.length > 0 && auth === `Bearer ${env.APP_PASSWORD}`;
 }
 
 function cors(request) {

@@ -1323,13 +1323,14 @@ function filterFullList(btn) {
       // shorter deadline. The old 5 s deadline meant a normal profile with a
       // cache repeatedly aborted the Sheets proxy while an incognito profile
       // (no cache, 60 s deadline) received the edited roster.
-      if (cachedAtStart && !__gCacheRendered && !refreshOnly) {
+      if (cachedAtStart && cachedAtStart.knownCarryovers && !__gCacheRendered && !refreshOnly) {
         try {
           const _now = g_now();
           const effective = new Date(_now);
           if (effective.getHours() < 8) effective.setDate(effective.getDate() - 1);
           g_todayStr = `${String(effective.getDate()).padStart(2,'0')}.${String(effective.getMonth()+1).padStart(2,'0')}.${effective.getFullYear()}`;
           window.__g_todayStr = g_todayStr;
+          window.MinkaKnownCarryovers.setKnownCarryovers(cachedAtStart.knownCarryovers);
           store = normalizeStoreKeys(getScheduleChannel(cachedAtStart, 'radiographers'));
           storeRad = normalizeStoreKeys(getScheduleChannel(cachedAtStart, 'radiologists'));
           patchCrossMonthContinuations(store);
@@ -1382,6 +1383,7 @@ function filterFullList(btn) {
       if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const d = await r.json();
+      if (!d.knownCarryovers || typeof d.knownCarryovers !== 'object' || Array.isArray(d.knownCarryovers)) throw new Error('Schedule exceptions unavailable');
       const remoteFingerprint = __gScheduleFingerprint(d);
       // Background freshness checks are intentionally cheap. Waiting for a
       // small fetch is asynchronous and does not block painting; the expensive
@@ -1393,6 +1395,7 @@ function filterFullList(btn) {
         clearTimeout(__gInitRetryTimer);
         return;
       }
+      window.MinkaKnownCarryovers.setKnownCarryovers(d.knownCarryovers);
       const cachedBeforeRefresh = cachedAtStart || readCachedSchedule();
       // Our shift "day" changes at 08:00 (not at midnight).
       // Before 08:00, we still consider the active shift to belong to the previous calendar day.
@@ -1489,7 +1492,7 @@ function filterFullList(btn) {
       console.warn('g_init retry:', e);
       const loader = document.getElementById('grafiks-loader');
       const cached = readCachedSchedule();
-      if (cached) {
+      if (cached && cached.knownCarryovers) {
         if (__gCacheRendered) {
           __gScheduleRetry(60000);
           return;
@@ -1500,6 +1503,7 @@ function filterFullList(btn) {
           if (effective.getHours() < 8) effective.setDate(effective.getDate() - 1);
           g_todayStr = `${String(effective.getDate()).padStart(2,'0')}.${String(effective.getMonth()+1).padStart(2,'0')}.${effective.getFullYear()}`;
           window.__g_todayStr = g_todayStr;
+          window.MinkaKnownCarryovers.setKnownCarryovers(cached.knownCarryovers);
           store = normalizeStoreKeys((cached.radiographers && typeof cached.radiographers === "object") ? cached.radiographers : (cached.allMonths || {}));
           storeRad = normalizeStoreKeys((cached.radiologists && typeof cached.radiologists === "object") ? cached.radiologists : (cached.radiologi || {}));
           patchCrossMonthContinuations(store);

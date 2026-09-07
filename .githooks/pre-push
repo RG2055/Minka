@@ -1,0 +1,5 @@
+#!/bin/sh
+while read -r local_ref local_oid remote_ref remote_oid; do
+  case "$local_oid" in 0000000000000000000000000000000000000000) continue ;; esac
+  node scripts/privacy-check.mjs --range "$local_oid" --tree "$local_oid" || exit 1
+done

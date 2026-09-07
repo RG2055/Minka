@@ -7,38 +7,29 @@ const scope = {};
 new Function("window", source)(scope);
 const carryovers = scope.MinkaKnownCarryovers;
 
-test("names on a listed month boundary are recognised", () => {
-  // The assertions use only the token fragments that known-carryovers.js
-  // already stores, never a full roster name: this file is published.
-  assert.equal(carryovers.isKnownNightCarryover("sample11 sample01", 8, "01.09.2026"), true);
-  assert.equal(carryovers.isKnownNightCarryover("sample14 sample02", 8, "01.09.2026"), true);
-  // The sheet is inconsistent about case and about diacritics, and norm()
-  // strips both before matching.
-  assert.equal(carryovers.isKnownNightCarryover("sample14 sample02", 8, "1.9.2026"), true);
-  assert.equal(carryovers.isKnownNightCarryover("sample11 sample01", 8, "01.09.2026"), true);
+// Synthetic identities only; production exceptions come from the private API.
+const fixture = { '01.02.2040': [{ hours: 8, tokens: ['sample', 'alpha'] }] };
+
+test("no identities are bundled before an authenticated response", () => {
+  assert.equal(carryovers.hasKnownCarryovers("01.02.2040"), false);
 });
 
-test("a listed name is only a carryover on its own date and hours", () => {
-  assert.equal(carryovers.isKnownNightCarryover("sample11 sample01", 8, "02.09.2026"), false);
-  assert.equal(carryovers.isKnownNightCarryover("sample11 sample01", 24, "01.09.2026"), false);
+test("API exceptions retain date, hours, all-token and accent matching", () => {
+  carryovers.setKnownCarryovers(fixture);
+  assert.equal(carryovers.isKnownNightCarryover("Sāmple Ālpha", 8, "1.2.2040"), true);
+  assert.equal(carryovers.isKnownNightCarryover("sample alpha", 8, "02.02.2040"), false);
+  assert.equal(carryovers.isKnownNightCarryover("sample alpha", 24, "01.02.2040"), false);
+  assert.equal(carryovers.isKnownNightCarryover("sample", 8, "01.02.2040"), false);
+  assert.equal(carryovers.isKnownNightCarryover("alpha", 8, "01.02.2040"), false);
+  assert.equal(carryovers.isKnownNightCarryover("", 8, "01.02.2040"), false);
 });
 
-test("colleagues on the same day are untouched", () => {
-  assert.equal(carryovers.isKnownNightCarryover("TESTA PERSONA", 8, "01.09.2026"), false);
-  assert.equal(carryovers.isKnownNightCarryover("", 8, "01.09.2026"), false);
-});
-
-test("a single matching token is not enough", () => {
-  // Both tokens must appear, so a shared first name cannot catch someone else.
-  assert.equal(carryovers.isKnownNightCarryover("sample11", 8, "01.09.2026"), false);
-  assert.equal(carryovers.isKnownNightCarryover("sample02", 8, "01.09.2026"), false);
-});
-
-test("the June boundary keeps working", () => {
-  assert.equal(carryovers.isKnownNightCarryover("sample06", 8, "01.06.2026"), true);
-  assert.equal(carryovers.isKnownNightCarryover("sample13", 8, "01.06.2026"), true);
-  assert.equal(carryovers.hasKnownCarryovers("01.06.2026"), true);
-  assert.equal(carryovers.hasKnownCarryovers("03.06.2026"), false);
+test("replacement snapshots clear obsolete exceptions and reject empty tokens", () => {
+  carryovers.setKnownCarryovers({ '01.02.2040': [{ hours: 8, tokens: [] }, { hours: 8, tokens: [''] }] });
+  assert.equal(carryovers.hasKnownCarryovers('01.02.2040'), false);
+  carryovers.setKnownCarryovers(fixture);
+  carryovers.setKnownCarryovers(null);
+  assert.equal(carryovers.hasKnownCarryovers('01.02.2040'), false);
 });
 
 test("a short block ending at the 08:00 rollover is last night's tail", () => {

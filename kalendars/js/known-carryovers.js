@@ -14,26 +14,33 @@
 //      than a full one that starts between 00:00 and 07:59 and ends at 08:00
 //      cannot be a day shift: the roster day itself rolls over at 08:00, so
 //      such a block always belongs to the previous roster day.
-//   2. isKnownNightCarryover() — the manual list, for boundaries where the
-//      source row carries no usable times and only the roster author knows.
+//   2. isKnownNightCarryover() — authenticated API exceptions for rows
+//      without usable times. This file contains no roster identities or dates.
 (function (global) {
   'use strict';
 
   // date (dd.mm.yyyy) → entries. `tokens` must ALL appear in the normalised
   // name, so a first name alone can never catch an unrelated colleague.
-  var KNOWN_CARRYOVERS = {
-    // 31.05.2026 night, split across the May/June sheet boundary.
-    '01.06.2026': [
-      { hours: 8, tokens: ['sample06'] },
-      { hours: 8, tokens: ['sample13'] }
-    ],
-    // 31.08.2026 night, split across the August/September sheet boundary.
-    // August only ever existed in the local cache, which was cleared.
-    '01.09.2026': [
-      { hours: 8, tokens: ['sample11', 'sample01'] },
-      { hours: 8, tokens: ['sample14', 'sample02'] }
-    ]
-  };
+  // Supplied only by the authenticated schedule response, never bundled here.
+  var KNOWN_CARRYOVERS = Object.create(null);
+
+  function setKnownCarryovers(value) {
+    var next = Object.create(null);
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      Object.keys(value).forEach(function (date) {
+        if (!/^\d{2}\.\d{2}\.\d{4}$/.test(date) || !Array.isArray(value[date])) return;
+        var entries = value[date].filter(function (entry) {
+          return entry && Number(entry.hours) > 0 && Number(entry.hours) <= 8 &&
+            Array.isArray(entry.tokens) && entry.tokens.length > 0 &&
+            entry.tokens.every(function (token) { return typeof token === 'string' && token.trim(); });
+        }).map(function (entry) {
+          return { hours: Number(entry.hours), tokens: entry.tokens.map(norm) };
+        });
+        if (entries.length) next[date] = entries;
+      });
+    }
+    KNOWN_CARRYOVERS = next;
+  }
 
   function norm(value) {
     var text = String(value == null ? '' : value).toLowerCase();
@@ -88,6 +95,7 @@
   }
 
   global.MinkaKnownCarryovers = {
+    setKnownCarryovers: setKnownCarryovers,
     hasKnownCarryovers: hasKnownCarryovers,
     isKnownNightCarryover: isKnownNightCarryover,
     isMorningTailShift: isMorningTailShift

@@ -1,0 +1,23 @@
+name: Private identity check
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  privacy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check published files and new commit messages
+        env:
+          PRIVATE_NAME_PATTERNS: ${{ secrets.PRIVATE_NAME_PATTERNS }}
+        run: |
+          node scripts/privacy-check.mjs --range HEAD
+      - name: Regression tests
+        run: node --test kalendars/test/*.test.mjs
