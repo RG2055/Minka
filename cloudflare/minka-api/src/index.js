@@ -39,6 +39,32 @@ function cleanNsOrder(value) {
   return result;
 }
 
+function cleanNightRevision(value, now) {
+  if (!value || typeof value !== 'object') return null;
+  const order = cleanNsOrder(value.order);
+  if (order.length < 2 || order.length > 8 || order.length !== value.order?.length) return null;
+  const sh = Number(value.sh), ei = Number(value.ei), from = Number(value.from);
+  if (![23, 23.5, 0, 0.5, 1].includes(sh) || ![0, 1, 2].includes(ei)) return null;
+  if (!Number.isFinite(from) || from <= 0) return null;
+  return { order, sh, ei, from: Math.min(from, now) };
+}
+function sameNightPlan(a, b) {
+  return a && b && a.sh === b.sh && a.ei === b.ei && JSON.stringify(a.order) === JSON.stringify(b.order);
+}
+function mergeNightHistory(previous, incoming, current, now) {
+  const history = [];
+  const source = previous?.revisions?.length ? previous.revisions : previous ? [{...previous, from:previous.savedAt}] : [];
+  for (const raw of source) { const r=cleanNightRevision(raw,now); if(r)history.push(r); }
+  // Retain offline changes after the last server-known revision. Earlier client
+  // history cannot overwrite periods already recorded by this server.
+  for (const raw of Array.isArray(incoming)?incoming:[]) {
+    const r=cleanNightRevision(raw,now);
+    if(r && (!history.length || r.from>history[history.length-1].from) && !sameNightPlan(history[history.length-1],r)) history.push(r);
+  }
+  if(!sameNightPlan(history[history.length-1],current)) history.push({...current,from:now});
+  return history;
+}
+
 function cleanNsSavedAt(value) {
   const now = Date.now();
   const timestamp = Math.trunc(Number(value));
@@ -508,15 +534,25 @@ const worker = {
     }
 
     if (url.pathname === "/api/ns-order" && method === "POST") {
-      const body = await readJson(request, 16 * 1024);
+      const body = await readJson(request, 64 * 1024);
       const date = cleanNsDate(body?.date);
       if (!date) return json(request, { ok: false, error: "valid date required" }, 400);
 
-      const ttl = nsTtl(date);
+      const previousRaw = await env.MINKA_EMOJI.get("ns::" + date);
+      const previous = previousRaw ? JSON.parse(previousRaw) : null;
+      if (previous?.savedAt > Number(body.savedAt || 0)) return json(request, {ok:false,error:"Newer night plan exists"}, 409);
+      const now = Date.now();
+      const current = cleanNightRevision({...body,from:now},now);
+      if(!current) return json(request,{ok:false,error:"Invalid night plan"},400);
+      const revisions=mergeNightHistory(previous,body.revisions,current,now);
+      if(revisions.length>64) return json(request,{ok:false,error:"Night history limit reached"},409);
+      // Retain authenticated plan history for the model's bounded lookback.
+      const ttl = nsTtl(date) + 42 * 86400;
       const orderPayload = {
-        order: cleanNsOrder(body.order),
-        sh: Math.max(0, Math.min(23, Math.trunc(Number(body.sh) || 0))),
-        ei: Math.max(0, Math.min(3, Math.trunc(Number(body.ei) || 0))),
+        order: current.order,
+        sh: current.sh,
+        ei: current.ei,
+        revisions,
         mode: body.mode === "freq" ? "freq" : "fatigue",
         savedAt: cleanNsSavedAt(body.savedAt)
       };
