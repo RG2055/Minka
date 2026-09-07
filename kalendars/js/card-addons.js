@@ -125,6 +125,7 @@
   function writeAll(value) {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(value)); }
     catch (_error) {}
+    if (window.nsRefreshDreams) window.nsRefreshDreams();
   }
 
   function currentWorkerName() {
@@ -835,6 +836,10 @@
 
   window.MinkaCardAddons = {
     items: ITEMS.slice(),
+    getDecoration: function(name) {
+      var config = getConfig(name), item = config && ITEM_BY_ID[config.id];
+      return item ? { id: item.id, label: item.label, src: assetUrl(item) } : null;
+    },
     applyWorker: applyWorker,
     get: getConfig,
     getAll: function() { return readAll(); },

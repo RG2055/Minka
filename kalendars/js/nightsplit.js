@@ -21,7 +21,12 @@
   }
   // Track which hash-slots are used in current render to guarantee no duplicate colours per session
   var _usedHashes={};
-  function getCol(name){
+  function getCol(name, skin){
+    if(arguments.length < 2 && window.mkGetWorkerSkin) skin=window.mkGetWorkerSkin(name);
+    var rgb=skin && (skin.num || (skin.t==='hue' && skin.rgb));
+    if(rgb && /^\d{1,3}(,\d{1,3}){2}$/.test(String(rgb)) && String(rgb).split(',').every(function(n){return +n<=255;})){
+      return {accent:'rgb('+rgb+')',border:'rgba('+rgb+',.6)',bg:'rgba('+rgb+',.18)',glow:'rgba('+rgb+',.3)',bed:'neutral',rgb:String(rgb)};
+    }
     var key=String(name||'').trim().toUpperCase();
     if(!_usedHashes[key]){
       var base=_nameHash(key)%COL.length;
@@ -36,6 +41,71 @@
     }
     return _usedHashes[key].col;
   }
+  function timelineColour(colour){
+    if(!colour.rgb) return colour.accent;
+    var rgb=colour.rgb.split(',').map(Number);
+    var light=rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722;
+    if(light>=105) return colour.accent;
+    var mix=(105-light)/(255-light);
+    return 'rgb('+rgb.map(function(n){return Math.round(n+(255-n)*mix);}).join(',')+')';
+  }
+  // Small, cached bitmaps keep bed tinting out of the animation/compositing loop.
+  var _bedPixels=null, _bedTints=new Map();
+  function tintedBed(rgb){
+    if(_bedTints.has(rgb)) return _bedTints.get(rgb);
+    if(!_bedPixels) _bedPixels=new Promise(function(resolve,reject){
+      var img=new Image();
+      img.onload=function(){
+        try {
+          var canvas=document.createElement('canvas');canvas.width=256;canvas.height=364;
+          var ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,256,364);
+          resolve(ctx.getImageData(0,0,256,364));
+        } catch(err){reject(err);}
+      };
+      img.onerror=function(){_bedPixels=null;reject(new Error('Bed image unavailable'));};
+      img.src='assets/rooms/bed-neutral-256.webp';
+    });
+    var task=_bedPixels.then(function(source){
+      var canvas=document.createElement('canvas');canvas.width=source.width;canvas.height=source.height;
+      var ctx=canvas.getContext('2d'), out=ctx.createImageData(source.width,source.height);
+      var channels=rgb.split(',').map(function(n){return 64+Number(n)*.68;}), a=source.data, b=out.data;
+      for(var i=0;i<a.length;i+=4){
+        var light=(a[i]*.2126+a[i+1]*.7152+a[i+2]*.0722)/255;
+        for(var c=0;c<3;c++) b[i+c]=light<.65 ? channels[c]*light/.65 : channels[c]+(255-channels[c])*(light-.65)/.35;
+        b[i+3]=a[i+3];
+      }
+      ctx.putImageData(out,0,0);
+      return canvas.toDataURL('image/png');
+    });
+    if(_bedTints.size>=24) _bedTints.delete(_bedTints.keys().next().value);
+    _bedTints.set(rgb,task);
+    task.catch(function(){if(_bedTints.get(rgb)===task)_bedTints.delete(rgb);});
+    return task;
+  }
+  window.nsApplyWorkerColour=function(el,skin){
+    if(!el.classList.contains('nsc-full-card') && !el.classList.contains('ns-room-bed')) return;
+    var colour=getCol(el.getAttribute('data-worker'),skin);
+    el.style.setProperty('--nsc-accent',colour.accent);
+    var fog=colour.rgb ? colour.rgb.split(',').map(function(n){return Math.round(72+Number(n)*.62);}).join(',') : '112,164,190';
+    el.style.setProperty('--nsc-fog',fog);
+    if(!el.classList.contains('ns-room-bed')) return;
+    refreshBedDream(el);
+    el.dataset.accent=colour.accent;
+    var channels=colour.rgb ? colour.rgb.split(',').map(Number) : null;
+    var dark=channels && channels[0]*.2126+channels[1]*.7152+channels[2]*.0722<120;
+    el.style.setProperty('--ns-bed-label',dark?'#f0f7fa':'#08121a');
+    var frame=el.querySelector('.ns-room-bed-card'), img=el.querySelector('.ns-room-bed-picture img');
+    if(frame){frame.style.setProperty('--bed',colour.accent);frame.style.setProperty('--bed-border',colour.border);}
+    if(!img) return;
+    var key=colour.rgb || colour.bed;
+    if(img.__tintKey===key)return;
+    img.__tintKey=key;
+    img.removeAttribute('srcset');
+    img.src='assets/rooms/bed-'+colour.bed+'-256.webp';
+    if(colour.rgb) tintedBed(colour.rgb).then(function(url){
+      if(img.__tintKey===key)img.src=url;
+    }).catch(function(){if(img.__tintKey===key)img.__tintKey=null;});
+  };
   // Reset used-colours each time a new day is selected (called from update())
   function resetColours(){_usedHashes={};}
   var st=null;
@@ -180,7 +250,7 @@
             +'<strong>'+currentPart+'</strong><span>DAĻA</span>'
           +'</div>'
           +'<div class="ns-stat-person">'
-            +'<div class="ns-stat-name" title="'+escHtml(nm)+'">'+escHtml(short)+'</div>'
+            +'<div class="ns-stat-name" title="'+escHtml(nm)+'"><span>'+escHtml(short)+'</span>'+(roomEmoji(nm)?'<span class="ns-stat-emoji" aria-hidden="true">'+escHtml(roomEmoji(nm))+'</span>':'')+'</div>'
             +'<div class="ns-stat-fav">'+favTxt+'</div>'
           +'</div>'
           +'<div class="ns-stat-bars">'+bars+'</div>'
@@ -1348,8 +1418,13 @@
     document.head.appendChild(style);
   }
 
+  var _nsFlowTimer=0;
   function refreshFlowLiveMarker(){
-    if(window.__nsOverlayOpen!==true) return;
+    if(document.hidden || window.__nsOverlayOpen!==true){
+      if(_nsFlowTimer){ clearInterval(_nsFlowTimer); _nsFlowTimer=0; }
+      return;
+    }
+    if(!_nsFlowTimer) _nsFlowTimer=setInterval(refreshFlowLiveMarker,1000);
     var bar=document.querySelector('#nsPanelContent .ns-flow-bar');
     if(!bar || !st || !st.sl || !st.sl.length) return;
     var dot=bar.querySelector('.ns-flow-live');
@@ -1391,8 +1466,9 @@
           var activeEmoji=roomEmoji(activeName);
           workerEl.classList.toggle('is-left-edge', live.pct < 10);
           workerEl.classList.toggle('is-right-edge', live.pct > 90);
-          workerEl.innerHTML=(activeEmoji?'<span class="ns-flow-worker-emoji">'+escHtml(activeEmoji)+'</span>':'')
+          var workerMarkup=(activeEmoji?'<span class="ns-flow-worker-emoji">'+escHtml(activeEmoji)+'</span>':'')
             +'<span class="ns-flow-worker-name">'+escHtml(activeFirst)+'</span>';
+          if(workerEl.__nsMarkup!==workerMarkup){ workerEl.innerHTML=workerMarkup; workerEl.__nsMarkup=workerMarkup; }
           workerEl.style.display=activeFirst?'inline-flex':'none';
         }
       } else {
@@ -1443,8 +1519,8 @@
       var rt=slotRealtime(s);
       var w=((s.d/tot)*100).toFixed(3);
       var nm=escHtml(String(s.w.name||'').split(/\s+/)[0]||'');
-      return '<div class="ns-flow-seg'+(rt.active?' is-active':'')+'" style="width:'+w+'%;--seg:'+c.accent+'">'
-        +'<div class="ns-flow-fill" style="background:'+c.accent+'"></div>'
+      return '<div class="ns-flow-seg'+(rt.active?' is-active':'')+'" style="width:'+w+'%;--seg:'+timelineColour(c)+'">'
+        +'<div class="ns-flow-fill" style="background:'+timelineColour(c)+'"></div>'
         +(nm?'<span class="ns-flow-name">'+nm+'</span>':'')
         +(rt.active?'<div class="ns-flow-pulse" style="left:'+rt.pct.toFixed(1)+'%"></div>':'')
         +'</div>';
@@ -1552,6 +1628,23 @@
     return '--room-x:'+p.x+'%;--room-y:'+p.y+'%;--room-bed-w:'+p.w+'%;--room-bed-scale:'+p.scale+';--room-bed-z:'+p.z;
   }
 
+  function dreamContents(name){
+    var api=window.MinkaCardAddons;
+    var item=api && api.getDecoration ? api.getDecoration(name) : null;
+    var object=item ? '<img src="'+escHtml(item.src)+'" alt="" decoding="async" draggable="false">' : '<span class="ns-dream-default">'+['🌙','✨','☁️','⭐'][_nameHash(name)%4]+'</span>';
+    return '<svg class="ns-dream-cloud" viewBox="0 0 80 64" aria-hidden="true"><path d="M18 47C3 48 1 30 12 25C8 12 23 7 31 12C38 0 55 5 58 14C72 10 82 24 73 34C82 47 62 55 54 49C44 57 28 55 25 47Z"/><circle cx="18" cy="56" r="4"/><circle cx="11" cy="62" r="2"/></svg><span class="ns-dream-object">'+object+'</span>';
+  }
+  function refreshBedDream(el){
+    var cloud=el.querySelector('.ns-bed-dream');
+    if(!cloud)return;
+    var html=dreamContents(el.getAttribute('data-worker')||'');
+    if(cloud.__dreamHtml===html)return;
+    cloud.innerHTML=html;cloud.__dreamHtml=html;
+  }
+  window.nsRefreshDreams=function(){
+    if(document.hidden || window.__nsOverlayOpen!==true)return;
+    document.querySelectorAll('#nsPanel .ns-room-bed[data-worker]').forEach(refreshBedDream);
+  };
   function roomBed(roomIdx, slot, posCls){
     if(!slot){
       return '<div class="ns-room-bed ns-room-bed-empty '+posCls+'" data-i="'+roomIdx+'" data-empty="1" style="'+roomSlotStyle(posCls)+'">'
@@ -1570,6 +1663,7 @@
       +'<span class="ns-room-bed-skin is-blanket" aria-hidden="true"></span>'
       +roomDevices(slot)
       +(em?'<div class="ns-room-bed-head-emoji">'+escHtml(em)+'</div>':'')
+      +'<span class="ns-bed-dream" aria-hidden="true"></span>'
       +'<div class="ns-room-bed-zzz" aria-hidden="true"><span>Z</span><span>Z</span><span>Z</span></div>'
       +'<div class="ns-room-bed-blanket"><span class="ns-room-bed-main" style="font-size:'+nm.size+';--ns-room-name-scale:'+nm.scale+'">'+nm.main+'</span></div>'
       +'</div>'
@@ -1811,26 +1905,19 @@
         var availH   = Math.max(80, panelRect.bottom - fitRect.top - bottomReserve);
         var widthScale = Math.min(1, availW / naturalW);
         var scale = Math.min(widthScale, availH / naturalH);
-        var roomHeight=null;
-        if(!narrow && cat){
-          var plaque=cat.querySelector('.ns-bedcare-perch-copy');
-          var columnHeight=plaque ? plaque.getBoundingClientRect().bottom-cat.getBoundingClientRect().top : cat.offsetHeight;
-          var shell=layout.querySelector('.ns-room-shell');
-          var titleHeight=shell ? layout.offsetHeight-shell.offsetHeight : 17;
-          // Use the empty floor area below the rooms; keep beds at their own scale.
-          scale=widthScale;
-          roomHeight=Math.max(360,columnHeight/scale-titleHeight);
-          naturalH=roomHeight+titleHeight;
-        }
+        // Preserve the source artwork proportions; fit the whole scene afterwards.
+        scale=widthScale;
         if(!isFinite(scale) || scale <= 0) scale = 1;
         var roomsW = Math.ceil(naturalW * scale);
         var roomsH = Math.ceil(naturalH * scale);
         var lift = (!narrow && headRect) ? Math.max(0, Math.round(fitRect.top-headRect.top)) : 0;
 
+        var carePanel=cat && (cat.querySelector('.ns-bedcare-popover') || cat.querySelector('.ns-bedcare-perch-copy'));
+        var careHeight=carePanel ? carePanel.getBoundingClientRect().bottom-cat.getBoundingClientRect().top : 0;
+
         // WRITE PHASE. All geometry reads above are complete; this single batch
         // avoids read → write → read forced reflow on old CPUs.
-        if(roomHeight!==null) layout.style.setProperty('--ns-room-height',roomHeight+'px');
-        else layout.style.removeProperty('--ns-room-height');
+        layout.style.removeProperty('--ns-room-height');
         layout.style.transform = 'scale(' + scale + ')';
         fit.style.width  = roomsW + 'px';
         fit.style.height = roomsH + 'px';
@@ -1845,7 +1932,8 @@
             stats.style.width = '100%';
           } else {
             stats.style.marginTop = (-lift) + 'px';
-            stats.style.height = (roomsH + lift) + 'px';
+            stats.style.height = (careHeight>0 ? careHeight : Math.max(320, roomsH + lift)) + 'px';
+            stats.style.marginTop = '0px';
           }
         }
         if(cat) {
@@ -2039,13 +2127,13 @@
       var cor=pointPath('cor');
       var wake=pointPath('wake');
       return '<g class="nsc-rhythm-lines">'
-        +'<path d="'+mel.area+'" fill="url(#'+uid+'-melFill)" opacity="0.68"/>'
-        +'<path d="'+mel.line+'" fill="none" stroke="#4fa3ff" stroke-width="5.5" opacity="0.20" stroke-linecap="round" stroke-linejoin="round"/>'
-        +'<path d="'+mel.line+'" fill="none" stroke="#4fa3ff" stroke-width="2.2" opacity="0.95" stroke-linecap="round" stroke-linejoin="round"/>'
-        +'<path d="'+cor.line+'" fill="none" stroke="#ffc629" stroke-width="4.8" opacity="0.18" stroke-dasharray="5 4" stroke-linecap="round" stroke-linejoin="round"/>'
-        +'<path d="'+cor.line+'" fill="none" stroke="#ffc629" stroke-width="2.1" stroke-dasharray="5 4" opacity="0.96" stroke-linecap="round" stroke-linejoin="round"/>'
-        +'<path d="'+wake.line+'" fill="none" stroke="#55e58b" stroke-width="5.2" opacity="0.18" stroke-linecap="round" stroke-linejoin="round"/>'
-        +'<path d="'+wake.line+'" fill="none" stroke="#55e58b" stroke-width="2.2" opacity="0.92" stroke-linecap="round" stroke-linejoin="round"/>'
+        +'<path d="'+mel.area+'" fill="url(#'+uid+'-melFill)" opacity="0.40"/>'
+        +'<path d="'+mel.line+'" fill="none" stroke="#83bced" stroke-width="5.5" opacity="0.20" stroke-linecap="round" stroke-linejoin="round"/>'
+        +'<path d="'+mel.line+'" fill="none" stroke="#83bced" stroke-width="1.7" opacity="0.95" stroke-linecap="round" stroke-linejoin="round"/>'
+        +'<path d="'+cor.line+'" fill="none" stroke="#e9ca79" stroke-width="4.8" opacity="0.18" stroke-dasharray="5 4" stroke-linecap="round" stroke-linejoin="round"/>'
+        +'<path d="'+cor.line+'" fill="none" stroke="#e9ca79" stroke-width="1.6" stroke-dasharray="5 4" opacity="0.96" stroke-linecap="round" stroke-linejoin="round"/>'
+        +'<path d="'+wake.line+'" fill="none" stroke="#8bd6ae" stroke-width="5.2" opacity="0.18" stroke-linecap="round" stroke-linejoin="round"/>'
+        +'<path d="'+wake.line+'" fill="none" stroke="#8bd6ae" stroke-width="1.7" opacity="0.92" stroke-linecap="round" stroke-linejoin="round"/>'
         +'</g>';
     }
 
@@ -2239,7 +2327,7 @@
       var _flowSegs=st.sl.map(function(s,i){
         var c=getCol(s.w.name);
         var pct=(s.d/tot*100).toFixed(2);
-        return '<div class="ns-flow-seg'+(slotRealtime(s).active?' is-active':'')+'" style="--w:'+pct+';--seg:'+c.accent+'"><div class="ns-flow-fill" style="background:'+c.accent+'"></div></div>';
+        return '<div class="ns-flow-seg'+(slotRealtime(s).active?' is-active':'')+'" style="--w:'+pct+';--seg:'+timelineColour(c)+'"><div class="ns-flow-fill" style="background:'+timelineColour(c)+'"></div></div>';
       }).join('');
       var _flowLabels='<div class="ns-flow-labels"><span>'+escHtml(st.sl[0].ss)+'</span>'
         +st.sl.map(function(s){ return '<span>'+escHtml(s.es)+'</span>'; }).join('')
@@ -2796,7 +2884,7 @@
     startRoomPolling();
     window.addEventListener('daySelected',function(){setTimeout(update,200);});
     setTimeout(update,600);setTimeout(update,1500);
-    setInterval(refreshFlowLiveMarker, 1000);
+    document.addEventListener('visibilitychange',refreshFlowLiveMarker);
   }
 
   function _cloneSlotsWithNewEndKeepStarts(oldSlots, ei){

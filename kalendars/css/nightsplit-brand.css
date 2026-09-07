@@ -1057,6 +1057,7 @@ html.mk-low-spec #nsOverlay.open #nsPanel .pkt-cat.pkt-awake .pkt-eyes { animati
    beds stay as the original .ns-room-bed[data-i] nodes, so drag/drop and room
    persistence remain independent from the visual treatment. */
 #nsPanel .ns-room-layout {
+  align-items: end !important;
   grid-template-columns: 560px 300px !important;
   gap: 14px !important;
   padding: 0 !important;
@@ -1415,3 +1416,250 @@ html.mk-low-spec #nsOverlay.open #nsPanel .pkt-cat.pkt-awake .pkt-eyes { animati
   #nsPanel .ns-flow-labels { margin: 4px 0 !important; }
   #nsPanel .ns-room-block { margin-top: 2px !important; padding-top: 4px !important; }
 }
+
+/* Unified night surface: static glass plates and graphite edges. */
+#nsPanel .ns-room-block { background: transparent !important; padding-inline: 0 !important; }
+#nsPanel .ns-room-stage { align-items: flex-start !important; }
+#nsPanel .ns-stats-box {
+  padding: 22px 18px 18px !important;
+  border: 0 !important;
+  border-radius: 20px !important;
+  background: url('../assets/night-stats-glass-v1.webp') center / 100% 100% no-repeat !important;
+  box-shadow: none !important;
+}
+#nsPanel .ns-stats-title { color: #d8e9ef !important; font-weight: 750 !important; letter-spacing: .1em !important; }
+#nsPanel .ns-stats-head { padding-bottom: 10px !important; border-bottom: 1px solid var(--ns-line); }
+#nsPanel .ns-stats-bed-title { grid-row: 2 !important; margin-top: 3px; }
+#nsPanel .ns-stat-row { border-bottom-color: rgba(134,185,202,.12) !important; box-shadow: none !important; }
+#nsPanel .ns-room-titlebar { color: #d8e9ef !important; border-color: #344b57 !important; background: linear-gradient(#1b2b35,#0a131c) !important; }
+#nsPanel .ns-room-cat { opacity: 1; isolation: isolate; }
+#nsPanel .ns-room-cat::before { content: none !important; display: none !important; }
+#nsPanel .ns-bedcare-perch-copy, #nsPanel .ns-bedcare-popover {
+  border: 1px solid #344b57 !important; border-radius: 13px !important;
+  background: linear-gradient(rgba(7,20,27,.58),rgba(7,16,23,.70)),url('../assets/bedcare-glass-v1.webp') center / 100% 100% no-repeat !important;
+  box-shadow: inset 0 1px rgba(191,233,244,.16) !important;
+}
+#nsPanel .ns-bedcare-perch-copy { width: 210px !important; }
+#nsPanel .nsc-full-card { box-shadow: inset 0 1px rgba(191,233,244,.18),0 2px 4px #03080c !important; }
+#nsPanel .nsc-full-inner { display: flex !important; flex-direction: column !important; padding: 14px 15px 12px !important; background: none !important; }
+#nsPanel .nsc-full-card .nsc-full-name,
+#nsPanel .nsc-full-card.nsc-worker-skinned.mk-has-txt .nsc-full-name { color: #f0f7fa !important; -webkit-text-fill-color: #f0f7fa !important; font-size: clamp(19px,2vw,25px) !important; }
+#nsPanel .nsc-full-card .nsc-full-time,
+#nsPanel .nsc-full-card.nsc-worker-skinned.mk-has-txt .nsc-full-time { color: #f0f7fa !important; -webkit-text-fill-color: #f0f7fa !important; font-size: clamp(17px,1.6vw,21px) !important; letter-spacing: .02em !important; }
+#nsPanel .nsc-full-card .nsc-full-desc,
+#nsPanel .nsc-full-card.nsc-worker-skinned.mk-has-txt .nsc-full-desc { color: #bfd2dd !important; -webkit-text-fill-color: #bfd2dd !important; font-size: 9px !important; letter-spacing: .1em !important; }
+#nsPanel .nsc-full-meta { position: relative !important; left: auto; right: auto; bottom: auto; width: 100% !important; margin: 8px 0 0 !important; min-height: 30px !important; transform: none !important; }
+#nsPanel .nsc-full-card.nsc-worker-skinned .nsc-full-dur { color: #d7edf3 !important; -webkit-text-fill-color: #d7edf3 !important; }
+#nsPanel .nsc-card-checklist { position: absolute !important; left: 0; right: 0; bottom: 0; padding: 0 12px 5px !important; }
+#nsPanel .nsc-card-checklist span { box-shadow: none !important; }
+#nsPanel .ns-room-bed-picture img { filter: none !important; }
+@media (min-width:641px) and (max-height:820px) {
+  #nsPanel { --ns-card-height: 190px; }
+  #nsPanel .nsc-full-card .nsc-full-inner { padding: 10px 12px 12px !important; }
+  #nsPanel .nsc-full-name { font-size: 20px !important; }
+  #nsPanel .nsc-full-time { margin-top: 6px !important; }
+}
+@media (max-width:640px) {
+  #nsPanel .ns-room-cat::before { inset: 0 -5px -100px; }
+  #nsPanel .ns-bedcare-perch-copy { width: 150px !important; }
+}
+
+#nsPanel .nsc-full-card.nsc-worker-skinned.mk-has-num .nsc-full-dur,
+#nsPanel .nsc-full-card.nsc-worker-skinned.mk-has-txt .nsc-full-dur { color: #d7edf3 !important; -webkit-text-fill-color: #d7edf3 !important; }
+
+/* The selected card colour is a quiet edge, without a separate top stripe. */
+#nsPanel .nsc-full-card { border-color: var(--nsc-accent, #2b3941) !important; }
+
+#nsPanel .ns-room-bed[data-worker] .ns-room-bed-main { color: var(--ns-bed-label, #08121a) !important; -webkit-text-fill-color: var(--ns-bed-label, #08121a) !important; }
+
+/* Fixed artwork ratios prevent tall, stretched floors. The glow is static. */
+#nsPanel .ns-room-main .ns-room-shell { height: 355.6px !important; }
+#nsPanel .ns-room-nmp .ns-room-shell { height: 367.5px !important; }
+#nsPanel .ns-room-stage { align-items: center !important; }
+#nsPanel .nsc-full-card {
+  border-color: rgba(var(--nsc-fog,112,164,190),.42) !important;
+  box-shadow: 0 0 10px rgba(var(--nsc-fog,112,164,190),.18), inset 0 0 14px rgba(var(--nsc-fog,112,164,190),.12) !important;
+}
+#nsPanel .ns-bedcare-perch-copy, #nsPanel .ns-bedcare-popover { border: 0 !important; box-shadow: none !important; }
+
+/* Only the glass artwork is translucent; the statistics remain fully legible. */
+#nsPanel .ns-stats-box { position: relative; isolation: isolate; background: transparent !important; }
+#nsPanel .ns-stats-box::before {
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: url('../assets/night-stats-glass-v1.webp') center / 100% 100% no-repeat;
+  opacity: .48;
+}
+
+/* A static thought cloud reuses the selected decoration, with no animation loop. */
+#nsPanel .ns-bed-dream {
+  position: absolute; left: 86%; top: -24%; width: 76%; aspect-ratio: 80 / 64;
+  z-index: 15; pointer-events: none; user-select: none;
+}
+#nsPanel .ns-room-bed.is-right-bottom .ns-bed-dream { left: auto; right: 80%; }
+#nsPanel .ns-room-bed.is-right-bottom .ns-dream-cloud { transform: scaleX(-1); }
+#nsPanel .ns-dream-cloud { display: block; width: 100%; height: 100%; overflow: visible; fill: #dce9ee; fill-opacity: .93; stroke: #91adbc; stroke-width: 1; }
+#nsPanel .ns-dream-object { position: absolute; inset: 13% 20% 25%; display: flex; align-items: center; justify-content: center; }
+#nsPanel .ns-dream-object img { display: block; width: 100%; height: 100%; object-fit: contain; filter: none; }
+#nsPanel .ns-dream-default { font-size: 24px; line-height: 1; }
+
+/* Fluent-inspired static material: no backdrop sampling or animated filters. */
+#nsPanel .ns-stats-box {
+  border: 1px solid rgba(190,222,240,.48) !important;
+  border-radius: 26px !important;
+  padding: 22px 18px 18px !important;
+  box-shadow: inset 0 1px 1px rgba(241,250,255,.55), inset 0 -1px 2px rgba(157,219,246,.22), 0 3px 12px rgba(0,0,0,.16) !important;
+}
+#nsPanel .ns-stats-box::before {
+  border-radius: inherit; opacity: 1;
+  background:
+    radial-gradient(ellipse at 0 0,rgba(161,212,247,.36),transparent 48%),
+    radial-gradient(ellipse at 100% 100%,rgba(140,193,226,.2),transparent 40%),
+    linear-gradient(145deg,rgba(97,125,147,.2),rgba(23,38,52,.5) 48%,rgba(67,85,103,.24));
+}
+#nsPanel .ns-stats-head, #nsPanel .ns-stat-row { grid-template-columns: 48px minmax(78px,1fr) 84px 74px !important; }
+#nsPanel .ns-stats-head { border-bottom-color: rgba(191,220,237,.17); }
+#nsPanel .ns-stat-row { border-bottom-color: rgba(191,220,237,.14) !important; }
+#nsPanel .ns-stat-part {
+  height: 45px; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  border-radius: 13px; border-color: rgba(192,223,241,.5);
+  background: linear-gradient(140deg,rgba(206,236,250,.28),rgba(91,137,164,.16) 48%,rgba(52,86,107,.27));
+  box-shadow: inset 1px 1px 1px rgba(242,252,255,.48),inset 0 -1px 2px rgba(99,221,236,.28),0 2px 4px rgba(0,0,0,.18);
+}
+#nsPanel .ns-stat-part strong { top: 0; font-size: 23px; text-shadow: none; }
+#nsPanel .ns-stat-part span { top: 0; font-size: 6.5px; }
+#nsPanel .ns-stat-part::after { bottom: 3px; left: 10px; right: 10px; height: 2px; box-shadow: none; }
+#nsPanel .ns-stat-name { font-weight: 650 !important; }
+#nsPanel .ns-stbar-fill { border-color: rgba(172,218,239,.46); background: linear-gradient(#88b6cd,#33546b) !important; box-shadow: inset 0 1px rgba(225,247,255,.4) !important; }
+#nsPanel .ns-stbar-fill.on { background: linear-gradient(#c6fcff,#69dce9 40%,#238ba9) !important; }
+#nsPanel .ns-bm-room { padding: 2px !important; border: 0 !important; background: none !important; box-shadow: none !important; }
+#nsPanel .ns-bm-main { grid-template-columns: repeat(2,17px) !important; grid-template-rows: repeat(2,18px) !important; }
+#nsPanel .ns-bm-nmp { grid-template-columns: 17px !important; }
+#nsPanel .ns-bm-cell { width: 17px !important; height: 18px !important; border: 1px solid rgba(164,200,222,.3); border-radius: 5px !important; background: linear-gradient(145deg,rgba(142,177,200,.2),rgba(74,99,118,.15)) !important; }
+#nsPanel .ns-bm-cell.on { color: #063846 !important; background: linear-gradient(#a6f5f6,#62dce7) !important; border-color: rgba(198,255,255,.68); box-shadow: inset 0 1px rgba(255,255,255,.4) !important; }
+#nsPanel .ns-bm-empty { visibility: hidden; }
+#nsPanel .ns-stats-foot { color: #aebfcd !important; }
+
+/* Shared Fluent material across the night controls and information surfaces. */
+#nsPanel {
+  --ns-fluent-edge: rgba(176,214,233,.3);
+  --ns-fluent-sheen: inset 0 1px 1px rgba(224,245,255,.23), inset 0 -1px rgba(114,181,207,.12);
+  --ns-fluent-control: linear-gradient(145deg,rgba(120,160,187,.23),rgba(30,49,65,.46));
+}
+#nsPanel .nss, #nsPanel .ns-mode-btn, #nsPanel .ns-raffle-trigger, #nsCloseBtn {
+  background: var(--ns-fluent-control) !important;
+  box-shadow: var(--ns-fluent-sheen) !important;
+}
+#nsPanel .nss, #nsCloseBtn { border-color: var(--ns-fluent-edge) !important; }
+#nsPanel .ns-mode-btn.is-on { background: linear-gradient(145deg,rgba(84,174,188,.23),rgba(23,57,68,.44)) !important; }
+#nsPanel .ns-mode-btns { background: rgba(15,28,38,.24) !important; border-color: rgba(143,185,207,.12) !important; box-shadow: none !important; }
+#nsPanel .ns-room-titlebar { background: var(--ns-fluent-control) !important; border-color: var(--ns-fluent-edge) !important; box-shadow: var(--ns-fluent-sheen) !important; }
+#nsPanel .nsc-full-meta {
+  background: linear-gradient(145deg,rgba(197,228,242,.12),rgba(16,30,43,.18)) !important;
+  border-color: rgba(208,233,247,.3) !important;
+  box-shadow: var(--ns-fluent-sheen) !important;
+}
+#nsPanel .ns-bedcare-perch-copy, #nsPanel .ns-bedcare-popover {
+  background: radial-gradient(ellipse at 0 0,rgba(158,210,243,.25),transparent 65%),linear-gradient(145deg,rgba(68,101,124,.3),rgba(15,29,42,.82)) !important;
+  border: 1px solid var(--ns-fluent-edge) !important;
+  border-radius: 18px !important;
+  box-shadow: var(--ns-fluent-sheen) !important;
+}
+
+/* BEGIN Microsoft Fluent UI tokens — @fluentui/react-theme 9.2.2 (MIT) */
+#nsPanel {
+  --fluent-fontFamilyBase: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif;
+  --fluent-fontSizeBase100: 10px;
+  --fluent-fontSizeBase200: 12px;
+  --fluent-fontWeightRegular: 400;
+  --fluent-fontWeightSemibold: 600;
+  --fluent-fontWeightBold: 700;
+  --fluent-borderRadiusMedium: 4px;
+  --fluent-borderRadiusXLarge: 8px;
+  --fluent-borderRadius2XLarge: 12px;
+  --fluent-borderRadius3XLarge: 16px;
+  --fluent-borderRadius4XLarge: 24px;
+  --fluent-spacingHorizontalXS: 4px;
+  --fluent-spacingHorizontalS: 8px;
+  --fluent-spacingHorizontalM: 12px;
+  --fluent-spacingHorizontalL: 16px;
+  --fluent-durationFaster: 100ms;
+  --fluent-curveEasyEase: cubic-bezier(0.33,0,0.67,1);
+  --fluent-colorStrokeFocus2: #ffffff;
+}
+/* END Microsoft Fluent UI tokens */
+
+#nsPanel .ns-stats-box, #nsPanel .ns-room-titlebar, #nsPanel .ns-mode-btn,
+#nsPanel .ns-raffle-trigger, #nsPanel .ns-bedcare-perch-copy, #nsPanel .ns-bedcare-popover {
+  font-family: var(--fluent-fontFamilyBase) !important;
+}
+#nsPanel .ns-stats-box { border-radius: var(--fluent-borderRadius4XLarge) !important; }
+#nsPanel .ns-stat-part { border-radius: var(--fluent-borderRadius2XLarge); }
+#nsPanel .ns-bm-cell { border-radius: var(--fluent-borderRadiusMedium) !important; }
+#nsPanel .ns-stats-head, #nsPanel .ns-stat-row { gap: var(--fluent-spacingHorizontalS) !important; }
+#nsPanel .ns-stat-name { font-weight: var(--fluent-fontWeightSemibold) !important; }
+#nsPanel .ns-stats-title { font-size: var(--fluent-fontSizeBase200) !important; font-weight: var(--fluent-fontWeightSemibold) !important; }
+#nsPanel .ns-stat-fav { font-size: var(--fluent-fontSizeBase100) !important; }
+#nsPanel .nss, #nsPanel .ns-mode-btn, #nsPanel .ns-raffle-trigger, #nsCloseBtn {
+  border-radius: var(--fluent-borderRadiusXLarge) !important;
+  transition: border-color var(--fluent-durationFaster) var(--fluent-curveEasyEase),color var(--fluent-durationFaster) var(--fluent-curveEasyEase) !important;
+}
+#nsPanel .ns-mode-btn, #nsPanel .ns-raffle-trigger { padding-inline: var(--fluent-spacingHorizontalM) !important; font-weight: var(--fluent-fontWeightSemibold) !important; }
+#nsPanel .ns-bedcare-perch-copy, #nsPanel .ns-bedcare-popover { border-radius: var(--fluent-borderRadius3XLarge) !important; }
+#nsPanel .nss:focus-visible, #nsPanel .ns-mode-btn:focus-visible, #nsPanel .ns-raffle-trigger:focus-visible, #nsCloseBtn:focus-visible {
+  outline: 2px solid var(--fluent-colorStrokeFocus2); outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  #nsPanel .nss, #nsPanel .ns-mode-btn, #nsPanel .ns-raffle-trigger, #nsCloseBtn { transition: none !important; }
+}
+
+/* Baked glass reflections: one shared 256px WebP, no live background blur. */
+#nsPanel { --ns-glass-image: url('../assets/night-fluent-glass-v1.webp'); }
+#nsPanel .ns-stats-box::before { background: #17212e var(--ns-glass-image) center / 100% 100% no-repeat; opacity: 1; }
+#nsPanel .ns-room-titlebar,
+#nsPanel .ns-bedcare-perch-copy,
+#nsPanel .ns-bedcare-popover {
+  background: #17212e var(--ns-glass-image) center / 100% 100% no-repeat !important;
+  opacity: 1 !important;
+}
+#nsPanel .ns-bedcare-perch[aria-expanded="true"] .ns-bedcare-perch-copy {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Night imagery is translucent independently of the readable foreground. */
+#nsPanel { --ns-glass-image: url('../assets/night-dream-glass-v2.webp'); }
+#nsPanel .ns-stats-box::before { opacity: .55; }
+#nsPanel .ns-bedcare-perch-copy, #nsPanel .ns-bedcare-popover {
+  isolation: isolate;
+  background: transparent !important;
+}
+#nsPanel .ns-bedcare-perch-copy::before, #nsPanel .ns-bedcare-popover::before {
+  content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit;
+  background: var(--ns-glass-image) center / 100% 100% no-repeat;
+  opacity: .6; pointer-events: none;
+}
+/* Stay inside the cat column, rather than expanding over the statistics. */
+#nsPanel .ns-bedcare-popover {
+  left: 0 !important; right: 0 !important; width: 100% !important;
+  transform: none !important; padding: 12px !important;
+}
+#nsPanel .ns-bedcare-form { grid-template-columns: minmax(0,1fr) 66px; gap: 10px 6px; }
+#nsPanel .ns-bedcare-save { min-width: 0; padding-inline: 5px; font-size: 10px; }
+#nsPanel .ns-bedcare-date input { padding-inline: 4px; font-size: 10px; }
+@media (max-width: 640px) {
+  #nsPanel .ns-bedcare-form { grid-template-columns: minmax(0,1fr); }
+  #nsPanel .ns-bedcare-save { width: 100%; }
+}
+
+/* Keep the familiar grouped room map in the statistics. */
+#nsPanel .ns-bm-room { gap: 3px !important; padding: 3px !important; border: 1px solid #27353c !important; border-radius: 5px !important; background: #0f1518 !important; box-shadow: inset 2px 2px 4px rgba(0,0,0,.52) !important; }
+#nsPanel .ns-bm-main { grid-template-columns: repeat(2,15px) !important; grid-template-rows: repeat(2,15px) !important; }
+#nsPanel .ns-bm-nmp { grid-template-columns: 15px !important; }
+#nsPanel .ns-bm-cell { width: 15px !important; height: 15px !important; border: 0 !important; border-radius: 2px !important; background: rgba(125,174,198,.09) !important; }
+#nsPanel .ns-bm-cell.on { background: #62dce7 !important; box-shadow: inset 1px 1px rgba(255,255,255,.22),1px 1px 3px rgba(0,0,0,.42) !important; }
+#nsPanel .ns-bm-empty { visibility: visible; }
+
+#nsPanel .ns-stats-box, #nsPanel .ns-room-cat { align-self: flex-start !important; }
+
+#nsPanel .ns-stat-name { display: flex; align-items: center; gap: 5px; }
+#nsPanel .ns-stat-emoji { flex: 0 0 auto; font-size: 16px; line-height: 1.2; font-family: "Fluent Emoji Gaps", "Fluent Emoji Color", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important; }

@@ -1,0 +1,2 @@
+Built-in image_gen edit of night-dream-glass-v1.webp.
+Edit this UI texture: remove the crescent moon completely from the upper left, and remove all star symbols and bright pinpoints. Preserve the dark navy smoked-glass material and very subtle wispy cloud reflections near the outer edges, keep the central region empty. No moons anywhere, no celestial objects, no text, no frame. Quiet low contrast background suitable for a translucent small Fluent UI statistics panel. Fill removed moon seamlessly with the surrounding dark glass. Keep square composition.
