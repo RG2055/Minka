@@ -6704,8 +6704,12 @@ function filterFullList(btn) {
 // ------------------------------------------------------------
 let modalCurrentYear = null, modalCurrentMonth = null;
 let modalWorkerDates = [];
+let modalListReady = false, modalCalendarReady = false;
+let workerModalCloseTimer, workerModalOutsideTimer;
 
 function showWorkerSchedule(workerName, currentShift) {
+  clearTimeout(workerModalCloseTimer);
+  clearTimeout(workerModalOutsideTimer);
   window.__wmWorkerName = String(workerName || '').trim();
   const stores = [window.__grafiksStore || {}, window.__grafiksStoreRad || {}];
   let allDates = [];
@@ -6776,6 +6780,55 @@ function showWorkerSchedule(workerName, currentShift) {
   if (avatarEl) avatarEl.textContent = initials || '??';
   if (surnameLine) surnameLine.textContent = surname || '';
 
+  modalListReady = false;
+  modalCalendarReady = false;
+
+  if (allDates.length > 0) {
+    const [d,m,y] = allDates[0].date.split('.').map(Number);
+    modalCurrentYear = y;
+    modalCurrentMonth = m-1;
+  } else {
+    const now = new Date();
+    modalCurrentYear = now.getFullYear();
+    modalCurrentMonth = now.getMonth();
+  }
+  updateModalTotalHours();
+
+  __workerModalRestore();
+  const modal = document.getElementById('worker-modal');
+
+  // Reset any previously dragged position so it always opens centered
+  modal.style.transition = '';
+  modal.style.transform = '';
+  modal.style.left = '';
+  modal.style.top = '';
+
+  // Compute exact px center to bypass any stacking context from iframe/backdrop-filter
+  const mw = Math.min(820, window.innerWidth * 0.86);
+  const mh = Math.min(window.innerHeight * 0.90, 760);
+  const cx = Math.round((window.innerWidth  - mw) / 2);
+  const cy = Math.round((window.innerHeight - mh) / 2);
+  modal.style.width  = mw + 'px';
+  modal.style.left   = cx + 'px';
+  modal.style.top    = cy + 'px';
+  modal.style.maxHeight = mh + 'px';
+  // Position once; fade without scaling the entire text-heavy sheet.
+  modal.style.transform = 'none';
+  showModalView('fatigue');
+
+  modal.classList.add('open');
+  const bd = document.getElementById('worker-modal-backdrop');
+  if (bd) bd.classList.add('open');
+  setWorkerModalBuddyFlag(true);
+
+  workerModalOutsideTimer = setTimeout(() => {
+    document.addEventListener('click', outsideModalClose);
+  }, 100);
+}
+
+
+function renderModalList() {
+  const allDates = modalWorkerDates;
   const listContainer = document.getElementById('modal-dates-list');
   listContainer.innerHTML = '';
   if (allDates.length === 0) {
@@ -6830,50 +6883,7 @@ function showWorkerSchedule(workerName, currentShift) {
     });
   }
 
-  if (allDates.length > 0) {
-    const [d,m,y] = allDates[0].date.split('.').map(Number);
-    modalCurrentYear = y;
-    modalCurrentMonth = m-1;
-  } else {
-    const now = new Date();
-    modalCurrentYear = now.getFullYear();
-    modalCurrentMonth = now.getMonth();
-  }
-  renderModalCalendar();
-  updateModalTotalHours();
-
-  __workerModalRestore();
-  const modal = document.getElementById('worker-modal');
-
-  // Reset any previously dragged position so it always opens centered
-  modal.style.transition = '';
-  modal.style.transform = '';
-  modal.style.left = '';
-  modal.style.top = '';
-
-  // Compute exact px center to bypass any stacking context from iframe/backdrop-filter
-  const mw = Math.min(820, window.innerWidth * 0.86);
-  const mh = Math.min(window.innerHeight * 0.90, 760);
-  const cx = Math.round((window.innerWidth  - mw) / 2);
-  const cy = Math.round((window.innerHeight - mh) / 2);
-  modal.style.width  = mw + 'px';
-  modal.style.left   = cx + 'px';
-  modal.style.top    = cy + 'px';
-  modal.style.maxHeight = mh + 'px';
-  // Override CSS transform to just scale (no translate since we set left/top directly)
-  modal.style.transform = 'scale(0.94)';
-  modal.offsetHeight; // force reflow
-  modal.style.transition = 'opacity .22s ease, transform .22s cubic-bezier(.2,.9,.3,1)';
-
-  modal.classList.add('open');
-  const bd = document.getElementById('worker-modal-backdrop');
-  if (bd) bd.classList.add('open');
-  setWorkerModalBuddyFlag(true);
-  showModalView('fatigue');
-
-  setTimeout(() => {
-    document.addEventListener('click', outsideModalClose);
-  }, 100);
+  modalListReady = true;
 }
 
 // Latvian statutory month norm: 8h for every Mon–Fri, minus public holidays
@@ -7199,9 +7209,14 @@ function showModalView(view) {
 
   // Parādīt izvēlēto
   if (view === 'list') {
+    if (!modalListReady) renderModalList();
     if (listView) listView.classList.remove('hide');
     if (toggleList) toggleList.classList.add('active');
   } else if (view === 'calendar') {
+    if (!modalCalendarReady) {
+      renderModalCalendar();
+      modalCalendarReady = true;
+    }
     if (calendarView) calendarView.classList.add('show');
     if (toggleCal) toggleCal.classList.add('active');
   } else if (view === 'fatigue') {
@@ -7226,12 +7241,14 @@ function showModalView(view) {
 }
 
 function closeWorkerModal() {
+  clearTimeout(workerModalOutsideTimer);
+  clearTimeout(workerModalCloseTimer);
   if (typeof __wmHidePop === 'function') __wmHidePop();
   setWorkerModalBuddyFlag(false);
   const modal = document.getElementById('worker-modal');
   if (modal) {
     modal.classList.remove('open');
-    setTimeout(() => {
+    workerModalCloseTimer = setTimeout(() => {
       modal.style.left = '';
       modal.style.top = '';
       modal.style.width = '';

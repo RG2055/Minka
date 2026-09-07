@@ -180,10 +180,11 @@ test('late coffee save acknowledgements stay on the day that was edited', async 
   assert.equal(client.timers.size, 0);
 });
 
-function skinClient() {
+function skinClient(initialSkins) {
   const env = environment();
   const c = env.context;
   const store = new Map();
+  if (initialSkins) store.set('mkWorkerSkinsV1', JSON.stringify(initialSkins));
   let writes = 0, calls = 0, addonWrites = 0, addons = {};
   const painted = [];
   let reply = {};
@@ -215,6 +216,17 @@ function skinClient() {
     snapshot() { return { writes, calls, addonWrites, painted: clone(painted), skins: clone(c.skinTest.loadAll()) }; }
   });
 }
+
+test('saved skins are available before the first cached roster, without a network request', () => {
+  const start = html.indexOf('(function MinkaSkins() {');
+  const end = html.indexOf('\n})();', start);
+  const calendarScript = html.indexOf('<script src="js/calendar.js?');
+  assert.ok(start >= 0 && end < calendarScript, 'skin initialization must precede the first calendar render');
+  const client = skinClient({ ANNA: { t: 'img', id: '23' } });
+  assert.deepEqual(clone(client.context.mkGetWorkerSkin('anna')), { t: 'img', id: '23' });
+  assert.equal(client.snapshot().calls, 0, 'cached appearance must not wait for the API');
+  assert.equal(client.snapshot().writes, 0, 'reading cached appearance must not rewrite storage');
+});
 
 test('skin polling updates changed people and clears deleted skins; unchanged polls do no DOM/storage work', async () => {
   const client = skinClient();
