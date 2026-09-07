@@ -442,13 +442,31 @@
     const work=mergeWorkWindows(history);
     const start=new Date(Math.min(+(work[0]?.start||now),+now));start.setDate(start.getDate()-21);start.setHours(7,0,0,0);
     const end=new Date(Math.max(+now,+work.at(-1)?.end||+now));end.setDate(end.getDate()+2);end.setHours(8,0,0,0);
-    const key=workerName+'|'+(+start)+'|'+(+end)+'|'+JSON.stringify(settings)+'|'+JSON.stringify(scenario)+'|'+new Date().toDateString()+'|'+(new Date().getHours()>=8);
+    const recoveryEnsemble=settings.recoveryVariant===undefined&&overrides?.homeHours===undefined&&overrides?.recoveryHours===undefined;
+    const key=workerName+'|'+(+start)+'|'+(+end)+'|'+recoveryEnsemble+'|'+JSON.stringify(settings)+'|'+JSON.stringify(scenario)+'|'+new Date().toDateString()+'|'+(new Date().getHours()>=8);
     if(sleepCache.has(key))return sleepCache.get(key);
+    // Unknown post-call sleep must not silently select the longest opportunity.
+    // Equal-weight sensitivity scenarios, NOT measured sleep probabilities or
+    // a published population calibration. Normal nights remain 8h opportunities;
+    // only the first home night after an overnight duty varies (6/7/8h).
+    // Explicit sleep overrides continue to select a single reproducible scenario.
+    if(recoveryEnsemble){
+      const variants=[{home:6,nap:2},{home:7,nap:3},{home:8,nap:4}].map((v,recoveryVariant)=>
+        sleepTimeline(history,workerName,now,{...settings,recoveryVariant,recoveryHomeHours:v.home,recoveryHours:v.nap},scenario));
+      const result={...variants[1],at(t){
+        const values=variants.map(v=>v.at(t));
+        const mean=key=>values.reduce((sum,v)=>sum+v[key],0)/values.length;
+        const bounds=values.flatMap(v=>v.historyRange||[v.score]);
+        return {...values[1],score:Math.round(mean('score')),umpScore:mean('umpScore'),dutyLoad:mean('dutyLoad'),lapses:mean('lapses'),homeostaticLapses:mean('homeostaticLapses'),circadianLapses:mean('circadianLapses'),recoveryRange:[Math.min(...bounds),Math.max(...bounds)]};
+      }};
+      sleepCache.set(key,result);if(sleepCache.size>80)sleepCache.delete(sleepCache.keys().next().value);
+      return result;
+    }
     const inferred=settings.habitVariant===undefined?habitHistory(history,workerName):null;
     if(inferred){
       const variants=inferred.weights.map((weight,habitVariant)=>({weight,model:sleepTimeline(history,workerName,now,{...settings,habitVariant,habitPlans:inferred.plans},scenario)}));
       const exemplar=variants[0].model;
-      const result={...exemplar,at(t){
+      const result={...exemplar,comparisonVariants:variants,at(t){
         const values=variants.map(v=>({...v.model.at(t),weight:v.weight}));
         const mean=key=>values.reduce((sum,v)=>sum+v[key]*v.weight,0);
         return {...values[0],score:Math.round(mean('score')),umpScore:mean('umpScore'),dutyLoad:mean('dutyLoad'),lapses:mean('lapses'),homeostaticLapses:mean('homeostaticLapses'),circadianLapses:mean('circadianLapses'),estimatedHistoryNights:Object.keys(inferred.plans).filter(date=>+getShiftStartEnd(history.find(e=>e.dateStr===date)).end<=t).length,historyRange:[Math.min(...values.map(v=>v.score)),Math.max(...values.map(v=>v.score))]};
@@ -458,17 +476,25 @@
     }
     const timelineScenario={...scenario,habitVariant:settings.habitVariant,habitPlans:settings.habitPlans};
     const opportunities=[],offDuty=[];
+    const overnightEnds=work.filter(iv=>{
+      const night=new Date(iv.start);night.setHours(2,0,0,0);
+      while(night<iv.end){const stop=new Date(night);stop.setHours(6,0,0,0);if(overlapHours(iv.start,iv.end,night,stop)>0)return true;night.setDate(night.getDate()+1);}
+      return false;
+    }).map(iv=>+iv.end);
     const day=new Date(start);day.setDate(day.getDate()-1);day.setHours(23,0,0,0);
     // Shared home-sleep assumption, clipped around actual duties.
-    while(day<end){const stop=new Date(day);stop.setHours(stop.getHours()+settings.homeHours);offDuty.push({start:+day,end:+stop});day.setDate(day.getDate()+1);}
+    while(day<end){
+      const postCall=overnightEnds.some(t=>t<=+day&&+day-t<24*HOUR);
+      const hours=postCall?(settings.recoveryHomeHours??settings.homeHours):settings.homeHours;
+      const stop=new Date(day);stop.setHours(stop.getHours()+hours);offDuty.push({start:+day,end:+stop});day.setDate(day.getDate()+1);
+    }
     const knownDates=new Set();
     for(const iv of work){
       const pieces=dutyPieces(iv,workerName,+iv.start,+iv.end,timelineScenario);
       for(const p of pieces){if(p.rest&&settings.noSleepDutyDate!==iv.entry.dateStr)opportunities.push(p);if(p.inNight&&p.start<+now)knownDates.add(iv.entry.dateStr);}
       // A recovery opportunity starts one hour after a duty covering 02–06.
       // This is a shared modelling assumption, never a recorded sleep.
-      const night=new Date(iv.start);night.setHours(2,0,0,0);let overnight=false;
-      while(night<iv.end){const stop=new Date(night);stop.setHours(6,0,0,0);if(overlapHours(iv.start,iv.end,night,stop)>0)overnight=true;night.setDate(night.getDate()+1);}
+      const overnight=overnightEnds.includes(+iv.end);
       if(overnight&&settings.recoveryHours>0)offDuty.push({start:+iv.end+HOUR,end:+iv.end+(1+settings.recoveryHours)*HOUR});
     }
     for(const p of offDuty){
@@ -484,22 +510,38 @@
     // Product heuristic, NOT a validated UMP/HSE extension. A separate bounded
     // duty-load reservoir prevents sleep opportunity from erasing duty exposure.
     // Parameters are explicit for later calibration against reported fatigue.
-    const hybrid={ceiling:50,workTauHours:24,dutyRestTauHours:48,offDutyTauHours:8};
+    // Recovery is sleep-dependent, not a countdown since clocking out. These
+    // conservative product defaults are NOT coefficients from a clinical study.
+    // Sleep/awake separation follows the recovery principle, not a claim that
+    // everyone recovers after a fixed number of nights. UMP remains unchanged.
+    const hybrid={ceiling:50,workTauHours:24,dutyRestTauHours:48,offDutySleepTauHours:16,offDutyAwakeTauHours:96};
     const exposure=[];let cursor=+start,burden=0;
     const append=(a,b,mode)=>{
       if(b<=a)return;
       const target=mode==='work'?hybrid.ceiling:0;
-      const tau=mode==='work'?hybrid.workTauHours:mode==='rest'?hybrid.dutyRestTauHours:hybrid.offDutyTauHours;
+      const tau=mode==='work'?hybrid.workTauHours:mode==='rest'?hybrid.dutyRestTauHours:mode==='sleep'?hybrid.offDutySleepTauHours:hybrid.offDutyAwakeTauHours;
       exposure.push({start:a,end:b,initial:burden,target,tau});
       burden=target+(burden-target)*Math.exp(-(b-a)/HOUR/tau);
     };
+    const appendOffDuty=(a,b)=>{
+      // Reuse the exact merged, latency-adjusted sleep spans used by UMP.
+      // Never credit future sleep or count overlapping opportunities twice.
+      for(const span of result.sleep){
+        if(span.end<=a)continue;
+        if(span.start>=b)break;
+        append(a,Math.min(b,span.start),'off');
+        append(Math.max(a,span.start),Math.min(b,span.end),'sleep');
+        a=Math.min(b,span.end);
+      }
+      append(a,b,'off');
+    };
     for(const iv of work){
-      append(cursor,+iv.start,'off');
+      appendOffDuty(cursor,+iv.start);
       for(const piece of dutyPieces(iv,workerName,+iv.start,+iv.end,timelineScenario))
         append(piece.start,piece.end,piece.rest&&settings.noSleepDutyDate!==iv.entry.dateStr?'rest':'work');
       cursor=+iv.end;
     }
-    append(cursor,+end,'off');
+    appendOffDuty(cursor,+end);
     const sleepAt=result.at.bind(result);
     result.at=t=>{
       const base=sleepAt(t);
@@ -581,6 +623,53 @@
     if(!overrides){sampleCache.set(key,score);if(sampleCache.size>400)sampleCache.delete(sampleCache.keys().next().value);}
     return score;
   }
+  // On-demand scientific comparison. Never add KSS/PVT outputs to the hybrid
+  // index: their units and calibrations differ. No per-card background work.
+  function compareRecovery(workerName,time){
+    syncFatigueCache();
+    const history=gatherWorkerHistory(workerName),when=new Date(time);
+    const variants=[{recoveryHomeHours:6,recoveryHours:2},{recoveryHomeHours:7,recoveryHours:3},{recoveryHomeHours:8,recoveryHours:4}];
+    const results=variants.map(settings=>{
+      const base=sleepTimeline(history,workerName,when,settings);
+      const native=(model,metric)=>{
+        if(model.comparisonVariants){
+          const values=model.comparisonVariants.map(v=>({...native(v.model,metric),weight:v.weight}));
+          return {...values[0],value:values.reduce((s,v)=>s+v.value*v.weight,0),inertia:values.reduce((s,v)=>s+v.inertia*v.weight,0)};
+        }
+        const clipped={...model,end:+when,segments:model.segments.filter(s=>s.start<+when).map(s=>({...s,end:Math.min(s.end,+when)}))};
+        return window.MinkaRecoveryModel.timeline(clipped,metric).at(+when);
+      };
+      return {settings,hybrid:base.at(+when).score,pvt:native(base,'PVT'),kss:native(base,'KSS')};
+    });
+    return {time:+when,variants:results,scope:'Post-call sleep sensitivity, native model outputs; not clinical validation'};
+  }
+  // Explicit light sensitivity, evaluated only on request. Same sleep and night
+  // plan engine, no saved assignment writes and no uncalibrated score penalty.
+  async function compareLight(workerName,entry,time){
+    syncFatigueCache();
+    const now=new Date(time),history=gatherWorkerHistory(workerName),shift=getShiftStartEnd(entry);
+    const live=window.__ns?.getPlan?.();
+    const shape=window.MinkaNightHistory.shape(live?.date===entry.dateStr?{order:live.segments.map(s=>s.name),sh:live.sh,ei:live.ei}:nightPlans[entry.dateStr]);
+    const actual=shape&&savedNightWindow(entry,workerName,shape);
+    if(!actual)return {options:[],missingPlan:true};
+    const work=mergeWorkWindows(history),options=[];
+    for(let i=0;i<shape.order.length;i++){
+      const order=shape.order.filter(n=>n!==workerName);order.splice(i,0,workerName);
+      const plan={...shape,order},slot=savedNightWindow(entry,workerName,plan);
+      if(slot.ownStart<+now&&actual.part!==i+1)continue;
+      // Middle post-call sleep scenario; light ranges are not probability bounds.
+      const base=sleepTimeline(history,workerName,shift.end,{recoveryHomeHours:7,recoveryHours:3},{date:entry.dateStr,from:+now,plan});
+      const leaves=m=>m.comparisonVariants?m.comparisonVariants.flatMap(v=>leaves(v.model)):[m];
+      const values=[];
+      for(const model of leaves(base))for(const dayLux of [100,1000])for(const workLux of [10,30,100]){
+        await new Promise(resolve=>setTimeout(resolve,0));
+        values.push(window.MinkaLightModel.simulate(model,work,+shift.end,{dayLux,workLux}).delayHours);
+      }
+      const lo=Math.min(...values),hi=Math.max(...values);
+      options.push({part:i+1,start:slot.ownStart,end:slot.ownEnd,delayHours:[lo,hi],ambiguous:hi-lo>12});
+    }
+    return {options,at:+shift.end,assumed:true};
+  }
   function restWindowSummary(from,to){
     if(!from||!to||to<=from)return null;
     let nights=0,nightHours=0;
@@ -626,12 +715,13 @@
       if(stop>start)nightBands.push({start,end:stop});
       day.setDate(day.getDate()+1);
     }
-    const earlyNightWorkHours=pieces.filter(p=>!p.rest).reduce((sum,p)=>sum+nightBands.reduce((n,b)=>n+Math.max(0,Math.min(p.end,b.end)-Math.max(p.start,b.start))/HOUR,0),0);
+    const earlyNightWorkSpans=window.MinkaSleepModel.merge(pieces.filter(p=>!p.rest).flatMap(p=>nightBands.map(b=>({start:Math.max(p.start,b.start),end:Math.min(p.end,b.end)}))));
+    const earlyNightWorkHours=earlyNightWorkSpans.reduce((sum,p)=>sum+(p.end-p.start)/HOUR,0);
     // A second, explicitly hypothetical case: no sleep in this duty. Earlier
     // duty/home assumptions stay identical; this is not a confidence interval.
     const noSleepModel=nightPieces.length?sleepTimeline(gatherWorkerHistory(workerName),workerName,iv.end,{noSleepDutyDate:entry.dateStr},scenario):null;
     const noSleepSamples=noSleepModel?samples.map(s=>({time:s.time,score:noSleepModel.at(s.time).score})):null;
-    const result={samples,noSleepSamples,noSleepEndScore:noSleepSamples?.at(-1).score??null,nightBands,restBands:pieces.filter(p=>p.rest).map(p=>({start:p.start,end:p.end})),earlyNightWorkHours,startScore:samples[0].score,endScore:samples.at(-1).score,peak,ownPeak,restBeforeHours:before,restAfterHours:after,longestRestHours:longest,hasNightPlan:nightPieces.length>0,nightParts:nightPieces.at(-1)?.plan?.parts??null,between:restWindowSummary(previous?.end,iv.start)};
+    const result={samples,noSleepSamples,noSleepEndScore:noSleepSamples?.at(-1).score??null,nightBands,restBands:pieces.filter(p=>p.rest).map(p=>({start:p.start,end:p.end})),earlyNightWorkHours,earlyNightWorkSpans,startScore:samples[0].score,endScore:samples.at(-1).score,peak,ownPeak,restBeforeHours:before,restAfterHours:after,longestRestHours:longest,hasNightPlan:nightPieces.length>0,nightParts:nightPieces.at(-1)?.plan?.parts??null,between:restWindowSummary(previous?.end,iv.start)};
     forecastCache.set(key,result);if(forecastCache.size>60)forecastCache.delete(forecastCache.keys().next().value);
     return result;
   }
@@ -952,7 +1042,7 @@
 
     const presentation = getPresentation(score);
     const result = {
-      workerName, nightRest: load.night, modelVersion: 15, sleepModel:load,
+      workerName, nightRest: load.night, modelVersion: 17, sleepModel:load,
       score, level: presentation.level, levelClass: presentation.levelClass, scoreReasons,
       weeklyHours, shiftsThisWeek, nightShiftsThisWeek,
       lastShift, lastShiftEnd, hoursSinceLastShift,
@@ -1210,7 +1300,7 @@
       const n=projection.between.nights;
       projectionNotes.push(`Pirms šīs maiņas grafikā brīvas <b>${formatDuration(projection.between.hours)}</b>. ${n} ${n===1?'naktī':'naktīs'} ir vismaz 7 stundas bez darba starp 22.00 un 08.00. Tas nenozīmē, ka visas šīs stundas nogulētas.`);
     }
-    if(projection?.hasNightPlan)projectionNotes.push(`Savā nakts daļā lielākais prognozētais nogurums: <b style="color:${getPresentation(projection.ownPeak?.score||0).color}">${projection.ownPeak?.score??'—'}/100</b>${projection.ownPeak?' — '+clockText(projection.ownPeak.time):''}. Darbs laikā no 02.00 līdz 06.00: <b>${formatDuration(projection.earlyNightWorkHours)}</b>.`);
+    if(projection?.hasNightPlan)projectionNotes.push(`Savā nakts daļā lielākais prognozētais nogurums: <b style="color:${getPresentation(projection.ownPeak?.score||0).color}">${projection.ownPeak?.score??'—'}/100</b>${projection.ownPeak?' — '+clockText(projection.ownPeak.time):''}.`);
 
     // 1. Weekly hours
     const hoursOk = f.weeklyHours < THRESHOLDS.weeklyHoursWarn;
@@ -1348,8 +1438,6 @@
     const driver=(label,value,tone='neutral')=>`<div class="fh-driver is-${tone}"><span>${label}</span><b>${value}</b></div>`;
     drivers.push(driver('Darbs pēdējās 7 dienās',formatRemaining(f.weeklyHours).replace(' 00m',''),f.weeklyHours>=THRESHOLDS.weeklyHoursWarn?'load':'neutral'));
     if(projection?.between)drivers.push(driver('Brīvs pirms šīs maiņas',formatRemaining(projection.between.hours).replace(' 00m',''),projection.between.hours<THRESHOLDS.minRestHours?'load':'rest'));
-    if(projection?.earlyNightWorkHours>0)drivers.push(driver('Darbs laikā 02–06',formatRemaining(projection.earlyNightWorkHours).replace(' 00m',''),'load'));
-    else if(projection?.hasNightPlan)drivers.push(driver('Laiks 02–06','Paredzēta atpūta','rest'));
     const driversHtml=drivers.slice(0,3).join('');
     return `<div class="fatigue-panel fatigue-tab-panel mk-detail-fatigue fh-health ${f.levelClass}">
       <section class="fh-summary" aria-label="Svarīgākais par nogurumu">
@@ -1362,7 +1450,7 @@
       <details class="fh-more"><summary>Grafiks un aprēķins</summary>
       <div class="fh-switch" role="group" aria-label="Papildu informācija"><button type="button" data-fatigue-section="schedule" aria-pressed="true" aria-controls="fh-schedule">${fluentIcon('calendar_ltr')}<span>Maiņa un atpūta</span></button><button type="button" data-fatigue-section="explanation" aria-pressed="false" aria-controls="fh-explanation">${fluentIcon('info')}<span>Kā aprēķināts?</span></button>${projection?'<button type="button" data-fatigue-section="curve" aria-pressed="false" aria-controls="fh-curve">'+fluentIcon('data_line')+'<span>Līkne un atpūta</span></button>':''}</div>
       <div id="fh-schedule" data-fatigue-panel="schedule" class="fatigue-details mk-detail-stats fh-facts">${rows.join('')}</div>
-      <div id="fh-explanation" data-fatigue-panel="explanation" class="fh-explanation" hidden><div class="fh-calculation"><h3>Tava slodze un atpūta</h3><div class="fh-drivers">${driversHtml}</div></div><div class="fh-context"><h3>Miegs un dežūras slodze</h3><p>Miegs samazina prognozi. Uzkrātā dežūras slodze mazinās lēnāk un saglabājas arī pēc maiņas.</p><p>Lietotnes hibrīda indekss, nevis izmērīts noguruma procents.</p>${usual}<details class="fh-model-details"><summary>Par modeli un skalu</summary>${f.sleepModel.estimatedHistoryNights?`<p>${f.sleepModel.estimatedHistoryNights} agrākām naktīm trūkst plāna. Aplēse izmanto daļu biežumu un 00:00–07:20 logu. Šie laiki nav vēsturiski apstiprināti; 3 cilvēkiem pielāgota relatīvā nakts pozīcija. Variantu rezultāti: ${f.sleepModel.historyRange.join('–')}/100, nevis ticamības intervāls.</p>`:''}<p>UMP miega/nomoda prognoze apvienota ar eksperimentālu dežūras slodzes komponenti. Slodzes griesti 50, uzkrāšanās laika konstante 24h, atpūtas dežūrā 48h un ārpus dežūras 8h. Šie svari ir lietotnes pieņēmumi, nevis klīniski validēti koeficienti. 0–100 nav procents vai medicīnisks slieksnis. Netiek noteikts melatonīna daudzums vai pamošanās inerce. Ārpus darba pieņemta 8 stundu miega iespēja no 23.00 un pēc nakts maiņas — 4 stundas, sākot stundu pēc darba. Darba laiks ir izslēgts. Faktiskais miegs nav zināms.</p></details></div></div>
+      <div id="fh-explanation" data-fatigue-panel="explanation" class="fh-explanation" hidden><div class="fh-calculation"><h3>Tava slodze un atpūta</h3><div class="fh-drivers">${driversHtml}</div></div><div class="fh-context"><h3>Miegs un dežūras slodze</h3><p>Miegs samazina prognozi. Uzkrātā dežūras slodze mazinās lēnāk un saglabājas arī pēc maiņas.</p><p>Lietotnes hibrīda indekss, nevis izmērīts noguruma procents.</p>${f.sleepModel.recoveryRange&&f.sleepModel.recoveryRange[0]!==f.sleepModel.recoveryRange[1]?`<p>Atkarībā no miega: ${f.sleepModel.recoveryRange.join("–")}/100. Scenāriju robežas, nevis mērījums.</p>`:""}${usual}<details class="fh-model-details"><summary>Par modeli un skalu</summary><button type="button" class="fh-research-button" data-fatigue-compare>Salīdzināt ar 2024. gada modeli</button><p data-fatigue-comparison-output aria-live="polite"></p>${f.sleepModel.estimatedHistoryNights?`<p>${f.sleepModel.estimatedHistoryNights} agrākām naktīm trūkst plāna. Aplēse izmanto daļu biežumu un 00:00–07:20 logu. Šie laiki nav vēsturiski apstiprināti; 3 cilvēkiem pielāgota relatīvā nakts pozīcija. Variantu rezultāti: ${f.sleepModel.historyRange.join('–')}/100, nevis ticamības intervāls.</p>`:''}<p>UMP miega/nomoda prognoze apvienota ar eksperimentālu dežūras slodzes komponenti. Slodzes griesti 50, uzkrāšanās laika konstante 24h, atpūtas dežūrā 48h, ārpus darba pieņemtajā miegā 16h un nomodā 96h. Tās ir pakāpeniskas samazināšanās konstantes, nevis pilnas atkopšanās ilgums. Šie svari ir lietotnes pieņēmumi, nevis klīniski validēti koeficienti. 0–100 nav procents vai medicīnisks slieksnis. Netiek noteikts melatonīna daudzums vai pamošanās inerce. Parastās naktīs pieņemta 8h miega iespēja no 23.00. Pēc nakts dežūras salīdzināti trīs varianti: 2h dienā un 6h naktī, 3h un 7h, 4h un 8h. Katrā miegā atvēlētas 15min iemigšanai. Galvenais skaitlis ir šo variantu vidējais. Varianti un vienādie svari ir lietotnes pieņēmumi, nevis izmērītas varbūtības. Dienas miega iespēja sākas stundu pēc darba; darba intervāli tiek izslēgti. Darba laiks ir izslēgts. Faktiskais miegs nav zināms.</p></details></div></div>
       ${projection?`<div id="fh-curve" data-fatigue-panel="curve" hidden>${middleHtml}</div>`:''}
       </details>
       <p class="fh-footnote">Aptuvena prognoze, nevis mērījums.${f.sleepModel.estimatedHistoryNights?' Daļa vēstures aplēsta pēc ieradumiem.':''}</p>
@@ -1421,7 +1509,22 @@
     if(moreOpen&&container.querySelector('.fh-more'))container.querySelector('.fh-more').open=true;
     if(!container.dataset.fatigueSectionsBound){
       container.dataset.fatigueSectionsBound='1';
-      container.addEventListener('click',event=>{
+      container.addEventListener('click',async event=>{
+        const compare=event.target.closest('[data-fatigue-compare]');
+        if(compare&&container.contains(compare)){
+          compare.disabled=true;
+          const output=container.querySelector('[data-fatigue-comparison-output]');
+          output.textContent='Rēķina…';
+          await new Promise(resolve=>setTimeout(resolve,0));
+          if(!container.contains(compare))return;
+          try{
+            const f=calculateFatigue(container.dataset.worker),r=compareRecovery(f.workerName,f.evaluatedAt);
+            const range=key=>{const v=r.variants.map(x=>x[key].value);return Math.min(...v).toFixed(1)+'–'+Math.max(...v).toFixed(1);};
+            output.textContent='2024. gada modelis: miegainība '+range('kss')+' KSS skalā (1–9). Lēnas reakcijas uzmanības testā: '+range('pvt')+'. Miega scenāriji, nevis mērījumi. Šīs skalas nav mūsu 0–100 indekss.';
+          }catch(error){output.textContent='Salīdzinājumu neizdevās aprēķināt.';}
+          finally{compare.disabled=false;}
+          return;
+        }
         const button=event.target.closest('[data-fatigue-section]');
         if(!button||!container.contains(button))return;
         const section=button.dataset.fatigueSection;
@@ -1527,7 +1630,7 @@
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshNightFatigue(); });
   window.addEventListener('storage', e => { if (!e.key || e.key === 'minkaNightSplitByDateV1') refreshNightFatigue(); });
 
-  window.__fatigue = { calculateFatigue, gatherWorkerHistory, getPresentation, scoreAt, forecast, nightScenarios, modelParameters: window.MinkaSleepModel.parameters, sleepAssumptions, savedNightWindow, clearCache: clearFatigueCache };
+  window.__fatigue = { calculateFatigue, gatherWorkerHistory, getPresentation, scoreAt, forecast, nightScenarios, compareRecovery, compareLight, modelParameters: window.MinkaSleepModel.parameters, sleepAssumptions, savedNightWindow, clearCache: clearFatigueCache };
   window.__fatigueRenderModal = renderModalFatigue;
   window.__minkaFatigueReady = true;
   document.dispatchEvent(new CustomEvent('minka:fatigue-ready'));

@@ -16,6 +16,8 @@ function env(days,at='2026-09-08T07:20:00+03:00',plan=null,stats=null){
  c.window=c;c.addEventListener=doc.addEventListener;c.__grafiksStore={test:days};c.__activeDateStr='08.09.2026';c.__refreshFatigueBars=()=>paints++;
  vm.runInContext(fs.readFileSync(new URL('../js/night-plan-history.js',import.meta.url),'utf8'),c);
  vm.runInContext(fs.readFileSync(new URL('../js/sleep-model.js',import.meta.url),'utf8'),c);
+ vm.runInContext(fs.readFileSync(new URL('../js/recovery-model.js',import.meta.url),'utf8'),c);
+ vm.runInContext(fs.readFileSync(new URL('../js/light-model.js',import.meta.url),'utf8'),c);
  vm.runInContext(source,c);
  return {c,doc,score:name=>c.__fatigue.calculateFatigue(name||names[0]),at(value){timestamp=+new Date(value)},plan(value){raw=JSON.stringify(value);emit({type:'minka:night-plan-changed'})},run(){for(const [id,t] of [...timers])if(t.delay===100){timers.delete(id);t.fn()}},paints:()=>paints};
 }
@@ -127,7 +129,7 @@ test('sleep-latency sensitivity is monotonic, separate from cached default resul
 });
 test('future cards explicitly identify the shift-start forecast',()=>{
  const e=env([shift('08.09.2026')],'2026-09-07T12:00:00+03:00');
- assert.equal(e.score().contextLabel,'Prognoze maiņas sākumā');assert.equal(e.score().modelVersion,15);
+ assert.equal(e.score().contextLabel,'Prognoze maiņas sākumā');assert.equal(e.score().modelVersion,17);
  e.at('2026-09-08T12:00:00+03:00');assert.equal(e.score().contextLabel,'Tagad');
 });
 
@@ -292,6 +294,77 @@ test('hybrid selected scenario and headline use the same endpoints',()=>{
  assert.ok(new Set(result.options.map(o=>o.endScore)).size>1);
 });
 
+test('post-duty recovery retains residual load after one day and fades over further nights',()=>{
+ const e=env([shift('07.09.2026')],'2026-09-08T08:00:00+03:00',plan());
+ const load=at=>{e.at(at);e.c.__activeDateStr='';e.c.__fatigue.clearCache();return e.score().sleepModel.dutyLoad;};
+ const initial=load('2026-09-08T08:00:00+03:00');
+ const day1=load('2026-09-09T08:00:00+03:00');
+ const day2=load('2026-09-10T08:00:00+03:00');
+ const week=load('2026-09-15T08:00:00+03:00');
+ // Product regression guard, not a clinically established recovery fraction.
+ assert.ok(day1>initial*0.25,'one day must not erase nearly all duty exposure');
+ assert.ok(initial>day1&&day1>day2&&day2>week);
+ assert.ok(week<initial*0.05,'a remote isolated duty must not leave a permanent penalty');
+});
+
+test('off-duty sleep restores load faster than equal elapsed time awake, without boundary jumps',()=>{
+ const e=env([shift('07.09.2026')],'2026-09-08T08:00:00+03:00',plan());
+ const load=at=>{e.at(at);e.c.__activeDateStr='';e.c.__fatigue.clearCache();return e.score().sleepModel.dutyLoad;};
+ const sleeping=load('2026-09-08T12:15:00+03:00')/load('2026-09-08T09:15:00+03:00');
+ const awake=load('2026-09-08T17:00:00+03:00')/load('2026-09-08T14:00:00+03:00');
+ assert.ok(sleeping<awake);
+ for(const boundary of ['2026-09-08T09:15:00+03:00','2026-09-08T13:00:00+03:00','2026-09-08T23:15:00+03:00']){
+  assert.ok(Math.abs(load(boundary)-load(new Date(+new Date(boundary)-1000).toISOString()))<0.01);
+ }
+});
+
+test('repeat 24h duty carries more fatigue with 24h off than with 48h off for three and four parts',()=>{
+ for(const size of [3,4]){
+  const team=names.slice(0,size);
+  const forecast=second=>{
+   const dates=['07.09.2026',`${second}.09.2026`];
+   const plans=Object.fromEntries(dates.map(date=>[date,{order:team,sh:0,ei:0,savedAt:1}]));
+   const e=env(dates.map(date=>shift(date,24,'08:00','08:00',team)),'2026-09-07T07:00:00+03:00',plans);
+   return team.map(name=>e.c.__fatigue.forecast(name,e.c.__fatigue.gatherWorkerHistory(name)[1]));
+  };
+  const short=forecast('09'),long=forecast('10');
+  short.forEach((f,i)=>{
+   assert.ok(f.startScore>long[i].startScore);
+   const evening=f.samples.find(s=>new Date(s.time).getHours()===20);
+   const other=long[i].samples.find(s=>new Date(s.time).getHours()===20);
+   assert.ok(evening.score>other.score);
+  });
+ }
+});
+
+test('24h then 12h uses post-call sleep scenarios without imposing chronic short sleep before duty',()=>{
+ const e=env([shift('07.09.2026'),shift('09.09.2026',12,'08:00','20:00')],'2026-09-09T08:00:00+03:00',plan());
+ e.c.__activeDateStr='09.09.2026';
+ const api=e.c.__fatigue,t=new Date('2026-09-09T08:00:00+03:00');
+ const raw=JSON.stringify(e.c.__grafiksStore);
+ for(const name of names){
+  const options=[{recoveryHomeHours:6,recoveryHours:2},{recoveryHomeHours:7,recoveryHours:3},{recoveryHomeHours:8,recoveryHours:4}];
+  const scores=options.map(o=>api.scoreAt(name,t,o));
+  const actual=e.score(name);
+  assert.equal(actual.score,Math.round(scores.reduce((a,b)=>a+b)/3));
+  assert.deepEqual(Array.from(actual.sleepModel.recoveryRange),[Math.min(...scores),Math.max(...scores)]);
+  assert.ok(actual.score>scores[2],'do not automatically choose the most optimistic sleep');
+  const before=new Date('2026-09-07T08:00:00+03:00');
+  const baseline=api.scoreAt(name,before,{homeHours:8,recoveryHours:4});
+  assert.equal(api.scoreAt(name,before),baseline,'future recovery must not change earlier fatigue');
+  for(const o of options)assert.equal(api.scoreAt(name,before,o),baseline);
+  const entry=api.gatherWorkerHistory(name)[1];
+  assert.equal(api.forecast(name,entry).startScore,actual.score);
+ }
+ assert.equal(JSON.stringify(e.c.__grafiksStore),raw);
+});
+
+test('ordinary day shifts do not acquire a short-sleep penalty from recovery scenarios',()=>{
+ const e=env([shift('07.09.2026',12,'08:00','20:00'),shift('09.09.2026',12,'08:00','20:00')],'2026-09-09T08:00:00+03:00');
+ const api=e.c.__fatigue,t=new Date('2026-09-09T08:00:00+03:00');
+ assert.equal(api.scoreAt(names[0],t),api.scoreAt(names[0],t,{homeHours:8,recoveryHours:4}));
+});
+
 
 test('undated habits estimate missing past nights but never replace a saved plan',()=>{
  const days=[shift('05.09.2026'),shift('07.09.2026')];
@@ -346,4 +419,39 @@ test('three-part first shift means longer work and less sleep than four with the
  assert.ok(a.end-a.start>b.end-b.start);
  assert.ok(minutes(a)<minutes(b));
  assert.ok(a.shiftEndScore>=b.shiftEndScore);
+});
+
+test('scientific comparison uses the same three post-call scenarios and never replaces the hybrid score',()=>{
+ const e=env([shift('07.09.2026'),shift('09.09.2026',12,'08:00','20:00')],'2026-09-09T08:00:00+03:00',plan());
+ e.c.__activeDateStr='09.09.2026';const api=e.c.__fatigue,t=new Date('2026-09-09T08:00:00+03:00'),before=e.score().score;
+ const r=api.compareRecovery(names[0],t);
+ assert.equal(r.variants.length,3);
+ for(const v of r.variants){assert.equal(v.hybrid,api.scoreAt(names[0],t,v.settings));assert.ok(Number.isFinite(v.kss.value)&&Number.isFinite(v.pvt.value));assert.equal(v.kss.metric,'KSS');}
+ assert.equal(e.score().score,before);
+});
+
+test('light comparison uses three/four real slots and never changes scores or plans',async()=>{
+ for(const count of [3,4]){
+  const team=names.slice(0,count),saved=plan(team,23,1);
+  const e=env([shift('07.09.2026',24,'08:00','08:00',team)],'2026-09-07T22:00:00+03:00',saved);
+  e.c.setTimeout=fn=>{fn();return 0;};
+  const before=e.c.__fatigue.scoreAt(names[0],new Date('2026-09-08T08:00:00+03:00'));
+  const entry=e.c.__fatigue.gatherWorkerHistory(names[0])[0];
+  const result=await e.c.__fatigue.compareLight(names[0],entry,new Date('2026-09-07T22:00:00+03:00'));
+  assert.equal(result.options.length,count);
+  assert.equal(result.options[0].start,+new Date('2026-09-07T23:00:00+03:00'));
+  assert.equal(result.options.at(-1).end,+new Date('2026-09-08T07:30:00+03:00'));
+  assert.ok(result.options.every(o=>o.delayHours.every(Number.isFinite)));
+  assert.equal(e.c.__fatigue.scoreAt(names[0],new Date('2026-09-08T08:00:00+03:00')),before);
+  assert.equal(JSON.stringify(saved),JSON.stringify(plan(team,23,1)));
+ }
+});
+test('light comparison requires a real plan and does not suggest elapsed alternatives',async()=>{
+ const e=env([shift('07.09.2026')],'2026-09-08T03:00:00+03:00',plan());
+ e.c.setTimeout=fn=>{fn();return 0;};
+ const entry=e.c.__fatigue.gatherWorkerHistory(names[0])[0];
+ const result=await e.c.__fatigue.compareLight(names[0],entry,new Date('2026-09-08T03:00:00+03:00'));
+ assert.deepEqual(Array.from(result.options,o=>o.part),[1,3,4]);
+ const missing=env([shift('07.09.2026')]);
+ assert.equal((await missing.c.__fatigue.compareLight(names[0],entry,new Date())).missingPlan,true);
 });

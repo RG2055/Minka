@@ -193,3 +193,7 @@
 #worker-modal.mk-fatigue-mode .fh-option .fh-slot-scores { align-self:end; margin-top:10px; width:100%; box-sizing:border-box; }
 #worker-modal.mk-fatigue-mode .fh-slot-scores span { align-items:baseline; min-height:19px; }
 #worker-modal.mk-fatigue-mode .fh-slot-scores b { font-variant-numeric:tabular-nums; }
+
+.fh-research-button { padding:8px 12px; border:1px solid #b9d2d637; border-radius:8px; background:#b0d8c810; color:inherit; font:inherit; cursor:pointer; }
+.fh-research-button:focus-visible { outline:2px solid #9cceff; outline-offset:2px; }
+.fh-research-button:disabled { opacity:.6; cursor:wait; }
