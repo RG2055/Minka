@@ -15,3 +15,10 @@ cloudflare/coffee-api/.wrangler/
 
 .DS_Store
 Thumbs.db
+
+# Local private backups and history-cleanup material must never be published.
+.cloudflare-backups/
+_audit_backup/
+minka-history-scrub/
+*.bundle
+**/.wrangler/

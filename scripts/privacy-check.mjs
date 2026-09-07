@@ -33,6 +33,11 @@ else {
   const paths = git(...(staged ? ['diff', '--cached', '--name-only', '--diff-filter=ACMR', '-z'] : ['ls-tree', '-r', '--name-only', '-z', tree])).toString().split('\0').filter(Boolean);
   const textFiles = [];
   for (const file of paths) {
+    if (/(^|\/)(\.cloudflare-backups|_audit_backup|minka-history-scrub)(\/|$)|\.bundle$/i.test(file)) {
+      console.error(`Private backup cannot be published: ${file}`);
+      failed = true;
+      continue;
+    }
     // Public name-day dictionaries are unrelated to the private staff roster.
     if (/(^|\/)(varda\.js|[^/]*nameday[^/]*)$/i.test(file)) continue;
     inspect('file path', Buffer.from(file));
