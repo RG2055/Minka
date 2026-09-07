@@ -670,6 +670,7 @@
       +'<span class="is-mel"><i></i><strong>Melatonīns</strong><small>Miegs</small></span>'
       +'<span class="is-cor"><i></i><strong>Kortizols</strong><small>Enerģija</small></span>'
       +'<span class="is-wake"><i></i><strong>Modrība</strong><small>Možums</small></span>'
+      +'<small>Ilustratīvs ritms, nevis hormonu mērījums. Noguruma prognoze izmanto miega un nomoda laikus.</small>'
       +'</div>';
   }
 
@@ -706,7 +707,7 @@
     }catch(e){ return {}; }
   }
   function saveSavedMap(map){
-    try{ localStorage.setItem(NS_STORE_KEY, JSON.stringify(map||{})); }catch(e){}
+    try{ localStorage.setItem(NS_STORE_KEY, JSON.stringify(map||{})); document.dispatchEvent(new CustomEvent('minka:night-plan-changed')); }catch(e){}
   }
   function roomStorageKey(dateKey){
     dateKey=String(dateKey||'').trim();
@@ -890,13 +891,13 @@
       var dk = activeDateKey();
       if(!dk) return;
       var map = loadSavedMap();
-      map[dk] = {
+      map[dk] = window.MinkaNightHistory.save(map[dk], {
         sh: Number(st.sh||0),
         ei: Number(st.ei||0),
         order: st.sl.map(function(s){ return String((s && s.w && s.w.name) || '').trim(); }).filter(Boolean),
         mode: _nsSortMode,
         savedAt: Date.now()
-      };
+      });
       saveSavedMap(map);
       if(window.__nsKv) window.__nsKv.push(dk);
     }catch(e){}
@@ -1040,17 +1041,8 @@
     var today=new Date(),scores=[];
     for(var i=13;i>=0;i--){
       var d=new Date(today);d.setDate(d.getDate()-i);
-      var dow=d.getDay(),mo=dow===0?6:dow-1;
-      var ws=new Date(d);ws.setDate(ws.getDate()-mo);
-      var we=new Date(ws);we.setDate(we.getDate()+6);
-      var wsh=hist.filter(function(e){return e.date>=ws&&e.date<=we;});
-      var wh=wsh.reduce(function(s,e){return s+e.hours;},0);
-      var wn=wsh.filter(function(e){return e.isNight;}).length;
-      var sc=0;
-      if(wh>=60)sc+=40;else if(wh>=48)sc+=20+Math.round((wh-48)/12*20);else sc+=Math.max(0,Math.round(wh/48*15));
-      sc+=Math.min(18,wsh.length*3);
-      sc+=Math.min(15,wn*5);
-      sc=Math.max(0,Math.min(100,sc));
+      d.setHours(8,0,0,0);
+      var sc=window.__fatigue.scoreAt(workerName,d);
       scores.push(sc);
     }
     if(scores.length<2)return'';
@@ -1485,6 +1477,9 @@
   function getPublicPlan(){
     if(!st || !st.sl || !st.sl.length) return null;
     return {
+      date: st.dateKey,
+      sh: st.sh,
+      ei: st.ei,
       count: st.sl.length,
       start: st.sl[0].ss,
       end: st.sl[st.sl.length-1].es,
@@ -2061,15 +2056,8 @@
       var today=new Date(), scores=[];
       for(var i=13;i>=0;i--){
         var d=new Date(today); d.setDate(d.getDate()-i);
-        var dow=d.getDay(), mo=dow===0?6:dow-1;
-        var ws=new Date(d); ws.setDate(ws.getDate()-mo);
-        var we=new Date(ws); we.setDate(we.getDate()+6);
-        var wsh=hist.filter(function(e){return e.date>=ws&&e.date<=we;});
-        var wh=wsh.reduce(function(s,e){return s+e.hours;},0);
-        var wn=wsh.filter(function(e){return e.isNight;}).length;
-        var sc=0;
-        if(wh>=60)sc+=40;else if(wh>=48)sc+=20+Math.round((wh-48)/12*20);else sc+=Math.max(0,Math.round(wh/48*15));
-        sc+=Math.min(18,wsh.length*3); sc+=Math.min(15,wn*5);
+        d.setHours(8,0,0,0);
+        var sc=window.__fatigue.scoreAt(workerName,d);
         scores.push(Math.max(0,Math.min(100,sc)));
       }
       if(scores.length<2) return null;
@@ -2853,7 +2841,7 @@
     if(wk.length<2){st=null;_nsLastRenderKey='';render();return;}
     var fallbackSh=st?st.sh:0, fallbackEi=st?(st.ei||0):0;
     var applied=applySavedDayState(fat(wk), fallbackSh, fallbackEi);
-    var next={sh:applied.sh,ei:applied.ei,sl:calc(applied.workers,applied.sh,applied.ei)};
+    var next={dateKey:dk,sh:applied.sh,ei:applied.ei,sl:calc(applied.workers,applied.sh,applied.ei)};
     var nextKey=[activeDateKey(),next.sh,next.ei,_nsSortMode,next.sl.map(function(slot){
       return [String((slot.w&&slot.w.name)||''),Number(slot.w&&slot.w.fs)||0,slot.s,slot.e].join(':');
     }).join('|')].join('::');
@@ -2918,6 +2906,13 @@
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
   else setTimeout(init,400);
+
+  document.addEventListener('minka:fatigue-updated',function(){
+    if(document.hidden || window.__nsOverlayOpen!==true || !st || !window.__fatigue)return;
+    // Refresh values only. A saved order must never sort itself as scores change.
+    st.sl.forEach(function(slot){var f=window.__fatigue.calculateFatigue(slot.w.name);if(f)slot.w.fs=f.score;});
+    render();
+  });
 
   window.__ns={
     _render: render,

@@ -2383,8 +2383,9 @@ function filterFullList(btn) {
     try {
       const map = getNightSplitSavedMap();
       const saved = map[dateStr] || {};
-      map[dateStr] = { sh: saved.sh || 0, ei: saved.ei !== undefined ? saved.ei : 0, order: newOrder, mode: saved.mode || 'fatigue', savedAt: Date.now() };
+      map[dateStr] = window.MinkaNightHistory.save(saved, { sh: saved.sh || 0, ei: saved.ei !== undefined ? saved.ei : 0, order: newOrder, mode: saved.mode || 'fatigue', savedAt: Date.now() });
       localStorage.setItem(NIGHT_SPLIT_STORE_KEY, JSON.stringify(map));
+      document.dispatchEvent(new CustomEvent('minka:night-plan-changed'));
       if (window.__nsKv) window.__nsKv.push(dateStr);
     } catch(e) {}
   }
@@ -2428,8 +2429,12 @@ function filterFullList(btn) {
         var map = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
         var data = map[dateStr];
         if (!data) return;
-        var payload = { date: dateStr, order: data.order || [], sh: data.sh || 0, ei: data.ei !== undefined ? data.ei : 0, mode: data.mode || 'fatigue', savedAt: data.savedAt || Date.now() };
-        api.apiFetch('/api/ns-order', { method: 'POST', json: payload }).catch(function(){});
+        var payload = { date: dateStr, order: data.order || [], sh: data.sh || 0, ei: data.ei !== undefined ? data.ei : 0, mode: data.mode || 'fatigue', savedAt: data.savedAt || Date.now(), revisions: data.revisions || [] };
+        api.apiFetch('/api/ns-order', { method: 'POST', json: payload }).then(function(r) {
+          if (r.status === 409) pull(dateStr, function() {
+            if (dateStr === _activeDateStr() && window.__ns && window.__ns._update) window.__ns._update();
+          });
+        }).catch(function(){});
         if (_bc) try { _bc.postMessage(payload); } catch(_e) {}
       } catch(e) {}
     }
@@ -2445,9 +2450,11 @@ function filterFullList(btn) {
           if (!remote || !Array.isArray(remote.order) || !remote.order.length) return;
           var map = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
           var local = map[dateStr];
-          if (!local || !local.savedAt || (remote.savedAt && remote.savedAt > local.savedAt)) {
-            map[dateStr] = { sh: remote.sh || 0, ei: remote.ei !== undefined ? remote.ei : 0, order: remote.order, mode: remote.mode || 'fatigue', savedAt: remote.savedAt || Date.now() };
+          if (!local || !local.savedAt || (remote.savedAt && remote.savedAt > local.savedAt) ||
+              (remote.savedAt === local.savedAt && Array.isArray(remote.revisions) && remote.revisions.length && JSON.stringify(remote.revisions) !== JSON.stringify(local.revisions))) {
+            map[dateStr] = window.MinkaNightHistory.receive(local, remote);
             localStorage.setItem(STORE_KEY, JSON.stringify(map));
+            document.dispatchEvent(new CustomEvent('minka:night-plan-changed'));
             if (cb) cb();
           }
         }).catch(function(){})
@@ -2473,8 +2480,9 @@ function filterFullList(btn) {
             var map = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
             var local = map[p.date];
             if (!local || !local.savedAt || (p.savedAt && p.savedAt > local.savedAt)) {
-              map[p.date] = { sh: p.sh || 0, ei: p.ei !== undefined ? p.ei : 0, order: p.order, mode: p.mode || 'fatigue', savedAt: p.savedAt || Date.now() };
+              map[p.date] = window.MinkaNightHistory.receive(local, p);
               localStorage.setItem(STORE_KEY, JSON.stringify(map));
+            document.dispatchEvent(new CustomEvent('minka:night-plan-changed'));
               if (p.date === _activeDateStr()) {
                 try { if (window.__ns && window.__ns._update) window.__ns._update(); } catch(_e) {}
                 try { if (window.__nsBarSync) window.__nsBarSync(); } catch(_e) {}
@@ -3055,7 +3063,7 @@ function filterFullList(btn) {
       ? Math.max(0, Math.min(100, Math.round(result.score)))
       : 0;
     if (window.__fatigue && typeof window.__fatigue.getPresentation === 'function') {
-      return window.__fatigue.getPresentation(score);
+      return {...window.__fatigue.getPresentation(score), contextLabel: result?.contextLabel || 'Tagad'};
     }
     if (score > 70) return { score, key: 'crit', label: 'Kritisks', color: '#ff5c70' };
     if (score > 45) return { score, key: 'high', label: 'Augsts', color: '#ff9f43' };
@@ -3163,7 +3171,7 @@ function filterFullList(btn) {
               <div class="badge-row mk-side-clock-row">${shiftChip}${timerHtml}</div>
               <div class="mk-side-fatigue">
                 <div class="mk-side-ring" role="img" aria-label="Nogurums ${fatigue.score} procenti, ${fatigue.label}"><span class="liquid-fill" aria-hidden="true"></span><span>${fatigue.score}<small>${fatigue.label}</small></span></div>
-                <span class="mk-side-fatigue-caption">Nogurums</span>
+                <span class="mk-side-fatigue-caption" title="${mkEscAttr(fatigue.contextLabel || 'Tagad')}">${fatigue.contextLabel === 'Prognoze maiņas sākumā' ? 'Sākumā ≈' : 'Tagad'}</span>
               </div>
             </div>
           </div>
@@ -5926,7 +5934,7 @@ function filterFullList(btn) {
       return `
             <div class="mk-mid-meta ${trend.cls}" style="--mk-mid-fat-color:${fatigueColor}">
               <span class="mk-mid-meta-fat">
-                <span class="mk-mid-meta-label">Nogurums</span>
+                <span class="mk-mid-meta-label" title="${escapeHtml(window.__fatigue?.calculateFatigue(w.name)?.contextLabel || 'Tagad')}">${window.__fatigue?.calculateFatigue(w.name)?.viewMode !== 'today' ? 'Sākumā ≈' : 'Tagad'}</span>
                 <span class="mk-mid-meta-value">${escapeHtml(fatText)}</span>
               </span>
               ${timeCell}
@@ -7181,7 +7189,10 @@ function setWorkerModalBuddyFlag(open) {
 function showModalView(view) {
   if (typeof __wmHidePop === 'function') __wmHidePop();
   const _wm = document.getElementById('worker-modal');
-  if (_wm) _wm.classList.toggle('mk-skin-mode', view === 'skin');
+  if (_wm) {
+    _wm.classList.toggle('mk-skin-mode', view === 'skin');
+    _wm.classList.toggle('mk-fatigue-mode', view === 'fatigue');
+  }
   const listView = document.getElementById('modal-list-view');
   const calendarView = document.getElementById('modal-calendar-view');
   const fatigueView = document.getElementById('modal-fatigue-view');
