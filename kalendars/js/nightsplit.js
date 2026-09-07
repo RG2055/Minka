@@ -1417,6 +1417,7 @@
       return;
     }
     if(!_nsFlowTimer) _nsFlowTimer=setInterval(refreshFlowLiveMarker,1000);
+    window.nsRefreshDreams();
     var bar=document.querySelector('#nsPanelContent .ns-flow-bar');
     if(!bar || !st || !st.sl || !st.sl.length) return;
     var dot=bar.querySelector('.ns-flow-live');
@@ -1623,12 +1624,18 @@
     return '--room-x:'+p.x+'%;--room-y:'+p.y+'%;--room-bed-w:'+p.w+'%;--room-bed-scale:'+p.scale+';--room-bed-z:'+p.z;
   }
 
-  // Rotate fallback dreams on the existing room refresh, at most hourly.
-  // Personal decorations always win; no extra timer or animation.
+  // Upcoming and active duty dream about the same four handsets as the bed.
+  // Other slots retain their personal dream, including immediately after duty.
+  function dreamPhones(name){
+    if(!st || !Array.isArray(st.sl)) return false;
+    var active=st.sl.findIndex(function(slot){return slotRealtime(slot).active;});
+    return active>=0 && (st.sl[active].w.name===name || (!!st.sl[active+1] && st.sl[active+1].w.name===name));
+  }
   function dreamContents(name){
     var api=window.MinkaCardAddons;
     var item=api && api.getDecoration ? api.getDecoration(name) : null;
-    var object=item ? '<img src="'+escHtml(item.src)+'" alt="" decoding="async" draggable="false">' : '<span class="ns-dream-default">'+['📱','⏰'][(_nameHash(name)+Math.floor(Date.now()/3600000))%2]+'</span>';
+    var object=item ? '<img src="'+escHtml(item.src)+'" alt="" decoding="async" draggable="false">' : '<span class="ns-dream-default">'+['🌙','✨','☁️','⭐'][_nameHash(name)%4]+'</span>';
+    if(dreamPhones(name)) object='<span class="ns-dream-phones">'+['feature','smart','feature','smart'].map(function(type){return '<span class="ns-room-device is-'+type+'"></span>';}).join('')+'</span>';
     return '<svg class="ns-dream-cloud" viewBox="0 0 80 64" aria-hidden="true"><path d="M18 47C3 48 1 30 12 25C8 12 23 7 31 12C38 0 55 5 58 14C72 10 82 24 73 34C82 47 62 55 54 49C44 57 28 55 25 47Z"/><circle cx="18" cy="56" r="4"/><circle cx="11" cy="62" r="2"/></svg><span class="ns-dream-object">'+object+'</span>';
   }
   function refreshBedDream(el){

@@ -1663,3 +1663,6 @@ html.mk-low-spec #nsOverlay.open #nsPanel .pkt-cat.pkt-awake .pkt-eyes { animati
 
 #nsPanel .ns-stat-name { display: flex; align-items: center; gap: 5px; }
 #nsPanel .ns-stat-emoji { flex: 0 0 auto; font-size: 16px; line-height: 1.2; font-family: "Fluent Emoji Gaps", "Fluent Emoji Color", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important; }
+
+#nsPanel .ns-dream-phones { display:grid; grid-template-columns:repeat(2,12px); gap:2px 4px; transform:rotate(-12deg) scale(.72); }
+#nsPanel .ns-dream-phones .ns-room-device { position:relative !important; width:12px !important; height:22px !important; margin:0 !important; }
