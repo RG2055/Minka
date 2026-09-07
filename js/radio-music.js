@@ -154,6 +154,8 @@
   function unloadFrame(){
     if(!frame) return;
     frame.src='about:blank'; frame.removeAttribute('src'); loaded=false;
+    if($('radioMusicStatus')) $('radioMusicStatus').textContent='';
+    if($('lacMiniPlay')) $('lacMiniPlay').disabled=false;
     bridgeReady=false;
     deck=[]; pendingDeck=null; pendingAppend=[]; curId=null; lastNpPayload=null;
     pendingCommands=[]; profileLibrary=[]; activeLyrics=null; activeLyricIndex=-1;
@@ -283,6 +285,14 @@
     if(!uiVisible()) return;
     fillEl.style.width=((d.pct||0)*100)+'%';
     setPlayIco(!!d.playing);
+    var status=$('radioMusicStatus'), play=$('lacMiniPlay');
+    if(status){
+      var message=d.loading?'Ielādē dziesmu…':(d.message||'');
+      if(status.textContent!==message) status.textContent=message;
+      status.title=message;
+    }
+    if(play){ play.disabled=!!d.loading; play.setAttribute('aria-busy',String(!!d.loading)); }
+
     // Only recenter when the PLAYING track actually changes (e.g. auto-advance),
     // so manual browsing during playback isn't yanked back every tick.
     if(d.id && d.id!==lastNpId){

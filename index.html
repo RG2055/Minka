@@ -346,7 +346,7 @@
 <!-- Radio polish overrides — must load after all other radio CSS -->
 <link rel="stylesheet" href="css/radio_polish_v1.css?v=20260708b">
 <link rel="stylesheet" href="css/radio_lacitis_v2.css?v=20260727m">
-<link rel="stylesheet" href="css/radio-source.css?v=20260907music5">
+<link rel="stylesheet" href="css/radio-source.css?v=20260907music6">
 
 <style>
 /* ═══ MINKA v11 Shell ═══ */
@@ -2522,6 +2522,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   </div>
   <div id="lacMiniProg" onclick="lacMiniSeek(event)"><div id="lacMiniProgFill"></div></div>
   <div id="lacMiniBottom">
+    <span id="radioMusicStatus" role="status" aria-live="polite"></span>
     <div id="lacMiniCtrls">
       <button class="lm-cbtn" onclick="lacMiniCmd('prev')" title="Iepriekšējā"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
       <button class="lm-cbtn" id="lacMiniPlay" onclick="lacMiniCmd('toggle')" title="Atskaņot/Pauze"><svg viewBox="0 0 24 24" id="lacMiniPlayIco"><path d="M8 5v14l11-7z"/></svg></button>
@@ -2591,7 +2592,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   </section>
 </div>
 
-<script src="js/radio-source.js?v=20260907music3" defer></script>
+<script src="js/radio-source.js?v=20260907music4" defer></script>
 
 <div id="mobileQrModal" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171000;background:rgba(2,4,8,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:20px;">
   <div id="mobileQrBackdrop" onclick="closeMobileQrModal()" style="position:absolute;inset:0;"></div>

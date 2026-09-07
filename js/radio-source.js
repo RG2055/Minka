@@ -26,7 +26,7 @@
     if (musicLoad) return musicLoad;
     musicLoad = new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      script.src = 'js/radio-music.js?v=20260907music2';
+      script.src = 'js/radio-music.js?v=20260907music3';
       script.onload = resolve;
       script.onerror = () => {
         musicLoad = null;
