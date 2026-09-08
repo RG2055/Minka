@@ -2984,12 +2984,17 @@ function filterFullList(btn) {
       const avatar = personEmoji || initials;
       const avatarClass = personEmoji ? '' : ' is-initial';
       const compactTime = hours > 0 ? hours + 'H' + emoji : emoji;
-      return '<span class="mk-next-person ' + kind + ' mk-next-person-avatar-card" title="' + mkEscAttr(first + ' ' + kindLabel) + '">'
+      return '<span class="mk-next-person ' + kind + ' mk-next-person-avatar-card" data-next-worker="' + mkEscAttr(String(w.name || '').trim()) + '" title="' + mkEscAttr(first + ' ' + kindLabel) + '">'
         + '<span class="mk-next-size-proxy" aria-hidden="true">' + emojiHtml + '<b>' + mkEscAttr(first) + '</b>' + hoursHtml + '</span>'
         + '<span class="mk-next-person-visual"><span class="mk-next-person-avatar' + avatarClass + '" aria-hidden="true">' + mkEscAttr(avatar) + '</span>'
         + '<span class="mk-next-person-copy"><b>' + mkEscAttr(first) + '</b><small>' + mkEscAttr(compactTime) + '</small></span></span>'
         + '</span>';
     }).join('');
+    if (typeof window.mkGetWorkerSkin === 'function' && typeof window.mkApplySkinToEl === 'function') {
+      target.querySelectorAll('.mk-next-person[data-next-worker]').forEach(function(card) {
+        window.mkApplySkinToEl(card, window.mkGetWorkerSkin(card.getAttribute('data-next-worker')));
+      });
+    }
   }
 
   const SIDE_MONTH_NAMES = ['janvāris','februāris','marts','aprīlis','maijs','jūnijs','jūlijs','augusts','septembris','oktobris','novembris','decembris'];
@@ -3170,7 +3175,7 @@ function filterFullList(btn) {
               </div>
               <div class="badge-row mk-side-clock-row">${shiftChip}${timerHtml}</div>
               <div class="mk-side-fatigue">
-                <div class="mk-side-ring" role="img" aria-label="Nogurums ${fatigue.score} procenti, ${fatigue.label}"><span class="liquid-fill" aria-hidden="true"></span><span>${fatigue.score}<small>${fatigue.label}</small></span></div>
+                <div class="mk-side-ring" role="img" aria-label="Nogurums ${fatigue.score} procenti, ${fatigue.label}"><span class="mk-side-liquid-vessel" aria-hidden="true"><span class="liquid-fill"></span></span><span class="mk-side-score">${fatigue.score}<small>${fatigue.label}</small></span></div>
                 <span class="mk-side-fatigue-caption" title="${mkEscAttr(fatigue.contextLabel || 'Tagad')}">Nogurums</span>
               </div>
             </div>
@@ -5903,7 +5908,7 @@ function filterFullList(btn) {
        Aizstāj veco 10 segmentu noguruma līkni — tā aizņēma visu rindu un
        neteica neko par to, KAD cilvēks strādā. Trīs kolonnas ar dalītājiem,
        tāpat kā nakts sadalījuma kartītēm, lai valoda ir viena. */
-    function buildMidMeta(w, fatigueScore, hasFatigueScore, fatigueColor, dutyHours, bgEmoji, initials) {
+    function buildMidMeta(w, fatigueScore, hasFatigueScore, fatigueColor, dutyHours, personEmoji, initials) {
       const trend = midFatigueTrend(w && w.name);
       const start = getDutyStartTime(w);
       const end = getDutyEndTime(w);
@@ -5938,7 +5943,7 @@ function filterFullList(btn) {
                 <span class="mk-mid-meta-value">${escapeHtml(fatText)}</span>
               </span>
               ${timeCell}
-              <span class="mk-mid-meta-emoji${bgEmoji ? '' : ' is-initials'}" data-mk-emoji-click="1" data-mk-emoji-home="${bgEmoji ? escapeHtml(bgEmoji) : escapeHtml(initials || '')}" title="Mainīt emoji"><span class="mk-mid-meta-emoji-fly">${bgEmoji ? escapeHtml(bgEmoji) : escapeHtml(initials || '')}</span></span>
+              <span class="mk-mid-meta-emoji${personEmoji ? '' : ' is-initials'}" data-mk-emoji-click="1" data-mk-emoji-home="${personEmoji ? escapeHtml(personEmoji) : escapeHtml(initials || '')}" title="Mainīt emoji"><span class="mk-mid-meta-emoji-fly">${personEmoji ? escapeHtml(personEmoji) : escapeHtml(initials || '')}</span></span>
             </div>`;
     }
 
@@ -6013,7 +6018,7 @@ function filterFullList(btn) {
             ${buildCoffeeRow(w.name)}
           </div>
           <div class="mk-mid-bottom">
-            ${buildMidMeta(w, fatigueScore, hasFatigueScore, fatigueColor, dutyHours, bgEmoji, initials)}
+            ${buildMidMeta(w, fatigueScore, hasFatigueScore, fatigueColor, dutyHours, personEmoji, initials)}
           </div>`;
 
         const _wSkin = (typeof window.mkGetWorkerSkin === 'function') ? window.mkGetWorkerSkin(w.name) : null;

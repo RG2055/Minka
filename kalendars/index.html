@@ -1909,7 +1909,42 @@ function _mkToast(msg, type) {
     var all = loadAll();
     return all[normName(name)] || null;
   };
+  window.mkGetRadioSkin = function(name) {
+    var skin=window.mkGetWorkerSkin(name);if(!skin)return null;
+    var bg='';
+    if(skin.t==='img'||skin.t==='art'){
+      var url=skin.t==='img'?stockSkinUrl(skin.id):artUrl(skin.id);
+      if(url)bg='url("'+new URL(url,document.baseURI).href+'")';
+    }else if(skin.t==='grad')bg=GRAD_MAP[skin.id]||'';
+    else if(skin.t==='hue'&&/^\d{1,3}(,\d{1,3}){2}$/.test(skin.rgb||''))bg='linear-gradient(rgb('+skin.rgb+'),rgb('+skin.rgb+'))';
+    function hex(rgb){if(!/^\d{1,3}(,\d{1,3}){2}$/.test(rgb||''))return '';return '#'+rgb.split(',').map(function(v){return Math.max(0,Math.min(255,Number(v))).toString(16).padStart(2,'0');}).join('');}
+    return {background:bg,text:hex(skin.txt),accent:hex(skin.num||skin.rgb||skin.txt)};
+  };
+  function applyNextShiftSkin(el, skin) {
+    // Next-shift pills share the saved appearance, without particle effects
+    // or data-worker hooks that operate on today's duty cards.
+    ['--mk-next-bg','--mk-next-tint','--mk-next-text','--mk-next-hours'].forEach(function(key) { el.style.removeProperty(key); });
+    el.classList.remove('mk-next-has-text','mk-next-has-hours');
+    if (!skin) return;
+    var background = '';
+    if (skin.t === 'art' && skin.id && artUrl(skin.id)) background = "url('" + artUrl(skin.id) + "')";
+    else if (skin.t === 'img' && skin.id) background = "url('" + stockSkinUrl(skin.id) + "')";
+    else if (skin.t === 'grad' && GRAD_MAP[skin.id]) background = GRAD_MAP[skin.id];
+    else if (skin.t === 'hue' && skin.rgb) el.style.setProperty('--mk-next-tint', 'rgba(' + skin.rgb + ',.3)');
+    if (background) el.style.setProperty('--mk-next-bg', background);
+    if (skin.txt && /^\d{1,3}(,\d{1,3}){2}$/.test(String(skin.txt))) {
+      el.style.setProperty('--mk-next-text', 'rgb(' + skin.txt + ')');
+      el.classList.add('mk-next-has-text');
+    }
+    var hours = skin.num || skin.txt;
+    if (hours && /^\d{1,3}(,\d{1,3}){2}$/.test(String(hours))) {
+      var alpha = skin.num ? Math.max(0, Math.min(1, Number(skin.numA != null ? skin.numA : 1) || 0)) : 1;
+      el.style.setProperty('--mk-next-hours', 'rgba(' + hours + ',' + alpha + ')');
+      el.classList.add('mk-next-has-hours');
+    }
+  }
   window.mkApplySkinToEl = function(el, skin) {
+    if (el.classList.contains('mk-next-person')) { applyNextShiftSkin(el, skin); return; }
     if (window.nsApplyWorkerColour) window.nsApplyWorkerColour(el, skin);
     var numEl = el.querySelector('.mk-mid-hours.card-shift') || el.querySelector('.pv-num') || el.querySelector('.nsc-full-dur');
     if (numEl) { numEl.style.removeProperty('color'); numEl.style.removeProperty('-webkit-text-fill-color'); }
@@ -1964,8 +1999,8 @@ function _mkToast(msg, type) {
   };
   function applyToCards(k) {
     var skin = loadAll()[k] || null;
-    document.querySelectorAll('#grafiks-list .card[data-worker], #nsPanel .nsc-full-card[data-worker], #nsPanel .ns-room-bed[data-worker]').forEach(function(c) {
-      if (normName(c.getAttribute('data-worker')) !== k) return;
+    document.querySelectorAll('#grafiks-list .card[data-worker], #nsPanel .nsc-full-card[data-worker], #nsPanel .ns-room-bed[data-worker], .mk-next-person[data-next-worker]').forEach(function(c) {
+      if (normName(c.getAttribute('data-worker') || c.getAttribute('data-next-worker')) !== k) return;
       window.mkApplySkinToEl(c, skin);
     });
   }
@@ -2354,8 +2389,8 @@ function _mkToast(msg, type) {
     function livePreview() {
       window.mkApplySkinToEl(prev, hasAny(draft) ? draft : null);
       var k = normName(name);
-      document.querySelectorAll('#grafiks-list .card[data-worker]').forEach(function(c) {
-        if (normName(c.getAttribute('data-worker')) === k) window.mkApplySkinToEl(c, hasAny(draft) ? draft : null);
+      document.querySelectorAll('#grafiks-list .card[data-worker], .mk-next-person[data-next-worker]').forEach(function(c) {
+        if (normName(c.getAttribute('data-worker') || c.getAttribute('data-next-worker')) === k) window.mkApplySkinToEl(c, hasAny(draft) ? draft : null);
       });
     }
     function commit() {
@@ -2557,7 +2592,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260908fatigue22"></script>
+<script src="js/calendar.js?v=20260908liquid25"></script>
 <script src="js/depth-cards.js?v=20260828local10" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
@@ -2566,12 +2601,12 @@ function _mkToast(msg, type) {
 <script src="js/light-model.js?v=20260908light1"></script>
 <script src="js/recovery-model.js?v=20260908recovery1"></script>
 <script src="js/fatigue.js?v=20260908fatigue46"></script>
-<script src="js/nightsplit.js?v=20260908dream26" defer></script>
-<script src="js/monthcal.js?v=20260814uxpass1" defer></script>
+<script src="js/nightsplit.js?v=20260908dreams5" defer></script>
+<script src="js/monthcal.js?v=20260908recovery1" defer></script>
 <script src="js/design_v1.js?v=20260824perfaudit2" defer></script>
 <script src="js/theme.js?v=20260724f" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
-<script src="js/emoji.js?v=20260825b3" defer></script>
+<script src="js/emoji.js?v=20260908recovery1" defer></script>
 <script src="js/levels.js?v=20260802coffee1" defer></script>
 
 <script>
@@ -2692,6 +2727,7 @@ document.addEventListener('keydown', (e) => {
   window.__nsOverlayOpen = false;
 
   function setNightWalkerMotion(running){
+    running = running && !document.hidden && !document.documentElement.classList.contains('minka-ambient-active') && !document.documentElement.classList.contains('minka-visuals-hidden');
     try{
       overlay.querySelectorAll('.ns-room-walker').forEach(function(svg){
         if(!running){
@@ -21084,124 +21120,74 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   border-color: color-mix(in srgb, var(--mk-side-glass-accent) 36%, rgba(255,255,255,.24)) !important;
 }
 
-/* ── Noguruma lodīte: v2.html liquid-fill recepte ────────────────────────
-   Šis ir tiešs pārnesums no mokapa .ring / .liquid-fill, nevis mans variants:
-   tie paši slāņi un tā pati kārtība, tikai izmēri samērīgi mazākajai lodītei
-   (mokapā 92px, šeit ~40px) un `--value` vietā ir `--mk-side-fat`, ko JS jau
-   liek uz kartītes.
-
-   Divas lietas no mokapa apzināti nav pārņemtas: ārējā ēna `0 5px 12px` uz
-   lodītes un `0 -2px 8px` akcenta atspīdums virs šķidruma. Abas ir ēnas ar
-   izplūdumu uz āru — tieši tas, kas izskatās kā mirdzums. Viss pārējais,
-   ieskaitot inset dziļumu un burbulīšus, ir kā mokapā. */
-.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-ring,
-.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-ring {
-  overflow: hidden !important;
-  border: 1px solid rgba(255,255,255,.56) !important;
-  background-color: rgba(197,199,192,.15) !important;
-  background-image:
-    radial-gradient(circle at 30% 18%, rgba(255,255,255,.34), transparent 32%),
-    linear-gradient(145deg, rgba(255,255,255,.17), rgba(64,68,66,.17)) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.48),
-    inset 0 -1px 0 rgba(255,255,255,.12) !important;
-}
-/* Mokapa .ring::before — atspīduma lociņš pa augšu. */
-.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-ring::before,
-.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-ring::before {
-  content: "" !important;
-  display: block !important;
-  position: absolute !important;
-  z-index: 4 !important;
-  inset: auto auto auto 7px !important;
-  top: 4px !important;
-  width: 14px !important;
-  height: 6px !important;
-  border: 0 !important;
-  border-top: 1.5px solid rgba(255,255,255,.66) !important;
-  border-radius: 50% !important;
-  background: none !important;
+/* Fatigue uses the same cached glass lens and liquid vessel as mood staff
+   bubbles. Only the fill level changes; there is no idle simulation. */
+#grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring {
+  isolation: isolate !important;
+  overflow: visible !important;
+  border: 0 !important; border-radius: 50% !important;
+  background: rgba(7,14,24,.34) !important;
   box-shadow: none !important;
-  transform: rotate(-18deg) !important;
-  clip-path: none !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  filter: none !important; animation: none !important;
+}
+#grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring::before {
+  content: none !important; display: none !important;
+}
+#grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring::after {
+  content: "" !important; display: block !important;
+  position: absolute !important;
+  inset: -9% !important; border: 0 !important; border-radius: inherit !important;
+  background: url('assets/mood-glass-premium.webp?v=20260820b') center / contain no-repeat !important;
+  box-shadow: none !important; z-index: 3 !important;
   pointer-events: none !important;
 }
-/* Mokapa .ring::after — iekšējā mala ar vēso atspīdumu pa apakšu. */
-.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-ring::after,
-.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-ring::after {
-  content: "" !important;
-  display: block !important;
-  position: absolute !important;
-  z-index: 4 !important;
-  inset: 3px !important;
-  border-radius: inherit !important;
-  border: 0 !important;
-  border-bottom: 1.5px solid rgba(180,225,255,.28) !important;
-  background: none !important;
-  background-color: transparent !important;
-  box-shadow: inset 0 -3px 6px rgba(49,128,170,.10) !important;
-  pointer-events: none !important;
+#grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring .mk-side-liquid-vessel {
+  position: absolute !important; inset: 5% !important;
+  display: block !important; width: auto !important; height: auto !important;
+  overflow: hidden !important; border-radius: 50% !important;
+  z-index: 1 !important; pointer-events: none !important;
+  transform: none !important; contain: paint;
 }
-/* Mokapa .liquid-fill. */
-.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-ring .liquid-fill,
-.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-ring .liquid-fill {
-  position: absolute !important;
-  z-index: 2 !important;
-  /* Šķidrums iet līdz pašai lodes malai, un apaļo formu tam nogriež pati lode
-     (overflow: hidden + apaļa mala). Mokapā šķidrums ir 5px no malas, bet tur
-     lode ir 92px; šeit tā ir ~40px, un tāda pati atkāpe proporcionāli ir tik
-     liela, ka šķidruma paša taisnstūrainie stūri pārrauj apli — aplis vairs
-     nav aplis. Ar nulles atkāpi apļa mala paliek nepārtraukta jebkurā līmenī. */
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
+#grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring .liquid-fill {
+  position: absolute !important; display: block !important;
+  left: 0 !important; right: 0 !important; bottom: 0 !important;
+  height: clamp(0%, var(--mk-side-fat, 0%), 100%) !important;
   overflow: hidden !important;
-  height: max(10px, var(--mk-side-fat, 0%)) !important;
-  border-radius: 0 !important;
-  clip-path: polygon(0 12%, 17% 7%, 34% 10%, 51% 15%, 69% 10%, 85% 6%, 100% 11%, 100% 100%, 0 100%) !important;
+  border-radius: 48% 48% 50% 50% / 3px 3px 50% 50% !important;
+  clip-path: none !important;
   background:
-    radial-gradient(circle at 31% 57%, rgba(255,255,255,.50) 0 1.2px, transparent 2.2px),
+    radial-gradient(ellipse at 28% 12%, rgba(240,252,255,.26), transparent 40%),
     linear-gradient(180deg,
-      color-mix(in srgb, var(--mk-side-glass-accent) 66%, white 34%),
-      var(--mk-side-glass-accent) 35%,
-      color-mix(in srgb, var(--mk-side-glass-accent) 66%, #04527f 34%)) !important;
-  box-shadow:
-    inset 0 3px 5px rgba(255,255,255,.19),
-    inset 0 -6px 9px rgba(7,48,78,.31) !important;
-  pointer-events: none !important;
+      color-mix(in srgb, var(--mk-side-fat-color, #30d158) 48%, transparent),
+      color-mix(in srgb, var(--mk-side-fat-color, #30d158) 72%, transparent)) !important;
+  box-shadow: inset 4px 0 7px rgba(226,250,255,.08), inset -5px 0 8px rgba(4,11,23,.14) !important;
+  transform: none !important; z-index: 2 !important; pointer-events: none !important;
+  transition: height 480ms cubic-bezier(.22,.78,.22,1) !important;
 }
-/* Mokapa .liquid-fill::before — spilgtā šķidruma virsma. */
-.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-ring .liquid-fill::before,
-.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-ring .liquid-fill::before {
-  content: "" !important;
-  position: absolute !important;
-  top: 0 !important;
-  left: -8% !important;
-  width: 116% !important;
-  height: 4px !important;
-  border-radius: 50% !important;
-  background: linear-gradient(180deg, rgba(255,255,255,.60), rgba(255,255,255,.06)) !important;
+#grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring .liquid-fill::before {
+  content: "" !important; display: block !important;
+  position: absolute !important; top: 0 !important; right: 4% !important; left: 4% !important;
+  width: auto !important; height: 2px !important;
+  border-radius: 50% !important; background: rgba(244,253,255,.72) !important;
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--mk-side-fat-color, #30d158) 70%, transparent) !important;
 }
-/* Mokapa .liquid-fill::after — burbulīši. */
-.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-ring .liquid-fill::after,
-.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-ring .liquid-fill::after {
-  content: "" !important;
-  position: absolute !important;
-  inset: 0 !important;
-  background:
-    radial-gradient(circle at 29% 74%, rgba(255,255,255,.43) 0 1px, transparent 2px),
-    radial-gradient(circle at 58% 51%, rgba(255,255,255,.34) 0 1.2px, transparent 2.2px),
-    radial-gradient(circle at 79% 72%, rgba(255,255,255,.27) 0 1px, transparent 2px) !important;
+#grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring .liquid-fill::after {
+  content: "" !important; display: block !important;
+  position: absolute !important; inset: 0 !important;
+  background: linear-gradient(90deg, rgba(255,255,255,.18), transparent 24%, transparent 74%, rgba(0,10,28,.15)) !important;
 }
-.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-ring > span:not(.liquid-fill),
-.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-ring > span:not(.liquid-fill) {
-  position: relative !important;
-  z-index: 5 !important;
-  color: #ffffff !important;
+#grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring > .mk-side-score {
+  position: relative !important; z-index: 5 !important;
+  color: #f6fbff !important; font-weight: 720 !important;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgba(0,0,0,.65) !important;
 }
-.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-ring > span:not(.liquid-fill) small,
-.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-ring > span:not(.liquid-fill) small {
-  color: rgba(255,255,255,.82) !important;
+#grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring small {
+  color: rgba(235,245,252,.92) !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring .liquid-fill { transition: none !important; }
 }
 
 /* ── Maiņas plāksnīte: neomorfisms ar akcenta rakstu ─────────────────── */
@@ -21858,23 +21844,26 @@ html body .side-panel .mk-next-shift-icon {
     3px 3px 6px rgba(0, 0, 0, .90),
     -3px -3px 6px rgba(255, 255, 255, .06) !important;
 }
-html body .side-panel .mk-next-person.mk-next-person-avatar-card {
-  border: 0 !important;
+/* Each next-shift pill owns its saved skin. Static highlights simulate
+   glass without backdrop blur, extra images or an animation loop. */
+#grafiks-app :is(#radiographers-next, #radiologists-next) .mk-next-person {
+  border: 1px solid rgba(230,242,255,.15) !important;
   border-radius: 13px !important;
-  background: #12151b !important;
-  box-shadow:
-    4px 4px 8px rgba(0, 0, 0, .90),
-    -3px -3px 7px rgba(255, 255, 255, .055) !important;
+  background:
+    linear-gradient(155deg, rgba(242,250,255,.16), transparent 45%),
+    linear-gradient(90deg, rgba(5,12,20,.12), rgba(5,12,20,.04)),
+    var(--mk-next-bg, linear-gradient(var(--mk-next-tint, #18212b), var(--mk-next-tint, #10171f))) center / cover no-repeat,
+    #10171f !important;
+  box-shadow: inset 0 1px 0 rgba(248,252,255,.18), inset 0 -1px 0 rgba(0,0,0,.25) !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  filter: none !important; animation: none !important;
 }
-/* Viens un tas pats neitrāls pacēlums visām plāksnītēm — krāsainā gaismas ēna
-   izskatījās pēc dīvaina spīduma. Maiņas veidu joprojām nes teksta krāsa. */
-html body .side-panel .mk-next-person.is-day,
-html body .side-panel .mk-next-person.is-night,
-html body .side-panel .mk-next-person.is-24h {
-  background: #12151b !important;
-  box-shadow:
-    4px 4px 8px rgba(0, 0, 0, .88),
-    -3px -3px 7px rgba(255, 255, 255, .05) !important;
+#grafiks-app :is(#radiographers-next, #radiologists-next) .mk-next-person.mk-next-has-text .mk-next-person-copy b,
+#grafiks-app :is(#radiographers-next, #radiologists-next) .mk-next-person.mk-next-has-text .mk-next-person-avatar.is-initial {
+  color: var(--mk-next-text) !important;
+}
+#grafiks-app :is(#radiographers-next, #radiologists-next) .mk-next-person.mk-next-has-hours .mk-next-person-copy small {
+  color: var(--mk-next-hours) !important;
 }
 
 /* Saturs katrā plāksnītē sākas vienā vietā: emoji fiksētā kolonnā, vārds tam
@@ -23767,9 +23756,13 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
 
 <!-- Loaded last on purpose: the night split is an overlay and this small,
      local stylesheet replaces the older visual layers without touching logic. -->
-<link rel="stylesheet" href="css/nightsplit-brand.css?v=20260908unified23">
+<link rel="stylesheet" href="css/nightsplit-brand.css?v=20260908dreams3">
 <link rel="stylesheet" href="css/role-headings.css?v=20260828rolehead4">
 
 <link rel="stylesheet" href="css/fatigue-health.css?v=20260908health18">
+<link rel="stylesheet" href="../css/radio-ambience.css?v=20260908ambient3">
+<link rel="stylesheet" href="css/radio-side-cards.css?v=20260908compact3">
+<script src="../js/radio-ambience.js?v=20260908ambient3"></script>
+<link rel="stylesheet" href="../css/calendar-surfaces.css?v=20260908surfaces3">
 </body>
 </html>

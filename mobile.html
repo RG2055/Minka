@@ -955,7 +955,9 @@ html.mk-low-spec #calendarEmbed {
       if (!saved) return Date.now();
       if (saved < _shiftStart()) {
         var d = new Date(saved), t = new Date();
-        return new Date(t.getFullYear(), t.getMonth(), t.getDate(), d.getHours(), d.getMinutes(), 0).getTime();
+        var candidate = new Date(t.getFullYear(), t.getMonth(), t.getDate(), d.getHours(), d.getMinutes(), 0);
+        if (candidate.getTime() > Date.now()) candidate.setDate(candidate.getDate() - 1);
+        return candidate.getTime();
       }
       return saved;
     }
@@ -976,7 +978,8 @@ html.mk-low-spec #calendarEmbed {
     function _kvPush(roomId) {
       var ts = _state[roomId] && _state[roomId].changedAt;
       var name = encodeURIComponent(_names[roomId] || 'Anonims');
-      if (ts) fetch(GS_URL + '?action=write&room=' + roomId + '&ts=' + ts + '&name=' + name).then(function(){
+      if (ts) fetch(GS_URL + '?action=write&room=' + roomId + '&ts=' + ts + '&name=' + name, { cache: 'no-store' }).then(function(r){ if (!r.ok) throw new Error('Bolus save failed'); return r.json(); }).then(function(result){
+        if (!result || result.ok !== true) throw new Error('Bolus save rejected');
         _mkToast(_pendingThanks || 'Saglabats', 'ok');
         _pendingThanks = null;
         var shout = _prettyFirst(_names[roomId] || '');
@@ -989,30 +992,44 @@ html.mk-low-spec #calendarEmbed {
       }).catch(function(){ _pendingThanks = null; _mkToast('Bolusa saglabasana neizdevas', 'error'); });
       _bcSync();
     }
+    var _pullPromise = null;
+    function _readBolusJson(url) {
+      var controller = new AbortController(), timer;
+      var deadline = new Promise(function(_resolve, reject) {
+        timer = setTimeout(function() { controller.abort(); reject(new Error('Bolus read timed out')); }, 20000);
+      });
+      var request = Promise.resolve().then(function() {
+        return fetch(url, { cache: 'no-store', signal: controller.signal });
+      }).then(function(r) { if (!r.ok) throw new Error('Bolus read failed'); return r.json(); });
+      return Promise.race([request, deadline]).finally(function() { clearTimeout(timer); });
+    }
     function _kvPull(cb) {
-      fetch(GS_URL + '?_=' + Date.now(), { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(remote) {
+      if (_pullPromise) return _pullPromise.then(function(changed) { if (changed && cb) cb(); return changed; });
+      var readStartedAt = Date.now();
+      _pullPromise = _readBolusJson(GS_URL + '?_=' + Date.now()).then(function(remote) {
         if (!remote || typeof remote !== 'object') return;
         var changed = false;
         ROOMS.forEach(function(r) {
           var rem = remote[r.id], loc = _state[r.id];
-          if (!rem) return;
-          if (rem.history && _remoteOverwriteAllowed(r.id) && _remoteHistOverwriteAllowed(r.id)) {
+          if (!rem || (_lastLocalWriteAt[r.id] || 0) >= readStartedAt || (_lastLocalHistWriteAt[r.id] || 0) >= readStartedAt) return;
+          if (Array.isArray(rem.history) && _remoteOverwriteAllowed(r.id) && _remoteHistOverwriteAllowed(r.id)) {
             // History is the source of truth: after a delete on another device
             // the correct changedAt moves BACKWARD, so recompute from the top
             // entry instead of only accepting newer timestamps.
-            _history[r.id] = rem.history;
+            var historyChanged = JSON.stringify(_history[r.id]) !== JSON.stringify(rem.history);
+            if (historyChanged) _history[r.id] = rem.history;
             var top = rem.history[0];
             var topTs = top ? (top.ts || top) : null;
-            if (topTs !== loc.changedAt) { _state[r.id] = { changedAt: topTs }; }
-            changed = true;
+            if (topTs !== loc.changedAt) { _state[r.id] = { changedAt: topTs }; changed = true; }
+            if (historyChanged) changed = true;
           } else if (rem.changedAt && _remoteOverwriteAllowed(r.id) && (!loc.changedAt || rem.changedAt > loc.changedAt)) {
             _state[r.id] = { changedAt: rem.changedAt }; changed = true;
           }
         });
-        if (changed) _save();
-        _saveHistory();
-        if (cb) cb();
-      }).catch(function(){ _mkToast('Bolusa datu ielade neizdevas', 'error'); });
+        if (changed) { _save(); _saveHistory(); }
+        return changed;
+      }).catch(function(){ _mkToast('Bolusa datu ielade neizdevas', 'error'); return false; }).finally(function() { _pullPromise = null; });
+      return _pullPromise.then(function(changed) { if (changed && cb) cb(); return changed; });
     }
     function _scheduleSync(delay) {
       if (_syncTimer) { clearTimeout(_syncTimer); _syncTimer = null; }

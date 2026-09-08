@@ -1,0 +1,397 @@
+{
+  "aliseplus": {
+    "file": "aliseplus.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/alise_plus.png",
+    "bytes": 3727
+  },
+  "avtoradio": {
+    "file": "avtoradio.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/avto-radio-logo.png",
+    "bytes": 3434
+  },
+  "comedy": {
+    "file": "comedy.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/comedy-radio.png",
+    "bytes": 2658
+  },
+  "dejuhiti": {
+    "file": "dejuhiti.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2023/10/deju-hiti-logo.png",
+    "bytes": 2128
+  },
+  "divukrastu": {
+    "file": "divukrastu.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2022/08/divu-krastu-radio-logo.png",
+    "bytes": 2641
+  },
+  "efei": {
+    "file": "efei.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/07/ef-ei.png",
+    "bytes": 5391
+  },
+  "ehr": {
+    "file": "ehr.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/eiropas-hitu-radio.png",
+    "bytes": 1965
+  },
+  "ehraccoustic": {
+    "file": "ehraccoustic.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/ehr_accoustic.png",
+    "bytes": 2135
+  },
+  "ehrdance": {
+    "file": "ehrdance.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/ehr_dance.png",
+    "bytes": 1840
+  },
+  "ehrfresh": {
+    "file": "ehrfresh.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/ehr_fresh.png",
+    "bytes": 1724
+  },
+  "ehrlatviesu": {
+    "file": "ehrlatviesu.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2022/09/latviesu-hiti-logo.png",
+    "bytes": 7744
+  },
+  "ehrsuperhits": {
+    "file": "ehrsuperhits.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/ehr_superhits.png",
+    "bytes": 1912
+  },
+  "energyfm": {
+    "file": "energyfm.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/energy.png",
+    "bytes": 6117
+  },
+  "flashsound": {
+    "file": "flashsound.webp",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2025/12/flashsound-logo.webp",
+    "bytes": 1240
+  },
+  "gradio": {
+    "file": "gradio.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2022/11/gradio-logo.png",
+    "bytes": 14984
+  },
+  "jazzfm": {
+    "file": "jazzfm.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/jazzfm.png",
+    "bytes": 5076
+  },
+  "kurzemes": {
+    "file": "kurzemes.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/kurzemes-radio.png",
+    "bytes": 3669
+  },
+  "latgales": {
+    "file": "latgales.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/latgales-logo.png",
+    "bytes": 4252
+  },
+  "lkr": {
+    "file": "lkr.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/latvijas-kristigais-radio-lkr.png",
+    "bytes": 4100
+  },
+  "loungefm": {
+    "file": "loungefm.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/lounge-fm.png",
+    "bytes": 3493
+  },
+  "love": {
+    "file": "love.jpg",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/07/love-radio.jpg",
+    "bytes": 4693
+  },
+  "lr1": {
+    "file": "lr1.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/LR1.png",
+    "bytes": 992
+  },
+  "lr2": {
+    "file": "lr2.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/lr2_logo.png",
+    "bytes": 1480
+  },
+  "lr3": {
+    "file": "lr3.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/lr3-klasika-1.png",
+    "bytes": 1577
+  },
+  "lustigs": {
+    "file": "lustigs.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/lustigsradio.png",
+    "bytes": 2536
+  },
+  "marija": {
+    "file": "marija.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/radio-marija.png",
+    "bytes": 3687
+  },
+  "melodija": {
+    "file": "melodija.webp",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2025/12/melodija-logo.webp",
+    "bytes": 1962
+  },
+  "mixfm": {
+    "file": "mixfm.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/mix-fm.png",
+    "bytes": 3872
+  },
+  "naba": {
+    "file": "naba.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/radio-naba.png",
+    "bytes": 2093
+  },
+  "nemiers": {
+    "file": "nemiers.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/nemiers.png",
+    "bytes": 3371
+  },
+  "njoy": {
+    "file": "njoy.webp",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2025/04/njoy-radio.webp",
+    "bytes": 3602
+  },
+  "nordicbeat": {
+    "file": "nordicbeat.jpg",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2024/07/nordic-chillout-logo.jpg",
+    "bytes": 2693
+  },
+  "norma": {
+    "file": "norma.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/norma-logo.png",
+    "bytes": 2119
+  },
+  "pikfm": {
+    "file": "pikfm.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/pik-1.png",
+    "bytes": 3959
+  },
+  "pmr": {
+    "file": "pmr.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/06/pmr-logo.png",
+    "bytes": 5623
+  },
+  "powerfm": {
+    "file": "powerfm.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/power_fm.png",
+    "bytes": 4016
+  },
+  "radio9": {
+    "file": "radio9.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2022/04/radio9-logo.png",
+    "bytes": 1280
+  },
+  "radioroks": {
+    "file": "radioroks.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2022/11/radioroks-logo.png",
+    "bytes": 3413
+  },
+  "relaxfm": {
+    "file": "relaxfm.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/relax-fm.png",
+    "bytes": 2962
+  },
+  "repahiti": {
+    "file": "repahiti.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2023/10/repa-hiti-logo.png",
+    "bytes": 5859
+  },
+  "retrodisco": {
+    "file": "retrodisco.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2023/10/retro-disco-logo.png",
+    "bytes": 2790
+  },
+  "retrofm": {
+    "file": "retrofm.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/retro_fm.png",
+    "bytes": 5729
+  },
+  "rezekne": {
+    "file": "rezekne.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/radio_rezekne.png",
+    "bytes": 3159
+  },
+  "schlagertime": {
+    "file": "schlagertime.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/07/schlager-time-radio-logo.png",
+    "bytes": 8623
+  },
+  "shanson": {
+    "file": "shanson.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/07/radio-shanson.png",
+    "bytes": 3710
+  },
+  "skonto": {
+    "file": "skonto.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/skonto-radio.png",
+    "bytes": 3978
+  },
+  "skontoplus": {
+    "file": "skontoplus.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/skonto-plus.png",
+    "bytes": 4347
+  },
+  "starfm": {
+    "file": "starfm.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/starfm-logo.png",
+    "bytes": 3812
+  },
+  "swh": {
+    "file": "swh.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/swh-logo.png",
+    "bytes": 3632
+  },
+  "swhgold": {
+    "file": "swhgold.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/swh_gold.png",
+    "bytes": 4082
+  },
+  "swhlv": {
+    "file": "swhlv.jpg",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2022/03/swh-lv-logo.jpg",
+    "bytes": 4161
+  },
+  "swhplus": {
+    "file": "swhplus.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/swh-plus.png",
+    "bytes": 5086
+  },
+  "swhrock": {
+    "file": "swhrock.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/swh_rock.png",
+    "bytes": 3653
+  },
+  "swhspin": {
+    "file": "swhspin.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/swh_spin.png",
+    "bytes": 3671
+  },
+  "tev": {
+    "file": "tev.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/radio-tev.png",
+    "bytes": 3874
+  },
+  "topradio": {
+    "file": "topradio.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/top_radio.png",
+    "bytes": 4094
+  },
+  "vatikans": {
+    "file": "vatikans.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/05/vatican_news.png",
+    "bytes": 3255
+  },
+  "xofm": {
+    "file": "xofm.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/xofm-radio-1.png",
+    "bytes": 3439
+  },
+  "xradio": {
+    "file": "xradio.png",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2021/04/xradio-logo.png",
+    "bytes": 5166
+  },
+  "ABSOLUTE CHILLOUT": {
+    "file": "extra-0.ico",
+    "source": "https://www.absolutechillout.com/favicon.ico",
+    "bytes": 16008
+  },
+  "CAPITAL FM": {
+    "file": "extra-2.jpg",
+    "source": "https://cdn-profiles.tunein.com/s241396/images/logod.jpg",
+    "bytes": 8065
+  },
+  "CHILLTRAX": {
+    "file": "extra-3.png",
+    "source": "https://www.chilltrax.com/images/apple-icon-120x120.png",
+    "bytes": 5728
+  },
+  "DFM": {
+    "file": "extra-4.ico",
+    "source": "https://dfm.ru/uploads/favicon.ico",
+    "bytes": 24
+  },
+  "ESC RADIO": {
+    "file": "extra-6.png",
+    "source": "https://www.escradio.com/wp-content/uploads/2019/05/fav.png",
+    "bytes": 2907
+  },
+  "EUROPA PLUS": {
+    "file": "extra-7.jpg",
+    "source": "https://liveam.tv/img/2494.jpg",
+    "bytes": 9982
+  },
+  "HIT FM": {
+    "file": "extra-9.png",
+    "source": "https://hitfm.ru/apple-icon.png?b1d3d31b1e6c8f8f",
+    "bytes": 6027
+  },
+  "KISS KISS ITALIA": {
+    "file": "extra-10.png",
+    "source": "https://kisskissitalia.it/wp-content/uploads/2021/07/cropped-favicon-kisskissitalia-180x180.png",
+    "bytes": 25310
+  },
+  "MAXIMUM": {
+    "file": "extra-11.ico",
+    "source": "https://www.maximum.ru/icon.ico?60bb89f8ad0d0a04",
+    "bytes": 5069
+  },
+  "NASHE": {
+    "file": "extra-12.png",
+    "source": "https://www.nashe.ru/favicons/apple-touch-icon.png",
+    "bytes": 2592
+  },
+  "NOVOE RADIO": {
+    "file": "extra-13.ico",
+    "source": "https://newradio.ru/favicon.ico",
+    "bytes": 12856
+  },
+  "ORFEI": {
+    "file": "extra-14.png",
+    "source": "https://orpheusradio.ru/apple-touch-icon.png",
+    "bytes": 6569
+  },
+  "RMF FM": {
+    "file": "extra-15.png",
+    "source": "https://www.rmf.fm/assets/images/favicon/apple-icon-120x120.png?3",
+    "bytes": 4788
+  },
+  "SEREBRJANIIJ DOZD": {
+    "file": "extra-16.ico",
+    "source": "https://www.silver.ru/favicon.ico",
+    "bytes": 15086
+  },
+  "SHOKOLAD": {
+    "file": "extra-17.ico",
+    "source": "https://chocoradio.ru/favicon.ico",
+    "bytes": 15086
+  },
+  "SVOBODA": {
+    "file": "extra-18.png",
+    "source": "https://www.svoboda.org/content/responsive/rfe/img/webapp/ico-128x128.png",
+    "bytes": 1897
+  },
+  "VIKERRAADIO": {
+    "file": "extra-19.png",
+    "source": "https://s.err.ee/www/images/favicon/Vikr_favicon@2x.png?2740",
+    "bytes": 2846
+  },
+  "ZET": {
+    "file": "extra-20.png",
+    "source": "https://gfx.radiozet.pl/extension/radiozet/design/standard/images/favicon/apple-touch-icon.png",
+    "bytes": 19518
+  },
+  "ABC LOUNGE": {
+    "file": "extra-21.png",
+    "source": "https://www.abc-lounge.com/radio/wp-content/uploads/2019/11/logo-ABC-Lounge100.png",
+    "bytes": 13539
+  },
+  "radio1": {
+    "file": "radio1.jpg",
+    "source": "https://lvradio.b-cdn.net/wp-content/uploads/2022/03/radio1-logo.jpg",
+    "bytes": 6516
+  }
+}

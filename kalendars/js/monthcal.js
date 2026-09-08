@@ -61,7 +61,7 @@
 
   function hoursOf(w){
     var m = String((w && w.shift) || '').match(/(\d+(?:[.,]\d+)?)/);
-    return m ? Math.round(parseFloat(m[1].replace(',', '.')) || 0) : 0;
+    return m ? (parseFloat(m[1].replace(',', '.')) || 0) : 0;
   }
   function fatColor(name){
     try {
@@ -163,23 +163,34 @@
   }
   function loadBirthdays(){
     if (_bdayLoadPromise) return _bdayLoadPromise;
+    if (_bdayLoaded) return Promise.resolve(BIRTHDAYS);
     var api = window.MinkaApi;
     if (!api || typeof api.apiFetch !== 'function'){
-      _bdayLoaded = true;
       return Promise.resolve([]);
     }
-    _bdayLoadPromise = api.apiFetch('/api/birthdays')
-      .then(function(r){ return r && r.ok ? r.json() : null; })
+    var controller = new AbortController(), timer;
+    var deadline = new Promise(function(_resolve, reject){
+      timer = setTimeout(function(){ controller.abort(); reject(new Error('Birthdays timed out')); }, 20000);
+    });
+    var request = Promise.resolve().then(function(){ return api.apiFetch('/api/birthdays', { signal: controller.signal }); })
+      .then(function(r){
+        if (!r || !r.ok) throw new Error('Birthdays unavailable');
+        return r.json();
+      });
+    _bdayLoadPromise = Promise.race([request, deadline])
       .then(function(data){
         var list = Array.isArray(data) ? data : (data && (data.birthdays || data.items || data.data));
+        if (!Array.isArray(list)) throw new Error("Invalid birthday response");
         setBirthdays(list);
         refreshBirthdaysUi();
         return BIRTHDAYS;
       })
       .catch(function(){
-        setBirthdays([]);
-        refreshBirthdaysUi();
         return [];
+      })
+      .finally(function(){
+        clearTimeout(timer);
+        _bdayLoadPromise = null;
       });
     return _bdayLoadPromise;
   }
@@ -359,7 +370,12 @@
       }
     });
   }
-  function scheduleFit(){ cancelAnimationFrame(_fitRaf); _fitRaf = requestAnimationFrame(function(){ requestAnimationFrame(fitAll); }); }
+  function scheduleFit(){
+    cancelAnimationFrame(_fitRaf);
+    _fitRaf = requestAnimationFrame(function(){
+      _fitRaf = requestAnimationFrame(function(){ _fitRaf = 0; if (isOpen()) fitAll(); });
+    });
+  }
 
   function render(month){
     var months = allMonths();
@@ -679,6 +695,7 @@
   else initBdayBadge();
 
   window.addEventListener('message', function(e){
+    if (e.origin !== window.location.origin || e.source !== window.parent) return;
     if (!e.data || e.data.type !== 'mk_open_month_calendar') return;
     if (isOpen()) close(); else open(e.data.month);
   });
@@ -686,6 +703,7 @@
     if (e.key === 'Escape'){ if (_bdayPopEl){ closeBdayPop(); } else if (panelOpen()){ closePanel(); } else if (isOpen()){ close(); } }
   });
   window.addEventListener('resize', function(){ if (isOpen()) scheduleFit(); });
+  document.addEventListener('minka:auth-ok', loadBirthdays);
 
   window.MinkaMonthCal = { open: open, close: close, isOpen: isOpen };
 })();

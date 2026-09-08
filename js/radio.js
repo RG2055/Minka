@@ -223,6 +223,8 @@ let rrPrefixToId = null;      // { prefix: id }
 let rrMapPromise = null;
 let npTimer = null;
 let npLastKey = "";
+let npGeneration = 0;
+let npInFlight = null;
 let npFitTimer = null;
 
 function npEl(id){ return document.getElementById(id); }
@@ -273,13 +275,13 @@ function deriveRRPrefix(st){
     return "";
 }
 
-function setNowUI(artist = "—", title = "—", coverUrl = ""){
+function setNowUI(artist = "", title = "", coverUrl = ""){
     const a = npEl("npArtist");
     const t = npEl("npTitle");
     const cover = npEl("npCover");
 
-    if (a) a.textContent = (artist && artist.trim()) ? artist : "—";
-    if (t) t.textContent = (title && title.trim()) ? title : "—";
+    if (a) a.textContent = String(artist || "").trim();
+    if (t) t.textContent = String(title || "").trim();
 
     // Keep both lines inside the box by shrinking text when needed.
     fitNowPlaying();
@@ -316,16 +318,28 @@ window.addEventListener("resize", () => {
     npFitTimer = setTimeout(fitNowPlaying, 120);
 });
 
+async function fetchRadioJson(url){
+    const controller = new AbortController();
+    let timer;
+    const deadline = new Promise((_resolve, reject) => {
+        timer = setTimeout(() => { controller.abort(); reject(new Error('Radio metadata timed out')); }, 20000);
+    });
+    const request = Promise.resolve().then(() => fetch(url, { cache: 'no-store', signal: controller.signal }))
+        .then(r => { if (!r.ok) throw new Error('Radio metadata unavailable'); return r.json(); });
+    try { return await Promise.race([request, deadline]); }
+    finally { clearTimeout(timer); }
+}
+
 async function ensureRRPrefixMap(){
     if (rrPrefixToId) return rrPrefixToId;
     if (rrMapPromise) return rrMapPromise;
 
     rrMapPromise = (async () => {
         try {
-            const r = await fetch(RR_STATIONS_URL, { cache: "no-store" });
-            const json = await r.json();
+            const json = await fetchRadioJson(RR_STATIONS_URL);
             const root = json?.result || json?.data || json;
-            const list = Array.isArray(root) ? root : (Array.isArray(root?.stations) ? root.stations : []);
+            const list = Array.isArray(root) ? root : (Array.isArray(root?.stations) ? root.stations : null);
+            if (!list || !list.length) throw new Error("Invalid radio station list");
             const map = {};
             for (const s of list){
                 const prefix = String(s?.prefix || s?.code || "").trim();
@@ -335,8 +349,7 @@ async function ensureRRPrefixMap(){
             rrPrefixToId = map;
             return rrPrefixToId;
         } catch(e) {
-            rrPrefixToId = {};
-            return rrPrefixToId;
+            return {}; // A temporary failure must not permanently cache an empty map.
         } finally {
             rrMapPromise = null;
         }
@@ -362,8 +375,7 @@ async function fetchNowForStation(st){
     const id = map?.[prefix];
     if (!id) return null;
 
-    const r = await fetch(RR_NOW_URL, { cache: "no-store" });
-    const json = await r.json();
+    const json = await fetchRadioJson(RR_NOW_URL);
     const list = parseNowList(json);
     const item = list.find(x => String(x?.id ?? x?.station_id ?? "") === String(id));
     const tr = item?.track || null;
@@ -381,25 +393,33 @@ async function updateNowPlaying(st){
     // Skip the network poll when nobody can see the result: tab hidden, audio
     // paused, or the radio panel hidden. The interval keeps ticking and resumes
     // fetching on the next tick once visible/playing again.
-    if (radioVisualsInactive() || audio.paused) return;
+    if (radioVisualsInactive() || audio.paused || npInFlight === npGeneration) return;
+    const generation = npGeneration;
+    npInFlight = generation;
     try {
         const hit = await fetchNowForStation(st);
+        if (generation !== npGeneration || radioVisualsInactive() || audio.paused) return;
+        const key = hit ? JSON.stringify([hit.artist, hit.title, hit.cover || '']) : 'none';
+        if (key === npLastKey) return;
+        npLastKey = key;
         if (!hit) {
-            setNowUI("—", "—", "");
+            setNowUI("", "", "");
             return;
         }
-        const key = [hit.artist, hit.title].filter(Boolean).join(" — ");
-        if (key && key !== npLastKey) npLastKey = key;
-        setNowUI(hit.artist || "—", hit.title || "—", hit.cover || "");
+        setNowUI(hit.artist || "", hit.title || "", hit.cover || "");
     } catch(e) {
         // keep last value
+    } finally {
+        if (npInFlight === generation) npInFlight = null;
     }
 }
 
 function startNowPlaying(st){
     if (npTimer) clearInterval(npTimer);
+    npTimer = null;
+    npGeneration++;
     npLastKey = "";
-    setNowUI("—", "—", "");
+    setNowUI("", "", "");
 
     // Only poll for Radio Record stations (prefix from hostingradio.ru/...)
     const p = deriveRRPrefix(st);
@@ -413,18 +433,37 @@ function toggleMenu(forceOpen) {
     const el = document.getElementById('stationOverlay');
     if (!el) return;
     const iframe = document.getElementById('calIframe');
+    const isNowOpen = typeof forceOpen === 'boolean' ? forceOpen : el.style.display !== 'grid';
 
+    if (isNowOpen) positionStationPicker(el);
+
+    el.style.display = isNowOpen ? 'grid' : 'none';
+    if (isNowOpen) renderStationOverlay();
+    el.setAttribute('aria-hidden', isNowOpen ? 'false' : 'true');
+    document.querySelectorAll('.station-btn').forEach(button => button.setAttribute('aria-expanded', String(isNowOpen)));
+    // Disable iframe pointer events while overlay is open (prevents click-through)
+    if (iframe) iframe.style.pointerEvents = isNowOpen ? 'none' : '';
+    if (isNowOpen) {
+        requestAnimationFrame(() => {
+            if (el.style.display !== 'grid') return;
+            const search = document.getElementById('stationPickerSearch');
+            if (search) search.focus({ preventScroll: true });
+        });
+    }
+}
+
+function positionStationPicker(el) {
     // Position near the radio window
     const win = document.getElementById('radioWindow');
     if (win) {
         const r = win.getBoundingClientRect();
-        const ow = Math.max(300, Math.min(760, r.width - 24, window.innerWidth - 24));
+        const ow = Math.min(window.innerWidth - 24, Math.max(280, Math.min(760, r.width - 24)));
         const dock = document.getElementById('dockShelf');
         const dockTop = dock?.getBoundingClientRect().top || window.innerHeight;
         // The picker always lives above the radio/dock. Opening it below the
         // player made its last rows disappear behind Minka's fixed toolbar.
-        const overlayBottom = Math.max(192, Math.min(r.top - 12, dockTop - 12, window.innerHeight - 12));
-        const oh = Math.max(180, Math.min(470, overlayBottom - 12));
+        const overlayBottom = Math.min(window.innerHeight - 12, Math.max(192, Math.min(r.top - 12, dockTop - 12)));
+        const oh = Math.min(window.innerHeight - 24, Math.max(180, Math.min(470, overlayBottom - 12)));
         el.style.width = ow + "px";
         el.style.height = oh + "px";
         el.style.right = "auto";
@@ -440,19 +479,12 @@ function toggleMenu(forceOpen) {
         el.style.top = top + "px";
     }
 
-    const isNowOpen = typeof forceOpen === 'boolean' ? forceOpen : el.style.display !== 'grid';
-    if (isNowOpen) renderStationOverlay();
-    el.style.display = isNowOpen ? 'grid' : 'none';
-    el.setAttribute('aria-hidden', isNowOpen ? 'false' : 'true');
-    // Disable iframe pointer events while overlay is open (prevents click-through)
-    if (iframe) iframe.style.pointerEvents = isNowOpen ? 'none' : '';
-    if (isNowOpen) {
-        requestAnimationFrame(() => {
-            const search = document.getElementById('stationPickerSearch');
-            if (search) search.focus({ preventScroll: true });
-        });
-    }
 }
+
+window.addEventListener('resize', () => {
+    const overlay = document.getElementById('stationOverlay');
+    if (overlay?.style.display === 'grid') positionStationPicker(overlay);
+});
 
 document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
@@ -1928,21 +1960,23 @@ async function initStations() {
     loadStationsFromWorker().catch(() => {});
 }
 
-const LACITIS_RADIO_LOGO_BASE = 'https://lacitis.pages.dev/icons/radio/';
-const LACITIS_RADIO_FALLBACK = 'https://lacitis.pages.dev/icons/radio-default.svg';
+const LACITIS_RADIO_LOGO_BASE = 'data/radio-logos/';
+const LACITIS_RADIO_FALLBACK = 'data/radio-default.svg';
 const LV_STATION_LOGO_RULES = [
+    ['POWER HIT RADIO', 'powerfm.png'], ['RADIO 1 JEKABPILS', 'radio1.jpg'], ['SUPER FM', 'ehrsuperhits.png'],
+    ['NABA', 'naba.png'],
     ['SWH GOLD', 'swhgold.png'], ['SWH PLUS', 'swhplus.png'], ['SWH ROCK', 'swhrock.png'],
     ['SWH SPIN', 'swhspin.png'], ['SWH LV', 'swhlv.jpg'], ['SKONTO PLUS', 'skontoplus.png'],
-    ['EHR ACCOUSTIC', 'ehr.png'], ['EHR DANCE', 'ehrdance.png'],
+    ['EHR ACCOUSTIC', 'ehraccoustic.png'], ['EHR DANCE', 'ehrdance.png'],
     ['EHR FRESH', 'ehrfresh.png'], ['EHR LATVIESU', 'ehrlatviesu.png'],
     ['EHR SUPERHITS', 'ehrsuperhits.png'], ['LATVIESU DEJU HITI', 'dejuhiti.png'],
     ['LATVIESU REPA HITI', 'repahiti.png'], ['LATVIJAS RADIO 1', 'lr1.png'],
     ['LATVIJAS RADIO 2', 'lr2.png'], ['LATVIJAS RADIO 3', 'lr3.png'],
     ['ALISE PLUS', 'aliseplus.png'], ['AVTORADIO', 'avtoradio.png'],
-    ['COMEDY RADIO', 'comedy.png'], ['DIVU KRASTU', 'efei.png'],
+    ['COMEDY RADIO', 'comedy.png'], ['DIVU KRASTU', 'divukrastu.png'],
     ['EIROPAS HITU RADIO', 'ehr.png'], ['ENERGY', 'energyfm.png'],
     ['FLASH SOUND', 'flashsound.webp'], ['GRADIO', 'gradio.png'],
-    ['JAZZ FM', 'jazzfm.jpg'], ['KURZEMES', 'kurzemes.png'],
+    ['JAZZ FM', 'jazzfm.png'], ['KURZEMES', 'kurzemes.png'],
     ['LATGALES', 'latgales.png'], ['KRISTIGAIS', 'lkr.png'],
     ['LOUNGE FM', 'loungefm.png'], ['LOVE RADIO', 'love.jpg'],
     ['LUSTIGS', 'lustigs.png'], ['MARIJA', 'marija.png'],
@@ -1954,46 +1988,125 @@ const LV_STATION_LOGO_RULES = [
     ['POWER FM', 'powerfm.png'], ['RADIO 9', 'radio9.png'],
     ['RELAX FM', 'relaxfm.png'], ['RETRO DISCO', 'retrodisco.png'],
     ['RETRO FM', 'retrofm.png'], ['REZEKNE', 'rezekne.png'],
-    ['ROMANTIKA', 'romantika.jpg'], ['SHANSON', 'shanson.png'],
+    ['SHANSON', 'shanson.png'],
     ['SCHLAGER', 'schlagertime.png'], ['SKONTO', 'skonto.png'],
     ['STAR FM', 'starfm.png'], ['RADIO TEV', 'tev.png'],
     ['TOP RADIO', 'topradio.png'], ['VATIKAN', 'vatikans.png'],
     ['XOFM', 'xofm.png'], ['X RADIO', 'xradio.png'], ['SWH', 'swh.png'],
     ['EHR', 'ehr.png']
 ];
+const LV_STATION_EXTRA_LOGOS = {
+    "ABSOLUTE CHILLOUT": "extra-0.ico",
+    "CAPITAL FM": "extra-2.jpg",
+    "CHILLTRAX": "extra-3.png",
+    "DFM": "extra-4.ico",
+    "ESC RADIO": "extra-6.png",
+    "EUROPA PLUS": "extra-7.jpg",
+    "HIT FM": "extra-9.png",
+    "KISS KISS ITALIA": "extra-10.png",
+    "MAXIMUM": "extra-11.ico",
+    "NASHE": "extra-12.png",
+    "NOVOE RADIO": "extra-13.ico",
+    "ORFEI": "extra-14.png",
+    "RMF FM": "extra-15.png",
+    "SEREBRJANIIJ DOZD": "extra-16.ico",
+    "SHOKOLAD": "extra-17.ico",
+    "SVOBODA": "extra-18.png",
+    "VIKERRAADIO": "extra-19.png",
+    "ZET": "extra-20.png",
+    "ABC LOUNGE": "extra-21.png"
+};
+
 let stationPickerSource = 'record';
 let stationPickerQuery = '';
 let stationPickerSearchTimer = 0;
+let stationPickerCatalogue = null;
+let stationPickerEntries = [];
+
+// Prepare search strings once per catalogue, not once per keystroke/open.
+function stationPickerIndex() {
+    if (stationPickerCatalogue !== stationsList) {
+        stationPickerCatalogue = stationsList;
+        stationPickerEntries = stationsList.flatMap((station, index) =>
+            !station || station.group === 'separator' ? [] : [{ station, index,
+                search: normalizeStationText(`${station.title || ''} ${station.tooltip || ''} ${station.prefix || ''}`)
+            }]);
+    }
+    return stationPickerEntries;
+}
 
 function normalizeStationText(value) {
     return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
 }
 
 function stationLogoUrl(station) {
+    if (station?.group === 'latvija') {
+        const key = normalizeStationText(station.title);
+        if (LV_STATION_EXTRA_LOGOS[key]) return LACITIS_RADIO_LOGO_BASE + LV_STATION_EXTRA_LOGOS[key];
+        const match = LV_STATION_LOGO_RULES.find(([needle]) => key.includes(needle));
+        if (match) return LACITIS_RADIO_LOGO_BASE + match[1];
+    }
     const direct = String(station?.cover || station?.bg_image_mobile || station?.bg_image || '').trim();
-    if (direct) return direct;
-    if (station?.group !== 'latvija') return LACITIS_RADIO_FALLBACK;
-    const key = normalizeStationText(station.title);
-    const match = LV_STATION_LOGO_RULES.find(([needle]) => key.includes(needle));
-    return match ? LACITIS_RADIO_LOGO_BASE + match[1] : LACITIS_RADIO_FALLBACK;
+    return direct || LACITIS_RADIO_FALLBACK;
 }
+
+function radioStationKey(station){return (station.group==='latvija'?'lv:':'record:')+String(station.title||'').normalize('NFC').trim().toLocaleLowerCase('lv-LV');}
+function updateStationFavorites(){
+    const favoriteIds=window.__mkUnifiedMedia?.getRadio()?.favorites||[];
+    document.querySelectorAll('#stationPickerList .station-entry').forEach(entry=>{
+        const index=Number(entry.querySelector('[data-station-index]')?.dataset.stationIndex),station=stationsList[index];if(!station)return;
+        const position=favoriteIds.indexOf(radioStationKey(station)),on=position>=0,button=entry.querySelector('.station-favorite');
+        if(button){button.setAttribute('aria-pressed',String(on));button.textContent=on?'★':'☆';button.setAttribute('aria-label',(on?'Noņemt no favorītiem ':'Pievienot favorītiem ')+station.title);}
+        entry.style.order=String(on?position:1000+index);
+    });
+    const count=document.querySelector('[data-station-source="favorites"] span');if(count)count.textContent=favoriteIds.length;
+}
+window.rgStations={list:()=>stationsList.filter(s=>s&&s.group!=='separator').map(s=>({key:radioStationKey(s),title:s.title})),play:key=>{const index=stationsList.findIndex(s=>s&&radioStationKey(s)===key);if(index>=0)selectStation(index);}};
+document.addEventListener('media-profile-change',()=>{
+    const list=document.getElementById('stationPickerList');if(!list)return;
+    const open=document.getElementById('stationOverlay')?.style.display==='grid';
+    if(stationPickerSource==='favorites'){list.__filter=null;if(open)renderStationPickerList();}
+    if(open)updateStationFavorites();
+});
 
 function stationPickerItems() {
     const query = normalizeStationText(stationPickerQuery);
-    return stationsList
-        .map((station, index) => ({ station, index }))
-        .filter(({ station }) => station && station.group !== 'separator')
-        .filter(({ station }) => stationPickerSource === 'latvija'
+    return stationPickerIndex()
+        .filter(({ station }) => stationPickerSource === 'favorites' ? (window.__mkUnifiedMedia?.getRadio()?.favorites||[]).includes(radioStationKey(station)) : stationPickerSource === 'latvija'
             ? station.group === 'latvija'
             : station.group !== 'latvija')
-        .filter(({ station }) => !query || normalizeStationText(
-            `${station.title || ''} ${station.tooltip || ''} ${station.prefix || ''}`
-        ).includes(query));
+        .filter(({ search }) => !query || search.includes(query));
+}
+
+const STATION_PLAY_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5a1.5 1.5 0 0 1 2.3-1.27l9 5.5a1.5 1.5 0 0 1 0 2.54l-9 5.5A1.5 1.5 0 0 1 8 16.5Z"/></svg>';
+const STATION_SELECTED_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+function updateStationPickerSelection() {
+    const list = document.getElementById('stationPickerList');
+    if (!list) return;
+    const next = list.querySelector(`[data-station-index="${currentIndex}"]`);
+    const previous = list.querySelector('.is-current');
+    if (previous === next) return;
+    for (const [button, selected] of [[previous, false], [next, true]]) {
+        if (!button) continue;
+        button.classList.toggle('is-current', selected);
+        button.setAttribute('aria-current', String(selected));
+        button.querySelector('.station-play-mark').innerHTML = selected ? STATION_SELECTED_ICON : STATION_PLAY_ICON;
+    }
 }
 
 function renderStationPickerList() {
     const list = document.getElementById('stationPickerList');
     if (!list) return;
+    const key = stationPickerSource + '|' + normalizeStationText(stationPickerQuery);
+    if (list.__catalogue === stationsList && list.__filter === key) {
+        updateStationPickerSelection();
+        updateStationFavorites();
+        return;
+    }
+    list.__catalogue = stationsList;
+    list.__filter = key;
+    const scrollTop = list.scrollTop;
     const items = stationPickerItems();
     if (!items.length) {
         list.innerHTML = '<div class="station-picker-empty">Neviena stacija neatbilst meklējumam.</div>';
@@ -2002,35 +2115,45 @@ function renderStationPickerList() {
     list.innerHTML = items.map(({ station, index }) => {
         const isCurrent = index === currentIndex;
         const title = escapeHtml(station.title || 'Radio');
-        const description = escapeHtml(station.tooltip || (station.group === 'latvija' ? 'Latvijas radio' : 'Radio Record'));
+        const description = escapeHtml(station.group === 'latvija' && (!station.tooltip || station.tooltip === 'Radio Record')
+            ? 'Latvijas radio' : (station.tooltip || 'Radio Record'));
         const logo = escapeHtml(stationLogoUrl(station));
-        return `<button class="station-tile${station.group === 'latvija' ? ' station-lv' : ''}${isCurrent ? ' is-current' : ''}"
+        return `<div class="station-entry"><button class="station-tile${station.group === 'latvija' ? ' station-lv' : ''}${isCurrent ? ' is-current' : ''}"
             type="button" data-station-index="${index}" aria-label="Atskaņot ${title}" aria-current="${isCurrent ? 'true' : 'false'}">
             <span class="station-logo-wrap">
-                <img class="station-logo" src="${logo}" alt="" loading="lazy" decoding="async"
+                <img class="station-logo" src="${logo}" alt="" width="44" height="44" loading="lazy" decoding="async" fetchpriority="low"
                     onerror="this.onerror=null;this.src='${LACITIS_RADIO_FALLBACK}'">
             </span>
             <span class="station-copy"><strong>${title}</strong><small>${description}</small></span>
-            <span class="station-play-mark" aria-hidden="true">${isCurrent ? '▮▮' : '▶'}</span>
-        </button>`;
+            <span class="station-play-mark" aria-hidden="true">${isCurrent ? STATION_SELECTED_ICON : STATION_PLAY_ICON}</span>
+        </button><button type="button" class="station-favorite" data-favorite-index="${index}" aria-pressed="false" aria-label="Pievienot favorītiem ${title}">☆</button></div>`;
     }).join('');
+    updateStationFavorites();
+    list.scrollTop = scrollTop;
 }
 
 function renderStationOverlay() {
     const overlay = document.getElementById('stationOverlay');
-    if (!overlay) return;
+    if (!overlay || overlay.style.display !== 'grid') return;
     const recordCount = stationsList.filter(s => s && s.group !== 'latvija' && s.group !== 'separator').length;
     const latviaCount = stationsList.filter(s => s && s.group === 'latvija').length;
+    if (overlay.querySelector('#stationPickerList')) {
+        overlay.querySelector('[data-station-source="record"] span').textContent = recordCount;
+        overlay.querySelector('[data-station-source="latvija"] span').textContent = latviaCount;
+        renderStationPickerList();
+        return;
+    }
     overlay.innerHTML = `
         <div class="station-picker-head">
-            <div class="station-picker-title"><strong>Stacijas</strong><span>Izvēlies tiešraidi</span></div>
+            <div class="station-picker-title"><strong>Stacijas</strong><span>Izvēle neaizver sarakstu</span></div>
             <label class="station-picker-search">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"/></svg>
-                <input id="stationPickerSearch" type="search" placeholder="Meklēt staciju…" value="${escapeHtml(stationPickerQuery)}" autocomplete="off">
+                <input id="stationPickerSearch" type="search" aria-label="Meklēt staciju" placeholder="Meklēt staciju…" value="${escapeHtml(stationPickerQuery)}" autocomplete="off">
             </label>
-            <button class="station-picker-close" type="button" aria-label="Aizvērt stacijas">×</button>
+            <button class="station-picker-close" type="button" aria-label="Aizvērt stacijas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
         </div>
         <div class="station-picker-tabs" role="tablist" aria-label="Staciju avots">
+            <button type="button" data-station-source="favorites" role="tab" aria-selected="${stationPickerSource === 'favorites'}">Favorīti <span>0</span></button>
             <button type="button" data-station-source="record" role="tab" aria-selected="${stationPickerSource === 'record'}"
                 class="${stationPickerSource === 'record' ? 'active' : ''}">Radio Record <span>${recordCount}</span></button>
             <button type="button" data-station-source="latvija" role="tab" aria-selected="${stationPickerSource === 'latvija'}"
@@ -2040,7 +2163,9 @@ function renderStationOverlay() {
     overlay.querySelector('.station-picker-close')?.addEventListener('click', () => toggleMenu(false));
     overlay.querySelectorAll('[data-station-source]').forEach(button => {
         button.addEventListener('click', () => {
-            stationPickerSource = button.dataset.stationSource === 'latvija' ? 'latvija' : 'record';
+            clearTimeout(stationPickerSearchTimer);
+            if(button.dataset.stationSource==='favorites'&&!window.__mkUnifiedMedia?.getSession()){window.__mkUnifiedMedia?.open();return;}
+            stationPickerSource = ['latvija','favorites'].includes(button.dataset.stationSource) ? button.dataset.stationSource : 'record';
             // A search that made sense for one catalogue often produces an
             // apparently broken empty state in the other one. Source switches
             // should start from the complete station list.
@@ -2053,16 +2178,21 @@ function renderStationOverlay() {
                 item.setAttribute('aria-selected', active ? 'true' : 'false');
             });
             renderStationPickerList();
+            overlay.querySelector('#stationPickerList').scrollTop = 0;
         });
     });
     overlay.querySelector('#stationPickerSearch')?.addEventListener('input', event => {
         clearTimeout(stationPickerSearchTimer);
+        stationPickerQuery = event.target.value || '';
         stationPickerSearchTimer = setTimeout(() => {
-            stationPickerQuery = event.target.value || '';
+            if (overlay.style.display !== 'grid') return;
             renderStationPickerList();
+            overlay.querySelector('#stationPickerList').scrollTop = 0;
         }, 80);
     });
     overlay.querySelector('#stationPickerList')?.addEventListener('click', event => {
+        const favorite=event.target.closest('[data-favorite-index]');
+        if(favorite){const station=stationsList[Number(favorite.dataset.favoriteIndex)];if(station){const id=radioStationKey(station),on=(window.__mkUnifiedMedia?.getRadio()?.favorites||[]).includes(id);window.__mkUnifiedMedia?.change({type:on?'favorite-remove':'favorite-add',id});}return;}
         const button = event.target.closest('[data-station-index]');
         if (!button) return;
         selectStation(Number(button.dataset.stationIndex));
@@ -2320,7 +2450,7 @@ function setupAudio() {
     compressorNode.attack.value = 0.003;
     compressorNode.release.value = 0.25;
 
-    setEQ('none');
+    setEQ(window.__eqMode || 'none');
 
     try {
         src = aCtx.createMediaElementSource(audio);
@@ -2390,7 +2520,9 @@ function selectStation(index) {
     document.getElementById('ui-kbps').textContent = streamMeta.quality;
     
     play(url, s.title);
+    updateStationPickerSelection();
     startNowPlaying(s);
+    if(window.__mkUnifiedMedia?.getSession())window.__mkUnifiedMedia.change({type:'station',id:radioStationKey(s)});
 
     // Re-apply EQ button highlight — audio nodes persist, just sync the UI
     const savedMode = window.__eqMode || 'none';
@@ -2480,7 +2612,6 @@ function play(url, name) {
     }
 
     document.getElementById('curStation').textContent = name;
-    if(document.getElementById('stationOverlay').style.display === 'grid') toggleMenu();
     document.getElementById('playBtn').innerHTML = '<i class="fas fa-pause"></i>';
 }
 
@@ -3284,6 +3415,15 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     }
   ];
 
+  [
+    ['Pusnakts','Tumši zils miers','#729cde','linear-gradient(125deg,#172b46,#080f1d 65%,#21394e)'],
+    ['Grafīts','Neitrāls un atturīgs','#b7c1c8','linear-gradient(135deg,#343b42,#101418 65%,#242d33)'],
+    ['Dzintars','Maigs vakara siltums','#e5b67d','linear-gradient(125deg,#473420,#181411 65%,#372517)'],
+    ['Jūras stikls','Mierīgi zaļi toņi','#8fd3bd','linear-gradient(125deg,#23473f,#0b1b1b 65%,#20403c)'],
+    ['Plūme','Dziļš violets tonis','#c4a5d7','linear-gradient(125deg,#3c2c49,#16131e 65%,#30243b)'],
+    ['Sudraba migla','Vēss un maigs','#c1d5de','linear-gradient(125deg,#4a5c68,#1b262d 65%,#364b57)']
+  ].forEach(([name,description,chip,background])=>THEMES.push({name,description,chip,background,surfaceRGB:[9,16,21],vars:{}}));
+
   function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
 
   function setVar(k,v){ document.documentElement.style.setProperty(k, v); }
@@ -3310,6 +3450,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
       const stationButtons = rw?.querySelectorAll('.station-btn, .viz-icon-btn, .nav-btn, .play-trigger, .md-mini-btn') || [];
 
       if (rw) {
+        rw.style.setProperty('--radio-ambient-rgb', parseColorToRGBStr(theme?.chip || '#53c9e8'));
         __radioImageSkin = !!image;
         rw.classList.toggle('radio-image-skin', __radioImageSkin);
         rw.classList.toggle('radio-black-skin', !__radioImageSkin);
@@ -3477,6 +3618,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
   function applyAlbumSurface(color){
     const rw = document.getElementById('radioWindow');
     if (!rw) return;
+    rw.style.setProperty('--radio-ambient-rgb', parseColorToRGBStr(color));
     const values = parseColorToRGBStr(color).split(',').map(Number);
     const [r, g, b] = values;
     const theme = findTheme(getSaved().name);
@@ -3497,8 +3639,10 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
   }
 
   function applyAlbumColor(color){
+    albumColor=color;
     applyAccent(color);
     applyAlbumSurface(color);
+    paintAppearance();
   }
 
   function rgbToAccent(r, g, b){
@@ -3519,7 +3663,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     lastAlbumAccentKey = seed;
 
     const fallback = () => {
-      if (getSaved().accentMode === 'album') applyAlbumColor(fallbackAlbumAccent(seed));
+      if (getSaved().accentMode === 'album' && seed === lastAlbumAccentKey) applyAlbumColor(safeColor(appearance.cardAccent,fallbackAlbumAccent(seed)));
     };
     if (!coverUrl) {
       fallback();
@@ -3530,7 +3674,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     probe.crossOrigin = 'anonymous';
     probe.decoding = 'async';
     probe.onload = () => {
-      if (getSaved().accentMode !== 'album') return;
+      if (getSaved().accentMode !== 'album' || seed !== lastAlbumAccentKey) return;
       try {
         const canvas = document.createElement('canvas');
         canvas.width = 8;
@@ -3561,7 +3705,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
   }
 
   function applyAccentMode(mode, persist = true){
-    const nextMode = ['off', 'album', 'green', 'warm', 'ice', 'mono', 'custom'].includes(mode) ? mode : 'off';
+    const nextMode = ['off', 'album', 'green', 'warm', 'ice', 'mono', 'custom', 'card'].includes(mode) ? mode : 'off';
     if (persist) {
       setEnabled(true);
       setSaved({ accentMode: nextMode });
@@ -3577,12 +3721,14 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
       return;
     }
     applyGlassIntensity(0, findTheme(getSaved().name));
-    applyAccent(nextMode === 'custom' ? getSaved().accent : (nextMode === 'off' ? '#1ed760' : FIXED_ACCENTS[nextMode]));
+    applyAccent(nextMode === 'card' ? safeColor(appearance.cardAccent,'#53c9e8') : nextMode === 'custom' ? getSaved().accent : (nextMode === 'off' ? '#1ed760' : FIXED_ACCENTS[nextMode]));
+    paintAppearance();
   }
 
   document.addEventListener('rg-now-playing-art', event => updateAlbumAccent(event.detail || {}));
 
   function findTheme(name){
+    if(name==='Mana kartīte')return {...THEMES[0],name,chip:safeColor(appearance.cardAccent,'#53c9e8')};
     return THEMES.find(t => t.name.toLowerCase() === String(name||'').toLowerCase()) || THEMES[0];
   }
 
@@ -3594,6 +3740,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     setSaved({name: theme.name});
     highlightActive(theme.name);
     applyAccentMode(saved.accentMode, false);
+    paintAppearance();
   }
 
   function highlightActive(name){
@@ -3602,6 +3749,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
       el.classList.toggle('active', active);
       el.setAttribute('aria-selected', active ? 'true' : 'false');
     });
+    syncCardChoice();
   }
 
   function renderList(){
@@ -3617,7 +3765,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
       row.dataset.name = t.name;
       const previewAsset = t.preview || t.image;
       const previewUrl = previewAsset ? new URL(previewAsset, document.baseURI).href : '';
-      row.style.setProperty('--theme-preview', previewUrl ? `url("${previewUrl}")` : 'none');
+      row.style.setProperty('--theme-preview', previewUrl ? `url("${previewUrl}")` : (t.background||'linear-gradient(#16211d,#070b09)'));
       row.innerHTML = `
         <span class="theme-card-shade"></span>
         <span class="theme-card-copy">
@@ -3631,7 +3779,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
         setEnabled(true);
         setSaved({
           name: t.name,
-          accentMode: t.name === 'Melns' ? 'off' : 'album'
+          accentMode: getSaved().accentMode
         });
         applyTheme(t.name);
       });
@@ -3649,10 +3797,13 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     const top = Math.max(12, bottom - ph);
     panel.style.left = Math.max(12, (window.innerWidth - pw) / 2) + 'px';
     panel.style.top = top + 'px';
-    panel.style.maxHeight = Math.max(260, bottom - 12) + 'px';
+    panel.style.maxHeight = Math.max(100, window.innerHeight - 24) + 'px';
   }
 
   function openPanel(){
+    lookBefore=lookSnapshot();
+    buildLookControls();
+    syncLookControls();
     panel.classList.add('open');
     panel.setAttribute('aria-hidden','false');
     renderList();
@@ -3660,9 +3811,133 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     requestAnimationFrame(positionPanel);
   }
   function closePanel(){
+    if(lookBefore){const previous=lookBefore;lookBefore=null;applyLookSettings(previous);}
     panel.classList.remove('open');
     panel.setAttribute('aria-hidden','true');
   }
+
+  const LOOK_KEY='rg_radio_appearance_v1';
+  const LOOK_DEFAULTS={darkness:64,tint:28,glass:24,glow:80,position:'center',text:'#f3f7f5',background:'',cardName:''};
+  let appearance;try{appearance={...LOOK_DEFAULTS,...JSON.parse(localStorage.getItem(LOOK_KEY)||'{}')};}catch(_){appearance={...LOOK_DEFAULTS};}
+  let lookBefore=null,albumColor='#53c9e8',applyingProfile=false;
+  const safeColor=(value,fallback='#f3f7f5')=>/^#[\da-f]{6}$/i.test(value||'')?value:fallback;
+  function safeBackground(value){
+    if(typeof value!=='string'||value.length>1600)return '';
+    if(/^linear-gradient\([\w\s.,%#()+-]+\)$/.test(value)&&CSS.supports('background-image',value))return value;
+    const m=value.match(/^url\("([^"]+)"\)$/);if(m){try{const u=new URL(m[1],location.href);if(u.origin===location.origin&&u.pathname.includes('/kalendars/')&&!/[\n\r]/.test(value))return `url("${u.href}")`;}catch(_){}}
+    return '';
+  }
+  function paintAppearance(){
+    const rw=document.getElementById('radioWindow');if(!rw)return;
+    const saved=getSaved(),theme=findTheme(saved.name);
+    const background=saved.name==='Mana kartīte'?safeBackground(appearance.background):(theme.image?`url("${new URL(theme.image,document.baseURI).href}")`:theme.background||'');
+    const color=saved.accentMode==='album'?albumColor:saved.accentMode==='card'?safeColor(appearance.cardAccent,'#53c9e8'):saved.accentMode==='custom'?saved.accent:(FIXED_ACCENTS[saved.accentMode]||theme.chip);
+    const rgb=parseColorToRGBStr(color),dark=clamp(Number(appearance.darkness)/100,.30,.92),tint=clamp(Number(appearance.tint)/100,0,.65),glass=clamp(Number(appearance.glass)/100,0,1);
+    rw.style.setProperty('background-image',`linear-gradient(to top,rgba(6,13,19,.8),rgba(6,13,19,0) 24px),linear-gradient(110deg,rgba(${rgb},${tint}),rgba(4,9,13,${dark}) 62%),${background||'linear-gradient(#0a1419,#0a1419)'}`,'important');
+    rw.style.setProperty('background-position',['left','center','right','top','bottom'].includes(appearance.position)?appearance.position:'center','important');
+    rw.style.setProperty('background-size','cover','important');
+    rw.style.setProperty('border-color','transparent','important');
+    rw.style.setProperty('border-top-color',`rgba(225,239,246,${.03+glass*.06})`,'important');
+    rw.style.setProperty('box-shadow','0 8px 24px rgba(0,0,0,.16)','important');
+    // A restrained text fallback keeps names legible on the dark overlay.
+    const text=safeColor(appearance.text),v=parseColorToRGBStr(text).split(',').map(Number);
+    rw.style.setProperty('--radio-personal-text',(.2126*v[0]+.7152*v[1]+.0722*v[2])<150?'#f3f7f5':text);
+    const strength=clamp(Number(appearance.glow)/100,0,1);document.documentElement.style.setProperty('--radio-glow-strength',String(strength));
+    rw.style.setProperty('--radio-glow-strength',String(strength));
+    const preview=document.getElementById('radioLookPreview');if(preview){preview.style.backgroundImage=rw.style.backgroundImage;preview.style.backgroundPosition=rw.style.backgroundPosition;preview.style.color=rw.style.getPropertyValue('--radio-personal-text');}
+  }
+  function lookSnapshot(){const s=getSaved();return {...appearance,theme:s.name,accent:s.accent,accentMode:s.accentMode,eq:window.__eqMode||'none',viz:String(vizStyle)};}
+  const GUEST_LOOK_KEY='rg_radio_guest_look_v1';
+  function storedGuestLook(){
+    try{const value=JSON.parse(localStorage.getItem(GUEST_LOOK_KEY)||'null');return value&&typeof value==='object'&&!Array.isArray(value)?value:null;}catch(_){return null;}
+  }
+  function captureGuestLook(){
+    const value=storedGuestLook()||lookSnapshot();
+    try{localStorage.setItem(GUEST_LOOK_KEY,JSON.stringify(value));}catch(_){}
+    return value;
+  }
+  function restoreGuestLook(fallback){
+    const value=storedGuestLook()||fallback;
+    if(value)applyLookSettings(value);
+    try{localStorage.removeItem(GUEST_LOOK_KEY);}catch(_){}
+  }
+  function applyLookSettings(data={}){
+    applyingProfile=true;
+    appearance={...LOOK_DEFAULTS,...data,background:safeBackground(data.background)};
+    for(const key of ['darkness','tint','glass','glow'])appearance[key]=clamp(Number(appearance[key])||0,0,100);
+    localStorage.setItem(LOOK_KEY,JSON.stringify(appearance));
+    setSaved({name:data.theme||'Dziļais okeāns',accent:safeColor(data.accent,'#1ed760'),accentMode:data.accentMode||'album',enabled:true});
+    if(/^(none|bass|bassplus|clear|studio|radio|chill|depth|lofi)$/.test(data.eq||'')){window.__eqMode=data.eq;if(lowNode)setEQ(data.eq);}
+    if(/^\d+$/.test(data.viz||''))setVizStyle(Number(data.viz));
+    applyTheme(getSaved().name);paintAppearance();applyingProfile=false;
+  }
+  function buildLookControls(){
+    if(document.getElementById('radioLookControls'))return;
+    const box=document.createElement('section');box.id='radioLookControls';box.innerHTML=`
+      <button type="button" id="radioUseCard">Kā mana kartīte</button><p id="radioLookNote" role="status">Fons paliek tavs. Albuma režīmā krāsa mainās līdzi mūzikai.</p>
+      <div id="radioLookPreview"><strong>Radio</strong><span>Tava fona priekšskatījums</span></div>
+      <details><summary>Pielāgot vairāk</summary>
+       <label>Fona tumšums<input type="range" min="30" max="92" data-look="darkness"></label>
+       <label>Krāsas pārklājums<input type="range" min="0" max="65" data-look="tint"></label>
+       <label>Stikla maliņa<input type="range" min="0" max="100" data-look="glass"></label>
+       <label>Apkārtējā gaisma<input type="range" min="0" max="100" data-look="glow"></label>
+       <label>Attēla novietojums<select data-look="position"><option value="center">Vidū</option><option value="left">Pa kreisi</option><option value="right">Pa labi</option><option value="top">Augšā</option><option value="bottom">Apakšā</option></select></label>
+       <label>Burtu krāsa<input type="color" data-look="text"></label>
+       <label>Vizualizācija<select data-look="viz">${VIZ_MODES.map(m=>`<option value="${m.idx}">${m.label}</option>`).join('')}</select></label>
+      </details><div class="radio-look-actions"><button type="button" id="radioLookReset">Atiestatīt izskatu</button><button type="button" id="radioLookCancel">Atcelt</button><button type="button" id="radioLookApply">Lietot</button></div>`;
+    panel.append(box);
+    const footer=box.querySelector('.radio-look-actions');
+    const scroll=document.createElement('div');scroll.className='radio-theme-scroll';
+    scroll.append(listEl,panel.querySelector('.theme-controls'),box);panel.append(scroll,footer);
+    const quick=box.querySelector('#radioUseCard');quick.className='radio-card-shortcut';panel.insertBefore(quick,scroll);
+    quick.innerHTML='<span class="radio-card-preview" aria-hidden="true"><span class="radio-card-emoji"></span></span><span class="radio-card-copy"><strong>Mana kartīte</strong><span class="radio-card-owner"></span><small class="radio-card-hint"></small></span><span class="radio-card-check" aria-hidden="true">✓</span>';
+    const cardMode=document.createElement('button');cardMode.type='button';cardMode.dataset.accentMode='card';cardMode.innerHTML='<b>Kartītes krāsas</b><small>Nemainīgas</small>';accentModeEl.append(cardMode);
+    const customMode=document.createElement('button');customMode.type='button';customMode.dataset.accentMode='custom';customMode.innerHTML='<b>Sava krāsa</b><small>Izvēlies toni</small>';accentModeEl.append(customMode);
+    const more=document.createElement('details');more.className='radio-more-colors';const summary=document.createElement('summary');summary.textContent='Vēl krāsu režīmi';more.append(summary);
+    ['off','green','warm','ice','mono'].forEach(mode=>{const b=accentModeEl.querySelector('[data-accent-mode="'+mode+'"]');if(b)more.append(b);});accentModeEl.append(more);
+
+    box.addEventListener('input',e=>{
+      const key=e.target.dataset.look;if(!key)return;
+      appearance[key]=e.target.type==='range'?Number(e.target.value):e.target.value;
+      if(key==='viz')setVizStyle(Number(e.target.value));
+      paintAppearance();
+    });
+    document.getElementById('radioUseCard').onclick=()=>{
+      const person=window.__mkUnifiedMedia?.getSession();if(!person){closePanel();window.__mkUnifiedMedia?.open();return;}
+      let skin;try{skin=document.getElementById('calIframe')?.contentWindow?.mkGetRadioSkin?.(person.name);}catch(_){}
+      if(!skin||!safeBackground(skin.background)){document.getElementById('radioLookNote').textContent='Vispirms izvēlies fonu savas darbinieka kartītes sadaļā Izskats.';return;}
+      appearance={...appearance,background:safeBackground(skin.background),text:skin.text||'#f3f7f5',cardAccent:skin.accent||'#53c9e8',cardName:person.name};
+      setSaved({name:'Mana kartīte',accent:appearance.cardAccent,accentMode:'album'});applyTheme('Mana kartīte');syncLookControls();
+      document.getElementById('radioLookNote').textContent='Pārņemts '+document.querySelector('#radioUseCard .radio-card-owner').textContent+' izskats. Krāsas turpina mainīties pēc albuma.';
+    };
+    document.getElementById('radioLookReset').onclick=()=>{applyLookSettings({});syncLookControls();};
+    document.getElementById('radioLookCancel').onclick=()=>closePanel();
+    document.getElementById('radioLookApply').onclick=()=>{
+      localStorage.setItem(LOOK_KEY,JSON.stringify(appearance));
+      const data=lookSnapshot();
+      if(window.__mkUnifiedMedia?.getSession()&&!window.__mkUnifiedMedia.change({type:'settings',settings:data}))return;
+      lookBefore=null;closePanel();
+    };
+  }
+  function syncCardChoice(){
+    const quick=document.getElementById('radioUseCard');if(!quick)return;
+    const person=window.__mkUnifiedMedia?.getSession();let skin=null,emoji='';
+    try{const calendar=document.getElementById('calIframe')?.contentWindow;if(person){skin=calendar?.mkGetRadioSkin?.(person.name);emoji=calendar?.MinkaEmoji?.get(person.name)||'';}}catch(_){}
+    const background=safeBackground(skin?.background),name=person?person.name.toLocaleLowerCase('lv-LV').replace(/(^|[\s-])([a-zāčēģīķļņōŗšūž])/g,(_,a,b)=>a+b.toLocaleUpperCase('lv-LV')):'';
+    quick.querySelector('.radio-card-owner').textContent=name||'Tavs personīgais izskats';
+    quick.querySelector('.radio-card-hint').textContent=!person?'Ielogojies, lai izmantotu savu kartīti':background?'Pārņemt fonu un krāsas':'Kartītei vēl nav izvēlēts fons';
+    const preview=quick.querySelector('.radio-card-preview');preview.style.backgroundImage=background||'linear-gradient(135deg,#243c37,#10202b)';
+    quick.querySelector('.radio-card-emoji').textContent=emoji||(person?person.name.trim().split(/\s+/).map(p=>p[0]).slice(0,2).join(''):'');
+    preview.style.color=safeColor(skin?.text);quick.querySelector('.radio-card-emoji').classList.toggle('has-emoji',!!emoji);
+    quick.setAttribute('aria-pressed',String(!!person&&getSaved().name==='Mana kartīte'&&appearance.cardName===person.name));
+    quick.setAttribute('aria-label',person?'Izmantot savu kartītes izskatu '+name:'Ielogoties, lai izmantotu savu kartītes izskatu');
+  }
+  function syncLookControls(){
+    syncCardChoice();const data=lookSnapshot();panel.querySelectorAll('[data-look]').forEach(e=>{e.value=data[e.dataset.look]??LOOK_DEFAULTS[e.dataset.look]??'0';});paintAppearance();
+  }
+  const closeProfileLook=()=>{lookBefore=null;panel.classList.remove('open');panel.setAttribute('aria-hidden','true');};
+  window.rgTheme={snapshot:lookSnapshot,captureGuest:captureGuestLook,restoreGuest:data=>{closeProfileLook();restoreGuestLook(data);},applyProfile:data=>{closeProfileLook();applyLookSettings(data);}};
+  document.getElementById('eqRow')?.addEventListener('click',e=>{if(e.target.closest('button')&&window.__mkUnifiedMedia?.getSession())window.__mkUnifiedMedia.change({type:'settings',settings:{eq:window.__eqMode||'none'}});});
 
   // init
   const saved = getSaved();
@@ -3676,6 +3951,10 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     applyAccentMode(saved.accentMode, false);
   }
 
+  // A reload must not turn the last person's persisted appearance into the guest default.
+  // Older builds did not keep a guest snapshot; discard their personal card background.
+  restoreGuestLook(getSaved().name==='Mana kartīte'?{}:null);
+  window.dispatchEvent(new Event('rg-theme-ready'));
   // events
   themeBtn.addEventListener('click', (e)=>{
     e.stopPropagation();
@@ -3690,6 +3969,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     setEnabled(true);
     setSaved({accent: color, accentMode: 'custom'});
     setAccentModeActive('custom');
+    paintAppearance();
   });
 
   accentModeEl.addEventListener('click', event => {

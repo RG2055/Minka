@@ -243,52 +243,85 @@
   }
 
   // ── GIST ─────────────────────────────────────────────────────────────────────
-  async function loadFromGist() {
-    if (hasApiAuth()) {
-      try {
-        var apiRes = await window.MinkaApi.apiFetch('/api/emoji?_=' + Date.now());
-        if (apiRes.ok) {
-          var apiJson = await apiRes.json();
-          _data = sanitizeEmojiMap(apiJson);
-          try {
-            localStorage.setItem(LOCAL_KEY, JSON.stringify(_data));
-            localStorage.removeItem('minka_emoji_v1');
-          } catch(e) {}
-          refreshAllCards();
-          return;
-        }
-      } catch(e) {}
-    }
-    if (!GIST_ID) return;
-    try {
-      var h = { 'Accept': 'application/vnd.github+json' };
-      if (GIST_TOKEN) h['Authorization'] = 'Bearer ' + GIST_TOKEN;
-      var r = await fetch('https://api.github.com/gists/' + GIST_ID + '?_=' + Date.now(), { headers: h, cache: 'no-store' });
-      if (!r.ok) return;
-      var j = await r.json();
-      var raw = j.files && j.files[GIST_FILE] && j.files[GIST_FILE].content;
-      if (raw) {
-        _data = sanitizeEmojiMap(JSON.parse(raw));
-        try {
-          localStorage.setItem(LOCAL_KEY, JSON.stringify(_data));
-          localStorage.removeItem('minka_emoji_v1');
-        } catch(e) {}
-        refreshAllCards();
-      }
-    } catch(e) {}
-  }
+  var emojiReadPending = false;
+  var emojiWriteVersion = 0;
+  var emojiWritesPending = 0;
+  var emojiWriteQueue = Promise.resolve();
 
-  async function saveToGist(workerName) {
+  function applyRemoteEmoji(raw, version) {
+    if (version !== emojiWriteVersion || emojiWritesPending) return;
+    var next = sanitizeEmojiMap(raw);
+    var keys = Object.keys(next);
+    if (keys.length === Object.keys(_data).length && keys.every(function(key) { return next[key] === _data[key]; })) return;
+    _data = next;
     try {
       localStorage.setItem(LOCAL_KEY, JSON.stringify(_data));
       localStorage.removeItem('minka_emoji_v1');
     } catch(e) {}
+    if (!document.hidden) refreshAllCards();
+  }
+
+  async function emojiRequest(send, parseJson) {
+    var controller = new AbortController(), timer;
+    var deadline = new Promise(function(_resolve, reject) {
+      timer = setTimeout(function() { controller.abort(); reject(new Error('Emoji request timed out')); }, 20000);
+    });
+    var request = Promise.resolve().then(function() { return send(controller.signal); }).then(function(r) {
+      if (!r.ok) throw new Error('Emoji request failed');
+      return parseJson ? r.json() : r;
+    });
+    try { return await Promise.race([request, deadline]); }
+    finally { clearTimeout(timer); }
+  }
+
+  async function loadFromGist() {
+    if (document.hidden || emojiReadPending || emojiWritesPending) return;
+    emojiReadPending = true;
+    var version = emojiWriteVersion;
+    try {
+      if (hasApiAuth()) {
+        try {
+          var apiJson = await emojiRequest(function(signal) { return window.MinkaApi.apiFetch('/api/emoji?_=' + Date.now(), { signal: signal }); }, true);
+          if (apiJson && typeof apiJson === 'object' && !Array.isArray(apiJson)) {
+            applyRemoteEmoji(apiJson, version);
+            return;
+          }
+        } catch(e) {}
+      }
+      if (!GIST_ID) return;
+      try {
+        var h = { 'Accept': 'application/vnd.github+json' };
+        if (GIST_TOKEN) h['Authorization'] = 'Bearer ' + GIST_TOKEN;
+        var j = await emojiRequest(function(signal) { return fetch('https://api.github.com/gists/' + GIST_ID + '?_=' + Date.now(), { headers: h, cache: 'no-store', signal: signal }); }, true);
+        var raw = j.files && j.files[GIST_FILE] && j.files[GIST_FILE].content;
+        if (raw) {
+          applyRemoteEmoji(JSON.parse(raw), version);
+        }
+      } catch(e) {}
+    } finally { emojiReadPending = false; }
+  }
+
+
+  function saveToGist(workerName) {
+    emojiWriteVersion++;
+    emojiWritesPending++;
+    // Persist the click immediately, even while an earlier network save waits.
+    try {
+      localStorage.setItem(LOCAL_KEY, JSON.stringify(_data));
+      localStorage.removeItem('minka_emoji_v1');
+    } catch(e) {}
+    var save = emojiWriteQueue.then(function() { return saveToGistRemote(workerName); });
+    emojiWriteQueue = save.catch(function() {});
+    return save.finally(function() { emojiWritesPending--; });
+  }
+
+  async function saveToGistRemote(workerName) {
     if (hasApiAuth() && workerName) {
       try {
-        var apiRes = await window.MinkaApi.apiFetch('/api/emoji', {
-          method: 'POST',
+        var apiRes = await emojiRequest(function(signal) { return window.MinkaApi.apiFetch('/api/emoji', {
+          method: 'POST', signal: signal,
           json: { worker: workerName, emoji: _data[workerName] || null }
-        });
+        }); }, false);
         if (apiRes.ok) {
           setTimeout(loadFromGist, 150);
           return 'github';
@@ -299,11 +332,11 @@
     if (!GIST_ID) return 'local';
     if (!GIST_TOKEN) return 'github-read';
     try {
-      var r = await fetch('https://api.github.com/gists/' + GIST_ID, {
-        method: 'PATCH',
+      var r = await emojiRequest(function(signal) { return fetch('https://api.github.com/gists/' + GIST_ID, {
+        method: 'PATCH', signal: signal,
         headers: { 'Accept':'application/vnd.github+json','Authorization':'Bearer '+GIST_TOKEN,'Content-Type':'application/json' },
         body: JSON.stringify({ files: { [GIST_FILE]: { content: JSON.stringify(_data, null, 2) } } })
-      });
+      }); }, false);
       return r.ok ? 'github' : 'error';
     } catch(e) { return 'error'; }
   }
@@ -335,6 +368,7 @@
 
   // ── CARD UPDATES ─────────────────────────────────────────────────────────────
   function refreshAllCards() {
+    if(window.parent!==window)window.parent.postMessage({type:"minka-personal-emoji-updated"},location.origin);
     document.querySelectorAll('.card[data-worker]').forEach(function(card) {
       updateCardEmoji(card, card.getAttribute('data-worker'));
     });
@@ -345,6 +379,15 @@
 
   function updateCardEmoji(card, name) {
     var emoji = safeEmoji(_data[name]) || null;
+    var meta = card.querySelector('.mk-mid-meta-emoji');
+    if (meta) {
+      var initials = String(name || '').trim().split(/\s+/).slice(0, 2).map(function(part) { return part.charAt(0); }).join('').toUpperCase();
+      var glyph = emoji || initials;
+      meta.classList.toggle('is-initials', !emoji);
+      meta.setAttribute('data-mk-emoji-home', glyph);
+      var fly = meta.querySelector('.mk-mid-meta-emoji-fly');
+      if (fly) fly.textContent = glyph;
+    }
     var shiftIcons = card.querySelector('.shift-icons');
     var midEl = card.querySelector('.mk-mid-person-emoji');
     var statusRail = card.querySelector('.mk-mid-status-icons');
@@ -1675,7 +1718,10 @@
       new MutationObserver(queueCardHook).observe(container, { childList: true });
     });
     setTimeout(loadFromGist, 250);
-    if (hasApiAuth() || GIST_ID) setInterval(loadFromGist, POLL_MS);
+    if (window.MinkaApi || GIST_ID) setInterval(loadFromGist, POLL_MS);
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) { refreshAllCards(); loadFromGist(); }
+    });
     document.addEventListener('minka:auth-ok', loadFromGist);
   }
 

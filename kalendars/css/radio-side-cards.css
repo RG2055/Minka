@@ -1,0 +1,112 @@
+/* Compact radio/music layout. Two ID scopes beat the older desktop card rules;
+   the existing host-radio-open state also survives page visibility changes. */
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) {
+  gap: 6px !important;
+  overflow-y: auto !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--radio-ambient-rgb,83,201,232),.25) transparent;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-card {
+  --mk-tint: rgb(var(--radio-ambient-rgb,83,201,232));
+  min-height: 0 !important;
+  padding: 7px 8px !important;
+  border-radius: 14px !important;
+  background: linear-gradient(125deg,rgba(var(--radio-ambient-rgb,83,201,232),.10),rgba(5,14,20,.30)) !important;
+  border: 1px solid rgba(var(--radio-ambient-rgb,83,201,232),.20) !important;
+  box-shadow: inset 0 1px rgba(224,245,255,.06) !important;
+  flex: 0 0 auto !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-card::after {
+  display: none !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-card-main {
+  grid-template-columns: 25px minmax(0,1fr) !important;
+  gap: 6px !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-icon-rail {
+  width: 25px !important; min-width: 25px !important; max-width: 25px !important;
+  height: 32px !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-emoji-side {
+  font-size: 22px !important; min-width: 22px !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-initials {
+  font-size: 15px !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-card-body {
+  grid-template-columns: minmax(0,1fr) 34px !important;
+  column-gap: 5px !important; row-gap: 3px !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-name-wrap {
+  min-width: 0 !important; max-width: 100% !important;
+  padding: 0 !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-name-row {
+  margin: 0 !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .duty-name {
+  font-size: 14px !important; line-height: 1.12 !important;
+  color: #e4f1f5 !important; letter-spacing: 0 !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .duty-surname {
+  font-size: 8px !important; line-height: 1.2 !important;
+  margin-top: 1px !important;
+  color: rgba(205,226,235,.70) !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-fatigue {
+  width: 34px !important; min-width: 34px !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring {
+  width: 32px !important; height: 32px !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring > .mk-side-score {
+  font-size: 12px !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring small {
+  font-size: 4px !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-fatigue-caption {
+  font-size: 5px !important; margin-top: 2px !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-clock-row {
+  gap: 3px !important; margin: 0 !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-shift-chip {
+  min-width: 0 !important; height: 16px !important;
+  padding: 0 4px !important; font-size: 9px !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .shift-icon-side {
+  font-size: 9px !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-timer.duty-timer {
+  min-width: 0 !important; height: 16px !important;
+  font-size: 8px !important; letter-spacing: 0 !important; padding: 0 2px !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot {
+  margin-top: 5px !important; padding-top: 4px !important;
+  gap: 2px !important; grid-template-columns: 1fr !important;
+  border-top-color: rgba(var(--radio-ambient-rgb,83,201,232),.13) !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot-row {
+  grid-template-columns: max-content minmax(0,1fr) !important; gap: 4px !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot dt {
+  font-size: 6px !important; letter-spacing: .02em !important;
+  color: rgba(200,224,233,.55) !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot dd {
+  display: block !important;
+  font-size: 9px !important; line-height: 1.2 !important;
+  color: #c7dce5 !important; gap: 2px !important;
+}
+/* The numeric total remains; the decorative dots would squeeze it into
+   multiple lines in the smaller card. */
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-nfoot-seg {
+  display: none !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot dd em {
+  font-size: 8px !important;
+}
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-wm {
+  opacity: .12 !important;
+}

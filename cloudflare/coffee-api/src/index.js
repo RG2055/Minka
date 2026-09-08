@@ -18,13 +18,27 @@ function json(body, status = 200) {
 
 async function readJson(request, maxBytes = 16 * 1024) {
   const declared = Number(request.headers.get('content-length') || 0);
-  if (declared > maxBytes) return null;
+  if (declared > maxBytes || !request.body) return null;
+  const reader = request.body.getReader();
+  const decoder = new TextDecoder();
+  let total = 0, text = '';
   try {
-    const text = await request.text();
-    if (new TextEncoder().encode(text).byteLength > maxBytes) return null;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel('body too large');
+        return null;
+      }
+      text += decoder.decode(value, { stream: true });
+    }
+    text += decoder.decode();
     return JSON.parse(text);
   } catch (_e) {
     return null;
+  } finally {
+    reader.releaseLock();
   }
 }
 
@@ -81,7 +95,7 @@ function cleanPriceCents(value) {
 }
 
 function ensureDetail(details, worker) {
-  if (!details[worker]) {
+  if (!Object.prototype.hasOwnProperty.call(details, worker)) {
     details[worker] = {
       sources: { philips: 0, lofbergs: 0, narvesen: 0, monster: 0, monsterultra: 0, redbull: 0, cupcoffee: 0 },
       spendCents: 0
@@ -138,8 +152,8 @@ export default {
         const rows = await env.COFFEE_DB
           .prepare('SELECT worker, SUM(count) AS total FROM coffee_counts GROUP BY worker')
           .all();
-        const totals = {};
-        const details = {};
+        const totals = Object.create(null);
+        const details = Object.create(null);
         for (const row of rows.results || []) {
           totals[row.worker] = Math.max(0, Number(row.total) || 0);
         }
@@ -167,9 +181,9 @@ export default {
         .bind(date)
         .all();
 
-      const counts = {};
-      const updated = {};
-      const details = {};
+      const counts = Object.create(null);
+      const updated = Object.create(null);
+      const details = Object.create(null);
       for (const row of rows.results || []) {
         counts[row.worker] = Math.max(0, Number(row.count) || 0);
         updated[row.worker] = Number(row.updated_at) || 0;

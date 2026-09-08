@@ -4,11 +4,11 @@
   // Local Minka uses the deployed player by default, so it does not depend on
   // a second dev server. Add ?lacLocal=1 only while developing Lācītis itself.
   var useLocalLac=isLocal&&/[?&]lacLocal=1(?:&|$)/.test(location.search);
-  var LAC_BASE=useLocalLac?'http://127.0.0.1:5174':'https://lacitis.pages.dev';
+  var LAC_BASE=useLocalLac?'http://127.0.0.1:5174':new URL('integrations/lacitis/player',location.href).href;
   var LAC_ORIGIN=new URL(LAC_BASE, location.href).origin;
   var MINI_URL=LAC_BASE+'/?embed=mini';
   var frame,cons,stage,deckEl,track,empty,titleEl,artistEl,fillEl,playIco,progEl,searchEl,deckPrev,deckNext;
-  var profilePanel,profileBtn,profileStatus,workersEl,pinForm,pinInput,pinConfirm,pinConfirmField,pinSubmit,profileError;
+  var profilePanel,profileStatus,workersEl,pinForm,pinInput,pinConfirm,pinConfirmField,pinSubmit,profileError;
   var loggedOut,loggedIn,libraryEl,favBtn,playlistQuickBtn,favoritesHeaderBtn;
   var lyricsPanel,lyricsBtn,lyricsTitle,lyricsArtist,lyricsBody;
   var soundPanel,soundBtn,soundStatusEl,soundOptions;
@@ -34,7 +34,7 @@
     titleEl=$('lacMiniTitle'); artistEl=$('lacMiniArtist'); fillEl=$('lacMiniProgFill');
     playIco=$('lacMiniPlayIco'); progEl=$('lacMiniProg'); searchEl=$('lacMiniSearch');
     deckPrev=$('lacMiniDeckPrev'); deckNext=$('lacMiniDeckNext');
-    profilePanel=$('lacMiniProfilePanel'); profileBtn=$('lacMiniProfileBtn'); profileStatus=$('lacMiniProfileStatus');
+    profilePanel=$('lacMiniProfilePanel'); profileStatus=$('lacMiniProfileStatus');
     workersEl=$('lacMiniWorkers'); pinForm=$('lacMiniPinForm'); pinInput=$('lacMiniPin');
     pinConfirm=$('lacMiniPinConfirm'); pinConfirmField=$('lacMiniPinConfirmField'); pinSubmit=$('lacMiniPinSubmit');
     profileError=$('lacMiniProfileError'); loggedOut=$('lacMiniLoggedOut'); loggedIn=$('lacMiniLoggedIn');
@@ -428,7 +428,7 @@
     if(pinForm) pinForm.classList.add('show');
     if(pinConfirmField) pinConfirmField.style.display=worker.hasPin===false?'flex':'none';
     if(pinSubmit) pinSubmit.textContent=worker.hasPin===false?'Izveidot PIN':'Ieiet';
-    var label=$('lacMiniPinLabel'); if(label) label.textContent=(worker.name||'')+' • PIN';
+    var label=$('lacMiniPinLabel'); if(label) label.textContent=(worker.name||'')+' PIN';
     if(pinInput){ pinInput.value=''; setTimeout(function(){pinInput.focus();},20); }
     if(pinConfirm) pinConfirm.value='';
   }
@@ -523,12 +523,7 @@
   function applyProfileState(data){
     profileState=data||profileState;
     var session=profileState.session;
-    if(profileBtn){
-      profileBtn.classList.toggle('active',!!session);
-      profileBtn.setAttribute('aria-label',session?'Profils '+session.name:'Ielogoties Lācīša profilā');
-      var label=profileBtn.querySelector('.lm-profile-label'); if(label) label.textContent=session?session.name:'Ielogoties';
-    }
-    if(profileStatus) profileStatus.textContent=session?'Sinhronizēts':'PIN profils';
+    if(profileStatus) profileStatus.textContent=!session?'Nav profila':profileState.syncStatus==='synced'?'Saglabāts':profileState.syncStatus==='syncing'?'Saglabā…':profileState.syncStatus==='error'?'Neizdevās saglabāt':'Profils ielādēts';
     if(loggedOut) loggedOut.style.display=session?'none':'block';
     if(loggedIn) loggedIn.style.display=session?'block':'none';
     if(session){
@@ -580,8 +575,9 @@
     var open=typeof force==='boolean'?force:!profileIsOpen();
     if(open&&lyricsIsOpen()) window.lacMiniToggleLyrics(false);
     if(open&&soundIsOpen()) window.lacMiniToggleSound(false);
+    if(open&&!window.__mkUnifiedMedia?.getSession()){ window.__mkUnifiedMedia?.open(); return; }
     profilePanel.classList.toggle('open',open); profilePanel.setAttribute('aria-hidden',open?'false':'true');
-    if(profileBtn) profileBtn.setAttribute('aria-expanded',open?'true':'false');
+    if(favoritesHeaderBtn) favoritesHeaderBtn.setAttribute('aria-expanded',open?'true':'false');
     if(open){
       send('profile_init',{workers:todayWorkers()});
       setTimeout(function(){ if(profileIsOpen()) window.__lacitisMiniRefreshWorkers(); },700);
@@ -593,7 +589,9 @@
     var workers=todayWorkers();
     if(profileIsOpen()&&workers.length) send('profile_init',{workers:workers});
   };
-  window.lacMiniLogout=function(){ send('profile_logout'); };
+  window.lacMiniLogout=function(){ window.__mkUnifiedMedia?.logout(); send('shared_profile',{session:null}); };
+  function syncSharedProfile(){ if(bridgeReady)send('shared_profile',{session:window.__mkUnifiedMedia?.getSession()||null}); }
+  document.addEventListener('media-profile-change',syncSharedProfile);
   window.lacMiniQuickAction=function(){
     var item=currentTrack();
     if(!item) return;
@@ -655,6 +653,7 @@
     var d=e.data; if(!d||typeof d!=='object') return;
     if(d.type==='lac_mini_ready'){
       bridgeReady=true;
+      syncSharedProfile();
       send('profile_init',{workers:todayWorkers()});
       send('sound_get');
       var queued=pendingCommands.slice(); pendingCommands=[];
@@ -685,6 +684,8 @@
       if(lyricsIsOpen()&&now&&now.id===d.id) renderLyrics(d);
     }
     else if(d.type==='lac_mini_sound'){ applySoundState(d); }
+    else if(d.type==='lac_shared_login_request'){ window.__mkUnifiedMedia?.open(); }
+    else if(d.type==='lac_shared_logout_request'){ window.__mkUnifiedMedia?.logout(); }
     else if(d.type==='lac_mini_profile'){ applyProfileState(d); }
     else if(d.type==='lac_mini_library'){
       if(d.section===profileSection) renderLibrary(d.tracks,d.section);
@@ -738,7 +739,7 @@
     cons.classList.remove('docked'); cons.setAttribute('aria-hidden','true');
     stage.classList.remove('full'); stage.setAttribute('aria-hidden','true');
     if(profilePanel){ profilePanel.classList.remove('open'); profilePanel.setAttribute('aria-hidden','true'); }
-    if(profileBtn) profileBtn.setAttribute('aria-expanded','false');
+    if(favoritesHeaderBtn) favoritesHeaderBtn.setAttribute('aria-expanded','false');
     if(lyricsPanel){ lyricsPanel.classList.remove('open'); lyricsPanel.setAttribute('aria-hidden','true'); }
     if(lyricsBtn){ lyricsBtn.classList.remove('on'); lyricsBtn.setAttribute('aria-expanded','false'); }
     if(soundPanel){ soundPanel.classList.remove('open'); soundPanel.setAttribute('aria-hidden','true'); }

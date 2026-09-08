@@ -276,7 +276,7 @@ const worker = {
 
     if (url.pathname === "/api/login" && method === "POST") {
       const body = await readJson(request);
-      if (!body || body.password !== env.APP_PASSWORD) {
+      if (typeof env.APP_PASSWORD !== 'string' || !env.APP_PASSWORD || !body || body.password !== env.APP_PASSWORD) {
         return json(request, { ok: false, error: "Wrong password" }, 401);
       }
       return json(request, { ok: true, token: env.APP_PASSWORD });
@@ -383,17 +383,21 @@ const worker = {
         const one = await env.MINKA_EMOJI.get(worker);
         return json(request, { worker, emoji: cleanEmojiValue(one) || null });
       }
-      const list = await env.MINKA_EMOJI.list();
-      const out = {};
-      const emojiKeys = list.keys.filter((key) => !/^(?:skins:|skin-art::|bed-care:)/.test(key.name));
-      const emojiEntries = await Promise.all(emojiKeys.map(async (key) => {
-        const name = cleanEmojiWorker(key.name);
-        const emoji = cleanEmojiValue(await env.MINKA_EMOJI.get(key.name));
-        return name && emoji ? [name, emoji] : null;
-      }));
-      for (const entry of emojiEntries) {
-        if (entry) out[entry[0]] = entry[1];
-      }
+      const out = Object.create(null);
+      let cursor;
+      do {
+        const list = await env.MINKA_EMOJI.list(cursor ? { cursor } : {});
+        const emojiKeys = list.keys.filter((key) => !/^(?:skins:|skin-art::|bed-care:|ns::|nsrooms::)/.test(key.name));
+        const emojiEntries = await Promise.all(emojiKeys.map(async (key) => {
+          const name = cleanEmojiWorker(key.name);
+          const emoji = cleanEmojiValue(await env.MINKA_EMOJI.get(key.name));
+          return name && emoji ? [name, emoji] : null;
+        }));
+        for (const entry of emojiEntries) {
+          if (entry) out[entry[0]] = entry[1];
+        }
+        cursor = list.list_complete === false ? list.cursor : undefined;
+      } while (cursor);
       return json(request, out);
     }
 
@@ -707,13 +711,27 @@ function json(request, data, status = 200) {
 }
 
 async function readJson(request, maxBytes = 64 * 1024) {
-  const declared = Number(request.headers.get("content-length") || 0);
-  if (declared > maxBytes) return null;
+  const declared = Number(request.headers.get('content-length') || 0);
+  if (declared > maxBytes || !request.body) return null;
+  const reader = request.body.getReader();
+  const decoder = new TextDecoder();
+  let total = 0, text = '';
   try {
-    const text = await request.text();
-    if (new TextEncoder().encode(text).byteLength > maxBytes) return null;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel('body too large');
+        return null;
+      }
+      text += decoder.decode(value, { stream: true });
+    }
+    text += decoder.decode();
     return JSON.parse(text);
-  } catch {
+  } catch (_e) {
     return null;
+  } finally {
+    reader.releaseLock();
   }
 }

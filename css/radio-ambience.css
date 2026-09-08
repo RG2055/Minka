@@ -1,0 +1,66 @@
+/* One continuous prepainted fog across the PWA; only its transform moves. */
+/* Older radio styles replaced the slide transition with a shadow transition. */
+html body #radioWindow {
+  visibility: visible;
+  transition: transform .28s cubic-bezier(.4,0,.2,1), opacity .24s ease, visibility 0s linear !important;
+}
+html body.radio-hidden #radioWindow {
+  visibility: hidden;
+  transition: transform .28s cubic-bezier(.4,0,.2,1), opacity .24s ease, visibility 0s linear .28s !important;
+}
+html.minka-visuals-hidden body #radioWindow { transition: none !important; }
+.minka-ambient-glow {
+  position: fixed; inset: 0; z-index: 0;
+  overflow: hidden; pointer-events: none; contain: strict;
+  opacity: 0; visibility: hidden;
+  transition: opacity .28s ease, visibility 0s linear .28s;
+}
+.minka-ambient-glow::before {
+  content: ''; position: absolute; inset: -5%;
+  background:
+    radial-gradient(ellipse at 12% 80%, rgba(var(--radio-ambient-rgb,83,201,232),.27), transparent 76%),
+    radial-gradient(ellipse at 94% 62%, rgba(var(--radio-ambient-rgb,83,201,232),.24), transparent 78%),
+    linear-gradient(rgba(var(--radio-ambient-rgb,83,201,232),.055),rgba(var(--radio-ambient-rgb,83,201,232),.085));
+  animation: minka-ambient-drift 22s ease-in-out infinite alternate !important;
+  animation-play-state: paused !important;
+}
+html.minka-ambient-active .minka-ambient-glow { opacity: var(--radio-glow-strength,.8); visibility: visible; transition-delay: 0s; }
+html.minka-ambient-moving .minka-ambient-glow::before { animation-play-state: running !important; }
+html.minka-visuals-hidden .minka-ambient-glow { transition: none; }
+/* Reveal the same host fog through the iframe, including both side columns. */
+html.minka-ambient-calendar.minka-ambient-active,
+html.minka-ambient-calendar.minka-ambient-active body,
+html.minka-ambient-active body #calendarEmbed,
+html.minka-ambient-active body #grafiks-app,
+html.minka-ambient-active body #grafiks-app .side-panel,
+html.minka-ambient-active body #grafiks-app .main-panel,
+html.minka-ambient-active body #grafiks-app .side-panel > div,
+html.minka-ambient-active body #grafiks-app #radiographers-duty,
+html.minka-ambient-active body #grafiks-app #radiologists-duty {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+html.minka-ambient-active body #calendarEmbed::before,
+html.minka-ambient-active body #macscapeBg,
+html.minka-ambient-active body #wallpaperOrbOverlay { display: none !important; }
+html.minka-ambient-active body #grafiks-app .side-panel {
+  -webkit-mask-image: linear-gradient(#000, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(#000, #000 calc(100% - 24px), transparent);
+}
+@keyframes minka-ambient-drift {
+  from { transform: translate(-2%, 1%) scale(1); }
+  to { transform: translate(2%, -2%) scale(1.04); }
+}
+/* Pause CSS and SVG walkers together, including when the parent PWA is hidden. */
+html:not(.ns-motion-active) #nsPanel .ns-bed-dream *,
+html:not(.ns-motion-active) #nsPanel .ns-room-walker,
+html:not(.ns-motion-active) #nsPanel .ns-room-walker *,
+html:not(.ns-motion-active) #nsPanel .ns-room-bed-zzz span {
+  animation-play-state: paused !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .minka-ambient-glow { transition: none; }
+  .minka-ambient-glow::before { animation: none !important; }
+  html body #radioWindow, html body.radio-hidden #radioWindow { transition: none !important; }
+}

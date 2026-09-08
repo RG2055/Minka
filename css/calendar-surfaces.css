@@ -1,0 +1,57 @@
+/* Continuous calendar surfaces. Static paint only; no blur or animation loop. */
+html body #calendarEmbed {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  will-change: auto !important;
+}
+html body #calendarEmbed::before { display: none !important; }
+
+html body #grafiks-app,
+html body #grafiks-app > .main-panel,
+html body #grafiks-app > .side-panel,
+html body #grafiks-app > .side-panel > div,
+html body #grafiks-app #radiographers-duty,
+html body #grafiks-app #radiologists-duty {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+html body #grafiks-app > .side-panel {
+  border: 0 !important;
+  border-radius: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transition: none !important;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
+}
+html body #grafiks-app > .side-panel::before,
+html body #grafiks-app > .side-panel::after { display: none !important; }
+
+/* Fade just the scrolling cards; the next-shift names remain fully readable. */
+html body #grafiks-app #radiographers-duty,
+html body #grafiks-app #radiologists-duty {
+  padding-bottom: 22px !important;
+  -webkit-mask-image: linear-gradient(#000, #000 calc(100% - 22px), transparent);
+  mask-image: linear-gradient(#000, #000 calc(100% - 22px), transparent);
+}
+:root:not(.mk-mobile-shell) body #grafiks-app > #minkaBarWrap,
+html body #grafiks-app > #minkaBarWrap {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+/* Only the scenic background fades; date controls and text stay sharp. */
+html body #grafiks-app > #minkaBarWrap > .mk-header-scenic-bg {
+  border-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-mask-image: linear-gradient(#000, #000 calc(100% - 22px), transparent);
+  mask-image: linear-gradient(#000, #000 calc(100% - 22px), transparent);
+}
+/* The central list already reserves 42px below its last row. */
+html body #grafiks-app #grafiks-list {
+  -webkit-mask-image: linear-gradient(#000, #000 calc(100% - 22px), transparent);
+  mask-image: linear-gradient(#000, #000 calc(100% - 22px), transparent);
+}

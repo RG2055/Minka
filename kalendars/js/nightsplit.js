@@ -146,30 +146,73 @@
   var NS_STATS_API_PATH='/api/ns-stats';
   var NS_STATS_CACHE_KEY='minkaNightStatsV1';
   var NS_STATS_TTL=12*3600*1000;
-  var _nsStats=null, _nsStatsPromise=null;
+  var _nsStats=null, _nsStatsPromise=null, _nsStatsAt=0, _nsStatsRetryAt=0;
+  var _nsStatsRenderVersion=0;
+  var NS_STATS_TIMEOUT=15000;
   var NS_BED_LABEL={main_left_top:'Galvenā · augšā',main_left_bottom:'Galvenā · apakšā',main_right_top:'Galvenā · pa labi',nmp_center:'Jaunais NMP'};
 
-  function nsStatsFetch(){
-    if(_nsStats) return Promise.resolve(_nsStats);
-    if(_nsStatsPromise) return _nsStatsPromise;
-    // Keša mēģinājums
+  function nsValidStats(data){
+    return !!(data && data.ok && data.parts && typeof data.parts==='object' && !Array.isArray(data.parts));
+  }
+
+  function nsCachedStats(){
+    if(_nsStats) return _nsStats;
     try{
-      var raw=localStorage.getItem(NS_STATS_CACHE_KEY);
-      if(raw){
-        var c=JSON.parse(raw);
-        if(c && c.at && (Date.now()-c.at)<NS_STATS_TTL && c.data){ _nsStats=c.data; return Promise.resolve(_nsStats); }
+      var cached=JSON.parse(localStorage.getItem(NS_STATS_CACHE_KEY)||'null');
+      if(cached && nsValidStats(cached.data) && Number(cached.at)>0 && Number(cached.at)<=Date.now()){
+        _nsStats=cached.data;
+        _nsStatsAt=Number(cached.at);
       }
     }catch(_e){}
+    return _nsStats;
+  }
+
+  function nsStatsFetch(){
+    var cached=nsCachedStats();
+    if(cached && Date.now()-_nsStatsAt<NS_STATS_TTL) return Promise.resolve(cached);
+    if(_nsStatsPromise) return _nsStatsPromise;
+    if(Date.now()<_nsStatsRetryAt) return Promise.resolve(cached);
     var api=(window.MinkaApi && typeof window.MinkaApi.apiFetch==='function' && window.MinkaApi.getToken && window.MinkaApi.getToken())
       ? window.MinkaApi
       : null;
-    if(!api) return Promise.resolve(null);
-    _nsStatsPromise=api.apiFetch(NS_STATS_API_PATH).then(function(r){return r.json();}).then(function(j){
-      if(j && j.ok){ _nsStats=j; try{localStorage.setItem(NS_STATS_CACHE_KEY,JSON.stringify({at:Date.now(),data:j}));}catch(_e){} }
-      _nsStatsPromise=null;
+    if(!api) return Promise.resolve(cached);
+    var controller=typeof AbortController==='function'?new AbortController():null;
+    var timeout;
+    var deadline=new Promise(function(_resolve,reject){
+      timeout=setTimeout(function(){
+        if(controller) controller.abort();
+        reject(new Error('Night history request timed out'));
+      },NS_STATS_TIMEOUT);
+    });
+    // The deadline covers both response headers and JSON parsing. The race also
+    // releases callers when a transport ignores AbortSignal.
+    var request=Promise.resolve().then(function(){
+      return api.apiFetch(NS_STATS_API_PATH,controller?{signal:controller.signal}:{});
+    }).then(function(r){
+      if(!r.ok) throw new Error('Night history unavailable');
+      return r.json();
+    }).then(function(data){
+      if(!nsValidStats(data)) throw new Error('Invalid night history');
+      return data;
+    });
+    _nsStatsPromise=Promise.race([request,deadline]).then(function(data){
+      _nsStats=data;
+      _nsStatsAt=Date.now();
+      _nsStatsRetryAt=0;
+      try{localStorage.setItem(NS_STATS_CACHE_KEY,JSON.stringify({at:_nsStatsAt,data:data}));}catch(_e){}
+      return data;
+    }).catch(function(){
+      _nsStatsRetryAt=Date.now()+30000;
       return _nsStats;
-    }).catch(function(){ _nsStatsPromise=null; return null; });
+    }).finally(function(){
+      clearTimeout(timeout);
+      _nsStatsPromise=null;
+    });
     return _nsStatsPromise;
+  }
+
+  function nsWarmStats(){
+    if(!document.hidden) nsStatsFetch();
   }
 
   // Mazs istabu plāns (mini-map): galvenā istaba (3 gultas) + NMP (1),
@@ -216,9 +259,11 @@
     }).filter(function(person){ return !!person.name; }).sort(function(a,b){
       return a.name.localeCompare(b.name,'lv',{sensitivity:'base'});
     });
+    var version=++_nsStatsRenderVersion;
     if(!people.length){ box.innerHTML='<div class="ns-stats-load">Nav cilvēku</div>'; return; }
-    nsStatsFetch().then(function(stats){
-      if(!stats || !stats.parts){ box.innerHTML='<div class="ns-stats-load">Nav datu</div>'; return; }
+    function paint(stats){
+      if(version!==_nsStatsRenderVersion || document.getElementById('nsStatsBody')!==box) return;
+      if(!stats || !stats.parts){ box.innerHTML='<div class="ns-stats-load">Vēsturi neizdevās ielādēt. Mēģini atvērt paneli pēc brīža.</div>'; return; }
       var rows=people.map(function(person){
         var nm=person.name;
         var currentPart=person.currentPart;
@@ -259,8 +304,15 @@
       }).join('');
       var nights=Number(stats.nights);
       nights=Number.isFinite(nights) ? Math.max(0, Math.min(100000, Math.round(nights))) : 0;
-      box.innerHTML=rows+'<div class="ns-stats-foot">Vēsture: '+nights+' naktis</div>';
-    }).catch(function(){ box.innerHTML='<div class="ns-stats-load">Nav datu</div>'; });
+      var saved=Date.now()-_nsStatsAt>=NS_STATS_TTL;
+      var age=saved?' · saglabāta '+new Date(_nsStatsAt).toLocaleString('lv-LV'):'';
+      box.innerHTML=rows+'<div class="ns-stats-foot">Vēsture: '+nights+' naktis'+escHtml(age)+'</div>';
+    }
+    // Paint valid local history synchronously, including an older snapshot.
+    // Slow refreshes never replace useful rows with an empty loading panel.
+    var cached=nsCachedStats();
+    if(cached) paint(cached);
+    nsStatsFetch().then(paint);
   }
 
   function bedCareNormalize(raw){
@@ -1642,12 +1694,56 @@
     });
     return active>=0 && !!st.sl[active+1] && st.sl[active+1].w.name===name;
   }
+  // Curated pairs: one existing Fluent strip plus one quiet themed prop.
+  var dreamScenes=[
+    {theme:'stars',file:'cat',frames:72,emoji:'🐈',prop:'🌛'},
+    {theme:'garden',file:'black-cat',frames:72,emoji:'🐈‍⬛',prop:'🦋'},
+    {theme:'sea',file:'dolphin',frames:72,emoji:'🐬',prop:'🌊'},
+    {theme:'forest',file:'hedgehog',frames:72,emoji:'🦔',prop:'🍄'},
+    {theme:'meadow',file:'rabbit-face',frames:72,emoji:'🐰',prop:'🥕'},
+    {theme:'reading',file:'owl',frames:72,emoji:'🦉',prop:'📖'},
+    {theme:'snow',file:'penguin',frames:48,emoji:'🐧',prop:'❄️'},
+    {theme:'autumn',file:'fox',frames:73,emoji:'🦊',prop:'🍂'},
+    {theme:'coffee',file:'hot-beverage',frames:72,emoji:'☕',prop:'🥐',object:true},
+    {theme:'music',file:'maracas',frames:73,emoji:'🪇',prop:'🎵',object:true},
+    {theme:'space',file:'rocket',frames:73,emoji:'🚀',prop:'🪐',object:true},
+    {theme:'travel',file:'compass',frames:72,emoji:'🧭',prop:'🗺️',object:true},
+    {theme:'games',file:'robot',frames:52,emoji:'🤖',prop:'🎮',object:true},
+    {theme:'exploring',file:'flying-saucer',frames:72,emoji:'🛸',prop:'🌙',object:true},
+    {theme:'beach',file:'spiral-shell',frames:72,emoji:'🐚',prop:'🏖️',object:true},
+    {theme:'rest',file:'teddy-bear',frames:69,emoji:'🧸',prop:'🛏️',object:true}
+  ];
+  var dreamChoices=new Map(), dreamDeck=[], dreamDate='';
+  function pickDreamScene(name){
+    var date=activeDateKey();
+    if(date!==dreamDate){dreamDate=date;dreamChoices.clear();dreamDeck=[];}
+    if(!dreamChoices.has(name)){
+      if(!dreamDeck.length){
+        var animals=dreamScenes.filter(function(scene){return !scene.object;});
+        var objects=dreamScenes.filter(function(scene){return scene.object;});
+        // Shuffle only when needed, then alternate animals and objects so a
+        // visible group gets a mix, without duplicates or a running timer.
+        [animals,objects].forEach(function(pool){
+          for(var i=pool.length-1;i>0;i--){
+            var j=Math.floor(Math.random()*(i+1)), temp=pool[i];
+            pool[i]=pool[j];pool[j]=temp;
+          }
+        });
+        var first=Math.random()<.5 ? animals : objects;
+        var second=first===animals ? objects : animals;
+        for(var k=0;k<first.length;k++){dreamDeck.push(first[k],second[k]);}
+      }
+      dreamChoices.set(name,dreamDeck.shift());
+    }
+    return dreamChoices.get(name);
+  }
   function dreamContents(name){
-    var api=window.MinkaCardAddons;
-    var item=api && api.getDecoration ? api.getDecoration(name) : null;
-    var object=item ? '<img src="'+escHtml(item.src)+'" alt="" decoding="async" draggable="false">' : '<span class="ns-dream-default">'+['🌙','✨','☁️','⭐'][_nameHash(name)%4]+'</span>';
-    if(dreamPhones(name)) object='<span class="ns-dream-phones">'+['feature','smart','feature','smart'].map(function(type){return '<span class="ns-room-device is-'+type+'"></span>';}).join('')+'</span>';
-    return '<svg class="ns-dream-cloud" viewBox="0 0 80 64" aria-hidden="true"><path d="M18 47C3 48 1 30 12 25C8 12 23 7 31 12C38 0 55 5 58 14C72 10 82 24 73 34C82 47 62 55 54 49C44 57 28 55 25 47Z"/><circle cx="18" cy="56" r="4"/><circle cx="11" cy="62" r="2"/></svg><span class="ns-dream-object">'+object+'</span>';
+    var hash=_nameHash(name), scene=pickDreamScene(name);
+    var phones=dreamPhones(name);
+    var object='<span class="ns-dream-sprite" style="--dream-frames:'+scene.frames+';--dream-duration:'+(scene.frames/12)+'s;--dream-phase:-'+(hash%30/10)+'s"><span class="ns-dream-fallback">'+scene.emoji+'</span><img class="ns-dream-film" data-src="assets/emoji-anim/'+scene.file+'.webp" alt="" decoding="async" draggable="false"></span>';
+    var prop=phones ? '<span class="ns-dream-phones">'+['feature','smart','feature','smart'].map(function(type){return '<span class="ns-room-device is-'+type+'"></span>';}).join('')+'</span>' : '<span class="ns-dream-prop">'+scene.prop+'</span>';
+    var cloud='<svg class="ns-dream-cloud" viewBox="0 0 80 64" aria-hidden="true"><path d="M18 47C3 48 1 30 12 25C8 12 23 7 31 12C38 0 55 5 58 14C72 10 82 24 73 34C82 47 62 55 54 49C44 57 28 55 25 47Z"/><circle cx="18" cy="56" r="4"/><circle cx="11" cy="62" r="2"/></svg>';
+    return '<span class="ns-dream-scene is-'+(phones?'phones':scene.theme)+'">'+cloud+object+prop+'</span>';
   }
   function refreshBedDream(el){
     var cloud=el.querySelector('.ns-bed-dream');
@@ -1655,6 +1751,7 @@
     var html=dreamContents(el.getAttribute('data-worker')||'');
     if(cloud.__dreamHtml===html)return;
     cloud.innerHTML=html;cloud.__dreamHtml=html;
+    if(typeof window.__nsObserveDream==='function') window.__nsObserveDream(cloud);
   }
   window.nsRefreshDreams=function(){
     if(document.hidden || window.__nsOverlayOpen!==true)return;
@@ -1865,11 +1962,14 @@
       naturalH=Math.max(naturalH,rect.bottom-bounds.top);
       naturalW=Math.max(naturalW,rect.right-bounds.left);
     });
-    var scale=Math.min(1,availableH/Math.max(1,naturalH),availableW/Math.max(1,naturalW));
+    // Mobile already stacks the sections in a scrollable panel. Fitting that
+    // tall column to screen height shrinks every control and history row.
+    var scrollable=document.documentElement.classList.contains('mk-mobile-shell');
+    var scale=Math.min(1,scrollable?1:availableH/Math.max(1,naturalH),availableW/Math.max(1,naturalW));
     var offset=Math.max(0,(availableW-naturalW*scale)/2);
     canvas.style.transform='translateX('+offset+'px) scale('+scale+')';
     panel.style.height=Math.ceil(naturalH*scale+paddingY+12)+'px';
-    panel.scrollTop=0;
+    if(!scrollable) panel.scrollTop=0;
     panel.scrollLeft=0;
     document.documentElement.style.setProperty('--ns-scene-scale',String(scale));
     var perch=canvas.querySelector('.ns-bedcare-perch');
@@ -2869,6 +2969,8 @@
     st=next;
     if(nextKey===_nsLastRenderKey && panel && panel.querySelector('.ns-panel-head')){
       scheduleFitRoomBlocks(panel);
+      // Reopening reuses the panel DOM; still retry expired/failed history.
+      nsRenderStats(st.sl);
       bedCareFetch().then(bedCareRenderPerch);
       refreshFlowLiveMarker();
       publishPlan();
@@ -2890,6 +2992,12 @@
   function init(){
     if(!window.__grafiksStore){setTimeout(init,500);return;}
     startRoomPolling();
+    // Roster/auth are ready now; warm history before the night panel is opened.
+    // This does not wait on, modify, or delay the application loader.
+    if(window.requestIdleCallback) window.requestIdleCallback(nsWarmStats,{timeout:2000});
+    else setTimeout(nsWarmStats,0);
+    document.addEventListener('minka:auth-ok',nsWarmStats);
+    document.addEventListener('visibilitychange',nsWarmStats);
     window.addEventListener('daySelected',function(){setTimeout(update,200);});
     setTimeout(update,600);setTimeout(update,1500);
     document.addEventListener('visibilitychange',refreshFlowLiveMarker);

@@ -1490,17 +1490,43 @@ html.mk-low-spec #nsOverlay.open #nsPanel .pkt-cat.pkt-awake .pkt-eyes { animati
   opacity: .48;
 }
 
-/* A static thought cloud reuses the selected decoration, with no animation loop. */
+/* Tiny Fluent dream scenes. Their frame strips pause outside the visible room. */
 #nsPanel .ns-bed-dream {
   position: absolute; left: 86%; top: -24%; width: 76%; aspect-ratio: 80 / 64;
   z-index: 15; pointer-events: none; user-select: none;
 }
 #nsPanel .ns-room-bed.is-right-bottom .ns-bed-dream { left: auto; right: 80%; }
-#nsPanel .ns-room-bed.is-right-bottom .ns-dream-cloud { transform: scaleX(-1); }
-#nsPanel .ns-dream-cloud { display: block; width: 100%; height: 100%; overflow: visible; fill: #dce9ee; fill-opacity: .93; stroke: #91adbc; stroke-width: 1; }
-#nsPanel .ns-dream-object { position: absolute; inset: 13% 20% 25%; display: flex; align-items: center; justify-content: center; }
-#nsPanel .ns-dream-object img { display: block; width: 100%; height: 100%; object-fit: contain; filter: none; }
-#nsPanel .ns-dream-default { font-size: 24px; line-height: 1; }
+#nsPanel .ns-dream-scene {
+  position: absolute; inset: 0;
+}
+#nsPanel .ns-dream-cloud {
+  display: block; width: 100%; height: 100%; overflow: visible;
+  fill: #dce9ee; fill-opacity: .93; stroke: #91adbc; stroke-width: 1;
+}
+#nsPanel .is-right-bottom .ns-dream-cloud { transform: scaleX(-1); }
+#nsPanel .ns-dream-sprite {
+  position: absolute; left: 14%; bottom: 24%; width: 48%; aspect-ratio: 1;
+  overflow: hidden; contain: layout paint; font-size: 20px;
+}
+#nsPanel .ns-dream-fallback, #nsPanel .ns-dream-prop {
+  font-family: 'Fluent Emoji Gaps','Fluent Emoji Color','Apple Color Emoji','Segoe UI Emoji',sans-serif;
+  line-height: 1; display: flex; align-items: center; justify-content: center;
+}
+#nsPanel .ns-dream-fallback { position: absolute; inset: 0; }
+#nsPanel .ns-dream-prop { position: absolute; right: 13%; top: 22%; font-size: 13px; }
+/* The Fluent black cat faces left: keep the butterfly by its face, not tail. */
+#nsPanel .ns-dream-scene.is-garden .ns-dream-sprite { left: 33%; }
+#nsPanel .ns-dream-scene.is-garden .ns-dream-prop { left: 13%; right: auto; top: 32%; font-size: 11px; }
+#nsPanel .ns-dream-film {
+  position: absolute; left: 0; top: 0; display: block; width: 100%; height: auto; max-width: none;
+  visibility: hidden;
+  animation: ns-dream-frames var(--dream-duration) steps(var(--dream-frames)) infinite !important;
+  animation-delay: var(--dream-phase) !important; animation-play-state: paused !important;
+}
+#nsPanel .ns-dream-sprite.is-ready .ns-dream-film { visibility: visible; }
+#nsPanel .ns-dream-sprite.is-ready .ns-dream-fallback { visibility: hidden; }
+html.ns-motion-active #nsPanel .ns-bed-dream.is-in-view .ns-dream-film { animation-play-state: running !important; }
+@keyframes ns-dream-frames { to { transform: translateY(-100%); } }
 
 /* Fluent-inspired static material: no backdrop sampling or animated filters. */
 #nsPanel .ns-stats-box {
@@ -1665,4 +1691,28 @@ html.mk-low-spec #nsOverlay.open #nsPanel .pkt-cat.pkt-awake .pkt-eyes { animati
 #nsPanel .ns-stat-emoji { flex: 0 0 auto; font-size: 16px; line-height: 1.2; font-family: "Fluent Emoji Gaps", "Fluent Emoji Color", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important; }
 
 #nsPanel .ns-dream-phones { display:grid; grid-template-columns:repeat(2,12px); gap:2px 4px; transform:rotate(-12deg) scale(.72); }
+#nsPanel .ns-dream-scene .ns-dream-phones { position:absolute; right:10%; top:18%; transform:rotate(8deg) scale(.5); transform-origin:top right; }
 #nsPanel .ns-dream-phones .ns-room-device { position:relative !important; width:12px !important; height:22px !important; margin:0 !important; }
+
+/* The mobile panel scrolls at readable size; keep its controls inside it. */
+:root.mk-mobile-shell #nsPanel .ns-panel-head {
+  flex-wrap: wrap !important;
+}
+:root.mk-mobile-shell #nsPanel .ns-panel-controls {
+  flex-wrap: nowrap !important;
+}
+:root.mk-mobile-shell #nsPanel .ns-mode-group {
+  flex-basis: 100%;
+  margin-left: 0 !important;
+}
+@media (max-width: 360px) {
+  :root.mk-mobile-shell #nsPanel .ns-stats-head,
+  :root.mk-mobile-shell #nsPanel .ns-stat-row {
+    grid-template-columns: 36px minmax(40px, 1fr) 78px 66px !important;
+    gap: 4px !important;
+  }
+  :root.mk-mobile-shell #nsPanel .ns-stat-part {
+    width: 36px !important;
+    min-width: 0 !important;
+  }
+}

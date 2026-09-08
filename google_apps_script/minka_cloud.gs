@@ -64,13 +64,9 @@ function doGet(e) {
     var roomRaw = String(data[j][0]).toLowerCase().trim();
     var room = roomRaw.indexOf('ge') !== -1 ? 'ge' : roomRaw.indexOf('philips') !== -1 ? 'philips' : null;
     if (!room) continue;
-    var dateStr = String(data[j][1]).trim();
     var whoRead = String(data[j][2] || 'Anonīms').trim();
-    if (!dateStr) continue;
-    var dp = dateStr.split(' ');
-    var dd = (dp[0] || '').split('.');
-    var tt = (dp[1] || '0:0').split(':');
-    var ts = new Date(Number(dd[2]), Number(dd[1]) - 1, Number(dd[0]), Number(tt[0]), Number(tt[1])).getTime();
+    // Sheets can return a Date object for a formatted date/time cell.
+    var ts = parseBolusTs_(data[j][1]);
     if (ts > 0) {
       result[room].history.push({ ts: ts, name: whoRead, media: bolusMediaFromRow_(data[j]) });
       if (!result[room].changedAt || ts > result[room].changedAt) result[room].changedAt = ts;

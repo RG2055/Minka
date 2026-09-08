@@ -19,7 +19,7 @@ function setup() {
   const scripts = [];
   const calls = { open:0, close:0, pause:0, minimize:0 };
   const document = { getElementById: node, body:node('body'), createElement:()=>node('script'+scripts.length), head:{ appendChild:s=>scripts.push(s) } };
-  const window = { __minimizeMusicPanel(){calls.minimize++;}, syncShellLayout(){}, openLacMini(){calls.open++;}, __hideLacMiniForRadio(){calls.close++;}, __mkPauseRadioForLacitis(){calls.pause++;} };
+  const window = { matchMedia:()=>({matches:false,addEventListener(){}}), __minimizeMusicPanel(){calls.minimize++;}, syncShellLayout(){}, openLacMini(){calls.open++;}, __hideLacMiniForRadio(){calls.close++;}, __mkPauseRadioForLacitis(){calls.pause++;} };
   vm.runInNewContext(source, {document,window});
   return {window,document,scripts,calls,node};
 }

@@ -145,7 +145,8 @@
       // do not yet carry the sizing signature.
       const needsSizing = Array.from(container.querySelectorAll('.cards-subgrid'))
         .some(grid => !grid.dataset.mkSizeSignature);
-      if (needsSizing) requestAnimationFrame(autoSizeCards);
+      // rAF supplies a timestamp, not the optional container-width hint.
+      if (needsSizing) requestAnimationFrame(() => autoSizeCards());
       requestAnimationFrame(applyStaffAccents);
     });
     mo.observe(container, { childList: true, subtree: false });
@@ -199,7 +200,7 @@
 
     document.querySelectorAll('.card').forEach((card) => {
       const name = card.getAttribute('data-worker') || '';
-      const accent = staffPalette(card.classList.contains('card-rd') ? 'rd' : 'rg');
+      const accent = card.classList.contains('card-rd') ? rdAccent : rgAccent;
       card.style.setProperty('--staff-accent', accent);
       card.classList.toggle('is-active-duty', activeNames.has(name));
     });

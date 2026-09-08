@@ -1,0 +1,11 @@
+{
+  "package": "driver.js",
+  "version": "1.8.0",
+  "repository": {
+    "url": "git+https://github.com/nilbuild/driver.js.git",
+    "type": "git",
+    "directory": "packages/driver"
+  },
+  "tarball": "https://registry.npmjs.org/driver.js/-/driver.js-1.8.0.tgz",
+  "integrity": "sha512-+8/IO7h1v14IzWh2GP60N7T3PFZweXwdn5e5POuxRSBoCYUojsBxzqawPeXh3YZIibRy7EehYNEyxe7slwwtdg=="
+}
