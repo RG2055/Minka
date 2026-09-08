@@ -125,7 +125,12 @@
   if(!loaded){status('Vispirms jāielādē profils.');return false;}
   saveLocalLook(op);queue.push(op);radio=applyOperation(radio,op);persistQueue();emit();void flush();return true;
  }
- function applyLook(){if(window.rgTheme)window.rgTheme.applyProfile(radio.settings);}
+ function applyLook(){
+  if(!window.rgTheme)return;
+  window.rgTheme.applyProfile(radio.settings);
+  const imageCrops=window.rgTheme.snapshot()?.imageCrops;
+  if(!radio.settings.imageCrops&&imageCrops&&Object.keys(imageCrops).length)change({type:'settings',settings:{imageCrops}});
+ }
  function recoveryNotice(code){if(!code)return;$('mediaRecoveryCode').textContent=code.match(/.{1,4}/g).join('-');$('mediaRecoveryNotice').hidden=false;}
  let favoriteStartGeneration=0;
  function startProfileFavorite(){

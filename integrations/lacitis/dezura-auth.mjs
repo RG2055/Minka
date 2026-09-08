@@ -45,6 +45,9 @@ export function cleanRadio(data={}){
  const s=data.settings||{};
  if(s.layout==='classic'||s.layout==='clean')out.settings.layout=s.layout;
  if(['auto','on','off'].includes(s.vizFrame))out.settings.vizFrame=s.vizFrame;
+ if(s.imageCrops&&typeof s.imageCrops==='object'&&!Array.isArray(s.imageCrops)){
+  out.settings.imageCrops=Object.fromEntries(Object.entries(s.imageCrops).filter(([key,crop])=>key.startsWith('kalendars/')&&key.length<=500&&crop&&[crop.x,crop.y,crop.zoom].every(Number.isFinite)).slice(-32).map(([key,crop])=>[key,{x:Math.max(-.75,Math.min(.75,crop.x)),y:Math.max(-2,Math.min(2,crop.y)),zoom:Math.max(.6,Math.min(2,crop.zoom))}]));
+ }
  for(const k of ['theme','accentMode','accent','text','background','position','viz','eq','cardName','cardAccent'])if(typeof s[k]==='string'&&s[k].length<=1600)out.settings[k]=s[k];
  for(const k of ['darkness','tint','glass','glow'])if(Number.isFinite(s[k]))out.settings[k]=Math.max(0,Math.min(100,s[k]));
  return out;

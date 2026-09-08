@@ -61,17 +61,23 @@ test('device image framing keeps cover defaults and scales exactly with the prev
  assert.equal(h.c.imageGeometry(1000,200,1800,600,null,'top').top,0);
  assert.ok(Math.abs(h.c.imageGeometry(1000,200,1800,600,null,'bottom').top+1000/3-200)<1e-8);
 });
-test('image framing drafts are isolated by profile and background and excluded from shared settings',()=>{
- const h=boot(),c=h.c;let owner='alpha';c.window.__mkUnifiedMedia={getSession:()=>({workerId:owner})};
- vm.runInContext("imageSource='photo-a';imageCropDraft={...imageCrops};paintImagePosition=()=>{};",c);
- c.changeImageCrop({x:.2,y:-.4,zoom:1.2});const key=c.imageCropKey();
- assert.equal(vm.runInContext('imageCrops[imageCropKey()]',c),undefined,'draft not yet saved');
- assert.equal(vm.runInContext('imageCropDraft[imageCropKey()].zoom',c),1.2);
- owner='beta';assert.notEqual(c.imageCropKey(),key);assert.equal(vm.runInContext('imageCropDraft[imageCropKey()]',c),undefined);
- owner='alpha';vm.runInContext("imageSource='photo-b'",c);assert.equal(vm.runInContext('imageCropDraft[imageCropKey()]',c),undefined);
- vm.runInContext("imageSource='photo-a';imageCropDraft=null",c);assert.equal(vm.runInContext('imageCrops[imageCropKey()]',c),undefined,'cancel discards draft');
- assert.ok(!('zoom' in h.snapshot())&&!('x' in h.snapshot())&&!('y' in h.snapshot()));
+test('image framing travels with profile settings and uses origin-independent image keys',()=>{
+ const h=boot(),c=h.c,key='kalendars/data/radio-skins/marble-bust.webp';
+ assert.equal(c.stableImageKey('http://localhost:8001/'+key),key);
+ assert.equal(c.stableImageKey('https://example.test/Minka/'+key),key);
+ vm.runInContext("imageSource='http://localhost:8001/kalendars/data/radio-skins/marble-bust.webp';imageCropDraft={...appearance.imageCrops};paintImagePosition=()=>{};",c);
+ c.changeImageCrop({x:.2,y:-.4,zoom:1.2});
+ assert.deepEqual(Object.keys(h.snapshot().imageCrops),[],'draft not saved until Apply');
+ const crops=vm.runInContext('cleanImageCrops(imageCropDraft)',c);
+ h.apply({...personal,imageCrops:crops});
+ const saved=JSON.parse(JSON.stringify(h.snapshot()));
+ const otherDevice=boot();otherDevice.apply(saved);assert.equal(otherDevice.snapshot().imageCrops[key].zoom,1.2);
+ otherDevice.apply({...personal,cardName:'Another Test',imageCrops:{}});assert.equal(otherDevice.snapshot().imageCrops[key],undefined);
  assert.equal(c.cleanImageCrop({x:NaN,y:0,zoom:1}),null);
- h.storage.setItem('rg_radio_image_crop_v1',JSON.stringify({[key]:{x:.2,y:-.4,zoom:1.2}}));
- assert.equal(boot(h.storage).c.readImageCrops()[key].zoom,1.2);
+});
+test('old device framing migration belongs only to its original profile',()=>{
+ const h=boot(),key='kalendars/data/radio-skins/marble-bust.webp';
+ h.storage.setItem('rg_radio_image_crop_v1',JSON.stringify({[JSON.stringify(['alpha','https://example.test/Minka/'+key])]:{x:.2,y:-.4,zoom:1.2}}));
+ assert.equal(h.c.legacyImageCrops('alpha')[key].zoom,1.2);
+ assert.deepEqual(Object.keys(h.c.legacyImageCrops('beta')),[]);
 });

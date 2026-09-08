@@ -3885,7 +3885,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
 
   function openPanel(){
     lookBefore=lookSnapshot();
-    imageCropDraft={...imageCrops};
+    imageCropDraft={...appearance.imageCrops};
     buildLookControls();
     syncLookControls();
     panel.classList.add('open');
@@ -3901,7 +3901,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     panel.setAttribute('aria-hidden','true');
   }
 
-  // Image framing belongs to this browser and profile, never to shared appearance settings.
+  // Image framing is part of the shared profile. Read the old device store only for migration.
   const IMAGE_CROP_KEY='rg_radio_image_crop_v1';
   function cleanImageCrop(value){
     if(!value||![value.x,value.y,value.zoom].every(Number.isFinite))return null;
@@ -3910,9 +3910,20 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
   function readImageCrops(){
     try{const data=JSON.parse(localStorage.getItem(IMAGE_CROP_KEY)||'{}');return Object.fromEntries(Object.entries(data).slice(-100).filter(([key,value])=>key.length<2000&&cleanImageCrop(value)).map(([key,value])=>[key,cleanImageCrop(value)]));}catch(_){return {};}
   }
-  let imageCrops=readImageCrops(),imageCropDraft=null,imageDrag=null,imageSource='',imageMetrics=null,imageLoading='';
+  function stableImageKey(source){
+    try{const url=new URL(source,document.baseURI),start=url.pathname.indexOf('/kalendars/');return start<0?'':url.pathname.slice(start+1);}catch(_){return '';}
+  }
+  function cleanImageCrops(value){
+    if(!value||typeof value!=='object'||Array.isArray(value))return {};
+    return Object.fromEntries(Object.entries(value).filter(([key,crop])=>key.startsWith('kalendars/')&&key.length<=500&&cleanImageCrop(crop)).slice(-32).map(([key,crop])=>[key,cleanImageCrop(crop)]));
+  }
+  function legacyImageCrops(owner){
+    const result={};for(const [key,crop] of Object.entries(readImageCrops())){try{const [person,source]=JSON.parse(key),image=stableImageKey(source);if(person===owner&&image)result[image]=crop;}catch(_){}}
+    return cleanImageCrops(result);
+  }
+  let imageCropDraft=null,imageDrag=null,imageSource='',imageMetrics=null,imageLoading='';
   const imageSizes=new Map();
-  function imageCropKey(){return JSON.stringify([window.__mkUnifiedMedia?.getSession()?.workerId||'guest',imageSource]);}
+  function imageCropKey(){return stableImageKey(imageSource);}
   function imageGeometry(width,height,naturalWidth,naturalHeight,crop,position='center'){
     const scale=Math.max(width/naturalWidth,height/naturalHeight),zoom=crop?.zoom||1;
     const w=naturalWidth*scale*zoom,h=naturalHeight*scale*zoom;
@@ -3924,7 +3935,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
   function currentImageCrop(){
     const rw=document.getElementById('radioWindow'),r=rw?.getBoundingClientRect?.();
     if(!r?.width||!r.height||!imageMetrics)return null;
-    return imageGeometry(r.width,r.height,imageMetrics.width,imageMetrics.height,(imageCropDraft||imageCrops)[imageCropKey()],appearance.position);
+    return imageGeometry(r.width,r.height,imageMetrics.width,imageMetrics.height,(imageCropDraft||appearance.imageCrops)[imageCropKey()],appearance.position);
   }
   function paintImagePosition(){
     const rw=document.getElementById('radioWindow'),preview=document.getElementById('radioLookPreview'),tools=document.getElementById('radioImageTools');
@@ -3934,7 +3945,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     const slider=document.getElementById('radioImageZoom'),reset=document.getElementById('radioImageReset'),hint=document.getElementById('radioImageHint');
     if(slider){slider.disabled=!geometry;slider.value=Math.round((geometry?.zoom||1)*100);document.getElementById('radioImageZoomValue').textContent=slider.value+'%';}
     if(reset)reset.disabled=!geometry;
-    if(hint)hint.textContent=geometry?'Velc attēlu priekšskatījumā. Saglabājas tikai šajā ierīcē.':'Ielādē attēlu…';
+    if(hint)hint.textContent=geometry?(window.__mkUnifiedMedia?.getSession()?'Velc attēlu priekšskatījumā. Saglabājas tavā profilā visās ierīcēs.':'Velc attēlu priekšskatījumā. Ielogojies, lai saglabātu visās ierīcēs.'):'Ielādē attēlu…';
     if(!geometry||!rw)return;
     const r=rw.getBoundingClientRect();
     for(const el of [rw,preview]){
@@ -3987,8 +3998,9 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
   }
 
   const LOOK_KEY='rg_radio_appearance_v1';
-  const LOOK_DEFAULTS={darkness:64,tint:28,glass:24,glow:45,layout:'classic',vizFrame:'auto',position:'center',text:'#f3f7f5',background:'',cardName:''};
+  const LOOK_DEFAULTS={darkness:64,tint:28,glass:24,glow:45,layout:'classic',vizFrame:'auto',position:'center',text:'#f3f7f5',background:'',cardName:'',imageCrops:{}};
   let appearance;try{appearance={...LOOK_DEFAULTS,...JSON.parse(localStorage.getItem(LOOK_KEY)||'{}')};}catch(_){appearance={...LOOK_DEFAULTS};}
+  appearance.imageCrops=cleanImageCrops(appearance.imageCrops);
   let lookBefore=null,albumColor='#53c9e8',applyingProfile=false;
   const safeColor=(value,fallback='#f3f7f5')=>/^#[\da-f]{6}$/i.test(value||'')?value:fallback;
   function safeBackground(value){
@@ -4045,7 +4057,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
   }
   function applyLookSettings(data={}){
     applyingProfile=true;
-    appearance={...LOOK_DEFAULTS,...data,background:safeBackground(data.background)};
+    appearance={...LOOK_DEFAULTS,...data,background:safeBackground(data.background),imageCrops:cleanImageCrops(data.imageCrops)};
     appearance.layout=data.layout==='clean'?'clean':'classic';
     appearance.vizFrame=['on','off'].includes(data.vizFrame)?data.vizFrame:'auto';
     for(const key of ['darkness','tint','glass','glow'])appearance[key]=clamp(Number(appearance[key])||0,0,100);
@@ -4088,7 +4100,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
       <button type="button" id="radioUseCard">Kā mana kartīte</button><p id="radioLookNote" role="status">Fons paliek tavs. Albuma režīmā krāsa mainās līdzi mūzikai.</p>
       <fieldset class="radio-layout-choices"><legend>Izkārtojums</legend><div class="radio-viz-families"><button type="button" data-radio-layout-choice="classic" aria-pressed="true">Pašreizējais</button><button type="button" data-radio-layout-choice="clean" aria-pressed="false">Jauns izkārtojums</button></div><p class="radio-viz-family-note">Jaunajā izkārtojumā pogas ir pa kreisi un spektrs pa labi.</p></fieldset>
       <div id="radioLookPreview" role="group" aria-label="Fona attēla novietojums. Velc attēlu vai lieto bulttaustiņus." aria-describedby="radioImageHint"><div class="radio-preview-copy"><strong class="radio-preview-station">Radio</strong><span>Tava mūzika</span></div><div class="radio-preview-toolbar" aria-hidden="true">◉ &nbsp; RADIO &nbsp; MŪZIKA</div><div class="radio-preview-buttons" aria-hidden="true">▣ &nbsp; ♫ &nbsp; ◀ &nbsp; <b>▶</b> &nbsp; ▶ &nbsp; ━━</div><div class="radio-viz-sample"><img id="radioLookVizImage" width="600" height="80" decoding="async" alt="Izvēlētās vizualizācijas momentuzņēmums"></div></div>
-      <div id="radioImageTools" class="radio-image-tools" hidden><p id="radioImageHint">Velc attēlu priekšskatījumā. Saglabājas tikai šajā ierīcē.</p><div><label for="radioImageZoom">Attēla izmērs</label><input id="radioImageZoom" type="range" min="60" max="200" step="1" value="100"><output id="radioImageZoomValue" for="radioImageZoom">100%</output><button type="button" id="radioImageReset">Atiestatīt</button></div></div>
+      <div id="radioImageTools" class="radio-image-tools" hidden><p id="radioImageHint">Velc attēlu priekšskatījumā.</p><div><label for="radioImageZoom">Attēla izmērs</label><input id="radioImageZoom" type="range" min="60" max="200" step="1" value="100"><output id="radioImageZoomValue" for="radioImageZoom">100%</output><button type="button" id="radioImageReset">Atiestatīt</button></div></div>
       <fieldset class="radio-viz-choices"><legend>Vizualizācija</legend><div class="radio-viz-families"><button type="button" data-viz-family="new">Jaunais skats</button><button type="button" data-viz-family="classic">Classic</button></div><p class="radio-viz-family-note"></p><div class="radio-viz-grid">${[...VIZ_MODES.filter(m=>m.idx!==MK_NO_VIZ),getVizMode(MK_NO_VIZ)].map(m=>`<button type="button" data-viz-choice="${m.idx}" aria-pressed="false">${vizPreview(m.idx)}<span>${m.label}</span></button>`).join('')}</div></fieldset>
       <fieldset class="radio-layout-choices"><legend>Spektra logs</legend><div class="radio-viz-families"><button type="button" data-viz-frame-choice="off">Bez loga</button><button type="button" data-viz-frame-choice="on">Ar logu</button></div></fieldset>
       <div class="radio-clean-actions"><button type="button" id="radioEffectsOff">Izslēgt visus efektus</button><button type="button" id="radioBackgroundOff">Bez fona attēla</button></div>
@@ -4146,10 +4158,10 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     document.getElementById('radioLookReset').onclick=()=>{setVizStyle(MK_DEFAULT_VIZ);applyLookSettings({});syncLookControls();};
     document.getElementById('radioLookCancel').onclick=()=>closePanel();
     document.getElementById('radioLookApply').onclick=()=>{
-      localStorage.setItem(LOOK_KEY,JSON.stringify(appearance));
-      const data=lookSnapshot();
+      const data={...lookSnapshot(),imageCrops:cleanImageCrops(imageCropDraft||appearance.imageCrops)};
       if(window.__mkUnifiedMedia?.getSession()&&!window.__mkUnifiedMedia.change({type:'settings',settings:data}))return;
-      if(imageCropDraft){try{localStorage.setItem(IMAGE_CROP_KEY,JSON.stringify(imageCropDraft));imageCrops=imageCropDraft;}catch(_){document.getElementById('radioImageHint').textContent='Pārlūks nevar saglabāt attēla novietojumu.';return;}}
+      appearance.imageCrops=data.imageCrops;
+      localStorage.setItem(LOOK_KEY,JSON.stringify(appearance));
       lookBefore=null;closePanel();
     };
   }
@@ -4170,7 +4182,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     syncCardChoice();const data=lookSnapshot();panel.querySelectorAll('[data-look]').forEach(e=>{e.value=data[e.dataset.look]??LOOK_DEFAULTS[e.dataset.look]??'0';});paintAppearance();
   }
   const closeProfileLook=()=>{lookBefore=null;imageCropDraft=null;imageDrag=null;panel.classList.remove('open');panel.setAttribute('aria-hidden','true');};
-  window.rgTheme={snapshot:lookSnapshot,captureGuest:captureGuestLook,restoreGuest:data=>{closeProfileLook();restoreGuestLook(data);},applyProfile:data=>{closeProfileLook();applyLookSettings(data);}};
+  window.rgTheme={snapshot:lookSnapshot,captureGuest:captureGuestLook,restoreGuest:data=>{closeProfileLook();restoreGuestLook(data);},applyProfile:data=>{closeProfileLook();applyLookSettings({...data,imageCrops:data.imageCrops??legacyImageCrops(window.__mkUnifiedMedia?.getSession()?.workerId)});}};
   document.getElementById('eqRow')?.addEventListener('click',e=>{if(e.target.closest('button')&&window.__mkUnifiedMedia?.getSession())window.__mkUnifiedMedia.change({type:'settings',settings:{eq:window.__eqMode||'none'}});});
 
   // init

@@ -98,3 +98,24 @@ test('spectrum frame setting persists and invalid values cannot overwrite it',()
  data=radioOperation(data,{type:'settings',settings:{vizFrame:'invalid'}});assert.equal(data.settings.vizFrame,'off');assert.equal(data.settings.layout,'clean');
  data=radioOperation(data,{type:'settings',settings:{vizFrame:'on'}});assert.equal(data.settings.vizFrame,'on');
 });
+test('image crop coordinates persist through the profile API and stay account scoped',async()=>{
+ const h=harness();try{
+  const a=await create(h),auth={sessionToken:a.session.sessionToken},key='kalendars/data/radio-skins/marble-bust.webp';
+  const imageCrops={[key]:{x:.2,y:-.4,zoom:.85}};
+  assert.equal((await h.call('radio/change',{...auth,operation:{type:'settings',settings:{imageCrops}}})).status,200);
+  await h.call('radio/change',{...auth,operation:{type:'favorite-add',id:'record:test'}});
+  assert.deepEqual((await h.call('radio/load',auth)).data.settings.imageCrops,imageCrops);
+  const b=await create(h,'Beta Test');assert.equal((await h.call('radio/load',{sessionToken:b.session.sessionToken,workerId:a.session.workerId})).data.settings.imageCrops,undefined);
+  const second=await h.call('login',{name:'Alpha Test',pin:'123456'});assert.deepEqual((await h.call('radio/load',{sessionToken:second.session.sessionToken})).data.settings.imageCrops,imageCrops);
+  await h.call('radio/change',{...auth,operation:{type:'reset-look'}});
+  assert.equal((await h.call('radio/load',auth)).data.settings.imageCrops,undefined);
+ }finally{h.close();}
+});
+test('image crop payloads reject malformed entries and bound storage and geometry',()=>{
+ const imageCrops=Object.fromEntries(Array.from({length:100},(_,i)=>['kalendars/'+i,{x:99,y:-99,zoom:99}]));
+ imageCrops.bad={x:0,y:0,zoom:1};imageCrops['kalendars/invalid']={x:NaN,y:0,zoom:1};
+ const settings=radioOperation({}, {type:'settings',settings:{imageCrops}}).settings;
+ assert.equal(Object.keys(settings.imageCrops).length,32);
+ assert.deepEqual(Object.values(settings.imageCrops)[0],{x:.75,y:-2,zoom:2});
+ assert.deepEqual(radioOperation({}, {type:'settings',settings:{imageCrops:[]}}).settings,{});
+});

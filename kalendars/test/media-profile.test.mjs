@@ -130,3 +130,12 @@ test('local preview restores unsupported layout fields per account after server 
  again.api.change({type:'settings',settings:{eq:'chill'}});await tick();assert.equal(again.api.getRadio().settings.vizFrame,'off');
  again.api.change({type:'reset-look'});await tick();assert.equal(storage.getItem('minka:media-local-look:alpha'),null);
 });
+test('migrated image framing is queued once into the authenticated shared profile',async()=>{
+ const imageCrops={'kalendars/data/radio-skins/marble-bust.webp':{x:.1,y:-.2,zoom:.8}};
+ const h=harness({restored:false,fetchHandler:(path,data)=>path==='radio/change'?{data:{favorites:[],settings:{imageCrops:data.operation.settings.imageCrops}}}:undefined});
+ h.c.window.rgTheme.snapshot=()=>({imageCrops});
+ await h.signIn();await tick();
+ const saves=h.requests.filter(r=>r.path==='radio/change');assert.equal(saves.length,1);
+ assert.deepEqual(JSON.parse(JSON.stringify(saves[0].data.operation.settings.imageCrops)),imageCrops);
+ assert.deepEqual(JSON.parse(JSON.stringify(h.api.getRadio().settings.imageCrops)),imageCrops);
+});
