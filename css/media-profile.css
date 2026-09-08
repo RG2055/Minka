@@ -257,3 +257,17 @@ html body #radioWindow .brand-text[hidden]{display:none!important}
 html body #radioWindow[data-radio-layout="classic"] .header-row{justify-content:flex-start}
 html body #radioWindow .branding{flex-direction:row!important;justify-content:flex-start!important}
 html body #radioWindow .branding #themeBtn{order:-1}
+
+/* Direct image framing; the preview and player share the same crop geometry. */
+#radioLookPreview.is-positionable{cursor:grab;touch-action:none;user-select:none}
+#radioLookPreview.is-positionable>*{pointer-events:none}
+#radioLookPreview.is-positionable.is-dragging{cursor:grabbing}
+#radioLookPreview.is-positionable:focus-visible{outline:2px solid #b9ddcf;outline-offset:3px}
+#radioLookControls .radio-image-tools{margin:-5px 0 16px}
+#radioLookControls .radio-image-tools[hidden]{display:none!important}
+#radioLookControls .radio-image-tools p{font-size:11px;color:#b2c5bd;margin:0 0 8px}
+#radioLookControls .radio-image-tools>div{display:flex;align-items:center;gap:10px}
+#radioLookControls .radio-image-tools label{margin:0;font-size:12px;white-space:nowrap}
+#radioLookControls .radio-image-tools input{flex:1;min-width:45px;max-width:none;accent-color:#a7dacb}
+#radioLookControls .radio-image-tools output{font-size:11px;min-width:34px;text-align:right;font-variant-numeric:tabular-nums}
+#radioLookControls .radio-image-tools button{font-size:11px;padding:6px 9px}

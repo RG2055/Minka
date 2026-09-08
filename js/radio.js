@@ -3885,18 +3885,105 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
 
   function openPanel(){
     lookBefore=lookSnapshot();
+    imageCropDraft={...imageCrops};
     buildLookControls();
     syncLookControls();
     panel.classList.add('open');
     panel.setAttribute('aria-hidden','false');
     renderList();
     setAccentModeActive(getSaved().accentMode);
-    requestAnimationFrame(()=>{positionPanel();syncLayoutPreview();});
+    requestAnimationFrame(()=>{positionPanel();syncLayoutPreview();paintImagePosition();});
   }
   function closePanel(){
+    imageCropDraft=null;imageDrag=null;
     if(lookBefore){const previous=lookBefore;lookBefore=null;applyLookSettings(previous);}
     panel.classList.remove('open');
     panel.setAttribute('aria-hidden','true');
+  }
+
+  // Image framing belongs to this browser and profile, never to shared appearance settings.
+  const IMAGE_CROP_KEY='rg_radio_image_crop_v1';
+  function cleanImageCrop(value){
+    if(!value||![value.x,value.y,value.zoom].every(Number.isFinite))return null;
+    return {x:clamp(value.x,-.75,.75),y:clamp(value.y,-2,2),zoom:clamp(value.zoom,.6,2)};
+  }
+  function readImageCrops(){
+    try{const data=JSON.parse(localStorage.getItem(IMAGE_CROP_KEY)||'{}');return Object.fromEntries(Object.entries(data).slice(-100).filter(([key,value])=>key.length<2000&&cleanImageCrop(value)).map(([key,value])=>[key,cleanImageCrop(value)]));}catch(_){return {};}
+  }
+  let imageCrops=readImageCrops(),imageCropDraft=null,imageDrag=null,imageSource='',imageMetrics=null,imageLoading='';
+  const imageSizes=new Map();
+  function imageCropKey(){return JSON.stringify([window.__mkUnifiedMedia?.getSession()?.workerId||'guest',imageSource]);}
+  function imageGeometry(width,height,naturalWidth,naturalHeight,crop,position='center'){
+    const scale=Math.max(width/naturalWidth,height/naturalHeight),zoom=crop?.zoom||1;
+    const w=naturalWidth*scale*zoom,h=naturalHeight*scale*zoom;
+    const limitX=(w/width+1)/2-Math.min(w/width,1)*.25,limitY=(h/height+1)/2-Math.min(h/height,1)*.25;
+    const x=clamp(crop?.x??(position==='left'?(w-width)/(2*width):position==='right'?(width-w)/(2*width):0),-limitX,limitX);
+    const y=clamp(crop?.y??(position==='top'?(h-height)/(2*height):position==='bottom'?(height-h)/(2*height):0),-limitY,limitY);
+    return {width:w,height:h,left:(width-w)/2+x*width,top:(height-h)/2+y*height,x,y,zoom};
+  }
+  function currentImageCrop(){
+    const rw=document.getElementById('radioWindow'),r=rw?.getBoundingClientRect?.();
+    if(!r?.width||!r.height||!imageMetrics)return null;
+    return imageGeometry(r.width,r.height,imageMetrics.width,imageMetrics.height,(imageCropDraft||imageCrops)[imageCropKey()],appearance.position);
+  }
+  function paintImagePosition(){
+    const rw=document.getElementById('radioWindow'),preview=document.getElementById('radioLookPreview'),tools=document.getElementById('radioImageTools');
+    const geometry=currentImageCrop(),enabled=!!imageSource;
+    if(tools)tools.hidden=!enabled;
+    if(preview){preview.classList.toggle('is-positionable',enabled&&!!geometry);preview.tabIndex=enabled&&geometry?0:-1;}
+    const slider=document.getElementById('radioImageZoom'),reset=document.getElementById('radioImageReset'),hint=document.getElementById('radioImageHint');
+    if(slider){slider.disabled=!geometry;slider.value=Math.round((geometry?.zoom||1)*100);document.getElementById('radioImageZoomValue').textContent=slider.value+'%';}
+    if(reset)reset.disabled=!geometry;
+    if(hint)hint.textContent=geometry?'Velc attēlu priekšskatījumā. Saglabājas tikai šajā ierīcē.':'Ielādē attēlu…';
+    if(!geometry||!rw)return;
+    const r=rw.getBoundingClientRect();
+    for(const el of [rw,preview]){
+      if(!el)continue;
+      const ratio=el===rw?1:el.getBoundingClientRect().width/r.width;if(!ratio)continue;
+      el.style.setProperty('background-size',`100% 100%,100% 100%,${geometry.width*ratio}px ${geometry.height*ratio}px`,'important');
+      el.style.setProperty('background-position',`center,center,${geometry.left*ratio}px ${geometry.top*ratio}px`,'important');
+      el.style.setProperty('background-repeat','no-repeat','important');
+      el.style.setProperty('background-color','#0a1015','important');
+    }
+  }
+  function prepareImagePosition(background){
+    const url=background.match(/^url\("([^"]+)"\)$/)?.[1]||'';
+    imageSource=url;imageMetrics=imageSizes.get(url)||null;
+    if(url&&!imageMetrics&&imageLoading!==url&&typeof Image==='function'){
+      imageLoading=url;const img=new Image();img.decoding='async';
+      img.onload=()=>{if(img.naturalWidth&&img.naturalHeight){imageSizes.set(url,{width:img.naturalWidth,height:img.naturalHeight});if(imageSizes.size>24)imageSizes.delete(imageSizes.keys().next().value);}if(imageSource===url){imageMetrics=imageSizes.get(url);paintImagePosition();}if(imageLoading===url)imageLoading='';};
+      img.onerror=()=>{if(imageLoading===url)imageLoading='';if(imageSource===url){const hint=document.getElementById('radioImageHint');if(hint)hint.textContent='Attēlu neizdevās ielādēt.';}};
+      img.src=url;
+    }
+    paintImagePosition();
+  }
+  function changeImageCrop(value){
+    if(!imageCropDraft||!imageSource)return;
+    imageCropDraft[imageCropKey()]=cleanImageCrop(value);paintImagePosition();
+  }
+  function wireImagePosition(){
+    const preview=document.getElementById('radioLookPreview'),slider=document.getElementById('radioImageZoom');
+    preview.addEventListener('pointerdown',event=>{
+      const crop=currentImageCrop();if(event.button!==0||!crop||!imageSource)return;
+      const rect=preview.getBoundingClientRect();
+      imageDrag={id:event.pointerId,key:imageCropKey(),x:event.clientX,y:event.clientY,width:rect.width,height:rect.height,crop};
+      preview.setPointerCapture(event.pointerId);preview.classList.add('is-dragging');event.preventDefault();preview.focus({preventScroll:true});
+    });
+    preview.addEventListener('pointermove',event=>{
+      if(!imageDrag||imageDrag.id!==event.pointerId||imageDrag.key!==imageCropKey())return;
+      const drag=imageDrag;
+      changeImageCrop({x:drag.crop.x+(event.clientX-drag.x)/drag.width,y:drag.crop.y+(event.clientY-drag.y)/drag.height,zoom:drag.crop.zoom});
+    });
+    const end=()=>{imageDrag=null;preview.classList.remove('is-dragging');};
+    preview.addEventListener('pointerup',end);preview.addEventListener('pointercancel',end);preview.addEventListener('lostpointercapture',end);
+    preview.addEventListener('keydown',event=>{
+      const crop=currentImageCrop();if(!crop||!imageSource)return;
+      const step=event.shiftKey?.05:.01,delta={ArrowLeft:[-step,0],ArrowRight:[step,0],ArrowUp:[0,-step],ArrowDown:[0,step]}[event.key];
+      if(!delta&&event.key!=='Home')return;event.preventDefault();
+      changeImageCrop(event.key==='Home'?{x:0,y:0,zoom:1}:{x:crop.x+delta[0],y:crop.y+delta[1],zoom:crop.zoom});
+    });
+    slider.addEventListener('input',()=>{const crop=currentImageCrop();if(crop)changeImageCrop({x:crop.x,y:crop.y,zoom:Number(slider.value)/100});});
+    document.getElementById('radioImageReset').onclick=()=>changeImageCrop({x:0,y:0,zoom:1});
   }
 
   const LOOK_KEY='rg_radio_appearance_v1';
@@ -3931,7 +4018,8 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     rw.style.setProperty('--radio-personal-text',(.2126*v[0]+.7152*v[1]+.0722*v[2])<150?'#f3f7f5':text);
     const strength=clamp(Number(appearance.glow)/100,0,1);document.documentElement.style.setProperty('--radio-glow-strength',String(strength));
     rw.style.setProperty('--radio-glow-strength',String(strength));
-    const preview=document.getElementById('radioLookPreview');if(preview){preview.style.backgroundImage=rw.style.backgroundImage;preview.style.backgroundPosition=rw.style.backgroundPosition;preview.style.color=rw.style.getPropertyValue('--radio-personal-text');preview.style.setProperty('--radio-preview-accent',color);preview.style.boxShadow=rw.style.getPropertyValue('box-shadow');renderLookPreviews();syncLayoutPreview();}
+    const preview=document.getElementById('radioLookPreview');if(preview){preview.style.backgroundImage=rw.style.backgroundImage;preview.style.setProperty('background-position',rw.style.backgroundPosition,'important');preview.style.setProperty('background-size','cover','important');preview.style.color=rw.style.getPropertyValue('--radio-personal-text');preview.style.setProperty('--radio-preview-accent',color);preview.style.boxShadow=rw.style.getPropertyValue('box-shadow');renderLookPreviews();syncLayoutPreview();}
+    prepareImagePosition(background);
     const themePanel=document.getElementById('themePanel');
     const framed=appearance.vizFrame==='on'||(appearance.vizFrame!=='off'&&!isModernViz(vizStyle));
     themePanel?.querySelectorAll('[data-viz-frame-choice]').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.vizFrameChoice==='on')===framed)));
@@ -3999,7 +4087,8 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     const box=document.createElement('section');box.id='radioLookControls';box.innerHTML=`
       <button type="button" id="radioUseCard">Kā mana kartīte</button><p id="radioLookNote" role="status">Fons paliek tavs. Albuma režīmā krāsa mainās līdzi mūzikai.</p>
       <fieldset class="radio-layout-choices"><legend>Izkārtojums</legend><div class="radio-viz-families"><button type="button" data-radio-layout-choice="classic" aria-pressed="true">Pašreizējais</button><button type="button" data-radio-layout-choice="clean" aria-pressed="false">Jauns izkārtojums</button></div><p class="radio-viz-family-note">Jaunajā izkārtojumā pogas ir pa kreisi un spektrs pa labi.</p></fieldset>
-      <div id="radioLookPreview" aria-label="Radio izkārtojuma un fona priekšskatījums"><div class="radio-preview-copy"><strong class="radio-preview-station">Radio</strong><span>Tava mūzika</span></div><div class="radio-preview-toolbar" aria-hidden="true">◉ &nbsp; RADIO &nbsp; MŪZIKA</div><div class="radio-preview-buttons" aria-hidden="true">▣ &nbsp; ♫ &nbsp; ◀ &nbsp; <b>▶</b> &nbsp; ▶ &nbsp; ━━</div><div class="radio-viz-sample"><img id="radioLookVizImage" width="600" height="80" decoding="async" alt="Izvēlētās vizualizācijas momentuzņēmums"></div></div>
+      <div id="radioLookPreview" role="group" aria-label="Fona attēla novietojums. Velc attēlu vai lieto bulttaustiņus." aria-describedby="radioImageHint"><div class="radio-preview-copy"><strong class="radio-preview-station">Radio</strong><span>Tava mūzika</span></div><div class="radio-preview-toolbar" aria-hidden="true">◉ &nbsp; RADIO &nbsp; MŪZIKA</div><div class="radio-preview-buttons" aria-hidden="true">▣ &nbsp; ♫ &nbsp; ◀ &nbsp; <b>▶</b> &nbsp; ▶ &nbsp; ━━</div><div class="radio-viz-sample"><img id="radioLookVizImage" width="600" height="80" decoding="async" alt="Izvēlētās vizualizācijas momentuzņēmums"></div></div>
+      <div id="radioImageTools" class="radio-image-tools" hidden><p id="radioImageHint">Velc attēlu priekšskatījumā. Saglabājas tikai šajā ierīcē.</p><div><label for="radioImageZoom">Attēla izmērs</label><input id="radioImageZoom" type="range" min="60" max="200" step="1" value="100"><output id="radioImageZoomValue" for="radioImageZoom">100%</output><button type="button" id="radioImageReset">Atiestatīt</button></div></div>
       <fieldset class="radio-viz-choices"><legend>Vizualizācija</legend><div class="radio-viz-families"><button type="button" data-viz-family="new">Jaunais skats</button><button type="button" data-viz-family="classic">Classic</button></div><p class="radio-viz-family-note"></p><div class="radio-viz-grid">${[...VIZ_MODES.filter(m=>m.idx!==MK_NO_VIZ),getVizMode(MK_NO_VIZ)].map(m=>`<button type="button" data-viz-choice="${m.idx}" aria-pressed="false">${vizPreview(m.idx)}<span>${m.label}</span></button>`).join('')}</div></fieldset>
       <fieldset class="radio-layout-choices"><legend>Spektra logs</legend><div class="radio-viz-families"><button type="button" data-viz-frame-choice="off">Bez loga</button><button type="button" data-viz-frame-choice="on">Ar logu</button></div></fieldset>
       <div class="radio-clean-actions"><button type="button" id="radioEffectsOff">Izslēgt visus efektus</button><button type="button" id="radioBackgroundOff">Bez fona attēla</button></div>
@@ -4008,11 +4097,10 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
        <label>Krāsas pārklājums<input type="range" min="0" max="65" data-look="tint"></label>
        <label>Stikla maliņa<input type="range" min="0" max="100" data-look="glass"></label>
        <label>Apkārtējā gaisma<input type="range" min="0" max="100" data-look="glow"></label>
-       <label>Attēla novietojums<select data-look="position"><option value="center">Vidū</option><option value="left">Pa kreisi</option><option value="right">Pa labi</option><option value="top">Augšā</option><option value="bottom">Apakšā</option></select></label>
        <label>Burtu krāsa<input type="color" data-look="text"></label>
       </details><div class="radio-look-actions"><button type="button" id="radioLookReset">Atiestatīt izskatu</button><button type="button" id="radioLookCancel">Atcelt</button><button type="button" id="radioLookApply">Lietot</button></div>`;
     panel.append(box);
-    if(typeof ResizeObserver==='function')new ResizeObserver(()=>syncLayoutPreview()).observe(document.getElementById('radioWindow'));
+    if(typeof ResizeObserver==='function')new ResizeObserver(()=>{syncLayoutPreview();paintImagePosition();}).observe(document.getElementById('radioWindow'));
     const footer=box.querySelector('.radio-look-actions');
     const scroll=document.createElement('div');scroll.className='radio-theme-scroll';
     const filters=document.createElement('div');filters.className='radio-theme-filters';filters.setAttribute('aria-label','Fonu veids');
@@ -4021,7 +4109,9 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     const displayOptions=document.createElement('div');displayOptions.className='radio-display-options';
     displayOptions.append(box.querySelector('[data-radio-layout-choice]').closest('fieldset'),box.querySelector('[data-viz-frame-choice]').closest('fieldset'));
     box.prepend(displayOptions);
-    box.querySelector('#radioLookPreview').after(filters,listEl,panel.querySelector('.theme-controls'));
+    box.querySelector('#radioImageTools').after(filters,listEl,panel.querySelector('.theme-controls'));
+    wireImagePosition();
+    if(typeof ResizeObserver==='function')new ResizeObserver(()=>paintImagePosition()).observe(box.querySelector('#radioLookPreview'));
     scroll.append(box);panel.append(scroll,footer);
     const quick=box.querySelector('#radioUseCard');quick.className='radio-card-shortcut';panel.insertBefore(quick,scroll);
     quick.innerHTML='<span class="radio-card-preview" aria-hidden="true"><span class="radio-card-emoji"></span></span><span class="radio-card-copy"><strong>Mana kartīte</strong><span class="radio-card-owner"></span><small class="radio-card-hint"></small></span><span class="radio-card-check" aria-hidden="true">✓</span>';
@@ -4059,6 +4149,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
       localStorage.setItem(LOOK_KEY,JSON.stringify(appearance));
       const data=lookSnapshot();
       if(window.__mkUnifiedMedia?.getSession()&&!window.__mkUnifiedMedia.change({type:'settings',settings:data}))return;
+      if(imageCropDraft){try{localStorage.setItem(IMAGE_CROP_KEY,JSON.stringify(imageCropDraft));imageCrops=imageCropDraft;}catch(_){document.getElementById('radioImageHint').textContent='Pārlūks nevar saglabāt attēla novietojumu.';return;}}
       lookBefore=null;closePanel();
     };
   }
@@ -4078,7 +4169,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
   function syncLookControls(){
     syncCardChoice();const data=lookSnapshot();panel.querySelectorAll('[data-look]').forEach(e=>{e.value=data[e.dataset.look]??LOOK_DEFAULTS[e.dataset.look]??'0';});paintAppearance();
   }
-  const closeProfileLook=()=>{lookBefore=null;panel.classList.remove('open');panel.setAttribute('aria-hidden','true');};
+  const closeProfileLook=()=>{lookBefore=null;imageCropDraft=null;imageDrag=null;panel.classList.remove('open');panel.setAttribute('aria-hidden','true');};
   window.rgTheme={snapshot:lookSnapshot,captureGuest:captureGuestLook,restoreGuest:data=>{closeProfileLook();restoreGuestLook(data);},applyProfile:data=>{closeProfileLook();applyLookSettings(data);}};
   document.getElementById('eqRow')?.addEventListener('click',e=>{if(e.target.closest('button')&&window.__mkUnifiedMedia?.getSession())window.__mkUnifiedMedia.change({type:'settings',settings:{eq:window.__eqMode||'none'}});});
 

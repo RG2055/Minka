@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 const code=fs.readFileSync(new URL('../../js/radio.js',import.meta.url),'utf8');
 const savedCode=code.slice(code.indexOf('  function getSaved(){'),code.indexOf('  // Remove the old purple/glass presets'));
-const appearanceCode=code.slice(code.indexOf("  const LOOK_KEY='"),code.indexOf('  function buildLookControls(){'));
+const appearanceCode=code.slice(code.indexOf("  const IMAGE_CROP_KEY='"),code.indexOf('  function buildLookControls(){'));
 const startup=code.slice(code.indexOf('  restoreGuestLook(getSaved().name'),code.indexOf("  window.dispatchEvent(new Event('rg-theme-ready'))"));
 const memory=()=>{const data=new Map();return {getItem:k=>data.get(k)||null,setItem:(k,v)=>data.set(k,String(v)),removeItem:k=>data.delete(k)};};
 function boot(storage=memory()){
@@ -43,4 +43,35 @@ test('spectrum frame choice is independent of layout and resets with the profile
  h.apply({...personal,layout:'clean',vizFrame:'on'});assert.equal(h.snapshot().vizFrame,'on');assert.equal(h.snapshot().layout,'clean');
  h.restore(guest);assert.equal(h.snapshot().vizFrame,'auto');
  h.apply({vizFrame:'off'});assert.equal(h.snapshot().vizFrame,'off');h.apply({vizFrame:'bad'});assert.equal(h.snapshot().vizFrame,'auto');
+});
+
+test('device image framing keeps cover defaults and scales exactly with the preview',()=>{
+ const h=boot();
+ for(const [width,height] of [[1470,200],[2560,200],[960,190]]){
+  const original=h.c.imageGeometry(width,height,1800,600,null);
+  assert.equal(original.width,width);assert.equal(original.height,width/3);assert.equal(original.left,0);
+  for(const zoom of [.6,1,2]){
+   const crop={x:.15,y:-.4,zoom},live=h.c.imageGeometry(width,height,1800,600,crop),ratio=600/width;
+   const preview=h.c.imageGeometry(600,height*ratio,1800,600,crop);
+   for(const key of ['width','height','left','top'])assert.ok(Math.abs(preview[key]-live[key]*ratio)<1e-8,key);
+  }
+  const edge=h.c.imageGeometry(width,height,1800,600,{x:99,y:99,zoom:.6});
+  assert.ok(edge.left<width&&edge.top<height,'drag cannot lose the entire image');
+ }
+ assert.equal(h.c.imageGeometry(1000,200,1800,600,null,'top').top,0);
+ assert.ok(Math.abs(h.c.imageGeometry(1000,200,1800,600,null,'bottom').top+1000/3-200)<1e-8);
+});
+test('image framing drafts are isolated by profile and background and excluded from shared settings',()=>{
+ const h=boot(),c=h.c;let owner='alpha';c.window.__mkUnifiedMedia={getSession:()=>({workerId:owner})};
+ vm.runInContext("imageSource='photo-a';imageCropDraft={...imageCrops};paintImagePosition=()=>{};",c);
+ c.changeImageCrop({x:.2,y:-.4,zoom:1.2});const key=c.imageCropKey();
+ assert.equal(vm.runInContext('imageCrops[imageCropKey()]',c),undefined,'draft not yet saved');
+ assert.equal(vm.runInContext('imageCropDraft[imageCropKey()].zoom',c),1.2);
+ owner='beta';assert.notEqual(c.imageCropKey(),key);assert.equal(vm.runInContext('imageCropDraft[imageCropKey()]',c),undefined);
+ owner='alpha';vm.runInContext("imageSource='photo-b'",c);assert.equal(vm.runInContext('imageCropDraft[imageCropKey()]',c),undefined);
+ vm.runInContext("imageSource='photo-a';imageCropDraft=null",c);assert.equal(vm.runInContext('imageCrops[imageCropKey()]',c),undefined,'cancel discards draft');
+ assert.ok(!('zoom' in h.snapshot())&&!('x' in h.snapshot())&&!('y' in h.snapshot()));
+ assert.equal(c.cleanImageCrop({x:NaN,y:0,zoom:1}),null);
+ h.storage.setItem('rg_radio_image_crop_v1',JSON.stringify({[key]:{x:.2,y:-.4,zoom:1.2}}));
+ assert.equal(boot(h.storage).c.readImageCrops()[key].zoom,1.2);
 });
