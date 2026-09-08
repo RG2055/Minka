@@ -49,6 +49,27 @@
   if(!map.size)for(const name of window.__lacitisTodayWorkers?.()||[])map.set(norm(name),{name,shift:'Dežūra'});
   return {date:state?.activeDateStr||state?.date||state?.dateKey||state?.day||'',workers:[...map.values()]};
  }
+ // The local preview uses the deployed API, which may not yet accept new look fields.
+ const localLookKey=id=>'minka:media-local-look:'+id;
+ function localLookSettings(value={}){
+  const out={};if(['classic','clean'].includes(value.layout))out.layout=value.layout;
+  if(['auto','on','off'].includes(value.vizFrame))out.vizFrame=value.vizFrame;
+  return out;
+ }
+ function withLocalLook(data,owner=session){
+  if(!local||!owner)return data;
+  try{const saved=localLookSettings(JSON.parse(localStorage.getItem(localLookKey(owner.workerId))||'{}'));return {...data,settings:{...saved,...data.settings}};}catch(_){return data;}
+ }
+ function saveLocalLook(op){
+  if(!local||!session)return;
+  try{
+   const key=localLookKey(session.workerId);
+   if(op.type==='reset-look'){localStorage.removeItem(key);return;}
+   if(op.type!=='settings')return;
+   const saved=localLookSettings(JSON.parse(localStorage.getItem(key)||'{}'));
+   localStorage.setItem(key,JSON.stringify({...saved,...localLookSettings(op.settings)}));
+  }catch(_){status('Pārlūks nevar saglabāt lokālo izskatu.');}
+ }
  const pendingKey=id=>'minka:media-pending:'+id;
  function persistQueue(){if(session)try{localStorage.setItem(pendingKey(session.workerId),JSON.stringify(queue));}catch(_){status('Pārlūks nevar saglabāt gaidošās izmaiņas.');}}
  async function api(path,data={},auth=session){
@@ -65,7 +86,7 @@
   trigger.replaceChildren();if(session)trigger.append(avatar(session.name));
   const label=document.createElement('span');label.textContent=session?'Radio '+pretty(session.name).split(' ')[0]:'Ielogoties';trigger.append(label);
 
-  const brand=document.querySelector('#radioWindow .brand-text');if(brand)brand.textContent=session?'RADIO '+pretty(session.name).split(' ')[0].toLocaleUpperCase('lv-LV'):'RG RADIO';
+  const brand=document.querySelector('#radioWindow .brand-text');if(brand){brand.textContent=session?'RADIO '+pretty(session.name).split(' ')[0].toLocaleUpperCase('lv-LV'):'RG RADIO';brand.hidden=!!session;}
   trigger.setAttribute('aria-description',session?'Tavs radio profils':'Saglabā savas iecienītās stacijas un radio izskatu.');
   trigger.title=session?'Atvērt profilu':'Saglabā savas iecienītās stacijas un radio izskatu.';
   document.dispatchEvent(new CustomEvent('media-profile-change',{detail:{session:session?{name:session.name,workerId:session.workerId}:null,radio}}));
@@ -89,7 +110,7 @@
     const op=queue[0];status('Saglabā…');
     const result=await api('radio/change',{operation:op},owner);
     if(gen!==generation||!checkSessionDeadline())return;
-    queue.shift();persistQueue();radio=queue.reduce(applyOperation,result.data);emit();
+    queue.shift();persistQueue();radio=queue.reduce(applyOperation,withLocalLook(result.data,owner));emit();
    }
    if(gen===generation)status('Saglabāts');
   }catch(e){
@@ -102,11 +123,18 @@
   if(session&&!checkSessionDeadline())return false;
   if(!session){open();status('Ielogojies, lai saglabātu savā profilā.');return false;}
   if(!loaded){status('Vispirms jāielādē profils.');return false;}
-  queue.push(op);radio=applyOperation(radio,op);persistQueue();emit();void flush();return true;
+  saveLocalLook(op);queue.push(op);radio=applyOperation(radio,op);persistQueue();emit();void flush();return true;
  }
  function applyLook(){if(window.rgTheme)window.rgTheme.applyProfile(radio.settings);}
  function recoveryNotice(code){if(!code)return;$('mediaRecoveryCode').textContent=code.match(/.{1,4}/g).join('-');$('mediaRecoveryNotice').hidden=false;}
- async function adopt(next){
+ let favoriteStartGeneration=0;
+ function startProfileFavorite(){
+  if(!favoriteStartGeneration||favoriteStartGeneration!==generation||!session||!loaded)return;
+  if(!radio.favorites.length){favoriteStartGeneration=0;return;}
+  if(window.rgStations?.startFavorite?.(radio.favorites))favoriteStartGeneration=0;
+ }
+ window.addEventListener('rg-stations-ready',startProfileFavorite);
+ async function adopt(next,startFavorite=false){
   next={...next,dutyEndsAt:Math.min(Number(next.dutyEndsAt)||nextDutyBoundary(),nextDutyBoundary())};
   if(Date.now()>=Math.min(next.expiresAt,next.dutyEndsAt)){sessionStorage.removeItem(KEY);void api('logout',{},next).catch(()=>{});status('Maiņa vai sesija beigusies. Ielogojies savā profilā.');return;}
   const current=roster();if(current.date&&!current.workers.some(w=>norm(w.name)===norm(next.name))){status('Izvēlies šīs dienas radiogrāferu.');return;}
@@ -118,7 +146,7 @@
   radio={favorites:[],settings:{},lastStation:''};emit();status('Ielādē profilu…');
   try{
    const result=await api('radio/load',{},next);if(gen!==generation||!checkSessionDeadline())return;
-   radio=queue.reduce(applyOperation,result.data);loaded=true;applyLook();emit();if(dialog.open)renderLogged();void flush();status(queue.length?'Gaida saglabāšanu':'Profils ielādēts');
+   radio=queue.reduce(applyOperation,withLocalLook(result.data,next));loaded=true;applyLook();emit();if(startFavorite){favoriteStartGeneration=gen;startProfileFavorite();}if(dialog.open)renderLogged();void flush();status(queue.length?'Gaida saglabāšanu':'Profils ielādēts');
   }catch(e){if(gen===generation){status(e.message);if(dialog.open)renderLogged();}}
  }
  async function logout(revoke=true){
@@ -165,7 +193,7 @@
   if(focusLabel)host.querySelectorAll('button[aria-label]').forEach(b=>{if(b.getAttribute('aria-label')===focusLabel)b.focus({preventScroll:true});});
  }
  async function renderWorkers(){
-  setHeading(null);const gen=generation;selected=null;recovering=false;const {date,workers}=roster();$('mediaDate').textContent=date?'Izvēlētā diena '+date:'Izvēlētās dienas darbinieki';
+  setHeading(null);const gen=generation;selected=null;recovering=false;const {date,workers}=roster();rosterDate=date;$('mediaDate').textContent=date?'Izvēlētā diena '+date:'Izvēlētās dienas darbinieki';
   const host=$('mediaContent');host.replaceChildren();status('Izvēlies savu vārdu. Radio var klausīties arī bez profila.');
   if(!workers.length){status('Izvēlies kalendārā dienu ar darbiniekiem.');return;}
   const grid=document.createElement('div');grid.className='media-workers';host.append(grid);
@@ -198,7 +226,7 @@
    try{
     status('Pārbauda…');const result=await api(recovering?'recover':'login',data,null);if(gen!==generation)return;
     if(recovering){recovering=false;selected.hasPin=true;renderPin();status('PIN atjaunots. Tagad ielogojies ar jauno PIN.');recoveryNotice(result.recoveryCode);}
-    else{await adopt(result.session);recoveryNotice(result.recoveryCode);if(!result.recoveryCode&&session){dialog.close();startTour();}}
+    else{await adopt(result.session,true);recoveryNotice(result.recoveryCode);if(!result.recoveryCode&&session){dialog.close();startTour();}}
    }catch(e){if(gen===generation)status(e.message);}finally{busy=false;submit.disabled=false;pin.value='';const c=$('mediaConfirm');if(c)c.value='';}
   });status(recovering?'Atjaunošana nemaina tavas dziesmas un favorītus.':selected.hasPin?'Ievadi savu PIN.':'Izveido PIN, lai saglabātu savas stacijas un izskatu.');pin.focus();
  }
@@ -271,14 +299,16 @@
   if(e.data?.type!=='minka-calendar-selected-day-state')return;
   window.__minkaLastSelectedDayState=e.data.payload;
   if(session&&!checkSessionDeadline())return;
-  const r=roster();if(rosterDate&&r.date!==rosterDate&&!session){generation++;busy=false;selected=null;}rosterDate=r.date;
+  const r=roster();
+  const selectionChanged=(rosterDate&&r.date!==rosterDate)||(selected&&!r.workers.some(w=>norm(w.name)===norm(selected.name)));
+  if(selectionChanged&&!session){generation++;busy=false;selected=null;}rosterDate=r.date;
   if(session&&!r.workers.some(w=>norm(w.name)===norm(session.name))){void logout();status('Šajā dienā tavs vārds nav sarakstā. Radio turpina viesis.');}
-  else if(!session&&dialog.open&&!busy)void renderWorkers();
+  else if(!session&&dialog.open&&!busy&&!selected)void renderWorkers();
  });
  window.__mkUnifiedMedia={open,logout,change,getSession:()=>session,getRadio:()=>radio,api,roster,refresh:()=>session&&adopt(session)};
  window.addEventListener('rg-theme-ready',()=>{if(session&&loaded){if(!guestLook)guestLook=window.rgTheme.captureGuest?.()||window.rgTheme.snapshot();applyLook();}});
  let saved;try{saved=JSON.parse(sessionStorage.getItem(KEY)||'null');}catch(_){}
  if(saved?.sessionToken&&Math.min(saved.expiresAt,saved.dutyEndsAt||Infinity)>Date.now()){
-  const gen=generation;void api('session',{},saved).then(r=>{if(gen===generation&&!session)return adopt({...saved,...r.session});}).catch(()=>{if(gen===generation)sessionStorage.removeItem(KEY);});
+  const gen=generation;void api('session',{},saved).then(r=>{if(gen===generation&&!session)return adopt({...saved,...r.session},true);}).catch(()=>{if(gen===generation)sessionStorage.removeItem(KEY);});
  }else if(saved?.sessionToken){sessionStorage.removeItem(KEY);void api('logout',{},saved).catch(()=>{});}
 })();

@@ -25,10 +25,10 @@
 
 const RG_peaks   = new Float32Array(128).fill(0);
 const RG_holdCnt = new Int32Array(128).fill(0);
-const PEAK_HOLD  = 38;
+const PEAK_HOLD  = 380;
 const PEAK_DECAY = 0.91;
 const RG_EXTRA_LOW_SPEC = !!(window.__mkPerfProfile && window.__mkPerfProfile.lowSpec);
-const RG_EXTRA_FRAME_MS = RG_EXTRA_LOW_SPEC ? 1000 / 24 : 0;
+const RG_EXTRA_FRAME_MS = 1000 / (RG_EXTRA_LOW_SPEC ? 30 : 60);
 let RG_extraLastFrameTs = 0;
 let RG_extraFreqData = null;
 
@@ -38,12 +38,12 @@ function rgVizAccent(alpha = 1, lift = 0) {
   return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})`;
 }
 
-function updatePeaks(data, n) {
+function updatePeaks(data, n, span=1, dt=16.7) {
   for (let i = 0; i < n; i++) {
-    const v = data[i] / 255;
+    const v = data[Math.floor(i/n*data.length*span)] / 255;
     if (v > RG_peaks[i]) { RG_peaks[i] = v; RG_holdCnt[i] = PEAK_HOLD; }
-    else if (RG_holdCnt[i] > 0) { RG_holdCnt[i]--; }
-    else { RG_peaks[i] = Math.max(0, RG_peaks[i] * PEAK_DECAY); }
+    else if (RG_holdCnt[i] > 0) { RG_holdCnt[i]=Math.max(0,RG_holdCnt[i]-Math.round(dt)); }
+    else { RG_peaks[i] = Math.max(0, RG_peaks[i] * Math.pow(PEAK_DECAY,dt/16.7)); }
   }
 }
 
@@ -55,8 +55,8 @@ function drawVU(ctx, W, H, data) {
   let L = 0, R = 0;
   for (let i = 0; i < N/2; i++) L += data[i];
   for (let i = N/2; i < N; i++) R += data[i];
-  L = Math.min(1, (L / (N/2)) / 255 * 1.8);
-  R = Math.min(1, (R / (N/2)) / 255 * 1.8);
+  L = Math.min(1, (L / (N/2)) / 255);
+  R = Math.min(1, (R / (N/2)) / 255);
 
   const panels = [{ cx: W*0.27, val: L, lbl:'L' }, { cx: W*0.73, val: R, lbl:'R' }];
 
@@ -120,7 +120,7 @@ function drawVU(ctx, W, H, data) {
     });
 
     // Needle
-    const powered = Math.pow(Math.min(1, val), 0.55);
+    const powered = Math.pow(Math.min(1, val), 0.85);
     const ang = MIN_ANG + powered * (MAX_ANG-MIN_ANG);
     const nLen = r * 0.68;
     ctx.save();
@@ -149,15 +149,15 @@ function drawVU(ctx, W, H, data) {
 }
 
 /* ─ LED Bar (mode 9) ─ */
-function drawLEDBar(ctx, W, H, data) {
+function drawLEDBar(ctx, W, H, data, dt=16.7) {
   ctx.clearRect(0, 0, W, H);
 
   const COLS = 30, ROWS = 16;
-  const GAP_X = 3, GAP_Y = 2;
+  const GAP_X = Math.min(3,W/180), GAP_Y = Math.min(2,H/64);
   const ledW = (W - GAP_X*(COLS+1)) / COLS;
   const ledH = (H - GAP_Y*(ROWS+1)) / ROWS;
 
-  updatePeaks(data, COLS);
+  updatePeaks(data, COLS, .68, dt);
 
   for (let c = 0; c < COLS; c++) {
     const di = Math.floor((c/COLS) * data.length * 0.68);
@@ -185,9 +185,9 @@ function drawLEDBar(ctx, W, H, data) {
         ctx.shadowBlur = 0;
       }
 
-      const pad = 1.2;
+      const pad = Math.min(1.2,ledW*.18,ledH*.18);
       ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(x+pad, y+pad, ledW-pad*2, ledH-pad*2, 2);
+      if (ctx.roundRect) ctx.roundRect(x+pad, y+pad, ledW-pad*2, ledH-pad*2, Math.min(1.5,(ledH-pad*2)/2));
       else ctx.rect(x+pad, y+pad, ledW-pad*2, ledH-pad*2);
       ctx.fill();
     }
@@ -196,7 +196,7 @@ function drawLEDBar(ctx, W, H, data) {
 }
 
 /* ─ Dot Matrix VU (mode 10) ─ */
-function drawDotMatrix(ctx, W, H, data) {
+function drawDotMatrix(ctx, W, H, data, dt=16.7) {
   ctx.clearRect(0, 0, W, H);
 
   // Subtle scanlines
@@ -206,10 +206,10 @@ function drawDotMatrix(ctx, W, H, data) {
   }
 
   const COLS = 50, ROWS = 14;
-  const dotR = Math.min(3.2, (W/COLS)*0.26);
+  const dotR = Math.min(3.2, (W/COLS)*0.26, (H-8)/ROWS*.3);
   const colW = W/COLS, rowH = (H-8)/ROWS;
 
-  updatePeaks(data, COLS);
+  updatePeaks(data, COLS, .72, dt);
 
   for (let c = 0; c < COLS; c++) {
     const di = Math.floor((c/COLS) * data.length * 0.72);
@@ -248,7 +248,6 @@ function drawDotMatrix(ctx, W, H, data) {
   const cvs = document.getElementById('vizCanvas');
   if (!cvs) { setTimeout(hookExtraViz, 500); return; }
   const _ctx = cvs.getContext('2d');
-  let hooked = false;
   let extraVizRaf = 0;
 
   function shouldRunExtraViz() {
@@ -269,6 +268,7 @@ function drawDotMatrix(ctx, W, H, data) {
       extraVizRaf = requestAnimationFrame(extraLoop);
       return;
     }
+    const dt=Math.min(64,Math.max(8,now-RG_extraLastFrameTs));
     RG_extraLastFrameTs = now;
 
     if (!RG_extraFreqData || RG_extraFreqData.length !== analyser.frequencyBinCount) {
@@ -278,11 +278,14 @@ function drawDotMatrix(ctx, W, H, data) {
     analyser.getByteFrequencyData(data);
 
     const w = cvs.clientWidth | 0, h = cvs.clientHeight | 0;
-    if (cvs.width !== w || cvs.height !== h) { cvs.width = w; cvs.height = h; }
+    const ratio=Math.min(window.devicePixelRatio||1,RG_EXTRA_LOW_SPEC?1.5:2);
+    if(cvs.width!==Math.round(w*ratio)||cvs.height!==Math.round(h*ratio)){cvs.width=Math.round(w*ratio);cvs.height=Math.round(h*ratio);}
+    _ctx.save();_ctx.scale(ratio,ratio);
 
     if      (vizStyle === 8)  drawVU(_ctx, w, h, data);
-    else if (vizStyle === 9)  drawLEDBar(_ctx, w, h, data);
-    else if (vizStyle === 10) drawDotMatrix(_ctx, w, h, data);
+    else if (vizStyle === 9)  drawLEDBar(_ctx, w, h, data, dt);
+    else if (vizStyle === 10) drawDotMatrix(_ctx, w, h, data, dt);
+    _ctx.restore();
 
     extraVizRaf = requestAnimationFrame(extraLoop);
   }
@@ -292,14 +295,11 @@ function drawDotMatrix(ctx, W, H, data) {
     extraVizRaf = requestAnimationFrame(extraLoop);
   }
 
-  function tryHook(){
-    if (hooked) return;
-    if (typeof analyser === 'undefined' || !analyser) { setTimeout(tryHook, 500); return; }
-    hooked = true;
-    scheduleExtraViz();
-  }
-  tryHook();
-  setInterval(scheduleExtraViz, 250);
+  // Start only on real state changes; hidden/disabled visuals have no polling.
+  if (typeof audio !== 'undefined') audio.addEventListener('play', scheduleExtraViz);
+  window.addEventListener('rg-viz-change',()=>{RG_peaks.fill(0);RG_holdCnt.fill(0);RG_extraLastFrameTs=0;scheduleExtraViz();});
+  new MutationObserver(scheduleExtraViz).observe(document.body,{attributes:true,attributeFilter:['class']});
+  scheduleExtraViz();
   document.addEventListener('visibilitychange', scheduleExtraViz);
 })();
 
@@ -671,7 +671,7 @@ function drawDotMatrix(ctx, W, H, data) {
   }
 
   function start() {
-    if (active) return;
+    if (active || document.body.classList.contains('radio-viz-off')) return;
     if (!cvs) {
       cvs = document.getElementById('slowedWaveCanvas');
       if (!cvs) return;

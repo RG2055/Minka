@@ -66,7 +66,7 @@
     const active = visible && expanded;
     root.style.setProperty('--radio-ambient-rgb', color);
     root.classList.toggle('minka-ambient-active', active);
-    root.classList.toggle('minka-ambient-moving', active && !motion.matches && !modestDevice);
+    root.classList.toggle('minka-ambient-moving', active && Number(radio?.style.getPropertyValue('--radio-glow-strength') || .45) > 0 && !motion.matches && !modestDevice);
     root.classList.toggle('minka-visuals-hidden', !visible);
     // The night scene and the expanded radio never animate at the same time.
     const nightActive = visible && !expanded && !!overlay?.classList.contains('open');

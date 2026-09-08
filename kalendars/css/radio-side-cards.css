@@ -34,7 +34,7 @@ html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .
   font-size: 15px !important;
 }
 html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-card-body {
-  grid-template-columns: minmax(0,1fr) 34px !important;
+  grid-template-columns: minmax(0,1fr) 44px !important;
   column-gap: 5px !important; row-gap: 3px !important;
 }
 html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-name-wrap {
@@ -54,19 +54,28 @@ html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .
   color: rgba(205,226,235,.70) !important;
 }
 html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-fatigue {
-  width: 34px !important; min-width: 34px !important;
+  width: 44px !important; min-width: 44px !important;
 }
 html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring {
-  width: 32px !important; height: 32px !important;
+  width: 40px !important; height: 40px !important;
+  flex-shrink: 0 !important;
 }
 html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring > .mk-side-score {
-  font-size: 12px !important;
+  font-size: 14px !important;
 }
 html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring small {
-  font-size: 4px !important;
+  font-size: 6px !important;
 }
 html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-fatigue-caption {
-  font-size: 5px !important; margin-top: 2px !important;
+  font-size: 6px !important; margin-top: 3px !important;
+}
+/* Vector glass avoids shrinking the detailed 512px mood texture to 32px.
+   No filters, animation, extra canvas or fractional outer clipping. */
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring::after {
+  inset: -2px !important;
+  background: url('../assets/fatigue-glass.svg') center / contain no-repeat !important;
+  image-rendering: auto !important;
+  transform: none !important;
 }
 html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-clock-row {
   gap: 3px !important; margin: 0 !important;

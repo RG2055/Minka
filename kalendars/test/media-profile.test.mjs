@@ -3,8 +3,8 @@ const code=fs.readFileSync(new URL('../../js/media-profile.js',import.meta.url),
 const memory=()=>{const map=new Map();return {getItem:k=>map.get(k)||null,setItem:(k,v)=>map.set(k,String(v)),removeItem:k=>map.delete(k)};};
 const tick=()=>new Promise(r=>setImmediate(r));
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return {promise,resolve,reject};};
-function harness({storage=memory(),fetchHandler,restored=true,now=Date.now(),savedPatch={}}={}){
- const elements=new Map(),events={},documentEvents={},timers=new Map(),applied=[],requests=[];let timer=0,clock=now;
+function harness({storage=memory(),fetchHandler,restored=true,now=Date.now(),savedPatch={},stationsReady=true}={}){
+ const elements=new Map(),events={},documentEvents={},timers=new Map(),applied=[],requests=[],started=[];let timer=0,clock=now;
  class ClockDate extends Date{constructor(...args){super(...(args.length?args:[clock]));}static now(){return clock;}}
  class Element{
   constructor(tag='div'){this.tag=tag;this.children=[];this.dataset={};this.style={};this.attributes={};this.classList={add(){},remove(){},toggle(){}};this.listeners={};this.open=false;this.textContent='';}
@@ -21,14 +21,14 @@ function harness({storage=memory(),fetchHandler,restored=true,now=Date.now(),sav
  elements.get('calIframe').contentWindow={__minkaGetSelectedDayState:()=>state,MinkaEmoji:{get:()=> '🐈'}};
  const ss=memory(),saved={workerId:'alpha',name:'Alpha Test',sessionToken:'a'.repeat(64),expiresAt:clock+3600000,...savedPatch};if(restored)ss.setItem('minka:media-session:v2',JSON.stringify(saved));
  const document={body,hidden:false,addEventListener:(name,fn)=>{(documentEvents[name]||=[]).push(fn);},createElement:t=>new Element(t),createTextNode:text=>({textContent:text}),getElementById:id=>elements.get(id),querySelector:s=>s==='#radioWindow .brand-text'?brand:null,dispatchEvent(){}};
- const window={addEventListener:(name,fn)=>{(events[name]||=[]).push(fn);},rgTheme:{snapshot:()=>({theme:'Guest'}),captureGuest:()=>({theme:'Guest'}),restoreGuest:v=>applied.push(v),applyProfile:v=>applied.push(v)},__minkaLastSelectedDayState:state};
+ const window={rgStations:{startFavorite(ids){if(!stationsReady)return false;started.push([...ids]);return true;}},addEventListener:(name,fn)=>{(events[name]||=[]).push(fn);},rgTheme:{snapshot:()=>({theme:'Guest'}),captureGuest:()=>({theme:'Guest'}),restoreGuest:v=>applied.push(v),applyProfile:v=>applied.push(v)},__minkaLastSelectedDayState:state};
  const c=vm.createContext({window,document,Date:ClockDate,location:{hostname:'127.0.0.1',origin:'http://127.0.0.1:8012'},navigator:{onLine:true},localStorage:storage,sessionStorage:ss,ResizeObserver:class{observe(){}},innerWidth:1000,innerHeight:800,CustomEvent:class{constructor(type,options){this.type=type;this.detail=options?.detail;}},AbortController,setTimeout:(fn,delay)=>{timers.set(++timer,{fn,at:clock+delay});return timer;},clearTimeout:id=>timers.delete(id),matchMedia:()=>({matches:false}),fetch:async(url,options)=>{
   const path=url.replace('/dezura/v2/',''),data=JSON.parse(options.body);requests.push({path,data});
   const result=await(fetchHandler?.(path,data)??(path==='session'?{session:saved}:path==='radio/load'?{data:{favorites:['record:a'],settings:{theme:'Personal'},lastStation:''}}:{ok:true,data:{favorites:['record:a'],settings:{theme:'Saved'},lastStation:''}}));
   return new Response(JSON.stringify(result),{status:200,headers:{'Content-Type':'application/json'}});
  }});
- vm.runInContext(code,c);
- return {api:window.__mkUnifiedMedia,c,elements,applied,requests,storage,sessionStorage:ss,brand,advance(ms,runTimers=false){clock+=ms;if(runTimers)for(const [id,t] of [...timers])if(t.at<=clock){timers.delete(id);t.fn();}},wake(event='visibilitychange'){for(const fn of (event==='visibilitychange'?documentEvents:events)[event]||[])fn();},setState(next){state=next;window.__minkaLastSelectedDayState=next;for(const fn of events.message||[])fn({origin:'http://127.0.0.1:8012',source:elements.get('calIframe').contentWindow,data:{type:'minka-calendar-selected-day-state',payload:next}});},online(){for(const fn of events.online||[])fn();}};
+ vm.runInContext(code.replace('window.__mkUnifiedMedia={','window.__testAdopt=adopt;window.__mkUnifiedMedia={'),c);
+ return {started,signIn:()=>window.__testAdopt(saved,true),stationsReady(){stationsReady=true;for(const fn of events['rg-stations-ready']||[])fn();},api:window.__mkUnifiedMedia,c,elements,applied,requests,storage,sessionStorage:ss,brand,advance(ms,runTimers=false){clock+=ms;if(runTimers)for(const [id,t] of [...timers])if(t.at<=clock){timers.delete(id);t.fn();}},wake(event='visibilitychange'){for(const fn of (event==='visibilitychange'?documentEvents:events)[event]||[])fn();},setState(next){state=next;window.__minkaLastSelectedDayState=next;for(const fn of events.message||[])fn({origin:'http://127.0.0.1:8012',source:elements.get('calIframe').contentWindow,data:{type:'minka-calendar-selected-day-state',payload:next}});},online(){for(const fn of events.online||[])fn();}};
 }
 test('guest stays passive; roster includes only selected radiographers',async()=>{
  const h=harness({restored:false});await tick();assert.equal(h.requests.length,0);assert.deepEqual(Array.from(h.api.roster().workers,x=>x.name),['Alpha Test']);assert.equal(h.api.getSession(),null);assert.equal(h.api.roster().date,'08.09.2026');
@@ -48,7 +48,7 @@ test('offline edits replay after returning to the same account without restoring
 test('changing the selected day to another radiographer locks the old profile even if listed as radiologist',async()=>{
  const h=harness();await tick();h.setState({activeDateStr:'08.09.2026',rg:[{name:'Alpha Test'}],rd:[]});h.setState({activeDateStr:'09.09.2026',rg:[{name:'Beta Test'}],rd:[{name:'Alpha Test'}]});await tick();assert.equal(h.api.getSession(),null);assert.equal(h.brand.textContent,'RG RADIO');
 });
-test('appearance loads without a playback call and personal branding is conditional',async()=>{
+test('restoring a profile selects its favorites without an extra server playback API and branding is conditional',async()=>{
  const h=harness();await tick();assert.equal(h.brand.textContent,'RADIO ALPHA');assert.equal(h.applied.at(-1).theme,'Personal');assert.ok(!h.requests.some(x=>/play/.test(x.path)));await h.api.logout(false);assert.equal(h.applied.at(-1).theme,'Guest');assert.equal(h.brand.textContent,'RG RADIO');
 });
 
@@ -78,4 +78,38 @@ test('expired handover cannot be extended by reload or a late server response',a
 });
 test('an action after a delayed handover timer cannot save under the previous profile',async()=>{
  const h=harness({now:Date.parse('2026-09-09T04:59:00Z')});await tick();h.advance(61000);assert.equal(h.api.change({type:'favorite-add',id:'test'}),false);await tick();assert.ok(!h.requests.some(r=>r.path==='radio/change'));
+});
+test('explicit login starts favorites in profile order; refreshing settings does not restart playback',async()=>{
+ const h=harness({restored:false});await h.signIn();assert.deepEqual(h.started,[['record:a']]);await h.api.refresh();assert.equal(h.started.length,1);
+});
+test('favorite start waits for catalogue and cannot run for a logged-out account',async()=>{
+ const h=harness({restored:false,stationsReady:false});await h.signIn();assert.equal(h.started.length,0);h.stationsReady();assert.deepEqual(h.started,[['record:a']]);h.stationsReady();assert.equal(h.started.length,1);
+ const old=harness({restored:false,stationsReady:false});await old.signIn();await old.api.logout(false);old.stationsReady();assert.equal(old.started.length,0);
+});
+test('a profile with no favorites leaves the current station alone',async()=>{
+ const h=harness({restored:false,fetchHandler:path=>path==='radio/load'?{data:{favorites:[],settings:{},lastStation:''}}:undefined});await h.signIn();assert.equal(h.started.length,0);
+});
+
+test('calendar refresh preserves PIN entry until the day or selected worker changes',()=>{
+ const start=code.indexOf(" window.addEventListener('message',e=>{"),end=code.indexOf(' window.__mkUnifiedMedia=',start);
+ let listener,renders=0;const frame={contentWindow:{}};
+ const c=vm.createContext({window:{addEventListener:(name,fn)=>listener=fn},location:{origin:'http://localhost'},$:()=>frame,session:null,selected:{name:'Alpha Test'},rosterDate:'08.09.2026',generation:0,busy:false,dialog:{open:true},norm:s=>s.toLowerCase(),roster:()=>c.window.__minkaLastSelectedDayState,renderWorkers(){renders++;},status(){},emit(){}});
+ vm.runInContext(code.slice(start,end),c);
+ const refresh=(date,workers=[{name:'Alpha Test'}])=>listener({origin:'http://localhost',source:frame.contentWindow,data:{type:'minka-calendar-selected-day-state',payload:{date,workers}}});
+ refresh('08.09.2026');assert.equal(renders,0);assert.equal(c.selected.name,'Alpha Test');assert.equal(c.generation,0);
+ refresh('09.09.2026');assert.equal(renders,1);assert.equal(c.selected,null);assert.equal(c.generation,1);
+ c.selected={name:'Alpha Test'};c.busy=true;
+ refresh('09.09.2026',[{name:'Beta Test'}]);assert.equal(renders,2);assert.equal(c.selected,null);assert.equal(c.generation,2);assert.equal(c.busy,false);
+});
+
+test('local preview restores unsupported layout fields per account after server save and reauthentication',async()=>{
+ const storage=memory(),fetchHandler=path=>path==='radio/change'||path==='radio/load'?{data:{favorites:['record:a'],settings:{theme:'Saved'},lastStation:''}}:undefined;
+ const h=harness({storage,fetchHandler});await tick();
+ h.api.change({type:'settings',settings:{layout:'clean',vizFrame:'off'}});await tick();
+ assert.equal(h.api.getRadio().settings.layout,'clean');assert.equal(h.api.getRadio().settings.vizFrame,'off');
+ await h.api.logout(false);assert.equal(h.api.getRadio().settings.layout,undefined);
+ const again=harness({storage,fetchHandler});await tick();assert.equal(again.applied.at(-1).layout,'clean');assert.equal(again.applied.at(-1).vizFrame,'off');
+ const other=harness({storage,fetchHandler,savedPatch:{workerId:'beta'}});await tick();assert.equal(other.applied.at(-1).layout,undefined);
+ again.api.change({type:'settings',settings:{eq:'chill'}});await tick();assert.equal(again.api.getRadio().settings.vizFrame,'off');
+ again.api.change({type:'reset-look'});await tick();assert.equal(storage.getItem('minka:media-local-look:alpha'),null);
 });

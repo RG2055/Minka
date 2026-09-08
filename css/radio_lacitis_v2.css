@@ -251,10 +251,11 @@ html #radioWindow #eqRow #ceqTriggerBtn:hover {
   background: var(--radio-lac-green) !important;
   color: #041108 !important;
   border: 0 !important;
-  box-shadow: 0 8px 24px -10px rgba(30, 215, 96, .75) !important;
+  box-shadow: 0 6px 18px -8px rgba(var(--radio-accent-rgb,30,215,96),calc(.3 * var(--radio-glow-strength,.45))) !important;
 }
 
 #radioWindow #playBtn:hover {
+  box-shadow: 0 7px 20px -8px rgba(var(--radio-accent-rgb,30,215,96),calc(.4 * var(--radio-glow-strength,.45))) !important;
   transform: scale(1.04) !important;
   filter: none !important;
 }

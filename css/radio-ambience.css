@@ -24,7 +24,7 @@ html.minka-visuals-hidden body #radioWindow { transition: none !important; }
   animation: minka-ambient-drift 22s ease-in-out infinite alternate !important;
   animation-play-state: paused !important;
 }
-html.minka-ambient-active .minka-ambient-glow { opacity: var(--radio-glow-strength,.8); visibility: visible; transition-delay: 0s; }
+html.minka-ambient-active .minka-ambient-glow { opacity: var(--radio-glow-strength,.45); visibility: visible; transition-delay: 0s; }
 html.minka-ambient-moving .minka-ambient-glow::before { animation-play-state: running !important; }
 html.minka-visuals-hidden .minka-ambient-glow { transition: none; }
 /* Reveal the same host fog through the iframe, including both side columns. */

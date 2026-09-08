@@ -6,13 +6,18 @@ const _warn = (...a) => { if (RG_DEBUG) console.warn(...a); };
 const _err  = (...a) => { if (RG_DEBUG) console.error(...a); };
 const MK_PERF = window.__mkPerfProfile || {};
 const MK_LOW_SPEC = !!MK_PERF.lowSpec;
-const MK_VIZ_FRAME_MS = MK_LOW_SPEC ? 1000 / 30 : 0;
-// Buddy visualizer: an optional ~4fps pixel ghost instead of the spectrum.
-// The round Buddy button switches back to the saved spectrum when requested.
+const MK_VIZ_FRAME_MS = 1000 / (MK_LOW_SPEC ? 30 : 60);
+// Buddy is an optional lightweight Classic visualizer.
 const MK_BUDDY_VIZ = 11;
+const MK_NO_VIZ = 12;
+const MK_FLOW_VIZ = 13;
+const flowLevels = new Float32Array(24);
+const isModernViz = mode => mode === MK_FLOW_VIZ || (mode >= 20 && mode <= 30);
+const modernBaseMode = mode => mode === MK_FLOW_VIZ ? 4 : mode - 20;
+let modernWaveData = null;
+const modernMeter = {level:0};
 const MK_DEFAULT_VIZ = 7;
 let __mkLastSpectrum = MK_DEFAULT_VIZ;
-let __mkBuddyStep = 0;
 let aCtx, analyser, src, lowNode, highNode, hls, masterGain, dryGain, wetGain, delayNode, feedbackNode, convolverNode, compressorNode, vinylNoiseSrc, vinylLPF, vinylGain, depthSplitter, depthMerger, depthDelayR, depthDryGain, depthWetGain, depthSumGain;
 let stationsList = [];
 let recordStations = [];
@@ -42,6 +47,7 @@ function mergeUniqueStations(a,b){
 }
 function refreshCombinedStations(){
     stationsList = mergeUniqueStations(recordStations, latvianStations);
+    window.dispatchEvent(new Event('rg-stations-ready'));
 }
 
 let currentIndex = 0;
@@ -54,10 +60,11 @@ let vizStyle = (function(){
         }
         const s = localStorage.getItem('mkRadioViz');
         if (s === 'buddy') return MK_BUDDY_VIZ;
-        if (s && s.indexOf('spectrum:') === 0) { const n = +s.slice(9); if (n >= 0 && n < MK_BUDDY_VIZ) { __mkLastSpectrum = n; return n; } }
+        if (s && s.indexOf('spectrum:') === 0) { const n = +s.slice(9); if ((n >= 0 && n < MK_BUDDY_VIZ) || n === MK_NO_VIZ || isModernViz(n)) { __mkLastSpectrum = n; return n; } }
     } catch(e){}
     return MK_DEFAULT_VIZ;
 })();
+let vizFamily = isModernViz(vizStyle) ? 'new' : 'classic';
 let isAdjustingVol = false;
 let volTimeout;
 let isFirstPlay = true; 
@@ -148,54 +155,6 @@ window.__mkSyncRadioVisuals = syncRadioVisualLoops;
     document.addEventListener('keydown',     preWarm, { capture: true, once: true, passive: true });
 })();
 document.addEventListener('visibilitychange', syncRadioVisualLoops, { passive: true });
-
-// ── Buddy/Spectrum round toggle (sits over the viz screen) ───────────
-function mkUpdateVizToggle(){
-    const b = document.getElementById('mkVizToggle');
-    if (!b) return;
-    if (vizStyle === MK_BUDDY_VIZ) {
-        b.innerHTML = '<svg width="30" height="15" viewBox="0 0 16 8" shape-rendering="crispEdges" aria-hidden="true"><rect x="7" y="0" width="2" height="1" fill="currentColor"/><rect x="6" y="1" width="3" height="1" fill="currentColor"/><rect x="3" y="2" width="9" height="1" fill="currentColor"/><rect x="2" y="3" width="12" height="1" fill="currentColor"/><rect x="1" y="4" width="15" height="1" fill="currentColor"/><rect x="0" y="5" width="2" height="1" fill="currentColor"/><rect x="4" y="5" width="10" height="1" fill="currentColor"/><rect x="0" y="6" width="1" height="1" fill="currentColor"/><rect x="6" y="6" width="4" height="1" fill="currentColor"/><rect x="7" y="7" width="2" height="1" fill="currentColor"/></svg><span>SPECTRUM</span>';
-        b.title = 'Ieslēgt spektra vizualizāciju';
-    } else {
-        b.innerHTML = '<svg width="22" height="16" viewBox="0 0 10 7" shape-rendering="crispEdges" aria-hidden="true">'
-          + '<rect x="3" y="0" width="4" height="1" fill="currentColor"/><rect x="2" y="1" width="6" height="1" fill="currentColor"/>'
-          + '<rect x="1" y="2" width="1" height="1" fill="currentColor"/><rect x="4" y="2" width="2" height="1" fill="currentColor"/><rect x="8" y="2" width="1" height="1" fill="currentColor"/>'
-          + '<rect x="1" y="3" width="8" height="3" fill="currentColor"/>'
-          + '<rect x="1" y="6" width="1" height="1" fill="currentColor"/><rect x="3" y="6" width="1" height="1" fill="currentColor"/><rect x="6" y="6" width="1" height="1" fill="currentColor"/><rect x="8" y="6" width="1" height="1" fill="currentColor"/>'
-          + '</svg><span>BUDDY</span>';
-        b.title = 'Buddy režīms (viegls, taupa resursus)';
-    }
-}
-function mkToggleBuddyViz(){
-    if (vizStyle === MK_BUDDY_VIZ) {
-        vizStyle = (__mkLastSpectrum >= 0 && __mkLastSpectrum < MK_BUDDY_VIZ) ? __mkLastSpectrum : MK_DEFAULT_VIZ;
-    } else {
-        __mkLastSpectrum = vizStyle;
-        vizStyle = MK_BUDDY_VIZ;
-    }
-    try { localStorage.setItem('mkRadioViz', vizStyle === MK_BUDDY_VIZ ? 'buddy' : ('spectrum:' + vizStyle)); } catch(e){}
-    updateVizLabel(); applyVizMode(); updateVizPickerUI(); mkUpdateVizToggle();
-}
-(function mkVizToggleInit(){
-    // Lives on the radio chassis, right next to the stations-list button.
-    const stationsBtn = document.querySelector('.control-panel .station-btn');
-    const host = stationsBtn && stationsBtn.parentElement;
-    if (!host) return;
-    const st = document.createElement('style');
-    st.textContent = '#radioWindow .control-panel{flex-wrap:wrap;row-gap:6px;justify-content:flex-end;}'
-      + '#mkVizToggle{flex:0 0 auto;width:44px;height:44px;border-radius:50%;border:1px solid rgba(var(--radio-accent-rgb,30,215,96),.35);background:rgba(6,10,8,.62);color:var(--radio-accent,#1ed760);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;font:700 5.5px/1 "Space Grotesk",system-ui;letter-spacing:.1em;padding:0;}'
-      + '#mkVizToggle:hover{border-color:rgba(var(--radio-accent-rgb,30,215,96),.7);background:rgba(8,12,10,.78);}'
-      + '#mkVizToggle svg{display:block;}'
-      + '@media (max-width:900px){#mkVizToggle{width:34px;height:34px;}#mkVizToggle span{display:none;}#mkVizToggle svg{width:22px;height:11px;}}';
-    document.head.appendChild(st);
-    const b = document.createElement('button');
-    b.id = 'mkVizToggle';
-    b.type = 'button';
-    stationsBtn.insertAdjacentElement('afterend', b);
-    b.addEventListener('click', (e) => { e.stopPropagation(); mkToggleBuddyViz(); });
-    mkUpdateVizToggle();
-})();
-
 
 const segContainer = document.getElementById('osd-segments');
 for(let i=0; i<50; i++) {
@@ -435,10 +394,27 @@ function toggleMenu(forceOpen) {
     const iframe = document.getElementById('calIframe');
     const isNowOpen = typeof forceOpen === 'boolean' ? forceOpen : el.style.display !== 'grid';
 
-    if (isNowOpen) positionStationPicker(el);
+    if (isNowOpen) {
+        if (el.style.display !== 'grid') {
+            const profile = window.__mkUnifiedMedia;
+            stationPickerSource = profile?.getSession() && profile.getRadio()?.favorites?.length ? 'favorites' : 'record';
+            stationPickerQuery = '';
+            clearTimeout(stationPickerSearchTimer);
+            const search = el.querySelector('#stationPickerSearch');
+            if (search) search.value = '';
+        }
+        positionStationPicker(el);
+    }
 
     el.style.display = isNowOpen ? 'grid' : 'none';
-    if (isNowOpen) renderStationOverlay();
+    if (isNowOpen) {
+        renderStationOverlay();
+        el.querySelectorAll('[data-station-source]').forEach(button => {
+            const active = button.dataset.stationSource === stationPickerSource;
+            button.classList.toggle('active', active);
+            button.setAttribute('aria-selected', String(active));
+        });
+    }
     el.setAttribute('aria-hidden', isNowOpen ? 'false' : 'true');
     document.querySelectorAll('.station-btn').forEach(button => button.setAttribute('aria-expanded', String(isNowOpen)));
     // Disable iframe pointer events while overlay is open (prevents click-through)
@@ -514,6 +490,7 @@ let vizPickerOpen = false;
 
 // Cat controls ONLY spectrum modes (no Milkdrop here).
 const VIZ_MODES = [
+    ...['PIXEL','MIRROR','LINE','CLASSIC','CENTER','PEAKS','WAVE','MATRIX','VU','LED','DOT VU'].map((label,i)=>({idx:20+i,label,hint:'Jaunais skats'})),
     { idx: 0, label: "PIXEL", hint: "pixel bars" },
     { idx: 1, label: "MIRROR", hint: "mirror bars" },
     { idx: 2, label: "LINE", hint: "line scope" },
@@ -522,9 +499,12 @@ const VIZ_MODES = [
     { idx: 5, label: "DOLPHIN", hint: "side peaks" },
     { idx: 6, label: "WAVE", hint: "smooth wave" },
     { idx: 7, label: "MATRIX", hint: "dot grid" },
+    { idx: MK_BUDDY_VIZ, label: "BUDDY", hint: "Viegls pikseļu tēls" },
+    { idx: MK_NO_VIZ, label: "Bez vizualizācijas", hint: "Nekas netiek zīmēts" },
 ];
 
 function getVizMode(idx){
+    if(idx === MK_FLOW_VIZ) idx = 24;
     if (idx === MK_BUDDY_VIZ) return { idx: MK_BUDDY_VIZ, label: "BUDDY", hint: "pixel buddy" };
     return VIZ_MODES.find(m => m.idx === idx) || VIZ_MODES[3];
 }
@@ -542,6 +522,7 @@ function ensureVizPicker(){
         <button class="vizpick-x" type="button" aria-label="Close">×</button>
       </div>
 
+      <div class="radio-viz-families"><button type="button" data-viz-family="new">Jaunais skats</button><button type="button" data-viz-family="classic">Classic</button></div>
       <div class="vizpick-grid" role="list">
         ${VIZ_MODES.map(m => `
           <button class="vizpick-btn" type="button" data-viz="${m.idx}">
@@ -580,6 +561,7 @@ function ensureVizPicker(){
 
     // mode buttons
     el.addEventListener('click', (e) => {
+        const family=e.target.closest('[data-viz-family]');if(family){switchVizFamily(family.dataset.vizFamily);return;}
         const btn = e.target.closest('[data-viz]');
         if (btn) {
             const idx = Number(btn.getAttribute('data-viz'));
@@ -976,33 +958,38 @@ function toggleMilkdrop(){
 
 function cycleVizMode(){
     // Next spectrum mode only
-    vizStyle = (vizStyle + 1) % VIZ_MODES.length;
+    const modes=VIZ_MODES.filter(m=>m.idx!==MK_NO_VIZ&&isModernViz(m.idx)===(vizFamily==='new'));
+    vizStyle = modes[(modes.findIndex(m => m.idx === vizStyle) + 1) % modes.length].idx;
     mkSaveVizPref();
     updateVizLabel();
     applyVizMode();
     updateVizPickerUI();
-    mkUpdateVizToggle();
 }
 
 function randomVizMode(){
     // Pick random among spectrum modes
-    const candidates = VIZ_MODES.map(m => m.idx);
+    const candidates = VIZ_MODES.filter(m=>m.idx!==MK_NO_VIZ&&isModernViz(m.idx)===(vizFamily==='new')).map(m => m.idx);
     vizStyle = candidates[Math.floor(Math.random() * candidates.length)];
     mkSaveVizPref();
     updateVizLabel();
     applyVizMode();
     updateVizPickerUI();
-    mkUpdateVizToggle();
 }
 
 function setVizStyle(idx){
+    if(idx===MK_FLOW_VIZ)idx=24;
+    if(idx!==MK_NO_VIZ)vizFamily=isModernViz(idx)?'new':'classic';
     // Spectrum only
-    vizStyle = Math.max(0, Math.min(idx, VIZ_MODES.length - 1));
+    vizStyle = VIZ_MODES.some(m => m.idx === idx) || idx === MK_BUDDY_VIZ ? idx : MK_DEFAULT_VIZ;
     mkSaveVizPref();
     updateVizLabel();
     applyVizMode();
     updateVizPickerUI();
-    mkUpdateVizToggle();
+}
+
+function switchVizFamily(family){
+    const base=isModernViz(vizStyle)?modernBaseMode(vizStyle):(vizStyle<=10?vizStyle:4);
+    setVizStyle(family==='new'?20+base:base);
 }
 
 function mkSaveVizPref(){
@@ -1018,8 +1005,10 @@ function updateVizPickerUI(forceWarn=false){
     el.querySelectorAll('[data-viz]').forEach(b => {
         const idx = Number(b.getAttribute('data-viz'));
         b.classList.toggle('active', idx === vizStyle);
+        b.hidden=idx!==MK_NO_VIZ&&isModernViz(idx)!==(vizFamily==='new');
     });
 
+    el.querySelectorAll('[data-viz-family]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.vizFamily===vizFamily)));
     const m = getVizMode(vizStyle);
     const status = el.querySelector('#vizPickStatus');
     if (status) status.textContent = `${m.label}`;
@@ -1322,6 +1311,26 @@ function milkdropStop() {
 }
 
 function applyVizMode() {
+    const disabled = vizStyle === MK_NO_VIZ;
+    document.body.classList.toggle('radio-viz-off', disabled);
+    document.body.classList.toggle('radio-viz-flow', isModernViz(vizStyle));
+    document.body.classList.toggle('radio-viz-dolphin', vizStyle === 5);
+    if(analyser){const modern=isModernViz(vizStyle);analyser.fftSize=modern?(MK_LOW_SPEC?512:1024):(MK_LOW_SPEC?128:256);analyser.minDecibels=modern?-85:-100;analyser.maxDecibels=modern?-5:-30;analyser.smoothingTimeConstant=modern?.12:.8;}
+    // Clear previous layers at selection time, even while paused or in an extra renderer.
+    if(dGif){dGif.style.display=vizStyle===5?'block':'none';dGif.style.opacity=vizStyle===5?'1':'0';}
+    if(ctx&&cvs)ctx.clearRect(0,0,cvs.width,cvs.height);
+    if(typeof peaks!=='undefined')peaks.fill(0);
+    __vizLastFrameTs=0;
+    window.dispatchEvent(new Event('rg-viz-change'));
+    if (disabled) {
+        milkdropEnabled = false;
+        if (milkdrop) { try { milkdropCollapse(true); milkdropStop(); } catch (_) {} milkdrop = null; }
+        try { window.__slowedWave?.stop(); } catch (_) {}
+        if (dGif) dGif.style.opacity = 0;
+        if (ctx && cvs) ctx.clearRect(0, 0, cvs.width, cvs.height);
+    } else {
+        scheduleDraw();
+    }
     // Milkdrop overlay is controlled separately from the cat spectrum.
     if (milkdropEnabled) {
         const ready = ensureMilkdrop();
@@ -2061,7 +2070,15 @@ function updateStationFavorites(){
     });
     const count=document.querySelector('[data-station-source="favorites"] span');if(count)count.textContent=favoriteIds.length;
 }
-window.rgStations={list:()=>stationsList.filter(s=>s&&s.group!=='separator').map(s=>({key:radioStationKey(s),title:s.title})),play:key=>{const index=stationsList.findIndex(s=>s&&radioStationKey(s)===key);if(index>=0)selectStation(index);}};
+function favoriteStationIndex(favorites){
+    for(const id of favorites||[]){const index=stationsList.findIndex(s=>s&&s.group!=='separator'&&radioStationKey(s)===id);if(index>=0)return index;}
+    return -1;
+}
+window.rgStations={startFavorite(favorites){
+    if(document.body.classList.contains('radio-idle')||document.body.classList.contains('radio-hidden')||window.__mkRadioSupersededByLacitis||window.isRadioMobileView?.())return false;
+    const index=favoriteStationIndex(favorites);if(index<0)return false;
+    selectStation(index);return true;
+},list:()=>stationsList.filter(s=>s&&s.group!=='separator').map(s=>({key:radioStationKey(s),title:s.title})),play:key=>{const index=stationsList.findIndex(s=>s&&radioStationKey(s)===key);if(index>=0)selectStation(index);}};
 document.addEventListener('media-profile-change',()=>{
     const list=document.getElementById('stationPickerList');if(!list)return;
     const open=document.getElementById('stationOverlay')?.style.display==='grid';
@@ -2398,6 +2415,7 @@ function setupAudio() {
     aCtx = new (window.AudioContext || window.webkitAudioContext)();
     analyser = aCtx.createAnalyser();
     analyser.fftSize = MK_LOW_SPEC ? 128 : 256;
+    if(isModernViz(vizStyle)){analyser.fftSize=MK_LOW_SPEC?512:1024;analyser.minDecibels=-85;analyser.maxDecibels=-5;analyser.smoothingTimeConstant=.12;}
     lowNode = aCtx.createBiquadFilter();
     highNode = aCtx.createBiquadFilter();
 
@@ -2835,142 +2853,112 @@ function setEQ(mode) {
 }
 
 function ensureCanvasSize(){
-    const w = cvs.clientWidth | 0;
-    const h = cvs.clientHeight | 0;
+    const ratio = Math.min(window.devicePixelRatio || 1, MK_LOW_SPEC ? 1.5 : 2);
+    const w = Math.round(cvs.clientWidth * ratio);
+    const h = Math.round(cvs.clientHeight * ratio);
     if (cvs.width !== w || cvs.height !== h) {
         cvs.width = w;
         cvs.height = h;
     }
 }
 
-// ── Buddy visualizer (green pixel ghost, ~4fps, no FFT) ──────────────
+// Pixel Buddy uses a small sprite and a capped 24 fps timer, without FFT work.
 const MK_BUDDY_FRAMES = [
-  ['...XXXX...','..XXXXXX..','.X..XX..X.','.XXXXXXXX.','.XXXXXXXX.','.XXXXXXXX.','.X.X..X.X.'],
-  ['...XXXX...','..XXXXXX..','.X..XX..X.','.XXXXXXXX.','.XXXXXXXX.','.XXXXXXXX.','..X.X.X.X.']
+  ['...XXXX...','..XXXXXX..','.XXXXXXXX.','.X..XX..X.','.X..XX..X.','.XXXXXXXX.','.XXXXXXXX.','.X.X..X.X.'],
+  ['...XXXX...','..XXXXXX..','.XXXXXXXX.','.X..XX..X.','.X..XX..X.','.XXXXXXXX.','.XXXXXXXX.','..X.X.X.X.']
 ];
-function mkDrawBuddyViz(ts) {
-    if (ts - __vizLastFrameTs < 240) return;
-    __vizLastFrameTs = ts;
-    ensureCanvasSize();
-    ctx.clearRect(0, 0, cvs.width, cvs.height);
-    __mkBuddyStep = (__mkBuddyStep + 1) % 4;
-    const st = [[0,0,0],[1,1,-1],[0,0,0],[1,-1,-1]][__mkBuddyStep];
-    const map = MK_BUDDY_FRAMES[st[0]];
-    const u = Math.max(2, Math.floor(Math.min(cvs.height / 9.5, cvs.width / 18)));
-    const w = map[0].length * u, h = map.length * u;
-    const ox = Math.floor((cvs.width - w) / 2 + st[1] * u * 0.5);
-    const oy = Math.floor((cvs.height - h) / 2 + st[2] * u * 0.4 + u * 0.4);
-    const buddyBright = __radioVizAccentRGB.map(value => Math.min(255, value + 42));
-    const buddyMain = `rgba(${__radioVizAccentRGB.join(',')},.74)`;
-    const buddyTop = `rgba(${buddyBright.join(',')},.82)`;
-    for (let r = 0; r < map.length; r++) {
-        const row = map[r];
-        for (let c = 0; c < row.length; c++) {
-            if (row[c] !== 'X') continue;
-            ctx.fillStyle = r < 1 ? buddyTop : buddyMain;
-            ctx.fillRect(ox + c * u, oy + r * u, u, u);
-        }
+function drawBuddySprite(context,width,height,ts,rgb){
+    const phase=ts/650,map=MK_BUDDY_FRAMES[Math.floor(ts/180)%2];
+    const unit=Math.max(2,Math.floor(Math.min(height/12,width/28)));
+    const ox=Math.round((width-map[0].length*unit)/2+Math.sin(phase*.7)*unit*1.5);
+    const oy=Math.round((height-map.length*unit)/2+Math.sin(phase)*unit*.65);
+    context.fillStyle=`rgba(${rgb.join(',')},.09)`;
+    context.beginPath();context.ellipse(width/2,height*.91,unit*4,unit*.35,0,0,Math.PI*2);context.fill();
+    for(let r=0;r<map.length;r++)for(let c=0;c<map[r].length;c++){
+        if(map[r][c]!=='X')continue;
+        context.fillStyle=r<2?`rgb(${rgb.map(v=>Math.min(255,v+38)).join(',')})`:`rgb(${rgb.join(',')})`;
+        context.fillRect(ox+c*unit,oy+r*unit,unit,unit);
     }
 }
+function mkDrawBuddyViz(ts){
+    __vizLastFrameTs=ts;ensureCanvasSize();ctx.clearRect(0,0,cvs.width,cvs.height);
+    drawBuddySprite(ctx,cvs.width,cvs.height,ts,__radioVizAccentRGB);
+}
 
-function draw(ts = 0) {
-    // Reduce CPU when hidden / paused / radio hidden. The radio panel hides via
-    // transform+opacity (not display:none), so the old getComputedStyle().display
-    // check never slept while hidden — and ran a style recalc every frame. A
-    // cheap classList check fixes both. Audio plays via the <audio> element, so
-    // sleeping the visualizer never stops the music.
-    __drawScheduled = false;
-    const shouldSleep = radioVisualsInactive() || audio.paused || !analyser;
-    if (shouldSleep) {
-        // Visibility/radio-toggle/play events restart the loop. Do not leave an
-        // invisible 500 ms polling loop running for the whole minimized period.
-        return;
+// One lightweight renderer for the entire new collection. Attack responds to
+// transients quickly; release is time-based so 30 and 60 fps feel consistent.
+function drawModernSpectrum(mode,ctx,w,h,data,dt,color,levels=flowLevels,wave=null,meter=modernMeter){
+    const count=24,step=w/count,bw=step*.58;
+    if(!wave){
+        if(!modernWaveData||modernWaveData.length!==analyser.fftSize)modernWaveData=new Uint8Array(analyser.fftSize);
+        analyser.getByteTimeDomainData(modernWaveData);wave=modernWaveData;
     }
-    if (isAdjustingVol) {
-        // The volume OSD owns the monitor while the slider is moving. Poll
-        // slowly instead of analysing and repainting audio behind it.
-        scheduleDraw(120);
-        return;
+    let sum=0;for(let i=0;i<wave.length;i++){const sample=(wave[i]-128)/128;sum+=sample*sample;}
+    const rms=Math.sqrt(sum/wave.length),db=20*Math.log10(Math.max(rms,.00001));
+    const loudness=Math.max(0,Math.min(1,(db+48)/48));
+    meter.level+=(loudness-meter.level)*(1-Math.exp(-dt/(loudness>meter.level?18:95)));
+    for(let i=0;i<count;i++){
+        const bin=Math.min(data.length-1,Math.round(Math.pow(data.length-1,i/(count-1))));
+        const target=Math.pow(data[bin]/255,1.05);
+        const rate=1-Math.exp(-dt/(target>levels[i]?24:120));
+        levels[i]+=(target-levels[i])*rate;
     }
-    scheduleDraw();
-    if (vizStyle === MK_BUDDY_VIZ) {
-        if (dGif) dGif.style.opacity = 0;
-        mkDrawBuddyViz(ts || performance.now());
-        return;
+    ctx.fillStyle=color;ctx.strokeStyle=color;ctx.lineCap='round';ctx.lineJoin='round';ctx.globalAlpha=1;
+    if(mode===2||mode===6){
+        const points=mode===6?32:24,dx=w/(points-1);ctx.beginPath();ctx.lineWidth=Math.max(1.5,h*.035);
+        let previousY=h/2;
+        for(let i=0;i<points;i++){
+            const y=h/2+(wave[Math.floor(i*(wave.length-1)/(points-1))]-128)/128*h*.43;
+            if(!i)ctx.moveTo(0,y);
+            else if(mode===6)ctx.quadraticCurveTo((i-.5)*dx,previousY,i*dx,y);
+            else ctx.lineTo(i*dx,y);
+            previousY=y;
+        }
+        ctx.stroke();return;
     }
-    if (MK_VIZ_FRAME_MS && ts && (ts - __vizLastFrameTs) < MK_VIZ_FRAME_MS) return;
-    __vizLastFrameTs = ts || performance.now();
-    if (!__vizFreqData || __vizFreqData.length !== analyser.frequencyBinCount) __vizFreqData = new Uint8Array(analyser.frequencyBinCount);
-    const data = __vizFreqData;
-    analyser.getByteFrequencyData(data);
-
-    // Spectrum follows the current album/theme accent. The cached value avoids
-    // reading computed styles on every animation frame.
-    const vC = __radioVizAccentRGB;
-    const vRgb = `${vC[0]}, ${vC[1]}, ${vC[2]}`;
-    const vHex = `rgb(${vRgb})`;
-
-    const bassSignal = data[2]; 
-    const midSignal = data[10];
-    const triggerPower = Math.max(bassSignal, midSignal * 0.8) / 255;
-    
-    if (triggerPower > 0.38) {
-        ledPoint.style.background = "var(--led-on)";
-        ledPoint.style.boxShadow = "none";
-        ledHalo.style.opacity = 0;
-    } else {
-        ledPoint.style.background = "var(--led-off)";
-        ledPoint.style.boxShadow = "none";
-        ledHalo.style.opacity = 0;
+    if(mode===8){
+        const radius=Math.min(w*.3,h*.78),cx=w/2,cy=h*.91;
+        ctx.lineWidth=Math.max(2,h*.04);ctx.globalAlpha=.25;ctx.beginPath();ctx.arc(cx,cy,radius,Math.PI,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;
+        const angle=Math.PI+meter.level*Math.PI;
+        ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(angle)*radius*.9,cy+Math.sin(angle)*radius*.9);ctx.stroke();ctx.beginPath();ctx.arc(cx,cy,ctx.lineWidth,0,Math.PI*2);ctx.fill();return;
     }
-
-    if (vizStyle === 5) { dGif.style.opacity = 1; } 
-    else { dGif.style.opacity = 0; }
-
-    ensureCanvasSize();
-    // Extra visualizers (VU/LED/DOT) own the canvas in radio_extras_v4.js
-    if (vizStyle >= 8 && vizStyle <= 10) {
-        return;
-    }
-    if ((vizStyle === 6 || vizStyle === 7) && !__radioImageSkin) {
-        ctx.fillStyle = 'rgba(0,0,0,0.18)';
-        ctx.fillRect(0,0,cvs.width,cvs.height);
-    } else {
-        ctx.clearRect(0, 0, cvs.width, cvs.height);
-    }
-
-    if (vizStyle === 0) {
-           const barW = 4; const barGap = 2; const pxH = 2; const pxGap = 1; for (let i = 0; i < data.length; i++) { const x = i * (barW + barGap); if (x > cvs.width) break; const val = (data[i] / 255) * cvs.height; for (let y = 0; y < val; y += (pxH + pxGap)) { ctx.fillStyle = `${`rgba(${vRgb},${(0.4 + y/cvs.height).toFixed(3)})`}`; ctx.fillRect(x, cvs.height - y - pxH, barW, pxH); } }
-        } else if (vizStyle === 1) { 
-           const barW = 12; const barGap = 4; const centerX = cvs.width / 2; for (let i = 0; i < 15; i++) { const val = (data[i*2] / 255) * cvs.height; ctx.fillStyle = `rgba(${vRgb},0.8)`; ctx.fillRect(centerX + (i * (barW + barGap)), cvs.height - val, barW, val); ctx.fillRect(centerX - ((i + 1) * (barW + barGap)), cvs.height - val, barW, val); }
-        } else if (vizStyle === 2) { 
-           ctx.beginPath(); ctx.lineWidth = 3; ctx.strokeStyle = `rgba(${vRgb},0.8)`; for (let i = 0; i < data.length; i++) { const x = (i / data.length) * cvs.width; const y = cvs.height - (data[i] / 255) * cvs.height; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); } ctx.stroke();
-        } else if (vizStyle === 3) { 
-           const barW = 8; const barGap = 2; for (let i = 0; i < data.length; i++) { const x = i * (barW + barGap); if (x > cvs.width) break; const val = (data[i] / 255) * cvs.height; ctx.fillStyle = `rgba(${vRgb},0.66)`; ctx.fillRect(x, cvs.height - val, barW, val); }
-        } else if (vizStyle === 4) { 
-           const centerY = cvs.height / 2; const barW = 6; const barGap = 3; for (let i = 0; i < data.length; i++) { const x = i * (barW + barGap); if (x > cvs.width) break; const val = (data[i] / 255) * (cvs.height * 0.4); ctx.fillStyle = `rgba(${vRgb},0.7)`; ctx.fillRect(x, centerY - val, barW, val); ctx.fillRect(x, centerY, barW, val); }
-        } else if (vizStyle === 5) { 
-            const sideW = (cvs.width - 320) / 2;
-            const barCount = 35;
-            const barGap = 2;
-            const barW = (sideW - (barCount * barGap)) / barCount;
-
-            function drawSide(startX) {
-                for (let i = 0; i < barCount; i++) {
-                    const dataIdx = i;
-                    const val = (data[dataIdx] / 255) * cvs.height;
-                    const x = startX + (i * (barW + barGap));
-                    const peakIdx = i + (startX > sideW ? barCount : 0);
-                    if (val > peaks[peakIdx]) { peaks[peakIdx] = val; } else { peaks[peakIdx] -= 0.8; }
-                    const pY = cvs.height - peaks[peakIdx];
-                    ctx.fillStyle = vHex;
-                    ctx.fillRect(x, cvs.height - val, barW, val);
-                    ctx.fillStyle = "#ffffff";
-                    ctx.fillRect(x, pY - 1, barW, 1);
-                }
+    for(let i=0;i<count;i++){
+        let value=levels[i];
+        if(mode===1||mode===5){const mirror=Math.min(23,Math.round(Math.abs(i-11.5)*2));value=levels[mode===1?23-mirror:mirror];}
+        const height=Math.max(2,value*h*.92),x=i*step+(step-bw)/2;
+        if(mode===9){ctx.globalAlpha=(i+.5)/count<meter.level?1:.12;ctx.beginPath();ctx.roundRect(x,h*.29,bw,h*.42,bw*.25);ctx.fill();continue;}
+        if(mode===0||mode===7||mode===10){
+            const rows=8,dy=h/rows,on=Math.round(value*rows);
+            for(let row=0;row<rows;row++){
+                if(row>=on&&mode!==10)continue;
+                ctx.globalAlpha=row<on?1:.1;const y=h-(row+.5)*dy;ctx.beginPath();
+                if(mode===0)ctx.roundRect(x,y-dy*.3,bw,dy*.6,Math.min(1.5,dy*.12));
+                else ctx.arc(x+bw/2,y,Math.min(bw*.35,dy*.26),0,Math.PI*2);
+                ctx.fill();
             }
-            drawSide(5);
-            drawSide(cvs.width - sideW + 5);
+        }else{ctx.globalAlpha=1;ctx.beginPath();ctx.roundRect(x,mode===4?(h-height)/2:h-height,bw,height,Math.min(bw/2,height/2));ctx.fill();}
+    }
+    ctx.globalAlpha=1;
+}
+
+function drawClassicSpectrum(vizStyle,ctx,cvs,data,vRgb,peaks,dt=16.7){
+    const vHex=`rgb(${vRgb})`;
+    if (vizStyle === 0) {
+           const count=Math.min(96,Math.max(12,Math.floor(cvs.width/6))),step=cvs.width/count,barW=Math.max(1,step-2);
+           for(let i=0;i<count;i++){const val=data[Math.floor(i/count*data.length)]/255*cvs.height;for(let y=0;y<val;y+=3){ctx.fillStyle=`rgba(${vRgb},${Math.min(1,.4+y/cvs.height)})`;ctx.fillRect(i*step,cvs.height-y-2,barW,2);}}
+        } else if (vizStyle === 1) {
+           const count=20,step=cvs.width/(count*2),barW=Math.max(1,step*.72),center=cvs.width/2;
+           for(let i=0;i<count;i++){const val=data[Math.floor(i/count*data.length)]/255*cvs.height;ctx.fillStyle=`rgba(${vRgb},.8)`;ctx.fillRect(center+i*step,cvs.height-val,barW,val);ctx.fillRect(center-(i+1)*step,cvs.height-val,barW,val);}
+        } else if (vizStyle === 2) {
+           ctx.beginPath();ctx.lineWidth=2;ctx.strokeStyle=`rgba(${vRgb},.8)`;
+           for(let i=0;i<data.length;i++){const x=i/(data.length-1)*cvs.width,y=cvs.height-data[i]/255*cvs.height;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.stroke();
+        } else if (vizStyle === 3 || vizStyle === 4) {
+           const count=Math.min(96,Math.max(12,Math.floor(cvs.width/9))),step=cvs.width/count,barW=Math.max(1,step*.72);
+           ctx.fillStyle=`rgba(${vRgb},.76)`;
+           for(let i=0;i<count;i++){const val=data[Math.floor(i/count*data.length)]/255*cvs.height*(vizStyle===4?.8:1);ctx.fillRect(i*step,vizStyle===4?(cvs.height-val)/2:cvs.height-val,barW,val);}
+        } else if (vizStyle === 5) {
+            // The animated artwork owns this mode; no spectrum bars around it.
+            return;
         } else if (vizStyle === 6) {
             const n = 64;
             const step = cvs.width / (n - 1);
@@ -3010,7 +2998,7 @@ function draw(ts = 0) {
             const rows = 18;
             const colW = cvs.width / cols;
             const gapY = (cvs.height - 12) / rows;
-            const dotR = Math.max(1.1, Math.min(2.8, colW * 0.20));
+            const dotR = Math.max(.45, Math.min(2.3, colW * .20, gapY*.28));
             for (let c = 0; c < cols; c++) {
                 const idx = Math.floor((c / cols) * data.length);
                 const v = data[idx] / 255;
@@ -3035,10 +3023,91 @@ function draw(ts = 0) {
     }
 }
 
+function draw(ts = 0) {
+    // Reduce CPU when hidden / paused / radio hidden. The radio panel hides via
+    // transform+opacity (not display:none), so the old getComputedStyle().display
+    // check never slept while hidden — and ran a style recalc every frame. A
+    // cheap classList check fixes both. Audio plays via the <audio> element, so
+    // sleeping the visualizer never stops the music.
+    __drawScheduled = false;
+    const shouldSleep = vizStyle === MK_NO_VIZ || vizStyle === 5 || (vizStyle >= 8 && vizStyle <= 10) || radioVisualsInactive() || audio.paused || !analyser;
+    if (shouldSleep) {
+        // Visibility/radio-toggle/play events restart the loop. Do not leave an
+        // invisible 500 ms polling loop running for the whole minimized period.
+        return;
+    }
+    if (isAdjustingVol) {
+        // The volume OSD owns the monitor while the slider is moving. Poll
+        // slowly instead of analysing and repainting audio behind it.
+        scheduleDraw(120);
+        return;
+    }
+    if (vizStyle === MK_BUDDY_VIZ) {
+        scheduleDraw(1000 / (MK_LOW_SPEC ? 15 : 24));
+        if (dGif) dGif.style.opacity = 0;
+        mkDrawBuddyViz(ts || performance.now());
+        return;
+    }
+    scheduleDraw();
+    const frameMs = isModernViz(vizStyle) ? 1000 / (MK_LOW_SPEC ? 30 : 60) : MK_VIZ_FRAME_MS;
+    if (frameMs && ts && (ts - __vizLastFrameTs) < frameMs - .5) return;
+    const frameDelta=Math.min(64,Math.max(8,(ts||performance.now())-__vizLastFrameTs));
+    __vizLastFrameTs = ts || performance.now();
+    if (!__vizFreqData || __vizFreqData.length !== analyser.frequencyBinCount) __vizFreqData = new Uint8Array(analyser.frequencyBinCount);
+    const data = __vizFreqData;
+    analyser.getByteFrequencyData(data);
+
+    // Spectrum follows the current album/theme accent. The cached value avoids
+    // reading computed styles on every animation frame.
+    const vC = __radioVizAccentRGB;
+    const vRgb = `${vC[0]}, ${vC[1]}, ${vC[2]}`;
+    const vHex = `rgb(${vRgb})`;
+
+    const bassSignal = data[2];
+    const midSignal = data[10];
+    const triggerPower = Math.max(bassSignal, midSignal * 0.8) / 255;
+
+    if (triggerPower > 0.38) {
+        ledPoint.style.background = "var(--led-on)";
+        ledPoint.style.boxShadow = "none";
+        ledHalo.style.opacity = 0;
+    } else {
+        ledPoint.style.background = "var(--led-off)";
+        ledPoint.style.boxShadow = "none";
+        ledHalo.style.opacity = 0;
+    }
+
+    if (vizStyle === 5) { dGif.style.opacity = 1; }
+    else { dGif.style.opacity = 0; }
+
+    ensureCanvasSize();
+    // Extra visualizers (VU/LED/DOT) own the canvas in radio_extras_v4.js
+    if (vizStyle >= 8 && vizStyle <= 10) {
+        return;
+    }
+    if ((vizStyle === 6 || vizStyle === 7) && !__radioImageSkin) {
+        ctx.fillStyle = 'rgba(0,0,0,0.18)';
+        ctx.fillRect(0,0,cvs.width,cvs.height);
+    } else {
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+    }
+
+    if (isModernViz(vizStyle)) {
+        drawModernSpectrum(modernBaseMode(vizStyle),ctx,cvs.width,cvs.height,data,frameDelta,vHex);
+    } else {
+        const ratio=cvs.width/cvs.clientWidth;
+        ctx.save();ctx.scale(ratio,ratio);
+        drawClassicSpectrum(vizStyle,ctx,{width:cvs.clientWidth,height:cvs.clientHeight},data,vRgb,peaks,frameDelta);
+        ctx.restore();
+    }
+}
+
 document.getElementById('playBtn').onclick = () => {
     setupAudio();
     if (isFirstPlay) {
         // Find first valid (non-separator) station
+        const favoriteIndex=window.__mkUnifiedMedia?.getSession()?favoriteStationIndex(window.__mkUnifiedMedia.getRadio()?.favorites):-1;
+        if(favoriteIndex>=0)currentIndex=favoriteIndex;
         let startIdx = currentIndex;
         for (let i = 0; i < stationsList.length; i++) {
             const idx = (currentIndex + i) % stationsList.length;
@@ -3050,7 +3119,7 @@ document.getElementById('playBtn').onclick = () => {
         // First play: select once, then retry after 800ms if still not playing
         selectStation(startIdx);
         setTimeout(function() {
-            if (!window.__mkRadioSupersededByLacitis && audio.paused) selectStation(startIdx);
+            if (!window.__mkRadioSupersededByLacitis && audio.paused && currentIndex === startIdx) selectStation(startIdx);
         }, 800);
     } else {
         if (audio.paused) { 
@@ -3172,7 +3241,7 @@ function focusRadio(){
       left: r.left,
       top: r.top,
       width: r.width,
-      height: r.height,
+      height: win.dataset.radioLayout ? 190 : r.height,
       minimized: win.classList.contains('minimized'),
       hidden: win.classList.contains('hidden')
     };
@@ -3424,6 +3493,21 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     ['Sudraba migla','Vēss un maigs','#c1d5de','linear-gradient(125deg,#4a5c68,#1b262d 65%,#364b57)']
   ].forEach(([name,description,chip,background])=>THEMES.push({name,description,chip,background,surfaceRGB:[9,16,21],vars:{}}));
 
+  [
+    ['Grieķu kolonnas','Akmens un silta gaisma','greek-columns','#c8b293'],
+    ['Marmora seja','Tumšs antīkais portrets','marble-face','#c6bda5'],
+    ['Antīkais marmors','Skulptūra melnā telpā','marble-bust','#c9c9c3'],
+    ['Filozofs','Dramatiskas marmora ēnas','marble-shadow','#b4bac0'],
+    ['Klusās arkas','Ritms un dziļas ēnas','stone-arches','#b5bfc6'],
+    ['Saules galerija','Kolonnas un mierīgs pagalms','quiet-gallery','#d2b390'],
+    ['Kāpu ēnas','Smilšu raksti un vakara gaisma','dune-shadows','#cba679'],
+    ['Kalni miglā','Vēss akmens un mākoņi','mist-peaks','#97b8c4'],
+    ['Pilsēta miglā','Kluss, sapņains siluets','fog-city','#9ab9a9'],
+    ['Ziemeļblāzma','Nakts debesis un zaļa gaisma','aurora','#87c9b0']
+  ].forEach(([name,description,file,chip])=>THEMES.push({name,description,chip,surfaceRGB:[8,14,18],vars:{},image:`kalendars/data/radio-skins/${file}.webp`,preview:`kalendars/data/radio-skins/${file}-preview.webp`}));
+
+  THEMES.sort((a,b)=>Number(!!b.image?.endsWith('.webp'))-Number(!!a.image?.endsWith('.webp')));
+
   function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
 
   function setVar(k,v){ document.documentElement.style.setProperty(k, v); }
@@ -3479,17 +3563,11 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
         el.style.setProperty('-webkit-backdrop-filter', 'none', 'important');
       });
       monitorFrames.forEach(el => {
-        el.style.setProperty('background', image ? 'rgba(0,0,0,.12)' : solidMonitor, 'important');
-        el.style.setProperty(
-          'border-color',
-          image ? 'rgba(var(--radio-accent-rgb,30,215,96),.13)' : border,
-          'important'
-        );
-        el.style.setProperty(
-          'box-shadow',
-          image ? 'none' : '0 12px 34px rgba(0,0,0,.28)',
-          'important'
-        );
+        // Keep theme defaults separate from the user's spectrum window choice.
+        el.style.setProperty('--radio-monitor-background', image ? 'rgba(0,0,0,.12)' : solidMonitor);
+        el.style.setProperty('--radio-monitor-border', image ? 'rgba(var(--radio-accent-rgb,30,215,96),.13)' : border);
+        el.style.setProperty('--radio-monitor-shadow', image ? 'none' : '0 12px 34px rgba(0,0,0,.28)');
+        ['background','border-color','box-shadow'].forEach(property => el.style.removeProperty(property));
       });
       controlPanels.forEach(el => {
         el.style.setProperty('background', 'transparent', 'important');
@@ -3543,7 +3621,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
         else hue = 60 * (((r - g) / delta) + 4);
       }
       if (hue < 0) hue += 360;
-      dGif.style.filter = `grayscale(1) brightness(.68) sepia(1) saturate(8) hue-rotate(${Math.round(hue - 39)}deg)`;
+      dGif.style.filter = `grayscale(1) brightness(.8) sepia(1) saturate(3) hue-rotate(${Math.round(hue - 39)}deg)`;
     }
     [
       document.getElementById('radioWindow'),
@@ -3763,9 +3841,10 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
       row.className = 'theme-item' + (saved.name === t.name ? ' active' : '');
       if (t.isDefault) row.classList.add('is-default');
       row.dataset.name = t.name;
+      row.dataset.category = t.image ? 'photos' : 'colors';
       const previewAsset = t.preview || t.image;
       const previewUrl = previewAsset ? new URL(previewAsset, document.baseURI).href : '';
-      row.style.setProperty('--theme-preview', previewUrl ? `url("${previewUrl}")` : (t.background||'linear-gradient(#16211d,#070b09)'));
+      row.style.setProperty('--theme-preview',t.background||'linear-gradient(#16211d,#070b09)');
       row.innerHTML = `
         <span class="theme-card-shade"></span>
         <span class="theme-card-copy">
@@ -3774,6 +3853,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
         </span>
         <span class="theme-check" aria-hidden="true">✓</span>
       `;
+      if(previewUrl){const img=document.createElement('img');img.className='theme-photo';img.alt='';img.loading='lazy';img.decoding='async';img.width=480;img.height=96;img.src=previewUrl;row.prepend(img);}
       row.addEventListener('click', (e)=>{
         e.stopPropagation();
         setEnabled(true);
@@ -3792,12 +3872,15 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     const radioRect = radio?.getBoundingClientRect();
     const pw = Math.min(680, window.innerWidth - 24);
     panel.style.width = pw + 'px';
-    const ph = Math.min(panel.scrollHeight || 520, window.innerHeight - 24);
+    // Measure after applying the new constraints. A short-to-tall resize used
+    // the old panel height, then expanded it below the bottom of the screen.
+    const availableHeight = Math.max(100, Math.min(900, window.innerHeight - 24));
+    panel.style.maxHeight = availableHeight + 'px';
+    const ph = Math.min(panel.getBoundingClientRect().height || 520, availableHeight);
     const bottom = Math.min((radioRect?.top || window.innerHeight) - 12, window.innerHeight - 12);
     const top = Math.max(12, bottom - ph);
     panel.style.left = Math.max(12, (window.innerWidth - pw) / 2) + 'px';
     panel.style.top = top + 'px';
-    panel.style.maxHeight = Math.max(100, window.innerHeight - 24) + 'px';
   }
 
   function openPanel(){
@@ -3808,7 +3891,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     panel.setAttribute('aria-hidden','false');
     renderList();
     setAccentModeActive(getSaved().accentMode);
-    requestAnimationFrame(positionPanel);
+    requestAnimationFrame(()=>{positionPanel();syncLayoutPreview();});
   }
   function closePanel(){
     if(lookBefore){const previous=lookBefore;lookBefore=null;applyLookSettings(previous);}
@@ -3817,7 +3900,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
   }
 
   const LOOK_KEY='rg_radio_appearance_v1';
-  const LOOK_DEFAULTS={darkness:64,tint:28,glass:24,glow:80,position:'center',text:'#f3f7f5',background:'',cardName:''};
+  const LOOK_DEFAULTS={darkness:64,tint:28,glass:24,glow:45,layout:'classic',vizFrame:'auto',position:'center',text:'#f3f7f5',background:'',cardName:''};
   let appearance;try{appearance={...LOOK_DEFAULTS,...JSON.parse(localStorage.getItem(LOOK_KEY)||'{}')};}catch(_){appearance={...LOOK_DEFAULTS};}
   let lookBefore=null,albumColor='#53c9e8',applyingProfile=false;
   const safeColor=(value,fallback='#f3f7f5')=>/^#[\da-f]{6}$/i.test(value||'')?value:fallback;
@@ -3829,6 +3912,10 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
   }
   function paintAppearance(){
     const rw=document.getElementById('radioWindow');if(!rw)return;
+    rw.dataset.radioLayout=appearance.layout==='clean'?'clean':'classic';
+    rw.dataset.vizFrame=['on','off'].includes(appearance.vizFrame)?appearance.vizFrame:'auto';
+    const lookButton=document.getElementById('themeBtn');
+    if(lookButton){const home=rw.querySelector(rw.dataset.radioLayout==='clean'?'.control-panel':'.tech-panel .branding');if(home&&lookButton.parentElement!==home)home.prepend(lookButton);}
     const saved=getSaved(),theme=findTheme(saved.name);
     const background=saved.name==='Mana kartīte'?safeBackground(appearance.background):(theme.image?`url("${new URL(theme.image,document.baseURI).href}")`:theme.background||'');
     const color=saved.accentMode==='album'?albumColor:saved.accentMode==='card'?safeColor(appearance.cardAccent,'#53c9e8'):saved.accentMode==='custom'?saved.accent:(FIXED_ACCENTS[saved.accentMode]||theme.chip);
@@ -3837,14 +3924,21 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     rw.style.setProperty('background-position',['left','center','right','top','bottom'].includes(appearance.position)?appearance.position:'center','important');
     rw.style.setProperty('background-size','cover','important');
     rw.style.setProperty('border-color','transparent','important');
-    rw.style.setProperty('border-top-color',`rgba(225,239,246,${.03+glass*.06})`,'important');
-    rw.style.setProperty('box-shadow','0 8px 24px rgba(0,0,0,.16)','important');
+    rw.style.setProperty('border-top-color',`rgba(225,239,246,${glass*.42})`,'important');
+    rw.style.setProperty('box-shadow',`inset 0 ${glass*2}px ${glass*12}px rgba(224,243,255,${glass*.22}),0 8px 24px rgba(0,0,0,.16)`,'important');
     // A restrained text fallback keeps names legible on the dark overlay.
     const text=safeColor(appearance.text),v=parseColorToRGBStr(text).split(',').map(Number);
     rw.style.setProperty('--radio-personal-text',(.2126*v[0]+.7152*v[1]+.0722*v[2])<150?'#f3f7f5':text);
     const strength=clamp(Number(appearance.glow)/100,0,1);document.documentElement.style.setProperty('--radio-glow-strength',String(strength));
     rw.style.setProperty('--radio-glow-strength',String(strength));
-    const preview=document.getElementById('radioLookPreview');if(preview){preview.style.backgroundImage=rw.style.backgroundImage;preview.style.backgroundPosition=rw.style.backgroundPosition;preview.style.color=rw.style.getPropertyValue('--radio-personal-text');}
+    const preview=document.getElementById('radioLookPreview');if(preview){preview.style.backgroundImage=rw.style.backgroundImage;preview.style.backgroundPosition=rw.style.backgroundPosition;preview.style.color=rw.style.getPropertyValue('--radio-personal-text');preview.style.setProperty('--radio-preview-accent',color);preview.style.boxShadow=rw.style.getPropertyValue('box-shadow');renderLookPreviews();syncLayoutPreview();}
+    const themePanel=document.getElementById('themePanel');
+    const framed=appearance.vizFrame==='on'||(appearance.vizFrame!=='off'&&!isModernViz(vizStyle));
+    themePanel?.querySelectorAll('[data-viz-frame-choice]').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.vizFrameChoice==='on')===framed)));
+    themePanel?.querySelectorAll('[data-radio-layout-choice]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.radioLayoutChoice===rw.dataset.radioLayout)));
+    themePanel?.querySelectorAll('[data-viz-choice]').forEach(b=>{const idx=Number(b.dataset.vizChoice);b.setAttribute('aria-pressed',String(idx===vizStyle||(vizStyle===MK_FLOW_VIZ&&idx===24)));b.hidden=idx!==MK_NO_VIZ&&isModernViz(idx)!==(vizFamily==='new');});
+    themePanel?.querySelectorAll('[data-viz-family]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.vizFamily===vizFamily)));
+    const familyNote=themePanel?.querySelector('.radio-viz-family-note');if(familyNote)familyNote.textContent=vizFamily==='new'?'Gludas formas. Ātra reakcija uz mūziku.':'Iepriekšējie efekti, delfīni un Buddy.';
   }
   function lookSnapshot(){const s=getSaved();return {...appearance,theme:s.name,accent:s.accent,accentMode:s.accentMode,eq:window.__eqMode||'none',viz:String(vizStyle)};}
   const GUEST_LOOK_KEY='rg_radio_guest_look_v1';
@@ -3864,6 +3958,8 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
   function applyLookSettings(data={}){
     applyingProfile=true;
     appearance={...LOOK_DEFAULTS,...data,background:safeBackground(data.background)};
+    appearance.layout=data.layout==='clean'?'clean':'classic';
+    appearance.vizFrame=['on','off'].includes(data.vizFrame)?data.vizFrame:'auto';
     for(const key of ['darkness','tint','glass','glow'])appearance[key]=clamp(Number(appearance[key])||0,0,100);
     localStorage.setItem(LOOK_KEY,JSON.stringify(appearance));
     setSaved({name:data.theme||'Dziļais okeāns',accent:safeColor(data.accent,'#1ed760'),accentMode:data.accentMode||'album',enabled:true});
@@ -3871,11 +3967,42 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     if(/^\d+$/.test(data.viz||''))setVizStyle(Number(data.viz));
     applyTheme(getSaved().name);paintAppearance();applyingProfile=false;
   }
+  function vizPreviewSource(mode){
+    return `kalendars/data/radio-viz/${mode===MK_FLOW_VIZ?24:mode}.webp?v=${mode===5?'20260908d1':'20260908c2'}`;
+  }
+  function vizPreview(mode){
+    if(mode===MK_NO_VIZ)return '';
+    return `<img class="radio-viz-thumbnail" src="${vizPreviewSource(mode)}" width="600" height="80" loading="lazy" decoding="async" alt="" aria-hidden="true">`;
+  }
+  function renderLookPreviews(){
+    const preview=document.getElementById('radioLookVizImage');if(!preview)return;
+    preview.hidden=vizStyle===MK_NO_VIZ;
+    const sample=preview.parentElement,modern=isModernViz(vizStyle);
+    sample.classList.toggle('is-modern',modern&&!preview.hidden);
+    sample.classList.toggle('has-frame',!preview.hidden&&(appearance.vizFrame==='on'||(appearance.vizFrame!=='off'&&!modern)));
+    if(!preview.hidden){const src=vizPreviewSource(vizStyle);if(preview.getAttribute('src')!==src)preview.src=src;sample.style.setProperty('--viz-preview-mask',modern?`url("${new URL(src,document.baseURI).href}")`:'none');}else sample.style.setProperty('--viz-preview-mask','none');
+  }
+  function syncLayoutPreview(){
+    const rw=document.getElementById('radioWindow'),preview=document.getElementById('radioLookPreview');
+    if(!rw||!preview||!panel.classList.contains('open'))return;
+    const rect=rw.getBoundingClientRect();if(!rect.width||!rect.height)return;
+    preview.style.aspectRatio=`${rect.width} / ${rect.height}`;
+    preview.dataset.layout=appearance.layout==='clean'?'clean':'classic';
+    const station=preview.querySelector('.radio-preview-station');
+    if(station)station.textContent=document.getElementById('curStation')?.textContent||'Radio';
+    // Match the displayed monitor rectangle, including the chosen layout.
+    const monitor=rw.querySelector('.monitor-frame')?.getBoundingClientRect(),sample=preview.querySelector('.radio-viz-sample');
+    if(monitor&&sample){sample.style.left=((monitor.left-rect.left)/rect.width*100)+'%';sample.style.top=((monitor.top-rect.top)/rect.height*100)+'%';sample.style.width=(monitor.width/rect.width*100)+'%';sample.style.height=(monitor.height/rect.height*100)+'%';}
+  }
   function buildLookControls(){
     if(document.getElementById('radioLookControls'))return;
     const box=document.createElement('section');box.id='radioLookControls';box.innerHTML=`
       <button type="button" id="radioUseCard">Kā mana kartīte</button><p id="radioLookNote" role="status">Fons paliek tavs. Albuma režīmā krāsa mainās līdzi mūzikai.</p>
-      <div id="radioLookPreview"><strong>Radio</strong><span>Tava fona priekšskatījums</span></div>
+      <fieldset class="radio-layout-choices"><legend>Izkārtojums</legend><div class="radio-viz-families"><button type="button" data-radio-layout-choice="classic" aria-pressed="true">Pašreizējais</button><button type="button" data-radio-layout-choice="clean" aria-pressed="false">Jauns izkārtojums</button></div><p class="radio-viz-family-note">Jaunajā izkārtojumā pogas ir pa kreisi un spektrs pa labi.</p></fieldset>
+      <div id="radioLookPreview" aria-label="Radio izkārtojuma un fona priekšskatījums"><div class="radio-preview-copy"><strong class="radio-preview-station">Radio</strong><span>Tava mūzika</span></div><div class="radio-preview-toolbar" aria-hidden="true">◉ &nbsp; RADIO &nbsp; MŪZIKA</div><div class="radio-preview-buttons" aria-hidden="true">▣ &nbsp; ♫ &nbsp; ◀ &nbsp; <b>▶</b> &nbsp; ▶ &nbsp; ━━</div><div class="radio-viz-sample"><img id="radioLookVizImage" width="600" height="80" decoding="async" alt="Izvēlētās vizualizācijas momentuzņēmums"></div></div>
+      <fieldset class="radio-viz-choices"><legend>Vizualizācija</legend><div class="radio-viz-families"><button type="button" data-viz-family="new">Jaunais skats</button><button type="button" data-viz-family="classic">Classic</button></div><p class="radio-viz-family-note"></p><div class="radio-viz-grid">${[...VIZ_MODES.filter(m=>m.idx!==MK_NO_VIZ),getVizMode(MK_NO_VIZ)].map(m=>`<button type="button" data-viz-choice="${m.idx}" aria-pressed="false">${vizPreview(m.idx)}<span>${m.label}</span></button>`).join('')}</div></fieldset>
+      <fieldset class="radio-layout-choices"><legend>Spektra logs</legend><div class="radio-viz-families"><button type="button" data-viz-frame-choice="off">Bez loga</button><button type="button" data-viz-frame-choice="on">Ar logu</button></div></fieldset>
+      <div class="radio-clean-actions"><button type="button" id="radioEffectsOff">Izslēgt visus efektus</button><button type="button" id="radioBackgroundOff">Bez fona attēla</button></div>
       <details><summary>Pielāgot vairāk</summary>
        <label>Fona tumšums<input type="range" min="30" max="92" data-look="darkness"></label>
        <label>Krāsas pārklājums<input type="range" min="0" max="65" data-look="tint"></label>
@@ -3883,12 +4010,19 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
        <label>Apkārtējā gaisma<input type="range" min="0" max="100" data-look="glow"></label>
        <label>Attēla novietojums<select data-look="position"><option value="center">Vidū</option><option value="left">Pa kreisi</option><option value="right">Pa labi</option><option value="top">Augšā</option><option value="bottom">Apakšā</option></select></label>
        <label>Burtu krāsa<input type="color" data-look="text"></label>
-       <label>Vizualizācija<select data-look="viz">${VIZ_MODES.map(m=>`<option value="${m.idx}">${m.label}</option>`).join('')}</select></label>
       </details><div class="radio-look-actions"><button type="button" id="radioLookReset">Atiestatīt izskatu</button><button type="button" id="radioLookCancel">Atcelt</button><button type="button" id="radioLookApply">Lietot</button></div>`;
     panel.append(box);
+    if(typeof ResizeObserver==='function')new ResizeObserver(()=>syncLayoutPreview()).observe(document.getElementById('radioWindow'));
     const footer=box.querySelector('.radio-look-actions');
     const scroll=document.createElement('div');scroll.className='radio-theme-scroll';
-    scroll.append(listEl,panel.querySelector('.theme-controls'),box);panel.append(scroll,footer);
+    const filters=document.createElement('div');filters.className='radio-theme-filters';filters.setAttribute('aria-label','Fonu veids');
+    filters.innerHTML='<button type="button" data-theme-filter="all" aria-pressed="true">Visi foni</button><button type="button" data-theme-filter="photos" aria-pressed="false">Attēli</button><button type="button" data-theme-filter="colors" aria-pressed="false">Vienkārši toņi</button>';
+    filters.addEventListener('click',e=>{const b=e.target.closest('[data-theme-filter]');if(!b)return;filters.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));listEl.querySelectorAll('.theme-item').forEach(x=>x.hidden=b.dataset.themeFilter!=='all'&&x.dataset.category!==b.dataset.themeFilter);});
+    const displayOptions=document.createElement('div');displayOptions.className='radio-display-options';
+    displayOptions.append(box.querySelector('[data-radio-layout-choice]').closest('fieldset'),box.querySelector('[data-viz-frame-choice]').closest('fieldset'));
+    box.prepend(displayOptions);
+    box.querySelector('#radioLookPreview').after(filters,listEl,panel.querySelector('.theme-controls'));
+    scroll.append(box);panel.append(scroll,footer);
     const quick=box.querySelector('#radioUseCard');quick.className='radio-card-shortcut';panel.insertBefore(quick,scroll);
     quick.innerHTML='<span class="radio-card-preview" aria-hidden="true"><span class="radio-card-emoji"></span></span><span class="radio-card-copy"><strong>Mana kartīte</strong><span class="radio-card-owner"></span><small class="radio-card-hint"></small></span><span class="radio-card-check" aria-hidden="true">✓</span>';
     const cardMode=document.createElement('button');cardMode.type='button';cardMode.dataset.accentMode='card';cardMode.innerHTML='<b>Kartītes krāsas</b><small>Nemainīgas</small>';accentModeEl.append(cardMode);
@@ -3910,7 +4044,16 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
       setSaved({name:'Mana kartīte',accent:appearance.cardAccent,accentMode:'album'});applyTheme('Mana kartīte');syncLookControls();
       document.getElementById('radioLookNote').textContent='Pārņemts '+document.querySelector('#radioUseCard .radio-card-owner').textContent+' izskats. Krāsas turpina mainīties pēc albuma.';
     };
-    document.getElementById('radioLookReset').onclick=()=>{applyLookSettings({});syncLookControls();};
+    box.querySelectorAll('[data-viz-frame-choice]').forEach(b=>b.onclick=()=>{appearance.vizFrame=b.dataset.vizFrameChoice==='on'?'on':'off';paintAppearance();});
+    box.querySelectorAll('[data-radio-layout-choice]').forEach(b=>b.onclick=()=>{appearance.layout=b.dataset.radioLayoutChoice==='clean'?'clean':'classic';paintAppearance();});
+    box.querySelectorAll('[data-viz-family]').forEach(b=>b.onclick=()=>{switchVizFamily(b.dataset.vizFamily);paintAppearance();});
+    box.querySelectorAll('[data-viz-choice]').forEach(b=>b.onclick=()=>{setVizStyle(Number(b.dataset.vizChoice));paintAppearance();});
+    document.getElementById('radioEffectsOff').onclick=()=>{
+      appearance={...appearance,tint:0,glass:0,glow:0,vizFrame:'off'};disableMilkdrop();setVizStyle(MK_NO_VIZ);syncLookControls();
+      document.getElementById('radioLookNote').textContent='Vizualizācija, krāsas pārklājums, stikls un apkārtējā gaisma ir izslēgti. Fons un skaņa paliek.';
+    };
+    document.getElementById('radioBackgroundOff').onclick=()=>{appearance.background='';appearance.cardName='';setSaved({name:'Melns'});applyTheme('Melns');syncLookControls();};
+    document.getElementById('radioLookReset').onclick=()=>{setVizStyle(MK_DEFAULT_VIZ);applyLookSettings({});syncLookControls();};
     document.getElementById('radioLookCancel').onclick=()=>closePanel();
     document.getElementById('radioLookApply').onclick=()=>{
       localStorage.setItem(LOOK_KEY,JSON.stringify(appearance));

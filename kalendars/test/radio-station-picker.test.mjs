@@ -82,3 +82,24 @@ test('Latvian logos are local existing assets and override stale feed covers',()
   assert.notEqual(c.stationLogoUrl({group:'latvija',title:'SWH'}),c.stationLogoUrl({group:'latvija',title:'SWH GOLD'}));
   assert.notEqual(c.stationLogoUrl({group:'latvija',title:'EHR'}),c.stationLogoUrl({group:'latvija',title:'EHR DANCE'}));
 });
+test('opening defaults to current profile favorites and clears stale searches',()=>{
+  let favorites=['record:rock'],session={};
+  const search={value:'old search'};
+  const tabs=['favorites','record','latvija'].map(source=>({dataset:{stationSource:source},classList:{toggle(){}},setAttribute(name,value){this[name]=value;}}));
+  const overlay={style:{display:'none'},setAttribute(){},querySelector:()=>search,querySelectorAll:()=>tabs};
+  const c=vm.createContext({window:{__mkUnifiedMedia:{getSession:()=>session,getRadio:()=>({favorites})}},
+    document:{getElementById:id=>id==='stationOverlay'?overlay:null,querySelectorAll:()=>[]},
+    positionStationPicker(){},renderStationOverlay(){},clearTimeout(){},requestAnimationFrame(){},
+    stationPickerSource:'latvija',stationPickerQuery:'old search',stationPickerSearchTimer:0});
+  vm.runInContext(section('function toggleMenu(', 'function positionStationPicker('),c);
+  c.toggleMenu(true);
+  assert.equal(c.stationPickerSource,'favorites');assert.equal(c.stationPickerQuery,'');assert.equal(search.value,'');
+  assert.equal(tabs[0]['aria-selected'],'true');assert.equal(tabs[1]['aria-selected'],'false');
+  c.stationPickerSource='latvija';c.toggleMenu(true);
+  assert.equal(c.stationPickerSource,'latvija','already open picker keeps manual tab selection');
+  c.toggleMenu(false);c.toggleMenu(true);assert.equal(c.stationPickerSource,'favorites');
+  favorites=[];c.toggleMenu(false);c.toggleMenu(true);
+  assert.equal(c.stationPickerSource,'record');assert.equal(tabs[1]['aria-selected'],'true');
+  favorites=['record:rock'];session=null;c.toggleMenu(false);c.toggleMenu(true);
+  assert.equal(c.stationPickerSource,'record','guest must not inherit another profile favorites');
+});

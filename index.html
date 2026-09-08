@@ -332,7 +332,7 @@
 
 
 <!-- App CSS: critical shell loads normally; radio extras load non-blocking -->
-<link rel="stylesheet" href="css/minka.css?v=20260907music1">
+<link rel="stylesheet" href="css/minka.css?v=20260908button1">
 <link rel="stylesheet" href="css/radio-extra.css">
 <!-- Non-critical CSS loaded async -->
 <link rel="preload" as="style" href="css/improvements.css"
@@ -345,9 +345,9 @@
 </noscript>
 <!-- Radio polish overrides — must load after all other radio CSS -->
 <link rel="stylesheet" href="css/radio_polish_v1.css?v=20260708b">
-<link rel="stylesheet" href="css/radio_lacitis_v2.css?v=20260908stations1">
-<link rel="stylesheet" href="css/radio-source.css?v=20260908header5">
-<link rel="stylesheet" href="css/media-profile.css?v=20260908header2">
+<link rel="stylesheet" href="css/radio_lacitis_v2.css?v=20260908playglow1">
+<link rel="stylesheet" href="css/radio-source.css?v=20260908skinbar1">
+<link rel="stylesheet" href="css/media-profile.css?v=20260908cover1">
 
 <style>
 /* ═══ MINKA v11 Shell ═══ */
@@ -422,6 +422,10 @@ html.mk-low-spec #calendarEmbed {
 body.radio-hidden #calendarEmbed { bottom: calc(var(--btnbar-h) + 4px); }
 body.radio-idle #calendarEmbed { bottom: calc(var(--btnbar-h) + 4px) !important; }
 body.lacitis-docked #calendarEmbed { bottom: var(--calendar-bottom) !important; }
+/* Work panels cover the radio without changing its playback or open state. */
+body.bolus-work-open #bolus-overlay { z-index: 170100 !important; }
+body.stats-work-open #calendarEmbed { z-index: 70000 !important; bottom: calc(var(--btnbar-h) + 4px) !important; }
+
 
 #calendarEmbed iframe {
   position: relative;
@@ -793,7 +797,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
             <div class="led-core" id="ledPoint"><div class="led-glow" id="ledHalo"></div></div>
             <div class="brand-text">RG RADIO</div>
             <button class="skin-mini-btn" id="themeBtn" title="Pielāgot radio izskatu" aria-label="Pielāgot radio izskatu">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m12 4 9 5-9 5-9-5 9-5Zm-8 9 8 4 8-4M4 17l8 4 8-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18h1.1a2.2 2.2 0 0 0 1.6-3.7 1.5 1.5 0 0 1 1.1-2.5h1.7A3.5 3.5 0 0 0 21 11.3 9 9 0 0 0 12 3Z" stroke="currentColor" stroke-width="1.65" stroke-linejoin="round"/><circle cx="7.3" cy="10" r="1.15" fill="currentColor"/><circle cx="11" cy="7" r="1.15" fill="currentColor"/><circle cx="15.8" cy="8.4" r="1.15" fill="currentColor"/></svg>
             </button>
           </div>
         </div>
@@ -869,7 +873,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
           <div id="osd-num">00</div>
           <div id="osd-segments"></div>
         </div>
-        <img data-radio-src="data/dolphin.webp" data-fallback-src="data/dolphin.gif" id="dolphin-bg" loading="lazy" decoding="async" alt="">
+        <img data-radio-src="data/dolphin.webp?v=20260908d1" data-fallback-src="data/dolphin.gif" id="dolphin-bg" loading="lazy" decoding="async" alt="">
         <canvas id="slowedWaveCanvas" class="slowed-wave-canvas"></canvas>
         <canvas id="vizCanvas"></canvas>
         <canvas id="milkdropCanvas"></canvas>
@@ -994,8 +998,8 @@ async function loadRadioScripts() {
     _fa.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
     document.head.appendChild(_fa);
   }
-  await loadAny(['js/radio.js?v=20260908stations3']);
-  await loadAny(['js/radio_extras_v4.js?v=20260801release1']);
+  await loadAny(['js/radio.js?v=20260908favopen1']);
+  await loadAny(['js/radio_extras_v4.js?v=20260908visuals1']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;
   return true;
@@ -2594,7 +2598,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   </section>
 </div>
 
-<script src="js/media-profile.js?v=20260908profile6" defer></script>
+<script src="js/media-profile.js?v=20260908profilelabel1" defer></script>
 <script src="js/radio-source.js?v=20260908header3" defer></script>
 
 <div id="mobileQrModal" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171000;background:rgba(2,4,8,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:20px;">
@@ -4506,6 +4510,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
 
 <script>
 var _nsOpen = false;
+document.getElementById('calIframe')?.addEventListener('load', function(){ document.body.classList.remove('stats-work-open'); });
 
 function setBuddyUiFlag(name, open) {
   /* Buddy no longer exists. Keep this compatibility hook because older UI
@@ -4526,7 +4531,7 @@ function openStatsFromDock() {
     var modal = idoc && idoc.getElementById('stats-modal');
     if (modal && modal.style.display && modal.style.display !== 'none') {
       if (typeof iframe.contentWindow.closeStatsModal === 'function') iframe.contentWindow.closeStatsModal();
-      else { modal.style.display = 'none'; }
+      else { modal.style.display = 'none'; document.body.classList.remove('stats-work-open'); }
       setBuddyUiFlag('stats', false);
       return;
     }
@@ -4609,10 +4614,12 @@ window.addEventListener('message', function(e) {
     window.__mkCoffeeStatsToggle(anchor);
   }
   if (e.data && e.data.type === 'mk_stats_closed') {
+    document.body.classList.remove('stats-work-open');
     var btn = document.getElementById('statsDocBtn');
     if (btn) btn.classList.remove('stats-open');
     setBuddyUiFlag('stats', false);
   } else if (e.data && e.data.type === 'mk_stats_opened') {
+    document.body.classList.add('stats-work-open');
     var btn = document.getElementById('statsDocBtn');
     if (btn) btn.classList.add('stats-open');
     setBuddyUiFlag('stats', true);

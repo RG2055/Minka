@@ -43,6 +43,8 @@ export function cleanRadio(data={}){
  const id=value=>typeof value==='string'&&value.length<=240&&value.length>0;
  const out={favorites:[...new Set((Array.isArray(data.favorites)?data.favorites:[]).filter(id))].slice(0,250),lastStation:id(data.lastStation)?data.lastStation:'',settings:{}};
  const s=data.settings||{};
+ if(s.layout==='classic'||s.layout==='clean')out.settings.layout=s.layout;
+ if(['auto','on','off'].includes(s.vizFrame))out.settings.vizFrame=s.vizFrame;
  for(const k of ['theme','accentMode','accent','text','background','position','viz','eq','cardName','cardAccent'])if(typeof s[k]==='string'&&s[k].length<=1600)out.settings[k]=s[k];
  for(const k of ['darkness','tint','glass','glow'])if(Number.isFinite(s[k]))out.settings[k]=Math.max(0,Math.min(100,s[k]));
  return out;

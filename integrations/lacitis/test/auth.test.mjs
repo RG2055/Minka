@@ -51,8 +51,8 @@ test('PIN recovery consumes code, preserves data and revokes old sessions',async
  }finally{h.close();}
 });
 test('radio operations are idempotent and preserve settings and favorite order',async()=>{
- const h=harness();try{const a=await create(h),auth={sessionToken:a.session.sessionToken};for(const op of [{type:'favorite-add',id:'a'},{type:'favorite-add',id:'b'},{type:'favorite-add',id:'b'},{type:'settings',settings:{theme:'Pusnakts',glow:50}},{type:'favorite-move',id:'b',before:'a'}])assert.equal((await h.call('radio/change',{...auth,operation:op})).status,200);
- const result=await h.call('radio/load',auth);assert.deepEqual(result.data.favorites,['b','a']);assert.equal(result.data.settings.glow,50);
+ const h=harness();try{const a=await create(h),auth={sessionToken:a.session.sessionToken};for(const op of [{type:'favorite-add',id:'a'},{type:'favorite-add',id:'b'},{type:'favorite-add',id:'b'},{type:'settings',settings:{theme:'Pusnakts',glow:50,layout:'clean'}},{type:'favorite-move',id:'b',before:'a'}])assert.equal((await h.call('radio/change',{...auth,operation:op})).status,200);
+ const result=await h.call('radio/load',auth);assert.deepEqual(result.data.favorites,['b','a']);assert.equal(result.data.settings.glow,50);assert.equal(result.data.settings.layout,'clean');
  await h.call('radio/change',{...auth,operation:{type:'reset-look'}});assert.deepEqual((await h.call('radio/load',auth)).data.favorites,['b','a']);
  }finally{h.close();}
 });
@@ -86,4 +86,15 @@ test('reviewed canonical identity uses the established account without merging d
   const status=await h.call('pin-status',{name:'ALPHA TEST'});assert.equal(status.workerId,a.session.workerId);assert.equal((await h.call('login',{name:'Alpha Test',pin:'123456'})).status,200);
   assert.equal(h.DB.sqlite.prepare('SELECT count(*) AS n FROM dezura_pins').get().n,2);
  }finally{h.close();}
+});
+test('radio layout accepts only supported choices and survives unrelated changes',()=>{
+ let data=radioOperation({}, {type:'settings',settings:{layout:'clean'}});
+ data=radioOperation(data,{type:'favorite-add',id:'record:remix'});assert.equal(data.settings.layout,'clean');
+ data=radioOperation(data,{type:'settings',settings:{layout:'invalid'}});assert.equal(data.settings.layout,'clean');
+ data=radioOperation(data,{type:'settings',settings:{layout:'classic'}});assert.equal(data.settings.layout,'classic');
+});
+test('spectrum frame setting persists and invalid values cannot overwrite it',()=>{
+ let data=radioOperation({}, {type:'settings',settings:{vizFrame:'off',layout:'clean'}});
+ data=radioOperation(data,{type:'settings',settings:{vizFrame:'invalid'}});assert.equal(data.settings.vizFrame,'off');assert.equal(data.settings.layout,'clean');
+ data=radioOperation(data,{type:'settings',settings:{vizFrame:'on'}});assert.equal(data.settings.vizFrame,'on');
 });
