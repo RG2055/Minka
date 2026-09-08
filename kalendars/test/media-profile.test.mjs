@@ -45,8 +45,24 @@ test('offline edits replay after returning to the same account without restoring
  const storage=memory(),h=harness({storage,fetchHandler:path=>{if(path==='radio/change')throw new Error('Offline');}});await tick();h.api.change({type:'favorite-add',id:'record:b'});await tick();assert.match(storage.getItem('minka:media-pending:alpha'),/record:b/);await h.api.logout(false);
  const next=harness({storage});await tick();await tick();assert.equal(next.requests.filter(x=>x.path==='radio/change').length,1);assert.equal(storage.getItem('minka:media-pending:alpha'),'[]');
 });
-test('changing the selected day to another radiographer locks the old profile even if listed as radiologist',async()=>{
- const h=harness();await tick();h.setState({activeDateStr:'08.09.2026',rg:[{name:'Alpha Test'}],rd:[]});h.setState({activeDateStr:'09.09.2026',rg:[{name:'Beta Test'}],rd:[{name:'Alpha Test'}]});await tick();assert.equal(h.api.getSession(),null);assert.equal(h.brand.textContent,'RG RADIO');
+test('browsing other calendar days keeps the authenticated profile and its original deadline',async()=>{
+ const h=harness({now:Date.parse('2026-09-08T19:00:00Z')});await tick();const session=h.api.getSession(),deadline=session.dutyEndsAt;
+ for(const day of [
+  {activeDateStr:'09.09.2026',rg:[{name:'Beta Test'}],rd:[{name:'Alpha Test'}]},
+  {activeDateStr:'01.08.2026',rg:[],rd:[]},
+  {activeDateStr:'08.09.2026',rg:[{name:'Alpha Test'}],rd:[]}
+ ]){
+  h.setState(day);await tick();assert.equal(h.api.getSession(),session);assert.equal(h.api.getSession().dutyEndsAt,deadline);
+  assert.deepEqual(Array.from(h.api.getRadio().favorites),['record:a']);assert.equal(h.brand.textContent,'RADIO ALPHA');assert.equal(h.applied.at(-1).theme,'Personal');
+ }
+ assert.ok(!h.requests.some(r=>r.path==='logout'));assert.equal(h.started.length,1);
+ h.setState({activeDateStr:'01.08.2026',rg:[],rd:[]});await h.api.refresh();
+ assert.equal(h.api.getSession().workerId,'alpha');assert.equal(h.api.getSession().dutyEndsAt,deadline);assert.equal(h.started.length,1);
+});
+test('restoring a valid session does not depend on the displayed calendar roster',async()=>{
+ const h=harness({now:Date.parse('2026-09-08T19:00:00Z')});
+ h.setState({activeDateStr:'11.09.2026',rg:[{name:'Beta Test'}],rd:[]});await tick();
+ assert.equal(h.api.getSession()?.workerId,'alpha');assert.equal(h.applied.at(-1)?.theme,'Personal');assert.ok(!h.requests.some(r=>r.path==='logout'));
 });
 test('restoring a profile selects its favorites without an extra server playback API and branding is conditional',async()=>{
  const h=harness();await tick();assert.equal(h.brand.textContent,'RADIO ALPHA');assert.equal(h.applied.at(-1).theme,'Personal');assert.ok(!h.requests.some(x=>/play/.test(x.path)));await h.api.logout(false);assert.equal(h.applied.at(-1).theme,'Guest');assert.equal(h.brand.textContent,'RG RADIO');
@@ -57,9 +73,10 @@ test('radio logout control appears only for an authenticated person and clears b
  const guest=harness({restored:false});await tick();assert.equal(guest.elements.get('mediaLogoutButton').hidden,true);
 });
 
-test('08:00 Riga handover revokes the profile even with an unchanged selected roster',async()=>{
+test('08:00 Riga handover revokes the profile even while browsing another calendar day',async()=>{
  const h=harness({now:Date.parse('2026-09-09T04:59:00Z')});await tick();
  assert.equal(h.api.getSession().dutyEndsAt,Date.parse('2026-09-09T05:00:00Z'));
+ h.setState({activeDateStr:'15.09.2026',rg:[{name:'Beta Test'}],rd:[]});
  h.advance(59999,true);assert.ok(h.api.getSession());h.advance(1,true);await tick();
  assert.equal(h.api.getSession(),null);assert.equal(h.brand.textContent,'RG RADIO');
  assert.equal(h.applied.at(-1).theme,'Guest');

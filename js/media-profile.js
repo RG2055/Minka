@@ -137,7 +137,7 @@
  async function adopt(next,startFavorite=false){
   next={...next,dutyEndsAt:Math.min(Number(next.dutyEndsAt)||nextDutyBoundary(),nextDutyBoundary())};
   if(Date.now()>=Math.min(next.expiresAt,next.dutyEndsAt)){sessionStorage.removeItem(KEY);void api('logout',{},next).catch(()=>{});status('Maiņa vai sesija beigusies. Ielogojies savā profilā.');return;}
-  const current=roster();if(current.date&&!current.workers.some(w=>norm(w.name)===norm(next.name))){status('Izvēlies šīs dienas radiogrāferu.');return;}
+  // A valid session follows real duty time, not the calendar day being viewed.
   const gen=++generation;selected=null;recovering=false;loaded=false;session=next;
   if(!guestLook&&window.rgTheme)guestLook=window.rgTheme.captureGuest?.()||window.rgTheme.snapshot();
   try{sessionStorage.setItem(KEY,JSON.stringify(next));}catch(_){}
@@ -302,8 +302,7 @@
   const r=roster();
   const selectionChanged=(rosterDate&&r.date!==rosterDate)||(selected&&!r.workers.some(w=>norm(w.name)===norm(selected.name)));
   if(selectionChanged&&!session){generation++;busy=false;selected=null;}rosterDate=r.date;
-  if(session&&!r.workers.some(w=>norm(w.name)===norm(session.name))){void logout();status('Šajā dienā tavs vārds nav sarakstā. Radio turpina viesis.');}
-  else if(!session&&dialog.open&&!busy&&!selected)void renderWorkers();
+  if(!session&&dialog.open&&!busy&&!selected)void renderWorkers();
  });
  window.__mkUnifiedMedia={open,logout,change,getSession:()=>session,getRadio:()=>radio,api,roster,refresh:()=>session&&adopt(session)};
  window.addEventListener('rg-theme-ready',()=>{if(session&&loaded){if(!guestLook)guestLook=window.rgTheme.captureGuest?.()||window.rgTheme.snapshot();applyLook();}});
