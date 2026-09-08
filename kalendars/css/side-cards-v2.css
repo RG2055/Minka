@@ -1235,3 +1235,30 @@ html body #radiologists-next.mk-next-shift-crew {
   height: auto !important;
   min-height: 53px !important;
 }
+
+/* Keep dashboard scrolling available without permanent Windows scroll tracks. */
+#grafiks-app :is(#grafiks-list, #radiographers-duty, #radiologists-duty) {
+  scrollbar-width: none !important;
+}
+#grafiks-app :is(#grafiks-list, #radiographers-duty, #radiologists-duty)::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* The high-fatigue glass shares the mood segment's clean lemon colour. */
+#grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-card[data-fatigue="high"] {
+  --mk-side-fat-color: #f5e548 !important;
+}
+html:not(.host-radio-open) #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-card[data-fatigue="high"] {
+  background-color: rgba(9, 14, 21, .88) !important;
+  background-image: linear-gradient(150deg, rgba(255,255,255,.09), transparent 52%) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.16), inset 0 -1px rgba(0,0,0,.42) !important;
+}
+#grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-card[data-fatigue="high"] .liquid-fill {
+  background: linear-gradient(180deg, #fff394, #f5e548) !important;
+}
+#grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-card[data-fatigue="high"] .mk-side-ring small {
+  color: #172018 !important;
+  text-shadow: none !important;
+}
