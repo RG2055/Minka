@@ -123,7 +123,7 @@ test('image crop payloads reject malformed entries and bound storage and geometr
 test('Pioneer look survives save, unrelated changes and another authenticated device',async()=>{
  const h=harness();try{
   const a=await create(h),auth={sessionToken:a.session.sessionToken};
-  const settings={layout:'pioneer',metalColor:'#755363',metalLight:62,metalShine:48,vizFrame:'off',viz:'27',vizPositions:{classic:{x:.2,y:-.1},pioneer:{x:-.4,y:.3}}};
+  const settings={layout:'pioneer',pioneerPixels:true,metalColor:'#755363',metalLight:62,metalShine:48,vizFrame:'off',viz:'27',vizPositions:{classic:{x:.2,y:-.1},pioneer:{x:-.4,y:.3}}};
   const saved=await h.call('radio/change',{...auth,operation:{type:'settings',settings}});
   assert.equal(saved.status,200);assert.deepEqual(saved.data.settings,settings);
   await h.call('radio/change',{...auth,operation:{type:'favorite-add',id:'record:remix'}});
@@ -141,4 +141,12 @@ test('Pioneer values validate colors, finite numbers and bounded per-layout posi
  assert.deepEqual(settings,{layout:'pioneer',metalColor:'#aBc123',metalLight:100,metalShine:0,vizPositions:{pioneer:{x:1,y:-1}}});
  const next=radioOperation({settings},{type:'settings',settings:{layout:'bad',metalColor:'url(https://invalid)',metalLight:Infinity,metalShine:'90',vizPositions:[]}});
  assert.deepEqual(next.settings,settings);
+});
+
+test('OEL preference accepts booleans, preserves false and ignores malformed values',()=>{
+ const enabled=radioOperation({}, {type:'settings',settings:{pioneerPixels:true}});
+ assert.equal(enabled.settings.pioneerPixels,true);
+ const disabled=radioOperation(enabled,{type:'settings',settings:{pioneerPixels:false}});
+ assert.equal(disabled.settings.pioneerPixels,false);
+ assert.equal(radioOperation(disabled,{type:'settings',settings:{pioneerPixels:'true'}}).settings.pioneerPixels,false);
 });

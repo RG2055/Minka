@@ -53,6 +53,7 @@
  const localLookKey=id=>'minka:media-local-look:'+id;
  function localLookSettings(value={}){
   const out={};if(['classic','clean','pioneer'].includes(value.layout))out.layout=value.layout;
+  if(typeof value.pioneerPixels==='boolean')out.pioneerPixels=value.pioneerPixels;
   if(['auto','on','off'].includes(value.vizFrame))out.vizFrame=value.vizFrame;
   if(value.vizPositions&&typeof value.vizPositions==='object'){out.vizPositions={};for(const layout of ['classic','clean','pioneer']){const point=value.vizPositions[layout];if(point&&Number.isFinite(point.x)&&Number.isFinite(point.y))out.vizPositions[layout]={x:Math.max(-1,Math.min(1,point.x)),y:Math.max(-1,Math.min(1,point.y))};}}
   if(/^#[\da-f]{6}$/i.test(value.metalColor||''))out.metalColor=value.metalColor;

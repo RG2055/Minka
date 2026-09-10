@@ -122,12 +122,13 @@ test('calendar refresh preserves PIN entry until the day or selected worker chan
 test('local preview restores unsupported layout fields per account after server save and reauthentication',async()=>{
  const storage=memory(),fetchHandler=path=>path==='radio/change'||path==='radio/load'?{data:{favorites:['record:a'],settings:{theme:'Saved'},lastStation:''}}:undefined;
  const h=harness({storage,fetchHandler});await tick();
- h.api.change({type:'settings',settings:{layout:'clean',vizFrame:'off'}});await tick();
+ h.api.change({type:'settings',settings:{layout:'clean',vizFrame:'off',pioneerPixels:true}});await tick();
  assert.equal(h.api.getRadio().settings.layout,'clean');assert.equal(h.api.getRadio().settings.vizFrame,'off');
  await h.api.logout(false);assert.equal(h.api.getRadio().settings.layout,undefined);
- const again=harness({storage,fetchHandler});await tick();assert.equal(again.applied.at(-1).layout,'clean');assert.equal(again.applied.at(-1).vizFrame,'off');
+ const again=harness({storage,fetchHandler});await tick();assert.equal(again.applied.at(-1).layout,'clean');assert.equal(again.applied.at(-1).vizFrame,'off');assert.equal(again.applied.at(-1).pioneerPixels,true);
  const other=harness({storage,fetchHandler,savedPatch:{workerId:'beta'}});await tick();assert.equal(other.applied.at(-1).layout,undefined);
  again.api.change({type:'settings',settings:{eq:'chill'}});await tick();assert.equal(again.api.getRadio().settings.vizFrame,'off');
+ again.api.change({type:'settings',settings:{pioneerPixels:false}});await tick();assert.equal(again.api.getRadio().settings.pioneerPixels,false);
  again.api.change({type:'reset-look'});await tick();assert.equal(storage.getItem('minka:media-local-look:alpha'),null);
 });
 test('migrated image framing is queued once into the authenticated shared profile',async()=>{

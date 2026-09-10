@@ -90,6 +90,7 @@
   setup.button.setAttribute('aria-label','Pioneer animācijas'+(active?' · '+selected.label:''));
   for(const container of inlineGalleries.keys())for(const button of container.querySelectorAll('[data-clip]'))button.setAttribute('aria-pressed',String(active&&button.dataset.clip===selected.id));
   if(list)for(const button of list.querySelectorAll('[data-clip]'))button.setAttribute('aria-pressed',String(active&&button.dataset.clip===selected.id));
+  window.rgPioneerLayout?.syncMatrix?.();
  }
  async function loadCatalog(){
   if(catalog)return catalog;

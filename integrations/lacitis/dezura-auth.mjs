@@ -44,6 +44,7 @@ export function cleanRadio(data={}){
  const out={favorites:[...new Set((Array.isArray(data.favorites)?data.favorites:[]).filter(id))].slice(0,250),lastStation:id(data.lastStation)?data.lastStation:'',settings:{}};
  const s=data.settings||{};
  if(['classic','clean','pioneer'].includes(s.layout))out.settings.layout=s.layout;
+ if(typeof s.pioneerPixels==='boolean')out.settings.pioneerPixels=s.pioneerPixels;
  if(/^#[\da-f]{6}$/i.test(s.metalColor||''))out.settings.metalColor=s.metalColor;
  for(const key of ['metalLight','metalShine'])if(Number.isFinite(s[key]))out.settings[key]=Math.max(0,Math.min(100,s[key]));
  if(s.vizPositions&&typeof s.vizPositions==='object'&&!Array.isArray(s.vizPositions)){

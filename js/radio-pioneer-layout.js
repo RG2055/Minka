@@ -2,6 +2,44 @@
 (function(){
  'use strict';
  let head,knob,display,volume,eq,active=false,drag;
+ let matrix,matrixObserver,matrixEnabled=false;
+ // One static mask, aligned to the displayed source pixels. No frame loop or
+ // second decoder: only source changes, layout changes and resizes update it.
+ function syncMatrix(){
+  if(!matrixEnabled||!display)return;
+  const monitor=display.querySelector('.monitor-frame');if(!monitor)return;
+  const visible=el=>el&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).opacity!=='0';
+  const meter=monitor.querySelector('.pioneer-meter'),image=monitor.querySelector('#dolphin-bg');
+  const source=visible(meter)?meter:visible(image)&&image.naturalWidth?image:null;
+  const box=(source||monitor).getBoundingClientRect(),screen=display.getBoundingClientRect();
+  if(!box.width||!box.height)return;
+  const width=source?(source.naturalWidth||source.width):256,height=source?(source.naturalHeight||source.height):64;
+  const pitch=Math.min(box.width/width,box.height/height);
+  const gap=Math.min(1,Math.max(.5,pitch*.2));
+  const x=box.left-screen.left-display.clientLeft+(box.width-width*pitch)/2;
+  const y=box.top-screen.top-display.clientTop+(box.height-height*pitch)/2;
+  matrix.style.setProperty('--oel-pitch',pitch+'px');
+  matrix.style.setProperty('--oel-cell',Math.max(.1,pitch-gap)+'px');
+  matrix.style.setProperty('--oel-origin-x',x+'px');matrix.style.setProperty('--oel-origin-y',y+'px');
+  // Below ~2 CSS pixels, strong gaps would create moiré and obscure text.
+  matrix.style.setProperty('--oel-gap-alpha',String(Math.min(.55,Math.max(0,(pitch-1)*.4))));
+ }
+ function setMatrix(rw,enabled){
+  rw.dataset.pioneerPixels=String(enabled);
+  if(enabled&&!matrix){
+   matrix=document.createElement('div');matrix.className='pioneer-oel-grid';matrix.setAttribute('aria-hidden','true');display.append(matrix);
+  }
+  if(enabled!==matrixEnabled){
+   matrixEnabled=enabled;
+   if(enabled){
+    matrixObserver=new ResizeObserver(syncMatrix);matrixObserver.observe(display);matrixObserver.observe(display.querySelector('.monitor-frame'));
+    display.addEventListener('load',syncMatrix,true);window.addEventListener('rg-viz-change',syncMatrix);
+   }else{
+    matrixObserver?.disconnect();matrixObserver=null;display?.removeEventListener('load',syncMatrix,true);window.removeEventListener('rg-viz-change',syncMatrix);
+   }
+  }
+  if(enabled)syncMatrix();
+ }
  const homes=new Map(),styles=new Map();
  // Display approximations inspired by Apple's published Pro finishes, not
  // manufacturer color specifications. Metal colors never touch the album tint.
@@ -85,7 +123,7 @@
  }
  function build(rw){
   if(head)return;
-  const css=document.createElement('link');css.rel='stylesheet';css.href='css/radio-pioneer-layout.css?v=20260910vfd15';css.onload=()=>{window.syncShellLayout?.();window.dispatchEvent(new Event('resize'));};document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href='css/radio-pioneer-layout.css?v=20260910oel1';css.onload=()=>{window.syncShellLayout?.();window.dispatchEvent(new Event('resize'));};document.head.append(css);
   head=document.createElement('div');head.className='pioneer-faceplate';head.innerHTML='<strong>Pioneer</strong>';rw.prepend(head);
   knob=document.createElement('div');knob.className='pioneer-volume';knob.innerHTML='<div class="pioneer-knob"><i aria-hidden="true"></i><span aria-hidden="true">VOLUME</span></div>';
   display=document.createElement('div');display.className='pioneer-display';
@@ -101,6 +139,7 @@
    volume.setAttribute('aria-label','Skaļums');volume.title='Skaļums — velc augšup vai pa labi. Var arī ritināt.';syncVolume();
   }else if(active)restore();
   if(enabled!==active){active=enabled;window.syncShellLayout?.();}
+  setMatrix(rw,enabled&&settings.pioneerPixels===true);
  }
  // A static snapshot of the real rendered faceplate, not a second player.
  // Shadow DOM isolates duplicate control IDs and global app styles. Changes
@@ -144,5 +183,5 @@
    const style=document.createElement('style');style.textContent=rules.join('');surface.shadowRoot.replaceChildren(style,clone);
   },Math.max(0,150-(performance.now()-previewLast)));
  }
- window.rgPioneerLayout={apply,finishes,renderPreview};
+ window.rgPioneerLayout={apply,finishes,renderPreview,syncMatrix};
 })();

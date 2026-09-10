@@ -176,3 +176,15 @@ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #volumeOS
 html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #osd-num{position:static;font-size:28px;line-height:1;color:inherit}
 html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #osd-num::after{content:"%";font-size:16px}
 html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #osd-segments{max-width:420px;height:10px;flex-shrink:0}
+/* OEL cells: a static mask over the entire display, never the metal controls.
+   Both axes use the actual contained animation's native pixel pitch. */
+html body #radioWindow .pioneer-oel-grid{display:none;pointer-events:none}
+html body #radioWindow[data-radio-layout="pioneer"][data-pioneer-pixels="true"]:not(.music-source) .pioneer-display{position:relative;overflow:hidden;isolation:isolate}
+html body #radioWindow[data-radio-layout="pioneer"][data-pioneer-pixels="true"]:not(.music-source) .pioneer-oel-grid{
+ display:block;position:absolute;inset:0;z-index:80;border-radius:inherit;background-color:rgba(var(--radio-accent-rgb,30,215,96),.045);
+ background-image:linear-gradient(90deg,transparent var(--oel-cell),rgba(0,0,0,var(--oel-gap-alpha)) var(--oel-cell)),linear-gradient(0deg,rgba(0,0,0,var(--oel-gap-alpha)) calc(var(--oel-pitch) - var(--oel-cell)),transparent calc(var(--oel-pitch) - var(--oel-cell)));
+ background-size:var(--oel-pitch) var(--oel-pitch);background-position:var(--oel-origin-x) var(--oel-origin-y);
+}
+html body #radioWindow[data-radio-layout="pioneer"][data-pioneer-pixels="true"]:not(.music-source) .pioneer-display img,
+html body #radioWindow[data-radio-layout="pioneer"][data-pioneer-pixels="true"]:not(.music-source) .pioneer-display canvas{image-rendering:pixelated}
+html body #radioWindow[data-radio-layout="pioneer"][data-pioneer-pixels="true"]:not(.music-source) .tech-panel{text-shadow:0 0 1px currentColor}

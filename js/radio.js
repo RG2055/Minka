@@ -740,7 +740,7 @@ let pioneerPlayerPromise = null;
 function ensurePioneerPlayer() {
     if (!pioneerPlayerPromise) pioneerPlayerPromise = new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.src = 'js/radio-pioneer.js?v=20260910pioneer5';
+        script.src = 'js/radio-pioneer.js?v=20260910oel1';
         script.onload = () => {
             window.rgPioneer.init({image:dGif, button:document.getElementById('vizBtn'), audio,
                 isActive:() => vizStyle === 5, getAnalyser:() => analyser,
@@ -3268,6 +3268,7 @@ function focusRadio(){
     const x=clamp(point.x*frame.width,Math.min(0,boundary.left+6-box.left),Math.max(0,boundary.right-6-box.right));
     const y=clamp(point.y*frame.height,Math.min(0,boundary.top+6-box.top),Math.max(0,boundary.bottom-6-box.bottom));
     monitor.style.setProperty('translate',`${x}px ${y}px`,'important');
+    window.rgPioneerLayout?.syncMatrix?.();
     return {x:x/frame.width,y:y/frame.height};
   }
   function changeSpectrumPosition(point){
@@ -3324,7 +3325,7 @@ function focusRadio(){
   }
 
   const LOOK_KEY='rg_radio_appearance_v1';
-  const LOOK_DEFAULTS={darkness:64,tint:28,glass:24,glow:45,layout:'classic',metalColor:'#9ca4aa',metalLight:50,metalShine:65,vizFrame:'auto',position:'center',text:'#f3f7f5',background:'',cardName:'',imageCrops:{},vizPositions:{}};
+  const LOOK_DEFAULTS={darkness:64,tint:28,glass:24,glow:45,layout:'classic',metalColor:'#9ca4aa',metalLight:50,metalShine:65,pioneerPixels:false,vizFrame:'auto',position:'center',text:'#f3f7f5',background:'',cardName:'',imageCrops:{},vizPositions:{}};
   let appearance;try{appearance={...LOOK_DEFAULTS,...JSON.parse(localStorage.getItem(LOOK_KEY)||'{}')};}catch(_){appearance={...LOOK_DEFAULTS};}
   appearance.imageCrops=cleanImageCrops(appearance.imageCrops);
   appearance.vizPositions=cleanVizPositions(appearance.vizPositions);
@@ -3368,6 +3369,8 @@ function focusRadio(){
     rw.style.setProperty('--radio-glow-strength',String(strength));
     const preview=document.getElementById('radioLookPreview');if(preview){preview.style.backgroundImage=appearance.layout==='pioneer'?getComputedStyle(rw).backgroundImage:rw.style.backgroundImage;preview.style.setProperty('background-position',rw.style.backgroundPosition,'important');preview.style.setProperty('background-size','cover','important');preview.style.color=rw.style.getPropertyValue('--radio-personal-text');preview.style.setProperty('--radio-preview-accent',color);preview.style.boxShadow=rw.style.getPropertyValue('box-shadow');renderLookPreviews();syncLayoutPreview();}
     prepareImagePosition(background);placeSpectrum();syncSpectrumMoveControls();
+    const displayControls=document.getElementById('pioneerDisplayControls');
+    if(displayControls){displayControls.hidden=appearance.layout!=='pioneer';document.getElementById('pioneerPixelGrid').setAttribute('aria-checked',String(appearance.pioneerPixels===true));}
     const metalControls=document.getElementById('pioneerMetalControls');
     if(metalControls){metalControls.hidden=appearance.layout!=='pioneer';metalControls.querySelectorAll('[data-metal-color]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.metalColor===appearance.metalColor)));for(const input of metalControls.querySelectorAll('[data-look]'))input.value=appearance[input.dataset.look]??LOOK_DEFAULTS[input.dataset.look];}
     const themePanel=document.getElementById('themePanel');
@@ -3403,6 +3406,7 @@ function focusRadio(){
     appearance.layout=['classic','clean','pioneer'].includes(data.layout)?data.layout:'classic';
     appearance.vizFrame=['on','off'].includes(data.vizFrame)?data.vizFrame:'auto';
     appearance.metalColor=safeColor(data.metalColor,LOOK_DEFAULTS.metalColor);
+    appearance.pioneerPixels=data.pioneerPixels===true;
     for(const key of ['metalLight','metalShine'])appearance[key]=clamp(Number.isFinite(Number(data[key]))?Number(data[key]):LOOK_DEFAULTS[key],0,100);
     for(const key of ['darkness','tint','glass','glow'])appearance[key]=clamp(Number(appearance[key])||0,0,100);
     localStorage.setItem(LOOK_KEY,JSON.stringify(appearance));
@@ -3447,7 +3451,7 @@ function focusRadio(){
       <button type="button" id="radioUseCard">Kā mana kartīte</button><p id="radioLookNote" role="status">Fons paliek tavs. Albuma režīmā krāsa mainās līdzi mūzikai.</p>
       <fieldset class="radio-layout-choices"><legend>Izkārtojums</legend><div class="radio-viz-families"><button type="button" data-radio-layout-choice="classic" aria-pressed="true">Pašreizējais</button><button type="button" data-radio-layout-choice="clean" aria-pressed="false">Jauns izkārtojums</button><button type="button" data-radio-layout-choice="pioneer" aria-pressed="false">Pioneer</button></div><p class="radio-viz-family-note">Jaunajā izkārtojumā pogas ir pa kreisi un spektrs pa labi.</p></fieldset>
       <div id="radioLookPreview" role="group" aria-label="Fona attēla novietojums. Velc attēlu vai lieto bulttaustiņus." aria-describedby="radioImageHint"><div class="radio-preview-copy"><strong class="radio-preview-station">Radio</strong><span>Tava mūzika</span></div><div class="radio-preview-toolbar" aria-hidden="true">◉ &nbsp; RADIO &nbsp; MŪZIKA</div><div class="radio-preview-buttons" aria-hidden="true">▣ &nbsp; ♫ &nbsp; ◀ &nbsp; <b>▶</b> &nbsp; ▶ &nbsp; ━━</div><div class="radio-viz-sample"><img id="radioLookVizImage" width="600" height="80" decoding="async" alt="Izvēlētās vizualizācijas momentuzņēmums"></div></div>
-      <div class="radio-spectrum-position"><button type="button" id="radioMoveSpectrum" aria-pressed="false">Pārvietot spektru</button><button type="button" id="radioResetSpectrum">Atiestatīt pozīciju</button><p id="radioSpectrumMoveHint">Ieslēdz, lai priekšskatījumā pārvietotu spektru.</p></div>
+      <div class="radio-spectrum-position"><button type="button" id="radioMoveSpectrum" aria-pressed="false">Pārvietot spektru</button><button type="button" id="radioResetSpectrum">Atiestatīt pozīciju</button><div id="pioneerDisplayControls" hidden><button type="button" id="pioneerPixelGrid" role="switch" aria-checked="false" title="OEL pikseļu matrica"><span>Pikseļu matrica</span><i aria-hidden="true"></i></button></div><p id="radioSpectrumMoveHint">Ieslēdz, lai priekšskatījumā pārvietotu spektru.</p></div>
       <fieldset id="pioneerMetalControls" hidden><legend>Pioneer korpuss</legend><p>Metāla tonis korpusam un pogām. Displeja izgaismojums seko albumam.</p><div class="pioneer-metal-presets">${(window.rgPioneerLayout?.finishes||[]).map(f=>`<button type="button" data-metal-color="${f.color}" style="--metal-swatch:${f.color}" aria-pressed="false"><i aria-hidden="true"></i><span>${f.name}</span></button>`).join('')}</div><div class="pioneer-metal-custom"><label>Sava krāsa<input type="color" data-look="metalColor" aria-label="Korpusa krāsa"></label><label>Gaišums<input type="range" min="0" max="100" data-look="metalLight"></label><label>Spīdums<input type="range" min="0" max="100" data-look="metalShine"></label><button type="button" id="pioneerMetalReset">Atiestatīt metālu</button></div></fieldset>
       <div id="radioImageTools" class="radio-image-tools" hidden><p id="radioImageHint">Velc attēlu priekšskatījumā.</p><div><label for="radioImageZoom">Attēla izmērs</label><input id="radioImageZoom" type="range" min="60" max="200" step="1" value="100"><output id="radioImageZoomValue" for="radioImageZoom">100%</output><button type="button" id="radioImageReset">Atiestatīt</button></div></div>
       <fieldset class="radio-viz-choices"><legend>Vizualizācija</legend><div class="radio-viz-families"><button type="button" data-viz-family="new">Jaunais skats</button><button type="button" data-viz-family="classic">Classic</button><button type="button" data-viz-family="pioneer">Pioneer</button></div><p class="radio-viz-family-note"></p><div data-pioneer-gallery hidden></div><div class="radio-viz-grid">${[...VIZ_MODES.filter(m=>m.idx!==MK_NO_VIZ),getVizMode(MK_NO_VIZ)].map(m=>`<button type="button" data-viz-choice="${m.idx}" aria-pressed="false">${vizPreview(m.idx)}<span>${m.label}</span></button>`).join('')}</div></fieldset>
@@ -3490,6 +3494,7 @@ function focusRadio(){
     box.querySelectorAll('[data-metal-color]').forEach(button=>button.onclick=()=>{appearance.metalColor=button.dataset.metalColor;paintAppearance();});
     document.getElementById('radioMoveSpectrum').onclick=()=>{spectrumMoveEnabled=!spectrumMoveEnabled;imageDrag=null;spectrumDrag=null;paintImagePosition();syncSpectrumMoveControls();};
     document.getElementById('radioResetSpectrum').onclick=()=>changeSpectrumPosition({x:0,y:0});
+    document.getElementById('pioneerPixelGrid').onclick=()=>{appearance.pioneerPixels=appearance.pioneerPixels!==true;paintAppearance();};
     document.getElementById('pioneerMetalReset').onclick=()=>{for(const key of ['metalColor','metalLight','metalShine'])appearance[key]=LOOK_DEFAULTS[key];paintAppearance();};
     document.getElementById('radioUseCard').onclick=()=>{
       const person=window.__mkUnifiedMedia?.getSession();if(!person){closePanel();window.__mkUnifiedMedia?.open();return;}

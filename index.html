@@ -333,7 +333,7 @@
 
 <!-- App CSS: critical shell loads normally; radio extras load non-blocking -->
 <link rel="stylesheet" href="css/minka.css?v=20260910vfd3">
-<link rel="stylesheet" href="css/radio-extra.css?v=20260910slow20">
+<link rel="stylesheet" href="css/radio-extra.css?v=20260910oel3">
 <!-- Non-critical CSS loaded async -->
 <link rel="preload" as="style" href="css/improvements.css?v=20260910pioneer2"
   onload="this.onload=null;this.rel='stylesheet'">
@@ -984,8 +984,8 @@ async function loadRadioScripts() {
     document.head.appendChild(_fa);
   }
   await loadAny(['js/radio-metadata.js?v=20260910metadata1']);
-  await loadAny(['js/radio-pioneer-layout.js?v=20260910vfd15']);
-  await loadAny(['js/radio.js?v=20260910slow20']);
+  await loadAny(['js/radio-pioneer-layout.js?v=20260910oel1']);
+  await loadAny(['js/radio.js?v=20260910oel3']);
   await loadAny(['js/radio_extras_v4.js?v=20260908visuals1']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;
@@ -2559,7 +2559,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   </section>
 </div>
 
-<script src="js/media-profile.js?v=20260910vfd13" defer></script>
+<script src="js/media-profile.js?v=20260910oel1" defer></script>
 <script src="js/radio-source.js?v=20260908header3" defer></script>
 
 <div id="mobileQrModal" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171000;background:rgba(2,4,8,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:20px;">

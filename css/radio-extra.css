@@ -596,3 +596,10 @@ body.slowed-active .monitor-frame {
 .slowfx-panel.slowfx-popup{
   background: #15171f !important;
 }
+#pioneerDisplayControls{margin:0 0 0 6px;flex:none;white-space:nowrap}
+#radioLookControls #pioneerPixelGrid{display:inline-flex;align-items:center;gap:9px;height:30px;min-height:30px;padding:3px 0;border:0;border-radius:4px;background:transparent;box-shadow:none;font:13px/1.2 system-ui;text-align:left}
+#pioneerPixelGrid i{flex:none;box-sizing:border-box;width:30px;height:18px;border:1px solid #9cb5aa;border-radius:20px;position:relative;background:#ffffff08}
+#pioneerPixelGrid i::after{content:"";position:absolute;width:12px;height:12px;left:2px;top:2px;border-radius:50%;background:#9cb5aa}
+#pioneerPixelGrid[aria-checked="true"] i{border-color:#b7e8d1;background:#b7e8d1}
+#pioneerPixelGrid[aria-checked="true"] i::after{left:14px;background:#15382b}
+#radioLookControls #pioneerPixelGrid:focus-visible{outline:2px solid #b7e8d1;outline-offset:4px}
