@@ -52,8 +52,11 @@
  // The local preview uses the deployed API, which may not yet accept new look fields.
  const localLookKey=id=>'minka:media-local-look:'+id;
  function localLookSettings(value={}){
-  const out={};if(['classic','clean'].includes(value.layout))out.layout=value.layout;
+  const out={};if(['classic','clean','pioneer'].includes(value.layout))out.layout=value.layout;
   if(['auto','on','off'].includes(value.vizFrame))out.vizFrame=value.vizFrame;
+  if(value.vizPositions&&typeof value.vizPositions==='object'){out.vizPositions={};for(const layout of ['classic','clean','pioneer']){const point=value.vizPositions[layout];if(point&&Number.isFinite(point.x)&&Number.isFinite(point.y))out.vizPositions[layout]={x:Math.max(-1,Math.min(1,point.x)),y:Math.max(-1,Math.min(1,point.y))};}}
+  if(/^#[\da-f]{6}$/i.test(value.metalColor||''))out.metalColor=value.metalColor;
+  for(const key of ['metalLight','metalShine'])if(Number.isFinite(value[key]))out[key]=Math.max(0,Math.min(100,value[key]));
   return out;
  }
  function withLocalLook(data,owner=session){

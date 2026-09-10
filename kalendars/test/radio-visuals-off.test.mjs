@@ -11,8 +11,8 @@ test('disabled visualizer stops before sampling audio or scheduling another fram
 });
 test('selecting no visualizer survives preferences, hides display, and releasing it restarts drawing',()=>{
  const classes=new Set(),saved=[],frames=[];
- const c=vm.createContext({isModernViz:m=>m===13||(m>=20&&m<=30),vizFamily:'classic',analyser:null,MK_FLOW_VIZ:13,MK_NO_VIZ:12,MK_BUDDY_VIZ:11,MK_DEFAULT_VIZ:7,VIZ_MODES:[{idx:0},{idx:7},{idx:12}],vizStyle:7,__mkLastSpectrum:7,milkdropEnabled:false,milkdrop:null,dGif:{style:{}},ctx:{clearRect(){}},cvs:{width:100,height:40},Event:class {},window:{dispatchEvent(){},__slowedWave:{stop(){saved.push('wave stopped');}}},document:{body:{classList:{toggle(k,v){v?classes.add(k):classes.delete(k);},remove(k){classes.delete(k);}}}},localStorage:{setItem:(k,v)=>saved.push(v)},updateVizLabel(){},updateVizPickerUI(){},mkUpdateVizToggle(){},milkdropStop(){},scheduleDraw(){frames.push('frame');}});
- vm.runInContext(extract('function setVizStyle(idx){','function updateVizPickerUI')+extract('function applyVizMode() {','// Keyboard: Winamp-ish'),c);
+ const c=vm.createContext({isModernViz:m=>m===13||(m>=20&&m<=30),vizFamily:'classic',analyser:null,MK_FLOW_VIZ:13,MK_NO_VIZ:12,MK_BUDDY_VIZ:11,MK_DEFAULT_VIZ:7,VIZ_MODES:[{idx:0},{idx:7},{idx:12}],vizStyle:7,__mkLastSpectrum:7,dGif:{style:{}},ctx:{clearRect(){}},cvs:{width:100,height:40},Event:class {},window:{dispatchEvent(){},__slowedWave:{stop(){saved.push('wave stopped');}}},document:{body:{classList:{toggle(k,v){v?classes.add(k):classes.delete(k);},remove(k){classes.delete(k);}}}},localStorage:{setItem:(k,v)=>saved.push(v)},updateVizLabel(){},updateVizPickerUI(){},mkUpdateVizToggle(){},scheduleDraw(){frames.push('frame');}});
+ vm.runInContext(extract('function setVizStyle(idx){','function updateVizPickerUI')+extract('function applyVizMode() {','function tick()'),c);
  vm.runInContext('setVizStyle(12);',c);assert.equal(c.vizStyle,12);assert.ok(saved.includes('spectrum:12'));assert.ok(classes.has('radio-viz-off'));assert.equal(frames.length,0);
  vm.runInContext('setVizStyle(7);',c);assert.equal(classes.has('radio-viz-off'),false);assert.equal(frames.length,1);
  vm.runInContext('setVizStyle(99);',c);assert.equal(c.vizStyle,7);
@@ -73,8 +73,9 @@ test('visualization choices use small static snapshots for every real renderer',
  assert.match(preview,/<img class="radio-viz-thumbnail"/);assert.doesNotMatch(preview,/<canvas|requestAnimationFrame|getContext/);
 });
 test('leaving DOLPHIN clears its layer immediately for every mode, including paused extras',()=>{
- const c=vm.createContext({vizStyle:5,MK_NO_VIZ:12,isModernViz:n=>n>=20,analyser:null,peaks:[50,80],__vizLastFrameTs:99,dGif:{style:{}},ctx:{clearRect(){}},cvs:{width:800,height:128},milkdropEnabled:false,milkdrop:null,window:{dispatchEvent(){},__slowedWave:{stop(){}}},Event:class{},document:{body:{classList:{toggle(){},remove(){}}}},scheduleDraw(){},milkdropStop(){}});
- vm.runInContext(extract('function applyVizMode() {','// Keyboard: Winamp-ish'),c);
+ const c=vm.createContext({vizStyle:5,MK_NO_VIZ:12,isModernViz:n=>n>=20,analyser:null,peaks:[50,80],__vizLastFrameTs:99,dGif:{style:{}},ctx:{clearRect(){}},cvs:{width:800,height:128},window:{dispatchEvent(){},__slowedWave:{stop(){}}},Event:class{},document:{body:{classList:{toggle(){},remove(){}}}},scheduleDraw(){},milkdropStop(){}});
+ c.ensurePioneerPlayer=()=>Promise.resolve({sync(){}});
+ vm.runInContext(extract('function applyVizMode() {','function tick()'),c);
  for(const mode of [...Array(13).keys(),20,24,30]){c.vizStyle=5;c.applyVizMode();assert.equal(c.dGif.style.display,'block');c.vizStyle=mode;c.applyVizMode();assert.equal(c.dGif.style.display,mode===5?'block':'none');assert.equal(c.peaks[0],0);}
 });
 const extras=fs.readFileSync(new URL('../../js/radio_extras_v4.js',import.meta.url),'utf8');

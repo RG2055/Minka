@@ -332,22 +332,22 @@
 
 
 <!-- App CSS: critical shell loads normally; radio extras load non-blocking -->
-<link rel="stylesheet" href="css/minka.css?v=20260908button1">
-<link rel="stylesheet" href="css/radio-extra.css">
+<link rel="stylesheet" href="css/minka.css?v=20260910vfd3">
+<link rel="stylesheet" href="css/radio-extra.css?v=20260910slow20">
 <!-- Non-critical CSS loaded async -->
-<link rel="preload" as="style" href="css/improvements.css"
+<link rel="preload" as="style" href="css/improvements.css?v=20260910pioneer2"
   onload="this.onload=null;this.rel='stylesheet'">
 <link rel="preload" as="style" href="css/radio_extras_v4.css"
   onload="this.onload=null;this.rel='stylesheet'">
 <noscript>
-  <link rel="stylesheet" href="css/improvements.css">
+  <link rel="stylesheet" href="css/improvements.css?v=20260910pioneer2">
   <link rel="stylesheet" href="css/radio_extras_v4.css">
 </noscript>
 <!-- Radio polish overrides — must load after all other radio CSS -->
 <link rel="stylesheet" href="css/radio_polish_v1.css?v=20260708b">
 <link rel="stylesheet" href="css/radio_lacitis_v2.css?v=20260910compact1">
 <link rel="stylesheet" href="css/radio-source.css?v=20260908skinbar1">
-<link rel="stylesheet" href="css/media-profile.css?v=20260908previewfit1">
+<link rel="stylesheet" href="css/media-profile.css?v=20260910vfd14">
 
 <style>
 /* ═══ MINKA v11 Shell ═══ */
@@ -511,7 +511,7 @@ body.mk-low-spec *, body.mk-low-spec *::before, body.mk-low-spec *::after {
 body.radio-hidden #radioToggle .rtog-led { background: #333; box-shadow: none; animation: none; }
 
 /* Overlay menus stay on top but not over radio toggle */
-#stationOverlay, #mdPresetPanel, #themePanel { z-index: 120000 !important; }
+#stationOverlay, #themePanel { z-index: 120000 !important; }
 /* Radio toggle ALWAYS visible above overlays */
 /* z-index handled by #bottomBtnBar */
 
@@ -828,39 +828,47 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
           </div>
           <div id="slowFxPanel" class="slowfx-panel slowfx-popup" aria-hidden="true">
             <div class="slowfx-popup-head">
-              <div class="slowfx-popup-title">MINKA FX</div>
-              <label class="slowfx-keep-toggle" title="Keep original pitch while changing speed">
+              <div class="slowfx-heading"><div class="slowfx-popup-title">Skaņas efekti</div><button type="button" id="slowfxClose" aria-label="Aizvērt skaņas efektus">×</button></div>
+              <label class="slowfx-keep-toggle" title="Mainīt ātrumu, saglabājot oriģinālo toni">
                 <input id="slowfxKeepPitch" type="checkbox">
                 <span class="slowfx-switch"></span>
-                <span class="slowfx-keep-label">Keep original pitch</span>
+                <span class="slowfx-keep-label">Saglabāt oriģinālo toni<small>Ātrums mainās, balss augstums paliek.</small></span>
               </label>
             </div>
             <div class="slowfx-row slowfx-vol">
-              <div class="slowfx-ico">🔊</div>
+              <div class="slowfx-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m11 5-5 4H3v6h3l5 4V5Z"/><path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg></div>
               <div class="slowfx-main">
-                <div class="slowfx-top">VOLUME <span id="slowfxVolumeVal">100%</span></div>
-                <input id="slowfxVolume" type="range" min="50" max="160" step="1" value="100">
+                <div class="slowfx-top">Skaļums <span id="slowfxVolumeVal">100%</span></div>
+                <p class="slowfx-hint" id="slowfxVolumeHint">Cik skaļi skan mūzika.</p>
+                <input id="slowfxVolume" aria-label="Skaļums" aria-describedby="slowfxVolumeHint" type="range" min="50" max="160" step="1" value="100">
+                <div class="slowfx-ends" aria-hidden="true"><span>Klusāk</span><span>Skaļāk</span></div>
               </div>
             </div>
             <div class="slowfx-row slowfx-pitch">
-              <div class="slowfx-ico">🎵</div>
+              <div class="slowfx-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l9-2v12M9 9l9-2"/><ellipse cx="6" cy="18" rx="3" ry="2"/><ellipse cx="15" cy="16" rx="3" ry="2"/></svg></div>
               <div class="slowfx-main">
-                <div class="slowfx-top">PITCH <span id="slowfxPitchVal">+0.00</span></div>
-                <input id="slowfxPitch" type="range" min="-6" max="6" step="0.01" value="0">
+                <div class="slowfx-top">Tonis <span id="slowfxPitchVal">+0.00</span></div>
+                <p class="slowfx-hint" id="slowfxPitchHint">Maina balss augstumu un arī ātrumu.</p>
+                <input id="slowfxPitch" aria-label="Tonis" aria-describedby="slowfxPitchHint" type="range" min="-6" max="6" step="0.01" value="0">
+                <div class="slowfx-ends" aria-hidden="true"><span>Zemāks</span><span>Augstāks</span></div>
               </div>
             </div>
             <div class="slowfx-row slowfx-speed">
-              <div class="slowfx-ico">⚡</div>
+              <div class="slowfx-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18a9 9 0 1 1 16 0M12 4v2M5.6 7.6 7 9m11.4-1.4L17 9M3 13h2m14 0h2m-9 0 4-3"/><circle cx="12" cy="14" r="2"/></svg></div>
               <div class="slowfx-main">
-                <div class="slowfx-top">SPEED <span id="slowfxSpeedVal">100%</span></div>
-                <input id="slowfxSpeed" type="range" min="60" max="130" step="1" value="100">
+                <div class="slowfx-top">Ātrums <span id="slowfxSpeedVal">88%</span></div>
+                <p class="slowfx-hint" id="slowfxSpeedHint">100% ir parastais mūzikas ātrums.</p>
+                <input id="slowfxSpeed" aria-label="Ātrums" aria-describedby="slowfxSpeedHint" type="range" min="60" max="130" step="1" value="88">
+                <div class="slowfx-ends" aria-hidden="true"><span>Lēnāk</span><span>Ātrāk</span></div>
               </div>
             </div>
             <div class="slowfx-row slowfx-reverb">
-              <div class="slowfx-ico">✨</div>
+              <div class="slowfx-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8v8m4-11v14m4-11v8m4-5v2m4-4v6"/></svg></div>
               <div class="slowfx-main">
-                <div class="slowfx-top">REVERB <span id="slowfxReverbVal">40%</span></div>
-                <input id="slowfxReverb" type="range" min="0" max="100" step="1" value="40">
+                <div class="slowfx-top">Telpas efekts <span id="slowfxReverbVal">40%</span></div>
+                <p class="slowfx-hint" id="slowfxReverbHint">Piešķir skaņai telpas plašumu.</p>
+                <input id="slowfxReverb" aria-label="Telpas efekts" aria-describedby="slowfxReverbHint" type="range" min="0" max="100" step="1" value="40">
+                <div class="slowfx-ends" aria-hidden="true"><span>Sausa skaņa</span><span>Vairāk telpas</span></div>
               </div>
             </div>
           </div>
@@ -873,10 +881,9 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
           <div id="osd-num">00</div>
           <div id="osd-segments"></div>
         </div>
-        <img data-radio-src="data/dolphin.webp?v=20260908d1" data-fallback-src="data/dolphin.gif" id="dolphin-bg" loading="lazy" decoding="async" alt="">
+        <img id="dolphin-bg" loading="lazy" decoding="async" alt="">
         <canvas id="slowedWaveCanvas" class="slowed-wave-canvas"></canvas>
         <canvas id="vizCanvas"></canvas>
-        <canvas id="milkdropCanvas"></canvas>
         <img data-radio-src="https://images.steamusercontent.com/ugc/1878591893790334004/B4176E21DAA54F881A29B455496699908EC6D290/" class="pixel-cat" loading="lazy" decoding="async" onclick="changeVizStyle()" title="Change Style" alt="">
       </div>
 
@@ -889,14 +896,9 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
             <path d="M13 12h5M13 16h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
         </button>
-        <button class="viz-icon-btn" id="vizBtn" title="Milkdrop Visuals" aria-label="Milkdrop Visuals">
+        <button class="viz-icon-btn" id="vizBtn" type="button" title="Pioneer animācijas" aria-label="Pioneer animācijas" aria-haspopup="dialog" aria-expanded="false">
           <i class="fas fa-wave-square" aria-hidden="true"></i>
         </button>
-        <div class="md-mini" id="mdMini" aria-hidden="true">
-          <button class="md-mini-btn md-arrow" id="mdPrevBtn" type="button" title="Previous preset">⟵</button>
-          <button class="md-mini-btn md-preset" id="mdPresetBtn" type="button" title="Preset">PRESET</button>
-          <button class="md-mini-btn md-arrow" id="mdNextBtn" type="button" title="Next preset">⟶</button>
-        </div>
         <div class="nav-cluster">
           <button class="nav-btn" onclick="playPrev()"><i class="fas fa-backward fa-fw"></i></button>
           <button class="play-trigger" id="playBtn"><i class="fas fa-play"></i></button>
@@ -906,18 +908,6 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
       </div>
     </footer>
   </div>
-</div>
-
-<!-- Milkdrop preset picker -->
-<div id="mdPresetPanel" class="md-preset-panel" aria-hidden="true">
-  <div class="mdp-head">
-    <div class="mdp-title">MILKDROP PRESETS</div>
-    <button class="mdp-close" id="mdPresetClose" aria-label="Close">×</button>
-  </div>
-  <div class="mdp-search-wrap">
-    <input id="mdPresetSearch" type="text" placeholder="Search preset…" autocomplete="off"/>
-  </div>
-  <div id="mdPresetList" class="mdp-list" role="listbox" aria-label="Milkdrop preset list"></div>
 </div>
 
 <!-- Theme panel -->
@@ -984,12 +974,7 @@ async function loadRadioScripts() {
   _radioScriptsLoading = true;
   document.querySelectorAll('[data-radio-src]').forEach(function(img) {
     if (img.getAttribute('src')) return;
-    if (img.id === 'dolphin-bg') {
-      img.onerror = function() {
-        this.onerror = null;
-        this.src = this.getAttribute('data-fallback-src') || 'data/dolphin.gif';
-      };
-    }
+
     img.src = img.getAttribute('data-radio-src');
   });
   if (!document.getElementById('mk-fa-css')) {
@@ -999,37 +984,14 @@ async function loadRadioScripts() {
     document.head.appendChild(_fa);
   }
   await loadAny(['js/radio-metadata.js?v=20260910metadata1']);
-  await loadAny(['js/radio.js?v=20260910compact1']);
+  await loadAny(['js/radio-pioneer-layout.js?v=20260910vfd15']);
+  await loadAny(['js/radio.js?v=20260910slow20']);
   await loadAny(['js/radio_extras_v4.js?v=20260908visuals1']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;
   return true;
 }
 
-let _milkdropLibsPromise = null;
-function ensureMilkdropLibs() {
-  if (window.butterchurn && window.butterchurnPresets) return Promise.resolve(true);
-  if (_milkdropLibsPromise) return _milkdropLibsPromise;
-  _milkdropLibsPromise = (async() => {
-    await loadAny(['vendor/butterchurn.min.js','https://cdn.jsdelivr.net/npm/butterchurn@2.6.7/lib/butterchurn.min.js']);
-    await loadAny(['vendor/butterchurnPresets.min.js','https://cdn.jsdelivr.net/npm/butterchurn-presets@2.4.7/lib/butterchurnPresets.min.js']);
-    return true;
-  })();
-  return _milkdropLibsPromise;
-}
-function wireVizLazyMilkdrop() {
-  const btn = document.getElementById('vizBtn');
-  if (!btn || btn._rgMilkdropHooked) return;
-  btn._rgMilkdropHooked = true;
-  btn.addEventListener('click', async function(e) {
-    if (window.butterchurn && window.butterchurnPresets) return;
-    e.stopImmediatePropagation(); e.preventDefault();
-    btn.disabled = true;
-    try { await ensureMilkdropLibs(); } catch(_e) {}
-    btn.disabled = false;
-    setTimeout(() => btn.click(), 0);
-  }, true);
-}
 </script>
 
 <script>
@@ -1080,7 +1042,6 @@ function radioIdleClick() {
   try { if (typeof window.__mkSyncRadioVisuals === 'function') window.__mkSyncRadioVisuals(); } catch(e) {}
 
   loadRadioScripts().then(function() {
-    try { wireVizLazyMilkdrop(); } catch(e) {}
     function tryStart() {
       if (window.__mkRadioSupersededByLacitis) { btn._loading = false; return; }
       if (window.rgStations?.startInitial()) {
@@ -2598,7 +2559,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   </section>
 </div>
 
-<script src="js/media-profile.js?v=20260910favoritelocal1" defer></script>
+<script src="js/media-profile.js?v=20260910vfd13" defer></script>
 <script src="js/radio-source.js?v=20260908header3" defer></script>
 
 <div id="mobileQrModal" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171000;background:rgba(2,4,8,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:20px;">

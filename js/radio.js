@@ -114,18 +114,17 @@ audio.addEventListener('play', () => {
 // Idle the entire audio graph (EQ, reverb, compressor, vinyl noise, analyser)
 // while paused; resume it on play. Frees CPU and stops the looping vinyl source.
 audio.addEventListener('pause', () => {
-    try { if (aCtx && aCtx.state === 'running') aCtx.suspend().catch(()=>{}); } catch(e) {}
+    try { if (aCtx && aCtx.state === 'running') aCtx.suspend().then(()=>{if(!audio.paused&&!window.__mkRadioSupersededByLacitis)return aCtx.resume();}).catch(()=>{}); } catch(e) {}
 });
 audio.addEventListener('play', () => {
     if (window.__mkRadioSupersededByLacitis) return;
-    try { if (aCtx && aCtx.state === 'suspended') aCtx.resume().catch(()=>{}); } catch(e) {}
+    try { if (aCtx) aCtx.resume().catch(()=>{}); } catch(e) {}
 });
 window.__mkPauseRadioForLacitis = function() {
     window.__mkRadioSupersededByLacitis = true;
     const wasPlaying = !audio.paused;
     try { audio.pause(); } catch(e) {}
     syncRadioVisualLoops();
-    if (milkdropExpanded) milkdropCollapse();
     const playButton = document.getElementById('playBtn');
     if (playButton) playButton.innerHTML = '<i class="fas fa-play"></i>';
     return wasPlaying;
@@ -135,12 +134,11 @@ window.__mkRadioPlaybackState = function() {
 };
 
 function syncRadioVisualLoops() {
+    window.rgPioneer?.sync();
     if (radioVisualsInactive()) {
-        try { if (typeof milkdropStop === 'function') milkdropStop(); } catch(e) {}
         return;
     }
     scheduleDraw();
-    try { if (milkdropEnabled && typeof milkdropStart === 'function') milkdropStart(); } catch(e) {}
 }
 window.__mkSyncRadioVisuals = syncRadioVisualLoops;
 
@@ -509,7 +507,7 @@ document.addEventListener('pointerdown', (event) => {
 
 
 function changeVizStyle() {
-    // Cat controls ONLY the spectrum (always cycles). Milkdrop is separate.
+    // Cycle the current spectrum family.
     cycleVizMode();
 }
 
@@ -518,7 +516,7 @@ function changeVizStyle() {
 // ---------------------------
 let vizPickerOpen = false;
 
-// Cat controls ONLY spectrum modes (no Milkdrop here).
+// Spectrum modes, including the original Pioneer dolphin.
 const VIZ_MODES = [
     ...['PIXEL','MIRROR','LINE','CLASSIC','CENTER','PEAKS','WAVE','MATRIX','VU','LED','DOT VU'].map((label,i)=>({idx:20+i,label,hint:'Jaunais skats'})),
     { idx: 0, label: "PIXEL", hint: "pixel bars" },
@@ -664,328 +662,6 @@ function closeVizPicker(){
     vizPickerOpen = false;
 }
 
-// ---------------------------
-// MILKDROP WINDOW (separate toggle icon)
-// ---------------------------
-let milkdropOverlayOpen = false;
-let milkdropEnabled = false;
-
-function ensureMilkdropOverlay(){
-    let el = document.getElementById('milkdropOverlay');
-    if (el) return el;
-
-    el = document.createElement('div');
-    el.id = 'milkdropOverlay';
-    el.innerHTML = `
-      <div class="vizpick-head">
-        <div class="vizpick-title">MILKDROP</div>
-        <button class="vizpick-x" type="button" aria-label="Close">×</button>
-      </div>
-
-      <div class="vizpick-row" style="margin-top:0">
-        <button class="vizpick-mini" id="milkdropToggleBtn" type="button">OFF</button>
-        <div class="vizpick-status" id="milkdropAvail">—</div>
-      </div>
-
-      <div class="milkdrop-controls" style="margin-top:10px">
-        <button class="vizpick-mini" type="button" data-md="prev">⟵</button>
-        <button class="vizpick-mini" type="button" data-md="rand">🎲</button>
-        <button class="vizpick-mini" type="button" data-md="next">⟶</button>
-      </div>
-
-      <input class="vizpick-input" id="milkdropSearch" placeholder="Search preset…" />
-      <select class="vizpick-select" id="milkdropSelect"></select>
-      <div class="milkdrop-now" id="milkdropNow">Preset: —</div>
-      <div class="milkdrop-hint">Hotkeys: <b>Ctrl+Shift+K</b> toggle, <b>N</b> next preset.</div>
-    `;
-    document.body.appendChild(el);
-
-    // close button
-    el.querySelector('.vizpick-x')?.addEventListener('click', closeMilkdropOverlay);
-
-    // inside click handlers
-    el.addEventListener('click', (e) => {
-        const tgl = e.target.closest('#milkdropToggleBtn');
-        if (tgl) {
-            toggleMilkdrop();
-            return;
-        }
-        const md = e.target.closest('[data-md]')?.getAttribute('data-md');
-        if (md) {
-            if (!milkdropEnabled) enableMilkdrop();
-            if (md === 'next') milkdropNextPreset();
-            if (md === 'prev') milkdropPrevPreset();
-            if (md === 'rand') milkdropRandomPreset();
-            updateMilkdropUI();
-        }
-    });
-
-    // preset select/search
-    const sel = el.querySelector('#milkdropSelect');
-    const search = el.querySelector('#milkdropSearch');
-    sel?.addEventListener('change', () => {
-        const key = sel.value;
-        if (!milkdropEnabled) enableMilkdrop();
-        if (key) milkdropSetPresetByKey(key, 1.0);
-        updateMilkdropUI();
-    });
-    search?.addEventListener('input', () => {
-        fillMilkdropSelect(search.value || '');
-    });
-
-    // click outside to close
-    document.addEventListener('pointerdown', (e) => {
-        if (!milkdropOverlayOpen) return;
-        const panel = document.getElementById('milkdropOverlay');
-        const btn = document.getElementById('vizBtn');
-        if (!panel) return;
-        if (panel.contains(e.target)) return;
-        if (btn && btn.contains(e.target)) return;
-        closeMilkdropOverlay();
-    }, { passive: true });
-
-    // esc
-    window.addEventListener('keydown', (e) => {
-        if (!milkdropOverlayOpen) return;
-        if (e.key === 'Escape') closeMilkdropOverlay();
-    });
-
-    return el;
-}
-
-function positionMilkdropOverlay(){
-    const el = document.getElementById('milkdropOverlay');
-    if (!el) return;
-    const btn = document.getElementById('vizBtn');
-    const rect = btn ? btn.getBoundingClientRect() : null;
-    const pad = 12;
-    const w = Math.min(380, window.innerWidth - pad*2);
-    el.style.width = w + 'px';
-
-    // measure height
-    el.style.visibility = 'hidden';
-    el.style.display = 'block';
-    const h = el.getBoundingClientRect().height;
-    el.style.display = 'none';
-    el.style.visibility = '';
-
-    let left = rect ? (rect.left + rect.width/2 - w/2) : (window.innerWidth - w - pad);
-    left = Math.max(pad, Math.min(left, window.innerWidth - w - pad));
-
-    let top;
-    if (rect) {
-        top = rect.top - h - 12;
-        if (top < pad) top = rect.bottom + 12;
-    } else {
-        top = pad + 60;
-    }
-    top = Math.max(pad, Math.min(top, window.innerHeight - h - pad));
-
-    el.style.left = left + 'px';
-    el.style.top = top + 'px';
-}
-
-function openMilkdropOverlay(){
-    const el = ensureMilkdropOverlay();
-    milkdropOverlayOpen = true;
-    positionMilkdropOverlay();
-    el.style.display = 'block';
-    syncMilkdropToggleUI();
-    // Populate the preset picker without creating the WebGL visualizer —
-    // the heavy GL context is only spun up when Milkdrop is actually enabled.
-    ensureMilkdropPresets();
-    fillMilkdropSelect(el.querySelector('#milkdropSearch')?.value || '');
-    updateMilkdropUI();
-}
-
-function closeMilkdropOverlay(){
-    const el = document.getElementById('milkdropOverlay');
-    if (el) el.style.display = 'none';
-    milkdropOverlayOpen = false;
-}
-
-function toggleMilkdropOverlay(){
-    if (milkdropOverlayOpen) closeMilkdropOverlay();
-    else openMilkdropOverlay();
-}
-
-function syncMilkdropToggleUI(){
-    // No context menu. Just reflect state on the small Milkdrop icon.
-    const btn = document.getElementById("vizBtn");
-    if (btn) {
-        btn.classList.toggle("active", !!milkdropEnabled);
-        btn.setAttribute("aria-pressed", milkdropEnabled ? "true" : "false");
-        btn.title = milkdropEnabled ? "Milkdrop: ON (click to turn off)" : "Milkdrop Visuals";
-    }
-
-    updateMilkdropQuickUI();
-}
-
-// --- Milkdrop quick controls (arrows + preset button in the player strip) ---
-let mdMiniEls = null;
-
-function shortPresetName(name){
-    if (!name) return "PRESET";
-    // Prefer a distinctive tail (many presets share the same prefix).
-    const max = 64;
-    if (name.length <= max) return name;
-    // If it has " - ", show the last segment (usually the unique part)
-    const parts = name.split(' - ');
-    if (parts.length >= 2) {
-        const tail = parts[parts.length - 1];
-        if (tail.length <= max) return tail;
-        return '…' + tail.slice(-(max - 1));
-    }
-    // Fallback: keep the end
-    return '…' + name.slice(-(max - 1));
-}
-
-function applyMarqueeIfNeeded(btn, span){
-    if (!btn || !span) return;
-    // Cancel old animation
-    try {
-        if (span.__marqueeAnim) { span.__marqueeAnim.cancel(); span.__marqueeAnim = null; }
-    } catch(e) {}
-    span.style.transform = 'translateX(0)';
-
-    // Measure overflow after layout
-    requestAnimationFrame(() => {
-        const padding = 24; // matches button padding
-        const available = Math.max(40, btn.clientWidth - padding);
-        const overflow = span.scrollWidth - available;
-        if (overflow <= 8) return;
-
-        // Duration scales with overflow so it's readable (slower = easier to read).
-        const duration = Math.min(34000, Math.max(12000, overflow * 85));
-        try {
-            span.__marqueeAnim = span.animate(
-                [
-                    { transform: 'translateX(0)' },
-                    { transform: `translateX(${-overflow}px)` }
-                ],
-                {
-                    duration,
-                    direction: 'alternate',
-                    iterations: Infinity,
-                    easing: 'ease-in-out',
-                    delay: 650
-                }
-            );
-        } catch(e) {}
-    });
-}
-
-function updateMilkdropQuickUI(){
-    // Mini controls (prev/next + preset name) should be visible only when the Milkdrop window is expanded.
-    const wrap = document.getElementById('mdMini');
-    const btn = document.getElementById('mdPresetBtn');
-    const showMini = !!(milkdropEnabled && milkdropExpanded);
-    if (wrap) wrap.setAttribute('aria-hidden', showMini ? "false" : "true");
-    if (btn) {
-        const name = milkdropPresetKeys && milkdropPresetKeys[milkdropPresetIndex] ? milkdropPresetKeys[milkdropPresetIndex] : "PRESET";
-        // Render text in a span so we can marquee-scroll long names.
-        let span = btn.querySelector('.mdp-label');
-        if (!span) {
-            btn.textContent = '';
-            span = document.createElement('span');
-            span.className = 'mdp-label';
-            btn.appendChild(span);
-        }
-        // Show full name (marquee will scroll if needed), keep full name in title.
-        span.textContent = name;
-        btn.title = name;
-        applyMarqueeIfNeeded(btn, span);
-    }
-    // The small Milkdrop icon is the entry point when collapsed (Winamp-ish).
-    // Hide it only when the big Milkdrop window is expanded.
-    const vizBtn = document.getElementById('vizBtn');
-    if (vizBtn) vizBtn.style.display = (milkdropEnabled && milkdropExpanded) ? 'none' : '';
-}
-
-function closeMdPresetPanel(){
-    const panel = document.getElementById('mdPresetPanel');
-    if (!panel) return;
-    panel.setAttribute('aria-hidden', 'true');
-}
-
-function openMdPresetPanel(){
-    const panel = document.getElementById('mdPresetPanel');
-    const btn = document.getElementById('mdPresetBtn');
-    if (!panel || !btn) return;
-    if (!(milkdropEnabled && milkdropExpanded)) return; // only when expanded
-
-    // Position near the PRESET button
-    const r = btn.getBoundingClientRect();
-    const padding = 10;
-    panel.style.left = Math.max(padding, Math.min(window.innerWidth - panel.offsetWidth - padding, r.left)) + 'px';
-    // prefer above; if not enough space, show below
-    const desiredTop = r.top - (panel.offsetHeight || 380) - 8;
-    const top = desiredTop < padding ? (r.bottom + 8) : desiredTop;
-    panel.style.top = top + 'px';
-
-    panel.setAttribute('aria-hidden', 'false');
-
-    // focus search
-    const search = document.getElementById('mdPresetSearch');
-    if (search) {
-        search.value = '';
-        setTimeout(() => search.focus(), 0);
-        renderMdPresetList('');
-    }
-}
-
-function toggleMdPresetPanel(){
-    const panel = document.getElementById('mdPresetPanel');
-    if (!panel) return;
-    if (!(milkdropEnabled && milkdropExpanded)) return;
-    const open = panel.getAttribute('aria-hidden') === 'false';
-    open ? closeMdPresetPanel() : openMdPresetPanel();
-}
-
-function renderMdPresetList(filterText){
-    const list = document.getElementById('mdPresetList');
-    if (!list) return;
-    if (!milkdropPresetKeys || !milkdropPresetKeys.length) {
-        list.innerHTML = '<div style="padding:10px;opacity:.8;">Loading presets…</div>';
-        return;
-    }
-    const f = (filterText || '').trim().toLowerCase();
-    const keys = f ? milkdropPresetKeys.filter(k => k.toLowerCase().includes(f)) : milkdropPresetKeys;
-    // performance cap (still plenty)
-    const capped = keys.slice(0, 600);
-
-    const current = milkdropPresetKeys[milkdropPresetIndex];
-    list.innerHTML = capped.map(k => {
-        const active = k === current ? 'is-active' : '';
-        return `<button class="mdp-item ${active}" type="button" data-mdkey="${escapeHtml(k)}">${escapeHtml(k)}</button>`;
-    }).join('') + (keys.length > capped.length ? `<div style="padding:8px 10px;opacity:.7;font-size:12px;">Showing ${capped.length} of ${keys.length}. Refine search to narrow.</div>` : '');
-}
-
-function enableMilkdrop(){
-    milkdropEnabled = true;
-    applyVizMode();
-    syncMilkdropToggleUI();
-    // Winamp-style: open Milkdrop in its own window above the player.
-    try { milkdropExpand(); } catch(e) {}
-}
-
-function disableMilkdrop(){
-    try { milkdropCollapse(true); } catch(e) {}
-    milkdropEnabled = false;
-    // Free the WebGL visualizer (the expensive GPU/RAM cost). Presets stay
-    // cached so re-enabling rebuilds the context instantly via ensureMilkdrop().
-    if (milkdrop) {
-        try { milkdropStop(); } catch(e) {}
-        milkdrop = null;
-    }
-    applyVizMode();
-    syncMilkdropToggleUI();
-}
-
-function toggleMilkdrop(){
-    milkdropEnabled ? disableMilkdrop() : enableMilkdrop();
-}
-
 function cycleVizMode(){
     // Next spectrum mode only
     const modes=VIZ_MODES.filter(m=>m.idx!==MK_NO_VIZ&&isModernViz(m.idx)===(vizFamily==='new'));
@@ -1044,121 +720,7 @@ function updateVizPickerUI(forceWarn=false){
     if (status) status.textContent = `${m.label}`;
 }
 
-// Milkdrop UI is a separate window (toggled by a small icon).
-function fillMilkdropSelect(filterText){
-    const el = document.getElementById('milkdropOverlay');
-    if (!el) return;
-    const sel = el.querySelector('#milkdropSelect');
-    const pill = el.querySelector('#milkdropAvail');
-    if (!sel) return;
-
-    const ok = canMilkdrop();
-    if (pill) pill.textContent = !hasWebGL2() ? 'NO WEBGL2' : (ok ? 'READY' : 'MISSING LIBS');
-
-    if (!ok || !milkdropPresetKeys || !milkdropPresetKeys.length) {
-        sel.innerHTML = `<option value="">(no presets)</option>`;
-        sel.disabled = true;
-        return;
-    }
-
-    const q = (filterText || '').trim().toLowerCase();
-    const keys = q ? milkdropPresetKeys.filter(k => k.toLowerCase().includes(q)) : milkdropPresetKeys;
-
-    sel.disabled = false;
-    sel.innerHTML = keys.slice(0, 600).map(k => `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join('');
-    const cur = milkdropPresetKeys[milkdropPresetIndex];
-    if (cur && keys.includes(cur)) sel.value = cur;
-}
-
-function updateMilkdropUI(){
-    // Legacy overlay UI may not exist in newer builds.
-    // Always keep the player-strip quick UI in sync.
-
-    const key = (milkdropPresetKeys && milkdropPresetKeys.length)
-        ? milkdropPresetKeys[milkdropPresetIndex]
-        : null;
-
-    const el = document.getElementById('milkdropOverlay');
-    if (el) {
-        const now = el.querySelector('#milkdropNow');
-        if (now) now.textContent = key ? ('Preset: ' + key) : 'Preset: —';
-
-        const sel = el.querySelector('#milkdropSelect');
-        if (sel && key) sel.value = key;
-    }
-
-    updateMilkdropQuickUI();
-}
-
-// helpers for presets
-
-function milkdropLoadPresetSafe(targetIndex, blend = 0.9) {
-    if (!milkdropEnabled) return false;
-    if (!ensureMilkdrop()) return false;
-    if (!milkdrop || !milkdropPresets || !milkdropPresetKeys.length) return false;
-
-    // Keep renderer sized correctly before loading presets (important after fullscreen transitions)
-    try { milkdropResizeToContainer(); } catch(_) {}
-
-    const total = milkdropPresetKeys.length;
-    let idx = ((targetIndex % total) + total) % total;
-
-    for (let tries = 0; tries < Math.min(total, 60); tries++) {
-        const key = milkdropPresetKeys[idx];
-        try {
-            milkdrop.loadPreset(milkdropPresets[key], blend);
-            milkdropPresetIndex = idx;
-            // force a couple frames to avoid "stuck/black" after heavy presets
-            try { milkdropStart(); } catch(_) {}
-            // Sync preset title + selection UI
-            try { updateMilkdropUI(); } catch(_) {}
-            try {
-                const panel = document.getElementById('mdPresetPanel');
-                const filter = document.getElementById('mdPresetFilter');
-                if (panel && panel.getAttribute('aria-hidden') === 'false') {
-                    renderMdPresetList((filter && filter.value) ? filter.value : '');
-                }
-            } catch(_) {}
-            return true;
-        } catch(e) {
-            _warn('[Milkdrop] preset failed:', key, e);
-            idx = (idx + 1) % total;
-        }
-    }
-    return false;
-}
-function milkdropPrevPreset() {
-    if (!milkdropEnabled) return;
-    if (!milkdrop || !milkdropPresets || !milkdropPresetKeys.length) return;
-    const total = milkdropPresetKeys.length;
-    const target = (milkdropPresetIndex - 1 + total) % total;
-    // Try target first; if it fails, safe loader will fall forward to a working one.
-    milkdropLoadPresetSafe(target, 1.0);
-}
-
-function milkdropRandomPreset() {
-    if (!milkdrop || !milkdropPresets || !milkdropPresetKeys.length) return;
-    const target = Math.floor(Math.random() * milkdropPresetKeys.length);
-    milkdropLoadPresetSafe(target, 1.2);
-}
-
-function milkdropSetPresetByKey(key, blend=1.0){
-    if (!milkdrop || !milkdropPresets || !milkdropPresetKeys.length) return;
-    const idx = milkdropPresetKeys.indexOf(key);
-    if (idx < 0) return;
-    milkdropPresetIndex = idx;
-    try { milkdrop.loadPreset(milkdropPresets[key], blend); } catch(e) {}
-    // Sync preset title + highlight
-    try { updateMilkdropUI(); } catch(_) {}
-    try {
-        const panel = document.getElementById('mdPresetPanel');
-        const filter = document.getElementById('mdPresetFilter');
-        if (panel && panel.getAttribute('aria-hidden') === 'false') {
-            renderMdPresetList((filter && filter.value) ? filter.value : '');
-        }
-    } catch(_) {}
-}
-
+// Shared by station names, search fields and appearance controls.
 function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, (m) => ({
         '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
@@ -1174,171 +736,29 @@ function updateVizLabel(){
 }
 
 
-// ------------------------------------------------------------
-// Butterchurn (Milkdrop) – optional viz mode (UI unchanged)
-// Mode index: 8 (MILKDROP)
-// ------------------------------------------------------------
-let milkdrop = null;
-let milkdropPresets = null;
-let milkdropPresetKeys = [];
-let milkdropPresetIndex = 0;
-let milkdropRaf = 0;
-
-function hasWebGL2() {
-    try { return !!document.createElement('canvas').getContext('webgl2'); }
-    catch(e){ return false; }
+let pioneerPlayerPromise = null;
+function ensurePioneerPlayer() {
+    if (!pioneerPlayerPromise) pioneerPlayerPromise = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'js/radio-pioneer.js?v=20260910pioneer5';
+        script.onload = () => {
+            window.rgPioneer.init({image:dGif, button:document.getElementById('vizBtn'), audio,
+                isActive:() => vizStyle === 5, getAnalyser:() => analyser,
+                isCovered:() => isAdjustingVol,
+                isRunning:() => !audio.paused && !radioVisualsInactive(),
+                selectMode:() => setVizStyle(5), disable:() => setVizStyle(MK_NO_VIZ)});
+            resolve(window.rgPioneer);
+        };
+        script.onerror = () => { script.remove(); pioneerPlayerPromise = null; reject(new Error('Pioneer load failed')); };
+        document.head.appendChild(script);
+    });
+    return pioneerPlayerPromise;
 }
-
-// butterchurn global can be either {createVisualizer} or {default:{createVisualizer}}
-function getButterchurnApi() {
-    const bc = window.butterchurn;
-    if (!bc) return null;
-    if (typeof bc.createVisualizer === 'function') return bc;
-    if (bc.default && typeof bc.default.createVisualizer === 'function') return bc.default;
-    return null;
-}
-
-function hasButterchurn() {
-    return !!getButterchurnApi();
-}
-
-function milkdropLibsReady() {
-    return hasButterchurn()
-        && typeof window.butterchurnPresets !== 'undefined'
-        && window.butterchurnPresets
-        && (typeof window.butterchurnPresets.getPresets === 'function');
-}
-
-// Milkdrop is *possible* if WebGL2 exists. Libraries can be loaded (or fixed) afterwards.
-function canMilkdrop() {
-    return hasWebGL2() && milkdropLibsReady();
-}
-
-
-function ensureMilkdropCanvas() {
-    const canvas = document.getElementById('milkdropCanvas');
-    if (!canvas) return null;
-    const frame = canvas.parentElement || canvas;
-    const rect = frame.getBoundingClientRect();
-    const dpr = Math.min(window.devicePixelRatio || 1, MK_LOW_SPEC ? 1 : 2);
-    const w = Math.max(1, Math.floor(rect.width * dpr));
-    const h = Math.max(1, Math.floor(rect.height * dpr));
-    if (canvas.width !== w || canvas.height !== h) {
-        canvas.width = w;
-        canvas.height = h;
-    }
-    return canvas;
-}
-
-// Load preset definitions only (needed by the picker UI). This is the RAM-heavy
-// part, but the far more expensive WebGL visualizer is created lazily in
-// ensureMilkdrop() — only when Milkdrop is actually enabled.
-function ensureMilkdropPresets() {
-    if (milkdropPresets) return true;
-    if (!milkdropLibsReady()) return false;
-    try {
-        milkdropPresets = window.butterchurnPresets.getPresets ? window.butterchurnPresets.getPresets() : null;
-        milkdropPresetKeys = milkdropPresets ? Object.keys(milkdropPresets) : [];
-        _log('[Milkdrop] presets:', milkdropPresetKeys.length);
-        if (milkdropPresetKeys.length) milkdropPresetIndex = Math.floor(Math.random() * milkdropPresetKeys.length);
-    } catch (e) {
-        _err('[Milkdrop] presets load failed:', e);
-        milkdropPresets = null;
-        milkdropPresetKeys = [];
-        return false;
-    }
-    return !!(milkdropPresets && milkdropPresetKeys.length);
-}
-
-function ensureMilkdrop() {
-    if (!hasWebGL2()) {
-        _warn('[Milkdrop] unavailable: no WebGL2');
-        return false;
-    }
-    if (!milkdropLibsReady()) {
-        _warn('[Milkdrop] libs missing', {
-            butterchurn: !!window.butterchurn,
-            presets: !!window.butterchurnPresets
-        });
-        return false;
-    }
-
-    if (!aCtx) setupAudio();
-
-    // AudioContext often starts suspended until user interaction
-    if (aCtx && aCtx.state === 'suspended') {
-        aCtx.resume().catch(() => {});
-    }
-
-    ensureMilkdropPresets();
-
-    const canvas = ensureMilkdropCanvas();
-    if (!canvas) return false;
-
-    if (!milkdrop) {
-        try {
-            const bcApi = getButterchurnApi();
-            milkdrop = bcApi.createVisualizer(aCtx, canvas, {
-                width: canvas.width,
-                height: canvas.height,
-                pixelRatio: (window.devicePixelRatio || 1)
-            });
-            _log('[Milkdrop] visualizer created');
-        } catch (e) {
-            _err('[Milkdrop] createVisualizer failed:', e);
-            milkdrop = null;
-            return false;
-        }
-
-        try {
-            if (analyser) milkdrop.connectAudio(analyser);
-            _log('[Milkdrop] audio connected');
-        } catch (e) {
-            _err('[Milkdrop] connectAudio failed:', e);
-        }
-
-        if (milkdropPresets && milkdropPresetKeys.length) {
-            const key = milkdropPresetKeys[milkdropPresetIndex];
-            try {
-                milkdrop.loadPreset(milkdropPresets[key], 0.0);
-                _log('[Milkdrop] preset loaded:', key);
-            } catch (e) {
-                _err('[Milkdrop] loadPreset failed:', e);
-            }
-        } else {
-            _warn('[Milkdrop] no presets available');
-        }
-    }
-
-    return true;
-}
-
-
-function milkdropNextPreset() {
-    if (!milkdropEnabled) return;
-    if (!milkdrop || !milkdropPresets || !milkdropPresetKeys.length) return;
-    const total = milkdropPresetKeys.length;
-    const target = (milkdropPresetIndex + 1) % total;
-    milkdropLoadPresetSafe(target, 1.0);
-}
-
-function milkdropRender() {
-    milkdropRaf = 0;
-    if (!milkdrop || !milkdropEnabled || radioVisualsInactive()) return;
-    ensureMilkdropCanvas();
-    try { milkdrop.render(); } catch(e) {}
-    milkdropRaf = requestAnimationFrame(milkdropRender);
-}
-
-function milkdropStart() {
-    if (milkdropRaf) cancelAnimationFrame(milkdropRaf);
-    milkdropRaf = requestAnimationFrame(milkdropRender);
-}
-
-function milkdropStop() {
-    if (milkdropRaf) cancelAnimationFrame(milkdropRaf);
-    milkdropRaf = 0;
-}
+document.getElementById('vizBtn')?.addEventListener('click', async event => {
+    event.preventDefault();event.stopPropagation();
+    try { (await ensurePioneerPlayer()).open(); }
+    catch (_) { event.currentTarget?.setAttribute('title','Neizdevās ielādēt skatus. Nospied vēlreiz.'); }
+});
 
 function applyVizMode() {
     const disabled = vizStyle === MK_NO_VIZ;
@@ -1351,469 +771,23 @@ function applyVizMode() {
     if(ctx&&cvs)ctx.clearRect(0,0,cvs.width,cvs.height);
     if(typeof peaks!=='undefined')peaks.fill(0);
     __vizLastFrameTs=0;
+    if (vizStyle === 5) void ensurePioneerPlayer().then(player => player.sync()).catch(() => {});
     window.dispatchEvent(new Event('rg-viz-change'));
     if (disabled) {
-        milkdropEnabled = false;
-        if (milkdrop) { try { milkdropCollapse(true); milkdropStop(); } catch (_) {} milkdrop = null; }
         try { window.__slowedWave?.stop(); } catch (_) {}
         if (dGif) dGif.style.opacity = 0;
         if (ctx && cvs) ctx.clearRect(0, 0, cvs.width, cvs.height);
     } else {
         scheduleDraw();
     }
-    // Milkdrop overlay is controlled separately from the cat spectrum.
-    if (milkdropEnabled) {
-        const ready = ensureMilkdrop();
-        document.body.classList.toggle('milkdrop-on', !!ready);
-        if (ready) {
-            milkdropStart();
-        } else {
-            // If missing libs / no WebGL2, auto-disable to avoid confusion.
-            milkdropEnabled = false;
-            document.body.classList.remove('milkdrop-on');
-            document.body.classList.remove('milkdrop-open');
-            milkdropStop();
-            syncMilkdropToggleUI();
-        }
-    } else {
-        document.body.classList.remove('milkdrop-on');
-            document.body.classList.remove('milkdrop-open');
-        milkdropStop();
-    }
-}
 
-// Keyboard: Winamp-ish
-// - Ctrl+Shift+K toggles Milkdrop
-// - N switches to next preset (when Milkdrop is on)
-window.addEventListener('keydown', (e) => {
-    if (e.ctrlKey && e.shiftKey && (e.key === 'k' || e.key === 'K')) {
-        e.preventDefault();
-        toggleMilkdrop();
-        // If window is open, keep UI in sync
-        if (milkdropOverlayOpen) {
-            fillMilkdropSelect(document.getElementById('milkdropSearch')?.value || '');
-            updateMilkdropUI();
-        }
-        return;
-    }
-    if (!milkdropEnabled) return;
-    if (e.key === 'n' || e.key === 'N') {
-        e.preventDefault();
-        milkdropNextPreset();
-        updateMilkdropUI();
-    }
-});
+}
 
 function tick() { document.getElementById('timeDisp').textContent = new Date().toLocaleTimeString('en-GB'); }
 setInterval(tick, 1000); tick();
 updateVizLabel();
 applyVizMode();
 
-// Milkdrop toggle icon (small VIS button) + quick controls
-// (arrows + preset square live in HTML; we just wire them)
-
-function setupMilkdropQuickControls(){
-    if (mdMiniEls) return;
-    const mini = document.getElementById('mdMini');
-    const prev = document.getElementById('mdPrevBtn');
-    const next = document.getElementById('mdNextBtn');
-    const presetBtn = document.getElementById('mdPresetBtn');
-    const panel = document.getElementById('mdPresetPanel');
-    const close = document.getElementById('mdPresetClose');
-    const search = document.getElementById('mdPresetSearch');
-    const list = document.getElementById('mdPresetList');
-
-    mdMiniEls = { mini, prev, next, presetBtn, panel, close, search, list };
-
-    if (prev) prev.addEventListener('click', (e) => {
-        e.preventDefault(); e.stopPropagation();
-        if (!milkdropEnabled) enableMilkdrop();
-        if (!milkdropEnabled) return;
-        milkdropPrevPreset();
-        updateMilkdropUI();
-    });
-
-    if (next) next.addEventListener('click', (e) => {
-        e.preventDefault(); e.stopPropagation();
-        if (!milkdropEnabled) enableMilkdrop();
-        if (!milkdropEnabled) return;
-        milkdropNextPreset();
-        updateMilkdropUI();
-    });
-
-    if (presetBtn) presetBtn.addEventListener('click', (e) => {
-        e.preventDefault(); e.stopPropagation();
-        if (!milkdropEnabled) enableMilkdrop();
-        toggleMdPresetPanel();
-    });
-
-    if (close) close.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); closeMdPresetPanel(); });
-
-    if (search) search.addEventListener('input', () => renderMdPresetList(search.value));
-
-    if (list) list.addEventListener('click', (e) => {
-        const btn = e.target && e.target.closest && e.target.closest('.mdp-item');
-        if (!btn) return;
-        const key = btn.getAttribute('data-mdkey');
-        if (!key) return;
-        milkdropSetPresetByKey(key);
-        updateMilkdropUI();
-        closeMdPresetPanel();
-    });
-
-    // click-outside closes
-    window.addEventListener('pointerdown', (e) => {
-        if (!panel) return;
-        if (panel.getAttribute('aria-hidden') !== 'false') return;
-        const t = e.target;
-        if (panel.contains(t) || presetBtn?.contains(t)) return;
-        closeMdPresetPanel();
-    }, { passive: true });
-
-    // ESC closes panel
-    window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeMdPresetPanel();
-    });
-
-    updateMilkdropQuickUI();
-}
-
-setupMilkdropQuickControls();
-
-const __vizBtn = document.getElementById('vizBtn');
-if (__vizBtn) {
-    __vizBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        // Winamp-ish behavior:
-        // - Spectrum ALWAYS runs in the main monitor
-        // - Milkdrop opens as a separate window above the player
-        // - If Milkdrop is already enabled but minimized, this re-opens it
-        // - If Milkdrop is enabled and already open, this turns it off
-
-        if (!milkdropEnabled) {
-            enableMilkdrop();
-            return;
-        }
-
-        if (milkdropEnabled && !milkdropExpanded) {
-            try { milkdropExpand(); } catch(e) {}
-            return;
-        }
-
-        disableMilkdrop();
-    });
-}
-
-
-
-// ------------------------------------------------------------
-// Milkdrop expanded window (Winamp-ish)
-// - Click Milkdrop screen to expand above the player (same width as player)
-// - Minimize returns canvas back to the small monitor
-// - Fullscreen is available from the expanded window
-// ------------------------------------------------------------
-let milkdropExpanded = false;
-
-let milkdropPanelEl = null;
-let milkdropPanelBodyEl = null;
-let milkdropCanvasHome = null;
-let milkdropCanvasHomeNext = null;
-let __md_exitByClick = false;
-let __md_afterExit = null; // 'min' | 'close' | null
-
-
-function ensureMilkdropPanel() {
-    if (milkdropPanelEl) return milkdropPanelEl;
-
-    const panel = document.createElement('div');
-    panel.id = 'milkdropPanel';
-    panel.style.display = 'none';
-    panel.innerHTML = `
-      <div class="md-head">
-        <div class="md-title">MILKDROP</div>
-        <div class="md-actions">
-          <button class="md-btn" type="button" data-act="stations" title="Stations" aria-label="Stations">≡</button>
-          <button class="md-btn" type="button" data-act="theme" title="Theme" aria-label="Theme">🎨</button>
-          <button class="md-btn" type="button" data-act="min" title="Minimize" aria-label="Minimize">_</button>
-          <button class="md-btn" type="button" data-act="fs" title="Fullscreen" aria-label="Fullscreen">[ ]</button>
-          <button class="md-btn" type="button" data-act="close" title="Close" aria-label="Close">x</button>
-        </div>
-      </div>
-      <div class="md-body" id="milkdropPanelBody"></div>
-    `;
-    document.body.appendChild(panel);
-
-    milkdropPanelEl = panel;
-    milkdropPanelBodyEl = panel.querySelector('#milkdropPanelBody');
-
-    // Buttons: direct handlers (more reliable than delegated clicks across overlays)
-    const btnStations = panel.querySelector('[data-act="stations"]');
-    const btnTheme = panel.querySelector('[data-act="theme"]');
-    const btnMin = panel.querySelector('[data-act="min"]');
-    const btnFs = panel.querySelector('[data-act="fs"]');
-    const btnClose = panel.querySelector('[data-act="close"]');
-
-    const stopEvt = (e) => { try { e.preventDefault(); e.stopPropagation(); } catch(_) {} };
-
-    // Allow opening Stations / Theme while Milkdrop is open
-    if (btnStations) {
-        btnStations.addEventListener('click', (e) => {
-            stopEvt(e);
-            try { toggleMenu(); } catch(_) {}
-        });
-    }
-    if (btnTheme) {
-        btnTheme.addEventListener('click', (e) => {
-            stopEvt(e);
-            try { document.getElementById('themeBtn')?.click(); } catch(_) {}
-        });
-    }
-
-    btnMin?.addEventListener('click', (e) => {
-        stopEvt(e);
-        // Minimize: if fullscreen, exit fullscreen first, then collapse back into the small monitor.
-        if (document.fullscreenElement === milkdropPanelEl) {
-            __md_afterExit = 'min';
-            try { document.exitFullscreen?.(); } catch(_) {}
-            return;
-        }
-        milkdropCollapse();
-    });
-
-    btnClose?.addEventListener('click', (e) => {
-        stopEvt(e);
-        // Close: if fullscreen, exit fullscreen first, then disable Milkdrop.
-        if (document.fullscreenElement === milkdropPanelEl) {
-            __md_afterExit = 'close';
-            try { document.exitFullscreen?.(); } catch(_) {}
-            return;
-        }
-        try { milkdropCollapse(true); } catch(_) {}
-        try { disableMilkdrop(); } catch(_) {}
-    });
-
-    btnFs?.addEventListener('click', (e) => {
-        stopEvt(e);
-        try {
-            // Make sure the panel is visible before requesting fullscreen
-            if (!milkdropExpanded) {
-                try { milkdropExpand(); } catch(_) {}
-            }
-            if (document.fullscreenElement !== milkdropPanelEl) {
-                const p = milkdropPanelEl.requestFullscreen ? milkdropPanelEl.requestFullscreen() : null;
-                if (p && typeof p.catch === 'function') p.catch(() => {});
-            } else {
-                document.exitFullscreen?.();
-            }
-        } catch(_) {}
-    });
-
-
-    const rw = document.getElementById('radioWindow');
-    if (rw && 'ResizeObserver' in window) {
-        const ro = new ResizeObserver(() => {
-            if (milkdropExpanded) positionMilkdropPanel();
-        });
-        ro.observe(rw);
-    }
-    window.addEventListener('resize', () => { if (milkdropExpanded) positionMilkdropPanel(); }, { passive: true });
-    document.addEventListener('fullscreenchange', () => {
-        const fs = (document.fullscreenElement === milkdropPanelEl);
-        document.body.classList.toggle('milkdrop-fs', fs);
-
-        // Always resync renderer on fullscreen transitions (prevents black frames)
-        setTimeout(() => { try { milkdropResizeToContainer(); milkdropStart(); } catch(_) {} }, 30);
-
-        // If we exited fullscreen because the visual was clicked, we keep the expanded window open.
-        if (!fs && __md_exitByClick) {
-            __md_exitByClick = false;
-        }
-
-        // If we exited fullscreen via window buttons, run the follow-up action.
-        if (!fs && __md_afterExit) {
-            const act = __md_afterExit;
-            __md_afterExit = null;
-            if (act === 'min') {
-                milkdropCollapse();
-            } else if (act === 'close') {
-                try { milkdropCollapse(true) } catch(_) {}
-                try { disableMilkdrop(); } catch(_) {}
-            }
-        }
-
-        if (milkdropExpanded) {
-            // Let layout settle first
-            setTimeout(() => { try { positionMilkdropPanel(); milkdropResizeToContainer(); } catch(_) {} }, 40);
-        }
-    });
-
-    return panel;
-}
-
-function positionMilkdropPanel() {
-    if (!milkdropPanelEl) return;
-    const rw = document.getElementById('radioWindow');
-    if (!rw) return;
-
-    // Fullscreen layout: take the whole viewport (Winamp-like).
-    if (document.fullscreenElement === milkdropPanelEl) {
-        milkdropPanelEl.style.top = '0px';
-        milkdropPanelEl.style.left = '0px';
-        milkdropPanelEl.style.width = '100vw';
-        milkdropPanelEl.style.height = '100vh';
-        try { milkdropPanelEl.style.borderRadius = '0px'; } catch(_) {}
-        return;
-    }
-
-    const r = rw.getBoundingClientRect();
-    const pad = 12;
-    const h = 320;
-
-    milkdropPanelEl.style.width = Math.floor(r.width) + 'px';
-    milkdropPanelEl.style.left = Math.floor(r.left) + 'px';
-    milkdropPanelEl.style.height = h + 'px';
-
-    // place above the player; clamp to viewport
-    const top = Math.max(pad, Math.floor(r.top - h - 12));
-    milkdropPanelEl.style.top = top + 'px';
-    try { milkdropPanelEl.style.borderRadius = '16px'; } catch(_) {}
-}
-
-// Keep Milkdrop "magnet-attached" to the radio window while dragging/resizing.
-// We do this via a rAF scheduler so dragging stays smooth.
-let __mdDockRaf = null;
-function scheduleMilkdropDockUpdate() {
-    try {
-        if (!milkdropExpanded) return;
-        if (document.fullscreenElement === milkdropPanelEl) return;
-    } catch(_) {
-        // ignore
-    }
-    if (__mdDockRaf) return;
-    __mdDockRaf = requestAnimationFrame(() => {
-        __mdDockRaf = null;
-        try {
-            positionMilkdropPanel();
-            milkdropResizeToContainer();
-        } catch(_) {}
-    });
-}
-
-function milkdropResizeToContainer() {
-    if (!milkdropEnabled) return;
-    const canvas = document.getElementById('milkdropCanvas');
-    if (!canvas) return;
-    ensureMilkdropCanvas();
-    if (milkdrop && typeof milkdrop.setRendererSize === 'function') {
-        try { milkdrop.setRendererSize(canvas.width, canvas.height); } catch(_) {}
-    }
-}
-
-function milkdropExpand() {
-    if (milkdropExpanded) return;
-    if (!milkdropEnabled) return;
-    if (!ensureMilkdrop()) return;
-
-    ensureMilkdropPanel();
-
-    const canvas = document.getElementById('milkdropCanvas');
-    if (!canvas || !milkdropPanelBodyEl) return;
-
-    milkdropCanvasHome = canvas.parentElement;
-    milkdropCanvasHomeNext = canvas.nextSibling;
-
-    milkdropPanelBodyEl.appendChild(canvas);
-
-    milkdropExpanded = true;
-    try { document.body.classList.add('milkdrop-open'); } catch(_) {}
-
-    milkdropPanelEl.style.display = 'block';
-    positionMilkdropPanel();
-    milkdropResizeToContainer();
-
-    // Mini controls should appear only in expanded mode
-    closeMdPresetPanel();
-    updateMilkdropQuickUI();
-}
-
-function milkdropCollapse(force = false) {
-    if (!milkdropExpanded && !force) return;
-
-    const canvas = document.getElementById('milkdropCanvas');
-    if (canvas && milkdropCanvasHome) {
-        try {
-            if (milkdropCanvasHomeNext && milkdropCanvasHomeNext.parentNode == milkdropCanvasHome) {
-                milkdropCanvasHome.insertBefore(canvas, milkdropCanvasHomeNext);
-            } else {
-                milkdropCanvasHome.appendChild(canvas);
-            }
-        } catch(_) {}
-    }
-
-    milkdropExpanded = false;
-    // IMPORTANT: 'milkdrop-open' must reflect the *window being visible*, not just enabled.
-    // If we collapse the window, remove the class so the Milkdrop icon can re-appear.
-    try { document.body.classList.remove('milkdrop-open'); } catch(_) {}
-    if (milkdropPanelEl) milkdropPanelEl.style.display = 'none';
-    milkdropResizeToContainer();
-
-    // Hide mini controls when collapsed; show Milkdrop icon again
-    closeMdPresetPanel();
-    updateMilkdropQuickUI();
-}
-
-function toggleMilkdropExpand() {
-    if (!milkdropEnabled) return;
-    if (milkdropExpanded) milkdropCollapse();
-    else milkdropExpand();
-}
-
-// Click on Milkdrop screen (only when Milkdrop is enabled) to expand.
-(function bindMilkdropExpandClicks(){
-    const mdCanvas = document.getElementById('milkdropCanvas');
-    if (!mdCanvas) return;
-
-    mdCanvas.addEventListener('click', (e) => {
-        if (!milkdropEnabled) return;
-        // Left click only
-        if (typeof e.button === 'number' && e.button !== 0) return;
-
-        // When fullscreen, a click should NOT move the canvas (that caused black screen).
-        // Instead, just exit fullscreen back to the expanded window (Winamp-ish).
-        if (document.fullscreenElement === milkdropPanelEl) {
-            try {
-                __md_exitByClick = true;
-                document.exitFullscreen?.();
-            } catch(_) {}
-            e.preventDefault();
-            e.stopPropagation();
-            return;
-        }
-
-        // Normal mode: click toggles expanded/collapsed.
-        toggleMilkdropExpand();
-    }, { passive: false });
-    // Double-click -> toggle fullscreen (Winamp-ish)
-    mdCanvas.addEventListener('dblclick', (e) => {
-        if (!milkdropEnabled) return;
-        if (typeof e.button === 'number' && e.button !== 0) return;
-        e.preventDefault();
-        e.stopPropagation();
-        try {
-            if (!milkdropExpanded) milkdropExpand();
-            ensureMilkdropPanel();
-            if (document.fullscreenElement !== milkdropPanelEl) {
-                const p = milkdropPanelEl.requestFullscreen ? milkdropPanelEl.requestFullscreen() : null;
-                if (p && typeof p.catch === 'function') p.catch(() => {});
-            } else {
-                document.exitFullscreen?.();
-            }
-        } catch(_) {}
-    }, { passive: false });
-
-})();
 // ── Latvian stations loaded from provided M3U file (embedded for offline/file://) ──
 const LATVIAN_STATIONS = [
   {title:"──── LATVIJAS RADIO (M3U) ────",group:"separator",stream_128:"",stream_320:"",stream_hls:"",stream_64:"",prefix:"",id:""},
@@ -2589,7 +1563,7 @@ async function loadStationsFromWorker() {
 }
 
 
-window.__slowFx = window.__slowFx || { volume:100, pitch:0, speed:100, reverb:40, keepPitch:false, panelInit:false };
+window.__slowFx = window.__slowFx || { volume:100, pitch:0, speed:88, reverb:40, keepPitch:false, panelInit:false };
 
 function toggleSlowPanel(force){
     const p = document.getElementById('slowFxPanel');
@@ -2597,7 +1571,10 @@ function toggleSlowPanel(force){
     const shouldOpen = (typeof force === 'boolean') ? force : !p.classList.contains('open');
     p.classList.toggle('open', shouldOpen);
     p.setAttribute('aria-hidden', shouldOpen ? 'false' : 'true');
-    if (shouldOpen) { initSlowFxPanel(); setTimeout(positionSlowPanel, 0); }
+    if (shouldOpen) {
+      if(p.parentElement!==document.body)document.body.append(p);
+      initSlowFxPanel();positionSlowPanel();
+    }
     try{ document.body.classList.toggle('slowfx-open', shouldOpen); }catch(e){}
 }
 
@@ -2636,48 +1613,39 @@ function positionSlowPanel(){
 
 function refreshSlowFxLabels(){
     const v=document.getElementById('slowfxVolumeVal'); if(v) v.textContent = `${Math.round(__slowFx.volume)}%`;
-    const p=document.getElementById('slowfxPitchVal'); if(p){ const x=(Math.round(__slowFx.pitch*100)/100).toFixed(2); p.textContent = `${__slowFx.pitch>=0?'+':''}${x}`; }
+    const p=document.getElementById('slowfxPitchVal'); if(p){ const x=(Math.round(__slowFx.pitch*100)/100).toFixed(2); p.textContent = __slowFx.keepPitch?'Oriģinālais':`${__slowFx.pitch>=0?'+':''}${x}`; }
     const s=document.getElementById('slowfxSpeedVal'); if(s) s.textContent = `${Math.round(__slowFx.speed)}%`;
     const r=document.getElementById('slowfxReverbVal'); if(r) r.textContent = `${Math.round(__slowFx.reverb)}%`;
+    const pitchInput=document.getElementById('slowfxPitch');if(pitchInput)pitchInput.disabled=!!__slowFx.keepPitch;
+    const pitchHint=document.getElementById('slowfxPitchHint');if(pitchHint)pitchHint.textContent=__slowFx.keepPitch?'Tonis ir saglabāts. Izslēdz slēdzi augšā, lai to mainītu.':'Maina balss augstumu un arī ātrumu.';
+    for(const id of ['Volume','Pitch','Speed','Reverb']){const input=document.getElementById('slowfx'+id);if(input)input.style.setProperty('--slowfx-fill',((Number(input.value)-Number(input.min))/(Number(input.max)-Number(input.min))*100)+'%');}
 }
 
 function applySlowFxCustom(){
-    try{ if(!audio) return; }catch(e){ return; }
-    const eqMode = window.__eqMode || 'none';
-    // Every normal preset starts from the original-speed, unity-gain signal.
-    // Custom pitch/speed/boost belongs only to the explicit SLOW mode.
-    if (eqMode !== 'chilldeep') {
-      try{ if(masterGain) masterGain.gain.value = 1.0; }catch(e){}
-      try{
-        const rate = eqMode === 'chill' ? 0.92 : 1.0;
-        audio.preservesPitch = false;
-        audio.mozPreservesPitch = false;
-        audio.webkitPreservesPitch = false;
-        audio.playbackRate = rate;
-      }catch(e){}
-      return;
-    }
-    // volume: keep user slider (audio.volume) as canonical value; apply preset boost only via post-gain
-    const vol = Math.max(0, Math.min(200, +__slowFx.volume || 100));
-    try{ if(masterGain) masterGain.gain.value = vol > 100 ? Math.min(1.6, vol / 100) : 1.0; }catch(e){}
-
-    // playbackRate (HTML audio = speed and pitch linked)
-    // pitch value is semitone-ish offset (approx).
-    const pitchMul = Math.pow(2, ((+__slowFx.pitch || 0) / 12));
-    const speedMul = Math.max(0.4, Math.min(2.0, (+__slowFx.speed || 100) / 100));
-    const baseRate = eqMode === 'chilldeep' ? 0.88 : (eqMode === 'chill' ? 0.92 : 1.0);
+    if(!audio)return;
+    const mode=window.__eqMode||'none',slow=mode==='chilldeep';
+    const finite=(value,fallback)=>Number.isFinite(Number(value))?Number(value):fallback;
+    const keepPitch=slow&&!!__slowFx.keepPitch;
+    const pitch=keepPitch?1:Math.pow(2,Math.max(-6,Math.min(6,finite(__slowFx.pitch,0)))/12);
+    const speed=Math.max(.6,Math.min(1.3,finite(__slowFx.speed,88)/100));
+    const rate=slow?Math.max(.45,Math.min(1.8,speed*pitch)):mode==='chill'?.92:1;
+    // One final rate per action. Do not bounce through 1.0 and the base preset:
+    // each write can make a streaming decoder refill/reconfigure its buffer.
     try{
-      const keepPitch = !!__slowFx.keepPitch;
-      audio.preservesPitch = keepPitch; audio.mozPreservesPitch = keepPitch; audio.webkitPreservesPitch = keepPitch;
-      audio.playbackRate = Math.max(0.45, Math.min(1.8, baseRate * pitchMul * speedMul));
-    }catch(e){}
-
-    // reverb blend: scales wet + feedback around preset base
-    try{
-      const rv = Math.max(0, Math.min(100, +__slowFx.reverb || 0)) / 100;
-      if (wetGain) wetGain.gain.value = (eqMode === 'chilldeep' ? 0.75 : (eqMode === 'chill' ? 0.55 : 0.0)) * rv;
-      if (feedbackNode) feedbackNode.gain.value = (eqMode === 'chilldeep' ? 0.30 : (eqMode === 'chill' ? 0.22 : 0.0)) * rv;
-    }catch(e){}
+      for(const property of ['preservesPitch','mozPreservesPitch','webkitPreservesPitch'])if(audio[property]!==keepPitch)audio[property]=keepPitch;
+      if(Math.abs(audio.playbackRate-rate)>.000001)audio.playbackRate=rate;
+    }catch(_){}
+    const rv=Math.max(0,Math.min(100,finite(__slowFx.reverb,40)))/100;
+    const smooth=(param,target)=>{
+      if(!param)return;
+      const now=aCtx?.currentTime||0;
+      if(typeof param.cancelAndHoldAtTime==='function')param.cancelAndHoldAtTime(now);
+      else{const current=param.value;param.cancelScheduledValues(now);param.setValueAtTime(current,now);}
+      param.linearRampToValueAtTime(target,now+.08);
+    };
+    smooth(masterGain?.gain,slow?Math.max(.5,Math.min(1.6,finite(__slowFx.volume,100)/100)):1);
+    smooth(wetGain?.gain,slow?.75*rv:mode==='chill'?.55:0);
+    smooth(feedbackNode?.gain,slow?.30*rv:mode==='chill'?.22:0);
 }
 
 function initSlowFxPanel(){
@@ -2687,6 +1655,7 @@ function initSlowFxPanel(){
       refreshSlowFxLabels();
       return;
     }
+    document.getElementById('slowfxClose')?.addEventListener('click',()=>toggleSlowPanel(false));
     const ids = ['Volume','Pitch','Speed','Reverb'];
     ids.forEach((name)=>{
       const el = document.getElementById('slowfx'+name);
@@ -2704,7 +1673,7 @@ function initSlowFxPanel(){
       keepPitchEl.checked = !!__slowFx.keepPitch;
       keepPitchEl.addEventListener('change', ()=>{
         __slowFx.keepPitch = !!keepPitchEl.checked;
-        applySlowFxCustom();
+        refreshSlowFxLabels();applySlowFxCustom();
       });
     }
     document.addEventListener('pointerdown', (e)=>{
@@ -2904,23 +1873,28 @@ function play(url, name) {
     const active = () => generation === radioStreamGeneration && !window.__mkRadioSupersededByLacitis;
     radioStreamCleanup = () => { for (const dispose of cleanup) dispose(); };
     try { audio.pause(); } catch (_) {}
-    audio.src = '';
+    // An empty src URL emits a spurious error while the lazy HLS script loads.
+    if (typeof audio.removeAttribute === 'function') audio.removeAttribute('src');
+    else audio.src = '';
     audio.load();
     const failedPlayback = () => {
         if (!active()) return;
+        console.warn('[radio] Media playback failed '+JSON.stringify({code:audio.error?.code,message:audio.error?.message,rate:audio.playbackRate,readyState:audio.readyState,format:url.includes('.m3u8')?'hls':'direct',engine:hls?'hls.js':'native'}));
         const title = document.getElementById('npTitle');
         if (title) { title.textContent = 'Stacija pašlaik nav sasniedzama. Mēģini citu staciju.'; title.setAttribute?.('role', 'status'); }
         const button = document.getElementById('playBtn');
-        if (button) { button.innerHTML = '<i class="fas fa-play"></i>'; button.title = 'Mēģināt atskaņot vēlreiz'; }
+        if (button) { button.innerHTML = '<i class="fas fa-play"></i>'; button.title = 'Mēģināt atskaņot vēlreiz'; button.setAttribute('aria-label',button.title); }
     };
     audio.addEventListener?.('error', failedPlayback);
     cleanup.push(() => audio.removeEventListener?.('error', failedPlayback));
     const direct = () => { if (!active()) return; audio.src = url; requestRadioPlayback(); };
     const isHLS = url.includes('.m3u8');
-    // Native HLS needs no additional parser, worker or JavaScript buffer.
-    // ERR's audio-only manifest plays through hls.js, but Chrome's native
-    // demuxer rejects it despite advertising HLS support.
-    const needsHlsParser = url.startsWith('https://sb.err.ee/');
+    // Chrome advertises native HLS, but changing a live stream to .88 speed
+    // can fail with DEMUXER_ERROR_COULD_NOT_PARSE (observed on Record Remix).
+    // Use MSE/hls.js there from the start so SLOW never switches decoders.
+    // Safari keeps native HLS; non-HLS stations need no extra library.
+    const chromiumHls = typeof navigator !== 'undefined' && /(?:Chrome|Chromium|Edg|OPR)\//.test(navigator.userAgent || '');
+    const needsHlsParser = chromiumHls || url.startsWith('https://sb.err.ee/');
     if (!isHLS || (!needsHlsParser && audio.canPlayType('application/vnd.apple.mpegurl'))) { direct(); return; }
     const connectHls = () => {
         if (!active()) return;
@@ -2987,36 +1961,10 @@ function playNext() { stepStation(1); }
 function playPrev() { stepStation(-1); }
 
 function setChill(preset){
-    if(!aCtx) return;
-    const now = aCtx.currentTime;
-    let wetTarget = 0.0, fbTarget  = 0.0, dly       = 0.0, rate      = 1.0;
-    if (preset === 'chill') {
-        wetTarget = 0.55; fbTarget  = 0.22; dly       = 0.12; rate      = 0.92;
-    } else if (preset === 'chilldeep') {
-        wetTarget = 0.75; fbTarget  = 0.30; dly       = 0.16; rate      = 0.88;
-    }
-    const t = now + 0.12;
-    try{
-        if (wetGain){
-            wetGain.gain.cancelScheduledValues(now);
-            wetGain.gain.setValueAtTime(wetGain.gain.value, now);
-            wetGain.gain.linearRampToValueAtTime(wetTarget, t);
-        }
-        if (feedbackNode){
-            feedbackNode.gain.cancelScheduledValues(now);
-            feedbackNode.gain.setValueAtTime(feedbackNode.gain.value, now);
-            feedbackNode.gain.linearRampToValueAtTime(fbTarget, t);
-        }
-        if (delayNode){
-            delayNode.delayTime.setValueAtTime(dly, now);
-        }
-    }catch(e){}
-    try{
-        audio.preservesPitch = false;
-        audio.mozPreservesPitch = false;
-        audio.webkitPreservesPitch = false;
-        audio.playbackRate = rate;
-    }catch(e){}
+    if(!aCtx||!delayNode)return;
+    // Speed and wet/feedback gains are committed once by applySlowFxCustom.
+    const delay=preset==='chilldeep'?.16:preset==='chill'?.12:0;
+    if(delayNode.delayTime.value!==delay)delayNode.delayTime.setValueAtTime(delay,aCtx.currentTime);
 }
 
 function toggleMorePresets(){
@@ -3041,6 +1989,8 @@ function toggleMorePresets(){
 }
 
 function setEQ(mode) {
+    // Set the requested mode before initialization or custom rate/gain reads it.
+    window.__eqMode = mode;
     if(!lowNode){
         try{ setupAudio(); }catch(e){}
         if(!lowNode){
@@ -3048,12 +1998,13 @@ function setEQ(mode) {
             return;
         }
     }
+    if(!audio.paused&&aCtx?.state==='suspended')void aCtx.resume().catch(()=>{});
     const moreModes = new Set(['bassplus','studio','depth','chilldeep','lofi']);
 
     lowNode.type = "lowshelf"; lowNode.frequency.value = 120; lowNode.gain.value = 0;
     highNode.type = "highshelf"; highNode.frequency.value = 4000; highNode.gain.value = 0;
 
-    setChill('off');
+    setChill(mode==='chilldeep'?'chilldeep':mode==='chill'?'chill':'off');
 
     try{
         if (vinylGain) vinylGain.gain.value = 0.0;
@@ -3092,7 +2043,6 @@ function setEQ(mode) {
         lowNode.gain.value = 3.5;
         highNode.gain.value = -4;
         highNode.frequency.value = 3500;
-        setChill('chill');
     } else if (mode === 'bassplus') {
         lowNode.frequency.value = 95;
         lowNode.gain.value = 12;
@@ -3136,7 +2086,6 @@ function setEQ(mode) {
         lowNode.gain.value = 4.5;
         highNode.gain.value = -5.5;
         highNode.frequency.value = 3300;
-        setChill('chilldeep');
         document.body.classList.add('slowed-active');
     }
 
@@ -3145,7 +2094,7 @@ function setEQ(mode) {
     }
     try{ applySlowFxCustom(); }catch(e){}
 
-    // Update spectrum color: purple for slowed, green for everything else
+    // Keep the selected visualizer informed of the active speed effect.
     window.__vizSlowed = (mode === 'chilldeep');
 
     document.querySelectorAll('.eq-btn, .eq-seg-btn, .epb').forEach(b => b.classList.remove('active'));
@@ -3169,7 +2118,6 @@ function setEQ(mode) {
 
     const moreBtn = document.getElementById('eq-more');
     const panel = document.getElementById('morePanel');
-    window.__eqMode = mode;
     if (moreBtn){
         if (moreModes.has(mode)) moreBtn.classList.add('active');
         else moreBtn.classList.remove('active');
@@ -3452,11 +2400,15 @@ document.getElementById('playBtn').onclick = () => {
             if (!window.__mkRadioSupersededByLacitis && audio.paused && currentIndex === startIdx) selectStation(startIdx);
         }, 800);
     } else {
-        if (audio.paused) { 
+        if (audio.error && radioStreamURL) {
+            play(radioStreamURL, document.getElementById('curStation').textContent);
+        } else if (audio.paused) {
             requestRadioPlayback();
         } else { 
             audio.pause(); 
-            document.getElementById('playBtn').innerHTML = '<i class="fas fa-play"></i>'; 
+            const button=document.getElementById('playBtn');
+            button.innerHTML = '<i class="fas fa-play"></i>';
+            button.title='Atskaņot';button.setAttribute('aria-label','Atskaņot');
         }
     }
 };
@@ -3625,15 +2577,12 @@ function focusRadio(){
     const top  = clamp(e.clientY - oy, 8, window.innerHeight - 44);
     win.style.left = left + "px";
     win.style.top  = top + "px";
-    // If Milkdrop is open, keep it attached above the radio while dragging
-    scheduleMilkdropDockUpdate();
   });
   window.addEventListener('mouseup', ()=>{
     if(!dragging) return;
     dragging = false;
     document.body.style.userSelect = "";
     save();
-    scheduleMilkdropDockUpdate();
   });
 
   // Resize persistence (CSS resize)
@@ -3641,11 +2590,10 @@ function focusRadio(){
   try{
     ro = new ResizeObserver(()=>{
       save();
-      scheduleMilkdropDockUpdate();
     });
     ro.observe(win);
   }catch(e){
-    window.addEventListener('mouseup', ()=>{ save(); scheduleMilkdropDockUpdate(); });
+    window.addEventListener('mouseup', save);
   }
 
   // Controls
@@ -3698,7 +2646,6 @@ function focusRadio(){
   window.addEventListener('mousemove', onMove, {passive:true});
 })();
 
-window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCanvas(); }, {passive:true});
 
 
 // --- THEME SYSTEM (WindowGlass presets) ---
@@ -3951,10 +2898,11 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
       }
       if (hue < 0) hue += 360;
       dGif.style.filter = `grayscale(1) brightness(.8) sepia(1) saturate(3) hue-rotate(${Math.round(hue - 39)}deg)`;
+      window.rgPioneer?.sync();
     }
     [
       document.getElementById('radioWindow'),
-      document.getElementById('milkdropPanel'),
+      document.getElementById('pioneerPicker'),
       document.getElementById('ceqPanel')
     ].filter(Boolean).forEach(target => {
       target.style.setProperty('--radio-accent', color);
@@ -4062,7 +3010,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
   }
 
   function updateAlbumAccent(detail = {}){
-    if (getSaved().accentMode !== 'album') return;
+    if (getSaved().accentMode !== 'album' && appearance.layout !== 'pioneer') return;
     const visibleCover = document.getElementById('npCover');
     const coverUrl = String(detail.coverUrl || visibleCover?.currentSrc || visibleCover?.src || '');
     const seed = `${detail.artist || ''}|${detail.title || ''}|${coverUrl}`;
@@ -4070,7 +3018,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     lastAlbumAccentKey = seed;
 
     const fallback = () => {
-      if (getSaved().accentMode === 'album' && seed === lastAlbumAccentKey) applyAlbumColor(safeColor(appearance.cardAccent,fallbackAlbumAccent(seed)));
+      if ((getSaved().accentMode === 'album' || appearance.layout === 'pioneer') && seed === lastAlbumAccentKey) applyAlbumColor(safeColor(appearance.cardAccent,fallbackAlbumAccent(seed)));
     };
     if (!coverUrl) {
       fallback();
@@ -4081,7 +3029,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     probe.crossOrigin = 'anonymous';
     probe.decoding = 'async';
     probe.onload = () => {
-      if (getSaved().accentMode !== 'album' || seed !== lastAlbumAccentKey) return;
+      if ((getSaved().accentMode !== 'album' && appearance.layout !== 'pioneer') || seed !== lastAlbumAccentKey) return;
       try {
         const canvas = document.createElement('canvas');
         canvas.width = 8;
@@ -4118,7 +3066,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
       setSaved({ accentMode: nextMode });
     }
     setAccentModeActive(nextMode);
-    if (nextMode === 'album') {
+    if (nextMode === 'album' || appearance.layout === 'pioneer') {
       lastAlbumAccentKey = '';
       updateAlbumAccent({
         artist: document.getElementById('npArtist')?.textContent || '',
@@ -4213,6 +3161,8 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
   }
 
   function openPanel(){
+    spectrumMoveEnabled=false;spectrumDrag=null;
+    lookVizFamily=null;lookPioneerBefore=localStorage.getItem('mkRadioPioneer')||'original';
     lookBefore=lookSnapshot();
     imageCropDraft={...appearance.imageCrops};
     buildLookControls();
@@ -4224,8 +3174,8 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     requestAnimationFrame(()=>{positionPanel();syncLayoutPreview();paintImagePosition();});
   }
   function closePanel(){
-    imageCropDraft=null;imageDrag=null;
-    if(lookBefore){const previous=lookBefore;lookBefore=null;applyLookSettings(previous);}
+    imageCropDraft=null;imageDrag=null;spectrumMoveEnabled=false;spectrumDrag=null;
+    if(lookBefore){const previous=lookBefore;lookBefore=null;if(window.rgPioneer&&localStorage.getItem('mkRadioPioneer')!==lookPioneerBefore)window.rgPioneer.select(lookPioneerBefore);lookVizFamily=null;applyLookSettings(previous);}
     panel.classList.remove('open');
     panel.setAttribute('aria-hidden','true');
   }
@@ -4268,14 +3218,14 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
   }
   function paintImagePosition(){
     const rw=document.getElementById('radioWindow'),preview=document.getElementById('radioLookPreview'),tools=document.getElementById('radioImageTools');
-    const geometry=currentImageCrop(),enabled=!!imageSource;
+    const geometry=currentImageCrop(),enabled=appearance.layout!=='pioneer'&&!!imageSource;
     if(tools)tools.hidden=!enabled;
-    if(preview){preview.classList.toggle('is-positionable',enabled&&!!geometry);preview.tabIndex=enabled&&geometry?0:-1;}
+    if(preview){preview.classList.toggle('is-positionable',enabled&&!!geometry);preview.tabIndex=spectrumMoveEnabled||(enabled&&geometry)?0:-1;}
     const slider=document.getElementById('radioImageZoom'),reset=document.getElementById('radioImageReset'),hint=document.getElementById('radioImageHint');
     if(slider){slider.disabled=!geometry;slider.value=Math.round((geometry?.zoom||1)*100);document.getElementById('radioImageZoomValue').textContent=slider.value+'%';}
     if(reset)reset.disabled=!geometry;
     if(hint)hint.textContent=geometry?(window.__mkUnifiedMedia?.getSession()?'Velc attēlu priekšskatījumā. Saglabājas tavā profilā visās ierīcēs.':'Velc attēlu priekšskatījumā. Ielogojies, lai saglabātu visās ierīcēs.'):'Ielādē attēlu…';
-    if(!geometry||!rw)return;
+    if(!enabled||!geometry||!rw)return;
     const r=rw.getBoundingClientRect();
     for(const el of [rw,preview]){
       if(!el)continue;
@@ -4287,7 +3237,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     }
   }
   function prepareImagePosition(background){
-    const url=background.match(/^url\("([^"]+)"\)$/)?.[1]||'';
+    const url=appearance.layout==='pioneer'?'':background.match(/^url\("([^"]+)"\)$/)?.[1]||'';
     imageSource=url;imageMetrics=imageSizes.get(url)||null;
     if(url&&!imageMetrics&&imageLoading!==url&&typeof Image==='function'){
       imageLoading=url;const img=new Image();img.decoding='async';
@@ -4301,22 +3251,69 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     if(!imageCropDraft||!imageSource)return;
     imageCropDraft[imageCropKey()]=cleanImageCrop(value);paintImagePosition();
   }
+  function cleanVizPositions(value){
+    const result={};
+    for(const layout of ['classic','clean','pioneer']){
+      const point=value?.[layout];if(point&&Number.isFinite(point.x)&&Number.isFinite(point.y))result[layout]={x:clamp(point.x,-1,1),y:clamp(point.y,-1,1)};
+    }
+    return result;
+  }
+  function placeSpectrum(){
+    const rw=document.getElementById('radioWindow'),monitor=rw?.querySelector?.('.monitor-frame');
+    if(!monitor||!rw.getBoundingClientRect)return;
+    monitor.style.removeProperty('translate');
+    const frame=rw.getBoundingClientRect(),box=monitor.getBoundingClientRect();if(!frame.width||!frame.height)return;
+    const boundary=(appearance.layout==='pioneer'?rw.querySelector('.pioneer-display'):rw).getBoundingClientRect();
+    const point=appearance.vizPositions?.[appearance.layout]||{x:0,y:0};
+    const x=clamp(point.x*frame.width,Math.min(0,boundary.left+6-box.left),Math.max(0,boundary.right-6-box.right));
+    const y=clamp(point.y*frame.height,Math.min(0,boundary.top+6-box.top),Math.max(0,boundary.bottom-6-box.bottom));
+    monitor.style.setProperty('translate',`${x}px ${y}px`,'important');
+    return {x:x/frame.width,y:y/frame.height};
+  }
+  function changeSpectrumPosition(point){
+    appearance.vizPositions={...appearance.vizPositions,[appearance.layout]:{x:clamp(point.x,-1,1),y:clamp(point.y,-1,1)}};
+    const actual=placeSpectrum();if(actual)appearance.vizPositions[appearance.layout]=actual;
+    syncLayoutPreview();
+  }
+  function syncSpectrumMoveControls(){
+    const preview=document.getElementById('radioLookPreview'),toggle=document.getElementById('radioMoveSpectrum');
+    if(!preview||!toggle)return;
+    toggle.setAttribute('aria-pressed',String(spectrumMoveEnabled));
+    preview.classList.toggle('is-spectrum-positionable',spectrumMoveEnabled);
+    const hint=document.getElementById('radioSpectrumMoveHint');
+    if(hint)hint.textContent=spectrumMoveEnabled?'Velc spektru priekšskatījumā. Fons šajā režīmā paliek savā vietā.':'Ieslēdz, lai priekšskatījumā pārvietotu spektru.';
+    preview.setAttribute('aria-label',spectrumMoveEnabled?'Spektra novietojums. Velc vai lieto bulttaustiņus.':appearance.layout==='pioneer'?'Pioneer atskaņotāja priekšskatījums.':'Fona attēla novietojums. Velc attēlu vai lieto bulttaustiņus.');
+    if(spectrumMoveEnabled)preview.tabIndex=0;
+  }
   function wireImagePosition(){
     const preview=document.getElementById('radioLookPreview'),slider=document.getElementById('radioImageZoom');
     preview.addEventListener('pointerdown',event=>{
+      if(spectrumMoveEnabled){
+        if(event.button!==0||vizStyle===MK_NO_VIZ)return;
+        const rect=preview.getBoundingClientRect(),point=placeSpectrum()||{x:0,y:0};
+        spectrumDrag={id:event.pointerId,x:event.clientX,y:event.clientY,width:rect.width,height:rect.height,point};
+        preview.setPointerCapture(event.pointerId);event.preventDefault();preview.focus({preventScroll:true});return;
+      }
       const crop=currentImageCrop();if(event.button!==0||!crop||!imageSource)return;
       const rect=preview.getBoundingClientRect();
       imageDrag={id:event.pointerId,key:imageCropKey(),x:event.clientX,y:event.clientY,width:rect.width,height:rect.height,crop};
       preview.setPointerCapture(event.pointerId);preview.classList.add('is-dragging');event.preventDefault();preview.focus({preventScroll:true});
     });
     preview.addEventListener('pointermove',event=>{
+      if(spectrumMoveEnabled){
+        const drag=spectrumDrag;if(drag?.id===event.pointerId)changeSpectrumPosition({x:drag.point.x+(event.clientX-drag.x)/drag.width,y:drag.point.y+(event.clientY-drag.y)/drag.height});return;
+      }
       if(!imageDrag||imageDrag.id!==event.pointerId||imageDrag.key!==imageCropKey())return;
       const drag=imageDrag;
       changeImageCrop({x:drag.crop.x+(event.clientX-drag.x)/drag.width,y:drag.crop.y+(event.clientY-drag.y)/drag.height,zoom:drag.crop.zoom});
     });
-    const end=()=>{imageDrag=null;preview.classList.remove('is-dragging');};
+    const end=()=>{imageDrag=null;spectrumDrag=null;preview.classList.remove('is-dragging');};
     preview.addEventListener('pointerup',end);preview.addEventListener('pointercancel',end);preview.addEventListener('lostpointercapture',end);
     preview.addEventListener('keydown',event=>{
+      if(spectrumMoveEnabled){
+        const step=event.shiftKey?.05:.01,delta={ArrowLeft:[-step,0],ArrowRight:[step,0],ArrowUp:[0,-step],ArrowDown:[0,step]}[event.key];
+        if(delta||event.key==='Home'){event.preventDefault();const point=placeSpectrum()||{x:0,y:0};changeSpectrumPosition(event.key==='Home'?{x:0,y:0}:{x:point.x+delta[0],y:point.y+delta[1]});}return;
+      }
       const crop=currentImageCrop();if(!crop||!imageSource)return;
       const step=event.shiftKey?.05:.01,delta={ArrowLeft:[-step,0],ArrowRight:[step,0],ArrowUp:[0,-step],ArrowDown:[0,step]}[event.key];
       if(!delta&&event.key!=='Home')return;event.preventDefault();
@@ -4327,9 +3324,12 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
   }
 
   const LOOK_KEY='rg_radio_appearance_v1';
-  const LOOK_DEFAULTS={darkness:64,tint:28,glass:24,glow:45,layout:'classic',vizFrame:'auto',position:'center',text:'#f3f7f5',background:'',cardName:'',imageCrops:{}};
+  const LOOK_DEFAULTS={darkness:64,tint:28,glass:24,glow:45,layout:'classic',metalColor:'#9ca4aa',metalLight:50,metalShine:65,vizFrame:'auto',position:'center',text:'#f3f7f5',background:'',cardName:'',imageCrops:{},vizPositions:{}};
   let appearance;try{appearance={...LOOK_DEFAULTS,...JSON.parse(localStorage.getItem(LOOK_KEY)||'{}')};}catch(_){appearance={...LOOK_DEFAULTS};}
   appearance.imageCrops=cleanImageCrops(appearance.imageCrops);
+  appearance.vizPositions=cleanVizPositions(appearance.vizPositions);
+  let spectrumMoveEnabled=false,spectrumDrag=null;
+  let lookVizFamily=null,lookPioneerBefore='original';
   let lookBefore=null,albumColor='#53c9e8',applyingProfile=false;
   const safeColor=(value,fallback='#f3f7f5')=>/^#[\da-f]{6}$/i.test(value||'')?value:fallback;
   function safeBackground(value){
@@ -4340,34 +3340,47 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
   }
   function paintAppearance(){
     const rw=document.getElementById('radioWindow');if(!rw)return;
-    rw.dataset.radioLayout=appearance.layout==='clean'?'clean':'classic';
+    rw.dataset.radioLayout=['classic','clean','pioneer'].includes(appearance.layout)?appearance.layout:'classic';
     rw.dataset.vizFrame=['on','off'].includes(appearance.vizFrame)?appearance.vizFrame:'auto';
     const lookButton=document.getElementById('themeBtn');
-    if(lookButton){const home=rw.querySelector(rw.dataset.radioLayout==='clean'?'.control-panel':'.tech-panel .branding');if(home&&lookButton.parentElement!==home)home.prepend(lookButton);}
+    if(lookButton){const home=rw.querySelector(rw.dataset.radioLayout==='pioneer'?'.bottom-console':rw.dataset.radioLayout==='clean'?'.control-panel':'.tech-panel .branding');if(home&&lookButton.parentElement!==home)home.prepend(lookButton);}
     const saved=getSaved(),theme=findTheme(saved.name);
     const background=saved.name==='Mana kartīte'?safeBackground(appearance.background):(theme.image?`url("${new URL(theme.image,document.baseURI).href}")`:theme.background||'');
-    const color=saved.accentMode==='album'?albumColor:saved.accentMode==='card'?safeColor(appearance.cardAccent,'#53c9e8'):saved.accentMode==='custom'?saved.accent:(FIXED_ACCENTS[saved.accentMode]||theme.chip);
+    const color=(appearance.layout==='pioneer'||saved.accentMode==='album')?albumColor:saved.accentMode==='card'?safeColor(appearance.cardAccent,'#53c9e8'):saved.accentMode==='custom'?saved.accent:(FIXED_ACCENTS[saved.accentMode]||theme.chip);
     const rgb=parseColorToRGBStr(color),dark=clamp(Number(appearance.darkness)/100,.30,.92),tint=clamp(Number(appearance.tint)/100,0,.65),glass=clamp(Number(appearance.glass)/100,0,1);
     rw.style.setProperty('background-image',`linear-gradient(to top,rgba(6,13,19,.8),rgba(6,13,19,0) 24px),linear-gradient(110deg,rgba(${rgb},${tint}),rgba(4,9,13,${dark}) 62%),${background||'linear-gradient(#0a1419,#0a1419)'}`,'important');
+    if(appearance.layout==='pioneer'){
+      rw.style.removeProperty('background');rw.style.removeProperty('background-image');
+      if(__radioVizAccentRGB.join(',')!==rgb)applyAccent(color);
+    }
+    window.rgPioneerLayout?.apply(rw,appearance);
     rw.style.setProperty('background-position',['left','center','right','top','bottom'].includes(appearance.position)?appearance.position:'center','important');
     rw.style.setProperty('background-size','cover','important');
-    rw.style.setProperty('border-color','transparent','important');
+    if(appearance.layout==='pioneer'){['border-color','border-top-color','box-shadow'].forEach(p=>rw.style.removeProperty(p));}
+    else{rw.style.setProperty('border-color','transparent','important');
     rw.style.setProperty('border-top-color',`rgba(225,239,246,${glass*.42})`,'important');
     rw.style.setProperty('box-shadow',`inset 0 ${glass*2}px ${glass*12}px rgba(224,243,255,${glass*.22}),0 8px 24px rgba(0,0,0,.16)`,'important');
+    }
     // A restrained text fallback keeps names legible on the dark overlay.
     const text=safeColor(appearance.text),v=parseColorToRGBStr(text).split(',').map(Number);
     rw.style.setProperty('--radio-personal-text',(.2126*v[0]+.7152*v[1]+.0722*v[2])<150?'#f3f7f5':text);
     const strength=clamp(Number(appearance.glow)/100,0,1);document.documentElement.style.setProperty('--radio-glow-strength',String(strength));
     rw.style.setProperty('--radio-glow-strength',String(strength));
-    const preview=document.getElementById('radioLookPreview');if(preview){preview.style.backgroundImage=rw.style.backgroundImage;preview.style.setProperty('background-position',rw.style.backgroundPosition,'important');preview.style.setProperty('background-size','cover','important');preview.style.color=rw.style.getPropertyValue('--radio-personal-text');preview.style.setProperty('--radio-preview-accent',color);preview.style.boxShadow=rw.style.getPropertyValue('box-shadow');renderLookPreviews();syncLayoutPreview();}
-    prepareImagePosition(background);
+    const preview=document.getElementById('radioLookPreview');if(preview){preview.style.backgroundImage=appearance.layout==='pioneer'?getComputedStyle(rw).backgroundImage:rw.style.backgroundImage;preview.style.setProperty('background-position',rw.style.backgroundPosition,'important');preview.style.setProperty('background-size','cover','important');preview.style.color=rw.style.getPropertyValue('--radio-personal-text');preview.style.setProperty('--radio-preview-accent',color);preview.style.boxShadow=rw.style.getPropertyValue('box-shadow');renderLookPreviews();syncLayoutPreview();}
+    prepareImagePosition(background);placeSpectrum();syncSpectrumMoveControls();
+    const metalControls=document.getElementById('pioneerMetalControls');
+    if(metalControls){metalControls.hidden=appearance.layout!=='pioneer';metalControls.querySelectorAll('[data-metal-color]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.metalColor===appearance.metalColor)));for(const input of metalControls.querySelectorAll('[data-look]'))input.value=appearance[input.dataset.look]??LOOK_DEFAULTS[input.dataset.look];}
     const themePanel=document.getElementById('themePanel');
+    if(themePanel)themePanel.dataset.radioLayout=rw.dataset.radioLayout;
     const framed=appearance.vizFrame==='on'||(appearance.vizFrame!=='off'&&!isModernViz(vizStyle));
     themePanel?.querySelectorAll('[data-viz-frame-choice]').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.vizFrameChoice==='on')===framed)));
     themePanel?.querySelectorAll('[data-radio-layout-choice]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.radioLayoutChoice===rw.dataset.radioLayout)));
-    themePanel?.querySelectorAll('[data-viz-choice]').forEach(b=>{const idx=Number(b.dataset.vizChoice);b.setAttribute('aria-pressed',String(idx===vizStyle||(vizStyle===MK_FLOW_VIZ&&idx===24)));b.hidden=idx!==MK_NO_VIZ&&isModernViz(idx)!==(vizFamily==='new');});
-    themePanel?.querySelectorAll('[data-viz-family]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.vizFamily===vizFamily)));
-    const familyNote=themePanel?.querySelector('.radio-viz-family-note');if(familyNote)familyNote.textContent=vizFamily==='new'?'Gludas formas. Ātra reakcija uz mūziku.':'Iepriekšējie efekti, delfīni un Buddy.';
+    const family=lookVizFamily||(vizStyle===5?'pioneer':vizFamily);
+    themePanel?.querySelectorAll('[data-viz-choice]').forEach(b=>{const idx=Number(b.dataset.vizChoice);b.setAttribute('aria-pressed',String(idx===vizStyle||(vizStyle===MK_FLOW_VIZ&&idx===24)));b.hidden=idx!==MK_NO_VIZ&&(family==='pioneer'||isModernViz(idx)!==(family==='new'));});
+    themePanel?.querySelectorAll('[data-viz-family]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.vizFamily===family)));
+    const gallery=themePanel?.querySelector('[data-pioneer-gallery]');
+    if(gallery){gallery.hidden=family!=='pioneer';if(!gallery.hidden)void ensurePioneerPlayer().then(player=>player.mountGallery(gallery,()=>{lookVizFamily='pioneer';paintAppearance();})).catch(()=>{gallery.textContent='Neizdevās ielādēt Pioneer. Atver cilni vēlreiz.';});}
+    const familyNote=themePanel?.querySelector('.radio-viz-choices .radio-viz-family-note');if(familyNote)familyNote.textContent=family==='pioneer'?'Pioneer animācijas un audio indikatori.':family==='new'?'Gludas formas. Ātra reakcija uz mūziku.':'Iepriekšējie efekti, delfīni un Buddy.';
   }
   function lookSnapshot(){const s=getSaved();return {...appearance,theme:s.name,accent:s.accent,accentMode:s.accentMode,eq:window.__eqMode||'none',viz:String(vizStyle)};}
   const GUEST_LOOK_KEY='rg_radio_guest_look_v1';
@@ -4386,9 +3399,11 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
   }
   function applyLookSettings(data={}){
     applyingProfile=true;
-    appearance={...LOOK_DEFAULTS,...data,background:safeBackground(data.background),imageCrops:cleanImageCrops(data.imageCrops)};
-    appearance.layout=data.layout==='clean'?'clean':'classic';
+    appearance={...LOOK_DEFAULTS,...data,background:safeBackground(data.background),imageCrops:cleanImageCrops(data.imageCrops),vizPositions:cleanVizPositions(data.vizPositions)};
+    appearance.layout=['classic','clean','pioneer'].includes(data.layout)?data.layout:'classic';
     appearance.vizFrame=['on','off'].includes(data.vizFrame)?data.vizFrame:'auto';
+    appearance.metalColor=safeColor(data.metalColor,LOOK_DEFAULTS.metalColor);
+    for(const key of ['metalLight','metalShine'])appearance[key]=clamp(Number.isFinite(Number(data[key]))?Number(data[key]):LOOK_DEFAULTS[key],0,100);
     for(const key of ['darkness','tint','glass','glow'])appearance[key]=clamp(Number(appearance[key])||0,0,100);
     localStorage.setItem(LOOK_KEY,JSON.stringify(appearance));
     setSaved({name:data.theme||'Dziļais okeāns',accent:safeColor(data.accent,'#1ed760'),accentMode:data.accentMode||'album',enabled:true});
@@ -4415,8 +3430,11 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     const rw=document.getElementById('radioWindow'),preview=document.getElementById('radioLookPreview');
     if(!rw||!preview||!panel.classList.contains('open'))return;
     const rect=rw.getBoundingClientRect();if(!rect.width||!rect.height)return;
+    placeSpectrum();syncSpectrumMoveControls();
     preview.style.aspectRatio=`${rect.width} / ${rect.height}`;
-    preview.dataset.layout=appearance.layout==='clean'?'clean':'classic';
+    preview.dataset.layout=['classic','clean','pioneer'].includes(appearance.layout)?appearance.layout:'classic';
+    if(appearance.layout==='pioneer'){window.rgPioneerLayout?.renderPreview(preview);return;}
+    preview.querySelector('.pioneer-real-preview')?.remove();
     const station=preview.querySelector('.radio-preview-station');
     if(station)station.textContent=document.getElementById('curStation')?.textContent||'Radio';
     // Match the displayed monitor rectangle, including the chosen layout.
@@ -4427,21 +3445,23 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     if(document.getElementById('radioLookControls'))return;
     const box=document.createElement('section');box.id='radioLookControls';box.innerHTML=`
       <button type="button" id="radioUseCard">Kā mana kartīte</button><p id="radioLookNote" role="status">Fons paliek tavs. Albuma režīmā krāsa mainās līdzi mūzikai.</p>
-      <fieldset class="radio-layout-choices"><legend>Izkārtojums</legend><div class="radio-viz-families"><button type="button" data-radio-layout-choice="classic" aria-pressed="true">Pašreizējais</button><button type="button" data-radio-layout-choice="clean" aria-pressed="false">Jauns izkārtojums</button></div><p class="radio-viz-family-note">Jaunajā izkārtojumā pogas ir pa kreisi un spektrs pa labi.</p></fieldset>
+      <fieldset class="radio-layout-choices"><legend>Izkārtojums</legend><div class="radio-viz-families"><button type="button" data-radio-layout-choice="classic" aria-pressed="true">Pašreizējais</button><button type="button" data-radio-layout-choice="clean" aria-pressed="false">Jauns izkārtojums</button><button type="button" data-radio-layout-choice="pioneer" aria-pressed="false">Pioneer</button></div><p class="radio-viz-family-note">Jaunajā izkārtojumā pogas ir pa kreisi un spektrs pa labi.</p></fieldset>
       <div id="radioLookPreview" role="group" aria-label="Fona attēla novietojums. Velc attēlu vai lieto bulttaustiņus." aria-describedby="radioImageHint"><div class="radio-preview-copy"><strong class="radio-preview-station">Radio</strong><span>Tava mūzika</span></div><div class="radio-preview-toolbar" aria-hidden="true">◉ &nbsp; RADIO &nbsp; MŪZIKA</div><div class="radio-preview-buttons" aria-hidden="true">▣ &nbsp; ♫ &nbsp; ◀ &nbsp; <b>▶</b> &nbsp; ▶ &nbsp; ━━</div><div class="radio-viz-sample"><img id="radioLookVizImage" width="600" height="80" decoding="async" alt="Izvēlētās vizualizācijas momentuzņēmums"></div></div>
+      <div class="radio-spectrum-position"><button type="button" id="radioMoveSpectrum" aria-pressed="false">Pārvietot spektru</button><button type="button" id="radioResetSpectrum">Atiestatīt pozīciju</button><p id="radioSpectrumMoveHint">Ieslēdz, lai priekšskatījumā pārvietotu spektru.</p></div>
+      <fieldset id="pioneerMetalControls" hidden><legend>Pioneer korpuss</legend><p>Metāla tonis korpusam un pogām. Displeja izgaismojums seko albumam.</p><div class="pioneer-metal-presets">${(window.rgPioneerLayout?.finishes||[]).map(f=>`<button type="button" data-metal-color="${f.color}" style="--metal-swatch:${f.color}" aria-pressed="false"><i aria-hidden="true"></i><span>${f.name}</span></button>`).join('')}</div><div class="pioneer-metal-custom"><label>Sava krāsa<input type="color" data-look="metalColor" aria-label="Korpusa krāsa"></label><label>Gaišums<input type="range" min="0" max="100" data-look="metalLight"></label><label>Spīdums<input type="range" min="0" max="100" data-look="metalShine"></label><button type="button" id="pioneerMetalReset">Atiestatīt metālu</button></div></fieldset>
       <div id="radioImageTools" class="radio-image-tools" hidden><p id="radioImageHint">Velc attēlu priekšskatījumā.</p><div><label for="radioImageZoom">Attēla izmērs</label><input id="radioImageZoom" type="range" min="60" max="200" step="1" value="100"><output id="radioImageZoomValue" for="radioImageZoom">100%</output><button type="button" id="radioImageReset">Atiestatīt</button></div></div>
-      <fieldset class="radio-viz-choices"><legend>Vizualizācija</legend><div class="radio-viz-families"><button type="button" data-viz-family="new">Jaunais skats</button><button type="button" data-viz-family="classic">Classic</button></div><p class="radio-viz-family-note"></p><div class="radio-viz-grid">${[...VIZ_MODES.filter(m=>m.idx!==MK_NO_VIZ),getVizMode(MK_NO_VIZ)].map(m=>`<button type="button" data-viz-choice="${m.idx}" aria-pressed="false">${vizPreview(m.idx)}<span>${m.label}</span></button>`).join('')}</div></fieldset>
+      <fieldset class="radio-viz-choices"><legend>Vizualizācija</legend><div class="radio-viz-families"><button type="button" data-viz-family="new">Jaunais skats</button><button type="button" data-viz-family="classic">Classic</button><button type="button" data-viz-family="pioneer">Pioneer</button></div><p class="radio-viz-family-note"></p><div data-pioneer-gallery hidden></div><div class="radio-viz-grid">${[...VIZ_MODES.filter(m=>m.idx!==MK_NO_VIZ),getVizMode(MK_NO_VIZ)].map(m=>`<button type="button" data-viz-choice="${m.idx}" aria-pressed="false">${vizPreview(m.idx)}<span>${m.label}</span></button>`).join('')}</div></fieldset>
       <fieldset class="radio-layout-choices"><legend>Spektra logs</legend><div class="radio-viz-families"><button type="button" data-viz-frame-choice="off">Bez loga</button><button type="button" data-viz-frame-choice="on">Ar logu</button></div></fieldset>
       <div class="radio-clean-actions"><button type="button" id="radioEffectsOff">Izslēgt visus efektus</button><button type="button" id="radioBackgroundOff">Bez fona attēla</button></div>
       <details><summary>Pielāgot vairāk</summary>
-       <label>Fona tumšums<input type="range" min="30" max="92" data-look="darkness"></label>
-       <label>Krāsas pārklājums<input type="range" min="0" max="65" data-look="tint"></label>
+       <label data-radio-background-only>Fona tumšums<input type="range" min="30" max="92" data-look="darkness"></label>
+       <label data-radio-background-only>Krāsas pārklājums<input type="range" min="0" max="65" data-look="tint"></label>
        <label>Stikla maliņa<input type="range" min="0" max="100" data-look="glass"></label>
        <label>Apkārtējā gaisma<input type="range" min="0" max="100" data-look="glow"></label>
        <label>Burtu krāsa<input type="color" data-look="text"></label>
       </details><div class="radio-look-actions"><button type="button" id="radioLookReset">Atiestatīt izskatu</button><button type="button" id="radioLookCancel">Atcelt</button><button type="button" id="radioLookApply">Lietot</button></div>`;
     panel.append(box);
-    if(typeof ResizeObserver==='function')new ResizeObserver(()=>{syncLayoutPreview();paintImagePosition();}).observe(document.getElementById('radioWindow'));
+    if(typeof ResizeObserver==='function')new ResizeObserver(()=>{placeSpectrum();syncLayoutPreview();paintImagePosition();}).observe(document.getElementById('radioWindow'));
     const footer=box.querySelector('.radio-look-actions');
     const scroll=document.createElement('div');scroll.className='radio-theme-scroll';
     const filters=document.createElement('div');filters.className='radio-theme-filters';filters.setAttribute('aria-label','Fonu veids');
@@ -4452,7 +3472,7 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
     box.prepend(displayOptions);
     box.querySelector('#radioImageTools').after(filters,listEl,panel.querySelector('.theme-controls'));
     wireImagePosition();
-    if(typeof ResizeObserver==='function')new ResizeObserver(()=>paintImagePosition()).observe(box.querySelector('#radioLookPreview'));
+    if(typeof ResizeObserver==='function')new ResizeObserver(()=>{paintImagePosition();syncLayoutPreview();}).observe(box.querySelector('#radioLookPreview'));
     scroll.append(box);panel.append(scroll,footer);
     const quick=box.querySelector('#radioUseCard');quick.className='radio-card-shortcut';panel.insertBefore(quick,scroll);
     quick.innerHTML='<span class="radio-card-preview" aria-hidden="true"><span class="radio-card-emoji"></span></span><span class="radio-card-copy"><strong>Mana kartīte</strong><span class="radio-card-owner"></span><small class="radio-card-hint"></small></span><span class="radio-card-check" aria-hidden="true">✓</span>';
@@ -4467,6 +3487,10 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
       if(key==='viz')setVizStyle(Number(e.target.value));
       paintAppearance();
     });
+    box.querySelectorAll('[data-metal-color]').forEach(button=>button.onclick=()=>{appearance.metalColor=button.dataset.metalColor;paintAppearance();});
+    document.getElementById('radioMoveSpectrum').onclick=()=>{spectrumMoveEnabled=!spectrumMoveEnabled;imageDrag=null;spectrumDrag=null;paintImagePosition();syncSpectrumMoveControls();};
+    document.getElementById('radioResetSpectrum').onclick=()=>changeSpectrumPosition({x:0,y:0});
+    document.getElementById('pioneerMetalReset').onclick=()=>{for(const key of ['metalColor','metalLight','metalShine'])appearance[key]=LOOK_DEFAULTS[key];paintAppearance();};
     document.getElementById('radioUseCard').onclick=()=>{
       const person=window.__mkUnifiedMedia?.getSession();if(!person){closePanel();window.__mkUnifiedMedia?.open();return;}
       let skin;try{skin=document.getElementById('calIframe')?.contentWindow?.mkGetRadioSkin?.(person.name);}catch(_){}
@@ -4476,11 +3500,11 @@ window.addEventListener('resize', () => { if (milkdropEnabled) ensureMilkdropCan
       document.getElementById('radioLookNote').textContent='Pārņemts '+document.querySelector('#radioUseCard .radio-card-owner').textContent+' izskats. Krāsas turpina mainīties pēc albuma.';
     };
     box.querySelectorAll('[data-viz-frame-choice]').forEach(b=>b.onclick=()=>{appearance.vizFrame=b.dataset.vizFrameChoice==='on'?'on':'off';paintAppearance();});
-    box.querySelectorAll('[data-radio-layout-choice]').forEach(b=>b.onclick=()=>{appearance.layout=b.dataset.radioLayoutChoice==='clean'?'clean':'classic';paintAppearance();});
-    box.querySelectorAll('[data-viz-family]').forEach(b=>b.onclick=()=>{switchVizFamily(b.dataset.vizFamily);paintAppearance();});
-    box.querySelectorAll('[data-viz-choice]').forEach(b=>b.onclick=()=>{setVizStyle(Number(b.dataset.vizChoice));paintAppearance();});
+    box.querySelectorAll('[data-radio-layout-choice]').forEach(b=>b.onclick=()=>{appearance.layout=['classic','clean','pioneer'].includes(b.dataset.radioLayoutChoice)?b.dataset.radioLayoutChoice:'classic';paintAppearance();if(appearance.layout==='pioneer'){lastAlbumAccentKey='';updateAlbumAccent();}});
+    box.querySelectorAll('[data-viz-family]').forEach(b=>b.onclick=()=>{lookVizFamily=b.dataset.vizFamily;if(lookVizFamily!=='pioneer')switchVizFamily(lookVizFamily);paintAppearance();});
+    box.querySelectorAll('[data-viz-choice]').forEach(b=>b.onclick=()=>{lookVizFamily=null;setVizStyle(Number(b.dataset.vizChoice));paintAppearance();});
     document.getElementById('radioEffectsOff').onclick=()=>{
-      appearance={...appearance,tint:0,glass:0,glow:0,vizFrame:'off'};disableMilkdrop();setVizStyle(MK_NO_VIZ);syncLookControls();
+      appearance={...appearance,tint:0,glass:0,glow:0,vizFrame:'off'};setVizStyle(MK_NO_VIZ);syncLookControls();
       document.getElementById('radioLookNote').textContent='Vizualizācija, krāsas pārklājums, stikls un apkārtējā gaisma ir izslēgti. Fons un skaņa paliek.';
     };
     document.getElementById('radioBackgroundOff').onclick=()=>{appearance.background='';appearance.cardName='';setSaved({name:'Melns'});applyTheme('Melns');syncLookControls();};
@@ -4589,21 +3613,15 @@ function openSlowFxMenu(ev){
     // Try enabling SLOW preset, but never let it cancel the menu
     try {
       window.__manualSlowPanelControl = true;
-      if (typeof setEQ === 'function') setEQ('chilldeep');
+      if(window.__eqMode!=='chilldeep')setEQ('chilldeep');
+      else if(!audio.paused&&aCtx?.state==='suspended')void aCtx.resume().catch(()=>{});
     } catch(e) {
       try{ console.warn('setEQ chilldeep failed, menu stays open', e); }catch(_){ }
     } finally {
       window.__manualSlowPanelControl = false;
     }
 
-    // Force-open after any side effects and after paint
-    try{
-      initSlowFxPanel();
-      p.classList.add('open');
-      p.setAttribute('aria-hidden','false');
-      requestAnimationFrame(()=>{ try{ p.classList.add('open'); positionSlowPanel(); }catch(e){} });
-      setTimeout(()=>{ try{ p.classList.add('open'); positionSlowPanel(); }catch(e){} }, 0);
-    }catch(e){}
+    positionSlowPanel();
     return false;
   }catch(e){
     try{ console.error('openSlowFxMenu error', e); }catch(_){ }
@@ -4616,17 +3634,6 @@ try{ window.openSlowFxMenu = openSlowFxMenu; }catch(e){}
 try{ window.handleSlowButton = handleSlowButton; }catch(e){}
 
 
-(function bindSlowButtonPopup(){
-  function attach(){
-    const btn = document.getElementById('eq-chilldeep');
-    if(!btn || btn.__slowPopupBound) return;
-    btn.__slowPopupBound = true;
-    btn.addEventListener('click', function(e){ if (window.openSlowFxMenu) return openSlowFxMenu(e); }, true);
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attach, {once:true}); else attach();
-  window.addEventListener('load', attach, {once:true});
-})();
-
 /* ── Release audio + GPU resources on unload ──
    Without this, refreshing leaves the old AudioContext + WebGL context alive
    until Chrome lazily reclaims them, so the new page's memory stacks on top
@@ -4635,18 +3642,6 @@ try{ window.handleSlowButton = handleSlowButton; }catch(e){}
   let __mkCleaned = false;
   function mkReleaseResources(){
     if (__mkCleaned) return; __mkCleaned = true;
-    // Stop the Milkdrop render loop
-    try { if (milkdropRaf) cancelAnimationFrame(milkdropRaf); } catch(e){}
-    // Free the WebGL visualizer context (only if it was ever created)
-    if (typeof milkdrop !== 'undefined' && milkdrop) {
-      try {
-        const mc = document.getElementById('milkdropCanvas');
-        const gl = mc && (mc.getContext('webgl2') || mc.getContext('webgl'));
-        const ext = gl && gl.getExtension('WEBGL_lose_context');
-        if (ext) ext.loseContext();
-      } catch(e){}
-      milkdrop = null;
-    }
     // Close the whole audio graph (EQ, reverb, vinyl, analyser, …)
     try { if (typeof aCtx !== 'undefined' && aCtx && aCtx.state !== 'closed') aCtx.close(); } catch(e){}
   }

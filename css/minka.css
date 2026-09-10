@@ -1971,7 +1971,7 @@ button:focus-visible, input:focus-visible, select:focus-visible{
    ceqTriggerBtn (EQ+) is excluded: it's a text chip in the preset row, and
    this circular glass style made it look foreign and overflow the row. */
 #radioWindow .ctrl-btn,
-#radioWindow .radio-win-body button[id*="Btn"]:not(#radioIdleBtn):not(#playBtn):not(#ceqTriggerBtn):not(#themeBtn) {
+#radioWindow:not([data-radio-layout="pioneer"]) .radio-win-body button[id*="Btn"]:not(#radioIdleBtn):not(#playBtn):not(#ceqTriggerBtn):not(#themeBtn) {
   background: rgba(255,255,255,0.08) !important;
   border: 1px solid rgba(255,255,255,0.15) !important;
   border-radius: 50% !important;
@@ -2071,3 +2071,6 @@ button:focus-visible, input:focus-visible, select:focus-visible{
     right: env(safe-area-inset-right, 0px) !important;
   }
 }
+
+/* Slow controls are portalled outside the transformed receiver. */
+body > #slowFxPanel{z-index:100005!important;max-width:min(320px,calc(100vw - 16px))!important}

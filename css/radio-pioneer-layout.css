@@ -1,0 +1,178 @@
+/* Static machined-metal layers; no texture downloads or decorative render loop. */
+.pioneer-faceplate,.pioneer-volume,.pioneer-display{display:none}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source){
+ --pioneer-ink:rgb(var(--radio-accent-rgb,112,200,230));
+ min-width:0!important;width:100%!important;max-width:none!important;left:0!important;right:0!important;transform:none!important;height:282px!important;
+ border:8px solid var(--pioneer-metal-edge,#969ca0)!important;border-radius:38px!important;overflow:hidden;
+ background:linear-gradient(160deg,var(--pioneer-metal-top),var(--pioneer-metal-base) 18%,var(--pioneer-metal-dark) 47%,var(--pioneer-metal-light) 80%,var(--pioneer-metal-edge))!important;
+ box-shadow:inset 0 2px 3px #fff9,inset 0 -3px 5px #0008,0 4px 12px #000b!important;
+}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source)::before{display:block!important;height:auto!important;z-index:0!important;content:""!important;position:absolute!important;inset:8px!important;border-radius:27px!important;background:linear-gradient(165deg,var(--pioneer-metal-faceTop),var(--pioneer-metal-face) 42%,var(--pioneer-metal-faceBottom))!important;border:2px solid #404a52!important;box-shadow:0 1px 2px #fff9,inset 0 1px 4px #000!important;pointer-events:none}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .pioneer-faceplate{display:flex;z-index:2;position:absolute;top:14px;left:28px;right:28px;height:30px;align-items:center;justify-content:center;pointer-events:none;color:var(--pioneer-ink)}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .pioneer-faceplate strong{font:italic 900 28px/1 Arial,sans-serif;letter-spacing:-1.3px;color:var(--pioneer-metal-logo);padding:0 14px 3px;border:1px solid var(--pioneer-metal-edge);border-radius:4px 4px 10px 10px;background:linear-gradient(var(--pioneer-metal-edge),var(--pioneer-metal-dark) 48%,var(--pioneer-metal-base));box-shadow:inset 0 1px #faffff80,0 2px 3px #000;text-shadow:0 1px 1px #0008}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .radio-win-body{position:relative;z-index:1;height:100%;box-sizing:border-box;padding:54px 26px 18px!important;background:transparent!important}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .bottom-console{height:100%;display:grid!important;grid-template-columns:126px minmax(0,1fr) 126px!important;grid-template-rows:minmax(0,1fr) 30px!important;gap:12px 18px!important;padding:0!important;align-items:center}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .pioneer-display{display:grid;grid-column:2;grid-row:1;height:100%;min-width:0;grid-template-columns:minmax(145px,.75fr) minmax(0,2fr);gap:12px;padding:10px 12px;border-radius:8px 8px 18px 18px;border:2px solid #39474f;background:linear-gradient(165deg,#10202950,transparent 40%),var(--pioneer-metal-screen);box-shadow:inset 0 2px 5px #000,0 1px #cbd5d536;align-items:center;overflow:hidden}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .tech-panel{min-width:0;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;display:flex!important;flex-direction:column;justify-content:center!important;gap:8px;overflow:hidden!important}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) :is(.header-row,.meta-status){display:none!important}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #curStation{position:static!important;margin:0!important;padding:0!important;color:var(--pioneer-ink)!important;font:700 16px/1.2 monospace!important;opacity:1!important;letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .np-row{display:flex;gap:8px!important;min-height:0!important;margin:0!important;align-items:center}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .np-cover{width:34px!important;height:34px!important;min-width:34px;flex:0 0 34px!important;border-radius:2px!important}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .np-lines{min-width:0;padding:0!important}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) :is(#npArtist,#npTitle){color:var(--pioneer-ink)!important;font:500 11px/1.45 monospace!important;white-space:normal;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .monitor-frame{width:100%!important;height:100%!important;min-height:0!important;max-height:none!important;align-self:stretch;margin:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;overflow:hidden}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #dolphin-bg{object-fit:contain!important}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .monitor-frame::before,html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .monitor-frame::after{display:none!important}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .control-panel{display:contents!important}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .eq-wrap{grid-column:2;grid-row:2;align-self:center;margin:0!important;min-width:0}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .eq-pioneer{display:flex;flex-wrap:nowrap!important;justify-content:center;gap:4px!important;padding:0!important;margin:0!important}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .epb,html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #eqRow #ceqTriggerBtn{display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;flex:1 1 0;min-width:0;min-height:28px!important;height:28px!important;position:relative;border:1px solid #8296a044!important;border-bottom:2px solid #263c3d!important;border-radius:5px!important;background:linear-gradient(#34454f,#192a34 48%,#101c23)!important;box-shadow:inset 0 1px #d4ecf326,0 1px 2px #0006!important;color:#c4d5d9!important;padding:4px 3px!important;font:700 9px/1.2 monospace!important;letter-spacing:.04em;cursor:pointer}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .epb.active{border-bottom-color:var(--pioneer-ink)!important;color:var(--pioneer-ink)!important;background:linear-gradient(#314954,#152e3a)!important}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .epb-label{display:block!important;color:inherit!important;font:700 9px/1.2 monospace!important;text-align:center!important;letter-spacing:.035em!important}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .epb-led{display:none!important}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #eqRow #ceqTriggerBtn{flex:0 0 36px!important}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .epb:focus-visible{outline:1px solid var(--pioneer-ink)!important;outline-offset:2px!important}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .pioneer-volume{grid-column:1;grid-row:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) :is(.pioneer-knob,.nav-cluster){position:relative;width:118px!important;height:118px!important;min-width:0!important;margin:0!important;border:2px solid var(--pioneer-metal-light);border-radius:50%;background:conic-gradient(from 10deg,var(--pioneer-metal-top),var(--pioneer-metal-edge) 12%,var(--pioneer-metal-light) 24%,var(--pioneer-metal-dark) 48%,var(--pioneer-metal-light) 66%,var(--pioneer-metal-top) 79%,var(--pioneer-metal-edge) 94%,var(--pioneer-metal-top));box-shadow:0 3px 5px #000b,inset 0 1px 2px #fff,inset 0 0 0 8px var(--pioneer-metal-light),inset 0 0 0 13px var(--pioneer-ink);padding:0!important}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) :is(.pioneer-knob,.nav-cluster)::before{content:"";position:absolute;inset:15px;border-radius:50%;background:repeating-radial-gradient(circle,rgba(255,255,255,var(--pioneer-metal-grain)) 0 .5px,#15242b18 .8px 1.3px,transparent 1.6px 2px),conic-gradient(from 10deg,var(--pioneer-metal-base),var(--pioneer-metal-top) 15%,var(--pioneer-metal-dark) 37%,var(--pioneer-metal-light) 60%,var(--pioneer-metal-edge) 80%,var(--pioneer-metal-base));box-shadow:inset 0 1px 2px #fff9,inset 0 -2px 3px #0008;pointer-events:none}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .pioneer-knob i{position:absolute;inset:19px;transform:rotate(var(--pioneer-knob-angle));pointer-events:none}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .pioneer-knob i::before{content:"";position:absolute;top:0;left:calc(50% - 2px);width:4px;height:10px;border-radius:1px;background:var(--pioneer-metal-ink);box-shadow:0 1px #fff6}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .pioneer-knob span{position:absolute;inset:0;display:grid;place-items:center;color:var(--pioneer-metal-ink);font:700 9px monospace;pointer-events:none;text-shadow:0 1px #fff7}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .pioneer-knob #vol{position:absolute!important;inset:0!important;opacity:0!important;width:100%!important;height:100%!important;max-width:none!important;margin:0!important;padding:0!important;cursor:ns-resize;touch-action:none}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .pioneer-knob:focus-within{outline:2px solid var(--pioneer-ink);outline-offset:3px}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .nav-cluster{grid-column:3;grid-row:1;display:flex!important;align-items:center;justify-content:center;gap:0!important;justify-self:center}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) :is(.nav-btn,#playBtn){z-index:1;position:relative;width:32px!important;height:42px!important;min-height:42px!important;max-height:42px!important;min-width:0!important;flex:0 0 32px!important;border:0!important;border-radius:5px!important;background:transparent!important;color:var(--pioneer-metal-ink)!important;box-shadow:none!important;font-size:12px!important;transform:none!important;padding:0!important}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #playBtn{width:38px!important;flex-basis:38px!important;font-size:20px!important}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) :is(.nav-btn,#playBtn):hover{background:transparent!important;color:var(--pioneer-ink)!important;box-shadow:none!important}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) :is(.station-btn,#vizBtn,#themeBtn){grid-row:2;width:52px!important;height:30px!important;min-width:0!important;min-height:30px!important;max-width:none!important;border:1px solid rgba(var(--radio-accent-rgb),.6)!important;border-radius:6px!important;background:linear-gradient(#e2e8eb,rgba(var(--radio-accent-rgb),.8) 45%,rgba(var(--radio-accent-rgb),.32))!important;color:#102c3b!important;box-shadow:inset 0 1px #ffffffe0,0 1px 2px #0009!important;margin:0!important;padding:5px!important;position:static!important}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .station-btn{grid-column:1;justify-self:center}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #vizBtn{grid-column:3;justify-self:start}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #themeBtn{grid-column:3;justify-self:end}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #radioSourceBar{left:30px!important;right:auto!important;top:13px!important;height:29px!important;max-width:37%;padding:1px 3px!important;gap:4px!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #radioSourceBar button{height:25px!important;min-height:25px!important;padding:3px 5px!important;border-radius:3px!important;font-size:10px!important;gap:4px!important;color:var(--pioneer-metal-ink)!important}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #radioSourceBar svg{width:14px;height:14px}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #mediaProfileButton .media-worker-avatar{font-size:16px!important}
+#themePanel #radioLookPreview[data-layout="pioneer"]{border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;padding:0!important;cursor:default!important}
+#radioLookPreview[data-layout="pioneer"]>div:not(.pioneer-real-preview){display:none!important}
+#radioLookPreview .pioneer-real-preview{position:absolute;inset:0;display:block;pointer-events:none;overflow:hidden}
+@media(max-width:1000px){
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source){height:264px!important;border-width:6px!important}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .radio-win-body{padding:51px 20px 17px!important}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .bottom-console{grid-template-columns:104px minmax(0,1fr) 104px!important;gap:9px 12px!important}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) :is(.pioneer-knob,.nav-cluster){width:98px!important;height:98px!important}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .pioneer-display{grid-template-columns:minmax(110px,.7fr) minmax(0,2fr);gap:8px;padding:8px}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .np-cover{display:none!important}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) :is(#npArtist,#npTitle){font-size:10px!important}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .epb .epb-label{font-size:8px!important;}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .epb{font-size:8px!important;padding:3px 1px!important}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .eq-pioneer{gap:2px!important}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) :is(#vizBtn,#themeBtn){width:44px!important}
+}
+@media(max-width:700px){
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source){height:260px!important;border-radius:24px!important}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .radio-win-body{padding:49px 12px 13px!important}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .bottom-console{grid-template-columns:76px minmax(0,1fr) 76px!important;gap:8px!important}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) :is(.pioneer-knob,.nav-cluster){width:74px!important;height:74px!important}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .pioneer-knob span{font-size:7px}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) :is(.nav-btn,#playBtn){width:22px!important;flex-basis:22px!important;font-size:10px!important}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .pioneer-display{display:flex;flex-direction:column;gap:4px;padding:7px}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .tech-panel{width:100%;gap:2px}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #curStation{font-size:11px!important}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #npArtist{display:none}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #npTitle{-webkit-line-clamp:1;font-size:9px!important}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .monitor-frame{flex:1;min-height:50px!important}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .eq-wrap{overflow-x:auto;scrollbar-width:none}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .epb{flex:0 0 32px}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .eq-pioneer{justify-content:flex-start}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) :is(#vizBtn,#themeBtn){width:34px!important}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) .pioneer-faceplate strong{font-size:23px}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #radioSourceBar{left:17px!important;max-width:36%}
+}
+
+#pioneerMetalControls[hidden]{display:none!important}
+#pioneerMetalControls{margin:12px 0 16px;padding:14px;border:1px solid #ffffff25;border-radius:14px}
+#pioneerMetalControls legend{font-weight:700;padding:0 6px}
+#pioneerMetalControls p{margin:0 0 12px;color:#adbdc2;font-size:12px}
+#pioneerMetalControls .pioneer-metal-presets{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:7px}
+#pioneerMetalControls [data-metal-color]{display:flex;align-items:center;gap:8px;text-align:left;padding:8px!important;font-size:11px!important;border:1px solid #ffffff20!important;box-shadow:none!important;outline:none}
+#pioneerMetalControls [data-metal-color] i{flex:0 0 28px;height:28px;border-radius:50%;background:conic-gradient(#ffffffa0,transparent,#0006,transparent,#ffffffa0),var(--metal-swatch);border:1px solid #ffffff38;box-shadow:inset 0 0 0 2px #ffffff20}
+#pioneerMetalControls [data-metal-color][aria-pressed="true"]{border-color:#b9d1d9!important;background:#b4d9e21a!important}
+#pioneerMetalControls [data-metal-color]:focus-visible{outline:2px solid #b9d1d9;outline-offset:2px}
+#pioneerMetalControls .pioneer-metal-custom{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}
+#pioneerMetalControls .pioneer-metal-custom label{margin:0;font-size:12px;gap:8px}
+#pioneerMetalControls input[type=range]{min-width:60px;max-width:55%}
+#pioneerMetalReset{font-size:11px!important;padding:6px 10px!important;justify-self:end}
+@media(max-width:550px){#pioneerMetalControls .pioneer-metal-custom{grid-template-columns:1fr}}
+
+/* Satin metal keys: one continuous face, a fine bevel and engraved legends.
+   Keep the existing grid and dial geometry; only the lower keys are restyled. */
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #eqRow{
+ gap:7px!important;background:none!important;
+}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) :is(#eqRow .epb,#eqRow #ceqTriggerBtn,.station-btn,#vizBtn,#themeBtn){
+ --key-ink:color-mix(in srgb,var(--pioneer-metal-base) 28%,#10171b);
+ position:relative!important;isolation:isolate;box-sizing:border-box;overflow:hidden;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ height:30px!important;min-height:30px!important;max-height:30px!important;
+ padding:0 5px!important;clip-path:none!important;transform:none!important;
+ border:1px solid color-mix(in srgb,var(--pioneer-metal-dark) 65%,#172026)!important;
+ border-top-color:var(--pioneer-metal-light)!important;
+ border-radius:7px!important;
+ background:
+  repeating-linear-gradient(0deg,#ffffff07 0 1px,#00000004 1px 2px,transparent 2px 4px),
+  linear-gradient(180deg,var(--pioneer-metal-top),var(--pioneer-metal-light) 18%,var(--pioneer-metal-base) 55%,var(--pioneer-metal-edge) 86%,var(--pioneer-metal-dark))!important;
+ box-shadow:inset 0 1px 0 #ffffff80,inset 1px 0 0 #ffffff18,inset 0 -1px 0 #00000026,0 1px 2px #00000070!important;
+ color:var(--key-ink)!important;
+ font:700 10px/1 Arial,sans-serif!important;letter-spacing:.045em!important;
+ text-shadow:0 1px 0 #ffffff65,0 -1px 0 #00000025!important;
+ transition:box-shadow .12s ease!important;
+}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) :is(#eqRow .epb,#eqRow #ceqTriggerBtn,.station-btn,#vizBtn,#themeBtn)::before{
+ content:none!important;display:none!important;
+}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #eqRow .epb-label{
+ position:relative!important;top:auto!important;left:auto!important;transform:none!important;
+ color:inherit!important;font:inherit!important;letter-spacing:inherit!important;text-shadow:inherit!important;
+}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #eqRow :is(.epb,#ceqTriggerBtn)::after{
+ content:""!important;display:block!important;position:absolute;inset:auto auto 2px 50%;
+ transform:translateX(-50%);width:18px;height:2px;border-radius:2px;
+ background:#00000028;box-shadow:0 1px #ffffff35;pointer-events:none;
+}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #eqRow :is(.epb,#ceqTriggerBtn).active::after{
+ background:var(--pioneer-ink);box-shadow:0 0 3px rgba(var(--radio-accent-rgb),.35);
+}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) :is(.station-btn,#vizBtn,#themeBtn) :is(svg,i){
+ display:grid!important;place-items:center!important;margin:0!important;padding:0!important;line-height:18px!important;font-size:18px!important;letter-spacing:0!important;transform:none!important;
+ width:18px!important;height:18px!important;flex:none;color:inherit!important;filter:drop-shadow(0 1px 0 #ffffff60);
+}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) :is(#eqRow .epb,#eqRow #ceqTriggerBtn,.station-btn,#vizBtn,#themeBtn):hover{
+ box-shadow:inset 0 1px #ffffffb0,inset 0 0 0 1px #ffffff30,0 1px 2px #00000070!important;
+}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) :is(#eqRow .epb,#eqRow #ceqTriggerBtn,.station-btn,#vizBtn,#themeBtn):active{
+ box-shadow:inset 0 1px 3px #00000070,inset 0 -1px #ffffff50!important;
+}
+@media(max-width:1000px){
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #eqRow{gap:4px!important}
+ html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #eqRow :is(.epb,#ceqTriggerBtn){font-size:8px!important;padding-inline:2px!important;letter-spacing:.01em!important}
+}
+
+/* A single metal finish also covers the source controls and wordmark.
+   Volume geometry and pointer behavior are intentionally unchanged. */
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #radioSourceBar :is(#mediaProfileButton,#mediaLogoutButton,#radioSourceBroadcast,#radioSourceMusic){
+ background:linear-gradient(180deg,#ffffff65,transparent 48%,#0002),linear-gradient(105deg,var(--pioneer-metal-edge),var(--pioneer-metal-light) 27%,var(--pioneer-metal-base) 60%,var(--pioneer-metal-dark))!important;
+ color:var(--pioneer-metal-ink)!important;border:1px solid var(--pioneer-metal-edge)!important;
+ box-shadow:inset 0 1px #ffffff70,inset 0 -1px #0003!important;
+}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #radioSourceBar [aria-pressed="true"]{border-bottom-color:var(--pioneer-ink)!important}
+
+/* Volume feedback lives in the display only, while the dial is adjusted. */
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #volumeOSD{
+ inset:0;width:100%;height:100%;box-sizing:border-box;padding:14px 24px;
+ align-items:center;gap:10px;background:var(--pioneer-metal-screen);
+ color:var(--pioneer-ink);font-family:monospace;
+}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #volumeOSD::before{content:"VOLUME";font-size:12px;font-weight:700;letter-spacing:.18em}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #osd-num{position:static;font-size:28px;line-height:1;color:inherit}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #osd-num::after{content:"%";font-size:16px}
+html body #radioWindow[data-radio-layout="pioneer"]:not(.music-source) #osd-segments{max-width:420px;height:10px;flex-shrink:0}

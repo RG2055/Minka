@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';
 const source=fs.readFileSync(new URL('../../js/radio.js',import.meta.url),'utf8');
-function harness({native=false,library=true}={}){
+function harness({native=false,library=true,userAgent=''}={}){
  const elements={},timers=new Map(),instances=[];let timer=0,loads=0,starts=0;
  const events=()=>{const map=new Map();return {on:map,addEventListener(k,fn){if(!map.has(k))map.set(k,new Set());map.get(k).add(fn);},removeEventListener(k,fn){map.get(k)?.delete(fn);},emit(k){for(const fn of [...map.get(k)||[]])fn();}};};
  const audio={...events(),src:'',paused:true,pause(){this.paused=true;this.emit('pause');},load(){loads++;},canPlayType:()=>native?'probably':''};
@@ -8,7 +8,7 @@ function harness({native=false,library=true}={}){
   constructor(){this.events={};this.stopped=0;this.restarted=0;this.destroyed=0;instances.push(this);}on(k,fn){this.events[k]=fn;}loadSource(url){this.url=url;}attachMedia(){}destroy(){this.destroyed++;}stopLoad(){this.stopped++;}startLoad(){this.restarted++;}recoverMediaError(){this.recovered=true;}}
  const document={getElementById:id=>elements[id],head:{appendChild(el){elements[el.id]=el;}},createElement:()=>({...events(),remove(){delete elements[this.id];}})};
  elements.curStation={};const window={Hls:library?Hls:null};
- const c=vm.createContext({window,Hls,document,audio,hls:null,radioPlayAttempt:0,setupAudio(){},requestRadioPlayback(){starts++;audio.paused=false;audio.emit('play');},setTimeout:fn=>{timers.set(++timer,fn);return timer;},clearTimeout:id=>timers.delete(id)});
+ const c=vm.createContext({window,Hls,document,audio,navigator:{userAgent},hls:null,radioPlayAttempt:0,setupAudio(){},requestRadioPlayback(){starts++;audio.paused=false;audio.emit('play');},setTimeout:fn=>{timers.set(++timer,fn);return timer;},clearTimeout:id=>timers.delete(id)});
  vm.runInContext(source.slice(source.indexOf('let radioStreamGeneration ='),source.indexOf('function describeStationStream(')),c);
  return {c,audio,window,elements,instances,timers,Hls,get loads(){return loads;},get starts(){return starts;}};
 }
@@ -39,4 +39,15 @@ test('native HLS avoids loading the JavaScript parser',()=>{
 
 test('ERR audio uses the working HLS parser even when native HLS is advertised',()=>{
  const h=harness({native:true});h.c.play('https://sb.err.ee/live/vikerraadio.m3u8','Vikerraadio');assert.equal(h.instances.length,1);h.instances[0].events.manifest();assert.equal(h.starts,1);
+});
+
+// Regression: native Chromium HLS accepts Remix initially, then fails on SLOW.
+test('Chromium HLS uses MSE even when native support is advertised',()=>{
+ for(const userAgent of ['Mozilla/5.0 Chrome/146.0.0.0 Safari/537.36','Mozilla/5.0 Edg/146.0']){
+  const h=harness({native:true,userAgent});h.c.play('https://example.test/remix.m3u8','Remix');assert.equal(h.instances.length,1);assert.equal(h.audio.src,'');h.instances[0].events.manifest();assert.equal(h.starts,1);
+ }
+});
+test('Chromium direct stations do not load HLS while Safari retains native HLS',()=>{
+ const chrome=harness({native:true,library:false,userAgent:'Chrome/146.0'});chrome.c.play('remix.mp3','Remix');assert.equal(chrome.elements['mk-hls-loader'],undefined);assert.equal(chrome.audio.src,'remix.mp3');
+ const safari=harness({native:true,library:false,userAgent:'Version/26.0 Safari/605.1.15'});safari.c.play('remix.m3u8','Remix');assert.equal(safari.elements['mk-hls-loader'],undefined);assert.equal(safari.audio.src,'remix.m3u8');
 });

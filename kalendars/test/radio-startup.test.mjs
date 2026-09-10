@@ -15,7 +15,7 @@ function harness({loaded=true,signedIn=true}={}){
   radioStationKey:s=>(s.group==='latvija'?'lv:':'record:')+s.title.toLowerCase(),
   selectStation:index=>{selected.push(index);c.currentIndex=index;c.isFirstPlay=false;c.audio.paused=false;},
   document:{body:{classList:{contains:()=>false,remove(){}}},getElementById:id=>fields[id]},
-  syncShellLayout(){},wireVizLazyMilkdrop(){},loadRadioScripts:()=>new Promise(resolve=>finishLoading=resolve),
+  syncShellLayout(){},loadRadioScripts:()=>new Promise(resolve=>finishLoading=resolve),
   setTimeout:fn=>timers.push(fn)});
  Object.defineProperty(window,'stationsList',{get:()=>c.stationsList});
  vm.runInContext(radio.slice(radio.indexOf('function favoriteStationIndex('),radio.indexOf("document.addEventListener('media-profile-change'")),c);

@@ -271,3 +271,24 @@ html body #radioWindow .branding #themeBtn{order:-1}
 #radioLookControls .radio-image-tools input{flex:1;min-width:45px;max-width:none;accent-color:#a7dacb}
 #radioLookControls .radio-image-tools output{font-size:11px;min-width:34px;text-align:right;font-variant-numeric:tabular-nums}
 #radioLookControls .radio-image-tools button{font-size:11px;padding:6px 9px}
+
+/* Pioneer clips share the existing dolphin layer; color originals keep their palette. */
+html body #radioWindow #dolphin-bg.pioneer-color{filter:none!important}
+html body #radioWindow #dolphin-bg.pioneer-square{object-fit:contain}
+html body #radioWindow .pioneer-meter{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;mix-blend-mode:screen;pointer-events:none;display:none}
+html body #radioWindow .monitor-frame.volume-adjusting .pioneer-meter{opacity:0!important}
+html body #radioWindow #vizBtn.active{border-color:rgba(var(--radio-accent-rgb,112,168,194),.6)!important;background:rgba(var(--radio-accent-rgb,112,168,194),.14)!important}
+
+#radioLookControls [data-pioneer-gallery][hidden]{display:none!important}
+#radioLookControls [data-pioneer-gallery] input{width:100%;box-sizing:border-box;margin:0 0 10px;padding:10px 12px;border:1px solid #ffffff28;border-radius:10px;background:#ffffff08;color:inherit;font:inherit}
+#radioLookControls [data-pioneer-gallery] .pioneer-inline-poster{display:block;width:100%;height:54px;object-fit:contain;margin:8px 0}
+#radioLookControls [data-pioneer-gallery] .radio-viz-grid span{overflow-wrap:anywhere;text-align:center}
+
+#radioLookControls .radio-spectrum-position{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 14px}
+#radioLookControls .radio-spectrum-position p{flex-basis:100%;margin:0;color:#abc5b8;font-size:12px}
+#radioLookControls #radioMoveSpectrum[aria-pressed=true]{border-color:#b9ddcf;background:#b6dfce26}
+#themePanel #radioLookPreview.is-spectrum-positionable{cursor:move!important;touch-action:none;outline:1px dashed #b9ddcf;outline-offset:3px}
+#radioLookPreview.is-spectrum-positionable .radio-viz-sample{outline:1px dashed #b9ddcf;outline-offset:2px;pointer-events:none}
+
+/* Pioneer has a metal faceplate; keep background choices for the other layouts. */
+#themePanel[data-radio-layout="pioneer"] :is(#themeList,.radio-theme-filters,#radioImageTools,#radioUseCard,#radioLookNote,#radioBackgroundOff,[data-radio-background-only]){display:none!important}

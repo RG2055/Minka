@@ -17,8 +17,8 @@ function harness() {
   const overlay={style:{display:'grid'},querySelector:s=>s==='#stationPickerList'?list:count};
   const c=vm.createContext({window:{},document:{addEventListener(){},querySelectorAll(){return [];},querySelector(){return null;},getElementById:id=>id==='stationOverlay'?overlay:id==='stationPickerList'?list:null},
     stationsList:[{title:'Record',group:'record'},{title:'Latviešu hiti',group:'latvija'},{title:'Rock',group:'record'}],
-    currentIndex:0,escapeHtml:s=>s,LACITIS_RADIO_FALLBACK:'fallback.svg',LV_STATION_LOGO_RULES:[],LV_STATION_EXTRA_LOGOS:{}});
-  vm.runInContext(section("let stationPickerSource =",'// Pull stations from'),c);
+    currentIndex:0,LACITIS_RADIO_FALLBACK:'fallback.svg',LV_STATION_LOGO_RULES:[],LV_STATION_EXTRA_LOGOS:{}});
+  vm.runInContext(section("function escapeHtml(s){", "function updateVizLabel()")+section("let stationPickerSource =",'// Pull stations from'),c);
   return {c,list,overlay,get writes(){return writes;},get buttons(){return buttons;}};
 }
 test('reopening and selecting keep station buttons, images and scroll position',()=>{
@@ -126,4 +126,10 @@ test('a rejected older play request cannot overwrite a newer successful start',a
   vm.runInContext(section('let radioPlayAttempt =','function play(url, name)'),c);
   const old=c.requestRadioPlayback();c.audio.play=()=>Promise.resolve();await c.requestRadioPlayback();
   reject({name:'NotAllowedError'});await old;assert.match(button.innerHTML,/fa-pause/);
+});
+
+test('shared station text helper remains available without the removed renderer',()=>{
+  const h=harness();
+  assert.equal(h.c.escapeHtml(`A&B <Radio> "live" 'mix'`), 'A&amp;B &lt;Radio&gt; &quot;live&quot; &#39;mix&#39;');
+  h.c.stationsList=[{title:'A&B <Radio>',group:'record'}];h.c.renderStationOverlay();assert.equal(h.writes,1);
 });

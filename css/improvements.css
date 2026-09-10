@@ -151,14 +151,8 @@
   from { opacity: 0; transform: translateY(-8px) scale(0.97); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
-.theme-panel[aria-hidden='false'],
-.md-preset-panel[aria-hidden='false'] {
+.theme-panel[aria-hidden='false']{
   animation: panelIn .2s var(--transition-spring) both !important;
-}
-
-/* ── Milkdrop toggle button: pulse when active ── */
-body.milkdrop-on .viz-icon-btn {
-  animation: none !important;
 }
 
 /* ── Scrollbar improvements ── */
@@ -171,26 +165,6 @@ body.milkdrop-on .viz-icon-btn {
 }
 *::-webkit-scrollbar-thumb:hover {
   background: rgba(255,255,255,0.25) !important;
-}
-
-/* ── Milkdrop preset panel: improved ── */
-.mdp-item {
-  transition: all .15s ease !important;
-}
-.mdp-item:hover {
-  transform: translateX(4px) !important;
-}
-.mdp-item.is-active {
-  position: relative !important;
-}
-.mdp-item.is-active::before {
-  content: '▶';
-  position: absolute;
-  left: 6px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 8px;
-  color: rgba(0,255,136,0.8);
 }
 
 /* ── Tech panel clock ── */
