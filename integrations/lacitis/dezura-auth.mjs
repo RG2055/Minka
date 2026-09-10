@@ -43,7 +43,16 @@ export function cleanRadio(data={}){
  const id=value=>typeof value==='string'&&value.length<=240&&value.length>0;
  const out={favorites:[...new Set((Array.isArray(data.favorites)?data.favorites:[]).filter(id))].slice(0,250),lastStation:id(data.lastStation)?data.lastStation:'',settings:{}};
  const s=data.settings||{};
- if(s.layout==='classic'||s.layout==='clean')out.settings.layout=s.layout;
+ if(['classic','clean','pioneer'].includes(s.layout))out.settings.layout=s.layout;
+ if(/^#[\da-f]{6}$/i.test(s.metalColor||''))out.settings.metalColor=s.metalColor;
+ for(const key of ['metalLight','metalShine'])if(Number.isFinite(s[key]))out.settings[key]=Math.max(0,Math.min(100,s[key]));
+ if(s.vizPositions&&typeof s.vizPositions==='object'&&!Array.isArray(s.vizPositions)){
+  out.settings.vizPositions={};
+  for(const layout of ['classic','clean','pioneer']){
+   const point=s.vizPositions[layout];
+   if(point&&!Array.isArray(point)&&Number.isFinite(point.x)&&Number.isFinite(point.y))out.settings.vizPositions[layout]={x:Math.max(-1,Math.min(1,point.x)),y:Math.max(-1,Math.min(1,point.y))};
+  }
+ }
  if(['auto','on','off'].includes(s.vizFrame))out.settings.vizFrame=s.vizFrame;
  if(s.imageCrops&&typeof s.imageCrops==='object'&&!Array.isArray(s.imageCrops)){
   out.settings.imageCrops=Object.fromEntries(Object.entries(s.imageCrops).filter(([key,crop])=>key.startsWith('kalendars/')&&key.length<=500&&crop&&[crop.x,crop.y,crop.zoom].every(Number.isFinite)).slice(-32).map(([key,crop])=>[key,{x:Math.max(-.75,Math.min(.75,crop.x)),y:Math.max(-2,Math.min(2,crop.y)),zoom:Math.max(.6,Math.min(2,crop.zoom))}]));

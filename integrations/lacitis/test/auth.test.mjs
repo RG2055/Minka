@@ -119,3 +119,26 @@ test('image crop payloads reject malformed entries and bound storage and geometr
  assert.deepEqual(Object.values(settings.imageCrops)[0],{x:.75,y:-2,zoom:2});
  assert.deepEqual(radioOperation({}, {type:'settings',settings:{imageCrops:[]}}).settings,{});
 });
+
+test('Pioneer look survives save, unrelated changes and another authenticated device',async()=>{
+ const h=harness();try{
+  const a=await create(h),auth={sessionToken:a.session.sessionToken};
+  const settings={layout:'pioneer',metalColor:'#755363',metalLight:62,metalShine:48,vizFrame:'off',viz:'27',vizPositions:{classic:{x:.2,y:-.1},pioneer:{x:-.4,y:.3}}};
+  const saved=await h.call('radio/change',{...auth,operation:{type:'settings',settings}});
+  assert.equal(saved.status,200);assert.deepEqual(saved.data.settings,settings);
+  await h.call('radio/change',{...auth,operation:{type:'favorite-add',id:'record:remix'}});
+  const second=await h.call('login',{name:'Alpha Test',pin:'123456'});
+  const loaded=await h.call('radio/load',{sessionToken:second.session.sessionToken});
+  assert.deepEqual(loaded.data.settings,settings);assert.deepEqual(loaded.data.favorites,['record:remix']);
+  const b=await create(h,'Beta Test');assert.deepEqual((await h.call('radio/load',{sessionToken:b.session.sessionToken})).data.settings,{});
+  await h.call('radio/change',{...auth,operation:{type:'reset-look'}});
+  const reset=await h.call('radio/load',auth);assert.deepEqual(reset.data.settings,{});assert.deepEqual(reset.data.favorites,['record:remix']);
+ }finally{h.close();}
+});
+
+test('Pioneer values validate colors, finite numbers and bounded per-layout positions',()=>{
+ const settings=radioOperation({}, {type:'settings',settings:{layout:'pioneer',metalColor:'#aBc123',metalLight:130,metalShine:-5,vizPositions:{pioneer:{x:99,y:-99},classic:{x:NaN,y:0},clean:{x:'1',y:0},unknown:{x:0,y:0}}}}).settings;
+ assert.deepEqual(settings,{layout:'pioneer',metalColor:'#aBc123',metalLight:100,metalShine:0,vizPositions:{pioneer:{x:1,y:-1}}});
+ const next=radioOperation({settings},{type:'settings',settings:{layout:'bad',metalColor:'url(https://invalid)',metalLight:Infinity,metalShine:'90',vizPositions:[]}});
+ assert.deepEqual(next.settings,settings);
+});

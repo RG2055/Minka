@@ -62,3 +62,9 @@ Skaņas efektu vadīklām pievienotas vienotas lokālas SVG ikonas, īsi darbīb
 Reproduced in the user's Chrome tab on Remix: switching to 0.88 raised media error 4, `PipelineStatus::DEMUXER_ERROR_COULD_NOT_PARSE`, with native HLS. Chromium HLS now selects the existing lazy hls.js/MSE path before playback. Safari keeps native HLS and direct streams do not load the parser. Clearing a stream removes `src` instead of assigning an empty URL, avoiding a false error during lazy initialization. A failed stream can be retried with Play; pause/error button labels now match the icon. No periodic watchdog or extra audio graph was added.
 
 Validated with 107 radio tests, plus actual Remix HLS through the Web Audio graph: eight FLAT/SLOW cycles under 4x CPU throttling, advancing media time and nonzero audio RMS, unchanged stream connection when reopening controls, volume/reverb/pitch settings, context resume, and pause/play races. Pioneer utility glyphs are centered within their 18px icon boxes; live measured horizontal and vertical center offsets are zero.
+
+### Pioneer profile persistence, 2026-09-10
+
+The production `cleanRadio` allowlist still accepted only classic/clean and discarded Pioneer metal/position fields. It now accepts Pioneer, validates a six-digit metal color, bounds brightness/gloss to 0–100 and spectrum coordinates to −1…1 for the three supported layouts. API tests cover save/load, a second session, unrelated favorite changes, account isolation, reset and malformed fields (38 integration/profile tests passed).
+
+Published only this sanitizer into the current `lacitis-api` bundle using the content-only API. All code outside that function and the Worker bindings, allowed origins, compatibility settings and observability are unchanged; no database migration or profile reset. Active version: `d8d23772-4b8b-4192-b60b-949d116b2031`. Existing frontend already sends these fields, so no service-worker bump is required.
