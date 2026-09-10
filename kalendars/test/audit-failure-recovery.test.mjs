@@ -44,7 +44,7 @@ test('one hung emoji save does not block every later selection',async()=>{
 });
 test('radio station-map failure can retry without reloading',async()=>{
  const h=harness({rrPrefixToId:null,rrMapPromise:null,RR_STATIONS_URL:'stations'});
- const s=read('js/radio.js');vm.runInContext(section(s,'async function '+(s.includes('async function fetchRadioJson(')?'fetchRadioJson(':'ensureRRPrefixMap('),'function parseNowList('),h.c);
+ const s=read('js/radio.js');vm.runInContext(section(s,'function deriveRRPrefix(','function setNowUI(')+section(s,'async function '+(s.includes('async function fetchRadioJson(')?'fetchRadioJson(':'ensureRRPrefixMap('),'function parseNowList('),h.c);
  const first=h.c.ensureRRPrefixMap();await tick();h.requests[0].reject(new Error('offline'));await first;
  const second=h.c.ensureRRPrefixMap();await tick();assert.equal(h.requests.length,2);
  h.requests[1].resolve({ok:true,json:async()=>({result:[{prefix:'test',id:7}]})});
@@ -52,7 +52,7 @@ test('radio station-map failure can retry without reloading',async()=>{
 });
 test('radio hung station-map response releases the shared request',async()=>{
  const h=harness({rrPrefixToId:null,rrMapPromise:null,RR_STATIONS_URL:'stations'});
- const s=read('js/radio.js');vm.runInContext(section(s,'async function '+(s.includes('async function fetchRadioJson(')?'fetchRadioJson(':'ensureRRPrefixMap('),'function parseNowList('),h.c);
+ const s=read('js/radio.js');vm.runInContext(section(s,'function deriveRRPrefix(','function setNowUI(')+section(s,'async function '+(s.includes('async function fetchRadioJson(')?'fetchRadioJson(':'ensureRRPrefixMap('),'function parseNowList('),h.c);
  h.c.ensureRRPrefixMap();await tick();await h.advance(20000);h.c.ensureRRPrefixMap();await tick();
  assert.equal(h.requests.length,2);
  h.requests[1].resolve({ok:true,json:async()=>({result:[{prefix:'new',id:8}]})});await tick();

@@ -159,3 +159,22 @@
     contain: style !important;
   }
 }
+
+/* In compact radio cards the existing background emoji takes over on hover.
+   It stays behind the controls instead of flying across their hit targets. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  html.host-radio-open:not(.mk-mobile-shell) body #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):hover:has(.mk-mid-meta-emoji:not(.is-initials)) .mk-mid-bg-emoji {
+    left: 50% !important;
+    top: 47% !important;
+    font-size: clamp(72px, 64cqw, 148px) !important;
+    transform: translate(-50%, -50%) !important;
+    opacity: .28 !important;
+    filter: none !important;
+    z-index: 0 !important;
+    pointer-events: none !important;
+  }
+  html.host-radio-open:not(.mk-mobile-shell) body #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):hover .mk-mid-meta-emoji:not(.is-initials) .mk-mid-meta-emoji-fly {
+    transform: translate3d(0, 0, 0) scale(.465116) !important;
+    opacity: 0 !important;
+  }
+}

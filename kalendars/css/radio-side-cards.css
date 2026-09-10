@@ -119,3 +119,19 @@ html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .
 html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-wm {
   opacity: .12 !important;
 }
+
+/* Let the coffee buttons' larger hit areas extend beyond the compact pill. */
+:root.host-radio-open:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) :is(.mk-coffee-step, .mk-coffee-sub, .mk-coffee-add) {
+  overflow: visible !important;
+}
+:root.host-radio-open:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) :is(.mk-coffee-sub, .mk-coffee-add)::after {
+  inset: -9px -8px !important;
+}
+
+/* Round only the painted ends, leaving the invisible hit areas unrestricted. */
+:root.host-radio-open:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-sub {
+  border-radius: 999px 0 0 999px !important;
+}
+:root.host-radio-open:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-add {
+  border-radius: 0 999px 999px 0 !important;
+}

@@ -855,3 +855,119 @@ html #radioWindow #eqRow #ceqTriggerBtn:hover {
   #themePanel .theme-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #themePanel .accent-mode-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* The world directory stays inside the existing station picker. */
+#stationOverlay:has(#worldStationControls:not([hidden])) {
+  grid-template-rows: auto auto auto minmax(0, 1fr) !important;
+}
+.station-picker-tabs { flex-wrap: wrap; }
+.world-station-controls[hidden] { display: none !important; }
+.world-station-controls {
+  display: block; padding: 2px 14px 14px; color: rgba(255,255,255,.72); font-size: 11px;
+}
+.world-station-controls label { display: flex; align-items: center; gap: 6px; }
+.world-station-controls select, .world-station-pages button {
+  min-height: 32px; max-width: 180px; border: 1px solid rgba(var(--radio-ambient-rgb,83,201,232),.25);
+  border-radius: 9px; padding: 4px 9px; background: rgba(var(--radio-ambient-rgb,83,201,232),.08);
+  color: inherit; font: inherit; cursor: pointer;
+}
+.world-station-controls option { background: #111d24; color: #eef6fa; }
+.world-station-pages { display: flex; align-items: center; gap: 8px; }
+.world-station-pages button:disabled { opacity: .35; cursor: default; }
+
+#stationOverlay select:focus, #stationOverlay select:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: rgba(var(--radio-ambient-rgb,83,201,232),.75) !important;
+}
+
+#stationOverlay[data-station-view="featured"] .station-copy small {
+  white-space: normal; display: -webkit-box; -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2; overflow: hidden; line-height: 1.35;
+}
+.world-directory-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 0 0 12px; }
+.world-directory-heading strong { color: #eef6f8; font-size: 16px; letter-spacing: -.02em; }
+.world-directory-heading>span { opacity: .7; font-size: 11px; }
+.world-directory-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.world-country-picker { position: relative; min-width: 190px; }
+.world-country-picker summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 38px; padding: 8px 12px; border: 1px solid rgba(var(--radio-ambient-rgb,83,201,232),.3); border-radius: 10px; background: rgba(var(--radio-ambient-rgb,83,201,232),.08); cursor: pointer; list-style: none; }
+.world-country-picker summary::-webkit-details-marker { display: none; }
+#worldCountrySelected { display: flex; align-items: center; gap: 8px; }
+.station-country-flag { display: inline-block; width: 24px; height: 16px; object-fit: cover; border-radius: 3px; flex-shrink: 0; vertical-align: middle; }
+.station-copy small .station-country-flag { width: 16px; height: 11px; margin-right: 5px; border-radius: 2px; }
+.world-country-popover { position: absolute; z-index: 20; top: calc(100% + 7px); left: 0; width: min(440px, calc(100vw - 80px)); padding: 10px; border: 1px solid rgba(var(--radio-ambient-rgb,83,201,232),.35); border-radius: 14px; background: #102028; box-shadow: 0 12px 28px #0008; }
+#stationOverlay #worldCountrySearch { width: 100%; min-height: 36px; padding: 8px 10px; margin-bottom: 8px; color: #fff; border: 1px solid #ffffff25 !important; border-radius: 8px; background: #ffffff08; }
+.world-country-list { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; max-height: 240px; overflow: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.world-country-list::-webkit-scrollbar { display: none; }
+.world-country-list button { display: flex; align-items: center; gap: 8px; min-height: 38px; padding: 7px 8px; background: transparent; border: 1px solid transparent; border-radius: 8px; color: #d9e8ee; font: inherit; text-align: left; cursor: pointer; }
+.world-country-list button:hover, .world-country-list button[aria-pressed="true"] { background: rgba(var(--radio-ambient-rgb,83,201,232),.16); border-color: rgba(var(--radio-ambient-rgb,83,201,232),.2); }
+.world-genre-label { gap: 8px !important; }
+.world-station-pages { margin-left: auto; }
+.world-country-picker summary:focus-visible { outline: 1px solid rgba(var(--radio-ambient-rgb,83,201,232),.75); outline-offset: 2px; box-shadow: none !important; }
+.station-discovery-heading { grid-column: 1 / -1; align-self: center; display: flex; flex-direction: column; gap: 7px; padding: 8px 2px; }
+.station-discovery-heading strong { font-size: 22px; letter-spacing: -.025em; }
+.station-discovery-heading>span { font-size: 12px; color: #a7b9c2; }
+#stationOverlay[data-station-view="featured"] .station-tile { height: 116px !important; grid-template-columns: 64px minmax(0,1fr) 24px; padding-left: 14px !important; }
+#stationOverlay[data-station-view="featured"] .station-logo-wrap,
+#stationOverlay[data-station-view="featured"] .station-logo { width: 64px; height: 64px; }
+#stationOverlay[data-station-view="featured"] .station-copy strong { font-size: 15px; }
+#stationOverlay[data-station-view="featured"] .station-copy small { font-size: 12px; }
+@media (max-width: 640px) {
+  .world-directory-heading { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .world-country-picker { min-width: 160px; }
+  .world-station-pages { margin-left: 0; }
+}
+
+/* Discovery uses short horizontal shelves, then opens the same player list. */
+#stationOverlay[data-station-view="featured"] .station-picker-list {
+  display: block; padding: 18px 16px 24px;
+}
+.discovery-intro { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0 0 24px; }
+.discovery-intro strong { font-size: 24px; letter-spacing: -.03em; }
+.discovery-intro>span, .discovery-muted { font-size: 11px; color: rgba(235,246,248,.6); }
+.discovery-section { margin: 0 0 25px; }
+.discovery-section h3, .discovery-section-head h3 { margin: 0 0 11px; font-size: 16px; letter-spacing: -.015em; }
+.discovery-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+#stationOverlay .discovery-link { padding: 2px 0; border: 0; background: none; box-shadow: none; color: rgba(var(--radio-ambient-rgb,83,201,232),1); font: inherit; font-size: 11px; cursor: pointer; }
+.discovery-rail { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.discovery-rail-content { display: flex; align-items: center; gap: 9px; min-width: 0; flex: 1; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; padding: 3px; }
+.discovery-rail-content::-webkit-scrollbar, .discovery-featured-row::-webkit-scrollbar { display: none; }
+#stationOverlay .discovery-rail>button { width: 23px; height: 32px; flex-shrink: 0; padding: 0; border: 0; background: transparent; box-shadow: none; color: #b8cacc; font-size: 22px; cursor: pointer; }
+#stationOverlay .discovery-chip { display: inline-flex; flex-shrink: 0; align-items: center; gap: 9px; min-height: 39px; padding: 8px 15px; border-radius: 24px; border: 1px solid rgba(var(--radio-ambient-rgb,83,201,232),.25); background: rgba(var(--radio-ambient-rgb,83,201,232),.08); color: #edf4f6; font: inherit; font-size: 13px; box-shadow: none; white-space: nowrap; cursor: pointer; }
+.discovery-chip small { font-size: 11px; color: #9eadb4; font-variant-numeric: tabular-nums; }
+#stationOverlay .discovery-chip:hover { background: rgba(var(--radio-ambient-rgb,83,201,232),.19); border-color: rgba(var(--radio-ambient-rgb,83,201,232),.6); }
+#stationOverlay .discovery-logo { display: block; width: 54px; height: 54px; flex: 0 0 54px; border: 1px solid #ffffff38; border-radius: 50%; padding: 0; overflow: hidden; background: #18272e; cursor: pointer; box-shadow: none; }
+.discovery-logo img { width: 100%; height: 100%; object-fit: cover; }
+#stationOverlay .discovery-logo:hover { border-color: rgba(var(--radio-ambient-rgb,83,201,232),1); }
+.discovery-featured-row { display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding: 3px 1px 8px; }
+.discovery-featured-row .station-entry { flex: 0 0 min(380px, 90%); scroll-snap-align: start; }
+#stationOverlay[data-station-view="featured"] .station-tile { margin-bottom: 10px; }
+.discovery-featured-row .station-tile { margin-bottom: 0 !important; }
+#stationOverlay .discovery-chip:focus-visible, #stationOverlay .discovery-logo:focus-visible, #stationOverlay .discovery-link:focus-visible, #stationOverlay .discovery-rail>button:focus-visible, #stationOverlay .world-country-list button:focus-visible, #stationOverlay #worldCountrySearch:focus-visible {
+  outline: 1px solid rgba(var(--radio-ambient-rgb,83,201,232),.9) !important; outline-offset: 2px; box-shadow: none !important;
+}
+@media (max-width: 640px) {
+  .discovery-intro { flex-direction: column; }
+  #stationOverlay[data-station-view="featured"] .station-picker-list { padding: 14px 10px 20px; }
+}
+
+#stationOverlay img[src*="featured-byte-fm"] { background: #bfc4c4; }
+
+.discovery-mouse-hint { display: none; }
+@media (hover: hover) and (pointer: fine) {
+  .discovery-intro .discovery-mouse-hint { display: inline; margin-right: auto; margin-left: 12px; font-size: 11px; }
+  #stationOverlay :is(.discovery-rail-content, .discovery-featured-row),
+  #stationOverlay :is(.discovery-rail-content, .discovery-featured-row) button { cursor: grab; }
+}
+.discovery-rail-content, .discovery-featured-row { user-select: none; -webkit-user-select: none; }
+.discovery-rail-content img, .discovery-featured-row img { -webkit-user-drag: none; }
+#stationOverlay .is-dragging, #stationOverlay .is-dragging * { cursor: grabbing !important; }
+.discovery-featured-row.is-dragging { scroll-snap-type: none; scroll-behavior: auto; }
+
+/* Compact discovery header and readable station names on desktop and Windows. */
+#stationOverlay[data-station-view="featured"] .station-picker-list { padding-top: 8px; }
+.discovery-intro { justify-content: flex-start; gap: 6px 14px; margin-bottom: 12px; }
+.discovery-intro strong { font-size: 18px; }
+.discovery-intro .discovery-mouse-hint { order: 3; margin: 0; }
+.discovery-section { margin-bottom: 15px; }
+.discovery-section h3, .discovery-section-head h3 { margin-bottom: 6px; }

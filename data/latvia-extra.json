@@ -1,0 +1,154 @@
+[
+  {
+    "title": "LRMAROCKRADIO",
+    "url": "https://c22.radioboss.fm:18318/stream",
+    "cover": "https://lrma.lv/wp-content/uploads/2026/02/cropped-Generated-Image-February-26-2026-9_59PM-300x300.png",
+    "tooltip": "Latvijas radio",
+    "source": "rrradio / Radio Browser",
+    "checkedAt": "2026-09-10"
+  },
+  {
+    "title": "EHR+",
+    "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_PLUSAAC.aac",
+    "cover": "https://www.ehr.fm/content/channels/fc039806-e0c3-49bc-82d8-4f421f45be63.png?w=205&h=205&fm=webp&s=3b8d5106ea026855e5700c9c260f45b4",
+    "tooltip": "Latvijas radio",
+    "source": "rrradio / Radio Browser",
+    "checkedAt": "2026-09-10"
+  },
+  {
+    "title": "Radio 7",
+    "url": "https://listen.radio7.lv:2053/Radio7",
+    "cover": "https://radio7.lv/wp-content/uploads/2021/03/cropped-radio7-symbol-180x180.png",
+    "tooltip": "Latvijas radio",
+    "source": "rrradio / Radio Browser",
+    "checkedAt": "2026-09-10"
+  },
+  {
+    "title": "Your City Radio",
+    "url": "https://c34.radioboss.fm:8234/stream",
+    "cover": "https://c28.radioboss.fm/stationlogo/234.jpg?9299",
+    "tooltip": "Latvijas radio",
+    "source": "rrradio / Radio Browser",
+    "checkedAt": "2026-09-10"
+  },
+  {
+    "title": "gradio.lv ONE",
+    "url": "https://stream.gradio.lv/gradio-one.mp4a",
+    "cover": "https://gradio.lv/logo/only-g-without-gloss-web-200.png",
+    "tooltip": "Latvijas radio",
+    "source": "rrradio / Radio Browser",
+    "checkedAt": "2026-09-10"
+  },
+  {
+    "title": "Tīrkultūra",
+    "url": "https://s3.radio.co/s216811754/listen",
+    "cover": "https://tirkultura.lv/favicon-32x32.png",
+    "tooltip": "Latvijas radio",
+    "source": "rrradio / Radio Browser",
+    "checkedAt": "2026-09-10"
+  },
+  {
+    "title": "EHR Party Service",
+    "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_PARTY_SERVICE.mp3",
+    "cover": "",
+    "tooltip": "Latvijas radio",
+    "source": "rrradio / Radio Browser",
+    "checkedAt": "2026-09-10"
+  },
+  {
+    "title": "EHR Gold",
+    "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_SUPERHITS_GOLD.mp3",
+    "cover": "",
+    "tooltip": "Latvijas radio",
+    "source": "rrradio / Radio Browser",
+    "checkedAt": "2026-09-10"
+  },
+  {
+    "title": "EHR Festivālu Hiti",
+    "url": "https://stream.ehrhiti.lv:8000/Stream_73.mp3",
+    "cover": "",
+    "tooltip": "Latvijas radio",
+    "source": "rrradio / Radio Browser",
+    "checkedAt": "2026-09-10"
+  },
+  {
+    "title": "EHR Ice Ice Party",
+    "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/SUPERHITS_SUPER_DANCE.mp3",
+    "cover": "",
+    "tooltip": "Latvijas radio",
+    "source": "rrradio / Radio Browser",
+    "checkedAt": "2026-09-10"
+  },
+  {
+    "title": "EHR Darbam",
+    "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_DARBAM.mp3",
+    "cover": "",
+    "tooltip": "Latvijas radio",
+    "source": "rrradio / Radio Browser",
+    "checkedAt": "2026-09-10"
+  },
+  {
+    "title": "EHR iDeal Music",
+    "url": "https://stream.ehrhiti.lv:8000/Stream_78.mp3",
+    "cover": "",
+    "tooltip": "Latvijas radio",
+    "source": "rrradio / Radio Browser",
+    "checkedAt": "2026-09-10"
+  },
+  {
+    "title": "ALISE PLUS",
+    "url": "https://fm2inet.aliseplus.lv/",
+    "cover": "",
+    "tooltip": "Latvijas radio",
+    "source": "rrradio / Radio Browser",
+    "checkedAt": "2026-09-10"
+  },
+  {
+    "title": "EHR TOP 40",
+    "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_TOP_40AAC.aac",
+    "cover": "",
+    "tooltip": "Latvijas radio",
+    "source": "rrradio / Radio Browser",
+    "checkedAt": "2026-09-10"
+  },
+  {
+    "title": "NewDanceRadio",
+    "url": "https://stream.newdanceradio.lv/mp3_192",
+    "cover": "",
+    "tooltip": "Latvijas radio",
+    "source": "Radio Browser",
+    "checkedAt": "2026-09-10"
+  },
+  {
+    "title": "Nordic Chillout Indie",
+    "url": "https://listen.radioking.com/radio/768542/stream/835766",
+    "cover": "https://indie.nordichilloutradio.com/wp-content/themes/indie-chillout-main/media/apple-touch-icon.png",
+    "tooltip": "Latvijas radio",
+    "source": "Radio Browser",
+    "checkedAt": "2026-09-10"
+  },
+  {
+    "title": "Radio Liepāja",
+    "url": "https://stream.radioliepaja.lv/live/playlist.m3u8",
+    "cover": "https://radioliepaja.lv/favicon.svg",
+    "tooltip": "Latvijas radio",
+    "source": "Radio Browser",
+    "checkedAt": "2026-09-10"
+  },
+  {
+    "title": "Radio Viens",
+    "url": "https://radioviens.lv/live",
+    "cover": "https://radioviens.lv/avatar.png",
+    "tooltip": "Latvijas radio",
+    "source": "Radio Browser",
+    "checkedAt": "2026-09-10"
+  },
+  {
+    "title": "Retro FM 70s 80s 90s",
+    "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/RETRO_LATVIJA_FM_70_80_90S.mp3",
+    "cover": "https://retrofm.lv/files/logo_03.png",
+    "tooltip": "Latvijas radio",
+    "source": "Radio Browser",
+    "checkedAt": "2026-09-10"
+  }
+]

@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.590';
+const CACHE = 'minka-4.6.591';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
@@ -119,7 +119,10 @@ self.addEventListener('fetch', event => {
   const isApiRequest = (() => {
     try {
       const parsed = new URL(url);
-      return parsed.pathname.includes('/api/');
+      // ZET metadata uses JSONP scripts with a fresh URL every 30 seconds.
+      // Keep those live responses out of the persistent asset cache.
+      return parsed.pathname.includes('/api/') ||
+        (parsed.hostname === 'rds.eurozet.pl' && parsed.pathname === '/reader/history.php');
     } catch (_e) {
       return false;
     }

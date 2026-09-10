@@ -21,7 +21,7 @@ test('radio ignores old-station metadata and coalesces same-station polls', asyn
   const source = read('js/radio.js'), requests = [], painted = [];
   const c = vm.createContext({
     radioVisualsInactive: () => false, audio: { paused: false }, MK_LOW_SPEC: false,
-    npTimer: null, npLastKey: '', npGeneration: 0, npInFlight: null,
+    npTimer: null, npLastKey: '', npGeneration: 0, npInFlight: null, npMetadataController:null, npStationLogo:'', AbortController, window:{}, stationLogoUrl:()=> 'station-logo',
     deriveRRPrefix: s => s.prefix,
     setNowUI: (...args) => painted.push(args), setInterval: () => 1, clearInterval() {},
     fetchNowForStation: st => { const d = deferred(); requests.push({ st, ...d }); return d.promise; }
