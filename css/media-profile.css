@@ -76,7 +76,7 @@
 .driver-popover.media-radio-tour{min-width:0;max-width:min(290px,calc(100vw - 28px));padding:18px;border:1px solid #badcc631;border-radius:17px;background:#142820;color:#e9f5ee;box-shadow:0 12px 35px #0006;font-family:system-ui}
 .driver-popover.media-radio-tour .driver-popover-title{font-size:15px;font-weight:650;line-height:1.4;padding-right:20px}
 .driver-popover.media-radio-tour .driver-popover-description{font-size:12px;line-height:1.6;color:#bdd1c4}
-.driver-popover.media-radio-tour .driver-popover-close-btn{top:8px;right:8px;width:26px;height:26px;border-radius:50%;color:#b4cfc0;font-size:20px}
+.driver-popover.media-radio-tour .driver-popover-close-btn{top:8px;right:8px;width:26px;height:26px;box-sizing:border-box;border-radius:50%;color:#b4cfc0;font-size:20px;line-height:1;display:grid;place-items:center;padding:0 0 2px}
 .driver-popover.media-radio-tour .driver-popover-close-btn:hover{background:#ffffff12;color:#fff}
 .driver-popover.media-radio-tour .driver-popover-close-btn:focus{outline:none;background:none;color:#b4cfc0}
 .driver-popover.media-radio-tour .driver-popover-close-btn:focus-visible{outline:2px solid #91e3c5;outline-offset:2px;color:#fff}
