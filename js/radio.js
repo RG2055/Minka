@@ -3657,3 +3657,5 @@ try{ window.handleSlowButton = handleSlowButton; }catch(e){}
     mkReleaseResources();
   });
 })();
+
+window.MinkaShiftRadio?.attach(audio);

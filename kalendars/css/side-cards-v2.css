@@ -1262,3 +1262,13 @@ html:not(.host-radio-open) #grafiks-app :is(#radiographers-duty, #radiologists-d
   color: #172018 !important;
   text-shadow: none !important;
 }
+
+/* The month split bar spans the whole row (no dt column). */
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot-row--split,
+html body :is(.left-panel #radiographers-duty, .right-panel #radiologists-duty) .mk-side-nfoot-row--split,
+html body :is(.side-panel.compact-duty, .side-panel.mini-duty) :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot-row--split {
+  grid-template-columns: 1fr !important;
+  margin: 0 0 1px !important;
+}
+html body :is(#radiographers-duty, #radiologists-duty) .mk-nfoot-split { width: 100% !important; }
+html body :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot--split { border-top: 0 !important; padding-top: 0 !important; }

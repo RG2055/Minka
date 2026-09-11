@@ -3039,11 +3039,16 @@ function filterFullList(btn) {
 
           let meta = index.get(workerName);
           if (!meta) {
-            meta = { done: 0, total: 0, next: null };
+            meta = { done: 0, total: 0, next: null, types: { day: 0, night: 0, h24: 0 } };
             index.set(workerName, meta);
           }
           if (Math.floor(dateNumber / 100) === selectedYearMonth) {
             meta.total += 1;
+            // Month split by shift kind for the footer bar (same buckets as statistics).
+            const shiftHours = parseInt(String(worker.shift || '').replace(/\D/g, ''), 10) || 0;
+            const kind = shiftHours >= 24 || String(worker.type || '').toUpperCase() === 'DIENNAKTS' ? 'h24'
+              : String(worker.type || '').toUpperCase() === 'NAKTS' ? 'night' : 'day';
+            meta.types[kind] += 1;
             if (dateNumber < selectedDateNumber || (dateNumber === selectedDateNumber && shiftStartTime <= nowTime)) {
               meta.done += 1;
             }
@@ -3113,13 +3118,22 @@ function filterFullList(btn) {
     }
 
     let monthHtml = '';
+    let splitHtml = '';
     if (meta.total > 0) {
       const remaining = meta.total - meta.done;
       const selectedMonth = Math.floor(sideDateNumber(activeDateStr) / 100) % 100;
-      const segments = Array.from({ length: meta.total }, (_, index) => `<i${index < meta.done ? ' class="on"' : ''}></i>`).join('');
-      monthHtml = `<div class="mk-side-nfoot-row"><dt>Maiņas ${SIDE_MONTH_LOCATIVE[selectedMonth - 1]}</dt><dd>${meta.done} / ${meta.total}${remaining > 0 ? ` <em>(vēl ${remaining})</em>` : ''}<span class="mk-nfoot-seg" style="--mk-side-fat-color:${fatigue.color}">${segments}</span></dd></div>`;
+      // Split bar by shift kind, as in the statistics team cards: each count
+      // sits on its own colour, so the month reads at a glance.
+      const types = meta.types || { day: 0, night: 0, h24: 0 };
+      const split = [['day', 'D', '#3f9bff'], ['night', 'N', '#23cdcf'], ['h24', '24h', '#f5b73f']]
+        .filter(([key]) => types[key] > 0)
+        .map(([key, label, color]) => `<i style="flex:${types[key]} 1 0;background:${color}" title="${label === 'D' ? 'Diena' : label === 'N' ? 'Nakts' : '24h'}: ${types[key]}"><b>${types[key]}</b><span>${label}</span></i>`)
+        .join('');
+      monthHtml = `<div class="mk-side-nfoot-row"><dt>Maiņas ${SIDE_MONTH_LOCATIVE[selectedMonth - 1]}</dt><dd>${meta.done} / ${meta.total}${remaining > 0 ? ` <em>(vēl ${remaining})</em>` : ''}</dd></div>`;
+      // The bar takes the place of the footer's dashed divider.
+      if (split) splitHtml = `<div class="mk-side-nfoot-row mk-side-nfoot-row--split"><span class="mk-nfoot-split">${split}</span></div>`;
     }
-    return nextHtml || monthHtml ? `<dl class="mk-side-nfoot">${nextHtml}${monthHtml}</dl>` : '';
+    return nextHtml || monthHtml ? `<dl class="mk-side-nfoot${splitHtml ? ' mk-side-nfoot--split' : ''}">${splitHtml}${nextHtml}${monthHtml}</dl>` : '';
   }
 
   function renderSideDutyCards(container, workers, options) {

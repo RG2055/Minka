@@ -191,7 +191,7 @@
   }
 
   function emojiButtonHtml(e, workerLvl, currentEmoji) {
-    var locked = LOCKED[e] && workerLvl < LOCKED[e].lvl;
+    var locked = !window.MinkaDaybook && LOCKED[e] && workerLvl < LOCKED[e].lvl;
     var isSelected = e === currentEmoji;
     var cls = 'mkp-emoji-btn' + (isSelected ? ' mkp-selected' : '') + (locked ? ' mkp-locked' : '');
     if (locked) {
@@ -362,6 +362,7 @@
   }
 
   function isUnlocked(emoji, workerName) {
+    if(window.MinkaDaybook)return true;
     if (!LOCKED[emoji]) return true;
     return getWorkerLvl(workerName) >= LOCKED[emoji].lvl;
   }
@@ -538,7 +539,7 @@
       '<div class="mk-ctx-item" data-mk-ctx-emoji="1">✨ ' + (emoji ? 'Mainīt emoji' : 'Pievienot emoji') + '</div>' +
       (emoji ? '<div class="mk-ctx-item mk-ctx-remove" data-mk-ctx-remove="1">🗑️ Noņemt emoji</div>' : '') +
       '<div class="mk-ctx-sep"></div>' +
-      '<div class="mk-ctx-label">Lv.' + getWorkerLvl(workerName) + ' ' + escapeHtml(workerName.split(' ')[0] || '') + '</div>';
+      '<div class="mk-ctx-label">' + escapeHtml(workerName.split(' ')[0] || '') + '</div>';
 
     var vw = window.innerWidth, vh = window.innerHeight;
     var cx = Math.min(x, vw - 160), cy = Math.min(y, vh - 100);
@@ -577,7 +578,7 @@
   function renderPicker() {
     if (!_pickerEl) return;
     var inner = _pickerEl.querySelector('.mkp-inner');
-    var workerLvl = getWorkerLvl(_activeWorker || '');
+    var workerLvl = window.MinkaDaybook ? 10 : getWorkerLvl(_activeWorker || '');
     var currentEmoji = _selectedEmoji;
 
     var gridHtml = buildEmojiGroupsHtml(workerLvl, currentEmoji);
@@ -1751,7 +1752,7 @@
   function renderInModal(container) {
     if (!container || !_modalWorker) return;
     var workerName = _modalWorker;
-    var workerLvl = getWorkerLvl(workerName);
+    var workerLvl = window.MinkaDaybook ? 10 : getWorkerLvl(workerName);
     var current = safeEmoji(_data[workerName]) || null;
     if (_activeWorker !== workerName) {
       _activeWorker = workerName;

@@ -133,7 +133,7 @@ window.setTimeout(function () {
 <link rel="stylesheet" href="css/skin-draw.css?v=20260829chalk1">
 <link rel="stylesheet" href="css/card-addons.css?v=20260831perf25">
 <script src="js/card-addons.js?v=20260908identity2" defer></script>
-<link rel="stylesheet" href="css/side-cards-v2.css?v=20260908lemon1">
+<link rel="stylesheet" href="css/side-cards-v2.css?v=20260911split4">
 <link rel="stylesheet" href="css/header-weather.css?v=20260813headerfix1">
 <link rel="stylesheet" href="css/mood-fluent.css?v=20260820fmood16">
 <link rel="stylesheet" href="css/daily-cat.css?v=20260829catpicker1">
@@ -2592,7 +2592,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260908liquid25"></script>
+<script src="js/calendar.js?v=20260911split2"></script>
 <script src="js/depth-cards.js?v=20260828local10" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
@@ -2606,8 +2606,11 @@ function _mkToast(msg, type) {
 <script src="js/design_v1.js?v=20260824perfaudit2" defer></script>
 <script src="js/theme.js?v=20260724f" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
-<script src="js/emoji.js?v=20260908recovery1" defer></script>
-<script src="js/levels.js?v=20260802coffee1" defer></script>
+<script src="js/emoji.js?v=20260911daybook1-20260908recovery1" defer></script>
+<link rel="stylesheet" href="css/daybook.css?v=20260912x">
+<script src="js/daybook-model.js?v=20260911b" defer></script>
+<script src="js/daybook.js?v=20260912s" defer></script>
+<script src="js/levels.js?v=20260911daybook2" defer></script>
 
 <script>
 window.__minkaLocalBuild = '20260824perfaudit3';
@@ -10878,6 +10881,40 @@ html.mk-low-spec .nsc-deco .ns-moon-float {
 .mk-nfoot-seg i.on {
   background: var(--mk-side-fat-color, #35d07f) !important;
 }
+/* Month split by shift kind (D / N / 24h), same bar as the statistics cards. */
+/* With the split bar in place the footer's divider line goes away everywhere:
+   this out-specifies every themed/layout variant of .mk-side-nfoot. */
+.mk-side-nfoot--split,
+html body #grafiks-app #radiographers-duty .mk-side-nfoot--split.mk-side-nfoot--split,
+html body #grafiks-app #radiologists-duty .mk-side-nfoot--split.mk-side-nfoot--split { border-top: 0 !important; padding-top: 0 !important; }
+.mk-side-nfoot-row--split { grid-column: 1 / -1 !important; grid-template-columns: 1fr !important; margin: 0 0 2px !important; }
+.mk-nfoot-split {
+  display: flex !important;
+  gap: 2px !important;
+  width: 100% !important;
+  height: 12px !important;
+  border-radius: 4px !important;
+  overflow: hidden !important;
+}
+.mk-nfoot-split i {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 2px !important;
+  min-width: 18px !important;
+  height: 100% !important;
+  font-style: normal !important;
+  font-size: 8.5px !important;
+  line-height: 1 !important;
+  letter-spacing: .02em !important;
+  color: #0a0b0d !important;
+  -webkit-text-fill-color: #0a0b0d !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+}
+/* Count in white (with a shadow so it holds on the amber), kind letter in black. */
+.mk-nfoot-split i b { font-weight: 800 !important; font-size: 10.5px !important; color: #fff !important; -webkit-text-fill-color: #fff !important; text-shadow: 0 1px 1px rgba(0,0,0,.6) !important; }
+.mk-nfoot-split i span { font-weight: 700 !important; opacity: .8 !important; }
 /* watermark initials */
 .mk-side-wm {
   position: absolute !important;
@@ -18350,9 +18387,9 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
         return box.l < other.r && other.l < box.r && box.t < other.b && other.t < box.b;
       });
     }
-    card.querySelectorAll('.rg-feedback-card-title, .rg-mood-side, .rg-mood-topbtn, .rg-mood-label, .rg-pulse-taps, .rg-feedback-card-actions')
+    card.querySelectorAll('.rg-feedback-card-title, .rg-mood-side, .rg-mood-topbtn, .rg-mood-label, .rg-mood-now, .rg-pulse-taps, .rg-feedback-card-actions')
       .forEach(function (node) {
-        var protectedText = node.classList.contains('rg-mood-label') || node.classList.contains('rg-feedback-card-title');
+        var protectedText = node.classList.contains('rg-mood-label') || node.classList.contains('rg-mood-now') || node.classList.contains('rg-feedback-card-title');
         var box = nodeBox(node, protectedText ? 12 : 6);
         if (box) staffOccupied.push(box);
       });
@@ -18567,7 +18604,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     people.forEach(function (person) {
       addOccupied(person, Math.max(8, person.getBoundingClientRect().width * .18));
     });
-    card.querySelectorAll('.rg-feedback-card-title, .rg-mood-side, .rg-mood-topbtn, .rg-mood-label, .rg-pulse-taps, .rg-feedback-card-actions')
+    card.querySelectorAll('.rg-feedback-card-title, .rg-mood-side, .rg-mood-topbtn, .rg-mood-label, .rg-mood-now, .rg-pulse-taps, .rg-feedback-card-actions')
       .forEach(function (node) { addOccupied(node, 4); });
     addOccupied(blob, 4);
     function collidesWith(box, boxes) {
@@ -19470,6 +19507,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
         + '<div class="rg-feedback-card-actions"><button class="rg-pulse-write rg-pulse-write--comment" type="button" data-rg-write="comment" title="Atvērt komentārus"><b class="rg-comment-icon" aria-hidden="true"></b><span>Komentāri</span><small class="rg-feedback-action-count" data-rg-action-count="comment"></small></button></div>';
     }
     grid.appendChild(pulse);
+    window.MinkaDaybook?.enhance(pulse);
     if (!deferLayout) scheduleMoodSectionLayout();
     if (!skipMoodPaint) paintCounts();
     // A selected-day render already has one forced refresh queued by the
@@ -19538,6 +19576,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     // storage event and mount. `selected` is this device's last tap, `dominant`
     // is the day's leading reaction restored from the server.
     updateMoodBlob((selected && selected.key) || (dominant && dominant.key) || null);
+    window.MinkaDaybook?.enhance(card);
     // updateMoodBlob() also rebuilds the responsive feedback illustration.
     // Its final height is only known after that synchronous rebuild, so place
     // the following profession once more. Synchronously: the rebuild and the
@@ -23761,7 +23800,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
 
 <link rel="stylesheet" href="css/fatigue-health.css?v=20260908health18">
 <link rel="stylesheet" href="../css/radio-ambience.css?v=20260908ambient3">
-<link rel="stylesheet" href="css/radio-side-cards.css?v=20260910coffeetarget2">
+<link rel="stylesheet" href="css/radio-side-cards.css?v=20260911split1">
 <script src="../js/radio-ambience.js?v=20260908ambient3"></script>
 <link rel="stylesheet" href="../css/calendar-surfaces.css?v=20260908surfaces3">
 </body>

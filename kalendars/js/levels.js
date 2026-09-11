@@ -1096,7 +1096,15 @@
         .sort(function(a, b) { return (b.xp || 0) - (a.xp || 0); })[0] || null;
     },
 
+    // The daybook statistics view embeds the fatigue chart for any month label
+    // ("SEPTEMBRIS 2026"), not only the calendar's active one.
+    renderFatigueChart: function(monthLabel) {
+      var label = monthLabel || window.__activeMonth || '';
+      return label ? buildFatigueChart(buildMonthStats(label), label) : '';
+    },
+
     injectIntoStats: function() {
+      if (window.MinkaDaybook) { window.MinkaDaybook.renderStats(); return; }
       var wrap = document.getElementById('stats-table-wrap');
       if (!wrap) return;
 

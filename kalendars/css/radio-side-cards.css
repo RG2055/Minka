@@ -135,3 +135,6 @@ html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .
 :root.host-radio-open:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-add {
   border-radius: 0 999px 999px 0 !important;
 }
+
+/* Compact cards next to the open radio: no room for the month split bar. */
+html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot-row--split { display: none !important; }

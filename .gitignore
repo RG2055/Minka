@@ -22,3 +22,6 @@ _audit_backup/
 minka-history-scrub/
 *.bundle
 **/.wrangler/
+
+# Local-only daybook preview data.
+.local-preview/
