@@ -4,7 +4,8 @@ const FEEDBACK_PATHS = new Set([
   "/api/feedback",
   "/api/feedback/days",
   "/api/feedback/rating",
-  "/api/feedback/message"
+  "/api/feedback/message",
+  "/api/radio"
 ]);
 
 function corsHeaders(request) {
@@ -348,6 +349,52 @@ async function deleteMessage(request, env) {
   return json(request, { ok: true, deleted: true });
 }
 
+function cleanStation(value) {
+  const text = String(value || "").normalize("NFC").replace(/\s+/g, " ").trim();
+  if (!text || text.length > 120 || /[<>]/.test(text)) return "";
+  return text;
+}
+
+// Which stations played on which shift days, for the statistics view.
+// GET /api/radio?from=YYYY-MM-DD&to=YYYY-MM-DD (at most 93 days).
+async function getRadioDays(request, env, url) {
+  const from = cleanDay(url.searchParams.get("from"));
+  const to = cleanDay(url.searchParams.get("to"));
+  if (!from || !to || from > to) return json(request, { ok: false, error: "valid from/to required" }, 400);
+  const span = (Date.parse(to + "T00:00:00Z") - Date.parse(from + "T00:00:00Z")) / 86400000;
+  if (span > 92) return json(request, { ok: false, error: "range too long" }, 400);
+  const result = await env.DB.prepare(
+    "SELECT shift_day, station, first_at FROM radio_days WHERE shift_day BETWEEN ?1 AND ?2 ORDER BY shift_day, first_at"
+  ).bind(from, to).all();
+  return json(request, {
+    ok: true,
+    from,
+    to,
+    days: (result.results || []).map((row) => ({
+      day: row.shift_day,
+      station: row.station,
+      firstAt: Math.max(0, Number(row.first_at) || 0)
+    }))
+  });
+}
+
+// POST /api/radio { date, station } — records that a station played on that
+// shift day. Repeats are ignored; the day may not be in the future.
+async function addRadioDay(request, env) {
+  const body = await readLimitedJson(request);
+  const date = cleanDay(body?.date);
+  const station = cleanStation(body?.station);
+  if (!date) return json(request, { ok: false, error: "valid date required" }, 400);
+  if (!station) return json(request, { ok: false, error: "valid station required" }, 400);
+  const today = new Date(Date.now() + 3 * 3600000).toISOString().slice(0, 10); // Riga is UTC+2/+3
+  if (date > today) return json(request, { ok: false, error: "date in the future" }, 400);
+  const now = Date.now();
+  await env.DB.prepare(
+    "INSERT INTO radio_days (shift_day, station, first_at) VALUES (?1, ?2, ?3) ON CONFLICT(shift_day, station) DO NOTHING"
+  ).bind(date, station, now).run();
+  return json(request, { ok: true, date, station });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -365,6 +412,8 @@ export default {
       if (url.pathname === "/api/feedback/message" && request.method === "POST") return await addMessage(request, env);
       if (url.pathname === "/api/feedback/message" && request.method === "PATCH") return await editMessage(request, env);
       if (url.pathname === "/api/feedback/message" && request.method === "DELETE") return await deleteMessage(request, env);
+      if (url.pathname === "/api/radio" && request.method === "GET") return await getRadioDays(request, env, url);
+      if (url.pathname === "/api/radio" && request.method === "POST") return await addRadioDay(request, env);
       if (FEEDBACK_PATHS.has(url.pathname)) return json(request, { ok: false, error: "Method not allowed" }, 405);
       return json(request, { ok: false, error: "Not found" }, 404);
     } catch (error) {

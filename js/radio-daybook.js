@@ -19,6 +19,18 @@
     var w = frameWindow();
     if (w) w.postMessage({ type: 'minka-shift-radio', state: state }, location.origin);
   }
+  var FEEDBACK_BASE = String(window.MINKA_FEEDBACK_API_BASE || 'https://minka-feedback-api.gamernr1elite.workers.dev').replace(/\/$/, '');
+  // Shared history: day + station only, so every device's statistics agree.
+  // Sent once per station and day per page load; the API ignores repeats.
+  var shared = {};
+  function share(day, name) {
+    var key = day + '|' + M.norm(name);
+    if (shared[key]) return;
+    shared[key] = true;
+    fetch(FEEDBACK_BASE + '/api/radio', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date: day, station: name }), keepalive: true })
+      .then(function (r) { if (!r.ok) delete shared[key]; })
+      .catch(function () { delete shared[key]; });
+  }
   function persist() {
     try { localStorage.setItem(KEY, JSON.stringify(records)); } catch (_e) {}
     if (window.MINKA_LOCAL_DAYBOOK) {
@@ -37,6 +49,7 @@
     if (playing && name) {
       var day = M.dutyDay();
       lastDay = day;
+      share(day, name);
       var key = M.norm(name);
       var exists = records.some(function (e) { return e.day === day && M.norm(e.name) === key; });
       if (!exists) {

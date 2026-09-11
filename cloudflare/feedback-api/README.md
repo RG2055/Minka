@@ -26,3 +26,12 @@ D1: `minka-feedback-db`
 - Publiskais GET turpina atdot `clientId` kā stabilu identifikatoru, bet tas
   vairs nepiešķir rediģēšanas tiesības. Vecie ieraksti bez tokena ir read-only.
 - Strauji emoji klikšķi PWA pusē tiek apvienoti vienā `delta` pieprasījumā.
+
+## Dežūras radio vēsture
+
+- `POST /api/radio` `{ date, station }` — PWA nosūta, kad stacija sāk skanēt
+  (viens ieraksts dienā uz staciju; atkārtojumi tiek ignorēti, nākotnes datums
+  tiek noraidīts). Netiek glabāts, kurš klausījās.
+- `GET /api/radio?from=YYYY-MM-DD&to=YYYY-MM-DD` (līdz 93 dienām) — statistikas
+  skats nolasa mēnesi un apvieno ar ierīces lokālo vēsturi.
+- Tabula `radio_days` (migrācija `0003_radio_days.sql`).

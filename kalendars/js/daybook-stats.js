@@ -22,6 +22,9 @@
   var COFFEE_SOURCES = [['philips', 'Philips'], ['lofbergs', 'Löfbergs'], ['narvesen', 'Narvesen'], ['monster', 'Monster'], ['monsterultra', 'Monster Ultra'], ['redbull', 'Red Bull'], ['cupcoffee', 'Cita kafija']];
 
   var state = { month: '', group: 'all', tab: 'overview', person: '', day: '' };
+  // Shared radio history from the feedback API, per month: { 'YYYY-MM': { at, days: [...] } }.
+  var remoteRadio = {};
+  var radioJob = null;
   // day -> timestamp of the last successful ratings fetch (this session only).
   var ratingsFetchedAt = {};
   var ratingsJob = null;
@@ -66,12 +69,43 @@
 
   /* ── data ─────────────────────────────────────────────────────────────── */
   function shiftsAll() { return M.schedule([window.__grafiksStore, window.__grafiksStoreRad]); }
+  function radioAll(range) {
+    // This device's own records plus what the API knows, one row per day and station.
+    var seen = {}, out = [];
+    var add = function (day, name, firstAt) {
+      var key = day + '|' + M.norm(name);
+      if (!day || !name || seen[key]) return;
+      seen[key] = true;
+      out.push({ day: day, name: name, firstAt: firstAt || 0 });
+    };
+    Object.keys(remoteRadio).forEach(function (month) { (remoteRadio[month].days || []).forEach(function (e) { add(e.day, e.station, e.firstAt); }); });
+    (D.radio() || []).forEach(function (e) { add(e.day, e.name, e.firstAt); });
+    return out;
+  }
+  function ensureRadio(month) {
+    var base = String(window.MINKA_FEEDBACK_API_BASE || '').replace(/\/$/, '');
+    if (!base || radioJob) return;
+    var cached = remoteRadio[month];
+    if (cached && Date.now() - cached.at < 5 * 60000) return;
+    var range = M.monthRange(month);
+    var got = false;
+    radioJob = fetch(base + '/api/radio?from=' + range.from + '&to=' + range.to, { cache: 'no-store', signal: AbortSignal.timeout(10000) })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) { if (data && data.ok) { remoteRadio[month] = { at: Date.now(), days: data.days || [] }; got = true; } })
+      .catch(function () {})
+      .then(function () {
+        // A failed fetch is remembered too, so a missing endpoint never loops.
+        if (!got) remoteRadio[month] = { at: Date.now(), days: (cached && cached.days) || [] };
+        radioJob = null;
+        if (got && state.month === month && modalOpen()) render();
+      });
+  }
   function summaryFor(range, person, group) {
     return M.summary({
       shifts: shiftsAll(),
       changes: M.bolus(readJson('minkaBolusHistoryV1')),
       ratings: D.ratings(),
-      radio: D.radio(),
+      radio: radioAll(range),
       coffee: readJson(COFFEE_KEY),
       from: range.from, to: range.to,
       person: person || '', group: group || 'all'
@@ -550,6 +584,7 @@
     if (!state.person && !state.day && state.tab === 'overview') {
       ensureRatings(elapsedDays(b.rows, b.today).map(function (r) { return r.day; }));
     }
+    ensureRadio(state.month);
     // Coffee days come from the API on demand; opening the stats (or a month)
     // pulls the month's missing days, a day view pulls its own day.
     var coffeeDays = state.day ? [state.day] : elapsedDays(b.rows, b.today).map(function (r) { return r.day; });
