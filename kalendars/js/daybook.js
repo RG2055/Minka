@@ -28,14 +28,68 @@
       + part('rg-hp-cup rg-hp-cup--l', 'hp-cup-left.webp') + part('rg-hp-cup rg-hp-cup--r', 'hp-cup-right.webp');
   }
 
-  function radioIconSvg() {
-    return '<svg class="rg-mood-now-icon" viewBox="0 0 24 24" aria-hidden="true">'
-      + '<path d="M4 9.5 17.5 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>'
-      + '<rect x="3" y="9" width="18" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="2"></rect>'
-      + '<circle cx="15.5" cy="14.5" r="2.4" fill="currentColor"></circle>'
-      + '<path d="M6.5 13h4M6.5 16.5h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>'
-      + '</svg>';
+  /* Where the radio sits: a random free spot on the lower arc around the
+     glass, chosen once per station. Candidates are tested against the real
+     boxes of the staff bubbles, side chips, label and card edges, so nothing
+     stacks. No animation — the cheap part of "floating" is only the place. */
+  function placeBadge(stage, force) {
+    var now = stage.querySelector('.rg-mood-now');
+    var wrap = stage.querySelector('.rg-mood-blob-wrap');
+    var card = stage.closest('.rg-feedback-card');
+    if (!now || !wrap || !card) return;
+    // One spot per station and selected day; a new day or station rolls again.
+    var key = state.name + '|' + selectedDay();
+    if (!force && now.dataset.placedFor === key) return;
+    // Size varies a little too — never above the base size.
+    now.style.setProperty('--b', 'calc(clamp(82px, 45cqw, 100px) * ' + (0.8 + Math.random() * 0.2).toFixed(2) + ')');
+    var lens = stage.querySelector('.rg-mood-glass-lens') || wrap;
+    var W = wrap.getBoundingClientRect(), L = lens.getBoundingClientRect(), C = card.getBoundingClientRect();
+    var b = now.getBoundingClientRect();
+    if (!W.width || !b.width) return;
+    var bw = b.width, bh = b.height, ant = bh * 0.56; // antenna rises above the body
+    var cx = L.left + L.width / 2 - W.left, cy = L.top + L.height / 2 - W.top;
+    var R = L.width / 2 + bh * 0.6 + 4;
+    var avoid = [];
+    card.querySelectorAll('.rg-mood-person, .rg-mood-side, .rg-mood-label, .rg-mood-topbtn, .rg-feedback-card-title, .rg-pulse-taps, .rg-feedback-card-actions, .rg-hp-cup, .rg-mood-glass-lens').forEach(function (el) {
+      var r = el.getBoundingClientRect();
+      if (r.width && r.height && !now.contains(el)) avoid.push(r);
+    });
+    var angles = [];
+    for (var a = 30; a <= 150; a += 8) if (Math.abs(a - lastAngle) > 20) angles.push(a);
+    for (var i = angles.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = angles[i]; angles[i] = angles[j]; angles[j] = t; }
+    var best = null;
+    angles.some(function (deg) {
+      var rad = deg * Math.PI / 180;
+      var x = cx + Math.cos(rad) * R - bw / 2, y = cy + Math.sin(rad) * R - bh / 2;
+      var box = { left: W.left + x, top: W.top + y - ant, right: W.left + x + bw, bottom: W.top + y + bh };
+      if (box.left < C.left + 4 || box.right > C.right - 4 || box.bottom > C.bottom - 4) return false;
+      var hit = avoid.some(function (r) { return box.left < r.right && r.left < box.right && box.top < r.bottom && r.top < box.bottom; });
+      if (hit) return false;
+      best = { x: x, y: y };
+      lastAngle = deg;
+      return true;
+    });
+    if (!best) best = { x: cx - bw / 2, y: cy + L.height / 2 + bh * 0.14 };
+    now.style.left = best.x.toFixed(1) + 'px';
+    now.style.top = best.y.toFixed(1) + 'px';
+    // A static tilt, left or right, rolled with the place. No motion.
+    var tilt = (3 + Math.random() * 6) * (Math.random() < 0.5 ? -1 : 1);
+    now.style.transform = 'rotate(' + tilt.toFixed(1) + 'deg)';
+    now.classList.add('is-placed');
+    now.dataset.placedFor = key;
+    // Let the staff constellation re-flow around the new box.
+    if (window.__minkaScheduleMoodSectionLayout) window.__minkaScheduleMoodSectionLayout();
   }
+  var lastAngle = -999;
+  var placeTimer = 0;
+  window.addEventListener('resize', function () {
+    window.clearTimeout(placeTimer);
+    placeTimer = window.setTimeout(function () {
+      var stage = document.querySelector('.rg-feedback-card .rg-mood-stage.is-radio');
+      if (stage) placeBadge(stage, true);
+    }, 200);
+  }, { passive: true });
+
   function paint() {
     var stage = document.querySelector('.rg-feedback-card .rg-mood-stage');
     if (!stage) return;
@@ -47,35 +101,40 @@
     if (!now) return;
     var track = [state.artist, state.title].filter(Boolean).join(' — ');
     now.title = on ? 'Skan: ' + state.name + (track ? ' · ' + track : '') : '';
-    // Album cover in the middle; the station logo, then the radio glyph, as fallbacks.
+    // Album cover (or the station's logo) in the radio's left window.
     var art = now.querySelector('.rg-mood-now-cover');
-    var pick = function (url) { return url && !/radio-default\.svg$/.test(url) && !/^data:/.test(url) ? url : ''; };
+    // Only absolute or data URLs count; a station's relative placeholder path
+    // (Record's DefaultTrack_600.png) is not art. A failed load falls back to
+    // the station logo, then hides the window.
+    var pick = function (url) { return url && /^(https?:|data:)/.test(url) && !/radio-default\.svg(\?|$)|DefaultTrack/.test(url) ? url : ''; };
     var want = pick(state.cover) || pick(state.logo);
+    var fallback = want === pick(state.cover) ? pick(state.logo) : '';
+    if (!art._bound) {
+      art._bound = true;
+      art.addEventListener('error', function () {
+        var next = art.dataset.fallback || '';
+        art.dataset.fallback = '';
+        if (next && art.getAttribute('src') !== next) art.src = next;
+        else { art.setAttribute('hidden', ''); art.removeAttribute('src'); }
+      });
+    }
+    art.dataset.fallback = fallback && fallback !== want ? fallback : '';
     if (want) { if (art.getAttribute('src') !== want) art.src = want; art.removeAttribute('hidden'); }
     else { art.setAttribute('hidden', ''); art.removeAttribute('src'); }
-    var icon = now.querySelector('.rg-mood-now-icon');
-    if (want) icon.setAttribute('hidden', ''); else icon.removeAttribute('hidden');
-    // Station on the top arc, track on the bottom arc. When the track does not
-    // fit its arc the whole text goes on one slowly turning ring instead.
-    var key = state.name + '|' + track;
-    if (now.dataset.text === key) return;
-    now.dataset.text = key;
-    var top = now.querySelector('.rg-mood-now-top textPath');
-    var bottom = now.querySelector('.rg-mood-now-bottom textPath');
-    var ring = now.querySelector('.rg-mood-now-full textPath');
-    top.textContent = state.name;
-    bottom.textContent = track;
-    ring.innerHTML = '';
-    now.classList.remove('is-spinning', 'is-full');
-    // Measured when visible; while the card is hidden the SVG reports 0, so a
-    // per-character estimate (Inter bold ≈ 4.1 units at 6.6px) stands in.
-    var arc = Math.PI * 29.5 * 0.92, fits = true;
-    var measure = function (el, text) { var n = 0; try { n = el.getComputedTextLength(); } catch (_e) {} return n || text.length * 4.1; };
-    fits = measure(top, state.name) <= arc && measure(bottom, track) <= arc;
-    if (!fits) {
-      now.classList.add('is-full', 'is-spinning');
-      ring.innerHTML = '<tspan class="rg-mood-now-station">' + esc(state.name) + '</tspan><tspan>  ·  ' + esc(track) + '  ·  </tspan>';
-    }
+    // Only the station on the top band (the track lives in the tooltip);
+    // a long station name scrolls.
+    var top = now.querySelector('.rg-mood-now-station > span');
+    if (top.textContent !== state.name) top.textContent = state.name;
+    if (!on) return;
+    placeBadge(stage, false);
+    window.requestAnimationFrame(function () {
+      [top].forEach(function (el) {
+        var box = el.parentNode, over = el.scrollWidth - box.clientWidth;
+        box.classList.toggle('is-overflow', over > 2);
+        box.style.setProperty('--shift', over > 2 ? (-over - 8) + 'px' : '0px');
+        box.style.setProperty('--dur', Math.max(5, Math.round((over + 40) / 14)) + 's');
+      });
+    });
   }
 
   function enhance(card) {
@@ -103,25 +162,11 @@
       now.className = 'rg-mood-now';
       now.setAttribute('aria-live', 'polite');
       now.setAttribute('data-rg-now', '');
-      now.innerHTML = '<span class="rg-mood-now-halo" aria-hidden="true"></span>'
-        + '<img class="rg-mood-now-base" src="assets/radio-glass-base.webp?v=3" alt="" decoding="async" onerror="this.parentNode.classList.add(\'no-glass-image\')">'
-        + '<span class="rg-mood-now-glass"></span>'
+      // Glass radio (kalendars/assets/radio.webp): body spans the badge width;
+      // the antenna sits above it. Tinted like the headphones.
+      now.innerHTML = '<span class="rg-mood-now-radio"><img src="assets/radio.webp?v=1" alt="" decoding="async"><i class="rg-hp-tint" style="-webkit-mask-image:url(assets/radio.webp?v=1);mask-image:url(assets/radio.webp?v=1)"></i></span>'
         + '<img class="rg-mood-now-cover" alt="" decoding="async" hidden>'
-        + '<span class="rg-mood-now-content">' + radioIconSvg()
-        + '<svg class="rg-mood-now-ring" viewBox="0 0 100 100" aria-hidden="true"><defs>'
-        // The bubble image spans radius ~39 of this box; text runs just inside its rim.
-        + '<path id="rgNowTop" d="M50 50 m-29.5 0 a29.5 29.5 0 1 1 59 0"></path>'
-        // left → right along the bottom (counter-clockwise) so the text reads upright
-        + '<path id="rgNowBottom" d="M50 50 m-35.5 0 a35.5 35.5 0 0 0 71 0"></path>'
-        + '<path id="rgNowFull" d="M50 50 m-30 0 a30 30 0 1 1 60 0 a30 30 0 1 1 -60 0"></path></defs>'
-        // dark translucent band under the text so it reads on the light glass
-        + '<circle class="rg-mood-now-band" cx="50" cy="50" r="32.5" fill="none"></circle>'
-        + '<text class="rg-mood-now-top"><textPath href="#rgNowTop" startOffset="50%" text-anchor="middle"></textPath></text>'
-        + '<text class="rg-mood-now-bottom"><textPath href="#rgNowBottom" startOffset="50%" text-anchor="middle"></textPath></text>'
-        + '<text class="rg-mood-now-full"><textPath href="#rgNowFull"></textPath></text></svg>'
-        + '</span>'
-        + '<img class="rg-mood-now-gloss" src="assets/radio-glass-gloss.webp?v=3" alt="" decoding="async" onerror="this.remove()">'
-        + '<span class="rg-mood-now-tint"></span>';
+        + '<span class="rg-mood-now-station"><span></span></span>';
       wrap.append(now);
     }
     paint();

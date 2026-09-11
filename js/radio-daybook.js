@@ -11,6 +11,12 @@
   var state = { name: '', playing: false, artist: '', title: '', tint: '', logo: '', cover: '' };
   var lastDay = '', nextDateCheck = 0, tintSeed = '';
 
+  // Logos and covers may be paths relative to this document; the calendar
+  // frame lives in a subfolder, so hand it absolute URLs.
+  function absolute(url) {
+    if (!url) return '';
+    try { return new URL(url, location.href).href; } catch (_e) { return ''; }
+  }
   function frameWindow() {
     var frame = document.getElementById('calIframe');
     return frame && frame.contentWindow;
@@ -45,7 +51,7 @@
     state.name = name;
     state.playing = !!playing;
     // radio.js declares npStationLogo with `let` (a global binding, not a window property).
-    state.logo = typeof npStationLogo === 'string' ? npStationLogo : '';
+    state.logo = absolute(typeof npStationLogo === 'string' ? npStationLogo : '');
     if (playing && name) {
       var day = M.dutyDay();
       lastDay = day;
@@ -119,8 +125,8 @@
     var d = (e && e.detail) || {};
     state.artist = String(d.artist || '').trim();
     state.title = String(d.title || '').trim();
-    state.logo = typeof npStationLogo === 'string' ? npStationLogo : '';
-    state.cover = String(d.coverUrl || '');
+    state.logo = absolute(typeof npStationLogo === 'string' ? npStationLogo : '');
+    state.cover = absolute(String(d.coverUrl || ''));
     var seed = state.artist + '|' + state.title + '|' + (d.coverUrl || '');
     if (seed === tintSeed) { emit(); return; }
     tintSeed = seed;

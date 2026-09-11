@@ -222,43 +222,25 @@
 html.mk-low-spec .rg-hp-cup, html.mk-low-spec .rg-hp-band { filter: none; }
 /* While the cups are on, the side chips drop below them instead of colliding. */
 .rg-mood-stage.is-radio .rg-mood-side { top: calc(50% + clamp(50px, 27cqw, 66px)); }
-.rg-mood-now { position: absolute; left: 50%; top: calc(50% + clamp(104px, 55cqw, 136px) / 2 - clamp(2px, 1.5cqw, 4px)); z-index: 9; display: none; width: clamp(76px, 44cqw, 96px); aspect-ratio: 1; padding: 0; border: 0; background: none; transform: translateX(-50%); pointer-events: auto; cursor: pointer; }
+/* Now-playing badge: the glass radio under the face. --b is the radio body's
+   width; the image (1254² source, body at x 0.167–0.833, y 0.426–0.812) is
+   1.5×--b so its body fills the badge exactly. Cover sits in the left window,
+   station on the top band, track on the bottom band. */
+.rg-mood-now { --b: clamp(82px, 45cqw, 100px); position: absolute; left: 50%; top: calc(50% + clamp(104px, 55cqw, 136px) / 2 + var(--b) * .14); z-index: 9; display: none; width: var(--b); height: calc(var(--b) * .58); padding: 0; border: 0; background: none; transform: translateX(-50%); pointer-events: auto; cursor: pointer; overflow: visible; }
 .rg-mood-stage.is-radio .rg-mood-now { display: block; }
-/* Layers: album cover under the glass (1) → glass bubble with its glyph (2) → album tint (3) → curved text (4) → gloss (5). */
-.rg-mood-now-base, .rg-mood-now-gloss, .rg-mood-now-content, .rg-mood-now-tint, .rg-mood-now-glass { position: absolute; inset: 0; width: 100%; height: 100%; }
-/* One soft album-coloured glow behind the bubble. */
-.rg-mood-now-halo { position: absolute; z-index: 0; left: 50%; top: 50%; width: 150%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; opacity: .5;
-  background: radial-gradient(circle closest-side, var(--rg-radio-tint, #7dd3fc) 0%, color-mix(in srgb, var(--rg-radio-tint, #7dd3fc) 55%, transparent) 40%, transparent 72%); }
-html.mk-low-spec .rg-mood-now-halo { opacity: .35; }
-.rg-mood-now-base { z-index: 2; object-fit: contain; pointer-events: none; }
-.rg-mood-now-content { z-index: 4; }
-.rg-mood-now-gloss { z-index: 5; object-fit: contain; pointer-events: none; opacity: .9; }
-.rg-mood-now-tint { z-index: 3; left: 11.5%; top: 11.5%; width: 77%; height: 77%; border-radius: 50%; background: radial-gradient(circle closest-side, var(--rg-radio-tint, transparent) 0%, var(--rg-radio-tint, transparent) 90%, transparent 100%); mix-blend-mode: multiply; opacity: .38; pointer-events: none; transition: background 900ms ease; }
-.rg-mood-now-band { stroke: rgba(4, 9, 18, .42); stroke-width: 9.5; }
-/* CSS glass stands in until the rendered base image is available. */
-.rg-mood-now-glass { display: none; z-index: 2; box-sizing: border-box; border-radius: 50%; border: 1px solid rgba(214, 235, 255, .22);
-  background:
-    radial-gradient(circle at 31% 24%, rgba(255, 255, 255, .26), transparent 31%),
-    linear-gradient(145deg, rgba(255, 255, 255, .16) 0%, rgba(255, 255, 255, .05) 40%, rgba(5, 14, 27, .82) 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), inset 0 -1px 0 rgba(0, 0, 0, .26), inset 0 0 0 clamp(7px, 4cqw, 9px) rgba(255, 255, 255, .04), 0 4px 10px rgba(0, 0, 0, .26); }
-.rg-mood-now.no-glass-image .rg-mood-now-base { display: none; }
-.rg-mood-now.no-glass-image .rg-mood-now-glass { display: block; }
-.rg-mood-now-cover { position: absolute; z-index: 1; left: 12%; top: 12%; width: 76%; height: 76%; border-radius: 50%; object-fit: cover; opacity: .62; filter: saturate(1.1); pointer-events: none; }
-.rg-mood-now-icon { position: absolute; left: 50%; top: 50%; width: 30%; height: 30%; transform: translate(-50%, -50%); color: var(--rg-radio-tint, #9dd7ff); }
-.rg-mood-now-cover[hidden], .rg-mood-now-icon[hidden] { display: none; }
-/* The bubble image carries its own radio glyph; the SVG one is only for the CSS fallback. */
-.rg-mood-now:not(.no-glass-image) .rg-mood-now-icon { display: none; }
-.rg-mood-now-ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.rg-mood-now-ring text { font: 800 6.6px/1 Inter, system-ui, sans-serif; letter-spacing: .06em; fill: #fff; paint-order: stroke fill; stroke: rgba(0, 0, 0, .55); stroke-width: .55px; }
-.rg-mood-now-bottom { fill: #eef4fa; font-weight: 700; }
-.rg-mood-now-full { display: none; }
-.rg-mood-now.is-full .rg-mood-now-top, .rg-mood-now.is-full .rg-mood-now-bottom { display: none; }
-.rg-mood-now.is-full .rg-mood-now-full { display: block; }
-.rg-mood-now-station { fill: #fff; font-weight: 800; }
-.rg-mood-now.is-spinning .rg-mood-now-ring { animation: rg-now-spin 26s linear infinite; }
-@keyframes rg-now-spin { to { transform: rotate(360deg); } }
-html.mk-low-spec .rg-mood-now.is-spinning .rg-mood-now-ring { animation-duration: 52s; }
-html.mk-low-spec .rg-mood-now-tint { mix-blend-mode: normal; opacity: .28; }
-@media (prefers-reduced-motion: reduce) { .rg-mood-now.is-spinning .rg-mood-now-ring { animation: none; } }
-.rg-mood-stage.is-radio .rg-mood-label { margin-top: clamp(48px, 28cqw, 68px); }
+.rg-mood-now-radio { position: absolute; left: -25%; top: calc(var(--b) * -.64); width: 150%; aspect-ratio: 1; isolation: isolate; pointer-events: none; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .45)); }
+/* Placed by placeBadge(): a random free spot around the glass, no motion. */
+.rg-mood-now.is-placed { transform: none; }
+.rg-mood-now-radio img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.rg-mood-now-radio .rg-hp-tint { opacity: .6; }
+.rg-mood-now-cover { position: absolute; left: 19%; top: 36%; width: 30.7%; height: 36.7%; border-radius: 9%; object-fit: cover; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .25); }
+.rg-mood-now-cover[hidden] { display: none; }
+.rg-mood-now-station, .rg-mood-now-track { position: absolute; left: 9%; right: 9%; display: flex; align-items: center; justify-content: center; overflow: hidden; white-space: nowrap; color: #fff; font: 800 calc(var(--b) * .09)/1 Inter, system-ui, sans-serif; letter-spacing: .01em; text-shadow: 0 1px 1px rgba(0, 0, 0, .7), 0 0 5px rgba(0, 0, 0, .5); background: linear-gradient(90deg, transparent, rgba(4, 9, 18, .55) 10%, rgba(4, 9, 18, .55) 90%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
+.rg-mood-now-station { top: 0; height: 26.4%; }
+.rg-mood-now-station > span, .rg-mood-now-track > span { display: inline-block; }
+.rg-mood-now-station.is-overflow > span, .rg-mood-now-track.is-overflow > span { animation: rg-now-marquee var(--dur, 10s) linear infinite alternate; }
+@keyframes rg-now-marquee { 0%, 15% { transform: translateX(0); } 85%, 100% { transform: translateX(var(--shift, 0px)); } }
+html.mk-low-spec .rg-mood-now-radio { filter: none; }
+@media (prefers-reduced-motion: reduce) { .rg-mood-now-station.is-overflow > span, .rg-mood-now-track.is-overflow > span { animation: none; } }
+.rg-mood-stage.is-radio .rg-mood-label { margin-top: clamp(50px, 30cqw, 70px); }
 html.mk-low-spec 
