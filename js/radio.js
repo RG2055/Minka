@@ -3558,6 +3558,25 @@ function focusRadio(){
   // A reload must not turn the last person's persisted appearance into the guest default.
   // Older builds did not keep a guest snapshot; discard their personal card background.
   restoreGuestLook(getSaved().name==='Mana kartīte'?{}:null);
+
+  // Without a profile the radio wears a different skin every time it is opened
+  // (and so on every new shift) — a taste of what a profile would keep.
+  function randomGuestLook(){
+    if (window.__mkUnifiedMedia?.getSession?.()) return;
+    const rand = list => list[Math.floor(Math.random() * list.length)];
+    const now = lookSnapshot();
+    // Skin, layout (classic / clean / pioneer) and spectrum all change; each
+    // picks something other than what is on now, so a reopen always differs.
+    const theme = rand(THEMES.filter(t => t.name !== now.theme)) || THEMES[0];
+    const layout = rand(['classic', 'clean', 'pioneer'].filter(l => l !== now.layout));
+    const spectra = VIZ_MODES.filter(m => m.idx !== MK_NO_VIZ && m.idx !== MK_BUDDY_VIZ && String(m.idx) !== now.viz);
+    const viz = rand(spectra);
+    closeProfileLook();
+    applyLookSettings({ ...now, theme: theme.name, layout, viz: String(viz.idx), background: '', cardName: '' });
+    try { syncLookControls(); } catch (_) {}
+  }
+  // Only on an explicit open (toggleRadio): a reload keeps the guest look it had.
+  (window.rgTheme = window.rgTheme || {}).randomGuest = randomGuestLook;
   window.dispatchEvent(new Event('rg-theme-ready'));
   // events
   themeBtn.addEventListener('click', (e)=>{

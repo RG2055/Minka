@@ -346,8 +346,8 @@
 <!-- Radio polish overrides — must load after all other radio CSS -->
 <link rel="stylesheet" href="css/radio_polish_v1.css?v=20260708b">
 <link rel="stylesheet" href="css/radio_lacitis_v2.css?v=20260910compact1">
-<link rel="stylesheet" href="css/radio-source.css?v=20260908skinbar1">
-<link rel="stylesheet" href="css/media-profile.css?v=20260910vfd14">
+<link rel="stylesheet" href="css/radio-source.css?v=20260911nobox1">
+<link rel="stylesheet" href="css/media-profile.css?v=20260911auth11">
 
 <style>
 /* ═══ MINKA v11 Shell ═══ */
@@ -985,7 +985,7 @@ async function loadRadioScripts() {
   }
   await loadAny(['js/radio-metadata.js?v=20260910metadata1']);
   await loadAny(['js/radio-pioneer-layout.js?v=20260910oel1']);
-  await loadAny(['js/radio.js?v=20260910oel3']);
+  await loadAny(['js/radio.js?v=20260911guest3']);
   await loadAny(['js/radio_extras_v4.js?v=20260908visuals1']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;
@@ -1011,6 +1011,12 @@ function toggleRadio() {
     document.body.classList.remove('radio-idle');
     const rw = document.getElementById('radioWindow');
     if (rw) rw.style.display = '';
+    // Guests get a fresh random look on every open; on the very first open the
+    // radio scripts are still loading, so roll once they are in.
+    try {
+      if (window.rgTheme?.randomGuest) window.rgTheme.randomGuest();
+      else loadRadioScripts().then(function () { try { window.rgTheme?.randomGuest?.(); } catch (_e) {} });
+    } catch (_e) {}
     // Update toggle label
     document.getElementById('radioToggleLabel').textContent = 'RADIO';
     document.getElementById('radioToggleIcon').innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" style="opacity:.7;vertical-align:middle" aria-hidden="true"><path d="M4 8l8 8 8-8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -2561,7 +2567,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
 
 <script src="kalendars/js/daybook-model.js?v=20260911b" defer></script>
 <script src="js/radio-daybook.js?v=20260911i" defer></script>
-<script src="js/media-profile.js?v=20260910oel1" defer></script>
+<script src="js/media-profile.js?v=20260911auth12" defer></script>
 <script src="js/radio-source.js?v=20260908header3" defer></script>
 
 <div id="mobileQrModal" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171000;background:rgba(2,4,8,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:20px;">

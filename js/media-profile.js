@@ -32,7 +32,48 @@
  const trigger=document.createElement('button');trigger.type='button';trigger.id='mediaProfileButton';trigger.textContent='Ielogoties';trigger.title='Ielogoties radio profilā';trigger.addEventListener('click',open);
  const exitTrigger=button('Iziet',()=>{void logout();dialog.close();trigger.focus();});exitTrigger.id='mediaLogoutButton';exitTrigger.hidden=true;
  exitTrigger.prepend(icon('exit'));exitTrigger.title='Iziet no sava profila';exitTrigger.setAttribute('aria-label','Iziet no profila');
- $('radioSourceBar')?.prepend(trigger,exitTrigger);
+ /* Logged-out: a segmented "Ielogoties | Reģistrēties" pill with a quiet hint
+    below it in the tour popover's look (no driver.js, no overlay). Both open
+    the same dialog: pick your name, then enter or create a PIN. */
+ const seg=document.createElement('span');seg.id='mediaAuthSeg';seg.setAttribute('role','group');seg.setAttribute('aria-label','Radio profils');
+ const registerTrigger=document.createElement('button');registerTrigger.type='button';registerTrigger.id='mediaRegisterButton';registerTrigger.textContent='Reģistrēties';registerTrigger.title='Izveidot radio profilu';
+ registerTrigger.addEventListener('click',()=>{open();status('Izvēlies savu vārdu un izveido PIN. Favorīti un izskats paliks tavi.');});
+ seg.append(trigger,registerTrigger);
+ $('radioSourceBar')?.prepend(seg,exitTrigger);
+ /* Logged-out hint in the tour popover's look (driver.css + .media-radio-tour),
+    but without the driver.js engine: that library swallows every click outside
+    its active element, which would lock the radio. This is plain DOM, pinned
+    above the login pill, and never intercepts anything. ✕ hides it until the
+    radio is opened again. */
+ let hint=null,hintDismissed=false,hintLoading=false;
+ function radioOpen(){const win=$('radioWindow');if(!win||document.body.classList.contains('radio-hidden'))return false;try{return getComputedStyle(win).display!=='none'&&seg.getClientRects().length>0;}catch(_){return false;}}
+ function positionHint(){
+  if(!hint)return;const b=trigger.getBoundingClientRect();if(!b.width){hint.style.visibility='hidden';return;}
+  hint.style.visibility='';
+  const w=hint.offsetWidth,h=hint.offsetHeight;
+  const left=Math.max(8,Math.min(b.right-w,innerWidth-w-8));
+  hint.style.left=left+'px';hint.style.top=Math.max(8,b.top-h-12)+'px';
+  const arrow=hint.querySelector('.driver-popover-arrow');if(arrow)arrow.style.left=Math.max(14,Math.min(w-24,b.left+b.width/2-left-5))+'px';
+ }
+ async function showLoginHint(){
+  if(session||hintDismissed||hint||hintLoading||tour||!radioOpen()||(typeof matchMedia==='function'&&matchMedia('(max-width: 520px)').matches))return;
+  hintLoading=true;
+  try{await loadAsset('vendor/driver/1.8.0/driver.css',true);}catch(_){hintLoading=false;return;}
+  hintLoading=false;
+  if(session||hintDismissed||hint||tour||!radioOpen())return;
+  hint=document.createElement('div');hint.className='driver-popover media-radio-tour media-login-hint driver-popover-side-top driver-popover-align-end';hint.setAttribute('role','note');
+  hint.innerHTML='<div class="driver-popover-arrow driver-popover-arrow-side-top driver-popover-arrow-align-end"></div><header class="driver-popover-title">Radio profils</header><div class="driver-popover-description">Saglabā favorītus, vairāk radio, izskats.</div>';
+  const close=document.createElement('button');close.type='button';close.className='driver-popover-close-btn';close.setAttribute('aria-label','Aizvērt paziņojumu');close.textContent='×';
+  close.addEventListener('click',()=>{hintDismissed=true;hideLoginHint();});
+  hint.prepend(close);document.body.append(hint);positionHint();
+  // The window may still be sliding in; settle the position over the next frames.
+  let n=0;const settle=()=>{positionHint();if(++n<12&&hint)requestAnimationFrame(settle);};requestAnimationFrame(settle);
+ }
+ function hideLoginHint(){if(hint){hint.remove();hint=null;}}
+ function syncLoginHint(){if(session||!radioOpen()){hideLoginHint();if(!radioOpen())hintDismissed=false;}else void showLoginHint();positionHint();}
+ if(typeof MutationObserver==='function')new MutationObserver(syncLoginHint).observe(document.body,{attributes:true,attributeFilter:['class']});
+ window.addEventListener('resize',positionHint,{passive:true});
+ {const win=$('radioWindow');if(win){win.addEventListener('transitionend',positionHint);if(typeof ResizeObserver==='function')new ResizeObserver(positionHint).observe(win);}}
  trigger.title='Saglabā savas iecienītās stacijas un radio izskatu.';
  trigger.setAttribute('aria-description',trigger.title);
  function avatar(name){
@@ -89,6 +130,7 @@
   exitTrigger.hidden=!session;trigger.setAttribute('aria-haspopup','dialog');trigger.setAttribute('aria-expanded',String(dialog.open));
   trigger.replaceChildren();if(session)trigger.append(avatar(session.name));
   const label=document.createElement('span');label.textContent=session?'Radio '+pretty(session.name).split(' ')[0]:'Ielogoties';trigger.append(label);
+  seg.classList.toggle('is-logged',!!session);registerTrigger.hidden=!!session;syncLoginHint();
 
   const brand=document.querySelector('#radioWindow .brand-text');if(brand){brand.textContent=session?'RADIO '+pretty(session.name).split(' ')[0].toLocaleUpperCase('lv-LV'):'RG RADIO';brand.hidden=!!session;}
   trigger.setAttribute('aria-description',session?'Tavs radio profils':'Saglabā savas iecienītās stacijas un radio izskatu.');
@@ -167,7 +209,7 @@
  }
  function button(text,fn){const b=document.createElement('button');b.type='button';b.textContent=text;b.addEventListener('click',fn);return b;}
  function icon(kind){
-  const paths={exit:'M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5M10 12h10m-4-4 4 4-4 4',look:'m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5',help:'M9.5 9a2.5 2.5 0 1 1 4 2c-1 .7-1.5 1.2-1.5 2M12 17h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0',play:'m9 5 11 7-11 7V5Z',star:'m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z',close:'m7 7 10 10M17 7 7 17'};
+  const paths={heart:'M12 20.5s-7.5-4.6-7.5-10A4 4 0 0 1 12 8a4 4 0 0 1 7.5 2.5c0 5.4-7.5 10-7.5 10Z',list:'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01',shirt:'m8 4 4 2 4-2 4 3-2 3-2-1v11H8V9L6 10 4 7l4-3Z',exit:'M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5M10 12h10m-4-4 4 4-4 4',look:'m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5',help:'M9.5 9a2.5 2.5 0 1 1 4 2c-1 .7-1.5 1.2-1.5 2M12 17h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0',play:'m9 5 11 7-11 7V5Z',star:'m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z',close:'m7 7 10 10M17 7 7 17'};
   const el=document.createElement('span');el.className='media-icon';el.setAttribute('aria-hidden','true');
   el.innerHTML='<svg viewBox="0 0 24 24" fill="none"><path d="'+paths[kind]+'" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';return el;
  }
@@ -251,7 +293,7 @@
  function endTour(){tourGeneration++;tourObserver?.disconnect();tourObserver=null;const old=tour;tour=null;old?.destroy();}
  function radioVisible(){return !document.hidden&&!document.body.classList.contains('radio-hidden')&&!document.body.classList.contains('radio-idle')&&!$('radioWindow')?.classList.contains('music-source');}
  async function startTour(){
-  if(!session)return;endTour();$('radioSourceBroadcast')?.click();const gen=tourGeneration;
+  if(!session)return;endTour();hideLoginHint();$('radioSourceBroadcast')?.click();const gen=tourGeneration;
   try{
    await Promise.all([loadAsset('vendor/driver/1.8.0/driver.js.iife.js'),loadAsset('vendor/driver/1.8.0/driver.css',true)]);
    if(gen!==tourGeneration||!session||!radioVisible())return;

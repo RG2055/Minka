@@ -78,6 +78,8 @@
 .driver-popover.media-radio-tour .driver-popover-description{font-size:12px;line-height:1.6;color:#bdd1c4}
 .driver-popover.media-radio-tour .driver-popover-close-btn{top:8px;right:8px;width:26px;height:26px;border-radius:50%;color:#b4cfc0;font-size:20px}
 .driver-popover.media-radio-tour .driver-popover-close-btn:hover{background:#ffffff12;color:#fff}
+.driver-popover.media-radio-tour .driver-popover-close-btn:focus{outline:none;background:none;color:#b4cfc0}
+.driver-popover.media-radio-tour .driver-popover-close-btn:focus-visible{outline:2px solid #91e3c5;outline-offset:2px;color:#fff}
 .driver-popover.media-radio-tour .driver-popover-progress-text{font-size:10px;color:#9eb9aa}
 .driver-popover.media-radio-tour .driver-popover-footer-btn{font:11px/1.4 system-ui;border:1px solid #c7e3d12b;border-radius:8px;background:#ffffff08;color:#c9dfd1;padding:7px 10px;text-shadow:none}
 .driver-popover.media-radio-tour .driver-popover-next-btn{background:#b6ddc4;color:#11271b;border-color:transparent}
@@ -292,3 +294,16 @@ html body #radioWindow #vizBtn.active{border-color:rgba(var(--radio-accent-rgb,1
 
 /* Pioneer has a metal faceplate; keep background choices for the other layouts. */
 #themePanel[data-radio-layout="pioneer"] :is(#themeList,.radio-theme-filters,#radioImageTools,#radioUseCard,#radioLookNote,#radioBackgroundOff,[data-radio-background-only]){display:none!important}
+/* Logged-out auth pill (Ielogoties | Reģistrēties) and the quiet hint below
+   it, in the tour popover's look — no driver.js, no overlay. */
+#radioSourceBar #mediaAuthSeg{position:relative;display:inline-flex;align-items:center;gap:2px;padding:0;margin-right:4px}
+#radioSourceBar #mediaAuthSeg.is-logged{padding:0;background:none;box-shadow:none}
+#radioSourceBar #mediaAuthSeg:not(.is-logged) #mediaProfileButton{border-radius:999px;padding:6px 14px;background:#f2f6f8;color:#0b1418;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+#radioSourceBar #mediaAuthSeg:not(.is-logged) #mediaProfileButton:hover{background:#fff}
+#radioSourceBar #mediaRegisterButton{border-radius:999px;padding:6px 12px;color:#aebcc6;font-weight:700}
+#radioSourceBar #mediaRegisterButton:hover{color:#e2f8ff}
+#radioSourceBar #mediaRegisterButton[hidden]{display:none}
+@media(max-width:520px){#radioSourceBar #mediaRegisterButton{display:none}}
+/* Login hint: the tour popover's look, rendered without driver.js. */
+/* Above the radio window (which raises itself to 65000 when focused) so the arrow is not cut off. */
+.driver-popover.media-login-hint{position:fixed;z-index:70000;display:block;pointer-events:auto}
