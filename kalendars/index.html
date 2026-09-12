@@ -1562,9 +1562,9 @@ function _mkToast(msg, type) {
 <script src="data/namedays.local.js"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/known-carryovers.js?v=20260907smooth1"></script>
-<script src="js/card-face-model.js?v=20260912faces27"></script>
+<script src="js/card-face-model.js?v=20260912faces28"></script>
 <script src="js/card-materials.js?v=20260912faces21"></script>
-<script src="js/card-faces.js?v=20260912faces27"></script>
+<script src="js/card-faces.js?v=20260912faces28"></script>
 <!-- Saved worker skins must be ready before the cached roster is rendered. -->
 <script>
 /* ── MinkaSkins: per-darbinieka kartes izskats ──
@@ -1779,6 +1779,7 @@ function _mkToast(msg, type) {
     face.tint=p[1];face.finish=p[2];face.parts.hours=[50,45,112,1];
     face.parts.name=[50,73,80,1];face.parts.coffee=[22,15,85,1];face.parts.emoji=[81,15,90,1];
     face.parts.month=[81,85,65,0];face.parts.fatigue=[20,85,65,0];face.parts.remaining=[50,92,65,1];
+    face.parts.moon=window.MinkaCardFaceModel.symbolPlacement(face.parts,face.face);
     PRESETS.push({label:p[0],group:'numbers',isNew:true,bg:{t:'hue',rgb:p[3]},num:hexToRgb('#'+p[1]),na:'1',txt:'246,247,249',face:face,depth:false});
   });
   var PRESET_GROUPS=[['all','Visi'],['new','Jaunumi'],['wildlife','Dzīvnieki'],['botanical','Ziedi un augi'],['ocean','Ūdens'],['landscape','Ainavas un nakts'],['numbers','Ciparu efekti'],['collection','Citi foto']];
@@ -2699,7 +2700,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260912faces27"></script>
+<script src="js/calendar.js?v=20260912faces28"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
@@ -23910,6 +23911,6 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
 <link rel="stylesheet" href="css/radio-side-cards.css?v=20260911split1">
 <script src="../js/radio-ambience.js?v=20260908ambient3"></script>
 <link rel="stylesheet" href="../css/calendar-surfaces.css?v=20260908surfaces3">
-<link rel="stylesheet" href="css/card-faces.css?v=20260912faces27">
+<link rel="stylesheet" href="css/card-faces.css?v=20260912faces28">
 </body>
 </html>

@@ -19,6 +19,9 @@
   // Once moved, the symbol keeps its own coordinates independently of the hours.
   function symbolPlacement(values, face) {
     var hours=values.hours||[68,38,100,1],scale=hours[2]/100;
+    // The uncondensed numeral needs a full symbol-width of extra clearance.
+    // High-set photo bundles also leave the top-left row for the coffee buttons.
+    if(face==='classic')return fitPart([Math.round(hours[0]-38*scale),Math.round(Math.max(hours[1]<36?24:16,hours[1]-21*scale)),90,1],14.4,14.4);
     return fitPart([Math.round(hours[0]-20*scale),Math.round(hours[1]-21*scale),100,1],16,16);
   }
   function clean(value, keepSymbolPosition) {

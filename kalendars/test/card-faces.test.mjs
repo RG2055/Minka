@@ -60,6 +60,10 @@ test('old symbol defaults move beside the numeral while custom positions and vis
   const fern={hours:[68,39,105,1]},orchid={hours:[70,38,105,1]};
   assert.deepEqual(M.symbolPlacement(fern,'photo'),[47,17,100,1]);
   assert.deepEqual(M.symbolPlacement(orchid,'photo'),[49,16,100,1]);
+  // Butterfly and koi use a wider, high-set numeral: leave room to its left.
+  const classic=M.symbolPlacement({hours:[58,28,100,1]},'classic');
+  assert.deepEqual(classic,[20,24,90,1]);
+  assert.ok(classic[0]+16*classic[2]/200 < 58-30);
   const moved=M.clean({...face,parts:{...face.parts,hours:[60,55,120,1]}});
   assert.deepEqual(moved.parts.moon,[30,62,140,1]);
 });
