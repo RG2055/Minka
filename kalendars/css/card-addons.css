@@ -25,15 +25,15 @@
   pointer-events: none !important;
 }
 
-html body #grafiks-app #grafiks-list .card.mk-addon-active::before,
-html body #grafiks-app #grafiks-list .card.mk-addon-active::after,
-html body #worker-modal .card.mk-addon-active::before,
-html body #worker-modal .card.mk-addon-active::after {
+html body #grafiks-app #grafiks-list .card.mk-addon-active:not(.mk-watch-face)::before,
+html body #grafiks-app #grafiks-list .card.mk-addon-active:not(.mk-watch-face)::after,
+html body #worker-modal .card.mk-addon-active:not(.mk-watch-face)::before,
+html body #worker-modal .card.mk-addon-active:not(.mk-watch-face)::after {
   border-radius: var(--mk-addon-card-radius, 24px) !important;
 }
 
-html body #grafiks-app #grafiks-list .card.mk-addon-active .mk-mid-name-wrap,
-html body #worker-modal .card.mk-addon-active .mk-mid-name-wrap {
+html body #grafiks-app #grafiks-list .card.mk-addon-active:not(.mk-watch-face) .mk-mid-name-wrap,
+html body #worker-modal .card.mk-addon-active:not(.mk-watch-face) .mk-mid-name-wrap {
   --mk-addon-rounded-tab-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 50' preserveAspectRatio='none'%3E%3Cpath fill='%23fff' d='M20 0H100C93 0 91 12 86 24C81 37 78 50 68 50H0V38C0 17 8 0 20 0Z'/%3E%3C/svg%3E");
   border-top-left-radius: var(--mk-addon-card-radius, 24px) !important;
   -webkit-mask-image: var(--mk-addon-rounded-tab-mask) !important;
@@ -41,7 +41,7 @@ html body #worker-modal .card.mk-addon-active .mk-mid-name-wrap {
 }
 
 html body #worker-modal #modal-skin-view #grafiks-list.mk-skin-preview-list
-  .card.mk-skin-preview-real.mk-addon-active .mk-mid-name-wrap {
+  .card.mk-skin-preview-real.mk-addon-active:not(.mk-watch-face) .mk-mid-name-wrap {
   border-top-left-radius: var(--mk-addon-card-radius, 24px) !important;
   -webkit-mask-image: var(--mk-addon-rounded-tab-mask) !important;
   mask-image: var(--mk-addon-rounded-tab-mask) !important;
@@ -490,4 +490,9 @@ html body #worker-modal .card.mk-addon-active.mk-addon-group-object .mk-mid-meta
   .mk-addon-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
   .mk-addon-controls { grid-template-columns: 1fr; }
   .mk-addon-side button { flex: 1; }
+}
+
+/* The photographic collection already carries its own material shading. */
+.mk-card-addon[src*="/realistic-v1/"] {
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.28));
 }

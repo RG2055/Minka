@@ -30,7 +30,7 @@
   function closestCard(target) {
     if (!target || target.nodeType !== 1 || !target.closest) return null;
     var card = target.closest(CARD_SELECTOR);
-    return card && host && host.contains(card) ? card : null;
+    return card && !card.classList.contains('mk-watch-face') && host && host.contains(card) ? card : null;
   }
 
   function setGeometryListeners(on) {

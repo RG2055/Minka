@@ -4,6 +4,8 @@ import vm from 'node:vm';
 import test from 'node:test';
 
 const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+const faceModel = await readFile(new URL('../js/card-face-model.js', import.meta.url), 'utf8');
+const materials = await readFile(new URL('../js/card-materials.js', import.meta.url), 'utf8');
 const calendar = await readFile(new URL('../js/calendar.js', import.meta.url), 'utf8');
 const tick = () => new Promise(resolve => setImmediate(resolve));
 const clone = value => JSON.parse(JSON.stringify(value));
@@ -206,6 +208,8 @@ function skinClient(initialSkins) {
       return Promise.resolve({ ok: true, json: () => clone(reply) });
     }
   };
+  vm.runInContext(faceModel,c);
+  vm.runInContext(materials,c);
   const start = html.indexOf('(function MinkaSkins() {');
   const end = html.indexOf('\n})();', start);
   vm.runInContext(html.slice(start, end) + '\nwindow.skinTest = { cloudPull, setSkin, storeSkinLocal, loadAll };\n})();', c);

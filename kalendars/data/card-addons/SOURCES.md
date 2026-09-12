@@ -30,3 +30,7 @@ Only the owner-approved assets in `optimized/` are exposed in the local
 card-decor picker. The uncurated medical sheet remains outside the picker.
 The original large standalone PNG copies were replaced by the optimized WebP
 files after visual and alpha validation.
+
+## 2026-09-12 — complete realistic replacement
+
+The owner requested every current decoration in the photographic style of the new depth backgrounds. All 61 picker assets were generated individually with built-in imagegen. The transparent optimized production collection is now `realistic-v1/`; `optimized/` retains the previous assets. Item identities and saved placement configurations were preserved. See `realistic-v1/prompts.json` for every prompt and `realistic-v1/manifest.json` for measured dimensions and sizes.

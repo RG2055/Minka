@@ -5522,7 +5522,10 @@ function filterFullList(btn) {
     }
 
     function closeCoffeePicker() {
+      const picker = document.querySelector('.mk-coffee-picker');
+      const returnFocus = picker && picker.contains(document.activeElement) ? picker._returnFocus : null;
       document.querySelectorAll('.mk-coffee-picker').forEach(el => el.remove());
+      if (returnFocus && returnFocus.isConnected) returnFocus.focus({preventScroll:true});
       document.querySelectorAll('.mk-coffee-backdrop').forEach(el => el.remove());
       document.removeEventListener('keydown', onCoffeePickerKey, true);
       setCoffeePickerBuddyFlag(false);
@@ -5579,7 +5582,15 @@ function filterFullList(btn) {
     }
 
     function onCoffeePickerKey(e) {
-      if (e.key === 'Escape') closeCoffeePicker();
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeCoffeePicker(); }
+      if (e.key === 'Tab') {
+        const picker = document.querySelector('.mk-coffee-picker');
+        const controls = picker && [...picker.querySelectorAll('button:not(:disabled), input:not(:disabled)')].filter(el => el.getClientRects().length);
+        if (!controls || !controls.length) return;
+        const first = controls[0], last = controls[controls.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
     }
 
     function showCoffeePicker(name, card, anchor) {
@@ -5593,6 +5604,8 @@ function filterFullList(btn) {
       backdrop.addEventListener('pointerdown', onCoffeePickerBackdrop, true);
       document.body.appendChild(backdrop);
       picker.className = 'mk-coffee-picker';
+      picker._returnFocus = anchor;
+      picker.setAttribute('role','dialog'); picker.setAttribute('aria-label','Kafija'); picker.setAttribute('aria-modal','true');
       setCoffeePickerBuddyFlag(true);
       picker.innerHTML = `
         <div class="mk-coffee-picker-title">Kafija</div>
@@ -5612,17 +5625,33 @@ function filterFullList(btn) {
         </label>
         <div class="mk-coffee-caf"></div>
         <button class="mk-coffee-save" type="button">Saglabāt</button>`;
+      if (card && card.classList.contains('mk-watch-face')) {
+        const remove = document.createElement('button');
+        remove.type = 'button'; remove.className = 'mk-coffee-remove';
+        remove.textContent = 'Noņemt pēdējo kafiju';
+        remove.disabled = getCoffeeCount(name) <= 0;
+        remove.onclick = e => {
+          e.preventDefault(); e.stopPropagation();
+          card.querySelector('.mk-coffee-sub')?.click();
+          closeCoffeePicker();
+          anchor?.focus({ preventScroll: true });
+        };
+        picker.appendChild(remove);
+      }
       document.body.appendChild(picker);
 
       function placePicker() {
         const rect = anchor && anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : null;
         const pw = 258;
-        const ph = Math.ceil(picker.getBoundingClientRect().height || 270);
+
         const mobileShell = document.documentElement.classList.contains('mk-mobile-shell') || window.innerWidth <= 760;
         // Both shells have a bottom nav bar overlaying this (iframed) calendar, so
         // reserve room for it — otherwise the Saglabāt button can land behind the
         // nav and be untappable.
         const bottomGuard = mobileShell ? 126 : 96;
+        picker.style.maxHeight = Math.max(96,window.innerHeight - bottomGuard - 16) + 'px';
+        picker.style.overflowY = 'auto';
+        const ph = Math.ceil(picker.getBoundingClientRect().height || 270);
         const left = rect ? Math.max(8, Math.min(window.innerWidth - pw - 8, rect.right - pw)) : 20;
         const safeBottom = window.innerHeight - bottomGuard;
         let top;
@@ -5700,13 +5729,16 @@ function filterFullList(btn) {
           addCoffeeEntry(name, card, { source: selected, size: selected === 'narvesen' ? size : '', priceCents });
           playCoffeeAddedEffect(card);
           closeCoffeePicker();
+          anchor?.focus({ preventScroll: true });
         });
       }
 
       sync();
       placePicker();
       setTimeout(() => {
+        if (!picker.isConnected) return;
         document.addEventListener('keydown', onCoffeePickerKey, true);
+        picker.querySelector('.mk-coffee-source.is-on')?.focus({preventScroll:true});
       }, 0);
     }
 
@@ -6036,7 +6068,7 @@ function filterFullList(btn) {
           </div>`;
 
         const _wSkin = (typeof window.mkGetWorkerSkin === 'function') ? window.mkGetWorkerSkin(w.name) : null;
-        if (_wSkin && typeof window.mkApplySkinToEl === 'function') window.mkApplySkinToEl(card, _wSkin);
+        if (typeof window.mkApplySkinToEl === 'function') window.mkApplySkinToEl(card, _wSkin);
 
         const coffeeBtn = card.querySelector('.mk-coffee-add');
         if (coffeeBtn) {

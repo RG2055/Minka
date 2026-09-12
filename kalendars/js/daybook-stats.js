@@ -27,8 +27,10 @@
   var radioJob = null;
   // day -> timestamp of the last successful ratings fetch (this session only).
   var ratingsFetchedAt = {};
+  // Failed days wait for an explicit retry, reopening, or restored connectivity.
+  var ratingsFailed = {};
   var ratingsJob = null;
-  var coffee = { busy: false, message: '', loaded: {} };
+  var coffee = { busy: false, loaded: {}, failed: {} };
 
   function readJson(key) {
     try { return JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch (_e) { return {}; }
@@ -126,7 +128,7 @@
     var base = String(window.MINKA_FEEDBACK_API_BASE || '').replace(/\/$/, '');
     if (!base || ratingsJob) return;
     var now = Date.now();
-    var todo = days.filter(function (d) { return !ratingsFetchedAt[d] || now - ratingsFetchedAt[d] > 10 * 60000; });
+    var todo = days.filter(function (d) { return !ratingsFailed[d] && (!ratingsFetchedAt[d] || now - ratingsFetchedAt[d] > 10 * 60000); });
     if (!todo.length) return;
     var month = state.month, done = 0, index = 0;
     ratingsJob = { total: todo.length, done: 0 };
@@ -147,7 +149,8 @@
             all[day] = counts;
             writeJson(PULSE_KEY, all);
             ratingsFetchedAt[day] = Date.now();
-          } catch (_e) {}
+            delete ratingsFailed[day];
+          } catch (_e) { ratingsFailed[day] = true; }
           done++;
           ratingsJob.done = done;
           if (done % 6 === 0 && state.month === month && modalOpen()) render();
@@ -162,11 +165,12 @@
 
   async function loadCoffee(days) {
     if (coffee.busy) return;
-    coffee.busy = true; coffee.message = '';
+    var todo = days.filter(function (d) { return d <= M.dutyDay() && !coffee.loaded[d] && !coffee.failed[d]; });
+    if (!todo.length) return;
+    coffee.busy = true;
     if (state.tab === 'coffee' && !state.day && !state.person) render();
     var base = String(window.MINKA_COFFEE_API_BASE || 'https://minka-coffee-api.gamernr1elite.workers.dev').replace(/\/+$/, '');
-    var todo = days.filter(function (d) { return d <= M.dutyDay() && !coffee.loaded[d]; });
-    var index = 0, failed = 0;
+    var index = 0;
     function worker() {
       return (async function () {
         while (index < todo.length && modalOpen()) {
@@ -184,13 +188,13 @@
             details[date] = value.details || {};
             writeJson(COFFEE_DETAILS_KEY, details);
             coffee.loaded[day] = true;
-          } catch (_e) { failed++; coffee.loaded[day] = true; }
+            delete coffee.failed[day];
+          } catch (_e) { coffee.failed[day] = true; }
         }
       })();
     }
     await Promise.all([worker(), worker()]);
     coffee.busy = false;
-    coffee.message = failed ? failed + ' dienu datus neizdevās ielādēt.' : '';
     if (modalOpen() && todo.length) render();
   }
 
@@ -559,13 +563,29 @@
   }
 
   /* ── render ───────────────────────────────────────────────────────────── */
+  function retryFailed() {
+    ratingsFailed = {};
+    coffee.failed = {};
+    if (modalOpen()) render();
+  }
+  function loadingError(range) {
+    var from = state.day || range.from, to = state.day || range.to;
+    var inView = function (d) { return d >= from && d <= to; };
+    var missing = [];
+    if ((state.day || (!state.person && state.tab === 'overview')) && Object.keys(ratingsFailed).some(inView)) missing.push('pašsajūtas');
+    if (Object.keys(coffee.failed).some(inView)) missing.push('kafijas');
+    if (!missing.length) return '';
+    return '<p class="db-note" role="status">Neizdevās ielādēt visus ' + missing.join(' un ') + ' datus. '
+      + 'Pārskats var būt nepilnīgs. <button type="button" class="db-link" data-db-retry>Mēģināt vēlreiz</button></p>';
+  }
   function render() {
     var wrap = document.getElementById('stats-table-wrap');
     if (!wrap) return;
-    if (!modalOpen()) {
+    if (!state.month || !modalOpen()) {
       // Opening: start from the day selected in the calendar.
       state.month = D.selectedDay().slice(0, 7);
       state.person = ''; state.day = ''; state.tab = 'overview';
+      ratingsFailed = {}; coffee.failed = {};
       wrap.scrollTop = 0;
     }
     if (!state.month) state.month = M.dutyDay().slice(0, 7);
@@ -580,20 +600,23 @@
     else if (state.tab === 'fatigue') body = fatigueView();
     else body = overview(b);
     wrap.classList.add('db-stats');
-    wrap.innerHTML = header(names) + '<div class="db-body">' + body + '</div>';
-    if (!state.person && !state.day && state.tab === 'overview') {
+    wrap.innerHTML = header(names) + '<div class="db-body">' + loadingError(b.range) + body + '</div>';
+    if (state.day) {
+      ensureRatings(state.day <= b.today ? [state.day] : []);
+    } else if (!state.person && state.tab === 'overview') {
       ensureRatings(elapsedDays(b.rows, b.today).map(function (r) { return r.day; }));
     }
     ensureRadio(state.month);
     // Coffee days come from the API on demand; opening the stats (or a month)
     // pulls the month's missing days, a day view pulls its own day.
     var coffeeDays = state.day ? [state.day] : elapsedDays(b.rows, b.today).map(function (r) { return r.day; });
-    if (coffeeDays.some(function (d) { return d <= b.today && !coffee.loaded[d]; })) void loadCoffee(coffeeDays);
+    if (coffeeDays.some(function (d) { return d <= b.today && !coffee.loaded[d] && !coffee.failed[d]; })) void loadCoffee(coffeeDays);
   }
 
   document.addEventListener('click', function (e) {
     var wrap = e.target.closest('#stats-table-wrap');
     if (!wrap) return;
+    if (e.target.closest('[data-db-retry]')) { retryFailed(); return; }
     var t;
     if ((t = e.target.closest('[data-db-nav]'))) { state.month = shiftMonth(state.month, +t.dataset.dbNav); state.day = ''; render(); return; }
     if ((t = e.target.closest('[data-db-group]'))) { state.group = t.dataset.dbGroup; render(); return; }
@@ -608,5 +631,6 @@
     render();
   });
   window.addEventListener('minka:daybook', function () { if (modalOpen()) render(); });
+  window.addEventListener('online', retryFailed);
   window.MinkaDaybookStats = { render: render };
 })();

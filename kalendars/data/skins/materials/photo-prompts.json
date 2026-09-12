@@ -1,0 +1,66 @@
+[
+  {
+    "id": "photo-fox",
+    "label": "Meža lapsa",
+    "background": "linear-gradient(150deg,#243a34,#0b1717)",
+    "tint": "f4d3b4",
+    "prompt": "Use case: photorealistic-natural. Asset type: one square premium watch-inspired duty card background foreground layer, not a UI mockup. Subject: A real red fox sitting on dark moss and a fallen log, viewed at eye level, three-quarter profile looking up-right. Fox occupies lower-left and centre-left: x10–55%, y35–100%. Bushy tail sweeps across the bottom. Fine orange fur, forest-green moss, subtle amber rim light. Composition crucial: square 1024x1024 canvas, main subject in lower-left/centre-left only, upper-right x55–100%,y0–65% stays entirely transparent to leave room for a large live '24' added later in code. Subject can gently extend into x55–65%,y55–75% to overlap ONLY the lower-left edge of the future number, never obscure the number's centre. Lower 25% contains a cohesive natural base reaching the bottom edge, no floating sticker look. Actual transparent alpha background outside the subject, no solid rectangle, no checkerboard. Premium realistic photography, lifelike natural textures and restrained cinematic light, polished contemporary composition, clear silhouette, no abstract glass bubbles or metallic shapes, no people, no frame, no typography, no digits, no logo. Do not draw 24: leave space for it. One continuous composition, no grid or collage.",
+    "method": "built-in imagegen"
+  },
+  {
+    "id": "photo-hydrangea",
+    "label": "Zilā hortenzija",
+    "background": "linear-gradient(145deg,#1c3449,#102530)",
+    "tint": "d3e7ff",
+    "prompt": "Use case: photorealistic-natural. Asset type: one square premium watch-inspired duty card background foreground layer, not a UI mockup. Subject: A lush real pale-blue hydrangea bloom with two rich green leaves and a curved stem. Bloom at lower-left x10–60%, y40–85%, leaves fill bottom corners. Exquisite petal detail, fresh morning dew, sophisticated periwinkle blue. Composition crucial: square 1024x1024 canvas, main subject in lower-left/centre-left only, upper-right x55–100%,y0–65% stays entirely transparent to leave room for a large live '24' added later in code. Subject can gently extend into x55–65%,y55–75% to overlap ONLY the lower-left edge of the future number, never obscure the number's centre. Lower 25% contains a cohesive natural base reaching the bottom edge, no floating sticker look. Actual transparent alpha background outside the subject, no solid rectangle, no checkerboard. Premium realistic photography, lifelike natural textures and restrained cinematic light, polished contemporary composition, clear silhouette, no abstract glass bubbles or metallic shapes, no people, no frame, no typography, no digits, no logo. Do not draw 24: leave space for it. One continuous composition, no grid or collage.",
+    "method": "built-in imagegen"
+  },
+  {
+    "id": "photo-moon",
+    "label": "Mēness klusums",
+    "background": "linear-gradient(155deg,#1d2940,#060b15)",
+    "tint": "e2e9f6",
+    "prompt": "Use case: photorealistic-natural. Asset type: one square premium watch-inspired duty card background foreground layer, not a UI mockup. Subject: A realistic enormous crescent moon, softly lit craters on its shaded surface, centred at x32%, y62%, diameter55% of canvas, the lit sliver follows its left edge. A fine wispy bank of silver clouds fills bottom 20%, actual photographic lunar details, natural not a stylized icon. Composition crucial: square 1024x1024 canvas, main subject in lower-left/centre-left only, upper-right x55–100%,y0–65% stays entirely transparent to leave room for a large live '24' added later in code. Subject can gently extend into x55–65%,y55–75% to overlap ONLY the lower-left edge of the future number, never obscure the number's centre. Lower 25% contains a cohesive natural base reaching the bottom edge, no floating sticker look. Actual transparent alpha background outside the subject, no solid rectangle, no checkerboard. Premium realistic photography, lifelike natural textures and restrained cinematic light, polished contemporary composition, clear silhouette, no abstract glass bubbles or metallic shapes, no people, no frame, no typography, no digits, no logo. Do not draw 24: leave space for it. One continuous composition, no grid or collage.",
+    "method": "built-in imagegen"
+  },
+  {
+    "id": "photo-fern",
+    "label": "Papardes rīts",
+    "background": "linear-gradient(145deg,#284238,#0b211d)",
+    "tint": "d9e8c2",
+    "prompt": "Use case: photorealistic-natural. Asset type: one square premium watch-inspired duty card background foreground layer, not a UI mockup. Subject: Real delicate forest fern fronds with fresh dew, an elegant tall curled fiddlehead rising from lower-left to x35%,y35%. Dark-green fronds sweep bottom third, several cross the centre-left. Macro botanical photography with detailed leaflets, subtle warm morning rim lighting. Composition crucial: square 1024x1024 canvas, main subject in lower-left/centre-left only, upper-right x55–100%,y0–65% stays entirely transparent to leave room for a large live '24' added later in code. Subject can gently extend into x55–65%,y55–75% to overlap ONLY the lower-left edge of the future number, never obscure the number's centre. Lower 25% contains a cohesive natural base reaching the bottom edge, no floating sticker look. Actual transparent alpha background outside the subject, no solid rectangle, no checkerboard. Premium realistic photography, lifelike natural textures and restrained cinematic light, polished contemporary composition, clear silhouette, no abstract glass bubbles or metallic shapes, no people, no frame, no typography, no digits, no logo. Do not draw 24: leave space for it. One continuous composition, no grid or collage.",
+    "method": "built-in imagegen"
+  },
+  {
+    "id": "photo-wave",
+    "label": "Okeāna vilnis",
+    "background": "linear-gradient(160deg,#236479,#123844)",
+    "tint": "d7f4f7",
+    "prompt": "Use case: photorealistic-natural. Asset type: one square premium watch-inspired duty card background foreground layer, not a UI mockup. Subject: A real crystalline turquoise ocean wave curling from lower-left across the lower half, crest at x32%,y44%. White foam, suspended water drops, elegant translucent aquamarine water. The wave forms a continuous lower foreground reaching the bottom edge; no surfboard or people. Composition crucial: square 1024x1024 canvas, main subject in lower-left/centre-left only, upper-right x55–100%,y0–65% stays entirely transparent to leave room for a large live '24' added later in code. Subject can gently extend into x55–65%,y55–75% to overlap ONLY the lower-left edge of the future number, never obscure the number's centre. Lower 25% contains a cohesive natural base reaching the bottom edge, no floating sticker look. Actual transparent alpha background outside the subject, no solid rectangle, no checkerboard. Premium realistic photography, lifelike natural textures and restrained cinematic light, polished contemporary composition, clear silhouette, no abstract glass bubbles or metallic shapes, no people, no frame, no typography, no digits, no logo. Do not draw 24: leave space for it. One continuous composition, no grid or collage.",
+    "method": "built-in imagegen"
+  },
+  {
+    "id": "photo-orchid",
+    "label": "Baltā orhideja",
+    "background": "linear-gradient(140deg,#504558,#211f2e)",
+    "tint": "f1e7ef",
+    "prompt": "Use case: photorealistic-natural. Asset type: one square premium watch-inspired duty card background foreground layer, not a UI mockup. Subject: Real elegant white orchid flowers on an arching dark stem, two blooms centred lower-left x30%,y56%, one smaller flower reaches x48%,y38%, glossy leaves fill bottom. Delicate pearly petals with a muted lavender throat, refined editorial botanical photograph. Composition crucial: square 1024x1024 canvas, main subject in lower-left/centre-left only, upper-right x55–100%,y0–65% stays entirely transparent to leave room for a large live '24' added later in code. Subject can gently extend into x55–65%,y55–75% to overlap ONLY the lower-left edge of the future number, never obscure the number's centre. Lower 25% contains a cohesive natural base reaching the bottom edge, no floating sticker look. Actual transparent alpha background outside the subject, no solid rectangle, no checkerboard. Premium realistic photography, lifelike natural textures and restrained cinematic light, polished contemporary composition, clear silhouette, no abstract glass bubbles or metallic shapes, no people, no frame, no typography, no digits, no logo. Do not draw 24: leave space for it. One continuous composition, no grid or collage.",
+    "method": "built-in imagegen"
+  },
+  {
+    "id": "photo-panda",
+    "label": "Mazais sarkanais panda",
+    "background": "linear-gradient(155deg,#31463a,#13221c)",
+    "tint": "f5dfc9",
+    "prompt": "Use case: photorealistic-natural. Asset type: one square premium watch-inspired duty card background foreground layer, not a UI mockup. Subject: A real red panda curled peacefully on a dark tree branch diagonally across bottom third, head at x33%,y57%, body left and centre-bottom, gorgeous reddish fur and white face markings. Tail drapes to bottom edge. Tiny fresh green leaves at far left. Natural wildlife portrait, not cartoon. Composition crucial: square 1024x1024 canvas, main subject in lower-left/centre-left only, upper-right x55–100%,y0–65% stays entirely transparent to leave room for a large live '24' added later in code. Subject can gently extend into x55–65%,y55–75% to overlap ONLY the lower-left edge of the future number, never obscure the number's centre. Lower 25% contains a cohesive natural base reaching the bottom edge, no floating sticker look. Actual transparent alpha background outside the subject, no solid rectangle, no checkerboard. Premium realistic photography, lifelike natural textures and restrained cinematic light, polished contemporary composition, clear silhouette, no abstract glass bubbles or metallic shapes, no people, no frame, no typography, no digits, no logo. Do not draw 24: leave space for it. One continuous composition, no grid or collage.",
+    "method": "built-in imagegen"
+  },
+  {
+    "id": "photo-coast",
+    "label": "Saulrieta klints",
+    "background": "linear-gradient(160deg,#657f98,#b6adb0 60%,#725c55)",
+    "tint": "ffe8cf",
+    "prompt": "Use case: photorealistic-natural. Asset type: one square premium watch-inspired duty card background foreground layer, not a UI mockup. Subject: A real rugged cream limestone sea cliff with a single small windswept pine rising at x25%,y35%. Rocky promontory occupies lower-left to centre-bottom, textured rock face reaches bottom edge, a few golden coastal grasses. Warm low sunset light, quiet Mediterranean photography. Composition crucial: square 1024x1024 canvas, main subject in lower-left/centre-left only, upper-right x55–100%,y0–65% stays entirely transparent to leave room for a large live '24' added later in code. Subject can gently extend into x55–65%,y55–75% to overlap ONLY the lower-left edge of the future number, never obscure the number's centre. Lower 25% contains a cohesive natural base reaching the bottom edge, no floating sticker look. Actual transparent alpha background outside the subject, no solid rectangle, no checkerboard. Premium realistic photography, lifelike natural textures and restrained cinematic light, polished contemporary composition, clear silhouette, no abstract glass bubbles or metallic shapes, no people, no frame, no typography, no digits, no logo. Do not draw 24: leave space for it. One continuous composition, no grid or collage.",
+    "method": "built-in imagegen"
+  }
+]

@@ -1,0 +1,498 @@
+{
+  "count": 61,
+  "bytes": 1770674,
+  "oldBytes": 2389272,
+  "savedPercent": 26,
+  "maxBytes": 68848,
+  "method": "Built-in imagegen; alpha-preserving WebP optimization",
+  "items": [
+    {
+      "id": "topper-happy-tabby",
+      "label": "Priecīgais kaķis",
+      "group": "topper",
+      "width": 512,
+      "height": 410,
+      "bytes": 55318
+    },
+    {
+      "id": "topper-space-cat",
+      "label": "Kosmosa kaķis",
+      "group": "topper",
+      "width": 512,
+      "height": 422,
+      "bytes": 48048
+    },
+    {
+      "id": "topper-neon-black-cat",
+      "label": "Neona melnais kaķis",
+      "group": "topper",
+      "width": 512,
+      "height": 488,
+      "bytes": 52024
+    },
+    {
+      "id": "topper-flower-white-cat",
+      "label": "Ziedu baltais kaķis",
+      "group": "topper",
+      "width": 512,
+      "height": 418,
+      "bytes": 35024
+    },
+    {
+      "id": "topper-music-orange-cat",
+      "label": "Mūzikas rudais kaķis",
+      "group": "topper",
+      "width": 512,
+      "height": 435,
+      "bytes": 56140
+    },
+    {
+      "id": "topper-medic-tuxedo-cat",
+      "label": "Mediķa kaķis",
+      "group": "topper",
+      "width": 481,
+      "height": 512,
+      "bytes": 63612
+    },
+    {
+      "id": "topper-night-nurse-cat",
+      "label": "Nakts mediķa kaķis",
+      "group": "topper",
+      "width": 512,
+      "height": 401,
+      "bytes": 55500
+    },
+    {
+      "id": "topper-cosmic-moon",
+      "label": "Kosmiskais mēness",
+      "group": "topper",
+      "width": 512,
+      "height": 323,
+      "bytes": 33812
+    },
+    {
+      "id": "sticker-good-vibes",
+      "label": "Good Vibes",
+      "group": "sticker",
+      "width": 256,
+      "height": 252,
+      "bytes": 15494
+    },
+    {
+      "id": "sticker-night-mode",
+      "label": "Night Mode",
+      "group": "sticker",
+      "width": 256,
+      "height": 255,
+      "bytes": 16956
+    },
+    {
+      "id": "sticker-24h-duty",
+      "label": "24H Duty",
+      "group": "sticker",
+      "width": 251,
+      "height": 256,
+      "bytes": 16946
+    },
+    {
+      "id": "sticker-coffee-first",
+      "label": "Coffee First",
+      "group": "sticker",
+      "width": 249,
+      "height": 256,
+      "bytes": 18524
+    },
+    {
+      "id": "sticker-focus",
+      "label": "Focus",
+      "group": "sticker",
+      "width": 256,
+      "height": 253,
+      "bytes": 15898
+    },
+    {
+      "id": "sticker-planet",
+      "label": "Planēta",
+      "group": "sticker",
+      "width": 256,
+      "height": 207,
+      "bytes": 14708
+    },
+    {
+      "id": "sticker-prism",
+      "label": "Kristāls",
+      "group": "sticker",
+      "width": 256,
+      "height": 239,
+      "bytes": 13420
+    },
+    {
+      "id": "sticker-pink-paw",
+      "label": "Rozā ķepiņa",
+      "group": "sticker",
+      "width": 219,
+      "height": 256,
+      "bytes": 10786
+    },
+    {
+      "id": "charm-gold-moon",
+      "label": "Zelta mēness",
+      "group": "charm",
+      "width": 148,
+      "height": 512,
+      "bytes": 15594
+    },
+    {
+      "id": "charm-prism-star",
+      "label": "Kristāla zvaigzne",
+      "group": "charm",
+      "width": 243,
+      "height": 512,
+      "bytes": 22588
+    },
+    {
+      "id": "charm-coffee",
+      "label": "Kafija",
+      "group": "charm",
+      "width": 200,
+      "height": 512,
+      "bytes": 23090
+    },
+    {
+      "id": "charm-paw",
+      "label": "Ķepiņa",
+      "group": "charm",
+      "width": 153,
+      "height": 512,
+      "bytes": 16144
+    },
+    {
+      "id": "charm-planet",
+      "label": "Planēta",
+      "group": "charm",
+      "width": 251,
+      "height": 512,
+      "bytes": 27704
+    },
+    {
+      "id": "charm-blue-moon",
+      "label": "Zilais mēness",
+      "group": "charm",
+      "width": 203,
+      "height": 512,
+      "bytes": 21416
+    },
+    {
+      "id": "charm-white-bone",
+      "label": "Baltais kauliņš",
+      "group": "charm",
+      "width": 113,
+      "height": 512,
+      "bytes": 15238
+    },
+    {
+      "id": "charm-night-nurse-skull",
+      "label": "Nakts māsiņa",
+      "group": "charm",
+      "width": 164,
+      "height": 512,
+      "bytes": 20352
+    },
+    {
+      "id": "charm-masked-night-skull",
+      "label": "Mediķis maskā",
+      "group": "charm",
+      "width": 174,
+      "height": 512,
+      "bytes": 22000
+    },
+    {
+      "id": "charm-holo-dice",
+      "label": "Holo kauliņi",
+      "group": "charm",
+      "width": 247,
+      "height": 512,
+      "bytes": 32042
+    },
+    {
+      "id": "charm-holo-heart",
+      "label": "Holo sirds",
+      "group": "charm",
+      "width": 256,
+      "height": 512,
+      "bytes": 26936
+    },
+    {
+      "id": "strip-night-shift",
+      "label": "Night Shift",
+      "group": "strip",
+      "width": 55,
+      "height": 512,
+      "bytes": 4886
+    },
+    {
+      "id": "strip-ct-ramp",
+      "label": "CT Ramp",
+      "group": "strip",
+      "width": 60,
+      "height": 512,
+      "bytes": 5514
+    },
+    {
+      "id": "strip-nmp",
+      "label": "NMP",
+      "group": "strip",
+      "width": 64,
+      "height": 512,
+      "bytes": 4778
+    },
+    {
+      "id": "strip-xray-hand",
+      "label": "Rentgena roka",
+      "group": "strip",
+      "width": 61,
+      "height": 512,
+      "bytes": 5986
+    },
+    {
+      "id": "strip-ct-hazard",
+      "label": "CT brīdinājums",
+      "group": "strip",
+      "width": 79,
+      "height": 512,
+      "bytes": 6038
+    },
+    {
+      "id": "tape-clear",
+      "label": "Caurspīdīga",
+      "group": "tape",
+      "width": 512,
+      "height": 114,
+      "bytes": 23168
+    },
+    {
+      "id": "tape-black",
+      "label": "Melna",
+      "group": "tape",
+      "width": 512,
+      "height": 105,
+      "bytes": 11828
+    },
+    {
+      "id": "tape-white",
+      "label": "Balta",
+      "group": "tape",
+      "width": 512,
+      "height": 119,
+      "bytes": 13440
+    },
+    {
+      "id": "tape-paper",
+      "label": "Papīra",
+      "group": "tape",
+      "width": 512,
+      "height": 93,
+      "bytes": 9088
+    },
+    {
+      "id": "tape-grid",
+      "label": "Rūtiņu",
+      "group": "tape",
+      "width": 512,
+      "height": 89,
+      "bytes": 6108
+    },
+    {
+      "id": "tape-cream",
+      "label": "Krēmkrāsas",
+      "group": "tape",
+      "width": 512,
+      "height": 91,
+      "bytes": 9408
+    },
+    {
+      "id": "tape-iridescent",
+      "label": "Hologrāfiska",
+      "group": "tape",
+      "width": 512,
+      "height": 100,
+      "bytes": 12876
+    },
+    {
+      "id": "tape-gold",
+      "label": "Zelta",
+      "group": "tape",
+      "width": 512,
+      "height": 109,
+      "bytes": 15342
+    },
+    {
+      "id": "tape-on-duty",
+      "label": "On Duty",
+      "group": "tape",
+      "width": 512,
+      "height": 128,
+      "bytes": 25788
+    },
+    {
+      "id": "tape-rakus",
+      "label": "Rakus",
+      "group": "tape",
+      "width": 512,
+      "height": 149,
+      "bytes": 23728
+    },
+    {
+      "id": "tape-holographic",
+      "label": "Holo spīdums",
+      "group": "tape",
+      "width": 512,
+      "height": 90,
+      "bytes": 16464
+    },
+    {
+      "id": "tape-botanical-leaves",
+      "label": "Eikalipta zaļumi",
+      "group": "tape",
+      "width": 512,
+      "height": 104,
+      "bytes": 17156
+    },
+    {
+      "id": "object-david",
+      "label": "Dāvids",
+      "group": "object",
+      "width": 328,
+      "height": 512,
+      "bytes": 29628
+    },
+    {
+      "id": "object-floral-statue",
+      "label": "Ziedu statuja",
+      "group": "object",
+      "width": 395,
+      "height": 512,
+      "bytes": 45224
+    },
+    {
+      "id": "object-glitch-statue",
+      "label": "Neona statuja",
+      "group": "object",
+      "width": 381,
+      "height": 512,
+      "bytes": 40572
+    },
+    {
+      "id": "object-crystal-cat",
+      "label": "Kristāla kaķis",
+      "group": "object",
+      "width": 373,
+      "height": 512,
+      "bytes": 54998
+    },
+    {
+      "id": "object-snake",
+      "label": "Baltā čūska",
+      "group": "object",
+      "width": 512,
+      "height": 491,
+      "bytes": 40954
+    },
+    {
+      "id": "object-lilies",
+      "label": "Lilijas",
+      "group": "object",
+      "width": 321,
+      "height": 512,
+      "bytes": 28414
+    },
+    {
+      "id": "object-astronaut",
+      "label": "Mēness astronauts",
+      "group": "object",
+      "width": 467,
+      "height": 512,
+      "bytes": 68848
+    },
+    {
+      "id": "object-floral-skull",
+      "label": "Ziedu galvaskauss",
+      "group": "object",
+      "width": 441,
+      "height": 512,
+      "bytes": 57480
+    },
+    {
+      "id": "object-owl",
+      "label": "Baltā pūce",
+      "group": "object",
+      "width": 365,
+      "height": 512,
+      "bytes": 38044
+    },
+    {
+      "id": "object-radiology-cat",
+      "label": "Radioloģijas kaķis",
+      "group": "object",
+      "width": 316,
+      "height": 512,
+      "bytes": 41138
+    },
+    {
+      "id": "object-new-floral-statue",
+      "label": "Liliju statuja",
+      "group": "object",
+      "width": 361,
+      "height": 512,
+      "bytes": 42722
+    },
+    {
+      "id": "object-skeleton-peace",
+      "label": "Skeleta miera zīme",
+      "group": "object",
+      "width": 237,
+      "height": 512,
+      "bytes": 31786
+    },
+    {
+      "id": "object-holo-helmet",
+      "label": "Holo ķivere",
+      "group": "object",
+      "width": 507,
+      "height": 512,
+      "bytes": 49550
+    },
+    {
+      "id": "object-holo-skull",
+      "label": "Holo galvaskauss",
+      "group": "object",
+      "width": 441,
+      "height": 512,
+      "bytes": 67602
+    },
+    {
+      "id": "object-strawberry",
+      "label": "Zemene",
+      "group": "object",
+      "width": 369,
+      "height": 512,
+      "bytes": 55980
+    },
+    {
+      "id": "object-green-glitter-bear",
+      "label": "Zaļais spīdumu lācis",
+      "group": "object",
+      "width": 362,
+      "height": 512,
+      "bytes": 53002
+    },
+    {
+      "id": "object-cloud-cat",
+      "label": "Kaķis uz mākoņa",
+      "group": "object",
+      "width": 512,
+      "height": 458,
+      "bytes": 47822
+    }
+  ]
+}

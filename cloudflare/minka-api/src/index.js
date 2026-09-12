@@ -141,7 +141,7 @@ const SKINS_KEY = "skins:v1";
 const SKIN_ART_PREFIX = "skin-art::";
 const SKIN_ART_MAX_BYTES = 96 * 1024;
 const SKIN_ART_ID_RE = /^[a-f0-9]{32}$/;
-const SKIN_PART_RE = /^(img:[\w-]{1,24}|art:[a-f0-9]{32}|grad:[a-z]{1,16}|hue:\d{1,3},\d{1,3},\d{1,3}|txt:\d{1,3},\d{1,3},\d{1,3}|num:\d{1,3},\d{1,3},\d{1,3}|na:(0(\.\d{1,2})?|1)|em:(0(\.\d{1,2})?|1)|emn:[01]|fx:[a-z]{1,12}|fxs:[0-3](\.\d{1,2})?|av:1|ad:[a-z0-9-]{1,40},(?:[6-9]\d|1[0-3]\d|140),[lr],-?(?:1000|[0-9]{1,3}),-?(?:1000|[0-9]{1,3}))$/;
+const SKIN_PART_RE = /^(img:[\w-]{1,24}|art:[a-f0-9]{32}|grad:[a-z]{1,16}|hue:\d{1,3},\d{1,3},\d{1,3}|txt:\d{1,3},\d{1,3},\d{1,3}|num:\d{1,3},\d{1,3},\d{1,3}|na:(0(\.\d{1,2})?|1)|em:(0(\.\d{1,2})?|1)|emn:[01]|dp:0|fx:[a-z]{1,12}|fxs:[0-3](\.\d{1,2})?|av:1|ad:[a-z0-9-]{1,40},(?:[6-9]\d|1[0-3]\d|140),[lr],-?(?:1000|[0-9]{1,3}),-?(?:1000|[0-9]{1,3}))$/;
 
 function cleanSkinWorker(value) {
   if (typeof value !== "string") return "";
@@ -164,11 +164,26 @@ function cleanEmojiValue(value) {
   return emoji;
 }
 
+// wf: is a compact, versioned card layout, never CSS or executable markup.
+function validCardFacePart(part) {
+  if (!part.startsWith("wf:")) return false;
+  const a = part.slice(3).split("~");
+  if (a.length !== 17 || a[0] !== "1" || !/^[0-3]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return false;
+  const integer = (s, min, max) => /^(0|[1-9]\d{0,2})$/.test(s) && Number(s) >= min && Number(s) <= max;
+  if (!integer(a[3],0,11) || !integer(a[4],0,2) || !integer(a[5],0,100) || !integer(a[6],0,100) || !integer(a[7],100,180)) return false;
+  return a.slice(8).every((part) => {
+    const p = part.split(",");
+    return p.length === 4 && integer(p[0],5,95) && integer(p[1],5,95) && integer(p[2],50,170)
+      && /^[01]$/.test(p[3]);
+  });
+}
+
 function cleanSkinValue(value) {
-  if (typeof value !== "string" || value.length > 320) return "";
+  if (typeof value !== "string" || value.length > 640) return "";
   const skin = value.trim();
   const parts = skin.split(";");
-  if (parts.length < 1 || parts.length > 10 || parts.some((part) => !SKIN_PART_RE.test(part))) return "";
+  if (parts.length < 1 || parts.length > 12 || parts.filter(part => part.startsWith("wf:")).length > 1 || parts.filter(part => part.startsWith("dp:")).length > 1
+    || parts.some((part) => !SKIN_PART_RE.test(part) && !validCardFacePart(part))) return "";
   return skin;
 }
 

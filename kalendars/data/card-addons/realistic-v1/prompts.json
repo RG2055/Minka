@@ -1,0 +1,490 @@
+[
+  {
+    "id": "topper-happy-tabby",
+    "label": "Priecīgais kaķis",
+    "group": "topper",
+    "width": 640,
+    "height": 513,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A lively friendly brown tabby cat, real amber eyes and fine striped fur, head and front paws peeking over an invisible ledge. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "topper-space-cat",
+    "label": "Kosmosa kaķis",
+    "group": "topper",
+    "width": 640,
+    "height": 527,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A real charcoal cat with subtle silver astronaut collar and small polished clear space visor pushed above its forehead, head and front paws peeking over an invisible ledge. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "topper-neon-black-cat",
+    "label": "Neona melnais kaķis",
+    "group": "topper",
+    "width": 640,
+    "height": 610,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A beautiful real black cat with fine glossy fur, warm amber eyes and restrained teal rim light, head and front paws over an invisible ledge. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "topper-flower-white-cat",
+    "label": "Ziedu baltais kaķis",
+    "group": "topper",
+    "width": 640,
+    "height": 523,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A real white cat with a tiny pale blush flower tucked beside one ear, fine white fur, head and front paws peeking over an invisible ledge. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "topper-music-orange-cat",
+    "label": "Mūzikas rudais kaķis",
+    "group": "topper",
+    "width": 640,
+    "height": 544,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A real orange tabby cat wearing small elegant dark headphones, head and front paws peeking over an invisible ledge. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "topper-medic-tuxedo-cat",
+    "label": "Mediķa kaķis",
+    "group": "topper",
+    "width": 601,
+    "height": 640,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A real black and white tuxedo cat with a small folded pale medical cap, head and front paws peeking over an invisible ledge. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "topper-night-nurse-cat",
+    "label": "Nakts mediķa kaķis",
+    "group": "topper",
+    "width": 640,
+    "height": 501,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A sleepy real charcoal tabby cat with a tiny navy medical cap, soft blue and amber highlights, head and front paws peeking over an invisible ledge. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "topper-cosmic-moon",
+    "label": "Kosmiskais mēness",
+    "group": "topper",
+    "width": 640,
+    "height": 404,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A sculptural silver crescent moon with realistic lunar crater texture, one small floating bronze planet and two tiny metallic stars, a single compact balanced ornament. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "sticker-good-vibes",
+    "label": "Good Vibes",
+    "group": "sticker",
+    "width": 126,
+    "height": 139,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A small rounded brushed champagne titanium badge with clearly engraved centered text \"GOOD VIBES\", subtle depth and satin reflections. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "sticker-night-mode",
+    "label": "Night Mode",
+    "group": "sticker",
+    "width": 119,
+    "height": 124,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A small rounded midnight blue enamel badge with a silver crescent and precisely engraved text \"NIGHT MODE\". Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "sticker-24h-duty",
+    "label": "24H Duty",
+    "group": "sticker",
+    "width": 209,
+    "height": 121,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A small rounded brushed silver badge with clearly embossed text \"24H DUTY\", typography large and legible. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "sticker-coffee-first",
+    "label": "Coffee First",
+    "group": "sticker",
+    "width": 124,
+    "height": 123,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A small espresso brown enamel badge with a tiny sculpted ceramic cup and clearly embossed text \"COFFEE FIRST\". Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "sticker-focus",
+    "label": "Focus",
+    "group": "sticker",
+    "width": 172,
+    "height": 106,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A small rounded dark graphite brushed metal badge with precisely engraved text \"FOCUS\", restrained warm silver reflection. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "sticker-planet",
+    "label": "Planēta",
+    "group": "sticker",
+    "width": 167,
+    "height": 121,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: One realistic miniature Saturn sculpture, dusty blue planet with textured surface and thin champagne metal rings, tilted elegantly. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "sticker-prism",
+    "label": "Kristāls",
+    "group": "sticker",
+    "width": 94,
+    "height": 107,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: One clean optical crystal prism with polished realistic facets and subtle spectral highlights, translucent pale ice blue glass. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "sticker-pink-paw",
+    "label": "Rozā ķepiņa",
+    "group": "sticker",
+    "width": 512,
+    "height": 496,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A lifelike small sculpted paw medallion in ivory ceramic with soft blush paw pads, glazed but restrained realistic highlights. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "charm-gold-moon",
+    "label": "Zelta mēness",
+    "group": "charm",
+    "width": 100,
+    "height": 206,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Portrait vertical composition with the clasp at the top, roughly 1:2 aspect ratio. Subject: A delicate brushed gold crescent moon pendant on a short fine gold chain with a small lobster clasp at top; vertical complete charm. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "charm-prism-star",
+    "label": "Kristāla zvaigzne",
+    "group": "charm",
+    "width": 95,
+    "height": 195,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Portrait vertical composition with the clasp at the top, roughly 1:2 aspect ratio. Subject: A pale optical crystal five-point star pendant, subtle rainbow edges, on a short fine silver chain and small lobster clasp at top. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "charm-coffee",
+    "label": "Kafija",
+    "group": "charm",
+    "width": 110,
+    "height": 207,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Portrait vertical composition with the clasp at the top, roughly 1:2 aspect ratio. Subject: A miniature ivory porcelain espresso cup with visible dark coffee surface, on a short fine champagne chain and lobster clasp. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "charm-paw",
+    "label": "Ķepiņa",
+    "group": "charm",
+    "width": 85,
+    "height": 169,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Portrait vertical composition with the clasp at the top, roughly 1:2 aspect ratio. Subject: A sculpted ivory ceramic cat paw pendant with pale blush pads, realistic glazed finish, short fine gold chain with small lobster clasp. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "charm-planet",
+    "label": "Planēta",
+    "group": "charm",
+    "width": 111,
+    "height": 173,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Portrait vertical composition with the clasp at the top, roughly 1:2 aspect ratio. Subject: A miniature textured blue Saturn pendant with fine gold rings on a short fine gold chain and small lobster clasp. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "charm-blue-moon",
+    "label": "Zilais mēness",
+    "group": "charm",
+    "width": 287,
+    "height": 640,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Portrait vertical composition with the clasp at the top, roughly 1:2 aspect ratio. Subject: A matte midnight blue enamel crescent moon pendant edged in silver, short fine silver chain and lobster clasp. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "charm-white-bone",
+    "label": "Baltais kauliņš",
+    "group": "charm",
+    "width": 194,
+    "height": 640,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Portrait vertical composition with the clasp at the top, roughly 1:2 aspect ratio. Subject: A small polished ivory bone-shaped charm, anatomical silhouette, short fine silver chain with lobster clasp. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "charm-night-nurse-skull",
+    "label": "Nakts māsiņa",
+    "group": "charm",
+    "width": 207,
+    "height": 640,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Portrait vertical composition with the clasp at the top, roughly 1:2 aspect ratio. Subject: A small ivory sculpted skull pendant wearing a tiny navy nurse cap, no gore, delicate rose-gold chain and lobster clasp. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "charm-masked-night-skull",
+    "label": "Mediķis maskā",
+    "group": "charm",
+    "width": 212,
+    "height": 640,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Portrait vertical composition with the clasp at the top, roughly 1:2 aspect ratio. Subject: A small realistic ivory skull pendant wearing a pale surgical face mask, no gore, on a short fine silver chain and lobster clasp. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "charm-holo-dice",
+    "label": "Holo kauliņi",
+    "group": "charm",
+    "width": 314,
+    "height": 384,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Portrait vertical composition with the clasp at the top, roughly 1:2 aspect ratio. Subject: Two small polished optical glass dice with dark recessed dots and subtle iridescent facets, on a short fine silver chain with lobster clasp. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "charm-holo-heart",
+    "label": "Holo sirds",
+    "group": "charm",
+    "width": 240,
+    "height": 384,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Portrait vertical composition with the clasp at the top, roughly 1:2 aspect ratio. Subject: One translucent smoky rose glass heart pendant with subtle pearly iridescent rim, short fine silver chain and lobster clasp. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "strip-night-shift",
+    "label": "Night Shift",
+    "group": "strip",
+    "width": 89,
+    "height": 358,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Tall NARROW VERTICAL composition, about 1:4 width-to-height aspect ratio, filling the full height. Subject: A tall narrow vertical brushed dark titanium security strip with large legible engraved text \"NIGHT SHIFT\", tiny amber indicator at one end. Only render text explicitly requested in the subject, otherwise no text. This is a vertical strip mounted along a card edge, NOT a horizontal badge. Any text must run down the strip, rotated 90 degrees clockwise, large and clear. Keep the image tall and slim, with only 5% safety margin."
+  },
+  {
+    "id": "strip-ct-ramp",
+    "label": "CT Ramp",
+    "group": "strip",
+    "width": 93,
+    "height": 356,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Tall NARROW VERTICAL composition, about 1:4 width-to-height aspect ratio, filling the full height. Subject: A tall narrow vertical satin silver security strip with large legible dark text \"CT RAMP\", a tiny restrained medical scanner motif. Only render text explicitly requested in the subject, otherwise no text. This is a vertical strip mounted along a card edge, NOT a horizontal badge. Any text must run down the strip, rotated 90 degrees clockwise, large and clear. Keep the image tall and slim, with only 5% safety margin."
+  },
+  {
+    "id": "strip-nmp",
+    "label": "NMP",
+    "group": "strip",
+    "width": 89,
+    "height": 356,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Tall NARROW VERTICAL composition, about 1:4 width-to-height aspect ratio, filling the full height. Subject: A tall narrow vertical dark navy metal strip with legible large silver text \"NMP\", a discreet copper accent. Only render text explicitly requested in the subject, otherwise no text. This is a vertical strip mounted along a card edge, NOT a horizontal badge. Any text must run down the strip, rotated 90 degrees clockwise, large and clear. Keep the image tall and slim, with only 5% safety margin."
+  },
+  {
+    "id": "strip-xray-hand",
+    "label": "Rentgena roka",
+    "group": "strip",
+    "width": 146,
+    "height": 768,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Tall NARROW VERTICAL composition, about 1:4 width-to-height aspect ratio, filling the full height. Subject: A tall narrow vertical smoky glass strip containing a delicate realistic x-ray image of hand bones, premium etched glass finish, no gore or extra text. Only render text explicitly requested in the subject, otherwise no text. This is a vertical strip mounted along a card edge, NOT a horizontal badge. Any text must run down the strip, rotated 90 degrees clockwise, large and clear. Keep the image tall and slim, with only 5% safety margin."
+  },
+  {
+    "id": "strip-ct-hazard",
+    "label": "CT brīdinājums",
+    "group": "strip",
+    "width": 147,
+    "height": 768,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Tall NARROW VERTICAL composition, about 1:4 width-to-height aspect ratio, filling the full height. Subject: A tall narrow vertical brushed graphite warning strip with a restrained ochre radiation trefoil and clearly engraved text \"CT\", realistic industrial premium finish. Only render text explicitly requested in the subject, otherwise no text. This is a vertical strip mounted along a card edge, NOT a horizontal badge. Any text must run down the strip, rotated 90 degrees clockwise, large and clear. Keep the image tall and slim, with only 5% safety margin."
+  },
+  {
+    "id": "tape-clear",
+    "label": "Caurspīdīga",
+    "group": "tape",
+    "width": 211,
+    "height": 99,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Wide horizontal composition around 4:1 aspect ratio. Subject: One short horizontal piece of clear adhesive tape, slightly torn ends, realistic glossy ripples and subtle neutral specular highlights; alpha transparency through the tape. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "tape-black",
+    "label": "Melna",
+    "group": "tape",
+    "width": 211,
+    "height": 119,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Wide horizontal composition around 4:1 aspect ratio. Subject: One short horizontal piece of matte black fabric adhesive tape, torn ends, subtle woven texture and restrained folds. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "tape-white",
+    "label": "Balta",
+    "group": "tape",
+    "width": 211,
+    "height": 111,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Wide horizontal composition around 4:1 aspect ratio. Subject: One short horizontal piece of ivory white medical cloth tape, softly torn ends, natural fine woven texture. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "tape-paper",
+    "label": "Papīra",
+    "group": "tape",
+    "width": 210,
+    "height": 112,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Wide horizontal composition around 4:1 aspect ratio. Subject: One short horizontal piece of kraft paper masking tape, irregular torn ends, realistic fine paper fibers and a slight folded corner. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "tape-grid",
+    "label": "Rūtiņu",
+    "group": "tape",
+    "width": 206,
+    "height": 105,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Wide horizontal composition around 4:1 aspect ratio. Subject: One short horizontal piece of warm white washi tape with fine pale blue square grid, torn ends, realistic paper fibers. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "tape-cream",
+    "label": "Krēmkrāsas",
+    "group": "tape",
+    "width": 200,
+    "height": 116,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Wide horizontal composition around 4:1 aspect ratio. Subject: One short horizontal piece of cream linen washi tape, torn ends, fine natural fibers, delicate raised edge. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "tape-iridescent",
+    "label": "Hologrāfiska",
+    "group": "tape",
+    "width": 197,
+    "height": 118,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Wide horizontal composition around 4:1 aspect ratio. Subject: One short horizontal piece of translucent opal adhesive tape with a restrained pink lavender and cyan sheen, realistic wrinkles, torn ends. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "tape-gold",
+    "label": "Zelta",
+    "group": "tape",
+    "width": 205,
+    "height": 116,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Wide horizontal composition around 4:1 aspect ratio. Subject: One short horizontal piece of brushed gold foil tape, subtle crinkling and irregular torn ends, realistic satin reflections. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "tape-on-duty",
+    "label": "On Duty",
+    "group": "tape",
+    "width": 196,
+    "height": 121,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Wide horizontal composition around 4:1 aspect ratio. Subject: One short horizontal strip of dark slate woven tape with clearly printed pale text \"ON DUTY\", realistic torn fabric edges. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "tape-rakus",
+    "label": "Rakus",
+    "group": "tape",
+    "width": 213,
+    "height": 120,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Wide horizontal composition around 4:1 aspect ratio. Subject: One short horizontal strip of ivory medical cloth tape with clearly printed dark blue text \"RAKUS\", realistic fine fibers and torn ends. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "tape-holographic",
+    "label": "Holo spīdums",
+    "group": "tape",
+    "width": 640,
+    "height": 224,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Wide horizontal composition around 4:1 aspect ratio. Subject: One short horizontal strip of silver holographic foil with fine iridescent spectral bands, gently crinkled texture and torn ends. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "tape-botanical-leaves",
+    "label": "Eikalipta zaļumi",
+    "group": "tape",
+    "width": 640,
+    "height": 151,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Wide horizontal composition around 4:1 aspect ratio. Subject: A delicate horizontal sprig of real eucalyptus leaves, dusty sage tones, botanical macro photography, slender natural stems, no tape behind it. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "object-david",
+    "label": "Dāvids",
+    "group": "object",
+    "width": 217,
+    "height": 308,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A small classical David marble bust, finely carved white marble with subtle veins, three-quarter angle, sculptural museum object, fully isolated. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "object-floral-statue",
+    "label": "Ziedu statuja",
+    "group": "object",
+    "width": 233,
+    "height": 302,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A small ivory classical marble bust crowned with delicate blush peonies and natural sage leaves, realistic stone and petal textures. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "object-glitch-statue",
+    "label": "Neona statuja",
+    "group": "object",
+    "width": 212,
+    "height": 313,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A small classical marble bust with restrained blue and copper metallic seams across the stone, tactile sculpture, no digital distortion or pixel effects. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "object-crystal-cat",
+    "label": "Kristāla kaķis",
+    "group": "object",
+    "width": 228,
+    "height": 313,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: An elegant small seated cat sculpture carved from smoky clear quartz, realistic polished facets, subtle spectral reflections, restrained premium product photography. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "object-snake",
+    "label": "Baltā čūska",
+    "group": "object",
+    "width": 205,
+    "height": 314,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A graceful small ivory white snake loosely coiled with raised head, fine realistic scales, delicate natural pose, editorial wildlife macro photography. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "object-lilies",
+    "label": "Lilijas",
+    "group": "object",
+    "width": 198,
+    "height": 316,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A small graceful arrangement of three real ivory lily blooms with blush centers and dark sage leaves, botanical photography, fine petal texture. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "object-astronaut",
+    "label": "Mēness astronauts",
+    "group": "object",
+    "width": 189,
+    "height": 311,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A small detailed realistic astronaut figurine seated on a textured crescent moon, white fabric suit, reflective copper visor, a single compact sculpture. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "object-floral-skull",
+    "label": "Ziedu galvaskauss",
+    "group": "object",
+    "width": 209,
+    "height": 306,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A small realistic aged ivory skull with blush roses and dark sage leaves growing around one side, no gore, refined still-life photography. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "object-owl",
+    "label": "Baltā pūce",
+    "group": "object",
+    "width": 176,
+    "height": 302,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A real snowy white owl perched calmly, exquisite feather detail, golden eyes, full compact body and small talons, no branch. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "object-radiology-cat",
+    "label": "Radioloģijas kaķis",
+    "group": "object",
+    "width": 618,
+    "height": 768,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A real charcoal cat sitting with a small pale medical collar and tiny silver radiology badge, warm amber eyes, photographic fur texture, not cartoon. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "object-new-floral-statue",
+    "label": "Liliju statuja",
+    "group": "object",
+    "width": 466,
+    "height": 768,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A graceful ivory marble bust partly embraced by real white lilies, exquisite stone veins and petal detail, elegant asymmetrical composition. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "object-skeleton-peace",
+    "label": "Skeleta miera zīme",
+    "group": "object",
+    "width": 448,
+    "height": 640,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: One sculptural ivory skeleton hand making a peace sign, realistic anatomical carved bone details, no gore, isolated single object. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "object-holo-helmet",
+    "label": "Holo ķivere",
+    "group": "object",
+    "width": 507,
+    "height": 512,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A small realistic futuristic motorcycle helmet in smoky titanium and optical opal glass, subtle iridescent visor, finely detailed product photograph. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "object-holo-skull",
+    "label": "Holo galvaskauss",
+    "group": "object",
+    "width": 400,
+    "height": 512,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A small realistic skull carved from smoky optical glass, subtle opalescent facets and warm silver reflections, no gore. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "object-strawberry",
+    "label": "Zemene",
+    "group": "object",
+    "width": 403,
+    "height": 462,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: One ripe fresh strawberry with tiny golden seeds, rich natural red skin and crisp green leaves, exquisite macro food photography. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "object-green-glitter-bear",
+    "label": "Zaļais spīdumu lācis",
+    "group": "object",
+    "width": 406,
+    "height": 512,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A small seated bear sculpture in deep sage green translucent resin with extremely fine subtle mineral flecks, tactile polished material, no chunky glitter or cartoon eyes. Only render text explicitly requested in the subject, otherwise no text."
+  },
+  {
+    "id": "object-cloud-cat",
+    "label": "Kaķis uz mākoņa",
+    "group": "object",
+    "width": 376,
+    "height": 431,
+    "prompt": "Use case: photorealistic-natural / premium product photography. Generate ONE standalone decoration asset on a GENUINELY TRANSPARENT alpha background. Match an elegant editorial photographic collection: highly realistic natural texture, soft studio light, a delicate warm rim, subdued refined color, beautiful tactile materials. No illustration, cartoon, emoji, vector art, thick white sticker outline, checkerboard, panel, card, UI, backdrop, watermark, floor or cast shadow outside the object. Keep the entire object visible with a small 5% transparent safety margin. Nearly square compact composition. Subject: A real soft silver tabby cat resting on a small fluffy cloud-like white wool cushion, fine fur texture, calm amber eyes, dreamy but photographic. Only render text explicitly requested in the subject, otherwise no text."
+  }
+]

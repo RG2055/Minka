@@ -2,7 +2,7 @@
   'use strict';
 
   var STORAGE_KEY = 'mkWorkerCardAddonsV1';
-  var CACHE_BUST = '20260903holo4';
+  var CACHE_BUST = '20260912realistic1';
   var activeGroup = 'topper';
   var scanFrame = 0;
   var sectionFrame = 0;
@@ -35,7 +35,7 @@
     { id: 'object', label: 'Objekti' }
   ];
 
-  function optimized(file) { return 'data/card-addons/optimized/' + file; }
+  function optimized(file) { return 'data/card-addons/realistic-v1/' + file; }
 
   var ITEMS = [
     { id: 'topper-happy-tabby', label: 'Priecīgais kaķis', group: 'topper', dockY: 5, aspect: '640 / 513', src: optimized('topper-happy-tabby.webp') },
@@ -655,6 +655,7 @@
 
     function syncPreviewClearance() {
       if (!previewSlot || !preview) return;
+      if (window.MinkaCardFaces && window.MinkaCardFaces.refreshPreview) window.MinkaCardFaces.refreshPreview();
       var addon = preview.querySelector(':scope > .mk-card-addon');
       if (!addon) {
         previewSlot.style.removeProperty('--mk-addon-preview-top-clearance');
@@ -730,7 +731,7 @@
       grid.innerHTML = ITEMS.filter(function(item) { return item.group === activeGroup; }).map(function(item) {
         var selected = config && config.id === item.id;
         return '<button type="button" class="mk-addon-choice' + (selected ? ' is-active' : '') + '" data-addon-id="' + esc(item.id) + '" aria-label="' + esc(item.label) + '" aria-pressed="' + selected + '" title="' + esc(item.label) + '">'
-          + '<span><img loading="eager" decoding="async" draggable="false" src="' + esc(assetUrl(item)) + '" alt=""></span><b>' + esc(item.label) + '</b></button>';
+          + '<span><img loading="lazy" decoding="async" draggable="false" src="' + esc(assetUrl(item)) + '" alt=""></span><b>' + esc(item.label) + '</b></button>';
       }).join('');
       grid.querySelectorAll('.mk-addon-choice').forEach(function(button) {
         var thumb = button.querySelector('img');

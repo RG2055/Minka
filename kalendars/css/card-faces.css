@@ -1,0 +1,354 @@
+/* Card faces: static paint only. No blur filters or continuously animated layers. */
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-face-classic .mk-mid-hours.card-shift {
+  font-size: clamp(58px, 49cqw, 150px) !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif !important;
+  font-weight: 650 !important;
+  font-style: normal !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.065em !important;
+  line-height: .98 !important;
+  color: rgba(var(--mk-num-color, 204,218,245), .75) !important;
+  -webkit-text-fill-color: transparent !important;
+  -webkit-text-stroke: .2px rgba(255,255,255,.34);
+  background-image: linear-gradient(155deg,rgba(var(--mk-num-color,204,218,245),.92),rgba(var(--mk-num-color,204,218,245),.62) 52%,rgba(var(--mk-num-color,204,218,245),.85));
+  background-size: cover;
+  background-position: center;
+  background-clip: text;
+  -webkit-background-clip: text;
+  text-shadow: 0 1px 1px rgba(0,0,0,.12) !important;
+  opacity: var(--mk-num-alpha,1) !important;
+  padding: 0 .045em .06em 0 !important;
+}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] {
+  --wf-tint:#d5e6ef; --wf-metal:#d7d9de;
+  position:relative !important;
+  container-type:inline-size;
+  isolation:isolate;
+  overflow:hidden !important;
+  border-radius:22% !important;
+  border:2px solid var(--wf-metal) !important;
+  background:#080b10 !important;
+  box-shadow:inset 0 0 0 2px #101318,0 2px 5px #0002 !important;
+  transform:none !important;
+  transition:none !important;
+}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]::before {
+  content:'' !important;display:block !important;position:absolute !important;inset:2px !important;z-index:0 !important;
+  border-radius:inherit !important;opacity:1 !important;transform:none !important;
+  background-image:linear-gradient(180deg,#00000008,#00000012 45%,#00000069),var(--mk-skin-img,linear-gradient(150deg,#323b53,#0c121c)) !important;
+  background-size:var(--wf-bg-zoom,100%) var(--wf-bg-zoom,100%) !important;
+  background-position:var(--wf-bg-x,50%) var(--wf-bg-y,50%) !important;
+  background-repeat:no-repeat !important;
+  /* Old card glow uses this pseudo-element as a masked border ring. A face
+     needs the entire image area, not that inherited cut-out centre. */
+  -webkit-mask:none !important;mask:none !important;clip-path:none !important;
+  padding:0 !important;border:0 !important;width:auto !important;height:auto !important;
+  mix-blend-mode:normal !important;background-blend-mode:normal !important;
+  pointer-events:none !important;filter:none !important;
+}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]::after {
+  content:'' !important;display:block !important;position:absolute !important;inset:1px !important;z-index:9 !important;
+  border:1px solid #ffffff35 !important;border-bottom-color:#0007 !important;border-radius:inherit !important;
+  background:linear-gradient(145deg,#ffffff13,transparent 30%,transparent 75%,#ffffff08) !important;
+  pointer-events:none !important;filter:none !important;box-shadow:none !important;
+}
+/* The face owns its background; legacy skin/decor surfaces must not paint
+   a second, differently cropped copy behind it. Decorations stay outside. */
+html body #grafiks-app #grafiks-list.grid-view .card.mk-watch-face[data-watch-face],
+html body #worker-modal #modal-skin-view #grafiks-list.grid-view .card.mk-watch-face[data-watch-face] {
+  background:#080b10 !important;
+}
+html body #grafiks-list .card.mk-watch-face > .mk-card-addon-surface {display:none !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-top,
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-left,
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-center,
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-bottom,
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-meta {
+  display:contents !important;transform:none !important;
+}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-meta::before,
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-meta::after,
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-status-icons,
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-name-wrap::before,
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-meta-emoji::after { display:none !important; }
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part] {
+  position:absolute !important;
+  left:var(--wf-x) !important;top:var(--wf-y) !important;right:auto !important;bottom:auto !important;
+  transform:translate(-50%,-50%) scale(var(--wf-scale)) !important;
+  transform-origin:center !important;
+  width:max-content !important;max-width:88% !important;height:auto !important;min-height:0 !important;min-width:0 !important;
+  margin:0 !important;z-index:3 !important;
+  opacity:1 !important;filter:none !important;animation:none !important;transition:none !important;
+  color:var(--wf-tint) !important;
+  box-sizing:border-box;
+}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part][hidden] {display:none !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-bg-emoji[hidden] {display:none !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="hours"] {
+  z-index:2 !important;opacity:var(--wf-number-alpha,1) !important;
+  font-size:50cqw !important;
+  -webkit-text-stroke:.2px color-mix(in srgb,var(--wf-tint) 35%,transparent);
+  background-image:linear-gradient(155deg,color-mix(in srgb,var(--wf-tint) 94%,white),color-mix(in srgb,var(--wf-tint) 66%,transparent) 52%,color-mix(in srgb,var(--wf-tint) 86%,transparent)) !important;
+}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-face="photo"] [data-wf-part="hours"] {
+  font-stretch:normal !important;
+  font-family:'Helvetica Neue',Arial,sans-serif !important;
+  font-weight:600 !important;
+  transform:translate(-50%,-50%) scale(calc(var(--wf-scale)*.78),calc(var(--wf-scale)*1.2)) !important;
+  letter-spacing:-.075em !important;
+}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="name"] {
+  display:flex !important;flex-direction:column;align-items:center;gap:1px;
+  width:56% !important;
+  background:none !important;padding:0 !important;border:0 !important;border-radius:0 !important;box-shadow:none !important;
+  clip-path:none !important;mask-image:none !important;-webkit-mask-image:none !important;text-align:center !important;overflow:visible !important;
+}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="name"] .name-main {
+  font-size:min(9cqw,calc(82cqw / var(--wf-name-chars,10))) !important;font-weight:750 !important;line-height:1.15 !important;
+  color:rgb(var(--mk-txt-color,246,247,249)) !important;letter-spacing:-.025em !important;
+  text-transform:none !important;text-shadow:0 1px 3px #0008 !important;
+}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="name"] .name-sub {
+  font-size:min(5.7cqw,calc(76cqw / var(--wf-surname-chars,14))) !important;line-height:1.2 !important;font-weight:600 !important;
+  color:rgb(var(--mk-txt-color,246,247,249)) !important;opacity:.8 !important;letter-spacing:.07em !important;
+  text-shadow:0 1px 2px #0008 !important;
+}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="name"] > span {
+  flex:none !important;overflow:visible !important;text-overflow:clip !important;
+  padding:.1em 0 !important;margin:0 !important;
+  -webkit-text-fill-color:currentColor !important;
+}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="initials"] { font-size:10cqw !important;display:block !important; }
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="month"] { display:flex !important;flex-direction:column;align-items:center;gap:2px; }
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-month-num {font-size:9cqw !important;color:var(--wf-tint) !important;line-height:1 !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-month-label {font-size:3.8cqw !important;letter-spacing:.15em;color:var(--wf-tint) !important;opacity:.65;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="coffee"] { display:flex !important;padding:0 !important;border:0 !important;background:none !important;box-shadow:none !important; }
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-step {
+  display:flex !important;align-items:center;justify-content:center;gap:3px;
+  min-width:0 !important;width:auto !important;min-height:0 !important;height:auto !important;
+  padding:4px 5px !important;border:1px solid #ffffff22 !important;border-radius:20px !important;background:#10151e88 !important;
+}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-mid {display:flex !important;position:static !important;gap:3px;color:var(--wf-tint);font-size:8cqw !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-copy {display:inline !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-num {font-size:8cqw !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="fatigue"] {
+  display:flex !important;flex-direction:column;align-items:center;gap:3px !important;
+  padding:4px 6px !important;border:1px solid #ffffff17 !important;border-radius:12px !important;background:#0d152785 !important;
+}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-meta-label {font-size:3.8cqw !important;line-height:1 !important;color:var(--wf-tint) !important;opacity:.65;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-meta-value {font-size:8cqw !important;line-height:1 !important;color:var(--wf-tint) !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="remaining"],
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="clock"] {
+  display:block !important;border:0 !important;font-size:8.2cqw !important;font-weight:650 !important;line-height:1.2 !important;
+  font-variant-numeric:tabular-nums;text-shadow:0 1px 2px #0008 !important;
+}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="remaining"] .val {font:inherit !important;color:inherit !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="emoji"] {display:flex !important;align-items:center;justify-content:center;font-size:10cqw !important;border:1px solid #ffffff21 !important;border-radius:50% !important;padding:5px !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-meta-emoji-fly {font:inherit !important;transform:none !important;opacity:1 !important;animation:none !important;transition:none !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-bg-emoji {opacity:var(--mk-emoji-op,.1) !important;pointer-events:none;z-index:1 !important;}
+.mk-wf-art {position:absolute;inset:0;z-index:1;color:var(--wf-tint);pointer-events:none;}
+.mk-wf-art svg {width:100%;height:100%;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-face="orbit"]::before {background-image:linear-gradient(#080b1328,#080b1355),var(--mk-skin-img,linear-gradient(#080b13,#080b13)) !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-face="orbit"] [data-wf-part="hours"] {font-style:italic !important;font-weight:850 !important;letter-spacing:-.08em !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-face="orbit"] [data-wf-part="fatigue"],
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-face="orbit"] .mk-coffee-step {background:#111821 !important;border-color:color-mix(in srgb,var(--wf-tint) 20%,transparent) !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-face="modular"]::before {background-image:linear-gradient(155deg,color-mix(in srgb,var(--wf-tint) 12%,transparent),#08101844),var(--mk-skin-img,linear-gradient(#143438,#081018)) !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-face="modular"] [data-wf-part="month"],
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-face="modular"] [data-wf-part="remaining"],
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-face="modular"] [data-wf-part="fatigue"],
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-face="modular"] .mk-coffee-step {min-width:33cqw !important;min-height:21cqw !important;display:flex !important;align-items:center;justify-content:center;background:color-mix(in srgb,var(--wf-tint) 12%,#0b1720) !important;border:1px solid #ffffff12 !important;border-radius:12px !important;padding:4px !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-finish="1"] [data-wf-part="hours"] {background-image:linear-gradient(155deg,#fff 3%,var(--wf-tint) 24%,#354052 45%,#e9eff6 49%,var(--wf-tint) 76%,#ffffffdd) !important;-webkit-text-stroke:.5px #ffffff80;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-finish="2"] [data-wf-part="hours"] {background:var(--wf-tint) !important;background-clip:text !important;-webkit-background-clip:text !important;-webkit-text-stroke:0;text-shadow:none !important;}
+
+/* Shared tinted glass for the live information fields, with no blur work. */
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-finish] .mk-coffee-step,
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-finish] :is([data-wf-part="month"],[data-wf-part="fatigue"],[data-wf-part="remaining"],[data-wf-part="emoji"],[data-wf-part="clock"]) {
+  background:linear-gradient(145deg,color-mix(in srgb,var(--wf-tint) 25%,transparent),color-mix(in srgb,var(--wf-tint) 9%,transparent) 48%,#08121b28) !important;
+  border:1px solid color-mix(in srgb,var(--wf-tint) 34%,transparent) !important;
+  box-shadow:inset 0 1px 0 #ffffff38,inset 0 -1px 0 #00000020,0 1px 3px #00000015 !important;
+  backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
+}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-finish] :is([data-wf-part="remaining"],[data-wf-part="clock"]) {
+  padding:1.2cqw 3cqw !important;border-radius:20px !important;font-size:7.5cqw !important;
+}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-finish] [data-wf-part="month"] {
+  padding:3cqw 4cqw !important;border-radius:14px !important;
+}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-finish] [data-wf-part="emoji"] {
+  width:17cqw !important;height:17cqw !important;padding:2cqw !important;
+  aspect-ratio:1 !important;line-height:1 !important;overflow:visible !important;
+}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-meta-emoji-fly {
+  display:flex !important;align-items:center !important;justify-content:center !important;
+  width:100% !important;height:100% !important;line-height:1 !important;overflow:visible !important;
+}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-meta-emoji-fly .mk-emoji-film-box {
+  width:1.18em !important;height:1.18em !important;
+}
+
+/* Editor: its live card is the same DOM as the roster, enlarged for precision. */
+.wf-editor {--wf-editor-ink:#dfe7ef;--wf-editor-muted:#8392a5;color:var(--wf-editor-ink);}
+.wf-editor button,.wf-editor input {font:inherit;}
+.wf-editor button {cursor:pointer;}
+.wf-editor-heading {display:flex;justify-content:space-between;gap:12px;align-items:start;margin:0 0 16px;}
+.wf-editor-heading strong {font-size:22px;letter-spacing:-.6px;}
+.wf-editor-heading p {font-size:12px;color:var(--wf-editor-muted);margin:5px 0 0;}
+.wf-static-label {font-size:8px;letter-spacing:.12em;border:1px solid #ffffff12;border-radius:20px;padding:6px 9px;color:#9baabb;white-space:nowrap;}
+.wf-faces {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;}
+.wf-face-choice {border:1px solid #ffffff14;background:#131a24;padding:8px 8px 10px;border-radius:16px;color:inherit;display:grid;gap:9px;justify-items:center;}
+.wf-face-choice[aria-pressed="true"] {background:#233548;border-color:#9dc2e7;box-shadow:0 0 0 1px #9dc2e733;}
+.wf-face-choice strong {font-size:10px;font-weight:600;}
+.wf-face-thumb {position:relative;display:grid;place-content:center;width:100%;aspect-ratio:1;border:2px solid var(--wf-thumb-metal,#adb4bb);border-radius:24%;background:linear-gradient(135deg,#384361,#121624);overflow:hidden;}
+.wf-face-thumb b {font-family:Arial,sans-serif;font-size:clamp(25px,4vw,52px);line-height:1;letter-spacing:-.09em;background:linear-gradient(155deg,#fff,var(--wf-thumb-tint,#d5e6ef));color:transparent;background-clip:text;-webkit-text-stroke:.2px #ffffff55;}
+.wf-face-thumb small {font-size:5px;letter-spacing:.23em;margin-top:7px;text-align:center;opacity:.6;}
+.wf-face-thumb {background-image:linear-gradient(150deg,#0002,#0004),var(--wf-thumbnail-image);background-position:center;background-size:cover;}
+.wf-thumb-photo b {transform:scale(.8,1.3);}
+.wf-thumb-orbit {background-image:linear-gradient(#080b1328,#080b1355),var(--wf-thumbnail-image);}
+.wf-thumb-orbit i {position:absolute;inset:9%;border:2px dashed var(--wf-thumb-tint,#c8e69f);opacity:.5;border-radius:50%;transform:rotate(-25deg);}
+.wf-thumb-orbit b {font-style:italic;color:var(--wf-thumb-tint,#d9ebba);}
+.wf-thumb-modular {background-image:linear-gradient(155deg,color-mix(in srgb,var(--wf-thumb-tint,#73e2de) 12%,transparent),#08101844),var(--wf-thumbnail-image);}
+.wf-thumb-modular i {position:absolute;inset:58% 9% 9%;background:linear-gradient(90deg,#8ef3cf22 47%,transparent 47%,transparent 53%,#8ef3cf22 53%);border-radius:6px;}
+.wf-thumb-modular b {transform:translateY(-16%);}
+.wf-section {padding-top:18px;margin-top:17px;border-top:1px solid #ffffff0c;}
+.wf-label {font-size:12px;font-weight:650;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.wf-label>span {font-size:10px;color:var(--wf-editor-muted);font-weight:400;}
+.wf-color {width:28px;height:24px;border:0;background:none;padding:0;cursor:pointer;}
+.wf-swatches,.wf-metals {display:flex;gap:8px;flex-wrap:wrap;}
+.wf-swatches button,.wf-metals button {width:24px;height:24px;padding:0;border-radius:50%;border:2px solid #ffffff20;background:var(--sw);box-shadow:inset 0 1px 1px #ffffff66;}
+.wf-metals button {width:27px;height:27px;background:linear-gradient(140deg,#ffffffaa,transparent 29%,#0005 48%,#ffffff99 55%,transparent 80%),var(--sw);}
+.wf-swatches button[aria-pressed="true"],.wf-metals button[aria-pressed="true"] {outline:2px solid #e4f1ff;outline-offset:3px;}
+.wf-segment {display:flex;gap:3px;margin-top:15px;background:#0c111b;padding:3px;border-radius:9px;}
+.wf-segment button {flex:1;border:0;border-radius:6px;padding:7px;color:#899aae;background:none;font-size:11px;}
+.wf-segment button[aria-pressed="true"] {color:#eaf4ff;background:#29394c;}
+.wf-elements {display:flex;gap:6px;flex-wrap:wrap;}
+.wf-elements button {border:1px solid #ffffff13;background:#161f2b;color:#acbcd0;border-radius:8px;padding:6px 9px;font-size:10px;}
+.wf-elements button[aria-pressed="true"] {border-color:#b6cfe9;color:#f1f6fb;background:#304357;}
+.wf-elements button.is-off::before {content:'+ ';opacity:.8;}
+.wf-remove {border:1px solid #ffffff25;border-radius:7px;background:#192430;color:#d4e3ed;padding:6px 10px;font-size:11px;}
+.wf-part-head {display:flex;justify-content:space-between;align-items:center;margin:16px 0 12px;font-size:12px;}
+.wf-part-head label {font-size:11px;color:#a2b0c1;display:flex;align-items:center;gap:5px;}
+.wf-editor input[type="range"] {accent-color:#c2d8ee;width:100%;min-width:0;}
+.wf-editor input[type="checkbox"] {accent-color:#c2d8ee;}
+.wf-range {display:grid;grid-template-columns:78px minmax(70px,1fr) 40px;gap:10px;align-items:center;margin:9px 0;font-size:11px;color:#a5b5c8;}
+.wf-range output {text-align:right;color:#dce9f5;font-variant-numeric:tabular-nums;font-size:10px;}
+.wf-editor-help,.wf-background p {font-size:10px;line-height:1.6;color:#7e91a8;margin:12px 0 0;}
+.wf-background {border-top:1px solid #ffffff0c;margin-top:18px;padding-top:15px;}
+.wf-background summary {cursor:pointer;font-size:12px;color:#b5c4d5;}
+.wf-footer {display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:18px;}
+.wf-footer button {border:1px solid #ffffff16;border-radius:8px;background:#192430;padding:8px 10px;color:#b8c9dd;font-size:10px;}
+.wf-footer button:disabled {opacity:.35;cursor:default;}
+html body #grafiks-list.grid-view .card.mk-mid-card.wf-editing {touch-action:none;overflow:hidden !important;pointer-events:auto !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.wf-editing [data-wf-part] {cursor:grab !important;pointer-events:auto !important;user-select:none;touch-action:none;}
+html body #grafiks-list.grid-view .card.mk-mid-card.wf-editing [data-wf-part].wf-selected {outline:1px dashed #e9f4ffb0;outline-offset:4px;}
+.mk-skin-shell:has(.wf-editor.is-active) {grid-template-columns:minmax(210px,.8fr) minmax(320px,1.3fr);}
+.mk-skin-shell:has(.wf-editor.is-active) .mk-skin-aside {position:sticky;top:12px;align-self:start;}
+.mk-skin-shell:has(.wf-editor.is-active) .mk-skin-preview-slot {width:100%;max-width:300px;margin-inline:auto;}
+html body #worker-modal.mk-skin-mode:has(.wf-editor) {max-width:calc(100vw - 24px) !important;left:50% !important;transform:translateX(-50%) !important;}
+html body #worker-modal #modal-skin-view #grafiks-list.mk-skin-preview-list.grid-view .card.mk-mid-card.wf-scaled-preview {
+  width:var(--wf-preview-width) !important;height:var(--wf-preview-height) !important;
+  min-width:0 !important;max-width:none !important;min-height:0 !important;max-height:none !important;
+  aspect-ratio:auto !important;transform:scale(var(--wf-preview-scale)) !important;transform-origin:top left !important;
+  padding:var(--wf-preview-padding) !important;
+}
+@media (max-width:700px) {
+  .mk-skin-shell:has(.wf-editor.is-active) {grid-template-columns:1fr;}
+  .mk-skin-shell:has(.wf-editor.is-active) .mk-skin-aside {position:static;display:grid;grid-template-columns:minmax(160px,220px) 1fr;gap:14px;align-items:center;}
+  .wf-face-thumb b {font-size:36px;}
+  .wf-static-label {display:none;}
+}
+@media (max-width:480px) {
+  .mk-skin-shell:has(.wf-editor.is-active) .mk-skin-aside {grid-template-columns:1fr;}
+  .mk-skin-shell:has(.wf-editor.is-active) .mk-skin-preview-slot {max-width:220px;}
+  .wf-faces {gap:5px;}
+  .wf-face-choice {padding:5px 4px 8px;border-radius:11px;}
+  .wf-face-choice strong {font-size:9px;}
+}
+@media (prefers-reduced-motion:reduce) {
+  .mk-watch-face,.mk-watch-face * {animation:none !important;transition:none !important;}
+}
+
+.mk-coffee-picker .mk-coffee-remove {display:block;width:100%;min-height:36px;margin-top:8px;border:1px solid #ffffff24;border-radius:9px;background:transparent;color:inherit;cursor:pointer;}
+.mk-coffee-picker .mk-coffee-remove:disabled {opacity:.4;cursor:default;}
+.mk-wf-effects {position:absolute;inset:12%;z-index:1;pointer-events:none;color:var(--wf-tint);}
+.mk-wf-effects span {position:absolute;opacity:.38;font-size:calc(5cqw * var(--mk-fx-scale,1));line-height:1;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="initials"] {color:rgb(var(--mk-txt-color,246,247,249)) !important;}
+
+.mk-skin-presets:has(.mk-material-preset) {grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:10px;}
+.mk-material-preset {flex-direction:column;gap:8px;padding:10px;font-size:11px;text-align:center;}
+.mk-material-preset .mk-skin-preset-sw {position:relative;display:grid;place-items:center;width:100%;height:auto;aspect-ratio:1;border-radius:23%;background-position:center;border:1px solid #ffffff60;}
+.mk-material-preset .mk-skin-preset-sw b {font:650 48px/.95 'Helvetica Neue',Arial,sans-serif;letter-spacing:-.07em;background:linear-gradient(150deg,#fff,var(--preset-tint));background-clip:text;color:transparent;}
+.mk-material-preset[data-preset-face="photo"] b {transform:scale(.78,1.25);}
+.mk-material-preset[data-preset-face="orbit"] b {font-style:italic;}
+.mk-material-preset[data-preset-face="orbit"] .mk-skin-preset-sw:after {content:'';position:absolute;inset:8%;border:1px solid var(--preset-tint);border-radius:50%;opacity:.4;}
+.mk-material-preset[data-preset-face="modular"] .mk-skin-preset-sw:after {content:'';position:absolute;inset:73% 15% 9%;border-radius:5px;background:linear-gradient(90deg,#fff2 47%,transparent 47%,transparent 53%,#fff2 53%);}
+
+/* The same transparent bitmap paints below and above the duration. Both layers
+   share crop/zoom, so moving digits reveals a real silhouette without live AI. */
+.mk-wf-depth {position:absolute;inset:2px;z-index:3;pointer-events:none;border-radius:inherit;
+  background-size:var(--wf-bg-zoom,100%) var(--wf-bg-zoom,100%);background-position:var(--wf-bg-x,50%) var(--wf-bg-y,50%);background-repeat:no-repeat;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part]:not([data-wf-part="hours"]) {z-index:4 !important;}
+.wf-depth-control {display:flex;gap:8px;align-items:center;margin-top:18px;color:#cfdfed;font-size:12px;}
+.wf-depth-control[hidden] {display:none;}
+/* The +/- controls are always visible and take the same space at rest, hover
+   and focus. Clamp the entire capsule inside the face, including user scaling. */
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="coffee"] {
+  --wf-coffee-width:clamp(70px,38cqw,100px);
+  width:var(--wf-coffee-width) !important;max-width:none !important;
+  left:clamp(calc(var(--wf-coffee-width) * var(--wf-scale) / 2 + 5%),var(--wf-x),calc(95% - var(--wf-coffee-width) * var(--wf-scale) / 2)) !important;
+}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-step {
+  display:grid !important;grid-template-columns:18px minmax(0,1fr) 18px !important;gap:0 !important;
+  width:100% !important;min-width:0 !important;min-height:28px !important;box-sizing:border-box !important;padding:2px !important;
+}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] :is(.mk-coffee-add,.mk-coffee-sub) {
+  display:flex !important;position:relative !important;align-items:center;justify-content:center;
+  width:18px !important;min-width:0 !important;height:24px !important;min-height:24px !important;
+  flex:none !important;opacity:1 !important;pointer-events:auto !important;overflow:visible !important;
+  padding:0 !important;margin:0 !important;transition:none !important;transform:none !important;font-size:14px !important;
+}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] :is(.mk-coffee-add,.mk-coffee-sub)::after {display:none !important;}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-mid {width:100% !important;min-width:0 !important;padding:0 !important;gap:1px !important;justify-content:center !important;}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-copy {padding-left:1px !important;border:0 !important;}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-num {font-size:10px !important;}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-cup {width:13px !important;height:13px !important;flex-shrink:0 !important;}
+/* In the editor the whole capsule is the drag target, not a live action. */
+html body #worker-modal #modal-skin-view #grafiks-list .card.mk-watch-face.wf-editing :is(.mk-coffee-add,.mk-coffee-sub) {display:flex !important;pointer-events:none !important;}
+
+/* Small previews use the same silhouette layering as the real card. */
+.wf-face-thumb b {position:relative;z-index:1;}
+.wf-face-thumb::after {content:'';position:absolute;inset:0;background-image:var(--wf-depth-thumbnail,none);background-size:100% 100%;pointer-events:none;z-index:2;}
+.mk-material-preset .mk-skin-preset-sw b {z-index:1;}
+.mk-material-preset .mk-preset-depth {position:absolute;inset:0;background-size:100% 100%;border-radius:inherit;z-index:2;}
+
+/* Bundle previews use the live renderer, including layout, foreground, tint and
+   visibility. Only the enclosing tile sets the width; no fixed-size fake number. */
+.mk-skin-presets:has(.mk-material-preset) {grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px;}
+.mk-material-preset {display:flex;flex-direction:column;min-width:0;padding:12px;gap:10px;}
+.mk-material-preset strong {font-size:12px;line-height:1.3;overflow-wrap:anywhere;}
+html body #grafiks-list.mk-preset-stage.grid-view {display:block !important;position:relative !important;width:100% !important;min-width:0 !important;height:auto !important;aspect-ratio:var(--wf-card-aspect,1);padding:0 !important;margin:0 !important;overflow:visible !important;pointer-events:none;}
+html body #grafiks-list.mk-preset-stage.grid-view .card.mk-preset-card {position:absolute !important;inset:0 !important;width:100% !important;height:100% !important;min-width:0 !important;max-width:none !important;min-height:0 !important;max-height:none !important;margin:0 !important;padding:0 !important;grid-area:auto !important;animation:none !important;transform:none !important;box-sizing:border-box !important;}
+.mk-preset-stage * {pointer-events:none !important;animation:none !important;transition:none !important;}
+@media(max-width:520px){.mk-skin-presets:has(.mk-material-preset){grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}.mk-material-preset{padding:8px;}}
+
+/* Cover is resolved from the image's actual aspect ratio before zoom. The
+   clipping surface never scales, so even an old portrait SVG fills every card. */
+.mk-wf-background,.mk-wf-depth {position:absolute;inset:2px;border-radius:inherit;overflow:hidden;pointer-events:none;background:none !important;}
+.mk-wf-background {z-index:0;}
+.mk-wf-background > i,.mk-wf-depth > i {display:block;position:absolute;inset:0;background-size:cover;background-position:var(--wf-bg-x,50%) var(--wf-bg-y,50%);background-repeat:no-repeat;transform:scale(var(--wf-zoom-ratio,1));transform-origin:var(--wf-bg-x,50%) var(--wf-bg-y,50%);}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]::before {z-index:1 !important;background-image:linear-gradient(180deg,#0000,#0000 45%,#0003) !important;background-size:cover !important;}
+
+/* Matching content boxes are essential: inherited roster padding previously
+   made the live numeral smaller than its otherwise identical tile preview. */
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face],
+html body #worker-modal #modal-skin-view #grafiks-list.mk-skin-preview-list.grid-view .card.mk-mid-card.mk-watch-face.wf-scaled-preview {padding:0 !important;}
+
+/* The photograph meets the frame directly: no black inset/bezel. */
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] {box-shadow:0 2px 5px #0002 !important;}
+.mk-wf-background,.mk-wf-depth {inset:0;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]::before,
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]::after {inset:0 !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]::after {border-bottom-color:#ffffff20 !important;}
+@media(max-width:700px){
+  .mk-skin-shell:has(.wf-editor) .mk-skin-aside {position:static;grid-template-columns:minmax(0,1fr);align-items:start;}
+  .mk-skin-shell:has(.wf-editor) .mk-auto-palette {width:100%;box-sizing:border-box;align-self:start;}
+}
