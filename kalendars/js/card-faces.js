@@ -63,7 +63,8 @@
   }
   document.addEventListener('visibilitychange', paintClock);
   function orbitArt() {
-    return '<svg viewBox="0 0 200 200" preserveAspectRatio="none" aria-hidden="true"><rect x="10" y="10" width="180" height="180" rx="40" fill="none" stroke="currentColor" stroke-width=".65" opacity=".16"/><path d="M18 69V53Q18 18 53 18H116 M182 131V147Q182 182 147 182H84" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" opacity=".65"/></svg>';
+    // Two corner arcs only; the earlier faint inner frame read as a stray box.
+    return '<svg viewBox="0 0 200 200" preserveAspectRatio="none" aria-hidden="true"><path d="M18 69V53Q18 18 53 18H116 M182 131V147Q182 182 147 182H84" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" opacity=".65"/></svg>';
   }
   function apply(card, skin) {
     if (!card || !card.matches('.mk-mid-card, .mk-skin-preview-real')) return;
