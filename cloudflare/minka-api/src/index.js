@@ -168,7 +168,7 @@ function cleanEmojiValue(value) {
 function validCardFacePart(part) {
   if (!part.startsWith("wf:")) return false;
   const a = part.slice(3).split("~");
-  if (a.length !== 17 || a[0] !== "1" || !/^[0-3]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return false;
+  if (!((a.length === 17 && a[0] === "1") || (a.length === 18 && a[0] === "2")) || !/^[0-3]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return false;
   const integer = (s, min, max) => /^(0|[1-9]\d{0,2})$/.test(s) && Number(s) >= min && Number(s) <= max;
   if (!integer(a[3],0,11) || !integer(a[4],0,5) || !integer(a[5],0,100) || !integer(a[6],0,100) || !integer(a[7],100,180)) return false;
   return a.slice(8).every((part) => {

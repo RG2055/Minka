@@ -49,6 +49,30 @@ test('every default style includes the person emoji', () => {
   for (const face of M.faces) assert.equal(M.preset(face).parts.emoji[3], 1);
 });
 
+test('v1 saved cards retain all existing elements and upgrade to an independent moon', async () => {
+  const request=fixture();
+  const original=M.preset('photo');
+  original.parts.month[3]=0;
+  original.parts.hours=[68,38,130,1];
+  const fields=M.pack(original).split('~');fields[0]='1';fields.pop();
+  const legacy=fields.join('~');
+  assert.deepEqual(M.unpack(legacy),original);
+  assert.equal((await request('wf:'+legacy)).status,200);
+  const next=M.unpack(legacy);next.parts.moon=[77,17,135,0];
+  const packed=M.pack(next);
+  assert.equal(packed.split('~').length,18);
+  assert.equal((await request('wf:'+packed)).status,200);
+  const stored=(await (await request(undefined,'GET')).json())['ALPHA TEST'];
+  assert.deepEqual(M.unpack(stored.slice(3)),next);
+  next.parts.moon[3]=1;
+  assert.equal(next.parts.month[3],0);
+  assert.deepEqual(next.parts.hours,original.parts.hours);
+  for(const bad of [packed.replace(/^2~/,'1~'),legacy.replace(/^1~/,'2~'),packed.replace(/77,17,135,0$/,'77,17,171,1')]){
+    assert.equal(M.unpack(bad),null);
+    assert.equal((await request('wf:'+bad)).status,400);
+  }
+});
+
 test('a corner widget is moved inside the rounded frame without changing visibility', () => {
   const p=M.fitPart([84,13,90,1],28,34);
   assert.ok(p[0]<=80 && p[1]>=25);
@@ -99,7 +123,7 @@ test('API persists complete legacy appearance plus face and decoration, and can 
 test('API and decoder reject malformed and out of range layouts without overwriting saved data', async () => {
   const request = fixture();
   const valid = M.pack(M.preset('photo'));
-  const mutations = [[0,'2'],[1,'4'],[2,'url(x)'],[3,'12'],[4,'6'],[5,'101'],[6,'-1'],[7,'99'],[8,'50,50,100,2'],[9,'50,50,100,-1'],[10,'50,50,171,1'],[11,'00,50,100,1']];
+  const mutations = [[0,'3'],[1,'4'],[2,'url(x)'],[3,'12'],[4,'6'],[5,'101'],[6,'-1'],[7,'99'],[8,'50,50,100,2'],[9,'50,50,100,-1'],[10,'50,50,171,1'],[11,'00,50,100,1']];
   await request('grad:menta');
   for (const [index, replacement] of mutations) {
     const fields = valid.split('~'); fields[index] = replacement;

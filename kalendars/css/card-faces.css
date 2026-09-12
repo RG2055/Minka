@@ -90,7 +90,7 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-fac
   z-index:2 !important;opacity:var(--wf-number-alpha,1) !important;
   font-size:50cqw !important;
   -webkit-text-stroke:.2px color-mix(in srgb,var(--wf-tint) 35%,transparent);
-  background-image:linear-gradient(155deg,color-mix(in srgb,var(--wf-tint) 94%,white),color-mix(in srgb,var(--wf-tint) 66%,transparent) 52%,color-mix(in srgb,var(--wf-tint) 86%,transparent)) !important;
+  background-image:var(--wf-finish-paint) !important;
 }
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-face="photo"] [data-wf-part="hours"] {
   font-stretch:normal !important;
@@ -159,7 +159,7 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-fac
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-face="modular"] [data-wf-part="remaining"],
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-face="modular"] [data-wf-part="fatigue"],
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-face="modular"] .mk-coffee-step {min-width:33cqw !important;min-height:21cqw !important;display:flex !important;align-items:center;justify-content:center;background:color-mix(in srgb,var(--wf-tint) 12%,#0b1720) !important;border:1px solid #ffffff12 !important;border-radius:12px !important;padding:4px !important;}
-html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-finish="1"] [data-wf-part="hours"] {background-image:linear-gradient(155deg,#fff 3%,var(--wf-tint) 24%,#354052 45%,#e9eff6 49%,var(--wf-tint) 76%,#ffffffdd) !important;-webkit-text-stroke:.5px #ffffff80;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-finish="1"] [data-wf-part="hours"] {background-image:var(--wf-finish-paint) !important;-webkit-text-stroke:.5px #ffffff80;}
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-finish="2"] [data-wf-part="hours"] {background:var(--wf-tint) !important;background-clip:text !important;-webkit-background-clip:text !important;-webkit-text-stroke:0;text-shadow:none !important;}
 
 /* Shared tinted glass for the live information fields, with no blur work. */
@@ -370,6 +370,9 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-fac
 }
 /* A 1.9 kB local digit subset, used only by the new rounded finishes. */
 @font-face {font-family:'Minka Rounded';src:url('../assets/fonts/minka-rounded/numerals.woff2') format('woff2');font-weight:700;font-display:swap;}
+[data-watch-finish="0"] {--wf-finish-paint:linear-gradient(155deg,color-mix(in srgb,var(--wf-tint) 94%,white),color-mix(in srgb,var(--wf-tint) 66%,transparent) 52%,color-mix(in srgb,var(--wf-tint) 86%,transparent));}
+[data-watch-finish="1"] {--wf-finish-paint:linear-gradient(155deg,#fff 3%,var(--wf-tint) 24%,#354052 45%,#e9eff6 49%,var(--wf-tint) 76%,#ffffffdd);}
+[data-watch-finish="2"] {--wf-finish-paint:linear-gradient(var(--wf-tint),var(--wf-tint));}
 [data-watch-finish="3"] {--wf-finish-paint:radial-gradient(ellipse at 27% 8%,#fff 0%,#ffffffb8 6%,transparent 28%),radial-gradient(ellipse at 80% 92%,#c3fff6 0%,transparent 45%),linear-gradient(168deg,color-mix(in srgb,var(--wf-tint) 65%,#fb9eff) 6%,color-mix(in srgb,var(--wf-tint) 25%,#7071e8) 33%,#4149a0 48%,var(--wf-tint) 65%,color-mix(in srgb,var(--wf-tint) 75%,#6edbcf) 88%,#eafffa 100%);}
 [data-watch-finish="4"] {--wf-finish-paint:linear-gradient(145deg,#fff 3%,var(--wf-tint) 20%,#a4edf4 38%,#edd2fd 52%,var(--wf-tint) 67%,#fff1d8 83%,#fff 97%);}
 [data-watch-finish="5"] {--wf-finish-paint:linear-gradient(color-mix(in srgb,var(--wf-tint) 22%,transparent),color-mix(in srgb,var(--wf-tint) 5%,transparent));}
@@ -390,3 +393,18 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-fac
  font-family:Arial,sans-serif!important;font-weight:700!important;
  -webkit-text-stroke:1px var(--wf-tint);text-shadow:0 0 5px color-mix(in srgb,var(--wf-tint) 32%,transparent)!important;
 }
+
+/* Independent schedule-aware moon: the same static material paint as the hours. */
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-wf-moon {
+  width:14cqw !important;height:14cqw !important;padding:0 !important;border:0 !important;
+  background:none !important;box-shadow:none !important;opacity:var(--wf-number-alpha,1) !important;
+}
+.mk-wf-moon i {
+  display:block;width:100%;height:100%;background-image:var(--wf-finish-paint);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='white' d='M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+[data-watch-finish="5"] .mk-wf-moon i {
+  background:var(--wf-tint);
+  mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='white' stroke-width='1' stroke-linejoin='round' d='M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z'/%3E%3C/svg%3E");
+}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face.wf-night-shift[data-watch-face] .mk-mid-shift-icons {display:none !important;}

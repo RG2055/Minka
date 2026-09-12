@@ -6034,6 +6034,7 @@ function filterFullList(btn) {
         const monthHours = Math.max(0, Math.min(1000, Number(getMonthHoursForWorker(w.name, isRd)) || 0));
         if (probe) probe.monthHoursMs = +((probe.monthHoursMs || 0) + (performance.now() - bcHours)).toFixed(2);
         const dutyHours = Math.max(0, Math.min(48, Number(getDutyShiftHours(w)) || 0));
+        card.setAttribute('data-duty-period', shiftEmoji === '🌙' ? 'night' : 'day');
         card.setAttribute('data-duty-hours', String(dutyHours || String(w.shift || '').replace(/[^0-9]/g, '') || ''));
         const safeInitials = escapeHtml(initials);
         const safeFirstName = escapeHtml(firstName);
