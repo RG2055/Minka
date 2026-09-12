@@ -112,6 +112,7 @@
     var sourceSize = null;
     function sizePreview() {
       if (!preview.isConnected || !options.source || !slot.clientWidth) return;
+      if (preview.querySelector(':scope > .mk-card-addon.is-dragging')) return;
       // The roster can replace its cards while this editor remains open.
       // Reconnect to the live card; retain its last geometry while it is hidden.
       if (!options.source.isConnected && sourceWorker) {

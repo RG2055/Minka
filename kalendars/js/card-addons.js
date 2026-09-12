@@ -222,6 +222,13 @@
     image.style.setProperty('--mk-addon-offset-y', (offsetY * cardHeight / 100) + 'px');
   }
 
+  function addonDragPosition(baseX, baseY, dx, dy, width, height) {
+    return {
+      x: Math.max(-100, Math.min(100, baseX + dx / width * 100)),
+      y: Math.max(-100, Math.min(100, baseY + dy / height * 100))
+    };
+  }
+
   function refreshAddonGeometry() {
     geometryFrame = 0;
     var images = Array.prototype.slice.call(document.querySelectorAll(
@@ -694,32 +701,47 @@
       if (!previewAddon || previewAddon.dataset.dragBound === '1') return;
       previewAddon.dataset.dragBound = '1';
       previewAddon.addEventListener('pointerdown', function(event) {
-        if (!config || !config.id) return;
+        if (!config || !config.id || event.button !== 0 || previewAddon.classList.contains('is-dragging')) return;
         event.preventDefault();
+        event.stopPropagation();
         var startX = event.clientX;
         var startY = event.clientY;
         var baseX = Number(config.x) || 0;
         var baseY = Number(config.y) || 0;
         var rect = preview.getBoundingClientRect();
+        var width = preview.clientWidth, height = preview.clientHeight;
+        var visibleWidth = width * rect.width / preview.offsetWidth;
+        var visibleHeight = height * rect.height / preview.offsetHeight;
+        if (!visibleWidth || !visibleHeight) return;
         previewAddon.classList.add('is-dragging');
         previewAddon.setPointerCapture(event.pointerId);
         function move(moveEvent) {
-          config.x = Math.max(-100, Math.min(100, baseX + ((moveEvent.clientX - startX) / rect.width * 100)));
-          config.y = Math.max(-100, Math.min(100, baseY + ((moveEvent.clientY - startY) / rect.height * 100)));
-          previewAddon.style.setProperty('--mk-addon-offset-x', (config.x * rect.width / 100) + 'px');
-          previewAddon.style.setProperty('--mk-addon-offset-y', (config.y * rect.height / 100) + 'px');
+          if (moveEvent.pointerId !== event.pointerId) return;
+          var position = addonDragPosition(baseX, baseY, moveEvent.clientX - startX, moveEvent.clientY - startY, visibleWidth, visibleHeight);
+          config.x = position.x; config.y = position.y;
+          // Store the live position too: a queued geometry refresh must not
+          // restore the starting coordinates in the middle of a drag.
+          previewAddon.dataset.addonX = String(config.x);
+          previewAddon.dataset.addonY = String(config.y);
+          writeAddonGeometry(previewAddon, width, height);
         }
-        function finish() {
+        function finish(endEvent) {
+          if (endEvent.pointerId !== event.pointerId) return;
+          if (endEvent.type === 'pointerup') move(endEvent);
+          if (endEvent.type === 'pointercancel') { config.x = baseX; config.y = baseY; }
           previewAddon.classList.remove('is-dragging');
           previewAddon.removeEventListener('pointermove', move);
           previewAddon.removeEventListener('pointerup', finish);
           previewAddon.removeEventListener('pointercancel', finish);
+          previewAddon.removeEventListener('lostpointercapture', finish);
+          if (previewAddon.hasPointerCapture(event.pointerId)) previewAddon.releasePointerCapture(event.pointerId);
           saveConfig(name, config);
           applyPreview();
         }
         previewAddon.addEventListener('pointermove', move);
         previewAddon.addEventListener('pointerup', finish);
         previewAddon.addEventListener('pointercancel', finish);
+        previewAddon.addEventListener('lostpointercapture', finish);
       });
     }
 
