@@ -240,7 +240,7 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-fac
 .wf-elements button {border:1px solid #ffffff13;background:#161f2b;color:#acbcd0;border-radius:8px;padding:6px 9px;font-size:10px;}
 .wf-elements button[aria-pressed="true"] {border-color:#b6cfe9;color:#f1f6fb;background:#304357;}
 .wf-elements button.is-off::before {content:'+ ';opacity:.8;}
-.wf-remove {border:1px solid #ffffff25;border-radius:7px;background:#192430;color:#d4e3ed;padding:6px 10px;font-size:11px;}
+.wf-remove,.wf-fit {border:1px solid #ffffff25;border-radius:7px;background:#192430;color:#d4e3ed;padding:6px 10px;font-size:11px;}
 .wf-part-head {display:flex;justify-content:space-between;align-items:center;margin:16px 0 12px;font-size:12px;}
 .wf-part-head label {font-size:11px;color:#a2b0c1;display:flex;align-items:center;gap:5px;}
 .wf-editor input[type="range"] {accent-color:#c2d8ee;width:100%;min-width:0;}

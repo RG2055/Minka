@@ -41,7 +41,7 @@ test('changing presets retains chosen materials but resets the element layout', 
 test('invalid local values are bounded without overriding chosen visibility', () => {
   const value = M.clean({ tint: 'url(evil)', imageZoom: 999, parts: { hours: [-100, Infinity, 999, 0], name: [50, 50, 100, 0] } });
   assert.equal(value.tint, 'd5e6ef'); assert.equal(value.imageZoom, 180);
-  assert.deepEqual(value.parts.hours, [5, 45, 170, 0]);
+  assert.deepEqual(value.parts.hours, [5, 45, 300, 0]);
   assert.equal(value.parts.name[3], 0);
 });
 
@@ -120,6 +120,20 @@ test('oversized numerals fit while an already safe element keeps its position', 
   assert.ok(p[0]+120*p[2]/170/2<=96);
   assert.ok(p[1]-100*p[2]/170/2>=4);
   assert.deepEqual(M.fitPart([50,50,100,0],20,20),[50,50,100,0]);
+});
+
+test('manual numeral enlargement survives dragging and storage; fitting is explicit', async () => {
+  const request=fixture(),face=M.preset('photo');
+  face.parts.hours=[62,40,300,1];
+  assert.deepEqual(M.fitPart(face.parts.hours,160,182,true),face.parts.hours);
+  assert.ok(M.fitPart(face.parts.hours,160,182)[2]<300);
+  const skin='wf:'+M.pack(face);
+  assert.equal((await request(skin)).status,200);
+  const saved=(await (await request(undefined,'GET')).json())['ALPHA TEST'];
+  assert.deepEqual(M.unpack(saved.slice(3)).parts.hours,[62,40,300,1]);
+  const tooLarge=skin.replace('62,40,300,1','62,40,301,1');
+  assert.equal(M.unpack(tooLarge.slice(3)),null);
+  assert.equal((await request(tooLarge)).status,400);
 });
 
 test('every element can be removed, stored and restored without losing its position', async () => {

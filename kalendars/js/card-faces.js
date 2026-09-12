@@ -185,7 +185,7 @@
       + '<div class="wf-section"><div class="wf-label">Elementi <span>Velc priekšskatījumā</span></div><div class="wf-elements">'+M.parts.map(function(key){return '<button type="button" data-part="'+key+'">'+labels[key]+'</button>';}).join('')+'</div>'
       + '<div class="wf-part-head"><strong class="wf-part-name"></strong><button type="button" class="wf-remove">Noņemt</button></div>'
       + [['x','Horizontāli',5,95],['y','Vertikāli',5,95],['size','Izmērs',50,170]].map(function(r){return '<label class="wf-range"><span>'+r[1]+'</span><input type="range" data-position="'+r[0]+'" min="'+r[2]+'" max="'+r[3]+'"><output></output></label>';}).join('')
-      + '<div class="wf-editor-help">Saule dienas maiņai, mēness nakts maiņai. Simbolu vari pārvietot un mainīt izmērā; 24 h maiņās tas redzams tikai redaktorā. Izvēlies elementu un velc to priekšskatījumā. Ar bultiņām pārvieto precīzi. Noņemtos elementus pievieno atpakaļ ar +.</div></div>'
+      + '<button type="button" class="wf-fit">Ietilpināt kartītē</button><div class="wf-editor-help">Lielu ciparu kadrē, pārvietojot priekšskatījumā. Saule dienas maiņai, mēness nakts maiņai. Simbolu vari pārvietot un mainīt izmērā; 24 h maiņās tas redzams tikai redaktorā. Izvēlies elementu un velc to priekšskatījumā. Ar bultiņām pārvieto precīzi. Noņemtos elementus pievieno atpakaļ ar +.</div></div>'
       + '<label class="wf-depth-control"><input type="checkbox" class="wf-depth-toggle"> Objekts priekšā ciparam</label>'
       + '<details class="wf-background"><summary>Attēla novietojums</summary>'+[['imageX','Horizontāli',0,100],['imageY','Vertikāli',0,100],['imageZoom','Tuvinājums',100,180]].map(function(r){return '<label class="wf-range"><span>'+r[1]+'</span><input type="range" data-image="'+r[0]+'" min="'+r[2]+'" max="'+r[3]+'"><output></output></label>';}).join('')+'<p>Attēlu vai krāsainu fonu izvēlies sadaļā “Fons”.</p></details>'
       + '<div class="wf-footer"><button type="button" class="wf-undo" disabled>Atcelt pēdējo</button><button type="button" class="wf-reset">Atjaunot izkārtojumu</button><button type="button" class="wf-original">Sākotnējā klasika</button></div>';
@@ -225,14 +225,14 @@
       panel.querySelector('.wf-part-name').textContent=labels[selectedPart];
       panel.querySelector('.wf-remove').textContent=config.parts[selectedPart][3]?'Noņemt':'Pievienot';
       panel.querySelector('.wf-undo').disabled=!history.length;
-      panel.querySelectorAll('[data-position]').forEach(function(el){var i={x:0,y:1,size:2}[el.dataset.position];el.value=config.parts[selectedPart][i];el.nextElementSibling.textContent=el.value+'%';});
+      panel.querySelectorAll('[data-position]').forEach(function(el){var i={x:0,y:1,size:2}[el.dataset.position];if(i===2)el.max=selectedPart==='hours'?300:170;el.value=config.parts[selectedPart][i];el.nextElementSibling.textContent=el.value+'%';});
       panel.querySelectorAll('[data-image]').forEach(function(el){el.value=config[el.dataset.image];el.nextElementSibling.textContent=el.value+'%';});
       preview.querySelectorAll('[data-wf-part]').forEach(function(el){el.classList.toggle('wf-selected',el.dataset.wfPart===selectedPart);el.tabIndex=0;el.setAttribute('aria-label',labels[el.dataset.wfPart]);});
       preview.closest('.mk-skin-preview-list').setAttribute('aria-hidden','false');
     }
     // Keep the whole element inside the face, including its scaled bounds.
     // Read geometry only while editing; roster rendering never measures parts.
-    function constrainParts(all) {
+    function constrainParts(all, keepSize) {
       apply(preview,Object.assign({},options.get(),{face:config}));
       var r=preview.getBoundingClientRect();
       if(!r.width||!r.height)return;
@@ -240,14 +240,14 @@
         var el=preview.querySelector('[data-wf-part="'+key+'"]');
         if(!el||el.hidden)return;
         var b=el.getBoundingClientRect();
-        config.parts[key]=M.fitPart(config.parts[key],b.width/r.width*100,b.height/r.height*100);
+        config.parts[key]=M.fitPart(config.parts[key],b.width/r.width*100,b.height/r.height*100,keepSize&&key==='hours');
       });
       config=M.clean(config);
     }
     function save(constrain) {
       history.push(options.get().face ? M.clean(options.get().face) : null);
       if(history.length>20)history.shift();
-      preview.classList.add('wf-editing');config=M.clean(config);if(constrain)constrainParts(constrain==='all');options.change(M.clean(config));sync();sizePreview();
+      preview.classList.add('wf-editing');config=M.clean(config);if(constrain)constrainParts(constrain==='all'||constrain==='material',constrain===true||constrain==='material');options.change(M.clean(config));sync();sizePreview();
     }
     tab.addEventListener('click',activate);
     tabs.addEventListener('click',function(e){if(e.target.closest('[data-skin-section]')!==tab){preview.classList.remove('wf-editing');apply(preview,options.get());}});
@@ -256,10 +256,11 @@
       if(el.dataset.face){var previous=options.get().face;if(previous)previous=M.clean(previous);config=M.preset(el.dataset.face,previous?config:null);if(previous)M.parts.forEach(function(key){config.parts[key][3]=previous.parts[key][3];});save('all');}
       if(el.dataset.tint){config.tint=el.dataset.tint;save();}
       if(el.dataset.metal!=null){config.metal=+el.dataset.metal;save();}
-      if(el.dataset.finish!=null){config.finish=+el.dataset.finish;save('all');}
+      if(el.dataset.finish!=null){config.finish=+el.dataset.finish;save('material');}
       if(el.dataset.part){selectedPart=el.dataset.part;if(!config.parts[selectedPart][3]||!options.get().face){config.parts[selectedPart][3]=1;save(true);}else sync();}
       if(el.classList.contains('wf-remove')){config.parts[selectedPart][3]=config.parts[selectedPart][3]?0:1;save(true);}
       if(el.classList.contains('wf-undo')&&history.length){var previous=history.pop();config=M.clean(previous);options.change(previous);preview.classList.toggle('wf-editing',!!previous);apply(preview,options.get());sync();sizePreview();}
+      if(el.classList.contains('wf-fit'))save('fit');
       if(el.classList.contains('wf-reset')){config=M.preset(config.face,config);save('all');}
       if(el.classList.contains('wf-original')){options.change(null);options.section('background');options.rebuild();}
     });
@@ -287,7 +288,7 @@
       if(!drag||e.pointerId!==drag.id)return;
       config.parts[selectedPart][0]=Math.max(5,Math.min(95,Math.round(drag.px+(e.clientX-drag.x)/drag.r.width*100)));
       config.parts[selectedPart][1]=Math.max(5,Math.min(95,Math.round(drag.py+(e.clientY-drag.y)/drag.r.height*100)));
-      constrainParts(false);apply(preview,Object.assign({},options.get(),{face:config}));sync();
+      constrainParts(false,true);apply(preview,Object.assign({},options.get(),{face:config}));sync();
     });
     function endDrag(e){if(!drag||e.pointerId!==drag.id)return;drag=null;save(true);}
     preview.addEventListener('pointerup',endDrag);preview.addEventListener('pointercancel',endDrag);preview.addEventListener('lostpointercapture',endDrag);

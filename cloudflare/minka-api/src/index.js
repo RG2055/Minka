@@ -171,9 +171,9 @@ function validCardFacePart(part) {
   if (!((a.length === 17 && a[0] === "1") || (a.length === 18 && a[0] === "2")) || !/^[0-3]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return false;
   const integer = (s, min, max) => /^(0|[1-9]\d{0,2})$/.test(s) && Number(s) >= min && Number(s) <= max;
   if (!integer(a[3],0,11) || !integer(a[4],0,5) || !integer(a[5],0,100) || !integer(a[6],0,100) || !integer(a[7],100,180)) return false;
-  return a.slice(8).every((part) => {
+  return a.slice(8).every((part, index) => {
     const p = part.split(",");
-    return p.length === 4 && integer(p[0],5,95) && integer(p[1],5,95) && integer(p[2],50,170)
+    return p.length === 4 && integer(p[0],5,95) && integer(p[1],5,95) && integer(p[2],50,index === 0 ? 300 : 170)
       && /^[01]$/.test(p[3]);
   });
 }

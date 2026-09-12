@@ -31,7 +31,7 @@
     parts.forEach(function (key, i) {
       var base = layouts[face][i] || moonLayouts[face], p = value.parts && value.parts[key];
       if (!Array.isArray(p)) p = base;
-      out.parts[key] = [bounded(p[0], 5, 95, base[0]), bounded(p[1], 5, 95, base[1]), bounded(p[2], 50, 170, base[2]), p[3] === 0 ? 0 : 1];
+      out.parts[key] = [bounded(p[0], 5, 95, base[0]), bounded(p[1], 5, 95, base[1]), bounded(p[2], 50, key==='hours'?300:170, base[2]), p[3] === 0 ? 0 : 1];
     });
     var oldSymbol=value.parts&&value.parts.moon;
     if(!keepSymbolPosition&&(!oldSymbol||Object.values(moonLayouts).concat([[14,68,100,1],[14,76,100,1]]).some(function(p){return p.slice(0,3).join()===oldSymbol.slice(0,3).join();}))){
@@ -70,10 +70,11 @@
   }
   // Fit the measured element inside the rounded face, not just its rectangle.
   // Measurements are percentages, so this works at every preview/radio size.
-  function fitPart(part, width, height) {
+  function fitPart(part, width, height, keepSize) {
     var p=part.slice();
     if (!(width>0&&height>0)) return p;
-    var fit=Math.min(1,84/width,80/height);
+    if(keepSize&&(width>84||height>80))return p;
+    var fit=keepSize?1:Math.min(1,84/width,80/height);
     var scale=Math.max(50,Math.floor(p[2]*fit)), ratio=scale/p[2];
     p[2]=scale;width*=ratio;height*=ratio;
     var hx=width/2,hy=height/2;
