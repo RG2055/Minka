@@ -49,7 +49,7 @@ test('every default style includes the person emoji', () => {
   for (const face of M.faces) assert.equal(M.preset(face).parts.emoji[3], 1);
 });
 
-test('old symbol defaults move into a free slot while custom positions and visibility survive', () => {
+test('old symbol defaults move beside the numeral while custom positions and visibility survive', () => {
   const face=M.preset('classic');
   Object.assign(face.parts,{coffee:[23,13,80,1],name:[50,77,72,1],month:[81,85,65,0],moon:[82,39,90,0]});
   const upgraded=M.unpack(M.pack(face));
@@ -57,8 +57,11 @@ test('old symbol defaults move into a free slot while custom positions and visib
   assert.equal(upgraded.parts.moon[3],0);
   face.parts.moon=[30,62,140,1];
   assert.deepEqual(M.unpack(M.pack(face)).parts.moon,face.parts.moon);
-  face.parts.month=[79,16,100,1];
-  assert.notDeepEqual(M.symbolPlacement(face.parts).slice(0,2),[79,16]);
+  const fern={hours:[68,39,105,1]},orchid={hours:[70,38,105,1]};
+  assert.deepEqual(M.symbolPlacement(fern,'photo'),[47,17,100,1]);
+  assert.deepEqual(M.symbolPlacement(orchid,'photo'),[49,16,100,1]);
+  const moved=M.clean({...face,parts:{...face.parts,hours:[60,55,120,1]}});
+  assert.deepEqual(moved.parts.moon,[30,62,140,1]);
 });
 
 test('shift symbols distinguish day, overnight and 24 hour duties including effective overrides', async () => {

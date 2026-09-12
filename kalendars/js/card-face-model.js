@@ -15,22 +15,11 @@
     n = Number(n);
     return Number.isFinite(n) ? Math.round(Math.min(max, Math.max(min, n))) : fallback;
   }
+  // Default only: sit beside the upper-left shoulder of the large numeral.
+  // Once moved, the symbol keeps its own coordinates independently of the hours.
   function symbolPlacement(values, face) {
-    var sizes={hours:face==='photo'?[52,68]:[64,55],name:[56,19],initials:[14,14],month:[34,24],coffee:[46,22],fatigue:[28,21],remaining:[38,12],emoji:[17,17],clock:[38,12]};
-    var slots=[[79,16],[54,13],[17,60],[83,62],[50,87],[18,19]];
-    for(var y=12;y<=88;y+=8)for(var x=12;x<=88;x+=8)slots.push([x,y]);
-    var best=[79,16,100,1],score=Infinity;
-    for(var scale of [100,85,70])for(var slot of slots){
-      var p=fitPart([slot[0],slot[1],scale,1],16*scale/100,16*scale/100),half=8*p[2]/100,overlap=0;
-      Object.keys(sizes).forEach(function(key){
-        var other=values[key];if(!other||!other[3])return;
-        var w=sizes[key][0]*other[2]/200+2,h=sizes[key][1]*other[2]/200+2;
-        overlap+=Math.max(0,Math.min(p[0]+half,other[0]+w)-Math.max(p[0]-half,other[0]-w))*Math.max(0,Math.min(p[1]+half,other[1]+h)-Math.max(p[1]-half,other[1]-h));
-      });
-      if(overlap===0)return p;
-      if(overlap<score){score=overlap;best=p;}
-    }
-    return best;
+    var hours=values.hours||[68,38,100,1],scale=hours[2]/100;
+    return fitPart([Math.round(hours[0]-20*scale),Math.round(hours[1]-21*scale),100,1],16,16);
   }
   function clean(value, keepSymbolPosition) {
     value = value && typeof value === 'object' ? value : {};
@@ -45,7 +34,7 @@
       out.parts[key] = [bounded(p[0], 5, 95, base[0]), bounded(p[1], 5, 95, base[1]), bounded(p[2], 50, 170, base[2]), p[3] === 0 ? 0 : 1];
     });
     var oldSymbol=value.parts&&value.parts.moon;
-    if(!keepSymbolPosition&&(!oldSymbol||Object.values(moonLayouts).some(function(p){return p.slice(0,3).join()===oldSymbol.slice(0,3).join();}))){
+    if(!keepSymbolPosition&&(!oldSymbol||Object.values(moonLayouts).concat([[14,68,100,1],[14,76,100,1]]).some(function(p){return p.slice(0,3).join()===oldSymbol.slice(0,3).join();}))){
       var visibility=out.parts.moon[3];out.parts.moon=symbolPlacement(out.parts,face);out.parts.moon[3]=visibility;
     }
     return out;
