@@ -139,7 +139,7 @@
       el.style.setProperty('--wf-x', p[0]+'%'); el.style.setProperty('--wf-y', p[1]+'%'); el.style.setProperty('--wf-scale', p[2]/100);
       // Own colour: the element gets its own tint and text colour variables, so
       // every rule that reads --wf-tint / --mk-txt-color picks it up locally.
-      var own=config.colors[key];
+      var own=config.fullTintMode===3?'':config.colors[key];
       el.classList.toggle('wf-colored',!!own);
       if(own){el.style.setProperty('--wf-tint','#'+own);el.style.setProperty('--mk-txt-color',own.match(/../g).map(function(v){return parseInt(v,16);}).join(','));}
       else{el.style.removeProperty('--wf-tint');el.style.removeProperty('--mk-txt-color');}
@@ -152,6 +152,12 @@
      photo, chips and text share a hue while keeping their light and shade.
      Auto takes that colour from the picture's own palette. */
   var fullTintPalettes=new Map();
+  function hslParts(h,s,l){
+    s/=100;l/=100;var k=function(n){var a=(n+h/30)%12;var c=s*Math.min(l,1-l);return l-c*Math.max(-1,Math.min(a-3,9-a,1));};
+    return [k(0),k(8),k(4)].map(function(v){return Math.round(v*255);});
+  }
+  function hslRgb(h,s,l){return hslParts(h,s,l).join(',');}
+  function hslHex(h,s,l){return '#'+hslParts(h,s,l).map(function(v){return v.toString(16).padStart(2,'0');}).join('');}
   // "Auto" scheme follows the duty day: dark from 20:00 to 08:00 Riga time.
   function nightNow(){
     var h=+new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Riga',hour:'2-digit',hourCycle:'h23'}).format(new Date());
@@ -165,9 +171,27 @@
     // Everything is done with colour-matrix filters on the picture layers and
     // the decor, so the numeral, name and chips keep their own style and
     // colours (accent or per-element). Tinted: grey → sepia → hue-rotate.
-    if(mode!=='tinted'){delete card.dataset.fullTintPalette;return;}
+    if(mode!=='tinted'){
+      delete card.dataset.fullTintPalette;
+      // Drop the text/numeral colours the tint painted, unless the skin has
+      // since written its own values over them.
+      if(card.dataset.tintNum!=null){
+        if(card.style.getPropertyValue('--mk-num-color')===card.dataset.tintNum)card.style.removeProperty('--mk-num-color');
+        if(card.style.getPropertyValue('--mk-txt-color')===card.dataset.tintTxt)card.style.removeProperty('--mk-txt-color');
+        delete card.dataset.tintNum;delete card.dataset.tintTxt;
+      }
+      return;
+    }
     card.style.setProperty('--wf-full-tint-sat',config.fullTintIntensity);
-    var paintHue=function(h){card.style.setProperty('--wf-full-tint-hue',h);};
+    // Everything takes the hue: accent (numeral finish, chips, icons) and text.
+    var sat=Math.round(config.fullTintIntensity*0.78);
+    var paintHue=function(h){
+      card.style.setProperty('--wf-full-tint-hue',h);
+      card.style.setProperty('--wf-tint',hslHex(h,sat,dark?52:64));
+      var num=hslRgb(h,sat,dark?52:64),txt=hslRgb(h,Math.min(sat,45),dark?86:94);
+      card.style.setProperty('--mk-num-color',num);card.style.setProperty('--mk-txt-color',txt);
+      card.dataset.tintNum=num;card.dataset.tintTxt=txt;
+    };
     if(!config.fullTintAuto){delete card.dataset.fullTintPalette;paintHue(config.fullTintHue);return;}
     var key=JSON.stringify([skin.t,skin.id,skin.rgb]);
     if(card.dataset.fullTintPalette===key)return;
