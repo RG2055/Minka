@@ -108,10 +108,28 @@
     var preview = host.querySelector('.mk-skin-preview-real');
     if (!tabs || !editor || !preview) return;
     var slot = preview.closest('.mk-skin-preview-slot');
+    var sourceWorker = options.source && options.source.getAttribute('data-worker');
+    var sourceSize = null;
     function sizePreview() {
       if (!preview.isConnected || !options.source || !slot.clientWidth) return;
-      var r = options.source.getBoundingClientRect();
-      if (!r.width || !r.height) return;
+      // The roster can replace its cards while this editor remains open.
+      // Reconnect to the live card; retain its last geometry while it is hidden.
+      if (!options.source.isConnected && sourceWorker) {
+        var replacement = Array.prototype.find.call(document.querySelectorAll('.card[data-worker]'), function(card) {
+          return card.getAttribute('data-worker') === sourceWorker;
+        });
+        if (replacement) {
+          if (previewObserver) previewObserver.unobserve(options.source);
+          options.source = replacement;
+          if (previewObserver) previewObserver.observe(replacement);
+        }
+      }
+      var measured = options.source.getBoundingClientRect();
+      if (measured.width && measured.height) {
+        sourceSize = {width: measured.width, height: measured.height, padding: getComputedStyle(options.source).padding};
+      }
+      if (!sourceSize) return;
+      var r = sourceSize;
       var addon=preview.querySelector(':scope > .mk-card-addon'), before=preview.getBoundingClientRect();
       var a=addon&&addon.getBoundingClientRect(), left=0,right=0,top=0,bottom=0;
       if(a&&before.width&&before.height){
@@ -130,7 +148,7 @@
       preview.style.setProperty('--wf-preview-width', r.width + 'px');
       preview.style.setProperty('--wf-preview-height', r.height + 'px');
       preview.style.setProperty('--wf-preview-scale', scale);
-      preview.style.setProperty('--wf-preview-padding', getComputedStyle(options.source).padding);
+      preview.style.setProperty('--wf-preview-padding', r.padding);
       slot.style.height = (r.height * scale) + 'px';
       slot.style.aspectRatio = 'auto';
     }
