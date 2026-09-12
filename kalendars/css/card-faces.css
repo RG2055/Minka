@@ -457,9 +457,9 @@ html body #worker-modal #modal-skin-view #grafiks-list .card.mk-watch-face.wf-ed
 
 /* Hovering the coffee icon itself (not the whole card) reveals the icon-mode controls. */
 @media (hover:hover) {
-  html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"] [data-wf-part="coffee"]:hover {--wf-coffee-width:var(--wf-coffee-open-width);}
-  html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"] [data-wf-part="coffee"]:hover .mk-coffee-step {grid-template-columns:18px minmax(0,1fr) 18px !important;}
-  html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"] [data-wf-part="coffee"]:hover :is(.mk-coffee-add,.mk-coffee-sub) {display:flex !important;}
+  html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:hover [data-wf-part="coffee"] {--wf-coffee-width:var(--wf-coffee-open-width);}
+  html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:hover .mk-coffee-step {grid-template-columns:18px minmax(0,1fr) 18px !important;}
+  html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:hover :is(.mk-coffee-add,.mk-coffee-sub) {display:flex !important;}
 }
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:has(.mk-mid-coffee :focus-visible) [data-wf-part="coffee"] {--wf-coffee-width:var(--wf-coffee-open-width);}
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:has(.mk-mid-coffee :focus-visible) .mk-coffee-step {grid-template-columns:18px minmax(0,1fr) 18px !important;}
