@@ -1831,6 +1831,18 @@ function filterFullList(btn) {
     return String(worker && worker.__minkaDutyType || worker && worker.type || '').toUpperCase();
   }
 
+  function getDutyPeriod(worker) {
+    const type=getDutyShiftType(worker);
+    if(type==='NAKTS')return 'night';
+    if(type==='DIENA')return 'day';
+    const hours=getDutyShiftHours(worker);
+    if(!(hours>0&&hours<24))return 'mixed';
+    if(hours>=15)return 'night';
+    const start=getDutyStartTime(worker),end=getDutyEndTime(worker);
+    if(!/^\d{2}:\d{2}$/.test(start)||!/^\d{2}:\d{2}$/.test(end))return 'mixed';
+    return end<=start?'night':'day';
+  }
+
   // Compute real shift end — if endTime == startTime or end <= start,
   // use shift duration (hours) instead of blindly adding +1 day.
   function getShiftEnd(worker, dateStr) {
@@ -6034,7 +6046,7 @@ function filterFullList(btn) {
         const monthHours = Math.max(0, Math.min(1000, Number(getMonthHoursForWorker(w.name, isRd)) || 0));
         if (probe) probe.monthHoursMs = +((probe.monthHoursMs || 0) + (performance.now() - bcHours)).toFixed(2);
         const dutyHours = Math.max(0, Math.min(48, Number(getDutyShiftHours(w)) || 0));
-        card.setAttribute('data-duty-period', shiftEmoji === '🌙' ? 'night' : 'day');
+        card.setAttribute('data-duty-period', getDutyPeriod(w));
         card.setAttribute('data-duty-hours', String(dutyHours || String(w.shift || '').replace(/[^0-9]/g, '') || ''));
         const safeInitials = escapeHtml(initials);
         const safeFirstName = escapeHtml(firstName);

@@ -3,7 +3,7 @@
 (function () {
   'use strict';
   var M = window.MinkaCardFaceModel;
-  var labels = { hours: 'Maiņas stundas', name: 'Vārds', initials: 'Iniciāļi', month: 'Stundas mēnesī', coffee: 'Kafija', fatigue: 'Nogurums', remaining: 'Maiņas laiks', emoji: 'Emoji', clock: 'Pulkstenis', moon: 'Mēness' };
+  var labels = { hours: 'Maiņas stundas', name: 'Vārds', initials: 'Iniciāļi', month: 'Stundas mēnesī', coffee: 'Kafija', fatigue: 'Nogurums', remaining: 'Maiņas laiks', emoji: 'Emoji', clock: 'Pulkstenis', moon: 'Saule / mēness' };
   var selectors = { hours: '.mk-mid-hours', name: '.mk-mid-name-wrap', initials: '.mk-mid-initials', month: '.mk-mid-month', coffee: '.mk-mid-coffee', fatigue: '.mk-mid-meta-fat', remaining: '.mk-mid-meta-time', emoji: '.mk-mid-meta-emoji', clock: '.mk-wf-clock', moon: '.mk-wf-moon' };
   var titles = ['Klasika', 'Foto stikls', 'Loks', 'Moduļi'];
   var metals = [
@@ -91,13 +91,16 @@
     if (art.dataset.face !== config.face) { art.innerHTML = config.face === 'orbit' ? orbitArt() : ''; art.dataset.face = config.face; }
     if (!card.querySelector('.mk-wf-clock')) { var clock = document.createElement('span'); clock.className = 'mk-wf-clock'; clock.setAttribute('aria-label','Laiks Rīgā'); card.append(clock); }
     if (!card.querySelector('.mk-wf-moon')) { var moon=document.createElement('span');moon.className='mk-wf-moon';moon.innerHTML='<i aria-hidden="true"></i>';moon.setAttribute('aria-label','Nakts maiņa');card.append(moon); }
-    var night=card.dataset.dutyPeriod==='night'||!!(card.querySelector('.mk-mid-shift-emoji')&&card.querySelector('.mk-mid-shift-emoji').textContent.includes('🌙'));
-    card.classList.toggle('wf-night-shift',night);
+    var shiftIcon=card.querySelector('.mk-mid-shift-emoji');
+    var period=card.dataset.dutyPeriod||(shiftIcon&&shiftIcon.textContent.includes('🌙')?'night':shiftIcon&&shiftIcon.textContent.includes('☀')?'day':'mixed');
+    card.dataset.shiftSymbol=period;
+    card.classList.toggle('wf-night-shift',period==='night');
+    card.querySelector('.mk-wf-moon').setAttribute('aria-label',period==='day'?'Dienas maiņa':'Nakts maiņa');
     M.parts.forEach(function(key) {
       var el = card.querySelector(selectors[key]);
       if (!el) return;
       var p = config.parts[key];
-      el.dataset.wfPart = key; el.hidden = !p[3] || (key==='moon'&&!night);
+      el.dataset.wfPart = key; el.hidden = !p[3] || (key==='moon'&&period==='mixed'&&!card.classList.contains('wf-editing'));
       el.style.setProperty('--wf-x', p[0]+'%'); el.style.setProperty('--wf-y', p[1]+'%'); el.style.setProperty('--wf-scale', p[2]/100);
     });
     paintClock();
@@ -182,7 +185,7 @@
       + '<div class="wf-section"><div class="wf-label">Elementi <span>Velc priekšskatījumā</span></div><div class="wf-elements">'+M.parts.map(function(key){return '<button type="button" data-part="'+key+'">'+labels[key]+'</button>';}).join('')+'</div>'
       + '<div class="wf-part-head"><strong class="wf-part-name"></strong><button type="button" class="wf-remove">Noņemt</button></div>'
       + [['x','Horizontāli',5,95],['y','Vertikāli',5,95],['size','Izmērs',50,170]].map(function(r){return '<label class="wf-range"><span>'+r[1]+'</span><input type="range" data-position="'+r[0]+'" min="'+r[2]+'" max="'+r[3]+'"><output></output></label>';}).join('')
-      + '<div class="wf-editor-help">Mēness automātiski redzams nakts maiņās. Izvēlies elementu un velc to priekšskatījumā. Ar bultiņām pārvieto precīzi. Noņemtos elementus pievieno atpakaļ ar +.</div></div>'
+      + '<div class="wf-editor-help">Saule dienas maiņai, mēness nakts maiņai. Simbolu vari pārvietot un mainīt izmērā; 24 h maiņās tas redzams tikai redaktorā. Izvēlies elementu un velc to priekšskatījumā. Ar bultiņām pārvieto precīzi. Noņemtos elementus pievieno atpakaļ ar +.</div></div>'
       + '<label class="wf-depth-control"><input type="checkbox" class="wf-depth-toggle"> Objekts priekšā ciparam</label>'
       + '<details class="wf-background"><summary>Attēla novietojums</summary>'+[['imageX','Horizontāli',0,100],['imageY','Vertikāli',0,100],['imageZoom','Tuvinājums',100,180]].map(function(r){return '<label class="wf-range"><span>'+r[1]+'</span><input type="range" data-image="'+r[0]+'" min="'+r[2]+'" max="'+r[3]+'"><output></output></label>';}).join('')+'<p>Attēlu vai krāsainu fonu izvēlies sadaļā “Fons”.</p></details>'
       + '<div class="wf-footer"><button type="button" class="wf-undo" disabled>Atcelt pēdējo</button><button type="button" class="wf-reset">Atjaunot izkārtojumu</button><button type="button" class="wf-original">Sākotnējā klasika</button></div>';

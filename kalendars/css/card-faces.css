@@ -395,16 +395,23 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-fac
 }
 
 /* Independent schedule-aware moon: the same static material paint as the hours. */
-html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-wf-moon {
-  width:14cqw !important;height:14cqw !important;padding:0 !important;border:0 !important;
-  background:none !important;box-shadow:none !important;opacity:var(--wf-number-alpha,1) !important;
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-wf-moon[data-wf-part="moon"] {
+  width:16cqw !important;height:16cqw !important;padding:0 !important;border:0 !important;
+  background:none !important;box-shadow:none !important;opacity:1 !important;z-index:8 !important;
 }
 .mk-wf-moon i {
-  display:block;width:100%;height:100%;background-image:var(--wf-finish-paint);
+  display:block;width:100%;height:100%;background-image:var(--wf-finish-paint);pointer-events:none;filter:drop-shadow(0 1px 1px #0009);
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='white' d='M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z'/%3E%3C/svg%3E") center/contain no-repeat;
 }
 [data-watch-finish="5"] .mk-wf-moon i {
   background:var(--wf-tint);
   mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='white' stroke-width='1' stroke-linejoin='round' d='M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z'/%3E%3C/svg%3E");
 }
-html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face.wf-night-shift[data-watch-face] .mk-mid-shift-icons {display:none !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-shift-icons {display:none !important;}
+
+[data-shift-symbol="day"] .mk-wf-moon i {
+  mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='4.2' fill='white'/%3E%3Cpath d='M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42' stroke='white' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+[data-shift-symbol="day"][data-watch-finish="5"] .mk-wf-moon i {
+  mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='4.2' fill='none' stroke='white' stroke-width='1'/%3E%3Cpath d='M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42' stroke='white' stroke-width='1' stroke-linecap='round'/%3E%3C/svg%3E");
+}

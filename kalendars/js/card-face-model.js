@@ -15,7 +15,24 @@
     n = Number(n);
     return Number.isFinite(n) ? Math.round(Math.min(max, Math.max(min, n))) : fallback;
   }
-  function clean(value) {
+  function symbolPlacement(values, face) {
+    var sizes={hours:face==='photo'?[52,68]:[64,55],name:[56,19],initials:[14,14],month:[34,24],coffee:[46,22],fatigue:[28,21],remaining:[38,12],emoji:[17,17],clock:[38,12]};
+    var slots=[[79,16],[54,13],[17,60],[83,62],[50,87],[18,19]];
+    for(var y=12;y<=88;y+=8)for(var x=12;x<=88;x+=8)slots.push([x,y]);
+    var best=[79,16,100,1],score=Infinity;
+    for(var scale of [100,85,70])for(var slot of slots){
+      var p=fitPart([slot[0],slot[1],scale,1],16*scale/100,16*scale/100),half=8*p[2]/100,overlap=0;
+      Object.keys(sizes).forEach(function(key){
+        var other=values[key];if(!other||!other[3])return;
+        var w=sizes[key][0]*other[2]/200+2,h=sizes[key][1]*other[2]/200+2;
+        overlap+=Math.max(0,Math.min(p[0]+half,other[0]+w)-Math.max(p[0]-half,other[0]-w))*Math.max(0,Math.min(p[1]+half,other[1]+h)-Math.max(p[1]-half,other[1]-h));
+      });
+      if(overlap===0)return p;
+      if(overlap<score){score=overlap;best=p;}
+    }
+    return best;
+  }
+  function clean(value, keepSymbolPosition) {
     value = value && typeof value === 'object' ? value : {};
     var face = faces.indexOf(value.face) >= 0 ? value.face : 'classic';
     var out = { face: face, tint: /^[a-f0-9]{6}$/i.test(value.tint || '') ? value.tint.toLowerCase() : 'd5e6ef',
@@ -27,6 +44,10 @@
       if (!Array.isArray(p)) p = base;
       out.parts[key] = [bounded(p[0], 5, 95, base[0]), bounded(p[1], 5, 95, base[1]), bounded(p[2], 50, 170, base[2]), p[3] === 0 ? 0 : 1];
     });
+    var oldSymbol=value.parts&&value.parts.moon;
+    if(!keepSymbolPosition&&(!oldSymbol||Object.values(moonLayouts).some(function(p){return p.slice(0,3).join()===oldSymbol.slice(0,3).join();}))){
+      var visibility=out.parts.moon[3];out.parts.moon=symbolPlacement(out.parts,face);out.parts.moon[3]=visibility;
+    }
     return out;
   }
   function preset(face, previous) {
@@ -38,7 +59,7 @@
     return clean(value);
   }
   function pack(value) {
-    var v = clean(value);
+    var v = clean(value, true);
     return [2, faces.indexOf(v.face), v.tint, v.metal, v.finish, v.imageX, v.imageY, v.imageZoom]
       .concat(parts.map(function (key) { return v.parts[key].join(','); })).join('~');
   }
@@ -52,11 +73,11 @@
       if (!/^\d{1,2},\d{1,2},\d{2,3},[01]$/.test(a[i + 8])) return null;
       value.parts[parts[i]] = a[i + 8].split(',').map(Number);
     }
-    var result = clean(value);
+    var result = clean(value, true);
     // Reject noncanonical/out-of-range payloads rather than silently accepting them.
     var canonical=pack(result).split('~');
     if(legacy){canonical[0]='1';canonical.pop();}
-    return canonical.join('~') === text ? result : null;
+    return canonical.join('~') === text ? clean(result) : null;
   }
   // Fit the measured element inside the rounded face, not just its rectangle.
   // Measurements are percentages, so this works at every preview/radio size.
@@ -79,5 +100,5 @@
     p[0]=Math.round(x);p[1]=Math.round(y);
     return p;
   }
-  root.MinkaCardFaceModel = { faces: faces, parts: parts, clean: clean, preset: preset, pack: pack, unpack: unpack, fitPart: fitPart };
+  root.MinkaCardFaceModel = { faces: faces, parts: parts, clean: clean, preset: preset, pack: pack, unpack: unpack, fitPart: fitPart, symbolPlacement: symbolPlacement };
 })(globalThis);

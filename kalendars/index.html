@@ -1562,9 +1562,9 @@ function _mkToast(msg, type) {
 <script src="data/namedays.local.js"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/known-carryovers.js?v=20260907smooth1"></script>
-<script src="js/card-face-model.js?v=20260912faces24"></script>
+<script src="js/card-face-model.js?v=20260912faces25"></script>
 <script src="js/card-materials.js?v=20260912faces21"></script>
-<script src="js/card-faces.js?v=20260912faces24"></script>
+<script src="js/card-faces.js?v=20260912faces25"></script>
 <!-- Saved worker skins must be ready before the cached roster is rendered. -->
 <script>
 /* ── MinkaSkins: per-darbinieka kartes izskats ──
@@ -1754,6 +1754,7 @@ function _mkToast(msg, type) {
     Object.assign(face,{tint:m.tint,metal:m.metal,finish:m.finish});
     if(m.hours)face.parts.hours=m.hours.slice();
     Object.keys(m.parts||{}).forEach(function(key){face.parts[key]=m.parts[key].slice();});
+    face.parts.moon=window.MinkaCardFaceModel.symbolPlacement(face.parts,face.face);
     return {label:m.label,group:m.group||'landscape',isNew:!!m.isNew,bg:{t:'img',id:m.id},num:hexToRgb('#'+m.tint),na:'1',txt:'246,247,249',face:face,depth:m.depth,foreground:m.foreground||(m.kind==='depth'?m.path:null),sw:'url('+m.path+')'+(m.background?','+m.background:'')};
   }).concat(PRESETS.map(function(p,i){
     // Legacy bundles now also have a complete, editable arrangement.
@@ -1764,6 +1765,7 @@ function _mkToast(msg, type) {
       p.face.parts.name=[50,70,65,1];p.face.parts.coffee=[25,13,80,1];p.face.parts.emoji=[82,14,85,1];
       p.face.parts.month=[80,84,70,0];p.face.parts.fatigue=[21,84,70,0];p.face.parts.remaining=[50,91,70,1];
     }
+    p.face.parts.moon=window.MinkaCardFaceModel.symbolPlacement(p.face.parts,p.face.face);
     delete p.fx;
     p.group='collection';
     return p;
@@ -2697,7 +2699,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260912faces24"></script>
+<script src="js/calendar.js?v=20260912faces25"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
@@ -23908,6 +23910,6 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
 <link rel="stylesheet" href="css/radio-side-cards.css?v=20260911split1">
 <script src="../js/radio-ambience.js?v=20260908ambient3"></script>
 <link rel="stylesheet" href="../css/calendar-surfaces.css?v=20260908surfaces3">
-<link rel="stylesheet" href="css/card-faces.css?v=20260912faces24">
+<link rel="stylesheet" href="css/card-faces.css?v=20260912faces25">
 </body>
 </html>

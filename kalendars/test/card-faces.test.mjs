@@ -49,6 +49,33 @@ test('every default style includes the person emoji', () => {
   for (const face of M.faces) assert.equal(M.preset(face).parts.emoji[3], 1);
 });
 
+test('old symbol defaults move into a free slot while custom positions and visibility survive', () => {
+  const face=M.preset('classic');
+  Object.assign(face.parts,{coffee:[23,13,80,1],name:[50,77,72,1],month:[81,85,65,0],moon:[82,39,90,0]});
+  const upgraded=M.unpack(M.pack(face));
+  assert.notDeepEqual(upgraded.parts.moon.slice(0,3),[82,39,90]);
+  assert.equal(upgraded.parts.moon[3],0);
+  face.parts.moon=[30,62,140,1];
+  assert.deepEqual(M.unpack(M.pack(face)).parts.moon,face.parts.moon);
+  face.parts.month=[79,16,100,1];
+  assert.notDeepEqual(M.symbolPlacement(face.parts).slice(0,2),[79,16]);
+});
+
+test('shift symbols distinguish day, overnight and 24 hour duties including effective overrides', async () => {
+  const calendar=await readFile(new URL('../js/calendar.js',import.meta.url),'utf8');
+  const fn=calendar.slice(calendar.indexOf('  function getDutyPeriod('),calendar.indexOf('  // Compute real shift end'));
+  const period=new Function('getDutyShiftType','getDutyShiftHours','getDutyStartTime','getDutyEndTime',fn+';return getDutyPeriod;')(
+    w=>w.__minkaDutyType||w.type||'',w=>w.hours,w=>w.start||'',w=>w.end||''
+  );
+  assert.equal(period({hours:12,start:'20:00',end:'08:00'}),'night');
+  assert.equal(period({hours:15,start:'17:00',end:'08:00'}),'night');
+  assert.equal(period({hours:9,start:'08:00',end:'17:00'}),'day');
+  assert.equal(period({hours:12,type:'NAKTS'}),'night');
+  assert.equal(period({hours:24,start:'08:00',end:'08:00'}),'mixed');
+  assert.equal(period({hours:12}),'mixed');
+  assert.equal(period({hours:24,type:'DIENA',__minkaDutyType:'NAKTS'}),'night');
+});
+
 test('v1 saved cards retain all existing elements and upgrade to an independent moon', async () => {
   const request=fixture();
   const original=M.preset('photo');

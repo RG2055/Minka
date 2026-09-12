@@ -122,7 +122,7 @@ test('new day/night cards paint personal initials immediately, before emoji hook
  const c=vm.createContext({window:{},probe:null,isGridView:true,isToday:false,now:new Date(),
   document:{createElement:()=>({setAttribute(){},querySelector:()=>null})},
   capitalize:x=>x,escapeHtml:x=>String(x),safeEmojiText:x=>x||'',
-  getPersonEmoji:w=>w.emoji,getShiftEmoji:w=>w.night?'🌙':'☀️',
+  getPersonEmoji:w=>w.emoji,getShiftEmoji:w=>w.night?'🌙':'☀️',getDutyPeriod:w=>w.night?'night':'day',
   getDutyStartTime:()=> '20:00',getDutyEndTime:()=> '08:00',
   midFatigueTrend:()=>({icon:'→',cls:''}),getMonthHoursForWorker:()=>120,
   getDutyShiftHours:()=>12,buildCoffeeRow:()=>''});
