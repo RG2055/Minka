@@ -5,7 +5,7 @@
   var M = window.MinkaCardFaceModel;
   var labels = { hours: 'Maiņas stundas', name: 'Vārds', initials: 'Iniciāļi', month: 'Stundas mēnesī', coffee: 'Kafija', fatigue: 'Nogurums', remaining: 'Maiņas laiks', emoji: 'Emoji', clock: 'Pulkstenis' };
   var selectors = { hours: '.mk-mid-hours', name: '.mk-mid-name-wrap', initials: '.mk-mid-initials', month: '.mk-mid-month', coffee: '.mk-mid-coffee', fatigue: '.mk-mid-meta-fat', remaining: '.mk-mid-meta-time', emoji: '.mk-mid-meta-emoji', clock: '.mk-wf-clock' };
-  var titles = ['Klasika', 'Foto stikls', 'Orbīta', 'Moduļi'];
+  var titles = ['Klasika', 'Foto stikls', 'Loks', 'Moduļi'];
   var metals = [
     ['Sudrabs','#d7d9de'],['Dabiskais titāns','#b7afa0'],['Melnais titāns','#484a50'],['Rozā zelts','#d9b3a7'],
     ['Zelts','#c7ac7c'],['Slānekļa titāns','#71747a'],['Tuksneša titāns','#c4a98d'],['Baltais titāns','#e7e5de'],
@@ -33,9 +33,7 @@
   }
   document.addEventListener('visibilitychange', paintClock);
   function orbitArt() {
-    var lines = '';
-    for (var i = 0; i < 12; i++) lines += '<ellipse cx="100" cy="100" rx="76" ry="36" transform="rotate(' + (i*15) + ' 100 100)"/>';
-    return '<svg viewBox="0 0 200 200" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width=".45" opacity=".28">' + lines + '</g><circle cx="100" cy="100" r="87" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-dasharray="78 55 70 60 75 209" transform="rotate(-135 100 100)"/></svg>';
+    return '<svg viewBox="0 0 200 200" preserveAspectRatio="none" aria-hidden="true"><rect x="10" y="10" width="180" height="180" rx="40" fill="none" stroke="currentColor" stroke-width=".65" opacity=".16"/><path d="M18 69V53Q18 18 53 18H116 M182 131V147Q182 182 147 182H84" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" opacity=".65"/></svg>';
   }
   function apply(card, skin) {
     if (!card || !card.matches('.mk-mid-card, .mk-skin-preview-real')) return;
@@ -171,7 +169,7 @@
     var config = M.clean(options.get().face);
     var history = [];
     var faceTiles = M.faces.map(function(face,i) {
-      return '<button type="button" class="wf-face-choice" data-face="'+face+'"><span class="wf-face-thumb wf-thumb-'+face+'"><i></i><b>24</b><small>DEŽŪRA</small></span><strong>'+titles[i]+'</strong></button>';
+      return '<button type="button" class="wf-face-choice" data-face="'+face+'"><span class="wf-face-thumb wf-thumb-'+face+'"><i>'+(face==='orbit'?orbitArt():'')+'</i><b>24</b><small>DEŽŪRA</small></span><strong>'+titles[i]+'</strong></button>';
     }).join('');
     panel.innerHTML = '<div class="wf-editor-heading"><div><strong>Kartītes izskats</strong><p>Pielāgo kartīti savai dežūrai.</p></div></div>'
       + '<div class="wf-faces">'+faceTiles+'</div>'
@@ -228,36 +226,35 @@
     }
     // Keep the whole element inside the face, including its scaled bounds.
     // Read geometry only while editing; roster rendering never measures parts.
-    function constrainSelected() {
+    function constrainParts(all) {
       apply(preview,Object.assign({},options.get(),{face:config}));
-      var el=preview.querySelector('[data-wf-part="'+selectedPart+'"]');
-      if(!el||el.hidden)return;
-      var r=preview.getBoundingClientRect(), b=el.getBoundingClientRect(), p=config.parts[selectedPart];
-      if(!r.width||!r.height||!b.width||!b.height)return;
-      var fit=Math.min(1,r.width*.88/b.width,r.height*.84/b.height);
-      if(fit<1){p[2]=Math.max(50,Math.floor(p[2]*fit));apply(preview,Object.assign({},options.get(),{face:config}));b=el.getBoundingClientRect();}
-      var dx=b.left<r.left+r.width*.06?r.left+r.width*.06-b.left:Math.min(0,r.right-r.width*.06-b.right);
-      var dy=b.top<r.top+r.height*.08?r.top+r.height*.08-b.top:Math.min(0,r.bottom-r.height*.08-b.bottom);
-      p[0]+=dx/r.width*100;p[1]+=dy/r.height*100;
+      var r=preview.getBoundingClientRect();
+      if(!r.width||!r.height)return;
+      (all?M.parts:[selectedPart]).forEach(function(key){
+        var el=preview.querySelector('[data-wf-part="'+key+'"]');
+        if(!el||el.hidden)return;
+        var b=el.getBoundingClientRect();
+        config.parts[key]=M.fitPart(config.parts[key],b.width/r.width*100,b.height/r.height*100);
+      });
       config=M.clean(config);
     }
     function save(constrain) {
       history.push(options.get().face ? M.clean(options.get().face) : null);
       if(history.length>20)history.shift();
-      preview.classList.add('wf-editing');config=M.clean(config);if(constrain)constrainSelected();options.change(M.clean(config));sync();sizePreview();
+      preview.classList.add('wf-editing');config=M.clean(config);if(constrain)constrainParts(constrain==='all');options.change(M.clean(config));sync();sizePreview();
     }
     tab.addEventListener('click',activate);
     tabs.addEventListener('click',function(e){if(e.target.closest('[data-skin-section]')!==tab){preview.classList.remove('wf-editing');apply(preview,options.get());}});
     panel.addEventListener('click',function(e){
       var el=e.target.closest('button');if(!el)return;
-      if(el.dataset.face){var previous=options.get().face;config=M.preset(el.dataset.face,previous?config:null);if(previous)M.parts.forEach(function(key){config.parts[key][3]=previous.parts[key][3];});save(true);}
+      if(el.dataset.face){var previous=options.get().face;config=M.preset(el.dataset.face,previous?config:null);if(previous)M.parts.forEach(function(key){config.parts[key][3]=previous.parts[key][3];});save('all');}
       if(el.dataset.tint){config.tint=el.dataset.tint;save();}
       if(el.dataset.metal!=null){config.metal=+el.dataset.metal;save();}
-      if(el.dataset.finish!=null){config.finish=+el.dataset.finish;save();}
-      if(el.dataset.part){selectedPart=el.dataset.part;if(!config.parts[selectedPart][3]||!options.get().face){config.parts[selectedPart][3]=1;save();}else sync();}
-      if(el.classList.contains('wf-remove')){config.parts[selectedPart][3]=config.parts[selectedPart][3]?0:1;save();}
+      if(el.dataset.finish!=null){config.finish=+el.dataset.finish;save('all');}
+      if(el.dataset.part){selectedPart=el.dataset.part;if(!config.parts[selectedPart][3]||!options.get().face){config.parts[selectedPart][3]=1;save(true);}else sync();}
+      if(el.classList.contains('wf-remove')){config.parts[selectedPart][3]=config.parts[selectedPart][3]?0:1;save(true);}
       if(el.classList.contains('wf-undo')&&history.length){var previous=history.pop();config=M.clean(previous);options.change(previous);preview.classList.toggle('wf-editing',!!previous);apply(preview,options.get());sync();sizePreview();}
-      if(el.classList.contains('wf-reset')){config=M.preset(config.face,config);save(true);}
+      if(el.classList.contains('wf-reset')){config=M.preset(config.face,config);save('all');}
       if(el.classList.contains('wf-original')){options.change(null);options.section('background');options.rebuild();}
     });
     panel.querySelector('.wf-depth-toggle').addEventListener('change',function(e){options.depth(e.target.checked);sync();});
@@ -284,7 +281,7 @@
       if(!drag||e.pointerId!==drag.id)return;
       config.parts[selectedPart][0]=Math.max(5,Math.min(95,Math.round(drag.px+(e.clientX-drag.x)/drag.r.width*100)));
       config.parts[selectedPart][1]=Math.max(5,Math.min(95,Math.round(drag.py+(e.clientY-drag.y)/drag.r.height*100)));
-      constrainSelected();apply(preview,Object.assign({},options.get(),{face:config}));sync();
+      constrainParts(false);apply(preview,Object.assign({},options.get(),{face:config}));sync();
     });
     function endDrag(e){if(!drag||e.pointerId!==drag.id)return;drag=null;save(true);}
     preview.addEventListener('pointerup',endDrag);preview.addEventListener('pointercancel',endDrag);preview.addEventListener('lostpointercapture',endDrag);

@@ -5,9 +5,9 @@
   var parts = ['hours', 'name', 'initials', 'month', 'coffee', 'fatigue', 'remaining', 'emoji', 'clock'];
   // Centre x/y (%), size (%), visibility. Positions scale with the actual card.
   var layouts = {
-    classic: [[50,45,100,1],[35,12,100,1],[16,12,100,0],[84,13,90,1],[14,39,90,1],[23,85,90,1],[53,85,90,1],[82,85,95,1],[50,20,100,0]],
-    photo: [[68,38,130,1],[37,78,100,1],[17,14,100,0],[81,14,90,0],[16,16,90,1],[19,58,90,0],[64,92,80,1],[18,51,100,1],[50,14,90,0]],
-    orbit: [[50,46,112,1],[50,71,85,1],[50,13,90,0],[78,19,85,1],[19,20,95,1],[21,83,85,1],[52,87,85,1],[83,80,110,1],[50,12,85,0]],
+    classic: [[50,45,100,1],[35,12,100,1],[16,12,100,0],[78,21,80,1],[14,39,90,1],[23,85,90,1],[53,85,90,1],[82,85,95,1],[50,20,100,0]],
+    photo: [[68,38,130,1],[37,78,100,1],[17,14,100,0],[78,21,80,0],[16,16,90,1],[19,58,90,0],[64,92,80,1],[18,51,100,1],[50,14,90,0]],
+    orbit: [[50,47,96,1],[50,72,78,1],[50,13,80,0],[77,19,80,1],[26,19,85,1],[24,84,72,1],[50,92,65,1],[78,84,78,1],[50,12,80,0]],
     modular: [[50,32,85,1],[50,12,80,1],[16,14,90,0],[77,58,95,1],[25,58,100,1],[25,83,95,1],[72,84,100,1],[85,16,100,1],[50,45,90,0]]
   };
   function bounded(n, min, max, fallback) {
@@ -54,5 +54,26 @@
     // Reject noncanonical/out-of-range payloads rather than silently accepting them.
     return pack(result) === text ? result : null;
   }
-  root.MinkaCardFaceModel = { faces: faces, parts: parts, clean: clean, preset: preset, pack: pack, unpack: unpack };
+  // Fit the measured element inside the rounded face, not just its rectangle.
+  // Measurements are percentages, so this works at every preview/radio size.
+  function fitPart(part, width, height) {
+    var p=part.slice();
+    if (!(width>0&&height>0)) return p;
+    var fit=Math.min(1,84/width,80/height);
+    var scale=Math.max(50,Math.floor(p[2]*fit)), ratio=scale/p[2];
+    p[2]=scale;width*=ratio;height*=ratio;
+    var hx=width/2,hy=height/2;
+    function inside(x,y) {
+      if(x<4||x>96||y<4||y>96)return false;
+      var dx=Math.max(0,22-x,x-78),dy=Math.max(0,22-y,y-78);
+      return !dx||!dy||dx*dx+dy*dy<=18*18;
+    }
+    function fits(x,y){return [-1,1].every(function(a){return [-1,1].every(function(b){return inside(x+a*hx,y+b*hy);});});}
+    var x=Math.max(6+hx,Math.min(94-hx,p[0])),y=Math.max(8+hy,Math.min(92-hy,p[1]));
+    // Moving toward the centre converges within this fixed, tiny edit-time loop.
+    for(var i=0;i<50&&!fits(Math.round(x),Math.round(y));i++){x+=(50-x)*.12;y+=(50-y)*.12;}
+    p[0]=Math.round(x);p[1]=Math.round(y);
+    return p;
+  }
+  root.MinkaCardFaceModel = { faces: faces, parts: parts, clean: clean, preset: preset, pack: pack, unpack: unpack, fitPart: fitPart };
 })(globalThis);

@@ -49,6 +49,25 @@ test('every default style includes the person emoji', () => {
   for (const face of M.faces) assert.equal(M.preset(face).parts.emoji[3], 1);
 });
 
+test('a corner widget is moved inside the rounded frame without changing visibility', () => {
+  const p=M.fitPart([84,13,90,1],28,34);
+  assert.ok(p[0]<=80 && p[1]>=25);
+  assert.equal(p[2],90);
+  assert.equal(p[3],1);
+  for(const x of [p[0]-14,p[0]+14])for(const y of [p[1]-17,p[1]+17]){
+    const cx=x<22?22:x>78?78:x,cy=y<22?22:y>78?78:y;
+    assert.ok(Math.hypot(x-cx,y-cy)<=18);
+  }
+});
+
+test('oversized numerals fit while an already safe element keeps its position', () => {
+  const p=M.fitPart([95,5,170,1],120,100);
+  assert.ok(p[2]<170);
+  assert.ok(p[0]+120*p[2]/170/2<=96);
+  assert.ok(p[1]-100*p[2]/170/2>=4);
+  assert.deepEqual(M.fitPart([50,50,100,0],20,20),[50,50,100,0]);
+});
+
 test('every element can be removed, stored and restored without losing its position', async () => {
   const request = fixture();
   const face = M.preset('photo');
