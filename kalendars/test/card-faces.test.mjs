@@ -207,7 +207,7 @@ test('API persists complete legacy appearance plus face and decoration, and can 
 test('API and decoder reject malformed and out of range layouts without overwriting saved data', async () => {
   const request = fixture();
   const valid = M.pack(M.preset('photo'));
-  const mutations = [[0,'3'],[1,'4'],[2,'url(x)'],[3,'12'],[4,'6'],[5,'101'],[6,'-1'],[7,'99'],[8,'50,50,100,2'],[9,'50,50,100,-1'],[10,'50,50,171,1'],[11,'00,50,100,1']];
+  const mutations = [[0,'3'],[1,'5'],[2,'url(x)'],[3,'12'],[4,'6'],[5,'101'],[6,'-1'],[7,'99'],[8,'50,50,100,2'],[9,'50,50,100,-1'],[10,'50,50,171,1'],[11,'00,50,100,1']];
   await request('grad:menta');
   for (const [index, replacement] of mutations) {
     const fields = valid.split('~'); fields[index] = replacement;

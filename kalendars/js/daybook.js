@@ -214,6 +214,7 @@
     state = Object.assign({ name: '', playing: false, artist: '', title: '', tint: '', logo: '', cover: '' }, e.data.state || {});
     try { radioRecords = window.parent.MinkaShiftRadio.history() || radioRecords; } catch (_e) {}
     paint();
+    document.dispatchEvent(new CustomEvent('minka-shift-radio', { detail: state }));
   });
   window.addEventListener('storage', function (e) {
     if (e.key !== 'minkaShiftRadioV1') return;

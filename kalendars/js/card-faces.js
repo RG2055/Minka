@@ -5,7 +5,7 @@
   var M = window.MinkaCardFaceModel;
   var labels = { hours: 'Maiņas stundas', name: 'Vārds', initials: 'Iniciāļi', month: 'Stundas mēnesī', coffee: 'Kafija', fatigue: 'Nogurums', remaining: 'Maiņas laiks', emoji: 'Emoji', clock: 'Pulkstenis', moon: 'Saule / mēness' };
   var selectors = { hours: '.mk-mid-hours', name: '.mk-mid-name-wrap', initials: '.mk-mid-initials', month: '.mk-mid-month', coffee: '.mk-mid-coffee', fatigue: '.mk-mid-meta-fat', remaining: '.mk-mid-meta-time', emoji: '.mk-mid-meta-emoji', clock: '.mk-wf-clock', moon: '.mk-wf-moon' };
-  var titles = ['Klasika', 'Foto stikls', 'Loks', 'Moduļi'];
+  var titles = ['Klasika', 'Foto stikls', 'Loks', 'Moduļi', 'Winamp'];
   var metals = [
     ['Sudrabs','#d7d9de'],['Dabiskais titāns','#b7afa0'],['Melnais titāns','#484a50'],['Rozā zelts','#d9b3a7'],
     ['Zelts','#c7ac7c'],['Slānekļa titāns','#71747a'],['Tuksneša titāns','#c4a98d'],['Baltais titāns','#e7e5de'],
@@ -59,6 +59,7 @@
     if (!nodes.length) return;
     var time = new Intl.DateTimeFormat('lv-LV', { timeZone: 'Europe/Riga', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date());
     nodes.forEach(function (el) { if (el.textContent !== time) el.textContent = time; });
+    document.querySelectorAll('.card.wf-winamp .mk-wa-pos').forEach(function (el) { el.style.setProperty('--p', waProgress(el.closest('.card')).toFixed(3)); });
     clockTimer = setTimeout(paintClock, 60000 - Date.now() % 60000 + 25);
   }
   document.addEventListener('visibilitychange', paintClock);
@@ -66,6 +67,117 @@
     // Two corner arcs only; the earlier faint inner frame read as a stray box.
     return '<svg viewBox="0 0 200 200" preserveAspectRatio="none" aria-hidden="true"><path d="M18 69V53Q18 18 53 18H116 M182 131V147Q182 182 147 182H84" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" opacity=".65"/></svg>';
   }
+  /* Player face. The chrome is one sprite sheet composed from a classic
+     Winamp 2 skin; the title marquee uses its 5x6 bitmap font (Latin letters
+     only, so diacritics are stripped). The card's own elements keep their
+     saved layout inside the display window. */
+  var WA_SHEET = new URL('assets/winamp/base.png?v=20260912wa3', document.baseURI).href;
+  var WA_FRAME = new URL('assets/winamp/frame.webp?v=20260912wa3', document.baseURI).href;
+  var WA_TEXT = ['ABCDEFGHIJKLMNOPQRSTUVWXYZ"@   ', '0123456789….:()-\'!_+\\/[]^&%,=$#', 'ÅÖÄ?*'];
+  var waRadio = { playing: false, text: '' };
+  function waAscii(text) { return String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase(); }
+  function waBitmap(host, text) {
+    var el = host.querySelector(':scope > .mk-wa-bmp');
+    if (!el) { el = document.createElement('span'); el.className = 'mk-wa-bmp'; host.append(el); }
+    if (el.dataset.text === text) return el;
+    el.dataset.text = text;
+    el.innerHTML = Array.prototype.map.call(text, function (ch) {
+      if (ch === ' ') return '<b class="sp"></b>';
+      var r = -1, c = -1;
+      for (var i = 0; i < WA_TEXT.length && r < 0; i++) { var j = WA_TEXT[i].indexOf(ch); if (j >= 0) { r = i; c = j; } }
+      if (r < 0) { r = 0; c = 28; }
+      return '<b style="--c:' + c + ';--r:' + r + '"></b>';
+    }).join('');
+    return el;
+  }
+  function waMarquee(card) {
+    var box = card.querySelector(':scope > .mk-wa .mk-wa-mqbox'); if (!box) return;
+    var text = waRadio.playing && waRadio.text ? 'NOW PLAYING: ' + waAscii(waRadio.text) : '';
+    if (!text) {
+      var main = card.querySelector('.name-main'), sub = card.querySelector('.name-sub');
+      text = waAscii(((main ? main.textContent : '') + ' ' + (sub ? sub.textContent : '')).trim());
+    }
+    text = text.replace(/\s+/g, ' ');
+    var scroll = text.length > 8, run = scroll ? text + '  ***  ' : text;
+    var el = waBitmap(box, scroll ? run + run : run);
+    el.classList.toggle('is-scrolling', scroll);
+    el.style.setProperty('--n', run.length);
+    card.classList.toggle('is-playing', !!waRadio.playing);
+  }
+  // Shift progress for the position bar. Off duty the bar still sits part way
+  // along, like a track that has been playing for a while: the scheduled
+  // hours against the clock when they apply, otherwise a fixed spot per person.
+  function waProgress(card) {
+    var timer = card.querySelector('.duty-timer'), m = timer && /(\d+):(\d\d):(\d\d)/.exec(timer.textContent), hours = +card.dataset.dutyHours || 0;
+    if (m && hours) return Math.max(0, Math.min(1, 1 - ((+m[1]) * 3600 + (+m[2]) * 60 + (+m[3])) / (hours * 3600)));
+    var span = card.querySelector('.mk-mid-meta-time'), range = span && /(\d{1,2})\D+(\d{1,2})/.exec(span.textContent);
+    if (range) {
+      var now = new Date(), t = now.getHours() + now.getMinutes() / 60, start = +range[1], end = +range[2];
+      if (end <= start) end += 24;
+      if (t < start) t += 24;
+      if (t >= start && t <= end) return Math.max(.04, Math.min(.96, (t - start) / (end - start)));
+    }
+    var h = 3, seed = card.dataset.worker || '';
+    for (var i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+    return .3 + (h % 40) / 100;
+  }
+  // Shift time as Winamp's LCD digits (NUMBERS sprite), refreshed whenever the
+  // live text changes; ':' and '–' are drawn with CSS.
+  function waLcd(el) {
+    var text = el.textContent.replace(/\s+/g, ''), lcd = el.querySelector(':scope > .mk-wa-lcd');
+    if (!lcd) { lcd = document.createElement('span'); lcd.className = 'mk-wa-lcd'; lcd.setAttribute('aria-hidden', 'true'); el.append(lcd); }
+    if (lcd.dataset.text === text) return;
+    lcd.dataset.text = text;
+    lcd.innerHTML = Array.prototype.map.call(text, function (ch) {
+      if (/\d/.test(ch)) return '<b style="--c:' + ch + '"></b>';
+      if (ch === ':') return '<b class="colon"></b>';
+      if (/[-–—]/.test(ch)) return '<b class="dash"></b>';
+      return '';
+    }).join('');
+  }
+  function waWatchLcd(el) {
+    waLcd(el);
+    if (el.__waObs || typeof MutationObserver !== 'function') return;
+    el.__waObs = new MutationObserver(function (list) {
+      if (list.some(function (m) { return !(m.target.nodeType === 1 && m.target.classList.contains('mk-wa-lcd')) && !(m.target.parentElement && m.target.parentElement.closest('.mk-wa-lcd')); })) waLcd(el);
+    });
+    el.__waObs.observe(el, { childList: true, characterData: true, subtree: true });
+  }
+  function clearWinamp(card) {
+    if (!card.classList.contains('wf-winamp')) return;
+    card.classList.remove('wf-winamp', 'is-playing');
+    card.style.removeProperty('--wa-sheet');card.style.removeProperty('--wa-frame');
+    card.querySelectorAll(':scope > .mk-wa').forEach(function (el) { el.remove(); });
+    var fatigue = card.querySelector('[data-wf-part="fatigue"]'); if (fatigue) fatigue.style.removeProperty('--fat');
+    card.style.removeProperty('--fat');
+    var remaining = card.querySelector('[data-wf-part="remaining"]');
+    if (remaining) { if (remaining.__waObs) { remaining.__waObs.disconnect(); delete remaining.__waObs; } var lcd = remaining.querySelector(':scope > .mk-wa-lcd'); if (lcd) lcd.remove(); }
+  }
+  function applyWinamp(card) {
+    card.classList.add('wf-winamp');
+    card.style.setProperty('--wa-sheet', 'url("' + WA_SHEET + '")');
+    card.style.setProperty('--wa-frame', 'url("' + WA_FRAME + '")');
+    var root = card.querySelector(':scope > .mk-wa');
+    if (!root) {
+      root = document.createElement('div'); root.className = 'mk-wa'; root.setAttribute('aria-hidden', 'true');
+      root.innerHTML = '<i class="mk-wa-mqbox"></i><i class="mk-wa-pos"><b></b><b></b></i><i class="mk-wa-meter"></i>';
+      card.append(root);
+    }
+    root.querySelector('.mk-wa-pos').style.setProperty('--p', waProgress(card).toFixed(3));
+    var fatigue = card.querySelector('[data-wf-part="fatigue"] .mk-mid-meta-value');
+    var fat = fatigue ? (fatigue.textContent.match(/\d+/) || [0])[0] : 0;
+    if (fatigue) fatigue.parentElement.style.setProperty('--fat', fat);
+    card.style.setProperty('--fat', fat);
+    var remaining = card.querySelector('[data-wf-part="remaining"]');
+    if (remaining) waWatchLcd(remaining);
+    waMarquee(card);
+  }
+  // The parent page reports what the radio plays; the daybook forwards it here.
+  document.addEventListener('minka-shift-radio', function (e) {
+    var d = (e && e.detail) || {};
+    waRadio = { playing: !!d.playing, text: [d.artist, d.title].filter(Boolean).join(' - ') || d.name || '' };
+    document.querySelectorAll('.card.wf-winamp').forEach(waMarquee);
+  });
   function apply(card, skin) {
     if (!card || !card.matches('.mk-mid-card, .mk-skin-preview-real')) return;
     card.classList.add('mk-face-classic');
@@ -84,6 +196,7 @@
       });
       card.querySelectorAll('.mk-wf-art,.mk-wf-clock,.mk-wf-moon,.mk-wf-effects,.mk-wf-depth,.mk-wf-background').forEach(function(el) { el.remove(); });
       delete card.dataset.fullTintPalette;delete card.dataset.fullTint;delete card.dataset.fullTintScheme;['--wf-full-tint-hue','--wf-full-tint-sat'].forEach(function(p){card.style.removeProperty(p);});
+      clearWinamp(card);
       var originalEmoji=card.querySelector('.mk-mid-bg-emoji');if(originalEmoji)originalEmoji.hidden=false;
       ['--wf-tint','--wf-metal','--wf-bg-x','--wf-bg-y','--wf-bg-zoom','--wf-name-chars','--wf-surname-chars','--wf-number-alpha'].forEach(function(p) { card.style.removeProperty(p); });
       paintClock(); return;
@@ -145,6 +258,7 @@
       if(own){el.style.setProperty('--wf-tint','#'+own);el.style.setProperty('--mk-txt-color',own.match(/../g).map(function(v){return parseInt(v,16);}).join(','));}
       else{el.style.removeProperty('--wf-tint');el.style.removeProperty('--mk-txt-color');}
     });
+    if(config.face==='winamp')applyWinamp(card);else clearWinamp(card);
     applyFullTint(card,skin,config);
     paintClock();
   }
@@ -292,15 +406,15 @@
     panel.innerHTML = '<div class="wf-editor-heading"><div><strong>Kartītes izskats</strong></div></div>'
       + '<div class="wf-faces">'+faceTiles+'</div>'
       + look
-      + '<div class="wf-section"><div class="wf-label">Akcenta krāsa <span>cipariem, čipiem un ikonām, ja elementam nav savas</span> <input type="color" class="wf-color" aria-label="Akcenta krāsa"></div><div class="wf-swatches">'+colors.map(function(c){return '<button type="button" data-tint="'+c[1].slice(1)+'" style="--sw:'+c[1]+'" title="'+c[0]+'" aria-label="'+c[0]+'"></button>';}).join('')+'</div>'
-      + '</div><div class="wf-section"><div class="wf-label">Ciparu materiāls</div>'
+      + '<div class="wf-section wf-accent"><div class="wf-label">Akcenta krāsa <span>cipariem, čipiem un ikonām, ja elementam nav savas</span> <input type="color" class="wf-color" aria-label="Akcenta krāsa"></div><div class="wf-swatches">'+colors.map(function(c){return '<button type="button" data-tint="'+c[1].slice(1)+'" style="--sw:'+c[1]+'" title="'+c[0]+'" aria-label="'+c[0]+'"></button>';}).join('')+'</div>'
+      + '</div><div class="wf-section wf-finish"><div class="wf-label">Ciparu materiāls</div>'
       + '<div class="wf-segment" aria-label="Ciparu materiāls">'+['Stikls','Metāls','Tīrs','Plūsma','Perlamutrs','Neons'].map(function(t,i){return '<button type="button" data-finish="'+i+'" data-watch-finish="'+i+'" aria-label="'+t+'"><b class="wf-number-sample" aria-hidden="true">24</b><span>'+t+'</span></button>';}).join('')+'</div></div>'
-      + '<div class="wf-section"><div class="wf-label">Metāla ietvars <span class="wf-metal-name"></span></div><div class="wf-metals">'+metals.map(function(c,i){return '<button type="button" data-metal="'+i+'" style="--sw:'+c[1]+'" title="'+c[0]+'" aria-label="'+c[0]+'"></button>';}).join('')+'</div></div>'
+      + '<div class="wf-section wf-metal"><div class="wf-label">Metāla ietvars <span class="wf-metal-name"></span></div><div class="wf-metals">'+metals.map(function(c,i){return '<button type="button" data-metal="'+i+'" style="--sw:'+c[1]+'" title="'+c[0]+'" aria-label="'+c[0]+'"></button>';}).join('')+'</div></div>'
       + '<div class="wf-section"><div class="wf-label">Elementi <span>Velc priekšskatījumā</span></div><div class="wf-elements">'+M.parts.map(function(key){return '<button type="button" data-part="'+key+'">'+labels[key]+'</button>';}).join('')+'</div>'
       + '<div class="wf-part-head"><strong class="wf-part-name"></strong><button type="button" class="wf-remove">Noņemt</button></div>'
       + '<div class="wf-part-color"><span>Šī elementa krāsa</span><input type="color" class="wf-part-color-input" aria-label="Šī elementa krāsa"><button type="button" class="wf-part-color-clear">Kā akcenta krāsa</button></div>'
       + '<div class="wf-coffee-options" hidden><div class="wf-segment wf-coffee-mode" aria-label="Kafijas vadība"><button type="button" data-coffee-mode="0">Ikona → pogas</button><button type="button" data-coffee-mode="1">Vienmēr − / +</button></div><div class="wf-segment" aria-label="Kafijas tonis"><button type="button" data-coffee-contrast="0">Stikls</button><button type="button" data-coffee-contrast="1">Fona kontrasts</button><button type="button" data-coffee-contrast="2">Kartītes tonis</button></div></div>'
-      + [['x','Horizontāli',5,95],['y','Vertikāli',5,95],['size','Izmērs',50,170]].map(function(r){return '<label class="wf-range"><span>'+r[1]+'</span><input type="range" data-position="'+r[0]+'" min="'+r[2]+'" max="'+r[3]+'"><output></output></label>';}).join('')
+      + [['x','Horizontāli',5,95],['y','Vertikāli',5,95],['size','Izmērs',50,170]].map(function(r){return '<label class="wf-range wf-position"><span>'+r[1]+'</span><input type="range" data-position="'+r[0]+'" min="'+r[2]+'" max="'+r[3]+'"><output></output></label>';}).join('')
       + '<button type="button" class="wf-fit">Ietilpināt kartītē</button></div>'
       + '<label class="wf-depth-control"><input type="checkbox" class="wf-depth-toggle"> Objekts priekšā ciparam</label>'
       + '<details class="wf-background"><summary>Attēla novietojums</summary>'+[['imageX','Horizontāli',0,100],['imageY','Vertikāli',0,100],['imageZoom','Tuvinājums',100,180]].map(function(r){return '<label class="wf-range"><span>'+r[1]+'</span><input type="range" data-image="'+r[0]+'" min="'+r[2]+'" max="'+r[3]+'"><output></output></label>';}).join('')+'</details>'
@@ -317,6 +431,7 @@
       sync();
     }
     function sync() {
+      panel.classList.toggle('is-winamp',config.face==='winamp');
       panel.querySelectorAll('[data-face]').forEach(function(el){
         el.setAttribute('aria-pressed',String(!!options.get().face&&el.dataset.face===config.face));
         var look=M.preset(el.dataset.face,options.get().face?config:null);
@@ -368,7 +483,8 @@
     function constrainParts(all, keepSize) {
       // Manual dragging/sliders keep the chosen position, including corners.
       // Only preset layout changes and the explicit Fit action move it inward.
-      if(!all&&keepSize)return;
+      // The player face lays parts out inside its display window; the round-face fit does not apply.
+      if((!all&&keepSize)||config.face==='winamp')return;
       apply(preview,Object.assign({},options.get(),{face:config}));
       var r=preview.getBoundingClientRect();
       if(!r.width||!r.height)return;
@@ -389,7 +505,7 @@
     tabs.addEventListener('click',function(e){if(e.target.closest('[data-skin-section]')!==tab){preview.classList.remove('wf-editing');apply(preview,options.get());}});
     panel.addEventListener('click',function(e){
       var el=e.target.closest('button');if(!el)return;
-      if(el.dataset.face){var previous=options.get().face;if(previous)previous=M.clean(previous);config=M.preset(el.dataset.face,previous?config:null);if(previous)M.parts.forEach(function(key){config.parts[key][3]=previous.parts[key][3];});save('all');}
+      if(el.dataset.face){var previous=options.get().face;if(previous)previous=M.clean(previous);config=M.preset(el.dataset.face,previous?config:null);if(previous)M.parts.forEach(function(key){config.parts[key][3]=previous.parts[key][3];});if(el.dataset.face==='winamp'&&(!previous||previous.face!=='winamp'))config.tint='9dff4a';save('all');}
       if(el.dataset.tint){config.tint=el.dataset.tint;save();}
       if(el.dataset.metal!=null){config.metal=+el.dataset.metal;save();}
       if(el.dataset.finish!=null){config.finish=+el.dataset.finish;save('material');}
@@ -422,7 +538,7 @@
     // to its real dimensions; persisted values never depend on device pixels.
     var drag=null;
     preview.addEventListener('pointerdown',function(e){
-      if(!preview.classList.contains('wf-editing')||e.button!==0)return;
+      if(!preview.classList.contains('wf-editing')||e.button!==0||config.face==='winamp')return;
       var el=e.target.closest('[data-wf-part]');if(!el)return;
       e.preventDefault();e.stopPropagation();selectedPart=el.dataset.wfPart;sync();
       var r=preview.getBoundingClientRect();

@@ -1,0 +1,175 @@
+/* Player card face: a Winamp-style player frame (kalendars/assets/winamp/
+   frame.webp) around the ordinary card. The picture sits in the player's
+   display window, the numeral is an LED dot matrix and the chips are small
+   LCD panels. Every length is a multiple of --u, 1/148 of the card width, so
+   the face scales with the card. Static paint only; the title marquee is the
+   one CSS animation and it stops with reduced motion. */
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] {
+  --u:calc(100cqw / 148);
+  --wa-sheet-w:calc(var(--u) * 320);--wa-sheet-h:calc(var(--u) * 250);
+  --wa-lcd:#9dff4a;
+  border:0 !important;padding:0 !important;border-radius:9% !important; /* cqw on the card itself would resolve against an outer container */
+  background:var(--wa-frame) center / 100% 100% no-repeat !important;box-shadow:none !important;
+}
+/* The picture fills the display window only (chamfered like the frame). */
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"]::before,
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wf-background,
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wf-depth {
+  top:calc(var(--u) * 18) !important;right:calc(var(--u) * 7) !important;bottom:calc(var(--u) * 34) !important;left:calc(var(--u) * 6) !important;
+  border-radius:0 !important;filter:brightness(.72) !important;
+  clip-path:polygon(calc(var(--u) * 4) 0,calc(100% - var(--u) * 4) 0,100% calc(var(--u) * 4),100% calc(100% - var(--u) * 4),calc(100% - var(--u) * 4) 100%,calc(var(--u) * 4) 100%,0 calc(100% - var(--u) * 4),0 calc(var(--u) * 4)) !important;
+}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"]::after,
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wf-art,
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wf-effects { display:none !important; }
+
+/* ---- overlays on the frame: marquee, shift progress, analyzer ---- */
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa,
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa > i,
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa > i > b {
+  position:absolute;display:block;margin:0;padding:0;border:0;pointer-events:none;
+}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa { inset:0;z-index:1;overflow:hidden;border-radius:inherit; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-mqbox { left:calc(var(--u) * 44);top:calc(var(--u) * 6.5);width:calc(var(--u) * 66);height:calc(var(--u) * 6);overflow:hidden; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-mqbox .mk-wa-bmp { position:absolute;left:calc(var(--u) * 2);top:0; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-mqbox .mk-wa-bmp.is-scrolling { animation:mk-wa-marquee calc(var(--n) * .28s) steps(var(--n)) infinite; }
+@keyframes mk-wa-marquee { to { transform:translateX(calc(var(--u) * var(--n) * -6)); } }
+@media (prefers-reduced-motion:reduce) { html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-mqbox .mk-wa-bmp.is-scrolling { animation:none; } }
+/* Progress: a track painted over the frame's own slider, LCD-green fill, small thumb. */
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-pos { left:calc(var(--u) * 8);top:calc(var(--u) * 119.5);width:calc(var(--u) * 73);height:calc(var(--u) * 4); }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-pos b { top:calc(var(--u) * .8);left:calc(var(--u) * .8);height:calc(var(--u) * 2.4);width:calc((var(--u) * 71.4) * var(--p,0));background:var(--wa-lcd);border-radius:calc(var(--u) * 1);box-shadow:0 0 calc(var(--u) * 2) color-mix(in srgb,var(--wa-lcd) 60%,transparent); }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-pos b + b { top:calc(var(--u) * -2);left:calc((var(--u) * 67) * var(--p,0));width:calc(var(--u) * 6);height:calc(var(--u) * 8);background:linear-gradient(#e9ebf1,#b9bccb);border:calc(var(--u) * .6) solid #5a5d74;border-radius:calc(var(--u) * 1);box-shadow:none; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-vis { display:none; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-vis b {
+  bottom:0;width:calc(var(--u) * 2.2);height:calc(var(--u) * var(--h,3));left:calc(var(--u) * var(--x,0));
+  background:linear-gradient(to top,#188408,#29ce10 45%,#dea518 70%,#ef3110) bottom / 100% calc(var(--u) * 13) no-repeat;
+  -webkit-mask:repeating-linear-gradient(0deg,#000 0 calc(var(--u) * 1.2),transparent calc(var(--u) * 1.2) calc(var(--u) * 1.7));mask:repeating-linear-gradient(0deg,#000 0 calc(var(--u) * 1.2),transparent calc(var(--u) * 1.2) calc(var(--u) * 1.7));
+}
+
+/* ---- bitmap text (the skin's 5x6 font) ---- */
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-bmp {
+  display:flex;gap:calc(var(--u) * 1);height:calc(var(--u) * 6);width:max-content;white-space:nowrap;line-height:0;font-size:0;
+}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-bmp b {
+  flex:none;display:block;width:calc(var(--u) * 5);height:calc(var(--u) * 6);
+  background:var(--wa-sheet) calc(var(--u) * var(--c,28) * -5) calc(var(--u) * (-197 - var(--r,0) * 6)) / var(--wa-sheet-w) var(--wa-sheet-h) no-repeat;
+  image-rendering:pixelated;
+}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-bmp b.sp { background:none; }
+
+/* ---- the card's own elements: fixed player layout inside the display
+   window (135x96 skin px at 6,18). Saved positions and sizes are ignored so
+   nothing can collide; only the visibility flags are read. ---- */
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part] {
+  transform:translate(-50%,-50%) !important;color:var(--wa-lcd) !important;max-width:none !important;
+}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="moon"] { left:calc(var(--u) * 41) !important;top:calc(var(--u) * 32) !important;width:calc(var(--u) * 14) !important;height:calc(var(--u) * 14) !important; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="month"] { left:calc(var(--u) * 121) !important;top:calc(var(--u) * 32) !important; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="clock"] { left:calc(var(--u) * 82) !important;top:calc(var(--u) * 29) !important; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="hours"] { left:calc(var(--u) * 80) !important;top:calc(var(--u) * 59) !important; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="fatigue"] { left:calc(var(--u) * 29) !important;top:calc(var(--u) * 76) !important; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="name"] { left:calc(var(--u) * 78) !important;top:calc(var(--u) * 89) !important;width:calc(var(--u) * 58) !important; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="initials"] { left:calc(var(--u) * 118) !important;top:calc(var(--u) * 66) !important; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="emoji"] { left:calc(var(--u) * 118) !important;top:calc(var(--u) * 88) !important; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="remaining"] { left:calc(var(--u) * 104.8) !important;top:calc(var(--u) * 126.5) !important;z-index:4 !important; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="coffee"] { left:calc(var(--u) * 30) !important;top:calc(var(--u) * 106) !important; }
+
+/* LED dot-matrix numeral. */
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="hours"] {
+  font-size:calc(var(--u) * 44) !important;line-height:1 !important;font-family:'Helvetica Neue',Arial,sans-serif !important;font-weight:800 !important;letter-spacing:-.04em !important;
+  background:none !important;background-image:none !important;-webkit-background-clip:border-box !important;background-clip:border-box !important;
+  color:var(--wa-lcd) !important;-webkit-text-fill-color:var(--wa-lcd) !important;opacity:1 !important;
+  padding:0 .05em .05em !important;
+  -webkit-mask-image:repeating-linear-gradient(90deg,#000 0 calc(var(--u) * 2.3),transparent calc(var(--u) * 2.3) calc(var(--u) * 3)),repeating-linear-gradient(0deg,#000 0 calc(var(--u) * 2.3),transparent calc(var(--u) * 2.3) calc(var(--u) * 3));
+  -webkit-mask-composite:source-in;
+  mask-image:repeating-linear-gradient(90deg,#000 0 calc(var(--u) * 2.3),transparent calc(var(--u) * 2.3) calc(var(--u) * 3)),repeating-linear-gradient(0deg,#000 0 calc(var(--u) * 2.3),transparent calc(var(--u) * 2.3) calc(var(--u) * 3));
+  mask-composite:intersect;
+  filter:drop-shadow(0 0 calc(var(--u) * 1.5) color-mix(in srgb,var(--wa-lcd) 70%,transparent)) !important;
+}
+/* Name stays white, bold. */
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="name"] .name-main,
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="name"] .name-sub { color:#fff !important;text-shadow:0 0 calc(var(--u) * 3) #000,0 1px 2px #000 !important; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="name"] .name-main { font-size:min(calc(var(--u) * 10),calc(var(--u) * 62 / var(--wf-name-chars,6))) !important; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="name"] .name-sub { opacity:.95 !important;letter-spacing:.1em !important;font-size:min(calc(var(--u) * 6),calc(var(--u) * 58 / var(--wf-surname-chars,10))) !important; }
+/* LCD chips. */
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] :is([data-wf-part="month"],[data-wf-part="fatigue"],[data-wf-part="clock"],[data-wf-part="coffee"] .mk-coffee-step,[data-wf-part="initials"]) {
+  background:#04120a !important;background-image:none !important;
+  border:calc(var(--u) * 1) solid #4b5070 !important;border-radius:calc(var(--u) * 3) !important;
+  box-shadow:inset 0 0 0 calc(var(--u) * 1) #000,0 0 0 calc(var(--u) * 1) #12131e !important;
+  padding:calc(var(--u) * 2) calc(var(--u) * 4) !important;
+  color:var(--wa-lcd) !important;font-family:'SF Mono',Menlo,Consolas,'Courier New',monospace !important;font-size:calc(var(--u) * 8) !important;line-height:1.1 !important;
+  text-shadow:0 0 calc(var(--u) * 3) color-mix(in srgb,var(--wa-lcd) 60%,transparent) !important;
+  backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
+}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] :is([data-wf-part="month"],[data-wf-part="fatigue"],[data-wf-part="remaining"],[data-wf-part="clock"],[data-wf-part="coffee"],[data-wf-part="initials"]) *:not(svg):not(rect) { color:var(--wa-lcd) !important;-webkit-text-fill-color:currentColor !important;font-family:inherit !important;opacity:1 !important;text-shadow:inherit !important; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-mid-month-label,
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-mid-meta-label { opacity:.85 !important;letter-spacing:.08em !important;font-weight:700 !important;font-size:calc(var(--u) * 4.2) !important; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-mid-month-num,
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-mid-meta-value { font-size:calc(var(--u) * 8.5) !important;font-weight:700 !important; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="month"] { display:flex !important;flex-direction:column !important;align-items:center !important;gap:calc(var(--u) * 1) !important; }
+/* Shift time: Winamp's LCD digits, drawn from the number sprite in the LCD colour. */
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="remaining"] { font-size:0 !important;line-height:0 !important;color:transparent !important;white-space:nowrap !important;background:none !important;border:0 !important;box-shadow:none !important;padding:0 !important;overflow:visible !important;width:max-content !important;max-width:none !important; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="remaining"] > :not(.mk-wa-lcd) { display:none !important; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-lcd { --k:.52;display:flex;gap:calc(var(--u) * var(--k));height:calc(var(--u) * 13 * var(--k));filter:drop-shadow(0 0 calc(var(--u) * 2) color-mix(in srgb,var(--wa-lcd) 60%,transparent)); }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-lcd b {
+  flex:none;display:block;width:calc(var(--u) * 9 * var(--k));height:calc(var(--u) * 13 * var(--k));background:var(--wa-lcd);
+  -webkit-mask:var(--wa-sheet) calc(var(--u) * var(--c,0) * -9 * var(--k)) calc(var(--u) * -184 * var(--k)) / calc(var(--wa-sheet-w) * var(--k)) calc(var(--wa-sheet-h) * var(--k)) no-repeat;
+  mask:var(--wa-sheet) calc(var(--u) * var(--c,0) * -9 * var(--k)) calc(var(--u) * -184 * var(--k)) / calc(var(--wa-sheet-w) * var(--k)) calc(var(--wa-sheet-h) * var(--k)) no-repeat;
+  -webkit-mask-source-type:luminance;mask-mode:luminance;
+}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-lcd b.colon { width:calc(var(--u) * 3 * var(--k));-webkit-mask:none;mask:none;background:linear-gradient(var(--wa-lcd),var(--wa-lcd)) 50% calc(var(--u) * 3.5 * var(--k)) / calc(var(--u) * 2 * var(--k)) calc(var(--u) * 2 * var(--k)) no-repeat,linear-gradient(var(--wa-lcd),var(--wa-lcd)) 50% calc(var(--u) * 8 * var(--k)) / calc(var(--u) * 2 * var(--k)) calc(var(--u) * 2 * var(--k)) no-repeat; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-lcd b.dash { width:calc(var(--u) * 7 * var(--k));-webkit-mask:none;mask:none;background:linear-gradient(var(--wa-lcd),var(--wa-lcd)) 50% 50% / calc(var(--u) * 5 * var(--k)) calc(var(--u) * 2 * var(--k)) no-repeat; }
+/* Fatigue: label, segmented level bar, value. */
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="fatigue"] { display:flex !important;flex-direction:column !important;align-items:flex-start !important;gap:calc(var(--u) * 2) !important; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="fatigue"] .mk-mid-meta-label { order:0; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="fatigue"] .mk-mid-meta-value { order:2; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="fatigue"]::after {
+  content:'' !important;display:block !important;order:1;width:100%;min-width:calc(var(--u) * 34);height:calc(var(--u) * 3);
+  background:linear-gradient(90deg,var(--wa-lcd) 0 calc(var(--fat,0) * 1%),#1c2a22 0);
+  -webkit-mask:repeating-linear-gradient(90deg,#000 0 calc(var(--u) * 2),transparent calc(var(--u) * 2) calc(var(--u) * 3));mask:repeating-linear-gradient(90deg,#000 0 calc(var(--u) * 2),transparent calc(var(--u) * 2) calc(var(--u) * 3));
+  position:static !important;
+}
+/* Initials: round badge with an LED ring. */
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="initials"] {
+  border-radius:50% !important;width:calc(var(--u) * 20) !important;height:calc(var(--u) * 20) !important;padding:0 !important;
+  display:flex !important;align-items:center !important;justify-content:center !important;
+  border-color:var(--wa-lcd) !important;color:#fff !important;font-weight:800 !important;font-size:calc(var(--u) * 8) !important;
+}
+/* Sun / moon glow in the LCD colour. */
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wf-moon i { background:var(--wa-lcd) !important;filter:drop-shadow(0 0 calc(var(--u) * 3) color-mix(in srgb,var(--wa-lcd) 70%,transparent)) !important; }
+/* Coffee: the capsule is an LCD chip too. */
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="coffee"] .mk-coffee-step { padding:calc(var(--u) * 1) calc(var(--u) * 2) !important;--wf-coffee-bg:#04120a;--wf-coffee-ink:var(--wa-lcd); }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="coffee"] :is(.mk-coffee-sub,.mk-coffee-add,.mk-coffee-mid) { background:none !important;color:var(--wa-lcd) !important;border:0 !important;box-shadow:none !important; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="coffee"] .mk-coffee-cup,
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="coffee"] .mk-coffee-cup rect { color:var(--wa-lcd) !important;fill:var(--wa-lcd) !important; }
+/* Emoji slot doubles as the round badge when it shows initials. */
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="emoji"].is-initials {
+  border-radius:50% !important;width:calc(var(--u) * 20) !important;height:calc(var(--u) * 20) !important;padding:0 !important;
+  display:flex !important;align-items:center !important;justify-content:center !important;
+  background:#04120a !important;border:calc(var(--u) * 1.2) solid var(--wa-lcd) !important;box-shadow:0 0 calc(var(--u) * 3) color-mix(in srgb,var(--wa-lcd) 50%,transparent),inset 0 0 0 calc(var(--u) * 1) #000 !important;
+  color:#fff !important;font-weight:800 !important;font-size:calc(var(--u) * 8) !important;
+}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="emoji"].is-initials > * { color:#fff !important;-webkit-text-fill-color:#fff !important;font:inherit !important;font-weight:800 !important;background:none !important;text-shadow:none !important;opacity:1 !important; }
+/* Vertical level meter at the display's right edge shows the fatigue. */
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-meter { left:calc(var(--u) * 129);top:calc(var(--u) * 26);width:calc(var(--u) * 5);height:calc(var(--u) * 80);
+  background:linear-gradient(to top,#2fbf1f 0,#9dff4a 55%,#dea518 80%,#ef3110 100%) bottom / 100% calc(var(--fat,0) * 1%) no-repeat,#12161f;
+  -webkit-mask:repeating-linear-gradient(0deg,#000 0 calc(var(--u) * 1.6),transparent calc(var(--u) * 1.6) calc(var(--u) * 2.2));mask:repeating-linear-gradient(0deg,#000 0 calc(var(--u) * 1.6),transparent calc(var(--u) * 1.6) calc(var(--u) * 2.2));
+}
+
+/* Compact coffee chip: − cup count +. */
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="coffee"] { font-size:calc(var(--u) * 7) !important;--wf-coffee-width:auto;--wf-coffee-glyph-size:calc(var(--u) * 7); }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="coffee"] .mk-coffee-step { display:flex !important;grid-template-columns:none !important;align-items:center !important;gap:calc(var(--u) * 2) !important;width:auto !important;min-width:0 !important;min-height:0 !important;height:auto !important; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="coffee"] :is(.mk-coffee-sub,.mk-coffee-add) { display:flex !important;width:calc(var(--u) * 8) !important;height:calc(var(--u) * 8) !important;min-width:0 !important;min-height:0 !important;max-height:none !important;padding:0 !important;margin:0 !important;font-size:calc(var(--u) * 9) !important;line-height:1 !important;align-items:center !important;justify-content:center !important; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="coffee"] .mk-coffee-mid { width:auto !important;min-width:0 !important;height:auto !important;min-height:0 !important;padding:0 !important;margin:0 !important;gap:calc(var(--u) * 1) !important;display:flex !important;align-items:center !important; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="coffee"] .mk-coffee-cup { width:calc(var(--u) * 7) !important;height:calc(var(--u) * 7) !important;min-width:0 !important; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="coffee"] .mk-coffee-num { font-size:calc(var(--u) * 7) !important; }
+/* Hidden elements stay hidden despite the display rules above. */
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part][hidden] { display:none !important; }
+
+/* ---- editor tile and panel ---- */
+.wf-face-choice .wf-face-thumb.wf-thumb-winamp {
+  background:#1a1d33 url("../assets/winamp/frame.webp") center / 100% 100% no-repeat !important;border-color:#5a5a75 !important;
+}
+.wf-face-choice .wf-face-thumb.wf-thumb-winamp b { color:#9dff4a !important;-webkit-text-fill-color:#9dff4a !important;background:none !important;font-weight:800 !important;text-shadow:0 0 6px #9dff4a88; }
+.wf-face-choice .wf-face-thumb.wf-thumb-winamp small { color:#9dff4a !important;opacity:.85; }
+.wf-editor.is-winamp :is(.wf-look,.wf-finish,.wf-metal,.wf-accent,.wf-position,.wf-fit,.wf-reset,.wf-part-color,.wf-coffee-options) { display:none !important; }

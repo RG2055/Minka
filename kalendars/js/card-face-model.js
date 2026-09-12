@@ -1,16 +1,20 @@
 /* Compact, versioned appearance data. No DOM, timers, or network work. */
 (function (root) {
   'use strict';
-  var faces = ['classic', 'photo', 'orbit', 'modular'];
+  var faces = ['classic', 'photo', 'orbit', 'modular', 'winamp'];
   var parts = ['hours', 'name', 'initials', 'month', 'coffee', 'fatigue', 'remaining', 'emoji', 'clock', 'moon'];
   // Centre x/y (%), size (%), visibility. Positions scale with the actual card.
   var layouts = {
     classic: [[50,45,100,1],[35,12,100,1],[16,12,100,0],[78,21,80,1],[14,39,90,1],[23,85,90,1],[53,85,90,1],[82,85,95,1],[50,20,100,0]],
     photo: [[68,38,130,1],[37,78,100,1],[17,14,100,0],[78,21,80,0],[16,16,90,1],[19,58,90,0],[64,92,80,1],[18,51,100,1],[50,14,90,0]],
     orbit: [[50,47,96,1],[50,72,78,1],[50,13,80,0],[77,19,80,1],[26,19,85,1],[24,84,72,1],[50,92,65,1],[78,84,78,1],[50,12,80,0]],
-    modular: [[50,32,85,1],[50,12,80,1],[16,14,90,0],[77,58,95,1],[25,58,100,1],[25,83,95,1],[72,84,100,1],[85,16,100,1],[50,45,90,0]]
+    modular: [[50,32,85,1],[50,12,80,1],[16,14,90,0],[77,58,95,1],[25,58,100,1],[25,83,95,1],[72,84,100,1],[85,16,100,1],[50,45,90,0]],
+    // Player face: positions are percentages of the display window, laid out
+    // like the mock-up (moon top left, month chip top right, numeral centre,
+    // fatigue left, name below, badge right, shift chip at the bottom).
+    winamp: [[56,40,100,1],[50,66,90,1],[83,76,100,0],[85,15,85,1],[13,91,70,1],[17,58,90,1],[52,93,85,1],[83,76,95,1],[50,30,90,0]]
   };
-  var moonLayouts={classic:[82,39,90,1],photo:[57,12,80,1],orbit:[57,11,75,1],modular:[17,34,90,1]};
+  var moonLayouts={classic:[82,39,90,1],photo:[57,12,80,1],orbit:[57,11,75,1],modular:[17,34,90,1],winamp:[26,15,95,1]};
   function bounded(n, min, max, fallback) {
     n = Number(n);
     return Number.isFinite(n) ? Math.round(Math.min(max, Math.max(min, n))) : fallback;
@@ -19,6 +23,7 @@
   // Once moved, the symbol keeps its own coordinates independently of the hours.
   function symbolPlacement(values, face) {
     var hours=values.hours||[68,38,100,1],scale=hours[2]/100;
+    if(face==='winamp')return moonLayouts.winamp.slice();
     // The uncondensed numeral needs a full symbol-width of extra clearance.
     // High-set photo bundles also leave the top-left row for the coffee buttons.
     if(face==='classic')return fitPart([Math.round(hours[0]-38*scale),Math.round(Math.max(hours[1]<36?24:16,hours[1]-21*scale)),90,1],14.4,14.4);
@@ -58,7 +63,7 @@
   function preset(face, previous) {
     var value = Object.assign({}, previous || {}, { face: face, parts: null });
     if (!previous) {
-      value.tint = face === 'orbit' ? 'c8e69f' : face === 'photo' ? 'f4cec7' : face === 'modular' ? '73e2de' : 'd5e6ef';
+      value.tint = face === 'orbit' ? 'c8e69f' : face === 'photo' ? 'f4cec7' : face === 'modular' ? '73e2de' : face === 'winamp' ? '9dff4a' : 'd5e6ef';
       value.metal = face === 'photo' ? 3 : face === 'orbit' ? 2 : 0;
     }
     return clean(value);
@@ -77,7 +82,7 @@
     var legacy=a.length===17&&a[0]==='1';
     var coffee=a.length===20&&a[0]==='3';
     var colored=a.length===22&&a[0]==='4';
-    if ((!legacy && !coffee && !colored && !(a.length===18&&a[0]==='2')) || !/^[0-3]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return null;
+    if ((!legacy && !coffee && !colored && !(a.length===18&&a[0]==='2')) || !/^[0-4]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return null;
     if (!a.slice(3,8).every(function (n) { return /^\d{1,3}$/.test(n); })) return null;
     var value = { face: faces[+a[1]], tint: a[2], metal: +a[3], finish: +a[4], imageX: +a[5], imageY: +a[6], imageZoom: +a[7], parts: {} };
     if(coffee||colored){if(!/^[01]$/.test(a[18])||!/^[0-2]$/.test(a[19]))return null;value.coffeeMode=+a[18];value.coffeeContrast=+a[19];}
