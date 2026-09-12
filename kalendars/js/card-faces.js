@@ -78,10 +78,11 @@
       var coffeeButton=card.querySelector('button.mk-coffee-mid');
       if(coffeeButton){coffeeButton.removeAttribute('aria-expanded');coffeeButton.setAttribute('aria-label','Atvērt kafijas izvēlni');}
       card.querySelectorAll('[data-wf-part]').forEach(function(el) {
-        delete el.dataset.wfPart; el.hidden = false;
-        ['--wf-x','--wf-y','--wf-scale'].forEach(function(p) { el.style.removeProperty(p); });
+        delete el.dataset.wfPart; el.hidden = false; el.classList.remove('wf-colored');
+        ['--wf-x','--wf-y','--wf-scale','--wf-tint','--mk-txt-color'].forEach(function(p) { el.style.removeProperty(p); });
       });
       card.querySelectorAll('.mk-wf-art,.mk-wf-clock,.mk-wf-moon,.mk-wf-effects,.mk-wf-depth,.mk-wf-background').forEach(function(el) { el.remove(); });
+      delete card.dataset.fullTintPalette;delete card.dataset.fullTint;delete card.dataset.fullTintScheme;['--wf-full-tint-hue','--wf-full-tint-sat'].forEach(function(p){card.style.removeProperty(p);});
       var originalEmoji=card.querySelector('.mk-mid-bg-emoji');if(originalEmoji)originalEmoji.hidden=false;
       ['--wf-tint','--wf-metal','--wf-bg-x','--wf-bg-y','--wf-bg-zoom','--wf-name-chars','--wf-surname-chars','--wf-number-alpha'].forEach(function(p) { card.style.removeProperty(p); });
       paintClock(); return;
@@ -136,8 +137,56 @@
       var p = config.parts[key];
       el.dataset.wfPart = key; el.hidden = !p[3] || (key==='moon'&&period==='mixed'&&!card.classList.contains('wf-editing'));
       el.style.setProperty('--wf-x', p[0]+'%'); el.style.setProperty('--wf-y', p[1]+'%'); el.style.setProperty('--wf-scale', p[2]/100);
+      // Own colour: the element gets its own tint and text colour variables, so
+      // every rule that reads --wf-tint / --mk-txt-color picks it up locally.
+      var own=config.colors[key];
+      el.classList.toggle('wf-colored',!!own);
+      if(own){el.style.setProperty('--wf-tint','#'+own);el.style.setProperty('--mk-txt-color',own.match(/../g).map(function(v){return parseInt(v,16);}).join(','));}
+      else{el.style.removeProperty('--wf-tint');el.style.removeProperty('--mk-txt-color');}
     });
+    applyFullTint(card,skin,config);
     paintClock();
+  }
+  /* Whole-card look. Dark and clear work on the picture layers with plain
+     filters; tinted lays one colour over everything in `color` blend, so the
+     photo, chips and text share a hue while keeping their light and shade.
+     Auto takes that colour from the picture's own palette. */
+  var fullTintPalettes=new Map();
+  // "Auto" scheme follows the duty day: dark from 20:00 to 08:00 Riga time.
+  function nightNow(){
+    var h=+new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Riga',hour:'2-digit',hourCycle:'h23'}).format(new Date());
+    return h>=20||h<8;
+  }
+  function applyFullTint(card,skin,config){
+    var mode=['','dark','clear','tinted'][config.fullTintMode];
+    if(mode)card.dataset.fullTint=mode;else delete card.dataset.fullTint;
+    var dark=config.fullTintScheme===2||(config.fullTintScheme===0&&nightNow());
+    if(mode==='clear'||mode==='tinted')card.dataset.fullTintScheme=dark?'dark':'light';else delete card.dataset.fullTintScheme;
+    // Everything is done with colour-matrix filters on the picture layers and
+    // the decor, so the numeral, name and chips keep their own style and
+    // colours (accent or per-element). Tinted: grey → sepia → hue-rotate.
+    if(mode!=='tinted'){delete card.dataset.fullTintPalette;return;}
+    card.style.setProperty('--wf-full-tint-sat',config.fullTintIntensity);
+    var paintHue=function(h){card.style.setProperty('--wf-full-tint-hue',h);};
+    if(!config.fullTintAuto){delete card.dataset.fullTintPalette;paintHue(config.fullTintHue);return;}
+    var key=JSON.stringify([skin.t,skin.id,skin.rgb]);
+    if(card.dataset.fullTintPalette===key)return;
+    card.dataset.fullTintPalette=key;
+    var hueOf=function(rgb){
+      var c=String(rgb||'100,150,190').split(',').map(Number);
+      var max=Math.max.apply(null,c)/255,min=Math.min.apply(null,c)/255,h=0;
+      if(max!==min){var d=max-min;var r=c[0]/255,g=c[1]/255,b=c[2]/255;h=max===r?(g-b)/d+(g<b?6:0):max===g?(b-r)/d+2:(r-g)/d+4;h*=60;}
+      return Math.round(h);
+    };
+    paintHue(hueOf(skin.rgb));
+    if(typeof window.mkSuggestSkinPalette!=='function')return;
+    if(!fullTintPalettes.has(key)){
+      if(fullTintPalettes.size>=128)fullTintPalettes.delete(fullTintPalettes.keys().next().value);
+      fullTintPalettes.set(key,window.mkSuggestSkinPalette(skin).catch(function(){return null;}));
+    }
+    fullTintPalettes.get(key).then(function(palette){
+      if(palette&&card.dataset.fullTintPalette===key)paintHue(hueOf(palette.source||palette.num));
+    });
   }
   function mount(host, options) {
     if (previewObserver) { previewObserver.disconnect(); previewObserver = null; }
@@ -211,18 +260,25 @@
     var faceTiles = M.faces.map(function(face,i) {
       return '<button type="button" class="wf-face-choice" data-face="'+face+'"><span class="wf-face-thumb wf-thumb-'+face+'"><i>'+(face==='orbit'?orbitArt():'')+'</i><b>24</b><small>DEŽŪRA</small></span><strong>'+titles[i]+'</strong></button>';
     }).join('');
-    panel.innerHTML = '<div class="wf-editor-heading"><div><strong>Kartītes izskats</strong><p>Pielāgo kartīti savai dežūrai.</p></div></div>'
+    var look = ''
+      + '<div class="wf-section wf-look"><div class="wf-label">Kartītes izskats <span>attiecas uz visu kartīti, arī attēlu</span></div><div class="wf-segment wf-look-modes" aria-label="Kartītes izskats">'+[['0','Noklusējums'],['1','Tumšs'],['2','Caurspīdīgs'],['3','Tonēts']].map(function(m){return '<button type="button" data-full-tint-mode="'+m[0]+'"><b class="wf-look-sample" aria-hidden="true">24</b><span>'+m[1]+'</span></button>';}).join('')+'</div>'
+      + '<div class="wf-look-tinted" hidden><label class="wf-range wf-hue"><span>Krāsa</span><input type="range" class="wf-full-tint-hue" min="0" max="360" aria-label="Toņa krāsa"><output></output></label><label class="wf-range wf-light"><span>Intensitāte</span><input type="range" class="wf-full-tint-light" min="0" max="100" aria-label="Toņa intensitāte"><output></output></label><button type="button" class="wf-full-tint-auto" aria-pressed="false">Krāsa no attēla</button></div>'
+      + '<div class="wf-segment wf-look-scheme" hidden aria-label="Gaišs vai tumšs"><button type="button" data-full-tint-scheme="1">Gaišs</button><button type="button" data-full-tint-scheme="2">Tumšs</button><button type="button" data-full-tint-scheme="0">Auto</button></div></div>';
+    panel.innerHTML = '<div class="wf-editor-heading"><div><strong>Kartītes izskats</strong></div></div>'
       + '<div class="wf-faces">'+faceTiles+'</div>'
-      + '<div class="wf-section"><div class="wf-label">Stikla tonis <input type="color" class="wf-color" aria-label="Stikla tonis"></div><div class="wf-swatches">'+colors.map(function(c){return '<button type="button" data-tint="'+c[1].slice(1)+'" style="--sw:'+c[1]+'" title="'+c[0]+'" aria-label="'+c[0]+'"></button>';}).join('')+'</div>'
+      + look
+      + '<div class="wf-section"><div class="wf-label">Akcenta krāsa <span>cipariem, čipiem un ikonām, ja elementam nav savas</span> <input type="color" class="wf-color" aria-label="Akcenta krāsa"></div><div class="wf-swatches">'+colors.map(function(c){return '<button type="button" data-tint="'+c[1].slice(1)+'" style="--sw:'+c[1]+'" title="'+c[0]+'" aria-label="'+c[0]+'"></button>';}).join('')+'</div>'
+      + '</div><div class="wf-section"><div class="wf-label">Ciparu materiāls</div>'
       + '<div class="wf-segment" aria-label="Ciparu materiāls">'+['Stikls','Metāls','Tīrs','Plūsma','Perlamutrs','Neons'].map(function(t,i){return '<button type="button" data-finish="'+i+'" data-watch-finish="'+i+'" aria-label="'+t+'"><b class="wf-number-sample" aria-hidden="true">24</b><span>'+t+'</span></button>';}).join('')+'</div></div>'
       + '<div class="wf-section"><div class="wf-label">Metāla ietvars <span class="wf-metal-name"></span></div><div class="wf-metals">'+metals.map(function(c,i){return '<button type="button" data-metal="'+i+'" style="--sw:'+c[1]+'" title="'+c[0]+'" aria-label="'+c[0]+'"></button>';}).join('')+'</div></div>'
       + '<div class="wf-section"><div class="wf-label">Elementi <span>Velc priekšskatījumā</span></div><div class="wf-elements">'+M.parts.map(function(key){return '<button type="button" data-part="'+key+'">'+labels[key]+'</button>';}).join('')+'</div>'
       + '<div class="wf-part-head"><strong class="wf-part-name"></strong><button type="button" class="wf-remove">Noņemt</button></div>'
-      + '<div class="wf-coffee-options" hidden><div class="wf-segment wf-coffee-mode" aria-label="Kafijas vadība"><button type="button" data-coffee-mode="0">Ikona → pogas</button><button type="button" data-coffee-mode="1">Vienmēr − / +</button></div><p class="wf-editor-help">Uzbrauc ar peli kartītei, lai parādītu − / +. Telefonā pieskaries ikonai.</p><div class="wf-segment" aria-label="Kafijas tonis"><button type="button" data-coffee-contrast="0">Stikls</button><button type="button" data-coffee-contrast="1">Fona kontrasts</button><button type="button" data-coffee-contrast="2">Kartītes tonis</button></div></div>'
+      + '<div class="wf-part-color"><span>Šī elementa krāsa</span><input type="color" class="wf-part-color-input" aria-label="Šī elementa krāsa"><button type="button" class="wf-part-color-clear">Kā akcenta krāsa</button></div>'
+      + '<div class="wf-coffee-options" hidden><div class="wf-segment wf-coffee-mode" aria-label="Kafijas vadība"><button type="button" data-coffee-mode="0">Ikona → pogas</button><button type="button" data-coffee-mode="1">Vienmēr − / +</button></div><div class="wf-segment" aria-label="Kafijas tonis"><button type="button" data-coffee-contrast="0">Stikls</button><button type="button" data-coffee-contrast="1">Fona kontrasts</button><button type="button" data-coffee-contrast="2">Kartītes tonis</button></div></div>'
       + [['x','Horizontāli',5,95],['y','Vertikāli',5,95],['size','Izmērs',50,170]].map(function(r){return '<label class="wf-range"><span>'+r[1]+'</span><input type="range" data-position="'+r[0]+'" min="'+r[2]+'" max="'+r[3]+'"><output></output></label>';}).join('')
-      + '<button type="button" class="wf-fit">Ietilpināt kartītē</button><div class="wf-editor-help">Lielu ciparu kadrē, pārvietojot priekšskatījumā. Saule dienas maiņai, mēness nakts maiņai. Simbolu vari pārvietot un mainīt izmērā; 24 h maiņās tas redzams tikai redaktorā. Izvēlies elementu un velc to priekšskatījumā. Ar bultiņām pārvieto precīzi. Noņemtos elementus pievieno atpakaļ ar +.</div></div>'
+      + '<button type="button" class="wf-fit">Ietilpināt kartītē</button></div>'
       + '<label class="wf-depth-control"><input type="checkbox" class="wf-depth-toggle"> Objekts priekšā ciparam</label>'
-      + '<details class="wf-background"><summary>Attēla novietojums</summary>'+[['imageX','Horizontāli',0,100],['imageY','Vertikāli',0,100],['imageZoom','Tuvinājums',100,180]].map(function(r){return '<label class="wf-range"><span>'+r[1]+'</span><input type="range" data-image="'+r[0]+'" min="'+r[2]+'" max="'+r[3]+'"><output></output></label>';}).join('')+'<p>Attēlu vai krāsainu fonu izvēlies sadaļā “Fons”.</p></details>'
+      + '<details class="wf-background"><summary>Attēla novietojums</summary>'+[['imageX','Horizontāli',0,100],['imageY','Vertikāli',0,100],['imageZoom','Tuvinājums',100,180]].map(function(r){return '<label class="wf-range"><span>'+r[1]+'</span><input type="range" data-image="'+r[0]+'" min="'+r[2]+'" max="'+r[3]+'"><output></output></label>';}).join('')+'</details>'
       + '<div class="wf-footer"><button type="button" class="wf-undo" disabled>Atcelt pēdējo</button><button type="button" class="wf-reset">Atjaunot izkārtojumu</button><button type="button" class="wf-original">Sākotnējā klasika</button></div>';
     tabs.after(panel);
     function activate() {
@@ -262,6 +318,20 @@
       panel.querySelectorAll('[data-coffee-mode]').forEach(function(el){el.setAttribute('aria-pressed',String(+el.dataset.coffeeMode===config.coffeeMode));});
       panel.querySelectorAll('[data-coffee-contrast]').forEach(function(el){el.setAttribute('aria-pressed',String(+el.dataset.coffeeContrast===config.coffeeContrast));});
       panel.querySelector('.wf-remove').textContent=config.parts[selectedPart][3]?'Noņemt':'Pievienot';
+      var own=config.colors[selectedPart];
+      panel.querySelector('.wf-part-color-input').value='#'+(own||config.tint);
+      panel.querySelector('.wf-part-color').classList.toggle('is-own',!!own);
+      panel.querySelector('.wf-part-color-clear').hidden=!own;
+      panel.querySelectorAll('[data-full-tint-mode]').forEach(function(el){el.setAttribute('aria-pressed',String(+el.dataset.fullTintMode===config.fullTintMode));});
+      var tinted=panel.querySelector('.wf-look-tinted');tinted.hidden=config.fullTintMode!==3;
+      var hue=panel.querySelector('.wf-full-tint-hue');hue.value=config.fullTintHue;hue.nextElementSibling.textContent=config.fullTintHue+'°';
+      var light=panel.querySelector('.wf-full-tint-light');light.value=config.fullTintIntensity;light.nextElementSibling.textContent=config.fullTintIntensity+'%';
+      panel.style.setProperty('--wf-look-hue',config.fullTintHue);
+      var scheme=panel.querySelector('.wf-look-scheme');scheme.hidden=config.fullTintMode<2;
+      scheme.querySelectorAll('[data-full-tint-scheme]').forEach(function(el){el.setAttribute('aria-pressed',String(+el.dataset.fullTintScheme===config.fullTintScheme));});
+      var auto=panel.querySelector('.wf-full-tint-auto');auto.setAttribute('aria-pressed',String(!!config.fullTintAuto));
+      tinted.classList.toggle('is-auto',!!config.fullTintAuto);
+      panel.querySelectorAll('.wf-look-sample').forEach(function(el){el.textContent=(preview.querySelector('.mk-mid-hours')||{}).textContent||'24';});
       panel.querySelector('.wf-undo').disabled=!history.length;
       panel.querySelectorAll('[data-position]').forEach(function(el){var i={x:0,y:1,size:2}[el.dataset.position];if(i===2)el.max=selectedPart==='hours'?300:170;el.value=config.parts[selectedPart][i];el.nextElementSibling.textContent=el.value+'%';});
       panel.querySelectorAll('[data-image]').forEach(function(el){el.value=config[el.dataset.image];el.nextElementSibling.textContent=el.value+'%';});
@@ -300,6 +370,10 @@
       if(el.dataset.finish!=null){config.finish=+el.dataset.finish;save('material');}
       if(el.dataset.coffeeMode!=null){config.coffeeMode=+el.dataset.coffeeMode;save(true);}
       if(el.dataset.coffeeContrast!=null){config.coffeeContrast=+el.dataset.coffeeContrast;save();}
+      if(el.dataset.fullTintMode!=null){config.fullTintMode=+el.dataset.fullTintMode;save();}
+      if(el.dataset.fullTintScheme!=null){config.fullTintScheme=+el.dataset.fullTintScheme;save();}
+      if(el.classList.contains('wf-full-tint-auto')){config.fullTintAuto=config.fullTintAuto?0:1;save();}
+      if(el.classList.contains('wf-part-color-clear')){config.colors[selectedPart]='';save();}
       if(el.dataset.part){selectedPart=el.dataset.part;if(!config.parts[selectedPart][3]||!options.get().face){config.parts[selectedPart][3]=1;save(true);}else sync();}
       if(el.classList.contains('wf-remove')){config.parts[selectedPart][3]=config.parts[selectedPart][3]?0:1;save(true);}
       if(el.classList.contains('wf-undo')&&history.length){var previous=history.pop();config=M.clean(previous);options.change(previous);preview.classList.toggle('wf-editing',!!previous);apply(preview,options.get());sync();sizePreview();}
@@ -311,6 +385,9 @@
     panel.addEventListener('input',function(e){
       var el=e.target;
       if(el.classList.contains('wf-color'))config.tint=el.value.slice(1);
+      else if(el.classList.contains('wf-part-color-input'))config.colors[selectedPart]=el.value.slice(1);
+      else if(el.classList.contains('wf-full-tint-hue')){config.fullTintHue=+el.value;config.fullTintAuto=0;}
+      else if(el.classList.contains('wf-full-tint-light'))config.fullTintIntensity=+el.value;
       else if(el.dataset.position)config.parts[selectedPart][{x:0,y:1,size:2}[el.dataset.position]]=+el.value;
       else if(el.dataset.image)config[el.dataset.image]=+el.value;
       else return;

@@ -169,11 +169,18 @@ function validCardFacePart(part) {
   if (!part.startsWith("wf:")) return false;
   const a = part.slice(3).split("~");
   const coffee = a.length === 20 && a[0] === "3";
-  if (!((a.length === 17 && a[0] === "1") || (a.length === 18 && a[0] === "2") || coffee) || !/^[0-3]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return false;
-  if (coffee && (!/^[01]$/.test(a[18]) || !/^[0-2]$/.test(a[19]))) return false;
+  // v4 adds per-element colours (hex or "-" per element) and a full-tint strength.
+  const colored = a.length === 22 && a[0] === "4";
+  if (!((a.length === 17 && a[0] === "1") || (a.length === 18 && a[0] === "2") || coffee || colored) || !/^[0-3]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return false;
+  if ((coffee || colored) && (!/^[01]$/.test(a[18]) || !/^[0-2]$/.test(a[19]))) return false;
   const integer = (s, min, max) => /^(0|[1-9]\d{0,2})$/.test(s) && Number(s) >= min && Number(s) <= max;
+  if (colored) {
+    const look = a[21].split(",");
+    if (!/^(-|[a-f0-9]{6})(,(-|[a-f0-9]{6})){9}$/.test(a[20]) || look.length !== 5 || !/^[0-3]$/.test(look[0])
+      || !integer(look[1], 0, 360) || !integer(look[2], 0, 100) || !/^[01]$/.test(look[3]) || !/^[0-2]$/.test(look[4])) return false;
+  }
   if (!integer(a[3],0,11) || !integer(a[4],0,5) || !integer(a[5],0,100) || !integer(a[6],0,100) || !integer(a[7],100,180)) return false;
-  return a.slice(8, coffee ? 18 : a.length).every((part, index) => {
+  return a.slice(8, (coffee || colored) ? 18 : a.length).every((part, index) => {
     const p = part.split(",");
     return p.length === 4 && integer(p[0],5,95) && integer(p[1],5,95) && integer(p[2],50,index === 0 ? 300 : 170)
       && /^[01]$/.test(p[3]);

@@ -33,6 +33,17 @@
       imageZoom: bounded(value.imageZoom, 100, 180, 100), parts: {} };
     out.coffeeMode=bounded(value.coffeeMode,0,1,1);
     out.coffeeContrast=bounded(value.coffeeContrast,0,2,0);
+    // Per-element colour overrides (empty = the shared glass tint) and the
+    // iOS-style full tint strength (0 = off) that recolours the whole card.
+    out.colors={};
+    parts.forEach(function (key) { var c=value.colors&&value.colors[key]; out.colors[key]=/^[a-f0-9]{6}$/i.test(c||'')?String(c).toLowerCase():''; });
+    // Whole-card look: 0 default, 1 dark, 2 clear, 3 tinted (hue/light, or
+    // the picture's own palette when auto is on).
+    out.fullTintMode=bounded(value.fullTintMode,0,3,0);
+    out.fullTintHue=bounded(value.fullTintHue,0,360,210);
+    out.fullTintIntensity=bounded(value.fullTintIntensity,0,100,80);
+    out.fullTintAuto=value.fullTintAuto===1||value.fullTintAuto===true?1:0;
+    out.fullTintScheme=bounded(value.fullTintScheme,0,2,0); // 0 auto, 1 light, 2 dark
     parts.forEach(function (key, i) {
       var base = layouts[face][i] || moonLayouts[face], p = value.parts && value.parts[key];
       if (!Array.isArray(p)) p = base;
@@ -54,19 +65,29 @@
   }
   function pack(value) {
     var v = clean(value, true);
-    var extra=v.coffeeMode!==1||v.coffeeContrast!==0;
-    return [extra?3:2, faces.indexOf(v.face), v.tint, v.metal, v.finish, v.imageX, v.imageY, v.imageZoom]
+    var colored=parts.some(function (key) { return v.colors[key]; })||v.fullTintMode>0;
+    var extra=colored||v.coffeeMode!==1||v.coffeeContrast!==0;
+    return [colored?4:extra?3:2, faces.indexOf(v.face), v.tint, v.metal, v.finish, v.imageX, v.imageY, v.imageZoom]
       .concat(parts.map(function (key) { return v.parts[key].join(','); }))
-      .concat(extra?[v.coffeeMode,v.coffeeContrast]:[]).join('~');
+      .concat(extra?[v.coffeeMode,v.coffeeContrast]:[])
+      .concat(colored?[parts.map(function (key) { return v.colors[key]||'-'; }).join(','),[v.fullTintMode,v.fullTintHue,v.fullTintIntensity,v.fullTintAuto,v.fullTintScheme].join(',')]:[]).join('~');
   }
   function unpack(text) {
     var a = String(text || '').split('~');
     var legacy=a.length===17&&a[0]==='1';
     var coffee=a.length===20&&a[0]==='3';
-    if ((!legacy && !coffee && !(a.length===18&&a[0]==='2')) || !/^[0-3]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return null;
+    var colored=a.length===22&&a[0]==='4';
+    if ((!legacy && !coffee && !colored && !(a.length===18&&a[0]==='2')) || !/^[0-3]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return null;
     if (!a.slice(3,8).every(function (n) { return /^\d{1,3}$/.test(n); })) return null;
     var value = { face: faces[+a[1]], tint: a[2], metal: +a[3], finish: +a[4], imageX: +a[5], imageY: +a[6], imageZoom: +a[7], parts: {} };
-    if(coffee){if(!/^[01]$/.test(a[18])||!/^[0-2]$/.test(a[19]))return null;value.coffeeMode=+a[18];value.coffeeContrast=+a[19];}
+    if(coffee||colored){if(!/^[01]$/.test(a[18])||!/^[0-2]$/.test(a[19]))return null;value.coffeeMode=+a[18];value.coffeeContrast=+a[19];}
+    if(colored){
+      var colors=a[20].split(',');
+      var look=a[21].split(',');
+      if(colors.length!==parts.length||!colors.every(function (c) { return c==='-'||/^[a-f0-9]{6}$/.test(c); })||look.length!==5||!/^[0-3]$/.test(look[0])||!/^\d{1,3}$/.test(look[1])||!/^\d{1,3}$/.test(look[2])||!/^[01]$/.test(look[3])||!/^[0-2]$/.test(look[4]))return null;
+      value.colors={};parts.forEach(function (key, i) { value.colors[key]=colors[i]==='-'?'':colors[i]; });
+      value.fullTintMode=+look[0];value.fullTintHue=+look[1];value.fullTintIntensity=+look[2];value.fullTintAuto=+look[3];value.fullTintScheme=+look[4];
+    }
     for (var i = 0; i < (legacy?9:10); i++) {
       if (!/^\d{1,2},\d{1,2},\d{2,3},[01]$/.test(a[i + 8])) return null;
       value.parts[parts[i]] = a[i + 8].split(',').map(Number);

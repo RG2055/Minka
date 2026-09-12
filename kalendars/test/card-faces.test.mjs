@@ -262,3 +262,25 @@ test('all material bundles have local lightweight assets and API-compatible appe
     assert.equal((await (await request(undefined, 'GET')).json())['ALPHA TEST'], skin);
   }
 });
+
+test('per-element colours and the whole-card look survive storage, default off, and reject bad values', async () => {
+  const request=fixture();
+  const face=M.preset('photo');face.colors.hours='ff5c5c';face.colors.name='1fe091';face.fullTintMode=3;face.fullTintHue=312;face.fullTintIntensity=62;face.fullTintAuto=1;face.fullTintScheme=2;
+  const packed=M.pack(face);
+  assert.equal(packed.split('~')[0],'4');
+  assert.deepEqual(M.unpack(packed),face);
+  assert.equal((await request('wf:'+packed)).status,200);
+  const stored=(await (await request(undefined,'GET')).json())['ALPHA TEST'];
+  assert.deepEqual(M.unpack(stored.slice(3)),face);
+  // Colours follow a face change; with no colours and the default look it drops back to v2.
+  assert.equal(M.preset('classic',face).colors.hours,'ff5c5c');
+  assert.equal(M.preset('classic',face).fullTintMode,3);
+  const plain=M.clean(Object.assign({},face,{colors:{},fullTintMode:0}));
+  assert.equal(M.pack(plain).split('~')[0],'2');
+  assert.equal(M.unpack(M.pack(M.preset('classic'))).fullTintMode,0);
+  for(const [index,invalid] of [[20,'red,-,-,-,-,-,-,-,-,-'],[20,'ff5c5c'],[21,'4,10,10,0,0'],[21,'3,361,10,0,0'],[21,'3,10,101,0,0'],[21,'3,10,10,2,0'],[21,'3,10,10,0,3'],[21,'3,10,10,0']]){
+    const fields=packed.split('~');fields[index]=invalid;
+    assert.equal(M.unpack(fields.join('~')),null);
+    assert.equal((await request('wf:'+fields.join('~'))).status,400);
+  }
+});

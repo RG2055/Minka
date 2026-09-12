@@ -458,3 +458,56 @@ html body #worker-modal #modal-skin-view #grafiks-list .card.mk-watch-face.wf-ed
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:has(.mk-mid-coffee :focus-visible) [data-wf-part="coffee"] {--wf-coffee-width:var(--wf-coffee-open-width);}
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:has(.mk-mid-coffee :focus-visible) .mk-coffee-step {grid-template-columns:18px minmax(0,1fr) 18px !important;}
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:has(.mk-mid-coffee :focus-visible) :is(.mk-coffee-add,.mk-coffee-sub) {display:flex !important;}
+
+/* ── Per-element colour and iOS-style full tint ──────────────────────── */
+/* An element with its own colour carries its own --wf-tint; the numeral's
+   finish paint is re-derived here so it resolves against that local tint. */
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-finish="0"] .wf-colored {--wf-finish-paint:linear-gradient(155deg,color-mix(in srgb,var(--wf-tint) 94%,white),color-mix(in srgb,var(--wf-tint) 66%,transparent) 52%,color-mix(in srgb,var(--wf-tint) 86%,transparent));}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-finish="1"] .wf-colored {--wf-finish-paint:linear-gradient(155deg,#fff 3%,var(--wf-tint) 24%,#354052 45%,#e9eff6 49%,var(--wf-tint) 76%,#ffffffdd);}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-finish="2"] .wf-colored {--wf-finish-paint:linear-gradient(var(--wf-tint),var(--wf-tint));}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-finish="3"] .wf-colored {--wf-finish-paint:radial-gradient(ellipse at 27% 8%,#fff 0%,#ffffffb8 6%,transparent 28%),radial-gradient(ellipse at 80% 92%,#c3fff6 0%,transparent 45%),linear-gradient(168deg,color-mix(in srgb,var(--wf-tint) 65%,#fb9eff) 6%,color-mix(in srgb,var(--wf-tint) 80%,#8ff5e6) 50%,color-mix(in srgb,var(--wf-tint) 62%,#ffd58f) 100%);}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-finish="4"] .wf-colored {--wf-finish-paint:linear-gradient(145deg,#fff 3%,var(--wf-tint) 20%,#a4edf4 38%,#edd2fd 52%,var(--wf-tint) 67%,#fff1d8 83%,#fff 97%);}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-finish="5"] .wf-colored {--wf-finish-paint:linear-gradient(color-mix(in srgb,var(--wf-tint) 22%,transparent),color-mix(in srgb,var(--wf-tint) 5%,transparent));}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .wf-colored:is([data-wf-part="remaining"],[data-wf-part="clock"],[data-wf-part="initials"],[data-wf-part="emoji"]) {color:var(--wf-tint) !important;-webkit-text-fill-color:var(--wf-tint) !important;}
+/* Out-specifies the .mk-has-txt white fill on cards with a chosen text colour. */
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-name-wrap.wf-colored[data-wf-part="name"] .name-main,
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-name-wrap.wf-colored[data-wf-part="name"] .name-sub,
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-initials.wf-colored[data-wf-part="initials"],
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-month.wf-colored[data-wf-part="month"] .mk-mid-month-num,
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-month.wf-colored[data-wf-part="month"] .mk-mid-month-label {color:rgb(var(--mk-txt-color)) !important;-webkit-text-fill-color:rgb(var(--mk-txt-color)) !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .wf-colored[data-wf-part="coffee"] .mk-coffee-mid {color:var(--wf-tint) !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .wf-colored[data-wf-part="moon"] {color:var(--wf-tint) !important;}
+/* Whole-card look, all through colour-matrix filters on the picture layers
+   and the decor sticker, never on the numeral, name or chips — those keep
+   their own style and colours. Tinted: grey → sepia (a ~40° hue) → rotate
+   to the chosen hue; intensity drives saturation, the scheme brightness. */
+.mk-watch-face[data-full-tint] .mk-wf-background > i,.mk-watch-face[data-full-tint] .mk-wf-depth > i,html body #grafiks-list .card.mk-watch-face[data-full-tint] > .mk-card-addon,.mk-skin-preview-real.mk-watch-face[data-full-tint] > .mk-card-addon {filter:var(--wf-look-filter) !important;}
+.mk-watch-face[data-full-tint="dark"] {--wf-look-filter:brightness(.55) saturate(.8);}
+.mk-watch-face[data-full-tint="clear"][data-full-tint-scheme="light"] {--wf-look-filter:saturate(0) contrast(.9) brightness(1.08);}
+.mk-watch-face[data-full-tint="clear"][data-full-tint-scheme="dark"] {--wf-look-filter:saturate(0) contrast(.92) brightness(.62);}
+.mk-watch-face[data-full-tint="tinted"] {--wf-look-filter:grayscale(1) sepia(1) saturate(calc(var(--wf-full-tint-sat,80) / 100 * 3.2)) hue-rotate(calc((var(--wf-full-tint-hue,210) - 40) * 1deg)) brightness(1.04);}
+.mk-watch-face[data-full-tint="tinted"][data-full-tint-scheme="dark"] {--wf-look-filter:grayscale(1) sepia(1) saturate(calc(var(--wf-full-tint-sat,80) / 100 * 3.2)) hue-rotate(calc((var(--wf-full-tint-hue,210) - 40) * 1deg)) brightness(.62);}
+html body #grafiks-list .card.mk-watch-face[data-full-tint] > .mk-card-addon,.mk-skin-preview-real.mk-watch-face[data-full-tint] > .mk-card-addon {filter:drop-shadow(0 8px 9px rgba(0,0,0,.42)) var(--wf-look-filter) !important;}
+.wf-editor .wf-look-modes {display:grid !important;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:4px;}
+.wf-editor .wf-look-modes button {display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0;padding:6px 2px;}
+.wf-editor .wf-look-sample {display:grid;place-items:center;width:40px;height:40px;font-size:17px;font-weight:800;line-height:1;border-radius:11px;background:linear-gradient(150deg,#5a7f9c,#243447);color:#f4f7fb;box-shadow:inset 0 1px 0 #ffffff33,0 2px 6px #0006;}
+.wf-editor .wf-look-modes button span {font-size:10.5px;}
+.wf-editor [data-full-tint-mode="1"] .wf-look-sample {background:linear-gradient(150deg,#2f4353,#131c25);color:#e3e9ef;}
+.wf-editor [data-full-tint-mode="2"] .wf-look-sample {background:linear-gradient(150deg,#8d949b,#4a5057);color:#f6f7f8;}
+.wf-editor [data-full-tint-mode="3"] .wf-look-sample {background:linear-gradient(150deg,hsl(var(--wf-look-hue,210) 70% 62%),hsl(var(--wf-look-hue,210) 70% 32%));color:#fff;}
+.wf-editor .wf-look-tinted {display:grid;gap:10px;margin-top:10px;}
+.wf-editor .wf-look-tinted[hidden] {display:none;}
+.wf-editor :is(.wf-hue,.wf-light) input[type=range] {-webkit-appearance:none;appearance:none;height:14px;border-radius:99px;border:1px solid #ffffff22;outline:none;}
+.wf-editor :is(.wf-hue,.wf-light) input[type=range]::-webkit-slider-thumb {-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#e9eef3;border:2px solid #0f1520;box-shadow:0 1px 4px #0008;cursor:pointer;}
+.wf-editor .wf-hue input[type=range] {background:linear-gradient(90deg,hsl(0 80% 60%),hsl(60 80% 60%),hsl(120 80% 60%),hsl(180 80% 60%),hsl(240 80% 60%),hsl(300 80% 60%),hsl(360 80% 60%));}
+.wf-editor .wf-light input[type=range] {background:linear-gradient(90deg,hsl(var(--wf-look-hue,210) 0% 55%),hsl(var(--wf-look-hue,210) 78% 55%));}
+.wf-editor .wf-look-scheme {margin-top:10px;}
+.wf-editor .wf-look-scheme[hidden] {display:none;}
+.wf-editor .wf-look-tinted.is-auto .wf-hue {opacity:.45;}
+.wf-editor .wf-full-tint-auto {justify-self:start;font-size:12px;padding:6px 11px;border-radius:9px;border:1px solid #ffffff22;background:#ffffff0a;color:inherit;cursor:pointer;}
+.wf-editor .wf-full-tint-auto[aria-pressed=true] {border-color:#91e3c5;background:#91e3c522;color:#dff7ec;}
+.wf-editor .wf-part-color {display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:12px;color:#aeb8c6;}
+.wf-editor .wf-part-color input[type=color] {width:34px;height:26px;padding:0;border:1px solid #ffffff22;border-radius:8px;background:none;cursor:pointer;}
+.wf-editor .wf-part-color.is-own input[type=color] {box-shadow:0 0 0 2px #91e3c5;}
+.wf-editor .wf-part-color-clear {font-size:11px;padding:4px 9px;border-radius:8px;border:1px solid #ffffff22;background:#ffffff0a;color:inherit;cursor:pointer;}
+.wf-editor .wf-part-color-clear[hidden] {display:none;}
