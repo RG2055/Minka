@@ -271,6 +271,9 @@
     // Keep the whole element inside the face, including its scaled bounds.
     // Read geometry only while editing; roster rendering never measures parts.
     function constrainParts(all, keepSize) {
+      // Manual dragging/sliders keep the chosen position, including corners.
+      // Only preset layout changes and the explicit Fit action move it inward.
+      if(!all&&keepSize)return;
       apply(preview,Object.assign({},options.get(),{face:config}));
       var r=preview.getBoundingClientRect();
       if(!r.width||!r.height)return;

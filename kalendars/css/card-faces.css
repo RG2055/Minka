@@ -305,10 +305,14 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-fac
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part]:not([data-wf-part="hours"]) {z-index:4 !important;}
 .wf-depth-control {display:flex;gap:8px;align-items:center;margin-top:18px;color:#cfdfed;font-size:12px;}
 .wf-depth-control[hidden] {display:none;}
-/* Expanded controls take the same space at rest, hover
+/* Keep the SVG at least 16 CSS pixels after the user scale, including on 1x displays.
+   Reserve space for the icon and count so they cannot overlap the +/- buttons.
+   Expanded controls take the same space at rest, hover
    and focus. Clamp the entire capsule inside the face, including user scaling. */
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="coffee"] {
-  --wf-coffee-width:clamp(70px,38cqw,100px);
+  --wf-coffee-glyph-size:max(13px,calc(16px / var(--wf-scale)));
+  --wf-coffee-open-width:max(clamp(70px,38cqw,100px),calc(var(--wf-coffee-glyph-size) + 51px));
+  --wf-coffee-width:var(--wf-coffee-open-width);
   width:var(--wf-coffee-width) !important;max-width:none !important;
   left:clamp(calc(var(--wf-coffee-width) * var(--wf-scale) / 2 + 5%),var(--wf-x),calc(95% - var(--wf-coffee-width) * var(--wf-scale) / 2)) !important;
 }
@@ -326,7 +330,7 @@ html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafik
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-mid {width:100% !important;min-width:0 !important;padding:0 !important;gap:1px !important;justify-content:center !important;}
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-copy {padding-left:1px !important;border:0 !important;}
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-num {font-size:10px !important;}
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-cup {width:13px !important;height:13px !important;flex-shrink:0 !important;}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-cup {width:var(--wf-coffee-glyph-size) !important;height:var(--wf-coffee-glyph-size) !important;max-width:none !important;flex-shrink:0 !important;shape-rendering:geometricPrecision;}
 /* In the editor the whole capsule is the drag target, not a live action. */
 html body #worker-modal #modal-skin-view #grafiks-list .card.mk-watch-face.wf-editing :is(.mk-coffee-add,.mk-coffee-sub) {display:flex !important;pointer-events:none !important;}
 
@@ -423,7 +427,7 @@ html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafik
   border:0 !important;background:transparent !important;box-shadow:none !important;cursor:pointer;font:inherit;color:inherit;pointer-events:auto !important;
 }
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]) [data-wf-part="coffee"] {
-  --wf-coffee-width:clamp(32px,16cqw,44px);
+  --wf-coffee-width:max(clamp(32px,16cqw,44px),calc(var(--wf-coffee-glyph-size) + 14px));
 }
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]) .mk-coffee-step {
   grid-template-columns:minmax(0,1fr) !important;
@@ -446,10 +450,10 @@ html body #worker-modal #modal-skin-view #grafiks-list .card.mk-watch-face.wf-ed
 
 /* Hovering anywhere on the card reveals the icon-mode controls. */
 @media (hover:hover) {
-  html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:hover [data-wf-part="coffee"] {--wf-coffee-width:clamp(70px,38cqw,100px);}
+  html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:hover [data-wf-part="coffee"] {--wf-coffee-width:var(--wf-coffee-open-width);}
   html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:hover .mk-coffee-step {grid-template-columns:18px minmax(0,1fr) 18px !important;}
   html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:hover :is(.mk-coffee-add,.mk-coffee-sub) {display:flex !important;}
 }
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:has(.mk-mid-coffee :focus-visible) [data-wf-part="coffee"] {--wf-coffee-width:clamp(70px,38cqw,100px);}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:has(.mk-mid-coffee :focus-visible) [data-wf-part="coffee"] {--wf-coffee-width:var(--wf-coffee-open-width);}
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:has(.mk-mid-coffee :focus-visible) .mk-coffee-step {grid-template-columns:18px minmax(0,1fr) 18px !important;}
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:has(.mk-mid-coffee :focus-visible) :is(.mk-coffee-add,.mk-coffee-sub) {display:flex !important;}
