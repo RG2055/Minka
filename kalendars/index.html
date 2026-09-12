@@ -1562,9 +1562,9 @@ function _mkToast(msg, type) {
 <script src="data/namedays.local.js"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/known-carryovers.js?v=20260907smooth1"></script>
-<script src="js/card-face-model.js?v=20260912faces17"></script>
-<script src="js/card-materials.js?v=20260912faces17"></script>
-<script src="js/card-faces.js?v=20260912faces19"></script>
+<script src="js/card-face-model.js?v=20260912faces21"></script>
+<script src="js/card-materials.js?v=20260912faces21"></script>
+<script src="js/card-faces.js?v=20260912faces21"></script>
 <!-- Saved worker skins must be ready before the cached roster is rendered. -->
 <script>
 /* ── MinkaSkins: per-darbinieka kartes izskats ──
@@ -1577,6 +1577,7 @@ function _mkToast(msg, type) {
   var cloudWrites = 0;
   var activeImageGroup = 0;
   var activeSkinSection = 'background';
+  var activePresetGroup = 'new';
   var autoPaletteEnabled = true;
   var paletteRevision = 0;
   function skinEsc(value) {
@@ -1753,7 +1754,7 @@ function _mkToast(msg, type) {
     Object.assign(face,{tint:m.tint,metal:m.metal,finish:m.finish});
     if(m.hours)face.parts.hours=m.hours.slice();
     Object.keys(m.parts||{}).forEach(function(key){face.parts[key]=m.parts[key].slice();});
-    return {label:m.label,bg:{t:'img',id:m.id},num:hexToRgb('#'+m.tint),na:'1',txt:'246,247,249',face:face,depth:m.depth,foreground:m.foreground||(m.kind==='depth'?m.path:null),sw:'url('+m.path+')'+(m.background?','+m.background:'')};
+    return {label:m.label,group:m.group||'landscape',isNew:!!m.isNew,bg:{t:'img',id:m.id},num:hexToRgb('#'+m.tint),na:'1',txt:'246,247,249',face:face,depth:m.depth,foreground:m.foreground||(m.kind==='depth'?m.path:null),sw:'url('+m.path+')'+(m.background?','+m.background:'')};
   }).concat(PRESETS.map(function(p,i){
     // Legacy bundles now also have a complete, editable arrangement.
     p.face=window.MinkaCardFaceModel.preset(['classic','photo','modular','photo','classic','photo','modular','classic','photo','orbit','photo','classic','modular'][i]);
@@ -1764,8 +1765,22 @@ function _mkToast(msg, type) {
       p.face.parts.month=[80,84,70,0];p.face.parts.fatigue=[21,84,70,0];p.face.parts.remaining=[50,91,70,1];
     }
     delete p.fx;
+    p.group='collection';
     return p;
   }).filter(function(p){return p.bg.t==='img';}));
+  [
+    ['Koraļļu plūsma','ffb7c9',3,'30,13,28'],['Lagūnas plūsma','80eadf',3,'5,23,31'],
+    ['Violetā pērle','c4afff',4,'20,15,33'],['Sudraba pērle','d0e8f4',4,'13,20,29'],
+    ['Zilais neons','70cbff',5,'4,12,24'],['Laima neons','c6f17e',5,'12,20,12']
+  ].forEach(function(p){
+    var face=window.MinkaCardFaceModel.preset('classic');
+    face.tint=p[1];face.finish=p[2];face.parts.hours=[50,45,112,1];
+    face.parts.name=[50,73,80,1];face.parts.coffee=[22,15,85,1];face.parts.emoji=[81,15,90,1];
+    face.parts.month=[81,85,65,0];face.parts.fatigue=[20,85,65,0];face.parts.remaining=[50,92,65,1];
+    PRESETS.push({label:p[0],group:'numbers',isNew:true,bg:{t:'hue',rgb:p[3]},num:hexToRgb('#'+p[1]),na:'1',txt:'246,247,249',face:face,depth:false});
+  });
+  var PRESET_GROUPS=[['all','Visi'],['new','Jaunumi'],['wildlife','Dzīvnieki'],['botanical','Ziedi un augi'],['ocean','Ūdens'],['landscape','Ainavas un nakts'],['numbers','Ciparu efekti'],['collection','Citi foto']];
+  function presetInGroup(p,group){return group==='all'||(group==='new'?p.isNew:p.group===group);}
 
   function loadAll() {
     try {
@@ -2303,9 +2318,11 @@ function _mkToast(msg, type) {
       + '<button type="button" class="mk-skin-main-tab' + (activeSkinSection === 'presets' ? ' is-active' : '') + '" data-skin-section="presets" role="tab" aria-selected="' + (activeSkinSection === 'presets') + '">Komplekti</button>'
       + '</div>';
 
-    html += '<section class="mk-skin-section' + (activeSkinSection === 'presets' ? ' is-active' : '') + '" data-skin-panel="presets"><div class="mk-skin-section-head"><strong>Gatavie komplekti</strong></div><div class="mk-skin-presets">';
+    html += '<section class="mk-skin-section' + (activeSkinSection === 'presets' ? ' is-active' : '') + '" data-skin-panel="presets"><div class="mk-skin-section-head"><strong>Gatavie komplekti</strong></div><div class="mk-preset-groups" role="group" aria-label="Komplektu grupas">';
+    PRESET_GROUPS.forEach(function(g){var count=PRESETS.filter(function(p){return presetInGroup(p,g[0]);}).length;if(count)html+='<button type="button" class="mk-preset-group" data-preset-group="'+g[0]+'" aria-pressed="'+(activePresetGroup===g[0])+'">'+skinEsc(g[1])+' <span>'+count+'</span></button>';});
+    html += '</div><div class="mk-skin-presets">';
     PRESETS.forEach(function(p, i) {
-      html += '<button type="button" class="mk-skin-preset mk-material-preset" data-preset="'+i+'"><span class="mk-preset-stage" aria-hidden="true"></span><strong>'+skinEsc(p.label)+'</strong></button>';
+      html += '<button type="button" class="mk-skin-preset mk-material-preset" data-preset="'+i+'"'+(presetInGroup(p,activePresetGroup)?'':' hidden')+'><span class="mk-preset-stage" aria-hidden="true"></span><strong>'+skinEsc(p.label)+'</strong></button>';
     });
     html += '</div></section>';
 
@@ -2518,11 +2535,11 @@ function _mkToast(msg, type) {
       if(p.txt)skin.txt=p.txt;
       return skin;
     }
-    var bundlesBuilt=false;
     function renderBundles(){
-      if(bundlesBuilt||!previewSource||!host.querySelector('[data-skin-panel="presets"].is-active'))return;
-      bundlesBuilt=true;
+      if(!previewSource||!host.querySelector('[data-skin-panel="presets"].is-active'))return;
       host.querySelectorAll('.mk-skin-preset').forEach(function(button){
+        if(button.hidden||button.dataset.built)return;
+        button.dataset.built='1';
         var card=previewSource.cloneNode(true),stage=button.querySelector('.mk-preset-stage');
         card.removeAttribute('style');card.removeAttribute('id');card.removeAttribute('data-worker');
         card.querySelectorAll('[id],[data-worker]').forEach(function(el){el.removeAttribute('id');el.removeAttribute('data-worker');});
@@ -2534,6 +2551,14 @@ function _mkToast(msg, type) {
       });
       window.MinkaCardFaces.refreshPreview();
     }
+    host.querySelectorAll('[data-preset-group]').forEach(function(button){
+      button.addEventListener('click',function(){
+        activePresetGroup=button.dataset.presetGroup;
+        host.querySelectorAll('[data-preset-group]').forEach(function(b){b.setAttribute('aria-pressed',String(b===button));});
+        host.querySelectorAll('.mk-skin-preset').forEach(function(b){b.hidden=!presetInGroup(PRESETS[+b.dataset.preset],activePresetGroup);});
+        renderBundles();
+      });
+    });
     host.querySelectorAll('.mk-skin-preset').forEach(function(b) {
       b.addEventListener('click',function(){draft=bundleSkin(PRESETS[+b.dataset.preset]);disableAutoPalette();commit();});
     });
@@ -23883,6 +23908,6 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
 <link rel="stylesheet" href="css/radio-side-cards.css?v=20260911split1">
 <script src="../js/radio-ambience.js?v=20260908ambient3"></script>
 <link rel="stylesheet" href="../css/calendar-surfaces.css?v=20260908surfaces3">
-<link rel="stylesheet" href="css/card-faces.css?v=20260912faces20">
+<link rel="stylesheet" href="css/card-faces.css?v=20260912faces21">
 </body>
 </html>

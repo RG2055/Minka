@@ -1,0 +1,67 @@
+[
+  {
+    "id": "photo-jellyfish",
+    "label": "Zilā medūza",
+    "subject": "A luminous real moon jellyfish in three-quarter side view, translucent cyan and sapphire bell, fine lavender internal veins, delicate long tentacles drifting down-left. Bell centered at x35%,y48%, about 50% canvas wide; tentacles flow to the lower edge. A single breathtaking underwater macro specimen.",
+    "background": "linear-gradient(155deg,#07172b,#02060f)",
+    "tint": "88e8fa",
+    "group": "ocean",
+    "prompt": "Use case: photorealistic-natural. Asset type: one square 1024x1024 premium watch-inspired duty-card photographic foreground asset, NOT a watch or a UI mockup. Real transparent alpha background around the subject. The upper-right quadrant x55–100%, y0–55% must remain fully transparent for large live numerals to be added by code; do not draw any text or numerals. Preserve the full square canvas and quiet margins at its left/right edges for a rounded-square card crop. No opaque background, no checkerboard pattern, no frame, no borders, no logo, no people, no abstract blobs, no collage. Rich natural detail, restrained premium lighting, strong recognizable silhouette at thumbnail size. Subject may overlap the bottom-left of future numerals around x50%,y58%, but keep the number area mostly open. A luminous real moon jellyfish in three-quarter side view, translucent cyan and sapphire bell, fine lavender internal veins, delicate long tentacles drifting down-left. Bell centered at x35%,y48%, about 50% canvas wide; tentacles flow to the lower edge. A single breathtaking underwater macro specimen.",
+    "method": "built-in imagegen",
+    "original": "exec-40332f01-c88c-4b5a-b6da-bdfeb7d6418f.png"
+  },
+  {
+    "id": "photo-butterfly",
+    "label": "Atlasa spārni",
+    "subject": "A magnificent real atlas moth with fully spread sculptural wings, detailed warm amber silk scales, subtle rose cream markings, viewed straight on. Moth centered at x46%,y64%, wingspan 85% canvas. The upper wings begin at y35%. Antennae fine and intact. Natural museum-quality macro photograph.",
+    "background": "linear-gradient(145deg,#211712,#090706)",
+    "tint": "f3c293",
+    "group": "wildlife",
+    "prompt": "Use case: photorealistic-natural. Asset type: one square 1024x1024 premium watch-inspired duty-card photographic foreground asset, NOT a watch or a UI mockup. Real transparent alpha background around the subject. The upper-right quadrant x55–100%, y0–55% must remain fully transparent for large live numerals to be added by code; do not draw any text or numerals. Preserve the full square canvas and quiet margins at its left/right edges for a rounded-square card crop. No opaque background, no checkerboard pattern, no frame, no borders, no logo, no people, no abstract blobs, no collage. Rich natural detail, restrained premium lighting, strong recognizable silhouette at thumbnail size. Subject may overlap the bottom-left of future numerals around x50%,y58%, but keep the number area mostly open. A magnificent real atlas moth with fully spread sculptural wings, detailed warm amber silk scales, subtle rose cream markings, viewed straight on. Moth centered at x46%,y64%, wingspan 85% canvas. The upper wings begin at y35%. Antennae fine and intact. Natural museum-quality macro photograph.",
+    "method": "built-in imagegen",
+    "original": "exec-478b03ca-39ad-4dd5-b1ae-83e8bf73758c.png"
+  },
+  {
+    "id": "photo-koi",
+    "label": "Koi deja",
+    "subject": "Two elegant real koi fish seen from directly above, one ivory with vermilion patches, the other smoky silver with gold, flowing fins creating a graceful open S composition in the lower half. Main ivory koi travels from x15%,y90% towards x38%,y45%; smaller koi at lower-right x75%,y75%. Delicate water glints confined to fish silhouette. Luxurious still pond photography.",
+    "background": "linear-gradient(150deg,#123c3c,#051b20)",
+    "tint": "a8ebdc",
+    "group": "ocean",
+    "prompt": "Use case: photorealistic-natural. Asset type: one square 1024x1024 premium watch-inspired duty-card photographic foreground asset, NOT a watch or a UI mockup. Real transparent alpha background around the subject. The upper-right quadrant x55–100%, y0–55% must remain fully transparent for large live numerals to be added by code; do not draw any text or numerals. Preserve the full square canvas and quiet margins at its left/right edges for a rounded-square card crop. No opaque background, no checkerboard pattern, no frame, no borders, no logo, no people, no abstract blobs, no collage. Rich natural detail, restrained premium lighting, strong recognizable silhouette at thumbnail size. Subject may overlap the bottom-left of future numerals around x50%,y58%, but keep the number area mostly open. Two elegant real koi fish seen from directly above, one ivory with vermilion patches, the other smoky silver with gold, flowing fins creating a graceful open S composition in the lower half. Main ivory koi travels from x15%,y90% towards x38%,y45%; smaller koi at lower-right x75%,y75%. Delicate water glints confined to fish silhouette. Luxurious still pond photography.",
+    "method": "built-in imagegen",
+    "original": "exec-03f85cfe-2fe3-4960-90b2-12d5e79a40a0.png"
+  },
+  {
+    "id": "photo-hummingbird",
+    "label": "Kolibri mirklis",
+    "subject": "A tiny real hummingbird hovering beside a curved branch of coral fuchsia blossoms. Iridescent emerald feathers, sapphire crown, warm copper throat, wings frozen sharp in flight. Bird at x32%,y58%, beak points toward one flower at x65%,y65%. Fine branch and foliage occupy the bottom edge. Exquisite wildlife macro photograph.",
+    "background": "linear-gradient(145deg,#1b3033,#0c111c)",
+    "tint": "a9e6d2",
+    "group": "wildlife",
+    "prompt": "Use case: photorealistic-natural. Asset type: one square 1024x1024 premium watch-inspired duty-card photographic foreground asset, NOT a watch or a UI mockup. Real transparent alpha background around the subject. The upper-right quadrant x55–100%, y0–55% must remain fully transparent for large live numerals to be added by code; do not draw any text or numerals. Preserve the full square canvas and quiet margins at its left/right edges for a rounded-square card crop. No opaque background, no checkerboard pattern, no frame, no borders, no logo, no people, no abstract blobs, no collage. Rich natural detail, restrained premium lighting, strong recognizable silhouette at thumbnail size. Subject may overlap the bottom-left of future numerals around x50%,y58%, but keep the number area mostly open. A tiny real hummingbird hovering beside a curved branch of coral fuchsia blossoms. Iridescent emerald feathers, sapphire crown, warm copper throat, wings frozen sharp in flight. Bird at x32%,y58%, beak points toward one flower at x65%,y65%. Fine branch and foliage occupy the bottom edge. Exquisite wildlife macro photograph.",
+    "method": "built-in imagegen",
+    "original": "exec-76009e48-1569-4508-a2df-16d9edc5b549.png"
+  },
+  {
+    "id": "photo-snowy-owl",
+    "label": "Polārā pūce",
+    "subject": "A magnificent real snowy owl perched on a frost-covered birch branch, soft white feather detail, bright amber eyes, three-quarter profile looking up-right. Owl at x35%,y64%, body extends to bottom edge, head at y38%. Frosty branch spans the bottom. Cool blue rim lighting and quiet arctic photographic atmosphere.",
+    "background": "linear-gradient(150deg,#273848,#0d1725)",
+    "tint": "dcebf9",
+    "group": "wildlife",
+    "prompt": "Use case: photorealistic-natural. Asset type: one square 1024x1024 premium watch-inspired duty-card photographic foreground asset, NOT a watch or a UI mockup. Real transparent alpha background around the subject. The upper-right quadrant x55–100%, y0–55% must remain fully transparent for large live numerals to be added by code; do not draw any text or numerals. Preserve the full square canvas and quiet margins at its left/right edges for a rounded-square card crop. No opaque background, no checkerboard pattern, no frame, no borders, no logo, no people, no abstract blobs, no collage. Rich natural detail, restrained premium lighting, strong recognizable silhouette at thumbnail size. Subject may overlap the bottom-left of future numerals around x50%,y58%, but keep the number area mostly open. A magnificent real snowy owl perched on a frost-covered birch branch, soft white feather detail, bright amber eyes, three-quarter profile looking up-right. Owl at x35%,y64%, body extends to bottom edge, head at y38%. Frosty branch spans the bottom. Cool blue rim lighting and quiet arctic photographic atmosphere.",
+    "method": "built-in imagegen",
+    "original": "exec-03f1a7e9-1a0c-45a5-89e7-7e0b9dbec932.png"
+  },
+  {
+    "id": "photo-magnolia",
+    "label": "Magnolijas maigums",
+    "group": "botanical",
+    "background": "linear-gradient(145deg,#30202b,#151b22)",
+    "tint": "f3ccdc",
+    "prompt": "Create one premium photorealistic botanical cutout on a genuinely transparent alpha background, square 1024x1024 canvas. A graceful pale blush pink magnolia blossom with only 8 broad smooth satin petals, warm ivory center discreetly hidden by petals, two simple dark green leaves and a delicate curved twig. Soft morning light, calm elegant beautiful familiar flower, restrained natural colors. Blossom centered x36% y66%, diameter 57% of canvas; twig and leaves reach toward lower edge. Keep entire upper-right quadrant x55–100% y0–55% empty transparent, for a separate large numeral in an app. Subject may overlap lower-left part of that numeral around x48%,y56%. Composition fills lower left and bottom but leaves clean negative space above. Actual transparent background, no black/white baked background, no text, no digits, no watch, no border, no frame, no tendrils, no filaments, no spikes, no exotic anatomy, no abstract shapes. Preserve full square canvas. This is a lightweight photographic foreground for a card with separately rendered typography.",
+    "method": "built-in imagegen",
+    "original": "exec-4bad431d-25cc-4fdd-a45d-0a2036a4fec0.png"
+  }
+]

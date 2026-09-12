@@ -2,6 +2,354 @@
 (function(root){
 root.MinkaCardMaterials = [
   {
+    "id": "photo-jellyfish",
+    "label": "Zilā medūza",
+    "path": "data/skins/materials/photo-jellyfish.webp",
+    "face": "photo",
+    "tint": "88e8fa",
+    "metal": 0,
+    "finish": 0,
+    "kind": "depth",
+    "background": "linear-gradient(155deg,#07172b,#02060f)",
+    "depth": true,
+    "group": "ocean",
+    "isNew": true,
+    "hours": [
+      70,
+      37,
+      99,
+      1
+    ],
+    "parts": {
+      "coffee": [
+        23,
+        13,
+        80,
+        1
+      ],
+      "emoji": [
+        19,
+        46,
+        80,
+        1
+      ],
+      "name": [
+        50,
+        77,
+        72,
+        1
+      ],
+      "month": [
+        81,
+        85,
+        65,
+        0
+      ],
+      "fatigue": [
+        20,
+        85,
+        65,
+        0
+      ],
+      "remaining": [
+        50,
+        92,
+        65,
+        1
+      ]
+    }
+  },
+  {
+    "id": "photo-butterfly",
+    "label": "Atlasa spārni",
+    "path": "data/skins/materials/photo-butterfly.webp",
+    "face": "classic",
+    "tint": "f3c293",
+    "metal": 6,
+    "finish": 0,
+    "kind": "depth",
+    "background": "linear-gradient(145deg,#211712,#090706)",
+    "depth": false,
+    "group": "wildlife",
+    "isNew": true,
+    "hours": [
+      58,
+      28,
+      100,
+      1
+    ],
+    "parts": {
+      "coffee": [
+        23,
+        13,
+        80,
+        1
+      ],
+      "emoji": [
+        19,
+        46,
+        80,
+        1
+      ],
+      "name": [
+        50,
+        77,
+        72,
+        1
+      ],
+      "month": [
+        81,
+        85,
+        65,
+        0
+      ],
+      "fatigue": [
+        20,
+        85,
+        65,
+        0
+      ],
+      "remaining": [
+        50,
+        92,
+        65,
+        1
+      ]
+    }
+  },
+  {
+    "id": "photo-koi",
+    "label": "Koi deja",
+    "path": "data/skins/materials/photo-koi.webp",
+    "face": "classic",
+    "tint": "a8ebdc",
+    "metal": 0,
+    "finish": 0,
+    "kind": "depth",
+    "background": "linear-gradient(150deg,#123c3c,#051b20)",
+    "depth": false,
+    "group": "ocean",
+    "isNew": true,
+    "hours": [
+      58,
+      28,
+      100,
+      1
+    ],
+    "parts": {
+      "coffee": [
+        23,
+        13,
+        80,
+        1
+      ],
+      "emoji": [
+        19,
+        46,
+        80,
+        1
+      ],
+      "name": [
+        50,
+        77,
+        72,
+        1
+      ],
+      "month": [
+        81,
+        85,
+        65,
+        0
+      ],
+      "fatigue": [
+        20,
+        85,
+        65,
+        0
+      ],
+      "remaining": [
+        50,
+        92,
+        65,
+        1
+      ]
+    }
+  },
+  {
+    "id": "photo-hummingbird",
+    "label": "Kolibri mirklis",
+    "path": "data/skins/materials/photo-hummingbird.webp",
+    "face": "photo",
+    "tint": "a9e6d2",
+    "metal": 0,
+    "finish": 0,
+    "kind": "depth",
+    "background": "linear-gradient(145deg,#1b3033,#0c111c)",
+    "depth": true,
+    "group": "wildlife",
+    "isNew": true,
+    "hours": [
+      70,
+      37,
+      99,
+      1
+    ],
+    "parts": {
+      "coffee": [
+        23,
+        13,
+        80,
+        1
+      ],
+      "emoji": [
+        19,
+        46,
+        80,
+        1
+      ],
+      "name": [
+        50,
+        77,
+        72,
+        1
+      ],
+      "month": [
+        81,
+        85,
+        65,
+        0
+      ],
+      "fatigue": [
+        20,
+        85,
+        65,
+        0
+      ],
+      "remaining": [
+        50,
+        92,
+        65,
+        1
+      ]
+    }
+  },
+  {
+    "id": "photo-snowy-owl",
+    "label": "Polārā pūce",
+    "path": "data/skins/materials/photo-snowy-owl.webp",
+    "face": "photo",
+    "tint": "dcebf9",
+    "metal": 0,
+    "finish": 0,
+    "kind": "depth",
+    "background": "linear-gradient(150deg,#273848,#0d1725)",
+    "depth": true,
+    "group": "wildlife",
+    "isNew": true,
+    "hours": [
+      70,
+      37,
+      99,
+      1
+    ],
+    "parts": {
+      "coffee": [
+        23,
+        13,
+        80,
+        1
+      ],
+      "emoji": [
+        19,
+        46,
+        80,
+        1
+      ],
+      "name": [
+        50,
+        77,
+        72,
+        1
+      ],
+      "month": [
+        81,
+        85,
+        65,
+        0
+      ],
+      "fatigue": [
+        20,
+        85,
+        65,
+        0
+      ],
+      "remaining": [
+        50,
+        92,
+        65,
+        1
+      ]
+    }
+  },
+  {
+    "id": "photo-magnolia",
+    "label": "Magnolijas maigums",
+    "path": "data/skins/materials/photo-magnolia.webp",
+    "face": "photo",
+    "tint": "f3ccdc",
+    "metal": 0,
+    "finish": 0,
+    "kind": "depth",
+    "background": "linear-gradient(145deg,#30202b,#151b22)",
+    "depth": true,
+    "group": "botanical",
+    "isNew": true,
+    "hours": [
+      70,
+      37,
+      99,
+      1
+    ],
+    "parts": {
+      "coffee": [
+        23,
+        13,
+        80,
+        1
+      ],
+      "emoji": [
+        19,
+        46,
+        80,
+        1
+      ],
+      "name": [
+        50,
+        77,
+        72,
+        1
+      ],
+      "month": [
+        81,
+        85,
+        65,
+        0
+      ],
+      "fatigue": [
+        20,
+        85,
+        65,
+        0
+      ],
+      "remaining": [
+        50,
+        92,
+        65,
+        1
+      ]
+    }
+  },
+  {
     "id": "photo-fox",
     "label": "Meža lapsa",
     "path": "data/skins/materials/photo-fox.webp",
@@ -60,7 +408,8 @@ root.MinkaCardMaterials = [
       "mat-glass-ice",
       "mat-metal-copper",
       "mat-silk-lavender"
-    ]
+    ],
+    "group": "wildlife"
   },
   {
     "id": "photo-hydrangea",
@@ -121,7 +470,8 @@ root.MinkaCardMaterials = [
       "mat-glass-rose",
       "mat-metal-blue",
       "mat-silk-sage"
-    ]
+    ],
+    "group": "botanical"
   },
   {
     "id": "photo-moon",
@@ -182,7 +532,8 @@ root.MinkaCardMaterials = [
       "mat-glass-lilac",
       "mat-brush-silver",
       "mat-silk-white"
-    ]
+    ],
+    "group": "landscape"
   },
   {
     "id": "photo-fern",
@@ -243,7 +594,8 @@ root.MinkaCardMaterials = [
       "mat-glass-sage",
       "mat-brush-graphite",
       "mat-silk-black"
-    ]
+    ],
+    "group": "botanical"
   },
   {
     "id": "photo-wave",
@@ -303,7 +655,8 @@ root.MinkaCardMaterials = [
     "legacyIds": [
       "mat-glass-amber",
       "mat-brush-gold"
-    ]
+    ],
+    "group": "ocean"
   },
   {
     "id": "photo-orchid",
@@ -363,7 +716,8 @@ root.MinkaCardMaterials = [
     "legacyIds": [
       "mat-glass-ocean",
       "mat-brush-rose"
-    ]
+    ],
+    "group": "botanical"
   },
   {
     "id": "photo-panda",
@@ -423,7 +777,8 @@ root.MinkaCardMaterials = [
     "legacyIds": [
       "mat-metal-silver",
       "mat-silk-orange"
-    ]
+    ],
+    "group": "wildlife"
   },
   {
     "id": "photo-coast",
@@ -483,7 +838,8 @@ root.MinkaCardMaterials = [
     "legacyIds": [
       "mat-metal-titan",
       "mat-silk-mist"
-    ]
+    ],
+    "group": "landscape"
   },
   {
     "id": "depth-alpine",
@@ -538,7 +894,8 @@ root.MinkaCardMaterials = [
         65,
         1
       ]
-    }
+    },
+    "group": "landscape"
   },
   {
     "id": "depth-peony",
@@ -593,7 +950,8 @@ root.MinkaCardMaterials = [
         65,
         1
       ]
-    }
+    },
+    "group": "botanical"
   },
   {
     "id": "depth-cat",
@@ -648,7 +1006,8 @@ root.MinkaCardMaterials = [
         65,
         1
       ]
-    }
+    },
+    "group": "wildlife"
   }
 ];
 root.MinkaFindCardMaterial=function(id){return root.MinkaCardMaterials.find(function(m){return m.id===id||(m.legacyIds||[]).indexOf(id)>=0;});};

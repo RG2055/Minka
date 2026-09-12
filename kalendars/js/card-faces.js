@@ -176,7 +176,7 @@
     panel.innerHTML = '<div class="wf-editor-heading"><div><strong>Kartītes izskats</strong><p>Pielāgo kartīti savai dežūrai.</p></div></div>'
       + '<div class="wf-faces">'+faceTiles+'</div>'
       + '<div class="wf-section"><div class="wf-label">Stikla tonis <input type="color" class="wf-color" aria-label="Stikla tonis"></div><div class="wf-swatches">'+colors.map(function(c){return '<button type="button" data-tint="'+c[1].slice(1)+'" style="--sw:'+c[1]+'" title="'+c[0]+'" aria-label="'+c[0]+'"></button>';}).join('')+'</div>'
-      + '<div class="wf-segment" aria-label="Ciparu materiāls">'+['Stikls','Metāls','Tīrs'].map(function(t,i){return '<button type="button" data-finish="'+i+'">'+t+'</button>';}).join('')+'</div></div>'
+      + '<div class="wf-segment" aria-label="Ciparu materiāls">'+['Stikls','Metāls','Tīrs','Plūsma','Perlamutrs','Neons'].map(function(t,i){return '<button type="button" data-finish="'+i+'" data-watch-finish="'+i+'" aria-label="'+t+'"><b class="wf-number-sample" aria-hidden="true">24</b><span>'+t+'</span></button>';}).join('')+'</div></div>'
       + '<div class="wf-section"><div class="wf-label">Metāla ietvars <span class="wf-metal-name"></span></div><div class="wf-metals">'+metals.map(function(c,i){return '<button type="button" data-metal="'+i+'" style="--sw:'+c[1]+'" title="'+c[0]+'" aria-label="'+c[0]+'"></button>';}).join('')+'</div></div>'
       + '<div class="wf-section"><div class="wf-label">Elementi <span>Velc priekšskatījumā</span></div><div class="wf-elements">'+M.parts.map(function(key){return '<button type="button" data-part="'+key+'">'+labels[key]+'</button>';}).join('')+'</div>'
       + '<div class="wf-part-head"><strong class="wf-part-name"></strong><button type="button" class="wf-remove">Noņemt</button></div>'
@@ -209,6 +209,8 @@
       panel.style.setProperty('--wf-thumbnail-image',preview.style.getPropertyValue('--mk-skin-img')||'linear-gradient(150deg,#323b53,#0c121c)');
       panel.querySelectorAll('[data-tint]').forEach(function(el){el.setAttribute('aria-pressed',String(el.dataset.tint===config.tint));});
       panel.querySelectorAll('[data-metal]').forEach(function(el){el.setAttribute('aria-pressed',String(+el.dataset.metal===config.metal));});
+      panel.style.setProperty('--wf-tint','#'+config.tint);
+      panel.querySelectorAll('.wf-number-sample').forEach(function(el){el.textContent=(preview.querySelector('.mk-mid-hours')||{}).textContent||'24';});
       panel.querySelectorAll('[data-finish]').forEach(function(el){el.setAttribute('aria-pressed',String(+el.dataset.finish===config.finish));});
       panel.querySelectorAll('[data-part]').forEach(function(el){el.setAttribute('aria-pressed',String(el.dataset.part===selectedPart));el.classList.toggle('is-off',!config.parts[el.dataset.part][3]);});
       var hasDepth=options.get().t==='img'&&!!window.MinkaFindCardMaterial(options.get().id);

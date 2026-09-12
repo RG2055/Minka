@@ -80,7 +80,7 @@ test('API persists complete legacy appearance plus face and decoration, and can 
 test('API and decoder reject malformed and out of range layouts without overwriting saved data', async () => {
   const request = fixture();
   const valid = M.pack(M.preset('photo'));
-  const mutations = [[0,'2'],[1,'4'],[2,'url(x)'],[3,'12'],[4,'3'],[5,'101'],[6,'-1'],[7,'99'],[8,'50,50,100,2'],[9,'50,50,100,-1'],[10,'50,50,171,1'],[11,'00,50,100,1']];
+  const mutations = [[0,'2'],[1,'4'],[2,'url(x)'],[3,'12'],[4,'6'],[5,'101'],[6,'-1'],[7,'99'],[8,'50,50,100,2'],[9,'50,50,100,-1'],[10,'50,50,171,1'],[11,'00,50,100,1']];
   await request('grad:menta');
   for (const [index, replacement] of mutations) {
     const fields = valid.split('~'); fields[index] = replacement;
@@ -119,8 +119,19 @@ test('all material bundles have local lightweight assets and API-compatible appe
     assert.equal(response.status, 200, material.id + ': ' + await response.text());
     assert.equal((await (await request(undefined,'GET')).json())['ALPHA TEST'], skin);
   }
-  assert.equal(ids.size, 11);
+  assert.equal(ids.size, 17);
   const aliases=globalThis.MinkaCardMaterials.flatMap(m=>m.legacyIds||[]);
   assert.equal(aliases.length,20);
   for(const id of aliases)assert.ok(globalThis.MinkaFindCardMaterial(id).id.startsWith('photo-'));
+});
+
+ test('all six finishes persist through API without changing hidden elements or background', async () => {
+  const request = fixture();
+  for (const style of M.faces) for (let finish = 0; finish <= 5; finish++) {
+    const face = M.preset(style); face.finish = finish; face.parts.month[3] = 0;
+    const skin = 'img:photo-magnolia;wf:' + M.pack(face);
+    assert.deepEqual(M.unpack(M.pack(face)), face);
+    assert.equal((await request(skin)).status, 200);
+    assert.equal((await (await request(undefined, 'GET')).json())['ALPHA TEST'], skin);
+  }
 });

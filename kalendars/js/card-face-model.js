@@ -18,7 +18,7 @@
     value = value && typeof value === 'object' ? value : {};
     var face = faces.indexOf(value.face) >= 0 ? value.face : 'classic';
     var out = { face: face, tint: /^[a-f0-9]{6}$/i.test(value.tint || '') ? value.tint.toLowerCase() : 'd5e6ef',
-      metal: bounded(value.metal, 0, 11, 0), finish: bounded(value.finish, 0, 2, 0),
+      metal: bounded(value.metal, 0, 11, 0), finish: bounded(value.finish, 0, 5, 0),
       imageX: bounded(value.imageX, 0, 100, 50), imageY: bounded(value.imageY, 0, 100, 50),
       imageZoom: bounded(value.imageZoom, 100, 180, 100), parts: {} };
     parts.forEach(function (key, i) {
