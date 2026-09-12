@@ -1562,9 +1562,9 @@ function _mkToast(msg, type) {
 <script src="data/namedays.local.js"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/known-carryovers.js?v=20260907smooth1"></script>
-<script src="js/card-face-model.js?v=20260912faces28"></script>
+<script src="js/card-face-model.js?v=20260912faces29"></script>
 <script src="js/card-materials.js?v=20260912faces21"></script>
-<script src="js/card-faces.js?v=20260912faces28"></script>
+<script src="js/card-faces.js?v=20260912faces29"></script>
 <!-- Saved worker skins must be ready before the cached roster is rendered. -->
 <script>
 /* ── MinkaSkins: per-darbinieka kartes izskats ──
@@ -1889,6 +1889,7 @@ function _mkToast(msg, type) {
     return {
       num: contrast.join(','),
       txt: text.join(','),
+      source: c.join(','),
       na: '0.98'
     };
   }
@@ -1950,6 +1951,8 @@ function _mkToast(msg, type) {
     if (skin.t === 'art' && skin.id && artUrl(skin.id)) return sampleImagePalette(artUrl(skin.id));
     return Promise.resolve(paletteFromRgb([100, 210, 255]));
   }
+  // Share the existing small-image palette sampler with contrast controls.
+  window.mkSuggestSkinPalette=suggestedPalette;
 
   window.mkGetWorkerSkin = function(name) {
     var all = loadAll();
@@ -2532,6 +2535,7 @@ function _mkToast(msg, type) {
     function bundleSkin(p) {
       var skin=JSON.parse(JSON.stringify(p.bg));
       skin.face=JSON.parse(JSON.stringify(p.face));
+      if(draft.face){skin.face.coffeeMode=draft.face.coffeeMode;skin.face.coffeeContrast=draft.face.coffeeContrast;}
       if(draft.face)Object.keys(draft.face.parts).forEach(function(key){skin.face.parts[key][3]=draft.face.parts[key][3];});
       skin.num=p.num;skin.numA=p.na;skin.em='0';
       if(p.depth===false)skin.depth=false;
@@ -2700,7 +2704,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260912faces28"></script>
+<script src="js/calendar.js?v=20260912faces29"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
@@ -23911,6 +23915,6 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
 <link rel="stylesheet" href="css/radio-side-cards.css?v=20260911split1">
 <script src="../js/radio-ambience.js?v=20260908ambient3"></script>
 <link rel="stylesheet" href="../css/calendar-surfaces.css?v=20260908surfaces3">
-<link rel="stylesheet" href="css/card-faces.css?v=20260912faces28">
+<link rel="stylesheet" href="css/card-faces.css?v=20260912faces29">
 </body>
 </html>

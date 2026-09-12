@@ -31,6 +31,8 @@
       metal: bounded(value.metal, 0, 11, 0), finish: bounded(value.finish, 0, 5, 0),
       imageX: bounded(value.imageX, 0, 100, 50), imageY: bounded(value.imageY, 0, 100, 50),
       imageZoom: bounded(value.imageZoom, 100, 180, 100), parts: {} };
+    out.coffeeMode=bounded(value.coffeeMode,0,1,1);
+    out.coffeeContrast=bounded(value.coffeeContrast,0,2,0);
     parts.forEach(function (key, i) {
       var base = layouts[face][i] || moonLayouts[face], p = value.parts && value.parts[key];
       if (!Array.isArray(p)) p = base;
@@ -52,16 +54,20 @@
   }
   function pack(value) {
     var v = clean(value, true);
-    return [2, faces.indexOf(v.face), v.tint, v.metal, v.finish, v.imageX, v.imageY, v.imageZoom]
-      .concat(parts.map(function (key) { return v.parts[key].join(','); })).join('~');
+    var extra=v.coffeeMode!==1||v.coffeeContrast!==0;
+    return [extra?3:2, faces.indexOf(v.face), v.tint, v.metal, v.finish, v.imageX, v.imageY, v.imageZoom]
+      .concat(parts.map(function (key) { return v.parts[key].join(','); }))
+      .concat(extra?[v.coffeeMode,v.coffeeContrast]:[]).join('~');
   }
   function unpack(text) {
     var a = String(text || '').split('~');
     var legacy=a.length===17&&a[0]==='1';
-    if ((!legacy && !(a.length===18&&a[0]==='2')) || !/^[0-3]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return null;
+    var coffee=a.length===20&&a[0]==='3';
+    if ((!legacy && !coffee && !(a.length===18&&a[0]==='2')) || !/^[0-3]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return null;
     if (!a.slice(3,8).every(function (n) { return /^\d{1,3}$/.test(n); })) return null;
     var value = { face: faces[+a[1]], tint: a[2], metal: +a[3], finish: +a[4], imageX: +a[5], imageY: +a[6], imageZoom: +a[7], parts: {} };
-    for (var i = 0; i < a.length-8; i++) {
+    if(coffee){if(!/^[01]$/.test(a[18])||!/^[0-2]$/.test(a[19]))return null;value.coffeeMode=+a[18];value.coffeeContrast=+a[19];}
+    for (var i = 0; i < (legacy?9:10); i++) {
       if (!/^\d{1,2},\d{1,2},\d{2,3},[01]$/.test(a[i + 8])) return null;
       value.parts[parts[i]] = a[i + 8].split(',').map(Number);
     }
@@ -70,6 +76,13 @@
     var canonical=pack(result).split('~');
     if(legacy){canonical[0]='1';canonical.pop();}
     return canonical.join('~') === text ? clean(result) : null;
+  }
+  function coffeeColors(rgb, useTint) {
+    var c=String(rgb||'100,150,190').split(',').map(Number);
+    if(c.length!==3||c.some(function(n){return !Number.isFinite(n)||n<0||n>255;}))c=[100,150,190];
+    var light=(c[0]*.2126+c[1]*.7152+c[2]*.0722)>148;
+    if(useTint)return {background:'rgb('+c.map(function(n){return Math.round(12+n*.15);}).join(',')+')',foreground:'rgb('+c.map(function(n){return light?n:Math.round(191+n*.25);}).join(',')+')'};
+    return {background:'rgb('+c.map(function(n){return Math.round(light?220+n*.12:12+n*.15);}).join(',')+')',foreground:light?'#15202c':'#ffffff'};
   }
   // Fit the measured element inside the rounded face, not just its rectangle.
   // Measurements are percentages, so this works at every preview/radio size.
@@ -93,5 +106,5 @@
     p[0]=Math.round(x);p[1]=Math.round(y);
     return p;
   }
-  root.MinkaCardFaceModel = { faces: faces, parts: parts, clean: clean, preset: preset, pack: pack, unpack: unpack, fitPart: fitPart, symbolPlacement: symbolPlacement };
+  root.MinkaCardFaceModel = { faces: faces, parts: parts, clean: clean, preset: preset, pack: pack, unpack: unpack, fitPart: fitPart, symbolPlacement: symbolPlacement, coffeeColors: coffeeColors };
 })(globalThis);

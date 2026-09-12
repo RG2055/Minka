@@ -305,7 +305,7 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-fac
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part]:not([data-wf-part="hours"]) {z-index:4 !important;}
 .wf-depth-control {display:flex;gap:8px;align-items:center;margin-top:18px;color:#cfdfed;font-size:12px;}
 .wf-depth-control[hidden] {display:none;}
-/* The +/- controls are always visible and take the same space at rest, hover
+/* Expanded controls take the same space at rest, hover
    and focus. Clamp the entire capsule inside the face, including user scaling. */
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="coffee"] {
   --wf-coffee-width:clamp(70px,38cqw,100px);
@@ -415,3 +415,41 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-fac
 [data-shift-symbol="day"][data-watch-finish="5"] .mk-wf-moon i {
   mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='4.2' fill='none' stroke='white' stroke-width='1'/%3E%3Cpath d='M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42' stroke='white' stroke-width='1' stroke-linecap='round'/%3E%3C/svg%3E");
 }
+
+/* Coffee presentation is saved per card; icon mode expands on card hover. */
+.wf-coffee-options[hidden] {display:none !important;}
+.wf-coffee-mode {grid-template-columns:repeat(2,minmax(0,1fr));}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card .mk-coffee-mid {
+  border:0 !important;background:transparent !important;box-shadow:none !important;cursor:pointer;font:inherit;color:inherit;pointer-events:auto !important;
+}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]) [data-wf-part="coffee"] {
+  --wf-coffee-width:clamp(32px,16cqw,44px);
+}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]) .mk-coffee-step {
+  grid-template-columns:minmax(0,1fr) !important;
+}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]) :is(.mk-coffee-add,.mk-coffee-sub) {
+  display:none !important;
+}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-mid {
+  min-height:24px !important;line-height:1 !important;
+}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:is([data-coffee-contrast="auto"],[data-coffee-contrast="tint"]) .mk-coffee-step {
+  background:var(--wf-coffee-bg,#17212d) !important;border-color:var(--wf-coffee-ink,#fff) !important;
+  box-shadow:0 1px 3px #0005 !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
+}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:is([data-coffee-contrast="auto"],[data-coffee-contrast="tint"]) :is(.mk-coffee-add,.mk-coffee-sub,.mk-coffee-mid,.mk-coffee-num,.mk-coffee-cup) {
+  color:var(--wf-coffee-ink,#fff) !important;-webkit-text-fill-color:var(--wf-coffee-ink,#fff) !important;text-shadow:none !important;filter:none !important;
+}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:is([data-coffee-contrast="auto"],[data-coffee-contrast="tint"]) .mk-coffee-cup [fill]:not([fill="none"]) {fill:currentColor !important;}
+html body #worker-modal #modal-skin-view #grafiks-list .card.mk-watch-face.wf-editing .mk-coffee-mid {pointer-events:none !important;}
+
+/* Hovering anywhere on the card reveals the icon-mode controls. */
+@media (hover:hover) {
+  html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:hover [data-wf-part="coffee"] {--wf-coffee-width:clamp(70px,38cqw,100px);}
+  html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:hover .mk-coffee-step {grid-template-columns:18px minmax(0,1fr) 18px !important;}
+  html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:hover :is(.mk-coffee-add,.mk-coffee-sub) {display:flex !important;}
+}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:has(.mk-mid-coffee :focus-visible) [data-wf-part="coffee"] {--wf-coffee-width:clamp(70px,38cqw,100px);}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:has(.mk-mid-coffee :focus-visible) .mk-coffee-step {grid-template-columns:18px minmax(0,1fr) 18px !important;}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:has(.mk-mid-coffee :focus-visible) :is(.mk-coffee-add,.mk-coffee-sub) {display:flex !important;}

@@ -5786,7 +5786,7 @@ function filterFullList(btn) {
         <div class="mk-mid-coffee${count > 0 ? '' : ' is-empty'}" data-coffee-name="${safeName}">
           <div class="mk-coffee-step">
             <button class="mk-coffee-sub" type="button" aria-label="Atņemt kafiju" title="Atņemt kafiju">−</button>
-            <span class="mk-coffee-mid">${buildCoffeeCup('filled')}<span class="mk-coffee-copy"><span class="mk-coffee-num">${count}</span></span></span>
+            <button class="mk-coffee-mid" type="button" aria-label="Atvērt kafijas izvēlni">${buildCoffeeCup('filled')}<span class="mk-coffee-copy"><span class="mk-coffee-num">${count}</span></span></button>
             <button class="mk-coffee-add" type="button" aria-label="Pievienot kafiju" title="Pievienot kafiju">+</button>
           </div>
         </div>`;
@@ -6084,6 +6084,22 @@ function filterFullList(btn) {
         if (typeof window.mkApplySkinToEl === 'function') window.mkApplySkinToEl(card, _wSkin);
 
         const coffeeBtn = card.querySelector('.mk-coffee-add');
+        const coffeeIcon = card.querySelector('.mk-coffee-mid');
+        if(coffeeIcon)coffeeIcon.onclick=(e)=>{
+          e.preventDefault();e.stopPropagation();
+          if(card.dataset.coffeeMode==='icon'){
+            // Desktop uses the whole card's hover area; taps/keyboard can toggle.
+            if(window.matchMedia('(hover: hover)').matches&&e.detail>0)return;
+            const expanded=card.dataset.coffeeExpanded!=='true';
+            card.dataset.coffeeExpanded=String(expanded);
+            coffeeIcon.setAttribute('aria-expanded',String(expanded));
+            coffeeIcon.setAttribute('aria-label',expanded?'Sakļaut kafijas pogas':'Atvērt kafijas pogas');
+          }else showCoffeePicker(w.name,card,coffeeIcon);
+        };
+        if(coffeeIcon){
+          card.addEventListener('pointerenter',()=>{if(card.dataset.coffeeMode==='icon'&&window.matchMedia('(hover: hover)').matches)coffeeIcon.setAttribute('aria-expanded','true');});
+          card.addEventListener('pointerleave',()=>{if(card.dataset.coffeeMode==='icon')coffeeIcon.setAttribute('aria-expanded',String(card.dataset.coffeeExpanded==='true'));});
+        }
         if (coffeeBtn) {
           coffeeBtn.onclick = (e) => {
             e.preventDefault();

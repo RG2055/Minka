@@ -21,6 +21,36 @@
   var previewObserver = null;
   var previewFrame = 0;
   var refreshPreview = function() {};
+  var coffeePalettes = new Map();
+  function applyCoffee(card,skin,config) {
+    if(card.dataset.coffeeMode!==(config.coffeeMode?'open':'icon'))delete card.dataset.coffeeExpanded;
+    card.dataset.coffeeMode=config.coffeeMode?'open':'icon';
+    var button=card.querySelector('button.mk-coffee-mid');
+    if(button){
+      if(config.coffeeMode){button.removeAttribute('aria-expanded');button.setAttribute('aria-label','Atvērt kafijas izvēlni');}
+      else {var expanded=card.dataset.coffeeExpanded==='true';button.setAttribute('aria-expanded',String(expanded));button.setAttribute('aria-label',expanded?'Sakļaut kafijas pogas':'Atvērt kafijas pogas');}
+    }
+    card.dataset.coffeeContrast=['glass','auto','tint'][config.coffeeContrast];
+    if(!config.coffeeContrast){delete card.dataset.coffeePalette;return;}
+    if(config.coffeeContrast===2){
+      delete card.dataset.coffeePalette;
+      var tinted=M.coffeeColors(config.tint.match(/../g).map(function(v){return parseInt(v,16);}).join(','),true);
+      card.style.setProperty('--wf-coffee-bg',tinted.background);card.style.setProperty('--wf-coffee-ink',tinted.foreground);return;
+    }
+    var key=JSON.stringify([skin.t,skin.id,skin.rgb]);
+    if(card.dataset.coffeePalette===key)return;
+    card.dataset.coffeePalette=key;
+    function paint(rgb){var c=M.coffeeColors(rgb);card.style.setProperty('--wf-coffee-bg',c.background);card.style.setProperty('--wf-coffee-ink',c.foreground);}
+    paint(skin.rgb);
+    if(typeof window.mkSuggestSkinPalette!=='function')return;
+    if(!coffeePalettes.has(key)){
+      if(coffeePalettes.size>=128)coffeePalettes.delete(coffeePalettes.keys().next().value);
+      coffeePalettes.set(key,window.mkSuggestSkinPalette(skin).catch(function(){return null;}));
+    }
+    coffeePalettes.get(key).then(function(palette){
+      if(palette&&card.dataset.coffeeContrast==='auto'&&card.dataset.coffeePalette===key)paint(palette.source||palette.num);
+    });
+  }
   function esc(s) { return String(s).replace(/[&<>"']/g, function(c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function paintClock() {
     clearTimeout(clockTimer); clockTimer = 0;
@@ -44,6 +74,9 @@
     card.classList.toggle('mk-watch-face', !!config);
     if (!config) {
       delete card.dataset.watchFace; delete card.dataset.watchFinish;
+      delete card.dataset.coffeeMode;delete card.dataset.coffeeContrast;delete card.dataset.coffeePalette;delete card.dataset.coffeeExpanded;
+      var coffeeButton=card.querySelector('button.mk-coffee-mid');
+      if(coffeeButton){coffeeButton.removeAttribute('aria-expanded');coffeeButton.setAttribute('aria-label','Atvērt kafijas izvēlni');}
       card.querySelectorAll('[data-wf-part]').forEach(function(el) {
         delete el.dataset.wfPart; el.hidden = false;
         ['--wf-x','--wf-y','--wf-scale'].forEach(function(p) { el.style.removeProperty(p); });
@@ -54,6 +87,7 @@
       paintClock(); return;
     }
     card.dataset.watchFace = config.face;
+    applyCoffee(card,skin,config);
     // Keep legacy effect settings saved, but never run them on a custom face.
     card.classList.remove('mk-has-spark','mk-fx-hearts','mk-fx-mirdz','mk-fx-burb','mk-fx-ziedi','mk-fx-taur','mk-depth-live');
     if(skin.t==='hue'&&/^\d{1,3}(,\d{1,3}){2}$/.test(String(skin.rgb||'')))card.style.setProperty('--mk-skin-img','linear-gradient(rgb('+skin.rgb+'),rgb('+skin.rgb+'))');
@@ -184,6 +218,7 @@
       + '<div class="wf-section"><div class="wf-label">Metāla ietvars <span class="wf-metal-name"></span></div><div class="wf-metals">'+metals.map(function(c,i){return '<button type="button" data-metal="'+i+'" style="--sw:'+c[1]+'" title="'+c[0]+'" aria-label="'+c[0]+'"></button>';}).join('')+'</div></div>'
       + '<div class="wf-section"><div class="wf-label">Elementi <span>Velc priekšskatījumā</span></div><div class="wf-elements">'+M.parts.map(function(key){return '<button type="button" data-part="'+key+'">'+labels[key]+'</button>';}).join('')+'</div>'
       + '<div class="wf-part-head"><strong class="wf-part-name"></strong><button type="button" class="wf-remove">Noņemt</button></div>'
+      + '<div class="wf-coffee-options" hidden><div class="wf-segment wf-coffee-mode" aria-label="Kafijas vadība"><button type="button" data-coffee-mode="0">Ikona → pogas</button><button type="button" data-coffee-mode="1">Vienmēr − / +</button></div><p class="wf-editor-help">Uzbrauc ar peli kartītei, lai parādītu − / +. Telefonā pieskaries ikonai.</p><div class="wf-segment" aria-label="Kafijas tonis"><button type="button" data-coffee-contrast="0">Stikls</button><button type="button" data-coffee-contrast="1">Fona kontrasts</button><button type="button" data-coffee-contrast="2">Kartītes tonis</button></div></div>'
       + [['x','Horizontāli',5,95],['y','Vertikāli',5,95],['size','Izmērs',50,170]].map(function(r){return '<label class="wf-range"><span>'+r[1]+'</span><input type="range" data-position="'+r[0]+'" min="'+r[2]+'" max="'+r[3]+'"><output></output></label>';}).join('')
       + '<button type="button" class="wf-fit">Ietilpināt kartītē</button><div class="wf-editor-help">Lielu ciparu kadrē, pārvietojot priekšskatījumā. Saule dienas maiņai, mēness nakts maiņai. Simbolu vari pārvietot un mainīt izmērā; 24 h maiņās tas redzams tikai redaktorā. Izvēlies elementu un velc to priekšskatījumā. Ar bultiņām pārvieto precīzi. Noņemtos elementus pievieno atpakaļ ar +.</div></div>'
       + '<label class="wf-depth-control"><input type="checkbox" class="wf-depth-toggle"> Objekts priekšā ciparam</label>'
@@ -223,6 +258,9 @@
       panel.querySelector('.wf-color').value='#'+config.tint;
       panel.querySelector('.wf-metal-name').textContent=metals[config.metal][0];
       panel.querySelector('.wf-part-name').textContent=labels[selectedPart];
+      panel.querySelector('.wf-coffee-options').hidden=selectedPart!=='coffee';
+      panel.querySelectorAll('[data-coffee-mode]').forEach(function(el){el.setAttribute('aria-pressed',String(+el.dataset.coffeeMode===config.coffeeMode));});
+      panel.querySelectorAll('[data-coffee-contrast]').forEach(function(el){el.setAttribute('aria-pressed',String(+el.dataset.coffeeContrast===config.coffeeContrast));});
       panel.querySelector('.wf-remove').textContent=config.parts[selectedPart][3]?'Noņemt':'Pievienot';
       panel.querySelector('.wf-undo').disabled=!history.length;
       panel.querySelectorAll('[data-position]').forEach(function(el){var i={x:0,y:1,size:2}[el.dataset.position];if(i===2)el.max=selectedPart==='hours'?300:170;el.value=config.parts[selectedPart][i];el.nextElementSibling.textContent=el.value+'%';});
@@ -257,6 +295,8 @@
       if(el.dataset.tint){config.tint=el.dataset.tint;save();}
       if(el.dataset.metal!=null){config.metal=+el.dataset.metal;save();}
       if(el.dataset.finish!=null){config.finish=+el.dataset.finish;save('material');}
+      if(el.dataset.coffeeMode!=null){config.coffeeMode=+el.dataset.coffeeMode;save(true);}
+      if(el.dataset.coffeeContrast!=null){config.coffeeContrast=+el.dataset.coffeeContrast;save();}
       if(el.dataset.part){selectedPart=el.dataset.part;if(!config.parts[selectedPart][3]||!options.get().face){config.parts[selectedPart][3]=1;save(true);}else sync();}
       if(el.classList.contains('wf-remove')){config.parts[selectedPart][3]=config.parts[selectedPart][3]?0:1;save(true);}
       if(el.classList.contains('wf-undo')&&history.length){var previous=history.pop();config=M.clean(previous);options.change(previous);preview.classList.toggle('wf-editing',!!previous);apply(preview,options.get());sync();sizePreview();}

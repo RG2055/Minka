@@ -107,6 +107,42 @@ test('v1 saved cards retain all existing elements and upgrade to an independent 
   }
 });
 
+test('coffee presentation and contrast survive API storage and legacy defaults', async () => {
+  const request=fixture();
+  for(const mode of [0,1])for(const contrast of [0,1,2]){
+    const face=M.preset('photo');face.coffeeMode=mode;face.coffeeContrast=contrast;
+    face.parts.coffee=[34,27,120,1];
+    const packed=M.pack(face);
+    assert.deepEqual(M.unpack(packed),face);
+    assert.equal((await request('wf:'+packed)).status,200);
+    const stored=(await (await request(undefined,'GET')).json())['ALPHA TEST'];
+    assert.deepEqual(M.unpack(stored.slice(3)),face);
+    assert.equal(M.preset('classic',face).coffeeMode,mode);
+    assert.equal(M.preset('classic',face).coffeeContrast,contrast);
+  }
+  const old=M.unpack(M.pack(M.preset('classic')));
+  assert.equal(old.coffeeMode,1);assert.equal(old.coffeeContrast,0);
+  const face=M.preset('photo');face.coffeeMode=0;
+  for(const index of [18,19])for(const invalid of ['3','-1','true','url(x)']){
+    const fields=M.pack(face).split('~');fields[index]=invalid;
+    assert.equal(M.unpack(fields.join('~')),null);
+    assert.equal((await request('wf:'+fields.join('~'))).status,400);
+  }
+});
+
+test('adaptive coffee surfaces maintain readable contrast on light and dark palettes', () => {
+  const luminance=rgb=>rgb.map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;}).reduce((a,v,i)=>a+v*[.2126,.7152,.0722][i],0);
+  for(const r of [0,128,255])for(const g of [0,128,255])for(const b of [0,128,255]){
+    const colors=M.coffeeColors([r,g,b].join(','));
+    const bg=luminance(colors.background.match(/\d+/g).map(Number));
+    const fg=luminance(colors.foreground.slice(1).match(/../g).map(v=>parseInt(v,16)));
+    assert.ok((Math.max(bg,fg)+.05)/(Math.min(bg,fg)+.05)>=7);
+    const tinted=M.coffeeColors([r,g,b].join(','),true);
+    const tb=luminance(tinted.background.match(/\d+/g).map(Number)),tf=luminance(tinted.foreground.match(/\d+/g).map(Number));
+    assert.ok((Math.max(tb,tf)+.05)/(Math.min(tb,tf)+.05)>=4.5);
+  }
+});
+
 test('a corner widget is moved inside the rounded frame without changing visibility', () => {
   const p=M.fitPart([84,13,90,1],28,34);
   assert.ok(p[0]<=80 && p[1]>=25);
