@@ -17,7 +17,9 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-face-classic .mk-mid-hour
   -webkit-background-clip: text;
   text-shadow: 0 1px 1px rgba(0,0,0,.12) !important;
   opacity: var(--mk-num-alpha,1) !important;
-  padding: 0 .045em .06em 0 !important;
+  /* Negative tracking leaves the final glyph beyond its advance width.
+     Keep that overhang inside the background-clip:text paint area. */
+  padding: 0 .12em .06em .03em !important;
 }
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] {
   --wf-tint:#d5e6ef; --wf-metal:#d7d9de;
@@ -149,7 +151,7 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-fac
 .mk-wf-art {position:absolute;inset:0;z-index:1;color:var(--wf-tint);pointer-events:none;}
 .mk-wf-art svg {width:100%;height:100%;}
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-face="orbit"]::before {background-image:linear-gradient(#080b1328,#080b1355),var(--mk-skin-img,linear-gradient(#080b13,#080b13)) !important;}
-html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-face="orbit"] [data-wf-part="hours"] {font-style:italic !important;font-weight:850 !important;letter-spacing:-.08em !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-face="orbit"] [data-wf-part="hours"] {font-style:italic !important;font-weight:850 !important;letter-spacing:-.08em !important;padding-right:.18em !important;}
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-face="orbit"] [data-wf-part="fatigue"],
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-face="orbit"] .mk-coffee-step {background:#111821 !important;border-color:color-mix(in srgb,var(--wf-tint) 20%,transparent) !important;}
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-face="modular"]::before {background-image:linear-gradient(155deg,color-mix(in srgb,var(--wf-tint) 12%,transparent),#08101844),var(--mk-skin-img,linear-gradient(#143438,#081018)) !important;}
