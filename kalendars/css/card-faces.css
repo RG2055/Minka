@@ -9,13 +9,14 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-face-classic .mk-mid-hour
   line-height: .98 !important;
   color: rgba(var(--mk-num-color, 204,218,245), .75) !important;
   -webkit-text-fill-color: transparent !important;
-  -webkit-text-stroke: .2px rgba(255,255,255,.34);
+  /* Avoid fractional outline/shadow seams when Windows rasterizes scaled digits. */
+  -webkit-text-stroke: 0;
   background-image: linear-gradient(155deg,rgba(var(--mk-num-color,204,218,245),.92),rgba(var(--mk-num-color,204,218,245),.62) 52%,rgba(var(--mk-num-color,204,218,245),.85));
   background-size: cover;
   background-position: center;
   background-clip: text;
   -webkit-background-clip: text;
-  text-shadow: 0 1px 1px rgba(0,0,0,.12) !important;
+  text-shadow: none !important;
   opacity: var(--mk-num-alpha,1) !important;
   /* Negative tracking leaves the final glyph beyond its advance width.
      Keep that overhang inside the background-clip:text paint area. */
@@ -89,7 +90,7 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-fac
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="hours"] {
   z-index:2 !important;opacity:var(--wf-number-alpha,1) !important;
   font-size:50cqw !important;
-  -webkit-text-stroke:.2px color-mix(in srgb,var(--wf-tint) 35%,transparent);
+  -webkit-text-stroke:0;
   background-image:var(--wf-finish-paint) !important;
 }
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-face="photo"] [data-wf-part="hours"] {
@@ -159,7 +160,7 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-fac
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-face="modular"] [data-wf-part="remaining"],
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-face="modular"] [data-wf-part="fatigue"],
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-face="modular"] .mk-coffee-step {min-width:33cqw !important;min-height:21cqw !important;display:flex !important;align-items:center;justify-content:center;background:color-mix(in srgb,var(--wf-tint) 12%,#0b1720) !important;border:1px solid #ffffff12 !important;border-radius:12px !important;padding:4px !important;}
-html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-finish="1"] [data-wf-part="hours"] {background-image:var(--wf-finish-paint) !important;-webkit-text-stroke:.5px #ffffff80;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-finish="1"] [data-wf-part="hours"] {background-image:var(--wf-finish-paint) !important;-webkit-text-stroke:0;}
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-finish="2"] [data-wf-part="hours"] {background:var(--wf-tint) !important;background-clip:text !important;-webkit-background-clip:text !important;-webkit-text-stroke:0;text-shadow:none !important;}
 
 /* Shared tinted glass for the live information fields, with no blur work. */

@@ -2072,7 +2072,7 @@ function _mkToast(msg, type) {
       var pendingSkin = skin ? JSON.parse(JSON.stringify(skin)) : null;
       cloudTimers[k] = setTimeout(function() {
         delete cloudTimers[k];
-        cloudPush(name, pendingSkin);
+        cloudPush(name, pendingSkin, true);
       }, 300);
     } else {
       delete cloudTimers[k];
@@ -2162,10 +2162,10 @@ function _mkToast(msg, type) {
   }
   function cloudPush(name, sk, silent) {
     if (!window.MinkaApi || !window.MinkaApi.apiFetch) { warnLocalOnly(); return; }
-    cloudRevision++;
+    var revision = ++cloudRevision;
     cloudWrites++;
     return window.MinkaApi.apiFetch('/api/skins', { method: 'POST', json: { worker: cloudWorkerName(name), skin: packSkin(sk, name) || null } })
-      .then(function(r) { if (!r.ok) throw 0; if (!silent && typeof _mkToast === 'function') _mkToast('Izskats saglabāts — redzēs visi', 'ok'); })
+      .then(function(r) { if (!r.ok) throw 0; if (!silent && revision===cloudRevision && typeof _mkToast === 'function') _mkToast('Izskats saglabāts — redzēs visi', 'ok'); })
       .catch(warnLocalOnly)
       .finally(function(){ cloudWrites--; });
   }
@@ -23915,6 +23915,6 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
 <link rel="stylesheet" href="css/radio-side-cards.css?v=20260911split1">
 <script src="../js/radio-ambience.js?v=20260908ambient3"></script>
 <link rel="stylesheet" href="../css/calendar-surfaces.css?v=20260908surfaces3">
-<link rel="stylesheet" href="css/card-faces.css?v=20260912faces30">
+<link rel="stylesheet" href="css/card-faces.css?v=20260912faces31">
 </body>
 </html>

@@ -298,3 +298,29 @@ test('queued and in-flight local skin writes pause reads', async () => {
   pending.resolve({ ok: true });
   await tick();
 });
+
+test('live appearance autosaves stay quiet while failures remain visible', async () => {
+  const client=skinClient(),notices=[];
+  client.context._mkToast=(message,type)=>notices.push({message,type});
+  for(const rgb of ['10,20,30','20,30,40','30,40,50']){
+    client.context.skinTest.setSkin('ANNA',{t:'hue',rgb},true);
+    client.runTimer(300);await tick();
+  }
+  assert.equal(client.snapshot().calls,3);
+  assert.equal(notices.length,0);
+  client.context.MinkaApi.apiFetch=()=>Promise.resolve({ok:false});
+  client.context.skinTest.setSkin('ANNA',{t:'hue',rgb:'40,50,60'},true);
+  client.runTimer(300);await tick();
+  assert.equal(notices.length,1);assert.equal(notices[0].type,'error');
+});
+
+test('only the latest explicit appearance save reports success', async () => {
+  const client=skinClient(),notices=[],first=deferred(),last=deferred();
+  client.context._mkToast=(message,type)=>notices.push({message,type});
+  let count=0;client.context.MinkaApi.apiFetch=()=>count++?last.promise:first.promise;
+  client.context.skinTest.setSkin('ANNA',{t:'img',id:'23'});
+  client.context.skinTest.setSkin('ANNA',{t:'img',id:'28'});
+  last.resolve({ok:true});await tick();
+  first.resolve({ok:true});await tick();
+  assert.equal(notices.length,1);assert.equal(notices[0].type,'ok');
+});
