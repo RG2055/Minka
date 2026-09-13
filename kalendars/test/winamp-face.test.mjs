@@ -73,6 +73,21 @@ test('the time display is drawn from the real Winamp digit sprite', () => {
   assert.doesNotMatch(lcd, /drop-shadow/, 'a glow around a 9px digit only costs contrast');
 });
 
+test('the frame overlays are placed the way the frame itself is stretched', () => {
+  // The frame is a square picture scaled to 100% x 100% of a card that is not
+  // square, so anything that has to line up with it needs its vertical
+  // coordinates in per cent of the card height, not in width-derived units.
+  const rules = css.split('\n').filter(line => /\.mk-wa-(mqbox|pos|meter)|data-wf-part="(remaining|moon|month|clock|hours|fatigue|name|initials|emoji|coffee)"|\.mk-wf-depth/.test(line));
+  assert.ok(rules.length >= 12, 'found ' + rules.length + ' frame-aligned rules');
+  for (const rule of rules) {
+    for (const [prop] of [['top'], ['bottom']]) {
+      const match = new RegExp(prop + ':calc\\(var\\(--u\\)[^;]*').exec(rule);
+      assert.equal(match, null, prop + ' still measured off the card width: ' + (match && match[0]));
+    }
+  }
+  assert.match(css, /top:calc\(100% \* 120 \/ 148\)/, 'the time display sits on the panel the frame draws');
+});
+
 test('the shift numeral is lit on the same whole-pixel grid, without a halo', () => {
   const numeral = css.slice(css.indexOf('/* LED dot-matrix numeral. */'), css.indexOf('/* Name stays white'));
   const cells = numeral.match(/repeating-linear-gradient\([^)]*deg,#000 0 calc\((\d+)px \* var\(--wa-px\)\),transparent calc\(\d+px \* var\(--wa-px\)\) calc\((\d+)px \* var\(--wa-px\)\)\)/g);
