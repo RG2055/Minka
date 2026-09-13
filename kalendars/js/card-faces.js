@@ -73,6 +73,24 @@
      saved layout inside the display window. */
   var WA_SHEET = new URL('assets/winamp/base.png?v=20260912wa3', document.baseURI).href;
   var WA_FRAME = new URL('assets/winamp/frame.webp?v=20260912wa3', document.baseURI).href;
+  var WA_NUMS = new URL('assets/winamp/numbers.png?v=20260913wa1', document.baseURI).href;
+  /* Skin bitmaps only stay sharp at whole-number zoom, so the card picks the
+     biggest step it can hold instead of stretching the sprite to fit. What
+     sets the limit is the display window's top row: 17 skin px of time display
+     (13 for the digits, 2 of plate above and below) inside the 16 units
+     between the window's edge and the shift numeral. */
+  var WA_ZOOM_STEP = 157;
+  function waZoom(card) {
+    var width = card.clientWidth || card.getBoundingClientRect().width || 0;
+    var zoom = Math.max(1, Math.min(6, Math.floor(width / WA_ZOOM_STEP)));
+    if (card.dataset.waZoom !== String(zoom)) {
+      card.dataset.waZoom = String(zoom);
+      card.style.setProperty('--wa-px', zoom);
+    }
+  }
+  var waSizes = typeof ResizeObserver === 'function' ? new ResizeObserver(function (entries) {
+    entries.forEach(function (entry) { waZoom(entry.target); });
+  }) : null;
   var WA_TEXT = ['ABCDEFGHIJKLMNOPQRSTUVWXYZ"@   ', '0123456789….:()-\'!_+\\/[]^&%,=$#', 'ÅÖÄ?*'];
   var waRadio = { playing: false, text: '' };
   function waAscii(text) { return String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase(); }
@@ -121,10 +139,20 @@
     for (var i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
     return .3 + (h % 40) / 100;
   }
+  /* Winamp's time display is five characters wide, so a running H:MM:SS shift
+     timer drops its seconds — hours and minutes in digits twice the size read
+     from across the room, a full eight-digit row at half the size does not.
+     Under an hour it switches to MM:SS and keeps ticking. */
+  function waLcdText(raw) {
+    var text = String(raw || '').replace(/\s+/g, '');
+    var parts = /^(\d{1,2}):(\d{2}):(\d{2})$/.exec(text);
+    if (!parts) return text;
+    return +parts[1] ? (parts[1].length < 2 ? '0' : '') + parts[1] + ':' + parts[2] : parts[2] + ':' + parts[3];
+  }
   // Shift time as Winamp's LCD digits (NUMBERS sprite), refreshed whenever the
   // live text changes; ':' and '–' are drawn with CSS.
   function waLcd(el) {
-    var text = el.textContent.replace(/\s+/g, ''), lcd = el.querySelector(':scope > .mk-wa-lcd');
+    var text = waLcdText(el.textContent), lcd = el.querySelector(':scope > .mk-wa-lcd');
     if (!lcd) { lcd = document.createElement('span'); lcd.className = 'mk-wa-lcd'; lcd.setAttribute('aria-hidden', 'true'); el.append(lcd); }
     if (lcd.dataset.text === text) return;
     lcd.dataset.text = text;
@@ -146,7 +174,9 @@
   function clearWinamp(card) {
     if (!card.classList.contains('wf-winamp')) return;
     card.classList.remove('wf-winamp', 'is-playing');
-    card.style.removeProperty('--wa-sheet');card.style.removeProperty('--wa-frame');
+    if (waSizes) waSizes.unobserve(card);
+    delete card.dataset.waZoom;
+    ['--wa-sheet','--wa-frame','--wa-nums','--wa-px'].forEach(function (key) { card.style.removeProperty(key); });
     card.querySelectorAll(':scope > .mk-wa').forEach(function (el) { el.remove(); });
     var fatigue = card.querySelector('[data-wf-part="fatigue"]'); if (fatigue) fatigue.style.removeProperty('--fat');
     card.style.removeProperty('--fat');
@@ -157,6 +187,9 @@
     card.classList.add('wf-winamp');
     card.style.setProperty('--wa-sheet', 'url("' + WA_SHEET + '")');
     card.style.setProperty('--wa-frame', 'url("' + WA_FRAME + '")');
+    card.style.setProperty('--wa-nums', 'url("' + WA_NUMS + '")');
+    waZoom(card);
+    if (waSizes) waSizes.observe(card);
     var root = card.querySelector(':scope > .mk-wa');
     if (!root) {
       root = document.createElement('div'); root.className = 'mk-wa'; root.setAttribute('aria-hidden', 'true');
