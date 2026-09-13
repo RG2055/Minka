@@ -70,3 +70,11 @@ test('the time display is drawn from the real Winamp digit sprite', () => {
   assert.match(lcd, /image-rendering:pixelated/);
   assert.doesNotMatch(lcd, /drop-shadow/, 'a glow around a 9px digit only costs contrast');
 });
+
+test('the shift numeral is lit on the same whole-pixel grid, without a halo', () => {
+  const numeral = css.slice(css.indexOf('/* LED dot-matrix numeral. */'), css.indexOf('/* Name stays white'));
+  const cells = numeral.match(/repeating-linear-gradient\([^)]*deg,#000 0 calc\((\d+)px \* var\(--wa-px\)\),transparent calc\(\d+px \* var\(--wa-px\)\) calc\((\d+)px \* var\(--wa-px\)\)\)/g);
+  assert.equal(cells && cells.length, 4, 'both axes of both mask-image declarations run on whole pixels');
+  assert.doesNotMatch(numeral, /var\(--u\) \* 2\.3/, 'a grid in card units is what smeared the dots');
+  assert.doesNotMatch(numeral, /drop-shadow/, 'the glow was a blurred copy of the whole matrix');
+});

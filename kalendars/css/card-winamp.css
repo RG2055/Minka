@@ -92,11 +92,17 @@ html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafik
   background:none !important;background-image:none !important;-webkit-background-clip:border-box !important;background-clip:border-box !important;
   color:var(--wa-lcd) !important;-webkit-text-fill-color:var(--wa-lcd) !important;opacity:1 !important;
   padding:0 .05em .05em !important;
-  -webkit-mask-image:repeating-linear-gradient(90deg,#000 0 calc(var(--u) * 2.3),transparent calc(var(--u) * 2.3) calc(var(--u) * 3)),repeating-linear-gradient(0deg,#000 0 calc(var(--u) * 2.3),transparent calc(var(--u) * 2.3) calc(var(--u) * 3));
+  /* The dot grid is whole pixels wide (4 lit of every 5) and the same on both
+     axes, so every cell lands on a device pixel instead of being smeared
+     across two — a grid in card units left half the dots dim and broke the
+     strokes. Bigger cells with thinner gaps keep the digit's shape together
+     at card size. No glow either: blurring a copy of the whole matrix
+     underneath was what turned the numeral into a green haze. */
+  -webkit-mask-image:repeating-linear-gradient(90deg,#000 0 calc(4px * var(--wa-px)),transparent calc(4px * var(--wa-px)) calc(5px * var(--wa-px))),repeating-linear-gradient(0deg,#000 0 calc(4px * var(--wa-px)),transparent calc(4px * var(--wa-px)) calc(5px * var(--wa-px)));
   -webkit-mask-composite:source-in;
-  mask-image:repeating-linear-gradient(90deg,#000 0 calc(var(--u) * 2.3),transparent calc(var(--u) * 2.3) calc(var(--u) * 3)),repeating-linear-gradient(0deg,#000 0 calc(var(--u) * 2.3),transparent calc(var(--u) * 2.3) calc(var(--u) * 3));
+  mask-image:repeating-linear-gradient(90deg,#000 0 calc(4px * var(--wa-px)),transparent calc(4px * var(--wa-px)) calc(5px * var(--wa-px))),repeating-linear-gradient(0deg,#000 0 calc(4px * var(--wa-px)),transparent calc(4px * var(--wa-px)) calc(5px * var(--wa-px)));
   mask-composite:intersect;
-  filter:drop-shadow(0 0 calc(var(--u) * 1.5) color-mix(in srgb,var(--wa-lcd) 70%,transparent)) !important;
+  filter:none !important;
 }
 /* Name stays white, bold. */
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="name"] .name-main,
