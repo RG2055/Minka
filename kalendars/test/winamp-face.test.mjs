@@ -9,46 +9,61 @@ const numbers = await readFile(new URL('../assets/winamp/numbers.png', import.me
 
 function harness() {
   const context = vm.createContext({ document: { baseURI: 'https://example.test/kalendars/' }, URL, Math });
-  const slice = (from, to) => js.slice(js.indexOf(from), js.indexOf(to));
+  const slice = (from, to) => {
+    const start = js.indexOf(from), end = js.indexOf(to);
+    assert.ok(start >= 0 && end > start, 'card-faces.js no longer contains ' + JSON.stringify(start < 0 ? from : to));
+    return js.slice(start, end);
+  };
   vm.runInContext(slice('  var WA_SHEET = new URL(', '  var WA_TEXT ='), context);
-  vm.runInContext(slice('  function waLcdText(', '  // Shift time as Winamp'), context);
+  vm.runInContext(slice('  function waLcdText(', '  function waLcdCell('), context);
   return context;
 }
 function card(width) {
   const style = new Map();
   return { clientWidth: width, getBoundingClientRect: () => ({ width }), dataset: {},
-    style: { setProperty: (k, v) => style.set(k, String(v)) }, read: k => style.get(k) };
+    querySelector: () => null, style: { setProperty: (k, v) => style.set(k, String(v)) }, read: k => style.get(k) };
 }
 
-test('the shift timer keeps to the five cells a Winamp display has', () => {
+test('the readout shows the timer as it runs, seconds and all', () => {
   const { waLcdText } = harness();
-  assert.equal(waLcdText('07:38:55'), '07:38', 'hours and minutes while more than an hour is left');
-  assert.equal(waLcdText('7:05:09'), '07:05', 'a single-digit hour still fills both digit cells');
-  assert.equal(waLcdText('00:04:09'), '04:09', 'under an hour the seconds are the useful part');
-  assert.equal(waLcdText('00:00:07'), '00:07');
-  assert.equal(waLcdText('8–20'), '8–20', 'a shift window is passed through for the dash glyph');
-  assert.equal(waLcdText(' 12:30 '), '12:30', 'a plain clock reading is left alone');
-  assert.equal(waLcdText(''), '');
+  assert.equal(waLcdText('07:38:55', '1'), '07:38:55');
+  assert.equal(waLcdText(' 07:38:55 ', '1'), '07:38:55', 'the live timer arrives with the markup\u2019s whitespace');
+  assert.equal(waLcdText('8\u201320', '1'), '8\u201320', 'a shift window keeps its dash glyph');
+  assert.equal(waLcdText('', '1'), '');
+  // Too narrow a panel for eight cells: the seconds go, not the digit size.
+  assert.equal(waLcdText('07:38:55', ''), '07:38');
+  assert.equal(waLcdText('7:05:09', ''), '07:05');
+  assert.equal(waLcdText('00:04:09', ''), '04:09', 'under an hour the seconds are the useful part');
+  assert.equal(waLcdText('8\u201320', ''), '8\u201320');
 });
 
 test('skin bitmaps are zoomed in whole steps, never stretched to fit', () => {
   const { waZoom } = harness();
-  const zoom = width => { const el = card(width); waZoom(el); return Number(el.read('--wa-px')); };
-  for (const width of [0, 80, 165, 200, 260, 340, 420, 520, 900, 4000]) {
-    const value = zoom(width);
-    assert.ok(Number.isInteger(value), width + 'px card got a fractional zoom: ' + value);
-    assert.ok(value >= 1, width + 'px card must still draw at least 1:1');
+  const zooms = width => { const el = card(width); waZoom(el); return { skin: Number(el.read('--wa-px')), lcd: Number(el.read('--wa-px-lcd')) }; };
+  for (const width of [0, 80, 165, 200, 260, 340, 420, 520, 596, 900, 4000]) {
+    const { skin, lcd } = zooms(width);
+    for (const [name, value] of [['skin', skin], ['lcd', lcd]]) {
+      assert.ok(Number.isInteger(value), width + 'px card got a fractional ' + name + ' zoom: ' + value);
+      assert.ok(value >= 1, width + 'px card must still draw ' + name + ' at least 1:1');
+    }
+    assert.ok(lcd <= skin, 'the time display has the tighter box, so it can never zoom past the rest');
   }
-  assert.equal(zoom(200), 1, 'a small card stays at the sprite’s own size');
-  assert.equal(zoom(340), 2);
-  assert.equal(zoom(520), 3);
-  assert.ok(zoom(4000) <= 6, 'the zoom is capped so a huge card cannot blow the sprite up');
-  // 43 skin px of digits and gaps have to fit the 41.5 units of the transport
-  // bar's panel, and 13 of height its 13.5 units.
-  for (const width of [180, 260, 312, 340, 420, 520, 700]) {
-    assert.ok(43 * zoom(width) <= 41.5 * (width / 148), 'time display too wide for the panel at ' + width + 'px');
-    assert.ok(13 * zoom(width) <= 13.5 * (width / 148), 'time display too tall for the panel at ' + width + 'px');
+  assert.equal(zooms(200).skin, 1, 'a small card stays at the sprite\u2019s own size');
+  assert.equal(zooms(340).skin, 2);
+  assert.equal(zooms(520).skin, 3);
+  assert.equal(zooms(596).lcd, 2, 'a card the size of the one in the app fits H:MM:SS at double size');
+  assert.ok(zooms(4000).skin <= 6, 'the zoom is capped so a huge card cannot blow the sprite up');
+  // Whatever the card renders has to fit the panel: 67 skin px for H:MM:SS,
+  // 43 for the short form, across the 41.5 units the panel is wide.
+  const { waLcdFits } = harness();
+  for (const width of [180, 200, 240, 260, 340, 420, 520, 596, 700]) {
+    const { lcd } = zooms(width);
+    const cells = waLcdFits(width, lcd) ? 67 : 43;
+    assert.ok(cells * lcd <= 41.5 * (width / 148) + 1, 'time display too wide for the panel at ' + width + 'px');
+    assert.ok(13 * lcd <= 13.5 * (width / 148), 'time display too tall for the panel at ' + width + 'px');
   }
+  assert.ok(waLcdFits(596, zooms(596).lcd), 'a card the size of the one in the app shows the seconds');
+  assert.ok(!waLcdFits(180, zooms(180).lcd), 'a narrow card drops them instead of shrinking the digits');
 });
 
 test('the zoom is only recomputed when it actually changes', () => {
@@ -57,7 +72,7 @@ test('the zoom is only recomputed when it actually changes', () => {
   let writes = 0;
   el.style.setProperty = () => { writes++; };
   waZoom(el); waZoom(el); waZoom(el);
-  assert.equal(writes, 1);
+  assert.equal(writes, 2, 'both zoom variables, written once');
 });
 
 test('the time display is drawn from the real Winamp digit sprite', () => {
@@ -68,7 +83,7 @@ test('the time display is drawn from the real Winamp digit sprite', () => {
   assert.match(css, /--wa-nums/, 'the digits use the dedicated sprite, not the composed sheet');
   assert.doesNotMatch(css, /mask-source-type|mask-mode/, 'luminance masking is what browsers disagreed about');
   const lcd = css.slice(css.indexOf('.mk-wa-lcd b {'), css.indexOf('.mk-wa-lcd b.colon'));
-  assert.match(lcd, /width:calc\(9px \* var\(--wa-px\)\)/, 'digit cells are whole skin pixels');
+  assert.match(lcd, /width:calc\(9px \* var\(--wa-px-lcd\)\)/, 'digit cells are whole skin pixels');
   assert.match(lcd, /image-rendering:pixelated/);
   assert.doesNotMatch(lcd, /drop-shadow/, 'a glow around a 9px digit only costs contrast');
 });

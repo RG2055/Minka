@@ -18,7 +18,7 @@ html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafik
      the card's real width). A 9x13 digit stretched to 1.17 of its size lands
      between device pixels and turns to mush on Windows; at 1x, 2x or 3x every
      pixel stays a pixel. */
-  --wa-px:1;
+  --wa-px:1;--wa-px-lcd:1;
   border:0 !important;padding:0 !important;border-radius:9% !important; /* cqw on the card itself would resolve against an outer container */
   background:var(--wa-frame) center / 100% 100% no-repeat !important;box-shadow:none !important;
 }
@@ -137,15 +137,15 @@ html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafik
    contrast and a repaint. */
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="remaining"] { display:flex !important;align-items:center !important;justify-content:center !important;font-size:0 !important;line-height:0 !important;color:transparent !important;white-space:nowrap !important;background:#02110a !important;border:0 !important;box-shadow:none !important;padding:0 !important;overflow:hidden !important;max-width:none !important;border-radius:calc(var(--u) * .8) !important; }
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="remaining"] > :not(.mk-wa-lcd) { display:none !important; }
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-lcd { display:flex;gap:calc(1px * var(--wa-px));align-items:center; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-lcd { display:flex;gap:calc(1px * var(--wa-px-lcd));align-items:center; }
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-lcd b {
-  flex:none;display:block;width:calc(9px * var(--wa-px));height:calc(13px * var(--wa-px));background:var(--wa-lcd);
-  -webkit-mask:var(--wa-nums) calc(-9px * var(--wa-px) * var(--c,10)) 0 / calc(99px * var(--wa-px)) calc(13px * var(--wa-px)) no-repeat;
-  mask:var(--wa-nums) calc(-9px * var(--wa-px) * var(--c,10)) 0 / calc(99px * var(--wa-px)) calc(13px * var(--wa-px)) no-repeat;
+  flex:none;display:block;width:calc(9px * var(--wa-px-lcd));height:calc(13px * var(--wa-px-lcd));background:var(--wa-lcd);
+  -webkit-mask:var(--wa-nums) calc(-9px * var(--wa-px-lcd) * var(--c,10)) 0 / calc(99px * var(--wa-px-lcd)) calc(13px * var(--wa-px-lcd)) no-repeat;
+  mask:var(--wa-nums) calc(-9px * var(--wa-px-lcd) * var(--c,10)) 0 / calc(99px * var(--wa-px-lcd)) calc(13px * var(--wa-px-lcd)) no-repeat;
   image-rendering:pixelated;
 }
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-lcd b.colon { width:calc(3px * var(--wa-px));-webkit-mask:none;mask:none;background:linear-gradient(var(--wa-lcd),var(--wa-lcd)) 50% calc(4px * var(--wa-px)) / calc(2px * var(--wa-px)) calc(2px * var(--wa-px)) no-repeat,linear-gradient(var(--wa-lcd),var(--wa-lcd)) 50% calc(9px * var(--wa-px)) / calc(2px * var(--wa-px)) calc(2px * var(--wa-px)) no-repeat; }
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-lcd b.dash { width:calc(7px * var(--wa-px));-webkit-mask:none;mask:none;background:linear-gradient(var(--wa-lcd),var(--wa-lcd)) 50% 50% / calc(5px * var(--wa-px)) calc(2px * var(--wa-px)) no-repeat; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-lcd b.colon { width:calc(3px * var(--wa-px-lcd));-webkit-mask:none;mask:none;background:linear-gradient(var(--wa-lcd),var(--wa-lcd)) 50% calc(4px * var(--wa-px-lcd)) / calc(2px * var(--wa-px-lcd)) calc(2px * var(--wa-px-lcd)) no-repeat,linear-gradient(var(--wa-lcd),var(--wa-lcd)) 50% calc(9px * var(--wa-px-lcd)) / calc(2px * var(--wa-px-lcd)) calc(2px * var(--wa-px-lcd)) no-repeat; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-lcd b.dash { width:calc(7px * var(--wa-px-lcd));-webkit-mask:none;mask:none;background:linear-gradient(var(--wa-lcd),var(--wa-lcd)) 50% 50% / calc(5px * var(--wa-px-lcd)) calc(2px * var(--wa-px-lcd)) no-repeat; }
 /* Fatigue: label, segmented level bar, value. */
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="fatigue"] { display:flex !important;flex-direction:column !important;align-items:flex-start !important;gap:calc(var(--u) * 2) !important; }
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="fatigue"] .mk-mid-meta-label { order:0; }
