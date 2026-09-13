@@ -75,11 +75,10 @@
   var WA_FRAME = new URL('assets/winamp/frame.webp?v=20260912wa3', document.baseURI).href;
   var WA_NUMS = new URL('assets/winamp/numbers.png?v=20260913wa1', document.baseURI).href;
   /* Skin bitmaps only stay sharp at whole-number zoom, so the card picks the
-     biggest step it can hold instead of stretching the sprite to fit. What
-     sets the limit is the display window's top row: 17 skin px of time display
-     (13 for the digits, 2 of plate above and below) inside the 16 units
-     between the window's edge and the shift numeral. */
-  var WA_ZOOM_STEP = 157;
+     biggest step it can hold instead of stretching the sprite to fit. The
+     tightest fit is the time display inside the transport bar's panel: 43 skin
+     px of digits and gaps across the 41.5 units the panel is wide. */
+  var WA_ZOOM_STEP = 156;
   function waZoom(card) {
     var width = card.clientWidth || card.getBoundingClientRect().width || 0;
     var zoom = Math.max(1, Math.min(6, Math.floor(width / WA_ZOOM_STEP)));

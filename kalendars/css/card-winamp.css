@@ -70,20 +70,18 @@ html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafik
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part] {
   transform:translate(-50%,-50%) !important;color:var(--wa-lcd) !important;max-width:none !important;
 }
-/* Top row of the display window, in Winamp's own order: the shift symbol
-   stands where the player keeps its play indicator, the time display next to
-   it, the month chip at the far right. The clock chip moves down to the
-   bottom row — switched on in the editor it would otherwise land on the time,
-   which now needs the whole width it can reach at its largest zoom. */
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="moon"] { left:calc(var(--u) * 16) !important;top:calc(var(--u) * 32) !important;width:calc(var(--u) * 14) !important;height:calc(var(--u) * 14) !important; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="moon"] { left:calc(var(--u) * 41) !important;top:calc(var(--u) * 32) !important;width:calc(var(--u) * 14) !important;height:calc(var(--u) * 14) !important; }
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="month"] { left:calc(var(--u) * 121) !important;top:calc(var(--u) * 32) !important; }
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="clock"] { left:calc(var(--u) * 118) !important;top:calc(var(--u) * 106) !important; }
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="clock"] { left:calc(var(--u) * 82) !important;top:calc(var(--u) * 29) !important; }
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="hours"] { left:calc(var(--u) * 80) !important;top:calc(var(--u) * 59) !important; }
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="fatigue"] { left:calc(var(--u) * 29) !important;top:calc(var(--u) * 76) !important; }
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="name"] { left:calc(var(--u) * 78) !important;top:calc(var(--u) * 89) !important;width:calc(var(--u) * 58) !important; }
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="initials"] { left:calc(var(--u) * 118) !important;top:calc(var(--u) * 66) !important; }
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="emoji"] { left:calc(var(--u) * 118) !important;top:calc(var(--u) * 88) !important; }
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="remaining"] { left:calc(var(--u) * 28) !important;top:calc(var(--u) * 32) !important;transform:translate(0,-50%) !important;z-index:4 !important; }
+/* The time display takes over the whole dotted panel in the transport bar
+   (84..125.5 x 120..133.5 skin units, measured off frame.webp), so the digits
+   have every pixel of it to grow into. */
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="remaining"] { left:calc(var(--u) * 84) !important;top:calc(var(--u) * 120) !important;width:calc(var(--u) * 41.5) !important;height:calc(var(--u) * 13.5) !important;transform:none !important;z-index:4 !important; }
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="coffee"] { left:calc(var(--u) * 30) !important;top:calc(var(--u) * 106) !important; }
 
 /* LED dot-matrix numeral. */
@@ -129,18 +127,13 @@ html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafik
    NUMBERS sprite (kalendars/assets/winamp/numbers.png — see
    scripts/prepare-winamp-numbers.py), masked in the LCD colour so a tinted
    card tints the readout too. Sizes are whole skin pixels times --wa-px, so
-   nothing is ever resampled; the digits sit on their own flat plate, because
-   the frame's dotted texture behind thin strokes is what made the old readout
-   unreadable. No glow: a blurred halo around a 9 px digit costs contrast and
-   a repaint. */
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="remaining"] { font-size:0 !important;line-height:0 !important;color:transparent !important;white-space:nowrap !important;background:none !important;border:0 !important;box-shadow:none !important;padding:0 !important;overflow:visible !important;width:max-content !important;max-width:none !important; }
+   nothing is ever resampled. The panel is painted flat: its printed dot
+   texture behind the sprite's own unlit dots is what made the old readout
+   unreadable. No glow either — a blurred halo around a 9 px digit costs
+   contrast and a repaint. */
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="remaining"] { display:flex !important;align-items:center !important;justify-content:center !important;font-size:0 !important;line-height:0 !important;color:transparent !important;white-space:nowrap !important;background:#02110a !important;border:0 !important;box-shadow:none !important;padding:0 !important;overflow:hidden !important;max-width:none !important;border-radius:calc(var(--u) * .8) !important; }
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part="remaining"] > :not(.mk-wa-lcd) { display:none !important; }
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-lcd {
-  display:flex;gap:calc(1px * var(--wa-px));align-items:center;
-  padding:calc(2px * var(--wa-px)) calc(3px * var(--wa-px));
-  background:#02110a;border-radius:calc(1px * var(--wa-px));
-  box-shadow:inset 0 0 0 calc(1px * var(--wa-px)) #000a05;
-}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-lcd { display:flex;gap:calc(1px * var(--wa-px));align-items:center; }
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-lcd b {
   flex:none;display:block;width:calc(9px * var(--wa-px));height:calc(13px * var(--wa-px));background:var(--wa-lcd);
   -webkit-mask:var(--wa-nums) calc(-9px * var(--wa-px) * var(--c,10)) 0 / calc(99px * var(--wa-px)) calc(13px * var(--wa-px)) no-repeat;

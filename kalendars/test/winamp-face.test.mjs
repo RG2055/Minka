@@ -43,9 +43,11 @@ test('skin bitmaps are zoomed in whole steps, never stretched to fit', () => {
   assert.equal(zoom(340), 2);
   assert.equal(zoom(520), 3);
   assert.ok(zoom(4000) <= 6, 'the zoom is capped so a huge card cannot blow the sprite up');
-  // 17 skin px of time display have to fit the 16 units of the display's top row.
-  for (const width of [180, 260, 320, 340, 420, 520, 700]) {
-    assert.ok(17 * zoom(width) <= 16 * (width / 148) + 0.5, 'time display overflows at ' + width + 'px');
+  // 43 skin px of digits and gaps have to fit the 41.5 units of the transport
+  // bar's panel, and 13 of height its 13.5 units.
+  for (const width of [180, 260, 312, 340, 420, 520, 700]) {
+    assert.ok(43 * zoom(width) <= 41.5 * (width / 148), 'time display too wide for the panel at ' + width + 'px');
+    assert.ok(13 * zoom(width) <= 13.5 * (width / 148), 'time display too tall for the panel at ' + width + 'px');
   }
 });
 
