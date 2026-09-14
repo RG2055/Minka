@@ -7631,6 +7631,8 @@ window.addEventListener('resize', function() {
 // re-lays the calendar once while nothing is visible and calls 'in' (120 ms).
 // opacity only — no per-card work, no overlay, clicks are never blocked.
 var __fadeState = 'in', __fadeAnims = [], __fadeGuard = 0, __ptrDown = false;
+// Dim floor: 0 = full fade-through (read as a blink), ~0.3 = the cards only dim while they re-lay.
+var __fadeFloor = 0.3;
 document.addEventListener('pointerdown', function () { __ptrDown = true; }, true);
 document.addEventListener('pointerup', function () { __ptrDown = false; }, true);
 document.addEventListener('pointercancel', function () { __ptrDown = false; }, true);
@@ -7639,22 +7641,32 @@ window.__minkaCardsFade = function (dir, ms) {
   if (!list) return false;
   var reduce = false; try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_e) {}
   var targets = [list].concat(Array.prototype.slice.call(document.querySelectorAll('.mk-card-addon-portal')));
-  __fadeAnims.forEach(function (a) { try { a.cancel(); } catch (_e) {} }); __fadeAnims = [];
+  __fadeAnims.forEach(function (a) { try { a.onfinish = a.oncancel = null; a.cancel(); } catch (_e) {} }); __fadeAnims = [];
   clearTimeout(__fadeGuard); __fadeGuard = 0;
   if (dir === 'out') {
     // Skip the cosmetic part while the user is pressing on the calendar or the tab is hidden.
-    if (reduce || document.hidden || __ptrDown) { __fadeState = 'in'; return false; }
+    if (reduce || document.hidden || __ptrDown) { __fadeState = 'in'; targets.forEach(function (el) { if (el === list) el.style.opacity = ''; else el.style.filter = ''; }); return false; }
     __fadeState = 'out';
     // Portal clones carry opacity:1 !important (card-addons.css), so they fade through filter:opacity() instead.
-    targets.forEach(function (el) { var portal = el !== list; __fadeAnims.push(el.animate(portal ? [{ filter: 'opacity(1)' }, { filter: 'opacity(0)' }] : [{ opacity: 1 }, { opacity: 0 }], { duration: ms || 80, easing: 'ease-in', fill: 'forwards' })); });
+    targets.forEach(function (el) { var portal = el !== list; __fadeAnims.push(el.animate(portal ? [{ filter: 'opacity(1)' }, { filter: 'opacity(' + __fadeFloor + ')' }] : [{ opacity: 1 }, { opacity: __fadeFloor }], { duration: ms || 80, easing: 'ease-in', fill: 'forwards' })); });
     // Safety: never leave the calendar invisible if no layout call follows.
     __fadeGuard = setTimeout(function () { if (__fadeState === 'out') window.__minkaCardsFade('in', 120); }, 700);
     return true;
   }
-  // 'in': from the current (invisible) state to full, only if we actually faded out.
+  // 'in': from the dimmed state back to full, only if we actually dimmed.
   var wasOut = __fadeState === 'out';
   __fadeState = 'in';
-  targets.forEach(function (el) { var portal = el !== list; if (wasOut && !reduce && !document.hidden) __fadeAnims.push(el.animate(portal ? [{ filter: 'opacity(0)' }, { filter: 'opacity(1)' }] : [{ opacity: 0 }, { opacity: 1 }], { duration: ms || 120, easing: 'ease-out', fill: 'none' })); });
+  targets.forEach(function (el) {
+    var portal = el !== list;
+    if (!wasOut || reduce || document.hidden) return;
+    // Pin the dimmed value as the base first: cancelling the forwards-filled
+    // 'out' animation otherwise shows one frame at full opacity before the
+    // 'in' animation takes effect (a visible flash at the very swap).
+    if (portal) el.style.filter = 'opacity(' + __fadeFloor + ')'; else el.style.opacity = String(__fadeFloor);
+    var a = el.animate(portal ? [{ filter: 'opacity(' + __fadeFloor + ')' }, { filter: 'opacity(1)' }] : [{ opacity: __fadeFloor }, { opacity: 1 }], { duration: ms || 120, easing: 'ease-out', fill: 'forwards' });
+    a.onfinish = a.oncancel = function () { if (portal) el.style.filter = ''; else el.style.opacity = ''; try { a.cancel(); } catch (_e) {} };
+    __fadeAnims.push(a);
+  });
   return wasOut;
 };
 window.__minkaHostLayout = function(data, applyHost) {

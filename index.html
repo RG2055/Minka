@@ -1119,7 +1119,7 @@ const mkRadioReveal = (function () {
     if (running) return;                   // a newer reveal owns the state now
     try { document.body.classList.remove('radio-anim'); } catch (_e) {}
     try { cancelAnimationFrame(_syncRaf); _doSync(); } catch (_e) {}
-    try { clearTimeout(fadeTimer); const w = document.getElementById('calIframe')?.contentWindow; if (w && typeof w.__minkaCardsFade === 'function') w.__minkaCardsFade('in', 120); } catch (_e) {}
+    try { clearTimeout(fadeTimer); const w = document.getElementById('calIframe')?.contentWindow; if (w && typeof w.__minkaCardsFade === 'function') w.__minkaCardsFade('in', 160); } catch (_e) {}
     try { if (typeof window.__mkSyncRadioVisuals === 'function') window.__mkSyncRadioVisuals(); } catch (_e) {}
     if (!p.open) rollNextLook(p.rw);
   }
@@ -1195,7 +1195,7 @@ const mkRadioReveal = (function () {
     // The calendar's cards fade out over the reveal's last 80 ms,
     // so settle() re-lays them while invisible and fades the new layout in.
     clearTimeout(fadeTimer);
-    fadeTimer = setTimeout(function () { try { const w = document.getElementById('calIframe')?.contentWindow; if (running && w && typeof w.__minkaCardsFade === 'function') w.__minkaCardsFade('out', 80); } catch (_e) {} }, TOTAL_MS - 80);
+    fadeTimer = setTimeout(function () { try { const w = document.getElementById('calIframe')?.contentWindow; if (running && w && typeof w.__minkaCardsFade === 'function') w.__minkaCardsFade('out', 60); } catch (_e) {} }, TOTAL_MS - 60);
     const anims = [sh.animate(shellFrames, opts), rw.animate(winFrames, opts)];
     const me = running = { open: open, anims: anims, rw: rw };
     Promise.all(anims.map(a => a.finished)).then(
