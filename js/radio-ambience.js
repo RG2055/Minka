@@ -56,15 +56,27 @@
 
   function sync() {
     if (radio) {
-      expanded = !document.body.classList.contains('radio-hidden') &&
-        !document.body.classList.contains('radio-idle') &&
-        !document.body.classList.contains('lacitis-full') && radio.style.display !== 'none';
+      // While the dock-button reveal runs (body.radio-anim) the previous state
+      // stands: the glow fade and the calendar's transparency swap wait for
+      // the class to drop, which this observer sees as one more sync().
+      if (!document.body.classList.contains('radio-anim')) {
+        expanded = !document.body.classList.contains('radio-hidden') &&
+          !document.body.classList.contains('radio-idle') &&
+          !document.body.classList.contains('lacitis-full') && radio.style.display !== 'none';
+      }
       const palette = radio.style.getPropertyValue('--radio-ambient-rgb').trim();
       if (/^\d{1,3},\d{1,3},\d{1,3}$/.test(palette)) color = palette;
     }
     const visible = !document.hidden && hostVisible && !document.body.classList.contains('lacitis-full');
     const active = visible && expanded;
-    root.style.setProperty('--radio-ambient-rgb', color);
+    // Inherited custom property on :root = a style pass over every element.
+    // The calendar reads the colour only in its two duty panels, so write it
+    // there; the host keeps :root (its own document is small). Skip no-op writes.
+    const colourHosts = embedded && typeof document.querySelectorAll === 'function'
+      ? Array.from(document.querySelectorAll('#radiographers-duty, #radiologists-duty')) : [];
+    for (const el of (colourHosts.length ? colourHosts : [root])) {
+      if (el.style.getPropertyValue('--radio-ambient-rgb') !== color) el.style.setProperty('--radio-ambient-rgb', color);
+    }
     root.classList.toggle('minka-ambient-active', active);
     root.classList.toggle('minka-ambient-moving', active && Number(radio?.style.getPropertyValue('--radio-glow-strength') || .45) > 0 && !motion.matches && !modestDevice);
     root.classList.toggle('minka-visuals-hidden', !visible);
@@ -77,10 +89,22 @@
       const state = JSON.stringify([expanded, visible, color]);
       if (state !== lastMessage) {
         lastMessage = state;
-        frame.contentWindow.postMessage({type:'minka-radio-ambient', expanded, visible, color}, origin);
+        const data = {type:'minka-radio-ambient', expanded, visible, color};
+        // Same task as the caller (the host's layout pass), not a later message
+        // task: the calendar's ambient and radio-open flips then share one recalc.
+        let handed = false;
+        try { const w = frame.contentWindow; if (typeof w.__minkaAmbientApply === 'function') { w.__minkaAmbientApply(data); handed = true; } } catch (_e) {}
+        if (!handed) frame.contentWindow.postMessage(data, origin);
       }
     }
   }
+  function applyFromHost(data) {
+    if (!data || typeof data.expanded !== 'boolean' || typeof data.visible !== 'boolean' ||
+        typeof data.color !== 'string' || !/^\d{1,3},\d{1,3},\d{1,3}$/.test(data.color)) return;
+    expanded = data.expanded; hostVisible = data.visible; color = data.color;
+    sync();
+  }
+  if (embedded) window.__minkaAmbientApply = applyFromHost;
   document.addEventListener('visibilitychange', sync);
   window.addEventListener('pageshow', sync);
   motion.addEventListener('change', sync);
@@ -95,11 +119,7 @@
     if (radio && event.source === frame?.contentWindow && event.data.type === 'minka-ambient-ready') {
       lastMessage = ''; sync();
     } else if (embedded && event.source === window.parent && event.data.type === 'minka-radio-ambient') {
-      const data = event.data;
-      if (typeof data.expanded !== 'boolean' || typeof data.visible !== 'boolean' ||
-          typeof data.color !== 'string' || !/^\d{1,3},\d{1,3},\d{1,3}$/.test(data.color)) return;
-      expanded = data.expanded; hostVisible = data.visible; color = data.color;
-      sync();
+      applyFromHost(event.data);
     }
   });
   sync();

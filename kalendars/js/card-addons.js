@@ -931,7 +931,8 @@
     });
     scheduleAddonGeometry();
     scheduleTopperClearance();
-    scheduleScan();
+    // No scheduleScan(): a resize changes geometry only; which add-on a card
+    // wears is re-checked by the card mutation observer, not by every resize.
     scheduleAddonPortals(120);
   }, { passive: true });
 })();

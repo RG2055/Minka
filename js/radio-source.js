@@ -10,6 +10,7 @@
     window.__mkPauseRadioForLacitis?.();
     window.__hideLacMiniForRadio?.();
     document.getElementById('radioWindow')?.classList.remove('music-source');
+    document.body.classList.remove('radio-anim');
     document.body.classList.add('radio-hidden', 'radio-idle');
     document.getElementById('mediaProfile')?.close();
     window.__mkSyncRadioVisuals?.();
@@ -26,15 +27,16 @@
   window.minimizeRadioMusic = function () {
     if (requestedSource !== 'music') return;
     if (window.__minimizeMusicPanel) window.__minimizeMusicPanel();
-    document.body.classList.add('radio-hidden');
+    if (!(window.__mkRadioReveal && window.__mkRadioReveal.run(false))) document.body.classList.add('radio-hidden');
     updateDock(true, true);
     window.syncShellLayout();
   };
   window.toggleRadioMusicVisibility = function () {
     if (mobileView.matches) { closeMobileRadio(); return true; }
     if (requestedSource !== 'music') return false;
-    if (document.body.classList.contains('radio-hidden')) {
-      document.body.classList.remove('radio-hidden', 'radio-idle');
+    const reveal = window.__mkRadioReveal;
+    if (reveal ? !reveal.logicalOpen() : document.body.classList.contains('radio-hidden')) {
+      if (!(reveal && reveal.run(true))) document.body.classList.remove('radio-hidden', 'radio-idle');
       window.setRadioSource('music');
     } else window.minimizeRadioMusic();
     return true;

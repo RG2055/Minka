@@ -7621,17 +7621,23 @@ window.addEventListener('resize', function() {
   if (typeof hideShiftStopPopover === 'function') hideShiftStopPopover();
 });
 
-window.addEventListener('message', function(e) {
-  if (e.origin !== window.location.origin || e.source !== window.parent) return;
-  if (!e || !e.data || e.data.type !== 'hostLayoutChanged') return;
-  var data = e.data || {};
+// Host layout state (radio open/closed, its height). The host calls this
+// directly in the same task in which it resizes the iframe, so the class flip
+// and the size change land in one style/layout pass; postMessage is the
+// fallback. No synthetic 'resize': the real one fires when the frame resizes.
+window.__minkaHostLayout = function(data) {
+  data = data || {};
   var root = document.documentElement;
   root.classList.toggle('host-radio-open', !!data.radioVisible);
   root.style.setProperty('--host-radio-h', String(Math.max(0, data.radioHeight || 0)) + 'px');
   root.style.setProperty('--host-btnbar-h', String(Math.max(0, data.buttonBarHeight || 0)) + 'px');
   requestAnimationFrame(function(){
-    try { window.dispatchEvent(new Event('resize')); } catch(_e) {}
     var pop = document.getElementById('miniCalPopup');
     if (pop && pop.style.display !== 'none') positionMiniCalPopup();
   });
+};
+window.addEventListener('message', function(e) {
+  if (e.origin !== window.location.origin || e.source !== window.parent) return;
+  if (!e || !e.data || e.data.type !== 'hostLayoutChanged') return;
+  window.__minkaHostLayout(e.data);
 });

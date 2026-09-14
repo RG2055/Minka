@@ -94,9 +94,12 @@ audio.preload = "none";
 // that never died — after a day of use dozens of loops were ticking at once.
 let __drawScheduled = false;
 function radioVisualsInactive() {
+    // radio-anim: the dock-button reveal is running; the spectrum stays frozen
+    // for those 300 ms and is restarted by the host once the reveal finishes.
     return document.hidden || window.__mkRadioSupersededByLacitis ||
         document.body.classList.contains('radio-hidden') ||
-        document.body.classList.contains('radio-idle');
+        document.body.classList.contains('radio-idle') ||
+        document.body.classList.contains('radio-anim');
 }
 function scheduleDraw(delayMs) {
     if (__drawScheduled) return;
@@ -3340,6 +3343,11 @@ function focusRadio(){
     return '';
   }
   function paintAppearance(){
+    // One look change reaches here up to four times (accent mode, theme,
+    // settings, controls). While applyLookSettings runs, every call is
+    // batched into its single final paint: one set of style writes, one
+    // set of geometry reads, instead of a write→read→write cycle per pass.
+    if(applyingProfile)return;
     const rw=document.getElementById('radioWindow');if(!rw)return;
     rw.dataset.radioLayout=['classic','clean','pioneer'].includes(appearance.layout)?appearance.layout:'classic';
     rw.dataset.vizFrame=['on','off'].includes(appearance.vizFrame)?appearance.vizFrame:'auto';
@@ -3413,7 +3421,7 @@ function focusRadio(){
     setSaved({name:data.theme||'Dziļais okeāns',accent:safeColor(data.accent,'#1ed760'),accentMode:data.accentMode||'album',enabled:true});
     if(/^(none|bass|bassplus|clear|studio|radio|chill|depth|lofi)$/.test(data.eq||'')){window.__eqMode=data.eq;if(lowNode)setEQ(data.eq);}
     if(/^\d+$/.test(data.viz||''))setVizStyle(Number(data.viz));
-    applyTheme(getSaved().name);paintAppearance();applyingProfile=false;
+    applyTheme(getSaved().name);applyingProfile=false;paintAppearance();
   }
   function vizPreviewSource(mode){
     return `kalendars/data/radio-viz/${mode===MK_FLOW_VIZ?24:mode}.webp?v=${mode===5?'20260908d1':'20260908c2'}`;
@@ -3536,8 +3544,8 @@ function focusRadio(){
     quick.setAttribute('aria-pressed',String(!!person&&getSaved().name==='Mana kartīte'&&appearance.cardName===person.name));
     quick.setAttribute('aria-label',person?'Izmantot savu kartītes izskatu '+name:'Ielogoties, lai izmantotu savu kartītes izskatu');
   }
-  function syncLookControls(){
-    syncCardChoice();const data=lookSnapshot();panel.querySelectorAll('[data-look]').forEach(e=>{e.value=data[e.dataset.look]??LOOK_DEFAULTS[e.dataset.look]??'0';});paintAppearance();
+  function syncLookControls(repaint=true){
+    syncCardChoice();const data=lookSnapshot();panel.querySelectorAll('[data-look]').forEach(e=>{e.value=data[e.dataset.look]??LOOK_DEFAULTS[e.dataset.look]??'0';});if(repaint)paintAppearance();
   }
   const closeProfileLook=()=>{lookBefore=null;imageCropDraft=null;imageDrag=null;panel.classList.remove('open');panel.setAttribute('aria-hidden','true');};
   window.rgTheme={snapshot:lookSnapshot,captureGuest:captureGuestLook,restoreGuest:data=>{closeProfileLook();restoreGuestLook(data);},applyProfile:data=>{closeProfileLook();applyLookSettings({...data,imageCrops:data.imageCrops??legacyImageCrops(window.__mkUnifiedMedia?.getSession()?.workerId)});}};
@@ -3573,7 +3581,7 @@ function focusRadio(){
     const viz = rand(spectra);
     closeProfileLook();
     applyLookSettings({ ...now, theme: theme.name, layout, viz: String(viz.idx), background: '', cardName: '' });
-    try { syncLookControls(); } catch (_) {}
+    try { syncLookControls(false); } catch (_) {}   // applyLookSettings already painted this look
   }
   // Only on an explicit open (toggleRadio): a reload keeps the guest look it had.
   (window.rgTheme = window.rgTheme || {}).randomGuest = randomGuestLook;

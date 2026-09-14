@@ -46,7 +46,9 @@
     above the login pill, and never intercepts anything. ✕ hides it until the
     radio is opened again. */
  let hint=null,hintDismissed=false,hintLoading=false;
- function radioOpen(){const win=$('radioWindow');if(!win||document.body.classList.contains('radio-hidden'))return false;try{return getComputedStyle(win).display!=='none'&&seg.getClientRects().length>0;}catch(_){return false;}}
+ // Idle no longer means display:none (the window is pre-warmed in layout), and
+ // radio-anim is the dock-button reveal in flight: neither counts as open.
+ function radioOpen(){const win=$('radioWindow'),cls=document.body.classList;if(!win||cls.contains('radio-hidden')||cls.contains('radio-idle')||cls.contains('radio-anim'))return false;try{const cs=getComputedStyle(win);return cs.display!=='none'&&cs.visibility!=='hidden'&&seg.getClientRects().length>0;}catch(_){return false;}}
  function positionHint(){
   if(!hint)return;const b=trigger.getBoundingClientRect();if(!b.width){hint.style.visibility='hidden';return;}
   hint.style.visibility='';

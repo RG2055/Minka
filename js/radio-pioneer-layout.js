@@ -123,7 +123,7 @@
  }
  function build(rw){
   if(head)return;
-  const css=document.createElement('link');css.rel='stylesheet';css.href='css/radio-pioneer-layout.css?v=20260910oel1';css.onload=()=>{window.syncShellLayout?.();window.dispatchEvent(new Event('resize'));};document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href='css/radio-pioneer-layout.css?v=20260910oel1';css.onload=()=>{window.syncShellLayout?.();syncMatrix();};document.head.append(css);
   head=document.createElement('div');head.className='pioneer-faceplate';head.innerHTML='<strong>Pioneer</strong>';rw.prepend(head);
   knob=document.createElement('div');knob.className='pioneer-volume';knob.innerHTML='<div class="pioneer-knob"><i aria-hidden="true"></i><span aria-hidden="true">VOLUME</span></div>';
   display=document.createElement('div');display.className='pioneer-display';

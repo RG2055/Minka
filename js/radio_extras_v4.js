@@ -254,6 +254,7 @@ function drawDotMatrix(ctx, W, H, data, dt=16.7) {
     return !document.hidden &&
       !document.body.classList.contains('radio-hidden') &&
       !document.body.classList.contains('radio-idle') &&
+      !document.body.classList.contains('radio-anim') &&
       typeof audio !== 'undefined' && !audio.paused &&
       typeof analyser !== 'undefined' && !!analyser &&
       typeof vizStyle !== 'undefined' && vizStyle >= 8 && vizStyle <= 10 &&

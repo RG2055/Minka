@@ -37,7 +37,7 @@
   }
   window.__minkaHasApiAuth = function() { return !!getToken(); };
 
-  var CALENDAR_BUILD = '20260914sekundes2';
+  var CALENDAR_BUILD = '20260914reveal2';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -354,8 +354,10 @@
 :root {
   --rh: clamp(142px, 21vh, 170px);        /* fallback radio height */
   --btnbar-h: 78px;
-  --calendar-safe-gap: 14px;
-  --calendar-bottom: calc(var(--rh) + var(--btnbar-h) + var(--calendar-safe-gap));
+  --calendar-safe-gap: 0px;
+  /* Calendar layout is owned by _doSync() (JS), never by body.radio-* classes:
+     the radio's open/close animation must not resize the iframe mid-flight. */
+  --calendar-bottom: var(--btnbar-h);
   --font: 'Space Grotesk', system-ui, sans-serif;
 }
 html, body {
@@ -419,8 +421,7 @@ html.mk-low-spec #calendarEmbed {
   opacity: .9;
   z-index: 0;
 }
-body.radio-hidden #calendarEmbed { bottom: calc(var(--btnbar-h) + 4px); }
-body.radio-idle #calendarEmbed { bottom: calc(var(--btnbar-h) + 4px) !important; }
+/* body.radio-hidden / body.radio-idle no longer touch #calendarEmbed — see --calendar-bottom. */
 body.lacitis-docked #calendarEmbed { bottom: var(--calendar-bottom) !important; }
 /* Work panels cover the radio without changing its playback or open state. */
 body.bolus-work-open #bolus-overlay { z-index: 170100 !important; }
@@ -458,6 +459,43 @@ body.radio-hidden #radioWindow {
   opacity: 0;
   pointer-events: none;
 }
+/* Morph mode (html.radio-morph, set by the reveal module): the window never
+   slides. Hidden = in place, invisible. Open/close is the dock-button morph
+   shell plus a Web Animations opacity ramp on the window itself, so no CSS
+   transition may compete (transitions outrank animations in the cascade). */
+html.radio-morph body #radioWindow,
+html.radio-morph body.radio-hidden #radioWindow,
+html.radio-morph body.radio-idle #radioWindow {
+  transform: none !important;
+  transition: none !important;
+}
+html.radio-morph body.radio-hidden #radioWindow,
+html.radio-morph body.radio-idle #radioWindow {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+html.radio-morph body.radio-anim #radioWindow {
+  visibility: visible;
+  pointer-events: none;
+}
+/* Morph shell: a plain rounded slab that grows from the dock button into the
+   radio's frame. transform + opacity only; no shadow, blur or clip. */
+#radioMorph {
+  position: fixed; left: 0; top: 0;
+  display: none;
+  border-radius: 24px;
+  /* Static paint (one layer, scaled by the compositor): the radio's slab
+     colour with a faint lit top edge so it reads against the black page. */
+  background: linear-gradient(180deg, #232733, #15171e 40%, #111319);
+  border: 1px solid rgba(0,255,136,0.32);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.10);
+  transform-origin: 0 0;
+  pointer-events: none;
+  z-index: 161500;
+  contain: strict;
+}
+#radioMorph.on { display: block; will-change: transform, opacity; }
 html.mk-low-spec #calendarEmbed::before,
 html.mk-low-spec #macscapeBg,
 html.mk-low-spec #bottomBtnBar::before,
@@ -535,7 +573,7 @@ body.radio-hidden #radioToggle .rtog-led { background: #333; box-shadow: none; a
 body:not(.radio-idle) #radioIdleBtn{display:none;}
 .rg-idle-icon{width:48px;height:48px;display:block;border-radius:12px;filter:drop-shadow(0 0 8px rgba(0,220,90,0.35)) drop-shadow(0 10px 22px rgba(0,0,0,0.65));animation:rgIdlePulse 2.6s ease-in-out infinite;}
 @keyframes rgIdlePulse{0%,100%{transform:scale(1);}50%{transform:scale(1.05);}}
-body.radio-idle #radioWindow{display:none!important;}
+body.radio-idle #radioWindow{visibility:hidden;opacity:0;pointer-events:none;transform:translateY(100%)!important;}
 body.radio-idle #radioToggle{display:none;}
 body:not(.radio-idle) #radioIdleBtn{display:none;}
 
@@ -984,9 +1022,9 @@ async function loadRadioScripts() {
     document.head.appendChild(_fa);
   }
   await loadAny(['js/radio-metadata.js?v=20260910metadata1']);
-  await loadAny(['js/radio-pioneer-layout.js?v=20260910oel1']);
-  await loadAny(['js/radio.js?v=20260911guest3']);
-  await loadAny(['js/radio_extras_v4.js?v=20260908visuals1']);
+  await loadAny(['js/radio-pioneer-layout.js?v=20260914reveal2']);
+  await loadAny(['js/radio.js?v=20260914reveal2']);
+  await loadAny(['js/radio_extras_v4.js?v=20260914reveal1']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;
   return true;
@@ -998,41 +1036,227 @@ async function loadRadioScripts() {
 /* ──────────────────────────────────────────────
    RADIO TOGGLE & CALENDAR SYNC
 ────────────────────────────────────────────── */
+/* ──────────────────────────────────────────────
+   RADIO REVEAL: dock button ⇄ radio window morph
+   Frame 0 does class flips and two compositor-only animations (a plain
+   shell slab: transform+opacity; the window: opacity). Everything heavy —
+   calendar reflow, ambience, visualizer restart, the next guest look — waits
+   until the animation has finished, and the next look is rolled while the
+   radio is closed, so an open never changes what is on screen.
+────────────────────────────────────────────── */
+const mkRadioReveal = (function () {
+  const TOTAL_MS = 300;                // whole reveal
+  const MORPH = 'cubic-bezier(.2,.8,.2,1)';
+  let shell = null, running = null, guard = 0;
+  let pending = null;                  // last state asked for during a reveal
+  document.documentElement.classList.add('radio-morph');
+
+  function reduced() {
+    try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_e) { return false; }
+  }
+  function dockButton() {
+    for (const id of ['radioToggle', 'radioIdleBtn']) {
+      const b = document.getElementById(id);
+      if (b && b.offsetWidth > 0 && b.offsetHeight > 0) return b;
+    }
+    return null;
+  }
+  function getShell() {
+    if (!shell) {
+      shell = document.createElement('div');
+      shell.id = 'radioMorph';
+      shell.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(shell);
+    }
+    return shell;
+  }
+  // One measurement pass, before any style flips dirty the layout.
+  function geometry(rw) {
+    const btn = dockButton();
+    const b = btn ? btn.getBoundingClientRect() : null;
+    const r = rw.getBoundingClientRect();
+    if (!r.width || !r.height) return null;
+    const from = (b && b.width) ? b : { left: r.left + r.width / 2 - 48, top: r.bottom + 12, width: 96, height: 48 };
+    return {
+      w: r.width, h: r.height,
+      end: 'translate(' + r.left + 'px,' + r.top + 'px) scale(1,1)',
+      start: 'translate(' + from.left + 'px,' + from.top + 'px) scale(' + (from.width / r.width) + ',' + (from.height / r.height) + ')'
+    };
+  }
+  // Always leaves a consistent state: radio-anim never survives a cancelled
+  // or rejected animation (finished() rejects with AbortError on cancel), and
+  // the visualizer is re-synced even if a deferred step throws.
+  function finalize(rw, open) {
+    if (!running) return;
+    clearTimeout(guard);
+    const anims = running.anims || [];
+    running = null;
+    anims.forEach(a => { try { a.cancel(); } catch (_e) {} });
+    if (shell) shell.classList.remove('on');
+    const body = document.body;
+    if (!open) body.classList.add('radio-hidden');
+    // A click that arrived mid-reveal asked for the opposite state: honour it now.
+    const next = pending; pending = null;
+    if (next !== null && next !== open) { body.classList.remove('radio-anim'); run(next); return; }
+    // Settle in ONE frame callback: drop radio-anim, hand the calendar its new
+    // state and resize it (_doSync), restart the visualizer. The ambience
+    // observer fires in this task's microtasks and also writes straight into
+    // the calendar, so the host and the iframe each get a single style/layout
+    // pass for the whole state change instead of one per message.
+    settlePending = { rw: rw, open: open };
+    if (document.hidden) settle();         // no frames while hidden: settle right now, no animation to wait for
+    else { requestAnimationFrame(settle); setTimeout(settle, 120); }   // rAF normally; the timer if frames stall
+  }
+  // Settles the logical state after a reveal: drop radio-anim, hand the
+  // calendar its new state and resize it (_doSync), re-sync the visualizer
+  // (which itself stays asleep while document.hidden), roll the next look.
+  let settlePending = null;
+  function settle() {
+    const p = settlePending;
+    if (!p) return;
+    settlePending = null;
+    if (running) return;                   // a newer reveal owns the state now
+    try { document.body.classList.remove('radio-anim'); } catch (_e) {}
+    try { cancelAnimationFrame(_syncRaf); _doSync(); } catch (_e) {}
+    try { if (typeof window.__mkSyncRadioVisuals === 'function') window.__mkSyncRadioVisuals(); } catch (_e) {}
+    if (!p.open) rollNextLook(p.rw);
+  }
+  // Tab lifecycle: a reveal caught by a tab switch ends immediately in its
+  // target state (no timer to wait for); on return, anything left over is
+  // settled before the user can click again.
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) {
+      if (running) finalize(running.rw, running.open);
+      settle();
+    } else {
+      settle();
+      if (!running && document.body.classList.contains('radio-anim')) {
+        settlePending = { rw: document.getElementById('radioWindow'), open: !document.body.classList.contains('radio-hidden') };
+        settle();
+      }
+    }
+  });
+  // Guests get a fresh look per open; roll it while closed and invisible so
+  // the open itself never restyles anything. Pre-decode its skin image too.
+  function rollNextLook(rw) {
+    const roll = function () {
+      const b = document.body.classList;
+      if (!b.contains('radio-hidden') || b.contains('radio-anim')) return;   // reopened already
+      try { window.rgTheme?.randomGuest?.(); } catch (_e) {}
+      try {
+        const m = /url\("?([^")]+)"?\)/.exec(rw.style.backgroundImage || '');
+        if (m) { const img = new Image(); img.src = m[1]; if (img.decode) img.decode().catch(function () {}); }
+      } catch (_e) {}
+    };
+    if ('requestIdleCallback' in window) requestIdleCallback(roll, { timeout: 2000 });
+    else setTimeout(roll, 400);
+  }
+  // The state the UI is heading for: during a reveal, its target.
+  function logicalOpen() {
+    if (running) return pending !== null ? pending : running.open;
+    const c = document.body.classList;
+    return !c.contains('radio-hidden') && !c.contains('radio-idle');
+  }
+  function run(open) {
+    const rw = document.getElementById('radioWindow');
+    if (!rw) return false;
+    if (running) { pending = open; return true; }   // remember the last request; finalize() applies it
+    const body = document.body;
+    const geo = reduced() ? null : geometry(rw);
+    body.classList.add('radio-anim');
+    if (open) { body.classList.remove('radio-hidden'); body.classList.remove('radio-idle'); }
+    if (!geo) { running = { open: open, anims: [], rw: rw }; finalize(rw, open); return true; }
+    const sh = getShell();
+    sh.style.width = geo.w + 'px';
+    sh.style.height = geo.h + 'px';
+    sh.classList.add('on');
+    let shellFrames, winFrames;
+    if (open) {
+      // Slab grows out of the dock button, then fades to reveal the window.
+      shellFrames = [
+        { transform: geo.start, opacity: 1, easing: MORPH },
+        { transform: geo.end,   opacity: 1, offset: .74, easing: 'linear' },
+        { transform: geo.end,   opacity: 0 }
+      ];
+      winFrames = [{ opacity: 0 }, { opacity: 0, offset: .45 }, { opacity: 1 }];
+    } else {
+      // Slab covers the window, shrinks back into the button, fades away.
+      shellFrames = [
+        { transform: geo.end,   opacity: 0, easing: 'linear' },
+        { transform: geo.end,   opacity: 1, offset: .2, easing: MORPH },
+        { transform: geo.start, opacity: 1, offset: .9, easing: 'linear' },
+        { transform: geo.start, opacity: 0 }
+      ];
+      winFrames = [{ opacity: 1 }, { opacity: 0, offset: .35 }, { opacity: 0 }];
+    }
+    const opts = { duration: TOTAL_MS, fill: 'both' };
+    const anims = [sh.animate(shellFrames, opts), rw.animate(winFrames, opts)];
+    const me = running = { open: open, anims: anims, rw: rw };
+    Promise.all(anims.map(a => a.finished)).then(
+      function () { if (running === me) finalize(rw, open); },
+      function () { if (running === me) finalize(rw, open); }   // AbortError: cancelled → settle the state now
+    );
+    guard = setTimeout(function () { if (running === me) finalize(rw, open); }, TOTAL_MS + 250);   // hidden tab / stalled timeline
+    return true;
+  }
+  return { run: run, busy: function () { return !!running; }, logicalOpen: logicalOpen };
+})();
+window.__mkRadioReveal = mkRadioReveal;
+
+// Pre-warm: once the schedule has painted and the machine is idle, put the
+// (still invisible) radio window into layout and load its scripts, so the
+// first open is the same 300 ms reveal as every later one instead of a
+// script-parse stall. Nothing plays until the user presses the button.
+(function () {
+  let done = false;
+  function prewarm() {
+    if (done) return;
+    done = true;
+    if (window.isRadioMobileView?.()) return;
+    const rw = document.getElementById('radioWindow');
+    if (rw && document.body.classList.contains('radio-idle')) rw.style.display = '';
+    loadRadioScripts().catch(function () {});
+  }
+  function schedule() {
+    if ('requestIdleCallback' in window) requestIdleCallback(prewarm, { timeout: 6000 });
+    else setTimeout(prewarm, 2500);
+  }
+  window.addEventListener('message', function (e) {
+    const frame = document.getElementById('calIframe');
+    if (e.origin === window.location.origin && frame && e.source === frame.contentWindow && e.data && e.data.type === 'minka:appReady') schedule();
+  });
+})();
+
 function toggleRadio() {
   if (window.isRadioMobileView?.()) return;
   if (window.toggleRadioMusicVisibility && window.toggleRadioMusicVisibility()) return;
-  if (window.setRadioSource && document.body.classList.contains('radio-hidden')) window.setRadioSource('radio');
-  const isHidden = document.body.classList.contains('radio-hidden');
+  // During a reveal the classes lag the target state; ask the reveal instead.
+  const isHidden = !mkRadioReveal.logicalOpen();
+  if (window.setRadioSource && isHidden) window.setRadioSource('radio');
   if (isHidden) {
-    // Show radio
+    // Show radio. The look was rolled while closed (see rollNextLook).
     window.__mkRadioSupersededByLacitis = false;
     try { if (typeof window.__hideLacMiniForRadio === 'function') window.__hideLacMiniForRadio(); } catch(e) {}
-    document.body.classList.remove('radio-hidden');
-    document.body.classList.remove('radio-idle');
     const rw = document.getElementById('radioWindow');
     if (rw) rw.style.display = '';
-    // Guests get a fresh random look on every open; on the very first open the
-    // radio scripts are still loading, so roll once they are in.
-    try {
-      if (window.rgTheme?.randomGuest) window.rgTheme.randomGuest();
-      else loadRadioScripts().then(function () { try { window.rgTheme?.randomGuest?.(); } catch (_e) {} });
-    } catch (_e) {}
     // Update toggle label
     document.getElementById('radioToggleLabel').textContent = 'RADIO';
     document.getElementById('radioToggleIcon').innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" style="opacity:.7;vertical-align:middle" aria-hidden="true"><path d="M4 8l8 8 8-8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-    syncShellLayout();
+    mkRadioReveal.run(true);
+    // Pre-warm normally has these in; if not, load them in parallel with the reveal.
+    if (!_radioScriptsLoaded) loadRadioScripts().catch(function (err) { console.error(err); });
   } else {
     // Close the music engine as well when its shared shell is hidden.
     if (window.setRadioSource) window.setRadioSource('radio');
-    document.body.classList.add('radio-hidden');
     document.getElementById('radioToggleIcon').innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" style="opacity:.85;vertical-align:middle" aria-hidden="true"><path d="M9 18V5l12-2v13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="18" r="3" fill="currentColor"/><circle cx="18" cy="16" r="3" fill="currentColor"/></svg>';
-    syncShellLayout();
+    mkRadioReveal.run(false);
   }
-  try { if (typeof window.__mkSyncRadioVisuals === 'function') window.__mkSyncRadioVisuals(); } catch(e) {}
 }
 
 function radioIdleClick() {
   if (window.isRadioMobileView?.()) return;
+  const reveal = window.__mkRadioReveal;
+  if (reveal && reveal.busy()) return;
   if (window.setRadioSource) window.setRadioSource('radio');
   const btn = document.getElementById('radioIdleBtn');
   if (!btn || btn._loading) return;
@@ -1042,10 +1266,11 @@ function radioIdleClick() {
   try { if (typeof window.__hideLacMiniForRadio === 'function') window.__hideLacMiniForRadio(); } catch(e) {}
   const rw = document.getElementById('radioWindow');
   if (rw) rw.style.display = '';
-  document.body.classList.remove('radio-idle');
-  document.body.classList.remove('radio-hidden');
-  syncShellLayout();
-  try { if (typeof window.__mkSyncRadioVisuals === 'function') window.__mkSyncRadioVisuals(); } catch(e) {}
+  if (!(reveal && reveal.run(true))) {
+    document.body.classList.remove('radio-idle');
+    document.body.classList.remove('radio-hidden');
+    syncShellLayout();
+  }
 
   loadRadioScripts().then(function() {
     function tryStart() {
@@ -1072,6 +1297,7 @@ function syncShellLayout() {
   _syncRaf = requestAnimationFrame(_doSync);
 }
 function _doSync() {
+  if (document.body.classList.contains('radio-anim')) return;   // finalize() re-syncs after the reveal
   const root = document.documentElement;
   const rw = document.getElementById('radioWindow');
   const iframe = document.getElementById('calIframe');
@@ -1089,15 +1315,21 @@ function _doSync() {
   const lacH = lacVisible ? Math.max(0, Math.round(lac.getBoundingClientRect().height || 0)) : 0;
   const consoleH = Math.max(radioH, lacH);
   const consoleVisible = radioVisible || lacVisible;
-  const safeGap = consoleVisible ? 10 : 6;
+  const safeGap = consoleVisible ? 10 : 0;   // closed: bottom = --btnbar-h (+4px in #calendarEmbed), as before
   const layoutKey = [btnH, consoleH, consoleVisible, window.innerWidth, window.innerHeight].join(':');
   if (layoutKey === _lastShellLayout) return;
   _lastShellLayout = layoutKey;
+  // Same-origin: hand the calendar its new state in this very task, so its
+  // class flip, our --calendar-bottom write and the iframe resize are one
+  // style/layout pass instead of three. postMessage remains the fallback.
+  const payload = { type: 'hostLayoutChanged', radioVisible: consoleVisible, radioHeight: consoleH, buttonBarHeight: btnH };
+  let handed = false;
+  try { const w = iframe && iframe.contentWindow; if (w && typeof w.__minkaHostLayout === 'function') { w.__minkaHostLayout(payload); handed = true; } } catch(e) {}
   root.style.setProperty('--btnbar-h', btnH + 'px');
   root.style.setProperty('--calendar-safe-gap', safeGap + 'px');
   root.style.setProperty('--calendar-bottom', (consoleH + btnH + safeGap) + 'px');
-  if (iframe && iframe.contentWindow) {
-    try { iframe.contentWindow.postMessage({ type: 'hostLayoutChanged', radioVisible: consoleVisible, radioHeight: consoleH, buttonBarHeight: btnH }, window.location.origin); } catch(e) {}
+  if (!handed && iframe && iframe.contentWindow) {
+    try { iframe.contentWindow.postMessage(payload, window.location.origin); } catch(e) {}
   }
 }
 
@@ -2567,8 +2799,8 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
 
 <script src="kalendars/js/daybook-model.js?v=20260911b" defer></script>
 <script src="js/radio-daybook.js?v=20260911i" defer></script>
-<script src="js/media-profile.js?v=20260911auth12" defer></script>
-<script src="js/radio-source.js?v=20260908header3" defer></script>
+<script src="js/media-profile.js?v=20260914reveal1" defer></script>
+<script src="js/radio-source.js?v=20260914reveal1" defer></script>
 
 <div id="mobileQrModal" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171000;background:rgba(2,4,8,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:20px;">
   <div id="mobileQrBackdrop" onclick="closeMobileQrModal()" style="position:absolute;inset:0;"></div>
@@ -6940,7 +7172,7 @@ body.mk-buddy-header-home #mk-buddy-bolus {
 </script>
 
 <link rel="stylesheet" href="css/radio-ambience.css?v=20260908ambient3">
-<script src="js/radio-ambience.js?v=20260908ambient3"></script>
+<script src="js/radio-ambience.js?v=20260914reveal2"></script>
 <link rel="stylesheet" href="css/calendar-surfaces.css?v=20260908surfaces3">
 </body>
 </html>
