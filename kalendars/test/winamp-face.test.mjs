@@ -53,12 +53,12 @@ test('skin bitmaps are zoomed in whole steps, never stretched to fit', () => {
   assert.equal(zooms(520).skin, 3);
   assert.equal(zooms(596).lcd, 2, 'a card the size of the one in the app fits H:MM:SS at double size');
   assert.ok(zooms(4000).skin <= 6, 'the zoom is capped so a huge card cannot blow the sprite up');
-  // Whatever the card renders has to fit the panel: 67 skin px for H:MM:SS,
-  // 43 for the short form, across the 41.5 units the panel is wide.
+  // Whatever the card renders has to fit the panel: 65 skin px for H:MM:SS,
+  // 42 for the short form, across the 41.5 units the panel is wide.
   const { waLcdFits } = harness();
-  for (const width of [180, 200, 240, 260, 340, 420, 520, 596, 700]) {
+  for (const width of [180, 200, 232, 260, 340, 420, 464, 520, 596, 700]) {
     const { lcd } = zooms(width);
-    const cells = waLcdFits(width, lcd) ? 67 : 43;
+    const cells = waLcdFits(width, lcd) ? 65 : 42;
     assert.ok(cells * lcd <= 41.5 * (width / 148) + 1, 'time display too wide for the panel at ' + width + 'px');
     assert.ok(13 * lcd <= 13.5 * (width / 148), 'time display too tall for the panel at ' + width + 'px');
   }

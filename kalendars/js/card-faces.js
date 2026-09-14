@@ -81,9 +81,10 @@
      transport bar's panel is 41.5 units wide. The title font has no such box,
      so it keeps the roomier step. */
   var WA_ZOOM_STEP = 156;
-  var WA_LCD_STEP = 240;
+  var WA_LCD_STEP = 232;
   var WA_LCD_PANEL = 41.5;   // skin units across the transport bar's panel
-  var WA_LCD_FULL = 67;      // skin px of H:MM:SS, colons and gaps
+  var WA_LCD_FULL = 65;      // skin px of H:MM:SS: six 9px digits, two 2px
+                             // colons and seven 1px gaps
   // Whether the running seconds still fit the panel at this zoom; on a narrow
   // card they do not, and hours and minutes take the whole width instead.
   function waLcdFits(width, zoom) { return WA_LCD_FULL * zoom <= WA_LCD_PANEL * width / 148; }
