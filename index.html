@@ -37,7 +37,7 @@
   }
   window.__minkaHasApiAuth = function() { return !!getToken(); };
 
-  var CALENDAR_BUILD = '20260911daybook2';
+  var CALENDAR_BUILD = '20260914winamplcd';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -5284,9 +5284,27 @@ window.addEventListener('message', function(e) {
 
 <script>
 if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-  const MINKA_APP_VERSION = '2026.08.31-card-addons-layout25';
+  const MINKA_APP_VERSION = '2026.09.14-winamp-lcd';
   const MINKA_VERSION_KEY = 'minka_app_version';
   const MINKA_RELOAD_KEY = 'minka_sw_reloading';
+  const MINKA_SW_VERSION_KEY = 'minka_sw_version_reloading';
+  // The guard below is keyed on the version the worker reports, not on the
+  // constant in this file: a tab that had already reloaded once for a release
+  // used to sit on the old code for every release after it, which is why a
+  // deploy needed a manual double reload to show up. Each worker version gets
+  // exactly one reload per tab, and none at all if the guard cannot be stored.
+  const reloadForWorkerVersion = version => {
+    if (!version || !navigator.serviceWorker.controller) return;
+    try {
+      if (sessionStorage.getItem(MINKA_SW_VERSION_KEY) === version) return;
+      sessionStorage.setItem(MINKA_SW_VERSION_KEY, version);
+    } catch (e) { return; }
+    location.reload();
+  };
+  navigator.serviceWorker.addEventListener('message', event => {
+    const data = (event && event.data) || {};
+    if (data.type === 'MINKA_SW_ACTIVATED') reloadForWorkerVersion(data.version);
+  });
   function clearMinkaRuntimeCaches() {
     try {
       // Schedule data is the offline/cold-start fallback. A UI or Service

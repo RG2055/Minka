@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.638';
+const CACHE = 'minka-4.6.639';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
@@ -76,6 +76,14 @@ self.addEventListener('activate', event => {
       await caches.delete(key);
     }
     await self.clients.claim();
+    // Tell the pages which version just took over. A document that is already
+    // open keeps running the code it loaded, so without this the release only
+    // shows up on the *next* reload after the one that installed it — the
+    // "press Ctrl+F5 twice" that every deploy used to need.
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of windows) {
+      try { client.postMessage({ type: 'MINKA_SW_ACTIVATED', version: CACHE }); } catch (_e) {}
+    }
   })());
 });
 
