@@ -245,12 +245,19 @@
     const sub = document.getElementById('tkVerSub');
     if (!rows) return;
 
-    let build = '';
-    try {
-      const m = (document.querySelector('script[src*="calendar.js"]') || {}).src || '';
-      build = (m.match(/[?&]v=([\w.-]+)/) || [])[1] || '';
-    } catch (e) {}
-    if (sub) sub.textContent = build ? 'Kalendārs ' + build : '';
+    // The number above comes from the Cache Storage key, so it only says which
+    // worker installed — a tab can hold an older document than that. These read
+    // the versions of the scripts this document actually loaded, which is what
+    // decides whether a release is on screen.
+    const scriptBuild = name => {
+      try {
+        const src = (document.querySelector('script[src*="' + name + '"]') || {}).src || '';
+        return (src.match(/[?&]v=([\w.-]+)/) || [])[1] || '';
+      } catch (e) { return ''; }
+    };
+    const builds = [['Kalendārs', scriptBuild('calendar.js')], ['Kartītes', scriptBuild('card-faces.js')]]
+      .filter(pair => pair[1]).map(pair => pair[0] + ' ' + pair[1]);
+    if (sub) sub.textContent = builds.join(' · ');
 
     let months = 0, saved = '';
     try { months = Object.keys(window.__grafiksStore || {}).length; } catch (e) {}
@@ -397,7 +404,17 @@
         catch (e) {}
         return window;
       })();
-      try { target.location.reload(); } catch (e) { window.location.reload(); }
+      // A plain reload can still be answered from the browser's own HTTP cache
+      // — the host serves the shell with max-age, so the button could promise
+      // the newest version and hand back the one already on screen. A URL the
+      // cache has never seen cannot be answered that way.
+      try {
+        const fresh = new URL(target.location.href);
+        fresh.searchParams.set('fresh', Date.now().toString(36));
+        target.location.replace(fresh.href);
+      } catch (e) {
+        try { target.location.reload(); } catch (e2) { window.location.reload(); }
+      }
     });
     // Outside-click and Escape are bound once globally (see initGlobalListeners)
   }
