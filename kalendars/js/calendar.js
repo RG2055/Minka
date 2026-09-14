@@ -7625,12 +7625,51 @@ window.addEventListener('resize', function() {
 // directly in the same task in which it resizes the iframe, so the class flip
 // and the size change land in one style/layout pass; postMessage is the
 // fallback. No synthetic 'resize': the real one fires when the frame resizes.
-window.__minkaHostLayout = function(data) {
+// Fade-through: one shared fade for the card list (the mood card
+// and section labels live inside it) plus the body-level charm portals.
+// 'out' runs over the last 80 ms of the radio reveal; the host's settle then
+// re-lays the calendar once while nothing is visible and calls 'in' (120 ms).
+// opacity only — no per-card work, no overlay, clicks are never blocked.
+var __fadeState = 'in', __fadeAnims = [], __fadeGuard = 0, __ptrDown = false;
+document.addEventListener('pointerdown', function () { __ptrDown = true; }, true);
+document.addEventListener('pointerup', function () { __ptrDown = false; }, true);
+document.addEventListener('pointercancel', function () { __ptrDown = false; }, true);
+window.__minkaCardsFade = function (dir, ms) {
+  var list = document.getElementById('grafiks-list');
+  if (!list) return false;
+  var reduce = false; try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_e) {}
+  var targets = [list].concat(Array.prototype.slice.call(document.querySelectorAll('.mk-card-addon-portal')));
+  __fadeAnims.forEach(function (a) { try { a.cancel(); } catch (_e) {} }); __fadeAnims = [];
+  clearTimeout(__fadeGuard); __fadeGuard = 0;
+  if (dir === 'out') {
+    // Skip the cosmetic part while the user is pressing on the calendar or the tab is hidden.
+    if (reduce || document.hidden || __ptrDown) { __fadeState = 'in'; return false; }
+    __fadeState = 'out';
+    // Portal clones carry opacity:1 !important (card-addons.css), so they fade through filter:opacity() instead.
+    targets.forEach(function (el) { var portal = el !== list; __fadeAnims.push(el.animate(portal ? [{ filter: 'opacity(1)' }, { filter: 'opacity(0)' }] : [{ opacity: 1 }, { opacity: 0 }], { duration: ms || 80, easing: 'ease-in', fill: 'forwards' })); });
+    // Safety: never leave the calendar invisible if no layout call follows.
+    __fadeGuard = setTimeout(function () { if (__fadeState === 'out') window.__minkaCardsFade('in', 120); }, 700);
+    return true;
+  }
+  // 'in': from the current (invisible) state to full, only if we actually faded out.
+  var wasOut = __fadeState === 'out';
+  __fadeState = 'in';
+  targets.forEach(function (el) { var portal = el !== list; if (wasOut && !reduce && !document.hidden) __fadeAnims.push(el.animate(portal ? [{ filter: 'opacity(0)' }, { filter: 'opacity(1)' }] : [{ opacity: 0 }, { opacity: 1 }], { duration: ms || 120, easing: 'ease-out', fill: 'none' })); });
+  return wasOut;
+};
+window.__minkaHostLayout = function(data, applyHost) {
   data = data || {};
   var root = document.documentElement;
+  var changed = root.classList.contains('host-radio-open') !== !!data.radioVisible;
   root.classList.toggle('host-radio-open', !!data.radioVisible);
   root.style.setProperty('--host-radio-h', String(Math.max(0, data.radioHeight || 0)) + 'px');
   root.style.setProperty('--host-btnbar-h', String(Math.max(0, data.buttonBarHeight || 0)) + 'px');
+  if (typeof applyHost === 'function') applyHost();   // the host's own resize, so one layout covers both
+  // Decorations (add-on sizes, charm portals) move with the cards, in this
+  // very frame, instead of catching up a frame or two later.
+  if (changed && window.MinkaCardAddons && typeof window.MinkaCardAddons.syncNow === 'function') {
+    try { window.MinkaCardAddons.syncNow(); } catch (_e) {}
+  }
   requestAnimationFrame(function(){
     var pop = document.getElementById('miniCalPopup');
     if (pop && pop.style.display !== 'none') positionMiniCalPopup();

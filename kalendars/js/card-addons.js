@@ -885,6 +885,17 @@
     refreshPortals: function(duration) {
       scheduleAddonPortals(typeof duration === 'number' ? duration : 160);
     },
+    /* Same-frame update for a layout change the caller has just made (the
+       host resizing the frame and flipping the card compaction): sizes and
+       portal positions are read and written now, so decorations land in the
+       same paint as the cards instead of one or two frames later. */
+    syncNow: function() {
+      if (geometryFrame) { cancelAnimationFrame(geometryFrame); geometryFrame = 0; }
+      refreshAddonGeometry();
+      if (portalFrame) { cancelAnimationFrame(portalFrame); portalFrame = 0; }
+      syncAddonPortals();
+      scheduleAddonPortals(160);
+    },
     replaceFromCloud: function(value) {
       var clean = {};
       Object.keys(value && typeof value === 'object' ? value : {}).forEach(function(name) {
@@ -931,8 +942,11 @@
     });
     scheduleAddonGeometry();
     scheduleTopperClearance();
-    // No scheduleScan(): a resize changes geometry only; which add-on a card
-    // wears is re-checked by the card mutation observer, not by every resize.
+    // The signatures were just cleared: the scan re-copies each card's
+    // background/radius onto its add-on surface (syncCardSurface) and re-runs
+    // the section clearance. Dropping it left decorations clipped at the
+    // pre-resize radius after the radio changed the card size.
+    scheduleScan();
     scheduleAddonPortals(120);
   }, { passive: true });
 })();

@@ -1049,6 +1049,7 @@ const mkRadioReveal = (function () {
   const MORPH = 'cubic-bezier(.2,.8,.2,1)';
   let shell = null, running = null, guard = 0;
   let pending = null;                  // last state asked for during a reveal
+  let fadeTimer = 0;                   // calendar fade-out scheduler
   document.documentElement.classList.add('radio-morph');
 
   function reduced() {
@@ -1118,6 +1119,7 @@ const mkRadioReveal = (function () {
     if (running) return;                   // a newer reveal owns the state now
     try { document.body.classList.remove('radio-anim'); } catch (_e) {}
     try { cancelAnimationFrame(_syncRaf); _doSync(); } catch (_e) {}
+    try { clearTimeout(fadeTimer); const w = document.getElementById('calIframe')?.contentWindow; if (w && typeof w.__minkaCardsFade === 'function') w.__minkaCardsFade('in', 120); } catch (_e) {}
     try { if (typeof window.__mkSyncRadioVisuals === 'function') window.__mkSyncRadioVisuals(); } catch (_e) {}
     if (!p.open) rollNextLook(p.rw);
   }
@@ -1190,6 +1192,10 @@ const mkRadioReveal = (function () {
       winFrames = [{ opacity: 1 }, { opacity: 0, offset: .35 }, { opacity: 0 }];
     }
     const opts = { duration: TOTAL_MS, fill: 'both' };
+    // The calendar's cards fade out over the reveal's last 80 ms,
+    // so settle() re-lays them while invisible and fades the new layout in.
+    clearTimeout(fadeTimer);
+    fadeTimer = setTimeout(function () { try { const w = document.getElementById('calIframe')?.contentWindow; if (running && w && typeof w.__minkaCardsFade === 'function') w.__minkaCardsFade('out', 80); } catch (_e) {} }, TOTAL_MS - 80);
     const anims = [sh.animate(shellFrames, opts), rw.animate(winFrames, opts)];
     const me = running = { open: open, anims: anims, rw: rw };
     Promise.all(anims.map(a => a.finished)).then(
@@ -1324,10 +1330,13 @@ function _doSync() {
   // style/layout pass instead of three. postMessage remains the fallback.
   const payload = { type: 'hostLayoutChanged', radioVisible: consoleVisible, radioHeight: consoleH, buttonBarHeight: btnH };
   let handed = false;
-  try { const w = iframe && iframe.contentWindow; if (w && typeof w.__minkaHostLayout === 'function') { w.__minkaHostLayout(payload); handed = true; } } catch(e) {}
-  root.style.setProperty('--btnbar-h', btnH + 'px');
-  root.style.setProperty('--calendar-safe-gap', safeGap + 'px');
-  root.style.setProperty('--calendar-bottom', (consoleH + btnH + safeGap) + 'px');
+  const applyHost = () => {
+    root.style.setProperty('--btnbar-h', btnH + 'px');
+    root.style.setProperty('--calendar-safe-gap', safeGap + 'px');
+    root.style.setProperty('--calendar-bottom', (consoleH + btnH + safeGap) + 'px');
+  };
+  try { const w = iframe && iframe.contentWindow; if (w && typeof w.__minkaHostLayout === 'function') { w.__minkaHostLayout(payload, applyHost); handed = true; } } catch(e) {}
+  applyHost();   // idempotent: same values if the calendar already ran it
   if (!handed && iframe && iframe.contentWindow) {
     try { iframe.contentWindow.postMessage(payload, window.location.origin); } catch(e) {}
   }
