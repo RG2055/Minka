@@ -61,6 +61,23 @@ test('skin bitmaps are zoomed in whole steps, never stretched to fit', () => {
   }
 });
 
+test('a row wider than the panel is squeezed, never trimmed', () => {
+  const { waFitLcd } = harness();
+  const row = width => ({ scrollWidth: width, offsetWidth: width, style: { transform: '' } });
+  let lcd = row(130);
+  waFitLcd({ clientWidth: 167 }, lcd);
+  assert.equal(lcd.style.transform, '', 'a row that already fits is left alone');
+  lcd = row(65);
+  waFitLcd({ clientWidth: 56 }, lcd);
+  assert.equal(lcd.style.transform, 'scale(0.862)', 'a card too narrow for 1:1 digits');
+  lcd = row(195);
+  waFitLcd({ clientWidth: 167 }, lcd);
+  assert.equal(lcd.style.transform, 'scale(0.856)', 'a page still running an older stylesheet');
+  lcd = row(65);
+  waFitLcd({ clientWidth: 0 }, lcd);
+  assert.equal(lcd.style.transform, '', 'nothing to measure against before layout');
+});
+
 test('the zoom is only recomputed when it actually changes', () => {
   const { waZoom } = harness();
   const el = card(340);

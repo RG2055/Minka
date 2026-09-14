@@ -94,12 +94,12 @@
     card.dataset.waZoom = stamp;
     card.style.setProperty('--wa-px', skin);
     card.style.setProperty('--wa-px-lcd', lcd);
-    var remaining = card.querySelector('[data-wf-part="remaining"]');
-    var row = remaining && remaining.querySelector(':scope > .mk-wa-lcd');
-    if (row) waFitLcd(remaining, row);
   }
+  // Re-fitting on every resize, not only when the zoom step changes: the card
+  // is usually measured before it has been laid out, so the first run sees no
+  // width at all and the row has to be re-measured once it has one.
   var waSizes = typeof ResizeObserver === 'function' ? new ResizeObserver(function (entries) {
-    entries.forEach(function (entry) { waZoom(entry.target); });
+    entries.forEach(function (entry) { waZoom(entry.target); waFitCard(entry.target); });
   }) : null;
   var WA_TEXT = ['ABCDEFGHIJKLMNOPQRSTUVWXYZ"@   ', '0123456789….:()-\'!_+\\/[]^&%,=$#', 'ÅÖÄ?*'];
   var waRadio = { playing: false, text: '' };
@@ -151,14 +151,21 @@
   }
   // The readout shows the timer exactly as the shift clock writes it.
   function waLcdText(raw) { return String(raw || '').replace(/\s+/g, ''); }
-  /* On a card too narrow even for 1:1 digits the row is squeezed to the panel
-     rather than having its edge trimmed — a slightly soft last digit still
-     tells the time, half a digit does not. At every normal size the row
-     already fits and this changes nothing. */
+  /* Whatever the row measures, it is made to fit the panel rather than have
+     its edge trimmed — a slightly soft last digit still tells the time, half a
+     digit does not. The scale goes on the element itself, not through a custom
+     property, so it holds even when the page is running an older stylesheet
+     than this script. At every size where the row already fits it does
+     nothing. */
   function waFitLcd(host, lcd) {
-    lcd.style.removeProperty('--wa-lcd-fit');
-    var room = host.clientWidth, row = lcd.scrollWidth;
-    if (room > 0 && row > room) lcd.style.setProperty('--wa-lcd-fit', (room / row).toFixed(3));
+    lcd.style.transform = '';
+    var room = host.clientWidth, row = lcd.scrollWidth || lcd.offsetWidth;
+    if (room > 0 && row > room) lcd.style.transform = 'scale(' + (room / row).toFixed(3) + ')';
+  }
+  function waFitCard(card) {
+    var host = card.querySelector('[data-wf-part="remaining"]');
+    var row = host && host.querySelector(':scope > .mk-wa-lcd');
+    if (host && row) waFitLcd(host, row);
   }
   function waLcdCell(ch) {
     if (/\d/.test(ch)) return '<b style="--c:' + ch + '"></b>';
