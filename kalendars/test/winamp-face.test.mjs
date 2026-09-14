@@ -26,15 +26,14 @@ function card(width) {
 
 test('the readout shows the timer as it runs, seconds and all', () => {
   const { waLcdText } = harness();
-  assert.equal(waLcdText('07:38:55', '1'), '07:38:55');
-  assert.equal(waLcdText(' 07:38:55 ', '1'), '07:38:55', 'the live timer arrives with the markup\u2019s whitespace');
-  assert.equal(waLcdText('8\u201320', '1'), '8\u201320', 'a shift window keeps its dash glyph');
-  assert.equal(waLcdText('', '1'), '');
-  // Too narrow a panel for eight cells: the seconds go, not the digit size.
-  assert.equal(waLcdText('07:38:55', ''), '07:38');
-  assert.equal(waLcdText('7:05:09', ''), '07:05');
-  assert.equal(waLcdText('00:04:09', ''), '04:09', 'under an hour the seconds are the useful part');
-  assert.equal(waLcdText('8\u201320', ''), '8\u201320');
+  // Nothing is ever dropped to make the row fit: whatever the shift clock
+  // writes is what the panel shows.
+  assert.equal(waLcdText('07:38:55'), '07:38:55');
+  assert.equal(waLcdText(' 01:24:37 '), '01:24:37', 'the live timer arrives with the markup\u2019s whitespace');
+  assert.equal(waLcdText('00:04:09'), '00:04:09');
+  assert.equal(waLcdText('8\u201320'), '8\u201320', 'a shift window keeps its dash glyph');
+  assert.equal(waLcdText(''), '');
+  assert.equal(waLcdText.length, 1, 'no second argument can switch the seconds off again');
 });
 
 test('skin bitmaps are zoomed in whole steps, never stretched to fit', () => {
@@ -53,17 +52,13 @@ test('skin bitmaps are zoomed in whole steps, never stretched to fit', () => {
   assert.equal(zooms(520).skin, 3);
   assert.equal(zooms(596).lcd, 2, 'a card the size of the one in the app fits H:MM:SS at double size');
   assert.ok(zooms(4000).skin <= 6, 'the zoom is capped so a huge card cannot blow the sprite up');
-  // Whatever the card renders has to fit the panel: 65 skin px for H:MM:SS,
-  // 42 for the short form, across the 41.5 units the panel is wide.
-  const { waLcdFits } = harness();
-  for (const width of [180, 200, 232, 260, 340, 420, 464, 520, 596, 700]) {
+  // H:MM:SS is 65 skin px of digits, colons and gaps; the panel is 41.5 units
+  // wide and 13.5 tall.
+  for (const width of [232, 260, 340, 420, 464, 520, 596, 700]) {
     const { lcd } = zooms(width);
-    const cells = waLcdFits(width, lcd) ? 65 : 42;
-    assert.ok(cells * lcd <= 41.5 * (width / 148) + 1, 'time display too wide for the panel at ' + width + 'px');
+    assert.ok(65 * lcd <= 41.5 * (width / 148) + 1, 'time display too wide for the panel at ' + width + 'px');
     assert.ok(13 * lcd <= 13.5 * (width / 148), 'time display too tall for the panel at ' + width + 'px');
   }
-  assert.ok(waLcdFits(596, zooms(596).lcd), 'a card the size of the one in the app shows the seconds');
-  assert.ok(!waLcdFits(180, zooms(180).lcd), 'a narrow card drops them instead of shrinking the digits');
 });
 
 test('the zoom is only recomputed when it actually changes', () => {

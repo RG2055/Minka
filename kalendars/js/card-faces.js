@@ -77,29 +77,26 @@
   /* Skin bitmaps only stay sharp at whole-number zoom, so the card picks the
      biggest step it can hold instead of stretching the sprite to fit. The time
      display gets its own step because it is the one thing with a hard frame to
-     fit inside: H:MM:SS is 67 skin px of digits, colons and gaps, and the
-     transport bar's panel is 41.5 units wide. The title font has no such box,
-     so it keeps the roomier step. */
+     fit inside: H:MM:SS is 65 skin px of digits, colons and gaps, and the
+     transport bar's panel is 41.5 units wide — 65 / (41.5 / 148) is where the
+     step comes from. The title font has no such box, so it keeps the roomier
+     step. Below that width the row is drawn at 1:1 anyway and the panel trims
+     its edges: the seconds are the point of the readout, never the thing that
+     gets dropped to make room. */
   var WA_ZOOM_STEP = 156;
   var WA_LCD_STEP = 232;
-  var WA_LCD_PANEL = 41.5;   // skin units across the transport bar's panel
-  var WA_LCD_FULL = 65;      // skin px of H:MM:SS: six 9px digits, two 2px
-                             // colons and seven 1px gaps
-  // Whether the running seconds still fit the panel at this zoom; on a narrow
-  // card they do not, and hours and minutes take the whole width instead.
-  function waLcdFits(width, zoom) { return WA_LCD_FULL * zoom <= WA_LCD_PANEL * width / 148; }
   function waZoom(card) {
     var width = card.clientWidth || card.getBoundingClientRect().width || 0;
     var step = function (size) { return Math.max(1, Math.min(6, Math.floor(width / size))); };
-    var skin = step(WA_ZOOM_STEP), lcd = step(WA_LCD_STEP), full = waLcdFits(width, lcd) ? '1' : '';
-    var stamp = skin + ':' + lcd + ':' + full;
+    var skin = step(WA_ZOOM_STEP), lcd = step(WA_LCD_STEP);
+    var stamp = skin + ':' + lcd;
     if (card.dataset.waZoom === stamp) return;
     card.dataset.waZoom = stamp;
     card.style.setProperty('--wa-px', skin);
     card.style.setProperty('--wa-px-lcd', lcd);
-    card.dataset.waLcdFull = full;
     var remaining = card.querySelector('[data-wf-part="remaining"]');
-    if (remaining) waLcd(remaining);
+    var row = remaining && remaining.querySelector(':scope > .mk-wa-lcd');
+    if (row) waFitLcd(remaining, row);
   }
   var waSizes = typeof ResizeObserver === 'function' ? new ResizeObserver(function (entries) {
     entries.forEach(function (entry) { waZoom(entry.target); });
@@ -152,15 +149,16 @@
     for (var i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
     return .3 + (h % 40) / 100;
   }
-  /* The panel holds H:MM:SS whenever the card is wide enough for it. When it
-     is not, the seconds go rather than the size: hours and minutes at full
-     height read, eight digits shrunk to fit do not. */
-  function waLcdText(raw, full) {
-    var text = String(raw || '').replace(/\s+/g, '');
-    if (full) return text;
-    var parts = /^(\d{1,2}):(\d{2}):(\d{2})$/.exec(text);
-    if (!parts) return text;
-    return +parts[1] ? (parts[1].length < 2 ? '0' : '') + parts[1] + ':' + parts[2] : parts[2] + ':' + parts[3];
+  // The readout shows the timer exactly as the shift clock writes it.
+  function waLcdText(raw) { return String(raw || '').replace(/\s+/g, ''); }
+  /* On a card too narrow even for 1:1 digits the row is squeezed to the panel
+     rather than having its edge trimmed — a slightly soft last digit still
+     tells the time, half a digit does not. At every normal size the row
+     already fits and this changes nothing. */
+  function waFitLcd(host, lcd) {
+    lcd.style.removeProperty('--wa-lcd-fit');
+    var room = host.clientWidth, row = lcd.scrollWidth;
+    if (room > 0 && row > room) lcd.style.setProperty('--wa-lcd-fit', (room / row).toFixed(3));
   }
   function waLcdCell(ch) {
     if (/\d/.test(ch)) return '<b style="--c:' + ch + '"></b>';
@@ -173,8 +171,7 @@
      the cells are rewritten in place — rebuilding the row every second is work
      an old machine does not need to do. */
   function waLcd(el) {
-    var card = el.closest('.card');
-    var text = waLcdText(el.textContent, card && card.dataset.waLcdFull), lcd = el.querySelector(':scope > .mk-wa-lcd');
+    var text = waLcdText(el.textContent), lcd = el.querySelector(':scope > .mk-wa-lcd');
     if (!lcd) { lcd = document.createElement('span'); lcd.className = 'mk-wa-lcd'; lcd.setAttribute('aria-hidden', 'true'); el.append(lcd); }
     var previous = lcd.dataset.text;
     if (previous === text) return;
@@ -189,6 +186,7 @@
       if (!moved) return;
     }
     lcd.innerHTML = Array.prototype.map.call(text, waLcdCell).join('');
+    waFitLcd(el, lcd);
   }
   function waWatchLcd(el) {
     waLcd(el);
@@ -202,7 +200,7 @@
     if (!card.classList.contains('wf-winamp')) return;
     card.classList.remove('wf-winamp', 'is-playing');
     if (waSizes) waSizes.unobserve(card);
-    delete card.dataset.waZoom; delete card.dataset.waLcdFull;
+    delete card.dataset.waZoom;
     ['--wa-sheet','--wa-frame','--wa-nums','--wa-px','--wa-px-lcd'].forEach(function (key) { card.style.removeProperty(key); });
     card.querySelectorAll(':scope > .mk-wa').forEach(function (el) { el.remove(); });
     var fatigue = card.querySelector('[data-wf-part="fatigue"]'); if (fatigue) fatigue.style.removeProperty('--fat');
