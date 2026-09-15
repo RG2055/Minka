@@ -3000,7 +3000,7 @@ function _mkToast(msg, type) {
 <script src="js/levels.js?v=20260911daybook2" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260824perfaudit3';
+window.__minkaLocalBuild = '20260915modalhide';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -13049,10 +13049,18 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   transition: opacity 140ms ease !important;
   animation: none !important;
 }
+/* Closed = truly gone: the skin editor's preview card and its drag parts force
+   pointer-events:auto, which leaks through the modal's pointer-events:none while
+   it sits transparent; visibility:hidden removes it from hit-testing entirely. */
+#worker-modal:not(.open) {
+  visibility: hidden !important;
+  transition: opacity 140ms ease, visibility 0s linear 140ms !important;
+}
 #worker-modal-backdrop { transition: opacity 140ms ease !important; }
 #worker-modal .fatigue-panel { animation: none !important; }
 @media (prefers-reduced-motion: reduce) {
   #worker-modal, #worker-modal-backdrop { transition: none !important; }
+  #worker-modal:not(.open) { transition: visibility 0s !important; }
 }
 
 #worker-modal-backdrop {
