@@ -130,7 +130,7 @@
 :root.mk-mobile-shell.mk-mobile-v2 .mk-date-controls #miniCalBtn { display: none !important; } /* pārcelts uz galveni (mobile-v2.js) */
 :root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller {
   display: flex !important; flex: 1 1 auto !important; gap: 8px !important; width: auto !important; max-width: 100% !important; height: auto !important; margin: 0 !important;
-  padding: 0 var(--mv2-gutter) 0 0 !important; overflow-x: auto !important; overflow-y: hidden !important;
+  padding: 3px var(--mv2-gutter) 3px 0 !important; overflow-x: auto !important; overflow-y: hidden !important; /* 3 px — lai ārējais gredzens nav nogriezts */
   scroll-snap-type: x proximity !important; scroll-padding-inline: 0 var(--mv2-gutter) !important; touch-action: pan-x !important;
   mask-image: none !important; -webkit-mask-image: none !important;
 }
