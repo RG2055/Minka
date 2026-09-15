@@ -26,7 +26,7 @@
     } catch (_e) {}
   }
 
-  var CALENDAR_BUILD = '20260907smooth1';
+  var CALENDAR_BUILD = '20260915mobilev2';
 
   function withCalendarBuild(url) {
     try {
@@ -46,6 +46,7 @@
       var token = getToken();
       if (!token) return;
       var base = withCalendarBuild(f.getAttribute('data-base-src') || 'kalendars/index.html');
+      try { if (new URLSearchParams(window.location.search).get('mv2') === '0') base += '&mv2=0'; } catch (_e) {}
       var next = base;
       var nextAbsolute = new URL(next, window.location.href).href;
       if (f.src !== nextAbsolute) f.setAttribute('src', next);
@@ -276,7 +277,8 @@ body * { font-family: var(--font), inherit; }
 
 #calendarEmbed {
   position: fixed;
-  top: 0;
+  /* Zem iPhone status joslas (viewport-fit=cover): kalendārs sākas zem "notch". */
+  top: env(safe-area-inset-top, 0px);
   left: 0;
   right: 0;
   bottom: var(--calendar-bottom);
@@ -670,12 +672,44 @@ html.mk-low-spec #calendarEmbed {
   }
 }
 
+/* ── Mobile v2 doks: 11 px etiķetes, 24 px ikonas, ≥52 px pieskāriena mērķi ── */
+:root {
+  --dock-h: 66px;
+  --dock-btn-h: 52px;
+  --dock-icon-size: 24px;
+  --dock-seg-h: 22px;
+}
+.mobile-dock {
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
+  border-radius: 22px;
+}
+.mobile-dock-grid { gap: 6px; }
+.dock-btn {
+  min-height: var(--dock-btn-h);
+  border-radius: 16px;
+  gap: 4px;
+  padding: 5px 3px 4px;
+  font-size: 10.5px;
+  letter-spacing: .06em;
+}
+.dock-icon.dock-px { width: 24px !important; }
+#bolusDocBtn .bolus-dock-title { font-size: 10.5px; letter-spacing: .08em; }
+#bolusDocBtn .bolus-room-seg { width: 28px; height: var(--dock-seg-h); font-size: 10px; border-radius: 8px; }
+@media (max-width: 390px) {
+  .mobile-dock { left: 8px; right: 8px; }
+  .mobile-dock-grid { gap: 5px; }
+  .dock-btn { min-height: 50px; font-size: 10px; }
+  #bolusDocBtn .bolus-room-seg { width: 26px; height: 21px; font-size: 9.5px; }
+}
 @media (max-height: 700px) {
   :root {
-    --dock-h: 52px;
-    --dock-btn-h: 36px;
-    --dock-icon-size: 16px;
-    --dock-seg-h: 17px;
+    --dock-h: 58px;
+    --dock-btn-h: 44px;
+    --dock-icon-size: 20px;
+    --dock-seg-h: 19px;
   }
 
   .mobile-dock {
@@ -694,8 +728,8 @@ html.mk-low-spec #calendarEmbed {
 <body>
   <div id="calendarEmbed">
     <iframe
-      src="kalendars/index.html?mobile=1&cv=20260907smooth1"
-      data-base-src="kalendars/index.html?mobile=1&cv=20260907smooth1"
+      src="kalendars/index.html?mobile=1&cv=20260915mobilev2"
+      data-base-src="kalendars/index.html?mobile=1&cv=20260915mobilev2"
       id="calIframe"
       title="Mobilais dežūru grafiks"
       loading="eager"
@@ -1793,7 +1827,7 @@ html.mk-low-spec #calendarEmbed {
 
   <script>
   if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
-    const MINKA_APP_VERSION = '2026.08.14-brand1.mobile';
+    const MINKA_APP_VERSION = '2026.09.15-mobile-v2';
     const MINKA_VERSION_KEY = 'minka_mobile_app_version';
     const MINKA_RELOAD_KEY = 'minka_mobile_sw_reloading';
     function clearMinkaRuntimeCaches() {
@@ -1844,6 +1878,44 @@ html.mk-low-spec #calendarEmbed {
 *, *::before, *::after {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+}
+/* Mobile v2: doks ir vadības slānis — tam stikls ir vietā (telefons to velk).
+   Saturs (kalendārs iframe) paliek necaurspīdīgs. */
+body .mobile-dock {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03) 40%, rgba(255,255,255,.02)),
+    rgba(10, 17, 28, .58) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(170%) !important;
+  backdrop-filter: blur(24px) saturate(170%) !important;
+  border-color: rgba(255,255,255,.14) !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.12) !important;
+}
+/* Pogas bez pilulēm: ikona + etiķete uz paša doka; aktīvā — gaišāka + svītra */
+body .dock-btn {
+  position: relative;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 12px !important;
+  color: rgba(238,244,255,.72) !important;
+}
+body .dock-btn.is-active { background: transparent !important; color: #fff !important; }
+body .dock-btn.is-active::before {
+  content: "";
+  position: absolute;
+  left: 50%; bottom: 2px;
+  width: 22px; height: 3px;
+  margin-left: -11px;
+  border-radius: 999px;
+  background: #64d2ff;
+}
+body .dock-btn:active { background: rgba(255,255,255,.06) !important; }
+@media (prefers-reduced-transparency: reduce) {
+  body .mobile-dock {
+    background: rgba(10, 17, 28, .96) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
 }
 </style>
 <script src="kalendars/js/emoji-particles.js?v=20260822particles20"></script>

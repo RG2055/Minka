@@ -1,0 +1,270 @@
+/* ============================================================================
+   MOBILE V2 — telefona izkārtojums (vizuālais slānis, tikai :root.mk-mobile-v2)
+   ----------------------------------------------------------------------------
+   Atslēdzams ar ?mv2=0 (tad paliek vecais mobilais izskats). Funkcionālie
+   labojumi ir atsevišķi: css/mobile-fixes.css + kods (skat. tā galveni).
+   Ielādējas pēdējais; prefikss :root.mk-mobile-shell.mk-mobile-v2 uzvar vecos
+   ":root.mk-mobile-shell …" slāņus, kartīšu iekšpusei — arī card-faces.css
+   (tur "html body #grafiks-list …", tāpēc te ir "body #grafiks-app #grafiks-list").
+
+   Pirmā ekrāna plāns (375 px):
+     galvene ar foto (datums, vārdadienas, 3 ikonas) ~74 px
+     maiņas lente (viena rinda: laiks · atlicis · %)   ~44 px
+     mēnesis + dienu lente (viena rinda)               ~72 px
+     "Radiologi · 3"                                    ~36 px
+     kartītes 2 kolonnās — iekšpuse tieši kā darbvirsmā (card-faces)
+   Datums rādās vienreiz galvenē, mēnesis — pilulī pie dienām, statuss — lentē.
+   ============================================================================ */
+
+:root.mk-mobile-shell.mk-mobile-v2 {
+  --mv2-gutter: 16px;
+  --mv2-ink: #eef4ff;
+  --mv2-dim: rgba(238, 244, 255, .62);
+  --mv2-faint: rgba(238, 244, 255, .38);
+  --mv2-line: rgba(255, 255, 255, .08);
+  --mv2-surface: rgba(255, 255, 255, .06);
+  --mv2-accent: #64d2ff;
+  --mv2-font: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --mv2-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* ── Karkass ─────────────────────────────────────────────────────────────── */
+:root.mk-mobile-shell.mk-mobile-v2,
+:root.mk-mobile-shell.mk-mobile-v2 body { height: 100% !important; overflow: hidden !important; background: #070a10 !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-app {
+  position: fixed !important; inset: 0 !important; width: auto !important; height: auto !important;
+  overflow-y: auto !important; background: #070a10 !important; font-family: var(--mv2-font) !important;
+  touch-action: pan-y !important;
+}
+:root.mk-mobile-shell.mk-mobile-v2 .main-panel {
+  display: block !important; width: 100% !important; max-width: none !important; min-height: 0 !important;
+  margin: 0 !important; padding-top: 0 !important; padding-left: 0 !important; padding-right: 0 !important;
+  overflow: visible !important; background: transparent !important;
+}
+:root.mk-mobile-shell.mk-mobile-v2 .side-panel,
+:root.mk-mobile-shell.mk-mobile-v2 #mobile-swipe-hint,
+:root.mk-mobile-shell.mk-mobile-v2 .mk-weather-layer,
+:root.mk-mobile-shell.mk-mobile-v2 .top-row { display: none !important; } /* .top-row: "Nakts sadalījums" dublē doku, ATLIKUŠAS dublē lenti */
+
+/* ── 1. Galvene: foto josla, datums vienreiz ─────────────────────────────── */
+:root.mk-mobile-shell.mk-mobile-v2 #minkaBarWrap {
+  position: relative !important; width: auto !important; margin: 0 !important;
+  padding: 8px var(--mv2-gutter) 0 !important; border: 0 !important; background: transparent !important; box-shadow: none !important;
+}
+:root.mk-mobile-shell.mk-mobile-v2 #minkaBar { height: auto !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; border: 0 !important; background: transparent !important; box-shadow: none !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #minkaBarInner {
+  display: grid !important; grid-template-columns: minmax(0, 1fr) auto !important; grid-template-rows: auto !important;
+  align-items: center !important; column-gap: 4px !important;
+  height: auto !important; min-height: 74px !important; padding: 10px 4px 10px 12px !important;
+  border: 1px solid var(--mv2-line) !important; border-radius: 20px !important; overflow: hidden !important;
+  background: #101826 !important; box-shadow: none !important;
+}
+:root.mk-mobile-shell.mk-mobile-v2 .mk-header-scenic-bg { inset: 0 !important; width: auto !important; height: auto !important; border-radius: 0 !important; opacity: 1 !important; }
+:root.mk-mobile-shell.mk-mobile-v2 .mk-header-scenic-bg::after {
+  content: "" !important; position: absolute !important; inset: 0 !important;
+  background: linear-gradient(90deg, rgba(7, 10, 16, .88) 0%, rgba(7, 10, 16, .66) 58%, rgba(7, 10, 16, .34) 100%) !important;
+}
+:root.mk-mobile-shell.mk-mobile-v2 #mkSearchDate {
+  position: relative !important; z-index: 1 !important; display: flex !important; flex-direction: column !important; gap: 5px !important;
+  width: auto !important; min-width: 0 !important; height: auto !important; margin: 0 !important; padding: 0 !important;
+}
+:root.mk-mobile-shell.mk-mobile-v2 .mk-search-date-main { display: flex !important; align-items: baseline !important; gap: 8px !important; width: auto !important; height: auto !important; min-width: 0 !important; overflow: hidden !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #mkSearchDateNum { font: 800 21px/1 var(--mv2-font) !important; letter-spacing: -.02em !important; color: #fff !important; font-variant-numeric: tabular-nums !important; white-space: nowrap !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #mkSearchWeekday { font: 600 14px/1 var(--mv2-font) !important; color: var(--mv2-dim) !important; text-transform: none !important; letter-spacing: 0 !important; white-space: nowrap !important; }
+:root.mk-mobile-shell.mk-mobile-v2 .mk-search-date-meta {
+  display: flex !important; align-items: center !important; gap: 6px !important;
+  width: auto !important; max-width: 100% !important; height: auto !important; min-height: 0 !important; overflow: hidden !important;
+}
+:root.mk-mobile-shell.mk-mobile-v2 #mkSearchToday { display: none !important; } /* šodienu rāda dienu lente */
+:root.mk-mobile-shell.mk-mobile-v2 #mkSearchToday.mv2-keep { flex: 0 0 auto !important; height: 20px !important; padding: 0 7px !important; border-radius: 6px !important; font: 800 10px/20px var(--mv2-font) !important; letter-spacing: .08em !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #mkBdayBadge { flex: 0 0 auto !important; height: 20px !important; padding: 0 7px !important; border-radius: 6px !important; font-size: 11px !important; line-height: 20px !important; white-space: nowrap !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #mkNamedayBar {
+  flex: 1 1 auto !important; min-width: 0 !important; height: auto !important; padding: 0 !important; border: 0 !important; background: transparent !important;
+  font: 500 12px/1.2 var(--mv2-font) !important; color: var(--mv2-dim) !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
+}
+:root.mk-mobile-shell.mk-mobile-v2 #mkMoonChip, :root.mk-mobile-shell.mk-mobile-v2 #mkTempChip { font-size: 11px !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #minkaBarInner #minkaBarInput { position: absolute !important; top: 0 !important; left: 0 !important; width: 1px !important; height: 1px !important; opacity: 0 !important; pointer-events: none !important; }
+/* Trīs ikonu pogas bez kastēm (tinte uz foto scrima) */
+:root.mk-mobile-shell.mk-mobile-v2 #minkaBarInner .mv2-actions { position: relative !important; z-index: 1 !important; display: flex !important; align-items: center !important; gap: 0 !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #mkSearchLaunch,
+:root.mk-mobile-shell.mk-mobile-v2 #minkaBarMenu,
+:root.mk-mobile-shell.mk-mobile-v2 #minkaBarInner #miniCalBtn {
+  position: relative !important; z-index: 1 !important; width: 44px !important; height: 44px !important; margin: 0 !important; padding: 0 !important;
+  border: 0 !important; border-radius: 14px !important; background: transparent !important; box-shadow: none !important; color: #fff !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important; opacity: .92 !important;
+}
+:root.mk-mobile-shell.mk-mobile-v2 #mkSearchLaunch .material-icons-round,
+:root.mk-mobile-shell.mk-mobile-v2 #minkaBarMenu .material-icons-round,
+:root.mk-mobile-shell.mk-mobile-v2 #minkaBarInner #miniCalBtn .material-icons-round { font-size: 24px !important; width: 24px !important; height: 24px !important; text-shadow: 0 1px 2px rgba(0,0,0,.5) !important; }
+
+/* ── 2. Maiņas lente: josla + viena rinda teksta ─────────────────────────── */
+:root.mk-mobile-shell.mk-mobile-v2 #shift-progress-wrap { position: relative !important; width: auto !important; height: auto !important; min-height: 0 !important; margin: 6px 0 0 !important; padding: 0 !important; border: 0 !important; background: transparent !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #shift-lanes-wrap { width: auto !important; height: auto !important; margin: 0 !important; padding: 0 !important; }
+:root.mk-mobile-shell.mk-mobile-v2 .sl-ruler { position: relative !important; width: auto !important; height: 42px !important; margin: 0 !important; padding: 0 !important; }
+:root.mk-mobile-shell.mk-mobile-v2 .sl-ruler-band { top: 0 !important; height: 6px !important; border-radius: 999px !important; overflow: hidden !important; }
+:root.mk-mobile-shell.mk-mobile-v2 .sl-rtick { top: 11px !important; font: 600 10px/1 var(--mv2-mono) !important; color: var(--mv2-faint) !important; }
+:root.mk-mobile-shell.mk-mobile-v2 .sl-ruler-now {
+  top: 25px !important; left: 0 !important; right: auto !important; transform: none !important; height: auto !important; padding: 0 !important;
+  border: 0 !important; background: transparent !important; box-shadow: none !important; border-radius: 0 !important;
+  display: inline-flex !important; align-items: baseline !important; gap: 5px !important; white-space: nowrap !important;
+}
+:root.mk-mobile-shell.mk-mobile-v2 .sl-ruler-now .sl-rn-clock,
+:root.mk-mobile-shell.mk-mobile-v2 .sl-ruler-now .sl-rn-remaining { font: 800 12px/1 var(--mv2-mono) !important; color: #fff !important; }
+:root.mk-mobile-shell.mk-mobile-v2 .sl-ruler-now .sl-rn-word { font: 500 11px/1 var(--mv2-font) !important; color: var(--mv2-dim) !important; }
+:root.mk-mobile-shell.mk-mobile-v2 .sl-ruler-pct { top: 25px !important; right: 0 !important; left: auto !important; transform: none !important; font: 800 12px/1 var(--mv2-mono) !important; color: var(--mv2-accent) !important; }
+
+/* ── 3. Mēnesis + dienas vienā rindā ─────────────────────────────────────── */
+:root.mk-mobile-shell.mk-mobile-v2 .scroll-row {
+  display: flex !important; flex-wrap: nowrap !important; align-items: center !important; gap: 8px !important;
+  width: auto !important; height: auto !important; min-height: 0 !important; margin: 8px 0 0 !important; padding: 0 0 0 var(--mv2-gutter) !important; overflow: visible !important;
+}
+:root.mk-mobile-shell.mk-mobile-v2 .scroll-row > .arrow { display: none !important; }
+:root.mk-mobile-shell.mk-mobile-v2 .mk-date-controls { order: -1 !important; flex: 0 0 auto !important; display: flex !important; width: auto !important; height: auto !important; margin: 0 !important; padding: 0 !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-monthPicker {
+  appearance: none !important; -webkit-appearance: none !important;
+  flex: 0 0 auto !important; width: 64px !important; max-width: none !important; min-width: 0 !important; height: 60px !important;
+  padding: 18px 0 0 !important; border: 0 !important; border-radius: 16px !important; box-shadow: none !important;
+  background: var(--mv2-surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23eef4ff' stroke-opacity='.6' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center 10px !important;
+  font: 800 16px/1 var(--mv2-font) !important; letter-spacing: 0 !important; color: #fff !important; text-align: center !important; text-align-last: center !important; text-transform: none !important;
+}
+:root.mk-mobile-shell.mk-mobile-v2 .mk-date-controls #miniCalBtn { display: none !important; } /* pārcelts uz galveni (mobile-v2.js) */
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller {
+  display: flex !important; flex: 1 1 auto !important; gap: 8px !important; width: auto !important; max-width: 100% !important; height: auto !important; margin: 0 !important;
+  padding: 0 var(--mv2-gutter) 0 0 !important; overflow-x: auto !important; overflow-y: hidden !important;
+  scroll-snap-type: x proximity !important; scroll-padding-inline: 0 var(--mv2-gutter) !important; touch-action: pan-x !important;
+  mask-image: none !important; -webkit-mask-image: none !important;
+}
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill {
+  flex: 0 0 48px !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 5px !important;
+  width: 48px !important; height: 60px !important; min-height: 60px !important; margin: 0 !important; padding: 0 !important;
+  border: 0 !important; border-radius: 16px !important; background: var(--mv2-surface) !important; box-shadow: none !important; transform: none !important;
+  scroll-snap-align: center !important; font: 800 18px/1 var(--mv2-font) !important; color: var(--mv2-ink) !important;
+}
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill .weekday { font: 700 10px/1 var(--mv2-font) !important; letter-spacing: .08em !important; color: var(--mv2-faint) !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill.weekend-pill,
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill.weekend-pill .weekday { color: #ffb08a !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill.holiday-pill,
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill.holiday-pill .weekday { color: #ff8a9a !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill::before,
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill::after { display: none !important; }
+/* šodiena: svītra zem skaitļa; aktīvā: balta */
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill.today-pill { box-shadow: inset 0 -3px 0 -1px var(--mv2-accent) !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill.active,
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill.today-pill.active { width: 48px !important; height: 60px !important; background: #fff !important; color: #0b1220 !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill.active > span { color: #0b1220 !important; -webkit-text-fill-color: #0b1220 !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill.active .weekday { color: rgba(11, 18, 32, .6) !important; -webkit-text-fill-color: rgba(11, 18, 32, .6) !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill.today-pill.active { box-shadow: inset 0 -3px 0 -1px #0b1220 !important; }
+
+/* ── 4. Sekcijas ─────────────────────────────────────────────────────────── */
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-list,
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-list.grid-view { display: block !important; width: auto !important; height: auto !important; min-height: 0 !important; margin: 4px 0 0 !important; padding: 0 !important; overflow: visible !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-list .cards-section { display: block !important; width: auto !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; --rg-mood-pullup: 0px !important; transform: none !important; }
+:root.mk-mobile-shell.mk-mobile-v2 body #grafiks-app #grafiks-list.grid-view .cards-section:last-child { padding-bottom: 24px !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-list .cards-section-label {
+  display: flex !important; align-items: center !important; gap: 8px !important; width: auto !important; height: 40px !important;
+  margin: 4px var(--mv2-gutter) 0 !important; padding: 0 !important; font: 700 15px/1 var(--mv2-font) !important; letter-spacing: -.01em !important; text-transform: none !important; color: #fff !important;
+}
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-list .cards-section-label .cards-role-name { font: inherit !important; text-transform: none !important; letter-spacing: inherit !important; color: inherit !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-list .cards-section-label .cards-role-mark { width: 22px !important; height: 22px !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-list .cards-section-label .cards-role-mark img { width: 22px !important; height: 22px !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-list .cards-section-label .cards-role-rule { display: none !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-list .cards-section-label[data-mv2-count]::after { content: attr(data-mv2-count) !important; font: 700 12px/20px var(--mv2-mono) !important; color: var(--mv2-dim) !important; padding: 0 7px !important; border-radius: 999px !important; background: var(--mv2-surface) !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-list .cards-section-label-rd .cards-role-name { color: #ff8b98 !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-list .cards-section-label-rg .cards-role-name { color: #8fe3ff !important; }
+
+/* Režģis: 2 kolonnas */
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-list .cards-subgrid,
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-list.grid-view .cards-subgrid {
+  display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; grid-auto-rows: auto !important; gap: 10px !important;
+  width: auto !important; height: auto !important; margin: 0 !important; padding: 2px var(--mv2-gutter) 8px !important; overflow: visible !important;
+}
+
+/* ── 5. Kartītes: IEKŠPUSE NEMAINĀS (card-faces.css, skins, sejas, piekariņi —
+      tieši kā darbvirsmā). Te tikai ārējais izmērs režģa šūnā. ─────────────── */
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-list .cards-subgrid > .card:not(.rg-feedback-card),
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-list.grid-view .cards-subgrid > .card.mk-mid-card:not(.rg-feedback-card) {
+  width: auto !important; max-width: none !important; min-width: 0 !important; margin: 0 !important;
+  grid-row: auto !important; grid-column: auto !important;
+}
+
+/* ── 6. Noskaņojums: kā līdz šim, tikai virsraksts un pogas ───────────────── */
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-list .cards-section > .rg-feedback-card,
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-list.grid-view .cards-section > .rg-feedback-card.card.mk-mid-card {
+  box-sizing: border-box !important; width: auto !important; max-width: none !important; min-height: 0 !important; aspect-ratio: auto !important; height: auto !important;
+  margin: 2px 0 0 !important; grid-row: auto !important; grid-column: auto !important;
+}
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-list .rg-feedback-card .rg-feedback-card-title { font: 800 17px/1.1 var(--mv2-font) !important; letter-spacing: -.01em !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-list .rg-feedback-card .rg-pulse-tap > span:first-child { font-size: 26px !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-list .rg-feedback-card .rg-pulse-write > span { font-size: 14px !important; }
+
+/* ── 7. Nakts sadalījums — apakšējā lapa ar stiklu (vadības slānis) ────────── */
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay,
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay.open { align-items: flex-end !important; padding: 0 !important; background: rgba(0, 0, 0, .42) !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel {
+  position: fixed !important; inset: auto 0 0 0 !important; width: auto !important; max-width: none !important;
+  height: calc(100% - 10px) !important; max-height: none !important; margin: 0 !important; padding: 0 !important;
+  border-radius: 26px 26px 0 0 !important; border: 1px solid var(--mv2-line) !important; border-bottom: 0 !important;
+  background: rgba(10, 16, 25, .80) !important; -webkit-backdrop-filter: blur(26px) saturate(150%) !important; backdrop-filter: blur(26px) saturate(150%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14) !important; transform: none !important; overflow: hidden !important; display: flex !important; flex-direction: column !important;
+}
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel::before { content: "" !important; position: absolute !important; top: 8px !important; left: 50% !important; width: 40px !important; height: 5px !important; margin-left: -20px !important; border-radius: 999px !important; background: rgba(255, 255, 255, .22) !important; pointer-events: none !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsCloseBtn { position: absolute !important; top: 14px !important; right: 14px !important; z-index: 5 !important; width: 44px !important; height: 44px !important; border-radius: 14px !important; font-size: 20px !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanelContent { flex: 1 1 auto !important; width: auto !important; height: auto !important; max-height: none !important; margin: 0 !important; padding: 22px var(--mv2-gutter) 24px !important; overflow-y: auto !important; overflow-x: hidden !important; overscroll-behavior: contain !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-panel-canvas { width: auto !important; min-width: 0 !important; padding: 0 !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-panel-head { width: auto !important; padding-right: 52px !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-panel-controls { width: auto !important; gap: 8px !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-panel-controls .nss-shell { width: 96px !important; height: 44px !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-panel-controls .nss { width: 100% !important; height: 44px !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-panel-controls .nss-display { font-size: 16px !important; height: 42px !important; line-height: 42px !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-mode-group { width: auto !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-mode-btns { display: flex !important; gap: 6px !important; width: auto !important; height: auto !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-mode-btn,
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-raffle-trigger { flex: 1 1 0 !important; height: 44px !important; padding: 0 10px !important; border-radius: 13px !important; font-size: 13px !important; }
+/* Nakts kartītes = LAIKA SECĪBA (00:00 → 07:20). Telefonā viena zem otras,
+   katra pilnā platumā kā horizontāla rinda: kreisajā pusē vārds/laiks/fāze,
+   labajā — nogurums, ilgums, emoji. Foto paliek fonā; ritma līnijas un mēness
+   pārklājums telefonā nost (troksnis 96 px augstumā). */
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row {
+  display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 8px !important;
+  width: auto !important; height: auto !important; margin: 0 !important; padding: 4px 0 10px !important; overflow: visible !important;
+}
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row > .nsc-card-wrap { display: block !important; width: 100% !important; min-width: 0 !important; max-width: none !important; height: auto !important; min-height: 0 !important; margin: 0 !important; flex: none !important; align-self: stretch !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-full-card { display: block !important; width: 100% !important; height: auto !important; min-height: 96px !important; border-radius: 18px !important; container-type: inline-size !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-rhythm-overlay,
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-moon-overlay { display: none !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-full-inner {
+  position: relative !important; z-index: 3 !important; box-sizing: border-box !important; height: auto !important; min-height: 96px !important;
+  display: grid !important; grid-template-columns: minmax(0, 1fr) auto !important; grid-template-rows: auto auto auto !important;
+  grid-template-areas: "name name" "time meta" "desc desc" !important; align-items: center !important; column-gap: 8px !important; row-gap: 3px !important;
+  padding: 12px 14px 12px 16px !important; border-radius: inherit !important;
+  background: linear-gradient(90deg, rgba(6, 10, 18, .72) 0%, rgba(6, 10, 18, .48) 60%, rgba(6, 10, 18, .30) 100%) !important;
+}
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-full-top { grid-area: name !important; width: auto !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-full-name { font-size: 17px !important; max-width: calc(100% - 36px) !important; white-space: nowrap !important; overflow: visible !important; text-overflow: clip !important; word-break: keep-all !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-full-time { grid-area: time !important; width: auto !important; font-size: 15px !important; white-space: nowrap !important; margin: 0 !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-full-desc,
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-full-desc span { grid-area: desc !important; width: auto !important; font-size: 12px !important; color: rgba(238, 244, 255, .8) !important; opacity: 1 !important; white-space: normal !important; overflow: visible !important; letter-spacing: 0 !important; text-transform: none !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-full-meta {
+  grid-area: meta !important; align-self: center !important; justify-self: end !important; width: auto !important; min-height: 0 !important; margin: 0 !important; display: flex !important; align-items: center !important; gap: 6px !important;
+  padding: 4px 8px !important; white-space: nowrap !important; background: rgba(6, 10, 18, .55) !important; border: 1px solid rgba(255,255,255,.12) !important; border-radius: 12px !important;
+}
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-full-fat { display: inline-flex !important; flex-direction: row !important; align-items: baseline !important; gap: 3px !important; font-size: 11px !important; min-width: 0 !important; height: auto !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-fat-label { display: none !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-fat-value { font-size: 13px !important; white-space: nowrap !important; width: auto !important; height: auto !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-full-dur,
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-dur-cluster { font-size: 14px !important; width: auto !important; height: auto !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-duration-emoji { font-size: 20px !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-card-checklist { position: relative !important; z-index: 3 !important; padding: 0 16px 10px !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-last-checklist { display: flex !important; flex-wrap: wrap !important; gap: 6px 10px !important; font-size: 12px !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-rhythm-help { top: 8px !important; right: 8px !important; width: 26px !important; height: 26px !important; font-size: 12px !important; background: rgba(6, 10, 18, .6) !important; z-index: 4 !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-flow-labels { font-size: 12px !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-room-block { width: auto !important; }
+
+/* ── 8. Modāļi: ērtas pogas ──────────────────────────────────────────────── */
+:root.mk-mobile-shell.mk-mobile-v2 #stats-modal button,
+:root.mk-mobile-shell.mk-mobile-v2 #stats-modal select,
+:root.mk-mobile-shell.mk-mobile-v2 #worker-modal button { min-height: 42px !important; }
+
+@media (prefers-reduced-transparency: reduce) {
+  :root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel { background: #0a1019 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+}

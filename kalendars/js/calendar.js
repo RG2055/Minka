@@ -2122,8 +2122,10 @@ function filterFullList(btn) {
     function shouldIgnoreTarget(target) {
       if (!target) return true;
       if (document.getElementById('nsOverlay')?.classList.contains('open')) return true;
+      // mobile-v2: kartīšu rail un dienu lente paši ritinās horizontāli —
+      // vilkšana tur nedrīkst pārslēgt dienu.
       return !!target.closest(
-        'button, select, input, textarea, [contenteditable="true"], #miniCalPopup, #worker-modal, #full-list-modal, #nsPanel, .night-split-panel, .ns-cards-row, .month-select'
+        'button, select, input, textarea, [contenteditable="true"], #miniCalPopup, #worker-modal, #full-list-modal, #nsPanel, .night-split-panel, .ns-cards-row, .month-select, .cards-subgrid, #grafiks-scroller, .rg-feedback-card'
       );
     }
 

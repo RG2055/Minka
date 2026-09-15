@@ -144,7 +144,7 @@ window.setTimeout(function () {
      ~25 KB gabalus, kuros ir lapā reāli lietotie emoji. Nav ne attēlu, ne papildu
      DOM mezglu — emoji paliek teksts, mainās tikai fonts. -->
 <link rel="preload" as="style" href="assets/fluentmoji/FluentEmojiColor.css?v=20260818fm1"
-  onload="this.onload=null;this.rel='stylesheet'">
+  onload="this.onload=null;if(!document.documentElement.classList.contains('mk-mobile-shell'))this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="assets/fluentmoji/FluentEmojiColor.css?v=20260818fm1"></noscript>
 <style id="mk-fluentmoji-v1">
   /* Divi robi šajā fonta laidienā: 🍀 (U+1F340) un 🪴 (U+1FAB4) ir unicode-range
@@ -2979,7 +2979,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260914reveal6"></script>
+<script src="js/calendar.js?v=20260915mobilev2"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
@@ -19875,7 +19875,10 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     var grid = section && section.querySelector('.cards-subgrid');
     if (!grid) return;
     grid.classList.add('rg-has-mood-card');
-    if (grid.querySelector('.rg-feedback-card')) {
+    // Telefonā (mobile-v2) noskaņojuma kartīte stāv pilnā platumā ZEM darbinieku
+    // režģa, tāpēc to pieliek sekcijai, ne režģim. Darbvirsmā — režģī kā līdz šim.
+    var moodHost = document.documentElement.classList.contains('mk-mobile-shell') ? section : grid;
+    if (section.querySelector('.rg-feedback-card')) {
       if (!deferLayout) scheduleMoodSectionLayout();
       return;
     }
@@ -19893,7 +19896,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
         + '<small class="rg-feedback-card-reaction-label" aria-live="polite">Izvēlies sajūtu</small></div>'
         + '<div class="rg-feedback-card-actions"><button class="rg-pulse-write rg-pulse-write--comment" type="button" data-rg-write="comment" title="Atvērt komentārus"><b class="rg-comment-icon" aria-hidden="true"></b><span>Komentāri</span><small class="rg-feedback-action-count" data-rg-action-count="comment"></small></button></div>';
     }
-    grid.appendChild(pulse);
+    moodHost.appendChild(pulse);
     window.MinkaDaybook?.enhance(pulse);
     if (!deferLayout) scheduleMoodSectionLayout();
     if (!skipMoodPaint) paintCounts();
@@ -24193,5 +24196,21 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
 <link rel="stylesheet" href="../css/calendar-surfaces.css?v=20260908surfaces3">
 <link rel="stylesheet" href="css/card-faces.css?v=20260912faces45">
 <link rel="stylesheet" href="css/card-winamp.css?v=20260914wa23">
+<script>
+/* MOBILE — telefona slāņi, tikai ?mobile=1 čaulā, ielādē pēdējos (uzvar vecos).
+   css/mobile-fixes.css — funkcionāli (pieskārieni, ritināšana, safe-area), vienmēr.
+   css/mobile-v2.css + js/mobile-v2.js — vizuālais izkārtojums; ?mv2=0 to atslēdz. */
+(function(){
+  if (!document.documentElement.classList.contains('mk-mobile-shell')) return;
+  var v = '20260915mv3k';
+  function css(href) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href + '?v=' + v; document.body.appendChild(l); }
+  css('css/mobile-fixes.css');
+  try { if (new URLSearchParams(location.search).get('mv2') === '0') return; } catch (_e) {}
+  document.documentElement.classList.add('mk-mobile-v2');
+  css('css/mobile-v2.css');
+  var s = document.createElement('script'); s.src = 'js/mobile-v2.js?v=' + v; s.defer = true;
+  document.body.appendChild(s);
+})();
+</script>
 </body>
 </html>

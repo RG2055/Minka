@@ -1,0 +1,74 @@
+/* ============================================================================
+   MOBILE FIXES — funkcionālie labojumi telefonam (tikai :root.mk-mobile-shell)
+   ----------------------------------------------------------------------------
+   Šis fails NAV dizains. Te ir tikai tas, kam jāstrādā neatkarīgi no izskata:
+   pieskāriena mērķi, ritināšana, horizontālā pārplūde, drošās zonas.
+   Vizuālais slānis ir css/mobile-v2.css (atslēdzams ar ?mv2=0); šo nekad
+   neatslēdz. Pārējie funkcionālie labojumi dzīvo kodā:
+     • Fluent Emoji webfonts telefonā netiek ielādēts (index.html <head>),
+     • noskaņojuma kartīte telefonā stāv sekcijā, ne režģī (mount()),
+     • dienu švīks ignorē horizontāli ritināmos (calendar.js shouldIgnoreTarget),
+     • #calendarEmbed sākas zem status joslas (mobile.html).
+   ============================================================================ */
+
+/* Viens vertikāls ritināšanas konteiners; horizontāli nekas nedrīkst izbīdīt */
+:root.mk-mobile-shell #grafiks-app {
+  overflow-x: hidden !important;
+  overscroll-behavior-y: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+:root.mk-mobile-shell #grafiks-scroller {
+  overscroll-behavior-x: contain !important;
+  scrollbar-width: none !important;
+}
+:root.mk-mobile-shell #grafiks-scroller::-webkit-scrollbar { display: none !important; }
+
+/* Pieskāriena mērķi ≥ 44 px (formas nemainot — tikai minimālais laukums) */
+:root.mk-mobile-shell #mkSearchLaunch,
+:root.mk-mobile-shell #minkaBarMenu,
+:root.mk-mobile-shell #miniCalBtn,
+:root.mk-mobile-shell #grafiks-monthPicker,
+:root.mk-mobile-shell #nsOverlay #nsCloseBtn,
+:root.mk-mobile-shell #nsOverlay #nsPanel .ns-mode-btn,
+:root.mk-mobile-shell #nsOverlay #nsPanel .ns-raffle-trigger,
+:root.mk-mobile-shell #nsOverlay #nsPanel .nss-shell,
+:root.mk-mobile-shell #grafiks-list .rg-pulse-tap,
+:root.mk-mobile-shell #grafiks-list .rg-pulse-write {
+  min-width: 44px !important;
+  min-height: 44px !important;
+}
+:root.mk-mobile-shell .pill,
+:root.mk-mobile-shell .day-pill { min-height: 48px !important; }
+:root.mk-mobile-shell button,
+:root.mk-mobile-shell select,
+:root.mk-mobile-shell .pill,
+:root.mk-mobile-shell [data-mk-emoji-click] {
+  touch-action: manipulation !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+/* iOS zūmē lapu, ja formas lauka teksts < 16 px */
+:root.mk-mobile-shell select,
+:root.mk-mobile-shell input,
+:root.mk-mobile-shell textarea,
+:root.mk-mobile-shell [contenteditable="true"] { font-size: max(16px, 1em) !important; }
+
+/* Apakša: pēdējais saturs virs doka (iframe beidzas virs doka, bet lai ir gaiss) */
+:root.mk-mobile-shell .main-panel { padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)) !important; }
+:root.mk-mobile-shell #nsOverlay #nsPanelContent { padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)) !important; }
+
+/* Mood sejiņa: bez Fluent fonta glifs ir sistēmas emoji (Apple/Noto), kam tinte
+   sēž centrā — mood-fluent.css nobīde pa kreisi/lejā bija Fluent glifa dēļ. */
+:root.mk-mobile-shell .rg-mood-fluent-face {
+  transform: translate(-50%, -50%) !important;
+  font-size: clamp(60px, 33cqw, 82px) !important;
+}
+
+/* Kustība: sistēmas iestatījums uzvar */
+@media (prefers-reduced-motion: reduce) {
+  :root.mk-mobile-shell *, :root.mk-mobile-shell *::before, :root.mk-mobile-shell *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
