@@ -147,13 +147,13 @@
 :root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill.holiday-pill .weekday { color: #ff8a9a !important; }
 :root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill::before,
 :root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill::after { display: none !important; }
-/* šodiena: svītra zem skaitļa; aktīvā: balta */
-:root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill.today-pill { box-shadow: inset 0 -3px 0 -1px var(--mv2-accent) !important; }
+/* šodiena: gredzens apkārt visam pilulim (kā kartītei); aktīvā: balta */
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill.today-pill { box-shadow: inset 0 0 0 1.5px var(--mv2-accent) !important; }
 :root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill.active,
 :root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill.today-pill.active { width: 48px !important; height: 60px !important; background: #fff !important; color: #0b1220 !important; }
 :root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill.active > span { color: #0b1220 !important; -webkit-text-fill-color: #0b1220 !important; }
 :root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill.active .weekday { color: rgba(11, 18, 32, .6) !important; -webkit-text-fill-color: rgba(11, 18, 32, .6) !important; }
-:root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill.today-pill.active { box-shadow: inset 0 -3px 0 -1px #0b1220 !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #grafiks-scroller .pill.today-pill.active { box-shadow: 0 0 0 2px var(--mv2-accent) !important; }
 
 /* ── 4. Sekcijas ─────────────────────────────────────────────────────────── */
 :root.mk-mobile-shell.mk-mobile-v2 #grafiks-list,
