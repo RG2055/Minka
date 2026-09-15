@@ -211,7 +211,8 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-fac
 .wf-face-choice[aria-pressed="true"] {background:#233548;border-color:#9dc2e7;box-shadow:0 0 0 1px #9dc2e733;}
 .wf-face-choice strong {font-size:10px;font-weight:600;}
 .wf-face-thumb {position:relative;display:grid;place-content:center;width:100%;aspect-ratio:1;border:2px solid var(--wf-thumb-metal,#adb4bb);border-radius:24%;background:linear-gradient(135deg,#384361,#121624);overflow:hidden;}
-.wf-face-thumb b {font-family:Arial,sans-serif;font-size:clamp(25px,4vw,52px);line-height:1;letter-spacing:-.09em;background:linear-gradient(155deg,#fff,var(--wf-thumb-tint,#d5e6ef));color:transparent;background-clip:text;-webkit-text-stroke:.2px #ffffff55;}
+/* background-clip:text paints only inside the box; the trailing negative letter-spacing and the font ascent push glyph edges past it, so pad the box or the digits' right/top edges are shaved off. */
+.wf-face-thumb b {font-family:Arial,sans-serif;font-size:clamp(25px,4vw,52px);line-height:1;letter-spacing:-.09em;padding:.1em .16em .1em .08em;background:linear-gradient(155deg,#fff,var(--wf-thumb-tint,#d5e6ef));color:transparent;background-clip:text;-webkit-text-stroke:.2px #ffffff55;}
 .wf-face-thumb small {font-size:5px;letter-spacing:.23em;margin-top:7px;text-align:center;opacity:.6;}
 .wf-face-thumb {background-image:linear-gradient(150deg,#0002,#0004),var(--wf-thumbnail-image);background-position:center;background-size:cover;}
 .wf-thumb-photo b {transform:scale(.8,1.3);}
