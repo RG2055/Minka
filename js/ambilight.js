@@ -264,15 +264,6 @@
   function render(ts = 0) {
     renderRaf = 0;
     if (!canRender()) return;
-    // Hold the glow while the calendar rebuilds its roster, the same way the
-    // visualiser does — sixteen radial gradients a frame is exactly the work
-    // a day switch cannot spare. Waiting on a timer, not on frames, so the
-    // page really does go idle in between.
-    const quietFor = (window.__mkRadioQuietUntil || 0) - (ts || performance.now());
-    if (quietFor > 0) {
-      setTimeout(scheduleRender, Math.min(quietFor + 16, 300));
-      return;
-    }
     if (FRAME_MS && ts && (ts - lastRenderTs) < FRAME_MS) {
       renderRaf = requestAnimationFrame(render);
       return;

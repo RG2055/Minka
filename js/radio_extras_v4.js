@@ -265,13 +265,6 @@ function drawDotMatrix(ctx, W, H, data, dt=16.7) {
     extraVizRaf = 0;
     if (!shouldRunExtraViz()) return;
     const now = performance.now();
-    // Hand the frame to the calendar while it rebuilds its roster, the way the
-    // main visualiser does; come back on a timer so the page idles meanwhile.
-    const quietFor = (window.__mkRadioQuietUntil || 0) - now;
-    if (quietFor > 0) {
-      setTimeout(scheduleExtraViz, Math.min(quietFor + 16, 300));
-      return;
-    }
     if (RG_EXTRA_FRAME_MS && (now - RG_extraLastFrameTs) < RG_EXTRA_FRAME_MS) {
       extraVizRaf = requestAnimationFrame(extraLoop);
       return;
@@ -660,7 +653,6 @@ function drawDotMatrix(ctx, W, H, data, dt=16.7) {
     if (!active || !cvs || !ctx) return;
     raf = requestAnimationFrame(draw);
     const now = ts || performance.now();
-    if ((window.__mkRadioQuietUntil || 0) > now) { lastWaveTs = now; return; }
     const elapsed = lastWaveTs ? now - lastWaveTs : 16.7;
     if (WAVE_FRAME_MS && elapsed < WAVE_FRAME_MS) return;
     lastWaveTs = now;

@@ -37,7 +37,7 @@
   }
   window.__minkaHasApiAuth = function() { return !!getToken(); };
 
-  var CALENDAR_BUILD = '20260919coffee';
+  var CALENDAR_BUILD = '20260919smooth';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -478,14 +478,6 @@ html.radio-morph body.radio-idle #radioWindow {
 html.radio-morph body.radio-anim #radioWindow {
   visibility: visible;
   pointer-events: none;
-}
-/* Held, not stopped, while the calendar rebuilds its roster: the animations
-   resume where they were, and the rebuild gets the frame to itself. */
-body.mk-roster-busy #radioWindow,
-body.mk-roster-busy #radioWindow *,
-body.mk-roster-busy #radioWindow *::before,
-body.mk-roster-busy #radioWindow *::after {
-  animation-play-state: paused !important;
 }
 /* Morph shell: a plain rounded slab that grows from the dock button into the
    radio's frame. transform + opacity only; no shadow, blur or clip. */
@@ -1031,8 +1023,8 @@ async function loadRadioScripts() {
   }
   await loadAny(['js/radio-metadata.js?v=20260910metadata1']);
   await loadAny(['js/radio-pioneer-layout.js?v=20260914reveal2']);
-  await loadAny(['js/radio.js?v=20260919quiet1']);
-  await loadAny(['js/radio_extras_v4.js?v=20260919quiet1']);
+  await loadAny(['js/radio.js?v=20260919smooth1']);
+  await loadAny(['js/radio_extras_v4.js?v=20260919smooth1']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;
   return true;
@@ -1046,18 +1038,26 @@ async function loadRadioScripts() {
 ────────────────────────────────────────────── */
 /* ──────────────────────────────────────────────
    RADIO REVEAL: dock button ⇄ radio window morph
-   Frame 0 does class flips and two compositor-only animations (a plain
-   shell slab: transform+opacity; the window: opacity). Everything heavy —
-   calendar reflow, ambience, visualizer restart, the next guest look — waits
-   until the animation has finished, and the next look is rolled while the
-   radio is closed, so an open never changes what is on screen.
+   Frame 0 does the class flips (they name the target state from the
+   start) and two compositor-only animations (a plain shell slab:
+   transform+opacity; the window: opacity), and starts dimming the cards.
+   The heavy part — the calendar's reflow to its radio-open/closed layout,
+   the ambience swap — runs a few frames in, WHILE the slab is still
+   moving: the animations live on the compositor thread, so a slow main
+   thread only delays the cards' new layout, never the morph. Doing it
+   after the morph instead read as a freeze on the work machines: the slab
+   arrived, then everything stood still for the reflow, then the cards
+   popped. The visualizer restart and the next guest look still wait until
+   the reveal is over.
 ────────────────────────────────────────────── */
 const mkRadioReveal = (function () {
   const TOTAL_MS = 300;                // whole reveal
+  const DIM_MS = 80;                   // cards dim to their floor this fast
+  const REFLOW_AT_MS = 90;             // reflow lands once the dim is in
   const MORPH = 'cubic-bezier(.2,.8,.2,1)';
   let shell = null, running = null, guard = 0;
   let pending = null;                  // last state asked for during a reveal
-  let fadeTimer = 0;                   // calendar fade-out scheduler
+  let reflowTimer = 0;                 // calendar reflow scheduler
   document.documentElement.classList.add('radio-morph');
 
   function reduced() {
@@ -1079,6 +1079,12 @@ const mkRadioReveal = (function () {
     }
     return shell;
   }
+  function calendarWindow() {
+    try { return document.getElementById('calIframe')?.contentWindow || null; } catch (_e) { return null; }
+  }
+  function cardsFade(dir, ms) {
+    try { const w = calendarWindow(); if (w && typeof w.__minkaCardsFade === 'function') w.__minkaCardsFade(dir, ms); } catch (_e) {}
+  }
   // One measurement pass, before any style flips dirty the layout.
   function geometry(rw) {
     const btn = dockButton();
@@ -1092,33 +1098,44 @@ const mkRadioReveal = (function () {
       start: 'translate(' + from.left + 'px,' + from.top + 'px) scale(' + (from.width / r.width) + ',' + (from.height / r.height) + ')'
     };
   }
+  // The one heavy step of a reveal: the calendar gets its new state and
+  // size (_doSync → __minkaHostLayout, one style/layout pass for the class
+  // flip, the frame resize and the decoration sync), the ambience swaps in
+  // the same task, and the cards fade back in from wherever the dim left
+  // them, so the new layout appears under the fade rather than after it.
+  function reflow(me) {
+    clearTimeout(reflowTimer); reflowTimer = 0;
+    if (me.laidOut) return;
+    me.laidOut = true;
+    try { cancelAnimationFrame(_syncRaf); _doSync(true); } catch (_e) {}
+    try { if (typeof window.__mkAmbienceSync === 'function') window.__mkAmbienceSync(); } catch (_e) {}
+    cardsFade('in', 160);
+  }
   // Always leaves a consistent state: radio-anim never survives a cancelled
   // or rejected animation (finished() rejects with AbortError on cancel), and
   // the visualizer is re-synced even if a deferred step throws.
   function finalize(rw, open) {
     if (!running) return;
     clearTimeout(guard);
-    const anims = running.anims || [];
+    const me = running;
+    const anims = me.anims || [];
     running = null;
     anims.forEach(a => { try { a.cancel(); } catch (_e) {} });
     if (shell) shell.classList.remove('on');
     const body = document.body;
-    if (!open) body.classList.add('radio-hidden');
     // A click that arrived mid-reveal asked for the opposite state: honour it now.
     const next = pending; pending = null;
-    if (next !== null && next !== open) { body.classList.remove('radio-anim'); run(next); return; }
-    // Settle in ONE frame callback: drop radio-anim, hand the calendar its new
-    // state and resize it (_doSync), restart the visualizer. The ambience
-    // observer fires in this task's microtasks and also writes straight into
-    // the calendar, so the host and the iframe each get a single style/layout
-    // pass for the whole state change instead of one per message.
-    settlePending = { rw: rw, open: open };
+    if (next !== null && next !== open) { clearTimeout(reflowTimer); body.classList.remove('radio-anim'); run(next); return; }
+    // Settle in ONE frame callback: drop radio-anim, make sure the reflow
+    // happened (it normally did mid-morph), restart the visualizer.
+    settlePending = { rw: rw, open: open, me: me };
     if (document.hidden) settle();         // no frames while hidden: settle right now, no animation to wait for
     else { requestAnimationFrame(settle); setTimeout(settle, 120); }   // rAF normally; the timer if frames stall
   }
-  // Settles the logical state after a reveal: drop radio-anim, hand the
-  // calendar its new state and resize it (_doSync), re-sync the visualizer
-  // (which itself stays asleep while document.hidden), roll the next look.
+  // Settles the logical state after a reveal: drop radio-anim, reflow if
+  // that is still owed (reduced motion, hidden tab, a cancelled morph),
+  // re-sync the visualizer (which itself stays asleep while document.hidden),
+  // roll the next look.
   let settlePending = null;
   function settle() {
     const p = settlePending;
@@ -1126,8 +1143,8 @@ const mkRadioReveal = (function () {
     settlePending = null;
     if (running) return;                   // a newer reveal owns the state now
     try { document.body.classList.remove('radio-anim'); } catch (_e) {}
-    try { cancelAnimationFrame(_syncRaf); _doSync(); } catch (_e) {}
-    try { clearTimeout(fadeTimer); const w = document.getElementById('calIframe')?.contentWindow; if (w && typeof w.__minkaCardsFade === 'function') w.__minkaCardsFade('in', 160); } catch (_e) {}
+    try { reflow(p.me); } catch (_e) {}
+    try { cancelAnimationFrame(_syncRaf); _doSync(); } catch (_e) {}   // no-op when the reflow already ran
     try { if (typeof window.__mkSyncRadioVisuals === 'function') window.__mkSyncRadioVisuals(); } catch (_e) {}
     if (!p.open) rollNextLook(p.rw);
   }
@@ -1141,13 +1158,16 @@ const mkRadioReveal = (function () {
     } else {
       settle();
       if (!running && document.body.classList.contains('radio-anim')) {
-        settlePending = { rw: document.getElementById('radioWindow'), open: !document.body.classList.contains('radio-hidden') };
+        settlePending = { rw: document.getElementById('radioWindow'), open: !document.body.classList.contains('radio-hidden'), me: { laidOut: false } };
         settle();
       }
     }
   });
   // Guests get a fresh look per open; roll it while closed and invisible so
   // the open itself never restyles anything. Pre-decode its skin image too.
+  // It restyles the whole (hidden) radio window, which on a slow machine is
+  // real work — so it waits until the cards have finished fading back in,
+  // and then for an idle moment on top of that.
   function rollNextLook(rw) {
     const roll = function () {
       const b = document.body.classList;
@@ -1158,8 +1178,10 @@ const mkRadioReveal = (function () {
         if (m) { const img = new Image(); img.src = m[1]; if (img.decode) img.decode().catch(function () {}); }
       } catch (_e) {}
     };
-    if ('requestIdleCallback' in window) requestIdleCallback(roll, { timeout: 2000 });
-    else setTimeout(roll, 400);
+    setTimeout(function () {
+      if ('requestIdleCallback' in window) requestIdleCallback(roll, { timeout: 2000 });
+      else roll();
+    }, 700);
   }
   // The state the UI is heading for: during a reveal, its target.
   function logicalOpen() {
@@ -1174,8 +1196,12 @@ const mkRadioReveal = (function () {
     const body = document.body;
     const geo = reduced() ? null : geometry(rw);
     body.classList.add('radio-anim');
+    // The classes name the target from frame 0 (the morph rules keep the
+    // window visible under radio-anim), so _doSync and the ambience can
+    // read the state they are heading for before the slab has arrived.
     if (open) { body.classList.remove('radio-hidden'); body.classList.remove('radio-idle'); }
-    if (!geo) { running = { open: open, anims: [], rw: rw }; finalize(rw, open); return true; }
+    else body.classList.add('radio-hidden');
+    if (!geo) { running = { open: open, anims: [], rw: rw, laidOut: false }; finalize(rw, open); return true; }
     const sh = getShell();
     sh.style.width = geo.w + 'px';
     sh.style.height = geo.h + 'px';
@@ -1200,12 +1226,15 @@ const mkRadioReveal = (function () {
       winFrames = [{ opacity: 1 }, { opacity: 0, offset: .35 }, { opacity: 0 }];
     }
     const opts = { duration: TOTAL_MS, fill: 'both' };
-    // The calendar's cards fade out over the reveal's last 80 ms,
-    // so settle() re-lays them while invisible and fades the new layout in.
-    clearTimeout(fadeTimer);
-    fadeTimer = setTimeout(function () { try { const w = document.getElementById('calIframe')?.contentWindow; if (running && w && typeof w.__minkaCardsFade === 'function') w.__minkaCardsFade('out', 60); } catch (_e) {} }, TOTAL_MS - 60);
     const anims = [sh.animate(shellFrames, opts), rw.animate(winFrames, opts)];
-    const me = running = { open: open, anims: anims, rw: rw };
+    const me = running = { open: open, anims: anims, rw: rw, laidOut: false };
+    // Cards dim now; the reflow lands under the dim while the slab is still
+    // on its way. A timer, not a frame callback: this task may block the
+    // main thread for a while on a slow machine, and the compositor carries
+    // the morph through it either way.
+    cardsFade('out', DIM_MS);
+    clearTimeout(reflowTimer);
+    reflowTimer = setTimeout(function () { if (running === me) reflow(me); }, REFLOW_AT_MS);
     Promise.all(anims.map(a => a.finished)).then(
       function () { if (running === me) finalize(rw, open); },
       function () { if (running === me) finalize(rw, open); }   // AbortError: cancelled → settle the state now
@@ -1306,27 +1335,15 @@ function radioIdleClick() {
 // Keep calendar area synced to the actual radio height
 let _syncRaf = 0;
 let _lastShellLayout = null;
-/* The calendar says when it is rebuilding its roster. While it does, the radio
-   gives up its frame: the visualiser polls instead of drawing and the panel's
-   own animations hold. Nothing about playback changes — this is decoration
-   standing aside for the part of the app people are actually looking at. */
-window.addEventListener('message', function (e) {
-  if (e.origin !== window.location.origin || !e.data || e.data.type !== 'minka:roster-busy') return;
-  var ms = Math.min(1200, Math.max(120, Number(e.data.ms) || 450));
-  window.__mkRadioQuietUntil = Math.max(window.__mkRadioQuietUntil || 0, performance.now() + ms);
-  document.body.classList.add('mk-roster-busy');
-  clearTimeout(window.__mkRosterBusyTimer);
-  window.__mkRosterBusyTimer = setTimeout(function () {
-    document.body.classList.remove('mk-roster-busy');
-  }, ms);
-});
-
 function syncShellLayout() {
   cancelAnimationFrame(_syncRaf);
   _syncRaf = requestAnimationFrame(_doSync);
 }
-function _doSync() {
-  if (document.body.classList.contains('radio-anim')) return;   // finalize() re-syncs after the reveal
+function _doSync(duringReveal) {
+  // The reveal calls this itself with `true` (mid-morph, then again at
+  // settle); anyone else waits until it is over so the frame is never resized
+  // twice. Strict: as a rAF callback this receives a timestamp instead.
+  if (duringReveal !== true && document.body.classList.contains('radio-anim')) return;
   const root = document.documentElement;
   const rw = document.getElementById('radioWindow');
   const iframe = document.getElementById('calIframe');
@@ -7204,7 +7221,7 @@ body.mk-buddy-header-home #mk-buddy-bolus {
 </script>
 
 <link rel="stylesheet" href="css/radio-ambience.css?v=20260908ambient3">
-<script src="js/radio-ambience.js?v=20260914reveal2"></script>
+<script src="js/radio-ambience.js?v=20260919smooth1"></script>
 <link rel="stylesheet" href="css/calendar-surfaces.css?v=20260908surfaces3">
 </body>
 </html>

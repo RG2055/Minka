@@ -129,7 +129,7 @@ window.setTimeout(function () {
 <meta name="theme-color" content="#0a0a1a">
 <title>RG Search OS - Clean Start</title>
 <!-- bundle.css is critical ï¿½ load normally -->
-<link rel="stylesheet" href="css/bundle.css?v=20260901nojump1">
+<link rel="stylesheet" href="css/bundle.css?v=20260919smooth1">
 <link rel="stylesheet" href="css/skin-draw.css?v=20260829chalk1">
 <link rel="stylesheet" href="css/card-addons.css?v=20260912faces17">
 <script src="js/card-addons.js?v=20260914reveal4" defer></script>
@@ -2979,7 +2979,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260919coffee1"></script>
+<script src="js/calendar.js?v=20260919smooth1"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
 <script src="js/header-weather.js?v=20260813headerfix1" defer></script>
@@ -2987,7 +2987,7 @@ function _mkToast(msg, type) {
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
 <script src="js/light-model.js?v=20260908light1"></script>
 <script src="js/recovery-model.js?v=20260908recovery1"></script>
-<script src="js/fatigue.js?v=20260908fatigue46"></script>
+<script src="js/fatigue.js?v=20260919smooth1"></script>
 <script src="js/nightsplit.js?v=20260908dreams5" defer></script>
 <script src="js/monthcal.js?v=20260908recovery1" defer></script>
 <script src="js/design_v1.js?v=20260824perfaudit2" defer></script>
@@ -3115,6 +3115,8 @@ document.addEventListener('keydown', (e) => {
   var overlay=document.getElementById('nsOverlay');
   var _nsOpen=false;
   window.__nsOverlayOpen = false;
+  var _nsParkTimer=0;
+  overlay.classList.add('ns-parked');
 
   function setNightWalkerMotion(running){
     running = running && !document.hidden && !document.documentElement.classList.contains('minka-ambient-active') && !document.documentElement.classList.contains('minka-visuals-hidden');
@@ -3135,7 +3137,14 @@ document.addEventListener('keydown', (e) => {
 
   window.toggleNsOverlay=function(forceOpen){
     _nsOpen = (typeof forceOpen === 'boolean') ? !!forceOpen : !_nsOpen;
+    clearTimeout(_nsParkTimer);
+    if(_nsOpen && overlay.classList.contains('ns-parked')){
+      // Unpark first and let the closed styles compute, so .open transitions.
+      overlay.classList.remove('ns-parked');
+      void overlay.offsetWidth;
+    }
     overlay.classList.toggle('open',_nsOpen);
+    if(!_nsOpen) _nsParkTimer=setTimeout(function(){ if(!_nsOpen) overlay.classList.add('ns-parked'); }, 450);
     window.__nsOverlayOpen = _nsOpen;
     setNightWalkerMotion(_nsOpen);
     if(_nsOpen && window.__ns) {
@@ -8121,6 +8130,14 @@ html.mk-low-spec .pkt-cat { animation: none !important; }
 html.mk-low-spec .pkt-cat .pkt-eyes { animation: pktSleepEyes 8.8s ease-in-out infinite !important; }
 html.mk-low-spec .pkt-cat.pkt-awake .pkt-eyes { animation: pktAwakeEyes 1.45s ease-in-out infinite !important; }
 
+/* Closed, the overlay is opacity:0 but still ~800 elements in the tree: every
+   style pass over the document (a day switch, the radio flipping the roster's
+   layout) paid for them. content-visibility skips their style/layout/paint
+   while it is parked; nightsplit measures nothing while it is closed
+   (everything is gated on __nsOverlayOpen) and re-renders on open. The
+   toggle unparks it a style pass before adding .open, so the panel's
+   slide-in transition still has a start value to run from. */
+#nsOverlay.ns-parked:not(.open) { content-visibility: hidden; }
 /* Closed night-split content must not keep animating behind the schedule.
    Low-spec mode keeps these purely decorative details static even when open. */
 #nsOverlay:not(.open) .ns-room-bed-zzz span,
@@ -24200,7 +24217,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
 <link rel="stylesheet" href="css/fatigue-health.css?v=20260908health18">
 <link rel="stylesheet" href="../css/radio-ambience.css?v=20260908ambient3">
 <link rel="stylesheet" href="css/radio-side-cards.css?v=20260911split1">
-<script src="../js/radio-ambience.js?v=20260914reveal2"></script>
+<script src="../js/radio-ambience.js?v=20260919smooth1"></script>
 <link rel="stylesheet" href="../css/calendar-surfaces.css?v=20260908surfaces3">
 <link rel="stylesheet" href="css/card-faces.css?v=20260915faces46">
 <link rel="stylesheet" href="css/card-winamp.css?v=20260914wa23">

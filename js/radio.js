@@ -2134,13 +2134,26 @@ function setEQ(mode) {
 }
 
 function ensureCanvasSize(){
+    if (!__vizCssW || !__vizCssH) __vizMeasure();
     const ratio = Math.min(window.devicePixelRatio || 1, MK_LOW_SPEC ? 1.5 : 2);
-    const w = Math.round(cvs.clientWidth * ratio);
-    const h = Math.round(cvs.clientHeight * ratio);
+    const w = Math.round(__vizCssW * ratio);
+    const h = Math.round(__vizCssH * ratio);
     if (cvs.width !== w || cvs.height !== h) {
         cvs.width = w;
         cvs.height = h;
     }
+}
+// The canvas's CSS size, kept by a ResizeObserver instead of read off the
+// element every frame: clientWidth right after the LED's style writes meant
+// a forced style/layout pass of the shell per visualizer frame. The LED and
+// DOLPHIN layer states are remembered for the same reason (written on change).
+let __vizCssW = 0, __vizCssH = 0, __vizLedOn = null, __vizGifOn = null;
+function __vizMeasure(){ __vizCssW = cvs.clientWidth; __vizCssH = cvs.clientHeight; }
+if (typeof ResizeObserver === 'function') {
+    new ResizeObserver(entries => {
+        const box = entries[0] && entries[0].contentRect;
+        if (box) { __vizCssW = box.width; __vizCssH = box.height; } else __vizMeasure();
+    }).observe(cvs);
 }
 
 // Pixel Buddy uses a small sprite and a capped 24 fps timer, without FFT work.
@@ -2323,14 +2336,6 @@ function draw(ts = 0) {
         scheduleDraw(120);
         return;
     }
-    // Same idea while the calendar rebuilds its roster: the schedule is the
-    // app, the spectrum is decoration. Come back when the rebuild is done
-    // rather than fighting it for the frame.
-    const quietFor = (window.__mkRadioQuietUntil || 0) - (ts || performance.now());
-    if (quietFor > 0) {
-        scheduleDraw(Math.min(quietFor + 16, 300));
-        return;
-    }
     if (vizStyle === MK_BUDDY_VIZ) {
         scheduleDraw(1000 / (MK_LOW_SPEC ? 15 : 24));
         if (dGif) dGif.style.opacity = 0;
@@ -2356,18 +2361,17 @@ function draw(ts = 0) {
     const midSignal = data[10];
     const triggerPower = Math.max(bassSignal, midSignal * 0.8) / 255;
 
-    if (triggerPower > 0.38) {
-        ledPoint.style.background = "var(--led-on)";
-        ledPoint.style.boxShadow = "none";
-        ledHalo.style.opacity = 0;
-    } else {
-        ledPoint.style.background = "var(--led-off)";
+    // Written only on change: the same three style writes every frame were
+    // free of visible effect but not of style invalidation.
+    const ledOn = triggerPower > 0.38;
+    if (__vizLedOn !== ledOn) {
+        __vizLedOn = ledOn;
+        ledPoint.style.background = ledOn ? "var(--led-on)" : "var(--led-off)";
         ledPoint.style.boxShadow = "none";
         ledHalo.style.opacity = 0;
     }
-
-    if (vizStyle === 5) { dGif.style.opacity = 1; }
-    else { dGif.style.opacity = 0; }
+    const gifOn = vizStyle === 5 ? 1 : 0;
+    if (__vizGifOn !== gifOn) { __vizGifOn = gifOn; dGif.style.opacity = gifOn; }
 
     ensureCanvasSize();
     // Extra visualizers (VU/LED/DOT) own the canvas in radio_extras_v4.js
@@ -2384,9 +2388,9 @@ function draw(ts = 0) {
     if (isModernViz(vizStyle)) {
         drawModernSpectrum(modernBaseMode(vizStyle),ctx,cvs.width,cvs.height,data,frameDelta,vHex);
     } else {
-        const ratio=cvs.width/cvs.clientWidth;
+        const ratio=cvs.width/(__vizCssW||cvs.clientWidth||1);
         ctx.save();ctx.scale(ratio,ratio);
-        drawClassicSpectrum(vizStyle,ctx,{width:cvs.clientWidth,height:cvs.clientHeight},data,vRgb,peaks,frameDelta);
+        drawClassicSpectrum(vizStyle,ctx,{width:__vizCssW||cvs.clientWidth,height:__vizCssH||cvs.clientHeight},data,vRgb,peaks,frameDelta);
         ctx.restore();
     }
 }

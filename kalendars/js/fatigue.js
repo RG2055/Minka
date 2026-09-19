@@ -761,9 +761,12 @@
     return result;
   }
 
-  function calculateFatigue(workerName) {
+  // `dateStr` evaluates the person as of another day than the one on screen.
+  // The calendar uses it to warm the cache for the neighbouring days in idle
+  // time, so stepping to them does not pay for the sleep model in the click.
+  function calculateFatigue(workerName, dateStr) {
     syncFatigueCache();
-    const requestedDateStr = _getSelectedDateStr() || '';
+    const requestedDateStr = (dateStr ? normalizeDateStr(dateStr) : '') || _getSelectedDateStr() || '';
     // A past or future view below replaces `now` with a time simulated from the
     // selected shift and never reads the live duty timer, so its score cannot
     // change until the calendar day itself rolls over. Only today's view has to
@@ -794,7 +797,7 @@
     const today = new Date(realNow.getFullYear(), realNow.getMonth(), realNow.getDate());
 
     // â”€â”€ SkatÄ«juma konteksts â”€â”€
-    const selectedDateStr = _getSelectedDateStr();
+    const selectedDateStr = requestedDateStr || null;
     const selectedDate = selectedDateStr ? parseDate(selectedDateStr) : null;
     let viewMode = 'today';
     if (selectedDate && selectedDate.getTime() > today.getTime()) viewMode = 'future';

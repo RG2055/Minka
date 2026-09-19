@@ -9,8 +9,14 @@
   const origin = window.location.origin;
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const nav = window.navigator;
+  // The drifting fog is a full-screen layer re-composited every frame for
+  // as long as the radio is open. The work machines run the low-spec
+  // profile (8 GB, an integrated GPU): they get the fog, but standing still.
+  // Host only: the calendar copy of this module always runs low-spec, and
+  // its night-scene walkers are not the fog.
   const modestDevice = (nav.hardwareConcurrency > 0 && nav.hardwareConcurrency <= 4) ||
-    (nav.deviceMemory > 0 && nav.deviceMemory <= 4) || !!nav.connection?.saveData;
+    (nav.deviceMemory > 0 && nav.deviceMemory <= 4) || !!nav.connection?.saveData ||
+    (!!radio && (!!(window.__mkPerfProfile && window.__mkPerfProfile.lowSpec) || root.classList.contains('mk-low-spec')));
   let hostVisible = true, expanded = false, color = '83,201,232', lastMessage = '';
   const dreams = new Set();
   function updateDream(el) {
@@ -54,12 +60,13 @@
   }
   root.classList.toggle('minka-ambient-calendar', !radio);
 
-  function sync() {
+  function sync(force) {
     if (radio) {
       // While the dock-button reveal runs (body.radio-anim) the previous state
-      // stands: the glow fade and the calendar's transparency swap wait for
-      // the class to drop, which this observer sees as one more sync().
-      if (!document.body.classList.contains('radio-anim')) {
+      // stands for everyone but the reveal itself: it calls sync(true) in the
+      // same task as the calendar's reflow, so the glow fade and the
+      // calendar's transparency swap share that one style/layout pass.
+      if (force === true || !document.body.classList.contains('radio-anim')) {
         expanded = !document.body.classList.contains('radio-hidden') &&
           !document.body.classList.contains('radio-idle') &&
           !document.body.classList.contains('lacitis-full') && radio.style.display !== 'none';
@@ -105,6 +112,7 @@
     sync();
   }
   if (embedded) window.__minkaAmbientApply = applyFromHost;
+  if (radio) window.__mkAmbienceSync = function () { sync(true); };
   document.addEventListener('visibilitychange', sync);
   window.addEventListener('pageshow', sync);
   motion.addEventListener('change', sync);

@@ -1798,6 +1798,52 @@ function filterFullList(btn) {
         document.documentElement.dataset.minkaDayPerf = JSON.stringify(window.__minkaDaySwitchMetrics.slice(-20));
       });
     }
+    g_warmNeighbourFatigue(date);
+  }
+
+  // The sleep model is the single most expensive piece of a day switch (it
+  // ran for every person in the click, ~half the roster's build time), and
+  // it is cached per person and day. The days people step to next are almost
+  // always the two beside this one, so their scores are computed here, in
+  // idle time, one person per slice, and the click then finds them ready.
+  let g_fatigueWarmToken = 0, g_fatigueWarmTimer = 0, g_fatigueWarmIdle = 0;
+  function g_warmNeighbourFatigue(dateStr) {
+    const token = ++g_fatigueWarmToken;
+    clearTimeout(g_fatigueWarmTimer); g_fatigueWarmTimer = 0;
+    if (g_fatigueWarmIdle) {
+      try { if ('cancelIdleCallback' in window) cancelIdleCallback(g_fatigueWarmIdle); else clearTimeout(g_fatigueWarmIdle); } catch (_e) {}
+      g_fatigueWarmIdle = 0;
+    }
+    const parts = String(dateStr || '').split('.').map(Number);
+    if (parts.length !== 3 || !window.__fatigue || typeof window.__fatigue.calculateFatigue !== 'function') return;
+    const base = new Date(parts[2], parts[1] - 1, parts[0]);
+    const queue = [];
+    for (const delta of [1, -1]) {
+      const d = new Date(base); d.setDate(d.getDate() + delta);
+      const ds = String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + d.getFullYear();
+      let names = [];
+      try { names = getWorkersForDateWithDate(store, ds).concat(getWorkersForDateWithDate(storeRad, ds)).map(w => w && w.name).filter(Boolean); } catch (_e) {}
+      names.forEach(name => queue.push([name, ds]));
+    }
+    if (!queue.length) return;
+    const schedule = () => {
+      g_fatigueWarmIdle = ('requestIdleCallback' in window)
+        ? requestIdleCallback(step, { timeout: 4000 })
+        : setTimeout(() => step({ timeRemaining: () => 8, didTimeout: false }), 250);
+    };
+    const step = deadline => {
+      g_fatigueWarmIdle = 0;
+      if (token !== g_fatigueWarmToken) return;                 // a newer day was chosen
+      // One person per idle slice unless the slice is generous; a click that
+      // lands meanwhile waits for at most one score.
+      do {
+        const [name, ds] = queue.shift();
+        try { window.__fatigue.calculateFatigue(name, ds); } catch (_e) {}
+      } while (queue.length && deadline && !deadline.didTimeout && deadline.timeRemaining() > 12);
+      if (queue.length) schedule();
+    };
+    // Let the switch itself paint (and its images decode) before warming.
+    g_fatigueWarmTimer = setTimeout(() => { g_fatigueWarmTimer = 0; if (token === g_fatigueWarmToken) schedule(); }, 350);
   }
 
   function g_applyTodayUI(){
@@ -4952,16 +4998,6 @@ function filterFullList(btn) {
 
   function g_updateList() {
     const container = document.getElementById('grafiks-list');
-    /* Rebuilding the roster is the heaviest thing this app does, and on the
-       work machines it shares one frame budget with the radio's visualiser —
-       with music on, a day switch visibly drags. Ask the shell to stand its
-       decoration down for the length of the rebuild. The audio never stops;
-       only the spectrum holds still for a third of a second. */
-    try {
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'minka:roster-busy', ms: 450 }, window.location.origin);
-      }
-    } catch (_e) {}
     // Read the stable width before invalidating the old roster. The synchronous
     // finalizer can then size the replacement grid without forcing an extra
     // layout read after dozens of new nodes have been inserted.
@@ -7666,6 +7702,22 @@ window.__minkaCardsFade = function (dir, ms) {
   if (!list) return false;
   var reduce = false; try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_e) {}
   var targets = [list].concat(Array.prototype.slice.call(document.querySelectorAll('.mk-card-addon-portal')));
+  // 'in' ramps back from wherever the dim currently is: the host's reflow
+  // may land before the 'out' ramp has reached its floor, and snapping down
+  // to the floor first would read as a blink. Read before the running
+  // animations are cancelled (their effect is what is being measured); the
+  // style pass this costs is one the caller is about to force anyway.
+  if (dir !== 'out' && __fadeState === 'out' && !reduce && !document.hidden) {
+    targets.forEach(function (el) {
+      var portal = el !== list, v = __fadeFloor;
+      try {
+        var cs = getComputedStyle(el);
+        var m = portal ? /opacity\(([\d.]+)\)/.exec(cs.filter || '') : null;
+        v = portal ? (m ? parseFloat(m[1]) : 1) : parseFloat(cs.opacity);
+      } catch (_e) {}
+      el.__mkFadeFrom = (v >= 0 && v <= 1) ? v : __fadeFloor;
+    });
+  }
   __fadeAnims.forEach(function (a) { try { a.onfinish = a.oncancel = null; a.cancel(); } catch (_e) {} }); __fadeAnims = [];
   clearTimeout(__fadeGuard); __fadeGuard = 0;
   if (dir === 'out') {
@@ -7678,17 +7730,18 @@ window.__minkaCardsFade = function (dir, ms) {
     __fadeGuard = setTimeout(function () { if (__fadeState === 'out') window.__minkaCardsFade('in', 120); }, 700);
     return true;
   }
-  // 'in': from the dimmed state back to full, only if we actually dimmed.
+  // 'in': from the live dim value (read above) back to full, only if we actually dimmed.
   var wasOut = __fadeState === 'out';
   __fadeState = 'in';
   targets.forEach(function (el) {
     var portal = el !== list;
     if (!wasOut || reduce || document.hidden) return;
-    // Pin the dimmed value as the base first: cancelling the forwards-filled
+    var from = typeof el.__mkFadeFrom === 'number' ? el.__mkFadeFrom : __fadeFloor; el.__mkFadeFrom = undefined;
+    // Pin the current value as the base first: cancelling the forwards-filled
     // 'out' animation otherwise shows one frame at full opacity before the
     // 'in' animation takes effect (a visible flash at the very swap).
-    if (portal) el.style.filter = 'opacity(' + __fadeFloor + ')'; else el.style.opacity = String(__fadeFloor);
-    var a = el.animate(portal ? [{ filter: 'opacity(' + __fadeFloor + ')' }, { filter: 'opacity(1)' }] : [{ opacity: __fadeFloor }, { opacity: 1 }], { duration: ms || 120, easing: 'ease-out', fill: 'forwards' });
+    if (portal) el.style.filter = 'opacity(' + from + ')'; else el.style.opacity = String(from);
+    var a = el.animate(portal ? [{ filter: 'opacity(' + from + ')' }, { filter: 'opacity(1)' }] : [{ opacity: from }, { opacity: 1 }], { duration: ms || 120, easing: 'ease-out', fill: 'forwards' });
     a.onfinish = a.oncancel = function () { if (portal) el.style.filter = ''; else el.style.opacity = ''; try { a.cancel(); } catch (_e) {} };
     __fadeAnims.push(a);
   });
@@ -7699,8 +7752,12 @@ window.__minkaHostLayout = function(data, applyHost) {
   var root = document.documentElement;
   var changed = root.classList.contains('host-radio-open') !== !!data.radioVisible;
   root.classList.toggle('host-radio-open', !!data.radioVisible);
-  root.style.setProperty('--host-radio-h', String(Math.max(0, data.radioHeight || 0)) + 'px');
-  root.style.setProperty('--host-btnbar-h', String(Math.max(0, data.buttonBarHeight || 0)) + 'px');
+  // Only the roster reads these. A custom property changed on :root is
+  // inherited by everything, so it used to cost a style pass over the whole
+  // document (the closed night overlay included) each time the radio moved.
+  var list = document.getElementById('grafiks-list') || root;
+  list.style.setProperty('--host-radio-h', String(Math.max(0, data.radioHeight || 0)) + 'px');
+  list.style.setProperty('--host-btnbar-h', String(Math.max(0, data.buttonBarHeight || 0)) + 'px');
   if (typeof applyHost === 'function') applyHost();   // the host's own resize, so one layout covers both
   // Decorations (add-on sizes, charm portals) move with the cards, in this
   // very frame, instead of catching up a frame or two later.
