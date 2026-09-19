@@ -49,3 +49,17 @@ test('random Pixel opens keep album colors and the default wave, without pinning
  assert.equal(applied.layout,'pixel');assert.equal(applied.viz,'31');assert.equal(applied.accentMode,'album');
  context.window.__mkUnifiedMedia={getSession:()=>({name:'Saved profile'})};applied=null;context.randomGuestLook();assert.equal(applied,null);
 });
+
+test('non-Pixel random rotation exhausts every other visualizer before repeating, across reloads',()=>{
+ const source=fs.readFileSync(new URL('../../js/radio.js',import.meta.url),'utf8');
+ const start=source.indexOf('  function nextGuestSpectrum('),end=source.indexOf('  // The shell consumes this',start);
+ assert.ok(start>=0,'random spectrum rotation exists');
+ const data=new Map(),localStorage={getItem:k=>data.get(k)||null,setItem:(k,v)=>data.set(k,v)};
+ const modes=[...Array(13).keys(),...Array.from({length:12},(_,i)=>20+i)].map(idx=>({idx}));
+ const boot=()=>{const c={localStorage,VIZ_MODES:modes,MK_NO_VIZ:12,Math};vm.runInNewContext(source.slice(start,end),c);return c;};
+ const selected=[];let c=boot();
+ for(let i=0;i<23;i++){if(i===10)c=boot();selected.push(c.nextGuestSpectrum(String(selected.at(-1)??31)));}
+ assert.equal(new Set(selected).size,23);assert.ok(!selected.includes(31));assert.ok(!selected.includes(12));
+ for(const mode of [8,9,10,11,20,30])assert.ok(selected.includes(mode),'includes mode '+mode);
+ assert.notEqual(c.nextGuestSpectrum(String(selected.at(-1))),selected.at(-1));
+});

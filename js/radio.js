@@ -532,6 +532,9 @@ const VIZ_MODES = [
     { idx: 5, label: "DOLPHIN", hint: "side peaks" },
     { idx: 6, label: "WAVE", hint: "smooth wave" },
     { idx: 7, label: "MATRIX", hint: "dot grid" },
+    { idx: 8, label: "VU", hint: "VU needle meters" },
+    { idx: 9, label: "LED", hint: "LED bar spectrum" },
+    { idx: 10, label: "DOT VU", hint: "dot-matrix spectrum" },
     { idx: MK_BUDDY_VIZ, label: "BUDDY", hint: "Viegls pikseļu tēls" },
     { idx: MK_NO_VIZ, label: "Bez vizualizācijas", hint: "Nekas netiek zīmēts" },
 ];
@@ -3616,6 +3619,19 @@ function focusRadio(){
 
   // Without a profile the radio wears a different skin every time it is opened
   // (and so on every new shift) — a taste of what a profile would keep.
+  function nextGuestSpectrum(current){
+    const key='rg_radio_guest_spectrum_cycle_v1';
+    const modes=[...new Set(VIZ_MODES.filter(m=>m.idx!==MK_NO_VIZ&&m.idx!==31).map(m=>m.idx))];
+    let seen=[];
+    try{const stored=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(stored))seen=stored.filter(n=>modes.includes(n));}catch(_){}
+    let remaining=modes.filter(n=>!seen.includes(n));
+    if(!remaining.length){seen=[];remaining=modes;}
+    const different=remaining.filter(n=>String(n)!==current);
+    const choices=different.length?different:remaining;
+    const chosen=choices[Math.floor(Math.random()*choices.length)];
+    try{localStorage.setItem(key,JSON.stringify([...seen,chosen]));}catch(_){}
+    return chosen;
+  }
   function randomGuestLook(){
     if (window.__mkUnifiedMedia?.getSession?.()) return;
     const rand = list => list[Math.floor(Math.random() * list.length)];
@@ -3624,10 +3640,9 @@ function focusRadio(){
     const layout = rand(['classic', 'clean', 'pioneer', 'pixel'].filter(l => l !== now.layout));
     const choices=THEMES.filter(t=>!!t.pixel===(layout==='pixel'));
     const theme=rand(choices.filter(t=>t.name!==now.theme))||choices[0]||THEMES[0];
-    const spectra = VIZ_MODES.filter(m => m.idx !== MK_NO_VIZ && m.idx !== MK_BUDDY_VIZ && String(m.idx) !== now.viz);
-    const viz = rand(spectra);
+    const viz=layout==='pixel'?31:nextGuestSpectrum(now.viz);
     closeProfileLook();
-    applyLookSettings({ ...now, theme: theme.name, layout, viz: String(layout==='pixel'?31:viz.idx), accentMode:'album',accent:theme.chip, background: '', cardName: '' });
+    applyLookSettings({ ...now, theme: theme.name, layout, viz: String(viz), accentMode:'album',accent:theme.chip, background: '', cardName: '' });
     try { syncLookControls(false); } catch (_) {}   // applyLookSettings already painted this look
   }
   // The shell consumes this on every open, including the first after reload.
