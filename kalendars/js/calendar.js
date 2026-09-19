@@ -4952,6 +4952,16 @@ function filterFullList(btn) {
 
   function g_updateList() {
     const container = document.getElementById('grafiks-list');
+    /* Rebuilding the roster is the heaviest thing this app does, and on the
+       work machines it shares one frame budget with the radio's visualiser —
+       with music on, a day switch visibly drags. Ask the shell to stand its
+       decoration down for the length of the rebuild. The audio never stops;
+       only the spectrum holds still for a third of a second. */
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'minka:roster-busy', ms: 450 }, window.location.origin);
+      }
+    } catch (_e) {}
     // Read the stable width before invalidating the old roster. The synchronous
     // finalizer can then size the replacement grid without forcing an extra
     // layout read after dozens of new nodes have been inserted.

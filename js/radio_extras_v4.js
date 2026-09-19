@@ -265,6 +265,13 @@ function drawDotMatrix(ctx, W, H, data, dt=16.7) {
     extraVizRaf = 0;
     if (!shouldRunExtraViz()) return;
     const now = performance.now();
+    // Hand the frame to the calendar while it rebuilds its roster, the way the
+    // main visualiser does; come back on a timer so the page idles meanwhile.
+    const quietFor = (window.__mkRadioQuietUntil || 0) - now;
+    if (quietFor > 0) {
+      setTimeout(scheduleExtraViz, Math.min(quietFor + 16, 300));
+      return;
+    }
     if (RG_EXTRA_FRAME_MS && (now - RG_extraLastFrameTs) < RG_EXTRA_FRAME_MS) {
       extraVizRaf = requestAnimationFrame(extraLoop);
       return;
@@ -637,6 +644,11 @@ function drawDotMatrix(ctx, W, H, data, dt=16.7) {
 
   let raf = 0, t = 0, active = false;
   let cvs = null, ctx = null;
+  let lastWaveTs = 0;
+  // Five wave paths of several hundred segments each; a background this slow
+  // carries nothing at 60 fps that it does not carry at 30, and on the work
+  // machines those are frames the rest of the app needs.
+  const WAVE_FRAME_MS = (window.__mkPerfProfile && window.__mkPerfProfile.lowSpec) ? 1000 / 20 : 1000 / 30;
 
   function resize() {
     if (!cvs) return;
@@ -644,10 +656,17 @@ function drawDotMatrix(ctx, W, H, data, dt=16.7) {
     cvs.height = cvs.clientHeight || cvs.parentElement?.clientHeight || 100;
   }
 
-  function draw() {
+  function draw(ts = 0) {
     if (!active || !cvs || !ctx) return;
     raf = requestAnimationFrame(draw);
-    t += 1;
+    const now = ts || performance.now();
+    if ((window.__mkRadioQuietUntil || 0) > now) { lastWaveTs = now; return; }
+    const elapsed = lastWaveTs ? now - lastWaveTs : 16.7;
+    if (WAVE_FRAME_MS && elapsed < WAVE_FRAME_MS) return;
+    lastWaveTs = now;
+    // Advance by elapsed time, not by frame, so capping the rate slows the
+    // work and not the wave.
+    t += Math.min(4, elapsed / 16.7);
 
     const W = cvs.width, H = cvs.height;
     ctx.clearRect(0, 0, W, H);

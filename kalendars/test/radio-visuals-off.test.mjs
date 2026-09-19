@@ -89,7 +89,7 @@ for(const height of [48,64,128])test('all Classic renderers have finite, nonnega
 });
 test('Buddy is a Classic choice and schedules capped work without sampling FFT',()=>{
  assert.match(source,/idx: MK_BUDDY_VIZ, label: "BUDDY"/);assert.doesNotMatch(source,/b.id = 'mkVizToggle'/);
- let delay=0,drawn=0;const c=vm.createContext({MK_NO_VIZ:12,MK_BUDDY_VIZ:11,vizStyle:11,MK_LOW_SPEC:false,radioVisualsInactive:()=>false,audio:{paused:false},analyser:{getByteFrequencyData(){throw Error('Buddy must not sample FFT');}},isAdjustingVol:false,scheduleDraw:d=>delay=d,dGif:{style:{}},mkDrawBuddyViz:()=>drawn++,performance:{now:()=>100}});
+ let delay=0,drawn=0;const c=vm.createContext({MK_NO_VIZ:12,MK_BUDDY_VIZ:11,vizStyle:11,MK_LOW_SPEC:false,radioVisualsInactive:()=>false,audio:{paused:false},analyser:{getByteFrequencyData(){throw Error('Buddy must not sample FFT');}},isAdjustingVol:false,scheduleDraw:d=>delay=d,dGif:{style:{}},mkDrawBuddyViz:()=>drawn++,performance:{now:()=>100},window:{}});
  vm.runInContext(extract('function draw(ts = 0)',"document.getElementById('playBtn').onclick"),c);c.draw(100);assert.equal(drawn,1);assert.equal(delay,1000/24);
 });
 

@@ -132,7 +132,14 @@
 
   function canRender() {
     const radio = document.getElementById('radioWindow');
-    return !!(cfg.enabled && canvas && ctx && radio && !document.hidden && getComputedStyle(radio).display !== 'none');
+    if (!cfg.enabled || !canvas || !ctx || !radio || document.hidden) return false;
+    // The panel hides in place, not with display:none, so asking for its
+    // computed display both missed the hidden state — the glow kept painting
+    // behind a panel nobody could see — and cost a style recalc on every
+    // frame. The classes the shell already sets answer both questions free.
+    const body = document.body;
+    if (body.classList.contains('radio-hidden') || body.classList.contains('radio-idle')) return false;
+    return radio.style.display !== 'none';
   }
 
   function stopRender() {
@@ -257,6 +264,15 @@
   function render(ts = 0) {
     renderRaf = 0;
     if (!canRender()) return;
+    // Hold the glow while the calendar rebuilds its roster, the same way the
+    // visualiser does — sixteen radial gradients a frame is exactly the work
+    // a day switch cannot spare. Waiting on a timer, not on frames, so the
+    // page really does go idle in between.
+    const quietFor = (window.__mkRadioQuietUntil || 0) - (ts || performance.now());
+    if (quietFor > 0) {
+      setTimeout(scheduleRender, Math.min(quietFor + 16, 300));
+      return;
+    }
     if (FRAME_MS && ts && (ts - lastRenderTs) < FRAME_MS) {
       renderRaf = requestAnimationFrame(render);
       return;

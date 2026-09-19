@@ -37,7 +37,7 @@
   }
   window.__minkaHasApiAuth = function() { return !!getToken(); };
 
-  var CALENDAR_BUILD = '20260915modalhide';
+  var CALENDAR_BUILD = '20260919quiet';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -478,6 +478,14 @@ html.radio-morph body.radio-idle #radioWindow {
 html.radio-morph body.radio-anim #radioWindow {
   visibility: visible;
   pointer-events: none;
+}
+/* Held, not stopped, while the calendar rebuilds its roster: the animations
+   resume where they were, and the rebuild gets the frame to itself. */
+body.mk-roster-busy #radioWindow,
+body.mk-roster-busy #radioWindow *,
+body.mk-roster-busy #radioWindow *::before,
+body.mk-roster-busy #radioWindow *::after {
+  animation-play-state: paused !important;
 }
 /* Morph shell: a plain rounded slab that grows from the dock button into the
    radio's frame. transform + opacity only; no shadow, blur or clip. */
@@ -1023,8 +1031,8 @@ async function loadRadioScripts() {
   }
   await loadAny(['js/radio-metadata.js?v=20260910metadata1']);
   await loadAny(['js/radio-pioneer-layout.js?v=20260914reveal2']);
-  await loadAny(['js/radio.js?v=20260914reveal2']);
-  await loadAny(['js/radio_extras_v4.js?v=20260914reveal1']);
+  await loadAny(['js/radio.js?v=20260919quiet1']);
+  await loadAny(['js/radio_extras_v4.js?v=20260919quiet1']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;
   return true;
@@ -1298,6 +1306,21 @@ function radioIdleClick() {
 // Keep calendar area synced to the actual radio height
 let _syncRaf = 0;
 let _lastShellLayout = null;
+/* The calendar says when it is rebuilding its roster. While it does, the radio
+   gives up its frame: the visualiser polls instead of drawing and the panel's
+   own animations hold. Nothing about playback changes — this is decoration
+   standing aside for the part of the app people are actually looking at. */
+window.addEventListener('message', function (e) {
+  if (e.origin !== window.location.origin || !e.data || e.data.type !== 'minka:roster-busy') return;
+  var ms = Math.min(1200, Math.max(120, Number(e.data.ms) || 450));
+  window.__mkRadioQuietUntil = Math.max(window.__mkRadioQuietUntil || 0, performance.now() + ms);
+  document.body.classList.add('mk-roster-busy');
+  clearTimeout(window.__mkRosterBusyTimer);
+  window.__mkRosterBusyTimer = setTimeout(function () {
+    document.body.classList.remove('mk-roster-busy');
+  }, ms);
+});
+
 function syncShellLayout() {
   cancelAnimationFrame(_syncRaf);
   _syncRaf = requestAnimationFrame(_doSync);

@@ -2323,6 +2323,14 @@ function draw(ts = 0) {
         scheduleDraw(120);
         return;
     }
+    // Same idea while the calendar rebuilds its roster: the schedule is the
+    // app, the spectrum is decoration. Come back when the rebuild is done
+    // rather than fighting it for the frame.
+    const quietFor = (window.__mkRadioQuietUntil || 0) - (ts || performance.now());
+    if (quietFor > 0) {
+        scheduleDraw(Math.min(quietFor + 16, 300));
+        return;
+    }
     if (vizStyle === MK_BUDDY_VIZ) {
         scheduleDraw(1000 / (MK_LOW_SPEC ? 15 : 24));
         if (dGif) dGif.style.opacity = 0;
