@@ -2983,7 +2983,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260919clouds1"></script>
+<script src="js/calendar.js?v=20260919today1"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
 <script src="js/header-weather.js?v=20260919clouds2" defer></script>
@@ -2995,7 +2995,7 @@ function _mkToast(msg, type) {
 <script src="js/nightsplit.js?v=20260908dreams5" defer></script>
 <script src="js/monthcal.js?v=20260919birthday1" defer></script>
 <script src="js/design_v1.js?v=20260824perfaudit2" defer></script>
-<script src="js/theme.js?v=20260919header-local16" defer></script>
+<script src="js/theme.js?v=20260919header-local17" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
 <script src="js/emoji.js?v=20260911daybook1-20260908recovery1" defer></script>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
@@ -24242,6 +24242,12 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
 })();
 </script>
 <link rel="stylesheet" href="../css/geist-ui.css?v=20260919type3">
+<style>
+/* Historical/future dates have no live progress segment or reserved row. */
+html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
+  display: none !important;
+}
+</style>
 <script src="../js/image-palette.js?v=20260919palette2"></script>
 <link rel="stylesheet" href="css/header-appearance.css?v=20260919local15">
 <script src="js/header-appearance.js?v=20260919local13"></script>

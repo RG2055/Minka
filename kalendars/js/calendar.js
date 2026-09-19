@@ -1763,9 +1763,11 @@ function filterFullList(btn) {
     const tPanelsDone = phaseMark();
     g_adjustDutyNameFontSize();
     const tFontDone = phaseMark();
-    // No forced g_updateLive here: the shift progress bar is pinned to the
-    // current shift day (not the clicked date), and the 1s interval keeps it
-    // live — the forced full rescan was costing ~0.5-1s per click on weak PCs.
+    // Only returning to today needs a fresh live strip. Browsing any other
+    // date skips the roster scan and ruler/chart work entirely.
+    if (date === g_todayStr && prevDate !== date) requestAnimationFrame(() => {
+      if (activeDateStr === date) g_updateLive(true);
+    });
     try { setTimeout(() => { try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(e) {} }, 40); } catch(e) {}
     try { setTimeout(() => { try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(e) {} }, 280); } catch(e) {}
     try { setTimeout(() => { try { window.__minkaPostAssistantState && window.__minkaPostAssistantState(); } catch(e) {} }, 900); } catch(e) {}
@@ -1848,6 +1850,8 @@ function filterFullList(btn) {
     const isToday = !!(g_todayStr && activeDateStr === g_todayStr);
     if(title) title.classList.toggle('is-today', isToday);
     if(tag) tag.hidden = !isToday;
+    const progress = document.getElementById('shift-progress-wrap');
+    if (progress) progress.hidden = !isToday;
   }
 
   function createDateFromDateTime(dateStr, timeStr) {
@@ -3683,6 +3687,10 @@ function filterFullList(btn) {
       // replaces them only after a complete response arrives.
       g_init(0, true);
     }
+
+    // Keep the 08:00 rollover check above even while browsing another date,
+    // but do not scan rosters or update hidden timers/rulers for those dates.
+    if (activeDateStr !== g_todayStr) return;
 
     // Keep clocks live every second, but do not rebuild gradients, rulers,
     // night lanes and stop markers every second. A 2 s visual step is

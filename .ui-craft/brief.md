@@ -26,3 +26,5 @@ Preserve the existing Classic, Clean and Pioneer layouts. Pixel is an additional
 - Cloud visibility correction: retain the original slow 150s / 210s drift and travel distance. Improve texture sizing/contrast only; no extra particles, layers, or per-frame JavaScript.
 
 - Cloud texture must never repeat as identical small stamps across the header; use a broad non-repeating crop with the original slow drift.
+
+- Live header progress/countdown is shown only for the current duty-day (existing 08:00 rollover). Past/future dates hide the whole row and skip live progress calculations; selecting today resumes it. Retain the lightweight rollover check while browsing other dates.
