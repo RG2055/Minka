@@ -1,0 +1,63 @@
+/* Pixel: original Material-inspired layout over the existing radio controls. */
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source){
+ --pixel-accent:color-mix(in srgb,var(--radio-accent,#a8c98e) 55%,#ffffff);
+ --pixel-surface:color-mix(in srgb,var(--radio-accent,#a8c98e) 36%,#080e12);
+ height:282px!important;border-radius:32px!important;background:var(--pixel-surface)!important;
+ background-image:none!important;border:1px solid #ffffff12!important;box-shadow:0 -8px 32px #0003!important;
+}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .radio-win-body{height:100%;padding:50px 28px 28px!important;box-sizing:border-box}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .bottom-console{height:100%;display:grid!important;grid-template-columns:180px minmax(200px,1fr) minmax(290px,.85fr)!important;grid-template-rows:24px 1fr 24px 36px;gap:6px 24px!important;padding:0!important;align-items:center}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .tech-panel{display:contents!important}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .header-row{position:absolute;top:8px;left:28px;margin:0!important}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) #timeDisp{display:none!important}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .brand-text{color:var(--pixel-accent)!important;letter-spacing:.06em!important}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) #curStation{grid-column:2;grid-row:1;margin:0!important;font:600 13px/1.4 system-ui,sans-serif!important;letter-spacing:0!important;color:var(--pixel-accent)!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .np-row{display:contents!important}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) #npCover{grid-column:1;grid-row:1/5;width:180px!important;height:180px!important;min-width:0!important;border-radius:26px!important;object-fit:cover;opacity:1!important;background:#ffffff08;box-shadow:0 8px 18px #0003}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .np-lines{grid-column:2;grid-row:2;min-width:0;display:flex;flex-direction:column-reverse;gap:8px;align-self:center}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) #npTitle{font:700 clamp(18px,2vw,30px)/1.15 system-ui,sans-serif!important;letter-spacing:-.035em!important;color:var(--pixel-text,#eff1e8)!important;white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) #npArtist{font:500 14px/1.4 system-ui,sans-serif!important;color:color-mix(in srgb,var(--pixel-text,#eff1e8) 80%,transparent)!important;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .meta-status{display:none!important}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .eq-wrap{grid-column:2;grid-row:4;margin:0!important;min-width:0}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .eq-pioneer{flex-wrap:nowrap!important;overflow-x:auto;gap:4px!important;margin:0!important;padding:3px 0!important;scrollbar-width:thin}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .epb{border-radius:14px!important;min-height:30px!important;padding:7px 10px!important;background:#ffffff08!important;border:1px solid transparent!important;color:var(--pixel-text,#eff1e8)!important;flex-shrink:0}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .epb.active{background:var(--pixel-accent)!important;color:var(--pixel-surface,#20341c)!important}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .epb-label{font:600 10px/1 system-ui,sans-serif!important;letter-spacing:0!important;color:inherit!important}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .epb-led{display:none!important}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .monitor-frame{grid-column:2;grid-row:3;height:24px!important;min-height:0!important;width:100%!important;border:0!important;background:transparent!important;box-shadow:none!important;border-radius:12px!important}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .monitor-frame::before,
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .monitor-frame::after{display:none!important}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .control-panel{grid-column:3;grid-row:2/5;display:flex!important;flex-wrap:wrap;justify-content:center!important;gap:12px!important;min-width:0}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .nav-cluster{order:0;width:100%;justify-content:center;gap:18px!important}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) #playBtn{width:72px!important;height:72px!important;border-radius:50%!important;color:var(--pixel-surface,#20341c)!important;background:var(--pixel-play,#a7d0b5)!important;color:#102c20!important;box-shadow:none!important;transition:background-color .2s ease!important}
+html body #radioWindow[data-radio-layout="pixel"][data-playback="playing"]:not(.music-source) #playBtn{border-radius:50%!important}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .nav-btn{width:44px!important;height:44px!important;border-radius:50%;background:#ffffff09!important;color:var(--pixel-accent)!important}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) :is(.station-btn,.viz-icon-btn,#mkVizToggle){order:1;border-radius:50%!important;background:#ffffff08!important;color:var(--pixel-text,#eff1e8)!important}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) #vol{order:2;width:96px!important;accent-color:var(--pixel-accent)}
+#radioWindow :is(button,input,select):focus-visible{outline:2px solid #d8efbd!important;outline-offset:3px!important}
+#radioWindow #ceqTriggerBtn{font:700 10px/1 system-ui,sans-serif!important;color:#d4edc4!important;background:#b8d5a41a!important;border-color:#b8d5a438!important;transition:background-color .15s ease!important}
+#radioWindow #ceqTriggerBtn[data-eq-active="true"]{color:#142211!important;background:#c7e8b5!important}
+@media(max-width:1100px){
+ html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .bottom-console{grid-template-columns:150px minmax(170px,1fr) 290px!important;gap:6px 16px!important}
+ html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) #npCover{width:150px!important;height:170px!important}
+ html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .radio-win-body{padding-left:20px!important;padding-right:20px!important}
+}
+@media(prefers-reduced-motion:reduce){html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) #playBtn{transition:none!important}}
+
+/* Keep appearance access alongside transport, clear of the artwork. */
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) #themeBtn{position:static!important;order:1;width:38px!important;height:38px!important;flex:0 0 38px!important;display:flex!important;align-items:center;justify-content:center;border-radius:50%!important;color:var(--pixel-text,#eff1e8)!important;background:#ffffff08!important;z-index:1}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .header-row{top:-38px;left:0;z-index:1}
+/* The compact meter shares one row with its temporary volume readout. */
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) #volumeOSD{inset:0;width:100%;height:100%;padding:0;box-sizing:border-box;flex-direction:row;align-items:center;justify-content:flex-start;gap:10px}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) #osd-num{position:static;flex:0 0 3ch;font:700 12px/1 system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--pixel-accent)}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) #osd-segments{flex:1;min-width:0;width:auto;height:6px;gap:2px}
+
+/* Palettes are available beside the layout and in the skin gallery. */
+#pixelPaletteControls[hidden]{display:none!important}
+.pixel-palette-choices{display:flex;flex-wrap:wrap;gap:8px}
+.pixel-palette-choices button{display:flex;align-items:center;gap:7px;min-height:36px;padding:6px 10px;border:1px solid #ffffff26;border-radius:12px;background:#ffffff08;color:#eff4f0;font:600 12px/1.2 system-ui;cursor:pointer}
+.pixel-palette-choices button[aria-pressed="true"]{border-color:#d4edc4;box-shadow:inset 0 0 0 1px #d4edc4}
+.pixel-palette-choices i{display:block;width:22px;height:22px;border-radius:50%;background:var(--swatch);box-shadow:inset -7px -2px var(--swatch-accent)}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .nav-btn{background:var(--pixel-accent)!important;color:var(--pixel-surface)!important}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) :is(.station-btn,.viz-icon-btn,#mkVizToggle,#themeBtn){background:color-mix(in srgb,var(--pixel-surface) 74%,#000)!important}
+html body #radioWindow[data-radio-layout="pixel"]:not(.music-source) .epb.active{background:var(--pixel-accent)!important}

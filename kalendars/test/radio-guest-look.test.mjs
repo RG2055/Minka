@@ -81,3 +81,11 @@ test('old device framing migration belongs only to its original profile',()=>{
  assert.equal(h.c.legacyImageCrops('alpha')[key].zoom,1.2);
  assert.deepEqual(Object.keys(h.c.legacyImageCrops('beta')),[]);
 });
+
+
+test('Pixel profiles default to their wave but preserve a deliberately chosen spectrum or no visuals',()=>{
+ const h=boot();h.c.setVizStyle=n=>{h.c.vizStyle=n;};
+ h.apply({layout:'pixel'});assert.equal(h.snapshot().viz,'31');
+ h.apply({layout:'pixel',viz:'24'});assert.equal(h.snapshot().viz,'24');
+ h.apply({layout:'pixel',viz:'12'});assert.equal(h.snapshot().viz,'12');
+});

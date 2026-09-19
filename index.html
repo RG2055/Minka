@@ -347,6 +347,8 @@
 <link rel="stylesheet" href="css/radio_polish_v1.css?v=20260708b">
 <link rel="stylesheet" href="css/radio_lacitis_v2.css?v=20260910compact1">
 <link rel="stylesheet" href="css/radio-source.css?v=20260911nobox1">
+<link rel="stylesheet" href="css/radio-equalizer.css?v=20260919pixel2">
+<link rel="stylesheet" href="css/radio-pixel.css?v=20260919pixel5">
 <link rel="stylesheet" href="css/media-profile.css?v=20260911auth12">
 
 <style>
@@ -938,11 +940,11 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
           <i class="fas fa-wave-square" aria-hidden="true"></i>
         </button>
         <div class="nav-cluster">
-          <button class="nav-btn" onclick="playPrev()"><i class="fas fa-backward fa-fw"></i></button>
-          <button class="play-trigger" id="playBtn"><i class="fas fa-play"></i></button>
-          <button class="nav-btn" onclick="playNext()"><i class="fas fa-forward fa-fw"></i></button>
+          <button class="nav-btn" onclick="playPrev()" aria-label="Iepriekšējā stacija" title="Iepriekšējā stacija"><i class="fas fa-backward fa-fw"></i></button>
+          <button class="play-trigger" id="playBtn" aria-label="Atskaņot" title="Atskaņot"><i class="fas fa-play"></i></button>
+          <button class="nav-btn" onclick="playNext()" aria-label="Nākamā stacija" title="Nākamā stacija"><i class="fas fa-forward fa-fw"></i></button>
         </div>
-        <input type="range" class="fader" id="vol" min="0" max="1" step="0.01" value="0.7" draggable="false" ondragstart="return false">
+        <input type="range" class="fader" id="vol" aria-label="Skaļums" min="0" max="1" step="0.01" value="0.7" draggable="false" ondragstart="return false">
       </div>
     </footer>
   </div>
@@ -1023,8 +1025,12 @@ async function loadRadioScripts() {
   }
   await loadAny(['js/radio-metadata.js?v=20260910metadata1']);
   await loadAny(['js/radio-pioneer-layout.js?v=20260914reveal2']);
-  await loadAny(['js/radio.js?v=20260919smooth1']);
-  await loadAny(['js/radio_extras_v4.js?v=20260919smooth1']);
+  await loadAny(['js/radio-listening.js?v=20260919pixel2']);
+  await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
+  await loadAny(['js/radio-equalizer-ui.js?v=20260919pixel2']);
+  await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
+  await loadAny(['js/radio.js?v=20260919pixel5']);
+  await loadAny(['js/radio_extras_v4.js?v=20260919pixel2']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;
   return true;
@@ -1168,11 +1174,22 @@ const mkRadioReveal = (function () {
   // It restyles the whole (hidden) radio window, which on a slow machine is
   // real work — so it waits until the cards have finished fading back in,
   // and then for an idle moment on top of that.
+  let nextGuestLook = true;
+  function prepareGuestLook() {
+    if (!nextGuestLook || !window.rgTheme?.randomGuest) return;
+    nextGuestLook = false;
+    try { window.rgTheme.randomGuest(); } catch (_e) {}
+  }
+  // A cold first open can reveal before the lazy appearance module is ready.
+  window.addEventListener('rg-theme-ready', function () {
+    const classes = document.body.classList;
+    if (!classes.contains('radio-hidden') && !classes.contains('radio-idle')) prepareGuestLook();
+  });
   function rollNextLook(rw) {
     const roll = function () {
       const b = document.body.classList;
       if (!b.contains('radio-hidden') || b.contains('radio-anim')) return;   // reopened already
-      try { window.rgTheme?.randomGuest?.(); } catch (_e) {}
+      prepareGuestLook();
       try {
         const m = /url\("?([^")]+)"?\)/.exec(rw.style.backgroundImage || '');
         if (m) { const img = new Image(); img.src = m[1]; if (img.decode) img.decode().catch(function () {}); }
@@ -1193,6 +1210,7 @@ const mkRadioReveal = (function () {
     const rw = document.getElementById('radioWindow');
     if (!rw) return false;
     if (running) { pending = open; return true; }   // remember the last request; finalize() applies it
+    if (open) prepareGuestLook(); else nextGuestLook = true;
     const body = document.body;
     const geo = reduced() ? null : geometry(rw);
     body.classList.add('radio-anim');
@@ -2848,7 +2866,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
 
 <script src="kalendars/js/daybook-model.js?v=20260911b" defer></script>
 <script src="js/radio-daybook.js?v=20260911i" defer></script>
-<script src="js/media-profile.js?v=20260914reveal1" defer></script>
+<script src="js/media-profile.js?v=20260919pixel2" defer></script>
 <script src="js/radio-source.js?v=20260914reveal1" defer></script>
 
 <div id="mobileQrModal" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171000;background:rgba(2,4,8,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:20px;">

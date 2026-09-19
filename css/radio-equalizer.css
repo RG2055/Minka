@@ -1,0 +1,29 @@
+.minka-eq{--eq-accent:#c7e8b5;box-sizing:border-box;width:min(580px,calc(100vw - 24px));max-height:calc(100dvh - 32px);overflow:auto;padding:26px;border:1px solid #ffffff1a;border-radius:30px;background:#191e19;color:#eef3e8;box-shadow:0 24px 80px #0008;font:500 14px/1.45 system-ui,sans-serif;color-scheme:dark}
+.minka-eq{margin:auto}
+.minka-eq::backdrop{background:#030803b3}
+.minka-eq header,.minka-eq footer,.minka-eq-switch{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.minka-eq h2{margin:2px 0 18px;font-size:28px;letter-spacing:-.04em;color:inherit}
+.minka-eq-kicker{color:#c2cbbd;font-size:12px}
+.minka-eq button{font:inherit;color:inherit;cursor:pointer;border:1px solid #ffffff20;background:#ffffff08;border-radius:18px;min-height:40px;padding:8px 14px}
+.minka-eq [data-close]{width:44px;height:44px;align-self:flex-start;padding:0;font-size:26px;background:#ffffff0d}
+.minka-eq-switch{padding:12px 0 18px;color:#c2cbbd;font-size:12px}
+.minka-eq-switch label{font-size:14px;color:#eef3e8;display:flex;align-items:center;gap:8px}
+.minka-eq input{accent-color:var(--eq-accent)}
+.minka-eq-presets{display:flex;gap:6px;flex-wrap:wrap}
+.minka-eq-presets button[aria-pressed=true]{background:var(--eq-accent);color:#1b3018;border-color:transparent}
+.minka-eq-curve{display:block;width:100%;height:64px;margin:16px 0 8px;overflow:visible}
+.minka-eq-curve path{stroke:#ffffff24;stroke-width:.3;stroke-dasharray:1 2}
+.minka-eq-curve polyline{stroke:var(--eq-accent);stroke-width:.7;stroke-linejoin:round}
+.minka-eq-bands{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px}
+.minka-eq-bands label{display:flex;align-items:center;flex-direction:column;gap:12px;min-width:0;color:#c2cbbd;font-size:11px;font-variant-numeric:tabular-nums}
+.minka-eq-bands input{writing-mode:vertical-lr;direction:rtl;appearance:auto;width:30px;height:145px;cursor:ns-resize;margin:0}
+.minka-eq-bands output{color:var(--eq-accent);font-size:12px}
+.minka-eq-balance{display:flex;align-items:center;gap:10px;font-size:12px;margin-top:24px;color:#c2cbbd}
+.minka-eq-balance input{min-width:30px;flex:1}
+.minka-eq footer{margin-top:22px;padding-top:16px;border-top:1px solid #ffffff15;font-size:12px;color:#c2cbbd}
+.minka-eq [data-error]:empty{display:none}
+.minka-eq [data-error]{color:#ffb5a9}
+.minka-eq :is(button,input):focus-visible{outline:2px solid var(--eq-accent);outline-offset:4px}
+.minka-eq button:hover{border-color:var(--eq-accent)}
+.minka-eq input:disabled{opacity:.4;cursor:default}
+@media(max-width:480px){.minka-eq{padding:18px}.minka-eq-bands{gap:0}.minka-eq-bands input{width:24px;height:125px}.minka-eq-presets button{padding:8px 11px}.minka-eq-switch{align-items:flex-start}}

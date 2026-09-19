@@ -150,3 +150,18 @@ test('OEL preference accepts booleans, preserves false and ignores malformed val
  assert.equal(disabled.settings.pioneerPixels,false);
  assert.equal(radioOperation(disabled,{type:'settings',settings:{pioneerPixels:'true'}}).settings.pioneerPixels,false);
 });
+
+test('Pixel skin, album colors and wave survive reauthentication and remain account-scoped',async()=>{
+ const h=harness();try{
+  const first=await create(h),auth={sessionToken:first.session.sessionToken};
+  const settings={layout:'pixel',theme:'Pixel · Olīva',accentMode:'album',accent:'#ddd17b',viz:'31',vizPositions:{pixel:{x:.1,y:-.2}}};
+  const save=await h.call('radio/change',{...auth,operation:{type:'settings',settings}});
+  assert.equal(save.status,200);assert.deepEqual(save.data.settings,settings);
+  const again=await h.call('login',{name:'Alpha Test',pin:'123456'});
+  assert.deepEqual((await h.call('radio/load',{sessionToken:again.session.sessionToken})).data.settings,settings);
+  const other=await create(h,'Beta Test');assert.deepEqual((await h.call('radio/load',{sessionToken:other.session.sessionToken})).data.settings,{});
+  const palette={...settings,accentMode:'custom',theme:'Pixel · Ceriņi',accent:'#d5b7e8'};
+  await h.call('radio/change',{...auth,operation:{type:'settings',settings:palette}});
+  assert.deepEqual((await h.call('radio/load',{sessionToken:again.session.sessionToken})).data.settings,palette);
+ }finally{h.close();}
+});

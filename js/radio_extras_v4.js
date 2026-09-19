@@ -305,310 +305,34 @@ function drawDotMatrix(ctx, W, H, data, dt=16.7) {
 })();
 
 // ─────────────────────────────────────────────────────────────
-//  CUSTOM 5-BAND EQ PANEL
+//  Shared ten-band EQ, applied once to every radio skin.
 // ─────────────────────────────────────────────────────────────
 (function CustomEQPanel(){
-  let eqNodes  = null;
-  let panelOpen = false;
-  let currentGains = [0,0,0,0,0];
-
-  const EQ_BANDS = [
-    { freq:60,    type:'lowshelf',  label:'60Hz'  },
-    { freq:250,   type:'peaking',   label:'250Hz' },
-    { freq:1000,  type:'peaking',   label:'1kHz'  },
-    { freq:4000,  type:'peaking',   label:'4kHz'  },
-    { freq:12000, type:'highshelf', label:'12kHz' },
-  ];
-
-  const PRESETS = {
-    'FLAT':     [0,0,0,0,0],
-    'BASS+':    [9,4,-1,-2,-1],
-    'VOCAL':    [-3,2,5,3,-1],
-    'TREBLE+':  [-2,-2,0,4,8],
-    'LOUDNESS': [6,2,-1,2,5],
-    'NIGHT':    [4,2,0,-3,-5],
-    'JAZZ':     [2,1,3,2,4],
-    'ROCK':     [5,2,-1,3,4],
-    'DANCE':    [6,-1,-3,-1,4],
-    'CLASSIC':  [2,-1,-1,1,3],
-  };
-
-  function ensureNodes(){
-    if (eqNodes) return true;
-    if (typeof aCtx === 'undefined' || !aCtx) return false;
-    try {
-      eqNodes = EQ_BANDS.map(({freq, type}) => {
-        const n = aCtx.createBiquadFilter();
-        n.type = type; n.frequency.value = freq; n.Q.value = 1; n.gain.value = 0;
-        return n;
-      });
-      if (typeof masterGain !== 'undefined' && masterGain &&
-          typeof depthDryGain !== 'undefined' && depthDryGain &&
-          typeof depthSplitter !== 'undefined' && depthSplitter) {
-        masterGain.disconnect();
-        masterGain.connect(eqNodes[0]);
-        for (let i=0; i<eqNodes.length-1; i++) eqNodes[i].connect(eqNodes[i+1]);
-        const last = eqNodes[eqNodes.length-1];
-        last.connect(depthDryGain);
-        last.connect(depthSplitter);
-      }
-      return true;
-    } catch(e) { eqNodes = null; return false; }
-  }
-
-  function setGains(gains){
-    currentGains = [...gains];
-    if (!ensureNodes()) return;
-    gains.forEach((g,i) => {
-      eqNodes[i].gain.setTargetAtTime(g, aCtx.currentTime, 0.04);
-    });
-    syncUI();
-  }
-
-  function setPreset(name){
-    const g = PRESETS[name];
-    if (!g) return;
-    setGains(g);
-    document.querySelectorAll('.ceq-preset-btn').forEach(b =>
-      b.classList.toggle('active', b.dataset.preset === name));
-  }
-
-  function syncUI(){
-    currentGains.forEach((g, i) => {
-      const fill  = document.querySelector(`.ceq-band-fill[data-band="${i}"]`);
-      const val   = document.querySelector(`.ceq-band-val[data-band="${i}"]`);
-      const thumb = document.querySelector(`.ceq-band-thumb[data-band="${i}"]`);
-      if (!fill) return;
-      const pct = (g + 12) / 24; // 0→1
-      if (g > 0) {
-        fill.style.top    = 'auto';
-        fill.style.bottom = '50%';
-        fill.style.height = ((pct - 0.5) * 100) + '%';
-        fill.style.background = 'linear-gradient(to top, rgba(0,255,136,0.88), rgba(0,180,90,0.50))';
-      } else if (g < 0) {
-        fill.style.bottom = 'auto';
-        fill.style.top    = '50%';
-        fill.style.height = ((0.5 - pct) * 100) + '%';
-        fill.style.background = 'linear-gradient(to bottom, rgba(255,80,60,0.78), rgba(255,150,120,0.40))';
-      } else {
-        fill.style.height = '0%';
-      }
-      if (val) val.textContent = (g >= 0 ? '+' : '') + g.toFixed(0) + 'dB';
-      if (thumb) thumb.style.top = `calc(${(1 - pct) * 100}% - 6px)`;
-    });
-  }
-
-  function buildPanel(){
-    if (document.getElementById('ceqPanel')) return document.getElementById('ceqPanel');
-    const panel = document.createElement('div');
-    panel.id = 'ceqPanel';
-    panel.style.display = 'none';
-
-    const presetHtml = Object.keys(PRESETS).map(k =>
-      `<button class="ceq-preset-btn" data-preset="${k}">${k}</button>`).join('');
-
-    const bandsHtml = EQ_BANDS.map((b,i) => `
-      <div class="ceq-band">
-        <div class="ceq-band-track" data-band="${i}">
-          <div class="ceq-band-fill" data-band="${i}"></div>
-          <div class="ceq-center-line"></div>
-          <div class="ceq-band-thumb" data-band="${i}"></div>
-        </div>
-        <div class="ceq-band-val" data-band="${i}">0dB</div>
-        <div class="ceq-band-label">${b.label}</div>
-      </div>`).join('');
-
-    panel.innerHTML = `
-      <div class="ceq-head">
-        <div class="ceq-title"><span class="ceq-dot"></span>CUSTOM EQ</div>
-        <button class="ceq-close" id="ceqClose">×</button>
-      </div>
-      <div class="ceq-presets">${presetHtml}</div>
-      <div class="ceq-body">
-        <div class="ceq-bands">${bandsHtml}</div>
-        <div class="ceq-bal">
-          <div class="ceq-bal-track" id="ceqBalTrack">
-            <div class="ceq-bal-thumb" id="ceqBalThumb"></div>
-          </div>
-          <div class="ceq-bal-label">BAL</div>
-          <div class="ceq-bal-val" id="ceqBalVal">C</div>
-        </div>
-      </div>
-      <div class="ceq-foot">
-        <button class="ceq-fb" id="ceqFlatBtn">FLAT</button>
-        <button class="ceq-fb" id="ceqRstBtn">RESET</button>
-      </div>`;
-
-    document.body.appendChild(panel);
-
-    panel.querySelector('#ceqClose').onclick = closePanel;
-    panel.querySelector('#ceqFlatBtn').onclick = () => setPreset('FLAT');
-    panel.querySelector('#ceqRstBtn').onclick  = () => {
-      setPreset('FLAT');
-      setBalance(0);
-    };
-    panel.querySelectorAll('.ceq-preset-btn').forEach(b =>
-      b.addEventListener('click', () => setPreset(b.dataset.preset)));
-
-    // Band drag
-    panel.querySelectorAll('.ceq-band-track').forEach(track => {
-      const band = parseInt(track.dataset.band);
-      let dragging = false;
-      const handleMove = (clientY) => {
-        const rect = track.getBoundingClientRect();
-        let pct = 1 - (clientY - rect.top) / rect.height;
-        pct = Math.max(0, Math.min(1, pct));
-        const gain = Math.round(pct * 24 - 12);
-        currentGains[band] = gain;
-        if (ensureNodes()) {
-          eqNodes[band].gain.setTargetAtTime(gain, aCtx.currentTime, 0.025);
-        }
-        const val   = panel.querySelector(`.ceq-band-val[data-band="${band}"]`);
-        const fill  = panel.querySelector(`.ceq-band-fill[data-band="${band}"]`);
-        const thumb = panel.querySelector(`.ceq-band-thumb[data-band="${band}"]`);
-        if (val) val.textContent = (gain >= 0 ? '+' : '') + gain + 'dB';
-        if (thumb) thumb.style.top = `calc(${(1-pct)*100}% - 6px)`;
-        if (fill) {
-          // Fill always anchored at center (50%), extends up (positive) or down (negative)
-          if (gain >= 0) {
-            const h = (pct - 0.5) * 100;
-            fill.style.bottom = '50%';
-            fill.style.height = h + '%';
-            fill.style.top = 'auto';
-            fill.style.background = 'linear-gradient(to top, rgba(0,255,136,.88), rgba(0,180,90,.50))';
-          } else {
-            const h = (0.5 - pct) * 100;
-            fill.style.top = '50%';
-            fill.style.height = h + '%';
-            fill.style.bottom = 'auto';
-            fill.style.background = 'linear-gradient(to bottom, rgba(255,80,60,.78), rgba(255,150,120,.40))';
-          }
-          if (gain === 0) { fill.style.height = '0%'; }
-        }
-        panel.querySelectorAll('.ceq-preset-btn').forEach(b => b.classList.remove('active'));
-      };
-
-      track.addEventListener('pointerdown', (e) => {
-        dragging = true;
-        track.setPointerCapture(e.pointerId);
-        handleMove(e.clientY);
-      });
-      track.addEventListener('pointermove', (e) => { if (dragging) handleMove(e.clientY); });
-      track.addEventListener('pointerup', () => { dragging = false; });
-      track.addEventListener('pointercancel', () => { dragging = false; });
-    });
-
-    // Balance drag
-    setupBalanceDrag(panel);
-
-    // Click outside
-    document.addEventListener('pointerdown', (e) => {
-      if (!panelOpen) return;
-      if (panel.contains(e.target)) return;
-      const btn = document.getElementById('ceqTriggerBtn');
-      if (btn && btn.contains(e.target)) return;
-      closePanel();
-    }, { passive: true });
-
-    return panel;
-  }
-
-  let balVal = 0;
-  function setBalance(v) {
-    balVal = Math.max(-1, Math.min(1, v));
-    const valEl = document.getElementById('ceqBalVal');
-    if (valEl) valEl.textContent = balVal === 0 ? 'C' : (balVal < 0 ? 'L'+Math.abs(Math.round(balVal*100)) : 'R'+Math.round(balVal*100));
-    const thumb = document.getElementById('ceqBalThumb');
-    const track = document.getElementById('ceqBalTrack');
-    if (thumb && track) {
-      const pct = (balVal + 1) / 2;
-      thumb.style.top = `calc(${(1-pct)*100}% - 6px)`;
+  const engine = window.MinkaEqualizer.create();
+  let connected = false;
+  function ensure(){
+    setupAudio();
+    if(!aCtx || !masterGain) throw new Error('Audio unavailable');
+    if(!connected){
+      masterGain.disconnect();
+      engine.connect(aCtx, masterGain, [depthDryGain, depthSplitter]);
+      connected = true;
     }
-    // Apply stereo panner
-    try {
-      if (!window._rgPanner) {
-        if (typeof aCtx !== 'undefined' && aCtx && typeof analyser !== 'undefined' && analyser) {
-          const panner = aCtx.createStereoPanner();
-          analyser.disconnect();
-          analyser.connect(panner);
-          panner.connect(aCtx.destination);
-          window._rgPanner = panner;
-        }
-      } else {
-        window._rgPanner.pan.setTargetAtTime(balVal, aCtx.currentTime, 0.05);
-      }
-    } catch(e) {}
   }
-
-  function setupBalanceDrag(panel) {
-    const track = panel.querySelector('#ceqBalTrack');
-    const thumb = panel.querySelector('#ceqBalThumb');
-    if (!track || !thumb) return;
-    let dragging = false;
-    track.addEventListener('pointerdown', (e) => {
-      dragging = true;
-      track.setPointerCapture(e.pointerId);
-      const r = track.getBoundingClientRect();
-      setBalance((1 - (e.clientY - r.top) / r.height) * 2 - 1);
-    });
-    track.addEventListener('pointermove', (e) => {
-      if (!dragging) return;
-      const r = track.getBoundingClientRect();
-      setBalance((1 - (e.clientY - r.top) / r.height) * 2 - 1);
-    });
-    track.addEventListener('pointerup', () => { dragging = false; });
-    track.addEventListener('pointercancel', () => { dragging = false; });
-  }
-
-  function position(){
-    const panel = document.getElementById('ceqPanel');
-    const btn   = document.getElementById('ceqTriggerBtn');
-    if (!panel || !btn) return;
-    const r = btn.getBoundingClientRect();
-    const pw = 320, ph = panel.offsetHeight || 330;
-    let left = r.left + r.width/2 - pw/2;
-    left = Math.max(10, Math.min(window.innerWidth - pw - 10, left));
-    let top = r.top - ph - 10;
-    if (top < 10) top = r.bottom + 10;
-    panel.style.left = left + 'px';
-    panel.style.top  = top  + 'px';
-    panel.style.width = pw + 'px';
-  }
-
-  function openPanel(){
-    const panel = buildPanel();
-    panelOpen = true;
-    panel.style.display = 'block';
-    position();
-    syncUI();
-    const btn = document.getElementById('ceqTriggerBtn');
-    if (btn) btn.classList.add('active');
-  }
-
-  function closePanel(){
-    const panel = document.getElementById('ceqPanel');
-    if (panel) panel.style.display = 'none';
-    panelOpen = false;
-    const btn = document.getElementById('ceqTriggerBtn');
-    if (btn) btn.classList.remove('active');
-  }
-
-  function injectBtn(){
-    if (document.getElementById('ceqTriggerBtn')) return;
-    const eqRow = document.getElementById('eqRow');
-    if (!eqRow) { setTimeout(injectBtn, 400); return; }
-    const btn = document.createElement('button');
-    btn.id = 'ceqTriggerBtn';
-    btn.className = 'eq-btn ceq-trigger';
-    btn.type = 'button';
-    btn.title = 'Custom EQ';
-    btn.textContent = 'EQ+';
-    btn.onclick = () => panelOpen ? closePanel() : openPanel();
-    eqRow.appendChild(btn);
-  }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', injectBtn);
-  else setTimeout(injectBtn, 400);
+  audio.addEventListener('play', ensure);
+  if(!audio.paused) ensure();
+  const trigger = document.createElement('button');
+  trigger.id = 'ceqTriggerBtn'; trigger.className = 'epb ceq-trigger';
+  trigger.type = 'button'; trigger.textContent = 'EQ';
+  document.getElementById('eqRow').append(trigger);
+  window.MinkaEqualizer.mount({engine, trigger, ensure, balance(value){
+    if(!window._rgPanner){
+      window._rgPanner = aCtx.createStereoPanner();
+      analyser.disconnect(); analyser.connect(window._rgPanner); window._rgPanner.connect(aCtx.destination);
+    }
+    window._rgPanner.pan.setTargetAtTime(value,aCtx.currentTime,.035);
+  }});
+  window.rgEqualizer = engine;
 })();
 
 /* ═══════════════════════════════════════════════════
