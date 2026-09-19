@@ -180,10 +180,35 @@
   syncMoonPhase();
   window.addEventListener('daySelected', syncMoonPhase, { passive: true });
 
+  // Match the visible sky after object-fit: cover crops each panorama. Run on
+  // scenery/load/resize events only; cloud movement remains CSS transforms.
+  function syncScenery() {
+    var image = header.querySelector('.mk-header-scenic-img');
+    var root = document.documentElement;
+    var scene = root.dataset.minkaHeaderScene || 'coast';
+    layer.dataset.scenicScene = scene;
+    layer.dataset.scenicPeriod = root.dataset.minkaHeaderPeriod || 'day';
+    if (!image || !image.naturalWidth || !image.naturalHeight) return;
+    var rect = image.getBoundingClientRect();
+    var weatherRect = layer.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    var scale = Math.max(rect.width / image.naturalWidth, rect.height / image.naturalHeight);
+    var renderedHeight = image.naturalHeight * scale;
+    var position = parseFloat(getComputedStyle(image).objectPosition.split(' ')[1]);
+    var offset = (rect.height - renderedHeight) * (Number.isFinite(position) ? position / 100 : .48);
+    // Fade before the coastline / rooftops, rather than over the foreground.
+    var skyLine = scene === 'riga' ? .42 : .46;
+    var skyHeight = Math.max(0, Math.min(rect.height, offset + renderedHeight * skyLine));
+    layer.style.setProperty('--mk-cloud-top', (rect.top - weatherRect.top) + 'px');
+    layer.style.setProperty('--mk-cloud-sky', skyHeight.toFixed(1) + 'px');
+  }
+  window.addEventListener('minka:header-scenery', syncScenery);
+
   function syncHeight() {
     var height = Math.max(36, Math.round(layer.getBoundingClientRect().height || header.getBoundingClientRect().height || 60));
     layer.style.setProperty('--mk-weather-height', (height + 18) + 'px');
     layer.style.setProperty('--mk-weather-mid', Math.round((height + 18) * 0.45) + 'px');
+    syncScenery();
   }
   syncHeight();
   if (typeof ResizeObserver === 'function') {
@@ -226,30 +251,8 @@
     if (!demoMode) return;
     if (window.MinkaHeaderScenic && typeof window.MinkaHeaderScenic.setPreviewPeriod === 'function') {
       window.MinkaHeaderScenic.setPreviewPeriod(period);
+      return;
     }
-    var scenic = header.querySelector(':scope > .mk-header-scenic-bg') || header.querySelector('.mk-header-scenic-bg');
-    var scenicImage = scenic && scenic.querySelector('.mk-header-scenic-img');
-    var headerInner = document.getElementById('minkaBarInner');
-    var next = PERIODS.indexOf(period) >= 0 ? period : 'day';
-    var scenicAssets = {
-      morning: { src: 'data/header-backgrounds/header-morning-20260701.jpg', position: '54% 46%' },
-      day: { src: 'data/header-backgrounds/header-day-20260701.jpg', position: '56% 48%' },
-      sunset: { src: 'data/header-backgrounds/header-sunset-20260701.jpg', position: '58% 48%' },
-      night: { src: 'data/header-backgrounds/header-night-20260701.jpg', position: '58% 48%' }
-    };
-    var asset = scenicAssets[next];
-    var src = asset.src;
-    var position = asset.position;
-    if (headerInner) headerInner.dataset.headerPeriod = next;
-    document.documentElement.dataset.minkaHeaderPeriod = next;
-    header.dataset.weatherDemoPeriod = next;
-    if (!scenic || !scenicImage) return;
-    scenic.classList.remove('is-loaded');
-    scenicImage.style.objectPosition = position;
-    scenicImage.onload = function() { scenic.classList.add('is-loaded'); };
-    scenicImage.onerror = function() { scenic.classList.remove('is-loaded'); };
-    if (scenicImage.getAttribute('src') === src && scenicImage.complete) scenic.classList.add('is-loaded');
-    else scenicImage.src = src;
   }
 
   function setPeriod(period) {

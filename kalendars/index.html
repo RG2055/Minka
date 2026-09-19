@@ -134,7 +134,7 @@ window.setTimeout(function () {
 <link rel="stylesheet" href="css/card-addons.css?v=20260912faces17">
 <script src="js/card-addons.js?v=20260914reveal4" defer></script>
 <link rel="stylesheet" href="css/side-cards-v2.css?v=20260911split4">
-<link rel="stylesheet" href="css/header-weather.css?v=20260813headerfix1">
+<link rel="stylesheet" href="css/header-weather.css?v=20260919clouds5">
 <link rel="stylesheet" href="css/mood-fluent.css?v=20260820fmood16">
 <link rel="stylesheet" href="css/daily-cat.css?v=20260829catpicker1">
 <link rel="stylesheet" href="css/depth-cards.css?v=20260912faces17">
@@ -948,8 +948,12 @@ body.stars-active #stars-overlay{display:block;}
         <button id="mkSearchLaunch" class="mk-bar-icon-btn" type="button" title="Meklēt" aria-label="Meklēt">
           <span class="material-icons-round">search</span>
         </button>
-        <button id="minkaBarMenu" onclick="toggleFullListModal(event)" title="Viss saraksts">
-          <span class="material-icons-round">menu</span>
+        <button id="minkaBarMenu" type="button" onclick="toggleFullListModal(event)" title="Tālruņu numuri" aria-label="Tālruņu numuri">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <path d="M7 3H4.8C3.8 3 3 3.8 3 4.8v14.4c0 1 .8 1.8 1.8 1.8H7l1.2-4.5-2-1.5V9l2-1.5L7 3Z"/>
+            <path d="M12 4h8v3h-8z"/>
+            <g fill="currentColor" stroke="none"><circle cx="13" cy="11" r="1.2"/><circle cx="18" cy="11" r="1.2"/><circle cx="13" cy="15" r="1.2"/><circle cx="18" cy="15" r="1.2"/><circle cx="13" cy="19" r="1.2"/><circle cx="18" cy="19" r="1.2"/></g>
+          </svg>
         </button>
         <button id="minkaBarMute" aria-label="Izslēgt skaņu" title="Skaņa ieslēgta" style="width:36px;height:36px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:#cbd5e1;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;">🔊</button>
       </div>
@@ -2979,19 +2983,19 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260919smooth1"></script>
+<script src="js/calendar.js?v=20260919clouds1"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
-<script src="js/header-weather.js?v=20260813headerfix1" defer></script>
+<script src="js/header-weather.js?v=20260919clouds2" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260831autofit1"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
 <script src="js/light-model.js?v=20260908light1"></script>
 <script src="js/recovery-model.js?v=20260908recovery1"></script>
 <script src="js/fatigue.js?v=20260919smooth1"></script>
 <script src="js/nightsplit.js?v=20260908dreams5" defer></script>
-<script src="js/monthcal.js?v=20260908recovery1" defer></script>
+<script src="js/monthcal.js?v=20260919birthday1" defer></script>
 <script src="js/design_v1.js?v=20260824perfaudit2" defer></script>
-<script src="js/theme.js?v=20260914about1" defer></script>
+<script src="js/theme.js?v=20260919header-local16" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
 <script src="js/emoji.js?v=20260911daybook1-20260908recovery1" defer></script>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
@@ -24237,5 +24241,9 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
   document.body.appendChild(s);
 })();
 </script>
+<link rel="stylesheet" href="../css/geist-ui.css?v=20260919type3">
+<script src="../js/image-palette.js?v=20260919palette2"></script>
+<link rel="stylesheet" href="css/header-appearance.css?v=20260919local15">
+<script src="js/header-appearance.js?v=20260919local13"></script>
 </body>
 </html>

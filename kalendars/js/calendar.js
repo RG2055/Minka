@@ -20,28 +20,13 @@ window.hospitalDatabase = Array.isArray(window.hospitalDatabase) ? window.hospit
 var hospitalDatabase = window.hospitalDatabase;
 
 (function initMinkaHeaderScenicBackground() {
-  const assets = {
-    morning: {
-      src: 'data/header-backgrounds/header-morning-20260701.jpg',
-      position: '54% 46%',
-      next: 'day'
-    },
-    day: {
-      src: 'data/header-backgrounds/header-day-20260701.jpg',
-      position: '56% 48%',
-      next: 'sunset'
-    },
-    sunset: {
-      src: 'data/header-backgrounds/header-sunset-20260701.jpg',
-      position: '58% 48%',
-      next: 'night'
-    },
-    night: {
-      src: 'data/header-backgrounds/header-night-20260701.jpg',
-      position: '58% 48%',
-      next: 'morning'
-    }
-  };
+  let scene = 'coast';
+  try { if (JSON.parse(localStorage.getItem('mk_header_appearance_v1') || '{}').background === 'riga') scene = 'riga'; } catch (_) {}
+  const periods = ['morning', 'day', 'sunset', 'night'];
+  const assets = Object.fromEntries(periods.map((period, i) => [period, {
+    src: 'data/header-backgrounds/header-' + scene + '-' + period + '-20260919.webp',
+    position: '50% 48%', next: periods[(i + 1) % 4]
+  }]));
   const boundaries = [
     { hour: 5, period: 'morning' },
     { hour: 9, period: 'day' },
@@ -165,10 +150,13 @@ var hospitalDatabase = window.hospitalDatabase;
       layer.classList.remove('is-loaded');
       header.dataset.headerPeriod = period;
       document.documentElement.dataset.minkaHeaderPeriod = period;
+      document.documentElement.dataset.minkaHeaderScene = scene;
       img.style.objectPosition = asset.position;
-      img.onload = () => layer.classList.add('is-loaded');
+      const notifyScenery = () => window.dispatchEvent(new CustomEvent('minka:header-scenery'));
+      img.onload = () => { layer.classList.add('is-loaded'); notifyScenery(); };
       img.onerror = () => layer.classList.remove('is-loaded');
       img.src = asset.src;
+      notifyScenery();
     }
 
     preloadNextPeriod(period);
@@ -186,6 +174,14 @@ var hospitalDatabase = window.hospitalDatabase;
   }
 
   window.MinkaHeaderScenic = {
+    getScene: () => scene,
+    setScene(value) {
+      const next = value === 'riga' ? 'riga' : 'coast';
+      if (scene === next) return;
+      scene = next;
+      periods.forEach(period => { assets[period].src = 'data/header-backgrounds/header-' + scene + '-' + period + '-20260919.webp'; });
+      applyPeriod(true);
+    },
     getHeaderPeriod,
     getMillisecondsUntilNextPeriod,
     refresh: () => applyPeriod(true),

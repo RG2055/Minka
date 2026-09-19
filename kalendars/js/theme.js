@@ -233,6 +233,8 @@
 
         <div class="tk-rows" id="tkRows"></div>
 
+        <button type="button" class="tk-reload" id="tkHeaderAppearance">Galvenes izskats</button>
+
         <button type="button" class="tk-reload" id="tkReload">Pārlādēt un atjaunot</button>
         <div class="tk-note">Notīra saglabāto kopiju un ielādē jaunāko versiju.</div>
       </div>`;
@@ -379,6 +381,14 @@
   function bindPanelEvents(wrap) {
     const closeBtn = wrap.querySelector('#tkClose');
     if (closeBtn) closeBtn.addEventListener('click', hidePanel, { passive: true });
+    const headerAppearance = wrap.querySelector('#tkHeaderAppearance');
+    if (headerAppearance) {
+      headerAppearance.hidden = document.documentElement.classList.contains('mk-mobile-shell');
+      headerAppearance.addEventListener('click', () => {
+        hidePanel();
+        window.MinkaHeaderAppearance?.open();
+      });
+    }
 
     const reload = wrap.querySelector('#tkReload');
     if (reload) reload.addEventListener('click', async function () {

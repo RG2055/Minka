@@ -37,7 +37,7 @@
   }
   window.__minkaHasApiAuth = function() { return !!getToken(); };
 
-  var CALENDAR_BUILD = '20260919smooth';
+  var CALENDAR_BUILD = '20260919header-local16';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -634,6 +634,8 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 #mk-toast.mk-err{border-color:rgba(255,60,60,.4);color:#ff6b6b;}
 #mk-toast.mk-ok{border-color:rgba(48,209,88,.35);color:#30d158;}
 </style>
+<link rel="stylesheet" href="css/geist-ui.css?v=20260919type3">
+<script src="js/image-palette.js?v=20260919palette2"></script>
 </head>
 <body class="radio-idle">
 
@@ -1029,7 +1031,7 @@ async function loadRadioScripts() {
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20260919pixel2']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
-  await loadAny(['js/radio.js?v=20260919pixel7']);
+  await loadAny(['js/radio.js?v=20260919palette2']);
   await loadAny(['js/radio_extras_v4.js?v=20260919pixel2']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;

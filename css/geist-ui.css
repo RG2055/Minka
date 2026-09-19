@@ -1,0 +1,26 @@
+@layer minka-time, minka-typography;
+@font-face {
+  font-family: 'Geist Sans'; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url('../assets/fonts/geist/Geist-Variable.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Geist Mono'; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url('../assets/fonts/geist/GeistMono-Variable.woff2') format('woff2');
+}
+:root { --font-ui: 'Geist Sans', system-ui, sans-serif; --font-time: 'Geist Mono', ui-monospace, monospace; }
+/* Layered important declarations outrank legacy inline stylesheet shorthands,
+   without changing font sizes, line heights or the dashboard's geometry. */
+@layer minka-typography {
+  :is(#minkaBarWrap, #headerAppearance, #radioWindow, #bottomBtnBar),
+  :is(#minkaBarWrap, #headerAppearance, #radioWindow, #bottomBtnBar) *:not(i):not([class*="fa-"]):not(.fa):not([class*="material-"]) {
+    font-family: var(--font-ui) !important;
+  }
+}
+@layer minka-time {
+  #minkaBarWrap :is(.sl-rn-clock, .sl-rn-remaining, .sl-ruler-pct, .sl-rtick, .sl-ts-val),
+  #minkaBarWrap :is(.sl-rn-clock, .sl-rn-remaining, .sl-ruler-pct, .sl-rtick, .sl-ts-val) *,
+  #radioWindow :is(.radio-time, .pioneer-time, .time-display, #currentTime, #duration) {
+    font-family: var(--font-time) !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+}

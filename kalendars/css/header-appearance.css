@@ -1,0 +1,189 @@
+/* Loaded after legacy header styles. Skin rules change paint, never geometry. */
+@layer minka-header-details {
+  #minkaBarWrap #mkBdayBadge,
+  #minkaBarWrap #mkBdayBadge .mk-bday-pill {
+    border: 0 !important; border-radius: 0 !important;
+    background: none !important; box-shadow: none !important;
+    color: var(--hs-text, #f5faf7) !important;
+    text-shadow: 0 1px 2px #0008 !important;
+  }
+  #minkaBarWrap #mkBdayBadge .mk-bday-pill { padding: 0 !important; font-size: 11px !important; font-weight: 600 !important; }
+  #minkaBarWrap #mkBdayBadge .mk-bday-ic { display: inline-flex; opacity: 1 !important; filter: none !important; }
+  #minkaBarWrap #mkBdayBadge:hover .mk-bday-pill { text-decoration: underline; text-underline-offset: 3px; }
+  #minkaBarWrap #mkBdayBadge:focus-visible { outline: 2px solid var(--hs-accent) !important; outline-offset: 3px; }
+}
+.hs-backgrounds { display: flex; gap: 8px; flex-wrap: wrap; }
+#headerAppearance .hs-backgrounds button { padding: 10px 14px; border-radius: 12px; border: 1px solid #ffffff25; background: var(--hs-raised); color: var(--hs-text); cursor: pointer; }
+#headerAppearance .hs-backgrounds button[aria-pressed="true"] { background: var(--hs-accent); color: var(--hs-ink); }
+:root[data-header-skin]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap {
+  --hs-surface: #2b3e38;
+  --hs-raised: #3c4f48;
+  --hs-text: #f5faf7;
+  --hs-muted: #d9eade;
+  --hs-accent: #c7e4d2;
+  --hs-ink: #101b19;
+}
+:root[data-header-skin="hybrid"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap {
+  background: var(--hs-surface) !important;
+  border-color: #ffffff12 !important;
+  box-shadow: inset 0 1px 0 #ffffff16, 0 5px 16px #00000020 !important;
+}
+:root[data-header-skin="hybrid"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .mk-header-scenic-bg::after,
+:root[data-header-color-source="album"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .mk-header-scenic-bg::after {
+  background: linear-gradient(90deg, rgba(var(--hs-surface-rgb), .92), rgba(var(--hs-surface-rgb), .57) 31%, rgba(var(--hs-surface-rgb), .46) 64%, rgba(var(--hs-surface-rgb), .9)), linear-gradient(0deg, #05090db3, #05090d18 65%) !important;
+}
+/* Album following changes paint only; it never switches the chosen skin. */
+:root[data-header-color-source="album"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row {
+  background: var(--hs-surface) !important;
+}
+:root[data-header-color-source="album"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap :is(.pill:not(.active),.arrow,#grafiks-monthPicker,#mkSearchLaunch,#minkaBarMenu,#ns-bar-toggle,#lanes-mini-toggle) {
+  background: var(--hs-raised) !important;
+}
+:root[data-header-color-source="album"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap .sl-ruler-elapsed {
+  background: var(--hs-accent) !important;
+}
+:root[data-header-skin="hybrid"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap :is(#minkaBarInner,.mk-duty-wing),
+:root[data-header-skin="hybrid"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap .mk-duty-wing::before,
+:root[data-header-skin="hybrid"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap .mk-duty-wing::after {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+:root[data-header-skin="hybrid"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row {
+  background: var(--hs-surface) !important;
+  border-color: #ffffff0d !important;
+  box-shadow: none !important;
+}
+:root[data-header-skin="hybrid"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > #shift-progress-wrap {
+  background: transparent !important;
+}
+:root[data-header-skin="hybrid"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap :is(.mk-news-headline,.mk-search-date-num,#mkNamedayBar,.sl-rtick) {
+  color: var(--hs-text) !important;
+  text-shadow: none !important;
+}
+:root[data-header-skin="hybrid"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap :is(.mk-search-weekday,#mkTempChip,#mkMoonChip,.mk-tick-time,.mk-count-item small) {
+  color: var(--hs-muted) !important;
+  text-shadow: none !important;
+}
+:root[data-header-skin="hybrid"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap :is(.pill,.arrow,#grafiks-monthPicker,#mkSearchLaunch,#minkaBarMenu,#ns-bar-toggle,#lanes-mini-toggle) {
+  background: var(--hs-raised) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  border-radius: 14px !important;
+  text-shadow: none !important;
+}
+:root[data-header-skin="hybrid"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap :is(.pill:not(.weekend-pill):not(.holiday-pill),.arrow,#grafiks-monthPicker,#mkSearchLaunch,#minkaBarMenu,#ns-bar-toggle,#lanes-mini-toggle) {
+  color: var(--hs-text) !important;
+}
+:root[data-header-skin="hybrid"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap .pill .weekday {
+  color: inherit !important;
+  opacity: .82 !important;
+}
+:root[data-header-skin="hybrid"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap :is(.weekend-pill,.holiday-pill):not(.active) {
+  color: #ffb5a9 !important;
+}
+:root[data-header-skin="hybrid"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap :is(.pill,.arrow,#grafiks-monthPicker,#mkSearchLaunch,#minkaBarMenu,#ns-bar-toggle,#lanes-mini-toggle):hover {
+  background: color-mix(in srgb, var(--hs-raised), var(--hs-accent) 15%) !important;
+}
+:root[data-header-skin="hybrid"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap :is(.pill.active,#ns-bar-toggle.is-on,#lanes-mini-toggle.is-on),
+:root[data-header-skin="panorama"][data-header-palette]:not([data-header-palette="scene"]):not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap .pill.active {
+  background: var(--hs-accent) !important;
+  color: var(--hs-ink) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+:root[data-header-skin="hybrid"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap #grafiks-scroller .pill.active > span,
+:root[data-header-skin="panorama"][data-header-palette]:not([data-header-palette="scene"]):not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap #grafiks-scroller .pill.active > span {
+  color: var(--hs-ink) !important;
+}
+:root[data-header-skin]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap #grafiks-scroller .pill .weekday {
+  font-weight: 700 !important;
+}
+:root[data-header-skin="hybrid"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap #grafiks-scroller .pill.active .weekday,
+:root[data-header-skin="panorama"][data-header-palette]:not([data-header-palette="scene"]):not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap #grafiks-scroller .pill.active .weekday {
+  color: var(--hs-ink) !important;
+  opacity: 1 !important;
+}
+:root[data-header-skin="hybrid"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap .today-pill:not(.active) {
+  box-shadow: inset 0 -2px 0 var(--hs-accent) !important;
+}
+:root[data-header-skin="hybrid"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > #shift-progress-wrap :is(.sl-ruler-now,.sl-ruler-pct) {
+  color: var(--hs-ink) !important;
+  background: var(--hs-accent) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+:root[data-header-skin="hybrid"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > #shift-progress-wrap .sl-ruler-now :is(.sl-rn-clock,.sl-rn-remaining,.sl-rn-word) {
+  color: var(--hs-ink) !important;
+}
+:root[data-header-skin="hybrid"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap .sl-ruler-elapsed {
+  background: var(--hs-accent) !important;
+}
+:root[data-header-skin]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap :is(button,.pill,select):focus-visible {
+  outline: 2px solid var(--hs-accent) !important;
+  outline-offset: 2px !important;
+}
+/* Native date scrolling already has swipe and centering. No second carousel. */
+:root[data-header-skin]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > #shift-progress-wrap .sl-ruler-band {
+  border-radius: 2px !important;
+}
+:root[data-header-skin]:not(.mk-mobile-shell) #grafiks-scroller { overscroll-behavior-x: contain; }
+:root[data-header-skin]:not(.mk-mobile-shell) #minkaBarWrap .hs-weather-icon { position: relative; }
+:root[data-header-skin]:not(.mk-mobile-shell) #minkaBarWrap .hs-original-icon { opacity: 0; }
+:root[data-header-skin]:not(.mk-mobile-shell) #minkaBarWrap .hs-weather-icon > svg { position: absolute; inset: 0; width: 100%; height: 100%; color: inherit; }
+:root.mk-header-motion #grafiks-app > #minkaBarWrap :is(.pill,.arrow,#grafiks-monthPicker,#mkSearchLaunch,#minkaBarMenu) {
+  transition: background-color 160ms ease, color 160ms ease, border-radius 160ms ease !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root[data-header-skin] #grafiks-app > #minkaBarWrap :is(.pill,.arrow,#grafiks-monthPicker,#mkSearchLaunch,#minkaBarMenu) { transition: none !important; }
+}
+
+/* The settings panel is outside the header. Its layout is independent. */
+#headerAppearance {
+  box-sizing: border-box; position: fixed; inset: auto 18px 18px auto; margin: 0;
+  width: min(530px, calc(100vw - 36px)); max-height: min(610px, calc(100dvh - 215px));
+  overflow: auto; overscroll-behavior: contain; padding: 24px; border: 1px solid #ffffff16; border-radius: 24px;
+  background: var(--hs-surface, #283d35); color: var(--hs-text, #f2f7f3); box-shadow: 0 16px 60px #0008;
+  font: 14px/1.45 Inter, system-ui, sans-serif; color-scheme: dark;
+}
+#headerAppearance::backdrop { background: #00000030; }
+#headerAppearance .hs-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+#headerAppearance .hs-eyebrow { color: var(--hs-muted); font-size: 12px; }
+#headerAppearance h2 { font: 650 28px/1.2 Inter, system-ui, sans-serif; margin: 2px 0 0; letter-spacing: -.025em; color: inherit; }
+#headerAppearance h3 { margin: 22px 0 10px; font: 650 14px/1.3 Inter, system-ui, sans-serif; color: inherit; }
+#headerAppearance p { margin: 8px 0 16px; }
+#headerAppearance button { font: inherit; color: inherit; cursor: pointer; letter-spacing: normal; text-transform: none; }
+#headerAppearance [data-close] { width: 38px; height: 38px; border: 0; border-radius: 50%; background: var(--hs-raised); color: var(--hs-text); font-size: 25px; }
+#headerAppearance .hs-intro, #headerAppearance .hs-hint { color: var(--hs-muted); font-size: 12px; }
+#headerAppearance .hs-skins { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+#headerAppearance [data-skin] { min-width: 0; padding: 5px 5px 10px; border: 2px solid transparent; border-radius: 15px; background: var(--hs-raised); text-align: left; }
+#headerAppearance [data-skin][aria-pressed="true"] { border-color: var(--hs-accent); }
+#headerAppearance .hs-choice-title { display: block; padding: 9px 4px 3px; font-weight: 650; font-size: 12px; }
+#headerAppearance [data-skin] small { display: block; padding: 0 4px; font-size: 10px; color: var(--hs-muted); }
+#headerAppearance .hs-preview { position: relative; display: block; height: 60px; border-radius: 10px; overflow: hidden; background: var(--hs-surface); }
+#headerAppearance .hs-preview-panorama, #headerAppearance .hs-preview-hybrid { background: linear-gradient(#10202044,#10202088), url('../data/header-backgrounds/header-riga-sunset-20260919.webp') center/cover; }
+#headerAppearance .hs-preview i { position: absolute; left: 9%; top: 11px; width: 23%; height: 5px; border-radius: 2px; background: #edf7ed; opacity: .8; }
+#headerAppearance .hs-preview i:nth-child(2) { left: 39%; width: 22%; height: 8px; }
+#headerAppearance .hs-preview i:nth-child(3) { left: 72%; width: 18%; }
+#headerAppearance .hs-preview b { position: absolute; left: 6%; top: 31px; height: 4px; width: 62%; border-radius: 4px; background: var(--hs-accent); }
+#headerAppearance .hs-preview em { position: absolute; inset: auto 6% 8px; height: 12px; background: repeating-linear-gradient(90deg, #ffffff28 0 11px, transparent 11px 15px); border-radius: 6px; }
+#headerAppearance .hs-preview-hybrid em { background-color: var(--hs-surface); }
+#headerAppearance .hs-preview-hybrid em::after { content: ''; position: absolute; left: 43%; width: 13px; height: 12px; border-radius: 6px; background: var(--hs-accent); }
+#headerAppearance .hs-palettes { display: flex; flex-wrap: wrap; gap: 7px; }
+#headerAppearance [data-palette] { display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; min-height: 34px; border: 1px solid transparent; border-radius: 12px; background: var(--hs-raised); font-size: 12px; }
+#headerAppearance [data-palette] i { width: 13px; height: 13px; border-radius: 50%; background: var(--swatch); }
+#headerAppearance [data-palette][aria-pressed="true"] { border-color: var(--hs-accent); box-shadow: inset 0 0 0 1px var(--hs-accent); }
+#headerAppearance .hs-hint { margin: 10px 0 16px; min-height: 34px; }
+#headerAppearance .hs-options { border-top: 1px solid #ffffff1c; padding-top: 6px; }
+#headerAppearance .hs-options label { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 9px 0; cursor: pointer; font-size: 13px; }
+#headerAppearance .hs-options small { display: block; color: var(--hs-muted); font-size: 11px; margin-top: 3px; }
+#headerAppearance input { flex: 0 0 auto; width: 18px; height: 18px; accent-color: var(--hs-accent); }
+#headerAppearance .hs-footer { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+#headerAppearance .hs-footer button { padding: 10px 14px; min-height: 40px; border: 0; border-radius: 14px; background: var(--hs-accent); color: var(--hs-ink); font-size: 12px; font-weight: 650; }
+#headerAppearance .hs-footer [data-reset] { color: var(--hs-text); background: var(--hs-raised); }
+#headerAppearance #hsStatus { color: var(--hs-muted); font-size: 11px; margin: 12px 0 0; }
+#headerAppearance button:hover { box-shadow: inset 0 0 0 1px var(--hs-accent); }
+#headerAppearance :is(button,input):focus-visible { outline: 2px solid var(--hs-accent) !important; outline-offset: 3px !important; }
+@media (max-height: 620px), (max-width: 600px) {
+  #headerAppearance { inset: auto 10px 10px auto; width: min(530px, calc(100vw - 20px)); max-height: calc(100dvh - 24px); padding: 18px; }
+}

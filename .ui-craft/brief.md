@@ -14,4 +14,15 @@ Preserve the existing Classic, Clean and Pioneer layouts. Pixel is an additional
 - Pixel colors fill the entire body; named palettes and album colors remain selectable beside skins and participate in guest random rotation.
 - Pixel defaults to the upstream WavySliderExpressive/Material wave, not generic bars. Manual spectrum changes remain available and persist.
 - Place the Pixel wave below the artist and directly above the EQ presets.
+- Header, 2026-09-19: always retain the panorama in every skin and random choice; only restyle controls/colors. Preserve layout. Selected and unselected days must share the same shape. Use readable Se / Sv weekday labels. Progress track ends use a subtle 2px radius, never asymmetric semicircles. Header preferences stay local; no login or publishing in this pass.
 - Random guest appearance applies on the first open after reload as well as reopen; Pixel has no priority. Random Pixel and explicit Pixel layout selection default to album-following colors. Fixed palettes require an explicit palette choice.
+
+- Header correction, 2026-09-19: put the appearance palette icon in the header action row beside the menu, never in the bottom dock. An open radio temporarily gives the header the actual album color; closing restores the saved header palette. Keep the panorama visible.
+
+- 2026-09-19 correction: remove NumberFlow entirely; clock/countdown/percent update as plain text. New backgrounds must depict Latvia only. Include the newly generated Riga panorama plus a different Latvian landscape (Baltic coast), each following the existing Riga-time day-period schedule. Use Geist Sans for header/player UI and Geist Mono for time. Birthday display is a simple icon/name, not a pink pill.
+
+- 2026-09-19: Cloud animation follows the visible sky crop of each Latvian panorama and its four time-of-day lighting states; keep drift in CSS. The header phone-directory action uses a handset/keypad icon and the label “Tālruņu numuri”, not a generic menu icon.
+
+- Cloud visibility correction: retain the original slow 150s / 210s drift and travel distance. Improve texture sizing/contrast only; no extra particles, layers, or per-frame JavaScript.
+
+- Cloud texture must never repeat as identical small stamps across the header; use a broad non-repeating crop with the original slow drift.

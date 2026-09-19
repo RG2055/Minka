@@ -72,17 +72,21 @@ html body #minkaBarWrap > #minkaNamedayChip { z-index: 2; }
 }
 .mk-weather-layer[data-weather-period='night'][data-weather-state='clear'] .mk-weather-atmosphere::before { opacity: .25; }
 
-/* One 47 KB texture is reused by both cloud nodes. Only transform/opacity
+/* One 47 KB texture is cropped as a broad cloud bank, never tiled across
+   the sky as identical stamps. It is reused by both cloud nodes. Only transform/opacity
    change, unlike the original background-position animation that repaints. */
 .mk-weather-cloud {
   display: none;
   position: absolute;
-  top: -5px;
+  top: var(--mk-cloud-top, 0px);
   left: -20%;
   width: 140%;
-  height: calc(100% + 10px);
+  height: var(--mk-cloud-sky, 40%);
   opacity: 0;
-  background: url('../data/weather/greywen-clouds.png') 0 54% / auto 82px repeat-x;
+  background: url('../data/weather/greywen-clouds.png') 0 48% / 100% auto no-repeat;
+  mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%),
+    linear-gradient(to right, transparent 6%, #000 28%, #000 78%, transparent 98%);
+  mask-composite: intersect;
   mix-blend-mode: screen;
   filter: none;
   transform: translate3d(0,0,0) scale(var(--cloud-scale,1));
@@ -95,12 +99,12 @@ html body #minkaBarWrap > #minkaNamedayChip { z-index: 2; }
 }
 .mk-weather-cloud:nth-child(2) {
   z-index: 0;
-  top: -8px;
+  top: var(--mk-cloud-top, 0px);
   left: -15%;
   width: 130%;
-  height: calc(100% + 16px);
-  --cloud-scale: 1.04;
-  background: url('../data/weather/greywen-clouds.png') 48% 48% / auto 94px repeat-x;
+  height: var(--mk-cloud-sky, 40%);
+  --cloud-scale: 1;
+  background-position: 48% 35%;
   animation: mkWeatherCloudDriftBack 210s ease-in-out -124s infinite alternate;
 }
 .mk-weather-layer[data-weather-state='partly-cloudy'] .mk-weather-cloud:nth-child(1) {
@@ -131,7 +135,7 @@ html body #minkaBarWrap > #minkaNamedayChip { z-index: 2; }
 .mk-weather-layer[data-weather-state='thunderstorm'] .mk-weather-cloud { opacity: .52; }
 .mk-weather-layer[data-weather-state='thunderstorm'] .mk-weather-cloud:nth-child(2) { opacity: .24; }
 
-.mk-weather-layer[data-weather-period='night'][data-weather-state='partly-cloudy'] .mk-weather-cloud:nth-child(1) { opacity: .38; }
+.mk-weather-layer[data-weather-period='night'][data-weather-state='partly-cloudy'] .mk-weather-cloud:nth-child(1) { opacity: .46; }
 .mk-weather-layer[data-weather-period='night'][data-weather-state='cloudy'] .mk-weather-cloud { opacity: .46; }
 .mk-weather-layer[data-weather-period='night'][data-weather-state='cloudy'] .mk-weather-cloud:nth-child(2) { opacity: .20; }
 .mk-weather-layer[data-weather-period='night'][data-weather-state='rain'] .mk-weather-cloud { opacity: .30; }
@@ -188,6 +192,13 @@ html body #minkaBarWrap > #minkaNamedayChip { z-index: 2; }
 .mk-weather-layer[data-weather-state='snow'] .mk-weather-cloud,
 .mk-weather-layer[data-weather-state='sleet'] .mk-weather-cloud { filter: none; }
 .mk-weather-layer[data-weather-period='night'] .mk-weather-cloud { filter: brightness(.72) saturate(.54); }
+
+/* The photograph determines the cloud light, independent of a cached weather
+   API day/night icon. Filters are static; only translation is animated. */
+.mk-weather-layer[data-scenic-period='morning'] .mk-weather-cloud { filter: sepia(.55) saturate(.65) brightness(.90); }
+.mk-weather-layer[data-scenic-period='day'] .mk-weather-cloud { filter: brightness(.95) saturate(.25); }
+.mk-weather-layer[data-scenic-period='sunset'] .mk-weather-cloud { filter: sepia(.85) saturate(1.2) brightness(.88); }
+.mk-weather-layer[data-scenic-period='night'] .mk-weather-cloud { filter: sepia(.3) hue-rotate(165deg) saturate(.65) brightness(.52); }
 
 /* A 23 KB downscaled source texture; screen blend makes the JPEG black level
    act transparent. Two slow copies create depth without blur animation. */
@@ -442,9 +453,9 @@ html body #minkaBarWrap > #minkaNamedayChip { z-index: 2; }
 }
 .mk-weather-demo-controls button:focus-visible { outline: 2px solid #70d5f4; outline-offset: 2px; }
 
-html.mk-weather-paused .mk-weather-layer *,
-html.mk-weather-paused .mk-weather-layer *::before,
-html.mk-weather-paused .mk-weather-layer *::after { animation-play-state: paused !important; }
+html.mk-weather-paused #minkaBarWrap .mk-weather-layer *,
+html.mk-weather-paused #minkaBarWrap .mk-weather-layer *::before,
+html.mk-weather-paused #minkaBarWrap .mk-weather-layer *::after { animation-play-state: paused !important; }
 
 @keyframes mkWeatherLight {
   from { transform: translate3d(-7%,0,0); opacity: .28; }
@@ -562,7 +573,7 @@ html.mk-low-spec:not(.mk-no-anim) .mk-weather-layer[data-weather-state='thunders
   }
   .mk-weather-cloud:nth-child(2),
   .mk-weather-fog:nth-of-type(4) { display: none !important; }
-  .mk-weather-layer[data-weather-state='partly-cloudy'] .mk-weather-cloud:nth-child(1) { opacity: .28; }
+  .mk-weather-layer[data-weather-state='partly-cloudy'] .mk-weather-cloud:nth-child(1) { opacity: .40; }
   .mk-weather-demo-controls { top: 72px; }
   .mk-weather-demo-controls { max-width: calc(100vw - 12px); gap: 3px; padding: 3px 4px; }
   .mk-weather-demo-controls select { min-width: 112px; max-width: 31vw; }
@@ -570,11 +581,11 @@ html.mk-low-spec:not(.mk-no-anim) .mk-weather-layer[data-weather-state='thunders
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html:root .mk-weather-layer *,
-  html:root .mk-weather-layer *::before,
-  html:root .mk-weather-layer *::after { animation: none !important; }
+  html:root #minkaBarWrap .mk-weather-layer *,
+  html:root #minkaBarWrap .mk-weather-layer *::before,
+  html:root #minkaBarWrap .mk-weather-layer *::after { animation: none !important; }
   .mk-weather-particles { display: none !important; }
-  .mk-weather-cloud { left: 45% !important; transform: scale(var(--cloud-scale,1)) !important; }
+  .mk-weather-cloud { transform: none !important; }
   .mk-weather-cloud:nth-child(2),
   .mk-weather-fog:nth-of-type(4) { display: none !important; }
   .mk-weather-temp-icon { display: none !important; }

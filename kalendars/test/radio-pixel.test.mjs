@@ -5,6 +5,21 @@ import vm from 'node:vm';
 const sandbox={window:{}};
 vm.runInNewContext(fs.readFileSync(new URL('../../js/radio-pixel.js',import.meta.url),'utf8'),sandbox);
 const pixel=sandbox.window.rgPixel;
+test('album color is available to the header without changing a fixed radio palette',()=>{
+ const source=fs.readFileSync(new URL('../../js/radio.js',import.meta.url),'utf8');
+ const start=source.indexOf('  function applyAlbumColor('),end=source.indexOf('  function rgbToAccent(',start);
+ const properties=new Map(),calls=[];
+ let mode='custom';
+ const context={albumColor:null,document:{getElementById:()=>({style:{setProperty:(k,v)=>properties.set(k,v)}})},getSaved:()=>({accentMode:mode}),appearance:{layout:'pixel'},applyAccent:color=>calls.push(color),applyAlbumSurface(){},paintAppearance(){}};
+ vm.runInNewContext(source.slice(start,end),context);
+ context.applyAlbumColor('#d74466');
+ assert.equal(properties.get('--radio-album-color'),'#d74466');
+ assert.equal(context.albumColor,'#d74466');
+ assert.deepEqual(calls,[]);
+ mode='album';context.applyAlbumColor('#3366dd');
+ assert.equal(properties.get('--radio-album-color'),'#3366dd');
+ assert.deepEqual(calls,['#3366dd']);
+});
 function frame(level,{dt=16.7,state={},reducedMotion=false,scale=1}={}){
  const curves=[];let stroke;
  const ctx={save(){},restore(){},beginPath(){},rect(){},clip(){},moveTo(){},quadraticCurveTo(...v){curves.push(v);},stroke(){stroke=this.lineWidth;}};

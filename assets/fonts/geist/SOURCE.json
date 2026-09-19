@@ -1,0 +1,9 @@
+{
+  "source": "https://github.com/vercel/geist-font",
+  "npm": "geist@1.7.2",
+  "license": "SIL OFL 1.1",
+  "files": [
+    "Geist-Variable.woff2",
+    "GeistMono-Variable.woff2"
+  ]
+}

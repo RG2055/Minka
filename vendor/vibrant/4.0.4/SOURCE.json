@@ -1,0 +1,16 @@
+{
+  "source": "https://github.com/Vibrant-Colors/node-vibrant",
+  "version": "4.0.4",
+  "build": "esbuild 0.25.12, browser bundle, esm, es2020, minified",
+  "dependencies": {
+    "@vibrant/color": "4.0.4",
+    "@vibrant/core": "4.0.4",
+    "@vibrant/generator-default": "4.0.4",
+    "@vibrant/image": "4.0.4",
+    "@vibrant/image-browser": "4.0.4",
+    "@vibrant/quantizer-mmcq": "4.0.4",
+    "@vibrant/types": "4.0.4",
+    "@vibrant/worker": "4.0.4",
+    "node-vibrant": "4.0.4"
+  }
+}

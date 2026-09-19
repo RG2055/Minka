@@ -1,0 +1,23 @@
+# Header appearance — local implementation
+
+Approved direction: preserve all header geometry and existing schedule/search/calendar actions. Keep the scenic original and add a scenic + Material variant. No login, cloud writes, commits or deployment for this task.
+
+Use the existing dense layout, fonts, role colors, weather assets and calendar logic. Apply scoped header color tokens (surface, raised surface, primary/secondary text, accent and on-accent), border colors, shadows and corner radii only. Do not change dimensions or global theme variables. The selected date is the signature Material detail.
+
+Controls: palette icon in the header action row, after the menu and before the month selector; no bottom-dock entry. A secondary entry in the existing system panel for standalone calendar access. Local persistence is separate from shared worker skins. Original panorama is the first-visit default. Optional daily shuffle changes only on a new day's visit/resume; manual choices turn daily shuffle off. While radio is open, the header automatically follows the actual album color, even if the radio has a fixed palette. Closing/minimizing restores the saved header palette without overwriting preferences. The explicit radio palette remains available and is never included in random selection.
+
+Attachment ideas adopted: image-derived palette and stronger scenic scrim; consistent monochrome sun/moon icons in duty summaries; restrained selected-date/number feedback; keyboard-accessible date strip retaining native swipe and existing centering. Preserve month picker/search behavior and existing typography. No React, new calendar engine, competing carousel, blur, or continuously running animation loop.
+
+Verification: persistence, invalid storage, daily shuffle, palette contrast; compare header and control rectangles for both skins at desktop widths; test date selection, keyboard, month picker, search and settings dismissal; verify mobile shell is unaffected. Respect reduced motion and modest hardware.
+
+User corrections: selected weekday must be dark and readable on the pale fill; use Se / Sv to distinguish Saturday and Sunday. Every day keeps the same shape, selected or not; selection changes color only, never corner radius. Panorama must ALWAYS remain visible, including Material and daily/random choices; migrate the discarded flat Material skin to hybrid.
+
+References: https://design.google/library/expressive-material-design-google-research and the user's attached research list. New CSS/JS is native and uses existing icons rather than bundling the listed libraries.
+
+Verified locally: 397 existing/new tests pass. Both skins preserve header geometry at 1470, 1180 and 960px. The new 38px header palette button takes space from the date scroller, not the surrounding layout. Browser checks cover Se/Sv contrast, equal selected/unselected radii in both skins, visible panorama, saved/daily preferences after reload, Escape and focus return, arrow-key/Enter day selection, month switching, search/calendar opening, radio color following and fixed-palette independence. Red/blue test covers change header colors while the player keeps its fixed palette; closing radio restores the saved olive palette. The palette button opens the settings from the header at 1470 and 960px. The mobile shell does not initialize this desktop module. Progress band radius is 2px in both skins. No commit, push or deployment.
+
+Latest correction: NumberFlow removed, plain live numbers restored. Locally hosted Geist Sans/Mono now style header/player text/time. A birthday icon and name replace the pink nested pills while retaining the popup. Header scene selection offers Latvia coast (default) and generated Riga, persisted locally independently of skin randomization. All eight optimized WebP assets retain morning/day/sunset/night switching at 05/09/17/22 Europe/Riga. Color Thief extracts dominant scene colors; node-vibrant extracts real album accent swatches from 64px samples, with a shared 64-entry cache and existing CORS fallbacks.
+
+Final checks: all eight scenery assets decoded and returned distinct Color Thief/Vibrant palettes; red/blue radio covers update header colors while a fixed player palette stays fixed, and hiding radio restores the saved header palette. Live plain-text seconds advance each second. Browser confirms Geist Sans/Mono and the original Material icon font; header height remains 167px. No NumberFlow nodes or runtime API remain.
+
+Publication: user explicitly requested pushing these completed changes to GitHub main on 2026-09-19. Local-only restrictions above describe the earlier implementation phase. Header preferences remain browser-local.

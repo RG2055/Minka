@@ -3025,6 +3025,9 @@ function focusRadio(){
 
   function applyAlbumColor(color){
     albumColor=color;
+    // The header follows the album independently of the player's fixed palette.
+    document.getElementById('radioWindow')?.style.setProperty('--radio-album-color', color);
+    if (getSaved().accentMode !== 'album' && appearance.layout !== 'pioneer') return;
     applyAccent(color);
     applyAlbumSurface(color);
     paintAppearance();
@@ -3040,7 +3043,6 @@ function focusRadio(){
   }
 
   function updateAlbumAccent(detail = {}){
-    if (getSaved().accentMode !== 'album' && appearance.layout !== 'pioneer') return;
     const visibleCover = document.getElementById('npCover');
     const coverUrl = String(detail.coverUrl || visibleCover?.currentSrc || visibleCover?.src || '');
     const seed = `${detail.artist || ''}|${detail.title || ''}|${coverUrl}`;
@@ -3048,7 +3050,7 @@ function focusRadio(){
     lastAlbumAccentKey = seed;
 
     const fallback = () => {
-      if ((getSaved().accentMode === 'album' || appearance.layout === 'pioneer') && seed === lastAlbumAccentKey) applyAlbumColor(safeColor(appearance.cardAccent,fallbackAlbumAccent(seed)));
+      if (seed === lastAlbumAccentKey) applyAlbumColor(safeColor(appearance.cardAccent,fallbackAlbumAccent(seed)));
     };
     if (!coverUrl) {
       fallback();
@@ -3058,8 +3060,11 @@ function focusRadio(){
     const probe = new Image();
     probe.crossOrigin = 'anonymous';
     probe.decoding = 'async';
-    probe.onload = () => {
-      if ((getSaved().accentMode !== 'album' && appearance.layout !== 'pioneer') || seed !== lastAlbumAccentKey) return;
+    probe.onload = async () => {
+      if (seed !== lastAlbumAccentKey) return;
+      const extracted = await window.MinkaImagePalette?.extract(probe);
+      if (seed !== lastAlbumAccentKey) return;
+      if (extracted) { applyAlbumColor(extracted.accent); return; }
       try {
         const canvas = document.createElement('canvas');
         canvas.width = 8;

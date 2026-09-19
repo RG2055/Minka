@@ -663,7 +663,7 @@
     var isToday = today.length > 0;
     btn.style.display = nearest ? '' : 'none';
     // On the birthday replace the countdown with a compact congratulations.
-    btn.innerHTML = '<span class="mk-bday-ic">🎂</span>'
+    btn.innerHTML = '<span class="mk-bday-ic" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16v9H4zM4 16c2 2 3-2 5 0s3-2 5 0 4-2 6 0M8 12V8m8 4V8M8 5V3m8 2V3"/></svg></span>'
       + (nearest ? '<span class="mk-bday-pill">' + esc(isToday ? birthdayNames(today) : bdayRelLong(nearest.days)) + '</span>' : '');
     btn.classList.toggle('has-up', !!nearest);
     btn.classList.toggle('is-today', isToday);
