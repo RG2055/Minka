@@ -5664,8 +5664,21 @@ function filterFullList(btn) {
       }
       document.body.appendChild(picker);
 
+      /* The "+" this picker hangs off is revealed by hovering its card: at rest
+         it is zero-wide, and on a watch face display:none. The pointer leaves
+         the card the instant it moves onto the picker, so by the time a source
+         is clicked the anchor measures 0x0 — and re-placing against that put
+         the whole picker in the top-left corner. Remember the box we opened
+         from and fall back to it whenever the live one has gone away. */
+      let anchorBox = null;
+      function anchorRect() {
+        const live = anchor && anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : null;
+        if (live && live.width > 0 && live.height > 0) { anchorBox = live; return live; }
+        return anchorBox;
+      }
+
       function placePicker() {
-        const rect = anchor && anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : null;
+        const rect = anchorRect();
         const pw = 258;
 
         const mobileShell = document.documentElement.classList.contains('mk-mobile-shell') || window.innerWidth <= 760;
