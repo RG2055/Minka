@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.662-webamp-local1';
+const CACHE = 'minka-4.6.662-duty8';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
