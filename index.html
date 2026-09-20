@@ -37,7 +37,7 @@
   }
   window.__minkaHasApiAuth = function() { return !!getToken(); };
 
-  var CALENDAR_BUILD = '20260920header-duty7';
+  var CALENDAR_BUILD = '20260920header-duty8';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -1011,8 +1011,15 @@ async function loadAny(urls) {
   for (const u of urls) { try { await loadScript(u); return true; } catch(e) {} }
   return false;
 }
+let radioCatalogPromise;
 async function loadRadioScripts() {
-  if (_radioScriptsLoaded || _radioScriptsLoading) return _radioScriptsLoaded;
+  if (!radioCatalogPromise) radioCatalogPromise = loadRadioCatalog().catch(error => { radioCatalogPromise = null; throw error; });
+  await radioCatalogPromise;
+  if (window.__mkUseWebamp && !document.body.classList.contains('radio-idle') && !document.body.classList.contains('radio-hidden')) await window.ensureRGWebamp();
+  return true;
+}
+async function loadRadioCatalog() {
+  if (_radioScriptsLoaded) return true;
   _radioScriptsLoading = true;
   document.querySelectorAll('[data-radio-src]').forEach(function(img) {
     if (img.getAttribute('src')) return;
@@ -1031,7 +1038,7 @@ async function loadRadioScripts() {
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20260919pixel2']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
-  await loadAny(['js/radio.js?v=20260919palette2']);
+  await loadAny(['js/radio.js?v=20260920webamp-local3']);
   await loadAny(['js/radio_extras_v4.js?v=20260919pixel2']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;
@@ -1178,6 +1185,7 @@ const mkRadioReveal = (function () {
   // and then for an idle moment on top of that.
   let nextGuestLook = true;
   function prepareGuestLook() {
+    if (window.__mkUseWebamp) return;
     if (!nextGuestLook || !window.rgTheme?.randomGuest) return;
     nextGuestLook = false;
     try { window.rgTheme.randomGuest(); } catch (_e) {}
@@ -1307,7 +1315,7 @@ function toggleRadio() {
     document.getElementById('radioToggleIcon').innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" style="opacity:.7;vertical-align:middle" aria-hidden="true"><path d="M4 8l8 8 8-8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     mkRadioReveal.run(true);
     // Pre-warm normally has these in; if not, load them in parallel with the reveal.
-    if (!_radioScriptsLoaded) loadRadioScripts().catch(function (err) { console.error(err); });
+    loadRadioScripts().catch(function (err) { console.error(err); });
   } else {
     // Close the music engine as well when its shared shell is hidden.
     if (window.setRadioSource) window.setRadioSource('radio');
@@ -2869,6 +2877,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
 <script src="kalendars/js/daybook-model.js?v=20260911b" defer></script>
 <script src="js/radio-daybook.js?v=20260911i" defer></script>
 <script src="js/media-profile.js?v=20260919pixel2" defer></script>
+<script src="js/radio-webamp.js?v=local4"></script>
 <script src="js/radio-source.js?v=20260914reveal1" defer></script>
 
 <div id="mobileQrModal" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171000;background:rgba(2,4,8,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:20px;">

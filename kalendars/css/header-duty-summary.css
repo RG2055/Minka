@@ -209,6 +209,11 @@
   }
   :root:not(.mk-mobile-shell) #mkDutyWingRd .mk-duty-avatar-group small {
     margin: 0 !important;
+    /* The older layer pins the label to the column's end (justify-self: end),
+       so "Līdz 20:00:" and "No 20:00:" started at different x. Fill the
+       column instead: labels share a left edge, names keep theirs. */
+    justify-self: stretch !important;
+    width: 100% !important;
     text-align: left !important;
   }
   :root:not(.mk-mobile-shell) #mkDutyWingRd .mk-duty-avatar-names {
