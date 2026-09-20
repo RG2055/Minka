@@ -22965,7 +22965,8 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
   min-height: 35px !important;
   padding: 0 !important;
   border-top: 0 !important;
-  background: linear-gradient(180deg, rgba(10,31,45,.10), rgba(5,17,28,.30)) !important;
+  /* No tinted strip behind the ruler row: it read as a bar across the scenery. */
+  background: transparent !important;
 }
 
 /* Header wings: dark, integrated end-caps with a shallow inward notch. */
@@ -23553,6 +23554,9 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
 }
 :root:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > #shift-progress-wrap .sl-ruler-band {
   height: 14px !important;
+  /* No track behind the day ruler: only the elapsed fill and the tick labels
+     sit on the scenery; the dark strip read as a bar across the picture. */
+  background: transparent !important;
 }
 :root:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > #shift-progress-wrap .sl-ruler-now {
   top: 0 !important;
