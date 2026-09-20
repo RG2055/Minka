@@ -212,6 +212,7 @@
     const scroller = doc.getElementById('grafiks-scroller');
     function enhanceDays() {
       if (!scroller) return;
+      const now = new Date();
       scroller.setAttribute('aria-label', 'Izvēlēties dienu');
       const active = scroller.querySelector('.pill.active');
       scroller.querySelectorAll('.pill').forEach((pill, i) => {
@@ -220,13 +221,16 @@
         pill.setAttribute('aria-pressed', String(pill === active));
         const date = pill.id.replace(/^p-/, '').replace(/-/g, '.');
         const parts = date.split('.').map(Number);
+        const isToday = parts[0] === now.getDate() && parts[1] === now.getMonth() + 1 && parts[2] === now.getFullYear();
+        pill.classList.toggle('is-calendar-today', isToday);
         const weekday = new Date(parts[2], parts[1] - 1, parts[0]).getDay();
         const short = ['Sv', 'Pr', 'Ot', 'Tr', 'Ce', 'Pk', 'Se'][weekday];
         const full = ['Svētdiena', 'Pirmdiena', 'Otrdiena', 'Trešdiena', 'Ceturtdiena', 'Piektdiena', 'Sestdiena'][weekday];
         const label = pill.querySelector('.weekday');
         if (short && label && label.textContent !== short) label.textContent = short;
-        pill.setAttribute('aria-label', (full ? full + ', ' : '') + date + (pill.classList.contains('today-pill') ? ', šodien' : ''));
-        if (pill.classList.contains('today-pill')) pill.setAttribute('aria-current', 'date');
+        pill.setAttribute('aria-label', (full ? full + ', ' : '') + date + (isToday ? ', šodien' : ''));
+        if (isToday) pill.setAttribute('aria-current', 'date');
+        else pill.removeAttribute('aria-current');
       });
     }
     scroller?.addEventListener('keydown', e => {

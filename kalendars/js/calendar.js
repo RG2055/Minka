@@ -2802,7 +2802,7 @@ function filterFullList(btn) {
   function updateShiftCountPill(id, count, singular, plural) {
     const el = document.getElementById(id);
     if (!el) return;
-    el.textContent = `DEŽŪRĀ ${count}`;
+    el.innerHTML = '<span class="mk-count-item"><small>DEŽŪRĀ</small><strong>' + (Number(count) || 0) + '</strong></span>';
     el.title = `Dežūrā: ${count} ${count === 1 ? singular : plural}`;
   }
 

@@ -28,3 +28,13 @@ Preserve the existing Classic, Clean and Pioneer layouts. Pixel is an additional
 - Cloud texture must never repeat as identical small stamps across the header; use a broad non-repeating crop with the original slow drift.
 
 - Live header progress/countdown is shown only for the current duty-day (existing 08:00 rollover). Past/future dates hide the whole row and skip live progress calculations; selecting today resumes it. Retain the lightweight rollover check while browsing other dates.
+
+- 2026-09-20: Apply the supplied duty-summary reference to both header wings: boxed role icon, role-colored heading (cyan radiographers, coral radiologists), aligned icon/label/name rows without separators and separate current/night count badges. Fit summaries to their content to avoid blank gaps. Radiographers have text on the left and counts on the right; radiologists mirror this, with counts on the left and right-aligned title/rows. Preserve role and shift-state colors, live data, person links and panorama; let long names wrap and expand the top row when needed. No extra animation or backdrop blur. Local only until requested.
+
+- 2026-09-20 correction: radiologist sun/moon icons must form one vertical column. Keep header date/weather and news consistently top-aligned with a clear text hierarchy. Current/night counters are plain labels and colored numbers without boxes, backgrounds, borders or shadows; no colored side stripes on these or future UI elements. Night counts use mint green. No separators between duty rows or beside the count column.
+
+- News correction: retain the original inline ticker layout, with time/category beside the headline. Do not stack metadata above the headline; preserve the original headline typography and wrapping.
+
+- Today label belongs in the day rail beneath the actual current calendar date, never beside the large date and never on the selected past/future day. Temperature needs a readable number and a matching static weather icon; moon phase needs a larger SVG and readable illumination percentage. Use local Meteocons static assets; preserve existing weather animation costs. Keep date, weekday, birthday and weather content aligned, and keep radiologist names next to their time labels without a stretched gap.
+
+- Header date block order: date, weekday/birthday, namedays, then temperature and moon phase.

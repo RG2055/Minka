@@ -1,0 +1,352 @@
+/* Compact version of the supplied duty-summary reference. No animated paint
+   or backdrop blur; use the existing panorama, live data and person links. */
+@layer minka-duty-summary {
+  :root:not(.mk-mobile-shell) #minkaBarWrap { --mk-duty-summary-height: 108px; }
+  :root:not(.mk-mobile-shell) #minkaBarWrap :is(#mkDutyWingLayer, #minkaBar, #minkaBarInner) {
+    height: var(--mk-duty-summary-height) !important;
+    min-height: var(--mk-duty-summary-height) !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarWrap .mk-duty-wing {
+    display: flex !important;
+    align-items: flex-start !important;
+    padding: 4px 10px !important;
+    overflow: visible !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarWrap .mk-duty-wing::before { display: none !important; }
+  :root:not(.mk-mobile-shell) #minkaBarWrap .mk-duty-wing-slot {
+    --duty-accent: #9ddff3;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 52px !important;
+    grid-template-rows: auto auto !important;
+    column-gap: 8px !important;
+    row-gap: 4px !important;
+    width: fit-content !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 76px !important;
+    align-content: center !important;
+    text-align: left !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarWrap #mkDutyWingRd { --duty-accent: #ff9788; }
+  :root:not(.mk-mobile-shell) .mk-duty-wing .status-tag { display: contents !important; }
+  :root:not(.mk-mobile-shell) .mk-duty-wing .mk-role-title {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    display: flex !important;
+    gap: 7px !important;
+    justify-content: flex-start !important;
+    align-self: start !important;
+    align-items: center !important;
+    min-width: 0 !important;
+    height: 26px !important;
+    font-size: clamp(12px, 1.02vw, 17px) !important;
+    font-weight: 800 !important;
+    letter-spacing: .01em !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+  :root:not(.mk-mobile-shell) .mk-duty-wing .mk-role-title span {
+    color: var(--duty-accent) !important;
+    text-shadow: 0 1px 3px #0008 !important;
+  }
+  :root:not(.mk-mobile-shell) .mk-duty-wing .mk-role-title-icon {
+    box-sizing: border-box !important;
+    width: 26px !important;
+    height: 26px !important;
+    flex: 0 0 26px !important;
+    padding: 3px !important;
+    border: 1px solid color-mix(in srgb, var(--duty-accent) 55%, transparent) !important;
+    border-radius: 7px !important;
+    background: #0b172d66 !important;
+  }
+  :root:not(.mk-mobile-shell) .mk-duty-wing .mk-shift-count-pill {
+    grid-column: 2 !important;
+    grid-row: 1 / 3 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: stretch !important;
+    align-self: start !important;
+    width: auto !important;
+    height: 80px !important;
+    min-height: 0 !important;
+    gap: 4px !important;
+    padding: 0 0 0 7px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: none !important;
+    color: var(--duty-accent) !important;
+    white-space: normal !important;
+    font-size: 10px !important;
+    text-align: center !important;
+  }
+  :root:not(.mk-mobile-shell) .mk-duty-wing .mk-count-item {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 3px !important;
+    width: 100% !important;
+    min-height: 35px !important;
+    padding: 3px 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: none !important;
+    box-shadow: none !important;
+  }
+  :root:not(.mk-mobile-shell) .mk-duty-wing .mk-count-item small {
+    color: #e6eef4 !important;
+    font-size: 8px !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    letter-spacing: .04em !important;
+  }
+  :root:not(.mk-mobile-shell) .mk-duty-wing .mk-count-item strong {
+    color: var(--duty-accent) !important;
+    font-size: 21px !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+  :root:not(.mk-mobile-shell) .mk-duty-wing .mk-count-item:nth-child(2) strong { color: #91dfbb !important; }
+  :root:not(.mk-mobile-shell) .mk-duty-wing .mk-duty-strip {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    align-self: start !important;
+    justify-content: flex-start !important;
+    gap: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  :root:not(.mk-mobile-shell) .mk-duty-wing .mk-duty-avatar-group {
+    display: block !important;
+    position: relative !important;
+    align-self: stretch !important;
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 17px !important;
+    padding: 3px 0 3px 20px !important;
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+    white-space: normal !important;
+    text-align: left !important;
+  }
+  :root:not(.mk-mobile-shell) .mk-duty-wing .mk-duty-avatar-group + .mk-duty-avatar-group {
+    border-top: 0 !important;
+  }
+  :root:not(.mk-mobile-shell) .mk-duty-wing .mk-duty-crowded-copy { display: contents !important; }
+  :root:not(.mk-mobile-shell) .mk-duty-wing :is(.mk-duty-crowded-icon, .mk-duty-sentence-icon) {
+    position: absolute !important;
+    left: 0 !important;
+    top: 3px !important;
+    width: 15px !important;
+    height: 15px !important;
+    min-width: 0 !important;
+    line-height: 15px !important;
+    color: #f4f5f8 !important;
+  }
+  :root:not(.mk-mobile-shell) .mk-duty-wing .mk-duty-avatar-group small {
+    display: inline !important;
+    width: auto !important;
+    font-size: inherit !important;
+    font-weight: 500 !important;
+    line-height: inherit !important;
+    white-space: nowrap !important;
+    color: #e2e4ea !important;
+    margin-right: 3px !important;
+  }
+  :root:not(.mk-mobile-shell) .mk-duty-wing .mk-duty-avatar-names {
+    display: inline !important;
+    width: auto !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
+    font-weight: 750 !important;
+    letter-spacing: 0 !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    overflow-wrap: anywhere !important;
+    text-overflow: clip !important;
+  }
+  :root:not(.mk-mobile-shell) .mk-duty-wing .mk-duty-avatar-names b { color: #81ebba !important; }
+  :root:not(.mk-mobile-shell) .mk-duty-wing .dl-leave .mk-duty-avatar-names b { color: #ffcf7b !important; }
+  :root:not(.mk-mobile-shell) .mk-duty-wing .dl-later .mk-duty-avatar-names b { color: #a8d8ff !important; }
+
+  /* Keep both summaries close to their counters, mirrored at the outer edges. */
+  :root:not(.mk-mobile-shell) #minkaBarWrap .mk-duty-wing-rd {
+    justify-content: flex-end !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarWrap #mkDutyWingRd {
+    grid-template-columns: 52px minmax(0, 1fr) !important;
+    text-align: right !important;
+  }
+  :root:not(.mk-mobile-shell) #mkDutyWingRd :is(.mk-role-title, .mk-duty-strip) {
+    grid-column: 2 !important;
+  }
+  :root:not(.mk-mobile-shell) #mkDutyWingRd .mk-role-title {
+    justify-content: flex-end !important;
+  }
+  :root:not(.mk-mobile-shell) #mkDutyWingRd .mk-shift-count-pill {
+    grid-column: 1 !important;
+    padding: 0 7px 0 0 !important;
+    border-left: 0 !important;
+    border-right: 0 !important;
+  }
+  :root:not(.mk-mobile-shell) #mkDutyWingRd .mk-duty-avatar-group {
+    display: grid !important;
+    grid-template-columns: 15px 60px minmax(0, 1fr) !important;
+    column-gap: 5px !important;
+    align-items: start !important;
+    padding: 3px 0 !important;
+    text-align: right !important;
+  }
+  :root:not(.mk-mobile-shell) #mkDutyWingRd .mk-duty-avatar-group small {
+    margin: 0 !important;
+    text-align: left !important;
+  }
+  :root:not(.mk-mobile-shell) #mkDutyWingRd .mk-duty-avatar-names {
+    display: block !important;
+    width: 100% !important;
+    text-align: left !important;
+  }
+  :root:not(.mk-mobile-shell) #mkDutyWingRd :is(.mk-duty-crowded-icon, .mk-duty-sentence-icon) {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    margin: 0 !important;
+  }
+
+  /* Shared top alignment and a clear reading order for the centre details. */
+  :root:not(.mk-mobile-shell) #minkaBarWrap #minkaBarInner {
+    align-items: flex-start !important;
+    padding-top: 4px !important;
+    column-gap: 10px !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarWrap #mkSearchDate {
+    flex: 0 1 196px !important;
+    width: 196px !important;
+    min-width: 190px !important;
+    max-width: 50% !important;
+    height: auto !important;
+    min-height: 80px !important;
+    padding: 0 !important;
+    grid-template-columns: max-content minmax(0, 1fr) !important;
+    grid-template-rows: 28px 17px 18px 36px !important;
+    align-content: start !important;
+    column-gap: 8px !important;
+    row-gap: 1px !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarWrap #mkSearchDateNum {
+    grid-column: 1 / -1 !important;
+    grid-row: 1 !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    font-size: clamp(24px, 1.7vw, 28px) !important;
+    line-height: 28px !important;
+    font-weight: 650 !important;
+    letter-spacing: -.035em !important;
+    color: #eef7fc !important;
+    text-shadow: 0 1px 3px #0008 !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarWrap #mkSearchWeekday {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    font-size: 11px !important;
+    height: 17px !important;
+    min-height: 17px !important;
+    align-self: center !important;
+    line-height: 17px !important;
+    color: #e3edf4 !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarWrap #mkStatusGroup {
+    grid-column: 1 / -1 !important;
+    grid-row: 4 !important;
+    align-items: center !important;
+    gap: 10px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarWrap #mkSearchToday {
+    display: none !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarWrap #mkBdayBadge:not(.has-up) {
+    display: none !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarWrap #mkSearchDate #mkPeopleEvents #mkBdayBadge {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    align-self: center !important;
+    height: 17px !important;
+    min-height: 17px !important;
+    line-height: 17px !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarWrap #mkSearchDate #mkPeopleEvents #mkNamedayBar {
+    grid-column: 1 / -1 !important;
+    grid-row: 3 !important;
+    font-size: 10px !important;
+    font-weight: 550 !important;
+    color: #e3edf4 !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarWrap #mkBdayBadge :is(.mk-bday-pill, .mk-bday-ic) {
+    display: inline-flex !important;
+    align-items: center !important;
+    font-size: 11px !important;
+    line-height: 17px !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarWrap :is(#mkTempChip, #mkMoonChip) {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    line-height: 1 !important;
+    color: #eef7fc !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarWrap .mk-weather-temp-value {
+    font-size: 19px !important;
+    font-weight: 650 !important;
+    line-height: 1 !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarWrap .mk-moon-value {
+    font-size: 14px !important;
+    line-height: 1 !important;
+    font-weight: 600 !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarWrap :is(.mk-weather-temp-icon, .mk-moon-icon) {
+    display: block !important;
+    width: 40px !important;
+    height: 40px !important;
+    flex: 0 0 40px !important;
+    object-fit: contain !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarWrap #grafiks-scroller .pill.is-calendar-today {
+    gap: 0 !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarWrap #grafiks-scroller .pill.is-calendar-today::after {
+    content: 'ŠODIEN' !important;
+    position: static !important;
+    display: block !important;
+    font-size: 7.5px !important;
+    font-weight: 750 !important;
+    line-height: 8px !important;
+    letter-spacing: .02em !important;
+    color: inherit !important;
+    background: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+}

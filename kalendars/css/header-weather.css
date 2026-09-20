@@ -8,6 +8,14 @@
   isolation: isolate;
 }
 
+/* Compact fallback for the existing mobile strip; desktop sizes live in the
+   duty-summary layout. Static assets have intrinsic 128px dimensions. */
+#minkaBarWrap :is(.mk-weather-temp-icon, .mk-moon-icon) {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+}
+
 html:root body #minkaBarWrap > .mk-weather-layer.mk-weather-layer {
   position: absolute !important;
   inset: -1px !important;

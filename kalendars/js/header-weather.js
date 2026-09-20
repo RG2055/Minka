@@ -23,6 +23,8 @@
   };
   var MOON_ICONS = ['🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘'];
   var MOON_NAMES = ['Jauns mēness','Augošs sirpis','Pirmais ceturksnis','Augošs mēness','Pilnmēness','Dilstošs mēness','Pēdējais ceturksnis','Dilstošs sirpis'];
+  var MOON_ASSETS = ['moon-new', 'moon-waxing-crescent', 'moon-first-quarter', 'moon-waxing-gibbous', 'moon-full', 'moon-waning-gibbous', 'moon-last-quarter', 'moon-waning-crescent'];
+  var WEATHER_ASSETS = { cloudy: 'cloudy', rain: 'rain', 'heavy-rain': 'extreme-rain', snow: 'snow', sleet: 'sleet', hail: 'hail', fog: 'fog', thunderstorm: 'thunderstorms-rain' };
   var header = document.getElementById('minkaBarWrap');
   if (!header) return;
 
@@ -298,20 +300,46 @@
       return;
     }
 
-    var value = chip.querySelector('.mk-weather-temp-value');
-    if (!value) {
-      value = document.createElement('span');
-      value.className = 'mk-weather-temp-value';
-      chip.replaceChildren(value);
-    } else if (chip.children.length !== 1 || chip.firstElementChild !== value) {
-      // Remove the old decorative weather icon if this page was updated in
-      // place from a build that still rendered it.
-      chip.replaceChildren(value);
-    }
-    value.textContent = weather.t + '°C';
+    var state = conditionState(weather);
+    var asset = state === 'clear' || state === 'partly-cloudy'
+      ? state + '-' + conditionPeriod(weather) : WEATHER_ASSETS[state];
+    renderIconValue(chip, 'mk-weather-temp', asset, weather.t + '°C');
     chip.classList.add('mk-weather-temp');
     chip.setAttribute('aria-label', (weather.desc ? weather.desc + ', ' : '') + weather.t + ' grādi');
+    chip.title = weather.desc || STATE_LABELS[state];
     sync(weather);
+  }
+
+  // Small local static SVGs: no icon runtime, external requests or animation.
+  function renderIconValue(chip, prefix, asset, text) {
+    var icon = chip.querySelector('.' + prefix + '-icon');
+    var value = chip.querySelector('.' + prefix + '-value');
+    if (!icon || !value) {
+      icon = document.createElement('img');
+      icon.className = prefix + '-icon';
+      icon.alt = '';
+      icon.setAttribute('aria-hidden', 'true');
+      value = document.createElement('span');
+      value.className = prefix + '-value';
+      chip.replaceChildren(icon, value);
+    }
+    var src = 'assets/weather-icons/' + asset + '.svg';
+    if (icon.getAttribute('src') !== src) icon.setAttribute('src', src);
+    if (value.textContent !== text) value.textContent = text;
+  }
+
+  function renderMoon(chip, moon) {
+    if (!chip) return;
+    if (!moon || !Number.isInteger(moon.index) || !MOON_ASSETS[moon.index]) {
+      chip.replaceChildren();
+      chip.removeAttribute('aria-label');
+      chip.removeAttribute('title');
+      return;
+    }
+    renderIconValue(chip, 'mk-moon', MOON_ASSETS[moon.index], moon.illum + '%');
+    var label = (moon.name || MOON_NAMES[moon.index]) + ', apgaismots ' + moon.illum + '%';
+    chip.setAttribute('aria-label', label);
+    chip.title = label;
   }
 
   function visibilityChanged() {
@@ -330,6 +358,7 @@
     mapPeriod: conditionPeriod,
     syncMoon: syncMoonPhase,
     renderTemperature: renderTemperature,
+    renderMoon: renderMoon,
     diagnostics: function() {
       return {
         state: layer.dataset.weatherState,
