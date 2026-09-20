@@ -26,7 +26,9 @@ test('all eight local scenery files exist and invalid locations fall back to Lat
   assert.equal(api.getScene(), 'coast');
   api.setScene('riga'); assert.equal(api.getScene(), 'riga');
   api.setScene('unknown'); assert.equal(api.getScene(), 'coast');
+  // Riga is the real St Peter's tower panorama (2026-09-20); the coast is the generated scene (2026-09-19).
   for (const scene of ['coast', 'riga']) for (const period of ['morning', 'day', 'sunset', 'night']) {
-    assert.ok(fs.statSync(new URL(`../data/header-backgrounds/header-${scene}-${period}-20260919.webp`, import.meta.url)).size > 0);
+    const stamp = scene === 'riga' ? '20260920' : '20260919';
+    assert.ok(fs.statSync(new URL(`../data/header-backgrounds/header-${scene}-${period}-${stamp}.webp`, import.meta.url)).size > 0);
   }
 });

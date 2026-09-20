@@ -23,8 +23,11 @@ var hospitalDatabase = window.hospitalDatabase;
   let scene = 'coast';
   try { if (JSON.parse(localStorage.getItem('mk_header_appearance_v1') || '{}').background === 'riga') scene = 'riga'; } catch (_) {}
   const periods = ['morning', 'day', 'sunset', 'night'];
+  // Riga is the real St Peter's tower panorama (re-encoded 2026-09-20); the
+  // coast is the generated scene from the day before.
+  const sceneSrc = (scene, period) => 'data/header-backgrounds/header-' + scene + '-' + period + '-' + (scene === 'riga' ? '20260920' : '20260919') + '.webp';
   const assets = Object.fromEntries(periods.map((period, i) => [period, {
-    src: 'data/header-backgrounds/header-' + scene + '-' + period + '-20260919.webp',
+    src: sceneSrc(scene, period),
     position: '50% 48%', next: periods[(i + 1) % 4]
   }]));
   const boundaries = [
@@ -179,7 +182,7 @@ var hospitalDatabase = window.hospitalDatabase;
       const next = value === 'riga' ? 'riga' : 'coast';
       if (scene === next) return;
       scene = next;
-      periods.forEach(period => { assets[period].src = 'data/header-backgrounds/header-' + scene + '-' + period + '-20260919.webp'; });
+      periods.forEach(period => { assets[period].src = sceneSrc(scene, period); });
       applyPeriod(true);
     },
     getHeaderPeriod,

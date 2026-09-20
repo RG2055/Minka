@@ -161,7 +161,7 @@
 #headerAppearance .hs-choice-title { display: block; padding: 9px 4px 3px; font-weight: 650; font-size: 12px; }
 #headerAppearance [data-skin] small { display: block; padding: 0 4px; font-size: 10px; color: var(--hs-muted); }
 #headerAppearance .hs-preview { position: relative; display: block; height: 60px; border-radius: 10px; overflow: hidden; background: var(--hs-surface); }
-#headerAppearance .hs-preview-panorama, #headerAppearance .hs-preview-hybrid { background: linear-gradient(#10202044,#10202088), url('../data/header-backgrounds/header-riga-sunset-20260919.webp') center/cover; }
+#headerAppearance .hs-preview-panorama, #headerAppearance .hs-preview-hybrid { background: linear-gradient(#10202044,#10202088), url('../data/header-backgrounds/header-riga-sunset-20260920.webp') center/cover; }
 #headerAppearance .hs-preview i { position: absolute; left: 9%; top: 11px; width: 23%; height: 5px; border-radius: 2px; background: #edf7ed; opacity: .8; }
 #headerAppearance .hs-preview i:nth-child(2) { left: 39%; width: 22%; height: 8px; }
 #headerAppearance .hs-preview i:nth-child(3) { left: 72%; width: 18%; }
