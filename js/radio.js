@@ -3648,7 +3648,7 @@ function focusRadio(){
     const rand = list => list[Math.floor(Math.random() * list.length)];
     const now = lookSnapshot();
     // All five layouts rotate. Pixel keeps its default wave and album colors.
-    const layout = rand(['classic', 'clean', 'pioneer', 'pixel', 'amp'].filter(l => l !== now.layout));
+    const layout = rand(['classic', 'clean', 'pioneer', 'amp', 'pixel'].filter(l => l !== now.layout));
     const choices=THEMES.filter(t=>!!t.pixel===(layout==='pixel'));
     const theme=rand(choices.filter(t=>t.name!==now.theme))||choices[0]||THEMES[0];
     const viz=layout==='pixel'?31:nextGuestSpectrum(now.viz);
