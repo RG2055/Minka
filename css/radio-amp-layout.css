@@ -1,0 +1,169 @@
+/* "Amp" faceplate — soft dark-navy Winamp: player · equalizer · playlist.
+   No blur, no filters, no image assets; shadows and gradients only. */
+.amp-shell{display:none}
+html body #radioWindow[data-radio-layout="amp"]:not(.music-source){
+ --amp-body:#2b3048;--amp-body-2:#252a40;--amp-inset:#1e2237;--amp-screen:#171a2c;--amp-line:#3a4160;
+ --amp-text:#e9ecf6;--amp-dim:#9aa1bd;--amp-orange:#e5601c;--amp-amber:#e2a51e;
+ --amp-accent-rgb:var(--radio-accent-rgb,105,201,30);--amp-green:rgb(var(--amp-accent-rgb));
+ --amp-tint:color-mix(in srgb,#2b3048 88%,rgb(var(--amp-accent-rgb)) 12%);--amp-tint-2:color-mix(in srgb,#252a40 92%,rgb(var(--amp-accent-rgb)) 8%);
+ --amp-shadow:0 10px 26px rgba(8,10,20,.45),0 2px 6px rgba(8,10,20,.35);
+ --amp-inset-shadow:inset 0 2px 5px rgba(6,8,18,.55),inset 0 -1px 0 rgba(255,255,255,.04);
+ min-width:0!important;width:100%!important;max-width:none!important;left:0!important;right:0!important;transform:none!important;
+ height:auto!important;min-height:0!important;padding:0!important;margin:0!important;
+ border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important;
+}
+html body #radioWindow[data-radio-layout="amp"]:not(.music-source)::before{display:none!important}
+html body #radioWindow[data-radio-layout="amp"]:not(.music-source) .radio-win-body{
+ /* the original console stays alive (engine, ids, hidden #vol) but out of view */
+ position:absolute!important;left:0;top:0;width:1px!important;height:1px!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important;padding:0!important;margin:0!important
+}
+html body #radioWindow[data-radio-layout="amp"]:not(.music-source) .radio-drag-strip{position:absolute!important;left:50%;top:0;transform:translateX(-50%);width:min(1140px,100%);height:28px!important;z-index:5;cursor:grab;background:transparent!important;border:0!important}
+html body #radioWindow[data-radio-layout="amp"]:not(.music-source) #radioSourceBar{
+ /* lives in the main pane's top strip, right of the three dots */
+ position:absolute!important;left:auto!important;right:12px!important;top:8px!important;height:24px!important;z-index:6;max-width:none!important;
+ padding:1px 3px!important;gap:3px!important;border:0!important;border-radius:999px!important;background:var(--amp-inset)!important;box-shadow:var(--amp-inset-shadow)!important
+}
+html body #radioWindow[data-radio-layout="amp"]:not(.music-source) #radioSourceBar button{height:20px!important;min-height:20px!important;padding:2px 8px!important;border-radius:999px!important;font-size:10px!important;gap:4px!important;color:var(--amp-dim)!important;background:transparent!important;border:0!important;box-shadow:none!important}
+html body #radioWindow[data-radio-layout="amp"]:not(.music-source) #radioSourceBar button[aria-pressed="true"]{color:var(--amp-text)!important;background:var(--amp-body)!important;box-shadow:0 1px 3px rgba(0,0,0,.4)!important}
+html body #radioWindow[data-radio-layout="amp"]:not(.music-source) #radioSourceBar svg{width:13px;height:13px}
+html body #radioWindow[data-radio-layout="amp"]:not(.music-source) #radioSourceStatus{display:none!important}
+
+/* ---- shell: three panes ---- */
+html body #radioWindow[data-radio-layout="amp"].music-source .amp-shell{display:none!important}
+html body #radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-shell{
+ display:flex;gap:10px;align-items:stretch;justify-content:center;width:min(1140px,100%);margin:0 auto;padding:0 6px 4px;box-sizing:border-box;
+ font-family:var(--font-ui,'Geist Sans',Inter,system-ui,sans-serif);color:var(--amp-text);
+ -webkit-font-smoothing:antialiased;user-select:none
+}
+.amp-pane{position:relative;flex:1 1 0;min-width:0;height:282px;border-radius:22px;background:linear-gradient(180deg,var(--amp-tint,var(--amp-body)),var(--amp-tint-2,var(--amp-body-2)));transition:background-color .6s ease;box-shadow:var(--amp-shadow),inset 0 1px 0 rgba(255,255,255,.06);padding:36px 18px 16px;box-sizing:border-box;display:flex;flex-direction:column}
+.amp-pane[hidden]{display:none}
+.amp-shell[data-panes="eq pl"] .amp-main,.amp-shell[data-panes="eq pl"] .amp-eq,.amp-shell[data-panes="eq pl"] .amp-pl{flex-basis:0}
+.amp-main{flex:1.32 1 0}
+.amp-dots{position:absolute;left:18px;top:13px;display:flex;gap:5px}
+.amp-dots i{width:9px;height:9px;border-radius:50%;background:#aab1c9}
+.amp-dots i:first-child{background:#e2b842}
+
+/* ---- main pane ---- */
+.amp-top{display:grid;grid-template-columns:minmax(120px,.85fr) minmax(0,1.3fr);gap:12px;margin-top:0;flex:0 0 auto}
+.amp-screen{position:relative;height:124px;border-radius:16px;background:var(--amp-screen);box-shadow:var(--amp-inset-shadow);overflow:hidden}
+.amp-vis{position:absolute;inset:0;width:100%;height:100%;display:block}
+.amp-time{position:absolute;right:14px;top:10px;z-index:2;font:500 22px/1 var(--font-time,'Geist Mono',ui-monospace,monospace);letter-spacing:.02em;color:#dfe4f4;font-variant-numeric:tabular-nums;pointer-events:none;text-shadow:0 1px 2px #0008}
+.amp-shell.is-playing .amp-time::before{content:"";position:absolute;right:calc(100% + 8px);top:6px;width:0;height:0;border-left:8px solid #dfe4f4;border-top:5px solid transparent;border-bottom:5px solid transparent;opacity:.9}
+.amp-right{display:flex;flex-direction:column;justify-content:center;gap:6px;min-width:0;padding:2px 0 0 4px}
+.amp-now{display:flex;align-items:center;gap:12px;min-width:0}
+.amp-lines{min-width:0;flex:1 1 auto}
+.amp-cover{position:relative;flex:0 0 56px;width:56px;height:56px;border-radius:12px;overflow:hidden;background:var(--amp-screen);box-shadow:0 3px 8px rgba(6,8,18,.5),inset 0 0 0 1px rgba(var(--amp-accent-rgb),.55)}
+.amp-cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .35s ease}
+.amp-cover.is-in img{opacity:1}
+.amp-cover-ph{position:absolute;inset:0;display:grid;place-items:center;color:var(--amp-dim)}
+.amp-cover-ph svg{width:24px;height:24px}
+.amp-cover.is-in .amp-cover-ph{display:none}
+.amp-song{font-weight:700;font-size:19px;line-height:1.15;letter-spacing:-.01em;color:#fff;white-space:nowrap;overflow:hidden}
+.amp-artist{font-weight:500;font-size:15px;line-height:1.2;color:var(--amp-green);white-space:nowrap;overflow:hidden}
+.amp-song>span,.amp-artist>span{display:inline-block;--shift:0px}
+.amp-song.is-long,.amp-artist.is-long{mask-image:linear-gradient(90deg,transparent,#000 6px,#000 calc(100% - 8px),transparent)}
+.amp-song.is-long>span,.amp-artist.is-long>span{animation:amp-marquee var(--dur,10s) linear infinite alternate}
+@keyframes amp-marquee{0%,15%{transform:translateX(0)}85%,100%{transform:translateX(var(--shift))}}
+.amp-volrow{display:flex;align-items:center;gap:10px;margin-top:10px}
+.amp-spk{width:22px;height:22px;flex:0 0 22px;fill:#d7dcec;color:#d7dcec}
+.amp-metaline{display:flex;gap:10px;font:600 10px/1 var(--font-time,'Geist Mono',ui-monospace,monospace);letter-spacing:.12em;color:var(--amp-dim);min-height:10px}
+.amp-shell.is-playing .amp-metaline [data-live]{color:var(--amp-green)}
+.amp-seek-wrap{position:relative;margin:16px 0 0}
+.amp-seek{height:18px;--amp-fill:#3a4160;background:linear-gradient(90deg,var(--amp-fill) var(--p,0%),var(--amp-inset) var(--p,0%))}
+.amp-seek::-webkit-slider-thumb{width:32px;height:32px}
+.amp-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:auto}
+.amp-transport{display:flex;gap:6px;align-items:center}
+.amp-extra{display:flex;gap:5px;align-items:center}
+.amp-extra .amp-tog{width:36px;height:36px}
+.amp-eject{width:42px;height:42px;border-radius:12px;margin-left:2px}
+.amp-eject svg{width:20px;height:20px}
+.amp-pill{width:52px;height:42px;border-radius:12px;background-color:#f1f3f9;box-shadow:0 3px 6px rgba(6,8,18,.5),inset 0 1px 0 #fff,inset 0 -1px 0 rgba(0,0,0,.08);color:#2b3048;appearance:none;border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background-color .15s ease}
+.amp-pill svg{width:20px;height:20px;fill:currentColor}
+.amp-pill:hover{background-color:#ffffff}
+.amp-pill:active{transform:translateY(1px);transition:none}
+.amp-pill.is-on{background-color:color-mix(in srgb,#f1f3f9 72%,rgb(var(--amp-accent-rgb)) 28%);color:#1e2536;box-shadow:0 3px 6px rgba(6,8,18,.5),inset 0 0 0 1px rgba(var(--amp-accent-rgb),.6)}
+.amp-pill.is-on:hover{background-color:color-mix(in srgb,#ffffff 70%,rgb(var(--amp-accent-rgb)) 30%)}
+.amp-vol{--amp-fill:rgb(var(--amp-accent-rgb));height:10px;flex:1 1 auto}
+.amp-vol::-webkit-slider-thumb{width:24px;height:24px}
+.amp-h.amp-bal{flex:0 0 64px;height:10px;background:linear-gradient(90deg,rgba(105,201,30,.32) 0,rgba(105,201,30,.32) min(50%,var(--p)),#69c91e min(50%,var(--p)),#69c91e max(50%,var(--p)),rgba(105,201,30,.32) max(50%,var(--p)))}
+.amp-bal::-webkit-slider-thumb{width:20px;height:20px}
+
+/* ---- buttons ---- */
+.amp-tog,.amp-sq{appearance:none;border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;position:relative;transition:background-color .15s ease,color .15s ease;font-family:inherit;-webkit-tap-highlight-color:transparent}
+.amp-tog:active,.amp-sq:active{transform:translateY(1px);transition:none}
+.amp-tog,.amp-sq{width:40px;height:38px;border-radius:12px;background:var(--amp-screen);box-shadow:0 2px 4px rgba(6,8,18,.5),inset 0 1px 0 rgba(255,255,255,.05);color:#dfe4f4}
+.amp-tog svg,.amp-sq svg{width:19px;height:19px;fill:currentColor}
+.amp-tog b{font-size:14px;font-weight:700}
+.amp-tog i{position:absolute;left:10px;right:10px;bottom:5px;height:3px;border-radius:2px;background:#3d4468;transition:background-color .15s,box-shadow .15s}
+.amp-tog[aria-pressed="true"] i,.amp-tog.is-on i{background:var(--amp-green);box-shadow:0 0 6px rgba(var(--amp-accent-rgb),.8)}
+.amp-tog:hover,.amp-sq:hover{background-color:#131627}
+.amp-sq{font-size:20px;font-weight:600;line-height:1}
+.amp-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:auto}
+.amp-transport{display:flex;gap:6px;align-items:center}
+
+/* ---- ranges ---- */
+.amp-h{-webkit-appearance:none;appearance:none;width:100%;height:13px;margin:0;border-radius:999px;background:linear-gradient(90deg,var(--amp-fill,var(--amp-amber)) var(--p,50%),var(--amp-inset) var(--p,50%));box-shadow:var(--amp-inset-shadow);cursor:pointer;outline:0;--p:50%}
+.amp-h::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#f4f6fb;box-shadow:0 2px 5px rgba(6,8,18,.55),inset 0 1px 0 #fff,inset 0 -1px 0 rgba(0,0,0,.08);border:0}
+.amp-h::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#f4f6fb;border:0;box-shadow:0 2px 5px rgba(6,8,18,.55)}
+.amp-h:focus-visible{box-shadow:var(--amp-inset-shadow),0 0 0 2px rgba(var(--amp-accent-rgb),.5)}
+.amp-h:disabled{cursor:default;opacity:.85}
+.amp-vol{--amp-fill:var(--amp-green);height:10px}
+.amp-vol::-webkit-slider-thumb{width:24px;height:24px}
+
+/* ---- equalizer pane ---- */
+.amp-eq{padding-bottom:10px}
+.amp-eq-head{display:flex;align-items:center;gap:8px;margin-top:0;height:40px}
+.amp-curve{flex:1 1 auto;min-width:0;height:38px;margin:0 10px;overflow:visible}
+.amp-curve polyline{stroke:#d5dae8;stroke-width:1.4;stroke-linejoin:round;vector-effect:non-scaling-stroke;transition:points .15s}
+.amp-eq-tools{display:inline-flex}
+html body #radioWindow[data-radio-layout="amp"] .amp-eq-tools #themeBtn{width:36px!important;height:34px!important;min-width:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:11px!important;background:var(--amp-screen)!important;box-shadow:0 2px 4px rgba(6,8,18,.5),inset 0 1px 0 rgba(255,255,255,.05)!important;color:#dfe4f4!important;position:static!important;display:inline-flex!important;align-items:center;justify-content:center}
+html body #radioWindow[data-radio-layout="amp"] .amp-eq-tools #themeBtn svg{width:18px;height:18px}
+.amp-bands{display:flex;align-items:flex-end;justify-content:space-between;gap:2px;margin-top:10px;flex:1 1 auto;min-height:0}
+.amp-band{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1 1 0;min-width:0}
+.amp-band span{font:500 12px/1 var(--font-time,'Geist Mono',ui-monospace,monospace);color:var(--amp-dim);letter-spacing:.02em}
+.amp-pre{margin-right:2px}
+.amp-scale{display:flex;flex-direction:column;justify-content:space-between;height:140px;padding-bottom:23px;box-sizing:border-box;margin-right:8px;font:600 11px/1 var(--font-time,ui-monospace,monospace);color:var(--amp-dim)}
+.amp-vband{-webkit-appearance:none;appearance:none;writing-mode:vertical-lr;direction:rtl;width:11px;height:140px;margin:0;border-radius:999px;cursor:pointer;outline:0;--p:50%;
+ background:linear-gradient(0deg,var(--amp-inset) 0,var(--amp-inset) min(50%,var(--p)),var(--amp-fill,var(--amp-amber)) min(50%,var(--p)),var(--amp-fill,var(--amp-amber)) max(50%,var(--p)),var(--amp-inset) max(50%,var(--p)));
+ box-shadow:var(--amp-inset-shadow)}
+.amp-vband[data-sign="up"]{--amp-fill:var(--amp-green)}
+.amp-vband[data-sign="down"]{--amp-fill:var(--amp-orange)}
+.amp-vband[data-sign="zero"]{--amp-fill:var(--amp-amber);background:linear-gradient(0deg,var(--amp-amber),var(--amp-amber))}
+.amp-vband::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#f4f6fb;box-shadow:0 2px 5px rgba(6,8,18,.55),inset 0 1px 0 #fff;border:0}
+.amp-vband::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#f4f6fb;border:0}
+.amp-vband:disabled{opacity:.45;cursor:default}
+.amp-eq.is-off .amp-curve polyline{stroke:#5d6488}
+.amp-presets{position:absolute;left:18px;right:18px;top:74px;z-index:20;display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:5px;border-radius:14px;background:var(--amp-screen);box-shadow:0 12px 30px rgba(6,8,18,.6),inset 0 1px 0 rgba(255,255,255,.06)}
+.amp-presets button{appearance:none;border:0;background:var(--amp-inset);color:var(--amp-text);font:500 11.5px/1 inherit;font-family:inherit;padding:0 4px;height:26px;border-radius:7px;cursor:pointer;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.amp-presets button:hover{background-color:#2f3552}
+
+/* ---- playlist pane ---- */
+.amp-pl{padding:32px 18px 14px}
+.amp-list{list-style:none;margin:0;padding:8px 12px;flex:1 1 auto;min-height:0;overflow:auto;border-radius:14px;background:var(--amp-screen);box-shadow:var(--amp-inset-shadow);scrollbar-width:thin;scrollbar-color:#3a4160 transparent;overscroll-behavior:contain}
+.amp-list li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:4px;height:32px;padding:0 8px;border-radius:9px;font-size:15px;cursor:pointer;color:#dfe4f4;transition:background-color .1s}
+.amp-list li:hover{background-color:#232742}
+.amp-list li.is-current{background:color-mix(in srgb,#2a3050 85%,rgb(var(--amp-accent-rgb)) 15%);color:#fff}
+.amp-list li.is-current .amp-name{color:var(--amp-green)}
+.amp-n{color:var(--amp-dim);font-variant-numeric:tabular-nums}
+.amp-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.amp-len{font:500 11px/1 var(--font-time,ui-monospace,monospace);color:var(--amp-dim);letter-spacing:.06em}
+.amp-pl-foot{display:flex;align-items:center;gap:8px;margin-top:12px}
+.amp-count{margin-left:auto;min-width:64px;font-size:12px}
+
+@media(max-width:1080px){
+ .amp-pane{height:270px;padding:34px 12px 12px}
+ .amp-pill{width:44px}
+ .amp-extra .amp-tog{width:32px}
+ .amp-band span{font-size:10px}
+}
+@media(max-width:900px){
+ html body #radioWindow[data-radio-layout="amp"] .amp-shell{flex-wrap:wrap}
+ .amp-main{flex:1 1 100%}
+ .amp-eq,.amp-pl{flex:1 1 45%}
+}
+
+/* ---- look panel while Amp is selected: only what Amp can use ---- */
+#themePanel[data-radio-layout="amp"] :is(#radioLookPreview,.radio-spectrum-position,#radioImageTools,.radio-viz-choices,.radio-clean-actions,#radioUseCard,#radioLookNote,#themeList,.radio-theme-filters,.theme-subtitle,[data-radio-background-only]){display:none!important}
+#themePanel[data-radio-layout="amp"] fieldset.radio-layout-choices:has([data-viz-frame-choice]){display:none!important}
+#themePanel[data-radio-layout="amp"] #radioLookControls details label:has([data-look="glass"]),#themePanel[data-radio-layout="amp"] #radioLookControls details label:has([data-look="text"]){display:none!important}
+#themePanel[data-radio-layout="amp"] #ampVisControls{display:block!important}

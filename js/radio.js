@@ -3291,7 +3291,7 @@ function focusRadio(){
   }
   function cleanVizPositions(value){
     const result={};
-    for(const layout of ['classic','clean','pioneer','pixel']){
+    for(const layout of ['classic','clean','pioneer','pixel','amp']){
       const point=value?.[layout];if(point&&Number.isFinite(point.x)&&Number.isFinite(point.y))result[layout]={x:clamp(point.x,-1,1),y:clamp(point.y,-1,1)};
     }
     return result;
@@ -3363,7 +3363,7 @@ function focusRadio(){
   }
 
   const LOOK_KEY='rg_radio_appearance_v1';
-  const LOOK_DEFAULTS={darkness:64,tint:28,glass:24,glow:45,layout:'classic',metalColor:'#9ca4aa',metalLight:50,metalShine:65,pioneerPixels:false,vizFrame:'auto',position:'center',text:'#f3f7f5',background:'',cardName:'',imageCrops:{},vizPositions:{}};
+  const LOOK_DEFAULTS={darkness:64,tint:28,glass:24,glow:45,layout:'classic',ampVis:'webamp',metalColor:'#9ca4aa',metalLight:50,metalShine:65,pioneerPixels:false,vizFrame:'auto',position:'center',text:'#f3f7f5',background:'',cardName:'',imageCrops:{},vizPositions:{}};
   let appearance;try{appearance={...LOOK_DEFAULTS,...JSON.parse(localStorage.getItem(LOOK_KEY)||'{}')};}catch(_){appearance={...LOOK_DEFAULTS};}
   appearance.imageCrops=cleanImageCrops(appearance.imageCrops);
   appearance.vizPositions=cleanVizPositions(appearance.vizPositions);
@@ -3385,10 +3385,10 @@ function focusRadio(){
     if(applyingProfile)return;
     const rw=document.getElementById('radioWindow');if(!rw)return;
     const previousLayout=rw.dataset.radioLayout;
-    rw.dataset.radioLayout=['classic','clean','pioneer','pixel'].includes(appearance.layout)?appearance.layout:'classic';
+    rw.dataset.radioLayout=['classic','clean','pioneer','pixel','amp'].includes(appearance.layout)?appearance.layout:'classic';
     rw.dataset.vizFrame=['on','off'].includes(appearance.vizFrame)?appearance.vizFrame:'auto';
     const lookButton=document.getElementById('themeBtn');
-    if(lookButton){const home=rw.querySelector(rw.dataset.radioLayout==='pioneer'?'.bottom-console':['clean','pixel'].includes(rw.dataset.radioLayout)?'.control-panel':'.tech-panel .branding');if(home&&lookButton.parentElement!==home)home.prepend(lookButton);}
+    if(lookButton){const home=rw.querySelector(rw.dataset.radioLayout==='pioneer'?'.bottom-console':rw.dataset.radioLayout==='amp'?'.amp-eq-tools':['clean','pixel'].includes(rw.dataset.radioLayout)?'.control-panel':'.tech-panel .branding');if(home&&lookButton.parentElement!==home)home.prepend(lookButton);}
     const saved=getSaved(),theme=findTheme(saved.name);
     const background=saved.name==='Mana kartīte'?safeBackground(appearance.background):(theme.image?`url("${new URL(theme.image,document.baseURI).href}")`:theme.background||'');
     const color=(appearance.layout==='pioneer'||saved.accentMode==='album')?albumColor:saved.accentMode==='card'?safeColor(appearance.cardAccent,'#53c9e8'):saved.accentMode==='custom'?saved.accent:(FIXED_ACCENTS[saved.accentMode]||theme.chip);
@@ -3401,14 +3401,15 @@ function focusRadio(){
       rw.style.setProperty('--radio-personal-text',palette.text);
       if(__radioVizAccentRGB.join(',')!==parseColorToRGBStr(palette.accent))applyAccent(palette.accent);
     }else if(previousLayout==='pixel'){rw.style.setProperty('background-color',`rgb(${(theme.surfaceRGB||[10,14,12]).join(',')})`,'important');}
-    if(appearance.layout==='pioneer'){
+    if(appearance.layout==='pioneer'||appearance.layout==='amp'){
       rw.style.removeProperty('background');rw.style.removeProperty('background-image');
       if(__radioVizAccentRGB.join(',')!==rgb)applyAccent(color);
     }
     window.rgPioneerLayout?.apply(rw,appearance);
+    window.rgAmpLayout?.apply(rw,appearance);
     rw.style.setProperty('background-position',['left','center','right','top','bottom'].includes(appearance.position)?appearance.position:'center','important');
     rw.style.setProperty('background-size','cover','important');
-    if(appearance.layout==='pioneer'){['border-color','border-top-color','box-shadow'].forEach(p=>rw.style.removeProperty(p));}
+    if(appearance.layout==='pioneer'||appearance.layout==='amp'){['border-color','border-top-color','box-shadow'].forEach(p=>rw.style.removeProperty(p));}
     else{rw.style.setProperty('border-color','transparent','important');
     rw.style.setProperty('border-top-color',`rgba(225,239,246,${glass*.42})`,'important');
     rw.style.setProperty('box-shadow',`inset 0 ${glass*2}px ${glass*12}px rgba(224,243,255,${glass*.22}),0 8px 24px rgba(0,0,0,.16)`,'important');
@@ -3422,6 +3423,8 @@ function focusRadio(){
     prepareImagePosition(appearance.layout==='pixel'?'':background);placeSpectrum();syncSpectrumMoveControls();
     const displayControls=document.getElementById('pioneerDisplayControls');
     if(displayControls){displayControls.hidden=appearance.layout!=='pioneer';document.getElementById('pioneerPixelGrid').setAttribute('aria-checked',String(appearance.pioneerPixels===true));}
+    const ampControls=document.getElementById('ampVisControls');
+    if(ampControls){ampControls.hidden=appearance.layout!=='amp';ampControls.querySelectorAll('[data-amp-vis]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.ampVis===(['classic','mirror','wave'].includes(appearance.ampVis)?appearance.ampVis:'webamp'))));}
     const metalControls=document.getElementById('pioneerMetalControls');
     if(metalControls){metalControls.hidden=appearance.layout!=='pioneer';metalControls.querySelectorAll('[data-metal-color]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.metalColor===appearance.metalColor)));for(const input of metalControls.querySelectorAll('[data-look]'))input.value=appearance[input.dataset.look]??LOOK_DEFAULTS[input.dataset.look];}
     const themePanel=document.getElementById('themePanel');
@@ -3456,10 +3459,11 @@ function focusRadio(){
   function applyLookSettings(data={}){
     applyingProfile=true;
     appearance={...LOOK_DEFAULTS,...data,background:safeBackground(data.background),imageCrops:cleanImageCrops(data.imageCrops),vizPositions:cleanVizPositions(data.vizPositions)};
-    appearance.layout=['classic','clean','pioneer','pixel'].includes(data.layout)?data.layout:'classic';
+    appearance.layout=['classic','clean','pioneer','pixel','amp'].includes(data.layout)?data.layout:'classic';
     appearance.vizFrame=['on','off'].includes(data.vizFrame)?data.vizFrame:'auto';
     appearance.metalColor=safeColor(data.metalColor,LOOK_DEFAULTS.metalColor);
     appearance.pioneerPixels=data.pioneerPixels===true;
+    appearance.ampVis=['classic','mirror','wave'].includes(data.ampVis)?data.ampVis:'webamp';
     for(const key of ['metalLight','metalShine'])appearance[key]=clamp(Number.isFinite(Number(data[key]))?Number(data[key]):LOOK_DEFAULTS[key],0,100);
     for(const key of ['darkness','tint','glass','glow'])appearance[key]=clamp(Number(appearance[key])||0,0,100);
     localStorage.setItem(LOOK_KEY,JSON.stringify(appearance));
@@ -3491,7 +3495,7 @@ function focusRadio(){
     const rect=rw.getBoundingClientRect();if(!rect.width||!rect.height)return;
     placeSpectrum();syncSpectrumMoveControls();
     preview.style.aspectRatio=`${rect.width} / ${rect.height}`;
-    preview.dataset.layout=['classic','clean','pioneer','pixel'].includes(appearance.layout)?appearance.layout:'classic';
+    preview.dataset.layout=['classic','clean','pioneer','pixel','amp'].includes(appearance.layout)?appearance.layout:'classic';
     if(appearance.layout==='pioneer'){window.rgPioneerLayout?.renderPreview(preview);return;}
     preview.querySelector('.pioneer-real-preview')?.remove();
     const station=preview.querySelector('.radio-preview-station');
@@ -3504,10 +3508,11 @@ function focusRadio(){
     if(document.getElementById('radioLookControls'))return;
     const box=document.createElement('section');box.id='radioLookControls';box.innerHTML=`
       <button type="button" id="radioUseCard">Kā mana kartīte</button><p id="radioLookNote" role="status">Fons paliek tavs. Albuma režīmā krāsa mainās līdzi mūzikai.</p>
-      <fieldset class="radio-layout-choices"><legend>Izkārtojums</legend><div class="radio-viz-families"><button type="button" data-radio-layout-choice="classic" aria-pressed="true">Pašreizējais</button><button type="button" data-radio-layout-choice="clean" aria-pressed="false">Jauns izkārtojums</button><button type="button" data-radio-layout-choice="pioneer" aria-pressed="false">Pioneer</button><button type="button" data-radio-layout-choice="pixel" aria-pressed="false">Pixel</button></div><p class="radio-viz-family-note">Pixel: albuma attēls, maigas formas un izteiksmīga atskaņošanas poga.</p></fieldset>
+      <fieldset class="radio-layout-choices"><legend>Izkārtojums</legend><div class="radio-viz-families"><button type="button" data-radio-layout-choice="classic" aria-pressed="true">Pašreizējais</button><button type="button" data-radio-layout-choice="clean" aria-pressed="false">Jauns izkārtojums</button><button type="button" data-radio-layout-choice="pioneer" aria-pressed="false">Pioneer</button><button type="button" data-radio-layout-choice="pixel" aria-pressed="false">Pixel</button><button type="button" data-radio-layout-choice="amp" aria-pressed="false">Amp</button></div><p class="radio-viz-family-note">Pixel: albuma attēls, maigas formas un izteiksmīga atskaņošanas poga.</p></fieldset>
       <fieldset id="pixelPaletteControls" class="radio-layout-choices" hidden><legend>Pixel krāsas</legend><p class="radio-viz-family-note">Krāsa seko albumam. Izvēloties paleti, tonis paliek nemainīgs.</p><div class="pixel-palette-choices">${(window.rgPixel?.palettes||[]).map(p=>`<button type="button" data-pixel-palette="Pixel · ${p.name}" aria-pressed="false" style="--swatch:${p.surface};--swatch-accent:${p.accent}"><i aria-hidden="true"></i>${p.name}</button>`).join('')}<button type="button" data-pixel-album aria-pressed="false">No albuma</button></div></fieldset>
       <div id="radioLookPreview" role="group" aria-label="Fona attēla novietojums. Velc attēlu vai lieto bulttaustiņus." aria-describedby="radioImageHint"><div class="radio-preview-copy"><strong class="radio-preview-station">Radio</strong><span>Tava mūzika</span></div><div class="radio-preview-toolbar" aria-hidden="true">◉ &nbsp; RADIO &nbsp; MŪZIKA</div><div class="radio-preview-buttons" aria-hidden="true">▣ &nbsp; ♫ &nbsp; ◀ &nbsp; <b>▶</b> &nbsp; ▶ &nbsp; ━━</div><div class="radio-viz-sample"><img id="radioLookVizImage" width="600" height="80" decoding="async" alt="Izvēlētās vizualizācijas momentuzņēmums"></div></div>
       <div class="radio-spectrum-position"><button type="button" id="radioMoveSpectrum" aria-pressed="false">Pārvietot spektru</button><button type="button" id="radioResetSpectrum">Atiestatīt pozīciju</button><div id="pioneerDisplayControls" hidden><button type="button" id="pioneerPixelGrid" role="switch" aria-checked="false" title="OEL pikseļu matrica"><span>Pikseļu matrica</span><i aria-hidden="true"></i></button></div><p id="radioSpectrumMoveHint">Ieslēdz, lai priekšskatījumā pārvietotu spektru.</p></div>
+      <fieldset id="ampVisControls" class="radio-layout-choices" hidden><legend>Amp spektrs</legend><div class="radio-viz-families"><button type="button" data-amp-vis="webamp" aria-pressed="true">Webamp</button><button type="button" data-amp-vis="classic" aria-pressed="false">Klasiskais Winamp</button><button type="button" data-amp-vis="mirror" aria-pressed="false">Spoguļots</button><button type="button" data-amp-vis="wave" aria-pressed="false">Vilnis</button></div><p class="radio-viz-family-note">Webamp: gaišas joslas ar pīķiem. Klasiskais: zaļi-dzeltenā-oranžā kāpne. Spoguļots: joslas ap viduslīniju. Vilnis: osciloskopa līnija.</p></fieldset>
       <fieldset id="pioneerMetalControls" hidden><legend>Pioneer korpuss</legend><p>Metāla tonis korpusam un pogām. Displeja izgaismojums seko albumam.</p><div class="pioneer-metal-presets">${(window.rgPioneerLayout?.finishes||[]).map(f=>`<button type="button" data-metal-color="${f.color}" style="--metal-swatch:${f.color}" aria-pressed="false"><i aria-hidden="true"></i><span>${f.name}</span></button>`).join('')}</div><div class="pioneer-metal-custom"><label>Sava krāsa<input type="color" data-look="metalColor" aria-label="Korpusa krāsa"></label><label>Gaišums<input type="range" min="0" max="100" data-look="metalLight"></label><label>Spīdums<input type="range" min="0" max="100" data-look="metalShine"></label><button type="button" id="pioneerMetalReset">Atiestatīt metālu</button></div></fieldset>
       <div id="radioImageTools" class="radio-image-tools" hidden><p id="radioImageHint">Velc attēlu priekšskatījumā.</p><div><label for="radioImageZoom">Attēla izmērs</label><input id="radioImageZoom" type="range" min="60" max="200" step="1" value="100"><output id="radioImageZoomValue" for="radioImageZoom">100%</output><button type="button" id="radioImageReset">Atiestatīt</button></div></div>
       <fieldset class="radio-viz-choices"><legend>Vizualizācija</legend><div class="radio-viz-families"><button type="button" data-viz-family="new">Jaunais skats</button><button type="button" data-viz-family="classic">Classic</button><button type="button" data-viz-family="pioneer">Pioneer</button></div><p class="radio-viz-family-note"></p><div data-pioneer-gallery hidden></div><div class="radio-viz-grid">${[...VIZ_MODES.filter(m=>m.idx!==MK_NO_VIZ),getVizMode(MK_NO_VIZ)].map(m=>`<button type="button" data-viz-choice="${m.idx}" aria-pressed="false">${vizPreview(m.idx)}<span>${m.label}</span></button>`).join('')}</div></fieldset>
@@ -3566,7 +3571,8 @@ function focusRadio(){
       document.getElementById('radioLookNote').textContent='Pārņemts '+document.querySelector('#radioUseCard .radio-card-owner').textContent+' izskats. Krāsas turpina mainīties pēc albuma.';
     };
     box.querySelectorAll('[data-viz-frame-choice]').forEach(b=>b.onclick=()=>{appearance.vizFrame=b.dataset.vizFrameChoice==='on'?'on':'off';paintAppearance();});
-    box.querySelectorAll('[data-radio-layout-choice]').forEach(b=>b.onclick=()=>{appearance.layout=['classic','clean','pioneer','pixel'].includes(b.dataset.radioLayoutChoice)?b.dataset.radioLayoutChoice:'classic';if(appearance.layout==='pixel'){lookVizFamily='new';setVizStyle(31);localStorage.setItem('rg_pixel_wave_v1','1');applyAccentMode('album');}paintAppearance();if(appearance.layout==='pioneer'){lastAlbumAccentKey='';updateAlbumAccent();}});
+    box.querySelectorAll('[data-amp-vis]').forEach(b=>b.onclick=()=>{appearance.ampVis=['classic','mirror','wave'].includes(b.dataset.ampVis)?b.dataset.ampVis:'webamp';paintAppearance();});
+    box.querySelectorAll('[data-radio-layout-choice]').forEach(b=>b.onclick=()=>{appearance.layout=['classic','clean','pioneer','pixel','amp'].includes(b.dataset.radioLayoutChoice)?b.dataset.radioLayoutChoice:'classic';if(appearance.layout==='pixel'){lookVizFamily='new';setVizStyle(31);localStorage.setItem('rg_pixel_wave_v1','1');applyAccentMode('album');}paintAppearance();if(appearance.layout==='pioneer'||appearance.layout==='amp'){lastAlbumAccentKey='';updateAlbumAccent();}});
     box.querySelectorAll('[data-viz-family]').forEach(b=>b.onclick=()=>{lookVizFamily=b.dataset.vizFamily;if(lookVizFamily!=='pioneer')switchVizFamily(lookVizFamily);paintAppearance();});
     box.querySelectorAll('[data-viz-choice]').forEach(b=>b.onclick=()=>{lookVizFamily=null;setVizStyle(Number(b.dataset.vizChoice));paintAppearance();});
     document.getElementById('radioEffectsOff').onclick=()=>{
@@ -3641,8 +3647,8 @@ function focusRadio(){
     if (window.__mkUnifiedMedia?.getSession?.()) return;
     const rand = list => list[Math.floor(Math.random() * list.length)];
     const now = lookSnapshot();
-    // All four layouts rotate. Pixel keeps its default wave and album colors.
-    const layout = rand(['classic', 'clean', 'pioneer', 'pixel'].filter(l => l !== now.layout));
+    // All five layouts rotate. Pixel keeps its default wave and album colors.
+    const layout = rand(['classic', 'clean', 'pioneer', 'pixel', 'amp'].filter(l => l !== now.layout));
     const choices=THEMES.filter(t=>!!t.pixel===(layout==='pixel'));
     const theme=rand(choices.filter(t=>t.name!==now.theme))||choices[0]||THEMES[0];
     const viz=layout==='pixel'?31:nextGuestSpectrum(now.viz);

@@ -43,13 +43,14 @@ export function cleanRadio(data={}){
  const id=value=>typeof value==='string'&&value.length<=240&&value.length>0;
  const out={favorites:[...new Set((Array.isArray(data.favorites)?data.favorites:[]).filter(id))].slice(0,250),lastStation:id(data.lastStation)?data.lastStation:'',settings:{}};
  const s=data.settings||{};
- if(['classic','clean','pioneer','pixel'].includes(s.layout))out.settings.layout=s.layout;
+ if(['classic','clean','pioneer','pixel','amp'].includes(s.layout))out.settings.layout=s.layout;
  if(typeof s.pioneerPixels==='boolean')out.settings.pioneerPixels=s.pioneerPixels;
+ if(['webamp','classic','mirror','wave'].includes(s.ampVis))out.settings.ampVis=s.ampVis;
  if(/^#[\da-f]{6}$/i.test(s.metalColor||''))out.settings.metalColor=s.metalColor;
  for(const key of ['metalLight','metalShine'])if(Number.isFinite(s[key]))out.settings[key]=Math.max(0,Math.min(100,s[key]));
  if(s.vizPositions&&typeof s.vizPositions==='object'&&!Array.isArray(s.vizPositions)){
   out.settings.vizPositions={};
-  for(const layout of ['classic','clean','pioneer','pixel']){
+  for(const layout of ['classic','clean','pioneer','pixel','amp']){
    const point=s.vizPositions[layout];
    if(point&&!Array.isArray(point)&&Number.isFinite(point.x)&&Number.isFinite(point.y))out.settings.vizPositions[layout]={x:Math.max(-1,Math.min(1,point.x)),y:Math.max(-1,Math.min(1,point.y))};
   }
