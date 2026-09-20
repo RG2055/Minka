@@ -5,8 +5,12 @@ const require = createRequire(import.meta.url);
 const appearance = require('../js/header-appearance.js');
 
 test('background preferences are limited to Latvia and survive a daily skin shuffle', () => {
-  assert.equal(appearance.normalize({ background: 'alps' }).background, 'coast');
+  assert.equal(appearance.normalize({ background: 'alps' }).background, 'mix', 'the collection is the default');
   assert.equal(appearance.normalize({ background: 'riga' }).background, 'riga');
+  assert.equal(appearance.normalize({ background: 'coast' }).background, 'mix', 'a version-1 coast was never chosen');
+  assert.equal(appearance.normalize({ version: 2, background: 'coast' }).background, 'coast', 'a chosen coast stays');
+  assert.equal(appearance.normalize({ background: 'mix' }).background, 'mix');
+  assert.equal(appearance.normalize({}).version, 2);
   assert.equal(appearance.shuffle({ background: 'riga' }).background, 'riga');
 });
 

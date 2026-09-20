@@ -5,11 +5,16 @@
   const skins = ['panorama', 'hybrid'];
   const seeds = { olive: '#d9ce7f', mint: '#a5d4ba', peach: '#f1c59e', rose: '#efb4cb', lilac: '#d5b7e8', blue: '#afccec' };
   const palettes = ['scene', ...Object.keys(seeds), 'radio'];
+  const backgrounds = ['coast', 'riga', 'mix'];
+  // The collection is the default everywhere. Version 1 wrote 'coast' for
+  // anyone who never chose, so a v1 'coast' is treated as unchosen; a coast
+  // picked on purpose from now on is saved as version 2 and stays.
   function normalize(value) {
     const s = value && typeof value === 'object' ? value : {};
-    return { version: 1, skin: s.skin === 'material' ? 'hybrid' : skins.includes(s.skin) ? s.skin : 'panorama',
+    const legacyCoast = s.version !== 2 && s.background === 'coast';
+    return { version: 2, skin: s.skin === 'material' ? 'hybrid' : skins.includes(s.skin) ? s.skin : 'panorama',
       palette: palettes.includes(s.palette) ? s.palette : 'scene', daily: s.daily === true,
-      motion: s.motion !== false, background: ['riga', 'mix'].includes(s.background) ? s.background : 'coast', day: /^\d{4}-\d{2}-\d{2}$/.test(s.day || '') ? s.day : '' };
+      motion: s.motion !== false, background: backgrounds.includes(s.background) && !legacyCoast ? s.background : 'mix', day: /^\d{4}-\d{2}-\d{2}$/.test(s.day || '') ? s.day : '' };
   }
   function dayKey(now = new Date()) {
     return [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');

@@ -5,8 +5,8 @@ import vm from 'node:vm';
 const source = fs.readFileSync(new URL('../js/calendar.js', import.meta.url), 'utf8');
 const start = source.indexOf('(function initMinkaHeaderScenicBackground()');
 const end = source.indexOf('\n})();', start) + 6;
-function boot(background) {
-  const context = { window: {}, Date, Intl, localStorage: { getItem: () => JSON.stringify({ background }) },
+function boot(background, version = 2) {
+  const context = { window: {}, Date, Intl, localStorage: { getItem: () => JSON.stringify({ version, background }) },
     document: { readyState: 'loading', addEventListener() {}, getElementById: () => null } };
   vm.runInNewContext(source.slice(start, end), context);
   return context.window.MinkaHeaderScenic;
@@ -21,9 +21,11 @@ test('both Latvian scenes retain the original Europe/Riga time boundaries', () =
     assert.equal(api.getMillisecondsUntilNextPeriod(new Date('2026-09-19T17:30:00Z')), 90 * 60 * 1000);
   }
 });
-test('all eight local scenery files exist and invalid locations fall back to Latvia coast', () => {
+test('all eight local scenery files exist and unknown locations fall back to the collection', () => {
   const api = boot('alps');
-  assert.equal(api.getScene(), 'coast');
+  assert.equal(api.getScene(), 'mix', 'the collection is the default');
+  assert.equal(boot('coast', 1).getScene(), 'mix', 'a version-1 coast was never a choice');
+  assert.equal(boot('coast').getScene(), 'coast', 'a chosen coast stays');
   api.setScene('riga'); assert.equal(api.getScene(), 'riga');
   api.setScene('unknown'); assert.equal(api.getScene(), 'coast');
   // Riga is the real St Peter's tower panorama (2026-09-20); the coast is the generated scene (2026-09-19).

@@ -21,8 +21,13 @@ var hospitalDatabase = window.hospitalDatabase;
 
 (function initMinkaHeaderScenicBackground() {
   const SCENES = ['coast', 'riga', 'mix'];
-  let scene = 'coast';
-  try { const saved = JSON.parse(localStorage.getItem('mk_header_appearance_v1') || '{}').background; if (SCENES.includes(saved)) scene = saved; } catch (_) {}
+  // The collection is the default; the appearance panel's normalize() applies
+  // the same rule (a version-1 'coast' was never a choice, so it is ignored).
+  let scene = 'mix';
+  try {
+    const saved = JSON.parse(localStorage.getItem('mk_header_appearance_v1') || '{}');
+    if (SCENES.includes(saved.background) && !(saved.version !== 2 && saved.background === 'coast')) scene = saved.background;
+  } catch (_) {}
   const periods = ['morning', 'day', 'sunset', 'night'];
   // Riga is the real St Peter's tower panorama (re-encoded 2026-09-20); the
   // coast is the generated scene from the day before.
@@ -36,10 +41,10 @@ var hospitalDatabase = window.hospitalDatabase;
   const MIX_ROTATE_MS = 25 * 60 * 1000;
   const MIX_POOL = [
     { id: 'hummingbird', periods: ['morning', 'day'], position: '50% 50%' },
-    { id: 'daffodils-glass', periods: ['morning'], position: '50% 60%' },
+    { id: 'daffodils-glass', periods: ['morning', 'day'], position: '50% 60%' },
     { id: 'bellflowers', periods: ['morning', 'day'], position: '50% 50%' },
-    { id: 'blossom-orange', periods: ['sunset'], position: '50% 50%' },
-    { id: 'riga-aerial-dusk', periods: ['sunset'], position: '50% 55%' },
+    { id: 'blossom-orange', periods: ['day', 'sunset'], position: '50% 50%' },
+    { id: 'riga-aerial-dusk', periods: ['day', 'sunset'], position: '50% 55%' },
     { id: 'cat-ghost', periods: ['sunset'], position: '50% 50%' },
     { id: 'glass-wave', periods: ['sunset', 'night'], position: '50% 50%' },
     { id: 'moon-eclipse', periods: ['night'], position: '50% 50%' },
