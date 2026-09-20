@@ -46,7 +46,7 @@ var hospitalDatabase = window.hospitalDatabase;
     { id: 'blossom-orange', periods: ['day', 'sunset'], position: '50% 50%' },
     { id: 'riga-aerial-dusk', periods: ['day', 'sunset'], position: '50% 55%' },
     { id: 'cat-ghost', periods: ['sunset'], position: '50% 50%' },
-    { id: 'glass-wave', periods: ['sunset', 'night'], position: '50% 50%' },
+    { id: 'egle', periods: ['sunset', 'night'], position: '50% 50%' }   /* spruce twig with a cone, cropped from the owner's photo (2026-09-20) */,
     { id: 'moon-eclipse', periods: ['night'], position: '50% 50%' },
     { id: 'tree-dusk', periods: ['night'], position: '50% 50%' }
   ].map(item => ({ ...item, src: 'data/header-backgrounds/pool/' + item.id + '.webp' }));
