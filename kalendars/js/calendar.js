@@ -41,7 +41,7 @@ var hospitalDatabase = window.hospitalDatabase;
   const MIX_ROTATE_MS = 25 * 60 * 1000;
   const MIX_POOL = [
     { id: 'hummingbird', periods: ['morning', 'day'], position: '50% 50%' },
-    { id: 'daffodils-glass', periods: ['morning', 'day'], position: '50% 60%' },
+    { id: 'daffodils-glass', periods: ['morning', 'day'], position: '50% 0%' }   /* the blooms sit high; keep their tops in a short header */,
     { id: 'bellflowers', periods: ['morning', 'day'], position: '50% 50%' },
     { id: 'blossom-orange', periods: ['day', 'sunset'], position: '50% 50%' },
     { id: 'riga-aerial-dusk', periods: ['day', 'sunset'], position: '50% 55%' },
