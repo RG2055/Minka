@@ -9,7 +9,7 @@
     const s = value && typeof value === 'object' ? value : {};
     return { version: 1, skin: s.skin === 'material' ? 'hybrid' : skins.includes(s.skin) ? s.skin : 'panorama',
       palette: palettes.includes(s.palette) ? s.palette : 'scene', daily: s.daily === true,
-      motion: s.motion !== false, background: s.background === 'riga' ? 'riga' : 'coast', day: /^\d{4}-\d{2}-\d{2}$/.test(s.day || '') ? s.day : '' };
+      motion: s.motion !== false, background: ['riga', 'mix'].includes(s.background) ? s.background : 'coast', day: /^\d{4}-\d{2}-\d{2}$/.test(s.day || '') ? s.day : '' };
   }
   function dayKey(now = new Date()) {
     return [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
@@ -151,6 +151,10 @@
       if (!dialog) return;
       dialog.querySelectorAll('[data-skin]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.skin === state.skin)));
       dialog.querySelectorAll('[data-background]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.background === state.background)));
+      const rotate = dialog.querySelector('[data-rotate]'); if (rotate) rotate.hidden = state.background !== 'mix';
+      dialog.querySelector('#hsBackgroundHint').textContent = state.background === 'mix'
+        ? 'Nejauši no kolekcijas — gaišie attēli rītā un dienā, siltie vakarā, tumšie naktī; piekraste un Rīga arī piedalās. Mainās ik pēc 25 minūtēm un pēc Rīgas laika.'
+        : 'Rīts, diena, vakars un nakts mainās automātiski pēc Rīgas laika.';
       dialog.querySelectorAll('[data-palette]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.palette === state.palette)));
       dialog.querySelector('#hsDaily').checked = state.daily;
       dialog.querySelector('#hsMotion').checked = state.motion;
@@ -177,7 +181,7 @@
         '<div class="hs-skins" role="group" aria-label="Galvenes skins">' +
         [['panorama', 'Panorāma', 'Tavs pašreizējais skats'], ['hybrid', 'Panorāma + Material', 'Panorāmas fons, maigas pogas']].map(([key, title, detail]) =>
           '<button type="button" data-skin="' + key + '" aria-pressed="false"><span class="hs-preview hs-preview-' + key + '" aria-hidden="true"><i></i><i></i><i></i><b></b><em></em></span><span class="hs-choice-title">' + title + '</span><small>' + detail + '</small></button>').join('') + '</div>' +
-        '<h3>Latvijas panorāmas</h3><div class="hs-backgrounds" role="group" aria-label="Panorāma"><button type="button" data-background="coast" aria-pressed="false">Latvijas piekraste</button><button type="button" data-background="riga" aria-pressed="false">Rīga</button></div><p class="hs-hint">Rīts, diena, vakars un nakts mainās automātiski pēc Rīgas laika.</p>' +
+        '<h3>Panorāma</h3><div class="hs-backgrounds" role="group" aria-label="Panorāma"><button type="button" data-background="coast" aria-pressed="false">Latvijas piekraste</button><button type="button" data-background="riga" aria-pressed="false">Rīga</button><button type="button" data-background="mix" aria-pressed="false">Kolekcija</button><button type="button" data-rotate class="hs-rotate" hidden>Cits attēls</button></div><p id="hsBackgroundHint" class="hs-hint"></p>' +
         '<h3>Krāsas</h3><div class="hs-palettes" role="group" aria-label="Galvenes palete">' +
         [['scene', 'No panorāmas'], ['olive', 'Olīva'], ['mint', 'Piparmētra'], ['peach', 'Persiks'], ['rose', 'Roze'], ['lilac', 'Ceriņi'], ['blue', 'Zils'], ['radio', 'Sekot radio']].map(([key, label]) =>
           '<button type="button" data-palette="' + key + '" aria-pressed="false"><i aria-hidden="true" style="--swatch:' + (seeds[key] || '#ded3b5') + '"></i>' + label + '</button>').join('') + '</div>' +
@@ -192,6 +196,7 @@
         else if (b.dataset.skin) set({ skin: b.dataset.skin });
         else if (b.dataset.palette) set({ palette: b.dataset.palette });
         else if (b.dataset.background) set({ background: b.dataset.background });
+        else if (b.hasAttribute('data-rotate')) host.MinkaHeaderScenic?.rotate?.();
         else if (b.hasAttribute('data-shuffle')) { state = shuffle(state); persist(); }
         else if (b.hasAttribute('data-reset')) { state = normalize(); persist(); }
       });

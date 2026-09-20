@@ -20,14 +20,63 @@ window.hospitalDatabase = Array.isArray(window.hospitalDatabase) ? window.hospit
 var hospitalDatabase = window.hospitalDatabase;
 
 (function initMinkaHeaderScenicBackground() {
+  const SCENES = ['coast', 'riga', 'mix'];
   let scene = 'coast';
-  try { if (JSON.parse(localStorage.getItem('mk_header_appearance_v1') || '{}').background === 'riga') scene = 'riga'; } catch (_) {}
+  try { const saved = JSON.parse(localStorage.getItem('mk_header_appearance_v1') || '{}').background; if (SCENES.includes(saved)) scene = saved; } catch (_) {}
   const periods = ['morning', 'day', 'sunset', 'night'];
   // Riga is the real St Peter's tower panorama (re-encoded 2026-09-20); the
   // coast is the generated scene from the day before.
   const sceneSrc = (scene, period) => 'data/header-backgrounds/header-' + scene + '-' + period + '-' + (scene === 'riga' ? '20260920' : '20260919') + '.webp';
+  // The collection ("mix"): single photographs, each tagged with the parts of
+  // the day it suits — bright ones for the morning and day, warm and darker
+  // ones towards the evening, near-black ones at night. In mix mode the
+  // header draws one at random from the current period's set (the coast and
+  // Riga variants for that period are in the draw too), and rotates every
+  // MIX_ROTATE_MS, never repeating the picture just shown.
+  const MIX_ROTATE_MS = 25 * 60 * 1000;
+  const MIX_POOL = [
+    { id: 'hummingbird', periods: ['morning', 'day'], position: '50% 50%' },
+    { id: 'daffodils-glass', periods: ['morning'], position: '50% 60%' },
+    { id: 'bellflowers', periods: ['morning', 'day'], position: '50% 50%' },
+    { id: 'blossom-orange', periods: ['sunset'], position: '50% 50%' },
+    { id: 'riga-aerial-dusk', periods: ['sunset'], position: '50% 55%' },
+    { id: 'cat-ghost', periods: ['sunset'], position: '50% 50%' },
+    { id: 'glass-wave', periods: ['sunset', 'night'], position: '50% 50%' },
+    { id: 'moon-eclipse', periods: ['night'], position: '50% 50%' },
+    { id: 'tree-dusk', periods: ['night'], position: '50% 50%' }
+  ].map(item => ({ ...item, src: 'data/header-backgrounds/pool/' + item.id + '.webp' }));
+  const MIX_LAST_KEY = 'mk_header_mix_last_v1';
+  let mixCurrent = null;      // { src, position, period }
+  let mixUpcoming = null;     // the next draw, decided early so it can be preloaded
+  let mixTimer = 0;
+  function mixCandidates(period) {
+    return MIX_POOL.filter(item => item.periods.includes(period))
+      .concat(['coast', 'riga'].map(name => ({ id: name + '-' + period, src: sceneSrc(name, period), position: '50% 48%' })));
+  }
+  function mixDraw(period, avoidSrc) {
+    const all = mixCandidates(period);
+    const pool = all.filter(item => item.src !== avoidSrc);
+    const list = pool.length ? pool : all;
+    const pick = list[Math.floor(Math.random() * list.length)];
+    return { src: pick.src, position: pick.position, period };
+  }
+  function mixPick(period) {
+    if (mixCurrent && mixCurrent.period === period) return mixCurrent;
+    let last = '';
+    try { last = localStorage.getItem(MIX_LAST_KEY) || ''; } catch (_) {}
+    const next = (mixUpcoming && mixUpcoming.period === period && mixUpcoming.src !== last) ? mixUpcoming : mixDraw(period, mixCurrent ? mixCurrent.src : last);
+    mixUpcoming = null;
+    mixCurrent = next;
+    try { localStorage.setItem(MIX_LAST_KEY, next.src); } catch (_) {}
+    return next;
+  }
+  function mixRotate() {
+    if (scene !== 'mix') return;
+    mixCurrent = null;                              // force a fresh draw for the same period
+    applyPeriod(true);
+  }
   const assets = Object.fromEntries(periods.map((period, i) => [period, {
-    src: sceneSrc(scene, period),
+    src: sceneSrc(scene === 'mix' ? 'coast' : scene, period),
     position: '50% 48%', next: periods[(i + 1) % 4]
   }]));
   const boundaries = [
@@ -110,11 +159,22 @@ var hospitalDatabase = window.hospitalDatabase;
     switchTimer = setTimeout(() => {
       applyPeriod(true);
     }, getMillisecondsUntilNextPeriod());
+    clearTimeout(mixTimer);
+    if (scene === 'mix') mixTimer = setTimeout(mixRotate, MIX_ROTATE_MS);
   }
 
   function preloadNextPeriod(period) {
-    const next = assets[period]?.next;
-    const src = next && assets[next]?.src;
+    let src;
+    if (scene === 'mix') {
+      // Decide the next draw now so it is decoded before it is needed: the
+      // rotation stays in this period, the period switch does not.
+      const soon = getMillisecondsUntilNextPeriod() < MIX_ROTATE_MS ? assets[period]?.next : period;
+      if (!mixUpcoming || mixUpcoming.period !== soon) mixUpcoming = mixDraw(soon, mixCurrent ? mixCurrent.src : '');
+      src = mixUpcoming.src;
+    } else {
+      const next = assets[period]?.next;
+      src = next && assets[next]?.src;
+    }
     if (!src || preloaded.has(src)) return;
     preloaded.add(src);
     if (preloadTimer) {
@@ -142,7 +202,7 @@ var hospitalDatabase = window.hospitalDatabase;
       return;
     }
     const period = getHeaderPeriod();
-    const asset = assets[period];
+    const asset = scene === 'mix' ? mixPick(period) : assets[period];
     const layer = ensureLayer();
     const header = document.getElementById('minkaBarInner');
     const img = layer?.querySelector('.mk-header-scenic-img');
@@ -179,12 +239,16 @@ var hospitalDatabase = window.hospitalDatabase;
   window.MinkaHeaderScenic = {
     getScene: () => scene,
     setScene(value) {
-      const next = value === 'riga' ? 'riga' : 'coast';
+      const next = SCENES.includes(value) ? value : 'coast';
       if (scene === next) return;
       scene = next;
-      periods.forEach(period => { assets[period].src = sceneSrc(scene, period); });
+      mixCurrent = null; mixUpcoming = null;
+      periods.forEach(period => { assets[period].src = sceneSrc(scene === 'mix' ? 'coast' : scene, period); });
       applyPeriod(true);
     },
+    // The collection's next picture now (the panel's "Cits attēls" button).
+    rotate() { if (scene === 'mix') mixRotate(); },
+    getMixPool: () => MIX_POOL.map(item => ({ id: item.id, periods: item.periods.slice(), src: item.src })),
     getHeaderPeriod,
     getMillisecondsUntilNextPeriod,
     refresh: () => applyPeriod(true),
@@ -195,6 +259,7 @@ var hospitalDatabase = window.hospitalDatabase;
     },
     destroy() {
       clearTimeout(switchTimer);
+      clearTimeout(mixTimer);
       if (preloadTimer) {
         if (preloadIdle && 'cancelIdleCallback' in window) window.cancelIdleCallback(preloadTimer);
         else clearTimeout(preloadTimer);
