@@ -13964,7 +13964,22 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
         var today = document.getElementById('mkSearchToday');
         if (today && metaRow && today.parentElement !== metaRow) metaRow.insertBefore(today, status);
         if (metaRow && actionSlot.parentElement !== metaRow) metaRow.appendChild(actionSlot);
-        if (status && actionSlot.previousElementSibling !== status) metaRow.insertBefore(status, actionSlot);
+        /* 3. Weather + moon leave the date box for the centre column: they sit
+           on the top row beside the date, and the news/weather ticker drops
+           under them. One flex column (#mkCenterStack) holds both. */
+        var inner = document.getElementById('minkaBarInner');
+        var ticker = document.getElementById('mkTickerWrap');
+        var stack = document.getElementById('mkCenterStack');
+        if (inner && ticker && !stack) {
+          stack = document.createElement('div');
+          stack.id = 'mkCenterStack';
+          stack.className = 'mk-center-stack';
+          ticker.parentElement.insertBefore(stack, ticker);
+          stack.appendChild(ticker);
+        }
+        if (status && stack) {
+          if (status.parentElement !== stack) stack.insertBefore(status, stack.firstChild);
+        } else if (status && actionSlot.previousElementSibling !== status) metaRow.insertBefore(status, actionSlot);
         var railModes = document.getElementById('mkRailModes');
         if (lanes && railModes && lanes.parentElement !== railModes) railModes.appendChild(lanes);
         else if (lanes && !railModes && lanes.parentElement !== actionSlot) actionSlot.appendChild(lanes);
@@ -13975,6 +13990,13 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
         var mobileMeta = searchDate.querySelector('.mk-search-date-meta');
         var mobilePeople = document.getElementById('mkPeopleEvents');
         var mobileStatus = document.getElementById('mkStatusGroup');
+        var mobileStack = document.getElementById('mkCenterStack');
+        if (mobileStack) {
+          var mobileTicker = document.getElementById('mkTickerWrap');
+          if (mobileTicker && mobileTicker.parentElement === mobileStack) mobileStack.parentElement.insertBefore(mobileTicker, mobileStack);
+          if (mobileStatus && mobileStatus.parentElement === mobileStack && mobileMeta) mobileMeta.insertBefore(mobileStatus, mobileMeta.firstChild);
+          mobileStack.remove();
+        }
         var mobileBday = document.getElementById('mkBdayBadge');
         var mobileNameday = document.getElementById('mkNamedayBar');
         if (mobileBday && mobileMain && mobileBday.parentElement !== mobileMain) mobileMain.appendChild(mobileBday);
@@ -24267,6 +24289,6 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 <script src="../js/image-palette.js?v=20260919palette2"></script>
 <link rel="stylesheet" href="css/header-appearance.css?v=20260919local15">
 <script src="js/header-appearance.js?v=20260920today1"></script>
-<link rel="stylesheet" href="css/header-duty-summary.css?v=20260920duty8">
+<link rel="stylesheet" href="css/header-duty-summary.css?v=20260920duty10">
 </body>
 </html>

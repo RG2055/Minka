@@ -240,10 +240,10 @@
     min-width: 190px !important;
     max-width: 50% !important;
     height: auto !important;
-    min-height: 80px !important;
+    min-height: 0 !important;
     padding: 0 !important;
     grid-template-columns: max-content minmax(0, 1fr) !important;
-    grid-template-rows: 28px 17px 18px 36px !important;
+    grid-template-rows: 28px 17px 18px !important;
     align-content: start !important;
     column-gap: 8px !important;
     row-gap: 1px !important;
@@ -270,13 +270,45 @@
     line-height: 17px !important;
     color: #e3edf4 !important;
   }
+  /* Centre column: weather + moon on the top row beside the date, the
+     news/weather ticker on the row below (the script builds #mkCenterStack). */
+  :root:not(.mk-mobile-shell) #minkaBarWrap #mkCenterStack {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
   :root:not(.mk-mobile-shell) #minkaBarWrap #mkStatusGroup {
-    grid-column: 1 / -1 !important;
-    grid-row: 4 !important;
+    display: inline-flex !important;
     align-items: center !important;
     gap: 10px !important;
     height: 36px !important;
     min-height: 36px !important;
+    margin: -4px 0 0 !important;   /* icons centre on the date's 28px row */
+    padding: 0 !important;
+    transform: none !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarWrap #mkCenterStack .mk-ticker-wrap,
+  :root:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap #mkCenterStack .mk-ticker-wrap {
+    /* In a column the old flex-basis (260px) would become its height. */
+    flex: 0 0 36px !important;
+    align-self: stretch !important;
+    width: auto !important;
+    max-width: none !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    max-height: 36px !important;
+    margin: 0 !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarWrap #mkCenterStack .mk-ticker-scroll {
+    height: 36px !important;
+    max-height: 36px !important;
   }
   :root:not(.mk-mobile-shell) #minkaBarWrap #mkSearchToday {
     display: none !important;
