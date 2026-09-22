@@ -2021,3 +2021,131 @@ html.mk-low-spec:not(.mk-mobile-shell) #nsOverlay.open #nsPanel { transform: tra
   font: 400 10px/1.4 Inter, system-ui, sans-serif !important;
   font-style: normal !important;
 }
+
+/* Līniju leģenda galvenē: tās pašas līnijas kā kartītēs, ar vienu vārdu. */
+#nsOverlay #nsPanel .ns-rhythm-legend-m3 {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  margin: 0 56px 0 auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  color: #a9b8c5 !important;
+  font: 600 11px/1 Inter, system-ui, sans-serif !important;
+  white-space: nowrap !important;
+}
+#nsOverlay #nsPanel .ns-rhythm-legend-m3 span { display: inline-flex !important; align-items: center !important; gap: 6px !important; color: inherit !important; }
+#nsOverlay #nsPanel .ns-rhythm-legend-m3 i { display: block !important; width: 18px !important; height: 0 !important; border-top: 2px solid var(--ns-line) !important; border-radius: 1px !important; }
+#nsOverlay #nsPanel .ns-rhythm-legend-m3 .is-mel { --ns-line: #8cc4f2; }
+#nsOverlay #nsPanel .ns-rhythm-legend-m3 .is-cor { --ns-line: #ecd08a; }
+#nsOverlay #nsPanel .ns-rhythm-legend-m3 .is-cor i { border-top-style: dashed !important; }
+#nsOverlay #nsPanel .ns-rhythm-legend-m3 .is-wake { --ns-line: #93dcb6; }
+@media (max-width: 1100px) { #nsOverlay #nsPanel .ns-rhythm-legend-m3 { display: none !important; } }
+:root.mk-mobile-shell #nsOverlay #nsPanel .ns-rhythm-legend-m3 { display: none !important; }
+
+/* ── Laika rats (2026-09-23) ──
+   Kā telefona pulkstenis: ritini, un laiks vidējā "pill" ir izvēlētais.
+   Pieci redzami rindiņu augstumi, attālākie izbalē; atverot ratu, tas
+   izaug no lauka (M3 emphasized decelerate). */
+#nsPanel .ns-wheel {
+  position: absolute;
+  z-index: 120;
+  width: 136px;
+  height: 216px;
+  padding: 8px;
+  border: 1px solid rgba(190, 214, 230, .16);
+  border-radius: 24px;
+  background: #121b24;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, .55);
+  opacity: 0;
+  transform: translateX(-50%) translateY(-6px) scale(.94);
+  transform-origin: 50% 0;
+  transition: opacity 140ms cubic-bezier(.3, 0, .8, .15), transform 140ms cubic-bezier(.3, 0, .8, .15);
+}
+#nsPanel .ns-wheel.is-open {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+  transition: opacity 200ms cubic-bezier(.05, .7, .1, 1), transform 320ms cubic-bezier(.05, .7, .1, 1);
+}
+#nsPanel .ns-wheel-pill {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 50%;
+  height: 40px;
+  margin-top: -20px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #1c6f7d, #0f4a55);
+  box-shadow: inset 0 1px 0 rgba(196, 245, 252, .25), 0 4px 14px rgba(15, 74, 85, .45);
+  pointer-events: none;
+}
+#nsPanel .ns-wheel-list {
+  position: relative;
+  height: 200px;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  padding: 80px 0;
+  box-sizing: border-box;
+  outline: none;
+}
+#nsPanel .ns-wheel-list::-webkit-scrollbar { display: none; }
+#nsPanel .ns-wheel-item {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  scroll-snap-align: center;
+  color: #e6eef5;
+  font: 700 17px/1 "JetBrains Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 120ms ease, transform 160ms cubic-bezier(.34, 1.45, .64, 1);
+}
+#nsPanel .ns-wheel-item[data-d="0"] { color: #ffffff; font-weight: 800; transform: scale(1.08); }
+#nsPanel .ns-wheel-item[data-d="1"] { opacity: .62; }
+#nsPanel .ns-wheel-item[data-d="2"] { opacity: .32; }
+#nsPanel .ns-wheel-item[data-d="3"] { opacity: .14; }
+#nsPanel .ns-wheel-list:focus-visible + .ns-wheel-pill,
+#nsPanel .ns-wheel:has(.ns-wheel-list:focus-visible) .ns-wheel-pill { outline: 2px solid #7fdcea; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  #nsPanel .ns-wheel, #nsPanel .ns-wheel.is-open, #nsPanel .ns-wheel-item { transition: none; }
+}
+/* Sākuma un beigu laiks vienmēr vienā rindā — bloks nedrīkst sarauties un
+   pārlūzt (tā tas notika ~1100 px platā logā, lai gan vietas pietika). */
+#nsOverlay #nsPanel .ns-panel-controls { flex-wrap: nowrap !important; flex-shrink: 0 !important; }
+
+/* ── Ritma josla starp kartītēm un laika joslu (2026-09-23) ──
+   Līknes vairs nav kartītēs (tur tās pārklājās ar tekstu un pogām). Šeit tām
+   ir sava 52 px josla visas nakts garumā; leģenda augšā vidū, kur līknes
+   visu nakti ir zemu, tāpēc arī tā ne ar ko nepārklājas. */
+#nsOverlay #nsPanel .ns-rhythm-strip {
+  position: relative;
+  height: 52px;
+  margin: 10px 0 2px;
+}
+#nsOverlay #nsPanel .ns-rhythm-strip svg { display: block; width: 100%; height: 100%; overflow: visible; }
+#nsOverlay #nsPanel .ns-rhythm-strip-legend {
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  color: #a9b8c5;
+  font: 600 10.5px/1 Inter, system-ui, sans-serif;
+  white-space: nowrap;
+  pointer-events: none;
+}
+#nsOverlay #nsPanel .ns-rhythm-strip-legend span { display: inline-flex; align-items: center; gap: 6px; }
+#nsOverlay #nsPanel .ns-rhythm-strip-legend i { display: block; width: 16px; height: 0; border-top: 2px solid var(--ns-line); border-radius: 1px; }
+#nsOverlay #nsPanel .ns-rhythm-strip-legend .is-mel { --ns-line: #8cc4f2; }
+#nsOverlay #nsPanel .ns-rhythm-strip-legend .is-cor { --ns-line: #ecd08a; }
+#nsOverlay #nsPanel .ns-rhythm-strip-legend .is-cor i { border-top-style: dashed; }
+#nsOverlay #nsPanel .ns-rhythm-strip-legend .is-wake { --ns-line: #93dcb6; }
+#nsOverlay #nsPanel .ns-rhythm-strip + .ns-flow-bar { margin-top: 12px !important; }

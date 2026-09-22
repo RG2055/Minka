@@ -589,6 +589,97 @@
     });
   }
 
+  // ── Laika rats (dators) ──
+  // The start/end <select>s stay the source of truth (their onchange runs
+  // __ns.ss/__ns.se as before) and keep native keyboard use. A mouse press
+  // opens a scroll wheel instead of the OS list: the value in the centre pill
+  // is the one you get, like a phone clock. Phones keep their native wheel.
+  var _nsWheel=null;
+  function closeTimeWheel(commit){
+    var wh=_nsWheel; if(!wh) return;
+    _nsWheel=null;
+    document.removeEventListener('pointerdown',wh.onOutside,true);
+    document.removeEventListener('keydown',wh.onKey,true);
+    var value=wh.values[wh.center];
+    wh.el.classList.remove('is-open');
+    setTimeout(function(){ if(wh.el.parentNode) wh.el.parentNode.removeChild(wh.el); },160);
+    var sel=wh.select;
+    if(commit && sel && sel.isConnected && value!=null && String(sel.value)!==String(value)){
+      sel.value=value;
+      sel.dispatchEvent(new Event('change',{bubbles:true}));
+    }
+    // After a commit the header is re-rendered; focus the fresh select.
+    var label=wh.label;
+    requestAnimationFrame(function(){
+      var fresh=document.querySelector('#nsPanel select.nss[aria-label="'+label+'"]');
+      if(fresh) fresh.focus({preventScroll:true});
+    });
+  }
+  function openTimeWheel(select){
+    if(_nsWheel) closeTimeWheel(false);
+    var panelEl=document.getElementById('nsPanel'), shell=select.closest('.nss-shell');
+    if(!panelEl||!shell) return;
+    var opts=[].slice.call(select.options), ROW=40;
+    var el=document.createElement('div');
+    el.className='ns-wheel';
+    el.innerHTML='<div class="ns-wheel-pill" aria-hidden="true"></div>'
+      +'<div class="ns-wheel-list" role="listbox" tabindex="0" aria-label="'+escHtml(select.getAttribute('aria-label')||'Laiks')+'">'
+      +opts.map(function(o,i){ return '<div class="ns-wheel-item" role="option" data-i="'+i+'">'+escHtml(o.textContent)+'</div>'; }).join('')
+      +'</div>';
+    panelEl.appendChild(el);
+    var pr=panelEl.getBoundingClientRect(), sr=shell.getBoundingClientRect();
+    el.style.left=Math.round(sr.left-pr.left+sr.width/2)+'px';
+    el.style.top=Math.round(sr.bottom-pr.top+8)+'px';
+    var list=el.querySelector('.ns-wheel-list'), items=[].slice.call(list.children);
+    var wh={el:el,select:select,label:select.getAttribute('aria-label')||'',values:opts.map(function(o){return o.value;}),center:Math.max(0,select.selectedIndex),frame:0};
+    function paint(){
+      wh.frame=0;
+      var c=Math.max(0,Math.min(items.length-1,Math.round(list.scrollTop/ROW)));
+      if(c===wh.lastPaint) return;
+      wh.lastPaint=c; wh.center=c;
+      items.forEach(function(it,i){
+        var dist=Math.min(3,Math.abs(i-c));
+        it.setAttribute('data-d',dist);
+        it.setAttribute('aria-selected',i===c?'true':'false');
+      });
+    }
+    list.scrollTop=wh.center*ROW;
+    paint();
+    list.addEventListener('scroll',function(){ if(!wh.frame) wh.frame=requestAnimationFrame(paint); },{passive:true});
+    list.addEventListener('click',function(e){
+      var it=e.target.closest('.ns-wheel-item'); if(!it) return;
+      var i=Number(it.getAttribute('data-i'));
+      if(i===wh.center){ closeTimeWheel(true); return; }
+      list.scrollTo({top:i*ROW,behavior:'smooth'});
+    });
+    wh.onOutside=function(e){ if(!el.contains(e.target)) closeTimeWheel(true); };
+    wh.onKey=function(e){
+      if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); closeTimeWheel(false); }
+      else if(e.key==='Enter'||e.key===' '){ e.preventDefault(); closeTimeWheel(true); }
+      else if(e.key==='ArrowDown'||e.key==='ArrowUp'){ e.preventDefault(); list.scrollBy({top:e.key==='ArrowDown'?ROW:-ROW,behavior:'smooth'}); }
+    };
+    _nsWheel=wh;
+    setTimeout(function(){
+      if(_nsWheel!==wh) return;
+      document.addEventListener('pointerdown',wh.onOutside,true);
+      document.addEventListener('keydown',wh.onKey,true);
+    },0);
+    requestAnimationFrame(function(){ el.classList.add('is-open'); list.focus({preventScroll:true}); });
+  }
+  function wireTimeWheels(scope){
+    if(document.documentElement.classList.contains('mk-mobile-shell')) return;
+    (scope||document).querySelectorAll('.nss-shell select.nss').forEach(function(sel){
+      if(sel.__nsWheel) return;
+      sel.__nsWheel=true;
+      sel.addEventListener('mousedown',function(e){
+        if(e.button!==0) return;
+        e.preventDefault();
+        sel.focus({preventScroll:true});
+        openTimeWheel(sel);
+      });
+    });
+  }
+
   function wireBedCarePerch(scope){
     var perch=(scope||document).querySelector('.ns-bedcare-perch');
     if(!perch || perch.__bedCareWired) return;
@@ -2270,10 +2361,14 @@
       return '<g class="nsc-rhythm-lines">'
         // One clean stroke per curve (no wide glow under-stroke): calmer to
         // read and three paths less to paint per card.
-        +'<path d="'+mel.area+'" fill="url(#'+uid+'-melFill)" opacity="0.30"/>'
-        +'<path d="'+mel.line+'" fill="none" stroke="#8cc4f2" stroke-width="1.6" opacity="0.9" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'
-        +'<path d="'+cor.line+'" fill="none" stroke="#ecd08a" stroke-width="1.6" stroke-dasharray="4 4" opacity="0.9" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'
-        +'<path d="'+wake.line+'" fill="none" stroke="#93dcb6" stroke-width="1.6" opacity="0.85" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'
+        // Each curve gets its own soft wash underneath in its colour, so the
+        // three read as three bands rather than three crossing wires.
+        +'<path d="'+mel.area+'" fill="url(#'+uid+'-melFill)"/>'
+        +'<path d="'+wake.area+'" fill="url(#'+uid+'-wakeFill)"/>'
+        +'<path d="'+cor.area+'" fill="url(#'+uid+'-corFill)"/>'
+        +'<path d="'+mel.line+'" fill="none" stroke="#8cc4f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'
+        +'<path d="'+wake.line+'" fill="none" stroke="#93dcb6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'
+        +'<path d="'+cor.line+'" fill="none" stroke="#ecd08a" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'
         +'</g>';
     }
 
@@ -2407,13 +2502,55 @@
         +'</svg>';
     }
 
+    // Ritma josla: visas nakts trīs līknes vienā savā joslā starp kartītēm un
+    // laika joslu. Līknes ir nepārtrauktas pār visu nakti (tā tās arī darbojas),
+    // plānas vertikālas atzīmes rāda, kur mainās cilvēki, un nekas cits tajā
+    // joslā nestāv — tāpēc nekas nepārklājas. Leģenda ir turpat augšā.
+    function _rhythmStripHtml(slots){
+      if(!slots || slots.length<1) return '';
+      var start=slots[0].s, end=slots[slots.length-1].e, tot=Math.max(1,end-start);
+      var W=1000, TOP=8, H=44, steps=80;
+      function curve(kind){
+        var d='';
+        for(var i=0;i<=steps;i++){
+          var n=i/steps, x=(W*n).toFixed(1), y=(TOP+(1-_circadianValue(kind,n))*H).toFixed(1);
+          d+=(i?' L':'M')+x+' '+y;
+        }
+        return { line:d, area:d+' L '+W+' '+(TOP+H)+' L 0 '+(TOP+H)+' Z' };
+      }
+      function wash(id,col){
+        return '<linearGradient id="nsrs-'+id+'" x1="0" y1="0" x2="0" y2="1">'
+          +'<stop offset="0%" stop-color="'+col+'" stop-opacity="0.20"/><stop offset="100%" stop-color="'+col+'" stop-opacity="0"/></linearGradient>';
+      }
+      var mel=curve('mel'), cor=curve('cor'), wake=curve('wake');
+      var ticks=slots.slice(1).map(function(sl){
+        var x=((sl.s-start)/tot*W).toFixed(1);
+        return '<path d="M'+x+' 2 L'+x+' '+(TOP+H)+'" stroke="rgba(214,232,244,.14)" stroke-width="1" vector-effect="non-scaling-stroke"/>';
+      }).join('');
+      var line=function(p,col,dash){ return '<path d="'+p+'" fill="none" stroke="'+col+'" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"'+(dash?' stroke-dasharray="6 5"':'')+' vector-effect="non-scaling-stroke"/>'; };
+      return '<div class="ns-rhythm-strip" aria-hidden="true">'
+        +'<svg viewBox="0 0 '+W+' '+(TOP+H)+'" preserveAspectRatio="none">'
+        +'<defs>'+wash('mel','#6fb6f5')+wash('wake','#7fd9aa')+wash('cor','#ecd08a')+'</defs>'
+        +ticks
+        +'<path d="'+mel.area+'" fill="url(#nsrs-mel)"/><path d="'+wake.area+'" fill="url(#nsrs-wake)"/><path d="'+cor.area+'" fill="url(#nsrs-cor)"/>'
+        +line(mel.line,'#8cc4f2')+line(wake.line,'#93dcb6')+line(cor.line,'#ecd08a',true)
+        +'</svg>'
+        +'<div class="ns-rhythm-strip-legend"><span class="is-mel"><i></i>miegs</span><span class="is-cor"><i></i>enerģija</span><span class="is-wake"><i></i>možums</span></div>'
+        +'</div>';
+    }
+
     function _rhythmOverlaySvg(slot, axisStart, axisEnd, idx){
       var u='nsco'+idx;
-      return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 182" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">'
-        +'<defs><linearGradient id="'+u+'-melFill" x1="0%" y1="0%" x2="0%" y2="100%">'
-        +'<stop offset="0%" stop-color="#4fa3ff" stop-opacity="0.26"/>'
-        +'<stop offset="100%" stop-color="#4fa3ff" stop-opacity="0"/>'
-        +'</linearGradient></defs>'
+      // "none", not "slice": the curves sit in the bottom band, and slice
+      // cropped that band off on wide cards (the card is wider than 280:182).
+      // Strokes are non-scaling, so stretching keeps them 2 px thin.
+      function wash(id,col){
+        return '<linearGradient id="'+u+'-'+id+'" x1="0%" y1="0%" x2="0%" y2="100%">'
+          +'<stop offset="0%" stop-color="'+col+'" stop-opacity="0.22"/>'
+          +'<stop offset="100%" stop-color="'+col+'" stop-opacity="0"/></linearGradient>';
+      }
+      return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 182" width="100%" height="100%" preserveAspectRatio="none">'
+        +'<defs>'+wash('melFill','#6fb6f5')+wash('wakeFill','#7fd9aa')+wash('corFill','#ecd08a')+'</defs>'
         +_circadianCardPaths(slot,axisStart,axisEnd,u)
         +'</svg>';
     }
@@ -2436,7 +2573,6 @@
       return '<div class="nsc-card-wrap" data-i="'+i+'">'
         +'<div class="nsc-full-card nsc-theme-'+theme+(rt.active?' nsc-active':'')+(checklist?' nsc-has-checklist':'')+'" data-i="'+i+'" data-worker="'+escHtml(s.w.name||'')+'" style="--nsc-accent:'+c.accent+';--nsc-grad:'+gradCss+'">'
         +'<div class="nsc-deco" aria-hidden="true">'+_nightSvg(theme,i,s.w.name,c.accent,s,st.sl[0].s,st.sl[st.sl.length-1].e)+'</div>'
-        +'<div class="nsc-rhythm-overlay" aria-hidden="true">'+_rhythmOverlaySvg(s,st.sl[0].s,st.sl[st.sl.length-1].e,i)+'</div>'
         +(theme==='moon'?'<span class="nsc-moon-overlay" aria-hidden="true"><svg viewBox="0 0 64 64">'+_moonSVG(32,32,25,_moonPhase(window.__activeDateStr),'nsc-moon-'+i)+'</svg></span>':'')
         +'<div class="nsc-full-inner">'
         +'<div class="nsc-full-top">'
@@ -2452,7 +2588,6 @@
         +(rt.active?'<div class="nsc-full-progress"><span style="width:'+rt.pct.toFixed(1)+'%;background:'+c.accent+'"></span></div>':'')
         +'</div>'
         +(checklist?'<div class="nsc-card-checklist">'+checklist+'</div>':'')
-        +rhythmHelpHTML()
         +'</div>'
         +'</div>';
     }).join('');
@@ -2472,7 +2607,7 @@
       var _flowLabels='<div class="ns-flow-labels"><span>'+escHtml(st.sl[0].ss)+'</span>'
         +st.sl.map(function(s){ return '<span>'+escHtml(s.es)+'</span>'; }).join('')
         +'</div>';
-      flowBar='<div class="ns-flow-bar">'
+      flowBar=_rhythmStripHtml(st.sl)+'<div class="ns-flow-bar">'
         +_flowSegs
         +(live?'<div class="ns-flow-spent" style="width:'+live.pct.toFixed(3)+'%"></div>':'<div class="ns-flow-spent" style="width:0%"></div>')
         +(live?'<div class="ns-flow-live" style="left:'+live.pct.toFixed(3)+'%"><span class="ns-flow-worker"></span><span class="ns-flow-time"></span>'+NS_FLOW_GHOST+'<span class="ns-flow-pct"></span></div>':'')
@@ -2500,6 +2635,7 @@
       applyWorkerSkinsToNightCards(_crEl);
       wireRhythmHelp(_crEl);
       var _ob=panel.querySelector('.ns-flow-bar'); if(_ob) _ob.remove();
+      var _os=panel.querySelector('.ns-rhythm-strip'); if(_os) _os.remove();
       var _ol=panel.querySelector('.ns-flow-labels'); if(_ol) _ol.remove();
       if(flowBar) _crEl.insertAdjacentHTML('afterend', flowBar);
       var _me=panel.querySelector('.ns-flow-meta'); if(_me) _me.innerHTML=_metaHtml;
@@ -2512,6 +2648,7 @@
         _nsLastRoomHtml=_roomHtml;
         applyWorkerSkinsToNightCards(panel);
         wireBedCarePerch(panel);
+        wireTimeWheels(panel);
         wireChalkboard(panel);
         scheduleFitRoomBlocks(panel);
         nsRenderStats(st.sl);
@@ -2558,6 +2695,7 @@
     _nsLastRoomHtml=_roomHtml;
     applyWorkerSkinsToNightCards(panel);
     wireBedCarePerch(panel);
+    wireTimeWheels(panel);
     wireChalkboard(panel);
     wireRhythmHelp(panel);
 
@@ -3077,6 +3215,7 @@
   window.__ns={
     _render: render,
     warmImages: warmImages,
+    closeTimeWheel: function(){ closeTimeWheel(false); },
     _update: update,
     getPlan:getPublicPlan,
     openRaffle:openRaffle,
