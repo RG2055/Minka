@@ -1570,7 +1570,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="data/svinamas-dienas.js?v=20260922mood12"></script>
+<script src="data/svinamas-dienas.js?v=20260922mood14"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/known-carryovers.js?v=20260907smooth1"></script>
 <script src="js/card-face-model.js?v=20260912wa4"></script>
@@ -2990,10 +2990,10 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260922mood12"></script>
+<script src="js/calendar.js?v=20260922mood14"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
-<script src="js/header-weather.js?v=20260922mood12" defer></script>
+<script src="js/header-weather.js?v=20260922mood14" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260831autofit1"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
 <script src="js/light-model.js?v=20260908light1"></script>
@@ -3004,14 +3004,14 @@ function _mkToast(msg, type) {
 <script src="js/design_v1.js?v=20260824perfaudit2" defer></script>
 <script src="js/theme.js?v=20260920header-duty1" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
-<script src="js/emoji.js?v=20260922mood12" defer></script>
+<script src="js/emoji.js?v=20260922mood14" defer></script>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
 <script src="js/daybook-model.js?v=20260911b" defer></script>
-<script src="js/daybook.js?v=20260922mood12" defer></script>
-<script src="js/levels.js?v=20260922mood12" defer></script>
+<script src="js/daybook.js?v=20260922mood14" defer></script>
+<script src="js/levels.js?v=20260922mood14" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260922mood12';
+window.__minkaLocalBuild = '20260922mood14';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -18713,6 +18713,24 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       }
       freshBadge.textContent = fresh > 0 ? '+' + fresh : '';
       freshBadge.setAttribute('aria-label', fresh > 0 ? fresh + ' jauni šodien' : '');
+      // Abas zīmes ir pārvietotas procentos no savas platuma, tāpēc CSS atstarpe
+      // tās nesalika blakus — tās uzkāpa viena otrai virsū. Vieta tiek nomērīta
+      // pēc tā, kur burbulis tiešām uzzīmējās.
+      if (fresh > 0) placeFreshBadge(button, badge, freshBadge);
+    });
+  }
+  function placeFreshBadge(button, totalBadge, freshBadge) {
+    requestAnimationFrame(function () {
+      if (!button.isConnected || !freshBadge.isConnected) return;
+      var host = button.getBoundingClientRect();
+      var total = totalBadge.getBoundingClientRect();
+      var fresh = freshBadge.getBoundingClientRect();
+      if (!host.width || !total.width || !fresh.width) return;
+      freshBadge.style.position = 'absolute';
+      freshBadge.style.margin = '0';
+      freshBadge.style.transform = 'none';
+      freshBadge.style.top = Math.round(total.top - host.top) + 'px';
+      freshBadge.style.left = Math.round(total.left - host.left - fresh.width - 4) + 'px';
     });
   }
   function loadGlobalEntryCount(kind, force) {
@@ -20387,9 +20405,12 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   /* ── Sava noskaņa: emoji + pāris vārdi ─────────────────────────────────
      Glabājas kā parasta dienas ziņa ar marķieri, tāpat kā čata tēmas — tā
      tā ir visiem, bez jaunas API tabulas. Lentē šīs ziņas nerāda. */
-  var MOOD_NOTE_MAX = 80;
+  // Pāris vārdi, ne stāsts: tikpat īsi kā “Lieliski” vai “Ļoti slikti”, ko
+  // raksta piecas gatavās reakcijas.
+  var MOOD_NOTE_MAX = 24;
   var MOOD_NOTE_MIN = 2;
-  var MOOD_POST_GAP = 20000;          // viens ieraksts ik 20 s no šīs ierīces
+  var MOOD_NOTE_WORDS = 3;
+  var MOOD_POST_GAP = 5000;           // tikai pret dubultklikšķi, ne pret rakstīšanu
   var moodOwnCache = {};              // day -> { emoji, note, at }
   var moodOwnLoadedAt = {};
   var moodLastPostAt = 0;
@@ -20410,7 +20431,8 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   function cleanMoodNote(value) {
     var text = String(value || '').replace(/\s+/g, ' ').trim();
     text = text.replace(/https?:\/\/\S+/gi, '').trim();
-    text = text.replace(/(.)\1{3,}/g, '$1$1$1');
+    text = text.replace(/(.)\1{2,}/g, '$1$1');
+    text = text.split(' ').slice(0, MOOD_NOTE_WORDS).join(' ');
     return text.slice(0, MOOD_NOTE_MAX);
   }
   function ownMoodFor(day) {
@@ -20433,9 +20455,9 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   }
   async function postOwnMood(day, emoji, note) {
     var now = Date.now();
-    if (now - moodLastPostAt < MOOD_POST_GAP) return { ok: false, error: 'Pagaidi mirkli pirms nākamā ieraksta.' };
     var clean = cleanMoodNote(note);
-    if (clean.length < MOOD_NOTE_MIN) return { ok: false, error: 'Uzraksti vismaz pāris vārdus.' };
+    if (clean.length < MOOD_NOTE_MIN) return { ok: false, error: 'Uzraksti vismaz vārdu.' };
+    if (now - moodLastPostAt < MOOD_POST_GAP) return { ok: false, error: 'Mirkli pagaidi.' };
     moodLastPostAt = now;
     moodOwnCache[day] = { emoji: emoji, note: clean, at: now };
     paintCounts();
@@ -21158,8 +21180,8 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     moodNoteBox.setAttribute('aria-label', 'Pāris vārdi par maiņu');
     moodNoteBox.innerHTML = '<div class="rg-mood-note-sheet">'
       + '<div class="rg-mood-note-head"><span class="rg-mood-note-emoji" aria-hidden="true">' + emoji + '</span>'
-      + '<div><strong>Kā bija maiņa?</strong><small>Šis emoji un teksts paliks uz kartītes visu dienu</small></div></div>'
-      + '<textarea class="rg-mood-note-text" maxlength="' + MOOD_NOTE_MAX + '" rows="2" placeholder="Piem. mierīga nakts, tikai divi izsaukumi"></textarea>'
+      + '<div><strong>Kā bija maiņa?</strong><small>Pāris vārdi — paliek uz kartītes visu dienu</small></div></div>'
+      + '<input class="rg-mood-note-text" type="text" maxlength="' + MOOD_NOTE_MAX + '" placeholder="Piem. mierīga nakts" autocomplete="off">'
       + '<div class="rg-mood-note-foot"><span class="rg-mood-note-count">0/' + MOOD_NOTE_MAX + '</span>'
       + '<span class="rg-mood-note-error" role="status"></span>'
       + '<button type="button" class="rg-mood-note-cancel">Atcelt</button>'
@@ -21178,6 +21200,9 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       saveButton.disabled = clean.length < MOOD_NOTE_MIN;
     };
     field.addEventListener('input', sync);
+    field.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter' && !saveButton.disabled) { event.preventDefault(); saveButton.click(); }
+    });
     sync();
     if (anchor) {
       var rect = anchor.getBoundingClientRect();
@@ -25016,7 +25041,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
    css/mobile-v2.css + js/mobile-v2.js — vizuālais izkārtojums; ?mv2=0 to atslēdz. */
 (function(){
   if (!document.documentElement.classList.contains('mk-mobile-shell')) return;
-  var v = '20260922mood12';
+  var v = '20260922mood14';
   function css(href) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href + '?v=' + v; document.body.appendChild(l); }
   css('css/mobile-fixes.css');
   try { if (new URLSearchParams(location.search).get('mv2') === '0') return; } catch (_e) {}
@@ -25034,9 +25059,9 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 </style>
 <script src="../js/image-palette.js?v=20260919palette2"></script>
-<link rel="stylesheet" href="css/header-appearance.css?v=20260922mood12">
-<script src="js/header-appearance.js?v=20260922mood12"></script>
-<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922mood12">
+<link rel="stylesheet" href="css/header-appearance.css?v=20260922mood14">
+<script src="js/header-appearance.js?v=20260922mood14"></script>
+<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922mood14">
 <style>
 /* ── Noskaņas kartīte un saziņa: Material 3 Expressive ───────────────────
    Tie paši žetoni, ko lieto kafijas izvēlne: toņu virsmas rāmju vietā,
@@ -25459,12 +25484,11 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 .rg-mood-note-head small { display: block !important; margin-top: 3px !important; color: #a1a1aa !important; font: 400 12px/1.35 Inter, system-ui, sans-serif !important; }
 .rg-mood-note-text {
   width: 100% !important;
-  min-height: 62px !important;
-  padding: 12px 14px !important;
+  height: 46px !important;
+  padding: 0 16px !important;
   border: 0 !important;
-  border-radius: 16px !important;
+  border-radius: 999px !important;
   outline: none !important;
-  resize: none !important;
   background: #09090b !important;
   color: #fafafa !important;
   font: 400 14px/1.45 Inter, system-ui, sans-serif !important;
@@ -25807,14 +25831,10 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
    burbuļa izkārtojumam (tas pats režģa lauks un nobīde), tikai pabīdīta pa
    kreisi par burbuļa platumu, lai abi stāv blakus, nevis viens uz otra. */
 #grafiks-list .rg-feedback-card .rg-pulse-write--comment .rg-feedback-new-count {
-  grid-area: 1 / 1 !important;
-  position: static !important;
-  align-self: start !important;
-  justify-self: end !important;
-  z-index: 2 !important;
+  position: absolute !important;
+  z-index: 3 !important;
   min-width: clamp(20px, 9cqw, 25px) !important;
   height: clamp(20px, 9cqw, 25px) !important;
-  margin-right: calc(clamp(20px, 9cqw, 25px) + 3px) !important;
   padding: 0 clamp(3px, 1.4cqw, 5px) !important;
   display: grid !important;
   place-items: center !important;
@@ -25823,7 +25843,6 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
   color: #ffffff !important;
   font: 900 clamp(9px, 4.2cqw, 11.5px)/1 Inter, system-ui, sans-serif !important;
   font-variant-numeric: tabular-nums !important;
-  transform: translate(34%, -34%) !important;
   animation: rg-fresh-pop 420ms cubic-bezier(.2, 0, 0, 1) !important;
 }
 #grafiks-list .rg-feedback-card .rg-feedback-new-count:empty { display: none !important; }
