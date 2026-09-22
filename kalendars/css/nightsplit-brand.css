@@ -2143,3 +2143,6 @@ html.mk-low-spec:not(.mk-mobile-shell) #nsOverlay.open #nsPanel { transform: tra
 #nsOverlay #nsPanel .ns-rhythm-lane.is-cor { --ns-line: #ecd08a; }
 #nsOverlay #nsPanel .ns-rhythm-lane.is-cor .ns-rhythm-lane-label i { border-top-style: dashed; }
 #nsOverlay #nsPanel .ns-rhythm-lane.is-wake { --ns-line: #93dcb6; }
+/* Rindiņu nosaukumiem svītriņu paraugs nav vajadzīgs — krāsa jau pasaka. */
+#nsOverlay #nsPanel .ns-rhythm-lane-label i { display: none; }
+#nsOverlay #nsPanel .ns-rhythm-lane-label { padding: 2px 7px; }
