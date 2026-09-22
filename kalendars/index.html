@@ -1566,7 +1566,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="data/svinamas-dienas.js?v=20260922mood2"></script>
+<script src="data/svinamas-dienas.js?v=20260922mood4"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/known-carryovers.js?v=20260907smooth1"></script>
 <script src="js/card-face-model.js?v=20260912wa4"></script>
@@ -2986,10 +2986,10 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260922mood2"></script>
+<script src="js/calendar.js?v=20260922mood4"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
-<script src="js/header-weather.js?v=20260922mood2" defer></script>
+<script src="js/header-weather.js?v=20260922mood4" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260831autofit1"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
 <script src="js/light-model.js?v=20260908light1"></script>
@@ -3003,11 +3003,11 @@ function _mkToast(msg, type) {
 <script src="js/emoji.js?v=20260911daybook1-20260908recovery1" defer></script>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
 <script src="js/daybook-model.js?v=20260911b" defer></script>
-<script src="js/daybook.js?v=20260922mood2" defer></script>
-<script src="js/levels.js?v=20260922mood2" defer></script>
+<script src="js/daybook.js?v=20260922mood4" defer></script>
+<script src="js/levels.js?v=20260922mood4" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260922mood2';
+window.__minkaLocalBuild = '20260922mood4';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -18435,6 +18435,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   // newest entry on the server is. The API already reports lastActivity per
   // day, so "is there anything new" needs no new endpoint — only a local mark.
   var SEEN_KEY = 'minkaRgFeedbackSeenV1';
+  var SEEN_COUNT_KEY = 'minkaRgFeedbackSeenCountsV1';
   var newestEntryAt = { comment: 0, suggestion: 0 };
   var globalEntryCounts = { comment: null, suggestion: null };
   var globalEntryCountsLoadedAt = {};
@@ -18635,7 +18636,30 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     if (!all || typeof all !== 'object') all = {};
     all[kind] = Math.max(Number(all[kind]) || 0, Number(at) || Date.now());
     writeJson(SEEN_KEY, all);
+    // Remember how many entries each day held at this moment; the difference
+    // against the live count is exactly what arrived afterwards.
+    var seenCounts = readJson(SEEN_COUNT_KEY, {});
+    if (!seenCounts || typeof seenCounts !== 'object') seenCounts = {};
+    var current = readJson(ENTRY_COUNT_KEY, {});
+    Object.keys(current || {}).forEach(function (day) {
+      var dayCounts = seenCounts[day] || { comment: 0, suggestion: 0 };
+      dayCounts[kind] = Math.max(0, Number(current[day] && current[day][kind]) || 0);
+      seenCounts[day] = dayCounts;
+    });
+    writeJson(SEEN_COUNT_KEY, seenCounts);
     paintEntryCounts();
+  }
+  // How many entries landed on the live shift day since this device last read
+  // the feed. Only today is counted — an older day filling up is history, not
+  // news, and the card should not shout about it.
+  function newTodayCount(kind) {
+    var day = liveShiftDayKey();
+    var current = readJson(ENTRY_COUNT_KEY, {});
+    var seenCounts = readJson(SEEN_COUNT_KEY, {});
+    var now = Math.max(0, Number(current && current[day] && current[day][kind]) || 0);
+    var before = Math.max(0, Number(seenCounts && seenCounts[day] && seenCounts[day][kind]) || 0);
+    // Entries this device wrote itself are not news to it.
+    return Math.max(0, now - before);
   }
   function hasUnseen(kind) {
     return newestEntryAt[kind] > 0 && newestEntryAt[kind] > readSeenAt(kind);
@@ -18667,14 +18691,24 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
         ? cachedTotal
         : Math.max(0, Number(globalEntryCounts[kind]) || 0);
       var count = serverTotal + Math.max(0, Number(local[kind]) || 0);
-      var unseen = hasUnseen(kind);
+      var fresh = newTodayCount(kind);
       badge.textContent = count ? String(count) : '';
-      badge.classList.toggle('is-new', unseen && count > 0);
-      badge.setAttribute('aria-label', count
-        ? count + ' ieraksti visās dienās' + (unseen ? ', ir jauni kopš pēdējās reizes' : '')
-        : 'Nav ierakstu');
+      badge.classList.remove('is-new');
+      badge.setAttribute('aria-label', count ? count + ' ieraksti visās dienās' : 'Nav ierakstu');
       var button = badge.closest('.rg-pulse-write');
-      if (button) button.classList.toggle('has-new', unseen && count > 0);
+      if (!button) return;
+      button.classList.toggle('has-new', fresh > 0);
+      // "+2" beside the total: today's arrivals only, in its own colour. An
+      // older day filling up is history and gets no badge.
+      var freshBadge = button.querySelector('[data-rg-new-count]');
+      if (!freshBadge) {
+        freshBadge = document.createElement('small');
+        freshBadge.className = 'rg-feedback-new-count';
+        freshBadge.dataset.rgNewCount = kind;
+        button.appendChild(freshBadge);
+      }
+      freshBadge.textContent = fresh > 0 ? '+' + fresh : '';
+      freshBadge.setAttribute('aria-label', fresh > 0 ? fresh + ' jauni šodien' : '');
     });
   }
   function loadGlobalEntryCount(kind, force) {
@@ -24564,7 +24598,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
    css/mobile-v2.css + js/mobile-v2.js — vizuālais izkārtojums; ?mv2=0 to atslēdz. */
 (function(){
   if (!document.documentElement.classList.contains('mk-mobile-shell')) return;
-  var v = '20260922mood2';
+  var v = '20260922mood4';
   function css(href) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href + '?v=' + v; document.body.appendChild(l); }
   css('css/mobile-fixes.css');
   try { if (new URLSearchParams(location.search).get('mv2') === '0') return; } catch (_e) {}
@@ -24582,9 +24616,9 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 </style>
 <script src="../js/image-palette.js?v=20260919palette2"></script>
-<link rel="stylesheet" href="css/header-appearance.css?v=20260922mood2">
-<script src="js/header-appearance.js?v=20260922mood2"></script>
-<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922mood2">
+<link rel="stylesheet" href="css/header-appearance.css?v=20260922mood4">
+<script src="js/header-appearance.js?v=20260922mood4"></script>
+<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922mood4">
 <style>
 /* ── Noskaņas kartīte un saziņa: Material 3 Expressive ───────────────────
    Tie paši žetoni, ko lieto kafijas izvēlne: toņu virsmas rāmju vietā,
@@ -24890,12 +24924,45 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
   transition: background-color .18s var(--m3c-motion) !important;
 }
 #grafiks-list .rg-feedback-card .rg-pulse-write--comment.has-new {
-  background: rgba(245, 198, 122, .16) !important;
+  background: rgba(255, 143, 77, .14) !important;
 }
-#grafiks-list .rg-feedback-card .rg-feedback-action-count.is-new {
-  background: var(--m3c-tertiary) !important;
+/* Kopskaits ir klusais skaitlis — silts smilšu tonis, nevis zils plankums. */
+#grafiks-list .rg-feedback-card .rg-feedback-action-count {
   border-color: transparent !important;
-  color: var(--m3c-on-tertiary) !important;
+  background: #e8dccb !important;
+  color: #3a2b1d !important;
+}
+/* "+N" — tikai šodienas jaunumi, sava krāsa. Kartītē tā seko kopskaita
+   burbuļa izkārtojumam (tas pats režģa lauks un nobīde), tikai pabīdīta pa
+   kreisi par burbuļa platumu, lai abi stāv blakus, nevis viens uz otra. */
+#grafiks-list .rg-feedback-card .rg-pulse-write--comment .rg-feedback-new-count {
+  grid-area: 1 / 1 !important;
+  position: static !important;
+  align-self: start !important;
+  justify-self: end !important;
+  z-index: 2 !important;
+  min-width: clamp(20px, 9cqw, 25px) !important;
+  height: clamp(20px, 9cqw, 25px) !important;
+  margin-right: calc(clamp(20px, 9cqw, 25px) + 3px) !important;
+  padding: 0 clamp(3px, 1.4cqw, 5px) !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 999px !important;
+  background: #ff8f4d !important;
+  color: #2a1200 !important;
+  font: 900 clamp(9px, 4.2cqw, 11.5px)/1 Inter, system-ui, sans-serif !important;
+  font-variant-numeric: tabular-nums !important;
+  transform: translate(34%, -34%) !important;
+  animation: rg-fresh-pop 420ms cubic-bezier(.2, 0, 0, 1) !important;
+}
+#grafiks-list .rg-feedback-card .rg-feedback-new-count:empty { display: none !important; }
+@keyframes rg-fresh-pop {
+  0% { transform: scale(.4); opacity: 0; }
+  70% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #grafiks-list .rg-feedback-card .rg-feedback-new-count { animation: none !important; }
 }
 @media (prefers-reduced-motion: reduce) {
   #rgFeedbackModal :is(.rg-comms-tab, .rg-comms-nav-button, .rg-comms-topic),
