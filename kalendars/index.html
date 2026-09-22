@@ -1570,7 +1570,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="data/svinamas-dienas.js?v=20260922mood16"></script>
+<script src="data/svinamas-dienas.js?v=20260922mood17"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/known-carryovers.js?v=20260907smooth1"></script>
 <script src="js/card-face-model.js?v=20260912wa4"></script>
@@ -2990,10 +2990,10 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260922mood16"></script>
+<script src="js/calendar.js?v=20260922mood17"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
-<script src="js/header-weather.js?v=20260922mood16" defer></script>
+<script src="js/header-weather.js?v=20260922mood17" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260831autofit1"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
 <script src="js/light-model.js?v=20260908light1"></script>
@@ -3004,14 +3004,14 @@ function _mkToast(msg, type) {
 <script src="js/design_v1.js?v=20260824perfaudit2" defer></script>
 <script src="js/theme.js?v=20260920header-duty1" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
-<script src="js/emoji.js?v=20260922mood16" defer></script>
+<script src="js/emoji.js?v=20260922mood17" defer></script>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
 <script src="js/daybook-model.js?v=20260911b" defer></script>
-<script src="js/daybook.js?v=20260922mood16" defer></script>
-<script src="js/levels.js?v=20260922mood16" defer></script>
+<script src="js/daybook.js?v=20260922mood17" defer></script>
+<script src="js/levels.js?v=20260922mood17" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260922mood16';
+window.__minkaLocalBuild = '20260922mood17';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -25031,7 +25031,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
    css/mobile-v2.css + js/mobile-v2.js — vizuālais izkārtojums; ?mv2=0 to atslēdz. */
 (function(){
   if (!document.documentElement.classList.contains('mk-mobile-shell')) return;
-  var v = '20260922mood16';
+  var v = '20260922mood17';
   function css(href) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href + '?v=' + v; document.body.appendChild(l); }
   css('css/mobile-fixes.css');
   try { if (new URLSearchParams(location.search).get('mv2') === '0') return; } catch (_e) {}
@@ -25049,9 +25049,9 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 </style>
 <script src="../js/image-palette.js?v=20260919palette2"></script>
-<link rel="stylesheet" href="css/header-appearance.css?v=20260922mood16">
-<script src="js/header-appearance.js?v=20260922mood16"></script>
-<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922mood16">
+<link rel="stylesheet" href="css/header-appearance.css?v=20260922mood17">
+<script src="js/header-appearance.js?v=20260922mood17"></script>
+<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922mood17">
 <style>
 /* ── Noskaņas kartīte un saziņa: Material 3 Expressive ───────────────────
    Tie paši žetoni, ko lieto kafijas izvēlne: toņu virsmas rāmju vietā,
@@ -25785,24 +25785,6 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
   background: rgba(255,255,255,.08) !important;
   opacity: 1 !important;
   transform: none !important;
-}
-/* Mazs plusiņš pie apļa: bez tā punktētais aplis izskatās pēc vēl vienas
-   reakcijas, nevis pēc “pieliec savu”. */
-#grafiks-list .rg-feedback-card .rg-pulse-own { overflow: visible !important; }
-#grafiks-list .rg-feedback-card .rg-pulse-own > span:first-child { position: relative !important; }
-#grafiks-list .rg-feedback-card .rg-pulse-own > span:first-child::after {
-  content: '+' !important;
-  position: absolute !important;
-  right: -3px !important;
-  bottom: -3px !important;
-  width: .72em !important;
-  height: .72em !important;
-  display: grid !important;
-  place-items: center !important;
-  border-radius: 999px !important;
-  background: #f5f5f5 !important;
-  color: #101014 !important;
-  font: 800 .5em/1 Inter, system-ui, sans-serif !important;
 }
 /* Pārējām reakcijām nosaukums parādās, kad tā ir izvēlēta; šai — kad uz tās
    uzej, jo citādi neviens neuzzina, kas tā par pogu. */
