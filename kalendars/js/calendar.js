@@ -189,6 +189,7 @@ var hospitalDatabase = window.hospitalDatabase;
   const FOCAL_BAND = 0.12;     // half-width of the near-natural band (fraction of the picture)
   const FOCAL_FADE = 0.10;     // ramp from the band to the fully stretched sides
   const FOCAL_MAX_STRETCH = 1.15; // the band itself may stretch this much
+  const MAX_STRETCH = 2;       // overall stretch beyond this becomes a crop around the focal point
   const STRIPS = 120;
   let fitObserver = null;
   function syncFit() {
@@ -226,10 +227,21 @@ var hospitalDatabase = window.hospitalDatabase;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
-    const S = img.naturalWidth, Hs = img.naturalHeight;
-    const k = (width / S) / (height / Hs);          // uniform stretch `fill` would apply
-    const focal = parseFloat(img.style.objectPosition) ;
-    const fx = Number.isFinite(focal) ? focal / 100 : 0.5;
+    const S = img.naturalWidth;
+    const position = String(img.style.objectPosition || '').split(/\s+/).map(parseFloat);
+    const fx = Number.isFinite(position[0]) ? position[0] / 100 : 0.5;
+    const fy = Number.isFinite(position[1]) ? position[1] / 100 : 0.5;
+    // Uniform stretch `fill` would apply. A 3:1 scene in a 12.7:1 box would be
+    // 4.2x — past MAX_STRETCH the surplus is taken as a vertical crop around
+    // the focal point instead, so a landscape is never smeared beyond
+    // recognition; it still shows far more of its height than `cover` did.
+    let k = (width / S) / (height / img.naturalHeight);
+    let Hs = img.naturalHeight, sy = 0;
+    if (k > MAX_STRETCH) {
+      Hs = img.naturalHeight * MAX_STRETCH / k;
+      sy = Math.min(img.naturalHeight - Hs, Math.max(0, (img.naturalHeight - Hs) * fy));
+      k = MAX_STRETCH;
+    }
     // 0 inside the focal band, 1 on the sides, smoothstep between.
     const shape = u => {
       const d = Math.abs(u - fx);
@@ -255,7 +267,7 @@ var hospitalDatabase = window.hospitalDatabase;
       const dw = width * weights[i] / sum;
       // A hair of overlap so antialiased strip edges never show as seams.
       const over = i < STRIPS - 1 ? 0.75 : 0;
-      ctx.drawImage(img, i * sw, 0, sw * (dw + over) / dw, Hs, dx, 0, dw + over, height);
+      ctx.drawImage(img, i * sw, sy, sw * (dw + over) / dw, Hs, dx, 0, dw + over, height);
       dx += dw;
     }
   }
