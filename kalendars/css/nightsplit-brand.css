@@ -2146,3 +2146,247 @@ html.mk-low-spec:not(.mk-mobile-shell) #nsOverlay.open #nsPanel { transform: tra
 /* Rindiņu nosaukumiem svītriņu paraugs nav vajadzīgs — krāsa jau pasaka. */
 #nsOverlay #nsPanel .ns-rhythm-lane-label i { display: none; }
 #nsOverlay #nsPanel .ns-rhythm-lane-label { padding: 2px 7px; }
+
+/* ════════════════════════════════════════════════════════════════════════
+   PixelPlayer / Material 3 Expressive (2026-09-23)
+   Viena tonālā krāsu sistēma (tumšs M3 ar zilu sēklu), Google Sans, plakanas
+   tonālas virsmas bez stikla/mirdzuma/gradienta, lieli noapaļojumi, "pill"
+   čipi (izvēlētais — gaišs ar tumšu tekstu), viļņota progresa līnija.
+   Kartīšu ādas un istabu ilustrācijas paliek; mainās viss ap tām.
+   Paneļa fons paliek #060b12, jo istabu bildēs tas ir iecepts.
+   ════════════════════════════════════════════════════════════════════════ */
+#nsOverlay #nsPanel {
+  --pp-font: "Google Sans", "Google Sans Text", "Product Sans", Roboto, Inter, system-ui, sans-serif;
+  --pp-bg: #060b12;
+  --pp-c1: #10161d;          /* surface-container-low */
+  --pp-c2: #171e27;          /* surface-container */
+  --pp-c3: #202833;          /* surface-container-high */
+  --pp-c4: #2a3340;          /* surface-container-highest */
+  --pp-on: #e3e7ee;          /* on-surface */
+  --pp-on-var: #b8c1cd;      /* on-surface-variant */
+  --pp-outline: #3d4653;
+  --pp-primary: #a8c7fa;
+  --pp-on-primary: #0b2a57;
+  --pp-primary-c: #d6e3ff;   /* izvēlētais čips: gaišs */
+  --pp-on-primary-c: #0b1d36;
+  --pp-tertiary-c: #4a3a55;
+  --pp-on-tertiary-c: #f5d9ff;
+  /* Iepriekšējā M3 slāņa tokeni uz šīs paletes. */
+  --m3-surface-high: var(--pp-c3);
+  --m3-surface-highest: var(--pp-c4);
+  --m3-outline: transparent;
+  --m3-on-surface: var(--pp-on);
+  --m3-on-variant: var(--pp-on-var);
+  --m3-primary: var(--pp-primary);
+  --m3-primary-container: var(--pp-primary-c);
+  --m3-on-primary-container: var(--pp-on-primary-c);
+  border: 0 !important;
+  border-radius: 32px !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, .6) !important;
+  font-family: var(--pp-font) !important;
+}
+#nsOverlay #nsPanel,
+#nsOverlay #nsPanel * { font-family: var(--pp-font) !important; }
+#nsOverlay #nsPanel .ns-stat-emoji,
+#nsOverlay #nsPanel .ns-flow-worker-emoji,
+#nsOverlay #nsPanel .nsc-duration-emoji,
+#nsOverlay #nsPanel .ns-stat-name .ns-stat-emoji { font-family: "Fluent Emoji Gaps", "Fluent Emoji Color", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important; }
+
+/* Galvene */
+#nsOverlay #nsPanel .ns-panel-head { border-bottom: 0 !important; margin-bottom: 14px !important; }
+#nsOverlay #nsPanel .ns-panel-title {
+  gap: 12px !important;
+  color: var(--pp-on) !important;
+  font-size: 22px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+#nsOverlay #nsPanel .ns-brand-mark { border-radius: 14px !important; box-shadow: none !important; }
+#nsOverlay #nsPanel .ns-mode-glabel { color: var(--pp-on-var) !important; font-size: 12px !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important; }
+#nsOverlay #nsPanel .nss-shell,
+#nsOverlay #nsPanel .ns-mode-btn,
+#nsOverlay #nsPanel .ns-raffle-trigger,
+#nsOverlay #nsCloseBtn {
+  border: 0 !important;
+  background: var(--pp-c3) !important;
+  color: var(--pp-on) !important;
+  box-shadow: none !important;
+}
+#nsOverlay #nsPanel .nss-display { font-size: 16px !important; font-weight: 500 !important; font-variant-numeric: tabular-nums !important; letter-spacing: 0 !important; }
+#nsOverlay #nsPanel .ns-mode-btn { font-size: 13px !important; font-weight: 500 !important; letter-spacing: .01em !important; }
+#nsOverlay #nsPanel .ns-mode-btns .ns-mode-btn.is-on { background: var(--pp-primary-c) !important; color: var(--pp-on-primary-c) !important; }
+#nsOverlay #nsPanel .ns-raffle-trigger { background: var(--pp-tertiary-c) !important; color: var(--pp-on-tertiary-c) !important; font-size: 13px !important; font-weight: 500 !important; }
+#nsOverlay #nsPanel .ns-raffle-cat { color: var(--pp-on-tertiary-c) !important; }
+#nsOverlay #nsPanel .nss-shell:hover,
+#nsOverlay #nsPanel .ns-mode-btn:hover,
+#nsOverlay #nsCloseBtn:hover { background: var(--pp-c4) !important; }
+#nsOverlay #nsPanel .ns-panel-controls > span { color: var(--pp-on-var) !important; opacity: .5 !important; }
+
+/* Personu kartītes: āda paliek, rāmis/mirdzums prom, M3 tipogrāfija */
+#nsOverlay #nsPanel .nsc-full-card {
+  border: 0 !important;
+  border-radius: 28px !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+}
+#nsOverlay #nsPanel .nsc-full-card::before,
+#nsOverlay #nsPanel .nsc-full-card::after { box-shadow: none !important; border-color: transparent !important; }
+#nsOverlay #nsPanel .nsc-full-name {
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, .55) !important;
+}
+#nsOverlay #nsPanel .nsc-full-time {
+  font-weight: 500 !important;
+  font-variant-numeric: tabular-nums !important;
+  letter-spacing: 0 !important;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, .55) !important;
+}
+#nsOverlay #nsPanel .nsc-full-desc,
+#nsOverlay #nsPanel .nsc-full-desc span {
+  color: rgba(227, 231, 238, .82) !important;
+  font-weight: 500 !important;
+  letter-spacing: .01em !important;
+  text-transform: none !important;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, .6) !important;
+}
+#nsOverlay #nsPanel .nsc-full-meta {
+  border: 0 !important;
+  border-radius: 18px !important;
+  background: rgba(16, 22, 29, .82) !important;
+  box-shadow: none !important;
+}
+#nsOverlay #nsPanel .nsc-full-meta *:not(.nsc-duration-emoji) { text-shadow: none !important; }
+#nsOverlay #nsPanel .nsc-fat-label { color: var(--pp-on-var) !important; font-weight: 500 !important; letter-spacing: .02em !important; text-transform: none !important; }
+#nsOverlay #nsPanel .nsc-fat-value,
+#nsOverlay #nsPanel .nsc-full-dur { font-weight: 700 !important; font-variant-numeric: tabular-nums !important; letter-spacing: 0 !important; }
+#nsOverlay #nsPanel .nsc-card-checklist span {
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: rgba(16, 22, 29, .82) !important;
+  box-shadow: none !important;
+  color: var(--pp-on) !important;
+  font-weight: 500 !important;
+}
+
+/* Ritma rindiņas */
+#nsOverlay #nsPanel .ns-rhythm-lane { border-radius: 14px !important; background: var(--pp-c1) !important; }
+#nsOverlay #nsPanel .ns-rhythm-lane-label { background: rgba(16, 22, 29, .9) !important; font-weight: 500 !important; font-size: 11px !important; letter-spacing: 0 !important; }
+
+/* Laika josla: nākotne — personu krāsas tonāli; pagātne — viļņota primārā
+   līnija (M3 expressive wavy progress), statiska — nekāda animācija. */
+#nsOverlay #nsPanel .ns-flow-bar .ns-flow-fill { opacity: .55 !important; }
+#nsOverlay #nsPanel .ns-flow-bar .ns-flow-seg.is-active .ns-flow-fill { opacity: .8 !important; }
+#nsOverlay #nsPanel .ns-flow-spent {
+  top: -4px !important;
+  bottom: -4px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: var(--pp-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='16' viewBox='0 0 28 16'%3E%3Cpath d='M0 8 Q7 1.5 14 8 T28 8' fill='none' stroke='%23a8c7fa' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E") left center / 28px 16px repeat-x !important;
+}
+#nsOverlay #nsPanel .ns-flow-worker,
+#nsOverlay #nsPanel .ns-flow-time,
+#nsOverlay #nsPanel .ns-flow-pct {
+  border: 0 !important;
+  background: var(--pp-c3) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .4) !important;
+  color: var(--pp-on) !important;
+}
+#nsOverlay #nsPanel .ns-flow-time { font-weight: 500 !important; font-size: 13px !important; }
+#nsOverlay #nsPanel .ns-flow-pct { background: var(--pp-primary-c) !important; color: var(--pp-on-primary-c) !important; font-weight: 700 !important; }
+#nsOverlay #nsPanel .ns-flow-worker { font-weight: 700 !important; letter-spacing: .02em !important; text-transform: none !important; }
+#nsOverlay #nsPanel .ns-flow-labels { color: var(--pp-on-var) !important; font-size: 12px !important; font-variant-numeric: tabular-nums !important; letter-spacing: 0 !important; }
+
+/* Istabas: virsraksti kā tonāli čipi */
+#nsOverlay #nsPanel .ns-room-titlebar {
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: var(--pp-c3) !important;
+  box-shadow: none !important;
+  color: var(--pp-on) !important;
+  font-weight: 500 !important;
+  letter-spacing: .02em !important;
+  text-transform: none !important;
+}
+
+/* Vēsture: tonāla kartīte, rindas kā saraksta flīzes (PixelPlayer Library) */
+#nsOverlay #nsPanel .ns-stats-box {
+  border: 0 !important;
+  border-radius: 28px !important;
+  background: var(--pp-c1) !important;
+  box-shadow: none !important;
+  padding: 12px 12px 8px !important;
+}
+#nsOverlay #nsPanel .ns-stats-box::before { display: none !important; }
+#nsOverlay #nsPanel .ns-stats-title { color: var(--pp-on) !important; font-size: 16px !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important; }
+#nsOverlay #nsPanel .ns-stats-bed-title { color: var(--pp-on-var) !important; font-size: 10px !important; font-weight: 500 !important; letter-spacing: .02em !important; text-transform: none !important; }
+#nsOverlay #nsPanel .ns-stats-body { gap: 6px !important; }
+#nsOverlay #nsPanel .ns-stat-row {
+  border: 0 !important;
+  border-radius: 20px !important;
+  background: var(--pp-c2) !important;
+  padding: 0 10px !important;
+}
+#nsOverlay #nsPanel .ns-stat-part {
+  border: 0 !important;
+  border-radius: 16px !important;
+  background: var(--pp-primary-c) !important;
+  box-shadow: none !important;
+  color: var(--pp-on-primary-c) !important;
+}
+#nsOverlay #nsPanel .ns-stat-part * { color: var(--pp-on-primary-c) !important; text-shadow: none !important; }
+#nsOverlay #nsPanel .ns-stat-part::before,
+#nsOverlay #nsPanel .ns-stat-part::after { display: none !important; }
+#nsOverlay #nsPanel .ns-stat-name { color: var(--pp-on) !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important; }
+#nsOverlay #nsPanel .ns-stat-fav { color: var(--pp-on-var) !important; }
+#nsOverlay #nsPanel .ns-stat-fav b { color: var(--pp-primary) !important; font-weight: 700 !important; }
+#nsOverlay #nsPanel .ns-stbar-fill { border: 0 !important; border-radius: 4px 4px 2px 2px !important; background: rgba(168, 199, 250, .28) !important; box-shadow: none !important; }
+#nsOverlay #nsPanel .ns-stbar-fill.on { background: var(--pp-primary) !important; }
+#nsOverlay #nsPanel .ns-stbar-c { color: var(--pp-on-var) !important; }
+#nsOverlay #nsPanel .ns-stbar-n { color: rgba(184, 193, 205, .7) !important; }
+#nsOverlay #nsPanel .ns-bm-room { border: 0 !important; border-radius: 8px !important; background: var(--pp-c3) !important; box-shadow: none !important; }
+#nsOverlay #nsPanel .ns-bm-cell { border-radius: 4px !important; background: rgba(168, 199, 250, .1) !important; box-shadow: none !important; }
+#nsOverlay #nsPanel .ns-bm-cell.on { background: var(--pp-primary) !important; box-shadow: none !important; }
+#nsOverlay #nsPanel .ns-bm-cell.on .ns-bm-count { color: var(--pp-on-primary) !important; }
+#nsOverlay #nsPanel .ns-bm-empty { background: transparent !important; }
+#nsOverlay #nsPanel .ns-stats-foot { color: rgba(184, 193, 205, .7) !important; font-size: 11px !important; }
+
+/* Gultas veļa: tonāla kartīte */
+#nsOverlay #nsPanel .ns-bedcare-perch-copy {
+  border: 0 !important;
+  border-radius: 24px !important;
+  background: var(--pp-c2) !important;
+  box-shadow: none !important;
+}
+#nsOverlay #nsPanel .ns-bedcare-perch-copy::before { display: none !important; }
+#nsOverlay #nsPanel .ns-bedcare-perch-copy small { color: var(--pp-on-var) !important; font-weight: 500 !important; }
+#nsOverlay #nsPanel .ns-bedcare-perch-copy b { color: var(--pp-on) !important; font-weight: 500 !important; font-variant-numeric: tabular-nums !important; }
+#nsOverlay #nsPanel .ns-bedcare-age { color: var(--pp-on-var) !important; }
+#nsOverlay #nsPanel .ns-bedcare-action { color: var(--pp-primary) !important; font-weight: 500 !important; }
+#nsOverlay #nsPanel .ns-bedcare-popover { border: 0 !important; border-radius: 24px !important; background: var(--pp-c3) !important; box-shadow: 0 12px 32px rgba(0, 0, 0, .5) !important; }
+#nsOverlay #nsPanel .ns-bedcare-popover::before { display: none !important; }
+#nsOverlay #nsPanel .ns-flow-meta { color: var(--pp-on-var) !important; }
+
+/* Laika rats un paskaidrojumi tajā pašā paletē */
+#nsPanel .ns-wheel { border: 0 !important; background: var(--pp-c3, #202833) !important; }
+#nsPanel .ns-wheel-pill { background: var(--pp-primary-c, #d6e3ff) !important; box-shadow: none !important; }
+#nsPanel .ns-wheel-item[data-d="0"] { color: var(--pp-on-primary-c, #0b1d36) !important; }
+#nsPanel .ns-wheel-item { font-family: var(--pp-font) !important; font-weight: 500 !important; font-size: 18px !important; }
+/* M3 Expressive kustību tokeni (tie paši, ko lieto m3e): ātrā telpiskā
+   atspere pogām/čipiem, noklusētā telpiskā — lielākiem elementiem. */
+#nsOverlay #nsPanel {
+  --m3-spring: cubic-bezier(.42, 1.67, .21, .9);           /* expressive fast spatial, 350ms */
+  --m3-spring-default: cubic-bezier(.38, 1.21, .22, 1);    /* expressive default spatial, 500ms */
+  --m3-effects: cubic-bezier(.31, .94, .34, 1);            /* fast effects, 150ms */
+}
+#nsOverlay #nsPanel .nss-shell,
+#nsOverlay #nsPanel .ns-mode-btn,
+#nsOverlay #nsPanel .ns-raffle-trigger,
+#nsOverlay #nsCloseBtn {
+  transition: border-radius 350ms var(--m3-spring), background-color 150ms var(--m3-effects), color 150ms var(--m3-effects) !important;
+}
+/* Bez rāmja tumšas ādas (piem. zīmējums uz melna) saplūda ar paneli —
+   kartītei tonāla pamatvirsma zem ādas. */
+#nsOverlay #nsPanel .nsc-full-card { background-color: var(--pp-c2) !important; }
