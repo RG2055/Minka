@@ -1570,7 +1570,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="data/svinamas-dienas.js?v=20260922bmc8"></script>
+<script src="data/svinamas-dienas.js?v=20260922bmc9"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/known-carryovers.js?v=20260907smooth1"></script>
 <script src="js/card-face-model.js?v=20260912wa4"></script>
@@ -2990,10 +2990,10 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260922bmc8"></script>
+<script src="js/calendar.js?v=20260922bmc9"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
-<script src="js/header-weather.js?v=20260922bmc8" defer></script>
+<script src="js/header-weather.js?v=20260922bmc9" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260831autofit1"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
 <script src="js/light-model.js?v=20260908light1"></script>
@@ -3004,14 +3004,14 @@ function _mkToast(msg, type) {
 <script src="js/design_v1.js?v=20260824perfaudit2" defer></script>
 <script src="js/theme.js?v=20260920header-duty1" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
-<script src="js/emoji.js?v=20260922bmc8" defer></script>
+<script src="js/emoji.js?v=20260922bmc9" defer></script>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
 <script src="js/daybook-model.js?v=20260911b" defer></script>
-<script src="js/daybook.js?v=20260922bmc8" defer></script>
-<script src="js/levels.js?v=20260922bmc8" defer></script>
+<script src="js/daybook.js?v=20260922bmc9" defer></script>
+<script src="js/levels.js?v=20260922bmc9" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260922bmc8';
+window.__minkaLocalBuild = '20260922bmc9';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -18778,9 +18778,8 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   function bmcQrMarkup() {
     return '<a class="rg-bmc-qrblock" href="' + BMC_URL + '" target="_blank" rel="noopener" data-rg-bmc-qr="1"'
       + ' aria-label="Buy me a coffee — buymeacoffee.com/rgapp">'
-      + '<img class="rg-bmc-qrimg" src="assets/coffee/bmc-qr.svg?v=official1" width="84" height="84" alt="">'
-      + '<span class="rg-bmc-cupicon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#ffdd00" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round">'
-      + '<path d="M6.2 5.2h11.6l-.7 2.6H6.9z"/><path d="M7.1 8.2l1.2 12.3c.05.5.47.9.98.9h5.44c.51 0 .93-.4.98-.9l1.2-12.3"/><path d="M7.6 11.6h8.8"/></svg></span>'
+      + '<img class="rg-bmc-qrimg" src="assets/coffee/bmc-qr.svg?v=official1" width="72" height="72" alt="">'
+      + '<img class="rg-bmc-cupicon" src="assets/coffee/bmc-logo.svg?v=official1" width="26" height="26" alt="">'
       + '<span class="rg-bmc-copy"><strong>Buy me a coffee</strong><em>Paldies par atbalstu <span class="rg-bmc-heart">💚</span></em>'
       + '<small>Ja RG tev noder, vari uzsaukt man kafiju. Tā ir iespēja pateikt paldies par ieguldīto laiku un atbalstīt turpmākos uzlabojumus. RG lietošana ir bez maksas, un atbalsts ir pilnībā brīvprātīgs. Paldies! ☕</small></span></a>';
   }
@@ -20284,8 +20283,8 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
         + moodBlobMarkup()
         + '<span class="rg-pulse-taps" role="group" aria-label="Ātrās reakcijas">' + reactionButtons() + '</span>'
         + '<small class="rg-feedback-card-reaction-label" aria-live="polite">Izvēlies sajūtu</small></div>'
-        + bmcQrMarkup()
-        + '<div class="rg-feedback-card-actions"><button class="rg-pulse-write rg-pulse-write--comment" type="button" data-rg-write="comment" title="Atvērt komentārus"><b class="rg-comment-icon" aria-hidden="true"></b><span>Komentāri</span><small class="rg-feedback-action-count" data-rg-action-count="comment"></small></button></div>';
+        + '<div class="rg-feedback-card-actions"><button class="rg-pulse-write rg-pulse-write--comment" type="button" data-rg-write="comment" title="Atvērt komentārus"><b class="rg-comment-icon" aria-hidden="true"></b><span>Komentāri</span><small class="rg-feedback-action-count" data-rg-action-count="comment"></small></button></div>'
+        + bmcQrMarkup();
     }
     moodHost.appendChild(pulse);
     window.MinkaDaybook?.enhance(pulse);
@@ -20336,8 +20335,8 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     if (oldBmc) oldBmc.remove();
     var qrBlock = card.querySelector('[data-rg-bmc-qr]');
     var actions = card.querySelector('.rg-feedback-card-actions');
-    if (!qrBlock && actions) actions.insertAdjacentHTML('beforebegin', bmcQrMarkup());
-    else if (qrBlock && actions && qrBlock.nextElementSibling !== actions) actions.parentNode.insertBefore(qrBlock, actions);
+    if (!qrBlock && actions) actions.insertAdjacentHTML('afterend', bmcQrMarkup());
+    else if (qrBlock && actions && actions.nextElementSibling !== qrBlock) actions.parentNode.insertBefore(qrBlock, actions.nextSibling);
     var selected = reactions.find(function (item) { return item.key === counts._last; });
     var dominant = null;
     var dominantCount = 0;
@@ -25084,7 +25083,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
    css/mobile-v2.css + js/mobile-v2.js — vizuālais izkārtojums; ?mv2=0 to atslēdz. */
 (function(){
   if (!document.documentElement.classList.contains('mk-mobile-shell')) return;
-  var v = '20260922bmc8';
+  var v = '20260922bmc9';
   function css(href) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href + '?v=' + v; document.body.appendChild(l); }
   css('css/mobile-fixes.css');
   try { if (new URLSearchParams(location.search).get('mv2') === '0') return; } catch (_e) {}
@@ -25102,9 +25101,9 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 </style>
 <script src="../js/image-palette.js?v=20260919palette2"></script>
-<link rel="stylesheet" href="css/header-appearance.css?v=20260922bmc8">
-<script src="js/header-appearance.js?v=20260922bmc8"></script>
-<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922bmc8">
+<link rel="stylesheet" href="css/header-appearance.css?v=20260922bmc9">
+<script src="js/header-appearance.js?v=20260922bmc9"></script>
+<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922bmc9">
 <style>
 /* ── Noskaņas kartīte un saziņa: Material 3 Expressive ───────────────────
    Tie paši žetoni, ko lieto kafijas izvēlne: toņu virsmas rāmju vietā,
@@ -25554,47 +25553,59 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 .rg-mood-note-save:disabled { opacity: .38 !important; cursor: default !important; }
 /* Buy me a coffee: tikai QR kods kartītes apakšā — bez pogas un loga.
    QR vienmēr uz balta, jo skeneri gaida tumšus moduļus uz gaiša fona. */
+/* Viena rinda zem "Komentāri": QR · kaķis · krūzīte ar vārdiem. Kaķis
+   (daily-cat.js) stāv zem burbuļa astes — ~30 px pa kreisi no kartītes
+   centra, 96 px plats —, tāpēc vidējā kolonna ir tieši viņa vieta, un QR ar
+   vārdiem piekļaujas viņam no abām pusēm. */
 #grafiks-list .rg-feedback-card .rg-bmc-qrblock {
   align-self: stretch !important;
-  display: flex !important;
+  display: grid !important;
+  grid-template-columns: calc(50% - 80px) 100px minmax(0, 1fr) !important;
   align-items: center !important;
-  gap: 12px !important;
-  margin: 8px 0 10px !important;
-  padding: 8px 12px 8px 8px !important;
-  border-radius: 16px !important;
-  background: rgba(255, 255, 255, .05) !important;
+  container-type: inline-size !important;
+  margin: 6px 0 4px !important;
+  padding: 0 !important;
+  background: transparent !important;
   color: #f4f4f5 !important;
   text-decoration: none !important;
 }
+#grafiks-list .rg-feedback-card .rg-bmc-qrimg { grid-column: 1 !important; grid-row: 1 / span 2 !important; justify-self: end !important; }
+/* Krūzīte virs vārdiem, nevis blakus — tā abi teksti paliek katrs savā
+   vienā rindā arī šaurā kartītē; burti sarūk līdz ar bloka platumu. */
+#grafiks-list .rg-feedback-card .rg-bmc-cupicon { grid-column: 3 !important; grid-row: 1 !important; align-self: end !important; margin-bottom: 5px !important; }
+#grafiks-list .rg-feedback-card .rg-bmc-copy { grid-column: 3 !important; grid-row: 2 !important; align-self: start !important; min-width: 0 !important; }
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock strong,
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock em { white-space: nowrap !important; }
 #grafiks-list .rg-feedback-card .rg-bmc-qrblock img {
-  flex: 0 0 84px !important;
-  width: 84px !important;
-  height: 84px !important;
+  flex: 0 0 72px !important;
+  width: min(72px, 100%) !important;
+  height: auto !important;
+  aspect-ratio: 1 !important;
   display: block !important;
   border-radius: 10px !important;
   background: #ffffff !important;
 }
-#grafiks-list .rg-feedback-card .rg-bmc-cupicon {
-  flex: 0 0 30px !important;
-  width: 30px !important;
-  height: 30px !important;
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock img.rg-bmc-cupicon {
+  justify-self: start !important;
+  flex: 0 0 26px !important;
+  width: 26px !important;
+  height: 26px !important;
   display: block !important;
+  border-radius: 7px !important;
+  background: none !important;
 }
-#grafiks-list .rg-feedback-card .rg-bmc-cupicon svg { display: block !important; width: 100% !important; height: 100% !important; }
 #grafiks-list .rg-feedback-card .rg-bmc-copy { min-width: 0 !important; }
 #grafiks-list .rg-feedback-card .rg-bmc-qrblock strong {
   display: block !important;
   color: #ffffff !important;
-  font: 700 15px/1.2 Inter, system-ui, sans-serif !important;
-  white-space: nowrap !important;
+  font: 700 clamp(11px, 4.9cqi, 14px)/1.2 Inter, system-ui, sans-serif !important;
 }
 #grafiks-list .rg-feedback-card .rg-bmc-qrblock em {
   display: block !important;
   margin-top: 3px !important;
   color: #a1a1aa !important;
-  font: 400 12px/1.3 Inter, system-ui, sans-serif !important;
+  font: 400 clamp(9.5px, 3.75cqi, 12px)/1.3 Inter, system-ui, sans-serif !important;
   font-style: normal !important;
-  white-space: nowrap !important;
 }
 #grafiks-list .rg-feedback-card .rg-bmc-heart {
   font-family: 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif !important;
@@ -25604,6 +25615,9 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
    bloks kļūst par parastu pogu: krūzīte, virsraksts un paldies rindiņa. */
 :root.mk-mobile-shell #grafiks-list .rg-feedback-card .rg-bmc-qrimg { display: none !important; }
 :root.mk-mobile-shell #grafiks-list .rg-feedback-card .rg-bmc-qrblock {
+  display: flex !important;
+  align-items: center !important;
+  margin: 10px 0 4px !important;
   min-height: 60px !important;
   padding: 10px 16px !important;
   gap: 12px !important;
@@ -25613,6 +25627,8 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
   background: rgba(255, 221, 0, .06) !important;
 }
 :root.mk-mobile-shell #grafiks-list .rg-feedback-card .rg-bmc-qrblock small { display: none !important; }
+:root.mk-mobile-shell #grafiks-list .rg-feedback-card .rg-bmc-copy { padding-left: 0 !important; margin: 0 !important; }
+:root.mk-mobile-shell #grafiks-list .rg-feedback-card .rg-bmc-qrblock { gap: 12px !important; }
 /* Paskaidrojums parādās tikai uzejot (vai fokusā) — kā neliels panelis virs
    bloka, tāpēc tas nemaina kartītes augstumu un neko nepabīda. */
 #grafiks-list .rg-feedback-card .rg-bmc-qrblock { position: relative !important; z-index: 1 !important; }
