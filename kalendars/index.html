@@ -1566,7 +1566,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="data/svinamas-dienas.js?v=20260922mood4"></script>
+<script src="data/svinamas-dienas.js?v=20260922mood8"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/known-carryovers.js?v=20260907smooth1"></script>
 <script src="js/card-face-model.js?v=20260912wa4"></script>
@@ -2986,10 +2986,10 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260922mood4"></script>
+<script src="js/calendar.js?v=20260922mood8"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
-<script src="js/header-weather.js?v=20260922mood4" defer></script>
+<script src="js/header-weather.js?v=20260922mood8" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260831autofit1"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
 <script src="js/light-model.js?v=20260908light1"></script>
@@ -3003,11 +3003,11 @@ function _mkToast(msg, type) {
 <script src="js/emoji.js?v=20260911daybook1-20260908recovery1" defer></script>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
 <script src="js/daybook-model.js?v=20260911b" defer></script>
-<script src="js/daybook.js?v=20260922mood4" defer></script>
-<script src="js/levels.js?v=20260922mood4" defer></script>
+<script src="js/daybook.js?v=20260922mood8" defer></script>
+<script src="js/levels.js?v=20260922mood8" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260922mood4';
+window.__minkaLocalBuild = '20260922mood8';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -20435,7 +20435,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     + '<header class="rg-comms-head"><span class="rg-comms-logo" aria-hidden="true">💬</span>'
     + '<div class="rg-comms-heading"><h2 id="rgFeedbackTitle">Saziņa</h2><p>Komandas čats un tēmu sarunas</p></div>'
     + '<div class="rg-comms-tabs" role="tablist"><button class="rg-comms-tab is-active" type="button" data-rg-comms-mode="all">Visi</button><button class="rg-comms-tab" type="button" data-rg-comms-mode="topics">Tēmas</button></div>'
-    + '<button class="rg-comms-new-topic" id="rgCommsNewTopic" type="button">＋ Jauna tēma</button>'
+    + '<button class="rg-comms-new-topic" id="rgCommsNewTopic" type="button" title="Sākt jaunu tēmu">＋ Jauna tēma</button>'
     + '<button class="rg-feedback-close" type="button" data-rg-close="1" aria-label="Aizvērt">×</button></header>'
     + '<div class="rg-comms-body"><aside class="rg-comms-sidebar">'
     + '<input class="rg-comms-search" id="rgCommsSearch" type="search" placeholder="Meklēt sarunās…" autocomplete="off">'
@@ -20444,8 +20444,8 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     + '<p class="rg-comms-section-label">Tēmas</p><div class="rg-comms-topic-list" id="rgCommsTopics"></div></aside>'
     + '<main class="rg-comms-main"><div class="rg-comms-feed-head"><div><strong id="rgCommsFeedTitle">Visi komentāri</strong><small id="rgCommsFeedSubtitle">Visa komandas sarakste vienuviet</small></div></div>'
     + '<div class="rg-feedback-list rg-comms-feed" id="rgFeedbackList" aria-live="polite"></div><button class="rg-feedback-more" id="rgFeedbackMore" type="button" hidden>Rādīt vēl</button>'
-    + '<div class="rg-comms-composer"><div class="rg-comms-compose-context"><label class="rg-comms-author-wrap"><span>Autors</span><select class="rg-comms-author" id="rgCommsAuthor" aria-label="Izvēlies komentāra autoru"><option value="">Anonīmi</option></select></label><input class="rg-comms-topic-input" id="rgCommsTopicInput" maxlength="44" placeholder="Tēma" autocomplete="off"><span class="rg-comms-replying" id="rgCommsReplying"></span><button class="rg-comms-cancel-reply" id="rgCommsCancelReply" type="button" hidden aria-label="Atcelt atbildi">×</button></div>'
-    + '<div class="rg-comms-compose-row"><textarea id="rgFeedbackText" maxlength="560" placeholder="Raksti ziņu…"></textarea><button class="rg-comms-send" id="rgFeedbackSave" type="button" disabled aria-label="Nosūtīt">↑</button></div>'
+    + '<div class="rg-comms-composer"><div class="rg-comms-compose-context"><label class="rg-comms-author-wrap"><span>Autors</span><select class="rg-comms-author" id="rgCommsAuthor" aria-label="Izvēlies komentāra autoru"><option value="">Anonīmi</option></select></label><input class="rg-comms-topic-input" id="rgCommsTopicInput" maxlength="44" placeholder="Tēma (nav obligāta)" autocomplete="off" title="Tēma, zem kuras ziņa parādīsies"><span class="rg-comms-replying" id="rgCommsReplying"></span><button class="rg-comms-cancel-reply" id="rgCommsCancelReply" type="button" hidden aria-label="Atcelt atbildi">×</button></div>'
+    + '<div class="rg-comms-compose-row"><textarea id="rgFeedbackText" maxlength="560" placeholder="Raksti ziņu…"></textarea><button class="rg-comms-send" id="rgFeedbackSave" type="button" disabled aria-label="Nosūtīt ziņu" title="Nosūtīt ziņu">↑</button></div>'
     + '<div class="rg-comms-tools" aria-label="Ātrie emoji"><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="👍">👍</button><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="😂">😂</button><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="❤️">❤️</button><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="🔥">🔥</button><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="☕">☕</button><span class="rg-comms-status" id="rgCommsStatus"></span><span class="rg-comms-char-count" id="rgFeedbackChars">0 / 560</span></div></div>'
     + '</main></div><div id="rgFeedbackDays" hidden></div><span id="rgFeedbackTargetDay" hidden></span>'
     + '</section>';
@@ -20476,10 +20476,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   var daysLoading = false;
   var dayRequestId = 0;
   var messageRequestId = 0;
-  // The mark as it stood when the feed was opened. Entries newer than this are
-  // badged while they are being read; the mark itself only moves on close, so
-  // nothing loses its "new" flag under the reader's eyes.
-  var feedSeenAt = 0;
+
 
   function syncFeedbackModalState(open) {
     if (window.parent === window) return;
@@ -20496,7 +20493,6 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   function openModal(kind, trigger) {
     var isComment = kind === 'comment';
     lastWriteButton = trigger || null;
-    feedSeenAt = Math.max(readSeenAt('comment'), readSeenAt('suggestion'));
     modal.dataset.kind = isComment ? 'comment' : 'suggestion';
     modalDay = shiftDayKey();
     modal.querySelector('#rgFeedbackTitle').textContent = isComment ? 'Komentāri' : 'Idejas RG lietotnei';
@@ -20950,16 +20946,9 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     renderCommunityTopics();
     var today = shiftDayKey();
     commsAllCount.textContent = String(communityMessages.length);
-    var todayItems = communityMessages.filter(function (item) { return (item.date || item.shiftDay) === today; });
-    commsTodayCount.textContent = String(todayItems.length);
-    // "Šodien" carries the accent while it holds something this device has not
-    // read yet, so the new-entry signal is visible before the feed is scrolled.
-    var unseenToday = todayItems.some(function (item) {
-      return feedSeenAt > 0 && Math.max(0, Number(item.createdAt) || 0) > feedSeenAt;
-    });
-    commsTodayCount.classList.toggle('is-new', unseenToday);
-    var todayButton = modal.querySelector('[data-rg-comms-view="today"]');
-    if (todayButton) todayButton.classList.toggle('has-new', unseenToday);
+    commsTodayCount.textContent = String(communityMessages.filter(function (item) {
+      return (item.date || item.shiftDay) === today;
+    }).length);
     modal.querySelectorAll('[data-rg-comms-view]').forEach(function (button) {
       button.classList.toggle('is-active', communityView === button.dataset.rgCommsView);
     });
@@ -20984,7 +20973,9 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     if (!items.length) {
       var empty = document.createElement('p');
       empty.className = 'rg-comms-empty';
-      empty.textContent = loadingText || (query ? 'Nekas netika atrasts.' : 'Te vēl ir kluss. Uzraksti pirmo ziņu.');
+      empty.textContent = loadingText || (query
+        ? 'Nekas netika atrasts. Pamēģini citu vārdu vai notīri meklēšanu.'
+        : 'Te vēl ir kluss. Uzraksti pirmo ziņu laukā zemāk un spied Sūtīt.');
       messageList.appendChild(empty);
       return;
     }
@@ -20996,10 +20987,8 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       var own = !!item.pending || !!editToken || owned.indexOf(item.clientId) >= 0;
       var canMutate = !!item.pending || !!editToken;
       var authorName = item.author || 'Anonīms';
-      var createdAt = Math.max(0, Number(item.createdAt) || 0);
-      var isNew = !own && feedSeenAt > 0 && createdAt > feedSeenAt;
       var article = document.createElement('article');
-      article.className = 'rg-comms-message' + (own ? ' is-own' : '') + (isNew ? ' is-new' : '');
+      article.className = 'rg-comms-message' + (own ? ' is-own' : '');
       article.dataset.rgMessageKey = item.key;
       var avatar = document.createElement('span');
       avatar.className = 'rg-comms-avatar';
@@ -21018,12 +21007,6 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       chip.dataset.rgCommunityTopic = item.topic;
       chip.textContent = '# ' + item.topic;
       head.append(author, time, chip);
-      if (isNew) {
-        var freshChip = document.createElement('span');
-        freshChip.className = 'rg-comms-new-chip';
-        freshChip.textContent = 'Jauns';
-        head.appendChild(freshChip);
-      }
       var bubble = document.createElement('div');
       bubble.className = 'rg-comms-bubble';
       if (item.parent && byKey[item.parent]) {
@@ -21136,9 +21119,6 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   };
   openModal = function (kind, trigger) {
     lastWriteButton = trigger || null;
-    // Baseline for the "Jauns" badges: what this device had already read when
-    // the feed was opened. The mark itself only moves on close.
-    feedSeenAt = Math.max(readSeenAt('comment'), readSeenAt('suggestion'));
     modal.dataset.kind = 'comment';
     modalDay = shiftDayKey();
     modal.hidden = false;
@@ -24598,7 +24578,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
    css/mobile-v2.css + js/mobile-v2.js — vizuālais izkārtojums; ?mv2=0 to atslēdz. */
 (function(){
   if (!document.documentElement.classList.contains('mk-mobile-shell')) return;
-  var v = '20260922mood4';
+  var v = '20260922mood8';
   function css(href) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href + '?v=' + v; document.body.appendChild(l); }
   css('css/mobile-fixes.css');
   try { if (new URLSearchParams(location.search).get('mv2') === '0') return; } catch (_e) {}
@@ -24616,9 +24596,9 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 </style>
 <script src="../js/image-palette.js?v=20260919palette2"></script>
-<link rel="stylesheet" href="css/header-appearance.css?v=20260922mood4">
-<script src="js/header-appearance.js?v=20260922mood4"></script>
-<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922mood4">
+<link rel="stylesheet" href="css/header-appearance.css?v=20260922mood8">
+<script src="js/header-appearance.js?v=20260922mood8"></script>
+<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922mood8">
 <style>
 /* ── Noskaņas kartīte un saziņa: Material 3 Expressive ───────────────────
    Tie paši žetoni, ko lieto kafijas izvēlne: toņu virsmas rāmju vietā,
@@ -24648,257 +24628,389 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
   --m3c-motion: cubic-bezier(.2, 0, 0, 1);
 }
 
-/* ── Saziņas dialogs ── */
+/* ── Saziņa: Material 3 Expressive ──────────────────────────────────────
+   Expressive raksturs nāk no četrām lietām, ne no krāsas vien: lielas un
+   dažādas formas (28px dialogs, pilnas kapsulas vadībai), izteiksmīga
+   tipogrāfija (headline nevis mazi treknraksti), tonālas virsmas rāmju
+   vietā un atsperīga kustība. Krāsu saime ir silta un dzīva — neitrāli
+   tumšas virsmas ar persiku primary un zaļu "jauns" akcentu; ne zils,
+   ne violets. Skaidrība pirms daiļuma: katrai pogai ir vārds, mērķi ir
+   vismaz 44px, un stāvokļi ir redzami. */
 #rgFeedbackModal {
-  background: rgba(10, 6, 3, .72) !important;
+  /* Neitrāls cinka pelēkais ir 2026. gada tumšā režīma bāze (slāņots
+     tumšums, ne plakans melnais), un virsū iet tieši viena darbības krāsa —
+     smaragds. Oranžais ir rezervēts vienai nozīmei: kas ir jauns. */
+  --m3x-surface: #09090b;
+  --m3x-container: #131316;
+  --m3x-container-high: #1c1c20;
+  --m3x-container-highest: #27272a;
+  --m3x-on-surface: #fafafa;
+  --m3x-on-variant: #a1a1aa;
+  --m3x-outline: #52525b;
+  --m3x-outline-variant: #27272a;
+  --m3x-primary: #10b981;
+  --m3x-on-primary: #04241a;
+  --m3x-primary-container: #064e3b;
+  --m3x-on-primary-container: #a7f3d0;
+  --m3x-secondary-container: #27272a;
+  --m3x-on-secondary-container: #fafafa;
+  --m3x-fresh: #f97316;
+  --m3x-on-fresh: #1a0c00;
+  --m3x-spring: cubic-bezier(.2, 1.1, .35, 1);
+  --m3x-standard: cubic-bezier(.2, 0, 0, 1);
+  background: rgba(4, 4, 6, .76) !important;
 }
 #rgFeedbackModal .rg-feedback-dialog.rg-comms {
   border: 0 !important;
   border-radius: 28px !important;
-  background: var(--m3c-surface-container) !important;
-  box-shadow: 0 8px 12px 6px rgba(0,0,0,.30), 0 4px 4px rgba(0,0,0,.36) !important;
+  background: var(--m3x-container) !important;
+  box-shadow: 0 12px 20px 8px rgba(0,0,0,.34), 0 6px 6px rgba(0,0,0,.40) !important;
 }
+/* Viens fokusa apzīmējums uz elementu. Pogām — plāns kontūrs ap tām;
+   laukiem — viena iekšēja līnija, jo abi kopā dod dubultu gredzenu. */
+#rgFeedbackModal :is(button, select):focus-visible {
+  outline: 2px solid var(--m3x-primary) !important;
+  outline-offset: 2px !important;
+}
+#rgFeedbackModal :is(input, textarea):focus-visible {
+  outline: none !important;
+}
+
+/* Galva: headline izmērs un pilnas kapsulas vadība. */
 #rgFeedbackModal .rg-comms-head {
-  border-bottom: 1px solid var(--m3c-outline-variant) !important;
-  background: var(--m3c-surface-container-high) !important;
+  min-height: 84px !important;
+  padding: 16px 16px 16px 20px !important;
+  gap: 16px !important;
+  border-bottom: 0 !important;
+  background: var(--m3x-container-high) !important;
 }
 #rgFeedbackModal .rg-comms-logo {
+  width: 52px !important;
+  height: 52px !important;
+  flex-basis: 52px !important;
   border: 0 !important;
-  border-radius: 16px !important;
-  background: var(--m3c-secondary-container) !important;
-  color: var(--m3c-on-secondary-container) !important;
+  border-radius: 18px !important;
+  background: var(--m3x-primary-container) !important;
+  color: var(--m3x-on-primary-container) !important;
+  font-size: 24px !important;
   box-shadow: none !important;
 }
 #rgFeedbackModal .rg-comms-heading h2 {
-  color: var(--m3c-on-surface) !important;
-  font: 500 22px/1.27 Inter, system-ui, sans-serif !important;
+  color: var(--m3x-on-surface) !important;
+  font: 400 28px/1.14 Inter, system-ui, sans-serif !important;
   letter-spacing: 0 !important;
 }
 #rgFeedbackModal .rg-comms-heading p {
-  color: var(--m3c-on-surface-variant) !important;
-  font: 400 12px/1.33 Inter, system-ui, sans-serif !important;
+  margin-top: 4px !important;
+  color: var(--m3x-on-variant) !important;
+  font: 400 13px/1.3 Inter, system-ui, sans-serif !important;
 }
-/* Cilnes: M3 segmented button — viena kapsula ar dalījumu. */
+/* Cilnes: M3 segmented button — 48px augsts, aktīvajam ķeksis un fons. */
 #rgFeedbackModal .rg-comms-tabs {
   gap: 0 !important;
   padding: 0 !important;
-  border: 1px solid var(--m3c-outline) !important;
+  border: 1px solid var(--m3x-outline) !important;
   border-radius: 999px !important;
   background: transparent !important;
   overflow: hidden !important;
 }
 #rgFeedbackModal .rg-comms-tab {
-  height: 36px !important;
+  height: 48px !important;
+  min-width: 96px !important;
+  padding: 0 20px !important;
+  border: 0 !important;
+  border-left: 1px solid var(--m3x-outline) !important;
   border-radius: 0 !important;
-  border-left: 1px solid var(--m3c-outline) !important;
-  color: var(--m3c-on-surface) !important;
-  font: 500 13px/1 Inter, system-ui, sans-serif !important;
-  transition: background-color .18s var(--m3c-motion) !important;
+  color: var(--m3x-on-surface) !important;
+  font: 500 14px/1 Inter, system-ui, sans-serif !important;
+  transition: background-color .2s var(--m3x-standard) !important;
 }
 #rgFeedbackModal .rg-comms-tab:first-child { border-left: 0 !important; }
+#rgFeedbackModal .rg-comms-tab:hover { background: rgba(250,250,250,.06) !important; }
 #rgFeedbackModal .rg-comms-tab.is-active {
-  background: var(--m3c-secondary-container) !important;
-  color: var(--m3c-on-secondary-container) !important;
+  background: var(--m3x-secondary-container) !important;
+  color: var(--m3x-on-secondary-container) !important;
   box-shadow: none !important;
   font-weight: 600 !important;
 }
-/* Jauna tēma: M3 filled tonal button. */
-#rgFeedbackModal .rg-comms-new-topic {
-  height: 40px !important;
-  padding: 0 20px !important;
-  border: 0 !important;
-  border-radius: 999px !important;
-  background: var(--m3c-primary) !important;
-  color: var(--m3c-on-primary) !important;
-  font: 600 14px/1 Inter, system-ui, sans-serif !important;
+#rgFeedbackModal .rg-comms-tab.is-active::before {
+  content: '✓' !important;
+  margin-right: 8px !important;
+  font-size: 13px !important;
 }
+/* Jauna tēma: extended FAB — lielākais, gaišākais elements galvā. */
+#rgFeedbackModal .rg-comms-new-topic {
+  height: 56px !important;
+  padding: 0 24px !important;
+  border: 0 !important;
+  border-radius: 18px !important;
+  background: var(--m3x-primary) !important;
+  color: var(--m3x-on-primary) !important;
+  font: 600 15px/1 Inter, system-ui, sans-serif !important;
+  box-shadow: 0 2px 6px 2px rgba(0,0,0,.28) !important;
+  transition: transform .22s var(--m3x-spring), filter .2s var(--m3x-standard) !important;
+}
+#rgFeedbackModal .rg-comms-new-topic:hover { transform: scale(1.04) !important; filter: brightness(1.05) !important; }
+#rgFeedbackModal .rg-comms-new-topic:active { transform: scale(.98) !important; }
 #rgFeedbackModal .rg-comms .rg-feedback-close {
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
   border: 0 !important;
   border-radius: 999px !important;
   background: transparent !important;
-  color: var(--m3c-on-surface-variant) !important;
+  color: var(--m3x-on-variant) !important;
+  font-size: 22px !important;
+  transition: background-color .2s var(--m3x-standard) !important;
 }
-#rgFeedbackModal .rg-comms .rg-feedback-close:hover { background: rgba(255,183,124,.10) !important; }
+#rgFeedbackModal .rg-comms .rg-feedback-close:hover { background: rgba(250,250,250,.08) !important; }
+
+/* Sānjosla: navigation drawer — 56px kapsulas, lasāms teksts. */
+#rgFeedbackModal .rg-comms-body { grid-template-columns: 268px minmax(0, 1fr) !important; }
 #rgFeedbackModal .rg-comms-sidebar {
-  border-right: 1px solid var(--m3c-outline-variant) !important;
-  background: var(--m3c-surface) !important;
+  padding: 16px 12px !important;
+  border-right: 0 !important;
+  background: var(--m3x-surface) !important;
 }
 #rgFeedbackModal .rg-comms-search {
-  height: 44px !important;
+  height: 48px !important;
+  padding-left: 34px !important;
   border: 0 !important;
   border-radius: 999px !important;
-  background: var(--m3c-surface-container-high) !important;
-  color: var(--m3c-on-surface) !important;
-  font: 400 13px/1 Inter, system-ui, sans-serif !important;
+  background: var(--m3x-container-high) !important;
+  color: var(--m3x-on-surface) !important;
+  font: 400 14px/1 Inter, system-ui, sans-serif !important;
 }
-/* Navigācija: M3 navigation drawer items — pilnas kapsulas. */
+#rgFeedbackModal .rg-comms-search::placeholder { color: var(--m3x-on-variant) !important; opacity: .8 !important; }
+#rgFeedbackModal .rg-comms-nav { margin-top: 14px !important; gap: 6px !important; }
 #rgFeedbackModal :is(.rg-comms-nav-button, .rg-comms-topic) {
-  min-height: 44px !important;
+  min-height: 56px !important;
+  padding: 8px 16px !important;
+  grid-template-columns: 28px minmax(0, 1fr) auto !important;
+  gap: 12px !important;
   border-radius: 999px !important;
-  color: var(--m3c-on-surface-variant) !important;
-  font: 500 13px/1.2 Inter, system-ui, sans-serif !important;
-  transition: background-color .18s var(--m3c-motion) !important;
+  color: var(--m3x-on-variant) !important;
+  font: 500 14px/1.25 Inter, system-ui, sans-serif !important;
+  transition: background-color .2s var(--m3x-standard), color .2s var(--m3x-standard) !important;
 }
 #rgFeedbackModal :is(.rg-comms-nav-button, .rg-comms-topic):hover {
-  background: rgba(255,183,124,.08) !important;
-  color: var(--m3c-on-surface) !important;
+  background: rgba(250,250,250,.06) !important;
+  color: var(--m3x-on-surface) !important;
 }
 #rgFeedbackModal :is(.rg-comms-nav-button, .rg-comms-topic).is-active {
-  background: var(--m3c-secondary-container) !important;
-  color: var(--m3c-on-secondary-container) !important;
+  background: var(--m3x-secondary-container) !important;
+  color: var(--m3x-on-secondary-container) !important;
   box-shadow: none !important;
+  font-weight: 600 !important;
 }
 #rgFeedbackModal .rg-comms-nav-icon {
+  width: 28px !important;
+  height: 28px !important;
   border-radius: 999px !important;
   background: transparent !important;
   color: inherit !important;
+  font-size: 15px !important;
 }
+#rgFeedbackModal .rg-comms-topic-copy small { margin-top: 4px !important; font-size: 11px !important; color: var(--m3x-on-variant) !important; opacity: .75 !important; }
 #rgFeedbackModal .rg-comms-count {
-  height: 20px !important;
+  min-width: 26px !important;
+  height: 26px !important;
+  padding: 0 9px !important;
   border-radius: 999px !important;
-  background: var(--m3c-surface-container-highest) !important;
-  color: var(--m3c-on-surface-variant) !important;
-  font: 600 11px/1 Inter, system-ui, sans-serif !important;
-}
-/* Jaunumu signāls: M3 badge — tertiary tonis, nevis vēl viens pelēks. */
-#rgFeedbackModal .rg-comms-count.is-new {
-  background: var(--m3c-tertiary) !important;
-  color: var(--m3c-on-tertiary) !important;
-}
-#rgFeedbackModal .rg-comms-nav-button.has-new > span:nth-child(2)::after {
-  content: '' !important;
-  display: inline-block !important;
-  width: 6px !important;
-  height: 6px !important;
-  margin-left: 6px !important;
-  border-radius: 999px !important;
-  background: var(--m3c-tertiary) !important;
-  vertical-align: middle !important;
+  background: var(--m3x-container-highest) !important;
+  color: var(--m3x-on-variant) !important;
+  font: 600 13px/1 Inter, system-ui, sans-serif !important;
 }
 #rgFeedbackModal .rg-comms-section-label {
-  color: var(--m3c-on-surface-variant) !important;
-  font: 500 11px/1 Inter, system-ui, sans-serif !important;
-  letter-spacing: .09em !important;
+  margin: 20px 12px 8px !important;
+  color: var(--m3x-on-variant) !important;
+  font: 600 12px/1 Inter, system-ui, sans-serif !important;
+  letter-spacing: .08em !important;
 }
-#rgFeedbackModal .rg-comms-main { background: var(--m3c-surface-container) !important; }
+
+/* Lente: lielāki burbuļi, skaidra autora rinda. */
+#rgFeedbackModal .rg-comms-main { background: var(--m3x-container) !important; }
 #rgFeedbackModal .rg-comms-feed-head {
-  border-bottom: 1px solid var(--m3c-outline-variant) !important;
+  min-height: 68px !important;
+  padding: 14px 22px !important;
+  border-bottom: 1px solid var(--m3x-outline-variant) !important;
 }
 #rgFeedbackModal .rg-comms-feed-head strong {
-  color: var(--m3c-on-surface) !important;
-  font: 500 16px/1.25 Inter, system-ui, sans-serif !important;
+  color: var(--m3x-on-surface) !important;
+  font: 400 22px/1.2 Inter, system-ui, sans-serif !important;
 }
 #rgFeedbackModal .rg-comms-feed-head small {
-  color: var(--m3c-on-surface-variant) !important;
-  font: 400 12px/1.2 Inter, system-ui, sans-serif !important;
+  margin-top: 5px !important;
+  color: var(--m3x-on-variant) !important;
+  font: 400 13px/1.25 Inter, system-ui, sans-serif !important;
 }
+#rgFeedbackModal .rg-feedback-list.rg-comms-feed { padding: 18px 22px 26px !important; gap: 18px !important; }
+#rgFeedbackModal .rg-comms-message { grid-template-columns: 44px minmax(0, 1fr) !important; gap: 14px !important; }
 #rgFeedbackModal .rg-comms-avatar {
+  width: 44px !important;
+  height: 44px !important;
   border: 0 !important;
   border-radius: 999px !important;
-  background: var(--m3c-primary-container) !important;
-  color: var(--m3c-on-secondary-container) !important;
-  font: 600 12px/1 Inter, system-ui, sans-serif !important;
+  background: var(--m3x-primary-container) !important;
+  color: var(--m3x-on-primary-container) !important;
+  font: 600 15px/1 Inter, system-ui, sans-serif !important;
 }
+#rgFeedbackModal .rg-comms-message-head { gap: 10px !important; flex-wrap: wrap !important; }
 #rgFeedbackModal .rg-comms-message-head strong {
-  color: var(--m3c-on-surface) !important;
-  font: 600 13px/1.2 Inter, system-ui, sans-serif !important;
+  color: var(--m3x-on-surface) !important;
+  font: 600 15px/1.2 Inter, system-ui, sans-serif !important;
 }
 #rgFeedbackModal .rg-comms-message-head time {
-  color: var(--m3c-on-surface-variant) !important;
-  font: 400 11px/1 Inter, system-ui, sans-serif !important;
+  color: var(--m3x-on-variant) !important;
+  font: 400 12px/1 Inter, system-ui, sans-serif !important;
 }
 #rgFeedbackModal .rg-comms-topic-chip {
-  padding: 4px 10px !important;
+  height: 32px !important;
+  padding: 0 14px !important;
+  display: inline-flex !important;
+  align-items: center !important;
   border-radius: 999px !important;
-  background: var(--m3c-surface-container-highest) !important;
-  color: var(--m3c-on-surface-variant) !important;
-  font: 500 11px/1 Inter, system-ui, sans-serif !important;
+  background: var(--m3x-container-highest) !important;
+  color: var(--m3x-on-variant) !important;
+  font: 500 12px/1 Inter, system-ui, sans-serif !important;
+  transition: background-color .2s var(--m3x-standard) !important;
 }
-/* "Jauns" čips: M3 suggestion chip tertiary tonī. */
-#rgFeedbackModal .rg-comms-new-chip {
-  padding: 4px 10px !important;
-  border-radius: 999px !important;
-  background: var(--m3c-tertiary) !important;
-  color: var(--m3c-on-tertiary) !important;
-  font: 600 11px/1 Inter, system-ui, sans-serif !important;
-  letter-spacing: .01em !important;
-}
+#rgFeedbackModal .rg-comms-topic-chip:hover { background: var(--m3x-secondary-container) !important; color: var(--m3x-on-secondary-container) !important; }
 #rgFeedbackModal .rg-comms-bubble {
-  margin-top: 6px !important;
-  padding: 12px 14px !important;
+  margin-top: 8px !important;
+  padding: 14px 18px !important;
   border: 0 !important;
-  border-radius: 4px 18px 18px 18px !important;
-  background: var(--m3c-surface-container-high) !important;
-  color: var(--m3c-on-surface) !important;
-  font: 400 14px/1.45 Inter, system-ui, sans-serif !important;
+  border-radius: 6px 22px 22px 22px !important;
+  background: var(--m3x-container-high) !important;
+  color: var(--m3x-on-surface) !important;
+  font: 400 15px/1.5 Inter, system-ui, sans-serif !important;
 }
 #rgFeedbackModal .rg-comms-message.is-own .rg-comms-bubble {
-  border: 0 !important;
-  border-radius: 18px 4px 18px 18px !important;
-  background: var(--m3c-secondary-container) !important;
-  color: var(--m3c-on-secondary-container) !important;
+  border-radius: 22px 6px 22px 22px !important;
+  background: var(--m3x-secondary-container) !important;
+  color: var(--m3x-on-secondary-container) !important;
 }
-/* Nelasītais ieraksts: plāna akcenta svītra, nevis cits fons — teksts paliek
-   tikpat lasāms, bet acs to atrod uzreiz. */
-#rgFeedbackModal .rg-comms-message.is-new .rg-comms-bubble {
-  box-shadow: inset 3px 0 0 var(--m3c-tertiary) !important;
+#rgFeedbackModal .rg-comms-reply-quote {
+  border-left: 3px solid var(--m3x-primary) !important;
+  border-radius: 0 10px 10px 0 !important;
+  background: rgba(0,0,0,.26) !important;
+  color: var(--m3x-on-variant) !important;
+  font-size: 12px !important;
 }
+/* Darbības: M3 text buttons ar pilnu vārdu un 40px augstumu. */
+#rgFeedbackModal .rg-comms-message-actions { gap: 8px !important; margin-top: 8px !important; opacity: 1 !important; }
 #rgFeedbackModal .rg-comms-message-actions button {
-  height: 32px !important;
-  padding: 0 12px !important;
+  height: 40px !important;
+  padding: 0 16px !important;
   border-radius: 999px !important;
-  color: var(--m3c-on-surface-variant) !important;
-  font: 500 12px/1 Inter, system-ui, sans-serif !important;
+  color: var(--m3x-on-variant) !important;
+  font: 500 13px/1 Inter, system-ui, sans-serif !important;
+  transition: background-color .2s var(--m3x-standard) !important;
 }
 #rgFeedbackModal .rg-comms-message-actions button:hover {
-  background: rgba(255,183,124,.10) !important;
-  color: var(--m3c-on-surface) !important;
+  background: rgba(250,250,250,.08) !important;
+  color: var(--m3x-on-surface) !important;
 }
 #rgFeedbackModal .rg-comms-empty {
-  color: var(--m3c-on-surface-variant) !important;
-  font: 400 14px/1.5 Inter, system-ui, sans-serif !important;
+  color: var(--m3x-on-variant) !important;
+  font: 400 15px/1.55 Inter, system-ui, sans-serif !important;
 }
-/* Rakstīšana: M3 filled text field + FAB sūtīšanai. */
+
+/* Rakstīšana: liels lauks un extended FAB ar vārdu "Sūtīt". */
 #rgFeedbackModal .rg-comms-composer {
-  padding: 12px !important;
+  margin: 0 18px 18px !important;
+  padding: 14px !important;
   border: 0 !important;
-  border-radius: 24px !important;
-  background: var(--m3c-surface-container-high) !important;
+  border-radius: 28px !important;
+  background: var(--m3x-container-high) !important;
   box-shadow: none !important;
 }
-#rgFeedbackModal #rgFeedbackText {
-  min-height: 48px !important;
-  border-radius: 16px !important;
-  background: var(--m3c-surface) !important;
-  color: var(--m3c-on-surface) !important;
-  font: 400 14px/1.4 Inter, system-ui, sans-serif !important;
-}
-#rgFeedbackModal #rgFeedbackText:focus {
-  box-shadow: inset 0 0 0 2px var(--m3c-primary) !important;
-}
-#rgFeedbackModal .rg-comms-send {
-  width: 48px !important;
-  height: 48px !important;
-  border-radius: 16px !important;
-  background: var(--m3c-primary) !important;
-  color: var(--m3c-on-primary) !important;
-}
+#rgFeedbackModal .rg-comms-compose-context { gap: 10px !important; margin-bottom: 10px !important; }
 #rgFeedbackModal :is(.rg-comms-author-wrap, .rg-comms-topic-input) {
-  height: 36px !important;
+  height: 44px !important;
   border: 0 !important;
   border-radius: 999px !important;
-  background: var(--m3c-surface-container-highest) !important;
-  color: var(--m3c-on-surface-variant) !important;
+  background: var(--m3x-container-highest) !important;
+  color: var(--m3x-on-variant) !important;
 }
-#rgFeedbackModal .rg-comms-topic-input { padding: 0 14px !important; }
-#rgFeedbackModal .rg-comms-topic-input::placeholder { color: var(--m3c-on-surface-variant) !important; opacity: .7 !important; }
-#rgFeedbackModal .rg-comms-author { color: var(--m3c-on-surface) !important; }
-#rgFeedbackModal .rg-comms-author option { background: var(--m3c-surface-container-high) !important; color: var(--m3c-on-surface) !important; }
-#rgFeedbackModal .rg-comms-emoji { border-radius: 999px !important; }
-#rgFeedbackModal .rg-comms-emoji:hover { background: rgba(255,183,124,.10) !important; }
+#rgFeedbackModal .rg-comms-author-wrap { padding: 0 8px 0 16px !important; }
+#rgFeedbackModal .rg-comms-author-wrap > span { font: 600 11px/1 Inter, system-ui, sans-serif !important; }
+#rgFeedbackModal .rg-comms-author { height: 32px !important; color: var(--m3x-on-surface) !important; font: 500 13px/1 Inter, system-ui, sans-serif !important; }
+#rgFeedbackModal .rg-comms-author option { background: var(--m3x-container-high) !important; color: var(--m3x-on-surface) !important; }
+#rgFeedbackModal .rg-comms-topic-input { padding: 0 18px !important; font: 400 13px/1 Inter, system-ui, sans-serif !important; color: var(--m3x-on-surface) !important; }
+#rgFeedbackModal .rg-comms-topic-input::placeholder { color: var(--m3x-on-variant) !important; opacity: .8 !important; }
+#rgFeedbackModal #rgFeedbackText {
+  min-height: 56px !important;
+  padding: 16px 18px !important;
+  border-radius: 20px !important;
+  background: var(--m3x-surface) !important;
+  color: var(--m3x-on-surface) !important;
+  font: 400 15px/1.45 Inter, system-ui, sans-serif !important;
+}
+#rgFeedbackModal #rgFeedbackText::placeholder { color: var(--m3x-on-variant) !important; opacity: .85 !important; }
+#rgFeedbackModal #rgFeedbackText:focus,
+#rgFeedbackModal #rgFeedbackText:focus-visible {
+  outline: none !important;
+  box-shadow: inset 0 0 0 1.5px var(--m3x-primary) !important;
+}
+#rgFeedbackModal .rg-comms-send {
+  width: auto !important;
+  min-width: 112px !important;
+  height: 56px !important;
+  padding: 0 24px !important;
+  gap: 8px !important;
+  grid-auto-flow: column !important;
+  border-radius: 18px !important;
+  background: var(--m3x-primary) !important;
+  color: var(--m3x-on-primary) !important;
+  font: 600 15px/1 Inter, system-ui, sans-serif !important;
+  box-shadow: 0 2px 6px 2px rgba(0,0,0,.26) !important;
+  transition: transform .22s var(--m3x-spring), filter .2s var(--m3x-standard) !important;
+}
+/* Ikona viena nepasaka, ko tā dara — pieliekam vārdu. */
+#rgFeedbackModal .rg-comms-send::after {
+  content: 'Sūtīt' !important;
+  font: 600 15px/1 Inter, system-ui, sans-serif !important;
+}
+#rgFeedbackModal .rg-comms-send:not(:disabled):hover { transform: scale(1.03) !important; filter: brightness(1.05) !important; }
+#rgFeedbackModal .rg-comms-send:disabled { opacity: .38 !important; box-shadow: none !important; }
+#rgFeedbackModal .rg-comms-tools { gap: 6px !important; margin-top: 10px !important; }
+#rgFeedbackModal .rg-comms-emoji {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 999px !important;
+  font-size: 20px !important;
+  transition: background-color .2s var(--m3x-standard), transform .22s var(--m3x-spring) !important;
+}
+#rgFeedbackModal .rg-comms-emoji:hover { background: rgba(250,250,250,.08) !important; transform: scale(1.1) !important; }
 #rgFeedbackModal :is(.rg-comms-char-count, .rg-comms-status, .rg-comms-replying) {
-  color: var(--m3c-on-surface-variant) !important;
-  font: 400 11px/1 Inter, system-ui, sans-serif !important;
+  color: var(--m3x-on-variant) !important;
+  font: 400 12px/1 Inter, system-ui, sans-serif !important;
+}
+/* Telefonā tie paši žetoni, mazāki soļi: galvai jāietilpst vienā rindā ar
+   aizvēršanu, un rakstīšanas rinda nedrīkst salauzt skaitītāju. */
+@media (max-width: 720px) {
+  #rgFeedbackModal .rg-comms-head {
+    min-height: 64px !important;
+    padding: 10px 10px 10px 12px !important;
+    gap: 10px !important;
+  }
+  #rgFeedbackModal .rg-comms-logo { width: 44px !important; height: 44px !important; flex-basis: 44px !important; font-size: 20px !important; }
+  #rgFeedbackModal .rg-comms-heading h2 { font-size: 22px !important; }
+  #rgFeedbackModal .rg-comms-tabs { flex: 0 0 auto !important; }
+  #rgFeedbackModal .rg-comms-tab { height: 44px !important; min-width: 0 !important; padding: 0 14px !important; font-size: 13px !important; }
+  #rgFeedbackModal .rg-comms-tab.is-active::before { display: none !important; }
+  #rgFeedbackModal .rg-comms .rg-feedback-close { width: 44px !important; height: 44px !important; min-width: 44px !important; flex: 0 0 44px !important; }
+  #rgFeedbackModal .rg-comms-feed-head { min-height: 58px !important; padding: 12px 14px !important; }
+  #rgFeedbackModal .rg-comms-feed-head strong { font-size: 19px !important; }
+  #rgFeedbackModal .rg-feedback-list.rg-comms-feed { padding: 14px 12px 20px !important; gap: 14px !important; }
+  #rgFeedbackModal .rg-comms-composer { margin: 0 10px 10px !important; padding: 10px !important; border-radius: 24px !important; }
+  #rgFeedbackModal .rg-comms-send { min-width: 96px !important; height: 52px !important; padding: 0 16px !important; }
+  #rgFeedbackModal .rg-comms-emoji { width: 40px !important; height: 40px !important; }
+  #rgFeedbackModal .rg-comms-char-count { white-space: nowrap !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #rgFeedbackModal * { transition: none !important; }
 }
 
 /* ── Noskaņas kartīte ── */
@@ -24924,13 +25036,13 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
   transition: background-color .18s var(--m3c-motion) !important;
 }
 #grafiks-list .rg-feedback-card .rg-pulse-write--comment.has-new {
-  background: rgba(255, 143, 77, .14) !important;
+  background: rgba(249, 115, 22, .12) !important;
 }
-/* Kopskaits ir klusais skaitlis — silts smilšu tonis, nevis zils plankums. */
+/* Kopskaits ir klusais skaitlis — neitrāls cinka aplis, ne krāsains plankums. */
 #grafiks-list .rg-feedback-card .rg-feedback-action-count {
   border-color: transparent !important;
-  background: #e8dccb !important;
-  color: #3a2b1d !important;
+  background: #27272a !important;
+  color: #fafafa !important;
 }
 /* "+N" — tikai šodienas jaunumi, sava krāsa. Kartītē tā seko kopskaita
    burbuļa izkārtojumam (tas pats režģa lauks un nobīde), tikai pabīdīta pa
@@ -24948,8 +25060,8 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
   display: grid !important;
   place-items: center !important;
   border-radius: 999px !important;
-  background: #ff8f4d !important;
-  color: #2a1200 !important;
+  background: #f97316 !important;
+  color: #ffffff !important;
   font: 900 clamp(9px, 4.2cqw, 11.5px)/1 Inter, system-ui, sans-serif !important;
   font-variant-numeric: tabular-nums !important;
   transform: translate(34%, -34%) !important;
