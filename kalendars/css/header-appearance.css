@@ -116,6 +116,14 @@
 :root[data-header-skin="hybrid"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > #shift-progress-wrap .sl-ruler-now :is(.sl-rn-clock,.sl-rn-remaining,.sl-rn-word) {
   color: var(--hs-ink) !important;
 }
+/* While the elapsed fill is still narrower than the label, the percentage
+   sits just after the fill as plain text: a filled box on its own read as a
+   stray element at the start of every shift. */
+:root[data-header-skin="hybrid"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > #shift-progress-wrap .sl-ruler-pct.sl-ruler-pct-out {
+  background: transparent !important;
+  color: var(--hs-text) !important;
+  text-shadow: 0 1px 2px #0009 !important;
+}
 :root[data-header-skin="hybrid"]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap .sl-ruler-elapsed {
   background: var(--hs-accent) !important;
 }

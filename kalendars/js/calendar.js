@@ -39,16 +39,22 @@ var hospitalDatabase = window.hospitalDatabase;
   // Riga variants for that period are in the draw too), and rotates every
   // MIX_ROTATE_MS, never repeating the picture just shown.
   const MIX_ROTATE_MS = 25 * 60 * 1000;
+  // `position` is the picture's focal point (object-position), not a layout
+  // tweak: the header's aspect ratio differs on every monitor and DPI scale,
+  // so object-fit: cover crops a different slice everywhere. With the focal
+  // point set to the subject, the same relative point of the picture is
+  // pinned to the same relative point of the header, and the subject stays in
+  // view whichever side gets cropped. Measured on the 2400x433 files.
   const MIX_POOL = [
-    { id: 'hummingbird', periods: ['morning', 'day'], position: '50% 50%' },
+    { id: 'hummingbird', periods: ['morning', 'day'], position: '64% 10%' }   /* the head with the crest sits high on the right; a 16:1 header keeps only a third of the height */,
     { id: 'daffodils-glass', periods: ['morning', 'day'], position: '50% 0%' }   /* the blooms sit high; keep their tops in a short header */,
-    { id: 'bellflowers', periods: ['morning', 'day'], position: '50% 50%' },
-    { id: 'blossom-orange', periods: ['day', 'sunset'], position: '50% 50%' },
-    { id: 'riga-aerial-dusk', periods: ['day', 'sunset'], position: '50% 55%' },
-    { id: 'cat-ghost', periods: ['sunset'], position: '50% 50%' },
-    { id: 'egle-20260920b', periods: ['sunset', 'night'], position: '50% 50%' }   /* spruce twig with a cone, cropped from the owner's photo (2026-09-20) */,
-    { id: 'moon-eclipse', periods: ['night'], position: '50% 50%' },
-    { id: 'tree-dusk', periods: ['night'], position: '50% 50%' }
+    { id: 'bellflowers', periods: ['morning', 'day'], position: '60% 50%' },
+    { id: 'blossom-orange', periods: ['day', 'sunset'], position: '20% 55%' }   /* the blossom cluster is bottom-left, the rest is sky */,
+    { id: 'riga-aerial-dusk', periods: ['day', 'sunset'], position: '40% 55%' }   /* St Peter's tower */,
+    { id: 'cat-ghost', periods: ['sunset'], position: '58% 30%' }   /* the eyes */,
+    { id: 'egle-20260920b', periods: ['sunset', 'night'], position: '65% 50%' }   /* spruce twig with a cone, cropped from the owner's photo (2026-09-20) */,
+    { id: 'moon-eclipse', periods: ['night'], position: '64% 50%' }   /* the moon */,
+    { id: 'tree-dusk', periods: ['night'], position: '30% 50%' }   /* the lone tree */
   ].map(item => ({ ...item, src: 'data/header-backgrounds/pool/' + item.id + '.webp' }));
   const MIX_LAST_KEY = 'mk_header_mix_last_v1';
   let mixCurrent = null;      // { src, position, period }
@@ -4594,6 +4600,21 @@ function filterFullList(btn) {
     metrics.forEach(function(metric) {
       metric.tick.classList.toggle('sl-rtick-hidden', metric.right > left - 5 && metric.left < left + pillWidth + 5);
     });
+
+    // The percentage is a caption of the elapsed fill, so it is pinned to the
+    // fill's end in pixels: inside the fill while it fits, and just after it
+    // (as plain text, not a box) while the fill is still narrower than the
+    // label — a percentage-based minimum left it floating on its own near the
+    // start of every shift.
+    var pctEl = ruler.querySelector('.sl-ruler-pct');
+    if (pctEl) {
+      var fillWidth = rulerWidth * Math.max(0, Math.min(100, scrubPct)) / 100;
+      var pctWidth = pctEl.offsetWidth || 0;
+      var inside = fillWidth >= pctWidth + 12;
+      pctEl.classList.toggle('sl-ruler-pct-out', !inside);
+      pctEl.style.right = 'auto';
+      pctEl.style.left = (inside ? fillWidth - pctWidth - 6 : Math.min(rulerWidth - pctWidth, fillWidth + 6)).toFixed(1) + 'px';
+    }
   }
 
   // Cheap per-second refresh of only the values that actually move, so the full
@@ -4602,7 +4623,7 @@ function filterFullList(btn) {
     var scrubPct = Math.max(0, Math.min(100, (nowMs - axisStartMs) / axisDur * 100));
     var rEl = wrap.querySelector('.sl-ruler-elapsed'); if (rEl) rEl.style.width = scrubPct.toFixed(2) + '%';
     var rFut = wrap.querySelector('.sl-ruler-future'); if (rFut) rFut.style.left = scrubPct.toFixed(2) + '%';
-    var rPct = wrap.querySelector('.sl-ruler-pct'); if (rPct) { rPct.style.right = 'calc(' + (100 - Math.max(6, scrubPct)).toFixed(2) + '% + 6px)'; rPct.textContent = Math.round(scrubPct) + '%'; }
+    var rPct = wrap.querySelector('.sl-ruler-pct'); if (rPct) rPct.textContent = Math.round(scrubPct) + '%';
     var rNow = wrap.querySelector('.sl-ruler-now');
     if (rNow) {
       var nd = new Date(nowMs);
@@ -4779,7 +4800,8 @@ function filterFullList(btn) {
     var _reColor = _reMs > 14400000 ? 'rgba(139,92,246,0.95)' : _reMs > 7200000 ? 'rgba(251,191,36,0.95)' : 'rgba(239,68,68,0.95)';
 
     var _pctInt = Math.round(scrubPctR);
-    // % sits just left of the scrubber inside the elapsed zone
+    // % sits just left of the scrubber inside the elapsed zone; this is only
+    // the first paint, _layoutCompactRulerNow then pins it to the fill in px.
     var _pctRight = 'calc(' + (100 - Math.max(6, scrubPctR)).toFixed(2) + '% + 6px)';
     var html = '<div class="sl-ruler">' +
       '<div class="sl-ruler-band">' +
