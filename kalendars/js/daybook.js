@@ -190,7 +190,7 @@
     if (!statsLoading) {
       statsLoading = new Promise(function (resolve, reject) {
         var s = document.createElement('script');
-        s.src = 'js/daybook-stats.js?v=20260923m3m';
+        s.src = 'js/daybook-stats.js?v=20260923m3p';
         s.onload = resolve;
         s.onerror = function () { s.remove(); statsLoading = null; reject(new Error('daybook-stats')); };
         document.head.append(s);

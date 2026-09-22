@@ -2509,33 +2509,35 @@
     function _rhythmStripHtml(slots){
       if(!slots || slots.length<1) return '';
       var start=slots[0].s, end=slots[slots.length-1].e, tot=Math.max(1,end-start);
-      var W=1000, TOP=8, H=44, steps=80;
-      function curve(kind){
+      var W=1000, H=30, PAD=4, steps=80;
+      // Katra līkne savā rindiņā un savā mērogā (no nakts minimuma līdz
+      // maksimumam), tāpēc forma — krīt, aug, iekrīt — ir skaidri redzama un
+      // trīs līknes nekad nesaplūst vienā kamolā.
+      function lane(kind,cls,label,col,dash){
+        var vals=[], i;
+        for(i=0;i<=steps;i++) vals.push(_circadianValue(kind,i/steps));
+        var lo=Math.min.apply(null,vals), hi=Math.max.apply(null,vals), span=Math.max(.0001,hi-lo);
         var d='';
-        for(var i=0;i<=steps;i++){
-          var n=i/steps, x=(W*n).toFixed(1), y=(TOP+(1-_circadianValue(kind,n))*H).toFixed(1);
+        for(i=0;i<=steps;i++){
+          var x=(W*i/steps).toFixed(1), y=(PAD+(1-(vals[i]-lo)/span)*(H-2*PAD)).toFixed(1);
           d+=(i?' L':'M')+x+' '+y;
         }
-        return { line:d, area:d+' L '+W+' '+(TOP+H)+' L 0 '+(TOP+H)+' Z' };
+        var ticks=slots.slice(1).map(function(sl){
+          var x=((sl.s-start)/tot*W).toFixed(1);
+          return '<path d="M'+x+' 0 L'+x+' '+H+'" stroke="rgba(214,232,244,.12)" stroke-width="1" vector-effect="non-scaling-stroke"/>';
+        }).join('');
+        return '<div class="ns-rhythm-lane '+cls+'">'
+          +'<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'
+          +'<defs><linearGradient id="nsrl-'+kind+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="'+col+'" stop-opacity="0.34"/><stop offset="100%" stop-color="'+col+'" stop-opacity="0.02"/></linearGradient></defs>'
+          +ticks
+          +'<path d="'+d+' L '+W+' '+H+' L 0 '+H+' Z" fill="url(#nsrl-'+kind+')"/>'
+          +'<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"'+(dash?' stroke-dasharray="6 5"':'')+' vector-effect="non-scaling-stroke"/>'
+          +'</svg><span class="ns-rhythm-lane-label"><i></i>'+label+'</span></div>';
       }
-      function wash(id,col){
-        return '<linearGradient id="nsrs-'+id+'" x1="0" y1="0" x2="0" y2="1">'
-          +'<stop offset="0%" stop-color="'+col+'" stop-opacity="0.20"/><stop offset="100%" stop-color="'+col+'" stop-opacity="0"/></linearGradient>';
-      }
-      var mel=curve('mel'), cor=curve('cor'), wake=curve('wake');
-      var ticks=slots.slice(1).map(function(sl){
-        var x=((sl.s-start)/tot*W).toFixed(1);
-        return '<path d="M'+x+' 2 L'+x+' '+(TOP+H)+'" stroke="rgba(214,232,244,.14)" stroke-width="1" vector-effect="non-scaling-stroke"/>';
-      }).join('');
-      var line=function(p,col,dash){ return '<path d="'+p+'" fill="none" stroke="'+col+'" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"'+(dash?' stroke-dasharray="6 5"':'')+' vector-effect="non-scaling-stroke"/>'; };
       return '<div class="ns-rhythm-strip" aria-hidden="true">'
-        +'<svg viewBox="0 0 '+W+' '+(TOP+H)+'" preserveAspectRatio="none">'
-        +'<defs>'+wash('mel','#6fb6f5')+wash('wake','#7fd9aa')+wash('cor','#ecd08a')+'</defs>'
-        +ticks
-        +'<path d="'+mel.area+'" fill="url(#nsrs-mel)"/><path d="'+wake.area+'" fill="url(#nsrs-wake)"/><path d="'+cor.area+'" fill="url(#nsrs-cor)"/>'
-        +line(mel.line,'#8cc4f2')+line(wake.line,'#93dcb6')+line(cor.line,'#ecd08a',true)
-        +'</svg>'
-        +'<div class="ns-rhythm-strip-legend"><span class="is-mel"><i></i>miegs</span><span class="is-cor"><i></i>enerģija</span><span class="is-wake"><i></i>možums</span></div>'
+        +lane('mel','is-mel','miegs','#8cc4f2')
+        +lane('cor','is-cor','enerģija','#ecd08a',true)
+        +lane('wake','is-wake','možums','#93dcb6')
         +'</div>';
     }
 
