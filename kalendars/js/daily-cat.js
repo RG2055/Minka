@@ -61,6 +61,12 @@
   var anchorTimer = 0;
   var hopTimer = 0;
   var nightPerchTarget = null;
+  // Where the last auto-position put the pet: under the comment bubble or not.
+  // The bubble's tail follows this (see syncBubbleTail), so it never points at
+  // an empty spot while the pet sits on a card, is dragged away or is hidden.
+  var positionedAtBubble = false;
+  // Same breakpoint as daily-cat.css, which hides the pet below it.
+  var petHiddenMedia = window.matchMedia ? matchMedia('(max-width: 899px), (max-height: 559px)') : null;
 
   function pad(value) { return String(value).padStart(2, '0'); }
   function currentDate() {
@@ -224,6 +230,7 @@
       hopTimer = setTimeout(function () {
         hopTimer = 0;
         if (petButton) petButton.classList.remove('is-hopping');
+        syncBubbleTail();
       }, 700);
       playAction('jumping', 1);
     }
@@ -245,6 +252,21 @@
     if (anchorTimer) clearTimeout(anchorTimer);
     anchorTimer = setTimeout(rotateAnchor,
       ANCHOR_ROTATE_MIN + Math.random() * (ANCHOR_ROTATE_MAX - ANCHOR_ROTATE_MIN));
+  }
+  // The comment bubble reads data-mk-cat-tail on <html> ("out" = tail toward
+  // the pet, "in" = tail drawn into the bubble). <html> survives the mood
+  // card being re-rendered, and CSS does the morph, so this only flips the
+  // state at the moments the pet itself changes place. A pet still gliding
+  // home keeps the tail in until the hop ends — it grows out on arrival.
+  function syncBubbleTail() {
+    var home = !!petButton && !petButton.hidden && !nightPerchTarget &&
+      !(petHiddenMedia && petHiddenMedia.matches) &&
+      positionMode === 'auto' && !(dragState && dragState.moved) &&
+      positionedAtBubble && !petButton.classList.contains('is-hopping');
+    var next = home ? 'out' : 'in';
+    if (document.documentElement.getAttribute('data-mk-cat-tail') !== next) {
+      document.documentElement.setAttribute('data-mk-cat-tail', next);
+    }
   }
   function candidatePosition(left, top) {
     return clampPosition({
@@ -274,6 +296,7 @@
         var spread = 0.28 + (nameSeed(anchorChoice.worker) % 45) / 100;
         var perchLeft = rect.left + rect.width * spread - PET_SIZE / 2;
         perchLeft = Math.max(rect.left - 12, Math.min(rect.right - PET_SIZE + 12, perchLeft));
+        positionedAtBubble = false;
         return candidatePosition(perchLeft, rect.top - PET_SIZE + 10);
       }
       // If the chosen card is too close to the viewport edge, the bubble is a
@@ -284,6 +307,7 @@
       if (!rect.width || !rect.height) return null;
     }
     var tailX = rect.left + Math.max(18, Math.min(28, rect.width * 0.2));
+    positionedAtBubble = true;
     return candidatePosition(tailX - PET_SIZE / 2, rect.bottom);
   }
   function activeAnchorElement() {
@@ -297,6 +321,7 @@
     return target;
   }
   function fastAutoPosition() {
+    positionedAtBubble = false;
     if (nightPerchTarget) {
       var perch = nightPerchPosition(nightPerchTarget);
       if (perch) return perch;
@@ -444,6 +469,7 @@
     if (!petButton || positionMode !== 'auto' || dragState) return;
     var position = fastAutoPosition();
     if (position) applyPosition(position);
+    syncBubbleTail();
     if (pickerOpen) requestAnimationFrame(positionPicker);
   }
   function scheduleAutoPosition() {
@@ -464,6 +490,7 @@
       petButton.classList.remove('is-hopping');
       if (hopTimer) clearTimeout(hopTimer);
       hopTimer = 0;
+      syncBubbleTail();
     }
     scheduleAutoPosition();
   }
@@ -565,6 +592,7 @@
     if (!petButton) return;
     var wasHidden = petButton.hidden;
     petButton.hidden = isCompact() && !nightPerchTarget;
+    syncBubbleTail();
     if (petButton.hidden) {
       closePicker();
       clearAnimationTimers();
@@ -617,7 +645,7 @@
     var dx = event.clientX - dragState.x;
     var dy = event.clientY - dragState.y;
     if (!dragState.moved && Math.abs(dx) + Math.abs(dy) < 5) return;
-    dragState.moved = true;
+    if (!dragState.moved) { dragState.moved = true; syncBubbleTail(); }
     var next = clampPosition({ right: dragState.right - dx, bottom: dragState.bottom - dy });
     dragState.nextRight = next.right;
     dragState.nextBottom = next.bottom;
@@ -646,6 +674,7 @@
       manualPosition = clampPosition(position);
     }
     petButton.dataset.positionMode = positionMode;
+    syncBubbleTail();
     if (petButton.hasPointerCapture(event.pointerId)) petButton.releasePointerCapture(event.pointerId);
     startIdle();
   }
@@ -676,6 +705,12 @@
     petButton.addEventListener('pointermove', onPointerMove);
     petButton.addEventListener('pointerup', onPointerEnd);
     petButton.addEventListener('pointercancel', onPointerEnd);
+    petButton.addEventListener('transitionend', function (event) {
+      if (event.target !== petButton || event.propertyName !== 'transform') return;
+      if (hopTimer) { clearTimeout(hopTimer); hopTimer = 0; }
+      petButton.classList.remove('is-hopping');
+      syncBubbleTail();
+    });
     petButton.addEventListener('pointerenter', function () {
       if (!dragState && !pickerOpen) playAction('waving', 1);
     });
@@ -691,6 +726,7 @@
       observeAnchor(nightPerchTarget);
       scheduleAutoPosition();
     }
+    syncBubbleTail();
   }
 
   function enterNightSplit(target) {
@@ -708,6 +744,7 @@
     petButton.dataset.positionMode = 'night';
     petButton.classList.add('is-night-perched');
     observeAnchor(target);
+    syncBubbleTail();
     scheduleAutoPosition();
     if (!sameTarget) playAction('jumping', 1);
     return true;
@@ -954,9 +991,18 @@
       document.documentElement.setAttribute('data-mk-daily-cat-id', catalog[selectedIndex].id);
     }).catch(function () {
       document.documentElement.setAttribute('data-mk-daily-cat-error', 'catalog');
+      syncBubbleTail();
     });
   }
   function init() {
+    // Compact layouts never show the pet; start those without a tail so the
+    // first paint is already the settled pill, not a morph.
+    if (isCompact() || (petHiddenMedia && petHiddenMedia.matches)) syncBubbleTail();
+    if (petHiddenMedia) {
+      var onPetMedia = function () { if (petButton || isCompact() || petHiddenMedia.matches) syncBubbleTail(); };
+      if (petHiddenMedia.addEventListener) petHiddenMedia.addEventListener('change', onPetMedia);
+      else if (petHiddenMedia.addListener) petHiddenMedia.addListener(onPetMedia);
+    }
     addEventListener('scroll', scheduleScrollPosition, { passive: true, capture: true });
     addEventListener('resize', function () {
       if (!petButton && !isCompact()) mountWhenReady();
