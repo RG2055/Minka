@@ -187,7 +187,7 @@
   function syncScenery() {
     var image = header.querySelector('.mk-header-scenic-img');
     var root = document.documentElement;
-    var scene = root.dataset.minkaHeaderScene || 'coast';
+    var scene = root.dataset.minkaHeaderScene || 'mix';
     layer.dataset.scenicScene = scene;
     layer.dataset.scenicPeriod = root.dataset.minkaHeaderPeriod || 'day';
     if (!image || !image.naturalWidth || !image.naturalHeight) return;
@@ -198,7 +198,7 @@
     var renderedHeight = image.naturalHeight * scale;
     var position = parseFloat(getComputedStyle(image).objectPosition.split(' ')[1]);
     var offset = (rect.height - renderedHeight) * (Number.isFinite(position) ? position / 100 : .48);
-    // Fade before the coastline / rooftops, rather than over the foreground.
+    // Fade before the rooftops, rather than over the foreground.
     var skyLine = scene === 'riga' ? .42 : .46;
     var skyHeight = Math.max(0, Math.min(rect.height, offset + renderedHeight * skyLine));
     layer.style.setProperty('--mk-cloud-top', (rect.top - weatherRect.top) + 'px');

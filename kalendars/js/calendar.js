@@ -20,23 +20,23 @@ window.hospitalDatabase = Array.isArray(window.hospitalDatabase) ? window.hospit
 var hospitalDatabase = window.hospitalDatabase;
 
 (function initMinkaHeaderScenicBackground() {
-  const SCENES = ['coast', 'riga', 'mix'];
-  // The collection is the default; the appearance panel's normalize() applies
-  // the same rule (a version-1 'coast' was never a choice, so it is ignored).
+  // The coast scene is gone (2026-09-22): its 3:1 frames could not survive a
+  // 12:1 header box. What is left is Riga and the collection.
+  const SCENES = ['riga', 'mix'];
+  // The collection is the default; the appearance panel's normalize() agrees.
   let scene = 'mix';
   try {
     const saved = JSON.parse(localStorage.getItem('mk_header_appearance_v1') || '{}');
-    if (SCENES.includes(saved.background) && !(saved.version !== 2 && saved.background === 'coast')) scene = saved.background;
+    if (SCENES.includes(saved.background)) scene = saved.background;
   } catch (_) {}
   const periods = ['morning', 'day', 'sunset', 'night'];
-  // Riga is the real St Peter's tower panorama (re-encoded 2026-09-20); the
-  // coast is the generated scene from the day before.
-  const sceneSrc = (scene, period) => 'data/header-backgrounds/header-' + scene + '-' + period + '-' + (scene === 'riga' ? '20260920' : '20260919') + '.webp';
+  // Riga is the real St Peter's tower panorama (re-encoded 2026-09-20).
+  const sceneSrc = (scene, period) => 'data/header-backgrounds/header-' + scene + '-' + period + '-20260920.webp';
   // The collection ("mix"): single photographs, each tagged with the parts of
   // the day it suits — bright ones for the morning and day, warm and darker
   // ones towards the evening, near-black ones at night. In mix mode the
-  // header draws one at random from the current period's set (the coast and
-  // Riga variants for that period are in the draw too), and rotates every
+  // header draws one at random from the current period's set (the Riga
+  // variant for that period is in the draw too), and rotates every
   // MIX_ROTATE_MS, never repeating the picture just shown.
   const MIX_ROTATE_MS = 25 * 60 * 1000;
   // `position` is the picture's focal point (object-position), not a layout
@@ -54,7 +54,11 @@ var hospitalDatabase = window.hospitalDatabase;
     { id: 'cat-ghost', periods: ['sunset'], position: '58% 30%' }   /* the eyes */,
     { id: 'egle-20260920b', periods: ['sunset', 'night'], position: '65% 50%' }   /* spruce twig with a cone, cropped from the owner's photo (2026-09-20) */,
     { id: 'moon-eclipse', periods: ['night'], position: '64% 50%' }   /* the moon */,
-    { id: 'tree-dusk', periods: ['night'], position: '30% 50%' }   /* the lone tree */
+    { id: 'tree-dusk', periods: ['night'], position: '30% 50%' }   /* the lone tree */,
+    // Cut to 2400x250 (9.6:1) on purpose: at that ratio a 1900px-wide header
+    // shows them whole, with no stretch and barely any crop.
+    { id: 'dunes-mono-20260922', periods: ['day', 'sunset'], position: '55% 50%' }   /* the dune ridge */,
+    { id: 'emoji-gold-20260922', periods: ['morning', 'day'], position: '42% 45%' }   /* the face */
   ].map(item => ({ ...item, src: 'data/header-backgrounds/pool/' + item.id + '.webp' }));
   const MIX_LAST_KEY = 'mk_header_mix_last_v1';
   let mixCurrent = null;      // { src, position, period }
@@ -62,7 +66,7 @@ var hospitalDatabase = window.hospitalDatabase;
   let mixTimer = 0;
   function mixCandidates(period) {
     return MIX_POOL.filter(item => item.periods.includes(period))
-      .concat(['coast', 'riga'].map(name => ({ id: name + '-' + period, src: sceneSrc(name, period), position: '50% 48%' })));
+      .concat([{ id: 'riga-' + period, src: sceneSrc('riga', period), position: '50% 48%' }]);
   }
   function mixDraw(period, avoidSrc) {
     const all = mixCandidates(period);
@@ -87,7 +91,7 @@ var hospitalDatabase = window.hospitalDatabase;
     applyPeriod(true);
   }
   const assets = Object.fromEntries(periods.map((period, i) => [period, {
-    src: sceneSrc(scene === 'mix' ? 'coast' : scene, period),
+    src: sceneSrc('riga', period),
     position: '50% 48%', next: periods[(i + 1) % 4]
   }]));
   const boundaries = [
@@ -357,11 +361,11 @@ var hospitalDatabase = window.hospitalDatabase;
   window.MinkaHeaderScenic = {
     getScene: () => scene,
     setScene(value) {
-      const next = SCENES.includes(value) ? value : 'coast';
+      const next = SCENES.includes(value) ? value : 'mix';
       if (scene === next) return;
       scene = next;
       mixCurrent = null; mixUpcoming = null;
-      periods.forEach(period => { assets[period].src = sceneSrc(scene === 'mix' ? 'coast' : scene, period); });
+      periods.forEach(period => { assets[period].src = sceneSrc(scene === 'mix' ? 'riga' : scene, period); });
       applyPeriod(true);
     },
     // The collection's next picture now (the panel's "Cits attēls" button).

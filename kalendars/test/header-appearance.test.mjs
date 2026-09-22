@@ -7,8 +7,8 @@ const appearance = require('../js/header-appearance.js');
 test('background preferences are limited to Latvia and survive a daily skin shuffle', () => {
   assert.equal(appearance.normalize({ background: 'alps' }).background, 'mix', 'the collection is the default');
   assert.equal(appearance.normalize({ background: 'riga' }).background, 'riga');
-  assert.equal(appearance.normalize({ background: 'coast' }).background, 'mix', 'a version-1 coast was never chosen');
-  assert.equal(appearance.normalize({ version: 2, background: 'coast' }).background, 'coast', 'a chosen coast stays');
+  assert.equal(appearance.normalize({ background: 'coast' }).background, 'mix', 'the retired coast falls back to the collection');
+  assert.equal(appearance.normalize({ version: 2, background: 'coast' }).background, 'mix', 'even a coast chosen on purpose is retired');
   assert.equal(appearance.normalize({ background: 'mix' }).background, 'mix');
   assert.equal(appearance.normalize({}).version, 2);
   assert.equal(appearance.shuffle({ background: 'riga' }).background, 'riga');
