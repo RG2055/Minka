@@ -37,7 +37,7 @@
   }
   window.__minkaHasApiAuth = function() { return !!getToken(); };
 
-  var CALENDAR_BUILD = '20260923skin2';
+  var CALENDAR_BUILD = '20260923wm8';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -317,6 +317,8 @@
 <noscript>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
 </noscript>
+<!-- Google Sans: M3 stila elementiem (GE/PH čipi). Faili lādējas tikai, kad tekstu izmanto. -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
 
 <!-- Font Awesome ielādējas dinamiski līdz ar radio skriptiem (tikai radio to lieto) -->
 
@@ -643,7 +645,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <div id="calendarEmbed">
   <!-- Keep the expensive calendar document dormant behind the password gate.
        Authenticated startup assigns data-base-src immediately. -->
-  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260923skin2" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260923wm8" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- Compact brand loader. It stays up until the embedded schedule has painted. -->
@@ -2340,6 +2342,22 @@ window.addEventListener('DOMContentLoaded', () => {
       letter-spacing: .06em !important;
       animation: none !important;
       box-shadow: none !important;
+    }
+    /* M3 stils: tonāls "pill" čips statusa tonī, Google Sans; pikseļa
+       lampiņa paliek kā ir. */
+    #bolusDocBtn .bolus-room-seg,
+    #bolusDocBtn .bolus-room-seg.is-fresh,
+    #bolusDocBtn .bolus-room-seg.is-caution,
+    #bolusDocBtn .bolus-room-seg.is-warn,
+    #bolusDocBtn .bolus-room-seg.is-stale {
+      height: 20px !important;
+      padding: 0 8px 0 7px !important;
+      gap: 5px !important;
+      border-radius: 10px !important;
+      background: color-mix(in srgb, var(--led) 16%, #1a1f27) !important;
+      color: #e3e7ee !important;
+      font: 500 10.5px/1 "Google Sans", "Product Sans", Roboto, Inter, system-ui, sans-serif !important;
+      letter-spacing: .02em !important;
     }
     #bolusDocBtn .bolus-room-seg::before {
       content: '';

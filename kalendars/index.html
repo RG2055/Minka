@@ -134,7 +134,7 @@ window.setTimeout(function () {
 <link rel="stylesheet" href="css/card-addons.css?v=20260923wrap1">
 <script src="js/card-addons.js?v=20260914reveal4" defer></script>
 <link rel="stylesheet" href="css/side-cards-v2.css?v=20260911split4">
-<link rel="stylesheet" href="css/header-weather.css?v=20260923skin2">
+<link rel="stylesheet" href="css/header-weather.css?v=20260923wm8">
 <link rel="stylesheet" href="css/mood-fluent.css?v=20260820fmood16">
 <link rel="stylesheet" href="css/daily-cat.css?v=20260829catpicker1">
 <link rel="stylesheet" href="css/depth-cards.css?v=20260912faces17">
@@ -1573,12 +1573,12 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="data/svinamas-dienas.js?v=20260923skin2"></script>
+<script src="data/svinamas-dienas.js?v=20260923wm8"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/known-carryovers.js?v=20260907smooth1"></script>
 <script src="js/card-face-model.js?v=20260912wa4"></script>
 <script src="js/card-materials.js?v=20260912faces21"></script>
-<script src="js/card-faces.js?v=20260914wa18"></script>
+<script src="js/card-faces.js?v=20260923wftabs1"></script>
 <!-- Saved worker skins must be ready before the cached roster is rendered. -->
 <script>
 /* ── MinkaSkins: per-darbinieka kartes izskats ──
@@ -2698,7 +2698,7 @@ function _mkToast(msg, type) {
     SCENIC_SKINS.forEach(function(scene) {
       var act = draft.t === 'img' && draft.id === scene.id;
       var imageUrl = stockSkinUrl(scene.id);
-      html += '<button type="button" class="mk-skin-thumb' + (act ? ' is-active' : '') + '" data-skin="' + scene.id + '" data-src="' + skinEsc(imageUrl) + '" title="' + skinEsc(scene.label) + '" aria-label="' + skinEsc(scene.label) + '" aria-pressed="' + act + '" style="background-image:url(&quot;' + skinEsc(imageUrl) + '&quot;)"><span>' + skinEsc(scene.label) + '</span></button>';
+      html += '<button type="button" class="mk-skin-thumb' + (act ? ' is-active' : '') + '" data-skin="' + scene.id + '" data-src="' + skinEsc(imageUrl) + '" title="' + skinEsc(scene.label) + '" aria-label="' + skinEsc(scene.label) + '" aria-pressed="' + act + '" style="background-image:url(&quot;' + skinEsc(imageUrl) + '&quot;)"><span><b>' + skinEsc(scene.label) + '</b></span></button>';
     });
     html += '</div>';
     IMG_GROUPS.forEach(function(grp, groupIndex) {
@@ -2713,7 +2713,7 @@ function _mkToast(msg, type) {
         html += '<button type="button" class="mk-skin-thumb' + (act ? ' is-active' : '') + '" data-skin="' + id + '" data-src="' + skinEsc(imageUrl) + '" title="' + skinEsc(label) + '" aria-label="' + skinEsc(label) + '"'
           + ' aria-pressed="' + act + '"'
           + (categoryIndex === activeImageGroup ? ' style="background-image:' + imageStyle + '"' : '')
-          + '><span>' + skinEsc(label) + '</span></button>';
+          + '><span><b>' + skinEsc(label) + '</b></span></button>';
       });
       html += '</div>';
     });
@@ -2998,28 +2998,28 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260923skin2"></script>
+<script src="js/calendar.js?v=20260923wm8"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
-<script src="js/daily-cat.js?v=20260923skin2" defer></script>
-<script src="js/header-weather.js?v=20260923skin2" defer></script>
+<script src="js/daily-cat.js?v=20260923wm8" defer></script>
+<script src="js/header-weather.js?v=20260923wm8" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260831autofit1"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
 <script src="js/light-model.js?v=20260908light1"></script>
 <script src="js/recovery-model.js?v=20260908recovery1"></script>
 <script src="js/fatigue.js?v=20260919smooth1"></script>
-<script src="js/nightsplit.js?v=20260923skin2" defer></script>
+<script src="js/nightsplit.js?v=20260923wm8" defer></script>
 <script src="js/monthcal.js?v=20260919birthday1" defer></script>
 <script src="js/design_v1.js?v=20260824perfaudit2" defer></script>
 <script src="js/theme.js?v=20260920header-duty1" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
-<script src="js/emoji.js?v=20260923skin2" defer></script>
+<script src="js/emoji.js?v=20260923wm8" defer></script>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
 <script src="js/daybook-model.js?v=20260911b" defer></script>
-<script src="js/daybook.js?v=20260923skin2" defer></script>
-<script src="js/levels.js?v=20260923skin2" defer></script>
+<script src="js/daybook.js?v=20260923wm8" defer></script>
+<script src="js/levels.js?v=20260923wm8" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260923skin2';
+window.__minkaLocalBuild = '20260923wm8';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -15005,15 +15005,18 @@ window.addEventListener('message', function(e) {
   text-shadow: 0 1px 2px rgba(0,0,0,.9);
   pointer-events: none;
 }
-/* Kāds vispārīgāks noteikums pārrakstīja display, un 2 rindu ierobežojums
-   nestrādāja — garie nosaukumi lūza 3. rindā, kas tika nogriezta pusē. */
-#worker-modal .mk-bg-images .mk-skin-thumb > span {
-  display: -webkit-box !important;
-  -webkit-box-orient: vertical !important;
-  -webkit-line-clamp: 2 !important;
-  overflow: hidden !important;
-  overflow-wrap: normal !important;
-  word-break: normal !important;
+/* Absolūti novietots elements pārlūkā kļūst par bloku, un -webkit-box
+   (tātad 2 rindu ierobežojums) uz tā nestrādā — garie nosaukumi lūza 3. rindā.
+   Ierobežojums tāpēc ir iekšējam elementam, kas nav absolūts. */
+#worker-modal .mk-bg-images .mk-skin-thumb > span { display: block !important; }
+#worker-modal .mk-bg-images .mk-skin-thumb > span > b {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font: inherit;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 @media (max-width: 760px) {
   .mk-skin-shell { grid-template-columns: 1fr; gap: 11px; }
@@ -25115,7 +25118,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
 
 <!-- Loaded last on purpose: the night split is an overlay and this small,
      local stylesheet replaces the older visual layers without touching logic. -->
-<link rel="stylesheet" href="css/nightsplit-brand.css?v=20260923skin2">
+<link rel="stylesheet" href="css/nightsplit-brand.css?v=20260923wm8">
 <link rel="stylesheet" href="css/role-headings.css?v=20260828rolehead4">
 
 <link rel="stylesheet" href="css/fatigue-health.css?v=20260908health18">
@@ -25131,7 +25134,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
    css/mobile-v2.css + js/mobile-v2.js — vizuālais izkārtojums; ?mv2=0 to atslēdz. */
 (function(){
   if (!document.documentElement.classList.contains('mk-mobile-shell')) return;
-  var v = '20260923skin2';
+  var v = '20260923wm8';
   function css(href) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href + '?v=' + v; document.body.appendChild(l); }
   css('css/mobile-fixes.css');
   try { if (new URLSearchParams(location.search).get('mv2') === '0') return; } catch (_e) {}
@@ -25149,9 +25152,9 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 </style>
 <script src="../js/image-palette.js?v=20260919palette2"></script>
-<link rel="stylesheet" href="css/header-appearance.css?v=20260923skin2">
-<script src="js/header-appearance.js?v=20260923skin2"></script>
-<link rel="stylesheet" href="css/header-duty-summary.css?v=20260923skin2">
+<link rel="stylesheet" href="css/header-appearance.css?v=20260923wm8">
+<script src="js/header-appearance.js?v=20260923wm8"></script>
+<link rel="stylesheet" href="css/header-duty-summary.css?v=20260923wm8">
 <style>
 /* ── Noskaņas kartīte un saziņa: Material 3 Expressive ───────────────────
    Tie paši žetoni, ko lieto kafijas izvēlne: toņu virsmas rāmju vietā,
@@ -26173,6 +26176,425 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
     transition: none !important;
   }
 }
+</style>
+<style id="mk-worker-modal-m3">
+/* ════════════════════════════════════════════════════════════════════════
+   Kartītes logs (#worker-modal#worker-modal) — M3 Expressive / PixelPlayer (2026-09-23)
+   Tā pati tonālā sistēma kā nakts logā: plakanas virsmas, Google Sans,
+   "pill" čipi (izvēlētais gaišs ar tumšu tekstu), M3 slēdzis, lieli
+   noapaļojumi. Kartīšu priekšskatījums un saturs paliek; mainās rāmis.
+   ════════════════════════════════════════════════════════════════════════ */
+#worker-modal#worker-modal {
+  --pp-font: "Google Sans", "Google Sans Text", "Product Sans", Roboto, Inter, system-ui, sans-serif;
+  --pp-bg: #10141b;
+  --pp-c1: #161b23;
+  --pp-c2: #1c222c;
+  --pp-c3: #252c37;
+  --pp-c4: #2f3743;
+  --pp-on: #e3e7ee;
+  --pp-on-var: #b8c1cd;
+  --pp-primary: #a8c7fa;
+  --pp-on-primary: #0b2a57;
+  --pp-primary-c: #d6e3ff;
+  --pp-on-primary-c: #0b1d36;
+  --pp-spring: cubic-bezier(.42, 1.67, .21, .9);
+  --pp-effects: cubic-bezier(.31, .94, .34, 1);
+  background: var(--pp-bg) !important;
+  border: 0 !important;
+  border-radius: 32px !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, .6) !important;
+}
+#worker-modal#worker-modal .modal-header,
+#worker-modal#worker-modal .view-toggle,
+#worker-modal#worker-modal .mk-skin-editor,
+#worker-modal#worker-modal .mk-skin-aside,
+#worker-modal#worker-modal .mk-skin-footer,
+#worker-modal#worker-modal .mk-skin-editor *,
+#worker-modal#worker-modal .mk-auto-palette *,
+#worker-modal#worker-modal .modal-header *:not(.material-icons-round),
+#worker-modal#worker-modal .view-toggle * { font-family: var(--pp-font) !important; }
+#worker-modal#worker-modal .modal-content { background: transparent !important; }
+
+/* Galvene: bez blāvā "RP" ūdenszīmes; vārds kā M3 virsraksts */
+#worker-modal#worker-modal .modal-avatar { display: none !important; }
+#worker-modal#worker-modal .modal-header { grid-template-columns: minmax(0, 1fr) auto auto !important; }
+#worker-modal#worker-modal #modal-worker-name {
+  color: var(--pp-on) !important;
+  font-size: 22px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+#worker-modal#worker-modal .modal-surname-line {
+  color: var(--pp-on-var) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  letter-spacing: .02em !important;
+  text-transform: none !important;
+}
+#worker-modal#worker-modal #modal-total-hours {
+  border: 0 !important;
+  border-radius: 16px !important;
+  background: var(--pp-primary-c) !important;
+  color: var(--pp-on-primary-c) !important;
+  font-family: var(--pp-font) !important;
+  font-weight: 700 !important;
+}
+#worker-modal#worker-modal #modal-total-hours * { color: var(--pp-on-primary-c) !important; -webkit-text-fill-color: var(--pp-on-primary-c) !important; font-family: var(--pp-font) !important; }
+#worker-modal#worker-modal #modal-total-hours::before,
+#worker-modal#worker-modal #modal-total-hours::after { color: rgba(11, 29, 54, .72) !important; -webkit-text-fill-color: rgba(11, 29, 54, .72) !important; font-family: var(--pp-font) !important; font-weight: 500 !important; letter-spacing: .04em !important; }
+#worker-modal#worker-modal .modal-close {
+  border: 0 !important;
+  border-radius: 20px !important;
+  background: var(--pp-c3) !important;
+  color: var(--pp-on) !important;
+  box-shadow: none !important;
+  transition: border-radius 350ms var(--pp-spring), background-color 150ms var(--pp-effects) !important;
+}
+#worker-modal#worker-modal .modal-close:hover { background: var(--pp-c4) !important; }
+#worker-modal#worker-modal .modal-close:active { border-radius: 12px !important; }
+
+/* Galvenās cilnes (Nogurums / Kalendārs / Emoji / Izskats) */
+#worker-modal#worker-modal .view-toggle { gap: 6px !important; border: 0 !important; background: transparent !important; box-shadow: none !important; }
+#worker-modal#worker-modal .toggle-btn {
+  border: 0 !important;
+  border-radius: 20px !important;
+  background: var(--pp-c2) !important;
+  color: var(--pp-on-var) !important;
+  box-shadow: none !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  transition: border-radius 350ms var(--pp-spring), background-color 150ms var(--pp-effects), color 150ms var(--pp-effects) !important;
+}
+#worker-modal#worker-modal .toggle-btn:hover { background: var(--pp-c3) !important; color: var(--pp-on) !important; }
+#worker-modal#worker-modal .toggle-btn.active { background: var(--pp-primary-c) !important; color: var(--pp-on-primary-c) !important; }
+#worker-modal#worker-modal .toggle-btn.active svg,
+#worker-modal#worker-modal .toggle-btn.active svg * { color: var(--pp-on-primary-c) !important; }
+#worker-modal#worker-modal .toggle-btn:active { border-radius: 12px !important; }
+
+/* Izskata redaktors */
+#worker-modal#worker-modal .mk-skin-main-tabs {
+  gap: 4px !important;
+  padding: 4px !important;
+  border: 0 !important;
+  border-radius: 24px !important;
+  background: var(--pp-c1) !important;
+  box-shadow: none !important;
+}
+#worker-modal#worker-modal .mk-skin-main-tab,
+#worker-modal#worker-modal .mk-bg-mode {
+  border: 0 !important;
+  border-radius: 20px !important;
+  background: transparent !important;
+  color: var(--pp-on-var) !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  transition: border-radius 350ms var(--pp-spring), background-color 150ms var(--pp-effects), color 150ms var(--pp-effects) !important;
+}
+#worker-modal#worker-modal .mk-skin-main-tab:hover,
+#worker-modal#worker-modal .mk-bg-mode:hover { background: var(--pp-c3) !important; color: var(--pp-on) !important; }
+#worker-modal#worker-modal .mk-skin-main-tab.is-active,
+#worker-modal#worker-modal .mk-bg-mode.is-active { background: var(--pp-primary-c) !important; color: var(--pp-on-primary-c) !important; }
+#worker-modal#worker-modal .mk-bg-mode-tabs {
+  gap: 4px !important;
+  padding: 4px !important;
+  border: 0 !important;
+  border-radius: 20px !important;
+  background: var(--pp-c1) !important;
+  box-shadow: none !important;
+}
+#worker-modal#worker-modal .mk-skin-section-head strong {
+  color: var(--pp-on) !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+/* Filtru čipi (kategorijas, dekoru un komplektu grupas) */
+#worker-modal#worker-modal .mk-skin-category,
+#worker-modal#worker-modal .mk-addon-group,
+#worker-modal#worker-modal .mk-preset-group {
+  min-height: 32px !important;
+  padding: 0 12px !important;
+  border: 0 !important;
+  border-radius: 16px !important;
+  background: var(--pp-c2) !important;
+  color: var(--pp-on-var) !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  transition: border-radius 350ms var(--pp-spring), background-color 150ms var(--pp-effects) !important;
+}
+#worker-modal#worker-modal .mk-skin-category span,
+#worker-modal#worker-modal .mk-addon-group span,
+#worker-modal#worker-modal .mk-preset-group span { color: inherit !important; opacity: .65 !important; font-weight: 500 !important; margin-left: 6px !important; }
+#worker-modal#worker-modal .mk-skin-category:hover,
+#worker-modal#worker-modal .mk-addon-group:hover,
+#worker-modal#worker-modal .mk-preset-group:hover { background: var(--pp-c3) !important; color: var(--pp-on) !important; }
+#worker-modal#worker-modal .mk-skin-category.is-active,
+#worker-modal#worker-modal .mk-addon-group.is-active,
+#worker-modal#worker-modal .mk-preset-group.is-active,
+#worker-modal#worker-modal .mk-preset-group[aria-pressed="true"] { background: var(--pp-primary-c) !important; color: var(--pp-on-primary-c) !important; }
+#worker-modal#worker-modal .mk-skin-category:active,
+#worker-modal#worker-modal .mk-addon-group:active,
+#worker-modal#worker-modal .mk-preset-group:active { border-radius: 10px !important; }
+/* Flīzes: lielāks noapaļojums, izvēlētā ar skaidru primāro rāmi */
+#worker-modal#worker-modal .mk-skin-thumb {
+  border: 0 !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+  transition: border-radius 350ms var(--pp-spring), box-shadow 150ms var(--pp-effects) !important;
+}
+#worker-modal#worker-modal .mk-skin-thumb:hover { border-radius: 12px !important; }
+#worker-modal#worker-modal .mk-skin-thumb.is-active { box-shadow: 0 0 0 3px var(--pp-bg), 0 0 0 5px var(--pp-primary) !important; }
+#worker-modal#worker-modal .mk-skin-thumb.is-active::after { background: var(--pp-primary) !important; color: var(--pp-on-primary) !important; }
+#worker-modal#worker-modal .mk-bg-images .mk-skin-thumb > span { font-family: var(--pp-font) !important; font-weight: 500 !important; font-size: 10px !important; }
+/* Auto krāsas: tonāla kartīte ar M3 slēdzi */
+#worker-modal#worker-modal .mk-auto-palette {
+  border: 0 !important;
+  border-radius: 24px !important;
+  background: var(--pp-c1) !important;
+  box-shadow: none !important;
+}
+#worker-modal#worker-modal .mk-auto-palette strong { color: var(--pp-on) !important; font-size: 13px !important; font-weight: 500 !important; }
+#worker-modal#worker-modal .mk-auto-toggle span { width: 36px !important; height: 20px !important; border: 2px solid var(--pp-on-var) !important; background: var(--pp-c4) !important; box-sizing: border-box !important; }
+#worker-modal#worker-modal .mk-auto-toggle span::after { top: 2px !important; left: 2px !important; width: 12px !important; height: 12px !important; background: var(--pp-on-var) !important; transition: transform 350ms var(--pp-spring), width 150ms var(--pp-effects), height 150ms var(--pp-effects) !important; }
+#worker-modal#worker-modal .mk-auto-toggle input:checked + span { border-color: var(--pp-primary) !important; background: var(--pp-primary) !important; }
+#worker-modal#worker-modal .mk-auto-toggle input:checked + span::after { top: 0 !important; width: 16px !important; height: 16px !important; transform: translateX(16px) !important; background: var(--pp-on-primary) !important; }
+#worker-modal#worker-modal .mk-auto-toggle b { color: var(--pp-on-var) !important; font-size: 11px !important; font-weight: 500 !important; }
+#worker-modal#worker-modal .mk-auto-palette-now,
+#worker-modal#worker-modal .mk-skin-clear {
+  min-height: 36px !important;
+  border: 0 !important;
+  border-radius: 18px !important;
+  background: var(--pp-c3) !important;
+  color: var(--pp-on) !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  transition: border-radius 350ms var(--pp-spring), background-color 150ms var(--pp-effects) !important;
+}
+#worker-modal#worker-modal .mk-auto-palette-now:hover,
+#worker-modal#worker-modal .mk-skin-clear:hover { background: var(--pp-c4) !important; }
+#worker-modal#worker-modal .mk-auto-palette-now:active,
+#worker-modal#worker-modal .mk-skin-clear:active { border-radius: 10px !important; }
+#worker-modal#worker-modal .mk-skin-footer { border-top: 0 !important; background: transparent !important; }
+#worker-modal#worker-modal :is(.toggle-btn, .mk-skin-main-tab, .mk-bg-mode, .mk-skin-category, .mk-addon-group, .mk-preset-group, .mk-skin-thumb, .mk-auto-palette-now, .mk-skin-clear, .modal-close):focus-visible {
+  outline: 2px solid var(--pp-primary) !important;
+  outline-offset: 2px !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  #worker-modal#worker-modal :is(.toggle-btn, .mk-skin-main-tab, .mk-bg-mode, .mk-skin-category, .mk-addon-group, .mk-preset-group, .mk-skin-thumb, .mk-auto-palette-now, .mk-skin-clear, .modal-close),
+  #worker-modal#worker-modal .mk-auto-toggle span::after { transition: none !important; }
+}
+
+/* ── Visas cilnes: Nogurums, Kalendārs, Emoji ── */
+#worker-modal#worker-modal .modal-content *:not(.material-icons-round):not(.mkp-emoji-btn):not([class*="emoji"]):not(.shift-label) { font-family: var(--pp-font) !important; }
+
+/* Nogurums: plakanas tonālas kartītes (bez fona foto), M3 tipogrāfija */
+#worker-modal#worker-modal .fatigue-panel { border: 0 !important; background: transparent !important; box-shadow: none !important; }
+#worker-modal#worker-modal .fh-summary,
+#worker-modal#worker-modal .fh-comparison {
+  border: 0 !important;
+  border-radius: 28px !important;
+  background: var(--pp-c1) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+#worker-modal#worker-modal .fh-summary::before, #worker-modal#worker-modal .fh-summary::after,
+#worker-modal#worker-modal .fh-comparison::before, #worker-modal#worker-modal .fh-comparison::after { background-image: none !important; opacity: 0 !important; }
+#worker-modal#worker-modal .fh-tile + .fh-tile { border-left-color: rgba(184, 193, 205, .12) !important; }
+#worker-modal#worker-modal .fh-eyebrow { color: var(--pp-on-var) !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important; }
+#worker-modal#worker-modal .fh-number,
+#worker-modal#worker-modal .fh-time-number { font-weight: 500 !important; letter-spacing: -.01em !important; }
+#worker-modal#worker-modal .fh-tile-note,
+#worker-modal#worker-modal .fh-number small { color: var(--pp-on-var) !important; }
+#worker-modal#worker-modal .fh-comparison-head h3 { color: var(--pp-on) !important; font-size: 16px !important; font-weight: 500 !important; letter-spacing: 0 !important; }
+#worker-modal#worker-modal .fh-option {
+  border: 0 !important;
+  border-radius: 20px !important;
+  background: var(--pp-c2) !important;
+  box-shadow: none !important;
+}
+#worker-modal#worker-modal .fh-option.is-selected { background: var(--pp-c3) !important; box-shadow: inset 0 0 0 2px var(--pp-primary) !important; }
+#worker-modal#worker-modal .fh-option.is-unavailable { opacity: .6 !important; }
+#worker-modal#worker-modal .fh-more > summary { color: var(--pp-on-var) !important; font-weight: 500 !important; }
+#worker-modal#worker-modal .fh-switch button {
+  border: 0 !important;
+  border-radius: 18px !important;
+  background: var(--pp-c3) !important;
+  color: var(--pp-on) !important;
+  box-shadow: none !important;
+}
+#worker-modal#worker-modal .fh-facts,
+#worker-modal#worker-modal .fatigue-details { border: 0 !important; border-radius: 20px !important; background: var(--pp-c1) !important; box-shadow: none !important; }
+#worker-modal#worker-modal .fatigue-row { border-color: rgba(184, 193, 205, .08) !important; }
+#worker-modal#worker-modal .fatigue-row-label { color: var(--pp-on-var) !important; }
+#worker-modal#worker-modal .fatigue-row-val { color: var(--pp-on) !important; font-weight: 500 !important; }
+#worker-modal#worker-modal .fh-footnote,
+#worker-modal#worker-modal .fh-sleep-note { color: rgba(184, 193, 205, .7) !important; }
+
+/* Kalendārs */
+#worker-modal#worker-modal .calendar-container { border: 0 !important; border-radius: 28px !important; background: var(--pp-c1) !important; box-shadow: none !important; }
+#worker-modal#worker-modal .current-date { color: var(--pp-on) !important; font-size: 18px !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important; }
+#worker-modal#worker-modal .cal-nav-btn {
+  width: 40px !important; height: 40px !important; line-height: 40px !important;
+  border: 0 !important; border-radius: 20px !important;
+  background: var(--pp-c3) !important; color: var(--pp-on) !important; box-shadow: none !important;
+  transition: border-radius 350ms var(--pp-spring), background-color 150ms var(--pp-effects) !important;
+}
+#worker-modal#worker-modal .cal-nav-btn:hover { background: var(--pp-c4) !important; }
+#worker-modal#worker-modal .cal-nav-btn:active { border-radius: 12px !important; }
+#worker-modal#worker-modal .wm-norm-row { border: 0 !important; border-radius: 18px !important; background: var(--pp-c2) !important; box-shadow: none !important; color: var(--pp-on-var) !important; }
+#worker-modal#worker-modal .wm-norm-row b { color: var(--pp-on) !important; font-weight: 700 !important; }
+#worker-modal#worker-modal .calendar .weeks li { color: var(--pp-on-var) !important; font-weight: 500 !important; }
+#worker-modal#worker-modal .calendar .days li { border-radius: 14px !important; font-weight: 500 !important; }
+#worker-modal#worker-modal .calendar .days li.is-today { background: transparent !important; box-shadow: inset 0 0 0 2px var(--pp-primary) !important; color: var(--pp-primary) !important; }
+#worker-modal#worker-modal .calendar .days li.worked.is-today { box-shadow: inset 0 0 0 2px var(--pp-primary) !important; }
+#worker-modal#worker-modal .calendar .days li .shift-label { border-radius: 8px !important; }
+
+/* Emoji */
+#worker-modal#worker-modal .mkp-toolbar,
+#worker-modal#worker-modal .mkp-body,
+#worker-modal#worker-modal .mkp-footer { background: transparent !important; border-color: rgba(184, 193, 205, .08) !important; }
+#worker-modal#worker-modal .mkp-search {
+  min-height: 44px !important;
+  border: 0 !important;
+  border-radius: 22px !important;
+  background: var(--pp-c2) !important;
+  box-shadow: none !important;
+}
+#worker-modal#worker-modal .mkp-search input { color: var(--pp-on) !important; font-size: 14px !important; }
+#worker-modal#worker-modal .mkp-search input::placeholder { color: var(--pp-on-var) !important; }
+#worker-modal#worker-modal .mkp-tab {
+  border: 0 !important;
+  border-radius: 16px !important;
+  background: var(--pp-c2) !important;
+  box-shadow: none !important;
+  transition: border-radius 350ms var(--pp-spring), background-color 150ms var(--pp-effects) !important;
+}
+#worker-modal#worker-modal .mkp-tab .mkp-cat-name { background: transparent !important; color: var(--pp-on-var) !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important; }
+#worker-modal#worker-modal .mkp-tab:hover { background: var(--pp-c3) !important; }
+#worker-modal#worker-modal .mkp-tab.mkp-tab-active { background: var(--pp-primary-c) !important; }
+#worker-modal#worker-modal .mkp-tab.mkp-tab-active .mkp-cat-name { color: var(--pp-on-primary-c) !important; }
+#worker-modal#worker-modal .mkp-tab:active { border-radius: 10px !important; }
+#worker-modal#worker-modal .mkp-group h5 { color: var(--pp-on-var) !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important; }
+#worker-modal#worker-modal .mkp-emoji-btn { border-radius: 14px !important; transition: border-radius 350ms var(--pp-spring), background-color 150ms var(--pp-effects) !important; }
+#worker-modal#worker-modal .mkp-emoji-btn:hover { background: var(--pp-c3) !important; border-radius: 10px !important; }
+#worker-modal#worker-modal .mkp-btn {
+  min-height: 40px !important;
+  border: 0 !important;
+  border-radius: 20px !important;
+  box-shadow: none !important;
+  font-weight: 500 !important;
+  transition: border-radius 350ms var(--pp-spring), background-color 150ms var(--pp-effects) !important;
+}
+#worker-modal#worker-modal .mkp-clear { background: var(--pp-c3) !important; color: var(--pp-on) !important; }
+#worker-modal#worker-modal .mkp-save { background: var(--pp-primary) !important; color: var(--pp-on-primary) !important; }
+#worker-modal#worker-modal .mkp-btn:active { border-radius: 10px !important; }
+
+/* Kalendāra/Emoji cilnē logs bija nobīdīts pa labi: JS centrē to savam
+   platumam (inline left), bet "#worker-modal { width: min(820px, 96vw) !important }"
+   padara to platāku, tāpēc labā mala izlīda ārā. Centrē pēc īstā platuma.
+   Noguruma un Izskata režīmiem ir savs centrējums — tos neaiztiek. */
+:root:not(.mk-mobile-shell) #worker-modal#worker-modal.open:not(.mk-fatigue-mode):not(.mk-skin-mode) {
+  left: calc((100vw - min(820px, 96vw)) / 2) !important;
+}
+
+/* ── Stils: trīs cilnes (Izkārtojums · Krāsas · Elementi) un M3 vadīklas ── */
+#worker-modal#worker-modal .wf-subtabs {
+  display: flex;
+  gap: 4px;
+  margin: 4px 0 14px;
+  padding: 4px;
+  border-radius: 24px;
+  background: var(--pp-c1);
+}
+#worker-modal#worker-modal .wf-subtabs button {
+  flex: 1 1 0;
+  min-height: 36px;
+  border: 0;
+  border-radius: 18px;
+  background: transparent;
+  color: var(--pp-on-var);
+  font: 500 13px/1 var(--pp-font);
+  cursor: pointer;
+  transition: border-radius 350ms var(--pp-spring), background-color 150ms var(--pp-effects), color 150ms var(--pp-effects);
+}
+#worker-modal#worker-modal .wf-subtabs button:hover { background: var(--pp-c3); color: var(--pp-on); }
+#worker-modal#worker-modal .wf-subtabs button.is-active { background: var(--pp-primary-c); color: var(--pp-on-primary-c); }
+#worker-modal#worker-modal .wf-subtabs button:active { border-radius: 10px; }
+#worker-modal#worker-modal .wf-subtabs button:focus-visible { outline: 2px solid var(--pp-primary); outline-offset: 2px; }
+#worker-modal#worker-modal .wf-group[hidden] { display: none !important; }
+#worker-modal#worker-modal .wf-editor-heading strong { color: var(--pp-on) !important; font-size: 16px !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important; }
+#worker-modal#worker-modal .wf-section { border-color: rgba(184, 193, 205, .08) !important; }
+#worker-modal#worker-modal .wf-label { color: var(--pp-on) !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important; }
+#worker-modal#worker-modal .wf-label span { color: var(--pp-on-var) !important; font-weight: 400 !important; }
+#worker-modal#worker-modal .wf-segment { gap: 6px !important; border: 0 !important; background: transparent !important; box-shadow: none !important; }
+#worker-modal#worker-modal .wf-segment button,
+#worker-modal#worker-modal .wf-elements button,
+#worker-modal#worker-modal .wf-face-choice {
+  border: 0 !important;
+  border-radius: 16px !important;
+  background: var(--pp-c2) !important;
+  color: var(--pp-on-var) !important;
+  box-shadow: none !important;
+  font-weight: 500 !important;
+  transition: border-radius 350ms var(--pp-spring), background-color 150ms var(--pp-effects), color 150ms var(--pp-effects) !important;
+}
+#worker-modal#worker-modal .wf-segment button:hover,
+#worker-modal#worker-modal .wf-elements button:hover,
+#worker-modal#worker-modal .wf-face-choice:hover { background: var(--pp-c3) !important; color: var(--pp-on) !important; }
+#worker-modal#worker-modal .wf-segment button[aria-pressed="true"],
+#worker-modal#worker-modal .wf-elements button[aria-pressed="true"],
+#worker-modal#worker-modal .wf-face-choice[aria-pressed="true"] { background: var(--pp-primary-c) !important; color: var(--pp-on-primary-c) !important; }
+#worker-modal#worker-modal .wf-segment button:active,
+#worker-modal#worker-modal .wf-elements button:active,
+#worker-modal#worker-modal .wf-face-choice:active { border-radius: 10px !important; }
+#worker-modal#worker-modal .wf-elements button.is-off:not([aria-pressed="true"]) { background: transparent !important; box-shadow: inset 0 0 0 1px rgba(184, 193, 205, .22) !important; }
+#worker-modal#worker-modal .wf-swatches button,
+#worker-modal#worker-modal .wf-metals button { border: 0 !important; transition: transform 350ms var(--pp-spring) !important; }
+#worker-modal#worker-modal .wf-swatches button[aria-pressed="true"],
+#worker-modal#worker-modal .wf-metals button[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--pp-bg), 0 0 0 5px var(--pp-primary) !important; }
+#worker-modal#worker-modal .wf-swatches button:hover,
+#worker-modal#worker-modal .wf-metals button:hover { transform: scale(1.08); }
+#worker-modal#worker-modal .wf-range { color: var(--pp-on-var) !important; }
+#worker-modal#worker-modal .wf-range input[type="range"] { accent-color: var(--pp-primary); }
+#worker-modal#worker-modal .wf-range output { color: var(--pp-on) !important; font-variant-numeric: tabular-nums !important; }
+#worker-modal#worker-modal .wf-part-head strong { color: var(--pp-on) !important; font-weight: 500 !important; }
+#worker-modal#worker-modal .wf-remove,
+#worker-modal#worker-modal .wf-fit,
+#worker-modal#worker-modal .wf-part-color-clear,
+#worker-modal#worker-modal .wf-full-tint-auto,
+#worker-modal#worker-modal .wf-footer button {
+  min-height: 36px !important;
+  padding: 0 16px !important;
+  border: 0 !important;
+  border-radius: 18px !important;
+  background: var(--pp-c3) !important;
+  color: var(--pp-on) !important;
+  box-shadow: none !important;
+  font: 500 13px/1 var(--pp-font) !important;
+  transition: border-radius 350ms var(--pp-spring), background-color 150ms var(--pp-effects) !important;
+}
+#worker-modal#worker-modal .wf-remove:hover,
+#worker-modal#worker-modal .wf-fit:hover,
+#worker-modal#worker-modal .wf-footer button:hover:not(:disabled) { background: var(--pp-c4) !important; }
+#worker-modal#worker-modal .wf-remove:active,
+#worker-modal#worker-modal .wf-fit:active,
+#worker-modal#worker-modal .wf-footer button:active { border-radius: 10px !important; }
+#worker-modal#worker-modal .wf-footer button:disabled { opacity: .4 !important; }
+#worker-modal#worker-modal .wf-full-tint-auto[aria-pressed="true"] { background: var(--pp-primary-c) !important; color: var(--pp-on-primary-c) !important; }
+#worker-modal#worker-modal .wf-background > summary { color: var(--pp-on) !important; font-weight: 500 !important; }
+#worker-modal#worker-modal .wf-footer { border-top: 1px solid rgba(184, 193, 205, .08) !important; }
 </style>
 </body>
 </html>

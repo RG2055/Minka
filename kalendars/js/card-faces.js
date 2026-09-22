@@ -468,13 +468,23 @@
       + '<div class="wf-section wf-look"><div class="wf-label">Kartītes izskats <span>attiecas uz visu kartīti, arī attēlu</span></div><div class="wf-segment wf-look-modes" aria-label="Kartītes izskats">'+[['0','Noklusējums'],['1','Tumšs'],['2','Caurspīdīgs'],['3','Tonēts']].map(function(m){return '<button type="button" data-full-tint-mode="'+m[0]+'"><b class="wf-look-sample" aria-hidden="true">24</b><span>'+m[1]+'</span></button>';}).join('')+'</div>'
       + '<div class="wf-look-tinted" hidden><label class="wf-range wf-hue"><span>Krāsa</span><input type="range" class="wf-full-tint-hue" min="0" max="360" aria-label="Toņa krāsa"><output></output></label><label class="wf-range wf-light"><span>Intensitāte</span><input type="range" class="wf-full-tint-light" min="0" max="100" aria-label="Toņa intensitāte"><output></output></label><button type="button" class="wf-full-tint-auto" aria-pressed="false">Krāsa no attēla</button></div>'
       + '<div class="wf-segment wf-look-scheme" hidden aria-label="Gaišs vai tumšs"><button type="button" data-full-tint-scheme="1">Gaišs</button><button type="button" data-full-tint-scheme="2">Tumšs</button><button type="button" data-full-tint-scheme="0">Auto</button></div></div>';
+    // Trīs cilnes vienas garās lapas vietā: Izkārtojums · Krāsas · Elementi.
+    // Saturs un loģika ir tie paši; mainās tikai tas, kas redzams vienlaikus.
     panel.innerHTML = '<div class="wf-editor-heading"><div><strong>Kartītes izskats</strong></div></div>'
+      + '<div class="wf-subtabs" role="tablist" aria-label="Stila iestatījumi">'
+      + [['layout','Izkārtojums'],['colors','Krāsas'],['parts','Elementi']].map(function(t){return '<button type="button" role="tab" data-wf-tab="'+t[0]+'">'+t[1]+'</button>';}).join('')
+      + '</div>'
+      + '<div class="wf-group" data-wf-group="layout" role="tabpanel">'
       + '<div class="wf-faces">'+faceTiles+'</div>'
+      + '</div>'
+      + '<div class="wf-group" data-wf-group="colors" role="tabpanel">'
       + look
       + '<div class="wf-section wf-accent"><div class="wf-label">Akcenta krāsa <span>cipariem, čipiem un ikonām, ja elementam nav savas</span> <input type="color" class="wf-color" aria-label="Akcenta krāsa"></div><div class="wf-swatches">'+colors.map(function(c){return '<button type="button" data-tint="'+c[1].slice(1)+'" style="--sw:'+c[1]+'" title="'+c[0]+'" aria-label="'+c[0]+'"></button>';}).join('')+'</div>'
       + '</div><div class="wf-section wf-finish"><div class="wf-label">Ciparu materiāls</div>'
       + '<div class="wf-segment" aria-label="Ciparu materiāls">'+['Stikls','Metāls','Tīrs','Plūsma','Perlamutrs','Neons'].map(function(t,i){return '<button type="button" data-finish="'+i+'" data-watch-finish="'+i+'" aria-label="'+t+'"><b class="wf-number-sample" aria-hidden="true">24</b><span>'+t+'</span></button>';}).join('')+'</div></div>'
       + '<div class="wf-section wf-metal"><div class="wf-label">Metāla ietvars <span class="wf-metal-name"></span></div><div class="wf-metals">'+metals.map(function(c,i){return '<button type="button" data-metal="'+i+'" style="--sw:'+c[1]+'" title="'+c[0]+'" aria-label="'+c[0]+'"></button>';}).join('')+'</div></div>'
+      + '</div>'
+      + '<div class="wf-group" data-wf-group="parts" role="tabpanel">'
       + '<div class="wf-section"><div class="wf-label">Elementi <span>Velc priekšskatījumā</span></div><div class="wf-elements">'+M.parts.map(function(key){return '<button type="button" data-part="'+key+'">'+labels[key]+'</button>';}).join('')+'</div>'
       + '<div class="wf-part-head"><strong class="wf-part-name"></strong><button type="button" class="wf-remove">Noņemt</button></div>'
       + '<div class="wf-part-color"><span>Šī elementa krāsa</span><input type="color" class="wf-part-color-input" aria-label="Šī elementa krāsa"><button type="button" class="wf-part-color-clear">Kā akcenta krāsa</button></div>'
@@ -483,8 +493,22 @@
       + '<button type="button" class="wf-fit">Ietilpināt kartītē</button></div>'
       + '<label class="wf-depth-control"><input type="checkbox" class="wf-depth-toggle"> Objekts priekšā ciparam</label>'
       + '<details class="wf-background"><summary>Attēla novietojums</summary>'+[['imageX','Horizontāli',0,100],['imageY','Vertikāli',0,100],['imageZoom','Tuvinājums',100,180]].map(function(r){return '<label class="wf-range"><span>'+r[1]+'</span><input type="range" data-image="'+r[0]+'" min="'+r[2]+'" max="'+r[3]+'"><output></output></label>';}).join('')+'</details>'
+      + '</div>'
       + '<div class="wf-footer"><button type="button" class="wf-undo" disabled>Atcelt pēdējo</button><button type="button" class="wf-reset">Atjaunot izkārtojumu</button><button type="button" class="wf-original">Sākotnējā klasika</button></div>';
     tabs.after(panel);
+    var wfTab='layout';
+    try{ wfTab=localStorage.getItem('minka:wf-tab')||'layout'; }catch(_e){}
+    function showGroup(name){
+      if(!panel.querySelector('[data-wf-group="'+name+'"]'))name='layout';
+      wfTab=name;
+      try{ localStorage.setItem('minka:wf-tab',name); }catch(_e){}
+      panel.querySelectorAll('[data-wf-tab]').forEach(function(b){var on=b.dataset.wfTab===name;b.classList.toggle('is-active',on);b.setAttribute('aria-selected',String(on));});
+      panel.querySelectorAll('[data-wf-group]').forEach(function(g){g.hidden=g.dataset.wfGroup!==name;});
+    }
+    showGroup(wfTab);
+    panel.addEventListener('click',function(e){var b=e.target.closest('[data-wf-tab]');if(b)showGroup(b.dataset.wfTab);});
+    // Pieskaroties elementam priekšskatījumā, uzreiz rāda tā iestatījumus.
+    preview.addEventListener('pointerdown',function(e){if(e.target.closest&&e.target.closest('[data-wf-part]'))showGroup('parts');},true);
     function activate() {
       config=M.clean(options.get().face);
       options.section('face');
