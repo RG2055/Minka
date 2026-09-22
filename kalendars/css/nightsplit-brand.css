@@ -1861,3 +1861,25 @@ html.mk-low-spec:not(.mk-mobile-shell) #nsOverlay.open #nsPanel { transform: tra
   #nsOverlay, #nsOverlay #nsPanel, #nsCloseBtn,
   #nsPanel .nss-shell, #nsPanel .ns-mode-btn, #nsPanel .ns-raffle-trigger { transition: none !important; }
 }
+/* "×" ir fonta glifs un nesēž apļa vidū (bāzes līnija, fonta metrika). Krustu
+   zīmē divas 14 px līnijas no pogas centra — ģeometriski precīzi vidū. */
+:root:not(.mk-mobile-shell) #nsCloseBtn {
+  position: absolute !important;
+  font-size: 0 !important;
+  color: #c9d6e1 !important;
+}
+:root:not(.mk-mobile-shell) #nsCloseBtn::before,
+:root:not(.mk-mobile-shell) #nsCloseBtn::after {
+  content: '' !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 14px !important;
+  height: 1.75px !important;
+  margin: -.875px 0 0 -7px !important;
+  border-radius: 1px !important;
+  background: currentColor !important;
+  transform: rotate(45deg) !important;
+}
+:root:not(.mk-mobile-shell) #nsCloseBtn::after { transform: rotate(-45deg) !important; }
+:root:not(.mk-mobile-shell) #nsCloseBtn:hover { color: #ffffff !important; }
