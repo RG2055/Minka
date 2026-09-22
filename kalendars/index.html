@@ -1570,7 +1570,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="data/svinamas-dienas.js?v=20260922mood17"></script>
+<script src="data/svinamas-dienas.js?v=20260922mood18"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/known-carryovers.js?v=20260907smooth1"></script>
 <script src="js/card-face-model.js?v=20260912wa4"></script>
@@ -2990,10 +2990,10 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260922mood17"></script>
+<script src="js/calendar.js?v=20260922mood18"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
-<script src="js/header-weather.js?v=20260922mood17" defer></script>
+<script src="js/header-weather.js?v=20260922mood18" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260831autofit1"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
 <script src="js/light-model.js?v=20260908light1"></script>
@@ -3004,14 +3004,14 @@ function _mkToast(msg, type) {
 <script src="js/design_v1.js?v=20260824perfaudit2" defer></script>
 <script src="js/theme.js?v=20260920header-duty1" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
-<script src="js/emoji.js?v=20260922mood17" defer></script>
+<script src="js/emoji.js?v=20260922mood18" defer></script>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
 <script src="js/daybook-model.js?v=20260911b" defer></script>
-<script src="js/daybook.js?v=20260922mood17" defer></script>
-<script src="js/levels.js?v=20260922mood17" defer></script>
+<script src="js/daybook.js?v=20260922mood18" defer></script>
+<script src="js/levels.js?v=20260922mood18" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260922mood17';
+window.__minkaLocalBuild = '20260922mood18';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -25031,7 +25031,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
    css/mobile-v2.css + js/mobile-v2.js — vizuālais izkārtojums; ?mv2=0 to atslēdz. */
 (function(){
   if (!document.documentElement.classList.contains('mk-mobile-shell')) return;
-  var v = '20260922mood17';
+  var v = '20260922mood18';
   function css(href) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href + '?v=' + v; document.body.appendChild(l); }
   css('css/mobile-fixes.css');
   try { if (new URLSearchParams(location.search).get('mv2') === '0') return; } catch (_e) {}
@@ -25049,9 +25049,9 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 </style>
 <script src="../js/image-palette.js?v=20260919palette2"></script>
-<link rel="stylesheet" href="css/header-appearance.css?v=20260922mood17">
-<script src="js/header-appearance.js?v=20260922mood17"></script>
-<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922mood17">
+<link rel="stylesheet" href="css/header-appearance.css?v=20260922mood18">
+<script src="js/header-appearance.js?v=20260922mood18"></script>
+<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922mood18">
 <style>
 /* ── Noskaņas kartīte un saziņa: Material 3 Expressive ───────────────────
    Tie paši žetoni, ko lieto kafijas izvēlne: toņu virsmas rāmju vietā,
@@ -25837,26 +25837,28 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
   z-index: 3 !important;
   display: flex !important;
   align-items: center !important;
-  gap: 4px !important;
-  transform: translate(30%, -34%) !important;
+  gap: 3px !important;
+  transform: translate(12%, -30%) !important;
 }
 #grafiks-list .rg-feedback-card .rg-pulse-write--comment .rg-feedback-badges .rg-feedback-action-count {
   position: static !important;
   transform: none !important;
   margin: 0 !important;
 }
+/* Jaunums ir piezīme pie kopskaita, ne otrs tikpat liels aplis: tas ir
+   manāmi mazāks un stāv blakus, nevis dala vietu ar to. */
 #grafiks-list .rg-feedback-card .rg-pulse-write--comment .rg-feedback-new-count {
   position: static !important;
   z-index: 3 !important;
-  min-width: clamp(20px, 9cqw, 25px) !important;
-  height: clamp(20px, 9cqw, 25px) !important;
-  padding: 0 clamp(3px, 1.4cqw, 5px) !important;
+  min-width: clamp(14px, 6.2cqw, 18px) !important;
+  height: clamp(14px, 6.2cqw, 18px) !important;
+  padding: 0 clamp(2px, 1cqw, 4px) !important;
   display: grid !important;
   place-items: center !important;
   border-radius: 999px !important;
   background: #f97316 !important;
   color: #ffffff !important;
-  font: 900 clamp(9px, 4.2cqw, 11.5px)/1 Inter, system-ui, sans-serif !important;
+  font: 900 clamp(7px, 3.1cqw, 8.5px)/1 Inter, system-ui, sans-serif !important;
   font-variant-numeric: tabular-nums !important;
   animation: rg-fresh-pop 420ms cubic-bezier(.2, 0, 0, 1) !important;
 }
