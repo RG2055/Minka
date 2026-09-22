@@ -1570,7 +1570,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="data/svinamas-dienas.js?v=20260922mood20"></script>
+<script src="data/svinamas-dienas.js?v=20260922mood21"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/known-carryovers.js?v=20260907smooth1"></script>
 <script src="js/card-face-model.js?v=20260912wa4"></script>
@@ -2990,10 +2990,10 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260922mood20"></script>
+<script src="js/calendar.js?v=20260922mood21"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
-<script src="js/header-weather.js?v=20260922mood20" defer></script>
+<script src="js/header-weather.js?v=20260922mood21" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260831autofit1"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
 <script src="js/light-model.js?v=20260908light1"></script>
@@ -3004,14 +3004,14 @@ function _mkToast(msg, type) {
 <script src="js/design_v1.js?v=20260824perfaudit2" defer></script>
 <script src="js/theme.js?v=20260920header-duty1" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
-<script src="js/emoji.js?v=20260922mood20" defer></script>
+<script src="js/emoji.js?v=20260922mood21" defer></script>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
 <script src="js/daybook-model.js?v=20260911b" defer></script>
-<script src="js/daybook.js?v=20260922mood20" defer></script>
-<script src="js/levels.js?v=20260922mood20" defer></script>
+<script src="js/daybook.js?v=20260922mood21" defer></script>
+<script src="js/levels.js?v=20260922mood21" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260922mood20';
+window.__minkaLocalBuild = '20260922mood21';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -19949,8 +19949,14 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     }
     if (refs.stage) refs.stage.classList.toggle('has-own-mood', !preview && !!(own && own.emoji));
     if (refs.label) {
-      refs.label.textContent = visual.label || '\u00a0';
-      refs.label.style.color = key ? visual.color1 : '';
+      // The day's own note belongs in the visible label under the blob — the
+      // card's other label is screen-reader only, so a note written there was
+      // never seen.
+      var ownNote = !preview && own && own.note ? own.note : '';
+      refs.label.textContent = ownNote || visual.label || '\u00a0';
+      refs.label.style.color = ownNote ? '' : (key ? visual.color1 : '');
+      refs.label.classList.toggle('is-own-note', !!ownNote);
+      refs.label.title = ownNote;
     }
     moodFaceParts.forEach(function (part) {
       var el = refs.face[part];
@@ -25031,7 +25037,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
    css/mobile-v2.css + js/mobile-v2.js — vizuālais izkārtojums; ?mv2=0 to atslēdz. */
 (function(){
   if (!document.documentElement.classList.contains('mk-mobile-shell')) return;
-  var v = '20260922mood20';
+  var v = '20260922mood21';
   function css(href) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href + '?v=' + v; document.body.appendChild(l); }
   css('css/mobile-fixes.css');
   try { if (new URLSearchParams(location.search).get('mv2') === '0') return; } catch (_e) {}
@@ -25049,9 +25055,9 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 </style>
 <script src="../js/image-palette.js?v=20260919palette2"></script>
-<link rel="stylesheet" href="css/header-appearance.css?v=20260922mood20">
-<script src="js/header-appearance.js?v=20260922mood20"></script>
-<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922mood20">
+<link rel="stylesheet" href="css/header-appearance.css?v=20260922mood21">
+<script src="js/header-appearance.js?v=20260922mood21"></script>
+<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922mood21">
 <style>
 /* ── Noskaņas kartīte un saziņa: Material 3 Expressive ───────────────────
    Tie paši žetoni, ko lieto kafijas izvēlne: toņu virsmas rāmju vietā,

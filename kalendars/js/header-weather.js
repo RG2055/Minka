@@ -324,7 +324,24 @@
       chip.replaceChildren(icon, value);
     }
     var src = 'assets/weather-icons/' + asset + '.svg';
-    if (icon.getAttribute('src') !== src) icon.setAttribute('src', src);
+    if (icon.dataset.iconSrc !== src) {
+      icon.dataset.iconSrc = src;
+      icon.dataset.retried = '';
+      icon.setAttribute('src', src);
+    }
+    // A fetch that fails once — typically while the service worker is being
+    // replaced — used to leave a broken image until the weather changed. Try
+    // once more with a fresh URL; if that fails too, hide the icon rather
+    // than show the broken-image glyph.
+    icon.onerror = function () {
+      if (!icon.dataset.retried) {
+        icon.dataset.retried = '1';
+        setTimeout(function () { icon.setAttribute('src', src + '?r=' + Date.now()); }, 800);
+        return;
+      }
+      icon.style.visibility = 'hidden';
+    };
+    icon.onload = function () { icon.style.visibility = ''; };
     if (value.textContent !== text) value.textContent = text;
   }
 
