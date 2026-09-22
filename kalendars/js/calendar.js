@@ -5750,7 +5750,14 @@ function filterFullList(btn) {
       }
       if (source === 'brite' || source === 'mycoffee') {
         // Pixel-art artwork from the owner, cut out of its white background.
-        return '<img src="assets/coffee/' + source + '.png" alt="" decoding="async" loading="lazy">';
+        // Wrapped in the same 32x32 <svg> as the drawn icons on purpose: every
+        // place that shows these icons — the picker, the stats chips, the mood
+        // ring — sizes them with an `svg` rule, and a bare <img> ignored all of
+        // them and rendered at its own 160px.
+        return '<svg viewBox="0 0 32 32" aria-hidden="true">'
+          + '<image href="assets/coffee/' + source + '.png" x="0" y="0" width="32" height="32"'
+          + ' preserveAspectRatio="xMidYMid meet" style="image-rendering:pixelated"/>'
+          + '</svg>';
       }
       if (source === 'cupcoffee') {
         // Generic vending-machine coffee — plain ribbed plastic cup, tapered
