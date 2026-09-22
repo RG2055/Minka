@@ -2248,7 +2248,9 @@
       if(!slot || typeof axisStart!=='number' || typeof axisEnd!=='number' || axisEnd<=axisStart) return '';
       // Span the complete card width so adjacent cards meet at the exact same
       // time/value instead of showing two padded samples at the seam.
-      var x0=0, y0=100, w=280, h=80, steps=34;
+      // The curves live in the bottom band under the fatigue pill (77–98 % of
+      // the card), so they no longer cross the name, times or the pill.
+      var x0=0, y0=141, w=280, h=38, steps=34;
       function pointPath(kind){
         var d='', area='';
         for(var i=0;i<=steps;i++){
@@ -2266,13 +2268,12 @@
       var cor=pointPath('cor');
       var wake=pointPath('wake');
       return '<g class="nsc-rhythm-lines">'
-        +'<path d="'+mel.area+'" fill="url(#'+uid+'-melFill)" opacity="0.40"/>'
-        +'<path d="'+mel.line+'" fill="none" stroke="#83bced" stroke-width="5.5" opacity="0.20" stroke-linecap="round" stroke-linejoin="round"/>'
-        +'<path d="'+mel.line+'" fill="none" stroke="#83bced" stroke-width="1.7" opacity="0.95" stroke-linecap="round" stroke-linejoin="round"/>'
-        +'<path d="'+cor.line+'" fill="none" stroke="#e9ca79" stroke-width="4.8" opacity="0.18" stroke-dasharray="5 4" stroke-linecap="round" stroke-linejoin="round"/>'
-        +'<path d="'+cor.line+'" fill="none" stroke="#e9ca79" stroke-width="1.6" stroke-dasharray="5 4" opacity="0.96" stroke-linecap="round" stroke-linejoin="round"/>'
-        +'<path d="'+wake.line+'" fill="none" stroke="#8bd6ae" stroke-width="5.2" opacity="0.18" stroke-linecap="round" stroke-linejoin="round"/>'
-        +'<path d="'+wake.line+'" fill="none" stroke="#8bd6ae" stroke-width="1.7" opacity="0.92" stroke-linecap="round" stroke-linejoin="round"/>'
+        // One clean stroke per curve (no wide glow under-stroke): calmer to
+        // read and three paths less to paint per card.
+        +'<path d="'+mel.area+'" fill="url(#'+uid+'-melFill)" opacity="0.30"/>'
+        +'<path d="'+mel.line+'" fill="none" stroke="#8cc4f2" stroke-width="1.6" opacity="0.9" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'
+        +'<path d="'+cor.line+'" fill="none" stroke="#ecd08a" stroke-width="1.6" stroke-dasharray="4 4" opacity="0.9" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'
+        +'<path d="'+wake.line+'" fill="none" stroke="#93dcb6" stroke-width="1.6" opacity="0.85" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'
         +'</g>';
     }
 
