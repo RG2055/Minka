@@ -1566,7 +1566,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="data/svinamas-dienas.js?v=20260922focal2"></script>
+<script src="data/svinamas-dienas.js?v=20260922focal3"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/known-carryovers.js?v=20260907smooth1"></script>
 <script src="js/card-face-model.js?v=20260912wa4"></script>
@@ -2986,7 +2986,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260922focal2"></script>
+<script src="js/calendar.js?v=20260922focal3"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
 <script src="js/header-weather.js?v=20260920icons1" defer></script>
@@ -3007,7 +3007,7 @@ function _mkToast(msg, type) {
 <script src="js/levels.js?v=20260911daybook2" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260922focal2';
+window.__minkaLocalBuild = '20260922focal3';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -24295,16 +24295,6 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
     wrap.querySelectorAll('.mk-duty-wing-slot').forEach(function(slot) {
       dutyHeight = Math.max(dutyHeight, Math.ceil(slot.getBoundingClientRect().height) + 8);
     });
-    // The photo box keeps a proportion on wide monitors. The header is the
-    // same ~200px tall on every screen, so on a 1900px-wide monitor the
-    // scenery box is 9.5:1 and a 5.5:1 picture loses 40% of its height,
-    // while a MacBook shows almost all of it. Below ~1400px this changes
-    // nothing; above it the top block grows so the box (top block + ruler +
-    // day strip, ~90px) never gets wider than 7:1, capped so an ultrawide
-    // screen does not get a 400px header. With each picture's focal point
-    // (object-position) the framing is then comparable everywhere.
-    var scenic = wrap.querySelector('#minkaBarInner.mk-header-scenic');
-    if (scenic) dutyHeight = Math.max(dutyHeight, Math.min(200, Math.round(appWidth / 7) - 90));
     var dutyHeightValue = dutyHeight + 'px';
     if (wrap.style.getPropertyValue('--mk-duty-summary-height') !== dutyHeightValue) {
       wrap.style.setProperty('--mk-duty-summary-height', dutyHeightValue);
@@ -24361,9 +24351,6 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
     }
     window.addEventListener('resize', scheduleGeometry, { passive: true });
     window.addEventListener('daySelected', scheduleGeometry, { passive: true });
-    // The scenery layer mounts after the first geometry pass; its proportion
-    // is part of the top block's height.
-    window.addEventListener('minka:header-scenery', scheduleGeometry, { passive: true });
     document.addEventListener('minka:monthReady', function(){
       moveDutyNodes();
       scheduleGeometry();
@@ -24402,7 +24389,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
    css/mobile-v2.css + js/mobile-v2.js — vizuālais izkārtojums; ?mv2=0 to atslēdz. */
 (function(){
   if (!document.documentElement.classList.contains('mk-mobile-shell')) return;
-  var v = '20260922focal2';
+  var v = '20260922focal3';
   function css(href) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href + '?v=' + v; document.body.appendChild(l); }
   css('css/mobile-fixes.css');
   try { if (new URLSearchParams(location.search).get('mv2') === '0') return; } catch (_e) {}
@@ -24420,8 +24407,8 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 </style>
 <script src="../js/image-palette.js?v=20260919palette2"></script>
-<link rel="stylesheet" href="css/header-appearance.css?v=20260922focal2">
+<link rel="stylesheet" href="css/header-appearance.css?v=20260922focal3">
 <script src="js/header-appearance.js?v=20260920mix3"></script>
-<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922focal2">
+<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922focal3">
 </body>
 </html>
