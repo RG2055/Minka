@@ -1570,7 +1570,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="data/svinamas-dienas.js?v=20260922topic5"></script>
+<script src="data/svinamas-dienas.js?v=20260922topic7"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/known-carryovers.js?v=20260907smooth1"></script>
 <script src="js/card-face-model.js?v=20260912wa4"></script>
@@ -2990,10 +2990,10 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260922topic5"></script>
+<script src="js/calendar.js?v=20260922topic7"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
-<script src="js/header-weather.js?v=20260922topic5" defer></script>
+<script src="js/header-weather.js?v=20260922topic7" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260831autofit1"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
 <script src="js/light-model.js?v=20260908light1"></script>
@@ -3004,14 +3004,14 @@ function _mkToast(msg, type) {
 <script src="js/design_v1.js?v=20260824perfaudit2" defer></script>
 <script src="js/theme.js?v=20260920header-duty1" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
-<script src="js/emoji.js?v=20260922topic5" defer></script>
+<script src="js/emoji.js?v=20260922topic7" defer></script>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
 <script src="js/daybook-model.js?v=20260911b" defer></script>
-<script src="js/daybook.js?v=20260922topic5" defer></script>
-<script src="js/levels.js?v=20260922topic5" defer></script>
+<script src="js/daybook.js?v=20260922topic7" defer></script>
+<script src="js/levels.js?v=20260922topic7" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260922topic5';
+window.__minkaLocalBuild = '20260922topic7';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -20954,6 +20954,63 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   var topicPickerTab = 'all';
   var topicPickerQuery = '';
   var topicPickerMode = 'topic';   // 'topic' | 'message'
+  /* Kuri koda punkti Fluent fontam tiešām ir. Saraksts nāk no paša fonta CSS
+     (unicode-range gabali), tāpēc tas nekad nenovecos attiecībā pret fontu, un
+     emoji, ko uzzīmētu sistēmas fonts, izvēlnē vispār neparādās. */
+  var fluentRanges = null;
+  function fluentCoverage() {
+    if (fluentRanges) return fluentRanges;
+    var ranges = [];
+    var sheets = Array.prototype.slice.call(document.styleSheets);
+    sheets.forEach(function (sheet) {
+      if (!/FluentEmojiColor/.test(sheet.href || '')) return;
+      var rules;
+      try { rules = sheet.cssRules; } catch (_error) { return; }
+      Array.prototype.forEach.call(rules || [], function (rule) {
+        if (!rule || rule.type !== 5 || !rule.style) return;       // @font-face
+        String(rule.style.unicodeRange || '').split(',').forEach(function (part) {
+          var match = part.trim().match(/^U\+([0-9A-Fa-f]+)(?:-([0-9A-Fa-f]+))?$/);
+          if (!match) return;
+          var from = parseInt(match[1], 16);
+          ranges.push([from, match[2] ? parseInt(match[2], 16) : from]);
+        });
+      });
+    });
+    fluentRanges = ranges;
+    return fluentRanges;
+  }
+  // U+FE0F (variation selector) and U+200D (joiner) are glue, not glyphs.
+  function fluentDraws(emoji) {
+    var ranges = fluentCoverage();
+    if (!ranges.length) return true;                                // font CSS not parsed: show everything
+    var points = Array.from(String(emoji || ''));
+    for (var i = 0; i < points.length; i++) {
+      var code = points[i].codePointAt(0);
+      if (code === 0xFE0F || code === 0x200D || code === 0xFE0E) continue;
+      var covered = ranges.some(function (range) { return code >= range[0] && code <= range[1]; });
+      if (!covered) return false;
+    }
+    return true;
+  }
+  /* Meklēšanas vārdi. Blakus rokā rakstītajiem nosaukumiem der arī animēto
+     Fluent failu vārdi (x-ray.webp -> "x ray"), tāpēc meklē arī tie emoji,
+     kuriem latviskā nosaukuma nav. */
+  var fluentFileNames = null;
+  function loadFluentNames() {
+    if (fluentFileNames) return;
+    fluentFileNames = {};
+    fetch('assets/emoji-anim/manifest.json?v=' + (window.__minkaLocalBuild || '1'), { cache: 'force-cache' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        var all = data && data.emoji ? data.emoji : {};
+        Object.keys(all).forEach(function (key) {
+          var file = String(all[key] && all[key].file || '').replace(/\.webp$/, '').replace(/-/g, ' ');
+          if (file) fluentFileNames[key] = file;
+        });
+        if (topicPicker) renderTopicEmojiGrid();
+      })
+      .catch(function () {});
+  }
   function emojiCatalogue() {
     try {
       if (window.MinkaEmoji && typeof window.MinkaEmoji.catalogue === 'function') return window.MinkaEmoji.catalogue();
@@ -20972,11 +21029,13 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     var data = emojiCatalogue();
     var list = (data.bySection[topicPickerTab] || data.bySection.all || []).slice();
     var query = topicPickerQuery.trim().toLocaleLowerCase('lv-LV');
+    if (query) list = (data.bySection.all || []).slice();
+    list = list.filter(fluentDraws);
     if (query) {
-      var all = data.bySection.all || [];
-      list = all.filter(function (emoji) {
+      list = list.filter(function (emoji) {
         var name = String(data.names[emoji] || '').toLocaleLowerCase('lv-LV');
-        return emoji === query || name.indexOf(query) >= 0;
+        var file = String((fluentFileNames || {})[emoji] || '').toLocaleLowerCase('lv-LV');
+        return emoji === query || name.indexOf(query) >= 0 || file.indexOf(query) >= 0;
       });
     }
     var grid = topicPicker.querySelector('.rg-emoji-grid');
@@ -20994,8 +21053,9 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       button.type = 'button';
       button.className = 'rg-emoji-cell' + (emoji === current ? ' is-on' : '');
       button.dataset.rgPickEmoji = emoji;
-      button.title = data.names[emoji] || emoji;
-      button.setAttribute('aria-label', data.names[emoji] || emoji);
+      var label = data.names[emoji] || (fluentFileNames || {})[emoji] || emoji;
+      button.title = label;
+      button.setAttribute('aria-label', label);
       button.textContent = emoji;
       grid.appendChild(button);
     });
@@ -21019,7 +21079,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       + '<div class="rg-emoji-head"><div><strong>' + (isTopic ? 'Tēmas emoji' : 'Emoji ziņai') + '</strong><small>'
       + (isTopic ? '# ' + topicPickerTopic : 'Izvēlētais tiek ielikts ziņā') + '</small></div>'
       + '<button type="button" class="rg-emoji-done" data-rg-emoji-close="1">Gatavs</button></div>'
-      + '<input class="rg-emoji-search" type="search" placeholder="Meklēt emoji…" autocomplete="off" aria-label="Meklēt emoji">'
+      + '<input class="rg-emoji-search" type="search" placeholder="Meklēt latviski vai angliski…" autocomplete="off" aria-label="Meklēt emoji pēc nosaukuma">'
       + '<div class="rg-emoji-tabs" role="tablist">' + data.sections.map(function (sec) {
         return '<button type="button" class="rg-emoji-tab' + (sec.id === 'all' ? ' is-on' : '') + '" data-rg-emoji-tab="' + sec.id + '" title="' + sec.title + '"><span>' + sec.label + '</span>' + sec.title + '</button>';
       }).join('') + '</div>'
@@ -21027,6 +21087,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       + (isTopic ? '<div class="rg-emoji-foot"><button type="button" class="rg-emoji-clear" data-rg-emoji-clear="1">Noņemt emoji</button></div>' : '')
       + '</div>';
     modal.appendChild(topicPicker);
+    loadFluentNames();
     renderTopicEmojiGrid();
     var search = topicPicker.querySelector('.rg-emoji-search');
     search.addEventListener('input', function () {
@@ -21171,7 +21232,10 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       chip.className = 'rg-comms-topic-chip';
       chip.dataset.rgCommunityTopic = item.topic;
       var chipEmoji = topicEmoji(item.topic);
-      chip.textContent = (chipEmoji ? chipEmoji + ' ' : '# ') + item.topic;
+      var chipMark = document.createElement('span');
+      chipMark.className = chipEmoji ? 'rg-comms-topic-emoji' : '';
+      chipMark.textContent = chipEmoji || '#';
+      chip.append(chipMark, document.createTextNode(' ' + item.topic));
       head.append(author, time, chip);
       var bubble = document.createElement('div');
       bubble.className = 'rg-comms-bubble';
@@ -24761,7 +24825,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
    css/mobile-v2.css + js/mobile-v2.js — vizuālais izkārtojums; ?mv2=0 to atslēdz. */
 (function(){
   if (!document.documentElement.classList.contains('mk-mobile-shell')) return;
-  var v = '20260922topic5';
+  var v = '20260922topic7';
   function css(href) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href + '?v=' + v; document.body.appendChild(l); }
   css('css/mobile-fixes.css');
   try { if (new URLSearchParams(location.search).get('mv2') === '0') return; } catch (_e) {}
@@ -24779,9 +24843,9 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 </style>
 <script src="../js/image-palette.js?v=20260919palette2"></script>
-<link rel="stylesheet" href="css/header-appearance.css?v=20260922topic5">
-<script src="js/header-appearance.js?v=20260922topic5"></script>
-<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922topic5">
+<link rel="stylesheet" href="css/header-appearance.css?v=20260922topic7">
+<script src="js/header-appearance.js?v=20260922topic7"></script>
+<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922topic7">
 <style>
 /* ── Noskaņas kartīte un saziņa: Material 3 Expressive ───────────────────
    Tie paši žetoni, ko lieto kafijas izvēlne: toņu virsmas rāmju vietā,
@@ -25175,6 +25239,13 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 /* Telefonā tie paši žetoni, mazāki soļi: galvai jāietilpst vienā rindā ar
    aizvēršanu, un rakstīšanas rinda nedrīkst salauzt skaitītāju. */
+/* Emoji vienmēr zīmē Fluent fonts. Dialoga tipogrāfijas noteikumi ir ar
+   !important, tāpēc tie pārrakstīja agrāko saimes noteikumu — te tā tiek
+   uzlikta atpakaļ tieši tiem elementiem, kas satur emoji. */
+#rgFeedbackModal :is(.rg-emoji-cell, .rg-emoji-tab span, .rg-comms-emoji, .rg-comms-topic-emoji, .rg-comms-topic-emoji-btn.has-emoji) {
+  font-family: 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif !important;
+  font-variant-emoji: emoji !important;
+}
 /* Tēmas emoji izvēle: M3 lapa dialoga iekšpusē. Mērķi 48px, kategorijas
    kapsulas ar vārdu (ne tikai ikonu), un abas darbības ir nosauktas. */
 #rgFeedbackModal .rg-comms-topic { grid-template-columns: 22px minmax(0, 1fr) auto 30px !important; }
