@@ -1570,7 +1570,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="data/svinamas-dienas.js?v=20260922topic8"></script>
+<script src="data/svinamas-dienas.js?v=20260922topic9"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/known-carryovers.js?v=20260907smooth1"></script>
 <script src="js/card-face-model.js?v=20260912wa4"></script>
@@ -2990,10 +2990,10 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260922topic8"></script>
+<script src="js/calendar.js?v=20260922topic9"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
-<script src="js/header-weather.js?v=20260922topic8" defer></script>
+<script src="js/header-weather.js?v=20260922topic9" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260831autofit1"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
 <script src="js/light-model.js?v=20260908light1"></script>
@@ -3004,14 +3004,14 @@ function _mkToast(msg, type) {
 <script src="js/design_v1.js?v=20260824perfaudit2" defer></script>
 <script src="js/theme.js?v=20260920header-duty1" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
-<script src="js/emoji.js?v=20260922topic8" defer></script>
+<script src="js/emoji.js?v=20260922topic9" defer></script>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
 <script src="js/daybook-model.js?v=20260911b" defer></script>
-<script src="js/daybook.js?v=20260922topic8" defer></script>
-<script src="js/levels.js?v=20260922topic8" defer></script>
+<script src="js/daybook.js?v=20260922topic9" defer></script>
+<script src="js/levels.js?v=20260922topic9" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260922topic8';
+window.__minkaLocalBuild = '20260922topic9';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -21165,9 +21165,12 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     var chosen = typed ? topicEmoji(typed) : '';
     button.textContent = chosen || '☺';
     button.classList.toggle('has-emoji', !!chosen);
+    button.classList.toggle('can-pick', !!typed && !chosen);
     button.title = typed
-      ? (chosen ? 'Mainīt emoji tēmai “' + typed + '”' : 'Pievienot emoji tēmai “' + typed + '”')
-      : 'Vispirms ieraksti tēmas nosaukumu';
+      ? (chosen ? 'Mainīt šīs tēmas emoji' : 'Piešķirt emoji tēmai “' + typed + '”')
+      : 'Ieraksti tēmas nosaukumu, tad šeit var piešķirt tai emoji';
+    button.setAttribute('aria-label', button.title);
+    commsTopicInput.placeholder = 'Tēma';
   }
   function renderCommunityTopics() {
     commsTopics.replaceChildren();
@@ -24851,7 +24854,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
    css/mobile-v2.css + js/mobile-v2.js — vizuālais izkārtojums; ?mv2=0 to atslēdz. */
 (function(){
   if (!document.documentElement.classList.contains('mk-mobile-shell')) return;
-  var v = '20260922topic8';
+  var v = '20260922topic9';
   function css(href) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href + '?v=' + v; document.body.appendChild(l); }
   css('css/mobile-fixes.css');
   try { if (new URLSearchParams(location.search).get('mv2') === '0') return; } catch (_e) {}
@@ -24869,9 +24872,9 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 </style>
 <script src="../js/image-palette.js?v=20260919palette2"></script>
-<link rel="stylesheet" href="css/header-appearance.css?v=20260922topic8">
-<script src="js/header-appearance.js?v=20260922topic8"></script>
-<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922topic8">
+<link rel="stylesheet" href="css/header-appearance.css?v=20260922topic9">
+<script src="js/header-appearance.js?v=20260922topic9"></script>
+<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922topic9">
 <style>
 /* ── Noskaņas kartīte un saziņa: Material 3 Expressive ───────────────────
    Tie paši žetoni, ko lieto kafijas izvēlne: toņu virsmas rāmju vietā,
@@ -25275,30 +25278,50 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 /* Tēmas emoji izvēle: M3 lapa dialoga iekšpusē. Mērķi 48px, kategorijas
    kapsulas ar vārdu (ne tikai ikonu), un abas darbības ir nosauktas. */
 #rgFeedbackModal .rg-comms-topic { grid-template-columns: 22px minmax(0, 1fr) auto 30px !important; }
+/* Emoji poga ir PAŠĀ tēmas laukā, tā labajā malā — tā ir daļa no lauka, nevis
+   atsevišķa ikona kaut kur tālāk pa labi. */
 #rgFeedbackModal .rg-comms-topic-field {
-  position: relative !important;
   display: inline-flex !important;
   align-items: center !important;
+  gap: 2px !important;
   flex: 0 1 auto !important;
   min-width: 0 !important;
+  width: min(300px, 62%) !important;
+  height: 36px !important;
+  padding: 0 4px 0 0 !important;
+  border-radius: 999px !important;
+  background: var(--m3x-container-highest) !important;
 }
-#rgFeedbackModal .rg-comms-topic-field .rg-comms-topic-input { padding-right: 44px !important; }
+#rgFeedbackModal .rg-comms-topic-field .rg-comms-topic-input {
+  flex: 1 1 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: 32px !important;
+  padding: 0 4px 0 16px !important;
+  background: transparent !important;
+}
 #rgFeedbackModal .rg-comms-topic-emoji-btn {
-  position: absolute !important;
-  right: 4px !important;
+  flex: 0 0 32px !important;
   width: 32px !important;
   height: 32px !important;
+  display: grid !important;
+  place-items: center !important;
   border: 0 !important;
   border-radius: 999px !important;
   background: transparent !important;
   color: var(--m3x-on-variant) !important;
-  font-size: 16px !important;
+  font-size: 17px !important;
   line-height: 1 !important;
   cursor: pointer !important;
-  transition: background-color .2s var(--m3x-standard) !important;
+  transition: background-color .2s var(--m3x-standard), color .2s var(--m3x-standard) !important;
 }
 #rgFeedbackModal .rg-comms-topic-emoji-btn:hover { background: rgba(250,250,250,.10) !important; }
-#rgFeedbackModal .rg-comms-topic-emoji-btn.has-emoji { font-size: 18px !important; }
+/* Kamēr tēmai vārds ir, bet emoji nav, poga pati sevi piesaka. */
+#rgFeedbackModal .rg-comms-topic-emoji-btn.can-pick {
+  background: var(--m3x-primary-container) !important;
+  color: var(--m3x-on-primary-container) !important;
+}
+#rgFeedbackModal .rg-comms-topic-emoji-btn.has-emoji { font-size: 19px !important; }
 #rgFeedbackModal .rg-comms-emoji-more {
   border: 1px dashed var(--m3x-outline) !important;
   color: var(--m3x-on-variant) !important;
