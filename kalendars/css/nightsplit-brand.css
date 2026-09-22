@@ -1716,3 +1716,148 @@ html.ns-motion-active #nsPanel .ns-bed-dream.is-in-view .ns-dream-film { animati
     min-width: 0 !important;
   }
 }
+
+/* ── Material 3 Expressive slānis (2026-09-23) ─────────────────────────────
+   Tie paši elementi un tā pati doma, tikai viena formu un kustību valoda:
+   pilnas "pill" vadīklas 40 px augstumā, tonāli aizpildīts izvēlētais
+   kārtošanas veids, apaļa aizvēršanas ikonas poga, vienkāršas ēnas (viena
+   ēna, nevis trīs slāņu bevele — lētāk vecam GPU). Nospiežot, vadīklas
+   forma īsi "saspiežas" (M3 expressive shape morph); tikai border-radius un
+   transform, bez filtriem. Telefona čaulu neaiztiek. */
+:root:not(.mk-mobile-shell) #nsPanel {
+  --m3-surface: #0a1017;
+  --m3-surface-high: #17212b;
+  --m3-surface-highest: #1f2b36;
+  --m3-outline: rgba(190, 214, 230, .16);
+  --m3-on-surface: #e6eef5;
+  --m3-on-variant: #a9b8c5;
+  --m3-primary: #7fdcea;
+  --m3-primary-container: #0f4a55;
+  --m3-on-primary-container: #c4f5fc;
+  --m3-spring: cubic-bezier(.34, 1.45, .64, 1);      /* ātrs telpisks atsperīgums */
+  --m3-emph-dec: cubic-bezier(.05, .7, .1, 1);       /* emphasized decelerate */
+  --m3-emph-acc: cubic-bezier(.3, 0, .8, .15);       /* emphasized accelerate */
+  border-radius: 28px !important;
+  border-color: var(--m3-outline) !important;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .55) !important;
+}
+
+/* Vadīklas: laiks, kārtošana, izloze */
+:root:not(.mk-mobile-shell) #nsPanel .nss-shell {
+  height: 40px !important;
+  border-radius: 20px !important;
+  border: 1px solid var(--m3-outline) !important;
+  background: var(--m3-surface-high) !important;
+  box-shadow: none !important;
+  transition: border-radius 220ms var(--m3-spring), background-color 150ms ease, border-color 150ms ease !important;
+}
+:root:not(.mk-mobile-shell) #nsPanel .nss-shell:hover { background: var(--m3-surface-highest) !important; }
+:root:not(.mk-mobile-shell) #nsPanel .nss-shell:focus-within {
+  border-color: var(--m3-primary) !important;
+  box-shadow: 0 0 0 1px var(--m3-primary) !important;
+}
+:root:not(.mk-mobile-shell) #nsPanel .nss-shell:active { border-radius: 12px !important; }
+:root:not(.mk-mobile-shell) #nsPanel .ns-panel-controls,
+:root:not(.mk-mobile-shell) #nsPanel .ns-mode-btns {
+  gap: 4px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+:root:not(.mk-mobile-shell) #nsPanel .ns-mode-btn,
+:root:not(.mk-mobile-shell) #nsPanel .ns-raffle-trigger {
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 16px !important;
+  border: 1px solid var(--m3-outline) !important;
+  border-radius: 20px !important;
+  background: var(--m3-surface-high) !important;
+  box-shadow: none !important;
+  color: var(--m3-on-variant) !important;
+  font-weight: 600 !important;
+  transition: border-radius 220ms var(--m3-spring), background-color 150ms ease, color 150ms ease, border-color 150ms ease !important;
+}
+/* Savienotā pogu grupa: iekšējie stūri mazāki, ārējie pilni. */
+
+:root:not(.mk-mobile-shell) #nsPanel .ns-mode-btn:hover,
+:root:not(.mk-mobile-shell) #nsPanel .ns-raffle-trigger:hover {
+  background: var(--m3-surface-highest) !important;
+  color: var(--m3-on-surface) !important;
+}
+/* Abām pogām viena forma; izvēlēto rāda tikai tonālais aizpildījums. */
+:root:not(.mk-mobile-shell) #nsPanel .ns-mode-btns .ns-mode-btn.is-on {
+  border-color: transparent !important;
+  background: var(--m3-primary-container) !important;
+  color: var(--m3-on-primary-container) !important;
+  box-shadow: none !important;
+}
+:root:not(.mk-mobile-shell) #nsPanel .ns-mode-btns .ns-mode-btn:active,
+:root:not(.mk-mobile-shell) #nsPanel .ns-raffle-trigger:active { border-radius: 10px !important; }
+:root:not(.mk-mobile-shell) #nsPanel .ns-raffle-trigger {
+  margin-left: 4px !important;
+  border-color: rgba(255, 215, 135, .28) !important;
+  background: rgba(255, 215, 135, .08) !important;
+  color: #ffd787 !important;
+}
+:root:not(.mk-mobile-shell) #nsPanel .ns-raffle-trigger:hover { background: rgba(255, 215, 135, .14) !important; color: #ffe2a8 !important; }
+:root:not(.mk-mobile-shell) #nsPanel .ns-panel-head {
+  border-bottom: 1px solid var(--m3-outline) !important;
+  box-shadow: none !important;
+}
+
+/* Aizvēršana: apaļa ikonas poga, centrēta ar galvenes rindu. */
+:root:not(.mk-mobile-shell) #nsCloseBtn {
+  top: 23px !important;
+  right: 18px !important;
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  padding: 0 !important;
+  border: 1px solid var(--m3-outline, rgba(190, 214, 230, .16)) !important;
+  border-radius: 20px !important;
+  background: var(--m3-surface-high, #17212b) !important;
+  box-shadow: none !important;
+  color: #c9d6e1 !important;
+  font: 400 20px/38px system-ui, sans-serif !important;
+  text-align: center !important;
+  transition: border-radius 220ms cubic-bezier(.34, 1.45, .64, 1), background-color 150ms ease !important;
+}
+:root:not(.mk-mobile-shell) #nsCloseBtn:hover { background: #1f2b36 !important; color: #fff !important; }
+:root:not(.mk-mobile-shell) #nsCloseBtn:active { border-radius: 12px !important; }
+:root:not(.mk-mobile-shell) #nsPanel .nss-shell:focus-visible,
+:root:not(.mk-mobile-shell) #nsPanel .ns-mode-btn:focus-visible,
+:root:not(.mk-mobile-shell) #nsPanel .ns-raffle-trigger:focus-visible,
+:root:not(.mk-mobile-shell) #nsCloseBtn:focus-visible { outline: 2px solid var(--m3-primary, #7fdcea) !important; outline-offset: 2px !important; }
+
+/* "JAUNAIS NMP" vairs nelūst divās rindās: šaurajai istabai virsraksts ņem
+   savu platumu, nevis 58 % no istabas. */
+#nsPanel .ns-room-titlebar {
+  white-space: nowrap !important;
+  width: max-content !important;
+  min-width: min(58%, 410px) !important;
+  max-width: 100% !important;
+  text-align: center !important;
+}
+
+/* Atvēršana: M3 emphasized decelerate — panelis nedaudz paceļas un
+   izpletas; aizvēršana īsāka, ar accelerate. Tikai transform + opacity, tātad
+   GPU tikai kompozē jau uzzīmētu slāni. */
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel {
+  transform: translate(-50%, calc(-50% + 12px)) scale(.97) !important;
+  transition: transform 200ms cubic-bezier(.3, 0, .8, .15) !important;
+}
+:root:not(.mk-mobile-shell) #nsOverlay.open #nsPanel {
+  transform: translate(-50%, -50%) scale(1) !important;
+  transition: transform 380ms cubic-bezier(.05, .7, .1, 1) !important;
+}
+:root:not(.mk-mobile-shell) #nsOverlay { transition: opacity 180ms cubic-bezier(.3, 0, .8, .15) !important; }
+:root:not(.mk-mobile-shell) #nsOverlay.open { transition: opacity 220ms cubic-bezier(.05, .7, .1, 1) !important; }
+/* Vājam datoram: bez mērogošanas, tikai neliela pacelšanās. */
+html.mk-low-spec:not(.mk-mobile-shell) #nsOverlay #nsPanel { transform: translate(-50%, calc(-50% + 8px)) !important; }
+html.mk-low-spec:not(.mk-mobile-shell) #nsOverlay.open #nsPanel { transform: translate(-50%, -50%) !important; }
+@media (prefers-reduced-motion: reduce) {
+  #nsOverlay, #nsOverlay #nsPanel, #nsCloseBtn,
+  #nsPanel .nss-shell, #nsPanel .ns-mode-btn, #nsPanel .ns-raffle-trigger { transition: none !important; }
+}

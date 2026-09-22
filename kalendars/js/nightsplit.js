@@ -75,9 +75,20 @@
         b[i+3]=a[i+3];
       }
       ctx.putImageData(out,0,0);
-      return canvas.toDataURL('image/png');
+      // toBlob encodes off the main thread; toDataURL did the PNG encode
+      // synchronously for every bed colour, a visible hitch on old PCs.
+      return new Promise(function(resolve){
+        if(!canvas.toBlob) { resolve(canvas.toDataURL('image/png')); return; }
+        canvas.toBlob(function(blob){ resolve(blob ? URL.createObjectURL(blob) : canvas.toDataURL('image/png')); },'image/png');
+      });
     });
-    if(_bedTints.size>=24) _bedTints.delete(_bedTints.keys().next().value);
+    if(_bedTints.size>=24){
+      var oldKey=_bedTints.keys().next().value, oldTask=_bedTints.get(oldKey);
+      _bedTints.delete(oldKey);
+      // Beds still showing the old URL keep their decoded bitmap; the blob URL
+      // is only released after they have moved on to a newer one.
+      if(oldTask) oldTask.then(function(url){ if(String(url).indexOf('blob:')===0) setTimeout(function(){ URL.revokeObjectURL(url); },60000); }).catch(function(){});
+    }
     _bedTints.set(rgb,task);
     task.catch(function(){if(_bedTints.get(rgb)===task)_bedTints.delete(rgb);});
     return task;
@@ -2068,6 +2079,25 @@
     });
   }
 
+  // Decode the night panel's pictures while the app is idle, so opening the
+  // panel only has to paint them. Pictures stay lazy for the first page load:
+  // this runs after the panel's own idle render, never on the critical path.
+  var _nsWarmPending=0;
+  function warmImages(){
+    if(_nsWarmPending) return;
+    var run=function(){
+      _nsWarmPending=0;
+      var overlay=document.getElementById('nsOverlay');
+      if(!overlay) return;
+      overlay.querySelectorAll('img').forEach(function(img){
+        var src=img.currentSrc||img.src;
+        if(!src || img.__nsWarm===src || typeof img.decode!=='function') return;
+        img.__nsWarm=src;
+        img.decode().catch(function(){ img.__nsWarm=''; });
+      });
+    };
+    _nsWarmPending=window.requestIdleCallback ? window.requestIdleCallback(run,{timeout:3000}) : setTimeout(run,300);
+  }
   function scheduleIdleRender(renderKey){
     _nsPendingRenderKey=renderKey;
     if(_nsIdleRender){
@@ -2079,6 +2109,7 @@
       if(window.__nsOverlayOpen===true || _nsPendingRenderKey!==renderKey || !st) return;
       _nsLastRenderKey=renderKey;
       render();
+      warmImages();
     };
     _nsIdleRender=window.requestIdleCallback
       ? window.requestIdleCallback(run,{timeout:1400})
@@ -3044,6 +3075,7 @@
 
   window.__ns={
     _render: render,
+    warmImages: warmImages,
     _update: update,
     getPlan:getPublicPlan,
     openRaffle:openRaffle,

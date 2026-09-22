@@ -37,7 +37,7 @@
   }
   window.__minkaHasApiAuth = function() { return !!getToken(); };
 
-  var CALENDAR_BUILD = '20260923nomoon1';
+  var CALENDAR_BUILD = '20260923m3b';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -643,7 +643,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <div id="calendarEmbed">
   <!-- Keep the expensive calendar document dormant behind the password gate.
        Authenticated startup assigns data-base-src immediately. -->
-  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260923nomoon1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260923m3b" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- Compact brand loader. It stays up until the embedded schedule has painted. -->
@@ -5283,6 +5283,27 @@ window.addEventListener('message', function(e) {
       window.closePlanotajsSheet();
     }
   });
+})();
+
+// Hovering NAKTS tells the calendar to prepare the night panel (style, layout
+// and images) during the few hundred ms before the click, so the click itself
+// only has to fade it in. Harmless if the click never comes: it parks again.
+(function () {
+  var lastWarm = 0;
+  function warmNs() {
+    if (_nsOpen || Date.now() - lastWarm < 4000) return;
+    lastWarm = Date.now();
+    var iframe = document.getElementById('calIframe');
+    if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage({ type: 'nsWarm' }, window.location.origin);
+  }
+  function wire() {
+    var btn = document.getElementById('nsToggleBtnParent');
+    if (!btn) return;
+    btn.addEventListener('pointerenter', warmNs, { passive: true });
+    btn.addEventListener('focus', warmNs);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire, { once: true });
+  else wire();
 })();
 
 function toggleNsFromParent() {
