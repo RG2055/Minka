@@ -1570,7 +1570,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="data/svinamas-dienas.js?v=20260922topic9"></script>
+<script src="data/svinamas-dienas.js?v=20260922mood11"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/known-carryovers.js?v=20260907smooth1"></script>
 <script src="js/card-face-model.js?v=20260912wa4"></script>
@@ -2990,10 +2990,10 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260922topic9"></script>
+<script src="js/calendar.js?v=20260922mood11"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
-<script src="js/header-weather.js?v=20260922topic9" defer></script>
+<script src="js/header-weather.js?v=20260922mood11" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260831autofit1"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
 <script src="js/light-model.js?v=20260908light1"></script>
@@ -3004,14 +3004,14 @@ function _mkToast(msg, type) {
 <script src="js/design_v1.js?v=20260824perfaudit2" defer></script>
 <script src="js/theme.js?v=20260920header-duty1" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
-<script src="js/emoji.js?v=20260922topic9" defer></script>
+<script src="js/emoji.js?v=20260922mood11" defer></script>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
 <script src="js/daybook-model.js?v=20260911b" defer></script>
-<script src="js/daybook.js?v=20260922topic9" defer></script>
-<script src="js/levels.js?v=20260922topic9" defer></script>
+<script src="js/daybook.js?v=20260922mood11" defer></script>
+<script src="js/levels.js?v=20260922mood11" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260922topic9';
+window.__minkaLocalBuild = '20260922mood11';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -18766,7 +18766,9 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     return reactions.map(function (item) {
       return '<button class="rg-pulse-tap" type="button" data-rg-pulse="' + item.key + '" data-emoji="' + item.emoji + '" aria-label="' + item.label + '" aria-pressed="false" title="' + item.label + ' — spied vairākas reizes">'
         + '<span aria-hidden="true">' + item.emoji + '</span><small class="rg-pulse-count" data-rg-count="' + item.key + '"></small><small class="rg-pulse-name" aria-hidden="true">' + item.label + '</small></button>';
-    }).join('');
+    }).join('')
+      + '<button class="rg-pulse-tap rg-pulse-own" type="button" data-rg-own-mood="1" aria-label="Savs emoji un pāris vārdi par maiņu" title="Savs emoji un pāris vārdi par maiņu">'
+        + '<span aria-hidden="true">🙂</span><small class="rg-pulse-name" aria-hidden="true">Savs</small></button>';
   }
   function moodBlobMarkup() {
     var base = moodVisuals._none;
@@ -19933,7 +19935,11 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       stop.style.stopColor = stop.dataset.rgStop === 'c1' ? visual.color1 : visual.color2;
     });
     if (refs.glow) refs.glow.style.color = visual.glow;
-    if (refs.fluentFace) refs.fluentFace.textContent = visual.emoji || moodVisuals._none.emoji;
+    var own = ownMoodFor(shiftDayKey());
+    if (refs.fluentFace) {
+      refs.fluentFace.textContent = (!preview && own && own.emoji) || visual.emoji || moodVisuals._none.emoji;
+    }
+    if (refs.stage) refs.stage.classList.toggle('has-own-mood', !preview && !!(own && own.emoji));
     if (refs.label) {
       refs.label.textContent = visual.label || '\u00a0';
       refs.label.style.color = key ? visual.color1 : '';
@@ -20298,10 +20304,14 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     if (reactionLabel) {
       var voted = reactions.reduce(function (sum, item) { return sum + Math.max(0, Number(counts[item.key]) || 0); }, 0);
       var isLiveDay = shiftDayKey() === liveShiftDayKey();
-      reactionLabel.textContent = selected ? selected.label
+      var own = ownMoodFor(shiftDayKey());
+      reactionLabel.textContent = own && own.note ? own.note
+        : selected ? selected.label
         : dominant ? dominant.label + ' · ' + voted
         : isLiveDay ? 'Vēl neviens nav novērtējis' : 'Šai maiņai nav novērtējumu';
-      reactionLabel.classList.toggle('is-empty-state', !selected && !dominant);
+      reactionLabel.classList.toggle('is-empty-state', !own && !selected && !dominant);
+      reactionLabel.classList.toggle('is-own-note', !!(own && own.note));
+      reactionLabel.title = own && own.note ? own.note : '';
     }
     card.querySelectorAll('[data-rg-pulse]').forEach(function (button) {
       var isSelected = !!selected && button.dataset.rgPulse === selected.key;
@@ -20374,6 +20384,73 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     ratingFlushTimer = window.setTimeout(function () { flushRatings(day); }, 320);
   }
 
+  /* ── Sava noskaņa: emoji + pāris vārdi ─────────────────────────────────
+     Glabājas kā parasta dienas ziņa ar marķieri, tāpat kā čata tēmas — tā
+     tā ir visiem, bez jaunas API tabulas. Lentē šīs ziņas nerāda. */
+  var MOOD_NOTE_MAX = 80;
+  var MOOD_NOTE_MIN = 2;
+  var MOOD_POST_GAP = 20000;          // viens ieraksts ik 20 s no šīs ierīces
+  var moodOwnCache = {};              // day -> { emoji, note, at }
+  var moodOwnLoadedAt = {};
+  var moodLastPostAt = 0;
+  function moodMarker(emoji, note) {
+    return '[[rgmood;emoji=' + encodeURIComponent(emoji) + ']]' + note;
+  }
+  function parseMoodMessage(item) {
+    var raw = String(item && item.text || '');
+    var match = raw.match(/^\[\[rgmood;emoji=([^\]]*)\]\]/);
+    if (!match) return null;
+    var emoji = '';
+    try { emoji = decodeURIComponent(match[1] || ''); } catch (_error) { return null; }
+    if (!emoji) return null;
+    return { emoji: emoji, note: raw.slice(match[0].length).trim().slice(0, MOOD_NOTE_MAX), at: Number(item.createdAt) || 0 };
+  }
+  /* Spama bremzes: garums abos galos, atkārtotu rakstzīmju un tukšumu
+     savilkšana, saites nost un viens ieraksts reizi 20 sekundēs. */
+  function cleanMoodNote(value) {
+    var text = String(value || '').replace(/\s+/g, ' ').trim();
+    text = text.replace(/https?:\/\/\S+/gi, '').trim();
+    text = text.replace(/(.)\1{3,}/g, '$1$1$1');
+    return text.slice(0, MOOD_NOTE_MAX);
+  }
+  function ownMoodFor(day) {
+    return moodOwnCache[day] || null;
+  }
+  async function loadOwnMood(day, force) {
+    var now = Date.now();
+    if (!force && moodOwnLoadedAt[day] && now - moodOwnLoadedAt[day] < 20000) return;
+    moodOwnLoadedAt[day] = now;
+    try {
+      var data = await fetchFeedback('/api/feedback?date=' + encodeURIComponent(day) + '&kind=comment&limit=60');
+      var newest = null;
+      (data.messages || []).forEach(function (item) {
+        var parsed = parseMoodMessage(item);
+        if (parsed && (!newest || parsed.at > newest.at)) newest = parsed;
+      });
+      moodOwnCache[day] = newest;
+      if (day === shiftDayKey()) paintCounts();
+    } catch (_error) {}
+  }
+  async function postOwnMood(day, emoji, note) {
+    var now = Date.now();
+    if (now - moodLastPostAt < MOOD_POST_GAP) return { ok: false, error: 'Pagaidi mirkli pirms nākamā ieraksta.' };
+    var clean = cleanMoodNote(note);
+    if (clean.length < MOOD_NOTE_MIN) return { ok: false, error: 'Uzraksti vismaz pāris vārdus.' };
+    moodLastPostAt = now;
+    moodOwnCache[day] = { emoji: emoji, note: clean, at: now };
+    paintCounts();
+    try {
+      await fetchFeedback('/api/feedback/message', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ date: day, kind: 'comment', text: moodMarker(emoji, clean), clientId: newClientId() })
+      });
+      loadOwnMood(day, true);
+      return { ok: true };
+    } catch (_error) {
+      return { ok: false, error: 'Nevarēja nosūtīt — pamēģini vēlreiz.' };
+    }
+  }
   function updateLocalRating(day, key, serverCount, pendingCount) {
     var all = readJson(PULSE_KEY, {});
     var counts = all[day] || {};
@@ -20414,6 +20491,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   }
   async function loadRatings(day, force) {
     var now = Date.now();
+    loadOwnMood(day, force);
     if (!force && ratingsLoadedAt[day] && now - ratingsLoadedAt[day] < 15000) return;
     ratingsLoadedAt[day] = now;
     await flushRatings(day);
@@ -21062,6 +21140,70 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       grid.appendChild(button);
     });
   }
+  /* Pāris vārdu lodziņš pēc emoji izvēles. Skaitītājs rāda, cik atlicis,
+     poga ir neaktīva, kamēr teksts par īsu, un Esc aizver. */
+  var moodNoteBox = null;
+  function closeMoodNote() {
+    if (!moodNoteBox) return;
+    moodNoteBox.remove();
+    moodNoteBox = null;
+  }
+  function openMoodNote(emoji, anchor) {
+    closeMoodNote();
+    var day = shiftDayKey();
+    var existing = ownMoodFor(day);
+    moodNoteBox = document.createElement('div');
+    moodNoteBox.className = 'rg-mood-note';
+    moodNoteBox.setAttribute('role', 'dialog');
+    moodNoteBox.setAttribute('aria-label', 'Pāris vārdi par maiņu');
+    moodNoteBox.innerHTML = '<div class="rg-mood-note-sheet">'
+      + '<div class="rg-mood-note-head"><span class="rg-mood-note-emoji" aria-hidden="true">' + emoji + '</span>'
+      + '<div><strong>Kā bija maiņa?</strong><small>Šis emoji un teksts paliks uz kartītes visu dienu</small></div></div>'
+      + '<textarea class="rg-mood-note-text" maxlength="' + MOOD_NOTE_MAX + '" rows="2" placeholder="Piem. mierīga nakts, tikai divi izsaukumi"></textarea>'
+      + '<div class="rg-mood-note-foot"><span class="rg-mood-note-count">0/' + MOOD_NOTE_MAX + '</span>'
+      + '<span class="rg-mood-note-error" role="status"></span>'
+      + '<button type="button" class="rg-mood-note-cancel">Atcelt</button>'
+      + '<button type="button" class="rg-mood-note-save" disabled>Saglabāt</button></div>'
+      + '</div>';
+    document.body.appendChild(moodNoteBox);
+    var sheet = moodNoteBox.querySelector('.rg-mood-note-sheet');
+    var field = moodNoteBox.querySelector('.rg-mood-note-text');
+    var counter = moodNoteBox.querySelector('.rg-mood-note-count');
+    var errorLine = moodNoteBox.querySelector('.rg-mood-note-error');
+    var saveButton = moodNoteBox.querySelector('.rg-mood-note-save');
+    if (existing && existing.emoji === emoji) field.value = existing.note || '';
+    var sync = function () {
+      var clean = cleanMoodNote(field.value);
+      counter.textContent = clean.length + '/' + MOOD_NOTE_MAX;
+      saveButton.disabled = clean.length < MOOD_NOTE_MIN;
+    };
+    field.addEventListener('input', sync);
+    sync();
+    if (anchor) {
+      var rect = anchor.getBoundingClientRect();
+      var width = sheet.offsetWidth || 300;
+      var height = sheet.offsetHeight || 190;
+      var left = Math.min(Math.max(8, rect.left + rect.width / 2 - width / 2), window.innerWidth - width - 8);
+      var top = rect.top - height - 10 >= 8 ? rect.top - height - 10 : Math.min(window.innerHeight - height - 8, rect.bottom + 10);
+      sheet.style.left = Math.round(left) + 'px';
+      sheet.style.top = Math.round(top) + 'px';
+    }
+    moodNoteBox.addEventListener('click', function (event) {
+      if (event.target === moodNoteBox || event.target.closest('.rg-mood-note-cancel')) { closeMoodNote(); return; }
+      if (!event.target.closest('.rg-mood-note-save')) return;
+      saveButton.disabled = true;
+      errorLine.textContent = '';
+      postOwnMood(day, emoji, field.value).then(function (result) {
+        if (result.ok) { closeMoodNote(); return; }
+        errorLine.textContent = result.error || 'Neizdevās.';
+        saveButton.disabled = false;
+      });
+    });
+    window.setTimeout(function () { field.focus(); }, 60);
+  }
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && moodNoteBox) { event.stopPropagation(); closeMoodNote(); }
+  }, true);
   function previewPickedEmoji(emoji, label) {
     if (!topicPicker) return;
     var face = topicPicker.querySelector('.rg-emoji-preview');
@@ -21087,7 +21229,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   }
   function openTopicEmojiPicker(topic, anchor, mode) {
     closeTopicEmojiPicker();
-    topicPickerMode = mode === 'message' ? 'message' : 'topic';
+    topicPickerMode = mode === 'message' || mode === 'mood' ? mode : 'topic';
     topicPickerTopic = String(topic || '');
     topicPickerReturn = anchor || null;
     topicPickerQuery = '';
@@ -21099,7 +21241,8 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     topicPicker.setAttribute('role', 'dialog');
     topicPicker.setAttribute('aria-modal', 'true');
     var isTopic = topicPickerMode === 'topic';
-    topicPicker.setAttribute('aria-label', isTopic ? 'Tēmas emoji: ' + topicPickerTopic : 'Emoji ziņai');
+    topicPicker.setAttribute('aria-label', isTopic ? 'Tēmas emoji: ' + topicPickerTopic
+      : topicPickerMode === 'mood' ? 'Savs maiņas emoji' : 'Emoji ziņai');
     topicPicker.innerHTML = '<div class="rg-emoji-sheet">'
       + '<input class="rg-emoji-search" type="search" placeholder="Meklēt emoji" autocomplete="off" aria-label="Meklēt emoji pēc nosaukuma">'
       + '<div class="rg-emoji-tabs" role="tablist">' + data.sections.map(function (sec) {
@@ -21107,11 +21250,14 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       }).join('') + '</div>'
       + '<div class="rg-emoji-grid"></div>'
       + '<div class="rg-emoji-foot"><span class="rg-emoji-preview" aria-hidden="true">' + (isTopic ? (topicEmoji(topicPickerTopic) || '☺') : '☺') + '</span>'
-      + '<span class="rg-emoji-preview-name">' + (isTopic ? '# ' + topicPickerTopic : 'Izvēlies emoji') + '</span>'
+      + '<span class="rg-emoji-preview-name">' + (isTopic ? '# ' + topicPickerTopic
+        : topicPickerMode === 'mood' ? 'Izvēlies emoji, tad uzraksti pāris vārdus' : 'Izvēlies emoji') + '</span>'
       + (isTopic ? '<button type="button" class="rg-emoji-clear" data-rg-emoji-clear="1">Noņemt</button>' : '')
       + '</div>'
       + '</div>';
-    modal.appendChild(topicPicker);
+    var host = modal.hidden ? document.body : modal;
+    if (host === document.body) topicPicker.classList.add('rg-emoji-picker-loose');
+    host.appendChild(topicPicker);
     loadFluentNames();
     renderTopicEmojiGrid();
     placeTopicPicker(anchor);
@@ -21141,6 +21287,12 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       var cell = event.target.closest('[data-rg-pick-emoji]');
       if (cell) {
         var picked = cell.dataset.rgPickEmoji;
+        if (topicPickerMode === 'mood') {
+          var moodAnchor = topicPickerReturn;
+          closeTopicEmojiPicker();
+          openMoodNote(picked, moodAnchor);
+          return;
+        }
         if (topicPickerMode === 'message') {
           textarea.value += picked;
           updateTextState();
@@ -21355,6 +21507,9 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
         var key = item.clientId || ('id-' + item.id);
         if (seen[key]) return false;
         seen[key] = true;
+        // Dienas noskaņas ieraksti brauc pa to pašu ceļu, bet pieder kartītei,
+        // nevis sarakstei.
+        if (parseMoodMessage(item)) return false;
         return item && (item.text || '').trim();
       }).map(communityDecode);
       remoteMessages = communityMessages;
@@ -21587,6 +21742,13 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   });
 
   list.addEventListener('click', function (event) {
+    var ownMood = event.target.closest('[data-rg-own-mood]');
+    if (ownMood) {
+      event.preventDefault();
+      event.stopPropagation();
+      openTopicEmojiPicker('', ownMood, 'mood');
+      return;
+    }
     var tap = event.target.closest('[data-rg-pulse]');
     if (tap) { event.preventDefault(); event.stopPropagation(); addReaction(tap); return; }
     var writeButton = event.target.closest('[data-rg-write]');
@@ -24854,7 +25016,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
    css/mobile-v2.css + js/mobile-v2.js — vizuālais izkārtojums; ?mv2=0 to atslēdz. */
 (function(){
   if (!document.documentElement.classList.contains('mk-mobile-shell')) return;
-  var v = '20260922topic9';
+  var v = '20260922mood11';
   function css(href) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href + '?v=' + v; document.body.appendChild(l); }
   css('css/mobile-fixes.css');
   try { if (new URLSearchParams(location.search).get('mv2') === '0') return; } catch (_e) {}
@@ -24872,9 +25034,9 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 </style>
 <script src="../js/image-palette.js?v=20260919palette2"></script>
-<link rel="stylesheet" href="css/header-appearance.css?v=20260922topic9">
-<script src="js/header-appearance.js?v=20260922topic9"></script>
-<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922topic9">
+<link rel="stylesheet" href="css/header-appearance.css?v=20260922mood11">
+<script src="js/header-appearance.js?v=20260922mood11"></script>
+<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922mood11">
 <style>
 /* ── Noskaņas kartīte un saziņa: Material 3 Expressive ───────────────────
    Tie paši žetoni, ko lieto kafijas izvēlne: toņu virsmas rāmju vietā,
@@ -25268,10 +25430,73 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 /* Telefonā tie paši žetoni, mazāki soļi: galvai jāietilpst vienā rindā ar
    aizvēršanu, un rakstīšanas rinda nedrīkst salauzt skaitītāju. */
+/* Pāris vārdu lodziņš pie noskaņas kartītes. */
+.rg-mood-note {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483200 !important;
+  background: rgba(4,4,6,.55) !important;
+}
+.rg-mood-note-sheet {
+  position: absolute !important;
+  width: min(320px, calc(100vw - 24px)) !important;
+  display: grid !important;
+  gap: 10px !important;
+  padding: 16px !important;
+  border-radius: 24px !important;
+  background: #1c1c20 !important;
+  box-shadow: 0 10px 24px 6px rgba(0,0,0,.42) !important;
+  color: #fafafa !important;
+  font-family: Inter, system-ui, sans-serif !important;
+}
+.rg-mood-note-head { display: flex !important; align-items: center !important; gap: 12px !important; }
+.rg-mood-note-emoji {
+  font-size: 30px !important;
+  line-height: 1 !important;
+  font-family: 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif !important;
+}
+.rg-mood-note-head strong { display: block !important; font: 500 17px/1.2 Inter, system-ui, sans-serif !important; }
+.rg-mood-note-head small { display: block !important; margin-top: 3px !important; color: #a1a1aa !important; font: 400 12px/1.35 Inter, system-ui, sans-serif !important; }
+.rg-mood-note-text {
+  width: 100% !important;
+  min-height: 62px !important;
+  padding: 12px 14px !important;
+  border: 0 !important;
+  border-radius: 16px !important;
+  outline: none !important;
+  resize: none !important;
+  background: #09090b !important;
+  color: #fafafa !important;
+  font: 400 14px/1.45 Inter, system-ui, sans-serif !important;
+}
+.rg-mood-note-text:focus { box-shadow: inset 0 0 0 1.5px #10b981 !important; }
+.rg-mood-note-foot { display: flex !important; align-items: center !important; gap: 8px !important; }
+.rg-mood-note-count { color: #a1a1aa !important; font: 500 11px/1 Inter, system-ui, sans-serif !important; font-variant-numeric: tabular-nums !important; }
+.rg-mood-note-error { flex: 1 1 auto !important; color: #f97316 !important; font: 500 11px/1.2 Inter, system-ui, sans-serif !important; }
+.rg-mood-note-cancel, .rg-mood-note-save {
+  height: 38px !important;
+  padding: 0 16px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  font: 600 13px/1 Inter, system-ui, sans-serif !important;
+  cursor: pointer !important;
+}
+.rg-mood-note-cancel { background: transparent !important; color: #a1a1aa !important; }
+.rg-mood-note-cancel:hover { background: rgba(250,250,250,.08) !important; color: #fafafa !important; }
+.rg-mood-note-save { background: #10b981 !important; color: #04241a !important; }
+.rg-mood-note-save:disabled { opacity: .38 !important; cursor: default !important; }
+/* Kartītes paraksts ar paša tekstu — divas rindas, ne vairāk. */
+#grafiks-list .rg-feedback-card .rg-feedback-card-reaction-label.is-own-note {
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
 /* Emoji vienmēr zīmē Fluent fonts. Dialoga tipogrāfijas noteikumi ir ar
    !important, tāpēc tie pārrakstīja agrāko saimes noteikumu — te tā tiek
    uzlikta atpakaļ tieši tiem elementiem, kas satur emoji. */
-#rgFeedbackModal :is(.rg-emoji-cell, .rg-emoji-tab span, .rg-emoji-preview, .rg-comms-emoji, .rg-comms-topic-emoji, .rg-comms-topic-emoji-btn.has-emoji) {
+.rg-emoji-picker :is(.rg-emoji-cell, .rg-emoji-tab span, .rg-emoji-preview),
+#rgFeedbackModal :is(.rg-comms-emoji, .rg-comms-topic-emoji, .rg-comms-topic-emoji-btn.has-emoji) {
   font-family: 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif !important;
   font-variant-emoji: emoji !important;
 }
@@ -25342,6 +25567,26 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 #rgFeedbackModal .rg-comms-topic:hover .rg-comms-topic-pick,
 #rgFeedbackModal .rg-comms-topic-pick:focus-visible { opacity: 1 !important; background: rgba(250,250,250,.08) !important; }
 #rgFeedbackModal .rg-comms-topic-emoji { font-size: 17px !important; }
+.rg-emoji-picker.rg-emoji-picker-loose {
+  --m3x-surface: #09090b;
+  --m3x-container: #131316;
+  --m3x-container-high: #1c1c20;
+  --m3x-container-highest: #27272a;
+  --m3x-on-surface: #fafafa;
+  --m3x-on-variant: #a1a1aa;
+  --m3x-outline: #52525b;
+  --m3x-outline-variant: #27272a;
+  --m3x-primary: #10b981;
+  --m3x-on-primary: #04241a;
+  --m3x-primary-container: #064e3b;
+  --m3x-on-primary-container: #a7f3d0;
+  --m3x-standard: cubic-bezier(.2, 0, 0, 1);
+  --m3x-spring: cubic-bezier(.2, 1.1, .35, 1);
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483150 !important;
+  background: rgba(4,4,6,.55) !important;
+}
 #rgFeedbackModal .rg-emoji-picker {
   position: absolute !important;
   inset: 0 !important;
@@ -25353,7 +25598,7 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 /* Kompakts popover blakus pogai, kas to atvēra — meklēšana, ikonu kategorijas,
    ciešs režģis un nosaukuma rindiņa apakšā. */
-#rgFeedbackModal .rg-emoji-sheet {
+.rg-emoji-picker .rg-emoji-sheet {
   position: absolute !important;
   width: 332px !important;
   max-width: calc(100% - 16px) !important;
@@ -25366,7 +25611,7 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
   background: var(--m3x-container-high) !important;
   box-shadow: 0 10px 24px 6px rgba(0,0,0,.42) !important;
 }
-#rgFeedbackModal .rg-emoji-search {
+.rg-emoji-picker .rg-emoji-search {
   height: 38px !important;
   padding: 0 14px !important;
   border: 0 !important;
@@ -25376,10 +25621,10 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
   color: var(--m3x-on-surface) !important;
   font: 400 14px/1 Inter, system-ui, sans-serif !important;
 }
-#rgFeedbackModal .rg-emoji-search::placeholder { color: var(--m3x-on-variant) !important; }
-#rgFeedbackModal .rg-emoji-search:focus { box-shadow: inset 0 0 0 1.5px var(--m3x-primary) !important; }
+.rg-emoji-picker .rg-emoji-search::placeholder { color: var(--m3x-on-variant) !important; }
+.rg-emoji-picker .rg-emoji-search:focus { box-shadow: inset 0 0 0 1.5px var(--m3x-primary) !important; }
 /* Kategorijas: tikai ikonas vienā rindā, ar svītriņu zem aktīvās. */
-#rgFeedbackModal .rg-emoji-tabs {
+.rg-emoji-picker .rg-emoji-tabs {
   display: grid !important;
   grid-auto-flow: column !important;
   grid-auto-columns: 1fr !important;
@@ -25387,7 +25632,7 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
   padding-bottom: 4px !important;
   border-bottom: 1px solid var(--m3x-outline-variant) !important;
 }
-#rgFeedbackModal .rg-emoji-tab {
+.rg-emoji-picker .rg-emoji-tab {
   position: relative !important;
   height: 34px !important;
   padding: 0 !important;
@@ -25400,10 +25645,10 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
   opacity: .55 !important;
   transition: opacity .15s var(--m3x-standard), background-color .15s var(--m3x-standard) !important;
 }
-#rgFeedbackModal .rg-emoji-tab span { font-size: 18px !important; line-height: 1 !important; }
-#rgFeedbackModal .rg-emoji-tab:hover { opacity: .85 !important; background: rgba(250,250,250,.06) !important; }
-#rgFeedbackModal .rg-emoji-tab.is-on { opacity: 1 !important; background: transparent !important; }
-#rgFeedbackModal .rg-emoji-tab.is-on::after {
+.rg-emoji-picker .rg-emoji-tab span { font-size: 18px !important; line-height: 1 !important; }
+.rg-emoji-picker .rg-emoji-tab:hover { opacity: .85 !important; background: rgba(250,250,250,.06) !important; }
+.rg-emoji-picker .rg-emoji-tab.is-on { opacity: 1 !important; background: transparent !important; }
+.rg-emoji-picker .rg-emoji-tab.is-on::after {
   content: '' !important;
   position: absolute !important;
   left: 50% !important;
@@ -25414,14 +25659,14 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
   background: var(--m3x-primary) !important;
   transform: translateX(-50%) !important;
 }
-#rgFeedbackModal .rg-emoji-grid {
+.rg-emoji-picker .rg-emoji-grid {
   display: grid !important;
   grid-template-columns: repeat(8, 1fr) !important;
   gap: 2px !important;
   overflow: auto !important;
   scrollbar-width: thin !important;
 }
-#rgFeedbackModal .rg-emoji-cell {
+.rg-emoji-picker .rg-emoji-cell {
   height: 36px !important;
   border: 0 !important;
   border-radius: 10px !important;
@@ -25431,19 +25676,19 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
   cursor: pointer !important;
   transition: background-color .15s var(--m3x-standard), transform .18s var(--m3x-spring) !important;
 }
-#rgFeedbackModal .rg-emoji-cell:hover { background: rgba(250,250,250,.08) !important; transform: scale(1.12) !important; }
-#rgFeedbackModal .rg-emoji-cell.is-on { background: var(--m3x-primary-container) !important; }
-#rgFeedbackModal .rg-emoji-empty { grid-column: 1 / -1 !important; margin: 0 !important; padding: 16px 4px !important; color: var(--m3x-on-variant) !important; font: 400 13px/1.5 Inter, system-ui, sans-serif !important; }
+.rg-emoji-picker .rg-emoji-cell:hover { background: rgba(250,250,250,.08) !important; transform: scale(1.12) !important; }
+.rg-emoji-picker .rg-emoji-cell.is-on { background: var(--m3x-primary-container) !important; }
+.rg-emoji-picker .rg-emoji-empty { grid-column: 1 / -1 !important; margin: 0 !important; padding: 16px 4px !important; color: var(--m3x-on-variant) !important; font: 400 13px/1.5 Inter, system-ui, sans-serif !important; }
 /* Apakšā tas pats, kas paraugā: liels izvēlētais emoji un tā nosaukums. */
-#rgFeedbackModal .rg-emoji-foot {
+.rg-emoji-picker .rg-emoji-foot {
   display: flex !important;
   align-items: center !important;
   gap: 10px !important;
   padding-top: 6px !important;
   border-top: 1px solid var(--m3x-outline-variant) !important;
 }
-#rgFeedbackModal .rg-emoji-preview { font-size: 24px !important; line-height: 1 !important; }
-#rgFeedbackModal .rg-emoji-preview-name {
+.rg-emoji-picker .rg-emoji-preview { font-size: 24px !important; line-height: 1 !important; }
+.rg-emoji-picker .rg-emoji-preview-name {
   min-width: 0 !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
@@ -25451,7 +25696,7 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
   color: var(--m3x-on-variant) !important;
   font: 500 12px/1 Inter, system-ui, sans-serif !important;
 }
-#rgFeedbackModal .rg-emoji-clear {
+.rg-emoji-picker .rg-emoji-clear {
   margin-left: auto !important;
   height: 32px !important;
   padding: 0 12px !important;
@@ -25462,9 +25707,9 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
   font: 500 13px/1 Inter, system-ui, sans-serif !important;
   cursor: pointer !important;
 }
-#rgFeedbackModal .rg-emoji-clear:hover { background: rgba(250,250,250,.08) !important; color: var(--m3x-on-surface) !important; }
+.rg-emoji-picker .rg-emoji-clear:hover { background: rgba(250,250,250,.08) !important; color: var(--m3x-on-surface) !important; }
 @media (max-width: 720px) {
-  #rgFeedbackModal .rg-emoji-sheet { width: calc(100% - 16px) !important; }
+  .rg-emoji-picker .rg-emoji-sheet { width: calc(100% - 16px) !important; }
   #rgFeedbackModal .rg-comms-head {
     min-height: 64px !important;
     padding: 10px 10px 10px 12px !important;
@@ -25494,13 +25739,51 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
   border-radius: 999px !important;
   transition: background-color .18s var(--m3c-motion), transform .18s var(--m3c-motion) !important;
 }
-#grafiks-list .rg-feedback-card .rg-pulse-tap:hover { background: rgba(255,255,255,.08) !important; }
-/* Izvēlētā reakcija: M3 forma, bet krāsa nāk no pašas kartītes noskaņas
-   toņa (--rg-card-rgb), tāpēc kartīte nekļūst par otru krāsu saimi. */
-#grafiks-list .rg-feedback-card .rg-pulse-tap.is-selected {
-  background: rgba(var(--rg-card-rgb, 148, 184, 213), .22) !important;
-  transform: scale(1.06) !important;
+/* Uzejot un izvēloties, fons ir aplis tieši ap emoji, nevis pastiepts
+   taisnstūris: poga ir platāka par glifu, tāpēc fons tiek zīmēts kā
+   pseidoelements emoji izmērā un centrā. */
+#grafiks-list .rg-feedback-card .rg-pulse-taps {
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
 }
+#grafiks-list .rg-feedback-card .rg-pulse-tap { isolation: isolate !important; }
+/* Sestā poga: tāda pati vieta rindā, bet punktēts aplis un sejiņa, lai to
+   nesajauc ar reakciju un lai saprot — te liek savu. */
+#grafiks-list .rg-feedback-card .rg-pulse-own > span:first-child {
+  font-size: .82em !important;
+  opacity: .85 !important;
+}
+#grafiks-list .rg-feedback-card .rg-pulse-own::before {
+  width: 1.7em !important;
+  height: 1.7em !important;
+  background: transparent !important;
+  border: 1.5px dashed rgba(255,255,255,.34) !important;
+}
+#grafiks-list .rg-feedback-card .rg-pulse-own:hover > span:first-child { opacity: 1 !important; }
+#grafiks-list .rg-feedback-card .rg-pulse-own:hover::before {
+  border-color: rgba(255,255,255,.55) !important;
+  background: rgba(255,255,255,.08) !important;
+}
+#grafiks-list .rg-feedback-card .rg-pulse-tap::before {
+  content: '' !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 1.55em !important;
+  height: 1.55em !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  transform: translate(-50%, -50%) !important;
+  transition: background-color .16s var(--m3c-motion, ease) !important;
+  z-index: -1 !important;
+  pointer-events: none !important;
+}
+#grafiks-list .rg-feedback-card .rg-pulse-tap:hover::before { background: rgba(255,255,255,.10) !important; }
+/* Izvēlētā reakcija: krāsa nāk no pašas reakcijas toņa, tāpēc kartīte
+   nedabū otru krāsu saimi. */
+#grafiks-list .rg-feedback-card .rg-pulse-tap.is-selected::before {
+  background: rgba(var(--rg-reaction-rgb, 148, 184, 213), .22) !important;
+}
+#grafiks-list .rg-feedback-card .rg-pulse-tap.is-selected { background: transparent !important; }
 /* Tukšais stāvoklis: paskaidro, kas trūkst, nevis atkārto virsrakstu. */
 #grafiks-list .rg-feedback-card .rg-feedback-card-reaction-label.is-empty-state {
   color: var(--m3c-on-surface-variant) !important;
