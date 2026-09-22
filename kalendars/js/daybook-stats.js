@@ -31,6 +31,21 @@
   var ratingsFailed = {};
   var ratingsJob = null;
   var coffee = { busy: false, loaded: {}, failed: {} };
+  // A day's own mood (any Fluent emoji + a few words), written from the mood
+  // card as a message with an [[rgmood;…]] marker. day -> { emoji, note, at }.
+  var OWN_MOOD_KEY = 'minkaRgOwnMoodV1';
+  function ownMood(day) {
+    var all = readJson(OWN_MOOD_KEY);
+    return all && all[day] && all[day].emoji ? all[day] : null;
+  }
+  function parseOwnMood(item) {
+    var match = String(item && item.text || '').match(/^\[\[rgmood;emoji=([^\]]*)\]\]/);
+    if (!match) return null;
+    var emoji = '';
+    try { emoji = decodeURIComponent(match[1] || ''); } catch (_e) { return null; }
+    if (!emoji) return null;
+    return { emoji: emoji, note: String(item.text).slice(match[0].length).trim().slice(0, 24), at: Number(item.createdAt) || 0 };
+  }
 
   function readJson(key) {
     try { return JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch (_e) { return {}; }
@@ -137,7 +152,7 @@
         while (index < todo.length && modalOpen()) {
           var day = todo[index++];
           try {
-            var r = await fetch(base + '/api/feedback?date=' + day + '&messages=0', { cache: 'no-store', signal: AbortSignal.timeout(10000) });
+            var r = await fetch(base + '/api/feedback?date=' + day + '&kind=comment&limit=100', { cache: 'no-store', signal: AbortSignal.timeout(10000) });
             if (!r.ok) throw new Error();
             var data = await r.json();
             if (!data || data.ok !== true) throw new Error();
@@ -148,6 +163,14 @@
             });
             all[day] = counts;
             writeJson(PULSE_KEY, all);
+            var newest = null;
+            (data.messages || []).forEach(function (item) {
+              var own = parseOwnMood(item);
+              if (own && (!newest || own.at > newest.at)) newest = own;
+            });
+            var owns = readJson(OWN_MOOD_KEY) || {};
+            if (newest) owns[day] = newest; else delete owns[day];
+            writeJson(OWN_MOOD_KEY, owns);
             ratingsFetchedAt[day] = Date.now();
             delete ratingsFailed[day];
           } catch (_e) { ratingsFailed[day] = true; }
@@ -286,15 +309,38 @@
       else if (segment.length) { segments.push(segment); segment = []; }
     });
     if (segment.length) segments.push(segment);
+    // All marked days are joined into one line: dashed and dimmer where it
+    // crosses days nobody rated, solid between neighbouring days. Before, only
+    // neighbours were joined and single days stood alone as loose dots.
+    var allPoints = [].concat.apply([], segments);
+    if (allPoints.length > 1) out += '<path d="' + smoothPath(allPoints) + '" fill="none" stroke="rgba(125,211,252,.45)" stroke-width="1.6" stroke-dasharray="4 5" stroke-linecap="round"/>';
     segments.forEach(function (seg) {
       if (seg.length > 1) out += '<path d="' + smoothPath(seg) + '" fill="none" stroke="#7dd3fc" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>';
       seg.forEach(function (p) {
         var m = M.moodFor(p.row.mood.score);
         var r = 3.2 + Math.min(4, p.row.mood.total / 3);
-        out += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + r.toFixed(1) + '" fill="' + m.color + '" stroke="#0c0d11" stroke-width="1.5"><title>' + esc(shortDay(p.row.day)) + '&ensp;' + fmt(p.row.mood.score) + ' (' + p.row.mood.total + ' reakcijas)</title></circle>';
+        out += '<circle data-db-day="' + p.row.day + '" style="cursor:pointer" cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + r.toFixed(1) + '" fill="' + m.color + '" stroke="#0c0d11" stroke-width="1.5"><title>' + esc(shortDay(p.row.day)) + '&ensp;' + fmt(p.row.mood.score) + ' (' + p.row.mood.total + ' reakcijas)</title></circle>';
       });
     });
+    // Own moods: the emoji above that day's point, or on the middle line when
+    // the day has no reactions. Its note is the tooltip.
+    rows.forEach(function (r, i) {
+      var own = ownMood(r.day);
+      if (!own) return;
+      var cy = r.mood ? y(r.mood.score) - 14 : y(3);
+      out += '<text data-db-day="' + r.day + '" style="cursor:pointer" x="' + x(i).toFixed(1) + '" y="' + (cy + 5).toFixed(1) + '" text-anchor="middle" font-size="14" class="db-chart-face db-chart-own">' + esc(own.emoji)
+        + '<title>' + esc(shortDay(r.day)) + '&ensp;' + esc(own.emoji) + (own.note ? ' — ' + esc(own.note) : '') + '</title></text>';
+    });
     return out + '</svg>';
+  }
+  function ownMoodList(rows) {
+    var items = rows.map(function (r) { return { day: r.day, own: ownMood(r.day) }; })
+      .filter(function (e) { return e.own; }).reverse();
+    if (!items.length) return '';
+    return '<div class="db-own"><span class="db-own-title">Savi vērtējumi</span>' + items.map(function (e) {
+      return '<button type="button" class="db-own-item" data-db-day="' + e.day + '"><span class="db-face">' + esc(e.own.emoji) + '</span>'
+        + '<b>' + esc(e.own.note || '—') + '</b><small>' + shortDay(e.day) + '</small></button>';
+    }).join('') + '</div>';
   }
   function moodCounts(s) {
     var total = s.reactionTotal || 0;
@@ -348,7 +394,15 @@
         var m = M.moodFor(r.mood.score);
         color = m.color; kind = 'marked'; face = '<span class="db-px-face">' + m.emoji + '</span>';
         title += ' ' + fmt(r.mood.score) + ' (' + r.mood.total + ' reakcijas)';
-      } else if (!future) title += ' — nav atzīmēts';
+      } else if (!future && !ownMood(r.day)) title += ' — nav atzīmēts';
+      var ownDay = mode !== 'shift' ? ownMood(r.day) : null;
+      if (ownDay) {
+        // The team's own word for the day wins the cell's face; the colour
+        // still comes from the reactions when there are any.
+        if (!color) { color = '#94a3b8'; kind = 'marked'; }
+        face = '<span class="db-px-face db-px-own">' + esc(ownDay.emoji) + '</span>';
+        title += ' · ' + ownDay.emoji + (ownDay.note ? ' ' + ownDay.note : '');
+      }
       var staff = mode !== 'shift' && r.shifts.length;
       var head = '<span class="db-px-head"><b>' + Number(r.day.slice(8)) + '</b>' + face + '</span>' + (staff ? '<i title="Dienā">☀</i><i title="Naktī">☾</i>' : '');
       if (staff) title += '. Dienā: ' + r.shifts.filter(function (e) { return e.type !== 'night'; }).length + ', naktī: ' + r.shifts.filter(function (e) { return e.type !== 'day'; }).length + ' dežūrā';
@@ -393,7 +447,7 @@
   /* ── views ────────────────────────────────────────────────────────────── */
   function overview(b) {
     var s = b.s, rows = b.rows, past = elapsedDays(rows, b.today);
-    var marked = past.filter(function (r) { return r.mood; }).length;
+    var marked = past.filter(function (r) { return r.mood || ownMood(r.day); }).length;
     var weighted = rows.reduce(function (acc, r) { if (r.mood) { acc.sum += r.mood.score * r.mood.total; acc.n += r.mood.total; } return acc; }, { sum: 0, n: 0 });
     var avg = weighted.n ? weighted.sum / weighted.n : null;
     var avgMood = M.moodFor(avg);
@@ -405,7 +459,7 @@
       + tile(s.bolus.length || '—', 'Bolusa maiņas', 'GE ' + s.bolus.filter(function (e) { return e.room === 'ge'; }).length + '&ensp;Philips ' + s.bolus.filter(function (e) { return e.room === 'philips'; }).length)
       + '</div>';
     return section('Komandas sajūta', loading || 'Dienas vidējā, lielāks punkts = vairāk reakciju',
-        (s.reactionTotal ? moodChart(rows, b.today) : empty('Šim mēnesim vēl nav nevienas sajūtas atzīmes.')) + '<div class="db-two"><div>' + moodCounts(s) + tiles + '</div>' + pixels(rows, b.today, 'mood') + '</div>' + note('Sejiņa — dienas biežākā reakcija; bez sejiņas — neviens nav atzīmējis. ☀ dienā un ☾ naktī dežūrā: <b class="db-px-rg">radiogrāferi</b>, <b class="db-px-rd">radiologi</b>. Spied uz dienas, lai redzētu detaļas.'), '#7dd3fc')
+        (s.reactionTotal || rows.some(function (r) { return ownMood(r.day); }) ? moodChart(rows, b.today) : empty('Šim mēnesim vēl nav nevienas sajūtas atzīmes.')) + '<div class="db-two"><div>' + moodCounts(s) + ownMoodList(rows) + tiles + '</div>' + pixels(rows, b.today, 'mood') + '</div>' + note('Sejiņa — dienas biežākā reakcija; bez sejiņas — neviens nav atzīmējis. ☀ dienā un ☾ naktī dežūrā: <b class="db-px-rg">radiogrāferi</b>, <b class="db-px-rd">radiologi</b>. Spied uz dienas, lai redzētu detaļas.'), '#7dd3fc')
       + team(s);
   }
   function bolusView(b) {
@@ -534,12 +588,16 @@
     var day = state.day, all = summaryFor({ from: day, to: day }, '', 'all');
     var row = M.dayRows(all, day, day)[0];
     var moodBlock;
+    var ownDayMood = ownMood(day);
+    var ownBlock = ownDayMood ? '<div class="db-own db-own--day"><span class="db-own-title">Savs vērtējums</span><span class="db-own-item is-static"><span class="db-face">'
+      + esc(ownDayMood.emoji) + '</span><b>' + esc(ownDayMood.note || '—') + '</b></span></div>' : '';
     if (row.mood) {
       var m = M.moodFor(row.mood.score);
       moodBlock = '<div class="db-tiles db-tiles--2">' + tile('<span class="db-face">' + m.emoji + '</span>' + fmt(row.mood.score), 'Dienas sajūta', m.label, m.color) + tile(row.mood.total, 'Reakcijas', 'anonīmi klikšķi') + '</div>' + moodCounts(all);
     } else {
-      moodBlock = empty(day > b.today ? 'Diena vēl nav pienākusi.' : 'Šai dienai sajūtas nav atzīmētas.');
+      moodBlock = ownBlock ? '' : empty(day > b.today ? 'Diena vēl nav pienākusi.' : 'Šai dienai sajūtas nav atzīmētas.');
     }
+    moodBlock = ownBlock + moodBlock;
     var staff = ['rg', 'rd'].map(function (g) {
       var list = row.shifts.filter(function (e) { return e.group === g; });
       if (!list.length) return '';
