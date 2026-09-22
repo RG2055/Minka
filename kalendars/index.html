@@ -1566,7 +1566,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="data/svinamas-dienas.js?v=20260922kafija2"></script>
+<script src="data/svinamas-dienas.js?v=20260922mood2"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/known-carryovers.js?v=20260907smooth1"></script>
 <script src="js/card-face-model.js?v=20260912wa4"></script>
@@ -2986,10 +2986,10 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260922kafija2"></script>
+<script src="js/calendar.js?v=20260922mood2"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
-<script src="js/header-weather.js?v=20260922kafija2" defer></script>
+<script src="js/header-weather.js?v=20260922mood2" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260831autofit1"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
 <script src="js/light-model.js?v=20260908light1"></script>
@@ -3003,11 +3003,11 @@ function _mkToast(msg, type) {
 <script src="js/emoji.js?v=20260911daybook1-20260908recovery1" defer></script>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
 <script src="js/daybook-model.js?v=20260911b" defer></script>
-<script src="js/daybook.js?v=20260922kafija2" defer></script>
-<script src="js/levels.js?v=20260922kafija2" defer></script>
+<script src="js/daybook.js?v=20260922mood2" defer></script>
+<script src="js/levels.js?v=20260922mood2" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260922kafija2';
+window.__minkaLocalBuild = '20260922mood2';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -18431,6 +18431,11 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   var ratingFlushTimer = 0;
   var ratingSyncs = {};
   var ratingsLoadedAt = {};
+  // When this device last had the comment/idea feed open, and how fresh the
+  // newest entry on the server is. The API already reports lastActivity per
+  // day, so "is there anything new" needs no new endpoint — only a local mark.
+  var SEEN_KEY = 'minkaRgFeedbackSeenV1';
+  var newestEntryAt = { comment: 0, suggestion: 0 };
   var globalEntryCounts = { comment: null, suggestion: null };
   var globalEntryCountsLoadedAt = {};
   var globalEntryCountLoads = {};
@@ -18563,12 +18568,23 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   var moodBoredSince = 0;
   var moodBoredDay = '';
   var moodLiquidTimer = 0;
-  var MOOD_BORED_DELAY = 18000;
+  // How long the card waits before it admits nobody has rated this shift. The
+  // old 18 s meant the face went to sleep during a glance at the page, which
+  // read as "the app is asleep" rather than "no ratings yet".
+  var MOOD_BORED_DELAY = 90000;
 
   function shiftDayKey() {
     var selected = String(window.__activeDateStr || '').trim();
     var selectedMatch = selected.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
     if (selectedMatch) return selectedMatch[3] + '-' + selectedMatch[2] + '-' + selectedMatch[1];
+    var d = new Date();
+    if (d.getHours() < 8) d.setDate(d.getDate() - 1);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function liveShiftDayKey() {
+    var today = String(window.__g_todayStr || '').trim();
+    var match = today.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    if (match) return match[3] + '-' + match[2] + '-' + match[1];
     var d = new Date();
     if (d.getHours() < 8) d.setDate(d.getDate() - 1);
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -18610,6 +18626,20 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     try { localStorage.setItem(key, JSON.stringify(value)); }
     catch (_e) {}
   }
+  function readSeenAt(kind) {
+    var all = readJson(SEEN_KEY, {});
+    return Math.max(0, Number(all && all[kind]) || 0);
+  }
+  function markSeen(kind, at) {
+    var all = readJson(SEEN_KEY, {});
+    if (!all || typeof all !== 'object') all = {};
+    all[kind] = Math.max(Number(all[kind]) || 0, Number(at) || Date.now());
+    writeJson(SEEN_KEY, all);
+    paintEntryCounts();
+  }
+  function hasUnseen(kind) {
+    return newestEntryAt[kind] > 0 && newestEntryAt[kind] > readSeenAt(kind);
+  }
   function saveServerEntryCounts(day, counts) {
     var all = readJson(ENTRY_COUNT_KEY, {});
     var current = all[day] || { comment: 0, suggestion: 0 };
@@ -18637,8 +18667,14 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
         ? cachedTotal
         : Math.max(0, Number(globalEntryCounts[kind]) || 0);
       var count = serverTotal + Math.max(0, Number(local[kind]) || 0);
+      var unseen = hasUnseen(kind);
       badge.textContent = count ? String(count) : '';
-      badge.setAttribute('aria-label', count ? count + ' ieraksti visās dienās' : 'Nav ierakstu');
+      badge.classList.toggle('is-new', unseen && count > 0);
+      badge.setAttribute('aria-label', count
+        ? count + ' ieraksti visās dienās' + (unseen ? ', ir jauni kopš pēdējās reizes' : '')
+        : 'Nav ierakstu');
+      var button = badge.closest('.rg-pulse-write');
+      if (button) button.classList.toggle('has-new', unseen && count > 0);
     });
   }
   function loadGlobalEntryCount(kind, force) {
@@ -18651,6 +18687,9 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     globalEntryCountLoads[kind] = fetchFeedback('/api/feedback/days?kind=' + encodeURIComponent(kind) + '&limit=180')
       .then(function (data) {
         var days = Array.isArray(data.days) ? data.days : [];
+        newestEntryAt[kind] = days.reduce(function (newest, item) {
+          return Math.max(newest, Math.max(0, Number(item && item.lastActivity) || 0));
+        }, 0);
         globalEntryCounts[kind] = data.total != null
           ? Math.max(0, Number(data.total) || 0)
           : days.reduce(function (sum, item) { return sum + Math.max(0, Number(item && item.count) || 0); }, 0);
@@ -19845,6 +19884,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     stage.classList.toggle('is-idle', !moodBlobKey && !preview);
     stage.classList.toggle('is-preview', !!preview);
     stage.classList.remove('is-bored');
+    stage.classList.remove('is-waiting');
     var visual = moodVisuals[key] || moodVisuals._none;
     stage.dataset.rgMood = key || 'none';
     stage.style.setProperty('--rg-mood-primary', visual.color1);
@@ -19877,6 +19917,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       moodBoredSince = 0;
       moodBoredDay = day;
       refs.stage.classList.remove('is-bored');
+      refs.stage.classList.remove('is-waiting');
       return;
     }
     if (moodBoredDay !== day) {
@@ -19896,8 +19937,14 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
         moodBoredTimer = window.setTimeout(showBored, 700);
         return;
       }
-      live.stage.classList.add('is-bored');
-      if (live.fluentFace) live.fluentFace.textContent = '😴';
+      // Asleep is only honest at night. During the day an unrated shift gets
+      // the waiting face and the label says so, instead of the app looking
+      // like it has dozed off.
+      var hour = new Date().getHours();
+      var night = hour >= 22 || hour < 6;
+      live.stage.classList.toggle('is-bored', night);
+      live.stage.classList.toggle('is-waiting', !night);
+      if (live.fluentFace) live.fluentFace.textContent = night ? '😴' : (moodVisuals._none.emoji || '🙂');
     };
     var remaining = MOOD_BORED_DELAY - (Date.now() - moodBoredSince);
     if (remaining <= 0) showBored();
@@ -20210,7 +20257,14 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     if (dominant) card.dataset.mood = dominant.key;
     else card.removeAttribute('data-mood');
     var reactionLabel = card.querySelector('.rg-feedback-card-reaction-label');
-    if (reactionLabel) reactionLabel.textContent = selected ? selected.label : 'Izvēlies sajūtu';
+    if (reactionLabel) {
+      var voted = reactions.reduce(function (sum, item) { return sum + Math.max(0, Number(counts[item.key]) || 0); }, 0);
+      var isLiveDay = shiftDayKey() === liveShiftDayKey();
+      reactionLabel.textContent = selected ? selected.label
+        : dominant ? dominant.label + ' · ' + voted
+        : isLiveDay ? 'Vēl neviens nav novērtējis' : 'Šai maiņai nav novērtējumu';
+      reactionLabel.classList.toggle('is-empty-state', !selected && !dominant);
+    }
     card.querySelectorAll('[data-rg-pulse]').forEach(function (button) {
       var isSelected = !!selected && button.dataset.rgPulse === selected.key;
       button.classList.toggle('is-selected', isSelected);
@@ -20388,6 +20442,10 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   var daysLoading = false;
   var dayRequestId = 0;
   var messageRequestId = 0;
+  // The mark as it stood when the feed was opened. Entries newer than this are
+  // badged while they are being read; the mark itself only moves on close, so
+  // nothing loses its "new" flag under the reader's eyes.
+  var feedSeenAt = 0;
 
   function syncFeedbackModalState(open) {
     if (window.parent === window) return;
@@ -20404,6 +20462,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   function openModal(kind, trigger) {
     var isComment = kind === 'comment';
     lastWriteButton = trigger || null;
+    feedSeenAt = Math.max(readSeenAt('comment'), readSeenAt('suggestion'));
     modal.dataset.kind = isComment ? 'comment' : 'suggestion';
     modalDay = shiftDayKey();
     modal.querySelector('#rgFeedbackTitle').textContent = isComment ? 'Komentāri' : 'Idejas RG lietotnei';
@@ -20427,6 +20486,9 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   function closeModal() {
     modal.hidden = true;
     syncFeedbackModalState(false);
+    var closedAt = Date.now();
+    markSeen('comment', closedAt);
+    markSeen('suggestion', closedAt);
     dayRequestId += 1;
     messageRequestId += 1;
     daysLoading = false;
@@ -20489,6 +20551,9 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       var data = await fetchFeedback('/api/feedback/days?kind=' + encodeURIComponent(requestedKind) + '&limit=90');
       if (requestId !== dayRequestId || requestedKind !== modal.dataset.kind) return;
       remoteDays = Array.isArray(data.days) ? data.days : [];
+      newestEntryAt[requestedKind] = remoteDays.reduce(function (newest, item) {
+        return Math.max(newest, Math.max(0, Number(item && item.lastActivity) || 0));
+      }, 0);
       if (data.total != null) globalEntryCounts[requestedKind] = Math.max(0, Number(data.total) || 0);
       var storedCounts = readJson(ENTRY_COUNT_KEY, {});
       remoteDays.forEach(function (item) {
@@ -20851,7 +20916,16 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     renderCommunityTopics();
     var today = shiftDayKey();
     commsAllCount.textContent = String(communityMessages.length);
-    commsTodayCount.textContent = String(communityMessages.filter(function (item) { return (item.date || item.shiftDay) === today; }).length);
+    var todayItems = communityMessages.filter(function (item) { return (item.date || item.shiftDay) === today; });
+    commsTodayCount.textContent = String(todayItems.length);
+    // "Šodien" carries the accent while it holds something this device has not
+    // read yet, so the new-entry signal is visible before the feed is scrolled.
+    var unseenToday = todayItems.some(function (item) {
+      return feedSeenAt > 0 && Math.max(0, Number(item.createdAt) || 0) > feedSeenAt;
+    });
+    commsTodayCount.classList.toggle('is-new', unseenToday);
+    var todayButton = modal.querySelector('[data-rg-comms-view="today"]');
+    if (todayButton) todayButton.classList.toggle('has-new', unseenToday);
     modal.querySelectorAll('[data-rg-comms-view]').forEach(function (button) {
       button.classList.toggle('is-active', communityView === button.dataset.rgCommsView);
     });
@@ -20888,8 +20962,10 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       var own = !!item.pending || !!editToken || owned.indexOf(item.clientId) >= 0;
       var canMutate = !!item.pending || !!editToken;
       var authorName = item.author || 'Anonīms';
+      var createdAt = Math.max(0, Number(item.createdAt) || 0);
+      var isNew = !own && feedSeenAt > 0 && createdAt > feedSeenAt;
       var article = document.createElement('article');
-      article.className = 'rg-comms-message' + (own ? ' is-own' : '');
+      article.className = 'rg-comms-message' + (own ? ' is-own' : '') + (isNew ? ' is-new' : '');
       article.dataset.rgMessageKey = item.key;
       var avatar = document.createElement('span');
       avatar.className = 'rg-comms-avatar';
@@ -20908,6 +20984,12 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       chip.dataset.rgCommunityTopic = item.topic;
       chip.textContent = '# ' + item.topic;
       head.append(author, time, chip);
+      if (isNew) {
+        var freshChip = document.createElement('span');
+        freshChip.className = 'rg-comms-new-chip';
+        freshChip.textContent = 'Jauns';
+        head.appendChild(freshChip);
+      }
       var bubble = document.createElement('div');
       bubble.className = 'rg-comms-bubble';
       if (item.parent && byKey[item.parent]) {
@@ -21020,6 +21102,9 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   };
   openModal = function (kind, trigger) {
     lastWriteButton = trigger || null;
+    // Baseline for the "Jauns" badges: what this device had already read when
+    // the feed was opened. The mark itself only moves on close.
+    feedSeenAt = Math.max(readSeenAt('comment'), readSeenAt('suggestion'));
     modal.dataset.kind = 'comment';
     modalDay = shiftDayKey();
     modal.hidden = false;
@@ -21046,6 +21131,9 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     modal.hidden = true;
     communityLoadId += 1;
     syncFeedbackModalState(false);
+    var closedAt = Date.now();
+    markSeen('comment', closedAt);
+    markSeen('suggestion', closedAt);
   };
   renderMessages = renderCommunity;
   loadMessages = function () { return loadCommunity(); };
@@ -24476,7 +24564,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
    css/mobile-v2.css + js/mobile-v2.js — vizuālais izkārtojums; ?mv2=0 to atslēdz. */
 (function(){
   if (!document.documentElement.classList.contains('mk-mobile-shell')) return;
-  var v = '20260922kafija2';
+  var v = '20260922mood2';
   function css(href) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href + '?v=' + v; document.body.appendChild(l); }
   css('css/mobile-fixes.css');
   try { if (new URLSearchParams(location.search).get('mv2') === '0') return; } catch (_e) {}
@@ -24494,8 +24582,327 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 </style>
 <script src="../js/image-palette.js?v=20260919palette2"></script>
-<link rel="stylesheet" href="css/header-appearance.css?v=20260922kafija2">
-<script src="js/header-appearance.js?v=20260922kafija2"></script>
-<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922kafija2">
+<link rel="stylesheet" href="css/header-appearance.css?v=20260922mood2">
+<script src="js/header-appearance.js?v=20260922mood2"></script>
+<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922mood2">
+<style>
+/* ── Noskaņas kartīte un saziņa: Material 3 Expressive ───────────────────
+   Tie paši žetoni, ko lieto kafijas izvēlne: toņu virsmas rāmju vietā,
+   izvēlētais elements kā secondary-container, lielas apaļas formas un
+   pilnas kapsulas pogām. Silti toņi; violets projektā netiek lietots.
+   Atsauce: m3.material.io — color roles, shape scale, chips, dialogs. */
+/* Saziņa patur savu auksto identitāti (tumši zils + piparmētra), ko tā
+   lietoja līdz šim — Material 3 šeit maina uzbūvi un formas, ne krāsu
+   saimi. Siltie kafijas toņi paliek kafijas izvēlnē. Jaunumu akcents ir
+   dzintara, lai to nesajauktu ar parasto piparmētras akcentu. */
+:root {
+  --m3c-surface: #0d1620;
+  --m3c-surface-container: #13202c;
+  --m3c-surface-container-high: #1a2b39;
+  --m3c-surface-container-highest: #223647;
+  --m3c-on-surface: #e6f1f8;
+  --m3c-on-surface-variant: #b3c6d4;
+  --m3c-outline: #7c93a4;
+  --m3c-outline-variant: #34485a;
+  --m3c-primary: #7fd8c6;
+  --m3c-on-primary: #00382c;
+  --m3c-primary-container: #16493f;
+  --m3c-secondary-container: #1f4a4a;
+  --m3c-on-secondary-container: #c6f4e8;
+  --m3c-tertiary: #f5c67a;
+  --m3c-on-tertiary: #3d2900;
+  --m3c-motion: cubic-bezier(.2, 0, 0, 1);
+}
+
+/* ── Saziņas dialogs ── */
+#rgFeedbackModal {
+  background: rgba(10, 6, 3, .72) !important;
+}
+#rgFeedbackModal .rg-feedback-dialog.rg-comms {
+  border: 0 !important;
+  border-radius: 28px !important;
+  background: var(--m3c-surface-container) !important;
+  box-shadow: 0 8px 12px 6px rgba(0,0,0,.30), 0 4px 4px rgba(0,0,0,.36) !important;
+}
+#rgFeedbackModal .rg-comms-head {
+  border-bottom: 1px solid var(--m3c-outline-variant) !important;
+  background: var(--m3c-surface-container-high) !important;
+}
+#rgFeedbackModal .rg-comms-logo {
+  border: 0 !important;
+  border-radius: 16px !important;
+  background: var(--m3c-secondary-container) !important;
+  color: var(--m3c-on-secondary-container) !important;
+  box-shadow: none !important;
+}
+#rgFeedbackModal .rg-comms-heading h2 {
+  color: var(--m3c-on-surface) !important;
+  font: 500 22px/1.27 Inter, system-ui, sans-serif !important;
+  letter-spacing: 0 !important;
+}
+#rgFeedbackModal .rg-comms-heading p {
+  color: var(--m3c-on-surface-variant) !important;
+  font: 400 12px/1.33 Inter, system-ui, sans-serif !important;
+}
+/* Cilnes: M3 segmented button — viena kapsula ar dalījumu. */
+#rgFeedbackModal .rg-comms-tabs {
+  gap: 0 !important;
+  padding: 0 !important;
+  border: 1px solid var(--m3c-outline) !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  overflow: hidden !important;
+}
+#rgFeedbackModal .rg-comms-tab {
+  height: 36px !important;
+  border-radius: 0 !important;
+  border-left: 1px solid var(--m3c-outline) !important;
+  color: var(--m3c-on-surface) !important;
+  font: 500 13px/1 Inter, system-ui, sans-serif !important;
+  transition: background-color .18s var(--m3c-motion) !important;
+}
+#rgFeedbackModal .rg-comms-tab:first-child { border-left: 0 !important; }
+#rgFeedbackModal .rg-comms-tab.is-active {
+  background: var(--m3c-secondary-container) !important;
+  color: var(--m3c-on-secondary-container) !important;
+  box-shadow: none !important;
+  font-weight: 600 !important;
+}
+/* Jauna tēma: M3 filled tonal button. */
+#rgFeedbackModal .rg-comms-new-topic {
+  height: 40px !important;
+  padding: 0 20px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: var(--m3c-primary) !important;
+  color: var(--m3c-on-primary) !important;
+  font: 600 14px/1 Inter, system-ui, sans-serif !important;
+}
+#rgFeedbackModal .rg-comms .rg-feedback-close {
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: var(--m3c-on-surface-variant) !important;
+}
+#rgFeedbackModal .rg-comms .rg-feedback-close:hover { background: rgba(255,183,124,.10) !important; }
+#rgFeedbackModal .rg-comms-sidebar {
+  border-right: 1px solid var(--m3c-outline-variant) !important;
+  background: var(--m3c-surface) !important;
+}
+#rgFeedbackModal .rg-comms-search {
+  height: 44px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: var(--m3c-surface-container-high) !important;
+  color: var(--m3c-on-surface) !important;
+  font: 400 13px/1 Inter, system-ui, sans-serif !important;
+}
+/* Navigācija: M3 navigation drawer items — pilnas kapsulas. */
+#rgFeedbackModal :is(.rg-comms-nav-button, .rg-comms-topic) {
+  min-height: 44px !important;
+  border-radius: 999px !important;
+  color: var(--m3c-on-surface-variant) !important;
+  font: 500 13px/1.2 Inter, system-ui, sans-serif !important;
+  transition: background-color .18s var(--m3c-motion) !important;
+}
+#rgFeedbackModal :is(.rg-comms-nav-button, .rg-comms-topic):hover {
+  background: rgba(255,183,124,.08) !important;
+  color: var(--m3c-on-surface) !important;
+}
+#rgFeedbackModal :is(.rg-comms-nav-button, .rg-comms-topic).is-active {
+  background: var(--m3c-secondary-container) !important;
+  color: var(--m3c-on-secondary-container) !important;
+  box-shadow: none !important;
+}
+#rgFeedbackModal .rg-comms-nav-icon {
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: inherit !important;
+}
+#rgFeedbackModal .rg-comms-count {
+  height: 20px !important;
+  border-radius: 999px !important;
+  background: var(--m3c-surface-container-highest) !important;
+  color: var(--m3c-on-surface-variant) !important;
+  font: 600 11px/1 Inter, system-ui, sans-serif !important;
+}
+/* Jaunumu signāls: M3 badge — tertiary tonis, nevis vēl viens pelēks. */
+#rgFeedbackModal .rg-comms-count.is-new {
+  background: var(--m3c-tertiary) !important;
+  color: var(--m3c-on-tertiary) !important;
+}
+#rgFeedbackModal .rg-comms-nav-button.has-new > span:nth-child(2)::after {
+  content: '' !important;
+  display: inline-block !important;
+  width: 6px !important;
+  height: 6px !important;
+  margin-left: 6px !important;
+  border-radius: 999px !important;
+  background: var(--m3c-tertiary) !important;
+  vertical-align: middle !important;
+}
+#rgFeedbackModal .rg-comms-section-label {
+  color: var(--m3c-on-surface-variant) !important;
+  font: 500 11px/1 Inter, system-ui, sans-serif !important;
+  letter-spacing: .09em !important;
+}
+#rgFeedbackModal .rg-comms-main { background: var(--m3c-surface-container) !important; }
+#rgFeedbackModal .rg-comms-feed-head {
+  border-bottom: 1px solid var(--m3c-outline-variant) !important;
+}
+#rgFeedbackModal .rg-comms-feed-head strong {
+  color: var(--m3c-on-surface) !important;
+  font: 500 16px/1.25 Inter, system-ui, sans-serif !important;
+}
+#rgFeedbackModal .rg-comms-feed-head small {
+  color: var(--m3c-on-surface-variant) !important;
+  font: 400 12px/1.2 Inter, system-ui, sans-serif !important;
+}
+#rgFeedbackModal .rg-comms-avatar {
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: var(--m3c-primary-container) !important;
+  color: var(--m3c-on-secondary-container) !important;
+  font: 600 12px/1 Inter, system-ui, sans-serif !important;
+}
+#rgFeedbackModal .rg-comms-message-head strong {
+  color: var(--m3c-on-surface) !important;
+  font: 600 13px/1.2 Inter, system-ui, sans-serif !important;
+}
+#rgFeedbackModal .rg-comms-message-head time {
+  color: var(--m3c-on-surface-variant) !important;
+  font: 400 11px/1 Inter, system-ui, sans-serif !important;
+}
+#rgFeedbackModal .rg-comms-topic-chip {
+  padding: 4px 10px !important;
+  border-radius: 999px !important;
+  background: var(--m3c-surface-container-highest) !important;
+  color: var(--m3c-on-surface-variant) !important;
+  font: 500 11px/1 Inter, system-ui, sans-serif !important;
+}
+/* "Jauns" čips: M3 suggestion chip tertiary tonī. */
+#rgFeedbackModal .rg-comms-new-chip {
+  padding: 4px 10px !important;
+  border-radius: 999px !important;
+  background: var(--m3c-tertiary) !important;
+  color: var(--m3c-on-tertiary) !important;
+  font: 600 11px/1 Inter, system-ui, sans-serif !important;
+  letter-spacing: .01em !important;
+}
+#rgFeedbackModal .rg-comms-bubble {
+  margin-top: 6px !important;
+  padding: 12px 14px !important;
+  border: 0 !important;
+  border-radius: 4px 18px 18px 18px !important;
+  background: var(--m3c-surface-container-high) !important;
+  color: var(--m3c-on-surface) !important;
+  font: 400 14px/1.45 Inter, system-ui, sans-serif !important;
+}
+#rgFeedbackModal .rg-comms-message.is-own .rg-comms-bubble {
+  border: 0 !important;
+  border-radius: 18px 4px 18px 18px !important;
+  background: var(--m3c-secondary-container) !important;
+  color: var(--m3c-on-secondary-container) !important;
+}
+/* Nelasītais ieraksts: plāna akcenta svītra, nevis cits fons — teksts paliek
+   tikpat lasāms, bet acs to atrod uzreiz. */
+#rgFeedbackModal .rg-comms-message.is-new .rg-comms-bubble {
+  box-shadow: inset 3px 0 0 var(--m3c-tertiary) !important;
+}
+#rgFeedbackModal .rg-comms-message-actions button {
+  height: 32px !important;
+  padding: 0 12px !important;
+  border-radius: 999px !important;
+  color: var(--m3c-on-surface-variant) !important;
+  font: 500 12px/1 Inter, system-ui, sans-serif !important;
+}
+#rgFeedbackModal .rg-comms-message-actions button:hover {
+  background: rgba(255,183,124,.10) !important;
+  color: var(--m3c-on-surface) !important;
+}
+#rgFeedbackModal .rg-comms-empty {
+  color: var(--m3c-on-surface-variant) !important;
+  font: 400 14px/1.5 Inter, system-ui, sans-serif !important;
+}
+/* Rakstīšana: M3 filled text field + FAB sūtīšanai. */
+#rgFeedbackModal .rg-comms-composer {
+  padding: 12px !important;
+  border: 0 !important;
+  border-radius: 24px !important;
+  background: var(--m3c-surface-container-high) !important;
+  box-shadow: none !important;
+}
+#rgFeedbackModal #rgFeedbackText {
+  min-height: 48px !important;
+  border-radius: 16px !important;
+  background: var(--m3c-surface) !important;
+  color: var(--m3c-on-surface) !important;
+  font: 400 14px/1.4 Inter, system-ui, sans-serif !important;
+}
+#rgFeedbackModal #rgFeedbackText:focus {
+  box-shadow: inset 0 0 0 2px var(--m3c-primary) !important;
+}
+#rgFeedbackModal .rg-comms-send {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 16px !important;
+  background: var(--m3c-primary) !important;
+  color: var(--m3c-on-primary) !important;
+}
+#rgFeedbackModal :is(.rg-comms-author-wrap, .rg-comms-topic-input) {
+  height: 36px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: var(--m3c-surface-container-highest) !important;
+  color: var(--m3c-on-surface-variant) !important;
+}
+#rgFeedbackModal .rg-comms-topic-input { padding: 0 14px !important; }
+#rgFeedbackModal .rg-comms-topic-input::placeholder { color: var(--m3c-on-surface-variant) !important; opacity: .7 !important; }
+#rgFeedbackModal .rg-comms-author { color: var(--m3c-on-surface) !important; }
+#rgFeedbackModal .rg-comms-author option { background: var(--m3c-surface-container-high) !important; color: var(--m3c-on-surface) !important; }
+#rgFeedbackModal .rg-comms-emoji { border-radius: 999px !important; }
+#rgFeedbackModal .rg-comms-emoji:hover { background: rgba(255,183,124,.10) !important; }
+#rgFeedbackModal :is(.rg-comms-char-count, .rg-comms-status, .rg-comms-replying) {
+  color: var(--m3c-on-surface-variant) !important;
+  font: 400 11px/1 Inter, system-ui, sans-serif !important;
+}
+
+/* ── Noskaņas kartīte ── */
+/* Reakcijas: M3 čipi — izvēlētā ir secondary-container kapsula, ne rāmis. */
+#grafiks-list .rg-feedback-card .rg-pulse-tap {
+  border-radius: 999px !important;
+  transition: background-color .18s var(--m3c-motion), transform .18s var(--m3c-motion) !important;
+}
+#grafiks-list .rg-feedback-card .rg-pulse-tap:hover { background: rgba(255,255,255,.08) !important; }
+/* Izvēlētā reakcija: M3 forma, bet krāsa nāk no pašas kartītes noskaņas
+   toņa (--rg-card-rgb), tāpēc kartīte nekļūst par otru krāsu saimi. */
+#grafiks-list .rg-feedback-card .rg-pulse-tap.is-selected {
+  background: rgba(var(--rg-card-rgb, 148, 184, 213), .22) !important;
+  transform: scale(1.06) !important;
+}
+/* Tukšais stāvoklis: paskaidro, kas trūkst, nevis atkārto virsrakstu. */
+#grafiks-list .rg-feedback-card .rg-feedback-card-reaction-label.is-empty-state {
+  color: var(--m3c-on-surface-variant) !important;
+}
+/* Komentāru poga: M3 tonal button ar badge. */
+#grafiks-list .rg-feedback-card .rg-pulse-write--comment {
+  border-radius: 999px !important;
+  transition: background-color .18s var(--m3c-motion) !important;
+}
+#grafiks-list .rg-feedback-card .rg-pulse-write--comment.has-new {
+  background: rgba(245, 198, 122, .16) !important;
+}
+#grafiks-list .rg-feedback-card .rg-feedback-action-count.is-new {
+  background: var(--m3c-tertiary) !important;
+  border-color: transparent !important;
+  color: var(--m3c-on-tertiary) !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  #rgFeedbackModal :is(.rg-comms-tab, .rg-comms-nav-button, .rg-comms-topic),
+  #grafiks-list .rg-feedback-card :is(.rg-pulse-tap, .rg-pulse-write--comment) {
+    transition: none !important;
+  }
+}
+</style>
 </body>
 </html>
