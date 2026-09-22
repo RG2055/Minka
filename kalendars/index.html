@@ -1570,7 +1570,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="data/svinamas-dienas.js?v=20260922bmc1"></script>
+<script src="data/svinamas-dienas.js?v=20260922bmc2"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/known-carryovers.js?v=20260907smooth1"></script>
 <script src="js/card-face-model.js?v=20260912wa4"></script>
@@ -2990,10 +2990,10 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260922bmc1"></script>
+<script src="js/calendar.js?v=20260922bmc2"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
-<script src="js/header-weather.js?v=20260922bmc1" defer></script>
+<script src="js/header-weather.js?v=20260922bmc2" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260831autofit1"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
 <script src="js/light-model.js?v=20260908light1"></script>
@@ -3004,14 +3004,14 @@ function _mkToast(msg, type) {
 <script src="js/design_v1.js?v=20260824perfaudit2" defer></script>
 <script src="js/theme.js?v=20260920header-duty1" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
-<script src="js/emoji.js?v=20260922bmc1" defer></script>
+<script src="js/emoji.js?v=20260922bmc2" defer></script>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
 <script src="js/daybook-model.js?v=20260911b" defer></script>
-<script src="js/daybook.js?v=20260922bmc1" defer></script>
-<script src="js/levels.js?v=20260922bmc1" defer></script>
+<script src="js/daybook.js?v=20260922bmc2" defer></script>
+<script src="js/levels.js?v=20260922bmc2" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260922bmc1';
+window.__minkaLocalBuild = '20260922bmc2';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -18791,13 +18791,13 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     bmcPop = document.createElement('div');
     bmcPop.className = 'rg-bmc-pop';
     bmcPop._return = anchor || null;
-    bmcPop.innerHTML = '<div class="rg-bmc-sheet" role="dialog" aria-modal="true" aria-label="Buy me a coffee">'
-      + '<div class="rg-bmc-head"><span class="rg-bmc-cup" aria-hidden="true">☕</span><div><strong>Buy me a coffee</strong>'
-      + '<small>If RG makes your shifts easier</small></div>'
-      + '<button type="button" class="rg-bmc-close" data-rg-bmc-close="1" aria-label="Close">×</button></div>'
-      + '<div class="rg-bmc-qr"><img src="assets/coffee/bmc-qr.svg" alt="QR code for ' + BMC_URL + '" width="168" height="168"></div>'
-      + '<p class="rg-bmc-hint">Scan with your phone camera</p>'
-      + '<a class="rg-bmc-open" href="' + BMC_URL + '" target="_blank" rel="noopener">Open buymeacoffee.com/rgapp</a>'
+    bmcPop.innerHTML = '<div class="rg-bmc-sheet" role="dialog" aria-modal="true" aria-label="Uzsauc autoram kafiju">'
+      + '<div class="rg-bmc-head"><div><strong>Uzsauc autoram kafiju ☕</strong></div>'
+      + '<button type="button" class="rg-bmc-close" data-rg-bmc-close="1" aria-label="Aizvērt">×</button></div>'
+      + '<p class="rg-bmc-text">RG veidoju un uzturu savā brīvajā laikā. Ja lietotne tev noder, vari pateikt paldies ar kafiju un atbalstīt turpmākos uzlabojumus. Lietošana paliek bez maksas.</p>'
+      + '<div class="rg-bmc-qr"><img src="assets/coffee/bmc-qr.svg?v=rgapp1" alt="QR kods: ' + BMC_URL + '" width="168" height="168"></div>'
+      + '<p class="rg-bmc-hint">Noskenē ar telefona kameru</p>'
+      + '<a class="rg-bmc-open" href="' + BMC_URL + '" target="_blank" rel="noopener">Atbalstīt RG</a>'
       + '</div>';
     document.body.appendChild(bmcPop);
     var sheet = bmcPop.querySelector('.rg-bmc-sheet');
@@ -25102,7 +25102,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
    css/mobile-v2.css + js/mobile-v2.js — vizuālais izkārtojums; ?mv2=0 to atslēdz. */
 (function(){
   if (!document.documentElement.classList.contains('mk-mobile-shell')) return;
-  var v = '20260922bmc1';
+  var v = '20260922bmc2';
   function css(href) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href + '?v=' + v; document.body.appendChild(l); }
   css('css/mobile-fixes.css');
   try { if (new URLSearchParams(location.search).get('mv2') === '0') return; } catch (_e) {}
@@ -25120,9 +25120,9 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 </style>
 <script src="../js/image-palette.js?v=20260919palette2"></script>
-<link rel="stylesheet" href="css/header-appearance.css?v=20260922bmc1">
-<script src="js/header-appearance.js?v=20260922bmc1"></script>
-<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922bmc1">
+<link rel="stylesheet" href="css/header-appearance.css?v=20260922bmc2">
+<script src="js/header-appearance.js?v=20260922bmc2"></script>
+<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922bmc2">
 <style>
 /* ── Noskaņas kartīte un saziņa: Material 3 Expressive ───────────────────
    Tie paši žetoni, ko lieto kafijas izvēlne: toņu virsmas rāmju vietā,
@@ -25616,7 +25616,7 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 .rg-bmc-sheet {
   position: absolute !important;
-  width: 260px !important;
+  width: 280px !important;
   display: grid !important;
   justify-items: center !important;
   gap: 10px !important;
@@ -25647,6 +25647,7 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 /* QR vienmēr uz balta: skeneri gaida tumšus moduļus uz gaiša fona. */
 .rg-bmc-qr { padding: 10px !important; border-radius: 16px !important; background: #ffffff !important; line-height: 0 !important; }
 .rg-bmc-qr img { display: block !important; width: 168px !important; height: 168px !important; }
+.rg-bmc-text { margin: 0 !important; color: #d4d4d8 !important; font: 400 13px/1.45 Inter, system-ui, sans-serif !important; text-align: left !important; }
 .rg-bmc-hint { margin: 0 !important; color: #a1a1aa !important; font: 400 12px/1.3 Inter, system-ui, sans-serif !important; }
 .rg-bmc-open {
   width: 100% !important;
