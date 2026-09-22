@@ -162,14 +162,14 @@ async function getDayGroups(request, env, url) {
   const [result, totalResult] = await env.DB.batch([env.DB.prepare(`
     SELECT shift_day, COUNT(*) AS entry_count, MAX(created_at) AS last_activity
     FROM feedback_messages
-    WHERE kind = ?1
+    WHERE kind = ?1 AND body NOT LIKE '[[rgmood;%'
     GROUP BY shift_day
     ORDER BY shift_day DESC
     LIMIT ?2
   `).bind(kind, limit), env.DB.prepare(`
     SELECT COUNT(*) AS entry_count
     FROM feedback_messages
-    WHERE kind = ?1
+    WHERE kind = ?1 AND body NOT LIKE '[[rgmood;%'
   `).bind(kind)]);
   const totalRow = (totalResult.results || [])[0];
   return json(request, {
@@ -184,6 +184,9 @@ async function getDayGroups(request, env, url) {
   });
 }
 
+// A shift's own mood (emoji + a few words) travels as a message with an
+// [[rgmood;…]] marker. It belongs to the mood card, not to the conversation,
+// so none of the comment counts include it.
 async function getFeedback(request, env, url) {
   const date = cleanDay(url.searchParams.get("date"));
   const rawKind = url.searchParams.get("kind");
@@ -202,7 +205,7 @@ async function getFeedback(request, env, url) {
   const countsQuery = env.DB.prepare(`
     SELECT kind, COUNT(*) AS entry_count
     FROM feedback_messages
-    WHERE shift_day = ?1
+    WHERE shift_day = ?1 AND body NOT LIKE '[[rgmood;%'
     GROUP BY kind
   `).bind(date);
   const messagesQuery = kind
