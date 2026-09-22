@@ -37,7 +37,7 @@
   }
   window.__minkaHasApiAuth = function() { return !!getToken(); };
 
-  var CALENDAR_BUILD = '20260923pp3';
+  var CALENDAR_BUILD = '20260923crown2';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -643,7 +643,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <div id="calendarEmbed">
   <!-- Keep the expensive calendar document dormant behind the password gate.
        Authenticated startup assigns data-base-src immediately. -->
-  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260923pp3" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260923crown2" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- Compact brand loader. It stays up until the embedded schedule has painted. -->
@@ -2317,6 +2317,44 @@ window.addEventListener('DOMContentLoaded', () => {
       box-shadow: none !important;
     }
     @keyframes bolusBlinkFlat { 50% { opacity: .55; } }
+    /* GE/PH lampiņas: pikseļa gaismiņa statusa krāsā + kluss čips. Krāsa
+       stāv gaismiņā un burtos, nevis visā čipā; "nokavēts" mirgo tikai
+       gaismiņa. Tāds pats 1-px pikseļu raksts kā lāsei un kronim. */
+    #bolusDocBtn .bolus-room-seg,
+    #bolusDocBtn .bolus-room-seg.is-fresh,
+    #bolusDocBtn .bolus-room-seg.is-caution,
+    #bolusDocBtn .bolus-room-seg.is-warn,
+    #bolusDocBtn .bolus-room-seg.is-stale {
+      --led: #5b6b85;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 4px !important;
+      height: 18px !important;
+      min-width: 0 !important;
+      padding: 0 6px 0 5px !important;
+      border: 0 !important;
+      border-radius: 6px !important;
+      background: rgba(148, 170, 205, .10) !important;
+      color: #9fb0c9 !important;
+      font: 700 8.5px/1 'Space Grotesk', system-ui !important;
+      letter-spacing: .06em !important;
+      animation: none !important;
+      box-shadow: none !important;
+    }
+    #bolusDocBtn .bolus-room-seg::before {
+      content: '';
+      flex: 0 0 5px;
+      width: 5px;
+      height: 5px;
+      background: var(--led);
+      box-shadow: inset -1px -1px 0 rgba(0, 0, 0, .28), inset 1px 1px 0 rgba(255, 255, 255, .35);
+    }
+    #bolusDocBtn .bolus-room-seg.is-fresh   { --led: #2dd4bf; color: #b9f5e9 !important; }
+    #bolusDocBtn .bolus-room-seg.is-caution { --led: #fbbf24; color: #fde9a8 !important; }
+    #bolusDocBtn .bolus-room-seg.is-warn    { --led: #fb923c; color: #ffd9b3 !important; }
+    #bolusDocBtn .bolus-room-seg.is-stale   { --led: #ff5a6e; color: #ffd0d6 !important; background: rgba(255, 90, 110, .14) !important; }
+    #bolusDocBtn .bolus-room-seg.is-stale::before { animation: bolusBlinkFlat 1.3s steps(2, jump-none) infinite; }
+    @media (prefers-reduced-motion: reduce) { #bolusDocBtn .bolus-room-seg.is-stale::before { animation: none; } }
 
     /* Keep music recognizable without adding animation, glow or rendering cost. */
     #lacitisDockBtn,
@@ -4120,8 +4158,22 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     var ct = document.getElementById('bolusCrownTag');
     if (ct) {
       _updateChampCached();
-      var txt = _champ ? '👑 ' + _prettyFirst(_champ.name) : '';
-      if (ct.textContent !== txt) ct.textContent = txt;
+      var txt = _champ ? _prettyFirst(_champ.name) : '';
+      if (ct.__champName !== txt) {
+        ct.__champName = txt;
+        // Pixel crown in the dock's own 1-px-grid style (like the drop above),
+        // not the emoji: it matched nothing else on the bar.
+        ct.innerHTML = txt ? '<svg class="bolus-crown-px" viewBox="0 0 9 7" width="12" height="9" shape-rendering="crispEdges" aria-hidden="true">'
+          + '<rect x="0" y="0" width="1.04" height="1.04" fill="#fde68a"/><rect x="4" y="0" width="1.04" height="1.04" fill="#fde68a"/><rect x="8" y="0" width="1.04" height="1.04" fill="#fde68a"/>'
+          + '<rect x="0" y="1" width="2.04" height="1.04" fill="#fbbf24"/><rect x="3" y="1" width="3.04" height="1.04" fill="#fbbf24"/><rect x="7" y="1" width="2.04" height="1.04" fill="#fbbf24"/>'
+          + '<rect x="0" y="2" width="9.04" height="1.04" fill="#fbbf24"/>'
+          + '<rect x="0" y="3" width="9.04" height="1.04" fill="#f59e0b"/><rect x="2" y="3" width="1.04" height="1.04" fill="#f87171"/><rect x="4" y="3" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="6" y="3" width="1.04" height="1.04" fill="#f87171"/>'
+          + '<rect x="0" y="4" width="9.04" height="1.04" fill="#f59e0b"/>'
+          + '<rect x="0" y="5" width="9.04" height="1.04" fill="#b45309"/>'
+          + '</svg><span class="bolus-crown-name"></span>' : '';
+        var nameEl = ct.querySelector('.bolus-crown-name');
+        if (nameEl) nameEl.textContent = txt;
+      }
     }
     var btn = document.getElementById('bolusDocBtn');
     var led = document.getElementById('bolusLed');
@@ -4601,7 +4653,9 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       '@media(max-width:1100px){#bolus-rooms{display:block!important;overflow-y:auto!important}.brc[data-room="ge"],.brc[data-room="philips"]{min-height:700px!important;margin:0!important}.brc[data-room="philips"]{border-left:0!important;border-top:1px solid #00a9db!important}}'+
       '@media(max-width:560px){.brc[data-room="ge"],.brc[data-room="philips"]{display:flex!important;min-height:0!important;overflow:visible!important}.ctmotion-media-stage{min-height:575px!important}.ctmotion-media-stage.is-choosing{min-height:630px!important}.bhist{min-height:180px!important}.bnm-prow{grid-template-columns:1fr 1fr!important}.bnm-prow .bnm-now,.bnm-prow .bnm-savepick{min-width:0!important}}'+
       '@media(max-width:700px){.bolus-guide-steps{grid-template-columns:1fr}.bolus-guide-photo{height:220px}.bolus-guide-safety{grid-template-columns:auto 1fr}.bolus-guide-source{grid-column:2}.bolus-guide-head h2{font-size:24px}}'+
-      '#bolusDocBtn .bolus-crown{font-size:8px;font-weight:800;color:#ffd77a;line-height:1;display:block;text-align:center;margin-top:1px;white-space:nowrap;}';
+      '#bolusDocBtn .bolus-crown{display:inline-flex;align-items:center;justify-content:center;gap:4px;margin-top:2px;color:#ffd77a;font:700 8.5px/1 "Space Grotesk",system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;}'+
+      '#bolusDocBtn .bolus-crown:empty{display:none;}'+
+      '#bolusDocBtn .bolus-crown-px{display:block;flex:0 0 12px;width:12px;height:9px;image-rendering:pixelated;}';
     document.head.appendChild(s);
   }
   window.toggleBolus = function() {
