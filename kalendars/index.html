@@ -1570,7 +1570,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="data/svinamas-dienas.js?v=20260922bmc2"></script>
+<script src="data/svinamas-dienas.js?v=20260922bmc8"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/known-carryovers.js?v=20260907smooth1"></script>
 <script src="js/card-face-model.js?v=20260912wa4"></script>
@@ -2990,10 +2990,10 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260922bmc2"></script>
+<script src="js/calendar.js?v=20260922bmc8"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
-<script src="js/header-weather.js?v=20260922bmc2" defer></script>
+<script src="js/header-weather.js?v=20260922bmc8" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260831autofit1"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
 <script src="js/light-model.js?v=20260908light1"></script>
@@ -3004,14 +3004,14 @@ function _mkToast(msg, type) {
 <script src="js/design_v1.js?v=20260824perfaudit2" defer></script>
 <script src="js/theme.js?v=20260920header-duty1" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
-<script src="js/emoji.js?v=20260922bmc2" defer></script>
+<script src="js/emoji.js?v=20260922bmc8" defer></script>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
 <script src="js/daybook-model.js?v=20260911b" defer></script>
-<script src="js/daybook.js?v=20260922bmc2" defer></script>
-<script src="js/levels.js?v=20260922bmc2" defer></script>
+<script src="js/daybook.js?v=20260922bmc8" defer></script>
+<script src="js/levels.js?v=20260922bmc8" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260922bmc2';
+window.__minkaLocalBuild = '20260922bmc8';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -18771,52 +18771,19 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     return data;
   }
   /* ── Buy me a coffee ────────────────────────────────────────────────────
-     A quiet pill under the comments button. Desktop users mostly pay from
-     their phone, so it opens a small card with a QR code and the link. */
+     Just the QR code on the card — nothing to open or close. People scan it
+     with their phone; on a computer the code itself is the link. The code is
+     drawn in Buy Me a Coffee's own QR style and encodes BMC_URL exactly. */
   var BMC_URL = 'https://buymeacoffee.com/rgapp';
-  function bmcButtonMarkup() {
-    return '<button class="rg-bmc" type="button" data-rg-bmc="1" aria-haspopup="dialog">'
-      + '<span class="rg-bmc-cup" aria-hidden="true">☕</span><span>Buy me a coffee</span></button>';
+  function bmcQrMarkup() {
+    return '<a class="rg-bmc-qrblock" href="' + BMC_URL + '" target="_blank" rel="noopener" data-rg-bmc-qr="1"'
+      + ' aria-label="Buy me a coffee — buymeacoffee.com/rgapp">'
+      + '<img class="rg-bmc-qrimg" src="assets/coffee/bmc-qr.svg?v=official1" width="84" height="84" alt="">'
+      + '<span class="rg-bmc-cupicon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#ffdd00" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round">'
+      + '<path d="M6.2 5.2h11.6l-.7 2.6H6.9z"/><path d="M7.1 8.2l1.2 12.3c.05.5.47.9.98.9h5.44c.51 0 .93-.4.98-.9l1.2-12.3"/><path d="M7.6 11.6h8.8"/></svg></span>'
+      + '<span class="rg-bmc-copy"><strong>Buy me a coffee</strong><em>Paldies par atbalstu <span class="rg-bmc-heart">💚</span></em>'
+      + '<small>Ja RG tev noder, vari uzsaukt man kafiju. Tā ir iespēja pateikt paldies par ieguldīto laiku un atbalstīt turpmākos uzlabojumus. RG lietošana ir bez maksas, un atbalsts ir pilnībā brīvprātīgs. Paldies! ☕</small></span></a>';
   }
-  var bmcPop = null;
-  function closeBmc() {
-    if (!bmcPop) return;
-    var back = bmcPop._return;
-    bmcPop.remove();
-    bmcPop = null;
-    if (back && back.isConnected) back.focus({ preventScroll: true });
-  }
-  function openBmc(anchor) {
-    closeBmc();
-    bmcPop = document.createElement('div');
-    bmcPop.className = 'rg-bmc-pop';
-    bmcPop._return = anchor || null;
-    bmcPop.innerHTML = '<div class="rg-bmc-sheet" role="dialog" aria-modal="true" aria-label="Uzsauc autoram kafiju">'
-      + '<div class="rg-bmc-head"><div><strong>Uzsauc autoram kafiju ☕</strong></div>'
-      + '<button type="button" class="rg-bmc-close" data-rg-bmc-close="1" aria-label="Aizvērt">×</button></div>'
-      + '<p class="rg-bmc-text">RG veidoju un uzturu savā brīvajā laikā. Ja lietotne tev noder, vari pateikt paldies ar kafiju un atbalstīt turpmākos uzlabojumus. Lietošana paliek bez maksas.</p>'
-      + '<div class="rg-bmc-qr"><img src="assets/coffee/bmc-qr.svg?v=rgapp1" alt="QR kods: ' + BMC_URL + '" width="168" height="168"></div>'
-      + '<p class="rg-bmc-hint">Noskenē ar telefona kameru</p>'
-      + '<a class="rg-bmc-open" href="' + BMC_URL + '" target="_blank" rel="noopener">Atbalstīt RG</a>'
-      + '</div>';
-    document.body.appendChild(bmcPop);
-    var sheet = bmcPop.querySelector('.rg-bmc-sheet');
-    if (anchor) {
-      var rect = anchor.getBoundingClientRect();
-      var width = sheet.offsetWidth || 260, height = sheet.offsetHeight || 330;
-      var left = Math.min(Math.max(8, rect.left + rect.width / 2 - width / 2), window.innerWidth - width - 8);
-      var top = rect.top - height - 10 >= 8 ? rect.top - height - 10 : Math.min(window.innerHeight - height - 8, rect.bottom + 10);
-      sheet.style.left = Math.round(left) + 'px';
-      sheet.style.top = Math.round(top) + 'px';
-    }
-    bmcPop.addEventListener('click', function (event) {
-      if (event.target === bmcPop || event.target.closest('[data-rg-bmc-close]')) closeBmc();
-    });
-    window.setTimeout(function () { var link = bmcPop && bmcPop.querySelector('.rg-bmc-open'); if (link) link.focus({ preventScroll: true }); }, 40);
-  }
-  document.addEventListener('keydown', function (event) {
-    if (event.key === 'Escape' && bmcPop) { event.stopPropagation(); closeBmc(); }
-  }, true);
   function reactionButtons() {
     return reactions.map(function (item) {
       return '<button class="rg-pulse-tap" type="button" data-rg-pulse="' + item.key + '" data-emoji="' + item.emoji + '" aria-label="' + item.label + '" aria-pressed="false">'
@@ -19167,7 +19134,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
         return box.l < other.r && other.l < box.r && box.t < other.b && other.t < box.b;
       });
     }
-    card.querySelectorAll('.rg-feedback-card-title, .rg-mood-side, .rg-mood-topbtn, .rg-mood-label, .rg-mood-now, .rg-pulse-taps, .rg-feedback-card-actions')
+    card.querySelectorAll('.rg-feedback-card-title, .rg-mood-side, .rg-mood-topbtn, .rg-mood-label, .rg-mood-now, .rg-pulse-taps, .rg-feedback-card-actions, .rg-bmc-qrblock')
       .forEach(function (node) {
         var protectedText = node.classList.contains('rg-mood-label') || node.classList.contains('rg-mood-now') || node.classList.contains('rg-feedback-card-title');
         var box = nodeBox(node, protectedText ? 12 : 6);
@@ -19384,7 +19351,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     people.forEach(function (person) {
       addOccupied(person, Math.max(8, person.getBoundingClientRect().width * .18));
     });
-    card.querySelectorAll('.rg-feedback-card-title, .rg-mood-side, .rg-mood-topbtn, .rg-mood-label, .rg-mood-now, .rg-pulse-taps, .rg-feedback-card-actions')
+    card.querySelectorAll('.rg-feedback-card-title, .rg-mood-side, .rg-mood-topbtn, .rg-mood-label, .rg-mood-now, .rg-pulse-taps, .rg-feedback-card-actions, .rg-bmc-qrblock')
       .forEach(function (node) { addOccupied(node, 4); });
     addOccupied(blob, 4);
     function collidesWith(box, boxes) {
@@ -19675,7 +19642,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       });
     };
     card.querySelectorAll('.rg-feedback-card-title, .rg-mood-pill, .rg-mood-side-label,'
-      + ' .rg-mood-topbtn, .rg-pulse-taps').forEach(function (node) {
+      + ' .rg-mood-topbtn, .rg-pulse-taps, .rg-feedback-card-actions, .rg-bmc-qrblock').forEach(function (node) {
       add(node.getBoundingClientRect(), 5, 5);
     });
     var label = card.querySelector('.rg-mood-label');
@@ -20207,15 +20174,27 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       clearMoodSectionLayout(rgSection, rgGrid);
       return;
     }
-    var firstRowSlots = Math.max(1, columns - 2);
+    var besideSlots = Math.max(1, columns - 2);
     var cards = [].slice.call(rgGrid.children).filter(function (card) {
       return card.classList.contains('card');
     });
-    cards.forEach(function (card, index) {
-      var row = index < firstRowSlots ? 1 : 2 + Math.floor((index - firstRowSlots) / columns);
-      var column = index < firstRowSlots ? index + 1 : ((index - firstRowSlots) % columns) + 1;
+    // Every row that still sits beside the mood card gets only the free
+    // columns; only rows that start below it get all of them. The old rule
+    // gave the free columns to the first row alone, so a mood card taller
+    // than one row of workers had the second row drawn on top of it.
+    var gridTopAfter = rgGrid.getBoundingClientRect().top - currentPullup - pullup;
+    var rowGap = parseFloat(getComputedStyle(rgGrid).rowGap) || 0;
+    var rowHeight = (cards[0] && cards[0].getBoundingClientRect().height) || employeeRect.height;
+    var rowSlots = function (row) {
+      var rowTop = gridTopAfter + (row - 1) * (rowHeight + rowGap);
+      return rowTop < moodRect.bottom - 4 ? besideSlots : columns;
+    };
+    var row = 1, column = 0;
+    cards.forEach(function (card) {
+      if (column >= rowSlots(row)) { row += 1; column = 0; }
       card.style.setProperty('grid-row', String(row));
-      card.style.setProperty('grid-column', String(column));
+      card.style.setProperty('grid-column', String(column + 1));
+      column += 1;
     });
     rgSection.style.setProperty('--rg-mood-pullup', (-pullup).toFixed(2) + 'px');
     rgSection.classList.add('rg-mood-pullup');
@@ -20305,8 +20284,8 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
         + moodBlobMarkup()
         + '<span class="rg-pulse-taps" role="group" aria-label="Ātrās reakcijas">' + reactionButtons() + '</span>'
         + '<small class="rg-feedback-card-reaction-label" aria-live="polite">Izvēlies sajūtu</small></div>'
-        + '<div class="rg-feedback-card-actions"><button class="rg-pulse-write rg-pulse-write--comment" type="button" data-rg-write="comment" title="Atvērt komentārus"><b class="rg-comment-icon" aria-hidden="true"></b><span>Komentāri</span><small class="rg-feedback-action-count" data-rg-action-count="comment"></small></button></div>'
-        + bmcButtonMarkup();
+        + bmcQrMarkup()
+        + '<div class="rg-feedback-card-actions"><button class="rg-pulse-write rg-pulse-write--comment" type="button" data-rg-write="comment" title="Atvērt komentārus"><b class="rg-comment-icon" aria-hidden="true"></b><span>Komentāri</span><small class="rg-feedback-action-count" data-rg-action-count="comment"></small></button></div>';
     }
     moodHost.appendChild(pulse);
     window.MinkaDaybook?.enhance(pulse);
@@ -20353,7 +20332,12 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     });
     var card = list.querySelector('.rg-feedback-card');
     if (!card) return;
-    if (!card.querySelector('[data-rg-bmc]')) card.insertAdjacentHTML('beforeend', bmcButtonMarkup());
+    var oldBmc = card.querySelector('[data-rg-bmc]');
+    if (oldBmc) oldBmc.remove();
+    var qrBlock = card.querySelector('[data-rg-bmc-qr]');
+    var actions = card.querySelector('.rg-feedback-card-actions');
+    if (!qrBlock && actions) actions.insertAdjacentHTML('beforebegin', bmcQrMarkup());
+    else if (qrBlock && actions && qrBlock.nextElementSibling !== actions) actions.parentNode.insertBefore(qrBlock, actions);
     var selected = reactions.find(function (item) { return item.key === counts._last; });
     var dominant = null;
     var dominantCount = 0;
@@ -21826,8 +21810,6 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   });
 
   list.addEventListener('click', function (event) {
-    var bmc = event.target.closest('[data-rg-bmc]');
-    if (bmc) { event.preventDefault(); event.stopPropagation(); openBmc(bmc); return; }
     var ownMood = event.target.closest('[data-rg-own-mood]');
     if (ownMood) {
       event.preventDefault();
@@ -25102,7 +25084,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
    css/mobile-v2.css + js/mobile-v2.js — vizuālais izkārtojums; ?mv2=0 to atslēdz. */
 (function(){
   if (!document.documentElement.classList.contains('mk-mobile-shell')) return;
-  var v = '20260922bmc2';
+  var v = '20260922bmc8';
   function css(href) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href + '?v=' + v; document.body.appendChild(l); }
   css('css/mobile-fixes.css');
   try { if (new URLSearchParams(location.search).get('mv2') === '0') return; } catch (_e) {}
@@ -25120,9 +25102,9 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 </style>
 <script src="../js/image-palette.js?v=20260919palette2"></script>
-<link rel="stylesheet" href="css/header-appearance.css?v=20260922bmc2">
-<script src="js/header-appearance.js?v=20260922bmc2"></script>
-<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922bmc2">
+<link rel="stylesheet" href="css/header-appearance.css?v=20260922bmc8">
+<script src="js/header-appearance.js?v=20260922bmc8"></script>
+<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922bmc8">
 <style>
 /* ── Noskaņas kartīte un saziņa: Material 3 Expressive ───────────────────
    Tie paši žetoni, ko lieto kafijas izvēlne: toņu virsmas rāmju vietā,
@@ -25570,98 +25552,98 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 .rg-mood-note-cancel:hover { background: rgba(250,250,250,.08) !important; color: #fafafa !important; }
 .rg-mood-note-save { background: #10b981 !important; color: #04241a !important; }
 .rg-mood-note-save:disabled { opacity: .38 !important; cursor: default !important; }
-/* Buy me a coffee: klusa kapsula kartītes stilā. Vienīgā zīmola norāde ir
-   dzeltenā krūzīte; pārējais — tā pati tumšā stikla valoda kā kartītei. */
-#grafiks-list .rg-feedback-card .rg-bmc {
-  order: 6 !important;
-  align-self: center !important;
-  display: inline-flex !important;
+/* Buy me a coffee: tikai QR kods kartītes apakšā — bez pogas un loga.
+   QR vienmēr uz balta, jo skeneri gaida tumšus moduļus uz gaiša fona. */
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock {
+  align-self: stretch !important;
+  display: flex !important;
   align-items: center !important;
-  gap: 7px !important;
-  height: 30px !important;
-  margin: 8px auto 0 !important;
-  padding: 0 14px 0 10px !important;
-  border: 1px solid rgba(255, 255, 255, .14) !important;
-  border-radius: 999px !important;
+  gap: 12px !important;
+  margin: 8px 0 10px !important;
+  padding: 8px 12px 8px 8px !important;
+  border-radius: 16px !important;
   background: rgba(255, 255, 255, .05) !important;
-  color: rgba(255, 255, 255, .86) !important;
-  font: 600 11.5px/1 Inter, system-ui, sans-serif !important;
-  letter-spacing: .01em !important;
-  white-space: nowrap !important;
-  cursor: pointer !important;
-  transition: background-color .16s ease, border-color .16s ease, color .16s ease !important;
-}
-#grafiks-list .rg-feedback-card .rg-bmc:hover {
-  background: rgba(255, 221, 0, .10) !important;
-  border-color: rgba(255, 221, 0, .45) !important;
-  color: #ffffff !important;
-}
-#grafiks-list .rg-feedback-card .rg-bmc:focus-visible { outline: 2px solid #ffdd00 !important; outline-offset: 2px !important; }
-.rg-bmc-cup {
-  display: inline-grid !important;
-  place-items: center !important;
-  width: 20px !important;
-  height: 20px !important;
-  border-radius: 999px !important;
-  background: #ffdd00 !important;
-  font-size: 12px !important;
-  line-height: 1 !important;
-  font-family: 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif !important;
-}
-.rg-bmc-pop {
-  position: fixed !important;
-  inset: 0 !important;
-  z-index: 2147483200 !important;
-  background: rgba(4, 4, 6, .55) !important;
-}
-.rg-bmc-sheet {
-  position: absolute !important;
-  width: 280px !important;
-  display: grid !important;
-  justify-items: center !important;
-  gap: 10px !important;
-  padding: 16px !important;
-  border-radius: 24px !important;
-  background: #1c1c20 !important;
-  box-shadow: 0 10px 24px 6px rgba(0, 0, 0, .42) !important;
-  color: #fafafa !important;
-  font-family: Inter, system-ui, sans-serif !important;
-}
-.rg-bmc-head { width: 100% !important; display: flex !important; align-items: center !important; gap: 10px !important; }
-.rg-bmc-head .rg-bmc-cup { width: 32px !important; height: 32px !important; font-size: 18px !important; flex: 0 0 32px !important; }
-.rg-bmc-head strong { display: block !important; font: 600 15px/1.2 Inter, system-ui, sans-serif !important; }
-.rg-bmc-head small { display: block !important; margin-top: 2px !important; color: #a1a1aa !important; font: 400 12px/1.3 Inter, system-ui, sans-serif !important; }
-.rg-bmc-close {
-  margin-left: auto !important;
-  width: 32px !important;
-  height: 32px !important;
-  border: 0 !important;
-  border-radius: 999px !important;
-  background: transparent !important;
-  color: #a1a1aa !important;
-  font-size: 20px !important;
-  line-height: 1 !important;
-  cursor: pointer !important;
-}
-.rg-bmc-close:hover { background: rgba(250, 250, 250, .08) !important; color: #fafafa !important; }
-/* QR vienmēr uz balta: skeneri gaida tumšus moduļus uz gaiša fona. */
-.rg-bmc-qr { padding: 10px !important; border-radius: 16px !important; background: #ffffff !important; line-height: 0 !important; }
-.rg-bmc-qr img { display: block !important; width: 168px !important; height: 168px !important; }
-.rg-bmc-text { margin: 0 !important; color: #d4d4d8 !important; font: 400 13px/1.45 Inter, system-ui, sans-serif !important; text-align: left !important; }
-.rg-bmc-hint { margin: 0 !important; color: #a1a1aa !important; font: 400 12px/1.3 Inter, system-ui, sans-serif !important; }
-.rg-bmc-open {
-  width: 100% !important;
-  height: 40px !important;
-  display: grid !important;
-  place-items: center !important;
-  border-radius: 999px !important;
-  background: #ffdd00 !important;
-  color: #0d0c22 !important;
-  font: 600 13px/1 Inter, system-ui, sans-serif !important;
+  color: #f4f4f5 !important;
   text-decoration: none !important;
 }
-.rg-bmc-open:hover { filter: brightness(1.05) !important; }
-.rg-bmc-open:focus-visible { outline: 2px solid #ffffff !important; outline-offset: 2px !important; }
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock img {
+  flex: 0 0 84px !important;
+  width: 84px !important;
+  height: 84px !important;
+  display: block !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+}
+#grafiks-list .rg-feedback-card .rg-bmc-cupicon {
+  flex: 0 0 30px !important;
+  width: 30px !important;
+  height: 30px !important;
+  display: block !important;
+}
+#grafiks-list .rg-feedback-card .rg-bmc-cupicon svg { display: block !important; width: 100% !important; height: 100% !important; }
+#grafiks-list .rg-feedback-card .rg-bmc-copy { min-width: 0 !important; }
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock strong {
+  display: block !important;
+  color: #ffffff !important;
+  font: 700 15px/1.2 Inter, system-ui, sans-serif !important;
+  white-space: nowrap !important;
+}
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock em {
+  display: block !important;
+  margin-top: 3px !important;
+  color: #a1a1aa !important;
+  font: 400 12px/1.3 Inter, system-ui, sans-serif !important;
+  font-style: normal !important;
+  white-space: nowrap !important;
+}
+#grafiks-list .rg-feedback-card .rg-bmc-heart {
+  font-family: 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif !important;
+  font-variant-emoji: emoji !important;
+}
+/* Telefonā QR nav vajadzīgs — telefons pats ir tā ierīce, ar ko maksā —, tāpēc
+   bloks kļūst par parastu pogu: krūzīte, virsraksts un paldies rindiņa. */
+:root.mk-mobile-shell #grafiks-list .rg-feedback-card .rg-bmc-qrimg { display: none !important; }
+:root.mk-mobile-shell #grafiks-list .rg-feedback-card .rg-bmc-qrblock {
+  min-height: 60px !important;
+  padding: 10px 16px !important;
+  gap: 12px !important;
+  justify-content: center !important;
+  border: 1px solid rgba(255, 221, 0, .28) !important;
+  border-radius: 999px !important;
+  background: rgba(255, 221, 0, .06) !important;
+}
+:root.mk-mobile-shell #grafiks-list .rg-feedback-card .rg-bmc-qrblock small { display: none !important; }
+/* Paskaidrojums parādās tikai uzejot (vai fokusā) — kā neliels panelis virs
+   bloka, tāpēc tas nemaina kartītes augstumu un neko nepabīda. */
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock { position: relative !important; z-index: 1 !important; }
+/* Uzejot bloks paceļas virs kartītes galvenās daļas, citādi panelis paliek
+   zem reakcijām (tās ir vēlāks slānis tajā pašā kartītē). */
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock:hover,
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock:focus-visible { z-index: 30 !important; }
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock small {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: calc(100% + 8px) !important;
+  z-index: 20 !important;
+  display: block !important;
+  padding: 10px 12px !important;
+  border-radius: 14px !important;
+  background: #1c1c20 !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .45) !important;
+  color: #d4d4d8 !important;
+  font: 400 12px/1.45 Inter, system-ui, sans-serif !important;
+  opacity: 0 !important;
+  transform: translateY(4px) !important;
+  pointer-events: none !important;
+  transition: opacity .16s ease, transform .16s ease !important;
+}
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock:hover small,
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock:focus-visible small {
+  opacity: 1 !important;
+  transform: none !important;
+}
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock:focus-visible { outline: 2px solid #ffdd00 !important; outline-offset: 2px !important; }
 /* Statistika: savi vērtējumi. Tie paši --stx-* toņi, ko lieto viss logs;
    emoji zīmē Fluent fonts tāpat kā pārējās sejiņas. */
 #stats-modal .db-px-own,
