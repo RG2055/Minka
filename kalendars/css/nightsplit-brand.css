@@ -1964,3 +1964,60 @@ html.mk-low-spec:not(.mk-mobile-shell) #nsOverlay.open #nsPanel { transform: tra
 /* Starp vārdu un laiku tieva atdalītājlīnija. */
 #nsOverlay #nsPanel .ns-flow-worker + .ns-flow-time { padding-left: 8px !important; border-left: 1px solid rgba(11, 23, 34, .18) !important; }
 #nsOverlay #nsPanel .ns-flow-labels { margin: 10px 0 9px !important; color: rgba(194, 208, 220, .62) !important; }
+
+/* ── "Ko rāda līnijas?" — M3 rich tooltip (2026-09-23) ──
+   Katrai rindai paraugs ir tieši tāda pati līnija kā kartītē (zila, dzeltena
+   raustīta, zaļa), blakus nosaukums un vienkāršs "augstāk = …" skaidrojums.
+   Viens burtu izmērs rindām, mazāks tikai piezīmei — nekas vairs nelec. */
+#nsOverlay #nsPanel .nsc-rhythm-help-pop {
+  top: 32px !important;
+  left: 8px !important;
+  right: 8px !important;
+  gap: 6px !important;
+  padding: 10px 12px !important;
+  border: 1px solid rgba(190, 214, 230, .16) !important;
+  border-radius: 16px !important;
+  background: #17212b !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .5) !important;
+  color: #e6eef5 !important;
+  font-family: Inter, system-ui, sans-serif !important;
+}
+#nsOverlay #nsPanel .nsc-rhythm-help-pop > b {
+  margin-bottom: 2px !important;
+  color: #ffffff !important;
+  font: 700 12px/1.25 Inter, system-ui, sans-serif !important;
+}
+#nsOverlay #nsPanel .nsc-rhythm-help-pop > span {
+  grid-template-columns: 22px 78px minmax(0, 1fr) !important;
+  gap: 8px !important;
+  color: inherit !important;
+}
+#nsOverlay #nsPanel .nsc-rhythm-help-pop span > i {
+  width: 22px !important;
+  height: 0 !important;
+  border-radius: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  border-top: 2px solid var(--ns-line) !important;
+}
+#nsOverlay #nsPanel .nsc-rhythm-help-pop .is-mel { --ns-line: #8cc4f2; }
+#nsOverlay #nsPanel .nsc-rhythm-help-pop .is-cor { --ns-line: #ecd08a; }
+#nsOverlay #nsPanel .nsc-rhythm-help-pop .is-cor > i { border-top-style: dashed !important; }
+#nsOverlay #nsPanel .nsc-rhythm-help-pop .is-wake { --ns-line: #93dcb6; }
+#nsOverlay #nsPanel .nsc-rhythm-help-pop span > strong {
+  color: var(--ns-line) !important;
+  font: 700 11.5px/1.2 Inter, system-ui, sans-serif !important;
+}
+#nsOverlay #nsPanel .nsc-rhythm-help-pop span > small {
+  color: #c9d6e1 !important;
+  opacity: 1 !important;
+  font: 500 11px/1.25 Inter, system-ui, sans-serif !important;
+}
+#nsOverlay #nsPanel .nsc-rhythm-help-pop > em {
+  margin-top: 1px !important;
+  padding-top: 6px !important;
+  border-top: 1px solid rgba(190, 214, 230, .12) !important;
+  color: #8fa2b2 !important;
+  font: 400 10px/1.4 Inter, system-ui, sans-serif !important;
+  font-style: normal !important;
+}

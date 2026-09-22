@@ -729,11 +729,11 @@
   function rhythmHelpHTML(){
     return '<button type="button" class="nsc-rhythm-help" aria-label="Ko nozīmē krāsainās līnijas?" aria-expanded="false">i</button>'
       +'<div class="nsc-rhythm-help-pop" role="tooltip">'
-      +'<b>Ko rāda līnijas?</b>'
-      +'<span class="is-mel"><i></i><strong>Melatonīns</strong><small>Miegs</small></span>'
-      +'<span class="is-cor"><i></i><strong>Kortizols</strong><small>Enerģija</small></span>'
-      +'<span class="is-wake"><i></i><strong>Modrība</strong><small>Možums</small></span>'
-      +'<small>Ilustratīvs ritms, nevis hormonu mērījums. Noguruma prognoze izmanto miega un nomoda laikus.</small>'
+      +'<b>Jo augstāk līnija, jo vairāk:</b>'
+      +'<span class="is-mel"><i></i><strong>Melatonīns</strong><small>miegainuma</small></span>'
+      +'<span class="is-cor"><i></i><strong>Kortizols</strong><small>enerģijas</small></span>'
+      +'<span class="is-wake"><i></i><strong>Modrība</strong><small>možuma</small></span>'
+      +'<em>Tipisks diennakts ritms, nevis mērījums.</em>'
       +'</div>';
   }
 
