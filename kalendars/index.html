@@ -1570,7 +1570,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="data/svinamas-dienas.js?v=20260922mood11"></script>
+<script src="data/svinamas-dienas.js?v=20260922mood12"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/known-carryovers.js?v=20260907smooth1"></script>
 <script src="js/card-face-model.js?v=20260912wa4"></script>
@@ -2990,10 +2990,10 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260922mood11"></script>
+<script src="js/calendar.js?v=20260922mood12"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
-<script src="js/header-weather.js?v=20260922mood11" defer></script>
+<script src="js/header-weather.js?v=20260922mood12" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260831autofit1"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
 <script src="js/light-model.js?v=20260908light1"></script>
@@ -3004,14 +3004,14 @@ function _mkToast(msg, type) {
 <script src="js/design_v1.js?v=20260824perfaudit2" defer></script>
 <script src="js/theme.js?v=20260920header-duty1" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
-<script src="js/emoji.js?v=20260922mood11" defer></script>
+<script src="js/emoji.js?v=20260922mood12" defer></script>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
 <script src="js/daybook-model.js?v=20260911b" defer></script>
-<script src="js/daybook.js?v=20260922mood11" defer></script>
-<script src="js/levels.js?v=20260922mood11" defer></script>
+<script src="js/daybook.js?v=20260922mood12" defer></script>
+<script src="js/levels.js?v=20260922mood12" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260922mood11';
+window.__minkaLocalBuild = '20260922mood12';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -25016,7 +25016,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
    css/mobile-v2.css + js/mobile-v2.js — vizuālais izkārtojums; ?mv2=0 to atslēdz. */
 (function(){
   if (!document.documentElement.classList.contains('mk-mobile-shell')) return;
-  var v = '20260922mood11';
+  var v = '20260922mood12';
   function css(href) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href + '?v=' + v; document.body.appendChild(l); }
   css('css/mobile-fixes.css');
   try { if (new URLSearchParams(location.search).get('mv2') === '0') return; } catch (_e) {}
@@ -25034,9 +25034,9 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 </style>
 <script src="../js/image-palette.js?v=20260919palette2"></script>
-<link rel="stylesheet" href="css/header-appearance.css?v=20260922mood11">
-<script src="js/header-appearance.js?v=20260922mood11"></script>
-<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922mood11">
+<link rel="stylesheet" href="css/header-appearance.css?v=20260922mood12">
+<script src="js/header-appearance.js?v=20260922mood12"></script>
+<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922mood12">
 <style>
 /* ── Noskaņas kartīte un saziņa: Material 3 Expressive ───────────────────
    Tie paši žetoni, ko lieto kafijas izvēlne: toņu virsmas rāmju vietā,
@@ -25748,20 +25748,29 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 #grafiks-list .rg-feedback-card .rg-pulse-tap { isolation: isolate !important; }
 /* Sestā poga: tāda pati vieta rindā, bet punktēts aplis un sejiņa, lai to
    nesajauc ar reakciju un lai saprot — te liek savu. */
+/* Punktētais aplis tiek zīmēts ap PAŠU glifu (uz tā span), nevis ap pogu,
+   kas ir platāka — citādi aplis un sejiņa sēž šķībi viens pret otru. */
+#grafiks-list .rg-feedback-card .rg-pulse-own::before { display: none !important; }
 #grafiks-list .rg-feedback-card .rg-pulse-own > span:first-child {
-  font-size: .82em !important;
-  opacity: .85 !important;
-}
-#grafiks-list .rg-feedback-card .rg-pulse-own::before {
-  width: 1.7em !important;
-  height: 1.7em !important;
-  background: transparent !important;
+  box-sizing: border-box !important;
+  width: 1.62em !important;
+  height: 1.62em !important;
+  flex: 0 0 1.62em !important;
+  display: grid !important;
+  place-items: center !important;
   border: 1.5px dashed rgba(255,255,255,.34) !important;
+  border-radius: 999px !important;
+  font-size: .8em !important;
+  line-height: 1 !important;
+  opacity: .9 !important;
+  transform: none !important;
+  transition: border-color .16s ease, opacity .16s ease, background-color .16s ease !important;
 }
-#grafiks-list .rg-feedback-card .rg-pulse-own:hover > span:first-child { opacity: 1 !important; }
-#grafiks-list .rg-feedback-card .rg-pulse-own:hover::before {
-  border-color: rgba(255,255,255,.55) !important;
+#grafiks-list .rg-feedback-card .rg-pulse-own:hover > span:first-child {
+  border-color: rgba(255,255,255,.6) !important;
   background: rgba(255,255,255,.08) !important;
+  opacity: 1 !important;
+  transform: none !important;
 }
 #grafiks-list .rg-feedback-card .rg-pulse-tap::before {
   content: '' !important;
