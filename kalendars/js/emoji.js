@@ -1912,6 +1912,17 @@
     safe: safeEmoji,
     refresh: refreshAllCards,
     reload: loadFromGist,
-    renderInModal: renderInModal
+    renderInModal: renderInModal,
+    // The Fluent catalogue, so other pickers in the app offer the same set
+    // instead of a handful of hardcoded faces. Copies, not the live arrays.
+    catalogue: function () {
+      var bySection = {};
+      Object.keys(EMOJI_BY_SECTION).forEach(function (key) { bySection[key] = EMOJI_BY_SECTION[key].slice(); });
+      return {
+        sections: SECTIONS.map(function (sec) { return { id: sec.id, label: sec.label, title: sec.title }; }),
+        bySection: bySection,
+        names: Object.assign({}, EMOJI_NAMES)
+      };
+    }
   };
 })();

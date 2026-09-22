@@ -179,6 +179,10 @@ window.setTimeout(function () {
   .shift-stop-popover-emoji,
   .pv-emoji,
   .rg-comms-emoji,
+  .rg-comms-topic-emoji,
+  .rg-comms-topic-chip,
+  .rg-emoji-cell,
+  .rg-emoji-tab span,
   .ns-flow-worker-emoji,
   .ns-room-bed-head-emoji,
   .ns-room-pill-emoji,
@@ -1566,7 +1570,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="data/svinamas-dienas.js?v=20260922mood8"></script>
+<script src="data/svinamas-dienas.js?v=20260922topic5"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/known-carryovers.js?v=20260907smooth1"></script>
 <script src="js/card-face-model.js?v=20260912wa4"></script>
@@ -2986,10 +2990,10 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260922mood8"></script>
+<script src="js/calendar.js?v=20260922topic5"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
-<script src="js/header-weather.js?v=20260922mood8" defer></script>
+<script src="js/header-weather.js?v=20260922topic5" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260831autofit1"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
 <script src="js/light-model.js?v=20260908light1"></script>
@@ -3000,14 +3004,14 @@ function _mkToast(msg, type) {
 <script src="js/design_v1.js?v=20260824perfaudit2" defer></script>
 <script src="js/theme.js?v=20260920header-duty1" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
-<script src="js/emoji.js?v=20260911daybook1-20260908recovery1" defer></script>
+<script src="js/emoji.js?v=20260922topic5" defer></script>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
 <script src="js/daybook-model.js?v=20260911b" defer></script>
-<script src="js/daybook.js?v=20260922mood8" defer></script>
-<script src="js/levels.js?v=20260922mood8" defer></script>
+<script src="js/daybook.js?v=20260922topic5" defer></script>
+<script src="js/levels.js?v=20260922topic5" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260922mood8';
+window.__minkaLocalBuild = '20260922topic5';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -20444,9 +20448,9 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     + '<p class="rg-comms-section-label">Tēmas</p><div class="rg-comms-topic-list" id="rgCommsTopics"></div></aside>'
     + '<main class="rg-comms-main"><div class="rg-comms-feed-head"><div><strong id="rgCommsFeedTitle">Visi komentāri</strong><small id="rgCommsFeedSubtitle">Visa komandas sarakste vienuviet</small></div></div>'
     + '<div class="rg-feedback-list rg-comms-feed" id="rgFeedbackList" aria-live="polite"></div><button class="rg-feedback-more" id="rgFeedbackMore" type="button" hidden>Rādīt vēl</button>'
-    + '<div class="rg-comms-composer"><div class="rg-comms-compose-context"><label class="rg-comms-author-wrap"><span>Autors</span><select class="rg-comms-author" id="rgCommsAuthor" aria-label="Izvēlies komentāra autoru"><option value="">Anonīmi</option></select></label><input class="rg-comms-topic-input" id="rgCommsTopicInput" maxlength="44" placeholder="Tēma (nav obligāta)" autocomplete="off" title="Tēma, zem kuras ziņa parādīsies"><span class="rg-comms-replying" id="rgCommsReplying"></span><button class="rg-comms-cancel-reply" id="rgCommsCancelReply" type="button" hidden aria-label="Atcelt atbildi">×</button></div>'
+    + '<div class="rg-comms-composer"><div class="rg-comms-compose-context"><label class="rg-comms-author-wrap"><span>Autors</span><select class="rg-comms-author" id="rgCommsAuthor" aria-label="Izvēlies komentāra autoru"><option value="">Anonīmi</option></select></label><span class="rg-comms-topic-field"><input class="rg-comms-topic-input" id="rgCommsTopicInput" maxlength="44" placeholder="Tēma (nav obligāta)" autocomplete="off" title="Tēma, zem kuras ziņa parādīsies"><button type="button" class="rg-comms-topic-emoji-btn" id="rgCommsTopicEmoji" title="Tēmas emoji" aria-label="Izvēlēties tēmas emoji">☺</button></span><span class="rg-comms-replying" id="rgCommsReplying"></span><button class="rg-comms-cancel-reply" id="rgCommsCancelReply" type="button" hidden aria-label="Atcelt atbildi">×</button></div>'
     + '<div class="rg-comms-compose-row"><textarea id="rgFeedbackText" maxlength="560" placeholder="Raksti ziņu…"></textarea><button class="rg-comms-send" id="rgFeedbackSave" type="button" disabled aria-label="Nosūtīt ziņu" title="Nosūtīt ziņu">↑</button></div>'
-    + '<div class="rg-comms-tools" aria-label="Ātrie emoji"><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="👍">👍</button><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="😂">😂</button><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="❤️">❤️</button><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="🔥">🔥</button><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="☕">☕</button><span class="rg-comms-status" id="rgCommsStatus"></span><span class="rg-comms-char-count" id="rgFeedbackChars">0 / 560</span></div></div>'
+    + '<div class="rg-comms-tools" aria-label="Ātrie emoji"><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="👍">👍</button><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="😂">😂</button><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="❤️">❤️</button><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="🔥">🔥</button><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="☕">☕</button><button class="rg-comms-emoji rg-comms-emoji-more" type="button" id="rgCommsEmojiMore" title="Visi emoji" aria-label="Atvērt emoji sarakstu">＋</button><span class="rg-comms-status" id="rgCommsStatus"></span><span class="rg-comms-char-count" id="rgFeedbackChars">0 / 560</span></div></div>'
     + '</main></div><div id="rgFeedbackDays" hidden></div><span id="rgFeedbackTargetDay" hidden></span>'
     + '</section>';
   document.body.appendChild(modal);
@@ -20748,6 +20752,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   /* Topic chat layer. The API remains date-based; the client combines those
      pages into one inbox and stores the optional topic/reply metadata inside
      the message body, so existing comments stay readable and no data is lost. */
+  var TOPIC_EMOJI_KEY = 'minkaCommunityTopicEmojiV1';
   var COMMUNITY_OWNED_KEY = 'minkaCommunityOwnedV1';
   var COMMUNITY_EDIT_TOKEN_KEY = 'minkaCommunityEditTokensV1';
   var COMMUNITY_AUTHOR_KEY = 'minkaCommunityAuthorV1';
@@ -20759,6 +20764,26 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   var communityEditing = null;
   var communityLoadId = 0;
 
+  // Topic emoji are optional decoration kept on this device: the API stores
+  // only the topic's name, and an emoji nobody else sees is better than a
+  // schema change for a label.
+  function topicEmojiMap() {
+    var value = readJson(TOPIC_EMOJI_KEY, {});
+    return value && typeof value === 'object' ? value : {};
+  }
+  function topicEmoji(topic) {
+    var value = topicEmojiMap()[String(topic || '')];
+    return typeof value === 'string' ? value : '';
+  }
+  function setTopicEmoji(topic, emoji) {
+    var map = topicEmojiMap();
+    var key = String(topic || '');
+    if (!key) return;
+    if (emoji) map[key] = emoji;
+    else delete map[key];
+    writeJson(TOPIC_EMOJI_KEY, map);
+    renderCommunity();
+  }
   function communityOwnedIds() {
     var value = readJson(COMMUNITY_OWNED_KEY, []);
     return Array.isArray(value) ? value : [];
@@ -20918,6 +20943,145 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     });
     renderCommunity();
   }
+  /* Tēmas emoji izvēle. Izmanto to pašu Fluent komplektu, kas appā jau ir
+     (js/emoji.js katalogs), nevis piecas iepriekš izvēlētas sejiņas. Skaidrība
+     pirms blīvuma: virsraksts nosauc tēmu, meklēšana ir pirmais lauks,
+     kategorijas ir kapsulas, un abas darbības — noņemt un aizvērt — ir
+     redzami vārdi, nevis ikonas. */
+  var topicPicker = null;
+  var topicPickerTopic = '';
+  var topicPickerReturn = null;
+  var topicPickerTab = 'all';
+  var topicPickerQuery = '';
+  var topicPickerMode = 'topic';   // 'topic' | 'message'
+  function emojiCatalogue() {
+    try {
+      if (window.MinkaEmoji && typeof window.MinkaEmoji.catalogue === 'function') return window.MinkaEmoji.catalogue();
+    } catch (_error) {}
+    return { sections: [{ id: 'all', label: '⭐', title: 'Visi' }], bySection: { all: ['💬', '☕', '🩻', '🌙', '⚡', '🔥'] }, names: {} };
+  }
+  function closeTopicEmojiPicker() {
+    if (!topicPicker) return;
+    topicPicker.remove();
+    topicPicker = null;
+    if (topicPickerReturn && topicPickerReturn.isConnected) topicPickerReturn.focus({ preventScroll: true });
+    topicPickerReturn = null;
+  }
+  function renderTopicEmojiGrid() {
+    if (!topicPicker) return;
+    var data = emojiCatalogue();
+    var list = (data.bySection[topicPickerTab] || data.bySection.all || []).slice();
+    var query = topicPickerQuery.trim().toLocaleLowerCase('lv-LV');
+    if (query) {
+      var all = data.bySection.all || [];
+      list = all.filter(function (emoji) {
+        var name = String(data.names[emoji] || '').toLocaleLowerCase('lv-LV');
+        return emoji === query || name.indexOf(query) >= 0;
+      });
+    }
+    var grid = topicPicker.querySelector('.rg-emoji-grid');
+    grid.replaceChildren();
+    if (!list.length) {
+      var empty = document.createElement('p');
+      empty.className = 'rg-emoji-empty';
+      empty.textContent = 'Nekas neatbilst. Pamēģini citu vārdu vai izvēlies kategoriju.';
+      grid.appendChild(empty);
+      return;
+    }
+    var current = topicPickerMode === 'topic' ? topicEmoji(topicPickerTopic) : '';
+    list.forEach(function (emoji) {
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'rg-emoji-cell' + (emoji === current ? ' is-on' : '');
+      button.dataset.rgPickEmoji = emoji;
+      button.title = data.names[emoji] || emoji;
+      button.setAttribute('aria-label', data.names[emoji] || emoji);
+      button.textContent = emoji;
+      grid.appendChild(button);
+    });
+  }
+  function openTopicEmojiPicker(topic, anchor, mode) {
+    closeTopicEmojiPicker();
+    topicPickerMode = mode === 'message' ? 'message' : 'topic';
+    topicPickerTopic = String(topic || '');
+    topicPickerReturn = anchor || null;
+    topicPickerQuery = '';
+    topicPickerTab = 'all';
+    if (topicPickerMode === 'topic' && !topicPickerTopic) return;
+    var data = emojiCatalogue();
+    topicPicker = document.createElement('div');
+    topicPicker.className = 'rg-emoji-picker';
+    topicPicker.setAttribute('role', 'dialog');
+    topicPicker.setAttribute('aria-modal', 'true');
+    var isTopic = topicPickerMode === 'topic';
+    topicPicker.setAttribute('aria-label', isTopic ? 'Tēmas emoji: ' + topicPickerTopic : 'Emoji ziņai');
+    topicPicker.innerHTML = '<div class="rg-emoji-sheet">'
+      + '<div class="rg-emoji-head"><div><strong>' + (isTopic ? 'Tēmas emoji' : 'Emoji ziņai') + '</strong><small>'
+      + (isTopic ? '# ' + topicPickerTopic : 'Izvēlētais tiek ielikts ziņā') + '</small></div>'
+      + '<button type="button" class="rg-emoji-done" data-rg-emoji-close="1">Gatavs</button></div>'
+      + '<input class="rg-emoji-search" type="search" placeholder="Meklēt emoji…" autocomplete="off" aria-label="Meklēt emoji">'
+      + '<div class="rg-emoji-tabs" role="tablist">' + data.sections.map(function (sec) {
+        return '<button type="button" class="rg-emoji-tab' + (sec.id === 'all' ? ' is-on' : '') + '" data-rg-emoji-tab="' + sec.id + '" title="' + sec.title + '"><span>' + sec.label + '</span>' + sec.title + '</button>';
+      }).join('') + '</div>'
+      + '<div class="rg-emoji-grid"></div>'
+      + (isTopic ? '<div class="rg-emoji-foot"><button type="button" class="rg-emoji-clear" data-rg-emoji-clear="1">Noņemt emoji</button></div>' : '')
+      + '</div>';
+    modal.appendChild(topicPicker);
+    renderTopicEmojiGrid();
+    var search = topicPicker.querySelector('.rg-emoji-search');
+    search.addEventListener('input', function () {
+      topicPickerQuery = search.value || '';
+      renderTopicEmojiGrid();
+    });
+    topicPicker.addEventListener('click', function (event) {
+      if (event.target === topicPicker || event.target.closest('[data-rg-emoji-close]')) { closeTopicEmojiPicker(); return; }
+      var tab = event.target.closest('[data-rg-emoji-tab]');
+      if (tab) {
+        topicPickerTab = tab.dataset.rgEmojiTab;
+        topicPickerQuery = '';
+        search.value = '';
+        topicPicker.querySelectorAll('.rg-emoji-tab').forEach(function (button) {
+          button.classList.toggle('is-on', button === tab);
+        });
+        renderTopicEmojiGrid();
+        return;
+      }
+      if (event.target.closest('[data-rg-emoji-clear]')) {
+        setTopicEmoji(topicPickerTopic, '');
+        closeTopicEmojiPicker();
+        return;
+      }
+      var cell = event.target.closest('[data-rg-pick-emoji]');
+      if (cell) {
+        var picked = cell.dataset.rgPickEmoji;
+        if (topicPickerMode === 'message') {
+          textarea.value += picked;
+          updateTextState();
+          closeTopicEmojiPicker();
+          textarea.focus();
+          return;
+        }
+        // The topic may still be being typed, so remember the emoji for the
+        // name in the field and show it right there.
+        var typed = String(commsTopicInput.value || '').trim() || topicPickerTopic;
+        setTopicEmoji(typed, picked);
+        syncTopicEmojiButton();
+        closeTopicEmojiPicker();
+      }
+    });
+    window.setTimeout(function () { search.focus(); }, 60);
+  }
+  function syncTopicEmojiButton() {
+    var button = modal.querySelector('#rgCommsTopicEmoji');
+    if (!button) return;
+    var typed = String(commsTopicInput.value || '').trim();
+    var chosen = typed ? topicEmoji(typed) : '';
+    button.textContent = chosen || '☺';
+    button.classList.toggle('has-emoji', !!chosen);
+    button.title = typed
+      ? (chosen ? 'Mainīt emoji tēmai “' + typed + '”' : 'Pievienot emoji tēmai “' + typed + '”')
+      : 'Vispirms ieraksti tēmas nosaukumu';
+  }
   function renderCommunityTopics() {
     commsTopics.replaceChildren();
     communityTopicStats().forEach(function (item) {
@@ -20925,9 +21089,10 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       button.type = 'button';
       button.className = 'rg-comms-topic' + (communityView === 'topic' && communityTopic === item.topic ? ' is-active' : '');
       button.dataset.rgCommunityTopic = item.topic;
+      var chosen = topicEmoji(item.topic);
       var icon = document.createElement('span');
-      icon.className = 'rg-comms-nav-icon';
-      icon.textContent = item.topic === 'Idejas' ? '✦' : '#';
+      icon.className = 'rg-comms-nav-icon' + (chosen ? ' rg-comms-topic-emoji' : '');
+      icon.textContent = chosen || (item.topic === 'Idejas' ? '✦' : '#');
       var copy = document.createElement('span');
       copy.className = 'rg-comms-topic-copy';
       var title = document.createElement('strong');
@@ -21005,7 +21170,8 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       chip.type = 'button';
       chip.className = 'rg-comms-topic-chip';
       chip.dataset.rgCommunityTopic = item.topic;
-      chip.textContent = '# ' + item.topic;
+      var chipEmoji = topicEmoji(item.topic);
+      chip.textContent = (chipEmoji ? chipEmoji + ' ' : '# ') + item.topic;
       head.append(author, time, chip);
       var bubble = document.createElement('div');
       bubble.className = 'rg-comms-bubble';
@@ -21210,7 +21376,23 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     await loadCommunity();
   };
 
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && topicPicker) { event.stopPropagation(); closeTopicEmojiPicker(); }
+  }, true);
   modal.addEventListener('click', function (event) {
+    var topicEmojiButton = event.target.closest('#rgCommsTopicEmoji');
+    if (topicEmojiButton) {
+      event.stopPropagation();
+      var typed = String(commsTopicInput.value || '').trim();
+      if (!typed) { commsTopicInput.focus(); commsStatus.textContent = 'Vispirms ieraksti tēmas nosaukumu.'; return; }
+      openTopicEmojiPicker(typed, topicEmojiButton, 'topic');
+      return;
+    }
+    if (event.target.closest('#rgCommsEmojiMore')) {
+      event.stopPropagation();
+      openTopicEmojiPicker('', event.target.closest('#rgCommsEmojiMore'), 'message');
+      return;
+    }
     var mode = event.target.closest('[data-rg-comms-mode]');
     if (mode) { setCommunityMode(mode.dataset.rgCommsMode); return; }
     var view = event.target.closest('[data-rg-comms-view]');
@@ -21351,6 +21533,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     if (removePending) removePendingMessage(removePending.dataset.rgRemovePending);
   });
   textarea.addEventListener('input', updateTextState);
+  commsTopicInput.addEventListener('input', syncTopicEmojiButton);
   save.addEventListener('click', saveText);
   moreButton.addEventListener('click', function () { loadMessages(false); });
   document.addEventListener('keydown', function (event) {
@@ -24578,7 +24761,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
    css/mobile-v2.css + js/mobile-v2.js — vizuālais izkārtojums; ?mv2=0 to atslēdz. */
 (function(){
   if (!document.documentElement.classList.contains('mk-mobile-shell')) return;
-  var v = '20260922mood8';
+  var v = '20260922topic5';
   function css(href) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href + '?v=' + v; document.body.appendChild(l); }
   css('css/mobile-fixes.css');
   try { if (new URLSearchParams(location.search).get('mv2') === '0') return; } catch (_e) {}
@@ -24596,9 +24779,9 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 </style>
 <script src="../js/image-palette.js?v=20260919palette2"></script>
-<link rel="stylesheet" href="css/header-appearance.css?v=20260922mood8">
-<script src="js/header-appearance.js?v=20260922mood8"></script>
-<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922mood8">
+<link rel="stylesheet" href="css/header-appearance.css?v=20260922topic5">
+<script src="js/header-appearance.js?v=20260922topic5"></script>
+<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922topic5">
 <style>
 /* ── Noskaņas kartīte un saziņa: Material 3 Expressive ───────────────────
    Tie paši žetoni, ko lieto kafijas izvēlne: toņu virsmas rāmju vietā,
@@ -24678,26 +24861,26 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 
 /* Galva: headline izmērs un pilnas kapsulas vadība. */
 #rgFeedbackModal .rg-comms-head {
-  min-height: 84px !important;
-  padding: 16px 16px 16px 20px !important;
-  gap: 16px !important;
+  min-height: 64px !important;
+  padding: 10px 12px 10px 14px !important;
+  gap: 12px !important;
   border-bottom: 0 !important;
   background: var(--m3x-container-high) !important;
 }
 #rgFeedbackModal .rg-comms-logo {
-  width: 52px !important;
-  height: 52px !important;
-  flex-basis: 52px !important;
+  width: 40px !important;
+  height: 40px !important;
+  flex-basis: 40px !important;
   border: 0 !important;
-  border-radius: 18px !important;
+  border-radius: 14px !important;
   background: var(--m3x-primary-container) !important;
   color: var(--m3x-on-primary-container) !important;
-  font-size: 24px !important;
+  font-size: 19px !important;
   box-shadow: none !important;
 }
 #rgFeedbackModal .rg-comms-heading h2 {
   color: var(--m3x-on-surface) !important;
-  font: 400 28px/1.14 Inter, system-ui, sans-serif !important;
+  font: 400 21px/1.15 Inter, system-ui, sans-serif !important;
   letter-spacing: 0 !important;
 }
 #rgFeedbackModal .rg-comms-heading p {
@@ -24715,9 +24898,9 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
   overflow: hidden !important;
 }
 #rgFeedbackModal .rg-comms-tab {
-  height: 48px !important;
-  min-width: 96px !important;
-  padding: 0 20px !important;
+  height: 40px !important;
+  min-width: 78px !important;
+  padding: 0 16px !important;
   border: 0 !important;
   border-left: 1px solid var(--m3x-outline) !important;
   border-radius: 0 !important;
@@ -24740,8 +24923,8 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 /* Jauna tēma: extended FAB — lielākais, gaišākais elements galvā. */
 #rgFeedbackModal .rg-comms-new-topic {
-  height: 56px !important;
-  padding: 0 24px !important;
+  height: 44px !important;
+  padding: 0 18px !important;
   border: 0 !important;
   border-radius: 18px !important;
   background: var(--m3x-primary) !important;
@@ -24753,9 +24936,9 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 #rgFeedbackModal .rg-comms-new-topic:hover { transform: scale(1.04) !important; filter: brightness(1.05) !important; }
 #rgFeedbackModal .rg-comms-new-topic:active { transform: scale(.98) !important; }
 #rgFeedbackModal .rg-comms .rg-feedback-close {
-  width: 48px !important;
-  height: 48px !important;
-  min-width: 48px !important;
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
   border: 0 !important;
   border-radius: 999px !important;
   background: transparent !important;
@@ -24766,14 +24949,14 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 #rgFeedbackModal .rg-comms .rg-feedback-close:hover { background: rgba(250,250,250,.08) !important; }
 
 /* Sānjosla: navigation drawer — 56px kapsulas, lasāms teksts. */
-#rgFeedbackModal .rg-comms-body { grid-template-columns: 268px minmax(0, 1fr) !important; }
+#rgFeedbackModal .rg-comms-body { grid-template-columns: 232px minmax(0, 1fr) !important; }
 #rgFeedbackModal .rg-comms-sidebar {
-  padding: 16px 12px !important;
+  padding: 12px 10px !important;
   border-right: 0 !important;
   background: var(--m3x-surface) !important;
 }
 #rgFeedbackModal .rg-comms-search {
-  height: 48px !important;
+  height: 42px !important;
   padding-left: 34px !important;
   border: 0 !important;
   border-radius: 999px !important;
@@ -24784,10 +24967,11 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 #rgFeedbackModal .rg-comms-search::placeholder { color: var(--m3x-on-variant) !important; opacity: .8 !important; }
 #rgFeedbackModal .rg-comms-nav { margin-top: 14px !important; gap: 6px !important; }
 #rgFeedbackModal :is(.rg-comms-nav-button, .rg-comms-topic) {
-  min-height: 56px !important;
-  padding: 8px 16px !important;
-  grid-template-columns: 28px minmax(0, 1fr) auto !important;
-  gap: 12px !important;
+  min-height: 44px !important;
+  padding: 6px 14px !important;
+  grid-template-columns: 22px minmax(0, 1fr) auto !important;
+  gap: 10px !important;
+  align-items: center !important;
   border-radius: 999px !important;
   color: var(--m3x-on-variant) !important;
   font: 500 14px/1.25 Inter, system-ui, sans-serif !important;
@@ -24813,9 +24997,9 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 #rgFeedbackModal .rg-comms-topic-copy small { margin-top: 4px !important; font-size: 11px !important; color: var(--m3x-on-variant) !important; opacity: .75 !important; }
 #rgFeedbackModal .rg-comms-count {
-  min-width: 26px !important;
-  height: 26px !important;
-  padding: 0 9px !important;
+  min-width: 22px !important;
+  height: 22px !important;
+  padding: 0 7px !important;
   border-radius: 999px !important;
   background: var(--m3x-container-highest) !important;
   color: var(--m3x-on-variant) !important;
@@ -24831,42 +25015,42 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 /* Lente: lielāki burbuļi, skaidra autora rinda. */
 #rgFeedbackModal .rg-comms-main { background: var(--m3x-container) !important; }
 #rgFeedbackModal .rg-comms-feed-head {
-  min-height: 68px !important;
-  padding: 14px 22px !important;
+  min-height: 50px !important;
+  padding: 9px 18px !important;
   border-bottom: 1px solid var(--m3x-outline-variant) !important;
 }
 #rgFeedbackModal .rg-comms-feed-head strong {
   color: var(--m3x-on-surface) !important;
-  font: 400 22px/1.2 Inter, system-ui, sans-serif !important;
+  font: 400 17px/1.2 Inter, system-ui, sans-serif !important;
 }
 #rgFeedbackModal .rg-comms-feed-head small {
   margin-top: 5px !important;
   color: var(--m3x-on-variant) !important;
   font: 400 13px/1.25 Inter, system-ui, sans-serif !important;
 }
-#rgFeedbackModal .rg-feedback-list.rg-comms-feed { padding: 18px 22px 26px !important; gap: 18px !important; }
-#rgFeedbackModal .rg-comms-message { grid-template-columns: 44px minmax(0, 1fr) !important; gap: 14px !important; }
+#rgFeedbackModal .rg-feedback-list.rg-comms-feed { padding: 12px 18px 16px !important; gap: 10px !important; }
+#rgFeedbackModal .rg-comms-message { grid-template-columns: 32px minmax(0, 1fr) !important; gap: 10px !important; }
 #rgFeedbackModal .rg-comms-avatar {
-  width: 44px !important;
-  height: 44px !important;
+  width: 32px !important;
+  height: 32px !important;
   border: 0 !important;
   border-radius: 999px !important;
   background: var(--m3x-primary-container) !important;
   color: var(--m3x-on-primary-container) !important;
-  font: 600 15px/1 Inter, system-ui, sans-serif !important;
+  font: 600 12px/1 Inter, system-ui, sans-serif !important;
 }
-#rgFeedbackModal .rg-comms-message-head { gap: 10px !important; flex-wrap: wrap !important; }
+#rgFeedbackModal .rg-comms-message-head { gap: 8px !important; flex-wrap: wrap !important; }
 #rgFeedbackModal .rg-comms-message-head strong {
   color: var(--m3x-on-surface) !important;
-  font: 600 15px/1.2 Inter, system-ui, sans-serif !important;
+  font: 600 13px/1.2 Inter, system-ui, sans-serif !important;
 }
 #rgFeedbackModal .rg-comms-message-head time {
   color: var(--m3x-on-variant) !important;
   font: 400 12px/1 Inter, system-ui, sans-serif !important;
 }
 #rgFeedbackModal .rg-comms-topic-chip {
-  height: 32px !important;
-  padding: 0 14px !important;
+  height: 24px !important;
+  padding: 0 10px !important;
   display: inline-flex !important;
   align-items: center !important;
   border-radius: 999px !important;
@@ -24877,16 +25061,16 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 #rgFeedbackModal .rg-comms-topic-chip:hover { background: var(--m3x-secondary-container) !important; color: var(--m3x-on-secondary-container) !important; }
 #rgFeedbackModal .rg-comms-bubble {
-  margin-top: 8px !important;
-  padding: 14px 18px !important;
+  margin-top: 4px !important;
+  padding: 9px 13px !important;
   border: 0 !important;
-  border-radius: 6px 22px 22px 22px !important;
+  border-radius: 4px 16px 16px 16px !important;
   background: var(--m3x-container-high) !important;
   color: var(--m3x-on-surface) !important;
-  font: 400 15px/1.5 Inter, system-ui, sans-serif !important;
+  font: 400 13.5px/1.42 Inter, system-ui, sans-serif !important;
 }
 #rgFeedbackModal .rg-comms-message.is-own .rg-comms-bubble {
-  border-radius: 22px 6px 22px 22px !important;
+  border-radius: 16px 4px 16px 16px !important;
   background: var(--m3x-secondary-container) !important;
   color: var(--m3x-on-secondary-container) !important;
 }
@@ -24898,13 +25082,15 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
   font-size: 12px !important;
 }
 /* Darbības: M3 text buttons ar pilnu vārdu un 40px augstumu. */
-#rgFeedbackModal .rg-comms-message-actions { gap: 8px !important; margin-top: 8px !important; opacity: 1 !important; }
+#rgFeedbackModal .rg-comms-message-actions { gap: 4px !important; margin-top: 2px !important; opacity: .55 !important; }
+#rgFeedbackModal .rg-comms-message:hover .rg-comms-message-actions,
+#rgFeedbackModal .rg-comms-message:focus-within .rg-comms-message-actions { opacity: 1 !important; }
 #rgFeedbackModal .rg-comms-message-actions button {
-  height: 40px !important;
-  padding: 0 16px !important;
+  height: 26px !important;
+  padding: 0 10px !important;
   border-radius: 999px !important;
   color: var(--m3x-on-variant) !important;
-  font: 500 13px/1 Inter, system-ui, sans-serif !important;
+  font: 500 11px/1 Inter, system-ui, sans-serif !important;
   transition: background-color .2s var(--m3x-standard) !important;
 }
 #rgFeedbackModal .rg-comms-message-actions button:hover {
@@ -24918,16 +25104,16 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 
 /* Rakstīšana: liels lauks un extended FAB ar vārdu "Sūtīt". */
 #rgFeedbackModal .rg-comms-composer {
-  margin: 0 18px 18px !important;
-  padding: 14px !important;
+  margin: 0 18px 12px !important;
+  padding: 10px !important;
   border: 0 !important;
-  border-radius: 28px !important;
+  border-radius: 22px !important;
   background: var(--m3x-container-high) !important;
   box-shadow: none !important;
 }
-#rgFeedbackModal .rg-comms-compose-context { gap: 10px !important; margin-bottom: 10px !important; }
+#rgFeedbackModal .rg-comms-compose-context { gap: 8px !important; margin-bottom: 8px !important; }
 #rgFeedbackModal :is(.rg-comms-author-wrap, .rg-comms-topic-input) {
-  height: 44px !important;
+  height: 36px !important;
   border: 0 !important;
   border-radius: 999px !important;
   background: var(--m3x-container-highest) !important;
@@ -24940,9 +25126,9 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 #rgFeedbackModal .rg-comms-topic-input { padding: 0 18px !important; font: 400 13px/1 Inter, system-ui, sans-serif !important; color: var(--m3x-on-surface) !important; }
 #rgFeedbackModal .rg-comms-topic-input::placeholder { color: var(--m3x-on-variant) !important; opacity: .8 !important; }
 #rgFeedbackModal #rgFeedbackText {
-  min-height: 56px !important;
-  padding: 16px 18px !important;
-  border-radius: 20px !important;
+  min-height: 46px !important;
+  padding: 12px 14px !important;
+  border-radius: 16px !important;
   background: var(--m3x-surface) !important;
   color: var(--m3x-on-surface) !important;
   font: 400 15px/1.45 Inter, system-ui, sans-serif !important;
@@ -24955,9 +25141,9 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 #rgFeedbackModal .rg-comms-send {
   width: auto !important;
-  min-width: 112px !important;
-  height: 56px !important;
-  padding: 0 24px !important;
+  min-width: 96px !important;
+  height: 46px !important;
+  padding: 0 18px !important;
   gap: 8px !important;
   grid-auto-flow: column !important;
   border-radius: 18px !important;
@@ -24974,10 +25160,10 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 #rgFeedbackModal .rg-comms-send:not(:disabled):hover { transform: scale(1.03) !important; filter: brightness(1.05) !important; }
 #rgFeedbackModal .rg-comms-send:disabled { opacity: .38 !important; box-shadow: none !important; }
-#rgFeedbackModal .rg-comms-tools { gap: 6px !important; margin-top: 10px !important; }
+#rgFeedbackModal .rg-comms-tools { gap: 4px !important; margin-top: 6px !important; }
 #rgFeedbackModal .rg-comms-emoji {
-  width: 44px !important;
-  height: 44px !important;
+  width: 36px !important;
+  height: 36px !important;
   border-radius: 999px !important;
   font-size: 20px !important;
   transition: background-color .2s var(--m3x-standard), transform .22s var(--m3x-spring) !important;
@@ -24989,7 +25175,157 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 /* Telefonā tie paši žetoni, mazāki soļi: galvai jāietilpst vienā rindā ar
    aizvēršanu, un rakstīšanas rinda nedrīkst salauzt skaitītāju. */
+/* Tēmas emoji izvēle: M3 lapa dialoga iekšpusē. Mērķi 48px, kategorijas
+   kapsulas ar vārdu (ne tikai ikonu), un abas darbības ir nosauktas. */
+#rgFeedbackModal .rg-comms-topic { grid-template-columns: 22px minmax(0, 1fr) auto 30px !important; }
+#rgFeedbackModal .rg-comms-topic-field {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+}
+#rgFeedbackModal .rg-comms-topic-field .rg-comms-topic-input { padding-right: 44px !important; }
+#rgFeedbackModal .rg-comms-topic-emoji-btn {
+  position: absolute !important;
+  right: 4px !important;
+  width: 32px !important;
+  height: 32px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: var(--m3x-on-variant) !important;
+  font-size: 16px !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  transition: background-color .2s var(--m3x-standard) !important;
+}
+#rgFeedbackModal .rg-comms-topic-emoji-btn:hover { background: rgba(250,250,250,.10) !important; }
+#rgFeedbackModal .rg-comms-topic-emoji-btn.has-emoji { font-size: 18px !important; }
+#rgFeedbackModal .rg-comms-emoji-more {
+  border: 1px dashed var(--m3x-outline) !important;
+  color: var(--m3x-on-variant) !important;
+  font-size: 15px !important;
+}
+#rgFeedbackModal .rg-comms-topic-pick {
+  width: 30px !important;
+  height: 30px !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 999px !important;
+  color: var(--m3x-on-variant) !important;
+  font-size: 14px !important;
+  opacity: .5 !important;
+  cursor: pointer !important;
+  transition: opacity .2s var(--m3x-standard), background-color .2s var(--m3x-standard) !important;
+}
+#rgFeedbackModal .rg-comms-topic:hover .rg-comms-topic-pick,
+#rgFeedbackModal .rg-comms-topic-pick:focus-visible { opacity: 1 !important; background: rgba(250,250,250,.08) !important; }
+#rgFeedbackModal .rg-comms-topic-emoji { font-size: 17px !important; }
+#rgFeedbackModal .rg-emoji-picker {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 5 !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 16px !important;
+  background: rgba(4,4,6,.62) !important;
+}
+#rgFeedbackModal .rg-emoji-sheet {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: min(460px, calc(100% - 32px)) !important;
+  max-height: calc(100% - 32px) !important;
+  display: grid !important;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto !important;
+  gap: 12px !important;
+  padding: 18px !important;
+  border-radius: 28px !important;
+  background: var(--m3x-container-high) !important;
+  box-shadow: 0 12px 20px 8px rgba(0,0,0,.36) !important;
+}
+#rgFeedbackModal .rg-emoji-head { display: flex !important; align-items: center !important; gap: 12px !important; }
+#rgFeedbackModal .rg-emoji-head strong { display: block !important; color: var(--m3x-on-surface) !important; font: 400 20px/1.2 Inter, system-ui, sans-serif !important; }
+#rgFeedbackModal .rg-emoji-head small { display: block !important; margin-top: 2px !important; color: var(--m3x-on-variant) !important; font: 400 13px/1.2 Inter, system-ui, sans-serif !important; }
+#rgFeedbackModal .rg-emoji-done {
+  margin-left: auto !important;
+  height: 40px !important;
+  padding: 0 20px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: var(--m3x-primary) !important;
+  color: var(--m3x-on-primary) !important;
+  font: 600 14px/1 Inter, system-ui, sans-serif !important;
+  cursor: pointer !important;
+}
+#rgFeedbackModal .rg-emoji-search {
+  height: 44px !important;
+  padding: 0 16px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  outline: none !important;
+  background: var(--m3x-container-highest) !important;
+  color: var(--m3x-on-surface) !important;
+  font: 400 14px/1 Inter, system-ui, sans-serif !important;
+}
+#rgFeedbackModal .rg-emoji-search::placeholder { color: var(--m3x-on-variant) !important; }
+#rgFeedbackModal .rg-emoji-search:focus { box-shadow: inset 0 0 0 1.5px var(--m3x-primary) !important; }
+#rgFeedbackModal .rg-emoji-tabs { display: flex !important; gap: 6px !important; overflow-x: auto !important; padding-bottom: 2px !important; scrollbar-width: thin !important; }
+#rgFeedbackModal .rg-emoji-tab {
+  flex: 0 0 auto !important;
+  height: 36px !important;
+  padding: 0 14px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  border: 1px solid var(--m3x-outline) !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: var(--m3x-on-variant) !important;
+  font: 500 12px/1 Inter, system-ui, sans-serif !important;
+  cursor: pointer !important;
+}
+#rgFeedbackModal .rg-emoji-tab.is-on {
+  border-color: transparent !important;
+  background: var(--m3x-primary-container) !important;
+  color: var(--m3x-on-primary-container) !important;
+}
+#rgFeedbackModal .rg-emoji-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)) !important;
+  gap: 4px !important;
+  overflow: auto !important;
+  scrollbar-width: thin !important;
+}
+#rgFeedbackModal .rg-emoji-cell {
+  height: 48px !important;
+  border: 0 !important;
+  border-radius: 14px !important;
+  background: transparent !important;
+  font-size: 24px !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  transition: background-color .15s var(--m3x-standard), transform .18s var(--m3x-spring) !important;
+}
+#rgFeedbackModal .rg-emoji-cell:hover { background: rgba(250,250,250,.08) !important; transform: scale(1.12) !important; }
+#rgFeedbackModal .rg-emoji-cell.is-on { background: var(--m3x-primary-container) !important; }
+#rgFeedbackModal .rg-emoji-empty { margin: 0 !important; padding: 18px 4px !important; color: var(--m3x-on-variant) !important; font: 400 14px/1.5 Inter, system-ui, sans-serif !important; }
+#rgFeedbackModal .rg-emoji-foot { display: flex !important; }
+#rgFeedbackModal .rg-emoji-clear {
+  height: 40px !important;
+  padding: 0 18px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: var(--m3x-on-variant) !important;
+  font: 500 13px/1 Inter, system-ui, sans-serif !important;
+  cursor: pointer !important;
+}
+#rgFeedbackModal .rg-emoji-clear:hover { background: rgba(250,250,250,.08) !important; color: var(--m3x-on-surface) !important; }
 @media (max-width: 720px) {
+  #rgFeedbackModal .rg-emoji-sheet { width: 100% !important; padding: 14px !important; }
   #rgFeedbackModal .rg-comms-head {
     min-height: 64px !important;
     padding: 10px 10px 10px 12px !important;
@@ -25035,15 +25371,7 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
   border-radius: 999px !important;
   transition: background-color .18s var(--m3c-motion) !important;
 }
-#grafiks-list .rg-feedback-card .rg-pulse-write--comment.has-new {
-  background: rgba(249, 115, 22, .12) !important;
-}
-/* Kopskaits ir klusais skaitlis — neitrāls cinka aplis, ne krāsains plankums. */
-#grafiks-list .rg-feedback-card .rg-feedback-action-count {
-  border-color: transparent !important;
-  background: #27272a !important;
-  color: #fafafa !important;
-}
+/* Kopskaita aplis paliek tāds, kāds bija. Vienīgais jaunums ir "+N" blakus. */
 /* "+N" — tikai šodienas jaunumi, sava krāsa. Kartītē tā seko kopskaita
    burbuļa izkārtojumam (tas pats režģa lauks un nobīde), tikai pabīdīta pa
    kreisi par burbuļa platumu, lai abi stāv blakus, nevis viens uz otra. */
