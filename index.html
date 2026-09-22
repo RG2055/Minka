@@ -37,7 +37,7 @@
   }
   window.__minkaHasApiAuth = function() { return !!getToken(); };
 
-  var CALENDAR_BUILD = '20260923wm9';
+  var CALENDAR_BUILD = '20260923wm10';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -645,7 +645,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <div id="calendarEmbed">
   <!-- Keep the expensive calendar document dormant behind the password gate.
        Authenticated startup assigns data-base-src immediately. -->
-  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260923wm9" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260923wm10" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- Compact brand loader. It stays up until the embedded schedule has painted. -->
@@ -2350,13 +2350,13 @@ window.addEventListener('DOMContentLoaded', () => {
     #bolusDocBtn .bolus-room-seg.is-caution,
     #bolusDocBtn .bolus-room-seg.is-warn,
     #bolusDocBtn .bolus-room-seg.is-stale {
-      height: 20px !important;
-      padding: 0 8px 0 7px !important;
-      gap: 5px !important;
-      border-radius: 10px !important;
+      height: 18px !important;
+      padding: 0 6px 0 5px !important;
+      gap: 4px !important;
+      border-radius: 9px !important;
       background: color-mix(in srgb, var(--led) 16%, #1a1f27) !important;
       color: #e3e7ee !important;
-      font: 500 10.5px/1 "Google Sans", "Product Sans", Roboto, Inter, system-ui, sans-serif !important;
+      font: 500 9.5px/1 "Google Sans", "Product Sans", Roboto, Inter, system-ui, sans-serif !important;
       letter-spacing: .02em !important;
     }
     /* "Baterija": čipa fons aizpildās statusa krāsā tik tālu, cik no 24 h vēl
