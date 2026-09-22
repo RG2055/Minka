@@ -1566,7 +1566,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="data/svinamas-dienas.js?v=20260922focal3"></script>
+<script src="data/svinamas-dienas.js?v=20260922focal4"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/known-carryovers.js?v=20260907smooth1"></script>
 <script src="js/card-face-model.js?v=20260912wa4"></script>
@@ -2986,7 +2986,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260922focal3"></script>
+<script src="js/calendar.js?v=20260922focal4"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
 <script src="js/header-weather.js?v=20260920icons1" defer></script>
@@ -3007,7 +3007,7 @@ function _mkToast(msg, type) {
 <script src="js/levels.js?v=20260911daybook2" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260922focal3';
+window.__minkaLocalBuild = '20260922focal4';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -15375,6 +15375,23 @@ window.addEventListener('message', function(e) {
 :root:not(.mk-mobile-shell) #minkaBarWrap > .mk-header-scenic-bg.is-loaded .mk-header-scenic-img {
   opacity: 1 !important;
 }
+/* Box much wider than the picture (see syncFit in calendar.js): the canvas
+   shows the whole composition stretched unevenly to the box; the picture
+   itself stays for the palette and as the first paint. */
+:root:not(.mk-mobile-shell) #minkaBarWrap > .mk-header-scenic-bg .mk-header-scenic-canvas {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  display: block !important;
+  pointer-events: none !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap > .mk-header-scenic-bg .mk-header-scenic-canvas[hidden],
+:root:not(.mk-mobile-shell) #minkaBarWrap > .mk-header-scenic-bg:not(.is-stretch) .mk-header-scenic-canvas {
+  display: none !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap > .mk-header-scenic-bg.is-stretch .mk-header-scenic-img {
+  visibility: hidden !important;
+}
 :root:not(.mk-mobile-shell) #minkaBarWrap #minkaBar {
   position: relative !important;
   z-index: 8 !important;
@@ -24389,7 +24406,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
    css/mobile-v2.css + js/mobile-v2.js — vizuālais izkārtojums; ?mv2=0 to atslēdz. */
 (function(){
   if (!document.documentElement.classList.contains('mk-mobile-shell')) return;
-  var v = '20260922focal3';
+  var v = '20260922focal4';
   function css(href) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href + '?v=' + v; document.body.appendChild(l); }
   css('css/mobile-fixes.css');
   try { if (new URLSearchParams(location.search).get('mv2') === '0') return; } catch (_e) {}
@@ -24407,8 +24424,8 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 </style>
 <script src="../js/image-palette.js?v=20260919palette2"></script>
-<link rel="stylesheet" href="css/header-appearance.css?v=20260922focal3">
+<link rel="stylesheet" href="css/header-appearance.css?v=20260922focal4">
 <script src="js/header-appearance.js?v=20260920mix3"></script>
-<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922focal3">
+<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922focal4">
 </body>
 </html>

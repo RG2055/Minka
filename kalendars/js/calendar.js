@@ -162,7 +162,102 @@ var hospitalDatabase = window.hospitalDatabase;
       host.prepend(layer);
     }
     header.classList.add('mk-header-scenic');
+    if (!mobileShell && !fitObserver && 'ResizeObserver' in window) {
+      fitObserver = new ResizeObserver(() => syncFit());
+      fitObserver.observe(layer);
+    }
     return layer;
+  }
+
+  // Desktop: the header is the same ~200px tall on every screen, so its box
+  // is 5.7:1 on a MacBook but 9.4:1 on a 1900px monitor. With `cover` the
+  // wide box shows only a strip of a 5.5:1 picture. Once the box is this
+  // much wider than the picture itself, the picture is stretched to the box
+  // instead of cropped, so the whole composition stays in view. A plain
+  // `object-fit: fill` made a bird 2.3x wider, so the stretch is uneven: the
+  // band around the picture's focal point (its object-position x) keeps
+  // near-natural proportions and the sides — bokeh, sky, water — absorb the
+  // rest, blended over a smooth ramp so nothing kinks. Drawn on a canvas in
+  // vertical strips; only on load and resize, never per tick. The decision
+  // compares the real box against the picture's own size, so it holds for
+  // any picture and any monitor. The box is the part of the layer above the
+  // opaque day strip, which is what is actually seen. A MacBook-wide box
+  // (~7.6:1) never stretches, so the crop that already looks right there
+  // stays as it is for every picture, the 3:1 scenes included.
+  const WIDE_BOX = 9.5;        // the box counts as very wide from this aspect ratio (a 1440px+ desktop)
+  const STRETCH_AT = 1.25;     // ...and only when it is this much wider than the picture
+  const FOCAL_BAND = 0.12;     // half-width of the near-natural band (fraction of the picture)
+  const FOCAL_FADE = 0.10;     // ramp from the band to the fully stretched sides
+  const FOCAL_MAX_STRETCH = 1.15; // the band itself may stretch this much
+  const STRIPS = 120;
+  let fitObserver = null;
+  function syncFit() {
+    const layer = document.querySelector('#minkaBarWrap > .mk-header-scenic-bg');
+    const img = layer?.querySelector('.mk-header-scenic-img');
+    if (!layer || !img || document.documentElement.classList.contains('mk-mobile-shell')) return;
+    if (!img.naturalWidth || !img.naturalHeight) return;
+    const box = layer.getBoundingClientRect();
+    const strip = layer.parentElement.querySelector(':scope > .scroll-row');
+    const stripHeight = strip ? strip.getBoundingClientRect().height : 0;
+    const width = Math.round(box.width);
+    const height = Math.max(1, Math.round(box.height - stripHeight));
+    const boxRatio = width / height;
+    const stretch = boxRatio >= WIDE_BOX && boxRatio / (img.naturalWidth / img.naturalHeight) >= STRETCH_AT;
+    layer.classList.toggle('is-stretch', stretch);
+    const canvas = layer.querySelector('.mk-header-scenic-canvas');
+    if (!stretch) { if (canvas) canvas.hidden = true; return; }
+    drawStretched(layer, img, canvas, width, height);
+  }
+  function drawStretched(layer, img, canvas, width, height) {
+    if (!canvas) {
+      canvas = document.createElement('canvas');
+      canvas.className = 'mk-header-scenic-canvas';
+      canvas.setAttribute('aria-hidden', 'true');
+      layer.appendChild(canvas);
+    }
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    canvas.style.width = width + 'px';
+    canvas.style.height = height + 'px';
+    canvas.hidden = false;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    const S = img.naturalWidth, Hs = img.naturalHeight;
+    const k = (width / S) / (height / Hs);          // uniform stretch `fill` would apply
+    const focal = parseFloat(img.style.objectPosition) ;
+    const fx = Number.isFinite(focal) ? focal / 100 : 0.5;
+    // 0 inside the focal band, 1 on the sides, smoothstep between.
+    const shape = u => {
+      const d = Math.abs(u - fx);
+      if (d <= FOCAL_BAND) return 0;
+      if (d >= FOCAL_BAND + FOCAL_FADE) return 1;
+      const t = (d - FOCAL_BAND) / FOCAL_FADE;
+      return t * t * (3 - 2 * t);
+    };
+    const shapes = [];
+    for (let i = 0; i < STRIPS; i++) shapes.push(shape((i + 0.5) / STRIPS));
+    // Strip i gets width * w_i / Σw with w_i = 1 + (side - 1) * shape_i. The band
+    // (shape 0) must land at its target stretch, which fixes Σw and so `side`.
+    const target = Math.min(k, FOCAL_MAX_STRETCH);
+    const sumShape = shapes.reduce((a, b) => a + b, 0);
+    const sumNeeded = k * STRIPS / target;
+    const side = sumShape > 0 ? Math.max(1, 1 + (sumNeeded - STRIPS) / sumShape) : 1;
+    const weights = shapes.map(v => 1 + (side - 1) * v);
+    const sum = weights.reduce((a, b) => a + b, 0);
+    const sw = S / STRIPS;
+    let dx = 0;
+    ctx.clearRect(0, 0, width, height);
+    for (let i = 0; i < STRIPS; i++) {
+      const dw = width * weights[i] / sum;
+      // A hair of overlap so antialiased strip edges never show as seams.
+      const over = i < STRIPS - 1 ? 0.75 : 0;
+      ctx.drawImage(img, i * sw, 0, sw * (dw + over) / dw, Hs, dx, 0, dw + over, height);
+      dx += dw;
+    }
   }
 
   function scheduleNextSwitch() {
@@ -227,7 +322,7 @@ var hospitalDatabase = window.hospitalDatabase;
       document.documentElement.dataset.minkaHeaderScene = scene;
       img.style.objectPosition = asset.position;
       const notifyScenery = () => window.dispatchEvent(new CustomEvent('minka:header-scenery'));
-      img.onload = () => { layer.classList.add('is-loaded'); notifyScenery(); };
+      img.onload = () => { layer.classList.add('is-loaded'); syncFit(); notifyScenery(); };
       img.onerror = () => layer.classList.remove('is-loaded');
       img.src = asset.src;
       notifyScenery();
