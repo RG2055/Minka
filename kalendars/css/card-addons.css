@@ -302,10 +302,9 @@ html body #worker-modal .card.mk-addon-active.mk-addon-group-object .mk-mid-meta
 
 .mk-addon-groups {
   display: flex;
+  flex-wrap: wrap; /* ritināma rinda nogrieza "Objekti" aiz malas bez mājiena, ka tur vēl kaut kas ir */
   gap: 6px;
-  overflow-x: auto;
   padding: 2px 0 8px;
-  scrollbar-width: thin;
 }
 
 .mk-addon-group,
