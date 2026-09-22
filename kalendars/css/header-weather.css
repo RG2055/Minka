@@ -178,6 +178,9 @@ html body #minkaBarWrap > #minkaNamedayChip { z-index: 2; }
 }
 .mk-weather-moon svg { display: block; width: 100%; height: 100%; }
 .mk-weather-moon.is-dark-phase { display: none !important; }
+/* Fona mēness hederī vairs netiek rādīts — tas stāvēja aiz datuma un izskatījās
+   pēc traipa. Mēness fāze paliek redzama laikapstākļu čipā. */
+.mk-weather-moon { display: none !important; }
 .mk-weather-layer[data-weather-period='night'] .mk-weather-moon { display: block; opacity: .92; }
 .mk-weather-layer[data-weather-period='night'][data-weather-state='clear'] .mk-weather-moon { opacity: 1; }
 .mk-weather-layer[data-weather-period='night'][data-weather-state='partly-cloudy'] .mk-weather-moon { opacity: .90; }
