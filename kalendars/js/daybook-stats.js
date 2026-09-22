@@ -19,7 +19,7 @@
   var PENDING_KEY = 'minkaShiftPulsePendingV2';
   var COFFEE_KEY = 'minkaCoffeeCountsV1';
   var COFFEE_DETAILS_KEY = 'minkaCoffeeDetailsV1';
-  var COFFEE_SOURCES = [['philips', 'Philips'], ['lofbergs', 'Löfbergs'], ['narvesen', 'Narvesen'], ['monster', 'Monster'], ['monsterultra', 'Monster Ultra'], ['redbull', 'Red Bull'], ['cupcoffee', 'Cita kafija']];
+  var COFFEE_SOURCES = [['philips', 'Philips'], ['lofbergs', 'Löfbergs'], ['narvesen', 'Narvesen'], ['monster', 'Monster'], ['monsterultra', 'Monster Ultra'], ['redbull', 'Red Bull'], ['brite', 'Brite'], ['cupcoffee', 'Cita kafija'], ['mycoffee', 'Mana kafija']];
 
   var state = { month: '', group: 'all', tab: 'overview', person: '', day: '' };
   // Shared radio history from the feedback API, per month: { 'YYYY-MM': { at, days: [...] } }.

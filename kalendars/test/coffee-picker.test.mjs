@@ -24,14 +24,18 @@ function harness({ innerWidth = 1280, innerHeight = 900 } = {}) {
     Math
   });
   vm.runInContext(calendar.slice(from, to), context);
-  return { context, picker, anchor, place: () => context.placePicker() };
+  // The dialog's width is a Material 3 shape decision that may change; read it
+  // from the code so these cases keep testing the placement, not the number.
+  const width = Number(/const pw = (\d+)/.exec(calendar.slice(from, to))?.[1]);
+  assert.ok(width > 0, 'the placement block no longer declares the picker width');
+  return { context, picker, anchor, width, place: () => context.placePicker() };
 }
 
 test('the picker opens beside the button that asked for it', () => {
-  const { picker, place } = harness();
+  const { picker, place, width } = harness();
   place();
   assert.equal(picker.style.top, '432px', 'just below the +');
-  assert.equal(picker.style.left, '342px', 'right edge lined up with the +');
+  assert.equal(picker.style.left, (600 - width) + 'px', 'right edge lined up with the +');
 });
 
 test('a collapsed anchor does not throw the picker into the corner', () => {
@@ -50,14 +54,14 @@ test('a collapsed anchor does not throw the picker into the corner', () => {
 });
 
 test('the picker follows the button again once it is measurable', () => {
-  const { picker, anchor, place } = harness();
+  const { picker, anchor, place, width } = harness();
   place();
   anchor.rect = { top: 0, bottom: 0, right: 0, width: 0, height: 0 };
   place();
   anchor.rect = { top: 100, bottom: 124, right: 400, width: 17, height: 24 };
   place();
   assert.equal(picker.style.top, '132px');
-  assert.equal(picker.style.left, '142px');
+  assert.equal(picker.style.left, (400 - width) + 'px');
 });
 
 test('without any anchor it still lands somewhere sensible', () => {

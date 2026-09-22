@@ -357,7 +357,7 @@
     return totals;
   }
   function _emptyCoffeeDetail() {
-    return { sources: { philips: 0, lofbergs: 0, narvesen: 0, monster: 0, monsterultra: 0, redbull: 0, cupcoffee: 0 }, spendCents: 0 };
+    return { sources: { philips: 0, lofbergs: 0, narvesen: 0, monster: 0, monsterultra: 0, redbull: 0, brite: 0, cupcoffee: 0, mycoffee: 0 }, spendCents: 0 };
   }
   function _addCoffeeDetail(out, key, detail) {
     if (!out[key]) out[key] = _emptyCoffeeDetail();
@@ -940,7 +940,7 @@
   function _coffeeSourceChips(cs) {
     cs = cs || {};
     var icon = window.__minkaCoffeeIcon;
-    var defs = [['philips', 'Philips'], ['lofbergs', 'Löfbergs'], ['narvesen', 'Narvesen'], ['monster', 'Monster'], ['monsterultra', 'Monster Ultra'], ['redbull', 'Red Bull'], ['cupcoffee', 'Cita kafija']];
+    var defs = [['philips', 'Philips'], ['lofbergs', 'Löfbergs'], ['narvesen', 'Narvesen'], ['monster', 'Monster'], ['monsterultra', 'Monster Ultra'], ['redbull', 'Red Bull'], ['brite', 'Brite'], ['cupcoffee', 'Cita kafija'], ['mycoffee', 'Mana kafija']];
     var parts = defs.filter(function (d) { return (Number(cs[d[0]]) || 0) > 0; }).map(function (d) {
       var n = Number(cs[d[0]]) || 0;
       if (icon) return '<span class="mk-stx-csrc" title="' + d[1] + '">' + icon(d[0]) + '<i>' + n + '</i></span>';
@@ -950,7 +950,7 @@
   }
 
   function buildCoffeeSummary(list) {
-    var g = { cups: 0, cents: 0, philips: 0, lofbergs: 0, narvesen: 0, monster: 0, monsterultra: 0, redbull: 0, cupcoffee: 0 };
+    var g = { cups: 0, cents: 0, philips: 0, lofbergs: 0, narvesen: 0, monster: 0, monsterultra: 0, redbull: 0, brite: 0, cupcoffee: 0, mycoffee: 0 };
     (list || []).forEach(function (w) {
       g.cups += Math.max(0, Number(w.coffeeTotal) || 0);
       g.cents += Math.max(0, Number(w.coffeeSpendCents) || 0);

@@ -65,14 +65,23 @@ function cleanDelta(value) {
   return n === -2 || n === -1 || n === 1 || n === 2 ? n : 0;
 }
 
+// The drinks the app ships with today. The list is here so a reply always
+// carries every known source, even one nobody has logged yet — but it is not a
+// gate: an unknown slug that looks like a source is stored as it is, so a drink
+// added in the app starts counting before this worker is redeployed. Only the
+// bookkeeping value 'adjustment' and junk are turned away.
+const KNOWN_SOURCES = ['philips', 'lofbergs', 'narvesen', 'monster', 'monsterultra', 'redbull', 'brite', 'cupcoffee', 'mycoffee'];
+const SOURCE_ALIASES = {
+  'löfbergs': 'lofbergs', 'monster-ultra': 'monsterultra', monsterwhite: 'monsterultra', ultra: 'monsterultra',
+  'red-bull': 'redbull', redbul: 'redbull', 'cup-coffee': 'cupcoffee', cita: 'cupcoffee', other: 'cupcoffee',
+  'my-coffee': 'mycoffee', mana: 'mycoffee', manakafija: 'mycoffee'
+};
+
 function cleanSource(value) {
-  const s = String(value || 'philips').trim().toLowerCase();
-  if (s === 'lofbergs' || s === 'löfbergs') return 'lofbergs';
-  if (s === 'narvesen') return 'narvesen';
-  if (s === 'monster') return 'monster';
-  if (s === 'monsterultra' || s === 'monster-ultra' || s === 'monsterwhite' || s === 'ultra') return 'monsterultra';
-  if (s === 'redbull' || s === 'red-bull' || s === 'redbul') return 'redbull';
-  if (s === 'cupcoffee' || s === 'cup-coffee' || s === 'cita' || s === 'other') return 'cupcoffee';
+  const s = String(value || '').trim().toLowerCase();
+  if (!s) return 'philips';
+  if (SOURCE_ALIASES[s]) return SOURCE_ALIASES[s];
+  if (/^[a-z][a-z0-9-]{1,23}$/.test(s) && s !== 'adjustment') return s;
   return 'philips';
 }
 
@@ -96,10 +105,9 @@ function cleanPriceCents(value) {
 
 function ensureDetail(details, worker) {
   if (!Object.prototype.hasOwnProperty.call(details, worker)) {
-    details[worker] = {
-      sources: { philips: 0, lofbergs: 0, narvesen: 0, monster: 0, monsterultra: 0, redbull: 0, cupcoffee: 0 },
-      spendCents: 0
-    };
+    const sources = {};
+    for (const key of KNOWN_SOURCES) sources[key] = 0;
+    details[worker] = { sources, spendCents: 0 };
   }
   return details[worker];
 }
@@ -107,9 +115,10 @@ function ensureDetail(details, worker) {
 async function readCoffeeEvents(env, whereSql, binds) {
   try {
     // Net all deltas per source so a "minus" (logged with its source) reduces that
-    // source's count. Only the real sources are aggregated — legacy source-less
-    // removals were logged as 'adjustment' and are ignored here.
-    const known = "source IN ('philips','lofbergs','narvesen','monster','monsterultra','redbull','cupcoffee')";
+    // source's count. Everything except the bookkeeping rows is aggregated:
+    // legacy source-less removals were logged as 'adjustment' and are ignored,
+    // and a drink added in the app is counted without touching this worker.
+    const known = "source IS NOT NULL AND source <> '' AND source <> 'adjustment'";
     const where = whereSql ? `${whereSql} AND ${known}` : `WHERE ${known}`;
     const rows = await env.COFFEE_DB
       .prepare(`
@@ -162,7 +171,7 @@ export default {
           const worker = row.worker;
           const source = cleanSource(row.source);
           const d = ensureDetail(details, worker);
-          d.sources[source] = Math.max(0, Number(row.total) || 0);
+          d.sources[source] = (d.sources[source] || 0) + Math.max(0, Number(row.total) || 0);
           d.spendCents += Math.max(0, Number(row.spend_cents) || 0);
         }
         Object.keys(totals).forEach(worker => {
@@ -193,7 +202,7 @@ export default {
         const worker = row.worker;
         const source = cleanSource(row.source);
         const d = ensureDetail(details, worker);
-        d.sources[source] = Math.max(0, Number(row.total) || 0);
+        d.sources[source] = (d.sources[source] || 0) + Math.max(0, Number(row.total) || 0);
         d.spendCents += Math.max(0, Number(row.spend_cents) || 0);
       }
       Object.keys(counts).forEach(worker => {

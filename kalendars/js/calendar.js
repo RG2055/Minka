@@ -5298,10 +5298,17 @@ function filterFullList(btn) {
       monster: { label: 'Monster', priceCents: 159, eq: 2 },
       monsterultra: { label: 'Monster Ultra', priceCents: 159, eq: 2 },
       redbull: { label: 'Red Bull', priceCents: 149, eq: 1 },
-      cupcoffee: { label: 'Cita kafija', priceCents: 100, eq: 1 }
+      // Brite: 330 ml at 30 mg caffeine per 100 ml ≈ 99 mg ≈ 1.25 cups, and
+      // 1.99 € in Rimi and Barbora (checked 2026-09-22).
+      brite: { label: 'Brite', priceCents: 199, eq: 1.25 },
+      cupcoffee: { label: 'Cita kafija', priceCents: 100, eq: 1 },
+      mycoffee: { label: 'Mana kafija', priceCents: 0, eq: 1 }
     };
-    const COFFEE_SOURCES = ['philips', 'lofbergs', 'narvesen', 'monster', 'monsterultra', 'redbull', 'cupcoffee'];
+    const COFFEE_SOURCES = ['philips', 'lofbergs', 'narvesen', 'monster', 'monsterultra', 'redbull', 'brite', 'cupcoffee', 'mycoffee'];
     function coffeeEq(source) { const m = coffeeSourceMeta[cleanCoffeeSource(source)]; return Math.max(1, (m && m.eq) || 1); }
+    // Cups are stored as whole numbers, so a drink worth 1.25 cups still counts
+    // as one cup; only the caffeine readout shows the finer figure.
+    function coffeeMg(source) { const m = coffeeSourceMeta[cleanCoffeeSource(source)]; return Math.round(((m && m.eq) || 1) * COFFEE_MG_PER_CUP); }
     // Fixed-price machines (Löfbergs, Cita kafija, energy drinks) can vary between
     // vending machines/stores, so remember the last price the user typed per source
     // on this device — avoids retyping it every single time for the same machine.
@@ -5373,19 +5380,20 @@ function filterFullList(btn) {
       return String(name || '').trim().toLocaleLowerCase('lv-LV');
     }
 
+    const COFFEE_SOURCE_ALIASES = {
+      'löfbergs': 'lofbergs', 'monster-ultra': 'monsterultra', monsterwhite: 'monsterultra', ultra: 'monsterultra',
+      'red-bull': 'redbull', redbul: 'redbull', 'cup-coffee': 'cupcoffee', cita: 'cupcoffee', other: 'cupcoffee',
+      'my-coffee': 'mycoffee', mana: 'mycoffee', manakafija: 'mycoffee'
+    };
     function cleanCoffeeSource(source) {
       const s = String(source || 'philips').trim().toLowerCase();
-      if (s === 'lofbergs' || s === 'löfbergs') return 'lofbergs';
-      if (s === 'narvesen') return 'narvesen';
-      if (s === 'monster') return 'monster';
-      if (s === 'monsterultra' || s === 'monster-ultra' || s === 'monsterwhite' || s === 'ultra') return 'monsterultra';
-      if (s === 'redbull' || s === 'red-bull' || s === 'redbul') return 'redbull';
-      if (s === 'cupcoffee' || s === 'cup-coffee' || s === 'cita' || s === 'other') return 'cupcoffee';
-      return 'philips';
+      if (coffeeSourceMeta[s]) return s;
+      return COFFEE_SOURCE_ALIASES[s] || 'philips';
     }
 
     function emptyCoffeeDetail() {
-      return { sources: { philips: 0, lofbergs: 0, narvesen: 0, monster: 0, monsterultra: 0, redbull: 0, cupcoffee: 0 }, spendCents: 0 };
+      const sources = {}; COFFEE_SOURCES.forEach(k => { sources[k] = 0; });
+      return { sources, spendCents: 0 };
     }
 
     function normalizeCoffeeDetail(detail, count) {
@@ -5740,6 +5748,10 @@ function filterFullList(btn) {
           + '<rect x="16" y="21" width="2" height="1" fill="#d61f26"/>'
           + '</svg>';
       }
+      if (source === 'brite' || source === 'mycoffee') {
+        // Pixel-art artwork from the owner, cut out of its white background.
+        return '<img src="assets/coffee/' + source + '.png" alt="" decoding="async" loading="lazy">';
+      }
       if (source === 'cupcoffee') {
         // Generic vending-machine coffee — plain ribbed plastic cup, tapered
         // narrower at the base, filled with coffee, a couple of steam wisps.
@@ -5925,7 +5937,7 @@ function filterFullList(btn) {
 
       function placePicker() {
         const rect = anchorRect();
-        const pw = 258;
+        const pw = 288;   // must match .mk-coffee-picker width
 
         const mobileShell = document.documentElement.classList.contains('mk-mobile-shell') || window.innerWidth <= 760;
         // Both shells have a bottom nav bar overlaying this (iframed) calendar, so
@@ -5975,9 +5987,8 @@ function filterFullList(btn) {
         const caf = picker.querySelector('.mk-coffee-caf');
         if (caf) {
           const eq = coffeeEq(selected);
-          const mg = eq * COFFEE_MG_PER_CUP;
-          const cups = eq === 1 ? '1 tasīte' : eq + ' tasītes';
-          caf.textContent = '≈ ' + mg + ' mg kofeīna ' + cups;
+          const cups = eq === 1 ? '1 tasīte' : (Math.round(eq * 100) / 100) + ' tasītes';
+          caf.textContent = '≈ ' + coffeeMg(selected) + ' mg kofeīna · ' + cups;
         }
       }
       picker.querySelectorAll('.mk-coffee-source').forEach(btn => {

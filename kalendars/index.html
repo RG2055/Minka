@@ -1180,7 +1180,7 @@ body.stars-active #stars-overlay{display:block;}
 .mk-stx-bi-full { grid-column:1 / -1; align-items:center; }
 .mk-stx-csrcs { display:inline-flex; align-items:center; gap:10px; }
 .mk-stx-csrc { display:inline-flex; align-items:center; gap:3px; }
-.mk-stx-csrc svg { width:16px; height:16px; display:block; }
+.mk-stx-csrc :is(svg, img) { width:16px; height:16px; display:block; object-fit:contain; }
 .mk-stx-csrc i { font-style:normal; font-weight:800; font-size:11px; color:#f4f5f7; }
 .mk-stx-csrc-none { color:var(--stx-t3); font-weight:600; }
 .mk-stx-coffee-sum { display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin:0 0 14px; padding:11px 15px; border-radius:13px; background:var(--stx-card2); border:1px solid var(--stx-border-soft); }
@@ -1189,12 +1189,12 @@ body.stars-active #stars-overlay{display:block;}
 .mk-stx-cs-stat b { font-size:17px; font-weight:800; color:#f4f5f7; }
 .mk-stx-cs-stat i { font-style:normal; font-size:9.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--stx-t3); margin-left:5px; }
 .mk-stx-cs-srcs { display:inline-flex; align-items:center; gap:12px; margin-left:auto; }
-.mk-stx-cs-srcs .mk-stx-csrc svg { width:20px; height:20px; }
+.mk-stx-cs-srcs .mk-stx-csrc :is(svg, img) { width:20px; height:20px; }
 .mk-stx-cs-srcs .mk-stx-csrc i { font-size:12px; }
 .mk-stx-metric-coffee { width:auto; min-width:58px; padding-left:9px; padding-right:9px; }
 .mk-stx-mc-srcs { display:flex; align-items:center; justify-content:center; gap:7px; margin:5px 0 2px; }
 .mk-stx-mc-srcs .mk-stx-csrc { gap:2px; }
-.mk-stx-mc-srcs .mk-stx-csrc svg { width:15px; height:15px; display:block; }
+.mk-stx-mc-srcs .mk-stx-csrc :is(svg, img) { width:15px; height:15px; display:block; }
 .mk-stx-mc-srcs .mk-stx-csrc i { font-style:normal; font-weight:800; font-size:10px; color:#f4f5f7; }
 
 @media (max-width:1080px) {
@@ -1566,7 +1566,7 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="data/namedays.local.js"></script>
-<script src="data/svinamas-dienas.js?v=20260922pool2"></script>
+<script src="data/svinamas-dienas.js?v=20260922kafija1"></script>
 <script src="js/emoji-particles.js?v=20260822bubblefatigue37"></script>
 <script src="js/known-carryovers.js?v=20260907smooth1"></script>
 <script src="js/card-face-model.js?v=20260912wa4"></script>
@@ -2986,10 +2986,10 @@ function _mkToast(msg, type) {
 })();
 </script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260922pool2"></script>
+<script src="js/calendar.js?v=20260922kafija1"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260829catpicker1" defer></script>
-<script src="js/header-weather.js?v=20260922pool2" defer></script>
+<script src="js/header-weather.js?v=20260922kafija1" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260831autofit1"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
 <script src="js/light-model.js?v=20260908light1"></script>
@@ -3003,11 +3003,11 @@ function _mkToast(msg, type) {
 <script src="js/emoji.js?v=20260911daybook1-20260908recovery1" defer></script>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
 <script src="js/daybook-model.js?v=20260911b" defer></script>
-<script src="js/daybook.js?v=20260912wa1" defer></script>
-<script src="js/levels.js?v=20260911daybook2" defer></script>
+<script src="js/daybook.js?v=20260922kafija1" defer></script>
+<script src="js/levels.js?v=20260922kafija1" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260922pool2';
+window.__minkaLocalBuild = '20260922kafija1';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -12728,6 +12728,28 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   line-height: 1 !important;
   pointer-events: none !important;
 }
+/* ── Kafijas izvēlne: Material 3 Expressive ──────────────────────────────
+   M3 Expressive būvē dialogu no toņu virsmām, nevis no rāmjiem: fons ir
+   surface-container-high, izvēlētais elements — secondary-container plankums,
+   un formas ir lielas un apaļas (dialogs 28px, čipi 20px, pogas pilnas
+   kapsulas). Krāsas ir siltas — kafijas oranžs kā primary, zaļgans tonis
+   kofeīna rindai; violets šajā projektā netiek lietots.
+   Atsauce: m3.material.io — color roles, shape scale, segmented buttons. */
+.mk-coffee-picker {
+  --m3-surface: #19120d;
+  --m3-surface-container: #241a14;
+  --m3-surface-container-high: #2f231b;
+  --m3-on-surface: #f6e5da;
+  --m3-on-surface-variant: #d5c0b2;
+  --m3-outline: #9d887a;
+  --m3-outline-variant: #524339;
+  --m3-primary: #ffb77c;
+  --m3-on-primary: #4c2700;
+  --m3-secondary-container: #5b3b22;
+  --m3-on-secondary-container: #ffdcc2;
+  --m3-tertiary: #9fd0b4;
+  --m3-motion: cubic-bezier(.2, 0, 0, 1);
+}
 .mk-coffee-backdrop {
   position: fixed !important;
   inset: 0 !important;
@@ -12737,121 +12759,168 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 .mk-coffee-picker {
   position: fixed !important;
   z-index: 2147483000 !important;
-  width: 258px !important;
-  padding: 9px 10px 10px !important;
-  border-radius: 14px !important;
-  border: 1px solid rgba(196,132,69,.42) !important;
-  background: rgba(11,12,18,.96) !important;
-  box-shadow: 0 16px 44px rgba(0,0,0,.48), inset 0 0 0 1px rgba(255,255,255,.05) !important;
-  color: #f8fafc !important;
+  width: 288px !important;
+  padding: 16px 14px 14px !important;
+  border-radius: 28px !important;
+  border: 0 !important;
+  background: var(--m3-surface-container-high) !important;
+  box-shadow: 0 8px 12px 6px rgba(0,0,0,.30), 0 4px 4px rgba(0,0,0,.36) !important;
+  color: var(--m3-on-surface) !important;
   font-family: Inter, system-ui, sans-serif !important;
 }
 .mk-coffee-picker-title {
-  color: rgba(248,250,252,.92) !important;
-  font: 900 11px/1 Inter, system-ui, sans-serif !important;
-  letter-spacing: .14em !important;
-  text-transform: uppercase !important;
-  margin: 0 0 7px !important;
+  color: var(--m3-on-surface) !important;
+  font: 500 20px/1.4 Inter, system-ui, sans-serif !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  margin: 0 0 12px !important;
 }
 .mk-coffee-source-row {
   display: grid !important;
   grid-template-columns: repeat(3, 1fr) !important;
-  gap: 5px 6px !important;
+  gap: 6px !important;
 }
+/* Izvēles čips: M3 "selected container" — apaļš plankums aiz ikonas, ne rāmis. */
 .mk-coffee-source {
   min-width: 0 !important;
-  padding: 3px 2px !important;
+  padding: 8px 4px 7px !important;
   border: 0 !important;
+  border-radius: 20px !important;
   background: transparent !important;
-  color: rgba(248,250,252,.6) !important;
+  color: var(--m3-on-surface-variant) !important;
   cursor: pointer !important;
-  font: 850 9px/1.1 Inter, system-ui, sans-serif !important;
-  letter-spacing: .04em !important;
+  font: 500 11px/1.25 Inter, system-ui, sans-serif !important;
+  letter-spacing: .01em !important;
+  transition: background-color .18s var(--m3-motion), color .18s var(--m3-motion) !important;
 }
+.mk-coffee-source:hover { background: rgba(255,183,124,.08) !important; }
 .mk-coffee-source.is-on {
-  color: #f5b73f !important;
+  background: var(--m3-secondary-container) !important;
+  color: var(--m3-on-secondary-container) !important;
+  font-weight: 600 !important;
 }
 .mk-coffee-source-icon {
   display: block !important;
-  width: 42px !important;
-  height: 42px !important;
-  margin: 0 auto 4px !important;
-  opacity: .88 !important;
-  transition: transform .12s ease, opacity .12s ease !important;
+  width: 40px !important;
+  height: 40px !important;
+  margin: 0 auto 6px !important;
+  opacity: .9 !important;
+  transition: transform .22s var(--m3-motion), opacity .18s var(--m3-motion) !important;
 }
 .mk-coffee-source.is-on .mk-coffee-source-icon {
   opacity: 1 !important;
-  transform: scale(1.08) !important;
+  transform: scale(1.12) !important;
 }
-.mk-coffee-source-icon svg {
+.mk-coffee-source-icon svg,
+.mk-coffee-source-icon img {
   display: block !important;
-  width: 42px !important;
-  height: 42px !important;
+  width: 40px !important;
+  height: 40px !important;
+  object-fit: contain !important;
   image-rendering: pixelated !important;
 }
+/* Izmērs: M3 segmented button — viena kapsula ar dalījumu, ne trīs kastes. */
 .mk-coffee-size-row {
   display: flex !important;
-  gap: 6px !important;
-  margin: 7px 0 0 !important;
+  gap: 0 !important;
+  margin: 14px 0 0 !important;
+  border: 1px solid var(--m3-outline) !important;
+  border-radius: 999px !important;
+  overflow: hidden !important;
 }
 .mk-coffee-size-row[hidden] { display: none !important; }
 .mk-coffee-size-row button {
   flex: 1 1 0 !important;
-  min-height: 26px !important;
-  border-radius: 9px !important;
-  border: 1px solid rgba(255,255,255,.12) !important;
-  background: rgba(255,255,255,.04) !important;
-  color: rgba(248,250,252,.78) !important;
-  font: 900 11px/1 Inter, system-ui, sans-serif !important;
+  min-height: 40px !important;
+  border: 0 !important;
+  border-left: 1px solid var(--m3-outline) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--m3-on-surface) !important;
+  font: 500 14px/1 Inter, system-ui, sans-serif !important;
   cursor: pointer !important;
+  transition: background-color .18s var(--m3-motion), color .18s var(--m3-motion) !important;
 }
+.mk-coffee-size-row button:first-child { border-left: 0 !important; }
 .mk-coffee-size-row button.is-on {
-  border-color: rgba(56,189,248,.58) !important;
-  background: rgba(56,189,248,.14) !important;
-  color: #7dd3fc !important;
+  background: var(--m3-secondary-container) !important;
+  color: var(--m3-on-secondary-container) !important;
+  font-weight: 600 !important;
 }
+/* Cena: M3 filled text field — tonēta virsma, apaļas augšmalas, bez rāmja. */
 .mk-coffee-price-row {
   display: grid !important;
-  grid-template-columns: 1fr 96px !important;
+  grid-template-columns: 1fr 108px !important;
   align-items: center !important;
-  gap: 8px !important;
-  margin: 7px 0 4px !important;
-  color: rgba(160,166,184,.78) !important;
-  font: 850 9px/1 Inter, system-ui, sans-serif !important;
-  letter-spacing: .12em !important;
-  text-transform: uppercase !important;
+  gap: 10px !important;
+  margin: 14px 0 6px !important;
+  color: var(--m3-on-surface-variant) !important;
+  font: 500 12px/1 Inter, system-ui, sans-serif !important;
+  letter-spacing: .03em !important;
+  text-transform: none !important;
 }
 .mk-coffee-price {
   width: 100% !important;
-  height: 30px !important;
-  padding: 0 8px !important;
-  border-radius: 9px !important;
-  border: 1px solid rgba(255,255,255,.12) !important;
-  background: rgba(0,0,0,.45) !important;
-  color: #f8fafc !important;
-  font: 900 13px/1 Inter, system-ui, sans-serif !important;
+  height: 44px !important;
+  padding: 0 12px !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--m3-outline) !important;
+  border-radius: 12px 12px 4px 4px !important;
+  background: var(--m3-surface-container) !important;
+  color: var(--m3-on-surface) !important;
+  font: 500 16px/1 Inter, system-ui, sans-serif !important;
   text-align: right !important;
+  transition: border-color .18s var(--m3-motion) !important;
+}
+.mk-coffee-price:focus {
+  outline: 0 !important;
+  border-bottom: 2px solid var(--m3-primary) !important;
 }
 .mk-coffee-price:read-only {
-  color: #f5b73f !important;
+  color: var(--m3-primary) !important;
+  border-bottom-color: var(--m3-outline-variant) !important;
 }
 .mk-coffee-caf {
-  margin: 0 0 5px !important;
-  color: rgba(160,200,230,.78) !important;
-  font: 800 10px/1.2 Inter, system-ui, sans-serif !important;
-  letter-spacing: .02em !important;
+  margin: 0 0 12px !important;
+  color: var(--m3-tertiary) !important;
+  font: 500 12px/1.35 Inter, system-ui, sans-serif !important;
+  letter-spacing: .01em !important;
 }
+/* Saglabāt: M3 filled button — pilna kapsula, primary virsma. */
 .mk-coffee-save {
   width: 100% !important;
-  min-height: 32px !important;
-  border-radius: 10px !important;
-  border: 1px solid rgba(196,132,69,.50) !important;
-  background: linear-gradient(180deg, rgba(196,132,69,.34), rgba(196,132,69,.18)) !important;
-  color: #fff !important;
-  font: 900 11px/1 Inter, system-ui, sans-serif !important;
-  letter-spacing: .12em !important;
-  text-transform: uppercase !important;
+  min-height: 44px !important;
+  border-radius: 999px !important;
+  border: 0 !important;
+  background: var(--m3-primary) !important;
+  color: var(--m3-on-primary) !important;
+  font: 600 15px/1 Inter, system-ui, sans-serif !important;
+  letter-spacing: .01em !important;
+  text-transform: none !important;
   cursor: pointer !important;
+  transition: filter .18s var(--m3-motion) !important;
+}
+.mk-coffee-save:hover { filter: brightness(1.06) !important; }
+.mk-coffee-save:active { filter: brightness(.96) !important; }
+/* Noņemt: M3 text button. */
+.mk-coffee-picker .mk-coffee-remove {
+  display: block !important;
+  width: 100% !important;
+  min-height: 40px !important;
+  margin-top: 8px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: var(--m3-on-surface-variant) !important;
+  font: 500 14px/1 Inter, system-ui, sans-serif !important;
+  cursor: pointer !important;
+}
+.mk-coffee-picker .mk-coffee-remove:hover { background: rgba(255,183,124,.08) !important; }
+.mk-coffee-picker .mk-coffee-remove:disabled { opacity: .38 !important; cursor: default !important; }
+@media (prefers-reduced-motion: reduce) {
+  .mk-coffee-picker :is(.mk-coffee-source, .mk-coffee-source-icon, .mk-coffee-size-row button, .mk-coffee-price, .mk-coffee-save) {
+    transition: none !important;
+  }
 }
 :root.host-radio-open #grafiks-list.grid-view .card.mk-mid-card {
   padding: 7px !important;
@@ -18098,10 +18167,11 @@ window.addEventListener('message', function(e) {
   transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px))) rotate(-3deg);
   animation: rg-src-float 5.6s ease-in-out infinite;
 }
-.rg-mood-src svg {
+.rg-mood-src :is(svg, img) {
   display: block;
   width: var(--rg-src-icon, clamp(25px, 11.5cqw, 31px));
   height: var(--rg-src-icon, clamp(25px, 11.5cqw, 31px));
+  object-fit: contain;
 }
 .rg-mood-src b {
   color: #f2ddba;
@@ -19356,10 +19426,10 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   // sources added later — nothing here is written per source count.
   var MOOD_DEPTHS = [0.06, 0.66, 0.28, 0.92, 0.44, 0.14, 0.78, 0.36, 0.58, 0.22];
   var MOOD_SRC_GAP = 10;
-  var MOOD_SOURCES = ['philips', 'lofbergs', 'narvesen', 'monster', 'monsterultra', 'redbull', 'cupcoffee'];
+  var MOOD_SOURCES = ['philips', 'lofbergs', 'narvesen', 'monster', 'monsterultra', 'redbull', 'brite', 'cupcoffee', 'mycoffee'];
   var MOOD_SOURCE_NAMES = {
     philips: 'Philips', lofbergs: 'Löfbergs', narvesen: 'Narvesen', monster: 'Monster',
-    monsterultra: 'Monster Ultra', redbull: 'Red Bull', cupcoffee: 'Cita kafija'
+    monsterultra: 'Monster Ultra', redbull: 'Red Bull', brite: 'Brite', cupcoffee: 'Cita kafija', mycoffee: 'Mana kafija'
   };
   // Badge sizes follow the card's container queries, so a resize moves the
   // whole ring. Lay it out again instead of rebuilding the DOM.
@@ -24406,7 +24476,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
    css/mobile-v2.css + js/mobile-v2.js — vizuālais izkārtojums; ?mv2=0 to atslēdz. */
 (function(){
   if (!document.documentElement.classList.contains('mk-mobile-shell')) return;
-  var v = '20260922pool2';
+  var v = '20260922kafija1';
   function css(href) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href + '?v=' + v; document.body.appendChild(l); }
   css('css/mobile-fixes.css');
   try { if (new URLSearchParams(location.search).get('mv2') === '0') return; } catch (_e) {}
@@ -24424,8 +24494,8 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 </style>
 <script src="../js/image-palette.js?v=20260919palette2"></script>
-<link rel="stylesheet" href="css/header-appearance.css?v=20260922pool2">
-<script src="js/header-appearance.js?v=20260922pool2"></script>
-<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922pool2">
+<link rel="stylesheet" href="css/header-appearance.css?v=20260922kafija1">
+<script src="js/header-appearance.js?v=20260922kafija1"></script>
+<link rel="stylesheet" href="css/header-duty-summary.css?v=20260922kafija1">
 </body>
 </html>
