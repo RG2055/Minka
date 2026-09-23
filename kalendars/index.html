@@ -25971,14 +25971,22 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
   background: var(--m3x-primary) !important;
   transform: translateX(-50%) !important;
 }
+/* Tikai vertikāla ritināšana: kolonnas drīkst sarauties (minmax(0,1fr)), pogām
+   nav noklusētā iekšējā atstatuma, un palielinājums uz hover neizstiepj režģi
+   uz sāniem — vecā datora PWA citādi rādīja horizontālo ritjoslu. */
 .rg-emoji-picker .rg-emoji-grid {
   display: grid !important;
-  grid-template-columns: repeat(8, 1fr) !important;
+  grid-template-columns: repeat(8, minmax(0, 1fr)) !important;
   gap: 2px !important;
-  overflow: auto !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
   scrollbar-width: thin !important;
 }
 .rg-emoji-picker .rg-emoji-cell {
+  min-width: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
   height: 36px !important;
   border: 0 !important;
   border-radius: 10px !important;
