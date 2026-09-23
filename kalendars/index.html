@@ -20500,8 +20500,14 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     text = text.split(' ').slice(0, MOOD_NOTE_WORDS).join(' ');
     return text.slice(0, MOOD_NOTE_MAX);
   }
+  // Savs emoji paliek visu dienu: pēc pārlādes vai kamēr serveris vēl nav
+  // atbildējis (vai neatbild), rādām to, kas saglabāts šajā ierīcē, nevis
+  // noklusēto sejiņu.
   function ownMoodFor(day) {
-    return moodOwnCache[day] || null;
+    if (moodOwnCache[day]) return moodOwnCache[day];
+    var saved = readJson('minkaRgOwnMoodV1', {});
+    var entry = saved && typeof saved === 'object' ? saved[day] : null;
+    return entry && entry.emoji ? entry : null;
   }
   // The statistics view reads the same fact from this key, so a mood saved
   // on the card shows there without waiting for its own fetch.
@@ -20517,12 +20523,16 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
     if (!force && moodOwnLoadedAt[day] && now - moodOwnLoadedAt[day] < 20000) return;
     moodOwnLoadedAt[day] = now;
     try {
-      var data = await fetchFeedback('/api/feedback?date=' + encodeURIComponent(day) + '&kind=comment&limit=60');
+      var data = await fetchFeedback('/api/feedback?date=' + encodeURIComponent(day) + '&kind=comment&limit=100');
       var newest = null;
       (data.messages || []).forEach(function (item) {
         var parsed = parseMoodMessage(item);
         if (parsed && (!newest || parsed.at > newest.at)) newest = parsed;
       });
+      // Tukša atbilde (ziņa izkritusi no loga, ieraksts vēl ceļā) nenodzēš jau
+      // izvēlēto emoji — tikai jaunāks ieraksts to nomaina.
+      var known = ownMoodFor(day);
+      if (!newest || (known && known.at > newest.at)) newest = known;
       moodOwnCache[day] = newest;
       shareOwnMood(day, newest);
       if (day === shiftDayKey()) paintCounts();
