@@ -619,7 +619,7 @@
     if(_nsWheel) closeTimeWheel(false);
     var panelEl=document.getElementById('nsPanel'), shell=select.closest('.nss-shell');
     if(!panelEl||!shell) return;
-    var opts=[].slice.call(select.options), ROW=40;
+    var opts=[].slice.call(select.options);
     var el=document.createElement('div');
     el.className='ns-wheel';
     el.innerHTML='<div class="ns-wheel-pill" aria-hidden="true"></div>'
@@ -631,32 +631,31 @@
     el.style.left=Math.round(sr.left-pr.left+sr.width/2)+'px';
     el.style.top=Math.round(sr.bottom-pr.top+8)+'px';
     var list=el.querySelector('.ns-wheel-list'), items=[].slice.call(list.children);
-    var wh={el:el,select:select,label:select.getAttribute('aria-label')||'',values:opts.map(function(o){return o.value;}),center:Math.max(0,select.selectedIndex),frame:0};
-    function paint(){
-      wh.frame=0;
-      var c=Math.max(0,Math.min(items.length-1,Math.round(list.scrollTop/ROW)));
-      if(c===wh.lastPaint) return;
-      wh.lastPaint=c; wh.center=c;
+    var wh={el:el,select:select,label:select.getAttribute('aria-label')||'',values:opts.map(function(o){return o.value;}),center:Math.max(0,select.selectedIndex)};
+    // Kompakts saraksts bez tukšām vietām augšā/apakšā: visi laiki redzami
+    // uzreiz, "pill" seko peles/bultiņu izvēlei, un viens klikšķis izvēlas.
+    function paint(c){
+      wh.center=Math.max(0,Math.min(items.length-1,c));
+      el.style.setProperty('--ns-wheel-i',wh.center);
       items.forEach(function(it,i){
-        var dist=Math.min(3,Math.abs(i-c));
-        it.setAttribute('data-d',dist);
-        it.setAttribute('aria-selected',i===c?'true':'false');
+        it.setAttribute('data-d',i===wh.center?0:1);
+        it.setAttribute('aria-selected',i===wh.center?'true':'false');
       });
     }
-    list.scrollTop=wh.center*ROW;
-    paint();
-    list.addEventListener('scroll',function(){ if(!wh.frame) wh.frame=requestAnimationFrame(paint); },{passive:true});
+    paint(wh.center);
+    list.addEventListener('pointerover',function(e){
+      var it=e.target.closest('.ns-wheel-item'); if(it) paint(Number(it.getAttribute('data-i')));
+    });
     list.addEventListener('click',function(e){
       var it=e.target.closest('.ns-wheel-item'); if(!it) return;
-      var i=Number(it.getAttribute('data-i'));
-      if(i===wh.center){ closeTimeWheel(true); return; }
-      list.scrollTo({top:i*ROW,behavior:'smooth'});
+      paint(Number(it.getAttribute('data-i')));
+      closeTimeWheel(true);
     });
-    wh.onOutside=function(e){ if(!el.contains(e.target)) closeTimeWheel(true); };
+    wh.onOutside=function(e){ if(!el.contains(e.target)) closeTimeWheel(false); };
     wh.onKey=function(e){
       if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); closeTimeWheel(false); }
       else if(e.key==='Enter'||e.key===' '){ e.preventDefault(); closeTimeWheel(true); }
-      else if(e.key==='ArrowDown'||e.key==='ArrowUp'){ e.preventDefault(); list.scrollBy({top:e.key==='ArrowDown'?ROW:-ROW,behavior:'smooth'}); }
+      else if(e.key==='ArrowDown'||e.key==='ArrowUp'){ e.preventDefault(); paint(wh.center+(e.key==='ArrowDown'?1:-1)); }
     };
     _nsWheel=wh;
     setTimeout(function(){

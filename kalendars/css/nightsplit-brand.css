@@ -2036,13 +2036,14 @@ html.mk-low-spec:not(.mk-mobile-shell) #nsOverlay.open #nsPanel { transform: tra
    Pieci redzami rindiņu augstumi, attālākie izbalē; atverot ratu, tas
    izaug no lauka (M3 emphasized decelerate). */
 #nsPanel .ns-wheel {
+  --ns-wheel-i: 0;
   position: absolute;
   z-index: 120;
-  width: 136px;
-  height: 216px;
-  padding: 8px;
+  width: 120px;
+  padding: 6px;
+  box-sizing: border-box;
   border: 1px solid rgba(190, 214, 230, .16);
-  border-radius: 24px;
+  border-radius: 22px;
   background: #121b24;
   box-shadow: 0 16px 40px rgba(0, 0, 0, .55);
   opacity: 0;
@@ -2055,51 +2056,44 @@ html.mk-low-spec:not(.mk-mobile-shell) #nsOverlay.open #nsPanel { transform: tra
   transform: translateX(-50%) translateY(0) scale(1);
   transition: opacity 200ms cubic-bezier(.05, .7, .1, 1), transform 320ms cubic-bezier(.05, .7, .1, 1);
 }
+/* Kompakts saraksts: tik augsts, cik laiku, bez tukšām malām; "pill" pārslīd
+   uz rindu zem peles, un viens klikšķis izvēlas (2026-09-23). */
 #nsPanel .ns-wheel-pill {
   position: absolute;
-  left: 8px;
-  right: 8px;
-  top: 50%;
-  height: 40px;
-  margin-top: -20px;
-  border-radius: 20px;
+  left: 6px;
+  right: 6px;
+  top: 6px;
+  height: 38px;
+  border-radius: 19px;
   background: linear-gradient(180deg, #1c6f7d, #0f4a55);
   box-shadow: inset 0 1px 0 rgba(196, 245, 252, .25), 0 4px 14px rgba(15, 74, 85, .45);
+  transform: translateY(calc(var(--ns-wheel-i) * 38px));
+  transition: transform 160ms cubic-bezier(.2, 0, 0, 1);
   pointer-events: none;
 }
 #nsPanel .ns-wheel-list {
   position: relative;
-  height: 200px;
-  overflow-y: auto;
-  scroll-snap-type: y mandatory;
-  overscroll-behavior: contain;
-  scrollbar-width: none;
-  padding: 80px 0;
-  box-sizing: border-box;
+  display: grid;
   outline: none;
 }
-#nsPanel .ns-wheel-list::-webkit-scrollbar { display: none; }
 #nsPanel .ns-wheel-item {
-  height: 40px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
-  scroll-snap-align: center;
   color: #e6eef5;
-  font: 700 17px/1 "JetBrains Mono", ui-monospace, monospace;
+  font: 700 16px/1 "JetBrains Mono", ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
   user-select: none;
-  transition: opacity 120ms ease, transform 160ms cubic-bezier(.34, 1.45, .64, 1);
+  opacity: .66;
+  transition: opacity 120ms ease;
 }
-#nsPanel .ns-wheel-item[data-d="0"] { color: #ffffff; font-weight: 800; transform: scale(1.08); }
-#nsPanel .ns-wheel-item[data-d="1"] { opacity: .62; }
-#nsPanel .ns-wheel-item[data-d="2"] { opacity: .32; }
-#nsPanel .ns-wheel-item[data-d="3"] { opacity: .14; }
+#nsPanel .ns-wheel-item[data-d="0"] { color: #ffffff; font-weight: 800; opacity: 1; }
 #nsPanel .ns-wheel-list:focus-visible + .ns-wheel-pill,
 #nsPanel .ns-wheel:has(.ns-wheel-list:focus-visible) .ns-wheel-pill { outline: 2px solid #7fdcea; outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
-  #nsPanel .ns-wheel, #nsPanel .ns-wheel.is-open, #nsPanel .ns-wheel-item { transition: none; }
+  #nsPanel .ns-wheel, #nsPanel .ns-wheel.is-open, #nsPanel .ns-wheel-item, #nsPanel .ns-wheel-pill { transition: none; }
 }
 /* Sākuma un beigu laiks vienmēr vienā rindā — bloks nedrīkst sarauties un
    pārlūzt (tā tas notika ~1100 px platā logā, lai gan vietas pietika). */
