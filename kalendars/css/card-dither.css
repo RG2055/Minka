@@ -1,0 +1,126 @@
+/* Dither on cards — the Dither face, and the per-card "Dither efekts"
+   (skin fx: dither = one ink, dithercolor = the picture's own palette).
+   Like good dither UI: text stays solid and crisp; the dither lives in the
+   picture (MinkaDither.skin → --mk-skin-dither, cut to the card's exact size),
+   the dotted frames, the dot fills and the numeral's dithered offset shadow.
+   Static CSS gradients only: no filters, no blur, no animation.
+   Selectors repeat classes (.card.card …) on purpose: they must outrank the
+   face rules in card-faces.css without touching them. */
+
+/* ---- the picture ---- */
+.mk-has-dither {--mk-skin-img:var(--mk-skin-dither) !important;}
+.mk-has-dither .mk-wf-background > i {image-rendering:pixelated;background-size:100% 100% !important;background-position:0 0 !important;transform:none !important;}
+.card.mk-has-dither:not(.mk-watch-face) {image-rendering:pixelated;}
+
+/* ---- Dither face: black ground + dotted frame; dot field until the picture is ready ---- */
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-watch-face[data-watch-face="dither"] {
+  border-radius:7% !important;border:2px solid transparent !important;
+  background:linear-gradient(#060606,#060606) padding-box,repeating-conic-gradient(color-mix(in srgb,var(--wf-tint) 70%,transparent) 0 25%,transparent 0 50%) 0 0/2px 2px border-box !important;
+  box-shadow:none !important;
+}
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-watch-face[data-watch-face="dither"]::before {
+  inset:0 !important;border-radius:inherit !important;
+  background:conic-gradient(at 1px 1px,transparent 75%,color-mix(in srgb,var(--wf-tint) 24%,transparent) 0) 0 0/4px 4px repeat,#060606 !important;
+}
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-watch-face[data-watch-face="dither"].mk-has-dither::before {background:none !important;}
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-watch-face[data-watch-face="dither"]::after {border:0 !important;background:none !important;}
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-watch-face[data-watch-face="dither"]:not(.mk-has-dither) .mk-wf-background,
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-watch-face[data-watch-face="dither"] .mk-wf-depth,
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watch-face="dither"],.mk-fx-dither) .mk-mid-bg-emoji {display:none !important;}
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-watch-face[data-watch-face="dither"] .mk-wf-background {inset:0 !important;}
+
+/* ---- numeral: its own font; solid top, 75% dither below, 50% dithered shadow behind ---- */
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watch-face="dither"],.mk-fx-dither) .mk-mid-hours.card-shift {
+  position:relative !important;isolation:isolate;
+  color:transparent !important;-webkit-text-fill-color:transparent !important;
+  background:linear-gradient(rgb(var(--dth-ink-rgb,236,234,228)) 0 44%,transparent 44%) 0 0/100% 100% no-repeat,
+    conic-gradient(at 1px 1px,rgb(var(--dth-ink-rgb,236,234,228)) 75%,transparent 0) 0 0/2px 2px !important;
+  -webkit-background-clip:text !important;background-clip:text !important;
+  text-shadow:none !important;filter:none !important;
+  opacity:var(--wf-number-alpha,var(--mk-num-alpha,1)) !important;   /* "Ciparu redzamība" keeps working */
+}
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watch-face="dither"],.mk-fx-dither) .mk-mid-hours.card-shift[data-dth-num]::after {
+  content:attr(data-dth-num);position:absolute;inset:0;z-index:-1;pointer-events:none;
+  padding:inherit;text-align:inherit;letter-spacing:inherit;line-height:inherit;white-space:nowrap;
+  transform:translate(.06em,.06em);
+  color:transparent;-webkit-text-fill-color:transparent;
+  background:repeating-conic-gradient(rgb(var(--dth-ink-rgb,236,234,228)) 0 25%,transparent 0 50%) 0 0/2px 2px;
+  -webkit-background-clip:text;background-clip:text;
+}
+
+/* ---- small values stay solid ink (dots would eat them); the chips around them are the dither ---- */
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watch-face="dither"],.mk-fx-dither) :is(.mk-mid-meta-time,.mk-mid-meta-value,.mk-mid-month-num,.mk-coffee-num,.mk-mid-meta-emoji-fly) {
+  color:rgb(var(--dth-ink-rgb,236,234,228)) !important;-webkit-text-fill-color:rgb(var(--dth-ink-rgb,236,234,228)) !important;text-shadow:none !important;
+}
+/* ---- the name: large enough for a 75% dither fill ---- */
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watch-face="dither"],.mk-fx-dither) .name-main {
+  color:transparent !important;-webkit-text-fill-color:transparent !important;text-shadow:none !important;
+  background:conic-gradient(at 1px 1px,rgb(var(--mk-txt-color,var(--dth-txt-rgb,241,240,234))) 75%,transparent 0) 0 0/2px 2px !important;
+  -webkit-background-clip:text !important;background-clip:text !important;
+}
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watch-face="dither"],.mk-fx-dither) .name-sub {color:rgb(var(--mk-txt-color,var(--dth-txt-rgb,241,240,234))) !important;-webkit-text-fill-color:rgb(var(--mk-txt-color,var(--dth-txt-rgb,241,240,234))) !important;text-shadow:none !important;opacity:.85;}
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watch-face="dither"],.mk-fx-dither).mk-fx-ditherpaper {--dth-txt-rgb:20,20,20;}
+
+/* ---- chips: solid dark fill, dotted frame, dot-field hover ---- */
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-watch-face:is([data-watch-face="dither"],.mk-fx-dither) :is([data-wf-part="month"],[data-wf-part="fatigue"],[data-wf-part="remaining"],[data-wf-part="emoji"],[data-wf-part="clock"],[data-wf-part="name"]),
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watch-face="dither"],.mk-fx-dither) .mk-coffee-step,
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-fx-dither:not(.mk-watch-face) :is(.mk-mid-month,.mk-mid-meta,.card-name-wrap) {
+  /* the fill is dither too: 3 of every 4 pixels, so the picture shows through as dots and text stays readable */
+  background:conic-gradient(at 1px 1px,#060606 75%,transparent 0) 0 0/2px 2px padding-box,repeating-conic-gradient(rgba(var(--dth-ink-rgb,236,234,228),.8) 0 25%,transparent 0 50%) 0 0/2px 2px border-box !important;
+  border:2px solid transparent !important;border-radius:4px !important;box-shadow:none !important;
+  -webkit-backdrop-filter:none !important;backdrop-filter:none !important;text-shadow:none !important;
+}
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watch-face="dither"],.mk-fx-dither) :is(.mk-coffee-sub,.mk-coffee-add,.mk-coffee-mid):hover {
+  background:conic-gradient(at 1px 1px,transparent 75%,rgba(var(--dth-ink-rgb,236,234,228),.45) 0) 0 0/2px 2px !important;
+}
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watch-face="dither"],.mk-fx-dither) :is(.mk-mid-meta-label,.mk-mid-month-label) {color:#b9b8b1 !important;-webkit-text-fill-color:#b9b8b1 !important;opacity:1 !important;}
+/* sun / moon: same shape, dithered — solid on the lit edge, dots toward the shadow */
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watch-face="dither"],.mk-fx-dither) .mk-wf-moon i {
+  filter:none !important;image-rendering:pixelated;
+  background:linear-gradient(135deg,rgb(var(--dth-ink-rgb,236,234,228)) 0 38%,transparent 38%) 0 0/100% 100% no-repeat,
+    conic-gradient(at 1px 1px,rgb(var(--dth-ink-rgb,236,234,228)) 75%,transparent 0) 0 0/2px 2px !important;
+}
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watch-face="dither"],.mk-fx-dither) [data-wf-part][hidden] {display:none !important;}
+
+/* ---- editor tile + panel ---- */
+.wf-face-choice .wf-face-thumb.wf-thumb-dither {
+  border-radius:10% !important;border:2px solid transparent !important;
+  background:conic-gradient(at 1px 1px,transparent 75%,#ffffff2e 0) 0 0/4px 4px padding-box,linear-gradient(#060606,#060606) padding-box,repeating-conic-gradient(#eceae4b0 0 25%,transparent 0 50%) 0 0/2px 2px border-box !important;
+}
+.wf-face-choice .wf-face-thumb.wf-thumb-dither b {
+  color:var(--wf-thumb-tint,#eceae4);-webkit-text-fill-color:var(--wf-thumb-tint,#eceae4);background:none;-webkit-text-stroke:0;text-shadow:2px 2px 0 #060606;
+}
+.wf-editor.is-dither :is(.wf-look,.wf-finish,.wf-metal) {display:none !important;}
+
+.mk-skin-thumb[data-mk-dither-src] {image-rendering:pixelated;}
+
+/* ---- "Papīrs": ink on light paper — dark text, light chips ---- */
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-watch-face[data-watch-face="dither"].mk-fx-ditherpaper {
+  background:linear-gradient(#efece4,#efece4) padding-box,repeating-conic-gradient(rgba(var(--dth-ink-rgb),.8) 0 25%,transparent 0 50%) 0 0/2px 2px border-box !important;
+}
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-watch-face[data-watch-face="dither"].mk-fx-ditherpaper:not(.mk-has-dither)::before {background:#efece4 !important;}
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-watch-face.mk-fx-ditherpaper :is([data-wf-part="month"],[data-wf-part="fatigue"],[data-wf-part="remaining"],[data-wf-part="emoji"],[data-wf-part="clock"]),
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-fx-ditherpaper .mk-coffee-step,
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-fx-ditherpaper:not(.mk-watch-face) :is(.mk-mid-month,.mk-mid-meta) {
+  background:conic-gradient(at 1px 1px,#efece4 75%,transparent 0) 0 0/2px 2px padding-box,repeating-conic-gradient(rgba(var(--dth-ink-rgb),.85) 0 25%,transparent 0 50%) 0 0/2px 2px border-box !important;
+  color:#141414 !important;-webkit-text-fill-color:#141414 !important;
+}
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-fx-ditherpaper :is(.mk-mid-meta-label,.mk-mid-month-label) {color:#55534d !important;-webkit-text-fill-color:#55534d !important;}
+
+/* ---- picker: Dither toggle, variants and one-tap colours ---- */
+.mk-dither-switch {display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:8px 0 12px;}
+.mk-dither-toggle {height:34px;padding:0 16px;border-radius:10px;border:2px solid transparent;cursor:pointer;font:700 12.5px/1 Inter,system-ui,sans-serif;color:#dfe6f4;
+  background:linear-gradient(#141a24,#141a24) padding-box,repeating-conic-gradient(#ffffff55 0 25%,transparent 0 50%) 0 0/2px 2px border-box;}
+.mk-dither-toggle[aria-pressed="true"] {color:#0c1017;background:conic-gradient(at 1px 1px,#dfe6f4 75%,#9fb0c8 0) 0 0/2px 2px padding-box,repeating-conic-gradient(#dfe6f4 0 25%,transparent 0 50%) 0 0/2px 2px border-box;}
+.mk-dither-switch .wf-segment {margin:0;flex:1 1 240px;grid-template-columns:repeat(3,minmax(0,1fr));}
+.mk-dither-switch .wf-segment button[aria-pressed="true"] {color:#eaf4ff;background:#29394c;}
+.mk-dither-inks {display:flex;gap:6px;flex:1 0 100%;}
+.mk-dither-inks button {width:26px;height:26px;border-radius:6px;border:2px solid transparent;cursor:pointer;padding:0;
+  background:conic-gradient(at 1px 1px,var(--ink) 75%,transparent 0) 0 0/2px 2px padding-box,linear-gradient(#0b0f15,#0b0f15) padding-box,repeating-conic-gradient(#ffffff40 0 25%,transparent 0 50%) 0 0/2px 2px border-box;}
+.mk-dither-inks button[aria-pressed="true"] {background:linear-gradient(var(--ink),var(--ink)) padding-box,repeating-conic-gradient(#fff 0 25%,transparent 0 50%) 0 0/2px 2px border-box;}
+.mk-dither-switch [hidden] {display:none !important;}
+/* smooth picture effects (rentgens, rastrs, duotons, ascii) are drawn at device resolution: no pixelated scaling */
+.mk-fx-pic.mk-has-dither,.mk-fx-pic.mk-has-dither .mk-wf-background > i {image-rendering:auto !important;}
+/* photo compositions: with a picture effect the cut-out foreground would show the
+   untouched photo over the effect — hide it (the depth switch explains why) */
+.mk-has-dither:is(.mk-fx-dither,.mk-fx-pic) .mk-wf-depth {display:none !important;}

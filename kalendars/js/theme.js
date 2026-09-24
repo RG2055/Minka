@@ -233,6 +233,16 @@
 
         <div class="tk-rows" id="tkRows"></div>
 
+        <div class="tk-dither" role="group" aria-labelledby="tkDitherLabel">
+          <div class="tk-dither-label" id="tkDitherLabel">Attēli kā dither</div>
+          <div class="tk-dither-seg">
+            <button type="button" data-dither-images="off" aria-pressed="true">Izslēgts</button>
+            <button type="button" data-dither-images="color" aria-pressed="false">Krāsains</button>
+            <button type="button" data-dither-images="mono" aria-pressed="false">Melnbalts</button>
+          </div>
+          <div class="tk-note">Fotogrāfijas visā lietotnē pārzīmē punktos. Ikonas un emoji paliek. Katru attēlu apstrādā vienreiz, kad dators ir brīvs.</div>
+        </div>
+
         <button type="button" class="tk-reload" id="tkHeaderAppearance">Galvenes izskats</button>
 
         <button type="button" class="tk-reload" id="tkReload">Pārlādēt un atjaunot</button>
@@ -328,6 +338,12 @@
       .tk-reload { width:100%; margin-top:12px; height:40px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.05); color:#dfe5ee; font:600 13px Inter,system-ui,sans-serif; letter-spacing:.01em; cursor:pointer; transition:background 120ms ease; }
       .tk-reload:hover { background:rgba(255,255,255,.09); border-color:rgba(255,255,255,.18); }
       .tk-reload:disabled { opacity:.6; cursor:default; }
+      .tk-dither { margin-top:14px; padding-top:12px; border-top:1px solid rgba(255,255,255,.08); }
+      .tk-dither-label { font:600 11px Inter,system-ui,sans-serif; letter-spacing:.06em; text-transform:uppercase; color:rgba(255,255,255,.5); margin-bottom:8px; }
+      .tk-dither-seg { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; padding:2px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(0,0,0,.35); }
+      .tk-dither-seg button { height:32px; border:0; border-radius:8px; background:transparent; color:#c9d0da; font:600 12px Inter,system-ui,sans-serif; cursor:pointer; }
+      .tk-dither-seg button:hover { background:rgba(255,255,255,.06); }
+      .tk-dither-seg button[aria-pressed="true"] { background:#eceae4; color:#0a0a0a; }
       .tk-note { margin-top:8px; font-size:11px; color:rgba(255,255,255,.34); text-align:center; }
       @media (max-width: 700px) { #tk-panel { width:calc(100vw - 18px) !important; padding:14px !important; } }
     `;
@@ -389,6 +405,13 @@
         window.MinkaHeaderAppearance?.open();
       });
     }
+
+    const syncDither = () => {
+      const mode = window.MinkaDither ? window.MinkaDither.mode() : 'off';
+      wrap.querySelectorAll('[data-dither-images]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.ditherImages === mode)));
+    };
+    window.addEventListener('mk-dither-images', syncDither);
+    syncDither();
 
     const reload = wrap.querySelector('#tkReload');
     if (reload) reload.addEventListener('click', async function () {

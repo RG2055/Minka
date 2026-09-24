@@ -29,6 +29,7 @@
     { label: 'Pilsēta un arhitektūra', ids: ['gnome-curvaturingster-d','gnome-map-d','1029','1033'] },
     { label: 'Melnbalti',          ids: ['gnome-curvy-d','open-bw','47','58'] },
     { label: 'Barbie rozā',        ids: ['gnome-dithered-sun-l','open-barbie','bb2','bb3','bb4','bd1','bd2','bd3'] },
+    { label: 'Dither',             ids: ['dither-tors','dither-lode','dither-kapas','dither-lentes','dither-rezgis','dither-signals','dither-papirs'] },
     { label: 'Kaķi',               ids: ['user-neon-alley-cat','open-cat','cat-01','cat-02','cat-03','cat-04','cat-05','cat-06','cat-07','cat-08','cat-09','cat-10','cat-11','cat-12','cat-13','cat-14','user-black-cat'] }
   ];
   var IMG_LABELS = {
@@ -103,7 +104,9 @@
     'gnome-tarka-d': 'Maigās formas', 'gnome-tarka-l': 'Maigās formas — gaišas',
     'gnome-tarkov-pills-d': 'Krāsu stienīši — tumši', 'gnome-tarkov-pills-l': 'Krāsu stienīši — gaiši',
     'gnome-tubes-d': 'Nakts caurules', 'gnome-tubes-l': 'Nakts caurules — gaišas',
-    'gnome-vnc-d': 'Vienkrāsains — tumšs', 'gnome-vnc-l': 'Vienkrāsains — gaišs'
+    'gnome-vnc-d': 'Vienkrāsains — tumšs', 'gnome-vnc-l': 'Vienkrāsains — gaišs',
+    'dither-tors': 'Dither tors', 'dither-lode': 'Dither lode', 'dither-kapas': 'Dither kāpas',
+    'dither-lentes': 'Dither lentes', 'dither-rezgis': 'Dither režģis', 'dither-signals': 'Dither signāls', 'dither-papirs': 'Dither papīrs'
   };
   var MATERIALS = window.MinkaCardMaterials || [];
   IMG_GROUPS.unshift({label:'Foto kompozīcijas', ids:MATERIALS.filter(function(m){return m.kind==='depth';}).map(function(m){return m.id;})});
@@ -218,7 +221,25 @@
     face.parts.moon=window.MinkaCardFaceModel.symbolPlacement(face.parts,face.face);
     PRESETS.push({label:p[0],group:'numbers',isNew:true,bg:{t:'hue',rgb:p[3]},num:hexToRgb('#'+p[1]),na:'1',txt:'246,247,249',face:face,depth:false});
   });
-  var PRESET_GROUPS=[['all','Visi'],['new','Jaunumi'],['wildlife','Dzīvnieki'],['botanical','Ziedi un augi'],['ocean','Ūdens'],['landscape','Ainavas un nakts'],['numbers','Ciparu efekti'],['collection','Citi foto']];
+  // Dither examples: real photos with the per-card effect (fine Bayer / palette).
+  [['Zilā tinte','58','ditherpaper','2554a0'],['Kaķis 1-bit','cat-06','dither','eceae4'],['Zaļā tinte','1018','ditherpaper','305c28'],
+   ['Nakts okeāns','user-silver-ocean','dither','64d2ff'],['Zemeņu rastrs','1080','dithercolor','ffe4eb'],['Saulriets','110','dither','f5b73f'],
+   ['Mols','47','ditherpaper','141414'],['Aurora','pix-aurora-sky','dithercolor','c8f1ff']].forEach(function(p){
+    var face=window.MinkaCardFaceModel.preset('classic');
+    face.tint=p[3];face.parts.hours=[50,45,112,1];
+    face.parts.name=[50,73,80,1];face.parts.coffee=[22,15,85,1];face.parts.emoji=[81,15,90,1];
+    face.parts.month=[81,85,65,0];face.parts.fatigue=[20,85,65,0];face.parts.remaining=[50,92,65,1];
+    face.parts.moon=window.MinkaCardFaceModel.symbolPlacement(face.parts,face.face);
+    PRESETS.push({label:p[0],group:'dither',isNew:true,bg:{t:'img',id:p[1]},num:hexToRgb('#'+p[3]),na:'1',txt:p[2]==='ditherpaper'?'20,20,20':'241,240,234',fx:p[2],face:face,depth:false,sw:'url(data/skins/skin-'+p[1]+'.webp)'});
+  });
+  // Dither sets: pre-dithered backgrounds (scripts/build-dither-skins.py) on the Dither face.
+  [['Tors','tors','eceae4'],['Lode','lode','64d2ff'],['Kāpas','kapas','1fe091'],['Lentes','lentes','f5b73f'],
+   ['Režģis','rezgis','23cdcf'],['Signāls','signals','ff5c5c'],['Papīrs','papirs','141414']].forEach(function(p){
+    var face=window.MinkaCardFaceModel.preset('dither');
+    face.tint=p[2];face.parts.moon=window.MinkaCardFaceModel.symbolPlacement(face.parts,face.face);
+    PRESETS.push({label:'Dither · '+p[0],group:'dither',isNew:true,bg:{t:'img',id:'dither-'+p[1]},num:hexToRgb('#'+p[2]),na:'1',txt:'241,240,234',face:face,depth:false,sw:'url(data/skins/skin-dither-'+p[1]+'.webp)'});
+  });
+  var PRESET_GROUPS=[['all','Visi'],['new','Jaunumi'],['dither','Dither'],['wildlife','Dzīvnieki'],['botanical','Ziedi un augi'],['ocean','Ūdens'],['landscape','Ainavas un nakts'],['numbers','Ciparu efekti'],['collection','Citi foto']];
   function presetInGroup(p,group){return group==='all'||(group==='new'?p.isNew:p.group===group);}
 
   function loadAll() {
@@ -710,7 +731,7 @@
     if (numEl) { numEl.style.removeProperty('color'); numEl.style.removeProperty('-webkit-text-fill-color'); }
     // Night duration sits on a fixed dark info strip, independent of skin text colours.
     if (el.classList.contains('nsc-full-card')) numEl = null;
-    ['mk-has-skin','mk-has-grad','mk-skin-fit','mk-has-num','mk-has-txt','mk-has-spark','mk-fx-hearts','mk-fx-mirdz','mk-fx-burb','mk-fx-ziedi','mk-fx-taur','mk-emoji-custom','mk-emoji-normal','nsc-worker-skinned','nsc-skin-hue','nsc-skin-contain','ns-room-bed-skin-hue'].forEach(function(c){ el.classList.remove(c); });
+    ['mk-has-skin','mk-has-grad','mk-skin-fit','mk-has-num','mk-has-txt','mk-has-spark','mk-fx-hearts','mk-fx-mirdz','mk-fx-burb','mk-fx-ziedi','mk-fx-taur','mk-fx-dither','mk-fx-ditherpaper','mk-fx-dithercolor','mk-fx-pic','mk-fx-xray','mk-fx-halftone','mk-fx-duotone','mk-fx-ascii','mk-emoji-custom','mk-emoji-normal','nsc-worker-skinned','nsc-skin-hue','nsc-skin-contain','ns-room-bed-skin-hue'].forEach(function(c){ el.classList.remove(c); });
     ['--mk-skin-img','--mk-emoji-tint','--mk-emoji-tint-a','--mk-num-color','--mk-num-alpha','--mk-txt-color','--mk-emoji-op','--mk-fx-scale'].forEach(function(p){ el.style.removeProperty(p); });
     if (!skin) { if (window.MinkaCardFaces) window.MinkaCardFaces.apply(el, null); return; }
     if (el.classList.contains('nsc-full-card')) el.classList.add('nsc-worker-skinned');
@@ -756,6 +777,8 @@
     if (skin.emn === '0') el.classList.add('mk-emoji-normal');
     if (skin.fx === 'spark') el.classList.add('mk-has-spark');
     else if (['hearts','mirdz','burb','ziedi','taur'].indexOf(skin.fx) >= 0) el.classList.add('mk-fx-' + skin.fx);
+    else if (skin.fx === 'dither' || skin.fx === 'ditherpaper' || skin.fx === 'dithercolor') { el.classList.add('mk-fx-dither'); if (skin.fx !== 'dither') el.classList.add('mk-fx-' + skin.fx); }
+    else if (['xray','halftone','duotone','ascii'].indexOf(skin.fx) >= 0) el.classList.add('mk-fx-pic', 'mk-fx-' + skin.fx);
     if (skin.fx && skin.fxs != null) el.style.setProperty('--mk-fx-scale', skin.fxs);
     if (window.MinkaCardFaces) window.MinkaCardFaces.apply(el, skin);
   };
@@ -1083,7 +1106,21 @@
     html += '</div></div></section>';
 
     var activeBgMode = draft.t === 'img' ? 'image' : (draft.t === 'art' ? 'draw' : 'color');
-    html += '<section class="mk-skin-section' + (activeSkinSection === 'background' ? ' is-active' : '') + '" data-skin-panel="background"><div class="mk-skin-section-head"><strong>Izvēlies fonu</strong></div><div class="mk-bg-workspace"><div class="mk-bg-toolbar">'
+    html += '<section class="mk-skin-section' + (activeSkinSection === 'background' ? ' is-active' : '') + '" data-skin-panel="background"><div class="mk-skin-section-head"><strong>Izvēlies fonu</strong></div>'
+      + (function(){
+          var fx=draft.fx||'',kind=/^dither/.test(fx)?'dither':(['xray','halftone','duotone','ascii'].indexOf(fx)>=0?fx:'');
+          var inked=kind&&kind!=='xray'&&fx!=='dithercolor';
+          return '<div class="mk-dither-switch" data-pic-kind="'+kind+'"><div class="wf-segment mk-pic-effects" role="group" aria-label="Attēla efekts">'
+          + [['','Nav'],['dither','Dither'],['xray','Rentgens'],['halftone','Rastrs'],['duotone','Duotons'],['ascii','ASCII']].map(function(m){return '<button type="button" data-pic-effect="'+m[0]+'" aria-pressed="'+(kind===m[0])+'">'+m[1]+'</button>';}).join('')
+          + '</div><div class="wf-segment mk-card-dither" role="group" aria-label="Dither"'+(kind==='dither'?'':' hidden')+'>'
+          + [['dither','Tumšs'],['ditherpaper','Papīrs'],['dithercolor','Krāsains']].map(function(m){return '<button type="button" data-card-dither="'+m[0]+'" aria-pressed="'+(fx===m[0])+'">'+m[1]+'</button>';}).join('')
+          + '</div><div class="mk-pic-tune"'+(kind?'':' hidden')+'>'
+          + (function(){var h=Math.round((parseFloat(draft.fxs)||1.55)*100),b=/^(dither|xray|halftone|duotone|ascii)/.test(fx)&&draft.fxs!=null?Math.floor(h/10)%10:5,c=/^(dither|xray|halftone|duotone|ascii)/.test(fx)&&draft.fxs!=null?h%10:5;
+              return '<label><span>Smalkums</span><input type="range" min="0" max="9" step="1" value="'+b+'" data-pic-tune="b" aria-label="Smalkums"><output class="mk-pic-val">'+b+'</output></label>'
+                + '<label><span>Kontrasts</span><input type="range" min="0" max="9" step="1" value="'+c+'" data-pic-tune="c" aria-label="Kontrasts"><output class="mk-pic-val">'+c+'</output></label>';})()
+          + '</div><div class="mk-dither-inks" role="group" aria-label="Efekta krāsa"'+(inked?'':' hidden')+'>'
+          + [['eceae4','Balta'],['64d2ff','Ledus'],['23cdcf','Ciāna'],['1fe091','Zaļa'],['f5b73f','Dzintars'],['ff8a5c','Oranža'],['ff5c5c','Sarkana'],['2554a0','Tinte'],['141414','Melna']].map(function(c){return '<button type="button" data-dither-ink="'+c[0]+'" style="--ink:#'+c[0]+'" title="'+c[1]+'" aria-label="'+c[1]+'" aria-pressed="'+(String(draft.num||'')===hexToRgb('#'+c[0]))+'"></button>';}).join('')
+          + '</div></div>';})() + '<div class="mk-bg-workspace"><div class="mk-bg-toolbar">'
       + '<div class="mk-bg-mode-tabs" role="tablist" aria-label="Fona veids">'
       + '<button type="button" class="mk-bg-mode' + (activeBgMode === 'image' ? ' is-active' : '') + '" data-bg-mode="image" role="tab" aria-selected="' + (activeBgMode === 'image') + '">Attēli</button>'
       + '<button type="button" class="mk-bg-mode' + (activeBgMode === 'color' ? ' is-active' : '') + '" data-bg-mode="color" role="tab" aria-selected="' + (activeBgMode === 'color') + '">Krāsa</button>'
@@ -1179,6 +1216,13 @@
       setSkin(name, hasAny(draft) ? draft : null);
       window.mkRenderSkinPicker(host);
     }
+    // Save and repaint the cards, but keep the editor as it is: effect, colour and
+    // tuning changes update their own controls in place (no rebuild, no flicker).
+    function commitQuiet() {
+      livePreview();
+      setSkin(name, hasAny(draft) ? draft : null);
+      try { host.dispatchEvent(new CustomEvent('mk-skin-quiet', { detail: { fx: draft.fx || '', num: draft.num || '' } })); } catch (_e) {}
+    }
     function persistLive() {
       livePreview();
       setSkin(name, hasAny(draft) ? draft : null, true);
@@ -1259,6 +1303,7 @@
       if(draft.face){skin.face.coffeeMode=draft.face.coffeeMode;skin.face.coffeeContrast=draft.face.coffeeContrast;skin.face.colors=draft.face.colors;skin.face.fullTintMode=draft.face.fullTintMode;skin.face.fullTintHue=draft.face.fullTintHue;skin.face.fullTintIntensity=draft.face.fullTintIntensity;skin.face.fullTintAuto=draft.face.fullTintAuto;skin.face.fullTintScheme=draft.face.fullTintScheme;}
       if(draft.face)Object.keys(draft.face.parts).forEach(function(key){skin.face.parts[key][3]=draft.face.parts[key][3];});
       skin.num=p.num;skin.numA=p.na;skin.em='0';
+      if(p.fx)skin.fx=p.fx;
       if(p.depth===false)skin.depth=false;
       if(p.txt)skin.txt=p.txt;
       return skin;
@@ -1386,6 +1431,48 @@
       if (ev.target.checked) delete draft.emn; else draft.emn = '0';
       commit();
     });
+    // Per-card dither effect (stored in the skin's fx slot, which the API already accepts).
+    // One picture effect per card (skin fx): dither variants, rentgens, rastrs, duotons, ascii.
+    function setPicEffect(v) {
+      if (v) { draft.fx = v; delete draft.fxs; } else if (/^(dither|xray|halftone|duotone|ascii)/.test(draft.fx || '')) { delete draft.fx; delete draft.fxs; }
+      var kind = /^dither/.test(v) ? 'dither' : v, box = host.querySelector('.mk-dither-switch');
+      if (box) {
+        box.dataset.picKind = kind || '';
+        box.querySelector('.mk-card-dither').hidden = kind !== 'dither';
+        box.querySelector('.mk-dither-inks').hidden = !kind || kind === 'xray' || v === 'dithercolor';
+        box.querySelector('.mk-pic-tune').hidden = !kind;
+        box.querySelectorAll('[data-pic-effect]').forEach(function(x){ x.setAttribute('aria-pressed', String(x.dataset.picEffect === (kind || ''))); });
+        box.querySelectorAll('[data-card-dither]').forEach(function(x){ x.setAttribute('aria-pressed', String(x.dataset.cardDither === v)); });
+      }
+      host.querySelectorAll('.mk-skin-fx').forEach(function(x){ var on=(draft.fx||'')===x.dataset.fx; x.classList.toggle('is-on',on); x.setAttribute('aria-pressed',String(on)); });
+      commitQuiet();
+    }
+    var setCardDither = setPicEffect;
+    // Smalkums / Kontrasts, packed as fxs "1.bc" (the API already accepts fxs).
+    host.querySelectorAll('[data-pic-tune]').forEach(function(r) {
+      function pack() { var b = host.querySelector('[data-pic-tune="b"]').value, c = host.querySelector('[data-pic-tune="c"]').value; draft.fxs = '1.' + b + c; }
+      r.addEventListener('input', function() { if (r.nextElementSibling) r.nextElementSibling.textContent = r.value; if (!/^(dither|xray|halftone|duotone|ascii)/.test(draft.fx || '')) return; pack(); persistLive(); });
+      r.addEventListener('change', function() { if (!/^(dither|xray|halftone|duotone|ascii)/.test(draft.fx || '')) return; pack(); commitQuiet(); });
+    });
+    host.querySelectorAll('[data-pic-effect]').forEach(function(b) {
+      b.addEventListener('click', function() { var v = b.dataset.picEffect; setPicEffect(v === 'dither' ? (/^dither/.test(draft.fx || '') ? draft.fx : 'dither') : v); });
+    });
+    host.querySelectorAll('[data-card-dither]').forEach(function(b) {
+      b.addEventListener('click', function() {
+        setCardDither(b.dataset.cardDither);
+      });
+    });
+    // Dither colour = the number colour (and the Dither face's tint): one tap.
+    host.querySelectorAll('[data-dither-ink]').forEach(function(b) {
+      b.addEventListener('click', function() {
+        var hex = b.dataset.ditherInk;
+        draft.num = hexToRgb('#' + hex); draft.numA = '1';
+        if (draft.face && draft.face.face === 'dither') draft.face.tint = hex;
+        host.querySelectorAll('[data-dither-ink]').forEach(function(x){ x.setAttribute('aria-pressed', String(x === b)); });
+        var numInput = host.querySelector('.mk-num-color'); if (numInput) numInput.value = '#' + hex;
+        commitQuiet();
+      });
+    });
     host.querySelectorAll('.mk-skin-fx').forEach(function(b) {
       b.addEventListener('click', function() {
         if (b.dataset.fx) draft.fx = b.dataset.fx; else { delete draft.fx; delete draft.fxs; }
@@ -1395,12 +1482,12 @@
     var fxSize = host.querySelector('.mk-fx-size');
     var fxSizeVal = host.querySelector('.mk-fx-size-val');
     fxSize.addEventListener('input', function() {
-      if (!draft.fx) return;
+      if (!draft.fx || /^(dither|xray|halftone|duotone|ascii)/.test(draft.fx)) return;
       draft.fxs = String((+fxSize.value / 100).toFixed(2));
       fxSizeVal.textContent = fxSize.value + '%';
       persistLive();
     });
-    fxSize.addEventListener('change', commit);
+    fxSize.addEventListener('change', function() { if (!/^(dither|xray|halftone|duotone|ascii)/.test(draft.fx || '')) commit(); });
     host.querySelector('.mk-skin-clear').addEventListener('click', function() {
       draft = {};
       setSkin(name, null);

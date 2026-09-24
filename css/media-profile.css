@@ -307,3 +307,11 @@ html body #radioWindow #vizBtn.active{border-color:rgba(var(--radio-accent-rgb,1
 /* Login hint: the tour popover's look, rendered without driver.js. */
 /* Above the radio window (which raises itself to 65000 when focused) so the arrow is not cut off. */
 .driver-popover.media-login-hint{position:fixed;z-index:70000;display:block;pointer-events:auto}
+/* Look panel: the layout picker owns a full row — six layouts in one
+   container, 3×2 pills like the card editor's tabs (light active pill). */
+#radioLookControls .radio-display-options{grid-template-columns:1fr!important;gap:10px!important}
+#radioLookControls .radio-display-options .radio-layout-choices:has([data-radio-layout-choice]) .radio-viz-families{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;border-radius:16px;background:#00000038;position:static}
+#radioLookControls .radio-display-options [data-radio-layout-choice]{min-height:40px;padding:8px 6px!important;border-radius:12px!important;border:0!important;font:650 12.5px/1.15 Inter,system-ui,sans-serif!important;color:#c9d6d0!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#radioLookControls .radio-display-options [data-radio-layout-choice]:hover{background:#ffffff0d!important;color:#f0faf5!important}
+#radioLookControls .radio-display-options [data-radio-layout-choice][aria-pressed=true]{background:#dfe6f4!important;color:#10161f!important;box-shadow:0 1px 2px #0003!important}
+#radioLookControls .radio-display-options .radio-layout-choices:has([data-viz-frame-choice]) .radio-viz-families{max-width:340px}

@@ -1,0 +1,150 @@
+/* "RG Dither" faceplate — every element is dithered and still readable:
+   text and icons are 1-bit masks (solid cores, dithered rims + a dithered
+   shadow), frames are 2px checker borders, fills and hovers are dot fields,
+   the deck is shaded by an ordered-dither ramp. All patterns are CSS
+   gradients coloured by --dth-ink-rgb (the album colour): no images, no
+   filters, no blur. 50% = repeating-conic checker, 25% = one conic dot per 2×2. */
+.dth-shell{display:none}
+html body #radioWindow[data-radio-layout="dither"]:not(.music-source){
+ min-width:0!important;width:100%!important;max-width:none!important;left:0!important;right:0!important;transform:none!important;
+ height:auto!important;min-height:0!important;padding:0!important;margin:0!important;
+ border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important
+}
+html body #radioWindow[data-radio-layout="dither"]:not(.music-source)::before{display:none!important}
+html body #radioWindow[data-radio-layout="dither"]:not(.music-source) .radio-win-body{
+ position:absolute!important;left:0;top:0;width:1px!important;height:1px!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important;padding:0!important;margin:0!important
+}
+html body #radioWindow[data-radio-layout="dither"]:not(.music-source) .radio-drag-strip{position:absolute!important;left:50%;top:0;transform:translateX(-50%);width:min(1140px,100%);height:14px!important;z-index:5;cursor:grab;background:transparent!important;border:0!important}
+html body #radioWindow[data-radio-layout="dither"].music-source .dth-shell{display:none!important}
+
+html body #radioWindow[data-radio-layout="dither"]:not(.music-source) .dth-shell{
+ --dth-ink-rgb:120,220,200;--dth-ink:rgb(var(--dth-ink-rgb));
+ --dth-paper:#050505;--dth-deck:#0b0b0b;--dth-raise:#141414;
+ --dth-text:#f1f0ea;--dth-dim:#a3a29b;--dth-grey:rgba(255,255,255,.34);
+ /* 2px checker frame: transparent border over a checker border-box layer */
+ --dth-frame:repeating-conic-gradient(var(--dth-grey) 0 25%,transparent 0 50%) 0 0/2px 2px border-box;
+ --dth-frame-ink:repeating-conic-gradient(var(--dth-ink) 0 25%,transparent 0 50%) 0 0/2px 2px border-box;
+ --dth-dots:conic-gradient(at 1px 1px,transparent 75%,rgba(var(--dth-ink-rgb),.6) 0) 0 0/2px 2px;
+ display:block;width:min(1140px,100%);margin:0 auto;padding:0 6px 4px;box-sizing:border-box;
+ color:var(--dth-text);user-select:none;image-rendering:pixelated
+}
+/* deck: checker frame + a dithered shade from the top (25% → 12% → none) */
+.dth-deck{position:relative;height:238px;box-sizing:border-box;display:grid;grid-template-rows:26px minmax(0,1fr) 42px;gap:10px;padding:10px 14px 12px;border:2px solid transparent;border-radius:4px;
+ background:linear-gradient(var(--dth-deck),var(--dth-deck)) padding-box,var(--dth-frame);box-shadow:0 10px 24px rgba(0,0,0,.45)}
+/* dithered shade from the top edge: a 25% band, then a sparser 6% band */
+.dth-deck::before,.dth-deck::after{content:"";position:absolute;left:0;right:0;pointer-events:none;z-index:0}
+.dth-deck::before{top:0;height:8px;background:conic-gradient(at 1px 1px,transparent 75%,rgba(255,255,255,.1) 0) 0 0/2px 2px}
+.dth-deck::after{top:8px;height:14px;background:conic-gradient(at 1px 1px,transparent 75%,rgba(255,255,255,.07) 0) 0 0/4px 4px}
+.dth-deck>*{position:relative;z-index:1}
+
+/* ---- dithered text / icons: a mask painted in currentColor ---- */
+.dth-sr{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important}
+.dth-dt,.dth-ico{display:inline-block;position:relative;flex:0 0 auto;vertical-align:middle;background:currentColor;
+ -webkit-mask:var(--dt) 0 0/100% 100% no-repeat;mask:var(--dt) 0 0/100% 100% no-repeat}
+/* title/artist: ::before = dithered drop shadow (baked 1px down-right), ::after = the glyph */
+.dth-song .dth-dt,.dth-artist .dth-dt,.dth-brand .dth-dt{-webkit-mask:none;mask:none;background:none}
+.dth-song .dth-dt::before,.dth-artist .dth-dt::before,.dth-brand .dth-dt::before{content:"";position:absolute;inset:0;background:rgba(var(--dth-ink-rgb),.8);-webkit-mask:var(--dts) 0 0/100% 100% no-repeat;mask:var(--dts) 0 0/100% 100% no-repeat}
+.dth-song .dth-dt::after,.dth-artist .dth-dt::after,.dth-brand .dth-dt::after{content:"";position:absolute;inset:0;background:currentColor;-webkit-mask:var(--dt) 0 0/100% 100% no-repeat;mask:var(--dt) 0 0/100% 100% no-repeat}
+.dth-artist .dth-dt::before{background:rgba(255,255,255,.35)}
+
+/* ---- head ---- */
+.dth-head{display:flex;align-items:center;gap:10px;min-width:0}
+.dth-logo{flex:0 0 22px;width:22px;height:22px;display:block;image-rendering:pixelated}
+.dth-brand{display:inline-flex;align-items:center;color:var(--dth-text);white-space:nowrap;letter-spacing:0}
+.dth-rule{flex:1 1 auto;min-width:20px;height:2px;background:repeating-conic-gradient(var(--dth-grey) 0 25%,transparent 0 50%) 0 0/2px 2px}
+.dth-src,.dth-tools{display:inline-flex;align-items:center;gap:4px}
+html body #radioWindow[data-radio-layout="dither"]:not(.music-source) #radioSourceBar{
+ position:static!important;height:26px!important;max-width:none!important;padding:0!important;gap:4px!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;transform:none!important;display:flex!important;align-items:center!important
+}
+/* engine buttons on the deck: text hidden (font-size 0), dithered label shown */
+html body #radioWindow[data-radio-layout="dither"]:not(.music-source) #radioSourceBar button{
+ height:26px!important;min-height:26px!important;padding:0 9px!important;border:2px solid transparent!important;border-radius:3px!important;
+ background:linear-gradient(var(--dth-paper),var(--dth-paper)) padding-box,var(--dth-frame)!important;
+ color:var(--dth-dim)!important;box-shadow:none!important;gap:6px!important;display:inline-flex!important;align-items:center!important;font-size:0!important;letter-spacing:0!important}
+html body #radioWindow[data-radio-layout="dither"]:not(.music-source) #radioSourceBar button:hover{color:var(--dth-text)!important;background:var(--dth-dots) padding-box,linear-gradient(var(--dth-paper),var(--dth-paper)) padding-box,var(--dth-frame)!important}
+html body #radioWindow[data-radio-layout="dither"]:not(.music-source) #radioSourceBar button[aria-pressed="true"]{color:#050505!important;background:linear-gradient(var(--dth-ink),var(--dth-ink)) padding-box,var(--dth-frame-ink)!important}
+html body #radioWindow[data-radio-layout="dither"]:not(.music-source) #radioSourceBar button>span:not(.dth-dt-wrap){display:none!important}
+html body #radioWindow[data-radio-layout="dither"]:not(.music-source) #radioSourceBar [hidden]{display:none!important}
+html body #radioWindow[data-radio-layout="dither"]:not(.music-source) #radioSourceBar svg{width:13px!important;height:13px!important}
+html body #radioWindow[data-radio-layout="dither"]:not(.music-source) #radioSourceBar .dth-dt-wrap{display:inline-flex;align-items:center}
+html body #radioWindow[data-radio-layout="dither"]:not(.music-source) #radioSourceStatus{display:none!important}
+html body #radioWindow[data-radio-layout="dither"]:not(.music-source) #mediaAuthSeg{display:inline-flex!important;gap:4px!important;background:transparent!important;border:0!important;padding:0!important;box-shadow:none!important}
+html body #radioWindow[data-radio-layout="dither"] .dth-tools #themeBtn{width:30px!important;height:26px!important;min-width:0!important;min-height:0!important;margin:0!important;padding:0!important;border:2px solid transparent!important;border-radius:3px!important;
+ background:linear-gradient(var(--dth-paper),var(--dth-paper)) padding-box,var(--dth-frame)!important;box-shadow:none!important;color:var(--dth-text)!important;position:static!important;display:inline-flex!important;align-items:center;justify-content:center}
+html body #radioWindow[data-radio-layout="dither"] .dth-tools #themeBtn:hover{background:var(--dth-dots) padding-box,linear-gradient(var(--dth-paper),var(--dth-paper)) padding-box,var(--dth-frame)!important}
+html body #radioWindow[data-radio-layout="dither"] .dth-tools #themeBtn.dth-look>svg{display:none!important}
+
+/* ---- body: art · stage · info ---- */
+.dth-body{display:grid;grid-template-columns:auto minmax(0,1.35fr) minmax(220px,1fr);gap:14px;min-height:0}
+.dth-art,.dth-stage{border:2px solid transparent;border-radius:3px;background:linear-gradient(var(--dth-paper),var(--dth-paper)) padding-box,var(--dth-frame)}
+.dth-art{appearance:none;padding:0;margin:0;cursor:pointer;height:100%;aspect-ratio:1;overflow:hidden;display:block;-webkit-tap-highlight-color:transparent}
+.dth-art canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+.dth-art:hover{background:linear-gradient(var(--dth-paper),var(--dth-paper)) padding-box,var(--dth-frame-ink)}
+.dth-art:focus-visible{outline:2px solid var(--dth-ink);outline-offset:2px}
+.dth-stage{position:relative;min-width:0;overflow:hidden}
+.dth-stage canvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block;image-rendering:pixelated;image-rendering:crisp-edges}
+.dth-tag,.dth-time{position:absolute;top:6px;z-index:1;display:inline-flex;align-items:center;padding:3px 5px;background:var(--dth-paper);pointer-events:none}
+.dth-tag{left:6px;color:var(--dth-dim)}
+.dth-time{right:6px;color:var(--dth-text);gap:6px}
+.dth-shell.is-playing .dth-time::before{content:"";width:6px;height:6px;background:var(--dth-ink)}
+
+.dth-info{display:flex;flex-direction:column;justify-content:center;gap:6px;min-width:0;padding-right:2px}
+.dth-kicker{display:flex;align-items:center;gap:8px;min-width:0;color:var(--dth-dim);white-space:nowrap;overflow:hidden;min-height:18px}
+.dth-kicker>span{display:inline-flex;align-items:center}
+.dth-live{padding:2px 4px;border:2px solid transparent;background:linear-gradient(var(--dth-deck),var(--dth-deck)) padding-box,var(--dth-frame)}
+.dth-shell.is-playing .dth-live{color:#050505;background:linear-gradient(var(--dth-ink),var(--dth-ink)) padding-box,var(--dth-frame-ink)}
+.dth-station{min-width:0;overflow:hidden}
+.dth-song,.dth-artist{white-space:nowrap;overflow:hidden;line-height:0}
+.dth-song{color:#fff;min-height:30px}
+.dth-artist{color:var(--dth-ink);min-height:22px}
+.dth-line{display:inline-block;--shift:0px}
+.dth-song.is-long .dth-line,.dth-artist.is-long .dth-line{animation:dth-marquee var(--dur,10s) steps(60) infinite alternate}
+@keyframes dth-marquee{0%,15%{transform:translateX(0)}85%,100%{transform:translateX(var(--shift))}}
+.dth-volrow{display:flex;align-items:center;gap:10px;margin-top:6px;color:var(--dth-dim)}
+
+/* ---- ranges: solid ink fill, 50% checker remainder, pixel block thumb ---- */
+.dth-range{-webkit-appearance:none;appearance:none;width:100%;height:8px;margin:0;border-radius:0;cursor:pointer;outline:0;--p:50%;
+ background:linear-gradient(90deg,var(--dth-ink) var(--p),transparent var(--p)),repeating-conic-gradient(rgba(255,255,255,.3) 0 25%,transparent 0 50%) 0 0/2px 2px,var(--dth-paper)}
+.dth-range::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:20px;border-radius:0;border:0;
+ background:repeating-conic-gradient(#fff 0 25%,#8d8d88 0 50%) 0 0/2px 2px;box-shadow:inset 0 0 0 2px #fff,0 0 0 2px var(--dth-deck)}
+.dth-range::-moz-range-thumb{width:12px;height:20px;border-radius:0;border:0;background:#fff}
+.dth-range:focus-visible{outline:2px solid var(--dth-ink);outline-offset:3px}
+.dth-seek:disabled{cursor:default;background:repeating-conic-gradient(rgba(255,255,255,.18) 0 25%,transparent 0 50%) 0 0/2px 2px,var(--dth-paper)}
+.dth-seek:disabled::-webkit-slider-thumb{opacity:0}
+
+/* ---- foot ---- */
+.dth-foot{display:grid;grid-template-columns:auto minmax(80px,1fr) auto;align-items:center;gap:14px;min-width:0}
+.dth-transport{display:flex;gap:6px}
+.dth-btn{appearance:none;width:42px;height:38px;border:2px solid transparent;border-radius:3px;background:linear-gradient(var(--dth-raise),var(--dth-raise)) padding-box,var(--dth-frame);color:var(--dth-text);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;-webkit-tap-highlight-color:transparent}
+.dth-btn:hover{background:var(--dth-dots) padding-box,linear-gradient(var(--dth-raise),var(--dth-raise)) padding-box,var(--dth-frame-ink)}
+.dth-btn:active{transform:translateY(1px)}
+.dth-btn:focus-visible{outline:2px solid var(--dth-ink);outline-offset:2px}
+/* play: solid ink on top, dithered darker lower third (shaded like the art) */
+.dth-play{width:56px;color:#050505;background:linear-gradient(var(--dth-ink) 0 62%,transparent 0) padding-box,conic-gradient(at 1px 1px,rgba(var(--dth-ink-rgb),.55) 75%,var(--dth-ink) 0) 0 0/2px 2px padding-box,var(--dth-frame-ink)}
+.dth-play:hover{background:linear-gradient(var(--dth-ink),var(--dth-ink)) padding-box,var(--dth-frame-ink)}
+.dth-vis-pick{display:flex;gap:4px}
+.dth-vis-pick button{appearance:none;height:30px;padding:0 8px;border:2px solid transparent;border-radius:3px;background:linear-gradient(var(--dth-paper),var(--dth-paper)) padding-box,var(--dth-frame);color:var(--dth-dim);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.dth-vis-pick button:hover{color:var(--dth-text);background:var(--dth-dots) padding-box,linear-gradient(var(--dth-paper),var(--dth-paper)) padding-box,var(--dth-frame)}
+.dth-vis-pick button[aria-pressed="true"]{color:#050505;background:linear-gradient(var(--dth-ink),var(--dth-ink)) padding-box,var(--dth-frame-ink)}
+.dth-vis-pick button:focus-visible{outline:2px solid var(--dth-ink);outline-offset:1px}
+
+@media(max-width:1000px){
+ .dth-body{grid-template-columns:auto minmax(0,1fr) minmax(190px,.9fr)}
+ .dth-vis-pick button{padding:0 5px}
+}
+@media(max-width:820px){
+ .dth-deck{height:auto;grid-template-rows:26px auto auto}
+ .dth-body{grid-template-columns:118px minmax(0,1fr);grid-template-rows:118px auto}
+ .dth-art{height:118px}
+ .dth-info{grid-column:1/-1}
+ .dth-foot{grid-template-columns:auto minmax(60px,1fr);row-gap:8px}
+ .dth-vis-pick{grid-column:1/-1;justify-content:space-between}
+ .dth-vis-pick button{flex:1 1 0}
+}
+@media(prefers-reduced-motion:reduce){.dth-song.is-long .dth-line,.dth-artist.is-long .dth-line{animation:none}}
+
+/* ---- look panel while Dither is selected: only what Dither uses ---- */
+#themePanel[data-radio-layout="dither"] :is(#radioLookPreview,.radio-spectrum-position,#radioImageTools,.radio-viz-choices,.radio-clean-actions,#radioUseCard,#radioLookNote,#themeList,.radio-theme-filters,.theme-subtitle,[data-radio-background-only]){display:none!important}
+#themePanel[data-radio-layout="dither"] fieldset.radio-layout-choices:has([data-viz-frame-choice]){display:none!important}
+#themePanel[data-radio-layout="dither"] #radioLookControls details label:has([data-look="glass"]),#themePanel[data-radio-layout="dither"] #radioLookControls details label:has([data-look="text"]){display:none!important}
+#themePanel[data-radio-layout="dither"] #ditherVisControls{display:block!important}

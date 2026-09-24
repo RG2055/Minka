@@ -8,11 +8,20 @@
   // The coast scene is gone (2026-09-22): its 3:1 frames could not survive a
   // 12:1 header box, so anyone who had it chosen lands on the collection.
   const backgrounds = ['riga', 'mix'];
+  // Skin pack: the shift progress line, and the bottom bar's icons and surface.
+  const progressStyles = ['classic', 'm3', 'cat', 'pixel', 'dither', 'ekg'];
+  const dockIconSets = ['pixel', 'm3', 'line', 'dither'];
+  const dockTints = ['color', 'white', 'accent', 'muted'];
+  const dockBars = ['default', 'dark', 'dots', 'fade', 'grid', 'kapas', 'tors', 'signals', 'rezgis'];
   function normalize(value) {
     const s = value && typeof value === 'object' ? value : {};
     return { version: 2, skin: s.skin === 'material' ? 'hybrid' : skins.includes(s.skin) ? s.skin : 'panorama',
       palette: palettes.includes(s.palette) ? s.palette : 'scene', daily: s.daily === true,
-      motion: s.motion !== false, background: backgrounds.includes(s.background) ? s.background : 'mix', day: /^\d{4}-\d{2}-\d{2}$/.test(s.day || '') ? s.day : '' };
+      motion: s.motion !== false, background: backgrounds.includes(s.background) ? s.background : 'mix', day: /^\d{4}-\d{2}-\d{2}$/.test(s.day || '') ? s.day : '',
+      progress: progressStyles.includes(s.progress) ? s.progress : 'classic',
+      dockIcons: dockIconSets.includes(s.dockIcons) ? s.dockIcons : 'pixel',
+      dockTint: dockTints.includes(s.dockTint) ? s.dockTint : 'color',
+      dockBar: dockBars.includes(s.dockBar) ? s.dockBar : s.dockBar === 'amoled' ? 'dark' : s.dockBar === 'dither' ? 'dots' : 'default' };
   }
   function dayKey(now = new Date()) {
     return [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
@@ -20,8 +29,14 @@
   function shuffle(value, day = dayKey(), random = Math.random) {
     const s = normalize(value);
     const choose = list => list[Math.min(list.length - 1, Math.max(0, Math.floor(random() * list.length)))];
-    return { ...s, skin: choose(skins.filter(x => x !== s.skin)),
+    const next = { ...s, skin: choose(skins.filter(x => x !== s.skin)),
       palette: choose(['scene', ...Object.keys(seeds)].filter(x => x !== s.palette)), day };
+    // The daily shuffle also deals a new skin-pack combination (progress line, bottom bar).
+    next.progress = choose(progressStyles.filter(x => x !== s.progress));
+    next.dockIcons = choose(dockIconSets.filter(x => x !== s.dockIcons));
+    next.dockTint = choose(dockTints.filter(x => x !== s.dockTint));
+    next.dockBar = choose(dockBars.filter(x => x !== s.dockBar));
+    return next;
   }
   function resolveDay(value, day = dayKey(), random = Math.random) {
     const s = normalize(value);
@@ -61,6 +76,7 @@
   let state = resolveDay(read(storage));
   root.dataset.headerSkin = state.skin;
   root.dataset.headerPalette = state.palette;
+  root.dataset.headerProgress = state.progress;
   if (state.daily) write(storage, state);
 
   function mount() {
@@ -127,11 +143,22 @@
     function paint() {
       scheduled = false;
       root.dataset.headerSkin = state.skin;
+      root.dataset.headerProgress = state.progress;
+      if (state.progress === 'cat') syncPet();
+      // The bottom bar lives in the shell document; it reads the same saved state (index.html),
+      // this keeps it in step while the panel is open.
+      try {
+        const pr = host.parent !== host ? host.parent.document.documentElement : null;
+        if (pr) { pr.dataset.dockIcons = state.dockIcons; pr.dataset.dockBar = state.dockBar; pr.dataset.dockTint = state.dockTint; }
+      } catch (_) {}
       host.MinkaHeaderScenic?.setScene(state.background);
       const effective = resolveColor(state, radioStatus(), sceneSeed(), state.palette === 'radio' ? radioSeed() : undefined);
       root.dataset.headerPalette = effective.source === 'album' ? 'album' : state.palette;
       root.dataset.headerColorSource = effective.source;
+      lastDockAccent = effective.seed;
       const p = palette(effective.seed);
+      // "Akcents" icon colour in the bottom bar follows the header palette.
+      try { if (host.parent !== host) host.parent.document.documentElement.style.setProperty('--dock-accent', effective.seed); } catch (_) {}
       [header, dialog].filter(Boolean).forEach(node => {
         for (const [name, value] of Object.entries(p)) {
           if (node.style.getPropertyValue('--hs-' + name) !== value) node.style.setProperty('--hs-' + name, value);
@@ -142,6 +169,14 @@
       watchRadio();
       syncControls();
     }
+    let lastDockAccent = '#d9ce7f';
+    // Running-cat progress line: the pet of the day runs at the end of the fill.
+    function syncPet(url) {
+      const u = url || host.__minkaDailyCat?.getCurrent?.()?.spritesheetUrl || '';
+      if (!/^https:\/\/[^"'()\s]+\.webp$/.test(u)) return;
+      [header, dialog].filter(Boolean).forEach(n => { n.style.setProperty('--hs-pet-sheet', 'url("' + u + '")'); n.classList.add('hs-has-pet'); });
+    }
+    host.addEventListener('minka:daily-pet', e => syncPet(e.detail && e.detail.spritesheetUrl));
     function schedule() { if (!scheduled) { scheduled = true; requestAnimationFrame(paint); } }
     function persist() { saveOK = write(storage, state); paint(); }
     function set(value) {
@@ -159,6 +194,13 @@
         ? 'Nejauši no kolekcijas — gaišie attēli rītā un dienā, siltie vakarā, tumšie naktī; Rīga arī piedalās. Mainās ik pēc 25 minūtēm un pēc Rīgas laika.'
         : 'Rīts, diena, vakars un nakts mainās automātiski pēc Rīgas laika.';
       dialog.querySelectorAll('[data-palette]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.palette === state.palette)));
+      dialog.querySelectorAll('[data-progress]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.progress === state.progress)));
+      dialog.querySelectorAll('[data-dock-icons]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.dockIcons === state.dockIcons)));
+      dialog.querySelectorAll('[data-dock-bar]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.dockBar === state.dockBar)));
+      dialog.querySelectorAll('[data-dock-tint]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.dockTint === state.dockTint)));
+      const tintRow = dialog.querySelector('.hs-dock-tints'), tintNote = dialog.querySelector('.hs-dock-tint-note');
+      if (tintRow) { const locked = state.dockIcons === 'pixel'; tintRow.classList.toggle('is-locked', locked); tintRow.setAttribute('aria-disabled', String(locked)); if (tintNote) tintNote.hidden = !locked; }
+      dialog.style.setProperty('--dock-accent', lastDockAccent);
       dialog.querySelector('#hsDaily').checked = state.daily;
       dialog.querySelector('#hsMotion').checked = state.motion;
       dialog.querySelector('#hsStatus').textContent = saveOK ? 'Saglabāts šajā pārlūkā' : 'Izvēle darbojas, bet pārlūks neļauj to saglabāt.';
@@ -185,6 +227,19 @@
         [['panorama', 'Panorāma', 'Tavs pašreizējais skats'], ['hybrid', 'Panorāma + Material', 'Panorāmas fons, maigas pogas']].map(([key, title, detail]) =>
           '<button type="button" data-skin="' + key + '" aria-pressed="false"><span class="hs-preview hs-preview-' + key + '" aria-hidden="true"><i></i><i></i><i></i><b></b><em></em></span><span class="hs-choice-title">' + title + '</span><small>' + detail + '</small></button>').join('') + '</div>' +
         '<h3>Panorāma</h3><div class="hs-backgrounds" role="group" aria-label="Panorāma"><button type="button" data-background="riga" aria-pressed="false">Rīga</button><button type="button" data-background="mix" aria-pressed="false">Kolekcija</button><button type="button" data-rotate class="hs-rotate" hidden>Cits attēls</button></div><p id="hsBackgroundHint" class="hs-hint"></p>' +
+        '<h3>Progresa josla</h3><div class="hs-pack hs-progress" role="group" aria-label="Progresa josla">' +
+        [['classic', 'Klasiskā'], ['m3', 'M3 vilnis'], ['cat', 'Skrienošs kaķis'], ['pixel', 'Pikseļi'], ['dither', 'Dither'], ['ekg', 'EKG']].map(([key, label]) =>
+          '<button type="button" data-progress="' + key + '" aria-pressed="false"><span class="hs-pp hs-pp-' + key + '" aria-hidden="true"><i></i></span>' + label + '</button>').join('') + '</div>' +
+        '<h3>Apakšējā josla</h3><div class="hs-pack hs-dock-icons" role="group" aria-label="Apakšējās joslas ikonas">' +
+        [['pixel', 'Pikseļu'], ['m3', 'M3'], ['line', 'Līnijas'], ['dither', 'Dither']].map(([key, label]) =>
+          '<button type="button" data-dock-icons="' + key + '" aria-pressed="false"><span class="hs-di hs-di-' + key + '" aria-hidden="true"><i></i><i></i><i></i></span>' + label + '</button>').join('') + '</div>' +
+        '<h4 class="hs-sub">Ikonu krāsa</h4><div class="hs-backgrounds hs-dock-tints" role="group" aria-label="Ikonu krāsa">' +
+        [['color', 'Krāsainas'], ['white', 'Baltas'], ['accent', 'Akcents'], ['muted', 'Klusinātas']].map(([key, label]) =>
+          '<button type="button" data-dock-tint="' + key + '" aria-pressed="false"><i class="hs-tint hs-tint-' + key + '" aria-hidden="true"></i>' + label + '</button>').join('') + '</div>' +
+        '<p class="hs-hint hs-dock-tint-note" hidden>Pikseļu ikonām krāsas ir zīmētas iekšā — izvēlies M3, Līnijas vai Dither, lai mainītu krāsu.</p>' +
+        '<h4 class="hs-sub">Fons</h4><div class="hs-pack hs-dock-bars" role="group" aria-label="Apakšējās joslas fons">' +
+        [['default', 'Parasts'], ['dark', 'Tumšs'], ['dots', 'Punkti'], ['fade', 'Pāreja'], ['grid', 'Tīkls'], ['kapas', 'Kāpas'], ['tors', 'Tors'], ['signals', 'Signāls'], ['rezgis', 'Režģis']].map(([key, label]) =>
+          '<button type="button" data-dock-bar="' + key + '" aria-pressed="false"><span class="hs-db hs-db-' + key + '" aria-hidden="true"></span>' + label + '</button>').join('') + '</div>' +
         '<h3>Krāsas</h3><div class="hs-palettes" role="group" aria-label="Galvenes palete">' +
         [['scene', 'No panorāmas'], ['olive', 'Olīva'], ['mint', 'Piparmētra'], ['peach', 'Persiks'], ['rose', 'Roze'], ['lilac', 'Ceriņi'], ['blue', 'Zils'], ['radio', 'Sekot radio']].map(([key, label]) =>
           '<button type="button" data-palette="' + key + '" aria-pressed="false"><i aria-hidden="true" style="--swatch:' + (seeds[key] || '#ded3b5') + '"></i>' + label + '</button>').join('') + '</div>' +
@@ -200,6 +255,10 @@
         else if (b.dataset.palette) set({ palette: b.dataset.palette });
         else if (b.dataset.background) set({ background: b.dataset.background });
         else if (b.hasAttribute('data-rotate')) host.MinkaHeaderScenic?.rotate?.();
+        else if (b.dataset.progress) set({ progress: b.dataset.progress });
+        else if (b.dataset.dockIcons) set({ dockIcons: b.dataset.dockIcons });
+        else if (b.dataset.dockBar) set({ dockBar: b.dataset.dockBar });
+        else if (b.dataset.dockTint) { if (state.dockIcons !== 'pixel') set({ dockTint: b.dataset.dockTint }); }
         else if (b.hasAttribute('data-shuffle')) { state = shuffle(state); persist(); }
         else if (b.hasAttribute('data-reset')) { state = normalize(); persist(); }
       });

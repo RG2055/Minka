@@ -15,6 +15,7 @@
 .mkl-text{width:2px;height:2px}
 </style>
 <script src="js/dither-text.js?v=20260924d2"></script>
+<script src="js/dither-core.js?v=20260925nofx" defer></script>
 <script>
 (function() {
   var API_BASE = 'https://minka-api.gamernr1elite.workers.dev';
@@ -37,7 +38,7 @@
   }
   window.__minkaHasApiAuth = function() { return !!getToken(); };
 
-  var CALENDAR_BUILD = '20260924d1';
+  var CALENDAR_BUILD = '20260925rel1';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -365,7 +366,7 @@
 <link rel="stylesheet" href="css/radio-source.css?v=20260911nobox1">
 <link rel="stylesheet" href="css/radio-equalizer.css?v=20260919pixel2">
 <link rel="stylesheet" href="css/radio-pixel.css?v=20260919pixel5">
-<link rel="stylesheet" href="css/media-profile.css?v=20260911auth12">
+<link rel="stylesheet" href="css/media-profile.css?v=20260924dth2">
 
 <style>
 /* ═══ MINKA v11 Shell ═══ */
@@ -645,7 +646,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <div id="calendarEmbed">
   <!-- Keep the expensive calendar document dormant behind the password gate.
        Authenticated startup assigns data-base-src immediately. -->
-  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260924d1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260925rel1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- Dither loader (js/dither-loader.js). It stays up until the embedded
@@ -958,11 +959,12 @@ async function loadRadioScripts() {
   await loadAny(['js/radio-metadata.js?v=20260910metadata1']);
   await loadAny(['js/radio-pioneer-layout.js?v=20260914reveal2']);
   await loadAny(['js/radio-amp-layout.js?v=20260920amp24']);
+  await loadAny(['js/radio-dither-layout.js?v=20260924dth24']);
   await loadAny(['js/radio-listening.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20260919pixel2']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
-  await loadAny(['js/radio.js?v=20260924d1e']);
+  await loadAny(['js/radio.js?v=20260925dock2']);
   await loadAny(['js/radio_extras_v4.js?v=20260919pixel2']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;
@@ -2897,7 +2899,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
 
 <script src="kalendars/js/daybook-model.js?v=20260911b" defer></script>
 <script src="js/radio-daybook.js?v=20260911i" defer></script>
-<script src="js/media-profile.js?v=20260920amp23" defer></script>
+<script src="js/media-profile.js?v=20260924dth1" defer></script>
 <script src="js/radio-source.js?v=20260914reveal1" defer></script>
 
 <div id="mobileQrModal" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171000;background:rgba(2,4,8,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:20px;">
@@ -7326,5 +7328,75 @@ body.mk-buddy-header-home #mk-buddy-bolus {
 <link rel="stylesheet" href="css/radio-ambience.css?v=20260908ambient3">
 <script src="js/radio-ambience.js?v=20260919smooth1"></script>
 <link rel="stylesheet" href="css/calendar-surfaces.css?v=20260908surfaces3">
+
+<!-- Skin pack: bottom bar icon sets and surfaces (Galvene → Apakšējā josla).
+     The original pixel icons stay in the markup; an alternative <i class="dock-alt"> is added once
+     next to each and shown by CSS. The choice is read from the same saved header state, so it
+     applies at load with no flash, and follows changes made in the calendar frame (storage event). -->
+<style id="mk-dock-skins">
+#dockShelf #bottomBtnBar .dock-alt{display:none;width:22px;height:22px;flex:0 0 22px;background:currentColor;-webkit-mask:var(--ico-fill) center/contain no-repeat;mask:var(--ico-fill) center/contain no-repeat}
+html[data-dock-icons]:not([data-dock-icons="pixel"]) #dockShelf #bottomBtnBar .dock-px{display:none !important}
+html[data-dock-icons]:not([data-dock-icons="pixel"]) #dockShelf #bottomBtnBar .dock-alt{display:block}
+/* icon colour: one variable per icon, from the chosen tint */
+#dockShelf #bottomBtnBar .dock-alt{--dock-ico:var(--ico-col)}
+html[data-dock-tint="white"] #dockShelf #bottomBtnBar .dock-alt{--dock-ico:#eef2f6}
+html[data-dock-tint="accent"] #dockShelf #bottomBtnBar .dock-alt{--dock-ico:var(--dock-accent,#d9ce7f)}
+html[data-dock-tint="muted"] #dockShelf #bottomBtnBar .dock-alt{--dock-ico:#8b95a3}
+html[data-dock-icons]:is([data-dock-icons="m3"],[data-dock-icons="line"]) #dockShelf #bottomBtnBar .dock-alt{background:var(--dock-ico)}
+html[data-dock-icons="line"] #dockShelf #bottomBtnBar .dock-alt{-webkit-mask-image:var(--ico-line);mask-image:var(--ico-line)}
+html[data-dock-icons="dither"] #dockShelf #bottomBtnBar .dock-alt{background:repeating-conic-gradient(var(--dock-ico) 0 25%,transparent 0 50%) 0 0/2px 2px,linear-gradient(transparent 55%,var(--dock-ico) 55%);image-rendering:pixelated}
+/* backgrounds: a layer behind the buttons (the bar isolates it), coloured like the icons */
+#dockShelf #bottomBtnBar{isolation:isolate}
+#dockShelf #bottomBtnBar > .dock-bg{display:none;position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;overflow:hidden;
+  --bg-ink:var(--dock-ink,rgba(238,242,246,.42))}
+html[data-dock-bar]:not([data-dock-bar="default"]) #dockShelf #bottomBtnBar{background:#05070b !important;border-color:rgba(255,255,255,.08) !important}
+html[data-dock-bar]:not([data-dock-bar="default"]):not([data-dock-bar="dark"]) #dockShelf #bottomBtnBar > .dock-bg{display:block}
+html[data-dock-tint="color"] #dockShelf #bottomBtnBar{--dock-ink:rgba(100,210,255,.42)}
+html[data-dock-tint="white"] #dockShelf #bottomBtnBar{--dock-ink:rgba(238,242,246,.4)}
+html[data-dock-tint="accent"] #dockShelf #bottomBtnBar{--dock-ink:color-mix(in srgb,var(--dock-accent,#d9ce7f) 55%,transparent)}
+html[data-dock-tint="muted"] #dockShelf #bottomBtnBar{--dock-ink:rgba(139,149,163,.4)}
+html[data-dock-bar="dots"] #dockShelf #bottomBtnBar > .dock-bg{background:conic-gradient(at 1px 1px,transparent 75%,var(--bg-ink) 0) 0 0/4px 4px}
+html[data-dock-bar="fade"] #dockShelf #bottomBtnBar > .dock-bg{background:repeating-conic-gradient(var(--bg-ink) 0 25%,transparent 0 50%) 0 0/2px 2px;
+  -webkit-mask:linear-gradient(0deg,#000,rgba(0,0,0,.5) 35%,transparent 80%);mask:linear-gradient(0deg,#000,rgba(0,0,0,.5) 35%,transparent 80%)}
+html[data-dock-bar="grid"] #dockShelf #bottomBtnBar > .dock-bg{background:repeating-linear-gradient(90deg,var(--bg-ink) 0 1px,transparent 1px 12px),repeating-linear-gradient(0deg,var(--bg-ink) 0 1px,transparent 1px 12px);opacity:.55}
+html[data-dock-bar]:is([data-dock-bar="kapas"],[data-dock-bar="tors"],[data-dock-bar="signals"],[data-dock-bar="rezgis"]) #dockShelf #bottomBtnBar > .dock-bg{
+  /* drawn for the bar (scripts/build-dither-dock.py): 36 dots tall, tiles sideways, shown at its own scale */
+  background:var(--bg-ink);-webkit-mask:var(--dock-art) 0 50%/auto 100% repeat-x;mask:var(--dock-art) 0 50%/auto 100% repeat-x;-webkit-mask-mode:luminance;mask-mode:luminance;image-rendering:pixelated}
+html[data-dock-bar="kapas"] #dockShelf #bottomBtnBar > .dock-bg{--dock-art:url("kalendars/data/skins/dock-dither-kapas.webp")}
+html[data-dock-bar="tors"] #dockShelf #bottomBtnBar > .dock-bg{--dock-art:url("kalendars/data/skins/dock-dither-tors.webp");-webkit-mask-position:right 7% center !important;mask-position:right 7% center !important;-webkit-mask-repeat:no-repeat !important;mask-repeat:no-repeat !important}
+html[data-dock-bar="signals"] #dockShelf #bottomBtnBar > .dock-bg{--dock-art:url("kalendars/data/skins/dock-dither-signals.webp")}
+html[data-dock-bar="rezgis"] #dockShelf #bottomBtnBar > .dock-bg{--dock-art:url("kalendars/data/skins/dock-dither-rezgis.webp")}
+#dockShelf #bottomBtnBar #nsToggleBtnParent .dock-alt{--ico-fill:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Cpath%20fill=%22white%22%20d=%22M20.4%2013.4A8.5%208.5%200%200%201%2010.6%203.6%208.5%208.5%200%201%200%2020.4%2013.4Z%22/%3E%3C/svg%3E");--ico-line:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Cpath%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22M20.4%2013.4A8.5%208.5%200%200%201%2010.6%203.6%208.5%208.5%200%201%200%2020.4%2013.4Z%22/%3E%3C/svg%3E");--ico-col:#64d2ff;}
+#dockShelf #bottomBtnBar #bolusDocBtn .dock-alt{--ico-fill:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Cpath%20fill=%22white%22%20d=%22M12%202.6c-.3%200-.6.2-.8.5C8.6%206.5%205.6%2010.3%205.6%2014a6.4%206.4%200%200%200%2012.8%200c0-3.7-3-7.5-5.6-10.9-.2-.3-.5-.5-.8-.5Z%22/%3E%3C/svg%3E");--ico-line:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Cpath%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22M12%203.2C9.4%206.6%206.4%2010.4%206.4%2014a5.6%205.6%200%200%200%2011.2%200c0-3.6-3-7.4-5.6-10.8Z%22/%3E%3Cpath%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22M9.4%2014.6a2.7%202.7%200%200%200%202.5%202.5%22/%3E%3C/svg%3E");--ico-col:#5ee6c8;}
+#dockShelf #bottomBtnBar #monthCalDocBtn .dock-alt{--ico-fill:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Cpath%20fill=%22white%22%20d=%22M7%202h2v2h6V2h2v2h1.5A2.5%202.5%200%200%201%2021%206.5v12a2.5%202.5%200%200%201-2.5%202.5h-13A2.5%202.5%200%200%201%203%2018.5v-12A2.5%202.5%200%200%201%205.5%204H7V2Zm-2%207v9.5c0%20.3.2.5.5.5h13c.3%200%20.5-.2.5-.5V9H5Zm2%202h2v2H7v-2Zm4%200h2v2h-2v-2Zm4%200h2v2h-2v-2Zm-8%204h2v2H7v-2Zm4%200h2v2h-2v-2Z%22/%3E%3C/svg%3E");--ico-line:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Crect%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20x=%223.5%22%20y=%225%22%20width=%2217%22%20height=%2215.5%22%20rx=%222.5%22/%3E%3Cpath%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22M8%203v4M16%203v4M3.5%2010h17M8%2014h.01M12%2014h.01M16%2014h.01M8%2017h.01M12%2017h.01%22/%3E%3C/svg%3E");--ico-col:#3f9bff;}
+#dockShelf #bottomBtnBar #planotajsDockBtn .dock-alt{--ico-fill:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Crect%20fill=%22white%22%20x=%223%22%20y=%224%22%20width=%2212%22%20height=%224%22%20rx=%222%22/%3E%3Crect%20fill=%22white%22%20x=%223%22%20y=%2210%22%20width=%2218%22%20height=%224%22%20rx=%222%22/%3E%3Crect%20fill=%22white%22%20x=%223%22%20y=%2216%22%20width=%229%22%20height=%224%22%20rx=%222%22/%3E%3C/svg%3E");--ico-line:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Cpath%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22M4%206h10M4%2012h16M4%2018h8%22/%3E%3C/svg%3E");--ico-col:#f5b73f;}
+#dockShelf #bottomBtnBar #statsDocBtn .dock-alt{--ico-fill:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Crect%20fill=%22white%22%20x=%223%22%20y=%2212%22%20width=%225%22%20height=%229%22%20rx=%221.5%22/%3E%3Crect%20fill=%22white%22%20x=%229.5%22%20y=%223%22%20width=%225%22%20height=%2218%22%20rx=%221.5%22/%3E%3Crect%20fill=%22white%22%20x=%2216%22%20y=%228%22%20width=%225%22%20height=%2213%22%20rx=%221.5%22/%3E%3C/svg%3E");--ico-line:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Cpath%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22M5%2020v-7M12%2020V4M19%2020v-11%22/%3E%3C/svg%3E");--ico-col:#1fe091;}
+#dockShelf #bottomBtnBar #radioIdleBtn .dock-alt{--ico-fill:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Cpath%20fill=%22white%22%20d=%22M17.5%202.6%2018.3%204.5%2010.4%207.5H19a2%202%200%200%201%202%202v9.5a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2V9.5c0-.9.5-1.6%201.3-1.9L17.5%202.6ZM8%2017.5a2.8%202.8%200%201%200%200-5.6%202.8%202.8%200%200%200%200%205.6ZM14%2012v2h5v-2h-5Zm0%203.6v2h5v-2h-5Z%22/%3E%3C/svg%3E");--ico-line:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Cpath%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22m5%208%2013-4.5M5%208h14a1.5%201.5%200%200%201%201.5%201.5v9.5A1.5%201.5%200%200%201%2019%2020.5H5A1.5%201.5%200%200%201%203.5%2019V9.5A1.5%201.5%200%200%201%205%208Z%22/%3E%3Ccircle%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20cx=%228.5%22%20cy=%2214.3%22%20r=%222.6%22/%3E%3Cpath%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22M14%2012.5h4M14%2016h4%22/%3E%3C/svg%3E");--ico-col:#ff8a5c;}
+#dockShelf #bottomBtnBar #radioToggle .dock-alt{--ico-fill:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Cpath%20fill=%22white%22%20d=%22M17.5%202.6%2018.3%204.5%2010.4%207.5H19a2%202%200%200%201%202%202v9.5a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2V9.5c0-.9.5-1.6%201.3-1.9L17.5%202.6ZM8%2017.5a2.8%202.8%200%201%200%200-5.6%202.8%202.8%200%200%200%200%205.6ZM14%2012v2h5v-2h-5Zm0%203.6v2h5v-2h-5Z%22/%3E%3C/svg%3E");--ico-line:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Cpath%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22m5%208%2013-4.5M5%208h14a1.5%201.5%200%200%201%201.5%201.5v9.5A1.5%201.5%200%200%201%2019%2020.5H5A1.5%201.5%200%200%201%203.5%2019V9.5A1.5%201.5%200%200%201%205%208Z%22/%3E%3Ccircle%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20cx=%228.5%22%20cy=%2214.3%22%20r=%222.6%22/%3E%3Cpath%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22M14%2012.5h4M14%2016h4%22/%3E%3C/svg%3E");--ico-col:#ff8a5c;}
+</style>
+<script>
+(function(){
+  var root=document.documentElement,KEY='mk_header_appearance_v1';
+  function apply(){
+    var s={};try{s=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(_){}
+    root.dataset.dockIcons=['m3','line','dither'].indexOf(s.dockIcons)>=0?s.dockIcons:'pixel';
+    var bars=['dark','dots','fade','grid','kapas','tors','signals','rezgis'];
+    root.dataset.dockBar=bars.indexOf(s.dockBar)>=0?s.dockBar:(s.dockBar==='amoled'?'dark':s.dockBar==='dither'?'dots':'default');
+    root.dataset.dockTint=['white','accent','muted'].indexOf(s.dockTint)>=0?s.dockTint:'color';
+  }
+  function addIcons(){
+    ['#nsToggleBtnParent','#bolusDocBtn','#monthCalDocBtn','#planotajsDockBtn','#statsDocBtn','#radioIdleBtn','#radioToggle'].forEach(function(sel){
+      var b=document.querySelector('#bottomBtnBar '+sel),px=b&&b.querySelector('.dock-px');
+      if(!px||(px.nextElementSibling&&px.nextElementSibling.classList.contains('dock-alt')))return;
+      var i=document.createElement('i');i.className='dock-alt';i.setAttribute('aria-hidden','true');px.after(i);
+    });
+    var bar=document.getElementById('bottomBtnBar');
+    if(bar&&!bar.querySelector(':scope > .dock-bg')){var bg=document.createElement('span');bg.className='dock-bg';bg.setAttribute('aria-hidden','true');bar.prepend(bg);}
+  }
+  apply();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addIcons,{once:true});else addIcons();
+  window.addEventListener('storage',function(e){if(e.key===KEY||e.key===null)apply();});
+})();
+</script>
 </body>
 </html>

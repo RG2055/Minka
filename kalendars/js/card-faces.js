@@ -5,7 +5,7 @@
   var M = window.MinkaCardFaceModel;
   var labels = { hours: 'Maiņas stundas', name: 'Vārds', initials: 'Iniciāļi', month: 'Stundas mēnesī', coffee: 'Kafija', fatigue: 'Nogurums', remaining: 'Maiņas laiks', emoji: 'Emoji', clock: 'Pulkstenis', moon: 'Saule / mēness' };
   var selectors = { hours: '.mk-mid-hours', name: '.mk-mid-name-wrap', initials: '.mk-mid-initials', month: '.mk-mid-month', coffee: '.mk-mid-coffee', fatigue: '.mk-mid-meta-fat', remaining: '.mk-mid-meta-time', emoji: '.mk-mid-meta-emoji', clock: '.mk-wf-clock', moon: '.mk-wf-moon' };
-  var titles = ['Klasika', 'Foto stikls', 'Loks', 'Moduļi', 'Winamp'];
+  var titles = ['Klasika', 'Foto stikls', 'Loks', 'Moduļi', 'Winamp', 'Dither'];
   var metals = [
     ['Sudrabs','#d7d9de'],['Dabiskais titāns','#b7afa0'],['Melnais titāns','#484a50'],['Rozā zelts','#d9b3a7'],
     ['Zelts','#c7ac7c'],['Slānekļa titāns','#71747a'],['Tuksneša titāns','#c4a98d'],['Baltais titāns','#e7e5de'],
@@ -264,7 +264,7 @@
       clearWinamp(card);
       var originalEmoji=card.querySelector('.mk-mid-bg-emoji');if(originalEmoji)originalEmoji.hidden=false;
       ['--wf-tint','--wf-metal','--wf-bg-x','--wf-bg-y','--wf-bg-zoom','--wf-name-chars','--wf-surname-chars','--wf-number-alpha'].forEach(function(p) { card.style.removeProperty(p); });
-      paintClock(); return;
+      paintClock(); if(window.MinkaDither&&window.MinkaDither.skin)window.MinkaDither.skin(card); return;
     }
     card.dataset.watchFace = config.face;
     applyCoffee(card,skin,config);
@@ -324,6 +324,8 @@
       else{el.style.removeProperty('--wf-tint');el.style.removeProperty('--mk-txt-color');}
     });
     if(config.face==='winamp')applyWinamp(card);else clearWinamp(card);
+    // Dither face (and the app-wide "dither images" option): the background is re-dithered off-thread-ish, once per image.
+    if(window.MinkaDither&&window.MinkaDither.skin)window.MinkaDither.skin(card);
     applyFullTint(card,skin,config);
     paintClock();
   }
@@ -507,6 +509,7 @@
     }
     showGroup(wfTab);
     panel.addEventListener('click',function(e){var b=e.target.closest('[data-wf-tab]');if(b)showGroup(b.dataset.wfTab);});
+
     // Pieskaroties elementam priekšskatījumā, uzreiz rāda tā iestatījumus.
     preview.addEventListener('pointerdown',function(e){if(e.target.closest&&e.target.closest('[data-wf-part]'))showGroup('parts');},true);
     function activate() {
@@ -521,6 +524,7 @@
     }
     function sync() {
       panel.classList.toggle('is-winamp',config.face==='winamp');
+      panel.classList.toggle('is-dither',config.face==='dither');
       panel.querySelectorAll('[data-face]').forEach(function(el){
         el.setAttribute('aria-pressed',String(!!options.get().face&&el.dataset.face===config.face));
         var look=M.preset(el.dataset.face,options.get().face?config:null);
@@ -565,6 +569,10 @@
       panel.querySelectorAll('[data-position]').forEach(function(el){var i={x:0,y:1,size:2}[el.dataset.position];if(i===2)el.max=selectedPart==='hours'?300:170;el.value=config.parts[selectedPart][i];el.nextElementSibling.textContent=el.value+'%';});
       panel.querySelectorAll('[data-image]').forEach(function(el){el.value=config[el.dataset.image];el.nextElementSibling.textContent=el.value+'%';});
       preview.querySelectorAll('[data-wf-part]').forEach(function(el){el.classList.toggle('wf-selected',el.dataset.wfPart===selectedPart);el.tabIndex=0;el.setAttribute('aria-label',labels[el.dataset.wfPart]);});
+      // Corner handle: resize the selected element with the mouse.
+      var oldHandle=preview.querySelector('.wf-resize'),selEl=preview.querySelector('[data-wf-part="'+selectedPart+'"]');
+      if(oldHandle&&oldHandle.parentElement!==selEl)oldHandle.remove();
+      if(selEl&&!selEl.hidden&&config.face!=='winamp'&&!selEl.querySelector(':scope > .wf-resize')){var hd=document.createElement('span');hd.className='wf-resize';hd.setAttribute('aria-hidden','true');hd.title='Velc, lai mainītu izmēru';selEl.append(hd);}
       preview.closest('.mk-skin-preview-list').setAttribute('aria-hidden','false');
     }
     // Keep the whole element inside the face, including its scaled bounds.
@@ -629,18 +637,51 @@
     preview.addEventListener('pointerdown',function(e){
       if(!preview.classList.contains('wf-editing')||e.button!==0||config.face==='winamp')return;
       var el=e.target.closest('[data-wf-part]');if(!el)return;
-      e.preventDefault();e.stopPropagation();selectedPart=el.dataset.wfPart;sync();
-      var r=preview.getBoundingClientRect();
-      drag={id:e.pointerId,x:e.clientX,y:e.clientY,px:config.parts[selectedPart][0],py:config.parts[selectedPart][1],r:r};
-      preview.setPointerCapture(e.pointerId);
+      e.preventDefault();e.stopPropagation();
+      var resizing=!!e.target.closest('.wf-resize');
+      selectedPart=el.dataset.wfPart;sync();
+      var r=preview.getBoundingClientRect(),b=el.getBoundingClientRect(),cx=b.left+b.width/2,cy=b.top+b.height/2;
+      drag={id:e.pointerId,x:e.clientX,y:e.clientY,px:config.parts[selectedPart][0],py:config.parts[selectedPart][1],r:r,
+        resize:resizing,size:config.parts[selectedPart][2],cx:cx,cy:cy,d0:Math.max(8,Math.hypot(e.clientX-cx,e.clientY-cy))};
+      try{preview.setPointerCapture(e.pointerId);}catch(_e){}
     });
+    // Alignment guides while dragging: the card centre (amber) and the centres
+    // of the other visible elements (blue). Within SNAP % the part locks on.
+    var SNAP=2.5;
+    function guideLayer(){
+      var g=preview.querySelector(':scope > .wf-guides');
+      if(!g){g=document.createElement('div');g.className='wf-guides';g.setAttribute('aria-hidden','true');g.innerHTML='<i class="wf-g-cx"></i><i class="wf-g-cy"></i><i class="wf-g-v"></i><i class="wf-g-h"></i>';preview.append(g);}
+      return g;
+    }
+    function snap(nx,ny){
+      var xs=[[50,'center']],ys=[[50,'center']];
+      M.parts.forEach(function(key){var p=config.parts[key];if(key===selectedPart||!p||!p[3])return;var el=preview.querySelector('[data-wf-part="'+key+'"]');if(!el||el.hidden)return;xs.push([p[0],'part']);ys.push([p[1],'part']);});
+      var bx=null,by=null;
+      xs.forEach(function(t){var d=Math.abs(t[0]-nx);if(d<=SNAP&&(!bx||d<bx.d))bx={v:t[0],k:t[1],d:d};});
+      ys.forEach(function(t){var d=Math.abs(t[0]-ny);if(d<=SNAP&&(!by||d<by.d))by={v:t[0],k:t[1],d:d};});
+      var g=guideLayer();g.classList.add('is-on');
+      var v=g.querySelector('.wf-g-v'),h=g.querySelector('.wf-g-h');
+      v.hidden=!bx;h.hidden=!by;
+      if(bx){v.style.left=bx.v+'%';v.dataset.kind=bx.k;nx=bx.v;}
+      if(by){h.style.top=by.v+'%';h.dataset.kind=by.k;ny=by.v;}
+      return [nx,ny];
+    }
     preview.addEventListener('pointermove',function(e){
       if(!drag||e.pointerId!==drag.id)return;
-      config.parts[selectedPart][0]=Math.max(5,Math.min(95,Math.round(drag.px+(e.clientX-drag.x)/drag.r.width*100)));
-      config.parts[selectedPart][1]=Math.max(5,Math.min(95,Math.round(drag.py+(e.clientY-drag.y)/drag.r.height*100)));
+      if(drag.resize){
+        // size follows the distance from the element's centre
+        var max=selectedPart==='hours'?300:170,d=Math.hypot(e.clientX-drag.cx,e.clientY-drag.cy);
+        config.parts[selectedPart][2]=Math.max(50,Math.min(max,Math.round(drag.size*d/drag.d0)));
+        apply(preview,Object.assign({},options.get(),{face:config}));sync();return;
+      }
+      var nx=Math.max(5,Math.min(95,drag.px+(e.clientX-drag.x)/drag.r.width*100));
+      var ny=Math.max(5,Math.min(95,drag.py+(e.clientY-drag.y)/drag.r.height*100));
+      var s=snap(nx,ny);
+      config.parts[selectedPart][0]=Math.round(s[0]);
+      config.parts[selectedPart][1]=Math.round(s[1]);
       constrainParts(false,true);apply(preview,Object.assign({},options.get(),{face:config}));sync();
     });
-    function endDrag(e){if(!drag||e.pointerId!==drag.id)return;drag=null;save(true);}
+    function endDrag(e){if(!drag||e.pointerId!==drag.id)return;drag=null;var g=preview.querySelector(':scope > .wf-guides');if(g)g.remove();save(true);}
     preview.addEventListener('pointerup',endDrag);preview.addEventListener('pointercancel',endDrag);preview.addEventListener('lostpointercapture',endDrag);
     preview.addEventListener('click',function(e){if(preview.classList.contains('wf-editing')){e.preventDefault();e.stopPropagation();}},true);
     preview.addEventListener('keydown',function(e){

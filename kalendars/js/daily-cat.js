@@ -794,6 +794,8 @@
   function selectPet(index, manual) {
     if (!catalog.length || index < 0) return;
     selectedIndex = ((index % catalog.length) + catalog.length) % catalog.length;
+    // Others (the header's running-cat progress line) follow the pet of the day.
+    try { var chosen = catalog[selectedIndex]; if (chosen) window.dispatchEvent(new CustomEvent('minka:daily-pet', { detail: { spritesheetUrl: chosen.spritesheetUrl } })); } catch (_e) {}
     if (manual) safeWrite(CHOICE_KEY, { dayKey: petDayKey(currentDate()), id: catalog[selectedIndex].id });
     pickerPage = Math.floor(selectedIndex / PAGE_SIZE);
     updatePet();
@@ -1063,7 +1065,7 @@
       exitNightSplit: exitNightSplit,
       getCurrent: function () {
         var pet = catalog[selectedIndex];
-        return pet ? { index: selectedIndex, id: pet.id, displayName: pet.displayName } : null;
+        return pet ? { index: selectedIndex, id: pet.id, displayName: pet.displayName, spritesheetUrl: pet.spritesheetUrl } : null;
       },
       getAutomatic: function () {
         var previewIndex = indexForDutyDay(rolloverDutyDay);

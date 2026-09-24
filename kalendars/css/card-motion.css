@@ -1,0 +1,72 @@
+/* Animated card decorations (card-addons.js, group "Kustīgi").
+   Transform/opacity keyframes only, so the compositor runs them without layout
+   or paint; at most 8 particles per card; no filters or blur (glows are flat
+   radial gradients). Colour follows the card: face tint, else the number colour. */
+.mk-card-motion {
+  position:absolute;inset:0;z-index:4;pointer-events:none;overflow:hidden;border-radius:inherit;
+  container-type:size;--mk-motion-scale:1;
+  color:var(--wf-tint,rgb(var(--mk-num-color,236,234,228)));
+}
+.mk-card-motion > i {
+  position:absolute;left:var(--x);top:var(--y);font-style:normal;line-height:1;
+  font-size:calc(9cqw * var(--mk-motion-scale));
+  animation:var(--anim) var(--t,7s) var(--d,0s) infinite var(--ease,ease-in-out);
+}
+
+/* twinkle in place */
+.mk-card-motion[data-motion="sparkles"] > i {--anim:mk-twinkle;--t:3.6s;font-size:calc(7cqw * var(--mk-motion-scale));}
+@keyframes mk-twinkle {0%,100%{opacity:0;transform:scale(.35) rotate(0)}45%{opacity:.95;transform:scale(1.1) rotate(45deg)}70%{opacity:.35;transform:scale(.7) rotate(80deg)}}
+
+/* rise from the bottom */
+.mk-card-motion:is([data-motion="hearts"],[data-motion="bubbles"]) > i {top:auto;bottom:-14%;--anim:mk-rise;--ease:linear;}
+.mk-card-motion[data-motion="hearts"] {color:#ff6b8b;}
+.mk-card-motion[data-motion="bubbles"] > i {width:calc(6cqw * var(--mk-motion-scale));height:calc(6cqw * var(--mk-motion-scale));border-radius:50%;
+  background:radial-gradient(circle at 32% 30%,rgba(255,255,255,.9) 0 12%,rgba(255,255,255,.12) 38%,rgba(255,255,255,.04) 62%,transparent 64%);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.45);}
+@keyframes mk-rise {0%{opacity:0;transform:translate(0,0) scale(.7)}12%{opacity:.9}50%{transform:translate(4cqw,-60cqh) scale(1)}88%{opacity:.8}100%{opacity:0;transform:translate(-3cqw,-125cqh) scale(1.05)}}
+
+/* fall and sway */
+.mk-card-motion:is([data-motion="petals"],[data-motion="snow"]) > i {top:-14%;--anim:mk-fall;--ease:linear;}
+.mk-card-motion[data-motion="petals"] {color:#ffb7c9;}
+.mk-card-motion[data-motion="snow"] {color:#eef6ff;}
+.mk-card-motion[data-motion="snow"] > i {font-size:calc(6cqw * var(--mk-motion-scale));}
+@keyframes mk-fall {0%{opacity:0;transform:translate(0,0) rotate(0)}10%{opacity:.95}30%{transform:translate(6cqw,38cqh) rotate(90deg)}60%{transform:translate(-5cqw,76cqh) rotate(200deg)}90%{opacity:.85}100%{opacity:0;transform:translate(3cqw,125cqh) rotate(300deg)}}
+
+/* fireflies: soft lights wandering */
+.mk-card-motion[data-motion="fireflies"] > i {--anim:mk-wander;width:calc(4.5cqw * var(--mk-motion-scale));height:calc(4.5cqw * var(--mk-motion-scale));border-radius:50%;
+  background:radial-gradient(circle,#fff6c8 0 18%,rgba(245,215,110,.55) 36%,rgba(245,215,110,0) 70%);}
+@keyframes mk-wander {0%,100%{opacity:.15;transform:translate(0,0)}25%{opacity:1;transform:translate(7cqw,-6cqh)}50%{opacity:.3;transform:translate(-4cqw,-11cqh)}75%{opacity:.9;transform:translate(-8cqw,3cqh)}}
+
+/* CT scan: a light band sweeping down and back */
+.mk-card-motion[data-motion="scan"] .mk-scan-line {position:absolute;left:0;right:0;top:0;height:calc(14cqh * var(--mk-motion-scale));
+  background:linear-gradient(180deg,rgba(100,210,255,0),rgba(100,210,255,.16) 70%,rgba(200,240,255,.85) 96%,rgba(100,210,255,0));
+  animation:mk-scan 3.4s ease-in-out infinite alternate;}
+@keyframes mk-scan {from{transform:translateY(-14cqh)}to{transform:translateY(100cqh)}}
+
+/* ECG: window slides right, trace slides left by the same amount → the still trace is revealed, then fades */
+.mk-card-motion[data-motion="ekg"] .mk-ekg {position:absolute;left:0;right:0;bottom:12%;height:calc(26cqh * var(--mk-motion-scale));overflow:hidden;animation:mk-ekg-fade 2.6s linear infinite;}
+.mk-card-motion[data-motion="ekg"] .mk-ekg-win {position:absolute;inset:0;overflow:hidden;animation:mk-ekg-win 2.6s linear infinite;}
+.mk-card-motion[data-motion="ekg"] .mk-ekg-in {position:absolute;inset:0;animation:mk-ekg-in 2.6s linear infinite;}
+.mk-card-motion[data-motion="ekg"] svg {position:absolute;inset:0;width:100%;height:100%;overflow:visible;}
+.mk-card-motion[data-motion="ekg"] polyline {fill:none;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke;}
+.mk-card-motion[data-motion="ekg"] .mk-ekg-line {stroke:#1fe091;stroke-width:2.2;}
+.mk-card-motion[data-motion="ekg"] .mk-ekg-glow {stroke:rgba(31,224,145,.25);stroke-width:7;}
+@keyframes mk-ekg-win {0%{transform:translateX(-100%)}72%,100%{transform:translateX(0)}}
+@keyframes mk-ekg-in {0%{transform:translateX(100%)}72%,100%{transform:translateX(0)}}
+@keyframes mk-ekg-fade {0%,78%{opacity:1}100%{opacity:0}}
+
+/* off-screen cards pause (set by an IntersectionObserver in card-addons.js) */
+.mk-card-motion.is-offscreen > i,.mk-card-motion.is-offscreen .mk-scan-line,.mk-card-motion.is-offscreen :is(.mk-ekg,.mk-ekg-win,.mk-ekg-in) {animation-play-state:paused !important;}
+
+/* picker tile: a live mini demo on a dark card */
+.mk-addon-choice.is-motion > .mk-motion-demo {position:relative !important;display:block !important;width:100% !important;height:auto !important;aspect-ratio:4 / 3;
+  border-radius:9px;overflow:hidden !important;
+  background:linear-gradient(rgba(6,10,14,.35),rgba(6,10,14,.35)),var(--demo-img,radial-gradient(circle at 30% 25%,#26303d,#0d1117 70%)) center / cover no-repeat !important;}
+.mk-addon-choice.is-motion > .mk-motion-demo::after {display:none !important;}
+.mk-addon-choice.is-motion > .mk-motion-demo > .mk-card-motion {position:absolute;inset:0;--mk-motion-scale:1.1;}
+.mk-addon-section.is-motion :is(.mk-addon-side,.mk-addon-reset-position,.mk-addon-drag-hint) {display:none !important;}
+
+@media (prefers-reduced-motion:reduce) {
+  .mk-card-motion > i,.mk-card-motion .mk-scan-line,.mk-card-motion :is(.mk-ekg,.mk-ekg-win,.mk-ekg-in) {animation:none !important;}
+  .mk-card-motion > i {opacity:.7;}
+}
