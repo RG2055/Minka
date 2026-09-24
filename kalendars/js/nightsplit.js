@@ -1277,103 +1277,7 @@
       return tip;
     }catch(_e){ return null; }
   }
-  function miniClock(slots){
-    var slotDataEsc = '[]';
-    try{
-      slotDataEsc = JSON.stringify((slots||[]).map(function(s){
-        return {
-          nm:String((s.w&&s.w.name)||'').split(/\s+/)[0]||'â€”', fnm:String((s.w&&s.w.name)||'')||'â€”',
-          ss:s.ss, es:s.es, h:Math.floor((s.d||0)/60), m:(s.d||0)%60,
-          fs:(s.w&&s.w.fs)||0, accent:getCol((s.w&&s.w.name)||'').accent,
-          s:Math.max(0,s.s||0), e:Math.max(0,s.e||0)
-        };
-      }));
-      slotDataEsc = escHtml(slotDataEsc);
-    }catch(_e){}
-    var cx=48, cy=48, r=43;
-    function polar(aDeg, rr){ var rad=(aDeg-90)*Math.PI/180; return {x:cx+Math.cos(rad)*(rr||r), y:cy+Math.sin(rad)*(rr||r)}; }
-    function mod(n,m){ return ((n % m) + m) % m; }
-    // Draw segments on a real 12h clock ring (not fixed 00:00/240Â° timeline)
-    function arcPathAbs(absStartMin, absEndMin){
-      var dur = Math.max(0, (absEndMin||0) - (absStartMin||0));
-      if(dur <= 0) return '';
-      var sa = mod(absStartMin, 720) * 0.5; // 720 min => 360Â°
-      var ea = mod(absEndMin,   720) * 0.5;
-      if(ea <= sa && dur > 0) ea += 360; // wrap across 12 o'clock
-      var rawSpan = ea - sa;
-      var pad = Math.min(1.1, Math.max(0.15, rawSpan * 0.08));
-      var s = sa + pad, e = ea - pad;
-      if(e <= s){ s = sa; e = ea; if(e <= s) return ''; }
-      var p1=polar(s,r), p2=polar(e,r), large=((e-s)>180)?1:0;
-      return 'M '+p1.x.toFixed(2)+' '+p1.y.toFixed(2)+' A '+r+' '+r+' 0 '+large+' 1 '+p2.x.toFixed(2)+' '+p2.y.toFixed(2);
-    }
-    var segs='', hits='', lbls='';
-    (slots||[]).forEach(function(s,i){
-      var st = Number(s && s.s), en = Number(s && s.e);
-      if(!isFinite(st) || !isFinite(en) || en <= st) return;
-      var d=arcPathAbs(st,en); if(!d) return;
-      var col=getCol((s.w&&s.w.name)||'').accent || ['#66d9ff','#55aaf5','#ffae3d','#63f7b7'][i%4];
-      var nm=String((s.w&&s.w.name)||'').split(/\s+/)[0]||'â€”';
-      var tm=String((s.ss||'')+'â€“'+(s.es||''));
-      var safeNm=escHtml(nm), safeTm=escHtml(tm);
-      segs += '<path class="nsh-ringseg" d="'+d+'" stroke="'+col+'"></path>';
-      hits += '<path class="nsh-hitseg nscw-arc-hit" data-wi="'+i+'" data-name="'+safeNm+'" data-time="'+safeTm+'" d="'+d+'"><title>'+safeNm+' '+safeTm+'</title></path>';
-      try{
-        var saMid = mod(st, 720) * 0.5;
-        var eaMid = mod(en, 720) * 0.5;
-        if(eaMid <= saMid) eaMid += 360;
-        var ma = (saMid + eaMid) / 2;
-        var lp = polar(ma, r + 6.5);
-        var initials = (String((s.w&&s.w.name)||'').trim().split(/\s+/).slice(0,2).map(function(w){return (w||'').charAt(0).toUpperCase();}).join('') || nm.slice(0,2).toUpperCase());
-        if(false) lbls += '<g class="nsh-arc-label" transform="translate('+lp.x.toFixed(2)+' '+lp.y.toFixed(2)+')">'
-          + '<circle r="6.8" fill="rgba(6,10,20,.78)" stroke="'+col+'" stroke-width="1.1"></circle>'
-          + '<text text-anchor="middle" dominant-baseline="central" y="0.6" fill="#fff">'+escHtml(initials)+'</text>'
-          + '</g>';
-      }catch(_e){}
-    });
-    var ticks=''; for(var i=0;i<60;i++){ ticks += '<i class="nsh-tick'+(i%5===0?' major':'')+'" style="--a:'+(i*6)+'deg"></i>'; }
-    var html=''
-      +'<div class="ns-clock-wrap minka-orb-mini" data-slots="'+slotDataEsc+'">'
-      +'<style>.minka-orb-mini{position:relative;display:inline-flex;align-items:center;justify-content:center;width:96px;height:96px}.minka-orb-mini .nsh-shell{position:relative;width:96px;height:96px;border-radius:50%}.minka-orb-mini .nsh-energy{position:absolute;inset:0;border-radius:50%;overflow:hidden;background:#080a12}.minka-orb-mini .nsh-plasma{position:absolute;border-radius:50%;filter:blur(10px);opacity:.22;animation:nshFloat 13s ease-in-out infinite alternate}.minka-orb-mini .p1{width:44px;height:44px;background:#55aaf5;left:-4px;top:4px}.minka-orb-mini .p2{width:38px;height:38px;background:#66d9ff;right:-4px;bottom:6px;animation-duration:10s}.minka-orb-mini .p3{width:34px;height:34px;background:#63f7b7;left:24px;bottom:-5px;animation-duration:16s}@keyframes nshFloat{to{transform:translate(10px,7px) scale(1.2)}}.minka-orb-mini .nscw-outer{position:absolute;inset:0;width:96px;height:96px;transform:scale(1);outline:none!important;-webkit-tap-highlight-color:transparent;transform-origin:center center;background:none!important;border:none!important;box-shadow:none!important;border-radius:0!important;cursor:default!important;transition:transform .18s ease, filter .18s ease!important;overflow:visible!important;z-index:5}.minka-orb-mini .nsh-core,.minka-orb-mini .nsh-reflect,.minka-orb-mini .nsh-face{pointer-events:none}.minka-orb-mini .nsh-core{z-index:2}.minka-orb-mini .nsh-reflect{z-index:3}.minka-orb-mini .nsh-face{z-index:4}.minka-orb-mini:hover .nscw-outer{transform:scale(1.08)!important;box-shadow:none!important;filter:drop-shadow(0 0 8px rgba(102,217,255,.18))}@media (hover:none),(pointer:coarse){.minka-orb-mini:hover .nscw-outer{transform:scale(1)!important;filter:none!important}}.minka-orb-mini .nscw-outer:focus,.minka-orb-mini .nscw-outer:focus-visible,.minka-orb-mini .nsh-hitseg:focus,.minka-orb-mini .nsh-hitseg:focus-visible{outline:none!important;box-shadow:none!important}.minka-orb-mini svg *::selection{background:transparent}.minka-orb-mini .nsh-ringtrack{fill:none;stroke:rgba(255,255,255,.07);stroke-width:7}.minka-orb-mini .nsh-ringseg{fill:none;stroke-width:6;stroke-linecap:round;filter:drop-shadow(0 0 4px rgba(255,255,255,.12))}.minka-orb-mini .nsh-hitseg{fill:none;stroke:rgba(255,255,255,.02);stroke-width:22;stroke-linecap:round;pointer-events:stroke;cursor:pointer}.minka-orb-mini .nsh-arc-label{pointer-events:none}.minka-orb-mini .nsh-arc-label text{font:700 4.6px/1 Inter,system-ui,sans-serif;letter-spacing:.2px;paint-order:stroke;stroke:rgba(3,5,10,.7);stroke-width:.7px}.minka-orb-mini .nsh-core{position:absolute;inset:6px;border-radius:50%;background:rgba(5,8,16,.38);backdrop-filter:blur(6px) saturate(130%);border:1px solid rgba(255,255,255,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 8px 18px rgba(0,0,0,.35)}.minka-orb-mini .nsh-reflect{position:absolute;inset:5px;border-radius:50%;background:radial-gradient(circle at 28% 22%, rgba(255,255,255,.12), transparent 45%);pointer-events:none}.minka-orb-mini .nsh-face{position:absolute;inset:6px}.minka-orb-mini .nsh-ticks{position:absolute;inset:0}.minka-orb-mini .nsh-tick{position:absolute;left:50%;top:50%;width:1px;height:100%;transform-origin:50% 50%;transform:translate(-50%,-50%) rotate(var(--a))}.minka-orb-mini .nsh-tick::before{content:"";display:block;margin:6px auto 0;border-radius:2px;width:1px;height:3px;background:rgba(255,255,255,.24)}.minka-orb-mini .nsh-tick.major::before{width:2px;height:5px;background:rgba(255,255,255,.62)}.minka-orb-mini .nsh-num{position:absolute;color:rgba(255,255,255,.92);font:700 7px/1 Inter,system-ui,sans-serif;text-shadow:0 1px 6px rgba(0,0,0,.5)}.minka-orb-mini .n12{top:5px;left:50%;transform:translateX(-50%)}.minka-orb-mini .n3{right:6px;top:50%;transform:translateY(-50%)}.minka-orb-mini .n6{bottom:5px;left:50%;transform:translateX(-50%)}.minka-orb-mini .n9{left:6px;top:50%;transform:translateY(-50%)}.minka-orb-mini .nsh-hw{position:absolute;inset:0;transform-origin:50% 50%}.minka-orb-mini .nsh-hand{position:absolute;left:50%;transform:translateX(-50%);border-radius:99px}.minka-orb-mini .hour{top:22px;width:3px;height:18px;background:linear-gradient(#fff,#dfe8ff)}.minka-orb-mini .min{top:13px;width:2px;height:27px;background:linear-gradient(#fff,#c7d6ff)}.minka-orb-mini .sec{top:10px;width:1px;height:31px;background:#7ef89a;box-shadow:0 0 6px rgba(126,248,154,.6)}.minka-orb-mini .nsh-pin{position:absolute;left:50%;top:50%;width:7px;height:7px;transform:translate(-50%,-50%);border-radius:50%;background:#fff;border:1.5px solid #7ef89a;box-shadow:0 0 7px rgba(126,248,154,.3);z-index:2}.minka-orb-mini .nsh-catPivot{position:absolute;inset:0;pointer-events:none;z-index:0}.minka-orb-mini .nsh-cat{position:absolute;left:50%;top:50%;width:18px;height:18px;transform:translate(-50%,-50%) translateY(0);transition:transform .65s cubic-bezier(.34,1.56,.64,1),opacity .2s;opacity:.95}.minka-orb-mini .nsh-ear{position:absolute;top:2px;width:5px;height:6px;background:#0f121d;clip-path:polygon(50% 0,0 100%,100% 100%);border:1px solid rgba(255,255,255,.08)}.minka-orb-mini .nsh-ear.l{left:3px;transform:rotate(-14deg)}.minka-orb-mini .nsh-ear.r{right:3px;transform:rotate(14deg)}.minka-orb-mini .nsh-facecat{position:absolute;left:50%;top:5px;transform:translateX(-50%);width:12px;height:9px;background:#0f121d;border:1px solid rgba(255,255,255,.08);border-radius:6px 6px 5px 5px}.minka-orb-mini .nsh-eye{position:absolute;top:2px;width:2px;height:2px;border-radius:50%;background:#7ef89a;box-shadow:0 0 4px rgba(126,248,154,.8)}.minka-orb-mini .nsh-eye.l{left:2px}.minka-orb-mini .nsh-eye.r{right:2px}.minka-orb-mini .nsh-smirk{position:absolute;left:50%;bottom:1px;transform:translateX(-50%);width:4px;height:2px;border-bottom:1px solid #7ef89a;border-right:1px solid #7ef89a;border-radius:0 0 4px 0;opacity:.95}</style>'
-      +'<div class="nsh-shell" title="Nakts sadalÄ«juma pulkstenis"><div class="nsh-catPivot"><div class="nsh-cat"><div class="nsh-ear l"></div><div class="nsh-ear r"></div><div class="nsh-facecat"><div class="nsh-eye l"></div><div class="nsh-eye r"></div><div class="nsh-smirk"></div></div></div></div><div class="nsh-energy"><div class="nsh-plasma p1"></div><div class="nsh-plasma p2"></div><div class="nsh-plasma p3"></div></div><svg viewBox="0 0 96 96" class="nscw-outer" aria-label="Nakts sadalÄ«juma pulkstenis" tabindex="-1" focusable="false"><circle cx="48" cy="48" r="43" class="nsh-ringtrack"/>'+segs+hits+lbls+'</svg><div class="nsh-core"></div><div class="nsh-reflect"></div><div class="nsh-face"><div class="nsh-ticks">'+ticks+'</div><div class="nsh-num n12">12</div><div class="nsh-num n3">3</div><div class="nsh-num n6">6</div><div class="nsh-num n9">9</div><div class="nsh-hw nsh-h"><div class="nsh-hand hour"></div></div><div class="nsh-hw nsh-m"><div class="nsh-hand min"></div></div><div class="nsh-hw nsh-s"><div class="nsh-hand sec"></div></div><div class="nsh-pin"></div></div></div><div class="ns-clock-tooltip" style="display:none"></div><div class="ns-arc-tip" style="display:none"></div></div>';
-    return html;
-  }
 
-  function initMiniOrbClock(clockWrap){
-    if(!clockWrap || clockWrap.__minkaOrbInit) return;
-    clockWrap.__minkaOrbInit = 1;
-    try{ clockWrap.querySelectorAll('.nsh-hitseg').forEach(function(p){ p.style.pointerEvents='stroke'; p.style.cursor='pointer'; }); }catch(e){}
-    var H=clockWrap.querySelector('.nsh-h'), M=clockWrap.querySelector('.nsh-m'), S=clockWrap.querySelector('.nsh-s');
-    var catPivot=clockWrap.querySelector('.nsh-catPivot'), cat=clockWrap.querySelector('.nsh-cat');
-    var lastPaint=0;
-    var lowMotion=!!(document.documentElement.classList.contains('mk-low-spec') ||
-      (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches));
-    function loop(){
-      if(!document.body.contains(clockWrap)) return;
-      if(!document.hidden && performance.now()-lastPaint>=250){
-        lastPaint=performance.now();
-        var n=new Date(), ms=n.getMilliseconds(), ss=n.getSeconds()+ms/1000, mm=n.getMinutes()+ss/60, hh=(n.getHours()%12)+mm/60;
-        if(S) S.style.transform='rotate('+(ss*6)+'deg)';
-        if(M) M.style.transform='rotate('+(mm*6)+'deg)';
-        if(H) H.style.transform='rotate('+(hh*30)+'deg)';
-      }
-      // Hands repaint at 4Hz (250ms gate above) — schedule at that rate
-      // instead of waking on every 60Hz frame.
-      if(document.hidden || lowMotion) setTimeout(function(){ requestAnimationFrame(loop); }, 1000);
-      else setTimeout(function(){ requestAnimationFrame(loop); }, 250);
-    } requestAnimationFrame(loop);
-    if(catPivot && cat && !lowMotion){
-      (function peek(){
-        if(!document.body.contains(clockWrap)) return;
-        if(document.hidden){ setTimeout(peek,5000); return; }
-        var ang=160+Math.random()*40;
-        catPivot.style.transform='rotate('+ang+'deg)';
-        setTimeout(function(){ if(document.body.contains(clockWrap)) cat.style.transform='translate(-50%,-50%) translateY(-40px)'; },60);
-        setTimeout(function(){ if(document.body.contains(clockWrap)) cat.style.transform='translate(-50%,-50%) translateY(0)'; },1100+Math.random()*700);
-        setTimeout(peek,3600+Math.random()*3800);
-      })();
-    }
-  }
 
 
 
@@ -1512,24 +1416,6 @@
     return res.posOf.map(function(pi){ return pi===null?'':names[pi]; });
   }
 
-  function getStatusSlots(slots){
-    var active=null,next=null,after=null;
-    var today=(window.__activeDateStr && window.__todayDateStr && window.__activeDateStr===window.__todayDateStr);
-    if(!slots||!slots.length) return {active:null,next:null,after:null};
-    if(!today){
-      return {active:null,next:slots[0]||null,after:slots[1]||null};
-    }
-    var now = new Date();
-    var cur = now.getHours()*60 + now.getMinutes();
-    if(st && typeof st.sh==='number' && st.sh >= 20 && cur < Math.round(st.sh*60)) cur += 1440;
-    for(var i=0;i<slots.length;i++){
-      var s=slots[i];
-      if(cur >= s.s && cur < s.e){ active=s; next=slots[i+1]||null; after=slots[i+2]||null; break; }
-      if(cur < s.s){ if(!next) next=s; else if(!after) { after=s; break; } }
-    }
-    if(!active && !next){ next=slots[0]||null; after=slots[1]||null; }
-    return {active:active,next:next,after:after};
-  }
 
   function getFlowLiveState(slots){
     if(!slots || !slots.length) return null;
@@ -1656,41 +1542,7 @@
     }catch(e){}
   }
 
-  function buildFlowBar(slots){
-    if(!slots||!slots.length) return '';
-    var tot=Math.max(1, slots[slots.length-1].e-slots[0].s);
-    var labels='<div class="ns-flow-labels">';
-    labels += '<span>'+escHtml(slots[0].ss)+'</span>';
-    for(var i=0;i<slots.length;i++){ labels += '<span>'+escHtml(slots[i].es)+'</span>'; }
-    labels += '</div>';
-    var segs=slots.map(function(s){
-      var c=getCol(s.w.name);
-      var rt=slotRealtime(s);
-      var w=((s.d/tot)*100).toFixed(3);
-      var nm=escHtml(String(s.w.name||'').split(/\s+/)[0]||'');
-      return '<div class="ns-flow-seg'+(rt.active?' is-active':'')+'" style="width:'+w+'%;--seg:'+timelineColour(c)+'">'
-        +'<div class="ns-flow-fill" style="background:'+timelineColour(c)+'"></div>'
-        +(nm?'<span class="ns-flow-name">'+nm+'</span>':'')
-        +(rt.active?'<div class="ns-flow-pulse" style="left:'+rt.pct.toFixed(1)+'%"></div>':'')
-        +'</div>';
-    }).join('');
-    return '<div class="ns-flow-wrap"><div class="ns-flow-track">'+segs+'</div>'+labels+'</div>';
-  }
 
-  function stageCard(label, slot, kind){
-    if(!slot) return '<div class="ns-stage ns-stage-'+kind+' is-empty"><div class="ns-stage-k">'+label+'</div><div class="ns-stage-empty">â€”</div></div>';
-    var c=getCol(slot.w.name);
-    var nm=escHtml(String(slot.w.name||'').split(/\s+/)[0]||'â€”');
-    var rt=slotRealtime(slot);
-    var dur=Math.floor(slot.d/60)+'h'+(((slot.d%60))?String(slot.d%60).padStart(2,'0')+'m':'');
-    return '<div class="ns-stage ns-stage-'+kind+(rt.active?' is-live':'')+'" style="--stage:'+c.accent+'">'
-      +'<div class="ns-stage-k">'+label+'</div>'
-      +'<div class="ns-stage-name">'+nm+'</div>'
-      +'<div class="ns-stage-time">'+escHtml(slot.ss)+' â€“ '+escHtml(slot.es)+'</div>'
-      +'<div class="ns-stage-meta"><span>'+dur+'</span><span>âš¡'+(slot.w.fs||0)+'%</span></div>'
-      +(rt.active?'<div class="ns-stage-progress"><span style="width:'+rt.pct.toFixed(1)+'%;background:'+c.accent+'"></span></div>':'')
-      +'</div>';
-  }
 
   function roomInitials(name){
     var parts=String(name||'').trim().split(/\s+/).filter(Boolean);
@@ -2290,30 +2142,6 @@
     }
 
     // Compute fatigue sparkline path data scaled to SVG coordinates
-    function _sparkPaths(workerName, uid, x0, y0, sw, sh){
-      if(!window.__fatigue) return null;
-      var hist=window.__fatigue.gatherWorkerHistory(workerName);
-      if(!hist||hist.length<3) return null;
-      var today=new Date(), scores=[];
-      for(var i=13;i>=0;i--){
-        var d=new Date(today); d.setDate(d.getDate()-i);
-        d.setHours(8,0,0,0);
-        var sc=window.__fatigue.scoreAt(workerName,d);
-        scores.push(Math.max(0,Math.min(100,sc)));
-      }
-      if(scores.length<2) return null;
-      var pad=2, mn=Math.min.apply(null,scores), mx=Math.max.apply(null,scores);
-      if(mx===mn) mx=mn+1;
-      var xp=function(i){return x0+pad+(i/(scores.length-1))*(sw-pad*2);};
-      var yp=function(s){return y0+sh-pad-(s-mn)/(mx-mn)*(sh-pad*2);};
-      var path='M '+xp(0).toFixed(1)+','+yp(scores[0]).toFixed(1);
-      for(var j=1;j<scores.length;j++){
-        var px=xp(j-1),cx=(px+xp(j))/2;
-        path+=' C '+cx.toFixed(1)+','+yp(scores[j-1]).toFixed(1)+' '+cx.toFixed(1)+','+yp(scores[j]).toFixed(1)+' '+xp(j).toFixed(1)+','+yp(scores[j]).toFixed(1);
-      }
-      var area=path+' L '+xp(scores.length-1).toFixed(1)+','+(y0+sh)+' L '+xp(0).toFixed(1)+','+(y0+sh)+' Z';
-      return {line:path, area:area};
-    }
 
     function _circadianValue(kind, n){
       n=Math.max(0,Math.min(1,n));
@@ -2540,21 +2368,6 @@
         +'</div>';
     }
 
-    function _rhythmOverlaySvg(slot, axisStart, axisEnd, idx){
-      var u='nsco'+idx;
-      // "none", not "slice": the curves sit in the bottom band, and slice
-      // cropped that band off on wide cards (the card is wider than 280:182).
-      // Strokes are non-scaling, so stretching keeps them 2 px thin.
-      function wash(id,col){
-        return '<linearGradient id="'+u+'-'+id+'" x1="0%" y1="0%" x2="0%" y2="100%">'
-          +'<stop offset="0%" stop-color="'+col+'" stop-opacity="0.22"/>'
-          +'<stop offset="100%" stop-color="'+col+'" stop-opacity="0"/></linearGradient>';
-      }
-      return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 182" width="100%" height="100%" preserveAspectRatio="none">'
-        +'<defs>'+wash('melFill','#6fb6f5')+wash('wakeFill','#7fd9aa')+wash('corFill','#ecd08a')+'</defs>'
-        +_circadianCardPaths(slot,axisStart,axisEnd,u)
-        +'</svg>';
-    }
 
     // Build full glowing cards
     var cards=st.sl.map(function(s,i){
@@ -3174,34 +2987,6 @@
     document.addEventListener('visibilitychange',refreshFlowLiveMarker);
   }
 
-  function _cloneSlotsWithNewEndKeepStarts(oldSlots, ei){
-    if(!oldSlots||!oldSlots.length) return [];
-    var eo=END[ei]||END[0];
-    var sh=oldSlots[0].s;
-    var em=eo.h*60+eo.m;
-    if(sh>=20*60) em+=1440;
-    var out=oldSlots.map(function(sl){ return {w:sl.w,s:sl.s,e:sl.e}; });
-    out[out.length-1].e = em;
-    // cascade backwards only if overlap/negative appears
-    for(var i=out.length-1;i>0;i--){
-      if(out[i].e <= out[i].s){
-        out[i].s = out[i].e - 5;
-      }
-      if(out[i].s < out[i-1].s + 5){
-        out[i].s = out[i-1].s + 5;
-      }
-      if(out[i-1].e > out[i].s) out[i-1].e = out[i].s;
-      if(out[i-1].e <= out[i-1].s) out[i-1].e = out[i-1].s + 5;
-    }
-    // if end is too early and caused overflow, rebuild safely
-    if(out[0].e > out[1]?.s || out.some(function(sl){return sl.e<=sl.s;})) {
-      return calc(oldSlots.map(function(x){return x.w;}), oldSlots[0].s/60, ei);
-    }
-    for(var j=0;j<out.length;j++){
-      out[j].ss = mt(out[j].s); out[j].es = mt(out[j].e); out[j].d = out[j].e-out[j].s;
-    }
-    return out;
-  }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
   else setTimeout(init,400);

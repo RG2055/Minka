@@ -849,43 +849,6 @@
     '</div>';
   }
 
-  function renderMonthTable(workers, title, accent) {
-    if (!workers.length) return '';
-    var rows = workers.map(function(w) {
-      var name = shortName(w.name);
-      var bar = Math.min(100, Math.round(w.totalHrs / 200 * 100));
-      var emoji = window.MinkaEmoji ? (window.MinkaEmoji.get(w.name) || '') : '';
-      var ld = w.levelData || getLevelData(0);
-      return '<tr>' +
-        '<td style="padding:7px 8px;font-size:11px;font-weight:700;color:#e0e0e0;white-space:nowrap;">' +
-          (emoji ? '<span style="margin-right:4px;">' + emoji + '</span>' : '') + name +
-          '<span style="margin-left:5px;font-size:9px;font-weight:800;color:' + ld.current.color + ';opacity:.8;">Lv.' + ld.current.lvl + '</span>' +
-        '</td>' +
-        '<td style="padding:7px 8px;text-align:center;font-size:12px;font-weight:800;color:#00ff7f;">' + w.totalHrs + 'h</td>' +
-        '<td style="padding:7px 8px;text-align:center;font-size:11px;color:#60a5fa;">' + (w.d12 || '-') + '</td>' +
-        '<td style="padding:7px 8px;text-align:center;font-size:11px;color:#67e8f9;">' + (w.n12 || '-') + '</td>' +
-        '<td style="padding:7px 8px;text-align:center;font-size:11px;color:#fb923c;">' + (w.h24 || '-') + '</td>' +
-        '<td style="padding:7px 8px;text-align:center;font-size:11px;color:rgba(255,255,255,0.35);">' + ((w.h8 || 0) > 0 ? w.h8 : '-') + '</td>' +
-        '<td style="padding:7px 8px;min-width:70px;"><div style="height:3px;border-radius:99px;background:rgba(255,255,255,0.07);"><div style="height:100%;width:' + bar + '%;background:' + accent + ';border-radius:99px;"></div></div></td>' +
-      '</tr>';
-    }).join('');
-
-    return '<div style="margin-bottom:20px;">' +
-      '<div style="font-size:9px;font-weight:800;letter-spacing:.12em;color:' + accent + ';text-transform:uppercase;margin-bottom:8px;">' + title + '</div>' +
-      '<table style="width:100%;border-collapse:collapse;">' +
-        '<thead><tr style="border-bottom:1px solid rgba(255,255,255,0.07);">' +
-          '<th style="padding:5px 8px;text-align:left;font-size:9px;font-weight:700;color:rgba(255,255,255,0.3);letter-spacing:.08em;text-transform:uppercase;">Darbinieks</th>' +
-          '<th style="padding:5px 8px;font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:.08em;text-transform:uppercase;">Kopa</th>' +
-          '<th style="padding:5px 8px;font-size:9px;color:#60a5fa;letter-spacing:.08em;text-transform:uppercase;">12D</th>' +
-          '<th style="padding:5px 8px;font-size:9px;color:#67e8f9;letter-spacing:.08em;text-transform:uppercase;">12N</th>' +
-          '<th style="padding:5px 8px;font-size:9px;color:#fb923c;letter-spacing:.08em;text-transform:uppercase;">24H</th>' +
-          '<th style="padding:5px 8px;font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:.08em;text-transform:uppercase;">Citas</th>' +
-          '<th style="padding:5px 8px;font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:.08em;text-transform:uppercase;">Slodze</th>' +
-        '</tr></thead>' +
-        '<tbody>' + rows + '</tbody>' +
-      '</table>' +
-    '</div>';
-  }
 
   function renderBadges(ws, topNightCount) {
     var badges = [];
@@ -897,16 +860,6 @@
     }).join('');
   }
 
-  function renderAvatarChip(ws, idx) {
-    var gradient = idx === 0
-      ? 'linear-gradient(135deg, rgba(251,191,36,0.95), rgba(245,158,11,0.88))'
-      : idx === 1
-      ? 'linear-gradient(135deg, rgba(226,232,240,0.92), rgba(148,163,184,0.88))'
-      : idx === 2
-      ? 'linear-gradient(135deg, rgba(251,146,60,0.92), rgba(180,83,9,0.88))'
-      : (ws.isRad ? 'linear-gradient(135deg, rgba(56,189,248,0.88), rgba(124,58,237,0.78))' : 'linear-gradient(135deg, rgba(52,211,153,0.88), rgba(5,150,105,0.78))');
-    return '<div style="width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;background:' + gradient + ';box-shadow:inset 0 1px 0 rgba(255,255,255,0.22), 0 12px 22px rgba(0,0,0,0.22);flex-shrink:0;">' + getInitials(ws.name) + '</div>';
-  }
 
   var RANK_ACCENTS = ['#f3b94a', '#c4cad2', '#c98a57']; // gold / silver / bronze; rest ice-blue
   function _accentFor(idx) { return RANK_ACCENTS[idx] || '#38bdf8'; }

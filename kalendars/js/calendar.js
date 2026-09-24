@@ -2564,19 +2564,6 @@ function filterFullList(btn) {
     return 'linear-gradient(90deg, ' + stops.join(', ') + ')';
   }
 
-  function buildNightSplitLabels(segments, start, end) {
-    if (!Array.isArray(segments) || !segments.length || !(start instanceof Date) || !(end instanceof Date)) return '';
-    const total = Math.max(1, end - start);
-    return segments.map(function(seg) {
-      const from = Math.max(0, Math.min(100, ((seg.start - start) / total) * 100));
-      const to = Math.max(0, Math.min(100, ((seg.end - start) / total) * 100));
-      const mid = from + ((to - from) / 2);
-      const firstName = String(seg.name || '').split(/\s+/)[0] || '—';
-      const widthPct = Math.max(0, to - from);
-      const cls = widthPct < 10 ? ' is-hidden' : (widthPct < 16 ? ' is-tight' : '');
-      return '<span class="shift-progress-seg-label' + cls + '" style="left:' + mid.toFixed(3) + '%;--seg-color:' + seg.color.accent + '">' + escapeHtml(firstName) + '</span>';
-    }).join('');
-  }
 
   function buildNightSplitMeta(segments, start, end, now) {
     // Names above bar + draggable dividers
@@ -2610,24 +2597,6 @@ function filterFullList(btn) {
     return parts.join('');
   }
 
-  function buildNightSplitTimesBelow(segments, start, end, now) {
-    // Time labels below bar
-    if (!Array.isArray(segments) || !segments.length || !(start instanceof Date) || !(end instanceof Date)) return '';
-    const total = Math.max(1, end - start);
-    const parts = [];
-    const fmt = function(d) { return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); };
-    segments.forEach(function(seg, index) {
-      const from = Math.max(0, Math.min(100, ((seg.start - start) / total) * 100));
-      const to   = Math.max(0, Math.min(100, ((seg.end   - start) / total) * 100));
-      const clsFrom = from < 2 ? ' is-start' : '';
-      parts.push('<span class="shift-progress-time-label' + clsFrom + '" style="left:' + from.toFixed(2) + '%">' + fmt(seg.start) + '</span>');
-      if (index === segments.length - 1) {
-        const clsTo = to > 98 ? ' is-end' : '';
-        parts.push('<span class="shift-progress-time-label' + clsTo + '" style="left:' + to.toFixed(2) + '%">' + fmt(seg.end) + '</span>');
-      }
-    });
-    return parts.join('');
-  }
 
   function saveNightSplitOrder(dateStr, newOrder) {
     try {
@@ -4564,56 +4533,6 @@ function filterFullList(btn) {
     '</section>';
   }
 
-  function buildNightSplitLaneHtml(overlay, nowMs) {
-    if (!overlay || !overlay.segments || !overlay.segments.length) return '';
-    const ovStart = overlay.start instanceof Date ? overlay.start.getTime() : +overlay.start;
-    const ovEnd   = overlay.end   instanceof Date ? overlay.end.getTime()   : +overlay.end;
-    const ovDur   = Math.max(1, ovEnd - ovStart);
-    const nowPct  = Math.max(0, Math.min(100, (nowMs - ovStart) / ovDur * 100));
-    const grad    = 'linear-gradient(90deg, rgba(91,33,182,0.90) 0%, rgba(124,58,237,0.96) 42%, rgba(56,189,248,0.90) 100%)';
-    const fmt     = function(d) { return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); };
-
-    // Worker name labels
-    var labelsHtml = '';
-    overlay.segments.forEach(function(seg, i) {
-      const from = Math.max(0, Math.min(100, (seg.start - ovStart) / ovDur * 100));
-      const to   = Math.max(0, Math.min(100, (seg.end   - ovStart) / ovDur * 100));
-      const mid  = from + (to - from) / 2;
-      const firstName = normalizeLvName(String(seg.name || '').split(/\s+/)[0] || '–');
-      const isCurrent = nowMs >= seg.start && nowMs < seg.end;
-      const isPast    = nowMs >= seg.end;
-      const cls = (isCurrent ? ' is-current' : '') + (isPast ? ' is-past' : '');
-      const wPct = to - from;
-      if (wPct > 1) {
-        labelsHtml += '<span class="sl-ns-name shift-progress-seg-label' + cls + '" style="left:' + mid.toFixed(2) + '%;--seg-color:' + seg.color.accent + '" data-seg-idx="' + i + '" data-seg-name="' + escapeHtml(firstName) + '">' + escapeHtml(firstName) + '</span>';
-      }
-      if (i < overlay.segments.length - 1) {
-        labelsHtml += '<span class="sl-ns-divider" style="left:' + to.toFixed(2) + '%"></span>';
-      }
-    });
-
-    // Time ticks at segment boundaries
-    var timesHtml = '';
-    overlay.segments.forEach(function(seg, i) {
-      const from = Math.max(0, Math.min(100, (seg.start - ovStart) / ovDur * 100));
-      const to   = Math.max(0, Math.min(100, (seg.end   - ovStart) / ovDur * 100));
-      const clsFrom = from < 2 ? ' is-start' : '';
-      timesHtml += '<span class="sl-ns-time' + clsFrom + '" style="left:' + from.toFixed(2) + '%">' + fmt(seg.start) + '</span>';
-      if (i === overlay.segments.length - 1) {
-        const clsTo = to > 98 ? ' is-end' : '';
-        timesHtml += '<span class="sl-ns-time' + clsTo + '" style="left:' + to.toFixed(2) + '%">' + fmt(seg.end) + '</span>';
-      }
-    });
-
-    return '<div class="sl-ns-bar">' +
-      '<div class="sl-ns-track">' +
-        '<div class="sl-ns-labels">' + labelsHtml + '</div>' +
-        '<div class="sl-ns-fill" style="width:' + nowPct.toFixed(2) + '%;background:' + grad + '"></div>' +
-        '<div class="sl-ns-scrubber" style="left:' + nowPct.toFixed(2) + '%"></div>' +
-      '</div>' +
-      '<div class="sl-ns-times">' + timesHtml + '</div>' +
-    '</div>';
-  }
 
   function initNsWrapDrag(wrap) {
     // Event delegation on the static wrap — fires once, works on dynamically rebuilt .sl-ns-labels

@@ -3334,97 +3334,6 @@ document.addEventListener('keydown', (e) => {
     }
   }
 
-  function syncMoonPlacement(){
-    if(!moonNode) return;
-    try{
-      var app = document.getElementById('grafiks-app');
-      var rightPanel = document.querySelector('.side-panel.right-panel');
-      var nextBox = document.getElementById('radiologists-next-container');
-      if(!app){
-        moonNode.style.left = 'calc(100vw - 180px)';
-        moonNode.style.top = '110px';
-        return;
-      }
-
-      var appRect = app.getBoundingClientRect();
-      var panelRect = rightPanel ? rightPanel.getBoundingClientRect() : appRect;
-      var size = moonNode.getBoundingClientRect();
-      var w = Math.max(54, size.width || 64);
-      var h = Math.max(54, size.height || 64);
-      var gap = 12;
-
-      function rectOf(el){
-        if(!el) return null;
-        var r = el.getBoundingClientRect();
-        if(!r || !r.width || !r.height) return null;
-        return { left:r.left, top:r.top, right:r.right, bottom:r.bottom, width:r.width, height:r.height };
-      }
-
-      function overlaps(a, b){
-        return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
-      }
-
-      function inflate(r, pad){
-        return { left:r.left-pad, top:r.top-pad, right:r.right+pad, bottom:r.bottom+pad };
-      }
-
-      var occupied = [];
-      Array.prototype.forEach.call(document.querySelectorAll(
-        '.duty-block, #grafiks-list .card, #radiologists-next-container, #shift-progress-wrap, .scroll-row, .top-row'
-      ), function(el){
-        if(!el || !el.offsetParent) return;
-        var r = rectOf(el);
-        if(r) occupied.push(inflate(r, 8));
-      });
-
-      var candidates = [];
-      if (nextBox) {
-        var nr = rectOf(nextBox);
-        if (nr) {
-          candidates.push({ left: nr.left - w - 18, top: nr.top + 8 });
-        }
-      }
-
-      candidates.push(
-        { left: panelRect.left + 22, top: panelRect.top + 70 },
-        { left: panelRect.left + panelRect.width * 0.52 - w * 0.5, top: panelRect.top + 86 },
-        { left: appRect.right - w - 28, top: appRect.top + 84 },
-        { left: appRect.right - w - 28, top: appRect.top + 170 }
-      );
-
-      function clampPos(pos){
-        return {
-          left: Math.max(appRect.left + 12, Math.min(appRect.right - w - 12, pos.left)),
-          top: Math.max(appRect.top + 18, Math.min(appRect.bottom - h - 18, pos.top))
-        };
-      }
-
-      function score(pos){
-        var box = { left:pos.left, top:pos.top, right:pos.left + w, bottom:pos.top + h };
-        var hits = 0;
-        for (var i = 0; i < occupied.length; i++) {
-          if (overlaps(box, occupied[i])) hits++;
-        }
-        return hits;
-      }
-
-      var best = null;
-      var bestScore = Infinity;
-      for (var i = 0; i < candidates.length; i++) {
-        var cand = clampPos(candidates[i]);
-        var sc = score(cand);
-        if (sc === 0) { best = cand; bestScore = 0; break; }
-        if (sc < bestScore) { best = cand; bestScore = sc; }
-      }
-
-      if (!best) {
-        best = { left: appRect.right - w - 28, top: appRect.top + 96 };
-      }
-
-      moonNode.style.left = best.left.toFixed(1) + 'px';
-      moonNode.style.top = best.top.toFixed(1) + 'px';
-    }catch(_e){}
-  }
 
   function isAutoNight(){
     var h=(new Date()).getHours();
@@ -3599,7 +3508,7 @@ document.addEventListener('keydown', (e) => {
   let _aiDebounce, _aiOpen = false;
   let _msgQueue = [], _msgBusy = false;
   let _msgHideTimer = 0, _msgRunToken = 0;
-  let _weatherData = null, _newsItems = [], _newsFeedIdx = {v:0,l:0,r:0};
+  let _newsItems = [], _newsFeedIdx = {v:0,l:0,r:0};
   let _cbId = 0;
 
   const _dn = ['Svētdiena','Pirmdiena','Otrdiena','Trešdiena','Ceturtdiena','Piektdiena','Sestdiena'];
@@ -3609,7 +3518,6 @@ document.addEventListener('keydown', (e) => {
     'Meklē nodaļu, numuru vai darbinieku...',
     _todayStr,
   ];
-  const WKEY = 'e91db7aba1dd5745f52eb99e7cc38e8e';
   const RSS  = 'https://api.rss2json.com/v1/api.json';
   const FEEDS = {
     v:  'https://www.lsm.lv/rss/?lang=lv&catid=51',    // VeselÄ«ba
@@ -3621,7 +3529,6 @@ document.addEventListener('keydown', (e) => {
     sp: 'https://www.lsm.lv/rss/?lang=lv&catid=12',    // Sports
   };
   const FEEDS_LABELS = {v:'Veselība',l:'Latvija',r:'Rīga',sv:'Sabiedrība',ek:'Ekonomika',pa:'Pasaule',sp:'Sports'};
-  const DESCMAP = {'clear sky':'Skaidrs','few clouds':'Daži mākoņi','scattered clouds':'Mainīgi mākoņains','broken clouds':'Mākoņains','overcast clouds':'Apmācies','light rain':'Viegls lietus','moderate rain':'Lietus','heavy intensity rain':'Stiprs lietus','rain':'Lietus','thunderstorm':'Pērkona negaiss','snow':'Sniegs','light snow':'Viegls sniegs','mist':'Migla','fog':'Bieza migla','drizzle':'Smidzina','sleet':'Slapjš sniegs'};
   /* VARDA ï¿½ tiek izmantots no data/varda.js (window.LATVIAN_NAMEDAYS) */
   function openExternalLink(url) {
     const target = String(url || '').trim();
@@ -4102,24 +4009,6 @@ document.addEventListener('keydown', (e) => {
     if (_text || document.activeElement===input || _aiOpen) { setTimeout(drainMsgs, 4000); return; }
     const item = _msgQueue.shift();
     presentMessage(item, 10000);
-  }
-
-  /* ï¿½ï¿½ï¿½ï¿½ Weather ï¿½ï¿½ï¿½ï¿½ */
-  async function fetchWeather() {
-    try {
-      const r = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=Riga&appid=${WKEY}&units=metric`, {cache:'no-store'});
-      const w = await r.json();
-      const condition = w?.weather?.[0] || {};
-      const raw = String(condition.description||'').toLowerCase();
-      const desc = DESCMAP[raw] || raw.charAt(0).toUpperCase()+raw.slice(1);
-      const t = Math.round(w?.main?.temp||0);
-      const tf = Math.round(w?.main?.feels_like||t);
-      const wind = Math.round((w?.wind?.speed||0)*10)/10;
-      function fmt(ts){ const d=new Date(ts*1000); return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0'); }
-      _weatherData = {desc, t, tf, wind, conditionId:Number(condition.id)||0, main:String(condition.main||''), rawDesc:raw, icon:String(condition.icon||''), sr:w?.sys?.sunrise?fmt(w.sys.sunrise):'—', ss:w?.sys?.sunset?fmt(w.sys.sunset):'—'};
-      window.__mkBarWeatherData = _weatherData;
-      if (typeof window.mkBarRefresh === 'function') window.mkBarRefresh();
-    } catch(e) {}
   }
 
   /* ï¿½ï¿½ï¿½ï¿½ RSS ï¿½ï¿½ï¿½ï¿½ */
@@ -19715,216 +19604,6 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
       return r;
     }
     return 0;
-  }
-  // Lays the badges out on one ring around the blob, at evenly spaced angles
-  // starting from the top. Two things make it read as a ring rather than as
-  // scattered icons: every badge sits on the same curve, traced once for the
-  // biggest of them, and that curve is mirrored left to right, so nothing can
-  // end up hanging further out on one side than on the other.
-  //
-  // Depth is carried by size and opacity alone: a badge drawn bigger and
-  // brighter reads as nearer, a small dim one as further away. An earlier
-  // version also pushed the near ones in and the far ones out, and that is
-  // what made the ring look lopsided.
-  //
-  // Nothing here is written per source count, so an eighth icon later needs no
-  // new code.
-  function placeMoodSources(ring) {
-    var wrap = ring.parentElement;
-    var blob = wrap && wrap.querySelector('.rg-mood-blob');
-    var card = ring.closest('.rg-feedback-card');
-    if (!blob || !card) return false;
-    var bb = blob.getBoundingClientRect();
-    if (!(bb.width > 0)) return false;
-    var cx = bb.left + bb.width / 2;
-    var cy = bb.top + bb.height / 2;
-    // <svg> is an SVGElement and has no offsetWidth — reading it gave NaN and
-    // every badge collapsed onto the blob's face. The painted box is the right
-    // thing to measure, but only part of it is the blob: the shape runs from 14
-    // to 86 across a 100-unit viewBox, so the circle the badges have to clear
-    // has a radius of 36/100 of the box's width, not half of it.
-    var blobR = bb.width * 0.36;
-    var badges = [].slice.call(ring.querySelectorAll('.rg-mood-src'));
-    if (!badges.length) return true;
-
-    // Lay a plain even ring down first, and only improve on it below. Every
-    // badge therefore always has a position that clears the blob, whatever the
-    // measurements turn out to be. Without this, any bail-out left the badges
-    // with no offset at all, and an unpositioned badge sits at the ring's
-    // centre — printed straight onto the blob's face, which is exactly what
-    // showed up in the app.
-    var safeRing = function () {
-      badges.forEach(function (el, i) {
-        var a = i * (2 * Math.PI / badges.length);
-        // Half the diagonal clears the blob whichever way the badge is turned,
-        // and a little slack covers the float drift.
-        var reach = Math.sqrt(el.offsetWidth * el.offsetWidth + el.offsetHeight * el.offsetHeight) / 2;
-        var r = blobR + MOOD_SRC_GAP + reach + 4;
-        el.style.setProperty('--rg-x', Math.round(Math.sin(a) * r) + 'px');
-        el.style.setProperty('--rg-y', Math.round(-Math.cos(a) * r) + 'px');
-      });
-    };
-    safeRing();
-
-    // The card's padding box, not its border box: a badge pushed right up to
-    // the card's edge sits on the rounded border and reads as falling out.
-    // getComputedStyle can hand back something parseFloat cannot read while the
-    // card is still settling, and a single NaN here poisons every later test,
-    // so anything unusable is treated as no padding.
-    var px = function (value) {
-      var n = parseFloat(value);
-      return n > 0 ? n : 0;
-    };
-    var cardRect = card.getBoundingClientRect();
-    var cardPad = window.getComputedStyle(card);
-    var bounds = {
-      l: cardRect.left + px(cardPad.paddingLeft) - cx,
-      r: cardRect.right - px(cardPad.paddingRight) - cx,
-      t: cardRect.top + px(cardPad.paddingTop) - cy,
-      b: cardRect.bottom - px(cardPad.paddingBottom) - cy
-    };
-    if (!(bounds.r > bounds.l && bounds.b > bounds.t)) return false;
-    var blocked = moodObstacles(card, cx, cy);
-    // Mirror every obstacle onto the other side. The statistics button only
-    // exists on the right, so without this the ring would be pushed out there
-    // and not on the left — and one icon hanging further out than its opposite
-    // number is exactly what reads as lopsided.
-    blocked = blocked.concat(blocked.map(function (o) {
-      return { l: -o.r, r: -o.l, t: o.t, b: o.b };
-    }));
-    var count = badges.length;
-
-    // How much height there is straight above and straight below the blob. Those
-    // two are what the ring has to fit between: the title caps it from above,
-    // the mood name and the emoji row from below. The sides are wider but the
-    // pills sit there, so they never set the size.
-    var room = Math.min(-bounds.t, bounds.b);
-    blocked.forEach(function (o) {
-      if (!(o.l < 0 && o.r > 0)) return;
-      // A box straddling the centre line would mean something is sitting on the
-      // blob itself. That only happens mid-relayout, when the rects are not
-      // settled yet; letting it through drove the height budget negative and
-      // dumped every badge on the blob's face, so it is ignored here and the
-      // caller retries on the next frame.
-      if (o.b <= 0) room = Math.min(room, -o.b);
-      else if (o.t >= 0) room = Math.min(room, o.t);
-    });
-
-    // Clear the previous run's sizes before measuring, or a re-place would
-    // scale an already-scaled badge. Reading everything between one clearing
-    // pass and one writing pass keeps this to a couple of layout passes.
-    badges.forEach(function (el) {
-      el.style.removeProperty('--rg-src-icon');
-      el.style.removeProperty('--rg-src-num');
-    });
-    var base = badges.map(function (el) {
-      var icon = el.querySelector('svg');
-      var num = el.querySelector('b');
-      return {
-        icon: icon ? icon.getBoundingClientRect().width : 0,
-        num: num ? parseFloat(window.getComputedStyle(num).fontSize) : 0
-      };
-    });
-    // Depth: nearer badges are drawn bigger and brighter, further ones smaller
-    // and dimmer.
-    var depths = badges.map(function (_el, i) { return MOOD_DEPTHS[i % MOOD_DEPTHS.length]; });
-    var scales = depths.map(function (t) { return 1.24 - 0.48 * t; });
-    // The whole set is then scaled to what the ring can actually take, against
-    // two limits. Height: a badge at the top of the ring needs as much room
-    // above the circle as the circle needs below it, so the tallest one can
-    // only be half the free height. Width: all of them together have to fit
-    // along the open part of the ring, which is what makes the icons shrink as
-    // more sources appear instead of crowding into each other.
-    //
-    // Both are measured back and corrected rather than predicted — a badge's
-    // box does not follow its icon size exactly, and its width changes the ring
-    // it has to fit on.
-    var allowed = (room - blobR - MOOD_SRC_GAP) / 2 - 1;
-    // Too little room to draw anything sane means the card is not settled yet.
-    if (!(allowed > 4)) return false;
-    var hw = 0, hh = 0;
-    var fit = 1;
-    var ring360 = [];
-    var open = [];
-    for (var pass = 0; pass < 5; pass++) {
-      badges.forEach(function (el, i) {
-        var scale = scales[i] * fit;
-        if (base[i].icon > 0) el.style.setProperty('--rg-src-icon', (base[i].icon * scale).toFixed(1) + 'px');
-        if (base[i].num > 0) el.style.setProperty('--rg-src-num', (base[i].num * scale).toFixed(1) + 'px');
-      });
-      // Every badge has to be able to sit anywhere on the ring, so the curve is
-      // traced against the biggest one plus the pixels the float drifts.
-      hw = 0; hh = 0;
-      badges.forEach(function (el) {
-        hw = Math.max(hw, el.offsetWidth / 2 + 3);
-        hh = Math.max(hh, el.offsetHeight / 2 + 3);
-      });
-      if (!(hh > 0)) break;
-      if (hh > allowed) { fit *= allowed / hh; continue; }
-
-      // Trace the ring for that size. Capped just past the radius a badge needs
-      // on the diagonals, where the blob's corner reaches furthest into it —
-      // past that the badge would not be on the ring any more, it would be
-      // shoved out around the pills, so those angles count as having no room.
-      var cap = blobR + MOOD_SRC_GAP + Math.sqrt(hw * hw + hh * hh) + 8;
-      ring360 = [];
-      open = [];
-      var span = 0;
-      for (var deg = 0; deg < 360; deg += 2) {
-        var rr = moodRingRadius(deg, hw, hh, blobR, blocked, bounds, cap);
-        ring360.push(rr);
-        if (rr > 0) { open.push(deg); span += rr * 2 * Math.PI / 180; }
-      }
-      if (!open.length) break;
-      var needed = hw * 2 * count * 1.08;
-      if (needed <= span) break;
-      fit *= span / needed;
-    }
-    badges.forEach(function (el, i) { el.style.opacity = (1 - 0.28 * depths[i]).toFixed(2); });
-    // The badges were resized since the safe ring was laid down, so redo it at
-    // the size they are now before giving up on the proper one.
-    if (!open.length) { safeRing(); return false; }
-
-    // Spacing the badges evenly along the open part of the ring still leaves a
-    // choice of where the sequence starts, and it matters a lot. The ring is
-    // open across a wide arc at the top and a narrower one at the bottom, so
-    // starting right at the top both puts a badge there and hands the spare one
-    // to the top as well — five above the blob and two below. Lay the sequence
-    // out at a few starting offsets and keep the most balanced one.
-    var slots = null;
-    var bestScore = Infinity;
-    // Only these two offsets keep the ring mirrored left to right: the open
-    // angles are symmetric about the top, and a pick set stays symmetric only
-    // when the offset is a whole or a half step. A quarter step balances the
-    // halves better but tips the whole ring to one side, which is worse.
-    [0, 0.5].forEach(function (phase) {
-      var picks = [];
-      for (var j = 0; j < count; j++) {
-        picks.push(open[Math.round((j + phase) * open.length / count) % open.length]);
-      }
-      var above = 0;
-      picks.forEach(function (deg) { if (deg < 90 || deg > 270) above++; });
-      var sorted = picks.slice().sort(function (a, b) { return a - b; });
-      var spread = 0;
-      for (var k = 0; k < sorted.length; k++) {
-        var gap = k + 1 < sorted.length ? sorted[k + 1] - sorted[k] : 360 - sorted[k] + sorted[0];
-        spread += gap * gap;
-      }
-      // Above/below evenness first — that is what reads as wrong. Gaps between
-      // neighbours only break the tie; squaring them punishes one big empty
-      // stretch harder than several slightly uneven ones.
-      var score = Math.abs(above - (count - above)) * 1e6 + spread;
-      if (score < bestScore - 0.5) { bestScore = score; slots = picks; }
-    });
-
-    for (var i = 0; i < count; i++) {
-      var slot = slots[i];
-      var a2 = slot * Math.PI / 180;
-      var r2 = ring360[slot / 2];
-      badges[i].style.setProperty('--rg-x', Math.round(Math.sin(a2) * r2) + 'px');
-      badges[i].style.setProperty('--rg-y', Math.round(-Math.cos(a2) * r2) + 'px');
-    }
-    return true;
   }
   function moodSourceIcon(key) {
     if (typeof window.__minkaCoffeeIcon !== 'function') return '';
