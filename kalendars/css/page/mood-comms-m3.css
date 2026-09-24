@@ -521,12 +521,14 @@
   border-radius: 0 !important;
   background: none !important;
 }
-/* Two rows so the button can use the full width under the text and QR: the
-   supporter count inside it stays readable even in a narrow mood card. */
+/* QR beside the cat, the words next to it, and the button on its own row across
+   both, so the supporter count inside it stays readable in a narrow card. */
 :root:not(.mk-mobile-shell) #grafiks-list .rg-feedback-card .rg-bmc-qrblock .rg-bmc-copy { display: contents !important; }
-:root:not(.mk-mobile-shell) #grafiks-list .rg-feedback-card .rg-bmc-qrblock em { grid-column: 3 !important; grid-row: 1 !important; align-self: center !important; margin: 0 !important; }
-:root:not(.mk-mobile-shell) #grafiks-list .rg-feedback-card .rg-bmc-qrblock .rg-bmc-qrimg { grid-row: 1 !important; }
-:root:not(.mk-mobile-shell) #grafiks-list .rg-feedback-card .rg-bmc-qrblock strong { grid-column: 3 / 5 !important; grid-row: 2 !important; margin-top: 8px !important; }
+:root:not(.mk-mobile-shell) #grafiks-list .rg-feedback-card .rg-bmc-qrblock { grid-template-columns: 98px auto minmax(0, 1fr) auto !important; }
+:root:not(.mk-mobile-shell) #grafiks-list .rg-feedback-card .rg-bmc-qrblock .rg-bmc-qrimg { grid-column: 2 !important; grid-row: 1 !important; justify-self: start !important; margin: 0 10px 0 0 !important; }
+:root:not(.mk-mobile-shell) #grafiks-list .rg-feedback-card .rg-bmc-qrblock em { grid-column: 3 / 5 !important; grid-row: 1 !important; align-self: center !important; margin: 0 !important; white-space: normal !important; }
+:root:not(.mk-mobile-shell) #grafiks-list .rg-feedback-card .rg-bmc-qrblock strong { grid-column: 2 / 5 !important; grid-row: 2 !important; margin-top: 8px !important; }
+:root:not(.mk-mobile-shell) #grafiks-list .rg-feedback-card .rg-bmc-qrblock img.rg-bmc-button { width: 100% !important; max-width: 230px !important; }
 #grafiks-list .rg-feedback-card .rg-bmc-heart {
   font-family: 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif !important;
   font-variant-emoji: emoji !important;
