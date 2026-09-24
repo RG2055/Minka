@@ -1,33 +1,11 @@
 /* ═══════════════════════════════════════════════════════════════════
    MINKA DESIGN v1 — JavaScript runtime
-   1. Ambient 24h hue cycle   (runs every 60s, single setInterval)
    2. Card-live / duty-live classes for currently-on-shift workers
    3. Hospital building loader animation
+   (1., the ambient hue cycle, was removed: no stylesheet reads --ambient-hue.)
    ═══════════════════════════════════════════════════════════════════ */
 (function MinkaDesignV1() {
   'use strict';
-
-  /* ──────────────────────────────────────────────────────────────
-     1. AMBIENT 24H HUE SHIFT
-     Maps 00:00 → +0°  06:00 → +8° (dawn warmth)  14:00 → -10° (noon cool)
-     22:00 → -18° (deep blue night)
-     Total swing ≈ 28° across the day — barely perceptible, atmospheric
-  ──────────────────────────────────────────────────────────────── */
-  function computeAmbientHue() {
-    const now = new Date();
-    const h = now.getHours() + now.getMinutes() / 60; // 0..24
-    // Sine wave: peaks at 6 am (+12°), troughs at 18:00 (-15°)
-    const hue = Math.round(12 * Math.sin((h - 6) * Math.PI / 12) - 5);
-    return hue + 'deg';
-  }
-
-  function applyAmbientHue() {
-    document.documentElement.style.setProperty('--ambient-hue', computeAmbientHue());
-  }
-
-  applyAmbientHue();
-  setInterval(() => { if (!document.hidden) applyAmbientHue(); }, 60_000);
-
 
   /* ──────────────────────────────────────────────────────────────
      2. LIVE PULSE CLASSES
@@ -107,7 +85,7 @@
   }
   scheduleLive();
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) { applyAmbientHue(); applyLiveClasses(); }
+    if (!document.hidden) applyLiveClasses();
   }, { passive: true });
 
   // Also re-run whenever the calendar re-renders (grafiks-list changes)
