@@ -120,7 +120,6 @@
   // Reset used-colours each time a new day is selected (called from update())
   function resetColours(){_usedHashes={};}
   var st=null;
-  var _actx=null;
   var _nsLastRoomHtml='';
   var _nsSortMode='fatigue'; // 'fatigue' (default) | 'freq' (by history stats)
   var _nsRaffle={open:false,workers:[],selected:-1,parts:[],results:[],revealing:false,revealIndex:-1,revealPart:null,revealToken:0};
@@ -816,33 +815,6 @@
     chalkboardFetch().then(chalkboardRender);
   }
 
-  function rhythmHelpHTML(){
-    return '<button type="button" class="nsc-rhythm-help" aria-label="Ko nozīmē krāsainās līnijas?" aria-expanded="false">i</button>'
-      +'<div class="nsc-rhythm-help-pop" role="tooltip">'
-      +'<b>Jo augstāk līnija, jo vairāk:</b>'
-      +'<span class="is-mel"><i></i><strong>Melatonīns</strong><small>miegainuma</small></span>'
-      +'<span class="is-cor"><i></i><strong>Kortizols</strong><small>enerģijas</small></span>'
-      +'<span class="is-wake"><i></i><strong>Modrība</strong><small>možuma</small></span>'
-      +'<em>Tipisks diennakts ritms, nevis mērījums.</em>'
-      +'</div>';
-  }
-
-  function wireRhythmHelp(scope){
-    (scope||document).querySelectorAll('.nsc-rhythm-help').forEach(function(button){
-      if(button.__rhythmHelpWired) return;
-      button.__rhythmHelpWired=true;
-      button.addEventListener('click',function(event){
-        event.preventDefault(); event.stopPropagation();
-        var card=button.closest('.nsc-full-card');
-        var open=card&&!card.classList.contains('is-rhythm-help-open');
-        (scope||document).querySelectorAll('.nsc-full-card.is-rhythm-help-open').forEach(function(item){
-          item.classList.remove('is-rhythm-help-open');
-          var other=item.querySelector('.nsc-rhythm-help'); if(other) other.setAttribute('aria-expanded','false');
-        });
-        if(card&&open){ card.classList.add('is-rhythm-help-open'); button.setAttribute('aria-expanded','true'); }
-      });
-    });
-  }
   var _roomBc=null;
   var _roomPolling=false;
   var _roomPulling={};
@@ -1086,28 +1058,6 @@
   }
 
   // â”€â”€ Web Audio â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  function actx(){if(!_actx)try{_actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}return _actx;}
-  function tone(freq,dur,type,vol){
-    var c=actx();if(!c)return;
-    try{
-      var o=c.createOscillator(),g=c.createGain();
-      o.connect(g);g.connect(c.destination);
-      o.type=type||'triangle';o.frequency.value=freq;
-      g.gain.setValueAtTime(0,c.currentTime);
-      g.gain.linearRampToValueAtTime(vol||0.1,c.currentTime+0.01);
-      g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dur);
-      o.start(c.currentTime);o.stop(c.currentTime+dur);
-    }catch(e){}
-  }
-  function sndPickup(){ tone(220,0.09,'triangle',0.13); setTimeout(function(){tone(280,0.07,'triangle',0.07);},25); }
-  function sndHover(){ tone(600,0.03,'sine',0.035); }
-  function sndDrop(){ tone(240,0.13,'triangle',0.16); setTimeout(function(){tone(300,0.09,'triangle',0.09);},55); }
-  function sndReorder(){ tone(420,0.07,'sine',0.06); setTimeout(function(){tone(530,0.1,'sine',0.08);},85); }
-  function sndSnore(){
-    tone(145,0.12,'sine',0.035);
-    setTimeout(function(){ tone(120,0.18,'triangle',0.028); },90);
-    setTimeout(function(){ tone(96,0.22,'sine',0.02); },210);
-  }
 
   // â”€â”€ Utils â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function mt(m){m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');}
@@ -1931,7 +1881,14 @@
     }
   }
 
+  // Every fit measures the panel at its final size, also when it runs while
+  // the panel is still growing out of its launcher (js/mk-motion.js atRest).
   function fitRoomBlocks(root){
+    var MM=window.MinkaMotion;
+    if(MM && typeof MM.atRest==='function') return MM.atRest('ns', function(){ fitRoomBlocksNow(root); });
+    fitRoomBlocksNow(root);
+  }
+  function fitRoomBlocksNow(root){
     try{
       var scope = root || document;
       var panel = document.getElementById('nsPanelContent');
@@ -2143,61 +2100,6 @@
 
     // Compute fatigue sparkline path data scaled to SVG coordinates
 
-    function _circadianValue(kind, n){
-      n=Math.max(0,Math.min(1,n));
-      if(kind==='mel'){
-        return Math.max(0.05, Math.min(0.86,
-          0.64 + 0.18*Math.exp(-Math.pow((n-0.14)/0.18,2))
-          - 0.18*n
-          - 0.44/(1+Math.exp(-(n-0.62)*12))
-        ));
-      }
-      if(kind==='cor'){
-        return Math.max(0.06, Math.min(0.88,
-          0.10 + 0.72/(1+Math.exp(-(n-0.70)*8))
-        ));
-      }
-      return Math.max(0.06, Math.min(0.82,
-        0.28 - 0.23*n + 0.62/(1+Math.exp(-(n-0.76)*10))
-      ));
-    }
-
-    function _circadianCardPaths(slot, axisStart, axisEnd, uid){
-      if(!slot || typeof axisStart!=='number' || typeof axisEnd!=='number' || axisEnd<=axisStart) return '';
-      // Span the complete card width so adjacent cards meet at the exact same
-      // time/value instead of showing two padded samples at the seam.
-      // The curves live in the bottom band under the fatigue pill (77–98 % of
-      // the card), so they no longer cross the name, times or the pill.
-      var x0=0, y0=141, w=280, h=38, steps=34;
-      function pointPath(kind){
-        var d='', area='';
-        for(var i=0;i<=steps;i++){
-          var local=i/steps;
-          var t=slot.s+(slot.e-slot.s)*local;
-          var n=(t-axisStart)/(axisEnd-axisStart);
-          var x=x0+w*local;
-          var y=y0+(1-_circadianValue(kind,n))*h;
-          d+=(i?' L':'M')+x.toFixed(1)+' '+y.toFixed(1);
-        }
-        area=d+' L '+(x0+w).toFixed(1)+' '+(y0+h).toFixed(1)+' L '+x0.toFixed(1)+' '+(y0+h).toFixed(1)+' Z';
-        return { line:d, area:area };
-      }
-      var mel=pointPath('mel');
-      var cor=pointPath('cor');
-      var wake=pointPath('wake');
-      return '<g class="nsc-rhythm-lines">'
-        // One clean stroke per curve (no wide glow under-stroke): calmer to
-        // read and three paths less to paint per card.
-        // Each curve gets its own soft wash underneath in its colour, so the
-        // three read as three bands rather than three crossing wires.
-        +'<path d="'+mel.area+'" fill="url(#'+uid+'-melFill)"/>'
-        +'<path d="'+wake.area+'" fill="url(#'+uid+'-wakeFill)"/>'
-        +'<path d="'+cor.area+'" fill="url(#'+uid+'-corFill)"/>'
-        +'<path d="'+mel.line+'" fill="none" stroke="#8cc4f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'
-        +'<path d="'+wake.line+'" fill="none" stroke="#93dcb6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'
-        +'<path d="'+cor.line+'" fill="none" stroke="#ecd08a" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'
-        +'</g>';
-    }
 
     // SVG background per theme — unique IDs via card index to avoid conflicts.
     // No SVG filters here: blur filters re-rasterize on every animation frame
@@ -2318,10 +2220,6 @@
         gr='<path d="M10 158 L36 146 L62 152 L88 132 L114 143 L140 118 L166 130 L192 108 L218 122 L232 98 L232 182 L10 182 Z" fill="url(#'+u+'-gr)"/>'
           +glowLine('M10 158 L36 146 L62 152 L88 132 L114 143 L140 118 L166 130 L192 108 L218 122 L232 98', '#ff8ca3', 2, 0.9);
       }
-      d+='<linearGradient id="'+u+'-melFill" x1="0%" y1="0%" x2="0%" y2="100%">'
-        +'<stop offset="0%" stop-color="#4fa3ff" stop-opacity="0.34"/>'
-        +'<stop offset="100%" stop-color="#4fa3ff" stop-opacity="0"/>'
-        +'</linearGradient>';
       return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 182" width="100%" height="100%" preserveAspectRatio="none">'
         +'<defs>'+d+'</defs>'
         +'<rect width="280" height="182" fill="'+bg+'"/>'
@@ -2329,44 +2227,6 @@
         +'</svg>';
     }
 
-    // Ritma josla: visas nakts trīs līknes vienā savā joslā starp kartītēm un
-    // laika joslu. Līknes ir nepārtrauktas pār visu nakti (tā tās arī darbojas),
-    // plānas vertikālas atzīmes rāda, kur mainās cilvēki, un nekas cits tajā
-    // joslā nestāv — tāpēc nekas nepārklājas. Leģenda ir turpat augšā.
-    function _rhythmStripHtml(slots){
-      if(!slots || slots.length<1) return '';
-      var start=slots[0].s, end=slots[slots.length-1].e, tot=Math.max(1,end-start);
-      var W=1000, H=30, PAD=4, steps=80;
-      // Katra līkne savā rindiņā un savā mērogā (no nakts minimuma līdz
-      // maksimumam), tāpēc forma — krīt, aug, iekrīt — ir skaidri redzama un
-      // trīs līknes nekad nesaplūst vienā kamolā.
-      function lane(kind,cls,label,col,dash){
-        var vals=[], i;
-        for(i=0;i<=steps;i++) vals.push(_circadianValue(kind,i/steps));
-        var lo=Math.min.apply(null,vals), hi=Math.max.apply(null,vals), span=Math.max(.0001,hi-lo);
-        var d='';
-        for(i=0;i<=steps;i++){
-          var x=(W*i/steps).toFixed(1), y=(PAD+(1-(vals[i]-lo)/span)*(H-2*PAD)).toFixed(1);
-          d+=(i?' L':'M')+x+' '+y;
-        }
-        var ticks=slots.slice(1).map(function(sl){
-          var x=((sl.s-start)/tot*W).toFixed(1);
-          return '<path d="M'+x+' 0 L'+x+' '+H+'" stroke="rgba(214,232,244,.12)" stroke-width="1" vector-effect="non-scaling-stroke"/>';
-        }).join('');
-        return '<div class="ns-rhythm-lane '+cls+'">'
-          +'<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'
-          +'<defs><linearGradient id="nsrl-'+kind+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="'+col+'" stop-opacity="0.34"/><stop offset="100%" stop-color="'+col+'" stop-opacity="0.02"/></linearGradient></defs>'
-          +ticks
-          +'<path d="'+d+' L '+W+' '+H+' L 0 '+H+' Z" fill="url(#nsrl-'+kind+')"/>'
-          +'<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"'+(dash?' stroke-dasharray="6 5"':'')+' vector-effect="non-scaling-stroke"/>'
-          +'</svg><span class="ns-rhythm-lane-label"><i></i>'+label+'</span></div>';
-      }
-      return '<div class="ns-rhythm-strip" aria-hidden="true">'
-        +lane('mel','is-mel','miegs','#8cc4f2')
-        +lane('cor','is-cor','enerģija','#ecd08a',true)
-        +lane('wake','is-wake','možums','#93dcb6')
-        +'</div>';
-    }
 
 
     // Build full glowing cards
@@ -2421,7 +2281,7 @@
       var _flowLabels='<div class="ns-flow-labels"><span>'+escHtml(st.sl[0].ss)+'</span>'
         +st.sl.map(function(s){ return '<span>'+escHtml(s.es)+'</span>'; }).join('')
         +'</div>';
-      flowBar=_rhythmStripHtml(st.sl)+'<div class="ns-flow-bar">'
+      flowBar='<div class="ns-flow-bar">'
         +_flowSegs
         +(live?'<div class="ns-flow-spent" style="width:'+live.pct.toFixed(3)+'%"></div>':'<div class="ns-flow-spent" style="width:0%"></div>')
         +(live?'<div class="ns-flow-live" style="left:'+live.pct.toFixed(3)+'%"><span class="ns-flow-worker"></span><span class="ns-flow-time"></span>'+NS_FLOW_GHOST+'<span class="ns-flow-pct"></span></div>':'')
@@ -2447,9 +2307,7 @@
       _crEl.style.setProperty('--ns-name-size',nsNameSize);
       _crEl.innerHTML=cards;
       applyWorkerSkinsToNightCards(_crEl);
-      wireRhythmHelp(_crEl);
       var _ob=panel.querySelector('.ns-flow-bar'); if(_ob) _ob.remove();
-      var _os=panel.querySelector('.ns-rhythm-strip'); if(_os) _os.remove();
       var _ol=panel.querySelector('.ns-flow-labels'); if(_ol) _ol.remove();
       if(flowBar) _crEl.insertAdjacentHTML('afterend', flowBar);
       var _me=panel.querySelector('.ns-flow-meta'); if(_me) _me.innerHTML=_metaHtml;
@@ -2511,7 +2369,6 @@
     wireBedCarePerch(panel);
     wireTimeWheels(panel);
     wireChalkboard(panel);
-    wireRhythmHelp(panel);
 
     var raffleTrigger=panel.querySelector('.ns-raffle-trigger');
     if(raffleTrigger)raffleTrigger.addEventListener('click',openRaffle);
@@ -2624,12 +2481,11 @@
 
     // ── Mouse ──────────────────────────────────────────────────────────────
     el.addEventListener('mousedown',function(e){
-      if(e.target.closest('.nsc-rhythm-help,.nsc-rhythm-help-pop')) return;
       var c=e.target.closest('.nsc-full-card, .ns-room-bed[data-i]'); if(!c||e.button!==0)return;
       e.preventDefault();
       dragging=c; mx=e.clientX; my=e.clientY;
       c.classList.add('nsdrag');
-      startGhost(c); sndPickup();
+      startGhost(c);
     });
     document.addEventListener('mousemove',function(e){
       if(!dragging)return;
@@ -2643,7 +2499,6 @@
       if(dragging.classList.contains('ns-room-bed')) target = nearestRoomBed(mx, my, dragging) || target;
       dragging.classList.remove('nsdrag'); clearOver(); killGhost();
       if(target){
-        sndDrop();
         if(dragging.classList.contains('ns-room-bed')) swapRoom(+dragging.dataset.i,+target.dataset.i);
         else swap(+dragging.dataset.i,+target.dataset.i);
       }
@@ -2652,7 +2507,6 @@
 
     // ── Touch ──────────────────────────────────────────────────────────────
     el.addEventListener('touchstart',function(e){
-      if(e.target.closest('.nsc-rhythm-help,.nsc-rhythm-help-pop')) return;
       var c=e.target.closest('.nsc-full-card, .ns-room-bed[data-i]'); if(!c)return;
       touching=c;
       touchDragReady=false;
@@ -2665,7 +2519,6 @@
         touchDragReady=true;
         touching.classList.add('nsdrag');
         startGhost(touching);
-        sndPickup();
       }, 180);
     },{passive:true});
     el.addEventListener('touchmove',function(e){
@@ -2697,7 +2550,6 @@
       if(touching.classList.contains('ns-room-bed')) target = nearestRoomBed(mx, my, touching) || target;
       touching.classList.remove('nsdrag'); clearOver(); killGhost();
       if(target){
-        sndDrop();
         if(touching.classList.contains('ns-room-bed')) swapRoom(+touching.dataset.i,+target.dataset.i);
         else swap(+touching.dataset.i,+target.dataset.i);
       }
@@ -2717,7 +2569,7 @@
     var t=w[a];w[a]=w[b];w[b]=t;
     st.sl=calc(w,st.sh,st.ei);
     saveCurrentDayState();
-    sndReorder(); render(true);
+    render(true);
     try{ if(window.__nsBarSync) window.__nsBarSync(); }catch(_e){}
     setTimeout(function(){
       var c=document.querySelectorAll('#nsPanelContent .nsc-full-card');
@@ -2731,7 +2583,6 @@
     while(order.length<4) order.push('');
     var t=order[a]; order[a]=order[b]; order[b]=t;
     saveRoomOrder(order);
-    sndReorder();
     render();
     setTimeout(function(){
       [a,b].forEach(function(i){
@@ -2915,7 +2766,6 @@
     var ordered=_nsRaffle.results.slice().sort(function(a,b){return a.part-b.part;}).map(function(result){return result.worker;});
     st.sl=calc(ordered,st.sh,st.ei);
     saveCurrentDayState();
-    sndReorder();
     closeRaffle();
     render(true);
     try{if(window.__nsBarSync)window.__nsBarSync();}catch(_e){}
@@ -3016,14 +2866,12 @@
     se:function(v){if(!st)return;st.ei=parseInt(v); st.sl=calc(st.sl.map(function(s){return s.w;}),st.sh,st.ei); saveCurrentDayState(); render();},
     eq:function(){
       if(!st)return;
-      sndReorder();
       st.sl=calc(st.sl.map(function(s){return s.w;}),st.sh,st.ei);
       saveCurrentDayState();
       render();
     },
     re:function(){
       if(!st)return;
-      sndReorder();
       var sorted=fat(st.sl.map(function(s){return s.w;}));
       st.sl=calc(sorted,st.sh,st.ei);
       saveCurrentDayState();
@@ -3031,7 +2879,6 @@
     },
     ba:function(){
       if(!st)return;
-      sndReorder();
       var balanced=balancedOrder(st.sl.map(function(s){return s.w;}));
       st.sl=calc(balanced,st.sh,st.ei);
       saveCurrentDayState();
@@ -3040,7 +2887,6 @@
     byFat:function(){
       if(!st)return;
       _nsSortMode='fatigue';
-      sndReorder();
       st.sl=calc(fat(st.sl.map(function(s){return s.w;})),st.sh,st.ei);
       saveCurrentDayState();
       render();
@@ -3048,7 +2894,6 @@
     byFreq:function(){
       if(!st)return;
       _nsSortMode='freq';
-      sndReorder();
       // Frequency needs the history stats — fetch (cached) then re-sort.
       nsStatsFetch().then(function(){
         if(!st)return;

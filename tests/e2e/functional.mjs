@@ -114,8 +114,11 @@ await test('cross-frame storage: a vote written by the shell page repaints the c
   const fr=p.frame({url:/kalendars\/index\.html/}); ok(fr,'no calendar frame');
   const before=await fr.evaluate(()=>[...document.querySelectorAll('[data-rg-count]')].map(e=>e.dataset.rgCount+'='+e.textContent).join(','));
   // write from the PARENT document so the calendar receives a real storage event
-  await p.evaluate(()=>{ const all=JSON.parse(localStorage.getItem('minkaShiftPulseV2')||'{}'); const days=Object.keys(all); const d=days.length?days[days.length-1]:null;
-    const frame=document.getElementById('calIframe').contentWindow; const key=d||Object.keys(frame.JSON.parse(frame.localStorage.getItem('minkaShiftPulseV2')||'{}'))[0];
+  // Vote for the day the mood card shows (other days are cached there too,
+  // e.g. by the team curve, so "the last key" is not necessarily it).
+  await p.evaluate(()=>{ const all=JSON.parse(localStorage.getItem('minkaShiftPulseV2')||'{}');
+    const frame=document.getElementById('calIframe').contentWindow; const m=String(frame.__activeDateStr||frame.__g_todayStr||'').match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    const days=Object.keys(all); const key=m?m[3]+'-'+m[2]+'-'+m[1]:(days.length?days[days.length-1]:null);
     all[key]=Object.assign({},all[key]); const react=Object.keys(all[key]).find(k=>k[0]!=='_')||'love'; all[key][react]=(Number(all[key][react])||0)+7; localStorage.setItem('minkaShiftPulseV2',JSON.stringify(all)); window.__votedKey=key+'/'+react; });
   const changed=await waitFor(async()=>{ const now=await fr.evaluate(()=>[...document.querySelectorAll('[data-rg-count]')].map(e=>e.dataset.rgCount+'='+e.textContent).join(',')); return now!==before; },4000);
   const k=await p.evaluate(()=>window.__votedKey);

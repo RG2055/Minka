@@ -1,0 +1,150 @@
+/* ── Minka sistēmas tokeni (Material 3 Expressive) ─────────────────────────
+   Viens avots krāsu lomām, formām, tipogrāfijai, stāvokļu slāņiem un
+   kustībai. Ielādē gan čaula (index.html), gan kalendārs (../css/).
+
+   Vērtības ir Minka pašreizējā palete, nevis Google demo krāsas: primary ir
+   piparmētra #1fe091 (RG un statistikas akcents), secondary ledus zils
+   #64d2ff (izcēlumi), tertiary dzintars #f5b73f. Violets netiek lietots.
+
+   Kustības tokeni ir M3 Expressive spring tokenu CSS aproksimācijas
+   (m3.material.io/styles/motion). JS tos pašus lasa caur MinkaMotion.token().
+   Līmeni nosaka <html data-motion="full|lite|reduced"> (js/mk-motion.js). */
+:root {
+  /* Virsmas: tumšas, zilgani neitrālas, tās pašas, ko lieto statistika */
+  --mk-sys-surface: #0c0f14;
+  --mk-sys-surface-container-lowest: #07090c;
+  --mk-sys-surface-container-low: #101318;
+  --mk-sys-surface-container: #14181e;
+  --mk-sys-surface-container-high: #1a1f27;
+  --mk-sys-surface-container-highest: #222933;
+  --mk-sys-on-surface: #e6ebf2;
+  --mk-sys-on-surface-variant: #a9b3c1;
+  --mk-sys-outline: #6f7a88;
+  --mk-sys-outline-variant: #262c36;
+  --mk-sys-scrim: rgba(0, 0, 0, .64);
+
+  --mk-sys-primary: #1fe091;
+  --mk-sys-on-primary: #003920;
+  --mk-sys-primary-container: #0e3a2a;
+  --mk-sys-on-primary-container: #b3f6d9;
+  --mk-sys-secondary: #64d2ff;
+  --mk-sys-on-secondary: #003547;
+  --mk-sys-secondary-container: #143444;
+  --mk-sys-on-secondary-container: #cbeeff;
+  --mk-sys-tertiary: #f5b73f;
+  --mk-sys-on-tertiary: #3f2a00;
+  --mk-sys-tertiary-container: #45320d;
+  --mk-sys-on-tertiary-container: #ffe2a8;
+  --mk-sys-error: #ff5c5c;
+  --mk-sys-on-error: #410003;
+
+  /* Semantiskās lomas (produkta identitāte) */
+  --mk-role-rg: #1fe091;
+  --mk-role-rd: #3f9bff;
+  --mk-shift-day: #3f9bff;
+  --mk-shift-night: #23cdcf;
+  --mk-shift-24h: #f5b73f;
+  --mk-mood-terrible: #fb7185;
+  --mk-mood-bad: #fb923c;
+  --mk-mood-ok: #cbd5e1;
+  --mk-mood-good: #5eead4;
+  --mk-mood-excellent: #86efac;
+
+  /* Stāvokļu slāņi (M3): krāsa = currentColor vai loma, necaurredzamība šeit */
+  --mk-state-hover: .08;
+  --mk-state-focus: .10;
+  --mk-state-pressed: .10;
+  --mk-state-dragged: .16;
+  --mk-state-disabled-content: .38;
+  --mk-state-disabled-container: .12;
+  --mk-focus-ring: 2px solid var(--mk-sys-secondary);
+  --mk-focus-offset: 2px;
+
+  /* Formas: vecāka forma vienmēr lielāka par bērna formu */
+  --mk-shape-none: 0;
+  --mk-shape-xs: 4px;
+  --mk-shape-sm: 8px;
+  --mk-shape-md: 12px;
+  --mk-shape-lg: 16px;
+  --mk-shape-lg-plus: 20px;
+  --mk-shape-xl: 28px;
+  --mk-shape-full: 999px;
+
+  /* Tipogrāfija: abas saimes paliek. Inter saturam, Google Sans virsrakstiem
+     un vadīklām tur, kur tas jau ir lietots. */
+  --mk-font-plain: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mk-font-brand: "Google Sans", "Google Sans Text", Inter, system-ui, sans-serif;
+  --mk-type-headline-s: 700 22px/1.2 var(--mk-font-plain);
+  --mk-type-title-l: 700 18px/1.25 var(--mk-font-plain);
+  --mk-type-title-m: 700 15px/1.3 var(--mk-font-plain);
+  --mk-type-title-s: 700 13px/1.3 var(--mk-font-plain);
+  --mk-type-body-l: 500 15px/1.45 var(--mk-font-plain);
+  --mk-type-body-m: 500 13px/1.45 var(--mk-font-plain);
+  --mk-type-body-s: 500 12px/1.4 var(--mk-font-plain);
+  --mk-type-label-l: 700 13px/1.2 var(--mk-font-plain);
+  --mk-type-label-m: 700 12px/1.2 var(--mk-font-plain);
+  --mk-type-label-s: 700 10.5px/1.2 var(--mk-font-plain);
+
+  /* Pacēlums: tonāls pirmkārt, ēna tikai peldošām virsmām (bez lieliem
+     blur mirdzumiem — darba datoriem tie ir dārgi). */
+  --mk-elev-1: 0 1px 2px rgba(0, 0, 0, .4);
+  --mk-elev-2: 0 8px 24px rgba(0, 0, 0, .45);
+  --mk-elev-3: 0 16px 40px rgba(0, 0, 0, .55);
+
+  /* Kustība: M3 Expressive (spatial ar pārsviedienu) un standard (bez) */
+  --mk-ease-expressive-fast: cubic-bezier(.42, 1.67, .21, .90);
+  --mk-ease-expressive-default: cubic-bezier(.38, 1.21, .22, 1.00);
+  --mk-ease-expressive-slow: cubic-bezier(.39, 1.29, .35, .98);
+  --mk-ease-standard: cubic-bezier(.27, 1.06, .18, 1.00);
+  --mk-ease-effects: cubic-bezier(.31, .94, .34, 1.00);
+  --mk-ease-exit: cubic-bezier(.3, 0, .8, .15);
+  --mk-dur-spatial-fast: 350ms;
+  --mk-dur-spatial-default: 500ms;
+  --mk-dur-spatial-slow: 650ms;
+  --mk-dur-effects-fast: 150ms;
+  --mk-dur-effects-default: 200ms;
+  --mk-dur-effects-slow: 300ms;
+  /* Cik tālu telpiskas pārejas ceļo, 1 = pilns attālums */
+  --mk-motion-travel: 1;
+}
+
+/* LITE: tā pati nozīme, mazāk darba kadrā. Bez pārsviediena (mazāk
+   starpkadru ar lielu kustību), īsāks ceļš; ilgumi paliek atsaucīgi. */
+:root[data-motion="lite"] {
+  --mk-ease-expressive-fast: var(--mk-ease-standard);
+  --mk-ease-expressive-default: var(--mk-ease-standard);
+  --mk-ease-expressive-slow: var(--mk-ease-standard);
+  --mk-dur-spatial-default: 420ms;
+  --mk-dur-spatial-slow: 480ms;
+  --mk-motion-travel: .5;
+}
+
+/* REDUCED: pieejamības izvēle. Telpiskās pārejas kļūst par īsu crossfade. */
+:root[data-motion="reduced"] {
+  --mk-ease-expressive-fast: var(--mk-ease-effects);
+  --mk-ease-expressive-default: var(--mk-ease-effects);
+  --mk-ease-expressive-slow: var(--mk-ease-effects);
+  --mk-ease-standard: var(--mk-ease-effects);
+  --mk-dur-spatial-fast: 120ms;
+  --mk-dur-spatial-default: 150ms;
+  --mk-dur-spatial-slow: 150ms;
+  --mk-dur-effects-default: 120ms;
+  --mk-dur-effects-slow: 150ms;
+  --mk-motion-travel: 0;
+}
+
+/* View Transitions (tikai full līmenī, sk. MinkaMotion.run): grupa kustas
+   telpiski, momentuzņēmumi pārslēdzas ar efektu tokenu. */
+::view-transition-group(*) {
+  animation-duration: var(--mk-dur-spatial-default);
+  animation-timing-function: var(--mk-ease-expressive-default);
+}
+::view-transition-old(*),
+::view-transition-new(*) {
+  animation-duration: var(--mk-dur-effects-default);
+  animation-timing-function: var(--mk-ease-effects);
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--mk-dur-effects-fast);
+}

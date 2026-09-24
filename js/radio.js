@@ -3254,7 +3254,10 @@ function focusRadio(){
     if(!r?.width||!r.height||!imageMetrics)return null;
     return imageGeometry(r.width,r.height,imageMetrics.width,imageMetrics.height,(imageCropDraft||appearance.imageCrops)[imageCropKey()],appearance.position);
   }
-  function paintImagePosition(){
+  // Measures #radioWindow: read it at its final size even while the
+  // reveal is still growing it out of the dock button (MinkaMotion.atRest).
+  function paintImagePosition(){return window.MinkaMotion?.atRest?window.MinkaMotion.atRest('radio',paintImagePositionNow):paintImagePositionNow();}
+  function paintImagePositionNow(){
     const rw=document.getElementById('radioWindow'),preview=document.getElementById('radioLookPreview'),tools=document.getElementById('radioImageTools');
     const geometry=currentImageCrop(),enabled=appearance.layout!=='pioneer'&&!!imageSource;
     if(tools)tools.hidden=!enabled;
@@ -3263,10 +3266,15 @@ function focusRadio(){
     if(slider){slider.disabled=!geometry;slider.value=Math.round((geometry?.zoom||1)*100);document.getElementById('radioImageZoomValue').textContent=slider.value+'%';}
     if(reset)reset.disabled=!geometry;
     if(hint)hint.textContent=geometry?(window.__mkUnifiedMedia?.getSession()?'Velc attēlu priekšskatījumā. Saglabājas tavā profilā visās ierīcēs.':'Velc attēlu priekšskatījumā. Ielogojies, lai saglabātu visās ierīcēs.'):'Ielādē attēlu…';
+    // Amp draws three floating panes on a transparent window; the skin image
+    // never shows there, so its backing colour must not either — otherwise the
+    // window becomes a full-width dark band with hard edges beside the panes.
+    const ampWindow=appearance.layout==='amp';
+    if(rw&&ampWindow)['background-color','background-size','background-position','background-repeat'].forEach(p=>rw.style.removeProperty(p));
     if(!enabled||!geometry||!rw)return;
     const r=rw.getBoundingClientRect();
     for(const el of [rw,preview]){
-      if(!el)continue;
+      if(!el||(el===rw&&ampWindow))continue;
       const ratio=el===rw?1:el.getBoundingClientRect().width/r.width;if(!ratio)continue;
       el.style.setProperty('background-size',`100% 100%,100% 100%,${geometry.width*ratio}px ${geometry.height*ratio}px`,'important');
       el.style.setProperty('background-position',`center,center,${geometry.left*ratio}px ${geometry.top*ratio}px`,'important');
@@ -3296,7 +3304,8 @@ function focusRadio(){
     }
     return result;
   }
-  function placeSpectrum(){
+  function placeSpectrum(){return window.MinkaMotion?.atRest?window.MinkaMotion.atRest('radio',placeSpectrumNow):placeSpectrumNow();}
+  function placeSpectrumNow(){
     const rw=document.getElementById('radioWindow'),monitor=rw?.querySelector?.('.monitor-frame');
     if(!monitor||!rw.getBoundingClientRect)return;
     monitor.style.removeProperty('translate');
@@ -3489,7 +3498,8 @@ function focusRadio(){
     sample.classList.toggle('has-frame',!preview.hidden&&(appearance.vizFrame==='on'||(appearance.vizFrame!=='off'&&!modern)));
     if(!preview.hidden){const src=vizPreviewSource(vizStyle);if(preview.getAttribute('src')!==src)preview.src=src;sample.style.setProperty('--viz-preview-mask',modern?`url("${new URL(src,document.baseURI).href}")`:'none');}else sample.style.setProperty('--viz-preview-mask','none');
   }
-  function syncLayoutPreview(){
+  function syncLayoutPreview(){return window.MinkaMotion?.atRest?window.MinkaMotion.atRest('radio',syncLayoutPreviewNow):syncLayoutPreviewNow();}
+  function syncLayoutPreviewNow(){
     const rw=document.getElementById('radioWindow'),preview=document.getElementById('radioLookPreview');
     if(!rw||!preview||!panel.classList.contains('open'))return;
     const rect=rw.getBoundingClientRect();if(!rect.width||!rect.height)return;

@@ -37,7 +37,7 @@
   }
   window.__minkaHasApiAuth = function() { return !!getToken(); };
 
-  var CALENDAR_BUILD = '20260923wheel1';
+  var CALENDAR_BUILD = '20260924m3';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -278,7 +278,15 @@
     var mem = Number(nav.deviceMemory || 0);
     var cores = Number(nav.hardwareConcurrency || 0);
     var reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    var lowSpec = reduceMotion || (mem > 0 && mem <= 8) || (cores > 0 && cores <= 4);
+    var lowSpec = (mem > 0 && mem <= 8) || (cores > 0 && cores <= 4);
+    // Motion level for the first paint (js/mk-motion.js keeps it current).
+    // Separate from lowSpec: reduced motion is an accessibility choice, lite
+    // is chosen from measured frames and stored per device.
+    try {
+      var motionStore = JSON.parse(localStorage.getItem('minkaMotionV1') || '{}') || {};
+      document.documentElement.setAttribute('data-motion', reduceMotion ? 'reduced' : (motionStore.level === 'lite' ? 'lite' : 'full'));
+    } catch (_m) { document.documentElement.setAttribute('data-motion', reduceMotion ? 'reduced' : 'full'); }
+
     window.__mkPerfProfile = {
       lowSpec: lowSpec,
       reducedMotion: reduceMotion,
@@ -464,9 +472,10 @@ body.radio-hidden #radioWindow {
   pointer-events: none;
 }
 /* Morph mode (html.radio-morph, set by the reveal module): the window never
-   slides. Hidden = in place, invisible. Open/close is the dock-button morph
-   shell plus a Web Animations opacity ramp on the window itself, so no CSS
-   transition may compete (transitions outrank animations in the cascade). */
+   slides. Hidden = in place, invisible. Open/close is a Web Animations
+   translate/scale/opacity morph of the window itself out of and back into
+   the dock button, so no CSS transition may compete (transitions outrank
+   animations in the cascade). */
 html.radio-morph body #radioWindow,
 html.radio-morph body.radio-hidden #radioWindow,
 html.radio-morph body.radio-idle #radioWindow {
@@ -483,23 +492,6 @@ html.radio-morph body.radio-anim #radioWindow {
   visibility: visible;
   pointer-events: none;
 }
-/* Morph shell: a plain rounded slab that grows from the dock button into the
-   radio's frame. transform + opacity only; no shadow, blur or clip. */
-#radioMorph {
-  position: fixed; left: 0; top: 0;
-  display: none;
-  border-radius: 24px;
-  /* Static paint (one layer, scaled by the compositor): the radio's slab
-     colour with a faint lit top edge so it reads against the black page. */
-  background: linear-gradient(180deg, #232733, #15171e 40%, #111319);
-  border: 1px solid rgba(0,255,136,0.32);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.10);
-  transform-origin: 0 0;
-  pointer-events: none;
-  z-index: 161500;
-  contain: strict;
-}
-#radioMorph.on { display: block; will-change: transform, opacity; }
 html.mk-low-spec #calendarEmbed::before,
 html.mk-low-spec #macscapeBg,
 html.mk-low-spec #bottomBtnBar::before,
@@ -637,6 +629,8 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 #mk-toast.mk-ok{border-color:rgba(48,209,88,.35);color:#30d158;}
 </style>
 <link rel="stylesheet" href="css/geist-ui.css?v=20260919type3">
+<link rel="stylesheet" href="css/mk-sys.css?v=20260924m3a">
+<script src="js/mk-motion.js?v=20260924day2"></script>
 <script src="js/image-palette.js?v=20260919palette2"></script>
 </head>
 <body class="radio-idle">
@@ -645,7 +639,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <div id="calendarEmbed">
   <!-- Keep the expensive calendar document dormant behind the password gate.
        Authenticated startup assigns data-base-src immediately. -->
-  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260923wheel1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260924m3" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- Compact brand loader. It stays up until the embedded schedule has painted. -->
@@ -1036,7 +1030,7 @@ async function loadRadioScripts() {
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20260919pixel2']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
-  await loadAny(['js/radio.js?v=20260920amp24']);
+  await loadAny(['js/radio.js?v=20260924m3e']);
   await loadAny(['js/radio_extras_v4.js?v=20260919pixel2']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;
@@ -1052,30 +1046,38 @@ async function loadRadioScripts() {
 /* ──────────────────────────────────────────────
    RADIO REVEAL: dock button ⇄ radio window morph
    Frame 0 does the class flips (they name the target state from the
-   start) and two compositor-only animations (a plain shell slab:
-   transform+opacity; the window: opacity), and starts dimming the cards.
+   start) and compositor-only animations on the radio window itself
+   (translate + scale + opacity, see run()), and starts dimming the cards.
    The heavy part — the calendar's reflow to its radio-open/closed layout,
-   the ambience swap — runs a few frames in, WHILE the slab is still
+   the ambience swap — runs a few frames in, WHILE the window is still
    moving: the animations live on the compositor thread, so a slow main
    thread only delays the cards' new layout, never the morph. Doing it
-   after the morph instead read as a freeze on the work machines: the slab
+   after the morph instead read as a freeze on the work machines: the window
    arrived, then everything stood still for the reflow, then the cards
    popped. The visualizer restart and the next guest look still wait until
    the reveal is over.
 ────────────────────────────────────────────── */
 const mkRadioReveal = (function () {
-  const TOTAL_MS = 300;                // whole reveal
+  // Durations and easings come from MinkaMotion (js/mk-motion.js, the M3
+  // Expressive tokens): open = spatial default, close = spatial fast. These
+  // two are only the fallback if that script is missing.
+  const TOTAL_MS = 500;                // open reveal (full motion)
   const DIM_MS = 80;                   // cards dim to their floor this fast
   const REFLOW_AT_MS = 90;             // reflow lands once the dim is in
-  const MORPH = 'cubic-bezier(.2,.8,.2,1)';
-  let shell = null, running = null, guard = 0;
-  let pending = null;                  // last state asked for during a reveal
+  const MORPH = 'cubic-bezier(.38,1.21,.22,1)';
+  let running = null, guard = 0;
   let reflowTimer = 0;                 // calendar reflow scheduler
   document.documentElement.classList.add('radio-morph');
 
   function reduced() {
+    if (window.MinkaMotion) return window.MinkaMotion.level() === 'reduced';
     try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_e) { return false; }
   }
+  function motionToken(name, standard) {
+    if (window.MinkaMotion) return window.MinkaMotion.token(name, { standard: !!standard });
+    return { duration: name === 'spatial-fast' ? 350 : TOTAL_MS, easing: MORPH };
+  }
+  function travel() { return window.MinkaMotion ? window.MinkaMotion.travel() : 1; }
   function dockButton() {
     for (const id of ['radioToggle', 'radioIdleBtn']) {
       const b = document.getElementById(id);
@@ -1083,33 +1085,11 @@ const mkRadioReveal = (function () {
     }
     return null;
   }
-  function getShell() {
-    if (!shell) {
-      shell = document.createElement('div');
-      shell.id = 'radioMorph';
-      shell.setAttribute('aria-hidden', 'true');
-      document.body.appendChild(shell);
-    }
-    return shell;
-  }
   function calendarWindow() {
     try { return document.getElementById('calIframe')?.contentWindow || null; } catch (_e) { return null; }
   }
   function cardsFade(dir, ms) {
     try { const w = calendarWindow(); if (w && typeof w.__minkaCardsFade === 'function') w.__minkaCardsFade(dir, ms); } catch (_e) {}
-  }
-  // One measurement pass, before any style flips dirty the layout.
-  function geometry(rw) {
-    const btn = dockButton();
-    const b = btn ? btn.getBoundingClientRect() : null;
-    const r = rw.getBoundingClientRect();
-    if (!r.width || !r.height) return null;
-    const from = (b && b.width) ? b : { left: r.left + r.width / 2 - 48, top: r.bottom + 12, width: 96, height: 48 };
-    return {
-      w: r.width, h: r.height,
-      end: 'translate(' + r.left + 'px,' + r.top + 'px) scale(1,1)',
-      start: 'translate(' + from.left + 'px,' + from.top + 'px) scale(' + (from.width / r.width) + ',' + (from.height / r.height) + ')'
-    };
   }
   // The one heavy step of a reveal: the calendar gets its new state and
   // size (_doSync → __minkaHostLayout, one style/layout pass for the class
@@ -1134,11 +1114,6 @@ const mkRadioReveal = (function () {
     const anims = me.anims || [];
     running = null;
     anims.forEach(a => { try { a.cancel(); } catch (_e) {} });
-    if (shell) shell.classList.remove('on');
-    const body = document.body;
-    // A click that arrived mid-reveal asked for the opposite state: honour it now.
-    const next = pending; pending = null;
-    if (next !== null && next !== open) { clearTimeout(reflowTimer); body.classList.remove('radio-anim'); run(next); return; }
     // Settle in ONE frame callback: drop radio-anim, make sure the reflow
     // happened (it normally did mid-morph), restart the visualizer.
     settlePending = { rw: rw, open: open, me: me };
@@ -1209,62 +1184,117 @@ const mkRadioReveal = (function () {
   }
   // The state the UI is heading for: during a reveal, its target.
   function logicalOpen() {
-    if (running) return pending !== null ? pending : running.open;
+    if (running) return running.open;
     const c = document.body.classList;
     return !c.contains('radio-hidden') && !c.contains('radio-idle');
   }
+  // Where an interrupted reveal is right now, read before it is cancelled,
+  // so the reverse starts from this pose instead of jumping to an end.
+  function livePose(me) {
+    try {
+      const cs = getComputedStyle(me.rw);
+      return { translate: cs.translate === 'none' ? '0px 0px' : cs.translate, scale: cs.scale === 'none' ? '1' : cs.scale, opacity: Number(cs.opacity) || 0 };
+    } catch (_e) { return null; }
+  }
+  function abandon(me) {
+    clearTimeout(guard);
+    clearTimeout(reflowTimer);
+    running = null;
+    (me.anims || []).forEach(function (a) { try { a.onfinish = a.oncancel = null; a.cancel(); } catch (_e) {} });
+  }
+  // The dock button takes the window back: a small catch on arrival.
+  function catchOnButton() {
+    const btn = dockButton();
+    if (btn && window.MinkaMotion) window.MinkaMotion.animate(btn, [{ scale: '1' }, { scale: '1.07', offset: .4 }, { scale: '1' }], 'spatial-fast');
+  }
+  // The radio itself, shrunk uniformly and centred on the dock button. One
+  // scale for both axes, so text, artwork and the spectrum never stretch.
+  function buttonPose(rw) {
+    const btn = dockButton();
+    const r = rw.getBoundingClientRect();
+    if (!r.width || !r.height) return null;
+    const b = (btn && btn.getBoundingClientRect().width) ? btn.getBoundingClientRect()
+      : { left: r.left + r.width / 2 - 48, top: r.bottom + 12, width: 96, height: 48 };
+    const s = Math.max(.12, Math.min(1, Math.max(b.width / r.width, b.height / r.height)));
+    // Scale happens about the window's own transform-origin (the skins set
+    // it to the bottom edge), so solve the translate that puts the scaled
+    // window's centre on the button's centre: B = O + s·(C − O) + T.
+    const origin = String(getComputedStyle(rw).transformOrigin || '').split(' ').map(parseFloat);
+    const ox = r.left + (isFinite(origin[0]) ? origin[0] : r.width / 2);
+    const oy = r.top + (isFinite(origin[1]) ? origin[1] : r.height / 2);
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const dx = (b.left + b.width / 2) - ox - s * (cx - ox);
+    const dy = (b.top + b.height / 2) - oy - s * (cy - oy);
+    return { translate: dx.toFixed(1) + 'px ' + dy.toFixed(1) + 'px', scale: s.toFixed(4) };
+  }
+  /* M3 container transform on the real player: open, the radio grows out
+     of the dock button into its place (spatial, expressive), fading in over
+     the first part of the trip so it is never an empty frame; close, it
+     shrinks back into the button and fades out at the very end, and the
+     button catches it. A click mid-way reverses from the live pose. Only
+     translate/scale/opacity are animated (the window's `transform` is
+     pinned by the morph rules, the individual properties are free). */
   function run(open) {
     const rw = document.getElementById('radioWindow');
     if (!rw) return false;
-    if (running) { pending = open; return true; }   // remember the last request; finalize() applies it
+    let from = null;
+    if (running) {
+      if (running.open === open) return true;          // already heading there
+      from = livePose(running);
+      abandon(running);
+    }
     if (open) prepareGuestLook(); else nextGuestLook = true;
     const body = document.body;
-    const geo = reduced() ? null : geometry(rw);
+    const pose = reduced() ? null : buttonPose(rw);
     body.classList.add('radio-anim');
     // The classes name the target from frame 0 (the morph rules keep the
     // window visible under radio-anim), so _doSync and the ambience can
-    // read the state they are heading for before the slab has arrived.
+    // read the state they are heading for before the window has arrived.
     if (open) { body.classList.remove('radio-hidden'); body.classList.remove('radio-idle'); }
     else body.classList.add('radio-hidden');
-    if (!geo) { running = { open: open, anims: [], rw: rw, laidOut: false }; finalize(rw, open); return true; }
-    const sh = getShell();
-    sh.style.width = geo.w + 'px';
-    sh.style.height = geo.h + 'px';
-    sh.classList.add('on');
-    let shellFrames, winFrames;
+    if (!pose) { running = { open: open, anims: [], rw: rw, laidOut: false }; finalize(rw, open); return true; }
+    const fade = motionToken('effects-default');
+    let anims, total;
     if (open) {
-      // Slab grows out of the dock button, then fades to reveal the window.
-      shellFrames = [
-        { transform: geo.start, opacity: 1, easing: MORPH },
-        { transform: geo.end,   opacity: 1, offset: .74, easing: 'linear' },
-        { transform: geo.end,   opacity: 0 }
+      const t = motionToken('spatial-default');
+      total = t.duration;
+      anims = [
+        rw.animate([
+          { translate: from ? from.translate : pose.translate, scale: from ? from.scale : pose.scale },
+          { translate: '0px 0px', scale: '1' }
+        ], { duration: total, easing: t.easing, fill: 'both' }),
+        rw.animate([{ opacity: from ? from.opacity : 0 }, { opacity: 1 }],
+          { duration: Math.min(total, fade.duration), easing: fade.easing, fill: 'both' })
       ];
-      winFrames = [{ opacity: 0 }, { opacity: 0, offset: .45 }, { opacity: 1 }];
     } else {
-      // Slab covers the window, shrinks back into the button, fades away.
-      shellFrames = [
-        { transform: geo.end,   opacity: 0, easing: 'linear' },
-        { transform: geo.end,   opacity: 1, offset: .2, easing: MORPH },
-        { transform: geo.start, opacity: 1, offset: .9, easing: 'linear' },
-        { transform: geo.start, opacity: 0 }
+      const t = motionToken('spatial-fast', true);
+      total = t.duration;
+      anims = [
+        rw.animate([
+          { translate: from ? from.translate : '0px 0px', scale: from ? from.scale : '1' },
+          { translate: pose.translate, scale: pose.scale }
+        ], { duration: total, easing: t.easing, fill: 'both' }),
+        rw.animate([{ opacity: from ? from.opacity : 1 }, { opacity: from ? from.opacity : 1, offset: .6 }, { opacity: 0 }],
+          { duration: total, easing: 'linear', fill: 'both' })
       ];
-      winFrames = [{ opacity: 1 }, { opacity: 0, offset: .35 }, { opacity: 0 }];
     }
-    const opts = { duration: TOTAL_MS, fill: 'both' };
-    const anims = [sh.animate(shellFrames, opts), rw.animate(winFrames, opts)];
     const me = running = { open: open, anims: anims, rw: rw, laidOut: false };
-    // Cards dim now; the reflow lands under the dim while the slab is still
-    // on its way. A timer, not a frame callback: this task may block the
-    // main thread for a while on a slow machine, and the compositor carries
-    // the morph through it either way.
+    // Code that measures the window (skin image, spectrum) reads it at rest.
+    if (window.MinkaMotion && window.MinkaMotion.track) window.MinkaMotion.track('radio', anims);
+    // Cards dim now; the reflow lands under the dim while the window is
+    // still on its way. A timer, not a frame callback: this task may block
+    // the main thread for a while on a slow machine, and the compositor
+    // carries the transform through it either way.
     cardsFade('out', DIM_MS);
     clearTimeout(reflowTimer);
     reflowTimer = setTimeout(function () { if (running === me) reflow(me); }, REFLOW_AT_MS);
-    Promise.all(anims.map(a => a.finished)).then(
-      function () { if (running === me) finalize(rw, open); },
+    const all = Promise.all(anims.map(a => a.finished));
+    if (window.MinkaMotion) window.MinkaMotion.measure(all.catch(function () {}), total);
+    all.then(
+      function () { if (running === me) { finalize(rw, open); if (!open) catchOnButton(); } },
       function () { if (running === me) finalize(rw, open); }   // AbortError: cancelled → settle the state now
     );
-    guard = setTimeout(function () { if (running === me) finalize(rw, open); }, TOTAL_MS + 250);   // hidden tab / stalled timeline
+    guard = setTimeout(function () { if (running === me) finalize(rw, open); }, total + 250);   // hidden tab / stalled timeline
     return true;
   }
   return { run: run, busy: function () { return !!running; }, logicalOpen: logicalOpen };
@@ -4051,7 +4081,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
         _history[room].unshift({ts:ts,name:_names[room]||'Anonīms',media:_mediaSnapshot(room)});
         _mediaSyncTs[room] = ts; _saveMediaSync();
         _recordStep[room]=0;
-        _save(); _saveHistory(); _kvPush(room); _render(); _updateLed(); _playMark();
+        _save(); _saveHistory(); _kvPush(room); _render(); _updateLed();
       });
     });
     // History: fade the bottom edge while there is more to scroll, so rows
@@ -4148,7 +4178,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
         _markLocalWrite(roomId);
         _history[roomId].unshift({ ts: ts, name: _names[roomId] || 'Anonīms', media: _mediaSnapshot(roomId) });
         _mediaSyncTs[roomId] = ts; _saveMediaSync();
-        _save(); _saveHistory(); _kvPush(roomId); _render(); _updateLed(); _playMark();
+        _save(); _saveHistory(); _kvPush(roomId); _render(); _updateLed();
       }
       modal.style.display = 'none';
       if (window.updateBuddyUiSuppression) window.updateBuddyUiSuppression();
@@ -4277,49 +4307,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       window.__minkaBolusNeedsChange = isAlert;
     }
   }
-  function _playWelcome() {
-    try {
-      var ctx = new (window.AudioContext||window.webkitAudioContext)();
-      // Soft pentatonic ascending arpeggio: C5 E5 G5 B5 + shimmer
-      var notes = [[523,0],[659,0.10],[784,0.20],[988,0.32],[1047,0.46]];
-      notes.forEach(function(n) {
-        var o=ctx.createOscillator(), g=ctx.createGain(), t=ctx.currentTime+n[1];
-        o.type='sine';
-        o.frequency.setValueAtTime(n[0],t);
-        g.gain.setValueAtTime(0,t);
-        g.gain.linearRampToValueAtTime(0.055,t+0.04);
-        g.gain.exponentialRampToValueAtTime(0.0001,t+0.55);
-        o.connect(g); g.connect(ctx.destination);
-        o.start(t); o.stop(t+0.6);
-      });
-      // Soft pad underneath
-      var op=ctx.createOscillator(), gp=ctx.createGain(), tp=ctx.currentTime;
-      op.type='triangle'; op.frequency.setValueAtTime(261,tp);
-      gp.gain.setValueAtTime(0,tp); gp.gain.linearRampToValueAtTime(0.03,tp+0.08);
-      gp.gain.exponentialRampToValueAtTime(0.0001,tp+0.9);
-      op.connect(gp); gp.connect(ctx.destination); op.start(tp); op.stop(tp+1.0);
-    } catch(e) {}
-  }
-  function _playBlip() {
-    try {
-      var ctx = new (window.AudioContext||window.webkitAudioContext)();
-      var o=ctx.createOscillator(), g=ctx.createGain(), t=ctx.currentTime;
-      o.type='sine'; o.frequency.setValueAtTime(620,t);
-      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.06,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+0.18);
-      o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t+0.2);
-    } catch(e) {}
-  }
-  function _playMark() {
-    try {
-      var ctx = new (window.AudioContext||window.webkitAudioContext)();
-      [[440,0],[554,0.12],[659,0.24]].forEach(function(n){
-        var o=ctx.createOscillator(),g=ctx.createGain(),t=ctx.currentTime+n[1];
-        o.type='sine';o.frequency.setValueAtTime(n[0],t);
-        g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.07,t+0.05);g.gain.exponentialRampToValueAtTime(0.0001,t+0.45);
-        o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+0.5);
-      });
-    } catch(e) {}
-  }
+
   function _injectCss() {
     if (document.getElementById('bolus-css')) return;
     var s = document.createElement('style');
@@ -4725,7 +4713,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     var btn = document.getElementById('bolusDocBtn');
     if (btn) btn.classList.toggle('bolus-open', _open);
     if (window.updateBuddyUiSuppression) window.updateBuddyUiSuppression();
-    if (_open) { _playWelcome(); _render(); _startTick(); _refreshSync(true); }
+    if (_open) { _render(); _startTick(); _refreshSync(true); }
     else { _stopTick(); _scheduleSync(); }
   };
   function _startTick() {
@@ -4904,11 +4892,13 @@ window.updateBuddyUiSuppression = updateBuddyUiSuppression;
 function openStatsFromDock() {
   var iframe = document.getElementById("calIframe");
   if (!iframe || !iframe.contentWindow) return;
-  // Toggle: if the stats modal is already open, a second press closes it.
+  // Toggle: if the stats dialog is open, a second press closes it. A dialog
+  // that is still animating closed counts as closed, so the press reopens.
   try {
     var idoc = iframe.contentDocument || iframe.contentWindow.document;
     var modal = idoc && idoc.getElementById('stats-modal');
-    if (modal && modal.style.display && modal.style.display !== 'none') {
+    var open = modal && (modal.dataset.state ? modal.dataset.state === 'open' : (modal.style.display && modal.style.display !== 'none'));
+    if (open) {
       if (typeof iframe.contentWindow.closeStatsModal === 'function') iframe.contentWindow.closeStatsModal();
       else { modal.style.display = 'none'; document.body.classList.remove('stats-work-open'); }
       setBuddyUiFlag('stats', false);
@@ -4916,17 +4906,12 @@ function openStatsFromDock() {
     }
   } catch (_e) {}
   setBuddyUiFlag('stats', true);
-  try {
-    var doc = iframe.contentDocument || iframe.contentWindow.document;
-    var btn = doc && doc.querySelector('button[title="Maiņu statistika"]');
-    if (btn) {
-      btn.click();
-      return;
-    }
-  } catch (_e) {}
+  // The dialog grows out of the dock button: hand the calendar the button's
+  // box in the calendar document's own coordinates.
+  var origin = dockOrigin('statsDocBtn');
   try {
     if (typeof iframe.contentWindow.openStatsModal === 'function') {
-      iframe.contentWindow.openStatsModal();
+      iframe.contentWindow.openStatsModal({ origin: origin });
       return;
     }
   } catch (_e) {}
@@ -4944,12 +4929,23 @@ function openSettingsFromDock() {
   iframe.contentWindow.postMessage({ type: "mk_open_settings" }, window.location.origin);
 }
 
+// A dock button's box in the calendar iframe's coordinates: the origin a
+// calendar surface grows out of (MinkaMotion.openSurface).
+function dockOrigin(id) {
+  try {
+    var btn = document.getElementById(id), iframe = document.getElementById('calIframe');
+    var b = btn && btn.getBoundingClientRect(), f = iframe && iframe.getBoundingClientRect();
+    if (b && f && b.width) return { left: b.left - f.left, top: b.top - f.top, width: b.width, height: b.height };
+  } catch (_e) {}
+  return null;
+}
+
 function openMonthCalFromDock() {
   var iframe = document.getElementById("calIframe");
   if (!iframe || !iframe.contentWindow) return;
   try {
     var mc = iframe.contentWindow.MinkaMonthCal;
-    if (mc && mc.open) { if (mc.isOpen()) mc.close(); else mc.open(); return; }
+    if (mc && mc.open) { if (mc.isOpen()) mc.close(); else mc.open(undefined, { origin: dockOrigin('monthCalDocBtn') }); return; }
   } catch (_e) {}
   try { iframe.contentWindow.postMessage({ type: "mk_open_month_calendar" }, window.location.origin); } catch (_e) {}
 }
@@ -5328,6 +5324,24 @@ window.addEventListener('message', function(e) {
 	  window.addEventListener('resize', positionLacitisSheet);
 	})();
 
+/* Full-screen sheets (Plānotājs, Pusdienas): M3 container transform out of
+   and back into their dock button (js/mk-motion.js). The sheet stays shown
+   while it closes (data-closing) and is hidden when that has played; a
+   reopen during the close simply takes over. */
+function mkSheetOpen(sheet, panel, key, btn) {
+  delete sheet.dataset.closing;
+  if (window.MinkaMotion) window.MinkaMotion.openSurface(panel || sheet, { key: key, origin: btn });
+}
+function mkSheetClose(sheet, panel, key, btn, done) {
+  if (!window.MinkaMotion || sheet.style.display === 'none') { done(); return; }
+  sheet.dataset.closing = '1';
+  window.MinkaMotion.closeSurface(panel || sheet, { key: key, origin: btn }, function () {
+    if (sheet.dataset.closing !== '1') return;
+    delete sheet.dataset.closing;
+    done();
+  });
+}
+
 /* Plānotājs launcher (TESTS): lazy full-screen iframe. */
 (function(){
   var PLANOTAJS_URL = 'https://grafika-planotajs.pages.dev/';
@@ -5349,15 +5363,16 @@ window.addEventListener('message', function(e) {
       window.open(PLANOTAJS_URL, 'planotajs', 'popup=yes,width=1180,height=800,resizable=yes,scrollbars=yes,toolbar=no,location=no,menubar=no,status=no');
       return;
     }
-    if (sheet.style.display !== 'none') {
+    if (sheet.style.display !== 'none' && sheet.dataset.closing !== '1') {
       window.closePlanotajsSheet();
       return;
     }
-    lastPlanotajsFocus = document.activeElement;
+    if (sheet.dataset.closing !== '1') lastPlanotajsFocus = document.activeElement;
     sheet.style.display = 'block';
     sheet.setAttribute('aria-hidden', 'false');
     if (btn) btn.classList.add('planotajs-open');
     positionPlanotajsSheet();
+    mkSheetOpen(sheet, document.getElementById('planotajsSheetPanel'), 'planotajs', btn);
     if (frame.src !== PLANOTAJS_URL) {
       frame.removeAttribute('srcdoc');
       frame.src = PLANOTAJS_URL;
@@ -5369,11 +5384,14 @@ window.addEventListener('message', function(e) {
     var sheet = document.getElementById('planotajsSheet');
     var frame = document.getElementById('planotajsSheetFrame');
     var btn = document.getElementById('planotajsDockBtn');
+    if (sheet && sheet.dataset.closing === '1') return;
     if (sheet) {
-      sheet.style.display = 'none';
       sheet.setAttribute('aria-hidden', 'true');
-    }
-    if (frame) frame.src = 'about:blank';
+      mkSheetClose(sheet, document.getElementById('planotajsSheetPanel'), 'planotajs', btn, function () {
+        sheet.style.display = 'none';
+        if (frame) frame.src = 'about:blank';
+      });
+    } else if (frame) frame.src = 'about:blank';
     if (btn) btn.classList.remove('planotajs-open');
     if (typeof window.updateBuddyUiSuppression === 'function') window.updateBuddyUiSuppression();
     if (lastPlanotajsFocus && typeof lastPlanotajsFocus.focus === 'function') {
@@ -5417,10 +5435,11 @@ window.addEventListener('message', function(e) {
 function toggleNsFromParent() {
   _nsOpen = !_nsOpen;
   const iframe = document.getElementById('calIframe');
-  if (iframe && iframe.contentWindow) {
-    iframe.contentWindow.postMessage({ type: 'toggleNs', open: _nsOpen }, window.location.origin);
-  }
   const btn = document.getElementById('nsToggleBtnParent');
+  if (iframe && iframe.contentWindow) {
+    // The panel grows out of this dock button: its box in calendar coordinates.
+    iframe.contentWindow.postMessage({ type: 'toggleNs', open: _nsOpen, origin: dockOrigin('nsToggleBtnParent') }, window.location.origin);
+  }
   const led = document.getElementById('nsLedParent');
   if (_nsOpen) {
     btn.style.borderColor = 'rgba(100,140,255,.65)';
@@ -5493,10 +5512,12 @@ window.addEventListener('message', function(e) {
       window.open(PUSDIENAS_URL, 'pusdienas', 'popup=yes,width=560,height=760,resizable=yes,scrollbars=yes,toolbar=no,location=no,menubar=no,status=no');
       return;
     }
+    var wasShown = sheet.style.display !== 'none' && sheet.dataset.closing !== '1';
     sheet.style.display = 'block';
     sheet.setAttribute('aria-hidden', 'false');
     if (btn) btn.classList.add('pusdienas-open');
     positionPusdienasSheet();
+    if (!wasShown) mkSheetOpen(sheet, document.getElementById('pusdienasSheetPanel'), 'pusdienas', btn);
     if (frame.src !== PUSDIENAS_URL) {
       frame.removeAttribute('srcdoc');
       frame.src = PUSDIENAS_URL;
@@ -5508,11 +5529,14 @@ window.addEventListener('message', function(e) {
     var sheet = document.getElementById('pusdienasSheet');
     var frame = document.getElementById('pusdienasSheetFrame');
     var btn = document.getElementById('pusdienasDockBtn');
+    if (sheet && sheet.dataset.closing === '1') return;
     if (sheet) {
-      sheet.style.display = 'none';
       sheet.setAttribute('aria-hidden', 'true');
-    }
-    if (frame) frame.src = 'about:blank';
+      mkSheetClose(sheet, document.getElementById('pusdienasSheetPanel'), 'pusdienas', btn, function () {
+        sheet.style.display = 'none';
+        if (frame) frame.src = 'about:blank';
+      });
+    } else if (frame) frame.src = 'about:blank';
     if (btn) btn.classList.remove('pusdienas-open');
     suppressBuddy();
   };
@@ -5684,32 +5708,6 @@ window.addEventListener('message', function(e) {
   document.addEventListener('keydown', function(e){
     if (e.key === 'Escape') window.closeMobileQrModal();
   });
-})();
-</script>
-
-<script>
-/* Parent sound system for NAKTS/RADIO buttons */
-(function(){
-  let _ctx=null;
-  function ctx(){ if(!_ctx)try{_ctx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}return _ctx; }
-  function blip(freq,dur,vol){
-    const c=ctx();if(!c)return;
-    try{const o=c.createOscillator(),g=c.createGain();
-    o.connect(g);g.connect(c.destination);
-    o.type='sine';o.frequency.value=freq;
-    g.gain.setValueAtTime(0,c.currentTime);
-    g.gain.linearRampToValueAtTime(vol||0.05,c.currentTime+0.008);
-    g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dur);
-    o.start(c.currentTime);o.stop(c.currentTime+dur+0.01);}catch(e){}
-  }
-  document.addEventListener('click',function(e){
-    const b=e.target.closest('button');
-    if(!b)return;
-    if(b.id==='nsToggleBtnParent') blip(420,0.12,0.04);
-    else if(b.id==='bolusDocBtn') blip(460,0.11,0.04);
-    else if(b.id==='mobileDockBtn') blip(500,0.12,0.04);
-    else if(b.id==='radioToggle'||b.id==='radioIdleBtn') blip(380,0.10,0.04);
-  },true);
 })();
 </script>
 

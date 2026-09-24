@@ -384,6 +384,16 @@
         + '<circle cx="14.9" cy="10.2" r=".9" fill="currentColor" stroke="none"/><path d="M8.6 14.1c1.7 2 5.1 2 6.8 0"/></svg></span>'
         + '<small class="rg-pulse-name" aria-hidden="true">Savs vērtējums</small></button>';
   }
+  // Fixed-size skeleton for the team curve (mood-trend.js fills it), so the
+  // card has its final height from the first frame and nothing shifts later.
+  function moodTrendMarkup() {
+    var faces = '<span class="rg-trend-axis" aria-hidden="true"><i>😍</i><i>😠</i></span>';
+    return '<button class="rg-trend" type="button" data-rg-trend title="Katrs vērtējums anonīmi nonāk komandas statistikā" aria-label="Komandas sajūta. Atvērt statistiku">'
+      + '<span class="rg-trend-head"><span class="rg-trend-title">Komandas sajūta</span>'
+      + '<span class="rg-trend-meta">14 dienas<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6.5 15 12l-5.5 5.5"/></svg></span></span>'
+      + '<span class="rg-trend-plot">' + faces + '<svg class="rg-trend-svg" viewBox="0 0 280 44" aria-hidden="true" focusable="false"></svg></span>'
+      + '</button>';
+  }
   function moodBlobMarkup() {
     var base = moodVisuals._none;
     var facePath = function (part) {
@@ -723,7 +733,7 @@
         return box.l < other.r && other.l < box.r && box.t < other.b && other.t < box.b;
       });
     }
-    card.querySelectorAll('.rg-feedback-card-title, .rg-mood-side, .rg-mood-topbtn, .rg-mood-label, .rg-mood-now, .rg-pulse-taps, .rg-feedback-card-actions, .rg-bmc-qrblock')
+    card.querySelectorAll('.rg-feedback-card-title, .rg-mood-side, .rg-mood-topbtn, .rg-mood-label, .rg-mood-now, .rg-pulse-taps, .rg-trend, .rg-feedback-card-actions, .rg-bmc-qrblock')
       .forEach(function (node) {
         var protectedText = node.classList.contains('rg-mood-label') || node.classList.contains('rg-mood-now') || node.classList.contains('rg-feedback-card-title');
         var box = nodeBox(node, protectedText ? 12 : 6);
@@ -940,7 +950,7 @@
     people.forEach(function (person) {
       addOccupied(person, Math.max(8, person.getBoundingClientRect().width * .18));
     });
-    card.querySelectorAll('.rg-feedback-card-title, .rg-mood-side, .rg-mood-topbtn, .rg-mood-label, .rg-mood-now, .rg-pulse-taps, .rg-feedback-card-actions, .rg-bmc-qrblock')
+    card.querySelectorAll('.rg-feedback-card-title, .rg-mood-side, .rg-mood-topbtn, .rg-mood-label, .rg-mood-now, .rg-pulse-taps, .rg-trend, .rg-feedback-card-actions, .rg-bmc-qrblock')
       .forEach(function (node) { addOccupied(node, 4); });
     addOccupied(blob, 4);
     function collidesWith(box, boxes) {
@@ -1231,7 +1241,7 @@
       });
     };
     card.querySelectorAll('.rg-feedback-card-title, .rg-mood-pill, .rg-mood-side-label,'
-      + ' .rg-mood-topbtn, .rg-pulse-taps, .rg-feedback-card-actions, .rg-bmc-qrblock').forEach(function (node) {
+      + ' .rg-mood-topbtn, .rg-pulse-taps, .rg-trend, .rg-feedback-card-actions, .rg-bmc-qrblock').forEach(function (node) {
       add(node.getBoundingClientRect(), 5, 5);
     });
     var label = card.querySelector('.rg-mood-label');
@@ -1493,6 +1503,11 @@
       });
     }
   }
+  function setMoodLift(mood, px) {
+    if (!mood) return;
+    if (px > 0) mood.style.setProperty('--rg-mood-lift', px + 'px');
+    else mood.style.removeProperty('--rg-mood-lift');
+  }
   function layoutMoodSections() {
     var mood = list.querySelector('.rg-feedback-card');
     var rdLabel = list.querySelector('.cards-section-label-rd');
@@ -1511,6 +1526,7 @@
     // rows; in the shortened radio viewport it moved RADIOGRĀFERI over the
     // RADIOLOGI cards and left most of the centre panel empty.
     if (document.documentElement.classList.contains('host-radio-open')) {
+      setMoodLift(mood, 0);
       clearMoodSectionLayout(rdSection, rdGrid);
       clearMoodSectionLayout(rgSection, rgGrid);
       return;
@@ -1524,17 +1540,28 @@
     var employees = [].slice.call(rdGrid.querySelectorAll('.card:not(.rg-feedback-card)'));
     var employee = employees[0] || rgGrid.querySelector('.card');
     if (mobile || columns < 3 || !employee) {
+      setMoodLift(mood, 0);
       clearMoodSectionLayout(rgSection, rgGrid);
       return;
     }
+    var currentLift = parseFloat(mood.style.getPropertyValue('--rg-mood-lift')) || 0;
     var moodRect = mood.getBoundingClientRect();
     var employeeRect = employee.getBoundingClientRect();
     // Pull the next profession into the free tracks only when the feedback
     // module really shares the employee row. On narrow layouts it wraps below
     // the workers; pulling there would create an overlap.
-    if (Math.abs(moodRect.top - employeeRect.top) > 4) {
+    if (Math.abs(moodRect.top + currentLift - employeeRect.top) > 4) {
+      setMoodLift(mood, 0);
       clearMoodSectionLayout(rgSection, rgGrid);
       return;
+    }
+    // Beside the workers the RADIOLOGI heading row is empty above the mood
+    // column, so the card starts there. That strip holds the team curve and
+    // everything under it moves up by the same amount.
+    var lift = Math.max(0, Math.round(moodRect.top + currentLift - rdLabel.getBoundingClientRect().top));
+    if (lift !== currentLift) {
+      setMoodLift(mood, lift);
+      moodRect = mood.getBoundingClientRect();
     }
     var employeeBottom = Math.max.apply(null, employees.map(function(card) {
       return card.getBoundingClientRect().bottom;
@@ -1660,7 +1687,7 @@
       pulse.setAttribute('aria-label', 'Novērtē maiņu');
       pulse.innerHTML = '<div class="rg-feedback-cloud" aria-hidden="true"></div><div class="rg-feedback-card-head-spacer" aria-hidden="true"></div>'
         + '<div class="rg-feedback-card-main"><strong class="rg-feedback-card-title">Novērtē maiņu</strong>'
-        + moodBlobMarkup()
+        + moodBlobMarkup() + moodTrendMarkup()
         + '<span class="rg-pulse-taps" role="group" aria-label="Ātrās reakcijas">' + reactionButtons() + '</span>'
         + '<small class="rg-feedback-card-reaction-label" aria-live="polite">Izvēlies sajūtu</small></div>'
         + '<div class="rg-feedback-card-actions"><button class="rg-pulse-write rg-pulse-write--comment" type="button" data-rg-write="comment" title="Atvērt komentārus"><b class="rg-comment-icon" aria-hidden="true"></b><span>Komentāri</span><small class="rg-feedback-action-count" data-rg-action-count="comment"></small></button></div>'
@@ -1753,6 +1780,7 @@
     // storage event and mount. `selected` is this device's last tap, `dominant`
     // is the day's leading reaction restored from the server.
     updateMoodBlob((selected && selected.key) || (dominant && dominant.key) || null);
+    window.MinkaMoodTrend?.paint(card);
     window.MinkaDaybook?.enhance(card);
     // updateMoodBlob() also rebuilds the responsive feedback illustration.
     // Its final height is only known after that synchronous rebuild, so place
@@ -2989,11 +3017,24 @@
     textarea.style.height = 'auto';
     textarea.style.height = Math.min(120, Math.max(44, textarea.scrollHeight)) + 'px';
   };
+  // M3 container transform (js/mk-motion.js): the conversation grows out of
+  // the button that opened it and returns into it. `hidden` is only set once
+  // the close has played; `commsClosing` is the logical state meanwhile.
+  var commsClosing = false;
+  var commsOrigin = null;
   openModal = function (kind, trigger) {
     lastWriteButton = trigger || null;
     modal.dataset.kind = 'comment';
     modalDay = shiftDayKey();
+    var wasShown = !modal.hidden && !commsClosing;
+    commsClosing = false;
+    modal.classList.remove('is-closing');
     modal.hidden = false;
+    var dialog = modal.querySelector('.rg-feedback-dialog');
+    if (!wasShown && window.MinkaMotion && dialog) {
+      commsOrigin = trigger || window.MinkaMotion.recentLauncher();
+      window.MinkaMotion.openSurface(dialog, { key: 'comms', origin: commsOrigin, scrim: modal });
+    }
     syncFeedbackModalState(true);
     textarea.value = '';
     commsSearch.value = '';
@@ -3014,7 +3055,20 @@
     window.setTimeout(function () { textarea.focus(); }, 80);
   };
   closeModal = function () {
-    modal.hidden = true;
+    if (modal.hidden || commsClosing) return;
+    var dialog = modal.querySelector('.rg-feedback-dialog');
+    if (window.MinkaMotion && dialog) {
+      commsClosing = true;
+      modal.classList.add('is-closing');
+      window.MinkaMotion.closeSurface(dialog, { key: 'comms', origin: commsOrigin, scrim: modal }, function () {
+        if (!commsClosing) return;
+        commsClosing = false;
+        modal.classList.remove('is-closing');
+        modal.hidden = true;
+      });
+    } else {
+      modal.hidden = true;
+    }
     communityLoadId += 1;
     syncFeedbackModalState(false);
     var closedAt = Date.now();
@@ -3250,7 +3304,7 @@
   save.addEventListener('click', saveText);
   moreButton.addEventListener('click', function () { loadMessages(false); });
   document.addEventListener('keydown', function (event) {
-    if (event.key === 'Escape' && !modal.hidden) closeModal();
+    if (event.key === 'Escape' && !modal.hidden && !commsClosing) closeModal();
   });
   // The shell page shares this origin, so each of its localStorage writes (radio,
   // theme, bolus…) fires `storage` here — about 30 during startup, each one a full

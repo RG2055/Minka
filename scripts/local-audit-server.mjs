@@ -14,7 +14,12 @@ const fixture=String.raw`(()=>{
  const delayMs=Math.max(0,Math.min(60000,Number(q.get('delay')||1000)));
  sessionStorage.setItem('minka_api_token_v1','local-fixture-only');
  try{delete Navigator.prototype.serviceWorker;}catch(_){}
- const names=['ALPHA TEST','BETA TEST','GAMMA TEST','DELTA TEST'];
+ // Optional busier shift for layout checks: localStorage['minka:audit-staff']=7.
+ const allNames=['ALPHA TEST','BETA TEST','GAMMA TEST','DELTA TEST','EPSILON TEST','ZETA TEST','ETA TEST','THETA TEST'];
+ const names=allNames.slice(0,Math.max(4,Math.min(8,Number(localStorage.getItem('minka:audit-staff'))||4)));
+ // Optional synthetic team reactions per day: localStorage['minka:audit-moods']='1'.
+ const moodDemo=localStorage.getItem('minka:audit-moods')==='1';
+ const demoRatings=date=>{const d=Number(String(date||'').slice(8));if(!moodDemo||!d||d%6===0)return {};const keys=['terrible','bad','ok','good','excellent'],out={};for(let i=0;i<1+d%4;i++){const k=keys[Math.min(4,Math.max(0,Math.round(2.6+Math.sin(d*.7+i)*1.6)))];out[k]=(out[k]||0)+1;}return out;};
  const skinState=JSON.parse(localStorage.getItem('minka:audit-skins')||'null')||{'ALPHA TEST':'grad:menta;txt:217,249,234;num:110,231,183','BETA TEST':'grad:zelts;txt:255,247,230;num:252,211,77'};
  const emojiState={}; const bolusState={ge:{changedAt:Date.now()-3600000,history:[{ts:Date.now()-3600000,name:'ALPHA TEST'}]},philips:{changedAt:null,history:[]}};
  const history=n=>({ok:true,nights:n,parts:Object.fromEntries(names.map(name=>[name,[4,3,2,1]])),beds:{}});
@@ -37,7 +42,7 @@ const fixture=String.raw`(()=>{
    body=history(20);
   }
   else if(url.pathname.includes('/api/coffee'))body={ok:true,counts:{},details:{},totals:{}};
-  else if(url.pathname.includes('/api/feedback'))body={ok:true,ratings:{},entryCounts:{comment:0,suggestion:0},messages:[],days:[]};
+  else if(url.pathname.includes('/api/feedback'))body={ok:true,ratings:demoRatings(url.searchParams.get('date')),entryCounts:{comment:0,suggestion:0},messages:[],days:[]};
   else if(url.pathname.includes('/api/birthdays'))body={ok:true,birthdays:[{d:'08.09',name:'ALPHA TEST'}]};
   else if(url.pathname.includes('/api/emoji')){if(options.method==='POST'){const data=JSON.parse(options.body);if(data.emoji)emojiState[data.worker]=data.emoji;else delete emojiState[data.worker];body={ok:true};}else body=emojiState;}
   else if(url.pathname.includes('/api/skins')){if(options.method==='POST'){const data=JSON.parse(options.body);if(data.skin)skinState[data.worker]=data.skin;else delete skinState[data.worker];localStorage.setItem('minka:audit-skins',JSON.stringify(skinState));body={ok:true};}else body=skinState;}

@@ -210,6 +210,7 @@
     s.textContent = [
       '#mcal-overlay{position:fixed;inset:0;z-index:240000;display:none;flex-direction:column;background:#060b13;color:#e6eef7;font-family:Inter,system-ui,sans-serif;}',
       '#mcal-overlay.is-open{display:flex;}',
+      '#mcal-overlay.is-closing{display:flex;pointer-events:none;}',
       '.mcal-inner{display:flex;flex-direction:column;width:100%;height:100%;padding:14px 18px 16px;box-sizing:border-box;}',
       '.mcal-head{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex:0 0 auto;}',
       '.mcal-title{font-weight:800;letter-spacing:.06em;font-size:17px;text-transform:uppercase;color:#7dd3fc;white-space:nowrap;}',
@@ -541,13 +542,33 @@
   function notifyParent(isOpenNow){
     try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'mk_monthcal_state', open: !!isOpenNow }, '*'); } catch(e){}
   }
-  function open(month){
+  // M3 container transform (js/mk-motion.js): the full-screen month grows
+  // out of the button that opened it (dock "Kalendārs") and returns into it.
+  var _origin = null;
+  function open(month, opts){
     ensureOverlay();
+    var MM = window.MinkaMotion;
+    var wasOpen = _overlay.classList.contains('is-open');
+    if (!wasOpen) _origin = (opts && opts.origin) || (MM && MM.recentLauncher()) || null;
+    _overlay.classList.remove('is-closing');
     _overlay.classList.add('is-open');
     render(month || window.__activeMonth || _curMonth);
+    if (MM && !wasOpen) MM.openSurface(_overlay, { key: 'monthcal', origin: _origin });
     notifyParent(true);
   }
-  function close(){ if (_overlay){ closePanel(); _overlay.classList.remove('is-open'); } notifyParent(false); }
+  function close(){
+    if (_overlay){
+      var wasOpen = _overlay.classList.contains('is-open');
+      closePanel();
+      _overlay.classList.remove('is-open');
+      var MM = window.MinkaMotion;
+      if (MM && wasOpen) {
+        _overlay.classList.add('is-closing');
+        MM.closeSurface(_overlay, { key: 'monthcal', origin: _origin }, function(){ _overlay.classList.remove('is-closing'); });
+      }
+    }
+    notifyParent(false);
+  }
   function isOpen(){ return !!(_overlay && _overlay.classList.contains('is-open')); }
 
   // ── Header "upcoming birthdays" badge ──────────────────────────────────

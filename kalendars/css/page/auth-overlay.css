@@ -58,9 +58,16 @@ html.mk-low-spec #macscapeBg .ms-orb {
   opacity: 0.08 !important;
   animation: none !important;
 }
-html.mk-low-spec *,
-html.mk-low-spec *::before,
-html.mk-low-spec *::after {
+/* Decorative CSS keyframe loops stop only in the lite and reduced motion
+   levels (js/mk-motion.js). This used to hang off mk-low-spec, which the
+   calendar always carries, so no CSS animation ever ran here. Transitions
+   and MinkaMotion (WAAPI) are not affected by this rule in any level. */
+html[data-motion="lite"] *,
+html[data-motion="lite"] *::before,
+html[data-motion="lite"] *::after,
+html[data-motion="reduced"] *,
+html[data-motion="reduced"] *::before,
+html[data-motion="reduced"] *::after {
   animation-duration: 0.01ms !important;
   animation-iteration-count: 1 !important;
 }

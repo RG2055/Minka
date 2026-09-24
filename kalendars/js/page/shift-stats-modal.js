@@ -1,10 +1,31 @@
 (function(){
-  // ï¿½ï¿½ï¿½ï¿½ MAIï¿½&U STATISTIKA MODÄ¬LS ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-  window.openStatsModal = function() {
+  /* ── MAIŅU STATISTIKA: M3 dialogs ─────────────────────────────────────────
+     Open is a container transform out of whatever launched it (the dock's
+     Statistika button, the mood curve) or, without an origin, the standard
+     M3 dialog enter. Close is the same relationship backwards. State is set
+     at once (data-state, aria, the shell message); the animation only shows
+     it, and reopening during a close simply cancels the close. */
+  let opener = null;        // element focused before opening, for focus return
+  let origin = null;        // launcher element or rect in this document
+  function isOpen(modal) { return !!modal && modal.dataset.state === 'open'; }
+  window.__minkaStatsIsOpen = function () { return isOpen(document.getElementById('stats-modal')); };
+  function focusables(root) {
+    return [].slice.call(root.querySelectorAll('button:not([disabled]),select,[href],input,[tabindex]:not([tabindex="-1"])'))
+      .filter(function (el) { return el.offsetWidth || el.offsetHeight; });
+  }
+
+  window.openStatsModal = function(opts) {
     const modal = document.getElementById('stats-modal');
     const wrap = document.getElementById('stats-table-wrap');
     const monthLabel = document.getElementById('stats-month-label');
     if (!modal || !wrap) return;
+    if (isOpen(modal)) return;
+    const reopening = modal.dataset.state === 'closing';
+    opts = opts || {};
+    // An element is re-measured on close (it may have moved); a rect is used as is.
+    origin = opts.from || opts.origin || null;
+    const active = document.activeElement;
+    opener = opts.from || (active && active !== document.body && !modal.contains(active) ? active : null);
 
     const store = window.__grafiksStore || {};
     const storeRad = window.__grafiksStoreRad || {};
@@ -66,11 +87,6 @@
         }
       }
     }
-    processStore(store, rgStats);
-    processStore(storeRad, rdStats);
-
-    const radiografers = Object.values(rgStats).sort((a,b) => b.totalHrs - a.totalHrs);
-    const radiologi    = Object.values(rdStats).sort((a,b) => b.totalHrs - a.totalHrs);
 
     function renderTable(workers, title, accent) {
       if (!workers.length) return '';
@@ -110,28 +126,76 @@
       </div>`;
     }
 
-    // Render the gamified leaderboard synchronously so the legacy table never
-    // flashes. The plain table below is only a fallback if levels.js failed.
-    if (window.MinkaLevels && typeof window.MinkaLevels.injectIntoStats === 'function') {
-      window.MinkaLevels.injectIntoStats();
-    } else {
-      wrap.innerHTML = renderTable(radiografers, '● Radiogrāferi', '#00ff7f') +
-                       renderTable(radiologi, '● Radiologi', '#a78bfa');
+    // Render the statistics synchronously, before the dialog shows, so the
+    // first frame already has content. The plain table is only a fallback
+    // if levels.js failed, and only then is it computed at all.
+    // A reopen during the close keeps what is already on screen.
+    if (!reopening || !wrap.firstChild) {
+      if (window.MinkaLevels && typeof window.MinkaLevels.injectIntoStats === 'function') {
+        window.MinkaLevels.injectIntoStats();
+      } else {
+        processStore(store, rgStats);
+        processStore(storeRad, rdStats);
+        const radiografers = Object.values(rgStats).sort((a,b) => b.totalHrs - a.totalHrs);
+        const radiologi    = Object.values(rdStats).sort((a,b) => b.totalHrs - a.totalHrs);
+        wrap.innerHTML = renderTable(radiografers, '● Radiogrāferi', '#1fe091') +
+                         renderTable(radiologi, '● Radiologi', '#3f9bff');
+      }
     }
     modal.style.display = 'flex';
+    modal.dataset.state = 'open';
+    modal.setAttribute('aria-hidden', 'false');
+    const sheet = modal.querySelector('.mk-stats-sheet');
+    if (window.MinkaMotion && sheet) window.MinkaMotion.openSurface(sheet, { key: 'stats', origin: origin, scrim: modal });
+    // Focus moves into the dialog: the selected tab, else the close button.
+    const target = modal.querySelector('#stats-table-wrap [role="tab"][aria-selected="true"]') || modal.querySelector('.mk-stats-close');
+    // No ring for a mouse open: the ring appears once the keyboard is used.
+    if (target) { try { target.focus({ preventScroll: true, focusVisible: false }); } catch (_e) {} }
     try { window.parent && window.parent.postMessage({ type: 'mk_stats_opened' }, window.location.origin); } catch(_e) {}
   };
 
   window.closeStatsModal = function() {
     const m = document.getElementById('stats-modal');
-    if (m) m.style.display = 'none';
-    // Free the ~2000 DOM nodes the table/leaderboard holds — it is fully
-    // rebuilt on every open, so keeping it around only wastes RAM.
-    const w = document.getElementById('stats-table-wrap');
-    if (w) w.innerHTML = '';
+    if (!m || m.dataset.state === 'closing' || m.style.display === 'none') return;
+    m.dataset.state = 'closing';
+    m.setAttribute('aria-hidden', 'true');
     try { window.parent && window.parent.postMessage({ type: 'mk_stats_closed' }, window.location.origin); } catch(_e) {}
+    const back = opener;
+    opener = null;
+    const finish = function () {
+      if (m.dataset.state !== 'closing') return;      // reopened meanwhile
+      m.dataset.state = 'closed';
+      m.style.display = 'none';
+      // Free the DOM the statistics hold — it is rebuilt on every open.
+      const w = document.getElementById('stats-table-wrap');
+      if (w) w.innerHTML = '';
+      if (window.MinkaDaybookStats && window.MinkaDaybookStats.reset) window.MinkaDaybookStats.reset();
+      if (back && back.isConnected && typeof back.focus === 'function') { try { back.focus({ preventScroll: true }); } catch (_e) {} }
+    };
+    const sheet = m.querySelector('.mk-stats-sheet');
+    // Back into the launcher when it is still there, else the M3 dialog exit.
+    if (window.MinkaMotion && sheet) window.MinkaMotion.closeSurface(sheet, { key: 'stats', origin: origin, scrim: m }, finish);
+    else finish();
   };
 
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') window.closeStatsModal?.(); });
+  document.addEventListener('keydown', e => {
+    const m = document.getElementById('stats-modal');
+    if (!isOpen(m)) return;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      // A day or person view goes back one level first.
+      if (window.MinkaDaybookStats && window.MinkaDaybookStats.back && window.MinkaDaybookStats.back()) return;
+      window.closeStatsModal();
+      return;
+    }
+    if (e.key === 'Tab') {
+      // Keep keyboard focus inside the dialog while it is open.
+      const list = focusables(m.querySelector('.mk-stats-sheet') || m);
+      if (!list.length) return;
+      const first = list[0], last = list[list.length - 1];
+      if (e.shiftKey && (document.activeElement === first || !m.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && (document.activeElement === last || !m.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
+    }
+  });
 
 })();

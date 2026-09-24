@@ -97,6 +97,13 @@ window.setTimeout(function () {
     var mem = Number(nav.deviceMemory || 0);
     var cores = Number(nav.hardwareConcurrency || 0);
     var reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    // Motion level for the first paint (js/mk-motion.js keeps it current).
+    // Separate from lowSpec: reduced motion is an accessibility choice, lite
+    // is chosen from measured frames and stored per device.
+    try {
+      var motionStore = JSON.parse(localStorage.getItem('minkaMotionV1') || '{}') || {};
+      document.documentElement.setAttribute('data-motion', reduceMotion ? 'reduced' : (motionStore.level === 'lite' ? 'lite' : 'full'));
+    } catch (_m) { document.documentElement.setAttribute('data-motion', reduceMotion ? 'reduced' : 'full'); }
     window.__mkPerfProfile = {
       lowSpec: true,
       reducedMotion: reduceMotion,
@@ -130,9 +137,11 @@ window.setTimeout(function () {
 <title>RG Search OS - Clean Start</title>
 <!-- bundle.css is critical ï¿½ load normally -->
 <link rel="stylesheet" href="css/bundle.css?v=20260924perf5">
+<link rel="stylesheet" href="../css/mk-sys.css?v=20260924m3a">
+<script src="../js/mk-motion.js?v=20260924day2"></script>
 <link rel="stylesheet" href="css/skin-draw.css?v=20260829chalk1">
 <link rel="stylesheet" href="css/card-addons.css?v=20260923wrap1">
-<script src="js/card-addons.js?v=20260924perf3" defer></script>
+<script src="js/card-addons.js?v=20260924day3" defer></script>
 <link rel="stylesheet" href="css/side-cards-v2.css?v=20260924perf1">
 <link rel="stylesheet" href="css/header-weather.css?v=20260923wm10">
 <link rel="stylesheet" href="css/mood-fluent.css?v=20260820fmood16">
@@ -244,9 +253,9 @@ html, body { overflow: hidden !important; }
 }
 #minkaBar { filter: none !important; overflow: visible !important; }
 #minkaBarInner { border-radius: 18px !important; }
-#minkaBarMute, #minkaBarMenu { position: relative; z-index: 2; }
+#minkaBarMenu { position: relative; z-index: 2; }
 </style>
-<link rel="stylesheet" id="minka_auth_overlay_css" href="css/page/auth-overlay.css?v=20260924perf1">
+<link rel="stylesheet" id="minka_auth_overlay_css" href="css/page/auth-overlay.css?v=20260924m3a">
 <style>
 #mk-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(30,32,48,0.97);color:#fff;padding:10px 18px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.05em;z-index:99999;box-shadow:0 4px 24px rgba(0,0,0,.5);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;white-space:nowrap;border:1px solid rgba(255,255,255,.08);}
 #mk-toast.mk-show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -485,7 +494,6 @@ body.stars-active #stars-overlay{display:block;}
             <g fill="currentColor" stroke="none"><circle cx="13" cy="11" r="1.2"/><circle cx="18" cy="11" r="1.2"/><circle cx="13" cy="15" r="1.2"/><circle cx="18" cy="15" r="1.2"/><circle cx="13" cy="19" r="1.2"/><circle cx="18" cy="19" r="1.2"/></g>
           </svg>
         </button>
-        <button id="minkaBarMute" aria-label="Izslēgt skaņu" title="Skaņa ieslēgta" style="width:36px;height:36px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:#cbd5e1;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;">🔊</button>
       </div>
       <!-- Search results -->
       <div id="minkaResults" class="results-area" style="display:none"></div>
@@ -551,7 +559,7 @@ body.stars-active #stars-overlay{display:block;}
         <button class="view-btn" onclick="g_toggleView()">
           <span class="material-icons-round" id="grafiks-viewIcon">format_list_bulleted</span>
         </button>
-        <button class="view-btn" onclick="openStatsModal()" title="Maiņu statistika">
+        <button class="view-btn" onclick="openStatsModal({ from: this })" title="Maiņu statistika">
           <span class="material-icons-round">bar_chart</span>
         </button>
         <button id="mkSettingsBtn" class="view-btn" type="button" title="Iestatījumi" aria-label="Iestatījumi">
@@ -608,20 +616,20 @@ body.stars-active #stars-overlay{display:block;}
 </div>
 
 
-<!-- STATS MODAL -->
-<div id="stats-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.72);backdrop-filter:blur(6px);align-items:center;justify-content:center;" onclick="if(event.target===this)closeStatsModal()">
-  <div style="background:#0f0f14;border:1px solid rgba(255,255,255,0.1);border-radius:14px;width:min(900px,96vw);max-height:80vh;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,0.9);">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.07);">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <span class="material-icons-round" style="color:#00ff7f;font-size:20px;">bar_chart</span>
-        <span style="font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#fff;">Maiņu statistika</span>
-        <span id="stats-month-label" style="font-size:11px;color:rgba(255,255,255,0.45);font-weight:600;"></span>
-      </div>
-      <button onclick="closeStatsModal()" style="background:none;border:none;color:rgba(255,255,255,0.5);cursor:pointer;padding:4px;border-radius:6px;line-height:1;" title="Aizvērt">
-        <span class="material-icons-round" style="font-size:18px;">close</span>
+<!-- STATS MODAL: M3 dialog. Styles: css/page/stats-m3.css; open/close,
+     focus and motion: js/page/shift-stats-modal.js. The outer element is the
+     scrim (a click on it closes), the sheet is the dialog surface. -->
+<div id="stats-modal" class="mk-stats" data-state="closed" style="display:none" onclick="if(event.target===this)closeStatsModal()">
+  <div class="mk-stats-sheet" role="dialog" aria-modal="true" aria-labelledby="stats-title">
+    <header class="mk-stats-head">
+      <span class="mk-stats-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19V11M12 19V5M19 19v-5"/></svg></span>
+      <h2 id="stats-title">Statistika</h2>
+      <span id="stats-month-label"></span>
+      <button type="button" class="mk-stats-close" onclick="closeStatsModal()" aria-label="Aizvērt statistiku" title="Aizvērt (Esc)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>
       </button>
-    </div>
-    <div id="stats-table-wrap" style="overflow:auto;padding:16px 20px;flex:1;"></div>
+    </header>
+    <div id="stats-table-wrap"></div>
   </div>
 </div>
 
@@ -952,7 +960,7 @@ function _mkToast(msg, type) {
 <!-- Saved worker skins must be ready before the cached roster is rendered. -->
 <script src="js/page/minka-skins.js?v=20260924perf6"></script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260924perf6"></script>
+<script src="js/calendar.js?v=20260924day3"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260923wm10" defer></script>
 <script src="js/header-weather.js?v=20260923wm10" defer></script>
@@ -961,19 +969,19 @@ function _mkToast(msg, type) {
 <script src="js/light-model.js?v=20260908light1"></script>
 <script src="js/recovery-model.js?v=20260908recovery1"></script>
 <script src="js/fatigue.js?v=20260924perf1"></script>
-<script src="js/nightsplit.js?v=20260924perf1" defer></script>
-<script src="js/monthcal.js?v=20260919birthday1" defer></script>
+<script src="js/nightsplit.js?v=20260924snd1" defer></script>
+<script src="js/monthcal.js?v=20260924m3c" defer></script>
 <script src="js/design_v1.js?v=20260924perf3" defer></script>
 <script src="js/theme.js?v=20260920header-duty1" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
 <script src="js/emoji.js?v=20260923wm10" defer></script>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
 <script src="js/daybook-model.js?v=20260911b" defer></script>
-<script src="js/daybook.js?v=20260924perf5" defer></script>
+<script src="js/daybook.js?v=20260924m3c" defer></script>
 <script src="js/levels.js?v=20260924perf1" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260923wm10';
+window.__minkaLocalBuild = '20260924m3';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -1083,7 +1091,7 @@ document.addEventListener('keydown', (e) => {
   </div>
 </div>
 
-<script src="js/page/night-overlay.js?v=20260924perf1"></script>
+<script src="js/page/night-overlay.js?v=20260924m3h"></script>
 
 <script src="js/page/stars-overlay.js?v=20260924perf1"></script>
 
@@ -1096,7 +1104,7 @@ document.addEventListener('keydown', (e) => {
 
 
 
-<script src="js/page/minka-bar.js?v=20260924perf3"></script>
+<script src="js/page/minka-bar.js?v=20260924snd1"></script>
 
 
 
@@ -1134,7 +1142,7 @@ document.addEventListener('keydown', (e) => {
 <script src="js/page/header-search.js?v=20260924perf1"></script>
 
 
-<script src="js/page/shift-stats-modal.js?v=20260924perf1"></script>
+<script src="js/page/shift-stats-modal.js?v=20260924m3b"></script>
 
 
 <script>
@@ -1698,9 +1706,10 @@ window.addEventListener('message', function(e) {
 
 <link rel="stylesheet" id="mk-header-compact-no-buddy-v1" href="css/page/mk-header-compact-no-buddy-v1.css?v=20260924perf1">
 
-<link rel="stylesheet" id="mk-rg-pulse-v2" href="css/page/mk-rg-pulse-v2.css?v=20260924perf1">
+<link rel="stylesheet" id="mk-rg-pulse-v2" href="css/page/mk-rg-pulse-v2.css?v=20260924trend4">
 
-<script src="js/page/mood-feedback.js?v=20260924perf11"></script>
+<script src="js/page/mood-feedback.js?v=20260924m3e"></script>
+<script src="js/page/mood-trend.js?v=20260924m3b" defer></script>
 
 <link rel="stylesheet" id="mk-mid-card-focus-v1" href="css/page/mk-mid-card-focus-v1.css?v=20260924perf1">
 
@@ -1954,7 +1963,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
 
 <!-- Loaded last on purpose: the night split is an overlay and this small,
      local stylesheet replaces the older visual layers without touching logic. -->
-<link rel="stylesheet" href="css/nightsplit-brand.css?v=20260924perf1">
+<link rel="stylesheet" href="css/nightsplit-brand.css?v=20260924m3d">
 <link rel="stylesheet" href="css/role-headings.css?v=20260828rolehead4">
 
 <link rel="stylesheet" href="css/fatigue-health.css?v=20260924perf1">
@@ -1970,7 +1979,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
    css/mobile-v2.css + js/mobile-v2.js — vizuālais izkārtojums; ?mv2=0 to atslēdz. */
 (function(){
   if (!document.documentElement.classList.contains('mk-mobile-shell')) return;
-  var v = '20260924perf1';
+  var v = '20260924m3d';
   function css(href) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href + '?v=' + v; document.body.appendChild(l); }
   css('css/mobile-fixes.css');
   try { if (new URLSearchParams(location.search).get('mv2') === '0') return; } catch (_e) {}
@@ -1993,5 +2002,7 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 <link rel="stylesheet" href="css/header-duty-summary.css?v=20260923wm10">
 <link rel="stylesheet" href="css/page/mood-comms-m3.css?v=20260924perf10">
 <link rel="stylesheet" id="mk-worker-modal-m3" href="css/page/mk-worker-modal-m3.css?v=20260924perf1">
+<link rel="stylesheet" id="mk-stats-m3" href="css/page/stats-m3.css?v=20260924m3c">
+<link rel="stylesheet" id="mk-m3-surfaces" href="css/page/m3-surfaces.css?v=20260924m3l">
 </body>
 </html>

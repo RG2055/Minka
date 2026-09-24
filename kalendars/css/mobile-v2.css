@@ -270,7 +270,6 @@
 :root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-duration-emoji { font-size: 20px !important; }
 :root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-card-checklist { position: relative !important; z-index: 3 !important; padding: 0 16px 10px !important; }
 :root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-last-checklist { display: flex !important; flex-wrap: wrap !important; gap: 6px 10px !important; font-size: 12px !important; }
-:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-rhythm-help { top: 8px !important; right: 8px !important; width: 26px !important; height: 26px !important; font-size: 12px !important; background: rgba(6, 10, 18, .6) !important; z-index: 4 !important; }
 :root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-flow-labels { font-size: 12px !important; }
 :root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-room-block { width: auto !important; }
 

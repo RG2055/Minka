@@ -16,7 +16,6 @@
   const hint    = document.getElementById('minkaBarHint');
   const pill    = document.getElementById('minkaBarPill');
   const clearB  = document.getElementById('minkaBarClear');
-  const muteB   = document.getElementById('minkaBarMute');
   const searchLaunch = document.getElementById('mkSearchLaunch');
   const results = document.getElementById('minkaResults');
   const aiPanel = document.getElementById('minkaAiPanel');
@@ -25,83 +24,6 @@
   const aiText  = document.getElementById('minkaAiText');
   if (!bar || !input) return;
 
-  /* ï¿½ï¿½ï¿½ï¿½ Sound engine (Web Audio, zero files) ï¿½ï¿½ï¿½ï¿½ */
-  let _ac = null;
-  let __minkaMuted = false;
-  try { __minkaMuted = localStorage.getItem('minka_muted') === '1'; } catch(e) {}
-  function setMuteUI() {
-    if (!muteB) return;
-  muteB.textContent = __minkaMuted ? '🔇' : '🔊';
-  muteB.title = __minkaMuted ? 'Skaņa izslēgta' : 'Skaņa ieslēgta';
-  muteB.setAttribute('aria-label', __minkaMuted ? 'Ieslēgt skaņu' : 'Izslēgt skaņu');
-    muteB.style.opacity = __minkaMuted ? '0.85' : '1';
-  }
-  setMuteUI();
-  if (muteB) muteB.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    __minkaMuted = !__minkaMuted;
-    try { localStorage.setItem('minka_muted', __minkaMuted ? '1' : '0'); } catch(err) {}
-    setMuteUI();
-  });
-  function ac() {
-    if (!_ac) try { _ac = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){}
-    if (_ac && _ac.state === 'suspended') _ac.resume().catch(()=>{});
-    return _ac;
-  }
-  // Modern soft chime: two sine waves + gentle gain envelope
-  function chime(notes, vol) {
-    if (__minkaMuted) return;
-    const c = ac(); if (!c) return;
-    try {
-      const master = c.createGain();
-      master.gain.setValueAtTime(0, c.currentTime);
-      master.gain.linearRampToValueAtTime(vol || 0.04, c.currentTime + 0.012);
-      master.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + (notes[0][1] || 0.18));
-      master.connect(c.destination);
-      notes.forEach(([freq, dur], i) => {
-        setTimeout(() => {
-          if (__minkaMuted) return;
-          try {
-            const o = c.createOscillator(), g = c.createGain();
-            o.type = 'sine'; o.frequency.value = freq;
-            g.gain.setValueAtTime(0, c.currentTime);
-            g.gain.linearRampToValueAtTime(1, c.currentTime + 0.01);
-            g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
-            o.connect(g); g.connect(master);
-            o.start(); o.stop(c.currentTime + dur + 0.02);
-          } catch(e) {}
-        }, i * 55);
-      });
-    } catch(e) {}
-  }
-  const snd = {
-    click:  () => chime([[1047, 0.10], [1319, 0.08]], 0.035),          // C6→E6 soft tap
-    nav:    () => chime([[880, 0.10], [1109, 0.09]], 0.030),           // A5→C#6
-    open:   () => chime([[659, 0.14], [880, 0.12], [1047, 0.10]], 0.032), // E5→A5→C6 open chord
-    close:  () => chime([[1047, 0.10], [784, 0.12]], 0.028),           // C6→G5 descend
-    type:   () => chime([[1319 + Math.random()*220, 0.04]], 0.012),    // random high tap
-    ai:     () => chime([[523, 0.08], [659, 0.10], [784, 0.12]], 0.030), // C5→E5→G5 arpeggio
-    warn:   () => chime([[392, 0.16], [349, 0.18]], 0.045),            // G4→F4 descending warn
-    news:   () => chime([[1047, 0.07], [1175, 0.09]], 0.022),          // C6→D6 gentle ping
-  };
-
-  /* ï¿½ï¿½ï¿½ï¿½ Global click sounds ï¿½ï¿½ï¿½ï¿½ */
-  document.addEventListener('click', e => {
-    const el = e.target.closest('button,.day-btn,.card,.duty-block,.pill,[onclick],.result-item');
-    if (!el || el === clearB || el.id === 'minkaBarMenu' || el.id === 'minkaBarMute') return;
-    if (el.classList.contains('pill') || el.classList.contains('arrow')) snd.nav();
-    else if (el.classList.contains('card') || el.classList.contains('duty-block')) snd.open();
-    else snd.click();
-  }, true);
-
-  /* ï¿½ï¿½ï¿½ï¿½ Typing sounds ï¿½ï¿½ï¿½ï¿½ */
-  let _typeN = 0;
-  document.addEventListener('keydown', e => {
-    if (document.activeElement === input && e.key.length === 1) {
-      if (++_typeN % 4 === 0) snd.type();
-    }
-  }, true);
 
   /* ï¿½ï¿½ï¿½ï¿½ State ï¿½ï¿½ï¿½ï¿½ */
   let _text = '';
@@ -254,16 +176,15 @@
   });
 
   input.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { clearText(); closeAi(); closeResults(); input.blur(); closeSearchMode(); snd.close(); }
+    if (e.key === 'Escape') { clearText(); closeAi(); closeResults(); input.blur(); closeSearchMode(); }
     if (e.key === 'Enter') { e.preventDefault(); }
   });
 
-  clearB.addEventListener('click', () => { clearText(); closeAi(); closeResults(); input.focus(); snd.click(); });
+  clearB.addEventListener('click', () => { clearText(); closeAi(); closeResults(); input.focus(); });
   if (searchLaunch) {
     searchLaunch.addEventListener('click', function(e) {
       e.preventDefault();
       openSearchMode();
-      snd.click();
     });
   }
 
@@ -277,12 +198,12 @@
     if (!el) return;
     el.addEventListener('touchend', function(e) {
       var t = e.target;
-      if (t === clearB || t === muteB || (t && t.id === 'minkaBarMenu')) return;
+      if (t === clearB || (t && t.id === 'minkaBarMenu')) return;
       focusMinkaInput();
     }, { passive:true });
     el.addEventListener('click', function(e) {
       var t = e.target;
-      if (t === clearB || t === muteB || (t && t.id === 'minkaBarMenu')) return;
+      if (t === clearB || (t && t.id === 'minkaBarMenu')) return;
       focusMinkaInput();
     });
   });
@@ -543,10 +464,6 @@
     aiText.innerHTML = '';
 
     aiMode.textContent = getModeLabel(mode);
-    if (mode === 'warning') snd.warn();
-    else if (mode === 'news') snd.news();
-    else snd.ai();
-
     setupPanelLink(mode, link);
     openAi();
     setMode('ai');

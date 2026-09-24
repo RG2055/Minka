@@ -1,0 +1,499 @@
+/* ── Statistika: Material 3 Expressive ─────────────────────────────────────
+   Tokens: ../../css/mk-sys.css. Loaded last so it wins over the older
+   stats layers (stats-leaderboard.css, daybook.css, mk-layer-fix-v1.css).
+
+   Structure over boxes: the dialog is the only large container. Inside it,
+   hierarchy comes from type, spacing and one tonal step; containers are
+   used only for things that are one object (the chart, a tile row, a
+   clickable person or day). Colours stay Minka's: mint primary, role and
+   mood colours unchanged. Motion: js/page/shift-stats-modal.js (dialog),
+   js/daybook-stats.js (tabs, month, drill-down). */
+
+/* ── Dialog ─────────────────────────────────────────────────────────────── */
+#stats-modal.mk-stats {
+  --stx-card: var(--mk-sys-surface-container);
+  --stx-card2: var(--mk-sys-surface-container-high);
+  --stx-hover: var(--mk-sys-surface-container-high);
+  --stx-border: var(--mk-sys-outline-variant);
+  --stx-border-soft: var(--mk-sys-outline-variant);
+  --stx-t2: var(--mk-sys-on-surface-variant);
+  --stx-t3: #8a94a3;
+  position: fixed;
+  inset: 0;
+  /* Above the daily cat (9999) and its picker, below the night panel. */
+  z-index: 20000;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--mk-sys-scrim);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+#stats-modal.mk-stats > .mk-stats-sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(1120px, 96vw) !important;
+  /* A fixed height: switching tabs never resizes the dialog. */
+  height: min(860px, 88vh);
+  max-height: 88vh !important;
+  overflow: hidden;
+  border: 0 !important;
+  border-radius: var(--mk-shape-xl) !important;
+  background: var(--mk-sys-surface-container-low) !important;
+  box-shadow: var(--mk-elev-3) !important;
+  color: var(--mk-sys-on-surface);
+  font: var(--mk-type-body-m);
+  font-feature-settings: "tnum" 1;
+  transform-origin: 50% 50%;
+}
+.mk-stats-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: none;
+  padding: 16px 16px 4px 24px;
+}
+.mk-stats-mark {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--mk-shape-md);
+  background: var(--mk-sys-primary-container);
+  color: var(--mk-sys-on-primary-container);
+}
+.mk-stats-mark svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; }
+#stats-title { margin: 0; font: var(--mk-type-title-l); font-size: 20px; letter-spacing: -.01em; color: var(--mk-sys-on-surface); }
+#stats-modal #stats-month-label { display: none; }
+
+/* Icon buttons: 40px visual, 48px target, M3 state layer. */
+.mk-stats-close,
+#stats-modal .db-icon-btn {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  border: 0 !important;
+  border-radius: var(--mk-shape-full) !important;
+  background: transparent !important;
+  color: var(--mk-sys-on-surface-variant) !important;
+  cursor: pointer;
+  isolation: isolate;
+}
+.mk-stats-close { margin-left: auto; }
+.mk-stats-close::after,
+#stats-modal .db-icon-btn::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+}
+.mk-stats-close::before,
+#stats-modal .db-icon-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity var(--mk-dur-effects-fast) var(--mk-ease-effects);
+}
+.mk-stats-close:hover::before,
+#stats-modal .db-icon-btn:hover::before { opacity: var(--mk-state-hover); }
+.mk-stats-close:active::before,
+#stats-modal .db-icon-btn:active::before { opacity: var(--mk-state-pressed); }
+.mk-stats-close svg,
+#stats-modal .db-icon-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+#stats-modal :focus-visible {
+  outline: var(--mk-focus-ring) !important;
+  outline-offset: var(--mk-focus-offset) !important;
+}
+
+/* The scroll area */
+#stats-modal #stats-table-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 4px 24px 24px !important;
+  scrollbar-gutter: stable;
+}
+#stats-modal .db-stats { color: var(--mk-sys-on-surface); font: var(--mk-type-body-m); }
+.db-visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* ── Toolbar: month, filter chips, person ───────────────────────────────── */
+/* Toolbar and tabs stay on top while the body scrolls under them. */
+#stats-modal .db-chrome {
+  position: sticky;
+  top: -4px;
+  z-index: 3;
+  margin: 0 -24px 20px;
+  padding: 0 24px;
+  background: var(--mk-sys-surface-container-low);
+}
+#stats-modal .db-top { gap: 8px 16px; margin: 0; padding: 8px 0 4px; }
+#stats-modal .db-monthnav {
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+#stats-modal .db-monthnav b {
+  min-width: 148px;
+  font: var(--mk-type-title-m);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--mk-sys-on-surface);
+}
+/* M3 filter chips: 32px, 8px shape, outline; selected = secondary container
+   with a leading check. */
+#stats-modal .db-chips { gap: 8px; }
+#stats-modal .db-chips button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--mk-sys-outline-variant);
+  border-radius: var(--mk-shape-sm);
+  background: transparent;
+  color: var(--mk-sys-on-surface-variant);
+  font: var(--mk-type-label-l);
+  letter-spacing: .01em;
+  isolation: isolate;
+  transition: background-color var(--mk-dur-effects-default) var(--mk-ease-effects), color var(--mk-dur-effects-default) var(--mk-ease-effects), border-color var(--mk-dur-effects-default) var(--mk-ease-effects), padding var(--mk-dur-effects-fast) var(--mk-ease-effects);
+}
+#stats-modal .db-chips button svg {
+  display: none;
+  width: 16px;
+  height: 16px;
+  margin-left: -4px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#stats-modal .db-chips button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity var(--mk-dur-effects-fast) var(--mk-ease-effects);
+}
+#stats-modal .db-chips button:hover::before { opacity: var(--mk-state-hover); }
+#stats-modal .db-chips button[aria-pressed="true"] {
+  padding-left: 10px;
+  border-color: transparent;
+  background: var(--mk-sys-secondary-container);
+  color: var(--mk-sys-on-secondary-container);
+}
+#stats-modal .db-chips button[aria-pressed="true"] svg { display: block; }
+#stats-modal .db-personpick select {
+  height: 40px;
+  min-width: 170px;
+  padding: 0 36px 0 14px;
+  border: 1px solid var(--mk-sys-outline-variant);
+  border-radius: var(--mk-shape-sm);
+  background-color: transparent;
+  color: var(--mk-sys-on-surface);
+  font: var(--mk-type-body-m);
+}
+#stats-modal .db-personpick select:hover { border-color: var(--mk-sys-outline); }
+
+/* ── M3 primary tabs with a sliding indicator ───────────────────────────── */
+#stats-modal .db-tabs {
+  position: relative;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0;
+  margin: 0 -24px;
+  padding: 0 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--mk-sys-outline-variant);
+  background: var(--mk-sys-surface-container-low);
+}
+#stats-modal .db-tabs::-webkit-scrollbar { display: none; }
+#stats-modal .db-tabs button {
+  position: relative;
+  flex: none;
+  height: 48px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--mk-sys-on-surface-variant);
+  font: var(--mk-type-label-l);
+  font-size: 14px;
+  letter-spacing: .01em;
+  isolation: isolate;
+  transition: color var(--mk-dur-effects-default) var(--mk-ease-effects);
+}
+#stats-modal .db-tabs button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity var(--mk-dur-effects-fast) var(--mk-ease-effects);
+}
+#stats-modal .db-tabs button:hover::before { opacity: var(--mk-state-hover); }
+#stats-modal .db-tabs button[aria-selected="true"] { color: var(--mk-sys-primary); }
+/* 1px wide, stretched by scaleX to the tab's width: moving it between tabs
+   is a compositor-only transform. */
+#stats-modal .db-tab-indicator {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 1px;
+  height: 3px;
+  background: var(--mk-sys-primary);
+  transform-origin: 0 0;
+  pointer-events: none;
+  transition: transform var(--mk-dur-spatial-fast) var(--mk-ease-expressive-fast), opacity var(--mk-dur-effects-fast) var(--mk-ease-effects);
+}
+#stats-modal .db-tab-indicator.is-static { transition: none; }
+
+/* ── Body ───────────────────────────────────────────────────────────────── */
+#stats-modal .db-body { outline: none; }
+/* The frame is up before the numbers: keep its size while they are built. */
+#stats-modal .db-body.db-pending { min-height: 60vh; }
+#stats-modal .db-sec { margin-bottom: 28px; }
+#stats-modal .db-sechead { gap: 12px; margin: 0 0 12px; align-items: baseline; }
+#stats-modal .db-sechead h3 {
+  font: var(--mk-type-title-m);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--mk-sys-on-surface);
+}
+#stats-modal .db-sechead i { display: none; }
+#stats-modal .db-meta { font: var(--mk-type-body-s); color: var(--mk-sys-on-surface-variant); letter-spacing: 0; }
+#stats-modal .db-loading { color: var(--mk-sys-secondary); }
+#stats-modal .db-note { margin: 10px 0 0; font: var(--mk-type-body-s); line-height: 1.55; color: var(--stx-t3); max-width: 78ch; }
+#stats-modal .db-empty {
+  padding: 28px 16px;
+  border: 0;
+  border-radius: var(--mk-shape-lg);
+  background: var(--mk-sys-surface-container);
+  color: var(--mk-sys-on-surface-variant);
+  font: var(--mk-type-body-m);
+  text-align: center;
+}
+#stats-modal .db-empty button,
+#stats-modal .db-tile--action button,
+#stats-modal .db-link[data-db-retry] {
+  height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--mk-shape-full);
+  background: var(--mk-sys-tertiary-container);
+  color: var(--mk-sys-on-tertiary-container);
+  font: var(--mk-type-label-l);
+}
+
+/* Tiles: one tonal step, no outline, a clear number. */
+#stats-modal .db-tiles { gap: 8px; margin-bottom: 24px; }
+#stats-modal .db-tile {
+  gap: 2px;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: var(--mk-shape-lg);
+  background: var(--mk-sys-surface-container);
+}
+#stats-modal .db-tile b { font: var(--mk-type-headline-s); font-size: 26px; letter-spacing: -.02em; color: var(--mk-sys-on-surface); }
+#stats-modal .db-tile > span { font: var(--mk-type-label-m); letter-spacing: .01em; text-transform: none; color: var(--mk-sys-on-surface-variant); }
+#stats-modal .db-tile > small { font: var(--mk-type-body-s); color: var(--stx-t3); }
+#stats-modal .db-tiles--side .db-tile { padding: 12px 14px; border-radius: var(--mk-shape-md); }
+#stats-modal .db-tiles--side .db-tile b { font-size: 20px; }
+#stats-modal .db-tiles--side .db-tile > span { font-size: 11px; }
+
+/* The chart is one object: its own tonal surface. */
+#stats-modal .db-chart {
+  border: 0;
+  border-radius: var(--mk-shape-lg);
+  background: var(--mk-sys-surface-container);
+}
+#stats-modal .db-chart circle[data-db-day] { transition: r var(--mk-dur-effects-fast) var(--mk-ease-effects); }
+#stats-modal .db-chart circle[data-db-day]:hover { r: 7px; }
+
+/* Bars: flat rows on the dialog surface; the fill is a fixed-width layer
+   translated into place (no width animation, rounded end never squashed). */
+#stats-modal .db-bars { gap: 10px; padding: 0; border: 0; border-radius: 0; background: none; }
+#stats-modal .db-bar-row { font: var(--mk-type-body-m); }
+#stats-modal .db-bar-label { color: var(--mk-sys-on-surface); font-weight: 600; }
+#stats-modal .db-bar {
+  height: 8px;
+  border-radius: var(--mk-shape-full);
+  background: var(--mk-sys-surface-container-highest);
+  overflow: hidden;
+}
+#stats-modal .db-bar i {
+  width: 100%;
+  border-radius: var(--mk-shape-full);
+  transform: translateX(calc((var(--v, 1) - 1) * 100%));
+}
+#stats-modal .db-body.db-anim .db-bar i {
+  animation: mk-db-bar-in var(--mk-dur-spatial-default) var(--mk-ease-standard) both;
+}
+@keyframes mk-db-bar-in { from { transform: translateX(-100%); } }
+#stats-modal .db-bar-row b { color: var(--mk-sys-on-surface); }
+#stats-modal .db-bar-row small { color: var(--stx-t3); }
+
+/* Mood chips: tonal, not outlined. */
+#stats-modal .db-moodchip {
+  border: 0;
+  border-radius: var(--mk-shape-sm);
+  background: color-mix(in srgb, var(--c) 14%, var(--mk-sys-surface-container));
+}
+
+/* Month in pixels: each day is a small clickable object. */
+#stats-modal .db-pixels { gap: 4px; }
+#stats-modal .db-px {
+  position: relative;
+  border: 0;
+  border-radius: var(--mk-shape-sm);
+  background: var(--mk-sys-surface-container);
+  isolation: isolate;
+  transition: none;
+}
+#stats-modal .db-px::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--mk-sys-on-surface);
+  opacity: 0;
+  transition: opacity var(--mk-dur-effects-fast) var(--mk-ease-effects);
+}
+#stats-modal .db-px:hover { transform: none; }
+#stats-modal .db-px:hover::before { opacity: var(--mk-state-hover); }
+#stats-modal .db-px[data-kind="marked"] {
+  border: 0;
+  background: color-mix(in srgb, var(--c) 18%, var(--mk-sys-surface-container));
+}
+#stats-modal .db-px.is-today { box-shadow: inset 0 0 0 2px var(--mk-sys-secondary); }
+
+/* People: list items in a grid, one tonal step, state layer on hover. */
+#stats-modal .db-people { gap: 8px; }
+#stats-modal .db-person,
+#stats-modal .db-coffee-row {
+  position: relative;
+  border: 0;
+  border-radius: var(--mk-shape-lg);
+  background: var(--mk-sys-surface-container);
+  isolation: isolate;
+  transition: none;
+}
+#stats-modal .db-person::before,
+#stats-modal .db-coffee-row::before,
+#stats-modal .db-staff-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--mk-sys-on-surface);
+  opacity: 0;
+  transition: opacity var(--mk-dur-effects-fast) var(--mk-ease-effects);
+}
+#stats-modal .db-person:hover,
+#stats-modal .db-coffee-row:hover { background: var(--mk-sys-surface-container); }
+#stats-modal .db-person:hover::before,
+#stats-modal .db-coffee-row:hover::before,
+#stats-modal .db-staff-item:hover::before { opacity: var(--mk-state-hover); }
+#stats-modal .db-person:active::before,
+#stats-modal .db-coffee-row:active::before { opacity: var(--mk-state-pressed); }
+#stats-modal .db-av { box-shadow: none; }
+#stats-modal .db-coffee { gap: 4px; }
+#stats-modal .db-coffee-sum {
+  border: 0;
+  border-radius: var(--mk-shape-md);
+  background: var(--mk-sys-surface-container);
+}
+
+/* Lists and tables: flat, separated by hairlines, no own box. */
+#stats-modal .db-list { padding: 0; border: 0; border-radius: 0; background: none; }
+#stats-modal .db-list li { border-bottom-color: var(--mk-sys-outline-variant); padding: 10px 4px; }
+#stats-modal .db-scroll { border: 0; border-radius: 0; background: none; }
+#stats-modal .db-table th,
+#stats-modal .db-table td { border-bottom-color: var(--mk-sys-outline-variant); padding: 10px 12px; }
+#stats-modal .db-table th:first-child,
+#stats-modal .db-table td:first-child { padding-left: 4px; }
+#stats-modal .db-table thead th { font: var(--mk-type-label-m); letter-spacing: .01em; text-transform: none; color: var(--mk-sys-on-surface-variant); }
+#stats-modal .db-table tbody tr { transition: background-color var(--mk-dur-effects-fast) var(--mk-ease-effects); }
+#stats-modal .db-table tbody tr:hover { background: color-mix(in srgb, var(--mk-sys-on-surface) 5%, transparent); }
+#stats-modal .db-link { color: var(--mk-sys-secondary); }
+#stats-modal .db-chip { border-radius: var(--mk-shape-xs); }
+
+/* Day view: staff as input-chip-like items. */
+#stats-modal .db-staff-item {
+  position: relative;
+  border: 0;
+  border-radius: var(--mk-shape-sm);
+  background: var(--mk-sys-surface-container);
+  isolation: isolate;
+}
+#stats-modal .db-staff-item:hover { background: var(--mk-sys-surface-container); }
+#stats-modal .db-staff-title { font: var(--mk-type-label-m); letter-spacing: .01em; text-transform: none; }
+
+/* Drill-down header: back icon button + title, like an M3 top app bar. */
+#stats-modal .db-back { gap: 8px; margin: 0 0 20px -8px; }
+#stats-modal .db-back h2 { font: var(--mk-type-headline-s); letter-spacing: -.01em; color: var(--mk-sys-on-surface); }
+#stats-modal .db-back > div > span { font: var(--mk-type-body-s); color: var(--mk-sys-on-surface-variant); }
+
+/* Leaderboard rows (levels.js) share the same surfaces. */
+#stats-modal .mk-stx-sortbtn {
+  border: 1px solid var(--mk-sys-outline-variant);
+  border-radius: var(--mk-shape-sm);
+  background: transparent;
+}
+#stats-modal .mk-stx-sortbtn.active {
+  border-color: transparent;
+  background: var(--mk-sys-secondary-container);
+  color: var(--mk-sys-on-secondary-container);
+}
+#stats-modal .mk-stx-info { border: 0; border-radius: var(--mk-shape-lg); background: var(--mk-sys-surface-container); }
+
+/* ── Phone: a full-height bottom sheet ──────────────────────────────────── */
+:root.mk-mobile-shell #stats-modal.mk-stats {
+  z-index: 220000 !important;
+  align-items: flex-end;
+  padding: 0;
+}
+:root.mk-mobile-shell #stats-modal.mk-stats > .mk-stats-sheet,
+#stats-modal.mk-stats > .mk-stats-sheet:where(:root.mk-mobile-shell *) {
+  width: 100vw !important;
+  height: calc(100dvh - 24px);
+  max-height: calc(100dvh - 24px) !important;
+  border-radius: var(--mk-shape-xl) var(--mk-shape-xl) 0 0 !important;
+}
+:root.mk-mobile-shell #stats-modal #stats-table-wrap { padding: 4px 16px 24px !important; }
+:root.mk-mobile-shell #stats-modal .db-chrome { margin-left: -16px; margin-right: -16px; padding-left: 16px; padding-right: 16px; }
+:root.mk-mobile-shell #stats-modal .db-tabs { margin-left: -16px; margin-right: -16px; padding-left: 4px; }
+@media (max-width: 760px) {
+  #stats-modal .db-chips { flex-wrap: wrap; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #stats-modal .db-tab-indicator,
+  #stats-modal .db-chips button,
+  #stats-modal .db-tabs button { transition: none; }
+}

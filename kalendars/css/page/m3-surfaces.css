@@ -1,0 +1,102 @@
+/* ── Surfaces moved by MinkaMotion (js/mk-motion.js) ───────────────────────
+   Their open/close is a WAAPI container transform, so older CSS transitions
+   on the same properties must go: a running CSS transition outranks an
+   animation in the cascade and would fight it. The closed pose rests on the
+   open geometry, so the motion always measures the real target. Loaded last
+   in kalendars/index.html. */
+
+/* Night split panel */
+:root[data-motion]:not(.mk-no-motion) #nsOverlay,
+:root[data-motion]:not(.mk-no-motion) #nsOverlay.open,
+:root[data-motion]:not(.mk-no-motion) #nsOverlay #nsPanel,
+:root[data-motion]:not(.mk-no-motion) #nsOverlay.open #nsPanel {
+  transition: none !important;
+}
+:root[data-motion]:not(.mk-mobile-shell) #nsOverlay #nsPanel {
+  transform: translate(-50%, -50%) !important;
+}
+/* Closing: still painted (the scrim fades by animation), no longer clickable. */
+:root[data-motion] #nsOverlay.ns-closing {
+  opacity: 1;
+  pointer-events: none;
+}
+
+/* Worker (card) window */
+:root[data-motion]:not(.mk-no-motion) #worker-modal,
+:root[data-motion]:not(.mk-no-motion) #worker-modal.open,
+:root[data-motion]:not(.mk-no-motion) #worker-modal:not(.open),
+:root[data-motion]:not(.mk-no-motion) #worker-modal-backdrop {
+  transition: none !important;
+}
+:root[data-motion] #worker-modal.wm-closing {
+  visibility: visible !important;
+  opacity: 1;
+  pointer-events: none;
+}
+
+/* Full phone list */
+:root[data-motion]:not(.mk-no-motion) #full-list-modal {
+  animation: none !important;
+  transition: none !important;
+}
+:root[data-motion] #full-list-modal.fl-closing { display: flex; pointer-events: none; }
+
+/* Conversation dialog: closing = still painted, no longer interactive. */
+#rgFeedbackModal.is-closing { pointer-events: none; }
+
+/* Coffee picker leaving: painted, not interactive. */
+.mk-coffee-picker.is-closing { pointer-events: none; }
+
+/* Worker window tabs: one geometry in every tab (no jump when switching),
+   the selected pill slides between segments (js/calendar.js wmTabMotion). */
+html body #worker-modal#worker-modal .modal-header {
+  padding: 16px 24px 12px !important;
+  gap: 16px !important;
+}
+html body #worker-modal#worker-modal .modal-header h2 { line-height: 22px !important; }
+html body #worker-modal#worker-modal #modal-total-hours {
+  box-sizing: border-box !important;
+  min-width: 68px !important;
+  height: 40px !important;
+  padding: 0 12px !important;
+  display: inline-flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transform: none !important;          /* mk-skins.css shrank it to .82 in Izskats */
+}
+html body #worker-modal#worker-modal .view-toggle {
+  position: relative !important;
+  isolation: isolate;
+  padding: 4px 20px 8px !important;
+  gap: 6px !important;
+}
+html body #worker-modal#worker-modal .view-toggle .toggle-btn {
+  /* bundle.css scales the active tab to 1.02: that shifted the row by a few
+     pixels per tab and trapped the label under the sliding pill. */
+  transform: none !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+html body #worker-modal#worker-modal .view-toggle .toggle-btn > * { position: relative; z-index: 2; }
+html body #worker-modal#worker-modal .view-toggle .wm-seg-pill {
+  position: absolute;
+  z-index: 1;
+  border-radius: 20px;
+  background: var(--pp-primary-c, #d6e3ff);
+  transform-origin: 0 50%;
+  pointer-events: none;
+}
+/* The pill carries the selected colour; the segment itself stays tonal. */
+html body #worker-modal#worker-modal .view-toggle.has-seg-pill .toggle-btn.active {
+  background: var(--pp-c2) !important;
+}
+html body #worker-modal#worker-modal:not(.mk-skin-mode) .modal-content {
+  padding-top: 12px !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+}
+:root.mk-mobile-shell #worker-modal#worker-modal .view-toggle .wm-seg-pill { display: none; }
+:root.mk-mobile-shell #worker-modal#worker-modal .view-toggle.has-seg-pill .toggle-btn.active { background: var(--pp-primary-c) !important; }

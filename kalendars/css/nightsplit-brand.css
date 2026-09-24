@@ -426,56 +426,6 @@
 }
 #nsPanel .nsc-fat-label { width: 100% !important; font-size: 8px !important; color: rgba(239, 247, 250, .82) !important; text-align: center !important; }
 #nsPanel .nsc-fat-value { width: 100% !important; font-size: 14px !important; text-align: center !important; }
-#nsPanel .nsc-deco .nsc-rhythm-lines { display: none !important; }
-#nsPanel .nsc-rhythm-help {
-  position: absolute !important;
-  z-index: 10 !important;
-  top: 8px !important;
-  right: 8px !important;
-  width: 20px !important;
-  height: 20px !important;
-  padding: 0 !important;
-  border: 1px solid rgba(255,255,255,.30) !important;
-  border-radius: 50% !important;
-  background: rgba(8,13,20,.66) !important;
-  color: rgba(244,248,251,.88) !important;
-  font: 800 11px/1 Georgia,serif !important;
-  cursor: pointer !important;
-}
-#nsPanel .nsc-rhythm-help:hover,
-#nsPanel .nsc-rhythm-help[aria-expanded="true"] { background: rgba(238,244,248,.92) !important; color: #18212a !important; }
-#nsPanel .nsc-rhythm-help-pop {
-  position: absolute !important;
-  z-index: 9 !important;
-  top: 32px !important;
-  right: 7px !important;
-  left: 7px !important;
-  display: none !important;
-  grid-template-columns: 1fr !important;
-  gap: 4px !important;
-  padding: 7px 8px !important;
-  border: 1px solid rgba(255,255,255,.20) !important;
-  border-radius: 8px !important;
-  background: rgba(12,18,25,.96) !important;
-  box-shadow: 0 8px 18px rgba(0,0,0,.42) !important;
-  color: #eef4f7 !important;
-  font-family: "Segoe UI",Inter,system-ui,sans-serif !important;
-}
-#nsPanel .nsc-full-card.is-rhythm-help-open .nsc-rhythm-help-pop { display: grid !important; }
-#nsPanel .nsc-rhythm-help-pop > b { font: 750 9.5px/1.1 "Segoe UI",Inter,system-ui,sans-serif !important; }
-#nsPanel .nsc-rhythm-help-pop > span {
-  display: grid !important;
-  grid-template-columns: 10px 56px minmax(0,1fr) !important;
-  align-items: center !important;
-  gap: 4px !important;
-  min-width: 0 !important;
-}
-#nsPanel .nsc-rhythm-help-pop span > i { width: 9px !important; height: 3px !important; border-radius: 2px !important; background: currentColor !important; box-shadow: 0 0 4px currentColor !important; }
-#nsPanel .nsc-rhythm-help-pop span > strong { color: currentColor !important; font: 750 7.5px/1 "Segoe UI",Inter,system-ui,sans-serif !important; }
-#nsPanel .nsc-rhythm-help-pop span > small { min-width: 0 !important; color: currentColor !important; opacity: .94 !important; font: 700 7.5px/1 "Segoe UI",Inter,system-ui,sans-serif !important; }
-#nsPanel .nsc-rhythm-help-pop .is-mel { color: #62b7ff !important; }
-#nsPanel .nsc-rhythm-help-pop .is-cor { color: #ffc629 !important; }
-#nsPanel .nsc-rhythm-help-pop .is-wake { color: #55e58b !important; }
 #nsPanel .nsc-moon-overlay {
   position: absolute !important;
   z-index: 1 !important;
@@ -1860,65 +1810,12 @@ html.mk-low-spec:not(.mk-mobile-shell) #nsOverlay.open #nsPanel { transform: tra
 #nsOverlay #nsPanel .ns-flow-pct { margin-left: 6px !important; }
 #nsOverlay #nsPanel .ns-flow-ghost { width: 24px !important; height: 17px !important; filter: none !important; }
 /* Vieta vārda čipam starp ritma rindiņām un joslu. */
-#nsOverlay #nsPanel .ns-rhythm-strip + .ns-flow-bar { margin-top: 36px !important; }
 #nsOverlay #nsPanel .ns-flow-labels { margin: 10px 0 9px !important; color: rgba(194, 208, 220, .62) !important; }
 
 /* ── "Ko rāda līnijas?" — M3 rich tooltip (2026-09-23) ──
    Katrai rindai paraugs ir tieši tāda pati līnija kā kartītē (zila, dzeltena
    raustīta, zaļa), blakus nosaukums un vienkāršs "augstāk = …" skaidrojums.
    Viens burtu izmērs rindām, mazāks tikai piezīmei — nekas vairs nelec. */
-#nsOverlay #nsPanel .nsc-rhythm-help-pop {
-  top: 32px !important;
-  left: 8px !important;
-  right: 8px !important;
-  gap: 6px !important;
-  padding: 10px 12px !important;
-  border: 1px solid rgba(190, 214, 230, .16) !important;
-  border-radius: 16px !important;
-  background: #17212b !important;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, .5) !important;
-  color: #e6eef5 !important;
-  font-family: Inter, system-ui, sans-serif !important;
-}
-#nsOverlay #nsPanel .nsc-rhythm-help-pop > b {
-  margin-bottom: 2px !important;
-  color: #ffffff !important;
-  font: 700 12px/1.25 Inter, system-ui, sans-serif !important;
-}
-#nsOverlay #nsPanel .nsc-rhythm-help-pop > span {
-  grid-template-columns: 22px 78px minmax(0, 1fr) !important;
-  gap: 8px !important;
-  color: inherit !important;
-}
-#nsOverlay #nsPanel .nsc-rhythm-help-pop span > i {
-  width: 22px !important;
-  height: 0 !important;
-  border-radius: 0 !important;
-  background: none !important;
-  box-shadow: none !important;
-  border-top: 2px solid var(--ns-line) !important;
-}
-#nsOverlay #nsPanel .nsc-rhythm-help-pop .is-mel { --ns-line: #8cc4f2; }
-#nsOverlay #nsPanel .nsc-rhythm-help-pop .is-cor { --ns-line: #ecd08a; }
-#nsOverlay #nsPanel .nsc-rhythm-help-pop .is-cor > i { border-top-style: dashed !important; }
-#nsOverlay #nsPanel .nsc-rhythm-help-pop .is-wake { --ns-line: #93dcb6; }
-#nsOverlay #nsPanel .nsc-rhythm-help-pop span > strong {
-  color: var(--ns-line) !important;
-  font: 700 11.5px/1.2 Inter, system-ui, sans-serif !important;
-}
-#nsOverlay #nsPanel .nsc-rhythm-help-pop span > small {
-  color: #c9d6e1 !important;
-  opacity: 1 !important;
-  font: 500 11px/1.25 Inter, system-ui, sans-serif !important;
-}
-#nsOverlay #nsPanel .nsc-rhythm-help-pop > em {
-  margin-top: 1px !important;
-  padding-top: 6px !important;
-  border-top: 1px solid rgba(190, 214, 230, .12) !important;
-  color: #8fa2b2 !important;
-  font: 400 10px/1.4 Inter, system-ui, sans-serif !important;
-  font-style: normal !important;
-}
 
 /* Līniju leģenda galvenē: tās pašas līnijas kā kartītēs, ar vienu vārdu. */
 
@@ -1994,43 +1891,7 @@ html.mk-low-spec:not(.mk-mobile-shell) #nsOverlay.open #nsPanel { transform: tra
    Trīs plānas rindiņas (miegs, enerģija, možums), katra ar savu nosaukumu un
    savā mērogā, tāpēc tās nesaplūst un nepārklājas ne ar ko kartītēs.
    Vertikālās atzīmes sakrīt ar cilvēku maiņas brīžiem. */
-#nsOverlay #nsPanel .ns-rhythm-strip {
-  display: grid;
-  gap: 4px;
-  margin: 10px 0 2px;
-}
-#nsOverlay #nsPanel .ns-rhythm-lane {
-  position: relative;
-  height: 30px;
-  overflow: hidden;
-  border-radius: 9px;
-  background: rgba(214, 232, 244, .035);
-}
-#nsOverlay #nsPanel .ns-rhythm-lane svg { display: block; width: 100%; height: 100%; }
-#nsOverlay #nsPanel .ns-rhythm-lane-label {
-  position: absolute;
-  top: 50%;
-  left: 6px;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 7px 2px 6px;
-  border-radius: 999px;
-  background: rgba(6, 11, 18, .78);
-  color: var(--ns-line);
-  font: 700 10px/1 Inter, system-ui, sans-serif;
-  letter-spacing: .02em;
-  white-space: nowrap;
-}
-#nsOverlay #nsPanel .ns-rhythm-lane-label i { display: block; width: 12px; height: 0; border-top: 2px solid var(--ns-line); border-radius: 1px; }
-#nsOverlay #nsPanel .ns-rhythm-lane.is-mel { --ns-line: #8cc4f2; }
-#nsOverlay #nsPanel .ns-rhythm-lane.is-cor { --ns-line: #ecd08a; }
-#nsOverlay #nsPanel .ns-rhythm-lane.is-cor .ns-rhythm-lane-label i { border-top-style: dashed; }
-#nsOverlay #nsPanel .ns-rhythm-lane.is-wake { --ns-line: #93dcb6; }
 /* Rindiņu nosaukumiem svītriņu paraugs nav vajadzīgs — krāsa jau pasaka. */
-#nsOverlay #nsPanel .ns-rhythm-lane-label i { display: none; }
-#nsOverlay #nsPanel .ns-rhythm-lane-label { padding: 2px 7px; }
 
 /* ════════════════════════════════════════════════════════════════════════
    PixelPlayer / Material 3 Expressive (2026-09-23)
@@ -2157,8 +2018,6 @@ html.mk-low-spec:not(.mk-mobile-shell) #nsOverlay.open #nsPanel { transform: tra
 }
 
 /* Ritma rindiņas */
-#nsOverlay #nsPanel .ns-rhythm-lane { border-radius: 14px !important; background: var(--pp-c1) !important; }
-#nsOverlay #nsPanel .ns-rhythm-lane-label { background: rgba(16, 22, 29, .9) !important; font-weight: 500 !important; font-size: 11px !important; letter-spacing: 0 !important; }
 
 /* Laika josla: nākotne — personu krāsas tonāli; pagātne — viļņota primārā
    līnija (M3 expressive wavy progress), statiska — nekāda animācija. */

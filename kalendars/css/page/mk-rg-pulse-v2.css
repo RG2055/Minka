@@ -1665,3 +1665,145 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   .rg-mood-coffee,
   .rg-feedback-card .rg-pulse-write { transition: none; }
 }
+
+/* ── Komandas sajūtas līkne (mood-trend.js) ─────────────────────────────
+   Tieši virs "Novērtē maiņu", lai balsojums un tā vieta līknē ir kopā.
+   Bez rāmja: līkne stāv tieši kartītes virsmā, virs tās virsraksts kā
+   M3 label. Visa josla ir viena poga uz statistiku; hover/fokuss ir M3
+   stāvokļa slānis, nevis kaste. Augstums fiksēts, lai nekas nelec.
+   Šeit, nevis mood-comms-m3.css: burbuļu risinātājs mēra līkni kā šķērsli,
+   tāpēc tās ģeometrijai jābūt gatavai kopā ar pārējo kartīti. */
+#grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card {
+  margin-top: calc(var(--rg-mood-lift, 0px) * -1) !important;
+}
+.rg-feedback-card .rg-trend {
+  --rg-trend-accent: var(--rg-card-accent, #7fd8c6);
+  order: 1;
+  position: relative;
+  z-index: 3;
+  display: block;
+  width: calc(100% + 8px);
+  /* The busy stage keeps a reserve belt under the face for the lower
+     orbit; the curve sits in that belt (the ring solver treats it as an
+     obstacle), so the rating row and the coffee block move up instead
+     of down. */
+  margin: -26px -4px 0;
+  padding: 5px 6px 4px;
+  border: 0;
+  border-radius: 16px;
+  background: transparent;
+  color: var(--m3c-on-surface, #e6f1f8);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  isolation: isolate;
+}
+.rg-feedback-card .rg-trend::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 150ms cubic-bezier(.31, .94, .34, 1);
+}
+.rg-feedback-card .rg-trend:hover::before { opacity: .06; }
+.rg-feedback-card .rg-trend:active::before { opacity: .1; }
+.rg-feedback-card .rg-trend:focus-visible { outline: 2px solid var(--m3c-primary, #7fd8c6); outline-offset: 1px; }
+.rg-trend-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 2px 2px;
+}
+.rg-trend-title {
+  color: var(--m3c-on-surface-variant, #b3c6d4);
+  font: 700 11px/1.2 Inter, system-ui, sans-serif;
+  letter-spacing: .02em;
+}
+.rg-trend-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  color: var(--m3c-outline, #7c93a4);
+  font: 600 10.5px/1.2 Inter, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  transition: color 150ms cubic-bezier(.31, .94, .34, 1);
+}
+.rg-trend-meta svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 350ms cubic-bezier(.42, 1.67, .21, .9);
+}
+.rg-feedback-card .rg-trend:hover .rg-trend-meta { color: var(--m3c-on-surface, #e6f1f8); }
+.rg-feedback-card .rg-trend:hover .rg-trend-meta svg { transform: translateX(2px); }
+.rg-trend-plot {
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  align-items: stretch;
+  gap: 3px;
+}
+.rg-trend-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1px 0;
+  font-size: 11px;
+  line-height: 1;
+  font-style: normal;
+}
+.rg-trend-axis i { font-style: normal; opacity: .8; }
+.rg-trend-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 280 / 44;
+  overflow: visible;
+}
+.rg-trend-mid { stroke: rgba(230, 241, 248, .1); stroke-width: 1; stroke-dasharray: 2 4; }
+.rg-trend-area { fill: url(#rgTrendFade); }
+.rg-trend-fade-top { stop-color: var(--rg-trend-accent); stop-opacity: .16; }
+.rg-trend-fade-bottom { stop-color: var(--rg-trend-accent); stop-opacity: 0; }
+.rg-trend-line {
+  fill: none;
+  stroke: var(--rg-trend-accent);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: .85;
+}
+.rg-trend-dot { stroke: #0b1118; stroke-width: 1.4; transform-box: fill-box; transform-origin: center; }
+.rg-trend-dot.is-selected { stroke: #f8fbff; stroke-width: 1.8; }
+.rg-trend-slot {
+  fill: none;
+  stroke: rgba(230, 241, 248, .55);
+  stroke-width: 1.4;
+  stroke-dasharray: 2.2 2.2;
+}
+.rg-feedback-card .rg-trend.is-empty .rg-trend-axis { opacity: .5; }
+/* Balsojuma lidojums: viens elements, tikai transform + opacity. */
+.rg-feedback-card .rg-trend-fly {
+  position: absolute;
+  z-index: 20;
+  left: 0;
+  top: 0;
+  font-size: 22px;
+  line-height: 1;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  will-change: transform, opacity;
+}
+:root.mk-mobile-shell .rg-feedback-card .rg-trend { margin-bottom: 6px; }
+@media (prefers-reduced-motion: reduce) {
+  .rg-feedback-card .rg-trend::before,
+  .rg-trend-meta,
+  .rg-trend-meta svg { transition: none; }
+}

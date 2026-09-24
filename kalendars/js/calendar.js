@@ -770,7 +770,13 @@ function openFullListModal(ev) {
   html += '</div>';
   content.innerHTML = html;
 
+  modal.classList.remove('fl-closing');
   modal.classList.add('open');
+  // Grows out of the control that opened it (js/mk-motion.js).
+  if (window.MinkaMotion) {
+    fullListOrigin = window.MinkaMotion.recentLauncher();
+    window.MinkaMotion.openSurface(modal, { key: 'fulllist', origin: fullListOrigin });
+  }
   notifyBuddyNumbers(true);
   setTimeout(() => {
     document.addEventListener('click', outsideFullListClose);
@@ -787,8 +793,15 @@ function outsideFullListClose(e) {
     document.removeEventListener('click', outsideFullListClose);
   }
 }
+let fullListOrigin = null;
 function closeFullListModal() {
-  document.getElementById('full-list-modal').classList.remove('open');
+  const modal = document.getElementById('full-list-modal');
+  const wasOpen = modal.classList.contains('open');
+  modal.classList.remove('open');
+  if (window.MinkaMotion && wasOpen) {
+    modal.classList.add('fl-closing');
+    window.MinkaMotion.closeSurface(modal, { key: 'fulllist', origin: fullListOrigin }, () => modal.classList.remove('fl-closing'));
+  }
   notifyBuddyNumbers(false);
   document.removeEventListener('click', outsideFullListClose);
 }
@@ -2726,47 +2739,6 @@ function filterFullList(btn) {
     return { push: push, pull: pull, startPolling: startPolling };
   })();
 
-  function playNightToggleSound(on) {
-    try {
-      var ctx = new (window.AudioContext || window.webkitAudioContext)();
-      // ON:  soft A3→C4→E4 — low, calm, ascending like distant wind chimes
-      // OFF: gentle E4→A3 descend — slow, quiet fade
-      var notes = on ? [220.00, 261.63, 329.63] : [329.63, 220.00];
-      var spacing = on ? 0.22 : 0.28;
-      notes.forEach(function(freq, i) {
-        var osc  = ctx.createOscillator();
-        var gain = ctx.createGain();
-        // slight shimmer via a second detuned oscillator for warmth
-        var osc2  = ctx.createOscillator();
-        var gain2 = ctx.createGain();
-        var t0 = ctx.currentTime + i * spacing;
-        var peak = on ? 0.06 : 0.045;
-        var attack = 0.14;
-        var release = on ? 2.8 : 2.0;
-
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, t0);
-        gain.gain.setValueAtTime(0, t0);
-        gain.gain.linearRampToValueAtTime(peak, t0 + attack);
-        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + attack + release);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(t0);
-        osc.stop(t0 + attack + release + 0.1);
-
-        // shimmer layer — 2 Hz above, very quiet
-        osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(freq + 2, t0);
-        gain2.gain.setValueAtTime(0, t0);
-        gain2.gain.linearRampToValueAtTime(peak * 0.25, t0 + attack + 0.1);
-        gain2.gain.exponentialRampToValueAtTime(0.0001, t0 + attack + release);
-        osc2.connect(gain2);
-        gain2.connect(ctx.destination);
-        osc2.start(t0);
-        osc2.stop(t0 + attack + release + 0.1);
-      });
-    } catch(e) {}
-  }
 
   function initNsBarDrag(segmentsEl) {
     if (!segmentsEl) return;
@@ -2788,12 +2760,6 @@ function filterFullList(btn) {
 
     function getLabel(el) { return el && el.closest ? el.closest('.shift-progress-seg-label') : null; }
 
-    // Same sounds as the nakts bottom panel
-    function _tone(freq,dur,type,vol){try{var c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type=type||'triangle';o.frequency.value=freq;g.gain.setValueAtTime(0,c.currentTime);g.gain.linearRampToValueAtTime(vol||0.1,c.currentTime+0.01);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dur);o.start(c.currentTime);o.stop(c.currentTime+dur);}catch(e){}}
-    function sndBarPickup(){ _tone(220,0.09,'triangle',0.13); setTimeout(function(){_tone(280,0.07,'triangle',0.07);},25); }
-    function sndBarHover(){  _tone(600,0.03,'sine',0.035); }
-    function sndBarDrop(){   _tone(240,0.13,'triangle',0.16); setTimeout(function(){_tone(300,0.09,'triangle',0.09);},55); }
-    function sndBarReorder(){ _tone(420,0.07,'sine',0.06); setTimeout(function(){_tone(530,0.1,'sine',0.08);},85); }
 
     function updateDropTarget() {
       // Layout reads in RAF — doesn't block ghost movement
@@ -2830,7 +2796,6 @@ function filterFullList(btn) {
       document.body.appendChild(ghost);
       ghost.style.left = (mx + 14) + 'px';
       ghost.style.top  = (my - 20) + 'px';
-      sndBarPickup();
     });
 
     _nsDragMoveHandler = function(e) {
@@ -2841,7 +2806,6 @@ function filterFullList(btn) {
       rafId = requestAnimationFrame(function() {
         var prevOver = overLabel;
         updateDropTarget();
-        if (overLabel && overLabel !== prevOver) sndBarHover();
       });
     };
     document.addEventListener('mousemove', _nsDragMoveHandler);
@@ -2858,8 +2822,6 @@ function filterFullList(btn) {
         var fromIdx = parseInt(dragging.dataset.segIdx, 10);
         var toIdx   = parseInt(target.dataset.segIdx, 10);
         if (!isNaN(fromIdx) && !isNaN(toIdx) && fromIdx !== toIdx) {
-          sndBarDrop();
-          setTimeout(sndBarReorder, 60);
           var dragDate = getNightSplitDragDate();
           var plan = getNightSplitPlan(dragDate);
           if (plan && plan.segments) {
@@ -4108,7 +4070,6 @@ function filterFullList(btn) {
             var w = document.getElementById('shift-progress-wrap');
             if (w) w.classList.toggle('ns-bar-active', _nsBarOn);
             try { if (window.__setStarsManual) window.__setStarsManual(_nsBarOn); } catch(_e) {}
-            playNightToggleSound(_nsBarOn);
             // Immediately re-render lanes with new axis
             try { g_updateLive(true); } catch(_e) {}
           });
@@ -4540,7 +4501,6 @@ function filterFullList(btn) {
     wrap._nsWrapDragWired = true;
     var dragging = null, overLabel = null, ghost = null, rafId = null, mx = 0, my = 0;
     function getLabel(el) { return el && el.closest ? el.closest('.shift-progress-seg-label') : null; }
-    function _tone(f,d,t,v){try{var c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type=t||'triangle';o.frequency.value=f;g.gain.setValueAtTime(0,c.currentTime);g.gain.linearRampToValueAtTime(v||0.1,c.currentTime+0.01);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+d);o.start(c.currentTime);o.stop(c.currentTime+d);}catch(e){}}
     wrap.addEventListener('mousedown', function(e) {
       var lbl = getLabel(e.target);
       if (!lbl || !lbl.closest('.sl-ns-labels')) return;
@@ -4553,7 +4513,6 @@ function filterFullList(btn) {
       ghost.style.setProperty('--ghost-color', getComputedStyle(lbl).getPropertyValue('--seg-color').trim() || '#8b5cf6');
       document.body.appendChild(ghost);
       ghost.style.left = (mx + 14) + 'px'; ghost.style.top = (my - 20) + 'px';
-      _tone(220,0.09,'triangle',0.13);
     });
     document.addEventListener('mousemove', function(e) {
       if (!dragging) return;
@@ -4585,8 +4544,6 @@ function filterFullList(btn) {
         var fromIdx = parseInt(dragging.dataset.segIdx, 10);
         var toIdx   = parseInt(target.dataset.segIdx, 10);
         if (!isNaN(fromIdx) && !isNaN(toIdx) && fromIdx !== toIdx) {
-          _tone(240,0.13,'triangle',0.16);
-          setTimeout(function(){ _tone(300,0.09,'triangle',0.09); }, 55);
           var dragDate = getNightSplitDragDate();
           var plan = getNightSplitPlan(dragDate);
           if (plan && plan.segments) {
@@ -5729,10 +5686,16 @@ function filterFullList(btn) {
       try { window.parent && window.parent.postMessage({ type: 'mk_coffee_picker', open: !!open }, window.location.origin); } catch (_e) {}
     }
 
-    function closeCoffeePicker() {
-      const picker = document.querySelector('.mk-coffee-picker');
+    // Closing: the picker returns into its "+" (js/mk-motion.js) and is removed
+    // after that has played. A picker that is being replaced goes at once.
+    function closeCoffeePicker(immediate) {
+      const picker = document.querySelector('.mk-coffee-picker:not(.is-closing)');
       const returnFocus = picker && picker.contains(document.activeElement) ? picker._returnFocus : null;
-      document.querySelectorAll('.mk-coffee-picker').forEach(el => el.remove());
+      document.querySelectorAll('.mk-coffee-picker').forEach(el => {
+        if (immediate === true || el !== picker || !window.MinkaMotion) { el.remove(); return; }
+        el.classList.add('is-closing');
+        window.MinkaMotion.closeSurface(el, { key: 'coffee', origin: el._origin }, () => el.remove());
+      });
       if (returnFocus && returnFocus.isConnected) returnFocus.focus({preventScroll:true});
       document.querySelectorAll('.mk-coffee-backdrop').forEach(el => el.remove());
       document.removeEventListener('keydown', onCoffeePickerKey, true);
@@ -5802,7 +5765,7 @@ function filterFullList(btn) {
     }
 
     function showCoffeePicker(name, card, anchor) {
-      closeCoffeePicker();
+      closeCoffeePicker(true);
       let selected = 'philips';
       let size = 'M';
       let priceCents = 0;
@@ -5861,7 +5824,12 @@ function filterFullList(btn) {
         return anchorBox;
       }
 
+      // Measured at rest: it can run while the picker is still growing.
       function placePicker() {
+        if (window.MinkaMotion && window.MinkaMotion.atRest) return window.MinkaMotion.atRest('coffee', placePickerNow);
+        placePickerNow();
+      }
+      function placePickerNow() {
         const rect = anchorRect();
         const pw = 288;   // must match .mk-coffee-picker width
 
@@ -5955,6 +5923,10 @@ function filterFullList(btn) {
 
       sync();
       placePicker();
+      // An M3 menu: it opens out of the "+" it belongs to.
+      // The "+" is zero-wide when its card is not hovered: then the card.
+      picker._origin = anchor && anchor.getBoundingClientRect().width ? anchor : card;
+      if (window.MinkaMotion) window.MinkaMotion.openSurface(picker, { key: 'coffee', origin: picker._origin });
       setTimeout(() => {
         if (!picker.isConnected) return;
         document.addEventListener('keydown', onCoffeePickerKey, true);
@@ -7119,22 +7091,37 @@ function showWorkerSchedule(workerName, currentShift) {
   modal.style.left = '';
   modal.style.top = '';
 
-  // Compute exact px center to bypass any stacking context from iframe/backdrop-filter
-  const mw = Math.min(820, window.innerWidth * 0.86);
-  const mh = Math.min(window.innerHeight * 0.90, 760);
+  // One window for all four tabs (M3 dialog with tabs): switching between
+  // Nogurums / Kalendārs / Emoji / Izskats never moves or resizes it. The
+  // geometry is inline !important because the tab modes used to carry their
+  // own sizes (fatigue: 980px wide at top 12px) and the window jumped.
+  // Phones keep their bottom-sheet layout from CSS.
+  const wmDesktop = !document.documentElement.classList.contains('mk-mobile-shell');
+  const mw = Math.min(980, window.innerWidth * 0.96);
+  const mh = Math.min(window.innerHeight - 24, 780);
   const cx = Math.round((window.innerWidth  - mw) / 2);
   const cy = Math.round((window.innerHeight - mh) / 2);
-  modal.style.width  = mw + 'px';
-  modal.style.left   = cx + 'px';
-  modal.style.top    = cy + 'px';
-  modal.style.maxHeight = mh + 'px';
+  const wmPin = (prop, value) => wmDesktop ? modal.style.setProperty(prop, value, 'important') : (modal.style[prop] = value);
+  wmPin('width', mw + 'px');
+  wmPin('left', cx + 'px');
+  wmPin('top', cy + 'px');
+  wmPin('max-height', mh + 'px');
+  if (wmDesktop) wmPin('height', mh + 'px');
   // Position once; fade without scaling the entire text-heavy sheet.
-  modal.style.transform = 'none';
+  wmPin('transform', 'none');
+  wmTabIndex = -1;
   showModalView('fatigue');
 
+  modal.classList.remove('wm-closing');
   modal.classList.add('open');
   const bd = document.getElementById('worker-modal-backdrop');
   if (bd) bd.classList.add('open');
+  // M3 container transform: the window grows out of the card that was
+  // pressed and returns into it on close (js/mk-motion.js).
+  if (window.MinkaMotion) {
+    workerModalOrigin = window.MinkaMotion.recentLauncher();
+    window.MinkaMotion.openSurface(modal, { key: 'worker', origin: workerModalOrigin, scrim: bd });
+  }
   setWorkerModalBuddyFlag(true);
 
   workerModalOutsideTimer = setTimeout(() => {
@@ -7496,9 +7483,53 @@ function setWorkerModalBuddyFlag(open) {
   try { window.parent && window.parent.postMessage({ type: 'mk_worker_modal', open: !!open }, window.location.origin); } catch (_e) {}
 }
 
+/* Tab switch motion (js/mk-motion.js): the selected pill slides to the new
+   tab and the new view enters along the tab axis from the side it lies on.
+   Effects only on the tabs (colour), spatial only on the pill and content. */
+const WM_TABS = ['fatigue', 'calendar', 'emoji', 'skin'];
+let wmTabIndex = -1;
+function wmTabMotion(prevBtn, nextBtn, viewEl, dir) {
+  const MM = window.MinkaMotion;
+  const bar = nextBtn && nextBtn.parentElement;
+  if (!bar) return;
+  let pill = bar.querySelector('.wm-seg-pill');
+  if (!pill) {
+    pill = document.createElement('span');
+    pill.className = 'wm-seg-pill';
+    pill.setAttribute('aria-hidden', 'true');
+    bar.prepend(pill);
+  }
+  // Reads first, then writes: one layout.
+  const barBox = bar.getBoundingClientRect();
+  const to = nextBtn.getBoundingClientRect();
+  const from = prevBtn && prevBtn !== nextBtn ? prevBtn.getBoundingClientRect() : null;
+  // Placed with left/top (a tiny absolute box, written once per switch) so
+  // the `scale` below stretches it from its own left edge.
+  pill.style.width = to.width + 'px';
+  pill.style.height = to.height + 'px';
+  pill.style.left = (to.left - barBox.left + bar.scrollLeft) + 'px';
+  pill.style.top = (to.top - barBox.top) + 'px';
+  bar.classList.add('has-seg-pill');
+  if (!MM || !from) return;
+  const tr = MM.travel();
+  MM.animate(pill, [
+    { translate: (from.left - to.left) + 'px 0', scale: (from.width / to.width) + ' 1' },
+    { translate: '0 0', scale: '1 1' }
+  ], 'spatial-fast');
+  if (viewEl) MM.animate(viewEl, [
+    { opacity: 0, translate: (24 * tr * dir) + 'px 0' },
+    { opacity: 1, translate: '0 0' }
+  ], 'spatial-fast', { standard: true, measure: true });
+}
+
 function showModalView(view) {
   if (typeof __wmHidePop === 'function') __wmHidePop();
   const _wm = document.getElementById('worker-modal');
+  const _prevBtn = _wm ? _wm.querySelector('.view-toggle .toggle-btn.active') : null;
+  const _nextIndex = WM_TABS.indexOf(view);
+  const _dir = wmTabIndex >= 0 && _nextIndex >= 0 ? Math.sign(_nextIndex - wmTabIndex) : 0;
+  const _animate = wmTabIndex >= 0 && _nextIndex !== wmTabIndex && !!_wm && _wm.classList.contains('open');
+  if (_nextIndex >= 0) wmTabIndex = _nextIndex;
   if (_wm) {
     _wm.classList.toggle('mk-skin-mode', view === 'skin');
     _wm.classList.toggle('mk-fatigue-mode', view === 'fatigue');
@@ -7557,26 +7588,43 @@ function showModalView(view) {
     if (toggleSkin) toggleSkin.classList.add('active');
     if (typeof window.mkRenderSkinPicker === 'function') window.mkRenderSkinPicker(skinView);
   }
+  // Motion only for a switch inside an open window; opening has its own.
+  const _nextBtn = _wm ? _wm.querySelector('.view-toggle .toggle-btn.active') : null;
+  const _viewEl = view === 'calendar' ? document.getElementById('modal-calendar-view')
+    : document.getElementById('modal-' + view + '-view');
+  wmTabMotion(_animate ? _prevBtn : null, _nextBtn, _animate ? _viewEl : null, _dir || 1);
 }
 
+let workerModalOrigin = null;
 function closeWorkerModal() {
   clearTimeout(workerModalOutsideTimer);
   clearTimeout(workerModalCloseTimer);
   if (typeof __wmHidePop === 'function') __wmHidePop();
   setWorkerModalBuddyFlag(false);
   const modal = document.getElementById('worker-modal');
+  const bd = document.getElementById('worker-modal-backdrop');
   if (modal) {
+    const wasOpen = modal.classList.contains('open');
     modal.classList.remove('open');
-    workerModalCloseTimer = setTimeout(() => {
+    const reset = () => {
+      modal.classList.remove('wm-closing');
       modal.style.left = '';
       modal.style.top = '';
       modal.style.width = '';
       modal.style.maxHeight = '';
+      modal.style.height = '';
       modal.style.transform = '';
       modal.style.transition = '';
-    }, 250);
+    };
+    if (window.MinkaMotion && wasOpen) {
+      // Stays painted (.wm-closing) while it shrinks back into its card; the
+      // inline geometry is only cleared once that has played.
+      modal.classList.add('wm-closing');
+      window.MinkaMotion.closeSurface(modal, { key: 'worker', origin: workerModalOrigin, scrim: bd }, reset);
+    } else {
+      workerModalCloseTimer = setTimeout(reset, 250);
+    }
   }
-  const bd = document.getElementById('worker-modal-backdrop');
   if (bd) bd.classList.remove('open');
   document.removeEventListener('click', outsideModalClose);
 }
@@ -7660,9 +7708,10 @@ function __initWorkerModalWindowing(){
     const mh = modal.offsetHeight;
     newLeft = Math.max(12, Math.min(window.innerWidth  - mw - 12, newLeft));
     newTop  = Math.max(12, Math.min(window.innerHeight - mh - 12, newTop));
-    modal.style.left = newLeft + 'px';
-    modal.style.top  = newTop  + 'px';
-    modal.style.transform = 'scale(1)';
+    const pin = modal.style.getPropertyPriority('left');
+    modal.style.setProperty('left', newLeft + 'px', pin);
+    modal.style.setProperty('top', newTop + 'px', pin);
+    modal.style.setProperty('transform', 'none', pin);
   }
 
   function onPointerUp(e) {

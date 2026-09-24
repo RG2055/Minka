@@ -78,7 +78,11 @@
   }
   function modalOpen() {
     var modal = document.getElementById('stats-modal');
-    return !!modal && modal.style.display !== 'none';
+    if (!modal) return false;
+    // data-state is authoritative (a closing dialog is already closed);
+    // hosts without it fall back to visibility.
+    if (modal.dataset && modal.dataset.state) return modal.dataset.state === 'open';
+    return modal.style.display !== 'none';
   }
   function personEmoji(name) {
     try { return (window.MinkaEmoji && window.MinkaEmoji.get(name)) || ''; } catch (_e) { return ''; }
@@ -239,7 +243,9 @@
     var max = items.reduce(function (m, e) { return Math.max(m, e.value); }, 0) || 1;
     if (!items.length) return empty('Nav ierakstu.');
     return '<div class="db-bars">' + items.map(function (e) {
-      return '<div class="db-bar-row"><span class="db-bar-label">' + e.label + '</span><span class="db-bar"><i style="width:' + (e.value / max * 100).toFixed(1) + '%;background:' + (e.color || color || '#1fe091') + '"></i></span><b>' + e.value + '</b>' + (e.sub ? '<small>' + e.sub + '</small>' : '') + '</div>';
+      // Fixed-width fill moved by a transform (stats-m3.css), never `width`,
+      // so a value change or the entrance grow is compositor-only.
+      return '<div class="db-bar-row"><span class="db-bar-label">' + e.label + '</span><span class="db-bar"><i style="--v:' + (e.value / max).toFixed(3) + ';background:' + (e.color || color || '#1fe091') + '"></i></span><b>' + e.value + '</b>' + (e.sub ? '<small>' + e.sub + '</small>' : '') + '</div>';
     }).join('') + '</div>';
   }
   function avatar(name, accent) {
@@ -252,22 +258,33 @@
   }
 
   /* ── header ───────────────────────────────────────────────────────────── */
+  var ICON = {
+    prev: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6 8.5 12l6 6"/></svg>',
+    next: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6"/></svg>',
+    back: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg>',
+    check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>'
+  };
+  function tabSelected(key) { return state.tab === key && !state.person && !state.day; }
+  function personOptions(names) {
+    return '<option value="">Cilvēks…</option>' + names.map(function (n) {
+      return '<option value="' + esc(n) + '"' + (state.person === n ? ' selected' : '') + '>' + esc(n) + '</option>';
+    }).join('');
+  }
   function header(names) {
-    return '<div class="db-top">'
-      + '<div class="db-monthnav"><button type="button" data-db-nav="-1" aria-label="Iepriekšējais mēnesis">‹</button><b>' + monthLabel(state.month) + '</b><button type="button" data-db-nav="1" aria-label="Nākamais mēnesis">›</button></div>'
-      + '<div class="db-chips">' + [['all', 'Visi'], ['rg', 'Radiogrāferi'], ['rd', 'Radiologi']].map(function (g) {
-        return '<button type="button" data-db-group="' + g[0] + '" aria-pressed="' + (state.group === g[0]) + '">' + g[1] + '</button>';
+    return '<div class="db-chrome"><div class="db-top">'
+      + '<div class="db-monthnav"><button type="button" class="db-icon-btn" data-db-nav="-1" aria-label="Iepriekšējais mēnesis">' + ICON.prev + '</button><b aria-live="polite" data-db-month>' + monthLabel(state.month) + '</b><button type="button" class="db-icon-btn" data-db-nav="1" aria-label="Nākamais mēnesis">' + ICON.next + '</button></div>'
+      + '<div class="db-chips" role="group" aria-label="Kuri cilvēki">' + [['all', 'Visi'], ['rg', 'Radiogrāferi'], ['rd', 'Radiologi']].map(function (g) {
+        return '<button type="button" data-db-group="' + g[0] + '" aria-pressed="' + (state.group === g[0]) + '">' + ICON.check + '<span>' + g[1] + '</span></button>';
       }).join('') + '</div>'
-      + '<label class="db-personpick"><select data-db-person-select><option value="">Cilvēks…</option>' + names.map(function (n) {
-        return '<option value="' + esc(n) + '"' + (state.person === n ? ' selected' : '') + '>' + esc(n) + '</option>';
-      }).join('') + '</select></label>'
+      + '<label class="db-personpick"><span class="db-visually-hidden">Cilvēks</span><select data-db-person-select>' + personOptions(names) + '</select></label>'
       + '</div>'
-      + '<nav class="db-tabs" aria-label="Sadaļa">' + TABS.map(function (t) {
-        return '<button type="button" data-db-tab="' + t[0] + '" aria-pressed="' + (state.tab === t[0] && !state.person && !state.day) + '">' + t[1] + '</button>';
-      }).join('') + '</nav>';
+      + '<nav class="db-tabs" role="tablist" aria-label="Sadaļa">' + TABS.map(function (t) {
+        var on = tabSelected(t[0]);
+        return '<button type="button" role="tab" id="db-tab-' + t[0] + '" aria-controls="db-panel" data-db-tab="' + t[0] + '" aria-selected="' + on + '" aria-pressed="' + on + '" tabindex="' + (on || (!TABS.some(function (x) { return tabSelected(x[0]); }) && t[0] === 'overview') ? 0 : -1) + '">' + t[1] + '</button>';
+      }).join('') + '<span class="db-tab-indicator" aria-hidden="true"></span></nav></div>';
   }
   function backBar(title, sub) {
-    return '<div class="db-back"><button type="button" data-db-back>‹ Atpakaļ</button><div><h2>' + title + '</h2>' + (sub ? '<span>' + sub + '</span>' : '') + '</div></div>';
+    return '<div class="db-back"><button type="button" class="db-icon-btn" data-db-back aria-label="Atpakaļ" title="Atpakaļ (Esc)">' + ICON.back + '</button><div><h2>' + title + '</h2>' + (sub ? '<span>' + sub + '</span>' : '') + '</div></div>';
   }
 
   /* ── mood chart ───────────────────────────────────────────────────────── */
@@ -634,17 +651,108 @@
     return '<p class="db-note" role="status">Neizdevās ielādēt visus ' + missing.join(' un ') + ' datus. '
       + 'Pārskats var būt nepilnīgs. <button type="button" class="db-link" data-db-retry>Mēģināt vēlreiz</button></p>';
   }
-  function render() {
+  /* The toolbar and tabs are built once per open and then updated in place,
+     so a click never rebuilds the control the user is on (focus and scroll
+     stay put). Only the body is replaced, and the replacement is animated by
+     what the change means:
+       tab / filter  fade through (effects)
+       month         shared axis X in the direction of travel
+       forward       the day/person opens out of the item that was clicked
+       back          the overview returns, scaled down into place
+       refresh       late data (ratings, coffee): swapped with no motion */
+  var chrome = null;
+  var scrollMemo = { list: 0, from: null };
+  function mountChrome(wrap, names) {
+    wrap.classList.add('db-stats');
+    wrap.innerHTML = header(names) + '<div class="db-body" id="db-panel" role="tabpanel" tabindex="-1"></div>';
+    chrome = {
+      wrap: wrap,
+      body: wrap.querySelector('.db-body'),
+      month: wrap.querySelector('[data-db-month]'),
+      select: wrap.querySelector('[data-db-person-select]'),
+      tablist: wrap.querySelector('.db-tabs'),
+      indicator: wrap.querySelector('.db-tab-indicator'),
+      names: names.join('|')
+    };
+  }
+  function syncChrome(names) {
+    chrome.month.textContent = monthLabel(state.month);
+    chrome.wrap.querySelectorAll('[data-db-group]').forEach(function (b) { b.setAttribute('aria-pressed', String(state.group === b.dataset.dbGroup)); });
+    var any = TABS.some(function (t) { return tabSelected(t[0]); });
+    chrome.wrap.querySelectorAll('[data-db-tab]').forEach(function (b) {
+      var on = tabSelected(b.dataset.dbTab);
+      b.setAttribute('aria-selected', String(on));
+      b.setAttribute('aria-pressed', String(on));
+      b.tabIndex = on || (!any && b.dataset.dbTab === 'overview') ? 0 : -1;
+    });
+    var key = names.join('|');
+    if (key !== chrome.names) { chrome.names = key; chrome.select.innerHTML = personOptions(names); }
+    chrome.select.value = state.person || '';
+  }
+  // One read (the selected tab's box), one transform write.
+  function placeIndicator(animate) {
+    if (!chrome || !chrome.indicator) return;
+    var sel = chrome.tablist.querySelector('[aria-selected="true"]');
+    var ind = chrome.indicator;
+    if (!sel) { ind.style.opacity = '0'; return; }
+    var x = sel.offsetLeft, w = sel.offsetWidth;
+    ind.classList.toggle('is-static', !animate);
+    ind.style.opacity = '1';
+    ind.style.transform = 'translateX(' + x + 'px) scaleX(' + w + ')';
+  }
+  function bodyMotion(kind, info) {
+    var MM = window.MinkaMotion, body = chrome.body;
+    if (!MM || !kind || kind === 'refresh') return null;
+    var tr = MM.travel();
+    if (kind === 'reveal') {
+      return MM.animate(body, [{ opacity: 0 }, { opacity: 1 }], 'effects-default');
+    }
+    if (kind === 'month') {
+      return MM.animate(body, [{ opacity: 0, translate: (28 * tr * info.dir) + 'px 0' }, { opacity: 1, translate: '0 0' }], 'spatial-fast', { standard: true, measure: true });
+    }
+    if (kind === 'forward' || kind === 'back') {
+      var origin = '50% 0';
+      if (info.point) origin = Math.round(info.point.x) + 'px ' + Math.round(info.point.y) + 'px';
+      body.style.transformOrigin = origin;
+      var from = kind === 'forward' ? 1 - .08 * tr : 1 + .04 * tr;
+      return MM.animate(body, [{ opacity: 0, scale: String(from) }, { opacity: 1, scale: '1' }], 'spatial-default', { standard: kind === 'back', measure: true });
+    }
+    return MM.animate(body, [{ opacity: 0, translate: '0 ' + (8 * tr) + 'px' }, { opacity: 1, translate: '0 0' }], 'effects-slow', { measure: true });
+  }
+  // Point inside the body where an element sits: the zoom origin.
+  function pointIn(el) {
+    if (!el || !chrome || typeof el.getBoundingClientRect !== 'function') return null;
+    var r = el.getBoundingClientRect(), b = chrome.body.getBoundingClientRect();
+    return { x: r.left + r.width / 2 - b.left, y: r.top + r.height / 2 - b.top };
+  }
+  function render(kind, info) {
     var wrap = document.getElementById('stats-table-wrap');
     if (!wrap) return;
+    info = info || {};
     if (!state.month || !modalOpen()) {
       // Opening: start from the day selected in the calendar.
       state.month = D.selectedDay().slice(0, 7);
       state.person = ''; state.day = ''; state.tab = 'overview';
       ratingsFailed = {}; coffee.failed = {};
+      scrollMemo = { list: 0, from: null };
       wrap.scrollTop = 0;
+      if (!kind) kind = 'open';
     }
     if (!state.month) state.month = M.dutyDay().slice(0, 7);
+    // Opening: the dialog frame (toolbar, tabs) goes up at once so the open
+    // motion starts on the click; the month's numbers (~40–70 ms here, a few
+    // times that on the work PCs) are built in the next task, while the frame
+    // is already moving, and fade in. Content is never held back for motion.
+    if (kind === 'open' && typeof wrap.querySelector === 'function') {
+      mountChrome(wrap, []);
+      chrome.body.classList.add('db-pending');
+      placeIndicator(false);
+      var mounted = chrome;
+      requestAnimationFrame(function () {
+        setTimeout(function () { if (chrome === mounted && modalOpen()) render('reveal'); }, 0);
+      });
+      return;
+    }
     var b = build();
     var names = Array.from(new Set(shiftsAll().filter(function (e) { return e.day >= b.range.from && e.day <= b.range.to; }).map(function (e) { return e.name; }))).sort(function (a, c) { return a.localeCompare(c, 'lv'); });
     var body;
@@ -655,8 +763,28 @@
     else if (state.tab === 'coffee') body = coffeeView(b);
     else if (state.tab === 'fatigue') body = fatigueView();
     else body = overview(b);
-    wrap.classList.add('db-stats');
-    wrap.innerHTML = header(names) + '<div class="db-body">' + loadingError(b.range) + body + '</div>';
+    var inner = loadingError(b.range) + body;
+    if (typeof wrap.querySelector !== 'function') {
+      // Minimal hosts (unit tests) have no DOM: one string, same content.
+      wrap.classList.add('db-stats');
+      wrap.innerHTML = header(names) + '<div class="db-body">' + inner + '</div>';
+    } else {
+      var fresh = !chrome || chrome.wrap !== wrap || !wrap.contains(chrome.body);
+      if (fresh) mountChrome(wrap, names); else syncChrome(names);
+      // Late data must not replay entrances or steal the reader's place.
+      chrome.body.classList.remove('db-pending');
+      var animated = kind && kind !== 'refresh';
+      var keepScroll = !animated ? wrap.scrollTop : null;
+      if (window.MinkaMotion) window.MinkaMotion.run('stats-body', function () {
+        chrome.body.innerHTML = inner;
+        chrome.body.classList.toggle('db-anim', !!animated);
+      }, { fallback: function () { return fresh && kind === 'open' ? null : bodyMotion(kind, info); } });
+      else { chrome.body.innerHTML = inner; chrome.body.classList.toggle('db-anim', !!animated); }
+      if (keepScroll != null) wrap.scrollTop = keepScroll;
+      if (kind === 'forward') wrap.scrollTop = 0;
+      if (kind === 'back' && scrollMemo.from != null) { wrap.scrollTop = scrollMemo.list; scrollMemo.from = null; }
+      placeIndicator(!fresh && animated);
+    }
     if (state.day) {
       ensureRatings(state.day <= b.today ? [state.day] : []);
     } else if (!state.person && state.tab === 'overview') {
@@ -668,25 +796,64 @@
     var coffeeDays = state.day ? [state.day] : elapsedDays(b.rows, b.today).map(function (r) { return r.day; });
     if (coffeeDays.some(function (d) { return d <= b.today && !coffee.loaded[d] && !coffee.failed[d]; })) void loadCoffee(coffeeDays);
   }
+  // Escape and the back button: leave a drill-down first, one level at a time.
+  function back() {
+    if (!modalOpen() || (!state.day && !state.person)) return false;
+    var from = state.day ? '[data-db-day="' + state.day + '"]' : '[data-db-person="' + state.person + '"]';
+    if (state.day) state.day = ''; else state.person = '';
+    render('back');
+    var again = chrome && chrome.body.querySelector(from);
+    if (again && typeof again.focus === 'function') { try { again.focus({ preventScroll: true }); } catch (_e) {} }
+    return true;
+  }
+  function openDrill(t, set) {
+    var wrap = document.getElementById('stats-table-wrap');
+    if (!state.day && !state.person && wrap) { scrollMemo.list = wrap.scrollTop; scrollMemo.from = true; }
+    var point = pointIn(t);
+    set();
+    render('forward', { point: point });
+    if (chrome && typeof chrome.body.focus === 'function') { try { chrome.body.focus({ preventScroll: true }); } catch (_e) {} }
+  }
 
   document.addEventListener('click', function (e) {
     var wrap = e.target.closest('#stats-table-wrap');
     if (!wrap) return;
     if (e.target.closest('[data-db-retry]')) { retryFailed(); return; }
     var t;
-    if ((t = e.target.closest('[data-db-nav]'))) { state.month = shiftMonth(state.month, +t.dataset.dbNav); state.day = ''; render(); return; }
-    if ((t = e.target.closest('[data-db-group]'))) { state.group = t.dataset.dbGroup; render(); return; }
-    if ((t = e.target.closest('[data-db-tab]'))) { state.tab = t.dataset.dbTab; state.person = ''; state.day = ''; render(); return; }
-    if ((t = e.target.closest('[data-db-day]'))) { state.day = t.dataset.dbDay; render(); wrap.scrollTop = 0; return; }
-    if ((t = e.target.closest('[data-db-person]'))) { state.person = t.dataset.dbPerson; state.day = ''; render(); wrap.scrollTop = 0; return; }
-    if (e.target.closest('[data-db-back]')) { if (state.day) state.day = ''; else state.person = ''; render(); return; }
+    if ((t = e.target.closest('[data-db-nav]'))) { var dir = +t.dataset.dbNav; state.month = shiftMonth(state.month, dir); state.day = ''; render('month', { dir: dir }); return; }
+    if ((t = e.target.closest('[data-db-group]'))) { if (state.group === t.dataset.dbGroup) return; state.group = t.dataset.dbGroup; render('filter'); return; }
+    if ((t = e.target.closest('[data-db-tab]'))) { if (tabSelected(t.dataset.dbTab)) return; state.tab = t.dataset.dbTab; state.person = ''; state.day = ''; render('tab'); return; }
+    if ((t = e.target.closest('[data-db-day]'))) { var day = t.dataset.dbDay; openDrill(t, function () { state.day = day; }); return; }
+    if ((t = e.target.closest('[data-db-person]'))) { var person = t.dataset.dbPerson; openDrill(t, function () { state.person = person; state.day = ''; }); return; }
+    if (e.target.closest('[data-db-back]')) { back(); return; }
+  });
+  // M3 tabs: arrow keys move between tabs, Home/End jump to the ends.
+  document.addEventListener('keydown', function (e) {
+    var tab = e.target && e.target.closest && e.target.closest('#stats-table-wrap [role="tab"]');
+    if (!tab) return;
+    var tabs = [].slice.call(tab.parentNode.querySelectorAll('[role="tab"]'));
+    var i = tabs.indexOf(tab), next = null;
+    if (e.key === 'ArrowRight') next = tabs[(i + 1) % tabs.length];
+    else if (e.key === 'ArrowLeft') next = tabs[(i - 1 + tabs.length) % tabs.length];
+    else if (e.key === 'Home') next = tabs[0];
+    else if (e.key === 'End') next = tabs[tabs.length - 1];
+    if (!next) return;
+    e.preventDefault();
+    next.focus();
+    next.click();
   });
   document.addEventListener('change', function (e) {
     if (!e.target.matches('#stats-table-wrap [data-db-person-select]')) return;
-    state.person = e.target.value; state.day = '';
-    render();
+    var person = e.target.value;
+    if (!person) { if (state.person) { state.person = ''; state.day = ''; render('back'); } return; }
+    openDrill(null, function () { state.person = person; state.day = ''; });
   });
   window.addEventListener('minka:daybook', function () { if (modalOpen()) render(); });
   window.addEventListener('online', retryFailed);
-  window.MinkaDaybookStats = { render: render };
+  // Outside callers (late data, levels.js, the modal opener) only refresh.
+  window.MinkaDaybookStats = {
+    render: function () { render(chrome && modalOpen() ? 'refresh' : null); },
+    back: back,
+    reset: function () { chrome = null; }
+  };
 })();
