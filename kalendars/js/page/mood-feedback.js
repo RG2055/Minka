@@ -349,11 +349,27 @@
      with their phone; on a computer the code itself is the link. The code is
      drawn in Buy Me a Coffee's own QR style and encodes BMC_URL exactly. */
   var BMC_URL = 'https://buymeacoffee.com/rgapp';
+  var BMC_BUTTON_URL = 'https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=%E2%98%95&slug=rgapp&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff';
+  // The official button draws the supporter count in white on yellow, which is
+  // hard to read. Fetch its SVG once and draw only that number black; if the
+  // fetch fails the original image stays.
+  var bmcButtonSrc = BMC_BUTTON_URL.replace(/&/g, '&amp;');
+  var bmcButtonJob = null;
+  function darkenBmcCount() {
+    if (bmcButtonJob || typeof fetch !== 'function' || !window.URL || typeof URL.createObjectURL !== 'function') return;
+    bmcButtonJob = fetch(BMC_BUTTON_URL).then(function (r) { return r.ok ? r.text() : ''; }).then(function (svg) {
+      var dark = svg.replace(/(<text[^>]*text-anchor="middle"[^>]*fill=")white(")/, '$1#000000$2');
+      if (!svg || dark === svg) return;
+      bmcButtonSrc = URL.createObjectURL(new Blob([dark], { type: 'image/svg+xml' }));
+      document.querySelectorAll('img.rg-bmc-button').forEach(function (img) { img.src = bmcButtonSrc; });
+    }).catch(function () {});
+  }
   function bmcQrMarkup() {
+    darkenBmcCount();
     return '<a class="rg-bmc-qrblock" href="' + BMC_URL + '" target="_blank" rel="noopener" data-rg-bmc-qr="1"'
       + ' aria-label="Buy me a coffee: atbalsts RG attīstībai (buymeacoffee.com/rgapp)">'
       + '<img class="rg-bmc-qrimg" src="assets/coffee/bmc-qr.svg?v=official1" width="72" height="72" alt="">'
-      + '<span class="rg-bmc-copy"><strong><img class="rg-bmc-button" src="https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&amp;emoji=%E2%98%95&amp;slug=rgapp&amp;button_colour=FFDD00&amp;font_colour=000000&amp;font_family=Cookie&amp;outline_colour=000000&amp;coffee_colour=ffffff" alt="Buy me a coffee" decoding="async" loading="lazy"></strong>'
+      + '<span class="rg-bmc-copy"><strong><img class="rg-bmc-button" src="' + bmcButtonSrc + '" width="235" height="50" alt="Buy me a coffee" decoding="async"></strong>'
       + '<em>Atbalsts RG attīstībai <span class="rg-bmc-heart">💚</span></em>'
       + '<small>RG ir bez maksas. Ja tas tev noder, vari uzsaukt kafiju projekta attīstībai. Tas palīdz RG uzturēt un pievienot jaunas iespējas. Pilnībā brīvprātīgi. Paldies! ☕</small></span></a>';
   }
