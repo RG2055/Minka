@@ -479,16 +479,9 @@
   text-decoration: none !important;
 }
 #grafiks-list .rg-feedback-card .rg-bmc-qrimg { grid-column: 4 !important; grid-row: 1 !important; justify-self: end !important; margin-left: 8px !important; }
-#grafiks-list .rg-feedback-card .rg-bmc-cupicon { grid-column: 2 !important; grid-row: 1 !important; margin-right: 8px !important; }
 #grafiks-list .rg-feedback-card .rg-bmc-copy { grid-column: 3 !important; grid-row: 1 !important; min-width: 0 !important; }
-/* Šaurā kartītē (1440 px ekrānā tā ir ~280 px) krūzīte blakus vārdiem
-   neietilpst — tad tā stāv virs "Buy me a coffee", un vārdi paliek lasāmā
-   izmērā. Platākā kartītē krūzīte ir blakus vārdiem. */
-#grafiks-list .rg-feedback-card .rg-bmc-qrblock img.rg-bmc-cupicon { grid-column: 3 !important; grid-row: 1 !important; align-self: end !important; margin: 0 0 4px !important; }
-#grafiks-list .rg-feedback-card .rg-bmc-copy { grid-row: 2 !important; align-self: start !important; }
 #grafiks-list .rg-feedback-card .rg-bmc-qrimg { grid-row: 1 / span 2 !important; align-self: center !important; }
 @container (min-width: 330px) {
-  #grafiks-list .rg-feedback-card .rg-bmc-qrblock img.rg-bmc-cupicon { grid-column: 2 !important; grid-row: 1 / span 2 !important; align-self: center !important; margin: 0 8px 0 12px !important; }
   #grafiks-list .rg-feedback-card .rg-bmc-copy { grid-row: 1 / span 2 !important; align-self: center !important; }
   #grafiks-list .rg-feedback-card .rg-bmc-qrblock strong { font-size: clamp(10.5px, calc((100cqi - 200px) / 7.9), 16px) !important; }
   #grafiks-list .rg-feedback-card .rg-bmc-qrblock em { font-size: clamp(9.5px, calc((100cqi - 200px) / 11), 13px) !important; }
@@ -503,14 +496,6 @@
   border-radius: 10px !important;
   background: #ffffff !important;
 }
-#grafiks-list .rg-feedback-card .rg-bmc-qrblock img.rg-bmc-cupicon {
-  justify-self: start !important;
-  flex: 0 0 30px !important;
-  width: 30px !important;
-  height: 30px !important;
-  border-radius: 7px !important;
-  background: none !important;
-}
 #grafiks-list .rg-feedback-card .rg-bmc-copy { min-width: 0 !important; }
 #grafiks-list .rg-feedback-card .rg-bmc-qrblock strong {
   display: block !important;
@@ -524,17 +509,24 @@
   font: 400 clamp(9.5px, calc((100cqi - 150px) / 11), 13px)/1.3 Inter, system-ui, sans-serif !important;
   font-style: normal !important;
 }
-/* The official Buy Me a Coffee button image (Cookie font), drawn smaller.
+/* The official Buy Me a Coffee button image (Cookie font, supporter count),
+   sized so the count stays legible; it shrinks with narrow cards.
    The generic QR image rule above must not square it or paint it white. */
 #grafiks-list .rg-feedback-card .rg-bmc-qrblock img.rg-bmc-button {
   display: block !important;
   flex: none !important;
-  width: auto !important;
-  height: 26px !important;
+  width: 170px !important;
+  height: auto !important;
   max-width: 100% !important;
   border-radius: 0 !important;
   background: none !important;
 }
+/* Two rows so the button can use the full width under the text and QR: the
+   supporter count inside it stays readable even in a narrow mood card. */
+:root:not(.mk-mobile-shell) #grafiks-list .rg-feedback-card .rg-bmc-qrblock .rg-bmc-copy { display: contents !important; }
+:root:not(.mk-mobile-shell) #grafiks-list .rg-feedback-card .rg-bmc-qrblock em { grid-column: 3 !important; grid-row: 1 !important; align-self: center !important; margin: 0 !important; }
+:root:not(.mk-mobile-shell) #grafiks-list .rg-feedback-card .rg-bmc-qrblock .rg-bmc-qrimg { grid-row: 1 !important; }
+:root:not(.mk-mobile-shell) #grafiks-list .rg-feedback-card .rg-bmc-qrblock strong { grid-column: 3 / 5 !important; grid-row: 2 !important; margin-top: 8px !important; }
 #grafiks-list .rg-feedback-card .rg-bmc-heart {
   font-family: 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif !important;
   font-variant-emoji: emoji !important;
@@ -559,7 +551,6 @@
 :root.mk-mobile-shell #grafiks-list .rg-feedback-card .rg-bmc-qrblock { gap: 12px !important; }
 :root.mk-mobile-shell #grafiks-list .rg-feedback-card .rg-bmc-qrblock strong { font-size: 15px !important; }
 :root.mk-mobile-shell #grafiks-list .rg-feedback-card .rg-bmc-qrblock em { font-size: 12px !important; }
-:root.mk-mobile-shell #grafiks-list .rg-feedback-card .rg-bmc-qrblock img.rg-bmc-cupicon { display: block !important; margin-right: 0 !important; }
 /* Paskaidrojums parādās tikai uzejot (vai fokusā) — kā neliels panelis virs
    bloka, tāpēc tas nemaina kartītes augstumu un neko nepabīda. */
 #grafiks-list .rg-feedback-card .rg-bmc-qrblock { position: relative !important; z-index: 1 !important; }
