@@ -96,7 +96,10 @@
         }
         var mobileBday = document.getElementById('mkBdayBadge');
         var mobileNameday = document.getElementById('mkNamedayBar');
-        if (mobileBday && mobileMain && mobileBday.parentElement !== mobileMain) mobileMain.appendChild(mobileBday);
+        // With the mobile-v2 layer, mobile-v2.js owns the badge (meta row). Moving it
+        // back here made the two observers swap it every frame (~120 moves/s).
+        var v2OwnsBday = document.documentElement.classList.contains('mk-mobile-v2');
+        if (!v2OwnsBday && mobileBday && mobileMain && mobileBday.parentElement !== mobileMain) mobileMain.appendChild(mobileBday);
         if (mobileStatus && mobileMeta) {
           while (mobileStatus.firstChild) mobileMeta.insertBefore(mobileStatus.firstChild, mobileStatus);
           mobileStatus.remove();

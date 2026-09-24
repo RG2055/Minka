@@ -1,47 +1,16 @@
 /* ================================================================
    CALENDAR EXTRAS v4 JS  – clean rewrite
-   1. Worker expiry fade + warning colours
+   1. (moved to calendar.js updateTimers)
    2. Full-list modal fix (never auto-close on open)
    3. Cards auto-resize to fill available space
    ================================================================ */
 (function CalendarExtrasV4() {
   'use strict';
 
-  /* ── 1. WORKER TIMER WARNING + FADE ── */
-  function enhanceTimers() {
-    document.querySelectorAll('.duty-timer').forEach(timer => {
-      const val = timer.querySelector('.val');
-      if (!val) return;
-      const parts = val.textContent.trim().split(':').map(Number);
-      if (parts.length !== 3 || isNaN(parts[0])) return;
-      const s = parts[0]*3600 + parts[1]*60 + parts[2];
-      if (s <= 0) {
-        const block = timer.closest('.duty-block');
-        if (block && !block.__fading) {
-          block.__fading = true;
-          block.classList.add('fading-out');
-          setTimeout(() => {
-            block.style.transition = 'max-height .5s ease, margin .5s ease, padding .5s ease';
-            block.style.maxHeight = block.offsetHeight + 'px';
-            block.style.overflow = 'hidden';
-            requestAnimationFrame(() => {
-              block.style.maxHeight = '0';
-              block.style.marginBottom = '0';
-              block.style.padding = '0';
-              setTimeout(() => block.remove(), 520);
-            });
-          }, 420);
-        }
-      } else if (s <= 300) {
-        timer.classList.add('warning-critical'); timer.classList.remove('warning-low');
-      } else if (s <= 900) {
-        timer.classList.add('warning-low'); timer.classList.remove('warning-critical');
-      } else {
-        timer.classList.remove('warning-low','warning-critical');
-      }
-    });
-  }
-  setInterval(() => { if (!document.hidden) enhanceTimers(); }, 1000);
+  /* ── 1. Timer warning colours and shift end are owned by calendar.js
+     updateTimers(): it already sets warning-low/-critical every second and turns
+     an ended block into "Maiņa beigusies". A second 1 s text-parsing pass here
+     duplicated the colours and could delete the whole block instead. ── */
 
   /* ── 2. FULL-LIST MODAL: guaranteed open on click ── */
   function fixFullListModal() {
@@ -225,6 +194,6 @@
     new MutationObserver(applyStaffAccents).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   }
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) { enhanceTimers(); applyStaffAccents(); }
+    if (!document.hidden) applyStaffAccents();
   }, { passive: true });
 })();

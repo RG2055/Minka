@@ -494,8 +494,16 @@ function nextNews(){
     setTimeout(refreshWeather, 900);
     setTimeout(() => { announceSelectedDay('weather'); }, 1500);
     schedule(11000);
-    setInterval(refreshNews, 8 * 60 * 1000);
-    setInterval(refreshWeather, 20 * 60 * 1000);
+    // While the app is hidden a poll is only marked as due; it runs the moment
+    // the app is visible again, so nobody sees data older than the interval.
+    let newsDue = false, weatherDue = false;
+    setInterval(() => { if (document.hidden) newsDue = true; else refreshNews(); }, 8 * 60 * 1000);
+    setInterval(() => { if (document.hidden) weatherDue = true; else refreshWeather(); }, 20 * 60 * 1000);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) return;
+      if (newsDue) { newsDue = false; refreshNews(); }
+      if (weatherDue) { weatherDue = false; refreshWeather(); }
+    });
   }
   // This block can be restored by the service worker after the load event has
   // already fired. Ready-state handling keeps the data loop reliable in both
