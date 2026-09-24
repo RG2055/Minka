@@ -6,15 +6,15 @@
      PWA wake after tab discard never flashes a white screen. -->
 <style>html{background:#060b13;}body{background:#060b13;}
 /* Loader geometry must be known before the loader markup is parsed. Its own
-   <style> sits ~4 KB further down the document, so on a slow machine the
-   parser can paint the loader first: the two inline SVGs carry only a
-   viewBox, and an unsized inline SVG fills 100% of the page width, which
-   flashed a full-screen brand mark for a frame. These rules repeat the
-   later ones verbatim, so nothing about the finished loader changes. */
-#mk-app-loader{position:fixed;inset:0;z-index:900000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;overflow:hidden;background:#06090e}
-.mkl-brand-motion{position:relative;width:176px;height:176px}
-.mkl-blob-mark,.mkl-pwa-mark{position:absolute;inset:8px;width:160px;height:160px}
+   <style> sits further down the document, so on a slow machine the parser
+   can paint the loader first, and an unsized image would flash at its own
+   size for a frame. These rules repeat the sizes of the later ones. */
+#mk-app-loader{position:fixed;inset:0;z-index:900000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;overflow:hidden;background:#000}
+.mkl-bg{position:absolute;inset:0;width:100%;height:100%;opacity:.62}
+.mkl-ring{position:relative;width:256px;height:256px}
+.mkl-text{width:2px;height:2px}
 </style>
+<script src="js/dither-text.js?v=20260924d2"></script>
 <script>
 (function() {
   var API_BASE = 'https://minka-api.gamernr1elite.workers.dev';
@@ -37,7 +37,7 @@
   }
   window.__minkaHasApiAuth = function() { return !!getToken(); };
 
-  var CALENDAR_BUILD = '20260924m3';
+  var CALENDAR_BUILD = '20260924d1';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -92,57 +92,60 @@
     overlay.id = 'minka-gate';
     overlay.innerHTML = ''
       + '<style>'
-      + '#minka-gate{position:fixed;inset:0;z-index:999999;display:flex;align-items:stretch;overflow:auto;background:#060b13;font-family:Inter,system-ui,sans-serif;}'
-      + '#minka-gate .mg-left{flex:1 1 46%;min-width:320px;position:relative;display:flex;align-items:center;justify-content:center;padding:34px 28px;background:radial-gradient(800px 560px at 50% 40%,rgba(12,20,36,.55) 0%,rgba(6,11,19,.35) 75%),url(data/gate-bg.webp) center/cover no-repeat #060b13;}'
-      + '#minka-gate .mg-login{position:relative;width:min(360px,100%);text-align:center;color:#eef6ff;}'
-      + '#minka-gate .mg-title{font-size:30px;font-weight:800;letter-spacing:.01em;margin-top:20px;}'
-      + '#minka-gate .mg-bar{width:58px;height:3px;border-radius:2px;background:#38bdf8;margin:13px auto 14px;}'
-      + '#minka-gate .mg-sub{font-size:13.5px;color:rgba(176,200,224,.78);margin-bottom:26px;}'
+      // 1-bit dither look: black ground, white pixels, one grey for quiet text.
+      + '#minka-gate{position:fixed;inset:0;z-index:999999;display:flex;align-items:stretch;overflow:auto;background:#000;color:#fff;font-family:Inter,system-ui,sans-serif;}'
+      + '#minka-gate .mg-left{flex:1 1 46%;min-width:320px;position:relative;display:flex;align-items:center;justify-content:center;padding:34px 28px;background:url(data/gate-bg-dither.png?v=20260924d2) center/cover no-repeat #000;image-rendering:pixelated;}'
+      + '#minka-gate .mg-login{position:relative;width:min(360px,100%);text-align:center;}'
+      + '#minka-gate .mg-brand-logo{display:block;width:128px;height:128px;margin:0 auto;image-rendering:pixelated;}'
+      + '#minka-gate .mg-title{margin:14px 0 0;min-height:40px;font-size:0;}'
+      + '#minka-gate .mg-dt{display:block;margin:0 auto;image-rendering:pixelated;}'
+      + '#minka-gate .mg-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}'
+      + '#minka-gate .mg-bar{width:64px;height:4px;margin:12px auto 14px;background-image:repeating-conic-gradient(#fff 0 25%,transparent 0 50%);background-size:2px 2px;}'
+      + '#minka-gate .mg-sub{font-size:13.5px;color:#a3a3a3;margin-bottom:26px;}'
       + '#minka-gate .mg-field{position:relative;margin-bottom:14px;}'
-      + '#minka-gate .mg-lock{position:absolute;left:15px;top:50%;transform:translateY(-50%);opacity:.55;pointer-events:none;}'
-      + '#minka-gate input[type=password],#minka-gate input[type=text]{width:100%;box-sizing:border-box;background:rgba(13,22,38,.7);border:1.5px solid rgba(125,211,252,.22);border-radius:12px;padding:14px 46px 14px 42px;color:#fff;font-size:15px;outline:none;}'
-      // Global minka.css focus-visible paints a violet ring — force ice-blue here.
-      + '#minka-gate input:focus,#minka-gate input:focus-visible{outline:none!important;box-shadow:none!important;border-color:rgba(56,189,248,.55)!important;}'
-      + '#minka-gate button:focus-visible{outline:none!important;box-shadow:0 0 0 3px rgba(56,189,248,.3)!important;}'
-      + '#minka-gate .mg-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;padding:8px 10px;cursor:pointer;opacity:.55;color:#cfe6f7;}'
-      + '#minka-gate .mg-eye:hover{opacity:.95;}'
-      + '#minka-gate .mg-rem{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(176,200,224,.7);margin:0 2px 14px;}'
-      + '#minka-gate .mg-rem input{accent-color:#38bdf8;}'
-      + '#minka-gate .mg-btn{width:100%;display:flex;align-items:center;background:#1d6ae5;border:none;border-radius:12px;padding:15px 20px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;}'
+      + '#minka-gate .mg-lock{position:absolute;left:15px;top:50%;transform:translateY(-50%);opacity:.6;pointer-events:none;}'
+      + '#minka-gate input[type=password],#minka-gate input[type=text]{width:100%;box-sizing:border-box;background:#000;border:1px solid #4a4a4a;border-radius:4px;padding:14px 46px 14px 42px;color:#fff;font-size:15px;outline:none;}'
+      + '#minka-gate input::placeholder{color:#8a8a8a;}'
+      // Global minka.css focus-visible paints a violet ring: plain white here.
+      + '#minka-gate input:focus,#minka-gate input:focus-visible{outline:none!important;box-shadow:none!important;border-color:#fff!important;}'
+      + '#minka-gate button:focus-visible{outline:2px solid #fff!important;outline-offset:2px!important;box-shadow:none!important;}'
+      + '#minka-gate .mg-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;padding:8px 10px;cursor:pointer;opacity:.6;color:#fff;}'
+      + '#minka-gate .mg-eye:hover{opacity:1;}'
+      + '#minka-gate .mg-rem{display:flex;align-items:center;gap:8px;font-size:12px;color:#a3a3a3;margin:0 2px 14px;}'
+      + '#minka-gate .mg-rem input{accent-color:#fff;}'
+      + '#minka-gate .mg-btn{width:100%;display:flex;align-items:center;background:#fff;border:none;border-radius:4px;padding:15px 20px;color:#000;font-size:16px;font-weight:700;cursor:pointer;}'
       + '#minka-gate .mg-btn span{flex:1;text-align:center;padding-left:17px;}'
-      + '#minka-gate .mg-btn:hover{background:#2674ef;}'
+      + '#minka-gate .mg-btn:hover{background:#d4d4d4;}'
       + '#minka-gate .mg-btn:disabled{opacity:.6;cursor:default;}'
-      + '#minka-gate .mg-err{color:#f87171;font-size:12px;margin-top:9px;min-height:15px;}'
+      + '#minka-gate .mg-err{color:#fff;font-size:12px;margin-top:9px;min-height:15px;}'
       + '#minka-gate .mg-note{display:flex;gap:13px;align-items:flex-start;text-align:left;margin-top:12px;}'
-      + '#minka-gate .mg-note b{display:block;font-size:14px;color:#eef6ff;}'
-      + '#minka-gate .mg-note span{display:block;font-size:12.5px;color:rgba(176,200,224,.7);margin-top:3px;}'
-      + '#minka-gate .mg-author{display:flex;align-items:center;gap:15px;text-align:left;margin-top:18px;padding-top:18px;border-top:1px solid rgba(255,255,255,.08);}'
-      + '#minka-gate .mg-brand-logo{display:block;width:104px;height:104px;margin:0 auto;filter:drop-shadow(0 14px 28px rgba(46,118,255,.22));}'
-      + '#minka-gate .mg-rg{flex:0 0 auto;width:52px;height:52px;border-radius:15px;overflow:hidden;box-shadow:0 8px 22px rgba(33,98,214,.22);}'
-      + '#minka-gate .mg-rg img{display:block;width:100%;height:100%;}'
-      + '#minka-gate .mg-author small{display:block;font-size:11.5px;color:rgba(176,200,224,.6);}'
-      + '#minka-gate .mg-author b{display:block;font-size:15px;color:#eef6ff;margin:2px 0;}'
-      + '#minka-gate .mg-info{flex:1 1 54%;background:#fff;border-radius:26px;margin:14px 14px 14px 0;padding:38px 46px;color:#16202c;overflow:auto;min-width:320px;}'
-      + '#minka-gate .mg-info h2{font-size:26px;font-weight:800;margin:0 0 18px;padding-bottom:16px;border-bottom:1px solid #e7ebf0;}'
-      + '#minka-gate .mg-item{display:flex;gap:16px;align-items:flex-start;padding:17px 0;border-bottom:1px solid #e7ebf0;}'
+      + '#minka-gate .mg-note b{display:block;font-size:14px;}'
+      + '#minka-gate .mg-note span{display:block;font-size:12.5px;color:#a3a3a3;margin-top:3px;}'
+      + '#minka-gate .mg-author{display:flex;align-items:center;gap:15px;text-align:left;margin-top:18px;padding-top:18px;border-top:1px dotted #4a4a4a;}'
+      + '#minka-gate .mg-rg{flex:0 0 auto;width:52px;height:52px;border-radius:12px;overflow:hidden;border:1px solid #2e2e2e;}'
+      + '#minka-gate .mg-rg img{display:block;width:100%;height:100%;image-rendering:pixelated;}'
+      + '#minka-gate .mg-author small{display:block;font-size:11.5px;color:#8a8a8a;}'
+      + '#minka-gate .mg-author b{display:block;font-size:15px;margin:2px 0;}'
+      + '#minka-gate .mg-info{flex:1 1 54%;background:#050505;border:1px solid #262626;border-radius:6px;margin:14px 14px 14px 0;padding:38px 46px;overflow:auto;min-width:320px;}'
+      + '#minka-gate .mg-info h2{margin:0 0 18px;padding-bottom:16px;border-bottom:1px dotted #4a4a4a;font-size:0;}'
+      + '#minka-gate .mg-info h2 .mg-dt{margin:0;}'
+      + '#minka-gate .mg-item{display:flex;gap:16px;align-items:flex-start;padding:17px 0;border-bottom:1px dotted #333;}'
       + '#minka-gate .mg-item:last-of-type{border-bottom:none;}'
-      + '#minka-gate .mg-num{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:#1d6ae5;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:8px;}'
-      + '#minka-gate .mg-ic{flex:0 0 auto;width:46px;height:46px;border-radius:10px;background:#f1f4f8;display:flex;align-items:center;justify-content:center;}'
-      + '#minka-gate .mg-item p{margin:0;font-size:14.5px;line-height:1.55;color:#2a3644;}'
-      + '#minka-gate .mg-blue{color:#1d6ae5;font-weight:700;}'
-      + '#minka-gate .mg-green{color:#0f9d58;font-weight:700;}'
-      + '#minka-gate .mg-red{color:#e2483d;font-weight:700;}'
-      + '#minka-gate .mg-foot{margin-top:16px;font-size:12px;color:#7a8794;}'
+      + '#minka-gate .mg-num{flex:0 0 auto;width:26px;height:26px;background:#fff;color:#000;font:700 13px/26px ui-monospace,Menlo,Consolas,monospace;text-align:center;}'
+      + '#minka-gate .mg-ic{flex:0 0 auto;width:46px;height:46px;border:1px solid #2e2e2e;display:flex;align-items:center;justify-content:center;}'
+      + '#minka-gate .mg-item p{margin:0;font-size:14.5px;line-height:1.55;color:#cfcfcf;}'
+      + '#minka-gate .mg-blue,#minka-gate .mg-green,#minka-gate .mg-red{color:#fff;font-weight:700;text-decoration:underline dotted;text-underline-offset:4px;}'
+      + '#minka-gate .mg-foot{margin-top:16px;font-size:12px;color:#8a8a8a;}'
       + '@media(max-width:920px){#minka-gate{flex-direction:column;}#minka-gate .mg-info{margin:0 12px 16px;padding:26px 22px;}#minka-gate .mg-left{padding:40px 22px 30px;}}'
       + '</style>'
       + '<div class="mg-left">'
       + '<div class="mg-login">'
-      + '<img class="mg-brand-logo" src="data/rg-brand.svg?v=20260814brand1" alt="RG">'
-      + '<div class="mg-title">Grafika p&#257;rskats</div>'
+      + '<img class="mg-brand-logo" src="data/rg-loader-ring.gif?v=20260924d1" width="128" height="128" alt="RG">'
+      + '<h1 class="mg-title"><span class="mg-sr" id="mg-title-src">Grafika p&#257;rskats</span><canvas class="mg-dt" id="mg-title-dt" width="1" height="1" aria-hidden="true"></canvas></h1>'
       + '<div class="mg-bar"></div>'
       + '<div class="mg-sub">Piek&#316;uve tikai autoriz&#275;tiem darbiniekiem</div>'
       + '<div class="mg-field">'
-      + '<svg class="mg-lock" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cfe6f7" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>'
+      + '<svg class="mg-lock" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>'
       + '<input id="minka-pw" type="password" placeholder="Parole" autocomplete="current-password">'
       + '<button class="mg-eye" id="minka-eye" type="button" tabindex="-1" aria-label="R&#257;d&#299;t paroli">'
       + '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>'
@@ -152,36 +155,39 @@
       + '<button id="minka-btn" class="mg-btn"><span>Piesl&#275;gties</span><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>'
       + '<div id="minka-err" class="mg-err"></div>'
       + '<div class="mg-note">'
-      + '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7d9cc4" stroke-width="1.8" style="flex:0 0 auto;margin-top:2px;"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/><path d="M8.5 12l2.5 2.5 4.5-4.5" stroke="#3b82f6"/></svg>'
+      + '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" style="flex:0 0 auto;margin-top:2px;"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/><path d="M8.5 12l2.5 2.5 4.5-4.5"/></svg>'
       + '<div><b>Sist&#275;m&#257; netiek izmantoti pacientu dati.</b><span>Tiek att&#275;loti tikai de&#382;&#363;ru grafika dati.</span></div>'
       + '</div>'
       + '<div class="mg-author">'
-      + '<div class="mg-rg"><img src="data/rg-brand.svg?v=20260814brand1" alt=""></div>'
+      + '<div class="mg-rg"><img src="data/rg-brand.svg?v=20260924d1" alt=""></div>'
       + '<div><small>Autors</small><b>Rihards Gavri&#316;enko</b><small>Radiogr&#257;fers</small></div>'
       + '</div>'
       + '</div>'
       + '</div>'
       + '<div class="mg-info">'
-      + '<h2>Inform&#257;cija</h2>'
+      + '<h2><span class="mg-sr" id="mg-info-src">Inform&#257;cija</span><canvas class="mg-dt" id="mg-info-dt" width="1" height="1" aria-hidden="true"></canvas></h2>'
       + '<div class="mg-item"><div class="mg-num">1</div>'
-      + '<div class="mg-ic"><svg width="26" height="26" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2" fill="#fff" stroke="#c9d3de"/><rect x="2" y="4" width="20" height="5" rx="2" fill="#1d6ae5"/><circle cx="5" cy="6.5" r="0.9" fill="#fff"/><circle cx="8" cy="6.5" r="0.9" fill="#fff"/><rect x="5" y="12" width="10" height="1.6" fill="#c9d3de"/><rect x="5" y="15" width="13" height="1.6" fill="#c9d3de"/></svg></div>'
+      + '<div class="mg-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><rect x="2.5" y="4.5" width="19" height="15"/><path d="M2.5 9h19M5 6.8h1M7.5 6.8h1M5.5 13h9M5.5 16h12"/></svg></div>'
       + '<p>&#352;&#299; nav instal&#275;jama programma; t&#257; ir p&#257;rl&#363;k&#257; atverama grafika p&#257;rskata <span class="mg-blue">t&#299;mek&#316;a lapa</span>.</p></div>'
       + '<div class="mg-item"><div class="mg-num">2</div>'
-      + '<div class="mg-ic"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M5 2h9l5 5v15H5z" fill="#0f9d58"/><path d="M14 2l5 5h-5z" fill="#87cfa8"/><rect x="8" y="11" width="8" height="7" fill="none" stroke="#fff" stroke-width="1.3"/><path d="M8 14.5h8M12 11v7" stroke="#fff" stroke-width="1.3"/></svg></div>'
+      + '<div class="mg-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><path d="M5.5 2.5h8.5l4.5 4.5v14.5h-13z"/><path d="M14 2.5V7h4.5M8.5 11.5h7v6h-7zM8.5 14.5h7M12 11.5v6"/></svg></div>'
       + '<p>Tiek att&#275;loti tikai de&#382;&#363;ru grafika dati no <span class="mg-green">Google Sheets</span>. Google Sheets tiek izmantots un apstiprin&#257;ts darba vajadz&#299;b&#257;m.</p></div>'
       + '<div class="mg-item"><div class="mg-num">3</div>'
-      + '<div class="mg-ic"><svg width="26" height="26" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2" fill="#fff" stroke="#c9d3de"/><rect x="3" y="5" width="18" height="5" rx="2" fill="#1d6ae5"/><rect x="7" y="3" width="2" height="4" rx="1" fill="#16202c"/><rect x="15" y="3" width="2" height="4" rx="1" fill="#16202c"/>'
-      + '<g fill="#5a6b7d"><circle cx="8" cy="13.5" r="1"/><circle cx="12" cy="13.5" r="1"/><circle cx="16" cy="13.5" r="1"/><circle cx="8" cy="17" r="1"/><circle cx="12" cy="17" r="1"/><circle cx="16" cy="17" r="1"/></g></svg></div>'
+      + '<div class="mg-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><rect x="3.5" y="5.5" width="17" height="15"/><path d="M3.5 10h17M8 3.5v4M16 3.5v4"/><path d="M7.5 13.5h1M11.5 13.5h1M15.5 13.5h1M7.5 17h1M11.5 17h1M15.5 17h1" stroke-width="2"/></svg></div>'
       + '<p>No Google Sheets datiem tiek izmantoti <span class="mg-blue">tikai de&#382;&#363;ru datumi un darba stundu ilgums</span>. &#352;ie dati tiek att&#275;loti &#275;rt&#257;k&#257; skat&#257; un izmantoti darbinieku <span class="mg-red">noslodzes/noguruma</span> apr&#275;&#311;inam.*</p></div>'
       + '<div class="mg-item"><div class="mg-num">4</div>'
-      + '<div class="mg-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3a4757" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="15.5" r="1.4" fill="#3a4757" stroke="none"/></svg></div>'
+      + '<div class="mg-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><rect x="4" y="11" width="16" height="9"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><path d="M12 14.5v2" stroke-width="2.2"/></svg></div>'
       + '<p>Piek&#316;uve lapai ir <span class="mg-blue">aizsarg&#257;ta ar paroli</span>; bez paroles grafika dati nav redzami.</p></div>'
       + '<div class="mg-item"><div class="mg-num">5</div>'
-      + '<div class="mg-ic"><svg width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#16202c"/><path fill="#fff" d="M12 4.8a7.3 7.3 0 0 0-2.31 14.23c.37.07.5-.16.5-.35v-1.24c-2.03.44-2.46-.98-2.46-.98-.33-.85-.81-1.07-.81-1.07-.66-.45.05-.44.05-.44.73.05 1.12.75 1.12.75.65 1.12 1.71.8 2.13.61.07-.47.26-.8.46-.98-1.62-.18-3.33-.81-3.33-3.61 0-.8.29-1.45.75-1.96-.07-.18-.33-.93.07-1.93 0 0 .61-.2 2.01.75a7 7 0 0 1 3.66 0c1.4-.95 2.01-.75 2.01-.75.4 1 .15 1.75.07 1.93.47.51.75 1.16.75 1.96 0 2.81-1.71 3.43-3.34 3.61.26.23.5.67.5 1.35v2c0 .2.13.42.51.35A7.3 7.3 0 0 0 12 4.8z"/></svg></div>'
+      + '<div class="mg-ic"><svg width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#fff"/><path fill="#000" d="M12 4.8a7.3 7.3 0 0 0-2.31 14.23c.37.07.5-.16.5-.35v-1.24c-2.03.44-2.46-.98-2.46-.98-.33-.85-.81-1.07-.81-1.07-.66-.45.05-.44.05-.44.73.05 1.12.75 1.12.75.65 1.12 1.71.8 2.13.61.07-.47.26-.8.46-.98-1.62-.18-3.33-.81-3.33-3.61 0-.8.29-1.45.75-1.96-.07-.18-.33-.93.07-1.93 0 0 .61-.2 2.01.75a7 7 0 0 1 3.66 0c1.4-.95 2.01-.75 2.01-.75.4 1 .15 1.75.07 1.93.47.51.75 1.16.75 1.96 0 2.81-1.71 3.43-3.34 3.61.26.23.5.67.5 1.35v2c0 .2.13.42.51.35A7.3 7.3 0 0 0 12 4.8z"/></svg></div>'
       + '<p>Publiskaj&#257; GitHub repozitorij&#257; <span class="mg-blue">nav</span> grafika datu, Google Sheets piek&#316;uves datu vai paro&#316;u.</p></div>'
       + '<div class="mg-foot">* Noguruma apr&#275;&#311;ins ir informat&#299;vs un balst&#299;ts uz de&#382;&#363;ru ilgumu un atp&#363;tas laiku.</div>'
       + '</div>';
     (document.body || document.documentElement).appendChild(overlay);
+    if (window.MinkaDitherText) {
+      window.MinkaDitherText.bind(document.getElementById('mg-title-dt'), document.getElementById('mg-title-src'), { size: 17, weight: 800, family: 'Inter, system-ui, sans-serif', fade: .25 });
+      window.MinkaDitherText.bind(document.getElementById('mg-info-dt'), document.getElementById('mg-info-src'), { size: 13, weight: 800, family: 'Inter, system-ui, sans-serif', fade: .25 });
+    }
     var input = document.getElementById('minka-pw');
     var btn = document.getElementById('minka-btn');
     var err = document.getElementById('minka-err');
@@ -308,9 +314,9 @@
 <meta name="theme-color" content="#09091a">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>RG</title>
-<link rel="icon" type="image/svg+xml" href="data/rg-brand.svg?v=20260814brand1">
-<link rel="icon" type="image/png" sizes="192x192" href="data/rg-cal-192.png?v=20260814brand1">
-<link rel="apple-touch-icon" href="data/rg-apple-touch-180.png?v=20260814brand1">
+<link rel="icon" type="image/svg+xml" href="data/rg-brand.svg?v=20260924d1">
+<link rel="icon" type="image/png" sizes="192x192" href="data/rg-cal-192.png?v=20260924d1">
+<link rel="apple-touch-icon" href="data/rg-apple-touch-180.png?v=20260924d1">
 
 <!-- Preconnect to external origins so DNS/TLS is resolved before requests fire -->
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
@@ -629,8 +635,8 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 #mk-toast.mk-ok{border-color:rgba(48,209,88,.35);color:#30d158;}
 </style>
 <link rel="stylesheet" href="css/geist-ui.css?v=20260919type3">
-<link rel="stylesheet" href="css/mk-sys.css?v=20260924m3a">
-<script src="js/mk-motion.js?v=20260924day2"></script>
+<link rel="stylesheet" href="css/mk-sys.css?v=20260924d1a">
+<script src="js/mk-motion.js?v=20260924d1"></script>
 <script src="js/image-palette.js?v=20260919palette2"></script>
 </head>
 <body class="radio-idle">
@@ -639,105 +645,31 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <div id="calendarEmbed">
   <!-- Keep the expensive calendar document dormant behind the password gate.
        Authenticated startup assigns data-base-src immediately. -->
-  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260924m3" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260924d1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
-<!-- Compact brand loader. It stays up until the embedded schedule has painted. -->
+<!-- Dither loader (js/dither-loader.js). It stays up until the embedded
+     schedule has painted. A dithered clip moves behind, the RG ring spins in
+     the middle and the status line is drawn as dithered pixel text. -->
 <div id="mk-app-loader" role="status" aria-label="Ielādē grafiku">
-  <div class="mkl-brand-motion" aria-hidden="true">
-    <span class="mkl-aura"></span>
-    <svg class="mkl-blob-mark" width="160" height="160" viewBox="0 0 160 150" focusable="false">
-      <defs>
-        <linearGradient id="mkl-blob-blue" x1="25" y1="12" x2="132" y2="139" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stop-color="#8de2ff"/>
-          <stop offset=".38" stop-color="#3caeff"/>
-          <stop offset=".72" stop-color="#537cff"/>
-          <stop offset="1" stop-color="#8a62e8"/>
-        </linearGradient>
-        <linearGradient id="mkl-blob-rg" x1="48" y1="55" x2="116" y2="101" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stop-color="#ffffff"/>
-          <stop offset="1" stop-color="#d9e7ff"/>
-        </linearGradient>
-      </defs>
-      <path class="mkl-blob-body" fill="url(#mkl-blob-blue)" d="M36 28c5-14 16-19 29-10 10-4 24-4 34 0 14-9 25-3 28 12 14 13 20 32 17 54-4 34-26 55-62 56-37 1-62-20-66-54-3-24 4-44 20-58Z"/>
-      <path class="mkl-blob-gloss" d="M38 40c16-20 56-27 79-5"/>
-      <ellipse class="mkl-blob-floor" cx="80" cy="125" rx="35" ry="7"/>
-      <g class="mkl-blob-rg">
-        <path d="M48 101V56h18c12 0 19 6 19 15s-7 15-19 15H48m20 0 18 15"/>
-        <path d="M116 66c-4-7-10-10-18-10-14 0-23 10-23 23s9 23 23 23c8 0 14-3 18-8V81h-17"/>
-      </g>
-    </svg>
-    <span class="mkl-burst">
-      <i class="mkl-drop mkl-drop-1"></i><i class="mkl-drop mkl-drop-2"></i>
-      <i class="mkl-drop mkl-drop-3"></i><i class="mkl-drop mkl-drop-4"></i>
-      <i class="mkl-drop mkl-drop-5"></i><i class="mkl-drop mkl-drop-6"></i>
-      <i class="mkl-drop mkl-drop-7"></i><i class="mkl-drop mkl-drop-8"></i>
-    </span>
-    <svg class="mkl-pwa-mark" width="160" height="160" viewBox="0 0 160 160" focusable="false">
-      <defs>
-        <linearGradient id="mkl-app-blue" x1="37" y1="21" x2="127" y2="139" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stop-color="#91e8ff"/>
-          <stop offset=".34" stop-color="#42bcff"/>
-          <stop offset=".72" stop-color="#468cff"/>
-          <stop offset="1" stop-color="#7969ee"/>
-        </linearGradient>
-        <linearGradient id="mkl-app-top" x1="52" y1="27" x2="105" y2="71" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stop-color="#d0f6ff" stop-opacity=".72"/>
-          <stop offset="1" stop-color="#74c9ff" stop-opacity=".08"/>
-        </linearGradient>
-        <filter id="mkl-app-shadow" x="-45%" y="-45%" width="190%" height="210%">
-          <feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#121b68" flood-opacity=".55"/>
-        </filter>
-      </defs>
-      <ellipse class="mkl-app-ground" cx="80" cy="142" rx="39" ry="8"/>
-      <g class="mkl-app-shell" filter="url(#mkl-app-shadow)">
-        <rect x="29" y="27" width="102" height="106" rx="28" fill="url(#mkl-app-blue)"/>
-        <path d="M29 56c0-16 0-29 28-29h46c28 0 28 13 28 29v4H29Z" fill="url(#mkl-app-top)"/>
-        <path d="M30 61h100" fill="none" stroke="#e4f8ff" stroke-opacity=".28" stroke-width="2"/>
-        <rect x="47" y="15" width="14" height="27" rx="7" fill="#c7f2ff"/>
-        <rect x="99" y="15" width="14" height="27" rx="7" fill="#c7f2ff"/>
-        <rect x="44" y="70" width="20" height="15" rx="6" fill="#eafaff" fill-opacity=".72"/>
-        <rect x="70" y="70" width="20" height="15" rx="6" fill="#d4f6ff" fill-opacity=".48"/>
-        <rect x="96" y="70" width="20" height="15" rx="6" fill="#eafaff" fill-opacity=".72"/>
-        <circle cx="64" cy="104" r="5" fill="#102540"/>
-        <circle cx="96" cy="104" r="5" fill="#102540"/>
-        <circle cx="66" cy="102" r="1.7" fill="#fff"/>
-        <circle cx="98" cy="102" r="1.7" fill="#fff"/>
-        <path d="M69 116c6 7 16 7 22 0" fill="none" stroke="#102540" stroke-width="4" stroke-linecap="round"/>
-        <ellipse cx="52" cy="113" rx="6" ry="2.5" fill="#ff9fd0" fill-opacity=".56"/>
-        <ellipse cx="108" cy="113" rx="6" ry="2.5" fill="#ff9fd0" fill-opacity=".56"/>
-        <path d="M40 43c10-10 24-13 39-13" fill="none" stroke="#fff" stroke-opacity=".38" stroke-width="4" stroke-linecap="round"/>
-      </g>
-    </svg>
-  </div>
+  <img class="mkl-bg" alt="" width="480" height="270" decoding="async">
+  <img class="mkl-scrim" alt="" width="480" height="270" aria-hidden="true">
+  <img class="mkl-ring" src="data/rg-loader-ring.gif?v=20260924d1" alt="" width="128" height="128">
+  <canvas class="mkl-text" id="mklDitherText" width="1" height="1" aria-hidden="true"></canvas>
   <div class="mkl-load-status" id="mklLoadStatus" aria-live="polite">Ielādē grafiku…</div>
 </div>
 <style>
-#mk-app-loader{position:fixed;inset:0;z-index:900000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;overflow:hidden;background:#06090e;transition:opacity .16s ease}
-.mkl-load-status{min-height:18px;max-width:min(440px,82vw);color:rgba(224,238,255,.78);font:600 13px/1.4 Inter,system-ui,sans-serif;letter-spacing:.02em;text-align:center}
-.mkl-brand-motion{--mkl-seq:1.28s;position:relative;width:176px;height:176px;isolation:isolate}
-.mkl-aura{position:absolute;inset:42px;border-radius:50%;background:radial-gradient(circle,#5cbfff 0,#695fff 48%,transparent 72%);filter:blur(22px);opacity:0;animation:mklAura var(--mkl-seq) ease-out both}
-.mkl-blob-mark,.mkl-pwa-mark{position:absolute;inset:8px;width:160px;height:160px;overflow:visible;transform-origin:50% 54%;will-change:transform,opacity,filter}
-.mkl-blob-mark{z-index:2;animation:mklBlobIntro var(--mkl-seq) cubic-bezier(.22,1,.36,1) both}
-.mkl-blob-body{filter:drop-shadow(0 16px 22px rgba(24,50,134,.42)) drop-shadow(0 0 18px rgba(73,177,255,.25))}
-.mkl-blob-gloss{fill:none;stroke:#fff;stroke-width:6;stroke-linecap:round;stroke-opacity:.31}
-.mkl-blob-floor{fill:#d5f7ff;fill-opacity:.28;filter:blur(2px)}
-.mkl-blob-rg{fill:none;stroke:url(#mkl-blob-rg);stroke-width:7.5;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 2px 2px rgba(29,67,146,.35))}
-.mkl-burst{position:absolute;inset:0;z-index:3;pointer-events:none}
-.mkl-burst::before{content:"";position:absolute;left:50%;top:50%;width:72px;height:72px;border:3px solid rgba(163,226,255,.8);border-radius:50%;opacity:0;animation:mklBurstRing var(--mkl-seq) cubic-bezier(.2,.8,.2,1) both}
-.mkl-drop{position:absolute;left:calc(50% - 4px);top:calc(50% - 4px);width:8px;height:8px;border-radius:52% 48% 56% 44%;background:linear-gradient(145deg,#a6efff,#5a8eff 58%,#a168ef);box-shadow:0 0 10px rgba(105,179,255,.48);opacity:0;animation:mklDrop var(--mkl-seq) cubic-bezier(.2,.75,.25,1) both}
-.mkl-drop-1{--dx:-8px;--dy:-88px;width:7px;height:11px}.mkl-drop-2{--dx:55px;--dy:-65px;width:6px;height:6px}.mkl-drop-3{--dx:91px;--dy:-7px;width:10px;height:7px}.mkl-drop-4{--dx:65px;--dy:53px;width:6px;height:10px}.mkl-drop-5{--dx:9px;--dy:89px;width:9px;height:6px}.mkl-drop-6{--dx:-67px;--dy:56px;width:7px;height:11px}.mkl-drop-7{--dx:-92px;--dy:-5px;width:10px;height:7px}.mkl-drop-8{--dx:-54px;--dy:-69px;width:6px;height:9px}
-.mkl-pwa-mark{z-index:4;opacity:0;animation:mklLogoReveal var(--mkl-seq) cubic-bezier(.16,1,.3,1) both,mklLogoFloat 2.4s var(--mkl-seq) ease-in-out infinite}
-.mkl-app-ground{fill:#509cff;fill-opacity:.28;filter:blur(5px)}
-.mkl-app-shell{transform-origin:80px 80px}
-@keyframes mklAura{0%,10%{opacity:0;transform:scale(.55)}28%{opacity:.56;transform:scale(1)}54%{opacity:.72;transform:scale(.86)}72%{opacity:.3;transform:scale(1.55)}100%{opacity:.22;transform:scale(1.08)}}
-@keyframes mklBlobIntro{0%{opacity:0;transform:translateY(9px) scale(.58);filter:blur(8px)}15%{opacity:1;transform:translateY(0) scale(1.06);filter:blur(0)}30%{transform:scale(.98)}43%{transform:scale(1.1,.9) rotate(-1.5deg)}51%{opacity:1;transform:scale(.82,1.12) rotate(1deg);filter:blur(0)}64%,100%{opacity:0;transform:scale(1.58);filter:blur(9px)}}
-@keyframes mklBurstRing{0%,48%{opacity:0;transform:translate(-50%,-50%) scale(.35)}55%{opacity:.82}76%,100%{opacity:0;transform:translate(-50%,-50%) scale(2.3)}}
-@keyframes mklDrop{0%,49%{opacity:0;transform:translate(0,0) scale(.35)}55%{opacity:1}76%,100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.9) rotate(95deg)}}
-@keyframes mklLogoReveal{0%,54%{opacity:0;transform:scale(.5) rotate(-5deg);filter:blur(9px)}66%{opacity:1;transform:scale(1.08) rotate(1deg);filter:blur(0)}78%{transform:scale(.97) rotate(0)}88%,100%{opacity:1;transform:scale(1);filter:blur(0)}}
-@keyframes mklLogoFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-3px) scale(1.012)}}
-@media(prefers-reduced-motion:reduce){.mkl-aura,.mkl-blob-mark,.mkl-burst,.mkl-pwa-mark{animation:none}.mkl-aura{opacity:.22}.mkl-blob-mark,.mkl-burst{display:none}.mkl-pwa-mark{opacity:1}}
+#mk-app-loader{position:fixed;inset:0;z-index:900000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;overflow:hidden;background:#000;transition:opacity .16s ease}
+.mkl-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:pixelated;opacity:.62}
+.mkl-bg:not([src]){display:none}
+.mkl-scrim{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
+.mkl-scrim:not([src]){display:none}
+.mkl-ring{position:relative;width:256px;height:256px;image-rendering:pixelated}
+.mkl-text{position:relative;width:2px;height:2px;image-rendering:pixelated}
+.mkl-load-status{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@media(max-width:520px){.mkl-ring{width:192px;height:192px}}
 </style>
+<script src="js/dither-loader.js?v=20260924d4"></script>
 <script>
 (function(){
   var loader = document.getElementById('mk-app-loader');
@@ -1030,7 +962,7 @@ async function loadRadioScripts() {
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20260919pixel2']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
-  await loadAny(['js/radio.js?v=20260924m3e']);
+  await loadAny(['js/radio.js?v=20260924d1e']);
   await loadAny(['js/radio_extras_v4.js?v=20260919pixel2']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;
@@ -2615,7 +2547,7 @@ body:not(.radio-idle) #dockShelf #bottomBtnBar>#radioIdleBtn{display:none!import
   </section>
 </div>
 
-<div id="planotajsSheet" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171195;pointer-events:auto;background:#0b0d12;">
+<div id="planotajsSheet" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171195;pointer-events:auto;background:transparent;">
   <section id="planotajsSheetPanel" aria-label="Grafika plānotājs" style="position:absolute;inset:0;width:100%;height:100dvh;min-height:0;border:0;border-radius:0;background:#141019;box-shadow:none;overflow:hidden;pointer-events:auto;">
     <div style="height:38px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 10px 0 14px;border-bottom:1px solid rgba(255,255,255,.10);background:rgba(56,189,248,.07);color:#f7f7f7;font:900 12px/1 'Space Grotesk',system-ui;letter-spacing:.08em;text-transform:uppercase;">
       <span style="display:flex;align-items:center;gap:8px;"><span>Plānotājs</span></span>
@@ -5346,6 +5278,29 @@ function mkSheetClose(sheet, panel, key, btn, done) {
 (function(){
   var PLANOTAJS_URL = 'https://grafika-planotajs.pages.dev/';
   var lastPlanotajsFocus = null;
+  // The planner is a whole app: loading it while the sheet grows made every
+  // open stutter. It starts loading on hover, stays loaded between opens and
+  // is only unloaded after a few idle minutes.
+  var PLANOTAJS_IDLE_MS = 5 * 60 * 1000;
+  var planotajsUnloadTimer = 0;
+  function loadPlanotajs() {
+    var frame = document.getElementById('planotajsSheetFrame');
+    clearTimeout(planotajsUnloadTimer);
+    if (frame && frame.src !== PLANOTAJS_URL) {
+      frame.removeAttribute('srcdoc');
+      frame.src = PLANOTAJS_URL;
+    }
+  }
+  function warmPlanotajs() {
+    var sheet = document.getElementById('planotajsSheet');
+    if (sheet && sheet.style.display === 'none') loadPlanotajs();
+  }
+  (function wireWarm() {
+    var btn = document.getElementById('planotajsDockBtn');
+    if (!btn) { document.addEventListener('DOMContentLoaded', wireWarm, { once: true }); return; }
+    btn.addEventListener('pointerenter', warmPlanotajs, { passive: true });
+    btn.addEventListener('focus', warmPlanotajs);
+  })();
 
   function positionPlanotajsSheet() {
     var sheet = document.getElementById('planotajsSheet');
@@ -5372,11 +5327,8 @@ function mkSheetClose(sheet, panel, key, btn, done) {
     sheet.setAttribute('aria-hidden', 'false');
     if (btn) btn.classList.add('planotajs-open');
     positionPlanotajsSheet();
+    loadPlanotajs();
     mkSheetOpen(sheet, document.getElementById('planotajsSheetPanel'), 'planotajs', btn);
-    if (frame.src !== PLANOTAJS_URL) {
-      frame.removeAttribute('srcdoc');
-      frame.src = PLANOTAJS_URL;
-    }
     if (typeof window.updateBuddyUiSuppression === 'function') window.updateBuddyUiSuppression();
   };
 
@@ -5389,7 +5341,10 @@ function mkSheetClose(sheet, panel, key, btn, done) {
       sheet.setAttribute('aria-hidden', 'true');
       mkSheetClose(sheet, document.getElementById('planotajsSheetPanel'), 'planotajs', btn, function () {
         sheet.style.display = 'none';
-        if (frame) frame.src = 'about:blank';
+        clearTimeout(planotajsUnloadTimer);
+        planotajsUnloadTimer = setTimeout(function () {
+          if (frame && sheet.style.display === 'none') frame.src = 'about:blank';
+        }, PLANOTAJS_IDLE_MS);
       });
     } else if (frame) frame.src = 'about:blank';
     if (btn) btn.classList.remove('planotajs-open');

@@ -371,7 +371,7 @@
       + '<img class="rg-bmc-qrimg" src="assets/coffee/bmc-qr.svg?v=official1" width="72" height="72" alt="">'
       + '<span class="rg-bmc-copy"><strong><img class="rg-bmc-button" src="' + bmcButtonSrc + '" width="235" height="50" alt="Buy me a coffee" decoding="async"></strong>'
       + '<em>Atbalsts RG attīstībai <span class="rg-bmc-heart">💚</span></em>'
-      + '<small>RG ir bez maksas. Ja tas tev noder, vari uzsaukt kafiju projekta attīstībai. Tas palīdz RG uzturēt un pievienot jaunas iespējas. Pilnībā brīvprātīgi. Paldies! ☕</small></span></a>';
+      + '<small>Ja RG tev noder, vari uzsaukt man kafiju. Tā ir iespēja pateikt paldies par ieguldīto laiku un atbalstīt turpmākos uzlabojumus. RG lietošana ir bez maksas, un atbalsts ir pilnībā brīvprātīgs. Paldies! ☕</small></span></a>';
   }
   function reactionButtons() {
     return reactions.map(function (item) {

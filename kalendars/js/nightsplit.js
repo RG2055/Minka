@@ -2338,7 +2338,7 @@
 
     panel.innerHTML=
       '<div class="ns-panel-canvas"><div class="ns-panel-head">'
-      +'<span class="ns-panel-title"><img class="ns-brand-mark" src="../data/rg-brand.svg" width="35" height="35" alt="" aria-hidden="true"><span>Nakts sadalījums</span></span>'
+      +'<span class="ns-panel-title"><img class="ns-brand-mark" src="../data/rg-brand.svg?v=20260924d1" width="35" height="35" alt="" aria-hidden="true"><span>Nakts sadalījums</span></span>'
       +'<div class="ns-panel-controls">'
       +'<label class="nss-shell"><select class="nss" aria-label="Nakts sākuma laiks" onchange="__ns.ss(this.value)">'+so+'</select><span class="nss-display" aria-hidden="true">'+escHtml(startLabel)+'</span><span class="nss-chevron" aria-hidden="true"></span></label>'
       +'<span style="color:rgba(255,255,255,.3)">—</span>'

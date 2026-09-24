@@ -156,7 +156,7 @@ test('birthday reads recover after a failed request and cache successful results
 
 test('month overview preserves fractional shift hours', () => {
   const c = vm.createContext({});
-  vm.runInContext(section(read('kalendars/js/monthcal.js'), '  function hoursOf(', '  function fatColor('), c);
+  vm.runInContext(section(read('kalendars/js/monthcal.js'), '  function hoursOf(', '  function dayWorkers('), c);
   assert.equal(c.hoursOf({ shift: '7,5h' }), 7.5);
   assert.equal(c.hoursOf({ shift: '12.5h' }), 12.5);
 });

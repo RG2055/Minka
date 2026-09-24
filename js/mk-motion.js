@@ -286,7 +286,12 @@
     var pose = poseFrom(rectOf(opts.origin), el);
     var anims = [];
     if (pose) {
-      anims.push(animate(el, [{ translate: pose.translate, scale: pose.scale }, { translate: '0 0', scale: '1' }], 'spatial-default', { measure: true }));
+      // Full-screen surfaces (month calendar, planner) grow in the shorter
+      // token without overshoot: a whole-screen layer overshooting past the
+      // viewport reads as a wobble and is the heaviest frame to composite.
+      var box = el.getBoundingClientRect();
+      var big = box.width * box.height > .6 * window.innerWidth * window.innerHeight;
+      anims.push(animate(el, [{ translate: pose.translate, scale: pose.scale }, { translate: '0 0', scale: '1' }], big ? 'spatial-fast' : 'spatial-default', { measure: true, standard: big }));
     } else if (opts.from === 'bottom') {
       anims.push(animate(el, [{ translate: '0 ' + Math.round(48 * tr) + 'px' }, { translate: '0 0' }], 'spatial-default', { measure: true }));
     } else {

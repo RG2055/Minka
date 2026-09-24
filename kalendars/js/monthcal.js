@@ -4,10 +4,10 @@
    Self-contained: reads window.__grafiksStore / __grafiksStoreRad /
    __fatigue. Injects its own scoped styles.
 
-   Layout: each day cell has a clear left date rail (no overlapping
-   watermark). Header has a Mēnesis / Nedēļa view toggle and two
-   action buttons (Dzimšanas dienas, Svētku dienas). Latvian holidays
-   are listed in a panel and subtly marked on the grid.
+   Layout: tonal day cells (date and holiday/birthday text on top, then
+   radiographers and radiologists, each group marked by a thin role
+   rule). Header has a Mēnesis / Nedēļa view toggle and two action
+   buttons (Dzimšanas dienas, Svētku dienas) that open list dialogs.
    ================================================================ */
 (function MinkaMonthCal(){
   'use strict';
@@ -62,18 +62,6 @@
   function hoursOf(w){
     var m = String((w && w.shift) || '').match(/(\d+(?:[.,]\d+)?)/);
     return m ? (parseFloat(m[1].replace(',', '.')) || 0) : 0;
-  }
-  function fatColor(name){
-    try {
-      if (window.__fatigue && window.__fatigue.calculateFatigue){
-        var f = window.__fatigue.calculateFatigue(name);
-        if (f && isFinite(f.score)){
-          var s = f.score;
-          return s > 70 ? '#ff453a' : s > 45 ? '#ff9f0a' : s > 20 ? '#ffd60a' : '#30d158';
-        }
-      }
-    } catch(e){}
-    return 'rgba(125,211,252,.35)';
   }
   function dayWorkers(month, dateStr, store){
     var arr = store[month] || [];
@@ -207,97 +195,168 @@
     if (document.getElementById('mcal-style')) return;
     var s = document.createElement('style');
     s.id = 'mcal-style';
+    // Same tonal system as the card window (mk-worker-modal-m3.css): flat
+    // surface steps, Google Sans, sentence case, role colour as a thin rule.
     s.textContent = [
-      '#mcal-overlay{position:fixed;inset:0;z-index:240000;display:none;flex-direction:column;background:#060b13;color:#e6eef7;font-family:Inter,system-ui,sans-serif;}',
+      '#mcal-overlay{--c0:#10141b;--c1:#161b23;--c2:#1c222c;--c3:#252c37;--c4:#2f3743;--on:#e3e7ee;--on-var:#b8c1cd;--pri:#a8c7fa;--on-pri:#0b2a57;--pri-c:#d6e3ff;--on-pri-c:#0b1d36;--rg:#1fe091;--rd:#3f9bff;--holi:#f5b73f;--bday:#ff8fc8;--k24:#f5b73f;--kn:#64d2ff;',
+      'position:fixed;inset:0;z-index:240000;display:none;flex-direction:column;background:var(--c0);color:var(--on);font-family:"Google Sans","Google Sans Text",Inter,system-ui,sans-serif;}',
       '#mcal-overlay.is-open{display:flex;}',
       '#mcal-overlay.is-closing{display:flex;pointer-events:none;}',
-      '.mcal-inner{display:flex;flex-direction:column;width:100%;height:100%;padding:14px 18px 16px;box-sizing:border-box;}',
-      '.mcal-head{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex:0 0 auto;}',
-      '.mcal-title{font-weight:800;letter-spacing:.06em;font-size:17px;text-transform:uppercase;color:#7dd3fc;white-space:nowrap;}',
+      '#mcal-overlay button{font-family:inherit;}',
+      '.mcal-inner{display:flex;flex-direction:column;width:100%;height:100%;padding:16px 20px 18px;box-sizing:border-box;}',
+      // header
+      '.mcal-head{display:flex;align-items:center;gap:16px;margin-bottom:14px;flex:0 0 auto;}',
+      '.mcal-titles{display:flex;align-items:baseline;gap:12px;min-width:0;}',
+      '.mcal-title{font-size:26px;font-weight:400;line-height:1.15;white-space:nowrap;}',
+      '.mcal-sub{font-size:15px;color:var(--on-var);white-space:nowrap;font-variant-numeric:tabular-nums;}',
       '.mcal-nav{display:flex;align-items:center;gap:6px;}',
-      '.mcal-navbtn{cursor:pointer;width:30px;height:30px;border-radius:9px;border:1px solid rgba(125,211,252,.25);background:rgba(125,211,252,.07);color:#cfe6f7;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;}',
-      '.mcal-navbtn:hover:not([disabled]){background:rgba(125,211,252,.16);}',
-      '.mcal-navbtn[disabled]{opacity:.3;cursor:default;}',
-      '.mcal-monthsel{height:30px;border-radius:9px;border:1px solid rgba(125,211,252,.25);background:#0d1322;color:#cfe6f7;font:800 11px Inter,system-ui,sans-serif;letter-spacing:.05em;padding:0 8px;accent-color:#38bdf8;outline:none;}',
-      '.mcal-monthsel:focus,.mcal-monthsel:focus-visible,.mcal-monthsel:active{outline:none !important;border-color:#38bdf8 !important;box-shadow:0 0 0 2px rgba(56,189,248,.45),0 0 14px rgba(56,189,248,.25) !important;}',
-      // segmented view toggle (Mēnesis / Nedēļa)
-      '.mcal-seg{display:inline-flex;align-items:center;gap:3px;padding:3px;border-radius:11px;border:1px solid rgba(125,211,252,.22);background:rgba(125,211,252,.05);}',
-      '.mcal-seg button{cursor:pointer;border:0;background:transparent;color:rgba(207,230,247,.7);font:800 11px Inter,system-ui,sans-serif;letter-spacing:.04em;padding:5px 12px;border-radius:8px;display:inline-flex;align-items:center;gap:6px;}',
-      '.mcal-seg button:hover{color:#e6eef7;}',
-      '.mcal-seg button.is-on{background:rgba(56,189,248,.18);color:#7dd3fc;box-shadow:inset 0 0 0 1px rgba(56,189,248,.4);}',
-      // right-side action buttons
+      '.mcal-icbtn{cursor:pointer;width:40px;height:40px;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:20px;background:var(--c2);color:var(--on);padding:0;transition:border-radius 350ms var(--mk-ease-expressive-fast,ease),background-color 150ms ease;}',
+      '.mcal-icbtn:hover:not([disabled]){background:var(--c3);}',
+      '.mcal-icbtn:active:not([disabled]){border-radius:12px;}',
+      '.mcal-icbtn[disabled]{opacity:.38;cursor:default;}',
+      '.mcal-icbtn svg{width:20px;height:20px;}',
+      '.mcal-seg{display:inline-flex;align-items:center;gap:2px;padding:4px;border-radius:24px;background:var(--c1);}',
+      '.mcal-seg button{cursor:pointer;height:32px;padding:0 16px;border:0;border-radius:16px;background:transparent;color:var(--on-var);font-size:14px;font-weight:500;transition:background-color 150ms ease,color 150ms ease;}',
+      '.mcal-seg button:hover{color:var(--on);}',
+      '.mcal-seg button.is-on{background:var(--pri-c);color:var(--on-pri-c);}',
       '.mcal-actions{margin-left:auto;display:flex;align-items:center;gap:8px;}',
-      '.mcal-actbtn{cursor:pointer;display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 13px;border-radius:9px;border:1px solid rgba(125,211,252,.22);background:rgba(125,211,252,.06);color:#cfe6f7;font:800 11px Inter,system-ui,sans-serif;letter-spacing:.03em;}',
-      '.mcal-actbtn:hover{background:rgba(125,211,252,.14);border-color:rgba(125,211,252,.38);}',
-      '.mcal-close{cursor:pointer;width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#cfe6f7;font-size:16px;}',
-      '.mcal-close:hover{background:rgba(255,90,80,.18);border-color:rgba(255,90,80,.4);color:#fff;}',
-      '.mcal-weekhead{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px;flex:0 0 auto;}',
-      '.mcal-weekhead>div{font:800 10px Inter,system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:rgba(160,180,205,.6);padding-left:4px;}',
-      '.mcal-grid{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:1fr;gap:6px;flex:1 1 auto;min-height:0;}',
-      // left date rail layout (no overlapping watermark)
-      '.mcal-cell{position:relative;border-radius:11px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.018);padding:5px 7px 5px 5px;overflow:hidden;display:flex;flex-direction:row;gap:6px;min-height:0;}',
-      '.mcal-grid:not(.is-week) .mcal-cell:not(.mcal-blank){cursor:pointer;}',
-      '.mcal-grid:not(.is-week) .mcal-cell:not(.mcal-blank):hover{border-color:rgba(125,211,252,.28);background:rgba(125,211,252,.065);}',
-      '.mcal-cell.is-weekend{background:rgba(125,211,252,.045);}',
-      '.mcal-cell.is-today{border-color:rgba(56,189,248,.6);box-shadow:inset 0 0 0 1px rgba(56,189,248,.3);}',
-      '.mcal-cell.is-holi{background:rgba(125,211,252,.05);}',
-      '.mcal-cell.is-holi-free{background:rgba(255,196,84,.07);border-color:rgba(255,196,84,.22);}',
-      '.mcal-blank{background:transparent;border:0;}',
-      '.mcal-rail{flex:0 0 auto;width:22px;display:flex;flex-direction:column;align-items:center;gap:4px;padding-top:1px;}',
-      '.mcal-daynum{font:800 17px/1 Inter,system-ui,sans-serif;color:rgba(207,230,247,.62);}',
-      '.mcal-cell.is-weekend .mcal-daynum{color:rgba(160,190,225,.72);}',
-      '.mcal-cell.is-today .mcal-daynum{color:#38bdf8;}',
-      '.mcal-holidot{width:6px;height:6px;border-radius:50%;background:rgba(125,211,252,.6);flex:0 0 auto;}',
-      '.mcal-holidot.is-free{background:#ffc454;box-shadow:0 0 5px rgba(255,196,84,.5);}',
-      '.mcal-bdaydot{width:6px;height:6px;border-radius:50%;background:#ff79c6;box-shadow:0 0 5px rgba(255,121,198,.55);flex:0 0 auto;}',
-      '.mcal-cell.is-bday{background:rgba(255,121,198,.06);}',
-      '.mcal-body{position:relative;flex:1 1 auto;min-width:0;min-height:0;overflow:hidden;font-size:11px;line-height:1.18;}',
-      '.mcal-grp{margin-bottom:3px;}',
-      '.mcal-grp-h{font-weight:800;font-size:.72em;letter-spacing:.06em;opacity:.55;margin-bottom:1px;white-space:nowrap;}',
-      '.mcal-grid:not(.is-week) .mcal-grp-h{display:none;}',
-      '.mcal-grid:not(.is-week) .mcal-rd{margin-top:2px;padding-top:2px;border-top:1px solid rgba(63,155,255,.18);}',
-      '.mcal-rg .mcal-grp-h{color:#1fe091;}',
-      '.mcal-rd .mcal-grp-h{color:#3f9bff;}',
-      '.mcal-w{display:flex;align-items:baseline;gap:4px;white-space:nowrap;}',
-      '.mcal-dot{width:.5em;height:.5em;border-radius:50%;flex:0 0 auto;align-self:center;}',
-      '.mcal-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
-      '.mcal-nf{font-weight:800;color:#eef4fb;}',
-      '.mcal-ns{font-size:.82em;font-weight:600;color:rgba(190,205,225,.62);margin-left:3px;}',
+      '.mcal-actbtn{cursor:pointer;height:40px;padding:0 18px;border:0;border-radius:20px;background:var(--c2);color:var(--on);font-size:14px;font-weight:500;white-space:nowrap;transition:background-color 150ms ease;}',
+      '.mcal-actbtn:hover{background:var(--c3);}',
+      '.mcal-close{margin-left:4px;}',
+      '#mcal-overlay button:focus-visible{outline:2px solid var(--pri);outline-offset:2px;}',
+      // grid
+      '.mcal-weekhead{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin-bottom:8px;flex:0 0 auto;}',
+      '.mcal-weekhead>div{padding-left:12px;font-size:13px;font-weight:500;color:var(--on-var);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+      '.mcal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-auto-rows:minmax(min-content,1fr);gap:8px;flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;}',
+      '.mcal-cell{position:relative;display:grid;grid-template-columns:28px minmax(0,1fr);column-gap:8px;min-width:0;padding:8px 10px 10px 8px;border-radius:16px;background:var(--c1);}',
+      '.mcal-main{display:flex;flex-direction:column;gap:4px;min-width:0;}',
+      '.mcal-cell.is-weekend{background:#13171e;}',
+      '.mcal-grid:not(.is-week) .mcal-cell:not(.mcal-blank){cursor:pointer;transition:background-color 150ms ease;}',
+      '.mcal-grid:not(.is-week) .mcal-cell:not(.mcal-blank):hover{background:var(--c2);}',
+      '.mcal-cell.is-past>*{opacity:.5;}',
+      '.mcal-cell.is-today{box-shadow:inset 0 0 0 2px var(--pri);}',
+      '.mcal-blank{background:transparent !important;}',
+            '.mcal-daynum{width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:500;line-height:1;font-variant-numeric:tabular-nums;color:var(--on);}',
+      '.mcal-cell.is-weekend .mcal-daynum{color:var(--on-var);}',
+      '.mcal-cell.is-holi-free .mcal-daynum{color:var(--holi);}',
+      '.mcal-cell.is-today .mcal-daynum{border-radius:14px;background:var(--pri);color:var(--on-pri);}',
+      '.mcal-tags{display:flex;flex-direction:column;min-width:0;padding-top:5px;font-size:11.5px;line-height:1.25;}',
+      '.mcal-tag{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--on-var);}',
+      '.mcal-tag.is-free{color:var(--holi);}',
+      '.mcal-tag.is-bday{color:var(--bday);}',
+      '.mcal-body{position:relative;display:flex;flex-direction:column;gap:5px;min-width:0;padding-top:5px;font-size:var(--mcal-fs,13px);line-height:1.25;}',
+      '.mcal-tags+.mcal-body{padding-top:0;}',
+      '.mcal-grid.is-week .mcal-body{gap:12px;}',
+      '.mcal-grp{display:flex;flex-direction:column;gap:1px;padding-left:8px;border-left:2px solid var(--rg);}',
+      '.mcal-rd{border-left-color:var(--rd);}',
+      '.mcal-grp-h{display:none;font-size:11.5px;font-weight:500;margin-bottom:3px;}',
+      '.mcal-grid.is-week .mcal-grp-h{display:block;}',
+      '.mcal-rg .mcal-grp-h{color:var(--rg);}',
+      '.mcal-rd .mcal-grp-h{color:var(--rd);}',
+      '.mcal-w{display:flex;align-items:baseline;gap:6px;min-width:0;white-space:nowrap;}',
+      '.mcal-name{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--on);}',
+      '.mcal-nf{font-weight:500;}',
+      '.mcal-ns{color:var(--on-var);margin-left:4px;}',
       '.mcal-grid:not(.is-week) .mcal-ns{display:none;}',
-      '.mcal-wh{margin-left:auto;color:rgba(160,180,205,.72);font-weight:700;padding-left:6px;flex:0 0 auto;}',
-      '.mcal-off{opacity:.25;font-size:.9em;}',
-      '.mcal-empty{margin:auto;opacity:.5;}',
-      // slide-over panel (holidays / birthdays)
-      '.mcal-panelwrap{position:absolute;inset:0;z-index:5;display:none;align-items:center;justify-content:center;background:rgba(4,8,14,.62);}',
+      '.mcal-wt{flex:0 0 auto;display:none;color:var(--on-var);font-size:.9em;font-variant-numeric:tabular-nums;}',
+      '.mcal-grid.is-week .mcal-w{flex-wrap:wrap;row-gap:0;}',
+      '.mcal-grid.is-week .mcal-wt{display:block;flex-basis:100%;order:3;}',
+      '.mcal-wh{flex:0 0 auto;margin-left:auto;color:var(--on-var);font-size:.92em;font-variant-numeric:tabular-nums;}',
+      '.mcal-hg{display:grid;grid-template-columns:2.9em minmax(0,1fr);column-gap:6px;align-items:start;}',
+      '.mcal-hk{justify-self:start;padding:0 .4em;border-radius:.45em;font-size:.88em;font-weight:500;line-height:1.42;font-variant-numeric:tabular-nums;background:var(--c3);color:var(--on);}',
+      '.mcal-hk.is-allday{background:rgba(245,183,63,.18);color:var(--k24);}',
+      '.mcal-hk.is-night{background:rgba(100,210,255,.16);color:var(--kn);}',
+      '.mcal-hg.is-allday .mcal-hl,.mcal-w.is-allday .mcal-name,.mcal-w.is-allday .mcal-ns{color:var(--k24);}',
+      '.mcal-hg.is-night .mcal-hl,.mcal-w.is-night .mcal-name,.mcal-w.is-night .mcal-ns{color:var(--kn);}',
+      '.mcal-legend{display:flex;align-items:center;gap:6px;font-size:13px;}',
+      '.mcal-legend .mcal-hk{font-size:12px;padding:3px 8px;border-radius:8px;}',
+      '.mcal-hl{color:var(--on);}',
+      '.mcal-off{color:var(--on-var);opacity:.6;font-size:13px;}',
+      '.mcal-empty{margin:auto;color:var(--on-var);font-size:15px;}',
+      // holidays / birthdays dialog
+      '.mcal-panelwrap{position:absolute;inset:0;z-index:5;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.5);}',
       '.mcal-panelwrap.is-open{display:flex;}',
-      '.mcal-panel{width:min(540px,92%);max-height:80%;display:flex;flex-direction:column;background:#0c1421;border:1px solid rgba(125,211,252,.22);border-radius:16px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.6);}',
-      '.mcal-panel-h{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.07);flex:0 0 auto;}',
-      '.mcal-panel-t{font:800 13px Inter,system-ui,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:#7dd3fc;}',
-      '.mcal-panel-x{margin-left:auto;cursor:pointer;width:30px;height:30px;border-radius:9px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#cfe6f7;font-size:14px;}',
-      '.mcal-panel-x:hover{background:rgba(255,90,80,.18);color:#fff;}',
-      '.mcal-panel-b{padding:8px;overflow:auto;flex:1 1 auto;}',
-      '.mcal-hrow{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:9px;}',
-      '.mcal-hrow:hover{background:rgba(125,211,252,.05);}',
-      '.mcal-hrow.is-free .mcal-hdate{color:#ffc454;}',
-      '.mcal-hdate{font:800 12px "Space Mono","SF Mono",monospace;color:#cfe6f7;min-width:54px;flex:0 0 auto;}',
-      '.mcal-hnm{flex:1 1 auto;color:#e6eef7;font-weight:600;font-size:13px;}',
-      '.mcal-hbadge{flex:0 0 auto;font:800 9px Inter,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#ffc454;border:1px solid rgba(255,196,84,.4);border-radius:999px;padding:2px 8px;}',
-      '.mcal-bbadge{color:#ff79c6 !important;border-color:rgba(255,121,198,.5) !important;}',
-      '.mcal-hrow.is-bdaytoday .mcal-hdate{color:#ff79c6;}',
-      '.mcal-soon{padding:34px 24px;text-align:center;color:rgba(190,205,225,.6);font-size:13px;line-height:1.5;}'
+      '.mcal-panel{width:min(520px,92%);max-height:80%;display:flex;flex-direction:column;overflow:hidden;border-radius:28px;background:var(--c1);box-shadow:0 16px 40px rgba(0,0,0,.55);}',
+      '.mcal-panel-h{display:flex;align-items:center;gap:12px;padding:20px 20px 12px 24px;flex:0 0 auto;}',
+      '.mcal-panel-t{font-size:22px;font-weight:400;color:var(--on);}',
+      '.mcal-panel-x{margin-left:auto;}',
+      '.mcal-panel-b{padding:0 12px 16px;overflow:auto;flex:1 1 auto;}',
+      '.mcal-hrow{display:flex;align-items:center;gap:14px;min-height:44px;padding:0 12px;border-radius:14px;}',
+      '.mcal-hrow:hover{background:var(--c2);}',
+      '.mcal-hdate{flex:0 0 auto;min-width:48px;font-size:14px;color:var(--on-var);font-variant-numeric:tabular-nums;}',
+      '.mcal-hnm{flex:1 1 auto;min-width:0;font-size:14px;color:var(--on);}',
+      '.mcal-hbadge{flex:0 0 auto;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:500;background:rgba(245,183,63,.16);color:var(--holi);}',
+      '.mcal-hrow.is-free .mcal-hdate{color:var(--holi);}',
+      '.mcal-bbadge{background:rgba(255,143,200,.16);color:var(--bday);}',
+      '.mcal-hrow.is-bdaytoday .mcal-hdate{color:var(--bday);}',
+      '.mcal-soon{padding:32px 24px;text-align:center;color:var(--on-var);font-size:14px;line-height:1.5;}'
     ].join('');
     document.head.appendChild(s);
+  }
+
+  var ICON = {
+    prev: '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M12.27 4.23a.75.75 0 0 1 0 1.06L7.56 10l4.71 4.71a.75.75 0 1 1-1.06 1.06l-5.24-5.24a.75.75 0 0 1 0-1.06l5.24-5.24a.75.75 0 0 1 1.06 0Z"/></svg>',
+    next: '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M7.73 4.23a.75.75 0 0 0 0 1.06L12.44 10l-4.71 4.71a.75.75 0 1 0 1.06 1.06l5.24-5.24a.75.75 0 0 0 0-1.06L8.79 4.23a.75.75 0 0 0-1.06 0Z"/></svg>',
+    close: '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4.47 4.47a.75.75 0 0 1 1.06 0L10 8.94l4.47-4.47a.75.75 0 1 1 1.06 1.06L11.06 10l4.47 4.47a.75.75 0 1 1-1.06 1.06L10 11.06l-4.47 4.47a.75.75 0 0 1-1.06-1.06L8.94 10 4.47 5.53a.75.75 0 0 1 0-1.06Z"/></svg>'
+  };
+  var WEEK_LONG = ['Pirmdiena','Otrdiena','Trešdiena','Ceturtdiena','Piektdiena','Sestdiena','Svētdiena'];
+  var MONTH_LOWER = ['janvāris','februāris','marts','aprīlis','maijs','jūnijs','jūlijs','augusts','septembris','oktobris','novembris','decembris'];
+
+  // Store names arrive upper case ("VĀRDS UZVĀRDS"); show them as names.
+  function titleCase(n){
+    return String(n || '').trim().replace(/\s+/g, ' ').toLowerCase().replace(/(^|[\s-])(\S)/g, function(m, sep, ch){ return sep + ch.toUpperCase(); });
   }
 
   function workerRows(list){
     return list.map(function(w){
       var h = hoursOf(w);
-      var parts = String(w.name || '').trim().replace(/\s+/g, ' ').split(' ');
+      var parts = titleCase(w.name).split(' ');
       var fn = parts.shift() || '';
       var sn = parts.join(' ');
-      return '<div class="mcal-w"><span class="mcal-dot" style="background:' + fatColor(w.name) + '"></span>'
-        + '<span class="mcal-name"><b class="mcal-nf">' + esc(fn) + '</b>' + (sn ? '<span class="mcal-ns">' + esc(sn) + '</span>' : '') + '</span>'
-        + '<span class="mcal-wh">' + (h ? h + 'h' : '') + '</span></div>';
+      var time = w.startTime && w.endTime ? w.startTime + '–' + w.endTime : '';
+      return '<div class="mcal-w is-' + kindOf(w) + '" title="' + esc(titleCase(w.name)) + '">'
+        + '<span class="mcal-name"><span class="mcal-nf">' + esc(fn) + '</span>' + (sn ? '<span class="mcal-ns">' + esc(sn) + '</span>' : '') + '</span>'
+        + '<span class="mcal-wh">' + hourChip(w) + '</span>'
+        + (time ? '<span class="mcal-wt">' + esc(time) + '</span>' : '')
+        + '</div>';
+    }).join('');
+  }
+
+  // Month overview: one line per shift length, first names flowing after
+  // it ("24h Anna, Jānis, Pēteris"). Half the lines of a name list, so a
+  // whole month fits without clipping; the week view keeps the full list.
+  // Shift kind from the roster row: 24h, day or night (12h day and 12h night
+  // are different shifts, so they get their own line and colour).
+  var KIND_ORDER = { allday: 0, day: 1, night: 2 };
+  var KIND_NAME = { allday: 'Diennakts', day: 'Diena', night: 'Nakts' };
+  function kindOf(w){
+    var t = String(w && w.type || '').toUpperCase(), h = hoursOf(w);
+    if (t === 'DIENNAKTS' || h >= 24) return 'allday';
+    if (t === 'NAKTS') return 'night';
+    if (t === 'DIENA') return 'day';
+    var hr = parseInt(String(w && w.startTime || '').split(':')[0], 10);
+    return !isNaN(hr) && (hr >= 18 || hr <= 7) ? 'night' : 'day';
+  }
+  function hourChip(w){
+    var h = hoursOf(w), k = kindOf(w);
+    return '<span class="mcal-hk is-' + k + '" title="' + KIND_NAME[k] + '">' + (h ? h + 'h' : '') + '</span>';
+  }
+  function monthRows(list){
+    var byH = {}, order = [];
+    list.forEach(function(w){
+      var key = kindOf(w) + '|' + hoursOf(w);
+      if (!byH[key]){ byH[key] = []; order.push(key); }
+      byH[key].push(w);
+    });
+    order.sort(function(a, b){
+      var pa = a.split('|'), pb = b.split('|');
+      return (KIND_ORDER[pa[0]] - KIND_ORDER[pb[0]]) || (pb[1] - pa[1]);
+    });
+    return order.map(function(key){
+      var names = byH[key].map(function(w){
+        return '<span class="mcal-hn" title="' + esc(titleCase(w.name)) + '">' + esc(titleCase(firstName(w.name))) + '</span>';
+      }).join(', ');
+      return '<div class="mcal-hg is-' + kindOf(byH[key][0]) + '">' + hourChip(byH[key][0]) + '<span class="mcal-hl">' + names + '</span></div>';
     }).join('');
   }
 
@@ -310,6 +369,18 @@
     var startW = (new Date(p.year, p.idx, 1).getDay() + 6) % 7;
     return Math.floor((startW + day - 1) / 7);
   }
+  // "21.–27. septembris": the days of the shown week that belong to the month.
+  function weekRange(p, week){
+    var startW = (new Date(p.year, p.idx, 1).getDay() + 6) % 7;
+    var daysIn = new Date(p.year, p.idx + 1, 0).getDate();
+    var a = Math.max(1, week * 7 - startW + 1), b = Math.min(daysIn, week * 7 - startW + 7);
+    return (a === b ? a + '.' : a + '.–' + b + '.') + ' ' + MONTH_LOWER[p.idx];
+  }
+
+  function todayKey(){
+    var t = String(window.__g_todayStr || window.__todayDateStr || '').trim().match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    return t ? (+t[3]) * 10000 + (+t[2]) * 100 + (+t[1]) : 0;
+  }
 
   function buildGrid(month){
     var p = monthParts(month);
@@ -317,7 +388,7 @@
     var startW = (new Date(p.year, p.idx, 1).getDay() + 6) % 7; // Mon = 0
     var daysIn = new Date(p.year, p.idx + 1, 0).getDate();
     var total = startW + daysIn;
-    var today = String(window.__g_todayStr || window.__todayDateStr || '').trim();
+    var today = todayKey();
     var holi = holidayMap(p.year);
     var bday = birthdayMap();
 
@@ -325,23 +396,24 @@
       var d = slot - startW + 1;
       if (d < 1 || d > daysIn) return '<div class="mcal-cell mcal-blank"></div>';
       var dateStr = ('0' + d).slice(-2) + '.' + ('0' + (p.idx + 1)).slice(-2) + '.' + p.year;
+      var key = p.year * 10000 + (p.idx + 1) * 100 + d;
       var rg = dayWorkers(month, dateStr, rgStore());
       var rd = dayWorkers(month, dateStr, rdStore());
-      var wd = slot % 7;
       var hd = holi[dateStr];
       var bdNames = bday[dateStr.slice(0, 5)];
       var body = '';
-      if (rg.length) body += '<div class="mcal-grp mcal-rg"><div class="mcal-grp-h">RADIOGRĀFERI</div>' + workerRows(rg) + '</div>';
-      if (rd.length) body += '<div class="mcal-grp mcal-rd"><div class="mcal-grp-h">RADIOLOGI</div>' + workerRows(rd) + '</div>';
-      if (!body) body = '<div class="mcal-off">—</div>';
-      var cls = 'mcal-cell' + (wd >= 5 ? ' is-weekend' : '') + (dateStr === today ? ' is-today' : '');
-      if (hd) cls += hd.free ? ' is-holi is-holi-free' : ' is-holi';
-      if (bdNames) cls += ' is-bday';
-      var rail = '<div class="mcal-rail"><span class="mcal-daynum">' + d + '</span>'
-        + (hd ? '<span class="mcal-holidot' + (hd.free ? ' is-free' : '') + '" title="' + esc(hd.name) + '"></span>' : '')
-        + (bdNames ? '<span class="mcal-bdaydot" title="🎂 ' + esc(bdNames.join(', ')) + '"></span>' : '')
-        + '</div>';
-      return '<div class="' + cls + '" data-day="' + d + '" title="Atvērt šīs nedēļas detalizēto skatu">' + rail + '<div class="mcal-body">' + body + '</div></div>';
+      var rows = _viewMode === 'week' ? workerRows : monthRows;
+      if (rg.length) body += '<div class="mcal-grp mcal-rg"><div class="mcal-grp-h">Radiogrāferi</div>' + rows(rg) + '</div>';
+      if (rd.length) body += '<div class="mcal-grp mcal-rd"><div class="mcal-grp-h">Radiologi</div>' + rows(rd) + '</div>';
+      if (!body) body = '<div class="mcal-off">Nav maiņu</div>';
+      var cls = 'mcal-cell' + (slot % 7 >= 5 ? ' is-weekend' : '')
+        + (key === today ? ' is-today' : (today && key < today ? ' is-past' : ''));
+      if (hd && hd.free) cls += ' is-holi-free';
+      var tags = (hd ? '<span class="mcal-tag' + (hd.free ? ' is-free' : '') + '">' + esc(hd.name) + '</span>' : '')
+        + (bdNames ? '<span class="mcal-tag is-bday">Dz. d. ' + esc(bdNames.map(function(n){ return titleCase(firstName(n)); }).join(', ')) + '</span>' : '');
+      var rail = '<div class="mcal-rail"><span class="mcal-daynum">' + d + '</span></div>';
+      var title = _viewMode === 'week' ? '' : ' title="Atvērt nedēļu"';
+      return '<div class="' + cls + '" data-day="' + d + '"' + title + '>' + rail + '<div class="mcal-main">' + (tags ? '<div class="mcal-tags">' + tags + '</div>' : '') + '<div class="mcal-body">' + body + '</div></div></div>';
     }
 
     var cells = '';
@@ -352,24 +424,26 @@
     } else {
       for (var s2 = 0; s2 < total; s2++) cells += cellFor(s2);
     }
-    return '<div class="mcal-weekhead">' + WEEK.map(function(w){ return '<div>' + w + '</div>'; }).join('') + '</div>'
+    return '<div class="mcal-weekhead">' + WEEK_LONG.map(function(w){ return '<div>' + w + '</div>'; }).join('') + '</div>'
       + '<div class="mcal-grid' + (_viewMode === 'week' ? ' is-week' : '') + '">' + cells + '</div>';
   }
 
-  // Month view is an overview, not micro-print. Dense days keep first names
-  // readable and open their full week on click instead of shrinking to 5px.
+  // Nothing is ever clipped: rows grow to their busiest day. When the month
+  // is taller than the screen the whole grid gets one smaller size (never
+  // below 11px, so it stays readable); beyond that the grid scrolls.
   function fitAll(){
-    if (!_overlay) return;
-    var bodies = [].slice.call(_overlay.querySelectorAll('.mcal-body'));
-    bodies.forEach(function(b){ b.style.fontSize = ''; });
-    var jobs = bodies.map(function(b){ return { b: b, sh: b.scrollHeight, ch: b.clientHeight }; });
-    jobs.forEach(function(o){
-      if (o.sh > o.ch + 1 && o.ch > 0){
-        var base = parseFloat(getComputedStyle(o.b).fontSize) || 11;
-        var floor = _viewMode === 'week' ? 10 : 7.5;
-        o.b.style.fontSize = Math.max(floor, base * (o.ch / o.sh) * 0.94).toFixed(2) + 'px';
-      }
-    });
+    var grid = _overlay && _overlay.querySelector('.mcal-grid');
+    if (!grid) return;
+    grid.style.removeProperty('--mcal-fs');
+    if (_viewMode === 'week') return;
+    // Paddings and gaps do not scale with the text, so a second pass settles it.
+    var fs = 13;
+    for (var pass = 0; pass < 2; pass++){
+      var sh = grid.scrollHeight, ch = grid.clientHeight;
+      if (!(sh > ch + 1 && ch > 0) || fs <= 11) break;
+      fs = Math.max(11, fs * (ch / sh) * 0.98);
+      grid.style.setProperty('--mcal-fs', fs.toFixed(2) + 'px');
+    }
   }
   function scheduleFit(){
     cancelAnimationFrame(_fitRaf);
@@ -400,23 +474,24 @@
       nextDis = idx >= months.length - 1;
     }
 
-    var titleTxt = esc(month) + (_viewMode === 'week' ? ' ' + (_weekIdx + 1) + '. nedēļa' : '');
-    var seg = '<div class="mcal-seg">'
-      + '<button data-view="month" class="' + (_viewMode === 'month' ? 'is-on' : '') + '">▦ Mēnesis</button>'
-      + '<button data-view="week" class="' + (_viewMode === 'week' ? 'is-on' : '') + '">▤ Nedēļa</button>'
-      + '</div>';
+    var stepName = _viewMode === 'week' ? 'nedēļa' : 'mēnesis';
     var head = '<div class="mcal-head">'
-      + '<div class="mcal-title">' + titleTxt + '</div>'
-      + '<div class="mcal-nav">'
-      + '<button class="mcal-navbtn" data-go="-1"' + (prevDis ? ' disabled' : '') + '>‹</button>'
-      + '<select class="mcal-monthsel">' + months.map(function(m){ return '<option' + (m === month ? ' selected' : '') + '>' + esc(m) + '</option>'; }).join('') + '</select>'
-      + '<button class="mcal-navbtn" data-go="1"' + (nextDis ? ' disabled' : '') + '>›</button>'
+      + '<div class="mcal-titles"><div class="mcal-title">' + esc(titleCase(month)) + '</div>'
+      + (_viewMode === 'week' && p.idx != null ? '<div class="mcal-sub">' + esc(weekRange(p, _weekIdx)) + '</div>' : '')
       + '</div>'
-      + seg
+      + '<div class="mcal-nav">'
+      + '<button class="mcal-icbtn mcal-navbtn" data-go="-1" aria-label="Iepriekšējā ' + stepName + '"' + (prevDis ? ' disabled' : '') + '>' + ICON.prev + '</button>'
+      + '<button class="mcal-icbtn mcal-navbtn" data-go="1" aria-label="Nākamā ' + stepName + '"' + (nextDis ? ' disabled' : '') + '>' + ICON.next + '</button>'
+      + '</div>'
+      + '<div class="mcal-seg" role="group" aria-label="Skats">'
+      + '<button data-view="month" class="' + (_viewMode === 'month' ? 'is-on' : '') + '" aria-pressed="' + (_viewMode === 'month') + '">Mēnesis</button>'
+      + '<button data-view="week" class="' + (_viewMode === 'week' ? 'is-on' : '') + '" aria-pressed="' + (_viewMode === 'week') + '">Nedēļa</button>'
+      + '</div>'
+      + '<div class="mcal-legend" aria-label="Maiņu veidi"><span class="mcal-hk is-allday">Diennakts</span><span class="mcal-hk is-day">Diena</span><span class="mcal-hk is-night">Nakts</span></div>'
       + '<div class="mcal-actions">'
-      + '<button class="mcal-actbtn" data-panel="bday">🎂 Dzimšanas dienas</button>'
-      + '<button class="mcal-actbtn" data-panel="holi">🎉 Svētku dienas</button>'
-      + '<button class="mcal-close" aria-label="Aizvērt">✕</button>'
+      + '<button class="mcal-actbtn" data-panel="bday">Dzimšanas dienas</button>'
+      + '<button class="mcal-actbtn" data-panel="holi">Svētku dienas</button>'
+      + '<button class="mcal-icbtn mcal-close" aria-label="Aizvērt">' + ICON.close + '</button>'
       + '</div>'
       + '</div>';
     _overlay.querySelector('.mcal-inner').innerHTML = head + buildGrid(month);
@@ -429,9 +504,10 @@
     if (!wrap) return;
     var year = (monthParts(_curMonth).year) || new Date().getFullYear();
     var html;
+    var closeBtn = '<button class="mcal-icbtn mcal-panel-x" aria-label="Aizvērt">' + ICON.close + '</button>';
     if (type === 'holi'){
       var items = holidaysForYear(year).slice().sort(function(a, b){ return dkey(a.date) - dkey(b.date); });
-      html = '<div class="mcal-panel"><div class="mcal-panel-h"><span class="mcal-panel-t">🎉 Svētku dienas ' + year + '</span><button class="mcal-panel-x" aria-label="Aizvērt">✕</button></div>'
+      html = '<div class="mcal-panel" role="dialog" aria-label="Svētku dienas ' + year + '"><div class="mcal-panel-h"><span class="mcal-panel-t">Svētku dienas ' + year + '</span>' + closeBtn + '</div>'
         + '<div class="mcal-panel-b">'
         + items.map(function(h){
             return '<div class="mcal-hrow' + (h.free ? ' is-free' : '') + '">'
@@ -445,7 +521,7 @@
       var todayDM = (function(){ var t = String(window.__g_todayStr || window.__todayDateStr || '').trim().match(/^(\d{2})\.(\d{2})/); return t ? (t[1] + '.' + t[2]) : ''; })();
       if (!_bdayLoaded) loadBirthdays();
       var bdays = BIRTHDAYS.slice().sort(function(a, b){ return bdkey(a.d) - bdkey(b.d); });
-      html = '<div class="mcal-panel"><div class="mcal-panel-h"><span class="mcal-panel-t">🎂 Dzimšanas dienas</span><button class="mcal-panel-x" aria-label="Aizvērt">✕</button></div>'
+      html = '<div class="mcal-panel" role="dialog" aria-label="Dzimšanas dienas"><div class="mcal-panel-h"><span class="mcal-panel-t">Dzimšanas dienas</span>' + closeBtn + '</div>'
         + '<div class="mcal-panel-b">'
         + (!_bdayLoaded
           ? '<div class="mcal-soon">Ielādē dzimšanas dienas...</div>'
@@ -453,7 +529,7 @@
             var isToday = b.d === todayDM;
             return '<div class="mcal-hrow' + (isToday ? ' is-bdaytoday' : '') + '">'
               + '<span class="mcal-hdate">' + esc(b.d) + '</span>'
-              + '<span class="mcal-hnm">' + esc(b.name) + '</span>'
+              + '<span class="mcal-hnm">' + esc(titleCase(b.name)) + '</span>'
               + (isToday ? '<span class="mcal-hbadge mcal-bbadge">Šodien</span>' : '')
               + '</div>';
           }).join('') : '<div class="mcal-soon">Dzimšanas dienas nav ielādētas.</div>'))
@@ -533,9 +609,6 @@
           if (j >= 0 && j < months.length){ _weekIdx = 0; render(months[j]); }
         }
       }
-    });
-    _overlay.addEventListener('change', function(e){
-      if (e.target && e.target.classList.contains('mcal-monthsel')){ _weekIdx = 0; render(e.target.value); }
     });
   }
 

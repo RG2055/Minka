@@ -7266,6 +7266,73 @@ function outsideModalClose(e) {
   }
 }
 
+// Kalendārs tab: the month-calendar idea (each day says who is on shift),
+// but only for the days this person works. One card per shift day with the
+// shift itself and the colleagues on duty the same day, so no hover needed.
+const WM_WEEKDAYS = ['Svētdiena', 'Pirmdiena', 'Otrdiena', 'Trešdiena', 'Ceturtdiena', 'Piektdiena', 'Sestdiena'];
+function wmEsc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function wmTitleCase(name) {
+  return String(name || '').trim().toLowerCase().replace(/(^|[\s-])(\p{L})/gu, (m, sep, ch) => sep + ch.toUpperCase());
+}
+function wmShiftKind(item) {
+  const t = String(item.type || '').toUpperCase();
+  const sh = String(item.shift || '').toLowerCase();
+  if (t === 'DIENNAKTS' || sh === '24' || sh === '24h') return 'allday';
+  if (t === 'NAKTS') return 'night';
+  if (t === 'DIENA') return 'day';
+  const hr = parseInt(String(item.startTime || '').split(':')[0], 10);
+  return !isNaN(hr) && (hr >= 18 || hr <= 7) ? 'night' : 'day';
+}
+const WM_KIND_LABEL = { allday: 'Diennakts', day: 'Diena', night: 'Nakts' };
+function wmHours(w) {
+  const n = Number(w && w.hours) || parseFloat(String(w && w.shift || '').replace(',', '.')) || 0;
+  return Number.isFinite(n) ? Math.max(0, Math.min(48, Math.round(n * 10) / 10)) : 0;
+}
+// Everyone on duty that day (the card owner included), per role.
+// Leave/absence codes are skipped.
+function wmCoworkers(dateKey, store, me) {
+  const out = [], seen = new Set();
+  for (const month in (store || {})) {
+    const days = store[month];
+    if (!Array.isArray(days)) continue;
+    for (const day of days) {
+      if (!day || day.date !== dateKey || !Array.isArray(day.workers)) continue;
+      for (const w of day.workers) {
+        const name = String(w && w.name || '').trim();
+        const sh = String(w && w.shift || '').toUpperCase().trim();
+        if (!name || seen.has(name.toLowerCase())) continue;
+        if (sh === 'N' || sh.indexOf('A') >= 0 || sh === 'B' || !sh || sh === '0') continue;
+        seen.add(name.toLowerCase());
+        out.push({ name, hrs: wmHours(w), kind: wmShiftKind(w), me: name.toLowerCase() === me });
+      }
+    }
+  }
+  const order = { allday: 0, day: 1, night: 2 };
+  return out.sort((a, b) => (order[a.kind] - order[b.kind]) || (b.hrs - a.hrs) || a.name.localeCompare(b.name, 'lv'));
+}
+// Same reading as the month calendar: one row per shift, hours chip in the
+// shift colour and first names after it. The card owner is listed in their
+// shift row like everyone else, only in bold.
+function wmPeopleRows(list) {
+  const groups = new Map();
+  list.forEach(p => {
+    const key = p.kind + '|' + p.hrs;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(p);
+  });
+  const order = { allday: 0, day: 1, night: 2 };
+  return [...groups.values()]
+    .sort((a, b) => (order[a[0].kind] - order[b[0].kind]) || (b[0].hrs - a[0].hrs))
+    .map(g => '<li class="wm-sd-row is-' + g[0].kind + '">'
+      + '<span class="wm-sd-h is-' + g[0].kind + '" title="' + WM_KIND_LABEL[g[0].kind] + '">' + (g[0].hrs ? g[0].hrs + 'h' : '') + '</span>'
+      + '<span class="wm-sd-names">' + g.map(p => {
+        const first = wmEsc(wmTitleCase(p.name).split(/\s+/)[0]);
+        return '<span title="' + wmEsc(wmTitleCase(p.name)) + '">' + (p.me ? '<b>' + first + '</b>' : first) + '</span>';
+      }).join(', ') + '</span></li>').join('');
+}
+
 function renderModalCalendar() {
   const year = modalCurrentYear;
   const month = modalCurrentMonth;
@@ -7273,197 +7340,47 @@ function renderModalCalendar() {
                       'Jūlijs', 'Augusts', 'Septembris', 'Oktobris', 'Novembris', 'Decembris'];
   document.getElementById('modal-calendar-month-year').innerText = `${monthNames[month]} ${year}`;
 
-  const daysContainer = document.getElementById('modal-calendar-days');
-  daysContainer.innerHTML = '';
-
-  const firstDay = (new Date(year, month, 1).getDay() + 6) % 7; // monday-first
-  const lastDate = new Date(year, month + 1, 0).getDate();
-  const lastDay = (new Date(year, month, lastDate).getDay() + 6) % 7; // monday-first
-  const lastDatePrev = new Date(year, month, 0).getDate();
-
-  let liTag = '';
-
-  function pad2(n){ return String(n).padStart(2, '0'); }
-  function dateKey(dd, mmZeroBased, yy){ return `${pad2(dd)}.${pad2(mmZeroBased + 1)}.${yy}`; }
-
-  const shiftMap = new Map();
+  const box = document.getElementById('modal-calendar-days');
+  const me = String(window.__wmWorkerName || '').trim().toLowerCase();
+  const pad2 = n => String(n).padStart(2, '0');
+  const byDate = new Map();
   modalWorkerDates.forEach(d => {
-    const [dd, mm, yy] = d.date.split('.').map(Number);
-    const key = `${pad2(dd)}.${pad2(mm)}.${yy}`;
-
-    let shiftLabel = String(d.shift || '');
-    if (/^(12|15|24|9)$/.test(shiftLabel) || /^(12|15|24|9)h$/i.test(shiftLabel)) {
-      if (!/h$/i.test(shiftLabel)) shiftLabel += 'h';
-    }
-
-    let shiftKind = 'day';
-    const t = String(d.type || '').toUpperCase();
-    const sh = String(d.shift || '').toLowerCase();
-    const st = String(d.startTime || '');
-    if (t === 'DIENNAKTS' || sh === '24' || sh === '24h') shiftKind = 'allday';
-    else if (t === 'NAKTS') shiftKind = 'night';
-    else if (t === 'DIENA') shiftKind = 'day';
-    else {
-      const hr = parseInt(st.split(':')[0], 10);
-      if (!isNaN(hr) && (hr >= 18 || hr <= 7)) shiftKind = 'night';
-    }
-
-    shiftMap.set(key, { label: shiftLabel, kind: shiftKind });
+    const [dd, mm, yy] = String(d.date || '').split('.').map(Number);
+    if (mm - 1 !== month || yy !== year || byDate.has(dd)) return;
+    byDate.set(dd, d);
   });
-
-  // Today / past markers: today gets a highlight ring, days already gone are
-  // dimmed so the remaining month reads at a glance.
-  const _tn = new Date();
-  const _todayMid = new Date(_tn.getFullYear(), _tn.getMonth(), _tn.getDate()).getTime();
-  function dayFlags(dd, mmZeroBased, yy) {
-    const t = new Date(yy, mmZeroBased, dd).getTime();
-    if (t === _todayMid) return ' is-today';
-    if (t < _todayMid) return ' is-past';
-    return '';
+  const shifts = [...byDate.keys()].sort((a, b) => a - b);
+  if (!shifts.length) {
+    box.innerHTML = '<p class="wm-sd-empty">Šajā mēnesī maiņu nav.</p>';
+    updateModalTotalHours();
+    return;
   }
 
-  for (let i = firstDay; i > 0; i--) {
-    const dayNum = lastDatePrev - i + 1;
-    const prevMonthDate = new Date(year, month, 0);
-    const prevYear = prevMonthDate.getFullYear();
-    const prevMonth = prevMonthDate.getMonth();
-    const key = dateKey(dayNum, prevMonth, prevYear);
-    const shift = shiftMap.get(key);
-    const fl = dayFlags(dayNum, prevMonth, prevYear);
-    if (shift) liTag += `<li class="inactive worked shift-${shift.kind}${fl}" data-dk="${key}">${dayNum}<span class="shift-label">${shift.label}</span></li>`;
-    else liTag += `<li class="inactive${fl}">${dayNum}</li>`;
-  }
-
-  for (let i = 1; i <= lastDate; i++) {
-    const key = dateKey(i, month, year);
-    const shift = shiftMap.get(key);
-    const fl = dayFlags(i, month, year);
-    if (shift) liTag += `<li class="worked shift-${shift.kind}${fl}" data-dk="${key}">${i}<span class="shift-label">${shift.label}</span></li>`;
-    else liTag += `<li class="${fl.trim()}">${i}</li>`;
-  }
-
-  for (let i = lastDay; i < 6; i++) {
-    const dayNum = i - lastDay + 1;
-    const nextMonthDate = new Date(year, month + 1, 1);
-    const nextYear = nextMonthDate.getFullYear();
-    const nextMonth = nextMonthDate.getMonth();
-    const key = dateKey(dayNum, nextMonth, nextYear);
-    const shift = shiftMap.get(key);
-    const fl = dayFlags(dayNum, nextMonth, nextYear);
-    if (shift) liTag += `<li class="inactive worked shift-${shift.kind}${fl}" data-dk="${key}">${dayNum}<span class="shift-label">${shift.label}</span></li>`;
-    else liTag += `<li class="inactive${fl}">${dayNum}</li>`;
-  }
-
-  daysContainer.innerHTML = liTag;
-  initModalDayPopover(daysContainer);
+  const now = new Date();
+  const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  box.innerHTML = shifts.map(dd => {
+    const item = byDate.get(dd);
+    const at = new Date(year, month, dd);
+    const key = `${pad2(dd)}.${pad2(month + 1)}.${year}`;
+    const kind = wmShiftKind(item);
+    const hrs = parseFloat(String(item.shift || '').replace(',', '.')) || 0;
+    const time = item.startTime && item.endTime ? item.startTime + '–' + item.endTime : '';
+    const when = at.getTime() === todayMid ? ' is-today' : at.getTime() < todayMid ? ' is-past' : '';
+    const rg = wmCoworkers(key, window.__grafiksStore, me);
+    const rd = wmCoworkers(key, window.__grafiksStoreRad, me);
+    const team = (rg.length ? '<ul class="wm-sd-grp is-rg" aria-label="Radiogrāferi">' + wmPeopleRows(rg) + '</ul>' : '')
+      + (rd.length ? '<ul class="wm-sd-grp is-rd" aria-label="Radiologi">' + wmPeopleRows(rd) + '</ul>' : '');
+    return '<article class="wm-sd is-' + kind + when + '">'
+      + '<header class="wm-sd-head">'
+      + '<span class="wm-sd-num">' + dd + '</span>'
+      + '<span class="wm-sd-meta"><span class="wm-sd-wd">' + (when === ' is-today' ? 'Šodien' : WM_WEEKDAYS[at.getDay()]) + '</span>'
+      + '<span class="wm-sd-kind">' + WM_KIND_LABEL[kind] + (time ? ' ' + wmEsc(time) : '') + '</span></span>'
+      + (hrs ? '<span class="wm-sd-hrs">' + hrs + 'h</span>' : '')
+      + '</header>'
+      + team
+      + '</article>';
+  }).join('');
   updateModalTotalHours();
-}
-
-// ── Worker-modal day popover: who works with this person on a given day ──
-// Cheap by design: ONE delegated listener pair on the grid (wired once), ONE
-// reused popover element, roster built lazily per day and cached until the
-// next month render. No per-cell listeners, timers, or observers.
-var __wmPopCache = new Map();
-function __wmEsc(s) {
-  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
-    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-  });
-}
-function __wmDayRosterHtml(dk) {
-  if (__wmPopCache.has(dk)) return __wmPopCache.get(dk);
-  var me = String(window.__wmWorkerName || '').trim().toLowerCase();
-  function collect(storeObj) {
-    var out = [], seen = new Set();
-    for (var m in (storeObj || {})) {
-      var days = storeObj[m];
-      if (!Array.isArray(days)) continue;
-      for (var i = 0; i < days.length; i++) {
-        if (!days[i] || days[i].date !== dk || !Array.isArray(days[i].workers)) continue;
-        days[i].workers.forEach(function (w) {
-          var name = String(w && w.name || '').trim();
-          var sh = String(w && w.shift || '').toUpperCase().trim();
-          if (!name || seen.has(name.toLowerCase())) return;
-          if (sh === 'N' || sh.indexOf('A') >= 0 || sh === 'B' || !sh || sh === '0') return;
-          seen.add(name.toLowerCase());
-          var hrs = Number(w.hours || parseInt(sh, 10) || 0);
-          hrs = Number.isFinite(hrs) ? Math.max(0, Math.min(48, Math.round(hrs * 10) / 10)) : 0;
-          out.push({ name: name, hrs: hrs });
-        });
-      }
-    }
-    out.sort(function (a, b) { return (b.hrs - a.hrs) || a.name.localeCompare(b.name); });
-    return out;
-  }
-  function rows(list) {
-    if (!list.length) return '<div class="wmdp-none">—</div>';
-    return list.map(function (p) {
-      var isMe = p.name.toLowerCase() === me;
-      var nm = p.name.split(/\s+/).slice(0, 2).join(' ');
-      return '<div class="wmdp-row' + (isMe ? ' me' : '') + '"><b>' + __wmEsc(nm) + '</b><span class="h">' + (p.hrs ? p.hrs + 'h' : '') + '</span></div>';
-    }).join('');
-  }
-  var rg = collect(window.__grafiksStore);
-  var rd = collect(window.__grafiksStoreRad);
-  var parts = dk.split('.');
-  var html = '<div class="wmdp-date">' + parts[0] + '.' + parts[1] + '.' + parts[2] + '</div>' +
-    '<div class="wmdp-sec">Radiogrāferi</div>' + rows(rg) +
-    '<div class="wmdp-sec">Radiologi</div>' + rows(rd);
-  __wmPopCache.set(dk, html);
-  return html;
-}
-function __wmPopEl() {
-  var el = document.getElementById('wmDayPop');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'wmDayPop';
-    document.body.appendChild(el);
-  }
-  return el;
-}
-function __wmShowPop(cell) {
-  var dk = cell.getAttribute('data-dk');
-  if (!dk) return;
-  var pop = __wmPopEl();
-  pop.innerHTML = __wmDayRosterHtml(dk);
-  pop.classList.add('open');
-  var r = cell.getBoundingClientRect();
-  pop.style.left = '0px'; pop.style.top = '0px'; // reset before measuring
-  var pw = pop.offsetWidth, ph = pop.offsetHeight;
-  var left = Math.max(8, Math.min(window.innerWidth - pw - 8, r.left + r.width / 2 - pw / 2));
-  var top = r.top - ph - 8;
-  if (top < 8) top = Math.min(window.innerHeight - ph - 8, r.bottom + 8);
-  pop.style.left = left + 'px';
-  pop.style.top = top + 'px';
-}
-function __wmHidePop() {
-  var pop = document.getElementById('wmDayPop');
-  if (pop) pop.classList.remove('open');
-}
-function initModalDayPopover(container) {
-  __wmPopCache.clear(); // roster data may differ per worker/month render
-  __wmHidePop();
-  if (container.__wmPopWired) return;
-  container.__wmPopWired = true;
-  var scroller = container.closest ? container.closest('.modal-content') : null;
-  if (scroller) scroller.addEventListener('scroll', __wmHidePop, { passive: true });
-  container.addEventListener('mouseover', function (e) {
-    var cell = e.target && e.target.closest ? e.target.closest('li.worked[data-dk]') : null;
-    if (cell) __wmShowPop(cell);
-  });
-  container.addEventListener('mouseout', function (e) {
-    var toCell = e.relatedTarget && e.relatedTarget.closest ? e.relatedTarget.closest('li.worked[data-dk]') : null;
-    if (!toCell) __wmHidePop();
-  });
-  // Touch: tap toggles (no hover on phones)
-  container.addEventListener('click', function (e) {
-    var cell = e.target && e.target.closest ? e.target.closest('li.worked[data-dk]') : null;
-    var pop = document.getElementById('wmDayPop');
-    if (!cell) { __wmHidePop(); return; }
-    if (pop && pop.classList.contains('open') && pop.__forDk === cell.getAttribute('data-dk')) { __wmHidePop(); return; }
-    __wmShowPop(cell);
-    if (pop) pop.__forDk = cell.getAttribute('data-dk');
-    else __wmPopEl().__forDk = cell.getAttribute('data-dk');
-  });
 }
 
 function modalCalendarMonth(delta) {
@@ -7523,7 +7440,6 @@ function wmTabMotion(prevBtn, nextBtn, viewEl, dir) {
 }
 
 function showModalView(view) {
-  if (typeof __wmHidePop === 'function') __wmHidePop();
   const _wm = document.getElementById('worker-modal');
   const _prevBtn = _wm ? _wm.querySelector('.view-toggle .toggle-btn.active') : null;
   const _nextIndex = WM_TABS.indexOf(view);
@@ -7599,7 +7515,6 @@ let workerModalOrigin = null;
 function closeWorkerModal() {
   clearTimeout(workerModalOutsideTimer);
   clearTimeout(workerModalCloseTimer);
-  if (typeof __wmHidePop === 'function') __wmHidePop();
   setWorkerModalBuddyFlag(false);
   const modal = document.getElementById('worker-modal');
   const bd = document.getElementById('worker-modal-backdrop');

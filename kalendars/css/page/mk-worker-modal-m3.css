@@ -263,7 +263,7 @@
 #worker-modal#worker-modal .fh-sleep-note { color: rgba(184, 193, 205, .7) !important; }
 
 /* Kalendārs */
-#worker-modal#worker-modal .calendar-container { border: 0 !important; border-radius: 28px !important; background: var(--pp-c1) !important; box-shadow: none !important; }
+#worker-modal#worker-modal .calendar-container { padding: 0 0 4px !important; border: 0 !important; background: transparent !important; box-shadow: none !important; }
 #worker-modal#worker-modal .current-date { color: var(--pp-on) !important; font-size: 18px !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important; }
 #worker-modal#worker-modal .cal-nav-btn {
   width: 40px !important; height: 40px !important; line-height: 40px !important;
@@ -273,13 +273,91 @@
 }
 #worker-modal#worker-modal .cal-nav-btn:hover { background: var(--pp-c4) !important; }
 #worker-modal#worker-modal .cal-nav-btn:active { border-radius: 12px !important; }
-#worker-modal#worker-modal .wm-norm-row { border: 0 !important; border-radius: 18px !important; background: var(--pp-c2) !important; box-shadow: none !important; color: var(--pp-on-var) !important; }
+#worker-modal#worker-modal .wm-norm-row { margin: 0 0 0 auto !important; border: 0 !important; border-radius: 18px !important; background: var(--pp-c1) !important; box-shadow: none !important; color: var(--pp-on-var) !important; }
 #worker-modal#worker-modal .wm-norm-row b { color: var(--pp-on) !important; font-weight: 700 !important; }
-#worker-modal#worker-modal .calendar .weeks li { color: var(--pp-on-var) !important; font-weight: 500 !important; }
-#worker-modal#worker-modal .calendar .days li { border-radius: 14px !important; font-weight: 500 !important; }
-#worker-modal#worker-modal .calendar .days li.is-today { background: transparent !important; box-shadow: inset 0 0 0 2px var(--pp-primary) !important; color: var(--pp-primary) !important; }
-#worker-modal#worker-modal .calendar .days li.worked.is-today { box-shadow: inset 0 0 0 2px var(--pp-primary) !important; }
-#worker-modal#worker-modal .calendar .days li .shift-label { border-radius: 8px !important; }
+
+/* Kalendārs: tikai darba dienas. Katra maiņa ir viena kompakta tonāla
+   kartīte: datums, maiņa, tad komanda pa maiņām (kā mēneša kalendārā),
+   lomu atšķir tā pati krāsainā josla. */
+#worker-modal#worker-modal .calendar-header { display: flex !important; align-items: center !important; gap: 8px !important; margin-bottom: 10px !important; padding: 0 2px !important; }
+#worker-modal#worker-modal .calendar-header .current-date { margin-right: 4px !important; }
+#worker-modal#worker-modal .wm-shiftdays {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)) !important;
+  gap: 8px !important;
+  margin: 0 !important; padding: 0 !important;
+}
+#worker-modal#worker-modal .wm-sd {
+  --k: var(--pp-on);
+  display: flex !important; flex-direction: column !important; gap: 8px !important;
+  min-width: 0 !important;
+  padding: 10px 10px 12px !important;
+  border: 0 !important; border-radius: 18px !important;
+  background: var(--pp-c1) !important; color: var(--pp-on) !important;
+}
+/* Maiņu krāsas kā mēneša kalendārā: diennakts dzintars, diena neitrāla, nakts ledus zila */
+#worker-modal#worker-modal .wm-sd.is-night { --k: #64d2ff; }
+#worker-modal#worker-modal .wm-sd.is-allday { --k: #f5b73f; }
+#worker-modal#worker-modal .wm-sd.is-past { opacity: .5 !important; }
+#worker-modal#worker-modal .wm-sd.is-today { box-shadow: inset 0 0 0 2px var(--pp-primary) !important; }
+#worker-modal#worker-modal .wm-sd.is-today .wm-sd-wd { color: var(--pp-primary) !important; }
+#worker-modal#worker-modal .wm-sd-head {
+  display: grid !important; grid-template-columns: auto minmax(0, 1fr) auto !important;
+  grid-template-areas: "num wd hrs" "num kind kind" !important;
+  align-items: center !important; column-gap: 8px !important; row-gap: 1px !important;
+}
+#worker-modal#worker-modal .wm-sd-meta { display: contents !important; }
+#worker-modal#worker-modal .wm-sd-num {
+  grid-area: num !important; min-width: 1.2em !important;
+  font-size: 24px !important; font-weight: 500 !important; line-height: 1 !important;
+  font-variant-numeric: tabular-nums !important; color: var(--pp-on) !important;
+}
+#worker-modal#worker-modal .wm-sd-wd {
+  grid-area: wd !important; min-width: 0 !important;
+  overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important;
+  font-size: 13px !important; font-weight: 500 !important; line-height: 1.2 !important; color: var(--pp-on) !important;
+}
+#worker-modal#worker-modal .wm-sd-kind {
+  grid-area: kind !important;
+  overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important;
+  font-size: 11.5px !important; font-weight: 400 !important; line-height: 1.2 !important;
+  font-variant-numeric: tabular-nums !important; color: var(--pp-on-var) !important;
+}
+#worker-modal#worker-modal .wm-sd-hrs {
+  grid-area: hrs !important;
+  padding: 3px 8px !important; border-radius: 8px !important;
+  background: color-mix(in srgb, var(--k) 16%, transparent) !important; color: var(--k) !important;
+  font-size: 12px !important; font-weight: 500 !important; line-height: 1.2 !important; font-variant-numeric: tabular-nums !important;
+}
+#worker-modal#worker-modal .wm-sd-grp {
+  display: flex !important; flex-direction: column !important; gap: 3px !important;
+  margin: 0 !important; padding: 0 0 0 8px !important; list-style: none !important;
+  border-left: 2px solid var(--mk-role-rg, #1fe091) !important;
+}
+#worker-modal#worker-modal .wm-sd-grp.is-rd { border-left-color: var(--mk-role-rd, #3f9bff) !important; }
+#worker-modal#worker-modal .wm-sd li.wm-sd-row {
+  display: grid !important; grid-template-columns: 3.1em minmax(0, 1fr) !important;
+  align-items: start !important; column-gap: 6px !important;
+  margin: 0 !important; padding: 0 !important; background: none !important;
+  font-size: 12.5px !important; font-weight: 400 !important; line-height: 1.35 !important;
+}
+#worker-modal#worker-modal .wm-sd-h {
+  justify-self: start !important;
+  padding: 0 6px !important; border-radius: 6px !important;
+  background: var(--pp-c3) !important; color: var(--pp-on) !important;
+  font-size: 11.5px !important; font-weight: 500 !important; line-height: 1.5 !important; font-variant-numeric: tabular-nums !important;
+}
+#worker-modal#worker-modal .wm-sd-h.is-allday { background: rgba(245, 183, 63, .18) !important; color: #f5b73f !important; }
+#worker-modal#worker-modal .wm-sd-h.is-night { background: rgba(100, 210, 255, .16) !important; color: #64d2ff !important; }
+#worker-modal#worker-modal .wm-sd-names { min-width: 0 !important; color: var(--pp-on) !important; }
+#worker-modal#worker-modal .wm-sd-names b { font-weight: 700 !important; color: inherit !important; }
+#worker-modal#worker-modal .wm-sd-row.is-allday .wm-sd-names { color: #f5b73f !important; }
+#worker-modal#worker-modal .wm-sd-row.is-night .wm-sd-names { color: #64d2ff !important; }
+#worker-modal#worker-modal .wm-sd-empty {
+  grid-column: 1 / -1 !important; margin: 0 !important; padding: 40px 16px !important;
+  border-radius: 18px !important; background: var(--pp-c1) !important;
+  text-align: center !important; font-size: 14px !important; color: var(--pp-on-var) !important;
+}
 
 /* Emoji */
 #worker-modal#worker-modal .mkp-toolbar,

@@ -138,7 +138,7 @@ window.setTimeout(function () {
 <!-- bundle.css is critical ï¿½ load normally -->
 <link rel="stylesheet" href="css/bundle.css?v=20260924perf5">
 <link rel="stylesheet" href="../css/mk-sys.css?v=20260924m3a">
-<script src="../js/mk-motion.js?v=20260924day2"></script>
+<script src="../js/mk-motion.js?v=20260924d1"></script>
 <link rel="stylesheet" href="css/skin-draw.css?v=20260829chalk1">
 <link rel="stylesheet" href="css/card-addons.css?v=20260923wrap1">
 <script src="js/card-addons.js?v=20260924day3" defer></script>
@@ -231,8 +231,8 @@ window.setTimeout(function () {
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Round">
   <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/digital-7-mono">
 </noscript>
-<link rel="icon" type="image/svg+xml" href="../data/rg-brand.svg?v=20260814brand1">
-<link rel="icon" type="image/png" sizes="192x192" href="../data/rg-any-192.png?v=20260814brand1">
+<link rel="icon" type="image/svg+xml" href="../data/rg-brand.svg?v=20260924d1">
+<link rel="icon" type="image/png" sizes="192x192" href="../data/rg-any-192.png?v=20260924d1">
 
 <style id="rg_corner_clip_fix">
 /* RG corner clip fix */
@@ -319,12 +319,6 @@ body.stars-active #stars-overlay{display:block;}
   0%{transform:translate3d(0,0,0);}
   100%{transform:translate3d(var(--dx, 0px), var(--dy, 0px), 0);}
 }
-</style>
-<style id="wm-cal-today-past">
-/* Worker-modal calendar: dim days already gone (dummy-proof). Opacity only —
-   no filters/blur, they cost GPU. Today's ring lives in #wm-cal-today-final. */
-#modal-calendar-days li.is-past{opacity:.38;}
-#modal-calendar-days li.is-past .shift-label{opacity:.8;}
 </style>
 <style>
 /* Radiographers keep the violet identity that distinguishes them from the
@@ -674,14 +668,9 @@ body.stars-active #stars-overlay{display:block;}
             <span class="cal-nav-btn material-icons-round" onclick="modalCalendarMonth(-1)">chevron_left</span>
             <span class="cal-nav-btn material-icons-round" onclick="modalCalendarMonth(1)">chevron_right</span>
           </div>
+          <div id="wm-norm-row" class="wm-norm-row" aria-live="polite"></div>
         </div>
-        <div id="wm-norm-row" class="wm-norm-row" aria-live="polite"></div>
-        <div class="calendar">
-          <ul class="weeks">
-            <li>P</li><li>O</li><li>T</li><li>C</li><li>P</li><li>S</li><li>Sv</li>
-          </ul>
-          <ul class="days" id="modal-calendar-days"></ul>
-        </div>
+        <div class="wm-shiftdays" id="modal-calendar-days"></div>
       </div>
     </div>
     <div id="modal-fatigue-view" class="fatigue-view-wrapper">
@@ -697,92 +686,6 @@ body.stars-active #stars-overlay{display:block;}
 </div>
 
 <style>
-/* ── Worker modal calendar v2: square cells + coworker popover ─────────── */
-#worker-modal .calendar .days li{
-  /* Square-ish but capped so a 6-week month always fits without scrolling */
-  aspect-ratio:1/1 !important;
-  max-height:54px !important;
-  min-height:40px !important;
-  height:auto !important;
-  margin:1px 0 !important;
-  padding:1px 0 !important;
-  border-radius:11px !important;
-  gap:0;
-  font-size:15px !important;   /* bigger, clearer day numbers */
-  font-weight:800 !important;
-  line-height:1.15 !important;
-}
-#worker-modal .calendar .days li.inactive{ font-weight:600 !important; }
-#worker-modal .calendar .days li.worked{
-  background:linear-gradient(180deg,rgba(var(--accent-rgb,183,123,255),0.26),rgba(var(--accent-rgb,183,123,255),0.14)) !important;
-  border:1px solid rgba(var(--accent-rgb,183,123,255),0.38) !important;
-  box-shadow:none !important;
-  backdrop-filter:none !important;
-}
-#worker-modal .calendar .days li.worked.shift-night{
-  background:linear-gradient(180deg,rgba(90,162,255,0.26),rgba(90,162,255,0.12)) !important;
-  border-color:rgba(90,162,255,0.42) !important;
-}
-#worker-modal .calendar .days li.worked.shift-allday{
-  background:linear-gradient(180deg,rgba(52,211,153,0.24),rgba(52,211,153,0.11)) !important;
-  border-color:rgba(52,211,153,0.40) !important;
-}
-#worker-modal .calendar .days li .shift-label{
-  font-size:9px !important;
-  font-weight:800 !important;
-  padding:1px 7px !important;
-  background:rgba(0,0,0,0.5) !important;
-  color:#fff !important;
-}
-#worker-modal .calendar .days li.worked{ cursor:pointer; }
-#worker-modal .calendar .days li.worked:hover{ filter:brightness(1.18); }
-
-/* Coworker popover — one reused element, shown on hover/tap of a worked day */
-#wmDayPop{
-  position:fixed;
-  z-index:2147483000;
-  width:min(280px,calc(100vw - 24px));
-  background:rgba(12,14,24,0.98);
-  border:1px solid rgba(255,255,255,0.14);
-  border-radius:14px;
-  padding:10px 12px 11px;
-  box-shadow:0 18px 50px rgba(0,0,0,0.6);
-  pointer-events:none;
-  display:none;
-  font-family:Inter,system-ui,sans-serif;
-}
-#wmDayPop.open{ display:block; }
-#wmDayPop .wmdp-date{
-  font:800 11px/1.2 Inter,system-ui,sans-serif;
-  color:#fff;
-  letter-spacing:.04em;
-  margin-bottom:2px;
-}
-#wmDayPop .wmdp-sec{
-  font:800 8.5px/1 Inter,system-ui,sans-serif;
-  letter-spacing:.14em;
-  text-transform:uppercase;
-  color:rgba(255,255,255,0.38);
-  margin:7px 0 3px;
-}
-#wmDayPop .wmdp-row{
-  display:flex;
-  align-items:baseline;
-  justify-content:space-between;
-  gap:10px;
-  font:600 11px/1.5 Inter,system-ui,sans-serif;
-  color:rgba(255,255,255,0.82);
-}
-#wmDayPop .wmdp-row b{ color:#fff; font-weight:800; }
-#wmDayPop .wmdp-row.me{ color:rgba(var(--accent-rgb,183,123,255),1); }
-#wmDayPop .wmdp-row .h{
-  flex-shrink:0;
-  font-weight:800;
-  font-variant-numeric:tabular-nums;
-  color:rgba(255,255,255,0.55);
-}
-#wmDayPop .wmdp-none{ font:600 10.5px/1.4 Inter,system-ui,sans-serif; color:rgba(255,255,255,0.35); }
-
 /* ── Month norm / overtime strip (LV darba stundu norma) ── */
 .wm-norm-row{
   display:flex;
@@ -960,7 +863,7 @@ function _mkToast(msg, type) {
 <!-- Saved worker skins must be ready before the cached roster is rendered. -->
 <script src="js/page/minka-skins.js?v=20260924perf6"></script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260924day3"></script>
+<script src="js/calendar.js?v=20260924d1"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260923wm10" defer></script>
 <script src="js/header-weather.js?v=20260923wm10" defer></script>
@@ -970,7 +873,7 @@ function _mkToast(msg, type) {
 <script src="js/recovery-model.js?v=20260908recovery1"></script>
 <script src="js/fatigue.js?v=20260924perf1"></script>
 <script src="js/nightsplit.js?v=20260924snd1" defer></script>
-<script src="js/monthcal.js?v=20260924m3c" defer></script>
+<script src="js/monthcal.js?v=20260924d1" defer></script>
 <script src="js/design_v1.js?v=20260924perf3" defer></script>
 <script src="js/theme.js?v=20260920header-duty1" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
@@ -981,7 +884,7 @@ function _mkToast(msg, type) {
 <script src="js/levels.js?v=20260924perf1" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260924m3';
+window.__minkaLocalBuild = '20260924d1';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -1657,20 +1560,6 @@ window.addEventListener('message', function(e) {
   -webkit-backdrop-filter: none !important;
 }
 </style>
-<style id="wm-cal-today-final">
-/* Worker-modal calendar TODAY highlight — loaded last so nothing outranks it.
-   Ice-blue, flat: no blur/glow shadows (GPU-cheap), inset ring only. */
-#worker-modal #modal-calendar-days li.is-today{
-  background:rgba(100,210,255,.16) !important;
-  box-shadow:inset 0 0 0 2.5px #64d2ff !important;
-  color:#fff !important;font-weight:800 !important;
-  opacity:1 !important;filter:none !important;
-}
-#worker-modal #modal-calendar-days li.is-today .shift-label{
-  background:#64d2ff !important;color:#06202e !important;font-weight:800 !important;
-}
-#worker-modal #modal-calendar-days li.is-past{opacity:.38 !important;}
-</style>
 <style id="mk-mid-card-corners">
 /* One clean clipping curve for both artwork and edge. A separate CSS border
    plus padding-box clip produced two arcs and a dark crescent in the corners. */
@@ -1708,7 +1597,7 @@ window.addEventListener('message', function(e) {
 
 <link rel="stylesheet" id="mk-rg-pulse-v2" href="css/page/mk-rg-pulse-v2.css?v=20260924trend4">
 
-<script src="js/page/mood-feedback.js?v=20260924m3e"></script>
+<script src="js/page/mood-feedback.js?v=20260924d6"></script>
 <script src="js/page/mood-trend.js?v=20260924m3b" defer></script>
 
 <link rel="stylesheet" id="mk-mid-card-focus-v1" href="css/page/mk-mid-card-focus-v1.css?v=20260924perf1">
@@ -2001,7 +1890,7 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 <script src="js/header-appearance.js?v=20260923wm10"></script>
 <link rel="stylesheet" href="css/header-duty-summary.css?v=20260923wm10">
 <link rel="stylesheet" href="css/page/mood-comms-m3.css?v=20260924perf10">
-<link rel="stylesheet" id="mk-worker-modal-m3" href="css/page/mk-worker-modal-m3.css?v=20260924perf1">
+<link rel="stylesheet" id="mk-worker-modal-m3" href="css/page/mk-worker-modal-m3.css?v=20260924d1">
 <link rel="stylesheet" id="mk-stats-m3" href="css/page/stats-m3.css?v=20260924m3c">
 <link rel="stylesheet" id="mk-m3-surfaces" href="css/page/m3-surfaces.css?v=20260924m3l">
 </body>
