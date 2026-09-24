@@ -1,0 +1,79 @@
+  /* Kāpēc bērnelements, nevis fons uz paša emoji:
+     appā ir noteikums ar ID selektorā —
+       html body :is(#radiographers-duty,#radiologists-duty) :is(.mk-emoji-side,…)
+         { background: initial !important }
+     Tas fiksē arī background-position, un CSS animācija `!important` deklarāciju
+     pārsist nevar. Uz jaunu bērnu appai noteikumu nav, tāpēc tur transform ir brīvs. */
+  /* Ligzda ir KVADRĀTS un centrēta. Bez tā: .mk-emoji-side ir 32x34 px, josla
+     32 px plata, tātad kadrs 32 px augsts — un atlikušajos 2 pikseļos apakšā
+     ielīda nākamais kadrs. Tieši tā izskatījās kā emoji atkārtojums. */
+  .mk-emoji-film-box {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    overflow: hidden; pointer-events: none;
+    line-height: 0;
+  }
+  .mk-emoji-film {
+    position: absolute; left: 0; top: 0; width: 100%; height: auto;
+    display: block; pointer-events: none;
+  }
+  /* Animācija tiek ieslēgta tikai tad, kad tā tiešām vajadzīga. Statiskajam
+     kadram `will-change` nav vajadzīgs un tas tikai patērētu atmiņu. */
+  .mk-emoji-film.is-playing { will-change: transform; }
+  /* `html.mk-low-spec *` uzliek animation-duration:0.01ms !important visam, un šī
+     klase te ir ieslēgta vienmēr; divkārša klase ar !important to pārsit. */
+  html.mk-low-spec .mk-emoji-film.is-playing.is-playing,
+  .mk-emoji-film.is-playing.is-playing {
+    animation-name: mk-emoji-frames !important;
+    animation-duration: var(--mk-anim-dur, 3s) !important;
+    animation-timing-function: steps(var(--mk-anim-frames, 24)) !important;
+    animation-iteration-count: infinite !important;
+  }
+  @keyframes mk-emoji-frames { from { transform: translate3d(0,0,0); } to { transform: translate3d(0,-100%,0); } }
+
+  /* ── Kustība tiem, kam animācijas nav ────────────────────────────────────
+     85 emoji animētas versijas nav ne Microsoft, ne Noto. Tiem tiek dota paša
+     glifa kustība: nekādu attēlu, nekādu papildu mezglu — tikai `transform` uz
+     jau esošā elementa, tātad kompozitora darbs un nulle CPU uz kadru.
+
+     Forma ir klasiskā "tada": īss paliecums ar vairākiem sīkiem pagriezieniem
+     uz abām pusēm. Pirmā versija bija 1,5 s lēns šūpojums ar 7° un 1.07 — to
+     vienkārši nevarēja pamanīt. Mikro-mijiedarbībai ieteicamais ilgums ir
+     150–300 ms; te tas ir 700 ms, jo pēc "tada" seko pauze, lai atkārtošanās
+     nekļūtu par vibrēšanu. */
+  /* Kustība iet BĒRNELEMENTĀ, ne uz paša emoji. Appā ir noteikums ar ID
+     selektorā — `:is(#radiographers-duty,#radiologists-duty) .mk-emoji-side
+     { transform: none !important }` — un CSS animācija `!important` deklarāciju
+     pārrakstīt nevar. Uz jaunu bērnu appai noteikumu nav. */
+  .mk-emoji-nudge-box {
+    position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font: inherit; line-height: 1; pointer-events: none;
+    transform-origin: 50% 50%;
+    will-change: transform;
+  }
+  html.mk-low-spec .mk-emoji-nudge-box.mk-emoji-nudge-box,
+  .mk-emoji-nudge-box.mk-emoji-nudge-box {
+    animation-name: mk-emoji-tada !important;
+    animation-duration: 1.9s !important;
+    animation-timing-function: ease-in-out !important;
+    animation-iteration-count: infinite !important;
+  }
+  @keyframes mk-emoji-tada {
+    /* Pilns apgrieziens ar nelielu ieskrējienu un piezemēšanos. Iepriekšējās
+       versijas bija šūpošanās — vispirms par kautru, tad par ātru, un abas
+       izskatījās pēc raustīšanās. Apgrieziens lasās kā apzināta kustība, un
+       vienam glifam tas ir tikpat lēts: viens `transform`, kompozitora darbs.
+       Z ass, nevis Y, jo plakans glifs, griežoties ap Y, pusceļā apgrieztos
+       spoguļattēlā. */
+    0%    { transform: rotate(0deg) scale3d(1, 1, 1); }
+    12%   { transform: rotate(-12deg) scale3d(.93, .93, 1); }   /* ieskrējiens */
+    52%   { transform: rotate(348deg) scale3d(1.1, 1.1, 1); }
+    64%   { transform: rotate(360deg) scale3d(1.04, 1.04, 1); } /* neliela pārsviešanās */
+    72%   { transform: rotate(360deg) scale3d(1, 1, 1); }
+    100%  { transform: rotate(360deg) scale3d(1, 1, 1); }       /* pauze */
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mk-emoji-nudge-box.mk-emoji-nudge-box { animation: none !important; }
+  }
+  @media (prefers-reduced-motion: reduce) { .mk-emoji-film { display: none !important; } }

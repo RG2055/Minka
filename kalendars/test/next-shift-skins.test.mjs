@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
+import { readCalendarPage } from './calendar-page-source.mjs';
+const html=readCalendarPage();
 const js=fs.readFileSync(new URL('../js/calendar.js',import.meta.url),'utf8');
 function card(name='',kind='is-day'){
  const props=new Map(),classes=new Set([kind]);

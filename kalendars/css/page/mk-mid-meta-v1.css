@@ -1,0 +1,289 @@
+/* ── Vidus kartītes apakšējā josla ────────────────────────────────────────
+   Vecās 10 noguruma svītriņas aizņēma visu rindu un neteica, KAD cilvēks
+   strādā. Vietā nāk tā pati trīsdaļīgā josla, kas nakts sadalījuma kartītēm:
+   nogurums ar tendences bultiņu · maiņas laiks · personas emoji.
+   “Fake glass”: gaismas atspīdums ir uzzīmēts ar gradientiem un iekšējām
+   ēnām, nevis ar backdrop-filter — vājie datori to nevelk (skat. mk-black-noglass). */
+#grafiks-list .card.mk-mid-card .mk-mid-meta {
+  position: relative;
+  display: grid;
+  /* Trīs vienādas trešdaļas ar dalītājiem — tieši tāpat kā nakts sadalījuma
+     kartītēm. Saturs pielāgojas ailei (cqw), nevis aile saturam. */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  width: 100%;
+  min-height: 26px;
+  /* Josla stāv kartītes apakšā — tur, kur agrāk bija kafija. */
+  margin: auto 0 0;
+  padding: 2px 3px;
+  overflow: hidden;
+  border: 1px solid rgba(229, 243, 249, .18);
+  border-radius: 10px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, .10), rgba(255, 255, 255, .02) 38%, transparent 40%),
+    linear-gradient(155deg, rgba(29, 42, 50, .34), rgba(4, 8, 12, .20));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .14),
+    inset 0 -1px 0 rgba(0, 0, 0, .45),
+    0 4px 8px rgba(0, 0, 0, .22);
+}
+#grafiks-list .card.mk-mid-card .mk-mid-meta-fat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 0 2px;
+}
+#grafiks-list .card.mk-mid-card .mk-mid-meta-label {
+  font: 800 clamp(5.5px, 4cqw, 8.5px)/1 Inter, system-ui, sans-serif;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: rgba(239, 247, 250, .70);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+}
+#grafiks-list .card.mk-mid-card .mk-mid-meta-value {
+  margin-top: 2px;
+  font: 800 clamp(8px, 6.4cqw, 13px)/1.1 Inter, system-ui, sans-serif;
+  color: var(--mk-mid-fat-color, #30d158);
+  -webkit-text-fill-color: var(--mk-mid-fat-color, #30d158);
+  white-space: nowrap;
+}
+#grafiks-list .card.mk-mid-card .mk-mid-meta-time,
+#grafiks-list .card.mk-mid-card .mk-mid-meta-emoji {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 0 2px;
+  overflow: hidden;
+  border-left: 1px solid rgba(229, 243, 249, .14);
+}
+#grafiks-list .card.mk-mid-card .mk-mid-meta-fat { overflow: hidden; }
+#grafiks-list .card.mk-mid-card .mk-mid-meta-time {
+  font: 700 clamp(7px, 5.4cqw, 12px)/1 "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.02em;
+  color: rgba(240, 246, 255, .94);
+  -webkit-text-fill-color: rgba(240, 246, 255, .94);
+  white-space: nowrap;
+}
+#grafiks-list .card.mk-mid-card .mk-mid-meta-emoji {
+  border-left-color: rgba(229, 243, 249, .12);
+  font-size: clamp(12px, 9cqw, 20px);
+  line-height: 1;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, .9);
+}
+/* Kam emoji nav — tur stāv iniciāļi, lai aile nekad nav tukša. */
+#grafiks-list .card.mk-mid-card .mk-mid-meta-emoji.is-initials {
+  font: 900 clamp(8px, 6cqw, 13px)/1 Inter, system-ui, sans-serif;
+  letter-spacing: .04em;
+  color: rgba(240, 246, 255, .90);
+  -webkit-text-fill-color: rgba(240, 246, 255, .90);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .75);
+}
+/* Taimeris joslā ir teksts, nevis atsevišķs pulksteņa displejs: sānu paneļa
+   .duty-timer melnais pilulis šeit tikai plēstos ar stiklu. */
+#grafiks-list .card.mk-mid-card .mk-mid-meta-time.duty-timer,
+#grafiks-list .card.mk-mid-card .mk-mid-meta-time .val {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  min-width: 0 !important;
+  color: rgba(240, 246, 255, .94) !important;
+  -webkit-text-fill-color: rgba(240, 246, 255, .94) !important;
+  font: 700 clamp(7px, 5.4cqw, 12px)/1 "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace !important;
+  font-variant-numeric: tabular-nums !important;
+  letter-spacing: -.02em !important;
+}
+#grafiks-list .card.mk-mid-card .mk-mid-meta-time.duty-timer {
+  border-left: 1px solid rgba(229, 243, 249, .14) !important;
+}
+#grafiks-list .card.mk-mid-card .mk-mid-meta-time .ghost { display: none !important; }
+/* Beidzoties maiņai, taimeris paliek stāvam līdz nākamajai pārzīmēšanai. */
+#grafiks-list .card.mk-mid-card .mk-mid-meta-time.mk-mid-timer:not(.duty-timer) {
+  opacity: .55 !important;
+}
+
+/* Emoji maiņa notiek, uzspiežot uz emoji joslas ailē — atsevišķa zīmuļa poga
+   izņemta, lai kartīte nav pārblīvēta. */
+#grafiks-list .card.mk-mid-card .mk-mid-meta-emoji {
+  cursor: pointer !important;
+}
+
+/* ── Kafija: mierā tikai krūzīte ar skaitu, uz hover — arī − un + ──────────
+   Divas vienmēr redzamas pogas aizņēma pusi kartītes apakšas un vilka acis uz
+   sevi, lai gan kafiju pieliek reizi dienā. Miera stāvoklī paliek mazs stikla
+   pilulis; pogas izslīd, kad kursors ir virsū vai fokuss ir iekšā (tastatūra).
+   Skārienekrānam hover nav, tāpēc mobilajā čaulā abas pogas paliek redzamas. */
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-copy {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 1px !important;
+  min-width: 0 !important;
+}
+/* Kafija pārceļas augšējā kreisajā stūrī pie vārda — tā ir reta darbība, kurai
+   nevajag kartītes apakšu. Atbrīvoto vietu pilnībā aizņem noguruma josla, kas
+   tagad var noslīdēt pašā apakšā, prom no lielā stundu skaitļa. */
+/* Zīmulis un kafija stāv vienā rindā kreisajā malā zem vārda — abi mazi, abi
+   klusi, abi atdzīvojas tikai uz hover. Kartītes vidus paliek tukšs. */
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-status-icons {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 4px !important;
+  width: max-content !important;
+  /* Tieši zem vārda cilnes: cilnes augstums + 3px atstarpe. Tā kafija sākas
+     turpat, kur beidzas vārds, nevis kartītes vidū. */
+  top: clamp(16px, 12.5cqw, 30px) !important;
+  left: clamp(2px, 1.4cqw, 5px) !important;
+}
+/* Kafijas čips dzīvo kartītes izmēra slānī (.mk-mid-center), tāpēc tā “top”
+   mērās tajā pašā koordinātu sistēmā, kurā vārda cilne: cilnes augstums + 3px.
+   Tā tas nekad neuzkāpj vārdam, lai kāds būtu kartītes izmērs. */
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-coffee {
+  position: absolute !important;
+  top: calc(clamp(31px, 19cqw, 56px) + 3px) !important;
+  left: clamp(4px, 3cqw, 9px) !important;
+  z-index: 6 !important;
+  width: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  pointer-events: auto !important;
+  justify-content: flex-start !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-bottom {
+  gap: 0 !important;
+}
+/* Miera stāvoklī — tikko manāms stikls pēc krūzītes izmēra, nevis platā josla. */
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-step {
+  width: max-content !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  margin: 0 auto !important;
+  border: 1px solid rgba(255, 255, 255, .10) !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, .05) !important;
+  box-shadow: none !important;
+  transition: background .14s ease, border-color .14s ease, box-shadow .14s ease !important;
+}
+/* Hover/fokuss — stikls kļūst redzams, un pogas izslīd no piluļa. */
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):hover .mk-coffee-step,
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-coffee:has(:focus-visible) .mk-coffee-step {
+  border-color: rgba(255, 255, 255, .24) !important;
+  background:
+    linear-gradient(150deg, rgba(255, 255, 255, .20), rgba(255, 255, 255, .06) 55%, rgba(255, 255, 255, .02)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .26),
+    0 2px 6px rgba(0, 0, 0, .30) !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-mid {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  padding: 0 4px !important;
+  gap: 3px !important;
+}
+/* Čipa augstums tur to brīvajā joslā starp vārda cilni un lielo skaitli, arī
+   tad, kad uz hover izslīd − un +. */
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-sub,
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-add {
+  min-height: 17px !important;
+  font-size: 12px !important;
+}
+/* Krūzīte ir tas, ko meklē ar acīm — tāpēc lielāka un siltāk dzeltena, ar
+   pašu krūzi stiklā (mīksts atspīdums + ēna zem tās). */
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-mid svg,
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-mid .mk-coffee-cup {
+  width: 17px !important;
+  height: 17px !important;
+  transform: none !important;
+  color: #ffc266 !important;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .45)) !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-coffee {
+  --mk-coffee: #ffc266 !important;
+}
+/* Skaitlis ar uzrakstu zem tā, atdalīts ar plānu vertikālu līniju — kā paraugā,
+   bez apļa ap krūzi. */
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-copy {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 1px !important;
+  min-width: 0 !important;
+  padding-left: 5px !important;
+  border-left: 1px solid rgba(255, 255, 255, .26) !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-num {
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  min-width: 0 !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .7) !important;
+}
+/* Neatzīmētiem — tikai krūze: ne skaitļa, ne uzraksta, ne līnijas. */
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-coffee.is-empty .mk-coffee-copy {
+  display: none !important;
+}
+
+/* Viena emoji uz kartītes, ne divas: personas emoji tagad dzīvo joslā, tāpēc
+   augšējā stūra dublikāts pazūd. Zīmuļa poga paliek — ar to emoji maina. */
+#grafiks-list.grid-view .card.mk-mid-card .mk-mid-status-icons .mk-mid-person-emoji {
+  display: none !important;
+}
+:root:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-sub,
+:root:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-add {
+  flex: 0 0 0 !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  transition: flex-basis .12s ease, opacity .12s ease !important;
+}
+/* Hover uz visas kartītes, ne uz kafijas rindas. Rinda ir tikai 19px augsta,
+   un pogas miera stāvoklī ir 0px platas ar pointer-events:none — tātad tās
+   parādās tikai tad, kad pele jau ir uz tām, un pazūd, tiklīdz pele novirzās
+   par 20px. Nomērķēt uz mērķi, kas eksistē tikai tad, kad esi jau uz tā,
+   nevar. Uz visas kartītes tās paliek atvērtas, kamēr pele ir uz kartītes,
+   un pazūd, kad pele aiziet nost. */
+:root:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):hover .mk-coffee-sub,
+:root:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):hover .mk-coffee-add,
+:root:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-coffee:has(:focus-visible) .mk-coffee-sub,
+:root:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-coffee:has(:focus-visible) .mk-coffee-add {
+  flex: 0 0 17px !important;
+  width: 17px !important;
+  min-width: 17px !important;
+  padding: 0 1px !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+/* Redzamā poga paliek 17x17px, bet klikšķināmais laukums ir lielāks. Pilulis ir
+   centrēts, tāpēc, atveroties, tas izaug uz abām pusēm un + parādās septiņpadsmit
+   pikseļus tālāk uz āru, nekā bija pilula mala — nomērķēt iepriekš nevar, un
+   septiņpadsmit pikseļi ir mazs mērķis, lai to noķertu pirmajā reizē.
+   Laukums izplešas ar pseidoelementu, tāpēc izkārtojums nemainās, un miera
+   stāvoklī tas neklausās, jo mantojumā saņem pogas pointer-events: none. */
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-sub,
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-add {
+  position: relative !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-sub::after,
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-add::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: -7px -5px !important;
+}

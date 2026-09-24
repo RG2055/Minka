@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { readCalendarPage } from './calendar-page-source.mjs';
 
 const shell = await readFile(new URL('../../index.html', import.meta.url), 'utf8');
 const calendar = await readFile(new URL('../js/calendar.js', import.meta.url), 'utf8');
-const calendarPage = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+const calendarPage = readCalendarPage();
 const bundle = await readFile(new URL('../css/bundle.css', import.meta.url), 'utf8');
 const ambience = await readFile(new URL('../../js/radio-ambience.js', import.meta.url), 'utf8');
 const radio = await readFile(new URL('../../js/radio.js', import.meta.url), 'utf8');

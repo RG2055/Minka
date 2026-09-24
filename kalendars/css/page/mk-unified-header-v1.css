@@ -1,0 +1,373 @@
+/* Unified scenic header + existing work timer.
+   Static surfaces only: no backdrop blur, animated glow or noise layer. */
+:root:not(.mk-mobile-shell) #minkaBarWrap {
+  container-type: inline-size !important;
+  position: relative !important;
+  isolation: isolate !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 0 5px !important;
+  padding: 3px !important;
+  overflow: visible !important;
+  border: 1px solid rgba(91, 170, 224, .38) !important;
+  border-radius: 18px !important;
+  background: #07101b !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(164, 214, 244, .055),
+    0 8px 24px rgba(0, 0, 0, .22) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap::after {
+  content: none !important;
+  display: none !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap > .mk-header-scenic-bg {
+  position: absolute !important;
+  inset: 3px !important;
+  z-index: 0 !important;
+  overflow: hidden !important;
+  border-radius: 14px !important;
+  pointer-events: none !important;
+  background: #07101b !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap > .mk-header-scenic-bg::before {
+  display: none !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap > .mk-header-scenic-bg::after {
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+  background: rgba(3,7,13,.34) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap > .mk-header-scenic-bg .mk-header-scenic-img {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  opacity: 0 !important;
+  filter: none !important;
+  transition: opacity .18s ease !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap > .mk-header-scenic-bg.is-loaded .mk-header-scenic-img {
+  opacity: 1 !important;
+}
+/* Box much wider than the picture (see syncFit in calendar.js): the canvas
+   shows the whole composition stretched unevenly to the box; the picture
+   itself stays for the palette and as the first paint. */
+:root:not(.mk-mobile-shell) #minkaBarWrap > .mk-header-scenic-bg .mk-header-scenic-canvas {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  display: block !important;
+  pointer-events: none !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap > .mk-header-scenic-bg .mk-header-scenic-canvas[hidden],
+:root:not(.mk-mobile-shell) #minkaBarWrap > .mk-header-scenic-bg:not(.is-stretch) .mk-header-scenic-canvas {
+  display: none !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap > .mk-header-scenic-bg.is-stretch .mk-header-scenic-img {
+  visibility: hidden !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap #minkaBar {
+  position: relative !important;
+  z-index: 8 !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap #minkaBarInner,
+:root:not(.mk-mobile-shell) #minkaBarWrap #minkaBarInner:focus-within,
+:root:not(.mk-mobile-shell) #minkaBarWrap #minkaBar.focused #minkaBarInner,
+:root:not(.mk-mobile-shell) #minkaBarWrap #minkaBar.has-text #minkaBarInner,
+:root:not(.mk-mobile-shell) #minkaBarWrap #minkaBar.search-open #minkaBarInner {
+  width: 100% !important;
+  height: 80px !important;
+  min-height: 80px !important;
+  padding: 0 12px !important;
+  gap: 10px !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  border-radius: 14px 14px 8px 8px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner .mk-header-scenic-bg {
+  inset: 0 !important;
+  border-radius: 14px 14px 8px 8px !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner .mk-header-scenic-img {
+  filter: none !important;
+  transition: opacity .18s ease !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner .mk-header-scenic-bg::after {
+  background:
+    linear-gradient(90deg, rgba(3,7,13,.80) 0%, rgba(3,7,13,.61) 31%, rgba(3,7,13,.34) 62%, rgba(3,7,13,.58) 100%),
+    linear-gradient(180deg, rgba(3,7,13,.10) 0%, rgba(3,7,13,.03) 40%, rgba(3,7,13,.48) 100%) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner #mkSearchDate {
+  flex: 0 1 auto !important;
+  width: max-content !important;
+  min-width: 0 !important;
+  max-width: 50% !important;
+  height: 100% !important;
+  padding: 10px 2px 8px 8px !important;
+  justify-content: center !important;
+  gap: 6px !important;
+}
+:root:not(.mk-mobile-shell) #mkSearchDate .mk-search-date-main {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  width: max-content !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  gap: clamp(8px, 1.1vw, 14px) !important;
+}
+:root:not(.mk-mobile-shell) #mkSearchDate .mk-search-date-num {
+  flex: 0 0 auto !important;
+  font-size: clamp(25px, 2.25vw, 34px) !important;
+  line-height: 1 !important;
+  font-weight: 450 !important;
+  letter-spacing: -.035em !important;
+  white-space: nowrap !important;
+}
+:root:not(.mk-mobile-shell) #mkSearchDate .mk-search-weekday {
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  font-size: clamp(14px, 1.22vw, 19px) !important;
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+}
+:root:not(.mk-mobile-shell) #mkSearchDate .mk-bday-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  max-width: 172px !important;
+  height: 28px !important;
+  margin: 0 0 0 2px !important;
+  padding: 0 10px 0 8px !important;
+  gap: 5px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(233, 217, 244, .36) !important;
+  border-radius: 999px !important;
+  background: rgba(236, 224, 245, .92) !important;
+  color: #2a2140 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.42) !important;
+  text-shadow: none !important;
+}
+:root:not(.mk-mobile-shell) #mkSearchDate .mk-bday-badge:hover {
+  background: rgba(244, 234, 250, .97) !important;
+}
+:root:not(.mk-mobile-shell) #mkSearchDate .mk-bday-ic {
+  flex: 0 0 auto !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+  opacity: .92 !important;
+  filter: none !important;
+}
+:root:not(.mk-mobile-shell) #mkSearchDate .mk-bday-pill {
+  min-width: 0 !important;
+  max-width: 140px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: inherit !important;
+  font-size: 10px !important;
+  line-height: 1 !important;
+}
+:root:not(.mk-mobile-shell) #mkSearchDate .mk-search-date-meta {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  width: max-content !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  gap: 8px !important;
+  overflow: hidden !important;
+}
+:root:not(.mk-mobile-shell) #mkSearchDate .mk-search-date-meta > * {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+}
+:root:not(.mk-mobile-shell) #mkSearchDate .mk-nameday-bar {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner .mk-bar-sep {
+  flex: 0 0 1px !important;
+  margin: 0 2px !important;
+  opacity: .35 !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner .mk-ticker-wrap {
+  flex: 1 1 260px !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 80px !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarInner #mkSearchLaunch,
+:root:not(.mk-mobile-shell) #minkaBarInner #minkaBarMenu {
+  flex: 0 0 36px !important;
+  width: 36px !important;
+  min-width: 36px !important;
+  height: 36px !important;
+  margin: 0 !important;
+  border-radius: 11px !important;
+  border-color: rgba(157, 211, 246, .16) !important;
+  background: rgba(4, 10, 18, .42) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap > #shift-progress-wrap {
+  position: relative !important;
+  z-index: 3 !important;
+  display: flex !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 10px 0 !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 0 14px 14px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap #shift-lanes-wrap,
+:root:not(.mk-mobile-shell) #minkaBarWrap .shift-lanes-wrap {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin-bottom: 0 !important;
+}
+/* Buddy is rendered by the parent shell over #sl-buddy-slot. The slot makes
+   him a real member of this row, so elapsed time never sits underneath him. */
+:root:not(.mk-mobile-shell) #minkaBarWrap .sl-times-strip {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: auto minmax(12px,1fr) auto minmax(6.5ch,auto) auto auto !important;
+  grid-template-rows: 16px 16px !important;
+  align-items: center !important;
+  justify-content: stretch !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  column-gap: 6px !important;
+  row-gap: 2px !important;
+  margin-top: 1px !important;
+  padding: 2px 4px 0 !important;
+  border-top: 0 !important;
+}
+:root:not(.mk-mobile-shell) .sl-ts-elapsed {
+  order: 2 !important;
+  grid-column: 4 !important;
+  grid-row: 1 !important;
+}
+:root:not(.mk-mobile-shell) .sl-ts-remaining-label {
+  order: 4 !important;
+  grid-column: 3 !important;
+  grid-row: 2 !important;
+}
+:root:not(.mk-mobile-shell) .sl-ts-rem {
+  order: 5 !important;
+  grid-column: 4 !important;
+  grid-row: 2 !important;
+}
+:root:not(.mk-mobile-shell) .sl-ts-elapsed,
+:root:not(.mk-mobile-shell) .sl-ts-rem {
+  flex: 0 0 auto !important;
+}
+:root:not(.mk-mobile-shell) #sl-lanes-slot {
+  order: 7 !important;
+  grid-column: 5 !important;
+  grid-row: 1 / 3 !important;
+  flex: 0 0 auto !important;
+  margin-left: 10px !important;
+}
+:root:not(.mk-mobile-shell) #sl-ns-slot {
+  order: 8 !important;
+  grid-column: 6 !important;
+  grid-row: 1 / 3 !important;
+  flex: 0 0 auto !important;
+  margin-right: 0 !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap .sl-ts-label {
+  color: #f7f9fc !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap .sl-ts-val {
+  color: #dceeff !important;
+  text-shadow: none !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap .sl-ts-val.sl-ts-rem {
+  color: #38bdf8 !important;
+  text-shadow: none !important;
+}
+:root:not(.mk-mobile-shell) .main-panel > .top-row {
+  display: none !important;
+}
+:root:not(.mk-mobile-shell) .main-panel > .scroll-row {
+  margin-top: 0 !important;
+}
+
+/* When the center panel is narrow, protect the real information first:
+   date, weekday, birthday and utility buttons. The ticker yields the space. */
+@container (max-width: 720px) {
+  :root:not(.mk-mobile-shell) #minkaBarInner #mkSearchDate {
+    flex-basis: calc(100% - 88px) !important;
+    max-width: calc(100% - 88px) !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarInner .mk-bar-sep,
+  :root:not(.mk-mobile-shell) #minkaBarInner .mk-ticker-wrap {
+    display: none !important;
+  }
+  :root:not(.mk-mobile-shell) #mkSearchDate .mk-search-date-num {
+    font-size: clamp(21px, 5cqw, 27px) !important;
+  }
+  :root:not(.mk-mobile-shell) #mkSearchDate .mk-search-weekday {
+    font-size: clamp(12px, 2.8cqw, 15px) !important;
+  }
+  :root:not(.mk-mobile-shell) #mkSearchDate .mk-bday-badge {
+    max-width: 136px !important;
+  }
+  :root:not(.mk-mobile-shell) #mkSearchDate .mk-bday-pill {
+    max-width: 105px !important;
+  }
+  :root:not(.mk-mobile-shell) #minkaBarWrap .sl-ts-label {
+    display: none !important;
+  }
+}
+
+/* The DOM is shared with mobile; keep its former compact layout after the
+   structural move, without applying the desktop shell treatment. */
+:root.mk-mobile-shell #minkaBarWrap {
+  height: auto !important;
+  overflow: visible !important;
+}
+:root.mk-mobile-shell #minkaBarWrap > #shift-progress-wrap {
+  width: 100% !important;
+  max-width: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  #minkaBarInner .mk-header-scenic-img { transition: none !important; }
+}

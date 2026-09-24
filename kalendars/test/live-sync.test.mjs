@@ -2,8 +2,9 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import test from 'node:test';
+import { readCalendarPage } from './calendar-page-source.mjs';
 
-const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+const html = readCalendarPage();
 const faceModel = await readFile(new URL('../js/card-face-model.js', import.meta.url), 'utf8');
 const materials = await readFile(new URL('../js/card-materials.js', import.meta.url), 'utf8');
 const calendar = await readFile(new URL('../js/calendar.js', import.meta.url), 'utf8');

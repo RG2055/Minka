@@ -1,0 +1,130 @@
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-card,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-card {
+  /* Noguruma krāsa ir kartītes akcents; JS to jau padod. */
+  --mk-side-glass-accent: var(--mk-side-fat-color, #5de3a2);
+  border-radius: 18px !important;
+  border: 1px solid rgba(255,255,255,.085) !important;
+  border-top-color: rgba(255,255,255,.20) !important;
+  /* Uz melna fona plašs gaišs pārklājums pāri visai virsmai kļūst par pelēku
+     plēvi — tieši tā ir tā "migla". Apple stikls tumšā UI strādā otrādi:
+     virsma paliek gandrīz melna, un stiklu nolasa šaura gaismas šķautne pa
+     augšmalu plus asa mala. Tāpēc gaišais gradients te beidzas jau pirmajā
+     ceturtdaļā, nevis stiepjas pāri visai kartītei. */
+  background-color: #090c11 !important;
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,.055) 0%, rgba(255,255,255,.014) 16%, rgba(255,255,255,0) 38%),
+    linear-gradient(180deg, transparent 62%, color-mix(in srgb, var(--mk-side-glass-accent) 7%, transparent)) !important;
+  /* Nekādu ārējo ēnu ar izplūdumu: tieši tās izskatās kā mirdzums un ir tas,
+     kas vecajos datoros maksā. Tikai 0-blur šķautnes. */
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.13),
+    inset 0 -1px 0 rgba(0,0,0,.55) !important;
+}
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-card[data-fatigue="crit"],
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-card[data-fatigue="crit"] {
+  border-color: color-mix(in srgb, var(--mk-side-glass-accent) 36%, rgba(255,255,255,.24)) !important;
+}
+
+/* Fatigue uses the same cached glass lens and liquid vessel as mood staff
+   bubbles. Only the fill level changes; there is no idle simulation. */
+#grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring {
+  isolation: isolate !important;
+  overflow: visible !important;
+  border: 0 !important; border-radius: 50% !important;
+  background: rgba(7,14,24,.34) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  filter: none !important; animation: none !important;
+}
+#grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring::before {
+  content: none !important; display: none !important;
+}
+#grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring::after {
+  content: "" !important; display: block !important;
+  position: absolute !important;
+  inset: -9% !important; border: 0 !important; border-radius: inherit !important;
+  background: url('../../assets/mood-glass-premium.webp?v=20260820b') center / contain no-repeat !important;
+  box-shadow: none !important; z-index: 3 !important;
+  pointer-events: none !important;
+}
+#grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring .mk-side-liquid-vessel {
+  position: absolute !important; inset: 5% !important;
+  display: block !important; width: auto !important; height: auto !important;
+  overflow: hidden !important; border-radius: 50% !important;
+  z-index: 1 !important; pointer-events: none !important;
+  transform: none !important; contain: paint;
+}
+#grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring .liquid-fill {
+  position: absolute !important; display: block !important;
+  left: 0 !important; right: 0 !important; bottom: 0 !important;
+  height: clamp(0%, var(--mk-side-fat, 0%), 100%) !important;
+  overflow: hidden !important;
+  border-radius: 48% 48% 50% 50% / 3px 3px 50% 50% !important;
+  clip-path: none !important;
+  background:
+    radial-gradient(ellipse at 28% 12%, rgba(240,252,255,.26), transparent 40%),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--mk-side-fat-color, #30d158) 48%, transparent),
+      color-mix(in srgb, var(--mk-side-fat-color, #30d158) 72%, transparent)) !important;
+  box-shadow: inset 4px 0 7px rgba(226,250,255,.08), inset -5px 0 8px rgba(4,11,23,.14) !important;
+  transform: none !important; z-index: 2 !important; pointer-events: none !important;
+  transition: height 480ms cubic-bezier(.22,.78,.22,1) !important;
+}
+#grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring .liquid-fill::before {
+  content: "" !important; display: block !important;
+  position: absolute !important; top: 0 !important; right: 4% !important; left: 4% !important;
+  width: auto !important; height: 2px !important;
+  border-radius: 50% !important; background: rgba(244,253,255,.72) !important;
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--mk-side-fat-color, #30d158) 70%, transparent) !important;
+}
+#grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring .liquid-fill::after {
+  content: "" !important; display: block !important;
+  position: absolute !important; inset: 0 !important;
+  background: linear-gradient(90deg, rgba(255,255,255,.18), transparent 24%, transparent 74%, rgba(0,10,28,.15)) !important;
+}
+#grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring > .mk-side-score {
+  position: relative !important; z-index: 5 !important;
+  color: #f6fbff !important; font-weight: 720 !important;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgba(0,0,0,.65) !important;
+}
+#grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring small {
+  color: rgba(235,245,252,.92) !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring .liquid-fill { transition: none !important; }
+}
+
+/* ── Maiņas plāksnīte: neomorfisms ar akcenta rakstu ─────────────────── */
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-shift-chip,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-shift-chip {
+  border-radius: 8px !important;
+  color: var(--mk-side-glass-accent) !important;
+  border: 1px solid color-mix(in srgb, var(--mk-side-glass-accent) 42%, rgba(255,255,255,.18)) !important;
+  background-color: rgba(55,60,57,.20) !important;
+  background-image: linear-gradient(145deg, rgba(40,44,42,.24), rgba(255,255,255,.07)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.14),
+    inset 0 -1px 0 rgba(0,0,0,.30) !important;
+}
+
+/* ── Kājene: plāna līnija un klusināti uzraksti kā mokapā ────────────── */
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-nfoot,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-nfoot {
+  border-top: 1px solid rgba(255,255,255,.15) !important;
+}
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-nfoot dt,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-nfoot dt {
+  color: rgba(255,255,255,.60) !important;
+}
+/* Maiņu skaits mainās no dažām līdz desmit, tāpēc fiksēts punktiņa platums
+   agrāk vai vēlāk pārsniedz kartītes platumu — tieši tāpēc "7 / 10 (vēl 3)"
+   salūza divās rindās. Punktiņi tagad ir elastīgi un saraujas grupā, tāpēc
+   rinda paliek viena jebkurā maiņu skaitā. */
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-nfoot dd,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-nfoot dd {
+  gap: 6px !important;
+}
+/* Uz stikla ūdenszīme kļūst par netīrumu — mokapā tās nav. */
+.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-wm,
+.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-wm { display: none !important; }

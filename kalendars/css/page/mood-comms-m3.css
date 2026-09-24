@@ -1,0 +1,1023 @@
+/* ── Noskaņas kartīte un saziņa: Material 3 Expressive ───────────────────
+   Tie paši žetoni, ko lieto kafijas izvēlne: toņu virsmas rāmju vietā,
+   izvēlētais elements kā secondary-container, lielas apaļas formas un
+   pilnas kapsulas pogām. Silti toņi; violets projektā netiek lietots.
+   Atsauce: m3.material.io — color roles, shape scale, chips, dialogs. */
+/* Saziņa patur savu auksto identitāti (tumši zils + piparmētra), ko tā
+   lietoja līdz šim — Material 3 šeit maina uzbūvi un formas, ne krāsu
+   saimi. Siltie kafijas toņi paliek kafijas izvēlnē. Jaunumu akcents ir
+   dzintara, lai to nesajauktu ar parasto piparmētras akcentu. */
+:root {
+  --m3c-surface: #0d1620;
+  --m3c-surface-container: #13202c;
+  --m3c-surface-container-high: #1a2b39;
+  --m3c-surface-container-highest: #223647;
+  --m3c-on-surface: #e6f1f8;
+  --m3c-on-surface-variant: #b3c6d4;
+  --m3c-outline: #7c93a4;
+  --m3c-outline-variant: #34485a;
+  --m3c-primary: #7fd8c6;
+  --m3c-on-primary: #00382c;
+  --m3c-primary-container: #16493f;
+  --m3c-secondary-container: #1f4a4a;
+  --m3c-on-secondary-container: #c6f4e8;
+  --m3c-tertiary: #f5c67a;
+  --m3c-on-tertiary: #3d2900;
+  --m3c-motion: cubic-bezier(.2, 0, 0, 1);
+}
+
+/* ── Saziņa: Material 3 Expressive ──────────────────────────────────────
+   Expressive raksturs nāk no četrām lietām, ne no krāsas vien: lielas un
+   dažādas formas (28px dialogs, pilnas kapsulas vadībai), izteiksmīga
+   tipogrāfija (headline nevis mazi treknraksti), tonālas virsmas rāmju
+   vietā un atsperīga kustība. Krāsu saime ir silta un dzīva — neitrāli
+   tumšas virsmas ar persiku primary un zaļu "jauns" akcentu; ne zils,
+   ne violets. Skaidrība pirms daiļuma: katrai pogai ir vārds, mērķi ir
+   vismaz 44px, un stāvokļi ir redzami. */
+#rgFeedbackModal {
+  /* Neitrāls cinka pelēkais ir 2026. gada tumšā režīma bāze (slāņots
+     tumšums, ne plakans melnais), un virsū iet tieši viena darbības krāsa —
+     smaragds. Oranžais ir rezervēts vienai nozīmei: kas ir jauns. */
+  --m3x-surface: #09090b;
+  --m3x-container: #131316;
+  --m3x-container-high: #1c1c20;
+  --m3x-container-highest: #27272a;
+  --m3x-on-surface: #fafafa;
+  --m3x-on-variant: #a1a1aa;
+  --m3x-outline: #52525b;
+  --m3x-outline-variant: #27272a;
+  --m3x-primary: #10b981;
+  --m3x-on-primary: #04241a;
+  --m3x-primary-container: #064e3b;
+  --m3x-on-primary-container: #a7f3d0;
+  --m3x-secondary-container: #27272a;
+  --m3x-on-secondary-container: #fafafa;
+  --m3x-fresh: #f97316;
+  --m3x-on-fresh: #1a0c00;
+  --m3x-spring: cubic-bezier(.2, 1.1, .35, 1);
+  --m3x-standard: cubic-bezier(.2, 0, 0, 1);
+  background: rgba(4, 4, 6, .76) !important;
+}
+#rgFeedbackModal .rg-feedback-dialog.rg-comms {
+  border: 0 !important;
+  border-radius: 28px !important;
+  background: var(--m3x-container) !important;
+  box-shadow: 0 12px 20px 8px rgba(0,0,0,.34), 0 6px 6px rgba(0,0,0,.40) !important;
+}
+/* Viens fokusa apzīmējums uz elementu. Pogām — plāns kontūrs ap tām;
+   laukiem — viena iekšēja līnija, jo abi kopā dod dubultu gredzenu. */
+#rgFeedbackModal :is(button, select):focus-visible {
+  outline: 2px solid var(--m3x-primary) !important;
+  outline-offset: 2px !important;
+}
+#rgFeedbackModal :is(input, textarea):focus-visible {
+  outline: none !important;
+}
+
+/* Galva: headline izmērs un pilnas kapsulas vadība. */
+#rgFeedbackModal .rg-comms-head {
+  min-height: 64px !important;
+  padding: 10px 12px 10px 14px !important;
+  gap: 12px !important;
+  border-bottom: 0 !important;
+  background: var(--m3x-container-high) !important;
+}
+#rgFeedbackModal .rg-comms-logo {
+  width: 40px !important;
+  height: 40px !important;
+  flex-basis: 40px !important;
+  border: 0 !important;
+  border-radius: 14px !important;
+  background: var(--m3x-primary-container) !important;
+  color: var(--m3x-on-primary-container) !important;
+  font-size: 19px !important;
+  box-shadow: none !important;
+}
+#rgFeedbackModal .rg-comms-heading h2 {
+  color: var(--m3x-on-surface) !important;
+  font: 400 21px/1.15 Inter, system-ui, sans-serif !important;
+  letter-spacing: 0 !important;
+}
+#rgFeedbackModal .rg-comms-heading p {
+  margin-top: 4px !important;
+  color: var(--m3x-on-variant) !important;
+  font: 400 13px/1.3 Inter, system-ui, sans-serif !important;
+}
+/* Cilnes: M3 segmented button — 48px augsts, aktīvajam ķeksis un fons. */
+#rgFeedbackModal .rg-comms-tabs {
+  gap: 0 !important;
+  padding: 0 !important;
+  border: 1px solid var(--m3x-outline) !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  overflow: hidden !important;
+}
+#rgFeedbackModal .rg-comms-tab {
+  height: 40px !important;
+  min-width: 78px !important;
+  padding: 0 16px !important;
+  border: 0 !important;
+  border-left: 1px solid var(--m3x-outline) !important;
+  border-radius: 0 !important;
+  color: var(--m3x-on-surface) !important;
+  font: 500 14px/1 Inter, system-ui, sans-serif !important;
+  transition: background-color .2s var(--m3x-standard) !important;
+}
+#rgFeedbackModal .rg-comms-tab:first-child { border-left: 0 !important; }
+#rgFeedbackModal .rg-comms-tab:hover { background: rgba(250,250,250,.06) !important; }
+#rgFeedbackModal .rg-comms-tab.is-active {
+  background: var(--m3x-secondary-container) !important;
+  color: var(--m3x-on-secondary-container) !important;
+  box-shadow: none !important;
+  font-weight: 600 !important;
+}
+#rgFeedbackModal .rg-comms-tab.is-active::before {
+  content: '✓' !important;
+  margin-right: 8px !important;
+  font-size: 13px !important;
+}
+/* Jauna tēma: extended FAB — lielākais, gaišākais elements galvā. */
+#rgFeedbackModal .rg-comms-new-topic {
+  height: 44px !important;
+  padding: 0 18px !important;
+  border: 0 !important;
+  border-radius: 18px !important;
+  background: var(--m3x-primary) !important;
+  color: var(--m3x-on-primary) !important;
+  font: 600 15px/1 Inter, system-ui, sans-serif !important;
+  box-shadow: 0 2px 6px 2px rgba(0,0,0,.28) !important;
+  transition: transform .22s var(--m3x-spring), filter .2s var(--m3x-standard) !important;
+}
+#rgFeedbackModal .rg-comms-new-topic:hover { transform: scale(1.04) !important; filter: brightness(1.05) !important; }
+#rgFeedbackModal .rg-comms-new-topic:active { transform: scale(.98) !important; }
+#rgFeedbackModal .rg-comms .rg-feedback-close {
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: var(--m3x-on-variant) !important;
+  font-size: 22px !important;
+  transition: background-color .2s var(--m3x-standard) !important;
+}
+#rgFeedbackModal .rg-comms .rg-feedback-close:hover { background: rgba(250,250,250,.08) !important; }
+
+/* Sānjosla: navigation drawer — 56px kapsulas, lasāms teksts. */
+#rgFeedbackModal .rg-comms-body { grid-template-columns: 232px minmax(0, 1fr) !important; }
+#rgFeedbackModal .rg-comms-sidebar {
+  padding: 12px 10px !important;
+  border-right: 0 !important;
+  background: var(--m3x-surface) !important;
+}
+#rgFeedbackModal .rg-comms-search {
+  height: 42px !important;
+  padding-left: 34px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: var(--m3x-container-high) !important;
+  color: var(--m3x-on-surface) !important;
+  font: 400 14px/1 Inter, system-ui, sans-serif !important;
+}
+#rgFeedbackModal .rg-comms-search::placeholder { color: var(--m3x-on-variant) !important; opacity: .8 !important; }
+#rgFeedbackModal .rg-comms-nav { margin-top: 14px !important; gap: 6px !important; }
+#rgFeedbackModal :is(.rg-comms-nav-button, .rg-comms-topic) {
+  min-height: 44px !important;
+  padding: 6px 14px !important;
+  grid-template-columns: 22px minmax(0, 1fr) auto !important;
+  gap: 10px !important;
+  align-items: center !important;
+  border-radius: 999px !important;
+  color: var(--m3x-on-variant) !important;
+  font: 500 14px/1.25 Inter, system-ui, sans-serif !important;
+  transition: background-color .2s var(--m3x-standard), color .2s var(--m3x-standard) !important;
+}
+#rgFeedbackModal :is(.rg-comms-nav-button, .rg-comms-topic):hover {
+  background: rgba(250,250,250,.06) !important;
+  color: var(--m3x-on-surface) !important;
+}
+#rgFeedbackModal :is(.rg-comms-nav-button, .rg-comms-topic).is-active {
+  background: var(--m3x-secondary-container) !important;
+  color: var(--m3x-on-secondary-container) !important;
+  box-shadow: none !important;
+  font-weight: 600 !important;
+}
+#rgFeedbackModal .rg-comms-nav-icon {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: inherit !important;
+  font-size: 15px !important;
+}
+#rgFeedbackModal .rg-comms-topic-copy small { margin-top: 4px !important; font-size: 11px !important; color: var(--m3x-on-variant) !important; opacity: .75 !important; }
+/* Tēmas nosaukums redzams pilnībā — garš nosaukums pārlec nākamajā rindā,
+   nevis tiek nogriezts ar "…". */
+#rgFeedbackModal .rg-comms-topic-copy strong {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  overflow-wrap: anywhere !important;
+}
+#rgFeedbackModal .rg-comms-topic { padding-top: 8px !important; padding-bottom: 8px !important; border-radius: 22px !important; }
+#rgFeedbackModal .rg-comms-count {
+  min-width: 22px !important;
+  height: 22px !important;
+  padding: 0 7px !important;
+  border-radius: 999px !important;
+  background: var(--m3x-container-highest) !important;
+  color: var(--m3x-on-variant) !important;
+  font: 600 13px/1 Inter, system-ui, sans-serif !important;
+}
+#rgFeedbackModal .rg-comms-section-label {
+  margin: 20px 12px 8px !important;
+  color: var(--m3x-on-variant) !important;
+  font: 600 12px/1 Inter, system-ui, sans-serif !important;
+  letter-spacing: .08em !important;
+}
+
+/* Lente: lielāki burbuļi, skaidra autora rinda. */
+#rgFeedbackModal .rg-comms-main { background: var(--m3x-container) !important; }
+#rgFeedbackModal .rg-comms-feed-head {
+  min-height: 50px !important;
+  padding: 9px 18px !important;
+  border-bottom: 1px solid var(--m3x-outline-variant) !important;
+}
+#rgFeedbackModal .rg-comms-feed-head strong {
+  color: var(--m3x-on-surface) !important;
+  font: 400 17px/1.2 Inter, system-ui, sans-serif !important;
+}
+#rgFeedbackModal .rg-comms-feed-head small {
+  margin-top: 5px !important;
+  color: var(--m3x-on-variant) !important;
+  font: 400 13px/1.25 Inter, system-ui, sans-serif !important;
+}
+#rgFeedbackModal .rg-feedback-list.rg-comms-feed { padding: 12px 18px 16px !important; gap: 10px !important; }
+#rgFeedbackModal .rg-comms-message { grid-template-columns: 32px minmax(0, 1fr) !important; gap: 10px !important; }
+#rgFeedbackModal .rg-comms-avatar {
+  width: 32px !important;
+  height: 32px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: var(--m3x-primary-container) !important;
+  color: var(--m3x-on-primary-container) !important;
+  font: 600 12px/1 Inter, system-ui, sans-serif !important;
+}
+#rgFeedbackModal .rg-comms-message-head { gap: 8px !important; flex-wrap: wrap !important; }
+#rgFeedbackModal .rg-comms-message-head strong {
+  color: var(--m3x-on-surface) !important;
+  font: 600 13px/1.2 Inter, system-ui, sans-serif !important;
+}
+#rgFeedbackModal .rg-comms-message-head time {
+  color: var(--m3x-on-variant) !important;
+  font: 400 12px/1 Inter, system-ui, sans-serif !important;
+}
+#rgFeedbackModal .rg-comms-topic-chip {
+  height: 24px !important;
+  padding: 0 10px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  border-radius: 999px !important;
+  background: var(--m3x-container-highest) !important;
+  color: var(--m3x-on-variant) !important;
+  font: 500 12px/1 Inter, system-ui, sans-serif !important;
+  transition: background-color .2s var(--m3x-standard) !important;
+}
+#rgFeedbackModal .rg-comms-topic-chip:hover { background: var(--m3x-secondary-container) !important; color: var(--m3x-on-secondary-container) !important; }
+#rgFeedbackModal .rg-comms-bubble {
+  margin-top: 4px !important;
+  padding: 9px 13px !important;
+  border: 0 !important;
+  border-radius: 4px 16px 16px 16px !important;
+  background: var(--m3x-container-high) !important;
+  color: var(--m3x-on-surface) !important;
+  font: 400 13.5px/1.42 Inter, system-ui, sans-serif !important;
+}
+#rgFeedbackModal .rg-comms-message.is-own .rg-comms-bubble {
+  border-radius: 16px 4px 16px 16px !important;
+  background: var(--m3x-secondary-container) !important;
+  color: var(--m3x-on-secondary-container) !important;
+}
+#rgFeedbackModal .rg-comms-reply-quote {
+  border-left: 3px solid var(--m3x-primary) !important;
+  border-radius: 0 10px 10px 0 !important;
+  background: rgba(0,0,0,.26) !important;
+  color: var(--m3x-on-variant) !important;
+  font-size: 12px !important;
+}
+/* Darbības: M3 text buttons ar pilnu vārdu un 40px augstumu. */
+#rgFeedbackModal .rg-comms-message-actions { gap: 4px !important; margin-top: 2px !important; opacity: .55 !important; }
+#rgFeedbackModal .rg-comms-message:hover .rg-comms-message-actions,
+#rgFeedbackModal .rg-comms-message:focus-within .rg-comms-message-actions { opacity: 1 !important; }
+#rgFeedbackModal .rg-comms-message-actions button {
+  height: 26px !important;
+  padding: 0 10px !important;
+  border-radius: 999px !important;
+  color: var(--m3x-on-variant) !important;
+  font: 500 11px/1 Inter, system-ui, sans-serif !important;
+  transition: background-color .2s var(--m3x-standard) !important;
+}
+#rgFeedbackModal .rg-comms-message-actions button:hover {
+  background: rgba(250,250,250,.08) !important;
+  color: var(--m3x-on-surface) !important;
+}
+#rgFeedbackModal .rg-comms-empty {
+  color: var(--m3x-on-variant) !important;
+  font: 400 15px/1.55 Inter, system-ui, sans-serif !important;
+}
+
+/* Rakstīšana: liels lauks un extended FAB ar vārdu "Sūtīt". */
+#rgFeedbackModal .rg-comms-composer {
+  margin: 0 18px 12px !important;
+  padding: 10px !important;
+  border: 0 !important;
+  border-radius: 22px !important;
+  background: var(--m3x-container-high) !important;
+  box-shadow: none !important;
+}
+#rgFeedbackModal .rg-comms-compose-context { gap: 8px !important; margin-bottom: 8px !important; }
+#rgFeedbackModal :is(.rg-comms-author-wrap, .rg-comms-topic-input) {
+  height: 36px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: var(--m3x-container-highest) !important;
+  color: var(--m3x-on-variant) !important;
+}
+#rgFeedbackModal .rg-comms-author-wrap { padding: 0 8px 0 16px !important; }
+#rgFeedbackModal .rg-comms-author-wrap > span { font: 600 11px/1 Inter, system-ui, sans-serif !important; }
+#rgFeedbackModal .rg-comms-author { height: 32px !important; color: var(--m3x-on-surface) !important; font: 500 13px/1 Inter, system-ui, sans-serif !important; }
+#rgFeedbackModal .rg-comms-author option { background: var(--m3x-container-high) !important; color: var(--m3x-on-surface) !important; }
+#rgFeedbackModal .rg-comms-topic-input { padding: 0 18px !important; font: 400 13px/1 Inter, system-ui, sans-serif !important; color: var(--m3x-on-surface) !important; }
+#rgFeedbackModal .rg-comms-topic-input::placeholder { color: var(--m3x-on-variant) !important; opacity: .8 !important; }
+#rgFeedbackModal #rgFeedbackText {
+  min-height: 46px !important;
+  padding: 12px 14px !important;
+  border-radius: 16px !important;
+  background: var(--m3x-surface) !important;
+  color: var(--m3x-on-surface) !important;
+  font: 400 15px/1.45 Inter, system-ui, sans-serif !important;
+}
+#rgFeedbackModal #rgFeedbackText::placeholder { color: var(--m3x-on-variant) !important; opacity: .85 !important; }
+#rgFeedbackModal #rgFeedbackText:focus,
+#rgFeedbackModal #rgFeedbackText:focus-visible {
+  outline: none !important;
+  box-shadow: inset 0 0 0 1.5px var(--m3x-primary) !important;
+}
+#rgFeedbackModal .rg-comms-send {
+  width: auto !important;
+  min-width: 96px !important;
+  height: 46px !important;
+  padding: 0 18px !important;
+  gap: 8px !important;
+  grid-auto-flow: column !important;
+  border-radius: 18px !important;
+  background: var(--m3x-primary) !important;
+  color: var(--m3x-on-primary) !important;
+  font: 600 15px/1 Inter, system-ui, sans-serif !important;
+  box-shadow: 0 2px 6px 2px rgba(0,0,0,.26) !important;
+  transition: transform .22s var(--m3x-spring), filter .2s var(--m3x-standard) !important;
+}
+/* Ikona viena nepasaka, ko tā dara — pieliekam vārdu. */
+#rgFeedbackModal .rg-comms-send::after {
+  content: 'Sūtīt' !important;
+  font: 600 15px/1 Inter, system-ui, sans-serif !important;
+}
+#rgFeedbackModal .rg-comms-send:not(:disabled):hover { transform: scale(1.03) !important; filter: brightness(1.05) !important; }
+#rgFeedbackModal .rg-comms-send:disabled { opacity: .38 !important; box-shadow: none !important; }
+#rgFeedbackModal .rg-comms-tools { gap: 4px !important; margin-top: 6px !important; }
+#rgFeedbackModal .rg-comms-emoji {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 999px !important;
+  font-size: 20px !important;
+  transition: background-color .2s var(--m3x-standard), transform .22s var(--m3x-spring) !important;
+}
+#rgFeedbackModal .rg-comms-emoji:hover { background: rgba(250,250,250,.08) !important; transform: scale(1.1) !important; }
+#rgFeedbackModal :is(.rg-comms-char-count, .rg-comms-status, .rg-comms-replying) {
+  color: var(--m3x-on-variant) !important;
+  font: 400 12px/1 Inter, system-ui, sans-serif !important;
+}
+/* Telefonā tie paši žetoni, mazāki soļi: galvai jāietilpst vienā rindā ar
+   aizvēršanu, un rakstīšanas rinda nedrīkst salauzt skaitītāju. */
+/* Pāris vārdu lodziņš pie noskaņas kartītes. */
+.rg-mood-note {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483200 !important;
+  background: rgba(4,4,6,.55) !important;
+}
+.rg-mood-note-sheet {
+  position: absolute !important;
+  width: min(320px, calc(100vw - 24px)) !important;
+  display: grid !important;
+  gap: 10px !important;
+  padding: 16px !important;
+  border-radius: 24px !important;
+  background: #1c1c20 !important;
+  box-shadow: 0 10px 24px 6px rgba(0,0,0,.42) !important;
+  color: #fafafa !important;
+  font-family: Inter, system-ui, sans-serif !important;
+}
+.rg-mood-note-head { display: flex !important; align-items: center !important; gap: 12px !important; }
+.rg-mood-note-emoji {
+  font-size: 30px !important;
+  line-height: 1 !important;
+  font-family: 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif !important;
+}
+.rg-mood-note-head strong { display: block !important; font: 500 17px/1.2 Inter, system-ui, sans-serif !important; }
+.rg-mood-note-head small { display: block !important; margin-top: 3px !important; color: #a1a1aa !important; font: 400 12px/1.35 Inter, system-ui, sans-serif !important; }
+.rg-mood-note-text {
+  width: 100% !important;
+  height: 46px !important;
+  padding: 0 16px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  outline: none !important;
+  background: #09090b !important;
+  color: #fafafa !important;
+  font: 400 14px/1.45 Inter, system-ui, sans-serif !important;
+}
+.rg-mood-note-text:focus { box-shadow: inset 0 0 0 1.5px #10b981 !important; }
+.rg-mood-note-foot { display: flex !important; align-items: center !important; gap: 8px !important; }
+.rg-mood-note-count { color: #a1a1aa !important; font: 500 11px/1 Inter, system-ui, sans-serif !important; font-variant-numeric: tabular-nums !important; }
+.rg-mood-note-error { flex: 1 1 auto !important; color: #f97316 !important; font: 500 11px/1.2 Inter, system-ui, sans-serif !important; }
+.rg-mood-note-cancel, .rg-mood-note-save {
+  height: 38px !important;
+  padding: 0 16px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  font: 600 13px/1 Inter, system-ui, sans-serif !important;
+  cursor: pointer !important;
+}
+.rg-mood-note-cancel { background: transparent !important; color: #a1a1aa !important; }
+.rg-mood-note-cancel:hover { background: rgba(250,250,250,.08) !important; color: #fafafa !important; }
+.rg-mood-note-save { background: #10b981 !important; color: #04241a !important; }
+.rg-mood-note-save:disabled { opacity: .38 !important; cursor: default !important; }
+/* Buy me a coffee: tikai QR kods kartītes apakšā — bez pogas un loga.
+   QR vienmēr uz balta, jo skeneri gaida tumšus moduļus uz gaiša fona. */
+/* Viena rinda zem "Komentāri": kaķis · krūzīte ar vārdiem · QR. Datorā
+   burbulis "Komentāri" stāv pie kreisās malas, tāpēc kaķis (daily-cat.js
+   viņu nosēdina zem burbuļa astes) ir pirmajā kolonnā; vārdi aiz viņa, QR
+   labajā malā. Burti sarūk līdz ar bloka platumu, lai katrs paliktu savā
+   vienā rindā. */
+:root:not(.mk-mobile-shell) .rg-feedback-card .rg-pulse-write.rg-pulse-write--comment {
+  justify-self: start !important;
+  width: auto !important;
+  margin-left: 20px !important;
+}
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock {
+  align-self: stretch !important;
+  display: grid !important;
+  grid-template-columns: 78px auto minmax(0, 1fr) auto !important;
+  column-gap: 0 !important;
+  align-items: center !important;
+  container-type: inline-size !important;
+  margin: 2px -8px 4px 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  color: #f4f4f5 !important;
+  text-decoration: none !important;
+}
+#grafiks-list .rg-feedback-card .rg-bmc-qrimg { grid-column: 4 !important; grid-row: 1 !important; justify-self: end !important; margin-left: 8px !important; }
+#grafiks-list .rg-feedback-card .rg-bmc-cupicon { grid-column: 2 !important; grid-row: 1 !important; margin-right: 8px !important; }
+#grafiks-list .rg-feedback-card .rg-bmc-copy { grid-column: 3 !important; grid-row: 1 !important; min-width: 0 !important; }
+/* Šaurā kartītē (1440 px ekrānā tā ir ~280 px) krūzīte blakus vārdiem
+   neietilpst — tad tā stāv virs "Buy me a coffee", un vārdi paliek lasāmā
+   izmērā. Platākā kartītē krūzīte ir blakus vārdiem. */
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock img.rg-bmc-cupicon { grid-column: 3 !important; grid-row: 1 !important; align-self: end !important; margin: 0 0 4px !important; }
+#grafiks-list .rg-feedback-card .rg-bmc-copy { grid-row: 2 !important; align-self: start !important; }
+#grafiks-list .rg-feedback-card .rg-bmc-qrimg { grid-row: 1 / span 2 !important; align-self: center !important; }
+@container (min-width: 330px) {
+  #grafiks-list .rg-feedback-card .rg-bmc-qrblock img.rg-bmc-cupicon { grid-column: 2 !important; grid-row: 1 / span 2 !important; align-self: center !important; margin: 0 8px 0 12px !important; }
+  #grafiks-list .rg-feedback-card .rg-bmc-copy { grid-row: 1 / span 2 !important; align-self: center !important; }
+  #grafiks-list .rg-feedback-card .rg-bmc-qrblock strong { font-size: clamp(10.5px, calc((100cqi - 200px) / 7.9), 16px) !important; }
+  #grafiks-list .rg-feedback-card .rg-bmc-qrblock em { font-size: clamp(9.5px, calc((100cqi - 200px) / 11), 13px) !important; }
+}
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock strong,
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock em { white-space: nowrap !important; }
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock img {
+  flex: 0 0 72px !important;
+  width: 64px !important;
+  height: 64px !important;
+  display: block !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+}
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock img.rg-bmc-cupicon {
+  justify-self: start !important;
+  flex: 0 0 30px !important;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 7px !important;
+  background: none !important;
+}
+#grafiks-list .rg-feedback-card .rg-bmc-copy { min-width: 0 !important; }
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock strong {
+  display: block !important;
+  color: #ffffff !important;
+  font: 700 clamp(10.5px, calc((100cqi - 150px) / 7.9), 16px)/1.2 Inter, system-ui, sans-serif !important;
+}
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock em {
+  display: block !important;
+  margin-top: 3px !important;
+  color: #a1a1aa !important;
+  font: 400 clamp(9.5px, calc((100cqi - 150px) / 11), 13px)/1.3 Inter, system-ui, sans-serif !important;
+  font-style: normal !important;
+}
+#grafiks-list .rg-feedback-card .rg-bmc-heart {
+  font-family: 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif !important;
+  font-variant-emoji: emoji !important;
+}
+/* Telefonā QR nav vajadzīgs — telefons pats ir tā ierīce, ar ko maksā —, tāpēc
+   bloks kļūst par parastu pogu: krūzīte, virsraksts un paldies rindiņa. */
+:root.mk-mobile-shell #grafiks-list .rg-feedback-card .rg-bmc-qrimg { display: none !important; }
+:root.mk-mobile-shell #grafiks-list .rg-feedback-card .rg-bmc-qrblock {
+  display: flex !important;
+  align-items: center !important;
+  margin: 10px 0 4px !important;
+  min-height: 60px !important;
+  padding: 10px 16px !important;
+  gap: 12px !important;
+  justify-content: center !important;
+  border: 1px solid rgba(255, 221, 0, .28) !important;
+  border-radius: 999px !important;
+  background: rgba(255, 221, 0, .06) !important;
+}
+:root.mk-mobile-shell #grafiks-list .rg-feedback-card .rg-bmc-qrblock small { display: none !important; }
+:root.mk-mobile-shell #grafiks-list .rg-feedback-card .rg-bmc-copy { padding-left: 0 !important; margin: 0 !important; }
+:root.mk-mobile-shell #grafiks-list .rg-feedback-card .rg-bmc-qrblock { gap: 12px !important; }
+:root.mk-mobile-shell #grafiks-list .rg-feedback-card .rg-bmc-qrblock strong { font-size: 15px !important; }
+:root.mk-mobile-shell #grafiks-list .rg-feedback-card .rg-bmc-qrblock em { font-size: 12px !important; }
+:root.mk-mobile-shell #grafiks-list .rg-feedback-card .rg-bmc-qrblock img.rg-bmc-cupicon { display: block !important; margin-right: 0 !important; }
+/* Paskaidrojums parādās tikai uzejot (vai fokusā) — kā neliels panelis virs
+   bloka, tāpēc tas nemaina kartītes augstumu un neko nepabīda. */
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock { position: relative !important; z-index: 1 !important; }
+/* Uzejot bloks paceļas virs kartītes galvenās daļas, citādi panelis paliek
+   zem reakcijām (tās ir vēlāks slānis tajā pašā kartītē). */
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock:hover,
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock:focus-visible { z-index: 30 !important; }
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock small {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: calc(100% + 8px) !important;
+  z-index: 20 !important;
+  display: block !important;
+  padding: 10px 12px !important;
+  border-radius: 14px !important;
+  background: #1c1c20 !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .45) !important;
+  color: #d4d4d8 !important;
+  font: 400 12px/1.45 Inter, system-ui, sans-serif !important;
+  opacity: 0 !important;
+  transform: translateY(4px) !important;
+  pointer-events: none !important;
+  transition: opacity .16s ease, transform .16s ease !important;
+}
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock:hover small,
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock:focus-visible small {
+  opacity: 1 !important;
+  transform: none !important;
+}
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock:focus-visible { outline: 2px solid #ffdd00 !important; outline-offset: 2px !important; }
+/* Statistika: savi vērtējumi. Tie paši --stx-* toņi, ko lieto viss logs;
+   emoji zīmē Fluent fonts tāpat kā pārējās sejiņas. */
+#stats-modal .db-px-own,
+#stats-modal .db-chart-own,
+#stats-modal .db-own .db-face {
+  font-family: 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif !important;
+  font-variant-emoji: emoji !important;
+}
+#stats-modal .db-own {
+  display: grid !important;
+  gap: 4px !important;
+  margin: 10px 0 12px !important;
+}
+#stats-modal .db-own-title {
+  color: var(--stx-t3, #8a8f98) !important;
+  font: 700 10px/1 Inter, system-ui, sans-serif !important;
+  letter-spacing: .1em !important;
+  text-transform: uppercase !important;
+  margin-bottom: 2px !important;
+}
+#stats-modal .db-own-item {
+  display: grid !important;
+  grid-template-columns: 26px minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 36px !important;
+  padding: 4px 10px !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: var(--stx-card, #16181d) !important;
+  color: #f4f5f7 !important;
+  text-align: left !important;
+  cursor: pointer !important;
+}
+#stats-modal .db-own-item:hover { background: var(--stx-hover, #1f2229) !important; }
+#stats-modal .db-own-item.is-static { cursor: default !important; }
+#stats-modal .db-own-item .db-face { font-size: 18px !important; line-height: 1 !important; text-align: center !important; }
+#stats-modal .db-own-item b {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  font: 600 13px/1.2 Inter, system-ui, sans-serif !important;
+}
+#stats-modal .db-own-item small { color: var(--stx-t3, #8a8f98) !important; font: 500 11px/1 Inter, system-ui, sans-serif !important; font-variant-numeric: tabular-nums !important; }
+/* Paša teksts zem burbuļa. Bez izvēlētas reakcijas skatuve ir
+   data-rg-mood="none", un mood-fluent.css tad paslēpj etiķeti (opacity 0) —
+   tāpēc teksts bija uzrakstīts, bet neredzams. Ar savu tekstu tā rādās vienmēr. */
+#grafiks-list .rg-mood-stage .rg-mood-label.is-own-note {
+  opacity: 1 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  border-color: rgba(255, 255, 255, .16) !important;
+  background: rgba(4, 9, 17, .6) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06) !important;
+  color: #f1f5f9 !important;
+}
+/* Kartītes paraksts ar paša tekstu — divas rindas, ne vairāk. */
+#grafiks-list .rg-feedback-card .rg-feedback-card-reaction-label.is-own-note {
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+/* Emoji vienmēr zīmē Fluent fonts. Dialoga tipogrāfijas noteikumi ir ar
+   !important, tāpēc tie pārrakstīja agrāko saimes noteikumu — te tā tiek
+   uzlikta atpakaļ tieši tiem elementiem, kas satur emoji. */
+.rg-emoji-picker :is(.rg-emoji-cell, .rg-emoji-tab span, .rg-emoji-preview),
+#rgFeedbackModal :is(.rg-comms-emoji, .rg-comms-topic-emoji, .rg-comms-topic-emoji-btn.has-emoji) {
+  font-family: 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif !important;
+  font-variant-emoji: emoji !important;
+}
+/* Tēmas emoji izvēle: M3 lapa dialoga iekšpusē. Mērķi 48px, kategorijas
+   kapsulas ar vārdu (ne tikai ikonu), un abas darbības ir nosauktas. */
+#rgFeedbackModal .rg-comms-topic { grid-template-columns: 22px minmax(0, 1fr) auto 30px !important; }
+/* Emoji poga ir PAŠĀ tēmas laukā, tā labajā malā — tā ir daļa no lauka, nevis
+   atsevišķa ikona kaut kur tālāk pa labi. */
+#rgFeedbackModal .rg-comms-topic-field {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  width: min(300px, 62%) !important;
+  height: 36px !important;
+  padding: 0 4px 0 0 !important;
+  border-radius: 999px !important;
+  background: var(--m3x-container-highest) !important;
+}
+#rgFeedbackModal .rg-comms-topic-field .rg-comms-topic-input {
+  flex: 1 1 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: 32px !important;
+  padding: 0 4px 0 16px !important;
+  background: transparent !important;
+}
+#rgFeedbackModal .rg-comms-topic-emoji-btn {
+  flex: 0 0 32px !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: var(--m3x-on-variant) !important;
+  font-size: 17px !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  transition: background-color .2s var(--m3x-standard), color .2s var(--m3x-standard) !important;
+}
+#rgFeedbackModal .rg-comms-topic-emoji-btn:hover { background: rgba(250,250,250,.10) !important; }
+/* Kamēr tēmai vārds ir, bet emoji nav, poga pati sevi piesaka. */
+#rgFeedbackModal .rg-comms-topic-emoji-btn.can-pick {
+  background: var(--m3x-primary-container) !important;
+  color: var(--m3x-on-primary-container) !important;
+}
+#rgFeedbackModal .rg-comms-topic-emoji-btn.has-emoji { font-size: 19px !important; }
+#rgFeedbackModal .rg-comms-emoji-more {
+  border: 1px dashed var(--m3x-outline) !important;
+  color: var(--m3x-on-variant) !important;
+  font-size: 15px !important;
+}
+#rgFeedbackModal .rg-comms-topic-emoji { font-size: 17px !important; }
+.rg-emoji-picker.rg-emoji-picker-loose {
+  --m3x-surface: #09090b;
+  --m3x-container: #131316;
+  --m3x-container-high: #1c1c20;
+  --m3x-container-highest: #27272a;
+  --m3x-on-surface: #fafafa;
+  --m3x-on-variant: #a1a1aa;
+  --m3x-outline: #52525b;
+  --m3x-outline-variant: #27272a;
+  --m3x-primary: #10b981;
+  --m3x-on-primary: #04241a;
+  --m3x-primary-container: #064e3b;
+  --m3x-on-primary-container: #a7f3d0;
+  --m3x-standard: cubic-bezier(.2, 0, 0, 1);
+  --m3x-spring: cubic-bezier(.2, 1.1, .35, 1);
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483150 !important;
+  background: rgba(4,4,6,.55) !important;
+}
+#rgFeedbackModal .rg-emoji-picker {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 5 !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 16px !important;
+  background: rgba(4,4,6,.62) !important;
+}
+/* Kompakts popover blakus pogai, kas to atvēra — meklēšana, ikonu kategorijas,
+   ciešs režģis un nosaukuma rindiņa apakšā. */
+.rg-emoji-picker .rg-emoji-sheet {
+  position: absolute !important;
+  width: 332px !important;
+  max-width: calc(100% - 16px) !important;
+  max-height: min(392px, calc(100% - 16px)) !important;
+  display: grid !important;
+  grid-template-rows: auto auto minmax(0, 1fr) auto !important;
+  gap: 8px !important;
+  padding: 10px !important;
+  border-radius: 20px !important;
+  background: var(--m3x-container-high) !important;
+  box-shadow: 0 10px 24px 6px rgba(0,0,0,.42) !important;
+}
+.rg-emoji-picker .rg-emoji-search {
+  height: 38px !important;
+  padding: 0 14px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  outline: none !important;
+  background: var(--m3x-container-highest) !important;
+  color: var(--m3x-on-surface) !important;
+  font: 400 14px/1 Inter, system-ui, sans-serif !important;
+}
+.rg-emoji-picker .rg-emoji-search::placeholder { color: var(--m3x-on-variant) !important; }
+.rg-emoji-picker .rg-emoji-search:focus { box-shadow: inset 0 0 0 1.5px var(--m3x-primary) !important; }
+/* Kategorijas: tikai ikonas vienā rindā, ar svītriņu zem aktīvās. */
+.rg-emoji-picker .rg-emoji-tabs {
+  display: grid !important;
+  grid-auto-flow: column !important;
+  grid-auto-columns: 1fr !important;
+  gap: 2px !important;
+  padding-bottom: 4px !important;
+  border-bottom: 1px solid var(--m3x-outline-variant) !important;
+}
+.rg-emoji-picker .rg-emoji-tab {
+  position: relative !important;
+  height: 34px !important;
+  padding: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  opacity: .55 !important;
+  transition: opacity .15s var(--m3x-standard), background-color .15s var(--m3x-standard) !important;
+}
+.rg-emoji-picker .rg-emoji-tab span { font-size: 18px !important; line-height: 1 !important; }
+.rg-emoji-picker .rg-emoji-tab:hover { opacity: .85 !important; background: rgba(250,250,250,.06) !important; }
+.rg-emoji-picker .rg-emoji-tab.is-on { opacity: 1 !important; background: transparent !important; }
+.rg-emoji-picker .rg-emoji-tab.is-on::after {
+  content: '' !important;
+  position: absolute !important;
+  left: 50% !important;
+  bottom: -5px !important;
+  width: 20px !important;
+  height: 3px !important;
+  border-radius: 999px !important;
+  background: var(--m3x-primary) !important;
+  transform: translateX(-50%) !important;
+}
+/* Tikai vertikāla ritināšana: kolonnas drīkst sarauties (minmax(0,1fr)), pogām
+   nav noklusētā iekšējā atstatuma, un palielinājums uz hover neizstiepj režģi
+   uz sāniem — vecā datora PWA citādi rādīja horizontālo ritjoslu. */
+.rg-emoji-picker .rg-emoji-grid {
+  display: grid !important;
+  grid-template-columns: repeat(8, minmax(0, 1fr)) !important;
+  gap: 2px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  scrollbar-width: thin !important;
+}
+.rg-emoji-picker .rg-emoji-cell {
+  min-width: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  height: 36px !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  font-size: 22px !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  transition: background-color .15s var(--m3x-standard), transform .18s var(--m3x-spring) !important;
+}
+.rg-emoji-picker .rg-emoji-cell:hover { background: rgba(250,250,250,.08) !important; transform: scale(1.12) !important; }
+.rg-emoji-picker .rg-emoji-cell.is-on { background: var(--m3x-primary-container) !important; }
+.rg-emoji-picker .rg-emoji-empty { grid-column: 1 / -1 !important; margin: 0 !important; padding: 16px 4px !important; color: var(--m3x-on-variant) !important; font: 400 13px/1.5 Inter, system-ui, sans-serif !important; }
+/* Apakšā tas pats, kas paraugā: liels izvēlētais emoji un tā nosaukums. */
+.rg-emoji-picker .rg-emoji-foot {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding-top: 6px !important;
+  border-top: 1px solid var(--m3x-outline-variant) !important;
+}
+.rg-emoji-picker .rg-emoji-preview { font-size: 24px !important; line-height: 1 !important; }
+.rg-emoji-picker .rg-emoji-preview-name {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  color: var(--m3x-on-variant) !important;
+  font: 500 12px/1 Inter, system-ui, sans-serif !important;
+}
+.rg-emoji-picker .rg-emoji-clear {
+  margin-left: auto !important;
+  height: 32px !important;
+  padding: 0 12px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: var(--m3x-on-variant) !important;
+  font: 500 13px/1 Inter, system-ui, sans-serif !important;
+  cursor: pointer !important;
+}
+.rg-emoji-picker .rg-emoji-clear:hover { background: rgba(250,250,250,.08) !important; color: var(--m3x-on-surface) !important; }
+@media (max-width: 720px) {
+  .rg-emoji-picker .rg-emoji-sheet { width: calc(100% - 16px) !important; }
+  #rgFeedbackModal .rg-comms-head {
+    min-height: 64px !important;
+    padding: 10px 10px 10px 12px !important;
+    gap: 10px !important;
+  }
+  #rgFeedbackModal .rg-comms-logo { width: 44px !important; height: 44px !important; flex-basis: 44px !important; font-size: 20px !important; }
+  #rgFeedbackModal .rg-comms-heading h2 { font-size: 22px !important; }
+  #rgFeedbackModal .rg-comms-tabs { flex: 0 0 auto !important; }
+  #rgFeedbackModal .rg-comms-tab { height: 44px !important; min-width: 0 !important; padding: 0 14px !important; font-size: 13px !important; }
+  #rgFeedbackModal .rg-comms-tab.is-active::before { display: none !important; }
+  #rgFeedbackModal .rg-comms .rg-feedback-close { width: 44px !important; height: 44px !important; min-width: 44px !important; flex: 0 0 44px !important; }
+  #rgFeedbackModal .rg-comms-feed-head { min-height: 58px !important; padding: 12px 14px !important; }
+  #rgFeedbackModal .rg-comms-feed-head strong { font-size: 19px !important; }
+  #rgFeedbackModal .rg-feedback-list.rg-comms-feed { padding: 14px 12px 20px !important; gap: 14px !important; }
+  #rgFeedbackModal .rg-comms-composer { margin: 0 10px 10px !important; padding: 10px !important; border-radius: 24px !important; }
+  #rgFeedbackModal .rg-comms-send { min-width: 96px !important; height: 52px !important; padding: 0 16px !important; }
+  #rgFeedbackModal .rg-comms-emoji { width: 40px !important; height: 40px !important; }
+  #rgFeedbackModal .rg-comms-char-count { white-space: nowrap !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #rgFeedbackModal * { transition: none !important; }
+}
+
+/* ── Noskaņas kartīte ── */
+/* Reakcijas: M3 čipi — izvēlētā ir secondary-container kapsula, ne rāmis. */
+#grafiks-list .rg-feedback-card .rg-pulse-tap {
+  border-radius: 999px !important;
+  transition: background-color .18s var(--m3c-motion), transform .18s var(--m3c-motion) !important;
+}
+/* Uzejot un izvēloties, fons ir aplis tieši ap emoji, nevis pastiepts
+   taisnstūris: poga ir platāka par glifu, tāpēc fons tiek zīmēts kā
+   pseidoelements emoji izmērā un centrā. */
+#grafiks-list .rg-feedback-card .rg-pulse-taps {
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+}
+#grafiks-list .rg-feedback-card .rg-pulse-tap { isolation: isolate !important; }
+/* Sestā poga: tāda pati vieta rindā, bet punktēts aplis un sejiņa, lai to
+   nesajauc ar reakciju un lai saprot — te liek savu. */
+/* Punktētais aplis tiek zīmēts ap PAŠU glifu (uz tā span), nevis ap pogu,
+   kas ir platāka — citādi aplis un sejiņa sēž šķībi viens pret otru. */
+#grafiks-list .rg-feedback-card .rg-pulse-own::before { display: none !important; }
+#grafiks-list .rg-feedback-card .rg-pulse-own > span:first-child {
+  box-sizing: border-box !important;
+  width: 1.62em !important;
+  height: 1.62em !important;
+  flex: 0 0 1.62em !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 1.5px dashed rgba(255,255,255,.34) !important;
+  border-radius: 999px !important;
+  line-height: 1 !important;
+  color: rgba(255, 255, 255, .62) !important;
+  transform: none !important;
+  transition: border-color .16s ease, color .16s ease, background-color .16s ease !important;
+}
+/* Līniju sejiņa, nevis emoji: emoji glifa zīmējums nav sava lodziņa centrā,
+   tāpēc aplī tas vienmēr sēdēja šķībi, un dzeltenais atkārtoja “Labi”.
+   Līniju ikona ir ģeometriski centrā un skaidri atšķiras no piecām reakcijām. */
+#grafiks-list .rg-feedback-card .rg-pulse-own .rg-pulse-own-icon {
+  display: block !important;
+  width: 1.02em !important;
+  height: 1.02em !important;
+}
+#grafiks-list .rg-feedback-card .rg-pulse-own:hover > span:first-child,
+#grafiks-list .rg-feedback-card .rg-pulse-own:focus-visible > span:first-child {
+  border-color: rgba(255,255,255,.6) !important;
+  background: rgba(255,255,255,.08) !important;
+  color: #ffffff !important;
+  transform: none !important;
+}
+/* Pārējām reakcijām nosaukums parādās, kad tā ir izvēlēta; šai — kad uz tās
+   uzej, jo citādi neviens neuzzina, kas tā par pogu. */
+#grafiks-list .rg-feedback-card .rg-pulse-own:hover .rg-pulse-name,
+#grafiks-list .rg-feedback-card .rg-pulse-own:focus-visible .rg-pulse-name {
+  display: block !important;
+  max-width: none !important;
+  white-space: nowrap !important;
+}
+#grafiks-list .rg-feedback-card .rg-pulse-tap::before {
+  content: '' !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 1.55em !important;
+  height: 1.55em !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  transform: translate(-50%, -50%) !important;
+  transition: background-color .16s var(--m3c-motion, ease) !important;
+  z-index: -1 !important;
+  pointer-events: none !important;
+}
+#grafiks-list .rg-feedback-card .rg-pulse-tap:hover::before { background: rgba(255,255,255,.10) !important; }
+/* Izvēlētā reakcija: krāsa nāk no pašas reakcijas toņa, tāpēc kartīte
+   nedabū otru krāsu saimi. */
+#grafiks-list .rg-feedback-card .rg-pulse-tap.is-selected::before {
+  background: rgba(var(--rg-reaction-rgb, 148, 184, 213), .22) !important;
+}
+#grafiks-list .rg-feedback-card .rg-pulse-tap.is-selected { background: transparent !important; }
+/* Tukšais stāvoklis: paskaidro, kas trūkst, nevis atkārto virsrakstu. */
+#grafiks-list .rg-feedback-card .rg-feedback-card-reaction-label.is-empty-state {
+  color: var(--m3c-on-surface-variant) !important;
+}
+/* Komentāru poga: M3 tonal button ar badge. */
+#grafiks-list .rg-feedback-card .rg-pulse-write--comment {
+  border-radius: 999px !important;
+  transition: background-color .18s var(--m3c-motion) !important;
+}
+/* Kopskaita aplis paliek tāds, kāds bija. Vienīgais jaunums ir "+N" blakus. */
+/* "+N" — tikai šodienas jaunumi, sava krāsa. Kartītē tā seko kopskaita
+   burbuļa izkārtojumam (tas pats režģa lauks un nobīde), tikai pabīdīta pa
+   kreisi par burbuļa platumu, lai abi stāv blakus, nevis viens uz otra. */
+/* Abas zīmītes vienā turētājā: izkārtojumu dara flex, nevis mērījumi, tāpēc
+   tās nekad nevar uzkāpt viena otrai virsū. */
+#grafiks-list .rg-feedback-card .rg-pulse-write--comment .rg-feedback-badges {
+  grid-area: 1 / 1 !important;
+  align-self: start !important;
+  justify-self: end !important;
+  z-index: 3 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  /* Uz augšu tik daudz, lai ABAS zīmītes ir virs burbuļa uzraksta: mazākā
+     stāv pa kreisi no kopskaita un citādi uzkāptu vārdam “Komentāri”. */
+  transform: translate(22%, -62%) !important;
+  pointer-events: none !important;
+}
+#grafiks-list .rg-feedback-card .rg-pulse-write--comment .rg-feedback-badges .rg-feedback-action-count {
+  position: static !important;
+  transform: none !important;
+  margin: 0 !important;
+}
+/* Jaunums ir piezīme pie kopskaita, ne otrs tikpat liels aplis: tas ir
+   manāmi mazāks un stāv blakus, nevis dala vietu ar to. */
+#grafiks-list .rg-feedback-card .rg-pulse-write--comment .rg-feedback-new-count {
+  position: static !important;
+  z-index: 3 !important;
+  min-width: clamp(14px, 6.2cqw, 18px) !important;
+  height: clamp(14px, 6.2cqw, 18px) !important;
+  padding: 0 clamp(2px, 1cqw, 4px) !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 999px !important;
+  background: #f97316 !important;
+  color: #ffffff !important;
+  font: 900 clamp(7px, 3.1cqw, 8.5px)/1 Inter, system-ui, sans-serif !important;
+  font-variant-numeric: tabular-nums !important;
+  animation: rg-fresh-pop 420ms cubic-bezier(.2, 0, 0, 1) !important;
+}
+#grafiks-list .rg-feedback-card .rg-feedback-new-count:empty { display: none !important; }
+@keyframes rg-fresh-pop {
+  0% { transform: scale(.4); opacity: 0; }
+  70% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #grafiks-list .rg-feedback-card .rg-feedback-new-count { animation: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #rgFeedbackModal :is(.rg-comms-tab, .rg-comms-nav-button, .rg-comms-topic),
+  #grafiks-list .rg-feedback-card :is(.rg-pulse-tap, .rg-pulse-write--comment) {
+    transition: none !important;
+  }
+}

@@ -1,0 +1,159 @@
+/* Compact next-shift card. Its height follows the crew text, so side panels
+   keep the same automatic resize behaviour with short and long name lists. */
+#radiographers-next-container.mk-next-shift-card,
+#radiologists-next-container.mk-next-shift-card {
+  container-type: inline-size;
+  position: relative !important;
+  display: grid !important;
+  grid-template-rows: auto auto auto !important;
+  gap: 10px !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 8px 0 2px !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+#radiographers-next-container.mk-next-shift-card::before,
+#radiologists-next-container.mk-next-shift-card::before {
+  display: none !important;
+}
+.mk-next-shift-head {
+  display: grid !important;
+  grid-template-columns: auto auto !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+}
+.mk-next-shift-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 25px !important;
+  height: 25px !important;
+  border: 1px solid rgba(125,211,252,.20) !important;
+  border-radius: 8px !important;
+  background: rgba(56,189,248,.09) !important;
+  color: #7dd3fc !important;
+  font-size: 14px !important;
+}
+.mk-next-shift-head .next-box-label {
+  min-width: 0 !important;
+  margin: 0 !important;
+  color: rgba(245,248,255,.76) !important;
+  font: 800 10px/1.15 Inter, system-ui, sans-serif !important;
+  letter-spacing: .11em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  word-break: normal !important;
+}
+.mk-next-shift-summary {
+  display: inline-flex !important;
+  align-items: baseline !important;
+  gap: 4px !important;
+  color: rgba(245,248,255,.84) !important;
+  font: 800 10px/1.1 ui-monospace, SFMono-Regular, Menlo, monospace !important;
+  white-space: nowrap !important;
+}
+.mk-next-shift-summary i {
+  color: rgba(255,255,255,.22) !important;
+  font-style: normal !important;
+}
+.mk-next-shift-summary strong {
+  color: #7dd3fc !important;
+  font-weight: 750 !important;
+}
+.mk-next-shift-crew {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  color: #f8faff !important;
+  font: 700 12px/1.35 Inter, system-ui, sans-serif !important;
+  letter-spacing: -.01em !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  overflow-wrap: anywhere !important;
+}
+.mk-next-shift-crew.is-empty {
+  color: rgba(255,255,255,.34) !important;
+}
+.mk-next-person {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  min-height: 25px !important;
+  padding: 4px 7px !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 8px !important;
+  background: rgba(255,255,255,.035) !important;
+  white-space: nowrap !important;
+}
+.mk-next-person.is-day {
+  border-color: rgba(251,191,36,.22) !important;
+  background: rgba(251,191,36,.075) !important;
+}
+.mk-next-person.is-night {
+  border-color: rgba(125,211,252,.22) !important;
+  background: rgba(56,189,248,.075) !important;
+}
+.mk-next-person.is-24h {
+  border-color: rgba(251,113,133,.15) !important;
+  background: rgba(255,255,255,.035) !important;
+}
+.mk-next-person b {
+  color: #fff !important;
+  font-weight: 800 !important;
+}
+.mk-next-person-emoji {
+  margin-right: 1px !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+}
+.mk-next-person-hours {
+  font: 700 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace !important;
+  letter-spacing: .01em !important;
+}
+.mk-next-person-hours.is-day { color: #fbbf24 !important; }
+.mk-next-person-hours.is-night { color: #7dd3fc !important; }
+.mk-next-person-hours.is-24h { color: #fb7185 !important; }
+.mk-next-shift-foot {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 0 !important;
+  padding-top: 2px !important;
+  border: 0 !important;
+}
+@container (max-width: 250px) {
+  .mk-next-shift-head {
+    grid-template-columns: auto auto !important;
+    justify-content: center !important;
+  }
+}
+@container (max-width: 190px) {
+  #radiographers-next-container.mk-next-shift-card,
+  #radiologists-next-container.mk-next-shift-card {
+    gap: 7px !important;
+    padding: 7px 0 1px !important;
+    border-radius: 0 !important;
+  }
+  .mk-next-shift-icon { display: none !important; }
+  .mk-next-shift-head { grid-template-columns: 1fr !important; justify-items: center !important; gap: 5px !important; }
+  .mk-next-shift-crew { font-size: 10px !important; line-height: 1.65 !important; }
+  .mk-next-shift-foot { padding-top: 1px !important; }
+}

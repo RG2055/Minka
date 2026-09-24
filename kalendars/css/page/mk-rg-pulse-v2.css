@@ -1,0 +1,1667 @@
+/* Reakcijas dzīvo RADIOGRĀFERI virsraksta brīvajā daļā, nevis kartīšu gridā.
+   Tāpēc arī pilnā dienā netiek pievienota jauna rinda un kartītes nekustas. */
+#grafiks-list.grid-view .cards-section-label-rg {
+  position: relative !important;
+  min-height: 49px !important;
+  align-items: flex-start !important;
+}
+.rg-pulse-taps { display: flex; align-items: center; gap: 5px; }
+.rg-pulse-tap {
+  position: relative;
+  width: 31px;
+  height: 31px;
+  min-width: 31px;
+  min-height: 31px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font: 400 23px/1 system-ui, sans-serif;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+.rg-pulse-tap:hover { background: transparent; border-color: transparent; transform: translateY(-2px) scale(1.08); }
+.rg-pulse-tap:active { transform: scale(.88); }
+.rg-pulse-count {
+  position: absolute;
+  right: -2px;
+  top: -3px;
+  min-width: 12px;
+  height: 12px;
+  padding: 0 3px;
+  border-radius: 99px;
+  background: #dff4ff;
+  color: #07121d;
+  font: 800 7px/12px Inter, system-ui, sans-serif;
+  text-align: center;
+  letter-spacing: 0;
+}
+.rg-pulse-count:empty { display: none; }
+.rg-pulse-write {
+  position: absolute;
+  right: calc(100% + 16px);
+  bottom: 2px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0 2px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #d8ccff;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: 700 11px/1 'Space Grotesk', system-ui, sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.rg-pulse-write:hover { background: transparent; color: #f0ebff; }
+.rg-pulse-burst {
+  position: absolute;
+  left: 50%;
+  top: 3px;
+  z-index: 4;
+  pointer-events: none;
+  font: 400 17px/1 system-ui, sans-serif;
+  animation: rgPulseFly .64s cubic-bezier(.15,.75,.25,1) forwards;
+}
+@keyframes rgPulseFly {
+  0%   { opacity: 1; transform: translate(-50%,0) scale(.72) rotate(-8deg); }
+  60%  { opacity: 1; transform: translate(calc(-50% + var(--rg-fly-x)), -30px) scale(1.18) rotate(8deg); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--rg-fly-x)), -47px) scale(.92) rotate(12deg); }
+}
+
+#rgFeedbackModal {
+  position: fixed;
+  inset: 0;
+  z-index: 230000;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(2,5,10,.72);
+}
+#rgFeedbackModal[hidden] { display: none !important; }
+.rg-feedback-dialog {
+  width: min(440px, calc(100vw - 28px));
+  max-height: min(86vh, 680px);
+  padding: 20px;
+  border: 1px solid rgba(160,190,220,.17);
+  border-radius: 22px;
+  background: #111823;
+  box-shadow: 0 24px 70px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.05);
+  color: #f4f7fb;
+  overflow: hidden;
+}
+.rg-feedback-dialog h2 {
+  margin: 0;
+  color: #fff;
+  font: 800 19px/1.18 Inter, system-ui, sans-serif;
+  letter-spacing: -.02em;
+}
+.rg-feedback-day-tab {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 74px;
+  height: 36px;
+  padding: 0 22px 0 11px;
+  border: 1px solid rgba(148,163,184,.15);
+  border-radius: 12px;
+  background: rgba(15,23,35,.72);
+  color: rgba(226,234,243,.66);
+  font: 760 10px/1 Inter, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.rg-feedback-day-tab:hover { border-color: rgba(125,211,252,.30); color: #fff; }
+.rg-feedback-day-tab.is-active {
+  border-color: rgba(125,211,252,.48);
+  background: rgba(14,116,144,.18);
+  color: #e6f7ff;
+}
+.rg-feedback-day-count {
+  position: absolute;
+  top: -5px;
+  right: -4px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border: 2px solid #111823;
+  border-radius: 99px;
+  background: #67e8f9;
+  color: #061019;
+  font: 850 8px/13px Inter, system-ui, sans-serif;
+  text-align: center;
+}
+#rgFeedbackModal[data-kind="suggestion"] .rg-feedback-day-tab.is-active {
+  border-color: rgba(134,239,172,.46);
+  background: rgba(34,197,94,.14);
+}
+#rgFeedbackModal[data-kind="suggestion"] .rg-feedback-day-count { background: #86efac; }
+.rg-feedback-list {
+  display: grid;
+  gap: 9px;
+  max-height: min(31vh, 210px);
+  margin-top: 8px;
+  padding: 3px 5px 3px 2px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.rg-feedback-entry {
+  position: relative;
+  justify-self: start;
+  width: fit-content;
+  max-width: 88%;
+  padding: 10px 12px 8px;
+  border: 1px solid rgba(103,232,249,.22);
+  border-radius: 17px 17px 17px 5px;
+  background: rgba(8,145,178,.20);
+}
+.rg-feedback-entry:nth-child(4n + 2) {
+  justify-self: end;
+  border-color: rgba(167,139,250,.24);
+  border-radius: 17px 17px 5px 17px;
+  background: rgba(124,58,237,.19);
+}
+.rg-feedback-entry:nth-child(4n + 3) {
+  border-color: rgba(94,234,212,.22);
+  background: rgba(13,148,136,.19);
+}
+.rg-feedback-entry:nth-child(4n) {
+  justify-self: end;
+  border-color: rgba(251,146,60,.22);
+  border-radius: 17px 17px 5px 17px;
+  background: rgba(194,65,12,.18);
+}
+.rg-feedback-entry.is-pending { padding-right: 30px; }
+.rg-feedback-entry-remove {
+  position: absolute;
+  top: 6px;
+  right: 7px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 99px;
+  background: rgba(2,6,12,.28);
+  color: rgba(240,247,255,.62);
+  font: 700 12px/18px system-ui, sans-serif;
+  cursor: pointer;
+}
+#rgFeedbackModal[data-kind="suggestion"] .rg-feedback-entry {
+  border-color: rgba(134,239,172,.22);
+  background: rgba(22,163,74,.17);
+}
+#rgFeedbackModal[data-kind="suggestion"] .rg-feedback-entry:nth-child(4n + 2) {
+  border-color: rgba(192,132,252,.24);
+  background: rgba(126,34,206,.18);
+}
+#rgFeedbackModal[data-kind="suggestion"] .rg-feedback-entry:nth-child(4n + 3) {
+  border-color: rgba(250,204,21,.20);
+  background: rgba(161,98,7,.17);
+}
+#rgFeedbackModal[data-kind="suggestion"] .rg-feedback-entry:nth-child(4n) {
+  border-color: rgba(45,212,191,.22);
+  background: rgba(15,118,110,.18);
+}
+.rg-feedback-entry-text {
+  margin: 0;
+  color: #edf4fb;
+  font: 560 12px/1.4 Inter, system-ui, sans-serif;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.rg-feedback-entry-meta {
+  display: block;
+  margin-top: 5px;
+  color: rgba(225,235,245,.50);
+  font: 650 9px/1.2 Inter, system-ui, sans-serif;
+}
+.rg-feedback-empty {
+  margin: 0;
+  padding: 18px 8px;
+  color: rgba(205,216,230,.42);
+  font: 600 11px/1.35 Inter, system-ui, sans-serif;
+  text-align: center;
+}
+.rg-feedback-more {
+  display: block;
+  min-height: 30px;
+  margin: 8px auto 0;
+  padding: 0 13px;
+  border: 1px solid rgba(125,211,252,.16);
+  border-radius: 10px;
+  background: rgba(125,211,252,.06);
+  color: #bae6fd;
+  font: 700 10px/1 Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+.rg-feedback-more[hidden] { display: none; }
+.rg-feedback-close {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 10px;
+  background: rgba(255,255,255,.05);
+  color: rgba(255,255,255,.72);
+  font: 500 18px/1 system-ui, sans-serif;
+  cursor: pointer;
+}
+#rgFeedbackText {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  min-height: 116px;
+  max-height: 220px;
+  resize: vertical;
+  padding: 12px 13px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 14px;
+  outline: none;
+  background: #0a1018;
+  color: #f4f7fb;
+  font: 500 13px/1.45 Inter, system-ui, sans-serif;
+}
+#rgFeedbackText:focus { border-color: rgba(125,211,252,.38); box-shadow: 0 0 0 3px rgba(56,189,248,.07); }
+#rgFeedbackText::placeholder { color: rgba(205,216,230,.30); }
+
+/* ── Saziņas centrs ---------------------------------------------------------
+   Zulip-inspired topic chat, adapted to the existing lightweight feedback API.
+   Solid translucent colours create a glass feel without backdrop-filter. */
+#rgFeedbackModal {
+  padding: clamp(8px, 2vw, 22px);
+  background: rgba(1, 5, 12, .84);
+}
+.rg-feedback-dialog.rg-comms {
+  width: min(980px, calc(100vw - 24px));
+  height: min(760px, calc(100vh - 28px));
+  max-height: none;
+  padding: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  border: 1px solid rgba(141, 188, 222, .18);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(56, 189, 248, .10), transparent 30%),
+    linear-gradient(145deg, #101923, #0a111a 72%);
+  box-shadow: 0 30px 100px rgba(0, 0, 0, .72), inset 0 1px 0 rgba(255, 255, 255, .055);
+  overflow: hidden;
+}
+.rg-comms-head {
+  min-height: 66px;
+  padding: 12px 14px 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  border-bottom: 1px solid rgba(148, 184, 213, .12);
+  background: rgba(15, 25, 36, .92);
+}
+.rg-comms-logo {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(94, 234, 212, .22);
+  border-radius: 13px;
+  background: linear-gradient(145deg, rgba(45, 212, 191, .20), rgba(16, 185, 129, .07));
+  color: #d3fff4;
+  font-size: 18px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .10);
+}
+.rg-comms-heading { min-width: 0; margin-right: auto; }
+.rg-comms-heading h2 {
+  margin: 0;
+  font: 800 18px/1.1 Inter, system-ui, sans-serif;
+  letter-spacing: -.025em;
+}
+.rg-comms-heading p {
+  margin: 4px 0 0;
+  color: rgba(205, 220, 234, .52);
+  font: 620 10px/1.2 Inter, system-ui, sans-serif;
+}
+.rg-comms-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid rgba(148, 184, 213, .12);
+  border-radius: 12px;
+  background: rgba(4, 10, 17, .52);
+}
+.rg-comms-tab {
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(211, 224, 237, .55);
+  font: 760 10px/1 Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+.rg-comms-tab.is-active {
+  background: rgba(94, 234, 212, .12);
+  color: #e9fff9;
+  box-shadow: inset 0 0 0 1px rgba(94, 234, 212, .18);
+}
+.rg-comms-new-topic {
+  height: 38px;
+  padding: 0 13px;
+  border: 1px solid rgba(251, 191, 36, .28);
+  border-radius: 11px;
+  background: #f4d28b;
+  color: #241705;
+  font: 800 10px/1 Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+.rg-comms .rg-feedback-close {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 11px;
+}
+.rg-comms-body {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+}
+.rg-comms-sidebar {
+  min-height: 0;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(148, 184, 213, .10);
+  background: rgba(7, 14, 22, .54);
+}
+.rg-comms-search {
+  width: 100%;
+  height: 36px;
+  padding: 0 11px 0 31px;
+  border: 1px solid rgba(148, 184, 213, .13);
+  border-radius: 11px;
+  outline: 0;
+  background:
+    linear-gradient(rgba(10, 18, 27, .9), rgba(10, 18, 27, .9)),
+    radial-gradient(circle, #8aa0b4 1.5px, transparent 2px);
+  color: #edf8ff;
+  font: 600 11px/1 Inter, system-ui, sans-serif;
+}
+.rg-comms-search::placeholder { color: rgba(204, 219, 233, .34); }
+.rg-comms-nav { margin-top: 10px; display: grid; gap: 4px; }
+.rg-comms-nav-button,
+.rg-comms-topic {
+  width: 100%;
+  min-height: 39px;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(218, 231, 242, .68);
+  display: grid;
+  grid-template-columns: 25px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  text-align: left;
+  font: 720 10.5px/1.2 Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+.rg-comms-nav-button:hover,
+.rg-comms-topic:hover { background: rgba(148, 184, 213, .07); color: #f5fbff; }
+.rg-comms-nav-button.is-active,
+.rg-comms-topic.is-active {
+  background: rgba(45, 212, 191, .10);
+  color: #e8fff9;
+  box-shadow: inset 0 0 0 1px rgba(94, 234, 212, .15);
+}
+.rg-comms-nav-icon {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(148, 184, 213, .08);
+  font-size: 12px;
+}
+.rg-comms-count {
+  min-width: 20px;
+  height: 19px;
+  padding: 0 6px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 99px;
+  background: rgba(94, 234, 212, .11);
+  color: #baf8e9;
+  font: 800 8px/1 Inter, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.rg-comms-section-label {
+  margin: 17px 8px 7px;
+  color: rgba(186, 205, 222, .34);
+  font: 800 8px/1 Inter, system-ui, sans-serif;
+  letter-spacing: .10em;
+  text-transform: uppercase;
+}
+.rg-comms-topic-list {
+  min-height: 0;
+  padding-right: 2px;
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+.rg-comms-topic-copy { min-width: 0; }
+.rg-comms-topic-copy strong,
+.rg-comms-topic-copy small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rg-comms-topic-copy strong { color: inherit; font: inherit; }
+.rg-comms-topic-copy small { margin-top: 3px; color: rgba(190, 208, 224, .38); font-size: 8px; }
+.rg-comms-main {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  background: rgba(6, 12, 19, .32);
+}
+.rg-comms-feed-head {
+  min-height: 55px;
+  padding: 10px 17px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid rgba(148, 184, 213, .09);
+}
+.rg-comms-feed-head div { min-width: 0; }
+.rg-comms-feed-head strong { display: block; color: #f5fbff; font: 800 13px/1.2 Inter, system-ui, sans-serif; }
+.rg-comms-feed-head small { display: block; margin-top: 4px; color: rgba(195, 213, 229, .42); font: 620 9px/1 Inter, system-ui, sans-serif; }
+.rg-feedback-list.rg-comms-feed {
+  min-height: 0;
+  max-height: none;
+  margin: 0;
+  padding: 14px 18px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+.rg-comms-message {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px;
+}
+.rg-comms-avatar {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(94, 234, 212, .18);
+  border-radius: 11px;
+  background: linear-gradient(145deg, rgba(45, 212, 191, .17), rgba(16, 185, 129, .07));
+  color: #dcfff6;
+  font: 850 9px/1 Inter, system-ui, sans-serif;
+}
+.rg-comms-message-main { min-width: 0; }
+.rg-comms-message-head { display: flex; align-items: baseline; gap: 7px; min-width: 0; }
+.rg-comms-message-head strong { color: #edf7fd; font: 800 11px/1.2 Inter, system-ui, sans-serif; }
+.rg-comms-message-head time { color: rgba(190, 207, 222, .38); font: 620 8.5px/1 Inter, system-ui, sans-serif; }
+.rg-comms-topic-chip {
+  max-width: 180px;
+  padding: 3px 7px;
+  border-radius: 7px;
+  background: rgba(45, 212, 191, .09);
+  color: #aef3e2;
+  font: 760 8px/1 Inter, system-ui, sans-serif;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rg-comms-bubble {
+  width: fit-content;
+  max-width: min(650px, 96%);
+  margin-top: 5px;
+  padding: 9px 11px;
+  border: 1px solid rgba(148, 184, 213, .12);
+  border-radius: 5px 14px 14px 14px;
+  background: rgba(18, 30, 42, .78);
+  color: #eaf3fa;
+  font: 540 11.5px/1.45 Inter, system-ui, sans-serif;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.rg-comms-message.is-own .rg-comms-bubble {
+  border-color: rgba(94, 234, 212, .18);
+  background: rgba(15, 118, 110, .20);
+}
+.rg-comms-reply-quote {
+  display: block;
+  margin-bottom: 7px;
+  padding: 6px 8px;
+  border-left: 2px solid rgba(125, 211, 252, .42);
+  border-radius: 0 7px 7px 0;
+  background: rgba(3, 9, 15, .38);
+  color: rgba(205, 222, 236, .58);
+  font-size: 9px;
+}
+.rg-comms-message-actions { display: flex; gap: 5px; margin-top: 4px; opacity: .62; }
+.rg-comms-message:hover .rg-comms-message-actions { opacity: 1; }
+.rg-comms-message-actions button {
+  height: 23px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(191, 210, 226, .55);
+  font: 700 8px/1 Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+.rg-comms-message-actions button:hover { background: rgba(148, 184, 213, .08); color: #e9f8ff; }
+.rg-comms-empty { margin: auto; padding: 28px; text-align: center; color: rgba(196, 214, 230, .42); font: 650 11px/1.5 Inter, system-ui, sans-serif; }
+.rg-comms-composer {
+  margin: 0 14px 14px;
+  padding: 9px;
+  border: 1px solid rgba(94, 234, 212, .14);
+  border-radius: 15px;
+  background: rgba(10, 18, 27, .92);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .18), inset 0 1px 0 rgba(255, 255, 255, .035);
+}
+.rg-comms-compose-context { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; }
+.rg-comms-author-wrap {
+  height: 30px;
+  max-width: 190px;
+  padding: 0 4px 0 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 1 auto;
+  border: 1px solid rgba(94, 234, 212, .16);
+  border-radius: 9px;
+  background: rgba(45, 212, 191, .055);
+  color: rgba(176, 226, 215, .54);
+}
+.rg-comms-author-wrap > span {
+  flex: 0 0 auto;
+  font: 760 7.5px/1 Inter, system-ui, sans-serif;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+.rg-comms-author {
+  min-width: 0;
+  max-width: 118px;
+  height: 24px;
+  border: 0;
+  outline: 0;
+  box-shadow: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  color: #d9fff5;
+  font: 760 9px/1 Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+.rg-comms-author:focus,
+.rg-comms-author:focus-visible {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+.rg-comms-author-wrap:focus-within {
+  border-color: rgba(94, 234, 212, .32);
+  box-shadow: inset 0 0 0 1px rgba(94, 234, 212, .06);
+}
+.rg-comms-author option { background: #101923; color: #edf8f5; }
+.rg-comms-topic-input {
+  width: min(280px, 62%);
+  height: 28px;
+  padding: 0 9px;
+  border: 1px solid rgba(251, 191, 36, .16);
+  border-radius: 8px;
+  outline: 0;
+  background: rgba(245, 158, 11, .055);
+  color: #ffe8b3;
+  font: 700 9px/1 Inter, system-ui, sans-serif;
+}
+.rg-comms-topic-input::placeholder { color: rgba(236, 205, 143, .35); }
+.rg-comms-replying { min-width: 0; color: rgba(188, 208, 224, .48); font: 650 8.5px/1 Inter, system-ui, sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rg-comms-cancel-reply { margin-left: auto; border: 0; background: transparent; color: rgba(202, 219, 233, .45); cursor: pointer; }
+.rg-comms-compose-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 8px; }
+#rgFeedbackText {
+  width: 100%;
+  min-height: 44px;
+  max-height: 120px;
+  margin: 0;
+  padding: 11px 12px;
+  resize: none;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(2, 8, 14, .48);
+  font-size: 11px;
+}
+#rgFeedbackText:focus { border: 0; box-shadow: inset 0 0 0 1px rgba(125, 211, 252, .15); }
+.rg-comms-send {
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 12px;
+  background: #bdf3df;
+  color: #071a14;
+  display: grid;
+  place-items: center;
+  font: 900 17px/1 system-ui, sans-serif;
+  cursor: pointer;
+}
+.rg-comms-send:disabled { opacity: .32; cursor: default; }
+.rg-comms-tools { display: flex; align-items: center; gap: 3px; margin-top: 7px; }
+.rg-comms-emoji {
+  width: 28px;
+  height: 25px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  font-size: 13px;
+  cursor: pointer;
+}
+.rg-comms-emoji:hover { background: rgba(148, 184, 213, .08); }
+.rg-comms-char-count { margin-left: auto; color: rgba(190, 207, 222, .30); font: 700 8px/1 Inter, system-ui, sans-serif; }
+.rg-comms-status { color: rgba(190, 207, 222, .38); font: 650 8px/1 Inter, system-ui, sans-serif; }
+
+@media (max-width: 720px) {
+  #rgFeedbackModal { padding: 0; }
+  .rg-feedback-dialog.rg-comms { width: 100vw; height: 100dvh; border: 0; border-radius: 0; }
+  .rg-comms-head { min-height: 58px; padding: 9px 10px; }
+  .rg-comms-heading p, .rg-comms-new-topic { display: none; }
+  .rg-comms-tab { padding: 0 8px; }
+  .rg-comms-body { grid-template-columns: 1fr; }
+  .rg-comms-sidebar { display: none; }
+  #rgFeedbackModal[data-mobile-panel="topics"] .rg-comms-sidebar { display: flex; }
+  #rgFeedbackModal[data-mobile-panel="topics"] .rg-comms-main { display: none; }
+  .rg-feedback-list.rg-comms-feed { padding: 12px 11px 20px; }
+  .rg-comms-composer { margin: 0 8px 8px; }
+  .rg-comms-compose-context { flex-wrap: wrap; }
+  .rg-comms-author-wrap { width: calc(48% - 4px); max-width: none; }
+  .rg-comms-author { max-width: none; flex: 1; }
+  .rg-comms-topic-input { width: calc(52% - 4px); }
+  .rg-comms-replying { order: 3; flex: 1; }
+  .rg-comms-cancel-reply { order: 4; }
+}
+
+:root.mk-mobile-shell #grafiks-list.grid-view .cards-section-label-rg { min-height: 40px !important; }
+:root.mk-mobile-shell .rg-pulse-tap { width: 24px; height: 24px; min-width: 24px; min-height: 24px; font-size: 17px; }
+:root.mk-mobile-shell .rg-pulse-write { width: 22px; min-width: 22px; height: 22px; min-height: 22px; padding: 0; justify-content: center; }
+:root.mk-mobile-shell .rg-pulse-write span { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .rg-pulse-burst { animation: none; opacity: 0; }
+  .rg-pulse-tap:active { transform: none; }
+}
+
+/* Feedback is a real RADIOLOGI grid card. It inherits the exact employee-card
+   column width and height, so crowded days wrap naturally without overlap. */
+#grafiks-list.grid-view .cards-section-label-rg {
+  min-height: 0 !important;
+  align-items: center !important;
+}
+#grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card {
+  position: relative !important;
+  cursor: default !important;
+  padding: clamp(10px, 4cqw, 14px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  overflow: hidden !important;
+  /* Keep the expensive mood subtree from invalidating layout/style outside
+     this grid item while its people and coffee badges are refreshed. */
+  contain: layout paint style;
+  --rg-card-accent: #86efac;
+  --rg-card-rgb: 74, 222, 128;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  transition: none !important;
+}
+#grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card:hover,
+#grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card:active {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.rg-feedback-cloud {
+  position: absolute;
+  inset: 8% 0 4%;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center,
+    rgba(var(--rg-card-rgb),.14) 0%,
+    rgba(var(--rg-card-rgb),.06) 46%,
+    transparent 74%);
+}
+.rg-feedback-card > :not(.rg-feedback-cloud) {
+  position: relative;
+  z-index: 1;
+}
+#grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card[data-mood="terrible"] { --rg-card-accent: #fb7185; --rg-card-rgb: 244,63,94; }
+#grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card[data-mood="bad"]      { --rg-card-accent: #fb923c; --rg-card-rgb: 249,115,22; }
+#grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card[data-mood="ok"]       { --rg-card-accent: #94a3b8; --rg-card-rgb: 100,116,139; }
+#grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card[data-mood="good"]     { --rg-card-accent: #5eead4; --rg-card-rgb: 45,212,191; }
+#grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card[data-mood="excellent"] { --rg-card-accent: #86efac; --rg-card-rgb: 74,222,128; }
+.rg-feedback-card-head-spacer {
+  flex: 0 0 clamp(8px, 5.8cqw, 11px);
+  width: 100%;
+  pointer-events: none;
+}
+.rg-feedback-card-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+.rg-feedback-card-title {
+  order: 2;
+  margin-top: clamp(3px, 2cqw, 6px);
+  color: #f8fbff;
+  font: 800 clamp(11px, 8cqw, 15px)/1.12 Inter, system-ui, sans-serif;
+  letter-spacing: -.02em;
+  text-align: center;
+  transform: none;
+  white-space: nowrap;
+}
+.rg-feedback-card .rg-mood-stage { order: 1; }
+.rg-feedback-card.rg-busy-staff .rg-mood-stage {
+  /* Dense days need real space, not smaller or overlapping tokens. The extra
+     height moves the reaction controls down and leaves a clean lower orbit. */
+  min-height: clamp(286px, 88cqw, 314px);
+}
+.rg-feedback-card.rg-super-busy-staff .rg-mood-stage {
+  /* Coffee counters extend beyond their lenses. Reserve the larger orbit only
+     on dates where four or more people carry those extra badges. */
+  min-height: clamp(340px, 105cqw, 380px);
+}
+.rg-feedback-card.rg-six-staff .rg-mood-stage {
+  /* Six tokens fit cleanly on a tighter orbit; the generic busy height leaves
+     a large empty belt between the face and reactions in the full PWA. */
+  min-height: 230px;
+}
+.rg-feedback-card .rg-pulse-taps {
+  order: 3;
+  width: 100%;
+  margin-top: clamp(7px, 5cqw, 10px);
+  padding-bottom: clamp(17px, 12cqw, 21px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0,1fr));
+  gap: 2px;
+}
+.rg-feedback-card .rg-feedback-card-reaction-label { order: 4; }
+.rg-feedback-card .rg-pulse-tap {
+  width: 100%;
+  height: clamp(24px, 18cqw, 30px);
+  min-width: 0;
+  min-height: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 8px;
+  font-size: clamp(20px, 13.5cqw, 25px);
+}
+.rg-feedback-card .rg-pulse-tap > span:first-child {
+  display: block;
+  width: 1em;
+  flex: 0 0 1em;
+  line-height: 1;
+  text-align: center;
+  transform: scale(1);
+  transition: transform 150ms ease;
+}
+.rg-feedback-card .rg-pulse-tap:hover {
+  background: transparent;
+  transform: none;
+}
+.rg-feedback-card .rg-pulse-tap:hover > span:first-child,
+.rg-feedback-card .rg-pulse-tap.is-selected > span:first-child { transform: scale(1.16); }
+.rg-feedback-card [data-rg-pulse="terrible"] { --rg-reaction-accent: #fb7185; --rg-reaction-rgb: 244,63,94; }
+.rg-feedback-card [data-rg-pulse="bad"]      { --rg-reaction-accent: #fb923c; --rg-reaction-rgb: 249,115,22; }
+.rg-feedback-card [data-rg-pulse="ok"]       { --rg-reaction-accent: #cbd5e1; --rg-reaction-rgb: 148,163,184; }
+.rg-feedback-card [data-rg-pulse="good"]     { --rg-reaction-accent: #5eead4; --rg-reaction-rgb: 45,212,191; }
+.rg-feedback-card [data-rg-pulse="excellent"] { --rg-reaction-accent: #86efac; --rg-reaction-rgb: 74,222,128; }
+.rg-feedback-card .rg-pulse-tap.is-selected {
+  background: transparent;
+  outline: 0;
+  outline-offset: 0;
+  box-shadow: none;
+  transform: none;
+}
+.rg-feedback-card .rg-pulse-tap.is-selected > span:first-child {
+  transform: scale(1.16);
+}
+.rg-feedback-card .rg-pulse-tap:focus-visible {
+  outline: 2px solid var(--rg-card-accent);
+  outline-offset: 2px;
+}
+.rg-feedback-card .rg-pulse-tap.is-selected:focus-visible {
+  outline: 0 !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
+}
+.rg-feedback-card .rg-pulse-count {
+  right: auto;
+  left: calc(50% + 5px);
+  top: -3px;
+  min-width: 13px;
+  height: 13px;
+  padding: 0 2px;
+  box-sizing: border-box;
+  border: 1px solid rgba(255,255,255,.24);
+  background: var(--rg-reaction-accent);
+  color: #081018;
+  font: 850 7px/11px Inter, system-ui, sans-serif;
+}
+.rg-feedback-card .rg-pulse-tap.is-selected .rg-pulse-count {
+  transform: none;
+}
+.rg-feedback-card .rg-pulse-name {
+  display: none;
+  position: absolute;
+  z-index: 12;
+  top: calc(100% + 5px);
+  left: 50%;
+  width: max-content;
+  max-width: 64px;
+  padding: 3px 5px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 7px;
+  background: #080c0a;
+  color: #f7fbf8;
+  font: 650 clamp(6.5px, 4.8cqw, 8px)/1 Inter, system-ui, sans-serif;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.rg-feedback-card .rg-pulse-tap.is-selected .rg-pulse-name { display: block; }
+.rg-feedback-card .rg-pulse-tap:first-child .rg-pulse-name {
+  left: 0;
+  transform: none;
+}
+.rg-feedback-card .rg-pulse-tap:last-child .rg-pulse-name {
+  right: 0;
+  left: auto;
+  transform: none;
+}
+.rg-feedback-card-reaction-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.rg-feedback-card-actions {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) clamp(42px, 28cqw, 48px);
+  gap: 5px;
+  width: 100%;
+}
+.rg-feedback-card .rg-pulse-write {
+  position: relative;
+  inset: auto !important;
+  width: 100%;
+  height: clamp(32px, 23cqw, 36px);
+  min-height: 32px;
+  padding: 0 1px;
+  border: 1px solid rgba(var(--rg-card-rgb),.22);
+  border-radius: 10px;
+  background: rgba(var(--rg-card-rgb),.09);
+  color: #e7f5ff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font: 750 clamp(9.5px, 7.2cqw, 11.5px)/1 Inter, system-ui, sans-serif;
+}
+.rg-feedback-card .rg-pulse-write > span {
+  position: static;
+  flex: 0 0 auto;
+  line-height: 1;
+  transform: none;
+  pointer-events: none;
+}
+.rg-feedback-card .rg-pulse-write--comment {
+  gap: 2px;
+  min-width: 0;
+  overflow: visible;
+}
+.rg-feedback-card .rg-pulse-write--comment > span {
+  min-width: 0;
+  letter-spacing: -0.25px;
+  white-space: nowrap;
+}
+.rg-feedback-card .rg-comment-icon {
+  position: relative;
+  display: block;
+  width: 12px;
+  height: 9px;
+  border-radius: 5px;
+  background: currentColor;
+  flex: 0 0 12px;
+}
+.rg-feedback-card .rg-comment-icon::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  bottom: -2px;
+  width: 0;
+  height: 0;
+  border-top: 3px solid currentColor;
+  border-right: 3px solid transparent;
+}
+@container (max-width: 120px) {
+  .rg-feedback-card .rg-pulse-taps {
+    width: calc(100% + 8px);
+    margin-inline: -4px;
+    gap: 3px;
+  }
+  .rg-feedback-card .rg-pulse-tap {
+    font-size: 19px;
+  }
+  .rg-feedback-card-actions {
+    grid-template-columns: minmax(0,1fr) 38px;
+    gap: 4px;
+  }
+  .rg-feedback-card .rg-pulse-write--comment {
+    gap: 2px;
+  }
+  .rg-feedback-card .rg-pulse-write--comment > span {
+    font-size: 8.75px;
+  }
+  .rg-feedback-card .rg-comment-icon {
+    width: 10px;
+    height: 8px;
+    flex-basis: 10px;
+  }
+}
+.rg-feedback-action-count {
+  position: absolute;
+  top: -6px;
+  right: -2px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: 99px;
+  background: #67e8f9;
+  color: #061019;
+  font: 850 7px/12px Inter, system-ui, sans-serif;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.rg-feedback-action-count:empty { display: none; }
+.rg-feedback-card .rg-pulse-write:hover {
+  background: rgba(var(--rg-card-rgb),.18);
+  color: #fff;
+}
+:root.mk-mobile-shell #grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card {
+  min-height: 120px !important;
+}
+
+/* ── Mood blob ─────────────────────────────────────────────────────────────
+   Presentation only. The blob renders whatever mood the existing pulse state
+   already holds (localStorage `minkaShiftPulseV2` + the Cloudflare counts
+   loaded into it); it never stores, sends or derives a mood of its own. */
+/* Right edge of the RADIOLOGI row, as an ordinary grid item. Taking it out of
+   the flow to centre it on the seam between the sections cost far more than it
+   was worth: the half hanging below the section got clipped, and the space
+   reserved for both halves pushed the two blocks ~310px apart. In the flow the
+   card can never be clipped and only ever adds the difference between its own
+   height and an employee card's. */
+#grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card,
+:root.host-radio-open #grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card,
+:root.mk-mobile-shell #grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card {
+  position: relative !important;
+  grid-column: span 2 / -1 !important;
+  justify-self: stretch !important;
+  align-self: start !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: clamp(184px, 84cqw, 232px) !important;
+  max-height: none !important;
+  aspect-ratio: auto !important;
+  margin: 0 !important;
+}
+/* The taller card must not stretch the employee cards sharing its row. The
+   class is set in mount() rather than with :has(), so the style engine never
+   has to re-check an ancestor while the grid is rebuilt. */
+.cards-subgrid.rg-has-mood-card > .card.mk-mid-card { align-self: start; }
+
+/* On a six-column desktop grid the feedback module occupies the last two
+   columns and is taller than one employee card. Pull the following
+   RADIOGRAFĒRI section into that otherwise empty vertical space; JS assigns
+   only its first row to the free columns on the left, while overflow starts
+   on row two below the module. `top` changes only the visual position and the
+   matching negative bottom margin removes the old blank space from the flow. */
+.cards-section.rg-mood-pullup {
+  position: relative;
+  top: var(--rg-mood-pullup, 0px);
+  margin-bottom: var(--rg-mood-pullup, 0px) !important;
+  /* The visually moved section still owns a full-width transparent box. Let
+     clicks pass through that empty area to the feedback controls beneath it. */
+  pointer-events: none;
+}
+.cards-section.rg-mood-pullup .cards-subgrid > .card { pointer-events: auto; }
+
+/* The blob label already names the selected mood, so the per-emoji tooltip
+   below the row would just repeat it — and its reserved space made the card
+   taller than it needs to be. */
+.rg-feedback-card .rg-pulse-tap.is-selected .rg-pulse-name { display: none; }
+.rg-feedback-card .rg-pulse-taps { padding-bottom: clamp(2px, 1.5cqw, 4px); }
+
+.rg-mood-stage {
+  position: relative;
+  width: 100%;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: clamp(2px, 1.6cqw, 5px);
+  pointer-events: none;
+  /* Layout and style containment keep the badge refresh from invalidating the
+     rest of the card. Paint containment must NOT be added here: the staff
+     badges are placed by offset from the blob's centre and the topmost ones
+     legitimately reach ~10px above the stage box, so a paint clip cuts their
+     top edge off. The card itself already owns a paint clip. */
+  contain: layout style;
+}
+.rg-mood-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: clamp(116px, 76cqw, 196px);
+  height: clamp(116px, 76cqw, 196px);
+  margin: 0;
+  border-radius: 50%;
+  color: rgba(148,163,184,.20);
+  background: radial-gradient(circle at 50% 50%, currentColor 0%, transparent 68%);
+  transform: translate(-50%, -60%);
+  transition: color 420ms ease;
+  pointer-events: none;
+}
+.rg-mood-blob-wrap {
+  position: relative;
+  display: block;
+  /* The ring is centred on the blob, so the wrapper has to grow to hold it. */
+  --rg-ring-r: clamp(52px, 34cqw, 86px);
+  padding: calc(var(--rg-ring-r) - clamp(78px, 52cqw, 132px) / 2 + clamp(11px, 4.5cqw, 14px));
+}
+/* The tap acknowledgement lives on the wrapper so it never fights with the
+   idle breathing animation running on the <svg> itself. */
+.rg-mood-blob-wrap.is-pop { animation: rg-blob-pop 460ms cubic-bezier(.3, .8, .3, 1); }
+.rg-mood-blob {
+  position: relative;
+  display: block;
+  width: clamp(78px, 52cqw, 132px);
+  height: clamp(78px, 52cqw, 132px);
+  overflow: visible;
+  animation: none;
+}
+/* Blinking is what makes the blob read as alive rather than as an icon.
+   view-box keeps the origin stable even for the dot-shaped neutral eyes. */
+.rg-mood-eyes {
+  transform-box: view-box;
+  transform-origin: 50px 45px;
+  animation: none;
+}
+.rg-mood-blob-shape {
+  transition: d 440ms cubic-bezier(.4, 0, .2, 1);
+}
+.rg-mood-blob-stop {
+  transition: stop-color 440ms ease;
+}
+.rg-mood-face path {
+  transition: d 440ms cubic-bezier(.4, 0, .2, 1), opacity 300ms ease;
+}
+/* Brows and mouth are drawn strokes; eyes are filled shapes. */
+.rg-mood-line {
+  fill: none;
+  stroke: rgba(9, 14, 22, .80);
+  stroke-width: 3.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.rg-mood-fill { stroke: none; }
+.rg-mood-eyeWhite { fill: #fbfdff; }
+.rg-mood-pupil    { fill: #141b24; }
+.rg-mood-glint    { fill: #ffffff; }
+.rg-mood-mouthOpen { fill: #141b24; }
+.rg-mood-teeth     { fill: #fbfdff; }
+.rg-mood-blob-shape,
+.rg-mood-blob-sheen { transition: d 440ms cubic-bezier(.4, 0, .2, 1); }
+.rg-mood-blob-fatigue {
+  fill: var(--rg-fatigue-wash, transparent);
+  opacity: var(--rg-fatigue-alpha, 0);
+  transition: d 440ms cubic-bezier(.4, 0, .2, 1), fill 300ms ease, opacity 300ms ease;
+}
+.rg-mood-glass-shell {
+  fill: url(#rgMoodGlassShell);
+  stroke: url(#rgMoodGlassRim);
+  stroke-width: 1.35;
+}
+.rg-mood-glass-inner {
+  fill: none;
+  stroke: rgba(230, 244, 255, .18);
+  stroke-width: .65;
+}
+.rg-mood-glass-highlight {
+  fill: none;
+  stroke: rgba(255,255,255,.58);
+  stroke-width: 2.1;
+  stroke-linecap: round;
+  opacity: .62;
+}
+.rg-mood-glass-shadowline {
+  fill: none;
+  stroke: rgba(4, 12, 23, .55);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  opacity: .60;
+}
+/* Every coffee source floats free around the blob: bare icon plus its count,
+   no box, no border, no glow. The ring fills the blob wrapper, so its centre
+   is the blob's centre and JS can lay the badges out by angle from there. */
+.rg-mood-ring {
+  position: absolute;
+  inset: 0;
+  --rg-ring-r: calc(clamp(78px, 52cqw, 132px) / 2 + clamp(20px, 8cqw, 26px));
+  pointer-events: none;
+}
+.rg-mood-person {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: var(--rg-person-z, 1);
+  width: var(--rg-person-size, 28px);
+  height: var(--rg-person-size, 28px);
+  transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px)));
+  opacity: var(--rg-person-opacity, 1);
+  pointer-events: none;
+}
+.rg-mood-person-glass {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1px solid rgba(214, 235, 255, .20);
+  border-radius: 38% 46% 42% 50%;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,.06) 32%, rgba(8,17,29,.82) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.22),
+    inset 0 -1px 0 rgba(0,0,0,.26),
+    0 4px 10px rgba(0,0,0,.26);
+  color: #eef7ff;
+  font: 850 calc(var(--rg-person-size, 28px) * .34)/1 Inter, system-ui, sans-serif;
+  letter-spacing: -.04em;
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0,0,0,.70);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+/* The staff tokens reuse the same pre-rendered transparent glass lens as the
+   main mood orb. Different fixed aspect ratios read as camera angles while
+   staying a single static image layer — no canvas, WebGL or idle animation. */
+.rg-mood-person .rg-mood-person-glass {
+  overflow: visible;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(7, 14, 24, .34);
+  box-shadow: none;
+  /* Keep the vessel itself perfectly round. Perspective belongs to the glass
+     highlight; squeezing the vessel makes its liquid look stretched. */
+  transform: none;
+  transform-origin: 50% 50%;
+}
+.rg-mood-person .rg-mood-person-glass::after {
+  content: '';
+  position: absolute;
+  inset: -9%;
+  z-index: 2;
+  background: url('../../assets/mood-glass-premium.webp?v=20260820b') center / contain no-repeat;
+  transform: rotate(var(--rg-bubble-roll, 0deg));
+  transform-origin: 50% 50%;
+  pointer-events: none;
+}
+/* Each worker carries their own fatigue level inside the lens. The fill is a
+   clipped, static layer: only its height transitions when fresh data arrives,
+   so there is no idle animation or continuous paint cost. */
+.rg-mood-person-liquid-vessel {
+  position: absolute;
+  inset: 5%;
+  z-index: 1;
+  display: block;
+  overflow: hidden;
+  border-radius: 50%;
+  pointer-events: none;
+  contain: paint;
+}
+.rg-mood-person-liquid {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: block;
+  height: var(--rg-person-fatigue-level, 0%);
+  min-height: 0;
+  border-radius: 48% 48% 50% 50% / 3px 3px 50% 50%;
+  background:
+    radial-gradient(ellipse at 28% 12%, rgba(240, 252, 255, .26), transparent 40%),
+    linear-gradient(180deg,
+      rgba(var(--rg-person-liquid-rgb, 46, 214, 145), .48),
+      rgba(var(--rg-person-liquid-rgb, 46, 214, 145), .72));
+  box-shadow:
+    inset 4px 0 7px rgba(226, 250, 255, .08),
+    inset -5px 0 8px rgba(4, 11, 23, .14);
+  transition: height 480ms cubic-bezier(.22, .78, .22, 1);
+}
+.rg-mood-person-liquid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 4%;
+  left: 4%;
+  height: 2px;
+  border-radius: 50%;
+  background: rgba(244, 253, 255, .72);
+  box-shadow: 0 1px 0 rgba(var(--rg-person-liquid-rgb, 46, 214, 145), .70);
+  pointer-events: none;
+}
+.rg-mood-person-glass::before {
+  content: '';
+  position: absolute;
+  inset: 2px 3px auto;
+  height: 34%;
+  border-radius: 999px 999px 45% 45%;
+  background: linear-gradient(180deg, rgba(255,255,255,.18), transparent);
+  pointer-events: none;
+}
+.rg-mood-person.is-rd .rg-mood-person-glass {
+  border-color: rgba(255, 120, 128, .24);
+  background: linear-gradient(145deg, rgba(255,148,154,.16), rgba(255,255,255,.04) 35%, rgba(29,10,18,.84));
+}
+.rg-mood-person-emoji {
+  position: relative;
+  z-index: 3;
+  display: block;
+  font-size: calc(var(--rg-person-size, 28px) * .62);
+  line-height: 1;
+  transform: translateY(-1px);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .54);
+}
+.rg-mood-person .rg-mood-person-emoji {
+  transform: translateY(-1px);
+}
+.rg-mood-person.is-initials .rg-mood-person-glass {
+  /* Initials are labels, not pictograms: a strongly foreshortened oval makes
+     them look crooked. Keep their glass shell round and readable. */
+  transform: none;
+}
+.rg-mood-person.is-initials .rg-mood-person-emoji {
+  transform: translateY(-1px);
+}
+.rg-mood-person.is-initials .rg-mood-person-glass {
+  border-radius: 50%;
+  border-color: rgba(var(--rg-person-fatigue-rgb, 255, 201, 79), .38);
+  background:
+    radial-gradient(circle at 32% 22%, rgba(255,255,255,.26), transparent 35%),
+    linear-gradient(145deg, rgba(var(--rg-person-fatigue-rgb, 255, 201, 79), .22), rgba(111,148,184,.07) 42%, rgba(6,18,34,.68));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.30),
+    inset -1px -2px 0 rgba(3,10,20,.24),
+    0 4px 10px rgba(0,0,0,.22);
+}
+.rg-mood-person.is-initials .rg-mood-person-emoji {
+  font-size: calc(var(--rg-person-size, 28px) * .54);
+  color: var(--rg-person-fatigue, #ffc94f);
+  letter-spacing: -.06em;
+  text-shadow:
+    0 1px 0 rgba(91, 52, 0, .92),
+    0 0 5px rgba(var(--rg-person-fatigue-rgb, 255, 201, 79), .30);
+}
+.rg-mood-person-coffee {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 16px;
+  padding: 0 3px;
+  box-sizing: border-box;
+  border: 1px solid rgba(229, 174, 91, .34);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(74, 49, 24, .96), rgba(27, 19, 12, .98));
+  box-shadow: inset 0 1px 0 rgba(255, 226, 178, .12), 0 2px 5px rgba(0,0,0,.28);
+  color: #f2c06f;
+  gap: 2px;
+  font: 800 8px/1 Inter, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.02em;
+  white-space: nowrap;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.rg-mood-person-coffee-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+.rg-mood-person-coffee-source svg {
+  display: block;
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+}
+.rg-mood-person-coffee-source b {
+  color: #f4c875;
+  font: inherit;
+}
+.rg-mood-coffee-orbit {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: var(--rg-coffee-z, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px)));
+  opacity: var(--rg-coffee-opacity, .92);
+  color: #f2c36f;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.rg-mood-coffee-orbit svg {
+  display: block;
+  width: var(--rg-coffee-size, 24px);
+  height: var(--rg-coffee-size, 24px);
+}
+.rg-mood-coffee-orbit b {
+  font: 800 calc(var(--rg-coffee-size, 24px) * .48)/1 Inter, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgba(0,0,0,.70);
+}
+.rg-mood-src {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: clamp(2px, 1.2cqw, 5px);
+  white-space: nowrap;
+  /* Position comes from --rg-x/--rg-y, worked out in JS from the badge's angle
+     and the blob's measured radius. Composing rotate+translate in CSS put the
+     badges on the blob's face, because the percentage translate resolved
+     against an already-rotated frame. */
+  transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px))) rotate(-3deg);
+  animation: rg-src-float 5.6s ease-in-out infinite;
+}
+.rg-mood-src :is(svg, img) {
+  display: block;
+  width: var(--rg-src-icon, clamp(25px, 11.5cqw, 31px));
+  height: var(--rg-src-icon, clamp(25px, 11.5cqw, 31px));
+  object-fit: contain;
+}
+.rg-mood-src b {
+  color: #f2ddba;
+  font: 700 var(--rg-src-num, clamp(14px, 6.6cqw, 19px))/1 Inter, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+/* Base size per how full the ring is; JS then scales each badge around this
+   from its own depth, so the two work together rather than fight. */
+[data-rg-dense="mid"] { --rg-src-icon: clamp(23px, 10.5cqw, 29px); --rg-src-num: clamp(13px, 6cqw, 17px); }
+[data-rg-dense="hi"]  { --rg-src-icon: clamp(21px, 9.5cqw, 26px); --rg-src-num: clamp(12px, 5.6cqw, 16px); }
+
+/* Four drift patterns, handed out round-robin so neighbouring badges never
+   bob in lockstep. Each keyframe re-states the base offset, otherwise the
+   animation would drop the badge back onto the blob for its whole run. */
+.rg-mood-f0 { animation-name: rg-src-f0; animation-duration: 5.6s; }
+.rg-mood-f1 { animation-name: rg-src-f1; animation-duration: 7.1s; animation-delay: -1.9s; }
+.rg-mood-f2 { animation-name: rg-src-f2; animation-duration: 6.3s; animation-delay: -3.4s; }
+.rg-mood-f3 { animation-name: rg-src-f3; animation-duration: 8s;   animation-delay: -0.8s; }
+@keyframes rg-src-f0 {
+  0%, 100% { transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px))) rotate(-3deg); }
+  50%      { transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px))) translateY(-4px) rotate(-3deg); }
+}
+@keyframes rg-src-f1 {
+  0%, 100% { transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px))) rotate(-3deg); }
+  50%      { transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px))) translate(3px, 2px) rotate(-1deg); }
+}
+@keyframes rg-src-f2 {
+  0%, 100% { transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px))) rotate(-3deg); }
+  33%      { transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px))) translate(-3px, -2px) rotate(-5deg); }
+  66%      { transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px))) translate(2px, -3px) rotate(-2deg); }
+}
+@keyframes rg-src-f3 {
+  0%, 100% { transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px))) rotate(-3deg); }
+  50%      { transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px))) translate(-3px, 3px) rotate(-4deg); }
+}
+
+/* Coffee statistics: a bare icon-and-label control tucked under the coffee
+   counter — no border, no background, nothing that reads as a box. It is
+   position:absolute so it never adds height to the right stack, which would
+   push the coffee pill off the fatigue pill's line. */
+.rg-mood-topbtn {
+  position: absolute;
+  top: calc(100% + clamp(4px, 1.8cqw, 6px));
+  left: 50%;
+  transform: translateX(-50%);
+  /* The stage is pointer-events: none so the badges never eat a tap; the one
+     real control inside it has to opt back in. */
+  pointer-events: auto;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #e8c79a;
+  font: 800 clamp(6px, 2.7cqw, 7.5px)/1.15 Inter, system-ui, sans-serif;
+  letter-spacing: .02em;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.rg-mood-topbtn[hidden] { display: none; }
+.rg-mood-topbtn:hover { color: #f7e3c2; }
+.rg-mood-topbtn svg {
+  display: block;
+  width: clamp(12px, 5.2cqw, 15px);
+  height: clamp(12px, 5.2cqw, 15px);
+  flex: 0 0 auto;
+}
+
+
+/* Coffee top: icon-only button directly under the coffee counter. */
+.rg-mood-topbtn svg { display: block; width: clamp(11px, 4.8cqw, 14px); height: clamp(11px, 4.8cqw, 14px); flex: 0 0 auto; }
+
+/* Both side stacks sit vertically centred on the blob, on opposite sides. */
+.rg-mood-side {
+  position: absolute;
+  top: calc(50% - clamp(9px, 4cqw, 14px));
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(4px, 1.8cqw, 7px);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.rg-mood-side.is-mounted { display: inline-flex; }
+.rg-mood-side--left { left: 0; align-items: center; }
+.rg-mood-side--right {
+  /* Its coffee pill is narrower than the fatigue pill. Pull the whole stack
+     inward so both pills have the same visual gap from the central glass. */
+  right: 21px;
+  align-items: center;
+}
+
+/* Fatigue reads like the watch badge: a solid pill that shifts colour with the
+   value, with the word underneath. */
+.rg-mood-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: clamp(3px, 1.4cqw, 5px) clamp(6px, 2.6cqw, 9px);
+  border-radius: 99px;
+  font: 850 clamp(11px, 4.8cqw, 13px)/1 Inter, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  transition: background 300ms ease, color 300ms ease, opacity 300ms ease;
+}
+.rg-mood-pill svg { display: block; width: clamp(12px, 5.4cqw, 16px); height: clamp(12px, 5.4cqw, 16px); }
+.rg-mood-pill--fatigue {
+  background: var(--rg-fat, #35d07f);
+  color: var(--rg-fat-ink, #0b1a10);
+}
+.rg-mood-pill--coffee {
+  gap: 3px;
+  background: #c8842a;
+  color: #17110a;
+  opacity: .55;
+}
+.rg-mood-pill--coffee.is-on { opacity: 1; }
+.rg-mood-side-label {
+  color: rgba(214,224,238,.62);
+  font: 800 clamp(6px, 2.7cqw, 7.5px)/1 Inter, system-ui, sans-serif;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+
+/* Coffee top: icon-only button directly under the coffee counter. */
+.rg-mood-topbtn svg { display: block; width: clamp(11px, 4.8cqw, 14px); height: clamp(11px, 4.8cqw, 14px); flex: 0 0 auto; }
+/* Opens as an overlay, not as extra rows: the card has a fixed place in the
+   grid, so growing it would push the whole section around. */
+
+
+
+/* One clear entry point for the complete communication centre. */
+.rg-feedback-card .rg-feedback-card-actions {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  margin-top: clamp(4px, 2.4cqw, 8px);
+}
+.rg-feedback-card .rg-pulse-write {
+  height: clamp(34px, 15.5cqw, 42px);
+  padding: 0 clamp(6px, 3cqw, 12px);
+  gap: clamp(5px, 2.6cqw, 8px);
+  border-radius: 12px;
+  border-color: rgba(var(--rg-card-rgb), .30);
+  background: rgba(var(--rg-card-rgb), .13);
+  font-size: clamp(10.5px, 5.2cqw, 12.5px);
+  letter-spacing: -.01em;
+  transition: background 200ms ease, border-color 200ms ease, transform 140ms ease;
+}
+.rg-feedback-card .rg-comment-icon {
+  width: clamp(12px, 5.6cqw, 15px);
+  height: clamp(9px, 4.2cqw, 11px);
+  flex-basis: clamp(12px, 5.6cqw, 15px);
+}
+.rg-feedback-card .rg-pulse-write:hover {
+  background: rgba(var(--rg-card-rgb), .22);
+  border-color: rgba(var(--rg-card-rgb), .44);
+}
+.rg-feedback-card .rg-pulse-write:active { transform: translateY(1px); }
+.rg-feedback-card .rg-pulse-write.rg-pulse-write--comment {
+  width: 100%;
+  height: clamp(44px, 19cqw, 50px);
+  min-height: 44px;
+  gap: clamp(7px, 3cqw, 10px);
+  border-radius: 14px;
+  background: rgba(var(--rg-card-rgb), .17);
+  font-size: clamp(12px, 5.8cqw, 14px);
+  font-weight: 820;
+}
+.rg-feedback-card .rg-pulse-write--comment .rg-comment-icon {
+  width: clamp(16px, 7cqw, 19px);
+  height: clamp(12px, 5.2cqw, 14px);
+  flex-basis: clamp(16px, 7cqw, 19px);
+}
+:root.mk-mobile-shell .rg-feedback-card .rg-feedback-card-actions {
+  grid-template-columns: minmax(0, 1fr);
+}
+:root.mk-mobile-shell .rg-feedback-card .rg-pulse-write.rg-pulse-write--comment {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+}
+:root.mk-mobile-shell .rg-feedback-card .rg-pulse-write--comment > span {
+  display: inline;
+  font-size: 12px;
+}
+
+/* The stage is deliberately static between interactions. This keeps the soft
+   glass look without maintaining compositor layers on older Windows GPUs. */
+.rg-mood-stage.is-idle .rg-mood-glow,
+.rg-mood-stage.is-idle .rg-mood-blob { animation: none; }
+/* Previewing the mood under the finger/cursor before it is committed. */
+.rg-mood-stage.is-preview .rg-mood-blob { animation-play-state: paused; }
+
+@keyframes rg-blob-breathe {
+  0%, 100% { transform: scale(1) translateY(0) rotate(0deg); }
+  34%      { transform: scale(1.016) translateY(-2px) rotate(1.3deg); }
+  67%      { transform: scale(1.009) translateY(-1px) rotate(-1.1deg); }
+}
+@keyframes rg-blink {
+  0%, 93%, 100% { transform: scaleY(1); }
+  95.2%         { transform: scaleY(.08); }
+  97.4%         { transform: scaleY(1); }
+}
+@keyframes rg-blob-pop {
+  0%   { transform: scale(1); }
+  38%  { transform: scale(1.058); }
+  100% { transform: scale(1); }
+}
+@keyframes rg-idle-glow {
+  0%, 100% { opacity: .62; }
+  50%      { opacity: 1; }
+}
+/* The work iGPUs run the app in mk-low-spec, where always-on compositor work
+   is deliberately killed. The blob keeps its looks and its mood transitions —
+   only the never-ending idle motion stops. */
+html.mk-low-spec .rg-mood-src,
+html.mk-low-spec .rg-mood-blob,
+html.mk-low-spec .rg-mood-eyes,
+html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .rg-mood-src,
+  .rg-mood-blob,
+  .rg-mood-eyes,
+  .rg-mood-blob-wrap.is-pop,
+  .rg-mood-stage.is-idle .rg-mood-glow { animation: none; }
+  .rg-mood-blob-shape,
+  .rg-mood-blob-stop,
+  .rg-mood-face path,
+  .rg-mood-glow,
+  .rg-mood-coffee,
+  .rg-feedback-card .rg-pulse-write { transition: none; }
+}

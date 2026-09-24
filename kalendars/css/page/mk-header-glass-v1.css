@@ -1,0 +1,259 @@
+/* ── Galvenes vadīklu caurspīdīgais pārklājums ─────────────────────────────
+   TIKAI stils. Šeit apzināti NAV neviena īpašība, kas maina izkārtojumu:
+   nekādu width/height/padding/margin/gap/font-size/position/display/order.
+   Mainās vienīgi background, border-color, border-radius, box-shadow, color,
+   text-shadow un backdrop-filter — tāpēc galvenes augstums un visu elementu
+   vietas paliek līdz pikselim tādas pašas.
+
+   Vienīgā vieta, kur pieskaros apmales biezumam, ir #minkaBarMenu — tam ir
+   fiksēts 32x32 un box-sizing:border-box, tāpēc 1px apmale neizmaina ārējo
+   izmēru. Elementiem ar automātisku platumu (piem. “Nakts sadalījums”)
+   apmales vietā lietoju inset box-shadow, kas neaizņem vietu.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Kopīgais tonis: mīksts tumšs pildījums, apmale gandrīz neredzama.
+   Formu veido pats pildījums, nevis kontūra — tāpēc nekādu gaišu 1px rāmju.
+   Apmales PLATUMS visur paliek 1px (to maina tikai krāsa), lai kastes izmērs
+   nemainās ne par pikseļa daļu. */
+:root:not(.mk-mobile-shell) #minkaBarWrap {
+  --mkg-fill: rgba(255, 255, 255, .10);
+  --mkg-fill-hover: rgba(255, 255, 255, .18);
+  --mkg-edge: rgba(255, 255, 255, .16);
+  --mkg-edge-hover: rgba(255, 255, 255, .26);
+  --mkg-inner: inset 0 1px 0 rgba(255, 255, 255, .06);
+}
+
+/* Joslas apmale gandrīz nemanāma — mazāk kontūras, vairāk panorāmas. */
+:root:not(.mk-mobile-shell) #minkaBarWrap {
+  border-color: rgba(150, 200, 240, .10) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(164, 214, 244, .03),
+    0 6px 18px rgba(0, 0, 0, .18) !important;
+}
+
+/* ── Attēls iet līdz pašai apmales līnijai ──
+   Foto slānis bija `inset: 3px` no joslas iekšmalas, tāpēc starp apmali un
+   attēlu palika ~4px tumša josla (joslas paša fons), kas tuvplānā izskatījās
+   pēc otras, tumšākas apmales. `inset: 0` aizved attēlu līdz līnijai.
+   #minkaBarWrap padding paliek 3px, tāpēc NEVIENS saturs nepakustas — mainās
+   tikai dekoratīvā slāņa izmērs. Rādiuss 17px = joslas 18px mīnus 1px apmale,
+   lai stūri sakristu ar līniju. */
+:root:not(.mk-mobile-shell) #minkaBarWrap > .mk-header-scenic-bg {
+  inset: 0 !important;
+  border-radius: 17px !important;
+}
+
+/* ── Meklēšanas un izvēlnes pogas: caurspīdīgi tumši zilas, nevis bloki ── */
+:root:not(.mk-mobile-shell) #minkaBarWrap #mkSearchLaunch,
+:root:not(.mk-mobile-shell) #minkaBarWrap #minkaBarMenu,
+:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic > #mkSearchLaunch,
+:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic > #minkaBarMenu {
+  border: 1px solid var(--mkg-edge) !important;
+  /* Mīkstāks stūris — tuvplānā redzamais “squircle”, nevis ciets kvadrāts */
+  border-radius: 14px !important;
+  background: var(--mkg-fill) !important;
+  color: rgba(226, 240, 255, .92) !important;
+  box-shadow: var(--mkg-inner) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap #mkSearchLaunch:hover,
+:root:not(.mk-mobile-shell) #minkaBarWrap #minkaBarMenu:hover {
+  border-color: var(--mkg-edge-hover) !important;
+  background: var(--mkg-fill-hover) !important;
+  color: #fff !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap #mkSearchLaunch .material-icons-round,
+:root:not(.mk-mobile-shell) #minkaBarWrap #minkaBarMenu .material-icons-round {
+  color: inherit !important;
+  text-shadow: none !important;
+}
+/* ── Atstarpe starp pogām (vienīgā apzinātā atkāpe no “tikai stils”) ──
+   Joslai ir gap: 8px, bet vecas negatīvās malas — meklēšanai -5px, izvēlnei
+   -3px — to nodzēsa tieši līdz 0px, tāpēc pogas saskārās. Tās bija noskaņotas
+   vēl 36px pogām. Atceļam tās un pieliekam 2px, sanāk 10px.
+   Pabīdās TIKAI meklēšanas poga pa kreisi; izvēlnes poga paliek pie labās
+   malas, un vietu atdod ziņu lente, kurai tā ir ar uzviju. */
+:root:not(.mk-mobile-shell) #minkaBarWrap #mkSearchLaunch,
+:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic #mkSearchLaunch {
+  margin-right: 2px !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap #minkaBarMenu,
+:root:not(.mk-mobile-shell) #minkaBarInner.mk-header-scenic #minkaBarMenu {
+  margin-left: 0 !important;
+}
+
+/* ── ŠODIEN: zaļais akcents dzīvo tekstā, nevis gredzenā ── */
+:root:not(.mk-mobile-shell) #minkaBarWrap .mk-search-today {
+  border-color: rgba(110, 231, 183, .16) !important;
+  background: var(--mkg-fill) !important;
+  color: rgba(134, 239, 172, .94) !important;
+  text-shadow: none !important;
+  box-shadow: var(--mkg-inner) !important;
+}
+
+/* ── Dzimšanas dienas pilulis: paliek gaišs, bet bez kontūras ── */
+:root:not(.mk-mobile-shell) #minkaBarWrap .mk-bday-badge {
+  border-color: transparent !important;
+  background: rgba(233, 226, 244, .78) !important;
+  color: #2b2340 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap .mk-bday-badge:hover {
+  background: rgba(240, 234, 249, .88) !important;
+}
+
+/* ── Ziņu kategoriju čipsi (LAIKS u.c.): NETIEK aiztikti ──
+   Te bija mans tumšais fons, bet tas padarīja čipsu smagu un tumšu. Katras
+   kategorijas oriģinālais gaišais tonis (piem. rgba(125,211,252,.07) ar
+   .28 apmali) ir labāks — tāpēc šeit apzināti nav neviena noteikuma. */
+
+/* ── “Detalizēti”: kluss otršķirīgs, caurspīdīgs ── */
+:root:not(.mk-mobile-shell) #minkaBarWrap .lanes-mini-toggle {
+  border-color: var(--mkg-edge) !important;
+  background: var(--mkg-fill) !important;
+  color: rgba(226, 240, 255, .88) !important;
+  box-shadow: var(--mkg-inner) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap .lanes-mini-toggle:hover {
+  border-color: var(--mkg-edge-hover) !important;
+  background: var(--mkg-fill-hover) !important;
+  color: #fff !important;
+}
+:root:not(.mk-mobile-shell) #shift-progress-wrap:not(.lanes-collapsed) #lanes-mini-toggle {
+  border-color: rgba(178, 158, 245, .40) !important;
+  background: rgba(74, 58, 122, .42) !important;
+  color: #e9e4fb !important;
+}
+
+/* ── “Nakts sadalījums”: galvenā gaišā poga — tikai tīrāka un plakanāka.
+   Platums ir satura noteikts, tāpēc mala ir inset ēna, nevis apmale. ── */
+:root:not(.mk-mobile-shell) #minkaBarWrap #sl-ns-slot #ns-bar-toggle {
+  background: rgba(244, 249, 255, .94) !important;
+  color: #0b1220 !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .30) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap #sl-ns-slot #ns-bar-toggle:hover {
+  background: rgba(255, 255, 255, .98) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .40) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap #sl-ns-slot #ns-bar-toggle.is-on {
+  background: rgba(165, 222, 250, .94) !important;
+  color: #06131f !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .34) !important;
+}
+
+/* ── Teksta lasāmība: tikai krāsa un ēnas asums, izmērs un vieta nemainās ── */
+:root:not(.mk-mobile-shell) #minkaBarWrap .mk-search-date-num {
+  color: rgba(150, 214, 250, .98) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .55) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap .mk-search-weekday {
+  color: rgba(226, 240, 255, .82) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap .mk-search-date-meta #mkMoonChip {
+  color: rgba(226, 240, 255, .74) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap .mk-search-date-meta #mkTempChip {
+  color: rgba(147, 206, 240, .88) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap .mk-search-date-meta .mk-nameday-bar {
+  color: rgba(240, 246, 252, .92) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap .sl-rtick {
+  color: rgba(232, 242, 252, .90) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .60) !important;
+}
+/* Saules/mēness atzīmes: akcents paliek, tikai mazāk piesātināts un bez auras */
+:root:not(.mk-mobile-shell) #minkaBarWrap .sl-rtick-sun {
+  color: rgba(240, 194, 118, .96) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .60) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap .sl-rtick-moon {
+  color: rgba(158, 209, 243, .96) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .60) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap .sl-ruler-now {
+  top: -8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  height: 17px !important;
+  padding: 0 8px !important;
+  font: 600 9.5px/17px 'Space Grotesk', system-ui !important;
+  font-variant-numeric: tabular-nums !important;
+  letter-spacing: 0 !important;
+  background: rgba(244, 249, 255, .92) !important;
+  color: #0b1220 !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap .sl-ruler-now strong {
+  font: inherit !important;
+  font-weight: 750 !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap .sl-ruler-now .sl-rn-clock {
+  font-size: 10.5px !important;
+  font-weight: 800 !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap .sl-ruler-now .sl-rn-word {
+  color: rgba(11,18,32,.58) !important;
+}
+:root:not(.mk-mobile-shell) #minkaBarWrap .sl-ruler-now .sl-rn-remaining {
+  color: #075985 !important;
+}
+:root:not(.mk-mobile-shell) #mkHeaderActions {
+  display: inline-flex !important;
+  align-items: center !important;
+  flex: 0 0 auto !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+  white-space: nowrap !important;
+}
+:root:not(.mk-mobile-shell) #mkHeaderActions .lanes-mini-toggle,
+:root:not(.mk-mobile-shell) #mkHeaderActions .ns-bar-toggle {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 20px !important;
+  min-height: 20px !important;
+  margin: 0 !important;
+  padding: 0 7px !important;
+  gap: 4px !important;
+  border-radius: 999px !important;
+  font: 650 9px/1 'Space Grotesk', system-ui !important;
+  letter-spacing: .02em !important;
+  white-space: nowrap !important;
+}
+:root:not(.mk-mobile-shell) #mkHeaderActions .lanes-mini-toggle .lmt-ic {
+  width: 9px !important;
+  height: 8px !important;
+}
+:root:not(.mk-mobile-shell) #mkHeaderActions .lanes-mini-toggle .lmt-chev {
+  display: none !important;
+}
+:root:not(.mk-mobile-shell) #mkHeaderActions #ns-bar-toggle {
+  border: 0 !important;
+  background: rgba(244,249,255,.92) !important;
+  color: #0b1220 !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.30) !important;
+}
+:root:not(.mk-mobile-shell) #mkHeaderActions #ns-bar-toggle .ns-moon {
+  display: inline-block !important;
+  font-size: 9px !important;
+  filter: none !important;
+  animation: none !important;
+}
+:root:not(.mk-mobile-shell) #mkHeaderActions #ns-bar-toggle.is-on {
+  background: rgba(165,222,250,.94) !important;
+  color: #06131f !important;
+}
+
+/* ── Par backdrop-filter apzināti ATTEIKTS ──
+   Vienīgā šī slāņa daļa, kas maksātu GPU, bija blur aiz vadīklām. theme.js
+   visai lapai uzliek .mk-no-blur tieši veiktspējas dēļ, un vājajam darba
+   datoram tas ir jūtami. Caurspīdīgais izskats sanāk arī bez tā — rgba fons
+   virs panorāmas dod to pašu efektu par nulli. Pārējais šajā failā (fona
+   krāsa, apmales krāsa, rādiuss, teksta krāsa) kompozīcijai neko nemaksā:
+   nav ne filtru, ne animāciju, ne jaunu slāņu.
+
+   Ja kādreiz tomēr gribas stiklu, pietiek ar šo bloku — bet tikai uz šīm
+   dažām mazajām vadīklām, nekad uz visas joslas:
+     #minkaBarWrap .lanes-mini-toggle { backdrop-filter: blur(8px); }
+*/
