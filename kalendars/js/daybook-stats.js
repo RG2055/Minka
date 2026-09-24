@@ -309,13 +309,11 @@
       else if (segment.length) { segments.push(segment); segment = []; }
     });
     if (segment.length) segments.push(segment);
-    // All marked days are joined into one line: dashed and dimmer where it
-    // crosses days nobody rated, solid between neighbouring days. Before, only
-    // neighbours were joined and single days stood alone as loose dots.
+    // All marked days are joined into one dashed line, so single days do not
+    // stand alone as loose dots.
     var allPoints = [].concat.apply([], segments);
     if (allPoints.length > 1) out += '<path d="' + smoothPath(allPoints) + '" fill="none" stroke="rgba(125,211,252,.45)" stroke-width="1.6" stroke-dasharray="4 5" stroke-linecap="round"/>';
     segments.forEach(function (seg) {
-      if (seg.length > 1) out += '<path d="' + smoothPath(seg) + '" fill="none" stroke="#7dd3fc" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>';
       seg.forEach(function (p) {
         var m = M.moodFor(p.row.mood.score);
         var r = 3.2 + Math.min(4, p.row.mood.total / 3);

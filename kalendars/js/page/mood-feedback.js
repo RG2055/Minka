@@ -3279,6 +3279,12 @@
   document.addEventListener('visibilitychange', function () {
     if (!document.hidden) scheduleMoodCoffeeRefresh();
   });
+  // Card fatigue percentages appear only once the fatigue model has decorated
+  // the roster (and change with night plans). Without these the mood card kept
+  // the "0 %" it read before that, unless an unrelated repaint happened to follow.
+  document.addEventListener('minka:initial-decorations-ready', scheduleMoodCoffeeRefresh);
+  document.addEventListener('minka:fatigue-updated', scheduleMoodCoffeeRefresh);
+  if (window.__minkaInitialDecorationsReady) scheduleMoodCoffeeRefresh();
   syncFeedbackModalState(false);
   mount();
   paintCounts();
