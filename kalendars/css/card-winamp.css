@@ -50,12 +50,6 @@ html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafik
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-pos { left:calc(var(--u) * 8);top:calc(100% * 119.5 / 148);width:calc(var(--u) * 73);height:calc(100% * 4 / 148); }
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-pos b { top:20%;left:calc(var(--u) * .8);height:60%;width:calc((var(--u) * 71.4) * var(--p,0));background:var(--wa-lcd);border-radius:calc(var(--u) * 1);box-shadow:0 0 calc(var(--u) * 2) color-mix(in srgb,var(--wa-lcd) 60%,transparent); }
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-pos b + b { top:-50%;left:calc((var(--u) * 67) * var(--p,0));width:calc(var(--u) * 6);height:200%;background:linear-gradient(#e9ebf1,#b9bccb);border:calc(var(--u) * .6) solid #5a5d74;border-radius:calc(var(--u) * 1);box-shadow:none; }
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-vis { display:none; }
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-vis b {
-  bottom:0;width:calc(var(--u) * 2.2);height:calc(var(--u) * var(--h,3));left:calc(var(--u) * var(--x,0));
-  background:linear-gradient(to top,#188408,#29ce10 45%,#dea518 70%,#ef3110) bottom / 100% calc(var(--u) * 13) no-repeat;
-  -webkit-mask:repeating-linear-gradient(0deg,#000 0 calc(var(--u) * 1.2),transparent calc(var(--u) * 1.2) calc(var(--u) * 1.7));mask:repeating-linear-gradient(0deg,#000 0 calc(var(--u) * 1.2),transparent calc(var(--u) * 1.2) calc(var(--u) * 1.7));
-}
 
 /* ---- bitmap text (the skin's 5x6 font) ---- */
 html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] .mk-wa-bmp {

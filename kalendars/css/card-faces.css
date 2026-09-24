@@ -205,7 +205,6 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-fac
 .wf-editor-heading {display:flex;justify-content:space-between;gap:12px;align-items:start;margin:0 0 16px;}
 .wf-editor-heading strong {font-size:22px;letter-spacing:-.6px;}
 .wf-editor-heading p {font-size:12px;color:var(--wf-editor-muted);margin:5px 0 0;}
-.wf-static-label {font-size:8px;letter-spacing:.12em;border:1px solid #ffffff12;border-radius:20px;padding:6px 9px;color:#9baabb;white-space:nowrap;}
 .wf-faces {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;}
 .wf-face-choice {border:1px solid #ffffff14;background:#131a24;padding:8px 8px 10px;border-radius:16px;color:inherit;display:grid;gap:9px;justify-items:center;}
 .wf-face-choice[aria-pressed="true"] {background:#233548;border-color:#9dc2e7;box-shadow:0 0 0 1px #9dc2e733;}
@@ -253,7 +252,7 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-fac
 .wf-editor input[type="checkbox"] {accent-color:#c2d8ee;}
 .wf-range {display:grid;grid-template-columns:78px minmax(70px,1fr) 40px;gap:10px;align-items:center;margin:9px 0;font-size:11px;color:#a5b5c8;}
 .wf-range output {text-align:right;color:#dce9f5;font-variant-numeric:tabular-nums;font-size:10px;}
-.wf-editor-help,.wf-background p {font-size:10px;line-height:1.6;color:#7e91a8;margin:12px 0 0;}
+.wf-background p {font-size:10px;line-height:1.6;color:#7e91a8;margin:12px 0 0;}
 .wf-background {border-top:1px solid #ffffff0c;margin-top:18px;padding-top:15px;}
 .wf-background summary {cursor:pointer;font-size:12px;color:#b5c4d5;}
 .wf-footer {display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:18px;}
@@ -276,7 +275,6 @@ html body #worker-modal #modal-skin-view #grafiks-list.mk-skin-preview-list.grid
   .mk-skin-shell:has(.wf-editor) {grid-template-columns:1fr;}
   .mk-skin-shell:has(.wf-editor) .mk-skin-aside {position:static;display:grid;grid-template-columns:minmax(160px,220px) 1fr;gap:14px;align-items:center;}
   .wf-face-thumb b {font-size:36px;}
-  .wf-static-label {display:none;}
 }
 @media (max-width:480px) {
   .mk-skin-shell:has(.wf-editor) .mk-skin-aside {grid-template-columns:1fr;}
@@ -297,12 +295,8 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-fac
 
 .mk-skin-presets:has(.mk-material-preset) {grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:10px;}
 .mk-material-preset {flex-direction:column;gap:8px;padding:10px;font-size:11px;text-align:center;}
-.mk-material-preset .mk-skin-preset-sw {position:relative;display:grid;place-items:center;width:100%;height:auto;aspect-ratio:1;border-radius:23%;background-position:center;border:1px solid #ffffff60;}
-.mk-material-preset .mk-skin-preset-sw b {font:650 48px/.95 'Helvetica Neue',Arial,sans-serif;letter-spacing:-.07em;background:linear-gradient(150deg,#fff,var(--preset-tint));background-clip:text;color:transparent;}
 .mk-material-preset[data-preset-face="photo"] b {transform:scale(.78,1.25);}
 .mk-material-preset[data-preset-face="orbit"] b {font-style:italic;}
-.mk-material-preset[data-preset-face="orbit"] .mk-skin-preset-sw:after {content:'';position:absolute;inset:8%;border:1px solid var(--preset-tint);border-radius:50%;opacity:.4;}
-.mk-material-preset[data-preset-face="modular"] .mk-skin-preset-sw:after {content:'';position:absolute;inset:73% 15% 9%;border-radius:5px;background:linear-gradient(90deg,#fff2 47%,transparent 47%,transparent 53%,#fff2 53%);}
 
 /* The same transparent bitmap paints below and above the duration. Both layers
    share crop/zoom, so moving digits reveals a real silhouette without live AI. */
@@ -343,8 +337,6 @@ html body #worker-modal #modal-skin-view #grafiks-list .card.mk-watch-face.wf-ed
 /* Small previews use the same silhouette layering as the real card. */
 .wf-face-thumb b {position:relative;z-index:1;}
 .wf-face-thumb::after {content:'';position:absolute;inset:0;background-image:var(--wf-depth-thumbnail,none);background-size:100% 100%;pointer-events:none;z-index:2;}
-.mk-material-preset .mk-skin-preset-sw b {z-index:1;}
-.mk-material-preset .mk-preset-depth {position:absolute;inset:0;background-size:100% 100%;border-radius:inherit;z-index:2;}
 
 /* Bundle previews use the live renderer, including layout, foreground, tint and
    visibility. Only the enclosing tile sets the width; no fixed-size fake number. */

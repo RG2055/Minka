@@ -76,7 +76,6 @@
   width: auto !important; max-width: 100% !important; height: auto !important; min-height: 0 !important; overflow: hidden !important;
 }
 :root.mk-mobile-shell.mk-mobile-v2 #mkSearchToday { display: none !important; } /* šodienu rāda dienu lente */
-:root.mk-mobile-shell.mk-mobile-v2 #mkSearchToday.mv2-keep { flex: 0 0 auto !important; height: 20px !important; padding: 0 7px !important; border-radius: 6px !important; font: 800 10px/20px var(--mv2-font) !important; letter-spacing: .08em !important; }
 :root.mk-mobile-shell.mk-mobile-v2 #mkBdayBadge { flex: 0 0 auto !important; height: 20px !important; padding: 0 7px !important; border-radius: 6px !important; font-size: 11px !important; line-height: 20px !important; white-space: nowrap !important; }
 :root.mk-mobile-shell.mk-mobile-v2 #mkNamedayBar {
   flex: 1 1 auto !important; min-width: 0 !important; height: auto !important; padding: 0 !important; border: 0 !important; background: transparent !important;
@@ -246,7 +245,6 @@
 }
 :root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row > .nsc-card-wrap { display: block !important; width: 100% !important; min-width: 0 !important; max-width: none !important; height: auto !important; min-height: 0 !important; margin: 0 !important; flex: none !important; align-self: stretch !important; }
 :root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-full-card { display: block !important; width: 100% !important; height: auto !important; min-height: 96px !important; border-radius: 18px !important; container-type: inline-size !important; }
-:root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-rhythm-overlay,
 :root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-moon-overlay { display: none !important; }
 :root.mk-mobile-shell.mk-mobile-v2 #nsOverlay #nsPanel .ns-cards-row .nsc-full-inner {
   position: relative !important; z-index: 3 !important; box-sizing: border-box !important; height: auto !important; min-height: 96px !important;

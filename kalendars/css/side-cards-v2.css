@@ -152,40 +152,6 @@ html body .side-panel .mk-duty-strip:empty {
   display: none !important;
 }
 
-html body .side-panel .mk-duty-line {
-  max-width: 100% !important;
-  color: #aeb7c8 !important;
-  font: 650 9.5px/1.18 Inter, system-ui, sans-serif !important;
-  letter-spacing: 0 !important;
-  overflow-wrap: break-word !important;
-}
-
-html body .side-panel .mk-duty-line .mk-dl-ico {
-  display: inline-block !important;
-  width: 13px !important;
-  height: auto !important;
-  margin-right: 3px !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  font-size: 9px !important;
-  text-align: center !important;
-  vertical-align: 0 !important;
-}
-
-html body .side-panel .mk-duty-line .mk-dl-t {
-  color: #f2f5fa !important;
-  font-weight: 800 !important;
-}
-
-html body .side-panel .mk-duty-line b {
-  font-weight: 800 !important;
-  text-decoration: none !important;
-}
-
-html body .side-panel .mk-duty-line.dl-night b { color: #79e8ae !important; }
-html body .side-panel .mk-duty-line.dl-leave b { color: #ffd08a !important; }
-html body .side-panel .mk-duty-line.dl-later b { color: #a9c3e4 !important; }
-
 html body :is(#radiographers-duty, #radiologists-duty) {
   gap: 10px !important;
   padding-top: 0 !important;
@@ -444,28 +410,6 @@ html body :is(#radiographers-duty, #radiologists-duty) .mk-side-shift-chip .shif
   box-shadow: none !important;
 }
 
-html body :is(#radiographers-duty, #radiologists-duty) .mk-side-card .mk-side-timer.duty-timer {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-width: 0 !important;
-  width: 100% !important;
-  height: 25px !important;
-  padding: 0 5px !important;
-  border: 1px solid rgba(166, 181, 207, .14) !important;
-  border-radius: 7px !important;
-  background: #05070b !important;
-  color: #dfe4ec !important;
-  font: 750 10px/1 "JetBrains Mono", ui-monospace, monospace !important;
-  letter-spacing: .045em !important;
-  white-space: nowrap !important;
-  box-shadow: none !important;
-}
-
-html body :is(#radiographers-duty, #radiologists-duty) .mk-side-timer :is(.ghost) {
-  display: none !important;
-}
-
 html body :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot {
   position: relative !important;
   z-index: 2 !important;
@@ -513,32 +457,6 @@ html body :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot dd em {
   color: #aeb7c8 !important;
   font: inherit !important;
   font-style: normal !important;
-}
-
-html body :is(#radiographers-duty, #radiologists-duty) .mk-nfoot-seg {
-  display: flex !important;
-  flex: 1 1 auto !important;
-  align-items: center !important;
-  gap: 2px !important;
-  min-width: 0 !important;
-  margin-left: 1px !important;
-}
-
-html body :is(#radiographers-duty, #radiologists-duty) .mk-nfoot-seg i {
-  flex: 1 1 3px !important;
-  width: auto !important;
-  min-width: 2px !important;
-  max-width: 5px !important;
-  height: 3px !important;
-  border: 0 !important;
-  border-radius: 2px !important;
-  background: #29303b !important;
-  box-shadow: none !important;
-}
-
-html body :is(#radiographers-duty, #radiologists-duty) .mk-nfoot-seg i.on {
-  background: var(--mk-side-fat-color) !important;
-  box-shadow: none !important;
 }
 
 html body :is(#radiographers-duty, #radiologists-duty) .mk-side-wm {
@@ -767,12 +685,6 @@ html body .left-panel #radiographers-duty .mk-side-clock-row:has(.mk-side-timer)
   font-size: 8px !important;
 }
 
-html body .left-panel #radiographers-duty .mk-side-clock-row:has(.mk-side-timer) .mk-side-timer.duty-timer {
-  padding-inline: 4px !important;
-  font-size: 9px !important;
-  letter-spacing: .02em !important;
-}
-
 html body .right-panel #radiologists-duty .mk-side-clock-row {
   gap: 2px !important;
 }
@@ -876,17 +788,6 @@ html body .side-panel .mk-duty-avatar-group {
   overflow: visible !important;
 }
 
-html body .side-panel .mk-duty-avatar-stack {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-  min-width: 0 !important;
-  height: 14px !important;
-  padding-left: 1px !important;
-  grid-column: 1 !important;
-  grid-row: 1 !important;
-}
-
 html body .side-panel .mk-duty-person-avatar {
   position: relative !important;
   z-index: calc(10 - var(--mk-avatar-i)) !important;
@@ -915,8 +816,7 @@ html body .side-panel .mk-duty-person-avatar.is-initials {
   letter-spacing: -.03em !important;
 }
 
-html body .side-panel .mk-duty-avatar-names,
-html body .side-panel .mk-duty-avatar-time {
+html body .side-panel .mk-duty-avatar-names {
   display: block !important;
   min-width: 0 !important;
   overflow: hidden !important;
@@ -933,19 +833,6 @@ html body .side-panel .mk-duty-avatar-names {
   letter-spacing: -.03em !important;
   text-align: left !important;
 }
-
-html body .side-panel .mk-duty-avatar-time {
-  color: #8895a8 !important;
-  grid-column: 3 !important;
-  grid-row: 1 !important;
-  font: 800 10px/14.5px Inter, system-ui, sans-serif !important;
-  letter-spacing: -.015em !important;
-  text-align: right !important;
-}
-
-html body .side-panel .mk-duty-avatar-group.dl-night .mk-duty-avatar-time { color: #70d6a3 !important; }
-html body .side-panel .mk-duty-avatar-group.dl-leave .mk-duty-avatar-time { color: #d8b16f !important; }
-html body .side-panel .mk-duty-avatar-group.dl-later .mk-duty-avatar-time { color: #8da9ce !important; }
 html body .side-panel .mk-duty-avatar-group.dl-night .mk-duty-avatar-names { color: #70d6a3 !important; }
 html body .side-panel .mk-duty-avatar-group.dl-leave .mk-duty-avatar-names { color: #e0bd7e !important; }
 html body .side-panel .mk-duty-avatar-group.dl-later .mk-duty-avatar-names { color: #9bb5d6 !important; }
@@ -964,18 +851,6 @@ html body .side-panel .mk-duty-night-icon {
   display: block !important;
   font-size: 14px !important;
   line-height: 14.5px !important;
-}
-
-html body .side-panel .mk-duty-avatar-group.is-night-summary .mk-duty-avatar-stack {
-  grid-column: 3 !important;
-}
-
-html body .side-panel .mk-duty-night-label {
-  grid-column: 2 !important;
-  grid-row: 1 !important;
-  color: #aeb8c8 !important;
-  font: 750 12px/14.5px Inter, system-ui, sans-serif !important;
-  white-space: nowrap !important;
 }
 
 html body .side-panel .mk-duty-avatar-group.is-night-summary .mk-duty-avatar-names {
@@ -1015,20 +890,6 @@ html body .side-panel .mk-duty-avatar-group.is-status-sentence .mk-duty-avatar-n
   cursor: pointer !important;
 }
 
-html body .side-panel .mk-duty-avatar-group.is-status-sentence.has-inline-avatars {
-  grid-template-columns: max-content max-content max-content minmax(0, max-content) !important;
-  column-gap: 2px !important;
-}
-
-html body .side-panel .mk-duty-avatar-group.is-status-sentence.has-inline-avatars .mk-duty-avatar-stack {
-  grid-column: 3 !important;
-}
-
-html body .side-panel .mk-duty-avatar-group.is-status-sentence.has-inline-avatars .mk-duty-avatar-names {
-  grid-column: 4 !important;
-  font-size: 14px !important;
-}
-
 /* A single person should read as one compact sentence, not as two labels
    pinned to opposite sides of the panel. */
 html body .side-panel .mk-duty-avatar-group.is-single {
@@ -1040,11 +901,6 @@ html body .side-panel .mk-duty-avatar-group.is-single {
 html body .side-panel .mk-duty-avatar-group.is-night-summary.is-single {
   grid-template-columns: max-content max-content max-content max-content !important;
   column-gap: 4px !important;
-}
-
-html body .side-panel .mk-duty-avatar-group.is-status-sentence.has-inline-avatars.is-single {
-  grid-template-columns: max-content max-content max-content max-content !important;
-  column-gap: 2px !important;
 }
 
 /* A multi-person status flows as one sentence across two lines, so
@@ -1126,10 +982,7 @@ html body .side-panel .mk-duty-crowded-copy .mk-duty-avatar-names b {
     font-size: 12px !important;
     line-height: 12px !important;
   }
-
-  html body .side-panel .mk-duty-avatar-stack { height: 12px !important; }
   html body .side-panel .mk-duty-avatar-names { font-size: 11px !important; }
-  html body .side-panel .mk-duty-avatar-time { font-size: 7.8px !important; }
   html body .side-panel .mk-duty-person-avatar.is-initials {
     flex-basis: 18px !important;
     width: 18px !important;

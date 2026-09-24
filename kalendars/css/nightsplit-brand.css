@@ -247,19 +247,6 @@
 #nsPanel .ns-bedcare-note { grid-column: 1 / -1; min-height: 0; color: #ffda9d; font: 500 10px/1.4 Inter,system-ui,sans-serif; }
 #nsPanel .ns-bedcare-note:empty { display: none; }
 
-#nsPanel .ns-rhythm-legend {
-  margin-left: auto !important;
-  padding: 7px 10px !important;
-  border: 1px solid #0a0e11 !important;
-  border-radius: 10px !important;
-  background: #10161a !important;
-  box-shadow: inset 3px 3px 7px rgba(0, 0, 0, .58), inset -1px -1px 2px rgba(180, 217, 225, .05) !important;
-  opacity: 1;
-  font-size: 9.5px !important;
-  gap: 14px !important;
-}
-#nsPanel .ns-rhythm-legend .ns-leg-desc { display: none !important; }
-
 /* Shift cards: keep their useful colour identity, add the same glass edge. */
 #nsPanel .ns-cards-row { min-height: 233px !important; gap: var(--ns-gap, 8px) !important; margin-top: -4px !important; padding: 8px 0 0 !important; overflow: visible !important; }
 #nsPanel .nsc-card-wrap { gap: 6px !important; }
@@ -337,24 +324,9 @@
   color: rgba(var(--mk-num-color, 167,139,250), var(--mk-num-alpha, 1)) !important;
   -webkit-text-fill-color: rgba(var(--mk-num-color, 167,139,250), var(--mk-num-alpha, 1)) !important;
 }
-#nsPanel .nsc-full-card.nsc-worker-skinned.mk-emoji-custom .nsc-bg-emoji {
-  opacity: var(--mk-emoji-op, .07) !important;
-}
 #nsPanel .nsc-full-inner { z-index: 3 !important; width: 100% !important; flex: 1 1 auto !important; padding: 14px 15px 12px !important; }
 #nsPanel .nsc-full-name { font-size: clamp(19px, 2vw, 25px) !important; line-height: 1 !important; letter-spacing: .015em !important; text-shadow: 0 1px 8px rgba(0, 0, 0, .28) !important; }
 #nsPanel .nsc-full-top { justify-content: flex-start !important; align-items: center !important; gap: 8px !important; }
-#nsPanel .nsc-name-emoji {
-  position: relative !important;
-  z-index: 2 !important;
-  flex: 0 0 auto !important;
-  font-size: 29px !important;
-  line-height: 1 !important;
-  opacity: .90 !important;
-  filter: none !important;
-  text-shadow: 0 2px 3px rgba(0, 0, 0, .94), 0 0 2px rgba(255, 255, 255, .34) !important;
-  transform: rotate(var(--nsc-emoji-tilt, -6deg)) !important;
-  transform-origin: center !important;
-}
 #nsPanel .nsc-full-time { margin-top: 9px !important; font-size: clamp(13px, 1.25vw, 16px) !important; letter-spacing: .045em !important; }
 #nsPanel .nsc-full-meta,
 #nsPanel .nsc-full-desc { margin-top: 6px !important; }
@@ -454,20 +426,7 @@
 }
 #nsPanel .nsc-fat-label { width: 100% !important; font-size: 8px !important; color: rgba(239, 247, 250, .82) !important; text-align: center !important; }
 #nsPanel .nsc-fat-value { width: 100% !important; font-size: 14px !important; text-align: center !important; }
-#nsPanel .nsc-bg-emoji { right: 25px !important; top: 18px !important; z-index: 1 !important; font-size: 62px !important; opacity: .13 !important; filter: none !important; }
-#nsPanel .nsc-theme-moon .nsc-bg-emoji { right: 76px !important; top: 24px !important; opacity: .11 !important; }
-#nsPanel .nsc-full-card.nsc-worker-skinned.mk-emoji-custom .nsc-bg-emoji { opacity: .13 !important; }
-#nsPanel .nsc-full-card.nsc-worker-skinned.mk-emoji-custom.nsc-theme-moon .nsc-bg-emoji { opacity: .11 !important; }
 #nsPanel .nsc-deco .nsc-rhythm-lines { display: none !important; }
-#nsPanel .nsc-rhythm-overlay {
-  position: absolute !important;
-  z-index: 2 !important;
-  inset: 0 !important;
-  overflow: hidden !important;
-  border-radius: inherit !important;
-  pointer-events: none !important;
-}
-#nsPanel .nsc-rhythm-overlay svg { display: block !important; width: 100% !important; height: 100% !important; }
 #nsPanel .nsc-rhythm-help {
   position: absolute !important;
   z-index: 10 !important;
@@ -622,8 +581,6 @@
 }
 #nsPanel .ns-room-bed { width: 108px !important; height: 140px !important; }
 #nsPanel .ns-room-bed-empty .ns-room-bed-card { --bed: #4d6874 !important; }
-#nsPanel .ns-room-bed-svg { filter: drop-shadow(0 5px 8px rgba(0, 0, 0, .28)) !important; }
-#nsPanel .ns-room-bed-pillow { box-shadow: inset 0 -2px 4px rgba(0, 0, 0, .10), 0 3px 8px rgba(0, 0, 0, .16) !important; }
 #nsPanel .ns-room-bed-blanket { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 3px 8px rgba(0, 0, 0, .18) !important; }
 #nsPanel .ns-room-bed[data-i].nsdrag { opacity: .36 !important; filter: none !important; }
 #nsPanel .ns-room-bed[data-i].nsover,
@@ -781,42 +738,6 @@
   outline: 2px solid #a8e5ff !important;
   outline-offset: 3px !important;
 }
-#nsPanel .ns-room-cat .pkt-cat {
-  position: relative !important;
-  z-index: 2 !important;
-  width: 112px !important;
-  height: auto !important;
-  max-width: 112px !important;
-  margin-left: 0 !important;
-  margin-right: auto !important;
-  transform: translate(44px,-18px) !important;
-}
-#nsPanel .pkt-cat.pkt-scratching .pkt-scratch-arm {
-  transform-box: view-box !important;
-  transform-origin: 164px 174px !important;
-  animation: pktScratchPaw 1.05s steps(2, end) infinite !important;
-  will-change: transform !important;
-}
-#nsPanel .pkt-caught-mouse {
-  font-family: 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif !important;
-  font-size: 48px !important;
-  font-variant-emoji: emoji !important;
-  shape-rendering: auto !important;
-  filter: drop-shadow(0 3px 3px rgba(0,0,0,.46)) !important;
-  pointer-events: none !important;
-}
-#nsPanel .pkt-caught-mouse-tail {
-  fill: none !important;
-  stroke: #c9a8a4 !important;
-  stroke-width: 3.2px !important;
-  stroke-linecap: round !important;
-  filter: drop-shadow(0 2px 2px rgba(0,0,0,.48)) !important;
-}
-#nsPanel .pkt-cat.pkt-scratching .pkt-eyes {
-  animation: pktScratchLook 5.8s steps(1, end) infinite !important;
-  opacity: .96 !important;
-  filter: none !important;
-}
 @keyframes pktScratchPaw {
   0%, 100% { transform: rotate(3deg) translate(0, 5px); }
   45% { transform: rotate(-5deg) translate(5px, -5px); }
@@ -825,8 +746,6 @@
   0%, 88%, 92%, 100% { transform: scaleY(.96); }
   89%, 91% { transform: scaleY(.10); }
 }
-#nsOverlay:not(.open) #nsPanel .pkt-scratch-arm,
-#nsOverlay:not(.open) #nsPanel .pkt-cat.pkt-scratching .pkt-eyes { animation-play-state: paused !important; }
 #nsPanel .ns-room-cat::before,
 #nsPanel .ns-room-cat::after { content: none !important; display: none !important; }
 #nsPanel .ns-cat-rhythm-key {
@@ -969,7 +888,6 @@
 #nsPanel .ns-bm-cell.on { background: #62dce7 !important; box-shadow: inset 1px 1px 0 rgba(255,255,255,.22), 1px 1px 3px rgba(0,0,0,.42) !important; }
 
 /* No violet anywhere in the Night Split information system. */
-#nsPanel .ns-rhythm-legend .is-mel { color: #62b7ff !important; }
 #nsPanel .ns-stats-foot {
   min-height: 11px !important;
   margin-top: 2px !important;
@@ -981,8 +899,6 @@
 
 /* Preserve tiny character motions; nothing else keeps animating. */
 html.mk-low-spec #nsOverlay.open #nsPanel .ns-room-bed-zzz span { animation: nsZzzFloat 3.2s ease-in-out infinite !important; filter: none !important; text-shadow: 0 1px 2px rgba(0, 0, 0, .68) !important; }
-html.mk-low-spec #nsOverlay.open #nsPanel .pkt-cat .pkt-eyes { animation: pktSleepEyes 8.8s ease-in-out infinite !important; filter: none !important; }
-html.mk-low-spec #nsOverlay.open #nsPanel .pkt-cat.pkt-awake .pkt-eyes { animation: pktAwakeEyes 1.45s ease-in-out infinite !important; }
 #nsCloseBtn { color: #929dab !important; }
 #nsOverlay:not(.open) #nsPanel *,
 #nsOverlay:not(.open) #nsPanel *::before,
@@ -991,7 +907,6 @@ html.mk-low-spec #nsOverlay.open #nsPanel .pkt-cat.pkt-awake .pkt-eyes { animati
 @media (min-width: 900px) and (min-height: 760px) { #nsPanel .ns-room-block { min-height: 272px; } }
 @media (max-width: 1100px) {
   #nsPanel .ns-panel-head { flex-wrap: nowrap !important; }
-  #nsPanel .ns-rhythm-legend { display: none !important; }
 }
 @media (max-width: 940px) {
   #nsPanel .ns-brand-mark { width: 31px; height: 31px; }
@@ -1042,7 +957,6 @@ html.mk-low-spec #nsOverlay.open #nsPanel .pkt-cat.pkt-awake .pkt-eyes { animati
 }
 @media (max-width: 640px) {
   #nsPanel { border-radius: 17px !important; }
-  #nsPanel .ns-rhythm-legend .ns-leg-desc { display: none !important; }
   #nsPanel .nsc-full-inner { padding: 10px !important; }
   #nsPanel .ns-stats-box { width: 100% !important; min-width: 0 !important; }
   #nsPanel .ns-stat-row,
@@ -1248,8 +1162,6 @@ html.mk-low-spec #nsOverlay.open #nsPanel .pkt-cat.pkt-awake .pkt-eyes { animati
   clip-path: polygon(3% 0, 97% 0, 100% 92%, 96% 100%, 4% 100%, 0 92%) !important;
   background-position: center, center 68% !important;
 }
-#nsPanel .ns-room-bed-svg,
-#nsPanel .ns-room-bed-pillow { display: none !important; }
 #nsPanel .ns-room-bed-blanket {
   position: absolute !important;
   left: 50% !important;
@@ -2009,27 +1921,6 @@ html.mk-low-spec:not(.mk-mobile-shell) #nsOverlay.open #nsPanel { transform: tra
 }
 
 /* Līniju leģenda galvenē: tās pašas līnijas kā kartītēs, ar vienu vārdu. */
-#nsOverlay #nsPanel .ns-rhythm-legend-m3 {
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 12px !important;
-  margin: 0 56px 0 auto !important;
-  padding: 0 !important;
-  border: 0 !important;
-  background: none !important;
-  box-shadow: none !important;
-  color: #a9b8c5 !important;
-  font: 600 11px/1 Inter, system-ui, sans-serif !important;
-  white-space: nowrap !important;
-}
-#nsOverlay #nsPanel .ns-rhythm-legend-m3 span { display: inline-flex !important; align-items: center !important; gap: 6px !important; color: inherit !important; }
-#nsOverlay #nsPanel .ns-rhythm-legend-m3 i { display: block !important; width: 18px !important; height: 0 !important; border-top: 2px solid var(--ns-line) !important; border-radius: 1px !important; }
-#nsOverlay #nsPanel .ns-rhythm-legend-m3 .is-mel { --ns-line: #8cc4f2; }
-#nsOverlay #nsPanel .ns-rhythm-legend-m3 .is-cor { --ns-line: #ecd08a; }
-#nsOverlay #nsPanel .ns-rhythm-legend-m3 .is-cor i { border-top-style: dashed !important; }
-#nsOverlay #nsPanel .ns-rhythm-legend-m3 .is-wake { --ns-line: #93dcb6; }
-@media (max-width: 1100px) { #nsOverlay #nsPanel .ns-rhythm-legend-m3 { display: none !important; } }
-:root.mk-mobile-shell #nsOverlay #nsPanel .ns-rhythm-legend-m3 { display: none !important; }
 
 /* ── Laika rats (2026-09-23) ──
    Kā telefona pulkstenis: ritini, un laiks vidējā "pill" ir izvēlētais.

@@ -87,10 +87,6 @@ html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .
 html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .shift-icon-side {
   font-size: 9px !important;
 }
-html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-timer.duty-timer {
-  min-width: 0 !important; height: 16px !important;
-  font-size: 8px !important; letter-spacing: 0 !important; padding: 0 2px !important;
-}
 html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot {
   margin-top: 5px !important; padding-top: 4px !important;
   gap: 2px !important; grid-template-columns: 1fr !important;
@@ -110,9 +106,6 @@ html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .
 }
 /* The numeric total remains; the decorative dots would squeeze it into
    multiple lines in the smaller card. */
-html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-nfoot-seg {
-  display: none !important;
-}
 html.host-radio-open #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-nfoot dd em {
   font-size: 8px !important;
 }

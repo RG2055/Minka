@@ -177,7 +177,6 @@ window.setTimeout(function () {
   .mk-skin-tool-emoji,
   .swc-emoji,
   .shift-stop-popover-emoji,
-  .pv-emoji,
   .rg-comms-emoji,
   .rg-comms-topic-emoji,
   .rg-comms-topic-chip,
@@ -655,7 +654,7 @@ html, body { overflow: hidden !important; }
 }
 #minkaBar { filter: none !important; overflow: visible !important; }
 #minkaBarInner { border-radius: 18px !important; }
-#minkaBarMute, #minkaBarMenu, #minkaLogo { position: relative; z-index: 2; }
+#minkaBarMute, #minkaBarMenu { position: relative; z-index: 2; }
 </style>
 <style id="minka_auth_overlay_css">
 html.minka-auth-locked body { overflow: hidden !important; }
@@ -686,8 +685,7 @@ html.minka-mobile-frame.minka-auth-locked #minka-auth-overlay { display: none; }
 }
 html.mk-low-spec #grafiks-app,
 html.mk-low-spec .side-panel,
-html.mk-low-spec .main-panel,
-html.mk-low-spec .mac-glass {
+html.mk-low-spec .main-panel {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
@@ -806,7 +804,6 @@ body.stars-active #stars-overlay{display:block;}
    (mk-night-ok / mk-night-drop / mk-night-zero) because that colour carries
    meaning — whether the headcount holds through the night or drops. */
 #radiographers-shift-count { color: #b77bff !important; }
-.cards-lbl-line-rg { background: #b77bff !important; }
 </style>
 </head>
 <body class="ai-collapsed">
@@ -1374,11 +1371,6 @@ html.mk-low-spec #stats-table-wrap * { transition:none !important; }
   color:#fff;
   letter-spacing:.04em;
   margin-bottom:2px;
-}
-#wmDayPop .wmdp-own{
-  font:700 10px/1.3 Inter,system-ui,sans-serif;
-  color:rgba(var(--accent-rgb,183,123,255),0.95);
-  margin-bottom:7px;
 }
 #wmDayPop .wmdp-sec{
   font:800 8.5px/1 Inter,system-ui,sans-serif;
@@ -5843,8 +5835,6 @@ window.addEventListener('message', function(e) {
 .duty-block,
 .nsc,
 .fatigue-panel,
-.fatigue-tendency,
-.fatigue-health-age,
 .night-split-panel,
 .ns-room-fit > .ns-room-layout {
   will-change: auto !important;
@@ -5991,8 +5981,7 @@ window.addEventListener('message', function(e) {
 .side-panel.compact-duty .next-box-label {
   font-size: 10px !important;
 }
-.side-panel.compact-duty .next-names,
-.side-panel.compact-duty .next-box-countdown {
+.side-panel.compact-duty .next-names {
   font-size: 11px !important;
 }
 .side-panel.mini-duty .duty-vertical {
@@ -6031,8 +6020,7 @@ window.addEventListener('message', function(e) {
 .side-panel.mini-duty .next-box-label {
   font-size: 9px !important;
 }
-.side-panel.mini-duty .next-names,
-.side-panel.mini-duty .next-box-countdown {
+.side-panel.mini-duty .next-names {
   font-size: 10px !important;
 }
 :root.host-radio-open #radiographers-next-container,
@@ -6041,7 +6029,6 @@ window.addEventListener('message', function(e) {
   display: none !important;
 }
 .next-box-label,
-.next-box-countdown,
 .next-names,
 #radiographers-next,
 #radiologists-next {
@@ -6169,9 +6156,7 @@ window.addEventListener('message', function(e) {
 .mk-search-date-meta .mk-info-chip[hidden] {
   display: none !important;
 }
-.mk-search-date-icon,
-.mk-search-date-dot,
-#minkaLogo {
+.mk-search-date-icon {
   display: none !important;
 }
 .mk-search-date-icon {
@@ -6190,17 +6175,6 @@ window.addEventListener('message', function(e) {
   font: 500 22px/1 'Space Grotesk', system-ui !important;
   letter-spacing: 0 !important;
   color: rgba(226,240,255,0.78) !important;
-}
-.mk-search-date-dot {
-  display: inline-block !important;
-  width: 6px !important;
-  height: 6px !important;
-  flex: 0 0 6px !important;
-  border-radius: 999px !important;
-  background: rgba(34,211,238,0.98) !important;
-  box-shadow:
-    0 0 6px rgba(34,211,238,0.95),
-    0 0 14px rgba(34,211,238,0.48) !important;
 }
 .mk-search-date-num {
   display: inline-flex !important;
@@ -6461,16 +6435,6 @@ window.addEventListener('message', function(e) {
 }
 .mk-ticker-label { display: none !important; }
 /* Logo: show it */
-#minkaLogo {
-  display: block !important;
-  width: 44px !important; height: 44px !important;
-  border-radius: 10px !important;
-  flex-shrink: 0 !important;
-  margin-left: 2px !important;
-  margin-right: 8px !important;
-  object-fit: cover !important;
-  opacity: 0.90 !important;
-}
 
 /* Single static headline: one DOM item, no continuously moving layer. */
 .mk-ticker-scroll {
@@ -6492,12 +6456,6 @@ window.addEventListener('message', function(e) {
 }
 #mkTickerTrack.is-changing { opacity: 0; }
 #mkTickerTrack:empty { opacity: 0; }
-.mk-ticker-cycle {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  height: 100%;
-}
 /* Each news item */
 .mk-news-item {
   display: flex; align-items: center; gap: 9px;
@@ -6557,16 +6515,6 @@ window.addEventListener('message', function(e) {
 .mk-ticker-fade-r { right: 0; background: linear-gradient(-90deg, #0f1218, transparent); }
 
 /* ── Info group: moon temp nameday ── */
-.mk-info-group {
-  display: flex; align-items: center; gap: 6px;
-  flex-shrink: 0; padding: 0 6px;
-  transition: opacity .22s ease;
-}
-#minkaBar.focused .mk-info-group,
-#minkaBar.has-text .mk-info-group,
-#minkaBar.search-open .mk-info-group {
-  opacity: 0; pointer-events: none;
-}
 .mk-search-date .mk-info-chip {
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
@@ -6619,10 +6567,6 @@ window.addEventListener('message', function(e) {
 :root.host-radio-open .card .card-top {
   padding: 5px 6px 0 !important;
 }
-:root.host-radio-open .card .card-middle {
-  padding: 0 6px 20px !important;
-  gap: 1px !important;
-}
 :root.host-radio-open .card .card-shift {
   font-size: clamp(18px, 1.6vw, 26px) !important;
   line-height: 0.94 !important;
@@ -6633,7 +6577,6 @@ window.addEventListener('message', function(e) {
 :root.host-radio-open .card .name-sub {
   font-size: clamp(9px, 0.85vw, 11px) !important;
 }
-:root.host-radio-open .card-bottom,
 :root.host-radio-open .card-fat-row {
   padding: 0 6px 5px !important;
 }
@@ -6732,13 +6675,6 @@ window.addEventListener('message', function(e) {
   display: inline-block;
   min-width: 6.5ch;
   text-align: left;
-}
-.sl-ts-sep {
-  display: inline-block;
-  width: 1px;
-  height: 14px;
-  background: rgba(255,255,255,0.12);
-  margin: 0 4px;
 }
 /* keep old classes functional for any external references */
 .shift-elapsed, .shift-remaining { display: none !important; }
@@ -6853,43 +6789,10 @@ window.addEventListener('message', function(e) {
   position: relative;
   margin-bottom: 2px;
 }
-.sl-circ-header {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 18px;
-  padding: 8px 14px 0;
-  font: 700 10px/1 'Space Grotesk', system-ui;
-  letter-spacing: .08em;
-  color: rgba(255,255,255,0.45);
-}
-.sl-circ-tagad strong { color: rgba(255,255,255,0.88); font-size: 13px; }
-.sl-circ-atlik strong { color: rgba(56,189,248,0.95);  font-size: 13px; }
 .sl-circ-chart svg {
   display: block;
   width: 100%;
   height: auto;
-}
-.sl-circ-chart .sl-circ-drag-labels {
-  position: absolute;
-  left: 3.03%;
-  right: 3.03%;
-  top: 17.6%;
-  height: 9.5%;
-  z-index: 6;
-  pointer-events: none;
-  background: transparent;
-}
-.sl-circ-chart .sl-circ-drag-labels .sl-ns-name {
-  top: 0;
-  width: 22%;
-  height: 100%;
-  opacity: 0 !important;
-  color: transparent !important;
-  text-shadow: none !important;
-  font-size: 0 !important;
-  pointer-events: auto;
-  cursor: grab;
 }
 
 /* Headera nakts sadalījums: kompakts Fluent Emoji kopsavilkums.
@@ -7153,20 +7056,7 @@ window.addEventListener('message', function(e) {
   .sl-circ-compact .ns-mini-guide > span { grid-template-columns: 24px auto !important; grid-template-rows: auto !important; }
   .sl-circ-compact .ns-mini-guide b { grid-row: auto !important; font-size: 18px !important; }
 }
-.sl-circ-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 16px;
-  font: 600 9px/1.4 'Space Grotesk', system-ui;
-  letter-spacing: .05em;
-  padding: 6px 12px 8px;
-  border-top: 1px solid rgba(255,255,255,0.05);
-}
 /* ── Night-split overlay bar (shown when 🌙 button is active) ── */
-.sl-ns-bar {
-  position: relative;
-  margin-bottom: 5px;
-}
 .sl-ns-labels {
   position: absolute;
   inset: 0;
@@ -7175,86 +7065,6 @@ window.addEventListener('message', function(e) {
   z-index: 4;
   pointer-events: none;
 }
-.sl-ns-name {
-  position: absolute;
-  top: 1px;
-  height: 18px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transform: translateX(-50%);
-  font: 800 10px/18px 'Space Grotesk', system-ui;
-  letter-spacing: .07em;
-  color: rgba(190,232,255,0.94);
-  text-shadow:
-    0 0 8px rgba(56,189,248,0.42),
-    0 0 14px rgba(56,189,248,0.28);
-  white-space: nowrap;
-  pointer-events: auto;
-  cursor: grab;
-  user-select: none;
-  -webkit-user-select: none;
-}
-.sl-ns-name.is-current { opacity: 1; color: rgba(226,246,255,0.98); }
-.sl-ns-name.is-past    { opacity: 0.38; }
-.sl-ns-divider {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: rgba(255,255,255,0.13);
-  transform: translateX(-50%);
-}
-.sl-ns-track {
-  position: relative;
-  height: 28px;
-  border-radius: 9px;
-  background: rgba(8,14,28,0.82);
-  border: 1px solid rgba(125,211,252,0.20);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.035),
-    0 0 12px rgba(56,189,248,0.10);
-  overflow: visible;
-}
-.sl-ns-fill {
-  position: absolute;
-  left: 0;
-  top: 17px;
-  height: 9px;
-  border-radius: 5px;
-  pointer-events: none;
-  box-shadow:
-    0 0 12px rgba(56,189,248,0.30),
-    0 0 20px rgba(56,189,248,0.16);
-}
-.sl-ns-scrubber {
-  position: absolute;
-  top: 21.5px;
-  transform: translate(-50%, -50%);
-  width: 13px; height: 13px;
-  background: #e0f7ff;
-  border-radius: 50%;
-  box-shadow:
-    0 0 0 2px rgba(8,14,28,0.82),
-    0 0 10px rgba(125,211,252,0.78),
-    0 0 18px rgba(56,189,248,0.32);
-  z-index: 5;
-  pointer-events: none;
-}
-.sl-ns-times {
-  position: relative;
-  height: 16px;
-  margin-top: 4px;
-}
-.sl-ns-time {
-  position: absolute;
-  font: 600 9px/1 'Space Grotesk', system-ui;
-  color: rgba(255,255,255,0.30);
-  transform: translateX(-50%);
-  white-space: nowrap;
-}
-.sl-ns-time.is-start { transform: translateX(0); }
-.sl-ns-time.is-end   { transform: translateX(-100%); }
 .sl-ns-time-moon     { color: rgba(125,211,252,0.75) !important; }
 /* ── Shift lanes (grouped by shift type) ── */
 .shift-lanes-wrap {
@@ -7300,14 +7110,6 @@ window.addEventListener('message', function(e) {
 #shift-progress-wrap:not(.lanes-collapsed) .lanes-mini-toggle .lmt-chev { transform: rotate(180deg); }
 /* Hidden static home (.ns-btn-row) keeps it invisible on non-today views */
 /* Day/night color band between lanes and ruler */
-.sl-time-band {
-  display: flex;
-  height: 4px;
-  border-radius: 3px;
-  overflow: hidden;
-  margin: 3px 0 2px;
-  opacity: 0.75;
-}
 /*
  * 24h bar — real sky palette, all values near-black (<100 RGB)
  * Colour lives as a subtle tinted haze, not vivid hues.
@@ -7365,12 +7167,6 @@ window.addEventListener('message', function(e) {
 /* Saule 08:00 — noņemta */
 .sl-ruler-band::after { display: none !important; }
 /* wrapper: full-width flex row — bar + % label sit side by side */
-.sl-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-}
 .sl {
   position: relative;
   height: 26px;
@@ -7475,9 +7271,6 @@ window.addEventListener('message', function(e) {
   background-repeat: no-repeat;
   pointer-events: none;
   z-index: 0;
-}
-.sl-gridline {
-  display: none !important;
 }
 .sl-bars-wrap .sl {
   z-index: 1;
@@ -7634,23 +7427,6 @@ window.addEventListener('message', function(e) {
   flex-shrink: 0 !important;
 }
 /* Name labels inside below row */
-.ns-bar-name {
-  position: absolute !important;
-  top: 0 !important;
-  transform: translateX(-50%) !important;
-  font-size: 9px !important;
-  font-weight: 800 !important;
-  letter-spacing: .04em !important;
-  text-transform: uppercase !important;
-  white-space: nowrap !important;
-  color: var(--ns-bar-color, rgba(255,255,255,0.75)) !important;
-  line-height: 1 !important;
-  pointer-events: none !important;
-}
-.ns-bar-name.is-current {
-  color: #fff !important;
-  text-shadow: 0 0 8px var(--ns-bar-color, #38bdf8) !important;
-}
 .shift-progress-time-label {
   position: absolute !important;
   top: 4px !important;
@@ -7721,19 +7497,6 @@ window.addEventListener('message', function(e) {
 .shift-progress-seg-label.is-drag-over {
   text-shadow: 0 0 14px #fff, 0 0 6px var(--seg-color,#8b5cf6) !important;
   filter: brightness(1.5) !important;
-}
-#sl-ns-slot .sl-ns-name.shift-progress-seg-label {
-  top: 1px !important;
-  height: 18px !important;
-  line-height: 18px !important;
-  font-size: 10px !important;
-  pointer-events: auto !important;
-}
-#sl-ns-slot .sl-ns-name.shift-progress-seg-label.is-current {
-  color: rgba(226,246,255,0.98) !important;
-}
-#sl-ns-slot .sl-ns-name.shift-progress-seg-label.is-past {
-  opacity: 0.38 !important;
 }
 /* Draggable dividers between segments */
 .shift-progress-seg-divider {
@@ -7814,37 +7577,20 @@ window.addEventListener('message', function(e) {
 html.mk-no-blur * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 html.mk-no-anim * { animation: none !important; transition: none !important; }
 /* Work-PC saver: avoid animated glow/blur paints that can slow other PWAs. */
-.minka-orb-mini .nsh-plasma,
-.minka-orb-mini .nsh-cat,
 .ns-flow-live::after,
 .nsc-full-card,
-.shift-progress-seg-label,
-.ns-bed-zzz {
+.shift-progress-seg-label {
   animation: none !important;
 }
-.minka-orb-mini .nsh-plasma,
-.minka-orb-mini .nsh-ringseg,
-.minka-orb-mini:hover .nscw-outer,
-.ns-stage-ghost,
-.ns-bed-zzz,
 .sbi-moon,
 .shift-progress-seg-label {
   filter: none !important;
 }
-.minka-orb-mini .nsh-core {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-.minka-orb-mini .nsh-sec,
 .minka-orb-mini .sec,
-.minka-orb-mini .nsh-pin,
-.minka-orb-mini .nsh-eye,
 .ns-flow-live {
   box-shadow: none !important;
 }
-.ns-bed-zzz,
-.shift-progress-seg-label,
-.nsh-num {
+.shift-progress-seg-label {
   text-shadow: none !important;
 }
 /* Live pozīcijas marķieris uz timeline = pikseļu buddy (nevis sarkans punkts).
@@ -7928,18 +7674,6 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
   text-overflow: ellipsis;
 }
 .ns-panel-head { position: relative !important; }
-.ns-lamp-iframe {
-  display: block !important;
-  position: relative !important;
-  width: 320px;
-  height: 269px;
-  border: none !important;
-  background: transparent !important;
-  pointer-events: inherit !important;
-  border-radius: 0 !important;
-  overflow: hidden !important;
-  flex: 0 0 auto !important;
-}
 /* Card wrapper — column so checklist sits below the card */
 .ns-cards-row { align-items: flex-start !important; }
 .nsc-card-wrap {
@@ -7955,7 +7689,6 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
   min-width: unset !important;
   width: 100% !important;
 }
-.nsc-below-checklist { padding: 0 2px !important; }
 /* SVG decorative background fills the whole card */
 .nsc-deco {
   position: absolute !important;
@@ -7974,18 +7707,6 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
 }
 .nsc-full-inner { position: relative !important; z-index: 1 !important; }
 /* Subtle worker emoji watermark — up in the card's "sky", plain text glyph */
-.nsc-bg-emoji {
-  position: absolute !important;
-  right: 52px !important;
-  top: 16px !important;
-  z-index: 0 !important;
-  font-size: 64px !important;
-  line-height: 1 !important;
-  opacity: .09 !important;
-  transform: rotate(-8deg) !important;
-  pointer-events: none !important;
-  user-select: none !important;
-}
 /* Headroom for the hover lift (translateY(-5px)) — bundle.css row has
    overflow-x:auto which otherwise clips the raised card's top edge */
 .ns-cards-row { padding-top: 8px !important; margin-top: -8px !important; }
@@ -7996,18 +7717,6 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
 .nsc-theme-sunrise { background: transparent !important; border-color: rgba(255,140,163,0.22) !important; }
 
 /* Sleeker action buttons below last card */
-.nsc-below-checklist span {
-  border-radius: 12px !important;
-  padding: 6px 8px !important;
-  font-size: 10px !important;
-  letter-spacing: .04em !important;
-  transition: filter .2s, transform .15s !important;
-  cursor: default !important;
-}
-.nsc-below-checklist span:hover {
-  filter: brightness(1.25) !important;
-  transform: translateY(-1px) !important;
-}
 
 .ns-room-block {
   position: relative !important;
@@ -8123,25 +7832,12 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
 }
 /* Inline pixel cat (aizvieto smago pikts_kakis iframe + Lottie). Bez fona,
    bez float — dzīvas tikai acis. Klikšķis uz brīdi pamodina. */
-.ns-room-cat .pkt-cat { width: 100%; height: 100%; display: block; }
 /* Cat is only clickable while the night-split overlay is actually open. Its old
    unconditional `pointer-events:auto !important` overrode the closed overlay's
    `pointer-events:none`, leaving an invisible (dark, opacity:0) clickable cat
    floating over the main schedule. */
 .ns-room-cat { pointer-events: none; cursor: pointer; }
 #nsOverlay.open .ns-room-cat { pointer-events: auto !important; }
-.pkt-cat { transform: none !important; animation: none !important; will-change: auto; }
-.pkt-cat .pkt-eyes {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: pktSleepEyes 8.8s ease-in-out infinite;
-  will-change: transform, opacity;
-}
-.pkt-cat.pkt-awake .pkt-eyes {
-  animation: pktAwakeEyes 1.45s ease-in-out infinite !important;
-  opacity: 1;
-  filter: drop-shadow(0 0 4px rgba(245,181,30,.55));
-}
 @keyframes pktSleepEyes {
   0%, 12%   { transform: scaleY(.95); opacity: .9; }
   28%       { transform: scaleY(.72); opacity: .75; }
@@ -8156,9 +7852,6 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
 /* Globālais low-spec noteikums (animation-duration:0.01ms) nogriež visas
    animācijas. Kaķa acu kustība ir niecīga, tāpēc atjaunojam to arī
    low-spec ar pilno shorthand !important (pārraksta duration + iteration). */
-html.mk-low-spec .pkt-cat { animation: none !important; }
-html.mk-low-spec .pkt-cat .pkt-eyes { animation: pktSleepEyes 8.8s ease-in-out infinite !important; }
-html.mk-low-spec .pkt-cat.pkt-awake .pkt-eyes { animation: pktAwakeEyes 1.45s ease-in-out infinite !important; }
 
 /* Closed, the overlay is opacity:0 but still ~800 elements in the tree: every
    style pass over the document (a day switch, the radio flipping the roster's
@@ -8170,12 +7863,10 @@ html.mk-low-spec .pkt-cat.pkt-awake .pkt-eyes { animation: pktAwakeEyes 1.45s ea
 #nsOverlay.ns-parked:not(.open) { content-visibility: hidden; }
 /* Closed night-split content must not keep animating behind the schedule.
    Low-spec mode keeps these purely decorative details static even when open. */
-#nsOverlay:not(.open) .ns-room-bed-zzz span,
-#nsOverlay:not(.open) .pkt-cat .pkt-eyes {
+#nsOverlay:not(.open) .ns-room-bed-zzz span {
   animation-play-state: paused !important;
 }
 html.mk-low-spec #nsOverlay .ns-room-bed-zzz span,
-html.mk-low-spec #nsOverlay .pkt-cat .pkt-eyes,
 html.mk-low-spec #ns-bar-toggle .ns-moon {
   animation: none !important;
 }
@@ -8344,57 +8035,11 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   overflow: visible !important;
 }
 
-.ns-room-bed-svg {
-  position: absolute !important;
-  inset: -9px -10px -8px -10px !important;
-  width: calc(100% + 20px) !important;
-  height: calc(100% + 17px) !important;
-  z-index: 1 !important;
-  pointer-events: none !important;
-  filter: drop-shadow(0 0 16px color-mix(in srgb, var(--bed, #8b5cf6) 28%, transparent))
-    drop-shadow(0 6px 10px rgba(0,0,0,.32)) !important;
-}
-
-.ns-room-bed-svg path {
-  fill: var(--bed, #8b5cf6) !important;
-}
-
 .ns-room-bed-empty .ns-room-bed-card {
   background: transparent !important;
   border: 0 !important;
   box-shadow: none !important;
   outline: none !important;
-}
-
-.ns-room-bed-empty .ns-room-bed-svg {
-  opacity: .12 !important;
-  filter: none !important;
-}
-
-.ns-room-bed-pillow {
-  width: 58% !important;
-  height: 25% !important;
-  margin-top: 0 !important;
-  border-radius: 13px !important;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--bed, #8b5cf6) 30%, white 70%), color-mix(in srgb, var(--bed, #8b5cf6) 44%, white 56%)) !important;
-  box-shadow: inset 0 -3px 6px rgba(0,0,0,0.10), 0 6px 14px rgba(0,0,0,0.18) !important;
-  position: absolute !important;
-  top: 15% !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  z-index: 3 !important;
-}
-
-.ns-room-bed-pillow::after {
-  content: "" !important;
-  position: absolute !important;
-  left: 18px !important;
-  right: 18px !important;
-  bottom: 6px !important;
-  height: 8px !important;
-  border-bottom: 3px solid color-mix(in srgb, var(--bed, #8b5cf6) 50%, white 50%) !important;
-  border-radius: 999px !important;
-  opacity: .42 !important;
 }
 
 .ns-room-bed-devices {
@@ -8572,17 +8217,7 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   text-rendering: geometricPrecision !important;
 }
 
-.ns-room-bed-emoji {
-  display: inline-block !important;
-  margin-right: 4px !important;
-  line-height: 1 !important;
-  vertical-align: -0.06em !important;
-}
-
-.ns-room-bed-sub { display: none !important; }
-
 .ns-room-bed-empty .ns-room-bed-main,
-.ns-room-bed-empty .ns-room-bed-sub,
 .ns-room-bed-empty {
   color: transparent !important;
 }
@@ -8590,13 +8225,6 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
 .ns-room-bed[data-i].nsover .ns-room-bed-card {
   border-color: rgba(255,255,255,0.92) !important;
   box-shadow: 0 0 0 2px rgba(255,255,255,0.12), 0 0 16px rgba(196,181,253,0.22) !important;
-}
-
-.ns-room-legend {
-  display: flex !important;
-  flex-wrap: wrap !important;
-  gap: 8px !important;
-  margin-top: 10px !important;
 }
 
 .ns-room-pill {
@@ -8634,14 +8262,6 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
 .ns-room-pill-time {
   font-size: 11px !important;
   color: rgba(255,255,255,0.56) !important;
-}
-
-.ns-room-extra {
-  margin-top: 8px !important;
-  color: rgba(255,255,255,0.56) !important;
-  font-size: 11px !important;
-  line-height: 1.35 !important;
-  display: none !important;
 }
 
 .shift-stop {
@@ -8793,17 +8413,10 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   text-shadow: 0 0 12px rgba(56,189,248,0.24) !important;
 }
 .pill.active,
-.day-pill.active,
-.date-pill.active {
+.day-pill.active {
   border-color: rgba(56,189,248,0.50) !important;
   background: rgba(56,189,248,0.12) !important;
   box-shadow: inset 0 0 0 1px rgba(196,181,253,0.10) !important;
-}
-.pill.active .date-num,
-.day-pill.active .date-num,
-.date-pill.active .date-num {
-  color: #c4b5fd !important;
-  text-shadow: none !important;
 }
 .top-row {
   margin-bottom: 0 !important;
@@ -8977,7 +8590,6 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   color: rgba(56,189,248,0.95) !important;
 }
 /* ── NAKTS SADALĪJUMS button — beside elapsed/remaining time ── */
-#mk-ns-slot #ns-bar-toggle,
 #sl-ns-slot #ns-bar-toggle {
   display: inline-flex !important;
   align-items: center !important;
@@ -8995,25 +8607,21 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   transition: background .2s, border-color .2s, color .2s, box-shadow .2s !important;
   box-shadow: none !important;
 }
-#mk-ns-slot #ns-bar-toggle[hidden],
 #sl-ns-slot #ns-bar-toggle[hidden] {
   display: none !important;
 }
-#mk-ns-slot #ns-bar-toggle:hover,
 #sl-ns-slot #ns-bar-toggle:hover {
   background: rgba(14,40,60,0.90) !important;
   border-color: rgba(125,211,252,0.45) !important;
   color: rgba(125,211,252,0.95) !important;
   box-shadow: 0 0 14px rgba(56,189,248,0.18) !important;
 }
-#mk-ns-slot #ns-bar-toggle.is-on,
 #sl-ns-slot #ns-bar-toggle.is-on {
   background: rgba(14,40,60,0.85) !important;
   border-color: rgba(125,211,252,0.55) !important;
   color: rgba(125,211,252,1) !important;
   box-shadow: 0 0 18px rgba(56,189,248,0.28), 0 0 6px rgba(56,189,248,0.18) !important;
 }
-#mk-ns-slot #ns-bar-toggle .ns-moon,
 #sl-ns-slot #ns-bar-toggle .ns-moon {
   font-size: 11px !important;
   margin-right: 4px !important;
@@ -9229,11 +8837,6 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   flex-basis: 16px !important;
 }
 
-:root.mk-mobile-shell .today-badge {
-  font-size: 6px !important;
-  padding: 2px 4px !important;
-}
-
 :root.mk-mobile-shell #radiographers-duty,
 :root.mk-mobile-shell #radiologists-duty {
   padding-right: 0 !important;
@@ -9323,8 +8926,7 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
 }
 
 :root.mk-mobile-shell .next-box-label,
-:root.mk-mobile-shell .next-names,
-:root.mk-mobile-shell .next-box-countdown {
+:root.mk-mobile-shell .next-names {
   font-size: 7px !important;
   line-height: 1.18 !important;
 }
@@ -9363,14 +8965,6 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   gap: 6px !important;
-}
-
-:root.mk-mobile-shell #minkaLogo {
-  width: 18px !important;
-  height: 18px !important;
-  min-width: 18px !important;
-  border-radius: 6px !important;
-  opacity: .85 !important;
 }
 
 :root.mk-mobile-shell #minkaBarHint,
@@ -9603,14 +9197,6 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   border-radius: 11px !important;
 }
 
-:root.mk-mobile-shell .date-num {
-  font-size: 9px !important;
-}
-
-:root.mk-mobile-shell .date-day {
-  font-size: 7px !important;
-}
-
 :root.mk-mobile-shell .arrow {
   width: 32px !important;
   min-width: 32px !important;
@@ -9643,11 +9229,6 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   padding: 3px 4px 0 !important;
 }
 
-:root.mk-mobile-shell .card .card-middle {
-  padding: 0 4px 5px !important;
-  gap: 0 !important;
-}
-
 :root.mk-mobile-shell .card .card-shift {
   font-size: clamp(8px, 2.2vw, 11px) !important;
   line-height: .92 !important;
@@ -9663,7 +9244,6 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   line-height: 1 !important;
 }
 
-:root.mk-mobile-shell .card-bottom,
 :root.mk-mobile-shell .card-fat-row {
   padding: 0 4px 2px !important;
 }
@@ -9786,8 +9366,7 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   padding-right: 28px !important;
 }
 
-:root.mk-mobile-shell .ns-panel-title,
-:root.mk-mobile-shell .ns-headline {
+:root.mk-mobile-shell .ns-panel-title {
   font-size: 9px !important;
   letter-spacing: .12em !important;
 }
@@ -9813,15 +9392,13 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   background-position: right 6px center !important;
 }
 
-:root.mk-mobile-shell .ns-mode-btns,
-:root.mk-mobile-shell .ns-modebar {
+:root.mk-mobile-shell .ns-mode-btns {
   gap: 5px !important;
   margin-bottom: 8px !important;
 }
 
 :root.mk-mobile-shell .ns-mode-btn,
-:root.mk-mobile-shell .ns-raffle-trigger,
-:root.mk-mobile-shell .nsrb {
+:root.mk-mobile-shell .ns-raffle-trigger {
   min-height: 32px !important;
   height: 32px !important;
   padding: 5px 9px !important;
@@ -9836,9 +9413,6 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   width:16px !important;
   height:16px !important;
   flex-basis:16px !important;
-}
-:root.mk-mobile-shell .ns-rhythm-legend {
-  display:none !important;
 }
 
 :root.mk-mobile-shell .ns-cards-row {
@@ -9895,53 +9469,9 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   padding-top: 5px !important;
 }
 
-:root.mk-mobile-shell .nsc-full-spark {
-  padding-top: 2px !important;
-}
-
-:root.mk-mobile-shell .nsc-full-spark svg {
-  height: 34px !important;
-}
-
-:root.mk-mobile-shell .ns-stage-grid {
-  gap: 6px !important;
-  margin-bottom: 8px !important;
-}
-
-:root.mk-mobile-shell .ns-stage {
-  padding: 8px 9px !important;
-  border-radius: 10px !important;
-}
-
-:root.mk-mobile-shell .ns-stage-name {
-  font-size: 13px !important;
-}
-
-:root.mk-mobile-shell .ns-stage-time,
-:root.mk-mobile-shell .ns-stage-meta {
-  font-size: 10px !important;
-}
-
-:root.mk-mobile-shell .ns-flow-wrap,
-:root.mk-mobile-shell .ns-reason {
-  margin-top: 8px !important;
-  margin-bottom: 8px !important;
-  padding: 8px 9px !important;
-  border-radius: 10px !important;
-}
-
-:root.mk-mobile-shell .ns-flow-track {
-  height: 20px !important;
-}
-
 :root.mk-mobile-shell .ns-flow-labels {
   margin-top: 5px !important;
   font-size: 9px !important;
-}
-
-:root.mk-mobile-shell .ns-reason {
-  font-size: 9px !important;
-  line-height: 1.35 !important;
 }
 
 :root.mk-mobile-shell .ns-room-block {
@@ -9966,16 +9496,6 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   width: 100% !important;
 }
 
-:root.mk-mobile-shell .ns-lamp-iframe {
-  width: 190px !important;
-  height: 160px !important;
-}
-
-:root.mk-mobile-shell .ns-room-legend {
-  gap: 5px !important;
-  margin-top: 6px !important;
-}
-
 :root.mk-mobile-shell .ns-room-pill {
   min-height: 28px !important;
   padding: 5px 8px !important;
@@ -9986,8 +9506,7 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   font-size: 9px !important;
 }
 
-:root.mk-mobile-shell .ns-room-pill-time,
-:root.mk-mobile-shell .ns-room-extra {
+:root.mk-mobile-shell .ns-room-pill-time {
   font-size: 8px !important;
 }
 
@@ -10149,12 +9668,6 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   letter-spacing: -.065em !important;
 }
 
-:root.mk-mobile-shell .ns-room-bed-pillow {
-  width: 38px !important;
-  height: 18px !important;
-  margin-top: 5px !important;
-}
-
 :root.mk-mobile-shell .ns-room-bed-head-emoji {
   top: 10px !important;
   font-size: 18px !important;
@@ -10199,14 +9712,11 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   padding: 3px 5px !important;
 }
 
-:root.mk-mobile-shell .ns-room-bed-emoji,
 :root.mk-mobile-shell .ns-room-pill-emoji {
   margin-right: 3px !important;
 }
 
-:root.mk-mobile-shell .ns-room-bed-sub,
-:root.mk-mobile-shell .ns-room-titlebar,
-:root.mk-mobile-shell .ns-room-exit {
+:root.mk-mobile-shell .ns-room-titlebar {
   font-size: 8px !important;
 }
 
@@ -10344,10 +9854,6 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   :root.mk-mobile-shell .nsc-full-fat {
     font-size: 7px !important;
   }
-
-  :root.mk-mobile-shell .nsc-full-spark svg {
-    height: 28px !important;
-  }
 }
 
 /* ══════════════════════════════════════════════════════
@@ -10476,8 +9982,6 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   background:rgba(125,211,252,.06);
   color:rgba(207,230,247,.72);
 }
-.ns-mode-t { font:800 10px/1 Inter, system-ui, sans-serif; letter-spacing:.06em; text-transform:uppercase; }
-.ns-mode-desc { font:600 8px/1 Inter, system-ui, sans-serif; letter-spacing:.01em; text-transform:none; opacity:.6; white-space:nowrap; }
 .ns-mode-btn:hover { background:rgba(125,211,252,.12); color:#cfe6f7; }
 .ns-mode-btn.is-on {
   border-color:rgba(56,189,248,.6);
@@ -10703,26 +10207,6 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   .ns-raffle-results li { min-height:28px; padding:4px 8px; }
 }
 @media (prefers-reduced-motion:reduce) { .ns-raffle-paper { transition:none; } }
-.ns-rhythm-legend {
-  display:inline-flex !important;
-  align-items:center !important;
-  gap:10px !important;
-  margin-left:10px !important;
-  padding:4px 9px !important;
-  border:1px solid rgba(125,211,252,.18) !important;
-  border-radius:999px !important;
-  background:rgba(4,12,24,.42) !important;
-  color:rgba(207,230,247,.72) !important;
-  font:800 9px/1 Inter, system-ui, sans-serif !important;
-  letter-spacing:.06em !important;
-  text-transform:uppercase !important;
-  white-space:nowrap !important;
-}
-.ns-rhythm-legend .is-mel { color:#b982ff !important; }
-.ns-rhythm-legend .is-cor { color:#ffc629 !important; }
-.ns-rhythm-legend .is-wake { color:#58e68e !important; }
-.ns-rhythm-legend > span { display:inline-flex !important; align-items:baseline !important; gap:5px !important; }
-.ns-rhythm-legend .ns-leg-desc { color:rgba(178,192,212,.66) !important; font-weight:600 !important; text-transform:none !important; letter-spacing:.01em !important; }
 .ns-flow-labels {
   font-family: 'Space Mono', 'SF Mono', 'Menlo', monospace !important;
 }
@@ -10978,9 +10462,6 @@ html.mk-low-spec .nsc-deco .ns-moon-float {
   --mk-side-name: #e8e9ef;
   --mk-side-sub: #8a8ca0;
 }
-.mk-side-shimmer {
-  display: none !important;
-}
 .mk-side-card-main {
   display: grid !important;
   grid-template-columns: auto minmax(0, 1fr) !important;
@@ -11200,66 +10681,6 @@ html.mk-low-spec .nsc-deco .ns-moon-float {
   background: rgba(255,122,122,.13) !important;
   color: #ff7a7a !important;
 }
-.mk-side-card .mk-side-timer.duty-timer {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  flex: 1 1 0 !important;
-  min-width: 0 !important;
-  max-width: none !important;
-  height: 18px !important;
-  padding: 0 5px !important;
-  border-radius: 6px !important;
-  background: rgba(6,7,12,.66) !important;
-  border: 1px solid rgba(255,255,255,.075) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.035) !important;
-  color: rgba(232,233,239,.88) !important;
-  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace !important;
-  font-size: 9px !important;
-  font-weight: 800 !important;
-  line-height: 1 !important;
-  letter-spacing: .03em !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: clip !important;
-}
-.mk-side-card .mk-side-timer.duty-timer::before {
-  content: none !important;
-  display: none !important;
-}
-.mk-side-card .mk-side-timer.duty-timer .ghost {
-  display: none !important;
-}
-.mk-side-card .mk-side-timer.duty-timer .val {
-  color: inherit !important;
-  font: inherit !important;
-}
-.mk-side-progress {
-  display: none !important;
-}
-.mk-side-progress .side-fat-bar-wrap {
-  flex: 1 1 auto !important;
-  height: 4px !important;
-  border-radius: 999px !important;
-  background: rgba(255,255,255,.06) !important;
-  overflow: hidden !important;
-}
-.mk-side-progress .side-fat-bar-wrap > div {
-  width: var(--mk-side-fat, 0%) !important;
-  height: 100% !important;
-  border-radius: inherit !important;
-  background: var(--mk-side-fat-color) !important;
-  box-shadow: none !important;
-  transition: width .85s cubic-bezier(.22,1,.36,1) !important;
-}
-.mk-side-progress .side-fat-pct {
-  flex: 0 0 auto !important;
-  min-width: 34px !important;
-  text-align: right !important;
-  color: var(--mk-side-fat-color) !important;
-  opacity: 1 !important;
-  font: 800 12px/1 "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace !important;
-}
 /* ── nfoot: next shift + month count ── */
 .mk-side-nfoot {
   margin-top: 8px !important;
@@ -11299,21 +10720,6 @@ html.mk-low-spec .nsc-deco .ns-moon-float {
   color: rgba(255,255,255,.65) !important;
   font-weight: 500 !important;
   font-size: 9.5px !important;
-}
-.mk-nfoot-seg {
-  display: inline-flex !important;
-  gap: 2px !important;
-  flex-shrink: 0 !important;
-}
-.mk-nfoot-seg i {
-  width: 5px !important;
-  height: 5px !important;
-  border-radius: 50% !important;
-  background: rgba(255,255,255,.12) !important;
-  display: inline-block !important;
-}
-.mk-nfoot-seg i.on {
-  background: var(--mk-side-fat-color, #35d07f) !important;
 }
 /* Month split by shift kind (D / N / 24h), same bar as the statistics cards. */
 /* With the split bar in place the footer's divider line goes away everywhere:
@@ -11451,19 +10857,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   color: rgba(235,240,255,.86) !important;
   font-weight: 750 !important;
 }
-#radiographers-duty .mk-nfoot-seg i,
-#radiologists-duty .mk-nfoot-seg i {
-  background: rgba(255,255,255,.24) !important;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.15) !important;
-  opacity: 1 !important;
-}
-#radiographers-duty .mk-nfoot-seg i.on,
-#radiologists-duty .mk-nfoot-seg i.on {
-  background: var(--mk-side-fat-color, #35d07f) !important;
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.25),
-    0 0 6px rgba(255,255,255,.13) !important;
-}
 /* Side card visual balance: compact version of the larger shift-card header. */
 #radiographers-duty .mk-side-card,
 #radiologists-duty .mk-side-card {
@@ -11565,16 +10958,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   font-weight: 950 !important;
   letter-spacing: .02em !important;
 }
-#radiographers-duty .mk-side-card .mk-side-timer.duty-timer,
-#radiologists-duty .mk-side-card .mk-side-timer.duty-timer {
-  height: 28px !important;
-  border-radius: 9px !important;
-  background: rgba(3,5,10,.74) !important;
-  border-color: rgba(255,255,255,.105) !important;
-  color: rgba(245,247,255,.94) !important;
-  font-size: 10.5px !important;
-  letter-spacing: .08em !important;
-}
 #radiographers-duty .mk-side-nfoot,
 #radiologists-duty .mk-side-nfoot {
   margin-top: 11px !important;
@@ -11597,15 +10980,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 #radiographers-duty .mk-side-nfoot dd em,
 #radiologists-duty .mk-side-nfoot dd em {
   font-size: 9px !important;
-}
-#radiographers-duty .mk-nfoot-seg,
-#radiologists-duty .mk-nfoot-seg {
-  gap: 1px !important;
-}
-#radiographers-duty .mk-nfoot-seg i,
-#radiologists-duty .mk-nfoot-seg i {
-  width: 4px !important;
-  height: 4px !important;
 }
 #radiographers-duty .mk-side-wm,
 #radiologists-duty .mk-side-wm {
@@ -11697,19 +11071,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 .side-panel.mini-duty .mk-side-radiologist .mk-side-name-wrap {
   padding-right: 0 !important;
   padding-left: 0 !important;
-}
-:root.mk-mobile-shell .mk-side-timer,
-.side-panel.compact-duty .mk-side-timer,
-.side-panel.mini-duty .mk-side-timer {
-  min-width: 54px !important;
-  height: 18px !important;
-  font-size: 10px !important;
-}
-.mk-side-card .mk-side-timer.duty-timer {
-  min-width: 0 !important;
-  flex: 1 1 0 !important;
-  height: 18px !important;
-  font-size: 9px !important;
 }
 :root.mk-mobile-shell .mk-side-shift-chip,
 .side-panel.compact-duty .mk-side-shift-chip,
@@ -11831,17 +11192,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   border-radius: 5px !important;
   font-size: 10px !important;
 }
-:root.mk-mobile-shell #radiographers-duty .mk-side-card .mk-side-timer.duty-timer,
-:root.mk-mobile-shell #radiologists-duty .mk-side-card .mk-side-timer.duty-timer,
-.side-panel.compact-duty #radiographers-duty .mk-side-card .mk-side-timer.duty-timer,
-.side-panel.compact-duty #radiologists-duty .mk-side-card .mk-side-timer.duty-timer,
-.side-panel.mini-duty #radiographers-duty .mk-side-card .mk-side-timer.duty-timer,
-.side-panel.mini-duty #radiologists-duty .mk-side-card .mk-side-timer.duty-timer {
-  height: 18px !important;
-  border-radius: 6px !important;
-  font-size: 9px !important;
-  letter-spacing: .03em !important;
-}
 
 /* Side card fit guard: long August dates and surnames must stay readable on macOS/Windows. */
 #radiographers-duty .mk-side-card .duty-surname,
@@ -11914,33 +11264,8 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 :root.mk-mobile-shell .date-title-wrap {
   display: none !important;
 }
-#minkaLogo,
-.mk-search-date-icon,
-.mk-search-date-dot {
+.mk-search-date-icon {
   display: none !important;
-}
-.mk-search-launch {
-  color: rgba(125,211,252,0.88) !important;
-  border-color: rgba(56,189,248,0.22) !important;
-  background: rgba(14,30,48,0.42) !important;
-  box-shadow:
-    0 0 0 1px rgba(56,189,248,0.06) inset,
-    0 0 14px rgba(56,189,248,0.10) !important;
-  transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease !important;
-}
-.mk-search-launch:hover,
-.mk-search-launch:focus-visible {
-  color: rgba(226,246,255,0.98) !important;
-  border-color: rgba(56,189,248,0.48) !important;
-  background: rgba(14,40,60,0.74) !important;
-  box-shadow:
-    0 0 0 1px rgba(56,189,248,0.12) inset,
-    0 0 18px rgba(56,189,248,0.24) !important;
-  transform: translateY(-1px) !important;
-}
-.mk-search-launch .material-icons-round {
-  font-size: 20px !important;
-  line-height: 1 !important;
 }
 :root:not(.mk-mobile-shell) #minkaBarInner {
   height: 72px !important;
@@ -12164,14 +11489,8 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 :root.mk-mobile-shell .mk-search-today[hidden] {
   display: none !important;
 }
-:root.mk-mobile-shell .mk-search-date-icon,
-:root.mk-mobile-shell .mk-search-date-dot {
+:root.mk-mobile-shell .mk-search-date-icon {
   display: none !important;
-}
-:root.mk-mobile-shell .mk-search-launch {
-  min-width: 32px !important;
-  width: 32px !important;
-  height: 32px !important;
 }
 :root.mk-mobile-shell .mk-bar-icon-btn {
   width: 32px !important;
@@ -12275,9 +11594,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 #grafiks-list.grid-view .cards-section-label-rd {
   color: #ff6b7a !important;
 }
-#grafiks-list.grid-view .cards-lbl-line {
-  display: none !important;
-}
 #grafiks-list.grid-view .card.mk-mid-card {
   box-sizing: border-box !important;
   container-type: inline-size !important;
@@ -12345,7 +11661,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   min-width: 0 !important;
   overflow: hidden !important;
 }
-#grafiks-list.grid-view .mk-mid-status-emoji,
 #grafiks-list.grid-view .mk-mid-person-emoji,
 #grafiks-list.grid-view .mk-mid-shift-emoji {
   font-size: clamp(15px, 8cqw, 28px) !important;
@@ -12479,16 +11794,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   padding-top: .18em !important;
   margin-top: -.18em !important;
 }
-#grafiks-list.grid-view .mk-mid-fatigue.card-fat-row {
-  position: relative !important;
-  z-index: 2 !important;
-  display: flex !important;
-  align-items: center !important;
-  width: 100% !important;
-  gap: clamp(5px, 2cqw, 10px) !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
 #grafiks-list.grid-view .mk-mid-fat-segs {
   flex: 1 1 auto !important;
   display: grid !important;
@@ -12534,13 +11839,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   padding-top: 0 !important;
   border-top: 0 !important;
 }
-#grafiks-list.grid-view .mk-coffee-lbl {
-  flex: 0 0 auto !important;
-  color: rgba(160, 166, 184, .62) !important;
-  opacity: 1 !important;
-  font: 850 clamp(6px, 2.4cqw, 8px)/1 Inter, system-ui, sans-serif !important;
-  letter-spacing: .13em !important;
-}
 #grafiks-list.grid-view .mk-coffee-cups {
   display: flex !important;
   align-items: center !important;
@@ -12568,14 +11866,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 #grafiks-list.grid-view .mk-coffee-cup.hint {
   opacity: .55 !important;
   filter: saturate(.35) !important;
-}
-#grafiks-list.grid-view .mk-coffee-count {
-  flex: 0 0 auto !important;
-  min-width: auto !important;
-  color: var(--mk-coffee) !important;
-  text-align: right !important;
-  font: 900 clamp(7px, 3.5cqw, 11px)/1 Inter, system-ui, sans-serif !important;
-  font-variant-numeric: tabular-nums !important;
 }
 /* ── Coffee stepper: [−] mug+count [+] — dummy-proof add/subtract ── */
 #grafiks-list.grid-view .mk-coffee-step {
@@ -12635,11 +11925,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   color: var(--mk-coffee) !important;
   font: 900 clamp(11px, 5cqw, 15px)/1 Inter, system-ui, sans-serif !important;
   font-variant-numeric: tabular-nums !important;
-  pointer-events: none !important;
-}
-#grafiks-list.grid-view .mk-coffee-add-cup {
-  font-size: 14px !important;
-  line-height: 1 !important;
   pointer-events: none !important;
 }
 /* ── Kafijas izvēlne: Material 3 Expressive ──────────────────────────────
@@ -12854,7 +12139,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 :root.host-radio-open #grafiks-list.grid-view .mk-mid-shift-icons {
   margin-top: 3px !important;
 }
-:root.host-radio-open #grafiks-list.grid-view .mk-mid-status-emoji,
 :root.host-radio-open #grafiks-list.grid-view .mk-mid-person-emoji,
 :root.host-radio-open #grafiks-list.grid-view .mk-mid-shift-emoji {
   font-size: clamp(12px, 7cqw, 18px) !important;
@@ -12905,16 +12189,9 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   gap: 3px !important;
   padding-top: 0 !important;
 }
-:root.host-radio-open #grafiks-list.grid-view .mk-coffee-lbl {
-  display: none !important;
-}
 :root.host-radio-open #grafiks-list.grid-view .mk-coffee-cup {
   width: 8px !important;
   height: 8px !important;
-}
-:root.host-radio-open #grafiks-list.grid-view .mk-coffee-count {
-  min-width: auto !important;
-  font-size: 9px !important;
 }
 :root.host-radio-open #grafiks-list.grid-view .mk-coffee-sub,
 :root.host-radio-open #grafiks-list.grid-view .mk-coffee-add {
@@ -12928,9 +12205,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 }
 :root.host-radio-open #grafiks-list.grid-view .mk-coffee-num {
   font-size: 10px !important;
-}
-:root.host-radio-open #grafiks-list.grid-view .mk-coffee-add-cup {
-  font-size: 11px !important;
 }
 
 :root.mk-mobile-shell #grafiks-list.grid-view .cards-section {
@@ -12979,7 +12253,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   max-width: 46px !important;
   overflow: visible !important;
 }
-:root.mk-mobile-shell #grafiks-list.grid-view .mk-mid-status-emoji,
 :root.mk-mobile-shell #grafiks-list.grid-view .mk-mid-person-emoji,
 :root.mk-mobile-shell #grafiks-list.grid-view .mk-mid-shift-emoji {
   font-size: var(--mk-mobile-mid-emoji) !important;
@@ -13020,9 +12293,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
 }
-:root.mk-mobile-shell #grafiks-list.grid-view .mk-mid-fatigue.card-fat-row {
-  gap: 4px !important;
-}
 :root.mk-mobile-shell #grafiks-list.grid-view .mk-mid-fat-pct {
   min-width: 22px !important;
   font-size: 9px !important;
@@ -13040,20 +12310,12 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   gap: 2px !important;
   padding-top: 0 !important;
 }
-:root.mk-mobile-shell #grafiks-list.grid-view .mk-coffee-lbl {
-  display: inline-flex !important;
-  font-size: 6px !important;
-}
 :root.mk-mobile-shell #grafiks-list.grid-view .mk-coffee-cups {
   gap: 1px !important;
 }
 :root.mk-mobile-shell #grafiks-list.grid-view .mk-coffee-cup {
   width: 7px !important;
   height: 7px !important;
-}
-:root.mk-mobile-shell #grafiks-list.grid-view .mk-coffee-count {
-  min-width: auto !important;
-  font-size: 8px !important;
 }
 :root.mk-mobile-shell #grafiks-list.grid-view .mk-coffee-sub,
 :root.mk-mobile-shell #grafiks-list.grid-view .mk-coffee-add {
@@ -13067,9 +12329,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 }
 :root.mk-mobile-shell #grafiks-list.grid-view .mk-coffee-num {
   font-size: 9px !important;
-}
-:root.mk-mobile-shell #grafiks-list.grid-view .mk-coffee-add-cup {
-  font-size: 10px !important;
 }
 :root.mk-mobile-shell #grafiks-list.grid-view .cards-section-label {
   font-size: 10px !important;
@@ -13330,8 +12589,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 }
 #worker-modal .fatigue-panel,
 #worker-modal .fatigue-tab-panel,
-#worker-modal .fatigue-health-age,
-#worker-modal .fatigue-tendency,
 #worker-modal .calendar-container {
   background: #14141d !important;
   border: 1px solid #1f1f2a !important;
@@ -13365,24 +12622,12 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   --mk-detail-accent: #ff5b73;
   --mk-detail-accent-rgb: 255, 91, 115;
 }
-#worker-modal .mk-fatigue-forecast { margin: 10px 0; padding: 10px 14px; border: 1px solid #ffffff18; border-radius: 14px; }
-#worker-modal .mk-fatigue-forecast-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(110px,1fr)); gap: 8px; }
-#worker-modal .mk-fatigue-forecast-grid > div { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 7px; }
-#worker-modal .mk-fatigue-forecast-grid > div > span:first-child { width:100%; color:#aeb9c4; font-size:12px; }
-#worker-modal .mk-fatigue-forecast-grid strong { font-size:22px; color:#e5eef4; }
-#worker-modal .mk-fatigue-forecast-grid small { font-size:12px; font-weight:400; color:#aeb9c4; }
-#worker-modal .mk-fatigue-forecast-grid > div > span:last-child { font-size:12px; color:#aeb9c4; }
-#worker-modal .mk-fatigue-forecast p { margin:7px 0 0; font-size:12px; line-height:1.45; color:#aeb9c4; }
-#worker-modal .mk-fatigue-forecast b { color:#d1dce5; font-weight:500; }
 #worker-modal .mk-fatigue-curve { margin:0; min-width:0; }
 #worker-modal .mk-fatigue-curve figcaption { color:#ccd7e2; font-size:12px; line-height:1.2; }
 #worker-modal .mk-fatigue-curve svg { display:block; width:100%; height:66px; }
 #worker-modal .mk-fatigue-curve svg text { font:10px system-ui,sans-serif; fill:#aeb9c4; }
 #worker-modal .mk-fatigue-curve-key { display:flex; flex-wrap:wrap; gap:4px 12px; font-size:10px; color:#e0c77c; }
 #worker-modal .mk-fatigue-curve-key span+span { color:#6ee7b7; }
-@media (min-width:800px) {
-  #worker-modal.mk-fatigue-mode .mk-detail-score-card { grid-template-columns:64px minmax(0,1fr) minmax(250px, .9fr) !important; }
-}
 @media (max-width:799px) { #worker-modal .mk-fatigue-curve { grid-column:1 / -1; } }
 #worker-modal .fh-comparison { background:#1b202a; border:1px solid #94c8ff28; border-radius:14px; padding:9px 12px; }
 #worker-modal .fh-comparison-head { display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:7px; }
@@ -13393,7 +12638,7 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 #worker-modal .fh-option.is-selected { border-color:#8dc9ff; background:#9cceff0b; }
 #worker-modal .fh-option-label { font-size:12px; color:#dce5f2; font-weight:600; }
 #worker-modal .fh-option-label small { font-size:10px; color:#9cceff; margin-left:4px; }
-#worker-modal .fh-option-time,#worker-modal .fh-option-end { font-size:11px; color:#aebace; }
+#worker-modal .fh-option-time { font-size:11px; color:#aebace; }
 #worker-modal .fh-option>strong { font-size:23px; font-weight:650; line-height:1.05; }
 #worker-modal .fh-option>strong small { color:#aebace; font-size:11px; font-weight:400; }
 #worker-modal .fh-option .fh-option-past { color:#94a0b2; font-size:12px; }
@@ -13423,7 +12668,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 #worker-modal .fh-number small { color:#9ba5b7; font-size:13px; font-weight:400; margin-left:3px; }
 #worker-modal .fh-level { color:var(--fh-color); font-size:13px; font-weight:600; }
 #worker-modal .fh-tile-note { font-size:12px; color:#bbc5d6; line-height:1.2; }
-#worker-modal .fh-peak-basis { display:block; color:#d8bf88; font-size:10px; margin-top:4px; }
 #worker-modal .fh-time-number { color:var(--fh-color); font-size:26px; font-weight:650; line-height:1.15; font-variant-numeric:tabular-nums; }
 #worker-modal .fh-middle { display:grid; grid-template-columns:1.15fr 1fr; gap:10px; }
 #worker-modal .fh-chart,#worker-modal .fh-rest { padding:10px 14px; border:1px solid #ffffff10; border-radius:16px; background:#191a23; min-width:0; }
@@ -13447,8 +12691,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 #worker-modal.mk-fatigue-mode .fh-health .fh-facts .fatigue-row-label { font-size:12px !important; color:#b9c4d5 !important; font-weight:500 !important; }
 #worker-modal.mk-fatigue-mode .fh-health .fh-facts .fatigue-row-val { font-family:system-ui,sans-serif !important; font-size:12px !important; font-weight:650 !important; }
 #worker-modal .fh-explanation { display:grid; grid-template-columns:1fr 1fr; gap:20px; background:#191a23; border:1px solid #ffffff10; padding:10px 14px; border-radius:14px; }
-#worker-modal .fh-reason { display:flex; justify-content:space-between; gap:14px; font-size:12px; line-height:1.35; padding:5px 0; color:#b9c4d5; }
-#worker-modal .fh-reason b { color:#9cceff; }
 #worker-modal .fh-footnote { margin:0; color:#9aa5b8; font-size:11px; line-height:1.3; }
 @media (max-height:700px) and (min-width:800px) {
   #worker-modal .fh-tile { padding:10px 14px; }
@@ -13474,18 +12716,8 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 #worker-modal.mk-fatigue-mode #modal-fatigue-view { padding:0 !important; }
 #worker-modal.mk-fatigue-mode .mk-detail-fatigue { overflow:visible !important; }
 #worker-modal.mk-fatigue-mode .mk-detail-fatigue { display:grid !important; grid-template-columns:1.08fr 1fr; gap:8px !important; }
-#worker-modal.mk-fatigue-mode .mk-detail-score-card, #worker-modal.mk-fatigue-mode .mk-fatigue-forecast { grid-column:1 / -1; }
-#worker-modal.mk-fatigue-mode .mk-detail-score-card { min-height:0 !important; padding:10px 14px !important; }
-#worker-modal.mk-fatigue-mode .mk-detail-score-label { letter-spacing:.04em !important; white-space:normal !important; line-height:1.2 !important; }
-#worker-modal.mk-fatigue-mode .mk-detail-score-head { margin-bottom:6px !important; }
-#worker-modal .mk-fatigue-scale-help { margin:5px 0 0; color:#aeb9c4; font-size:12px; line-height:1.3; }
-#worker-modal.mk-fatigue-mode .mk-fatigue-forecast { margin:0; padding:8px 14px; }
-#worker-modal.mk-fatigue-mode .mk-fatigue-forecast-grid { grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); }
 #worker-modal.mk-fatigue-mode .mk-detail-stats { grid-template-columns:1fr !important; gap:5px !important; align-content:start; }
 #worker-modal.mk-fatigue-mode .mk-detail-stats .fatigue-row { padding:6px 10px !important; min-height:30px !important; gap:6px !important; grid-template-columns:18px minmax(0,1fr) auto !important; }
-#worker-modal.mk-fatigue-mode .fatigue-reasons { align-self:start; padding:10px 12px !important; }
-#worker-modal.mk-fatigue-mode .fatigue-reasons-title { letter-spacing:.03em !important; line-height:1.3 !important; }
-#worker-modal.mk-fatigue-mode .fatigue-reason { line-height:1.35 !important; }
 @media (max-width:650px) {
   #worker-modal.mk-fatigue-mode .mk-detail-fatigue { grid-template-columns:1fr; }
   #worker-modal.mk-fatigue-mode .modal-content { overflow-y:auto !important; min-height:0; }
@@ -13493,84 +12725,9 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 @media (min-width:800px) and (max-height:700px) {
   #worker-modal.mk-fatigue-mode .mk-fatigue-curve svg { height:48px; }
   #worker-modal.mk-fatigue-mode .modal-header { padding:8px 16px !important; }
-  #worker-modal.mk-fatigue-mode .mk-detail-score-card { padding:8px 12px !important; }
   #worker-modal.mk-fatigue-mode .mk-detail-fatigue { gap:5px !important; }
   #worker-modal.mk-fatigue-mode .mk-detail-stats { gap:4px !important; }
   #worker-modal.mk-fatigue-mode .mk-detail-stats .fatigue-row { min-height:26px !important; padding:4px 8px !important; }
-}
-#worker-modal .mk-detail-score-card {
-  display: grid !important;
-  grid-template-columns: 82px minmax(0, 1fr) !important;
-  align-items: center !important;
-  gap: 18px !important;
-  min-height: 72px !important;
-  padding: 12px 20px !important;
-  border-radius: 18px !important;
-  background: #14141d !important;
-  border: 1px solid #23232f !important;
-  box-shadow: none !important;
-}
-#worker-modal .mk-detail-score-box {
-  min-width: 0 !important;
-}
-#worker-modal .mk-detail-score-num {
-  color: var(--mk-detail-accent) !important;
-  font: 950 46px/.82 Inter, system-ui, sans-serif !important;
-  letter-spacing: -.04em !important;
-  font-variant-numeric: tabular-nums !important;
-}
-#worker-modal .mk-detail-score-max {
-  margin-top: 3px !important;
-  color: rgba(255,255,255,.54) !important;
-  font: 800 12px/1 Inter, system-ui, sans-serif !important;
-  letter-spacing: .04em !important;
-}
-#worker-modal .mk-detail-score-meter {
-  min-width: 0 !important;
-}
-#worker-modal .mk-detail-score-head {
-  display: flex !important;
-  align-items: center !important;
-  gap: 10px !important;
-  margin-bottom: 9px !important;
-  min-width: 0 !important;
-}
-#worker-modal .mk-detail-score-label {
-  color: rgba(255,255,255,.48) !important;
-  font: 900 12px/1 Inter, system-ui, sans-serif !important;
-  letter-spacing: .28em !important;
-  white-space: nowrap !important;
-}
-#worker-modal .mk-detail-level-pill {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 4px 10px !important;
-  border-radius: 999px !important;
-  color: var(--mk-detail-accent) !important;
-  border: 1px solid rgba(var(--mk-detail-accent-rgb), .58) !important;
-  background: rgba(var(--mk-detail-accent-rgb), .08) !important;
-  font: 900 12px/1 Inter, system-ui, sans-serif !important;
-  letter-spacing: .12em !important;
-  text-transform: uppercase !important;
-  white-space: nowrap !important;
-}
-#worker-modal .mk-detail-fat-segs {
-  display: grid !important;
-  grid-template-columns: repeat(10, minmax(0, 1fr)) !important;
-  gap: 5px !important;
-  width: 100% !important;
-}
-#worker-modal .mk-detail-fat-seg {
-  height: 7px !important;
-  border-radius: 999px !important;
-  background: #292937 !important;
-}
-#worker-modal .mk-detail-fat-seg.is-on {
-  background: rgba(var(--mk-detail-accent-rgb), .48) !important;
-}
-#worker-modal .mk-detail-fat-seg.is-last {
-  background: var(--mk-detail-accent) !important;
 }
 #worker-modal .mk-detail-stats {
   display: grid !important;
@@ -13617,8 +12774,7 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   color: #fbbf24 !important;
 }
 #worker-modal .wl-month-hdr,
-#worker-modal .wl-item,
-#worker-modal .stat-row {
+#worker-modal .wl-item {
   background: #14141d !important;
   border-color: #1f1f2a !important;
 }
@@ -13632,101 +12788,12 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 #worker-modal .wl-shift {
   color: #34d399 !important;
 }
-#worker-modal .fatigue-reasons {
-  margin: 0 !important;
-  padding: 10px 14px !important;
-  background: #14141d !important;
-  border: 1px solid #1f1f2a !important;
-  border-radius: 16px !important;
-  box-shadow: none !important;
-}
-#worker-modal .fatigue-reasons-head {
-  display: flex !important;
-  align-items: baseline !important;
-  justify-content: space-between !important;
-  gap: 16px !important;
-  margin-bottom: 6px !important;
-}
-#worker-modal .fatigue-reasons-title {
-  margin: 0 !important;
-  color: rgba(255,255,255,.52) !important;
-  font: 800 12px/1 Inter, system-ui, sans-serif !important;
-  letter-spacing: .18em !important;
-  text-transform: uppercase !important;
-}
-#worker-modal .fatigue-reasons-total {
-  color: rgba(255,255,255,.52) !important;
-  font: 750 13px/1 Inter, system-ui, sans-serif !important;
-  font-variant-numeric: tabular-nums !important;
-  white-space: nowrap !important;
-}
-#worker-modal .fatigue-reasons-total b {
-  color: #fbbf24 !important;
-  font-size: 16px !important;
-  font-weight: 900 !important;
-  margin-left: 4px !important;
-}
-#worker-modal .fatigue-reason {
-  display: grid !important;
-  grid-template-columns: 8px minmax(0, 1fr) auto !important;
-  align-items: center !important;
-  gap: 10px !important;
-  padding: 5px 0 !important;
-  border-bottom: 1px solid #1f1f2a !important;
-  font-size: 13px !important;
-}
-#worker-modal .fatigue-reason:first-of-type {
-  padding-top: 4px !important;
-}
-#worker-modal .fatigue-reason:last-child {
-  border-bottom: 0 !important;
-  padding-bottom: 0 !important;
-}
 #worker-modal .fatigue-reason-icon {
   width: 8px !important;
   height: 8px !important;
   border-radius: 50% !important;
   background: #60a5fa !important;
 }
-#worker-modal .fatigue-reason-text {
-  color: rgba(255,255,255,.88) !important;
-  font: 650 12px/1.15 Inter, system-ui, sans-serif !important;
-  min-width: 0 !important;
-}
-#worker-modal .fatigue-reason-bar {
-  display: block !important;
-  width: min(210px, 58%) !important;
-  height: 3px !important;
-  margin-top: 4px !important;
-  border-radius: 999px !important;
-  background: #242432 !important;
-  overflow: hidden !important;
-}
-#worker-modal .fatigue-reason-bar i {
-  display: block !important;
-  height: 100% !important;
-  width: 0;
-  border-radius: inherit !important;
-  background: currentColor !important;
-}
-#worker-modal .fatigue-reason-pts {
-  min-width: 44px !important;
-  text-align: right !important;
-  font: 900 14px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
-  font-variant-numeric: tabular-nums !important;
-}
-#worker-modal .fatigue-reason-good .fatigue-reason-icon { background: #34d399 !important; }
-#worker-modal .fatigue-reason-good .fatigue-reason-pts,
-#worker-modal .fatigue-reason-good .fatigue-reason-bar { color: #34d399 !important; }
-#worker-modal .fatigue-reason-info .fatigue-reason-icon { background: #60a5fa !important; }
-#worker-modal .fatigue-reason-info .fatigue-reason-pts,
-#worker-modal .fatigue-reason-info .fatigue-reason-bar { color: #60a5fa !important; }
-#worker-modal .fatigue-reason-warn .fatigue-reason-icon { background: #fbbf24 !important; }
-#worker-modal .fatigue-reason-warn .fatigue-reason-pts,
-#worker-modal .fatigue-reason-warn .fatigue-reason-bar { color: #fbbf24 !important; }
-#worker-modal .fatigue-reason-bad .fatigue-reason-icon { background: #ff6b7a !important; }
-#worker-modal .fatigue-reason-bad .fatigue-reason-pts,
-#worker-modal .fatigue-reason-bad .fatigue-reason-bar { color: #ff6b7a !important; }
 @media (max-width: 760px) {
   #worker-modal .mk-detail-stats {
     grid-template-columns: 1fr !important;
@@ -13822,13 +12889,9 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 :root.mk-mobile-shell #grafiks-list.grid-view .mk-mid-initials {
   font-size: clamp(30px, 9.6vw, 40px) !important;
 }
-:root.mk-mobile-shell #grafiks-list.grid-view .mk-mid-status-emoji,
 :root.mk-mobile-shell #grafiks-list.grid-view .mk-mid-person-emoji,
 :root.mk-mobile-shell #grafiks-list.grid-view .mk-mid-shift-emoji {
   font-size: clamp(16px, 5.3vw, 22px) !important;
-}
-:root.mk-mobile-shell #grafiks-list.grid-view .mk-mid-fatigue.card-fat-row {
-  gap: 4px !important;
 }
 :root.mk-mobile-shell #grafiks-list.grid-view .mk-mid-fat-pct {
   min-width: 28px !important;
@@ -13836,11 +12899,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 }
 :root.mk-mobile-shell #grafiks-list.grid-view .mk-mid-coffee {
   gap: 3px !important;
-}
-:root.mk-mobile-shell #grafiks-list.grid-view .mk-coffee-lbl {
-  display: inline-flex !important;
-  font-size: 6px !important;
-  letter-spacing: .10em !important;
 }
 :root.mk-mobile-shell #grafiks-list.grid-view .mk-coffee-sub,
 :root.mk-mobile-shell #grafiks-list.grid-view .mk-coffee-add {
@@ -14294,8 +13352,6 @@ window.addEventListener('message', function(e) {
     #0b1019 !important;
   background-blend-mode: normal !important;
 }
-.mk-skin-top { display: flex; gap: 12px; align-items: stretch; padding-top: 2px; }
-.mk-skin-top-right { flex: 1; min-width: 0; }
 .mk-skin-shell {
   --mk-ui-accent: 100, 210, 255;
   --mk-ui-surface: rgba(255,255,255,.028);
@@ -14491,69 +13547,26 @@ window.addEventListener('message', function(e) {
   font: 950 78px/.72 Inter,sans-serif; letter-spacing: -.09em;
   transform: rotate(-7deg); pointer-events: none;
 }
-.mk-skin-preview .pv-name-tab {
-  position: absolute; z-index: 4; inset: 0 auto auto 0; width: 65%; height: 23%;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  box-sizing: border-box; padding: 3px 15% 3px 5%; overflow: hidden;
-  background: linear-gradient(120deg, rgba(var(--mk-num-color,167,139,250),.78), rgba(var(--mk-num-color,167,139,250),.50) 70%, rgba(255,255,255,.16));
-  -webkit-mask: var(--pv-tab-mask) 0 0/100% 100% no-repeat;
-  mask: var(--pv-tab-mask) 0 0/100% 100% no-repeat;
-}
-.mk-skin-preview .pv-name-main,
-.mk-skin-preview .pv-name-sub {
-  display: block; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  color: #fff; -webkit-text-fill-color: #fff; text-align: center; text-transform: uppercase;
-  text-shadow: 0 1px 2px rgba(0,0,0,.65);
-}
-.mk-skin-preview .pv-name-main { font: 900 9px/1 Inter, sans-serif; letter-spacing: .02em; }
-.mk-skin-preview .pv-name-sub { margin-top: 1px; font: 800 7px/1 Inter, sans-serif; opacity: .86; }
-.mk-skin-preview .pv-hours {
-  position: absolute; z-index: 3; top: 8px; right: 9px; color: #fff; text-align: right;
-  font-family: Inter, sans-serif; line-height: 1;
-}
-.mk-skin-preview .pv-hours b { display: block; font-size: 12px; font-weight: 900; }
-.mk-skin-preview .pv-hours small { display: block; margin-top: 2px; color: rgba(255,255,255,.58); font-size: 5.5px; font-weight: 800; letter-spacing: .08em; }
 .mk-skin-preview .pv-num {
   position: absolute; z-index: 2; left: 50%; top: 47%; transform: translate(-50%,-50%);
   font: 900 36px/.9 Inter, sans-serif; color: rgba(var(--mk-num-color, 167,139,250), var(--mk-num-alpha, 1));
 }
-.mk-skin-preview .pv-fatigue {
-  position: absolute; z-index: 3; left: 10px; right: 10px; bottom: 34px;
-  display: grid; grid-template-columns: repeat(6,1fr) auto; align-items: center; gap: 2px;
-}
-.mk-skin-preview .pv-fatigue i { height: 3px; border-radius: 5px; background: rgba(255,255,255,.13); }
-.mk-skin-preview .pv-fatigue i:nth-child(-n+2) { background: rgba(var(--mk-num-color,167,139,250),.75); }
-.mk-skin-preview .pv-fatigue strong { margin-left: 2px; color: rgba(var(--mk-num-color,167,139,250),1); font: 900 8px/1 Inter,sans-serif; }
-.mk-skin-preview .pv-coffee {
-  position: absolute; z-index: 3; left: 50%; bottom: 8px; transform: translateX(-50%);
-  width: 82px; height: 21px; display: grid; grid-template-columns: 24px 1fr 24px; align-items: center;
-  overflow: hidden; border: 1px solid rgba(196,132,69,.58); border-radius: 999px;
-  background: rgba(34,23,14,.82); color: #c48445; text-align: center; font: 900 10px/1 Inter,sans-serif;
-}
-.mk-skin-preview .pv-coffee span { height: 100%; display: flex; align-items: center; justify-content: center; border-inline: 1px solid rgba(196,132,69,.26); font-size: 8px; }
 .mk-skin-presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(102px, 1fr)); gap: 5px; }
 .mk-skin-preset { display: flex; align-items: center; gap: 7px; min-height: 38px; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.10); border-radius: 9px; color: rgba(255,255,255,.84); font-size: 10.5px; font-weight: 700; padding: 5px 8px; cursor: pointer; }
 .mk-skin-preset:hover { border-color: rgba(100,210,255,.5); }
-.mk-skin-preset-sw { width: 20px; height: 20px; border-radius: 6px; flex-shrink: 0; border: 1px solid rgba(255,255,255,.18); }
 .mk-num-alpha { flex: 1; accent-color: #64d2ff; }
 .mk-num-alpha-val { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.7); min-width: 36px; text-align: right; }
-.mk-skin-sec { font-size: 9px; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; color: rgba(255,255,255,.48); margin: 7px 2px 4px; }
 .mk-skin-grid { display: none; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 6px; }
 .mk-skin-grid.is-active { display: grid; }
-.mk-skin-row2 { display: flex; gap: 18px; flex-wrap: wrap; }
-.mk-skin-row2 .mk-skin-col { flex: 1; min-width: 240px; }
 .mk-skin-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; padding-top: 7px; border-top: 1px solid rgba(255,255,255,.07); }
 .mk-skin-thumb { aspect-ratio: 16/9; min-height: 42px; border-radius: 8px; border: 2px solid rgba(255,255,255,.10); background-size: cover; background-position: center; cursor: pointer; padding: 0; transition: border-color .15s; }
 .mk-skin-thumb:hover { border-color: rgba(100,210,255,.55); }
 .mk-skin-thumb.is-active { border-color: #64d2ff; box-shadow: 0 0 0 2px rgba(100,210,255,.35); }
-.mk-skin-hues { display: flex; flex-wrap: wrap; gap: 6px; }
 .mk-skin-hue { width: 30px; height: 30px; border-radius: 8px; border: 2px solid rgba(255,255,255,.12); cursor: pointer; padding: 0; }
 .mk-skin-hue.is-active { border-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,.3); }
 .mk-skin-custom { display: flex; align-items: center; gap: 10px; }
 .mk-skin-color { width: 30px; height: 30px; border: 2px solid rgba(255,255,255,.15); border-radius: 8px; background: transparent; padding: 2px; cursor: pointer; }
-.mk-skin-custom-lbl { font-size: 11px; color: rgba(255,255,255,.55); }
 .mk-skin-clear { background: transparent; border: 1px solid rgba(255,255,255,.13); border-radius: 8px; color: rgba(255,255,255,.68); font-size: 10.5px; font-weight: 700; padding: 6px 10px; cursor: pointer; white-space: nowrap; }
-.mk-skin-note { font-size: 10px; color: rgba(255,255,255,.35); }
 
 /* ── v3: gradientu foni (gaišāks scrim nekā foto, lai pasteļi dzīvo) ── */
 #grafiks-list.grid-view .card.mk-mid-card.mk-has-skin.mk-has-grad,
@@ -14585,20 +13598,9 @@ window.addEventListener('message', function(e) {
 #grafiks-list.grid-view .card.mk-has-txt .name-sub { opacity: .85; }
 #grafiks-list.grid-view .card.mk-has-txt .mk-mid-initials { opacity: .38; }
 #grafiks-list.grid-view .card.mk-has-txt .mk-mid-month-label { opacity: .6; }
-.mk-skin-preview.mk-has-txt .pv-hours {
-  color: rgb(var(--mk-txt-color, 255,255,255)) !important;
-  -webkit-text-fill-color: rgb(var(--mk-txt-color, 255,255,255)) !important;
-}
 /* ── v3: emoji ūdenszīmes kontrole ── */
 #grafiks-list.grid-view .card.mk-emoji-custom .mk-mid-bg-emoji { opacity: var(--mk-emoji-op, .13) !important; }
 #grafiks-list.grid-view .card.mk-emoji-normal .mk-mid-bg-emoji { filter: none !important; }
-.mk-skin-preview .pv-emoji {
-  position: absolute; left: 50%; top: 50%; transform: translate(-50%,-58%);
-  font-size: 58px; line-height: 1; pointer-events: none;
-  filter: invert(1) hue-rotate(180deg);
-  opacity: var(--mk-emoji-op, .13); z-index: 1;
-}
-.mk-skin-preview.mk-emoji-normal .pv-emoji { filter: none; }
 /* ── v3: picker jaunie elementi ── */
 .mk-skin-grads { display: flex; flex-wrap: wrap; gap: 6px; }
 .mk-skin-grad-sw { width: 30px; height: 30px; border-radius: 8px; border: 2px solid rgba(255,255,255,.12); cursor: pointer; padding: 0; transition: border-color .15s; }
@@ -14722,11 +13724,6 @@ window.addEventListener('message', function(e) {
   gap: 10px;
   padding: 5px 2px;
 }
-.mk-bg-toolbar > .mk-skin-sec {
-  flex: 0 0 auto;
-  width: 34px;
-  margin: 0;
-}
 .mk-bg-mode-tabs {
   display: inline-flex;
   align-items: center;
@@ -14753,61 +13750,12 @@ window.addEventListener('message', function(e) {
 }
 .mk-bg-panel { display: none; padding: 5px 2px 7px; }
 .mk-bg-panel.is-active { display: block; }
-.mk-skin-scene-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
-  gap: 7px;
-}
-.mk-skin-scene {
-  position: relative;
-  min-height: 0;
-  aspect-ratio: 1 / .82;
-  overflow: hidden;
-  padding: 0;
-  border: 2px solid rgba(255,255,255,.10);
-  border-radius: 10px;
-  background-position: center !important;
-  background-size: cover !important;
-  cursor: pointer;
-}
-.mk-skin-scene:hover { border-color: rgba(100,210,255,.55); }
-.mk-skin-scene.is-active { border-color: #64d2ff; box-shadow: 0 0 0 2px rgba(100,210,255,.30); }
-.mk-skin-scene::after {
-  content: '✓';
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  display: none;
-  width: 18px;
-  height: 18px;
-  place-items: center;
-  border-radius: 50%;
-  background: #64d2ff;
-  color: #071018;
-  font: 900 11px/1 Inter, system-ui, sans-serif;
-}
-.mk-skin-scene.is-active::after { display: grid; }
-.mk-skin-scene > span {
-  position: absolute;
-  inset: auto 0 0;
-  padding: 18px 7px 6px;
-  background: linear-gradient(transparent, rgba(5,8,14,.82));
-  color: rgba(255,255,255,.92);
-  font: 750 9px/1.1 Inter, system-ui, sans-serif;
-  text-align: left;
-  pointer-events: none;
-}
 .mk-bg-colors .mk-skin-grads { min-height: 30px; align-items: center; }
 .mk-bg-draw .mk-skin-art-row {
   min-height: 34px;
   display: flex;
   align-items: center;
   gap: 9px;
-}
-.mk-bg-draw-note {
-  min-width: 0;
-  color: rgba(255,255,255,.40);
-  font: 600 9.5px/1.3 Inter, system-ui, sans-serif;
 }
 .mk-bg-images { padding-top: 3px; }
 .mk-skin-category-nav {
@@ -14921,7 +13869,6 @@ window.addEventListener('message', function(e) {
   .mk-skin-effects-head > span { margin: 0; }
   .mk-bg-toolbar { flex-wrap: wrap; }
   .mk-bg-images .mk-skin-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .mk-skin-scene-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .mk-bg-draw .mk-skin-art-row { align-items: flex-start; flex-wrap: wrap; }
 }
 @media (max-width: 470px) {
@@ -14933,8 +13880,7 @@ window.addEventListener('message', function(e) {
   .mk-skin-section[data-skin-panel="details"] .mk-emoji-neg { grid-column: 1 / -1; }
   .mk-skin-main-tab { padding-inline: 6px; font-size: 9.5px; }
   .mk-skin-section-head small { display: none; }
-  .mk-bg-images .mk-skin-grid,
-  .mk-skin-scene-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mk-bg-images .mk-skin-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* ── v4: kompakta modāļa galva Izskats režīmā ── */
@@ -15082,18 +14028,6 @@ window.addEventListener('message', function(e) {
   align-items: center; text-align: center;
   margin: -12px 4px 14px;
 }
-.mk-duty-line {
-  font: 600 12px/1.5 Inter, system-ui, sans-serif;
-  letter-spacing: .015em; text-transform: none;
-  color: rgba(255,255,255,.62);
-}
-.mk-duty-line .mk-dl-ico { font-size: 11px; margin-right: 1px; }
-.mk-duty-line .mk-dl-t { color: #fff; font-weight: 700; }
-.mk-duty-line b { font-weight: 700; cursor: pointer; }
-.mk-duty-line b:hover { text-decoration: underline; }
-.mk-duty-line.dl-night b { color: #8ff0b5; }
-.mk-duty-line.dl-leave b { color: #ffcf8a; }
-.mk-duty-line.dl-later b { color: #9db8d8; }
 .mk-side-card.mk-dchip-flash { box-shadow: 0 0 0 2px rgba(125,232,165,.75) !important; }
 </style>
 
@@ -15591,26 +14525,10 @@ window.addEventListener('message', function(e) {
   padding: 2px 4px 0 !important;
   border-top: 0 !important;
 }
-:root:not(.mk-mobile-shell) #minkaBarWrap .sl-times-strip-buddy-only {
-  min-height: 48px !important;
-}
-:root:not(.mk-mobile-shell) .sl-ts-elapsed-label {
-  order: 1 !important;
-  grid-column: 3 !important;
-  grid-row: 1 !important;
-}
 :root:not(.mk-mobile-shell) .sl-ts-elapsed {
   order: 2 !important;
   grid-column: 4 !important;
   grid-row: 1 !important;
-}
-:root:not(.mk-mobile-shell) .sl-ts-sep {
-  order: 3 !important;
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-  margin: 0 !important;
-  background: transparent !important;
 }
 :root:not(.mk-mobile-shell) .sl-ts-remaining-label {
   order: 4 !important;
@@ -16520,13 +15438,7 @@ window.addEventListener('message', function(e) {
   margin: 0 !important;
   padding: 1px 4px !important;
 }
-:root:not(.mk-mobile-shell) .sl-ts-elapsed-label {
-  display: none !important;
-}
 :root:not(.mk-mobile-shell) .sl-ts-elapsed {
-  display: none !important;
-}
-:root:not(.mk-mobile-shell) .sl-ts-sep {
   display: none !important;
 }
 :root:not(.mk-mobile-shell) .sl-ts-remaining-label {
@@ -16553,8 +15465,7 @@ window.addEventListener('message', function(e) {
   height: 14px !important;
 }
 @container (max-width: 760px) {
-  :root:not(.mk-mobile-shell) #minkaBarWrap .sl-ts-label,
-  :root:not(.mk-mobile-shell) #minkaBarWrap .sl-ts-sep { display: none !important; }
+  :root:not(.mk-mobile-shell) #minkaBarWrap .sl-ts-label { display: none !important; }
   :root:not(.mk-mobile-shell) #minkaBarWrap .sl-times-strip {
     grid-template-columns: minmax(8px, 1fr) auto auto auto auto !important;
   }
@@ -16584,32 +15495,6 @@ window.addEventListener('message', function(e) {
   position: relative !important;
   min-height: 49px !important;
   align-items: flex-start !important;
-}
-.rg-pulse-inline {
-  position: absolute;
-  right: 0;
-  top: 0;
-  z-index: 12;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 3px;
-  height: 49px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  letter-spacing: 0;
-  text-transform: none;
-}
-.rg-pulse-question {
-  margin: 0;
-  color: #f8fbff;
-  font: 750 13px/1 'Space Grotesk', system-ui, sans-serif;
-  letter-spacing: -.01em;
-  text-transform: none;
-  white-space: nowrap;
 }
 .rg-pulse-taps { display: flex; align-items: center; gap: 5px; }
 .rg-pulse-tap {
@@ -16706,24 +15591,11 @@ window.addEventListener('message', function(e) {
   color: #f4f7fb;
   overflow: hidden;
 }
-.rg-feedback-head { display: flex; align-items: flex-start; gap: 12px; }
-.rg-feedback-title-wrap { flex: 1; min-width: 0; }
 .rg-feedback-dialog h2 {
   margin: 0;
   color: #fff;
   font: 800 19px/1.18 Inter, system-ui, sans-serif;
   letter-spacing: -.02em;
-}
-.rg-feedback-days {
-  display: flex;
-  gap: 7px;
-  width: 100%;
-  margin-top: 8px;
-  padding: 7px 4px 5px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  overscroll-behavior-inline: contain;
-  scrollbar-width: thin;
 }
 .rg-feedback-day-tab {
   position: relative;
@@ -16892,26 +15764,6 @@ window.addEventListener('message', function(e) {
 }
 #rgFeedbackText:focus { border-color: rgba(125,211,252,.38); box-shadow: 0 0 0 3px rgba(56,189,248,.07); }
 #rgFeedbackText::placeholder { color: rgba(205,216,230,.30); }
-.rg-feedback-meta {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 8px 2px 14px;
-  color: rgba(203,213,225,.38);
-  font: 600 9px/1.2 Inter, system-ui, sans-serif;
-}
-.rg-feedback-actions { display: flex; justify-content: flex-end; gap: 8px; }
-.rg-feedback-cancel,
-.rg-feedback-save {
-  height: 34px;
-  padding: 0 14px;
-  border-radius: 11px;
-  font: 750 11px/1 Inter, system-ui, sans-serif;
-  cursor: pointer;
-}
-.rg-feedback-cancel { border: 1px solid rgba(255,255,255,.09); background: transparent; color: rgba(235,240,247,.62); }
-.rg-feedback-save { border: 1px solid rgba(125,211,252,.22); background: #dff4ff; color: #07121d; }
-.rg-feedback-save:disabled { opacity: .38; cursor: default; }
 
 /* ── Saziņas centrs ---------------------------------------------------------
    Zulip-inspired topic chat, adapted to the existing lightweight feedback API.
@@ -17335,8 +16187,6 @@ window.addEventListener('message', function(e) {
 }
 
 :root.mk-mobile-shell #grafiks-list.grid-view .cards-section-label-rg { min-height: 40px !important; }
-:root.mk-mobile-shell .rg-pulse-inline { top: 0; height: 38px; padding: 0; gap: 1px; }
-:root.mk-mobile-shell .rg-pulse-question { display: block; font-size: 8px; }
 :root.mk-mobile-shell .rg-pulse-tap { width: 24px; height: 24px; min-width: 24px; min-height: 24px; font-size: 17px; }
 :root.mk-mobile-shell .rg-pulse-write { width: 22px; min-width: 22px; height: 22px; min-height: 22px; padding: 0; justify-content: center; }
 :root.mk-mobile-shell .rg-pulse-write span { display: none; }
@@ -17556,23 +16406,6 @@ window.addEventListener('message', function(e) {
   gap: 5px;
   width: 100%;
 }
-.rg-feedback-card .rg-pulse-write--suggestion {
-  padding: 0 4px;
-  gap: 2px;
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  font-size: clamp(9.5px, 7.2cqw, 11px);
-}
-.rg-feedback-card .rg-pulse-write--suggestion img {
-  display: block;
-  position: static;
-  width: clamp(13px, 9cqw, 15px);
-  height: clamp(13px, 9cqw, 15px);
-  object-fit: contain;
-  transform: none;
-  flex: 0 0 auto;
-}
 .rg-feedback-card .rg-pulse-write {
   position: relative;
   inset: auto !important;
@@ -17596,10 +16429,6 @@ window.addEventListener('message', function(e) {
   line-height: 1;
   transform: none;
   pointer-events: none;
-}
-.rg-feedback-card .rg-pulse-write.rg-pulse-write--suggestion {
-  gap: 1px;
-  font-size: clamp(9px, 6.8cqw, 10.5px);
 }
 .rg-feedback-card .rg-pulse-write--comment {
   gap: 2px;
@@ -17654,14 +16483,6 @@ window.addEventListener('message', function(e) {
     height: 8px;
     flex-basis: 10px;
   }
-  .rg-feedback-card .rg-pulse-write.rg-pulse-write--suggestion {
-    gap: 1px;
-    font-size: 8.5px;
-  }
-  .rg-feedback-card .rg-pulse-write--suggestion img {
-    width: 11px;
-    height: 11px;
-  }
 }
 .rg-feedback-action-count {
   position: absolute;
@@ -17678,7 +16499,6 @@ window.addEventListener('message', function(e) {
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
-.rg-pulse-write--suggestion .rg-feedback-action-count { background: #86efac; }
 .rg-feedback-action-count:empty { display: none; }
 .rg-feedback-card .rg-pulse-write:hover {
   background: rgba(var(--rg-card-rgb),.18);
@@ -18249,14 +17069,6 @@ window.addEventListener('message', function(e) {
   font-size: clamp(10.5px, 5.2cqw, 12.5px);
   letter-spacing: -.01em;
   transition: background 200ms ease, border-color 200ms ease, transform 140ms ease;
-}
-.rg-feedback-card .rg-pulse-write.rg-pulse-write--suggestion {
-  gap: clamp(4px, 2.2cqw, 7px);
-  font-size: clamp(10px, 5cqw, 12px);
-}
-.rg-feedback-card .rg-pulse-write--suggestion img {
-  width: clamp(14px, 6.6cqw, 17px);
-  height: clamp(14px, 6.6cqw, 17px);
 }
 .rg-feedback-card .rg-comment-icon {
   width: clamp(12px, 5.6cqw, 15px);
@@ -21734,8 +20546,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   gap: clamp(3px, 1.4cqw, 5px) !important;
   max-width: 100% !important;
 }
-#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-person-emoji,
-#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-status-emoji {
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-person-emoji {
   font-size: clamp(13px, 6.5cqw, 21px) !important;
 }
 #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-emoji-edit {
@@ -21888,21 +20699,10 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   min-height: clamp(25px, 10cqw, 34px) !important;
   justify-content: center !important;
 }
-#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-lbl {
-  display: none !important;
-}
 #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-coffee {
   position: relative !important;
   min-height: clamp(25px, 10cqw, 34px) !important;
   justify-content: center !important;
-}
-#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-mid .mk-coffee-lbl {
-  display: block !important;
-  margin: 0 !important;
-  color: rgba(255, 255, 255, .62) !important;
-  font: 900 6.5px/1 Inter, system-ui, sans-serif !important;
-  letter-spacing: .14em !important;
-  text-transform: uppercase !important;
 }
 #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-copy {
   display: flex !important;
@@ -21911,8 +20711,7 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   gap: 1px !important;
   min-width: 0 !important;
 }
-#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-cups,
-#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-count {
+#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-cups {
   display: none !important;
 }
 #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-step {
@@ -22249,30 +21048,9 @@ html[data-mk-cat-tail="in"] .rg-feedback-card .rg-pulse-write--comment .rg-comme
    agrāk vai vēlāk pārsniedz kartītes platumu — tieši tāpēc "7 / 10 (vēl 3)"
    salūza divās rindās. Punktiņi tagad ir elastīgi un saraujas grupā, tāpēc
    rinda paliek viena jebkurā maiņu skaitā. */
-.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-nfoot-seg,
-.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-nfoot-seg {
-  flex: 0 1 auto !important;
-  min-width: 0 !important;
-  gap: 1.5px !important;
-  overflow: hidden !important;
-}
-.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-nfoot-seg i,
-.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-nfoot-seg i {
-  flex: 1 1 5px !important;
-  width: auto !important;
-  min-width: 2.5px !important;
-  max-width: 6px !important;
-  height: 3.5px !important;
-  border-radius: 99px !important;
-  background: rgba(255,255,255,.18) !important;
-}
 .side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-nfoot dd,
 .side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-nfoot dd {
   gap: 6px !important;
-}
-.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-nfoot-seg i.on,
-.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-nfoot-seg i.on {
-  background: var(--mk-side-glass-accent) !important;
 }
 /* Uz stikla ūdenszīme kļūst par netīrumu — mokapā tās nav. */
 .side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-wm,
@@ -22393,10 +21171,6 @@ html[data-mk-cat-tail="in"] .rg-feedback-card .rg-pulse-write--comment .rg-comme
 .side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-nfoot,
 .side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-nfoot {
   border-top-color: color-mix(in srgb, var(--mk-tint) 22%, transparent) !important;
-}
-.side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-nfoot-seg i,
-.side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-nfoot-seg i {
-  background: color-mix(in srgb, var(--mk-tint) 22%, transparent) !important;
 }
 .side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-shift-chip,
 .side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-shift-chip {
@@ -22818,9 +21592,7 @@ html[data-mk-cat-tail="in"] .rg-feedback-card .rg-pulse-write--comment .rg-comme
 .ns-mode-btn,.ns-raffle-trigger{min-height:40px!important}
 .side-panel .duty-surname{font-size:9.5px!important}
 .side-panel .duty-timer,.side-panel .duty-timer .val{font-size:10px!important}
-.side-panel .mk-side-fatigue-caption,.side-panel .duty-fatigue small{font-size:7.5px!important;line-height:1!important}
-.side-panel .duty-meta dt{font-size:8.2px!important;line-height:1.1!important}
-.side-panel .duty-meta dd{font-size:10.3px!important;line-height:1.1!important}
+.side-panel .mk-side-fatigue-caption{font-size:7.5px!important;line-height:1!important}
 .side-panel .mk-shift-count-pill small{font-size:8px!important}
 </style>
 
@@ -23160,14 +21932,6 @@ html body .side-panel .mk-duty-strip.mk-duty-avatar-strip {
    sevi, lai gan kafiju pieliek reizi dienā. Miera stāvoklī paliek mazs stikla
    pilulis; pogas izslīd, kad kursors ir virsū vai fokuss ir iekšā (tastatūra).
    Skārienekrānam hover nav, tāpēc mobilajā čaulā abas pogas paliek redzamas. */
-#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-mid .mk-coffee-lbl {
-  display: block !important;
-  margin: 0 !important;
-  color: rgba(255, 255, 255, .62) !important;
-  font: 900 6.5px/1 Inter, system-ui, sans-serif !important;
-  letter-spacing: .14em !important;
-  text-transform: uppercase !important;
-}
 #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-coffee-copy {
   display: flex !important;
   flex-direction: column !important;
@@ -25553,20 +24317,6 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
   color: var(--m3x-on-variant) !important;
   font-size: 15px !important;
 }
-#rgFeedbackModal .rg-comms-topic-pick {
-  width: 30px !important;
-  height: 30px !important;
-  display: grid !important;
-  place-items: center !important;
-  border-radius: 999px !important;
-  color: var(--m3x-on-variant) !important;
-  font-size: 14px !important;
-  opacity: .5 !important;
-  cursor: pointer !important;
-  transition: opacity .2s var(--m3x-standard), background-color .2s var(--m3x-standard) !important;
-}
-#rgFeedbackModal .rg-comms-topic:hover .rg-comms-topic-pick,
-#rgFeedbackModal .rg-comms-topic-pick:focus-visible { opacity: 1 !important; background: rgba(250,250,250,.08) !important; }
 #rgFeedbackModal .rg-comms-topic-emoji { font-size: 17px !important; }
 .rg-emoji-picker.rg-emoji-picker-loose {
   --m3x-surface: #09090b;
