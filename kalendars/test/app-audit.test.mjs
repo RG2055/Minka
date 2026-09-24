@@ -67,7 +67,16 @@ for (const path of ['index.html', 'mobile.html']) {
     const first = c._kvPull(() => paints++), second = c._kvPull(() => paints++);
     reply.resolve({ ok: true, json: async () => ({ ge: { history: [{ ts: 123, name: 'Worker' }] } }) });
     await Promise.all([first, second]);
-    assert.deepEqual({ calls, saves, paints }, { calls: 1, saves: 0, paints: 0 });
+    // The first read after a page load repaints once so the history leaves its
+    // loading state; it must still not write unchanged data back to storage.
+    const firstPullRepaints = source.includes('var _everPulled');
+    assert.deepEqual({ calls, saves, paints }, { calls: 1, saves: 0, paints: firstPullRepaints ? 2 : 0 });
+    const paintsAfterFirst = paints, again = deferred();
+    c.fetch = () => { calls++; return again.promise; };
+    const unchanged = c._kvPull(() => paints++);
+    again.resolve({ ok: true, json: async () => ({ ge: { history: [{ ts: 123, name: 'Worker' }] } }) });
+    await unchanged;
+    assert.deepEqual({ saves, paints }, { saves: 0, paints: paintsAfterFirst }, 'a later unchanged poll neither writes nor repaints');
     const pending = deferred();
     c.fetch = () => pending.promise;
     const oldRead = c._kvPull(() => paints++);
@@ -82,7 +91,7 @@ for (const path of ['index.html', 'mobile.html']) {
     await c._kvPull(() => paints++);
     assert.equal(c._state.ge.changedAt, null, 'remote deletion can move the clock backward');
     assert.equal(c._history.ge.length, 0);
-    assert.equal(paints, 1);
+    assert.equal(paints, paintsAfterFirst + 1);
   });
 
   test(`${path}: bolus save reports rejected responses as errors`, async () => {

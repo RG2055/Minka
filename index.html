@@ -3382,7 +3382,9 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     var readStartedAt = Date.now();
     _pullPromise = _readBolusJson(GS_URL + '?_=' + Date.now()).then(function(remote) {
       if (!remote || typeof remote !== 'object') return;
-      var changed = !_everPulled;
+      // The first successful read must repaint once (the history leaves its
+      // "Ielādē…" state), but only real differences are written back to storage.
+      var firstPull = !_everPulled, changed = false;
       _everPulled = true;
       _pullRetryDelay = 4000;
       ROOMS.forEach(function(r) {
@@ -3421,7 +3423,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       });
       ROOMS.forEach(function(r) { if (_syncMediaFromHistory(r.id)) changed = true; });
       if (changed) { _save(); _saveHistory(); }
-      return changed;
+      return changed || firstPull;
     }).catch(function(){
       _mkToast('Bolusa datu ielāde neizdevās', 'error');
       // Nav nekā, ko rādīt — mēģinām vēlreiz pēc dažām sekundēm (4 → 8 → … 30 s).
