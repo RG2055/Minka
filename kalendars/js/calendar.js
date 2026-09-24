@@ -6355,6 +6355,28 @@ function filterFullList(btn) {
       container.appendChild(d);
     }
 
+    // The skin editor can open for a worker who is not on the selected day (e.g.
+    // from search). Build that worker's card from their nearest shift so the
+    // preview shows the real card, not just the background. The editor clones it.
+    window.__minkaBuildPreviewCard = function(name) {
+      const key = String(name || '').trim().toUpperCase();
+      const toTime = d => { const p = String(d || '').split('.').map(Number); return new Date(p[2], p[1] - 1, p[0]).getTime(); };
+      const ref = toTime(activeDateStr);
+      const findIn = src => {
+        const dates = [];
+        Object.values(src || {}).forEach(days => (Array.isArray(days) ? days : []).forEach(day => { if (day && day.date) dates.push(day.date); }));
+        dates.sort((a, b) => Math.abs(toTime(a) - ref) - Math.abs(toTime(b) - ref));
+        for (const date of dates) {
+          const w = getWorkersForDateWithDate(src, date).find(x => String(x && x.name || '').trim().toUpperCase() === key);
+          if (w) return w;
+        }
+        return null;
+      };
+      const rd = findIn(storeRad);
+      const w = rd || findIn(store);
+      return w ? buildCard(w, !!rd) : null;
+    };
+
     const pt1 = probe ? performance.now() : 0;
     // Radiologists FIRST (above)
     if (hasRd) {

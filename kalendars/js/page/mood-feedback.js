@@ -351,11 +351,12 @@
   var BMC_URL = 'https://buymeacoffee.com/rgapp';
   function bmcQrMarkup() {
     return '<a class="rg-bmc-qrblock" href="' + BMC_URL + '" target="_blank" rel="noopener" data-rg-bmc-qr="1"'
-      + ' aria-label="Buy me a coffee — buymeacoffee.com/rgapp">'
+      + ' aria-label="Buy me a coffee: atbalsts RG attīstībai (buymeacoffee.com/rgapp)">'
       + '<img class="rg-bmc-qrimg" src="assets/coffee/bmc-qr.svg?v=official1" width="72" height="72" alt="">'
       + '<img class="rg-bmc-cupicon" src="assets/coffee/bmc-logo.svg?v=official1" width="26" height="26" alt="">'
-      + '<span class="rg-bmc-copy"><strong>Buy me a coffee</strong><em>Paldies par atbalstu <span class="rg-bmc-heart">💚</span></em>'
-      + '<small>Ja RG tev noder, vari uzsaukt man kafiju. Tā ir iespēja pateikt paldies par ieguldīto laiku un atbalstīt turpmākos uzlabojumus. RG lietošana ir bez maksas, un atbalsts ir pilnībā brīvprātīgs. Paldies! ☕</small></span></a>';
+      + '<span class="rg-bmc-copy"><strong><img class="rg-bmc-button" src="https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&amp;emoji=%E2%98%95&amp;slug=rgapp&amp;button_colour=FFDD00&amp;font_colour=000000&amp;font_family=Cookie&amp;outline_colour=000000&amp;coffee_colour=ffffff" alt="Buy me a coffee" decoding="async" loading="lazy"></strong>'
+      + '<em>Atbalsts RG attīstībai <span class="rg-bmc-heart">💚</span></em>'
+      + '<small>RG ir bez maksas. Ja tas tev noder, vari uzsaukt kafiju projekta attīstībai. Tas palīdz RG uzturēt un pievienot jaunas iespējas. Pilnībā brīvprātīgi. Paldies! ☕</small></span></a>';
   }
   function reactionButtons() {
     return reactions.map(function (item) {

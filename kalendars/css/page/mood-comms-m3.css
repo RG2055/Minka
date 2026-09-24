@@ -524,6 +524,17 @@
   font: 400 clamp(9.5px, calc((100cqi - 150px) / 11), 13px)/1.3 Inter, system-ui, sans-serif !important;
   font-style: normal !important;
 }
+/* The official Buy Me a Coffee button image (Cookie font), drawn smaller.
+   The generic QR image rule above must not square it or paint it white. */
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock img.rg-bmc-button {
+  display: block !important;
+  flex: none !important;
+  width: auto !important;
+  height: 26px !important;
+  max-width: 100% !important;
+  border-radius: 0 !important;
+  background: none !important;
+}
 #grafiks-list .rg-feedback-card .rg-bmc-heart {
   font-family: 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif !important;
   font-variant-emoji: emoji !important;

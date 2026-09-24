@@ -1009,9 +1009,19 @@
     var draft = cur ? JSON.parse(JSON.stringify(cur)) : {};
     var chosenMaterial=draft.t==='img'&&window.MinkaFindCardMaterial(draft.id);
     if(chosenMaterial)draft.id=chosenMaterial.id;
-    var previewSource = Array.prototype.find.call(document.querySelectorAll('#grafiks-list .card[data-worker]'), function(card) {
+    var rosterCards = document.querySelectorAll('#grafiks-list .card[data-worker]');
+    var previewSource = Array.prototype.find.call(rosterCards, function(card) {
       return normName(card.getAttribute('data-worker')) === normName(name);
     });
+    // Card faces sizes the preview from a live card; roster cards share one size.
+    var previewSizeSource = previewSource;
+    if (!previewSource && typeof window.__minkaBuildPreviewCard === 'function') {
+      previewSource = window.__minkaBuildPreviewCard(name) || undefined;
+      if (previewSource) {
+        var role = previewSource.classList.contains('mk-mid-card-rd') ? 'mk-mid-card-rd' : 'mk-mid-card-rg';
+        previewSizeSource = Array.prototype.find.call(rosterCards, function(card) { return card.classList.contains(role); }) || rosterCards[0];
+      }
+    }
     var emVal = draft.em != null ? Math.round(parseFloat(draft.em) * 100) : 13;
     var emShown = draft.em !== '0';
     if (draft.t === 'img' && SCENIC_IDS[draft.id]) {
@@ -1397,7 +1407,7 @@
       window.mkRenderSkinPicker(host);
     });
     if (window.MinkaCardFaces) window.MinkaCardFaces.mount(host, {
-      source: previewSource,
+      source: previewSizeSource,
       get: function() { return draft; },
       change: function(face) {
         if (face) {
