@@ -391,6 +391,9 @@
       portalScrollList = list;
       portalScrollList.addEventListener('scroll', handlePortalScroll, { passive: true });
     }
+    // No charms on the roster: nothing to measure, so skip the forced layout
+    // that list.getBoundingClientRect() below would cost on every call.
+    if (!sources.length) return;
     sources.forEach(function(source) {
       var clone = portalMap.get(source);
       if (!clone) {

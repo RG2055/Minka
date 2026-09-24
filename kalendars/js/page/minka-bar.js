@@ -268,11 +268,8 @@
   }
 
   /* ï¿½ï¿½ï¿½ï¿½ Make contenteditable behave like input ï¿½ï¿½ï¿½ï¿½ */
-  input.setAttribute('contenteditable', 'true');
-  input.setAttribute('inputmode', 'search');
-  input.setAttribute('autocapitalize', 'sentences');
-  input.setAttribute('autocorrect', 'on');
-  input.setAttribute('autocomplete', 'off');
+  // contenteditable/inputmode/autocorrect live in the #minkaBarInput markup:
+  // switching contenteditable on from here, mid-parse, forced a full layout.
   function focusMinkaInput() {
     try { input.focus({ preventScroll:true }); } catch(e) { input.focus(); }
   }

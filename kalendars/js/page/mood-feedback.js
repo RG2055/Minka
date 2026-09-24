@@ -3236,7 +3236,16 @@
   document.addEventListener('keydown', function (event) {
     if (event.key === 'Escape' && !modal.hidden) closeModal();
   });
-  window.addEventListener('storage', function () { paintCounts(); });
+  // The shell page shares this origin, so each of its localStorage writes (radio,
+  // theme, bolus…) fires `storage` here — about 30 during startup, each one a full
+  // card repaint plus a forced layout. Repaint only for keys paintCounts() reads,
+  // plus the shift-radio history that MinkaDaybook.enhance() draws; a null key
+  // means storage was cleared.
+  var PAINT_STORAGE_KEYS = [PULSE_KEY, PENDING_PULSE_KEY, TEXT_KEY, ENTRY_COUNT_KEY,
+    SEEN_KEY, SEEN_COUNT_KEY, 'minkaRgOwnMoodV1', 'minkaShiftRadioV1'];
+  window.addEventListener('storage', function (event) {
+    if (event.key === null || PAINT_STORAGE_KEYS.indexOf(event.key) >= 0) paintCounts();
+  });
   window.addEventListener('daySelected', scheduleMoodDayRefresh);
   document.addEventListener('visibilitychange', function () {
     if (!document.hidden) {

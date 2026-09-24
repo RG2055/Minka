@@ -772,12 +772,14 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
       var schedule = doc && doc.getElementById('grafiks-list');
       var rgDuty = doc && doc.getElementById('radiographers-duty');
       var rdDuty = doc && doc.getElementById('radiologists-duty');
-      if (!doc || !win || !app || win.getComputedStyle(app).visibility === 'hidden') return false;
+      if (!doc || !win || !app) return false;
       var dateReady = dateTitle && dateTitle.textContent.trim() && dateTitle.textContent.trim() !== '...';
       var dataReady = [schedule, rgDuty, rdDuty].some(function(node){
         return node && (node.children.length > 0 || node.textContent.trim().length > 3);
       });
-      return !!(dateReady && dataReady);
+      // Computed style inside the frame first lays out this whole page, so ask
+      // only once the cheap text checks pass instead of every 200 ms while loading.
+      return !!(dateReady && dataReady) && win.getComputedStyle(app).visibility !== 'hidden';
     } catch (_e) {
       return false;
     }
