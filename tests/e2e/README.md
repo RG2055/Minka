@@ -27,6 +27,7 @@ node run-all.mjs http://127.0.0.1:8012 http://127.0.0.1:8024
 | `shift-states.mjs` + `shift-assert.mjs` | shift lifecycle with timed fixture data: active, 3 min left, just ended, old completed, selected past/future day, 07:59 / 08:00 duty-day rollover, a live crossing of 16:00 |
 | `hidden-polling.mjs` | news/weather do not poll while the app is hidden and catch up on return |
 | `mobile-badge.mjs` | the birthday badge settles once in the right header row (with and without mobile-v2) |
+| `computed-style-compare.mjs` | every element's computed CSS in 11 UI states (search results, modals, night panel, mobile…) compared between two versions — catches CSS that a screenshot misses |
 | `offline.mjs` | after one visit the calendar loads offline from the service worker |
 
 ## Visual comparison (before/after a change)

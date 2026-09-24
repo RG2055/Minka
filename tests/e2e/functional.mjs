@@ -62,6 +62,8 @@ await test('header search: launch button opens, typing shows results, Escape cle
   await p.keyboard.type('alpha',{delay:30});
   ok(await waitFor(()=>p.evaluate(()=>document.getElementById('minkaResults').children.length>0)),'no results for "alpha"');
   const n=await p.evaluate(()=>document.getElementById('minkaResults').children.length);
+  const look=await p.evaluate(()=>{const it=document.querySelector('#minkaResults .search-item'); if(!it)return null; const cs=getComputedStyle(it); const a=it.querySelector('a')||it; return {display:cs.display, deco:getComputedStyle(a).textDecorationLine, color:cs.color};});
+  ok(look&&look.display==='flex'&&look.deco==='none','search results are unstyled: '+JSON.stringify(look));
   await p.keyboard.press('Escape');
   ok(await waitFor(()=>p.evaluate(()=>document.getElementById('minkaBarInput').textContent==='')),'Escape did not clear text');
   ok(!p.__errs.length,'errors: '+p.__errs.join(' | ')); await p.context().close(); return n+' results'; });
