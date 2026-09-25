@@ -68,11 +68,11 @@
 #worker-modal#worker-modal input[type="range"]:focus-visible::-webkit-slider-thumb {box-shadow:0 0 0 3px var(--pp-primary,#a8c7fa) !important;}
 
 /* every slider row: name | slider | value */
-#worker-modal#worker-modal :is(.wf-range,.mk-pic-tune label,.mk-fx-size-wrap,.mk-addon-controls label) {
+#worker-modal#worker-modal :is(.wf-range,.mk-pic-tune label,.mk-fx-size-wrap,.mk-addon-controls label,.mk-addon-tune label) {
   display:grid !important;grid-template-columns:96px minmax(80px,1fr) 44px !important;align-items:center !important;gap:12px !important;
   font:600 13px/1.2 var(--pp-font,system-ui) !important;color:var(--pp-on-var,#b8c1cd) !important;
 }
-#worker-modal#worker-modal :is(.wf-range,.mk-pic-tune label,.mk-fx-size-wrap,.mk-addon-controls label) > :is(output,b,.mk-fx-size-val,.mk-addon-scale-value,.mk-pic-val) {
+#worker-modal#worker-modal :is(.wf-range,.mk-pic-tune label,.mk-fx-size-wrap,.mk-addon-controls label,.mk-addon-tune label) > :is(output,b,.mk-fx-size-val,.mk-addon-scale-value,.mk-pic-val) {
   text-align:right;font:600 13px/1 var(--pp-font,system-ui) !important;color:var(--pp-on,#e3e7ee) !important;font-variant-numeric:tabular-nums;
 }
 
@@ -247,3 +247,6 @@
 #worker-modal#worker-modal .mk-addon-inks button[aria-pressed="true"] {border-color:#fff !important;box-shadow:0 0 0 2px rgba(100,210,255,.55) !important;}
 #worker-modal#worker-modal .mk-addon-inks button.mk-addon-ink-auto {width:auto !important;height:28px !important;padding:0 12px !important;border-radius:999px !important;border:1px solid rgba(255,255,255,.18) !important;background:transparent !important;color:var(--pp-on,#e3e7ee);font:600 12px/1 var(--pp-font,system-ui);}
 #worker-modal#worker-modal .mk-addon-inks button.mk-addon-ink-auto[aria-pressed="true"] {background:#29394c !important;border-color:#64d2ff !important;color:#eaf4ff;box-shadow:none !important;}
+#worker-modal#worker-modal .mk-addon-tune {display:grid;gap:6px;}
+#worker-modal#worker-modal .mk-addon-tune[hidden] {display:none !important;}
+#worker-modal#worker-modal .mk-addon-tune input[type="range"] {width:100%;}

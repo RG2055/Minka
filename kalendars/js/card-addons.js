@@ -166,6 +166,8 @@
     };
     // The decoration's own effect and colour ("rrggbb"), independent of the card.
     if (validDecorFx(config.fx)) clean.fx = config.fx;
+    // Smalkums + Kontrasts of the decoration's own effect, "bc" (0–9 each); 5/5 = unset.
+    if (clean.fx && /^\d\d$/.test(String(config.tune || '')) && config.tune !== '55') clean.tune = String(config.tune);
     if (/^[a-f0-9]{6}$/.test(String(config.color || ''))) clean.color = String(config.color);
     return clean;
   }
@@ -317,9 +319,11 @@
          when the matching image already exists. Without this, only the few
          pixels inside the card (a clasp or paws) survive overflow:hidden. */
       var needsGeometry = !card.classList.contains('mk-addon-active');
-      if ((existing.dataset.addonColor || '') !== (config.color || '') || (existing.dataset.addonFx || '') !== (config.fx || '')) {
+      if ((existing.dataset.addonColor || '') !== (config.color || '') || (existing.dataset.addonFx || '') !== (config.fx || '')
+        || (existing.dataset.addonTune || '') !== (config.tune || '')) {
         if (config.color) existing.dataset.addonColor = config.color; else delete existing.dataset.addonColor;
         if (config.fx) existing.dataset.addonFx = config.fx; else delete existing.dataset.addonFx;
+        if (config.tune) existing.dataset.addonTune = config.tune; else delete existing.dataset.addonTune;
         if (window.MinkaDither && window.MinkaDither.decor) window.MinkaDither.decor(card);
       }
       if (!surface) {
@@ -360,6 +364,7 @@
     image.dataset.addonY = String(offsetY);
     if (/^[a-f0-9]{6}$/.test(String(config.color || ''))) image.dataset.addonColor = config.color;
     if (validDecorFx(config.fx)) image.dataset.addonFx = config.fx;
+    if (/^\d\d$/.test(String(config.tune || ''))) image.dataset.addonTune = config.tune;
     image.style.setProperty('--mk-addon-scale', scale);
     image.style.setProperty('--mk-addon-dock-y', (Number(item.dockY) || 3) + 'px');
     if (item.aspect) image.style.setProperty('--mk-addon-aspect', item.aspect);
@@ -683,10 +688,14 @@
       + '</div>'
       + '<div class="mk-addon-look">'
       + '<div class="mk-addon-look-label">Dekora efekts</div>'
-      + '<div class="mk-addon-fx" role="group" aria-label="Dekora efekts">' + DECOR_FX.map(function(f) { return '<button type="button" data-addon-fx="' + f[0] + '">' + esc(f[1]) + '</button>'; }).join('') + '</div>'
+      + '<div class="mk-addon-fx" role="group" aria-label="Dekora efekts">' + DECOR_FX.map(function(f) { return '<button type="button" data-decor-fx="' + f[0] + '">' + esc(f[1]) + '</button>'; }).join('') + '</div>'
+      + '<div class="mk-addon-tune">'
+      + '<label><span>Smalkums</span><input type="range" min="0" max="9" step="1" value="5" data-decor-tune="b" aria-label="Dekora smalkums"><output>5</output></label>'
+      + '<label><span>Kontrasts</span><input type="range" min="0" max="9" step="1" value="5" data-decor-tune="c" aria-label="Dekora kontrasts"><output>5</output></label>'
+      + '</div>'
       + '<div class="mk-addon-inks" role="group" aria-label="Dekora krāsa"><span>Dekora krāsa</span>'
-      + '<button type="button" class="mk-addon-ink-auto" data-addon-ink="">Kā kartītei</button>'
-      + DECOR_INKS.map(function(c) { return '<button type="button" data-addon-ink="' + c[0] + '" style="--ink:#' + c[0] + '" title="' + c[1] + '" aria-label="' + c[1] + '"></button>'; }).join('')
+      + '<button type="button" class="mk-addon-ink-auto" data-decor-ink="">Kā kartītei</button>'
+      + DECOR_INKS.map(function(c) { return '<button type="button" data-decor-ink="' + c[0] + '" style="--ink:#' + c[0] + '" title="' + c[1] + '" aria-label="' + c[1] + '"></button>'; }).join('')
       + '</div></div>';
     editor.appendChild(panel);
 
@@ -801,7 +810,7 @@
         if (thumb.complete) markReady();
         button.addEventListener('click', function() {
           // Another decoration keeps the chosen effect and colour.
-          config = { id: button.dataset.addonId, scale: Number(config.scale) || 1, side: config.side === 'left' ? 'left' : 'right', x: 0, y: 0, fx: config.fx, color: config.color };
+          config = { id: button.dataset.addonId, scale: Number(config.scale) || 1, side: config.side === 'left' ? 'left' : 'right', x: 0, y: 0, fx: config.fx, tune: config.tune, color: config.color };
           saveConfig(name, config);
           renderGrid();
           applyPreview();
@@ -842,21 +851,46 @@
       if (!look) return;
       look.hidden = !(config && config.id);
       var fx = config.fx || (followsCard() ? 'card' : 'none');
-      look.querySelectorAll('[data-addon-fx]').forEach(function(b) { b.setAttribute('aria-pressed', String(b.dataset.addonFx === fx)); });
-      look.querySelectorAll('[data-addon-ink]').forEach(function(b) { b.setAttribute('aria-pressed', String(b.dataset.addonInk === (config.color || ''))); });
+      look.querySelectorAll('[data-decor-fx]').forEach(function(b) { b.setAttribute('aria-pressed', String(b.dataset.decorFx === fx)); });
+      look.querySelectorAll('[data-decor-ink]').forEach(function(b) { b.setAttribute('aria-pressed', String(b.dataset.decorInk === (config.color || ''))); });
       look.querySelector('.mk-addon-inks').hidden = fx === 'none';
+      // Tuning belongs to the decoration's own effect ("Kā kartītei" uses the card's).
+      var tuneBox = look.querySelector('.mk-addon-tune'), t = /^\d\d$/.test(config.tune || '') ? config.tune : '55';
+      tuneBox.hidden = fx === 'none' || fx === 'card';
+      tuneBox.querySelectorAll('[data-decor-tune]').forEach(function(r, i) { r.value = t[i]; r.nextElementSibling.textContent = t[i]; });
     }
-    panel.querySelectorAll('[data-addon-fx]').forEach(function(button) {
+    // While a slider moves only the preview is redrawn (after a short rest);
+    // the saved decoration (all cards, cloud) follows on release.
+    var tuneTimer = 0;
+    function readTune() {
+      var r = panel.querySelectorAll('[data-decor-tune]');
+      var t = r[0].value + r[1].value;
+      if (t === '55') delete config.tune; else config.tune = t;
+    }
+    panel.querySelectorAll('[data-decor-tune]').forEach(function(r) {
+      r.addEventListener('input', function() {
+        r.nextElementSibling.textContent = r.value;
+        if (!config.id) return;
+        readTune(); clearTimeout(tuneTimer);
+        tuneTimer = setTimeout(function() { if (preview) applyToCard(preview, config); }, 160);
+      });
+      r.addEventListener('change', function() {
+        clearTimeout(tuneTimer);
+        if (!config.id) return;
+        readTune(); saveConfig(name, config); applyPreview();
+      });
+    });
+    panel.querySelectorAll('[data-decor-fx]').forEach(function(button) {
       button.addEventListener('click', function() {
         if (!config.id) return;
-        config.fx = button.dataset.addonFx;
+        config.fx = button.dataset.decorFx;
         saveConfig(name, config); syncLook(); applyPreview();
       });
     });
-    panel.querySelectorAll('[data-addon-ink]').forEach(function(button) {
+    panel.querySelectorAll('[data-decor-ink]').forEach(function(button) {
       button.addEventListener('click', function() {
         if (!config.id) return;
-        if (button.dataset.addonInk) config.color = button.dataset.addonInk; else delete config.color;
+        if (button.dataset.decorInk) config.color = button.dataset.decorInk; else delete config.color;
         saveConfig(name, config); syncLook(); applyPreview();
       });
     });

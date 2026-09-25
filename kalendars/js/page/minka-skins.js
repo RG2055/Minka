@@ -822,24 +822,32 @@
     var n = parseFloat(v);
     return isNaN(n) ? '0' : String(n);
   }
-  // The decoration's own effect and colour ride in the id field as "id--" + a one-letter
-  // effect code and/or "rrggbb" (no item id contains "--"), so they sync through the
-  // API's existing ad: format. "id--rrggbb" (colour only) is the first version of it.
+  // The decoration's own effect, tuning and colour ride in the id field as "id--" + a
+  // one-letter effect code, optional two tuning digits (smalkums, kontrasts) and optional
+  // "rrggbb" (no item id contains "--"), so they sync through the API's existing ad:
+  // format. The tail length tells the parts apart (1/3/7/9); "id--rrggbb" (colour only)
+  // is the first version of it.
   var DECOR_FX_CODE = { card: 'c', none: 'n', dither: 'd', xray: 'x', halftone: 'h', duotone: 't', ascii: 'a' };
   function decorFxFromCode(code) { for (var k in DECOR_FX_CODE) if (DECOR_FX_CODE[k] === code) return k; return ''; }
   function packAddonId(addon) {
-    var tail = (DECOR_FX_CODE[addon.fx] || '') + (addon.color || '');
+    var code = DECOR_FX_CODE[addon.fx] || '';
+    var tail = code ? code + (addon.tune || '') + (addon.color || '') : (addon.color || '');
     return addon.id + (tail ? '--' + tail : '');
   }
   function cleanAddonConfig(value) {
     if (!value || !/^[a-z0-9-]{1,40}$/.test(String(value.id || ''))) return null;
-    var id = String(value.id), color = String(value.color || ''), fx = DECOR_FX_CODE[value.fx] ? String(value.fx) : '';
+    var id = String(value.id), color = String(value.color || ''), fx = DECOR_FX_CODE[value.fx] ? String(value.fx) : '', tune = String(value.tune || '');
     var cut = id.indexOf('--');
     if (cut > 0) {
       var tail = id.slice(cut + 2);
       id = id.slice(0, cut);
       if (/^[a-f0-9]{6}$/.test(tail)) { if (!color) color = tail; }
-      else if (/^[a-z]([a-f0-9]{6})?$/.test(tail)) { if (!fx) fx = decorFxFromCode(tail[0]); if (!color && tail.length > 1) color = tail.slice(1); }
+      else if (/^[a-z](\d\d)?([a-f0-9]{6})?$/.test(tail)) {
+        if (!fx) fx = decorFxFromCode(tail[0]);
+        var rest = tail.slice(1);
+        if (rest.length === 2 || rest.length === 8) { if (!tune) tune = rest.slice(0, 2); rest = rest.slice(2); }
+        if (!color && rest.length === 6) color = rest;
+      }
     }
     var clean = {
       id: id,
@@ -849,8 +857,9 @@
       y: Math.round(Math.max(-100, Math.min(100, Number(value.y) || 0)) * 10)
     };
     if (fx) clean.fx = fx;
+    if (fx && /^\d\d$/.test(tune) && tune !== '55') clean.tune = tune;
     if (/^[a-f0-9]{6}$/.test(color)) clean.color = color;
-    if (packAddonId(clean).length > 40) { delete clean.color; delete clean.fx; }
+    if (packAddonId(clean).length > 40) { delete clean.color; delete clean.tune; delete clean.fx; }
     return clean;
   }
   function packSkin(sk, name) {
@@ -908,6 +917,7 @@
         if (clean) {
           addon = { id: clean.id, scale: clean.scale / 100, side: clean.side === 'l' ? 'left' : 'right', x: clean.x / 10, y: clean.y / 10 };
           if (clean.fx) addon.fx = clean.fx;
+          if (clean.tune) addon.tune = clean.tune;
           if (clean.color) addon.color = clean.color;
         }
       }

@@ -604,12 +604,16 @@
     return v;
   }
   // A decoration's own effect (Dekori → Dekora efekts), whatever the card shows.
-  function decorLook(fx, ink) {
+  // tune "bc": Smalkums (detail) and Kontrasts 0–9, 5/5 default — the same scale as the card's.
+  function decorLook(fx, ink, tune) {
     var sharp = Math.max(1, Math.round(host.devicePixelRatio || 1));
-    if (fx === 'xray') return { mode: 'xray', normalize: true, contrast: .95, sharpen: .2, dot: 1 / sharp, soft: true };
-    if (fx === 'duotone') return { mode: 'duotone', ink: ink, normalize: true, contrast: 1.05, sharpen: .3, dot: 1 / sharp, soft: true };
-    if (fx === 'halftone' || fx === 'ascii') return { mode: fx, ink: ink, normalize: true, contrast: 1.15, scale: sharp, cell: 1, dot: 1, soft: true };
-    return { mode: 'bayer', ink: ink.map(function (v) { return Math.round(6 + (v - 6) * .7); }), paper: [6, 6, 6], normalize: true, contrast: 1.2, sharpen: .45, dot: 2 / sharp };
+    var tb = /^\d\d$/.test(tune || '') ? +tune[0] : 5, tc = /^\d\d$/.test(tune || '') ? +tune[1] : 5;
+    var fine = Math.pow(1.8, (5 - tb) / 5), con = function (base) { return +(base * (0.7 + tc * .06)).toFixed(3); };
+    if (fx === 'xray') return { mode: 'xray', normalize: true, contrast: con(.95), sharpen: +(.2 / fine).toFixed(2), dot: 1 / sharp, soft: true };
+    if (fx === 'duotone') return { mode: 'duotone', ink: ink, normalize: true, contrast: con(1.05), sharpen: +(.3 / fine).toFixed(2), dot: 1 / sharp, soft: true };
+    if (fx === 'halftone' || fx === 'ascii') return { mode: fx, ink: ink, normalize: true, contrast: con(1.15), scale: sharp, cell: +fine.toFixed(2), dot: 1, soft: true };
+    var dpx = Math.max(1, Math.min(4, Math.round(2 * fine)));
+    return { mode: 'bayer', ink: ink.map(function (v) { return Math.round(6 + (v - 6) * .7); }), paper: [6, 6, 6], normalize: true, contrast: con(1.2), sharpen: .45, dot: dpx / sharp };
   }
   function decor(card) {
     if (!card || !card.querySelectorAll) return;
@@ -617,7 +621,7 @@
       // Own effect first; 'card' (or unset + the card's "also on the decoration"
       // switch) follows the card's effect; 'none' keeps the plain picture.
       var own = img.dataset.addonFx || '', d = null;
-      if (own && own !== 'card' && own !== 'none') d = decorLook(own, hexToRgb(img.dataset.addonColor || '') || cardInk(card));
+      if (own && own !== 'card' && own !== 'none') d = decorLook(own, hexToRgb(img.dataset.addonColor || '') || cardInk(card), img.dataset.addonTune);
       else if (own === 'card' || (!own && card.__dthDecorOn)) d = card.__dthCardFx || null;
       if (!d) { clearDecor(img); return; }
       var src = img.currentSrc || img.src, w = img.offsetWidth, h = img.offsetHeight;
@@ -644,7 +648,7 @@
         if (o.mode === 'xray' || o.mode === 'palette') { o.mode = 'duotone'; o.normalize = true; o.colors = null; if (!o.contrast) o.contrast = 1.05; soft = true;
           o.width = Math.max(8, Math.min(600, Math.round(shownW * Math.max(1, Math.round(host.devicePixelRatio || 1))))); }
       }
-      var key = src + '|' + [o.mode, (o.ink || []).join('.'), o.width, o.contrast, o.cell || '', o.paper ? o.paper.join('.') : ''].join('|');
+      var key = src + '|' + [o.mode, (o.ink || []).join('.'), o.width, o.contrast, o.cell || '', o.paper ? o.paper.join('.') : '', o.sharpen == null ? '' : o.sharpen].join('|');
       if (img.dataset.mkDitherDecor === key) return;
       img.dataset.mkDitherDecor = key;
       o.stale = function () { return !img.isConnected || img.dataset.mkDitherDecor !== key; };
