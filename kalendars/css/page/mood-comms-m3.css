@@ -1025,3 +1025,20 @@
     transition: none !important;
   }
 }
+
+/* A long "Atbilde: …" line must never widen the message column: the main
+   column is capped at the panel's width, so the composer and its Send button
+   always stay inside; the reply preview is cut with "…" (× cancels it). */
+#rgFeedbackModal .rg-comms-main { grid-template-columns: minmax(0, 1fr) !important; min-width: 0 !important; }
+#rgFeedbackModal :is(.rg-comms-composer, .rg-comms-compose-context, .rg-comms-compose-row) { min-width: 0 !important; max-width: 100% !important; box-sizing: border-box !important; }
+#rgFeedbackModal .rg-comms-compose-context { flex-wrap: wrap !important; }
+/* at least ~160px for the preview, else it takes its own line (never shrinks to nothing) */
+#rgFeedbackModal .rg-comms-replying { flex: 1 1 160px !important; min-width: 0 !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+#rgFeedbackModal .rg-comms-replying:empty { display: none !important; }
+#rgFeedbackModal .rg-comms-cancel-reply { flex: none !important; }
+/* Phones: one column (the topics list is its own panel there). The desktop
+   two-column rule above is !important and used to override the mobile one,
+   squeezing messages and the composer into a 232px column. */
+@media (max-width: 720px) {
+  #rgFeedbackModal .rg-comms-body { grid-template-columns: minmax(0, 1fr) !important; }
+}
