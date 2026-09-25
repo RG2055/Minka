@@ -34,6 +34,9 @@
 /* sub headings inside a tab (M3 title-small) */
 #worker-modal#worker-modal .org-sub {font:600 14px/1.2 var(--pp-font,system-ui) !important;color:var(--pp-on,#e3e7ee);margin:18px 0 10px;}
 #worker-modal#worker-modal .org-effects > .org-sub:first-child {margin-top:0;}
+#worker-modal#worker-modal .org-sub-row {display:flex;align-items:center;justify-content:space-between;gap:12px;}
+#worker-modal#worker-modal .org-sub-row .mk-addon-remove {min-height:34px;padding:0 14px;border:1px solid rgba(255,110,120,.30);border-radius:999px;font:600 13px/1 var(--pp-font,system-ui);}
+#worker-modal#worker-modal .org-sub-row .mk-addon-remove:disabled {border-color:rgba(255,255,255,.08);}
 #worker-modal#worker-modal .org-effects {margin-bottom:6px;}
 #worker-modal#worker-modal .org-colors {margin-bottom:8px;}
 #worker-modal#worker-modal .org-colors .mk-auto-palette {display:flex;align-items:center;gap:12px;margin:0 0 12px;padding:12px 16px;border-radius:20px;background:var(--pp-c2,#1c222c);}

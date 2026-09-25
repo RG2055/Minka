@@ -48,7 +48,12 @@
     if (fx) fx.hidden = true;
     var effectsPanel = addons || details;
     effectsPanel.prepend(effects);
-    if (addons) { var ah = document.createElement('div'); ah.className = 'org-sub'; ah.textContent = 'Dekori'; effects.append(ah); }
+    if (addons) {
+      var ah = document.createElement('div'); ah.className = 'org-sub'; ah.textContent = 'Dekori'; effects.append(ah);
+      // The panel's own header (hidden here) holds "Noņemt dekoru": it moves onto this line.
+      var rm = addons.querySelector('.mk-addon-remove');
+      if (rm) { ah.classList.add('org-sub-row'); ah.append(rm); }
+    }
 
     // ---- own tab row ----
     var row = document.createElement('div'); row.className = 'org-tabs'; row.setAttribute('role', 'tablist'); row.setAttribute('aria-label', 'Izskats');
