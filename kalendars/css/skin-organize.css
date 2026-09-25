@@ -227,3 +227,6 @@
 #worker-modal#worker-modal .org-colors .mk-skin-tool > * {justify-self:stretch !important;}
 #worker-modal#worker-modal .org-colors .mk-skin-tool .mk-skin-custom {justify-content:flex-start !important;}
 
+
+/* the decoration tile that a click on the card opened */
+#worker-modal#worker-modal .mk-addon-choice.org-flash {outline:2px solid var(--pp-primary,#a8c7fa);outline-offset:2px;transition:outline-color .9s;}

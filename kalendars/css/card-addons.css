@@ -243,17 +243,20 @@ html body > .mk-card-addon.mk-card-addon-portal.is-visible {
   z-index: 3 !important;
 }
 
-html body #grafiks-app #grafiks-list .card.mk-addon-active.mk-addon-group-object .mk-mid-bottom,
-html body #grafiks-app #grafiks-list .card.mk-addon-active.mk-addon-group-object .mk-mid-meta-emoji-fly,
-html body #grafiks-app #grafiks-list .card.mk-addon-active.mk-addon-group-object .mk-mid-meta-emoji {
+/* Classic cards: lift the bottom row above the object. Card faces place these
+   elements absolutely (card-faces.css) — forcing position:relative there threw
+   the emoji / initials chip out of its spot (below the card), so faces only get
+   the stacking order. */
+html body #grafiks-app #grafiks-list .card.mk-addon-active.mk-addon-group-object:not(.mk-watch-face) .mk-mid-bottom,
+html body #grafiks-app #grafiks-list .card.mk-addon-active.mk-addon-group-object:not(.mk-watch-face) .mk-mid-meta-emoji-fly,
+html body #grafiks-app #grafiks-list .card.mk-addon-active.mk-addon-group-object:not(.mk-watch-face) .mk-mid-meta-emoji,
+html body #worker-modal .card.mk-addon-active.mk-addon-group-object:not(.mk-watch-face) .mk-mid-bottom,
+html body #worker-modal .card.mk-addon-active.mk-addon-group-object:not(.mk-watch-face) .mk-mid-meta-emoji-fly,
+html body #worker-modal .card.mk-addon-active.mk-addon-group-object:not(.mk-watch-face) .mk-mid-meta-emoji {
   position: relative !important;
   z-index: 8 !important;
 }
-
-html body #worker-modal .card.mk-addon-active.mk-addon-group-object .mk-mid-bottom,
-html body #worker-modal .card.mk-addon-active.mk-addon-group-object .mk-mid-meta-emoji-fly,
-html body #worker-modal .card.mk-addon-active.mk-addon-group-object .mk-mid-meta-emoji {
-  position: relative !important;
+html body :is(#grafiks-app,#worker-modal) .card.mk-watch-face.mk-addon-active.mk-addon-group-object [data-wf-part="emoji"] {
   z-index: 8 !important;
 }
 

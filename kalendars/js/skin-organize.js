@@ -156,10 +156,29 @@
     row.addEventListener('click', function (e) { selectFrame(false); var b = e.target.closest('[data-org-tab]'); selectBackground(!!b && b.dataset.orgTab === 'background'); });
     // The preview is a picture of the card, never the live card: no click inside it
     // may reach the calendar's own handlers (coffee +/−, opening windows).
-    if (previewList) previewList.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); }, true);
+    // A click (no drag) on the decoration opens its own settings: Efekti → Dekori,
+    // in the decoration's group, its tile in view.
+    var addonDown = null;
+    if (previewList) previewList.addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      var addon = e.target.closest && e.target.closest('.mk-card-addon');
+      if (!addon || !addonDown || Math.abs(e.clientX - addonDown[0]) + Math.abs(e.clientY - addonDown[1]) > 6) return;
+      selectFrame(false); selectBackground(false);
+      if (current !== 'effects') show('effects');
+      var grp = addon.dataset.addonGroup, gb = grp && host.querySelector('.mk-addon-group[data-addon-group="' + grp + '"]');
+      if (gb && !gb.classList.contains('is-active')) gb.click();
+      setTimeout(function () {
+        var sec = host.querySelector('.mk-addon-section'), tile = sec && sec.querySelector('.mk-addon-choice.is-active');
+        var target = tile || sec; if (target) target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        if (tile) { tile.classList.add('org-flash'); setTimeout(function () { tile.classList.remove('org-flash'); }, 900); }
+      }, 60);
+    }, true);
     // Click what you want to change: an element → its settings, the picture → Fons.
     if (previewList) previewList.addEventListener('pointerdown', function (e) {
       if (e.button !== 0 || !e.target.closest('.mk-mid-card')) return;
+      // The decoration drags on its own; a click without moving opens its menu (above).
+      if (e.target.closest('.mk-card-addon')) { addonDown = [e.clientX, e.clientY]; return; }
+      addonDown = null;
       var part = e.target.closest('[data-wf-part]'), card = e.target.closest('.mk-mid-card');
       if (!part) {
         // the rim of the card = its frame → Krāsas, at the metal frame
