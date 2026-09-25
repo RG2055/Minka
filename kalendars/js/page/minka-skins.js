@@ -1024,6 +1024,17 @@
     return (f + ' ' + l).replace(/--/g, '').trim();
   }
 
+  // Izskats closed or left: drop its card clones, previews and effect pictures
+  // (a few hundred DOM nodes and canvases on 8 GB PCs). The next visit renders anew.
+  window.mkReleaseSkinPicker = function(host) {
+    if (!host || !host.firstChild) return;
+    paletteRevision++;   // a pending auto-palette result must not re-render the hidden editor
+    if (host.__bundleIO) { host.__bundleIO.disconnect(); host.__bundleIO = null; }
+    host.__org = null;
+    if (window.MinkaCardFaces && window.MinkaCardFaces.release) window.MinkaCardFaces.release(host);
+    host.innerHTML = '';
+    if (window.MinkaDither && window.MinkaDither.trim) window.MinkaDither.trim();
+  };
   window.mkRenderSkinPicker = function(host) {
     if (!host) return;
     paletteRevision++;

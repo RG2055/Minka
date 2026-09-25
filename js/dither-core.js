@@ -272,7 +272,7 @@
     try { var u = new URL(src, doc.baseURI); return u.origin === host.location.origin || u.protocol === 'data:' || u.protocol === 'blob:'; } catch (_) { return false; }
   }
 
-  var MAX_CACHE = 90;
+  var MAX_CACHE = 30;   // 8 GB work PCs: keep few finished pictures around
   function remember(key, value) {
     cache.set(key, value);
     if (cache.size <= MAX_CACHE) return;
@@ -307,7 +307,7 @@
     });
     job.catch(function () { if (sources.get(src) === job) sources.delete(src); });
     sources.set(src, job);
-    if (sources.size > 6) sources.delete(sources.keys().next().value);
+    if (sources.size > 3) sources.delete(sources.keys().next().value);
     return job;
   }
   /* One job at a time, each in its own task: the page keeps answering clicks
@@ -347,9 +347,23 @@
       return run;
     });
     job._wants = opts.stale ? [opts.stale] : null;
+    job.then(function (u) { job._url = u; }, function () {});
     job.catch(function () { if (cache.get(key) === job) cache.delete(key); });
     remember(key, job);
     return job;
+  }
+
+  /* Free what the appearance editor made once it is closed: the decoded
+     pictures, and every finished result nothing on screen still shows.
+     Jobs still running are left alone (their card is waiting for them). */
+  function trim() {
+    sources.clear();
+    Array.from(cache.keys()).forEach(function (key) {
+      var job = cache.get(key), u = job && job._url;
+      if (!u || inUse(u)) return;
+      cache.delete(key); decoded.delete(u);
+      try { URL.revokeObjectURL(u); } catch (_) {}
+    });
   }
 
   /* ---------- "dither every image" ---------- */
@@ -670,7 +684,7 @@
 
   host.MinkaDither = {
     bayer8: BAYER8, image: image, url: url, atkinson: atkinson,
-    mode: function () { return mode; }, setMode: setMode, skin: skin, ready: ready, _apply: apply, _cache: cache
+    mode: function () { return mode; }, setMode: setMode, skin: skin, ready: ready, trim: trim, _apply: apply, _cache: cache
   };
   function boot() { if (mode !== 'off') apply(mode); }
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', boot, { once: true }); else boot();

@@ -7439,7 +7439,21 @@ function wmTabMotion(prevBtn, nextBtn, viewEl, dir) {
   ], 'spatial-fast', { standard: true, measure: true });
 }
 
+// The appearance editor holds full card clones and effect pictures: free them
+// once it is out of sight (opening it again renders it anew).
+let skinReleaseTimer = 0;
+function releaseSkinViewSoon() {
+  clearTimeout(skinReleaseTimer);
+  skinReleaseTimer = setTimeout(() => {
+    const v = document.getElementById('modal-skin-view'), m = document.getElementById('worker-modal');
+    if (!v || !v.firstChild) return;
+    if (!v.classList.contains('hide') && m && m.classList.contains('open')) return;
+    if (typeof window.mkReleaseSkinPicker === 'function') window.mkReleaseSkinPicker(v);
+  }, 700);
+}
+
 function showModalView(view) {
+  if (view !== 'skin') releaseSkinViewSoon();
   const _wm = document.getElementById('worker-modal');
   const _prevBtn = _wm ? _wm.querySelector('.view-toggle .toggle-btn.active') : null;
   const _nextIndex = WM_TABS.indexOf(view);
@@ -7542,6 +7556,7 @@ function closeWorkerModal() {
   }
   if (bd) bd.classList.remove('open');
   document.removeEventListener('click', outsideModalClose);
+  releaseSkinViewSoon();
 }
 
 // ------------------------------------------------------------

@@ -693,5 +693,11 @@
     });
     if(options.active()==='face')activate();
   }
-  window.MinkaCardFaces = { apply: apply, mount: mount, refreshPreview: function(){refreshPreview();} };
+  // The editor is being emptied: stop watching its preview and card clones.
+  function release(host) {
+    if (previewObserver) { previewObserver.disconnect(); previewObserver = null; }
+    cancelAnimationFrame(previewFrame); previewFrame = 0; refreshPreview = function() {};
+    if (waSizes && host) host.querySelectorAll('.wf-winamp').forEach(function (card) { waSizes.unobserve(card); });
+  }
+  window.MinkaCardFaces = { apply: apply, mount: mount, release: release, refreshPreview: function(){refreshPreview();} };
 })();
