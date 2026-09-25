@@ -228,6 +228,29 @@
       drawScaled(ctx, img, (nw - cropW) * pos[0], (nh - cropH) * pos[1], cropW, cropH, w, h);
     } else drawScaled(ctx, img, 0, 0, nw, nh, w, h);
     var id = ctx.getImageData(0, 0, w, h);
+    // Cut-out pictures (card decorations): the effect works on the shape only.
+    // Transparent pixels take the shape's mean colour so they neither skew the
+    // levels nor bleed dark error into the edges; the alpha is put back at the end.
+    var alpha = null;
+    if (opts.keepAlpha) {
+      var da = id.data, sr = 0, sg = 0, sb = 0, sn = 0, qa;
+      alpha = new Uint8Array(w * h);
+      for (qa = 0; qa < da.length; qa += 4) { alpha[qa >> 2] = da[qa + 3]; if (da[qa + 3] >= 128) { sr += da[qa]; sg += da[qa + 1]; sb += da[qa + 2]; sn++; } }
+      if (sn) { sr /= sn; sg /= sn; sb /= sn; }
+      for (qa = 0; qa < da.length; qa += 4) if (da[qa + 3] < 128) { da[qa] = sr; da[qa + 1] = sg; da[qa + 2] = sb; }
+    }
+    // Dither modes keep 1-bit edges (dots stay dots); tone maps keep the soft edge.
+    function putAlpha(data, crisp) {
+      for (var qb = 0; qb < alpha.length; qb++) data[qb * 4 + 3] = crisp ? (alpha[qb] >= 128 ? 255 : 0) : alpha[qb];
+    }
+    function maskPattern(out) {
+      var mk = doc.createElement('canvas'); mk.width = w; mk.height = h;
+      var mc = mk.getContext('2d'), md = mc.createImageData(w, h);
+      for (var qc = 0; qc < alpha.length; qc++) md.data[qc * 4 + 3] = alpha[qc];
+      mc.putImageData(md, 0, 0);
+      var oc = out.getContext('2d'); oc.globalCompositeOperation = 'destination-in'; oc.drawImage(mk, 0, 0, out.width, out.height);
+      return out;
+    }
     if (opts.normalize) {
       // Auto levels: stretch the 2nd…98th luminance percentile to full range,
       // so soft pastel pictures keep their shapes instead of one even dot field.
@@ -241,12 +264,13 @@
       var d = id.data, c = opts.contrast;
       for (var i = 0; i < d.length; i += 4) { d[i] = clamp8((d[i] - 128) * c + 128); d[i + 1] = clamp8((d[i + 1] - 128) * c + 128); d[i + 2] = clamp8((d[i + 2] - 128) * c + 128); }
     }
-    if (opts.mode === 'halftone' || opts.mode === 'ascii') return patternArt(id.data, w, h, opts);
+    if (opts.mode === 'halftone' || opts.mode === 'ascii') { var art = patternArt(id.data, w, h, opts); return alpha ? maskPattern(art) : art; }
     if (opts.sharpen !== 0) sharpen(id.data, w, h, opts.sharpen || .35);
-    if (opts.mode === 'xray' || opts.mode === 'duotone') { toneMap(id.data, opts.mode, opts.ink || [236, 234, 228]); ctx.putImageData(id, 0, 0); return cv; }
+    if (opts.mode === 'xray' || opts.mode === 'duotone') { toneMap(id.data, opts.mode, opts.ink || [236, 234, 228]); if (alpha) putAlpha(id.data, false); ctx.putImageData(id, 0, 0); return cv; }
     if (opts.mode === 'bayer') bayerTone(id.data, w, h, opts.ink || [236, 236, 232], opts.paper || [6, 6, 6], opts.gamma || 1);
     else if (opts.mode === 'palette') diffusePalette(id.data, w, h, paletteOf(id.data, opts.colors || 6));
     else atkinson(id.data, w, h, opts.mode || 'color', opts.levels || (opts.mode === 'color' ? 3 : 2), opts.ink, opts.paper);
+    if (alpha) putAlpha(id.data, true);
     ctx.putImageData(id, 0, 0);
     return cv;
   }
@@ -321,7 +345,7 @@
      CORS copy; rejects when the host does not allow reading its pixels. */
   function url(src, opts) {
     opts = opts || {};
-    var key = [src, opts.width | 0, opts.height | 0, opts.box ? opts.box.join('x') + '/' + opts.dot + '/' + (opts.pos || []).join(',') + '/' + (opts.scale || 1) : '', opts.mode || 'color', opts.levels || '', opts.colors || '', (opts.ink || []).join('.'), opts.cover ? 'c' : '', opts.normalize ? 'n' : '', opts.contrast || '', opts.sharpen == null ? '' : opts.sharpen, opts.cell || ''].join('|');
+    var key = [src, opts.width | 0, opts.height | 0, opts.box ? opts.box.join('x') + '/' + opts.dot + '/' + (opts.pos || []).join(',') + '/' + (opts.scale || 1) : '', opts.mode || 'color', opts.levels || '', opts.colors || '', (opts.ink || []).join('.'), opts.cover ? 'c' : '', opts.normalize ? 'n' : '', opts.contrast || '', opts.sharpen == null ? '' : opts.sharpen, opts.cell || '', opts.keepAlpha ? 'a' : ''].join('|');
     if (cache.has(key)) {
       var hit = cache.get(key);
       if (hit._wants) { if (opts.stale) hit._wants.push(opts.stale); else hit._wants = null; }
@@ -551,7 +575,52 @@
       if (card.dataset.mkDitherKey && card.__dthSize !== card.offsetWidth + 'x' + card.offsetHeight) skin(card);
     });
   }) : null;
+  /* The decoration (img.mk-card-addon, a transparent cut-out) with the card's
+     effect: painted with the CSS content replacement, so the app's own src and
+     sizing stay untouched and removing it restores the original at once. */
+  function clearDecor(img) {
+    if (!img.dataset.mkDitherDecor) return;
+    delete img.dataset.mkDitherDecor;
+    img.style.removeProperty('content'); img.style.removeProperty('image-rendering');
+  }
+  function decor(card) {
+    if (!card || !card.querySelectorAll) return;
+    var d = card.__dthDecor;
+    card.querySelectorAll(':scope > img.mk-card-addon').forEach(function (img) {
+      if (!d) { clearDecor(img); return; }
+      var src = img.currentSrc || img.src, w = img.offsetWidth, h = img.offsetHeight;
+      if (!src) return;
+      if (!w || !h || !img.naturalWidth) {
+        if (!img.__dthWait) { img.__dthWait = 1; img.addEventListener('load', function () { img.__dthWait = 0; requestDecor(card); }, { once: true }); }
+        return;
+      }
+      // The shown picture (object-fit: contain in the element's box), in dots.
+      var ar = img.naturalWidth / img.naturalHeight, shownW = Math.min(w, h * ar);
+      var o = { mode: d.mode, ink: d.ink, paper: d.paper, colors: d.colors, normalize: d.normalize, contrast: d.contrast, sharpen: d.sharpen, cell: d.cell, scale: d.scale, keepAlpha: true,
+        width: Math.max(8, Math.min(600, Math.round(shownW / d.dot))) };
+      var key = src + '|' + [o.mode, (o.ink || []).join('.'), o.width, o.contrast, o.cell || '', o.paper ? o.paper.join('.') : ''].join('|');
+      if (img.dataset.mkDitherDecor === key) return;
+      img.dataset.mkDitherDecor = key;
+      o.stale = function () { return !img.isConnected || img.dataset.mkDitherDecor !== key; };
+      url(src, o).then(ready).then(function (u) {
+        if (img.dataset.mkDitherDecor !== key) return;
+        img.style.setProperty('content', 'url("' + u + '")');
+        img.style.setProperty('image-rendering', d.soft ? 'auto' : 'pixelated');
+      }, function () { if (img.dataset.mkDitherDecor === key) clearDecor(img); });
+    });
+  }
+  // Called by card-addons.js whenever it (re)creates a card's decoration.
+  var decorFrame = 0, decorCards = new Set();
+  function requestDecor(card) {
+    decorCards.add(card);
+    if (decorFrame) return;
+    decorFrame = (host.requestAnimationFrame || host.setTimeout)(function () {
+      decorFrame = 0; var list = Array.from(decorCards); decorCards.clear();
+      list.forEach(function (c) { if (c.isConnected) decor(c); });
+    });
+  }
   function clearSkin(card) {
+    if (card.__dthDecor) { card.__dthDecor = null; decor(card); }
     if (sizeWatch && card.__dthSize) { sizeWatch.unobserve(card); card.__dthSize = ''; }
     if (!card.classList.contains('mk-has-dither') && !card.style.getPropertyValue('--mk-skin-dither')) return;
     card.classList.remove('mk-has-dither', 'mk-dither-native');
@@ -656,6 +725,14 @@
       : want === 'mono' ? { box: box, dot: dot, pos: pos, mode: 'bayer', ink: [236, 234, 228], paper: [8, 8, 8], normalize: true, contrast: 1.15 }
       : { box: box, dot: dot, pos: pos, mode: 'bayer', ink: dotInk, paper: want === 'paper' ? [239, 236, 228] : [6, 6, 6], normalize: true, contrast: con(1.2), sharpen: .45 };
     var tint = dotInk;
+    // "Efekts arī dekoram" — the tuning's integer part is 2 (fxs "2.bc"): the card's
+    // decoration (a transparent cut-out) gets the same effect, same ink and grain.
+    card.__dthDecor = fx && !native && isFinite(tune) && Math.floor(tune + 1e-6) >= 2 ? {
+      mode: opts.mode, ink: opts.ink, paper: opts.paper, colors: opts.colors, normalize: opts.normalize,
+      contrast: opts.contrast, sharpen: opts.sharpen, cell: opts.cell, scale: opts.scale,
+      dot: (want === 'halftone' || want === 'ascii') ? 1 : opts.dot, soft: /^(xray|duotone|halftone|ascii)$/.test(want)
+    } : null;
+    if (card.__dthDecor || card.querySelector(':scope > img.mk-card-addon[data-mk-dither-decor]')) requestDecor(card);
     if (zoom > 1) opts.dot = opts.dot / zoom;
     var key = [src, want, box.join('x'), pos.join(','), (native || !dithered ? ink : tint).join('.'), tb, tc, zoom.toFixed(2)].join('|');
     if (sizeWatch && !card.__dthSize) sizeWatch.observe(card);
@@ -718,7 +795,7 @@
 
   host.MinkaDither = {
     bayer8: BAYER8, image: image, url: url, atkinson: atkinson,
-    mode: function () { return mode; }, setMode: setMode, skin: skin, ready: ready, trim: trim, settled: settled, _apply: apply, _cache: cache
+    mode: function () { return mode; }, setMode: setMode, skin: skin, decor: requestDecor, ready: ready, trim: trim, settled: settled, _apply: apply, _cache: cache
   };
   // Cards painted before this script ran still get their effect.
   function boot() { if (mode !== 'off') apply(mode); else skinAll(); }

@@ -355,6 +355,8 @@
     setAddonGroupClass(card, item.group);
     card.classList.add('mk-addon-active');
     card.appendChild(image);
+    // "Efekts arī dekoram": the card's picture effect follows onto a new decoration.
+    if (window.MinkaDither && window.MinkaDither.decor) window.MinkaDither.decor(card);
   }
 
   function applyWorker(name) {

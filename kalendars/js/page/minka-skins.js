@@ -1128,8 +1128,11 @@
           + [['dither','Tumšs'],['ditherpaper','Papīrs'],['dithercolor','Krāsains']].map(function(m){return '<button type="button" data-card-dither="'+m[0]+'" aria-pressed="'+(fx===m[0])+'">'+m[1]+'</button>';}).join('')
           + '</div><div class="mk-pic-tune"'+(kind?'':' hidden')+'>'
           + (function(){var h=Math.round((parseFloat(draft.fxs)||1.55)*100),b=/^(dither|xray|halftone|duotone|ascii)/.test(fx)&&draft.fxs!=null?Math.floor(h/10)%10:5,c=/^(dither|xray|halftone|duotone|ascii)/.test(fx)&&draft.fxs!=null?h%10:5;
+              // fxs "1.bc"; integer part 2 = the effect also covers the card's decoration.
+              var decorOn=/^(dither|xray|halftone|duotone|ascii)/.test(fx)&&draft.fxs!=null&&Math.floor(parseFloat(draft.fxs)+1e-6)>=2;
               return '<label><span>Smalkums</span><input type="range" min="0" max="9" step="1" value="'+b+'" data-pic-tune="b" aria-label="Smalkums"><output class="mk-pic-val">'+b+'</output></label>'
-                + '<label><span>Kontrasts</span><input type="range" min="0" max="9" step="1" value="'+c+'" data-pic-tune="c" aria-label="Kontrasts"><output class="mk-pic-val">'+c+'</output></label>';})()
+                + '<label><span>Kontrasts</span><input type="range" min="0" max="9" step="1" value="'+c+'" data-pic-tune="c" aria-label="Kontrasts"><output class="mk-pic-val">'+c+'</output></label>'
+                + '<label class="mk-switch mk-pic-decor"><input type="checkbox" data-pic-decor'+(decorOn?' checked':'')+'><span></span><b>Efekts arī dekoram</b></label>';})()
           + '</div><div class="mk-dither-inks" role="group" aria-label="Efekta krāsa"'+(inked?'':' hidden')+'>'
           + [['eceae4','Balta'],['64d2ff','Ledus'],['23cdcf','Ciāna'],['1fe091','Zaļa'],['f5b73f','Dzintars'],['ff8a5c','Oranža'],['ff5c5c','Sarkana'],['2554a0','Tinte'],['141414','Melna']].map(function(c){return '<button type="button" data-dither-ink="'+c[0]+'" style="--ink:#'+c[0]+'" title="'+c[1]+'" aria-label="'+c[1]+'" aria-pressed="'+(String(draft.num||'')===hexToRgb('#'+c[0]))+'"></button>';}).join('')
           + '</div></div>';})() + '<div class="mk-bg-workspace"><div class="mk-bg-toolbar">'
@@ -1467,7 +1470,8 @@
     // Per-card dither effect (stored in the skin's fx slot, which the API already accepts).
     // One picture effect per card (skin fx): dither variants, rentgens, rastrs, duotons, ascii.
     function setPicEffect(v) {
-      if (v) { draft.fx = v; delete draft.fxs; } else if (/^(dither|xray|halftone|duotone|ascii)/.test(draft.fx || '')) { delete draft.fx; delete draft.fxs; }
+      // Switching between effects keeps the tuning and the decoration switch as shown.
+      if (v) { draft.fx = v; delete draft.fxs; packTune(); if (draft.fxs === '1.55') delete draft.fxs; } else if (/^(dither|xray|halftone|duotone|ascii)/.test(draft.fx || '')) { delete draft.fx; delete draft.fxs; }
       var kind = /^dither/.test(v) ? 'dither' : v, box = host.querySelector('.mk-dither-switch');
       if (box) {
         box.dataset.picKind = kind || '';
@@ -1485,8 +1489,18 @@
     // While dragging only the number follows at once; the picture is recomputed
     // when the thumb rests for a moment (and on release), never per input event.
     var tuneTimer = 0;
+    function packTune() {
+      var b = host.querySelector('[data-pic-tune="b"]'), c = host.querySelector('[data-pic-tune="c"]'), d = host.querySelector('[data-pic-decor]');
+      if (!b || !c) return;
+      draft.fxs = (d && d.checked ? '2.' : '1.') + b.value + c.value;
+    }
+    var decorBox = host.querySelector('[data-pic-decor]');
+    if (decorBox) decorBox.addEventListener('change', function() {
+      if (!/^(dither|xray|halftone|duotone|ascii)/.test(draft.fx || '')) return;
+      packTune(); commitQuiet();
+    });
     host.querySelectorAll('[data-pic-tune]').forEach(function(r) {
-      function pack() { var b = host.querySelector('[data-pic-tune="b"]').value, c = host.querySelector('[data-pic-tune="c"]').value; draft.fxs = '1.' + b + c; }
+      function pack() { packTune(); }
       r.addEventListener('input', function() {
         if (r.nextElementSibling) r.nextElementSibling.textContent = r.value;
         if (!/^(dither|xray|halftone|duotone|ascii)/.test(draft.fx || '')) return;

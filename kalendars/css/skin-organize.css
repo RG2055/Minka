@@ -230,3 +230,6 @@
 
 /* the decoration tile that a click on the card opened */
 #worker-modal#worker-modal .mk-addon-choice.org-flash {outline:2px solid var(--pp-primary,#a8c7fa);outline-offset:2px;transition:outline-color .9s;}
+/* "Efekts arī dekoram" — a switch under the effect sliders, not a slider row */
+#worker-modal#worker-modal .mk-pic-tune label.mk-pic-decor {display:inline-flex !important;grid-template-columns:none !important;gap:10px !important;justify-self:start;margin:8px 0 2px;cursor:pointer;}
+#worker-modal#worker-modal .mk-pic-tune label.mk-pic-decor > b {text-align:left;font:600 13px/1.2 var(--pp-font,system-ui) !important;color:var(--pp-on,#e3e7ee) !important;}
