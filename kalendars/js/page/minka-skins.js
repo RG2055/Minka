@@ -240,6 +240,7 @@
     // Light paper art gets the paper look: light chips, dark text (dark chips on it hid the values).
     PRESETS.push({label:'Dither · '+p[0],group:'dither',isNew:true,bg:{t:'img',id:'dither-'+p[1]},num:hexToRgb('#'+p[2]),na:'1',txt:p[3]?'20,20,20':'241,240,234',fx:p[3],face:face,depth:false,sw:'url(data/skins/skin-dither-'+p[1]+'.webp)'});
   });
+  var DITHER_INKS=[['eceae4','Balta'],['64d2ff','Ledus'],['23cdcf','Ciāna'],['1fe091','Zaļa'],['f5b73f','Dzintars'],['ff8a5c','Oranža'],['ff5c5c','Sarkana'],['2554a0','Tinte'],['141414','Melna']];
   var PRESET_GROUPS=[['all','Visi'],['new','Jaunumi'],['dither','Dither'],['wildlife','Dzīvnieki'],['botanical','Ziedi un augi'],['ocean','Ūdens'],['landscape','Ainavas un nakts'],['numbers','Ciparu efekti'],['collection','Citi foto']];
   function presetInGroup(p,group){return group==='all'||(group==='new'?p.isNew:p.group===group);}
 
@@ -821,15 +822,22 @@
     var n = parseFloat(v);
     return isNaN(n) ? '0' : String(n);
   }
+  // The decoration's own colour rides in the id field as "id--rrggbb" (no item id
+  // contains "--"), so it syncs through the API's existing ad: format.
   function cleanAddonConfig(value) {
     if (!value || !/^[a-z0-9-]{1,40}$/.test(String(value.id || ''))) return null;
-    return {
-      id: String(value.id),
+    var id = String(value.id), color = String(value.color || '');
+    var cut = id.indexOf('--');
+    if (cut > 0) { if (!color) color = id.slice(cut + 2); id = id.slice(0, cut); }
+    var clean = {
+      id: id,
       scale: Math.round(Math.max(.6, Math.min(1.4, Number(value.scale) || 1)) * 100),
       side: value.side === 'left' ? 'l' : 'r',
       x: Math.round(Math.max(-100, Math.min(100, Number(value.x) || 0)) * 10),
       y: Math.round(Math.max(-100, Math.min(100, Number(value.y) || 0)) * 10)
     };
+    if (/^[a-f0-9]{6}$/.test(color) && (id + '--' + color).length <= 40) clean.color = color;
+    return clean;
   }
   function packSkin(sk, name) {
     var p = [];
@@ -851,7 +859,7 @@
     if (window.MinkaCardAddons && typeof window.MinkaCardAddons.get === 'function') {
       p.push('av:1');
       var addon = cleanAddonConfig(window.MinkaCardAddons.get(name));
-      if (addon) p.push('ad:' + [addon.id, addon.scale, addon.side, addon.x, addon.y].join(','));
+      if (addon) p.push('ad:' + [addon.id + (addon.color ? '--' + addon.color : ''), addon.scale, addon.side, addon.x, addon.y].join(','));
     }
     return p.join(';');
   }
@@ -883,7 +891,10 @@
           x: Number(fields[3]) / 10,
           y: Number(fields[4]) / 10
         }) : null;
-        if (clean) addon = { id: clean.id, scale: clean.scale / 100, side: clean.side === 'l' ? 'left' : 'right', x: clean.x / 10, y: clean.y / 10 };
+        if (clean) {
+          addon = { id: clean.id, scale: clean.scale / 100, side: clean.side === 'l' ? 'left' : 'right', x: clean.x / 10, y: clean.y / 10 };
+          if (clean.color) addon.color = clean.color;
+        }
       }
     });
     if (sk.t === 'grad' && SCENIC_IDS[sk.id]) sk.t = 'img';
@@ -1132,9 +1143,15 @@
               var decorOn=/^(dither|xray|halftone|duotone|ascii)/.test(fx)&&draft.fxs!=null&&Math.floor(parseFloat(draft.fxs)+1e-6)>=2;
               return '<label><span>Smalkums</span><input type="range" min="0" max="9" step="1" value="'+b+'" data-pic-tune="b" aria-label="Smalkums"><output class="mk-pic-val">'+b+'</output></label>'
                 + '<label><span>Kontrasts</span><input type="range" min="0" max="9" step="1" value="'+c+'" data-pic-tune="c" aria-label="Kontrasts"><output class="mk-pic-val">'+c+'</output></label>'
-                + '<label class="mk-switch mk-pic-decor"><input type="checkbox" data-pic-decor'+(decorOn?' checked':'')+'><span></span><b>Efekts arī dekoram</b></label>';})()
+                + '<label class="mk-switch mk-pic-decor"><input type="checkbox" data-pic-decor'+(decorOn?' checked':'')+'><span></span><b>Efekts arī dekoram</b></label>'
+                // The decoration's own colour under the effect, apart from the card's.
+                + (function(){var ad=window.MinkaCardAddons&&window.MinkaCardAddons.get?window.MinkaCardAddons.get(name):null,dc=(ad&&ad.color)||'';
+                    return '<div class="mk-decor-inks" role="group" aria-label="Dekora krāsa"'+(decorOn?'':' hidden')+'><span>Dekora krāsa</span>'
+                      + '<button type="button" class="mk-decor-auto" data-decor-ink="" aria-pressed="'+(!dc)+'">Kā kartītei</button>'
+                      + DITHER_INKS.map(function(c){return '<button type="button" data-decor-ink="'+c[0]+'" style="--ink:#'+c[0]+'" title="'+c[1]+'" aria-label="'+c[1]+'" aria-pressed="'+(dc===c[0])+'"></button>';}).join('')
+                      + '</div>';})();})()
           + '</div><div class="mk-dither-inks" role="group" aria-label="Efekta krāsa"'+(inked?'':' hidden')+'>'
-          + [['eceae4','Balta'],['64d2ff','Ledus'],['23cdcf','Ciāna'],['1fe091','Zaļa'],['f5b73f','Dzintars'],['ff8a5c','Oranža'],['ff5c5c','Sarkana'],['2554a0','Tinte'],['141414','Melna']].map(function(c){return '<button type="button" data-dither-ink="'+c[0]+'" style="--ink:#'+c[0]+'" title="'+c[1]+'" aria-label="'+c[1]+'" aria-pressed="'+(String(draft.num||'')===hexToRgb('#'+c[0]))+'"></button>';}).join('')
+          + DITHER_INKS.map(function(c){return '<button type="button" data-dither-ink="'+c[0]+'" style="--ink:#'+c[0]+'" title="'+c[1]+'" aria-label="'+c[1]+'" aria-pressed="'+(String(draft.num||'')===hexToRgb('#'+c[0]))+'"></button>';}).join('')
           + '</div></div>';})() + '<div class="mk-bg-workspace"><div class="mk-bg-toolbar">'
       + '<div class="mk-bg-mode-tabs" role="tablist" aria-label="Fona veids">'
       + '<button type="button" class="mk-bg-mode' + (activeBgMode === 'image' ? ' is-active' : '') + '" data-bg-mode="image" role="tab" aria-selected="' + (activeBgMode === 'image') + '">Attēli</button>'
@@ -1494,10 +1511,19 @@
       if (!b || !c) return;
       draft.fxs = (d && d.checked ? '2.' : '1.') + b.value + c.value;
     }
-    var decorBox = host.querySelector('[data-pic-decor]');
+    var decorBox = host.querySelector('[data-pic-decor]'), decorInks = host.querySelector('.mk-decor-inks');
     if (decorBox) decorBox.addEventListener('change', function() {
+      if (decorInks) decorInks.hidden = !decorBox.checked;
       if (!/^(dither|xray|halftone|duotone|ascii)/.test(draft.fx || '')) return;
       packTune(); commitQuiet();
+    });
+    // Decoration colour: stored with the decoration itself (card-addons), not the skin.
+    host.querySelectorAll('[data-decor-ink]').forEach(function(b) {
+      b.addEventListener('click', function() {
+        var api = window.MinkaCardAddons;
+        if (!api || !api.setColor || !api.setColor(name, b.dataset.decorInk)) return;
+        host.querySelectorAll('[data-decor-ink]').forEach(function(x){ x.setAttribute('aria-pressed', String(x === b)); });
+      });
     });
     host.querySelectorAll('[data-pic-tune]').forEach(function(r) {
       function pack() { packTune(); }

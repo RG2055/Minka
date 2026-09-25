@@ -150,13 +150,16 @@
 
   function normalizeConfig(config) {
     if (!config || !ITEM_BY_ID[config.id]) return null;
-    return {
+    var clean = {
       id: config.id,
       scale: Math.round(Math.max(.25, Math.min(1.4, Number(config.scale) || 1)) * 100) / 100,
       side: config.side === 'left' ? 'left' : 'right',
       x: Math.round(Math.max(-100, Math.min(100, Number(config.x) || 0)) * 100) / 100,
       y: Math.round(Math.max(-100, Math.min(100, Number(config.y) || 0)) * 100) / 100
     };
+    // The decoration's own colour under the card's picture effect ("rrggbb").
+    if (/^[a-f0-9]{6}$/.test(String(config.color || ''))) clean.color = String(config.color);
+    return clean;
   }
 
   function saveConfig(name, config, options) {
@@ -306,6 +309,10 @@
          when the matching image already exists. Without this, only the few
          pixels inside the card (a clasp or paws) survive overflow:hidden. */
       var needsGeometry = !card.classList.contains('mk-addon-active');
+      if ((existing.dataset.addonColor || '') !== (config.color || '')) {
+        if (config.color) existing.dataset.addonColor = config.color; else delete existing.dataset.addonColor;
+        if (window.MinkaDither && window.MinkaDither.decor) window.MinkaDither.decor(card);
+      }
       if (!surface) {
         surface = document.createElement('span');
         surface.className = 'mk-card-addon-surface';
@@ -342,6 +349,7 @@
     image.dataset.addonScale = String(scale);
     image.dataset.addonX = String(offsetX);
     image.dataset.addonY = String(offsetY);
+    if (/^[a-f0-9]{6}$/.test(String(config.color || ''))) image.dataset.addonColor = config.color;
     image.style.setProperty('--mk-addon-scale', scale);
     image.style.setProperty('--mk-addon-dock-y', (Number(item.dockY) || 3) + 'px');
     if (item.aspect) image.style.setProperty('--mk-addon-aspect', item.aspect);
@@ -636,6 +644,13 @@
     var name = currentWorkerName();
     var config = getConfig(name) || { id: '', scale: 1, side: 'right', x: 0, y: 0 };
     var previewSlot = preview && preview.closest('.mk-skin-preview-slot');
+    // The decoration's colour is set from the effect controls (setColor): pick it up
+    // before every save here, so a drag or size change never drops it.
+    function persist() {
+      var saved = getConfig(name);
+      if (saved && saved.color) config.color = saved.color; else delete config.color;
+      saveConfig(name, config);
+    }
 
     var tab = document.createElement('button');
     tab.type = 'button';
@@ -740,7 +755,7 @@
           previewAddon.removeEventListener('pointercancel', finish);
           previewAddon.removeEventListener('lostpointercapture', finish);
           if (previewAddon.hasPointerCapture(event.pointerId)) previewAddon.releasePointerCapture(event.pointerId);
-          saveConfig(name, config);
+          persist();
           applyPreview();
         }
         previewAddon.addEventListener('pointermove', move);
@@ -775,7 +790,7 @@
         if (thumb.complete) markReady();
         button.addEventListener('click', function() {
           config = { id: button.dataset.addonId, scale: Number(config.scale) || 1, side: config.side === 'left' ? 'left' : 'right', x: 0, y: 0 };
-          saveConfig(name, config);
+          persist();
           renderGrid();
           applyPreview();
         });
@@ -816,21 +831,21 @@
     scale.addEventListener('input', function() {
       config.scale = Number(scale.value) / 100;
       scaleValue.textContent = scale.value + '%';
-      if (config.id) { saveConfig(name, config); applyPreview(); }
+      if (config.id) { persist(); applyPreview(); }
     });
 
     panel.querySelectorAll('[data-addon-side]').forEach(function(button) {
       button.addEventListener('click', function() {
         config.side = button.dataset.addonSide;
         panel.querySelectorAll('[data-addon-side]').forEach(function(item) { item.classList.toggle('is-active', item === button); });
-        if (config.id) { saveConfig(name, config); applyPreview(); }
+        if (config.id) { persist(); applyPreview(); }
       });
     });
 
     panel.querySelector('.mk-addon-reset-position').addEventListener('click', function() {
       config.x = 0;
       config.y = 0;
-      if (config.id) { saveConfig(name, config); applyPreview(); }
+      if (config.id) { persist(); applyPreview(); }
     });
 
     renderGrid();
@@ -910,7 +925,18 @@
       writeAll(clean);
       scheduleScan();
     },
-    clear: function(name) { saveConfig(name, null); }
+    clear: function(name) { saveConfig(name, null); },
+    /* Colour of the decoration under the card's picture effect; '' = the card's own. */
+    setColor: function(name, hex) {
+      var config = getConfig(name);
+      if (!config) return false;
+      config = Object.assign({}, config);
+      if (/^[a-f0-9]{6}$/.test(String(hex || ''))) config.color = String(hex); else delete config.color;
+      saveConfig(name, config);
+      // The open editor's preview card follows at once.
+      document.querySelectorAll('.mk-skin-preview-real').forEach(function(card) { applyToCard(card, config); });
+      return true;
+    }
   };
 
   waitForHooks();

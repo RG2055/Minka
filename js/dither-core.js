@@ -616,6 +616,14 @@
       var ar = img.naturalWidth / img.naturalHeight, shownW = Math.min(w, h * ar);
       var o = { mode: d.mode, ink: d.ink, paper: d.paper, colors: d.colors, normalize: d.normalize, contrast: d.contrast, sharpen: d.sharpen, cell: d.cell, scale: d.scale, keepAlpha: true,
         width: Math.max(8, Math.min(600, Math.round(shownW / d.dot))) };
+      // The decoration's own colour (picked separately from the card's): it becomes
+      // the effect's ink; effects without an ink (rentgens, krāsains) tint it as duotone.
+      var own = hexToRgb(img.dataset.addonColor || ''), soft = d.soft;
+      if (own) {
+        o.ink = own;
+        if (o.mode === 'xray' || o.mode === 'palette') { o.mode = 'duotone'; o.normalize = true; o.colors = null; if (!o.contrast) o.contrast = 1.05; soft = true;
+          o.width = Math.max(8, Math.min(600, Math.round(shownW * Math.max(1, Math.round(host.devicePixelRatio || 1))))); }
+      }
       var key = src + '|' + [o.mode, (o.ink || []).join('.'), o.width, o.contrast, o.cell || '', o.paper ? o.paper.join('.') : ''].join('|');
       if (img.dataset.mkDitherDecor === key) return;
       img.dataset.mkDitherDecor = key;
@@ -623,7 +631,7 @@
       url(src, o).then(ready).then(function (u) {
         if (img.dataset.mkDitherDecor !== key) return;
         img.style.setProperty('content', 'url("' + u + '")');
-        img.style.setProperty('image-rendering', d.soft ? 'auto' : 'pixelated');
+        img.style.setProperty('image-rendering', soft ? 'auto' : 'pixelated');
       }, function () { if (img.dataset.mkDitherDecor === key) clearDecor(img); });
     });
   }
