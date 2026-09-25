@@ -681,7 +681,24 @@
     });
     return hash >>> 0;
   }
+  // While the page is still being parsed most stylesheets are missing and the
+  // calendar is hidden (calendar.js reveals it once styled): measuring now forces
+  // a full layout for positions that would be wrong anyway. Measure once, after.
+  var moodAfterParse = null;
+  function afterParse(key, fn) {
+    if (document.readyState !== 'loading') return false;
+    if (!moodAfterParse) {
+      moodAfterParse = {};
+      document.addEventListener('DOMContentLoaded', function () {
+        var jobs = moodAfterParse; moodAfterParse = null;
+        Object.keys(jobs).forEach(function (k) { jobs[k](); });
+      }, { once: true });
+    }
+    moodAfterParse[key] = fn;
+    return true;
+  }
   function placeMoodStaff(ring) {
+    if (afterParse('place', function () { if (ring && ring.isConnected) placeMoodStaff(ring); })) return;
     var wrap = ring && ring.parentElement;
     var blob = wrap && wrap.querySelector('.rg-mood-blob');
     var people = ring ? [].slice.call(ring.querySelectorAll('.rg-mood-person')) : [];
@@ -1617,6 +1634,7 @@
   // its card. Only the portals are refreshed here: section clearance feeds
   // back into this very layout, so requesting it would loop.
   function runMoodSectionLayout() {
+    if (afterParse('sections', runMoodSectionLayout)) return;
     if (moodSectionLayoutFrame) {
       cancelAnimationFrame(moodSectionLayoutFrame);
       moodSectionLayoutFrame = 0;

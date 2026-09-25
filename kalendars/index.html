@@ -5,9 +5,10 @@
 <style>html{background:#060b13;}body{background:#060b13;}html.mk-schedule-booting #grafiks-app{visibility:hidden!important;}</style>
 <script>
 document.documentElement.classList.add('mk-schedule-booting');
+// Safety net only: calendar.js reveals the page once it is parsed, styled and has fonts.
 window.setTimeout(function () {
   document.documentElement.classList.remove('mk-schedule-booting');
-}, 5000);
+}, 7000);
 </script>
 <script>
 (function() {
@@ -136,6 +137,9 @@ window.setTimeout(function () {
 <meta name="theme-color" content="#0a0a1a">
 <title>RG Search OS - Clean Start</title>
 <!-- bundle.css is critical ï¿½ load normally -->
+<!-- The UI font is declared by geist-ui.css at the very end of the page; fetch it now so it is ready when the calendar is first shown. -->
+<link rel="preload" as="font" type="font/woff2" href="../assets/fonts/geist/Geist-Variable.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="../assets/fonts/geist/GeistMono-Variable.woff2" crossorigin>
 <link rel="stylesheet" href="css/bundle.css?v=20260924perf5">
 <link rel="stylesheet" href="../css/mk-sys.css?v=20260924m3a">
 <script src="../js/mk-motion.js?v=20260924d1"></script>
@@ -864,7 +868,7 @@ function _mkToast(msg, type) {
 <!-- Saved worker skins must be ready before the cached roster is rendered. -->
 <script src="js/page/minka-skins.js?v=20260925perf3"></script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260925perf2"></script>
+<script src="js/calendar.js?v=20260925boot1"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260925pack6" defer></script>
 <script src="js/header-weather.js?v=20260923wm10" defer></script>
@@ -1598,7 +1602,7 @@ window.addEventListener('message', function(e) {
 
 <link rel="stylesheet" id="mk-rg-pulse-v2" href="css/page/mk-rg-pulse-v2.css?v=20260924trend4">
 
-<script src="js/page/mood-feedback.js?v=20260925perf3"></script>
+<script src="js/page/mood-feedback.js?v=20260925boot1"></script>
 <script src="js/page/mood-trend.js?v=20260924m3b" defer></script>
 
 <link rel="stylesheet" id="mk-mid-card-focus-v1" href="css/page/mk-mid-card-focus-v1.css?v=20260924perf1">

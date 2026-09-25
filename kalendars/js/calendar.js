@@ -413,10 +413,33 @@ function hideGrafiksLoader(loader) {
   }, delay);
 }
 
+// Show the calendar once, finished. The cached schedule renders while the page
+// is still being parsed (only ~a quarter of the stylesheets exist by then), so
+// revealing right away showed unstyled cards that re-laid themselves out several
+// times on slow PCs. Wait until parsing is done (every stylesheet is in the DOM,
+// deferred scripts have run), every same-origin stylesheet has loaded and the
+// fonts are ready — the fonts capped, so a slow font never keeps it hidden.
+let grafiksRevealStarted = false;
 function revealGrafiksApp() {
-  requestAnimationFrame(() => {
-    document.documentElement.classList.remove('mk-schedule-booting');
-  });
+  if (grafiksRevealStarted) return;
+  grafiksRevealStarted = true;
+  const root = document.documentElement;
+  const parsed = document.readyState === 'loading'
+    ? new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve, { once: true }))
+    : Promise.resolve();
+  const sheetsLoaded = () => Promise.all(Array.prototype.filter.call(document.querySelectorAll('link[rel="stylesheet"]'), link => {
+    if (link.sheet || link.disabled) return false;
+    try { return new URL(link.href, document.baseURI).origin === location.origin; } catch (_e) { return false; }
+  }).map(link => new Promise(resolve => {
+    link.addEventListener('load', resolve, { once: true });
+    link.addEventListener('error', resolve, { once: true });
+  })));
+  const fontsReady = () => Promise.race([
+    document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve(),
+    new Promise(resolve => setTimeout(resolve, 1200))
+  ]);
+  const show = () => requestAnimationFrame(() => root.classList.remove('mk-schedule-booting'));
+  parsed.then(sheetsLoaded).then(fontsReady).then(show, show);
 }
 
 function notifyHostAppReady() {
@@ -434,7 +457,9 @@ function notifyHostAppReady() {
     const decorationsReady = typeof window.__minkaEnsureInitialDecorations === 'function'
       ? window.__minkaEnsureInitialDecorations()
       : false;
-    if ((hasTitle && hasCards && hasMonth && decorationsReady) || attempts >= 80) {
+    // …and not while the calendar is still hidden for its first, finished paint.
+    const revealed = !document.documentElement.classList.contains('mk-schedule-booting');
+    if ((hasTitle && hasCards && hasMonth && decorationsReady && revealed) || attempts >= 80) {
       try { window.parent && window.parent.postMessage({ type: 'minka:appReady' }, window.location.origin); } catch(_e) {}
       return;
     }
