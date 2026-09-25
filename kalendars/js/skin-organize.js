@@ -101,7 +101,7 @@
         b.classList.add('has-thumb');
         if (o === null) { var raw = 'url("' + src + '")'; if (b.style.getPropertyValue('--thumb') !== raw) b.style.setProperty('--thumb', raw); return; }
         if (!o) return;
-        D.url(src, Object.assign({ box: box, pos: [.5, .5] }, o)).then(D.ready || function (u) { return u; }).then(function (u) { if (run !== thumbRun || !b.isConnected) return; var v2 = 'url("' + u + '")'; if (b.style.getPropertyValue('--thumb') !== v2) b.style.setProperty('--thumb', v2); }, function () {});
+        D.url(src, Object.assign({ box: box, pos: [.5, .5], stale: function () { return run !== thumbRun || !b.isConnected; } }, o)).then(D.ready || function (u) { return u; }).then(function (u) { if (run !== thumbRun || !b.isConnected) return; var v2 = 'url("' + u + '")'; if (b.style.getPropertyValue('--thumb') !== v2) b.style.setProperty('--thumb', v2); }, function () {});
       });
     }
     // Controls that cannot work with the current effect are greyed out with the reason
@@ -184,7 +184,7 @@
     }, true);
     // M3 sliders paint their active track from --p (values are also set from code: repaint after clicks).
     function paint(r) { var min = +r.min || 0, max = +r.max || 100, v = +r.value; r.style.setProperty('--p', ((v - min) / ((max - min) || 1) * 100).toFixed(1) + '%'); }
-    var paintAll = function () { host.querySelectorAll('input[type="range"]').forEach(paint); };
+    function paintAll() { host.querySelectorAll('input[type="range"]').forEach(paint); }
     show(current); paintAll(); syncLocks();
   }
 

@@ -3,7 +3,7 @@
 
   var STORAGE_KEY = 'mkWorkerCardAddonsV1';
   var CACHE_BUST = '20260912realistic1';
-  var activeGroup = 'motion';
+  var activeGroup = 'topper';
   var scanFrame = 0;
   var sectionFrame = 0;
   var portalFrame = 0;
@@ -27,7 +27,6 @@
   var CARD_SELECTOR = '#grafiks-list .card[data-worker]';
 
   var GROUPS = [
-    { id: 'motion', label: 'Kustīgi' },
     { id: 'topper', label: 'Topperi' },
     { id: 'sticker', label: 'Uzlīmes' },
     { id: 'charm', label: 'Piekariņi' },
@@ -106,47 +105,6 @@
     { id: 'object-green-glitter-bear', label: 'Zaļais spīdumu lācis', group: 'object', src: optimized('object-green-glitter-bear.webp') },
     { id: 'object-cloud-cat', label: 'Kaķis uz mākoņa', group: 'object', src: optimized('object-cloud-cat.webp') }
   ];
-
-  // Animated layers across the whole card (no image asset): CSS transform/opacity only.
-  [['sparkles','Zvaigznītes'],['hearts','Sirsniņas'],['petals','Ziedlapiņas'],['bubbles','Burbuļi'],['snow','Sniegs'],
-   ['fireflies','Jāņtārpiņi'],['scan','CT skenēšana'],['ekg','EKG pulss']].reverse().forEach(function(m){
-    ITEMS.unshift({ id: 'motion-' + m[0], label: m[1], group: 'motion', kind: 'motion', motion: m[0] });
-  });
-  ITEMS.sort(function(a, b){ return (a.group === 'motion' ? 0 : 1) - (b.group === 'motion' ? 0 : 1); });
-  var MOTION_GLYPH = { sparkles: '✦', hearts: '♥', petals: '✿', bubbles: '', snow: '❄', fireflies: '' };
-  // Same scatter for every card: stable, no per-render randomness.
-  // Weak work PCs: half the particles per card.
-  var NAV = typeof navigator !== 'undefined' ? navigator : {};
-  var LOW_POWER = (NAV.hardwareConcurrency || 8) <= 4 || (NAV.deviceMemory || 8) <= 4;
-  // Only cards on screen animate; the rest are paused (no compositor work off screen).
-  var motionIO = typeof IntersectionObserver !== 'undefined' ? new IntersectionObserver(function(entries) {
-    entries.forEach(function(en) { en.target.classList.toggle('is-offscreen', !en.isIntersecting); });
-  }) : null;
-  var MOTION_SEEDS = [[8,18,0,6.2],[26,62,1.4,7.4],[44,30,2.6,6.8],[63,74,.7,8.1],[79,22,3.3,7.0],[91,55,1.9,6.5],[16,88,4.1,7.8],[55,8,5.0,6.9]];
-  function motionMarkup(item) {
-    if (item.motion === 'scan') return '<i class="mk-scan-line"></i>';
-    // ECG: a clipping window slides right while the trace inside slides left by the
-    // same amount, so the still trace is revealed — transform only, nothing painted over the card.
-    if (item.motion === 'ekg') return '<span class="mk-ekg"><span class="mk-ekg-win"><span class="mk-ekg-in"><svg viewBox="0 0 200 60" preserveAspectRatio="none"><polyline class="mk-ekg-glow" points="0,40 40,40 52,40 58,22 64,52 70,8 78,46 84,40 120,40 130,40 136,30 142,40 200,40"/><polyline class="mk-ekg-line" points="0,40 40,40 52,40 58,22 64,52 70,8 78,46 84,40 120,40 130,40 136,30 142,40 200,40"/></svg></span></span></span>';
-    var g = MOTION_GLYPH[item.motion] || '';
-    return MOTION_SEEDS.slice(0, LOW_POWER ? 4 : 8).map(function(s){ return '<i style="--x:' + s[0] + '%;--y:' + s[1] + '%;--d:-' + s[2] + 's;--t:' + s[3] + 's">' + g + '</i>'; }).join('');
-  }
-  function applyMotion(card, item, scale) {
-    var layer = card.querySelector(':scope > .mk-card-motion');
-    if (!item) { if (layer) { if (motionIO) motionIO.unobserve(layer); layer.remove(); } card.classList.remove('mk-addon-motion'); return; }
-    if (!layer || layer.dataset.motion !== item.motion) {
-      if (layer) { if (motionIO) motionIO.unobserve(layer); layer.remove(); }
-      layer = document.createElement('span');
-      layer.className = 'mk-card-motion';
-      layer.dataset.motion = item.motion;
-      layer.setAttribute('aria-hidden', 'true');
-      layer.innerHTML = motionMarkup(item);
-      card.appendChild(layer);
-      if (motionIO) motionIO.observe(layer);
-    }
-    layer.style.setProperty('--mk-motion-scale', scale);
-    card.classList.add('mk-addon-motion');
-  }
 
   var ITEM_BY_ID = Object.create(null);
   ITEMS.forEach(function(item) { ITEM_BY_ID[item.id] = item; });
@@ -325,16 +283,6 @@
   function applyToCard(card, config) {
     var existing = card.querySelector(':scope > .mk-card-addon');
     var surface = card.querySelector(':scope > .mk-card-addon-surface');
-    var motionItem = config && ITEM_BY_ID[config.id] && ITEM_BY_ID[config.id].kind === 'motion' ? ITEM_BY_ID[config.id] : null;
-    applyMotion(card, motionItem, Math.max(.25, Math.min(1.4, Number(config && config.scale) || 1)));
-    if (motionItem) {
-      // an animated layer replaces any image decoration
-      if (existing) existing.remove();
-      if (surface) surface.remove();
-      card.classList.remove('mk-addon-active');
-      setAddonGroupClass(card, '');
-      return;
-    }
     if (!config || !ITEM_BY_ID[config.id]) {
       if (existing) existing.remove();
       if (surface) surface.remove();
@@ -803,36 +751,15 @@
     function renderGrid() {
       var grid = panel.querySelector('.mk-addon-grid');
       var removeButton = panel.querySelector('.mk-addon-remove');
-      // animated layers cover the whole card: side / position controls do not apply
-      panel.classList.toggle('is-motion', !!(config && ITEM_BY_ID[config.id] && ITEM_BY_ID[config.id].kind === 'motion'));
       removeButton.disabled = !(config && config.id);
       removeButton.setAttribute('aria-disabled', String(removeButton.disabled));
-      // Motion demos play over this card's own picture, in its colours.
-      var demoStyle = '';
-      if (preview) {
-        var pic = preview.style.getPropertyValue('--mk-skin-img'), pcs = getComputedStyle(preview), tint = pcs.getPropertyValue('--wf-tint').trim(), num = pcs.getPropertyValue('--mk-num-color').trim();
-        var parts = [];
-        if (pic && /url\(/.test(pic)) parts.push('--demo-img:' + pic.replace(/"/g, "'"));
-        if (/^#[0-9a-f]{6}$/i.test(tint)) parts.push('--wf-tint:' + tint);
-        if (/^\d{1,3},\d{1,3},\d{1,3}$/.test(num.replace(/\s/g, ''))) parts.push('--mk-num-color:' + num);
-        if (parts.length) demoStyle = ' style="' + esc(parts.join(';')) + '"';
-      }
       grid.innerHTML = ITEMS.filter(function(item) { return item.group === activeGroup; }).map(function(item) {
         var selected = config && config.id === item.id;
-        if (item.kind === 'motion') return '<button type="button" class="mk-addon-choice is-ready is-motion' + (selected ? ' is-active' : '') + '" data-addon-id="' + esc(item.id) + '" aria-label="' + esc(item.label) + '" aria-pressed="' + selected + '" title="' + esc(item.label) + '">'
-          + '<span class="mk-motion-demo"' + demoStyle + '><span class="mk-card-motion" data-motion="' + esc(item.motion) + '" aria-hidden="true">' + motionMarkup(item) + '</span></span><b>' + esc(item.label) + '</b></button>';
         return '<button type="button" class="mk-addon-choice' + (selected ? ' is-active' : '') + '" data-addon-id="' + esc(item.id) + '" aria-label="' + esc(item.label) + '" aria-pressed="' + selected + '" title="' + esc(item.label) + '">'
           + '<span><img loading="lazy" decoding="async" draggable="false" src="' + esc(assetUrl(item)) + '" alt=""></span><b>' + esc(item.label) + '</b></button>';
       }).join('');
       grid.querySelectorAll('.mk-addon-choice').forEach(function(button) {
         var thumb = button.querySelector('img');
-        if (!thumb) {
-          button.addEventListener('click', function() {
-            config = { id: button.dataset.addonId, scale: Number(config.scale) || 1, side: 'right', x: 0, y: 0 };
-            saveConfig(name, config); renderGrid(); applyPreview();
-          });
-          return;
-        }
         function markReady() {
           button.classList.toggle('is-ready', !!thumb.naturalWidth);
           button.classList.toggle('is-error', thumb.complete && !thumb.naturalWidth);

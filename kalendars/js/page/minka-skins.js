@@ -1308,21 +1308,42 @@
       if(p.txt)skin.txt=p.txt;
       return skin;
     }
+    // Each preset is a full clone of the card: build them only as they come into
+    // view, a few per frame, so opening Izskats never waits for the whole gallery.
+    if(host.__bundleIO){host.__bundleIO.disconnect();host.__bundleIO=null;}
+    var bundleQueue=[],bundleFrame=0;
+    function pumpBundles(){
+      bundleFrame=0;
+      var t0=performance.now();
+      while(bundleQueue.length&&performance.now()-t0<12)buildBundle(bundleQueue.shift());
+      if(bundleQueue.length)bundleFrame=requestAnimationFrame(pumpBundles);
+      else window.MinkaCardFaces.refreshPreview();
+    }
     function renderBundles(){
       if(!previewSource||!host.querySelector('[data-skin-panel="presets"].is-active'))return;
-      host.querySelectorAll('.mk-skin-preset').forEach(function(button){
-        if(button.hidden||button.dataset.built)return;
-        button.dataset.built='1';
-        var card=previewSource.cloneNode(true),stage=button.querySelector('.mk-preset-stage');
-        card.removeAttribute('style');card.removeAttribute('id');card.removeAttribute('data-worker');
-        card.querySelectorAll('[id],[data-worker]').forEach(function(el){el.removeAttribute('id');el.removeAttribute('data-worker');});
-        card.querySelectorAll('.mk-card-addon,.mk-card-addon-surface,.mk-wf-art,.mk-wf-depth,.mk-wf-effects').forEach(function(el){el.remove();});
-        card.querySelectorAll('button,input,select,textarea,a').forEach(function(el){var span=document.createElement('span');span.className=el.className;span.innerHTML=el.innerHTML;el.replaceWith(span);});
-        card.classList.add('mk-preset-card');card.classList.remove('mk-skin-preview-real','wf-scaled-preview','wf-editing');
-        stage.id='grafiks-list';stage.classList.add('grid-view');stage.appendChild(card);
-        window.mkApplySkinToEl(card,bundleSkin(PRESETS[+button.dataset.preset]));
-      });
-      window.MinkaCardFaces.refreshPreview();
+      var todo=Array.prototype.filter.call(host.querySelectorAll('.mk-skin-preset'),function(b){return !b.hidden&&!b.dataset.built;});
+      if(!window.IntersectionObserver){todo.forEach(buildBundle);window.MinkaCardFaces.refreshPreview();return;}
+      if(!host.__bundleIO)host.__bundleIO=new IntersectionObserver(function(entries){
+        entries.forEach(function(en){
+          if(!en.isIntersecting||!en.target.isConnected)return;
+          host.__bundleIO.unobserve(en.target);
+          if(bundleQueue.indexOf(en.target)<0)bundleQueue.push(en.target);
+        });
+        if(bundleQueue.length&&!bundleFrame)bundleFrame=requestAnimationFrame(pumpBundles);
+      },{rootMargin:'300px 0px'});
+      todo.forEach(function(b){host.__bundleIO.observe(b);});
+    }
+    function buildBundle(button){
+      if(button.hidden||button.dataset.built||!button.isConnected)return;
+      button.dataset.built='1';
+      var card=previewSource.cloneNode(true),stage=button.querySelector('.mk-preset-stage');
+      card.removeAttribute('style');card.removeAttribute('id');card.removeAttribute('data-worker');
+      card.querySelectorAll('[id],[data-worker]').forEach(function(el){el.removeAttribute('id');el.removeAttribute('data-worker');});
+      card.querySelectorAll('.mk-card-addon,.mk-card-addon-surface,.mk-wf-art,.mk-wf-depth,.mk-wf-effects').forEach(function(el){el.remove();});
+      card.querySelectorAll('button,input,select,textarea,a').forEach(function(el){var span=document.createElement('span');span.className=el.className;span.innerHTML=el.innerHTML;el.replaceWith(span);});
+      card.classList.add('mk-preset-card');card.classList.remove('mk-skin-preview-real','wf-scaled-preview','wf-editing');
+      stage.id='grafiks-list';stage.classList.add('grid-view');stage.appendChild(card);
+      window.mkApplySkinToEl(card,bundleSkin(PRESETS[+button.dataset.preset]));
     }
     host.querySelectorAll('[data-preset-group]').forEach(function(button){
       button.addEventListener('click',function(){
@@ -1449,10 +1470,17 @@
     }
     var setCardDither = setPicEffect;
     // Smalkums / Kontrasts, packed as fxs "1.bc" (the API already accepts fxs).
+    // While dragging only the number follows at once; the picture is recomputed
+    // when the thumb rests for a moment (and on release), never per input event.
+    var tuneTimer = 0;
     host.querySelectorAll('[data-pic-tune]').forEach(function(r) {
       function pack() { var b = host.querySelector('[data-pic-tune="b"]').value, c = host.querySelector('[data-pic-tune="c"]').value; draft.fxs = '1.' + b + c; }
-      r.addEventListener('input', function() { if (r.nextElementSibling) r.nextElementSibling.textContent = r.value; if (!/^(dither|xray|halftone|duotone|ascii)/.test(draft.fx || '')) return; pack(); persistLive(); });
-      r.addEventListener('change', function() { if (!/^(dither|xray|halftone|duotone|ascii)/.test(draft.fx || '')) return; pack(); commitQuiet(); });
+      r.addEventListener('input', function() {
+        if (r.nextElementSibling) r.nextElementSibling.textContent = r.value;
+        if (!/^(dither|xray|halftone|duotone|ascii)/.test(draft.fx || '')) return;
+        pack(); clearTimeout(tuneTimer); tuneTimer = setTimeout(persistLive, 160);
+      });
+      r.addEventListener('change', function() { clearTimeout(tuneTimer); if (!/^(dither|xray|halftone|duotone|ascii)/.test(draft.fx || '')) return; pack(); commitQuiet(); });
     });
     host.querySelectorAll('[data-pic-effect]').forEach(function(b) {
       b.addEventListener('click', function() { var v = b.dataset.picEffect; setPicEffect(v === 'dither' ? (/^dither/.test(draft.fx || '') ? draft.fx : 'dither') : v); });

@@ -290,24 +290,63 @@
     return docs.some(function (d) { return !!d.querySelector('img[data-mk-dither-url="' + u + '"],[style*="' + u + '"]'); });
   }
 
+  /* Each picture is decoded (off the main thread where the browser can) and
+     shrunk once; every effect, tuning step and thumbnail then works from that
+     small copy instead of decoding and halving the full photo again. */
+  var SRC_MAX = 720, sources = new Map();
+  function source(src) {
+    var hit = sources.get(src);
+    if (hit) { sources.delete(src); sources.set(src, hit); return hit; }
+    var job = load(src, !sameOrigin(src)).then(function (im) {
+      return (im.decode ? im.decode().catch(function () {}) : Promise.resolve()).then(function () {
+        var nw = im.naturalWidth || im.width, nh = im.naturalHeight || im.height, s = Math.min(1, SRC_MAX / Math.max(nw, nh, 1));
+        var cv = doc.createElement('canvas'); cv.width = Math.max(1, Math.round(nw * s)); cv.height = Math.max(1, Math.round(nh * s));
+        drawScaled(cv.getContext('2d'), im, 0, 0, nw, nh, cv.width, cv.height);
+        return cv;
+      });
+    });
+    job.catch(function () { if (sources.get(src) === job) sources.delete(src); });
+    sources.set(src, job);
+    if (sources.size > 6) sources.delete(sources.keys().next().value);
+    return job;
+  }
+  /* One job at a time, each in its own task: the page keeps answering clicks
+     and slider drags between jobs. A job nobody waits for any more (every
+     requester's opts.stale() is true when its turn comes) is skipped. */
+  var lane = Promise.resolve();
+  function nextTurn() { return new Promise(function (r) { host.setTimeout(r, 0); }); }
+  function STALE() { var e = new Error('stale'); e.stale = true; return e; }
+
   /* Dithered blob URL for `src`. Tries the plain image (same origin), then a
      CORS copy; rejects when the host does not allow reading its pixels. */
   function url(src, opts) {
     opts = opts || {};
     var key = [src, opts.width | 0, opts.height | 0, opts.box ? opts.box.join('x') + '/' + opts.dot + '/' + (opts.pos || []).join(',') + '/' + (opts.scale || 1) : '', opts.mode || 'color', opts.levels || '', opts.colors || '', (opts.ink || []).join('.'), opts.cover ? 'c' : '', opts.normalize ? 'n' : '', opts.contrast || '', opts.sharpen == null ? '' : opts.sharpen, opts.cell || ''].join('|');
-    if (cache.has(key)) return cache.get(key);
-    var job = load(src, !sameOrigin(src)).then(function (im) {
-      if (opts.box) {
-        // Exactly the shown box, cropped like cover at opts.pos: one dither
-        // pixel = `dot` CSS px, and the element shows it at 100% 100% — no stretch.
-        var dot = opts.dot || 2;
-        opts = Object.assign({}, opts, { width: Math.max(8, Math.floor(opts.box[0] / dot)), height: Math.max(8, Math.floor(opts.box[1] / dot)), cover: true });
-      }
-      var cv = image(im, opts);
-      return new Promise(function (resolve, reject) {
-        cv.toBlob(function (b) { b ? resolve(URL.createObjectURL(b)) : reject(new Error('toBlob')); }, 'image/png');
+    if (cache.has(key)) {
+      var hit = cache.get(key);
+      if (hit._wants) { if (opts.stale) hit._wants.push(opts.stale); else hit._wants = null; }
+      return hit;
+    }
+    // Ready-made dither art is cropped pixel for pixel: never from the smoothed copy.
+    var pic = opts.mode === 'recolor' ? load(src, !sameOrigin(src)) : source(src);
+    var job = pic.then(function (im) {
+      var run = lane.then(nextTurn).then(function () {
+        if (job._wants && job._wants.every(function (f) { return f(); })) throw STALE();
+        if (opts.box) {
+          // Exactly the shown box, cropped like cover at opts.pos: one dither
+          // pixel = `dot` CSS px, and the element shows it at 100% 100% — no stretch.
+          var dot = opts.dot || 2;
+          opts = Object.assign({}, opts, { width: Math.max(8, Math.floor(opts.box[0] / dot)), height: Math.max(8, Math.floor(opts.box[1] / dot)), cover: true });
+        }
+        var cv = image(im, opts);
+        return new Promise(function (resolve, reject) {
+          cv.toBlob(function (b) { b ? resolve(URL.createObjectURL(b)) : reject(new Error('toBlob')); }, 'image/png');
+        });
       });
+      lane = run.then(null, function () {});
+      return run;
     });
+    job._wants = opts.stale ? [opts.stale] : null;
     job.catch(function () { if (cache.get(key) === job) cache.delete(key); });
     remember(key, job);
     return job;
@@ -494,15 +533,51 @@
     card.style.removeProperty('--mk-skin-dither');
     delete card.dataset.mkDitherKey;
   }
+  /* skin() is called for every card on every repaint (and for each preset
+     thumbnail while the editor opens). The work that needs computed styles and
+     layout is batched: one read pass for all queued cards in the next frame,
+     then the writes — never a forced style recalculation per card. */
+  function wanted(card) {
+    var face = card.getAttribute('data-watch-face') === 'dither';
+    var fx = card.classList.contains('mk-fx-dithercolor') || card.classList.contains('mk-fx-ditherpaper') || card.classList.contains('mk-fx-dither') || card.classList.contains('mk-fx-pic');
+    var m = (card.style.getPropertyValue('--mk-skin-img') || '').match(/url\((['"]?)([^'")]+)\1\)/);
+    return face || fx || mode !== 'off' || !!(m && /skin-dither-/.test(m[2]));
+  }
+  var pendingSkins = new Set(), skinFrame = 0, skinTimer = 0;
   function skin(card) {
     if (!card || !card.style) return;
+    if (!wanted(card)) { pendingSkins.delete(card); clearSkin(card); return; }
+    pendingSkins.add(card);
+    if (skinFrame) return;
+    skinFrame = host.requestAnimationFrame ? host.requestAnimationFrame(flushSkins) : 1;
+    // rAF can stall (hidden frame): a timer makes sure the batch still runs.
+    skinTimer = host.setTimeout(flushSkins, 120);
+  }
+  function flushSkins() {
+    if (skinFrame && host.cancelAnimationFrame) host.cancelAnimationFrame(skinFrame);
+    host.clearTimeout(skinTimer); skinFrame = 0; skinTimer = 0;
+    var cards = [], snaps = [];
+    pendingSkins.forEach(function (card) {
+      if (!card.isConnected) return;
+      var cs = host.getComputedStyle(card);
+      cards.push(card);
+      snaps.push({ tint: cs.getPropertyValue('--wf-tint').trim(), num: cs.getPropertyValue('--mk-num-color').trim(), bx: cs.getPropertyValue('--wf-bg-x'), by: cs.getPropertyValue('--wf-bg-y'), w: card.offsetWidth, h: card.offsetHeight });
+    });
+    pendingSkins.clear();
+    for (var i = 0; i < cards.length; i++) paintSkin(cards[i], snaps[i]);
+  }
+  function paintSkin(card, snap) {
     var face = card.getAttribute('data-watch-face') === 'dither';
     var fx = card.classList.contains('mk-fx-dithercolor') ? 'palette' : card.classList.contains('mk-fx-ditherpaper') ? 'paper' : card.classList.contains('mk-fx-dither') ? 'dark'
       : card.classList.contains('mk-fx-xray') ? 'xray' : card.classList.contains('mk-fx-halftone') ? 'halftone' : card.classList.contains('mk-fx-duotone') ? 'duotone' : card.classList.contains('mk-fx-ascii') ? 'ascii' : '';
     var dithered = fx === 'palette' || fx === 'paper' || fx === 'dark';
     var want = fx || (face ? 'dark' : mode !== 'off' ? (mode === 'color' ? 'palette' : 'mono') : '');
+    var raw = card.style.getPropertyValue('--mk-skin-img') || '';
+    var m = raw.match(/url\((['"]?)([^'")]+)\1\)/);
+    // The card may have changed since it was queued.
+    if (!want && !(m && /skin-dither-/.test(m[2]))) { clearSkin(card); return; }
     // Ink for the numeral's dithered extrusion: the face tint, else the skin's number colour.
-    var cs = host.getComputedStyle(card), ink = (face ? hexToRgb(cs.getPropertyValue('--wf-tint').trim()) : null) || (cs.getPropertyValue('--mk-num-color').trim().split(',').map(Number));
+    var ink = (face ? hexToRgb(snap.tint) : null) || snap.num.split(',').map(Number);
     if (!(ink && ink.length === 3 && ink.every(isFinite))) ink = [236, 234, 228];
     var lumI = function (c) { return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; };
     // Readable ink: light enough on the dark ground, dark enough on paper.
@@ -511,17 +586,15 @@
     card.style.setProperty('--dth-ink-rgb', ink.join(','));
     var hours = card.querySelector('.mk-mid-hours');
     if (hours && (face || dithered)) hours.setAttribute('data-dth-num', (hours.textContent || '').trim());
-    var raw = card.style.getPropertyValue('--mk-skin-img') || '';
-    var m = raw.match(/url\((['"]?)([^'")]+)\1\)/);
     if (face && !m && raw) { colourScene(card, raw); return; }
     // Ready-made dither art always follows the card's colour, effect on or not.
     if (!m || (!want && !/skin-dither-/.test(m[2]))) { clearSkin(card); return; }
     var src = m[2];
     // Layout size (offset*, not the scaled preview's rect) and the image crop point.
-    var w = card.offsetWidth || 240, h = card.offsetHeight || 240;
+    var w = snap.w || 240, h = snap.h || 240;
     var dot = (host.devicePixelRatio || 1) >= 1.5 ? 1 : 2;
     var box = [Math.round(w / dot) * dot, Math.round(h / dot) * dot];
-    var pos = [parseFloat(cs.getPropertyValue('--wf-bg-x')) / 100, parseFloat(cs.getPropertyValue('--wf-bg-y')) / 100].map(function (v) { return isFinite(v) ? Math.max(0, Math.min(1, v)) : .5; });
+    var pos = [parseFloat(snap.bx) / 100, parseFloat(snap.by) / 100].map(function (v) { return isFinite(v) ? Math.max(0, Math.min(1, v)) : .5; });
     // The picture's dots are a step quieter than the numeral drawn on top of them.
     var dotInk = want === 'paper' ? ink.map(function (v) { return Math.round(v + (239 - v) * .18); }) : ink.map(function (v) { return Math.round(6 + (v - 6) * .7); });
     var native = /skin-dither-/.test(src);   // ready-made dither art: only recoloured
@@ -547,6 +620,8 @@
     var key = [src, want, box.join('x'), pos.join(','), (native || !dithered ? ink : tint).join('.'), tb, tc].join('|');
     if (card.dataset.mkDitherKey === key) return;
     card.dataset.mkDitherKey = key;
+    // While a slider is dragged only the last value is computed.
+    opts.stale = function () { return card.dataset.mkDitherKey !== key; };
     url(src, opts).then(ready).then(function (u) {
       if (card.dataset.mkDitherKey !== key) return;
       card.style.setProperty('--mk-skin-dither', 'url("' + u + '")');
