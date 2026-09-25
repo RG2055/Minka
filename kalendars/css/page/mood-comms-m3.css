@@ -1042,3 +1042,11 @@
 @media (max-width: 720px) {
   #rgFeedbackModal .rg-comms-body { grid-template-columns: minmax(0, 1fr) !important; }
 }
+
+/* Emoji-only messages: big emoji without a bubble, like in messengers.
+   1–3 emoji at 44px, 4–8 at 32px; a reply quote above them keeps its own size. */
+#rgFeedbackModal .rg-comms-bubble.is-emoji-only { padding: 2px 4px !important; background: transparent !important; }
+#rgFeedbackModal .rg-comms-message.is-own .rg-comms-bubble.is-emoji-only { background: transparent !important; }
+#rgFeedbackModal .rg-comms-bubble.is-emoji-only .rg-comms-reply-quote { display: block; margin-bottom: 4px; }
+#rgFeedbackModal .rg-comms-emoji-body { display: block; font-size: 44px; line-height: 1.15; letter-spacing: .04em; }
+#rgFeedbackModal .rg-comms-bubble[data-emoji-count="many"] .rg-comms-emoji-body { font-size: 32px; }

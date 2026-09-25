@@ -2426,6 +2426,16 @@
       key: String(item && (item.id || item.clientId) || '')
     });
   }
+  // Number of emoji when a message is nothing but emoji (up to 8), else 0.
+  var COMMUNITY_EMOJI_ONLY = /^(?:\p{Extended_Pictographic}|\p{Emoji_Modifier}|\p{Regional_Indicator}|[\uFE0F\u200D\u20E3#*0-9]|\s)+$/u;
+  function communityEmojiOnlyCount(text) {
+    var value = String(text || '').trim();
+    if (!value || value.length > 64 || !COMMUNITY_EMOJI_ONLY.test(value) || !/\p{Extended_Pictographic}|\p{Regional_Indicator}/u.test(value)) return 0;
+    var count = 0;
+    if (window.Intl && Intl.Segmenter) { var seg = new Intl.Segmenter('lv', { granularity: 'grapheme' }); for (var part of seg.segment(value)) if (part.segment.trim()) count++; }
+    else count = (value.match(/\p{Extended_Pictographic}/gu) || []).length;
+    return count > 0 && count <= 8 ? count : 0;
+  }
   function communityInitials(name) {
     var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
     if (!parts.length) return 'A';
@@ -2936,7 +2946,16 @@
         quote.textContent = '↳ ' + byKey[item.parent].body.slice(0, 110);
         bubble.appendChild(quote);
       }
-      bubble.appendChild(document.createTextNode(item.body));
+      // Emoji-only messages are shown large, like in messengers (1–3 big, up to 8 a bit smaller).
+      var emojiCount = communityEmojiOnlyCount(item.body);
+      if (emojiCount) {
+        bubble.classList.add('is-emoji-only');
+        bubble.dataset.emojiCount = emojiCount <= 3 ? 'few' : 'many';
+        var big = document.createElement('span');
+        big.className = 'rg-comms-emoji-body';
+        big.textContent = item.body.trim();
+        bubble.appendChild(big);
+      } else bubble.appendChild(document.createTextNode(item.body));
       var actions = document.createElement('div');
       actions.className = 'rg-comms-message-actions';
       var reply = document.createElement('button');
