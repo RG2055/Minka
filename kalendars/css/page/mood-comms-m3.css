@@ -383,7 +383,16 @@
   font: 600 15px/1 Inter, system-ui, sans-serif !important;
 }
 #rgFeedbackModal .rg-comms-send:not(:disabled):hover { transform: scale(1.03) !important; filter: brightness(1.05) !important; }
-#rgFeedbackModal .rg-comms-send:disabled { opacity: .38 !important; box-shadow: none !important; }
+/* Empty field: the button stays clearly visible (muted tonal green, readable
+   label) instead of fading to a ghost; it lights up as soon as there is text. */
+#rgFeedbackModal .rg-comms-send:disabled {
+  opacity: 1 !important;
+  box-shadow: none !important;
+  background: #173a30 !important;
+  color: #7fe0bd !important;
+  outline: 1px solid rgba(16, 185, 129, .5) !important;
+  outline-offset: -1px !important;
+}
 #rgFeedbackModal .rg-comms-tools { gap: 4px !important; margin-top: 6px !important; }
 #rgFeedbackModal .rg-comms-emoji {
   width: 36px !important;
