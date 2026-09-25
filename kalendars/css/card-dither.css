@@ -9,7 +9,13 @@
 
 /* ---- the picture ---- */
 .mk-has-dither {--mk-skin-img:var(--mk-skin-dither) !important;}
-.mk-has-dither .mk-wf-background > i {image-rendering:pixelated;background-size:100% 100% !important;background-position:0 0 !important;transform:none !important;}
+/* While a card's effect is being computed its plain photo stays hidden (a quiet
+   dot field shows instead), so the photo never flashes before the effect. */
+#grafiks-list .card:is(.mk-fx-dither,.mk-fx-pic):not(.mk-has-dither):not(.mk-dither-failed) {--mk-skin-img:linear-gradient(#0b0e13,#0b0e13) !important;}
+/* The dithered copy is cut to the card's box at the picture's position; the zoom
+   stays a transform (same origin as the plain picture), so switching to the
+   dithered copy never shifts or re-frames the picture. */
+.mk-has-dither .mk-wf-background > i {image-rendering:pixelated;background-size:100% 100% !important;background-position:0 0 !important;}
 .card.mk-has-dither:not(.mk-watch-face) {image-rendering:pixelated;}
 
 /* ---- Dither face: black ground + dotted frame; dot field until the picture is ready ---- */
@@ -56,6 +62,10 @@ html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watc
    chips, dark on paper). A dotted fill or a custom text colour made it vanish. ---- */
 html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watch-face="dither"],.mk-fx-dither) {--dth-chip-txt:241,240,234;}
 html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watch-face="dither"],.mk-fx-dither).mk-fx-ditherpaper {--dth-chip-txt:20,20,20;}
+/* "Šī elementa krāsa" keeps working with the effect: an element with its own colour
+   (card-faces.js sets --mk-txt-color = r,g,b on it) draws its ink, dotted frame
+   and text in that colour instead of the effect's. */
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watch-face="dither"],.mk-fx-dither) .wf-colored {--dth-ink-rgb:var(--mk-txt-color) !important;--dth-chip-txt:var(--mk-txt-color) !important;}
 html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watch-face="dither"],.mk-fx-dither) .name-main {
   color:rgb(var(--dth-chip-txt)) !important;-webkit-text-fill-color:rgb(var(--dth-chip-txt)) !important;text-shadow:none !important;
   background:none !important;-webkit-background-clip:border-box !important;background-clip:border-box !important;opacity:1 !important;
@@ -107,6 +117,9 @@ html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-fx-ditherp
   color:#141414 !important;-webkit-text-fill-color:#141414 !important;
 }
 html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-fx-ditherpaper :is(.mk-mid-meta-label,.mk-mid-month-label) {color:#55534d !important;-webkit-text-fill-color:#55534d !important;}
+/* own element colour beats the paper's dark text too */
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-watch-face.mk-fx-ditherpaper .wf-colored:is([data-wf-part="month"],[data-wf-part="fatigue"],[data-wf-part="remaining"],[data-wf-part="emoji"],[data-wf-part="clock"],[data-wf-part="initials"]),
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-watch-face.mk-fx-ditherpaper .wf-colored :is(.mk-mid-meta-time,.mk-mid-meta-value,.mk-mid-month-num) {color:rgb(var(--mk-txt-color)) !important;-webkit-text-fill-color:rgb(var(--mk-txt-color)) !important;}
 
 /* ---- picker: Dither toggle, variants and one-tap colours ---- */
 .mk-dither-switch {display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:8px 0 12px;}

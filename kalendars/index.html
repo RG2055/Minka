@@ -864,11 +864,13 @@ function _mkToast(msg, type) {
 <script src="js/known-carryovers.js?v=20260907smooth1"></script>
 <script src="js/card-face-model.js?v=20260924dth2"></script>
 <script src="js/card-materials.js?v=20260912faces21"></script>
+<!-- Before the first card render: cards painted from the cached schedule get their picture effect at once. -->
+<script src="../js/dither-core.js?v=20260925fx1"></script>
 <script src="js/card-faces.js?v=20260925perf2"></script>
 <!-- Saved worker skins must be ready before the cached roster is rendered. -->
 <script src="js/page/minka-skins.js?v=20260925perf3"></script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260925boot1"></script>
+<script src="js/calendar.js?v=20260925fx1"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260925pack6" defer></script>
 <script src="js/header-weather.js?v=20260923wm10" defer></script>
@@ -1867,7 +1869,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
 <link rel="stylesheet" href="../css/calendar-surfaces.css?v=20260908surfaces3">
 <link rel="stylesheet" href="css/card-faces.css?v=20260925perf3">
 <link rel="stylesheet" href="css/card-winamp.css?v=20260924perf1">
-<link rel="stylesheet" href="css/card-dither.css?v=20260925perf3">
+<link rel="stylesheet" href="css/card-dither.css?v=20260925fx1">
 <script>
 /* MOBILE — telefona slāņi, tikai ?mobile=1 čaulā, ielādē pēdējos (uzvar vecos).
    css/mobile-fixes.css — funkcionāli (pieskārieni, ritināšana, safe-area), vienmēr.
@@ -1892,7 +1894,6 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 }
 </style>
 <script src="../js/image-palette.js?v=20260919palette2"></script>
-<script src="../js/dither-core.js?v=20260925perf2"></script>
 <link rel="stylesheet" href="css/header-appearance.css?v=20260925pack9">
 <script src="js/header-appearance.js?v=20260925perf3"></script>
 <link rel="stylesheet" href="css/header-duty-summary.css?v=20260923wm10">

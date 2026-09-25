@@ -541,7 +541,18 @@
      only fills in for cards without their own. Skins that are already dither
      art (skin-dither-*) are only shown pixel-sharp. */
   function hexToRgb(h) { h = String(h || '').replace('#', ''); return /^[0-9a-f]{6}$/i.test(h) ? [0, 2, 4].map(function (i) { return parseInt(h.slice(i, i + 2), 16); }) : null; }
+  /* Cards change size after their first paint (roster auto-sizing, the editor's
+     preview, a window resize). A picture dithered for the old box would be
+     stretched into the new one, so a card whose box changes is re-dithered. */
+  var sizeWatch = host.ResizeObserver ? new host.ResizeObserver(function (entries) {
+    entries.forEach(function (en) {
+      var card = en.target;
+      if (!card.isConnected) { sizeWatch.unobserve(card); return; }
+      if (card.dataset.mkDitherKey && card.__dthSize !== card.offsetWidth + 'x' + card.offsetHeight) skin(card);
+    });
+  }) : null;
   function clearSkin(card) {
+    if (sizeWatch && card.__dthSize) { sizeWatch.unobserve(card); card.__dthSize = ''; }
     if (!card.classList.contains('mk-has-dither') && !card.style.getPropertyValue('--mk-skin-dither')) return;
     card.classList.remove('mk-has-dither', 'mk-dither-native');
     card.style.removeProperty('--mk-skin-dither');
@@ -558,9 +569,18 @@
     return face || fx || mode !== 'off' || !!(m && /skin-dither-/.test(m[2]));
   }
   var pendingSkins = new Set(), skinFrame = 0, skinTimer = 0;
+  // settled(): resolves once no card is queued or waiting for its picture — the
+  // calendar waits for it (capped) before it is first shown.
+  var busySkins = 0, idleWaiters = [];
+  function checkIdle() {
+    if (busySkins || pendingSkins.size || skinFrame) return;
+    var w = idleWaiters; idleWaiters = [];
+    w.forEach(function (f) { f(); });
+  }
+  function settled() { return new Promise(function (resolve) { idleWaiters.push(resolve); checkIdle(); }); }
   function skin(card) {
     if (!card || !card.style) return;
-    if (!wanted(card)) { pendingSkins.delete(card); clearSkin(card); return; }
+    if (!wanted(card)) { pendingSkins.delete(card); clearSkin(card); checkIdle(); return; }
     pendingSkins.add(card);
     if (skinFrame) return;
     skinFrame = host.requestAnimationFrame ? host.requestAnimationFrame(flushSkins) : 1;
@@ -575,10 +595,11 @@
       if (!card.isConnected) return;
       var cs = host.getComputedStyle(card);
       cards.push(card);
-      snaps.push({ tint: cs.getPropertyValue('--wf-tint').trim(), num: cs.getPropertyValue('--mk-num-color').trim(), bx: cs.getPropertyValue('--wf-bg-x'), by: cs.getPropertyValue('--wf-bg-y'), w: card.offsetWidth, h: card.offsetHeight });
+      snaps.push({ tint: cs.getPropertyValue('--wf-tint').trim(), num: cs.getPropertyValue('--mk-num-color').trim(), bx: cs.getPropertyValue('--wf-bg-x'), by: cs.getPropertyValue('--wf-bg-y'), zoom: cs.getPropertyValue('--wf-zoom-ratio'), w: card.offsetWidth, h: card.offsetHeight });
     });
     pendingSkins.clear();
     for (var i = 0; i < cards.length; i++) paintSkin(cards[i], snaps[i]);
+    checkIdle();
   }
   function paintSkin(card, snap) {
     var face = card.getAttribute('data-watch-face') === 'dither';
@@ -606,6 +627,10 @@
     var src = m[2];
     // Layout size (offset*, not the scaled preview's rect) and the image crop point.
     var w = snap.w || 240, h = snap.h || 240;
+    // The face's image zoom scales the picture layer (card-faces.css); the dither
+    // is computed that much finer, so after the same zoom its dots keep their size
+    // and the crop is exactly the one the plain picture showed.
+    var zoom = Math.max(1, Math.min(2.5, parseFloat(snap.zoom) || 1));
     var dot = (host.devicePixelRatio || 1) >= 1.5 ? 1 : 2;
     var box = [Math.round(w / dot) * dot, Math.round(h / dot) * dot];
     var pos = [parseFloat(snap.bx) / 100, parseFloat(snap.by) / 100].map(function (v) { return isFinite(v) ? Math.max(0, Math.min(1, v)) : .5; });
@@ -631,16 +656,25 @@
       : want === 'mono' ? { box: box, dot: dot, pos: pos, mode: 'bayer', ink: [236, 234, 228], paper: [8, 8, 8], normalize: true, contrast: 1.15 }
       : { box: box, dot: dot, pos: pos, mode: 'bayer', ink: dotInk, paper: want === 'paper' ? [239, 236, 228] : [6, 6, 6], normalize: true, contrast: con(1.2), sharpen: .45 };
     var tint = dotInk;
-    var key = [src, want, box.join('x'), pos.join(','), (native || !dithered ? ink : tint).join('.'), tb, tc].join('|');
+    if (zoom > 1) opts.dot = opts.dot / zoom;
+    var key = [src, want, box.join('x'), pos.join(','), (native || !dithered ? ink : tint).join('.'), tb, tc, zoom.toFixed(2)].join('|');
+    if (sizeWatch && !card.__dthSize) sizeWatch.observe(card);
+    card.__dthSize = w + 'x' + h;
     if (card.dataset.mkDitherKey === key) return;
     card.dataset.mkDitherKey = key;
     // While a slider is dragged only the last value is computed.
-    opts.stale = function () { return card.dataset.mkDitherKey !== key; };
+    // A card that left the page (closed editor, re-rendered roster) needs nothing either.
+    opts.stale = function () { return !card.isConnected || card.dataset.mkDitherKey !== key; };
+    card.classList.remove('mk-dither-failed');
+    busySkins++;
     url(src, opts).then(ready).then(function (u) {
       if (card.dataset.mkDitherKey !== key) return;
       card.style.setProperty('--mk-skin-dither', 'url("' + u + '")');
       card.classList.add('mk-has-dither');
-    }, function () { if (card.dataset.mkDitherKey === key) clearSkin(card); });
+    }, function () {
+      // Pixels not readable (a host without CORS): show the plain picture instead.
+      if (card.dataset.mkDitherKey === key) { clearSkin(card); card.classList.add('mk-dither-failed'); }
+    }).then(function () { busySkins--; checkIdle(); });
   }
   // Dither face on a plain colour or gradient: a lit sphere + soft ramp drawn
   // in that colour and dithered, so picking a colour recolours the dither.
@@ -676,16 +710,17 @@
       card.classList.add('mk-has-dither');
     }, function () {});
   }
+  // skin() itself decides per card (its own effect, the Dither face, the app-wide
+  // option); turning the app-wide option off must not drop a card's own effect.
   function skinAll() {
-    doc.querySelectorAll('[style*="--mk-skin-img"]').forEach(function (card) {
-      if (mode === 'off' && card.getAttribute('data-watch-face') !== 'dither') clearSkin(card); else skin(card);
-    });
+    doc.querySelectorAll('[style*="--mk-skin-img"]').forEach(skin);
   }
 
   host.MinkaDither = {
     bayer8: BAYER8, image: image, url: url, atkinson: atkinson,
-    mode: function () { return mode; }, setMode: setMode, skin: skin, ready: ready, trim: trim, _apply: apply, _cache: cache
+    mode: function () { return mode; }, setMode: setMode, skin: skin, ready: ready, trim: trim, settled: settled, _apply: apply, _cache: cache
   };
-  function boot() { if (mode !== 'off') apply(mode); }
+  // Cards painted before this script ran still get their effect.
+  function boot() { if (mode !== 'off') apply(mode); else skinAll(); }
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', boot, { once: true }); else boot();
 })(window);

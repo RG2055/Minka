@@ -418,7 +418,8 @@ function hideGrafiksLoader(loader) {
 // revealing right away showed unstyled cards that re-laid themselves out several
 // times on slow PCs. Wait until parsing is done (every stylesheet is in the DOM,
 // deferred scripts have run), every same-origin stylesheet has loaded and the
-// fonts are ready — the fonts capped, so a slow font never keeps it hidden.
+// fonts and card picture effects are ready — both capped, so neither can keep
+// it hidden for long.
 let grafiksRevealStarted = false;
 function revealGrafiksApp() {
   if (grafiksRevealStarted) return;
@@ -438,8 +439,14 @@ function revealGrafiksApp() {
     document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve(),
     new Promise(resolve => setTimeout(resolve, 1200))
   ]);
+  // Cards with a picture effect: wait for the effect too (capped), so they never
+  // appear with the plain picture first and switch a moment later.
+  const effectsReady = () => Promise.race([
+    window.MinkaDither && window.MinkaDither.settled ? window.MinkaDither.settled() : Promise.resolve(),
+    new Promise(resolve => setTimeout(resolve, 800))
+  ]);
   const show = () => requestAnimationFrame(() => root.classList.remove('mk-schedule-booting'));
-  parsed.then(sheetsLoaded).then(fontsReady).then(show, show);
+  parsed.then(sheetsLoaded).then(fontsReady).then(effectsReady).then(show, show);
 }
 
 function notifyHostAppReady() {
