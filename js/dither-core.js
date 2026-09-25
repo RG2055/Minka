@@ -586,6 +586,15 @@
     delete img.dataset.mkDitherDecor;
     img.style.removeProperty('content'); img.style.removeProperty('image-rendering');
   }
+  var decorSize = host.ResizeObserver ? new host.ResizeObserver(function (entries) {
+    entries.forEach(function (en) {
+      var img = en.target;
+      if (!img.isConnected) { decorSize.unobserve(img); img.__dthWait = 0; return; }
+      if (!img.offsetWidth || !img.offsetHeight) return;
+      decorSize.unobserve(img); img.__dthWait = 0;
+      if (img.parentElement) requestDecor(img.parentElement);
+    });
+  }) : null;
   function decor(card) {
     if (!card || !card.querySelectorAll) return;
     var d = card.__dthDecor;
@@ -594,7 +603,13 @@
       var src = img.currentSrc || img.src, w = img.offsetWidth, h = img.offsetHeight;
       if (!src) return;
       if (!w || !h || !img.naturalWidth) {
-        if (!img.__dthWait) { img.__dthWait = 1; img.addEventListener('load', function () { img.__dthWait = 0; requestDecor(card); }, { once: true }); }
+        if (!img.__dthWait) {
+          img.__dthWait = 1;
+          // Loaded but not laid out yet (a hidden card): no load event is coming,
+          // so wait for it to get a size instead.
+          if (img.complete && img.naturalWidth && decorSize) decorSize.observe(img);
+          else img.addEventListener('load', function () { img.__dthWait = 0; requestDecor(card); }, { once: true });
+        }
         return;
       }
       // The shown picture (object-fit: contain in the element's box), in dots.
@@ -719,34 +734,39 @@
     var dotInk = want === 'paper' ? ink.map(function (v) { return Math.round(v + (239 - v) * .18); }) : ink.map(function (v) { return Math.round(6 + (v - 6) * .7); });
     var native = /skin-dither-/.test(src);   // ready-made dither art: only recoloured
     if (native && !want) want = 'dark';
+    // …unless a non-dither effect was picked for it (rentgens, rastrs, duotons,
+    // ASCII): that one is really applied, just as its thumbnail shows.
+    var real = !native || /^(xray|halftone|duotone|ascii)$/.test(fx);
     var sharp = Math.max(1, Math.round(host.devicePixelRatio || 1));
     // Per-card tuning packed in the skin's fxs field: "1.bc" → b = detail 0–9, c = contrast 0–9 (5/5 default).
     var tune = parseFloat(card.style.getPropertyValue('--mk-fx-scale')), tb = 5, tc = 5;
     if (isFinite(tune) && fx) { var hund = Math.round(tune * 100); tb = Math.floor(hund / 10) % 10; tc = hund % 10; }
     var fine = Math.pow(1.8, (5 - tb) / 5);                     // <1 finer, >1 coarser
     var con = function (base) { return +(base * (0.7 + tc * .06)).toFixed(3); };
-    if (fx && !native) {
-      var dpx = Math.max(1, Math.min(4, Math.round(2 * fine)));  // dither dot in device pixels
-      dot = dpx / sharp; box = [Math.round(w / dot) * dot, Math.round(h / dot) * dot];
-    }
-    var opts = native ? { box: box, dot: 1, pos: pos, mode: 'recolor', ink: ink, sharpen: 0 }
-      : want === 'xray' ? { box: box, dot: 1 / sharp, pos: pos, mode: 'xray', normalize: true, contrast: con(.95), sharpen: +(.2 / fine).toFixed(2) }
+    var fxDot = Math.max(1, Math.min(4, Math.round(2 * fine))) / sharp;  // dither dot: device pixels → CSS
+    if (fx && real) { dot = fxDot; box = [Math.round(w / dot) * dot, Math.round(h / dot) * dot]; }
+    var effect = function (dot) {
+      return want === 'xray' ? { box: box, dot: 1 / sharp, pos: pos, mode: 'xray', normalize: true, contrast: con(.95), sharpen: +(.2 / fine).toFixed(2) }
       : want === 'duotone' ? { box: box, dot: 1 / sharp, pos: pos, mode: 'duotone', ink: ink, normalize: true, contrast: con(1.05), sharpen: +(.3 / fine).toFixed(2) }
       : (want === 'halftone' || want === 'ascii') ? { box: [w, h], dot: 1, pos: pos, mode: want, ink: ink, normalize: true, contrast: con(1.15), scale: sharp, cell: +fine.toFixed(2) }
       : want === 'palette' ? { box: box, dot: dot, pos: pos, mode: 'palette', colors: 8, contrast: con(1.06) }
       : want === 'mono' ? { box: box, dot: dot, pos: pos, mode: 'bayer', ink: [236, 234, 228], paper: [8, 8, 8], normalize: true, contrast: 1.15 }
       : { box: box, dot: dot, pos: pos, mode: 'bayer', ink: dotInk, paper: want === 'paper' ? [239, 236, 228] : [6, 6, 6], normalize: true, contrast: con(1.2), sharpen: .45 };
+    };
+    var opts = real ? effect(dot) : { box: box, dot: 1, pos: pos, mode: 'recolor', ink: ink, sharpen: 0 };
     var tint = dotInk;
     // "Efekts arī dekoram" — the tuning's integer part is 2 (fxs "2.bc"): the card's
     // decoration (a transparent cut-out) gets the same effect, same ink and grain.
-    card.__dthDecor = fx && !native && isFinite(tune) && Math.floor(tune + 1e-6) >= 2 ? {
-      mode: opts.mode, ink: opts.ink, paper: opts.paper, colors: opts.colors, normalize: opts.normalize,
-      contrast: opts.contrast, sharpen: opts.sharpen, cell: opts.cell, scale: opts.scale,
-      dot: (want === 'halftone' || want === 'ascii') ? 1 : opts.dot, soft: /^(xray|duotone|halftone|ascii)$/.test(want)
+    // On ready-made dither art the decoration is dithered in the art's own look.
+    var dfx = fx && isFinite(tune) && Math.floor(tune + 1e-6) >= 2 ? (real ? opts : effect(fxDot)) : null;
+    card.__dthDecor = dfx ? {
+      mode: dfx.mode, ink: dfx.ink, paper: dfx.paper, colors: dfx.colors, normalize: dfx.normalize,
+      contrast: dfx.contrast, sharpen: dfx.sharpen, cell: dfx.cell, scale: dfx.scale,
+      dot: (want === 'halftone' || want === 'ascii') ? 1 : dfx.dot, soft: /^(xray|duotone|halftone|ascii)$/.test(want)
     } : null;
     if (card.__dthDecor || card.querySelector(':scope > img.mk-card-addon[data-mk-dither-decor]')) requestDecor(card);
     if (zoom > 1) opts.dot = opts.dot / zoom;
-    var key = [src, want, box.join('x'), pos.join(','), (native || !dithered ? ink : tint).join('.'), tb, tc, zoom.toFixed(2)].join('|');
+    var key = [src, want, box.join('x'), pos.join(','), (!real || !dithered ? ink : tint).join('.'), tb, tc, zoom.toFixed(2)].join('|');
     if (sizeWatch && !card.__dthSize) sizeWatch.observe(card);
     card.__dthSize = w + 'x' + h;
     if (card.dataset.mkDitherKey === key) return;
