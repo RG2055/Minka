@@ -466,7 +466,9 @@ function positionStationPicker(el) {
     const win = document.getElementById('radioWindow');
     if (win) {
         const r = win.getBoundingClientRect();
-        const ow = Math.min(window.innerWidth - 24, Math.max(280, Math.min(760, r.width - 24)));
+        // Wide enough for three station columns on a desktop screen; centred,
+        // so it may be wider than the player below it.
+        const ow = Math.max(280, Math.min(window.innerWidth - 24, 1040));
         const dock = document.getElementById('dockShelf');
         const dockTop = dock?.getBoundingClientRect().top || window.innerHeight;
         // The picker always lives above the radio/dock. Opening it below the

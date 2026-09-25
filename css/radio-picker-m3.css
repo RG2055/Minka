@@ -59,11 +59,11 @@
 
 /* ── station list: tonal tiles, readable names ── */
 #stationOverlay#stationOverlay .station-picker-list {
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); grid-auto-rows: 72px; gap: 8px; padding: 4px 18px 18px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); grid-auto-rows: 72px; gap: 8px; padding: 4px 18px 18px;
   scrollbar-color: color-mix(in srgb, var(--pk-on) 22%, transparent) transparent;
 }
 #stationOverlay#stationOverlay .station-tile {
-  contain-intrinsic-size: auto 240px auto 72px;
+  contain-intrinsic-size: auto 280px auto 72px;
   height: 72px !important; grid-template-columns: 48px minmax(0, 1fr) 36px; gap: 12px; padding: 10px 12px !important;
   border: 0 !important; border-radius: var(--mk-shape-lg, 16px) !important;
   background: var(--pk-tile) !important; color: var(--pk-on) !important;
