@@ -1326,13 +1326,17 @@
   // already been read, changed or reloaded. Touches nothing but the blob.
   // `preview` renders a mood the finger/cursor is hovering without committing
   // it, so nothing is stored, sent or counted until the tap actually lands.
+  // The pop acknowledges the user's own tap only. Switching days or a sync
+  // changes the mood too, but then it simply shows (no bounce, no forced layout).
+  var moodPopNext = false;
   function updateMoodBlob(key, preview) {
     var refs = moodRefs();
     if (!refs) return;
     var stage = refs.stage;
     moodRenderedKey = key || null;
     if (!preview) {
-      if (moodBlobKey !== key && (moodBlobKey || key)) popMoodBlob(refs);
+      if (moodPopNext && moodBlobKey !== key && (moodBlobKey || key)) popMoodBlob(refs);
+      moodPopNext = false;
       moodBlobKey = key || null;
     }
     stage.classList.toggle('is-idle', !moodBlobKey && !preview);
@@ -1832,6 +1836,7 @@
     dayPending[key] = Math.max(0, Number(dayPending[key]) || 0) + 1;
     pending[day] = dayPending;
     writeJson(PENDING_PULSE_KEY, pending);
+    moodPopNext = true;
     paintCounts();
     addBurst(button, button.dataset.emoji || '❤️');
     var reaction = reactions.find(function (item) { return item.key === key; });
@@ -1920,6 +1925,7 @@
     moodLastPostAt = now;
     moodOwnCache[day] = { emoji: emoji, note: clean, at: now };
     shareOwnMood(day, moodOwnCache[day]);
+    moodPopNext = true;
     paintCounts();
     try {
       await fetchFeedback('/api/feedback/message', {

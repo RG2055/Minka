@@ -280,24 +280,28 @@
     function enhanceDays() {
       if (!scroller) return;
       const now = new Date();
-      scroller.setAttribute('aria-label', 'Izvēlēties dienu');
+      if (scroller.getAttribute('aria-label') !== 'Izvēlēties dienu') scroller.setAttribute('aria-label', 'Izvēlēties dienu');
       const active = scroller.querySelector('.pill.active');
+      // Only what changed is written: a day switch touches two pills, not all thirty
+      // (every attribute write re-styles the strip).
+      const put = (el, name, value) => { if (el.getAttribute(name) !== value) el.setAttribute(name, value); };
       scroller.querySelectorAll('.pill').forEach((pill, i) => {
-        pill.setAttribute('role', 'button');
-        pill.tabIndex = pill === active || (!active && i === 0) ? 0 : -1;
-        pill.setAttribute('aria-pressed', String(pill === active));
+        put(pill, 'role', 'button');
+        const tab = pill === active || (!active && i === 0) ? 0 : -1;
+        if (pill.tabIndex !== tab) pill.tabIndex = tab;
+        put(pill, 'aria-pressed', String(pill === active));
         const date = pill.id.replace(/^p-/, '').replace(/-/g, '.');
         const parts = date.split('.').map(Number);
         const isToday = parts[0] === now.getDate() && parts[1] === now.getMonth() + 1 && parts[2] === now.getFullYear();
-        pill.classList.toggle('is-calendar-today', isToday);
+        if (pill.classList.contains('is-calendar-today') !== isToday) pill.classList.toggle('is-calendar-today', isToday);
         const weekday = new Date(parts[2], parts[1] - 1, parts[0]).getDay();
         const short = ['Sv', 'Pr', 'Ot', 'Tr', 'Ce', 'Pk', 'Se'][weekday];
         const full = ['Svētdiena', 'Pirmdiena', 'Otrdiena', 'Trešdiena', 'Ceturtdiena', 'Piektdiena', 'Sestdiena'][weekday];
         const label = pill.querySelector('.weekday');
         if (short && label && label.textContent !== short) label.textContent = short;
-        pill.setAttribute('aria-label', (full ? full + ', ' : '') + date + (isToday ? ', šodien' : ''));
-        if (isToday) pill.setAttribute('aria-current', 'date');
-        else pill.removeAttribute('aria-current');
+        put(pill, 'aria-label', (full ? full + ', ' : '') + date + (isToday ? ', šodien' : ''));
+        if (isToday) put(pill, 'aria-current', 'date');
+        else if (pill.hasAttribute('aria-current')) pill.removeAttribute('aria-current');
       });
     }
     scroller?.addEventListener('keydown', e => {

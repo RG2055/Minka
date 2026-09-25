@@ -346,6 +346,24 @@ html body #worker-modal #modal-skin-view #grafiks-list .card.mk-watch-face.wf-ed
 html body #grafiks-list.mk-preset-stage.grid-view {display:block !important;position:relative !important;width:100% !important;min-width:0 !important;height:auto !important;aspect-ratio:var(--wf-card-aspect,1);padding:0 !important;margin:0 !important;overflow:visible !important;pointer-events:none;}
 html body #grafiks-list.mk-preset-stage.grid-view .card.mk-preset-card {position:absolute !important;inset:0 !important;width:100% !important;height:100% !important;min-width:0 !important;max-width:none !important;min-height:0 !important;max-height:none !important;margin:0 !important;padding:0 !important;grid-area:auto !important;animation:none !important;transform:none !important;box-sizing:border-box !important;}
 .mk-preset-stage * {pointer-events:none !important;animation:none !important;transition:none !important;}
+/* Presets are built as they scroll into view. Until then the tile already has the
+   card's size (the grid never jumps) and shows a still dither card: dotted frame,
+   dot field, a numeral block and a name bar. The only motion is a 2-step opacity
+   blink on the name bar (compositor only), and it ends when the preset is built. */
+.mk-material-preset > .mk-preset-stage {display:block;width:100%;aspect-ratio:var(--wf-card-aspect,1);}
+.mk-material-preset:not([data-built]) > .mk-preset-stage {
+  position:relative;overflow:hidden;box-sizing:border-box;border-radius:12%/11%;border:2px solid transparent;
+  background:conic-gradient(at 1px 1px,transparent 75%,rgba(236,234,228,.09) 0) 0 0/4px 4px padding-box,
+    linear-gradient(#0b0e13,#0b0e13) padding-box,
+    repeating-conic-gradient(rgba(236,234,228,.30) 0 25%,transparent 0 50%) 0 0/2px 2px border-box;
+}
+.mk-material-preset:not([data-built]) > .mk-preset-stage::before {content:"";position:absolute;left:30%;right:30%;top:22%;height:30%;border-radius:4px;
+  background:linear-gradient(rgba(236,234,228,.26) 0 45%,transparent 45%),conic-gradient(at 1px 1px,rgba(236,234,228,.26) 75%,transparent 0) 0 0/2px 2px;}
+.mk-material-preset:not([data-built]) > .mk-preset-stage::after {content:"";position:absolute;left:24%;right:24%;top:64%;height:11%;border-radius:3px;
+  background:conic-gradient(at 1px 1px,rgba(236,234,228,.42) 75%,transparent 0) 0 0/2px 2px;
+  animation:mk-preset-wait 1.1s steps(2,jump-none) infinite alternate;}
+@keyframes mk-preset-wait {from{opacity:.3}to{opacity:.85}}
+@media (prefers-reduced-motion:reduce) {.mk-material-preset:not([data-built]) > .mk-preset-stage::after {animation:none;}}
 @media(max-width:520px){.mk-skin-presets:has(.mk-material-preset){grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}.mk-material-preset{padding:8px;}}
 
 /* Cover is resolved from the image's actual aspect ratio before zoom. The

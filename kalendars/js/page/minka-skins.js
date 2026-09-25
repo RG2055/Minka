@@ -234,10 +234,11 @@
   });
   // Dither sets: pre-dithered backgrounds (scripts/build-dither-skins.py) on the Dither face.
   [['Tors','tors','eceae4'],['Lode','lode','64d2ff'],['Kāpas','kapas','1fe091'],['Lentes','lentes','f5b73f'],
-   ['Režģis','rezgis','23cdcf'],['Signāls','signals','ff5c5c'],['Papīrs','papirs','141414']].forEach(function(p){
+   ['Režģis','rezgis','23cdcf'],['Signāls','signals','ff5c5c'],['Papīrs','papirs','141414','ditherpaper']].forEach(function(p){
     var face=window.MinkaCardFaceModel.preset('dither');
     face.tint=p[2];face.parts.moon=window.MinkaCardFaceModel.symbolPlacement(face.parts,face.face);
-    PRESETS.push({label:'Dither · '+p[0],group:'dither',isNew:true,bg:{t:'img',id:'dither-'+p[1]},num:hexToRgb('#'+p[2]),na:'1',txt:'241,240,234',face:face,depth:false,sw:'url(data/skins/skin-dither-'+p[1]+'.webp)'});
+    // Light paper art gets the paper look: light chips, dark text (dark chips on it hid the values).
+    PRESETS.push({label:'Dither · '+p[0],group:'dither',isNew:true,bg:{t:'img',id:'dither-'+p[1]},num:hexToRgb('#'+p[2]),na:'1',txt:p[3]?'20,20,20':'241,240,234',fx:p[3],face:face,depth:false,sw:'url(data/skins/skin-dither-'+p[1]+'.webp)'});
   });
   var PRESET_GROUPS=[['all','Visi'],['new','Jaunumi'],['dither','Dither'],['wildlife','Dzīvnieki'],['botanical','Ziedi un augi'],['ocean','Ūdens'],['landscape','Ainavas un nakts'],['numbers','Ciparu efekti'],['collection','Citi foto']];
   function presetInGroup(p,group){return group==='all'||(group==='new'?p.isNew:p.group===group);}

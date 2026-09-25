@@ -203,7 +203,7 @@
   transition:border-radius .3s var(--pp-spring,ease),border-color .2s var(--pp-effects,ease);
 }
 #worker-modal#worker-modal :is(.mk-pic-effects,.mk-card-dither) > button.has-thumb::before {
-  content:"";display:block;aspect-ratio:1;background:var(--thumb,none) center/cover no-repeat,#0d1117;image-rendering:auto;
+  content:"";display:block;aspect-ratio:1;background:var(--thumb,none) center/cover no-repeat,conic-gradient(at 1px 1px,transparent 75%,rgba(236,234,228,.13) 0) 0 0/4px 4px,#0d1117;image-rendering:auto;
 }
 #worker-modal#worker-modal :is(.mk-pic-effects,.mk-card-dither) > button.has-thumb {font:600 12.5px/1 var(--pp-font,system-ui) !important;color:var(--pp-on,#e3e7ee) !important;}
 #worker-modal#worker-modal :is(.mk-pic-effects,.mk-card-dither) > button.has-thumb::after {content:attr(data-label);}
