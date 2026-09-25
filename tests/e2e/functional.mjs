@@ -1,8 +1,10 @@
 // Calendar functional smoke tests. usage: node functional.mjs <baseUrl>
 import {chromium} from 'playwright';
+// Fixed clocks below are Riga times (08:00 shift-day rollover): run the browser in that zone, whatever the host's.
+const TZ='Europe/Riga';
 const BASE=process.argv[2]; const results=[]; const T=new Date('2026-09-24T10:30:00+03:00');
 const b=await chromium.launch();
-async function fresh(url,vp={width:1440,height:900}){ const ctx=await b.newContext({viewport:vp}); const p=await ctx.newPage(); await p.clock.setFixedTime(T);
+async function fresh(url,vp={width:1440,height:900}){ const ctx=await b.newContext({viewport:vp,timezoneId:TZ}); const p=await ctx.newPage(); await p.clock.setFixedTime(T);
   p.__errs=[]; p.on('pageerror',e=>p.__errs.push(e.message.slice(0,160)));
   p.on('console',m=>{if(m.type()==='error'&&!/Content Security Policy|Failed to load resource/.test(m.text()))p.__errs.push('console: '+m.text().slice(0,160));});
   await p.goto(BASE+url,{waitUntil:'load'}); await p.waitForTimeout(5000); return p; }
@@ -77,7 +79,7 @@ await test('shift timer: calendar.js colours a timer that ends in 4 min (warning
   const txt=await p.evaluate(()=>document.querySelector('.test-timer').textContent);
   ok(!p.__errs.length,'errors: '+p.__errs.join(' | ')); await p.context().close(); return 'date '+date+' text '+txt; });
 
-await test('daily cat: pet is visible and its sprite animates', async()=>{ const ctx=await b.newContext({viewport:{width:1440,height:900}}); const p=await ctx.newPage(); p.__errs=[]; p.on('pageerror',e=>p.__errs.push(e.message));
+await test('daily cat: pet is visible and its sprite animates', async()=>{ const ctx=await b.newContext({viewport:{width:1440,height:900},timezoneId:TZ}); const p=await ctx.newPage(); p.__errs=[]; p.on('pageerror',e=>p.__errs.push(e.message));
   await p.goto(BASE+'/kalendars/index.html',{waitUntil:'load'}); await p.waitForTimeout(5000);
   ok(await shown(p,'.mk-daily-cat-pet'),'cat not visible');
   const frames=new Set(); for(let i=0;i<24;i++){ frames.add(await p.evaluate(()=>document.querySelector('.mk-daily-cat-sprite:not(.mk-daily-cat-sprite-ghost)')?.style.backgroundPosition||'')); await p.waitForTimeout(250); }

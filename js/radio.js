@@ -1219,15 +1219,20 @@ async function checkDiscoveryStations() {
     discoveryChecking = true;
     try {
         const featured = stationsList.filter(s => s && featuredKeys.has(radioStationKey(s)));
-        for (const station of [...featured, ...discoveryStations]) {
-            if (discoveryLogoStations().length >= DISCOVERY_SHOWN) break;
-            const overlay = document.getElementById('stationOverlay');
-            if (!overlay || overlay.style.display !== 'grid' || stationPickerSource !== 'featured') break;
-            const url = stationStreamUrl(station);
-            if (!url || radioHealth.status(url)) continue;
-            await radioHealth.check(url);
-            refreshDiscoveryRail();
-        }
+        const queue = [...featured, ...discoveryStations];
+        // Two checks at a time (the health queue's own limit), in popularity order.
+        const worker = async () => {
+            while (queue.length) {
+                if (discoveryLogoStations().length >= DISCOVERY_SHOWN) return;
+                const overlay = document.getElementById('stationOverlay');
+                if (!overlay || overlay.style.display !== 'grid' || stationPickerSource !== 'featured') return;
+                const url = stationStreamUrl(queue.shift());
+                if (!url || radioHealth.status(url)) continue;
+                await radioHealth.check(url);
+                refreshDiscoveryRail();
+            }
+        };
+        await Promise.all([worker(), worker()]);
     } finally {
         discoveryChecking = false; refreshDiscoveryRail();
         // Candidates that arrived while this pass ran (the catalogue answers later

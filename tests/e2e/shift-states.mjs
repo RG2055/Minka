@@ -1,9 +1,11 @@
 // Shift lifecycle scenarios with timed fixture data. usage: node shiftstates.mjs <base> <outJson>
 import {chromium} from 'playwright'; import fs from 'node:fs';
+// Fixed clocks below are Riga times (08:00 shift-day rollover): run the browser in that zone, whatever the host's.
+const TZ='Europe/Riga';
 const [BASE,OUT]=process.argv.slice(2);
 const WORKERS=`[{name:'ALPHA TEST',shift:'12',startTime:'08:00',endTime:'20:00',type:'DIENA'},{name:'BETA TEST',shift:'24',startTime:'08:00',endTime:'08:00'},{name:'GAMMA TEST',shift:'12',startTime:'20:00',endTime:'08:00',type:'NAKTS'},{name:'DELTA TEST',shift:'8',startTime:'08:00',endTime:'16:00',type:'DIENA'}]`;
 const b=await chromium.launch(); const out={};
-async function open(time,{live=false,vp={width:1440,height:900},q=''}={}){ const ctx=await b.newContext({viewport:vp}); const p=await ctx.newPage(); const errs=[];
+async function open(time,{live=false,vp={width:1440,height:900},q=''}={}){ const ctx=await b.newContext({viewport:vp,timezoneId:TZ}); const p=await ctx.newPage(); const errs=[];
   p.on('pageerror',e=>errs.push(e.message.slice(0,140)));
   await ctx.route('**/__fixture.js',async r=>{ const res=await r.fetch(); let js=await res.text(); const before=js;
     js=js.replace("workers:names.map(name=>({name,shift:'24'}))","workers:"+WORKERS); if(js===before) throw new Error('fixture pattern not found'); await r.fulfill({response:res,body:js}); });

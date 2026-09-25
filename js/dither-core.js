@@ -302,9 +302,12 @@
     if (cache.size <= MAX_CACHE) return;
     var oldKey = cache.keys().next().value, old = cache.get(oldKey);
     cache.delete(oldKey);
+    // A job still running when it leaves the cache has a card waiting for it: that
+    // card sets the URL a moment after it resolves, so only revoke it later, if unused.
+    var settledNow = !!(old && old._url);
     Promise.resolve(old).then(function (u) {
-      if (!u || inUse(u)) return;
-      try { URL.revokeObjectURL(u); } catch (_) {}
+      var drop = function () { if (u && !inUse(u) && cache.get(oldKey) !== old) { try { URL.revokeObjectURL(u); } catch (_) {} } };
+      if (settledNow) drop(); else host.setTimeout(drop, 5000);
     }, function () {});
   }
   function inUse(u) {
@@ -622,10 +625,13 @@
   function clearSkin(card) {
     if (card.__dthDecor) { card.__dthDecor = null; decor(card); }
     if (sizeWatch && card.__dthSize) { sizeWatch.unobserve(card); card.__dthSize = ''; }
+    // Always drop the key: a job still running for this card must not paint its
+    // effect after the effect was switched off (its stale() check sees no key).
+    delete card.dataset.mkDitherKey;
+    card.classList.remove('mk-dither-failed');
     if (!card.classList.contains('mk-has-dither') && !card.style.getPropertyValue('--mk-skin-dither')) return;
     card.classList.remove('mk-has-dither', 'mk-dither-native');
     card.style.removeProperty('--mk-skin-dither');
-    delete card.dataset.mkDitherKey;
   }
   /* skin() is called for every card on every repaint (and for each preset
      thumbnail while the editor opens). The work that needs computed styles and
@@ -692,7 +698,13 @@
     if (hours && (face || dithered)) hours.setAttribute('data-dth-num', (hours.textContent || '').trim());
     if (face && !m && raw) { colourScene(card, raw); return; }
     // Ready-made dither art always follows the card's colour, effect on or not.
-    if (!m || (!want && !/skin-dither-/.test(m[2]))) { clearSkin(card); return; }
+    if (!m || (!want && !/skin-dither-/.test(m[2]))) {
+      clearSkin(card);
+      // An effect on a colour / gradient background has no picture to work on:
+      // mark it so the "effect is computing" placeholder never hides that background.
+      if (want && !m) card.classList.add('mk-dither-failed');
+      return;
+    }
     var src = m[2];
     // Layout size (offset*, not the scaled preview's rect) and the image crop point.
     var w = snap.w || 240, h = snap.h || 240;

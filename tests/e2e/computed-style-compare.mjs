@@ -1,6 +1,8 @@
 // Compare computed styles of every element between two versions in several UI states.
 // usage: node computedcmp.mjs <baseA> <baseB>
 import {chromium} from 'playwright';
+// Fixed clocks below are Riga times (08:00 shift-day rollover): run the browser in that zone, whatever the host's.
+const TZ='Europe/Riga';
 const [A,B]=process.argv.slice(2); const T=new Date('2026-09-24T10:30:00+03:00');
 const KILL='*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}';
 const states=[
@@ -17,7 +19,7 @@ const states=[
  ['main-default','/index.html',null],
 ];
 const b=await chromium.launch();
-async function grab(base,[name,url,fn,vp]){ const ctx=await b.newContext({viewport:vp||{width:1440,height:900}}); const p=await ctx.newPage(); await p.clock.setFixedTime(T);
+async function grab(base,[name,url,fn,vp]){ const ctx=await b.newContext({viewport:vp||{width:1440,height:900},timezoneId:TZ}); const p=await ctx.newPage(); await p.clock.setFixedTime(T);
   await ctx.addInitScript(()=>{const cnt={};const h=s=>{let x=2166136261;for(let i=0;i<s.length;i++){x^=s.charCodeAt(i);x=Math.imul(x,16777619);}return x>>>0;};const mb=a=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};Math.random=function(){const fr=(new Error().stack||'').split('\n')[2]||'';const m=fr.match(/at\s+([^\s(]+)?\s*\(?.*\/([^/?:]+)(?:\?[^:]*)?:/);const fn=(m&&m[1]&&!/[\/:]/.test(m[1]))?m[1]:'';const k=m?(fn+'@'+m[2]):'?';cnt[k]=(cnt[k]||0)+1;return mb(h(k)+cnt[k]*7919);};});
   await p.goto(base+url,{waitUntil:'load'}); await p.waitForTimeout(5500); if(fn) await fn(p);
   const out={}; for(const f of p.frames()){ try{ await f.addStyleTag({content:KILL}); await p.waitForTimeout(150);
