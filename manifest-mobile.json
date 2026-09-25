@@ -11,9 +11,27 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "data/rg-brand.svg?v=20260924d1",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "data/rg-cal-16.png?v=20260925ic1",
+      "sizes": "16x16",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "data/rg-cal-24.png?v=20260925ic1",
+      "sizes": "24x24",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "data/rg-cal-32.png?v=20260925ic1",
+      "sizes": "32x32",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "data/rg-cal-48.png?v=20260925ic1",
+      "sizes": "48x48",
+      "type": "image/png",
       "purpose": "any"
     },
     {
