@@ -1,0 +1,164 @@
+/* Station picker — Material 3 Expressive on the app's own system tokens
+   (css/mk-sys.css): one opaque tonal surface, larger type, M3 chips, tonal tiles
+   and a clear selected state. Deliberately cheap to draw on work PCs: no
+   backdrop blur, no gradients behind content, one small shadow on the surface,
+   transitions only on background/colour. Geometry (position, size) stays with
+   positionStationPicker() in js/radio.js. Loaded after every older picker sheet;
+   the doubled id outranks them without touching their files. */
+
+#stationOverlay#stationOverlay {
+  --pk-surface: var(--mk-sys-surface-container, #14181e);
+  --pk-tile: var(--mk-sys-surface-container-high, #1a1f27);
+  --pk-tile-hover: var(--mk-sys-surface-container-highest, #222933);
+  --pk-on: var(--mk-sys-on-surface, #e6ebf2);
+  --pk-on-var: var(--mk-sys-on-surface-variant, #a9b3c1);
+  --pk-outline: var(--mk-sys-outline-variant, #262c36);
+  --pk-accent: var(--mk-sys-secondary, #64d2ff);
+  --pk-on-accent: var(--mk-sys-on-secondary, #003547);
+  --pk-accent-container: var(--mk-sys-secondary-container, #143444);
+  --pk-on-accent-container: var(--mk-sys-on-secondary-container, #cbeeff);
+  background: var(--pk-surface) !important;
+  border: 1px solid var(--pk-outline) !important;
+  border-radius: var(--mk-shape-xl, 28px) !important;
+  box-shadow: var(--mk-elev-3, 0 16px 40px rgba(0,0,0,.55)) !important;
+  color: var(--pk-on) !important;
+  font-family: var(--mk-font-plain, Inter, system-ui, sans-serif) !important;
+}
+
+/* ── head: title, search field, close ── */
+#stationOverlay#stationOverlay .station-picker-head { gap: 16px; padding: 18px 18px 8px; border-bottom: 0; }
+#stationOverlay#stationOverlay .station-picker-title strong { font: var(--mk-type-title-l, 700 18px/1.25 Inter, sans-serif); letter-spacing: -.01em; color: var(--pk-on); }
+#stationOverlay#stationOverlay .station-picker-title span { margin-top: 2px; font: var(--mk-type-body-s, 500 12px/1.4 Inter, sans-serif); color: var(--pk-on-var); }
+#stationOverlay#stationOverlay .station-picker-search {
+  height: 48px; padding: 0 16px; gap: 12px; border: 0; border-radius: var(--mk-shape-full, 999px);
+  background: var(--pk-tile-hover); transition: background-color .15s;
+}
+#stationOverlay#stationOverlay .station-picker-search:focus-within { outline: 2px solid var(--pk-accent); outline-offset: 0; }
+#stationOverlay#stationOverlay .station-picker-search svg { width: 20px; height: 20px; flex-basis: 20px; stroke: var(--pk-on-var); }
+#stationOverlay#stationOverlay .station-picker-search input { font: var(--mk-type-body-l, 500 15px/1.45 Inter, sans-serif); color: var(--pk-on); }
+#stationOverlay#stationOverlay .station-picker-search input::placeholder { color: var(--pk-on-var); opacity: 1; }
+#stationOverlay#stationOverlay .station-picker-close {
+  width: 40px; height: 40px; border-radius: 50%; background: transparent; color: var(--pk-on-var); transition: background-color .15s, color .15s;
+}
+#stationOverlay#stationOverlay .station-picker-close:hover { background: color-mix(in srgb, var(--pk-on) 8%, transparent); color: var(--pk-on); }
+#stationOverlay#stationOverlay .station-picker-close svg { width: 22px; height: 22px; stroke-width: 2; }
+
+/* ── source tabs: M3 filter chips ── */
+#stationOverlay#stationOverlay .station-picker-tabs { gap: 8px; padding: 8px 18px 12px; }
+#stationOverlay#stationOverlay .station-picker-tabs button {
+  height: 36px; padding: 0 16px; border: 1px solid var(--mk-sys-outline, #6f7a88); border-radius: var(--mk-shape-sm, 8px);
+  background: transparent; color: var(--pk-on-var); font: var(--mk-type-label-l, 700 13px/1.2 Inter, sans-serif);
+  transition: background-color .15s, color .15s, border-color .15s;
+}
+#stationOverlay#stationOverlay .station-picker-tabs button:hover { background: color-mix(in srgb, var(--pk-on) 8%, transparent); color: var(--pk-on); }
+#stationOverlay#stationOverlay .station-picker-tabs button.active,
+#stationOverlay#stationOverlay .station-picker-tabs button[aria-selected="true"] {
+  border-color: transparent; background: var(--pk-accent-container); color: var(--pk-on-accent-container);
+}
+#stationOverlay#stationOverlay .station-picker-tabs button span { margin-left: 6px; font: var(--mk-type-label-m, 700 12px/1.2 Inter, sans-serif); opacity: .75; font-variant-numeric: tabular-nums; }
+
+/* ── station list: tonal tiles, readable names ── */
+#stationOverlay#stationOverlay .station-picker-list {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); grid-auto-rows: 72px; gap: 8px; padding: 4px 18px 18px;
+  scrollbar-color: color-mix(in srgb, var(--pk-on) 22%, transparent) transparent;
+}
+#stationOverlay#stationOverlay .station-tile {
+  contain-intrinsic-size: auto 240px auto 72px;
+  height: 72px !important; grid-template-columns: 48px minmax(0, 1fr) 36px; gap: 12px; padding: 10px 12px !important;
+  border: 0 !important; border-radius: var(--mk-shape-lg, 16px) !important;
+  background: var(--pk-tile) !important; color: var(--pk-on) !important;
+  transition: background-color .15s !important;
+}
+#stationOverlay#stationOverlay .station-entry .station-tile { padding-right: 56px !important; }   /* room for the favourite star */
+#stationOverlay#stationOverlay .station-entry > .station-favorite { right: 10px; min-width: 40px; min-height: 40px; font-size: 21px; }
+#stationOverlay#stationOverlay .station-tile:hover { background: var(--pk-tile-hover) !important; }
+#stationOverlay#stationOverlay .station-tile.is-current { background: var(--pk-accent-container) !important; color: var(--pk-on-accent-container) !important; box-shadow: inset 0 0 0 2px var(--pk-accent) !important; }
+#stationOverlay#stationOverlay .station-logo-wrap { width: 48px; height: 48px; border-radius: var(--mk-shape-md, 12px); background: var(--mk-sys-surface-container-lowest, #07090c); }
+#stationOverlay#stationOverlay .station-copy { gap: 3px; }
+#stationOverlay#stationOverlay .station-copy strong { font: var(--mk-type-title-s, 700 13px/1.3 Inter, sans-serif); color: inherit; }
+#stationOverlay#stationOverlay .station-copy small { font: var(--mk-type-body-s, 500 12px/1.4 Inter, sans-serif); color: var(--pk-on-var); }
+#stationOverlay#stationOverlay .station-tile.is-current .station-copy small { color: color-mix(in srgb, var(--pk-on-accent-container) 78%, transparent); }
+#stationOverlay#stationOverlay .station-play-mark { width: 36px; height: 36px; background: color-mix(in srgb, var(--pk-on) 8%, transparent); color: var(--pk-on-var); }
+#stationOverlay#stationOverlay .station-tile:hover .station-play-mark { background: color-mix(in srgb, var(--pk-accent) 22%, transparent); color: var(--pk-on); }
+#stationOverlay#stationOverlay .station-tile.is-current .station-play-mark { background: var(--pk-accent); color: var(--pk-on-accent); }
+#stationOverlay#stationOverlay .station-favorite { color: var(--pk-on-var); border-radius: 50%; transition: background-color .15s, color .15s; }
+#stationOverlay#stationOverlay .station-favorite:hover { background: color-mix(in srgb, var(--pk-on) 8%, transparent); color: var(--pk-on); }
+#stationOverlay#stationOverlay .station-favorite[aria-pressed="true"] { color: var(--mk-sys-tertiary, #f5b73f); }
+/* a station that failed to play in this browser: still clickable (it may be back), clearly marked */
+#stationOverlay#stationOverlay .station-tile.is-offline { background: color-mix(in srgb, var(--pk-tile) 60%, transparent) !important; }
+#stationOverlay#stationOverlay .station-tile.is-offline :is(.station-logo-wrap, strong) { opacity: .55; }
+#stationOverlay#stationOverlay .station-offline-note { font-weight: 700; color: var(--mk-sys-error, #ff5c5c); }
+#stationOverlay#stationOverlay .station-picker-empty { border: 1px dashed var(--pk-outline); border-radius: var(--mk-shape-lg, 16px); color: var(--pk-on-var); font: var(--mk-type-body-m, 500 13px/1.45 Inter, sans-serif); }
+
+/* ── Atklāj: sections, chips, station shelf ── */
+#stationOverlay#stationOverlay[data-station-view="featured"] .station-picker-list { padding: 4px 18px 22px; }
+#stationOverlay#stationOverlay .discovery-intro { margin-bottom: 14px; gap: 4px 14px; }
+#stationOverlay#stationOverlay .discovery-intro strong { font: var(--mk-type-headline-s, 700 22px/1.2 Inter, sans-serif); letter-spacing: -.015em; color: var(--pk-on); }
+#stationOverlay#stationOverlay :is(.discovery-intro > span, .discovery-muted) { font: var(--mk-type-body-s, 500 12px/1.4 Inter, sans-serif); color: var(--pk-on-var); }
+#stationOverlay#stationOverlay .discovery-section { margin-bottom: 18px; }
+#stationOverlay#stationOverlay :is(.discovery-section h3, .discovery-section-head h3) { margin: 0 0 8px; font: var(--mk-type-title-m, 700 15px/1.3 Inter, sans-serif); color: var(--pk-on); }
+#stationOverlay#stationOverlay .discovery-link { font: var(--mk-type-label-l, 700 13px/1.2 Inter, sans-serif); color: var(--pk-accent); }
+#stationOverlay#stationOverlay .discovery-link:hover { text-decoration: underline; }
+#stationOverlay#stationOverlay .discovery-rail { gap: 6px; }
+#stationOverlay#stationOverlay .discovery-rail-content { gap: 8px; padding: 2px; }
+#stationOverlay#stationOverlay .discovery-rail > button {
+  display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
+  background: var(--pk-tile); color: var(--pk-on); font-size: 20px; line-height: 1; transition: background-color .15s;
+}
+#stationOverlay#stationOverlay .discovery-rail > button:hover { background: var(--pk-tile-hover); }
+/* genre / country: M3 suggestion chips */
+#stationOverlay#stationOverlay .discovery-chip {
+  min-height: 40px; padding: 8px 16px; gap: 8px; border: 1px solid var(--pk-outline); border-radius: var(--mk-shape-sm, 8px);
+  background: var(--pk-tile); color: var(--pk-on); font: var(--mk-type-label-l, 700 13px/1.2 Inter, sans-serif);
+  transition: background-color .15s, border-color .15s;
+}
+#stationOverlay#stationOverlay .discovery-chip:hover { background: var(--pk-tile-hover); border-color: var(--mk-sys-outline, #6f7a88); }
+#stationOverlay#stationOverlay .discovery-chip small { font: var(--mk-type-label-m, 700 12px/1.2 Inter, sans-serif); color: var(--pk-on-var); }
+/* world stations: logo + name (the name was only a tooltip before) */
+#stationOverlay#stationOverlay .discovery-logo {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; width: 84px; height: auto; flex: 0 0 84px;
+  padding: 6px 4px; border: 0; border-radius: var(--mk-shape-lg, 16px); background: transparent; overflow: visible;
+  color: var(--pk-on); transition: background-color .15s;
+}
+#stationOverlay#stationOverlay .discovery-logo:hover { background: color-mix(in srgb, var(--pk-on) 8%, transparent); }
+#stationOverlay#stationOverlay .discovery-logo-img {
+  display: block; width: 60px; height: 60px; border-radius: var(--mk-shape-lg, 16px); overflow: hidden;
+  background: var(--mk-sys-surface-container-lowest, #07090c); box-shadow: inset 0 0 0 1px var(--pk-outline);
+}
+#stationOverlay#stationOverlay .discovery-logo-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+#stationOverlay#stationOverlay .discovery-logo-name {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; width: 100%; min-height: 2.6em;
+  font: 600 11.5px/1.3 var(--mk-font-plain, Inter, sans-serif); text-align: center; color: var(--pk-on-var); overflow-wrap: anywhere;
+}
+#stationOverlay#stationOverlay .discovery-logo:hover .discovery-logo-name { color: var(--pk-on); }
+/* still being checked: a quiet, static placeholder */
+#stationOverlay#stationOverlay .discovery-logo.is-checking { pointer-events: none; }
+#stationOverlay#stationOverlay .discovery-logo.is-checking .discovery-logo-img { background: var(--pk-tile); box-shadow: none; }
+#stationOverlay#stationOverlay .discovery-logo.is-checking .discovery-logo-name { width: 70%; min-height: 0; height: 10px; margin-top: 4px; border-radius: 5px; background: var(--pk-tile); }
+/* featured shelf */
+#stationOverlay#stationOverlay[data-station-view="featured"] .station-tile { height: 112px !important; grid-template-columns: 64px minmax(0, 1fr) 36px; }
+#stationOverlay#stationOverlay[data-station-view="featured"] :is(.station-logo-wrap, .station-logo) { width: 64px; height: 64px; }
+#stationOverlay#stationOverlay[data-station-view="featured"] .station-copy strong { font: var(--mk-type-title-m, 700 15px/1.3 Inter, sans-serif); }
+#stationOverlay#stationOverlay[data-station-view="featured"] .station-copy small { font: var(--mk-type-body-s, 500 12px/1.4 Inter, sans-serif); }
+
+/* ── world directory controls ── */
+#stationOverlay#stationOverlay .world-station-controls { padding: 0 18px 12px; color: var(--pk-on-var); font: var(--mk-type-body-m, 500 13px/1.45 Inter, sans-serif); }
+#stationOverlay#stationOverlay :is(.world-station-controls select, .world-station-pages button, .world-country-picker summary) {
+  min-height: 40px; border: 1px solid var(--mk-sys-outline, #6f7a88); border-radius: var(--mk-shape-sm, 8px); background: var(--pk-tile); color: var(--pk-on);
+}
+#stationOverlay#stationOverlay .world-country-popover { border: 1px solid var(--pk-outline); border-radius: var(--mk-shape-lg, 16px); background: var(--mk-sys-surface-container-highest, #222933); box-shadow: var(--mk-elev-2, 0 8px 24px rgba(0,0,0,.45)); }
+#stationOverlay#stationOverlay .world-country-list button { color: var(--pk-on); border-radius: var(--mk-shape-sm, 8px); }
+#stationOverlay#stationOverlay .world-country-list button:is(:hover, [aria-pressed="true"]) { background: var(--pk-accent-container); border-color: transparent; color: var(--pk-on-accent-container); }
+#stationOverlay#stationOverlay .world-directory-heading strong { font: var(--mk-type-title-m, 700 15px/1.3 Inter, sans-serif); color: var(--pk-on); }
+
+/* ── focus: one visible ring everywhere ── */
+#stationOverlay#stationOverlay :is(button, summary, select, a):focus-visible { outline: 2px solid var(--pk-accent) !important; outline-offset: 2px !important; box-shadow: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  #stationOverlay#stationOverlay * { transition: none !important; }
+}
+@media (max-width: 640px) {
+  #stationOverlay#stationOverlay .station-picker-head { padding: 14px 14px 6px; }
+  #stationOverlay#stationOverlay :is(.station-picker-tabs, .world-station-controls) { padding-left: 14px; padding-right: 14px; }
+  #stationOverlay#stationOverlay .station-picker-list { padding: 4px 12px 14px; grid-template-columns: 1fr; }
+}

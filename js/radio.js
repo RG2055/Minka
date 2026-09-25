@@ -195,6 +195,7 @@ let npStationLogo = "";
 let npMetadataController = null;
 audio.addEventListener('pause', () => npMetadataController?.abort());
 audio.addEventListener('playing', () => {
+    if (radioStreamURL) radioHealth.mark(radioStreamURL, true);
     const station = stationsList[currentIndex];
     if (station) void updateNowPlaying(station);
 });
@@ -1060,7 +1061,67 @@ let stationPickerCatalogue = null;
 let stationPickerEntries = [];
 
 let featuredKeys = new Set();
+/* Station health, checked from this browser (its network, its CORS rules). The
+   player loads streams with crossOrigin (EQ and spectrum need the samples), so a
+   station whose server sends no CORS header cannot play here at all — the
+   directory's own "working" flag does not know that. Results are remembered
+   (working: 3 days, failing: 1 day); playback outcomes update them too. */
+const radioHealth = (() => {
+    const KEY = 'minka:radio-health:v1', OK_TTL = 3 * 864e5, FAIL_TTL = 864e5;
+    let store = {};
+    try { store = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (_) {}
+    let saveTimer = 0;
+    const save = () => {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => {
+            try {
+                const keys = Object.keys(store);
+                if (keys.length > 400) keys.sort((a, b) => store[a][1] - store[b][1]).slice(0, keys.length - 400).forEach(k => delete store[k]);
+                localStorage.setItem(KEY, JSON.stringify(store));
+            } catch (_) {}
+        }, 500);
+    };
+    const status = url => {
+        const e = url && store[url];
+        if (!e || Date.now() - e[1] > (e[0] ? OK_TTL : FAIL_TTL)) return '';
+        return e[0] ? 'ok' : 'fail';
+    };
+    const mark = (url, ok) => { if (url) { store[url] = [ok ? 1 : 0, Date.now()]; save(); } };
+    // One tiny request per station: headers plus the first chunk, then cancelled.
+    async function probe(url) {
+        const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 7000);
+        try {
+            const response = await fetch(url, { mode: 'cors', credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer', signal: controller.signal });
+            if (!response.ok || !response.body) return false;
+            const reader = response.body.getReader(), first = await reader.read();
+            return !!(first.value && first.value.length);
+        } catch (_) { return false; }
+        finally { clearTimeout(timer); controller.abort(); }
+    }
+    const queue = [], pending = new Map();
+    let running = 0;
+    function pump() {
+        while (running < 2 && queue.length) {
+            const [url, resolve] = queue.shift();
+            running++;
+            probe(url).then(ok => { mark(url, ok); pending.delete(url); running--; resolve(ok); pump(); });
+        }
+    }
+    function check(url) {
+        const known = status(url);
+        if (known) return Promise.resolve(known === 'ok');
+        if (pending.has(url)) return pending.get(url);
+        const task = new Promise(resolve => queue.push([url, resolve]));
+        pending.set(url, task); pump();
+        return task;
+    }
+    return { status, mark, check };
+})();
+function stationStreamUrl(s) { return s ? (s.stream_320 || s.stream_128 || s.stream_hls || s.stream_64 || '') : ''; }
+
 let discoveryGenres = [], discoveryStations = [], discoveryLoaded = false, discoveryLoading = false, discoveryRevision = 0;
+const DISCOVERY_SHOWN = 14;
+let discoveryChecking = false;
 let worldPageKeys = new Set(), worldCountry = '', worldGenre = '', worldQuality = 0, worldOffset = 0;
 let worldLoading = false, worldError = '', worldHasNext = false, worldRevision = 0, worldRequest = 0;
 let worldCatalogLoad = null, worldCountries = null, worldStats = null;
@@ -1116,8 +1177,8 @@ async function loadDiscoveryOverview(api) {
     if (results[1].status === 'fulfilled') worldCountries = results[1].value;
     if (results[2].status === 'fulfilled') discoveryGenres = results[2].value;
     if (results[3].status === 'fulfilled') {
-        discoveryStations = results[3].value.items.slice(0, 12);
-        installWorldStations(discoveryStations);
+        // Candidates in popularity order; only the ones this browser can play are shown.
+        discoveryStations = results[3].value.items.slice(0, 40);
     }
     discoveryLoaded = results.every(r => r.status === 'fulfilled');
     discoveryLoading = false; discoveryRevision++;
@@ -1126,8 +1187,56 @@ async function loadDiscoveryOverview(api) {
 function discoveryCount(value) {
     return Number(value).toLocaleString('lv-LV', {notation:'compact', maximumFractionDigits:1});
 }
-function discoveryRail(content, label) {
-    return `<div class="discovery-rail"><button type="button" data-discovery-scroll="-1" aria-label="${label}: ritināt pa kreisi">‹</button><div class="discovery-rail-content">${content}</div><button type="button" data-discovery-scroll="1" aria-label="${label}: ritināt pa labi">›</button></div>`;
+function discoveryRail(content, label, name) {
+    return `<div class="discovery-rail"><button type="button" data-discovery-scroll="-1" aria-label="${label}: ritināt pa kreisi">‹</button><div class="discovery-rail-content"${name ? ` data-rail="${name}"` : ''}>${content}</div><button type="button" data-discovery-scroll="1" aria-label="${label}: ritināt pa labi">›</button></div>`;
+}
+// "Stacijas visā pasaulē": the hand-picked ones, then the most popular stations that
+// passed the health check in this browser. Unchecked ones wait as quiet placeholders.
+function discoveryLogoStations() {
+    const featured = stationsList.filter(s => s && featuredKeys.has(radioStationKey(s)) && radioHealth.status(stationStreamUrl(s)) !== 'fail');
+    const working = discoveryStations.filter(s => radioHealth.status(stationStreamUrl(s)) === 'ok');
+    return [...featured, ...working].slice(0, DISCOVERY_SHOWN);
+}
+function discoveryLogosHTML(logos) {
+    const waiting = discoveryChecking || discoveryStations.some(s => !radioHealth.status(stationStreamUrl(s)));
+    const holes = waiting ? Math.max(0, Math.min(4, DISCOVERY_SHOWN - logos.length)) : 0;
+    return logos.map(station => `<button type="button" class="discovery-logo" data-discovery-play="${escapeHtml(radioStationKey(station))}" aria-label="Atskaņot ${escapeHtml(station.title)}" title="${escapeHtml(station.title)}"><span class="discovery-logo-img"><img src="${escapeHtml(stationLogoUrl(station))}" alt="" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${LACITIS_RADIO_FALLBACK}'"></span><span class="discovery-logo-name">${escapeHtml(station.title)}</span></button>`).join('')
+        + '<span class="discovery-logo is-checking" aria-hidden="true"><span class="discovery-logo-img"></span><span class="discovery-logo-name"></span></span>'.repeat(holes);
+}
+let discoveryRailTimer = 0;
+function refreshDiscoveryRail() {
+    clearTimeout(discoveryRailTimer);
+    discoveryRailTimer = setTimeout(() => {
+        const rail = document.querySelector('#stationPickerList .discovery-rail-content[data-rail="stations"]');
+        if (!rail) return;
+        const html = discoveryLogosHTML(discoveryLogoStations());
+        if (rail.__html !== html) { rail.__html = html; rail.innerHTML = html; }
+    }, 160);
+}
+// Checks candidates in order until enough work; stops when the picker closes.
+async function checkDiscoveryStations() {
+    if (discoveryChecking) return;
+    discoveryChecking = true;
+    try {
+        const featured = stationsList.filter(s => s && featuredKeys.has(radioStationKey(s)));
+        for (const station of [...featured, ...discoveryStations]) {
+            if (discoveryLogoStations().length >= DISCOVERY_SHOWN) break;
+            const overlay = document.getElementById('stationOverlay');
+            if (!overlay || overlay.style.display !== 'grid' || stationPickerSource !== 'featured') break;
+            const url = stationStreamUrl(station);
+            if (!url || radioHealth.status(url)) continue;
+            await radioHealth.check(url);
+            refreshDiscoveryRail();
+        }
+    } finally {
+        discoveryChecking = false; refreshDiscoveryRail();
+        // Candidates that arrived while this pass ran (the catalogue answers later
+        // than the hand-picked list) get their own pass.
+        const overlay = document.getElementById('stationOverlay');
+        if (overlay && overlay.style.display === 'grid' && stationPickerSource === 'featured'
+            && discoveryLogoStations().length < DISCOVERY_SHOWN
+            && discoveryStations.some(s => stationStreamUrl(s) && !radioHealth.status(stationStreamUrl(s)))) setTimeout(checkDiscoveryStations, 0);
+    }
 }
 function enableDiscoveryDrag(list) {
     const selector = '.discovery-rail-content, .discovery-featured-row';
@@ -1186,11 +1295,11 @@ function discoveryOverviewHTML() {
     const knownGenres = discoveryGenres.filter(t => Object.hasOwn(DISCOVERY_GENRE_NAMES, t.name));
     const tags = knownGenres.length ? knownGenres : Object.keys(DISCOVERY_GENRE_NAMES).slice(0, 12).map(name => ({name}));
     const countries = [...(worldCountries || [])].sort((a,b) => b.count - a.count).slice(0, 20);
-    const logos = [...stationsList.filter(s => s && featuredKeys.has(radioStationKey(s))), ...discoveryStations];
+    const logos = discoveryLogoStations();
     return `<div class="discovery-intro"><strong>Atklāj radio</strong><span class="discovery-mouse-hint">Rindas vari vilkt ar peli ↔</span><span>${worldStats ? `${worldStats.stations.toLocaleString('lv-LV')} stacijas pasaules katalogā · ${worldStats.countries} valstis` : 'Mūzika un balsis no visas pasaules'}</span></div>
         <section class="discovery-section"><h3>Pēc žanra</h3>${discoveryRail(tags.map(t => `<button type="button" class="discovery-chip" data-discovery-genre="${escapeHtml(t.name)}"><span>${escapeHtml(DISCOVERY_GENRE_NAMES[t.name] || t.name)}</span>${t.count ? `<small>${discoveryCount(t.count)}</small>` : ''}</button>`).join(''), 'Žanri')}</section>
         <section class="discovery-section"><div class="discovery-section-head"><h3>Pēc valsts</h3><button type="button" class="discovery-link" data-discovery-countries>Visas valstis ↗</button></div>${countries.length ? discoveryRail(countries.map(c => `<button type="button" class="discovery-chip" data-discovery-country="${c.code}">${countryFlag(c.code)}<span>${escapeHtml(c.code === 'US' ? 'ASV' : c.name)}</span><small>${discoveryCount(c.count)}</small></button>`).join(''), 'Valstis') : '<span class="discovery-muted">Valstu saraksts ielādējas, vai atver “Visas valstis”.</span>'}</section>
-        <section class="discovery-section"><div class="discovery-section-head"><h3>Stacijas visā pasaulē</h3><button type="button" class="discovery-link" data-discovery-all>Skatīt visas ↗</button></div>${discoveryRail(logos.map(station => `<button type="button" class="discovery-logo" data-discovery-play="${escapeHtml(radioStationKey(station))}" aria-label="Atskaņot ${escapeHtml(station.title)}" title="${escapeHtml(station.title)}"><img src="${escapeHtml(stationLogoUrl(station))}" alt="" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${LACITIS_RADIO_FALLBACK}'"></button>`).join(''), 'Stacijas')}</section>
+        <section class="discovery-section"><div class="discovery-section-head"><h3>Stacijas visā pasaulē</h3><button type="button" class="discovery-link" data-discovery-all>Skatīt visas ↗</button></div>${discoveryRail(discoveryLogosHTML(logos), 'Stacijas', 'stations')}</section>
         <div class="discovery-section-head"><h3>Izcelts klausīšanai</h3><span class="discovery-muted">Katrai savs raksturs</span></div>`;
 }
 let stationKeyPlayRequest = 0;
@@ -1199,6 +1308,12 @@ function playStationKey(key) {
     const index = stationsList.findIndex(s => s && radioStationKey(s) === key);
     if (index >= 0) { selectStation(index); return; }
     if (!/^(rb:|featured:)/.test(key)) return;
+    const known = discoveryStations.find(s => radioStationKey(s) === key);
+    if (known) {
+        installWorldStations([known]);
+        const at = stationsList.findIndex(s => s && radioStationKey(s) === key);
+        if (at >= 0) { selectStation(at); return; }
+    }
     loadWorldCatalog().then(api => api.resolve([key])).then(rows => {
         if (request !== stationKeyPlayRequest) return;
         installWorldStations(rows);
@@ -1412,19 +1527,21 @@ function renderStationPickerList() {
         return;
     }
     const discovery = stationPickerSource === 'featured' && !stationPickerQuery;
+    if (discovery) void checkDiscoveryStations();
     list.innerHTML = (discovery ? discoveryOverviewHTML() + '<div class="discovery-featured-row">' : '') + items.map(({ station, index }) => {
         const isCurrent = index === currentIndex;
         const title = escapeHtml(station.title || 'Radio');
         const description = escapeHtml(station.group === 'latvija' && (!station.tooltip || station.tooltip === 'Radio Record')
             ? 'Latvijas radio' : (station.tooltip || 'Radio Record'));
         const logo = escapeHtml(stationLogoUrl(station));
-        return `<div class="station-entry"><button class="station-tile${station.group === 'latvija' ? ' station-lv' : ''}${isCurrent ? ' is-current' : ''}"
+        const offline = radioHealth.status(stationStreamUrl(station)) === 'fail';
+        return `<div class="station-entry"><button class="station-tile${station.group === 'latvija' ? ' station-lv' : ''}${isCurrent ? ' is-current' : ''}${offline ? ' is-offline' : ''}"
             type="button" data-station-index="${index}" title="${title}&#10;${description}" aria-label="Atskaņot ${title}" aria-description="${description}" aria-current="${isCurrent ? 'true' : 'false'}">
             <span class="station-logo-wrap">
                 <img class="station-logo" src="${logo}" alt="" width="44" height="44" loading="lazy" decoding="async" fetchpriority="low"
                     onerror="this.onerror=null;this.src='${LACITIS_RADIO_FALLBACK}'">
             </span>
-            <span class="station-copy"><strong>${title}</strong><small>${station.group === 'world' ? countryFlag(station.country) : ''}${description}</small></span>
+            <span class="station-copy"><strong>${title}</strong><small>${offline ? '<b class="station-offline-note">Pēdējoreiz nesasniedzama · </b>' : ''}${station.group === 'world' ? countryFlag(station.country) : ''}${description}</small></span>
             <span class="station-play-mark" aria-hidden="true">${isCurrent ? STATION_SELECTED_ICON : STATION_PLAY_ICON}</span>
         </button><button type="button" class="station-favorite" data-favorite-index="${index}" aria-pressed="false" aria-label="Pievienot favorītiem ${title}">☆</button></div>`;
     }).join('') + (discovery ? '</div>' : '');
@@ -1887,6 +2004,7 @@ function play(url, name) {
     audio.load();
     const failedPlayback = () => {
         if (!active()) return;
+        radioHealth.mark(url, false);
         console.warn('[radio] Media playback failed '+JSON.stringify({code:audio.error?.code,message:audio.error?.message,rate:audio.playbackRate,readyState:audio.readyState,format:url.includes('.m3u8')?'hls':'direct',engine:hls?'hls.js':'native'}));
         const title = document.getElementById('npTitle');
         if (title) { title.textContent = 'Stacija pašlaik nav sasniedzama. Mēģini citu staciju.'; title.setAttribute?.('role', 'status'); }

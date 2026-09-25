@@ -638,6 +638,8 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <link rel="stylesheet" href="css/geist-ui.css?v=20260919type3">
 <link rel="stylesheet" href="css/mk-sys.css?v=20260924d1a">
 <script src="js/mk-motion.js?v=20260924d1"></script>
+<!-- Station picker in M3 on the system tokens above; must follow every older picker sheet. -->
+<link rel="stylesheet" href="css/radio-picker-m3.css?v=20260925pk2">
 <script src="js/image-palette.js?v=20260919palette2"></script>
 </head>
 <body class="radio-idle">
@@ -964,7 +966,7 @@ async function loadRadioScripts() {
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20260919pixel2']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
-  await loadAny(['js/radio.js?v=20260925dock2']);
+  await loadAny(['js/radio.js?v=20260925pk2']);
   await loadAny(['js/radio_extras_v4.js?v=20260919pixel2']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;

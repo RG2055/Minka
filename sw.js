@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.743-decor1';
+const CACHE = 'minka-4.6.745-pk2';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
@@ -145,6 +145,10 @@ self.addEventListener('fetch', event => {
   // the generic cache-first branch below can return an old response even when
   // fetch(..., { cache: 'no-store' }) was used.
   if (request.cache === 'no-store') {
+    // Cross-origin no-store requests (e.g. the radio picker's station check,
+    // which reads one chunk of a live stream and aborts) go straight to the
+    // network: relaying an endless body through the worker gains nothing.
+    try { if (new URL(url).origin !== self.location.origin) return; } catch (_e) {}
     event.respondWith(fetch(request));
     return;
   }
