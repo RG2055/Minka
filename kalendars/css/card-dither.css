@@ -101,7 +101,8 @@ html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watc
 .wf-face-choice .wf-face-thumb.wf-thumb-dither b {
   color:var(--wf-thumb-tint,#eceae4);-webkit-text-fill-color:var(--wf-thumb-tint,#eceae4);background:none;-webkit-text-stroke:0;text-shadow:2px 2px 0 #060606;
 }
-.wf-editor.is-dither :is(.wf-look,.wf-finish,.wf-metal) {display:none !important;}
+/* Dither face: no material, no metal frame (its frame is dotted); Kartītes izskats stays — it tones the dithered picture. */
+.wf-editor.is-dither :is(.wf-finish,.wf-metal) {display:none !important;}
 
 .mk-skin-thumb[data-mk-dither-src] {image-rendering:pixelated;}
 

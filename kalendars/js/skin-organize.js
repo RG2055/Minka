@@ -118,8 +118,10 @@
       var card = previewList && previewList.querySelector('.mk-mid-card');
       if (!card) return;
       var dither = card.matches('[data-watch-face="dither"], .mk-fx-dither');
-      lock(face.querySelector('.wf-finish'), dither ? 'Ar Dither efektu cipari ir punktoti — materiāls neko nemaina. Izslēdz Dither (Efekti), lai to izmantotu.' : '');
-      lock(face.querySelector('.wf-look'), dither ? 'Dither pats nosaka attēla toni. Izslēdz Dither (Efekti), lai mainītu kartītes toni.' : '');
+      // Kartītes izskats (tonis) works on the dithered picture too, so it is never locked.
+      // The Dither face hides the material section altogether (card-dither.css) — no orphan note there.
+      var ditherFace = card.matches('[data-watch-face="dither"]');
+      lock(face.querySelector('.wf-finish'), dither && !ditherFace ? 'Ar Dither efektu cipari ir punktoti, tāpēc materiāls tos nemaina. Ciparu krāsu maini ar Akcenta krāsu, Ciparu krāsu vai Izkārtojums → Šī elementa krāsa.' : '');
       lock(colorsBox.querySelector('.mk-skin-tool-emoji'), dither ? 'Ar Dither efektu fona emoji netiek rādīts.' : '');
       var effected = card.matches('.mk-fx-dither, .mk-fx-pic, [data-watch-face="dither"]');
       lock(face.querySelector('.wf-depth-control'), effected ? 'Ar attēla efektu izgrieztais objekts netiek likts priekšā ciparam — tas būtu bez efekta.' : '');
