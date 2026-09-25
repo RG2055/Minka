@@ -595,10 +595,30 @@
       if (img.parentElement) requestDecor(img.parentElement);
     });
   }) : null;
+  // The card's ink for a decoration with its own effect but no own colour.
+  function cardInk(card) {
+    var cs = host.getComputedStyle(card);
+    var v = (card.style.getPropertyValue('--dth-ink-rgb') || cs.getPropertyValue('--mk-num-color') || '').trim().split(',').map(Number);
+    if (!(v.length === 3 && v.every(isFinite))) return [236, 234, 228];
+    for (var i = 0; i < 10 && .2126 * v[0] + .7152 * v[1] + .0722 * v[2] < 110; i++) v = v.map(function (x) { return Math.round(x + (255 - x) * .18); });
+    return v;
+  }
+  // A decoration's own effect (Dekori → Dekora efekts), whatever the card shows.
+  function decorLook(fx, ink) {
+    var sharp = Math.max(1, Math.round(host.devicePixelRatio || 1));
+    if (fx === 'xray') return { mode: 'xray', normalize: true, contrast: .95, sharpen: .2, dot: 1 / sharp, soft: true };
+    if (fx === 'duotone') return { mode: 'duotone', ink: ink, normalize: true, contrast: 1.05, sharpen: .3, dot: 1 / sharp, soft: true };
+    if (fx === 'halftone' || fx === 'ascii') return { mode: fx, ink: ink, normalize: true, contrast: 1.15, scale: sharp, cell: 1, dot: 1, soft: true };
+    return { mode: 'bayer', ink: ink.map(function (v) { return Math.round(6 + (v - 6) * .7); }), paper: [6, 6, 6], normalize: true, contrast: 1.2, sharpen: .45, dot: 2 / sharp };
+  }
   function decor(card) {
     if (!card || !card.querySelectorAll) return;
-    var d = card.__dthDecor;
     card.querySelectorAll(':scope > img.mk-card-addon').forEach(function (img) {
+      // Own effect first; 'card' (or unset + the card's "also on the decoration"
+      // switch) follows the card's effect; 'none' keeps the plain picture.
+      var own = img.dataset.addonFx || '', d = null;
+      if (own && own !== 'card' && own !== 'none') d = decorLook(own, hexToRgb(img.dataset.addonColor || '') || cardInk(card));
+      else if (own === 'card' || (!own && card.__dthDecorOn)) d = card.__dthCardFx || null;
       if (!d) { clearDecor(img); return; }
       var src = img.currentSrc || img.src, w = img.offsetWidth, h = img.offsetHeight;
       if (!src) return;
@@ -646,7 +666,7 @@
     });
   }
   function clearSkin(card) {
-    if (card.__dthDecor) { card.__dthDecor = null; decor(card); }
+    if (card.__dthCardFx) { card.__dthCardFx = null; card.__dthDecorOn = false; decor(card); }
     if (sizeWatch && card.__dthSize) { sizeWatch.unobserve(card); card.__dthSize = ''; }
     // Always drop the key: a job still running for this card must not paint its
     // effect after the effect was switched off (its stale() check sees no key).
@@ -766,13 +786,14 @@
     // "Efekts arī dekoram" — the tuning's integer part is 2 (fxs "2.bc"): the card's
     // decoration (a transparent cut-out) gets the same effect, same ink and grain.
     // On ready-made dither art the decoration is dithered in the art's own look.
-    var dfx = fx && isFinite(tune) && Math.floor(tune + 1e-6) >= 2 ? (real ? opts : effect(fxDot)) : null;
-    card.__dthDecor = dfx ? {
+    var dfx = fx ? (real ? opts : effect(fxDot)) : null;
+    card.__dthDecorOn = !!dfx && isFinite(tune) && Math.floor(tune + 1e-6) >= 2;
+    card.__dthCardFx = dfx ? {
       mode: dfx.mode, ink: dfx.ink, paper: dfx.paper, colors: dfx.colors, normalize: dfx.normalize,
       contrast: dfx.contrast, sharpen: dfx.sharpen, cell: dfx.cell, scale: dfx.scale,
       dot: (want === 'halftone' || want === 'ascii') ? 1 : dfx.dot, soft: /^(xray|duotone|halftone|ascii)$/.test(want)
     } : null;
-    if (card.__dthDecor || card.querySelector(':scope > img.mk-card-addon[data-mk-dither-decor]')) requestDecor(card);
+    if (card.querySelector(':scope > img.mk-card-addon')) requestDecor(card);
     if (zoom > 1) opts.dot = opts.dot / zoom;
     var key = [src, want, box.join('x'), pos.join(','), (!real || !dithered ? ink : tint).join('.'), tb, tc, zoom.toFixed(2)].join('|');
     if (sizeWatch && !card.__dthSize) sizeWatch.observe(card);

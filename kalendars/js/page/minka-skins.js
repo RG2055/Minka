@@ -822,13 +822,25 @@
     var n = parseFloat(v);
     return isNaN(n) ? '0' : String(n);
   }
-  // The decoration's own colour rides in the id field as "id--rrggbb" (no item id
-  // contains "--"), so it syncs through the API's existing ad: format.
+  // The decoration's own effect and colour ride in the id field as "id--" + a one-letter
+  // effect code and/or "rrggbb" (no item id contains "--"), so they sync through the
+  // API's existing ad: format. "id--rrggbb" (colour only) is the first version of it.
+  var DECOR_FX_CODE = { card: 'c', none: 'n', dither: 'd', xray: 'x', halftone: 'h', duotone: 't', ascii: 'a' };
+  function decorFxFromCode(code) { for (var k in DECOR_FX_CODE) if (DECOR_FX_CODE[k] === code) return k; return ''; }
+  function packAddonId(addon) {
+    var tail = (DECOR_FX_CODE[addon.fx] || '') + (addon.color || '');
+    return addon.id + (tail ? '--' + tail : '');
+  }
   function cleanAddonConfig(value) {
     if (!value || !/^[a-z0-9-]{1,40}$/.test(String(value.id || ''))) return null;
-    var id = String(value.id), color = String(value.color || '');
+    var id = String(value.id), color = String(value.color || ''), fx = DECOR_FX_CODE[value.fx] ? String(value.fx) : '';
     var cut = id.indexOf('--');
-    if (cut > 0) { if (!color) color = id.slice(cut + 2); id = id.slice(0, cut); }
+    if (cut > 0) {
+      var tail = id.slice(cut + 2);
+      id = id.slice(0, cut);
+      if (/^[a-f0-9]{6}$/.test(tail)) { if (!color) color = tail; }
+      else if (/^[a-z]([a-f0-9]{6})?$/.test(tail)) { if (!fx) fx = decorFxFromCode(tail[0]); if (!color && tail.length > 1) color = tail.slice(1); }
+    }
     var clean = {
       id: id,
       scale: Math.round(Math.max(.6, Math.min(1.4, Number(value.scale) || 1)) * 100),
@@ -836,7 +848,9 @@
       x: Math.round(Math.max(-100, Math.min(100, Number(value.x) || 0)) * 10),
       y: Math.round(Math.max(-100, Math.min(100, Number(value.y) || 0)) * 10)
     };
-    if (/^[a-f0-9]{6}$/.test(color) && (id + '--' + color).length <= 40) clean.color = color;
+    if (fx) clean.fx = fx;
+    if (/^[a-f0-9]{6}$/.test(color)) clean.color = color;
+    if (packAddonId(clean).length > 40) { delete clean.color; delete clean.fx; }
     return clean;
   }
   function packSkin(sk, name) {
@@ -859,7 +873,7 @@
     if (window.MinkaCardAddons && typeof window.MinkaCardAddons.get === 'function') {
       p.push('av:1');
       var addon = cleanAddonConfig(window.MinkaCardAddons.get(name));
-      if (addon) p.push('ad:' + [addon.id + (addon.color ? '--' + addon.color : ''), addon.scale, addon.side, addon.x, addon.y].join(','));
+      if (addon) p.push('ad:' + [packAddonId(addon), addon.scale, addon.side, addon.x, addon.y].join(','));
     }
     return p.join(';');
   }
@@ -893,6 +907,7 @@
         }) : null;
         if (clean) {
           addon = { id: clean.id, scale: clean.scale / 100, side: clean.side === 'l' ? 'left' : 'right', x: clean.x / 10, y: clean.y / 10 };
+          if (clean.fx) addon.fx = clean.fx;
           if (clean.color) addon.color = clean.color;
         }
       }
@@ -1139,17 +1154,11 @@
           + [['dither','Tumšs'],['ditherpaper','Papīrs'],['dithercolor','Krāsains']].map(function(m){return '<button type="button" data-card-dither="'+m[0]+'" aria-pressed="'+(fx===m[0])+'">'+m[1]+'</button>';}).join('')
           + '</div><div class="mk-pic-tune"'+(kind?'':' hidden')+'>'
           + (function(){var h=Math.round((parseFloat(draft.fxs)||1.55)*100),b=/^(dither|xray|halftone|duotone|ascii)/.test(fx)&&draft.fxs!=null?Math.floor(h/10)%10:5,c=/^(dither|xray|halftone|duotone|ascii)/.test(fx)&&draft.fxs!=null?h%10:5;
-              // fxs "1.bc"; integer part 2 = the effect also covers the card's decoration.
-              var decorOn=/^(dither|xray|halftone|duotone|ascii)/.test(fx)&&draft.fxs!=null&&Math.floor(parseFloat(draft.fxs)+1e-6)>=2;
+              // fxs "1.bc"; integer part 2 = older "effect also on the decoration" (kept as is;
+              // the decoration now has its own effect in Dekori).
               return '<label><span>Smalkums</span><input type="range" min="0" max="9" step="1" value="'+b+'" data-pic-tune="b" aria-label="Smalkums"><output class="mk-pic-val">'+b+'</output></label>'
                 + '<label><span>Kontrasts</span><input type="range" min="0" max="9" step="1" value="'+c+'" data-pic-tune="c" aria-label="Kontrasts"><output class="mk-pic-val">'+c+'</output></label>'
-                + '<label class="mk-switch mk-pic-decor"><input type="checkbox" data-pic-decor'+(decorOn?' checked':'')+'><span></span><b>Efekts arī dekoram</b></label>'
-                // The decoration's own colour under the effect, apart from the card's.
-                + (function(){var ad=window.MinkaCardAddons&&window.MinkaCardAddons.get?window.MinkaCardAddons.get(name):null,dc=(ad&&ad.color)||'';
-                    return '<div class="mk-decor-inks" role="group" aria-label="Dekora krāsa"'+(decorOn?'':' hidden')+'><span>Dekora krāsa</span>'
-                      + '<button type="button" class="mk-decor-auto" data-decor-ink="" aria-pressed="'+(!dc)+'">Kā kartītei</button>'
-                      + DITHER_INKS.map(function(c){return '<button type="button" data-decor-ink="'+c[0]+'" style="--ink:#'+c[0]+'" title="'+c[1]+'" aria-label="'+c[1]+'" aria-pressed="'+(dc===c[0])+'"></button>';}).join('')
-                      + '</div>';})();})()
+                ;})()
           + '</div><div class="mk-dither-inks" role="group" aria-label="Efekta krāsa"'+(inked?'':' hidden')+'>'
           + DITHER_INKS.map(function(c){return '<button type="button" data-dither-ink="'+c[0]+'" style="--ink:#'+c[0]+'" title="'+c[1]+'" aria-label="'+c[1]+'" aria-pressed="'+(String(draft.num||'')===hexToRgb('#'+c[0]))+'"></button>';}).join('')
           + '</div></div>';})() + '<div class="mk-bg-workspace"><div class="mk-bg-toolbar">'
@@ -1487,8 +1496,8 @@
     // Per-card dither effect (stored in the skin's fx slot, which the API already accepts).
     // One picture effect per card (skin fx): dither variants, rentgens, rastrs, duotons, ascii.
     function setPicEffect(v) {
-      // Switching between effects keeps the tuning and the decoration switch as shown.
-      if (v) { draft.fx = v; delete draft.fxs; packTune(); if (draft.fxs === '1.55') delete draft.fxs; } else if (/^(dither|xray|halftone|duotone|ascii)/.test(draft.fx || '')) { delete draft.fx; delete draft.fxs; }
+      // Switching between effects keeps the tuning (and an older decoration flag).
+      if (v) { draft.fx = v; packTune(); if (draft.fxs === '1.55') delete draft.fxs; } else if (/^(dither|xray|halftone|duotone|ascii)/.test(draft.fx || '')) { delete draft.fx; delete draft.fxs; }
       var kind = /^dither/.test(v) ? 'dither' : v, box = host.querySelector('.mk-dither-switch');
       if (box) {
         box.dataset.picKind = kind || '';
@@ -1507,24 +1516,11 @@
     // when the thumb rests for a moment (and on release), never per input event.
     var tuneTimer = 0;
     function packTune() {
-      var b = host.querySelector('[data-pic-tune="b"]'), c = host.querySelector('[data-pic-tune="c"]'), d = host.querySelector('[data-pic-decor]');
+      var b = host.querySelector('[data-pic-tune="b"]'), c = host.querySelector('[data-pic-tune="c"]');
       if (!b || !c) return;
-      draft.fxs = (d && d.checked ? '2.' : '1.') + b.value + c.value;
+      var keep = draft.fxs != null && Math.floor(parseFloat(draft.fxs) + 1e-6) >= 2;
+      draft.fxs = (keep ? '2.' : '1.') + b.value + c.value;
     }
-    var decorBox = host.querySelector('[data-pic-decor]'), decorInks = host.querySelector('.mk-decor-inks');
-    if (decorBox) decorBox.addEventListener('change', function() {
-      if (decorInks) decorInks.hidden = !decorBox.checked;
-      if (!/^(dither|xray|halftone|duotone|ascii)/.test(draft.fx || '')) return;
-      packTune(); commitQuiet();
-    });
-    // Decoration colour: stored with the decoration itself (card-addons), not the skin.
-    host.querySelectorAll('[data-decor-ink]').forEach(function(b) {
-      b.addEventListener('click', function() {
-        var api = window.MinkaCardAddons;
-        if (!api || !api.setColor || !api.setColor(name, b.dataset.decorInk)) return;
-        host.querySelectorAll('[data-decor-ink]').forEach(function(x){ x.setAttribute('aria-pressed', String(x === b)); });
-      });
-    });
     host.querySelectorAll('[data-pic-tune]').forEach(function(r) {
       function pack() { packTune(); }
       r.addEventListener('input', function() {

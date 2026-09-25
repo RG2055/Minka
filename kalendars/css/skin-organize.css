@@ -233,15 +233,17 @@
 
 /* the decoration tile that a click on the card opened */
 #worker-modal#worker-modal .mk-addon-choice.org-flash {outline:2px solid var(--pp-primary,#a8c7fa);outline-offset:2px;transition:outline-color .9s;}
-/* "Efekts arī dekoram" — a switch under the effect sliders, not a slider row */
-#worker-modal#worker-modal .mk-pic-tune label.mk-pic-decor {display:inline-flex !important;grid-template-columns:none !important;gap:10px !important;justify-self:start;margin:8px 0 2px;cursor:pointer;}
-#worker-modal#worker-modal .mk-pic-tune label.mk-pic-decor > b {text-align:left;font:600 13px/1.2 var(--pp-font,system-ui) !important;color:var(--pp-on,#e3e7ee) !important;}
-
-/* Decoration colour under the picture effect (separate from the card's ink). */
-#worker-modal#worker-modal .mk-decor-inks {display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:2px 0 6px;}
-#worker-modal#worker-modal .mk-decor-inks[hidden] {display:none !important;}
-#worker-modal#worker-modal .mk-decor-inks > span {flex:0 0 100%;font:600 12px/1.2 var(--pp-font,system-ui);color:var(--pp-on-var,#a9b3c1);margin-bottom:2px;}
-#worker-modal#worker-modal .mk-decor-inks button {width:26px !important;height:26px !important;min-width:0 !important;border-radius:7px !important;border:2px solid rgba(255,255,255,.14) !important;cursor:pointer;padding:0 !important;background:var(--ink) !important;box-shadow:none !important;}
-#worker-modal#worker-modal .mk-decor-inks button[aria-pressed="true"] {border-color:#fff !important;box-shadow:0 0 0 2px rgba(100,210,255,.55) !important;}
-#worker-modal#worker-modal .mk-decor-inks button.mk-decor-auto {width:auto !important;height:28px !important;padding:0 12px !important;border-radius:999px !important;border:1px solid rgba(255,255,255,.18) !important;background:transparent !important;color:var(--pp-on,#e3e7ee);font:600 12px/1 var(--pp-font,system-ui);}
-#worker-modal#worker-modal .mk-decor-inks button.mk-decor-auto[aria-pressed="true"] {background:#29394c !important;border-color:#64d2ff !important;color:#eaf4ff;box-shadow:none !important;}
+/* The decoration's own effect and colour (Dekori, under size/side), independent of the card. */
+#worker-modal#worker-modal .mk-addon-look {display:grid;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08);}
+#worker-modal#worker-modal .mk-addon-look[hidden],#worker-modal#worker-modal .mk-addon-inks[hidden] {display:none !important;}
+#worker-modal#worker-modal .mk-addon-look-label,#worker-modal#worker-modal .mk-addon-inks > span {font:600 13px/1.2 var(--pp-font,system-ui);color:var(--pp-on,#e3e7ee);}
+#worker-modal#worker-modal .mk-addon-fx {display:flex;flex-wrap:wrap;gap:6px;}
+#worker-modal#worker-modal .mk-addon-fx button {min-height:34px;padding:0 14px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:transparent;color:var(--pp-on-var,#b8c1cd);font:600 13px/1 var(--pp-font,system-ui);cursor:pointer;}
+#worker-modal#worker-modal .mk-addon-fx button:hover {background:rgba(255,255,255,.06);color:var(--pp-on,#e3e7ee);}
+#worker-modal#worker-modal .mk-addon-fx button[aria-pressed="true"] {background:#29394c;border-color:#64d2ff;color:#eaf4ff;}
+#worker-modal#worker-modal .mk-addon-inks {display:flex;flex-wrap:wrap;align-items:center;gap:6px;}
+#worker-modal#worker-modal .mk-addon-inks > span {flex:0 0 100%;margin:4px 0 2px;}
+#worker-modal#worker-modal .mk-addon-inks button {width:26px !important;height:26px !important;min-width:0 !important;border-radius:7px !important;border:2px solid rgba(255,255,255,.14) !important;cursor:pointer;padding:0 !important;background:var(--ink) !important;box-shadow:none !important;}
+#worker-modal#worker-modal .mk-addon-inks button[aria-pressed="true"] {border-color:#fff !important;box-shadow:0 0 0 2px rgba(100,210,255,.55) !important;}
+#worker-modal#worker-modal .mk-addon-inks button.mk-addon-ink-auto {width:auto !important;height:28px !important;padding:0 12px !important;border-radius:999px !important;border:1px solid rgba(255,255,255,.18) !important;background:transparent !important;color:var(--pp-on,#e3e7ee);font:600 12px/1 var(--pp-font,system-ui);}
+#worker-modal#worker-modal .mk-addon-inks button.mk-addon-ink-auto[aria-pressed="true"] {background:#29394c !important;border-color:#64d2ff !important;color:#eaf4ff;box-shadow:none !important;}

@@ -148,6 +148,13 @@
 
   function getConfig(name) { return readAll()[normName(name)] || null; }
 
+  /* The decoration's own picture effect, independent of the card: 'card' follows
+     the card's effect, 'none' keeps the plain picture, the rest are effects. Unset
+     = the card's "Efekts arī dekoram" switch decides (older saves). */
+  var DECOR_FX = [['card', 'Kā kartītei'], ['none', 'Nav'], ['dither', 'Dither'], ['xray', 'Rentgens'], ['halftone', 'Rastrs'], ['duotone', 'Duotons'], ['ascii', 'ASCII']];
+  var DECOR_INKS = [['eceae4', 'Balta'], ['64d2ff', 'Ledus'], ['23cdcf', 'Ciāna'], ['1fe091', 'Zaļa'], ['f5b73f', 'Dzintars'], ['ff8a5c', 'Oranža'], ['ff5c5c', 'Sarkana'], ['2554a0', 'Tinte'], ['141414', 'Melna']];
+  function validDecorFx(v) { return DECOR_FX.some(function(f) { return f[0] === v; }); }
+
   function normalizeConfig(config) {
     if (!config || !ITEM_BY_ID[config.id]) return null;
     var clean = {
@@ -157,7 +164,8 @@
       x: Math.round(Math.max(-100, Math.min(100, Number(config.x) || 0)) * 100) / 100,
       y: Math.round(Math.max(-100, Math.min(100, Number(config.y) || 0)) * 100) / 100
     };
-    // The decoration's own colour under the card's picture effect ("rrggbb").
+    // The decoration's own effect and colour ("rrggbb"), independent of the card.
+    if (validDecorFx(config.fx)) clean.fx = config.fx;
     if (/^[a-f0-9]{6}$/.test(String(config.color || ''))) clean.color = String(config.color);
     return clean;
   }
@@ -309,8 +317,9 @@
          when the matching image already exists. Without this, only the few
          pixels inside the card (a clasp or paws) survive overflow:hidden. */
       var needsGeometry = !card.classList.contains('mk-addon-active');
-      if ((existing.dataset.addonColor || '') !== (config.color || '')) {
+      if ((existing.dataset.addonColor || '') !== (config.color || '') || (existing.dataset.addonFx || '') !== (config.fx || '')) {
         if (config.color) existing.dataset.addonColor = config.color; else delete existing.dataset.addonColor;
+        if (config.fx) existing.dataset.addonFx = config.fx; else delete existing.dataset.addonFx;
         if (window.MinkaDither && window.MinkaDither.decor) window.MinkaDither.decor(card);
       }
       if (!surface) {
@@ -350,6 +359,7 @@
     image.dataset.addonX = String(offsetX);
     image.dataset.addonY = String(offsetY);
     if (/^[a-f0-9]{6}$/.test(String(config.color || ''))) image.dataset.addonColor = config.color;
+    if (validDecorFx(config.fx)) image.dataset.addonFx = config.fx;
     image.style.setProperty('--mk-addon-scale', scale);
     image.style.setProperty('--mk-addon-dock-y', (Number(item.dockY) || 3) + 'px');
     if (item.aspect) image.style.setProperty('--mk-addon-aspect', item.aspect);
@@ -644,13 +654,6 @@
     var name = currentWorkerName();
     var config = getConfig(name) || { id: '', scale: 1, side: 'right', x: 0, y: 0 };
     var previewSlot = preview && preview.closest('.mk-skin-preview-slot');
-    // The decoration's colour is set from the effect controls (setColor): pick it up
-    // before every save here, so a drag or size change never drops it.
-    function persist() {
-      var saved = getConfig(name);
-      if (saved && saved.color) config.color = saved.color; else delete config.color;
-      saveConfig(name, config);
-    }
 
     var tab = document.createElement('button');
     tab.type = 'button';
@@ -677,7 +680,14 @@
       + '<label><span>Izmērs</span><input class="mk-addon-scale" type="range" min="25" max="140" step="5" value="' + Math.round((Number(config.scale) || 1) * 100) + '"><b class="mk-addon-scale-value">' + Math.round((Number(config.scale) || 1) * 100) + '%</b></label>'
       + '<div class="mk-addon-side" role="group" aria-label="Dekora puse"><button type="button" data-addon-side="left" class="' + (config.side === 'left' ? 'is-active' : '') + '">Kreisā</button><button type="button" data-addon-side="right" class="' + (config.side !== 'left' ? 'is-active' : '') + '">Labā</button></div>'
       + '<button type="button" class="mk-addon-reset-position">↺ Pozīcija</button>'
-      + '</div>';
+      + '</div>'
+      + '<div class="mk-addon-look">'
+      + '<div class="mk-addon-look-label">Dekora efekts</div>'
+      + '<div class="mk-addon-fx" role="group" aria-label="Dekora efekts">' + DECOR_FX.map(function(f) { return '<button type="button" data-addon-fx="' + f[0] + '">' + esc(f[1]) + '</button>'; }).join('') + '</div>'
+      + '<div class="mk-addon-inks" role="group" aria-label="Dekora krāsa"><span>Dekora krāsa</span>'
+      + '<button type="button" class="mk-addon-ink-auto" data-addon-ink="">Kā kartītei</button>'
+      + DECOR_INKS.map(function(c) { return '<button type="button" data-addon-ink="' + c[0] + '" style="--ink:#' + c[0] + '" title="' + c[1] + '" aria-label="' + c[1] + '"></button>'; }).join('')
+      + '</div></div>';
     editor.appendChild(panel);
 
     function syncPreviewClearance() {
@@ -755,7 +765,7 @@
           previewAddon.removeEventListener('pointercancel', finish);
           previewAddon.removeEventListener('lostpointercapture', finish);
           if (previewAddon.hasPointerCapture(event.pointerId)) previewAddon.releasePointerCapture(event.pointerId);
-          persist();
+          saveConfig(name, config);
           applyPreview();
         }
         previewAddon.addEventListener('pointermove', move);
@@ -770,6 +780,7 @@
       var removeButton = panel.querySelector('.mk-addon-remove');
       removeButton.disabled = !(config && config.id);
       removeButton.setAttribute('aria-disabled', String(removeButton.disabled));
+      syncLook();
       grid.innerHTML = ITEMS.filter(function(item) { return item.group === activeGroup; }).map(function(item) {
         var selected = config && config.id === item.id;
         return '<button type="button" class="mk-addon-choice' + (selected ? ' is-active' : '') + '" data-addon-id="' + esc(item.id) + '" aria-label="' + esc(item.label) + '" aria-pressed="' + selected + '" title="' + esc(item.label) + '">'
@@ -789,8 +800,9 @@
         });
         if (thumb.complete) markReady();
         button.addEventListener('click', function() {
-          config = { id: button.dataset.addonId, scale: Number(config.scale) || 1, side: config.side === 'left' ? 'left' : 'right', x: 0, y: 0 };
-          persist();
+          // Another decoration keeps the chosen effect and colour.
+          config = { id: button.dataset.addonId, scale: Number(config.scale) || 1, side: config.side === 'left' ? 'left' : 'right', x: 0, y: 0, fx: config.fx, color: config.color };
+          saveConfig(name, config);
           renderGrid();
           applyPreview();
         });
@@ -819,6 +831,36 @@
       });
     });
 
+    // Effect and colour of the decoration itself. Unset effect = the card's
+    // "Efekts arī dekoram" switch (fxs integer part 2) decides, as before.
+    function followsCard() {
+      var tune = preview ? parseFloat(preview.style.getPropertyValue('--mk-fx-scale')) : NaN;
+      return isFinite(tune) && Math.floor(tune + 1e-6) >= 2;
+    }
+    function syncLook() {
+      var look = panel.querySelector('.mk-addon-look');
+      if (!look) return;
+      look.hidden = !(config && config.id);
+      var fx = config.fx || (followsCard() ? 'card' : 'none');
+      look.querySelectorAll('[data-addon-fx]').forEach(function(b) { b.setAttribute('aria-pressed', String(b.dataset.addonFx === fx)); });
+      look.querySelectorAll('[data-addon-ink]').forEach(function(b) { b.setAttribute('aria-pressed', String(b.dataset.addonInk === (config.color || ''))); });
+      look.querySelector('.mk-addon-inks').hidden = fx === 'none';
+    }
+    panel.querySelectorAll('[data-addon-fx]').forEach(function(button) {
+      button.addEventListener('click', function() {
+        if (!config.id) return;
+        config.fx = button.dataset.addonFx;
+        saveConfig(name, config); syncLook(); applyPreview();
+      });
+    });
+    panel.querySelectorAll('[data-addon-ink]').forEach(function(button) {
+      button.addEventListener('click', function() {
+        if (!config.id) return;
+        if (button.dataset.addonInk) config.color = button.dataset.addonInk; else delete config.color;
+        saveConfig(name, config); syncLook(); applyPreview();
+      });
+    });
+
     panel.querySelector('.mk-addon-remove').addEventListener('click', function() {
       config = { id: '', scale: Number(config.scale) || 1, side: config.side === 'left' ? 'left' : 'right', x: 0, y: 0 };
       saveConfig(name, null);
@@ -831,21 +873,21 @@
     scale.addEventListener('input', function() {
       config.scale = Number(scale.value) / 100;
       scaleValue.textContent = scale.value + '%';
-      if (config.id) { persist(); applyPreview(); }
+      if (config.id) { saveConfig(name, config); applyPreview(); }
     });
 
     panel.querySelectorAll('[data-addon-side]').forEach(function(button) {
       button.addEventListener('click', function() {
         config.side = button.dataset.addonSide;
         panel.querySelectorAll('[data-addon-side]').forEach(function(item) { item.classList.toggle('is-active', item === button); });
-        if (config.id) { persist(); applyPreview(); }
+        if (config.id) { saveConfig(name, config); applyPreview(); }
       });
     });
 
     panel.querySelector('.mk-addon-reset-position').addEventListener('click', function() {
       config.x = 0;
       config.y = 0;
-      if (config.id) { persist(); applyPreview(); }
+      if (config.id) { saveConfig(name, config); applyPreview(); }
     });
 
     renderGrid();
@@ -925,18 +967,7 @@
       writeAll(clean);
       scheduleScan();
     },
-    clear: function(name) { saveConfig(name, null); },
-    /* Colour of the decoration under the card's picture effect; '' = the card's own. */
-    setColor: function(name, hex) {
-      var config = getConfig(name);
-      if (!config) return false;
-      config = Object.assign({}, config);
-      if (/^[a-f0-9]{6}$/.test(String(hex || ''))) config.color = String(hex); else delete config.color;
-      saveConfig(name, config);
-      // The open editor's preview card follows at once.
-      document.querySelectorAll('.mk-skin-preview-real').forEach(function(card) { applyToCard(card, config); });
-      return true;
-    }
+    clear: function(name) { saveConfig(name, null); }
   };
 
   waitForHooks();
