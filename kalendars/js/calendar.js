@@ -5536,7 +5536,7 @@ function filterFullList(btn) {
     }
 
     function getCoffeeApiBase() {
-      return String(window.MINKA_COFFEE_API_BASE || 'https://minka-coffee-api.gamernr1elite.workers.dev').replace(/\/+$/, '');
+      return String(window.MINKA_COFFEE_API_BASE || 'https://coffee.rgapp.page').replace(/\/+$/, '');
     }
 
     function coffeeApiFetch(path, options) {

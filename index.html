@@ -26,7 +26,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
 <script src="js/dither-core.js?v=20260925dt1" defer></script>
 <script>
 (function() {
-  var API_BASE = 'https://minka-api.gamernr1elite.workers.dev';
+  var API_BASE = 'https://api.rgapp.page';
   var TOKEN_KEY = 'minka_api_token_v1';
 
   function getToken() {
@@ -52,7 +52,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
   // no-store already, and Chrome reuses the CORS preflight only for requests
   // that do not bypass the cache. Every other request passes through as is.
   (function () {
-    var SIDE_HOSTS = ['minka-coffee-api.gamernr1elite.workers.dev', 'minka-feedback-api.gamernr1elite.workers.dev', 'minka-feedback-rad.gamernr1elite.workers.dev'];
+    var SIDE_HOSTS = ['coffee.rgapp.page', 'feedback.rgapp.page', 'feedback-rad.rgapp.page'];
     var nativeFetch = window.fetch;
     if (!nativeFetch || nativeFetch.__minkaSideAuth) return;
     var sideFetch = function (input, init) {
@@ -73,7 +73,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20260926up1';
+  var CALENDAR_BUILD = '20260926api1';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -1005,7 +1005,7 @@ async function loadRadioScripts() {
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20260919pixel2']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
-  await loadAny(['js/radio.js?v=20260926mo2']);
+  await loadAny(['js/radio.js?v=20260926api1']);
   await loadAny(['js/radio_extras_v4.js?v=20260919pixel2']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;
@@ -2950,7 +2950,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
 </div>
 
 <script src="kalendars/js/daybook-model.js?v=20260911b" defer></script>
-<script src="js/radio-daybook.js?v=20260911i" defer></script>
+<script src="js/radio-daybook.js?v=20260926api1" defer></script>
 <script src="js/media-profile.js?v=20260926rad1" defer></script>
 <script src="js/radio-source.js?v=20260926mo2" defer></script>
 
@@ -2978,7 +2978,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
 @keyframes mobileQrSpin{to{transform:rotate(360deg)}}
 </style>
 
-<script src="js/bolus.js?v=20260926rad1"></script>
+<script src="js/bolus.js?v=20260926api1"></script>
 
 <script>
 var _nsOpen = false;
@@ -3679,7 +3679,7 @@ window.addEventListener('message', function(e) {
 /* Desktop -> Mobile QR modal */
 (function(){
   var MOBILE_QR_TOKEN_KEY = 'minka_api_token_v1';
-  var MOBILE_QR_API_BASE = 'https://minka-api.gamernr1elite.workers.dev';
+  var MOBILE_QR_API_BASE = 'https://api.rgapp.page';
   var MOBILE_QR_PUBLIC_URL = 'https://rgapp.page/mobile.html';
   var _mobileQrUrl = '';
 
@@ -4345,7 +4345,7 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
    only when opened or when its selected view changes. */
 (function(){
   'use strict';
-  var API='https://minka-coffee-api.gamernr1elite.workers.dev';
+  var API='https://coffee.rgapp.page';
   var panel=null, selDay='', fetchedOnce=false, fetchInFlight=false, fetchWaiters=[], csView='day', anchorEl=null;
   var FETCH_CONCURRENCY=4;
   function $id(i){ return document.getElementById(i); }

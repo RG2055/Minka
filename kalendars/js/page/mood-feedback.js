@@ -426,7 +426,7 @@
   var monthCoffeeTried = {};
   function monthCoffeeFill(range, today) {
     var M = window.MinkaDaybookModel, C = window.MinkaCoffeeStore;
-    var base = String(window.MINKA_COFFEE_API_BASE || 'https://minka-coffee-api.gamernr1elite.workers.dev').replace(/\/+$/, '');
+    var base = String(window.MINKA_COFFEE_API_BASE || 'https://coffee.rgapp.page').replace(/\/+$/, '');
     if (!M || !C) return;
     var ym = range.from.slice(5, 7) + '.' + range.from.slice(0, 4);
     fetch(base + '/api/coffee?month=' + ym, { cache: 'no-store' })

@@ -206,7 +206,7 @@
     if (!todo.length) return;
     coffee.busy = true;
     if (state.tab === 'coffee' && !state.day && !state.person) render();
-    var base = String(window.MINKA_COFFEE_API_BASE || 'https://minka-coffee-api.gamernr1elite.workers.dev').replace(/\/+$/, '');
+    var base = String(window.MINKA_COFFEE_API_BASE || 'https://coffee.rgapp.page').replace(/\/+$/, '');
     var index = 0;
     function worker() {
       return (async function () {
@@ -596,7 +596,7 @@
     month.people.forEach(function (p) { Object.keys(p.sources).forEach(function (k) { sum[k] = (sum[k] || 0) + p.sources[k]; }); });
     if (!all && !coffee.totalsRequested) {
       coffee.totalsRequested = true;
-      fetch(String(window.MINKA_COFFEE_API_BASE || 'https://minka-coffee-api.gamernr1elite.workers.dev').replace(/\/+$/, '') + '/api/coffee?totals=1', { cache: 'no-store' })
+      fetch(String(window.MINKA_COFFEE_API_BASE || 'https://coffee.rgapp.page').replace(/\/+$/, '') + '/api/coffee?totals=1', { cache: 'no-store' })
         .then(function (r) { return r.json(); })
         .then(function (d) {
           if (!d || !d.ok || !d.totals) return;

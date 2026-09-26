@@ -17,8 +17,8 @@ for (const page of ['../../index.html', '../index.html']) {
     c.window.fetch = (input, init) => { calls.push({ input, init }); return Promise.resolve('ok'); };
     vm.runInContext('function getToken() { return token; }' + code, c);
 
-    await c.window.fetch('https://minka-coffee-api.gamernr1elite.workers.dev/api/coffee?date=01.09.2026', { cache: 'no-store' });
-    await c.window.fetch('https://minka-feedback-api.gamernr1elite.workers.dev/api/radio', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+    await c.window.fetch('https://coffee.rgapp.page/api/coffee?date=01.09.2026', { cache: 'no-store' });
+    await c.window.fetch('https://feedback.rgapp.page/api/radio', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
     await c.window.fetch('https://example.com/api/coffee', { cache: 'no-store' });
     await c.window.fetch('assets/x.png');
 
@@ -32,7 +32,7 @@ for (const page of ['../../index.html', '../index.html']) {
     assert.equal(calls[3].init, undefined);
 
     c.token = '';
-    await c.window.fetch('https://minka-coffee-api.gamernr1elite.workers.dev/api/coffee?totals=1');
+    await c.window.fetch('https://coffee.rgapp.page/api/coffee?totals=1');
     assert.equal(calls[4].init.headers.get('authorization'), null, 'no token, no header');
   });
 }

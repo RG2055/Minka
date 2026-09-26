@@ -21,7 +21,7 @@
   // Bolus lives in Cloudflare D1 behind the same login as the schedule (the
   // Apps Script sheet it replaced was readable by anyone and took ~3 s). The
   // worker keeps the old sheet up to date as an archive.
-  var BOLUS_API = 'https://minka-api.gamernr1elite.workers.dev/api/bolus';
+  var BOLUS_API = 'https://api.rgapp.page/api/bolus';
   function _bolusHeaders(json) {
     var token = '';
     try { token = sessionStorage.getItem('minka_api_token_v1') || localStorage.getItem('minka_api_token_v1') || ''; } catch(e) {}

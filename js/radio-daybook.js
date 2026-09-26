@@ -25,7 +25,7 @@
     var w = frameWindow();
     if (w) w.postMessage({ type: 'minka-shift-radio', state: state }, location.origin);
   }
-  var FEEDBACK_BASE = String(window.MINKA_FEEDBACK_API_BASE || 'https://minka-feedback-api.gamernr1elite.workers.dev').replace(/\/$/, '');
+  var FEEDBACK_BASE = String(window.MINKA_FEEDBACK_API_BASE || 'https://feedback.rgapp.page').replace(/\/$/, '');
   // Shared history: day + station only, so every device's statistics agree.
   // Sent once per station and day per page load; the API ignores repeats.
   var shared = {};

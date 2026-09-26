@@ -294,7 +294,7 @@
     if (now - _coffeeApiFetchedAt < 60000) return;
     _coffeeApiFetchedAt = now;
     try {
-      var base = String(window.MINKA_COFFEE_API_BASE || 'https://minka-coffee-api.gamernr1elite.workers.dev').replace(/\/+$/, '');
+      var base = String(window.MINKA_COFFEE_API_BASE || 'https://coffee.rgapp.page').replace(/\/+$/, '');
       var coffeeFetch = typeof window.__minkaCoffeeFetch === 'function'
         ? window.__minkaCoffeeFetch
         : function(path, options) {

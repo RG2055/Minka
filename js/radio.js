@@ -180,7 +180,7 @@ function getIcon(title) {
 //  NOW PLAYING (Radio Record) via CF Worker proxy
 //  Keeps playback untouched, only updates UI.
 // ------------------------------------------------------------
-const RR_PROXY_BASE = "https://ancient-bush-28d0.gamernr1elite.workers.dev/api";
+const RR_PROXY_BASE = "https://radio.rgapp.page/api";
 const RR_STATIONS_URL = `${RR_PROXY_BASE}/stations/`;
 const RR_NOW_URL = `${RR_PROXY_BASE}/stations/now/`;
 

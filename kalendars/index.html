@@ -20,14 +20,14 @@ window.__mkLeftRole=window.MINKA_APP==='rad'?{one:'Rezidents',many:'Rezidenti'}:
 </script>
 <script>
 (function() {
-  var API_BASE = 'https://minka-api.gamernr1elite.workers.dev';
-  window.MINKA_COFFEE_API_BASE = 'https://minka-coffee-api.gamernr1elite.workers.dev';
+  var API_BASE = 'https://api.rgapp.page';
+  window.MINKA_COFFEE_API_BASE = 'https://coffee.rgapp.page';
   // Radio days are shared by both apps; mood and comments are per app (/rad
   // has its own copy of the feedback service and database).
-  window.MINKA_RADIO_API_BASE = 'https://minka-feedback-api.gamernr1elite.workers.dev';
+  window.MINKA_RADIO_API_BASE = 'https://feedback.rgapp.page';
   window.MINKA_FEEDBACK_API_BASE = window.MINKA_APP === 'rad'
-    ? 'https://minka-feedback-rad.gamernr1elite.workers.dev'
-    : 'https://minka-feedback-api.gamernr1elite.workers.dev';
+    ? 'https://feedback-rad.rgapp.page'
+    : 'https://feedback.rgapp.page';
   var TOKEN_KEY = 'minka_api_token_v1';
   var IS_MOBILE_FRAME = new URLSearchParams(window.location.search).get('mobile') === '1';
   if (IS_MOBILE_FRAME) document.documentElement.classList.add('minka-mobile-frame');
@@ -111,7 +111,7 @@ window.__mkLeftRole=window.MINKA_APP==='rad'?{one:'Rezidents',many:'Rezidenti'}:
   // no-store already, and Chrome reuses the CORS preflight only for requests
   // that do not bypass the cache. Every other request passes through as is.
   (function () {
-    var SIDE_HOSTS = ['minka-coffee-api.gamernr1elite.workers.dev', 'minka-feedback-api.gamernr1elite.workers.dev', 'minka-feedback-rad.gamernr1elite.workers.dev'];
+    var SIDE_HOSTS = ['coffee.rgapp.page', 'feedback.rgapp.page', 'feedback-rad.rgapp.page'];
     var nativeFetch = window.fetch;
     if (!nativeFetch || nativeFetch.__minkaSideAuth) return;
     var sideFetch = function (input, init) {
@@ -924,7 +924,7 @@ function _mkToast(msg, type) {
 <!-- Saved worker skins must be ready before the cached roster is rendered. -->
 <script src="js/page/minka-skins.js?v=20260926rn2"></script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260926rgv1"></script>
+<script src="js/calendar.js?v=20260926api1"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260925pack6" defer></script>
 <script src="js/header-weather.js?v=20260923wm10" defer></script>
@@ -941,8 +941,8 @@ function _mkToast(msg, type) {
 <script src="js/emoji.js?v=20260926mo1" defer></script>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
 <script src="js/daybook-model.js?v=20260911b" defer></script>
-<script src="js/daybook.js?v=20260926rad3" defer></script>
-<script src="js/levels.js?v=20260926rad3" defer></script>
+<script src="js/daybook.js?v=20260926api1" defer></script>
+<script src="js/levels.js?v=20260926api1" defer></script>
 
 <script>
 window.__minkaLocalBuild = '20260926bm2';
@@ -1660,7 +1660,7 @@ window.addEventListener('message', function(e) {
 
 <link rel="stylesheet" id="mk-rg-pulse-v2" href="css/page/mk-rg-pulse-v2.css?v=20260926nt2">
 
-<script src="js/page/mood-feedback.js?v=20260926rad1"></script>
+<script src="js/page/mood-feedback.js?v=20260926api1"></script>
 <script src="js/page/mood-trend.js?v=20260926rad1" defer></script>
 
 <link rel="stylesheet" id="mk-mid-card-focus-v1" href="css/page/mk-mid-card-focus-v1.css?v=20260924perf1">
