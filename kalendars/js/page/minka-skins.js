@@ -295,7 +295,7 @@
     var cleanId = String(id || '');
     var material = window.MinkaFindCardMaterial(cleanId);
     if(material) return new URL(material.path+'?v=20260912photos1',document.baseURI).href;
-    var path = 'data/skins/skin-' + cleanId + '.webp' + (/^aesthetic-/.test(cleanId) ? '?v=2' : /^dither-rtg-/.test(cleanId) ? '?v=20260926h1' : '');
+    var path = 'data/skins/skin-' + cleanId + '.webp' + (/^aesthetic-/.test(cleanId) ? '?v=2' : /^dither-rtg-/.test(cleanId) ? '?v=20260926h2' : '');
     try { return new URL(path, document.baseURI).href; }
     catch (e) { return path; }
   }
@@ -734,6 +734,14 @@
   // Warm (women's names): the prettier ones, no skeletons. Cool: the rest.
   var RAD_SCENES_WARM = ['mr', 'zieds', 'krutis', 'ct'];
   var RAD_SCENES_COOL = ['krutis', 'ct', 'mr', 'plauksta', 'galvaskauss', 'galvaskauss-sanis', 'skelets'];
+  var RAD_SHIFT = { krutis: 56, ct: 58, 'galvaskauss-sanis': 58, zieds: 68, plauksta: 70, skelets: 72, mr: 72, galvaskauss: 74 };
+  // A saved look that is only the plain default card (no picture, classic
+  // face, default tint) counts as not chosen in /rad.
+  function blankSkin(skin) {
+    if (!skin || skin.t || skin.fx) return !skin;
+    var f = skin.face;
+    return !f || (f.face === 'classic' && f.tint === 'd5e6ef' && !f.fullTintMode);
+  }
   function radDefaultSkin(el) {
     if (window.MINKA_APP !== 'rad' || !el || !el.classList || !el.classList.contains('mk-mid-card-rg')) return null;
     var M = window.MinkaCardFaceModel;
@@ -745,6 +753,7 @@
     for (var i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
     var inks = warm ? [['f1', 'ffb3cf'], ['f2', 'ff9e8f'], ['f3', 'ffc9a8']] : [['m1', '8fd0ff'], ['m2', '5ee0d0'], ['m3', 'a8e67a']];
     var scenes = warm ? RAD_SCENES_WARM : RAD_SCENES_COOL;
+    var scene = scenes[hash % scenes.length];
     var ink = inks[Math.floor(hash / scenes.length) % 3];
     var face = M.preset('dither');
     face.tint = ink[1];
@@ -752,7 +761,9 @@
     // shifted in its frame), the big number right, shift time and the
     // day/night mark on top, coffee top right, name bottom left, emoji or
     // initials bottom right. No month or fatigue chip: nothing overlaps.
-    face.imageX = 75;
+    // How far the picture moves left in its frame: as far as each subject
+    // still fits whole in the square card (wide ones move less).
+    face.imageX = RAD_SHIFT[scene] || 70;
     face.parts.hours = [76, 47, 105, 1];
     face.parts.name = [30, 86, 85, 1];
     face.parts.remaining = [20, 12, 80, 1];
@@ -762,10 +773,10 @@
     face.parts.month[3] = 0;
     face.parts.fatigue[3] = 0;
     face.parts.initials[3] = 0;
-    return { t: 'img', id: 'dither-rtg-' + scenes[hash % scenes.length] + '-' + ink[0], num: hexToRgb('#' + ink[1]), na: '1', txt: '241,240,234', face: face, depth: false, radDefault: true };
+    return { t: 'img', id: 'dither-rtg-' + scene + '-' + ink[0], num: hexToRgb('#' + ink[1]), na: '1', txt: '241,240,234', face: face, depth: false, radDefault: true };
   }
   window.mkApplySkinToEl = function(el, skin) {
-    if (!skin) skin = radDefaultSkin(el);
+    if (blankSkin(skin)) skin = radDefaultSkin(el) || skin;
     if (el.classList.contains('mk-next-person')) { applyNextShiftSkin(el, skin); return; }
     if (window.nsApplyWorkerColour) window.nsApplyWorkerColour(el, skin);
     var numEl = el.querySelector('.mk-mid-hours.card-shift') || el.querySelector('.pv-num') || el.querySelector('.nsc-full-dur');

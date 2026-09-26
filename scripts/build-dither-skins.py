@@ -186,35 +186,51 @@ def xray(v, x, y, grain=.04):
 
 
 def rtg_chest(x, y):
+    """PA chest radiograph (patient's left on the viewer's right): dark lungs,
+    a uniform bright mediastinum with the dark trachea in its upper half and
+    the spine only faintly through it, a boot-shaped heart whose right border
+    sits just right of the spine and whose apex points down to the viewer's
+    right, the aortic knob above it, the right hemidiaphragm a little higher,
+    ribs over the lungs and the clavicles."""
     X, Y = (x - .5) * AR, y - .5
     v = .03
-    body = ellipse_d(X, Y, 0, .02, .44, .5)
-    v = max(v, .2 * smooth(body, .04))                                         # soft tissue
-    for side in (-1, 1):                                                       # dark lungs
-        if ellipse_d(X, Y, side * .17, -.02, .14, .33) < 0:
-            v = .07
-    for i in range(10):                                                        # ribs over the lungs
-        yy = -.32 + i * .066
+    thorax = ellipse_d(X, Y, 0, .02, .44, .5)
+    if thorax > 0:
+        return xray(v, x, y)
+    v = .2                                                                     # chest wall, soft tissue
+    in_lung = ellipse_d(X, Y, -.19, -.03, .15, .34) < 0 or ellipse_d(X, Y, .19, -.05, .15, .32) < 0
+    if in_lung:
+        v = .06
+    for i in range(10):                                                        # posterior ribs
+        yy = -.33 + i * .066
         for side in (-1, 1):
             xx = X * side
-            if .02 < xx < .33:
-                d = abs(Y - (yy + .5 * (xx - .12) ** 2 + .05 * xx))
-                v = max(v, .66 * smooth(d - .009, .006))
-    v = max(v, .78 * smooth(abs(X) - .03, .008) * smooth(abs(Y) - .47, .02))  # spine
+            if .08 < xx < .35:
+                d = abs(Y - (yy + .45 * (xx - .12) ** 2 + .05 * xx))
+                v = max(v, .5 * smooth(d - .008, .006))
     for side in (-1, 1):                                                       # clavicles
         xx = X * side
         if .03 < xx < .32:
-            v = max(v, .75 * smooth(abs(Y - (-.36 + .16 * (xx - .15) ** 2 - .05 * xx)) - .011, .007))
-    # PA view: patient's left on the viewer's right. The heart sits low in the
-    # middle on the diaphragm, two thirds to the viewer's right, about half
-    # the chest wide; the aortic knob bulges above it on the same side.
-    heart = ellipse_d((X - .06) * .94 + (Y - .17) * .25, (Y - .17) * .94 - (X - .06) * .25, 0, 0, .15, .11)
-    v = max(v, .66 * smooth(heart, .025))
-    v = max(v, .55 * smooth(ellipse_d(X, Y, .07, -.13, .05, .04), .02))      # aortic knob
-    for side in (-1, 1):                                                       # diaphragm domes
-        if Y > .2:
-            dome = Y - (.25 + 1.4 * (X * side - .17) ** 2)
-            v = max(v, .3 * smooth(-dome, .02) * smooth(ellipse_d(X, Y, 0, .02, .44, .5), .04))
+            v = max(v, .6 * smooth(abs(Y - (-.37 + .16 * (xx - .15) ** 2 - .05 * xx)) - .011, .007))
+    if abs(X) < .075 and -.46 < Y < .22:                                       # mediastinum
+        v = .46
+        if abs(X) < .022 and Y < -.12:                                         # trachea (air)
+            v = .14
+        elif abs(X) < .035 and Y > -.12:                                       # spine, faint through it
+            v = .5 if (Y * 15) % 1 < .72 else .42
+    if -.06 < Y < .26:                                                         # heart
+        t = (Y + .06) / .32
+        left = -.095 - .03 * math.sin(math.pi * t)
+        right = .05 + .2 * t ** .8
+        bottom = .26 - .09 * max(0.0, (X - .08) / .17) ** 2
+        if left < X < right and Y < bottom:
+            v = .6
+    v = max(v, .5 * smooth(ellipse_d(X, Y, .085, -.14, .05, .04), .015))       # aortic knob
+    dome = .22 + 1.1 * (X + .19) ** 2 if X < 0 else .26 + 1.1 * (X - .19) ** 2  # hemidiaphragms
+    if Y > dome and abs(X) > .06:
+        v = max(v, .32)
+    if abs(X) < .035 and Y >= .22:                                              # spine below the heart, faint
+        v = max(v, .36 if (Y * 15) % 1 < .72 else .3)
     return xray(v, x, y)
 
 
