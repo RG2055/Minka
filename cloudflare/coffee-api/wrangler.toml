@@ -17,3 +17,8 @@ head_sampling_rate = 0.05
 binding = "COFFEE_DB"
 database_name = "minka-coffee-db"
 database_id = "c3a19953-62d0-4aeb-9f2d-0223f83b7152"
+
+# Login check: asks minka-api whether the app's bearer token is valid.
+[[services]]
+binding = "AUTH"
+service = "minka-api"

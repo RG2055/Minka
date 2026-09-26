@@ -12,13 +12,48 @@ function corsHeaders(request) {
   const headers = new Headers({
     "access-control-allow-origin": request.headers.get("origin") || "*",
     "access-control-allow-methods": "GET,POST,PATCH,DELETE,OPTIONS",
-    "access-control-allow-headers": "content-type",
+    "access-control-allow-headers": "content-type, authorization",
     "access-control-max-age": "86400",
     "cache-control": "no-store",
     "vary": "Origin",
     "x-content-type-options": "nosniff"
   });
   return headers;
+}
+
+// ── Login check ──────────────────────────────────────────────────────────
+// The app sends the same bearer token it uses for minka-api; that worker is
+// asked (service binding AUTH) whether it is valid, so the password lives in
+// one place. While older cached clients still call without a token, a missing
+// token is only logged; REQUIRE_AUTH = "1" turns it into a 401. A wrong token
+// is always refused.
+const GOOD_TOKENS = new Map();
+async function checkAuth(request, env) {
+  const header = request.headers.get('authorization') || '';
+  if (!header) return 'missing';
+  const until = GOOD_TOKENS.get(header);
+  if (until && until > Date.now()) return 'ok';
+  if (!env.AUTH) return 'unchecked';
+  try {
+    const r = await env.AUTH.fetch('https://minka-api/api/me', { headers: { authorization: header } });
+    if (r.ok) {
+      if (GOOD_TOKENS.size > 50) GOOD_TOKENS.clear();
+      GOOD_TOKENS.set(header, Date.now() + 10 * 60000);
+      return 'ok';
+    }
+    return r.status === 401 ? 'bad' : 'unchecked';
+  } catch (_e) {
+    // minka-api briefly unreachable: do not lock people out of coffee.
+    return 'unchecked';
+  }
+}
+function authRefusal(state, env, path, method) {
+  if (state === 'bad') return 'Unauthorized';
+  if (state === 'missing') {
+    if (env.REQUIRE_AUTH === '1') return 'Unauthorized';
+    console.log(JSON.stringify({ message: 'request without login', path, method }));
+  }
+  return '';
 }
 
 function json(request, data, status = 200) {
@@ -259,6 +294,9 @@ async function addRating(request, env) {
   if (!date) return json(request, { ok: false, error: "valid date required" }, 400);
   if (!reaction) return json(request, { ok: false, error: "invalid reaction" }, 400);
   if (delta < 1 || delta > 1000) return json(request, { ok: false, error: "delta must be 1-1000" }, 400);
+  // The client batches taps saved while offline, so a delta above 1 is real;
+  // but no single request may add more than a handful of votes.
+  const counted = Math.min(delta, 10);
 
   const now = Date.now();
   const results = await env.DB.batch([
@@ -268,7 +306,7 @@ async function addRating(request, env) {
       ON CONFLICT(shift_day, reaction) DO UPDATE SET
         count = feedback_ratings.count + excluded.count,
         updated_at = excluded.updated_at
-    `).bind(date, reaction, delta, now),
+    `).bind(date, reaction, counted, now),
     env.DB.prepare(
       "SELECT count, updated_at FROM feedback_ratings WHERE shift_day = ?1 AND reaction = ?2"
     ).bind(date, reaction)
@@ -406,6 +444,11 @@ export default {
     }
     if (url.pathname === "/health" && request.method === "GET") {
       return json(request, { ok: true, service: "minka-feedback-api" });
+    }
+
+    if (FEEDBACK_PATHS.has(url.pathname)) {
+      const refusal = authRefusal(await checkAuth(request, env), env, url.pathname, request.method);
+      if (refusal) return json(request, { ok: false, error: refusal }, 401);
     }
 
     try {

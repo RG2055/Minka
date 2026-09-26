@@ -4,6 +4,10 @@
   "compatibility_date": "2026-08-24",
   "compatibility_flags": ["nodejs_compat"],
   "account_id": "a678c2143bd64a6ef4b783aac9953e94",
+  // Login check: asks minka-api whether the app's bearer token is valid.
+  "services": [
+    { "binding": "AUTH", "service": "minka-api" }
+  ],
   "d1_databases": [
     {
       "binding": "DB",

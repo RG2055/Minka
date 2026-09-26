@@ -1,9 +1,44 @@
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-  'Access-Control-Allow-Headers': 'content-type',
+  'Access-Control-Allow-Headers': 'content-type, authorization',
   'Access-Control-Max-Age': '86400'
 };
+
+// ── Login check ──────────────────────────────────────────────────────────
+// The app sends the same bearer token it uses for minka-api; that worker is
+// asked (service binding AUTH) whether it is valid, so the password lives in
+// one place. While older cached clients still call without a token, a missing
+// token is only logged; REQUIRE_AUTH = "1" turns it into a 401. A wrong token
+// is always refused.
+const GOOD_TOKENS = new Map();
+async function checkAuth(request, env) {
+  const header = request.headers.get('authorization') || '';
+  if (!header) return 'missing';
+  const until = GOOD_TOKENS.get(header);
+  if (until && until > Date.now()) return 'ok';
+  if (!env.AUTH) return 'unchecked';
+  try {
+    const r = await env.AUTH.fetch('https://minka-api/api/me', { headers: { authorization: header } });
+    if (r.ok) {
+      if (GOOD_TOKENS.size > 50) GOOD_TOKENS.clear();
+      GOOD_TOKENS.set(header, Date.now() + 10 * 60000);
+      return 'ok';
+    }
+    return r.status === 401 ? 'bad' : 'unchecked';
+  } catch (_e) {
+    // minka-api briefly unreachable: do not lock people out of coffee.
+    return 'unchecked';
+  }
+}
+function authRefusal(state, env, path, method) {
+  if (state === 'bad') return 'Unauthorized';
+  if (state === 'missing') {
+    if (env.REQUIRE_AUTH === '1') return 'Unauthorized';
+    console.log(JSON.stringify({ message: 'request without login', path, method }));
+  }
+  return '';
+}
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -180,6 +215,9 @@ export default {
     if (!env.COFFEE_DB) {
       return json({ ok: false, error: 'COFFEE_DB binding missing' }, 500);
     }
+
+    const refusal = authRefusal(await checkAuth(request, env), env, url.pathname, request.method);
+    if (refusal) return json({ ok: false, error: refusal }, 401);
 
     if (request.method === 'GET') {
       // All-time totals per worker (used by the stats leaderboard) — sums every
