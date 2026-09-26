@@ -726,7 +726,43 @@
     // Saglabātā teksta krāsa ir sākumpunkts, nevis galavārds: to pieskaņo fonam.
     applyNextShiftReadability(el, skin);
   }
+  /* /rad: a resident who has not chosen a look gets a dithered radiology
+     picture (scripts/build-dither-skins.py, rtg-*) on the Dither face. Warm
+     inks (rose, coral, peach) for first names with the Latvian women's
+     ending -a/-e, cool ones (ice, teal, green) otherwise; ink and picture
+     are picked by name. Everyone can change it in Izskats. */
+  var RAD_SCENES = ['krutis', 'plauksta', 'mugurkauls', 'mr'];
+  function radDefaultSkin(el) {
+    if (window.MINKA_APP !== 'rad' || !el || !el.classList || !el.classList.contains('mk-mid-card-rg')) return null;
+    var M = window.MinkaCardFaceModel;
+    if (!M) return null;
+    var name = String(el.getAttribute('data-worker') || '').trim();
+    var first = name.split(/\s+/)[0] || '';
+    var warm = /[AEĀĒ]$/i.test(first);
+    var hash = 0;
+    for (var i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+    var inks = warm ? [['f1', 'ffb3cf'], ['f2', 'ff9e8f'], ['f3', 'ffc9a8']] : [['m1', '8fd0ff'], ['m2', '5ee0d0'], ['m3', 'a8e67a']];
+    var ink = inks[Math.floor(hash / RAD_SCENES.length) % 3];
+    var face = M.preset('dither');
+    face.tint = ink[1];
+    // Like a picture card: the anatomy left of centre (the picture is
+    // shifted in its frame), the big number right, shift time and the
+    // day/night mark on top, coffee top right, name bottom left, emoji or
+    // initials bottom right. No month or fatigue chip: nothing overlaps.
+    face.imageX = 75;
+    face.parts.hours = [76, 47, 105, 1];
+    face.parts.name = [30, 86, 85, 1];
+    face.parts.remaining = [20, 12, 80, 1];
+    face.parts.moon = [50, 12, 85, 1];
+    face.parts.coffee = [84, 12, 80, 1];
+    face.parts.emoji = [86, 86, 85, 1];
+    face.parts.month[3] = 0;
+    face.parts.fatigue[3] = 0;
+    face.parts.initials[3] = 0;
+    return { t: 'img', id: 'dither-rtg-' + RAD_SCENES[hash % RAD_SCENES.length] + '-' + ink[0], num: hexToRgb('#' + ink[1]), na: '1', txt: '241,240,234', face: face, depth: false, radDefault: true };
+  }
   window.mkApplySkinToEl = function(el, skin) {
+    if (!skin) skin = radDefaultSkin(el);
     if (el.classList.contains('mk-next-person')) { applyNextShiftSkin(el, skin); return; }
     if (window.nsApplyWorkerColour) window.nsApplyWorkerColour(el, skin);
     var numEl = el.querySelector('.mk-mid-hours.card-shift') || el.querySelector('.pv-num') || el.querySelector('.nsc-full-dur');

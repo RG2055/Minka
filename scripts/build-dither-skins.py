@@ -155,6 +155,118 @@ def paper(x, y):
     return v * (1 - .7 * math.exp(-(((x - .5) / .25) ** 2 + ((y - .45) / .3) ** 2)))
 
 
+# ---------- radiology scenes for /rad resident cards ----------
+# X-ray look: bone bright, soft tissue faint, air dark. Cards are about
+# square and show the middle of the 16:9 picture, so the anatomy is centred;
+# card_mask() dims the number's area and the name/chip bands a little.
+AR = 16 / 9
+
+
+def smooth(d, w=.012):
+    """1 inside (d<0), 0 outside, soft edge of width w."""
+    return max(0.0, min(1.0, .5 - d / (2 * w)))
+
+
+def ellipse_d(x, y, cx, cy, rx, ry):
+    return math.hypot((x - cx) / rx, (y - cy) / ry) - 1
+
+
+def card_mask(x, y):
+    m = 1 - .35 * math.exp(-(((x - .5) / .2) ** 2 + ((y - .45) / .26) ** 2))
+    if y < .2:
+        m *= .55 + .45 * (y / .2)
+    if y > .76:
+        m *= .55 + .45 * ((1 - y) / .24)
+    return m
+
+
+def xray(v, x, y, grain=.04):
+    rnd = (math.sin(x * 812.3 + y * 1311.7) * 43758.5453) % 1
+    return max(0.0, min(1.0, (v + (rnd - .5) * grain) * card_mask(x, y)))
+
+
+def rtg_chest(x, y):
+    X, Y = (x - .5) * AR, y - .5
+    v = .03
+    body = ellipse_d(X, Y, 0, .02, .44, .5)
+    v = max(v, .2 * smooth(body, .04))                                         # soft tissue
+    for side in (-1, 1):                                                       # dark lungs
+        if ellipse_d(X, Y, side * .17, -.02, .14, .33) < 0:
+            v = .07
+    for i in range(10):                                                        # ribs over the lungs
+        yy = -.32 + i * .066
+        for side in (-1, 1):
+            xx = X * side
+            if .02 < xx < .33:
+                d = abs(Y - (yy + .5 * (xx - .12) ** 2 + .05 * xx))
+                v = max(v, .66 * smooth(d - .009, .006))
+    v = max(v, .78 * smooth(abs(X) - .03, .008) * smooth(abs(Y) - .47, .02))  # spine
+    for side in (-1, 1):                                                       # clavicles
+        xx = X * side
+        if .03 < xx < .32:
+            v = max(v, .75 * smooth(abs(Y - (-.36 + .16 * (xx - .15) ** 2 - .05 * xx)) - .011, .007))
+    v = max(v, .34 * smooth(ellipse_d(X, Y, .07, .13, .12, .15), .05))       # heart shadow
+    return xray(v, x, y)
+
+
+def rtg_hand(x, y):
+    X, Y = (x - .5) * AR, y - .56
+    v = .05
+    palm = ellipse_d(X, Y, 0, .12, .2, .2)
+    v = max(v, .13 * smooth(palm, .06))
+    rays = [(-.62, 3), (-.28, 4), (-.05, 4), (.17, 4), (.4, 4)]              # thumb .. little finger
+    for i, (ang, bones) in enumerate(rays):
+        ca, sa = math.sin(ang), -math.cos(ang)
+        bx, by = X - (-.05 + i * .06 - (.08 if i == 0 else 0)), Y - (.18 if i else .26)
+        along = bx * ca + by * sa
+        across = -bx * sa + by * ca
+        seg = [0, .16, .27, .35, .41][:bones + 1] if i else [0, .14, .24, .32]
+        for a, b in zip(seg, seg[1:]):
+            mid, half = (a + b) / 2, (b - a) / 2 - .008
+            d = max(abs(along - mid) - half, abs(across) - .028 * (1.2 if a == 0 else 1))
+            v = max(v, .78 * smooth(d, .008))
+        v = max(v, .12 * smooth(max(along - seg[-1] - .02, abs(across) - .04), .02) * smooth(-along + 0, .02) if False else 0)
+    for i in range(8):                                                         # carpals
+        cx, cy = -.09 + (i % 4) * .055, .33 + (i // 4) * .06
+        v = max(v, .7 * smooth(ellipse_d(X, Y, cx, cy, .026, .024), .01))
+    return xray(v, x, y)
+
+
+def rtg_spine(x, y):
+    X, Y = (x - .5) * AR, y - .5
+    v = .05
+    for i in range(8):
+        cy = -.42 + i * .12
+        cx = .04 * math.sin(i * .5)
+        d = max(abs(X - cx) - .09, abs(Y - cy) - .045)
+        v = max(v, .72 * smooth(d, .012))
+        v = max(v, .5 * smooth(ellipse_d(X, Y, cx + .16, cy + .01, .07, .025), .01))   # spinous process
+    v = max(v, .12 * smooth(abs(X - .05) - .3, .08))
+    return xray(v, x, y)
+
+
+def rtg_brain(x, y):
+    X, Y = (x - .5) * AR, y - .5
+    v = .04
+    head = ellipse_d(X, Y, 0, 0, .3, .38)
+    v = max(v, .65 * smooth(abs(head) - .02, .01))
+    inner = ellipse_d(X, Y, 0, 0, .27, .35)
+    if inner < 0:
+        gyri = .5 + .5 * math.sin(38 * math.hypot(X, Y * .8) + 5 * math.sin(7 * math.atan2(Y, X)))
+        v = max(v, .18 + .28 * gyri * min(1, -inner * 4))
+    for side in (-1, 1):                                                       # ventricles
+        v = min(v, .05 + 1 - smooth(ellipse_d(X * side, Y, .05, -.02, .035, .12), .01)) if ellipse_d(X * side, Y, .05, -.02, .035, .12) < 0 else v
+    return xray(v, x, y)
+
+
+# Kept what reads at a glance on a card. Tried and dropped: knee and pelvis
+# (could read as something else), skull and CT slice (not recognisable).
+RTG = [('krutis', rtg_chest), ('plauksta', rtg_hand), ('mugurkauls', rtg_spine), ('mr', rtg_brain)]
+# Inks: three warm ("f": rose, coral, peach) and three cool ("m": ice, teal,
+# green); /rad picks one by name, and everyone can change it. Never violet.
+RTG_INKS = [('f1', '#ffb3cf', '#0d0609'), ('f2', '#ff9e8f', '#0d0706'), ('f3', '#ffc9a8', '#0d0906'),
+            ('m1', '#8fd0ff', '#050a10'), ('m2', '#5ee0d0', '#040c0b'), ('m3', '#a8e67a', '#070c05')]
+
 SKINS = [
     ('tors', torus, '#eceae4', '#070707', 'atkinson'),
     ('lode', sphere, '#64d2ff', '#04080c', 'atkinson'),
@@ -187,9 +299,43 @@ def dither(field, method):
     return out
 
 
+def save_fine(sid, fn, ink, paper_c, w=240, h=135):
+    """Finer dots for the radiology pictures (2×2 per dot, same 480×270 size)."""
+    field = [[max(0.0, min(1.0, fn((x + .5) / w, (y + .5) / h))) for x in range(w)] for y in range(h)]
+    buf = [row[:] for row in field]
+    bits = [[0] * w for _ in range(h)]
+    for y in range(h):
+        for x in range(w):
+            old = buf[y][x]
+            new = 1 if old >= .5 else 0
+            bits[y][x] = new
+            err = (old - new) / 8
+            for dx, dy in ((1, 0), (2, 0), (-1, 1), (0, 1), (1, 1), (0, 2)):
+                xx, yy = x + dx, y + dy
+                if 0 <= xx < w and yy < h:
+                    buf[yy][xx] += err
+    ink_c, pap_c = hexrgb(ink), hexrgb(paper_c)
+    img = Image.new('RGB', (w, h))
+    px = img.load()
+    for y in range(h):
+        for x in range(w):
+            px[x, y] = ink_c if bits[y][x] else pap_c
+    img = img.resize((480, 270), Image.NEAREST)
+    path = OUT / f'skin-dither-{sid}.webp'
+    img.save(path, 'WEBP', lossless=True, method=6)
+    print(path.relative_to(ROOT), path.stat().st_size, 'bytes')
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
-    for sid, fn, ink, paper_c, method in SKINS:
+    rtg = [('rtg-' + name + '-' + tone, fn, ink, pap, 'atkinson') for name, fn in RTG for tone, ink, pap in RTG_INKS]
+    only = __import__('sys').argv[1:]
+    for sid, fn, ink, paper_c, method in SKINS + rtg:
+        if only and not any(sid.startswith(o) for o in only):
+            continue
+        if sid.startswith('rtg-'):
+            save_fine(sid, fn, ink, paper_c)
+            continue
         field = [[max(0.0, min(1.0, fn((x + .5) / W, (y + .5) / H))) for x in range(W)] for y in range(H)]
         bits = dither(field, method)
         ink_c, pap_c = hexrgb(ink), hexrgb(paper_c)

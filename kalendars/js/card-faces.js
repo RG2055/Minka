@@ -23,11 +23,12 @@
   var refreshPreview = function() {};
   var coffeePalettes = new Map();
   function applyCoffee(card,skin,config) {
-    if(card.dataset.coffeeMode!==(config.coffeeMode?'open':'icon'))delete card.dataset.coffeeExpanded;
-    card.dataset.coffeeMode=config.coffeeMode?'open':'icon';
+    var mode=M.effectiveCoffeeMode(config);
+    if(card.dataset.coffeeMode!==(mode?'open':'icon'))delete card.dataset.coffeeExpanded;
+    card.dataset.coffeeMode=mode?'open':'icon';
     var button=card.querySelector('button.mk-coffee-mid');
     if(button){
-      if(config.coffeeMode){button.removeAttribute('aria-expanded');button.setAttribute('aria-label','Atvērt kafijas izvēlni');}
+      if(mode){button.removeAttribute('aria-expanded');button.setAttribute('aria-label','Atvērt kafijas izvēlni');}
       else {var expanded=card.dataset.coffeeExpanded==='true';button.setAttribute('aria-expanded',String(expanded));button.setAttribute('aria-label',expanded?'Sakļaut kafijas pogas':'Atvērt kafijas pogas');}
     }
     card.dataset.coffeeContrast=['glass','auto','tint'][config.coffeeContrast];
@@ -328,6 +329,46 @@
     if(window.MinkaDither&&window.MinkaDither.skin)window.MinkaDither.skin(card);
     applyFullTint(card,skin,config);
     paintClock();
+    if(window.MINKA_APP==='rad'&&card.classList.contains('mk-mid-card-rg'))fitNoOverlap(card);
+  }
+  /* /rad rule: nothing overlaps inside a resident's card. After layout the
+     big number's glyph box is measured against every other visible element;
+     while it touches one, the number shrinks (at most 8 steps of 8 %).
+     Relative boxes, so it also holds while the card is being scaled. */
+  var fitQueue=new Set(),fitRaf=0;
+  function fitNoOverlap(card){
+    fitQueue.add(card);
+    if(fitRaf)return;
+    fitRaf=requestAnimationFrame(function(){
+      fitRaf=0;var cards=Array.from(fitQueue);fitQueue.clear();
+      cards.forEach(function(c){
+        var num=c.querySelector('[data-wf-part="hours"]');
+        if(!num||num.hidden||!c.isConnected)return;
+        var base=parseFloat(num.style.getPropertyValue('--wf-scale'))||1;
+        var others=Array.from(c.querySelectorAll('[data-wf-part]')).filter(function(el){return el!==num&&!el.hidden&&el.getClientRects().length;});
+        var range=document.createRange();
+        // The digits' own outline, not the text line (its empty ascent would
+        // "touch" the corner elements): canvas metrics scaled to the line box.
+        var cs=getComputedStyle(num),ctx=(fitNoOverlap.cv||(fitNoOverlap.cv=document.createElement('canvas'))).getContext('2d');
+        ctx.font=cs.fontStyle+' '+cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;
+        var m=ctx.measureText(num.textContent.trim());
+        function glyphBox(){
+          range.selectNodeContents(num);
+          var r=range.getBoundingClientRect(),fa=m.fontBoundingBoxAscent,fd=m.fontBoundingBoxDescent;
+          if(!r.width||!(fa+fd))return r;
+          var k=r.height/(fa+fd);
+          return {left:r.left,right:r.right,top:r.top+(fa-m.actualBoundingBoxAscent)*k,bottom:r.top+(fa+m.actualBoundingBoxDescent)*k,width:r.width};
+        }
+        function hits(){
+          var r=glyphBox(),box=c.getBoundingClientRect();
+          if(!r.width)return false;
+          if(r.left<box.left+2||r.right>box.right-2)return true;          // stays inside the card
+          return others.some(function(o){var q=o.getBoundingClientRect();return q.width&&q.height&&!(q.right<=r.left||q.left>=r.right||q.bottom<=r.top||q.top>=r.bottom);});
+        }
+        var scale=base;
+        for(var i=0;i<8&&hits();i++){scale*=.92;num.style.setProperty('--wf-scale',scale.toFixed(3));}
+      });
+    });
   }
   /* Whole-card look. Dark and clear work on the picture layers with plain
      filters; tinted lays one colour over everything in `color` blend, so the
@@ -548,7 +589,7 @@
       panel.querySelector('.wf-metal-name').textContent=metals[config.metal][0];
       panel.querySelector('.wf-part-name').textContent=labels[selectedPart];
       panel.querySelector('.wf-coffee-options').hidden=selectedPart!=='coffee';
-      panel.querySelectorAll('[data-coffee-mode]').forEach(function(el){el.setAttribute('aria-pressed',String(+el.dataset.coffeeMode===config.coffeeMode));});
+      panel.querySelectorAll('[data-coffee-mode]').forEach(function(el){el.setAttribute('aria-pressed',String(+el.dataset.coffeeMode===M.effectiveCoffeeMode(config)));});
       panel.querySelectorAll('[data-coffee-contrast]').forEach(function(el){el.setAttribute('aria-pressed',String(+el.dataset.coffeeContrast===config.coffeeContrast));});
       panel.querySelector('.wf-remove').textContent=config.parts[selectedPart][3]?'Noņemt':'Pievienot';
       var own=config.colors[selectedPart];
@@ -606,8 +647,8 @@
       if(el.dataset.tint){config.tint=el.dataset.tint;save();}
       if(el.dataset.metal!=null){config.metal=+el.dataset.metal;save();}
       if(el.dataset.finish!=null){config.finish=+el.dataset.finish;save('material');}
-      if(el.dataset.coffeeMode!=null){config.coffeeMode=+el.dataset.coffeeMode;save(true);}
-      if(el.dataset.coffeeContrast!=null){config.coffeeContrast=+el.dataset.coffeeContrast;save();}
+      if(el.dataset.coffeeMode!=null){config.coffeeMode=+el.dataset.coffeeMode;config.coffeeExplicit=1;save(true);}
+      if(el.dataset.coffeeContrast!=null){if(!config.coffeeExplicit)config.coffeeMode=0;config.coffeeContrast=+el.dataset.coffeeContrast;save();}
       if(el.dataset.fullTintMode!=null){config.fullTintMode=+el.dataset.fullTintMode;save();}
       if(el.dataset.fullTintScheme!=null){config.fullTintScheme=+el.dataset.fullTintScheme;save();}
       if(el.classList.contains('wf-full-tint-auto')){config.fullTintAuto=config.fullTintAuto?0:1;save();}

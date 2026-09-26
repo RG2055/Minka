@@ -1,0 +1,64 @@
+/* /rad (html.minka-rad): the radiologist/resident look — more dither, the
+   same rules as the Dither cards: one ink on a plain ground, the dots live in
+   frames, rules and fills, text stays solid. Static gradients only (no
+   filters, no animation), so it costs nothing on the work PCs. */
+html.minka-rad {
+  --rad-ink: 236,234,228;
+  --rad-night: 100,210,255;
+  --rad-day: 236,234,228;
+  --rad-rot: 245,183,63;
+}
+
+/* ---- residents: one compact list grouped by shift (calendar.js renderRadRoster) ---- */
+html.minka-rad #radiographers-duty.mk-rad-roster {
+  display: flex !important; flex-direction: column !important; gap: 10px !important;
+  overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none;
+}
+html.minka-rad #radiographers-duty.mk-rad-roster::-webkit-scrollbar { display: none; }
+html.minka-rad .mk-rad-grp { --acc: var(--rad-day); display: flex; flex-direction: column; gap: 2px; }
+html.minka-rad .mk-rad-grp.is-night { --acc: var(--rad-night); }
+html.minka-rad .mk-rad-grp.is-rot { --acc: var(--rad-rot); }
+html.minka-rad .mk-rad-grp-h {
+  display: flex; align-items: center; gap: 8px; margin: 0 0 4px; padding: 0 2px;
+  font: 600 11px/1 "Space Grotesk", Inter, system-ui, sans-serif; letter-spacing: .1em; text-transform: uppercase;
+  color: rgb(var(--acc));
+}
+html.minka-rad .mk-rad-grp-h b { font-weight: 600; font-variant-numeric: tabular-nums; opacity: .7; }
+/* dotted rule after the title */
+html.minka-rad .mk-rad-grp-h::after {
+  content: ""; flex: 1 1 auto; height: 1px;
+  background: linear-gradient(90deg, rgba(var(--acc), .55) 50%, transparent 0) 0 0/2px 1px repeat-x;
+}
+html.minka-rad .mk-rad-row {
+  display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; column-gap: 10px;
+  min-height: 40px; padding: 3px 6px 3px 3px; border-radius: 9px;
+  color: rgb(var(--rad-ink)); font: 500 13px/1.2 Inter, system-ui, sans-serif;
+}
+html.minka-rad .mk-rad-row:hover { background: conic-gradient(at 1px 1px, transparent 75%, rgba(var(--acc), .10) 0) 0 0/3px 3px; }
+/* initials in a dotted frame; the live shift gets a dot fill */
+html.minka-rad .mk-rad-av {
+  display: grid; place-items: center; width: 30px; height: 30px; box-sizing: border-box;
+  border: 2px solid transparent; border-radius: 8px;
+  background: linear-gradient(#07090d, #07090d) padding-box,
+              repeating-conic-gradient(rgba(var(--acc), .85) 0 25%, transparent 0 50%) 0 0/2px 2px border-box;
+  color: rgb(var(--acc)); font: 700 11px/1 "Space Grotesk", Inter, system-ui, sans-serif; letter-spacing: .02em;
+}
+html.minka-rad .mk-rad-row.is-live .mk-rad-av {
+  background: conic-gradient(at 1px 1px, transparent 75%, rgba(var(--acc), .45) 0) 0 0/2px 2px padding-box,
+              linear-gradient(#07090d, #07090d) padding-box,
+              linear-gradient(rgb(var(--acc)), rgb(var(--acc))) border-box;
+  color: rgb(var(--rad-ink));
+}
+/* first name, surname on its own line: whole names fit in the column */
+html.minka-rad .mk-rad-nm { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+html.minka-rad .mk-rad-nm :is(b, i) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html.minka-rad .mk-rad-nm b { font-weight: 600; }
+html.minka-rad .mk-rad-nm i { font-style: normal; font-size: 10.5px; letter-spacing: .04em; opacity: .55; }
+html.minka-rad .mk-rad-t { font: 500 12px/1 "Space Grotesk", Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums; color: rgba(var(--acc), .8); }
+html.minka-rad .mk-rad-row.is-done { opacity: .42; }
+
+/* ---- more dither around: dotted rules under the section labels ---- */
+html.minka-rad #grafiks-list .cards-role-rule {
+  height: 1px !important; border: 0 !important;
+  background: linear-gradient(90deg, rgba(var(--rad-ink), .45) 50%, transparent 0) 0 0/2px 1px repeat-x !important;
+}

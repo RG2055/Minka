@@ -3185,7 +3185,7 @@ function filterFullList(btn) {
     if (!nameEl) return;
     const strip = nameEl.closest('.mk-duty-strip');
     const list = strip && document.getElementById(strip.dataset.list || '');
-    const card = list && list.querySelector('.mk-side-card[data-worker="' + (window.CSS && CSS.escape ? CSS.escape(nameEl.dataset.w) : nameEl.dataset.w) + '"]');
+    const card = list && list.querySelector(':is(.mk-side-card,.mk-rad-row)[data-worker="' + (window.CSS && CSS.escape ? CSS.escape(nameEl.dataset.w) : nameEl.dataset.w) + '"]');
     if (!card) return;
     card.scrollIntoView({ behavior: 'smooth', block: 'center' });
     card.classList.add('mk-dchip-flash');
@@ -3479,6 +3479,44 @@ function filterFullList(btn) {
     container.innerHTML = cards.length ? cards.join('') : '<span class="mk-duty-empty">ATPŪTA</span>';
   }
 
+  /* /rad left column: residents are many (duties + rotation, up to ~15 on a
+     weekday), so one compact dither list grouped by shift instead of a card
+     each: everyone fits without scrolling. */
+  function renderRadRoster(container, workers, options) {
+    if (!container) return;
+    const groups = [
+      { key: 'night', title: 'Nakts', list: [] },
+      { key: 'day', title: 'Diena', list: [] },
+      { key: 'rot', title: 'Rotācija', list: [] }
+    ];
+    workers.forEach(worker => {
+      const type = getDutyShiftType(worker);
+      const g = worker.section === 'neatliekama_rotacija' ? groups[2] : (type === 'NAKTS' ? groups[0] : groups[1]);
+      g.list.push(worker);
+    });
+    const clock = t => String(t || '').replace(/^0(\d)/, '$1').replace(/:00$/, '');
+    const rows = g => g.list.map(worker => {
+      const name = String(worker.name || '').trim();
+      const parts = name.split(/\s+/).filter(Boolean);
+      const first = formatSideNamePart(parts[0], false);
+      const surname = formatSideNamePart(parts.slice(1).join(' '), true);
+      const initials = (parts[0]?.[0] || '') + (parts[1]?.[0] || '');
+      const ui = getWorkerUiState(worker, worker.date, options.now);
+      const live = options.isToday && isWorkerActive(worker, worker.date, options.now);
+      const start = getDutyStartTime(worker), end = getDutyEndTime(worker);
+      const time = start && end ? clock(start) + '–' + clock(end) : '';
+      return `<div class="mk-rad-row${live ? ' is-live' : ''}${options.isToday && ui.isDone ? ' is-done' : ''}" data-worker="${mkEscAttr(name)}">`
+        + `<span class="mk-rad-av" aria-hidden="true">${mkEscAttr(initials)}</span>`
+        + `<span class="mk-rad-nm"><b>${mkEscAttr(first)}</b>${surname ? `<i>${mkEscAttr(surname)}</i>` : ''}</span>`
+        + `<span class="mk-rad-t">${mkEscAttr(time)}</span></div>`;
+    }).join('');
+    const html = groups.filter(g => g.list.length).map(g =>
+      `<section class="mk-rad-grp is-${g.key}"><h4 class="mk-rad-grp-h"><span>${g.title}</span><b>${g.list.length}</b></h4>${rows(g)}</section>`
+    ).join('');
+    container.classList.add('mk-rad-roster');
+    container.innerHTML = html || '<span class="mk-duty-empty">ATPŪTA</span>';
+  }
+
   function g_updatePanelsForDate() {
     const isToday = (activeDateStr === g_todayStr);
     const now = g_now();
@@ -3493,7 +3531,8 @@ function filterFullList(btn) {
       let workersToShow = filterVisibleWorkers(getWorkersForDateWithDate(store, activeDateStr), isToday, now);
       renderDutyHeader('radiographers-shift-count', 'radiographers-duty', workersToShow, isToday, now, LEFT_ROLE.one, LEFT_ROLE.many);
 
-      renderSideDutyCards(radgContainer, workersToShow, {
+      if (IS_RAD) renderRadRoster(radgContainer, workersToShow, { isToday, now });
+      else renderSideDutyCards(radgContainer, workersToShow, {
         sourceStore: store,
         isToday,
         now,

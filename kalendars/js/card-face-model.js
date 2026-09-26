@@ -39,6 +39,9 @@
       imageX: bounded(value.imageX, 0, 100, 50), imageY: bounded(value.imageY, 0, 100, 50),
       imageZoom: bounded(value.imageZoom, 100, 180, 100), parts: {} };
     out.coffeeMode=bounded(value.coffeeMode,0,1,1);
+    // Chosen by the person (stored), or not: then the app's default applies,
+    // which is the coffee icon that opens into − / + (see effectiveCoffeeMode).
+    out.coffeeExplicit=value.coffeeExplicit&&out.coffeeMode===1?1:0;   // only "always − / +" needs the mark
     out.coffeeContrast=bounded(value.coffeeContrast,0,2,0);
     // Per-element colour overrides (empty = the shared glass tint) and the
     // iOS-style full tint strength (0 = off) that recolours the whole card.
@@ -73,7 +76,7 @@
   function pack(value) {
     var v = clean(value, true);
     var colored=parts.some(function (key) { return v.colors[key]; })||v.fullTintMode>0;
-    var extra=colored||v.coffeeMode!==1||v.coffeeContrast!==0;
+    var extra=colored||v.coffeeExplicit||v.coffeeMode!==1||v.coffeeContrast!==0;
     return [colored?4:extra?3:2, faces.indexOf(v.face), v.tint, v.metal, v.finish, v.imageX, v.imageY, v.imageZoom]
       .concat(parts.map(function (key) { return v.parts[key].join(','); }))
       .concat(extra?[v.coffeeMode,v.coffeeContrast]:[])
@@ -87,7 +90,9 @@
     if ((!legacy && !coffee && !colored && !(a.length===18&&a[0]==='2')) || !/^[0-5]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return null;
     if (!a.slice(3,8).every(function (n) { return /^\d{1,3}$/.test(n); })) return null;
     var value = { face: faces[+a[1]], tint: a[2], metal: +a[3], finish: +a[4], imageX: +a[5], imageY: +a[6], imageZoom: +a[7], parts: {} };
-    if(coffee||colored){if(!/^[01]$/.test(a[18])||!/^[0-2]$/.test(a[19]))return null;value.coffeeMode=+a[18];value.coffeeContrast=+a[19];}
+    if(coffee||colored){if(!/^[01]$/.test(a[18])||!/^[0-2]$/.test(a[19]))return null;value.coffeeMode=+a[18];value.coffeeContrast=+a[19];
+      // A stored coffee setting counts as chosen (colour-only looks store the default too).
+      value.coffeeExplicit=a[18]==='1'&&(coffee||a[19]!=='0')?1:0;}
     if(colored){
       var colors=a[20].split(',');
       var look=a[21].split(',');
@@ -134,5 +139,7 @@
     p[0]=Math.round(x);p[1]=Math.round(y);
     return p;
   }
-  root.MinkaCardFaceModel = { faces: faces, parts: parts, clean: clean, preset: preset, pack: pack, unpack: unpack, fitPart: fitPart, symbolPlacement: symbolPlacement, coffeeColors: coffeeColors };
+  // Coffee on a card: the person's own choice, otherwise the icon (0).
+  function effectiveCoffeeMode(v) { return v && v.coffeeExplicit ? v.coffeeMode : 0; }
+  root.MinkaCardFaceModel = { faces: faces, parts: parts, clean: clean, preset: preset, pack: pack, unpack: unpack, fitPart: fitPart, symbolPlacement: symbolPlacement, coffeeColors: coffeeColors, effectiveCoffeeMode: effectiveCoffeeMode };
 })(globalThis);

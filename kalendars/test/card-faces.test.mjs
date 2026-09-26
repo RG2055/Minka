@@ -110,7 +110,7 @@ test('v1 saved cards retain all existing elements and upgrade to an independent 
 test('coffee presentation and contrast survive API storage and legacy defaults', async () => {
   const request=fixture();
   for(const mode of [0,1])for(const contrast of [0,1,2]){
-    const face=M.preset('photo');face.coffeeMode=mode;face.coffeeContrast=contrast;
+    const face=M.preset('photo');face.coffeeMode=mode;face.coffeeContrast=contrast;face.coffeeExplicit=mode;
     face.parts.coffee=[34,27,120,1];
     const packed=M.pack(face);
     assert.deepEqual(M.unpack(packed),face);
@@ -122,6 +122,11 @@ test('coffee presentation and contrast survive API storage and legacy defaults',
   }
   const old=M.unpack(M.pack(M.preset('classic')));
   assert.equal(old.coffeeMode,1);assert.equal(old.coffeeContrast,0);
+  // Nobody chose: the coffee icon that opens into − / + is shown; a chosen
+  // "always − / +" is kept.
+  assert.equal(M.effectiveCoffeeMode(old),0);
+  const always=M.preset('classic');always.coffeeMode=1;always.coffeeExplicit=1;
+  assert.equal(M.effectiveCoffeeMode(M.unpack(M.pack(always))),1);
   const face=M.preset('photo');face.coffeeMode=0;
   for(const index of [18,19])for(const invalid of ['3','-1','true','url(x)']){
     const fields=M.pack(face).split('~');fields[index]=invalid;
