@@ -270,6 +270,10 @@
       '.mcal-grid.is-week .mcal-grp-h{display:block;}',
       '.mcal-rg .mcal-grp-h{color:var(--rg);}',
       '.mcal-rd .mcal-grp-h{color:var(--rd);}',
+      // /rad: residents teal, radiologists coral (as everywhere in /rad), and
+      // the group name shown in the month grid too, so it is plain who is who.
+      'html.minka-rad #mcal-overlay{--rg:#4dd0c8;--rd:#ff8f80;}',
+      'html.minka-rad .mcal-grp-h{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px;}',
       '.mcal-w{display:flex;align-items:baseline;gap:6px;min-width:0;white-space:nowrap;}',
       '.mcal-name{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--on);}',
       '.mcal-nf{font-weight:500;}',
@@ -619,8 +623,9 @@
       var bdNames = bday[dateStr.slice(0, 5)];
       var body = '';
       var rows = _viewMode === 'week' ? workerRows : monthRows;
-      if (rg.length) body += '<div class="mcal-grp mcal-rg"><div class="mcal-grp-h">' + LEFT + '</div>' + rows(rg) + '</div>';
-      if (rd.length) body += '<div class="mcal-grp mcal-rd"><div class="mcal-grp-h">Radiologi</div>' + rows(rd) + '</div>';
+      var rgHtml = rg.length ? '<div class="mcal-grp mcal-rg"><div class="mcal-grp-h">' + LEFT + '</div>' + rows(rg) + '</div>' : '';
+      var rdHtml = rd.length ? '<div class="mcal-grp mcal-rd"><div class="mcal-grp-h">Radiologi</div>' + rows(rd) + '</div>' : '';
+      body += IS_RAD ? rdHtml + rgHtml : rgHtml + rdHtml;      // /rad: radiologists first
       if (!body) body = '<div class="mcal-off">Nav maiņu</div>';
       var cls = 'mcal-cell' + (slot % 7 >= 5 ? ' is-weekend' : '')
         + (key === today ? ' is-today' : (today && key < today ? ' is-past' : ''));

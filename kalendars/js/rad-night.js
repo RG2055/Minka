@@ -74,6 +74,39 @@
     return '<section class="rn-group"><h3>' + label + '<small>00:00–08:00</small></h3><div class="rn-bar">' + bar + '</div><ol class="rn-rows">' + rows + '</ol></section>';
   }
 
+  // Walls: a thick dark band with a thin lit edge (the look of the
+  // radiographers' rooms), floors with faint planks, labels in small caps.
+  function planSvg() {
+    function room(x, y, w, h, rim, label, lx, ly) {
+      return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="10" class="rn-floor"/>'
+        + '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="10" class="rn-wall"/>'
+        + '<rect x="' + (x + 6) + '" y="' + (y + 6) + '" width="' + (w - 12) + '" height="' + (h - 12) + '" rx="6" class="rn-rim" stroke="' + rim + '"/>'
+        + (label ? '<text x="' + (lx == null ? x + 16 : lx) + '" y="' + (ly == null ? y + 26 : ly) + '" class="rn-label">' + label + '</text>' : '');
+    }
+    function door(x1, y1, x2, y2) { return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" class="rn-door"/>'; }
+    return '<svg class="rn-plan-svg" viewBox="0 0 1000 560" aria-hidden="true">'
+      + '<defs><pattern id="rnPlanks" width="1000" height="14" patternUnits="userSpaceOnUse"><rect width="1000" height="14" fill="#0e131b"/><line x1="0" y1="13.5" x2="1000" y2="13.5" stroke="#161d28" stroke-width="1"/></pattern></defs>'
+      // department (with the crowned bed)
+      + room(30, 20, 230, 175, '#f5b73f', 'NODAĻA')
+      // main room, kitchen along the top wall, coffee machine and fridge on the right
+      + room(30, 225, 330, 320, '#5ecbff', 'GALVENĀ ISTABA', 46, 530)
+      + '<rect x="70" y="244" width="232" height="30" rx="5" class="rn-counter-svg"/><text x="186" y="264" class="rn-label rn-mid">VIRTUVE</text>'
+      + '<rect x="318" y="246" width="26" height="26" rx="5" class="rn-appliance"/><text x="331" y="264" class="rn-icon">☕</text>'
+      + '<rect x="316" y="292" width="30" height="58" rx="5" class="rn-appliance"/><text x="331" y="326" class="rn-tiny rn-mid">LEDUS.</text>'
+      + door(292, 545, 350, 545)
+      // new admission unit
+      + room(420, 20, 150, 170, '#ff9fc4', 'REZ./RADIOL.', 434, 44)
+      + room(580, 20, 95, 260, '#9aa4b2', 'CT D.STAC.', 590, 44)
+      + room(685, 20, 205, 290, '#9aa4b2', 'CT PHILIPS', 700, 44)
+      + '<circle cx="788" cy="170" r="62" class="rn-gantry"/><circle cx="788" cy="170" r="30" class="rn-gantry-hole"/><rect x="778" y="170" width="20" height="110" rx="6" class="rn-table"/>'
+      + room(420, 200, 150, 70, '#9aa4b2', 'GAITENIS', 434, 242)
+      + room(580, 290, 95, 130, '#9aa4b2', '', 0, 0)
+      + room(900, 250, 90, 180, '#9aa4b2', 'RTG', 914, 274) + '<text x="914" y="292" class="rn-label">PHILIPS</text>'
+      + room(640, 425, 150, 125, '#9aa4b2', 'JAUNĀ UZŅ.', 654, 448)
+      + door(560, 150, 560, 185) + door(480, 190, 530, 190) + door(610, 280, 650, 280) + door(685, 290, 685, 330) + door(900, 330, 900, 380) + door(680, 425, 730, 425)
+      + '</svg>';
+  }
+
   function render() {
     var c = current();
     var everyone = c.rd.concat(c.rs);
@@ -93,18 +126,18 @@
         + '<span class="rn-pbed-who">' + (who ? esc(title(who).split(' ')[0]) : 'Brīva') + '</span>'
         + '<select data-rn-bed="' + key + '" aria-label="' + esc(b[1] + (b[2] ? ' ' + b[2] : '')) + '">' + options + '</select></div>';
     }
-    var beds = '<div class="rn-plans">'
-      + '<section class="rn-plan-wrap is-main"><h4>Galvenā istaba, virtuve</h4><div class="rn-plan rn-plan-main">'
-      +   '<img class="rn-plan-tray" src="assets/rooms/room-main-600.webp" alt="" draggable="false">'
-      +   '<span class="rn-furn rn-counter">virtuve</span><span class="rn-furn rn-coffee" title="Kafijas aparāts">☕</span><span class="rn-furn rn-fridge" title="Ledusskapis"></span>'
-      +   bed('virtuve1', 'is-left') + bed('virtuve2', 'is-bottom')
-      + '</div></section>'
-      + '<section class="rn-plan-wrap"><h4>Jaunā uzņemšana</h4><div class="rn-plan rn-plan-small">'
-      +   '<img class="rn-plan-tray" src="assets/rooms/room-nmp-320.webp" alt="" draggable="false">' + bed('uznemsana', 'is-center')
-      + '</div></section>'
-      + '<section class="rn-plan-wrap"><h4>Nodaļa</h4><div class="rn-plan rn-plan-small">'
-      +   '<img class="rn-plan-tray" src="assets/rooms/room-nmp-320.webp" alt="" draggable="false">' + bed('nodala', 'is-center', true)
-      + '</div></section>'
+    // The floor plan as it is (drawn after the department's own sketch):
+    // the department with the crowned bed, the main room with the kitchen,
+    // and the new admission unit with its CT/RTG rooms. Beds sit on top in
+    // viewBox percentages, so they stay in place at every size.
+    function at(x, y, w) { return 'left:' + (x / 10) + '%;top:' + (y / 5.6) + '%;width:' + (w / 10) + '%'; }
+    function placed(key, pose, x, y, w, crown) { return bed(key, pose, crown).replace('class="rn-pbed ' + pose, 'style="' + at(x, y, w) + '" class="rn-pbed ' + pose); }
+    var beds = '<div class="rn-map">' + planSvg()
+      + placed('nodala', 'is-up', 112, 58, 56, true)
+      + placed('virtuve1', 'is-up', 50, 318, 50)
+      + placed('virtuve2', 'is-side', 170, 420, 50)
+      + placed('uznemsana', 'is-up', 462, 60, 50)
+      + '<div class="rn-pbed is-up is-theirs" style="' + at(678, 440, 44) + '"><img src="assets/rooms/bed-neutral-256.webp" alt="" draggable="false"><span class="rn-pbed-who">radiogrāfers</span></div>'
       + '</div>';
     var date = c.date ? c.date.slice(0, 5) : '';
     content.innerHTML = '<div class="rn-wrap">'

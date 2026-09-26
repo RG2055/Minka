@@ -114,25 +114,30 @@ html.minka-rad .rn-move button {
 html.minka-rad .rn-move button:hover:not([disabled]) { background: rgba(var(--rn-ink), .16); }
 html.minka-rad .rn-move button:active:not([disabled]) { border-radius: 10px; }
 html.minka-rad .rn-move button[disabled] { opacity: .25; cursor: default; }
-/* rooms as a plan: the radiographers' room trays and bed pictures */
-html.minka-rad .rn-plans { display: grid; grid-template-columns: 2.2fr 1fr 1fr; gap: 14px; align-items: end; }
-@media (max-width: 760px) { html.minka-rad .rn-plans { grid-template-columns: 1fr 1fr; } html.minka-rad .rn-plan-wrap.is-main { grid-column: 1 / -1; } }
-html.minka-rad .rn-plan-wrap h4 { margin: 0 0 8px; font: 600 12px/1 "Space Grotesk", Inter, system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: rgba(var(--rn-ink), .8); }
-html.minka-rad .rn-plan { position: relative; }
-html.minka-rad .rn-plan-tray { display: block; width: 100%; height: auto; pointer-events: none; user-select: none; }
-html.minka-rad .rn-furn { position: absolute; pointer-events: none; color: rgba(var(--rn-ink), .6); font: 600 10px/1 "Space Grotesk", Inter, system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
-html.minka-rad .rn-counter { left: 13%; right: 16%; top: 19%; height: 8%; display: grid; place-items: center; border-radius: 4px;
-  background: conic-gradient(at 1px 1px, transparent 75%, rgba(var(--rn-ink), .35) 0) 0 0/3px 3px, rgba(var(--rn-ink), .06); box-shadow: inset 0 0 0 1px rgba(var(--rn-ink), .35); }
-html.minka-rad .rn-coffee { right: 9%; top: 20%; font-size: 16px; }
-html.minka-rad .rn-fridge { right: 8.5%; top: 34%; width: 7%; height: 20%; border-radius: 3px; background: rgba(var(--rn-ink), .08); box-shadow: inset 0 0 0 1px rgba(var(--rn-ink), .45); }
+/* the floor plan (js/rad-night.js planSvg) with the beds on top */
+html.minka-rad .rn-map { position: relative; width: 100%; aspect-ratio: 1000 / 560; }
+html.minka-rad .rn-plan-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+html.minka-rad .rn-plan-svg .rn-floor { fill: url(#rnPlanks); }
+html.minka-rad .rn-plan-svg .rn-wall { fill: none; stroke: #1b2330; stroke-width: 12; }
+html.minka-rad .rn-plan-svg .rn-rim { fill: none; stroke-width: 1.5; opacity: .55; }
+html.minka-rad .rn-plan-svg .rn-door { stroke: #0e131b; stroke-width: 14; }
+html.minka-rad .rn-plan-svg .rn-label { fill: rgba(236,234,228,.62); font: 600 13px "Space Grotesk", Inter, system-ui, sans-serif; letter-spacing: .08em; }
+html.minka-rad .rn-plan-svg .rn-mid { text-anchor: middle; }
+html.minka-rad .rn-plan-svg .rn-tiny { fill: rgba(236,234,228,.5); font: 600 9px "Space Grotesk", Inter, system-ui, sans-serif; }
+html.minka-rad .rn-plan-svg .rn-icon { font-size: 15px; text-anchor: middle; }
+html.minka-rad .rn-plan-svg .rn-counter-svg { fill: rgba(236,234,228,.07); stroke: rgba(236,234,228,.35); stroke-width: 1.5; }
+html.minka-rad .rn-plan-svg .rn-appliance { fill: rgba(236,234,228,.06); stroke: rgba(236,234,228,.4); stroke-width: 1.5; }
+html.minka-rad .rn-plan-svg .rn-gantry { fill: rgba(154,164,178,.08); stroke: rgba(154,164,178,.55); stroke-width: 3; }
+html.minka-rad .rn-plan-svg .rn-gantry-hole { fill: #0e131b; stroke: rgba(154,164,178,.4); stroke-width: 2; }
+html.minka-rad .rn-plan-svg .rn-table { fill: rgba(154,164,178,.18); stroke: rgba(154,164,178,.4); stroke-width: 1.5; }
+html.minka-rad .rn-pbed.is-theirs { pointer-events: none; opacity: .55; }
 html.minka-rad .rn-pbed { position: absolute; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
 html.minka-rad .rn-pbed img { display: block; width: 100%; height: auto; pointer-events: none; filter: drop-shadow(0 4px 6px rgba(0,0,0,.45)); transition: transform 180ms var(--mk-ease-effects, ease); }
 html.minka-rad .rn-pbed:not(.is-taken) img { opacity: .55; }
 html.minka-rad .rn-pbed.is-drop img { transform: scale(1.06); filter: drop-shadow(0 0 10px rgba(255,210,122,.9)); }
-html.minka-rad .rn-pbed.is-left { left: 10%; top: 30%; width: 13%; }
-html.minka-rad .rn-pbed.is-bottom { left: 46%; top: 54%; width: 13%; transform: rotate(-90deg); transform-origin: 50% 50%; }
-html.minka-rad .rn-pbed.is-bottom .rn-pbed-who { transform: rotate(90deg) translateX(46%); }
-html.minka-rad .rn-pbed.is-center { left: 34%; top: 22%; width: 32%; }
+html.minka-rad .rn-pbed.is-side img { transform: rotate(-90deg); }
+html.minka-rad .rn-pbed.is-side .rn-pbed-who { margin-top: -18%; }
+html.minka-rad .rn-pbed.is-side.is-drop img { transform: rotate(-90deg) scale(1.06); }
 html.minka-rad .rn-pbed-who { margin-top: 4px; padding: 2px 7px; border-radius: 7px; background: rgba(6,8,12,.85); color: rgb(var(--rn-ink)); font: 600 11px/1.2 Inter, system-ui, sans-serif; white-space: nowrap; }
 html.minka-rad .rn-pbed:not(.is-taken) .rn-pbed-who { opacity: .55; font-weight: 500; }
 html.minka-rad .rn-crown { position: absolute; top: -12px; right: -8px; font-size: 18px; }
@@ -142,3 +147,5 @@ html.minka-rad .rn-bed select {
   width: 100%; min-width: 0; height: 30px; padding: 0 8px; border: 0; border-radius: 9px;
   background: rgba(var(--rn-ink), .08); color: rgb(var(--rn-ink)); font: 500 13px/1 Inter, system-ui, sans-serif;
 }
+/* the /rad night content scrolls (the radiographers' panel scales its canvas instead) */
+html.minka-rad #nsOverlay #nsPanel #nsPanelContent { overflow-x: hidden !important; overflow-y: auto !important; overscroll-behavior: contain; scrollbar-width: thin; }
