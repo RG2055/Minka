@@ -3516,31 +3516,20 @@ function filterFullList(btn) {
       `<section class="mk-rad-grp is-${g.key}"><h4 class="mk-rad-grp-h"><span>${g.title}</span><b>${g.list.length}</b></h4>${rows(g)}</section>`
     ).join('');
     container.classList.add('mk-rad-roster');
-    container.innerHTML = (html || '<span class="mk-duty-empty">ATPŪTA</span>') + radPeekHtml(options);
-    if (!container.__radPeekBound) {
-      container.__radPeekBound = true;
-      container.addEventListener('click', e => {
-        if (!e.target.closest('[data-rad-peek-toggle]')) return;
-        radPeek.open = !radPeek.open;
-        try { localStorage.setItem(RAD_PEEK_KEY, radPeek.open ? '1' : '0'); } catch (_e) {}
-        if (radPeek.open) loadRadPeek();
-        g_updatePanelsForDate();
-      });
-    }
+    container.innerHTML = html || '<span class="mk-duty-empty">ATPŪTA</span>';
+    updateRadPeek(options);
   }
 
-  /* /rad: today's radiographers, read only, folded under the residents. The
-     radiographers' rota is fetched from /api/schedule only when the fold is
-     open and kept in memory; nothing of the radiographers' data is written
-     (no cache key, no plan, no mood). Rows carry no data-worker, so no card,
-     mood or night-plan code picks them up. */
-  const RAD_PEEK_KEY = 'minkaRadRgPeekV1';
-  const radPeek = { open: false, days: null, at: 0, loading: false, failed: false };
-  if (IS_RAD) { try { radPeek.open = localStorage.getItem(RAD_PEEK_KEY) === '1'; } catch (_e) {} }
+  /* /rad: the day's radiographers, read only, behind a small button next to
+     the residents' title. The radiographers' rota is fetched from
+     /api/schedule and kept in memory only; nothing of the radiographers'
+     data is written (no cache key, no plan, no mood). The rows carry no
+     data-worker, so no card, mood or night-plan code picks them up. */
+  const radPeek = { days: null, at: 0, loading: false, failed: false, btn: null, pop: null, options: null };
   function loadRadPeek() {
     if (!IS_RAD || radPeek.loading || (radPeek.days && Date.now() - radPeek.at < 10 * 60 * 1000)) return;
     radPeek.loading = true; radPeek.failed = false;
-    const req = window.MinkaApi ? window.MinkaApi.apiFetch('/api/schedule') : fetch(((window.MinkaApi && window.MinkaApi.base) || '') + '/api/schedule', { cache: 'no-store' });
+    const req = window.MinkaApi ? window.MinkaApi.apiFetch('/api/schedule') : fetch('/api/schedule', { cache: 'no-store' });
     Promise.resolve(req).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(d => {
       const days = {};
       Object.values((d && d.radiographers) || {}).forEach(list => (Array.isArray(list) ? list : []).forEach(day => {
@@ -3549,16 +3538,14 @@ function filterFullList(btn) {
       radPeek.days = days; radPeek.at = Date.now();
     }).catch(() => { radPeek.failed = true; }).then(() => {
       radPeek.loading = false;
-      if (radPeek.open) g_updatePanelsForDate();
+      updateRadPeek(radPeek.options);
     });
   }
-  function radPeekHtml(options) {
-    if (!IS_RAD) return '';
-    if (radPeek.open) loadRadPeek();
+  function radPeekRows(options) {
     const list = (radPeek.days && radPeek.days[activeDateStr]) || [];
     const clock = t => String(t || '').replace(/^0(\d)/, '$1').replace(/:00$/, '');
     const order = w => getDutyShiftType(w) === 'NAKTS' ? 1 : 0;
-    const rows = list.slice().sort((a, b) => order(a) - order(b) || String(getDutyStartTime(a)).localeCompare(String(getDutyStartTime(b)))).map(w => {
+    return list.slice().sort((a, b) => order(a) - order(b) || String(getDutyStartTime(a)).localeCompare(String(getDutyStartTime(b)))).map(w => {
       const parts = String(w.name).trim().split(/\s+/).filter(Boolean);
       const first = formatSideNamePart(parts[0], false), surname = formatSideNamePart(parts.slice(1).join(' '), true);
       const date = w.date || activeDateStr;
@@ -3566,20 +3553,84 @@ function filterFullList(btn) {
       const done = options.isToday && getWorkerUiState(w, date, options.now).isDone;
       const start = getDutyStartTime(w), end = getDutyEndTime(w);
       const night = getDutyShiftType(w) === 'NAKTS';
-      return `<div class="mk-rad-row is-peek${live ? ' is-live' : ''}${done ? ' is-done' : ''}">`
+      return `<div class="mk-rad-row is-peek${night ? ' is-night' : ''}${live ? ' is-live' : ''}${done ? ' is-done' : ''}">`
         + `<span class="mk-rad-av" aria-hidden="true">${mkEscAttr((parts[0]?.[0] || '') + (parts[1]?.[0] || ''))}</span>`
         + `<span class="mk-rad-nm"><b>${mkEscAttr(first)}</b>${surname ? `<i>${mkEscAttr(surname)}</i>` : ''}</span>`
         + `<span class="mk-rad-side"><span class="mk-rad-t">${mkEscAttr(start && end ? clock(start) + '–' + clock(end) : '')}</span>`
         + `<span class="mk-rad-kind">${night ? 'Nakts' : 'Diena'}</span></span></div>`;
-    }).join('');
-    const count = radPeek.days ? String(list.length) : '';
-    const body = !radPeek.open ? ''
-      : radPeek.days ? (rows || '<span class="mk-rad-peek-note">Šajā dienā nav</span>')
+    });
+  }
+  function closeRadPeek() {
+    const pop = radPeek.pop;
+    if (!pop) return;
+    radPeek.pop = null;
+    if (radPeek.btn) radPeek.btn.setAttribute('aria-expanded', 'false');
+    const MM = window.MinkaMotion;
+    if (MM && MM.closeSurface) MM.closeSurface(pop, { key: 'rad-rg-peek', origin: radPeek.btn }, () => pop.remove());
+    else pop.remove();
+  }
+  function placeRadPeek() {
+    const pop = radPeek.pop, btn = radPeek.btn;
+    if (!pop || !btn) return;
+    const r = btn.getBoundingClientRect();
+    const w = Math.min(280, window.innerWidth - 16);
+    pop.style.width = w + 'px';
+    pop.style.left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8)) + 'px';
+    pop.style.top = (r.bottom + 8) + 'px';
+    pop.style.maxHeight = Math.max(160, window.innerHeight - r.bottom - 24) + 'px';
+  }
+  function fillRadPeek() {
+    const pop = radPeek.pop;
+    if (!pop) return;
+    const rows = radPeek.days ? radPeekRows(radPeek.options || { isToday: false, now: g_now() }) : [];
+    const body = radPeek.days ? (rows.join('') || '<span class="mk-rad-peek-note">Šajā dienā nav</span>')
       : `<span class="mk-rad-peek-note">${radPeek.failed ? 'Neizdevās ielādēt' : 'Ielādē…'}</span>`;
-    return `<section class="mk-rad-grp is-peek${radPeek.open ? ' is-open' : ''}">`
-      + `<button type="button" class="mk-rad-grp-h mk-rad-peek-h" data-rad-peek-toggle aria-expanded="${radPeek.open}">`
-      + `<span>Radiogrāferi</span>${count ? `<b>${count}</b>` : ''}<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button>`
-      + body + `</section>`;
+    pop.innerHTML = `<h4 class="mk-rad-grp-h"><span>Radiogrāferi</span><b>${mkEscAttr(activeDateStr.slice(0, 5))}</b></h4>` + body;
+  }
+  function toggleRadPeek() {
+    if (radPeek.pop) { closeRadPeek(); return; }
+    loadRadPeek();
+    const pop = document.createElement('div');
+    pop.className = 'mk-rad-peek-pop';
+    pop.setAttribute('role', 'dialog');
+    pop.setAttribute('aria-label', 'Radiogrāferi');
+    radPeek.pop = pop;
+    fillRadPeek();
+    document.body.appendChild(pop);
+    placeRadPeek();
+    radPeek.btn.setAttribute('aria-expanded', 'true');
+    const MM = window.MinkaMotion;
+    if (MM && MM.openSurface) MM.openSurface(pop, { key: 'rad-rg-peek', origin: radPeek.btn });
+  }
+  function updateRadPeek(options) {
+    if (!IS_RAD) return;
+    if (options) radPeek.options = options;
+    if (!radPeek.btn) {
+      const title = document.querySelector('.status-tag.radiographers .mk-role-title');
+      if (!title) return;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'mk-rad-peek-btn';
+      btn.title = 'Radiogrāferi';
+      btn.setAttribute('aria-label', 'Radiogrāferi');
+      btn.setAttribute('aria-haspopup', 'dialog');
+      btn.setAttribute('aria-expanded', 'false');
+      btn.innerHTML = '<i class="mk-rad-peek-ico" aria-hidden="true"></i><b></b>';
+      btn.addEventListener('click', e => { e.stopPropagation(); toggleRadPeek(); });
+      title.appendChild(btn);
+      radPeek.btn = btn;
+      document.addEventListener('pointerdown', e => {
+        if (radPeek.pop && !radPeek.pop.contains(e.target) && !radPeek.btn.contains(e.target)) closeRadPeek();
+      }, true);
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') closeRadPeek(); });
+      window.addEventListener('resize', placeRadPeek);
+      loadRadPeek();
+    }
+    const n = radPeek.days ? ((radPeek.days[activeDateStr] || []).length) : '';
+    const b = radPeek.btn.querySelector('b');
+    if (b && b.textContent !== String(n)) b.textContent = String(n);
+    radPeek.btn.title = radPeek.days ? 'Radiogrāferi: ' + n : 'Radiogrāferi';
+    fillRadPeek();
   }
 
   function g_updatePanelsForDate() {
