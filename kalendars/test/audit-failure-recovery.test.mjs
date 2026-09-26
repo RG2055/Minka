@@ -99,14 +99,18 @@ test('main API accepts valid login and rejects incorrect, malformed, empty and o
   const r=await worker.fetch(new Request('https://fixture/api/login',{method:'POST',body}),{APP_PASSWORD:'fixture'},{});assert.equal(r.status,status);assert.equal((await r.json()).ok,status===200);
  }
 });
-test('emoji API write, paginated read and deletion round trip with isolated KV',async()=>{
- const map=new Map([['ns::08.09.2026','private plan'],['skin-art::fixture','binary']]);
- const env={APP_PASSWORD:'fixture',MINKA_EMOJI:{put:async(k,v)=>map.set(k,v),delete:async k=>map.delete(k),get:async k=>map.get(k),list:async({cursor}={})=>{const n=Number(cursor)||0,keys=[...map.keys()].slice(n,n+1).map(name=>({name}));return {keys,list_complete:n+1>=map.size,cursor:n+1<map.size?String(n+1):undefined};}}};
- const call=(method,body,auth=true)=>worker.fetch(new Request('https://fixture/api/emoji',{method,headers:auth?{authorization:'Bearer fixture'}:{},...(body?{body:JSON.stringify(body)}:{})}),env,{});
+test('emoji API write, read and deletion round trip in D1 with a KV mirror',async()=>{
+ const rows=new Map(),kv=new Map([['ns::08.09.2026','private plan']]),pending=[];
+ const db={prepare(sql){let args=[];return{bind(...v){args=v;return this;},async all(){return{results:[...rows].map(([worker,emoji])=>({worker,emoji}))};},async first(){return rows.has(args[0])?{emoji:rows.get(args[0])}:null;},async run(){if(/^\s*DELETE/.test(sql))rows.delete(args[0]);else rows.set(args[0],args[1]);return{};}};}};
+ const env={APP_PASSWORD:'fixture',DB:db,MINKA_EMOJI:{put:async(k,v)=>kv.set(k,v),delete:async k=>kv.delete(k)}};
+ const ctx={waitUntil:p=>pending.push(p)};
+ const call=(method,body,auth=true)=>worker.fetch(new Request('https://fixture/api/emoji',{method,headers:auth?{authorization:'Bearer fixture'}:{},...(body?{body:JSON.stringify(body)}:{})}),env,ctx);
  assert.equal((await call('GET',null,false)).status,401);
  for(const name of ['TEST ĀNA','__proto__','constructor'])assert.equal((await call('POST',{worker:name,emoji:'🐱'})).status,200);
  let data=await(await call('GET')).json();assert.equal(data['TEST ĀNA'],'🐱');assert.equal(data.__proto__,'🐱');assert.equal(data['ns::08.09.2026'],undefined);
+ await Promise.all(pending);assert.equal(kv.get('TEST ĀNA'),'🐱');
  assert.equal((await call('POST',{worker:'TEST ĀNA',emoji:null})).status,200);data=await(await call('GET')).json();assert.equal(data['TEST ĀNA'],undefined);assert.equal(data.constructor,'🐱');
+ await Promise.all(pending);assert.equal(kv.has('TEST ĀNA'),false);assert.equal(kv.get('ns::08.09.2026'),'private plan');
 });
 test('emoji selection and removal update the visible card badge without a roster reload',()=>{
  const glyph={textContent:'AT'},classes=new Set(['is-initials']),attrs={};

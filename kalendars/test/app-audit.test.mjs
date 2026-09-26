@@ -235,19 +235,26 @@ for (const path of ['cloudflare/minka-api/src/index.js', 'cloudflare/coffee-api/
 }
 
 const api = (await import(new URL('cloudflare/minka-api/src/index.js', root))).default;
-test('emoji API follows KV pages and skips internal plans without reading their bodies', async () => {
-  const reads = [], cursors = [];
-  const env = { APP_PASSWORD: 'test', MINKA_EMOJI: {
-    async list(options) {
-      cursors.push(options.cursor);
-      return options.cursor ? { keys: [{ name: 'Worker Two' }], list_complete: true }
-        : { keys: ['Worker One', 'ns::07.09.2026', 'nsrooms::07.09.2026', 'skin-art::test'].map(name => ({ name })), list_complete: false, cursor: 'page2' };
-    }, async get(name) { reads.push(name); return '🐱'; }
+// A minimal D1 stand-in for the emoji_store statements the worker runs.
+function emojiD1(rows = new Map()) {
+  const queries = [];
+  return { rows, queries, prepare(sql) {
+    queries.push(sql.replace(/\s+/g, ' ').trim());
+    let args = [];
+    return {
+      bind(...values) { args = values; return this; },
+      async all() { return { results: [...rows].map(([worker, emoji]) => ({ worker, emoji })) }; },
+      async first() { return rows.has(args[0]) ? { emoji: rows.get(args[0]) } : null; },
+      async run() { if (/^DELETE/.test(sql.trim())) rows.delete(args[0]); else rows.set(args[0], args[1]); return {}; }
+    };
   } };
-  const response = await api.fetch(new Request('https://local.test/api/emoji', { headers: { authorization: 'Bearer test' } }), env, {});
-  assert.deepEqual(await response.json(), { 'Worker One': '🐱', 'Worker Two': '🐱' });
-  assert.deepEqual(reads, ['Worker One', 'Worker Two']);
-  assert.deepEqual(cursors, [undefined, 'page2']);
+}
+test('emoji API reads every emoji with one D1 query and never lists KV', async () => {
+  const db = emojiD1(new Map([['Worker One', '🐱'], ['Worker Two', '🦊'], ['bad<name', '🐱']]));
+  const kv = { async list() { throw new Error('KV list must not run'); }, async get() { throw new Error('KV get must not run'); } };
+  const response = await api.fetch(new Request('https://local.test/api/emoji', { headers: { authorization: 'Bearer test' } }), { APP_PASSWORD: 'test', DB: db, MINKA_EMOJI: kv }, {});
+  assert.deepEqual(await response.json(), { 'Worker One': '🐱', 'Worker Two': '🦊' });
+  assert.deepEqual(db.queries, ['SELECT worker, emoji FROM emoji_store']);
 });
 
 test('login fails closed when the password binding is absent or empty', async () => {

@@ -54,6 +54,14 @@ function cleanDate(value) {
   return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day ? s : '';
 }
 
+function cleanMonth(value) {
+  const match = String(value || '').trim().match(/^(\d{2})\.(\d{4})$/);
+  if (!match) return '';
+  const month = Number(match[1]);
+  const year = Number(match[2]);
+  return month >= 1 && month <= 12 && year >= 2020 && year <= 2100 ? match[1] + '.' + match[2] : '';
+}
+
 function cleanWorker(value) {
   const worker = String(value || '').trim().replace(/\s+/g, ' ');
   if (!worker || worker.length > 64 || /[<>&"'`\\\u0000-\u001f\u007f]/.test(worker)) return '';
@@ -139,6 +147,25 @@ async function readCoffeeEvents(env, whereSql, binds) {
   }
 }
 
+async function readCoffeeEventsByDay(env, pattern) {
+  try {
+    const rows = await env.COFFEE_DB
+      .prepare(`
+        SELECT date, worker, source,
+          SUM(delta) AS total,
+          SUM(CASE WHEN delta > 0 THEN price_cents ELSE 0 END) AS spend_cents
+        FROM coffee_events
+        WHERE date LIKE ?1 AND source IS NOT NULL AND source <> '' AND source <> 'adjustment'
+        GROUP BY date, worker, source
+      `)
+      .bind(pattern)
+      .all();
+    return rows.results || [];
+  } catch (_e) {
+    return [];
+  }
+}
+
 export default {
   async fetch(request, env) {
     if (request.method === 'OPTIONS') {
@@ -180,6 +207,39 @@ export default {
           if (detailed < totals[worker]) d.sources.philips += totals[worker] - detailed;
         });
         return json({ ok: true, totals, details });
+      }
+
+      // Every day of one month in a single reply, so the month line and stats
+      // read the same numbers as the database instead of stitching together
+      // whichever days a device happened to cache (and never refreshing them).
+      const month = cleanMonth(url.searchParams.get('month'));
+      if (month) {
+        const pattern = '__.' + month;
+        const rows = await env.COFFEE_DB
+          .prepare('SELECT date, worker, count FROM coffee_counts WHERE date LIKE ?1')
+          .bind(pattern)
+          .all();
+        const days = Object.create(null);
+        const day = (date) => days[date] || (days[date] = { counts: Object.create(null), details: Object.create(null) });
+        for (const row of rows.results || []) {
+          day(row.date).counts[row.worker] = Math.max(0, Number(row.count) || 0);
+        }
+        const eventRows = await readCoffeeEventsByDay(env, pattern);
+        for (const row of eventRows) {
+          if (!days[row.date]) continue;
+          const d = ensureDetail(days[row.date].details, row.worker);
+          d.sources[cleanSource(row.source)] = (d.sources[cleanSource(row.source)] || 0) + Math.max(0, Number(row.total) || 0);
+          d.spendCents += Math.max(0, Number(row.spend_cents) || 0);
+        }
+        for (const date of Object.keys(days)) {
+          const { counts, details } = days[date];
+          Object.keys(counts).forEach(worker => {
+            const d = ensureDetail(details, worker);
+            const detailed = Object.values(d.sources).reduce((a, b) => a + (Number(b) || 0), 0);
+            if (detailed < counts[worker]) d.sources.philips += counts[worker] - detailed;
+          });
+        }
+        return json({ ok: true, month, days });
       }
 
       const date = cleanDate(url.searchParams.get('date'));

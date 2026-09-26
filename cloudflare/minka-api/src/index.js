@@ -401,27 +401,22 @@ const worker = {
       return json(request, { ok: true });
     }
 
+    // Emoji live in D1 (one query, read-your-write) instead of one KV read per
+    // person plus a list() on every poll. KV keeps a mirror of each write so a
+    // rollback to the old worker still finds every emoji.
     if (url.pathname === "/api/emoji" && method === "GET") {
       const worker = cleanEmojiWorker(url.searchParams.get("worker"));
       if (worker) {
-        const one = await env.MINKA_EMOJI.get(worker);
-        return json(request, { worker, emoji: cleanEmojiValue(one) || null });
+        const one = await env.DB.prepare("SELECT emoji FROM emoji_store WHERE worker = ?1").bind(worker).first();
+        return json(request, { worker, emoji: cleanEmojiValue(one && one.emoji) || null });
       }
+      const rows = await env.DB.prepare("SELECT worker, emoji FROM emoji_store").all();
       const out = Object.create(null);
-      let cursor;
-      do {
-        const list = await env.MINKA_EMOJI.list(cursor ? { cursor } : {});
-        const emojiKeys = list.keys.filter((key) => !/^(?:skins:|skin-art::|bed-care:|ns::|nsrooms::)/.test(key.name));
-        const emojiEntries = await Promise.all(emojiKeys.map(async (key) => {
-          const name = cleanEmojiWorker(key.name);
-          const emoji = cleanEmojiValue(await env.MINKA_EMOJI.get(key.name));
-          return name && emoji ? [name, emoji] : null;
-        }));
-        for (const entry of emojiEntries) {
-          if (entry) out[entry[0]] = entry[1];
-        }
-        cursor = list.list_complete === false ? list.cursor : undefined;
-      } while (cursor);
+      for (const row of rows.results || []) {
+        const name = cleanEmojiWorker(row.worker);
+        const emoji = cleanEmojiValue(row.emoji);
+        if (name && emoji) out[name] = emoji;
+      }
       return json(request, out);
     }
 
@@ -436,10 +431,15 @@ const worker = {
         return json(request, { ok: false, error: "invalid emoji" }, 400);
       }
       if (!emoji) {
-        await env.MINKA_EMOJI.delete(worker);
+        await env.DB.prepare("DELETE FROM emoji_store WHERE worker = ?1").bind(worker).run();
+        ctx.waitUntil(env.MINKA_EMOJI.delete(worker));
         return json(request, { ok: true, removed: true });
       }
-      await env.MINKA_EMOJI.put(worker, emoji);
+      await env.DB.prepare(`
+        INSERT INTO emoji_store (worker, emoji, updated_at) VALUES (?1, ?2, CURRENT_TIMESTAMP)
+        ON CONFLICT(worker) DO UPDATE SET emoji = excluded.emoji, updated_at = excluded.updated_at
+      `).bind(worker, emoji).run();
+      ctx.waitUntil(env.MINKA_EMOJI.put(worker, emoji));
       return json(request, { ok: true });
     }
 
@@ -719,7 +719,11 @@ function cors(request) {
   return {
     "access-control-allow-origin": origin,
     "access-control-allow-methods": "GET,POST,OPTIONS",
-    "access-control-allow-headers": "content-type, authorization"
+    "access-control-allow-headers": "content-type, authorization",
+    // Without this the browser re-sends the OPTIONS preflight before nearly
+    // every authorised call, which was half of this worker's traffic.
+    "access-control-max-age": "86400",
+    "vary": "Origin"
   };
 }
 

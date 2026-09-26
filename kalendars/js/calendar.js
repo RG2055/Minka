@@ -851,6 +851,53 @@ function filterFullList(btn) {
   });
 }
 
+// One spelling for names in this device's coffee store. The coffee API keys
+// people by the schedule's spelling (upper case) and the calendar by lower
+// case; a day that held both counted the same person twice. Every writer goes
+// through key()/counts()/details(), and whatever an older build left behind is
+// folded once here, before any card, month line or stats panel reads it.
+(function initMinkaCoffeeStore() {
+  var COUNTS_KEY = 'minkaCoffeeCountsV1', DETAILS_KEY = 'minkaCoffeeDetailsV1';
+  function key(name) {
+    return String(name || '').normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('lv-LV');
+  }
+  function cups(detail) {
+    var sources = (detail && detail.sources) || {}, total = 0;
+    Object.keys(sources).forEach(function (k) { total += Math.max(0, Number(sources[k]) || 0); });
+    return total;
+  }
+  // Two spellings of one person are two copies of the same server row, so the
+  // larger one is kept rather than added.
+  function fold(map, larger) {
+    var out = {};
+    Object.keys(map && typeof map === 'object' ? map : {}).forEach(function (name) {
+      var k = key(name);
+      if (!k) return;
+      if (!Object.prototype.hasOwnProperty.call(out, k) || larger(map[name], out[k])) out[k] = map[name];
+    });
+    return out;
+  }
+  function counts(map) {
+    var out = fold(map, function (a, b) { return (Number(a) || 0) > (Number(b) || 0); });
+    Object.keys(out).forEach(function (k) { out[k] = Math.max(0, Math.min(999, Number(out[k]) || 0)); });
+    return out;
+  }
+  function details(map) { return fold(map, function (a, b) { return cups(a) > cups(b); }); }
+  function migrate(storageKey, foldDay) {
+    try {
+      var all = JSON.parse(localStorage.getItem(storageKey) || '{}') || {}, changed = false;
+      Object.keys(all).forEach(function (day) {
+        var before = all[day], after = foldDay(before);
+        if (JSON.stringify(after) !== JSON.stringify(before)) { all[day] = after; changed = true; }
+      });
+      if (changed) localStorage.setItem(storageKey, JSON.stringify(all));
+    } catch (_e) {}
+  }
+  migrate(COUNTS_KEY, counts);
+  migrate(DETAILS_KEY, details);
+  window.MinkaCoffeeStore = { key: key, counts: counts, details: details };
+})();
+
 // ------------------------------------------------------------
 //  GRAFIKS – full logic (shortened for brevity, but identical to previous)
 // ------------------------------------------------------------
@@ -5285,7 +5332,8 @@ function filterFullList(btn) {
     }
 
     function getCoffeePersonKey(name) {
-      return String(name || '').trim().toLocaleLowerCase('lv-LV');
+      const store = window.MinkaCoffeeStore;
+      return store ? store.key(name) : String(name || '').normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('lv-LV');
     }
 
     const COFFEE_SOURCE_ALIASES = {

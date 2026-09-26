@@ -213,11 +213,14 @@
             if (!r.ok) throw new Error();
             var value = await r.json();
             if (!value || !value.ok) throw new Error();
+            // Same lower-case spelling the calendar writes (MinkaCoffeeStore),
+            // otherwise the calendar's next poll adds a second copy of a person.
+            var C = window.MinkaCoffeeStore;
             var store = readJson(COFFEE_KEY);
-            store[date] = value.counts || {};
+            store[date] = C ? C.counts(value.counts) : (value.counts || {});
             writeJson(COFFEE_KEY, store);
             var details = readJson(COFFEE_DETAILS_KEY);
-            details[date] = value.details || {};
+            details[date] = C ? C.details(value.details) : (value.details || {});
             writeJson(COFFEE_DETAILS_KEY, details);
             coffee.loaded[day] = true;
             delete coffee.failed[day];

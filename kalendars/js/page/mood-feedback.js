@@ -415,12 +415,35 @@
       .catch(function () { monthRadio.at = Date.now(); monthRadio.key = range.from; })
       .then(function () { monthRadio.busy = false; });
   }
-  // Past days of this month the coffee store does not have yet, fetched once
-  // per page load, two at a time, while the page is idle.
+  // Past days of this month come from the coffee API in one request, replacing
+  // what this device cached earlier (a day cached mid-shift used to stay short
+  // forever). Today stays with the calendar, which polls and posts it live.
+  // An older worker without ?month= falls back to the per-day fill below.
   var monthCoffeeTried = {};
   function monthCoffeeFill(range, today) {
-    var M = window.MinkaDaybookModel;
+    var M = window.MinkaDaybookModel, C = window.MinkaCoffeeStore;
     var base = String(window.MINKA_COFFEE_API_BASE || 'https://minka-coffee-api.gamernr1elite.workers.dev').replace(/\/+$/, '');
+    if (!M || !C) return;
+    var ym = range.from.slice(5, 7) + '.' + range.from.slice(0, 4);
+    fetch(base + '/api/coffee?month=' + ym, { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (v) {
+        if (!v || !v.ok || v.month !== ym || !v.days) return monthCoffeeFillDays(range, today, base);
+        var all = readJson('minkaCoffeeCountsV1', {}), det = readJson('minkaCoffeeDetailsV1', {});
+        for (var d = new Date(range.from + 'T12:00:00Z'); d.toISOString().slice(0, 10) < today; d.setUTCDate(d.getUTCDate() + 1)) {
+          var iso = d.toISOString().slice(0, 10), key = iso.slice(8) + '.' + iso.slice(5, 7) + '.' + iso.slice(0, 4);
+          var day = v.days[key] || { counts: {}, details: {} };
+          all[key] = C.counts(day.counts);
+          det[key] = C.details(day.details);
+        }
+        writeJson('minkaCoffeeCountsV1', all);
+        writeJson('minkaCoffeeDetailsV1', det);
+        paintMonth(true);
+      })
+      .catch(function () {});
+  }
+  function monthCoffeeFillDays(range, today, base) {
+    var M = window.MinkaDaybookModel, C = window.MinkaCoffeeStore;
     var store = readJson('minkaCoffeeCountsV1', {});
     var todo = [];
     for (var d = new Date(range.from + 'T12:00:00Z'); d.toISOString().slice(0, 10) < today; d.setUTCDate(d.getUTCDate() + 1)) {
@@ -435,8 +458,8 @@
       var key = todo[i++];
       return fetch(base + '/api/coffee?date=' + key, { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (v) {
         if (!v || !v.ok) return;
-        var all = readJson('minkaCoffeeCountsV1', {}); all[key] = v.counts || {}; writeJson('minkaCoffeeCountsV1', all);
-        var det = readJson('minkaCoffeeDetailsV1', {}); det[key] = v.details || {}; writeJson('minkaCoffeeDetailsV1', det);
+        var all = readJson('minkaCoffeeCountsV1', {}); all[key] = C.counts(v.counts); writeJson('minkaCoffeeCountsV1', all);
+        var det = readJson('minkaCoffeeDetailsV1', {}); det[key] = C.details(v.details); writeJson('minkaCoffeeDetailsV1', det);
       }).catch(function () {}).then(next);
     }
     Promise.all([next(), next()]).then(function () { paintMonth(true); });
@@ -476,7 +499,7 @@
     var top = Object.keys(stations).map(function (k) { return stations[k]; }).sort(function (a, b) { return b.days - a.days; })[0] || null;
     return { range: range, today: today, cups: cups, drinkers: Object.keys(people).length, stations: Object.keys(stations).length, top: top, bolus: bolus, ge: ge, philips: bolus - ge };
   }
-  var monthFillQueued = false, monthMemo = null;
+  var monthFillAt = 0, monthMemo = null;
   // Called on every mood repaint (day switches too): the stores are parsed at
   // most every few seconds; fresh data passes fresh=true.
   function paintMonth(fresh) {
@@ -504,8 +527,10 @@
     var share = n.bolus ? (n.ge / n.bolus).toFixed(3) : '0.5';
     set('bolus', n.bolus, 'bolusa maiņas', n.bolus ? '<i class="rg-month-split" style="--ge:' + share + '" aria-hidden="true"></i><em>GE ' + n.ge + '</em><em>Ph ' + n.philips + '</em>' : '', 'Šomēnes ' + n.bolus + ' bolusa maiņas: GE ' + n.ge + ', Philips ' + n.philips + '. Atvērt statistiku');
     monthRadioFetch(n.range);
-    if (!monthFillQueued) {
-      monthFillQueued = true;
+    // Past days rarely change, but corrections from another device should
+    // still arrive: one month request per page load, then every 15 minutes.
+    if (!monthFillAt || Date.now() - monthFillAt > 15 * 60000) {
+      monthFillAt = Date.now();
       var go = function () { monthCoffeeFill(n.range, n.today); };
       if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 8000 }); else setTimeout(go, 4000);
     }
