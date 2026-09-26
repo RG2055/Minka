@@ -45,6 +45,7 @@
   const forecastCache = new Map();
   const scenarioCache = new Map();
   const sleepCache = new Map();
+  const seriesCache = new Map();
   let habitRaw = null;
   let nightPlanRaw = null;
   let nightPlans = {};
@@ -59,6 +60,7 @@
     forecastCache.clear();
     scenarioCache.clear();
     sleepCache.clear();
+    seriesCache.clear();
     cachedGrafiksStore = window.__grafiksStore || null;
     cachedGrafiksStoreRad = window.__grafiksStoreRad || null;
   }
@@ -78,6 +80,7 @@
         forecastCache.clear();
       scenarioCache.clear();
       sleepCache.clear();
+      seriesCache.clear();
     }
     const nextGrafiks = window.__grafiksStore || null;
     const nextRadiologists = window.__grafiksStoreRad || null;
@@ -360,6 +363,25 @@
     return out;
   }
 
+  // Radiographer roster per normalized date, in store order. Night windows and
+  // habit priors ask for one date many times per timeline; scanning the whole
+  // store each time dominated the fatigue cost.
+  let dayIndex = null, dayIndexStore = null;
+  function workersOn(dateStr) {
+    const store = window.__grafiksStore || null;
+    if (!dayIndex || dayIndexStore !== store) {
+      dayIndex = new Map(); dayIndexStore = store;
+      for (const days of Object.values(store || {})) {
+        for (const day of Array.isArray(days) ? days : []) {
+          const key = normalizeDateStr(day.date);
+          if (!dayIndex.has(key)) dayIndex.set(key, []);
+          dayIndex.get(key).push(...(day.workers || []));
+        }
+      }
+    }
+    return dayIndex.get(dateStr) || [];
+  }
+
   function savedNightWindow(entry, workerName, saved) {
     if (!saved || !Array.isArray(saved.order) || saved.order.length < 2 || saved.order.length > 8) return null;
     const order = saved.order;
@@ -368,16 +390,11 @@
     // Match the persisted team against this roster, never infer rest from a
     // dynamically fatigue-sorted default or a stale three/four-person plan.
     const team = new Map();
-    for (const days of Object.values(window.__grafiksStore || {})) {
-      for (const day of Array.isArray(days) ? days : []) {
-        if (normalizeDateStr(day.date) !== entry.dateStr) continue;
-        for (const w of day.workers || []) {
-          const hrs = shiftHours(w.shift);
-          const type = String(w.type || '').toUpperCase();
-          const startHour = w.startTime ? parseInt(w.startTime,10) : -1;
-          if (hrs >= 12 && (hrs >= 24 || type === 'NAKTS' || type === 'DIENNAKTS' || startHour >= 18 || startHour >= 0 && startHour <= 5 || startHour === -1)) team.set(w.name,w);
-        }
-      }
+    for (const w of workersOn(entry.dateStr)) {
+      const hrs = shiftHours(w.shift);
+      const type = String(w.type || '').toUpperCase();
+      const startHour = w.startTime ? parseInt(w.startTime,10) : -1;
+      if (hrs >= 12 && (hrs >= 24 || type === 'NAKTS' || type === 'DIENNAKTS' || startHour >= 18 || startHour >= 0 && startHour <= 5 || startHour === -1)) team.set(w.name,w);
     }
     if (team.size !== order.length || order.some(name => !team.has(name))) return null;
     const start = new Date(entry.date);
@@ -419,15 +436,12 @@
       const iv=getShiftStartEnd(entry);
       if(+iv.end>+cutoff||+iv.end<+cutoff-42*24*HOUR||nightPlans[entry.dateStr])continue;
       const team=new Set();
-      for(const days of Object.values(window.__grafiksStore||{}))for(const day of Array.isArray(days)?days:[]){
-        if(normalizeDateStr(day.date)!==entry.dateStr)continue;
-        for(const w of day.workers||[]){
-          const hours=shiftHours(w.shift);
-          const candidate=getShiftStartEnd({...w,date:entry.date,hours,isNight:isNightShift(w.type,w.shift,w.startTime)});
-          const a=new Date(entry.date);a.setDate(a.getDate()+1);a.setHours(0,0,0,0);
-          const b=new Date(a);b.setHours(7,20,0,0);
-          if(hours>=12&&candidate.start<=a&&candidate.end>=b)team.add(w.name);
-        }
+      for(const w of workersOn(entry.dateStr)){
+        const hours=shiftHours(w.shift);
+        const candidate=getShiftStartEnd({...w,date:entry.date,hours,isNight:isNightShift(w.type,w.shift,w.startTime)});
+        const a=new Date(entry.date);a.setDate(a.getDate()+1);a.setHours(0,0,0,0);
+        const b=new Date(a);b.setHours(7,20,0,0);
+        if(hours>=12&&candidate.start<=a&&candidate.end>=b)team.add(w.name);
       }
       if(![3,4].includes(team.size)||!team.has(workerName))continue;
       const order=[...team].sort();
@@ -466,10 +480,12 @@
     if(inferred){
       const variants=inferred.weights.map((weight,habitVariant)=>({weight,model:sleepTimeline(history,workerName,now,{...settings,habitVariant,habitPlans:inferred.plans},scenario)}));
       const exemplar=variants[0].model;
+      // Plan end times once, not per sample (month curves sample hundreds of times).
+      const planEnds=Object.keys(inferred.plans).map(date=>+getShiftStartEnd(history.find(e=>e.dateStr===date)).end);
       const result={...exemplar,comparisonVariants:variants,at(t){
         const values=variants.map(v=>({...v.model.at(t),weight:v.weight}));
         const mean=key=>values.reduce((sum,v)=>sum+v[key]*v.weight,0);
-        return {...values[0],score:Math.round(mean('score')),umpScore:mean('umpScore'),dutyLoad:mean('dutyLoad'),lapses:mean('lapses'),homeostaticLapses:mean('homeostaticLapses'),circadianLapses:mean('circadianLapses'),estimatedHistoryNights:Object.keys(inferred.plans).filter(date=>+getShiftStartEnd(history.find(e=>e.dateStr===date)).end<=t).length,historyRange:[Math.min(...values.map(v=>v.score)),Math.max(...values.map(v=>v.score))]};
+        return {...values[0],score:Math.round(mean('score')),umpScore:mean('umpScore'),dutyLoad:mean('dutyLoad'),lapses:mean('lapses'),homeostaticLapses:mean('homeostaticLapses'),circadianLapses:mean('circadianLapses'),estimatedHistoryNights:planEnds.filter(end=>end<=t).length,historyRange:[Math.min(...values.map(v=>v.score)),Math.max(...values.map(v=>v.score))]};
       }};
       sleepCache.set(key,result);if(sleepCache.size>80)sleepCache.delete(sleepCache.keys().next().value);
       return result;
@@ -514,12 +530,25 @@
     // conservative product defaults are NOT coefficients from a clinical study.
     // Sleep/awake separation follows the recovery principle, not a claim that
     // everyone recovers after a fixed number of nights. UMP remains unchanged.
-    const hybrid={ceiling:50,workTauHours:24,dutyRestTauHours:48,offDutySleepTauHours:16,offDutyAwakeTauHours:96};
+    // Recovery debt: every finished duty leaves a debt that fades slowly
+    // (carryTauHours; overnight duties weigh hours/24, day duties hours/96).
+    // While it is unpaid, new duty load builds towards a higher ceiling and
+    // recovers more slowly, so a 24h after a 24h (or nights in a row) keeps
+    // climbing and the days after stay heavy. The debt never raises the load
+    // of the duty that created it, so one duty ends where it did before.
+    // Calibrated to the team's experience (24h, one day off, 24h ends near
+    // Kritisks, a third reaches the top), NOT to a clinical study.
+    const hybrid={ceiling:50,workTauHours:24,dutyRestTauHours:48,offDutySleepTauHours:16,offDutyAwakeTauHours:96,carryTauHours:36,carryFree:.14,carryGain:6,carrySlowRecovery:2};
+    const debts=work.map(iv=>({end:+iv.end,weight:(overnightEnds.includes(+iv.end)?24:96)>0?((+iv.end-+iv.start)/HOUR)/(overnightEnds.includes(+iv.end)?24:96):0}));
+    const carryAt=t=>{let c=0;for(const d of debts){if(d.end>t)break;const age=(t-d.end)/HOUR;if(age<10*hybrid.carryTauHours)c+=d.weight*Math.exp(-age/hybrid.carryTauHours);}return c;};
     const exposure=[];let cursor=+start,burden=0;
     const append=(a,b,mode)=>{
       if(b<=a)return;
-      const target=mode==='work'?hybrid.ceiling:0;
-      const tau=mode==='work'?hybrid.workTauHours:mode==='rest'?hybrid.dutyRestTauHours:mode==='sleep'?hybrid.offDutySleepTauHours:hybrid.offDutyAwakeTauHours;
+      // Debt left after about three free days (carryFree) costs nothing;
+      // above it, new duty load climbs higher and faster, and rest works slower.
+      const carry=carryAt(a),excess=Math.max(0,carry-hybrid.carryFree),amp=1+hybrid.carryGain*excess,slow=1+hybrid.carrySlowRecovery*excess;
+      const target=mode==='work'?Math.min(100,hybrid.ceiling*amp):0;
+      const tau=mode==='work'?hybrid.workTauHours/amp:(mode==='rest'?hybrid.dutyRestTauHours:mode==='sleep'?hybrid.offDutySleepTauHours:hybrid.offDutyAwakeTauHours)*slow;
       exposure.push({start:a,end:b,initial:burden,target,tau});
       burden=target+(burden-target)*Math.exp(-(b-a)/HOUR/tau);
     };
@@ -545,7 +574,12 @@
     const sleepAt=result.at.bind(result);
     result.at=t=>{
       const base=sleepAt(t);
-      const piece=exposure.find(p=>t>=p.start&&t<p.end)||(+t===+end?exposure.at(-1):null);
+      // Pieces are appended in time order and never overlap: binary search
+      // (month curves sample this hundreds of times per person).
+      let lo=0,hi=exposure.length-1;
+      while(lo<hi){const mid=(lo+hi+1)>>1;if(exposure[mid].start<=t)lo=mid;else hi=mid-1;}
+      const hit=exposure[lo];
+      const piece=hit&&t>=hit.start&&t<hit.end?hit:(+t===+end?exposure.at(-1):null);
       const dutyLoad=piece?piece.target+(piece.initial-piece.target)*Math.exp(-(+t-piece.start)/HOUR/piece.tau):0;
       const score=Math.max(0,Math.min(100,Math.round(base.score+(100-base.score)*dutyLoad/100)));
       return {...base,umpScore:base.score,dutyLoad,score};
@@ -622,6 +656,150 @@
     const score=components(load,now).score;
     if(!overrides){sampleCache.set(key,score);if(sampleCache.size>400)sampleCache.delete(sampleCache.keys().next().value);}
     return score;
+  }
+  // One person's month on the same scale as the card: the hybrid score every
+  // stepHours, the awake peak and mean per day, and the duties that drove it.
+  // One timeline per person (the card's own, when the schedule reaches past
+  // the month), so the month costs a few hundred cheap samples.
+  function seriesKey(workerName,year,month,stepHours){
+    return workerName+'|'+(+new Date(year,month-1,1))+'|'+stepHours+'|'+new Date().toDateString()+'|'+(new Date().getHours()>=8);
+  }
+  function isMonthSeriesReady(workerName,year,month,stepHours=1){
+    syncFatigueCache();
+    return seriesCache.has(seriesKey(workerName,year,month,stepHours));
+  }
+  function monthSeries(workerName,year,month,stepHours=1){
+    bindMonthCurveHover();
+    syncFatigueCache();
+    const from=+new Date(year,month-1,1),to=+new Date(year,month,1);
+    const key=seriesKey(workerName,year,month,stepHours);
+    if(seriesCache.has(key))return seriesCache.get(key);
+    const history=gatherWorkerHistory(workerName);
+    let result=null;
+    if(history.length){
+      const timeline=sleepTimeline(history,workerName,new Date(to),null);
+      const samples=[],days=[];
+      for(let t=from;t<=to;t+=stepHours*HOUR){
+        if(t<timeline.start||t>timeline.end){samples.push(null);continue;}
+        const v=timeline.at(t);samples.push({t,score:v.score,asleep:!!v.asleep});
+      }
+      const perDay=24/stepHours;
+      for(let d=0;d*perDay<samples.length-1;d++){
+        const day=samples.slice(d*perDay,(d+1)*perDay).filter(Boolean),awake=day.filter(v=>!v.asleep),pool=awake.length?awake:day;
+        if(!pool.length){days.push(null);continue;}
+        let peak=pool[0];for(const v of pool)if(v.score>peak.score)peak=v;
+        days.push({peak:peak.score,peakAt:peak.t,mean:Math.round(pool.reduce((a,v)=>a+v.score,0)/pool.length)});
+      }
+      const duties=mergeWorkWindows(history).filter(iv=>+iv.end>from&&+iv.start<to).map(iv=>({start:+iv.start,end:+iv.end,kind:shiftKind(iv.entry),hours:iv.entry.hours}));
+      result={from,to,stepHours,samples,days,duties};
+    }
+    seriesCache.set(key,result);if(seriesCache.size>60)seriesCache.delete(seriesCache.keys().next().value);
+    return result;
+  }
+  // The month numbers people compare: hours awake at Augsts or above, the
+  // worst awake moment and the awake mean. Only up to `until` (now), so the
+  // forecast part of the current month never counts as lived.
+  const HIGH_FROM=FATIGUE_LEVELS[1].max; // above Vidējs = Augsts, as on the card
+  function monthSummary(series,until=Date.now()){
+    if(!series)return null;
+    let high=0,sum=0,n=0,peak=null,last=null;
+    for(const v of series.samples){
+      if(!v||v.t>until)continue;
+      last=v;
+      if(v.asleep)continue;
+      n++;sum+=v.score;
+      if(v.score>HIGH_FROM)high+=series.stepHours;
+      if(!peak||v.score>peak.score)peak=v;
+    }
+    return {highHours:high,mean:n?Math.round(sum/n):null,peak,current:last&&until<series.to?last.score:null};
+  }
+  // One person's month: the hourly score (asleep hours drawn thin, the
+  // forecast after now dashed), the card's level bands and the duties under
+  // it. Plain SVG stretched to the width; text and dots are HTML so they keep
+  // their shape. Hover reads the numbers from data-fmc (bound once below).
+  function monthCurveHtml(workerName,year,month,opts={}){
+    const series=monthSeries(workerName,year,month,1);
+    if(!series)return '';
+    const hours=Math.round((series.to-series.from)/HOUR),now=Date.now();
+    const pct=t=>(100*(t-series.from)/(series.to-series.from)).toFixed(3);
+    const y=v=>(100-v).toFixed(1);
+    const paths={awake:'',sleep:'',awakeF:'',sleepF:''};let prevKey=null;
+    const S=series.samples;
+    for(let i=0;i<S.length-1;i++){
+      const a=S[i],b=S[i+1];
+      if(!a||!b){prevKey=null;continue;}
+      const key=(a.asleep?'sleep':'awake')+(a.t>=now?'F':'');
+      if(key!==prevKey)paths[key]+='M'+i+' '+y(a.score);
+      paths[key]+='L'+(i+1)+' '+y(b.score);
+      prevKey=key;
+    }
+    let area='';
+    S.forEach((v,i)=>{if(v)area+=(area?'L':'M')+i+' '+y(v.score);});
+    if(area)area+='L'+(S.length-1)+' 100L'+S.findIndex(Boolean)+' 100Z';
+    let weekends='',ticks='';
+    for(let d=0;d*24<hours;d++){
+      const date=new Date(year,month-1,d+1),dow=date.getDay();
+      if(dow===0||dow===6)weekends+=`<rect x="${d*24}" y="0" width="24" height="100" class="fmc-we"/>`;
+      if(dow===1||d===0)ticks+=`<span style="left:${pct(+date)}%">${d+1}.${month}.</span>`;
+    }
+    const band=(from,to,cls)=>`<rect x="0" y="${100-to}" width="${hours}" height="${to-from}" class="${cls}"/>`;
+    const lv=FATIGUE_LEVELS;
+    const bands=band(lv[2].max,100,'fmc-z4')+band(lv[1].max,lv[2].max,'fmc-z3');
+    const stops=[[100,lv[3].color],[lv[2].max,lv[3].color],[lv[2].max,lv[2].color],[lv[1].max,lv[2].color],[lv[1].max,lv[1].color],[lv[0].max,lv[1].color],[lv[0].max,lv[0].color],[0,lv[0].color]]
+      .map(([v,c])=>`<stop offset="${100-v}%" stop-color="${c}"/>`).join('');
+    const gid='fmcG'+Math.random().toString(36).slice(2,8);
+    const sum=monthSummary(series,now);
+    const inMonth=now>series.from&&now<series.to;
+    const nowMark=inMonth?`<i class="fmc-now" style="left:${pct(now)}%"><b>Tagad</b></i>`:'';
+    const peakMark=sum?.peak?`<i class="fmc-peak" style="left:${pct(sum.peak.t)}%;top:${100-sum.peak.score}%;--c:${getPresentation(sum.peak.score).color}"></i>`:'';
+    const duties=series.duties.map(d=>{
+      const a=Math.max(d.start,series.from),b=Math.min(d.end,series.to);
+      return `<i class="fmc-duty is-${d.kind==='nakts'?'night':d.kind==='diennakts'?'allday':'day'}" style="left:${pct(a)}%;width:${(100*(b-a)/(series.to-series.from)).toFixed(3)}%"></i>`;
+    }).join('');
+    const levelLabels=`<span class="fmc-lvl" style="top:${100-(lv[2].max+100)/2}%">${lv[3].label}</span><span class="fmc-lvl" style="top:${100-(lv[1].max+lv[2].max)/2}%">${lv[2].label}</span><span class="fmc-lvl" style="top:${100-(lv[0].max+lv[1].max)/2}%">${lv[1].label}</span>`;
+    const data=S.map(v=>v?(v.asleep?'-':'')+v.score:'').join(',');
+    const label=`${workerName}: nogurums ${month}. mēnesī. Augstā zonā ${sum?.highHours??0} stundas nomodā${sum?.peak?', augstākais '+sum.peak.score+'/100':''}.`;
+    return `<figure class="fmc${opts.compact?' is-compact':''}" data-fmc="${data}" data-fmc-from="${series.from}" data-fmc-step="${series.stepHours}">
+      <div class="fmc-plot" role="img" aria-label="${escapeHtml(label)}">
+        <svg viewBox="0 0 ${S.length-1} 100" preserveAspectRatio="none" aria-hidden="true">
+          <defs><linearGradient id="${gid}" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="100">${stops}</linearGradient></defs>
+          ${bands}${weekends}
+          <path d="${area}" class="fmc-area" fill="url(#${gid})"/>
+          <path d="${paths.sleep}" class="fmc-line is-sleep" stroke="url(#${gid})"/>
+          <path d="${paths.sleepF}" class="fmc-line is-sleep is-future" stroke="url(#${gid})"/>
+          <path d="${paths.awake}" class="fmc-line" stroke="url(#${gid})"/>
+          <path d="${paths.awakeF}" class="fmc-line is-future" stroke="url(#${gid})"/>
+        </svg>
+        ${levelLabels}${nowMark}${peakMark}<i class="fmc-cursor" hidden></i><div class="fmc-tip" hidden></div>
+      </div>
+      <div class="fmc-duties" aria-hidden="true">${duties}</div>
+      <div class="fmc-x" aria-hidden="true">${ticks}</div>
+      ${opts.compact?'':`<figcaption class="fmc-key"><span class="is-line">Nomodā</span><span class="is-sleep">Miegā (pieņemts)</span>${inMonth?'<span class="is-future">Prognoze</span>':''}<span class="is-day">Diena</span><span class="is-night">Nakts</span><span class="is-allday">24h</span></figcaption>`}
+    </figure>`;
+  }
+  function escapeHtml(v){return String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+  // Hover/touch readout for every month curve, one delegated listener.
+  function bindMonthCurveHover(){
+    if(bindMonthCurveHover.done)return;bindMonthCurveHover.done=true;
+    let active=null;
+    const move=e=>{
+      const plot=e.target.closest&&e.target.closest('.fmc-plot');
+      if(active&&active!==plot){active.classList.remove('is-reading');active.querySelector('.fmc-cursor').hidden=true;active.querySelector('.fmc-tip').hidden=true;active=null;}
+      if(!plot)return;
+      active=plot;
+      const fig=plot.closest('.fmc'),vals=fig.dataset.fmc.split(','),r=plot.getBoundingClientRect();
+      const i=Math.max(0,Math.min(vals.length-1,Math.round((e.clientX-r.left)/r.width*(vals.length-1))));
+      if(vals[i]===''||vals[i]===undefined)return;
+      const asleep=vals[i][0]==='-',score=Math.abs(Number(vals[i])),t=Number(fig.dataset.fmcFrom)+i*Number(fig.dataset.fmcStep)*HOUR;
+      const p=getPresentation(score),d=new Date(t),left=100*i/(vals.length-1);
+      const cursor=plot.querySelector('.fmc-cursor'),tip=plot.querySelector('.fmc-tip');
+      cursor.hidden=false;cursor.style.left=left+'%';
+      tip.hidden=false;tip.style.left=left+'%';tip.classList.toggle('is-left',left>60);
+      tip.innerHTML=`<small>${d.getDate()}.${d.getMonth()+1}. ${String(d.getHours()).padStart(2,'0')}:00${t>Date.now()?' prognoze':''}</small><b style="color:${p.color}">${score}<span>/100</span></b><small>${p.label}${asleep?', miegā':''}</small>`;
+      plot.classList.add('is-reading');
+    };
+    document.addEventListener('pointermove',move,{passive:true});
+    document.addEventListener('pointerdown',move,{passive:true});
   }
   // On-demand scientific comparison. Never add KSS/PVT outputs to the hybrid
   // index: their units and calibrations differ. No per-card background work.
@@ -1294,7 +1472,15 @@
       const sleepTimes=(o.sleep||[]).map(p=>`<span>${timeOnly(p.start)}–${timeOnly(p.end)}</span>`).join('');
       return `<div class="fh-option${o.selected?' is-selected':''}${o.unavailable?' is-unavailable':''}"><div class="fh-option-body"><span class="fh-option-label">${o.part}. nakts daļa <small>${o.selected?'Pašreizējā':''}</small></span><span class="fh-option-time">Darbs ${timeOnly(o.start)}–${timeOnly(o.end)}</span>${o.unavailable?'<strong class="fh-option-past">Jau sākusies</strong></div>':`<div class="fh-sleep-total"><b>${formatRemaining(total).replace(' 00m','')}</b><span>miegam*</span></div><div class="fh-sleep-axis" aria-hidden="true">${bar(o.start,o.end,'work')}${o.sleep.map(p=>bar(p.start,p.end,'sleep')).join('')}</div><div class="fh-sleep-times">${sleepTimes||'<span>Miegs nav paredzēts</span>'}</div>${(o.sleep||[]).length>1?`<span class="fh-sleep-note">2 posmi, garākais ${formatRemaining(longest).replace(' 00m','')}</span>`:''}</div><div class="fh-slot-scores"><small>Nogurums /100</small><span>Daļas beigās <b style="color:${getPresentation(o.endScore).color}">${o.endScore}</b></span><span>Maiņas beigās ${timeOnly(shiftEnd)} <b style="color:${getPresentation(o.shiftEndScore).color}">${o.shiftEndScore}</b></span></div>`}</div>`;
     };
-    const comparisonHtml=comparison?`<section class="fh-comparison"><div class="fh-comparison-head"><h3>Kuru nakts daļu strādāt?</h3><div class="fh-sleep-legend"><span class="is-work">Darbs</span><span class="is-sleep">Miegs*</span></div></div><div class="fh-options" style="--fh-parts:${comparison.options.length}">${comparison.options.map(nightCard).join('')}</div><p class="fh-sleep-note">* Atvēlētas ${assumptions.latencyMinutes} min iemigšanai katrā reizē.${comparison.saved?'':' Nesaglabāts plāns.'}</p></section>`:'';
+    // With the night parts shown, the footnote joins their note line (one row less).
+    const footnote=`Aptuvena prognoze, nevis mērījums.${f.sleepModel.estimatedHistoryNights?' Daļa vēstures aplēsta pēc ieradumiem.':''}`;
+    const comparisonHtml=comparison?`<section class="fh-comparison"><div class="fh-comparison-head"><h3>Kuru nakts daļu strādāt?</h3><div class="fh-sleep-legend"><span class="is-work">Darbs</span><span class="is-sleep">Miegs*</span></div></div><div class="fh-options" style="--fh-parts:${comparison.options.length}">${comparison.options.map(nightCard).join('')}</div><p class="fh-sleep-note">* Atvēlētas ${assumptions.latencyMinutes} min iemigšanai katrā reizē.${comparison.saved?'':' Nesaglabāts plāns.'} ${footnote}</p></section>`:'';
+    // The person's whole month on the card's scale (same curve as Statistika).
+    const monthAt=new Date(f.evaluatedAt||Date.now());
+    const monthCurve=monthCurveHtml(f.workerName,monthAt.getFullYear(),monthAt.getMonth()+1,{compact:true});
+    const monthSum=monthCurve?monthSummary(monthSeries(f.workerName,monthAt.getFullYear(),monthAt.getMonth()+1,1)):null;
+    const monthName=['janvārī','februārī','martā','aprīlī','maijā','jūnijā','jūlijā','augustā','septembrī','oktobrī','novembrī','decembrī'][monthAt.getMonth()];
+    const monthHtml=monthCurve?`<section class="fh-month"><div class="fh-month-head"><h3>Nogurums ${monthName}</h3><div class="fh-month-facts"><span>Augstā zonā <b>${monthSum.highHours} h</b></span>${monthSum.peak?`<span>Augstākais <b style="color:${getPresentation(monthSum.peak.score).color}">${monthSum.peak.score}</b> ${new Date(monthSum.peak.t).getDate()}.${monthAt.getMonth()+1}.</span>`:''}</div></div>${monthCurve}</section>`:'';
     const middleHtml=`<section class="fh-middle"><div class="fh-chart">${createForecastCurve(projection)||'<p>Izvēlies maiņu, lai redzētu noguruma prognozi.</p>'}${projection?`<div class="fh-start-score">Sākumā <b style="color:${getPresentation(projection.startScore).color}">${projection.startScore}/100</b><span>Augstākais <b style="color:${getPresentation(projection.peak.score).color}">${projection.peak.score}/100</b> — ${timeOnly(projection.peak.time)}</span></div>`:''}</div><div class="fh-rest">${restHtml}</div></section>`;
     // SmartCrew-inspired presentation: expose the actual schedule features,
     // without adding a second heuristic score or arbitrary extra penalties.
@@ -1304,7 +1490,8 @@
     if(projection?.between)drivers.push(driver('Brīvs pirms šīs maiņas',formatRemaining(projection.between.hours).replace(' 00m',''),projection.between.hours<THRESHOLDS.minRestHours?'load':'rest'));
     const driversHtml=drivers.slice(0,3).join('');
     return `<div class="fatigue-panel fatigue-tab-panel mk-detail-fatigue fh-health ${f.levelClass}">
-      <section class="fh-summary" aria-label="Svarīgākais par nogurumu">
+      ${monthHtml}
+      <section class="fh-summary fh-summary--small" aria-label="Svarīgākais par nogurumu">
         <div class="fh-tile fh-current" style="--fh-color:${current.color}"><span class="fh-eyebrow">${f.viewMode==='today'?'Nogurums tagad':'Maiņas sākumā'}</span><div class="fh-number">${f.score}<small>/100</small></div><strong class="fh-level">${current.label}</strong></div>
         <div class="fh-tile" style="--fh-color:${ending?.color||'#aeb9c4'}"><span class="fh-eyebrow">Maiņas beigās <small>Prognoze</small></span><div class="fh-number">${ending?.score??'—'}${ending?'<small>/100</small>':''}</div><span class="fh-tile-note">${projection?.hasNightPlan?`Ar nakts sadalījumu${projection.nightParts?` (${projection.nightParts} daļas)`:''}`:target?`${target.hours}h dežūra`:''}</span></div>
         <div class="fh-tile fh-time" style="--fh-color:#9cceff"><span class="fh-eyebrow">${timeLabel}</span><div class="fh-time-number">${timeValue}</div><span class="fh-tile-note">${timeHint}</span></div>
@@ -1314,10 +1501,10 @@
       <details class="fh-more"><summary>Grafiks un aprēķins</summary>
       <div class="fh-switch" role="group" aria-label="Papildu informācija"><button type="button" data-fatigue-section="schedule" aria-pressed="true" aria-controls="fh-schedule">${fluentIcon('calendar_ltr')}<span>Maiņa un atpūta</span></button><button type="button" data-fatigue-section="explanation" aria-pressed="false" aria-controls="fh-explanation">${fluentIcon('info')}<span>Kā aprēķināts?</span></button>${projection?'<button type="button" data-fatigue-section="curve" aria-pressed="false" aria-controls="fh-curve">'+fluentIcon('data_line')+'<span>Līkne un atpūta</span></button>':''}</div>
       <div id="fh-schedule" data-fatigue-panel="schedule" class="fatigue-details mk-detail-stats fh-facts">${rows.join('')}</div>
-      <div id="fh-explanation" data-fatigue-panel="explanation" class="fh-explanation" hidden><div class="fh-calculation"><h3>Tava slodze un atpūta</h3><div class="fh-drivers">${driversHtml}</div></div><div class="fh-context"><h3>Miegs un dežūras slodze</h3><p>Miegs samazina prognozi. Uzkrātā dežūras slodze mazinās lēnāk un saglabājas arī pēc maiņas.</p><p>Lietotnes hibrīda indekss, nevis izmērīts noguruma procents.</p>${f.sleepModel.recoveryRange&&f.sleepModel.recoveryRange[0]!==f.sleepModel.recoveryRange[1]?`<p>Atkarībā no miega: ${f.sleepModel.recoveryRange.join("–")}/100. Scenāriju robežas, nevis mērījums.</p>`:""}${usual}<details class="fh-model-details"><summary>Par modeli un skalu</summary><button type="button" class="fh-research-button" data-fatigue-compare>Salīdzināt ar 2024. gada modeli</button><p data-fatigue-comparison-output aria-live="polite"></p>${f.sleepModel.estimatedHistoryNights?`<p>${f.sleepModel.estimatedHistoryNights} agrākām naktīm trūkst plāna. Aplēse izmanto daļu biežumu un 00:00–07:20 logu. Šie laiki nav vēsturiski apstiprināti; 3 cilvēkiem pielāgota relatīvā nakts pozīcija. Variantu rezultāti: ${f.sleepModel.historyRange.join('–')}/100, nevis ticamības intervāls.</p>`:''}<p>UMP miega/nomoda prognoze apvienota ar eksperimentālu dežūras slodzes komponenti. Slodzes griesti 50, uzkrāšanās laika konstante 24h, atpūtas dežūrā 48h, ārpus darba pieņemtajā miegā 16h un nomodā 96h. Tās ir pakāpeniskas samazināšanās konstantes, nevis pilnas atkopšanās ilgums. Šie svari ir lietotnes pieņēmumi, nevis klīniski validēti koeficienti. 0–100 nav procents vai medicīnisks slieksnis. Netiek noteikts melatonīna daudzums vai pamošanās inerce. Parastās naktīs pieņemta 8h miega iespēja no 23.00. Pēc nakts dežūras salīdzināti trīs varianti: 2h dienā un 6h naktī, 3h un 7h, 4h un 8h. Katrā miegā atvēlētas 15min iemigšanai. Galvenais skaitlis ir šo variantu vidējais. Varianti un vienādie svari ir lietotnes pieņēmumi, nevis izmērītas varbūtības. Dienas miega iespēja sākas stundu pēc darba; darba intervāli tiek izslēgti. Darba laiks ir izslēgts. Faktiskais miegs nav zināms.</p></details></div></div>
+      <div id="fh-explanation" data-fatigue-panel="explanation" class="fh-explanation" hidden><div class="fh-calculation"><h3>Tava slodze un atpūta</h3><div class="fh-drivers">${driversHtml}</div></div><div class="fh-context"><h3>Miegs un dežūras slodze</h3><p>Miegs samazina prognozi. Uzkrātā dežūras slodze mazinās lēnāk un saglabājas arī pēc maiņas.</p><p>Dežūras pēc kārtas uzkrāj atkopšanās parādu. Diennakts pēc vienas brīvas dienas beidzas tuvu kritiskajam līmenim, un arī nākamās dienas paliek smagas.</p><p>Lietotnes hibrīda indekss, nevis izmērīts noguruma procents.</p>${f.sleepModel.recoveryRange&&f.sleepModel.recoveryRange[0]!==f.sleepModel.recoveryRange[1]?`<p>Atkarībā no miega: ${f.sleepModel.recoveryRange.join("–")}/100. Scenāriju robežas, nevis mērījums.</p>`:""}${usual}<details class="fh-model-details"><summary>Par modeli un skalu</summary><button type="button" class="fh-research-button" data-fatigue-compare>Salīdzināt ar 2024. gada modeli</button><p data-fatigue-comparison-output aria-live="polite"></p>${f.sleepModel.estimatedHistoryNights?`<p>${f.sleepModel.estimatedHistoryNights} agrākām naktīm trūkst plāna. Aplēse izmanto daļu biežumu un 00:00–07:20 logu. Šie laiki nav vēsturiski apstiprināti; 3 cilvēkiem pielāgota relatīvā nakts pozīcija. Variantu rezultāti: ${f.sleepModel.historyRange.join('–')}/100, nevis ticamības intervāls.</p>`:''}<p>UMP miega/nomoda prognoze apvienota ar eksperimentālu dežūras slodzes komponenti. Slodzes griesti 50, uzkrāšanās laika konstante 24h, atpūtas dežūrā 48h, ārpus darba pieņemtajā miegā 16h un nomodā 96h. Tās ir pakāpeniskas samazināšanās konstantes, nevis pilnas atkopšanās ilgums. Atkopšanās parāds: katra nakts vai diennakts dežūra atstāj parādu, kas dziest ar laika konstanti 36h (dienas dežūra ceturtdaļu no tā). Parāds, kas paliek pēc apmēram trim brīvām dienām, netiek skaitīts. Lielāks parāds liek jaunajai slodzei augt augstāk un ātrāk, un atpūta darbojas lēnāk. Tas kalibrēts pēc komandas pieredzes (diennakts pēc vienas brīvas dienas ap 90), nevis pēc klīniska pētījuma. Šie svari ir lietotnes pieņēmumi, nevis klīniski validēti koeficienti. 0–100 nav procents vai medicīnisks slieksnis. Netiek noteikts melatonīna daudzums vai pamošanās inerce. Parastās naktīs pieņemta 8h miega iespēja no 23.00. Pēc nakts dežūras salīdzināti trīs varianti: 2h dienā un 6h naktī, 3h un 7h, 4h un 8h. Katrā miegā atvēlētas 15min iemigšanai. Galvenais skaitlis ir šo variantu vidējais. Varianti un vienādie svari ir lietotnes pieņēmumi, nevis izmērītas varbūtības. Dienas miega iespēja sākas stundu pēc darba; darba intervāli tiek izslēgti. Darba laiks ir izslēgts. Faktiskais miegs nav zināms.</p></details></div></div>
       ${projection?`<div id="fh-curve" data-fatigue-panel="curve" hidden>${middleHtml}</div>`:''}
       </details>
-      <p class="fh-footnote">Aptuvena prognoze, nevis mērījums.${f.sleepModel.estimatedHistoryNights?' Daļa vēstures aplēsta pēc ieradumiem.':''}</p>
+      ${comparison?'':`<p class="fh-footnote">${footnote}</p>`}
     </div>`;
   }
 
@@ -1494,7 +1681,7 @@
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshNightFatigue(); });
   window.addEventListener('storage', e => { if (!e.key || e.key === 'minkaNightSplitByDateV1') refreshNightFatigue(); });
 
-  window.__fatigue = { calculateFatigue, gatherWorkerHistory, getPresentation, scoreAt, forecast, nightScenarios, compareRecovery, compareLight, modelParameters: window.MinkaSleepModel.parameters, sleepAssumptions, savedNightWindow, clearCache: clearFatigueCache };
+  window.__fatigue = { calculateFatigue, gatherWorkerHistory, getPresentation, scoreAt, monthSeries, monthSummary, monthCurveHtml, isMonthSeriesReady, FATIGUE_LEVELS, forecast, nightScenarios, compareRecovery, compareLight, modelParameters: window.MinkaSleepModel.parameters, sleepAssumptions, savedNightWindow, clearCache: clearFatigueCache };
   window.__fatigueRenderModal = renderModalFatigue;
   window.__minkaFatigueReady = true;
   document.dispatchEvent(new CustomEvent('minka:fatigue-ready'));

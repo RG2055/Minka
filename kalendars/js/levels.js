@@ -631,21 +631,11 @@
     return p;
   }
 
-  // Per-day fatigue: a shift adds load (hours + night/24h penalties), each rest
-  // day recovers. This gives a curve that actually moves day to day — unlike a
-  // weekly aggregate, which is flat within each week.
-  function _dayLoad(shift) {
-    var l = (shift.hours / 12) * 30;       // ~30 pts for a 12h shift
-    if (shift.isNight) l += 18;            // night penalty
-    if (shift.hours >= 24) l += 14;        // diennakts extra
-    return l;
-  }
-
-  // Team fatigue for one month: per-person running values (fatByDay), the
+  // Team fatigue for one month on the worker card's scale: each person's
+  // awake peak per day from the fatigue model (fatigue.js monthSeries), the
   // team mean per day, the moon curve and the summary numbers. The chart and
   // the statistics' fatigue tab both read it.
-  function _fatigueMonthData(monthStats, activeMonth) {
-    if (!window.__fatigue || !window.__fatigue.gatherWorkerHistory) return null;
+  function _fatigueMonthMeta(monthStats, activeMonth) {
     // Diacritic-insensitive month match (precomposed vs combining safety).
     var _strip = function(s) { return s.normalize('NFD').replace(/[̀-ͯ]/g, ''); };
     var amUp = _strip(String(activeMonth || '').toUpperCase());
@@ -660,42 +650,23 @@
     if (!people.length) people = Object.values(monthStats);
     var names = Array.from(new Set(people.map(function(person) { return person.name; }).filter(Boolean)));
     if (!year || !mm || !names.length) return null;
-
-    var daysIn = new Date(year, mm, 0).getDate();
-    var eventsByDay = {};
-    names.forEach(function(n) {
-      var map = new Map();
-      (window.__fatigue.gatherWorkerHistory(n) || []).forEach(function(entry) {
-        if (!entry || !entry.date) return;
-        var key = entry.date.getFullYear() + '-' + entry.date.getMonth() + '-' + entry.date.getDate();
-        if (!map.has(key)) map.set(key, []);
-        map.get(key).push(entry);
-      });
-      eventsByDay[n] = map;
+    return { year: year, mm: mm, names: names };
+  }
+  function _fatigueMonthData(monthStats, activeMonth) {
+    var F = window.__fatigue;
+    if (!F || !F.monthSeries) return null;
+    var meta = _fatigueMonthMeta(monthStats, activeMonth);
+    if (!meta) return null;
+    var year = meta.year, mm = meta.mm, daysIn = new Date(year, mm, 0).getDate();
+    var team = [], moon = [], fatByDay = {}, series = {};
+    var names = meta.names.filter(function(n) {
+      var s = F.monthSeries(n, year, mm, 1);
+      if (!s) return false;
+      series[n] = s;
+      fatByDay[n] = s.days.map(function(d) { return d ? d.peak : 0; });
+      return true;
     });
-
-    // Warm-up: start the accumulation 12 days before the 1st so the early-month
-    // values reflect real prior load instead of starting cold at 0.
-    var warm = 12;
-    var team = [], moon = [];
-    // Precompute per-worker running fatigue across the warm-up + month window.
-    var fatByDay = {}; // name -> array aligned to days 1..daysIn
-    names.forEach(function(n) {
-      var F = 0, arr = [];
-      for (var off = -warm; off < daysIn; off++) {
-        var d = new Date(year, mm - 1, 1 + off);
-        var dayKey = d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
-        var todays = eventsByDay[n].get(dayKey) || [];
-        if (todays.length) {
-          var load = todays.reduce(function(s, e) { return s + _dayLoad(e); }, 0);
-          F = Math.min(100, F * 0.78 + load);   // carry some, add new
-        } else {
-          F = F * 0.5;                            // rest day recovers ~half
-        }
-        if (off >= 0) arr.push(F);
-      }
-      fatByDay[n] = arr;
-    });
+    if (!names.length) return null;
 
     for (var day = 1; day <= daysIn; day++) {
       var sum = 0, cnt = 0;
@@ -722,7 +693,7 @@
     var todayIdx = -1;
     var nowD = new Date();
     if (nowD.getFullYear() === year && nowD.getMonth() === mm - 1) todayIdx = nowD.getDate() - 1;
-    return { year: year, mm: mm, daysIn: daysIn, names: names, fatByDay: fatByDay, team: team, moon: moon, avg: avg, peak: peak, peakDay: peakDay, fullIdx: fullIdx, corr: corr, todayIdx: todayIdx };
+    return { year: year, mm: mm, daysIn: daysIn, names: names, fatByDay: fatByDay, series: series, team: team, moon: moon, avg: avg, peak: peak, peakDay: peakDay, fullIdx: fullIdx, corr: corr, todayIdx: todayIdx };
   }
 
   // opts.bare: only the chart card (the statistics tab shows the numbers itself).
@@ -754,18 +725,19 @@
       }
     }
 
-    // Y zones: faint danger tint up high + zone labels (Zems / Vidējs / Augsts).
+    // Y zones: the worker card's levels (above 70 Kritisks, above 45 Augsts).
     var zones =
-      '<rect x="' + padL + '" y="' + yp(100).toFixed(1) + '" width="' + gW + '" height="' + (gH * 0.25).toFixed(1) + '" fill="rgba(255,92,92,0.05)"/>' +
-      '<rect x="' + padL + '" y="' + yp(50).toFixed(1) + '" width="' + gW + '" height="' + (gH * 0.25).toFixed(1) + '" fill="rgba(245,183,63,0.03)"/>';
+      '<rect x="' + padL + '" y="' + yp(100).toFixed(1) + '" width="' + gW + '" height="' + (gH * 0.30).toFixed(1) + '" fill="rgba(255,92,112,0.06)"/>' +
+      '<rect x="' + padL + '" y="' + yp(70).toFixed(1) + '" width="' + gW + '" height="' + (gH * 0.25).toFixed(1) + '" fill="rgba(255,159,67,0.04)"/>';
     var grid = '';
     [25, 50, 75].forEach(function(v) {
       grid += '<line x1="' + padL + '" y1="' + yp(v).toFixed(1) + '" x2="' + (padL + gW) + '" y2="' + yp(v).toFixed(1) + '" stroke="rgba(255,255,255,0.05)" stroke-width="0.5" stroke-dasharray="3 4"/>'
         + '<text x="' + (padL - 5) + '" y="' + (yp(v) + 3).toFixed(1) + '" text-anchor="end" fill="rgba(255,255,255,0.2)" font-size="8" font-family="Inter,system-ui,sans-serif">' + v + '</text>';
     });
     var zoneLabels =
-      '<text x="' + (padL + gW - 2) + '" y="' + (yp(88)).toFixed(1) + '" text-anchor="end" fill="rgba(255,92,92,0.55)" font-size="7.5" font-weight="700" font-family="Inter,system-ui,sans-serif" >Augsts</text>' +
-      '<text x="' + (padL + gW - 2) + '" y="' + (yp(12)).toFixed(1) + '" text-anchor="end" fill="rgba(125,211,252,0.4)" font-size="7.5" font-weight="700" font-family="Inter,system-ui,sans-serif" >Zems</text>';
+      '<text x="' + (padL + gW - 2) + '" y="' + (yp(85)).toFixed(1) + '" text-anchor="end" fill="rgba(255,92,112,0.6)" font-size="7.5" font-weight="700" font-family="Inter,system-ui,sans-serif" >Kritisks</text>' +
+      '<text x="' + (padL + gW - 2) + '" y="' + (yp(57)).toFixed(1) + '" text-anchor="end" fill="rgba(255,159,67,0.55)" font-size="7.5" font-weight="700" font-family="Inter,system-ui,sans-serif" >Augsts</text>' +
+      '<text x="' + (padL + gW - 2) + '" y="' + (yp(10)).toFixed(1) + '" text-anchor="end" fill="rgba(66,217,145,0.45)" font-size="7.5" font-weight="700" font-family="Inter,system-ui,sans-serif" >Zems</text>';
 
     // X-axis: a tick + "D.M" label on every Monday — easier to anchor dates.
     var xLabels = '';
@@ -801,18 +773,17 @@
       '<div class="mk-stx-fat-card">' +
         '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" style="width:100%;height:' + H + 'px;display:block;">' +
           '<defs>' +
-            // Curve colour ramps with the actual fatigue value (mapped in user
-            // space): calm ice-blue low → indigo → pink alert high.
+            // Curve colour = the worker card's level at that height (mapped
+            // in user space), so a colour means the same thing everywhere.
             '<linearGradient id="stxFatLine" gradientUnits="userSpaceOnUse" x1="0" y1="' + padT.toFixed(1) + '" x2="0" y2="' + (padT + gH).toFixed(1) + '">' +
-              '<stop offset="0%" stop-color="#ff5c5c"/>' +
-              '<stop offset="28%" stop-color="#f5b73f"/>' +
-              '<stop offset="52%" stop-color="#38bdf8"/>' +
-              '<stop offset="100%" stop-color="#7dd3fc"/>' +
+              '<stop offset="30%" stop-color="#ff5c70"/><stop offset="30%" stop-color="#ff9f43"/>' +
+              '<stop offset="55%" stop-color="#ff9f43"/><stop offset="55%" stop-color="#e7d34b"/>' +
+              '<stop offset="80%" stop-color="#e7d34b"/><stop offset="80%" stop-color="#42d991"/>' +
             '</linearGradient>' +
             '<linearGradient id="stxFatArea" gradientUnits="userSpaceOnUse" x1="0" y1="' + padT.toFixed(1) + '" x2="0" y2="' + (padT + gH).toFixed(1) + '">' +
-              '<stop offset="0%" stop-color="rgba(255,92,92,0.20)"/>' +
-              '<stop offset="55%" stop-color="rgba(56,189,248,0.12)"/>' +
-              '<stop offset="100%" stop-color="rgba(125,211,252,0)"/>' +
+              '<stop offset="0%" stop-color="rgba(255,159,67,0.20)"/>' +
+              '<stop offset="55%" stop-color="rgba(231,211,75,0.10)"/>' +
+              '<stop offset="100%" stop-color="rgba(66,217,145,0)"/>' +
             '</linearGradient>' +
           '</defs>' +
           weekendBands + zones + grid + zoneLabels + xLabels +
@@ -1070,6 +1041,12 @@
       return label ? buildFatigueChart(buildMonthStats(label), label, opts) : '';
     },
     // Numbers behind the chart (team mean, per-person values) for one month.
+    // Who the month's fatigue covers, without computing it (the statistics
+    // warm the model person by person so the tab never blocks).
+    fatigueNames: function(monthLabel) {
+      var label = monthLabel || window.__activeMonth || '';
+      return label ? _fatigueMonthMeta(buildMonthStats(label), label) : null;
+    },
     fatigueMonth: function(monthLabel) {
       var label = monthLabel || window.__activeMonth || '';
       return label ? _fatigueMonthData(buildMonthStats(label), label) : null;

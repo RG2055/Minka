@@ -1,0 +1,146 @@
+/* Month fatigue curve (fatigue.js monthCurveHtml): the person's hourly score
+   for a month, shared by the worker card (Nogurums) and Statistika.
+   Lines are a stretched SVG; labels, dots and the readout are HTML. */
+.fmc { --fmc-ink: rgba(226, 232, 240, .92); --fmc-dim: rgba(184, 193, 205, .62); --fmc-h: 168px; margin: 0; }
+.fmc.is-compact { --fmc-h: 132px; }
+.fmc-plot { position: relative; height: var(--fmc-h); touch-action: pan-y; cursor: crosshair; }
+.fmc-plot svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; }
+.fmc-z4 { fill: rgba(255, 92, 112, .05); }
+.fmc-z3 { fill: rgba(255, 159, 67, .03); }
+.fmc-we { fill: rgba(255, 255, 255, .025); }
+.fmc-area { opacity: .1; }
+.fmc-line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.fmc-line.is-sleep { stroke-width: 1; opacity: .35; }
+.fmc-line.is-future { stroke-dasharray: 3 4; opacity: .55; }
+.fmc-line.is-sleep.is-future { opacity: .2; }
+.fmc-lvl { position: absolute; right: 4px; transform: translateY(-50%); font-size: 10px; line-height: 1; color: var(--fmc-dim); pointer-events: none; }
+.fmc-now { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px dashed rgba(156, 206, 255, .55); pointer-events: none; }
+.fmc-now b { position: absolute; top: -2px; left: 4px; font-size: 10px; font-weight: 600; color: #9cceff; white-space: nowrap; }
+.fmc-peak { position: absolute; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 2px rgba(10, 14, 20, .85); pointer-events: none; }
+.fmc-cursor { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px solid rgba(226, 232, 240, .45); pointer-events: none; }
+.fmc-tip {
+  position: absolute; top: 6px; z-index: 2; margin-left: 8px; padding: 6px 9px;
+  display: grid; gap: 1px; min-width: 88px; pointer-events: none;
+  border-radius: 12px; background: rgba(20, 26, 34, .96); color: var(--fmc-ink);
+}
+.fmc-tip[hidden], .fmc-cursor[hidden] { display: none; }
+.fmc-tip.is-left { transform: translateX(calc(-100% - 16px)); }
+.fmc-tip small { font-size: 11px; color: var(--fmc-dim); white-space: nowrap; }
+.fmc-tip b { font-size: 18px; font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.fmc-tip b span { font-size: 11px; font-weight: 400; color: var(--fmc-dim); }
+.fmc-duties { position: relative; height: 6px; margin-top: 6px; border-radius: 3px; background: rgba(255, 255, 255, .04); }
+.fmc-duty { position: absolute; top: 0; bottom: 0; border-radius: 3px; background: #c9d2dc; }
+.fmc-duty.is-night { background: #64d2ff; }
+.fmc-duty.is-allday { background: #f5b73f; }
+.fmc-x { position: relative; height: 16px; margin-top: 4px; }
+.fmc-x span { position: absolute; top: 0; font-size: 10px; color: var(--fmc-dim); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.fmc-key { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 11px; color: var(--fmc-dim); }
+.fmc-key span { display: inline-flex; align-items: center; gap: 6px; }
+.fmc-key span::before { content: ""; width: 14px; height: 2px; border-radius: 1px; background: #ff9f43; }
+.fmc-key .is-sleep::before { height: 1px; opacity: .5; }
+.fmc-key .is-future::before { background: repeating-linear-gradient(90deg, #ff9f43 0 3px, transparent 3px 7px); }
+.fmc-key .is-day::before, .fmc-key .is-night::before, .fmc-key .is-allday::before { width: 10px; height: 6px; border-radius: 2px; background: #c9d2dc; }
+.fmc-key .is-night::before { background: #64d2ff; }
+.fmc-key .is-allday::before { background: #f5b73f; }
+
+/* Worker card: its own tonal block like the night-part comparison. */
+#worker-modal .fh-month { margin-top: 12px; padding: 16px 18px 12px; border-radius: 28px; background: var(--pp-c1, #152431); }
+#worker-modal .fh-month-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; margin-bottom: 12px; }
+#worker-modal .fh-month-head h3 { margin: 0; font-size: 16px; font-weight: 500; color: var(--pp-on, #e2e8f0); }
+#worker-modal .fh-month-facts { display: flex; gap: 16px; font-size: 13px; color: var(--pp-on-var, #b4c5cd); }
+#worker-modal .fh-month-facts b { font-weight: 600; color: var(--pp-on, #e2e8f0); font-variant-numeric: tabular-nums; }
+
+/* Summary under the month curve: the same three facts, smaller. */
+#worker-modal#worker-modal .fh-summary--small { margin-top: 12px; }
+#worker-modal#worker-modal .fh-summary--small .fh-tile { padding-top: 12px; padding-bottom: 12px; gap: 3px; }
+#worker-modal#worker-modal .fh-summary--small .fh-number,
+#worker-modal#worker-modal .fh-summary--small .fh-current .fh-number { font-size: 26px; }
+#worker-modal#worker-modal .fh-summary--small .fh-time-number { font-size: 20px; }
+#worker-modal#worker-modal .fh-summary--small .fh-number small { font-size: 11px; }
+#worker-modal#worker-modal .fh-summary--small .fh-level { font-size: 12px; }
+#worker-modal .fh-month { margin-top: 0; }
+.fmc-now, .fmc-now b { font-style: normal; }
+
+/* Nogurums tab fits without scrolling: compact night parts under the curve. */
+#worker-modal#worker-modal .fh-comparison { margin-top: 12px; padding: 12px 16px 10px; }
+#worker-modal#worker-modal .fh-comparison-head { margin-bottom: 8px; }
+#worker-modal#worker-modal .fh-comparison-head h3 { font-size: 15px !important; }
+#worker-modal#worker-modal .fh-health .fh-option { padding: 10px 12px; gap: 2px; grid-template-rows: auto auto; }
+#worker-modal#worker-modal .fh-option-body { gap: 2px; }
+#worker-modal#worker-modal .fh-sleep-total { margin: 0; }
+#worker-modal#worker-modal .fh-sleep-total b { font-size: 20px; }
+#worker-modal#worker-modal .fh-sleep-times { margin-bottom: 0; }
+#worker-modal#worker-modal .fh-option .fh-sleep-note { margin: 0; font-size: 11px; }
+#worker-modal#worker-modal .fh-option .fh-slot-scores { flex-direction: row; flex-wrap: wrap; gap: 2px 14px; margin-top: 6px; padding-top: 6px; }
+#worker-modal#worker-modal .fh-slot-scores > small { display: none; }
+#worker-modal#worker-modal .fh-slot-scores span { min-height: 0; gap: 6px; font-size: 11px; }
+#worker-modal#worker-modal .fh-slot-scores b { font-size: 15px; }
+#worker-modal#worker-modal .fh-comparison > .fh-sleep-note { margin-top: 6px; }
+#worker-modal#worker-modal .fh-summary--small .fh-tile { padding-top: 8px; padding-bottom: 8px; }
+#worker-modal#worker-modal .fh-summary--small .fh-number,
+#worker-modal#worker-modal .fh-summary--small .fh-current .fh-number { font-size: 22px; }
+#worker-modal#worker-modal .fh-summary--small .fh-time-number { font-size: 18px; }
+#worker-modal .fh-month { padding: 12px 16px 8px; }
+#worker-modal .fh-month-head { margin-bottom: 8px; }
+
+/* Compact card: the month curve, the night parts and the summary fit one
+   screen without scrolling. */
+#worker-modal .fh-month .fmc { --fmc-h: 116px; }
+#worker-modal .fh-month { padding: 12px 16px 10px; }
+#worker-modal .fh-month-head { margin-bottom: 8px; }
+#worker-modal .fh-month .fmc-key { margin-top: 2px; }
+#worker-modal#worker-modal .fh-comparison { margin-top: 10px; padding: 12px 14px 10px; }
+#worker-modal.mk-fatigue-mode .fh-comparison-head { margin-bottom: 6px; }
+#worker-modal.mk-fatigue-mode .fh-health .fh-option { grid-template-rows: auto auto; gap: 2px; padding: 8px 10px; }
+#worker-modal.mk-fatigue-mode .fh-sleep-times { margin-bottom: 0; }
+#worker-modal.mk-fatigue-mode .fh-option .fh-sleep-note { margin: 2px 0 0; font-size: 10px; line-height: 1.3; }
+/* Scores: two tight rows (label left, number right), no "/100" heading. */
+#worker-modal.mk-fatigue-mode .fh-option .fh-slot-scores { gap: 1px; margin-top: 6px; padding-top: 5px; }
+#worker-modal.mk-fatigue-mode .fh-slot-scores > small { display: none; }
+#worker-modal.mk-fatigue-mode .fh-option .fh-slot-scores span { min-height: 0; white-space: nowrap; align-items: baseline; }
+#worker-modal.mk-fatigue-mode .fh-option .fh-slot-scores b { font-size: 16px; }
+#worker-modal#worker-modal .fh-summary--small { margin-top: 10px; }
+#worker-modal#worker-modal .fh-summary--small .fh-tile { padding-top: 8px; padding-bottom: 8px; }
+#worker-modal#worker-modal .fh-summary--small .fh-number,
+#worker-modal#worker-modal .fh-summary--small .fh-current .fh-number { font-size: 22px; }
+#worker-modal#worker-modal .fh-summary--small .fh-time-number { font-size: 18px; }
+/* Summary as one line per fact: label, number, note side by side. */
+#worker-modal#worker-modal .fh-summary--small { padding: 6px 14px; border-radius: 20px; }
+#worker-modal#worker-modal .fh-summary--small .fh-tile { flex-direction: row; flex-wrap: wrap; align-items: baseline; justify-content: flex-start; gap: 2px 8px; padding: 6px 14px; }
+#worker-modal#worker-modal .fh-summary--small .fh-tile:first-child { padding-left: 4px; }
+#worker-modal#worker-modal .fh-summary--small .fh-eyebrow { width: 100%; font-size: 12px; }
+#worker-modal#worker-modal .fh-summary--small .fh-eyebrow small { font-size: 10px; }
+#worker-modal#worker-modal .fh-summary--small .fh-number,
+#worker-modal#worker-modal .fh-summary--small .fh-current .fh-number { font-size: 20px; line-height: 1.1; }
+#worker-modal#worker-modal .fh-summary--small .fh-time-number { font-size: 18px; line-height: 1.1; }
+#worker-modal#worker-modal .fh-summary--small .fh-tile-note,
+#worker-modal#worker-modal .fh-summary--small .fh-level { font-size: 11px; line-height: 1.2; }
+#worker-modal .fh-month .fmc { --fmc-h: 100px; }
+#worker-modal .fh-month .fmc-x { margin-bottom: -4px; }
+/* One slim line: "Nogurums tagad 58/100 Augsts" per cell. */
+#worker-modal#worker-modal .fh-summary--small { padding: 2px 10px; }
+#worker-modal#worker-modal .fh-summary--small .fh-tile { flex-wrap: nowrap; gap: 6px; padding: 8px 12px; min-width: 0; }
+#worker-modal#worker-modal .fh-summary--small .fh-eyebrow { width: auto; flex: none; white-space: nowrap; }
+#worker-modal#worker-modal .fh-summary--small .fh-eyebrow small { display: none; }
+#worker-modal#worker-modal .fh-summary--small .fh-number,
+#worker-modal#worker-modal .fh-summary--small .fh-current .fh-number { font-size: 17px; }
+#worker-modal#worker-modal .fh-summary--small .fh-time-number { font-size: 16px; }
+#worker-modal#worker-modal .fh-summary--small .fh-tile-note,
+#worker-modal#worker-modal .fh-summary--small .fh-level { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+/* Night parts: smaller sleep total, tighter rows. */
+#worker-modal.mk-fatigue-mode .fh-option .fh-sleep-total { margin: 0; }
+#worker-modal.mk-fatigue-mode .fh-option .fh-sleep-total b { font-size: 18px; }
+#worker-modal.mk-fatigue-mode .fh-option .fh-sleep-axis { margin: 2px 0; }
+#worker-modal.mk-fatigue-mode .fh-option-body { gap: 2px; }
+#worker-modal#worker-modal .fh-comparison > p { margin-top: 4px; }
+#worker-modal .fh-footnote { margin-top: 2px; }
+/* Full notes: wrap under the number instead of cutting with "…". */
+#worker-modal#worker-modal .fh-summary--small .fh-tile { flex-wrap: wrap; }
+#worker-modal#worker-modal .fh-summary--small .fh-tile-note,
+#worker-modal#worker-modal .fh-summary--small .fh-level { white-space: normal; overflow: visible; text-overflow: clip; }
+#worker-modal#worker-modal .fh-summary--small { margin: 10px 0 0; }
+#worker-modal.mk-fatigue-mode .fh-option .fh-slot-scores span { display: flex; width: 100%; justify-content: space-between; }
+#worker-modal .fh-month .fmc { --fmc-h: 88px; }
+#worker-modal .fh-month { padding-bottom: 6px; }
+#worker-modal.mk-fatigue-mode .fh-health .fh-option { padding: 7px 10px; }
+#worker-modal.mk-fatigue-mode .fh-option .fh-slot-scores { margin-top: 4px; padding-top: 4px; }

@@ -269,7 +269,11 @@
     var rest = items.length - limit;
     if (rest <= 0) return open + items.join('') + close;
     return '<div class="db-cap">' + open + items.map(function (html, i) {
-      return i < limit ? html : html.replace(/^<(\w+)( class=")?/, function (_m, tag, cls) { return '<' + tag + (cls ? ' class="db-extra ' : ' class="db-extra"'); });
+      // The class may sit after other attributes (<button type="button" class=…>);
+      // a second class attribute would be ignored and the row lose its styles.
+      if (i < limit) return html;
+      var tag = html.slice(0, html.indexOf('>'));
+      return /\sclass="/.test(tag) ? html.replace(/\sclass="/, ' class="db-extra ') : html.replace(/^<(\w+)/, '<$1 class="db-extra"');
     }).join('') + close + '<button type="button" class="db-more" data-db-more>Rādīt vēl ' + rest + '</button></div>';
   }
   function avatar(name, accent) {
@@ -691,51 +695,147 @@
       + section('Naktis šomēnes', monthLabel(state.month), bars(monthNights, null, CAP), '#23cdcf')
       + note('Daļu un gultu skaits ir no nakts sadalījuma vēstures (visas naktis kopā, ne pa mēnešiem). Nakts maiņas — no grafika.');
   }
-  /* Fatigue: the model's team curve for the month plus one row per person
-     (their month in a sparkline, mean and peak). Radiographers only, as the
-     model is built for them. */
-  var FAT_LOW = '#38bdf8', FAT_MID = '#f5b73f', FAT_HIGH = '#ff5c5c';
-  function fatColor(v) { return v >= 50 ? FAT_HIGH : v >= 30 ? FAT_MID : FAT_LOW; }
+  /* Fatigue: the worker card's model (fatigue.js) for the whole team. The
+     team chart on top, then one row per person: their month as a sparkline of
+     daily awake peaks and the hours they spent awake at Augsts or above.
+     A row opens the person with their full hourly curve. Radiographers only,
+     as the model is built for them. The model costs a few ms per person, so a
+     cold month is warmed person by person between frames (ensureFatigue). */
+  function fatigueApi() { return window.__fatigue && window.__fatigue.monthSeries ? window.__fatigue : null; }
+  function fatColor(v) { var F = fatigueApi(); return F ? F.getPresentation(v).color : '#ff9f43'; }
   function sparkline(values, color) {
     var n = values.length;
     if (n < 2) return '';
-    var W = 120, H = 28;
-    var pts = values.map(function (v, i) { return (i / (n - 1) * W).toFixed(1) + ',' + (H - 2 - Math.max(0, Math.min(100, v)) / 100 * (H - 4)).toFixed(1); });
+    // Daily awake peaks live between ~40 (rest day) and ~75, so the line
+    // uses that band: the shape of the month, not a flat line near the middle.
+    var W = 120, H = 28, lo = 35, hi = 80;
+    var pts = values.map(function (v, i) { return (i / (n - 1) * W).toFixed(1) + ',' + (H - 2 - (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo) * (H - 4)).toFixed(1); });
     return '<svg class="db-spark" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true"><polyline points="' + pts.join(' ') + '" fill="none" stroke="' + color + '" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>';
   }
+  var fatigueJob = null;
+  function fatigueMeta() {
+    var L = window.MinkaLevels;
+    try { return L && L.fatigueNames ? L.fatigueNames(monthLabel(state.month).toUpperCase()) : null; } catch (_e) { return null; }
+  }
+  function fatigueMissing(meta) {
+    var F = fatigueApi();
+    if (!F || !meta) return [];
+    return meta.names.filter(function (n) { return !F.isMonthSeriesReady(n, meta.year, meta.mm); });
+  }
+  function ensureFatigue() {
+    var meta = fatigueMeta(), todo = fatigueMissing(meta);
+    if (fatigueJob || !todo.length) return;
+    var month = state.month, F = fatigueApi();
+    fatigueJob = { done: 0, total: todo.length };
+    (function step() {
+      var until = performance.now() + 12;
+      while (todo.length && performance.now() < until) { try { F.monthSeries(todo.shift(), meta.year, meta.mm, 1); } catch (_e) {} fatigueJob.done++; }
+      if (todo.length && modalOpen() && state.month === month) { setTimeout(step, 0); return; }
+      fatigueJob = null;
+      if (modalOpen() && state.month === month) render();
+    })();
+  }
+  /* Team month: per day, the hours the team spent awake at Augsts (above
+     45) and Kritisks (above 70), summed over people. A team mean sits flat
+     near 48 (rest days pull it down) and nearly everyone touches 45 some
+     evening, so a count of people would be flat too; hours show heavy days. */
+  function teamFatigue(data) {
+    var F = fatigueApi(), lv = F.FATIGUE_LEVELS, high = lv[1].max, crit = lv[2].max;
+    var days = [];
+    for (var d = 0; d < data.daysIn; d++) days.push({ high: 0, crit: 0, total: 0 });
+    data.names.forEach(function (name) {
+      var s = data.series[name];
+      s.samples.forEach(function (v, i) {
+        if (!v || v.asleep || v.score <= high) return;
+        var day = days[Math.floor(i * s.stepHours / 24)];
+        if (!day) return;
+        if (v.score > crit) day.crit += s.stepHours; else day.high += s.stepHours;
+        day.total += s.stepHours;
+      });
+    });
+    return { days: days, n: data.names.length, high: high, crit: crit };
+  }
+  function teamFatigueChart(data, team) {
+    var W = data.daysIn, max = Math.max(4, Math.max.apply(null, team.days.map(function (d) { return d.total; })));
+    var stepY = max > 40 ? 20 : max > 16 ? 10 : 4, top = Math.ceil(max / stepY) * stepY, bars = '', we = '', ticks = '', grid = '';
+    team.days.forEach(function (d, i) {
+      var date = new Date(data.year, data.mm - 1, i + 1), dow = date.getDay(), future = data.todayIdx >= 0 && i > data.todayIdx;
+      if (dow === 0 || dow === 6) we += '<rect x="' + i + '" y="0" width="1" height="100" class="db-ft-we"/>';
+      var hh = d.high / top * 100, ch = d.crit / top * 100;
+      if (d.high) bars += '<rect x="' + (i + .18) + '" y="' + (100 - hh - ch).toFixed(2) + '" width=".64" height="' + hh.toFixed(2) + '" class="db-ft-h' + (future ? ' is-future' : '') + '"/>';
+      if (d.crit) bars += '<rect x="' + (i + .18) + '" y="' + (100 - ch).toFixed(2) + '" width=".64" height="' + ch.toFixed(2) + '" class="db-ft-c' + (future ? ' is-future' : '') + '"/>';
+      if (dow === 1 || i === 0) ticks += '<span style="left:' + ((i + .5) / W * 100).toFixed(2) + '%">' + (i + 1) + '.' + data.mm + '.</span>';
+    });
+    for (var g = stepY; g <= top; g += stepY) grid += '<span class="db-ft-g" style="bottom:' + (g / top * 100).toFixed(2) + '%"><b>' + g + ' h</b></span>';
+    var today = data.todayIdx >= 0 ? '<i class="db-ft-today' + (data.fullIdx - data.todayIdx >= 0 && data.fullIdx - data.todayIdx <= 1 ? ' is-by-moon' : '') + '" style="left:' + ((data.todayIdx + .5) / W * 100).toFixed(2) + '%"><b>Šodien</b></i>' : '';
+    var moon = '<i class="db-ft-moon" style="left:' + ((data.fullIdx + .5) / W * 100).toFixed(2) + '%" title="Pilnmēness ' + (data.fullIdx + 1) + '.' + data.mm + '.">🌕</i>';
+    return '<div class="db-ft"><div class="db-ft-plot" role="img" aria-label="Komandas stundas augstā noguruma zonā katru dienu">' + grid
+      + '<svg viewBox="0 0 ' + W + ' 100" preserveAspectRatio="none" aria-hidden="true">' + we + bars + '</svg>' + today + moon + '</div>'
+      + '<div class="db-ft-x" aria-hidden="true">' + ticks + '</div>'
+      + '<div class="db-ft-key"><span class="is-h">Augsts (virs ' + team.high + ')</span><span class="is-c">Kritisks (virs ' + team.crit + ')</span>' + (data.todayIdx >= 0 ? '<span class="is-f">Prognoze</span>' : '') + '<span>' + team.n + ' cilvēku stundas nomodā kopā</span></div></div>';
+  }
   function fatigueView(b) {
+    var F = fatigueApi(), meta = fatigueMeta();
+    if (!F || !meta) return empty('Noguruma modelim šim mēnesim nav datu.');
+    if (fatigueMissing(meta).length) {
+      return '<div class="db-empty db-fat-wait">Rēķina nogurumu' + (fatigueJob ? ' ' + fatigueJob.done + ' / ' + fatigueJob.total : '') + '…</div>';
+    }
     var L = window.MinkaLevels, label = monthLabel(state.month).toUpperCase();
-    var data = null, chart = '';
-    try { data = L && L.fatigueMonth ? L.fatigueMonth(label) : null; } catch (_e) {}
-    try { chart = L && L.renderFatigueChart ? L.renderFatigueChart(label, { bare: true }) : ''; } catch (_e) {}
-    if (!data || !chart) return empty('Noguruma modelim šim mēnesim nav datu.');
-    var mm = data.mm, past = data.todayIdx >= 0 ? data.todayIdx + 1 : data.daysIn;
-    var today = data.todayIdx >= 0 ? data.team[data.todayIdx] : null;
+    var data = null;
+    try { data = L.fatigueMonth(label); } catch (_e) {}
+    if (!data) return empty('Noguruma modelim šim mēnesim nav datu.');
+    var mm = data.mm, now = Date.now(), past = data.todayIdx >= 0 ? data.todayIdx + 1 : data.daysIn;
+    var team = teamFatigue(data), lived = team.days.slice(0, past);
+    var heavy = 0;
+    lived.forEach(function (d, i) { if (d.total > lived[heavy].total) heavy = i; });
+    var today = data.todayIdx >= 0 ? team.days[data.todayIdx].total : null;
+    // Moon, just for fun: does the heavy-day count follow the moonlight?
+    var mc = (function () {
+      var xs = lived.map(function (d) { return d.total; }), ys = data.moon.slice(0, past), k = xs.length;
+      if (k < 3) return 0;
+      var mx = xs.reduce(function (a, v) { return a + v; }, 0) / k, my = ys.reduce(function (a, v) { return a + v; }, 0) / k, nu = 0, dx = 0, dy = 0;
+      for (var i = 0; i < k; i++) { nu += (xs[i] - mx) * (ys[i] - my); dx += (xs[i] - mx) * (xs[i] - mx); dy += (ys[i] - my) * (ys[i] - my); }
+      return dx && dy ? Math.round(nu / Math.sqrt(dx * dy) * 100) : 0;
+    })();
     var people = data.names.map(function (name) {
-      var arr = (data.fatByDay[name] || []).slice(0, past);
-      var avg = arr.length ? arr.reduce(function (a, v) { return a + v; }, 0) / arr.length : 0;
-      var peak = 0, peakDay = 0;
-      arr.forEach(function (v, i) { if (v > peak) { peak = v; peakDay = i + 1; } });
-      return { name: name, arr: arr, avg: Math.round(avg), peak: Math.round(peak), peakDay: peakDay };
-    }).filter(function (p) { return p.arr.some(function (v) { return v > 0; }); })
-      .sort(function (a, c) { return c.avg - a.avg || c.peak - a.peak; });
+      var sum = F.monthSummary(data.series[name], now);
+      return { name: name, days: data.fatByDay[name].slice(0, past), sum: sum };
+    }).filter(function (p) { return p.sum && p.sum.peak; })
+      .sort(function (a, c) { return c.sum.highHours - a.sum.highHours || c.sum.peak.score - a.sum.peak.score; });
+    var teamHigh = people.reduce(function (a, p) { return a + p.sum.highHours; }, 0);
+    var perPerson = people.length ? Math.round(teamHigh / people.length) : 0;
     var tiles = '<div class="db-tiles db-tiles--4">'
-      + tile(data.avg + '<small>%</small>', 'Vidēji', 'komandas mēneša vidējais', fatColor(data.avg))
-      + tile(data.peak + '<small>%</small>', 'Smagākā diena', data.peakDay + '.' + mm + '.', fatColor(data.peak))
-      + tile(today == null ? '—' : today + '<small>%</small>', 'Šodien', today == null ? 'cits mēnesis' : 'komanda', today == null ? '' : fatColor(today))
-      + tile((data.corr > 0 ? '+' : '') + data.corr + '<small>%</small>', 'Mēness', 'korelācija, pilnmēness ' + (data.fullIdx + 1) + '.' + mm + '.')
+      + tile(perPerson + '<small>h</small>', 'Augstā zonā', 'vidēji uz cilvēku, nomodā', perPerson ? fatColor(46) : '')
+      + tile(lived[heavy].total + '<small>h</small>', 'Smagākā diena', (heavy + 1) + '.' + mm + '., komanda augstā zonā', lived[heavy].total ? fatColor(46) : '')
+      + tile(today == null ? '—' : today + '<small>h</small>', 'Šodien', today == null ? 'cits mēnesis' : 'komanda augstā zonā', today ? fatColor(46) : '')
+      + tile((mc > 0 ? '+' : '') + mc + '<small>%</small>', 'Mēness', 'korelācija, pilnmēness ' + (data.fullIdx + 1) + '.' + mm + '.')
       + '</div>';
     var rows = people.length ? capped('<div class="db-fat">', people.map(function (p) {
-      var g = GROUP.rg, c = fatColor(p.avg);
+      var g = GROUP.rg, pk = p.sum.peak, c = fatColor(pk.score), d = new Date(pk.t);
       return '<button type="button" class="db-fat-row" data-db-person="' + esc(p.name) + '">' + avatar(p.name, g.accent)
-        + '<span class="db-fat-name"><b>' + esc(shortName(p.name)) + '</b><small>Maksimums ' + p.peak + '% (' + p.peakDay + '.' + mm + '.)</small></span>'
-        + sparkline(p.arr, c)
-        + '<span class="db-fat-val" style="color:' + c + '"><b>' + p.avg + '%</b><small>vidēji</small></span></button>';
+        + '<span class="db-fat-name"><b>' + esc(shortName(p.name)) + '</b><small>Augstākais <span style="color:' + c + '">' + pk.score + '</span> ' + d.getDate() + '.' + mm + '.</small></span>'
+        + sparkline(p.days, c)
+        + '<span class="db-fat-val"><b style="color:' + (p.sum.highHours ? fatColor(46) : 'inherit') + '">' + p.sum.highHours + ' h</b><small>augstā zonā</small></span></button>';
     }), '</div>', CAP) : empty('Šomēnes nav noguruma datu.');
     return tiles
-      + section('Komanda', GROUP.rg.label.toLowerCase() + ', dienas vidējais', chart, '#38bdf8')
-      + section('Cilvēki', 'mēneša līkne, vidējais un maksimums', rows, '#38bdf8')
-      + note('Modeļa aprēķins no grafika un atpūtas laika. Tas nav cilvēka pašsajūta, to rāda sadaļa Pārskats. Mēness līkne ir joks, ne zinātne.');
+      + section('Komanda', 'stundas augstā zonā katru dienu, visi kopā', teamFatigueChart(data, team), '#38bdf8')
+      + section('Cilvēki', 'stundas nomodā virs 45, kā kartītē', rows, '#38bdf8')
+      + note('Tas pats modelis, ko rāda cilvēka kartīte (0–100, virs 45 ir Augsts). Tā ir aplēse pēc grafika un pieņemta miega, nevis mērījums vai pašsajūta. Mēness ir joks, ne zinātne.');
+  }
+  // The person's month on the card's scale (drill-down from any tab).
+  function personFatigue(name) {
+    var F = fatigueApi(), meta = fatigueMeta();
+    if (!F || !meta || meta.names.indexOf(name) < 0) return '';
+    var html = F.monthCurveHtml(name, meta.year, meta.mm);
+    if (!html) return '';
+    var sum = F.monthSummary(F.monthSeries(name, meta.year, meta.mm, 1));
+    var pk = sum && sum.peak, d = pk ? new Date(pk.t) : null;
+    var facts = '<div class="db-tiles db-tiles--3">'
+      + tile(sum.highHours + '<small>h</small>', 'Augstā zonā', 'nomodā, virs 45', sum.highHours ? fatColor(46) : '')
+      + tile(pk ? pk.score + '<small>/100</small>' : '—', 'Augstākais', pk ? d.getDate() + '.' + (d.getMonth() + 1) + '. ' + String(d.getHours()).padStart(2, '0') + ':00' : '', pk ? fatColor(pk.score) : '')
+      + tile(sum.current == null ? (sum.mean == null ? '—' : sum.mean + '<small>/100</small>') : sum.current + '<small>/100</small>', sum.current == null ? 'Vidēji nomodā' : 'Tagad', sum.current == null ? 'mēneša vidējais' : 'pēc modeļa', sum.current == null ? '' : fatColor(sum.current))
+      + '</div>';
+    return section('Nogurums', 'katra stunda, kā kartītē', facts + '<div class="db-fmc">' + html + '</div>', '#38bdf8');
   }
   function personView(b) {
     var name = state.person, s = summaryFor(b.range, name, 'all');
@@ -745,9 +845,13 @@
     var list = rows.filter(function (r) { return r.shifts.length; }).map(function (r) {
       return '<tr><td><button type="button" class="db-link" data-db-day="' + r.day + '">' + shortDay(r.day) + '</button></td><td>' + r.shifts.map(function (e) { return chip(shiftLabel(e), SHIFT[e.type].color); }).join(' ') + '</td><td>' + (r.bolus.length ? r.bolus.map(function (e) { return chip(e.room === 'ge' ? 'GE' : 'Philips', e.room === 'ge' ? '#0a84ff' : '#30d158'); }).join(' ') : '<span class="db-dim">—</span>') + '</td></tr>';
     });
+    var fat = group === GROUP.rg && !IS_RAD ? personFatigue(name) : '';
+    var fatFirst = state.tab === 'fatigue';
     return backBar(avatar(name, group.accent) + esc(name), group.label + '&ensp;' + monthLabel(state.month))
+      + (fatFirst ? fat : '')
       + '<div class="db-tiles db-tiles--5">' + tile(s.shifts.length, 'Maiņas') + tile(fmt(s.hours, 0) + '<small>h</small>', 'Stundas', '', '#1fe091') + tile(c.day, 'Diena', '', SHIFT.day.color) + tile(c.night, 'Nakts', '', SHIFT.night.color) + tile(c['24h'], '24h', '', SHIFT['24h'].color) + '</div>'
       + section('Mēnesis', 'pēc maiņas veida', pixels(rows, b.today, 'shift'), group.accent)
+      + (fatFirst ? '' : fat)
       + section('Maiņas', (p.ge + p.philips) + ' bolusa maiņas', table(['Diena', 'Maiņa', 'Boluss'], list), group.accent)
       + note('Sajūtas ir anonīmas, tāpēc personai tās netiek rādītas — tās redzamas tikai komandas kopainā.');
   }
@@ -958,6 +1062,7 @@
     }
     ensureRadio(state.month);
     if (state.tab === 'night' && !state.day && !state.person) ensureNight();
+    if (state.tab === 'fatigue' && !state.day && !state.person) ensureFatigue();
     // Coffee days come from the API on demand; opening the stats (or a month)
     // pulls the month's missing days, a day view pulls its own day.
     var coffeeDays = state.day ? [state.day] : elapsedDays(b.rows, b.today).map(function (r) { return r.day; });
