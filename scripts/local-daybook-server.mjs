@@ -7,7 +7,7 @@ const addresses=Object.values(networkInterfaces()).flat().filter(n=>n.family==='
 const dir=path.join(root,'.local-preview'),file=path.join(dir,'daybook.json');await mkdir(dir,{recursive:true});
 let saved;try{saved=JSON.parse(await readFile(file,'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;saved={entries:[],radio:[]};}
 let pending=Promise.resolve();
-const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.avif':'image/avif','.gif':'image/gif','.woff2':'font/woff2','.mp3':'audio/mpeg','.webmanifest':'application/manifest+json','.ico':'image/x-icon'};
+const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.avif':'image/avif','.gif':'image/gif','.woff2':'font/woff2','.mp3':'audio/mpeg','.mp4':'video/mp4','.webm':'video/webm','.webmanifest':'application/manifest+json','.ico':'image/x-icon'};
 const json=(res,value,status=200)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
 http.createServer(async(req,res)=>{
  try{

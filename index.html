@@ -8,6 +8,63 @@
    Plānotājs or night plan. Everything else is shared with the radiographers. */
 (function(){try{var rad=new URLSearchParams(location.search).get('app')==='rad';window.MINKA_APP=rad?'rad':'rg';if(rad)document.documentElement.classList.add('minka-rad');}catch(_e){window.MINKA_APP='rg';}})();
 </script>
+<script>
+/* /rad intro: the radiologists' room in the evening, the RG Rad icon is
+   double-clicked and the app opens on black. It plays once per session above
+   everything and ends on #000, where the login and the loader both start, so
+   the real app simply carries on. Any click or key skips it. The login and the
+   loader keep working underneath while it plays. Source: ~/Downloads/rg-intro-video
+   (Remotion scene RadRoom2 + Tesseract edit). RG never runs this. */
+(function(){
+  if (window.MINKA_APP !== 'rad') return;
+  try {
+    if (sessionStorage.getItem('radIntroSeen') === '1') return;
+    if (/[?&]nointro\b/.test(location.search)) return;
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  } catch (_e) { return; }
+  var V = '20260926i1';
+  var box = document.createElement('div');
+  box.id = 'rad-intro';
+  box.setAttribute('aria-hidden', 'true');
+  box.style.cssText = 'position:fixed;inset:0;z-index:2147483000;background:#000;transition:opacity .16s ease;cursor:pointer';
+  var v = document.createElement('video');
+  v.preload = 'auto'; v.playsInline = true; v.setAttribute('playsinline', '');
+  v.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000';
+  var last = null;
+  [['webm', 'video/webm'], ['mp4', 'video/mp4']].forEach(function(s){
+    last = document.createElement('source');
+    last.src = 'data/rad-intro.' + s[0] + '?v=' + V; last.type = s[1];
+    v.appendChild(last);
+  });
+  box.appendChild(v);
+  (document.body || document.documentElement).appendChild(box);
+  var done = false, guard = 0;
+  function finish(){
+    if (done) return; done = true;
+    clearTimeout(guard);
+    removeEventListener('keydown', skip, true);
+    box.style.opacity = '0';
+    setTimeout(function(){ try { v.pause(); box.remove(); } catch (_e) {} }, 180);
+  }
+  // swallow the key so it does not also land in the password field
+  function skip(e){ if (e) { e.preventDefault(); e.stopPropagation(); } finish(); }
+  box.addEventListener('click', skip);
+  addEventListener('keydown', skip, true);
+  v.addEventListener('ended', finish);
+  last.addEventListener('error', finish);
+  // not playing within 2.5 s (codec, autoplay policy, slow disk): the app goes on
+  guard = setTimeout(finish, 2500);
+  v.addEventListener('playing', function(){
+    clearTimeout(guard); guard = setTimeout(finish, 9000);
+    // seen only once it really played: a slow first load tries again next time
+    try { sessionStorage.setItem('radIntroSeen', '1'); } catch (_e) {}
+  });
+  // with sound when the browser allows it (an installed app often does), else muted
+  v.muted = false;
+  var p = v.play();
+  if (p && p.catch) p.catch(function(){ v.muted = true; var q = v.play(); if (q && q.catch) q.catch(finish); });
+})();
+</script>
 <style>/* four ids: the dock's own rules use three */
 html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #planotajsDockBtn#planotajsDockBtn#planotajsDockBtn#planotajsDockBtn,html.minka-rad #pusdienasDockBtn#pusdienasDockBtn#pusdienasDockBtn#pusdienasDockBtn,html.minka-rad #settingsDockBtn#settingsDockBtn#settingsDockBtn#settingsDockBtn,html.minka-rad #dockMoreBtn#dockMoreBtn#dockMoreBtn#dockMoreBtn,html.minka-rad #dockMoreMenu#dockMoreMenu#dockMoreMenu#dockMoreMenu{display:none!important}</style>
 <!-- First paint must be dark: this runs before any blocking script/CSS, so a
