@@ -112,6 +112,24 @@
     const pressed = document.querySelector('#radioSourceBar > button[aria-pressed="true"]');
     if (pressed) sourcePill(null, pressed);
   };
+  // Anything that moves the buttons inside the bar (the sign-in pills added
+  // or relabelled by js/media-profile.js, a font arriving, a new look) would
+  // leave the pill where the pressed button used to be: follow every resize
+  // of the bar and its buttons.
+  (function followBar() {
+    const bar = document.getElementById('radioSourceBar');
+    if (!bar || !window.ResizeObserver) return;
+    let frame = 0;
+    const resync = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => { frame = 0; window.__syncRadioSourcePill(); });
+    };
+    const sizes = new ResizeObserver(resync);
+    const watchAll = () => bar.querySelectorAll(':scope > *:not(.radio-source-pill)').forEach((el) => sizes.observe(el));
+    sizes.observe(bar);
+    watchAll();
+    new MutationObserver(() => { watchAll(); resync(); }).observe(bar, { childList: true });
+  })();
   window.setRadioSource = async function (source) {
     if (mobileView.matches) { closeMobileRadio(); return; }
     const prevSource = requestedSource;
