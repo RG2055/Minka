@@ -21,7 +21,7 @@
   };
   var WEEK = ['P','O','T','C','Pk','S','Sv']; // Mon-first (Latvian)
   var _overlay = null, _curMonth = null, _fitRaf = 0;
-  var _viewMode = 'month';   // 'month' | 'week' | 'abs'
+  var _viewMode = 'month';   // 'month' | 'week' | 'abs' | 'rgv' (/rad: radiographers)
   var _weekIdx = 0;          // which week row (0-based) in week view
   var _viewFrom = null;      // view being left, for the tab switch motion
   var _holiCache = {};
@@ -272,7 +272,10 @@
       '.mcal-rd .mcal-grp-h{color:var(--rd);}',
       // /rad: residents teal, radiologists coral (as everywhere in /rad), and
       // the group name shown in the month grid too, so it is plain who is who.
-      'html.minka-rad #mcal-overlay{--rg:#4dd0c8;--rd:#ff8f80;}',
+      'html.minka-rad #mcal-overlay{--rg:#4dd0c8;--rd:#ff8f80;--rgx:#b8c2cf;}',
+      // /rad Radiogrāferi tab: the radiographers in a quiet grey
+      '.mcal-rgx{border-left-color:var(--rgx);}',
+      '.mcal-rgx .mcal-grp-h{color:var(--rgx);}',
       'html.minka-rad .mcal-grp-h{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px;}',
       '.mcal-w{display:flex;align-items:baseline;gap:6px;min-width:0;white-space:nowrap;}',
       '.mcal-name{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--on);}',
@@ -596,6 +599,28 @@
       + body + '</div></div>';
   }
 
+  // ---- /rad: Radiogrāferi view (read only) ------------------------------
+  // The radiographers' month from /api/schedule, shown like the month grid.
+  // Fetched when the tab is opened and kept in memory only: nothing of the
+  // radiographers' data is written anywhere from /rad.
+  var _rgx = null, _rgxAt = 0, _rgxPromise = null, _rgxFailed = false;
+  function loadRgx(){
+    if (!IS_RAD || _rgxPromise || (_rgx && Date.now() - _rgxAt < AB_TTL)) return;
+    var api = window.MinkaApi;
+    if (!api || typeof api.apiFetch !== 'function'){ _rgxFailed = !_rgx; return; }
+    _rgxPromise = Promise.resolve().then(function(){ return api.apiFetch('/api/schedule'); })
+      .then(function(r){ if (!r || !r.ok) throw new Error('Schedule unavailable'); return r.json(); })
+      .then(function(d){
+        if (!d || !d.radiographers || typeof d.radiographers !== 'object') throw new Error('Invalid schedule');
+        _rgx = d.radiographers; _rgxAt = Date.now(); _rgxFailed = false;
+      })
+      .catch(function(){ _rgxFailed = !_rgx; })
+      .finally(function(){
+        _rgxPromise = null;
+        if (isOpen() && _viewMode === 'rgv') render(_curMonth);
+      });
+  }
+
   function absFilters(){
     return '<div class="mcal-legend mcal-abfilters" role="group" aria-label="Prombūtņu veidi">' + AB_GROUPS.map(function(g){
       return '<button class="mcal-abf is-' + g.k + '" data-abg="' + g.k + '" aria-pressed="' + !_absOff[g.k] + '"><i></i>' + g.name + '</button>';
@@ -611,19 +636,24 @@
     var today = todayKey();
     var holi = holidayMap(p.year);
     var bday = birthdayMap();
+    var rgv = _viewMode === 'rgv';
+    if (rgv){
+      if (!_rgx || Date.now() - _rgxAt >= AB_TTL) loadRgx();
+      if (!_rgx) return '<div class="mcal-empty">' + (_rgxFailed ? 'Radiogrāferu grafiks nav pieejams.' : 'Ielādē radiogrāferus...') + '</div>';
+    }
 
     function cellFor(slot){
       var d = slot - startW + 1;
       if (d < 1 || d > daysIn) return '<div class="mcal-cell mcal-blank"></div>';
       var dateStr = ('0' + d).slice(-2) + '.' + ('0' + (p.idx + 1)).slice(-2) + '.' + p.year;
       var key = p.year * 10000 + (p.idx + 1) * 100 + d;
-      var rg = dayWorkers(month, dateStr, rgStore());
-      var rd = dayWorkers(month, dateStr, rdStore());
+      var rg = rgv ? dayWorkers(month, dateStr, _rgx) : dayWorkers(month, dateStr, rgStore());
+      var rd = rgv ? [] : dayWorkers(month, dateStr, rdStore());
       var hd = holi[dateStr];
       var bdNames = bday[dateStr.slice(0, 5)];
       var body = '';
       var rows = _viewMode === 'week' ? workerRows : monthRows;
-      var rgHtml = rg.length ? '<div class="mcal-grp mcal-rg"><div class="mcal-grp-h">' + LEFT + '</div>' + rows(rg) + '</div>' : '';
+      var rgHtml = rg.length ? '<div class="mcal-grp ' + (rgv ? 'mcal-rgx' : 'mcal-rg') + '"><div class="mcal-grp-h">' + (rgv ? 'Radiogrāferi' : LEFT) + '</div>' + rows(rg) + '</div>' : '';
       var rdHtml = rd.length ? '<div class="mcal-grp mcal-rd"><div class="mcal-grp-h">Radiologi</div>' + rows(rd) + '</div>' : '';
       body += IS_RAD ? rdHtml + rgHtml : rgHtml + rdHtml;      // /rad: radiologists first
       if (!body) body = '<div class="mcal-off">Nav maiņu</div>';
@@ -633,7 +663,7 @@
       var tags = (hd ? '<span class="mcal-tag' + (hd.free ? ' is-free' : '') + '">' + esc(hd.name) + '</span>' : '')
         + (bdNames ? '<span class="mcal-tag is-bday">Dz. d. ' + esc(bdNames.map(function(n){ return titleCase(firstName(n)); }).join(', ')) + '</span>' : '');
       var rail = '<div class="mcal-rail"><span class="mcal-daynum">' + d + '</span></div>';
-      var title = _viewMode === 'week' ? '' : ' title="Atvērt nedēļu"';
+      var title = _viewMode === 'month' ? ' title="Atvērt nedēļu"' : '';
       return '<div class="' + cls + '" data-day="' + d + '"' + title + '>' + rail + '<div class="mcal-main">' + (tags ? '<div class="mcal-tags">' + tags + '</div>' : '') + '<div class="mcal-body">' + body + '</div></div></div>';
     }
 
@@ -734,6 +764,7 @@
       + '<button data-view="month" class="' + (_viewMode === 'month' ? 'is-on' : '') + '" aria-pressed="' + (_viewMode === 'month') + '">Mēnesis</button>'
       + '<button data-view="week" class="' + (_viewMode === 'week' ? 'is-on' : '') + '" aria-pressed="' + (_viewMode === 'week') + '">Nedēļa</button>'
       + '<button data-view="abs" class="' + (_viewMode === 'abs' ? 'is-on' : '') + '" aria-pressed="' + (_viewMode === 'abs') + '">Prombūtnes</button>'
+      + (IS_RAD ? '<button data-view="rgv" class="' + (_viewMode === 'rgv' ? 'is-on' : '') + '" aria-pressed="' + (_viewMode === 'rgv') + '">Radiogrāferi</button>' : '')
       + '</div>'
       + (_viewMode === 'week' && p.idx != null ? '<div class="mcal-sub">' + esc(weekRange(p, _weekIdx)) + '</div>' : '')
       + '<div class="mcal-actions">'
