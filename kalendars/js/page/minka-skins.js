@@ -295,7 +295,7 @@
     var cleanId = String(id || '');
     var material = window.MinkaFindCardMaterial(cleanId);
     if(material) return new URL(material.path+'?v=20260912photos1',document.baseURI).href;
-    var path = 'data/skins/skin-' + cleanId + '.webp' + (/^aesthetic-/.test(cleanId) ? '?v=2' : /^dither-rtg-/.test(cleanId) ? '?v=20260926h2' : '');
+    var path = 'data/skins/skin-' + cleanId + '.webp' + (/^aesthetic-/.test(cleanId) ? '?v=2' : /^dither-rtg-/.test(cleanId) ? '?v=20260926h3' : '');
     try { return new URL(path, document.baseURI).href; }
     catch (e) { return path; }
   }
@@ -732,9 +732,11 @@
      ending -a/-e, cool ones (ice, teal, green) otherwise; ink and picture
      are picked by name. Everyone can change it in Izskats. */
   // Warm (women's names): the prettier ones, no skeletons. Cool: the rest.
-  var RAD_SCENES_WARM = ['mr', 'zieds', 'krutis', 'ct'];
-  var RAD_SCENES_COOL = ['krutis', 'ct', 'mr', 'plauksta', 'galvaskauss', 'galvaskauss-sanis', 'skelets'];
-  var RAD_SHIFT = { krutis: 56, ct: 58, 'galvaskauss-sanis': 58, zieds: 68, plauksta: 70, skelets: 72, mr: 72, galvaskauss: 74 };
+  // Real radiographs/CT (CC0, scripts/rad-src/SOURCES.md), drawn MR and flower,
+  // and the colour perfusion maps (perf-*: their own colours, no ink).
+  var RAD_SCENES_WARM = ['mr', 'zieds', 'krutis', 'ct', 'ctgalva', 'perf-cbf', 'perf-tmax', 'perf-cbv'];
+  var RAD_SCENES_COOL = ['krutis', 'ct', 'ctkrutis', 'ctgalva', 'mr', 'plauksta', 'galvaskauss', 'galvaskauss-sanis', 'skelets', 'perf-cbf', 'perf-tmax', 'perf-cbv'];
+  var RAD_SHIFT = { krutis: 60, ct: 58, ctkrutis: 58, 'galvaskauss-sanis': 58, zieds: 68, plauksta: 72, skelets: 72, mr: 72, galvaskauss: 74, ctgalva: 70, 'perf-cbf': 70, 'perf-tmax': 70, 'perf-cbv': 70 };
   // A saved look that is only the plain default card (no picture, classic
   // face, default tint) counts as not chosen in /rad.
   function blankSkin(skin) {
@@ -767,13 +769,14 @@
     face.parts.hours = [76, 47, 105, 1];
     face.parts.name = [30, 86, 85, 1];
     face.parts.remaining = [20, 12, 80, 1];
-    face.parts.moon = [50, 12, 85, 0];              // the sun/moon mark crowded the top row
+    face.parts.moon = [50, 12, 85, 1];
+    face.colors.moon = 'ffd27a';                    // soft gold: stands out on every picture
     face.parts.coffee = [84, 12, 80, 1];
     face.parts.emoji = [86, 86, 85, 1];
     face.parts.month[3] = 0;
     face.parts.fatigue[3] = 0;
     face.parts.initials[3] = 0;
-    return { t: 'img', id: 'dither-rtg-' + scene + '-' + ink[0], num: hexToRgb('#' + ink[1]), na: '1', txt: '241,240,234', face: face, depth: false, radDefault: true };
+    return { t: 'img', id: 'dither-rtg-' + scene + (/^perf-/.test(scene) ? '' : '-' + ink[0]), num: hexToRgb('#' + ink[1]), na: '1', txt: '241,240,234', face: face, depth: false, radDefault: true };
   }
   window.mkApplySkinToEl = function(el, skin) {
     if (blankSkin(skin)) skin = radDefaultSkin(el) || skin;
@@ -1142,6 +1145,12 @@
         var role = previewSource.classList.contains('mk-mid-card-rd') ? 'mk-mid-card-rd' : 'mk-mid-card-rg';
         previewSizeSource = Array.prototype.find.call(rosterCards, function(card) { return card.classList.contains(role); }) || rosterCards[0];
       }
+    }
+    // /rad: a resident without a chosen look edits the look they actually see
+    // (the default radiology card), so every element on it can be moved/changed.
+    if (blankSkin(cur) && previewSource) {
+      var seed = radDefaultSkin(previewSource);
+      if (seed) { draft = JSON.parse(JSON.stringify(seed)); delete draft.radDefault; }
     }
     var emVal = draft.em != null ? Math.round(parseFloat(draft.em) * 100) : 13;
     var emShown = draft.em !== '0';

@@ -323,7 +323,115 @@ def rtg_ct(x, y):
     return xray(v, x, y, .08)
 
 
-RTG = [('krutis', rtg_chest), ('plauksta', rtg_hand), ('mr', rtg_brain), ('zieds', rtg_flower), ('ct', rtg_ct)]
+# Chest, CT, hand, head CT and the perfusion maps now come from real images
+# (build-rad-photo-skins.py); the drawn ones stay below for reference only.
+RTG = [('mr', rtg_brain), ('zieds', rtg_flower)]
+
+
+# ---------- axial head CT and CT perfusion maps (colour) ----------
+def seg_dist(px, py, ax, ay, bx, by):
+    dx, dy = bx - ax, by - ay
+    t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy or 1)))
+    return math.hypot(px - ax - t * dx, py - ay - t * dy)
+
+
+def head_ct(X, Y):
+    """Grey value of an axial head CT at (X, Y) (0 = air) and whether the point
+    is inside the brain: thick bright skull, a thin dark CSF rim, grey
+    parenchyma with wavy sulci at the cortex, the lateral ventricles as a
+    butterfly (frontal horns up and out, occipital horns down and out, a thin
+    septum in the middle), the falx."""
+    skull_o = ellipse_d(X, Y, 0, 0, .31, .4)
+    skull_i = ellipse_d(X, Y, 0, 0, .275, .36)
+    if skull_o > 0:
+        return 0.0, False
+    if skull_i > 0:
+        return .95, False
+    r = math.hypot(X / .275, Y / .36)
+    if r > .965:
+        return .12, True                                                       # CSF rim
+    v = .55
+    a = math.atan2(Y, X)
+    if r > .8:                                                                 # sulci: short, wavy, from the surface in
+        g = math.sin(a * 30 + 4 * math.sin(a * 7) + 22 * r)
+        if g > .6:
+            v = .22
+    ax = abs(X)
+    if ax > .007:                                                              # lateral ventricles (one per side)
+        path = [(.055, -.15), (.03, -.07), (.03, .03), (.06, .1), (.1, .15)]
+        d = min(seg_dist(ax, Y, *path[i], *path[i + 1]) for i in range(len(path) - 1))
+        width = .03 if -.08 < Y < .06 else .022
+        if d < width:
+            v = .1
+    if ax < .004 and (Y < -.17 or Y > .18):                                   # falx
+        v = .85
+    return v, True
+
+
+def ct_head(x, y):
+    X, Y = (x - .5) * AR, y - .5
+    v, _ = head_ct(X, Y)
+    return xray(v, x, y, .06)
+
+
+# (drawn head CT: replaced by the real slice)
+
+
+# Jet-like colour map as in CT perfusion software; dithered between
+# neighbouring colours with a 4×4 Bayer matrix (fine, no colour noise).
+JET = ['#0b1f8f', '#1f6bff', '#22d3ee', '#35d05a', '#f5e042', '#ff3b2f']
+
+
+def perf_value(kind, X, Y):
+    base, inside = head_ct(X, Y)
+    if not inside:
+        return None
+    noise = (math.sin(X * 97.3 + Y * 51.1) * 43758.5453) % 1
+    gyri = .5 + .5 * math.sin(math.atan2(Y, X) * 34 + 3 * math.sin(math.atan2(Y, X) * 5))
+    cortex = min(1.0, math.hypot(X / .275, Y / .36))
+    if kind == 'cbf':            # flow: high in grey matter, a low (blue) territory on the viewer's left
+        v = .35 + .45 * cortex * gyri + .15 * noise
+        if X < -.02 and Y < .12:
+            v *= .45
+    elif kind == 'tmax':         # delayed: one hemisphere red
+        v = .25 + .2 * noise + .2 * gyri * cortex
+        if X < .01:
+            v = .88 + .1 * noise
+    else:                        # volume: mostly blue, vessels and cortex light up
+        v = .15 + .25 * noise + (.55 if gyri > .93 and cortex > .75 else 0)
+    if base < .15:               # ventricles stay dark
+        v = min(v, .05)
+    return max(0.0, min(.999, v))
+
+
+def save_perf(sid, kind, w=240, h=135):
+    pal = [hexrgb(c) for c in JET]
+    img = Image.new('RGB', (w, h), (4, 5, 9))
+    px = img.load()
+    for y in range(h):
+        for x in range(w):
+            X, Y = ((x + .5) / w - .5) * AR, (y + .5) / h - .5
+            if kind == 'ring':
+                continue
+            v = perf_value(kind, X, Y)
+            if v is None:
+                if ellipse_d(X, Y, 0, 0, .31, .4) < 0 and ellipse_d(X, Y, 0, 0, .295, .385) > 0:
+                    px[x, y] = pal[2]                                          # thin skull outline, as on the maps
+                continue
+            lvl = v * (len(pal) - 1)
+            lo = int(lvl)
+            frac = lvl - lo
+            pick = lo + 1 if frac * 16 > BAYER4[y % 4][x % 4] + .5 else lo
+            if pick == 0 and (x + y) % 2:                                      # darkest blue: half the dots, so the brain keeps its shape
+                continue
+            px[x, y] = pal[min(pick, len(pal) - 1)]
+    img = img.resize((480, 270), Image.NEAREST)
+    path = OUT / f'skin-dither-{sid}.webp'
+    img.save(path, 'WEBP', lossless=True, method=6)
+    print(path.relative_to(ROOT), path.stat().st_size, 'bytes')
+
+
+PERF = ['cbf', 'tmax', 'cbv']
 # More pictures (brain, skulls, skeleton) come from reference images:
 # scripts/build-rad-photo-skins.py.
 # Inks: three warm ("f": rose, coral, peach) and three cool ("m": ice, teal,

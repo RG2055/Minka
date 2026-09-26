@@ -3505,10 +3505,12 @@ function filterFullList(btn) {
       const live = options.isToday && isWorkerActive(worker, worker.date, options.now);
       const start = getDutyStartTime(worker), end = getDutyEndTime(worker);
       const time = start && end ? clock(start) + '–' + clock(end) : '';
+      const fatigue = getSideFatigue(name);
       return `<div class="mk-rad-row${live ? ' is-live' : ''}${options.isToday && ui.isDone ? ' is-done' : ''}" data-worker="${mkEscAttr(name)}">`
         + `<span class="mk-rad-av" aria-hidden="true">${mkEscAttr(initials)}</span>`
         + `<span class="mk-rad-nm"><b>${mkEscAttr(first)}</b>${surname ? `<i>${mkEscAttr(surname)}</i>` : ''}</span>`
-        + `<span class="mk-rad-t">${mkEscAttr(time)}</span></div>`;
+        + `<span class="mk-rad-side"><span class="mk-rad-t">${mkEscAttr(time)}</span>`
+        + `<span class="mk-rad-fat" style="--fat:${fatigue.score}%;--fat-c:${fatigue.color}" title="Nogurums ${fatigue.score}% ${mkEscAttr(fatigue.label || '')}"><i aria-hidden="true"></i>${fatigue.score}%</span></span></div>`;
     }).join('');
     const html = groups.filter(g => g.list.length).map(g =>
       `<section class="mk-rad-grp is-${g.key}"><h4 class="mk-rad-grp-h"><span>${g.title}</span><b>${g.list.length}</b></h4>${rows(g)}</section>`

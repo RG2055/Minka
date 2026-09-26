@@ -13,7 +13,8 @@
 (function () {
   'use strict';
   var TABS = [['presets', 'Gatavie'], ['background', 'Fons'], ['layout', 'Izkārtojums'], ['colors', 'Krāsas'], ['effects', 'Efekti']];
-  var current = 'presets';
+  // /rad opens on the pictures (Fons); the radiographers keep Gatavie first.
+  var current = window.MINKA_APP === 'rad' ? 'background' : 'presets';
 
   function organize(host) {
     if (!host || host.querySelector('.org-tabs')) return;

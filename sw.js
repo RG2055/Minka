@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.800-rad11';
+const CACHE = 'minka-4.6.801-rad12';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
