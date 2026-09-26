@@ -9,7 +9,7 @@
 (function(){try{var rad=new URLSearchParams(location.search).get('app')==='rad';window.MINKA_APP=rad?'rad':'rg';if(rad)document.documentElement.classList.add('minka-rad');}catch(_e){window.MINKA_APP='rg';}})();
 </script>
 <style>/* four ids: the dock's own rules use three */
-html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #planotajsDockBtn#planotajsDockBtn#planotajsDockBtn#planotajsDockBtn,html.minka-rad #nsToggleBtnParent#nsToggleBtnParent#nsToggleBtnParent#nsToggleBtnParent,html.minka-rad #pusdienasDockBtn#pusdienasDockBtn#pusdienasDockBtn#pusdienasDockBtn,html.minka-rad #settingsDockBtn#settingsDockBtn#settingsDockBtn#settingsDockBtn,html.minka-rad #dockMoreBtn#dockMoreBtn#dockMoreBtn#dockMoreBtn,html.minka-rad #dockMoreMenu#dockMoreMenu#dockMoreMenu#dockMoreMenu{display:none!important}</style>
+html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #planotajsDockBtn#planotajsDockBtn#planotajsDockBtn#planotajsDockBtn,html.minka-rad #pusdienasDockBtn#pusdienasDockBtn#pusdienasDockBtn#pusdienasDockBtn,html.minka-rad #settingsDockBtn#settingsDockBtn#settingsDockBtn#settingsDockBtn,html.minka-rad #dockMoreBtn#dockMoreBtn#dockMoreBtn#dockMoreBtn,html.minka-rad #dockMoreMenu#dockMoreMenu#dockMoreMenu#dockMoreMenu{display:none!important}</style>
 <!-- First paint must be dark: this runs before any blocking script/CSS, so a
      PWA wake after tab discard never flashes a white screen. -->
 <style>html{background:#060b13;}body{background:#060b13;}
@@ -73,7 +73,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20260926rad18';
+  var CALENDAR_BUILD = '20260926rn2';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;

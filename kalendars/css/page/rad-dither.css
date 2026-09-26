@@ -74,3 +74,55 @@ html.minka-rad #grafiks-list .cards-role-rule {
   height: 1px !important; border: 0 !important;
   background: linear-gradient(90deg, rgba(var(--rad-ink), .45) 50%, transparent 0) 0 0/2px 1px repeat-x !important;
 }
+
+/* ---- /rad Nakts panel (js/rad-night.js) in the shared night overlay ---- */
+html.minka-rad #nsPanel { --rn-ink: 236,234,228; }
+html.minka-rad .rn-wrap { display: flex; flex-direction: column; gap: 18px; padding: 18px 22px 22px; color: rgb(var(--rn-ink)); font: 500 14px/1.3 Inter, system-ui, sans-serif; }
+html.minka-rad .rn-head h2 { margin: 0; display: flex; align-items: baseline; gap: 10px; font: 600 24px/1 "Space Grotesk", Inter, system-ui, sans-serif; letter-spacing: .02em; }
+html.minka-rad .rn-head small { font: 500 14px/1 "Space Grotesk", Inter, system-ui, sans-serif; opacity: .55; font-variant-numeric: tabular-nums; }
+html.minka-rad .rn-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+html.minka-rad .rn-group h3 {
+  display: flex; align-items: center; gap: 8px; margin: 0 0 10px;
+  font: 600 12px/1 "Space Grotesk", Inter, system-ui, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: rgba(var(--rn-ink), .85);
+}
+html.minka-rad .rn-group h3 small { font-weight: 500; letter-spacing: .04em; opacity: .55; }
+html.minka-rad .rn-group h3::after { content: ""; flex: 1 1 auto; height: 1px; background: linear-gradient(90deg, rgba(var(--rn-ink), .4) 50%, transparent 0) 0 0/2px 1px repeat-x; }
+html.minka-rad .rn-empty { margin: 0; opacity: .5; font-size: 13px; }
+/* the night as one bar, one dotted part per person */
+html.minka-rad .rn-bar { display: flex; gap: 3px; height: 46px; margin-bottom: 10px; }
+html.minka-rad .rn-seg { display: flex; flex-direction: column; justify-content: center; gap: 3px; min-width: 0; padding: 0 10px; border-radius: 10px; overflow: hidden; }
+html.minka-rad .rn-seg b { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.minka-rad .rn-seg i { font: 500 11px/1 "Space Grotesk", Inter, system-ui, sans-serif; font-style: normal; opacity: .75; font-variant-numeric: tabular-nums; }
+html.minka-rad .rn-seg-0 { --c: 100,210,255; } html.minka-rad .rn-seg-1 { --c: 255,179,207; }
+html.minka-rad .rn-seg-2 { --c: 168,230,122; } html.minka-rad .rn-seg-3 { --c: 245,183,63; }
+html.minka-rad .rn-bar .rn-seg { color: rgb(var(--c)); background: conic-gradient(at 1px 1px, transparent 75%, rgba(var(--c), .35) 0) 0 0/2px 2px, rgba(var(--c), .08); box-shadow: inset 0 0 0 1px rgba(var(--c), .35); }
+html.minka-rad .rn-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+html.minka-rad .rn-row { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto auto; align-items: center; gap: 10px; min-height: 36px; padding: 2px 4px; border-radius: 9px; }
+html.minka-rad .rn-dot { width: 10px; height: 10px; border-radius: 3px; background: rgb(var(--c)); }
+html.minka-rad .rn-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html.minka-rad .rn-time { font: 500 12px/1 "Space Grotesk", Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums; opacity: .7; }
+html.minka-rad .rn-move { display: inline-flex; gap: 4px; }
+html.minka-rad .rn-move button {
+  width: 32px; height: 32px; border: 0; border-radius: 16px; cursor: pointer;
+  background: rgba(var(--rn-ink), .08); color: rgb(var(--rn-ink)); font: 600 14px/1 Inter, system-ui, sans-serif;
+  transition: border-radius 350ms var(--mk-ease-expressive-fast, ease), background-color 150ms ease;
+}
+html.minka-rad .rn-move button:hover:not([disabled]) { background: rgba(var(--rn-ink), .16); }
+html.minka-rad .rn-move button:active:not([disabled]) { border-radius: 10px; }
+html.minka-rad .rn-move button[disabled] { opacity: .25; cursor: default; }
+/* beds: dotted frames, the taken ones filled with dots */
+html.minka-rad .rn-beds { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+html.minka-rad .rn-bed {
+  display: grid; grid-template-columns: 38px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 10px; row-gap: 6px; align-items: center;
+  padding: 12px; border: 2px solid transparent; border-radius: 14px; cursor: pointer;
+  background: linear-gradient(#0a0c10, #0a0c10) padding-box, repeating-conic-gradient(rgba(var(--rn-ink), .5) 0 25%, transparent 0 50%) 0 0/2px 2px border-box;
+}
+html.minka-rad .rn-bed.is-taken { background: conic-gradient(at 1px 1px, transparent 75%, rgba(100,210,255,.18) 0) 0 0/3px 3px padding-box, linear-gradient(#0a0c10, #0a0c10) padding-box, repeating-conic-gradient(rgba(100,210,255,.8) 0 25%, transparent 0 50%) 0 0/2px 2px border-box; }
+html.minka-rad .rn-bed-art { grid-row: 1 / 3; width: 38px; height: 26px; border-radius: 6px 6px 3px 3px; background: linear-gradient(rgba(var(--rn-ink), .9), rgba(var(--rn-ink), .9)) 3px 4px/10px 7px no-repeat, linear-gradient(rgba(var(--rn-ink), .5), rgba(var(--rn-ink), .5)) 0 12px/100% 9px no-repeat, linear-gradient(rgba(var(--rn-ink), .5), rgba(var(--rn-ink), .5)) 0 0/3px 100% no-repeat; }
+html.minka-rad .rn-bed-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+html.minka-rad .rn-bed-name b { font-weight: 600; }
+html.minka-rad .rn-bed-name small { font-size: 11.5px; opacity: .55; }
+html.minka-rad .rn-bed select {
+  grid-column: 2; min-width: 0; height: 32px; padding: 0 8px; border: 0; border-radius: 9px;
+  background: rgba(var(--rn-ink), .08); color: rgb(var(--rn-ink)); font: 500 13px/1 Inter, system-ui, sans-serif;
+}

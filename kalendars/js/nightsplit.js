@@ -1,5 +1,7 @@
 ﻿/* NAKTS SADALÄªTÄ€JS v3 â€” timeline bar design with fatigue mini-graphs */
 (function(){
+  // /rad has its own night (js/rad-night.js): this module never loads there.
+  if(window.MINKA_APP==='rad')return;
   var END=[{h:7,m:20,l:'07:20'},{h:7,m:30,l:'07:30'},{h:8,m:0,l:'08:00'}];
   var START=[{v:23,l:'23:00'},{v:23.5,l:'23:30'},{v:0,l:'00:00'},{v:0.5,l:'00:30'},{v:1,l:'01:00'}];
   // 8 hues, each ~45Â° apart on colour wheel â€” guaranteed visually distinct

@@ -822,7 +822,7 @@
     face.parts.coffee = [84, 12, 80, 1];
     face.parts.emoji = [86, 86, 85, 1];
     face.parts.month[3] = 0;
-    face.parts.fatigue[3] = 0;
+    face.parts.fatigue = [78, 72, 70, 1];              // under the number, above the initials
     face.parts.initials[3] = 0;
     return { t: 'img', id: 'dither-rtg-' + scene + (/^perf-/.test(scene) ? '' : '-' + ink[0]), num: hexToRgb('#' + ink[1]), na: '1', txt: '241,240,234', face: face, depth: false, radDefault: true };
   }

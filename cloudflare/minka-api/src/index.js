@@ -973,6 +973,28 @@ const worker = {
       return json(request, { ok: true, items });
     }
 
+    // /rad night: order of the radiologists' and the residents' night parts
+    // (00:00–08:00) and who sleeps in which bed. Its own key, never the
+    // radiographers' ns:: plan.
+    if (url.pathname === "/api/rad/night" && method === "GET") {
+      const date = cleanNsDate(url.searchParams.get("date"));
+      if (!date) return json(request, { ok: false, error: "valid date required" }, 400);
+      const val = await env.MINKA_EMOJI.get("radnight::" + date);
+      return json(request, val ? JSON.parse(val) : {});
+    }
+    if (url.pathname === "/api/rad/night" && method === "POST") {
+      const body = await readJson(request, 16 * 1024);
+      const date = cleanNsDate(body?.date);
+      if (!date) return json(request, { ok: false, error: "valid date required" }, 400);
+      const plan = cleanRadNight(body);
+      if (!plan) return json(request, { ok: false, error: "Invalid night plan" }, 400);
+      const previousRaw = await env.MINKA_EMOJI.get("radnight::" + date);
+      const previous = previousRaw ? JSON.parse(previousRaw) : null;
+      if (previous?.savedAt > plan.savedAt) return json(request, { ok: false, error: "Newer night plan exists", plan: previous }, 409);
+      await env.MINKA_EMOJI.put("radnight::" + date, JSON.stringify(plan), { expirationTtl: 120 * 86400 });
+      return json(request, { ok: true, plan });
+    }
+
     if (url.pathname === "/api/ns-order" && method === "GET") {
       const date = cleanNsDate(url.searchParams.get("date"));
       if (!date) return json(request, { ok: false, error: "valid date required" }, 400);
@@ -1202,6 +1224,25 @@ function cors(request) {
     "access-control-max-age": "86400",
     "vary": "Origin"
   };
+}
+
+const RAD_BEDS = ["virtuve1", "virtuve2", "uznemsana", "nodala"];
+function cleanRadName(value) {
+  const name = String(value || "").replace(/\s+/g, " ").trim();
+  return name && name.length <= 80 ? name : "";
+}
+function cleanRadNight(body) {
+  const list = (value) => Array.isArray(value) && value.length <= 12 ? value.map(cleanRadName).filter(Boolean) : null;
+  const rd = list(body?.rd), rs = list(body?.rs);
+  if (!rd || !rs) return null;
+  const beds = {};
+  for (const bed of RAD_BEDS) {
+    const name = cleanRadName(body?.beds?.[bed]);
+    if (name) beds[bed] = name;
+  }
+  const savedAt = Number(body?.savedAt);
+  if (!Number.isFinite(savedAt) || savedAt <= 0 || savedAt > Date.now() + 60000) return null;
+  return { rd, rs, beds, savedAt: Math.round(savedAt) };
 }
 
 function json(request, data, status = 200, extraHeaders = {}) {
