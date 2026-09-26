@@ -3,12 +3,18 @@
    rgapp.page/migrate.html and hands it what this device kept for the app
    (look, radio settings, sign-in), straight from window to window: sent
    only to rgapp.page, only to the window it opened, only when that window
-   asks. Caches are left behind (the new address fetches fresh). */
+   asks. Caches are left behind (the new address fetches fresh).
+   rgapp.page is the app; this address stays for testing before an update
+   goes there, so once a device has moved the bar never shows on it again. */
 (function () {
   if (location.hostname !== 'rg2055.github.io') return;
   var NEW = 'https://rgapp.page';
   var HIDE_KEY = 'minkaMoveNoticeHiddenAt';
-  try { if (Date.now() - Number(localStorage.getItem(HIDE_KEY) || 0) < 864e5) return; } catch (_e) {}
+  var MOVED_KEY = 'minkaMovedToRgappAt';
+  try {
+    if (localStorage.getItem(MOVED_KEY)) return;
+    if (Date.now() - Number(localStorage.getItem(HIDE_KEY) || 0) < 864e5) return;
+  } catch (_e) {}
 
   var app = window.MINKA_APP === 'rad' ? 'rad' : '';
   var mobile = /\/mobile\.html$/.test(location.pathname);
@@ -19,7 +25,7 @@
     try {
       for (var i = 0; i < localStorage.length; i++) {
         var k = localStorage.key(i);
-        if (!k || SKIP.test(k) || k === HIDE_KEY) continue;
+        if (!k || SKIP.test(k) || k === HIDE_KEY || k === MOVED_KEY) continue;
         var v = localStorage.getItem(k);
         if (typeof v === 'string' && v.length < 2e6) out[k] = v;
       }
@@ -28,6 +34,9 @@
   }
 
   function move() {
+    try { localStorage.setItem(MOVED_KEY, String(Date.now())); } catch (_e) {}
+    var bar = document.getElementById('mkMoveBar');
+    if (bar) bar.remove();
     var url = NEW + '/migrate.html?' + (app ? 'app=rad&' : '') + (mobile ? 'm=1' : '');
     var win = window.open(url, '_blank');
     if (!win) { location.href = NEW + (mobile ? '/mobile.html' + (app ? '?app=rad' : '') : (app ? '/rad/' : '/')); return; }
