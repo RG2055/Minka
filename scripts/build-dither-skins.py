@@ -232,19 +232,6 @@ def rtg_hand(x, y):
     return xray(v, x, y)
 
 
-def rtg_spine(x, y):
-    X, Y = (x - .5) * AR, y - .5
-    v = .05
-    for i in range(8):
-        cy = -.42 + i * .12
-        cx = .04 * math.sin(i * .5)
-        d = max(abs(X - cx) - .09, abs(Y - cy) - .045)
-        v = max(v, .72 * smooth(d, .012))
-        v = max(v, .5 * smooth(ellipse_d(X, Y, cx + .16, cy + .01, .07, .025), .01))   # spinous process
-    v = max(v, .12 * smooth(abs(X - .05) - .3, .08))
-    return xray(v, x, y)
-
-
 def rtg_brain(x, y):
     X, Y = (x - .5) * AR, y - .5
     v = .04
@@ -260,8 +247,10 @@ def rtg_brain(x, y):
 
 
 # Kept what reads at a glance on a card. Tried and dropped: knee and pelvis
-# (could read as something else), skull and CT slice (not recognisable).
-RTG = [('krutis', rtg_chest), ('plauksta', rtg_hand), ('mugurkauls', rtg_spine), ('mr', rtg_brain)]
+# (could read as something else), skull, CT slice and spine (not clear).
+RTG = [('krutis', rtg_chest), ('plauksta', rtg_hand), ('mr', rtg_brain)]
+# More pictures (brain, skulls, skeleton) come from reference images:
+# scripts/build-rad-photo-skins.py.
 # Inks: three warm ("f": rose, coral, peach) and three cool ("m": ice, teal,
 # green); /rad picks one by name, and everyone can change it. Never violet.
 RTG_INKS = [('f1', '#ffb3cf', '#0d0609'), ('f2', '#ff9e8f', '#0d0706'), ('f3', '#ffc9a8', '#0d0906'),

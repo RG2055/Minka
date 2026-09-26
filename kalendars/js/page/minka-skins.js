@@ -731,7 +731,7 @@
      inks (rose, coral, peach) for first names with the Latvian women's
      ending -a/-e, cool ones (ice, teal, green) otherwise; ink and picture
      are picked by name. Everyone can change it in Izskats. */
-  var RAD_SCENES = ['krutis', 'plauksta', 'mugurkauls', 'mr'];
+  var RAD_SCENES = ['smadzenes', 'galvaskauss', 'galvaskauss-sanis', 'skelets', 'krutis', 'mr', 'plauksta'];
   function radDefaultSkin(el) {
     if (window.MINKA_APP !== 'rad' || !el || !el.classList || !el.classList.contains('mk-mid-card-rg')) return null;
     var M = window.MinkaCardFaceModel;
