@@ -12,7 +12,7 @@
   var content = document.getElementById('nsPanelContent');
   if (!content) return;
 
-  var BEDS = [['virtuve1', 'Virtuve', 'gulta 1'], ['virtuve2', 'Virtuve', 'gulta 2'], ['uznemsana', 'Jaunā uzņemšana', ''], ['nodala', 'Nodaļa', '']];
+  var BEDS = [['virtuve1', 'Virtuve', 'dīvāns 1'], ['virtuve2', 'Virtuve', 'dīvāns 2'], ['uznemsana', 'Jaunā uzņemšana', 'rezidentu istabiņa'], ['nodala', 'Nodaļa', '']];
   // The rooms as they are: two beds in the main room (kitchen), one in the
   // new admission unit, one in the department (the crowned one: a resident's
   // or a doctor's). The radiographer's bed in the admission unit is theirs.
@@ -92,23 +92,33 @@
       + '<defs><pattern id="rnPlanks" width="1400" height="12" patternUnits="userSpaceOnUse"><rect width="1400" height="12" fill="#0e131b"/><line x1="0" y1="11.5" x2="1400" y2="11.5" stroke="#161d28" stroke-width="1"/></pattern></defs>'
       // department: the crowned bed (a resident's or a doctor's)
       + room(140, 8, 190, 125, '#f5b73f', 'NODAĻA')
-      // main room: kitchen along the top, coffee machine and fridge on the right wall, door low on the right
-      + room(440, 165, 215, 265, '#5ecbff', 'GALVENĀ ISTABA', 452, 420)
-      + '<rect x="462" y="174" width="150" height="26" rx="4" class="rn-counter-svg"/><text x="537" y="192" class="rn-label rn-mid">VIRTUVE</text>'
-      + '<rect x="618" y="176" width="26" height="24" rx="4" class="rn-appliance"/><text x="631" y="194" class="rn-icon">☕</text>'
-      + '<rect x="618" y="214" width="28" height="54" rx="4" class="rn-appliance"/><text x="632" y="245" class="rn-tiny rn-mid">LEDUS.</text>'
+      // main room: kitchen units along the top wall (sink, hob), the Philips
+      // coffee machine with the fridge beside it, a corner sofa in the lower
+      // left corner (the two places to sleep), the door low on the right
+      + room(440, 165, 215, 265, '#5ecbff', 'GALVENĀ ISTABA', 520, 250)
+      + '<rect x="452" y="172" width="120" height="30" rx="3" class="rn-counter-svg"/>'
+      + [462, 492, 522, 552].map(function (x) { return '<rect x="' + x + '" y="175" width="26" height="24" rx="2" class="rn-cabinet"/><circle cx="' + (x + 13) + '" cy="196" r="1.6" class="rn-knob"/>'; }).join('')
+      + '<rect x="494" y="178" width="22" height="15" rx="5" class="rn-sink"/><circle cx="505" cy="185" r="2" class="rn-knob"/>'
+      + [[529, 181], [543, 181], [529, 192], [543, 192]].map(function (p) { return '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="4.5" class="rn-hob"/>'; }).join('')
+      + '<text x="512" y="216" class="rn-tiny rn-mid">VIRTUVE</text>'
+      + '<rect x="578" y="174" width="30" height="28" rx="4" class="rn-appliance"/><rect x="586" y="188" width="14" height="8" rx="2" class="rn-cup"/><text x="593" y="184" class="rn-micro rn-mid">PHILIPS</text>'
+      + '<rect x="612" y="172" width="34" height="46" rx="4" class="rn-appliance"/><line x1="640" y1="182" x2="640" y2="206" class="rn-handle"/><text x="629" y="230" class="rn-tiny rn-mid">LEDUSSK.</text>'
+      + '<path d="M450 255 H486 V380 H600 V422 H450 Z" class="rn-sofa-frame"/><path d="M450 255 H462 V410 H600 V422 H450 Z" class="rn-sofa-back"/>'
       + door(655, 290, 655, 372)
-      // new admission unit
-      + room(900, 185, 100, 90, '#ff9fc4', 'REZ./RAD.', 906, 203)
-      + room(1000, 185, 90, 145, grey, 'CT D.ST.', 1008, 205)
-      + '<rect x="1010" y="214" width="70" height="12" rx="3" class="rn-appliance"/>'
+      // new admission unit: along the corridor and to the left the
+      // radiographers' workstation (a door into the CT Philips room), then the
+      // small residents' room; on along the corridor RTG Philips, and left of
+      // it the room where the radiographer sleeps
+      + room(900, 185, 100, 90, '#ff9fc4', 'REZIDENTI', 906, 203)
+      + room(1000, 185, 90, 145, grey, 'DARBA ST.', 1008, 205)
+      + '<rect x="1010" y="214" width="70" height="12" rx="3" class="rn-appliance"/><rect x="1016" y="208" width="18" height="8" rx="1.5" class="rn-screen"/><rect x="1052" y="208" width="18" height="8" rx="1.5" class="rn-screen"/>'
       + room(1090, 185, 110, 215, grey, 'CT PHILIPS', 1098, 205)
       + '<circle cx="1145" cy="290" r="36" class="rn-gantry"/><circle cx="1145" cy="290" r="17" class="rn-gantry-hole"/><rect x="1139" y="290" width="12" height="80" rx="4" class="rn-table"/>'
       + shape('M865 365 H1010 V330 H1090 V425 H865 Z', grey) + '<text x="880" y="400" class="rn-label">GAITENIS</text>'
       + room(1180, 345, 150, 90, grey, 'RTG PHILIPS', 1212, 368)
       + '<rect x="1230" y="380" width="70" height="36" rx="5" class="rn-table"/><circle cx="1265" cy="398" r="9" class="rn-gantry"/>'
-      + room(1070, 410, 120, 88, grey, 'JAUNĀ UZŅ.', 1078, 490)
-      + door(1000, 238, 1000, 268) + door(1030, 330, 1070, 330) + door(1090, 345, 1090, 390) + door(1200, 360, 1200, 395) + door(1100, 425, 1150, 425) + door(865, 378, 865, 412)
+      + room(1070, 410, 120, 88, grey, 'RADIOGR.', 1078, 490)
+      + door(1000, 238, 1000, 268) + door(1090, 245, 1090, 285) + door(1030, 330, 1070, 330) + door(1200, 360, 1200, 395) + door(1100, 425, 1150, 425) + door(865, 378, 865, 412)
       + '</svg>';
   }
   // A bed's box in the plan's own coordinates → percentages of the map.
@@ -138,10 +148,23 @@
     // and the new admission unit with its CT/RTG rooms. Beds sit on top in
     // viewBox percentages, so they stay in place at every size.
     function placed(key, pose, x, y, w, crown) { return bed(key, pose, crown).replace('class="rn-pbed ' + pose, 'style="' + at(x, y, w) + '" class="rn-pbed ' + pose); }
+    // A place on the corner sofa: the cushion is the target, the sleeper's
+    // name on it, their colour as the cushion's.
+    function sofa(key, x, y, w, h) {
+      var who = c.beds[key] && everyone.indexOf(c.beds[key]) >= 0 ? c.beds[key] : '';
+      var colour = who ? BED_COLOURS[everyone.indexOf(who) % BED_COLOURS.length] : '';
+      var options = '<option value="">Brīva</option>' + everyone.map(function (n) {
+        return '<option value="' + esc(n) + '"' + (n === who ? ' selected' : '') + '>' + esc(title(n)) + '</option>';
+      }).join('');
+      var box = 'left:' + ((x - VB.x) / VB.w * 100).toFixed(2) + '%;top:' + ((y - VB.y) / VB.h * 100).toFixed(2) + '%;width:' + (w / VB.w * 100).toFixed(2) + '%;height:' + (h / VB.h * 100).toFixed(2) + '%';
+      return '<div class="rn-sofa' + (w < h ? ' is-tall' : '') + (who ? ' is-taken is-' + colour : '') + '" style="' + box + '" data-rn-bed-drop="' + key + '">'
+        + '<span class="rn-pbed-who">' + (who ? esc(title(who).split(' ')[0]) : 'Brīva') + '</span>'
+        + '<select data-rn-bed="' + key + '" aria-label="Dīvāns">' + options + '</select></div>';
+    }
     var beds = '<div class="rn-map">' + planSvg()
       + placed('nodala', 'is-up', 214, 30, 42, true)
-      + placed('virtuve1', 'is-up', 452, 232, 40)
-      + placed('virtuve2', 'is-side', 532, 330, 40)
+      + sofa('virtuve1', 462, 262, 24, 118)
+      + sofa('virtuve2', 486, 380, 114, 30)
       + placed('uznemsana', 'is-up', 930, 210, 32)
       + '<div class="rn-pbed is-up is-theirs" style="' + at(1112, 430, 30) + '"><img src="assets/rooms/bed-neutral-256.webp" alt="" draggable="false"><span class="rn-pbed-who">radiogr.</span></div>'
       + '</div>';
