@@ -69,6 +69,19 @@ html.minka-rad .mk-rad-fat i {
 }
 html.minka-rad .mk-rad-row.is-done { opacity: .42; }
 
+/* radiographers of the day, read only, folded under the residents */
+html.minka-rad .mk-rad-grp.is-peek { --acc: 154,164,178; margin-top: 2px; }
+html.minka-rad .mk-rad-peek-h {
+  appearance: none; border: 0; background: none; cursor: pointer; width: 100%; text-align: left;
+  min-height: 28px; margin: 0;
+}
+html.minka-rad .mk-rad-peek-h::after { order: 3; }
+html.minka-rad .mk-rad-peek-h svg { order: 4; width: 12px; height: 12px; flex: none; transition: transform .2s ease; }
+html.minka-rad .mk-rad-grp.is-peek.is-open .mk-rad-peek-h svg { transform: rotate(180deg); }
+html.minka-rad .mk-rad-peek-h:focus-visible { outline: 1px solid rgba(var(--acc), .8); outline-offset: 2px; border-radius: 4px; }
+html.minka-rad .mk-rad-kind { font: 600 10px/1 "Space Grotesk", Inter, system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: rgba(var(--acc), .7); }
+html.minka-rad .mk-rad-peek-note { padding: 6px 4px; font: 500 12px/1.2 Inter, system-ui, sans-serif; color: rgba(var(--rad-ink), .5); }
+
 /* ---- more dither around: dotted rules under the section labels ---- */
 html.minka-rad #grafiks-list .cards-role-rule {
   height: 1px !important; border: 0 !important;

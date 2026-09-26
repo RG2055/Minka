@@ -3516,7 +3516,70 @@ function filterFullList(btn) {
       `<section class="mk-rad-grp is-${g.key}"><h4 class="mk-rad-grp-h"><span>${g.title}</span><b>${g.list.length}</b></h4>${rows(g)}</section>`
     ).join('');
     container.classList.add('mk-rad-roster');
-    container.innerHTML = html || '<span class="mk-duty-empty">ATPŪTA</span>';
+    container.innerHTML = (html || '<span class="mk-duty-empty">ATPŪTA</span>') + radPeekHtml(options);
+    if (!container.__radPeekBound) {
+      container.__radPeekBound = true;
+      container.addEventListener('click', e => {
+        if (!e.target.closest('[data-rad-peek-toggle]')) return;
+        radPeek.open = !radPeek.open;
+        try { localStorage.setItem(RAD_PEEK_KEY, radPeek.open ? '1' : '0'); } catch (_e) {}
+        if (radPeek.open) loadRadPeek();
+        g_updatePanelsForDate();
+      });
+    }
+  }
+
+  /* /rad: today's radiographers, read only, folded under the residents. The
+     radiographers' rota is fetched from /api/schedule only when the fold is
+     open and kept in memory; nothing of the radiographers' data is written
+     (no cache key, no plan, no mood). Rows carry no data-worker, so no card,
+     mood or night-plan code picks them up. */
+  const RAD_PEEK_KEY = 'minkaRadRgPeekV1';
+  const radPeek = { open: false, days: null, at: 0, loading: false, failed: false };
+  if (IS_RAD) { try { radPeek.open = localStorage.getItem(RAD_PEEK_KEY) === '1'; } catch (_e) {} }
+  function loadRadPeek() {
+    if (!IS_RAD || radPeek.loading || (radPeek.days && Date.now() - radPeek.at < 10 * 60 * 1000)) return;
+    radPeek.loading = true; radPeek.failed = false;
+    const req = window.MinkaApi ? window.MinkaApi.apiFetch('/api/schedule') : fetch(((window.MinkaApi && window.MinkaApi.base) || '') + '/api/schedule', { cache: 'no-store' });
+    Promise.resolve(req).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(d => {
+      const days = {};
+      Object.values((d && d.radiographers) || {}).forEach(list => (Array.isArray(list) ? list : []).forEach(day => {
+        if (day && day.date) days[day.date] = (day.workers || []).filter(w => w && w.name && isValidShift(w.shift));
+      }));
+      radPeek.days = days; radPeek.at = Date.now();
+    }).catch(() => { radPeek.failed = true; }).then(() => {
+      radPeek.loading = false;
+      if (radPeek.open) g_updatePanelsForDate();
+    });
+  }
+  function radPeekHtml(options) {
+    if (!IS_RAD) return '';
+    if (radPeek.open) loadRadPeek();
+    const list = (radPeek.days && radPeek.days[activeDateStr]) || [];
+    const clock = t => String(t || '').replace(/^0(\d)/, '$1').replace(/:00$/, '');
+    const order = w => getDutyShiftType(w) === 'NAKTS' ? 1 : 0;
+    const rows = list.slice().sort((a, b) => order(a) - order(b) || String(getDutyStartTime(a)).localeCompare(String(getDutyStartTime(b)))).map(w => {
+      const parts = String(w.name).trim().split(/\s+/).filter(Boolean);
+      const first = formatSideNamePart(parts[0], false), surname = formatSideNamePart(parts.slice(1).join(' '), true);
+      const date = w.date || activeDateStr;
+      const live = options.isToday && isWorkerActive(w, date, options.now);
+      const done = options.isToday && getWorkerUiState(w, date, options.now).isDone;
+      const start = getDutyStartTime(w), end = getDutyEndTime(w);
+      const night = getDutyShiftType(w) === 'NAKTS';
+      return `<div class="mk-rad-row is-peek${live ? ' is-live' : ''}${done ? ' is-done' : ''}">`
+        + `<span class="mk-rad-av" aria-hidden="true">${mkEscAttr((parts[0]?.[0] || '') + (parts[1]?.[0] || ''))}</span>`
+        + `<span class="mk-rad-nm"><b>${mkEscAttr(first)}</b>${surname ? `<i>${mkEscAttr(surname)}</i>` : ''}</span>`
+        + `<span class="mk-rad-side"><span class="mk-rad-t">${mkEscAttr(start && end ? clock(start) + '–' + clock(end) : '')}</span>`
+        + `<span class="mk-rad-kind">${night ? 'Nakts' : 'Diena'}</span></span></div>`;
+    }).join('');
+    const count = radPeek.days ? String(list.length) : '';
+    const body = !radPeek.open ? ''
+      : radPeek.days ? (rows || '<span class="mk-rad-peek-note">Šajā dienā nav</span>')
+      : `<span class="mk-rad-peek-note">${radPeek.failed ? 'Neizdevās ielādēt' : 'Ielādē…'}</span>`;
+    return `<section class="mk-rad-grp is-peek${radPeek.open ? ' is-open' : ''}">`
+      + `<button type="button" class="mk-rad-grp-h mk-rad-peek-h" data-rad-peek-toggle aria-expanded="${radPeek.open}">`
+      + `<span>Radiogrāferi</span>${count ? `<b>${count}</b>` : ''}<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button>`
+      + body + `</section>`;
   }
 
   function g_updatePanelsForDate() {
