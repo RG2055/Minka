@@ -29,4 +29,4 @@ id = "72f5893dcfc44771bd2ab40913ae99b4"
 
 # Refreshes the schedule copy from Apps Script (see refreshSchedule in src/index.js).
 [triggers]
-crons = ["*/2 * * * *"]
+crons = ["*/2 * * * *", "*/10 * * * *"]

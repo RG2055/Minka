@@ -647,8 +647,43 @@ async function authKind(request, env) {
   return "";
 }
 
+/* ── Raw sheet grids ─────────────────────────────────────────────────────
+   The Apps Script's ?fn=grid reply: every target month as displayed values,
+   background colours and merged ranges, for the radiologist mirror ("doc")
+   and the radiographer schedule plus its leave sheet ("tech"). Sections
+   (attending radiologists, residents, interns…) and absences (DNL, ATV…) are
+   read from it here, not in the sheet script. Kept in KV (the replies are
+   too large for a D1 row), rewritten only when the content changes. */
+const GRID_SOURCES = ["doc", "tech"];
+
+async function refreshGrid(env, src) {
+  if (!env.SOURCE_URL || !env.MINKA_EMOJI) return false;
+  try {
+    const upstream = await fetch(appsScriptUrl(env.SOURCE_URL, env, { fn: "grid", src }), { signal: AbortSignal.timeout(90000) });
+    if (!upstream.ok) throw new Error("upstream status " + upstream.status);
+    const text = await upstream.text();
+    const data = JSON.parse(text);
+    if (!data || data.success !== true || !Array.isArray(data.sheets) || !data.sheets.length) throw new Error("incomplete grid reply");
+    const hash = await sha256Hex(JSON.stringify(data.sheets));
+    const previous = await env.MINKA_EMOJI.getWithMetadata("grid:" + src, { type: "text" });
+    if (previous && previous.metadata && previous.metadata.hash === hash) {
+      await env.MINKA_EMOJI.put("grid-checked:" + src, String(Date.now()));
+      return true;
+    }
+    await env.MINKA_EMOJI.put("grid:" + src, text, { metadata: { hash, fetchedAt: Date.now() } });
+    return true;
+  } catch (error) {
+    console.error(JSON.stringify({ message: "Grid refresh failed", src, error: String(error) }));
+    return false;
+  }
+}
+
 const worker = {
-  async scheduled(_event, env, ctx) {
+  async scheduled(event, env, ctx) {
+    if (event && event.cron === "*/10 * * * *") {
+      ctx.waitUntil(Promise.all(GRID_SOURCES.map((src) => refreshGrid(env, src))));
+      return;
+    }
     ctx.waitUntil(refreshSchedule(env));
   },
 
@@ -1098,6 +1133,17 @@ const worker = {
       if (!body) return json(request, { ok: false, error: "invalid body" }, 400);
       const result = await handleBolusPost(env, ctx, body);
       return json(request, result.body, result.status);
+    }
+
+    if (url.pathname === "/api/grid" && method === "GET") {
+      const src = url.searchParams.get("src") === "tech" ? "tech" : "doc";
+      let stored = await env.MINKA_EMOJI.getWithMetadata("grid:" + src, { type: "text" });
+      if (!stored || !stored.value) {
+        await refreshGrid(env, src);
+        stored = await env.MINKA_EMOJI.getWithMetadata("grid:" + src, { type: "text" });
+      }
+      if (!stored || !stored.value) return json(request, { ok: false, error: "Grid unavailable" }, 503);
+      return new Response(stored.value, { headers: { ...cors(request), "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
     }
 
     if (url.pathname === "/api/residents" && method === "GET") {
