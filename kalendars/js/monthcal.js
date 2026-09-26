@@ -151,7 +151,7 @@
   function refreshBirthdaysUi(){
     try { if (isOpen()) render(_curMonth); } catch(_e){}
     try { renderBdayBadge(); } catch(_e2){}
-    try { if (_bdayPopEl) { closeBdayPop(); toggleBdayPop(); } } catch(_e3){}
+    try { if (_bdayPopEl) { closeBdayPop(true); toggleBdayPop(); } } catch(_e3){}
   }
   function loadBirthdays(){
     if (_bdayLoadPromise) return _bdayLoadPromise;
@@ -211,7 +211,10 @@
       // header
       '.mcal-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;margin-bottom:14px;flex:0 0 auto;}',
       '.mcal-headicon{flex:0 0 auto;width:28px;height:28px;image-rendering:pixelated;}',
-      '.mcal-titles{display:flex;align-items:baseline;gap:12px;min-width:0;}',
+      // Fixed width, so the arrows and tabs never move between months or
+      // views (the week range appears inside this space).
+      '.mcal-titles{display:flex;align-items:baseline;gap:12px;min-width:0;width:350px;flex:0 0 auto;overflow:hidden;}',
+      '@media (max-width:900px){.mcal-titles{width:auto;flex:0 1 auto;}}',
       '.mcal-title{font-size:26px;font-weight:400;line-height:1.15;white-space:nowrap;}',
       '.mcal-sub{font-size:15px;color:var(--on-var);white-space:nowrap;font-variant-numeric:tabular-nums;}',
       '.mcal-nav{display:flex;align-items:center;gap:6px;}',
@@ -224,12 +227,13 @@
       '.mcal-segpill{position:absolute;z-index:0;border-radius:16px;background:var(--pri-c);pointer-events:none;}',
       '.mcal-seg button{position:relative;z-index:1;}',
       '.mcal-seg.has-pill button.is-on{background:transparent;}',
-      '.mcal-seg button{cursor:pointer;height:32px;padding:0 16px;border:0;border-radius:16px;background:transparent;color:var(--on-var);font-size:14px;font-weight:500;transition:background-color 150ms ease,color 150ms ease;}',
+      '.mcal-seg button{cursor:pointer;height:32px;padding:0 16px;border:0;border-radius:16px;background:transparent;color:var(--on-var);font-size:14px;font-weight:500;transition:border-radius 350ms var(--mk-ease-expressive-fast,ease),background-color 150ms ease,color 150ms ease;}',
       '.mcal-seg button:hover{color:var(--on);}',
       '.mcal-seg button.is-on{background:var(--pri-c);color:var(--on-pri-c);}',
       '.mcal-actions{margin-left:auto;display:flex;align-items:center;gap:8px;}',
-      '.mcal-actbtn{cursor:pointer;height:40px;padding:0 18px;border:0;border-radius:20px;background:var(--c2);color:var(--on);font-size:14px;font-weight:500;white-space:nowrap;transition:background-color 150ms ease;}',
+      '.mcal-actbtn{cursor:pointer;height:40px;padding:0 18px;border:0;border-radius:20px;background:var(--c2);color:var(--on);font-size:14px;font-weight:500;white-space:nowrap;transition:border-radius 350ms var(--mk-ease-expressive-fast,ease),background-color 150ms ease;}',
       '.mcal-actbtn:hover{background:var(--c3);}',
+      '.mcal-actbtn:active,.mcal-seg button:active,.mcal-abf:active{border-radius:10px;}',
       '.mcal-close{margin-left:4px;}',
       '#mcal-overlay button:focus-visible{outline:2px solid var(--pri);outline-offset:2px;}',
       // grid
@@ -282,9 +286,10 @@
       '.mcal-off{color:var(--on-var);opacity:.6;font-size:13px;}',
       '.mcal-empty{margin:auto;color:var(--on-var);font-size:15px;}',
       // holidays / birthdays dialog
-      '.mcal-panelwrap{position:absolute;inset:0;z-index:5;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.5);}',
+      '.mcal-panelwrap{position:absolute;inset:0;z-index:5;display:none;align-items:center;justify-content:center;}',
+      '.mcal-scrim{position:absolute;inset:0;background:rgba(0,0,0,.5);}',
       '.mcal-panelwrap.is-open{display:flex;}',
-      '.mcal-panel{width:min(520px,92%);max-height:80%;display:flex;flex-direction:column;overflow:hidden;border-radius:28px;background:var(--c1);box-shadow:0 16px 40px rgba(0,0,0,.55);}',
+      '.mcal-panel{position:relative;width:min(520px,92%);max-height:80%;display:flex;flex-direction:column;overflow:hidden;border-radius:28px;background:var(--c1);box-shadow:0 16px 40px rgba(0,0,0,.55);}',
       '.mcal-panel-h{display:flex;align-items:center;gap:12px;padding:20px 20px 12px 24px;flex:0 0 auto;}',
       '.mcal-panel-t{font-size:22px;font-weight:400;color:var(--on);}',
       '.mcal-panel-x{margin-left:auto;}',
@@ -302,7 +307,8 @@
       '#mcal-overlay{--ab-leave:#f2b84b;--ab-sick:#ff8a80;--ab-away:#4dd0c8;--ab-unavailable:#9aa4b2;--ab-other:#c9ced6;}',
       '.mcal-head .mcal-legend{flex-wrap:wrap;}',
       '.mcal-head .mcal-abfilters{flex:1 0 100%;margin:-4px 0 0 -12px;}',
-      '.mcal-abf{cursor:pointer;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:0;border-radius:16px;background:transparent;color:var(--on-var);font-size:13px;font-weight:500;transition:background-color 150ms ease,color 150ms ease,opacity 150ms ease;}',
+      '.mcal-abf{cursor:pointer;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:0;border-radius:16px;background:transparent;color:var(--on-var);font-size:13px;font-weight:500;transition:border-radius 350ms var(--mk-ease-expressive-fast,ease),background-color 150ms ease,color 150ms ease,opacity 150ms ease;}',
+      '.mcal-abf i{transition:background-color 150ms ease,box-shadow 150ms ease;}',
       '.mcal-abf:hover{background:var(--c2);color:var(--on);}',
       '.mcal-abf i{width:10px;height:10px;border-radius:3px;background:var(--abc);}',
       '.mcal-abf[aria-pressed="false"]{opacity:.45;}',
@@ -731,9 +737,14 @@
   }
 
   // ---- panels -----------------------------------------------------------
+  // The dialogs grow out of the button that opens them and return into it
+  // (MinkaMotion container transform, like every other window).
+  var _panelType = null;
+  function panelButton(type){ return _overlay && _overlay.querySelector('.mcal-actbtn[data-panel="' + type + '"]'); }
   function openPanel(type){
     var wrap = _overlay && _overlay.querySelector('.mcal-panelwrap');
     if (!wrap) return;
+    var reopen = wrap.classList.contains('is-open');
     var year = (monthParts(_curMonth).year) || new Date().getFullYear();
     var html;
     var closeBtn = '<button class="mcal-icbtn mcal-panel-x" aria-label="Aizvērt">' + ICON.close + '</button>';
@@ -767,12 +778,21 @@
           }).join('') : '<div class="mcal-soon">Dzimšanas dienas nav ielādētas.</div>'))
         + '</div></div>';
     }
-    wrap.innerHTML = html;
+    wrap.innerHTML = '<div class="mcal-scrim"></div>' + html;
     wrap.classList.add('is-open');
+    _panelType = type;
+    var MM = window.MinkaMotion;
+    if (MM && MM.openSurface && !reopen) MM.openSurface(wrap.querySelector('.mcal-panel'), { key: 'mcal-panel', origin: panelButton(type), scrim: wrap.querySelector('.mcal-scrim') });
   }
-  function closePanel(){
+  function closePanel(instant){
     var w = _overlay && _overlay.querySelector('.mcal-panelwrap');
-    if (w){ w.classList.remove('is-open'); w.innerHTML = ''; }
+    if (!w || !w.classList.contains('is-open')) return;
+    var panel = w.querySelector('.mcal-panel'), MM = window.MinkaMotion, type = _panelType;
+    _panelType = null;
+    var hide = function(){ if (!_panelType){ w.classList.remove('is-open'); w.innerHTML = ''; } };
+    if (instant || !MM || !MM.closeSurface || !panel){ hide(); return; }
+    w.style.pointerEvents = 'none';
+    MM.closeSurface(panel, { key: 'mcal-panel', origin: panelButton(type), scrim: w.querySelector('.mcal-scrim') }, function(){ w.style.pointerEvents = ''; hide(); });
   }
   function panelOpen(){
     var w = _overlay && _overlay.querySelector('.mcal-panelwrap');
@@ -791,7 +811,7 @@
       var t = e.target;
       // panel interactions first
       if (t.closest && t.closest('.mcal-panel-x')){ closePanel(); return; }
-      if (t.classList && t.classList.contains('mcal-panelwrap')){ closePanel(); return; }
+      if (t.classList && (t.classList.contains('mcal-panelwrap') || t.classList.contains('mcal-scrim'))){ closePanel(); return; }
       if (t.closest && t.closest('.mcal-panel')){ return; } // clicks inside panel: ignore
 
       if (t.closest && t.closest('.mcal-close')){ close(); return; }
@@ -801,7 +821,10 @@
         var g = abf.getAttribute('data-abg');
         if (_absOff[g]) delete _absOff[g]; else _absOff[g] = 1;
         saveAbsOff();
-        render(_curMonth);
+        // Chip and rows change in place: the chip eases to its new state.
+        abf.setAttribute('aria-pressed', String(!_absOff[g]));
+        var sw = _overlay.querySelector('.mcal-absw'), top = sw ? sw.scrollTop : 0;
+        if (sw){ var tmp = document.createElement('div'); tmp.innerHTML = buildAbsences(_curMonth); sw.replaceWith(tmp.firstChild); var nsw = _overlay.querySelector('.mcal-absw'); if (nsw) nsw.scrollTop = top; }
         return;
       }
 
@@ -876,7 +899,7 @@
   function close(){
     if (_overlay){
       var wasOpen = _overlay.classList.contains('is-open');
-      closePanel();
+      closePanel(true);
       _overlay.classList.remove('is-open');
       var MM = window.MinkaMotion;
       if (MM && wasOpen) {
@@ -947,11 +970,15 @@
       }, window.location.origin);
     } catch(e) {}
   }
-  function closeBdayPop(){
+  function closeBdayPop(instant){
     if (_bdayPopEl){
-      _bdayPopEl.remove();
+      var pop = _bdayPopEl, MM = window.MinkaMotion;
       _bdayPopEl = null;
       document.removeEventListener('pointerdown', bdayPopOutside, true);
+      if (!instant && MM && MM.closeSurface){
+        pop.style.pointerEvents = 'none';
+        MM.closeSurface(pop, { key: 'mk-bday-pop', origin: document.getElementById('mkBdayBadge') }, function(){ pop.remove(); });
+      } else pop.remove();
     }
     notifyBuddyBirthday(false);
   }
@@ -980,6 +1007,7 @@
     pop.style.top = (r.bottom + 8) + 'px';
     pop.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.right - w)) + 'px';
     _bdayPopEl = pop;
+    if (window.MinkaMotion && window.MinkaMotion.openSurface) window.MinkaMotion.openSurface(pop, { key: 'mk-bday-pop', origin: btn });
     notifyBuddyBirthday(true);
     setTimeout(function(){ document.addEventListener('pointerdown', bdayPopOutside, true); }, 0);
   }
