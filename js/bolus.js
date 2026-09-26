@@ -28,7 +28,7 @@
     return headers;
   }
   function _bolusPost(body) {
-    return fetch(BOLUS_API, { method: 'POST', cache: 'no-store', headers: _bolusHeaders(true), body: JSON.stringify(body) });
+    return fetch(BOLUS_API, { method: 'POST', headers: _bolusHeaders(true), body: JSON.stringify(body) });
   }
   var WARN_MS   = 24 * 60 * 60 * 1000; // 24h
   // Divi kabineti — GE un PHILIPS
@@ -414,7 +414,9 @@
       timer = setTimeout(function() { controller.abort(); reject(new Error('Bolus read timed out')); }, limit);
     });
     var request = Promise.resolve().then(function() {
-      return fetch(url, { cache: 'no-store', headers: _bolusHeaders(false), signal: controller.signal });
+      // No cache: 'no-store' here: the API answers no-store itself, and
+      // Chrome skips its cached CORS preflight for no-store requests.
+      return fetch(url, { headers: _bolusHeaders(false), signal: controller.signal });
     }).then(function(r) { if (!r.ok) throw new Error('Bolus read failed'); return r.json(); });
     return Promise.race([request, deadline]).finally(function() { clearTimeout(timer); });
   }

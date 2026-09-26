@@ -205,7 +205,9 @@ function skinClient(initialSkins) {
     apiFetch(path, options) {
       calls++;
       if (options?.method === 'POST') return Promise.resolve({ ok: true });
-      assert.equal(options.cache, 'no-store');
+      // Freshness comes from the API's own no-store reply; a request-side
+      // no-store would make Chrome repeat the CORS preflight on every poll.
+      assert.equal(options?.cache, undefined);
       return Promise.resolve({ ok: true, json: () => clone(reply) });
     }
   };

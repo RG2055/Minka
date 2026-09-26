@@ -996,7 +996,7 @@
     var revision = cloudRevision;
     var nextDelay = 30000;
     var nextAttempt = 0;
-    return window.MinkaApi.apiFetch('/api/skins', { cache: 'no-store' }).then(function(r) {
+    return window.MinkaApi.apiFetch('/api/skins').then(function(r) {
       if (!r.ok) throw 0;
       return r.json();
     }).then(function(map) {
