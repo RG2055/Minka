@@ -211,10 +211,7 @@
       // header
       '.mcal-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;margin-bottom:14px;flex:0 0 auto;}',
       '.mcal-headicon{flex:0 0 auto;width:28px;height:28px;image-rendering:pixelated;}',
-      // Fixed width, so the arrows and tabs never move between months or
-      // views (the week range appears inside this space).
-      '.mcal-titles{display:flex;align-items:baseline;gap:12px;min-width:0;width:350px;flex:0 0 auto;overflow:hidden;}',
-      '@media (max-width:900px){.mcal-titles{width:auto;flex:0 1 auto;}}',
+      '.mcal-titles{display:flex;align-items:baseline;gap:12px;min-width:0;}',
       '.mcal-title{font-size:26px;font-weight:400;line-height:1.15;white-space:nowrap;}',
       '.mcal-sub{font-size:15px;color:var(--on-var);white-space:nowrap;font-variant-numeric:tabular-nums;}',
       '.mcal-nav{display:flex;align-items:center;gap:6px;}',
@@ -230,7 +227,9 @@
       '.mcal-seg button{cursor:pointer;height:32px;padding:0 16px;border:0;border-radius:16px;background:transparent;color:var(--on-var);font-size:14px;font-weight:500;transition:border-radius 350ms var(--mk-ease-expressive-fast,ease),background-color 150ms ease,color 150ms ease;}',
       '.mcal-seg button:hover{color:var(--on);}',
       '.mcal-seg button.is-on{background:var(--pri-c);color:var(--on-pri-c);}',
-      '.mcal-actions{margin-left:auto;display:flex;align-items:center;gap:8px;}',
+      '.mcal-actions{margin-left:auto;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:8px;}',
+      '.mcal-actions>.mcal-legend{margin-right:8px;}',
+      '.mcal-actions>.mcal-seg{margin-right:8px;}',
       '.mcal-actbtn{cursor:pointer;height:40px;padding:0 18px;border:0;border-radius:20px;background:var(--c2);color:var(--on);font-size:14px;font-weight:500;white-space:nowrap;transition:border-radius 350ms var(--mk-ease-expressive-fast,ease),background-color 150ms ease;}',
       '.mcal-actbtn:hover{background:var(--c3);}',
       '.mcal-actbtn:active,.mcal-seg button:active,.mcal-abf:active{border-radius:10px;}',
@@ -684,29 +683,31 @@
       return icon ? '<span class="mcal-headicon" aria-hidden="true">' + icon + '</span>' : '';
     }
     var stepName = _viewMode === 'week' ? 'nedēļa' : 'mēnesis';
+    // Arrows before the title and every other control on the right: the
+    // title and week range can change length without moving any button.
     var head = '<div class="mcal-head">'
       + headIcon()
-      + '<div class="mcal-titles"><div class="mcal-title">' + esc(titleCase(month)) + '</div>'
-      + (_viewMode === 'week' && p.idx != null ? '<div class="mcal-sub">' + esc(weekRange(p, _weekIdx)) + '</div>' : '')
-      + '</div>'
       + '<div class="mcal-nav">'
       + '<button class="mcal-icbtn mcal-navbtn" data-go="-1" aria-label="Iepriekšējā ' + stepName + '"' + (prevDis ? ' disabled' : '') + '>' + ICON.prev + '</button>'
       + '<button class="mcal-icbtn mcal-navbtn" data-go="1" aria-label="Nākamā ' + stepName + '"' + (nextDis ? ' disabled' : '') + '>' + ICON.next + '</button>'
       + '</div>'
+      + '<div class="mcal-titles"><div class="mcal-title">' + esc(titleCase(month)) + '</div>'
+      + (_viewMode === 'week' && p.idx != null ? '<div class="mcal-sub">' + esc(weekRange(p, _weekIdx)) + '</div>' : '')
+      + '</div>'
+      + '<div class="mcal-actions">'
+      + (_viewMode === 'abs' ? ''
+        : '<div class="mcal-legend" aria-label="Maiņu veidi"><span class="mcal-hk is-allday">Diennakts</span><span class="mcal-hk is-day">Diena</span><span class="mcal-hk is-night">Nakts</span></div>')
       + '<div class="mcal-seg" role="group" aria-label="Skats">'
       + '<button data-view="month" class="' + (_viewMode === 'month' ? 'is-on' : '') + '" aria-pressed="' + (_viewMode === 'month') + '">Mēnesis</button>'
       + '<button data-view="week" class="' + (_viewMode === 'week' ? 'is-on' : '') + '" aria-pressed="' + (_viewMode === 'week') + '">Nedēļa</button>'
       + '<button data-view="abs" class="' + (_viewMode === 'abs' ? 'is-on' : '') + '" aria-pressed="' + (_viewMode === 'abs') + '">Prombūtnes</button>'
       + '</div>'
-      + (_viewMode === 'abs' ? ''
-        : '<div class="mcal-legend" aria-label="Maiņu veidi"><span class="mcal-hk is-allday">Diennakts</span><span class="mcal-hk is-day">Diena</span><span class="mcal-hk is-night">Nakts</span></div>')
-      + '<div class="mcal-actions">'
       + '<button class="mcal-actbtn" data-panel="bday">Dzimšanas dienas</button>'
       + '<button class="mcal-actbtn" data-panel="holi">Svētku dienas</button>'
       + '<button class="mcal-icbtn mcal-close" aria-label="Aizvērt">' + ICON.close + '</button>'
       + '</div>'
       // Absence filters get their own line, so the top line stays as in
-      // the month view with the close button in the corner.
+      // the other views with the close button in the corner.
       + (_viewMode === 'abs' ? absFilters() : '')
       + '</div>';
     _overlay.querySelector('.mcal-inner').innerHTML = head + (_viewMode === 'abs' ? buildAbsences(month) : buildGrid(month));
