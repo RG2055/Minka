@@ -3728,7 +3728,16 @@ function filterFullList(btn) {
         confettiEngine = window.parent.MinkaEmojiParticles;
       }
     } catch (_error) {}
-    if (!confettiEngine || typeof confettiEngine.confetti !== 'function') return;
+    // RG: the shift change plays the RG flow video (index.html) instead of the
+    // confetti; the arrivals fly in when it has finished. /rad and the mobile
+    // page (no player) keep the confetti.
+    let playFlow = null;
+    if (!IS_RAD) {
+      try {
+        if (window.parent && window.parent !== window && typeof window.parent.__mkPlayFlow === 'function') playFlow = window.parent.__mkPlayFlow;
+      } catch (_error) {}
+    }
+    if (!playFlow && (!confettiEngine || typeof confettiEngine.confetti !== 'function')) return;
     g_clearRolloverTimers();
 
     const workerKey = function(value) {
@@ -3800,16 +3809,18 @@ function filterFullList(btn) {
     const flightDuration = lowPerf ? 1320 : 1580;
     const flightStagger = lowPerf ? 440 : 520;
 
-    // Phase 1: the whole PWA celebrates first. Particle quality scales the 76
-    // requested pieces down to ~26 on a 2-core/2-GB workstation, while capable
-    // machines get the denser full-screen shower.
-    confettiEngine.confetti(confettiGlyphs, {
-      count: 76,
-      delaySpread: 220,
-      duration: lowPerf ? 2300 : 2800,
-      durationSpread: lowPerf ? 600 : 800
-    });
-    g_rolloverPreviewTrace('confetti:' + confettiGlyphs.length);
+    // Phase 1: the whole PWA celebrates first: the RG flow video, or (/rad,
+    // mobile) the confetti. Particle quality scales the 76 requested pieces
+    // down to ~26 on a 2-core/2-GB workstation.
+    if (!playFlow) {
+      confettiEngine.confetti(confettiGlyphs, {
+        count: 76,
+        delaySpread: 220,
+        duration: lowPerf ? 2300 : 2800,
+        durationSpread: lowPerf ? 600 : 800
+      });
+      g_rolloverPreviewTrace('confetti:' + confettiGlyphs.length);
+    }
 
     // Phase 2: only after the final confetti has cleared, incoming people travel
     // into their own place around the mood. Starts are deliberately staggered so
@@ -3866,14 +3877,21 @@ function filterFullList(btn) {
         }
       });
     };
-    flights.forEach(function(flight, index) {
-      const startAt = confettiWait + index * flightStagger;
-      const flyTimer = window.setTimeout(function() {
-        launchFlight(flight, 0);
-      }, startAt);
-      __minkaRolloverTimers.push(flyTimer);
-    });
-    if (typeof confettiEngine.haptic === 'function') confettiEngine.haptic('success');
+    const scheduleFlights = function(firstAt) {
+      flights.forEach(function(flight, index) {
+        const flyTimer = window.setTimeout(function() {
+          launchFlight(flight, 0);
+        }, firstAt + index * flightStagger);
+        __minkaRolloverTimers.push(flyTimer);
+      });
+    };
+    if (playFlow) {
+      g_rolloverPreviewTrace('flow-video');
+      Promise.resolve(playFlow({ reason: 'shift' })).then(function() { scheduleFlights(420); }, function() { scheduleFlights(420); });
+    } else {
+      scheduleFlights(confettiWait);
+    }
+    if (confettiEngine && typeof confettiEngine.haptic === 'function') confettiEngine.haptic('success');
   }
 
   let __minkaRolloverPreviewStarted = false;

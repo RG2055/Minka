@@ -26,6 +26,8 @@
 
   // Anything audible: the radio, the player frame, any media element.
   function playing() {
+    // the intro / shift-change video (muted or not) is never cut by an update
+    if (document.getElementById('rg-flow') || document.getElementById('rad-intro')) return true;
     try { var st = window.__mkRadioPlaybackState && window.__mkRadioPlaybackState(); if (st && !st.paused) return true; } catch (_e) {}
     try { if (navigator.mediaSession && navigator.mediaSession.playbackState === 'playing') return true; } catch (_e) {}
     function busy(doc) {

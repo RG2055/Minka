@@ -65,6 +65,74 @@
   if (p && p.catch) p.catch(function(){ v.muted = true; var q = v.play(); if (q && q.catch) q.catch(finish); });
 })();
 </script>
+<script>
+/* RG flow: the CT control room in the evening, the cat grooming by the PC, the
+   RG icon is clicked, confetti, and the room closes onto the RG loader exactly as
+   the page draws it (the hibiscus clip, the ring, "Ielādē grafiku…"). It plays
+   once per session when the app starts and again at the 08:00 shift change
+   (calendar.js calls window.__mkPlayFlow instead of the old confetti). Any click
+   or key skips it; if it cannot play within 2.5 s the app simply carries on.
+   Source: ~/Downloads/rg-intro-video (Three.js scene + Blender-rigged cat,
+   edited in Tesseract). RG only: /rad has its own intro above. */
+(function(){
+  if (window.MINKA_APP === 'rad') return;
+  var V = '20260926f2';
+  var playing = null;
+  window.__mkPlayFlow = function(opts){
+    if (playing) return playing;
+    opts = opts || {};
+    playing = new Promise(function(resolve){
+      var box = document.createElement('div');
+      box.id = 'rg-flow';
+      box.setAttribute('aria-hidden', 'true');
+      box.style.cssText = 'position:fixed;inset:0;z-index:2147483000;background:#000;transition:opacity .35s ease;cursor:pointer';
+      var v = document.createElement('video');
+      v.preload = 'auto'; v.playsInline = true; v.setAttribute('playsinline', '');
+      v.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000';
+      var last = null;
+      // H.264 first: hardware decoding on the older work PCs
+      [['mp4', 'video/mp4'], ['webm', 'video/webm']].forEach(function(s){
+        last = document.createElement('source');
+        last.src = 'data/rg-flow.' + s[0] + '?v=' + V; last.type = s[1];
+        v.appendChild(last);
+      });
+      box.appendChild(v);
+      (document.body || document.documentElement).appendChild(box);
+      var done = false, guard = 0;
+      function finish(){
+        if (done) return; done = true;
+        clearTimeout(guard);
+        removeEventListener('keydown', skip, true);
+        // the video ends on the loader's own picture: dissolve into the page
+        box.style.opacity = '0';
+        setTimeout(function(){ try { v.pause(); box.remove(); } catch (_e) {} playing = null; resolve(); }, 360);
+      }
+      function skip(e){ if (e) { e.preventDefault(); e.stopPropagation(); } finish(); }
+      box.addEventListener('click', skip);
+      addEventListener('keydown', skip, true);
+      v.addEventListener('ended', finish);
+      last.addEventListener('error', finish);
+      guard = setTimeout(finish, 2500);
+      v.addEventListener('playing', function(){
+        clearTimeout(guard); guard = setTimeout(finish, 11000);
+        if (opts.onPlaying) try { opts.onPlaying(); } catch (_e) {}
+      });
+      v.muted = false;
+      var p = v.play();
+      if (p && p.catch) p.catch(function(){ v.muted = true; var q = v.play(); if (q && q.catch) q.catch(finish); });
+    });
+    return playing;
+  };
+  try {
+    if (sessionStorage.getItem('rgFlowSeen') === '1') return;
+    if (/[?&]nointro\b/.test(location.search)) return;
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  } catch (_e) { return; }
+  // the video ends on the hibiscus loader: the real one must continue with it
+  window.__mkLoaderBg = 'data/loader-hibiscus.gif?v=20260924d1';
+  window.__mkPlayFlow({ onPlaying: function(){ try { sessionStorage.setItem('rgFlowSeen', '1'); } catch (_e) {} } });
+})();
+</script>
 <style>/* four ids: the dock's own rules use three */
 html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #planotajsDockBtn#planotajsDockBtn#planotajsDockBtn#planotajsDockBtn,html.minka-rad #pusdienasDockBtn#pusdienasDockBtn#pusdienasDockBtn#pusdienasDockBtn,html.minka-rad #settingsDockBtn#settingsDockBtn#settingsDockBtn#settingsDockBtn,html.minka-rad #dockMoreBtn#dockMoreBtn#dockMoreBtn#dockMoreBtn,html.minka-rad #dockMoreMenu#dockMoreMenu#dockMoreMenu#dockMoreMenu{display:none!important}</style>
 <!-- First paint must be dark: this runs before any blocking script/CSS, so a
@@ -135,7 +203,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20260926ml2';
+  var CALENDAR_BUILD = '20260926fl1';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -749,7 +817,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <div id="calendarEmbed">
   <!-- Keep the expensive calendar document dormant behind the password gate.
        Authenticated startup assigns data-base-src immediately. -->
-  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260926bm4" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260926fl1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- Dither loader (js/dither-loader.js). It stays up until the embedded
@@ -789,7 +857,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 .rdl.is-leaving .rdl-crt{transform:scale(6.5);transition:transform .56s cubic-bezier(.7,0,.84,0);transform-origin:50% 34%}
 @media (prefers-reduced-motion:reduce){.rdl.is-leaving .rdl-crt{transform:none;transition:none}}
 </style>
-<script src="js/dither-loader.js?v=20260926rl2"></script>
+<script src="js/dither-loader.js?v=20260926fl1"></script>
 <script src="js/rad-loader.js?v=20260926rl2"></script>
 <script>
 (function(){
@@ -3925,7 +3993,7 @@ window.addEventListener('message', function(e) {
 })();
 </script>
 
-<script src="js/app-update.js?v=20260926up2"></script>
+<script src="js/app-update.js?v=20260926fl1"></script>
 <script>
 if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
   const MINKA_APP_VERSION = '2026.09.14-winamp-lcd';

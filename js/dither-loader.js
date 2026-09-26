@@ -19,7 +19,8 @@
   var bg = loader.querySelector('.mkl-bg');
   var scrim = loader.querySelector('.mkl-scrim');
   if (bg && !reduce) {
-    var pick = BACKGROUNDS[Math.floor(Math.random() * BACKGROUNDS.length)];
+    // After the RG flow intro the loader carries on with the clip the video ends on.
+    var pick = window.__mkLoaderBg || BACKGROUNDS[Math.floor(Math.random() * BACKGROUNDS.length)];
     bg.src = pick;
     // The ring's clearing is dithered too (black pixels on the clip's own
     // grid, dense in the middle), never a smooth gradient over the pixels.
