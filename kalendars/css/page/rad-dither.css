@@ -97,7 +97,11 @@ html.minka-rad .rn-seg-0 { --c: 100,210,255; } html.minka-rad .rn-seg-1 { --c: 2
 html.minka-rad .rn-seg-2 { --c: 168,230,122; } html.minka-rad .rn-seg-3 { --c: 245,183,63; }
 html.minka-rad .rn-bar .rn-seg { color: rgb(var(--c)); background: conic-gradient(at 1px 1px, transparent 75%, rgba(var(--c), .35) 0) 0 0/2px 2px, rgba(var(--c), .08); box-shadow: inset 0 0 0 1px rgba(var(--c), .35); }
 html.minka-rad .rn-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
-html.minka-rad .rn-row { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto auto; align-items: center; gap: 10px; min-height: 36px; padding: 2px 4px; border-radius: 9px; }
+html.minka-rad .rn-row { display: grid; grid-template-columns: 12px 10px minmax(0, 1fr) auto auto; align-items: center; gap: 10px; min-height: 36px; padding: 2px 4px; border-radius: 9px; cursor: grab; touch-action: none; user-select: none; background: #0b0d12; }
+html.minka-rad .rn-rows.is-sorting .rn-row { transition: transform 180ms var(--mk-ease-effects, ease); }
+html.minka-rad .rn-row.is-dragging { position: relative; z-index: 2; cursor: grabbing; transition: none !important; box-shadow: 0 8px 22px rgba(0,0,0,.55), inset 0 0 0 1px rgba(var(--rn-ink), .25); }
+/* grip: two dotted columns */
+html.minka-rad .rn-grip { width: 8px; height: 16px; background: radial-gradient(circle, rgba(var(--rn-ink), .45) 1px, transparent 1.5px) 0 0/4px 4px; }
 html.minka-rad .rn-dot { width: 10px; height: 10px; border-radius: 3px; background: rgb(var(--c)); }
 html.minka-rad .rn-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 html.minka-rad .rn-time { font: 500 12px/1 "Space Grotesk", Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums; opacity: .7; }
@@ -110,19 +114,35 @@ html.minka-rad .rn-move button {
 html.minka-rad .rn-move button:hover:not([disabled]) { background: rgba(var(--rn-ink), .16); }
 html.minka-rad .rn-move button:active:not([disabled]) { border-radius: 10px; }
 html.minka-rad .rn-move button[disabled] { opacity: .25; cursor: default; }
-/* beds: dotted frames, the taken ones filled with dots */
-html.minka-rad .rn-beds { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
-html.minka-rad .rn-bed {
-  display: grid; grid-template-columns: 38px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 10px; row-gap: 6px; align-items: center;
-  padding: 12px; border: 2px solid transparent; border-radius: 14px; cursor: pointer;
-  background: linear-gradient(#0a0c10, #0a0c10) padding-box, repeating-conic-gradient(rgba(var(--rn-ink), .5) 0 25%, transparent 0 50%) 0 0/2px 2px border-box;
+/* rooms: dotted outlines like a floor plan; beds inside, the taken ones filled with dots */
+html.minka-rad .rn-rooms { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; }
+@media (max-width: 760px) { html.minka-rad .rn-rooms { grid-template-columns: 1fr 1fr; } html.minka-rad .rn-room.is-wide { grid-column: 1 / -1; } }
+html.minka-rad .rn-room {
+  padding: 10px 12px 12px; border: 2px solid transparent; border-radius: 16px;
+  background: linear-gradient(#090b0f, #090b0f) padding-box, repeating-conic-gradient(rgba(var(--rn-ink), .35) 0 25%, transparent 0 50%) 0 0/2px 2px border-box;
 }
-html.minka-rad .rn-bed.is-taken { background: conic-gradient(at 1px 1px, transparent 75%, rgba(100,210,255,.18) 0) 0 0/3px 3px padding-box, linear-gradient(#0a0c10, #0a0c10) padding-box, repeating-conic-gradient(rgba(100,210,255,.8) 0 25%, transparent 0 50%) 0 0/2px 2px border-box; }
-html.minka-rad .rn-bed-art { grid-row: 1 / 3; width: 38px; height: 26px; border-radius: 6px 6px 3px 3px; background: linear-gradient(rgba(var(--rn-ink), .9), rgba(var(--rn-ink), .9)) 3px 4px/10px 7px no-repeat, linear-gradient(rgba(var(--rn-ink), .5), rgba(var(--rn-ink), .5)) 0 12px/100% 9px no-repeat, linear-gradient(rgba(var(--rn-ink), .5), rgba(var(--rn-ink), .5)) 0 0/3px 100% no-repeat; }
-html.minka-rad .rn-bed-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-html.minka-rad .rn-bed-name b { font-weight: 600; }
-html.minka-rad .rn-bed-name small { font-size: 11.5px; opacity: .55; }
+html.minka-rad .rn-room h4 { margin: 0 0 10px; font: 600 12px/1 "Space Grotesk", Inter, system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: rgba(var(--rn-ink), .8); }
+html.minka-rad .rn-room-beds { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+html.minka-rad .rn-bed {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 10px 10px;
+  border-radius: 12px; background: rgba(var(--rn-ink), .04); box-shadow: inset 0 0 0 1px rgba(var(--rn-ink), .12);
+  transition: box-shadow 150ms ease, background-color 150ms ease;
+}
+html.minka-rad .rn-bed.is-taken { background: conic-gradient(at 1px 1px, transparent 75%, rgba(100,210,255,.2) 0) 0 0/3px 3px, rgba(100,210,255,.05); box-shadow: inset 0 0 0 1px rgba(100,210,255,.55); }
+html.minka-rad .rn-bed.is-drop { box-shadow: inset 0 0 0 2px rgba(255,210,122,.9); background: rgba(255,210,122,.08); }
+/* a bed seen from above: pillow, blanket, frame */
+html.minka-rad .rn-bed-art {
+  width: 46px; height: 64px; border-radius: 8px;
+  background: linear-gradient(rgba(var(--rn-ink), .85), rgba(var(--rn-ink), .85)) 50% 6px/28px 10px no-repeat,
+              conic-gradient(at 1px 1px, transparent 75%, rgba(var(--rn-ink), .45) 0) 0 22px/2px 2px no-repeat,
+              rgba(var(--rn-ink), .06);
+  background-size: 28px 10px, 100% 42px, auto;
+  box-shadow: inset 0 0 0 2px rgba(var(--rn-ink), .45);
+}
+html.minka-rad .rn-bed.is-taken .rn-bed-art { box-shadow: inset 0 0 0 2px rgba(100,210,255,.8); }
+html.minka-rad .rn-bed-who { font-weight: 600; font-size: 13px; text-align: center; min-height: 16px; }
+html.minka-rad .rn-bed:not(.is-taken) .rn-bed-who { opacity: .4; font-weight: 500; }
 html.minka-rad .rn-bed select {
-  grid-column: 2; min-width: 0; height: 32px; padding: 0 8px; border: 0; border-radius: 9px;
+  width: 100%; min-width: 0; height: 30px; padding: 0 8px; border: 0; border-radius: 9px;
   background: rgba(var(--rn-ink), .08); color: rgb(var(--rn-ink)); font: 500 13px/1 Inter, system-ui, sans-serif;
 }

@@ -13,6 +13,8 @@
   if (!content) return;
 
   var BEDS = [['virtuve1', 'Virtuve', 'gulta 1'], ['virtuve2', 'Virtuve', 'gulta 2'], ['uznemsana', 'Jaunā uzņemšana', ''], ['nodala', 'Nodaļa', '']];
+  // The rooms as they are: two beds in the kitchen, one in the new admission unit, one in the department.
+  var ROOMS = [['Virtuve', ['virtuve1', 'virtuve2']], ['Jaunā uzņemšana', ['uznemsana']], ['Nodaļa', ['nodala']]];
   var CACHE_KEY = (window.__mkKey || function (k) { return k; })('minkaRadNightV1');
   var plans = {};            // date -> { rd, rs, beds, savedAt }
   var saveTimer = 0;
@@ -35,9 +37,13 @@
     });
     return out;
   }
-  // Keep the saved order for people still on the roster, the rest after them.
-  function ordered(saved, people) {
-    var out = (saved || []).filter(function (n) { return people.indexOf(n) >= 0; });
+  function hash(text) { var h = 0; for (var i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) >>> 0; return h; }
+  // Not planned yet: a random order, the same on every device (seeded by the
+  // date), so it is plain that the order is there to be changed.
+  // Planned: the saved order for people still on the roster, the rest after.
+  function ordered(saved, people, date) {
+    if (!saved) return people.slice().sort(function (a, b) { return hash(date + '|' + a) - hash(date + '|' + b); });
+    var out = saved.filter(function (n) { return people.indexOf(n) >= 0; });
     people.forEach(function (n) { if (out.indexOf(n) < 0) out.push(n); });
     return out;
   }
@@ -49,7 +55,7 @@
     var date = day();
     var rdPeople = nightOf(window.__grafiksStoreRad, date), rsPeople = nightOf(window.__grafiksStore, date);
     var p = plans[date] || {};
-    return { date: date, rd: ordered(p.rd, rdPeople), rs: ordered(p.rs, rsPeople), beds: Object.assign({}, p.beds || {}) };
+    return { date: date, rd: ordered(p.rd, rdPeople, date + 'rd'), rs: ordered(p.rs, rsPeople, date + 'rs'), beds: Object.assign({}, p.beds || {}) };
   }
 
   function group(key, label, list) {
@@ -59,7 +65,7 @@
       return '<span class="rn-seg rn-seg-' + (i % 4) + '" style="flex:1"><b>' + esc(title(n).split(' ')[0]) + '</b><i>' + hhmm(i * part) + '–' + hhmm((i + 1) * part) + '</i></span>';
     }).join('');
     var rows = list.map(function (n, i) {
-      return '<li class="rn-row"><span class="rn-dot rn-seg-' + (i % 4) + '" aria-hidden="true"></span>'
+      return '<li class="rn-row" data-rn-group="' + key + '" data-rn-i="' + i + '"><span class="rn-grip" aria-hidden="true"></span><span class="rn-dot rn-seg-' + (i % 4) + '" aria-hidden="true"></span>'
         + '<span class="rn-name">' + esc(title(n)) + '</span><span class="rn-time">' + hhmm(i * part) + '–' + hhmm((i + 1) * part) + '</span>'
         + '<span class="rn-move"><button type="button" data-rn-move="-1" data-rn-group="' + key + '" data-rn-i="' + i + '" aria-label="Uz augšu"' + (i ? '' : ' disabled') + '>↑</button>'
         + '<button type="button" data-rn-move="1" data-rn-group="' + key + '" data-rn-i="' + i + '" aria-label="Uz leju"' + (i < list.length - 1 ? '' : ' disabled') + '>↓</button></span></li>';
@@ -70,20 +76,24 @@
   function render() {
     var c = current();
     var everyone = c.rd.concat(c.rs);
-    var beds = BEDS.map(function (b) {
-      var who = c.beds[b[0]] && everyone.indexOf(c.beds[b[0]]) >= 0 ? c.beds[b[0]] : '';
+    function bed(key) {
+      var who = c.beds[key] && everyone.indexOf(c.beds[key]) >= 0 ? c.beds[key] : '';
       var options = '<option value="">—</option>' + everyone.map(function (n) {
         return '<option value="' + esc(n) + '"' + (n === who ? ' selected' : '') + '>' + esc(title(n)) + '</option>';
       }).join('');
-      return '<label class="rn-bed' + (who ? ' is-taken' : '') + '"><span class="rn-bed-art" aria-hidden="true"></span>'
-        + '<span class="rn-bed-name"><b>' + b[1] + '</b>' + (b[2] ? '<small>' + b[2] + '</small>' : '') + '</span>'
-        + '<select data-rn-bed="' + b[0] + '" aria-label="' + b[1] + ' ' + b[2] + '">' + options + '</select></label>';
+      var b = BEDS.filter(function (x) { return x[0] === key; })[0];
+      return '<div class="rn-bed' + (who ? ' is-taken' : '') + '" data-rn-bed-drop="' + key + '"><span class="rn-bed-art" aria-hidden="true"></span>'
+        + '<span class="rn-bed-who">' + (who ? esc(title(who)) : 'Brīva') + '</span>'
+        + '<select data-rn-bed="' + key + '" aria-label="' + esc(b[1] + (b[2] ? ' ' + b[2] : '')) + '">' + options + '</select></div>';
+    }
+    var beds = ROOMS.map(function (room) {
+      return '<section class="rn-room' + (room[1].length > 1 ? ' is-wide' : '') + '"><h4>' + room[0] + '</h4><div class="rn-room-beds">' + room[1].map(bed).join('') + '</div></section>';
     }).join('');
     var date = c.date ? c.date.slice(0, 5) : '';
     content.innerHTML = '<div class="rn-wrap">'
       + '<header class="rn-head"><h2>Nakts<small>' + esc(date) + '</small></h2></header>'
       + '<div class="rn-cols">' + group('rd', 'Radiologi', c.rd) + group('rs', 'Rezidenti', c.rs) + '</div>'
-      + '<section class="rn-group rn-beds-wrap"><h3>Gultas</h3><div class="rn-beds">' + beds + '</div></section>'
+      + '<section class="rn-group rn-beds-wrap"><h3>Gultas<small>ievelc cilvēku gultā vai izvēlies</small></h3><div class="rn-rooms">' + beds + '</div></section>'
       + '</div>';
   }
 
@@ -123,6 +133,59 @@
     var t = list[i]; list[i] = list[j]; list[j] = t;
     remember(c); render();
   });
+  // Drag a row (mouse or finger) to its place; the rows it passes make room.
+  var drag = null;
+  content.addEventListener('pointerdown', function (e) {
+    var row = e.target.closest && e.target.closest('.rn-row');
+    if (!row || e.button !== 0 || e.target.closest('button, select')) return;
+    var rows = Array.prototype.slice.call(row.parentNode.children);
+    drag = { row: row, rows: rows, from: rows.indexOf(row), to: rows.indexOf(row), y0: e.clientY, x0: e.clientX, bed: null, on: false, id: e.pointerId,
+      h: row.getBoundingClientRect().height + 2, mids: rows.map(function (r) { var b = r.getBoundingClientRect(); return b.top + b.height / 2; }) };
+  });
+  content.addEventListener('pointermove', function (e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    var dy = e.clientY - drag.y0;
+    if (!drag.on) {
+      if (Math.abs(dy) < 6) return;
+      drag.on = true;
+      try { drag.row.setPointerCapture(e.pointerId); } catch (_e) {}
+      drag.row.classList.add('is-dragging');
+      drag.row.parentNode.classList.add('is-sorting');
+    }
+    e.preventDefault();
+    drag.row.style.transform = 'translate(' + (e.clientX - drag.x0) + 'px,' + dy + 'px)';
+    // new place = how many of the other rows are above the dragged one's middle
+    var y = drag.mids[drag.from] + dy;
+    drag.to = drag.mids.filter(function (m, i) { return i !== drag.from && m < y; }).length;
+    // over a bed: this drop puts the person in that bed
+    var over = document.elementsFromPoint(e.clientX, e.clientY).map(function (el) { return el.closest && el.closest('[data-rn-bed-drop]'); }).filter(Boolean)[0] || null;
+    if (drag.bed !== over) { if (drag.bed) drag.bed.classList.remove('is-drop'); if (over) over.classList.add('is-drop'); drag.bed = over; }
+    drag.rows.forEach(function (r, i) {
+      if (r === drag.row) return;
+      var shift = drag.from < drag.to && i > drag.from && i <= drag.to ? -drag.h : drag.from > drag.to && i >= drag.to && i < drag.from ? drag.h : 0;
+      r.style.transform = shift ? 'translateY(' + shift + 'px)' : '';
+    });
+  });
+  function endDrag(e) {
+    if (!drag || (e && e.pointerId !== drag.id)) return;
+    var d = drag; drag = null;
+    if (!d.on) return;
+    var c = current(), list = c[d.row.dataset.rnGroup];
+    if (d.bed && list) {                                  // dropped on a bed
+      var who = list[d.from], key = d.bed.dataset.rnBedDrop;
+      Object.keys(c.beds).forEach(function (k) { if (c.beds[k] === who) delete c.beds[k]; });
+      c.beds[key] = who;
+      remember(c);
+    } else if (list && d.to !== d.from) {
+      var moved = list.splice(d.from, 1)[0];
+      list.splice(d.to, 0, moved);
+      remember(c);
+    }
+    render();
+  }
+  content.addEventListener('pointerup', endDrag);
+  content.addEventListener('pointercancel', endDrag);
+
   content.addEventListener('change', function (e) {
     var sel = e.target.closest && e.target.closest('[data-rn-bed]');
     if (!sel) return;
