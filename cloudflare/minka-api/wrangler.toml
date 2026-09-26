@@ -14,6 +14,10 @@ head_sampling_rate = 1
 enabled = true
 head_sampling_rate = 0.05
 
+[vars]
+# Archive copy of every Bolus change (the former Bolus sheet's Apps Script).
+BOLUS_SHEET_URL = "https://script.google.com/macros/s/AKfycbxmGL8uDYdOOb4hsegNu_eBQm0CdthdewIdJAQBLIoEIJhc4q-sV_sVQRSeorvmTvDG/exec"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "minka-db"

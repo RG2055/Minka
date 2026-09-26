@@ -16,8 +16,20 @@
   }
   var STORE_KEY = 'minkaBolusV3';
   var HISTORY_KEY = 'minkaBolusHistoryV1';
-  var GS_URL    = 'https://script.google.com/macros/s/AKfycbxmGL8uDYdOOb4hsegNu_eBQm0CdthdewIdJAQBLIoEIJhc4q-sV_sVQRSeorvmTvDG/exec';
-  window.__minkaCloud = Object.assign(window.__minkaCloud || {}, { gsUrl: GS_URL });
+  // Bolus lives in Cloudflare D1 behind the same login as the schedule (the
+  // Apps Script sheet it replaced was readable by anyone and took ~3 s). The
+  // worker keeps the old sheet up to date as an archive.
+  var BOLUS_API = 'https://minka-api.gamernr1elite.workers.dev/api/bolus';
+  function _bolusHeaders(json) {
+    var token = '';
+    try { token = sessionStorage.getItem('minka_api_token_v1') || localStorage.getItem('minka_api_token_v1') || ''; } catch(e) {}
+    var headers = token ? { authorization: 'Bearer ' + token } : {};
+    if (json) headers['content-type'] = 'application/json';
+    return headers;
+  }
+  function _bolusPost(body) {
+    return fetch(BOLUS_API, { method: 'POST', cache: 'no-store', headers: _bolusHeaders(true), body: JSON.stringify(body) });
+  }
   var WARN_MS   = 24 * 60 * 60 * 1000; // 24h
   // Divi kabineti — GE un PHILIPS
   var ROOMS = [
@@ -260,31 +272,29 @@
   }
   function _kvPush(roomId) {
     var ts = _state[roomId] && _state[roomId].changedAt;
-    var name = encodeURIComponent(_names[roomId] || 'Anonīms');
+    var body = { action: 'write', room: roomId, ts: ts, name: _names[roomId] || 'Anonīms' };
     var latest = _history[roomId] && _history[roomId][0];
     var media = latest && latest.media ? _sanitizeMedia(latest.media) : null;
-    var mediaQuery = '';
     if (media) {
-      if (media.left.enabled) mediaQuery += '&leftConc=' + media.left.concentration + '&leftMl=' + media.left.volumeMl;
-      if (media.nacl.enabled) mediaQuery += '&naclMl=' + media.nacl.volumeMl;
-      if (media.right.enabled) mediaQuery += '&rightConc=' + media.right.concentration + '&rightMl=' + media.right.volumeMl;
+      if (media.left.enabled) { body.leftConc = media.left.concentration; body.leftMl = media.left.volumeMl; }
+      if (media.nacl.enabled) body.naclMl = media.nacl.volumeMl;
+      if (media.right.enabled) { body.rightConc = media.right.concentration; body.rightMl = media.right.volumeMl; }
     }
-    if (ts) fetch(GS_URL + '?action=write&room=' + roomId + '&ts=' + ts + '&name=' + name + mediaQuery, { cache: 'no-store' }).then(function(r){ if (!r.ok) throw new Error('Bolus save failed'); return r.json(); }).then(function(result){
+    if (ts) _bolusPost(body).then(function(r){ if (!r.ok) throw new Error('Bolus save failed'); return r.json(); }).then(function(result){
       if (!result || result.ok !== true) throw new Error('Bolus save rejected');
       _mkToast('Saglabāts', 'ok');
     }).catch(function(){ _mkToast('Bolusa saglabāšana neizdevās', 'error'); });
     _bcSync();
   }
-  // Edit/delete a single history entry on the server (Apps Script sheet).
-  // An old server deployment answers unknown actions with the full data dump
-  // (no `ok` field) — detect that and tell the user the change is local-only.
+  // Edit/delete a single history entry on the server.
   function _kvEntryOp(action, roomId, params) {
-    var q = GS_URL + '?action=' + action + '&room=' + roomId + '&ts=' + params.ts;
-    if (params.oldTs) q += '&oldTs=' + params.oldTs;
-    if (params.name !== undefined) q += '&name=' + encodeURIComponent(params.name || 'Anonīms');
-    fetch(q).then(function(r){ return r.json(); }).then(function(j) {
+    var body = { action: action, room: roomId, ts: params.ts };
+    if (params.oldTs) body.oldTs = params.oldTs;
+    if (params.name !== undefined) body.name = params.name || 'Anonīms';
+    _bolusPost(body).then(function(r){ return r.json(); }).then(function(j) {
       if (j && j.ok) _mkToast(action === 'delete_entry' ? 'Ieraksts dzēsts ✓' : 'Ieraksts izlabots ✓', 'ok');
-      else _mkToast('Serveris vēl neatbalsta labošanu — izmaiņa redzama tikai šajā ierīcē', 'error');
+      else if (j && j.error === 'not_found') _mkToast('Ieraksts serverī nav atrasts — izmaiņa redzama tikai šajā ierīcē', 'error');
+      else _mkToast('Neizdevās saglabāt — izmaiņa redzama tikai šajā ierīcē', 'error');
     }).catch(function(){ _mkToast('Nav savienojuma — izmaiņa redzama tikai šajā ierīcē', 'error'); });
   }
   // The newest history entry drives the ring — recompute after edit/delete
@@ -404,7 +414,7 @@
       timer = setTimeout(function() { controller.abort(); reject(new Error('Bolus read timed out')); }, limit);
     });
     var request = Promise.resolve().then(function() {
-      return fetch(url, { cache: 'no-store', signal: controller.signal });
+      return fetch(url, { cache: 'no-store', headers: _bolusHeaders(false), signal: controller.signal });
     }).then(function(r) { if (!r.ok) throw new Error('Bolus read failed'); return r.json(); });
     return Promise.race([request, deadline]).finally(function() { clearTimeout(timer); });
   }
@@ -412,7 +422,7 @@
     if (_pullPromise) return _pullPromise.then(function(changed) { if (changed && cb) cb(); return changed; });
     if (window.__minkaHasApiAuth && !window.__minkaHasApiAuth()) return;
     var readStartedAt = Date.now();
-    _pullPromise = _readBolusJson(GS_URL + '?_=' + Date.now()).then(function(remote) {
+    _pullPromise = _readBolusJson(BOLUS_API + '?_=' + Date.now()).then(function(remote) {
       if (!remote || typeof remote !== 'object') return;
       // The first successful read must repaint once (the history leaves its
       // "Ielādē…" state), but only real differences are written back to storage.

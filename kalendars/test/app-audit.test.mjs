@@ -57,13 +57,14 @@ for (const path of ['js/bolus.js']) {
     const source = read(path), reply = deferred();
     let calls = 0, saves = 0, paints = 0;
     const c = vm.createContext({
-      window: {}, Date, AbortController, setTimeout, clearTimeout, GS_URL: 'https://local.test', ROOMS: [{ id: 'ge' }],
+      window: {}, Date, AbortController, setTimeout, clearTimeout, ROOMS: [{ id: 'ge' }],
       _state: { ge: { changedAt: 123 } }, _history: { ge: [{ ts: 123, name: 'Worker' }] },
       _lastLocalWriteAt: {}, _lastLocalHistWriteAt: {},
       _remoteOverwriteAllowed: () => true, _remoteHistOverwriteAllowed: () => true,
       _syncMediaFromHistory: () => false, _save: () => saves++, _saveHistory: () => saves++,
       _mkToast() {}, fetch: () => { calls++; return reply.promise; }
     });
+    vm.runInContext("var BOLUS_API='https://local.test';function _bolusHeaders(){return {authorization:'Bearer t'};}function _bolusPost(b){return fetch(BOLUS_API,{method:'POST',headers:_bolusHeaders(true),body:JSON.stringify(b)});}", c);
     vm.runInContext(section(source, 'var _pullPromise = null;', 'function _scheduleSync('), c);
     const first = c._kvPull(() => paints++), second = c._kvPull(() => paints++);
     reply.resolve({ ok: true, json: async () => ({ ge: { history: [{ ts: 123, name: 'Worker' }] } }) });
@@ -98,11 +99,12 @@ for (const path of ['js/bolus.js']) {
   test(`${path}: bolus save reports rejected responses as errors`, async () => {
     const source = read(path), messages = [];
     const c = vm.createContext({
-      GS_URL: 'https://local.test', _state: { ge: { changedAt: 123 } }, _names: { ge: 'Worker' },
+      _state: { ge: { changedAt: 123 } }, _names: { ge: 'Worker' },
       _history: { ge: [] }, _bcSync() {}, _pendingThanks: null,
       _prettyFirst: () => '', _mkToast: (text, kind) => messages.push(kind),
       fetch: async () => ({ ok: true, json: async () => ({ ok: false }) })
     });
+    vm.runInContext("var BOLUS_API='https://local.test';function _bolusHeaders(){return {authorization:'Bearer t'};}function _bolusPost(b){return fetch(BOLUS_API,{method:'POST',headers:_bolusHeaders(true),body:JSON.stringify(b)});}", c);
     vm.runInContext(section(source, 'function _kvPush(', '// Edit/delete'), c);
     c._kvPush('ge');
     await tick();

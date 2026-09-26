@@ -387,6 +387,128 @@ async function serveScheduleSnapshot(env, ctx, knownCarryovers) {
   }
 }
 
+/* ── Bolus ────────────────────────────────────────────────────────────────
+   The injector change log, formerly the Apps Script "Bolus" sheet. Reads and
+   writes keep that script's exact rules and reply shape, so the client only
+   changes where it asks. Every write is also sent to the sheet in the
+   background, which stays a complete archive (and a way back). */
+const BOLUS_ROOMS = ["ge", "philips"];
+
+function bolusRoom(value) {
+  const raw = String(value || "").toLowerCase().trim();
+  if (raw.indexOf("ge") !== -1) return "ge";
+  if (raw.indexOf("philips") !== -1 || raw.indexOf("ph") !== -1) return "philips";
+  return "";
+}
+
+function bolusTs(value) {
+  const ts = Math.floor(Number(value));
+  if (!Number.isFinite(ts)) return null;
+  // Past entries may be corrected later; only a practical future guard.
+  if (ts < Date.UTC(2019, 11, 31) || ts > Date.now() + 366 * 86400000) return null;
+  return Math.floor(ts / 60000) * 60000;
+}
+
+function bolusName(value) {
+  const text = String(value == null ? "" : value).replace(/\s+/g, " ").trim();
+  if (!text || text.length > 64) return "";
+  return text.replace(/[<>&`\u0000-\u001f\u007f]/g, "").trim();
+}
+
+function bolusConc(value) {
+  const match = String(value == null ? "" : value).match(/(?:^|\D)(300|370)(?:\D|$)/);
+  return match ? Number(match[1]) : null;
+}
+function bolusContrastMl(value) { const ml = Number(value); return ml === 200 || ml === 500 ? ml : null; }
+function bolusNaclMl(value) { const ml = Number(value); return ml === 500 || ml === 1000 ? ml : null; }
+
+function bolusMedia(row) {
+  if (!row.left_conc && !row.nacl_ml && !row.right_conc) return null;
+  return {
+    left: { enabled: !!(row.left_conc && row.left_ml), concentration: row.left_conc || 370, volumeMl: row.left_ml || 500 },
+    // 500 for a NaCl that was not fitted: the value the live sheet script
+    // has always answered with (the client only shows a fitted volume).
+    nacl: { enabled: !!row.nacl_ml, volumeMl: row.nacl_ml || 500 },
+    right: { enabled: !!(row.right_conc && row.right_ml), concentration: row.right_conc || 300, volumeMl: row.right_ml || 500 }
+  };
+}
+
+async function readBolus(env) {
+  const rows = await env.DB.prepare(
+    "SELECT room, ts, name, left_conc, left_ml, nacl_ml, right_conc, right_ml FROM bolus_entries ORDER BY ts DESC, id ASC"
+  ).all();
+  const out = { ge: { changedAt: null, history: [] }, philips: { changedAt: null, history: [] } };
+  for (const row of rows.results || []) {
+    const room = out[row.room];
+    if (!room) continue;
+    room.history.push({ ts: Number(row.ts), name: String(row.name || "Anonīms"), media: bolusMedia(row) });
+    if (!room.changedAt || row.ts > room.changedAt) room.changedAt = Number(row.ts);
+  }
+  return out;
+}
+
+// Keeps the sheet archive complete; failures are logged, never shown.
+function mirrorBolusToSheet(env, ctx, params) {
+  if (!env.BOLUS_SHEET_URL || !ctx || typeof ctx.waitUntil !== "function") return;
+  const url = env.BOLUS_SHEET_URL + "?" + new URLSearchParams(params).toString();
+  ctx.waitUntil((async () => {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const r = await fetch(url, { signal: AbortSignal.timeout(30000) });
+        const body = r.ok ? await r.json().catch(() => null) : null;
+        if (body && body.ok) return;
+      } catch (_) {}
+      await new Promise((resolve) => setTimeout(resolve, 2000 * (attempt + 1)));
+    }
+    console.error(JSON.stringify({ message: "Bolus sheet mirror failed", action: params.action }));
+  })());
+}
+
+async function handleBolusPost(env, ctx, body) {
+  const action = String(body?.action || "");
+  const room = bolusRoom(body?.room);
+  if (!room) return { status: 400, body: { ok: false, error: "invalid_room" } };
+  const now = Date.now();
+  if (action === "write") {
+    const ts = bolusTs(body.ts);
+    if (!ts) return { status: 400, body: { ok: false, error: "invalid_bolus" } };
+    const who = bolusName(body.name) || "Anonīms";
+    const leftConc = bolusConc(body.leftConc), leftMl = bolusContrastMl(body.leftMl);
+    const naclMl = bolusNaclMl(body.naclMl);
+    const rightConc = bolusConc(body.rightConc), rightMl = bolusContrastMl(body.rightMl);
+    const left = leftConc && leftMl, right = rightConc && rightMl;
+    await env.DB.prepare(`
+      INSERT INTO bolus_entries (room, ts, name, left_conc, left_ml, nacl_ml, right_conc, right_ml, updated_at)
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
+    `).bind(room, ts, who, left ? leftConc : null, left ? leftMl : null, naclMl, right ? rightConc : null, right ? rightMl : null, now).run();
+    const params = { action: "write", room, ts: String(body.ts), name: who };
+    if (left) { params.leftConc = String(leftConc); params.leftMl = String(leftMl); }
+    if (naclMl) params.naclMl = String(naclMl);
+    if (right) { params.rightConc = String(rightConc); params.rightMl = String(rightMl); }
+    mirrorBolusToSheet(env, ctx, params);
+    return { status: 200, body: { ok: true } };
+  }
+  if (action === "edit_entry" || action === "delete_entry") {
+    const matchTs = bolusTs(action === "edit_entry" ? (body.oldTs || body.ts) : body.ts);
+    const nextTs = bolusTs(body.ts);
+    if (!matchTs || !nextTs) return { status: 400, body: { ok: false, error: "invalid_timestamp" } };
+    // The sheet matched the newest row of that room and minute; so does this.
+    const row = await env.DB.prepare("SELECT id, name FROM bolus_entries WHERE room = ?1 AND ts = ?2 ORDER BY id DESC LIMIT 1")
+      .bind(room, matchTs).first();
+    if (!row) return { status: 404, body: { ok: false, error: "not_found" } };
+    if (action === "delete_entry") {
+      await env.DB.prepare("DELETE FROM bolus_entries WHERE id = ?1").bind(row.id).run();
+      mirrorBolusToSheet(env, ctx, { action, room, ts: String(body.ts) });
+    } else {
+      const who = bolusName(body.name) || bolusName(row.name) || "Anonīms";
+      await env.DB.prepare("UPDATE bolus_entries SET ts = ?2, name = ?3, updated_at = ?4 WHERE id = ?1").bind(row.id, nextTs, who, now).run();
+      mirrorBolusToSheet(env, ctx, { action, room, ts: String(body.ts), oldTs: String(body.oldTs || body.ts), name: who });
+    }
+    return { status: 200, body: { ok: true, action } };
+  }
+  return { status: 400, body: { ok: false, error: "invalid_action" } };
+}
+
 const worker = {
   async scheduled(_event, env, ctx) {
     ctx.waitUntil(refreshSchedule(env));
@@ -805,6 +927,17 @@ const worker = {
       }
       const data = await upstream.json();
       return json(request, { ...data, knownCarryovers });
+    }
+
+    if (url.pathname === "/api/bolus" && method === "GET") {
+      return json(request, await readBolus(env));
+    }
+
+    if (url.pathname === "/api/bolus" && method === "POST") {
+      const body = await readJson(request, 8 * 1024);
+      if (!body) return json(request, { ok: false, error: "invalid body" }, 400);
+      const result = await handleBolusPost(env, ctx, body);
+      return json(request, result.body, result.status);
     }
 
     if (url.pathname === "/api/residents" && method === "GET") {
