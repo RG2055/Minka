@@ -363,6 +363,7 @@
   }
 
   function bedCareApi(){
+    if(window.MINKA_APP==='rad')return null;           // /rad never writes the radiographers' night data
     function ready(api){
       return api && typeof api.apiFetch==='function' && api.getToken && api.getToken();
     }
@@ -930,6 +931,7 @@
     }catch(e){}
   }
   function activeRoomApi(){
+    if(window.MINKA_APP==='rad')return null;
     return (window.MinkaApi && typeof window.MinkaApi.apiFetch==='function' && window.MinkaApi.getToken())
       ? window.MinkaApi
       : null;
@@ -2866,6 +2868,7 @@
   }
 
   function init(){
+    if(window.MINKA_APP==='rad')return;                // radiographers' night plan only
     if(!window.__grafiksStore){setTimeout(init,500);return;}
     startRoomPolling();
     // Roster/auth are ready now; warm history before the night panel is opened.

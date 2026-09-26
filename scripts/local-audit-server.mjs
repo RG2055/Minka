@@ -36,6 +36,7 @@ const fixture=String.raw`(()=>{
   if(url.origin===location.origin)return realFetch(input,options);
   let body={};
   if(url.pathname.includes('/api/schedule'))body=schedule;
+  else if(url.pathname.includes('/api/rad/schedule'))body=schedule; // /rad reads the same shape
   else if(url.pathname.includes('/api/ns-stats')){
    result.requests++;result.requestAt=performance.now();show();
    await new Promise((resolve,reject)=>{const id=setTimeout(resolve,delayMs);options.signal?.addEventListener('abort',()=>{clearTimeout(id);reject(new DOMException('Aborted','AbortError'));},{once:true});});

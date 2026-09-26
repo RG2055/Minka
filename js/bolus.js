@@ -7,6 +7,8 @@
 // ============================================================
 (function(){
   'use strict';
+  // Radiologists and residents (/rad) have no Bolus.
+  if (window.MINKA_APP === 'rad') { window.toggleBolus = function(){}; return; }
   function _mkToast(msg, type) {
     var t = document.getElementById('mk-toast') || (function(){ var el = document.createElement('div'); el.id = 'mk-toast'; document.body.appendChild(el); return el; })();
     t.textContent = msg;

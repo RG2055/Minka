@@ -11,6 +11,12 @@ window.setTimeout(function () {
 }, 7000);
 </script>
 <script>
+/* /rad mode (?app=rad from the shell): see index.html. __mkKey() gives the
+   rad app its own browser storage for mood and comments (same origin). */
+(function(){try{var rad=new URLSearchParams(location.search).get('app')==='rad';window.MINKA_APP=rad?'rad':'rg';if(rad)document.documentElement.classList.add('minka-rad');}catch(_e){window.MINKA_APP='rg';}
+window.__mkKey=function(k){return window.MINKA_APP==='rad'?'rad:'+k:k;};})();
+</script>
+<script>
 (function() {
   var API_BASE = 'https://minka-api.gamernr1elite.workers.dev';
   window.MINKA_COFFEE_API_BASE = 'https://minka-coffee-api.gamernr1elite.workers.dev';

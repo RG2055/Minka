@@ -2,6 +2,14 @@
 <html lang="lv">
 <head>
 <meta charset="utf-8">
+<script>
+/* /rad: the same app for radiologists and residents (?app=rad). Their own
+   roster (left residents, right radiologists), mood and comments; no Bolus,
+   Plānotājs or night plan. Everything else is shared with the radiographers. */
+(function(){try{var rad=new URLSearchParams(location.search).get('app')==='rad';window.MINKA_APP=rad?'rad':'rg';if(rad)document.documentElement.classList.add('minka-rad');}catch(_e){window.MINKA_APP='rg';}})();
+</script>
+<style>/* four ids: the dock's own rules use three */
+html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #planotajsDockBtn#planotajsDockBtn#planotajsDockBtn#planotajsDockBtn,html.minka-rad #nsToggleBtnParent#nsToggleBtnParent#nsToggleBtnParent#nsToggleBtnParent{display:none!important}</style>
 <!-- First paint must be dark: this runs before any blocking script/CSS, so a
      PWA wake after tab discard never flashes a white screen. -->
 <style>html{background:#060b13;}body{background:#060b13;}
@@ -85,6 +93,7 @@
     try {
       var u = new URL(url, window.location.href);
       u.searchParams.set('cv', CALENDAR_BUILD);
+      if (window.MINKA_APP === 'rad') u.searchParams.set('app', 'rad');
       var previewParams = new URLSearchParams(window.location.search);
       if (previewParams.get('previewRollover') === '1') {
         u.searchParams.set('previewRollover', '1');
@@ -94,7 +103,7 @@
       return u.pathname + u.search + u.hash;
     } catch (_e) {
       var join = url.indexOf('?') >= 0 ? '&' : '?';
-      return url + join + 'cv=' + encodeURIComponent(CALENDAR_BUILD);
+      return url + join + 'cv=' + encodeURIComponent(CALENDAR_BUILD) + (window.MINKA_APP === 'rad' ? '&app=rad' : '');
     }
   }
 

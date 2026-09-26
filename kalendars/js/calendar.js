@@ -902,9 +902,25 @@ function filterFullList(btn) {
 //  GRAFIKS – full logic (shortened for brevity, but identical to previous)
 // ------------------------------------------------------------
 (function(){
-  const API_URL = ((window.MinkaApi && window.MinkaApi.base) ? window.MinkaApi.base : "") + "/api/schedule";
-  const API_CACHE_KEY = "minka_schedule_cache_v3";
-  const API_CACHE_TS_KEY = "minka_schedule_cache_ts_v3";
+  // /rad reads the radiologist/resident rota in the same shape (left column:
+  // residents, right: responsible radiologists) into its own cache.
+  const IS_RAD = window.MINKA_APP === 'rad';
+  const SCHEDULE_PATH = IS_RAD ? "/api/rad/schedule" : "/api/schedule";
+  const API_URL = ((window.MinkaApi && window.MinkaApi.base) ? window.MinkaApi.base : "") + SCHEDULE_PATH;
+  const API_CACHE_KEY = IS_RAD ? "minka_rad_schedule_cache_v1" : "minka_schedule_cache_v3";
+  const API_CACHE_TS_KEY = IS_RAD ? "minka_rad_schedule_cache_ts_v1" : "minka_schedule_cache_ts_v3";
+  // Who the left column holds ("radiographers" in the data shape).
+  const LEFT_ROLE = IS_RAD
+    ? { one: 'rezidents', many: 'rezidenti', title: 'Rezidenti', icon: 'data/rezidenti.svg' }
+    : { one: 'radiogrāfers', many: 'radiogrāferi', title: 'Radiogrāferi', icon: 'data/radiograferi.svg' };
+  if (IS_RAD) {
+    const tag = document.querySelector('.status-tag.radiographers .mk-role-title');
+    if (tag) {
+      const img = tag.querySelector('img'), label = tag.querySelector('span');
+      if (img) img.src = LEFT_ROLE.icon;
+      if (label) label.textContent = LEFT_ROLE.title.toUpperCase();
+    }
+  }
   function readCachedSchedule(){ try{ const raw = localStorage.getItem(API_CACHE_KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; } }
   function writeCachedSchedule(data){ try{ localStorage.setItem(API_CACHE_KEY, JSON.stringify(data)); localStorage.setItem(API_CACHE_TS_KEY, String(Date.now())); }catch(e){} }
   let store = {}, storeRad = {}, activeMonth = "", activeDateStr = "", isGridView = true;
@@ -1657,7 +1673,7 @@ function filterFullList(btn) {
       const requestTimeoutMs = 60000;
       timeoutId = controller ? setTimeout(() => controller.abort(), requestTimeoutMs) : null;
       const r = window.MinkaApi
-        ? await window.MinkaApi.apiFetch('/api/schedule', { signal: controller ? controller.signal : undefined })
+        ? await window.MinkaApi.apiFetch(SCHEDULE_PATH, { signal: controller ? controller.signal : undefined })
         : await fetch(API_URL + '?_=' + Date.now(), { cache: 'no-store', signal: controller ? controller.signal : undefined });
       if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
       if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -2579,6 +2595,7 @@ function filterFullList(btn) {
   }
 
   function getNightSplitPlan(dateStr) {
+    if (IS_RAD) return null;                          // the radiographers' night plan only
     const workers = getNightSplitWorkersForDate(dateStr);
     if (!workers.length) return null;
 
@@ -2718,7 +2735,8 @@ function filterFullList(btn) {
   // ---------------------------------------------------------------------------
   // Night-split KV sync — push/pull via Cloudflare Worker for cross-device share
   // ---------------------------------------------------------------------------
-  window.__nsKv = (function() {
+  // Never in /rad: its roster must not write the radiographers' shared plan.
+  window.__nsKv = IS_RAD ? null : (function() {
     var STORE_KEY = 'minkaNightSplitByDateV1';
     var _bc = null;
     var _polling = false;
@@ -3473,7 +3491,7 @@ function filterFullList(btn) {
       // That means we no longer need to merge "active yesterday" at midnight.
       // We simply render the selected date's roster.
       let workersToShow = filterVisibleWorkers(getWorkersForDateWithDate(store, activeDateStr), isToday, now);
-      renderDutyHeader('radiographers-shift-count', 'radiographers-duty', workersToShow, isToday, now, 'radiogrāfers', 'radiogrāferi');
+      renderDutyHeader('radiographers-shift-count', 'radiographers-duty', workersToShow, isToday, now, LEFT_ROLE.one, LEFT_ROLE.many);
 
       renderSideDutyCards(radgContainer, workersToShow, {
         sourceStore: store,
@@ -6462,8 +6480,8 @@ function filterFullList(btn) {
         const lbl = document.createElement('div');
         lbl.className = 'cards-section-label cards-section-label-rg';
         lbl.style.cssText = '';
-        lbl.innerHTML = `<span class="cards-role-mark" aria-hidden="true"><img src="data/radiograferi.svg" alt="" width="16" height="16"></span>`
-          + `<span class="cards-role-name">Radiogrāferi</span>`
+        lbl.innerHTML = `<span class="cards-role-mark" aria-hidden="true"><img src="${LEFT_ROLE.icon}" alt="" width="16" height="16"></span>`
+          + `<span class="cards-role-name">${LEFT_ROLE.title}</span>`
           + `<span class="cards-role-rule" aria-hidden="true"></span>`;
         sec.appendChild(lbl);
         const grid = document.createElement('div');
