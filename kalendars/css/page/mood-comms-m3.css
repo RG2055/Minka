@@ -1059,3 +1059,10 @@
 #rgFeedbackModal .rg-comms-bubble.is-emoji-only .rg-comms-reply-quote { display: block; margin-bottom: 4px; }
 #rgFeedbackModal .rg-comms-emoji-body { display: block; font-size: 44px; line-height: 1.15; letter-spacing: .04em; }
 #rgFeedbackModal .rg-comms-bubble[data-emoji-count="many"] .rg-comms-emoji-body { font-size: 32px; }
+/* Komentāri un atbalsts vienā blokā: QR, teksts un poga paceļas līdz
+   KOMENTĀRI burbuļa līmenim labajā pusē; kreisā kolonna paliek burbulim un
+   kaķim zem tā. Kartīte kļūst zemāka, nekas nestāv tukšā rindā. */
+:root:not(.mk-mobile-shell) #grafiks-list .rg-feedback-card .rg-bmc-qrblock {
+  grid-template-columns: var(--rg-bmc-left, 132px) auto minmax(0, 1fr) auto !important;
+  margin-top: calc(-1 * var(--rg-bmc-lift, 64px)) !important;
+}
