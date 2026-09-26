@@ -421,18 +421,25 @@
     function place(el, animate, dir) {
       var b = bar.getBoundingClientRect(), t = el.getBoundingClientRect();
       if (!t.width || !b.width) return false;         // not laid out: leave it
-      var x = t.left - b.left - bar.clientLeft + bar.scrollLeft;
+      // Screen rects shrink with a transformed ancestor (a panel opening with
+      // scale); the pill is laid out in the bar's own pixels, so undo it.
+      var sx = bar.offsetWidth ? b.width / bar.offsetWidth : 1;
+      var sy = bar.offsetHeight ? b.height / bar.offsetHeight : 1;
+      if (!(sx > 0)) sx = 1;
+      if (!(sy > 0)) sy = 1;
+      var x = (t.left - b.left) / sx - bar.clientLeft + bar.scrollLeft;
+      var w = t.width / sx;
       var left = Math.round(x * 10) / 10;
       var prev = parseFloat(ind.style.left);
       ind.classList.add('mk-liquid');
       ind.setAttribute('data-dir', dir || (isFinite(prev) && left < prev ? '-1' : '1'));
       ind.classList.toggle('is-static', !animate);
       if (opts.vertical !== false) {
-        ind.style.top = (Math.round((t.top - b.top - bar.clientTop + bar.scrollTop) * 10) / 10) + 'px';
-        ind.style.height = t.height + 'px';
+        ind.style.top = (Math.round(((t.top - b.top) / sy - bar.clientTop + bar.scrollTop) * 10) / 10) + 'px';
+        ind.style.height = (Math.round(t.height / sy * 10) / 10) + 'px';
       }
       ind.style.left = left + 'px';
-      ind.style.right = (Math.round((bar.clientWidth - x - t.width) * 10) / 10) + 'px';
+      ind.style.right = (Math.round((bar.clientWidth - x - w) * 10) / 10) + 'px';
       return true;
     }
     var placed = ind.classList.contains('mk-liquid') && isFinite(parseFloat(ind.style.left));
