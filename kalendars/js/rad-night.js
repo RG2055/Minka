@@ -13,8 +13,9 @@
   if (!content) return;
 
   var BEDS = [['virtuve1', 'Virtuve', 'gulta 1'], ['virtuve2', 'Virtuve', 'gulta 2'], ['uznemsana', 'Jaunā uzņemšana', ''], ['nodala', 'Nodaļa', '']];
-  // The rooms as they are: two beds in the kitchen, one in the new admission unit, one in the department.
-  var ROOMS = [['Virtuve', ['virtuve1', 'virtuve2']], ['Jaunā uzņemšana', ['uznemsana']], ['Nodaļa', ['nodala']]];
+  // The rooms as they are: two beds in the main room (kitchen), one in the
+  // new admission unit, one in the department (the crowned one: a resident's
+  // or a doctor's). The radiographer's bed in the admission unit is theirs.
   var CACHE_KEY = (window.__mkKey || function (k) { return k; })('minkaRadNightV1');
   var plans = {};            // date -> { rd, rs, beds, savedAt }
   var saveTimer = 0;
@@ -76,24 +77,40 @@
   function render() {
     var c = current();
     var everyone = c.rd.concat(c.rs);
-    function bed(key) {
+    // Beds drawn in the rooms as they are (the radiographers' room trays and
+    // bed pictures), each in the colour of the person sleeping in it.
+    var BED_COLOURS = ['cyan', 'pink', 'green', 'yellow', 'orange', 'teal', 'steel', 'copper'];
+    function bed(key, pose, crown) {
       var who = c.beds[key] && everyone.indexOf(c.beds[key]) >= 0 ? c.beds[key] : '';
-      var options = '<option value="">—</option>' + everyone.map(function (n) {
+      var colour = who ? BED_COLOURS[everyone.indexOf(who) % BED_COLOURS.length] : 'neutral';
+      var options = '<option value="">Brīva</option>' + everyone.map(function (n) {
         return '<option value="' + esc(n) + '"' + (n === who ? ' selected' : '') + '>' + esc(title(n)) + '</option>';
       }).join('');
       var b = BEDS.filter(function (x) { return x[0] === key; })[0];
-      return '<div class="rn-bed' + (who ? ' is-taken' : '') + '" data-rn-bed-drop="' + key + '"><span class="rn-bed-art" aria-hidden="true"></span>'
-        + '<span class="rn-bed-who">' + (who ? esc(title(who)) : 'Brīva') + '</span>'
+      return '<div class="rn-pbed ' + pose + (who ? ' is-taken' : '') + '" data-rn-bed-drop="' + key + '">'
+        + '<img src="assets/rooms/bed-' + colour + '-256.webp" alt="" draggable="false">'
+        + (crown ? '<span class="rn-crown" aria-hidden="true">👑</span>' : '')
+        + '<span class="rn-pbed-who">' + (who ? esc(title(who).split(' ')[0]) : 'Brīva') + '</span>'
         + '<select data-rn-bed="' + key + '" aria-label="' + esc(b[1] + (b[2] ? ' ' + b[2] : '')) + '">' + options + '</select></div>';
     }
-    var beds = ROOMS.map(function (room) {
-      return '<section class="rn-room' + (room[1].length > 1 ? ' is-wide' : '') + '"><h4>' + room[0] + '</h4><div class="rn-room-beds">' + room[1].map(bed).join('') + '</div></section>';
-    }).join('');
+    var beds = '<div class="rn-plans">'
+      + '<section class="rn-plan-wrap is-main"><h4>Galvenā istaba, virtuve</h4><div class="rn-plan rn-plan-main">'
+      +   '<img class="rn-plan-tray" src="assets/rooms/room-main-600.webp" alt="" draggable="false">'
+      +   '<span class="rn-furn rn-counter">virtuve</span><span class="rn-furn rn-coffee" title="Kafijas aparāts">☕</span><span class="rn-furn rn-fridge" title="Ledusskapis"></span>'
+      +   bed('virtuve1', 'is-left') + bed('virtuve2', 'is-bottom')
+      + '</div></section>'
+      + '<section class="rn-plan-wrap"><h4>Jaunā uzņemšana</h4><div class="rn-plan rn-plan-small">'
+      +   '<img class="rn-plan-tray" src="assets/rooms/room-nmp-320.webp" alt="" draggable="false">' + bed('uznemsana', 'is-center')
+      + '</div></section>'
+      + '<section class="rn-plan-wrap"><h4>Nodaļa</h4><div class="rn-plan rn-plan-small">'
+      +   '<img class="rn-plan-tray" src="assets/rooms/room-nmp-320.webp" alt="" draggable="false">' + bed('nodala', 'is-center', true)
+      + '</div></section>'
+      + '</div>';
     var date = c.date ? c.date.slice(0, 5) : '';
     content.innerHTML = '<div class="rn-wrap">'
       + '<header class="rn-head"><h2>Nakts<small>' + esc(date) + '</small></h2></header>'
       + '<div class="rn-cols">' + group('rd', 'Radiologi', c.rd) + group('rs', 'Rezidenti', c.rs) + '</div>'
-      + '<section class="rn-group rn-beds-wrap"><h3>Gultas<small>ievelc cilvēku gultā vai izvēlies</small></h3><div class="rn-rooms">' + beds + '</div></section>'
+      + '<section class="rn-group rn-beds-wrap"><h3>Gultas<small>ievelc cilvēku gultā vai uzspied uz gultas</small></h3>' + beds + '</section>'
       + '</div>';
   }
 
