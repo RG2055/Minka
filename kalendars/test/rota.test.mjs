@@ -106,6 +106,8 @@ test('labels, departments and shifts', () => {
   assert.equal(departmentOf('#ffffff'), '');
   assert.equal(shiftOf(12, true, false).type, 'NAKTS');
   assert.equal(shiftOf(16, false, true).type, 'DIENNAKTS');
+  assert.deepEqual([shiftOf(7, false, false).start, shiftOf(7, false, false).end], ['08:00', '15:00']);
+  assert.equal(shiftOf(8, true, false).type, 'NAKTS');
 });
 
 test('an unlabelled block after the department doctors is the rotation; marks are not absences', async () => {

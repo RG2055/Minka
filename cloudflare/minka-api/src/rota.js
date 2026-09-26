@@ -57,7 +57,10 @@ export function shiftOf(hours, isBlue, isLastDay) {
   if (hours === 12) return isBlue ? { type: "NAKTS", start: "20:00", end: "08:00" } : { type: "DIENA", start: "08:00", end: "20:00" };
   if (hours === 15) return { type: "NAKTS", start: "17:00", end: "08:00" };
   if (hours === 9) return { type: "DIENA", start: "08:00", end: "17:00" };
-  return isBlue ? { type: "NAKTS", start: "20:00", end: "08:00" } : { type: "DIENA", start: "08:00", end: "20:00" };
+  if (isBlue) return { type: "NAKTS", start: "20:00", end: "08:00" };
+  // Shorter day shifts (rotation 7 h, interns 2–8 h) end after their hours.
+  if (hours > 0 && hours < 12) return { type: "DIENA", start: "08:00", end: String(8 + hours).padStart(2, "0") + ":00" };
+  return { type: "DIENA", start: "08:00", end: "20:00" };
 }
 
 /* ── sections of the radiologist sheet ── */

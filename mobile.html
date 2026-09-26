@@ -9,7 +9,7 @@
 (function(){try{var rad=new URLSearchParams(location.search).get('app')==='rad';window.MINKA_APP=rad?'rad':'rg';if(rad)document.documentElement.classList.add('minka-rad');}catch(_e){window.MINKA_APP='rg';}})();
 </script>
 <style>/* four ids: the dock's own rules use three */
-html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #planotajsDockBtn#planotajsDockBtn#planotajsDockBtn#planotajsDockBtn,html.minka-rad #nsToggleBtnParent#nsToggleBtnParent#nsToggleBtnParent#nsToggleBtnParent{display:none!important}</style>
+html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #planotajsDockBtn#planotajsDockBtn#planotajsDockBtn#planotajsDockBtn,html.minka-rad #nsToggleBtnParent#nsToggleBtnParent#nsToggleBtnParent#nsToggleBtnParent,html.minka-rad #pusdienasDockBtn#pusdienasDockBtn#pusdienasDockBtn#pusdienasDockBtn,html.minka-rad #settingsDockBtn#settingsDockBtn#settingsDockBtn#settingsDockBtn,html.minka-rad #dockMoreBtn#dockMoreBtn#dockMoreBtn#dockMoreBtn,html.minka-rad #dockMoreMenu#dockMoreMenu#dockMoreMenu#dockMoreMenu{display:none!important}</style>
 <!-- Dark first paint: prevents white flash on PWA wake/reload. -->
 <style>html{background:#000;}body{background:#000;}</style>
 <script src="js/dither-text.js?v=20260924d2"></script>
@@ -36,7 +36,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     } catch (_e) {}
   }
 
-  var CALENDAR_BUILD = '20260926rad1';
+  var CALENDAR_BUILD = '20260926rad2';
 
   function withCalendarBuild(url) {
     try {
