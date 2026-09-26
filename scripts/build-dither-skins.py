@@ -205,7 +205,16 @@ def rtg_chest(x, y):
         xx = X * side
         if .03 < xx < .32:
             v = max(v, .75 * smooth(abs(Y - (-.36 + .16 * (xx - .15) ** 2 - .05 * xx)) - .011, .007))
-    v = max(v, .34 * smooth(ellipse_d(X, Y, .07, .13, .12, .15), .05))       # heart shadow
+    # PA view: patient's left on the viewer's right. The heart sits low in the
+    # middle on the diaphragm, two thirds to the viewer's right, about half
+    # the chest wide; the aortic knob bulges above it on the same side.
+    heart = ellipse_d((X - .06) * .94 + (Y - .17) * .25, (Y - .17) * .94 - (X - .06) * .25, 0, 0, .15, .11)
+    v = max(v, .66 * smooth(heart, .025))
+    v = max(v, .55 * smooth(ellipse_d(X, Y, .07, -.13, .05, .04), .02))      # aortic knob
+    for side in (-1, 1):                                                       # diaphragm domes
+        if Y > .2:
+            dome = Y - (.25 + 1.4 * (X * side - .17) ** 2)
+            v = max(v, .3 * smooth(-dome, .02) * smooth(ellipse_d(X, Y, 0, .02, .44, .5), .04))
     return xray(v, x, y)
 
 

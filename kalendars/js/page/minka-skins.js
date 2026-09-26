@@ -295,7 +295,7 @@
     var cleanId = String(id || '');
     var material = window.MinkaFindCardMaterial(cleanId);
     if(material) return new URL(material.path+'?v=20260912photos1',document.baseURI).href;
-    var path = 'data/skins/skin-' + cleanId + '.webp' + (/^aesthetic-/.test(cleanId) ? '?v=2' : '');
+    var path = 'data/skins/skin-' + cleanId + '.webp' + (/^aesthetic-/.test(cleanId) ? '?v=2' : /^dither-rtg-/.test(cleanId) ? '?v=20260926h1' : '');
     try { return new URL(path, document.baseURI).href; }
     catch (e) { return path; }
   }
