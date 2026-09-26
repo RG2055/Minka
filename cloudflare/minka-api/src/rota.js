@@ -419,6 +419,8 @@ export function buildRota(docGrid, techGrid) {
     // What the monthly sheets say (doc + tech), and the radiographers'
     // yearly leave plan separately (it reaches past the monthly sheets).
     absences: joinAbsences(docMonths.flatMap((m) => m.absences).concat(techAbsences)).map(withGroup),
-    leavePlan: joinAbsences(leavePlan).map(withGroup)
+    leavePlan: joinAbsences(leavePlan).map(withGroup),
+    // Months the radiographer sheet has; later months only have the plan.
+    techMonths: techSheets.filter((s) => s.month && s.year && !s.leave).map((s) => ({ month: s.month, year: s.year }))
   };
 }

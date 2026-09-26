@@ -6,8 +6,10 @@
 
    Layout: tonal day cells (date and holiday/birthday text on top, then
    radiographers and radiologists, each group marked by a thin role
-   rule). Header has a Mēnesis / Nedēļa view toggle and two action
-   buttons (Dzimšanas dienas, Svētku dienas) that open list dialogs.
+   rule). Header has a Mēnesis / Nedēļa / Prombūtnes view toggle and two
+   action buttons (Dzimšanas dienas, Svētku dienas) that open list dialogs.
+   Prombūtnes is a month timeline of absences (DNL, ATV, A…) from
+   /api/absences, one row per person.
    ================================================================ */
 (function MinkaMonthCal(){
   'use strict';
@@ -19,7 +21,7 @@
   };
   var WEEK = ['P','O','T','C','Pk','S','Sv']; // Mon-first (Latvian)
   var _overlay = null, _curMonth = null, _fitRaf = 0;
-  var _viewMode = 'month';   // 'month' | 'week'
+  var _viewMode = 'month';   // 'month' | 'week' | 'abs'
   var _weekIdx = 0;          // which week row (0-based) in week view
   var _holiCache = {};
 
@@ -205,7 +207,7 @@
       '#mcal-overlay button{font-family:inherit;}',
       '.mcal-inner{display:flex;flex-direction:column;width:100%;height:100%;padding:16px 20px 18px;box-sizing:border-box;}',
       // header
-      '.mcal-head{display:flex;align-items:center;gap:16px;margin-bottom:14px;flex:0 0 auto;}',
+      '.mcal-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;margin-bottom:14px;flex:0 0 auto;}',
       '.mcal-headicon{flex:0 0 auto;width:28px;height:28px;image-rendering:pixelated;}',
       '.mcal-titles{display:flex;align-items:baseline;gap:12px;min-width:0;}',
       '.mcal-title{font-size:26px;font-weight:400;line-height:1.15;white-space:nowrap;}',
@@ -290,7 +292,46 @@
       '.mcal-hrow.is-free .mcal-hdate{color:var(--holi);}',
       '.mcal-bbadge{background:rgba(255,143,200,.16);color:var(--bday);}',
       '.mcal-hrow.is-bdaytoday .mcal-hdate{color:var(--bday);}',
-      '.mcal-soon{padding:32px 24px;text-align:center;color:var(--on-var);font-size:14px;line-height:1.5;}'
+      '.mcal-soon{padding:32px 24px;text-align:center;color:var(--on-var);font-size:14px;line-height:1.5;}',
+      // absences timeline
+      '#mcal-overlay{--ab-leave:#f2b84b;--ab-sick:#ff8a80;--ab-away:#4dd0c8;--ab-unavailable:#9aa4b2;--ab-other:#c9ced6;}',
+      '.mcal-head .mcal-legend{flex-wrap:wrap;}',
+      '.mcal-abf{cursor:pointer;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:0;border-radius:16px;background:transparent;color:var(--on-var);font-size:13px;font-weight:500;transition:background-color 150ms ease,color 150ms ease,opacity 150ms ease;}',
+      '.mcal-abf:hover{background:var(--c2);color:var(--on);}',
+      '.mcal-abf i{width:10px;height:10px;border-radius:3px;background:var(--abc);}',
+      '.mcal-abf[aria-pressed="false"]{opacity:.45;}',
+      '.mcal-abf[aria-pressed="false"] i{background:transparent;box-shadow:inset 0 0 0 1.5px var(--abc);}',
+      '.mcal-absw{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;}',
+      '.mcal-abs{position:relative;--abn:176px;min-height:100%;padding-bottom:8px;}',
+      '.mcal-abs-bg{position:absolute;top:0;bottom:0;left:calc(var(--abn) + 8px);right:0;display:grid;grid-template-columns:repeat(var(--abd),minmax(0,1fr));pointer-events:none;}',
+      '.mcal-abs-bg>i{border-left:1px solid rgba(255,255,255,.035);}',
+      '.mcal-abs-bg>i.is-weekend{background:rgba(255,255,255,.028);}',
+      '.mcal-abs-bg>i.is-free{background:rgba(245,183,63,.06);}',
+      '.mcal-abs-bg>i.is-today{background:rgba(168,199,250,.10);box-shadow:inset 1px 0 0 rgba(168,199,250,.45),inset -1px 0 0 rgba(168,199,250,.45);}',
+      '.mcal-abhead,.mcal-abrow{position:relative;display:grid;grid-template-columns:var(--abn) minmax(0,1fr);column-gap:8px;align-items:center;}',
+      '.mcal-abhead{position:sticky;top:0;z-index:2;height:30px;background:var(--c0);}',
+      '.mcal-abdays,.mcal-abtrack{display:grid;grid-template-columns:repeat(var(--abd),minmax(0,1fr));align-items:center;}',
+      '.mcal-abdays>span{text-align:center;font-size:12px;color:var(--on-var);font-variant-numeric:tabular-nums;}',
+      '.mcal-abdays>span.is-weekend{opacity:.55;}',
+      '.mcal-abdays>span.is-free{color:var(--holi);opacity:1;}',
+      '.mcal-abdays>span.is-today{color:var(--on-pri);background:var(--pri);border-radius:10px;opacity:1;font-weight:500;}',
+      '.mcal-absec{position:relative;margin:14px 0 4px;padding-left:10px;border-left:2px solid var(--rg);font-size:13px;font-weight:500;color:var(--rg);}',
+      '.mcal-absec.mcal-rd{border-left-color:var(--rd);color:var(--rd);}',
+      '.mcal-absec.mcal-san{border-left-color:var(--on-var);color:var(--on-var);}',
+      '.mcal-absec small{margin-left:8px;font-size:12px;font-weight:400;color:var(--on-var);}',
+      '.mcal-abrow{min-height:30px;border-radius:10px;}',
+      '.mcal-abrow:hover{background:rgba(255,255,255,.035);}',
+      '.mcal-abname{min-width:0;padding-left:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;color:var(--on);}',
+      '.mcal-abname .mcal-ns{display:inline;}',
+      '.mcal-ni{display:none;color:var(--on-var);}',
+      '.mcal-abtrack{height:30px;}',
+      '.mcal-ab{grid-row:1;height:22px;min-width:0;margin:0 1px;padding:0 6px;box-sizing:border-box;display:flex;align-items:center;overflow:hidden;white-space:nowrap;border-radius:7px;font-size:11.5px;font-weight:500;line-height:1;color:var(--abc);background:rgba(255,255,255,.07);background:color-mix(in srgb,var(--abc) 20%,transparent);}',
+      '.mcal-abwhen{margin-left:8px;font-weight:400;opacity:.75;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;}',
+      '.mcal-ab.is-cl{border-top-left-radius:0;border-bottom-left-radius:0;margin-left:0;}',
+      '.mcal-ab.is-cr{border-top-right-radius:0;border-bottom-right-radius:0;margin-right:0;}',
+      '.mcal-ab.is-unavailable{background:transparent;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--abc) 55%,transparent);}',
+      '.is-leave{--abc:var(--ab-leave);}.is-sick{--abc:var(--ab-sick);}.is-away{--abc:var(--ab-away);}.is-unavailable{--abc:var(--ab-unavailable);}.is-other{--abc:var(--ab-other);}',
+      '@media (max-width:760px){.mcal-abs{--abn:92px;padding-right:6px;}.mcal-abname .mcal-ns,.mcal-abwhen{display:none;}.mcal-ni{display:inline;}.mcal-abdays>span:not(.is-tick):not(.is-today){visibility:hidden;}.mcal-abdays>span.is-today{border-radius:6px;}.mcal-ab{padding:0 2px;font-size:10px;}.mcal-abdays>span{font-size:10px;}}'
     ].join('');
     document.head.appendChild(s);
   }
@@ -383,6 +424,155 @@
     return t ? (+t[3]) * 10000 + (+t[2]) * 100 + (+t[1]) : 0;
   }
 
+  // ---- Absences (Prombūtnes view) ----------------------------------------
+  // /api/absences: absences from the monthly sheets (radiographers "tech",
+  // radiologists "doc") and the radiographers' yearly leave plan, which is
+  // used for months the radiographer sheet does not have yet.
+  var AB_GROUPS = [
+    { k: 'leave', name: 'Atvaļinājums' },
+    { k: 'sick', name: 'Slimība' },
+    { k: 'away', name: 'Strādā citur' },
+    { k: 'unavailable', name: 'Nevar strādāt' },
+    { k: 'other', name: 'Cits' }
+  ];
+  var AB_NAME = {}; AB_GROUPS.forEach(function(g){ AB_NAME[g.k] = g.name; });
+  var AB_TTL = 10 * 60 * 1000; // the sheets are re-read every 10 min
+  var _abs = null, _absAt = 0, _absPromise = null, _absFailed = false;
+  var _absOff = (function(){ try { return JSON.parse(localStorage.getItem('mcal_abs_off_v1') || '{}') || {}; } catch(_e){ return {}; } })();
+  function saveAbsOff(){ try { localStorage.setItem('mcal_abs_off_v1', JSON.stringify(_absOff)); } catch(_e){} }
+
+  function loadAbsences(){
+    if (_absPromise) return _absPromise;
+    if (_abs && Date.now() - _absAt < AB_TTL) return Promise.resolve(_abs);
+    var api = window.MinkaApi;
+    if (!api || typeof api.apiFetch !== 'function') return Promise.resolve(_abs);
+    _absPromise = Promise.resolve().then(function(){ return api.apiFetch('/api/absences'); })
+      .then(function(r){ if (!r || !r.ok) throw new Error('Absences unavailable'); return r.json(); })
+      .then(function(data){
+        if (!data || !Array.isArray(data.absences)) throw new Error('Invalid absences');
+        _abs = data; _absAt = Date.now(); _absFailed = false;
+        return _abs;
+      })
+      .catch(function(){ _absFailed = !_abs; return _abs; })
+      .finally(function(){
+        _absPromise = null;
+        if (isOpen() && _viewMode === 'abs') render(_curMonth);
+      });
+    return _absPromise;
+  }
+
+  function normName(n){ return String(n || '').toLowerCase().replace(/\s+/g, ' ').trim(); }
+  function dnum(s){ var p = String(s).split('.'); return Date.UTC(+p[2], +p[1] - 1, +p[0]) / 864e5; }
+  var MONTH_UPPER = MONTH_LOWER.map(function(m){ return m.toUpperCase(); });
+
+  // Months the absences view can show: the schedule's months and on to the
+  // end of what the leave plan covers.
+  function absMonths(){
+    var names = allMonths();
+    var start = names.length ? monthSortKey(names[0]) : dutyMonthIndex() - 1;
+    var end = names.length ? monthSortKey(names[names.length - 1]) : start;
+    if (_abs) (_abs.leavePlan || []).concat(_abs.absences || []).forEach(function(a){
+      var p = String(a.to).split('.'); var k = (+p[2]) * 12 + (+p[1]) - 1;
+      if (k > end) end = k;
+    });
+    end = Math.min(end, start + 17);
+    var out = [];
+    for (var k = start; k <= end; k++) out.push(MONTH_UPPER[k % 12] + ' ' + Math.floor(k / 12));
+    return out;
+  }
+
+  function radiologistNames(){
+    var set = {};
+    var st = rdStore();
+    Object.keys(st).forEach(function(m){ (st[m] || []).forEach(function(d){ (d.workers || []).forEach(function(w){ set[normName(w.name)] = 1; }); }); });
+    return set;
+  }
+
+  function monthAbsences(p){
+    var first = Date.UTC(p.year, p.idx, 1) / 864e5, daysIn = new Date(p.year, p.idx + 1, 0).getDate(), last = first + daysIn - 1;
+    var hasSheet = (_abs.techMonths || []).some(function(m){ return m.month === p.idx + 1 && m.year === p.year; });
+    var rdNames = radiologistNames();
+    var list = (_abs.absences || []).filter(function(a){
+      if (a.src === 'doc') return !!rdNames[normName(a.name)];
+      return a.src === 'tech' && hasSheet;
+    });
+    if (!hasSheet) list = list.concat(_abs.leavePlan || []);
+    var rows = {};
+    list.forEach(function(a){
+      if (a.group === 'assignment') return;
+      var f = dnum(a.from), t = dnum(a.to);
+      if (t < first || f > last) return;
+      var sec = a.src === 'doc' ? 'rd' : (a.role ? 'san' : 'rg');
+      var key = sec + '|' + normName(a.name);
+      var row = rows[key] || (rows[key] = { sec: sec, name: a.name, items: [], start: Infinity });
+      row.items.push({ a: a, s: Math.max(f, first) - first + 1, e: Math.min(t, last) - first + 1, cl: f < first, cr: t > last });
+      row.start = Math.min(row.start, Math.max(f, first));
+    });
+    return { rows: Object.keys(rows).map(function(k){ return rows[k]; }), daysIn: daysIn, plan: !hasSheet };
+  }
+
+  function buildAbsences(month){
+    var p = monthParts(month);
+    if (p.idx == null || !p.year) return '<div class="mcal-empty">Nav datu šim mēnesim.</div>';
+    if (!_abs){
+      if (!_absPromise) loadAbsences();
+      return '<div class="mcal-empty">' + (_absFailed ? 'Prombūtnes nav pieejamas.' : 'Ielādē prombūtnes...') + '</div>';
+    }
+    if (Date.now() - _absAt >= AB_TTL) loadAbsences();
+    var data = monthAbsences(p), n = data.daysIn;
+    var today = todayKey(), holi = holidayMap(p.year);
+    var startW = (new Date(p.year, p.idx, 1).getDay() + 6) % 7;
+    var bg = '', days = '';
+    for (var d = 1; d <= n; d++){
+      var dateStr = ('0' + d).slice(-2) + '.' + ('0' + (p.idx + 1)).slice(-2) + '.' + p.year;
+      var cls = ((startW + d - 1) % 7 >= 5 ? ' is-weekend' : '') + (holi[dateStr] && holi[dateStr].free ? ' is-free' : '')
+        + (p.year * 10000 + (p.idx + 1) * 100 + d === today ? ' is-today' : '');
+      bg += '<i class="' + cls.trim() + '"></i>';
+      // Phones show every fifth day; not right next to today's number.
+      var todayDay = today - (p.year * 10000 + (p.idx + 1) * 100);
+      if ((d === 1 || d % 5 === 0) && !(todayDay >= 1 && todayDay <= n && Math.abs(d - todayDay) <= 2 && d !== todayDay)) cls += ' is-tick';
+      days += '<span class="' + cls.trim() + '">' + d + '</span>';
+    }
+    var SECS = [
+      { k: 'rg', name: 'Radiogrāferi' },
+      { k: 'rd', name: 'Radiologi' },
+      { k: 'san', name: 'Sanitāri' }
+    ];
+    var body = '', shown = 0;
+    SECS.forEach(function(sec){
+      var rows = data.rows.filter(function(r){ return r.sec === sec.k; }).map(function(r){
+        return { r: r, items: r.items.filter(function(it){ return !_absOff[it.a.group]; }) };
+      }).filter(function(x){ return x.items.length; })
+        .sort(function(a, b){ return a.r.start - b.r.start || titleCase(a.r.name).localeCompare(titleCase(b.r.name), 'lv'); });
+      if (!rows.length) return;
+      shown += rows.length;
+      body += '<div class="mcal-absec mcal-' + sec.k + '">' + sec.name + (sec.k !== 'rd' && data.plan ? '<small>pēc atvaļinājumu plāna</small>' : '') + '</div>';
+      rows.forEach(function(x){
+        var parts = titleCase(x.r.name).split(' '), fn = parts.shift() || '', sn = parts.join(' ');
+        var bars = x.items.map(function(it){
+          var a = it.a, g = AB_NAME[a.group] || 'Cits';
+          var when = a.from === a.to ? a.from : a.from.slice(0, 5) + '.–' + a.to;
+          return '<span class="mcal-ab is-' + esc(a.group || 'other') + (it.cl ? ' is-cl' : '') + (it.cr ? ' is-cr' : '')
+            + '" style="grid-column:' + it.s + ' / ' + (it.e + 1) + '" title="' + esc(g + ' (' + a.code + ') ' + when) + '">' + esc(a.code)
+            + (it.e - it.s >= 4 && a.from !== a.to ? '<span class="mcal-abwhen">' + esc(a.from.slice(0, 5) + '.–' + a.to.slice(0, 5) + '.') + '</span>' : '') + '</span>';
+        }).join('');
+        body += '<div class="mcal-abrow"><div class="mcal-abname" title="' + esc(titleCase(x.r.name)) + '"><span class="mcal-nf">' + esc(fn) + '</span>'
+          + (sn ? '<span class="mcal-ns">' + esc(sn) + '</span><span class="mcal-ni"> ' + esc(sn.charAt(0)) + '.</span>' : '') + '</div><div class="mcal-abtrack">' + bars + '</div></div>';
+      });
+    });
+    if (!shown) body = '<div class="mcal-soon">Šajā mēnesī prombūtņu nav.</div>';
+    return '<div class="mcal-absw"><div class="mcal-abs" style="--abd:' + n + '">'
+      + '<div class="mcal-abs-bg" aria-hidden="true">' + bg + '</div>'
+      + '<div class="mcal-abhead"><span></span><div class="mcal-abdays">' + days + '</div></div>'
+      + body + '</div></div>';
+  }
+
+  function absFilters(){
+    return '<div class="mcal-legend" role="group" aria-label="Prombūtņu veidi">' + AB_GROUPS.map(function(g){
+      return '<button class="mcal-abf is-' + g.k + '" data-abg="' + g.k + '" aria-pressed="' + !_absOff[g.k] + '"><i></i>' + g.name + '</button>';
+    }).join('') + '</div>';
+  }
+
   function buildGrid(month){
     var p = monthParts(month);
     if (p.idx == null || !p.year) return '<div class="mcal-empty">Nav datu šim mēnesim.</div>';
@@ -454,7 +644,7 @@
   }
 
   function render(month){
-    var months = allMonths();
+    var months = _viewMode === 'abs' ? absMonths() : allMonths();
     if (!months.length){ _overlay.querySelector('.mcal-inner').innerHTML = '<div class="mcal-empty">Nav grafika datu.</div>'; return; }
     if (months.indexOf(month) < 0) {
       var active = window.__activeMonth;
@@ -494,15 +684,17 @@
       + '<div class="mcal-seg" role="group" aria-label="Skats">'
       + '<button data-view="month" class="' + (_viewMode === 'month' ? 'is-on' : '') + '" aria-pressed="' + (_viewMode === 'month') + '">Mēnesis</button>'
       + '<button data-view="week" class="' + (_viewMode === 'week' ? 'is-on' : '') + '" aria-pressed="' + (_viewMode === 'week') + '">Nedēļa</button>'
+      + '<button data-view="abs" class="' + (_viewMode === 'abs' ? 'is-on' : '') + '" aria-pressed="' + (_viewMode === 'abs') + '">Prombūtnes</button>'
       + '</div>'
-      + '<div class="mcal-legend" aria-label="Maiņu veidi"><span class="mcal-hk is-allday">Diennakts</span><span class="mcal-hk is-day">Diena</span><span class="mcal-hk is-night">Nakts</span></div>'
+      + (_viewMode === 'abs' ? absFilters()
+        : '<div class="mcal-legend" aria-label="Maiņu veidi"><span class="mcal-hk is-allday">Diennakts</span><span class="mcal-hk is-day">Diena</span><span class="mcal-hk is-night">Nakts</span></div>')
       + '<div class="mcal-actions">'
       + '<button class="mcal-actbtn" data-panel="bday">Dzimšanas dienas</button>'
       + '<button class="mcal-actbtn" data-panel="holi">Svētku dienas</button>'
       + '<button class="mcal-icbtn mcal-close" aria-label="Aizvērt">' + ICON.close + '</button>'
       + '</div>'
       + '</div>';
-    _overlay.querySelector('.mcal-inner').innerHTML = head + buildGrid(month);
+    _overlay.querySelector('.mcal-inner').innerHTML = head + (_viewMode === 'abs' ? buildAbsences(month) : buildGrid(month));
     scheduleFit();
   }
 
@@ -572,6 +764,15 @@
 
       if (t.closest && t.closest('.mcal-close')){ close(); return; }
 
+      var abf = t.closest && t.closest('.mcal-abf');
+      if (abf){
+        var g = abf.getAttribute('data-abg');
+        if (_absOff[g]) delete _absOff[g]; else _absOff[g] = 1;
+        saveAbsOff();
+        render(_curMonth);
+        return;
+      }
+
       var act = t.closest && t.closest('.mcal-actbtn');
       if (act){ openPanel(act.getAttribute('data-panel')); return; }
 
@@ -606,7 +807,7 @@
 
       var go = t.closest && t.closest('.mcal-navbtn');
       if (go && !go.disabled){
-        var months = allMonths(), i = months.indexOf(_curMonth), step = parseInt(go.getAttribute('data-go'), 10);
+        var months = _viewMode === 'abs' ? absMonths() : allMonths(), i = months.indexOf(_curMonth), step = parseInt(go.getAttribute('data-go'), 10);
         if (_viewMode === 'week'){
           var pp = monthParts(_curMonth), wN = weeksInMonth(pp), nw = _weekIdx + step;
           if (nw < 0){ if (i > 0){ var prevM = months[i - 1]; _weekIdx = weeksInMonth(monthParts(prevM)) - 1; render(prevM); } }
@@ -634,6 +835,7 @@
     _overlay.classList.remove('is-closing');
     _overlay.classList.add('is-open');
     render(month || window.__activeMonth || _curMonth);
+    if (!wasOpen) loadAbsences();
     if (MM && !wasOpen) MM.openSurface(_overlay, { key: 'monthcal', origin: _origin });
     notifyParent(true);
   }
