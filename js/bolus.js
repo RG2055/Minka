@@ -424,7 +424,9 @@
     if (_pullPromise) return _pullPromise.then(function(changed) { if (changed && cb) cb(); return changed; });
     if (window.__minkaHasApiAuth && !window.__minkaHasApiAuth()) return;
     var readStartedAt = Date.now();
-    _pullPromise = _readBolusJson(BOLUS_API + '?_=' + Date.now()).then(function(remote) {
+    // A fixed URL: the reply is no-store already, and a timestamp in the URL
+    // would force a fresh CORS preflight on every poll.
+    _pullPromise = _readBolusJson(BOLUS_API).then(function(remote) {
       if (!remote || typeof remote !== 'object') return;
       // The first successful read must repaint once (the history leaves its
       // "Ielādē…" state), but only real differences are written back to storage.

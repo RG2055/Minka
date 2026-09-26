@@ -281,7 +281,7 @@
     try {
       if (hasApiAuth()) {
         try {
-          var apiJson = await emojiRequest(function(signal) { return window.MinkaApi.apiFetch('/api/emoji?_=' + Date.now(), { signal: signal }); }, true);
+          var apiJson = await emojiRequest(function(signal) { return window.MinkaApi.apiFetch('/api/emoji', { signal: signal }); }, true);
           if (apiJson && typeof apiJson === 'object' && !Array.isArray(apiJson)) {
             applyRemoteEmoji(apiJson, version);
             return;

@@ -1657,7 +1657,7 @@ function filterFullList(btn) {
       const requestTimeoutMs = 60000;
       timeoutId = controller ? setTimeout(() => controller.abort(), requestTimeoutMs) : null;
       const r = window.MinkaApi
-        ? await window.MinkaApi.apiFetch('/api/schedule?_=' + Date.now(), { signal: controller ? controller.signal : undefined })
+        ? await window.MinkaApi.apiFetch('/api/schedule', { signal: controller ? controller.signal : undefined })
         : await fetch(API_URL + '?_=' + Date.now(), { cache: 'no-store', signal: controller ? controller.signal : undefined });
       if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
       if (!r.ok) throw new Error('HTTP ' + r.status);
