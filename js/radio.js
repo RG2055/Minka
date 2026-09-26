@@ -3058,7 +3058,10 @@ function focusRadio(){
     [
       document.getElementById('radioWindow'),
       document.getElementById('pioneerPicker'),
-      document.getElementById('ceqPanel')
+      document.getElementById('ceqPanel'),
+      // The dock's radio icon wears the same accent as the player (skin / album).
+      document.getElementById('radioIdleBtn'),
+      document.getElementById('radioToggle')
     ].filter(Boolean).forEach(target => {
       target.style.setProperty('--radio-accent', color);
       target.style.setProperty('--radio-accent-rgb', rgb);

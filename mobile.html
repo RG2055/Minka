@@ -28,7 +28,7 @@
     } catch (_e) {}
   }
 
-  var CALENDAR_BUILD = '20260926nt2';
+  var CALENDAR_BUILD = '20260926mb2';
 
   function withCalendarBuild(url) {
     try {
@@ -364,7 +364,7 @@ html.mk-low-spec #calendarEmbed {
 
 .mobile-dock-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 6px;
 }
 
@@ -584,7 +584,7 @@ html.mk-low-spec #calendarEmbed {
 
 @media (orientation: landscape) and (max-height: 560px) {
   .mobile-dock-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
   .dock-btn {
@@ -746,8 +746,8 @@ html.mk-low-spec #calendarEmbed {
 <body>
   <div id="calendarEmbed">
     <iframe
-      src="kalendars/index.html?mobile=1&cv=20260926nt2"
-      data-base-src="kalendars/index.html?mobile=1&cv=20260926nt2"
+      src="kalendars/index.html?mobile=1&cv=20260926mb2"
+      data-base-src="kalendars/index.html?mobile=1&cv=20260926mb2"
       id="calIframe"
       title="Mobilais dežūru grafiks"
       loading="eager"
@@ -780,6 +780,10 @@ html.mk-low-spec #calendarEmbed {
       <button id="statsDocBtn" class="dock-btn" onclick="openStatsFromDock()" title="Statistika">
         <svg class="dock-icon dock-px" width="20" height="18" viewBox="0 0 9 8" shape-rendering="crispEdges" aria-hidden="true"><rect x="6" y="0" width="2.04" height="1.04" fill="#1fe091"/><rect x="6" y="1" width="2.04" height="1.04" fill="#1fe091"/><rect x="3" y="2" width="2.04" height="1.04" fill="#86efac"/><rect x="6" y="2" width="2.04" height="1.04" fill="#1fe091"/><rect x="3" y="3" width="2.04" height="1.04" fill="#86efac"/><rect x="6" y="3" width="2.04" height="1.04" fill="#1fe091"/><rect x="0" y="4" width="2.04" height="1.04" fill="#1fe091"/><rect x="3" y="4" width="2.04" height="1.04" fill="#86efac"/><rect x="6" y="4" width="2.04" height="1.04" fill="#1fe091"/><rect x="0" y="5" width="2.04" height="1.04" fill="#1fe091"/><rect x="3" y="5" width="2.04" height="1.04" fill="#86efac"/><rect x="6" y="5" width="2.04" height="1.04" fill="#1fe091"/><rect x="0" y="6" width="2.04" height="1.04" fill="#1fe091"/><rect x="3" y="6" width="2.04" height="1.04" fill="#86efac"/><rect x="6" y="6" width="2.04" height="1.04" fill="#1fe091"/><rect x="0" y="7" width="9.04" height="1.04" fill="#475569"/></svg>
         <span>Statistika</span>
+      </button>
+      <button id="planotajsDockBtn" class="dock-btn" onclick="openPlanotajsLauncher()" title="Grafika plānotājs">
+        <svg class="dock-icon dock-px" width="20" height="20" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true"> <rect x="5" y="0" width="3.04" height="1.04" fill="#7dd3fc"/> <rect x="0" y="2" width="9.04" height="7.04" fill="#101c2b"/> <rect x="1" y="3" width="4.04" height="1.04" fill="#34d399"/> <rect x="2" y="5" width="5.04" height="1.04" fill="#fbbf24"/> <rect x="1" y="7" width="3.04" height="1.04" fill="#38bdf8"/> <rect x="5" y="7" width="3.04" height="1.04" fill="#22344a"/> </svg>
+        <span>Plānotājs</span>
       </button>
       <button id="settingsDockBtn" class="dock-btn" onclick="openSettingsFromDock()" title="Iestatījumi">
         <svg class="dock-icon dock-px" width="20" height="20" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true"><rect x="4" y="0" width="1.04" height="1.04" fill="#fbbf24"/><rect x="1" y="1" width="1.04" height="1.04" fill="#fbbf24"/><rect x="3" y="1" width="3.04" height="1.04" fill="#fbbf24"/><rect x="7" y="1" width="1.04" height="1.04" fill="#fbbf24"/><rect x="2" y="2" width="5.04" height="1.04" fill="#fbbf24"/><rect x="1" y="3" width="2.04" height="1.04" fill="#fbbf24"/><rect x="6" y="3" width="2.04" height="1.04" fill="#fbbf24"/><rect x="0" y="4" width="3.04" height="1.04" fill="#fbbf24"/><rect x="4" y="4" width="1.04" height="1.04" fill="#fde68a"/><rect x="6" y="4" width="3.04" height="1.04" fill="#fbbf24"/><rect x="1" y="5" width="2.04" height="1.04" fill="#fbbf24"/><rect x="6" y="5" width="2.04" height="1.04" fill="#fbbf24"/><rect x="2" y="6" width="5.04" height="1.04" fill="#fbbf24"/><rect x="1" y="7" width="1.04" height="1.04" fill="#fbbf24"/><rect x="3" y="7" width="3.04" height="1.04" fill="#fbbf24"/><rect x="7" y="7" width="1.04" height="1.04" fill="#fbbf24"/><rect x="4" y="8" width="1.04" height="1.04" fill="#fbbf24"/></svg>
@@ -1641,6 +1645,8 @@ html.mk-low-spec #calendarEmbed {
       if (nextState === _open) return;
       _open = nextState;
       ov.style.display = _open ? 'flex' : 'none';
+      if (_open) { if (window.__mkSheetOpened) window.__mkSheetOpened('bolus'); }
+      else if (window.__mkSheetClosed) window.__mkSheetClosed('bolus');
       var btn = document.getElementById('bolusDocBtn');
       if (btn) btn.classList.toggle('is-active', _open);
       if (_open) {
@@ -1953,6 +1959,95 @@ window.__mkDockIcon=function(btnId){
   c.setAttribute('style','display:block;width:100%;height:100%');
   return c.outerHTML;
 };
+</script>
+<div id="mkStatusStrip" aria-hidden="true"></div>
+<section id="planotajsSheet" aria-label="Grafika plānotājs" aria-hidden="true">
+  <header class="mk-msheet-bar">
+    <button type="button" class="mk-msheet-back" onclick="closePlanotajsSheet()" aria-label="Aizvērt plānotāju"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></button>
+    <h2>Plānotājs</h2>
+  </header>
+  <iframe id="planotajsSheetFrame" title="Grafika plānotājs" referrerpolicy="no-referrer"></iframe>
+</section>
+<style id="mk-phone-nav">
+/* iOS 27: a solid strip under the status bar. Without it Safari lays a
+   progressive blur over whatever scrolls there and the clock area goes
+   unreadable; with a solid element there it takes this colour instead. */
+#mkStatusStrip{position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:#06101f;z-index:2147483000;pointer-events:none}
+/* Full-page sheets on the phone: a top bar with back, the page below it. */
+#planotajsSheet{position:fixed;left:0;right:0;top:env(safe-area-inset-top,0px);bottom:0;z-index:5000;display:none;flex-direction:column;background:#0c0f14}
+#planotajsSheet.is-open{display:flex}
+.mk-msheet-bar{flex:0 0 auto;display:flex;align-items:center;gap:6px;height:56px;padding:0 8px;background:#0c0f14;border-bottom:1px solid #262c36;color:#e6ebf2}
+.mk-msheet-bar h2{margin:0;font:600 18px/1 var(--font-ui,'Geist Sans',system-ui,sans-serif);letter-spacing:-.01em}
+.mk-msheet-back{display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:50%;background:transparent;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.mk-msheet-back:active{background:rgba(255,255,255,.1)}
+.mk-msheet-back svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#planotajsSheetFrame{flex:1 1 auto;width:100%;border:0;background:#0c0f14}
+</style>
+<script>
+/* Phone navigation. Every open sheet gets one history entry, so the system
+   back (Android button, iOS edge swipe) closes the top sheet instead of
+   leaving the app. Calendar sheets report open/close (kalendars/js/
+   mobile-sheets.js); the shell's own sheets call __mkSheetOpened/Closed. */
+(function(){
+  var stack = [], skipPop = 0;
+  var SHELL = {
+    bolus: function(){ if (window.toggleBolus) window.toggleBolus(false); },
+    planner: function(){ if (window.closePlanotajsSheet) window.closePlanotajsSheet(); }
+  };
+  function opened(name){
+    if (stack.indexOf(name) >= 0) return;
+    stack.push(name);
+    try { history.pushState({ mkSheet: name }, ''); } catch (_e) {}
+  }
+  function closed(name){
+    var i = stack.lastIndexOf(name);
+    if (i < 0) return;
+    stack.splice(i, 1);
+    // Closed with its own button: take its history entry back off.
+    if (history.state && history.state.mkSheet === name) { skipPop++; history.back(); }
+  }
+  window.__mkSheetOpened = opened;
+  window.__mkSheetClosed = closed;
+  window.addEventListener('message', function(e){
+    if (e.origin !== location.origin || !e.data || e.data.type !== 'mk-sheet') return;
+    if (e.data.open) opened(e.data.name); else closed(e.data.name);
+  });
+  window.addEventListener('popstate', function(){
+    if (skipPop) { skipPop--; return; }
+    var name = stack.pop();
+    if (!name) return;
+    if (SHELL[name]) { SHELL[name](); return; }
+    var f = document.getElementById('calIframe');
+    try { f.contentWindow.postMessage({ type: 'mk-sheet-close', name: name }, location.origin); } catch (_e) {}
+  });
+})();
+
+/* Plānotājs on the phone: the same planner app as on the desktop, as a full
+   page under the status bar. Loaded on first open, kept for a few idle
+   minutes after closing. */
+(function(){
+  var PLANNER = 'https://grafika-planotajs.pages.dev/', IDLE = 5 * 60 * 1000, unload = 0;
+  var sheet = document.getElementById('planotajsSheet'), frame = document.getElementById('planotajsSheetFrame');
+  function dockBtn(on){ var b = document.getElementById('planotajsDockBtn'); if (b) b.classList.toggle('is-active', on); }
+  window.openPlanotajsLauncher = function(){
+    if (sheet.classList.contains('is-open')) { window.closePlanotajsSheet(); return; }
+    clearTimeout(unload);
+    if (frame.src !== PLANNER) frame.src = PLANNER;
+    sheet.classList.add('is-open');
+    sheet.setAttribute('aria-hidden', 'false');
+    dockBtn(true);
+    if (window.__mkSheetOpened) window.__mkSheetOpened('planner');
+  };
+  window.closePlanotajsSheet = function(){
+    if (!sheet.classList.contains('is-open')) return;
+    sheet.classList.remove('is-open');
+    sheet.setAttribute('aria-hidden', 'true');
+    dockBtn(false);
+    if (window.__mkSheetClosed) window.__mkSheetClosed('planner');
+    clearTimeout(unload);
+    unload = setTimeout(function(){ if (!sheet.classList.contains('is-open')) frame.src = 'about:blank'; }, IDLE);
+  };
+})();
 </script>
 </body>
 </html>

@@ -887,11 +887,11 @@ function _mkToast(msg, type) {
 <script src="js/emoji.js?v=20260926sp1" defer></script>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
 <script src="js/daybook-model.js?v=20260911b" defer></script>
-<script src="js/daybook.js?v=20260926nt2" defer></script>
+<script src="js/daybook.js?v=20260926mb3" defer></script>
 <script src="js/levels.js?v=20260926st7" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260926nt2';
+window.__minkaLocalBuild = '20260926mb2';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -1875,9 +1875,12 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
    css/mobile-v2.css + js/mobile-v2.js — vizuālais izkārtojums; ?mv2=0 to atslēdz. */
 (function(){
   if (!document.documentElement.classList.contains('mk-mobile-shell')) return;
-  var v = '20260924m3d';
+  var v = '20260926mb2';
   function css(href) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href + '?v=' + v; document.body.appendChild(l); }
   css('css/mobile-fixes.css');
+  // Sheets close by dragging down and by the phone's back (with mobile.html).
+  var ms = document.createElement('script'); ms.src = 'js/mobile-sheets.js?v=' + v; ms.defer = true;
+  document.body.appendChild(ms);
   try { if (new URLSearchParams(location.search).get('mv2') === '0') return; } catch (_e) {}
   document.documentElement.classList.add('mk-mobile-v2');
   css('css/mobile-v2.css');
@@ -1899,7 +1902,7 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 <link rel="stylesheet" href="css/page/mood-comms-m3.css?v=20260926sp1">
 <link rel="stylesheet" id="mk-worker-modal-m3" href="css/page/mk-worker-modal-m3.css?v=20260926sp1">
 <link rel="stylesheet" href="css/skin-organize.css?v=20260926sp1">
-<link rel="stylesheet" id="mk-stats-m3" href="css/page/stats-m3.css?v=20260926ic1">
+<link rel="stylesheet" id="mk-stats-m3" href="css/page/stats-m3.css?v=20260926mb3">
 <link rel="stylesheet" id="mk-m3-surfaces" href="css/page/m3-surfaces.css?v=20260924m3l">
 <link rel="stylesheet" href="../css/mk-spring.css?v=20260926sp1">
 </body>

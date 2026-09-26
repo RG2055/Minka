@@ -573,7 +573,14 @@
 
 /* ── Nakts: gultas ─────────────────────────────────────────────────── */
 #stats-modal .db-beds { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
-#stats-modal .db-bed { display: grid; gap: 8px; padding: 14px 16px; border-radius: var(--mk-shape-lg); background: var(--mk-sys-surface-container); }
+#stats-modal .db-bed { position: relative; display: grid; gap: 8px; padding: 14px 16px; border-radius: var(--mk-shape-lg); background: var(--mk-sys-surface-container); }
+/* Mazais istabu plāns stūrī: galvenā istaba 2×2 (viena vieta tukša) + NMP */
+#stats-modal .db-bedmap { position: absolute; top: 14px; right: 14px; display: flex; gap: 4px; }
+#stats-modal .db-bm-main { display: grid; grid-template-columns: repeat(2, 12px); grid-auto-rows: 12px; gap: 2px; padding: 3px; border-radius: 6px; background: var(--mk-sys-surface-container-high); }
+#stats-modal .db-bm-nmp { display: grid; place-items: center; width: 18px; padding: 3px; border-radius: 6px; background: var(--mk-sys-surface-container-high); }
+#stats-modal .db-bedmap i { display: block; width: 12px; height: 12px; border-radius: 3px; background: #2f3743; }
+#stats-modal .db-bedmap i.is-none { background: transparent; }
+#stats-modal .db-bedmap i.is-on { background: #23cdcf; }
 #stats-modal .db-bed-name { display: flex; align-items: baseline; gap: 6px; }
 #stats-modal .db-bed-name b { font: var(--mk-type-title-s); color: var(--mk-sys-on-surface); }
 #stats-modal .db-bed-name small { font: var(--mk-type-body-s); color: var(--stx-t3); }

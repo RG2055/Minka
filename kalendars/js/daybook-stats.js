@@ -629,6 +629,13 @@
         if (modalOpen() && state.tab === 'night' && !state.day && !state.person) render();
       }).catch(function () {}).then(function () { nightJob = null; });
   }
+  // Where the bed is: the same little plan as in the night panel, the main
+  // room (three beds) and Jaunais NMP (one), this bed lit.
+  function bedMap(key) {
+    var cell = function (k) { return '<i class="' + (k === key ? 'is-on' : '') + (k ? '' : ' is-none') + '"></i>'; };
+    return '<span class="db-bedmap" aria-hidden="true"><span class="db-bm-main">' + cell('main_left_top') + cell('main_right_top') + cell('main_left_bottom') + cell('')
+      + '</span><span class="db-bm-nmp">' + cell('nmp_center') + '</span></span>';
+  }
   function nightView(b) {
     var got = nightStats(), st = got && got.data;
     var groupOf = {};
@@ -663,7 +670,7 @@
         var who = Object.keys(st.beds || {}).map(function (name) { return { name: name, n: Math.max(0, Number(st.beds[name] && st.beds[name][bed[0]]) || 0) }; })
           .filter(function (e) { return e.n; }).sort(function (a, c) { return c.n - a.n; });
         var total = who.reduce(function (n, e) { return n + e.n; }, 0);
-        return '<div class="db-bed"><span class="db-bed-name"><b>' + bed[1] + '</b>' + (bed[2] ? '<small>' + bed[2] + '</small>' : '') + '</span><span class="db-bed-total">' + (total || '—') + '<small>' + (total ? ' naktis' : '') + '</small></span>'
+        return '<div class="db-bed">' + bedMap(bed[0]) + '<span class="db-bed-name"><b>' + bed[1] + '</b>' + (bed[2] ? '<small>' + bed[2] + '</small>' : '') + '</span><span class="db-bed-total">' + (total || '—') + '<small>' + (total ? ' naktis' : '') + '</small></span>'
           + '<span class="db-bed-who">' + (who.slice(0, 3).map(function (e) { return '<span>' + esc(shortName(e.name)) + '<b>' + e.n + '</b></span>'; }).join('') || '<span class="db-dim">nav datu</span>') + '</span></div>';
       }).join('') + '</div>';
     }

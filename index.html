@@ -38,7 +38,7 @@
   }
   window.__minkaHasApiAuth = function() { return !!getToken(); };
 
-  var CALENDAR_BUILD = '20260926nt2';
+  var CALENDAR_BUILD = '20260926mb2';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -649,7 +649,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <div id="calendarEmbed">
   <!-- Keep the expensive calendar document dormant behind the password gate.
        Authenticated startup assigns data-base-src immediately. -->
-  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260926nt2" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260926mb2" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- Dither loader (js/dither-loader.js). It stays up until the embedded
@@ -967,7 +967,7 @@ async function loadRadioScripts() {
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20260919pixel2']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
-  await loadAny(['js/radio.js?v=20260925pk3']);
+  await loadAny(['js/radio.js?v=20260926ri1']);
   await loadAny(['js/radio_extras_v4.js?v=20260919pixel2']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;
@@ -7380,6 +7380,13 @@ html[data-dock-bar="rezgis"] #dockShelf #bottomBtnBar > .dock-bg{--dock-art:url(
 #dockShelf #bottomBtnBar #statsDocBtn .dock-alt{--ico-fill:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Crect%20fill=%22white%22%20x=%223%22%20y=%2212%22%20width=%225%22%20height=%229%22%20rx=%221.5%22/%3E%3Crect%20fill=%22white%22%20x=%229.5%22%20y=%223%22%20width=%225%22%20height=%2218%22%20rx=%221.5%22/%3E%3Crect%20fill=%22white%22%20x=%2216%22%20y=%228%22%20width=%225%22%20height=%2213%22%20rx=%221.5%22/%3E%3C/svg%3E");--ico-line:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Cpath%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22M5%2020v-7M12%2020V4M19%2020v-11%22/%3E%3C/svg%3E");--ico-col:#1fe091;}
 #dockShelf #bottomBtnBar #radioIdleBtn .dock-alt{--ico-fill:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Cpath%20fill=%22white%22%20d=%22M17.5%202.6%2018.3%204.5%2010.4%207.5H19a2%202%200%200%201%202%202v9.5a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2V9.5c0-.9.5-1.6%201.3-1.9L17.5%202.6ZM8%2017.5a2.8%202.8%200%201%200%200-5.6%202.8%202.8%200%200%200%200%205.6ZM14%2012v2h5v-2h-5Zm0%203.6v2h5v-2h-5Z%22/%3E%3C/svg%3E");--ico-line:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Cpath%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22m5%208%2013-4.5M5%208h14a1.5%201.5%200%200%201%201.5%201.5v9.5A1.5%201.5%200%200%201%2019%2020.5H5A1.5%201.5%200%200%201%203.5%2019V9.5A1.5%201.5%200%200%201%205%208Z%22/%3E%3Ccircle%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20cx=%228.5%22%20cy=%2214.3%22%20r=%222.6%22/%3E%3Cpath%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22M14%2012.5h4M14%2016h4%22/%3E%3C/svg%3E");--ico-col:#ff8a5c;}
 #dockShelf #bottomBtnBar #radioToggle .dock-alt{--ico-fill:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Cpath%20fill=%22white%22%20d=%22M17.5%202.6%2018.3%204.5%2010.4%207.5H19a2%202%200%200%201%202%202v9.5a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2V9.5c0-.9.5-1.6%201.3-1.9L17.5%202.6ZM8%2017.5a2.8%202.8%200%201%200%200-5.6%202.8%202.8%200%200%200%200%205.6ZM14%2012v2h5v-2h-5Zm0%203.6v2h5v-2h-5Z%22/%3E%3C/svg%3E");--ico-line:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Cpath%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22m5%208%2013-4.5M5%208h14a1.5%201.5%200%200%201%201.5%201.5v9.5A1.5%201.5%200%200%201%2019%2020.5H5A1.5%201.5%200%200%201%203.5%2019V9.5A1.5%201.5%200%200%201%205%208Z%22/%3E%3Ccircle%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20cx=%228.5%22%20cy=%2214.3%22%20r=%222.6%22/%3E%3Cpath%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22M14%2012.5h4M14%2016h4%22/%3E%3C/svg%3E");--ico-col:#ff8a5c;}
+/* Radio icon: the player's own accent (skin colour, or the album colour in
+   album mode; radio.js sets --radio-accent on these buttons). Coral until the
+   radio has loaded. The pixel art keeps its shape, only its two inks change. */
+#dockShelf #bottomBtnBar :is(#radioIdleBtn,#radioToggle){--radio-ico:var(--radio-accent,#ff8a5c)}
+#dockShelf #bottomBtnBar :is(#radioIdleBtn,#radioToggle) .dock-px rect[fill="#34d399"]{fill:var(--radio-ico)}
+#dockShelf #bottomBtnBar :is(#radioIdleBtn,#radioToggle) .dock-px rect[fill="#a7f3d0"]{fill:color-mix(in srgb,var(--radio-ico) 45%,#fff)}
+#dockShelf #bottomBtnBar :is(#radioIdleBtn,#radioToggle) .dock-alt{--ico-col:var(--radio-ico)}
 </style>
 <script>
 /* One icon everywhere: a window's header shows the same icon as the dock
