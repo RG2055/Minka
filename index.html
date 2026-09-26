@@ -65,7 +65,7 @@
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20260926mo1';
+  var CALENDAR_BUILD = '20260926mo2';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -390,8 +390,8 @@
 </noscript>
 <!-- Radio polish overrides — must load after all other radio CSS -->
 <link rel="stylesheet" href="css/radio_polish_v1.css?v=20260708b">
-<link rel="stylesheet" href="css/radio_lacitis_v2.css?v=20260910compact1">
-<link rel="stylesheet" href="css/radio-source.css?v=20260911nobox1">
+<link rel="stylesheet" href="css/radio_lacitis_v2.css?v=20260926mo2">
+<link rel="stylesheet" href="css/radio-source.css?v=20260926mo3">
 <link rel="stylesheet" href="css/radio-equalizer.css?v=20260919pixel2">
 <link rel="stylesheet" href="css/radio-pixel.css?v=20260919pixel5">
 <link rel="stylesheet" href="css/media-profile.css?v=20260924dth2">
@@ -994,7 +994,7 @@ async function loadRadioScripts() {
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20260919pixel2']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
-  await loadAny(['js/radio.js?v=20260926ri1']);
+  await loadAny(['js/radio.js?v=20260926mo2']);
   await loadAny(['js/radio_extras_v4.js?v=20260919pixel2']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;
@@ -2526,8 +2526,9 @@ body:not(.radio-idle) #dockShelf #bottomBtnBar>#radioIdleBtn{display:none!import
 #dockMoreBtn i{position:absolute;right:8px;top:8px;width:6px;height:6px;border-radius:50%;background:#67e8f9;box-shadow:0 0 10px rgba(103,232,249,.65);opacity:0;transition:opacity .16s}
 #dockMoreBtn.has-active i{opacity:1}
 #dockMoreBtn[aria-expanded="true"]{background:rgba(103,232,249,.10)!important;border-color:rgba(103,232,249,.25)!important;color:#dffbff!important}
-#dockMoreMenu{position:fixed;left:50%;bottom:76px;z-index:171420;width:min(520px,calc(100vw - 24px));padding:10px;border:1px solid rgba(148,178,218,.18);border-radius:20px;background:rgba(9,13,21,.97);box-shadow:0 24px 70px rgba(0,0,0,.62),inset 0 1px 0 rgba(255,255,255,.045);backdrop-filter:blur(22px) saturate(125%);-webkit-backdrop-filter:blur(22px) saturate(125%);opacity:0;visibility:hidden;transform:translate(-50%,10px) scale(.98);transform-origin:50% 100%;transition:opacity .17s,transform .17s,visibility .17s}
-#dockMoreMenu.is-open{opacity:1;visibility:visible;transform:translate(-50%,0) scale(1)}
+#dockMoreMenu{position:fixed;left:50%;bottom:76px;z-index:171420;width:min(520px,calc(100vw - 24px));padding:10px;border:1px solid rgba(148,178,218,.18);border-radius:20px;background:rgba(9,13,21,.97);box-shadow:0 24px 70px rgba(0,0,0,.62),inset 0 1px 0 rgba(255,255,255,.045);backdrop-filter:blur(22px) saturate(125%);-webkit-backdrop-filter:blur(22px) saturate(125%);opacity:0;visibility:hidden;transform:translate(-50%,0);transform-origin:50% 100%}
+#dockMoreMenu.is-open,#dockMoreMenu.is-closing{opacity:1;visibility:visible}
+#dockMoreMenu.is-closing{pointer-events:none}
 .dock-more-head{display:flex;align-items:center;padding:6px 8px 11px;color:#edf4ff;font:800 12px/1 'Space Grotesk',system-ui;letter-spacing:.04em}
 #dockMoreItems{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 #dockMoreItems>button{position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:9px!important;width:100%!important;min-width:0!important;min-height:48px!important;padding:0 8px!important;border:0!important;border-radius:12px!important;background:transparent!important;box-shadow:none!important;color:#c8d3e2!important;font:750 10px/1 'Space Grotesk',system-ui!important;letter-spacing:.055em!important;animation:none!important;transform:none!important}
@@ -2552,10 +2553,20 @@ body:not(.radio-idle) #dockShelf #bottomBtnBar>#radioIdleBtn{display:none!import
     var active = !!menu.querySelector('.settings-open,.mobile-open,.pusdienas-open,.lacitis-open');
     moreBtn.classList.toggle('has-active', active);
   }
+  // The menu grows out of its dock button and returns into it (js/mk-motion.js).
   function setOpen(open){
+    var MM = window.MinkaMotion, was = menu.classList.contains('is-open');
+    if (!!open === was) return;
     menu.classList.toggle('is-open', !!open);
     menu.setAttribute('aria-hidden', open ? 'false' : 'true');
     moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open){
+      menu.classList.remove('is-closing');
+      if (MM) MM.openSurface(menu, { key: 'dock-more', origin: moreBtn });
+    } else if (MM){
+      menu.classList.add('is-closing');
+      MM.closeSurface(menu, { key: 'dock-more', origin: moreBtn }, function(){ menu.classList.remove('is-closing'); });
+    }
   }
   moreBtn.addEventListener('click', function(e){ e.stopPropagation(); setOpen(!menu.classList.contains('is-open')); });
   menu.addEventListener('click', function(e){
@@ -2930,7 +2941,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
 <script src="kalendars/js/daybook-model.js?v=20260911b" defer></script>
 <script src="js/radio-daybook.js?v=20260911i" defer></script>
 <script src="js/media-profile.js?v=20260924dth1" defer></script>
-<script src="js/radio-source.js?v=20260914reveal1" defer></script>
+<script src="js/radio-source.js?v=20260926mo2" defer></script>
 
 <div id="mobileQrModal" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171000;background:rgba(2,4,8,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:20px;">
   <div id="mobileQrBackdrop" onclick="closeMobileQrModal()" style="position:absolute;inset:0;"></div>
@@ -2956,7 +2967,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
 @keyframes mobileQrSpin{to{transform:rotate(360deg)}}
 </style>
 
-<script src="js/bolus.js?v=20260926cf5"></script>
+<script src="js/bolus.js?v=20260926mo2"></script>
 
 <script>
 var _nsOpen = false;
@@ -4218,7 +4229,8 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
 /* ── Coffee stats panel: opened from the calendar's coffee pill ──
    Perf rules: no blur, no glow, no filters, no timers — render on demand. */
 #mkCoffeeStats{display:none;position:fixed;left:12px;bottom:96px;z-index:172000;width:min(360px,calc(100vw - 28px));border-radius:16px;border:1px solid #21232c;background:#101116;color:#f2f4f8;font-family:'Space Grotesk',system-ui,sans-serif;padding:14px 14px 12px;box-shadow:0 16px 44px rgba(0,0,0,.55);}
-#mkCoffeeStats.open{display:block;}
+#mkCoffeeStats.open,#mkCoffeeStats.is-closing{display:block;}
+#mkCoffeeStats.is-closing{pointer-events:none;}
 /* Little pointer tail to the STATISTIKA button. */
 #mkCoffeeStats::after{content:'';position:absolute;bottom:-7px;left:var(--cs-arrow,50%);transform:translateX(-50%);width:14px;height:14px;background:#101116;border-right:1px solid #21232c;border-bottom:1px solid #21232c;rotate:45deg;}
 #mkCoffeeStats.under-anchor::after{top:-7px;bottom:auto;border:0;border-left:1px solid #21232c;border-top:1px solid #21232c;}
@@ -4516,15 +4528,26 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
     var arrow=Math.round(r.left + r.width/2 - left);
     panel.style.setProperty('--cs-arrow', Math.max(14, Math.min(pw-14, arrow))+'px');
   }
+  // Grows out of the coffee pill and returns into it (js/mk-motion.js). The
+  // pill lives in the calendar frame, so its box is passed as a plain rect.
+  function anchorRect(){
+    try { return anchorEl && typeof anchorEl.getBoundingClientRect==='function' ? anchorEl.getBoundingClientRect() : null; } catch(_e){ return null; }
+  }
   function openPanel(anchor){
     anchorEl=anchor||null;
+    panel.classList.remove('is-closing');
     panel.classList.add('open'); panel.setAttribute('aria-hidden','false');
     renderPanel();
     positionPanel();
+    if(window.MinkaMotion) window.MinkaMotion.openSurface(panel,{key:'coffee-stats',origin:anchorRect()});
     fetchMissing(function(){ if(panel.classList.contains('open')) renderPanel(); });
   }
   function closePanel(){
+    if(!panel.classList.contains('open')) return;
     panel.classList.remove('open'); panel.setAttribute('aria-hidden','true');
+    if(!window.MinkaMotion) return;
+    panel.classList.add('is-closing');
+    window.MinkaMotion.closeSurface(panel,{key:'coffee-stats',origin:anchorRect()},function(){ panel.classList.remove('is-closing'); });
   }
   // Opened from the calendar's coffee pill (minka-open-coffee-stats message).
   window.__mkCoffeeStatsToggle=function(anchor){
@@ -4558,7 +4581,7 @@ body.mk-low-spec #mk-buddy-card canvas.mk-prop-in{animation:none;}
       csView='day'; selDay=b.getAttribute('data-d'); renderPanel();
     });
     document.addEventListener('click',function(e){
-      if(panel.classList.contains('open') && !panel.contains(e.target) && !(anchorEl&&anchorEl.contains(e.target))) closePanel();
+      if(panel.classList.contains('open') && !panel.contains(e.target) && !(anchorEl&&typeof anchorEl.contains==='function'&&anchorEl.contains(e.target))) closePanel();
     });
     document.addEventListener('keydown',function(e){
       if(e.key==='Escape'&&panel.classList.contains('open')){
@@ -4974,6 +4997,6 @@ window.__mkDockIcon=function(btnId){
   window.addEventListener('storage',function(e){if(e.key===KEY||e.key===null)apply();});
 })();
 </script>
-<link rel="stylesheet" href="css/bolus-m3.css?v=20260926bs3">
+<link rel="stylesheet" href="css/bolus-m3.css?v=20260926mo2">
 </body>
 </html>

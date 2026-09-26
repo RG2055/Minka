@@ -424,10 +424,17 @@ function toggleMenu(forceOpen) {
     const el = document.getElementById('stationOverlay');
     if (!el) return;
     const iframe = document.getElementById('calIframe');
-    const isNowOpen = typeof forceOpen === 'boolean' ? forceOpen : el.style.display !== 'grid';
+    const closing = !!el._mkClosing;
+    const isNowOpen = typeof forceOpen === 'boolean' ? forceOpen : (el.style.display !== 'grid' || closing);
+    const MM = window.MinkaMotion;
+    // Grows out of the button that opened it and returns into it (js/mk-motion.js).
+    const origin = (MM && MM.recentLauncher && MM.recentLauncher()) || Array.from(document.querySelectorAll('.station-btn')).find(b => b.getClientRects().length) || null;
+    const wasVisible = el.style.display === 'grid' && !closing;
+    if (!isNowOpen && !wasVisible) return;
 
     if (isNowOpen) {
-        if (el.style.display !== 'grid') {
+        el._mkClosing = false;
+        if (el.style.display !== 'grid' || closing) {
             const profile = window.__mkUnifiedMedia;
             stationPickerSource = profile?.getSession() && profile.getRadio()?.favorites?.length ? 'favorites' : 'featured';
             stationPickerQuery = '';
@@ -438,7 +445,24 @@ function toggleMenu(forceOpen) {
         positionStationPicker(el);
     }
 
-    el.style.display = isNowOpen ? 'grid' : 'none';
+    if (isNowOpen) {
+        el.style.display = 'grid';
+        el.style.pointerEvents = '';
+        if (!wasVisible) {
+            el._mkOrigin = origin;
+            if (MM) MM.openSurface(el, { key: 'stations', origin });
+        }
+    } else if (MM) {
+        el._mkClosing = true;
+        el.style.pointerEvents = 'none';
+        MM.closeSurface(el, { key: 'stations', origin: el._mkOrigin || origin }, () => {
+            el._mkClosing = false;
+            el.style.pointerEvents = '';
+            el.style.display = 'none';
+        });
+    } else {
+        el.style.display = 'none';
+    }
     if (isNowOpen) {
         renderStationOverlay();
         if (stationPickerSource === 'featured') void loadFeaturedStations();

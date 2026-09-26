@@ -56,14 +56,31 @@
     });
     return musicLoad;
   }
+  // Radio / Mūzika: the selected pill slides between the two (MinkaMotion.liquid).
+  function sourcePill(prevBtn, nextBtn) {
+    const MM = window.MinkaMotion, bar = nextBtn && nextBtn.parentElement;
+    if (!MM || !MM.liquid || !bar || typeof bar.querySelector !== 'function') return;
+    let pill = bar.querySelector(':scope > .radio-source-pill');
+    if (!pill) {
+      pill = document.createElement('span');
+      pill.className = 'radio-source-pill';
+      pill.setAttribute('aria-hidden', 'true');
+      bar.prepend(pill);
+    }
+    if (MM.liquid(pill, bar, nextBtn, { from: prevBtn, animate: !!prevBtn && prevBtn !== nextBtn })) bar.classList.add('has-pill');
+  }
   window.setRadioSource = async function (source) {
     if (mobileView.matches) { closeMobileRadio(); return; }
+    const prevSource = requestedSource;
     requestedSource = source === 'music' ? 'music' : 'radio';
     const music = requestedSource === 'music';
     const shell = document.getElementById('radioWindow');
     const status = document.getElementById('radioSourceStatus');
-    document.getElementById('radioSourceBroadcast').setAttribute('aria-pressed', String(!music));
-    document.getElementById('radioSourceMusic').setAttribute('aria-pressed', String(music));
+    const broadcastBtn = document.getElementById('radioSourceBroadcast'), musicBtn = document.getElementById('radioSourceMusic');
+    const prevBtn = prevSource === 'music' ? musicBtn : prevSource === 'radio' ? broadcastBtn : null;
+    broadcastBtn.setAttribute('aria-pressed', String(!music));
+    musicBtn.setAttribute('aria-pressed', String(music));
+    sourcePill(prevBtn, music ? musicBtn : broadcastBtn);
     status.textContent = '';
     if (!music) {
       if (window.__hideLacMiniForRadio) window.__hideLacMiniForRadio();

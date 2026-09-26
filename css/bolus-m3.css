@@ -207,3 +207,10 @@
   #bolus-overlay .brc[data-room] :is(.bwc, .bwcits, .bwblank) { min-height: 44px !important; }
   #bolus-overlay .brc[data-room] :is(.bh-edit, .bh-del) { width: 40px !important; height: 40px !important; }
 }
+
+/* Dim layer as its own element (js/bolus.js toggleBolus) so it fades while
+   the sheet grows; no backdrop blur (under 78 % black it was invisible and
+   a full-screen blur is the heaviest thing to fade on the work PCs). */
+#bolus-overlay#bolus-overlay { background: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+#bolus-overlay > .bolus-scrim { position: absolute; inset: 0; background: rgba(0,0,0,.78); }
+#bolus-overlay > #bolus-sheet { position: relative; z-index: 1; }

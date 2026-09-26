@@ -28,7 +28,7 @@
     } catch (_e) {}
   }
 
-  var CALENDAR_BUILD = '20260926mo1';
+  var CALENDAR_BUILD = '20260926mo2';
 
   function withCalendarBuild(url) {
     try {
@@ -222,6 +222,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>RG Mobile</title>
 <link rel="stylesheet" href="css/mk-sys.css?v=20260926bm2">
+<!-- The shared motion system (windows grow out of their buttons, sliding
+     pills); the calendar frame loads its own copy and reports to this one. -->
+<script src="js/mk-motion.js?v=20260926sp1"></script>
 <link rel="icon" type="image/svg+xml" href="data/rg-brand.svg?v=20260924d1">
 <link rel="icon" type="image/png" sizes="192x192" href="data/rg-any-192.png?v=20260924d1">
 <link rel="apple-touch-icon" href="data/rg-apple-touch-180.png?v=20260924d1">
@@ -768,7 +771,7 @@ html.mk-low-spec #calendarEmbed {
     </div>
   </div>
 
-  <script src="js/bolus.js?v=20260926cf5"></script>
+  <script src="js/bolus.js?v=20260926mo2"></script>
 
   <script>
   let _syncRaf = 0;
@@ -1026,7 +1029,8 @@ window.__mkDockIcon=function(btnId){
 #mkStatusStrip{position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:#06101f;z-index:2147483000;pointer-events:none}
 /* Full-page sheets on the phone: a top bar with back, the page below it. */
 #planotajsSheet{position:fixed;left:0;right:0;top:env(safe-area-inset-top,0px);bottom:0;z-index:5000;display:none;flex-direction:column;background:#0c0f14}
-#planotajsSheet.is-open{display:flex}
+#planotajsSheet.is-open,#planotajsSheet.is-closing{display:flex}
+#planotajsSheet.is-closing{pointer-events:none}
 .mk-msheet-bar{flex:0 0 auto;display:flex;align-items:center;gap:6px;height:56px;padding:0 8px;background:#0c0f14;border-bottom:1px solid #262c36;color:#e6ebf2}
 .mk-msheet-bar h2{margin:0;font:600 18px/1 var(--font-ui,'Geist Sans',system-ui,sans-serif);letter-spacing:-.01em}
 .mk-msheet-back{display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:50%;background:transparent;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -1112,7 +1116,7 @@ window.__mkDockIcon=function(btnId){
     if (d.dy > 110 || (d.v > .8 && d.dy > 30)) {
       s.style.transition = 'transform 200ms cubic-bezier(.3,0,.8,.15)';
       s.style.transform = 'translateY(100%)';
-      setTimeout(function(){ if (window.toggleBolus) window.toggleBolus(false); s.style.removeProperty('transform'); s.style.removeProperty('transition'); }, 200);
+      setTimeout(function(){ if (window.toggleBolus) window.toggleBolus(false, true); s.style.removeProperty('transform'); s.style.removeProperty('transition'); }, 200);
     } else {
       s.style.transition = 'transform var(--mk-dur-spring-default, 560ms) var(--mk-ease-spring, ease)';
       s.style.transform = '';
@@ -1134,9 +1138,12 @@ window.__mkDockIcon=function(btnId){
     if (sheet.classList.contains('is-open')) { window.closePlanotajsSheet(); return; }
     clearTimeout(unload);
     if (frame.src !== PLANNER) frame.src = PLANNER;
+    sheet.classList.remove('is-closing');
     sheet.classList.add('is-open');
     sheet.setAttribute('aria-hidden', 'false');
     dockBtn(true);
+    // Grows out of its dock button and returns into it (js/mk-motion.js).
+    if (window.MinkaMotion) window.MinkaMotion.openSurface(sheet, { key: 'planner', origin: document.getElementById('planotajsDockBtn') });
     if (window.__mkSheetOpened) window.__mkSheetOpened('planner');
   };
   window.closePlanotajsSheet = function(){
@@ -1144,6 +1151,10 @@ window.__mkDockIcon=function(btnId){
     sheet.classList.remove('is-open');
     sheet.setAttribute('aria-hidden', 'true');
     dockBtn(false);
+    if (window.MinkaMotion) {
+      sheet.classList.add('is-closing');
+      window.MinkaMotion.closeSurface(sheet, { key: 'planner', origin: document.getElementById('planotajsDockBtn') }, function(){ sheet.classList.remove('is-closing'); });
+    }
     if (window.__mkSheetClosed) window.__mkSheetClosed('planner');
     clearTimeout(unload);
     unload = setTimeout(function(){ if (!sheet.classList.contains('is-open')) frame.src = 'about:blank'; }, IDLE);
@@ -1151,6 +1162,6 @@ window.__mkDockIcon=function(btnId){
 })();
 </script>
 <link rel="stylesheet" href="css/bolus.css?v=20260926bs1">
-<link rel="stylesheet" href="css/bolus-m3.css?v=20260926bs3">
+<link rel="stylesheet" href="css/bolus-m3.css?v=20260926mo2">
 </body>
 </html>

@@ -1722,7 +1722,8 @@
   }
   // force: true/false opens/closes; nothing toggles (the phone's back and
   // drag-to-close call toggleBolus(false)).
-  window.toggleBolus = function(force) {
+  // instant: already moved away by the caller (the phone's drag-to-close).
+  window.toggleBolus = function(force, instant) {
     var ov = document.getElementById('bolus-overlay');
     if (!ov) return;
     var next = typeof force === 'boolean' ? force : !_open;
@@ -1736,7 +1737,25 @@
       // Bolus is a focused work surface; the app dock is hidden while open.
       ov.style.paddingBottom = '10px';
     }
-    ov.style.display = _open ? 'flex' : 'none';
+    // The sheet grows out of the dock button (the phone: rises from the
+    // bottom) and returns into it; the dim layer fades on its own.
+    var MM = window.MinkaMotion, sheet = document.getElementById('bolus-sheet');
+    var scrim = ov.querySelector(':scope > .bolus-scrim');
+    if (!scrim) { scrim = document.createElement('div'); scrim.className = 'bolus-scrim'; ov.insertBefore(scrim, ov.firstChild); }
+    var dockBtn = document.getElementById('bolusDocBtn');
+    var phone = document.documentElement.classList.contains('mk-mobile-shell') || window.innerWidth <= 640;
+    var motion = phone ? { key: 'bolus', from: 'bottom', scrim: scrim }
+      : { key: 'bolus', origin: dockBtn && dockBtn.getClientRects().length ? dockBtn : null, scrim: scrim };
+    if (_open) {
+      ov.style.display = 'flex';
+      ov.style.pointerEvents = '';
+      if (MM && sheet) MM.openSurface(sheet, motion);
+    } else if (MM && sheet && !instant) {
+      ov.style.pointerEvents = 'none';
+      MM.closeSurface(sheet, motion, function () { if (!_open) { ov.style.display = 'none'; ov.style.pointerEvents = ''; } });
+    } else {
+      ov.style.display = 'none';
+    }
     var btn = document.getElementById('bolusDocBtn');
     if (btn) { btn.classList.toggle('bolus-open', _open); btn.classList.toggle('is-active', _open); }
     if (window.updateBuddyUiSuppression) window.updateBuddyUiSuppression();
@@ -1827,7 +1846,7 @@
           '</div>'+
         '</div>'+
       '</div>';
-    ov.addEventListener('click', function(e){ if(e.target===ov) toggleBolus(); });
+    ov.addEventListener('click', function(e){ if(e.target===ov || e.target.classList.contains('bolus-scrim')) toggleBolus(); });
     document.body.appendChild(ov);
     var guide = document.getElementById('bolus-guide');
     var guideBtn = document.getElementById('bolus-guide-btn');

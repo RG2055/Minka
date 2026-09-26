@@ -28,6 +28,14 @@
 }
 .radio-source-bar button svg { width: 17px; height: 17px; flex: 0 0 17px; }
 .radio-source-bar button[aria-pressed="true"] { color: #e2f8ff; background: rgba(var(--radio-ambient-rgb,83,201,232),.17); box-shadow: inset 0 0 0 1px rgba(var(--radio-ambient-rgb,83,201,232),.19); }
+/* Sliding pill (js/radio-source.js sourcePill): carries the selected look. */
+.radio-source-bar { position: relative; }
+.radio-source-bar > button { position: relative; z-index: 1; transition: background .18s ease, color .28s var(--mk-ease-effects, ease); }
+.radio-source-pill { position: absolute; z-index: 0; display: none; border-radius: 7px; background: rgba(var(--radio-accent-rgb,83,201,232),.15); box-shadow: inset 0 0 0 1px rgba(var(--radio-accent-rgb,83,201,232),.22); pointer-events: none; }
+/* Only in the looks that keep this bar's own style: the Amp, Dither and
+   Pioneer skins draw their selected button themselves and stay as they are. */
+#radioWindow:is(:not([data-radio-layout]), [data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"], .music-source) .radio-source-pill { display: block; }
+#radioWindow:is(:not([data-radio-layout]), [data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"], .music-source) .radio-source-bar.has-pill > button[aria-pressed="true"] { background: transparent; box-shadow: none; }
 .radio-source-bar button:hover { background: rgba(var(--radio-accent-rgb,83,201,232),.1); }
 .radio-source-bar button:focus-visible { outline: 2px solid var(--radio-accent,#b7e9ff); outline-offset: 2px; }
 #radioSourceStatus:empty { display: none; }
