@@ -269,7 +269,14 @@
  function renderPin(){
   const host=$('mediaContent');host.replaceChildren();const h=document.createElement('h3');h.className='media-person-heading';h.append(avatar(selected.name),document.createTextNode(pretty(selected.name)));host.append(h);
   const form=document.createElement('form');form.className='media-pin';host.append(form);
-  const makeField=(label,type,id,max)=>{const l=document.createElement('label');l.textContent=label;const input=document.createElement('input');input.id=id;input.type=type;input.required=true;input.maxLength=max;input.autocomplete=type==='password'?'off':'one-time-code';if(type==='password'){input.inputMode='numeric';input.pattern=recovering||!selected.hasPin?'[0-9]{6}':'[0-9]{4,8}';}l.append(input);form.append(l);return input;};
+  // A PIN is not the site password: a type=password field makes Chrome fill
+  // the saved calendar password into it (autocomplete=off is ignored there).
+  // Where dots can be drawn on a text field, the PIN is a masked text field
+  // that password managers leave alone; elsewhere it stays a password field.
+  const maskedText=!!(window.CSS&&CSS.supports&&CSS.supports('-webkit-text-security','disc'));
+  const makeField=(label,type,id,max)=>{const l=document.createElement('label');l.textContent=label;const input=document.createElement('input');input.id=id;input.name=id;input.required=true;input.maxLength=max;input.autocomplete='one-time-code';input.spellcheck=false;input.setAttribute('autocapitalize','off');
+   if(type==='password'){input.type=maskedText?'text':'password';if(maskedText)input.style.setProperty('-webkit-text-security','disc');else input.autocomplete='off';input.inputMode='numeric';input.pattern=recovering||!selected.hasPin?'[0-9]{6}':'[0-9]{4,8}';}else input.type=type;
+   l.append(input);form.append(l);return input;};
   if(recovering)makeField('Atkopšanas kods','text','mediaRecoveryInput',40);
   const pin=makeField(recovering?'Jauns 6 ciparu PIN':selected.hasPin?'Tavs PIN':'Izveido 6 ciparu PIN','password','mediaPin',recovering||!selected.hasPin?6:8);
   if(recovering||!selected.hasPin)makeField('Atkārto PIN','password','mediaConfirm',6);

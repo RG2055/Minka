@@ -203,7 +203,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20260926fm4';
+  var CALENDAR_BUILD = '20260926fm5';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -817,7 +817,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <div id="calendarEmbed">
   <!-- Keep the expensive calendar document dormant behind the password gate.
        Authenticated startup assigns data-base-src immediately. -->
-  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260926fm4" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260926fm5" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- Dither loader (js/dither-loader.js). It stays up until the embedded
@@ -857,7 +857,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 .rdl.is-leaving .rdl-crt{transform:scale(6.5);transition:transform .56s cubic-bezier(.7,0,.84,0);transform-origin:50% 34%}
 @media (prefers-reduced-motion:reduce){.rdl.is-leaving .rdl-crt{transform:none;transition:none}}
 </style>
-<script src="js/dither-loader.js?v=20260926fm4"></script>
+<script src="js/dither-loader.js?v=20260926fm5"></script>
 <script src="js/rad-loader.js?v=20260926rl2"></script>
 <script>
 (function(){
@@ -3103,7 +3103,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
 
 <script src="kalendars/js/daybook-model.js?v=20260911b" defer></script>
 <script src="js/radio-daybook.js?v=20260926api1" defer></script>
-<script src="js/media-profile.js?v=20260926rad1" defer></script>
+<script src="js/media-profile.js?v=20260926pin1" defer></script>
 <script src="js/radio-source.js?v=20260926mo2" defer></script>
 
 <div id="mobileQrModal" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171000;background:rgba(2,4,8,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:20px;">
@@ -3993,7 +3993,7 @@ window.addEventListener('message', function(e) {
 })();
 </script>
 
-<script src="js/app-update.js?v=20260926fm4"></script>
+<script src="js/app-update.js?v=20260926fm5"></script>
 <script>
 if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
   const MINKA_APP_VERSION = '2026.09.14-winamp-lcd';
