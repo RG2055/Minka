@@ -277,7 +277,121 @@ async function pushNightStats(env, payload) {
   }
 }
 
+/* ── Schedule copy ──────────────────────────────────────────────────────
+   The schedule itself stays in Google Sheets (colleagues edit it there); the
+   Apps Script reply takes ~8 s. The cron (every 2 min) and any request that
+   finds the copy older than SCHEDULE_REFRESH_MS fetch it again in the
+   background. A reply replaces the copy only when it is complete, so a
+   half-saved sheet or a Google outage keeps the last good schedule. */
+const SCHEDULE_KEY = "schedule";
+const SCHEDULE_REFRESH_MS = 90 * 1000;
+const SCHEDULE_MAX_AGE_MS = 30 * 60 * 1000;
+const SCHEDULE_LOCK_MS = 45 * 1000;
+
+async function ensureUpstreamCache(db) {
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS upstream_cache (
+      key TEXT PRIMARY KEY,
+      body TEXT,
+      hash TEXT,
+      fetched_at INTEGER NOT NULL DEFAULT 0,
+      changed_at INTEGER NOT NULL DEFAULT 0,
+      lock_until INTEGER NOT NULL DEFAULT 0,
+      last_error TEXT
+    )
+  `).run();
+}
+
+// A reply counts only if it has the radiographers with at least one full
+// month of days that actually lists people.
+function validSchedule(data) {
+  if (!data || typeof data !== "object" || data.success !== true) return false;
+  const tech = data.radiographers;
+  if (!tech || typeof tech !== "object" || Array.isArray(tech)) return false;
+  const months = Object.values(tech).filter(Array.isArray);
+  if (!months.some((days) => days.length >= 28 && days.some((d) => d && Array.isArray(d.workers) && d.workers.length))) return false;
+  const docs = data.radiologists;
+  return docs === undefined || (docs && typeof docs === "object" && !Array.isArray(docs));
+}
+
+async function scheduleHash(data) {
+  const text = JSON.stringify([data.radiographers, data.radiologists ?? null]);
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function readScheduleSnapshot(env) {
+  const row = await env.DB.prepare("SELECT body, fetched_at FROM upstream_cache WHERE key = ?1").bind(SCHEDULE_KEY).first();
+  if (!row || !row.body) return null;
+  const data = JSON.parse(row.body);
+  if (!validSchedule(data)) return null;
+  return { data, age: Math.max(0, Math.round((Date.now() - Number(row.fetched_at || 0)) / 1000)), fetchedAt: Number(row.fetched_at || 0) };
+}
+
+async function refreshSchedule(env) {
+  if (!env.SOURCE_URL || !env.DB) return false;
+  const db = env.DB;
+  await ensureUpstreamCache(db);
+  const now = Date.now();
+  // One refresh at a time across cron and requests, so Google is not asked
+  // by every open device at once; a crashed refresh frees the lock in 45 s.
+  const claim = await db.prepare(`
+    INSERT INTO upstream_cache (key, lock_until) VALUES (?1, ?2)
+    ON CONFLICT(key) DO UPDATE SET lock_until = excluded.lock_until WHERE upstream_cache.lock_until < ?3
+  `).bind(SCHEDULE_KEY, now + SCHEDULE_LOCK_MS, now).run();
+  if (Number(claim?.meta?.changes || 0) !== 1) return false;
+  try {
+    const upstream = await fetch(env.SOURCE_URL, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(40000) });
+    if (!upstream.ok) throw new Error("upstream status " + upstream.status);
+    const text = await upstream.text();
+    const data = JSON.parse(text);
+    if (!validSchedule(data)) throw new Error("incomplete schedule reply");
+    const hash = await scheduleHash(data);
+    const done = Date.now();
+    await db.prepare(`
+      UPDATE upstream_cache
+      SET body = ?2, hash = ?3, fetched_at = ?4,
+          changed_at = CASE WHEN hash IS ?3 THEN changed_at ELSE ?4 END,
+          lock_until = 0, last_error = NULL
+      WHERE key = ?1
+    `).bind(SCHEDULE_KEY, text, hash, done).run();
+    return true;
+  } catch (error) {
+    console.error(JSON.stringify({ message: "Schedule refresh failed", error: String(error) }));
+    await db.prepare("UPDATE upstream_cache SET lock_until = 0, last_error = ?2 WHERE key = ?1")
+      .bind(SCHEDULE_KEY, String(error).slice(0, 200)).run().catch(() => {});
+    return false;
+  }
+}
+
+async function serveScheduleSnapshot(env, ctx, knownCarryovers) {
+  if (!env.DB || !ctx || typeof ctx.waitUntil !== "function") return null;
+  try {
+    // A missing table (first run) or unreadable row counts as "no copy yet".
+    let snap = await readScheduleSnapshot(env).catch(() => null);
+    if (!snap || Date.now() - snap.fetchedAt > SCHEDULE_MAX_AGE_MS) {
+      // No copy yet, or the cron has not run for a while: give Google a
+      // normal reply time to refresh it; an old copy still beats an error.
+      const refresh = refreshSchedule(env);
+      ctx.waitUntil(refresh);
+      await Promise.race([refresh, new Promise((resolve) => setTimeout(resolve, 15000))]);
+      snap = (await readScheduleSnapshot(env).catch(() => null)) || snap;
+      if (!snap) return null;
+    } else if (Date.now() - snap.fetchedAt > SCHEDULE_REFRESH_MS) {
+      ctx.waitUntil(refreshSchedule(env));
+    }
+    return { body: { ...snap.data, knownCarryovers }, age: snap.age };
+  } catch (error) {
+    console.error(JSON.stringify({ message: "Schedule copy unavailable", error: String(error) }));
+    return null;
+  }
+}
+
 const worker = {
+  async scheduled(_event, env, ctx) {
+    ctx.waitUntil(refreshSchedule(env));
+  },
+
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const method = request.method;
@@ -677,6 +791,11 @@ const worker = {
       } catch (_) {
         return json(request, { ok: false, error: "Schedule exceptions unavailable" }, 503);
       }
+      // Serve the last good copy of the Apps Script reply (refreshed by the
+      // cron and in the background), so a reload no longer waits ~8 s on
+      // Google. Any problem with the copy falls through to the live fetch.
+      const cached = await serveScheduleSnapshot(env, ctx, knownCarryovers);
+      if (cached) return json(request, cached.body, 200, { "x-schedule-age": String(cached.age) });
       const upstream = await fetch(env.SOURCE_URL, {
         method: "GET",
         headers: { accept: "application/json" }
@@ -727,13 +846,14 @@ function cors(request) {
   };
 }
 
-function json(request, data, status = 200) {
+function json(request, data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       ...cors(request),
       "content-type": "application/json; charset=utf-8",
-      "cache-control": "no-store"
+      "cache-control": "no-store",
+      ...extraHeaders
     }
   });
 }

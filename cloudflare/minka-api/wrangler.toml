@@ -22,3 +22,7 @@ database_id = "643ee348-1085-47f1-a2fb-46bc149f94bb"
 [[kv_namespaces]]
 binding = "MINKA_EMOJI"
 id = "72f5893dcfc44771bd2ab40913ae99b4"
+
+# Refreshes the schedule copy from Apps Script (see refreshSchedule in src/index.js).
+[triggers]
+crons = ["*/2 * * * *"]
