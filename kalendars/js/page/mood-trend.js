@@ -9,9 +9,10 @@
    animation on one element. */
 (function () {
   'use strict';
-  var PULSE_KEY = 'minkaShiftPulseV2';
-  var PENDING_KEY = 'minkaShiftPulsePendingV2';
-  var FETCHED_KEY = 'minkaRgTrendFetchedV1';
+  var mkKey = (window.__mkKey || function (k) { return k; });            // /rad: own mood storage
+  var PULSE_KEY = mkKey('minkaShiftPulseV2');
+  var PENDING_KEY = mkKey('minkaShiftPulsePendingV2');
+  var FETCHED_KEY = mkKey('minkaRgTrendFetchedV1');
   var DAYS = 14;
   var W = 280, H = 44, PAD_X = 7, PAD_T = 7, PAD_B = 7;
   // Material 3 Expressive motion tokens (CSS approximations of the spring

@@ -1,10 +1,13 @@
 (function () {
   var list = document.getElementById('grafiks-list');
   if (!list) return;
-  var PULSE_KEY = 'minkaShiftPulseV2';
-  var PENDING_PULSE_KEY = 'minkaShiftPulsePendingV2';
-  var TEXT_KEY = 'minkaRgFeedbackV2';
-  var ENTRY_COUNT_KEY = 'minkaRgFeedbackCountsV2';
+  // /rad keeps its own mood and comments in the browser too (same origin).
+  var mkKey = (window.__mkKey || function (k) { return k; });
+  var PULSE_KEY = mkKey('minkaShiftPulseV2');
+  var PENDING_PULSE_KEY = mkKey('minkaShiftPulsePendingV2');
+  var TEXT_KEY = mkKey('minkaRgFeedbackV2');
+  var ENTRY_COUNT_KEY = mkKey('minkaRgFeedbackCountsV2');
+  var OWN_MOOD_KEY = mkKey('minkaRgOwnMoodV1');
   var lastWriteButton = null;
   var ratingFlushTimer = 0;
   var ratingSyncs = {};
@@ -12,8 +15,8 @@
   // When this device last had the comment/idea feed open, and how fresh the
   // newest entry on the server is. The API already reports lastActivity per
   // day, so "is there anything new" needs no new endpoint — only a local mark.
-  var SEEN_KEY = 'minkaRgFeedbackSeenV1';
-  var SEEN_COUNT_KEY = 'minkaRgFeedbackSeenCountsV1';
+  var SEEN_KEY = mkKey('minkaRgFeedbackSeenV1');
+  var SEEN_COUNT_KEY = mkKey('minkaRgFeedbackSeenCountsV1');
   var newestEntryAt = { comment: 0, suggestion: 0 };
   var globalEntryCounts = { comment: null, suggestion: null };
   var globalEntryCountsLoadedAt = {};
@@ -400,13 +403,13 @@
      Katrs skaitlis atver statistiku uz savas cilnes. */
   function moodMonthMarkup() {
     return '<div class="rg-month" data-rg-month aria-label="Šis mēnesis">'
-      + ['coffee', 'radio', 'bolus'].map(function (k) {
+      + (window.MINKA_APP === 'rad' ? ['coffee', 'radio'] : ['coffee', 'radio', 'bolus']).map(function (k) {
         return '<button type="button" class="rg-month-item rg-month-item--' + k + '" data-rg-month-tab="' + k + '"><b>—</b><span></span><small></small></button>';
       }).join('') + '</div>';
   }
   var monthRadio = { key: '', at: 0, days: [], busy: false };
   function monthRadioFetch(range) {
-    var base = String(window.MINKA_FEEDBACK_API_BASE || '').replace(/\/$/, '');
+    var base = String(window.MINKA_RADIO_API_BASE || window.MINKA_FEEDBACK_API_BASE || '').replace(/\/$/, '');
     if (!base || monthRadio.busy || (monthRadio.key === range.from && Date.now() - monthRadio.at < 30 * 60000)) return;
     monthRadio.busy = true;
     fetch(base + '/api/radio?from=' + range.from + '&to=' + range.to, { cache: 'no-store' })
@@ -2062,18 +2065,18 @@
   // noklusēto sejiņu.
   function ownMoodFor(day) {
     if (moodOwnCache[day]) return moodOwnCache[day];
-    var saved = readJson('minkaRgOwnMoodV1', {});
+    var saved = readJson(OWN_MOOD_KEY, {});
     var entry = saved && typeof saved === 'object' ? saved[day] : null;
     return entry && entry.emoji ? entry : null;
   }
   // The statistics view reads the same fact from this key, so a mood saved
   // on the card shows there without waiting for its own fetch.
   function shareOwnMood(day, value) {
-    var all = readJson('minkaRgOwnMoodV1', {});
+    var all = readJson(OWN_MOOD_KEY, {});
     if (!all || typeof all !== 'object') all = {};
     if (value && value.emoji) all[day] = { emoji: value.emoji, note: value.note || '', at: value.at || Date.now() };
     else delete all[day];
-    writeJson('minkaRgOwnMoodV1', all);
+    writeJson(OWN_MOOD_KEY, all);
   }
   async function loadOwnMood(day, force) {
     var now = Date.now();
@@ -2496,10 +2499,10 @@
   /* Topic chat layer. The API remains date-based; the client combines those
      pages into one inbox and stores the optional topic/reply metadata inside
      the message body, so existing comments stay readable and no data is lost. */
-  var TOPIC_EMOJI_KEY = 'minkaCommunityTopicEmojiV1';
-  var COMMUNITY_OWNED_KEY = 'minkaCommunityOwnedV1';
-  var COMMUNITY_EDIT_TOKEN_KEY = 'minkaCommunityEditTokensV1';
-  var COMMUNITY_AUTHOR_KEY = 'minkaCommunityAuthorV1';
+  var TOPIC_EMOJI_KEY = mkKey('minkaCommunityTopicEmojiV1');
+  var COMMUNITY_OWNED_KEY = mkKey('minkaCommunityOwnedV1');
+  var COMMUNITY_EDIT_TOKEN_KEY = mkKey('minkaCommunityEditTokensV1');
+  var COMMUNITY_AUTHOR_KEY = mkKey('minkaCommunityAuthorV1');
   var communityMessages = [];
   var communityMode = 'all';
   var communityView = 'all';
@@ -3568,7 +3571,7 @@
   // plus the shift-radio history that MinkaDaybook.enhance() draws; a null key
   // means storage was cleared.
   var PAINT_STORAGE_KEYS = [PULSE_KEY, PENDING_PULSE_KEY, TEXT_KEY, ENTRY_COUNT_KEY,
-    SEEN_KEY, SEEN_COUNT_KEY, 'minkaRgOwnMoodV1', 'minkaShiftRadioV1'];
+    SEEN_KEY, SEEN_COUNT_KEY, OWN_MOOD_KEY, 'minkaShiftRadioV1'];
   window.addEventListener('storage', function (event) {
     if (event.key === null || PAINT_STORAGE_KEYS.indexOf(event.key) >= 0) paintCounts();
   });

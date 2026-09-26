@@ -144,7 +144,7 @@
         processStore(storeRad, rdStats);
         const radiografers = Object.values(rgStats).sort((a,b) => b.totalHrs - a.totalHrs);
         const radiologi    = Object.values(rdStats).sort((a,b) => b.totalHrs - a.totalHrs);
-        wrap.innerHTML = renderTable(radiografers, '● Radiogrāferi', '#1fe091') +
+        wrap.innerHTML = renderTable(radiografers, window.MINKA_APP === 'rad' ? '● Rezidenti' : '● Radiogrāferi', window.MINKA_APP === 'rad' ? '#4dd0c8' : '#1fe091') +
                          renderTable(radiologi, '● Radiologi', '#3f9bff');
       }
     }

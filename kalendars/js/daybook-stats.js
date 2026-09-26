@@ -12,16 +12,21 @@
   var MONTHS = ['Janvāris', 'Februāris', 'Marts', 'Aprīlis', 'Maijs', 'Jūnijs', 'Jūlijs', 'Augusts', 'Septembris', 'Oktobris', 'Novembris', 'Decembris'];
   var WEEKDAYS = ['Pirmdiena', 'Otrdiena', 'Trešdiena', 'Ceturtdiena', 'Piektdiena', 'Sestdiena', 'Svētdiena'];
   var WEEKDAY_SHORT = ['P', 'O', 'T', 'C', 'P', 'S', 'Sv'];
-  var GROUP = { rg: { label: 'Radiogrāferi', accent: '#1fe091' }, rd: { label: 'Radiologi', accent: '#3f9bff' } };
+  // /rad: the left group ("rg" in the data) are the residents; no Bolus or
+  // night plan there.
+  var IS_RAD = window.MINKA_APP === 'rad';
+  var GROUP = { rg: { label: IS_RAD ? 'Rezidenti' : 'Radiogrāferi', accent: IS_RAD ? '#4dd0c8' : '#1fe091' }, rd: { label: 'Radiologi', accent: '#3f9bff' } };
   var SHIFT = { day: { label: 'Diena', color: '#3f9bff' }, night: { label: 'Nakts', color: '#23cdcf' }, '24h': { label: '24h', color: '#f5b73f' } };
-  var TABS = [['overview', 'Pārskats'], ['bolus', 'Boluss'], ['radio', 'Radio'], ['coffee', 'Kafija'], ['night', 'Nakts'], ['fatigue', 'Nogurums']];
+  var TABS = [['overview', 'Pārskats'], ['bolus', 'Boluss'], ['radio', 'Radio'], ['coffee', 'Kafija'], ['night', 'Nakts'], ['fatigue', 'Nogurums']]
+    .filter(function (t) { return !IS_RAD || (t[0] !== 'bolus' && t[0] !== 'night'); });
   // Long lists show this many rows, the rest behind "Rādīt visus".
   var CAP = 8;
   var NIGHT_STATS_KEY = 'minkaNightStatsV1';
   var NIGHT_STATS_TTL = 12 * 3600 * 1000;
   var BEDS = [['main_left_top', 'Galvenā', 'augšā'], ['main_right_top', 'Galvenā', 'pa labi'], ['main_left_bottom', 'Galvenā', 'apakšā'], ['nmp_center', 'Jaunais NMP', '']];
-  var PULSE_KEY = 'minkaShiftPulseV2';
-  var PENDING_KEY = 'minkaShiftPulsePendingV2';
+  var mkKey = (window.__mkKey || function (k) { return k; });            // /rad: own mood storage
+  var PULSE_KEY = mkKey('minkaShiftPulseV2');
+  var PENDING_KEY = mkKey('minkaShiftPulsePendingV2');
   var COFFEE_KEY = 'minkaCoffeeCountsV1';
   var COFFEE_DETAILS_KEY = 'minkaCoffeeDetailsV1';
   var COFFEE_SOURCES = [['philips', 'Philips'], ['lofbergs', 'Löfbergs'], ['narvesen', 'Narvesen'], ['monster', 'Monster'], ['monsterultra', 'Monster Ultra'], ['redbull', 'Red Bull'], ['brite', 'Brite'], ['cupcoffee', 'Cita kafija'], ['mycoffee', 'Mana kafija']];
@@ -38,7 +43,7 @@
   var coffee = { busy: false, loaded: {}, failed: {} };
   // A day's own mood (any Fluent emoji + a few words), written from the mood
   // card as a message with an [[rgmood;…]] marker. day -> { emoji, note, at }.
-  var OWN_MOOD_KEY = 'minkaRgOwnMoodV1';
+  var OWN_MOOD_KEY = mkKey('minkaRgOwnMoodV1');
   function ownMood(day) {
     var all = readJson(OWN_MOOD_KEY);
     return all && all[day] && all[day].emoji ? all[day] : null;
@@ -109,7 +114,7 @@
     return out;
   }
   function ensureRadio(month) {
-    var base = String(window.MINKA_FEEDBACK_API_BASE || '').replace(/\/$/, '');
+    var base = String(window.MINKA_RADIO_API_BASE || window.MINKA_FEEDBACK_API_BASE || '').replace(/\/$/, '');
     if (!base || radioJob) return;
     var cached = remoteRadio[month];
     if (cached && Date.now() - cached.at < 5 * 60000) return;
@@ -129,7 +134,7 @@
   function summaryFor(range, person, group) {
     return M.summary({
       shifts: shiftsAll(),
-      changes: M.bolus(readJson('minkaBolusHistoryV1')),
+      changes: IS_RAD ? [] : M.bolus(readJson('minkaBolusHistoryV1')),   // the radiographers' Bolus only
       ratings: D.ratings(),
       radio: radioAll(range),
       coffee: readJson(COFFEE_KEY),
@@ -292,7 +297,7 @@
   function header(names) {
     return '<div class="db-chrome"><div class="db-top">'
       + '<div class="db-monthnav"><button type="button" class="db-icon-btn" data-db-nav="-1" aria-label="Iepriekšējais mēnesis">' + ICON.prev + '</button><b aria-live="polite" data-db-month>' + monthLabel(state.month) + '</b><button type="button" class="db-icon-btn" data-db-nav="1" aria-label="Nākamais mēnesis">' + ICON.next + '</button></div>'
-      + '<div class="db-chips" role="group" aria-label="Kuri cilvēki">' + [['all', 'Visi'], ['rg', 'Radiogrāferi'], ['rd', 'Radiologi']].map(function (g) {
+      + '<div class="db-chips" role="group" aria-label="Kuri cilvēki">' + [['all', 'Visi'], ['rg', GROUP.rg.label], ['rd', GROUP.rd.label]].map(function (g) {
         return '<button type="button" data-db-group="' + g[0] + '" aria-pressed="' + (state.group === g[0]) + '">' + ICON.check + '<span>' + g[1] + '</span></button>';
       }).join('') + '</div>'
       + '<label class="db-personpick"><span class="db-visually-hidden">Cilvēks</span><select data-db-person-select>' + personOptions(names) + '</select></label>'
@@ -490,7 +495,7 @@
       + tile(avg == null ? '—' : '<span class="db-face">' + avgMood.emoji + '</span>' + fmt(avg), 'Vidējā sajūta', avg == null ? 'Nav atzīmēts' : avgMood.label, avgMood ? avgMood.color : '')
       + tile(marked + '<small>/' + past.length + '</small>', 'Atzīmētas dienas', 'no aizvadītajām')
       + tile(s.reactionTotal || '—', 'Reakcijas', 'Mood pogu klikšķi')
-      + tile(s.bolus.length || '—', 'Bolusa maiņas', 'GE ' + s.bolus.filter(function (e) { return e.room === 'ge'; }).length + '&ensp;Philips ' + s.bolus.filter(function (e) { return e.room === 'philips'; }).length)
+      + (IS_RAD ? '' : tile(s.bolus.length || '—', 'Bolusa maiņas', 'GE ' + s.bolus.filter(function (e) { return e.room === 'ge'; }).length + '&ensp;Philips ' + s.bolus.filter(function (e) { return e.room === 'philips'; }).length))
       + '</div>';
     return section('Komandas sajūta', loading || 'Dienas vidējā, lielāks punkts = vairāk reakciju',
         (s.reactionTotal || rows.some(function (r) { return ownMood(r.day); }) ? moodChart(rows, b.today) : empty('Šim mēnesim vēl nav nevienas sajūtas atzīmes.')) + '<div class="db-two"><div>' + moodCounts(s) + ownMoodList(rows) + tiles + '</div>' + pixels(rows, b.today, 'mood') + '</div>' + note('Sejiņa — dienas biežākā reakcija; bez sejiņas — neviens nav atzīmējis. ☀ dienā un ☾ naktī dežūrā: <b class="db-px-rg">radiogrāferi</b>, <b class="db-px-rd">radiologi</b>. Spied uz dienas, lai redzētu detaļas.'), '#7dd3fc')
@@ -774,7 +779,7 @@
       + section('Sajūta', '', moodBlock, '#7dd3fc')
       + section('Dežūrā', '', staff || empty('Grafikā šai dienai nav maiņu.'), '#1fe091')
       + '<div class="db-two">'
-      + section('Boluss', row.bolus.length + ' maiņas', row.bolus.length ? '<ul class="db-list">' + row.bolus.map(function (e) { return '<li>' + chip(e.room === 'ge' ? 'GE' : 'Philips', e.room === 'ge' ? '#0a84ff' : '#30d158') + '<b>' + esc(new Date(e.ts).toLocaleTimeString('lv-LV', { timeZone: 'Europe/Riga', hour: '2-digit', minute: '2-digit' })) + '</b><span>' + esc(e.name) + '</span></li>'; }).join('') + '</ul>' : empty('Nav bolusa maiņu.'), '#ff5c5c')
+      + (IS_RAD ? '' : section('Boluss', row.bolus.length + ' maiņas', row.bolus.length ? '<ul class="db-list">' + row.bolus.map(function (e) { return '<li>' + chip(e.room === 'ge' ? 'GE' : 'Philips', e.room === 'ge' ? '#0a84ff' : '#30d158') + '<b>' + esc(new Date(e.ts).toLocaleTimeString('lv-LV', { timeZone: 'Europe/Riga', hour: '2-digit', minute: '2-digit' })) + '</b><span>' + esc(e.name) + '</span></li>'; }).join('') + '</ul>' : empty('Nav bolusa maiņu.'), '#ff5c5c'))
       + section('Radio', '', row.radio.length ? '<ul class="db-list">' + row.radio.map(function (n) { return '<li><span class="db-face">📻</span><span>' + esc(n) + '</span></li>'; }).join('') + '</ul>' : empty('Radio nav pierakstīts.'), '#38bdf8')
       + '</div>'
       + section('Kafija', cupsKnown ? cups.reduce(function (n, e) { return n + e.count; }, 0) + ' dzērieni' : '', cupsKnown

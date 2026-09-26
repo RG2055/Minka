@@ -52,7 +52,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
   // no-store already, and Chrome reuses the CORS preflight only for requests
   // that do not bypass the cache. Every other request passes through as is.
   (function () {
-    var SIDE_HOSTS = ['minka-coffee-api.gamernr1elite.workers.dev', 'minka-feedback-api.gamernr1elite.workers.dev'];
+    var SIDE_HOSTS = ['minka-coffee-api.gamernr1elite.workers.dev', 'minka-feedback-api.gamernr1elite.workers.dev', 'minka-feedback-rad.gamernr1elite.workers.dev'];
     var nativeFetch = window.fetch;
     if (!nativeFetch || nativeFetch.__minkaSideAuth) return;
     var sideFetch = function (input, init) {

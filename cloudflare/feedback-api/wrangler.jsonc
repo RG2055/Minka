@@ -16,6 +16,24 @@
       "migrations_dir": "migrations"
     }
   ],
+  // The radiologist/resident app (/rad): same code, its own database, so its
+  // mood and comments never mix with the radiographers'. Deploy: --env rad.
+  "env": {
+    "rad": {
+      "name": "minka-feedback-rad",
+      "services": [
+        { "binding": "AUTH", "service": "minka-api" }
+      ],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "minka-feedback-rad-db",
+          "database_id": "053bc2b8-088c-4a6f-be1c-2dd1a0401af2",
+          "migrations_dir": "migrations"
+        }
+      ]
+    }
+  },
   "observability": {
     "enabled": true,
     "logs": {

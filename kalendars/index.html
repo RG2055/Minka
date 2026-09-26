@@ -20,7 +20,12 @@ window.__mkKey=function(k){return window.MINKA_APP==='rad'?'rad:'+k:k;};})();
 (function() {
   var API_BASE = 'https://minka-api.gamernr1elite.workers.dev';
   window.MINKA_COFFEE_API_BASE = 'https://minka-coffee-api.gamernr1elite.workers.dev';
-  window.MINKA_FEEDBACK_API_BASE = 'https://minka-feedback-api.gamernr1elite.workers.dev';
+  // Radio days are shared by both apps; mood and comments are per app (/rad
+  // has its own copy of the feedback service and database).
+  window.MINKA_RADIO_API_BASE = 'https://minka-feedback-api.gamernr1elite.workers.dev';
+  window.MINKA_FEEDBACK_API_BASE = window.MINKA_APP === 'rad'
+    ? 'https://minka-feedback-rad.gamernr1elite.workers.dev'
+    : 'https://minka-feedback-api.gamernr1elite.workers.dev';
   var TOKEN_KEY = 'minka_api_token_v1';
   var IS_MOBILE_FRAME = new URLSearchParams(window.location.search).get('mobile') === '1';
   if (IS_MOBILE_FRAME) document.documentElement.classList.add('minka-mobile-frame');
@@ -104,7 +109,7 @@ window.__mkKey=function(k){return window.MINKA_APP==='rad'?'rad:'+k:k;};})();
   // no-store already, and Chrome reuses the CORS preflight only for requests
   // that do not bypass the cache. Every other request passes through as is.
   (function () {
-    var SIDE_HOSTS = ['minka-coffee-api.gamernr1elite.workers.dev', 'minka-feedback-api.gamernr1elite.workers.dev'];
+    var SIDE_HOSTS = ['minka-coffee-api.gamernr1elite.workers.dev', 'minka-feedback-api.gamernr1elite.workers.dev', 'minka-feedback-rad.gamernr1elite.workers.dev'];
     var nativeFetch = window.fetch;
     if (!nativeFetch || nativeFetch.__minkaSideAuth) return;
     var sideFetch = function (input, init) {

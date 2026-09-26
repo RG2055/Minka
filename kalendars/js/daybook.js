@@ -226,7 +226,7 @@
     enhance: enhance,
     renderStats: renderStats,
     radio: function () { return radioRecords; },
-    ratings: function () { return read('minkaShiftPulseV2'); },
+    ratings: function () { return read((window.__mkKey || function (k) { return k; })('minkaShiftPulseV2')); },
     refresh: refresh,
     selectedDay: selectedDay,
     esc: esc
