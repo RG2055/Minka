@@ -9,6 +9,8 @@
 (function () {
   'use strict';
   if (window.MINKA_APP !== 'rad') return;
+  // Off until the computer intro (after the usual loader) is built around it.
+  if (!window.__mkRadIntro) return;
   var loader = document.getElementById('mk-app-loader');
   var root = loader && loader.querySelector('.rdl');
   if (!root) return;

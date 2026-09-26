@@ -15,8 +15,6 @@
   ];
   var loader = document.getElementById('mk-app-loader') || document.getElementById('mobileDataLoader');
   if (!loader) return;
-  // /rad has its own monitor (js/rad-loader.js): no RG clips to download.
-  if (window.MINKA_APP === 'rad' && loader.id === 'mk-app-loader') return;
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var bg = loader.querySelector('.mkl-bg');
   var scrim = loader.querySelector('.mkl-scrim');

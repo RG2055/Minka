@@ -21,10 +21,9 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
 .mkl-bg{position:absolute;inset:0;width:100%;height:100%;opacity:.62}
 .mkl-ring{position:relative;width:256px;height:256px}
 .mkl-text{width:2px;height:2px}
-/* /rad: the phosphor monitor (js/rad-loader.js) instead of the RG ring. */
+/* /rad: the phosphor screen (js/rad-loader.js) is kept for the coming
+   computer intro, which plays after this loader; until then it stays off. */
 .rdl{display:none}
-html.minka-rad #mk-app-loader>:is(.mkl-bg,.mkl-scrim,.mkl-ring,.mkl-text){display:none}
-html.minka-rad .rdl{position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(120% 90% at 50% 45%,#07120c 0%,#020503 70%,#000 100%)}
 .rdl-crt{position:relative;width:min(560px,88vw);aspect-ratio:4/3;border-radius:26px/22px;overflow:hidden}
 .rdl-cube{position:absolute;left:50%;top:9%;width:52%;aspect-ratio:1;transform:translateX(-50%)}
 </style>
@@ -733,8 +732,8 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 .rdl.is-leaving .rdl-crt{transform:scale(6.5);transition:transform .56s cubic-bezier(.7,0,.84,0);transform-origin:50% 34%}
 @media (prefers-reduced-motion:reduce){.rdl.is-leaving .rdl-crt{transform:none;transition:none}}
 </style>
-<script src="js/dither-loader.js?v=20260926rl1"></script>
-<script src="js/rad-loader.js?v=20260926rl1"></script>
+<script src="js/dither-loader.js?v=20260926rl2"></script>
+<script src="js/rad-loader.js?v=20260926rl2"></script>
 <script>
 (function(){
   var loader = document.getElementById('mk-app-loader');
