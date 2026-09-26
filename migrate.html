@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="lv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>RG pārceļas</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; height: 100%; background: #0b0e13; color: #e6ebf2; font: 500 15px/1.4 Inter, system-ui, -apple-system, sans-serif; }
+  main { min-height: 100%; display: grid; place-items: center; padding: 24px; box-sizing: border-box; text-align: center; }
+  h1 { font-size: 20px; margin: 0 0 8px; }
+  p { margin: 0; color: #9aa4b2; }
+</style>
+</head>
+<body>
+<main><div><h1 id="t">Pārnes iestatījumus…</h1><p id="s">Neaizver šo logu.</p></div></main>
+<script>
+/* The move from rg2055.github.io/Minka to rgapp.page: the old app opens this
+   page and hands over what it kept on the device (look, radio settings,
+   sign-in). Only a message from the old address, from the window that opened
+   this one, is taken; nothing that is already set here is overwritten. */
+(function () {
+  var OLD = 'https://rg2055.github.io';
+  var FLAG = 'minkaMovedFromGithubV1';
+  var params = new URLSearchParams(location.search);
+  var app = params.get('app') === 'rad' ? 'rad' : '';
+  var mobile = params.get('m') === '1';
+  var target = (mobile ? '/mobile.html' : (app ? '/rad/' : '/')) + (mobile && app ? '?app=rad' : '');
+  var t = document.getElementById('t'), s = document.getElementById('s');
+  var done = false;
+  function finish(title, note) {
+    if (done) return;
+    done = true;
+    t.textContent = title; s.textContent = note;
+    setTimeout(function () { location.replace(target); }, 900);
+  }
+  window.addEventListener('message', function (e) {
+    if (e.origin !== OLD || e.source !== window.opener || !e.data || e.data.type !== 'minka-move-data') return;
+    var items = e.data.items || {}, n = 0;
+    try {
+      Object.keys(items).slice(0, 3000).forEach(function (k) {
+        var v = items[k];
+        if (typeof v !== 'string' || localStorage.getItem(k) !== null) return;
+        localStorage.setItem(k, v); n++;
+      });
+      localStorage.setItem(FLAG, String(Date.now()));
+    } catch (_e) {}
+    finish('Gatavs', n ? 'Iestatījumi pārnesti. Atver lietotni…' : 'Atver lietotni…');
+  });
+  if (window.opener) {
+    try { window.opener.postMessage({ type: 'minka-move-ready' }, OLD); } catch (_e) {}
+    setTimeout(function () { finish('Atver lietotni…', ''); }, 8000);
+  } else {
+    finish('Atver lietotni…', '');
+  }
+})();
+</script>
+</body>
+</html>

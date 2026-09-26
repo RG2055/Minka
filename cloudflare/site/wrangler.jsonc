@@ -17,5 +17,7 @@
   // No per-version preview URLs: every published version stays private
   // except the live one.
   "preview_urls": false,
+  // The site's own address (bought 2026-09-26, Cloudflare Registrar).
+  "routes": [{ "pattern": "rgapp.page", "custom_domain": true }],
   "observability": { "enabled": true }
 }
