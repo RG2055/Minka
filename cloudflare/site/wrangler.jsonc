@@ -12,7 +12,10 @@
     // Serve index.html, mobile.html, kalendars/index.html as they are named,
     // like GitHub Pages (no redirect to pretty URLs; the service worker and
     // the calendar iframe request the .html paths).
-    "html_handling": "none"
+    "html_handling": "none",
+    // Every request goes through src/index.js, which sets the cache and
+    // safety headers (a year for ?v= files, a check for the rest).
+    "run_worker_first": true
   },
   // No per-version preview URLs: every published version stays private
   // except the live one.
