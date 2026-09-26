@@ -38,7 +38,34 @@
   }
   window.__minkaHasApiAuth = function() { return !!getToken(); };
 
-  var CALENDAR_BUILD = '20260926bm2';
+  // Coffee and feedback workers take the same login token as minka-api. This
+  // one wrapper adds it to every request to those two hosts (a dozen call
+  // sites), and drops a request-side cache:'no-store' there: their replies are
+  // no-store already, and Chrome reuses the CORS preflight only for requests
+  // that do not bypass the cache. Every other request passes through as is.
+  (function () {
+    var SIDE_HOSTS = ['minka-coffee-api.gamernr1elite.workers.dev', 'minka-feedback-api.gamernr1elite.workers.dev'];
+    var nativeFetch = window.fetch;
+    if (!nativeFetch || nativeFetch.__minkaSideAuth) return;
+    var sideFetch = function (input, init) {
+      try {
+        var url = typeof input === 'string' ? input : (input instanceof URL ? input.href : '');
+        if (url && SIDE_HOSTS.indexOf(new URL(url, window.location.href).host) !== -1) {
+          init = Object.assign({}, init || {});
+          var headers = new Headers(init.headers || {});
+          var token = getToken();
+          if (token && !headers.has('authorization')) headers.set('authorization', 'Bearer ' + token);
+          init.headers = headers;
+          if (init.cache === 'no-store') delete init.cache;
+        }
+      } catch (_e) {}
+      return nativeFetch.call(window, input, init);
+    };
+    sideFetch.__minkaSideAuth = true;
+    window.fetch = sideFetch;
+  })();
+
+  var CALENDAR_BUILD = '20260926cf6';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
