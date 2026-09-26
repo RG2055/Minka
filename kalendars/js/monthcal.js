@@ -229,7 +229,6 @@
       '.mcal-seg button.is-on{background:var(--pri-c);color:var(--on-pri-c);}',
       '.mcal-actions{margin-left:auto;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:8px;}',
       '.mcal-actions>.mcal-legend{margin-right:8px;}',
-      '.mcal-actions>.mcal-seg{margin-right:8px;}',
       '.mcal-actbtn{cursor:pointer;height:40px;padding:0 18px;border:0;border-radius:20px;background:var(--c2);color:var(--on);font-size:14px;font-weight:500;white-space:nowrap;transition:border-radius 350ms var(--mk-ease-expressive-fast,ease),background-color 150ms ease;}',
       '.mcal-actbtn:hover{background:var(--c3);}',
       '.mcal-actbtn:active,.mcal-seg button:active,.mcal-abf:active{border-radius:10px;}',
@@ -654,6 +653,24 @@
     });
   }
 
+  // Width of the longest "Mēnesis YYYY" in the title font.
+  var _titleW = {};
+  function titleWidth(year){
+    if (_titleW[year]) return _titleW[year];
+    try {
+      var probe = document.createElement('div');
+      probe.className = 'mcal-title';
+      probe.style.cssText = 'position:absolute;visibility:hidden;left:-9999px;top:0;white-space:nowrap;';
+      _overlay.appendChild(probe);
+      var w = 0;
+      MONTH_LOWER.forEach(function(m){ probe.textContent = titleCase(m) + ' ' + year; w = Math.max(w, probe.offsetWidth + 1); }); // layout width: unaffected by the open animation's scale
+      probe.remove();
+      // Measured before the web font arrived: do not keep that number.
+      if (w && (!document.fonts || document.fonts.status === 'loaded')) _titleW[year] = Math.ceil(w);
+      return Math.ceil(w);
+    } catch (_e) { return 0; }
+  }
+
   function render(month){
     var months = _viewMode === 'abs' ? absMonths() : allMonths();
     if (!months.length){ _overlay.querySelector('.mcal-inner').innerHTML = '<div class="mcal-empty">Nav grafika datu.</div>'; return; }
@@ -683,25 +700,25 @@
       return icon ? '<span class="mcal-headicon" aria-hidden="true">' + icon + '</span>' : '';
     }
     var stepName = _viewMode === 'week' ? 'nedēļa' : 'mēnesis';
-    // Arrows before the title and every other control on the right: the
-    // title and week range can change length without moving any button.
+    // Title, arrows, view tabs, then the week range; the rest on the right.
+    // The title keeps the width of the longest month name (titleWidth), so
+    // the arrows stay under the pointer while paging through months.
     var head = '<div class="mcal-head">'
       + headIcon()
+      + '<div class="mcal-titles"><div class="mcal-title" style="min-width:' + titleWidth(p.year) + 'px">' + esc(titleCase(month)) + '</div></div>'
       + '<div class="mcal-nav">'
       + '<button class="mcal-icbtn mcal-navbtn" data-go="-1" aria-label="Iepriekšējā ' + stepName + '"' + (prevDis ? ' disabled' : '') + '>' + ICON.prev + '</button>'
       + '<button class="mcal-icbtn mcal-navbtn" data-go="1" aria-label="Nākamā ' + stepName + '"' + (nextDis ? ' disabled' : '') + '>' + ICON.next + '</button>'
       + '</div>'
-      + '<div class="mcal-titles"><div class="mcal-title">' + esc(titleCase(month)) + '</div>'
-      + (_viewMode === 'week' && p.idx != null ? '<div class="mcal-sub">' + esc(weekRange(p, _weekIdx)) + '</div>' : '')
-      + '</div>'
-      + '<div class="mcal-actions">'
-      + (_viewMode === 'abs' ? ''
-        : '<div class="mcal-legend" aria-label="Maiņu veidi"><span class="mcal-hk is-allday">Diennakts</span><span class="mcal-hk is-day">Diena</span><span class="mcal-hk is-night">Nakts</span></div>')
       + '<div class="mcal-seg" role="group" aria-label="Skats">'
       + '<button data-view="month" class="' + (_viewMode === 'month' ? 'is-on' : '') + '" aria-pressed="' + (_viewMode === 'month') + '">Mēnesis</button>'
       + '<button data-view="week" class="' + (_viewMode === 'week' ? 'is-on' : '') + '" aria-pressed="' + (_viewMode === 'week') + '">Nedēļa</button>'
       + '<button data-view="abs" class="' + (_viewMode === 'abs' ? 'is-on' : '') + '" aria-pressed="' + (_viewMode === 'abs') + '">Prombūtnes</button>'
       + '</div>'
+      + (_viewMode === 'week' && p.idx != null ? '<div class="mcal-sub">' + esc(weekRange(p, _weekIdx)) + '</div>' : '')
+      + '<div class="mcal-actions">'
+      + (_viewMode === 'abs' ? ''
+        : '<div class="mcal-legend" aria-label="Maiņu veidi"><span class="mcal-hk is-allday">Diennakts</span><span class="mcal-hk is-day">Diena</span><span class="mcal-hk is-night">Nakts</span></div>')
       + '<button class="mcal-actbtn" data-panel="bday">Dzimšanas dienas</button>'
       + '<button class="mcal-actbtn" data-panel="holi">Svētku dienas</button>'
       + '<button class="mcal-icbtn mcal-close" aria-label="Aizvērt">' + ICON.close + '</button>'
