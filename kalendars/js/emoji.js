@@ -531,7 +531,7 @@
 
   // ── CONTEXT MENU ─────────────────────────────────────────────────────────────
   function showCtxMenu(workerName, card, x, y) {
-    closeCtxMenu();
+    closeCtxMenu(true);
     var cm = document.createElement('div');
     cm.id = 'mk-ctx-menu';
     var emoji = safeEmoji(_data[workerName]) || null;
@@ -545,10 +545,13 @@
     var cx = Math.min(x, vw - 160), cy = Math.min(y, vh - 100);
     cm.style.cssText = 'position:fixed;left:' + cx + 'px;top:' + cy + 'px;z-index:99998;';
     document.body.appendChild(cm);
+    // An M3 menu opens out of the point that was clicked.
+    cm._origin = { left: x - 4, top: y - 4, width: 8, height: 8 };
+    if (window.MinkaMotion) window.MinkaMotion.openSurface(cm, { key: 'ctx-menu', origin: cm._origin });
 
     cm.querySelector('[data-mk-ctx-emoji]').addEventListener('click', function(e) {
       e.stopPropagation();
-      closeCtxMenu();
+      closeCtxMenu(true);
       openPicker(workerName, card);
     });
     var rmv = cm.querySelector('[data-mk-ctx-remove]');
@@ -561,9 +564,14 @@
     });
   }
 
-  function closeCtxMenu() {
+  function closeCtxMenu(instant) {
     var cm = document.getElementById('mk-ctx-menu');
-    if (cm) cm.remove();
+    if (!cm) return;
+    if (instant === true || !window.MinkaMotion) { cm.remove(); return; }
+    if (cm._closing) return;
+    cm._closing = true;
+    cm.style.pointerEvents = 'none';
+    window.MinkaMotion.closeSurface(cm, { key: 'ctx-menu', origin: cm._origin }, function () { cm.remove(); });
   }
 
   // ── PICKER ───────────────────────────────────────────────────────────────────
@@ -769,6 +777,8 @@
     if (!_pickerEl) _pickerEl = buildPicker();
 
     var isMobileShell = document.documentElement.classList.contains('mk-mobile-shell') || window.innerWidth <= 640;
+    var wasOpen = _pickerEl.style.display === 'block' && !_pickerEl.classList.contains('is-closing');
+    _pickerEl.classList.remove('is-closing');
     _pickerEl.classList.toggle('mkp-mobile', !!isMobileShell);
     _pickerEl.style.display = 'block';
     renderPicker();
@@ -778,6 +788,8 @@
       _pickerEl.style.right = '6px';
       _pickerEl.style.top = 'auto';
       _pickerEl.style.bottom = 'max(8px, env(safe-area-inset-bottom, 0px))';
+      // Phone: a bottom sheet that rises into place.
+      if (!wasOpen && window.MinkaMotion) window.MinkaMotion.openSurface(_pickerEl, { key: 'emoji-picker', from: 'bottom' });
       return;
     }
 
@@ -806,12 +818,22 @@
 
     _pickerEl.style.left = left + 'px';
     _pickerEl.style.top  = top  + 'px';
+    // Grows out of the card it belongs to (js/mk-motion.js).
+    if (!wasOpen && window.MinkaMotion) window.MinkaMotion.openSurface(_pickerEl, { key: 'emoji-picker', origin: anchorEl });
   }
 
   function closePicker() {
-    if (_pickerEl) _pickerEl.style.display = 'none';
+    var el = _pickerEl, card = _activeCard, MM = window.MinkaMotion;
     _activeWorker = null;
     _activeCard   = null;
+    if (!el || el.style.display === 'none' || el.classList.contains('is-closing')) return;
+    if (!MM) { el.style.display = 'none'; return; }
+    el.classList.add('is-closing');
+    var mobile = el.classList.contains('mkp-mobile');
+    MM.closeSurface(el, mobile ? { key: 'emoji-picker', from: 'bottom' } : { key: 'emoji-picker', origin: card }, function () {
+      el.classList.remove('is-closing');
+      el.style.display = 'none';
+    });
   }
 
   // ── CSS ───────────────────────────────────────────────────────────────────────

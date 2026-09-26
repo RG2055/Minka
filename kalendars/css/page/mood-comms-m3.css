@@ -413,6 +413,12 @@
   position: fixed !important;
   inset: 0 !important;
   z-index: 2147483200 !important;
+  background: transparent !important;
+}
+/* The dim layer is its own element so it can fade while the sheet grows. */
+.rg-mood-note-scrim {
+  position: absolute !important;
+  inset: 0 !important;
   background: rgba(4,4,6,.55) !important;
 }
 .rg-mood-note-sheet {
@@ -747,8 +753,9 @@
   position: fixed !important;
   inset: 0 !important;
   z-index: 2147483150 !important;
-  background: rgba(4,4,6,.55) !important;
+  background: transparent !important;
 }
+.rg-emoji-picker.rg-emoji-picker-loose > .rg-emoji-scrim { background: rgba(4,4,6,.55) !important; }
 #rgFeedbackModal .rg-emoji-picker {
   position: absolute !important;
   inset: 0 !important;
@@ -756,8 +763,10 @@
   display: grid !important;
   place-items: center !important;
   padding: 16px !important;
-  background: rgba(4,4,6,.62) !important;
+  background: transparent !important;
 }
+/* The dim layer is its own element so it can fade while the sheet grows. */
+.rg-emoji-picker > .rg-emoji-scrim { position: absolute !important; inset: 0 !important; background: rgba(4,4,6,.62) !important; }
 /* Kompakts popover blakus pogai, kas to atvēra — meklēšana, ikonu kategorijas,
    ciešs režģis un nosaukuma rindiņa apakšā. */
 .rg-emoji-picker .rg-emoji-sheet {

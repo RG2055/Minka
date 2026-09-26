@@ -2771,10 +2771,17 @@
     } catch (_error) {}
     return { sections: [{ id: 'all', label: '⭐', title: 'Visi' }], bySection: { all: ['💬', '☕', '🩻', '🌙', '⚡', '🔥'] }, names: {} };
   }
-  function closeTopicEmojiPicker() {
+  // The picker grows out of the button that opened it and returns into it
+  // (js/mk-motion.js). `instant`: replaced or handed over to the mood note.
+  function closeTopicEmojiPicker(instant) {
     if (!topicPicker) return;
-    topicPicker.remove();
+    var box = topicPicker, sheet = box.querySelector('.rg-emoji-sheet'), MM = window.MinkaMotion;
     topicPicker = null;
+    if (instant === true || !MM || !sheet) box.remove();
+    else {
+      box.style.pointerEvents = 'none';
+      MM.closeSurface(sheet, { key: 'topic-emoji', origin: box._origin, scrim: box.querySelector('.rg-emoji-scrim') }, function () { box.remove(); });
+    }
     if (topicPickerReturn && topicPickerReturn.isConnected) topicPickerReturn.focus({ preventScroll: true });
     topicPickerReturn = null;
   }
@@ -2819,20 +2826,25 @@
   /* Pāris vārdu lodziņš pēc emoji izvēles. Skaitītājs rāda, cik atlicis,
      poga ir neaktīva, kamēr teksts par īsu, un Esc aizver. */
   var moodNoteBox = null;
-  function closeMoodNote() {
+  // The sheet grows out of the chosen emoji and returns into it
+  // (js/mk-motion.js); a note replaced by a new one goes at once.
+  function closeMoodNote(instant) {
     if (!moodNoteBox) return;
-    moodNoteBox.remove();
+    var box = moodNoteBox, sheet = box.querySelector('.rg-mood-note-sheet'), MM = window.MinkaMotion;
     moodNoteBox = null;
+    if (instant === true || !MM || !sheet) { box.remove(); return; }
+    box.style.pointerEvents = 'none';
+    MM.closeSurface(sheet, { key: 'mood-note', origin: box._origin, scrim: box.querySelector('.rg-mood-note-scrim') }, function () { box.remove(); });
   }
   function openMoodNote(emoji, anchor) {
-    closeMoodNote();
+    closeMoodNote(true);
     var day = shiftDayKey();
     var existing = ownMoodFor(day);
     moodNoteBox = document.createElement('div');
     moodNoteBox.className = 'rg-mood-note';
     moodNoteBox.setAttribute('role', 'dialog');
     moodNoteBox.setAttribute('aria-label', 'Pāris vārdi par maiņu');
-    moodNoteBox.innerHTML = '<div class="rg-mood-note-sheet">'
+    moodNoteBox.innerHTML = '<div class="rg-mood-note-scrim"></div><div class="rg-mood-note-sheet">'
       + '<div class="rg-mood-note-head"><span class="rg-mood-note-emoji" aria-hidden="true">' + emoji + '</span>'
       + '<div><strong>Kā bija maiņa?</strong><small>Pāris vārdi — paliek uz kartītes visu dienu</small></div></div>'
       + '<input class="rg-mood-note-text" type="text" maxlength="' + MOOD_NOTE_MAX + '" placeholder="Piem. mierīga nakts" autocomplete="off">'
@@ -2867,8 +2879,10 @@
       sheet.style.left = Math.round(left) + 'px';
       sheet.style.top = Math.round(top) + 'px';
     }
+    moodNoteBox._origin = anchor && anchor.isConnected ? anchor : null;
+    if (window.MinkaMotion) window.MinkaMotion.openSurface(sheet, { key: 'mood-note', origin: moodNoteBox._origin, scrim: moodNoteBox.querySelector('.rg-mood-note-scrim') });
     moodNoteBox.addEventListener('click', function (event) {
-      if (event.target === moodNoteBox || event.target.closest('.rg-mood-note-cancel')) { closeMoodNote(); return; }
+      if (event.target === moodNoteBox || event.target.classList.contains('rg-mood-note-scrim') || event.target.closest('.rg-mood-note-cancel')) { closeMoodNote(); return; }
       if (!event.target.closest('.rg-mood-note-save')) return;
       saveButton.disabled = true;
       errorLine.textContent = '';
@@ -2882,7 +2896,7 @@
       var MM = window.MinkaMotion;
       (MM && MM.pending ? MM.pending(saveButton, work) : work).then(function (result) {
         if (!result) return;
-        if (MM && MM.pending && MM.level() !== 'reduced') window.setTimeout(closeMoodNote, 380);
+        if (MM && MM.pending && MM.level() !== 'reduced') window.setTimeout(function () { closeMoodNote(); }, 380);
         else closeMoodNote();
       });
     });
@@ -2915,7 +2929,7 @@
     sheet.style.top = Math.round(top) + 'px';
   }
   function openTopicEmojiPicker(topic, anchor, mode) {
-    closeTopicEmojiPicker();
+    closeTopicEmojiPicker(true);
     topicPickerMode = mode === 'message' || mode === 'mood' ? mode : 'topic';
     topicPickerTopic = String(topic || '');
     topicPickerReturn = anchor || null;
@@ -2930,7 +2944,7 @@
     var isTopic = topicPickerMode === 'topic';
     topicPicker.setAttribute('aria-label', isTopic ? 'Tēmas emoji: ' + topicPickerTopic
       : topicPickerMode === 'mood' ? 'Savs maiņas emoji' : 'Emoji ziņai');
-    topicPicker.innerHTML = '<div class="rg-emoji-sheet">'
+    topicPicker.innerHTML = '<div class="rg-emoji-scrim"></div><div class="rg-emoji-sheet">'
       + '<input class="rg-emoji-search" type="search" placeholder="Meklēt emoji" autocomplete="off" aria-label="Meklēt emoji pēc nosaukuma">'
       + '<div class="rg-emoji-tabs" role="tablist">' + data.sections.map(function (sec) {
         return '<button type="button" class="rg-emoji-tab' + (sec.id === 'all' ? ' is-on' : '') + '" data-rg-emoji-tab="' + sec.id + '" title="' + sec.title + '" aria-label="' + sec.title + '"><span>' + sec.label + '</span></button>';
@@ -2948,13 +2962,15 @@
     loadFluentNames();
     renderTopicEmojiGrid();
     placeTopicPicker(anchor);
+    topicPicker._origin = anchor && anchor.isConnected ? anchor : null;
+    if (window.MinkaMotion) window.MinkaMotion.openSurface(topicPicker.querySelector('.rg-emoji-sheet'), { key: 'topic-emoji', origin: topicPicker._origin, scrim: topicPicker.querySelector('.rg-emoji-scrim') });
     var search = topicPicker.querySelector('.rg-emoji-search');
     search.addEventListener('input', function () {
       topicPickerQuery = search.value || '';
       renderTopicEmojiGrid();
     });
     topicPicker.addEventListener('click', function (event) {
-      if (event.target === topicPicker || event.target.closest('[data-rg-emoji-close]')) { closeTopicEmojiPicker(); return; }
+      if (event.target === topicPicker || event.target.classList.contains('rg-emoji-scrim') || event.target.closest('[data-rg-emoji-close]')) { closeTopicEmojiPicker(); return; }
       var tab = event.target.closest('[data-rg-emoji-tab]');
       if (tab) {
         topicPickerTab = tab.dataset.rgEmojiTab;
@@ -2976,7 +2992,7 @@
         var picked = cell.dataset.rgPickEmoji;
         if (topicPickerMode === 'mood') {
           var moodAnchor = topicPickerReturn;
-          closeTopicEmojiPicker();
+          closeTopicEmojiPicker(true);                  // the note takes its place
           openMoodNote(picked, moodAnchor);
           return;
         }

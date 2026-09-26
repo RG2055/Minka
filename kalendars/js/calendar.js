@@ -7755,13 +7755,27 @@ function toggleMiniCal(e) {
   if (!pop) return;
   // Always ensure popup is on body to avoid overflow:hidden clipping
   if (pop.parentNode !== document.body) document.body.appendChild(pop);
-  if (pop.style.display === 'none' || !pop.style.display) {
+  if (pop.style.display === 'none' || !pop.style.display || pop.classList.contains('is-closing')) {
+    pop.classList.remove('is-closing');
     renderMiniCal();
     positionMiniCalPopup();
     pop.style.display = 'block';
+    // Grows out of its button and returns into it (js/mk-motion.js).
+    if (window.MinkaMotion) window.MinkaMotion.openSurface(pop, { key: 'minical', origin: document.getElementById('miniCalBtn') });
   } else {
-    pop.style.display = 'none';
+    closeMiniCal();
   }
+}
+
+function closeMiniCal(instant) {
+  const pop = document.getElementById('miniCalPopup');
+  if (!pop || pop.style.display === 'none' || pop.classList.contains('is-closing')) return;
+  if (instant || !window.MinkaMotion) { pop.style.display = 'none'; return; }
+  pop.classList.add('is-closing');
+  window.MinkaMotion.closeSurface(pop, { key: 'minical', origin: document.getElementById('miniCalBtn') }, function () {
+    pop.classList.remove('is-closing');
+    pop.style.display = 'none';
+  });
 }
 
 function renderMiniCal() {
@@ -7807,7 +7821,7 @@ function renderMiniCal() {
     if (isActive && isToday) {
       style += 'background:rgba(255,200,60,0.25);color:#ffc83c;border-color:rgba(255,200,60,0.7);';
     } else if (isActive) {
-      style += 'background:rgba(183,123,255,0.35);color:#fff;border-color:rgba(183,123,255,0.5);';
+      style += 'background:rgba(168,199,250,0.28);color:#fff;border-color:rgba(168,199,250,0.55);';
     } else if (isToday) {
       style += 'border-color:rgba(255,200,60,0.6);color:#ffc83c;';
     } else {
@@ -7821,8 +7835,7 @@ function renderMiniCal() {
 }
 
 function miniCalSelectDay(dateStr) {
-  var pop = document.getElementById('miniCalPopup');
-  if (pop) pop.style.display = 'none';
+  closeMiniCal();
   g_selectDay(dateStr);
 }
 
@@ -7847,7 +7860,7 @@ document.addEventListener('click', function(e) {
   var btn = document.getElementById('miniCalBtn');
   if (pop && pop.style.display !== 'none') {
     if (!pop.contains(e.target) && btn && !btn.contains(e.target)) {
-      pop.style.display = 'none';
+      closeMiniCal();
     }
   }
 });

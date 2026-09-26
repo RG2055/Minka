@@ -22,9 +22,10 @@
     const s = String(q || '').trim();
     return !!s && (s[0] === '?' || /^(kur|kas|cik|vai|kāpēc|kapec|kādēļ|kadel|kā |kad |paskaidro|palīdzi|palidzi)/i.test(s));
   }
+  const motion = () => window.__mkSearchResults;
+  function showResults(){ if (motion()) motion().show(); else results.style.display = 'block'; }
   function hide(){
-    results.style.display = 'none';
-    results.innerHTML = '';
+    if (motion()) motion().hide(); else { results.style.display = 'none'; results.innerHTML = ''; }
     activeIndex = -1;
     currentNodes = [];
     if (mainPanel) mainPanel.classList.remove('mk-search-open');
@@ -104,7 +105,7 @@
     if (!workers.length && !phones.length) {
       if (shortMode) return hide();
     results.innerHTML = '<div class="search-empty"><div class="search-empty-icon">🔍</div><div class="search-empty-text">Nav rezultātu par <b>' + esc(q) + '</b></div><div class="search-empty-hint">Mēģini pilnu vārdu, nodaļu vai numuru</div></div>';
-      results.style.display = 'block';
+      showResults();
       activeIndex = -1;
       currentNodes = [];
       if (mainPanel) mainPanel.classList.add('mk-search-open');
@@ -114,7 +115,7 @@
     if (workers.length) {
     html += '<div class="search-category">👤 Ieteikumi</div>';
       workers.forEach((w) => {
-        const color = w.isRd ? '#ff7c6e' : '#b77bff';
+        const color = w.isRd ? '#ff7c6e' : '#1fe091';
         const role = w.isRd ? 'Radiologs' : 'Radiogrāfers';
         const initials = w.name.split(' ').map(p => p[0] || '').slice(0,2).join('');
         html += '<a class="search-item worker-result-item" href="#" data-kind="worker" data-name="' + esc(w.name) + '" data-shift="' + esc(w.shift) + '">'
@@ -141,7 +142,7 @@
     }
     html += '<div class="search-hint-row">↓ ↑ pārvietošanās Enter atvērt Esc aizvērt</div>';
     results.innerHTML = html;
-    results.style.display = 'block';
+    showResults();
     activeIndex = -1;
     if (mainPanel) mainPanel.classList.add('mk-search-open');
     wire();

@@ -105,3 +105,7 @@ html body #worker-modal#worker-modal:not(.mk-skin-mode) .modal-content {
 }
 :root.mk-mobile-shell #worker-modal#worker-modal .view-toggle .wm-seg-pill { display: none; }
 :root.mk-mobile-shell #worker-modal#worker-modal .view-toggle.has-seg-pill .toggle-btn.active { background: var(--pp-primary-c) !important; }
+
+/* Search results grow out of the search bar (MinkaMotion.openSurface in
+   minka-bar.js); the old CSS drop-in would run on top of it. */
+html body #minkaResults#minkaResults { animation: none !important; }

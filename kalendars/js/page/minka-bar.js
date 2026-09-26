@@ -226,13 +226,33 @@
   }
 
   /* ï¿½ï¿½ï¿½ï¿½ Results ï¿½ï¿½ï¿½ï¿½ */
-  function closeResults() { results.style.display='none'; results.innerHTML=''; }
+  // Results grow out of the search bar and return into it (js/mk-motion.js).
+  // Shared with header-search.js, which renders them while typing.
+  window.__mkSearchResults = {
+    show: function () {
+      if (results.style.display === 'block' && !results.classList.contains('is-closing')) return;
+      results.classList.remove('is-closing');
+      results.style.display = 'block';
+      if (window.MinkaMotion) window.MinkaMotion.openSurface(results, { key: 'search-results', origin: bar });
+    },
+    hide: function () {
+      if (results.classList.contains('is-closing')) return;
+      if (results.style.display === 'none' || !window.MinkaMotion) { results.style.display = 'none'; results.innerHTML = ''; return; }
+      results.classList.add('is-closing');
+      window.MinkaMotion.closeSurface(results, { key: 'search-results', origin: bar }, function () {
+        results.classList.remove('is-closing');
+        results.style.display = 'none';
+        results.innerHTML = '';
+      });
+    }
+  };
+  function closeResults() { window.__mkSearchResults.hide(); }
   function doSearch(q) {
     const query = String(q || '').trim();
     if (query.length < 2) { closeResults(); return; }
     if (typeof renderSearchResults === 'function') {
       renderSearchResults(query, results);
-      requestAnimationFrame(() => { results.style.display = results.innerHTML.trim() ? 'block' : 'none'; });
+      requestAnimationFrame(() => { if (results.innerHTML.trim()) window.__mkSearchResults.show(); else window.__mkSearchResults.hide(); });
     } else {
       closeResults();
     }
