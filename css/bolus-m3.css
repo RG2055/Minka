@@ -178,27 +178,32 @@
 @media (min-width: 1101px) and (max-height: 680px) { #bolus-overlay { --bm-dz: .5; } }
 @media (min-width: 1101px) and (max-height: 620px) { #bolus-overlay { --bm-dz: .42; } }
 
-/* ── Telefons (mobile.html): tas pats M3 logs kā lapa no apakšas ─────────
-   Sākas zem statusa joslas (tur ir necaurspīdīgā iOS josla), rokturis augšā
-   (logu var aizvilkt uz leju), GE/Philips kā segmentu pārslēgs, bez fona
-   izpludinājuma. */
+/* ── Telefons (mobile.html): tas pats Bolus logs kā uz datora, kā lapa no
+   apakšas zem statusa joslas. Kartītes viena zem otras, katra kolonnā:
+   nosaukums, iekārta (samazināta), Nomainīt / operatori / laiks, vēsture.
+   Ritina viss logs; datora 3 kolonnu režģis šeit neder. */
 @media (max-width: 720px) {
-  #bolus-overlay { inset: env(safe-area-inset-top, 0px) 0 0 0 !important; background: rgba(0, 0, 0, .55) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
-  #bolus-overlay #bolus-sheet { height: calc(100% - 8px) !important; max-width: 100vw !important; border-radius: 28px 28px 0 0 !important; }
-  #bolus-overlay #bolus-handle { display: block !important; flex: 0 0 auto; width: 36px !important; height: 4px !important; margin: 10px auto 0 !important; border-radius: 2px !important; background: #3a4250 !important; }
-  #bolus-overlay #bolus-title-bar { padding: 8px 12px 8px 20px !important; touch-action: none; }
-  #bolus-overlay .bolus-head-icon { width: 26px; height: 26px; }
+  #bolus-overlay { inset: env(safe-area-inset-top, 0px) 0 0 0 !important; padding: 0 !important; background: rgba(0, 0, 0, .55) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+  #bolus-overlay #bolus-sheet { width: 100vw !important; max-width: 100vw !important; height: calc(100% - 8px) !important; max-height: none !important; margin-top: auto !important; border-radius: 28px 28px 0 0 !important; }
+  #bolus-overlay #bolus-title-bar { padding: 12px 12px 8px 20px !important; touch-action: none; }
   #bolus-overlay .bolus-main-title { font-size: 20px !important; }
   #bolus-overlay #bolus-close-btn { width: 44px !important; height: 44px !important; }
-  #bolus-overlay #bolus-tops-btn { height: 40px !important; }
-  #bolus-overlay .bolus-tabs { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 0 !important; margin: 4px 16px 10px !important; padding: 4px !important; border: 0 !important; border-radius: 999px !important; background: var(--bm-c-high) !important; }
-  #bolus-overlay .bolus-tab { height: 40px !important; border: 0 !important; border-radius: 999px !important; background: transparent !important; box-shadow: none !important; color: var(--bm-on-var) !important; font: 600 15px/1 var(--bm-font) !important; letter-spacing: 0 !important; text-transform: none !important;
-    transition: background-color var(--bm-fx), color var(--bm-fx) !important; }
-  #bolus-overlay .bolus-tab.is-active[data-room="ge"] { background: #12304d !important; color: #d3e8ff !important; }
-  #bolus-overlay .bolus-tab.is-active[data-room="philips"] { background: #113a24 !important; color: #c6f5d6 !important; }
-  #bolus-overlay #bolus-rooms { padding: 0 12px 16px !important; overflow-y: auto !important; }
-  #bolus-overlay .brc[data-room] { padding: 16px !important; border-radius: 24px !important; }
-  #bolus-overlay .brc[data-room] .brn { position: static !important; text-align: center !important; font-size: 22px !important; }
-  #bolus-overlay .brc[data-room] :is(.bwc, .bwcits, .bwblank) { min-height: 40px !important; }
+  #bolus-overlay #bolus-rooms { display: flex !important; flex-direction: column !important; gap: 12px !important; height: auto !important; min-height: 0 !important; flex: 1 1 auto !important; overflow-x: hidden !important; overflow-y: auto !important; overscroll-behavior: contain !important; padding: 4px 12px calc(16px + env(safe-area-inset-bottom, 0px)) !important; }
+  #bolus-overlay .brc[data-room] { flex: none !important; display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 12px !important; height: auto !important; min-height: 0 !important; overflow: visible !important; padding: 16px !important; border-radius: 24px !important; }
+  #bolus-overlay .brc[data-room] .brn { position: static !important; align-self: flex-start !important; font-size: 22px !important; }
+  #bolus-overlay .brc[data-room] :is(.bdevice-console, .boperator, .bnm-section, .bhist-hdr, .bhist) { width: 100% !important; min-width: 0 !important; }
+  /* Iekārta: tā pati bilde, mazāka, lai vadīklas ir redzamas bez ritināšanas */
+  #bolus-overlay { --bm-dz: .6; }
+  #bolus-overlay .brc[data-room] .ctmotion-media-stage:not(.is-choosing) { height: calc(500px * var(--bm-dz)) !important; min-height: calc(500px * var(--bm-dz)) !important; }
+  #bolus-overlay .brc[data-room] .ctmotion-media-stage:not(.is-choosing) .ctmotion-reference { zoom: var(--bm-dz); }
+  #bolus-overlay .brc[data-room] .ctmotion-toolbar { top: -34px !important; left: auto !important; right: 0 !important; }
+  /* Operatori tikai tad, kad tie vajadzīgi (neaizņem vietu tukši) */
+  #bolus-overlay .brc[data-room].record-step-0 .boperator { display: none !important; }
+  #bolus-overlay .brc[data-room] .bnm-idle { height: auto !important; }
+  #bolus-overlay .brc[data-room] .bnm-begin { min-height: 60px !important; }
+  #bolus-overlay .brc[data-room] .bhist { container-type: normal !important; height: auto !important; max-height: none !important; min-height: 0 !important; overflow: visible !important; }
+  /* Telefonā vēsture rāda 3 jaunākās; pārējās ar "Visi" */
+  #bolus-overlay .brc[data-room] .bhist:not(.is-all) .bhist-row:nth-child(n+4) { display: none !important; }
+  #bolus-overlay .brc[data-room] :is(.bwc, .bwcits, .bwblank) { min-height: 44px !important; }
   #bolus-overlay .brc[data-room] :is(.bh-edit, .bh-del) { width: 40px !important; height: 40px !important; }
 }
