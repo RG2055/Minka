@@ -500,7 +500,7 @@
 #stats-modal .mk-stx-fat.is-bare .mk-stx-fat-card { border: 0; border-radius: var(--mk-shape-lg); background: var(--mk-sys-surface-container); padding: 12px 12px 6px; }
 #stats-modal .db-fat { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 8px; }
 #stats-modal .db-fat-row {
-  display: grid; grid-template-columns: auto minmax(0, 1fr) 96px auto; align-items: center; gap: 12px;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) 72px auto; align-items: center; gap: 10px;
   padding: 10px 14px; border: 0; border-radius: var(--mk-shape-lg);
   background: var(--mk-sys-surface-container); color: inherit; text-align: left; cursor: pointer;
   transition: background-color var(--mk-dur-effects-fast) var(--mk-ease-effects);
@@ -511,7 +511,7 @@
 #stats-modal .db-fat-name b { font: var(--mk-type-title-s); color: var(--mk-sys-on-surface); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #stats-modal .db-fat-name small { font: var(--mk-type-body-s); color: var(--stx-t3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #stats-modal .db-fat-name small span { font-weight: 700; font-variant-numeric: tabular-nums; }
-#stats-modal .db-spark { width: 96px; height: 28px; display: block; }
+#stats-modal .db-spark { width: 72px; height: 28px; display: block; }
 #stats-modal .db-fat-val { display: grid; justify-items: end; gap: 1px; min-width: 44px; }
 #stats-modal .db-fat-val b { font: 700 17px/1 var(--mk-font-plain); }
 #stats-modal .db-fat-val small { font: var(--mk-type-body-s); color: var(--stx-t3); white-space: nowrap; }

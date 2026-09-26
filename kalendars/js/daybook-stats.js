@@ -811,15 +811,15 @@
       + tile((mc > 0 ? '+' : '') + mc + '<small>%</small>', 'Mēness', 'korelācija, pilnmēness ' + (data.fullIdx + 1) + '.' + mm + '.')
       + '</div>';
     var rows = people.length ? capped('<div class="db-fat">', people.map(function (p) {
-      var g = GROUP.rg, pk = p.sum.peak, c = fatColor(pk.score), d = new Date(pk.t);
+      var g = GROUP.rg, pk = p.sum.peak, c = fatColor(pk.score);
       return '<button type="button" class="db-fat-row" data-db-person="' + esc(p.name) + '">' + avatar(p.name, g.accent)
-        + '<span class="db-fat-name"><b>' + esc(shortName(p.name)) + '</b><small>Augstākais <span style="color:' + c + '">' + pk.score + '</span> ' + d.getDate() + '.' + mm + '.</small></span>'
+        + '<span class="db-fat-name"><b>' + esc(shortName(p.name)) + '</b><small>Augstākais <span style="color:' + c + '">' + pk.score + '</span></small></span>'
         + sparkline(p.days, c)
         + '<span class="db-fat-val"><b style="color:' + (p.sum.highHours ? fatColor(46) : 'inherit') + '">' + p.sum.highHours + ' h</b><small>augstā zonā</small></span></button>';
     }), '</div>', CAP) : empty('Šomēnes nav noguruma datu.');
     return tiles
       + section('Komanda', 'stundas augstā zonā katru dienu, visi kopā', teamFatigueChart(data, team), '#38bdf8')
-      + section('Cilvēki', 'stundas nomodā virs 45, kā kartītē', rows, '#38bdf8')
+      + section('Cilvēki', '', rows, '#38bdf8')
       + note('Tas pats modelis, ko rāda cilvēka kartīte (0–100, virs 45 ir Augsts). Tā ir aplēse pēc grafika un pieņemta miega, nevis mērījums vai pašsajūta. Mēness ir joks, ne zinātne.');
   }
   // The person's month on the card's scale (drill-down from any tab).
@@ -835,7 +835,7 @@
       + tile(pk ? pk.score + '<small>/100</small>' : '—', 'Augstākais', pk ? d.getDate() + '.' + (d.getMonth() + 1) + '. ' + String(d.getHours()).padStart(2, '0') + ':00' : '', pk ? fatColor(pk.score) : '')
       + tile(sum.current == null ? (sum.mean == null ? '—' : sum.mean + '<small>/100</small>') : sum.current + '<small>/100</small>', sum.current == null ? 'Vidēji nomodā' : 'Tagad', sum.current == null ? 'mēneša vidējais' : 'pēc modeļa', sum.current == null ? '' : fatColor(sum.current))
       + '</div>';
-    return section('Nogurums', 'katra stunda, kā kartītē', facts + '<div class="db-fmc">' + html + '</div>', '#38bdf8');
+    return section('Nogurums', '', facts + '<div class="db-fmc">' + html + '</div>', '#38bdf8');
   }
   function personView(b) {
     var name = state.person, s = summaryFor(b.range, name, 'all');
