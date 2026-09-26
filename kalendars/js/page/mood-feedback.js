@@ -1294,10 +1294,44 @@
       clearTimeout(moodGeometryTimer);
       moodGeometryTimer = setTimeout(function () {
         var refs = moodRefs();
+        fitTrendUnderLabel(card);
         if (refs && refs.ring && refs.ring.firstChild && refs.ring.isConnected) placeMoodStaff(refs.ring);
       }, 120);
     });
     card.querySelectorAll('.rg-feedback-card-main, .rg-trend, .rg-month, .rg-pulse-taps, .rg-mood-stage').forEach(function (node) { moodGeometryObserver.observe(node); });
+  }
+  /* The curve is pulled up into the belt under the face (the -26px margin in
+     mk-rg-pulse-v2.css). On some card sizes the mood label under the face
+     ("Slikti", or the day's own note) sits lower than that belt, and then the
+     label pill lay on top of "Novērtē maiņu". Pull up only as far as the
+     label leaves room; with no label showing, the full pull-up stays.
+     /rad only: RG keeps its card exactly as it was. */
+  function fitTrendUnderLabel(card) {
+    if (window.MINKA_APP !== 'rad') return;
+    var trend = card && card.querySelector('.rg-trend');
+    var label = card && card.querySelector('.rg-mood-label');
+    if (!trend || !label) return;
+    trend.style.marginTop = '';
+    if (getComputedStyle(label).opacity === '0') return;
+    var lab = label.getBoundingClientRect();
+    if (!lab.height) return;
+    var head = (trend.querySelector('.rg-trend-head') || trend).getBoundingClientRect();
+    var clash = lab.bottom + 6 - head.top;
+    if (clash > 0) trend.style.marginTop = (parseFloat(getComputedStyle(trend).marginTop) + clash) + 'px';
+  }
+  var trendFitFrame = 0;
+  function scheduleTrendFit(stage) {
+    cancelAnimationFrame(trendFitFrame);
+    trendFitFrame = requestAnimationFrame(function () {
+      var card = stage && stage.closest('.rg-feedback-card');
+      if (!card) return;
+      var before = card.querySelector('.rg-trend');
+      var was = before ? before.style.marginTop : '';
+      fitTrendUnderLabel(card);
+      // the curve moved: the ring was solved against its old place
+      var refs = moodRefs();
+      if (before && before.style.marginTop !== was && refs && refs.ring && refs.ring.firstChild) placeMoodStaff(refs.ring);
+    });
   }
   // Every source gets its own place all the way around the blob — nothing is
   // ever collapsed into a "+N". Depth is what makes it read as an orbit rather
@@ -1546,6 +1580,7 @@
       refs.label.style.color = ownNote ? '' : (key ? visual.color1 : '');
       refs.label.classList.toggle('is-own-note', !!ownNote);
       refs.label.title = ownNote;
+      scheduleTrendFit(refs.stage);
     }
     moodFaceParts.forEach(function (part) {
       var el = refs.face[part];
