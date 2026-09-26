@@ -57,9 +57,12 @@ export function shiftOf(hours, isBlue, isLastDay) {
   if (hours === 12) return isBlue ? { type: "NAKTS", start: "20:00", end: "08:00" } : { type: "DIENA", start: "08:00", end: "20:00" };
   if (hours === 15) return { type: "NAKTS", start: "17:00", end: "08:00" };
   if (hours === 9) return { type: "DIENA", start: "08:00", end: "17:00" };
+  // The duty day runs 08:00 → 08:00: red (day) hours start at 08:00, blue
+  // (night) hours end at 08:00 the next morning (blue 7 = 01:00–08:00).
+  if (isBlue && hours > 0 && hours < 24) return { type: "NAKTS", start: String((8 - hours + 24) % 24).padStart(2, "0") + ":00", end: "08:00" };
   if (isBlue) return { type: "NAKTS", start: "20:00", end: "08:00" };
-  // Shorter day shifts (rotation 7 h, interns 2–8 h) end after their hours.
-  if (hours > 0 && hours < 12) return { type: "DIENA", start: "08:00", end: String(8 + hours).padStart(2, "0") + ":00" };
+  // Other day shifts (rotation 7 h, interns 2–8 h, 14 h) end after their hours.
+  if (hours > 0 && hours < 16) return { type: "DIENA", start: "08:00", end: String(8 + hours).padStart(2, "0") + ":00" };
   return { type: "DIENA", start: "08:00", end: "20:00" };
 }
 

@@ -108,6 +108,8 @@ test('labels, departments and shifts', () => {
   assert.equal(shiftOf(16, false, true).type, 'DIENNAKTS');
   assert.deepEqual([shiftOf(7, false, false).start, shiftOf(7, false, false).end], ['08:00', '15:00']);
   assert.equal(shiftOf(8, true, false).type, 'NAKTS');
+  // blue hours end at 08:00: 7 → 01–08, 10 → 22–08, 12 → 20–08, 15 → 17–08
+  assert.deepEqual([7, 10, 12, 15].map(h => shiftOf(h, true, false)).map(x => x.start + '–' + x.end), ['01:00–08:00', '22:00–08:00', '20:00–08:00', '17:00–08:00']);
 });
 
 test('an unlabelled block after the department doctors is the rotation; marks are not absences', async () => {
