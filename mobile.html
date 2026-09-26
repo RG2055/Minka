@@ -778,7 +778,7 @@ html.mk-low-spec #calendarEmbed {
         </span>
       </button>
       <button id="statsDocBtn" class="dock-btn" onclick="openStatsFromDock()" title="Statistika">
-        <svg class="dock-icon dock-px" width="20" height="18" viewBox="0 0 9 8" shape-rendering="crispEdges" aria-hidden="true"><rect x="6" y="0" width="2.04" height="1.04" fill="#a78bfa"/><rect x="6" y="1" width="2.04" height="1.04" fill="#a78bfa"/><rect x="3" y="2" width="2.04" height="1.04" fill="#c4b5fd"/><rect x="6" y="2" width="2.04" height="1.04" fill="#a78bfa"/><rect x="3" y="3" width="2.04" height="1.04" fill="#c4b5fd"/><rect x="6" y="3" width="2.04" height="1.04" fill="#a78bfa"/><rect x="0" y="4" width="2.04" height="1.04" fill="#a78bfa"/><rect x="3" y="4" width="2.04" height="1.04" fill="#c4b5fd"/><rect x="6" y="4" width="2.04" height="1.04" fill="#a78bfa"/><rect x="0" y="5" width="2.04" height="1.04" fill="#a78bfa"/><rect x="3" y="5" width="2.04" height="1.04" fill="#c4b5fd"/><rect x="6" y="5" width="2.04" height="1.04" fill="#a78bfa"/><rect x="0" y="6" width="2.04" height="1.04" fill="#a78bfa"/><rect x="3" y="6" width="2.04" height="1.04" fill="#c4b5fd"/><rect x="6" y="6" width="2.04" height="1.04" fill="#a78bfa"/><rect x="0" y="7" width="9.04" height="1.04" fill="#475569"/></svg>
+        <svg class="dock-icon dock-px" width="20" height="18" viewBox="0 0 9 8" shape-rendering="crispEdges" aria-hidden="true"><rect x="6" y="0" width="2.04" height="1.04" fill="#1fe091"/><rect x="6" y="1" width="2.04" height="1.04" fill="#1fe091"/><rect x="3" y="2" width="2.04" height="1.04" fill="#86efac"/><rect x="6" y="2" width="2.04" height="1.04" fill="#1fe091"/><rect x="3" y="3" width="2.04" height="1.04" fill="#86efac"/><rect x="6" y="3" width="2.04" height="1.04" fill="#1fe091"/><rect x="0" y="4" width="2.04" height="1.04" fill="#1fe091"/><rect x="3" y="4" width="2.04" height="1.04" fill="#86efac"/><rect x="6" y="4" width="2.04" height="1.04" fill="#1fe091"/><rect x="0" y="5" width="2.04" height="1.04" fill="#1fe091"/><rect x="3" y="5" width="2.04" height="1.04" fill="#86efac"/><rect x="6" y="5" width="2.04" height="1.04" fill="#1fe091"/><rect x="0" y="6" width="2.04" height="1.04" fill="#1fe091"/><rect x="3" y="6" width="2.04" height="1.04" fill="#86efac"/><rect x="6" y="6" width="2.04" height="1.04" fill="#1fe091"/><rect x="0" y="7" width="9.04" height="1.04" fill="#475569"/></svg>
         <span>Statistika</span>
       </button>
       <button id="settingsDockBtn" class="dock-btn" onclick="openSettingsFromDock()" title="Iestatījumi">
@@ -1942,5 +1942,17 @@ body .dock-btn:active { background: rgba(255,255,255,.06) !important; }
 }
 </style>
 <script src="kalendars/js/emoji-particles.js?v=20260822particles20"></script>
+<script>
+/* One icon everywhere: window headers in the calendar frame show the dock
+   button's own icon (same helper as index.html; the phone dock is pixel only). */
+window.__mkDockIcon=function(btnId){
+  var btn=document.getElementById(btnId), px=btn&&btn.querySelector('svg.dock-px');
+  if(!px) return '';
+  var c=px.cloneNode(true);
+  c.removeAttribute('class');c.removeAttribute('width');c.removeAttribute('height');
+  c.setAttribute('style','display:block;width:100%;height:100%');
+  return c.outerHTML;
+};
+</script>
 </body>
 </html>

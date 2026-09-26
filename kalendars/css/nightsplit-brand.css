@@ -2163,3 +2163,14 @@ html.mk-low-spec:not(.mk-mobile-shell) #nsOverlay.open #nsPanel { transform: tra
 #nsOverlay #nsPanel .nsc-task-txt { display: grid; gap: 1px; min-width: 0; }
 #nsOverlay #nsPanel .nsc-task-txt b { color: var(--pp-on, #e6ebf2); font: 700 11px/1.1 var(--pp-font, system-ui); white-space: nowrap; text-shadow: none; }
 #nsOverlay #nsPanel .nsc-task-txt small { color: var(--pp-on-var, #a9b3c1); font: 500 9.5px/1.1 var(--pp-font, system-ui); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Šaura kartīte (mazs logs): ikona virs teksta, lai uzraksti nav nogriezti. */
+#nsOverlay #nsPanel .nsc-full-card.nsc-has-checklist { container: nscard / inline-size; }
+@container nscard (max-width: 250px) {
+  #nsOverlay #nsPanel .nsc-full-card.nsc-has-checklist .nsc-full-inner { padding-bottom: 68px !important; }
+  #nsOverlay #nsPanel .nsc-tasks { height: 52px; border-radius: 16px; }
+  #nsOverlay #nsPanel .nsc-task { flex-direction: column; gap: 2px; }
+  #nsOverlay #nsPanel .nsc-task-ico { width: 15px; height: 18px; }
+  #nsOverlay #nsPanel .nsc-task-txt { justify-items: center; text-align: center; }
+  #nsOverlay #nsPanel .nsc-task-txt b { font-size: 9.5px; }
+  #nsOverlay #nsPanel .nsc-task-txt small { font-size: 8.5px; }
+}
