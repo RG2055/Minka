@@ -89,6 +89,9 @@ function cleanDate(value) {
   return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day ? s : '';
 }
 
+const TOTALS_CACHE_KEY = new Request('https://minka-coffee.cache/totals');
+const edgeCache = () => (typeof caches !== 'undefined' ? caches.default : null);
+
 function cleanMonth(value) {
   const match = String(value || '').trim().match(/^(\d{2})\.(\d{4})$/);
   if (!match) return '';
@@ -223,6 +226,10 @@ export default {
       // All-time totals per worker (used by the stats leaderboard) — sums every
       // day in D1 so past days logged on other devices are included.
       if (url.searchParams.get('totals')) {
+        // All-time totals scan every row, so the reply is shared for 30 s at
+        // the edge; a coffee added or removed clears it (see the POST below).
+        const cached = edgeCache() ? await edgeCache().match(TOTALS_CACHE_KEY).catch(() => null) : null;
+        if (cached) return json(await cached.json());
         const rows = await env.COFFEE_DB
           .prepare('SELECT worker, SUM(count) AS total FROM coffee_counts GROUP BY worker')
           .all();
@@ -244,7 +251,11 @@ export default {
           const detailed = Object.values(d.sources).reduce((a, b) => a + (Number(b) || 0), 0);
           if (detailed < totals[worker]) d.sources.philips += totals[worker] - detailed;
         });
-        return json({ ok: true, totals, details });
+        const reply = { ok: true, totals, details };
+        if (edgeCache()) await edgeCache().put(TOTALS_CACHE_KEY, new Response(JSON.stringify(reply), {
+          headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=30' }
+        })).catch(() => {});
+        return json(reply);
       }
 
       // Every day of one month in a single reply, so the month line and stats
@@ -351,6 +362,8 @@ export default {
           .bind(date, worker, delta > 0 ? source : (hasSource ? source : 'adjustment'), delta > 0 ? size : '', delta > 0 ? priceCents : 0, delta, now)
           .run();
       } catch (_e) {}
+
+      if (edgeCache()) await edgeCache().delete(TOTALS_CACHE_KEY).catch(() => {});
 
       const row = await env.COFFEE_DB
         .prepare('SELECT count, updated_at FROM coffee_counts WHERE date = ? AND worker = ?')
