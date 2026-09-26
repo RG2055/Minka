@@ -253,6 +253,16 @@ async function readSkins(env, strict = false) {
   }
 }
 
+// The Apps Script web apps answer only callers that know APPS_SCRIPT_KEY (a
+// Script Property there, a secret here), so their URLs alone no longer expose
+// names. Without the secret the URL is used as before.
+function appsScriptUrl(base, env, params) {
+  const url = new URL(base);
+  if (env.APPS_SCRIPT_KEY) url.searchParams.set("key", env.APPS_SCRIPT_KEY);
+  for (const [k, v] of Object.entries(params || {})) url.searchParams.set(k, v);
+  return url.toString();
+}
+
 // Night plans and bed layouts are logged in D1 (night_stats_log) and the
 // statistics are computed from it; the sheet keeps receiving a copy as an
 // archive, as it did when it was the only store.
@@ -278,7 +288,7 @@ async function pushNightStats(env, payload) {
   }
   try {
     if (!env.NS_STATS_URL) return;
-    await fetch(env.NS_STATS_URL, {
+    await fetch(appsScriptUrl(env.NS_STATS_URL, env), {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(row)
@@ -376,7 +386,7 @@ async function refreshSchedule(env) {
   `).bind(SCHEDULE_KEY, now + SCHEDULE_LOCK_MS, now).run();
   if (Number(claim?.meta?.changes || 0) !== 1) return false;
   try {
-    const upstream = await fetch(env.SOURCE_URL, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(40000) });
+    const upstream = await fetch(appsScriptUrl(env.SOURCE_URL, env), { headers: { accept: "application/json" }, signal: AbortSignal.timeout(40000) });
     if (!upstream.ok) throw new Error("upstream status " + upstream.status);
     const text = await upstream.text();
     const data = JSON.parse(text);
@@ -485,7 +495,7 @@ async function readBolus(env) {
 // Keeps the sheet archive complete; failures are logged, never shown.
 function mirrorBolusToSheet(env, ctx, params) {
   if (!env.BOLUS_SHEET_URL || !ctx || typeof ctx.waitUntil !== "function") return;
-  const url = env.BOLUS_SHEET_URL + "?" + new URLSearchParams(params).toString();
+  const url = appsScriptUrl(env.BOLUS_SHEET_URL, env, params);
   ctx.waitUntil((async () => {
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
@@ -1030,7 +1040,7 @@ const worker = {
         return json(request, { ok: false, error: "NS_STATS_URL missing" }, 500);
       }
       try {
-        const upstream = await fetch(env.NS_STATS_URL, {
+        const upstream = await fetch(appsScriptUrl(env.NS_STATS_URL, env), {
           method: "GET",
           headers: { accept: "application/json" }
         });
@@ -1068,7 +1078,7 @@ const worker = {
         ? { "x-minka-token": await createSession(env, "upgrade") } : {};
       const cached = await serveScheduleSnapshot(env, ctx, knownCarryovers);
       if (cached) return json(request, cached.body, 200, { "x-schedule-age": String(cached.age), ...upgrade });
-      const upstream = await fetch(env.SOURCE_URL, {
+      const upstream = await fetch(appsScriptUrl(env.SOURCE_URL, env), {
         method: "GET",
         headers: { accept: "application/json" }
       });
@@ -1094,7 +1104,7 @@ const worker = {
       if (!env.RESIDENTS_SOURCE_URL) {
         return json(request, { ok: false, error: "RESIDENTS_SOURCE_URL missing" }, 500);
       }
-      const upstream = await fetch(env.RESIDENTS_SOURCE_URL, {
+      const upstream = await fetch(appsScriptUrl(env.RESIDENTS_SOURCE_URL, env), {
         method: "GET",
         headers: { accept: "application/json" }
       });
