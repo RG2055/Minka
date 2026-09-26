@@ -391,8 +391,8 @@
   // card has its final height from the first frame and nothing shifts later.
   function moodTrendMarkup() {
     var faces = '<span class="rg-trend-axis" aria-hidden="true"><i>😍</i><i>😠</i></span>';
-    return '<button class="rg-trend" type="button" data-rg-trend title="Katrs vērtējums anonīmi nonāk komandas statistikā" aria-label="Komandas sajūta. Atvērt statistiku">'
-      + '<span class="rg-trend-head"><span class="rg-trend-title">Komandas sajūta</span>'
+    return '<button class="rg-trend" type="button" data-rg-trend title="Katrs vērtējums anonīmi nonāk komandas statistikā" aria-label="Novērtē maiņu. Komandas sajūta 14 dienās, atvērt statistiku">'
+      + '<span class="rg-trend-head"><span class="rg-trend-title">Novērtē maiņu</span>'
       + '<span class="rg-trend-meta">14 dienas<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6.5 15 12l-5.5 5.5"/></svg></span></span>'
       + '<span class="rg-trend-plot">' + faces + '<svg class="rg-trend-svg" viewBox="0 0 280 44" aria-hidden="true" focusable="false"></svg></span>'
       + '</button>';

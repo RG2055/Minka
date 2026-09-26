@@ -21,6 +21,12 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
 .mkl-bg{position:absolute;inset:0;width:100%;height:100%;opacity:.62}
 .mkl-ring{position:relative;width:256px;height:256px}
 .mkl-text{width:2px;height:2px}
+/* /rad: the phosphor monitor (js/rad-loader.js) instead of the RG ring. */
+.rdl{display:none}
+html.minka-rad #mk-app-loader>:is(.mkl-bg,.mkl-scrim,.mkl-ring,.mkl-text){display:none}
+html.minka-rad .rdl{position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(120% 90% at 50% 45%,#07120c 0%,#020503 70%,#000 100%)}
+.rdl-crt{position:relative;width:min(560px,88vw);aspect-ratio:4/3;border-radius:26px/22px;overflow:hidden}
+.rdl-cube{position:absolute;left:50%;top:9%;width:52%;aspect-ratio:1;transform:translateX(-50%)}
 </style>
 <script src="js/dither-text.js?v=20260924d2"></script>
 <script src="js/dither-core.js?v=20260925dt1" defer></script>
@@ -699,6 +705,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
   <img class="mkl-ring" src="data/rg-loader-ring.gif?v=20260924d1" alt="" width="128" height="128">
   <canvas class="mkl-text" id="mklDitherText" width="1" height="1" aria-hidden="true"></canvas>
   <div class="mkl-load-status" id="mklLoadStatus" aria-live="polite">Ielādē grafiku…</div>
+  <div class="rdl" aria-hidden="true"><div class="rdl-crt"><canvas class="rdl-cube" width="1" height="1"></canvas><div class="rdl-log"></div><i class="rdl-scan"></i><i class="rdl-glass"></i></div></div>
 </div>
 <style>
 #mk-app-loader{position:fixed;inset:0;z-index:900000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;overflow:hidden;background:#000;transition:opacity .16s ease}
@@ -710,8 +717,24 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 .mkl-text{position:relative;width:2px;height:2px;image-rendering:pixelated}
 .mkl-load-status{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 @media(max-width:520px){.mkl-ring{width:192px;height:192px}}
+/* /rad monitor: bezel, phosphor glass, scanlines; all static except the
+   canvas and the exit (transform + opacity). */
+.rdl-crt{background:radial-gradient(90% 80% at 50% 42%,#0c2518 0%,#061309 58%,#020703 100%);
+  box-shadow:0 0 0 10px #121613,0 0 0 11px #2a312c,0 0 0 22px #0b0d0c,0 34px 90px rgba(0,0,0,.7),inset 0 0 70px rgba(0,0,0,.85)}
+.rdl-cube{image-rendering:pixelated}
+.rdl-log{position:absolute;left:9%;right:9%;bottom:9%;display:flex;flex-direction:column;gap:5px;
+  font:500 clamp(10.5px,1.9vw,13px)/1.35 "JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;color:#8dffb8;
+  text-shadow:0 0 6px rgba(80,255,150,.45);white-space:pre;overflow:hidden}
+.rdl-line.is-head{color:#d8ffe6;letter-spacing:.06em}
+.rdl-line.is-note{color:#ffd98a;text-shadow:0 0 6px rgba(255,200,90,.35);white-space:normal}
+.rdl-line.is-ready{color:#d8ffe6}
+.rdl-scan{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.26) 0 1px,transparent 1px 3px)}
+.rdl-glass{position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:radial-gradient(120% 70% at 30% 0%,rgba(255,255,255,.07),transparent 55%)}
+.rdl.is-leaving .rdl-crt{transform:scale(6.5);transition:transform .56s cubic-bezier(.7,0,.84,0);transform-origin:50% 34%}
+@media (prefers-reduced-motion:reduce){.rdl.is-leaving .rdl-crt{transform:none;transition:none}}
 </style>
-<script src="js/dither-loader.js?v=20260924d4"></script>
+<script src="js/dither-loader.js?v=20260926rl1"></script>
+<script src="js/rad-loader.js?v=20260926rl1"></script>
 <script>
 (function(){
   var loader = document.getElementById('mk-app-loader');
@@ -726,6 +749,11 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
     setTimeout(function(){
       if (paintTimer) clearInterval(paintTimer);
       if(!loader) return;
+      // /rad: the monitor plays its own exit (js/rad-loader.js).
+      if (typeof window.__mkLoaderExit === 'function') {
+        window.__mkLoaderExit(function(){ loader.style.display = 'none'; });
+        return;
+      }
       loader.style.opacity = '0';
       setTimeout(function(){ loader.style.display = 'none'; }, 180);
     }, delay);

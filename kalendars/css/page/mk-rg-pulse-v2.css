@@ -1749,11 +1749,14 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   gap: 8px;
   padding: 0 2px 2px;
 }
+/* One heading for the curve and the reactions under it (2026-09-26): the
+   line's own title says "Novērtē maiņu", the separate centred one is gone. */
 .rg-trend-title {
-  color: var(--m3c-on-surface-variant, #b3c6d4);
-  font: 700 11px/1.2 Inter, system-ui, sans-serif;
-  letter-spacing: .02em;
+  color: #f8fbff;
+  font: 800 clamp(12px, 8cqw, 14px)/1.15 Inter, system-ui, sans-serif;
+  letter-spacing: -.01em;
 }
+#grafiks-list .rg-feedback-card .rg-feedback-card-title { display: none !important; }
 .rg-trend-meta {
   display: inline-flex;
   align-items: center;
