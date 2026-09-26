@@ -14,7 +14,7 @@ function harness(extra={}){
  return {c,requests,timers,async advance(ms){now+=ms;for(const [id,t]of [...timers])if(t.at<=now){timers.delete(id);t.fn();}await tick();}};
 }
 function bolus(path){const h=harness({window:{},GS_URL:'https://fixture',ROOMS:[{id:'ge'}],_state:{ge:{changedAt:10}},_history:{ge:[{ts:10}]},_lastLocalWriteAt:{},_lastLocalHistWriteAt:{},_remoteOverwriteAllowed:()=>true,_remoteHistOverwriteAllowed:()=>true,_syncMediaFromHistory:()=>false,_save(){},_saveHistory(){},_mkToast(){}});vm.runInContext(section(read(path),'var _pullPromise = null;','function _scheduleSync('),h.c);return h;}
-for(const path of ['index.html','mobile.html'])for(const bodyHang of [false,true])test(`${path}: ${bodyHang?'hung JSON body':'hung request'} releases bolus polling and ignores late data`,async()=>{
+for(const path of ['js/bolus.js'])for(const bodyHang of [false,true])test(`${path}: ${bodyHang?'hung JSON body':'hung request'} releases bolus polling and ignores late data`,async()=>{
  const h=bolus(path);h.c._kvPull();await tick();
  if(bodyHang){h.requests[0].resolve({ok:true,json:()=>new Promise(()=>{})});await tick();}
  await h.advance(20000);h.c._kvPull();await tick();
@@ -78,9 +78,9 @@ test('hung birthday body can retry and late results cannot replace the retry',as
  late([{d:'02.02',name:'Old'}]);await tick();assert.equal(h.c.BIRTHDAYS[0].name,'New');
 });
 
-for(const path of ['index.html','mobile.html']) for(const response of ['http500','invalid-json','rejected','success'])test(`${path}: bolus save handles ${response}`,async()=>{
+for(const path of ['js/bolus.js']) for(const response of ['http500','invalid-json','rejected','success'])test(`${path}: bolus save handles ${response}`,async()=>{
  const messages=[];const c=vm.createContext({GS_URL:'fixture',_state:{ge:{changedAt:123}},_names:{ge:'Test'},_history:{ge:[]},_pendingThanks:null,_prettyFirst:()=>'',_bcSync(){},_mkToast:(_t,k)=>messages.push(k),fetch:async()=>({ok:response!=='http500',json:async()=>{if(response==='invalid-json')throw new Error('parse');return {ok:response==='success'};}})});
- vm.runInContext(section(read(path),'function _kvPush(',path==='index.html'?'// Edit/delete':'var _pullPromise'),c);c._kvPush('ge');await tick();
+ vm.runInContext(section(read(path),'function _kvPush(','// Edit/delete'),c);c._kvPush('ge');await tick();
  assert.equal(messages[0],response==='success'?'ok':'error');
 });
 for(const path of ['cloudflare/minka-api/src/index.js','cloudflare/coffee-api/src/index.js'])test(`${path}: JSON reader boundaries, malformed data and stream failure`,async()=>{

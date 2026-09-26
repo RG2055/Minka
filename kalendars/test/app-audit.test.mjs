@@ -51,7 +51,8 @@ test('radio ignores old-station metadata and coalesces same-station polls', asyn
   assert.equal(painted.length, count, 'unchanged metadata does not refit text or dispatch artwork events');
 });
 
-for (const path of ['index.html', 'mobile.html']) {
+// Bolus is one module for desktop and phone (js/bolus.js).
+for (const path of ['js/bolus.js']) {
   test(`${path}: unchanged bolus polls share a request and perform no writes or repaint`, async () => {
     const source = read(path), reply = deferred();
     let calls = 0, saves = 0, paints = 0;
@@ -102,18 +103,18 @@ for (const path of ['index.html', 'mobile.html']) {
       _prettyFirst: () => '', _mkToast: (text, kind) => messages.push(kind),
       fetch: async () => ({ ok: true, json: async () => ({ ok: false }) })
     });
-    vm.runInContext(section(source, 'function _kvPush(', path === 'index.html' ? '// Edit/delete' : 'var _pullPromise'), c);
+    vm.runInContext(section(source, 'function _kvPush(', '// Edit/delete'), c);
     c._kvPush('ge');
     await tick();
     assert.deepEqual(messages, ['error']);
   });
 }
 
-test('mobile bolus default never synthesizes a future time from an older day', () => {
+test('bolus default never synthesizes a future time from an older day', () => {
   const now = new Date(2026, 8, 8, 9, 0).getTime();
   class Clock extends Date { constructor(...args) { super(...(args.length ? args : [now])); } static now() { return now; } }
   const c = vm.createContext({ Date: Clock, _pick: { ge: null }, _state: { ge: { changedAt: new Date(2026, 8, 6, 17).getTime() } } });
-  vm.runInContext(section(read('mobile.html'), 'function _shiftStart()', 'function _save()'), c);
+  vm.runInContext(section(read('js/bolus.js'), 'function _shiftStart()', 'function _save()'), c);
   const selected = new Date(c._pickTs('ge'));
   assert.equal(selected.getDate(), 7);
   assert.equal(selected.getHours(), 17);
