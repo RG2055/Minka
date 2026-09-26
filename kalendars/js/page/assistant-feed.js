@@ -420,6 +420,7 @@ function nextNews(){
   }
 
   function queueBolus() {
+    if (window.MINKA_APP === 'rad') return false;   // Bolus is the radiographers' only
     if ((cycle - lastBolusCycle) < 10) return false;
     const html = 'Samaini <span style="color:#ff3b30;font-weight:800;">bolusu</span>, atzīmē — saņem <span style="color:#4ade80;font-weight:700;">20 XP</span>! 💉';
     if (queue(html, 'bolus')) { lastBolusCycle = cycle; return true; }

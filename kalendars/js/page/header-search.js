@@ -116,7 +116,7 @@
     html += '<div class="search-category">👤 Ieteikumi</div>';
       workers.forEach((w) => {
         const color = w.isRd ? '#ff7c6e' : '#1fe091';
-        const role = w.isRd ? 'Radiologs' : 'Radiogrāfers';
+        const role = w.isRd ? 'Radiologs' : (window.__mkLeftRole || { one: 'Radiogrāfers' }).one;
         const initials = w.name.split(' ').map(p => p[0] || '').slice(0,2).join('');
         html += '<a class="search-item worker-result-item" href="#" data-kind="worker" data-name="' + esc(w.name) + '" data-shift="' + esc(w.shift) + '">'
           + '<div class="search-item-icon" style="background:' + color + '18;border-color:' + color + '33;color:' + color + ';">' + esc(initials) + '</div>'

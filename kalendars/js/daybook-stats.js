@@ -415,7 +415,7 @@
     });
     // Rows of one tight grid under the day header: numbers sit right next
     // to their word, under the ☀ / ☾ header cells.
-    return '<em class="db-px-rg">Radiogrāferi</em><b>' + n.day.rg + '</b><b>' + n.night.rg + '</b>'
+    return '<em class="db-px-rg">' + GROUP.rg.label + '</em><b>' + n.day.rg + '</b><b>' + n.night.rg + '</b>'
       + '<em class="db-px-rd">Radiologi</em><b>' + n.day.rd + '</b><b>' + n.night.rd + '</b>';
   }
   function pixels(rows, today, mode) {
@@ -498,7 +498,7 @@
       + (IS_RAD ? '' : tile(s.bolus.length || '—', 'Bolusa maiņas', 'GE ' + s.bolus.filter(function (e) { return e.room === 'ge'; }).length + '&ensp;Philips ' + s.bolus.filter(function (e) { return e.room === 'philips'; }).length))
       + '</div>';
     return section('Komandas sajūta', loading || 'Dienas vidējā, lielāks punkts = vairāk reakciju',
-        (s.reactionTotal || rows.some(function (r) { return ownMood(r.day); }) ? moodChart(rows, b.today) : empty('Šim mēnesim vēl nav nevienas sajūtas atzīmes.')) + '<div class="db-two"><div>' + moodCounts(s) + ownMoodList(rows) + tiles + '</div>' + pixels(rows, b.today, 'mood') + '</div>' + note('Sejiņa — dienas biežākā reakcija; bez sejiņas — neviens nav atzīmējis. ☀ dienā un ☾ naktī dežūrā: <b class="db-px-rg">radiogrāferi</b>, <b class="db-px-rd">radiologi</b>. Spied uz dienas, lai redzētu detaļas.'), '#7dd3fc')
+        (s.reactionTotal || rows.some(function (r) { return ownMood(r.day); }) ? moodChart(rows, b.today) : empty('Šim mēnesim vēl nav nevienas sajūtas atzīmes.')) + '<div class="db-two"><div>' + moodCounts(s) + ownMoodList(rows) + tiles + '</div>' + pixels(rows, b.today, 'mood') + '</div>' + note('Sejiņa — dienas biežākā reakcija; bez sejiņas — neviens nav atzīmējis. ☀ dienā un ☾ naktī dežūrā: <b class="db-px-rg">' + GROUP.rg.label.toLowerCase() + '</b>, <b class="db-px-rd">radiologi</b>. Spied uz dienas, lai redzētu detaļas.'), '#7dd3fc')
       + team(s);
   }
   function bolusView(b) {
@@ -733,7 +733,7 @@
         + '<span class="db-fat-val" style="color:' + c + '"><b>' + p.avg + '%</b><small>vidēji</small></span></button>';
     }), '</div>', CAP) : empty('Šomēnes nav noguruma datu.');
     return tiles
-      + section('Komanda', 'radiogrāferi, dienas vidējais', chart, '#38bdf8')
+      + section('Komanda', GROUP.rg.label.toLowerCase() + ', dienas vidējais', chart, '#38bdf8')
       + section('Cilvēki', 'mēneša līkne, vidējais un maksimums', rows, '#38bdf8')
       + note('Modeļa aprēķins no grafika un atpūtas laika. Tas nav cilvēka pašsajūta, to rāda sadaļa Pārskats. Mēness līkne ir joks, ne zinātne.');
   }

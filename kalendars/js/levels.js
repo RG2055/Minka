@@ -254,6 +254,7 @@
 
   function _bolusChangesPerPerson() {
     var counts = {};
+    if (window.MINKA_APP === 'rad') return counts;   // no Bolus in /rad
     try {
       var h = JSON.parse(localStorage.getItem('minkaBolusHistoryV1') || 'null');
       if (h) {
@@ -789,7 +790,7 @@
 
     return '<div class="mk-stx-fat' + (opts.bare ? ' is-bare' : '') + '">' + (opts.bare ? '' :
       '<div class="mk-stx-sechead" style="margin-bottom:10px;">' +
-        '<div class="lbl"><span class="dot" style="background:#38bdf8;box-shadow:0 0 0 4px rgba(56,189,248,.13);"></span>Nogurums radiogrāferi — ' + escapeAttr(activeMonth) + '</div>' +
+        '<div class="lbl"><span class="dot" style="background:#38bdf8;box-shadow:0 0 0 4px rgba(56,189,248,.13);"></span>Nogurums ' + (window.__mkLeftRole || { many: 'Radiogrāferi' }).many.toLowerCase() + ' — ' + escapeAttr(activeMonth) + '</div>' +
         '<div class="line"></div>' +
         '<div class="mk-stx-fat-legend">' +
           '<i class="lg-line"></i><span>Komanda</span>' +
@@ -1145,7 +1146,7 @@
         : sortBar +
           buildInfoBox() +
           buildCoffeeSummary(merged) +
-          renderLeaderboardGroup(lbRG, 'Radiogrāferi', '#1fe091') +
+          renderLeaderboardGroup(lbRG, (window.__mkLeftRole || { many: 'Radiogrāferi' }).many, '#1fe091') +
           renderLeaderboardGroup(lbRD, 'Radiologi', '#3f9bff');
 
       // Pull cross-device coffee totals (yesterday's coffees etc.) — re-renders when ready.

@@ -14,7 +14,9 @@ window.setTimeout(function () {
 /* /rad mode (?app=rad from the shell): see index.html. __mkKey() gives the
    rad app its own browser storage for mood and comments (same origin). */
 (function(){try{var rad=new URLSearchParams(location.search).get('app')==='rad';window.MINKA_APP=rad?'rad':'rg';if(rad)document.documentElement.classList.add('minka-rad');}catch(_e){window.MINKA_APP='rg';}
-window.__mkKey=function(k){return window.MINKA_APP==='rad'?'rad:'+k:k;};})();
+window.__mkKey=function(k){return window.MINKA_APP==='rad'?'rad:'+k:k;};
+// Who the left column holds: the radiographers, or in /rad the residents.
+window.__mkLeftRole=window.MINKA_APP==='rad'?{one:'Rezidents',many:'Rezidenti'}:{one:'Radiogrāfers',many:'Radiogrāferi'};})();
 </script>
 <script>
 (function() {
@@ -922,7 +924,7 @@ function _mkToast(msg, type) {
 <!-- Saved worker skins must be ready before the cached roster is rendered. -->
 <script src="js/page/minka-skins.js?v=20260926cf4"></script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20260926rad1"></script>
+<script src="js/calendar.js?v=20260926rad3"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260925pack6" defer></script>
 <script src="js/header-weather.js?v=20260923wm10" defer></script>
@@ -932,15 +934,15 @@ function _mkToast(msg, type) {
 <script src="js/recovery-model.js?v=20260908recovery1"></script>
 <script src="js/fatigue.js?v=20260924perf1"></script>
 <script src="js/nightsplit.js?v=20260926rad1" defer></script>
-<script src="js/monthcal.js?v=20260926ab8" defer></script>
+<script src="js/monthcal.js?v=20260926rad3" defer></script>
 <script src="js/design_v1.js?v=20260924perf3" defer></script>
 <script src="js/theme.js?v=20260924dth6" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
 <script src="js/emoji.js?v=20260926mo1" defer></script>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
 <script src="js/daybook-model.js?v=20260911b" defer></script>
-<script src="js/daybook.js?v=20260926rad1" defer></script>
-<script src="js/levels.js?v=20260926st7" defer></script>
+<script src="js/daybook.js?v=20260926rad3" defer></script>
+<script src="js/levels.js?v=20260926rad3" defer></script>
 
 <script>
 window.__minkaLocalBuild = '20260926bm2';
@@ -1083,7 +1085,7 @@ document.addEventListener('keydown', (e) => {
 <script src="js/page/nameday-highlight.js?v=20260924perf1"></script>
 
 
-<script src="js/page/assistant-feed.js?v=20260924perf4"></script>
+<script src="js/page/assistant-feed.js?v=20260926rad3"></script>
 
 
 <style>
@@ -1101,7 +1103,7 @@ document.addEventListener('keydown', (e) => {
   border-top: 1px solid rgba(255,255,255,0.05);
 }
 </style>
-<script src="js/page/header-search.js?v=20260926mo1"></script>
+<script src="js/page/header-search.js?v=20260926rad3"></script>
 
 
 <script src="js/page/shift-stats-modal.js?v=20260926rad1"></script>
@@ -1906,7 +1908,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
      headers so calendar.js remains the single source of truth. -->
 <link rel="stylesheet" id="mk-integrated-duty-header-v1" href="css/page/mk-integrated-duty-header-v1.css?v=20260924perf1">
 
-<script id="mk-integrated-duty-header-js-v1" src="js/page/mk-integrated-duty-header.js?v=20260924perf1"></script>
+<script id="mk-integrated-duty-header-js-v1" src="js/page/mk-integrated-duty-header.js?v=20260926rad3"></script>
 
 <!-- Loaded last on purpose: the night split is an overlay and this small,
      local stylesheet replaces the older visual layers without touching logic. -->

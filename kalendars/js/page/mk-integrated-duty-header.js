@@ -13,7 +13,7 @@
     layer.id = 'mkDutyWingLayer';
     layer.setAttribute('aria-label', 'Dežūru kopsavilkums');
     layer.innerHTML =
-      '<section class="mk-duty-wing mk-duty-wing-rg" aria-label="Radiogrāferi"><div id="mkDutyWingRg" class="mk-duty-wing-slot"></div></section>' +
+      '<section class="mk-duty-wing mk-duty-wing-rg" aria-label="' + (window.__mkLeftRole || { many: 'Radiogrāferi' }).many + '"><div id="mkDutyWingRg" class="mk-duty-wing-slot"></div></section>' +
       '<section class="mk-duty-wing mk-duty-wing-rd" aria-label="Radiologi"><div id="mkDutyWingRd" class="mk-duty-wing-slot"></div></section>';
     wrap.insertBefore(layer, wrap.firstChild);
     return layer;

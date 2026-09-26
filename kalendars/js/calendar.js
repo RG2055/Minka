@@ -7466,7 +7466,7 @@ function renderModalCalendar() {
     const when = at.getTime() === todayMid ? ' is-today' : at.getTime() < todayMid ? ' is-past' : '';
     const rg = wmCoworkers(key, window.__grafiksStore, me);
     const rd = wmCoworkers(key, window.__grafiksStoreRad, me);
-    const team = (rg.length ? '<ul class="wm-sd-grp is-rg" aria-label="Radiogrāferi">' + wmPeopleRows(rg) + '</ul>' : '')
+    const team = (rg.length ? '<ul class="wm-sd-grp is-rg" aria-label="' + (window.__mkLeftRole || { many: 'Radiogrāferi' }).many + '">' + wmPeopleRows(rg) + '</ul>' : '')
       + (rd.length ? '<ul class="wm-sd-grp is-rd" aria-label="Radiologi">' + wmPeopleRows(rd) + '</ul>' : '');
     return '<article class="wm-sd is-' + kind + when + '">'
       + '<header class="wm-sd-head">'

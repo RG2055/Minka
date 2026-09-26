@@ -26,6 +26,10 @@
   var _viewFrom = null;      // view being left, for the tab switch motion
   var _holiCache = {};
 
+  // /rad: the left column holds residents and the radiographers' birthdays
+  // are not shown anywhere.
+  var IS_RAD = window.MINKA_APP === 'rad';
+  var LEFT = IS_RAD ? 'Rezidenti' : 'Radiogrāferi';
   function rgStore(){ return window.__grafiksStore || {}; }
   function rdStore(){ return window.__grafiksStoreRad || {}; }
 
@@ -153,6 +157,7 @@
     try { if (_bdayPopEl) { closeBdayPop(true); toggleBdayPop(); } } catch(_e3){}
   }
   function loadBirthdays(){
+    if (window.MINKA_APP === 'rad') { _bdayLoaded = true; return Promise.resolve([]); }
     if (_bdayLoadPromise) return _bdayLoadPromise;
     if (_bdayLoaded) return Promise.resolve(BIRTHDAYS);
     var api = window.MinkaApi;
@@ -186,6 +191,7 @@
     return _bdayLoadPromise;
   }
   function birthdayMap(){
+    if (window.MINKA_APP === 'rad') return {};
     if (!_bdayLoaded) loadBirthdays();
     if (_bdayMap) return _bdayMap;
     var m = {};
@@ -482,7 +488,7 @@
     var names = allMonths();
     var start = names.length ? monthSortKey(names[0]) : dutyMonthIndex() - 1;
     var end = names.length ? monthSortKey(names[names.length - 1]) : start;
-    if (_abs) (_abs.leavePlan || []).concat(_abs.absences || []).forEach(function(a){
+    if (_abs) (IS_RAD ? (_abs.absences || []).filter(function(a){ return a.src === 'doc'; }) : (_abs.leavePlan || []).concat(_abs.absences || [])).forEach(function(a){
       var p = String(a.to).split('.'); var k = (+p[2]) * 12 + (+p[1]) - 1;
       if (k > end) end = k;
     });
@@ -492,6 +498,11 @@
     return out;
   }
 
+  function storeNames(st){
+    var set = {};
+    Object.keys(st).forEach(function(m){ (st[m] || []).forEach(function(d){ (d.workers || []).forEach(function(w){ set[normName(w.name)] = 1; }); }); });
+    return set;
+  }
   function radiologistNames(){
     var set = {};
     var st = rdStore();
@@ -503,17 +514,20 @@
     var first = Date.UTC(p.year, p.idx, 1) / 864e5, daysIn = new Date(p.year, p.idx + 1, 0).getDate(), last = first + daysIn - 1;
     var hasSheet = (_abs.techMonths || []).some(function(m){ return m.month === p.idx + 1 && m.year === p.year; });
     var rdNames = radiologistNames();
+    // /rad: only the radiologist sheet — its residents (left column) and
+    // radiologists; nothing from the radiographers' sheet.
+    var leftNames = IS_RAD ? storeNames(rgStore()) : null;
     var list = (_abs.absences || []).filter(function(a){
-      if (a.src === 'doc') return !!rdNames[normName(a.name)];
-      return a.src === 'tech' && hasSheet;
+      if (a.src === 'doc') return !!rdNames[normName(a.name)] || !!(leftNames && leftNames[normName(a.name)]);
+      return !IS_RAD && a.src === 'tech' && hasSheet;
     });
-    if (!hasSheet) list = list.concat(_abs.leavePlan || []);
+    if (!hasSheet && !IS_RAD) list = list.concat(_abs.leavePlan || []);
     var rows = {};
     list.forEach(function(a){
       if (a.group === 'assignment') return;
       var f = dnum(a.from), t = dnum(a.to);
       if (t < first || f > last) return;
-      var sec = a.src === 'doc' ? 'rd' : (a.role ? 'san' : 'rg');
+      var sec = a.src === 'doc' ? (leftNames && leftNames[normName(a.name)] && !rdNames[normName(a.name)] ? 'rg' : 'rd') : (a.role ? 'san' : 'rg');
       var key = sec + '|' + normName(a.name);
       var row = rows[key] || (rows[key] = { sec: sec, name: a.name, items: [], start: Infinity });
       row.items.push({ a: a, s: Math.max(f, first) - first + 1, e: Math.min(t, last) - first + 1, cl: f < first, cr: t > last });
@@ -545,7 +559,7 @@
       days += '<span class="' + cls.trim() + '">' + d + '</span>';
     }
     var SECS = [
-      { k: 'rg', name: 'Radiogrāferi' },
+      { k: 'rg', name: LEFT },
       { k: 'rd', name: 'Radiologi' },
       { k: 'san', name: 'Sanitāri' }
     ];
@@ -557,7 +571,7 @@
         .sort(function(a, b){ return a.r.start - b.r.start || titleCase(a.r.name).localeCompare(titleCase(b.r.name), 'lv'); });
       if (!rows.length) return;
       shown += rows.length;
-      body += '<div class="mcal-absec mcal-' + sec.k + '">' + sec.name + (sec.k !== 'rd' && data.plan ? '<small>pēc atvaļinājumu plāna</small>' : '') + '</div>';
+      body += '<div class="mcal-absec mcal-' + sec.k + '">' + sec.name + (sec.k !== 'rd' && data.plan && !IS_RAD ? '<small>pēc atvaļinājumu plāna</small>' : '') + '</div>';
       rows.forEach(function(x){
         var parts = titleCase(x.r.name).split(' '), fn = parts.shift() || '', sn = parts.join(' ');
         var bars = x.items.map(function(it){
@@ -605,7 +619,7 @@
       var bdNames = bday[dateStr.slice(0, 5)];
       var body = '';
       var rows = _viewMode === 'week' ? workerRows : monthRows;
-      if (rg.length) body += '<div class="mcal-grp mcal-rg"><div class="mcal-grp-h">Radiogrāferi</div>' + rows(rg) + '</div>';
+      if (rg.length) body += '<div class="mcal-grp mcal-rg"><div class="mcal-grp-h">' + LEFT + '</div>' + rows(rg) + '</div>';
       if (rd.length) body += '<div class="mcal-grp mcal-rd"><div class="mcal-grp-h">Radiologi</div>' + rows(rd) + '</div>';
       if (!body) body = '<div class="mcal-off">Nav maiņu</div>';
       var cls = 'mcal-cell' + (slot % 7 >= 5 ? ' is-weekend' : '')
@@ -720,7 +734,7 @@
       + '<div class="mcal-actions">'
       + (_viewMode === 'abs' ? ''
         : '<div class="mcal-legend" aria-label="Maiņu veidi"><span class="mcal-hk is-allday">Diennakts</span><span class="mcal-hk is-day">Diena</span><span class="mcal-hk is-night">Nakts</span></div>')
-      + '<button class="mcal-actbtn" data-panel="bday">Dzimšanas dienas</button>'
+      + (IS_RAD ? '' : '<button class="mcal-actbtn" data-panel="bday">Dzimšanas dienas</button>')
       + '<button class="mcal-actbtn" data-panel="holi">Svētku dienas</button>'
       + '<button class="mcal-icbtn mcal-close" aria-label="Aizvērt">' + ICON.close + '</button>'
       + '</div>'
@@ -1093,6 +1107,7 @@
   }
   function initBdayBadge(){
     notifyBuddyBirthday(false);
+    if (IS_RAD) return;                     // no birthday badge in /rad
     injectBdayBadgeStyles();
     // Put it on the weekday (top) row, pushed to the right — weekday left,
     // birthday top-right, namedays below.
