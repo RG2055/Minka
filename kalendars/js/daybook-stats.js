@@ -677,7 +677,7 @@
     var loading = !st ? empty(nightJob ? 'Ielādē nakts vēsturi…' : 'Nakts vēsture vēl nav ielādēta — tā parādās pēc nakts sadalījuma atvēršanas.') : '';
     return tiles
       + section('Kurš kuru daļu ņem', 'visā vēsturē', loading || parts, '#23cdcf')
-      + (st ? section('Gultas', 'kurš kur guļ visbiežāk', beds, '#23cdcf') : '')
+      + (st ? section('Gultas', 'kurš guļ kurās gultās visbiežāk', beds, '#23cdcf') : '')
       + section('Naktis šomēnes', monthLabel(state.month), bars(monthNights, null, CAP), '#23cdcf')
       + note('Daļu un gultu skaits ir no nakts sadalījuma vēstures (visas naktis kopā, ne pa mēnešiem). Nakts maiņas — no grafika.');
   }
