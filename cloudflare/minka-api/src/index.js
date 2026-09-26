@@ -655,7 +655,7 @@ async function authKind(request, env) {
    read from it here, not in the sheet script. Kept in KV (the replies are
    too large for a D1 row), rewritten only when the content changes. */
 const GRID_SOURCES = ["doc", "tech"];
-const ROTA_CACHE = { key: "", body: "", absences: "" };
+const ROTA_CACHE = { key: "", body: "", absences: "", rad: "" };
 
 async function refreshGrid(env, src) {
   if (!env.SOURCE_URL || !env.MINKA_EMOJI) return false;
@@ -1138,20 +1138,22 @@ const worker = {
 
     // Radiologist/resident rota and everyone's absences, read from the stored
     // grids (see ./rota.js); rebuilt only when a grid changes. /api/absences
-    // is the small part the radiographer calendar needs.
-    if ((url.pathname === "/api/rota" || url.pathname === "/api/absences") && method === "GET") {
+    // is the small part the radiographer calendar needs; /api/rad/schedule
+    // is the rota in /api/schedule's shape for the /rad app.
+    if ((url.pathname === "/api/rota" || url.pathname === "/api/absences" || url.pathname === "/api/rad/schedule") && method === "GET") {
       const [doc, tech] = await Promise.all(GRID_SOURCES.map((src) => env.MINKA_EMOJI.getWithMetadata("grid:" + src, { type: "text" })));
       if (!doc || !doc.value) return json(request, { ok: false, error: "Rota unavailable" }, 503);
       const key = (doc.metadata?.hash || "") + "|" + (tech?.metadata?.hash || "");
       if (ROTA_CACHE.key !== key) {
-        const { buildRota } = await import("./rota.js");
+        const { buildRota, radSchedule } = await import("./rota.js");
         const rota = buildRota(JSON.parse(doc.value), tech && tech.value ? JSON.parse(tech.value) : null);
         const sourceFetchedAt = { doc: doc.metadata?.fetchedAt || null, tech: tech?.metadata?.fetchedAt || null };
         ROTA_CACHE.key = key;
         ROTA_CACHE.body = JSON.stringify({ ...rota, sourceFetchedAt });
         ROTA_CACHE.absences = JSON.stringify({ ok: true, absences: rota.absences, leavePlan: rota.leavePlan, techMonths: rota.techMonths, sourceFetchedAt });
+        ROTA_CACHE.rad = JSON.stringify({ ...radSchedule(rota), serverTime: new Date().toISOString(), sourceFetchedAt });
       }
-      const body = url.pathname === "/api/absences" ? ROTA_CACHE.absences : ROTA_CACHE.body;
+      const body = url.pathname === "/api/absences" ? ROTA_CACHE.absences : url.pathname === "/api/rad/schedule" ? ROTA_CACHE.rad : ROTA_CACHE.body;
       return new Response(body, { headers: { ...cors(request), "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
     }
 

@@ -185,3 +185,25 @@ test('codes keep their spelling and get a group', async () => {
   const { codeGroup } = await import(new URL('../../cloudflare/minka-api/src/rota.js', import.meta.url));
   assert.deepEqual(['ATV', 'x', 'Liep', 'DNL', 'MR', 'AD'].map(codeGroup), ['leave', 'unavailable', 'away', 'sick', 'assignment', 'other']);
 });
+
+test('/rad schedule: residents on the emergency duty left, responsible radiologists right, in /api/schedule shape', async () => {
+  const { radSchedule } = await import(new URL('../../cloudflare/minka-api/src/rota.js', import.meta.url));
+  const sheet = docSheet({
+    rows: [
+      { a: 'Atbildīgie ārsti', name: 'Persona A', cells: { 1: '24' } },
+      { name: 'Persona B' },
+      { a: 'Nodaļu ārsti', name: 'Persona C', cells: { 1: '9' } },
+      { name: 'Persona D' },
+      { a: 'Neatliekamās radioloģijas nodaļas dežūras' },
+      { name: 'Persona E', cells: { 1: '12' } },
+      { name: 'Persona F', cells: { 1: '15' } }
+    ],
+    merges: [[3, 1, 2, 1], [5, 1, 2, 1], [8, 1, 2, 1]]
+  });
+  const out = radSchedule(buildRota({ sheets: [sheet] }, { sheets: [] }));
+  const day = (side) => out[side]['SEPTEMBRIS 2026'].find(d => d.date === '01.09.2026').workers;
+  assert.deepEqual(day('radiologists').map(w => [w.name, w.type, w.startTime, w.endTime]), [['PERSONA A', 'DIENNAKTS', '08:00', '08:00']]);
+  assert.deepEqual(day('radiographers').map(w => [w.name, w.section, w.startTime]), [['PERSONA E', 'neatliekama_dezuras', '08:00'], ['PERSONA F', 'neatliekama_dezuras', '17:00']]);
+  assert.equal(out['radiographers']['SEPTEMBRIS 2026'].length, 30);
+  assert.ok(!day('radiographers').some(w => w.name === 'PERSONA C'), 'department doctors are not in the default view');
+});

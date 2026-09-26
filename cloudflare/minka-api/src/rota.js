@@ -424,3 +424,43 @@ export function buildRota(docGrid, techGrid) {
     techMonths: techSheets.filter((s) => s.month && s.year && !s.leave).map((s) => ({ month: s.month, year: s.year }))
   };
 }
+
+/* ── /rad: the rota in the shape of /api/schedule ──
+   The radiologist/resident app reuses the radiographer app, which reads
+   { radiographers, radiologists } month maps. In it the left column
+   ("radiographers") holds the residents on the emergency radiology duty and
+   rotation, the right column ("radiologists") the responsible radiologists.
+   Other sections stay in /api/rota for later options. */
+const MONTH_UPPER = ["JANVĀRIS", "FEBRUĀRIS", "MARTS", "APRĪLIS", "MAIJS", "JŪNIJS", "JŪLIJS", "AUGUSTS", "SEPTEMBRIS", "OKTOBRIS", "NOVEMBRIS", "DECEMBRIS"];
+export const RAD_LEFT = ["neatliekama_dezuras", "neatliekama_rotacija"];
+export const RAD_RIGHT = ["atbildigie"];
+
+function radWorker(e, section) {
+  const w = { name: String(e.name).toUpperCase(), shift: e.shift, type: e.type, startTime: e.start, endTime: e.end, section };
+  if (e.year) w.year = e.year;
+  if (e.hoursNote) w.hoursNote = e.hoursNote;
+  if (e.carryOver) w.carryOver = true;
+  return w;
+}
+
+export function radSchedule(rota, left = RAD_LEFT, right = RAD_RIGHT) {
+  const residents = {}, radiologists = {};
+  for (const m of rota.months || []) {
+    const key = MONTH_UPPER[m.month - 1] + " " + m.year;
+    const pick = (sections) => Object.keys(m.days).map((date) => {
+      const seen = new Set(), workers = [];
+      for (const section of sections) {
+        for (const e of (m.days[date][section] || [])) {
+          const name = String(e.name).toUpperCase();
+          if (seen.has(name)) continue;           // listed in two sections: once
+          seen.add(name);
+          workers.push(radWorker(e, section));
+        }
+      }
+      return { date, workers };
+    }).sort((a, b) => a.date.split(".").reverse().join("").localeCompare(b.date.split(".").reverse().join("")));
+    residents[key] = pick(left);
+    radiologists[key] = pick(right);
+  }
+  return { success: true, radiographers: residents, radiologists, knownCarryovers: {} };
+}
