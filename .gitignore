@@ -25,3 +25,6 @@ minka-history-scrub/
 
 # Local-only daybook preview data.
 .local-preview/
+
+# Live Apps Script sources (contain colleague names; local backup only)
+google_apps_script/live/
