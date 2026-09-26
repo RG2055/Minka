@@ -150,7 +150,7 @@ export function docBlocks(sheet, header) {
     .sort((a, b) => a[0] - b[0]);
   const blocks = [];
   let previous = null;
-  for (const m of merges) {
+  merges.forEach((m, i) => {
     const top = m[0] - 1, bottom = m[0] - 1 + m[2] - 1;
     let label = cell(sheet, top, 0);
     let key = sectionKey(label);
@@ -161,6 +161,16 @@ export function docBlocks(sheet, header) {
         if (k) { key = k; label = text; break; }
       }
     }
+    // Residents grouped by year sit in one-column merges, and a sheet may split
+    // one list into two merges with the label only on the second (September:
+    // year 1, then years 2–5 labelled "…uzņemšanā"). An unlabelled year group
+    // right above a labelled one belongs to it.
+    const next = merges[i + 1];
+    if (!key && next && m[3] === 1 && next[3] === 1 && next[0] === m[0] + m[2]) {
+      const nextLabel = cell(sheet, next[0] - 1, 0);
+      const k = sectionKey(nextLabel);
+      if (k) { key = k; label = nextLabel; }
+    }
     // The rotation block sometimes has no label; it is the one right after the
     // department doctors (always labelled). Any other unlabelled block
     // continues the previous one (the list goes on over a page break).
@@ -169,7 +179,7 @@ export function docBlocks(sheet, header) {
     const block = { key: key || "cits", label: String(label || "").replace(/\s+/g, " ").trim(), top, bottom };
     blocks.push(block);
     previous = block;
-  }
+  });
   return blocks;
 }
 
@@ -431,11 +441,11 @@ export function buildRota(docGrid, techGrid) {
 /* ── /rad: the rota in the shape of /api/schedule ──
    The radiologist/resident app reuses the radiographer app, which reads
    { radiographers, radiologists } month maps. In it the left column
-   ("radiographers") holds the residents on the emergency radiology duty and
-   rotation, the right column ("radiologists") the responsible radiologists.
+   ("radiographers") holds the residents on the emergency radiology duty,
+   rotation and the obligatory admission duties, the right column ("radiologists") the responsible radiologists.
    Other sections stay in /api/rota for later options. */
 const MONTH_UPPER = ["JANVĀRIS", "FEBRUĀRIS", "MARTS", "APRĪLIS", "MAIJS", "JŪNIJS", "JŪLIJS", "AUGUSTS", "SEPTEMBRIS", "OKTOBRIS", "NOVEMBRIS", "DECEMBRIS"];
-export const RAD_LEFT = ["neatliekama_dezuras", "neatliekama_rotacija"];
+export const RAD_LEFT = ["neatliekama_dezuras", "neatliekama_stazieri", "neatliekama_rotacija", "rezidenti_uznemsana"];
 export const RAD_RIGHT = ["atbildigie"];
 
 function radWorker(e, section) {

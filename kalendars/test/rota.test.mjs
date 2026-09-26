@@ -209,3 +209,26 @@ test('/rad schedule: residents on the emergency duty left, responsible radiologi
   assert.equal(out['radiographers']['SEPTEMBRIS 2026'].length, 30);
   assert.ok(!day('radiographers').some(w => w.name === 'PERSONA C'), 'department doctors are not in the default view');
 });
+
+test('/rad schedule: a year group split off above the labelled admission block belongs to it, and admission residents are on the left', async () => {
+  const { radSchedule } = await import(new URL('../../cloudflare/minka-api/src/rota.js', import.meta.url));
+  const sheet = docSheet({
+    rows: [
+      { a: 'Atbildīgie ārsti', name: 'Persona A', cells: { 1: '12' } },               // row 3
+      { name: 'Persona B' },                                                           // row 4
+      { a: 'Neatliekamās radioloģijas nodaļas dežūras' },                              // row 5 (heading)
+      { name: 'Persona E', cells: { 1: '12' } },                                       // row 6
+      { name: 'Persona F' },                                                           // row 7
+      { b: '1', name: 'Persona G', cells: { 1: '12' } },                               // row 8 (year 1, own merge, no label)
+      { b: '1', name: 'Persona H' },                                                   // row 9
+      { a: 'REZIDENTI OBLIGĀTĀS DEŽŪRAS UZŅEMŠANĀ', b: '2', name: 'Persona I', cells: { 1: '12' } }, // row 10
+      { b: '5', name: 'Persona E', cells: { 1: '12' } }                                // row 11 (also above: listed once)
+    ],
+    merges: [[3, 1, 2, 1], [6, 1, 2, 1], [8, 1, 2, 1], [10, 1, 2, 1]]
+  });
+  const m = parseDocMonth(sheet);
+  assert.deepEqual(m.sections.map(s => s.key), ['atbildigie', 'neatliekama_dezuras', 'rezidenti_uznemsana', 'rezidenti_uznemsana']);
+  const out = radSchedule(buildRota({ sheets: [sheet] }, { sheets: [] }));
+  const left = out.radiographers['SEPTEMBRIS 2026'].find(d => d.date === '01.09.2026').workers;
+  assert.deepEqual(left.map(w => [w.name, w.section]), [['PERSONA E', 'neatliekama_dezuras'], ['PERSONA G', 'rezidenti_uznemsana'], ['PERSONA I', 'rezidenti_uznemsana']]);
+});
