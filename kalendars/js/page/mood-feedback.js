@@ -1294,7 +1294,7 @@
       clearTimeout(moodGeometryTimer);
       moodGeometryTimer = setTimeout(function () {
         var refs = moodRefs();
-        fitTrendUnderLabel(card);
+        fitTrendUnderLabel(card, moodPreviewing);
         if (refs && refs.ring && refs.ring.firstChild && refs.ring.isConnected) placeMoodStaff(refs.ring);
       }, 120);
     });
@@ -1305,11 +1305,24 @@
      ("Slikti", or the day's own note) sits lower than that belt, and then the
      label pill lay on top of "Novērtē maiņu". Pull up only as far as the
      label leaves room; with no label showing, the full pull-up stays.
-     RG and /rad alike. */
-  function fitTrendUnderLabel(card) {
+     RG and /rad alike.
+     A hover preview never moves anything: the faces sit under the curve, so
+     pushing the curve down slid the face out from under the pointer, the
+     preview ended, the curve came back and the card shook. While previewing,
+     a label that has no room is hidden instead. */
+  var moodPreviewing = false;
+  function fitTrendUnderLabel(card, preview) {
     var trend = card && card.querySelector('.rg-trend');
     var label = card && card.querySelector('.rg-mood-label');
     if (!trend || !label) return;
+    label.style.visibility = '';
+    if (preview) {
+      if (getComputedStyle(label).opacity === '0') return;
+      var labRect = label.getBoundingClientRect();
+      var headRect = (trend.querySelector('.rg-trend-head') || trend).getBoundingClientRect();
+      if (labRect.height && labRect.bottom + 6 > headRect.top) label.style.visibility = 'hidden';
+      return;
+    }
     trend.style.marginTop = '';
     if (getComputedStyle(label).opacity === '0') return;
     var lab = label.getBoundingClientRect();
@@ -1319,14 +1332,14 @@
     if (clash > 0) trend.style.marginTop = (parseFloat(getComputedStyle(trend).marginTop) + clash) + 'px';
   }
   var trendFitFrame = 0;
-  function scheduleTrendFit(stage) {
+  function scheduleTrendFit(stage, preview) {
     cancelAnimationFrame(trendFitFrame);
     trendFitFrame = requestAnimationFrame(function () {
       var card = stage && stage.closest('.rg-feedback-card');
       if (!card) return;
       var before = card.querySelector('.rg-trend');
       var was = before ? before.style.marginTop : '';
-      fitTrendUnderLabel(card);
+      fitTrendUnderLabel(card, preview);
       // the curve moved: the ring was solved against its old place
       var refs = moodRefs();
       if (before && before.style.marginTop !== was && refs && refs.ring && refs.ring.firstChild) placeMoodStaff(refs.ring);
@@ -1579,7 +1592,7 @@
       refs.label.style.color = ownNote ? '' : (key ? visual.color1 : '');
       refs.label.classList.toggle('is-own-note', !!ownNote);
       refs.label.title = ownNote;
-      scheduleTrendFit(refs.stage);
+      scheduleTrendFit(refs.stage, !!preview);
     }
     moodFaceParts.forEach(function (part) {
       var el = refs.face[part];
@@ -1648,9 +1661,12 @@
     wrap.classList.add('is-pop');
   }
   function previewMoodBlob(key) {
-    if (key && key !== moodBlobKey) updateMoodBlob(key, true);
+    if (!key || key === moodBlobKey) return;
+    moodPreviewing = true;
+    updateMoodBlob(key, true);
   }
   function endMoodBlobPreview() {
+    moodPreviewing = false;
     updateMoodBlob(moodBlobKey, false);
   }
   var moodSectionLayoutFrame = 0;
