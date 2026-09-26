@@ -473,7 +473,18 @@
   justify-self: start !important;
   width: auto !important;
   margin-left: 20px !important;
+  /* The coffee link below is one wide <a> whose empty first column (the
+     cat's place) sits over this bubble; keep the bubble on top so a tap on
+     "Komentāri" opens the comments, not Buy me a coffee. */
+  position: relative !important;
+  z-index: 3 !important;
 }
+/* Only the QR, the words and the button open the coffee link; the empty
+   space around them (and the cat) lets taps through to what is beneath. */
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock { pointer-events: none !important; }
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock img,
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock strong,
+#grafiks-list .rg-feedback-card .rg-bmc-qrblock em { pointer-events: auto !important; }
 #grafiks-list .rg-feedback-card .rg-bmc-qrblock {
   align-self: stretch !important;
   display: grid !important;
