@@ -24,7 +24,10 @@
 /* ── Virsma un galvene ── */
 #bolus-overlay #bolus-sheet { background: var(--bm-surface) !important; border: 0 !important; box-shadow: none !important; color: var(--bm-on) !important; }
 #bolus-overlay #bolus-title-bar { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 12px 20px 8px !important; align-items: center !important; }
-#bolus-overlay #bolus-title { display: flex !important; flex-direction: column !important; gap: 3px !important; letter-spacing: 0 !important; text-shadow: none !important; }
+#bolus-overlay #bolus-title { display: flex !important; flex-direction: row !important; align-items: center !important; gap: 12px !important; letter-spacing: 0 !important; text-shadow: none !important; }
+/* Galvenes ikona = doka Bolus ikona (window.__mkDockIcon) */
+#bolus-overlay .bolus-head-icon { flex: 0 0 auto; width: 28px; height: 28px; image-rendering: pixelated; }
+#bolus-overlay .bolus-head-icon:empty { display: none; }
 #bolus-overlay .bolus-main-title { font: 700 22px/1.15 var(--bm-font) !important; letter-spacing: -.01em !important; text-transform: none !important; color: var(--bm-on) !important; }
 #bolus-overlay :is(#bolus-guide-btn, #bolus-tops-btn) {
   display: inline-flex !important; align-items: center !important; gap: 8px !important;

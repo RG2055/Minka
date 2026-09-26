@@ -64,6 +64,9 @@
   color: var(--mk-sys-on-primary-container);
 }
 .mk-stats-mark svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; }
+/* Same icon as the dock button (window.parent.__mkDockIcon), no tinted tile. */
+.mk-stats-mark.is-dock-icon { width: 28px; height: 28px; padding: 0; border-radius: 0; background: none; }
+.mk-stats-mark.is-dock-icon svg { width: 100%; height: 100%; fill: initial; stroke: none; image-rendering: pixelated; }
 #stats-title { margin: 0; font: var(--mk-type-title-l); font-size: 20px; letter-spacing: -.01em; color: var(--mk-sys-on-surface); }
 #stats-modal #stats-month-label { display: none; }
 
@@ -488,6 +491,101 @@
 @media (max-width: 760px) {
   #stats-modal .db-chips { flex-wrap: wrap; }
 }
+
+/* ── Nogurums: flīzes, komandas grafiks, cilvēku rindas ─────────────── */
+#stats-modal .db-tiles--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 760px) { #stats-modal .db-tiles--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+#stats-modal .db-tile b small { font-size: .6em; font-weight: 600; margin-left: 1px; opacity: .8; }
+#stats-modal .mk-stx-fat.is-bare { margin: 0; }
+#stats-modal .mk-stx-fat.is-bare .mk-stx-fat-card { border: 0; border-radius: var(--mk-shape-lg); background: var(--mk-sys-surface-container); padding: 12px 12px 6px; }
+#stats-modal .db-fat { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 8px; }
+#stats-modal .db-fat-row {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) 120px auto; align-items: center; gap: 12px;
+  padding: 10px 14px; border: 0; border-radius: var(--mk-shape-lg);
+  background: var(--mk-sys-surface-container); color: inherit; text-align: left; cursor: pointer;
+  transition: background-color var(--mk-dur-effects-fast) var(--mk-ease-effects);
+}
+#stats-modal .db-fat-row:hover { background: var(--mk-sys-surface-container-high); }
+#stats-modal .db-fat-row .db-av { width: 36px; height: 36px; }
+#stats-modal .db-fat-name { display: grid; gap: 2px; min-width: 0; }
+#stats-modal .db-fat-name b { font: var(--mk-type-title-s); color: var(--mk-sys-on-surface); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#stats-modal .db-fat-name small { font: var(--mk-type-body-s); color: var(--stx-t3); }
+#stats-modal .db-spark { width: 120px; height: 28px; display: block; }
+#stats-modal .db-fat-val { display: grid; justify-items: end; gap: 1px; min-width: 44px; }
+#stats-modal .db-fat-val b { font: 700 17px/1 var(--mk-font-plain); }
+#stats-modal .db-fat-val small { font: var(--mk-type-body-s); color: var(--stx-t3); }
+
+/* ── Garie saraksti: pirmie N, pārējie aiz vienas pogas ─────────────── */
+#stats-modal .db-cap:not(.is-open) .db-extra { display: none !important; }
+#stats-modal .db-more {
+  display: inline-flex; align-items: center; height: 36px; margin-top: 10px; padding: 0 16px;
+  border: 0; border-radius: var(--mk-shape-full);
+  background: var(--mk-sys-surface-container-high); color: var(--mk-sys-on-surface);
+  font: var(--mk-type-label-l); cursor: pointer;
+  transition: border-radius var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, ease), background-color var(--mk-dur-effects-fast) var(--mk-ease-effects);
+}
+#stats-modal .db-more:hover { background: var(--mk-sys-surface-container-highest); }
+#stats-modal .db-more:active { border-radius: var(--mk-shape-md); }
+#stats-modal .db-cap.is-open > .db-more { display: none; }
+
+/* ── Radio: mēneša josla, viena šūna dienā, fiksēts augstums ─────────── */
+#stats-modal .db-strip { display: grid; grid-template-columns: repeat(var(--n, 31), minmax(0, 1fr)); gap: 3px; }
+#stats-modal .db-strip-day {
+  position: relative; display: grid; place-items: center; height: 44px; padding: 0;
+  border: 0; border-radius: var(--mk-shape-sm);
+  background: var(--mk-sys-surface-container); color: var(--stx-t3);
+  font: 600 11px/1 var(--mk-font-plain); cursor: pointer;
+}
+#stats-modal .db-strip-day b { font: inherit; }
+#stats-modal .db-strip-day.is-on {
+  background: color-mix(in srgb, #38bdf8 calc(28% + 40% * var(--k, 0)), var(--mk-sys-surface-container));
+  color: #e8f6ff;
+}
+#stats-modal .db-strip-day i { position: absolute; right: 3px; top: 2px; font: 700 9px/1 var(--mk-font-plain); font-style: normal; opacity: .75; }
+#stats-modal .db-strip-day.is-future { opacity: .35; cursor: default; }
+#stats-modal .db-strip-day.is-today { box-shadow: inset 0 0 0 2px var(--mk-sys-on-surface); }
+#stats-modal .db-strip-day:hover:not(.is-future) { filter: brightness(1.15); }
+@media (max-width: 760px) {
+  #stats-modal .db-strip { grid-template-columns: repeat(11, minmax(0, 1fr)); }
+}
+
+/* ── Nakts: kurš kuru daļu ņem (4 mazi stabiņi) ─────────────────────── */
+#stats-modal .db-parts { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; }
+#stats-modal .db-part-row {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px;
+  padding: 10px 14px; border-radius: var(--mk-shape-lg); background: var(--mk-sys-surface-container);
+}
+#stats-modal .db-part-row .db-av { width: 36px; height: 36px; }
+#stats-modal .db-part-name { display: grid; gap: 2px; min-width: 0; }
+#stats-modal .db-part-name b { font: var(--mk-type-title-s); color: var(--mk-sys-on-surface); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#stats-modal .db-part-name small { font: var(--mk-type-body-s); color: var(--stx-t3); }
+#stats-modal .db-part-bars { display: grid; grid-template-columns: repeat(4, 22px); gap: 4px; align-items: end; height: 46px; }
+#stats-modal .db-part-bars i {
+  position: relative; display: block; height: 100%; font-style: normal;
+  background: linear-gradient(to top, #2b5f66 calc(var(--h) * 70%), transparent 0) bottom / 100% 100% no-repeat;
+  border-radius: 4px;
+}
+#stats-modal .db-part-bars i.is-fav { background-image: linear-gradient(to top, #23cdcf calc(var(--h) * 70%), transparent 0); }
+#stats-modal .db-part-bars b { position: absolute; left: 0; right: 0; bottom: calc(var(--h) * 70% + 2px); text-align: center; font: 700 10px/1 var(--mk-font-plain); color: var(--mk-sys-on-surface-variant); }
+#stats-modal .db-part-bars i.is-fav b { color: var(--mk-sys-on-surface); }
+#stats-modal .db-part-bars em { position: absolute; left: 0; right: 0; bottom: -14px; text-align: center; font: 600 9px/1 var(--mk-font-plain); font-style: normal; color: var(--stx-t3); }
+#stats-modal .db-part-row { padding-bottom: 20px; }
+
+/* ── Nakts: gultas ─────────────────────────────────────────────────── */
+#stats-modal .db-beds { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+#stats-modal .db-bed { display: grid; gap: 8px; padding: 14px 16px; border-radius: var(--mk-shape-lg); background: var(--mk-sys-surface-container); }
+#stats-modal .db-bed-name { display: flex; align-items: baseline; gap: 6px; }
+#stats-modal .db-bed-name b { font: var(--mk-type-title-s); color: var(--mk-sys-on-surface); }
+#stats-modal .db-bed-name small { font: var(--mk-type-body-s); color: var(--stx-t3); }
+#stats-modal .db-bed-total { font: 700 22px/1 var(--mk-font-plain); color: #23cdcf; }
+#stats-modal .db-bed-total small { font: var(--mk-type-body-s); color: var(--stx-t3); }
+#stats-modal .db-bed-who { display: flex; flex-wrap: wrap; gap: 4px; }
+#stats-modal .db-bed-who > span:not(.db-dim) {
+  display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px;
+  border-radius: var(--mk-shape-sm); background: var(--mk-sys-surface-container-high);
+  font: 600 12px/1 var(--mk-font-plain); color: var(--mk-sys-on-surface);
+}
+#stats-modal .db-bed-who b { color: #23cdcf; }
 
 @media (prefers-reduced-motion: reduce) {
   #stats-modal .db-tab-indicator,

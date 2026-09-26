@@ -206,6 +206,7 @@
       '.mcal-inner{display:flex;flex-direction:column;width:100%;height:100%;padding:16px 20px 18px;box-sizing:border-box;}',
       // header
       '.mcal-head{display:flex;align-items:center;gap:16px;margin-bottom:14px;flex:0 0 auto;}',
+      '.mcal-headicon{flex:0 0 auto;width:28px;height:28px;image-rendering:pixelated;}',
       '.mcal-titles{display:flex;align-items:baseline;gap:12px;min-width:0;}',
       '.mcal-title{font-size:26px;font-weight:400;line-height:1.15;white-space:nowrap;}',
       '.mcal-sub{font-size:15px;color:var(--on-var);white-space:nowrap;font-variant-numeric:tabular-nums;}',
@@ -474,8 +475,15 @@
       nextDis = idx >= months.length - 1;
     }
 
+    // Same icon as the dock's Kalendārs button, in the chosen icon set.
+    function headIcon() {
+      var icon = '';
+      try { if (window.parent !== window && window.parent.__mkDockIcon) icon = window.parent.__mkDockIcon('monthCalDocBtn'); } catch (_e) {}
+      return icon ? '<span class="mcal-headicon" aria-hidden="true">' + icon + '</span>' : '';
+    }
     var stepName = _viewMode === 'week' ? 'nedēļa' : 'mēnesis';
     var head = '<div class="mcal-head">'
+      + headIcon()
       + '<div class="mcal-titles"><div class="mcal-title">' + esc(titleCase(month)) + '</div>'
       + (_viewMode === 'week' && p.idx != null ? '<div class="mcal-sub">' + esc(weekRange(p, _weekIdx)) + '</div>' : '')
       + '</div>'

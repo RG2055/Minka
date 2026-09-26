@@ -454,14 +454,6 @@
   padding: 0 13px 11px !important;
 }
 #nsPanel .nsc-card-checklist .nsc-last-checklist { width: 100% !important; }
-#nsPanel .nsc-card-checklist span {
-  border: 1px solid #27333a !important;
-  border-radius: 8px !important;
-  background: linear-gradient(145deg, #253038, #141b20) !important;
-  box-shadow: 3px 4px 7px rgba(0, 0, 0, .40), -1px -1px 2px rgba(190, 221, 230, .06) !important;
-  transition: color .12s ease, border-color .12s ease !important;
-}
-#nsPanel .nsc-card-checklist span:hover { transform: none !important; filter: none !important; border-color: rgba(225, 243, 255, .16) !important; }
 
 /* Timeline */
 #nsPanel .ns-flow-bar {
@@ -1313,7 +1305,6 @@ html.mk-low-spec #nsOverlay.open #nsPanel .ns-room-bed-zzz span { animation: nsZ
 #nsPanel .nsc-full-meta { position: relative !important; left: auto; right: auto; bottom: auto; width: 100% !important; margin: 8px 0 0 !important; min-height: 30px !important; transform: none !important; }
 #nsPanel .nsc-full-card.nsc-worker-skinned .nsc-full-dur { color: #d7edf3 !important; -webkit-text-fill-color: #d7edf3 !important; }
 #nsPanel .nsc-card-checklist { position: absolute !important; left: 0; right: 0; bottom: 0; padding: 0 12px 5px !important; }
-#nsPanel .nsc-card-checklist span { box-shadow: none !important; }
 #nsPanel .ns-room-bed-picture img { filter: none !important; }
 @media (min-width:641px) and (max-height:820px) {
   #nsPanel { --ns-card-height: 190px; }
@@ -1915,8 +1906,8 @@ html.mk-low-spec:not(.mk-mobile-shell) #nsOverlay.open #nsPanel { transform: tra
   --pp-on-primary: #0b2a57;
   --pp-primary-c: #d6e3ff;   /* izvēlētais čips: gaišs */
   --pp-on-primary-c: #0b1d36;
-  --pp-tertiary-c: #4a3a55;
-  --pp-on-tertiary-c: #f5d9ff;
+  --pp-tertiary-c: #45320d; /* dzintars, ne violets */
+  --pp-on-tertiary-c: #ffe2a8;
   /* Iepriekšējā M3 slāņa tokeni uz šīs paletes. */
   --m3-surface-high: var(--pp-c3);
   --m3-surface-highest: var(--pp-c4);
@@ -2008,14 +1999,6 @@ html.mk-low-spec:not(.mk-mobile-shell) #nsOverlay.open #nsPanel { transform: tra
 #nsOverlay #nsPanel .nsc-fat-label { color: var(--pp-on-var) !important; font-weight: 500 !important; letter-spacing: .02em !important; text-transform: none !important; }
 #nsOverlay #nsPanel .nsc-fat-value,
 #nsOverlay #nsPanel .nsc-full-dur { font-weight: 700 !important; font-variant-numeric: tabular-nums !important; letter-spacing: 0 !important; }
-#nsOverlay #nsPanel .nsc-card-checklist span {
-  border: 0 !important;
-  border-radius: 999px !important;
-  background: rgba(16, 22, 29, .82) !important;
-  box-shadow: none !important;
-  color: var(--pp-on) !important;
-  font-weight: 500 !important;
-}
 
 /* Ritma rindiņas */
 
@@ -2134,3 +2117,49 @@ html.mk-low-spec:not(.mk-mobile-shell) #nsOverlay.open #nsPanel { transform: tra
 /* Bez rāmja tumšas ādas (piem. zīmējums uz melna) saplūda ar paneli —
    kartītei tonāla pamatvirsma zem ādas. */
 #nsOverlay #nsPanel .nsc-full-card { background-color: var(--pp-c2) !important; }
+
+/* Galvenes ikona = doka Nakts ikona (nightsplit.js nsHeadIcon) */
+#nsOverlay #nsPanel .ns-brand-mark.ns-dock-icon { display: block; width: 30px !important; height: 30px !important; border-radius: 0 !important; background: none !important; image-rendering: pixelated; }
+
+/* ── Istabas: mēnessgaisma pār grīdu (statiska, bez kustības un filtriem) ──
+   Viens slīps gaismas stars no loga augšējā kreisajā stūrī, tikai grīdas
+   laukumā zem gultām. Uzzīmējas vienreiz; nekas netiek pārrēķināts. */
+#nsOverlay #nsPanel .ns-room-shell { isolation: isolate; }
+#nsOverlay #nsPanel .ns-room-scene-content::before {
+  content: '';
+  position: absolute;
+  inset: 16% 9% 15% 9%;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 4px;
+  background:
+    linear-gradient(118deg, transparent 18%, rgba(196, 222, 255, .045) 30%, rgba(196, 222, 255, .085) 40%, rgba(196, 222, 255, .04) 50%, transparent 62%),
+    radial-gradient(ellipse 60% 55% at 38% 42%, rgba(196, 222, 255, .05), transparent 70%);
+}
+#nsOverlay #nsPanel .ns-room-nmp .ns-room-scene-content::before {
+  inset: 14% 12% 17% 12%;
+  background:
+    linear-gradient(118deg, transparent 22%, rgba(255, 226, 168, .04) 34%, rgba(255, 226, 168, .075) 44%, transparent 60%),
+    radial-gradient(ellipse 60% 55% at 45% 40%, rgba(255, 226, 168, .045), transparent 70%);
+}
+/* Gulta zem peles: gaišāka, bez mirdzuma oreola */
+#nsOverlay #nsPanel .ns-room-bed[data-i].nsover .ns-room-bed-card { filter: brightness(1.12) !important; }
+
+/* ── Nakts kartītes: noguruma josla apakšā; pēdējās daļas darbi ──────────
+   Josla (Nogurums / laiks / emoji) stāv kartītes apakšā visās kartītēs.
+   Pēdējā kartītē zem tās vēl viena tāda pati josla ar trim darbiem:
+   ilustrācija bolusa iekārtas krāsās + divu rindu uzraksts. */
+#nsOverlay #nsPanel .nsc-full-meta { margin-top: auto !important; }
+#nsOverlay #nsPanel .nsc-full-card.nsc-has-checklist .nsc-full-inner { padding-bottom: 58px !important; }
+#nsOverlay #nsPanel .nsc-card-checklist { padding: 0 15px 12px !important; }
+#nsOverlay #nsPanel .nsc-tasks {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center;
+  height: 40px; padding: 0 4px; border-radius: 18px; background: rgba(16, 22, 29, .82);
+}
+#nsOverlay #nsPanel .nsc-task { display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; height: 100%; }
+#nsOverlay #nsPanel .nsc-task + .nsc-task { border-left: 1px solid rgba(255, 255, 255, .08); }
+#nsOverlay #nsPanel .nsc-task-ico { display: block; flex: 0 0 auto; width: 20px; height: 24px; }
+#nsOverlay #nsPanel .nsc-task-ico svg { display: block; width: 100%; height: 100%; }
+#nsOverlay #nsPanel .nsc-task-txt { display: grid; gap: 1px; min-width: 0; }
+#nsOverlay #nsPanel .nsc-task-txt b { color: var(--pp-on, #e6ebf2); font: 700 11px/1.1 var(--pp-font, system-ui); white-space: nowrap; text-shadow: none; }
+#nsOverlay #nsPanel .nsc-task-txt small { color: var(--pp-on-var, #a9b3c1); font: 500 9.5px/1.1 var(--pp-font, system-ui); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

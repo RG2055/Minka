@@ -1464,45 +1464,6 @@
   50%      { transform: translate(calc(-50% + var(--rg-x, 0px)), calc(-50% + var(--rg-y, 0px))) translate(-3px, 3px) rotate(-4deg); }
 }
 
-/* Coffee statistics: a bare icon-and-label control tucked under the coffee
-   counter — no border, no background, nothing that reads as a box. It is
-   position:absolute so it never adds height to the right stack, which would
-   push the coffee pill off the fatigue pill's line. */
-.rg-mood-topbtn {
-  position: absolute;
-  top: calc(100% + clamp(4px, 1.8cqw, 6px));
-  left: 50%;
-  transform: translateX(-50%);
-  /* The stage is pointer-events: none so the badges never eat a tap; the one
-     real control inside it has to opt back in. */
-  pointer-events: auto;
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: #e8c79a;
-  font: 800 clamp(6px, 2.7cqw, 7.5px)/1.15 Inter, system-ui, sans-serif;
-  letter-spacing: .02em;
-  text-align: center;
-  white-space: nowrap;
-  cursor: pointer;
-}
-.rg-mood-topbtn[hidden] { display: none; }
-.rg-mood-topbtn:hover { color: #f7e3c2; }
-.rg-mood-topbtn svg {
-  display: block;
-  width: clamp(12px, 5.2cqw, 15px);
-  height: clamp(12px, 5.2cqw, 15px);
-  flex: 0 0 auto;
-}
-
-
-/* Coffee top: icon-only button directly under the coffee counter. */
-.rg-mood-topbtn svg { display: block; width: clamp(11px, 4.8cqw, 14px); height: clamp(11px, 4.8cqw, 14px); flex: 0 0 auto; }
-
 /* Both side stacks sit vertically centred on the blob, on opposite sides. */
 .rg-mood-side {
   position: absolute;
@@ -1555,8 +1516,6 @@
 }
 
 
-/* Coffee top: icon-only button directly under the coffee counter. */
-.rg-mood-topbtn svg { display: block; width: clamp(11px, 4.8cqw, 14px); height: clamp(11px, 4.8cqw, 14px); flex: 0 0 auto; }
 /* Opens as an overlay, not as extra rows: the card has a fixed place in the
    grid, so growing it would push the whole section around. */
 
@@ -1665,6 +1624,73 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   .rg-mood-coffee,
   .rg-feedback-card .rg-pulse-write { transition: none; }
 }
+
+/* ── Mēnesis zem līknes (mood-feedback.js moodMonthMarkup) ─────────────
+   Trīs kolonnas: skaitlis, zem tā skaidrs uzraksts, zem tā sīkums (kafijai
+   cilvēki, radio dienas, bolusam GE/Philips josla). Bez rāmja; katra kolonna
+   ir poga uz savu statistikas cilni. Fiksēts augstums, lai kartīte nelec. */
+.rg-feedback-card .rg-month {
+  order: 1;
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  height: 56px;
+  margin: 4px 0 2px;
+}
+.rg-feedback-card .rg-month-item {
+  display: grid;
+  grid-template-rows: auto auto auto;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 4px 4px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--m3c-on-surface-variant, #a9b3c1);
+  font: 500 10.5px/1.15 var(--font-ui, Inter, system-ui, sans-serif);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 150ms cubic-bezier(.31, .94, .34, 1);
+}
+.rg-feedback-card .rg-month-item b {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--m3c-on-surface, #e6ebf2);
+  font: 700 17px/1 var(--font-ui, Inter, system-ui, sans-serif);
+  letter-spacing: -.01em;
+  font-variant-numeric: tabular-nums;
+}
+.rg-feedback-card .rg-month-item--coffee b { color: #f5b73f; }
+.rg-feedback-card .rg-month-item--radio b { color: #7dd3fc; font-size: 14px; line-height: 17px; }
+.rg-feedback-card .rg-month-item span { white-space: nowrap; }
+.rg-feedback-card .rg-month-item small {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 11px;
+  color: #7c8796;
+  font: 500 9.5px/1 var(--font-ui, Inter, system-ui, sans-serif);
+  white-space: nowrap;
+}
+.rg-feedback-card .rg-month-item small em { font-style: normal; font-variant-numeric: tabular-nums; }
+.rg-feedback-card .rg-month-item small em:first-of-type { color: #5aa9ff; order: -1; }
+.rg-feedback-card .rg-month-item small em:last-of-type { color: #4fdb86; order: 1; }
+/* GE pret Philips: viena josla, zilā daļa = GE īpatsvars */
+.rg-feedback-card .rg-month-split {
+  display: block;
+  width: 26px;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #5aa9ff calc(var(--ge, .5) * 100%), #4fdb86 0);
+}
+.rg-feedback-card .rg-month-item:hover { background: rgba(255, 255, 255, .06); }
+.rg-feedback-card .rg-month-item:focus-visible { outline: 2px solid var(--m3c-primary, #7fd8c6); outline-offset: 1px; }
 
 /* ── Komandas sajūtas līkne (mood-trend.js) ─────────────────────────────
    Tieši virs "Novērtē maiņu", lai balsojums un tā vieta līknē ir kopā.
@@ -1807,3 +1833,10 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   .rg-trend-meta,
   .rg-trend-meta svg { transition: none; }
 }
+
+/* Šīs dežūras kafijas pile = kafijas statistikas poga (atsevišķās pogas vietā) */
+.rg-feedback-card .rg-mood-pill--coffee[data-rg-coffee-open] { cursor: pointer; }
+.rg-feedback-card .rg-mood-pill--coffee[data-rg-coffee-open]:hover { box-shadow: inset 0 0 0 2px rgba(255, 226, 168, .35); }
+.rg-feedback-card .rg-mood-pill--coffee[data-rg-coffee-open]:focus-visible { outline: 2px solid #f5b73f; outline-offset: 2px; }
+.rg-feedback-card .rg-month-item small:empty { display: none; }
+.rg-feedback-card .rg-month { height: 46px; }

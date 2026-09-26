@@ -50,7 +50,7 @@
     var cx = L.left + L.width / 2 - W.left, cy = L.top + L.height / 2 - W.top;
     var R = L.width / 2 + bh * 0.6 + 4;
     var avoid = [];
-    card.querySelectorAll('.rg-mood-person, .rg-mood-side, .rg-mood-label, .rg-mood-topbtn, .rg-feedback-card-title, .rg-pulse-taps, .rg-feedback-card-actions, .rg-hp-cup, .rg-mood-glass-lens').forEach(function (el) {
+    card.querySelectorAll('.rg-mood-person, .rg-mood-side, .rg-mood-label, .rg-feedback-card-title, .rg-pulse-taps, .rg-feedback-card-actions, .rg-hp-cup, .rg-mood-glass-lens').forEach(function (el) {
       var r = el.getBoundingClientRect();
       if (r.width && r.height && !now.contains(el)) avoid.push(r);
     });
@@ -190,7 +190,7 @@
     if (!statsLoading) {
       statsLoading = new Promise(function (resolve, reject) {
         var s = document.createElement('script');
-        s.src = 'js/daybook-stats.js?v=20260926sp1';
+        s.src = 'js/daybook-stats.js?v=20260926st8';
         s.onload = resolve;
         s.onerror = function () { s.remove(); statsLoading = null; reject(new Error('daybook-stats')); };
         document.head.append(s);

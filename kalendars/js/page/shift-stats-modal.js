@@ -20,6 +20,12 @@
     const monthLabel = document.getElementById('stats-month-label');
     if (!modal || !wrap) return;
     if (isOpen(modal)) return;
+    // The header shows the dock's own Statistika icon, in the current icon set.
+    try {
+      const mark = modal.querySelector('.mk-stats-mark');
+      const icon = window.parent !== window && window.parent.__mkDockIcon ? window.parent.__mkDockIcon('statsDocBtn') : '';
+      if (mark && icon) { mark.innerHTML = icon; mark.classList.add('is-dock-icon'); }
+    } catch (_e) {}
     const reopening = modal.dataset.state === 'closing';
     opts = opts || {};
     // An element is re-measured on close (it may have moved); a rect is used as is.

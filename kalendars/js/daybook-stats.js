@@ -14,7 +14,12 @@
   var WEEKDAY_SHORT = ['P', 'O', 'T', 'C', 'P', 'S', 'Sv'];
   var GROUP = { rg: { label: 'Radiogrāferi', accent: '#1fe091' }, rd: { label: 'Radiologi', accent: '#3f9bff' } };
   var SHIFT = { day: { label: 'Diena', color: '#3f9bff' }, night: { label: 'Nakts', color: '#23cdcf' }, '24h': { label: '24h', color: '#f5b73f' } };
-  var TABS = [['overview', 'Pārskats'], ['bolus', 'Boluss'], ['radio', 'Radio'], ['coffee', 'Kafija'], ['fatigue', 'Nogurums']];
+  var TABS = [['overview', 'Pārskats'], ['bolus', 'Boluss'], ['radio', 'Radio'], ['coffee', 'Kafija'], ['night', 'Nakts'], ['fatigue', 'Nogurums']];
+  // Long lists show this many rows, the rest behind "Rādīt visus".
+  var CAP = 8;
+  var NIGHT_STATS_KEY = 'minkaNightStatsV1';
+  var NIGHT_STATS_TTL = 12 * 3600 * 1000;
+  var BEDS = [['main_left_top', 'Galvenā', 'augšā'], ['main_right_top', 'Galvenā', 'pa labi'], ['main_left_bottom', 'Galvenā', 'apakšā'], ['nmp_center', 'Jaunais NMP', '']];
   var PULSE_KEY = 'minkaShiftPulseV2';
   var PENDING_KEY = 'minkaShiftPulsePendingV2';
   var COFFEE_KEY = 'minkaCoffeeCountsV1';
@@ -234,19 +239,30 @@
   }
   function empty(text) { return '<div class="db-empty">' + text + '</div>'; }
   function note(text) { return '<p class="db-note">' + text + '</p>'; }
-  function table(headers, rows) {
+  function table(headers, rows, limit) {
     if (!rows.length) return empty('Šajā periodā ierakstu nav.');
-    return '<div class="db-scroll"><table class="db-table"><thead><tr>' + headers.map(function (h) { return '<th>' + h + '</th>'; }).join('') + '</tr></thead><tbody>' + rows.join('') + '</tbody></table></div>';
+    return capped('<div class="db-scroll"><table class="db-table"><thead><tr>' + headers.map(function (h) { return '<th>' + h + '</th>'; }).join('') + '</tr></thead><tbody>', rows, '</tbody></table></div>', limit);
   }
-  function bars(items, color) {
+  function bars(items, color, limit) {
     // items: [{label, value, sub, color?}] rendered as horizontal bars.
     var max = items.reduce(function (m, e) { return Math.max(m, e.value); }, 0) || 1;
     if (!items.length) return empty('Nav ierakstu.');
-    return '<div class="db-bars">' + items.map(function (e) {
+    return capped('<div class="db-bars">', items.map(function (e) {
       // Fixed-width fill moved by a transform (stats-m3.css), never `width`,
       // so a value change or the entrance grow is compositor-only.
       return '<div class="db-bar-row"><span class="db-bar-label">' + e.label + '</span><span class="db-bar"><i style="--v:' + (e.value / max).toFixed(3) + ';background:' + (e.color || color || '#1fe091') + '"></i></span><b>' + e.value + '</b>' + (e.sub ? '<small>' + e.sub + '</small>' : '') + '</div>';
-    }).join('') + '</div>';
+    }), '</div>', limit);
+  }
+  /* A list that shows `limit` items and hides the rest behind one button
+     (data-db-more, handled below): the tab keeps a sane height. Items are
+     HTML strings; the hidden ones get the db-extra class. */
+  function capped(open, items, close, limit) {
+    limit = limit || items.length;
+    var rest = items.length - limit;
+    if (rest <= 0) return open + items.join('') + close;
+    return '<div class="db-cap">' + open + items.map(function (html, i) {
+      return i < limit ? html : html.replace(/^<(\w+)( class=")?/, function (_m, tag, cls) { return '<' + tag + (cls ? ' class="db-extra ' : ' class="db-extra"'); });
+    }).join('') + close + '<button type="button" class="db-more" data-db-more>Rādīt vēl ' + rest + '</button></div>';
   }
   function avatar(name, accent) {
     var em = personEmoji(name);
@@ -352,10 +368,10 @@
     var items = rows.map(function (r) { return { day: r.day, own: ownMood(r.day) }; })
       .filter(function (e) { return e.own; }).reverse();
     if (!items.length) return '';
-    return '<div class="db-own"><span class="db-own-title">Savi vērtējumi</span>' + items.map(function (e) {
+    return capped('<div class="db-own"><span class="db-own-title">Savi vērtējumi</span>', items.map(function (e) {
       return '<button type="button" class="db-own-item" data-db-day="' + e.day + '"><span class="db-face">' + esc(e.own.emoji) + '</span>'
         + '<b>' + esc(e.own.note || '—') + '</b><small>' + shortDay(e.day) + '</small></button>';
-    }).join('') + '</div>';
+    }), '</div>', 6);
   }
   function moodCounts(s) {
     var total = s.reactionTotal || 0;
@@ -452,9 +468,9 @@
       var people = s.people.filter(function (p) { return s.shifts.some(function (e) { return e.group === g && M.norm(e.name) === M.norm(p.name); }); })
         .sort(function (a, b) { return b.hours - a.hours || a.name.localeCompare(b.name, 'lv'); });
       if (!people.length) return;
-      out += section(GROUP[g].label, people.length + ' cilvēki', '<div class="db-people">' + people.map(function (p) {
+      out += section(GROUP[g].label, people.length + ' cilvēki', capped('<div class="db-people">', people.map(function (p) {
         return personCard(p, GROUP[g], s.shifts.filter(function (e) { return e.group === g && M.norm(e.name) === M.norm(p.name); }));
-      }).join('') + '</div>', GROUP[g].accent);
+      }), '</div>', CAP), GROUP[g].accent);
     });
     return out || empty('Šim mēnesim grafikā nav maiņu.');
   }
@@ -482,19 +498,27 @@
     var perPerson = s.people.filter(function (p) { return p.ge + p.philips; }).sort(function (a, c) { return (c.ge + c.philips) - (a.ge + a.philips); })
       .map(function (p) { return { label: esc(shortName(p.name)), value: p.ge + p.philips, sub: 'GE ' + p.ge + '&ensp;Ph ' + p.philips, color: '#ff5c5c' }; });
     return '<div class="db-tiles db-tiles--3">' + tile(s.bolus.length, 'Bolusa maiņas', 'izvēlētajā mēnesī', '#ff5c5c') + tile(s.bolus.filter(function (e) { return e.room === 'ge'; }).length, 'GE', '', '#0a84ff') + tile(s.bolus.filter(function (e) { return e.room === 'philips'; }).length, 'Philips', '', '#30d158') + '</div>'
-      + section('Pēc cilvēka', '', bars(perPerson), '#ff5c5c')
+      + section('Pēc cilvēka', '', bars(perPerson, null, CAP), '#ff5c5c')
       + section('Visas maiņas', s.bolus.length + ' ieraksti', table(['Dežūras diena', 'Mainīts', 'Iekārta', 'Cilvēks'], s.bolus.map(function (e) {
         return '<tr><td><button type="button" class="db-link" data-db-day="' + e.day + '">' + shortDay(e.day) + '</button></td><td>' + esc(new Date(e.ts).toLocaleString('lv-LV', { timeZone: 'Europe/Riga', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })) + '</td><td>' + chip(e.room === 'ge' ? 'GE' : 'Philips', e.room === 'ge' ? '#0a84ff' : '#30d158') + '</td><td>' + esc(e.name) + '</td></tr>';
-      })) + note('Bolusa vēsture no ierīcē sinhronizētajiem ierakstiem. Maiņa pirms 08:00 pieder iepriekšējai dežūras dienai.'), '#ff5c5c');
+      }), CAP) + note('Bolusa vēsture no ierīcē sinhronizētajiem ierakstiem. Maiņa pirms 08:00 pieder iepriekšējai dežūras dienai.'), '#ff5c5c');
   }
   function radioView(b) {
     var s = b.s, past = elapsedDays(b.rows, b.today).length || 1;
     var items = s.stations.map(function (e) { return { label: esc(e.name), value: e.count, sub: e.count === 1 ? 'diena' : 'dienas', color: '#38bdf8' }; });
-    return '<div class="db-tiles db-tiles--3">' + tile(s.stations.length || '—', 'Stacijas', 'klausītas šomēnes', '#38bdf8') + tile(b.rows.filter(function (r) { return r.radio.length; }).length || '—', 'Dienas ar radio', 'no ' + past) + tile(s.stations[0] ? esc(s.stations[0].name) : '—', 'Biežākā', s.stations[0] ? s.stations[0].count + (s.stations[0].count === 1 ? ' diena' : ' dienas') : '') + '</div>'
-      + section('Stacijas', '', bars(items) + note('Stacija tiek pierakstīta, kad tā sāk skanēt. Klausīšanās ilgums netiek mērīts.'), '#38bdf8')
-      + section('Pa dienām', '', table(['Diena', 'Stacijas'], b.rows.filter(function (r) { return r.radio.length; }).reverse().map(function (r) {
-        return '<tr><td><button type="button" class="db-link" data-db-day="' + r.day + '">' + shortDay(r.day) + '</button></td><td>' + r.radio.map(esc).join(', ') + '</td></tr>';
-      })), '#38bdf8');
+    var withRadio = b.rows.filter(function (r) { return r.radio.length; }).length;
+    return '<div class="db-tiles db-tiles--3">' + tile(s.stations.length || '—', 'Stacijas', 'klausītas šomēnes', '#38bdf8') + tile(withRadio || '—', 'Dienas ar radio', 'no ' + past) + tile(s.stations[0] ? esc(s.stations[0].name) : '—', 'Biežākā', s.stations[0] ? s.stations[0].count + (s.stations[0].count === 1 ? ' diena' : ' dienas') : '') + '</div>'
+      + section('Mēnesis', withRadio + ' dienas ar radio', radioStrip(b), '#38bdf8')
+      + section('Stacijas', s.stations.length > 5 ? 'top 5' : '', bars(items, null, 5) + note('Stacija tiek pierakstīta, kad tā sāk skanēt. Klausīšanās ilgums netiek mērīts.'), '#38bdf8');
+  }
+  // One cell per day of the month: lit when radio played, the stations in the
+  // tooltip, a click opens the day. Fixed height, whatever the month holds.
+  function radioStrip(b) {
+    return '<div class="db-strip" style="--n:' + b.rows.length + '">' + b.rows.map(function (r) {
+      var n = r.radio.length, future = r.day > b.today;
+      var title = shortDay(r.day) + (n ? ': ' + r.radio.join(', ') : future ? '' : ' — radio nav');
+      return '<button type="button" class="db-strip-day' + (n ? ' is-on' : '') + (future ? ' is-future' : '') + (r.day === b.today ? ' is-today' : '') + '" data-db-day="' + r.day + '" title="' + esc(title) + '" style="--k:' + Math.min(1, n / 3).toFixed(2) + '"><b>' + Number(r.day.slice(8)) + '</b>' + (n ? '<i>' + n + '</i>' : '') + '</button>';
+    }).join('') + '</div>';
   }
   function eur(cents) {
     return (Math.max(0, Number(cents) || 0) / 100).toLocaleString('lv-LV', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
@@ -513,14 +537,14 @@
     if (!list.length) return empty(coffee.busy ? 'Ielādē…' : 'Nav atzīmētu dzērienu.');
     var groupOf = {};
     shiftsAll().forEach(function (e) { groupOf[M.norm(e.name)] = e.group; });
-    return '<div class="db-coffee">' + list.map(function (p) {
+    return capped('<div class="db-coffee">', list.map(function (p) {
       var g = GROUP[groupOf[M.norm(p.name)] || 'rg'];
       return '<button type="button" class="db-coffee-row" data-db-person="' + esc(p.name) + '">' + avatar(p.name, g.accent)
         + '<span class="db-coffee-name"><b>' + esc(shortName(p.name)) + '</b></span>'
         + '<span class="db-coffee-srcs">' + sourceChips(p.sources) + '</span>'
         + '<span class="db-coffee-cups"><b>' + p.cups + '</b><small>' + (p.cups === 1 ? 'tase' : 'tases') + '</small></span>'
         + '<span class="db-coffee-eur"><b>' + eur(p.cents) + '</b><small>iztērēts</small></span></button>';
-    }).join('') + '</div>';
+    }), '</div>', CAP);
   }
   function coffeeMonth(b) {
     // Only days this device has pulled from the coffee API count here.
@@ -575,15 +599,126 @@
     }
     var drinkers = month.people.filter(function (p) { return p.cups > 0; }).length;
     return '<div class="db-tiles db-tiles--3">' + tile(cups || (coffee.busy ? '…' : '—'), 'Tases šomēnes', '', '#f5b73f') + tile(eur(cents), 'Iztērēts šomēnes', '')
-      + tile(drinkers || '—', 'Cilvēki', drinkers ? 'atzīmējuši dzērienus' : '') + '</div>'
+      + tile(drinkers || '—', 'Cilvēki', 'šomēnes') + '</div>'
       + (cups ? '<div class="db-coffee-sum">' + sourceChips(sum) + '</div>' : '')
       + section(monthLabel(state.month), coffee.busy ? '<span class="db-loading">Ielādē…</span>' : '', coffeeRows(month.people), '#f5b73f')
       + section('Visu laiku', all ? all.reduce(function (n, p) { return n + p.cups; }, 0) + ' tases' : '', all ? coffeeRows(all) : empty('Ielādē…'), '#f5b73f');
   }
-  function fatigueView() {
-    var html = '';
-    try { html = window.MinkaLevels && window.MinkaLevels.renderFatigueChart ? window.MinkaLevels.renderFatigueChart(monthLabel(state.month).toUpperCase()) : ''; } catch (_e) {}
-    return (html || empty('Noguruma modelim šim mēnesim nav datu.')) + note('Modeļa aprēķins no grafika un atpūtas laika. Tas nav cilvēka pašsajūta — to rāda sadaļa Pārskats.');
+  /* ── night ─────────────────────────────────────────────────────────────
+     Who takes which part of the night and which bed: the night panel's
+     all-time history (the /api/ns-stats summary it caches), plus this month's
+     night shifts from the schedule. */
+  var nightJob = null, nightTried = 0;
+  function nightStats() {
+    var c = readJson(NIGHT_STATS_KEY);
+    return c && c.data && c.data.parts && typeof c.data.parts === 'object' ? { data: c.data, at: Number(c.at) || 0 } : null;
+  }
+  function ensureNight() {
+    var have = nightStats();
+    if ((have && Date.now() - have.at < NIGHT_STATS_TTL) || nightJob || Date.now() - nightTried < 60000) return;
+    var api = null;
+    try { if (window.MinkaApi && window.MinkaApi.getToken && window.MinkaApi.getToken()) api = window.MinkaApi; } catch (_e) {}
+    try { if (!api && window.parent !== window && window.parent.MinkaApi && window.parent.MinkaApi.getToken()) api = window.parent.MinkaApi; } catch (_e) {}
+    if (!api || typeof api.apiFetch !== 'function') return;
+    nightTried = Date.now();
+    nightJob = Promise.resolve().then(function () { return api.apiFetch('/api/ns-stats'); })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data || !data.ok || !data.parts) return;
+        writeJson(NIGHT_STATS_KEY, { at: Date.now(), data: data });
+        if (modalOpen() && state.tab === 'night' && !state.day && !state.person) render();
+      }).catch(function () {}).then(function () { nightJob = null; });
+  }
+  function nightView(b) {
+    var got = nightStats(), st = got && got.data;
+    var groupOf = {};
+    shiftsAll().forEach(function (e) { groupOf[M.norm(e.name)] = e.group; });
+    // This month's nights from the schedule (a 24h shift includes the night).
+    var nightsBy = {};
+    b.s.shifts.forEach(function (e) { if (e.type === 'night' || e.type === '24h') nightsBy[e.name] = (nightsBy[e.name] || 0) + 1; });
+    var monthNights = Object.keys(nightsBy).map(function (n) { return { label: esc(shortName(n)), value: nightsBy[n], color: '#23cdcf' }; })
+      .sort(function (a, c) { return c.value - a.value || a.label.localeCompare(c.label, 'lv'); });
+    var tiles = '<div class="db-tiles db-tiles--3">'
+      + tile(monthNights.reduce(function (n, e) { return n + e.value; }, 0) || '—', 'Nakts maiņas', 'šomēnes grafikā', '#23cdcf')
+      + tile(st && st.nights ? st.nights : '—', 'Sadalītas naktis', 'visā vēsturē')
+      + tile(st ? Object.keys(st.parts).length : '—', 'Cilvēki', 'nakts vēsturē')
+      + '</div>';
+    var parts = '', beds = '';
+    if (st) {
+      var people = Object.keys(st.parts).map(function (name) {
+        var p = [0, 1, 2, 3].map(function (i) { return Math.max(0, Math.round(Number(st.parts[name] && st.parts[name][i]) || 0)); });
+        return { name: name, p: p, total: p[0] + p[1] + p[2] + p[3] };
+      }).filter(function (e) { return e.total && (state.group === 'all' || (groupOf[M.norm(e.name)] || 'rg') === state.group); })
+        .sort(function (a, c) { return c.total - a.total || a.name.localeCompare(c.name, 'lv'); });
+      parts = people.length ? capped('<div class="db-parts">', people.map(function (e) {
+        var max = Math.max.apply(null, e.p) || 1, fav = e.p.indexOf(Math.max.apply(null, e.p)) + 1;
+        var g = GROUP[groupOf[M.norm(e.name)] || 'rg'];
+        return '<div class="db-part-row">' + avatar(e.name, g.accent)
+          + '<span class="db-part-name"><b>' + esc(shortName(e.name)) + '</b><small>Parasti ' + fav + '. daļa, ' + e.total + ' naktis</small></span>'
+          + '<span class="db-part-bars">' + e.p.map(function (v, i) {
+            return '<i class="' + (i + 1 === fav ? 'is-fav' : '') + '" style="--h:' + Math.max(.08, v / max).toFixed(3) + '" title="' + (i + 1) + '. daļa: ' + v + '×"><b>' + v + '</b><em>' + (i + 1) + '.</em></i>';
+          }).join('') + '</span></div>';
+      }), '</div>', CAP) : empty('Šai grupai nakts sadalījuma vēstures nav.');
+      beds = '<div class="db-beds">' + BEDS.map(function (bed) {
+        var who = Object.keys(st.beds || {}).map(function (name) { return { name: name, n: Math.max(0, Number(st.beds[name] && st.beds[name][bed[0]]) || 0) }; })
+          .filter(function (e) { return e.n; }).sort(function (a, c) { return c.n - a.n; });
+        var total = who.reduce(function (n, e) { return n + e.n; }, 0);
+        return '<div class="db-bed"><span class="db-bed-name"><b>' + bed[1] + '</b>' + (bed[2] ? '<small>' + bed[2] + '</small>' : '') + '</span><span class="db-bed-total">' + (total || '—') + '<small>' + (total ? ' naktis' : '') + '</small></span>'
+          + '<span class="db-bed-who">' + (who.slice(0, 3).map(function (e) { return '<span>' + esc(shortName(e.name)) + '<b>' + e.n + '</b></span>'; }).join('') || '<span class="db-dim">nav datu</span>') + '</span></div>';
+      }).join('') + '</div>';
+    }
+    var loading = !st ? empty(nightJob ? 'Ielādē nakts vēsturi…' : 'Nakts vēsture vēl nav ielādēta — tā parādās pēc nakts sadalījuma atvēršanas.') : '';
+    return tiles
+      + section('Kurš kuru daļu ņem', 'visā vēsturē', loading || parts, '#23cdcf')
+      + (st ? section('Gultas', 'kurš kur guļ visbiežāk', beds, '#23cdcf') : '')
+      + section('Naktis šomēnes', monthLabel(state.month), bars(monthNights, null, CAP), '#23cdcf')
+      + note('Daļu un gultu skaits ir no nakts sadalījuma vēstures (visas naktis kopā, ne pa mēnešiem). Nakts maiņas — no grafika.');
+  }
+  /* Fatigue: the model's team curve for the month plus one row per person
+     (their month in a sparkline, mean and peak). Radiographers only, as the
+     model is built for them. */
+  var FAT_LOW = '#38bdf8', FAT_MID = '#f5b73f', FAT_HIGH = '#ff5c5c';
+  function fatColor(v) { return v >= 50 ? FAT_HIGH : v >= 30 ? FAT_MID : FAT_LOW; }
+  function sparkline(values, color) {
+    var n = values.length;
+    if (n < 2) return '';
+    var W = 120, H = 28;
+    var pts = values.map(function (v, i) { return (i / (n - 1) * W).toFixed(1) + ',' + (H - 2 - Math.max(0, Math.min(100, v)) / 100 * (H - 4)).toFixed(1); });
+    return '<svg class="db-spark" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true"><polyline points="' + pts.join(' ') + '" fill="none" stroke="' + color + '" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>';
+  }
+  function fatigueView(b) {
+    var L = window.MinkaLevels, label = monthLabel(state.month).toUpperCase();
+    var data = null, chart = '';
+    try { data = L && L.fatigueMonth ? L.fatigueMonth(label) : null; } catch (_e) {}
+    try { chart = L && L.renderFatigueChart ? L.renderFatigueChart(label, { bare: true }) : ''; } catch (_e) {}
+    if (!data || !chart) return empty('Noguruma modelim šim mēnesim nav datu.');
+    var mm = data.mm, past = data.todayIdx >= 0 ? data.todayIdx + 1 : data.daysIn;
+    var today = data.todayIdx >= 0 ? data.team[data.todayIdx] : null;
+    var people = data.names.map(function (name) {
+      var arr = (data.fatByDay[name] || []).slice(0, past);
+      var avg = arr.length ? arr.reduce(function (a, v) { return a + v; }, 0) / arr.length : 0;
+      var peak = 0, peakDay = 0;
+      arr.forEach(function (v, i) { if (v > peak) { peak = v; peakDay = i + 1; } });
+      return { name: name, arr: arr, avg: Math.round(avg), peak: Math.round(peak), peakDay: peakDay };
+    }).filter(function (p) { return p.arr.some(function (v) { return v > 0; }); })
+      .sort(function (a, c) { return c.avg - a.avg || c.peak - a.peak; });
+    var tiles = '<div class="db-tiles db-tiles--4">'
+      + tile(data.avg + '<small>%</small>', 'Vidēji', 'komandas mēneša vidējais', fatColor(data.avg))
+      + tile(data.peak + '<small>%</small>', 'Smagākā diena', data.peakDay + '.' + mm + '.', fatColor(data.peak))
+      + tile(today == null ? '—' : today + '<small>%</small>', 'Šodien', today == null ? 'cits mēnesis' : 'komanda', today == null ? '' : fatColor(today))
+      + tile((data.corr > 0 ? '+' : '') + data.corr + '<small>%</small>', 'Mēness', 'korelācija, pilnmēness ' + (data.fullIdx + 1) + '.' + mm + '.')
+      + '</div>';
+    var rows = people.length ? capped('<div class="db-fat">', people.map(function (p) {
+      var g = GROUP.rg, c = fatColor(p.avg);
+      return '<button type="button" class="db-fat-row" data-db-person="' + esc(p.name) + '">' + avatar(p.name, g.accent)
+        + '<span class="db-fat-name"><b>' + esc(shortName(p.name)) + '</b><small>Maksimums ' + p.peak + '% (' + p.peakDay + '.' + mm + '.)</small></span>'
+        + sparkline(p.arr, c)
+        + '<span class="db-fat-val" style="color:' + c + '"><b>' + p.avg + '%</b><small>vidēji</small></span></button>';
+    }), '</div>', CAP) : empty('Šomēnes nav noguruma datu.');
+    return tiles
+      + section('Komanda', 'radiogrāferi, dienas vidējais', chart, '#38bdf8')
+      + section('Cilvēki', 'mēneša līkne, vidējais un maksimums', rows, '#38bdf8')
+      + note('Modeļa aprēķins no grafika un atpūtas laika. Tas nav cilvēka pašsajūta, to rāda sadaļa Pārskats. Mēness līkne ir joks, ne zinātne.');
   }
   function personView(b) {
     var name = state.person, s = summaryFor(b.range, name, 'all');
@@ -729,6 +864,13 @@
     var r = el.getBoundingClientRect(), b = chrome.body.getBoundingClientRect();
     return { x: r.left + r.width / 2 - b.left, y: r.top + r.height / 2 - b.top };
   }
+  // A caller may ask for a tab when opening (the mood card's month line):
+  // window.__mkStatsOpenTab is read once.
+  function openTab() {
+    var want = String(window.__mkStatsOpenTab || '');
+    window.__mkStatsOpenTab = '';
+    return TABS.some(function (t) { return t[0] === want; }) ? want : 'overview';
+  }
   function render(kind, info) {
     var wrap = document.getElementById('stats-table-wrap');
     if (!wrap) return;
@@ -736,7 +878,7 @@
     if (!state.month || !modalOpen()) {
       // Opening: start from the day selected in the calendar.
       state.month = D.selectedDay().slice(0, 7);
-      state.person = ''; state.day = ''; state.tab = 'overview';
+      state.person = ''; state.day = ''; state.tab = openTab();
       ratingsFailed = {}; coffee.failed = {};
       scrollMemo = { list: 0, from: null };
       wrap.scrollTop = 0;
@@ -765,7 +907,8 @@
     else if (state.tab === 'bolus') body = bolusView(b);
     else if (state.tab === 'radio') body = radioView(b);
     else if (state.tab === 'coffee') body = coffeeView(b);
-    else if (state.tab === 'fatigue') body = fatigueView();
+    else if (state.tab === 'night') body = nightView(b);
+    else if (state.tab === 'fatigue') body = fatigueView(b);
     else body = overview(b);
     var inner = loadingError(b.range) + body;
     if (typeof wrap.querySelector !== 'function') {
@@ -795,6 +938,7 @@
       ensureRatings(elapsedDays(b.rows, b.today).map(function (r) { return r.day; }));
     }
     ensureRadio(state.month);
+    if (state.tab === 'night' && !state.day && !state.person) ensureNight();
     // Coffee days come from the API on demand; opening the stats (or a month)
     // pulls the month's missing days, a day view pulls its own day.
     var coffeeDays = state.day ? [state.day] : elapsedDays(b.rows, b.today).map(function (r) { return r.day; });
@@ -823,6 +967,8 @@
     var wrap = e.target.closest('#stats-table-wrap');
     if (!wrap) return;
     if (e.target.closest('[data-db-retry]')) { retryFailed(); return; }
+    var more = e.target.closest('[data-db-more]');
+    if (more) { var cap = more.closest('.db-cap'); if (cap) cap.classList.add('is-open'); return; }
     var t;
     if ((t = e.target.closest('[data-db-nav]'))) { var dir = +t.dataset.dbNav; state.month = shiftMonth(state.month, dir); state.day = ''; render('month', { dir: dir }); return; }
     if ((t = e.target.closest('[data-db-group]'))) { if (state.group === t.dataset.dbGroup) return; state.group = t.dataset.dbGroup; render('filter'); return; }

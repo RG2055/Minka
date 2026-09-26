@@ -394,6 +394,123 @@
       + '<span class="rg-trend-plot">' + faces + '<svg class="rg-trend-svg" viewBox="0 0 280 44" aria-hidden="true" focusable="false"></svg></span>'
       + '</button>';
   }
+  /* ── Mēnesis vienā klusā rindā: kafija, radio, bolus ─────────────────
+     Skaitļi no tā, kas jau ir šajā ierīcē (kafijas dienas, bolusa vēsture,
+     radio ieraksti + viens /api/radio pieprasījums mēnesī ik pēc 30 min).
+     Katrs skaitlis atver statistiku uz savas cilnes. */
+  function moodMonthMarkup() {
+    return '<div class="rg-month" data-rg-month aria-label="Šis mēnesis">'
+      + ['coffee', 'radio', 'bolus'].map(function (k) {
+        return '<button type="button" class="rg-month-item rg-month-item--' + k + '" data-rg-month-tab="' + k + '"><b>—</b><span></span><small></small></button>';
+      }).join('') + '</div>';
+  }
+  var monthRadio = { key: '', at: 0, days: [], busy: false };
+  function monthRadioFetch(range) {
+    var base = String(window.MINKA_FEEDBACK_API_BASE || '').replace(/\/$/, '');
+    if (!base || monthRadio.busy || (monthRadio.key === range.from && Date.now() - monthRadio.at < 30 * 60000)) return;
+    monthRadio.busy = true;
+    fetch(base + '/api/radio?from=' + range.from + '&to=' + range.to, { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { if (d && d.ok) { monthRadio.days = d.days || []; monthRadio.key = range.from; monthRadio.at = Date.now(); paintMonth(true); } })
+      .catch(function () { monthRadio.at = Date.now(); monthRadio.key = range.from; })
+      .then(function () { monthRadio.busy = false; });
+  }
+  // Past days of this month the coffee store does not have yet, fetched once
+  // per page load, two at a time, while the page is idle.
+  var monthCoffeeTried = {};
+  function monthCoffeeFill(range, today) {
+    var M = window.MinkaDaybookModel;
+    var base = String(window.MINKA_COFFEE_API_BASE || 'https://minka-coffee-api.gamernr1elite.workers.dev').replace(/\/+$/, '');
+    var store = readJson('minkaCoffeeCountsV1', {});
+    var todo = [];
+    for (var d = new Date(range.from + 'T12:00:00Z'); d.toISOString().slice(0, 10) < today; d.setUTCDate(d.getUTCDate() + 1)) {
+      var iso = d.toISOString().slice(0, 10), key = iso.slice(8) + '.' + iso.slice(5, 7) + '.' + iso.slice(0, 4);
+      if (!Object.prototype.hasOwnProperty.call(store, key) && !monthCoffeeTried[key]) todo.push(key);
+    }
+    if (!M || !todo.length) return;
+    todo.forEach(function (k) { monthCoffeeTried[k] = true; });
+    var i = 0;
+    function next() {
+      if (i >= todo.length || document.hidden) return Promise.resolve();
+      var key = todo[i++];
+      return fetch(base + '/api/coffee?date=' + key, { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (v) {
+        if (!v || !v.ok) return;
+        var all = readJson('minkaCoffeeCountsV1', {}); all[key] = v.counts || {}; writeJson('minkaCoffeeCountsV1', all);
+        var det = readJson('minkaCoffeeDetailsV1', {}); det[key] = v.details || {}; writeJson('minkaCoffeeDetailsV1', det);
+      }).catch(function () {}).then(next);
+    }
+    Promise.all([next(), next()]).then(function () { paintMonth(true); });
+  }
+  function monthNumbers() {
+    var M = window.MinkaDaybookModel;
+    if (!M || !M.dutyDay) return null;
+    var today = M.dutyDay(), range = M.monthRange(today.slice(0, 7));
+    var inMonth = function (day) { return day && day >= range.from && day <= range.to && day <= today; };
+    var coffee = readJson('minkaCoffeeCountsV1', {}), cups = 0, people = {};
+    Object.keys(coffee).forEach(function (key) {
+      if (!inMonth(M.day(key))) return;
+      Object.keys(coffee[key] || {}).forEach(function (name) {
+        var n = Math.max(0, Number(coffee[key][name]) || 0);
+        if (n) { cups += n; people[M.norm(name)] = true; }
+      });
+    });
+    // Station → days it played this month; the line shows the favourite.
+    var stations = {}, seenDay = {};
+    var addStation = function (day, name) {
+      if (!inMonth(day) || !name) return;
+      var k = M.norm(name), dk = day + '|' + k;
+      if (seenDay[dk]) return;
+      seenDay[dk] = true;
+      (stations[k] || (stations[k] = { name: String(name).trim(), days: 0 })).days++;
+    };
+    (readJson('minkaShiftRadioV1', []) || []).forEach(function (e) { addStation(e && e.day, e && e.name); });
+    if (monthRadio.key === range.from) monthRadio.days.forEach(function (e) { addStation(e.day, e.station); });
+    var bolus = 0, ge = 0;
+    try {
+      M.bolus(readJson('minkaBolusHistoryV1', {})).forEach(function (e) {
+        if (!inMonth(e.day)) return;
+        bolus++;
+        if (e.room === 'ge') ge++;
+      });
+    } catch (_e) {}
+    var top = Object.keys(stations).map(function (k) { return stations[k]; }).sort(function (a, b) { return b.days - a.days; })[0] || null;
+    return { range: range, today: today, cups: cups, drinkers: Object.keys(people).length, stations: Object.keys(stations).length, top: top, bolus: bolus, ge: ge, philips: bolus - ge };
+  }
+  var monthFillQueued = false, monthMemo = null;
+  // Called on every mood repaint (day switches too): the stores are parsed at
+  // most every few seconds; fresh data passes fresh=true.
+  function paintMonth(fresh) {
+    var row = list && list.querySelector('[data-rg-month]');
+    if (!row) return;
+    if (fresh === true || !monthMemo || Date.now() - monthMemo.at > 5000) {
+      var computed = monthNumbers();
+      // The model script loads deferred: until it is there, nothing is cached.
+      monthMemo = computed ? { at: Date.now(), n: computed } : null;
+    }
+    var n = monthMemo && monthMemo.n;
+    if (!n) return;
+    var set = function (k, value, label, detail, title) {
+      var b = row.querySelector('[data-rg-month-tab="' + k + '"]');
+      if (!b) return;
+      var num = String(value || '—');
+      if (b.children[0].textContent !== num) b.children[0].textContent = num;
+      if (b.children[1].textContent !== label) b.children[1].textContent = label;
+      if (b.children[2].innerHTML !== detail) b.children[2].innerHTML = detail;
+      b.title = title;
+    };
+    set('coffee', n.cups, 'kafijas šomēnes', '', 'Šomēnes izdzertas ' + n.cups + ' kafijas. Atvērt statistiku');
+    set('radio', n.top ? n.top.name : '', n.top ? 'biežākā stacija' : 'radio šomēnes', '', n.top ? 'Šomēnes biežāk skanēja ' + n.top.name + ' (' + n.top.days + ' dienas), kopā ' + n.stations + ' stacijas. Atvērt statistiku' : 'Radio šomēnes nav skanējis');
+    // Bolus: GE against Philips as one split bar under the number.
+    var share = n.bolus ? (n.ge / n.bolus).toFixed(3) : '0.5';
+    set('bolus', n.bolus, 'bolusa maiņas', n.bolus ? '<i class="rg-month-split" style="--ge:' + share + '" aria-hidden="true"></i><em>GE ' + n.ge + '</em><em>Ph ' + n.philips + '</em>' : '', 'Šomēnes ' + n.bolus + ' bolusa maiņas: GE ' + n.ge + ', Philips ' + n.philips + '. Atvērt statistiku');
+    monthRadioFetch(n.range);
+    if (!monthFillQueued) {
+      monthFillQueued = true;
+      var go = function () { monthCoffeeFill(n.range, n.today); };
+      if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 8000 }); else setTimeout(go, 4000);
+    }
+  }
+
   function moodBlobMarkup() {
     var base = moodVisuals._none;
     var facePath = function (part) {
@@ -458,12 +575,10 @@
       + '<b data-rg-fatigue-num>0%</b></span>'
       + '<span class="rg-mood-side-label">Nogurums</span></span>'
       + '<span class="rg-mood-side rg-mood-side--right">'
-      + '<span class="rg-mood-pill rg-mood-pill--coffee" data-rg-chip="coffee">'
+      // The shift's coffee pill is itself the way into the coffee statistics.
+      + '<span class="rg-mood-pill rg-mood-pill--coffee" data-rg-chip="coffee" data-rg-coffee-open role="button" tabindex="0" title="Kafijas statistika">'
       + moodPillCupSvg() + '<b data-rg-coffee-num>0</b></span>'
       + '<span class="rg-mood-side-label" title="Šīs dežūras kafija">Dežūrā</span>'
-      + '<button class="rg-mood-topbtn" type="button" data-rg-topbtn hidden'
-      + ' title="Kafijas statistika">' + moodTopSvg()
-      + '<span>Kafijas<br>statistika</span></button>'
       + '</span>'
       + '<span class="rg-mood-label">' + (base.label || '&nbsp;') + '</span>'
       + '</div>';
@@ -484,15 +599,6 @@
       + '<path fill="currentColor" d="M2.6 5.6h11v7.6a3.6 3.6 0 0 1-3.6 3.6H6.2a3.6 3.6 0 0 1-3.6-3.6V5.6Z"></path>'
       + '<path fill="none" stroke="currentColor" stroke-width="1.7" d="M14.2 7.6h1.1a2.6 2.6 0 0 1 0 5.2h-1.1"></path>'
       + '<path fill="currentColor" opacity=".45" d="M4.4 3.1a1 1 0 0 1 1 1v.6h-2v-.6a1 1 0 0 1 1-1Zm3.6 0a1 1 0 0 1 1 1v.6h-2v-.6a1 1 0 0 1 1-1Zm3.6 0a1 1 0 0 1 1 1v.6h-2v-.6a1 1 0 0 1 1-1Z"></path>'
-      + '</svg>';
-  }
-  // The old pixel-art mark was unreadable at this size. Three rising bars is
-  // the plainest "statistics" symbol there is.
-  function moodTopSvg() {
-    return '<svg viewBox="0 0 20 20" aria-hidden="true" fill="currentColor">'
-      + '<rect x="2" y="11" width="4" height="7" rx="1.2"></rect>'
-      + '<rect x="8" y="7" width="4" height="11" rx="1.2"></rect>'
-      + '<rect x="14" y="3" width="4" height="15" rx="1.2"></rect>'
       + '</svg>';
   }
   function moodInitials(name) {
@@ -750,7 +856,7 @@
         return box.l < other.r && other.l < box.r && box.t < other.b && other.t < box.b;
       });
     }
-    card.querySelectorAll('.rg-feedback-card-title, .rg-mood-side, .rg-mood-topbtn, .rg-mood-label, .rg-mood-now, .rg-pulse-taps, .rg-trend, .rg-feedback-card-actions, .rg-bmc-qrblock')
+    card.querySelectorAll('.rg-feedback-card-title, .rg-mood-side, .rg-mood-label, .rg-mood-now, .rg-pulse-taps, .rg-trend, .rg-month, .rg-feedback-card-actions, .rg-bmc-qrblock')
       .forEach(function (node) {
         var protectedText = node.classList.contains('rg-mood-label') || node.classList.contains('rg-mood-now') || node.classList.contains('rg-feedback-card-title');
         var box = nodeBox(node, protectedText ? 12 : 6);
@@ -967,7 +1073,7 @@
     people.forEach(function (person) {
       addOccupied(person, Math.max(8, person.getBoundingClientRect().width * .18));
     });
-    card.querySelectorAll('.rg-feedback-card-title, .rg-mood-side, .rg-mood-topbtn, .rg-mood-label, .rg-mood-now, .rg-pulse-taps, .rg-trend, .rg-feedback-card-actions, .rg-bmc-qrblock')
+    card.querySelectorAll('.rg-feedback-card-title, .rg-mood-side, .rg-mood-label, .rg-mood-now, .rg-pulse-taps, .rg-trend, .rg-month, .rg-feedback-card-actions, .rg-bmc-qrblock')
       .forEach(function (node) { addOccupied(node, 4); });
     addOccupied(blob, 4);
     function collidesWith(box, boxes) {
@@ -1136,6 +1242,28 @@
     });
     ring.replaceChildren(fragment);
     placeMoodStaff(ring);
+    watchMoodGeometry(ring);
+  }
+  /* The ring is solved against the card's furniture (title, pills, curve,
+     month line, rating row). When any of those changes size after the solve
+     (fonts, late data, the curve), solve again: a bubble must never end up on
+     top of text. Size changes only, debounced; nothing runs per frame. */
+  var moodGeometryObserver = null, moodGeometryTimer = 0, moodGeometryCard = null;
+  function watchMoodGeometry(ring) {
+    var card = ring && ring.closest('.rg-feedback-card');
+    if (!card || typeof ResizeObserver !== 'function' || card === moodGeometryCard) return;
+    if (moodGeometryObserver) moodGeometryObserver.disconnect();
+    moodGeometryCard = card;
+    var first = true;
+    moodGeometryObserver = new ResizeObserver(function () {
+      if (first) { first = false; return; }          // the initial report is the solve we just did
+      clearTimeout(moodGeometryTimer);
+      moodGeometryTimer = setTimeout(function () {
+        var refs = moodRefs();
+        if (refs && refs.ring && refs.ring.firstChild && refs.ring.isConnected) placeMoodStaff(refs.ring);
+      }, 120);
+    });
+    card.querySelectorAll('.rg-feedback-card-main, .rg-trend, .rg-month, .rg-pulse-taps, .rg-mood-stage').forEach(function (node) { moodGeometryObserver.observe(node); });
   }
   // Every source gets its own place all the way around the blob — nothing is
   // ever collapsed into a "+N". Depth is what makes it read as an orbit rather
@@ -1166,6 +1294,7 @@
   function paintMoodCoffee(force) {
     var refs = moodRefs();
     if (!refs) return;
+    paintMonth();
     var stats = moodStats(force);
     var coffeeTotal = stats.total === null ? 0 : Math.max(0, Number(stats.total) || 0);
     var coffeeFill = coffeeTotal > 0 ? Math.min(28, 8 + Math.log(coffeeTotal + 1) / Math.LN2 * 5.5) : 0;
@@ -1191,11 +1320,9 @@
         }, 760);
       });
     }
-    var button = refs.topbtn;
-    if (button) button.hidden = !(stats.top.length || stats.total !== null);
     // Mount the fixed side furniture before measuring the scatter field. If it
     // is revealed afterwards, a perfectly valid coffee position can suddenly
-    // sit under the counter or statistics button.
+    // sit under the counter.
     var preCoffee = refs.chips.coffee;
     if (preCoffee) {
       preCoffee.classList.toggle('is-mounted', stats.total !== null);
@@ -1258,7 +1385,7 @@
       });
     };
     card.querySelectorAll('.rg-feedback-card-title, .rg-mood-pill, .rg-mood-side-label,'
-      + ' .rg-mood-topbtn, .rg-pulse-taps, .rg-trend, .rg-feedback-card-actions, .rg-bmc-qrblock').forEach(function (node) {
+      + ' .rg-pulse-taps, .rg-trend, .rg-month, .rg-feedback-card-actions, .rg-bmc-qrblock').forEach(function (node) {
       add(node.getBoundingClientRect(), 5, 5);
     });
     var label = card.querySelector('.rg-mood-label');
@@ -1326,7 +1453,6 @@
         label: stage.querySelector('.rg-mood-label'),
         ring: stage.querySelector('[data-rg-ring]'),
         top: stage.querySelector('[data-rg-top]'),
-        topbtn: stage.querySelector('[data-rg-topbtn]'),
         chips: {
           coffee: stage.querySelector('[data-rg-chip="coffee"]'),
           fatigue: stage.querySelector('[data-rg-chip="fatigue"]')
@@ -1709,7 +1835,7 @@
       pulse.setAttribute('aria-label', 'Novērtē maiņu');
       pulse.innerHTML = '<div class="rg-feedback-cloud" aria-hidden="true"></div><div class="rg-feedback-card-head-spacer" aria-hidden="true"></div>'
         + '<div class="rg-feedback-card-main"><strong class="rg-feedback-card-title">Novērtē maiņu</strong>'
-        + moodBlobMarkup() + moodTrendMarkup()
+        + moodBlobMarkup() + moodTrendMarkup() + moodMonthMarkup()
         + '<span class="rg-pulse-taps" role="group" aria-label="Ātrās reakcijas">' + reactionButtons() + '</span>'
         + '<small class="rg-feedback-card-reaction-label" aria-live="polite">Izvēlies sajūtu</small></div>'
         + '<div class="rg-feedback-card-actions"><button class="rg-pulse-write rg-pulse-write--comment" type="button" data-rg-write="comment" title="Atvērt komentārus"><b class="rg-comment-icon" aria-hidden="true"></b><span>Komentāri</span><small class="rg-feedback-action-count" data-rg-action-count="comment"></small></button></div>'
@@ -1719,6 +1845,7 @@
     window.MinkaDaybook?.enhance(pulse);
     if (!deferLayout) scheduleMoodSectionLayout();
     if (!skipMoodPaint) paintCounts();
+    paintMonth();
     // A selected-day render already has one forced refresh queued by the
     // daySelected listener below. Avoid issuing the same API request twice.
     if (!skipRatings) loadRatings(shiftDayKey());
@@ -3322,10 +3449,20 @@
   // and rolls back on leave; only the real click commits anything.
   // Opens the shell's own coffee statistics panel — the one with the per-person
   // and per-day views — instead of a second, poorer copy inside this card.
+  // Month line: each number opens the statistics on its own tab.
   list.addEventListener('click', function (event) {
-    var button = event.target.closest('[data-rg-topbtn]');
-    if (!button) return;
+    var item = event.target.closest('[data-rg-month-tab]');
+    if (!item || typeof window.openStatsModal !== 'function') return;
     event.preventDefault();
+    window.__mkStatsOpenTab = item.dataset.rgMonthTab;
+    window.openStatsModal({ from: item });
+  });
+  if (document.readyState === 'complete') setTimeout(function () { paintMonth(true); }, 0);
+  else window.addEventListener('load', function () { paintMonth(true); }, { once: true });
+  window.addEventListener('storage', function (event) {
+    if (/^(minkaCoffeeCountsV1|minkaBolusHistoryV1|minkaShiftRadioV1)$/.test(event.key || '')) paintMonth(true);
+  });
+  function openCoffeeStats(button) {
     var rect = button.getBoundingClientRect();
     try {
       window.parent.postMessage({
@@ -3333,6 +3470,19 @@
         rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height }
       }, window.location.origin);
     } catch (_error) {}
+  }
+  list.addEventListener('click', function (event) {
+    var button = event.target.closest('[data-rg-coffee-open]');
+    if (!button) return;
+    event.preventDefault();
+    openCoffeeStats(button);
+  });
+  list.addEventListener('keydown', function (event) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    var button = event.target.closest && event.target.closest('[data-rg-coffee-open]');
+    if (!button) return;
+    event.preventDefault();
+    openCoffeeStats(button);
   });
   list.addEventListener('pointerover', function (event) {
     var tap = event.target.closest('[data-rg-pulse]');

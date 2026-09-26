@@ -640,8 +640,11 @@
     return l;
   }
 
-  function buildFatigueChart(monthStats, activeMonth) {
-    if (!window.__fatigue || !window.__fatigue.gatherWorkerHistory) return '';
+  // Team fatigue for one month: per-person running values (fatByDay), the
+  // team mean per day, the moon curve and the summary numbers. The chart and
+  // the statistics' fatigue tab both read it.
+  function _fatigueMonthData(monthStats, activeMonth) {
+    if (!window.__fatigue || !window.__fatigue.gatherWorkerHistory) return null;
     // Diacritic-insensitive month match (precomposed vs combining safety).
     var _strip = function(s) { return s.normalize('NFD').replace(/[̀-ͯ]/g, ''); };
     var amUp = _strip(String(activeMonth || '').toUpperCase());
@@ -655,7 +658,7 @@
     var people = Object.values(monthStats).filter(function(person) { return person.isRad !== true; });
     if (!people.length) people = Object.values(monthStats);
     var names = Array.from(new Set(people.map(function(person) { return person.name; }).filter(Boolean)));
-    if (!year || !mm || !names.length) return '';
+    if (!year || !mm || !names.length) return null;
 
     var daysIn = new Date(year, mm, 0).getDate();
     var eventsByDay = {};
@@ -718,9 +721,19 @@
     var todayIdx = -1;
     var nowD = new Date();
     if (nowD.getFullYear() === year && nowD.getMonth() === mm - 1) todayIdx = nowD.getDate() - 1;
+    return { year: year, mm: mm, daysIn: daysIn, names: names, fatByDay: fatByDay, team: team, moon: moon, avg: avg, peak: peak, peakDay: peakDay, fullIdx: fullIdx, corr: corr, todayIdx: todayIdx };
+  }
+
+  // opts.bare: only the chart card (the statistics tab shows the numbers itself).
+  function buildFatigueChart(monthStats, activeMonth, opts) {
+    var D = _fatigueMonthData(monthStats, activeMonth);
+    if (!D) return '';
+    opts = opts || {};
+    var year = D.year, mm = D.mm, daysIn = D.daysIn, team = D.team, moon = D.moon;
+    var avg = D.avg, peak = D.peak, peakDay = D.peakDay, fullIdx = D.fullIdx, corr = D.corr, todayIdx = D.todayIdx;
 
     // ── SVG ── (own tab now, so it can be properly tall)
-    var W = 640, H = 330, padL = 30, padR = 12, padT = 18, padB = 26;
+    var W = 640, H = opts.bare ? 240 : 330, padL = 30, padR = 12, padT = 18, padB = 26;
     var gW = W - padL - padR, gH = H - padT - padB;
     var xp = function(i) { return padL + (i / (daysIn - 1)) * gW; };
     var yp = function(v) { return padT + gH - (v / 100) * gH; };
@@ -742,16 +755,16 @@
 
     // Y zones: faint danger tint up high + zone labels (Zems / Vidējs / Augsts).
     var zones =
-      '<rect x="' + padL + '" y="' + yp(100).toFixed(1) + '" width="' + gW + '" height="' + (gH * 0.25).toFixed(1) + '" fill="rgba(244,114,182,0.05)"/>' +
-      '<rect x="' + padL + '" y="' + yp(50).toFixed(1) + '" width="' + gW + '" height="' + (gH * 0.25).toFixed(1) + '" fill="rgba(129,140,248,0.03)"/>';
+      '<rect x="' + padL + '" y="' + yp(100).toFixed(1) + '" width="' + gW + '" height="' + (gH * 0.25).toFixed(1) + '" fill="rgba(255,92,92,0.05)"/>' +
+      '<rect x="' + padL + '" y="' + yp(50).toFixed(1) + '" width="' + gW + '" height="' + (gH * 0.25).toFixed(1) + '" fill="rgba(245,183,63,0.03)"/>';
     var grid = '';
     [25, 50, 75].forEach(function(v) {
       grid += '<line x1="' + padL + '" y1="' + yp(v).toFixed(1) + '" x2="' + (padL + gW) + '" y2="' + yp(v).toFixed(1) + '" stroke="rgba(255,255,255,0.05)" stroke-width="0.5" stroke-dasharray="3 4"/>'
         + '<text x="' + (padL - 5) + '" y="' + (yp(v) + 3).toFixed(1) + '" text-anchor="end" fill="rgba(255,255,255,0.2)" font-size="8" font-family="Inter,system-ui,sans-serif">' + v + '</text>';
     });
     var zoneLabels =
-      '<text x="' + (padL + gW - 2) + '" y="' + (yp(88)).toFixed(1) + '" text-anchor="end" fill="rgba(244,114,182,0.45)" font-size="7.5" font-weight="700" font-family="Inter,system-ui,sans-serif" letter-spacing="0.5">AUGSTS</text>' +
-      '<text x="' + (padL + gW - 2) + '" y="' + (yp(12)).toFixed(1) + '" text-anchor="end" fill="rgba(125,211,252,0.4)" font-size="7.5" font-weight="700" font-family="Inter,system-ui,sans-serif" letter-spacing="0.5">ZEMS</text>';
+      '<text x="' + (padL + gW - 2) + '" y="' + (yp(88)).toFixed(1) + '" text-anchor="end" fill="rgba(255,92,92,0.55)" font-size="7.5" font-weight="700" font-family="Inter,system-ui,sans-serif" >Augsts</text>' +
+      '<text x="' + (padL + gW - 2) + '" y="' + (yp(12)).toFixed(1) + '" text-anchor="end" fill="rgba(125,211,252,0.4)" font-size="7.5" font-weight="700" font-family="Inter,system-ui,sans-serif" >Zems</text>';
 
     // X-axis: a tick + "D.M" label on every Monday — easier to anchor dates.
     var xLabels = '';
@@ -765,16 +778,16 @@
     var todayMark = todayIdx >= 0
       ? '<line x1="' + xp(todayIdx).toFixed(1) + '" y1="' + padT + '" x2="' + xp(todayIdx).toFixed(1) + '" y2="' + (padT + gH) + '" stroke="rgba(56,189,248,0.4)" stroke-width="1" stroke-dasharray="2 3"/>'
         + '<rect x="' + (xp(todayIdx) - 2.6).toFixed(1) + '" y="' + (yp(team[todayIdx]) - 2.6).toFixed(1) + '" width="5.2" height="5.2" fill="#7dd3fc"/>'
-        + '<text x="' + xp(todayIdx).toFixed(1) + '" y="' + (padT - 5) + '" text-anchor="middle" fill="rgba(125,211,252,0.8)" font-size="7.5" font-weight="700" font-family="Inter,system-ui,sans-serif">ŠODIEN</text>'
+        + '<text x="' + xp(todayIdx).toFixed(1) + '" y="' + (padT - 5) + '" text-anchor="middle" fill="rgba(125,211,252,0.8)" font-size="7.5" font-weight="700" font-family="Inter,system-ui,sans-serif">Šodien</text>'
       : '';
     // Full moon: pixel-square marker on the moon curve (echoes the pixel logo)
     var fullMark =
       '<rect x="' + (xp(fullIdx) - 2.8).toFixed(1) + '" y="' + (yp(moon[fullIdx]) - 2.8).toFixed(1) + '" width="5.6" height="5.6" fill="#c4cad2"/>'
       + '<text x="' + xp(fullIdx).toFixed(1) + '" y="' + (yp(moon[fullIdx]) - 7).toFixed(1) + '" text-anchor="middle" fill="rgba(196,202,210,0.75)" font-size="7.5" font-family="Inter,system-ui,sans-serif">🌕 ' + (fullIdx + 1) + '.' + mm + '</text>';
     // Peak fatigue: pixel square in the danger colour
-    var peakMark = '<rect x="' + (xp(peakDay - 1) - 2.6).toFixed(1) + '" y="' + (yp(peak) - 2.6).toFixed(1) + '" width="5.2" height="5.2" fill="#f472b6"/>';
+    var peakMark = '<rect x="' + (xp(peakDay - 1) - 2.6).toFixed(1) + '" y="' + (yp(peak) - 2.6).toFixed(1) + '" width="5.2" height="5.2" fill="#ff5c5c"/>';
 
-    return '<div class="mk-stx-fat">' +
+    return '<div class="mk-stx-fat' + (opts.bare ? ' is-bare' : '') + '">' + (opts.bare ? '' :
       '<div class="mk-stx-sechead" style="margin-bottom:10px;">' +
         '<div class="lbl"><span class="dot" style="background:#38bdf8;box-shadow:0 0 0 4px rgba(56,189,248,.13);"></span>Nogurums radiogrāferi — ' + escapeAttr(activeMonth) + '</div>' +
         '<div class="line"></div>' +
@@ -783,20 +796,20 @@
           '<i class="lg-moon"></i><span>Mēness</span>' +
           '<i class="lg-full"></i><span>Pilnmēness</span>' +
         '</div>' +
-      '</div>' +
+      '</div>') +
       '<div class="mk-stx-fat-card">' +
         '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" style="width:100%;height:' + H + 'px;display:block;">' +
           '<defs>' +
             // Curve colour ramps with the actual fatigue value (mapped in user
             // space): calm ice-blue low → indigo → pink alert high.
             '<linearGradient id="stxFatLine" gradientUnits="userSpaceOnUse" x1="0" y1="' + padT.toFixed(1) + '" x2="0" y2="' + (padT + gH).toFixed(1) + '">' +
-              '<stop offset="0%" stop-color="#f472b6"/>' +
-              '<stop offset="28%" stop-color="#a78bfa"/>' +
+              '<stop offset="0%" stop-color="#ff5c5c"/>' +
+              '<stop offset="28%" stop-color="#f5b73f"/>' +
               '<stop offset="52%" stop-color="#38bdf8"/>' +
               '<stop offset="100%" stop-color="#7dd3fc"/>' +
             '</linearGradient>' +
             '<linearGradient id="stxFatArea" gradientUnits="userSpaceOnUse" x1="0" y1="' + padT.toFixed(1) + '" x2="0" y2="' + (padT + gH).toFixed(1) + '">' +
-              '<stop offset="0%" stop-color="rgba(244,114,182,0.22)"/>' +
+              '<stop offset="0%" stop-color="rgba(255,92,92,0.20)"/>' +
               '<stop offset="55%" stop-color="rgba(56,189,248,0.12)"/>' +
               '<stop offset="100%" stop-color="rgba(125,211,252,0)"/>' +
             '</linearGradient>' +
@@ -808,12 +821,12 @@
           '<path d="' + teamPath + '" fill="none" stroke="url(#stxFatLine)" stroke-width="2.4" stroke-linecap="round"/>' +
           todayMark + fullMark + peakMark +
         '</svg>' +
-        '<div class="mk-stx-fat-stats">' +
+        (opts.bare ? '' : '<div class="mk-stx-fat-stats">' +
           '<span>VIDĒJI <b>' + avg + '%</b></span>' +
           '<span>MAX <b>' + peak + '%</b> (' + peakDay + '.' + mm + ')</span>' +
           '<span>PILNMĒNESS <b>' + (fullIdx + 1) + '.' + mm + '</b></span>' +
           '<span title="Pīrsona korelācija starp komandas nogurumu un mēness gaismu">MĒNESS KORELĀCIJA <b>' + (corr > 0 ? '+' : '') + corr + '%</b></span>' +
-        '</div>' +
+        '</div>') +
       '</div>' +
     '</div>';
   }
@@ -1051,9 +1064,14 @@
 
     // The daybook statistics view embeds the fatigue chart for any month label
     // ("SEPTEMBRIS 2026"), not only the calendar's active one.
-    renderFatigueChart: function(monthLabel) {
+    renderFatigueChart: function(monthLabel, opts) {
       var label = monthLabel || window.__activeMonth || '';
-      return label ? buildFatigueChart(buildMonthStats(label), label) : '';
+      return label ? buildFatigueChart(buildMonthStats(label), label, opts) : '';
+    },
+    // Numbers behind the chart (team mean, per-person values) for one month.
+    fatigueMonth: function(monthLabel) {
+      var label = monthLabel || window.__activeMonth || '';
+      return label ? _fatigueMonthData(buildMonthStats(label), label) : null;
     },
 
     injectIntoStats: function() {

@@ -161,6 +161,16 @@
   var NS_STATS_TIMEOUT=15000;
   var NS_BED_LABEL={main_left_top:'Galvenā · augšā',main_left_bottom:'Galvenā · apakšā',main_right_top:'Galvenā · pa labi',nmp_center:'Jaunais NMP'};
 
+  // Header icon: the dock's own Nakts icon in the chosen icon set (one icon
+  // everywhere); the RG mark only when the shell is not there to ask.
+  function nsHeadIcon(){
+    var icon='';
+    try{ if(window.parent!==window && window.parent.__mkDockIcon) icon=window.parent.__mkDockIcon('nsToggleBtnParent'); }catch(_e){}
+    return icon
+      ? '<span class="ns-brand-mark ns-dock-icon" aria-hidden="true">'+icon+'</span>'
+      : '<img class="ns-brand-mark" src="../data/rg-brand.svg?v=20260924d1" width="35" height="35" alt="" aria-hidden="true">';
+  }
+
   function nsValidStats(data){
     return !!(data && data.ok && data.parts && typeof data.parts==='object' && !Array.isArray(data.parts));
   }
@@ -1286,13 +1296,45 @@
       window.mkApplySkinToEl(el, window.mkGetWorkerSkin(worker));
     });
   }
+  /* The last part of the night does the morning round: bolus check, orange
+     bags, CT/RTG restart and calibration. Three small flat illustrations in
+     the bolus device's own palette (dark/light blue, yellow, white; the bag is orange), one bar
+     like the fatigue bar above, each with a two-line label. */
+  var NS_TASK_ICONS={
+    bolus:'<svg viewBox="0 0 24 28" aria-hidden="true">'
+      +'<rect x="1.5" y="3" width="6.5" height="10" rx="2" fill="#1f5fb4"/><rect x="3" y="4.6" width="3.5" height="5.4" rx="1.1" fill="#f2c14e"/>'
+      +'<rect x="16" y="3" width="6.5" height="10" rx="2" fill="#1f5fb4"/><rect x="17.5" y="4.6" width="3.5" height="5.4" rx="1.1" fill="#f2c14e"/>'
+      +'<rect x="9.6" y=".6" width="4.8" height="12" rx="2" fill="#4fb3e3"/><circle cx="12" cy="5" r="1.5" fill="none" stroke="#123b6b" stroke-width=".9"/>'
+      +'<path d="M2 12.5h20l-1.4 7H3.4z" fill="#eef2f5"/><path d="M4.8 12.5c0 3 2.8 4 7.2 4.4 4.4-.4 7.2-1.4 7.2-4.4" fill="none" stroke="#f2c14e" stroke-width="1"/><path d="M12 12.5v4.4" stroke="#4fb3e3" stroke-width="1"/>'
+      +'<rect x="5.8" y="19" width="12.4" height="8.4" rx="3" fill="#1f5fb4"/><rect x="7.4" y="20.4" width="9.2" height="3.4" rx=".8" fill="#fff"/>'
+      +'</svg>',
+    bags:'<svg viewBox="0 0 24 28" aria-hidden="true">'
+      +'<path d="M8.6 3.2c.9 1.6 5.9 1.6 6.8 0l1.2 2.4c-1.5 1.1-7.7 1.1-9.2 0z" fill="#c8651a"/>'
+      +'<path d="M10.2 1.2c1-.8 2.6-.8 3.6 0l-.7 2.4h-2.2z" fill="#c8651a"/>'
+      +'<path d="M7.4 5.6c3 1 6.2 1 9.2 0 3.4 3.4 5.2 8.4 5 13.4-.2 4.8-4.4 8-9.6 8s-9.4-3.2-9.6-8c-.2-5 1.6-10 5-13.4z" fill="#f28c28"/>'
+      +'<path d="M7.4 5.6c-2.4 2.6-3.8 6.4-3.9 10.4" fill="none" stroke="#f7ad62" stroke-width="1.2" stroke-linecap="round"/>'
+      +'<rect x="10.7" y="11.6" width="2.6" height="9" rx=".6" fill="#fff"/><rect x="7.5" y="14.8" width="9" height="2.6" rx=".6" fill="#fff"/>'
+      +'</svg>',
+    ct:'<svg viewBox="0 0 24 28" aria-hidden="true">'
+      +'<rect x="3" y="22" width="18" height="4.6" rx="1.6" fill="#1f5fb4"/>'
+      +'<circle cx="12" cy="12" r="10.4" fill="#dfe6ec"/><circle cx="12" cy="12" r="10.4" fill="none" stroke="#b9c4cd" stroke-width="1"/>'
+      +'<circle cx="12" cy="12" r="5.6" fill="#123b6b"/>'
+      +'<path d="M12 7.6v8.8M7.6 12h8.8" stroke="#4fb3e3" stroke-width="1"/><circle cx="12" cy="12" r="2.4" fill="none" stroke="#4fb3e3" stroke-width="1"/>'
+      +'<rect x="1" y="13.4" width="22" height="3" rx="1.2" fill="#eef2f5"/>'
+      +'<circle cx="19.4" cy="4.6" r="3.8" fill="#f2c14e"/><path d="M17.6 4.7l1.2 1.2 2.3-2.4" fill="none" stroke="#123b6b" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>'
+      +'</svg>'
+  };
   function lastSlotChecklist(i,total){
     if(i !== total - 1) return '';
-    var note = 'Nepieciešams iznest un nomainīt visus sarkanos maisus, restartēt CT/RTG iekārtas, kā arī pārbaudīt bolusa gatavību, tīrību un darba kārtību.';
-    return '<div class="nsc-last-checklist" title="'+escHtml(note)+'" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px">'
-      + '<span style="display:inline-flex;justify-content:center;align-items:center;gap:5px;color:#bfdbfe;font-size:10px;font-weight:700;line-height:1.05;text-align:center"><svg width="11" height="13" viewBox="0 0 5 6" shape-rendering="crispEdges" style="display:block;flex:0 0 auto" aria-hidden="true"><rect x="2" y="0" width="1" height="1" fill="#93c5fd"/><rect x="2" y="1" width="1" height="1" fill="#93c5fd"/><rect x="1" y="2" width="3" height="1" fill="#93c5fd"/><rect x="0" y="3" width="5" height="1" fill="#93c5fd"/><rect x="0" y="4" width="5" height="1" fill="#93c5fd"/><rect x="1" y="5" width="3" height="1" fill="#93c5fd"/></svg> Bolus</span>'
-      + '<span style="display:inline-flex;justify-content:center;align-items:center;gap:5px;color:#fdba74;font-size:10px;font-weight:700;line-height:1.05;text-align:center"><svg width="11" height="15" viewBox="0 0 5 7" shape-rendering="crispEdges" style="display:block;flex:0 0 auto" aria-hidden="true"><rect x="0" y="0" width="1" height="1" fill="#fdba74"/><rect x="4" y="0" width="1" height="1" fill="#fdba74"/><rect x="1" y="1" width="1" height="1" fill="#fdba74"/><rect x="3" y="1" width="1" height="1" fill="#fdba74"/><rect x="1" y="2" width="3" height="1" fill="#fdba74"/><rect x="0" y="3" width="5" height="1" fill="#fdba74"/><rect x="0" y="4" width="5" height="1" fill="#fdba74"/><rect x="0" y="5" width="5" height="1" fill="#fdba74"/><rect x="1" y="6" width="3" height="1" fill="#fdba74"/></svg> Maisi</span>'
-      + '<span style="display:inline-flex;justify-content:center;align-items:center;gap:5px;color:#fda4af;font-size:10px;font-weight:700;line-height:1.05;text-align:center"><svg width="11" height="15" viewBox="0 0 5 7" shape-rendering="crispEdges" style="display:block;flex:0 0 auto" aria-hidden="true"><rect x="2" y="0" width="1" height="1" fill="#fda4af"/><rect x="1" y="1" width="3" height="1" fill="#fda4af"/><rect x="0" y="2" width="2" height="1" fill="#fda4af"/><rect x="3" y="2" width="2" height="1" fill="#fda4af"/><rect x="0" y="3" width="1" height="1" fill="#fda4af"/><rect x="2" y="3" width="1" height="1" fill="#fda4af"/><rect x="4" y="3" width="1" height="1" fill="#fda4af"/><rect x="0" y="4" width="2" height="1" fill="#fda4af"/><rect x="3" y="4" width="2" height="1" fill="#fda4af"/><rect x="1" y="5" width="3" height="1" fill="#fda4af"/><rect x="2" y="6" width="1" height="1" fill="#fda4af"/></svg> CT/RTG</span>'
+    var tasks=[
+      ['bolus','Bolusa','pārbaude','Pārbaudīt bolusa gatavību, tīrību un darba kārtību'],
+      ['bags','Maisu','nomaiņa','Iznest un nomainīt visus oranžos maisus'],
+      ['ct','CT/RTG','kalibrācija','Restartēt un kalibrēt CT/RTG iekārtas']
+    ];
+    return '<div class="nsc-last-checklist nsc-tasks" aria-label="Pēdējās daļas darbi">'
+      + tasks.map(function(t){
+        return '<div class="nsc-task" title="'+escHtml(t[3])+'"><i class="nsc-task-ico">'+NS_TASK_ICONS[t[0]]+'</i><div class="nsc-task-txt"><b>'+t[1]+'</b><small>'+t[2]+'</small></div></div>';
+      }).join('')
       + '</div>';
   }
 
@@ -2338,7 +2380,7 @@
 
     panel.innerHTML=
       '<div class="ns-panel-canvas"><div class="ns-panel-head">'
-      +'<span class="ns-panel-title"><img class="ns-brand-mark" src="../data/rg-brand.svg?v=20260924d1" width="35" height="35" alt="" aria-hidden="true"><span>Nakts sadalījums</span></span>'
+      +'<span class="ns-panel-title">'+nsHeadIcon()+'<span>Nakts sadalījums</span></span>'
       +'<div class="ns-panel-controls">'
       +'<label class="nss-shell"><select class="nss" aria-label="Nakts sākuma laiks" onchange="__ns.ss(this.value)">'+so+'</select><span class="nss-display" aria-hidden="true">'+escHtml(startLabel)+'</span><span class="nss-chevron" aria-hidden="true"></span></label>'
       +'<span style="color:rgba(255,255,255,.3)">—</span>'
