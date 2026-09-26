@@ -139,7 +139,12 @@
     p[0]=Math.round(x);p[1]=Math.round(y);
     return p;
   }
-  // Coffee on a card: the person's own choice, otherwise the icon (0).
-  function effectiveCoffeeMode(v) { return v && v.coffeeExplicit ? v.coffeeMode : 0; }
+  // Coffee on a card. /rad: the person's own choice, otherwise the icon (0).
+  // The radiographers (RG) keep the stored mode as it always was.
+  function effectiveCoffeeMode(v) {
+    if (!v) return 0;
+    if (root.MINKA_APP !== 'rad') return v.coffeeMode;
+    return v.coffeeExplicit ? v.coffeeMode : 0;
+  }
   root.MinkaCardFaceModel = { faces: faces, parts: parts, clean: clean, preset: preset, pack: pack, unpack: unpack, fitPart: fitPart, symbolPlacement: symbolPlacement, coffeeColors: coffeeColors, effectiveCoffeeMode: effectiveCoffeeMode };
 })(globalThis);

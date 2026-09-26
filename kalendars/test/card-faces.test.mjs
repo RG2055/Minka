@@ -122,11 +122,16 @@ test('coffee presentation and contrast survive API storage and legacy defaults',
   }
   const old=M.unpack(M.pack(M.preset('classic')));
   assert.equal(old.coffeeMode,1);assert.equal(old.coffeeContrast,0);
-  // Nobody chose: the coffee icon that opens into − / + is shown; a chosen
-  // "always − / +" is kept.
-  assert.equal(M.effectiveCoffeeMode(old),0);
-  const always=M.preset('classic');always.coffeeMode=1;always.coffeeExplicit=1;
-  assert.equal(M.effectiveCoffeeMode(M.unpack(M.pack(always))),1);
+  // RG: the stored mode as always ("always − / +" by default).
+  assert.equal(M.effectiveCoffeeMode(old),1);
+  // /rad: nobody chose, so the coffee icon that opens into − / + is shown; a
+  // chosen "always − / +" is kept.
+  globalThis.MINKA_APP='rad';
+  try{
+    assert.equal(M.effectiveCoffeeMode(old),0);
+    const always=M.preset('classic');always.coffeeMode=1;always.coffeeExplicit=1;
+    assert.equal(M.effectiveCoffeeMode(M.unpack(M.pack(always))),1);
+  }finally{delete globalThis.MINKA_APP;}
   const face=M.preset('photo');face.coffeeMode=0;
   for(const index of [18,19])for(const invalid of ['3','-1','true','url(x)']){
     const fields=M.pack(face).split('~');fields[index]=invalid;
