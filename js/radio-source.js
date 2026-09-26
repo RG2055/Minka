@@ -67,7 +67,7 @@
     if (musicLoad) return musicLoad;
     musicLoad = new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      script.src = useWebamp() ? 'js/music-webamp.js?v=20260927wa4' : 'js/radio-music.js?v=20260908header2';
+      script.src = useWebamp() ? 'js/music-webamp.js?v=20260927wa8' : 'js/radio-music.js?v=20260908header2';
       script.onload = resolve;
       script.onerror = () => {
         musicLoad = null;
@@ -78,6 +78,20 @@
     });
     return musicLoad;
   }
+  // Pointer on WINAMP (the switch or the dock button in music mode): load the
+  // player's code ahead of the click so it opens without the wait.
+  function warmMusic(event) {
+    if (!useWebamp()) return;
+    // The dock button only while it is WINAMP (never for radio listeners).
+    if (event && event.currentTarget && event.currentTarget.id === 'radioToggle' && !event.currentTarget.classList.contains('is-winamp')) return;
+    loadMusic().then(() => window.warmWebampMusic && window.warmWebampMusic()).catch(() => {});
+  }
+  ['radioSourceMusic', 'radioToggle'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('pointerenter', warmMusic, { passive: true });
+    el.addEventListener('focus', warmMusic);
+  });
   // Radio / Mūzika: the selected pill slides between the two (MinkaMotion.liquid).
   function sourcePill(prevBtn, nextBtn) {
     const MM = window.MinkaMotion, bar = nextBtn && nextBtn.parentElement;

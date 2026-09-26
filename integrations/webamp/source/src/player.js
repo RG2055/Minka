@@ -27,7 +27,8 @@ import { toYouTubeTracks, isYouTubeUrl, youtubeTracks } from "./youtube/tracks.j
 import { getYouTubeEngine } from "./youtube/engine.js";
 import { installYouTubeSource } from "./youtube/source.js";
 import { searchMusic, fetchPlaylist } from "./lacitis/search.js";
-import { resolveStream } from "./lacitis/resolver.js";
+import { noteSongPlayed } from "./lacitis/featured.js";
+import { resolveStream, prefetchStream } from "./lacitis/resolver.js";
 import { createVideoWindow } from "./youtube/videoWindow.js";
 import { historyStore } from "./historyStore.js";
 import { createEqAuto } from "./eqAuto.js";
@@ -348,6 +349,9 @@ export async function createRadioPlayer(options) {
     getDefaultPosition: getLibraryPosition ?? undefined,
     overlayHost,
     nodes: libraryNodes,
+    onPrefetch: (row) => {
+      if (lacitis && lacitis.streams !== false && row?.source === "youtube" && row.youtubeId) prefetchStream(row.youtubeId);
+    },
     // The host's stations become services under Online Services, one per
     // group (Minka: latvija, radiorecord, featured), read live so a later
     // setStations() shows up.
@@ -356,7 +360,18 @@ export async function createRadioPlayer(options) {
       getStations: () => hostStations.filter((station) => groupOf(station) === group.id)
     })),
     // Online Music: the YouTube playlists (async, cache-first loaders).
-    musicSources: [lacitisSource, ...(youtubeSources?.sources ?? [])].filter(Boolean)
+    // Lācītis search first, then the featured YouTube Music playlists
+    // (lacitis.featured: [{ id, name }]), each loading its songs on demand.
+    musicSources: [
+      lacitisSource,
+      ...(lacitis?.featured ?? []).map((list) => ({
+        id: `lacitis-list-${list.id}`,
+        name: list.name,
+        icon: "list",
+        load: async () => (await fetchPlaylist(list.id, lacitis.api ? { api: lacitis.api } : {}))?.rows ?? []
+      })),
+      ...(youtubeSources?.sources ?? [])
+    ].filter(Boolean)
   });
 
   const radioPicker = {
@@ -494,9 +509,24 @@ export async function createRadioPlayer(options) {
   // artist / title. Webamp reads a loaded stream's own tags (a YouTube
   // stream has none) and clears them, so they are put back whenever the
   // current song is without a cover.
+  let lastNotedUrl = null;
+  let prefetchedFor = null;
   function keepMusicTags(state) {
     const id = state.playlist.currentTrack;
     const track = id == null ? null : state.tracks[id];
+    // The next song's stream is looked up while this one plays, so it
+    // starts at once (Lācītis only; streams need the resolver).
+    if (lacitisSource && lacitis.streams !== false && id != null && prefetchedFor !== id && state.media.status === "PLAYING") {
+      prefetchedFor = id;
+      const order = state.playlist.trackOrder;
+      const next = state.tracks[order[order.indexOf(id) + 1]];
+      if (next && isYouTubeUrl(next.url)) setTimeout(() => prefetchStream(youtubeTracks.get(next.url)?.id), 1500);
+    }
+    // Songs actually playing feed the featured playlists (featured.js).
+    if (track && isYouTubeUrl(track.url) && state.media.status === "PLAYING" && lastNotedUrl !== track.url) {
+      lastNotedUrl = track.url;
+      noteSongPlayed(youtubeTracks.get(track.url)?.id);
+    }
     if (!track || !isYouTubeUrl(track.url) || track.albumArtUrl) return;
     const info = youtubeTracks.get(track.url);
     if (!info?.id) return;
@@ -558,12 +588,14 @@ export async function createRadioPlayer(options) {
 
   // Lācītis: the opening list goes into an empty playlist, never playing
   // by itself.
+  // lacitis.intro (a row) goes first, at once, so the host can start playing
+  // before the list has arrived; the list follows it.
   if (lacitisSource) {
+    const startEmpty = webamp.store.getState().playlist.trackOrder.length === 0;
+    if (startEmpty && lacitis.intro) webamp.appendTracks(toYouTubeTracks([lacitis.intro]));
     lacitisStartRows()
       .then((rows) => {
-        if (rows.length > 0 && webamp.store.getState().playlist.trackOrder.length === 0) {
-          webamp.appendTracks(toYouTubeTracks(rows));
-        }
+        if (startEmpty && rows.length > 0) webamp.appendTracks(toYouTubeTracks(rows));
       })
       .catch((error) => console.warn("Lācītis playlist:", error));
   }
@@ -605,6 +637,7 @@ export async function createRadioPlayer(options) {
     },
     getStations: () => hostStations,
     getAnalyser: () => webamp.media.getAnalyser(),
+    prefetchSong: (url) => { if (isYouTubeUrl(url)) prefetchStream(youtubeTracks.get(url)?.id ?? url.slice(8)); },
     getStatus: () => webamp.getMediaStatus(),
     getCurrentStation: () => {
       const state = webamp.store.getState();

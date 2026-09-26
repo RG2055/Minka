@@ -371,6 +371,13 @@
   align-items: center;
 }
 
+/* Music nodes (Lācītis, playlists): Song | Artist | Length | fav */
+.ml-thead:has(.ml-col-length),
+.ml-row.is-music {
+  grid-template-columns: minmax(160px, 2fr) minmax(110px, 1.3fr) 54px 24px;
+}
+.ml-col-length { text-align: right; padding-right: 8px; font-variant-numeric: tabular-nums; }
+
 /* Recently Heard: Song | Artist | Station | When */
 .ml-thead:has(.ml-col-when),
 .ml-row.is-song {

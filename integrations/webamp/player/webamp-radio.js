@@ -26,11 +26,11 @@ function themeSkinUrl(m, _) {
 }
 //#endregion
 //#region node_modules/webamp/built/webamp.lazy-bundle.min.mjs
-var ee = typeof globalThis < "u" ? globalThis : typeof window < "u" ? window : typeof global < "u" ? global : typeof self < "u" ? self : {};
+var J = typeof globalThis < "u" ? globalThis : typeof window < "u" ? window : typeof global < "u" ? global : typeof self < "u" ? self : {};
 function e(m) {
 	return m && m.__esModule && Object.prototype.hasOwnProperty.call(m, "default") ? m.default : m;
 }
-var te = { exports: {} }, J = {}, ne = Symbol.for("react.transitional.element"), re = Symbol.for("react.fragment");
+var ee = { exports: {} }, te = {}, ne = Symbol.for("react.transitional.element"), re = Symbol.for("react.fragment");
 function r(m, _, x) {
 	var S = null;
 	if (x !== void 0 && (S = "" + x), _.key !== void 0 && (S = "" + _.key), "key" in _) for (var C in x = {}, _) C !== "key" && (x[C] = _[C]);
@@ -43,8 +43,8 @@ function r(m, _, x) {
 		props: x
 	};
 }
-J.Fragment = re, J.jsx = r, J.jsxs = r, te.exports = J;
-var Q = te.exports, ie = { exports: {} }, ae = {}, oe = { exports: {} }, se = {};
+te.Fragment = re, te.jsx = r, te.jsxs = r, ee.exports = te;
+var Q = ee.exports, ie = { exports: {} }, ae = {}, oe = { exports: {} }, se = {};
 (function(m) {
 	function e(m, _) {
 		var x = m.length;
@@ -89,7 +89,7 @@ var Q = te.exports, ie = { exports: {} }, ae = {}, oe = { exports: {} }, se = {}
 			return x.now() - S;
 		};
 	}
-	var C = [], D = [], O = 1, F = null, I = 3, L = !1, H = !1, U = !1, W = !1, q = typeof setTimeout == "function" ? setTimeout : null, ee = typeof clearTimeout == "function" ? clearTimeout : null, te = typeof setImmediate < "u" ? setImmediate : null;
+	var C = [], D = [], O = 1, F = null, I = 3, L = !1, H = !1, U = !1, W = !1, q = typeof setTimeout == "function" ? setTimeout : null, J = typeof clearTimeout == "function" ? clearTimeout : null, ee = typeof setImmediate < "u" ? setImmediate : null;
 	function b(m) {
 		for (var _ = t(D); _ !== null;) {
 			if (_.callback === null) n(D);
@@ -102,25 +102,25 @@ var Q = te.exports, ie = { exports: {} }, ae = {}, oe = { exports: {} }, se = {}
 	}
 	function k(m) {
 		if (U = !1, b(m), !H) {
-			if (t(C) !== null) H = !0, J || (J = !0, y());
+			if (t(C) !== null) H = !0, te || (te = !0, y());
 			else {
 				var _ = t(D);
 				_ !== null && N(k, _.startTime - m);
 			}
 		}
 	}
-	var y, J = !1, ne = -1, re = 5, Q = -1;
+	var y, te = !1, ne = -1, re = 5, Q = -1;
 	function v() {
 		return !(!W && m.unstable_now() - Q < re);
 	}
 	function B() {
-		if (W = !1, J) {
+		if (W = !1, te) {
 			var _ = m.unstable_now();
 			Q = _;
 			var x = !0;
 			try {
 				A: {
-					H = !1, U && (U = !1, ee(ne), ne = -1), L = !0;
+					H = !1, U && (U = !1, J(ne), ne = -1), L = !0;
 					var S = I;
 					try {
 						e: {
@@ -139,8 +139,8 @@ var Q = te.exports, ie = { exports: {} }, ae = {}, oe = { exports: {} }, se = {}
 							}
 							if (F !== null) x = !0;
 							else {
-								var te = t(D);
-								te !== null && N(k, te.startTime - _), x = !1;
+								var ee = t(D);
+								ee !== null && N(k, ee.startTime - _), x = !1;
 							}
 						}
 						break A;
@@ -150,12 +150,12 @@ var Q = te.exports, ie = { exports: {} }, ae = {}, oe = { exports: {} }, se = {}
 					x = void 0;
 				}
 			} finally {
-				x ? y() : J = !1;
+				x ? y() : te = !1;
 			}
 		}
 	}
-	if (typeof te == "function") y = function() {
-		te(B);
+	if (typeof ee == "function") y = function() {
+		ee(B);
 	};
 	else if (typeof MessageChannel < "u") {
 		var ie = new MessageChannel(), ae = ie.port2;
@@ -234,7 +234,7 @@ var Q = te.exports, ie = { exports: {} }, ae = {}, oe = { exports: {} }, se = {}
 			startTime: S,
 			expirationTime: I = S + I,
 			sortIndex: -1
-		}, S > F ? (_.sortIndex = S, e(D, _), t(C) === null && _ === t(D) && (U ? (ee(ne), ne = -1) : U = !0, N(k, S - F))) : (_.sortIndex = I, e(C, _), H || L || (H = !0, J || (J = !0, y()))), _;
+		}, S > F ? (_.sortIndex = S, e(D, _), t(C) === null && _ === t(D) && (U ? (J(ne), ne = -1) : U = !0, N(k, S - F))) : (_.sortIndex = I, e(C, _), H || L || (H = !0, te || (te = !0, y()))), _;
 	}, m.unstable_shouldYield = v, m.unstable_wrapCallback = function(m) {
 		var _ = I;
 		return function() {
@@ -2379,20 +2379,20 @@ function dr(m, _, x, S) {
 					next: null
 				});
 				A: {
-					var ee = m, te = F;
+					var J = m, ee = F;
 					W = _;
-					var J = x;
-					switch (te.tag) {
+					var te = x;
+					switch (ee.tag) {
 						case 1:
-							if (typeof (ee = te.payload) == "function") {
-								U = ee.call(J, U, W);
+							if (typeof (J = ee.payload) == "function") {
+								U = J.call(te, U, W);
 								break A;
 							}
-							U = ee;
+							U = J;
 							break A;
-						case 3: ee.flags = -65537 & ee.flags | 128;
+						case 3: J.flags = -65537 & J.flags | 128;
 						case 0:
-							if ((W = typeof (ee = te.payload) == "function" ? ee.call(J, U, W) : ee) == null) break A;
+							if ((W = typeof (J = ee.payload) == "function" ? J.call(te, U, W) : J) == null) break A;
 							U = zt({}, U, W);
 							break A;
 						case 2: Cu = !0;
@@ -4510,7 +4510,7 @@ function hs(m, _, x) {
 					yt(m, W, q);
 					return;
 				case "option":
-					for (var ee in x) W = x[ee], x.hasOwnProperty(ee) && W != null && !S.hasOwnProperty(ee) && (ee === "selected" ? m.selected = !1 : Ad(m, _, ee, null, S, W));
+					for (var J in x) W = x[J], x.hasOwnProperty(J) && W != null && !S.hasOwnProperty(J) && (J === "selected" ? m.selected = !1 : Ad(m, _, J, null, S, W));
 					for (I in S) W = S[I], q = x[I], !S.hasOwnProperty(I) || W === q || W == null && q == null || (I === "selected" ? m.selected = W && typeof W != "function" && typeof W != "symbol" : Ad(m, _, I, W, S, q));
 					return;
 				case "img":
@@ -4528,7 +4528,7 @@ function hs(m, _, x) {
 				case "track":
 				case "wbr":
 				case "menuitem":
-					for (var te in x) W = x[te], x.hasOwnProperty(te) && W != null && !S.hasOwnProperty(te) && Ad(m, _, te, null, S, W);
+					for (var ee in x) W = x[ee], x.hasOwnProperty(ee) && W != null && !S.hasOwnProperty(ee) && Ad(m, _, ee, null, S, W);
 					for (L in S) if (W = S[L], q = x[L], S.hasOwnProperty(L) && W !== q && (W != null || q != null)) switch (L) {
 						case "children":
 						case "dangerouslySetInnerHTML":
@@ -4538,7 +4538,7 @@ function hs(m, _, x) {
 					}
 					return;
 				default: if (Bt(_)) {
-					for (var J in x) W = x[J], x.hasOwnProperty(J) && W !== void 0 && !S.hasOwnProperty(J) && ed(m, _, J, void 0, S, W);
+					for (var te in x) W = x[te], x.hasOwnProperty(te) && W !== void 0 && !S.hasOwnProperty(te) && ed(m, _, te, void 0, S, W);
 					for (H in S) W = S[H], q = x[H], !S.hasOwnProperty(H) || W === q || W === void 0 && q === void 0 || ed(m, _, H, W, S, q);
 					return;
 				}
@@ -5669,8 +5669,8 @@ function ac(m, _, x, S, C, D, O, F, I) {
 								if (1024 & m && D !== null) {
 									m = void 0, x = _, C = D.memoizedProps, D = D.memoizedState, S = x.stateNode;
 									try {
-										var ee = Eo(x.type, C);
-										m = S.getSnapshotBeforeUpdate(ee, D), S.__reactInternalSnapshotBeforeUpdate = m;
+										var J = Eo(x.type, C);
+										m = S.getSnapshotBeforeUpdate(J, D), S.__reactInternalSnapshotBeforeUpdate = m;
 									} catch (m) {
 										dc(x, x.return, m);
 									}
@@ -5725,12 +5725,12 @@ function ic() {
 						else {
 							var U = F.ownerDocument || document, W = U && U.defaultView || window;
 							if (W.getSelection) {
-								var q = W.getSelection(), ee = F.textContent.length, te = Math.min(I.start, ee), J = I.end === void 0 ? te : Math.min(I.end, ee);
-								!q.extend && te > J && (O = J, J = te, te = O);
-								var ne = Aa(F, te), re = Aa(F, J);
+								var q = W.getSelection(), J = F.textContent.length, ee = Math.min(I.start, J), te = I.end === void 0 ? ee : Math.min(I.end, J);
+								!q.extend && ee > te && (O = te, te = ee, ee = O);
+								var ne = Aa(F, ee), re = Aa(F, te);
 								if (ne && re && (q.rangeCount !== 1 || q.anchorNode !== ne.node || q.anchorOffset !== ne.offset || q.focusNode !== re.node || q.focusOffset !== re.offset)) {
 									var Q = U.createRange();
-									Q.setStart(ne.node, ne.offset), q.removeAllRanges(), te > J ? (q.addRange(Q), q.extend(re.node, re.offset)) : (Q.setEnd(re.node, re.offset), q.addRange(Q));
+									Q.setStart(ne.node, ne.offset), q.removeAllRanges(), ee > te ? (q.addRange(Q), q.extend(re.node, re.offset)) : (Q.setEnd(re.node, re.offset), q.addRange(Q));
 								}
 							}
 						}
@@ -6144,10 +6144,10 @@ function Yc(m, _, x, S, C) {
 				}
 				var H = !!(4 & _), U = !H && (m === "scroll" || m === "scrollend"), W = H ? F === null ? null : F + "Capture" : F;
 				H = [];
-				for (var q, ee = S; ee !== null;) {
-					var te = ee;
-					if (q = te.stateNode, (te = te.tag) !== 5 && te !== 26 && te !== 27 || q === null || W === null || (te = Ft(ee, W)) != null && H.push(Hc(ee, te, q)), U) break;
-					ee = ee.return;
+				for (var q, J = S; J !== null;) {
+					var ee = J;
+					if (q = ee.stateNode, (ee = ee.tag) !== 5 && ee !== 26 && ee !== 27 || q === null || W === null || (ee = Ft(J, W)) != null && H.push(Hc(J, ee, q)), U) break;
+					J = J.return;
 				}
 				0 < H.length && (F = new I(F, L, null, x, C), O.push({
 					event: F,
@@ -6157,12 +6157,12 @@ function Yc(m, _, x, S, C) {
 		}
 		if (!(7 & _)) {
 			if (I = m === "mouseout" || m === "pointerout", (!(F = m === "mouseover" || m === "pointerover") || x === Ti || !(L = x.relatedTarget || x.fromElement) || !Pe(L) && !L[xr]) && (I || F) && (F = C.window === C ? C : (F = C.ownerDocument) ? F.defaultView || F.parentWindow : window, I ? (I = S, (L = (L = x.relatedTarget || x.toElement) ? Pe(L) : null) !== null && (U = uA(L), H = L.tag, L !== U || H !== 5 && H !== 27 && H !== 6) && (L = null)) : (I = null, L = S), I !== L)) {
-				if (H = oa, te = "onMouseLeave", W = "onMouseEnter", ee = "mouse", m !== "pointerout" && m !== "pointerover" || (H = ya, te = "onPointerLeave", W = "onPointerEnter", ee = "pointer"), U = I == null ? F : He(I), q = L == null ? F : He(L), (F = new H(te, ee + "leave", I, x, C)).target = U, F.relatedTarget = q, te = null, Pe(C) === S && ((H = new H(W, ee + "enter", L, x, C)).target = q, H.relatedTarget = U, te = H), U = te, I && L) A: {
-					for (W = L, ee = 0, q = H = I; q; q = _c(q)) ee++;
-					for (q = 0, te = W; te; te = _c(te)) q++;
-					for (; 0 < ee - q;) H = _c(H), ee--;
-					for (; 0 < q - ee;) W = _c(W), q--;
-					for (; ee--;) {
+				if (H = oa, ee = "onMouseLeave", W = "onMouseEnter", J = "mouse", m !== "pointerout" && m !== "pointerover" || (H = ya, ee = "onPointerLeave", W = "onPointerEnter", J = "pointer"), U = I == null ? F : He(I), q = L == null ? F : He(L), (F = new H(ee, J + "leave", I, x, C)).target = U, F.relatedTarget = q, ee = null, Pe(C) === S && ((H = new H(W, J + "enter", L, x, C)).target = q, H.relatedTarget = U, ee = H), U = ee, I && L) A: {
+					for (W = L, J = 0, q = H = I; q; q = _c(q)) J++;
+					for (q = 0, ee = W; ee; ee = _c(ee)) q++;
+					for (; 0 < J - q;) H = _c(H), J--;
+					for (; 0 < q - J;) W = _c(W), q--;
+					for (; J--;) {
 						if (H === W || W !== null && H === W.alternate) break A;
 						H = _c(H), W = _c(W);
 					}
@@ -6171,15 +6171,15 @@ function Yc(m, _, x, S, C) {
 				else H = null;
 				I !== null && Jc(O, F, I, H, !1), L !== null && U !== null && Jc(O, U, L, H, !0);
 			}
-			if ((I = (F = S ? He(S) : window).nodeName && F.nodeName.toLowerCase()) === "select" || I === "input" && F.type === "file") var J = Gn;
+			if ((I = (F = S ? He(S) : window).nodeName && F.nodeName.toLowerCase()) === "select" || I === "input" && F.type === "file") var te = Gn;
 			else if (Ln(F)) {
-				if ($a) J = Wn;
+				if ($a) te = Wn;
 				else {
-					J = Jn;
+					te = Jn;
 					var ne = _n;
 				}
-			} else !(I = F.nodeName) || I.toLowerCase() !== "input" || F.type !== "checkbox" && F.type !== "radio" ? S && Bt(S.elementType) && (J = Gn) : J = qn;
-			switch ((J &&= J(m, S)) ? Dn(O, J, x, C) : (ne && ne(m, F, S), m === "focusout" && S && F.type === "number" && S.memoizedProps.value != null && bt(F, "number", F.value)), ne = S ? He(S) : window, m) {
+			} else !(I = F.nodeName) || I.toLowerCase() !== "input" || F.type !== "checkbox" && F.type !== "radio" ? S && Bt(S.elementType) && (te = Gn) : te = qn;
+			switch ((te &&= te(m, S)) ? Dn(O, te, x, C) : (ne && ne(m, F, S), m === "focusout" && S && F.type === "number" && S.memoizedProps.value != null && bt(F, "number", F.value)), ne = S ? He(S) : window, m) {
 				case "focusin":
 					(Ln(ne) || ne.contentEditable === "true") && (ho = ne, xo = S, wo = null);
 					break;
@@ -12428,26 +12428,26 @@ function xk({ analyser: m, width: _, height: x }) {
 		_,
 		x
 	]);
-	let ee = $.useRef(!1);
+	let J = $.useRef(!1);
 	$.useEffect(() => {
-		W != null && F != null && (ee.current ? W.loadPreset(F, lv[I]) : (W.loadPreset(F, lv[Kg.IMMEDIATE]), ee.current = !0));
+		W != null && F != null && (J.current ? W.loadPreset(F, lv[I]) : (W.loadPreset(F, lv[Kg.IMMEDIATE]), J.current = !0));
 	}, [W, F]), $.useEffect(() => {
 		W != null && O && W.launchSongTitleAnim(O);
 	}, [W, O]);
-	let te = $.useRef(null);
+	let ee = $.useRef(null);
 	$.useEffect(() => {
-		W != null && L != null && (te.current == null || L.time > te.current) && (te.current = Date.now(), W.launchSongTitleAnim(L.text));
+		W != null && L != null && (ee.current == null || L.time > ee.current) && (ee.current = Date.now(), W.launchSongTitleAnim(L.text));
 	}, [W, L]);
-	let J = C && H;
+	let te = C && H;
 	return $.useEffect(() => {
-		if (!J || W == null) return;
+		if (!te || W == null) return;
 		let m = null, e = () => {
 			W.render(), m = window.requestAnimationFrame(e);
 		};
 		return e(), () => {
 			m != null && window.cancelAnimationFrame(m);
 		};
-	}, [W, J]), Q.jsx("canvas", {
+	}, [W, te]), Q.jsx("canvas", {
 		height: x,
 		width: _,
 		style: {
@@ -12547,14 +12547,14 @@ function Dk({ height: m, width: _ }) {
 		C,
 		I,
 		D
-	]), ee = $.useCallback((m) => {
+	]), J = $.useCallback((m) => {
 		m != null && document.activeElement !== m && m.focus();
 	}, []);
 	return x == null ? Q.jsx("div", {
 		style: uv,
 		children: Q.jsx("span", { children: "Loading presets" })
 	}) : Q.jsx("div", {
-		ref: ee,
+		ref: J,
 		tabIndex: -1,
 		style: dv,
 		onKeyDown: q,
@@ -12783,7 +12783,7 @@ function _k({ analyser: m }) {
 		return $.useEffect(() => (window.addEventListener("resize", x), () => {
 			window.removeEventListener("resize", x);
 		}), [x]), m;
-	}(), ee = $.useCallback(() => {
+	}(), J = $.useCallback(() => {
 		document.fullscreenEnabled && F();
 	}, [F]);
 	return _ ? Q.jsx(pv, { children: Q.jsx(Hk, { children: Q.jsx(xk, {
@@ -12802,7 +12802,7 @@ function _k({ analyser: m }) {
 					enabled: x,
 					onChange: H,
 					children: Q.jsx("div", {
-						onDoubleClick: ee,
+						onDoubleClick: J,
 						children: Q.jsx(xk, {
 							...C,
 							analyser: m
@@ -13035,10 +13035,10 @@ function $k(m, _) {
 			return n(_), x;
 		})(I, L));
 		var U;
-		let W = I.filter((m) => !H.has(m)), q = Array.from(H), ee = {
+		let W = I.filter((m) => !H.has(m)), q = Array.from(H), J = {
 			x: D,
 			y: O
-		}, te = ((m) => {
+		}, ee = ((m) => {
 			let _ = m.slice(), x = _.pop();
 			if (x == null) throw Error("boundingBox must be called with at least one node");
 			let S = {
@@ -13057,10 +13057,10 @@ function $k(m, _) {
 			};
 		})(q);
 		F({
-			boundingBox: te,
+			boundingBox: ee,
 			moving: q,
 			stationary: W,
-			mouseStart: ee
+			mouseStart: J
 		});
 	}, [
 		S,
@@ -13284,7 +13284,7 @@ var hv = {
 	ſ: "s"
 }, ty = function(m) {
 	return hv?.[m];
-}, gv = typeof ee == "object" && ee && ee.Object === Object && ee, _v = typeof self == "object" && self && self.Object === Object && self, vv = (gv || _v || Function("return this")()).Symbol, yv = Array.isArray, bv = vv, xv = Object.prototype, Sv = xv.hasOwnProperty, Cv = xv.toString, wv = bv ? bv.toStringTag : void 0, Tv = Object.prototype.toString, gy = function(m) {
+}, gv = typeof J == "object" && J && J.Object === Object && J, _v = typeof self == "object" && self && self.Object === Object && self, vv = (gv || _v || Function("return this")()).Symbol, yv = Array.isArray, bv = vv, xv = Object.prototype, Sv = xv.hasOwnProperty, Cv = xv.toString, wv = bv ? bv.toStringTag : void 0, Tv = Object.prototype.toString, gy = function(m) {
 	var _ = Sv.call(m, wv), x = m[wv];
 	try {
 		m[wv] = void 0;
@@ -13696,7 +13696,7 @@ function Vy({ analyser: m }) {
 	}, [m, m.fftSize]);
 	let _ = mk(qf), x = mk(Zf), S = mk(x_), C = mk(u_), D = mk(c_)("main"), O = mk(Gf), F = fk(Zb), I = C("main"), L = I && D, H = L ? 5 : 16, U = O && L ? 2 : 1, W;
 	W = D ? I ? O ? 76 : 38 : 76 * U : 76;
-	let q = 76 * U, ee = H * U, te = $.useMemo(() => function(m) {
+	let q = 76 * U, J = H * U, ee = $.useMemo(() => function(m) {
 		let { width: _, height: x, bgColor: S, fgColor: C, windowShade: D, pixelDensity: O } = m, F = document.createElement("canvas");
 		F.width = _, F.height = x;
 		let I = 2 * O, L = F.getContext("2d");
@@ -13708,21 +13708,21 @@ function Vy({ analyser: m }) {
 		return F;
 	}({
 		width: W,
-		height: ee,
+		height: J,
 		bgColor: _[0],
 		fgColor: _[1],
 		windowShade: !!I,
 		pixelDensity: U
 	}), [
 		_,
-		ee,
+		J,
 		W,
 		I,
 		U
-	]), [J, ne] = $.useState(null), re = $.useMemo(() => {
-		if (!J) return null;
+	]), [te, ne] = $.useState(null), re = $.useMemo(() => {
+		if (!te) return null;
 		let S = {
-			canvas: J,
+			canvas: te,
 			colors: _,
 			analyser: m,
 			oscStyle: "lines",
@@ -13745,7 +13745,7 @@ function Vy({ analyser: m }) {
 		}
 	}, [
 		m,
-		J,
+		te,
 		x,
 		_,
 		H,
@@ -13755,32 +13755,32 @@ function Vy({ analyser: m }) {
 		D
 	]);
 	return $.useEffect(() => {
-		if (J && re) {
-			let m = J.getContext("2d");
-			m && (re.prepare(), S === pg && m.clearRect(0, 0, J.width, J.height));
+		if (te && re) {
+			let m = te.getContext("2d");
+			m && (re.prepare(), S === pg && m.clearRect(0, 0, te.width, te.height));
 		}
 	}, [
 		O,
-		J,
+		te,
 		re
 	]), $.useEffect(() => {
-		if (J == null || re == null) return;
-		let m = J.getContext("2d");
+		if (te == null || re == null) return;
+		let m = te.getContext("2d");
 		if (m == null) return;
 		m.imageSmoothingEnabled = !1;
 		let _ = null, a = () => {
-			m.drawImage(te, 0, 0), re.paintFrame(), _ = window.requestAnimationFrame(a);
+			m.drawImage(ee, 0, 0), re.paintFrame(), _ = window.requestAnimationFrame(a);
 		};
-		return S === dg && (x === Xh ? m.clearRect(0, 0, W, ee) : a()), () => {
+		return S === dg && (x === Xh ? m.clearRect(0, 0, W, J) : a()), () => {
 			_ !== null && window.cancelAnimationFrame(_);
 		};
 	}, [
 		S,
-		J,
-		re,
 		te,
-		W,
+		re,
 		ee,
+		W,
+		J,
 		x
 	]), S === fg ? null : Q.jsx("canvas", {
 		id: "visualizer",
@@ -13790,7 +13790,7 @@ function Vy({ analyser: m }) {
 			height: H
 		},
 		width: q,
-		height: ee,
+		height: J,
 		onClick: F
 	});
 }
@@ -14628,9 +14628,9 @@ function MS({ value: m, height: _, width: x, handle: S, handleHeight: C, onBefor
 		m.preventDefault(), function({ target: m, clientY: _ }) {
 			let x = H.current, S = U.current;
 			if (x == null || S == null) return null;
-			let C = x.getBoundingClientRect(), I = S.getBoundingClientRect(), { top: L, height: W } = C, { top: q, height: ee } = I, te = L + (S.contains(m) ? _ - q : ee / 2), J = W - ee;
+			let C = x.getBoundingClientRect(), I = S.getBoundingClientRect(), { top: L, height: W } = C, { top: q, height: J } = I, ee = L + (S.contains(m) ? _ - q : J / 2), te = W - J;
 			function f(m) {
-				O(Hh((m - te) / J, 0, 1));
+				O(Hh((m - ee) / te, 0, 1));
 			}
 			let E = (m) => {
 				m.preventDefault(), f(m.clientY);
@@ -14685,7 +14685,7 @@ function QS(m) {
 	return m.playlist.trackOrder.length - 1;
 }
 function LS({ analyser: m }) {
-	let _ = mk(g_), x = mk(d_), S = mk(Ff), C = mk(u_), D = mk(c_), O = mk(QS), F = mk(Wf), I = mk(A_), L = S === Ah, H = !!C(Ah), U = x(Ah), W = I(Ah), q = fk(WE), ee = fk(qE), te = fk(Dw), J = fk(Ow), ne = fk(Lw), re = fk(lb), ie = U[0] > 2, ae = !D(kh), oe = $.useCallback((m, x) => {
+	let _ = mk(g_), x = mk(d_), S = mk(Ff), C = mk(u_), D = mk(c_), O = mk(QS), F = mk(Wf), I = mk(A_), L = S === Ah, H = !!C(Ah), U = x(Ah), W = I(Ah), q = fk(WE), J = fk(qE), ee = fk(Dw), te = fk(Ow), ne = fk(Lw), re = fk(lb), ie = U[0] > 2, ae = !D(kh), oe = $.useCallback((m, x) => {
 		let S = m.clientY - x.y, C = Hh(_ + Math.round((S - 23) / 13), 0, O + 1);
 		re(m, Lh, C);
 	}, [
@@ -14713,7 +14713,7 @@ function LS({ analyser: m }) {
 			children: [
 				Q.jsxs("div", {
 					className: "playlist-top draggable",
-					onDoubleClick: ee,
+					onDoubleClick: J,
 					children: [
 						Q.jsx("div", { className: "playlist-top-left draggable" }),
 						le && Q.jsx("div", { className: "playlist-top-left-spacer draggable" }),
@@ -14725,7 +14725,7 @@ function LS({ analyser: m }) {
 							className: "playlist-top-right draggable",
 							children: [Q.jsx(Uk, {
 								id: "playlist-shade-button",
-								onClick: ee
+								onClick: J
 							}), Q.jsx(Uk, {
 								id: "playlist-close-button",
 								onClick: () => q(Ah)
@@ -14774,11 +14774,11 @@ function LS({ analyser: m }) {
 								Q.jsx(IS, {}),
 								Q.jsx("div", {
 									id: "playlist-scroll-up-button",
-									onClick: te
+									onClick: ee
 								}),
 								Q.jsx("div", {
 									id: "playlist-scroll-down-button",
-									onClick: J
+									onClick: te
 								}),
 								Q.jsx(pS, {})
 							]
@@ -16229,21 +16229,21 @@ var SI = class {
 	}
 	constructor(m) {
 		this._root = null, this._disposable = new kI(), this._actionEmitter = new bI(), this.options = m;
-		let { initialTracks: _, initialSkin: x, availableSkins: S, enableHotkeys: C = !1, zIndex: D, requireJSZip: O, requireMusicMetadata: F, requireButterchurnPresets: I, handleTrackDropEvent: L, handleAddUrlEvent: H, handleLoadListEvent: U, handleSaveListEvent: W, enableDoubleSizeMode: q, __butterchurnOptions: ee, __customMediaClass: te } = this.options, J = ee;
+		let { initialTracks: _, initialSkin: x, availableSkins: S, enableHotkeys: C = !1, zIndex: D, requireJSZip: O, requireMusicMetadata: F, requireButterchurnPresets: I, handleTrackDropEvent: L, handleAddUrlEvent: H, handleLoadListEvent: U, handleSaveListEvent: W, enableDoubleSizeMode: q, __butterchurnOptions: J, __customMediaClass: ee } = this.options, te = J;
 		if (I != null) {
-			if (J == null) throw Error("You must pass `__butterchurnOptions` if you are using `requireButterchurnPresets`.");
-			J.getPresets = I;
+			if (te == null) throw Error("You must pass `__butterchurnOptions` if you are using `requireButterchurnPresets`.");
+			te.getPresets = I;
 		}
 		let f = null;
-		if (J != null) {
-			let { importConvertPreset: m, presetConverterEndpoint: _ } = J;
+		if (te != null) {
+			let { importConvertPreset: m, presetConverterEndpoint: _ } = te;
 			m != null && _ != null && (f = async (x) => {
 				let { convertPreset: S } = await m();
 				return S(await vm(x), _);
 			});
 		}
 		var ne, re;
-		this.media = new (te || II)(), this.store = uk(this.media, this._actionEmitter, this.options.__customMiddlewares, this.options.__initialState, {
+		this.media = new (ee || II)(), this.store = uk(this.media, this._actionEmitter, this.options.__customMiddlewares, this.options.__initialState, {
 			requireJSZip: O,
 			requireMusicMetadata: F,
 			convertPreset: f,
@@ -16275,10 +16275,10 @@ var SI = class {
 		}))), q && this.store.dispatch(jE()), navigator.onLine ? this.store.dispatch({ type: "NETWORK_CONNECTED" }) : this.store.dispatch({ type: "NETWORK_DISCONNECTED" }), D != null && this.store.dispatch({
 			type: "SET_Z_INDEX",
 			zIndex: D
-		}), J && (this.store.dispatch({
+		}), te && (this.store.dispatch({
 			type: "ENABLE_MILKDROP",
-			open: J.butterchurnOpen
-		}), this.store.dispatch((re = J, async (m) => {
+			open: te.butterchurnOpen
+		}), this.store.dispatch((re = te, async (m) => {
 			let { getPresets: _, importButterchurn: x } = re;
 			x().then((_) => {
 				m({
@@ -17162,6 +17162,29 @@ var Jy = "webamp.radio.view.v1", Xy = /* @__PURE__ */ _((m, _, x) => {
 		numeric: !0
 	}
 ], gb = [
+	{
+		id: "name",
+		label: "Dziesma",
+		sort: (m) => (m.title || "").toLowerCase()
+	},
+	{
+		id: "artist",
+		label: "Izpildītājs",
+		sort: (m) => (m.artist || "").toLowerCase()
+	},
+	{
+		id: "length",
+		label: "Garums",
+		sort: (m) => m.duration || 0,
+		numeric: !0
+	},
+	{
+		id: "fav",
+		label: "★",
+		sort: (m) => +!!m.isFavorite,
+		numeric: !0
+	}
+], ex = [
 	["Most popular", "clickcount"],
 	["Most voted", "votes"],
 	["Name", "name"],
@@ -17178,14 +17201,14 @@ function formatWhen(m) {
 		minute: "2-digit"
 	})}`;
 }
-var ex = [
+var nx = [
 	["Any bitrate", 0],
 	["64 kbps and up", 64],
 	["96 kbps and up", 96],
 	["128 kbps and up", 128],
 	["192 kbps and up", 192],
 	["320 kbps", 320]
-], nx = [
+], rx = [
 	["Any format", ""],
 	["MP3", "MP3"],
 	["AAC", "AAC"],
@@ -17225,7 +17248,7 @@ function writeView(m) {
 		localStorage.setItem(Jy, JSON.stringify(m));
 	} catch {}
 }
-function createRadioLibrary({ onPlay: m, onEnqueue: _, favorites: x, history: S, getNowPlaying: C = () => null, getDefaultPosition: O, overlayHost: I = null, sources: L = [], musicSources: U = [], title: W = "MEDIA LIBRARY", nodes: q = Zy.map((m) => m.id) }) {
+function createRadioLibrary({ onPlay: m, onEnqueue: _, favorites: x, history: S, getNowPlaying: C = () => null, getDefaultPosition: O, overlayHost: I = null, sources: L = [], musicSources: U = [], title: W = "MEDIA LIBRARY", nodes: q = Zy.map((m) => m.id), onPrefetch: J = null }) {
 	let ee = new Map(L.map((m) => [m.id, m]));
 	function mergeSource(m) {
 		let _ = ee.get(m.id);
@@ -17248,27 +17271,27 @@ function createRadioLibrary({ onPlay: m, onEnqueue: _, favorites: x, history: S,
 			load: m.load,
 			search: m.search
 		})) : m.children?.map((m) => mergeSource(m))
-	})), J = /* @__PURE__ */ new Map(), ne = /* @__PURE__ */ new Map(), collectSources = (m) => {
-		for (let _ of m) (_.getStations || _.load) && J.set(_.id, _), _.children && collectSources(_.children);
+	})), ne = /* @__PURE__ */ new Map(), re = /* @__PURE__ */ new Map(), collectSources = (m) => {
+		for (let _ of m) (_.getStations || _.load) && ne.set(_.id, _), _.children && collectSources(_.children);
 	};
 	collectSources(te);
-	let re = Xy("div", "ml-overlay");
-	re.hidden = !0;
-	let Q = Xy("div", "gen-window window ml-window"), ie = Xy("div", "gen-top draggable"), ae = Xy("div", "gen-top-right draggable"), oe = Xy("div", "gen-close winamp-active");
-	oe.setAttribute("role", "button"), oe.setAttribute("aria-label", "Close media library"), oe.tabIndex = 0, ae.append(oe);
-	let se = Xy("div", "gen-top-title draggable");
+	let Q = Xy("div", "ml-overlay");
+	Q.hidden = !0;
+	let ie = Xy("div", "gen-window window ml-window"), ae = Xy("div", "gen-top draggable"), oe = Xy("div", "gen-top-right draggable"), se = Xy("div", "gen-close winamp-active");
+	se.setAttribute("role", "button"), se.setAttribute("aria-label", "Close media library"), se.tabIndex = 0, oe.append(se);
+	let ce = Xy("div", "gen-top-title draggable");
 	for (let m of String(W).toUpperCase()) {
 		let _ = /[a-z0-9]/i.test(m) ? m.toLowerCase() : "space";
-		se.append(Xy("div", `draggable gen-text-letter gen-text-${_}`));
+		ce.append(Xy("div", `draggable gen-text-letter gen-text-${_}`));
 	}
-	ie.append(Xy("div", "gen-top-left draggable"), Xy("div", "gen-top-left-fill draggable"), Xy("div", "gen-top-left-end draggable"), se, Xy("div", "gen-top-right-end draggable"), Xy("div", "gen-top-right-fill draggable"), ae);
-	let ce = Xy("div", "gen-middle"), le = Xy("div", "gen-middle-left draggable");
-	le.append(Xy("div", "gen-middle-left-bottom draggable"));
-	let ue = Xy("div", "gen-middle-center"), de = Xy("div", "gen-middle-right draggable");
-	de.append(Xy("div", "gen-middle-right-bottom draggable")), ce.append(le, ue, de);
-	let fe = Xy("div", "gen-bottom");
-	fe.append(Xy("div", "gen-bottom-left draggable"), Xy("div", "gen-bottom-fill draggable"), Xy("div", "gen-bottom-right draggable"));
-	let me = Xy("div", "ml-body"), he = [
+	ae.append(Xy("div", "gen-top-left draggable"), Xy("div", "gen-top-left-fill draggable"), Xy("div", "gen-top-left-end draggable"), ce, Xy("div", "gen-top-right-end draggable"), Xy("div", "gen-top-right-fill draggable"), oe);
+	let le = Xy("div", "gen-middle"), ue = Xy("div", "gen-middle-left draggable");
+	ue.append(Xy("div", "gen-middle-left-bottom draggable"));
+	let de = Xy("div", "gen-middle-center"), fe = Xy("div", "gen-middle-right draggable");
+	fe.append(Xy("div", "gen-middle-right-bottom draggable")), le.append(ue, de, fe);
+	let me = Xy("div", "gen-bottom");
+	me.append(Xy("div", "gen-bottom-left draggable"), Xy("div", "gen-bottom-fill draggable"), Xy("div", "gen-bottom-right draggable"));
+	let he = Xy("div", "ml-body"), ge = [
 		"play",
 		"enqueue",
 		"bookmark"
@@ -17276,15 +17299,15 @@ function createRadioLibrary({ onPlay: m, onEnqueue: _, favorites: x, history: S,
 	function readDoubleClickAction() {
 		try {
 			let m = localStorage.getItem("webamp.radio.doubleclick.v1");
-			return he.includes(m) ? m : "play";
+			return ge.includes(m) ? m : "play";
 		} catch {
 			return "play";
 		}
 	}
-	let ge = readDoubleClickAction(), we = "webamp.radio.nav.collapsed.v1";
+	let we = readDoubleClickAction(), Ee = "webamp.radio.nav.collapsed.v1";
 	function readCollapsed() {
 		try {
-			let m = localStorage.getItem(we), _ = m ? JSON.parse(m) : [];
+			let m = localStorage.getItem(Ee), _ = m ? JSON.parse(m) : [];
 			return new Set(Array.isArray(_) ? _ : []);
 		} catch {
 			return /* @__PURE__ */ new Set();
@@ -17292,29 +17315,29 @@ function createRadioLibrary({ onPlay: m, onEnqueue: _, favorites: x, history: S,
 	}
 	function writeCollapsed(m) {
 		try {
-			localStorage.setItem(we, JSON.stringify([...m]));
+			localStorage.setItem(Ee, JSON.stringify([...m]));
 		} catch {}
 	}
-	let Ee = readCollapsed(), De = Xy("div", "ml-nav");
-	De.setAttribute("role", "tree"), De.setAttribute("aria-label", "Library");
-	let Oe = /* @__PURE__ */ new Map();
+	let De = readCollapsed(), Oe = Xy("div", "ml-nav");
+	Oe.setAttribute("role", "tree"), Oe.setAttribute("aria-label", "Library");
+	let Ae = /* @__PURE__ */ new Map();
 	function addNavNode(m, _) {
 		let x = Xy("div", "ml-nav-row");
 		if (x.style.setProperty("--depth", String(_)), m.parent || m.children) {
-			let _ = Xy("div", "ml-genre-toggle"), S = Ee.has(m.id);
+			let _ = Xy("div", "ml-genre-toggle"), S = De.has(m.id);
 			_.classList.add(S ? "is-collapsed" : "is-expanded"), _.setAttribute("role", "button"), _.setAttribute("aria-label", S ? `Expand ${m.name}` : `Collapse ${m.name}`), _.addEventListener("click", (x) => {
 				x.stopPropagation();
-				let S = !Ee.has(m.id);
-				S ? Ee.add(m.id) : Ee.delete(m.id), writeCollapsed(Ee), _.classList.toggle("is-collapsed", S), _.classList.toggle("is-expanded", !S), renderChildren(m);
+				let S = !De.has(m.id);
+				S ? De.add(m.id) : De.delete(m.id), writeCollapsed(De), _.classList.toggle("is-collapsed", S), _.classList.toggle("is-expanded", !S), renderChildren(m);
 			}), x.append(_);
 		} else x.append(Xy("div", "ml-nav-spacer"));
 		let S = Xy("div", `ml-nav-item ml-icon-${m.icon}`, m.name);
-		S.setAttribute("role", "treeitem"), S.dataset.id = m.id, S.tabIndex = -1, m.invariantPrefix && (S.dataset.invariant = `${m.invariantPrefix}${m.id}`), S.addEventListener("click", () => selectNav(m.id)), x.append(S), De.append(x), Oe.set(m.id, S);
+		S.setAttribute("role", "treeitem"), S.dataset.id = m.id, S.tabIndex = -1, m.invariantPrefix && (S.dataset.invariant = `${m.invariantPrefix}${m.id}`), S.addEventListener("click", () => selectNav(m.id)), x.append(S), Oe.append(x), Ae.set(m.id, S);
 	}
 	function renderChildren(m) {
-		for (let _ of m.children ?? []) Oe.get(_.id)?.parentElement?.remove(), Oe.delete(_.id);
-		if (Ee.has(m.id)) return;
-		let _ = Oe.get(m.id)?.parentElement;
+		for (let _ of m.children ?? []) Ae.get(_.id)?.parentElement?.remove(), Ae.delete(_.id);
+		if (De.has(m.id)) return;
+		let _ = Ae.get(m.id)?.parentElement;
 		for (let x of m.children ?? []) {
 			let S = buildChildRow(x, (m.__depth ?? 0) + 1);
 			_.after(S), _ = S;
@@ -17324,94 +17347,94 @@ function createRadioLibrary({ onPlay: m, onEnqueue: _, favorites: x, history: S,
 		let x = Xy("div", "ml-nav-row");
 		x.style.setProperty("--depth", String(_)), x.append(Xy("div", "ml-nav-spacer"));
 		let S = Xy("div", `ml-nav-item ml-icon-${m.icon}`, m.name);
-		return S.setAttribute("role", "treeitem"), S.dataset.id = m.id, S.tabIndex = -1, S.addEventListener("click", () => selectNav(m.id)), x.append(S), Oe.set(m.id, S), x;
+		return S.setAttribute("role", "treeitem"), S.dataset.id = m.id, S.tabIndex = -1, S.addEventListener("click", () => selectNav(m.id)), x.append(S), Ae.set(m.id, S), x;
 	}
-	let Ae = /* @__PURE__ */ new Map();
+	let Fe = /* @__PURE__ */ new Map();
 	function walk(m, _) {
-		for (let x of m) if (x.__depth = _, Ae.set(x.id, _), addNavNode(x, _), x.children && !Ee.has(x.id)) for (let m of x.children) {
-			Ae.set(m.id, _ + 1);
+		for (let x of m) if (x.__depth = _, Fe.set(x.id, _), addNavNode(x, _), x.children && !De.has(x.id)) for (let m of x.children) {
+			Fe.set(m.id, _ + 1);
 			let x = buildChildRow(m, _ + 1);
-			De.append(x);
+			Oe.append(x);
 		}
 	}
 	walk(te, 0);
-	let Fe = Xy("div", "ml-search-bar"), Le = Xy("label", "ml-search-label", "Search:"), Re = Xy("input", "ml-input ml-search");
-	Re.type = "search", Re.id = "ml-radio-search", Re.setAttribute("aria-label", "Search stations"), Re.autocomplete = "off", Le.htmlFor = Re.id, Fe.append(Le, Re);
-	let ze = Xy("div", "ml-genres");
-	ze.setAttribute("role", "tree"), ze.setAttribute("aria-label", "Genres");
-	let Ve = Xy("div", "ml-table"), Ge = Xy("div", "ml-thead");
-	Ge.setAttribute("role", "row");
-	let qe = /* @__PURE__ */ new Map();
+	let Le = Xy("div", "ml-search-bar"), Re = Xy("label", "ml-search-label", "Search:"), ze = Xy("input", "ml-input ml-search");
+	ze.type = "search", ze.id = "ml-radio-search", ze.setAttribute("aria-label", "Search stations"), ze.autocomplete = "off", Re.htmlFor = ze.id, Le.append(Re, ze);
+	let Ve = Xy("div", "ml-genres");
+	Ve.setAttribute("role", "tree"), Ve.setAttribute("aria-label", "Genres");
+	let Ge = Xy("div", "ml-table"), qe = Xy("div", "ml-thead");
+	qe.setAttribute("role", "row");
+	let Je = /* @__PURE__ */ new Map();
 	function buildHead(m) {
-		Ge.replaceChildren(), qe.clear();
+		qe.replaceChildren(), Je.clear();
 		for (let _ of m) {
 			let m = Xy("div", `ml-th ml-col-${_.id}`);
-			m.setAttribute("role", "columnheader"), m.append(Xy("span", "ml-th-label", _.label), Xy("span", "ml-th-arrow")), m.addEventListener("click", () => sortBy(_.id)), Ge.append(m), qe.set(_.id, m);
+			m.setAttribute("role", "columnheader"), m.append(Xy("span", "ml-th-label", _.label), Xy("span", "ml-th-arrow")), m.addEventListener("click", () => sortBy(_.id)), qe.append(m), Je.set(_.id, m);
 		}
 	}
 	buildHead($y);
-	let Je = Xy("div", "ml-rows");
-	Je.tabIndex = 0, Je.setAttribute("role", "listbox"), Je.setAttribute("aria-multiselectable", "true"), Je.setAttribute("aria-label", "Stations");
-	let Xe = Xy("div", "ml-message");
-	Ve.append(Ge, Je, Xe);
-	let Qe = Xy("div", "ml-panes");
-	Qe.append(De, ze, Ve);
-	let $e = Xy("div", "ml-footer"), $ = button("ml-button", "Play"), et = button("ml-button", "Enqueue"), tt = button("ml-button ml-bookmark", "Bookmark"), lt = button("ml-button ml-filter", "Filter ▾");
-	lt.setAttribute("aria-haspopup", "true");
-	let mt = button("ml-button ml-more", "More");
-	mt.hidden = !0;
-	let xt = button("ml-button", "Clear");
+	let Xe = Xy("div", "ml-rows");
+	Xe.tabIndex = 0, Xe.setAttribute("role", "listbox"), Xe.setAttribute("aria-multiselectable", "true"), Xe.setAttribute("aria-label", "Stations");
+	let Qe = Xy("div", "ml-message");
+	Ge.append(qe, Xe, Qe);
+	let $e = Xy("div", "ml-panes");
+	$e.append(Oe, Ve, Ge);
+	let $ = Xy("div", "ml-footer"), et = button("ml-button", "Play"), tt = button("ml-button", "Enqueue"), lt = button("ml-button ml-bookmark", "Bookmark"), mt = button("ml-button ml-filter", "Filter ▾");
+	mt.setAttribute("aria-haspopup", "true");
+	let xt = button("ml-button ml-more", "More");
 	xt.hidden = !0;
-	let Tt = Xy("span", "ml-status");
-	Tt.setAttribute("role", "status"), $e.append($, et, tt, lt, mt, xt, Tt);
-	let Dt = Xy("div", "ml-popup ml-filter-panel");
-	Dt.hidden = !0;
-	let At = Xy("select", "ml-select");
-	At.setAttribute("aria-label", "Minimum bitrate"), At.append(...ex.map(([m, _]) => new Option(m, String(_))));
+	let Tt = button("ml-button", "Clear");
+	Tt.hidden = !0;
+	let Dt = Xy("span", "ml-status");
+	Dt.setAttribute("role", "status"), $.append(et, tt, lt, mt, xt, Tt, Dt);
+	let At = Xy("div", "ml-popup ml-filter-panel");
+	At.hidden = !0;
 	let Mt = Xy("select", "ml-select");
-	Mt.setAttribute("aria-label", "Stream format"), Mt.append(...nx.map(([m, _]) => new Option(m, _)));
+	Mt.setAttribute("aria-label", "Minimum bitrate"), Mt.append(...nx.map(([m, _]) => new Option(m, String(_))));
 	let Pt = Xy("select", "ml-select");
-	Pt.setAttribute("aria-label", "Country"), Pt.append(new Option("Any country", ""));
+	Pt.setAttribute("aria-label", "Stream format"), Pt.append(...rx.map(([m, _]) => new Option(m, _)));
 	let Lt = Xy("select", "ml-select");
-	Lt.setAttribute("aria-label", "Language"), Lt.append(new Option("Any language", ""));
+	Lt.setAttribute("aria-label", "Country"), Lt.append(new Option("Any country", ""));
 	let zt = Xy("select", "ml-select");
-	zt.setAttribute("aria-label", "Order"), zt.append(...gb.map(([m, _]) => new Option(m, _)));
-	let Vt = button("ml-button", "Reset");
-	Dt.append(Xy("div", "ml-popup-title", "Filter stations"), zt, At, Mt, Pt, Lt, Vt);
-	let Ht = Xy("div", "ml-popup ml-context");
-	Ht.hidden = !0, Ht.setAttribute("role", "menu"), me.append(Fe, Qe, $e, Dt, Ht), ue.append(me), Q.append(ie, ce, fe), re.append(Q);
+	zt.setAttribute("aria-label", "Language"), zt.append(new Option("Any language", ""));
+	let Vt = Xy("select", "ml-select");
+	Vt.setAttribute("aria-label", "Order"), Vt.append(...ex.map(([m, _]) => new Option(m, _)));
+	let Ht = button("ml-button", "Reset");
+	At.append(Xy("div", "ml-popup-title", "Filter stations"), Vt, Mt, Pt, Lt, zt, Ht);
+	let Ut = Xy("div", "ml-popup ml-context");
+	Ut.hidden = !0, Ut.setAttribute("role", "menu"), he.append(Le, $e, $, At, Ut), de.append(he), ie.append(ae, le, me), Q.append(ie);
 	function mount() {
 		let m = I ?? document.querySelector("#webamp");
-		m && re.parentElement !== m ? m.append(re) : !m && !re.parentElement && document.body.append(re);
+		m && Q.parentElement !== m ? m.append(Q) : !m && !Q.parentElement && document.body.append(Q);
 	}
-	let Ut = te[0].id, Gt = null, Kt = /* @__PURE__ */ new Set(), Yt = [], Xt = /* @__PURE__ */ new Set(), Zt = -1, $t = {
+	let Gt = te[0].id, Kt = null, Yt = /* @__PURE__ */ new Set(), Xt = [], Zt = /* @__PURE__ */ new Set(), $t = -1, en = {
 		url: null,
 		at: 0
-	}, en = null, tn = !1, nn = !1, rn = !1, an = null, on = 0, sn = null, cn = null, ln = null, un = !1, dn = {
+	}, tn = null, nn = !1, rn = !1, an = !1, on = null, sn = 0, cn = null, ln = null, un = null, dn = !1, fn = {
 		bitrateMin: 0,
 		format: "",
 		country: "",
 		language: "",
 		order: "clickcount"
-	}, fn = [], pn = [], isSongsView = () => Ut === "songs", columnsFor = () => isSongsView() ? pb : $y, selectedItems = () => Yt.filter((m) => Xt.has(rowKey(m))), selectedStations = () => isSongsView() ? [...new Map(selectedItems().map((m) => [m.stationUrl, songStation(m)])).values()] : selectedItems(), songStation = (m) => fn.find((_) => _.url === m.stationUrl) ?? x.get(m.stationUrl) ?? {
+	}, pn = [], gn = [], isSongsView = () => Gt === "songs", isMusicView = () => !!ne.get(Gt)?.load, columnsFor = () => isSongsView() ? pb : isMusicView() ? gb : $y, selectedItems = () => Xt.filter((m) => Zt.has(rowKey(m))), selectedStations = () => isSongsView() ? [...new Map(selectedItems().map((m) => [m.stationUrl, songStation(m)])).values()] : selectedItems(), songStation = (m) => pn.find((_) => _.url === m.stationUrl) ?? x.get(m.stationUrl) ?? {
 		url: m.stationUrl,
 		title: m.station,
 		favicon: m.favicon,
 		https: m.stationUrl.startsWith("https:")
 	};
 	function selectNav(m) {
-		Oe.has(m) || (m = te[0].id), Ut = m;
-		for (let [_, x] of Oe) x.classList.toggle("is-selected", _ === m), x.setAttribute("aria-selected", _ === m ? "true" : "false");
-		Gt = null, en = m === "online" || J.has(m) ? null : "name", tn = !1, xt.hidden = m !== "history", buildHead(columnsFor());
-		let _ = m === "online" || J.has(m);
-		ze.hidden = !_, Qe.classList.toggle("is-two-pane", !_), renderGenres(), load(), persistView();
+		Ae.has(m) || (m = te[0].id), Gt = m;
+		for (let [_, x] of Ae) x.classList.toggle("is-selected", _ === m), x.setAttribute("aria-selected", _ === m ? "true" : "false");
+		Kt = null, tn = m === "online" || ne.has(m) ? null : "name", nn = !1, Tt.hidden = m !== "history", buildHead(columnsFor());
+		let _ = m === "online" || ne.has(m) && !ne.get(m).load;
+		Ve.hidden = !_, $e.classList.toggle("is-two-pane", !_), renderGenres(), load(), persistView();
 	}
 	function persistView() {
 		let { left: m, top: _ } = readView();
 		writeView({
-			nav: Ut,
-			genre: Gt?.name ?? null,
-			expanded: [...Kt],
+			nav: Gt,
+			genre: Kt?.name ?? null,
+			expanded: [...Yt],
 			left: m,
 			top: _
 		});
@@ -17421,22 +17444,22 @@ function createRadioLibrary({ onPlay: m, onEnqueue: _, favorites: x, history: S,
 		D.setAttribute("role", "treeitem"), D.style.setProperty("--depth", String(x));
 		let O = Xy("span", "ml-genre-toggle", S ? C ? "−" : "+" : ""), F = Xy("span", "ml-genre-label", m);
 		D.append(O, F);
-		let I = Gt ? Gt.name === m && Gt.tag === _ : m === "All Stations";
+		let I = Kt ? Kt.name === m && Kt.tag === _ : m === "All Stations";
 		return D.classList.toggle("is-selected", I), D.setAttribute("aria-selected", I ? "true" : "false"), S && (D.setAttribute("aria-expanded", C ? "true" : "false"), O.addEventListener("click", (_) => {
-			_.stopPropagation(), Kt.has(m) ? Kt.delete(m) : Kt.add(m), renderGenres(), persistView();
+			_.stopPropagation(), Yt.has(m) ? Yt.delete(m) : Yt.add(m), renderGenres(), persistView();
 		})), D.addEventListener("click", () => {
-			Gt = m === "All Stations" ? null : {
+			Kt = m === "All Stations" ? null : {
 				name: m,
 				tag: _
-			}, S && !Kt.has(m) && Kt.add(m), renderGenres(), load(), persistView();
+			}, S && !Yt.has(m) && Yt.add(m), renderGenres(), load(), persistView();
 		}), D.addEventListener("dblclick", () => {
 			S && O.click();
 		}), D;
 	}
 	function renderGenres() {
 		let m = [genreNode("All Stations", "", 0)];
-		if (Ut === "online") for (let _ of Ky) {
-			let x = Kt.has(_.name);
+		if (Gt === "online") for (let _ of Ky) {
+			let x = Yt.has(_.name);
 			if (m.push(genreNode(_.name, _.tag, 0, {
 				expandable: _.children.length > 0,
 				isExpanded: x
@@ -17447,133 +17470,133 @@ function createRadioLibrary({ onPlay: m, onEnqueue: _, favorites: x, history: S,
 			for (let m of sourceStations()) for (let x of stationGenres(m)) _.set(x, (_.get(x) ?? 0) + 1);
 			for (let x of [..._.keys()].sort((m, _) => m.localeCompare(_))) m.push(genreNode(x, x.toLowerCase(), 0));
 		}
-		ze.replaceChildren(...m), ze.querySelector(".is-selected")?.scrollIntoView({ block: "nearest" });
+		Ve.replaceChildren(...m), Ve.querySelector(".is-selected")?.scrollIntoView({ block: "nearest" });
 	}
 	function sourceStations() {
-		if (J.has(Ut)) {
-			let m = J.get(Ut);
-			return m.load ? ne.get(Ut) ?? [] : m.getStations() ?? [];
+		if (ne.has(Gt)) {
+			let m = ne.get(Gt);
+			return m.load ? re.get(Gt) ?? [] : m.getStations() ?? [];
 		}
-		switch (Ut) {
-			case "featured": return cn ?? [];
+		switch (Gt) {
+			case "featured": return ln ?? [];
 			case "bookmarks": return x.list();
-			case "history": return fn;
-			case "songs": return pn;
+			case "history": return pn;
+			case "songs": return gn;
 			default: return [];
 		}
 	}
 	function matchesFilters(m) {
-		return !(dn.bitrateMin && (m.bitrate || 0) < dn.bitrateMin || dn.format && D(m) !== dn.format || dn.country && m.country !== dn.country);
+		return !(fn.bitrateMin && (m.bitrate || 0) < fn.bitrateMin || fn.format && D(m) !== fn.format || fn.country && m.country !== fn.country);
 	}
 	function matchesGenre(m) {
-		if (!Gt) return !0;
-		let _ = Gt.name.toLowerCase();
+		if (!Kt) return !0;
+		let _ = Kt.name.toLowerCase();
 		return stationGenres(m).some((m) => m.toLowerCase() === _);
 	}
 	function matchesSongSearch(m) {
-		let _ = Re.value.trim().toLowerCase();
+		let _ = ze.value.trim().toLowerCase();
 		if (!_) return !0;
 		let x = `${m.title} ${m.artist} ${m.station}`.toLowerCase();
 		return _.split(/\s+/).every((m) => x.includes(m));
 	}
 	function matchesSearch(m) {
-		let _ = Re.value.trim().toLowerCase();
+		let _ = ze.value.trim().toLowerCase();
 		if (!_) return !0;
 		let x = `${m.title} ${m.country} ${m.countryName ?? ""} ${stationGenres(m).join(" ")} ${m.url}`.toLowerCase();
 		return _.split(/\s+/).every((m) => x.includes(m));
 	}
 	async function load({ append: m = !1 } = {}) {
-		let _ = ++on;
-		if (mt.hidden = !0, Ut !== "online") {
-			if (Ut === "featured") {
-				if (await ensureLocal(), _ !== on) return;
-			} else if (Ut === "history") {
-				if (fn = await S.listStations(), _ !== on) return;
-			} else if (Ut === "songs") {
-				if (pn = await S.listSongs(), _ !== on) return;
-			} else if (J.get(Ut)?.search && Re.value.trim()) {
-				let x = J.get(Ut), S = Re.value.trim();
-				sn?.abort();
+		let _ = ++sn;
+		if (xt.hidden = !0, Gt !== "online") {
+			if (Gt === "featured") {
+				if (await ensureLocal(), _ !== sn) return;
+			} else if (Gt === "history") {
+				if (pn = await S.listStations(), _ !== sn) return;
+			} else if (Gt === "songs") {
+				if (gn = await S.listSongs(), _ !== sn) return;
+			} else if (ne.get(Gt)?.search && ze.value.trim()) {
+				let x = ne.get(Gt), S = ze.value.trim();
+				cn?.abort();
 				let C = new AbortController();
-				sn = C, setMessage("Meklē...");
+				cn = C, setMessage("Meklē...");
 				try {
 					let m = await x.search(S, { signal: C.signal });
-					if (_ !== on) return;
-					ne.set(Ut, m), setMessage(m.length === 0 ? "Nekas netika atrasts." : "");
+					if (_ !== sn) return;
+					re.set(Gt, m), setMessage(m.length === 0 ? "Nekas netika atrasts." : ""), m.slice(0, 2).forEach((m) => J?.(m));
 				} catch (m) {
-					if (_ !== on || C.signal.aborted) return;
-					ne.set(Ut, []), setMessage(m?.message || "Meklēšana neizdevās.");
+					if (_ !== sn || C.signal.aborted) return;
+					re.set(Gt, []), setMessage(m?.message || "Meklēšana neizdevās.");
 				}
-				Yt = sourceStations(), rn = !1, m || Xt.clear(), renderRows(), setStatus();
+				Xt = sourceStations(), an = !1, m || Zt.clear(), renderRows(), setStatus();
 				return;
-			} else if (J.get(Ut)?.load) {
-				let m = J.get(Ut);
-				ne.has(Ut) || setMessage("Loading playlist...");
+			} else if (ne.get(Gt)?.load) {
+				let m = ne.get(Gt);
+				re.has(Gt) || setMessage("Loading playlist...");
 				try {
 					let x = await m.load({ onRefresh: (_) => {
-						ne.set(Ut, _), J.get(Ut) === m && load();
+						re.set(Gt, _), ne.get(Gt) === m && load();
 					} });
-					if (_ !== on) return;
-					ne.set(Ut, x), setMessage(x.length === 0 ? "This playlist is empty or unavailable." : "");
+					if (_ !== sn) return;
+					re.set(Gt, x), setMessage(x.length === 0 ? "This playlist is empty or unavailable." : ""), x[0]?.source === "youtube" && J?.(x[0]);
 				} catch (m) {
-					if (_ !== on) return;
+					if (_ !== sn) return;
 					setMessage(m?.message || "The playlist could not be loaded.");
 				}
 			}
-			Yt = isSongsView() ? sourceStations().filter((m) => matchesSongSearch(m)) : sourceStations().filter((m) => matchesGenre(m) && matchesFilters(m) && matchesSearch(m)), rn = !1, m || Xt.clear(), renderRows(), setStatus();
+			Xt = isSongsView() ? sourceStations().filter((m) => matchesSongSearch(m)) : sourceStations().filter((m) => matchesGenre(m) && matchesFilters(m) && matchesSearch(m)), an = !1, m || Zt.clear(), renderRows(), setStatus();
 			return;
 		}
-		nn = !0, setMessage(m ? "" : "Searching the directory..."), m || Je.replaceChildren();
+		rn = !0, setMessage(m ? "" : "Searching the directory..."), m || Xe.replaceChildren();
 		try {
 			let x = await searchStations({
-				query: Re.value,
-				country: dn.country,
-				language: dn.language,
-				tag: Gt?.tag ?? "",
-				bitrateMin: dn.bitrateMin,
-				codec: dn.format,
-				order: dn.order,
-				offset: m ? Yt.length : 0,
+				query: ze.value,
+				country: fn.country,
+				language: fn.language,
+				tag: Kt?.tag ?? "",
+				bitrateMin: fn.bitrateMin,
+				codec: fn.format,
+				order: fn.order,
+				offset: m ? Xt.length : 0,
 				limit: 60
 			});
-			if (_ !== on) return;
-			Yt = m ? [...Yt, ...x.items] : x.items, rn = x.hasMore, nn = !1, m || Xt.clear(), setMessage(Yt.length === 0 ? "No streams found. Try a different search or genre." : ""), renderRows(), setStatus();
+			if (_ !== sn) return;
+			Xt = m ? [...Xt, ...x.items] : x.items, an = x.hasMore, rn = !1, m || Zt.clear(), setMessage(Xt.length === 0 ? "No streams found. Try a different search or genre." : ""), renderRows(), setStatus();
 		} catch (x) {
-			if (_ !== on) return;
-			Yt = m ? Yt : [], rn = !1, nn = !1, renderRows(), setMessage(x?.message || "The directory is unavailable."), setStatus();
+			if (_ !== sn) return;
+			Xt = m ? Xt : [], an = !1, rn = !1, renderRows(), setMessage(x?.message || "The directory is unavailable."), setStatus();
 		} finally {
-			_ === on && (nn = !1);
+			_ === sn && (rn = !1);
 		}
 	}
 	async function ensureLocal() {
-		return cn || (ln ||= (setMessage("Loading stations..."), F().then((m) => (cn = m, setMessage(""), m)).catch((m) => (setMessage(m?.message || "The station list could not be loaded."), cn = [], cn))), ln);
+		return ln || (un ||= (setMessage("Loading stations..."), F().then((m) => (ln = m, setMessage(""), m)).catch((m) => (setMessage(m?.message || "The station list could not be loaded."), ln = [], ln))), un);
 	}
 	async function loadCountries() {
-		if (!un) {
-			un = !0;
+		if (!dn) {
+			dn = !0;
 			try {
-				let [m, _] = await Promise.all([countries(), languages()]), x = Pt.value;
-				Pt.replaceChildren(new Option("Any country", ""), ...m.map((m) => new Option(`${m.code} (${m.count})`, m.code))), Pt.value = x;
-				let S = Lt.value;
-				Lt.replaceChildren(new Option("Any language", ""), ..._.map((m) => new Option(`${m.name} (${m.count})`, m.name))), Lt.value = S;
+				let [m, _] = await Promise.all([countries(), languages()]), x = Lt.value;
+				Lt.replaceChildren(new Option("Any country", ""), ...m.map((m) => new Option(`${m.code} (${m.count})`, m.code))), Lt.value = x;
+				let S = zt.value;
+				zt.replaceChildren(new Option("Any language", ""), ..._.map((m) => new Option(`${m.name} (${m.count})`, m.name))), zt.value = S;
 			} catch {
-				un = !1;
+				dn = !1;
 			}
 		}
 	}
 	function sortedStations() {
-		let m = Yt;
-		if (!en) return m;
-		let _ = columnsFor().find((m) => m.id === en);
+		let m = Xt;
+		if (!tn) return m;
+		let _ = columnsFor().find((m) => m.id === tn);
 		if (!_) return m;
-		let x = tn ? -1 : 1;
+		let x = nn ? -1 : 1;
 		return [...m].sort((m, S) => {
 			let C = _.sort(m), D = _.sort(S);
 			return _.numeric ? (C - D) * x : String(C).localeCompare(String(D)) * x;
 		});
 	}
 	function sortBy(m) {
-		en === m ? tn = !tn : (en = m, tn = m === "bitrate"), renderRows();
+		tn === m ? nn = !nn : (tn = m, nn = m === "bitrate"), renderRows();
 	}
 	function logoCell(m) {
 		let _ = Xy("span", `ml-station-icon${x.has(m.url) ? " is-bookmarked" : ""}`), S = m.favicon || m.logo || "";
@@ -17584,7 +17607,7 @@ function createRadioLibrary({ onPlay: m, onEnqueue: _, favorites: x, history: S,
 	function songRow(m, _, x) {
 		let S = Xy("div", "ml-row is-song");
 		S.setAttribute("role", "option"), S.dataset.url = m.stationUrl, S.dataset.index = String(_), S.title = `${m.streamTitle}\n${m.station}\n${new Date(m.at).toLocaleString()}`, _ % 2 == 1 && S.classList.add("is-alt");
-		let C = Xt.has(rowKey(m));
+		let C = Zt.has(rowKey(m));
 		S.classList.toggle("is-selected", C);
 		let D = Xy("div", "ml-td ml-col-name");
 		return D.append(Xy("span", "ml-station-icon is-song"), Xy("span", "ml-station-name", m.title || m.streamTitle)), S.append(D, Xy("div", "ml-td ml-col-artist", m.artist || ""), Xy("div", "ml-td ml-col-station", m.station || ""), Xy("div", "ml-td ml-col-when", formatWhen(m.at))), attachRowEvents(S, m, _, x), S;
@@ -17592,9 +17615,10 @@ function createRadioLibrary({ onPlay: m, onEnqueue: _, favorites: x, history: S,
 	let rowKey = (m) => isSongsView() ? `song:${m.id ?? m.at}` : m.url;
 	function row(m, _, S) {
 		if (isSongsView()) return songRow(m, _, S);
+		if (isMusicView()) return musicRow(m, _);
 		let O = Xy("div", "ml-row");
 		O.setAttribute("role", "option"), O.dataset.url = m.url, O.dataset.index = String(_), O.title = stationTooltip(m), _ % 2 == 1 && O.classList.add("is-alt"), H(m) && O.classList.add("is-blocked");
-		let F = Xt.has(m.url);
+		let F = Zt.has(m.url);
 		O.classList.toggle("is-selected", F), O.setAttribute("aria-selected", F ? "true" : "false");
 		let I = stationGenres(m), L = Xy("div", "ml-td ml-col-name");
 		L.append(logoCell(m), Xy("span", "ml-station-name", m.title));
@@ -17602,106 +17626,127 @@ function createRadioLibrary({ onPlay: m, onEnqueue: _, favorites: x, history: S,
 		W && O.classList.add("is-playing");
 		let q = Xy("button", `ml-fav${x.has(m.url) ? " is-on" : ""}`, x.has(m.url) ? "★" : "☆");
 		return q.type = "button", q.title = x.has(m.url) ? "Remove bookmark" : "Bookmark", q.addEventListener("mousedown", (m) => m.stopPropagation()), q.addEventListener("click", (_) => {
-			_.stopPropagation(), x.toggle(m), Ut === "bookmarks" ? load() : renderRows();
+			_.stopPropagation(), x.toggle(m), Gt === "bookmarks" ? load() : renderRows();
 		}), O.append(L, Xy("div", "ml-td ml-col-genre", I[0] ?? ""), Xy("div", "ml-td ml-col-nowplaying", W), Xy("div", "ml-td ml-col-bitrate", m.bitrate ? `${m.bitrate} kbps` : ""), Xy("div", "ml-td ml-col-format", D(m)), (() => {
 			let m = Xy("div", "ml-td ml-col-fav");
 			return m.append(q), m;
 		})()), O.dataset.index = String(_), O.dataset.key = rowKey(m), O;
 	}
+	function musicRow(m, _) {
+		let S = Xy("div", "ml-row is-music");
+		S.setAttribute("role", "option"), S.dataset.url = m.url, S.dataset.index = String(_), S.title = m.artist ? `${m.artist} - ${m.title}` : m.title, _ % 2 == 1 && S.classList.add("is-alt");
+		let D = Zt.has(m.url);
+		S.classList.toggle("is-selected", D), S.setAttribute("aria-selected", D ? "true" : "false");
+		let O = C();
+		O && O.station?.url === m.url && S.classList.add("is-playing");
+		let F = Xy("div", "ml-td ml-col-name");
+		F.append(logoCell(m), Xy("span", "ml-station-name", m.title));
+		let I = Math.round(m.duration || 0), L = I ? `${Math.floor(I / 60)}:${String(I % 60).padStart(2, "0")}` : "", H = x.has(m.url), U = Xy("button", `ml-fav${H ? " is-on" : ""}`, H ? "★" : "☆");
+		return U.type = "button", U.title = H ? "Noņemt no favorītiem" : "Pievienot favorītiem", U.addEventListener("mousedown", (m) => m.stopPropagation()), U.addEventListener("click", (_) => {
+			_.stopPropagation(), x.toggle(m), renderRows();
+		}), S.append(F, Xy("div", "ml-td ml-col-artist", m.artist || ""), Xy("div", "ml-td ml-col-length", L), (() => {
+			let m = Xy("div", "ml-td ml-col-fav");
+			return m.append(U), m;
+		})()), S.dataset.key = rowKey(m), S;
+	}
 	function rowFromEvent(m) {
 		let _ = m.target instanceof Element ? m.target.closest(".ml-row") : null;
-		return _ && Je.contains(_) ? _ : null;
+		return _ && Xe.contains(_) ? _ : null;
 	}
-	let gn = null;
-	Je.addEventListener("mousedown", (m) => {
+	let vn = null;
+	Xe.addEventListener("mousedown", (m) => {
 		let _ = rowFromEvent(m);
 		if (!_) return;
 		let x = _.dataset.key;
-		if (m.button === 2 && Xt.has(x)) {
-			gn = null;
+		if (J && _.classList.contains("is-music")) {
+			let m = Xt.find((m) => rowKey(m) === x);
+			m && J(m);
+		}
+		if (m.button === 2 && Zt.has(x)) {
+			vn = null;
 			return;
 		}
-		gn = {
+		vn = {
 			index: Number(_.dataset.index),
 			event: m
 		};
-	}), Je.addEventListener("mouseup", (m) => {
-		if (!gn || m.button !== 0) {
-			gn = null;
+	}), Xe.addEventListener("mouseup", (m) => {
+		if (!vn || m.button !== 0) {
+			vn = null;
 			return;
 		}
-		let { index: _ } = gn;
-		gn = null, applySelection(_, sortedStations(), m);
-	}), Je.addEventListener("dblclick", (m) => {
+		let { index: _ } = vn;
+		vn = null, applySelection(_, sortedStations(), m);
+	}), Xe.addEventListener("dblclick", (m) => {
 		let _ = rowFromEvent(m);
-		_ && (Xt = /* @__PURE__ */ new Set([_.dataset.key]), ge === "enqueue" ? enqueueSelected() : ge === "bookmark" ? bookmarkSelected() : playSelected());
-	}), Je.addEventListener("touchend", (m) => {
+		_ && (Zt = /* @__PURE__ */ new Set([_.dataset.key]), we === "enqueue" ? enqueueSelected() : we === "bookmark" ? bookmarkSelected() : playSelected());
+	}), Xe.addEventListener("touchend", (m) => {
 		let _ = rowFromEvent(m);
 		if (!_) return;
 		let x = _.dataset.key, S = Date.now();
-		if ($t.url === x && S - $t.at < 500) {
-			m.preventDefault(), $t = {
+		if (en.url === x && S - en.at < 500) {
+			m.preventDefault(), en = {
 				url: null,
 				at: 0
-			}, Xt = /* @__PURE__ */ new Set([x]), ge === "enqueue" ? enqueueSelected() : ge === "bookmark" ? bookmarkSelected() : playSelected();
+			}, Zt = /* @__PURE__ */ new Set([x]), we === "enqueue" ? enqueueSelected() : we === "bookmark" ? bookmarkSelected() : playSelected();
 			return;
 		}
-		$t = {
+		en = {
 			url: x,
 			at: S
 		};
-	}, { passive: !1 }), Je.addEventListener("contextmenu", (m) => {
+	}, { passive: !1 }), Xe.addEventListener("contextmenu", (m) => {
 		let _ = rowFromEvent(m);
 		if (!_) return;
 		m.preventDefault();
 		let x = Number(_.dataset.index), S = _.dataset.key;
-		Xt.has(S) || (Xt = /* @__PURE__ */ new Set([S]), Zt = x, renderRows()), openContextMenu(m.clientX, m.clientY);
+		Zt.has(S) || (Zt = /* @__PURE__ */ new Set([S]), $t = x, renderRows()), openContextMenu(m.clientX, m.clientY);
 	});
 	function renderRows() {
 		let m = sortedStations();
-		Je.replaceChildren(...m.map((_, x) => row(_, x, m)));
-		for (let [m, _] of qe) {
-			let x = m === en;
-			_.classList.toggle("is-sorted", x), _.querySelector(".ml-th-arrow").textContent = x ? tn ? "△" : "▽" : "", _.setAttribute("aria-sort", x ? tn ? "descending" : "ascending" : "none");
+		Xe.replaceChildren(...m.map((_, x) => row(_, x, m)));
+		for (let [m, _] of Je) {
+			let x = m === tn;
+			_.classList.toggle("is-sorted", x), _.querySelector(".ml-th-arrow").textContent = x ? nn ? "△" : "▽" : "", _.setAttribute("aria-sort", x ? nn ? "descending" : "ascending" : "none");
 		}
-		mt.hidden = !(Ut === "online" && rn), updateButtons();
+		xt.hidden = !(Gt === "online" && an), updateButtons();
 	}
 	function applySelection(m, _, x) {
 		let S = rowKey(_[m]);
-		if (x.shiftKey && Zt >= 0) {
-			let [x, S] = [Math.min(Zt, m), Math.max(Zt, m)];
-			Xt = new Set(_.slice(x, S + 1).map(rowKey));
-		} else x.ctrlKey || x.metaKey ? (Xt.has(S) ? Xt.delete(S) : Xt.add(S), Zt = m) : (Xt = /* @__PURE__ */ new Set([S]), Zt = m);
-		Je.focus({ preventScroll: !0 }), scheduleRender();
+		if (x.shiftKey && $t >= 0) {
+			let [x, S] = [Math.min($t, m), Math.max($t, m)];
+			Zt = new Set(_.slice(x, S + 1).map(rowKey));
+		} else x.ctrlKey || x.metaKey ? (Zt.has(S) ? Zt.delete(S) : Zt.add(S), $t = m) : (Zt = /* @__PURE__ */ new Set([S]), $t = m);
+		Xe.focus({ preventScroll: !0 }), scheduleRender();
 	}
-	let vn = !1;
+	let yn = !1;
 	function scheduleRender() {
-		vn || (vn = !0, setTimeout(() => {
-			vn = !1, renderRows();
+		yn || (yn = !0, setTimeout(() => {
+			yn = !1, renderRows();
 		}, 0));
 	}
 	function moveSelection(m, _) {
 		let x = sortedStations();
 		if (x.length === 0) return;
-		let S = Zt >= 0 ? Zt : -1, C = Math.max(0, Math.min(x.length - 1, S + m));
+		let S = $t >= 0 ? $t : -1, C = Math.max(0, Math.min(x.length - 1, S + m));
 		if (_ && S >= 0) {
 			let [m, _] = [Math.min(S, C), Math.max(S, C)];
-			for (let S of x.slice(m, _ + 1)) Xt.add(rowKey(S));
-		} else Xt = /* @__PURE__ */ new Set([rowKey(x[C])]);
-		Zt = C, renderRows(), Je.querySelector(`[data-index="${C}"]`)?.scrollIntoView({ block: "nearest" });
+			for (let S of x.slice(m, _ + 1)) Zt.add(rowKey(S));
+		} else Zt = /* @__PURE__ */ new Set([rowKey(x[C])]);
+		$t = C, renderRows(), Xe.querySelector(`[data-index="${C}"]`)?.scrollIntoView({ block: "nearest" });
 	}
 	function setMessage(m) {
-		Xe.textContent = m ?? "", Xe.hidden = !m;
+		Qe.textContent = m ?? "", Qe.hidden = !m;
 	}
 	function setStatus() {
-		let m = Yt.length, _ = isSongsView() ? m === 1 ? "song" : "songs" : J.get(Ut)?.load ? m === 1 ? "track" : "tracks" : m === 1 ? "stream" : "streams";
-		Tt.textContent = nn ? "Searching..." : `Found ${m} ${_}`, updateButtons();
+		let m = Xt.length, _ = isSongsView() ? m === 1 ? "song" : "songs" : ne.get(Gt)?.load ? m === 1 ? "track" : "tracks" : m === 1 ? "stream" : "streams";
+		Dt.textContent = rn ? "Searching..." : `Found ${m} ${_}`, updateButtons();
 	}
 	function updateButtons() {
 		let m = selectedStations(), _ = m.filter((m) => !H(m));
-		$.disabled = _.length === 0, et.disabled = _.length === 0, tt.disabled = m.length === 0;
+		et.disabled = _.length === 0, tt.disabled = _.length === 0, lt.disabled = m.length === 0;
 		let S = m.length > 0 && m.every((m) => x.has(m.url));
-		tt.textContent = S ? "Unbookmark" : "Bookmark";
+		lt.textContent = S ? "Unbookmark" : "Bookmark";
 	}
 	function playSelected() {
 		let x = selectedStations().filter((m) => !H(m));
@@ -17713,22 +17758,22 @@ function createRadioLibrary({ onPlay: m, onEnqueue: _, favorites: x, history: S,
 	}
 	function enqueueSelected() {
 		for (let m of selectedStations()) H(m) || _(m);
-		setMessage(""), Tt.textContent = `Enqueued ${selectedStations().length} ${selectedStations().length === 1 ? "stream" : "streams"}`;
+		setMessage(""), Dt.textContent = `Enqueued ${selectedStations().length} ${selectedStations().length === 1 ? "stream" : "streams"}`;
 	}
 	function bookmarkSelected() {
 		let m = selectedStations(), _ = m.every((m) => x.has(m.url));
 		for (let S of m) x.has(S.url) === _ && x.toggle(S);
-		Ut === "bookmarks" ? load() : renderRows();
+		Gt === "bookmarks" ? load() : renderRows();
 	}
 	function copySelectedUrls() {
 		let m = selectedStations().map((m) => m.url).join("\n");
 		m && navigator.clipboard?.writeText && navigator.clipboard.writeText(m).catch(() => {});
 	}
 	function closePopups() {
-		Dt.hidden = !0, Ht.hidden = !0, lt.setAttribute("aria-expanded", "false");
+		At.hidden = !0, Ut.hidden = !0, mt.setAttribute("aria-expanded", "false");
 	}
 	function placePopup(m, _, x) {
-		let S = me.getBoundingClientRect();
+		let S = he.getBoundingClientRect();
 		m.hidden = !1;
 		let C = m.offsetWidth, D = m.offsetHeight, O = Math.max(0, Math.min(_ - S.left, S.width - C - 2)), F = Math.max(0, Math.min(x - S.top, S.height - D - 2));
 		m.style.left = `${O}px`, m.style.top = `${F}px`;
@@ -17758,7 +17803,7 @@ function createRadioLibrary({ onPlay: m, onEnqueue: _, favorites: x, history: S,
 				!0
 			]
 		];
-		if (Ut === "bookmarks" && S.length === 1) {
+		if (Gt === "bookmarks" && S.length === 1) {
 			let [m] = S;
 			D.push([
 				"Rename...",
@@ -17785,77 +17830,77 @@ function createRadioLibrary({ onPlay: m, onEnqueue: _, favorites: x, history: S,
 			"Open station website",
 			() => window.open(S[0].homepage, "_blank", "noopener"),
 			!0
-		]), Ht.replaceChildren(...D.map(([m, _, x]) => {
+		]), Ut.replaceChildren(...D.map(([m, _, x]) => {
 			let S = button("ml-menu-item", m);
 			return S.setAttribute("role", "menuitem"), S.disabled = !x, S.addEventListener("click", () => {
 				closePopups(), _();
 			}), S;
-		})), Dt.hidden = !0, placePopup(Ht, m, _);
+		})), At.hidden = !0, placePopup(Ut, m, _);
 	}
 	function toggleFilterPanel() {
-		if (!Dt.hidden) {
+		if (!At.hidden) {
 			closePopups();
 			return;
 		}
-		if (Ht.hidden = !0, Ut === "online") loadCountries();
+		if (Ut.hidden = !0, Gt === "online") loadCountries();
 		else {
-			let m = [...new Set(sourceStations().map((m) => m.country).filter(Boolean))].sort(), _ = Pt.value;
-			Pt.replaceChildren(new Option("Any country", ""), ...m.map((m) => new Option(m, m))), Pt.value = m.includes(_) ? _ : "", un = !1;
+			let m = [...new Set(sourceStations().map((m) => m.country).filter(Boolean))].sort(), _ = Lt.value;
+			Lt.replaceChildren(new Option("Any country", ""), ...m.map((m) => new Option(m, m))), Lt.value = m.includes(_) ? _ : "", dn = !1;
 		}
-		let m = lt.getBoundingClientRect();
-		placePopup(Dt, m.left, m.top - 4), Dt.style.top = `${m.top - me.getBoundingClientRect().top - Dt.offsetHeight - 4}px`, lt.setAttribute("aria-expanded", "true");
+		let m = mt.getBoundingClientRect();
+		placePopup(At, m.left, m.top - 4), At.style.top = `${m.top - he.getBoundingClientRect().top - At.offsetHeight - 4}px`, mt.setAttribute("aria-expanded", "true");
 	}
 	function updateFilterLabel() {
 		let m = [
-			dn.bitrateMin ? `${dn.bitrateMin}k+` : "",
-			dn.format,
-			dn.country,
-			dn.language
+			fn.bitrateMin ? `${fn.bitrateMin}k+` : "",
+			fn.format,
+			fn.country,
+			fn.language
 		].filter(Boolean);
-		lt.textContent = m.length > 0 ? `Filter: ${m.join(" ")} ▾` : "Filter ▾";
+		mt.textContent = m.length > 0 ? `Filter: ${m.join(" ")} ▾` : "Filter ▾";
 	}
 	function applyFilters() {
-		dn.bitrateMin = Number(At.value) || 0, dn.format = Mt.value, dn.country = Pt.value, dn.language = Lt.value, dn.order = zt.value, updateFilterLabel(), load();
+		fn.bitrateMin = Number(Mt.value) || 0, fn.format = Pt.value, fn.country = Lt.value, fn.language = zt.value, fn.order = Vt.value, updateFilterLabel(), load();
 	}
 	function hide() {
-		closePopups(), re.hidden = !0;
+		closePopups(), Q.hidden = !0;
 	}
-	let yn = null, bn = !1;
+	let bn = null, xn = !1;
 	function embedInto(m) {
-		yn = m, hide(), m.classList.add("ml-embed"), m.append(me), bn || restoreView().then(() => load());
+		bn = m, hide(), m.classList.add("ml-embed"), m.append(he), xn || restoreView().then(() => load());
 	}
 	function unembed() {
-		yn && (yn.classList.remove("ml-embed"), yn = null, closePopups(), ue.append(me));
+		bn && (bn.classList.remove("ml-embed"), bn = null, closePopups(), de.append(he));
 	}
 	async function restoreView() {
-		bn = !0;
+		xn = !0;
 		let m = readView();
-		Kt = new Set(Array.isArray(m.expanded) ? m.expanded : ["Electronic"]), Ut = te.some((_) => _.id === m.nav) ? m.nav : te[0].id;
-		for (let [m, _] of Oe) _.classList.toggle("is-selected", m === Ut), _.setAttribute("aria-selected", m === Ut ? "true" : "false");
-		if (Ut === "online" && m.genre) for (let _ of Ky) {
-			_.name === m.genre && (Gt = {
+		Yt = new Set(Array.isArray(m.expanded) ? m.expanded : ["Electronic"]), Gt = te.some((_) => _.id === m.nav) ? m.nav : te[0].id;
+		for (let [m, _] of Ae) _.classList.toggle("is-selected", m === Gt), _.setAttribute("aria-selected", m === Gt ? "true" : "false");
+		if (Gt === "online" && m.genre) for (let _ of Ky) {
+			_.name === m.genre && (Kt = {
 				name: _.name,
 				tag: _.tag
 			});
 			let x = _.children.find((_) => _.name === m.genre);
-			x && (Gt = {
+			x && (Kt = {
 				name: x.name,
 				tag: x.tag
 			});
 		}
-		else Gt = null;
-		en = Ut === "online" || J.has(Ut) ? null : "name", xt.hidden = Ut !== "history" && Ut !== "songs", buildHead(columnsFor()), Ut === "featured" && await ensureLocal(), renderGenres();
+		else Kt = null;
+		tn = Gt === "online" || ne.has(Gt) ? null : "name", Tt.hidden = Gt !== "history" && Gt !== "songs", buildHead(columnsFor()), Gt === "featured" && await ensureLocal(), renderGenres();
 	}
 	async function show() {
-		yn || (mount(), re.hidden = !1, restoreWindowPosition(), await restoreView(), await load(), Re.focus());
+		bn || (mount(), Q.hidden = !1, restoreWindowPosition(), await restoreView(), await load(), ze.focus());
 	}
-	Re.addEventListener("input", () => {
-		clearTimeout(an);
-		let m = Ut === "online" || !!J.get(Ut)?.search;
-		an = setTimeout(() => void load(), m ? 450 : 100);
-	}), Re.addEventListener("keydown", (m) => {
-		m.key === "Enter" ? (m.preventDefault(), clearTimeout(an), load()) : m.key === "ArrowDown" && (m.preventDefault(), Je.focus(), moveSelection(1, !1));
-	}), Je.addEventListener("keydown", (m) => {
+	ze.addEventListener("input", () => {
+		clearTimeout(on);
+		let m = Gt === "online" || !!ne.get(Gt)?.search;
+		on = setTimeout(() => void load(), m ? 300 : 100);
+	}), ze.addEventListener("keydown", (m) => {
+		m.key === "Enter" ? (m.preventDefault(), clearTimeout(on), load()) : m.key === "ArrowDown" && (m.preventDefault(), Xe.focus(), moveSelection(1, !1));
+	}), Xe.addEventListener("keydown", (m) => {
 		switch (m.key) {
 			case "ArrowDown":
 				m.preventDefault(), moveSelection(1, m.shiftKey);
@@ -17870,55 +17915,55 @@ function createRadioLibrary({ onPlay: m, onEnqueue: _, favorites: x, history: S,
 				m.preventDefault(), moveSelection(-12, m.shiftKey);
 				break;
 			case "Home":
-				m.preventDefault(), moveSelection(-Yt.length, m.shiftKey);
+				m.preventDefault(), moveSelection(-Xt.length, m.shiftKey);
 				break;
 			case "End":
-				m.preventDefault(), moveSelection(Yt.length, m.shiftKey);
+				m.preventDefault(), moveSelection(Xt.length, m.shiftKey);
 				break;
 			case "Enter":
 				m.preventDefault(), m.shiftKey ? enqueueSelected() : playSelected();
 				break;
 			case "a":
 			case "A":
-				(m.ctrlKey || m.metaKey) && (m.preventDefault(), Xt = new Set(Yt.map((m) => m.url)), renderRows());
+				(m.ctrlKey || m.metaKey) && (m.preventDefault(), Zt = new Set(Xt.map((m) => m.url)), renderRows());
 				break;
 			case "Delete":
-			case "Backspace": Ut === "bookmarks" && selectedStations().length > 0 && (m.preventDefault(), bookmarkSelected());
+			case "Backspace": Gt === "bookmarks" && selectedStations().length > 0 && (m.preventDefault(), bookmarkSelected());
 		}
-	}), $.addEventListener("click", playSelected), et.addEventListener("click", enqueueSelected), tt.addEventListener("click", bookmarkSelected), mt.addEventListener("click", () => void load({ append: !0 })), lt.addEventListener("click", toggleFilterPanel), xt.addEventListener("click", async () => {
-		await S.clear(Ut === "songs" ? "songs" : "stations"), load();
-	}), Lt.addEventListener("change", applyFilters), zt.addEventListener("change", applyFilters), At.addEventListener("change", applyFilters), Mt.addEventListener("change", applyFilters), Pt.addEventListener("change", applyFilters), Vt.addEventListener("click", () => {
-		At.value = "0", Mt.value = "", Pt.value = "", Lt.value = "", zt.value = "clickcount", applyFilters(), closePopups();
-	}), oe.addEventListener("click", hide), oe.addEventListener("keydown", (m) => {
+	}), et.addEventListener("click", playSelected), tt.addEventListener("click", enqueueSelected), lt.addEventListener("click", bookmarkSelected), xt.addEventListener("click", () => void load({ append: !0 })), mt.addEventListener("click", toggleFilterPanel), Tt.addEventListener("click", async () => {
+		await S.clear(Gt === "songs" ? "songs" : "stations"), load();
+	}), zt.addEventListener("change", applyFilters), Vt.addEventListener("change", applyFilters), Mt.addEventListener("change", applyFilters), Pt.addEventListener("change", applyFilters), Lt.addEventListener("change", applyFilters), Ht.addEventListener("click", () => {
+		Mt.value = "0", Pt.value = "", Lt.value = "", zt.value = "", Vt.value = "clickcount", applyFilters(), closePopups();
+	}), se.addEventListener("click", hide), se.addEventListener("keydown", (m) => {
 		(m.key === "Enter" || m.key === " ") && (m.preventDefault(), hide());
-	}), re.addEventListener("keydown", (m) => {
-		m.key === "Escape" && (m.preventDefault(), !Dt.hidden || !Ht.hidden ? closePopups() : hide());
-	}), re.addEventListener("mousedown", (m) => {
-		!Dt.hidden && !Dt.contains(m.target) && m.target !== lt && (Dt.hidden = !0, lt.setAttribute("aria-expanded", "false")), !Ht.hidden && !Ht.contains(m.target) && (Ht.hidden = !0);
+	}), Q.addEventListener("keydown", (m) => {
+		m.key === "Escape" && (m.preventDefault(), !At.hidden || !Ut.hidden ? closePopups() : hide());
+	}), Q.addEventListener("mousedown", (m) => {
+		!At.hidden && !At.contains(m.target) && m.target !== mt && (At.hidden = !0, mt.setAttribute("aria-expanded", "false")), !Ut.hidden && !Ut.contains(m.target) && (Ut.hidden = !0);
 	});
-	let xn = null;
-	ie.addEventListener("mousedown", (m) => {
-		if (m.button !== 0 || oe.contains(m.target)) return;
+	let Sn = null;
+	ae.addEventListener("mousedown", (m) => {
+		if (m.button !== 0 || se.contains(m.target)) return;
 		m.preventDefault();
-		let _ = Q.getBoundingClientRect();
-		xn = {
+		let _ = ie.getBoundingClientRect();
+		Sn = {
 			dx: m.clientX - _.left,
 			dy: m.clientY - _.top
-		}, Q.classList.add("is-dragging");
+		}, ie.classList.add("is-dragging");
 	}), window.addEventListener("mousemove", (m) => {
-		xn && placeWindow(m.clientX - xn.dx, m.clientY - xn.dy);
+		Sn && placeWindow(m.clientX - Sn.dx, m.clientY - Sn.dy);
 	}), window.addEventListener("mouseup", () => {
-		xn && (xn = null, Q.classList.remove("is-dragging"), writeView({
+		Sn && (Sn = null, ie.classList.remove("is-dragging"), writeView({
 			...readView(),
-			left: Q.offsetLeft,
-			top: Q.offsetTop
+			left: ie.offsetLeft,
+			top: ie.offsetTop
 		}));
 	}), window.addEventListener("resize", () => {
-		!re.hidden && Q.classList.contains("is-placed") && placeWindow(Q.offsetLeft, Q.offsetTop);
+		!Q.hidden && ie.classList.contains("is-placed") && placeWindow(ie.offsetLeft, ie.offsetTop);
 	});
 	function placeWindow(m, _) {
-		let x = Math.max(0, re.clientWidth - Q.offsetWidth), S = Math.max(0, re.clientHeight - Q.offsetHeight);
-		Q.style.left = `${Math.round(Math.min(Math.max(0, m), x))}px`, Q.style.top = `${Math.round(Math.min(Math.max(0, _), S))}px`, Q.classList.add("is-placed");
+		let x = Math.max(0, Q.clientWidth - ie.offsetWidth), S = Math.max(0, Q.clientHeight - ie.offsetHeight);
+		ie.style.left = `${Math.round(Math.min(Math.max(0, m), x))}px`, ie.style.top = `${Math.round(Math.min(Math.max(0, _), S))}px`, ie.classList.add("is-placed");
 	}
 	function restoreWindowPosition() {
 		let m = readView();
@@ -17926,9 +17971,9 @@ function createRadioLibrary({ onPlay: m, onEnqueue: _, favorites: x, history: S,
 			placeWindow(m.left, m.top);
 			return;
 		}
-		let _ = re.getBoundingClientRect(), x = O?.({
-			width: Q.offsetWidth,
-			height: Q.offsetHeight,
+		let _ = Q.getBoundingClientRect(), x = O?.({
+			width: ie.offsetWidth,
+			height: ie.offsetHeight,
 			overlay: _
 		});
 		if (x) {
@@ -17936,12 +17981,12 @@ function createRadioLibrary({ onPlay: m, onEnqueue: _, favorites: x, history: S,
 			return;
 		}
 		let S = document.querySelector("#main-window")?.getBoundingClientRect();
-		S && S.right + Q.offsetWidth + 8 <= _.width ? placeWindow(S.right - _.left + 8, S.top - _.top) : placeWindow((_.width - Q.offsetWidth) / 2, (_.height - Q.offsetHeight) / 2);
+		S && S.right + ie.offsetWidth + 8 <= _.width ? placeWindow(S.right - _.left + 8, S.top - _.top) : placeWindow((_.width - ie.offsetWidth) / 2, (_.height - ie.offsetHeight) / 2);
 	}
 	function refreshNowPlaying() {
-		if (re.hidden || isSongsView()) return;
+		if (Q.hidden || isSongsView()) return;
 		let m = C();
-		for (let _ of Je.querySelectorAll(".ml-row")) {
+		for (let _ of Xe.querySelectorAll(".ml-row")) {
 			let x = m && _.dataset.url === m.station?.url;
 			_.classList.toggle("is-playing", !!x);
 			let S = _.querySelector(".ml-col-nowplaying");
@@ -17949,7 +17994,7 @@ function createRadioLibrary({ onPlay: m, onEnqueue: _, favorites: x, history: S,
 		}
 	}
 	async function showNode(m, _) {
-		await show(), m && Oe.has(m) && Ut !== m && selectNav(m), typeof _ == "string" && (Re.value = _), await load(), Re.focus(), Re.select?.();
+		await show(), m && Ae.has(m) && Gt !== m && selectNav(m), typeof _ == "string" && (ze.value = _), await load(), ze.focus(), ze.select?.();
 	}
 	return {
 		show,
@@ -17957,21 +18002,21 @@ function createRadioLibrary({ onPlay: m, onEnqueue: _, favorites: x, history: S,
 		hide,
 		embedInto,
 		unembed,
-		isEmbedded: () => !!yn,
+		isEmbedded: () => !!bn,
 		get body() {
-			return me;
+			return he;
 		},
-		isVisible: () => !!yn || !!re && !re.hidden,
+		isVisible: () => !!bn || !!Q && !Q.hidden,
 		refreshNowPlaying,
 		render: () => void load(),
 		get element() {
-			return re;
+			return Q;
 		}
 	};
 }
 //#endregion
 //#region src/playbackController.js
-var rx = [
+var ix = [
 	1e3,
 	2e3,
 	4e3,
@@ -17980,12 +18025,12 @@ var rx = [
 	3e4,
 	3e4,
 	3e4
-], ix = 5e3, ax = 15e3, ox = 3e4, sx = 4e3;
+], ax = 5e3, ox = 15e3, sx = 3e4, cx = 4e3;
 function createPlaybackController({ webamp: m, onEvent: _ }) {
 	let x = m.media?._source?._audio ?? null, emit = (m, x = {}) => _?.({
 		type: m,
 		...x
-	}), C = null, D = "stopped", O = 0, F = 0, I = null, L = null, H = 0, W = 0, q = 0, ee = 0, te = null, J = !1, isLive = (m) => !!m && m.live !== !1;
+	}), C = null, D = "stopped", O = 0, F = 0, I = null, L = null, H = 0, W = 0, q = 0, J = 0, ee = null, te = !1, isLive = (m) => !!m && m.live !== !1;
 	function currentTrackId() {
 		return m.store.getState().playlist.currentTrack;
 	}
@@ -17994,12 +18039,12 @@ function createPlaybackController({ webamp: m, onEvent: _ }) {
 	}
 	function startStallCheck() {
 		clearInterval(L), L = setInterval(() => {
-			D === "playing" && x && !x.paused && Date.now() - H > ax && (emit("stalled", { station: C }), reload("stalled"));
-		}, ix);
+			D === "playing" && x && !x.paused && Date.now() - H > ox && (emit("stalled", { station: C }), reload("stalled"));
+		}, ax);
 	}
 	function reload(_, { useNextUrl: x = !1 } = {}) {
-		if (C && !J) {
-			J = !0;
+		if (C && !te) {
+			te = !0;
 			try {
 				let D = Array.isArray(C.urls) && C.urls.length > 1 ? C.urls : [C.url];
 				x && D.length > 1 && (F = (F + 1) % D.length);
@@ -18017,27 +18062,27 @@ function createPlaybackController({ webamp: m, onEvent: _ }) {
 					};
 					C = _, m.setTracksToPlay(U([_]));
 				}
-				ee = Date.now(), H = Date.now(), emit("reconnecting", {
+				J = Date.now(), H = Date.now(), emit("reconnecting", {
 					station: C,
 					attempt: O,
 					reason: _,
 					url: I
 				});
 			} finally {
-				J = !1;
+				te = !1;
 			}
 		}
 	}
 	function scheduleRetry(m) {
 		if (!C || D !== "playing" || I) return;
-		if (O >= rx.length) {
+		if (O >= ix.length) {
 			D = "stopped", emit("failed", {
 				station: C,
 				reason: m
 			});
 			return;
 		}
-		let _ = navigator.onLine === !1 ? null : rx[O];
+		let _ = navigator.onLine === !1 ? null : ix[O];
 		if (O += 1, _ == null) {
 			emit("waiting-for-network", { station: C });
 			return;
@@ -18054,25 +18099,25 @@ function createPlaybackController({ webamp: m, onEvent: _ }) {
 	}, onEnded = () => {
 		C && isLive(C) && D === "playing" && (markFailure(), scheduleRetry("ended"));
 	}, onProgress = () => {
-		H = Date.now(), O > 0 && D === "playing" && !x.paused && Date.now() - ee > 1500 && (O = 0, F = 0, emit("recovered", { station: C }));
+		H = Date.now(), O > 0 && D === "playing" && !x.paused && Date.now() - J > 1500 && (O = 0, F = 0, emit("recovered", { station: C }));
 	};
 	x && (x.addEventListener("error", onError, !0), x.addEventListener("ended", onEnded, !0), x.addEventListener("timeupdate", onProgress), x.addEventListener("playing", onProgress));
 	let ne = m.store.subscribe(() => {
 		let _ = m.store.getState().media.status;
-		if (_ === te) return;
-		let x = te;
-		te = _, C && (_ === "PLAYING" ? (x === "PAUSED" && Date.now() - q > ox && isLive(C) ? (D = "playing", reload("live-edge")) : x === "STOPPED" && Date.now() - W > 200 && Date.now() - ee > sx ? (D = "playing", reload("play-after-stop")) : D = "playing", H = Date.now(), startStallCheck()) : _ === "PAUSED" ? (D = "paused", q = Date.now(), clearTimers()) : _ === "STOPPED" && (Date.now() - W < 200 || (D = "stopped", O = 0, clearTimers())), emit("status", {
+		if (_ === ee) return;
+		let x = ee;
+		ee = _, C && (_ === "PLAYING" ? (x === "PAUSED" && Date.now() - q > sx && isLive(C) ? (D = "playing", reload("live-edge")) : x === "STOPPED" && Date.now() - W > 200 && Date.now() - J > cx ? (D = "playing", reload("play-after-stop")) : D = "playing", H = Date.now(), startStallCheck()) : _ === "PAUSED" ? (D = "paused", q = Date.now(), clearTimers()) : _ === "STOPPED" && (Date.now() - W < 200 || (D = "stopped", O = 0, clearTimers())), emit("status", {
 			status: _,
 			intent: D
 		}));
 	}), onOnline = () => {
 		C && D === "playing" && (clearTimeout(I), I = null, O = 0, reload("online"));
 	}, onWake = () => {
-		!document.hidden && C && D === "playing" && x && (x.paused || Date.now() - H > ax) && reload("wake");
+		!document.hidden && C && D === "playing" && x && (x.paused || Date.now() - H > ox) && reload("wake");
 	};
 	return window.addEventListener("online", onOnline), document.addEventListener("visibilitychange", onWake), window.addEventListener("pageshow", onWake), {
 		noteStation(m) {
-			C = m, D = "playing", O = 0, F = Math.max(0, (m?.urls ?? []).indexOf(m?.url)), ee = Date.now(), H = Date.now(), W = 0, clearTimers(), startStallCheck();
+			C = m, D = "playing", O = 0, F = Math.max(0, (m?.urls ?? []).indexOf(m?.url)), J = Date.now(), H = Date.now(), W = 0, clearTimers(), startStallCheck();
 		},
 		clearStation() {
 			C = null, D = "stopped", clearTimers();
@@ -18096,19 +18141,19 @@ function createPlaybackController({ webamp: m, onEvent: _ }) {
 }
 //#endregion
 //#region src/radioRecord.js
-var cx = "https://ancient-bush-28d0.gamernr1elite.workers.dev/api", lx = `${cx}/stations/`, ux = `${cx}/stations/now/`, dx = /hostingradio\.ru\/([^/?]+)\//i;
+var lx = "https://ancient-bush-28d0.gamernr1elite.workers.dev/api", ux = `${lx}/stations/`, dx = `${lx}/stations/now/`, fx = /hostingradio\.ru\/([^/?]+)\//i;
 function deriveRRPrefix(m) {
-	let _ = String(m?.url ?? m?.hls ?? "").match(dx);
+	let _ = String(m?.url ?? m?.hls ?? "").match(fx);
 	return _ ? _[1] : "";
 }
 function isRadioRecord(m) {
 	return deriveRRPrefix(m) !== "";
 }
-var fx = null, px = null;
+var px = null, mx = null;
 async function ensureMap() {
-	return fx || px || (px = (async () => {
+	return px || mx || (mx = (async () => {
 		try {
-			let m = await fetch(lx, { cache: "no-store" });
+			let m = await fetch(ux, { cache: "no-store" });
 			if (!m.ok) throw Error(`stations ${m.status}`);
 			let _ = await m.json(), x = _?.result ?? _?.data ?? _, S = Array.isArray(x) ? x : x?.stations ?? [], C = {};
 			for (let m of S) {
@@ -18125,13 +18170,13 @@ async function ensureMap() {
 					m && (C[m] = _);
 				}
 			}
-			return fx = Object.keys(C).length > 0 ? C : null, fx;
+			return px = Object.keys(C).length > 0 ? C : null, px;
 		} catch {
 			return null;
 		} finally {
-			px = null;
+			mx = null;
 		}
-	})(), px);
+	})(), mx);
 }
 function pickCover(m) {
 	return m?.image600 || m?.image200 || m?.image100 || m?.cover || "";
@@ -18141,7 +18186,7 @@ async function fetchRadioRecordNowPlaying(m) {
 	if (!_) return null;
 	let x = (await ensureMap())?.[_];
 	if (!x) return null;
-	let S = await fetch(ux, { cache: "no-store" });
+	let S = await fetch(dx, { cache: "no-store" });
 	if (!S.ok) return null;
 	let C = await S.json(), D = C?.result ?? C?.data ?? C, O = (Array.isArray(D) ? D : D?.stations ?? []).find((m) => String(m?.id ?? m?.station_id ?? "") === String(x))?.track;
 	if (!O) return null;
@@ -18154,7 +18199,7 @@ async function fetchRadioRecordNowPlaying(m) {
 }
 //#endregion
 //#region src/radioMetadata.js
-var mx = 1e4, hx = 2e4, gx = 7e3, _x = 98304;
+var hx = 1e4, gx = 2e4, _x = 7e3, vx = 98304;
 function splitStreamTitle(m, _) {
 	let x = String(m ?? "").trim(), S = x.indexOf(" - ");
 	return S > 0 ? {
@@ -18166,7 +18211,7 @@ function splitStreamTitle(m, _) {
 	};
 }
 async function probeIcy(m) {
-	let _ = new AbortController(), x = setTimeout(() => _.abort(), gx);
+	let _ = new AbortController(), x = setTimeout(() => _.abort(), _x);
 	try {
 		let x = await fetch(m, {
 			headers: { "Icy-MetaData": "1" },
@@ -18176,7 +18221,7 @@ async function probeIcy(m) {
 		}), S = Number(x.headers.get("icy-metaint"));
 		if (!x.ok || !x.body || !Number.isInteger(S) || S <= 0) return _.abort(), null;
 		let C = x.body.getReader(), D = [], O = 0;
-		for (; O < Math.min(_x, S + 4097);) {
+		for (; O < Math.min(vx, S + 4097);) {
 			let { done: m, value: _ } = await C.read();
 			if (m) break;
 			D.push(_), O += _.length;
@@ -18254,7 +18299,7 @@ function createRadioMetadata({ onNowPlaying: m }) {
 	function schedule() {
 		stopTimer(), !(!_ || F && !C()) && (D(_) !== "HLS" || isRadioRecord(_)) && (x = setTimeout(async () => {
 			await poll(), schedule();
-		}, document.hidden ? hx : mx));
+		}, document.hidden ? gx : hx));
 	}
 	function stopTimer() {
 		clearTimeout(x), x = null;
@@ -18367,26 +18412,26 @@ function createMediaSessionBridge({ webamp: m, isLive: _ }) {
 }
 //#endregion
 //#region src/artworkResolver.js
-var vx = "https://itunes.apple.com/search", yx = "webamp.artwork.v1", bx = 200, xx = 4e3, Sx = null, Cx = 0;
-function readCache$1() {
-	if (!Sx) try {
-		Sx = JSON.parse(localStorage.getItem(yx) ?? "{}") ?? {};
+var yx = "https://itunes.apple.com/search", bx = "webamp.artwork.v1", xx = 200, Sx = 4e3, Cx = null, wx = 0;
+function readCache$2() {
+	if (!Cx) try {
+		Cx = JSON.parse(localStorage.getItem(bx) ?? "{}") ?? {};
 	} catch {
-		Sx = {};
+		Cx = {};
 	}
-	return Sx;
+	return Cx;
 }
-_(readCache$1, "readCache");
+_(readCache$2, "readCache");
 function remember(m, _) {
-	let x = readCache$1();
+	let x = readCache$2();
 	x[m] = {
 		url: _,
 		at: Date.now()
 	};
 	let S = Object.keys(x);
-	S.length > bx && S.sort((m, _) => x[m].at - x[_].at).slice(0, S.length - bx).forEach((m) => delete x[m]);
+	S.length > xx && S.sort((m, _) => x[m].at - x[_].at).slice(0, S.length - xx).forEach((m) => delete x[m]);
 	try {
-		localStorage.setItem(yx, JSON.stringify(x));
+		localStorage.setItem(bx, JSON.stringify(x));
 	} catch {}
 }
 function normalizeName(m) {
@@ -18398,17 +18443,17 @@ function looksLikeSong(m, _) {
 }
 async function resolveArtwork(m, _) {
 	if (!looksLikeSong(m, _)) return;
-	let x = `${normalizeName(m)}|${normalizeName(_)}`, S = readCache$1()[x];
+	let x = `${normalizeName(m)}|${normalizeName(_)}`, S = readCache$2()[x];
 	if (S) return S.url;
-	let C = xx - (Date.now() - Cx);
-	C > 0 && await new Promise((m) => setTimeout(m, C)), Cx = Date.now();
+	let C = Sx - (Date.now() - wx);
+	C > 0 && await new Promise((m) => setTimeout(m, C)), wx = Date.now();
 	try {
 		let S = new URLSearchParams({
 			term: `${m} ${_}`,
 			entity: "song",
 			limit: "5",
 			media: "music"
-		}), C = await fetch(`${vx}?${S}`, {
+		}), C = await fetch(`${yx}?${S}`, {
 			cache: "force-cache",
 			signal: AbortSignal.timeout(6e3)
 		});
@@ -18424,19 +18469,19 @@ async function resolveArtwork(m, _) {
 }
 //#endregion
 //#region src/favoritesStore.js
-var wx = "webamp.radio.bookmarks.v1", Tx = /* @__PURE__ */ new Set(), Ex = null;
+var Tx = "webamp.radio.bookmarks.v1", Ex = /* @__PURE__ */ new Set(), Dx = null;
 function read() {
-	if (Ex) return Ex;
+	if (Dx) return Dx;
 	try {
-		let m = localStorage.getItem(wx);
-		if (!m) Ex = [];
-		else if (m.trimStart().startsWith("[")) Ex = JSON.parse(m) ?? [];
+		let m = localStorage.getItem(Tx);
+		if (!m) Dx = [];
+		else if (m.trimStart().startsWith("[")) Dx = JSON.parse(m) ?? [];
 		else {
 			let _ = m.split("\n");
-			Ex = [];
+			Dx = [];
 			for (let m = 0; m + 1 < _.length; m += 2) {
 				let x = _[m].trim(), S = _[m + 1].trim();
-				x && S && Ex.push({
+				x && S && Dx.push({
 					url: x,
 					title: S,
 					https: x.startsWith("https:")
@@ -18444,16 +18489,16 @@ function read() {
 			}
 		}
 	} catch {
-		Ex = [];
+		Dx = [];
 	}
-	return Ex;
+	return Dx;
 }
 function write(m) {
-	Ex = m;
+	Dx = m;
 	try {
-		localStorage.setItem(wx, JSON.stringify(m));
+		localStorage.setItem(Tx, JSON.stringify(m));
 	} catch {}
-	for (let _ of Tx) try {
+	for (let _ of Ex) try {
 		_(m);
 	} catch (m) {
 		console.error(m);
@@ -18481,7 +18526,7 @@ function toEntry(m) {
 		addedAt: Date.now()
 	};
 }
-var Dx = {
+var Ox = {
 	list: () => read().slice(),
 	has: (m) => read().some((_) => _.url === m),
 	get: (m) => read().find((_) => _.url === m) ?? null,
@@ -18513,9 +18558,9 @@ var Dx = {
 		write(x);
 	},
 	subscribe(m) {
-		return Tx.add(m), () => Tx.delete(m);
+		return Ex.add(m), () => Ex.delete(m);
 	}
-}, Ox = "https://www.googleapis.com/youtube/v3/", kx = 50, YouTubeApiError = class extends Error {
+}, kx = "https://www.googleapis.com/youtube/v3/", Ax = 50, YouTubeApiError = class extends Error {
 	constructor(m, { status: _ = 0, reason: x = "" } = {}) {
 		super(m), this.name = "YouTubeApiError", this.status = _, this.reason = x;
 	}
@@ -18534,7 +18579,7 @@ function pickThumbnail(m) {
 function createYouTubeApi({ apiKey: m, fetchImpl: _ = (...m) => fetch(...m) } = {}) {
 	if (!m) throw new YouTubeApiError("YouTube API key is not configured", { reason: "noKey" });
 	async function request(x, S, { signal: C } = {}) {
-		let D = new URL(x, Ox);
+		let D = new URL(x, kx);
 		for (let [m, _] of Object.entries(S)) _ != null && _ !== "" && D.searchParams.set(m, String(_));
 		D.searchParams.set("key", m);
 		let O;
@@ -18561,11 +18606,11 @@ function createYouTubeApi({ apiKey: m, fetchImpl: _ = (...m) => fetch(...m) } = 
 		}
 		return F ?? {};
 	}
-	async function playlistItems(m, { max: _ = kx, pageToken: x, signal: S } = {}) {
+	async function playlistItems(m, { max: _ = Ax, pageToken: x, signal: S } = {}) {
 		let C = await request("playlistItems", {
 			part: "snippet",
 			playlistId: m,
-			maxResults: Math.min(kx, _),
+			maxResults: Math.min(Ax, _),
 			pageToken: x
 		}, { signal: S }), D = [];
 		for (let m of C.items ?? []) {
@@ -18585,11 +18630,11 @@ function createYouTubeApi({ apiKey: m, fetchImpl: _ = (...m) => fetch(...m) } = 
 	}
 	async function videos(m, { signal: _ } = {}) {
 		let x = /* @__PURE__ */ new Map(), S = [...new Set(m.filter(Boolean))];
-		for (let m = 0; m < S.length; m += kx) {
+		for (let m = 0; m < S.length; m += Ax) {
 			let C = await request("videos", {
 				part: "snippet,contentDetails,status",
-				id: S.slice(m, m + kx).join(","),
-				maxResults: kx
+				id: S.slice(m, m + Ax).join(","),
+				maxResults: Ax
 			}, { signal: _ });
 			for (let m of C.items ?? []) {
 				let _ = m.snippet ?? {}, S = m.status ?? {};
@@ -18614,7 +18659,7 @@ function createYouTubeApi({ apiKey: m, fetchImpl: _ = (...m) => fetch(...m) } = 
 }
 //#endregion
 //#region src/youtube/cache.js
-var Ax = "webamp.yt.v1:", jx = 40, Mx = 36e5, cacheKey = (m, ..._) => `${Ax}${m}:${_.map((m) => String(m ?? "")).join(":")}`;
+var jx = "webamp.yt.v1:", Mx = 40, Nx = 36e5, cacheKey = (m, ..._) => `${jx}${m}:${_.map((m) => String(m ?? "")).join(":")}`;
 function readRaw(m) {
 	try {
 		let _ = localStorage.getItem(m);
@@ -18634,20 +18679,21 @@ function evict() {
 	let m = [];
 	for (let _ = 0; _ < localStorage.length; _++) {
 		let x = localStorage.key(_);
-		x?.startsWith(Ax) && m.push(x);
+		x?.startsWith(jx) && m.push(x);
 	}
-	if (!(m.length <= jx)) {
+	if (!(m.length <= Mx)) {
 		m.sort((m, _) => (readRaw(m)?.at ?? 0) - (readRaw(_)?.at ?? 0));
-		for (let _ of m.slice(0, m.length - jx)) localStorage.removeItem(_);
+		for (let _ of m.slice(0, m.length - Mx)) localStorage.removeItem(_);
 	}
 }
-function readCache(m) {
+function readCache$1(m) {
 	let _ = readRaw(m);
 	return _ ? {
 		data: _.data,
 		fresh: Date.now() - _.at < (_.ttl ?? 0)
 	} : null;
 }
+_(readCache$1, "readCache");
 function writeCache(m, _, x) {
 	writeRaw(m, {
 		at: Date.now(),
@@ -18656,7 +18702,7 @@ function writeCache(m, _, x) {
 	});
 }
 async function cached(m, _, x, { onRefresh: S, allowStale: C = !0 } = {}) {
-	let D = readCache(m);
+	let D = readCache$1(m);
 	if (D?.fresh) return D.data;
 	if (D && C) return Promise.resolve().then(x).then((x) => {
 		writeCache(m, x, _), S?.(x);
@@ -18666,14 +18712,14 @@ async function cached(m, _, x, { onRefresh: S, allowStale: C = !0 } = {}) {
 }
 //#endregion
 //#region src/youtube/tracks.js
-var Nx = /* @__PURE__ */ new Map(), Px = "youtube:", isYouTubeUrl = (m) => typeof m == "string" && m.startsWith("youtube:"), youtubeIdFromUrl = (m) => isYouTubeUrl(m) ? m.slice(8) : "", Fx = /\s*[([](?:official\s*(?:music\s*)?(?:video|audio|visuali[sz]er|lyric\s*video)|lyrics?|hd|hq|4k|audio|visuali[sz]er|explicit|clean|out now|remaster(?:ed)?(?:\s*\d{4})?)[)\]]\s*/gi, Ix = /\s*-\s*topic$|vevo$/i;
+var Px = /* @__PURE__ */ new Map(), Fx = "youtube:", isYouTubeUrl = (m) => typeof m == "string" && m.startsWith("youtube:"), youtubeIdFromUrl = (m) => isYouTubeUrl(m) ? m.slice(8) : "", Ix = /\s*[([](?:official\s*(?:music\s*)?(?:video|audio|visuali[sz]er|lyric\s*video)|lyrics?|hd|hq|4k|audio|visuali[sz]er|explicit|clean|out now|remaster(?:ed)?(?:\s*\d{4})?)[)\]]\s*/gi, Lx = /\s*-\s*topic$|vevo$/i;
 function splitArtistTitle(m, _ = "") {
-	let x = String(m ?? "").replace(Fx, " ").replace(/\s{2,}/g, " ").trim(), S = /^(.+?)\s+[-–—]\s+(.+)$/.exec(x);
+	let x = String(m ?? "").replace(Ix, " ").replace(/\s{2,}/g, " ").trim(), S = /^(.+?)\s+[-–—]\s+(.+)$/.exec(x);
 	return S ? {
 		artist: S[1].trim(),
 		title: S[2].trim()
 	} : {
-		artist: String(_ ?? "").replace(Ix, "").trim(),
+		artist: String(_ ?? "").replace(Lx, "").trim(),
 		title: x
 	};
 }
@@ -18681,7 +18727,7 @@ function toYouTubeRows(m) {
 	let _ = [];
 	for (let x of m) {
 		if (!x?.id || x.playable === !1 || x.embeddable === !1) continue;
-		let { artist: m, title: S } = splitArtistTitle(x.title, x.channelTitle), C = `${Px}${x.id}`;
+		let { artist: m, title: S } = splitArtistTitle(x.title, x.channelTitle), C = `${Fx}${x.id}`;
 		_.push({
 			source: "youtube",
 			url: C,
@@ -18703,7 +18749,7 @@ function toYouTubeRows(m) {
 	return _;
 }
 function toYouTubeTracks(m) {
-	return m.map((m) => (Nx.set(m.url, {
+	return m.map((m) => (Px.set(m.url, {
 		id: m.youtubeId,
 		thumbnail: m.favicon,
 		channelTitle: m.genre,
@@ -18720,7 +18766,7 @@ function toYouTubeTracks(m) {
 }
 //#endregion
 //#region src/youtube/sources.js
-var Lx = 8 * Mx;
+var Rx = 8 * Nx;
 async function fetchPlaylistRows(m, _, { signal: x } = {}) {
 	let { items: S } = await m.playlistItems(_, {
 		max: 50,
@@ -18743,7 +18789,7 @@ function createYouTubeSources({ apiKey: m = "", defaultPlaylistId: _ = "", defau
 	async function loadPlaylist(m, { onRefresh: _, signal: x } = {}) {
 		if (!m) return loadFallback();
 		try {
-			return await cached(cacheKey("playlist", m), Lx, () => fetchPlaylistRows(getApi(), m, { signal: x }), { onRefresh: _ });
+			return await cached(cacheKey("playlist", m), Rx, () => fetchPlaylistRows(getApi(), m, { signal: x }), { onRefresh: _ });
 		} catch (m) {
 			if (m?.name === "AbortError") throw m;
 			return console.warn("YouTube playlist unavailable:", m instanceof YouTubeApiError ? `${m.reason || m.status} ${m.message}` : m), loadFallback();
@@ -18764,29 +18810,29 @@ function createYouTubeSources({ apiKey: m = "", defaultPlaylistId: _ = "", defau
 }
 //#endregion
 //#region src/youtube/engine.js
-var Rx = "https://www.youtube.com/iframe_api", zx = {
+var zx = "https://www.youtube.com/iframe_api", Bx = {
 	"-1": "unstarted",
 	0: "ended",
 	1: "playing",
 	2: "paused",
 	3: "buffering",
 	5: "cued"
-}, Bx = null;
+}, Vx = null;
 function loadIframeApi() {
-	return window.YT?.Player ? Promise.resolve(window.YT) : (Bx ||= new Promise((m, _) => {
+	return window.YT?.Player ? Promise.resolve(window.YT) : (Vx ||= new Promise((m, _) => {
 		let x = window.onYouTubeIframeAPIReady;
 		window.onYouTubeIframeAPIReady = () => {
 			x?.(), m(window.YT);
 		};
 		let S = document.createElement("script");
-		S.src = Rx, S.async = !0, S.onerror = () => {
-			Bx = null, S.remove(), _(/* @__PURE__ */ Error("YouTube player script could not be loaded"));
+		S.src = zx, S.async = !0, S.onerror = () => {
+			Vx = null, S.remove(), _(/* @__PURE__ */ Error("YouTube player script could not be loaded"));
 		}, document.head.append(S);
-	}), Bx);
+	}), Vx);
 }
-var Vx = null;
+var Hx = null;
 function getYouTubeEngine() {
-	return Vx ||= createYouTubeEngine(), Vx;
+	return Hx ||= createYouTubeEngine(), Hx;
 }
 function createYouTubeEngine() {
 	let m = null, _ = null, x = null, S = null, C = "idle", D = 100, O = /* @__PURE__ */ new Set(), emit = (m, _) => {
@@ -18816,7 +18862,7 @@ function createYouTubeEngine() {
 							m.setVolume(D), S(), emit("ready");
 						},
 						onStateChange: (m) => {
-							C = zx[m.data] ?? "idle", emit("state", C);
+							C = Bx[m.data] ?? "idle", emit("state", C);
 						},
 						onError: (m) => {
 							emit("error", m.data);
@@ -18868,13 +18914,13 @@ function createYouTubeEngine() {
 			try {
 				m?.destroy();
 			} catch {}
-			x?.remove(), m = null, _ = null, x = null, S = null, C = "idle", O.clear(), Vx === this && (Vx = null);
+			x?.remove(), m = null, _ = null, x = null, S = null, C = "idle", O.clear(), Hx === this && (Hx = null);
 		}
 	};
 }
 //#endregion
 //#region src/youtube/source.js
-var Hx = "PLAYING", Ux = "PAUSED", Wx = "STOPPED", Gx = 500;
+var Ux = "PLAYING", Wx = "PAUSED", Gx = "STOPPED", Kx = 500;
 function installYouTubeSource(m, { engine: _, getHost: x, onActive: S, resolveStream: C = null, onStreamMode: D = null } = {}) {
 	let O = m.media, F = O?._source, I = F?._audio;
 	if (!F || !I || F.__youtubeInstalled) return F?.__youtubeSource ?? null;
@@ -18889,9 +18935,9 @@ function installYouTubeSource(m, { engine: _, getHost: x, onActive: S, resolveSt
 		getTimeElapsed: F.getTimeElapsed.bind(F),
 		setVolume: O.setVolume.bind(O),
 		loadFromUrl: O.loadFromUrl.bind(O)
-	}, H = null, U = null, W = null, q = 0, ee = 0, te = !1, J = "idle", ne = null, re = null, trigger = (m) => F._emitter.trigger(m), setStatus = (m) => F._setStatus(m);
+	}, H = null, U = null, W = null, q = 0, J = 0, ee = !1, te = "idle", ne = null, re = null, trigger = (m) => F._emitter.trigger(m), setStatus = (m) => F._setStatus(m);
 	function startTimer() {
-		ne ||= setInterval(() => trigger("positionChange"), Gx);
+		ne ||= setInterval(() => trigger("positionChange"), Kx);
 	}
 	function stopTimer() {
 		ne && clearInterval(ne), ne = null;
@@ -18900,22 +18946,22 @@ function installYouTubeSource(m, { engine: _, getHost: x, onActive: S, resolveSt
 		re && clearTimeout(re), re = null;
 	}
 	function ended() {
-		stopTimer(), clearPauseCheck(), J = "stopped", trigger("ended"), setStatus(Wx);
+		stopTimer(), clearPauseCheck(), te = "stopped", trigger("ended"), setStatus(Gx);
 	}
 	function detachAudio() {
 		I.pause(), F.__dropHls?.(), I.hasAttribute("src") && (I.removeAttribute("src"), I.load());
 	}
 	function deactivate() {
-		stopTimer(), clearPauseCheck(), _.hasPlayer() && _.stop(), J = "stopped", H = null, U = null, W = null, q = 0, S?.(!1);
+		stopTimer(), clearPauseCheck(), _.hasPlayer() && _.stop(), te = "stopped", H = null, U = null, W = null, q = 0, S?.(!1);
 	}
 	let Q = /* @__PURE__ */ new Set(), ie = 0, ae = null;
 	async function findStream(m) {
 		ae?.abort();
 		let _ = new AbortController();
 		ae = _;
-		let x = setTimeout(() => _.abort(), 7e3);
+		let x = setTimeout(() => _.abort(), 7e3), S = new Promise((m) => _.signal.addEventListener("abort", () => m(null), { once: !0 }));
 		try {
-			return await C(m, { signal: _.signal });
+			return await Promise.race([C(m, { signal: _.signal }), S]);
 		} catch {
 			return null;
 		} finally {
@@ -18925,13 +18971,13 @@ function installYouTubeSource(m, { engine: _, getHost: x, onActive: S, resolveSt
 	let onStreamError = (m) => {
 		if (H !== "stream" || !W) return;
 		m.stopImmediatePropagation();
-		let _ = W, x = J === "playing" || F.getStatus() === Hx;
+		let _ = W, x = te === "playing" || F.getStatus() === Ux;
 		Q.add(youtubeIdFromUrl(_)), D?.(!1, { url: _ }), console.warn("Lācītis stream failed, switching to the YouTube player:", youtubeIdFromUrl(_)), H = null, (async () => {
-			te = x, await F.loadUrl(_), x && W === _ && await F.play();
+			ee = x, await F.loadUrl(_), x && W === _ && await F.play();
 		})();
 	};
 	I.addEventListener("error", onStreamError, !0), O.loadFromUrl = async (m, _) => {
-		te = !!_;
+		ee = !!_;
 		let x = O._emitter;
 		if (!x) return L.loadFromUrl(m, _);
 		let S = ie + 1;
@@ -18943,16 +18989,16 @@ function installYouTubeSource(m, { engine: _, getHost: x, onActive: S, resolveSt
 		if (C && !Q.has(O)) {
 			let _ = await findStream(O);
 			if (x !== ie) return;
-			if (_) return H === "youtube" && deactivate(), H = "stream", W = m, U = O, J = te ? "playing" : "stopped", D?.(!0, {
+			if (_) return H === "youtube" && deactivate(), H = "stream", W = m, U = O, te = ee ? "playing" : "stopped", D?.(!0, {
 				url: m,
 				stream: _
 			}), L.loadUrl(_.url);
 		}
-		H === "stream" && D?.(!1, { url: m }), H !== "youtube" && detachAudio(), stopTimer(), clearPauseCheck(), H = "youtube", W = m, U = youtubeIdFromUrl(m), q = Nx.get(m)?.duration ?? 0, ee = q, J = "stopped", S?.(!0), _.hasPlayer() && !te && _.getCurrentId() !== U && await _.load(U, { autoplay: !1 }), trigger("loaded");
+		H === "stream" && D?.(!1, { url: m }), H !== "youtube" && detachAudio(), stopTimer(), clearPauseCheck(), H = "youtube", W = m, U = youtubeIdFromUrl(m), q = Px.get(m)?.duration ?? 0, J = q, te = "stopped", S?.(!0), _.hasPlayer() && !ee && _.getCurrentId() !== U && await _.load(U, { autoplay: !1 }), trigger("loaded");
 	}, F.play = async () => {
-		if (H === "stream" && (J = "playing"), H !== "youtube") return L.play();
-		let m = F.getStatus() !== Ux, S = U;
-		J = "playing";
+		if (H === "stream" && (te = "playing"), H !== "youtube") return L.play();
+		let m = F.getStatus() !== Wx, S = U;
+		te = "playing";
 		try {
 			let C = x?.();
 			_.getCurrentId() !== S || _.getState() === "idle" || _.getState() === "ended" ? await _.load(S, {
@@ -18960,16 +19006,16 @@ function installYouTubeSource(m, { engine: _, getHost: x, onActive: S, resolveSt
 				host: C
 			}) : (await _.ensurePlayer(C), m && _.getState() !== "cued" && _.seekTo(0), _.play());
 		} catch (m) {
-			console.warn("YouTube playback failed:", m), J = "stopped", trigger("ended"), setStatus(Wx);
+			console.warn("YouTube playback failed:", m), te = "stopped", trigger("ended"), setStatus(Gx);
 			return;
 		}
-		U === S && setStatus(Hx);
+		U === S && setStatus(Ux);
 	}, F.pause = () => {
-		if (H === "stream" && (J = "paused"), H !== "youtube") return L.pause();
-		J = "paused", stopTimer(), clearPauseCheck(), _.pause(), setStatus(Ux);
+		if (H === "stream" && (te = "paused"), H !== "youtube") return L.pause();
+		te = "paused", stopTimer(), clearPauseCheck(), _.pause(), setStatus(Wx);
 	}, F.stop = () => {
-		if (H === "stream" && (J = "stopped"), H !== "youtube") return L.stop();
-		J = "stopped", stopTimer(), clearPauseCheck(), _.stop(), setStatus(Wx);
+		if (H === "stream" && (te = "stopped"), H !== "youtube") return L.stop();
+		te = "stopped", stopTimer(), clearPauseCheck(), _.stop(), setStatus(Gx);
 	}, F.seekToTime = (m) => {
 		if (H !== "youtube") return L.seekToTime(m);
 		let x = F.getDuration();
@@ -18983,24 +19029,24 @@ function installYouTubeSource(m, { engine: _, getHost: x, onActive: S, resolveSt
 		if (H === "youtube") {
 			if (x === "state") switch (S) {
 				case "playing": {
-					J === "playing" && startTimer();
+					te === "playing" && startTimer();
 					let m = _.getDuration();
-					m && Math.round(m) !== Math.round(ee) && (q = m, ee = m, trigger("loaded"));
+					m && Math.round(m) !== Math.round(J) && (q = m, J = m, trigger("loaded"));
 					break;
 				}
 				case "buffering":
 					stopTimer();
 					break;
 				case "paused":
-					stopTimer(), J === "playing" && !re && (re = setTimeout(() => {
-						if (re = null, H !== "youtube" || J !== "playing" || _.getState() !== "paused") return;
+					stopTimer(), te === "playing" && !re && (re = setTimeout(() => {
+						if (re = null, H !== "youtube" || te !== "playing" || _.getState() !== "paused") return;
 						let x = _.getDuration();
 						x && _.getCurrentTime() >= x - 1 ? ended() : m.pause();
 					}, 400));
 					break;
-				case "ended": J === "playing" ? ended() : stopTimer();
+				case "ended": te === "playing" ? ended() : stopTimer();
 			}
-			else x === "error" && J === "playing" && (console.warn(`YouTube player error ${S} for ${U}`), ended());
+			else x === "error" && te === "playing" && (console.warn(`YouTube player error ${S} for ${U}`), ended());
 		}
 	}), se = {
 		engine: _,
@@ -19016,7 +19062,7 @@ function installYouTubeSource(m, { engine: _, getHost: x, onActive: S, resolveSt
 }
 //#endregion
 //#region src/lacitis/meta.js
-var Kx = /^(?:worldstar(?:hiphop)?|wshh|lyrical lemonade|trap nation|chill nation|rap nation|wave music|cloudkid|7clouds|proximity|majestic casual|mrsuicidesheep|selected|various artists)$/i;
+var qx = /^(?:worldstar(?:hiphop)?|wshh|lyrical lemonade|trap nation|chill nation|rap nation|wave music|cloudkid|7clouds|proximity|majestic casual|mrsuicidesheep|selected|various artists)$/i;
 function cleanMusicMeta(m, _ = "") {
 	let x = String(m || "").replace(/\s+/g, " ").trim(), S = String(_ || "").replace(/\s+/g, " ").trim(), C = x, D = /VEVO\s*$/i.test(S), O = S.replace(/\s+-\s+Topic\s*$/i, "").replace(/\s*VEVO\s*$/i, "").trim();
 	D && !/\s/.test(O) && (O = O.replace(/([a-zāčēģīķļņšūž])([A-ZĀČĒĢĪĶĻŅŠŪŽ])/g, "$1 $2")), C = C.replace(/\b(?:official(?:\s+music)?\s+video|music\s+video|official\s+audio|lyrics?\s+video|visuali[sz]er)\b/gi, " "), C = C.replace(/\s*[[(][^\])]{0,180}(?:official|music\s+video|lyrics?|visuali[sz]er|wshh\s+exclusive|audio\s+only|premiere|\b(?:audio|video|4k|hd|hq)\b)[^\])]{0,180}[\])]\s*/gi, " "), C = C.replace(/\s*(?:[-–—|•]\s*)?(?:official(?:\s+music)?\s+(?:video|audio)|music\s+video|official\s+(?:video|audio)|lyrics?(?:\s+video)?|visuali[sz]er|wshh\s+exclusive|audio\s+only|premiere|\b(?:4k|hd|hq)\b)\s*$/gi, " "), C = C.replace(/\s*[[(]\s*[\])]\s*/g, " "), C = C.replace(/\s+(?:featuring|ft\.?|feat\.?)\s+([^()[\]]+)$/i, " (feat. $1)"), C = C.replace(/\s+/g, " ").trim();
@@ -19026,10 +19072,10 @@ function cleanMusicMeta(m, _ = "") {
 		let m = C.match(/^(.{2,90}?)\s*\|\s*(.{1,200})$/), _ = m || C.match(/^(.{2,90}?)\s+[-–—]\s+(.{1,200})$/);
 		if (_) {
 			let x = _[1].trim();
-			C = _[2].trim(), (m || !O || Kx.test(O) || O.toLowerCase().includes(x.toLowerCase())) && (O = x);
+			C = _[2].trim(), (m || !O || qx.test(O) || O.toLowerCase().includes(x.toLowerCase())) && (O = x);
 		}
 	}
-	if (C = C.replace(/\s*[[(]\s*[\])]\s*$/, "").replace(/^[\s"“”]+|[\s"“”]+$/g, "").replace(/\s+/g, " ").trim(), Kx.test(O)) {
+	if (C = C.replace(/\s*[[(]\s*[\])]\s*$/, "").replace(/^[\s"“”]+|[\s"“”]+$/g, "").replace(/\s+/g, " ").trim(), qx.test(O)) {
 		let m = x.match(/^(.{2,90}?)\s+[-–—]\s+/);
 		m && (O = m[1].trim());
 	}
@@ -19050,11 +19096,11 @@ function trackIdentity(m, _) {
 }
 //#endregion
 //#region src/lacitis/search.js
-var qx = "https://lacitis-api.gamernr1elite.workers.dev", Jx = [
+var Jx = "https://lacitis-api.gamernr1elite.workers.dev", Yx = [
 	"https://invidious.schenkel.eti.br",
 	"https://yt.omada.cafe",
 	"https://echostreamz.com"
-], Yx = /\b(?:reaction|interview|review|behind\s+the\s+scenes|tutorial)\b/i, Xx = /* @__PURE__ */ new Map(), Zx = 48;
+], Xx = /\b(?:reaction|interview|review|behind\s+the\s+scenes|tutorial)\b/i, Zx = /* @__PURE__ */ new Map(), Qx = 48;
 function withTimeout$1(m, _) {
 	let x = new AbortController(), S = setTimeout(() => x.abort(), m), onAbort = () => x.abort();
 	return _?.addEventListener("abort", onAbort, { once: !0 }), {
@@ -19085,12 +19131,12 @@ function toMusicRow({ id: m, title: _, author: x, lengthSeconds: S = 0, thumbnai
 		https: !0
 	};
 }
-async function searchMusic(m, { signal: _, api: x = qx, fallbacks: S = Jx } = {}) {
+async function searchMusic(m, { signal: _, api: x = Jx, fallbacks: S = Yx } = {}) {
 	let C = String(m || "").trim();
 	if (!C) return [];
 	let D = C.toLocaleLowerCase("lv-LV");
-	if (Xx.has(D)) return Xx.get(D);
-	let O = Yx.test(C), F = [
+	if (Zx.has(D)) return Zx.get(D);
+	let O = Xx.test(C), F = [
 		{
 			url: `${x}/search?q=${encodeURIComponent(C)}&f=song`,
 			kind: "lacitis"
@@ -19119,7 +19165,7 @@ async function searchMusic(m, { signal: _, api: x = qx, fallbacks: S = Jx } = {}
 				let x = m.kind === "invidious" ? _.videoId : _.id;
 				if (!x || C.has(x)) continue;
 				let S = typeof _.lengthSeconds == "number" ? _.lengthSeconds : parseDuration(_.duration);
-				if (S && S <= 30 || !O && Yx.test(_.title || "")) continue;
+				if (S && S <= 30 || !O && Xx.test(_.title || "")) continue;
 				let D = toMusicRow({
 					id: x,
 					title: _.title || "Nezināma dziesma",
@@ -19129,7 +19175,7 @@ async function searchMusic(m, { signal: _, api: x = qx, fallbacks: S = Jx } = {}
 				L && F.has(L) || (C.add(x), L && F.add(L), I.push(D));
 			}
 			if (!I.length) throw Error("No usable results");
-			return Xx.set(D, I), Xx.size > Zx && Xx.delete(Xx.keys().next().value), I;
+			return Zx.set(D, I), Zx.size > Qx && Zx.delete(Zx.keys().next().value), I;
 		} catch (x) {
 			if (_?.aborted) throw x;
 			console.warn("Lācītis search:", m.url, x?.message);
@@ -19139,21 +19185,18 @@ async function searchMusic(m, { signal: _, api: x = qx, fallbacks: S = Jx } = {}
 	}
 	throw Error("Meklēšana neizdevās. Pamēģini vēlreiz.");
 }
-var Qx = 432e5;
-async function fetchPlaylist(m, { signal: _, api: x = qx, fallbacks: S = Jx } = {}) {
-	let C = `webamp.lacitis.playlist.v1:${m}`;
+var $x = 432e5;
+async function fetchPlaylist(m, { signal: _, api: x = Jx } = {}) {
+	let S = `webamp.lacitis.playlist.v2:${m}`;
 	try {
-		let m = JSON.parse(localStorage.getItem(C) || "null");
-		if (m && Date.now() - m.at < Qx && Array.isArray(m.rows) && m.rows.length) return m;
+		let m = JSON.parse(localStorage.getItem(S) || "null");
+		if (m && Date.now() - m.at < $x && Array.isArray(m.rows) && m.rows.length) return m;
 	} catch {}
-	let D = [...S.slice(0, 2).map((_) => ({
-		url: `${_}/api/v1/playlists/${encodeURIComponent(m)}`,
-		kind: "invidious"
-	})), {
-		url: `${x}/playlist?id=${encodeURIComponent(m)}&all=true`,
+	let C = [{
+		url: `${x}/playlist?id=${encodeURIComponent(m)}`,
 		kind: "lacitis"
 	}];
-	for (let m of D) {
+	for (let m of C) {
 		let x = withTimeout$1(8e3, _);
 		try {
 			let _ = await fetch(m.url, {
@@ -19161,7 +19204,7 @@ async function fetchPlaylist(m, { signal: _, api: x = qx, fallbacks: S = Jx } = 
 				signal: x.signal
 			});
 			if (!_.ok) throw Error(`HTTP ${_.status}`);
-			let S = await _.json(), D = m.kind === "lacitis" ? S?.items : S?.videos;
+			let C = await _.json(), D = m.kind === "lacitis" ? C?.items : C?.videos;
 			if (!Array.isArray(D) || !D.length) throw Error("empty");
 			let O = [], F = /* @__PURE__ */ new Set();
 			for (let _ of D) {
@@ -19178,11 +19221,11 @@ async function fetchPlaylist(m, { signal: _, api: x = qx, fallbacks: S = Jx } = 
 			}
 			let I = {
 				at: Date.now(),
-				name: S?.name || S?.title || "Playlist",
+				name: C?.name || C?.title || "Playlist",
 				rows: O
 			};
 			try {
-				localStorage.setItem(C, JSON.stringify(I));
+				localStorage.setItem(S, JSON.stringify(I));
 			} catch {}
 			return I;
 		} catch (x) {
@@ -19195,24 +19238,80 @@ async function fetchPlaylist(m, { signal: _, api: x = qx, fallbacks: S = Jx } = 
 	return null;
 }
 //#endregion
+//#region src/lacitis/featured.js
+var tS = "https://ytmgr-seven.vercel.app", nS = "webamp.lacitis.featured.v2", rS = "webamp.lacitis.history.v1", iS = 864e5;
+function recentSongIds() {
+	try {
+		let m = JSON.parse(localStorage.getItem(rS) || "[]");
+		return Array.isArray(m) ? m.filter((m) => typeof m == "string") : [];
+	} catch {
+		return [];
+	}
+}
+function noteSongPlayed(m) {
+	if (m) try {
+		let _ = [m, ...recentSongIds().filter((_) => _ !== m)].slice(0, 50);
+		localStorage.setItem(rS, JSON.stringify(_));
+	} catch {}
+}
+function readCache() {
+	try {
+		let m = JSON.parse(localStorage.getItem(nS) || "null");
+		return m && Array.isArray(m.playlists) ? m : null;
+	} catch {
+		return null;
+	}
+}
+async function fetchFresh(m, _) {
+	let x = new AbortController(), S = setTimeout(() => x.abort(), 6e3);
+	_?.addEventListener("abort", () => x.abort(), { once: !0 });
+	try {
+		let _ = await fetch(`${tS}?ids=${encodeURIComponent(m.slice(0, 25).join(","))}&limit=20`, { signal: x.signal });
+		if (!_.ok) throw Error(`HTTP ${_.status}`);
+		let S = await _.json(), C = (Array.isArray(S?.playlists) ? S.playlists : []).filter((m) => m?.id && m?.name && !/^(songs|albums)$/i.test(m.section || "")).map((m) => ({
+			id: m.id,
+			name: m.name,
+			section: m.category || m.section || ""
+		})).filter((m, _, x) => x.findIndex((_) => _.name.toLowerCase() === m.name.toLowerCase()) === _);
+		if (!C.length) throw Error("no playlists");
+		let D = {
+			at: Date.now(),
+			playlists: C
+		};
+		try {
+			localStorage.setItem(nS, JSON.stringify(D));
+		} catch {}
+		return D;
+	} finally {
+		clearTimeout(S);
+	}
+}
+async function featuredPlaylists({ fallbackIds: m = [], waitMs: _ = 2500, signal: x } = {}) {
+	let S = recentSongIds(), C = S.length ? S : m, D = readCache();
+	if (D && Date.now() - D.at < iS) return D.playlists;
+	if (!C.length) return D?.playlists ?? [];
+	let O = fetchFresh(C, x).catch((m) => (console.warn("Featured playlists:", m?.message), null));
+	return D ? D.playlists : (await Promise.race([O, new Promise((m) => setTimeout(() => m(null), _))]))?.playlists ?? [];
+}
+//#endregion
 //#region src/lacitis/resolver.js
-var $x = [
+var aS = [
 	"https://invidious.schenkel.eti.br",
 	"https://yt.omada.cafe",
 	"https://invidious.kemonomimi.nl"
-], tS = "webamp.lacitis.instance.v1", nS = /* @__PURE__ */ new Map(), rS = /* @__PURE__ */ new Map();
+], oS = "webamp.lacitis.instance.v1", sS = /* @__PURE__ */ new Map(), cS = /* @__PURE__ */ new Map();
 function audio() {
 	return document.createElement("audio");
 }
-var iS = null;
+var lS = null;
 function itags() {
-	return iS ||= audio().canPlayType("audio/webm; codecs=\"opus\"") === "" ? [140, 139] : [
+	return lS ||= audio().canPlayType("audio/webm; codecs=\"opus\"") === "" ? [140, 139] : [
 		251,
 		250,
 		249,
 		140,
 		139
-	], iS;
+	], lS;
 }
 function withTimeout(m, _) {
 	let x = new AbortController(), S = setTimeout(() => x.abort(), m), onAbort = () => x.abort();
@@ -19226,12 +19325,12 @@ function withTimeout(m, _) {
 function orderedInstances(m) {
 	let _ = "";
 	try {
-		_ = localStorage.getItem(tS) || "";
+		_ = localStorage.getItem(oS) || "";
 	} catch {}
 	let x = Date.now();
 	return [...m].sort((m, S) => {
-		let C = x - (rS.get(m) || 0) < 6e5;
-		return C === x - (rS.get(S) || 0) < 6e5 ? (S === _) - (m === _) : C ? 1 : -1;
+		let C = x - (cS.get(m) || 0) < 6e5;
+		return C === x - (cS.get(S) || 0) < 6e5 ? (S === _) - (m === _) : C ? 1 : -1;
 	});
 }
 async function probe(m, _) {
@@ -19253,92 +19352,110 @@ function expiresOf(m) {
 	let _ = Number(new URL(m).searchParams.get("expire"));
 	return Number.isFinite(_) && _ > 0 ? _ * 1e3 - 6e4 : Date.now() + 18e5;
 }
-async function resolveStream(m, { signal: _, instances: x = $x } = {}) {
-	let S = nS.get(m);
-	if (S && S.expires > Date.now()) return S;
-	nS.delete(m);
-	for (let S of orderedInstances(x)) {
-		if (_?.aborted) return null;
-		let x = withTimeout(6e3, _);
-		try {
-			let C = await fetch(`${S}/api/v1/videos/${encodeURIComponent(m)}?fields=adaptiveFormats,lengthSeconds`, {
-				headers: { Accept: "application/json" },
-				signal: x.signal
-			});
-			if (!C.ok) throw Error(`HTTP ${C.status}`);
-			let D = await C.json(), O = (D?.adaptiveFormats || []).filter((m) => String(m.type || "").startsWith("audio") && m.url), F = new Map(O.map((m) => [Number(m.itag), m])), I = [...itags().map((m) => F.get(m)).filter(Boolean), ...O], L = /* @__PURE__ */ new Set();
-			for (let x of I) {
-				if (L.has(x.url)) continue;
-				L.add(x.url);
-				let C = `${S}/videoplayback?${new URL(x.url).search.slice(1)}`;
-				if (await probe(C, _)) {
-					let _ = {
-						url: C,
-						instance: S,
-						duration: Number(D.lengthSeconds) || 0,
-						expires: expiresOf(x.url)
-					};
-					nS.set(m, _), nS.size > 40 && nS.delete(nS.keys().next().value);
-					try {
-						localStorage.setItem(tS, S);
-					} catch {}
-					return rS.delete(S), _;
-				}
-				if (L.size >= 2) break;
-			}
-			throw Error("no playable audio");
-		} catch (m) {
-			if (_?.aborted) return null;
-			rS.set(S, Date.now()), console.warn("Lācītis stream:", S, m?.message);
-		} finally {
-			x.done();
+var fS = /* @__PURE__ */ new Set();
+async function tryInstance(m, _, x) {
+	let S = withTimeout(6e3, x);
+	try {
+		let C = await fetch(`${m}/api/v1/videos/${encodeURIComponent(_)}?fields=adaptiveFormats,lengthSeconds`, {
+			headers: { Accept: "application/json" },
+			signal: S.signal
+		});
+		if (!C.ok) throw Error(`HTTP ${C.status}`);
+		let D = await C.json(), O = (D?.adaptiveFormats || []).filter((m) => String(m.type || "").startsWith("audio") && m.url), F = new Map(O.map((m) => [Number(m.itag), m])), I = [...itags().map((m) => F.get(m)).filter(Boolean), ...O], L = /* @__PURE__ */ new Set();
+		for (let _ of I) {
+			if (L.has(_.url)) continue;
+			L.add(_.url);
+			let S = `${m}/videoplayback?${new URL(_.url).search.slice(1)}`;
+			if (fS.has(m) || await probe(S, x)) return fS.add(m), {
+				url: S,
+				instance: m,
+				duration: Number(D.lengthSeconds) || 0,
+				expires: expiresOf(_.url)
+			};
+			if (L.size >= 2) break;
 		}
+		throw Error("no playable audio");
+	} finally {
+		S.done();
 	}
-	return null;
+}
+var mS = /* @__PURE__ */ new Map(), gS = 1200;
+function resolveStream(m, { signal: _, instances: x = aS } = {}) {
+	let S = sS.get(m);
+	if (S && S.expires > Date.now()) return Promise.resolve(S);
+	if (sS.delete(m), mS.has(m)) return mS.get(m);
+	let C = orderedInstances(x), D = new Promise((x) => {
+		let S = C.length, D = !1, O = [], finish = (m) => {
+			D || (D = !0, O.forEach(clearTimeout), x(m));
+		};
+		C.forEach((x, C) => {
+			O.push(setTimeout(() => {
+				if (D || _?.aborted) {
+					--S === 0 && finish(null);
+					return;
+				}
+				tryInstance(x, m, _).then((_) => {
+					sS.set(m, _), sS.size > 40 && sS.delete(sS.keys().next().value);
+					try {
+						localStorage.setItem(oS, x);
+					} catch {}
+					cS.delete(x), finish(_);
+				}, (m) => {
+					_?.aborted || (cS.set(x, Date.now()), fS.delete(x), console.warn("Lācītis stream:", x, m?.message)), --S === 0 && finish(null);
+				});
+			}, C * gS));
+		}), _?.addEventListener("abort", () => finish(null), { once: !0 });
+	}).finally(() => mS.delete(m));
+	return mS.set(m, D), D;
+}
+function prefetchStream(m) {
+	if (!m) return;
+	let _ = sS.get(m);
+	_ && _.expires > Date.now() || resolveStream(m).catch(() => {});
 }
 //#endregion
 //#region src/youtube/videoWindow.js
-var aS = "webamp.video.window.v2", oS = {
+var _S = "webamp.video.window.v2", jS = {
 	width: 213,
 	height: 234
-}, sS = /* @__PURE__ */ _((m, _, x) => {
+}, RS = /* @__PURE__ */ _((m, _, x) => {
 	let S = document.createElement(m);
 	return _ && (S.className = _), x != null && (S.textContent = x), S;
 }, "el");
 function createVideoWindow({ overlayHost: m = null, getDefaultPosition: _, onClose: x } = {}) {
-	let S = sS("div", "video-overlay");
+	let S = RS("div", "video-overlay");
 	S.hidden = !0;
-	let C = sS("div", "gen-window window video-window"), D = sS("div", "gen-top draggable"), O = sS("div", "gen-top-right draggable"), F = sS("div", "gen-close winamp-active");
+	let C = RS("div", "gen-window window video-window"), D = RS("div", "gen-top draggable"), O = RS("div", "gen-top-right draggable"), F = RS("div", "gen-close winamp-active");
 	F.setAttribute("role", "button"), F.setAttribute("aria-label", "Close video window"), F.tabIndex = 0, O.append(F);
-	let I = sS("div", "gen-top-title draggable");
-	for (let m of "VIDEO") I.append(sS("div", `draggable gen-text-letter gen-text-${m.toLowerCase()}`));
-	D.append(sS("div", "gen-top-left draggable"), sS("div", "gen-top-left-fill draggable"), sS("div", "gen-top-left-end draggable"), I, sS("div", "gen-top-right-end draggable"), sS("div", "gen-top-right-fill draggable"), O);
-	let L = sS("div", "gen-middle"), H = sS("div", "gen-middle-left draggable");
-	H.append(sS("div", "gen-middle-left-bottom draggable"));
-	let U = sS("div", "gen-middle-center"), W = sS("div", "gen-middle-right draggable");
-	W.append(sS("div", "gen-middle-right-bottom draggable")), L.append(H, U, W);
-	let q = sS("div", "gen-bottom");
-	q.append(sS("div", "gen-bottom-left draggable"), sS("div", "gen-bottom-fill draggable"), sS("div", "gen-bottom-right draggable"));
-	let ee = sS("div", "video-body"), te = sS("img", "video-thumb");
-	te.alt = "", te.decoding = "async", te.loading = "lazy", te.referrerPolicy = "no-referrer", te.hidden = !0;
-	let J = sS("div", "video-player");
-	J.style.minWidth = "200px", J.style.minHeight = "200px", J.hidden = !0, ee.append(te, J), U.append(ee), C.append(D, L, q), S.append(C);
+	let I = RS("div", "gen-top-title draggable");
+	for (let m of "VIDEO") I.append(RS("div", `draggable gen-text-letter gen-text-${m.toLowerCase()}`));
+	D.append(RS("div", "gen-top-left draggable"), RS("div", "gen-top-left-fill draggable"), RS("div", "gen-top-left-end draggable"), I, RS("div", "gen-top-right-end draggable"), RS("div", "gen-top-right-fill draggable"), O);
+	let L = RS("div", "gen-middle"), H = RS("div", "gen-middle-left draggable");
+	H.append(RS("div", "gen-middle-left-bottom draggable"));
+	let U = RS("div", "gen-middle-center"), W = RS("div", "gen-middle-right draggable");
+	W.append(RS("div", "gen-middle-right-bottom draggable")), L.append(H, U, W);
+	let q = RS("div", "gen-bottom");
+	q.append(RS("div", "gen-bottom-left draggable"), RS("div", "gen-bottom-fill draggable"), RS("div", "gen-bottom-right draggable"));
+	let J = RS("div", "video-body"), ee = RS("img", "video-thumb");
+	ee.alt = "", ee.decoding = "async", ee.loading = "lazy", ee.referrerPolicy = "no-referrer", ee.hidden = !0;
+	let te = RS("div", "video-player");
+	te.style.minWidth = "200px", te.style.minHeight = "200px", te.hidden = !0, J.append(ee, te), U.append(J), C.append(D, L, q), S.append(C);
 	let ne = "idle";
 	function mount() {
 		let _ = m ?? document.querySelector("#webamp");
 		_ && S.parentElement !== _ ? _.append(S) : !_ && !S.parentElement && document.body.append(S);
 	}
 	function setSize(m, _) {
-		C.style.setProperty("width", `${Math.max(oS.width, Math.round(m || 0))}px`, "important"), C.style.setProperty("height", `${Math.max(oS.height, Math.round(_ || 0))}px`, "important");
+		C.style.setProperty("width", `${Math.max(jS.width, Math.round(m || 0))}px`, "important"), C.style.setProperty("height", `${Math.max(jS.height, Math.round(_ || 0))}px`, "important");
 	}
-	setSize(oS.width, oS.height);
+	setSize(jS.width, jS.height);
 	function placeWindow(m, _) {
 		let x = Math.max(0, S.clientWidth - C.offsetWidth), D = Math.max(0, S.clientHeight - C.offsetHeight);
 		C.style.left = `${Math.round(Math.min(Math.max(0, m), x))}px`, C.style.top = `${Math.round(Math.min(Math.max(0, _), D))}px`, C.classList.add("is-placed");
 	}
 	function readPosition() {
 		try {
-			return JSON.parse(localStorage.getItem(aS) ?? "null") ?? null;
+			return JSON.parse(localStorage.getItem(_S) ?? "null") ?? null;
 		} catch {
 			return null;
 		}
@@ -19352,7 +19469,7 @@ function createVideoWindow({ overlayHost: m = null, getDefaultPosition: _, onClo
 		let x = S.getBoundingClientRect(), D = _?.({
 			width: C.offsetWidth,
 			height: C.offsetHeight,
-			min: oS,
+			min: jS,
 			overlay: x
 		});
 		if (D) {
@@ -19376,7 +19493,7 @@ function createVideoWindow({ overlayHost: m = null, getDefaultPosition: _, onClo
 		if (re) {
 			re = null, C.classList.remove("is-dragging");
 			try {
-				localStorage.setItem(aS, JSON.stringify({
+				localStorage.setItem(_S, JSON.stringify({
 					left: C.offsetLeft,
 					top: C.offsetTop
 				}));
@@ -19399,7 +19516,7 @@ function createVideoWindow({ overlayHost: m = null, getDefaultPosition: _, onClo
 	}
 	function redock() {
 		try {
-			localStorage.removeItem(aS);
+			localStorage.removeItem(_S);
 		} catch {}
 		C.classList.remove("is-placed"), S.hidden || restorePosition();
 	}
@@ -19407,13 +19524,13 @@ function createVideoWindow({ overlayHost: m = null, getDefaultPosition: _, onClo
 		S.hidden = !0;
 	}
 	function showThumbnail(m, { force: _ = !1 } = {}) {
-		(ne !== "player" || _) && (ne = "thumbnail", J.hidden = !0, m ? (te.getAttribute("src") !== m && (te.src = m), te.hidden = !1) : (te.removeAttribute("src"), te.hidden = !0));
+		(ne !== "player" || _) && (ne = "thumbnail", te.hidden = !0, m ? (ee.getAttribute("src") !== m && (ee.src = m), ee.hidden = !1) : (ee.removeAttribute("src"), ee.hidden = !0));
 	}
 	function playerHost() {
-		return ne = "player", te.hidden = !0, J.hidden = !1, show(), J;
+		return ne = "player", ee.hidden = !0, te.hidden = !1, show(), te;
 	}
 	function showIdle(m = "") {
-		ne = "idle", J.hidden = !0, showThumbnail(m);
+		ne = "idle", te.hidden = !0, showThumbnail(m);
 	}
 	return {
 		element: S,
@@ -19433,28 +19550,28 @@ function createVideoWindow({ overlayHost: m = null, getDefaultPosition: _, onClo
 }
 //#endregion
 //#region src/historyStore.js
-var cS = "webamp-radio", lS = 1, fS = "webamp.radio.history.v1", mS = 200, gS = 1e3, _S = null, jS = {
+var zS = "webamp-radio", eC = 1, tC = "webamp.radio.history.v1", nC = 200, rC = 1e3, iC = null, aC = {
 	stations: [],
 	songs: []
-}, RS = !1, zS = /* @__PURE__ */ new Set();
+}, oC = !1, sC = /* @__PURE__ */ new Set();
 function emit(m) {
-	for (let _ of zS) try {
+	for (let _ of sC) try {
 		_(m);
 	} catch (m) {
 		console.error(m);
 	}
 }
 function openDb$1() {
-	return _S || (_S = new Promise((m) => {
+	return iC || (iC = new Promise((m) => {
 		if (!("indexedDB" in window)) {
-			RS = !0, m(null);
+			oC = !0, m(null);
 			return;
 		}
 		let _;
 		try {
-			_ = indexedDB.open(cS, lS);
+			_ = indexedDB.open(zS, eC);
 		} catch {
-			RS = !0, m(null);
+			oC = !0, m(null);
 			return;
 		}
 		_.onupgradeneeded = () => {
@@ -19467,11 +19584,11 @@ function openDb$1() {
 			let x = _.result;
 			x.onversionchange = () => x.close(), m(x), importLegacy(x);
 		}, _.onerror = () => {
-			RS = !0, m(null);
+			oC = !0, m(null);
 		}, _.onblocked = () => {
-			RS = !0, m(null);
+			oC = !0, m(null);
 		};
-	}), _S);
+	}), iC);
 }
 _(openDb$1, "openDb");
 function tx(m, _, x, S) {
@@ -19509,7 +19626,7 @@ function trim(m, _, x, S) {
 async function importLegacy(m) {
 	let _ = [];
 	try {
-		_ = JSON.parse(localStorage.getItem(fS) ?? "[]") ?? [];
+		_ = JSON.parse(localStorage.getItem(tC) ?? "[]") ?? [];
 	} catch {
 		_ = [];
 	}
@@ -19519,7 +19636,7 @@ async function importLegacy(m) {
 				...stationRecord(x),
 				playedAt: x.playedAt ?? Date.now()
 			});
-		}), localStorage.removeItem(fS), emit("stations");
+		}), localStorage.removeItem(tC), emit("stations");
 	} catch {}
 }
 function stationRecord(m) {
@@ -19541,16 +19658,16 @@ function stationRecord(m) {
 		playedAt: Date.now()
 	};
 }
-var eC = {
+var cC = {
 	async recordStation(m) {
 		if (!m?.url) return;
 		let _ = stationRecord(m), x = await openDb$1();
-		if (!x || RS) {
-			jS.stations = [_, ...jS.stations.filter((m) => m.url !== _.url)].slice(0, mS), emit("stations");
+		if (!x || oC) {
+			aC.stations = [_, ...aC.stations.filter((m) => m.url !== _.url)].slice(0, nC), emit("stations");
 			return;
 		}
 		try {
-			await tx(x, "stations", "readwrite", (m) => m.put(_)), await trim(x, "stations", "playedAt", mS);
+			await tx(x, "stations", "readwrite", (m) => m.put(_)), await trim(x, "stations", "playedAt", nC);
 		} catch {}
 		emit("stations");
 	},
@@ -19569,27 +19686,27 @@ var eC = {
 		}, [F] = await this.listSongs(1);
 		if (F && F.stationUrl === O.stationUrl && F.streamTitle === O.streamTitle) return;
 		let I = await openDb$1();
-		if (!I || RS) {
-			jS.songs = [O, ...jS.songs].slice(0, gS), emit("songs");
+		if (!I || oC) {
+			aC.songs = [O, ...aC.songs].slice(0, rC), emit("songs");
 			return;
 		}
 		try {
-			await tx(I, "songs", "readwrite", (m) => m.add(O)), await trim(I, "songs", "at", gS);
+			await tx(I, "songs", "readwrite", (m) => m.add(O)), await trim(I, "songs", "at", rC);
 		} catch {}
 		emit("songs");
 	},
-	async listStations(m = mS) {
+	async listStations(m = nC) {
 		let _ = await openDb$1();
-		if (!_ || RS) return jS.stations.slice(0, m);
+		if (!_ || oC) return aC.stations.slice(0, m);
 		try {
 			return await readAllByIndex(_, "stations", "playedAt", m);
 		} catch {
 			return [];
 		}
 	},
-	async listSongs(m = gS) {
+	async listSongs(m = rC) {
 		let _ = await openDb$1();
-		if (!_ || RS) return jS.songs.slice(0, m);
+		if (!_ || oC) return aC.songs.slice(0, m);
 		try {
 			return await readAllByIndex(_, "songs", "at", m);
 		} catch {
@@ -19599,7 +19716,7 @@ var eC = {
 	async clear(m = "all") {
 		let _ = await openDb$1(), x = m === "all" ? ["stations", "songs"] : [m];
 		for (let m of x) {
-			if (!_ || RS) jS[m] = [];
+			if (!_ || oC) aC[m] = [];
 			else try {
 				await tx(_, m, "readwrite", (m) => m.clear());
 			} catch {}
@@ -19607,9 +19724,9 @@ var eC = {
 		}
 	},
 	subscribe(m) {
-		return zS.add(m), () => zS.delete(m);
+		return sC.add(m), () => sC.delete(m);
 	}
-}, tC = [
+}, lC = [
 	{
 		name: "Classical",
 		hz60: 33,
@@ -19890,7 +20007,7 @@ var eC = {
 		hz16000: 33,
 		preamp: 1
 	}
-], nC = "webamp.eq.auto.v1", rC = [
+], uC = "webamp.eq.auto.v1", dC = [
 	60,
 	170,
 	310,
@@ -19901,7 +20018,7 @@ var eC = {
 	12e3,
 	14e3,
 	16e3
-], iC = 50, aC = [
+], fC = 50, pC = [
 	[/classical|opera|symphon|baroque|chamber|choral|orchestr|piano/i, "Classical"],
 	[/techno|trance|hardstyle|hardcore|industrial|hard house|psy/i, "Techno"],
 	[/house|club|edm|dance|disco|eurodance|italo|electro|breakbeat|jungle|drum|dubstep|garage/i, "Dance"],
@@ -19918,13 +20035,13 @@ var eC = {
 ];
 function presetForGenres(m) {
 	let _ = m.filter(Boolean).join(" ");
-	for (let [m, x] of aC) if (m.test(_)) return tC.find((m) => m.name === x) ?? null;
+	for (let [m, x] of pC) if (m.test(_)) return lC.find((m) => m.name === x) ?? null;
 	return null;
 }
 function createEqAuto({ webamp: m, onApplied: _ }) {
 	let x = !1;
 	try {
-		x = localStorage.getItem(nC) === "1";
+		x = localStorage.getItem(uC) === "1";
 	} catch {}
 	function setEnabled(_) {
 		x = _, m.store.dispatch({
@@ -19932,21 +20049,21 @@ function createEqAuto({ webamp: m, onApplied: _ }) {
 			value: _
 		});
 		try {
-			localStorage.setItem(nC, _ ? "1" : "0");
+			localStorage.setItem(uC, _ ? "1" : "0");
 		} catch {}
 		_ && applyForCurrentTrack();
 	}
 	let toStore = (m) => Math.round((m - 1) / 63 * 100);
 	function applyPreset(x) {
-		for (let _ of rC) m.store.dispatch({
+		for (let _ of dC) m.store.dispatch({
 			type: "SET_BAND_VALUE",
 			band: _,
-			value: x ? toStore(x[`hz${_}`]) : iC
+			value: x ? toStore(x[`hz${_}`]) : fC
 		});
 		m.store.dispatch({
 			type: "SET_BAND_VALUE",
 			band: "preamp",
-			value: x ? toStore(x.preamp) : iC
+			value: x ? toStore(x.preamp) : fC
 		}), m.store.getState().equalizer.on || m.store.dispatch({ type: "SET_EQ_ON" }), _?.(x);
 	}
 	function applyForCurrentTrack() {
@@ -19977,11 +20094,11 @@ function createEqAuto({ webamp: m, onApplied: _ }) {
 }
 //#endregion
 //#region src/hls.js
-var isHlsUrl = (m) => /\.m3u8(?:[?#]|$)|\.isml\//i.test(String(m ?? "")), oC = null;
+var isHlsUrl = (m) => /\.m3u8(?:[?#]|$)|\.isml\//i.test(String(m ?? "")), mC = null;
 function loadHls() {
-	return window.Hls ? Promise.resolve(window.Hls) : (oC ||= import("./chunks/hls-Dmf4JSVg.js").then((m) => m.default ?? m.Hls ?? m).catch((m) => {
-		throw oC = null, m;
-	}), oC);
+	return window.Hls ? Promise.resolve(window.Hls) : (mC ||= import("./chunks/hls-Dmf4JSVg.js").then((m) => m.default ?? m.Hls ?? m).catch((m) => {
+		throw mC = null, m;
+	}), mC);
 }
 function installHlsSupport(m, { onMetadata: _ } = {}) {
 	let x = m.media?._source, S = x?._audio;
@@ -20016,7 +20133,7 @@ function installHlsSupport(m, { onMetadata: _ } = {}) {
 }
 //#endregion
 //#region src/stations.js
-var sC = [
+var hC = [
 	"stream_320",
 	"stream_128",
 	"stream_64",
@@ -20025,7 +20142,7 @@ var sC = [
 	"hls"
 ];
 function collectUrls(m) {
-	let _ = [], x = [...sC.map((_) => m?.[_]), ...Array.isArray(m?.urls) ? m.urls : []];
+	let _ = [], x = [...hC.map((_) => m?.[_]), ...Array.isArray(m?.urls) ? m.urls : []];
 	for (let m of x) {
 		let x = String(m ?? "").trim();
 		/^https?:\/\//i.test(x) && !_.includes(x) && _.push(x);
@@ -20038,7 +20155,7 @@ function pickUrl(m) {
 function bitrateFromKeys(m, _) {
 	return Number(m?.bitrate) > 0 ? Number(m.bitrate) : _ && _ === String(m?.stream_320 ?? "").trim() ? 320 : _ && _ === String(m?.stream_128 ?? "").trim() ? 128 : _ && _ === String(m?.stream_64 ?? "").trim() ? 64 : 0;
 }
-var cC = {
+var gC = {
 	radiorecord: {
 		genre: "Radio Record",
 		country: "RU"
@@ -20064,7 +20181,7 @@ function fromMinkaStation(m) {
 	if (!m || m.group === "separator") return null;
 	let _ = pickUrl(m), x = String(m.title ?? "").trim();
 	if (!_ || !x) return null;
-	let S = String(m.group ?? "").toLowerCase(), C = cC[S] ?? {
+	let S = String(m.group ?? "").toLowerCase(), C = gC[S] ?? {
 		genre: S ? S[0].toUpperCase() + S.slice(1) : "",
 		country: ""
 	}, D = [C.genre, ...Array.isArray(m.tags) ? m.tags : String(m.genre ?? "").split(",").map((m) => m.trim())].filter(Boolean), O = String(m.codec ?? "").trim() || (/\.m3u8/i.test(_) ? "HLS" : "");
@@ -20110,11 +20227,11 @@ function normalizeStations(m) {
 }
 //#endregion
 //#region src/resize.js
-var lC = [
+var _C = [
 	"#playlist-resize-target",
 	"#gen-resize-target",
 	"[id$='-resize-target']"
-].join(","), uC = "\n  /* The grips are painted by the skin; make their intent obvious. */\n  #playlist-resize-target,\n  #gen-resize-target {\n    position: relative;\n    z-index: 1;\n  }\n";
+].join(","), vC = "\n  /* The grips are painted by the skin; make their intent obvious. */\n  #playlist-resize-target,\n  #gen-resize-target {\n    position: relative;\n    z-index: 1;\n  }\n";
 function attachGrip(m) {
 	return m.dataset.resizeReady !== "1" && (m.dataset.resizeReady = "1", m.addEventListener("pointerdown", (m) => {
 		m.stopPropagation();
@@ -20127,7 +20244,7 @@ function attachGrip(m) {
 }
 function scan() {
 	let m = 0;
-	for (let _ of document.querySelectorAll(lC)) attachGrip(_) && (m += 1);
+	for (let _ of document.querySelectorAll(_C)) attachGrip(_) && (m += 1);
 	return m;
 }
 function initResize(m = document.body) {
@@ -20141,21 +20258,21 @@ function initResize(m = document.body) {
 		subtree: !0
 	}), scan();
 	let x = document.createElement("style");
-	return x.textContent = uC, document.head.append(x), { scan };
+	return x.textContent = vC, document.head.append(x), { scan };
 }
 //#endregion
 //#region src/skins.js
-var dC = "https://skins.webamp.org/graphql", fC = "https://r2.webampskins.org", pC = "\n  query Browse($first: Int!, $offset: Int!, $sort: SkinsSortOption) {\n    skins(first: $first, offset: $offset, sort: $sort) {\n      count\n      nodes { md5 filename download_url screenshot_url webamp_url nsfw }\n    }\n  }\n", mC = "\n  query Search($query: String!, $first: Int!, $offset: Int!) {\n    search_classic_skins(query: $query, first: $first, offset: $offset) {\n      md5 filename download_url screenshot_url webamp_url nsfw\n    }\n  }\n";
+var yC = "https://skins.webamp.org/graphql", bC = "https://r2.webampskins.org", xC = "\n  query Browse($first: Int!, $offset: Int!, $sort: SkinsSortOption) {\n    skins(first: $first, offset: $offset, sort: $sort) {\n      count\n      nodes { md5 filename download_url screenshot_url webamp_url nsfw }\n    }\n  }\n", SC = "\n  query Search($query: String!, $first: Int!, $offset: Int!) {\n    search_classic_skins(query: $query, first: $first, offset: $offset) {\n      md5 filename download_url screenshot_url webamp_url nsfw\n    }\n  }\n";
 function downloadUrl(m) {
-	return m.download_url || `${fC}/skins/${m.md5}.wsz`;
+	return m.download_url || `${bC}/skins/${m.md5}.wsz`;
 }
 function screenshotUrl(m) {
-	return m.screenshot_url || `${fC}/screenshots/${m.md5}.png`;
+	return m.screenshot_url || `${bC}/screenshots/${m.md5}.png`;
 }
 function skinName(m) {
 	return (m.filename || m.md5).replace(/\.(wsz|zip)$/i, "").replace(/[[\]()]/g, " ").replace(/\s+/g, " ").trim() || m.md5;
 }
-var hC = [{
+var CC = [{
 	id: "MUSEUM",
 	label: "Curated"
 }, {
@@ -20163,7 +20280,7 @@ var hC = [{
 	label: "Most shared"
 }];
 async function request(m, _) {
-	let x = await fetch(dC, {
+	let x = await fetch(yC, {
 		method: "POST",
 		headers: { "content-type": "application/json" },
 		body: JSON.stringify({
@@ -20177,7 +20294,7 @@ async function request(m, _) {
 	return S.data;
 }
 async function fetchSkins({ offset: m = 0, first: _ = 24, sort: x = "MUSEUM" } = {}) {
-	let S = (await request(pC, {
+	let S = (await request(xC, {
 		first: _,
 		offset: m,
 		sort: x === "MUSEUM" ? null : x
@@ -20190,7 +20307,7 @@ async function fetchSkins({ offset: m = 0, first: _ = 24, sort: x = "MUSEUM" } =
 async function searchSkins({ query: m, offset: _ = 0, first: x = 24 }) {
 	return {
 		total: null,
-		items: ((await request(mC, {
+		items: ((await request(SC, {
 			query: m,
 			first: x,
 			offset: _
@@ -20237,15 +20354,15 @@ function createSkinBrowser({ onApply: m, overlayHost: _ = null }) {
 	U.append(el("div", "gen-middle-right-bottom draggable")), I.append(L, H, U);
 	let W = el("div", "gen-bottom");
 	W.append(el("div", "gen-bottom-left draggable"), el("div", "gen-bottom-fill draggable"), el("div", "gen-bottom-right draggable"));
-	let q = el("div", "skins-body"), ee = el("div", "skins-toolbar"), te = el("input", "skins-input");
-	te.type = "search", te.placeholder = "Search skins...", te.setAttribute("aria-label", "Search skins");
-	let J = el("select", "skins-select");
-	J.setAttribute("aria-label", "Sort skins");
-	for (let m of hC) J.append(new Option(m.label, m.id));
+	let q = el("div", "skins-body"), J = el("div", "skins-toolbar"), ee = el("input", "skins-input");
+	ee.type = "search", ee.placeholder = "Search skins...", ee.setAttribute("aria-label", "Search skins");
+	let te = el("select", "skins-select");
+	te.setAttribute("aria-label", "Sort skins");
+	for (let m of CC) te.append(new Option(m.label, m.id));
 	let ne = el("span", "skins-status", "Loading...");
-	ee.append(te, J, ne);
+	J.append(ee, te, ne);
 	let re = el("div", "skins-grid"), Q = el("div", "skins-footer"), ie = el("button", "skins-button", "Prev"), ae = el("span", "skins-page"), oe = el("button", "skins-button", "Next");
-	ie.type = "button", oe.type = "button", Q.append(ie, ae, oe), q.append(ee, re, Q), H.append(q), S.append(C, I, W), x.append(S);
+	ie.type = "button", oe.type = "button", Q.append(ie, ae, oe), q.append(J, re, Q), H.append(q), S.append(C, I, W), x.append(S);
 	let se = 0, ce = 0, le = !1;
 	function mount() {
 		let m = _ ?? document.querySelector("#webamp");
@@ -20272,7 +20389,7 @@ function createSkinBrowser({ onApply: m, overlayHost: _ = null }) {
 	async function load() {
 		if (le) return;
 		le = !0;
-		let m = te.value.trim();
+		let m = ee.value.trim();
 		ne.textContent = m ? "Searching..." : "Loading...";
 		try {
 			let _ = m ? await searchSkins({
@@ -20282,7 +20399,7 @@ function createSkinBrowser({ onApply: m, overlayHost: _ = null }) {
 			}) : await fetchSkins({
 				offset: se,
 				first: 24,
-				sort: J.value
+				sort: te.value
 			});
 			if (m || (ce = _.total), re.replaceChildren(..._.items.map(tile)), m) ne.textContent = _.items.length === 0 ? `No skins match "${m}"` : `${_.items.length} result${_.items.length === 1 ? "" : "s"} for "${m}"`, ae.textContent = `page ${Math.floor(se / 24) + 1}`, ie.disabled = se === 0, oe.disabled = _.items.length < 24;
 			else {
@@ -20303,13 +20420,13 @@ function createSkinBrowser({ onApply: m, overlayHost: _ = null }) {
 		x >= 0 && re.children[x]?.classList.add("is-active");
 	}
 	let ue = null;
-	te.addEventListener("input", () => {
+	ee.addEventListener("input", () => {
 		clearTimeout(ue), ue = setTimeout(() => {
 			se = 0, load();
 		}, 350);
-	}), te.addEventListener("keydown", (m) => {
+	}), ee.addEventListener("keydown", (m) => {
 		m.key === "Enter" && (clearTimeout(ue), se = 0, load());
-	}), J.addEventListener("change", () => {
+	}), te.addEventListener("change", () => {
 		se = 0, load();
 	}), ie.addEventListener("click", () => {
 		se = Math.max(0, se - 24), load();
@@ -20325,7 +20442,7 @@ function createSkinBrowser({ onApply: m, overlayHost: _ = null }) {
 		m.key === "Escape" && !x.hidden && (x.hidden = !0);
 	});
 	async function show() {
-		mount(), x.hidden = !1, re.childElementCount === 0 && await load(), te.focus();
+		mount(), x.hidden = !1, re.childElementCount === 0 && await load(), ee.focus();
 	}
 	return {
 		show,
@@ -20341,10 +20458,10 @@ function createSkinBrowser({ onApply: m, overlayHost: _ = null }) {
 }
 //#endregion
 //#region src/contextMenu.js
-var gC = /* @__PURE__ */ new Set(), _C = null, vC = null, yC = null;
+var wC = /* @__PURE__ */ new Set(), TC = null, EC = null, DC = null;
 function notify() {
 	let m = document.querySelector("#webamp-context-menu ul.context-menu");
-	if (m) for (let _ of gC) try {
+	if (m) for (let _ of wC) try {
 		_(m);
 	} catch (m) {
 		console.error(m);
@@ -20352,29 +20469,29 @@ function notify() {
 }
 function attachRoot() {
 	let m = document.getElementById("webamp-context-menu");
-	m !== yC && (_C?.disconnect(), yC = m, m && (_C = new MutationObserver(notify), _C.observe(m, {
+	m !== DC && (TC?.disconnect(), DC = m, m && (TC = new MutationObserver(notify), TC.observe(m, {
 		childList: !0,
 		subtree: !0
 	}), notify()));
 }
 function onContextMenu(m) {
-	return gC.add(m), vC || (vC = new MutationObserver(attachRoot), vC.observe(document.body, { childList: !0 }), attachRoot()), () => {
-		gC.delete(m), gC.size === 0 && (vC?.disconnect(), _C?.disconnect(), vC = null, _C = null, yC = null);
+	return wC.add(m), EC || (EC = new MutationObserver(attachRoot), EC.observe(document.body, { childList: !0 }), attachRoot()), () => {
+		wC.delete(m), wC.size === 0 && (EC?.disconnect(), TC?.disconnect(), EC = null, TC = null, DC = null);
 	};
 }
 //#endregion
 //#region src/skinMenu.js
-var bC = "webamp.skinList", xC = 12;
+var OC = "webamp.skinList", kC = 12;
 function readFavourites() {
 	try {
-		return JSON.parse(localStorage.getItem(bC) || "[]");
+		return JSON.parse(localStorage.getItem(OC) || "[]");
 	} catch {
 		return [];
 	}
 }
 function writeFavourites(m) {
 	try {
-		localStorage.setItem(bC, JSON.stringify(m));
+		localStorage.setItem(OC, JSON.stringify(m));
 	} catch {}
 }
 function findSkinsSubmenu() {
@@ -20401,7 +20518,7 @@ function installSkinMenu({ webamp: m, restore: _ = !0, onSkinChange: x, overlayH
 		S.unshift({
 			url: x,
 			name: _
-		}), writeFavourites(S.slice(0, xC)), dispatchSkins();
+		}), writeFavourites(S.slice(0, kC)), dispatchSkins();
 	};
 	function attachSkinMenuItem() {
 		let m = findSkinsSubmenu(), _ = m?.querySelector("ul");
@@ -20470,11 +20587,11 @@ function installSkinMenu({ webamp: m, restore: _ = !0, onSkinChange: x, overlayH
 		dispose: () => W()
 	};
 }
-var SC = null;
+var AC = null;
 function requireJSZip() {
-	return window.JSZip ? Promise.resolve(window.JSZip) : (SC ||= import("./chunks/jszip.min-Dk1X5e3d.js").then((_) => /* @__PURE__ */ m(_.default, 1)).then((m) => m.default ?? m).catch((m) => {
-		throw SC = null, m;
-	}), SC);
+	return window.JSZip ? Promise.resolve(window.JSZip) : (AC ||= import("./chunks/jszip.min-Dk1X5e3d.js").then((_) => /* @__PURE__ */ m(_.default, 1)).then((m) => m.default ?? m).catch((m) => {
+		throw AC = null, m;
+	}), AC);
 }
 var requireMusicMetadata = () => Promise.reject(/* @__PURE__ */ Error("Tag reading is not bundled in the radio build"));
 function detectLowSpec() {
@@ -20523,7 +20640,7 @@ function createEmitter() {
 	};
 }
 async function createRadioPlayer(m) {
-	let { host: _, layout: F = "stack", proxy: I = "auto", stations: L = [], stationsName: W = "My Stations", skins: q = !0, skinFileHooks: ee = null, availableSkins: te = readFavourites(), skinUrl: J = null, libraryTitle: ne = "MEDIA LIBRARY", getLibraryPosition: re = null, overlayHost: Q = null, getVideoPosition: ie = null, libraryNodes: ae = [
+	let { host: _, layout: F = "stack", proxy: I = "auto", stations: L = [], stationsName: W = "My Stations", skins: q = !0, skinFileHooks: J = null, availableSkins: ee = readFavourites(), skinUrl: te = null, libraryTitle: ne = "MEDIA LIBRARY", getLibraryPosition: re = null, overlayHost: Q = null, getVideoPosition: ie = null, libraryNodes: ae = [
 		"online",
 		"featured",
 		"bookmarks",
@@ -20575,7 +20692,7 @@ async function createRadioPlayer(m) {
 	}
 	let toTracks = (m) => m[0]?.source === "youtube" ? toYouTubeTracks(m) : U(m);
 	function stationStarted(m) {
-		Ve = null, Le?.noteStation(m), Re?.start(m), ze?.setStation(m), eC.recordStation(m), he.emit("station", m);
+		Ve = null, Le?.noteStation(m), Re?.start(m), ze?.setStation(m), cC.recordStation(m), he.emit("station", m);
 	}
 	async function onNowPlaying(m) {
 		Ve = {
@@ -20597,7 +20714,7 @@ async function createRadioPlayer(m) {
 			artist: m.artist,
 			title: m.title,
 			artwork: m.artwork || ""
-		}), eC.recordSong({
+		}), cC.recordSong({
 			station: m.station,
 			artist: m.artist,
 			title: m.title,
@@ -20641,17 +20758,29 @@ async function createRadioPlayer(m) {
 		title: ne,
 		onPlay: play,
 		onEnqueue: enqueue,
-		favorites: Dx,
-		history: eC,
+		favorites: Ox,
+		history: cC,
 		getNowPlaying: () => Ve,
 		getDefaultPosition: re ?? void 0,
 		overlayHost: Q,
 		nodes: ae,
+		onPrefetch: (m) => {
+			me && me.streams !== !1 && m?.source === "youtube" && m.youtubeId && prefetchStream(m.youtubeId);
+		},
 		sources: we.map((m) => ({
 			...m,
 			getStations: () => ge.filter((_) => groupOf(_) === m.id)
 		})),
-		musicSources: [Oe, ...Ee?.sources ?? []].filter(Boolean)
+		musicSources: [
+			Oe,
+			...(me?.featured ?? []).map((m) => ({
+				id: `lacitis-list-${m.id}`,
+				name: m.name,
+				icon: "list",
+				load: async () => (await fetchPlaylist(m.id, me.api ? { api: me.api } : {}))?.rows ?? []
+			})),
+			...Ee?.sources ?? []
+		].filter(Boolean)
 	});
 	Fe = new UI({
 		enableHotkeys: oe,
@@ -20662,8 +20791,8 @@ async function createRadioPlayer(m) {
 			requiresNetwork: !0,
 			filePicker: async () => (await Ge.show(), [])
 		}, ...se],
-		availableSkins: te,
-		...J ? { initialSkin: { url: J } } : {},
+		availableSkins: ee,
+		...te ? { initialSkin: { url: te } } : {},
 		...F === "row" ? { windowLayout: {
 			main: { position: {
 				top: 0,
@@ -20729,23 +20858,28 @@ async function createRadioPlayer(m) {
 	}), et = q ? installSkinMenu({
 		webamp: Fe,
 		overlayHost: Q,
-		restore: !J,
+		restore: !te,
 		onSkinChange: (m) => he.emit("skin", {
 			type: "classic",
 			...m
 		}),
-		onLoadSkinFile: ee ? () => ee.pickFile?.() : void 0,
-		getSkinMode: ee ? () => ee.getMode?.() ?? "classic" : void 0,
-		onBackToClassic: ee ? () => ee.showClassic?.() : void 0,
-		getRecentModernSkins: ee ? () => ee.getRecent?.() ?? [] : void 0,
-		onPickRecentModernSkin: ee ? (m) => ee.pickRecent?.(m) : void 0,
-		onPickBuiltinModernSkin: ee ? (m) => ee.pickBuiltin?.(m) : void 0,
-		getBuiltinModernSkins: ee ? () => ee.getBuiltin?.() ?? [] : void 0
-	}) : null, tt = null, lt = null;
+		onLoadSkinFile: J ? () => J.pickFile?.() : void 0,
+		getSkinMode: J ? () => J.getMode?.() ?? "classic" : void 0,
+		onBackToClassic: J ? () => J.showClassic?.() : void 0,
+		getRecentModernSkins: J ? () => J.getRecent?.() ?? [] : void 0,
+		onPickRecentModernSkin: J ? (m) => J.pickRecent?.(m) : void 0,
+		onPickBuiltinModernSkin: J ? (m) => J.pickBuiltin?.(m) : void 0,
+		getBuiltinModernSkins: J ? () => J.getBuiltin?.() ?? [] : void 0
+	}) : null, tt = null, lt = null, mt = null, xt = null;
 	function keepMusicTags(m) {
 		let _ = m.playlist.currentTrack, x = _ == null ? null : m.tracks[_];
-		if (!x || !isYouTubeUrl(x.url) || x.albumArtUrl) return;
-		let C = Nx.get(x.url);
+		if (Oe && me.streams !== !1 && _ != null && xt !== _ && m.media.status === "PLAYING") {
+			xt = _;
+			let x = m.playlist.trackOrder, S = m.tracks[x[x.indexOf(_) + 1]];
+			S && isYouTubeUrl(S.url) && setTimeout(() => prefetchStream(Px.get(S.url)?.id), 1500);
+		}
+		if (x && isYouTubeUrl(x.url) && m.media.status === "PLAYING" && mt !== x.url && (mt = x.url, noteSongPlayed(Px.get(x.url)?.id)), !x || !isYouTubeUrl(x.url) || x.albumArtUrl) return;
+		let C = Px.get(x.url);
 		if (!C?.id) return;
 		let D = S(x.url);
 		Fe.store.dispatch({
@@ -20760,17 +20894,17 @@ async function createRadioPlayer(m) {
 			numberOfChannels: void 0
 		});
 	}
-	let mt = Fe.store.subscribe(() => {
+	let Tt = Fe.store.subscribe(() => {
 		let m = Fe.store.getState();
 		if (keepMusicTags(m), m.media.status !== tt && (tt = m.media.status, he.emit("status", tt)), m.playlist.currentTrack !== lt) {
 			lt = m.playlist.currentTrack;
 			let _ = lt == null ? null : m.tracks[lt], x = _ ? S(_.url) : null, C = x && x.source !== "youtube" ? x : null;
-			Je && (_ && isYouTubeUrl(_.url) ? Je.showThumbnail(Nx.get(_.url)?.thumbnail ?? "", { force: m.media.status !== "PLAYING" }) : Je.getMode() !== "player" && Je.hide()), C && Le.getStation()?.url !== C.url ? stationStarted(C) : C || (Le.clearStation(), Re.stop(), ze.clear()), he.emit("track", _ ? {
+			Je && (_ && isYouTubeUrl(_.url) ? Je.showThumbnail(Px.get(_.url)?.thumbnail ?? "", { force: m.media.status !== "PLAYING" }) : Je.getMode() !== "player" && Je.hide()), C && Le.getStation()?.url !== C.url ? stationStarted(C) : C || (Le.clearStation(), Re.stop(), ze.clear()), he.emit("track", _ ? {
 				track: _,
 				station: C
 			} : null);
 		}
-	}), xt = F === "row" ? {
+	}), Dt = F === "row" ? {
 		main: {
 			x: 0,
 			y: 0
@@ -20797,13 +20931,17 @@ async function createRadioPlayer(m) {
 			y: 232
 		}
 	};
-	return Fe.store.dispatch({
+	if (Fe.store.dispatch({
 		type: "UPDATE_WINDOW_POSITIONS",
 		absolute: !0,
-		positions: xt
-	}), Oe && lacitisStartRows().then((m) => {
-		m.length > 0 && Fe.store.getState().playlist.trackOrder.length === 0 && Fe.appendTracks(toYouTubeTracks(m));
-	}).catch((m) => console.warn("Lācītis playlist:", m)), Ee && Ee.loadDefault().then((m) => {
+		positions: Dt
+	}), Oe) {
+		let m = Fe.store.getState().playlist.trackOrder.length === 0;
+		m && me.intro && Fe.appendTracks(toYouTubeTracks([me.intro])), lacitisStartRows().then((_) => {
+			m && _.length > 0 && Fe.appendTracks(toYouTubeTracks(_));
+		}).catch((m) => console.warn("Lācītis playlist:", m));
+	}
+	return Ee && Ee.loadDefault().then((m) => {
 		m.length > 0 && Fe.store.getState().playlist.trackOrder.length === 0 && Fe.appendTracks(toYouTubeTracks(m));
 	}).catch((m) => console.warn("Startup playlist:", m)), {
 		webamp: Fe,
@@ -20827,6 +20965,9 @@ async function createRadioPlayer(m) {
 		},
 		getStations: () => ge,
 		getAnalyser: () => Fe.media.getAnalyser(),
+		prefetchSong: (m) => {
+			isYouTubeUrl(m) && prefetchStream(Px.get(m)?.id ?? m.slice(8));
+		},
 		getStatus: () => Fe.getMediaStatus(),
 		getCurrentStation: () => {
 			let m = Fe.store.getState(), _ = m.playlist.currentTrack == null ? null : m.tracks[m.playlist.currentTrack];
@@ -20834,8 +20975,8 @@ async function createRadioPlayer(m) {
 		},
 		hasStreamProxy: C,
 		isLowSpec: () => Qe,
-		favorites: Dx,
-		history: eC,
+		favorites: Ox,
+		history: cC,
 		youtube: Ee,
 		lacitis: Oe,
 		isStreamPlayback: () => !!Xe?.isStream?.(),
@@ -20851,7 +20992,7 @@ async function createRadioPlayer(m) {
 		layoutWindows: (m = {
 			x: 0,
 			y: 0
-		}, _ = xt) => Fe.store.dispatch({
+		}, _ = Dt) => Fe.store.dispatch({
 			type: "UPDATE_WINDOW_POSITIONS",
 			absolute: !0,
 			positions: Object.fromEntries(Object.entries(_).map(([_, x]) => [_, {
@@ -20860,13 +21001,13 @@ async function createRadioPlayer(m) {
 			}]))
 		}),
 		dispose: () => {
-			mt(), Xe?.uninstall(), qe?.destroy(), Je?.dispose(), $e?.(), et?.dispose(), Le.dispose(), Re.dispose(), ze.clear(), Ge.hide(), he.clear(), Fe.dispose();
+			Tt(), Xe?.uninstall(), qe?.destroy(), Je?.dispose(), $e?.(), et?.dispose(), Le.dispose(), Re.dispose(), ze.clear(), Ge.hide(), he.clear(), Fe.dispose();
 		}
 	};
 }
 //#endregion
 //#region src/skinSurface.js
-var CC = "webamp-radio-skins", wC = "modernSkin", TC = 8, EC = "webamp.skin.mode.v1";
+var jC = "webamp-radio-skins", MC = "modernSkin", NC = 8, PC = "webamp.skin.mode.v1";
 async function inspectSkinArchive(m) {
 	let _ = await requireJSZip(), x;
 	try {
@@ -20910,10 +21051,10 @@ async function repackFolder(m, _) {
 }
 function openDb() {
 	return new Promise((m, _) => {
-		let x = indexedDB.open(CC, 1);
+		let x = indexedDB.open(jC, 1);
 		x.onupgradeneeded = () => {
 			let m = x.result;
-			m.objectStoreNames.contains(wC) || m.createObjectStore(wC);
+			m.objectStoreNames.contains(MC) || m.createObjectStore(MC);
 		}, x.onsuccess = () => m(x.result), x.onerror = () => _(x.error), x.onblocked = () => _(/* @__PURE__ */ Error("skin store blocked"));
 	});
 }
@@ -20930,13 +21071,13 @@ async function storeModernSkin(m, _ = "") {
 			at: Date.now()
 		};
 		await new Promise((m, _) => {
-			let D = x.transaction(wC, "readwrite"), O = D.objectStore(wC);
+			let D = x.transaction(MC, "readwrite"), O = D.objectStore(MC);
 			O.put(C, "current"), O.put(C, `recent:${S}`), D.oncomplete = m, D.onerror = () => _(D.error);
 		});
 		let D = await readRecentModernSkins();
-		D.length > TC && await new Promise((m) => {
-			let _ = x.transaction(wC, "readwrite");
-			for (let m of D.slice(TC)) _.objectStore(wC).delete(`recent:${m.label}`);
+		D.length > NC && await new Promise((m) => {
+			let _ = x.transaction(MC, "readwrite");
+			for (let m of D.slice(NC)) _.objectStore(MC).delete(`recent:${m.label}`);
 			_.oncomplete = m, _.onerror = m;
 		}), x.close();
 	} catch {}
@@ -20944,7 +21085,7 @@ async function storeModernSkin(m, _ = "") {
 async function readRecentModernSkins() {
 	try {
 		let m = await openDb(), _ = await new Promise((_, x) => {
-			let S = [], C = m.transaction(wC, "readonly").objectStore(wC).openCursor();
+			let S = [], C = m.transaction(MC, "readonly").objectStore(MC).openCursor();
 			C.onsuccess = () => {
 				let m = C.result;
 				if (!m) return _(S);
@@ -20959,7 +21100,7 @@ async function readRecentModernSkins() {
 async function readModernSkin() {
 	try {
 		let m = await openDb(), _ = await new Promise((_, x) => {
-			let S = m.transaction(wC, "readonly").objectStore(wC).get("current");
+			let S = m.transaction(MC, "readonly").objectStore(MC).get("current");
 			S.onsuccess = () => _(S.result ?? null), S.onerror = () => x(S.error);
 		});
 		return m.close(), _?.file ? {
@@ -20978,18 +21119,18 @@ function defaultChooseVariant(m) {
 }
 function readMode() {
 	try {
-		return localStorage.getItem(EC) || "classic";
+		return localStorage.getItem(PC) || "classic";
 	} catch {
 		return "classic";
 	}
 }
 function writeMode(m) {
 	try {
-		localStorage.setItem(EC, m);
+		localStorage.setItem(PC, m);
 	} catch {}
 }
 function createSkinSurface({ webamp: m, dock: _, classicStage: x, library: S, openSkinBrowser: C, getBox: D, seedTracks: O, defaultModern: F = null, modernAssetsBase: I = void 0, modernPrivateDefaults: L = void 0, switchButton: H = !0, barHeight: U = { max: "70vh" }, getStationInfo: W = null, emit: q = () => {} }) {
-	let ee = null, te = null, J = null, ne = [], refreshRecent = () => readRecentModernSkins().then((m) => {
+	let J = null, ee = null, te = null, ne = [], refreshRecent = () => readRecentModernSkins().then((m) => {
 		ne = m;
 	});
 	refreshRecent();
@@ -21000,11 +21141,11 @@ function createSkinSurface({ webamp: m, dock: _, classicStage: x, library: S, op
 		m.preventDefault(), m.stopPropagation(), openClassicMenu(m.clientX, m.clientY);
 	}), _.append(re));
 	function updateSwitch() {
-		re && (re.textContent = ee ? "CLASSIC" : "MODERN", re.setAttribute("aria-label", ee ? "Switch to the classic skin" : "Switch to the Modern skin"));
+		re && (re.textContent = J ? "CLASSIC" : "MODERN", re.setAttribute("aria-label", J ? "Switch to the classic skin" : "Switch to the Modern skin"));
 	}
 	updateSwitch();
 	function ensureModernHost() {
-		return te || (te = document.createElement("div"), te.className = "webamp-dock-modern", _.append(te)), te;
+		return ee || (ee = document.createElement("div"), ee.className = "webamp-dock-modern", _.append(ee)), ee;
 	}
 	function onAction(m, _) {
 		let x = (_ || "").toLowerCase();
@@ -21072,9 +21213,9 @@ function createSkinSurface({ webamp: m, dock: _, classicStage: x, library: S, op
 		};
 	};
 	function applyBarHeight() {
-		if (!ee) return;
+		if (!J) return;
 		oe ??= (_.style.height = "", _.clientHeight);
-		let m = Math.min(maxBarPx() || 0, ee.bounds.height), x = Math.max(oe, Math.round(m));
+		let m = Math.min(maxBarPx() || 0, J.bounds.height), x = Math.max(oe, Math.round(m));
 		_.style.height = x > oe ? `${x}px` : "";
 	}
 	function resetBarHeight() {
@@ -21082,17 +21223,17 @@ function createSkinSurface({ webamp: m, dock: _, classicStage: x, library: S, op
 	}
 	let se = !1;
 	function fit() {
-		if (ee && !se) {
+		if (J && !se) {
 			se = !0;
 			try {
-				let m = ee.arrange();
+				let m = J.arrange();
 				applyBarHeight();
 				let _ = D();
 				if (!m.width || !m.height) return;
 				let x = Math.min(_.width / m.width, _.height / m.height), S = x >= 1 ? Math.min(2, Math.floor(x + .01)) : x;
-				te.style.zoom = S === 1 ? "" : String(S);
+				ee.style.zoom = S === 1 ? "" : String(S);
 				let C = Math.round(m.width * S), O = Math.round(m.height * S);
-				te.style.left = `${Math.max(0, Math.round((_.width - C) / 2))}px`, te.style.top = `${Math.max(0, Math.round((_.height - O) / 2))}px`, q("layout", {
+				ee.style.left = `${Math.max(0, Math.round((_.width - C) / 2))}px`, ee.style.top = `${Math.max(0, Math.round((_.height - O) / 2))}px`, q("layout", {
 					mode: "modern",
 					width: C,
 					height: O,
@@ -21105,24 +21246,24 @@ function createSkinSurface({ webamp: m, dock: _, classicStage: x, library: S, op
 	}
 	let ce = null;
 	function watchSkinSize() {
-		if (ce?.disconnect(), !ee || typeof ResizeObserver > "u") return;
+		if (ce?.disconnect(), !J || typeof ResizeObserver > "u") return;
 		let m = !1;
 		ce = new ResizeObserver(() => {
 			m || (m = !0, requestAnimationFrame(() => {
 				m = !1, fit();
 			}));
 		});
-		for (let m of ee.uiRoot.getContainers()) {
+		for (let m of J.uiRoot.getContainers()) {
 			let _ = m.getDiv()?.firstElementChild;
 			_ && ce.observe(_), ce.observe(m.getDiv());
 		}
 	}
 	async function showModern(x, { remember: S = !0, skinRoot: C = "" } = {}) {
-		return J && await J.catch(() => {}), J = (async () => {
+		return te && await te.catch(() => {}), te = (async () => {
 			let { mountModernSkin: F } = await import("./chunks/modernSkin-GTROSuAl.js"), H = ensureModernHost();
-			ee?.dispose(), ee = null, H.replaceChildren(), H.hidden = !1, _.classList.add("modern-active");
+			J?.dispose(), J = null, H.replaceChildren(), H.hidden = !1, _.classList.add("modern-active");
 			try {
-				ee = await F({
+				J = await F({
 					webamp: m,
 					host: H,
 					skin: x,
@@ -21147,13 +21288,13 @@ function createSkinSurface({ webamp: m, dock: _, classicStage: x, library: S, op
 				type: "modern",
 				name: C ? C.replace(/\/$/, "").split("/").pop() : x.name
 			});
-		})(), J;
+		})(), te;
 	}
 	function onModernContextMenu(m) {
 		m.defaultPrevented || (m.preventDefault(), openClassicMenu(m.clientX, m.clientY));
 	}
 	function showClassic() {
-		ce?.disconnect(), ce = null, resetBarHeight(), ee && (te.removeEventListener("pointermove", trackPointer), te.removeEventListener("contextmenu", onModernContextMenu), ee.dispose(), ee = null, S.isEmbedded() && S.unembed(), te.replaceChildren(), te.hidden = !0, te.style.zoom = ""), _.classList.remove("modern-active"), updateSwitch(), writeMode("classic"), q("layout", { mode: "classic" });
+		ce?.disconnect(), ce = null, resetBarHeight(), J && (ee.removeEventListener("pointermove", trackPointer), ee.removeEventListener("contextmenu", onModernContextMenu), J.dispose(), J = null, S.isEmbedded() && S.unembed(), ee.replaceChildren(), ee.hidden = !0, ee.style.zoom = ""), _.classList.remove("modern-active"), updateSwitch(), writeMode("classic"), q("layout", { mode: "classic" });
 	}
 	async function setSkin(_, x = "", { variant: S, chooseVariant: C = defaultChooseVariant } = {}) {
 		let D = _;
@@ -21194,7 +21335,7 @@ function createSkinSurface({ webamp: m, dock: _, classicStage: x, library: S, op
 		throw Error("Not a Winamp skin (no main.bmp or skin.xml in the archive)");
 	}
 	async function toggle() {
-		if (ee) return showClassic(), "classic";
+		if (J) return showClassic(), "classic";
 		let m = await readModernSkin();
 		return m ? (await showModern(m.file, {
 			remember: !1,
@@ -21241,11 +21382,11 @@ function createSkinSurface({ webamp: m, dock: _, classicStage: x, library: S, op
 			}), !0) : !1;
 		},
 		fit,
-		getMode: () => ee ? "modern" : "classic",
-		getModern: () => ee,
+		getMode: () => J ? "modern" : "classic",
+		getModern: () => J,
 		openClassicMenu,
 		dispose: () => {
-			ie(), showClassic(), re?.remove(), te?.remove(), te = null;
+			ie(), showClassic(), re?.remove(), ee?.remove(), ee = null;
 		}
 	};
 }
@@ -21290,7 +21431,7 @@ function builtinModernSkins(m = document.baseURI) {
 }
 //#endregion
 //#region src/embed.js
-var DC = 825, OC = 213;
+var FC = 825, IC = 213;
 async function mountWebampRadio(m, _ = {}) {
 	if (!(m instanceof HTMLElement)) throw Error("mountWebampRadio: pass the element the player should fill");
 	let { scale: x = "auto", maxScale: S = 2, lockWindows: C = !0, align: D = "center", overlayZIndex: O = 1e4, libraryNodes: F = [
@@ -21298,10 +21439,10 @@ async function mountWebampRadio(m, _ = {}) {
 		"bookmarks",
 		"history",
 		"songs"
-	], assetsBase: I = document.baseURI, theme: L = W, forceTheme: H = !1, ...ee } = _, te = new URL(I, document.baseURI).href, J = builtinModernSkins(te);
+	], assetsBase: I = document.baseURI, theme: L = W, forceTheme: H = !1, ...J } = _, ee = new URL(I, document.baseURI).href, te = builtinModernSkins(ee);
 	m.classList.add("webamp-dock");
 	let ne = document.createElement("div");
-	ne.className = "webamp-dock-stage", ne.style.width = `${DC}px`, ne.style.height = "116px", m.append(ne);
+	ne.className = "webamp-dock-stage", ne.style.width = `${FC}px`, ne.style.height = "116px", m.append(ne);
 	let re = document.createElement("div");
 	re.id = "webamp", re.className = "webamp-dock-overlays", re.style.zIndex = String(O), document.body.append(re), document.documentElement.style.setProperty("--webamp-overlay-z", String(O + 1));
 	let Q = onContextMenu((m) => {
@@ -21311,15 +21452,15 @@ async function mountWebampRadio(m, _ = {}) {
 		let x = m.getBoundingClientRect(), S = x.bottom - window.innerHeight + 8, C = x.right - window.innerWidth + 8;
 		S > 0 && (_.style.top = `${Math.max(0, parseFloat(_.style.top || "0") - S)}px`), C > 0 && (_.style.left = `${Math.max(0, parseFloat(_.style.left || "0") - C)}px`);
 	}), ie = {}, ae = await createRadioPlayer({
-		...ee,
+		...J,
 		skinFileHooks: ie,
 		host: ne,
 		layout: "row",
 		contained: !0,
 		overlayHost: re,
 		libraryNodes: F,
-		enableHotkeys: ee.enableHotkeys ?? !1,
-		getVideoPosition: ee.getVideoPosition ?? (({ width: _, min: x, overlay: S }) => {
+		enableHotkeys: J.enableHotkeys ?? !1,
+		getVideoPosition: J.getVideoPosition ?? (({ width: _, min: x, overlay: S }) => {
 			if (!C && !m.classList.contains("modern-active")) {
 				let m = ne.querySelector("#main-window")?.getBoundingClientRect();
 				if (m && m.width > 0) {
@@ -21363,7 +21504,7 @@ async function mountWebampRadio(m, _ = {}) {
 				height: x.height
 			};
 		}),
-		getLibraryPosition: ee.getLibraryPosition ?? (({ width: _, height: x, overlay: S }) => {
+		getLibraryPosition: J.getLibraryPosition ?? (({ width: _, height: x, overlay: S }) => {
 			let C = m.getBoundingClientRect();
 			return {
 				left: Math.max(0, Math.min(C.left - S.left, S.width - _)),
@@ -21417,12 +21558,12 @@ async function mountWebampRadio(m, _ = {}) {
 	}
 	let ce = !1, le = 1;
 	function fit() {
-		let _ = m.clientWidth || DC, O = m.clientHeight || 116, F = Math.min(_ / DC, O / 116, S), I = x === "auto" ? F >= 1 ? Math.floor(F) : F : x === "fit" ? F : Number(x) || 1;
+		let _ = m.clientWidth || FC, O = m.clientHeight || 116, F = Math.min(_ / FC, O / 116, S), I = x === "auto" ? F >= 1 ? Math.floor(F) : F : x === "fit" ? F : Number(x) || 1;
 		le = Math.max(.5, Math.round(I * 100) / 100), m.style.setProperty("--dock-scale", String(le));
-		let L = DC * le, H = 116 * le;
+		let L = FC * le, H = 116 * le;
 		if (!C) {
 			if (ne.style.left = "0px", ne.style.top = "0px", ne.style.width = `${Math.ceil(window.innerWidth / le)}px`, ne.style.height = `${Math.ceil(window.innerHeight / le)}px`, !se) {
-				let x = (275 + OC + 275) * le, S = m.getBoundingClientRect(), C = D === "left" ? S.left : D === "right" ? S.right - x : S.left + (_ - x) / 2, F = S.bottom - Math.max(0, (O - H) / 2), I = Math.max(0, Math.round(C / le)), L = Math.max(0, Math.round(F / le) - 116);
+				let x = (275 + IC + 275) * le, S = m.getBoundingClientRect(), C = D === "left" ? S.left : D === "right" ? S.right - x : S.left + (_ - x) / 2, F = S.bottom - Math.max(0, (O - H) / 2), I = Math.max(0, Math.round(C / le)), L = Math.max(0, Math.round(F / le) - 116);
 				ce = !0, ae.layoutWindows({
 					x: I,
 					y: L
@@ -21436,7 +21577,7 @@ async function mountWebampRadio(m, _ = {}) {
 						y: 0
 					},
 					playlist: {
-						x: 275 + OC,
+						x: 275 + IC,
 						y: 0
 					}
 				}), ce = !1;
@@ -21453,14 +21594,14 @@ async function mountWebampRadio(m, _ = {}) {
 		classicStage: ne,
 		library: ae.library,
 		getBox: () => ({
-			width: m.clientWidth || DC,
+			width: m.clientWidth || FC,
 			height: m.clientHeight || 116
 		}),
-		defaultModern: J[0],
-		modernAssetsBase: new URL("modern/assets/", te).href,
-		modernPrivateDefaults: Object.assign({}, ...J.map((m) => m.privateDefaults ?? {}), ee.modernPrivateDefaults ?? {}),
-		switchButton: ee.switchButton ?? !0,
-		barHeight: ee.barHeight ?? { max: "70vh" },
+		defaultModern: te[0],
+		modernAssetsBase: new URL("modern/assets/", ee).href,
+		modernPrivateDefaults: Object.assign({}, ...te.map((m) => m.privateDefaults ?? {}), J.modernPrivateDefaults ?? {}),
+		switchButton: J.switchButton ?? !0,
+		barHeight: J.barHeight ?? { max: "70vh" },
 		getStationInfo: () => {
 			let m = ae.getCurrentStation?.();
 			if (!m) return null;
@@ -21473,13 +21614,13 @@ async function mountWebampRadio(m, _ = {}) {
 		},
 		emit: (m, _) => ae.emit?.(m, _)
 	});
-	ie.pickFile = () => ue.pickFile(), ie.getBuiltin = () => J, ie.getMode = () => ue.getMode(), ie.showClassic = () => ue.showClassic(), ie.getRecent = () => ue.getRecentModernSkins(), ie.pickRecent = (m) => ue.showRecentModernSkin(m).catch((m) => ae.emit?.("error", { reason: m?.message ?? String(m) })), ie.pickBuiltin = (m) => ue.setSkin(m.url, m.label, { variant: m.variant }).catch((m) => ae.emit?.("error", { reason: m?.message ?? String(m) }));
+	ie.pickFile = () => ue.pickFile(), ie.getBuiltin = () => te, ie.getMode = () => ue.getMode(), ie.showClassic = () => ue.showClassic(), ie.getRecent = () => ue.getRecentModernSkins(), ie.pickRecent = (m) => ue.showRecentModernSkin(m).catch((m) => ae.emit?.("error", { reason: m?.message ?? String(m) })), ie.pickBuiltin = (m) => ue.setSkin(m.url, m.label, { variant: m.variant }).catch((m) => ae.emit?.("error", { reason: m?.message ?? String(m) }));
 	let refit = () => {
 		fit(), ue.fit();
 	};
 	refit();
 	let de = new ResizeObserver(refit);
-	de.observe(m), window.addEventListener("resize", refit), ee.restoreSkin !== !1 && await ue.restore();
+	de.observe(m), window.addEventListener("resize", refit), J.restoreSkin !== !1 && await ue.restore();
 	let themedElements = () => [ne, re].filter(Boolean), fe = null;
 	function paintTheme() {
 		for (let m of themedElements()) for (let _ of Object.values(q)) _.className && m.classList.toggle(_.className, _ === fe);
@@ -21488,10 +21629,10 @@ async function mountWebampRadio(m, _ = {}) {
 		let _ = themeById(m);
 		if (fe = _, paintTheme(), !_?.skin) return _?.id ?? null;
 		ue.showClassic();
-		let x = themeSkinUrl(_, te);
+		let x = themeSkinUrl(_, ee);
 		return await ae.setSkin(x, _.label), _.id;
 	}
-	let me = ee.restoreSkin === !1 ? null : readStoredSkin(), he = !H && me ? null : L;
+	let me = J.restoreSkin === !1 ? null : readStoredSkin(), he = !H && me ? null : L;
 	if (he) try {
 		await applyTheme(he);
 	} catch (m) {
@@ -21514,9 +21655,9 @@ async function mountWebampRadio(m, _ = {}) {
 		setTheme: (m) => applyTheme(m),
 		getTheme: () => fe?.id ?? null,
 		getThemes: () => themeList(),
-		getBuiltinModernSkins: () => J,
+		getBuiltinModernSkins: () => te,
 		setBuiltinModernSkin: (m) => {
-			let _ = J.find((_) => _.id === m);
+			let _ = te.find((_) => _.id === m);
 			if (!_) throw Error(`Unknown built-in skin: ${m}`);
 			return ue.setSkin(_.url, _.label, { variant: _.variant });
 		},
@@ -21529,7 +21670,7 @@ async function mountWebampRadio(m, _ = {}) {
 }
 //#endregion
 //#region src/minka.js
-var kC = "media-profile-change", AC = "rg-stations-ready";
+var LC = "media-profile-change", RC = "rg-stations-ready";
 function readMinkaStations() {
 	try {
 		if (typeof stationsList < "u" && Array.isArray(stationsList)) return stationsList;
@@ -21555,7 +21696,7 @@ async function mountMinkaRadio(m, _ = {}) {
 		let m = readMinkaStations();
 		m && I.setStations(m);
 	};
-	S && (window.addEventListener(AC, applyStations), L.push(() => window.removeEventListener(AC, applyStations)));
+	S && (window.addEventListener(RC, applyStations), L.push(() => window.removeEventListener(RC, applyStations)));
 	let findByKey = (m) => (I.getStations?.() ?? []).find((_) => stationKey(_) === m) ?? null, profile = () => window.__mkUnifiedMedia ?? null, profileReady = () => !!(profile()?.getSession?.() && profile()?.isLoaded?.()), H = !1, pullFavorites = () => {
 		if (!profileReady()) return;
 		let m = profile().getRadio?.()?.favorites ?? [], _ = I.favorites.list();
@@ -21587,7 +21728,7 @@ async function mountMinkaRadio(m, _ = {}) {
 			id: m
 		});
 	};
-	if (C && (document.addEventListener(kC, pullFavorites), window.addEventListener(AC, pullFavorites), L.push(() => document.removeEventListener(kC, pullFavorites)), L.push(() => window.removeEventListener(AC, pullFavorites)), L.push(I.favorites.subscribe(pushFavorites)), pullFavorites()), D) {
+	if (C && (document.addEventListener(LC, pullFavorites), window.addEventListener(RC, pullFavorites), L.push(() => document.removeEventListener(LC, pullFavorites)), L.push(() => window.removeEventListener(RC, pullFavorites)), L.push(I.favorites.subscribe(pushFavorites)), pullFavorites()), D) {
 		let announce = (m) => {
 			let _ = I.getCurrentStation?.();
 			document.dispatchEvent(new CustomEvent("rg-now-playing-art", { detail: {
@@ -21641,4 +21782,4 @@ async function mountMinkaRadio(m, _ = {}) {
 	};
 }
 //#endregion
-export { createRadioPlayer, fromMinkaStation, mountWebampRadio as mount, mountWebampRadio, mountMinkaRadio, normalizeStations, searchMusic, stationKey, toMusicRow };
+export { createRadioPlayer, featuredPlaylists, fromMinkaStation, mountWebampRadio as mount, mountWebampRadio, mountMinkaRadio, normalizeStations, searchMusic, stationKey, toMusicRow };

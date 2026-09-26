@@ -7,9 +7,12 @@
    localStorage minkaMusicEngine = "lacitis" (js/radio-source.js). */
 (function () {
   'use strict';
-  var VERSION = '20260927wa4';
+  var VERSION = '20260927wa8';
   var BASE = new URL('integrations/webamp/player/', document.baseURI).href;
   var DEFAULT_PLAYLIST = 'RDCLAK5uy_nlHCD7Y3YATeFPwGmGRiZv4pKXW57yN8o';
+  // Winamp's own greeting, from YouTube: first in the playlist, and what
+  // plays whenever WINAMP opens with nothing playing.
+  var INTRO = { id: 'HaF-nRS_CWM', title: "It Really Whips the Llama's Ass", author: 'Winamp 2.91', lengthSeconds: 6 };
   var pending = null;
   var player = null;
   var host = null;
@@ -157,14 +160,20 @@
         import(BASE + 'webamp-radio.js?v=' + VERSION)
       ]);
       var module = loaded[2];
+      // Featured YouTube Music playlists, from what was listened to (ytify's
+      // Library "Featured"); the starter songs seed it the first time.
+      var featured = [];
+      try {
+        featured = await module.featuredPlaylists({ fallbackIds: STARTER.map(function (s) { return s[0]; }), waitMs: 1000 });
+      } catch (_) {}
       player = await module.mountWebampRadio(el, {
         assetsBase: BASE,
         stations: [],
         libraryNodes: ['bookmarks', 'history'],
-        libraryTitle: 'LĀCĪTIS',
+        libraryTitle: 'LACITIS', // the skin's pixel font has no Ā or Ī
         // The opening playlist (a YouTube Music list); the starter rows only
         // when it cannot be read.
-        lacitis: { playlistId: DEFAULT_PLAYLIST, starter: function () { return starterRows(module); } },
+        lacitis: { playlistId: DEFAULT_PLAYLIST, featured: featured, intro: module.toMusicRow(INTRO), starter: function () { return starterRows(module); } },
         proxy: false,
         theme: null,
         lowSpec: 'auto',
@@ -235,11 +244,21 @@
     if (player && player.setPresentationVisible) player.setPresentationVisible(visible);
   }
 
+  // Opening WINAMP plays: from the intro (the playlist's first song) when
+  // nothing is playing; a song already playing (minimized) just carries on.
+  function playOnOpen(p) {
+    if (p.getStatus() === 'PLAYING') return;
+    var st = p.webamp.store.getState();
+    var first = st.playlist.trackOrder[0];
+    if (first != null) p.webamp.store.dispatch({ type: 'PLAY_TRACK', id: first });
+  }
+
   window.openWebampMusic = async function () {
     ensureHost();
     setVisible(true);
     var p = await mount();
     p.refit();
+    playOnOpen(p);
     window.syncShellLayout && window.syncShellLayout();
     return p;
   };
@@ -249,6 +268,20 @@
   window.stopWebampMusic = function () {
     setVisible(false);
     if (player && player.getStatus() === 'PLAYING') player.pause();
+  };
+  // Pointer near WINAMP: fetch (and compile) the player before the click.
+  var warmed = false;
+  window.warmWebampMusic = function () {
+    if (warmed || pending) return;
+    warmed = true;
+    [['modulepreload', BASE + 'webamp-radio.js?v=' + VERSION], ['preload', BASE + 'webamp-radio.css?v=' + VERSION, 'style'], ['preload', 'css/music-webamp.css?v=' + VERSION, 'style']]
+      .forEach(function (item) {
+        var link = document.createElement('link');
+        link.rel = item[0];
+        link.href = item[1];
+        if (item[2]) link.as = item[2];
+        document.head.appendChild(link);
+      });
   };
   window.isWebampMusicPlaying = function () { return !!player && player.getStatus() === 'PLAYING'; };
   // The radio's own buttons (index.html toggleRadio / radioIdleClick) call

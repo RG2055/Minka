@@ -93,22 +93,20 @@ export async function searchMusic(query, { signal, api = LACITIS_API, fallbacks 
   throw new Error("Meklēšana neizdevās. Pamēģini vēlreiz.");
 }
 
-// A YouTube (Music) playlist's songs, as rows: Invidious, then the Lācītis
-// API (it reads YouTube Music lists such as "RDCLAK5uy_…" too). Cached
+// A YouTube (Music) playlist's songs, as rows, from the Lācītis API. Cached
 // in localStorage for 12 hours so opening WINAMP asks nothing twice.
 const PLAYLIST_TTL = 12 * 3600 * 1000;
-export async function fetchPlaylist(id, { signal, api = LACITIS_API, fallbacks = SEARCH_FALLBACKS } = {}) {
-  const key = `webamp.lacitis.playlist.v1:${id}`;
+export async function fetchPlaylist(id, { signal, api = LACITIS_API } = {}) {
+  const key = `webamp.lacitis.playlist.v2:${id}`;
   try {
     const cached = JSON.parse(localStorage.getItem(key) || "null");
     if (cached && Date.now() - cached.at < PLAYLIST_TTL && Array.isArray(cached.rows) && cached.rows.length) return cached;
   } catch {}
-  // Invidious first: it names the artists; the Lācītis API answers
-  // YouTube Music lists with "YouTube Music" for every song.
-  const endpoints = [
-    ...fallbacks.slice(0, 2).map((base) => ({ url: `${base}/api/v1/playlists/${encodeURIComponent(id)}`, kind: "invidious" })),
-    { url: `${api}/playlist?id=${encodeURIComponent(id)}&all=true`, kind: "lacitis" }
-  ];
+  // The Lācītis API reads YouTube Music lists ("RDCLAK5uy_…"); its first
+  // page (up to 100 songs) answers in well under a second, the whole list
+  // (&all=true) can take longer than anyone waits. Invidious answers these
+  // lists with a redirect (checked 2026-09-27), so it is not asked.
+  const endpoints = [{ url: `${api}/playlist?id=${encodeURIComponent(id)}`, kind: "lacitis" }];
   for (const endpoint of endpoints) {
     const timeout = withTimeout(8000, signal);
     try {

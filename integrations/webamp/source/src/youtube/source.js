@@ -132,8 +132,10 @@ export function installYouTubeSource(webamp, { engine, getHost, onActive, resolv
     const controller = new AbortController();
     streamAbort = controller;
     const timer = setTimeout(() => controller.abort(), STREAM_BUDGET_MS);
+    // The budget holds even when this joins a lookup a prefetch started.
+    const budget = new Promise((resolve) => controller.signal.addEventListener("abort", () => resolve(null), { once: true }));
     try {
-      return await resolveStream(id, { signal: controller.signal });
+      return await Promise.race([resolveStream(id, { signal: controller.signal }), budget]);
     } catch {
       return null;
     } finally {

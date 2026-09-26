@@ -102,6 +102,14 @@ const SONG_COLUMNS = [
   { id: "when", label: "When", sort: (s) => s.at || 0, numeric: true }
 ];
 
+// Songs of the music nodes (Lācītis search, YouTube Music playlists).
+const MUSIC_COLUMNS = [
+  { id: "name", label: "Dziesma", sort: (s) => (s.title || "").toLowerCase() },
+  { id: "artist", label: "Izpildītājs", sort: (s) => (s.artist || "").toLowerCase() },
+  { id: "length", label: "Garums", sort: (s) => s.duration || 0, numeric: true },
+  { id: "fav", label: "\u2605", sort: (s) => (s.isFavorite ? 1 : 0), numeric: true }
+];
+
 const SORTS = [
   ["Most popular", "clickcount"],
   ["Most voted", "votes"],
@@ -203,7 +211,10 @@ export function createRadioLibrary({
   musicSources = [],
   title = "MEDIA LIBRARY",
   // Which built-in nodes to show: "online", "bookmarks", "history".
-  nodes = NAV.map((entry) => entry.id)
+  nodes = NAV.map((entry) => entry.id),
+  // Called with a song row the moment it is pressed (the host looks its
+  // stream up before the double-click / Play arrives).
+  onPrefetch = null
 }) {
   // A host-supplied source can take over a NAV node instead of adding a new
   // one: the Radio Record service node is the same catalogue the host passes in.
@@ -571,7 +582,9 @@ export function createRadioLibrary({
   let historyCache = [];
   let songsCache = [];
   const isSongsView = () => navId === "songs";
-  const columnsFor = () => (isSongsView() ? SONG_COLUMNS : COLUMNS);
+  // Music nodes load songs (load()); host station lists only list stations.
+  const isMusicView = () => Boolean(customSources.get(navId)?.load);
+  const columnsFor = () => (isSongsView() ? SONG_COLUMNS : isMusicView() ? MUSIC_COLUMNS : COLUMNS);
 
   const selectedItems = () => stations.filter((item) => selectedUrls.has(rowKey(item)));
   // Songs resolve to the station they were heard on, so Play / Bookmark work there too.
@@ -602,7 +615,7 @@ export function createRadioLibrary({
     buildHead(columnsFor());
     // Winamp: the genre pane belongs to the Internet Radio directory only;
     // Bookmarks and History are plain lists.
-    const directoryView = id === "online" || customSources.has(id);
+    const directoryView = id === "online" || (customSources.has(id) && !customSources.get(id).load);
     genres.hidden = !directoryView;
     panes.classList.toggle("is-two-pane", !directoryView);
     renderGenres();
@@ -774,6 +787,8 @@ export function createRadioLibrary({
           if (id !== requestId) return;
           loadedRows.set(navId, found);
           setMessage(found.length === 0 ? "Nekas netika atrasts." : "");
+          // The likely picks start looking up their streams now.
+          found.slice(0, 2).forEach((item) => onPrefetch?.(item));
         } catch (error) {
           if (id !== requestId || controller.signal.aborted) return;
           loadedRows.set(navId, []);
@@ -800,6 +815,7 @@ export function createRadioLibrary({
           if (id !== requestId) return;
           loadedRows.set(navId, rows);
           setMessage(rows.length === 0 ? "This playlist is empty or unavailable." : "");
+          if (rows[0]?.source === "youtube") onPrefetch?.(rows[0]);
         } catch (error) {
           if (id !== requestId) return;
           setMessage(error?.message || "The playlist could not be loaded.");
@@ -980,6 +996,9 @@ export function createRadioLibrary({
     if (isSongsView()) {
       return songRow(station, index, ordered);
     }
+    if (isMusicView()) {
+      return musicRow(station, index);
+    }
     const node = el("div", "ml-row");
     node.setAttribute("role", "option");
     node.dataset.url = station.url;
@@ -1030,6 +1049,42 @@ export function createRadioLibrary({
     return node;
   }
 
+  function musicRow(song, index) {
+    const node = el("div", "ml-row is-music");
+    node.setAttribute("role", "option");
+    node.dataset.url = song.url;
+    node.dataset.index = String(index);
+    node.title = song.artist ? `${song.artist} - ${song.title}` : song.title;
+    if (index % 2 === 1) node.classList.add("is-alt");
+    const selected = selectedUrls.has(song.url);
+    node.classList.toggle("is-selected", selected);
+    node.setAttribute("aria-selected", selected ? "true" : "false");
+    const current = getNowPlaying();
+    if (current && current.station?.url === song.url) node.classList.add("is-playing");
+    const name = el("div", "ml-td ml-col-name");
+    name.append(logoCell(song), el("span", "ml-station-name", song.title));
+    const secs = Math.round(song.duration || 0);
+    const length = secs ? `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}` : "";
+    const on = favorites.has(song.url);
+    const fav = el("button", `ml-fav${on ? " is-on" : ""}`, on ? "\u2605" : "\u2606");
+    fav.type = "button";
+    fav.title = on ? "Noņemt no favorītiem" : "Pievienot favorītiem";
+    fav.addEventListener("mousedown", (event) => event.stopPropagation());
+    fav.addEventListener("click", (event) => {
+      event.stopPropagation();
+      favorites.toggle(song);
+      renderRows();
+    });
+    node.append(
+      name,
+      el("div", "ml-td ml-col-artist", song.artist || ""),
+      el("div", "ml-td ml-col-length", length),
+      (() => { const cell = el("div", "ml-td ml-col-fav"); cell.append(fav); return cell; })()
+    );
+    node.dataset.key = rowKey(song);
+    return node;
+  }
+
   /**
    * Row interactions are handled on the container, not on each row.
    *
@@ -1065,6 +1120,10 @@ export function createRadioLibrary({
     const node = rowFromEvent(event);
     if (!node) return;
     const key = node.dataset.key;
+    if (onPrefetch && node.classList.contains("is-music")) {
+      const item = stations.find((s) => rowKey(s) === key);
+      if (item) onPrefetch(item);
+    }
     // A right-press on an already-selected row keeps the whole selection, so the
     // context menu can act on it.
     if (event.button === 2 && selectedUrls.has(key)) {
@@ -1452,7 +1511,7 @@ export function createRadioLibrary({
   search.addEventListener("input", () => {
     clearTimeout(searchTimer);
     const remote = navId === "online" || Boolean(customSources.get(navId)?.search);
-    searchTimer = setTimeout(() => void load(), remote ? 450 : 100);
+    searchTimer = setTimeout(() => void load(), remote ? 300 : 100);
   });
   search.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {

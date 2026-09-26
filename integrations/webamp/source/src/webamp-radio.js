@@ -3,3 +3,4 @@
 export { mountWebampRadio, mount, createRadioPlayer, normalizeStations, fromMinkaStation } from "./embed.js";
 export { mountMinkaRadio, stationKey } from "./minka.js";
 export { searchMusic, toMusicRow } from "./lacitis/search.js";
+export { featuredPlaylists } from "./lacitis/featured.js";
