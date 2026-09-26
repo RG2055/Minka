@@ -27,8 +27,9 @@ PICS = {
     'krutis': ('rtg-krutis.png', 40, 1.25, 'sharp'),
     'ctkrutis': ('ct-krutis.png', 30, 1.1),
     'ct': ('ct-vederis.png', 30, 1.1),
-    'ctgalva': ('ct-galva.png', 30, 1.2),
     'plauksta': ('rtg-plauksta.png', 70, 1.2, 'sharp'),
+    'smadzenes': ('mr-t2.png', 12, .8, 'sharp'),
+    'ctgalva': ('ct-galva.png', 0, 1.0, 'brain'),
 }
 # Cards are about square and show the middle ~56 % of the 16:9 picture, so
 # every object fits a 125×127-dot box in the centre.
@@ -39,6 +40,9 @@ def field_of(src, floor, gamma, prep=''):
     im = Image.open(SRC / src).convert('L')
     if prep == 'sharp':          # radiographs: bring out ribs/bones before the dots eat them
         im = im.filter(ImageFilter.UnsharpMask(radius=6, percent=260, threshold=1))
+    if prep == 'brain':          # head CT in a brain window: bone white, grey/white matter apart, CSF dark
+        im = im.point(lambda v: 0 if v < 70 else 255 if v > 190 else int((v - 70) * 255 / 120))
+        im = im.filter(ImageFilter.UnsharpMask(radius=2, percent=140, threshold=2))
     im = ImageOps.autocontrast(im, cutoff=1)
     f = min(BOX_W / im.width, BOX_H / im.height)
     w, h = max(1, round(im.width * f)), max(1, round(im.height * f))
