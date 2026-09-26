@@ -90,7 +90,7 @@ test('radiographer absences join consecutive days with the same code', () => {
   const out = parseTechAbsences({ month: 9, year: 2026, values, palette: [], bg: [], fg: [], merges: [] });
   assert.deepEqual(out, [
     { src: 'tech', name: 'PERSONA A', code: 'A', from: '01.09.2026', to: '03.09.2026' },
-    { src: 'tech', name: 'PERSONA A', code: 'dnl', from: '06.09.2026', to: '06.09.2026' },
+    { src: 'tech', name: 'PERSONA A', code: 'DNL', from: '06.09.2026', to: '06.09.2026' },
     { src: 'tech', name: 'PERSONA A', code: 'X', from: '07.09.2026', to: '07.09.2026' }
   ]);
 });
@@ -106,4 +106,42 @@ test('labels, departments and shifts', () => {
   assert.equal(departmentOf('#ffffff'), '');
   assert.equal(shiftOf(12, true, false).type, 'NAKTS');
   assert.equal(shiftOf(16, false, true).type, 'DIENNAKTS');
+});
+
+test('an unlabelled block after the department doctors is the rotation; marks are not absences', async () => {
+  const { absenceCode } = await import(new URL('../../cloudflare/minka-api/src/rota.js', import.meta.url));
+  const sheet = docSheet({
+    rows: [
+      { a: 'Nodaļu ārsti', name: 'Persona C 9-17', cells: { 2: '9' } },
+      { name: 'Persona D' },
+      { name: 'Persona R', cells: { 3: '12', 4: '*' } },
+      { name: 'Persona S', cells: { 3: 'dnl' } }
+    ],
+    merges: [[3, 1, 2, 1], [5, 1, 2, 1]]
+  });
+  const m = parseDocMonth(sheet);
+  assert.deepEqual(m.sections.map(s => s.key), ['nodalu_arsti', 'neatliekama_rotacija']);
+  assert.equal(m.days['03.09.2026'].neatliekama_rotacija[0].name, 'Persona R');
+  assert.deepEqual(m.absences.map(a => [a.name, a.code]), [['Persona S', 'DNL']]);
+  assert.equal(absenceCode('AD⁣'.replace(/[⁠-⁤]/g, '')), 'AD');
+  assert.equal(absenceCode('*'), '');
+});
+
+test('a colour over the whole row is a highlight, not a department', () => {
+  const colors = {};
+  for (let d = 1; d <= 30; d++) colors['bg:3:' + d] = 2;
+  const sheet = docSheet({
+    rows: [
+      { a: 'REZIDENTI OBLIGĀTĀS DEŽŪRAS NODAĻĀS', b: '1', name: 'Persona I', cells: { 7: '8' } },
+      { b: '1', name: 'Persona J', cells: { 7: '8' } },
+      { b: '1', name: 'Persona K', cells: { 7: '8' } },
+      { b: '1', name: 'Persona L' },
+      { b: '1', name: 'Persona M' }
+    ],
+    merges: [[3, 1, 5, 1]],
+    colors: { ...colors, 'bg:4:7': 2 }
+  });
+  const dept = parseDocMonth(sheet).days['07.09.2026'].rezidenti_nodalas;
+  assert.equal(dept.find(e => e.name === 'Persona J').dept, undefined);
+  assert.equal(dept.find(e => e.name === 'Persona K').dept, 'Jugla');
 });

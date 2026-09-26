@@ -78,7 +78,16 @@ export function sectionKey(label) {
 
 const pad2 = (n) => String(n).padStart(2, "0");
 const dateKey = (day, month, year) => pad2(day) + "." + pad2(month) + "." + year;
-const cell = (sheet, r, c) => String(((sheet.values[r] || [])[c]) ?? "").trim();
+// Values as displayed, without invisible characters some cells carry.
+const cell = (sheet, r, c) => String(((sheet.values[r] || [])[c]) ?? "").replace(/[\u200b-\u200f\u2060-\u2064\ufeff]/g, "").trim();
+
+// Absence codes as written, except case differences of the same word
+// ("dnl"/"DNL"); a lone "*" or similar mark is a note, not an absence.
+export function absenceCode(value) {
+  const v = String(value || "").trim();
+  if (!/[A-Za-zĀ-ž]/.test(v)) return "";
+  return /^dnl$/i.test(v) ? "DNL" : v;
+}
 const color = (sheet, layer, r, c) => {
   const idx = ((sheet[layer] || [])[r] || [])[c];
   return idx === undefined ? "" : String((sheet.palette || [])[idx] || "");
@@ -132,6 +141,10 @@ export function docBlocks(sheet, header) {
         if (k) { key = k; label = text; break; }
       }
     }
+    // The rotation block sometimes has no label; it is the one right after the
+    // department doctors (always labelled). Any other unlabelled block
+    // continues the previous one (the list goes on over a page break).
+    if (!key && previous && previous.key === "nodalu_arsti") { key = "neatliekama_rotacija"; label = "Neatliekamās radioloģijas rotācija"; }
     if (!key && previous) { key = previous.key; label = previous.label; }
     const block = { key: key || "cits", label: String(label || "").replace(/\s+/g, " ").trim(), top, bottom };
     blocks.push(block);
@@ -163,6 +176,18 @@ function columnDefault(sheet, col, top, bottom) {
   return Object.entries(count).sort((a, b) => b[1] - a[1])[0]?.[0] || "";
 }
 
+// A colour over most of a row's days marks the whole row (a highlighted
+// person), not the department of one day.
+function rowDefault(sheet, r, cols) {
+  const count = {};
+  for (const { col } of cols) {
+    const c = color(sheet, "bg", r, col);
+    count[c] = (count[c] || 0) + 1;
+  }
+  const [top, n] = Object.entries(count).sort((a, b) => b[1] - a[1])[0] || [];
+  return n > cols.length / 2 ? top : "";
+}
+
 export function parseDocMonth(sheet) {
   const header = findDayHeader(sheet);
   if (!header || !sheet.month || !sheet.year) return null;
@@ -179,6 +204,7 @@ export function parseDocMonth(sheet) {
       const person = personRow(sheet, r);
       if (!person) continue;
       people.push({ ...person, section: block.key });
+      const rowColor = block.key === "rezidenti_nodalas" ? rowDefault(sheet, r, cols) : "";
       for (const { col, day } of cols) {
         const value = cell(sheet, r, col);
         if (!value || value === "-" || value === "?" || value === ".") continue;
@@ -189,7 +215,7 @@ export function parseDocMonth(sheet) {
           const entry = { name: person.name, shift: value, ...shiftOf(hours, isBlueTone(fg) || isBlueTone(bg), day === lastDay) };
           if (person.year) entry.year = person.year;
           if (person.hoursNote) entry.hoursNote = person.hoursNote;
-          if (block.key === "rezidenti_nodalas" && bg !== defaults[col]) {
+          if (block.key === "rezidenti_nodalas" && bg !== defaults[col] && bg !== rowColor) {
             const dept = departmentOf(bg);
             if (dept) entry.dept = dept;
           }
@@ -197,11 +223,13 @@ export function parseDocMonth(sheet) {
           continue;
         }
         // A code: the absence runs over its merged cells (else that one day).
+        const code = absenceCode(value);
+        if (!code) continue;
         const merge = mergeAt(sheet, r, col);
         const lastCol = merge ? merge[1] - 1 + merge[3] - 1 : col;
         const span = cols.filter((c) => c.col >= col && c.col <= lastCol);
         const to = span.length ? span[span.length - 1].day : day;
-        absences.push({ src: "doc", name: person.name, section: block.key, code: value, from: key, to: dateKey(to, sheet.month, sheet.year) });
+        absences.push({ src: "doc", name: person.name, section: block.key, code, from: key, to: dateKey(to, sheet.month, sheet.year) });
       }
     }
   }
@@ -239,8 +267,8 @@ export function parseTechAbsences(sheet) {
     let run = null;
     const flush = () => { if (run) { out.push(run); run = null; } };
     for (const { col, day } of cols) {
-      const value = cell(sheet, r, col);
-      const isCode = value && !/^\d+([.,]\d+)?$/.test(value) && value !== "-" ;
+      const value = absenceCode(cell(sheet, r, col));
+      const isCode = !!value;
       if (isCode && run && run.code === value && run.lastDay === day - 1) { run.to = dateKey(day, sheet.month, sheet.year); run.lastDay = day; continue; }
       flush();
       if (isCode) run = { src: "tech", name, code: value, from: dateKey(day, sheet.month, sheet.year), to: dateKey(day, sheet.month, sheet.year), lastDay: day };
