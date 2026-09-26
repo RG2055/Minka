@@ -84,7 +84,11 @@
     go.addEventListener('click', function () { go.disabled = true; go.textContent = 'Atjaunina…'; apply(); });
     toast.append(text, go);
     document.body.appendChild(toast);
-    requestAnimationFrame(function () { toast.style.opacity = '1'; toast.style.transform = 'translate(-50%,0)'; });
+    // Fade in without waiting for a frame: a background tab paints no frames,
+    // and the note must be there when the app comes back to the screen.
+    void toast.offsetWidth;
+    toast.style.opacity = '1';
+    toast.style.transform = 'translate(-50%,0)';
   }
 
   function ready() {

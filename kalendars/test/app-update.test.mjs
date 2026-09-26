@@ -13,7 +13,7 @@ function page({ now = 0 } = {}) {
   let clock = now;
   const body = { children: [], appendChild(el) { this.children.push(el); el.isConnected = true; } };
   const el = () => {
-    const node = { style: {}, children: [], attrs: {}, listeners: {}, textContent: '', disabled: false,
+    const node = { style: {}, offsetWidth: 0, children: [], attrs: {}, listeners: {}, textContent: '', disabled: false,
       setAttribute(k, v) { this.attrs[k] = v; }, append(...c) { this.children.push(...c); },
       addEventListener(t, f) { this.listeners[t] = f; }, remove() { body.children = body.children.filter(x => x !== this); } };
     return node;
