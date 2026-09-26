@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.811-grp1';
+const CACHE = 'minka-4.6.811-up1';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
@@ -45,7 +45,10 @@ self.addEventListener('install', event => {
       appUrl('manifest-mobile-rad.json'),
     ]))
   );
-  self.skipWaiting();
+  // No self.skipWaiting() here: a new version waits until the page asks for
+  // it (SKIP_WAITING from js/app-update.js at a safe moment or the button), so
+  // an update never cuts the radio or reloads under someone's hand. With no
+  // worker yet (first visit) it takes over at once anyway.
 });
 
 self.addEventListener('activate', event => {

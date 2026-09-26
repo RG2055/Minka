@@ -36,7 +36,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     } catch (_e) {}
   }
 
-  var CALENDAR_BUILD = '20260926grp1';
+  var CALENDAR_BUILD = '20260926up1';
 
   function withCalendarBuild(url) {
     try {
@@ -919,7 +919,8 @@ html.mk-low-spec #calendarEmbed {
   }
   </script>
 
-  <script>
+  <script src="js/app-update.js?v=20260926up1"></script>
+<script>
   if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
     const MINKA_APP_VERSION = '2026.09.15-mobile-v2';
     const MINKA_VERSION_KEY = 'minka_mobile_app_version';
@@ -946,21 +947,16 @@ html.mk-low-spec #calendarEmbed {
             }
           } catch (_e) {}
 
-          if (r.waiting) r.waiting.postMessage({ type: 'SKIP_WAITING' });
-          r.addEventListener('updatefound', () => {
-            const next = r.installing;
-            if (!next) return;
-            next.addEventListener('statechange', () => {
-              if (next.state === 'installed' && navigator.serviceWorker.controller) next.postMessage({ type: 'SKIP_WAITING' });
-            });
-          });
+          // A new version waits and is applied at a safe moment (js/app-update.js).
+          if (window.__mkUpdates) window.__mkUpdates.watch(r);
+          else if (r.waiting) r.waiting.postMessage({ type: 'SKIP_WAITING' });
 
           navigator.serviceWorker.addEventListener('controllerchange', () => {
             try {
               if (sessionStorage.getItem(MINKA_RELOAD_KEY) === MINKA_APP_VERSION) return;
               sessionStorage.setItem(MINKA_RELOAD_KEY, MINKA_APP_VERSION);
             } catch (_e) {}
-            location.reload();
+            if (window.__mkUpdates) window.__mkUpdates.reloadWhenSafe(); else location.reload();
           });
         })
         .catch(function(e) { console.log('SW error:', e); });

@@ -73,7 +73,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20260926grp1';
+  var CALENDAR_BUILD = '20260926up1';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -3841,6 +3841,7 @@ window.addEventListener('message', function(e) {
 })();
 </script>
 
+<script src="js/app-update.js?v=20260926up1"></script>
 <script>
 if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
   const MINKA_APP_VERSION = '2026.09.14-winamp-lcd';
@@ -3858,7 +3859,7 @@ if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
       if (sessionStorage.getItem(MINKA_SW_VERSION_KEY) === version) return;
       sessionStorage.setItem(MINKA_SW_VERSION_KEY, version);
     } catch (e) { return; }
-    location.reload();
+    if (window.__mkUpdates) window.__mkUpdates.reloadWhenSafe(); else location.reload();
   };
   navigator.serviceWorker.addEventListener('message', event => {
     const data = (event && event.data) || {};
@@ -3886,23 +3887,16 @@ if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
           }
         } catch (e) {}
 
-        if (r.waiting) r.waiting.postMessage({ type: 'SKIP_WAITING' });
-        r.addEventListener('updatefound', () => {
-          const next = r.installing;
-          if (!next) return;
-          next.addEventListener('statechange', () => {
-            if (next.state === 'installed' && navigator.serviceWorker.controller) {
-              next.postMessage({ type: 'SKIP_WAITING' });
-            }
-          });
-        });
+        // A new version waits and is applied at a safe moment (js/app-update.js).
+        if (window.__mkUpdates) window.__mkUpdates.watch(r);
+        else if (r.waiting) r.waiting.postMessage({ type: 'SKIP_WAITING' });
 
         navigator.serviceWorker.addEventListener('controllerchange', () => {
           try {
             if (sessionStorage.getItem(MINKA_RELOAD_KEY) === MINKA_APP_VERSION) return;
             sessionStorage.setItem(MINKA_RELOAD_KEY, MINKA_APP_VERSION);
           } catch (e) {}
-          location.reload();
+          if (window.__mkUpdates) window.__mkUpdates.reloadWhenSafe(); else location.reload();
         });
 
         console.log('Minka SW ok');
