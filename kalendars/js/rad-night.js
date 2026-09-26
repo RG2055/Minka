@@ -110,15 +110,19 @@
       // small residents' room; on along the corridor RTG Philips, and left of
       // it the room where the radiographer sleeps
       + room(900, 185, 100, 90, '#ff9fc4', 'REZIDENTI', 906, 203)
-      + room(1000, 185, 90, 145, grey, 'DARBA ST.', 1008, 205)
-      + '<rect x="1010" y="214" width="70" height="12" rx="3" class="rn-appliance"/><rect x="1016" y="208" width="18" height="8" rx="1.5" class="rn-screen"/><rect x="1052" y="208" width="18" height="8" rx="1.5" class="rn-screen"/>'
-      + room(1090, 185, 110, 215, grey, 'CT PHILIPS', 1098, 205)
-      + '<circle cx="1145" cy="290" r="36" class="rn-gantry"/><circle cx="1145" cy="290" r="17" class="rn-gantry-hole"/><rect x="1139" y="290" width="12" height="80" rx="4" class="rn-table"/>'
-      + shape('M865 365 H1010 V330 H1090 V425 H865 Z', grey) + '<text x="880" y="400" class="rn-label">GAITENIS</text>'
-      + room(1180, 345, 150, 90, grey, 'RTG PHILIPS', 1212, 368)
-      + '<rect x="1230" y="380" width="70" height="36" rx="5" class="rn-table"/><circle cx="1265" cy="398" r="9" class="rn-gantry"/>'
-      + room(1070, 410, 120, 88, grey, 'RADIOGR.', 1078, 490)
-      + door(1000, 238, 1000, 268) + door(1090, 245, 1090, 285) + door(1030, 330, 1070, 330) + door(1200, 360, 1200, 395) + door(1100, 425, 1150, 425) + door(865, 378, 865, 412)
+      // corridor: up between the residents' room and CT, and along under CT to RTG
+      + shape('M865 365 H1000 V195 H1090 V336 H1210 V423 H865 Z', grey) + '<text x="880" y="400" class="rn-label">GAITENIS</text>'
+      // CT Philips with the radiographers' workstation on its right, behind a glass wall
+      + room(1090, 185, 120, 151, grey, 'CT PHILIPS', 1098, 205)
+      + '<circle cx="1128" cy="265" r="32" class="rn-gantry"/><circle cx="1128" cy="265" r="15" class="rn-gantry-hole"/><rect x="1122" y="265" width="12" height="62" rx="4" class="rn-table"/>'
+      + '<line x1="1165" y1="215" x2="1165" y2="330" class="rn-glass"/>'
+      + '<rect x="1172" y="228" width="30" height="56" rx="3" class="rn-appliance"/><rect x="1176" y="234" width="9" height="16" rx="1.5" class="rn-screen"/><rect x="1176" y="256" width="9" height="16" rx="1.5" class="rn-screen"/>'
+      + '<text x="1187" y="300" class="rn-micro rn-mid">DARBA</text><text x="1187" y="309" class="rn-micro rn-mid">STACIJA</text>'
+      // RTG Philips at the corridor's end, the radiographer's room under the corridor
+      + room(1210, 335, 125, 105, grey, 'RTG PHILIPS', 1220, 358)
+      + '<rect x="1242" y="378" width="66" height="36" rx="5" class="rn-table"/><circle cx="1275" cy="396" r="9" class="rn-gantry"/>'
+      + room(1012, 430, 76, 76, grey, 'RADIOGR.', 1018, 500)
+      + door(1000, 238, 1000, 268) + door(1090, 296, 1090, 328) + door(1210, 372, 1210, 410) + door(1048, 430, 1076, 430) + door(865, 378, 865, 412)
       + '</svg>';
   }
   // A bed's box in the plan's own coordinates → percentages of the map.
@@ -166,7 +170,7 @@
       + sofa('virtuve1', 462, 262, 24, 118)
       + sofa('virtuve2', 486, 380, 114, 30)
       + placed('uznemsana', 'is-up', 930, 210, 32)
-      + '<div class="rn-pbed is-up is-theirs" style="' + at(1112, 430, 30) + '"><img src="assets/rooms/bed-neutral-256.webp" alt="" draggable="false"><span class="rn-pbed-who">radiogr.</span></div>'
+      + '<div class="rn-pbed is-up is-theirs" style="' + at(1038, 440, 24) + '"><img src="assets/rooms/bed-neutral-256.webp" alt="" draggable="false"></div>'
       + '</div>';
     var date = c.date ? c.date.slice(0, 5) : '';
     content.innerHTML = '<div class="rn-wrap">'
