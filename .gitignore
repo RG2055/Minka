@@ -28,3 +28,8 @@ minka-history-scrub/
 
 # Live Apps Script sources (contain colleague names; local backup only)
 google_apps_script/live/
+dist/
+
+# wrangler files
+.wrangler
+.dev.vars*

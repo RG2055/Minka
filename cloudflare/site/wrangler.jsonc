@@ -1,0 +1,21 @@
+{
+  // Static site on Cloudflare (parallel to GitHub Pages). Publishes ONLY
+  // dist/, built by scripts/build-pages.mjs — never the repository root.
+  "name": "rg-minka",
+  "compatibility_date": "2026-09-25",
+  "account_id": "a678c2143bd64a6ef4b783aac9953e94",
+  "main": "src/index.js",
+  "assets": {
+    "directory": "../../dist",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    // Serve index.html, mobile.html, kalendars/index.html as they are named,
+    // like GitHub Pages (no redirect to pretty URLs; the service worker and
+    // the calendar iframe request the .html paths).
+    "html_handling": "none"
+  },
+  // No per-version preview URLs: every published version stays private
+  // except the live one.
+  "preview_urls": false,
+  "observability": { "enabled": true }
+}
