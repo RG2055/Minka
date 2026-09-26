@@ -270,13 +270,14 @@
       '.mcal-grid.is-week .mcal-grp-h{display:block;}',
       '.mcal-rg .mcal-grp-h{color:var(--rg);}',
       '.mcal-rd .mcal-grp-h{color:var(--rd);}',
-      // /rad: residents teal, radiologists coral (as everywhere in /rad), and
-      // the group name shown in the month grid too, so it is plain who is who.
+      // /rad: residents teal, radiologists coral (as everywhere in /rad).
       'html.minka-rad #mcal-overlay{--rg:#4dd0c8;--rd:#ff8f80;--rgx:#b8c2cf;}',
       // /rad Radiogrāferi tab: the radiographers in a quiet grey
       '.mcal-rgx{border-left-color:var(--rgx);}',
       '.mcal-rgx .mcal-grp-h{color:var(--rgx);}',
-      'html.minka-rad .mcal-grp-h{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px;}',
+      // The group name in every day (month and week), so it is plain who is
+      // a radiographer and who a radiologist (/rad: resident / radiologist).
+      '#mcal-overlay .mcal-grp-h{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px;}',
       '.mcal-w{display:flex;align-items:baseline;gap:6px;min-width:0;white-space:nowrap;}',
       '.mcal-name{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--on);}',
       '.mcal-nf{font-weight:500;}',
