@@ -74,38 +74,45 @@
     return '<section class="rn-group"><h3>' + label + '<small>00:00–08:00</small></h3><div class="rn-bar">' + bar + '</div><ol class="rn-rows">' + rows + '</ol></section>';
   }
 
-  // Walls: a thick dark band with a thin lit edge (the look of the
-  // radiographers' rooms), floors with faint planks, labels in small caps.
+  // The plan uses the coordinates of the department's own sketch (viewBox
+  // 120 0 1230 510): the department top left, the main room with the
+  // kitchen in the middle, the new admission unit on the right.
+  var VB = { x: 120, y: 0, w: 1230, h: 510 };
   function planSvg() {
     function room(x, y, w, h, rim, label, lx, ly) {
-      return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="10" class="rn-floor"/>'
-        + '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="10" class="rn-wall"/>'
-        + '<rect x="' + (x + 6) + '" y="' + (y + 6) + '" width="' + (w - 12) + '" height="' + (h - 12) + '" rx="6" class="rn-rim" stroke="' + rim + '"/>'
-        + (label ? '<text x="' + (lx == null ? x + 16 : lx) + '" y="' + (ly == null ? y + 26 : ly) + '" class="rn-label">' + label + '</text>' : '');
+      return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="8" class="rn-floor"/>'
+        + '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="8" class="rn-wall"/>'
+        + '<rect x="' + (x + 5) + '" y="' + (y + 5) + '" width="' + (w - 10) + '" height="' + (h - 10) + '" rx="5" class="rn-rim" stroke="' + rim + '"/>'
+        + (label ? '<text x="' + (lx == null ? x + 12 : lx) + '" y="' + (ly == null ? y + 22 : ly) + '" class="rn-label">' + label + '</text>' : '');
     }
+    function shape(d, rim) { return '<path d="' + d + '" class="rn-floor"/><path d="' + d + '" class="rn-wall"/><path d="' + d + '" class="rn-rim" stroke="' + rim + '" transform="translate(0 0)"/>'; }
     function door(x1, y1, x2, y2) { return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" class="rn-door"/>'; }
-    return '<svg class="rn-plan-svg" viewBox="0 0 1000 560" aria-hidden="true">'
-      + '<defs><pattern id="rnPlanks" width="1000" height="14" patternUnits="userSpaceOnUse"><rect width="1000" height="14" fill="#0e131b"/><line x1="0" y1="13.5" x2="1000" y2="13.5" stroke="#161d28" stroke-width="1"/></pattern></defs>'
-      // department (with the crowned bed)
-      + room(30, 20, 230, 175, '#f5b73f', 'NODAĻA')
-      // main room, kitchen along the top wall, coffee machine and fridge on the right
-      + room(30, 225, 330, 320, '#5ecbff', 'GALVENĀ ISTABA', 46, 530)
-      + '<rect x="70" y="244" width="232" height="30" rx="5" class="rn-counter-svg"/><text x="186" y="264" class="rn-label rn-mid">VIRTUVE</text>'
-      + '<rect x="318" y="246" width="26" height="26" rx="5" class="rn-appliance"/><text x="331" y="264" class="rn-icon">☕</text>'
-      + '<rect x="316" y="292" width="30" height="58" rx="5" class="rn-appliance"/><text x="331" y="326" class="rn-tiny rn-mid">LEDUS.</text>'
-      + door(292, 545, 350, 545)
+    var grey = '#9aa4b2';
+    return '<svg class="rn-plan-svg" viewBox="' + VB.x + ' ' + VB.y + ' ' + VB.w + ' ' + VB.h + '" aria-hidden="true">'
+      + '<defs><pattern id="rnPlanks" width="1400" height="12" patternUnits="userSpaceOnUse"><rect width="1400" height="12" fill="#0e131b"/><line x1="0" y1="11.5" x2="1400" y2="11.5" stroke="#161d28" stroke-width="1"/></pattern></defs>'
+      // department: the crowned bed (a resident's or a doctor's)
+      + room(140, 8, 190, 125, '#f5b73f', 'NODAĻA')
+      // main room: kitchen along the top, coffee machine and fridge on the right wall, door low on the right
+      + room(440, 165, 215, 265, '#5ecbff', 'GALVENĀ ISTABA', 452, 420)
+      + '<rect x="462" y="174" width="150" height="26" rx="4" class="rn-counter-svg"/><text x="537" y="192" class="rn-label rn-mid">VIRTUVE</text>'
+      + '<rect x="618" y="176" width="26" height="24" rx="4" class="rn-appliance"/><text x="631" y="194" class="rn-icon">☕</text>'
+      + '<rect x="618" y="214" width="28" height="54" rx="4" class="rn-appliance"/><text x="632" y="245" class="rn-tiny rn-mid">LEDUS.</text>'
+      + door(655, 290, 655, 372)
       // new admission unit
-      + room(420, 20, 150, 170, '#ff9fc4', 'REZ./RADIOL.', 434, 44)
-      + room(580, 20, 95, 260, '#9aa4b2', 'CT D.STAC.', 590, 44)
-      + room(685, 20, 205, 290, '#9aa4b2', 'CT PHILIPS', 700, 44)
-      + '<circle cx="788" cy="170" r="62" class="rn-gantry"/><circle cx="788" cy="170" r="30" class="rn-gantry-hole"/><rect x="778" y="170" width="20" height="110" rx="6" class="rn-table"/>'
-      + room(420, 200, 150, 70, '#9aa4b2', 'GAITENIS', 434, 242)
-      + room(580, 290, 95, 130, '#9aa4b2', '', 0, 0)
-      + room(900, 250, 90, 180, '#9aa4b2', 'RTG', 914, 274) + '<text x="914" y="292" class="rn-label">PHILIPS</text>'
-      + room(640, 425, 150, 125, '#9aa4b2', 'JAUNĀ UZŅ.', 654, 448)
-      + door(560, 150, 560, 185) + door(480, 190, 530, 190) + door(610, 280, 650, 280) + door(685, 290, 685, 330) + door(900, 330, 900, 380) + door(680, 425, 730, 425)
+      + room(900, 185, 100, 90, '#ff9fc4', 'REZ./RAD.', 906, 203)
+      + room(1000, 185, 90, 145, grey, 'CT D.ST.', 1008, 205)
+      + '<rect x="1010" y="214" width="70" height="12" rx="3" class="rn-appliance"/>'
+      + room(1090, 185, 110, 215, grey, 'CT PHILIPS', 1098, 205)
+      + '<circle cx="1145" cy="290" r="36" class="rn-gantry"/><circle cx="1145" cy="290" r="17" class="rn-gantry-hole"/><rect x="1139" y="290" width="12" height="80" rx="4" class="rn-table"/>'
+      + shape('M865 365 H1010 V330 H1090 V425 H865 Z', grey) + '<text x="880" y="400" class="rn-label">GAITENIS</text>'
+      + room(1180, 345, 150, 90, grey, 'RTG PHILIPS', 1212, 368)
+      + '<rect x="1230" y="380" width="70" height="36" rx="5" class="rn-table"/><circle cx="1265" cy="398" r="9" class="rn-gantry"/>'
+      + room(1070, 410, 120, 88, grey, 'JAUNĀ UZŅ.', 1078, 490)
+      + door(1000, 238, 1000, 268) + door(1030, 330, 1070, 330) + door(1090, 345, 1090, 390) + door(1200, 360, 1200, 395) + door(1100, 425, 1150, 425) + door(865, 378, 865, 412)
       + '</svg>';
   }
+  // A bed's box in the plan's own coordinates → percentages of the map.
+  function at(x, y, w) { return 'left:' + ((x - VB.x) / VB.w * 100).toFixed(2) + '%;top:' + ((y - VB.y) / VB.h * 100).toFixed(2) + '%;width:' + (w / VB.w * 100).toFixed(2) + '%'; }
 
   function render() {
     var c = current();
@@ -130,14 +137,13 @@
     // the department with the crowned bed, the main room with the kitchen,
     // and the new admission unit with its CT/RTG rooms. Beds sit on top in
     // viewBox percentages, so they stay in place at every size.
-    function at(x, y, w) { return 'left:' + (x / 10) + '%;top:' + (y / 5.6) + '%;width:' + (w / 10) + '%'; }
     function placed(key, pose, x, y, w, crown) { return bed(key, pose, crown).replace('class="rn-pbed ' + pose, 'style="' + at(x, y, w) + '" class="rn-pbed ' + pose); }
     var beds = '<div class="rn-map">' + planSvg()
-      + placed('nodala', 'is-up', 112, 58, 56, true)
-      + placed('virtuve1', 'is-up', 50, 318, 50)
-      + placed('virtuve2', 'is-side', 170, 420, 50)
-      + placed('uznemsana', 'is-up', 462, 60, 50)
-      + '<div class="rn-pbed is-up is-theirs" style="' + at(678, 440, 44) + '"><img src="assets/rooms/bed-neutral-256.webp" alt="" draggable="false"><span class="rn-pbed-who">radiogrāfers</span></div>'
+      + placed('nodala', 'is-up', 214, 30, 42, true)
+      + placed('virtuve1', 'is-up', 452, 232, 40)
+      + placed('virtuve2', 'is-side', 532, 330, 40)
+      + placed('uznemsana', 'is-up', 930, 210, 32)
+      + '<div class="rn-pbed is-up is-theirs" style="' + at(1112, 430, 30) + '"><img src="assets/rooms/bed-neutral-256.webp" alt="" draggable="false"><span class="rn-pbed-who">radiogr.</span></div>'
       + '</div>';
     var date = c.date ? c.date.slice(0, 5) : '';
     content.innerHTML = '<div class="rn-wrap">'

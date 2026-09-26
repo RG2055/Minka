@@ -115,7 +115,7 @@ html.minka-rad .rn-move button:hover:not([disabled]) { background: rgba(var(--rn
 html.minka-rad .rn-move button:active:not([disabled]) { border-radius: 10px; }
 html.minka-rad .rn-move button[disabled] { opacity: .25; cursor: default; }
 /* the floor plan (js/rad-night.js planSvg) with the beds on top */
-html.minka-rad .rn-map { position: relative; width: 100%; aspect-ratio: 1000 / 560; }
+html.minka-rad .rn-map { position: relative; width: 100%; aspect-ratio: 1230 / 510; }
 html.minka-rad .rn-plan-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 html.minka-rad .rn-plan-svg .rn-floor { fill: url(#rnPlanks); }
 html.minka-rad .rn-plan-svg .rn-wall { fill: none; stroke: #1b2330; stroke-width: 12; }
