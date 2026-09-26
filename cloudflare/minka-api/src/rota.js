@@ -190,6 +190,8 @@ function personRow(sheet, r) {
   let hoursNote = "";
   const m = name.match(/^(.*?)\s+(\d{1,2}\s*[-–]\s*\d{1,2})$/);
   if (m) { name = m[1].trim(); hoursNote = m[2].replace(/\s+/g, ""); }
+  // A mark after the name ("*", "VĀ") is a note on the row, not the name.
+  name = name.replace(/\s*\*+$/, "").replace(/\s+V[ĀA]$/i, "").trim();
   const yearText = cell(sheet, r, 1);
   const year = /^[1-6]$/.test(yearText) ? Number(yearText) : null;
   return { name, year, hoursNote };
@@ -407,10 +409,90 @@ export function joinAbsences(list) {
 const withGroup = (a) => ({ ...a, group: codeGroup(a.code) });
 
 /* ── everything for the app ── */
+/* ── one person, one name ──
+   The sheet is typed by hand in several lists, so a resident can be spelt two
+   ways (a long mark or not, a hyphen or not, a swapped or missing letter). Two
+   spellings are the same person when they match without diacritics, hyphens
+   and case; or, for residents, when they differ by at most two letters, share
+   the first name or the surname, and never stand in the same list (two
+   different people both stand in the full year list). The spelling written
+   most often wins. No names live here: it is worked out from the sheet. */
+const RESIDENT_SECTIONS = new Set(["neatliekama_dezuras", "neatliekama_stazieri", "neatliekama_rotacija", "rezidenti_uznemsana", "rezidenti_nodalas", "nodalu_stazieri"]);
+const plainName = (n) => String(n).normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z]+/g, " ").trim();
+function editDistance(a, b) {
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i];
+    for (let j = 1; j <= b.length; j++) row[j] = Math.min(prev[j] + 1, row[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = row;
+  }
+  return prev[b.length];
+}
+export function nameAliases(docMonths) {
+  const info = new Map(); // spelling as written -> { count, lists, resident, admission }
+  docMonths.forEach((m, mi) => (m.people || []).forEach((p) => {
+    const it = info.get(p.name) || { count: 0, lists: new Set(), resident: true, admission: false };
+    it.count++;
+    it.lists.add(mi + ":" + p.section);   // a list is a section of one month (it may span several merges)
+    if (!RESIDENT_SECTIONS.has(p.section)) it.resident = false;
+    if (p.section === "rezidenti_uznemsana") it.admission = true;
+    info.set(p.name, it);
+  }));
+  const names = [...info.keys()];
+  const parent = new Map(names.map((n) => [n, n]));
+  const find = (n) => (parent.get(n) === n ? n : find(parent.get(n)));
+  const shareList = (a, b) => [...info.get(a).lists].some((l) => info.get(b).lists.has(l));
+  for (let i = 0; i < names.length; i++) {
+    for (let j = i + 1; j < names.length; j++) {
+      const a = names[i], b = names[j], pa = plainName(a), pb = plainName(b);
+      let same = pa.replace(/ /g, "") === pb.replace(/ /g, "");
+      if (!same && info.get(a).resident && info.get(b).resident && Math.min(pa.length, pb.length) >= 8 && !shareList(a, b)) {
+        // Same number of words, the first name or the surname shared, and
+        // every word that differs long enough (≥ 4 letters) for a typo to
+        // be told from another name.
+        const ta = pa.split(" "), tb = pb.split(" ");
+        same = ta.length === tb.length
+          && (ta[0] === tb[0] || ta[ta.length - 1] === tb[tb.length - 1])
+          && ta.every((t, k) => t === tb[k] || (t.length >= 4 && tb[k].length >= 4))
+          && editDistance(pa, pb) <= 2;
+      }
+      if (same) parent.set(find(a), find(b));
+    }
+  }
+  const groups = new Map();
+  for (const n of names) (groups.get(find(n)) || groups.set(find(n), []).get(find(n))).push(n);
+  const alias = {};
+  for (const list of groups.values()) {
+    if (list.length < 2) continue;
+    const best = list.slice().sort((a, b) => info.get(b).count - info.get(a).count
+      || Number(info.get(b).admission) - Number(info.get(a).admission) || a.localeCompare(b))[0];
+    // Only real spelling differences are renamed; the app already treats
+    // "ANNA" and "Anna" as one, so case alone changes nothing.
+    for (const n of list) if (n.toUpperCase() !== best.toUpperCase()) alias[n] = best;
+  }
+  return alias;
+}
+function applyAliases(m, alias) {
+  const fix = (e) => { if (alias[e.name]) e.name = alias[e.name]; };
+  (m.people || []).forEach(fix);
+  (m.absences || []).forEach(fix);
+  (m.leads || []).forEach(fix);
+  for (const day of Object.values(m.days)) {
+    for (const [section, list] of Object.entries(day)) {
+      list.forEach(fix);
+      // one person twice in one list after the merge: keep the first entry
+      const seen = new Set();
+      day[section] = list.filter((e) => { const k = e.name.toUpperCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+    }
+  }
+}
+
 export function buildRota(docGrid, techGrid) {
   const docMonths = (docGrid?.sheets || []).filter((s) => s.month && s.year)
     .map(parseDocMonth).filter(Boolean)
     .sort((a, b) => a.year - b.year || a.month - b.month);
+  const alias = nameAliases(docMonths);
+  docMonths.forEach((m) => applyAliases(m, alias));
   for (let i = 1; i < docMonths.length; i++) {
     const p = docMonths[i - 1], c = docMonths[i];
     if ((c.year * 12 + c.month) - (p.year * 12 + p.month) === 1) {

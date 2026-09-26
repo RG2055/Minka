@@ -232,3 +232,31 @@ test('/rad schedule: a year group split off above the labelled admission block b
   const left = out.radiographers['SEPTEMBRIS 2026'].find(d => d.date === '01.09.2026').workers;
   assert.deepEqual(left.map(w => [w.name, w.section]), [['PERSONA E', 'neatliekama_dezuras'], ['PERSONA G', 'rezidenti_uznemsana'], ['PERSONA I', 'rezidenti_uznemsana']]);
 });
+
+test('one person, one name: spelling variants of a resident merge, different people in the same list stay apart', () => {
+  const sheet = docSheet({
+    rows: [
+      { a: 'Atbildīgie ārsti', name: 'PERSONA ALFA *', cells: { 1: '12' } },            // row 3: a mark after the name
+      { name: 'PERSONA BETA', cells: { 2: '12' } },                                     // row 4
+      { a: 'Neatliekamās radioloģijas nodaļas dežūras' },                              // row 5 (heading)
+      { name: 'TESTS KĻAVIŅŠ', cells: { 3: '15' } },                                     // row 6
+      { name: 'PROVE OZOLA', cells: { 4: '15' } },                                     // row 7
+      { a: 'REZIDENTI OBLIGĀTĀS DEŽŪRAS UZŅEMŠANĀ', b: '3', name: 'Tests Kļaviņš', cells: { 5: '12' } }, // row 8
+      { b: '3', name: 'Prove Ozolā', cells: { 6: '12' } },                             // row 9
+      { b: '3', name: 'Ilze Lapa' },                                                   // row 10
+      { b: '4', name: 'Ilga Lepa' },                                                   // row 11: another person
+      { a: 'REZIDENTI OBLIGĀTĀS DEŽŪRAS NODAĻĀS', b: '3', name: 'Tests Kaļviņš', cells: { 7: '8' } }, // row 12: letters swapped
+      { b: '3', name: 'Prove Ozolā' }                                                  // row 13
+    ],
+    merges: [[3, 1, 2, 1], [6, 1, 2, 1], [8, 1, 4, 1], [12, 1, 2, 1]]
+  });
+  const rota = buildRota({ sheets: [sheet] }, { sheets: [] });
+  const m = rota.months[0];
+  const names = (date, section) => (m.days[date][section] || []).map(e => e.name.toUpperCase());
+  assert.deepEqual(names('01.09.2026', 'atbildigie'), ['PERSONA ALFA']);
+  assert.deepEqual(names('03.09.2026', 'neatliekama_dezuras'), ['TESTS KĻAVIŅŠ']);
+  assert.deepEqual(names('04.09.2026', 'neatliekama_dezuras'), ['PROVE OZOLĀ']);
+  assert.deepEqual(names('07.09.2026', 'rezidenti_nodalas'), ['TESTS KĻAVIŅŠ']);
+  const people = new Set(m.people.map(p => p.name));
+  assert.ok(people.has('Ilze Lapa') && people.has('Ilga Lepa'), 'two people in one list are never merged');
+});
