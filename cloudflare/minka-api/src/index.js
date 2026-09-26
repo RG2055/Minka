@@ -544,6 +544,99 @@ async function handleBolusPost(env, ctx, body) {
   return { status: 400, body: { ok: false, error: "invalid_action" } };
 }
 
+/* ── Sign-in ──────────────────────────────────────────────────────────────
+   The team password is exchanged once for a random per-device token (90 days,
+   extended while the device is used); only its hash is stored. A device that
+   still holds the password itself (signed in before this change) keeps
+   working and is quietly given its own token on the next schedule load, so a
+   later password change signs nobody out. Wrong passwords are limited per
+   address. "Sign out every device": DELETE FROM sessions. */
+const SESSION_DAYS = 90;
+const SESSION_EXTEND_BELOW_DAYS = 60;
+const LOGIN_WINDOW_MS = 10 * 60 * 1000;
+const LOGIN_MAX_FAILURES = 10;
+const SESSION_CACHE = new Map();
+
+function randomToken() {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return "s1." + btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+async function sha256Hex(text) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+// Constant-time comparison of two strings (compared as their hashes, so the
+// lengths never leak either).
+async function sameSecret(a, b) {
+  const [x, y] = await Promise.all([sha256Hex(String(a)), sha256Hex(String(b))]);
+  const ex = new TextEncoder().encode(x), ey = new TextEncoder().encode(y);
+  if (crypto.subtle.timingSafeEqual) return crypto.subtle.timingSafeEqual(ex, ey);
+  let diff = 0;
+  for (let i = 0; i < ex.length; i++) diff |= ex[i] ^ ey[i];
+  return diff === 0;
+}
+
+async function createSession(env, kind) {
+  if (!env.DB) return env.APP_PASSWORD;
+  const token = randomToken();
+  const now = Date.now();
+  await env.DB.prepare("INSERT INTO sessions (token_hash, kind, created_at, expires_at) VALUES (?1, ?2, ?3, ?4)")
+    .bind(await sha256Hex(token), kind, now, now + SESSION_DAYS * 86400000).run();
+  return token;
+}
+
+function clientIp(request) {
+  return request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for") || "unknown";
+}
+
+async function loginBlocked(env, ip) {
+  if (!env.DB) return false;
+  const row = await env.DB.prepare("SELECT window_start, count FROM login_failures WHERE ip = ?1").bind(ip).first().catch(() => null);
+  return !!row && Date.now() - Number(row.window_start) < LOGIN_WINDOW_MS && Number(row.count) >= LOGIN_MAX_FAILURES;
+}
+
+async function noteLoginFailure(env, ip) {
+  if (!env.DB) return;
+  const now = Date.now();
+  await env.DB.prepare(`
+    INSERT INTO login_failures (ip, window_start, count) VALUES (?1, ?2, 1)
+    ON CONFLICT(ip) DO UPDATE SET
+      count = CASE WHEN ?2 - login_failures.window_start >= ?3 THEN 1 ELSE login_failures.count + 1 END,
+      window_start = CASE WHEN ?2 - login_failures.window_start >= ?3 THEN ?2 ELSE login_failures.window_start END
+  `).bind(ip, now, LOGIN_WINDOW_MS).run().catch(() => {});
+}
+
+// "session" | "password" (a device from before per-device tokens) | "".
+async function authKind(request, env) {
+  const header = request.headers.get("authorization") || "";
+  if (!header.startsWith("Bearer ")) return "";
+  const token = header.slice(7);
+  if (!token) return "";
+  if (token.startsWith("s1.") && env.DB) {
+    const now = Date.now();
+    const cached = SESSION_CACHE.get(token);
+    if (cached && cached > now) return "session";
+    try {
+      const hash = await sha256Hex(token);
+      const row = await env.DB.prepare("SELECT expires_at FROM sessions WHERE token_hash = ?1").bind(hash).first();
+      if (!row || Number(row.expires_at) <= now) return "";
+      if (Number(row.expires_at) - now < SESSION_EXTEND_BELOW_DAYS * 86400000) {
+        await env.DB.prepare("UPDATE sessions SET expires_at = ?2 WHERE token_hash = ?1").bind(hash, now + SESSION_DAYS * 86400000).run();
+      }
+      if (SESSION_CACHE.size > 200) SESSION_CACHE.clear();
+      SESSION_CACHE.set(token, now + 5 * 60000);
+      return "session";
+    } catch (_e) {
+      return "";
+    }
+  }
+  if (typeof env.APP_PASSWORD === "string" && env.APP_PASSWORD.length > 0 && await sameSecret(token, env.APP_PASSWORD)) return "password";
+  return "";
+}
+
 const worker = {
   async scheduled(_event, env, ctx) {
     ctx.waitUntil(refreshSchedule(env));
@@ -570,11 +663,19 @@ const worker = {
     }
 
     if (url.pathname === "/api/login" && method === "POST") {
+      const ip = clientIp(request);
+      if (await loginBlocked(env, ip)) {
+        return json(request, { ok: false, error: "Too many attempts, try again in a few minutes" }, 429);
+      }
       const body = await readJson(request);
-      if (typeof env.APP_PASSWORD !== 'string' || !env.APP_PASSWORD || !body || body.password !== env.APP_PASSWORD) {
+      const valid = typeof env.APP_PASSWORD === "string" && env.APP_PASSWORD.length > 0
+        && !!body && typeof body.password === "string" && await sameSecret(body.password, env.APP_PASSWORD);
+      if (!valid) {
+        await noteLoginFailure(env, ip);
         return json(request, { ok: false, error: "Wrong password" }, 401);
       }
-      return json(request, { ok: true, token: env.APP_PASSWORD });
+      if (env.DB) await env.DB.prepare("DELETE FROM login_failures WHERE ip = ?1").bind(ip).run().catch(() => {});
+      return json(request, { ok: true, token: await createSession(env, "login") });
     }
 
     if (url.pathname === "/api/pair/claim" && method === "POST") {
@@ -611,10 +712,11 @@ const worker = {
         return json(request, { ok: false, error: "Invalid or expired pairing code" }, 410);
       }
 
-      return json(request, { ok: true, token: env.APP_PASSWORD });
+      return json(request, { ok: true, token: await createSession(env, "pair") });
     }
 
-    if (!isAuthed(request, env)) {
+    const auth = await authKind(request, env);
+    if (!auth) {
       return json(request, { ok: false, error: "Unauthorized" }, 401);
     }
 
@@ -960,8 +1062,12 @@ const worker = {
       // Serve the last good copy of the Apps Script reply (refreshed by the
       // cron and in the background), so a reload no longer waits ~8 s on
       // Google. Any problem with the copy falls through to the live fetch.
+      // A device still signed in with the password itself gets its own token
+      // here (the schedule is loaded once per start and every 2 minutes).
+      const upgrade = auth === "password" && env.DB
+        ? { "x-minka-token": await createSession(env, "upgrade") } : {};
       const cached = await serveScheduleSnapshot(env, ctx, knownCarryovers);
-      if (cached) return json(request, cached.body, 200, { "x-schedule-age": String(cached.age) });
+      if (cached) return json(request, cached.body, 200, { "x-schedule-age": String(cached.age), ...upgrade });
       const upstream = await fetch(env.SOURCE_URL, {
         method: "GET",
         headers: { accept: "application/json" }
@@ -970,7 +1076,7 @@ const worker = {
         return json(request, { ok: false, error: "Upstream schedule fetch failed", status: upstream.status }, 502);
       }
       const data = await upstream.json();
-      return json(request, { ...data, knownCarryovers });
+      return json(request, { ...data, knownCarryovers }, 200, upgrade);
     }
 
     if (url.pathname === "/api/bolus" && method === "GET") {
@@ -1005,10 +1111,6 @@ const worker = {
 
 export default worker;
 
-function isAuthed(request, env) {
-  const auth = request.headers.get("authorization") || "";
-  return typeof env.APP_PASSWORD === "string" && env.APP_PASSWORD.length > 0 && auth === `Bearer ${env.APP_PASSWORD}`;
-}
 
 function cors(request) {
   const origin = request.headers.get("origin") || "*";
@@ -1016,6 +1118,7 @@ function cors(request) {
     "access-control-allow-origin": origin,
     "access-control-allow-methods": "GET,POST,OPTIONS",
     "access-control-allow-headers": "content-type, authorization",
+    "access-control-expose-headers": "x-minka-token",
     // Without this the browser re-sends the OPTIONS preflight before nearly
     // every authorised call, which was half of this worker's traffic.
     "access-control-max-age": "86400",

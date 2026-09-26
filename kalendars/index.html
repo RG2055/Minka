@@ -71,6 +71,16 @@ window.setTimeout(function () {
       cache: options.cache || 'default'
     }));
     if (response.status === 401) clearToken();
+    // A device signed in before per-device tokens holds the password itself;
+    // the server hands it its own token once (on the schedule load). Store it
+    // where the old one was, so staying signed in survives a password change.
+    var upgraded = response.headers.get('x-minka-token');
+    if (upgraded && /^s1\./.test(upgraded) && token && upgraded !== token) {
+      try {
+        if (localStorage.getItem(TOKEN_KEY) === token) localStorage.setItem(TOKEN_KEY, upgraded);
+        if (sessionStorage.getItem(TOKEN_KEY) === token) sessionStorage.setItem(TOKEN_KEY, upgraded);
+      } catch (_e) {}
+    }
     return response;
   }
 
