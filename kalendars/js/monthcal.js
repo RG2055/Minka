@@ -24,7 +24,6 @@
   var _viewMode = 'month';   // 'month' | 'week' | 'abs'
   var _weekIdx = 0;          // which week row (0-based) in week view
   var _viewFrom = null;      // view being left, for the tab switch motion
-  var VIEWS = ['month', 'week', 'abs'];
   var _holiCache = {};
 
   function rgStore(){ return window.__grafiksStore || {}; }
@@ -224,6 +223,8 @@
       '.mcal-segpill{position:absolute;z-index:0;border-radius:16px;background:var(--pri-c);pointer-events:none;}',
       '.mcal-seg button{position:relative;z-index:1;}',
       '.mcal-seg.has-pill button.is-on{background:transparent;}',
+      // Label colours change over the pill's travel, not before it arrives.
+      '.mcal-seg button{transition:border-radius 350ms var(--mk-ease-expressive-fast,ease),background-color 150ms ease,color 280ms var(--mk-ease-effects,ease) !important;}',
       '.mcal-seg button{cursor:pointer;height:32px;padding:0 16px;border:0;border-radius:16px;background:transparent;color:var(--on-var);font-size:14px;font-weight:500;transition:border-radius 350ms var(--mk-ease-expressive-fast,ease),background-color 150ms ease,color 150ms ease;}',
       '.mcal-seg button:hover{color:var(--on);}',
       '.mcal-seg button.is-on{background:var(--pri-c);color:var(--on-pri-c);}',
@@ -727,31 +728,65 @@
       // the other views with the close button in the corner.
       + (_viewMode === 'abs' ? absFilters() : '')
       + '</div>';
-    _overlay.querySelector('.mcal-inner').innerHTML = head + (_viewMode === 'abs' ? buildAbsences(month) : buildGrid(month));
+    // The view tabs stay the same element across renders: a new element would
+    // show the new tab's colours for a frame before the pill arrives.
+    // The header is updated in place: unchanged parts are kept and the view
+    // tabs never leave the page. (A node taken out and put back loses its
+    // previous style, so its colours would snap instead of easing.)
+    var inner = _overlay.querySelector('.mcal-inner');
+    var body = _viewMode === 'abs' ? buildAbsences(month) : buildGrid(month);
+    var oldHead = inner.querySelector(':scope > .mcal-head');
+    var oldSeg = oldHead && oldHead.querySelector(':scope > .mcal-seg');
+    if (!oldHead || !oldSeg){
+      inner.innerHTML = head + body;
+    } else {
+      var tmp = document.createElement('div');
+      tmp.innerHTML = head;
+      var fresh = Array.prototype.slice.call(tmp.firstChild.children);
+      var keep = {};
+      Array.prototype.forEach.call(oldHead.children, function(c){ if (c !== oldSeg) keep[c.outerHTML] = c; });
+      var nodes = fresh.map(function(c){
+        if (c.classList.contains('mcal-seg')) return oldSeg;
+        var same = keep[c.outerHTML];
+        if (same){ delete keep[c.outerHTML]; return same; }
+        return c;
+      });
+      Object.keys(keep).forEach(function(k){ keep[k].remove(); });
+      // Everything is placed around the tabs, which stay where they are.
+      var at = nodes.indexOf(oldSeg);
+      nodes.forEach(function(n, i){
+        if (i < at) oldHead.insertBefore(n, oldSeg);
+        else if (i > at) oldHead.appendChild(n);
+      });
+      Array.prototype.forEach.call(oldSeg.querySelectorAll('button[data-view]'), function(b){
+        var on = b.getAttribute('data-view') === _viewMode;
+        b.classList.toggle('is-on', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+      while (oldHead.nextSibling) oldHead.nextSibling.remove();
+      oldHead.insertAdjacentHTML('afterend', body);
+    }
     if (_viewFrom){ var from = _viewFrom; _viewFrom = null; viewMotion(from); }
     scheduleFit();
   }
 
-  // Tab switch (js/mk-motion.js, same as the card window): the selected pill
-  // slides to the new tab on springs and the new view enters from the side
-  // its tab lies on. No blur; plain switch when motion is off.
+  // Tab switch (js/mk-motion.js, same pill as the card window): only the
+  // selected pill slides to the new tab on springs; the view itself swaps
+  // at once (a fade from nothing reads as a flash). Plain when motion is off.
   function viewMotion(from){
     var MM = window.MinkaMotion;
     var seg = _overlay.querySelector('.mcal-seg');
     if (!MM || !MM.liquid || !seg || from === _viewMode) return;
     var prevBtn = seg.querySelector('[data-view="' + from + '"]'), nextBtn = seg.querySelector('[data-view="' + _viewMode + '"]');
-    var pill = document.createElement('span');
-    pill.className = 'mcal-segpill';
-    pill.setAttribute('aria-hidden', 'true');
-    seg.prepend(pill);
+    var pill = seg.querySelector('.mcal-segpill');
+    if (!pill){
+      pill = document.createElement('span');
+      pill.className = 'mcal-segpill';
+      pill.setAttribute('aria-hidden', 'true');
+      seg.prepend(pill);
+    }
     if (MM.liquid(pill, seg, nextBtn, { from: prevBtn, animate: true })) seg.classList.add('has-pill');
-    else pill.remove();
-    var view = _overlay.querySelector('.mcal-absw') || _overlay.querySelector('.mcal-grid');
-    var dir = Math.sign(VIEWS.indexOf(_viewMode) - VIEWS.indexOf(from));
-    if (view && MM.animate && dir) MM.animate(view, [
-      { opacity: 0, translate: (6 * MM.travel() * dir) + 'px 0' },
-      { opacity: 1, translate: '0 0' }
-    ], 'spring-fast', { standard: true, measure: true });
+    else { pill.remove(); seg.classList.remove('has-pill'); }
   }
 
   // ---- panels -----------------------------------------------------------

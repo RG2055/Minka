@@ -81,6 +81,11 @@ html body #worker-modal#worker-modal .view-toggle .toggle-btn {
   padding-bottom: 0 !important;
 }
 html body #worker-modal#worker-modal .view-toggle .toggle-btn > * { position: relative; z-index: 2; }
+/* Labels change colour over the pill's travel instead of before it arrives. */
+html body #worker-modal#worker-modal .view-toggle .toggle-btn,
+html body #worker-modal#worker-modal .view-toggle .toggle-btn > * {
+  transition: color 280ms var(--mk-ease-effects), background-color 150ms ease !important;
+}
 html body #worker-modal#worker-modal .view-toggle .wm-seg-pill {
   position: absolute;
   z-index: 1;

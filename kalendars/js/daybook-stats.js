@@ -853,7 +853,9 @@
   }
   function bodyMotion(kind, info) {
     var MM = window.MinkaMotion, body = chrome.body;
-    if (!MM || !kind || kind === 'refresh') return null;
+    // Tabs: only the indicator moves; the body swaps at once (a fade from
+    // nothing reads as a flash).
+    if (!MM || !kind || kind === 'refresh' || kind === 'tab') return null;
     var tr = MM.travel();
     if (kind === 'reveal') {
       return MM.animate(body, [{ opacity: 0 }, { opacity: 1 }], 'effects-default');

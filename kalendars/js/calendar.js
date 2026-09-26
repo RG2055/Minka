@@ -7480,9 +7480,8 @@ function setWorkerModalBuddyFlag(open) {
   try { window.parent && window.parent.postMessage({ type: 'mk_worker_modal', open: !!open }, window.location.origin); } catch (_e) {}
 }
 
-/* Tab switch motion (js/mk-motion.js): the selected pill slides to the new
-   tab and the new view enters along the tab axis from the side it lies on.
-   Effects only on the tabs (colour), spatial only on the pill and content. */
+/* Tab switch motion (js/mk-motion.js): only the selected pill slides to the
+   new tab (labels ease their colour meanwhile); the view swaps at once. */
 const WM_TABS = ['fatigue', 'calendar', 'emoji', 'skin'];
 let wmTabIndex = -1;
 function wmTabMotion(prevBtn, nextBtn, viewEl, dir) {
@@ -7500,13 +7499,7 @@ function wmTabMotion(prevBtn, nextBtn, viewEl, dir) {
   // Liquid pill (MinkaMotion.liquid): its edges ride two springs, so it
   // stretches toward the new tab and settles to its width. CSS runs it.
   if (MM && MM.liquid) MM.liquid(pill, bar, nextBtn, { from: prevBtn, animate: !!(prevBtn && prevBtn !== nextBtn) });
-  if (!MM || !prevBtn || prevBtn === nextBtn) return;
-  const tr = MM.travel();
-  // Content swap: a short fade with a few px of travel, no blur.
-  if (viewEl) MM.animate(viewEl, [
-    { opacity: 0, translate: (6 * tr * dir) + 'px 0' },
-    { opacity: 1, translate: '0 0' }
-  ], 'spring-fast', { standard: true, measure: true });
+  // The view itself swaps at once: a fade from nothing reads as a flash.
 }
 
 // The appearance editor holds full card clones and effect pictures: free them
