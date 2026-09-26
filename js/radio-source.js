@@ -67,7 +67,7 @@
     if (musicLoad) return musicLoad;
     musicLoad = new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      script.src = useWebamp() ? 'js/music-webamp.js?v=20260927wa2' : 'js/radio-music.js?v=20260908header2';
+      script.src = useWebamp() ? 'js/music-webamp.js?v=20260927wa4' : 'js/radio-music.js?v=20260908header2';
       script.onload = resolve;
       script.onerror = () => {
         musicLoad = null;

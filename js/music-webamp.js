@@ -7,8 +7,9 @@
    localStorage minkaMusicEngine = "lacitis" (js/radio-source.js). */
 (function () {
   'use strict';
-  var VERSION = '20260927wa2';
+  var VERSION = '20260927wa4';
   var BASE = new URL('integrations/webamp/player/', document.baseURI).href;
+  var DEFAULT_PLAYLIST = 'RDCLAK5uy_nlHCD7Y3YATeFPwGmGRiZv4pKXW57yN8o';
   var pending = null;
   var player = null;
   var host = null;
@@ -161,7 +162,9 @@
         stations: [],
         libraryNodes: ['bookmarks', 'history'],
         libraryTitle: 'LĀCĪTIS',
-        lacitis: { starter: function () { return starterRows(module); } },
+        // The opening playlist (a YouTube Music list); the starter rows only
+        // when it cannot be read.
+        lacitis: { playlistId: DEFAULT_PLAYLIST, starter: function () { return starterRows(module); } },
         proxy: false,
         theme: null,
         lowSpec: 'auto',

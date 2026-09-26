@@ -26,7 +26,7 @@ import { createYouTubeSources } from "./youtube/sources.js";
 import { toYouTubeTracks, isYouTubeUrl, youtubeTracks } from "./youtube/tracks.js";
 import { getYouTubeEngine } from "./youtube/engine.js";
 import { installYouTubeSource } from "./youtube/source.js";
-import { searchMusic } from "./lacitis/search.js";
+import { searchMusic, fetchPlaylist } from "./lacitis/search.js";
 import { resolveStream } from "./lacitis/resolver.js";
 import { createVideoWindow } from "./youtube/videoWindow.js";
 import { historyStore } from "./historyStore.js";
@@ -207,12 +207,23 @@ export async function createRadioPlayer(options) {
     return group === "record" ? "radiorecord" : group === "world" ? "featured" : group;
   };
   const youtubeSources = youtube ? createYouTubeSources(youtube) : null;
+  // Lācītis' opening list: a YouTube (Music) playlist when one is set
+  // ({ playlistId }), else the host's starter rows.
+  let lacitisPlaylist = null;
+  const lacitisStartRows = async () => {
+    if (lacitis?.playlistId) {
+      lacitisPlaylist ??= fetchPlaylist(lacitis.playlistId, lacitis.api ? { api: lacitis.api } : {}).catch(() => null);
+      const list = await lacitisPlaylist;
+      if (list?.rows?.length) return list.rows;
+    }
+    return (await lacitis?.starter?.()) ?? [];
+  };
   const lacitisSource = lacitis
     ? {
       id: "lacitis",
       name: lacitis.name ?? "Lācītis",
       icon: "list",
-      load: async () => (await lacitis.starter?.()) ?? [],
+      load: lacitisStartRows,
       search: (query, opts) => searchMusic(query, { ...opts, ...(lacitis.api ? { api: lacitis.api } : {}) })
     }
     : null;
@@ -544,6 +555,18 @@ export async function createRadioPlayer(options) {
     ? { main: { x: 0, y: 0 }, equalizer: { x: WINDOW_WIDTH, y: 0 }, playlist: { x: WINDOW_WIDTH * 2, y: 0 } }
     : { main: { x: 0, y: 0 }, equalizer: { x: 0, y: WINDOW_HEIGHT }, playlist: { x: 0, y: WINDOW_HEIGHT * 2 } };
   webamp.store.dispatch({ type: "UPDATE_WINDOW_POSITIONS", absolute: true, positions });
+
+  // Lācītis: the opening list goes into an empty playlist, never playing
+  // by itself.
+  if (lacitisSource) {
+    lacitisStartRows()
+      .then((rows) => {
+        if (rows.length > 0 && webamp.store.getState().playlist.trackOrder.length === 0) {
+          webamp.appendTracks(toYouTubeTracks(rows));
+        }
+      })
+      .catch((error) => console.warn("Lācītis playlist:", error));
+  }
 
   // Startup playlist: the default YouTube playlist (WORK). From the cache when
   // there is a copy (no request at all), else fetched; not awaited, so the

@@ -92,3 +92,51 @@ export async function searchMusic(query, { signal, api = LACITIS_API, fallbacks 
   }
   throw new Error("Meklēšana neizdevās. Pamēģini vēlreiz.");
 }
+
+// A YouTube (Music) playlist's songs, as rows: Invidious, then the Lācītis
+// API (it reads YouTube Music lists such as "RDCLAK5uy_…" too). Cached
+// in localStorage for 12 hours so opening WINAMP asks nothing twice.
+const PLAYLIST_TTL = 12 * 3600 * 1000;
+export async function fetchPlaylist(id, { signal, api = LACITIS_API, fallbacks = SEARCH_FALLBACKS } = {}) {
+  const key = `webamp.lacitis.playlist.v1:${id}`;
+  try {
+    const cached = JSON.parse(localStorage.getItem(key) || "null");
+    if (cached && Date.now() - cached.at < PLAYLIST_TTL && Array.isArray(cached.rows) && cached.rows.length) return cached;
+  } catch {}
+  // Invidious first: it names the artists; the Lācītis API answers
+  // YouTube Music lists with "YouTube Music" for every song.
+  const endpoints = [
+    ...fallbacks.slice(0, 2).map((base) => ({ url: `${base}/api/v1/playlists/${encodeURIComponent(id)}`, kind: "invidious" })),
+    { url: `${api}/playlist?id=${encodeURIComponent(id)}&all=true`, kind: "lacitis" }
+  ];
+  for (const endpoint of endpoints) {
+    const timeout = withTimeout(8000, signal);
+    try {
+      const response = await fetch(endpoint.url, { headers: { Accept: "application/json" }, signal: timeout.signal });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      const items = endpoint.kind === "lacitis" ? data?.items : data?.videos;
+      if (!Array.isArray(items) || !items.length) throw new Error("empty");
+      const rows = [];
+      const seen = new Set();
+      for (const item of items) {
+        const vid = endpoint.kind === "lacitis" ? item.id : item.videoId;
+        if (!vid || seen.has(vid)) continue;
+        seen.add(vid);
+        // YouTube Music lists name no artist ("YouTube Music"): title only.
+        const author = /^youtube music$/i.test(item.author || "") ? "" : item.author || "";
+        const lengthSeconds = typeof item.lengthSeconds === "number" ? item.lengthSeconds : parseDuration(item.duration);
+        rows.push(toMusicRow({ id: vid, title: item.title || "Nezināma dziesma", author, lengthSeconds }));
+      }
+      const result = { at: Date.now(), name: data?.name || data?.title || "Playlist", rows };
+      try { localStorage.setItem(key, JSON.stringify(result)); } catch {}
+      return result;
+    } catch (error) {
+      if (signal?.aborted) throw error;
+      console.warn("Lācītis playlist:", endpoint.url, error?.message);
+    } finally {
+      timeout.done();
+    }
+  }
+  return null;
+}

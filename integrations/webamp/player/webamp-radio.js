@@ -19139,25 +19139,80 @@ async function searchMusic(m, { signal: _, api: x = qx, fallbacks: S = Jx } = {}
 	}
 	throw Error("Meklēšana neizdevās. Pamēģini vēlreiz.");
 }
+var Qx = 432e5;
+async function fetchPlaylist(m, { signal: _, api: x = qx, fallbacks: S = Jx } = {}) {
+	let C = `webamp.lacitis.playlist.v1:${m}`;
+	try {
+		let m = JSON.parse(localStorage.getItem(C) || "null");
+		if (m && Date.now() - m.at < Qx && Array.isArray(m.rows) && m.rows.length) return m;
+	} catch {}
+	let D = [...S.slice(0, 2).map((_) => ({
+		url: `${_}/api/v1/playlists/${encodeURIComponent(m)}`,
+		kind: "invidious"
+	})), {
+		url: `${x}/playlist?id=${encodeURIComponent(m)}&all=true`,
+		kind: "lacitis"
+	}];
+	for (let m of D) {
+		let x = withTimeout$1(8e3, _);
+		try {
+			let _ = await fetch(m.url, {
+				headers: { Accept: "application/json" },
+				signal: x.signal
+			});
+			if (!_.ok) throw Error(`HTTP ${_.status}`);
+			let S = await _.json(), D = m.kind === "lacitis" ? S?.items : S?.videos;
+			if (!Array.isArray(D) || !D.length) throw Error("empty");
+			let O = [], F = /* @__PURE__ */ new Set();
+			for (let _ of D) {
+				let x = m.kind === "lacitis" ? _.id : _.videoId;
+				if (!x || F.has(x)) continue;
+				F.add(x);
+				let S = /^youtube music$/i.test(_.author || "") ? "" : _.author || "", C = typeof _.lengthSeconds == "number" ? _.lengthSeconds : parseDuration(_.duration);
+				O.push(toMusicRow({
+					id: x,
+					title: _.title || "Nezināma dziesma",
+					author: S,
+					lengthSeconds: C
+				}));
+			}
+			let I = {
+				at: Date.now(),
+				name: S?.name || S?.title || "Playlist",
+				rows: O
+			};
+			try {
+				localStorage.setItem(C, JSON.stringify(I));
+			} catch {}
+			return I;
+		} catch (x) {
+			if (_?.aborted) throw x;
+			console.warn("Lācītis playlist:", m.url, x?.message);
+		} finally {
+			x.done();
+		}
+	}
+	return null;
+}
 //#endregion
 //#region src/lacitis/resolver.js
-var Qx = [
+var $x = [
 	"https://invidious.schenkel.eti.br",
 	"https://yt.omada.cafe",
 	"https://invidious.kemonomimi.nl"
-], $x = "webamp.lacitis.instance.v1", tS = /* @__PURE__ */ new Map(), nS = /* @__PURE__ */ new Map();
+], tS = "webamp.lacitis.instance.v1", nS = /* @__PURE__ */ new Map(), rS = /* @__PURE__ */ new Map();
 function audio() {
 	return document.createElement("audio");
 }
-var rS = null;
+var iS = null;
 function itags() {
-	return rS ||= audio().canPlayType("audio/webm; codecs=\"opus\"") === "" ? [140, 139] : [
+	return iS ||= audio().canPlayType("audio/webm; codecs=\"opus\"") === "" ? [140, 139] : [
 		251,
 		250,
 		249,
 		140,
 		139
-	], rS;
+	], iS;
 }
 function withTimeout(m, _) {
 	let x = new AbortController(), S = setTimeout(() => x.abort(), m), onAbort = () => x.abort();
@@ -19171,12 +19226,12 @@ function withTimeout(m, _) {
 function orderedInstances(m) {
 	let _ = "";
 	try {
-		_ = localStorage.getItem($x) || "";
+		_ = localStorage.getItem(tS) || "";
 	} catch {}
 	let x = Date.now();
 	return [...m].sort((m, S) => {
-		let C = x - (nS.get(m) || 0) < 6e5;
-		return C === x - (nS.get(S) || 0) < 6e5 ? (S === _) - (m === _) : C ? 1 : -1;
+		let C = x - (rS.get(m) || 0) < 6e5;
+		return C === x - (rS.get(S) || 0) < 6e5 ? (S === _) - (m === _) : C ? 1 : -1;
 	});
 }
 async function probe(m, _) {
@@ -19198,10 +19253,10 @@ function expiresOf(m) {
 	let _ = Number(new URL(m).searchParams.get("expire"));
 	return Number.isFinite(_) && _ > 0 ? _ * 1e3 - 6e4 : Date.now() + 18e5;
 }
-async function resolveStream(m, { signal: _, instances: x = Qx } = {}) {
-	let S = tS.get(m);
+async function resolveStream(m, { signal: _, instances: x = $x } = {}) {
+	let S = nS.get(m);
 	if (S && S.expires > Date.now()) return S;
-	tS.delete(m);
+	nS.delete(m);
 	for (let S of orderedInstances(x)) {
 		if (_?.aborted) return null;
 		let x = withTimeout(6e3, _);
@@ -19223,18 +19278,18 @@ async function resolveStream(m, { signal: _, instances: x = Qx } = {}) {
 						duration: Number(D.lengthSeconds) || 0,
 						expires: expiresOf(x.url)
 					};
-					tS.set(m, _), tS.size > 40 && tS.delete(tS.keys().next().value);
+					nS.set(m, _), nS.size > 40 && nS.delete(nS.keys().next().value);
 					try {
-						localStorage.setItem($x, S);
+						localStorage.setItem(tS, S);
 					} catch {}
-					return nS.delete(S), _;
+					return rS.delete(S), _;
 				}
 				if (L.size >= 2) break;
 			}
 			throw Error("no playable audio");
 		} catch (m) {
 			if (_?.aborted) return null;
-			nS.set(S, Date.now()), console.warn("Lācītis stream:", S, m?.message);
+			rS.set(S, Date.now()), console.warn("Lācītis stream:", S, m?.message);
 		} finally {
 			x.done();
 		}
@@ -19243,30 +19298,30 @@ async function resolveStream(m, { signal: _, instances: x = Qx } = {}) {
 }
 //#endregion
 //#region src/youtube/videoWindow.js
-var iS = "webamp.video.window.v2", aS = {
+var aS = "webamp.video.window.v2", oS = {
 	width: 213,
 	height: 234
-}, oS = /* @__PURE__ */ _((m, _, x) => {
+}, sS = /* @__PURE__ */ _((m, _, x) => {
 	let S = document.createElement(m);
 	return _ && (S.className = _), x != null && (S.textContent = x), S;
 }, "el");
 function createVideoWindow({ overlayHost: m = null, getDefaultPosition: _, onClose: x } = {}) {
-	let S = oS("div", "video-overlay");
+	let S = sS("div", "video-overlay");
 	S.hidden = !0;
-	let C = oS("div", "gen-window window video-window"), D = oS("div", "gen-top draggable"), O = oS("div", "gen-top-right draggable"), F = oS("div", "gen-close winamp-active");
+	let C = sS("div", "gen-window window video-window"), D = sS("div", "gen-top draggable"), O = sS("div", "gen-top-right draggable"), F = sS("div", "gen-close winamp-active");
 	F.setAttribute("role", "button"), F.setAttribute("aria-label", "Close video window"), F.tabIndex = 0, O.append(F);
-	let I = oS("div", "gen-top-title draggable");
-	for (let m of "VIDEO") I.append(oS("div", `draggable gen-text-letter gen-text-${m.toLowerCase()}`));
-	D.append(oS("div", "gen-top-left draggable"), oS("div", "gen-top-left-fill draggable"), oS("div", "gen-top-left-end draggable"), I, oS("div", "gen-top-right-end draggable"), oS("div", "gen-top-right-fill draggable"), O);
-	let L = oS("div", "gen-middle"), H = oS("div", "gen-middle-left draggable");
-	H.append(oS("div", "gen-middle-left-bottom draggable"));
-	let U = oS("div", "gen-middle-center"), W = oS("div", "gen-middle-right draggable");
-	W.append(oS("div", "gen-middle-right-bottom draggable")), L.append(H, U, W);
-	let q = oS("div", "gen-bottom");
-	q.append(oS("div", "gen-bottom-left draggable"), oS("div", "gen-bottom-fill draggable"), oS("div", "gen-bottom-right draggable"));
-	let ee = oS("div", "video-body"), te = oS("img", "video-thumb");
+	let I = sS("div", "gen-top-title draggable");
+	for (let m of "VIDEO") I.append(sS("div", `draggable gen-text-letter gen-text-${m.toLowerCase()}`));
+	D.append(sS("div", "gen-top-left draggable"), sS("div", "gen-top-left-fill draggable"), sS("div", "gen-top-left-end draggable"), I, sS("div", "gen-top-right-end draggable"), sS("div", "gen-top-right-fill draggable"), O);
+	let L = sS("div", "gen-middle"), H = sS("div", "gen-middle-left draggable");
+	H.append(sS("div", "gen-middle-left-bottom draggable"));
+	let U = sS("div", "gen-middle-center"), W = sS("div", "gen-middle-right draggable");
+	W.append(sS("div", "gen-middle-right-bottom draggable")), L.append(H, U, W);
+	let q = sS("div", "gen-bottom");
+	q.append(sS("div", "gen-bottom-left draggable"), sS("div", "gen-bottom-fill draggable"), sS("div", "gen-bottom-right draggable"));
+	let ee = sS("div", "video-body"), te = sS("img", "video-thumb");
 	te.alt = "", te.decoding = "async", te.loading = "lazy", te.referrerPolicy = "no-referrer", te.hidden = !0;
-	let J = oS("div", "video-player");
+	let J = sS("div", "video-player");
 	J.style.minWidth = "200px", J.style.minHeight = "200px", J.hidden = !0, ee.append(te, J), U.append(ee), C.append(D, L, q), S.append(C);
 	let ne = "idle";
 	function mount() {
@@ -19274,16 +19329,16 @@ function createVideoWindow({ overlayHost: m = null, getDefaultPosition: _, onClo
 		_ && S.parentElement !== _ ? _.append(S) : !_ && !S.parentElement && document.body.append(S);
 	}
 	function setSize(m, _) {
-		C.style.setProperty("width", `${Math.max(aS.width, Math.round(m || 0))}px`, "important"), C.style.setProperty("height", `${Math.max(aS.height, Math.round(_ || 0))}px`, "important");
+		C.style.setProperty("width", `${Math.max(oS.width, Math.round(m || 0))}px`, "important"), C.style.setProperty("height", `${Math.max(oS.height, Math.round(_ || 0))}px`, "important");
 	}
-	setSize(aS.width, aS.height);
+	setSize(oS.width, oS.height);
 	function placeWindow(m, _) {
 		let x = Math.max(0, S.clientWidth - C.offsetWidth), D = Math.max(0, S.clientHeight - C.offsetHeight);
 		C.style.left = `${Math.round(Math.min(Math.max(0, m), x))}px`, C.style.top = `${Math.round(Math.min(Math.max(0, _), D))}px`, C.classList.add("is-placed");
 	}
 	function readPosition() {
 		try {
-			return JSON.parse(localStorage.getItem(iS) ?? "null") ?? null;
+			return JSON.parse(localStorage.getItem(aS) ?? "null") ?? null;
 		} catch {
 			return null;
 		}
@@ -19297,7 +19352,7 @@ function createVideoWindow({ overlayHost: m = null, getDefaultPosition: _, onClo
 		let x = S.getBoundingClientRect(), D = _?.({
 			width: C.offsetWidth,
 			height: C.offsetHeight,
-			min: aS,
+			min: oS,
 			overlay: x
 		});
 		if (D) {
@@ -19321,7 +19376,7 @@ function createVideoWindow({ overlayHost: m = null, getDefaultPosition: _, onClo
 		if (re) {
 			re = null, C.classList.remove("is-dragging");
 			try {
-				localStorage.setItem(iS, JSON.stringify({
+				localStorage.setItem(aS, JSON.stringify({
 					left: C.offsetLeft,
 					top: C.offsetTop
 				}));
@@ -19344,7 +19399,7 @@ function createVideoWindow({ overlayHost: m = null, getDefaultPosition: _, onClo
 	}
 	function redock() {
 		try {
-			localStorage.removeItem(iS);
+			localStorage.removeItem(aS);
 		} catch {}
 		C.classList.remove("is-placed"), S.hidden || restorePosition();
 	}
@@ -19378,28 +19433,28 @@ function createVideoWindow({ overlayHost: m = null, getDefaultPosition: _, onClo
 }
 //#endregion
 //#region src/historyStore.js
-var sS = "webamp-radio", cS = 1, lS = "webamp.radio.history.v1", fS = 200, mS = 1e3, gS = null, _S = {
+var cS = "webamp-radio", lS = 1, fS = "webamp.radio.history.v1", mS = 200, gS = 1e3, _S = null, jS = {
 	stations: [],
 	songs: []
-}, jS = !1, RS = /* @__PURE__ */ new Set();
+}, RS = !1, zS = /* @__PURE__ */ new Set();
 function emit(m) {
-	for (let _ of RS) try {
+	for (let _ of zS) try {
 		_(m);
 	} catch (m) {
 		console.error(m);
 	}
 }
 function openDb$1() {
-	return gS || (gS = new Promise((m) => {
+	return _S || (_S = new Promise((m) => {
 		if (!("indexedDB" in window)) {
-			jS = !0, m(null);
+			RS = !0, m(null);
 			return;
 		}
 		let _;
 		try {
-			_ = indexedDB.open(sS, cS);
+			_ = indexedDB.open(cS, lS);
 		} catch {
-			jS = !0, m(null);
+			RS = !0, m(null);
 			return;
 		}
 		_.onupgradeneeded = () => {
@@ -19412,11 +19467,11 @@ function openDb$1() {
 			let x = _.result;
 			x.onversionchange = () => x.close(), m(x), importLegacy(x);
 		}, _.onerror = () => {
-			jS = !0, m(null);
+			RS = !0, m(null);
 		}, _.onblocked = () => {
-			jS = !0, m(null);
+			RS = !0, m(null);
 		};
-	}), gS);
+	}), _S);
 }
 _(openDb$1, "openDb");
 function tx(m, _, x, S) {
@@ -19454,7 +19509,7 @@ function trim(m, _, x, S) {
 async function importLegacy(m) {
 	let _ = [];
 	try {
-		_ = JSON.parse(localStorage.getItem(lS) ?? "[]") ?? [];
+		_ = JSON.parse(localStorage.getItem(fS) ?? "[]") ?? [];
 	} catch {
 		_ = [];
 	}
@@ -19464,7 +19519,7 @@ async function importLegacy(m) {
 				...stationRecord(x),
 				playedAt: x.playedAt ?? Date.now()
 			});
-		}), localStorage.removeItem(lS), emit("stations");
+		}), localStorage.removeItem(fS), emit("stations");
 	} catch {}
 }
 function stationRecord(m) {
@@ -19486,16 +19541,16 @@ function stationRecord(m) {
 		playedAt: Date.now()
 	};
 }
-var zS = {
+var eC = {
 	async recordStation(m) {
 		if (!m?.url) return;
 		let _ = stationRecord(m), x = await openDb$1();
-		if (!x || jS) {
-			_S.stations = [_, ..._S.stations.filter((m) => m.url !== _.url)].slice(0, fS), emit("stations");
+		if (!x || RS) {
+			jS.stations = [_, ...jS.stations.filter((m) => m.url !== _.url)].slice(0, mS), emit("stations");
 			return;
 		}
 		try {
-			await tx(x, "stations", "readwrite", (m) => m.put(_)), await trim(x, "stations", "playedAt", fS);
+			await tx(x, "stations", "readwrite", (m) => m.put(_)), await trim(x, "stations", "playedAt", mS);
 		} catch {}
 		emit("stations");
 	},
@@ -19514,27 +19569,27 @@ var zS = {
 		}, [F] = await this.listSongs(1);
 		if (F && F.stationUrl === O.stationUrl && F.streamTitle === O.streamTitle) return;
 		let I = await openDb$1();
-		if (!I || jS) {
-			_S.songs = [O, ..._S.songs].slice(0, mS), emit("songs");
+		if (!I || RS) {
+			jS.songs = [O, ...jS.songs].slice(0, gS), emit("songs");
 			return;
 		}
 		try {
-			await tx(I, "songs", "readwrite", (m) => m.add(O)), await trim(I, "songs", "at", mS);
+			await tx(I, "songs", "readwrite", (m) => m.add(O)), await trim(I, "songs", "at", gS);
 		} catch {}
 		emit("songs");
 	},
-	async listStations(m = fS) {
+	async listStations(m = mS) {
 		let _ = await openDb$1();
-		if (!_ || jS) return _S.stations.slice(0, m);
+		if (!_ || RS) return jS.stations.slice(0, m);
 		try {
 			return await readAllByIndex(_, "stations", "playedAt", m);
 		} catch {
 			return [];
 		}
 	},
-	async listSongs(m = mS) {
+	async listSongs(m = gS) {
 		let _ = await openDb$1();
-		if (!_ || jS) return _S.songs.slice(0, m);
+		if (!_ || RS) return jS.songs.slice(0, m);
 		try {
 			return await readAllByIndex(_, "songs", "at", m);
 		} catch {
@@ -19544,7 +19599,7 @@ var zS = {
 	async clear(m = "all") {
 		let _ = await openDb$1(), x = m === "all" ? ["stations", "songs"] : [m];
 		for (let m of x) {
-			if (!_ || jS) _S[m] = [];
+			if (!_ || RS) jS[m] = [];
 			else try {
 				await tx(_, m, "readwrite", (m) => m.clear());
 			} catch {}
@@ -19552,9 +19607,9 @@ var zS = {
 		}
 	},
 	subscribe(m) {
-		return RS.add(m), () => RS.delete(m);
+		return zS.add(m), () => zS.delete(m);
 	}
-}, eC = [
+}, tC = [
 	{
 		name: "Classical",
 		hz60: 33,
@@ -19835,7 +19890,7 @@ var zS = {
 		hz16000: 33,
 		preamp: 1
 	}
-], tC = "webamp.eq.auto.v1", nC = [
+], nC = "webamp.eq.auto.v1", rC = [
 	60,
 	170,
 	310,
@@ -19846,7 +19901,7 @@ var zS = {
 	12e3,
 	14e3,
 	16e3
-], rC = 50, iC = [
+], iC = 50, aC = [
 	[/classical|opera|symphon|baroque|chamber|choral|orchestr|piano/i, "Classical"],
 	[/techno|trance|hardstyle|hardcore|industrial|hard house|psy/i, "Techno"],
 	[/house|club|edm|dance|disco|eurodance|italo|electro|breakbeat|jungle|drum|dubstep|garage/i, "Dance"],
@@ -19863,13 +19918,13 @@ var zS = {
 ];
 function presetForGenres(m) {
 	let _ = m.filter(Boolean).join(" ");
-	for (let [m, x] of iC) if (m.test(_)) return eC.find((m) => m.name === x) ?? null;
+	for (let [m, x] of aC) if (m.test(_)) return tC.find((m) => m.name === x) ?? null;
 	return null;
 }
 function createEqAuto({ webamp: m, onApplied: _ }) {
 	let x = !1;
 	try {
-		x = localStorage.getItem(tC) === "1";
+		x = localStorage.getItem(nC) === "1";
 	} catch {}
 	function setEnabled(_) {
 		x = _, m.store.dispatch({
@@ -19877,21 +19932,21 @@ function createEqAuto({ webamp: m, onApplied: _ }) {
 			value: _
 		});
 		try {
-			localStorage.setItem(tC, _ ? "1" : "0");
+			localStorage.setItem(nC, _ ? "1" : "0");
 		} catch {}
 		_ && applyForCurrentTrack();
 	}
 	let toStore = (m) => Math.round((m - 1) / 63 * 100);
 	function applyPreset(x) {
-		for (let _ of nC) m.store.dispatch({
+		for (let _ of rC) m.store.dispatch({
 			type: "SET_BAND_VALUE",
 			band: _,
-			value: x ? toStore(x[`hz${_}`]) : rC
+			value: x ? toStore(x[`hz${_}`]) : iC
 		});
 		m.store.dispatch({
 			type: "SET_BAND_VALUE",
 			band: "preamp",
-			value: x ? toStore(x.preamp) : rC
+			value: x ? toStore(x.preamp) : iC
 		}), m.store.getState().equalizer.on || m.store.dispatch({ type: "SET_EQ_ON" }), _?.(x);
 	}
 	function applyForCurrentTrack() {
@@ -19922,11 +19977,11 @@ function createEqAuto({ webamp: m, onApplied: _ }) {
 }
 //#endregion
 //#region src/hls.js
-var isHlsUrl = (m) => /\.m3u8(?:[?#]|$)|\.isml\//i.test(String(m ?? "")), aC = null;
+var isHlsUrl = (m) => /\.m3u8(?:[?#]|$)|\.isml\//i.test(String(m ?? "")), oC = null;
 function loadHls() {
-	return window.Hls ? Promise.resolve(window.Hls) : (aC ||= import("./chunks/hls-Dmf4JSVg.js").then((m) => m.default ?? m.Hls ?? m).catch((m) => {
-		throw aC = null, m;
-	}), aC);
+	return window.Hls ? Promise.resolve(window.Hls) : (oC ||= import("./chunks/hls-Dmf4JSVg.js").then((m) => m.default ?? m.Hls ?? m).catch((m) => {
+		throw oC = null, m;
+	}), oC);
 }
 function installHlsSupport(m, { onMetadata: _ } = {}) {
 	let x = m.media?._source, S = x?._audio;
@@ -19961,7 +20016,7 @@ function installHlsSupport(m, { onMetadata: _ } = {}) {
 }
 //#endregion
 //#region src/stations.js
-var oC = [
+var sC = [
 	"stream_320",
 	"stream_128",
 	"stream_64",
@@ -19970,7 +20025,7 @@ var oC = [
 	"hls"
 ];
 function collectUrls(m) {
-	let _ = [], x = [...oC.map((_) => m?.[_]), ...Array.isArray(m?.urls) ? m.urls : []];
+	let _ = [], x = [...sC.map((_) => m?.[_]), ...Array.isArray(m?.urls) ? m.urls : []];
 	for (let m of x) {
 		let x = String(m ?? "").trim();
 		/^https?:\/\//i.test(x) && !_.includes(x) && _.push(x);
@@ -19983,7 +20038,7 @@ function pickUrl(m) {
 function bitrateFromKeys(m, _) {
 	return Number(m?.bitrate) > 0 ? Number(m.bitrate) : _ && _ === String(m?.stream_320 ?? "").trim() ? 320 : _ && _ === String(m?.stream_128 ?? "").trim() ? 128 : _ && _ === String(m?.stream_64 ?? "").trim() ? 64 : 0;
 }
-var sC = {
+var cC = {
 	radiorecord: {
 		genre: "Radio Record",
 		country: "RU"
@@ -20009,7 +20064,7 @@ function fromMinkaStation(m) {
 	if (!m || m.group === "separator") return null;
 	let _ = pickUrl(m), x = String(m.title ?? "").trim();
 	if (!_ || !x) return null;
-	let S = String(m.group ?? "").toLowerCase(), C = sC[S] ?? {
+	let S = String(m.group ?? "").toLowerCase(), C = cC[S] ?? {
 		genre: S ? S[0].toUpperCase() + S.slice(1) : "",
 		country: ""
 	}, D = [C.genre, ...Array.isArray(m.tags) ? m.tags : String(m.genre ?? "").split(",").map((m) => m.trim())].filter(Boolean), O = String(m.codec ?? "").trim() || (/\.m3u8/i.test(_) ? "HLS" : "");
@@ -20055,11 +20110,11 @@ function normalizeStations(m) {
 }
 //#endregion
 //#region src/resize.js
-var cC = [
+var lC = [
 	"#playlist-resize-target",
 	"#gen-resize-target",
 	"[id$='-resize-target']"
-].join(","), lC = "\n  /* The grips are painted by the skin; make their intent obvious. */\n  #playlist-resize-target,\n  #gen-resize-target {\n    position: relative;\n    z-index: 1;\n  }\n";
+].join(","), uC = "\n  /* The grips are painted by the skin; make their intent obvious. */\n  #playlist-resize-target,\n  #gen-resize-target {\n    position: relative;\n    z-index: 1;\n  }\n";
 function attachGrip(m) {
 	return m.dataset.resizeReady !== "1" && (m.dataset.resizeReady = "1", m.addEventListener("pointerdown", (m) => {
 		m.stopPropagation();
@@ -20072,7 +20127,7 @@ function attachGrip(m) {
 }
 function scan() {
 	let m = 0;
-	for (let _ of document.querySelectorAll(cC)) attachGrip(_) && (m += 1);
+	for (let _ of document.querySelectorAll(lC)) attachGrip(_) && (m += 1);
 	return m;
 }
 function initResize(m = document.body) {
@@ -20086,21 +20141,21 @@ function initResize(m = document.body) {
 		subtree: !0
 	}), scan();
 	let x = document.createElement("style");
-	return x.textContent = lC, document.head.append(x), { scan };
+	return x.textContent = uC, document.head.append(x), { scan };
 }
 //#endregion
 //#region src/skins.js
-var uC = "https://skins.webamp.org/graphql", dC = "https://r2.webampskins.org", fC = "\n  query Browse($first: Int!, $offset: Int!, $sort: SkinsSortOption) {\n    skins(first: $first, offset: $offset, sort: $sort) {\n      count\n      nodes { md5 filename download_url screenshot_url webamp_url nsfw }\n    }\n  }\n", pC = "\n  query Search($query: String!, $first: Int!, $offset: Int!) {\n    search_classic_skins(query: $query, first: $first, offset: $offset) {\n      md5 filename download_url screenshot_url webamp_url nsfw\n    }\n  }\n";
+var dC = "https://skins.webamp.org/graphql", fC = "https://r2.webampskins.org", pC = "\n  query Browse($first: Int!, $offset: Int!, $sort: SkinsSortOption) {\n    skins(first: $first, offset: $offset, sort: $sort) {\n      count\n      nodes { md5 filename download_url screenshot_url webamp_url nsfw }\n    }\n  }\n", mC = "\n  query Search($query: String!, $first: Int!, $offset: Int!) {\n    search_classic_skins(query: $query, first: $first, offset: $offset) {\n      md5 filename download_url screenshot_url webamp_url nsfw\n    }\n  }\n";
 function downloadUrl(m) {
-	return m.download_url || `${dC}/skins/${m.md5}.wsz`;
+	return m.download_url || `${fC}/skins/${m.md5}.wsz`;
 }
 function screenshotUrl(m) {
-	return m.screenshot_url || `${dC}/screenshots/${m.md5}.png`;
+	return m.screenshot_url || `${fC}/screenshots/${m.md5}.png`;
 }
 function skinName(m) {
 	return (m.filename || m.md5).replace(/\.(wsz|zip)$/i, "").replace(/[[\]()]/g, " ").replace(/\s+/g, " ").trim() || m.md5;
 }
-var mC = [{
+var hC = [{
 	id: "MUSEUM",
 	label: "Curated"
 }, {
@@ -20108,7 +20163,7 @@ var mC = [{
 	label: "Most shared"
 }];
 async function request(m, _) {
-	let x = await fetch(uC, {
+	let x = await fetch(dC, {
 		method: "POST",
 		headers: { "content-type": "application/json" },
 		body: JSON.stringify({
@@ -20122,7 +20177,7 @@ async function request(m, _) {
 	return S.data;
 }
 async function fetchSkins({ offset: m = 0, first: _ = 24, sort: x = "MUSEUM" } = {}) {
-	let S = (await request(fC, {
+	let S = (await request(pC, {
 		first: _,
 		offset: m,
 		sort: x === "MUSEUM" ? null : x
@@ -20135,7 +20190,7 @@ async function fetchSkins({ offset: m = 0, first: _ = 24, sort: x = "MUSEUM" } =
 async function searchSkins({ query: m, offset: _ = 0, first: x = 24 }) {
 	return {
 		total: null,
-		items: ((await request(pC, {
+		items: ((await request(mC, {
 			query: m,
 			first: x,
 			offset: _
@@ -20186,7 +20241,7 @@ function createSkinBrowser({ onApply: m, overlayHost: _ = null }) {
 	te.type = "search", te.placeholder = "Search skins...", te.setAttribute("aria-label", "Search skins");
 	let J = el("select", "skins-select");
 	J.setAttribute("aria-label", "Sort skins");
-	for (let m of mC) J.append(new Option(m.label, m.id));
+	for (let m of hC) J.append(new Option(m.label, m.id));
 	let ne = el("span", "skins-status", "Loading...");
 	ee.append(te, J, ne);
 	let re = el("div", "skins-grid"), Q = el("div", "skins-footer"), ie = el("button", "skins-button", "Prev"), ae = el("span", "skins-page"), oe = el("button", "skins-button", "Next");
@@ -20286,10 +20341,10 @@ function createSkinBrowser({ onApply: m, overlayHost: _ = null }) {
 }
 //#endregion
 //#region src/contextMenu.js
-var hC = /* @__PURE__ */ new Set(), gC = null, _C = null, vC = null;
+var gC = /* @__PURE__ */ new Set(), _C = null, vC = null, yC = null;
 function notify() {
 	let m = document.querySelector("#webamp-context-menu ul.context-menu");
-	if (m) for (let _ of hC) try {
+	if (m) for (let _ of gC) try {
 		_(m);
 	} catch (m) {
 		console.error(m);
@@ -20297,29 +20352,29 @@ function notify() {
 }
 function attachRoot() {
 	let m = document.getElementById("webamp-context-menu");
-	m !== vC && (gC?.disconnect(), vC = m, m && (gC = new MutationObserver(notify), gC.observe(m, {
+	m !== yC && (_C?.disconnect(), yC = m, m && (_C = new MutationObserver(notify), _C.observe(m, {
 		childList: !0,
 		subtree: !0
 	}), notify()));
 }
 function onContextMenu(m) {
-	return hC.add(m), _C || (_C = new MutationObserver(attachRoot), _C.observe(document.body, { childList: !0 }), attachRoot()), () => {
-		hC.delete(m), hC.size === 0 && (_C?.disconnect(), gC?.disconnect(), _C = null, gC = null, vC = null);
+	return gC.add(m), vC || (vC = new MutationObserver(attachRoot), vC.observe(document.body, { childList: !0 }), attachRoot()), () => {
+		gC.delete(m), gC.size === 0 && (vC?.disconnect(), _C?.disconnect(), vC = null, _C = null, yC = null);
 	};
 }
 //#endregion
 //#region src/skinMenu.js
-var yC = "webamp.skinList", bC = 12;
+var bC = "webamp.skinList", xC = 12;
 function readFavourites() {
 	try {
-		return JSON.parse(localStorage.getItem(yC) || "[]");
+		return JSON.parse(localStorage.getItem(bC) || "[]");
 	} catch {
 		return [];
 	}
 }
 function writeFavourites(m) {
 	try {
-		localStorage.setItem(yC, JSON.stringify(m));
+		localStorage.setItem(bC, JSON.stringify(m));
 	} catch {}
 }
 function findSkinsSubmenu() {
@@ -20346,7 +20401,7 @@ function installSkinMenu({ webamp: m, restore: _ = !0, onSkinChange: x, overlayH
 		S.unshift({
 			url: x,
 			name: _
-		}), writeFavourites(S.slice(0, bC)), dispatchSkins();
+		}), writeFavourites(S.slice(0, xC)), dispatchSkins();
 	};
 	function attachSkinMenuItem() {
 		let m = findSkinsSubmenu(), _ = m?.querySelector("ul");
@@ -20415,11 +20470,11 @@ function installSkinMenu({ webamp: m, restore: _ = !0, onSkinChange: x, overlayH
 		dispose: () => W()
 	};
 }
-var xC = null;
+var SC = null;
 function requireJSZip() {
-	return window.JSZip ? Promise.resolve(window.JSZip) : (xC ||= import("./chunks/jszip.min-Dk1X5e3d.js").then((_) => /* @__PURE__ */ m(_.default, 1)).then((m) => m.default ?? m).catch((m) => {
-		throw xC = null, m;
-	}), xC);
+	return window.JSZip ? Promise.resolve(window.JSZip) : (SC ||= import("./chunks/jszip.min-Dk1X5e3d.js").then((_) => /* @__PURE__ */ m(_.default, 1)).then((m) => m.default ?? m).catch((m) => {
+		throw SC = null, m;
+	}), SC);
 }
 var requireMusicMetadata = () => Promise.reject(/* @__PURE__ */ Error("Tag reading is not bundled in the radio build"));
 function detectLowSpec() {
@@ -20493,35 +20548,42 @@ async function createRadioPlayer(m) {
 	], groupOf = (m) => {
 		let _ = String(m.group ?? "").toLowerCase();
 		return _ === "record" ? "radiorecord" : _ === "world" ? "featured" : _;
-	}, Ee = fe ? createYouTubeSources(fe) : null, De = me ? {
+	}, Ee = fe ? createYouTubeSources(fe) : null, De = null, lacitisStartRows = async () => {
+		if (me?.playlistId) {
+			De ??= fetchPlaylist(me.playlistId, me.api ? { api: me.api } : {}).catch(() => null);
+			let m = await De;
+			if (m?.rows?.length) return m.rows;
+		}
+		return await me?.starter?.() ?? [];
+	}, Oe = me ? {
 		id: "lacitis",
 		name: me.name ?? "Lācītis",
 		icon: "list",
-		load: async () => await me.starter?.() ?? [],
+		load: lacitisStartRows,
 		search: (m, _) => searchMusic(m, {
 			..._,
 			...me.api ? { api: me.api } : {}
 		})
-	} : null, Oe = !!(Ee || De), Ae = null, Fe = null, Le = null, Re = null, ze = null;
+	} : null, Ae = !!(Ee || Oe), Fe = null, Le = null, Re = null, ze = null, Ve = null;
 	I !== !1 && await O(I === "auto" ? void 0 : I);
 	function play(m) {
 		let _ = normalizeStations([m])[0] ?? m;
 		return !_ || x(_) ? (he.emit("error", {
 			station: _,
 			reason: H(_ ?? {}) ?? "Not playable"
-		}), !1) : (Ae.setTracksToPlay(toTracks([_])), !0);
+		}), !1) : (Fe.setTracksToPlay(toTracks([_])), !0);
 	}
 	let toTracks = (m) => m[0]?.source === "youtube" ? toYouTubeTracks(m) : U(m);
 	function stationStarted(m) {
-		ze = null, Fe?.noteStation(m), Le?.start(m), Re?.setStation(m), zS.recordStation(m), he.emit("station", m);
+		Ve = null, Le?.noteStation(m), Re?.start(m), ze?.setStation(m), eC.recordStation(m), he.emit("station", m);
 	}
 	async function onNowPlaying(m) {
-		ze = {
+		Ve = {
 			...m,
 			artwork: m.artwork || ""
-		}, he.emit("nowplaying", ze), Ve.refreshNowPlaying();
-		let _ = Ae.store.getState().playlist.currentTrack;
-		if (_ != null && S(Ae.store.getState().tracks[_]?.url)?.url === m.station.url && Ae.store.dispatch({
+		}, he.emit("nowplaying", Ve), Ge.refreshNowPlaying();
+		let _ = Fe.store.getState().playlist.currentTrack;
+		if (_ != null && S(Fe.store.getState().tracks[_]?.url)?.url === m.station.url && Fe.store.dispatch({
 			type: "SET_MEDIA_TAGS",
 			id: _,
 			artist: m.artist,
@@ -20531,24 +20593,24 @@ async function createRadioPlayer(m) {
 			bitrate: m.station.bitrate ? m.station.bitrate * 1e3 : void 0,
 			sampleRate: void 0,
 			numberOfChannels: void 0
-		}), Re?.setNowPlaying({
+		}), ze?.setNowPlaying({
 			artist: m.artist,
 			title: m.title,
 			artwork: m.artwork || ""
-		}), zS.recordSong({
+		}), eC.recordSong({
 			station: m.station,
 			artist: m.artist,
 			title: m.title,
 			streamTitle: m.streamTitle
 		}), ce && !m.artwork) {
 			let _ = await resolveArtwork(m.artist, m.title);
-			if (_ && ze?.streamTitle === m.streamTitle) {
-				ze = {
-					...ze,
+			if (_ && Ve?.streamTitle === m.streamTitle) {
+				Ve = {
+					...Ve,
 					artwork: _
-				}, Re?.setArtwork(_), he.emit("artwork", { ...ze });
-				let x = Ae.store.getState().playlist.currentTrack;
-				x != null && S(Ae.store.getState().tracks[x]?.url)?.url === m.station.url && Ae.store.dispatch({
+				}, ze?.setArtwork(_), he.emit("artwork", { ...Ve });
+				let x = Fe.store.getState().playlist.currentTrack;
+				x != null && S(Fe.store.getState().tracks[x]?.url)?.url === m.station.url && Fe.store.dispatch({
 					type: "SET_MEDIA_TAGS",
 					id: x,
 					artist: m.artist,
@@ -20565,23 +20627,23 @@ async function createRadioPlayer(m) {
 	function enqueue(m) {
 		let _ = normalizeStations([m])[0] ?? m;
 		if (!_ || x(_)) return !1;
-		let S = Ae.store.getState().playlist.trackOrder.length;
-		if (Ae.appendTracks(toTracks([_])), S === 0) {
-			let m = Ae.store.getState().playlist.trackOrder[0];
-			m != null && Ae.store.dispatch({
+		let S = Fe.store.getState().playlist.trackOrder.length;
+		if (Fe.appendTracks(toTracks([_])), S === 0) {
+			let m = Fe.store.getState().playlist.trackOrder[0];
+			m != null && Fe.store.dispatch({
 				type: "PLAY_TRACK",
 				id: m
 			});
 		}
 		return !0;
 	}
-	let Ve = createRadioLibrary({
+	let Ge = createRadioLibrary({
 		title: ne,
 		onPlay: play,
 		onEnqueue: enqueue,
 		favorites: Dx,
-		history: zS,
-		getNowPlaying: () => ze,
+		history: eC,
+		getNowPlaying: () => Ve,
 		getDefaultPosition: re ?? void 0,
 		overlayHost: Q,
 		nodes: ae,
@@ -20589,16 +20651,16 @@ async function createRadioPlayer(m) {
 			...m,
 			getStations: () => ge.filter((_) => groupOf(_) === m.id)
 		})),
-		musicSources: [De, ...Ee?.sources ?? []].filter(Boolean)
+		musicSources: [Oe, ...Ee?.sources ?? []].filter(Boolean)
 	});
-	Ae = new UI({
+	Fe = new UI({
 		enableHotkeys: oe,
 		requireJSZip,
 		requireMusicMetadata,
 		filePickers: [{
 			contextMenuName: "Internet radio (Media Library)...",
 			requiresNetwork: !0,
-			filePicker: async () => (await Ve.show(), [])
+			filePicker: async () => (await Ge.show(), [])
 		}, ...se],
 		availableSkins: te,
 		...J ? { initialSkin: { url: J } } : {},
@@ -20622,38 +20684,38 @@ async function createRadioPlayer(m) {
 				}
 			}
 		} } : {}
-	}), de ? (getComputedStyle(_).position === "static" && (_.style.position = "relative"), await Ae.renderInto(_)) : await Ae.renderWhenReady(_), Le = createRadioMetadata({ onNowPlaying: (m) => void onNowPlaying(m) }), installHlsSupport(Ae, { onMetadata: (m) => Le.pushId3(m) });
-	let Ge = Oe ? getYouTubeEngine() : null, qe = Oe ? createVideoWindow({
+	}), de ? (getComputedStyle(_).position === "static" && (_.style.position = "relative"), await Fe.renderInto(_)) : await Fe.renderWhenReady(_), Re = createRadioMetadata({ onNowPlaying: (m) => void onNowPlaying(m) }), installHlsSupport(Fe, { onMetadata: (m) => Re.pushId3(m) });
+	let qe = Ae ? getYouTubeEngine() : null, Je = Ae ? createVideoWindow({
 		overlayHost: Q,
 		getDefaultPosition: ie ?? void 0,
 		onClose: () => {
-			Je?.isActive() && Ae.getMediaStatus() === "PLAYING" && Ae.pause();
+			Xe?.isActive() && Fe.getMediaStatus() === "PLAYING" && Fe.pause();
 		}
-	}) : null, Je = Oe ? installYouTubeSource(Ae, {
-		engine: Ge,
-		getHost: () => qe.playerHost(),
-		resolveStream: De && me.streams !== !1 ? resolveStream : null,
+	}) : null, Xe = Ae ? installYouTubeSource(Fe, {
+		engine: qe,
+		getHost: () => Je.playerHost(),
+		resolveStream: Oe && me.streams !== !1 ? resolveStream : null,
 		onStreamMode: (m, _) => he.emit("streammode", {
 			on: m,
 			..._
 		}),
 		onActive: (m) => {
-			m && qe.show(), m || (qe.showIdle(), qe.hide());
+			m && Je.show(), m || (Je.showIdle(), Je.hide());
 		}
 	}) : null;
 	initResize(de ? _ : document.body);
-	let Xe = le === "auto" ? detectLowSpec() : !!le, Qe = Xe ? applyLowSpec(Ae, { visualizerFps: ue }) : null;
-	Re = createMediaSessionBridge({
-		webamp: Ae,
+	let Qe = le === "auto" ? detectLowSpec() : !!le, $e = Qe ? applyLowSpec(Fe, { visualizerFps: ue }) : null;
+	ze = createMediaSessionBridge({
+		webamp: Fe,
 		isLive: (m) => m.live !== !1
-	}), Fe = createPlaybackController({
-		webamp: Ae,
+	}), Le = createPlaybackController({
+		webamp: Fe,
 		onEvent: (m) => {
 			switch (m.type) {
 				case "status":
-					Re?.setPlaybackState(m.status), m.status === "PLAYING" ? Le?.start(m.station ?? Fe.getStation()) : Le?.stop();
+					ze?.setPlaybackState(m.status), m.status === "PLAYING" ? Re?.start(m.station ?? Le.getStation()) : Re?.stop();
 					break;
-				case "failed": Le?.stop(), he.emit("error", {
+				case "failed": Re?.stop(), he.emit("error", {
 					station: m.station,
 					reason: C() ? "The stream could not be opened." : "The stream could not be opened (offline, or no CORS headers)."
 				});
@@ -20661,11 +20723,11 @@ async function createRadioPlayer(m) {
 			he.emit("playback", m);
 		}
 	});
-	let $e = createEqAuto({
-		webamp: Ae,
+	let $ = createEqAuto({
+		webamp: Fe,
 		onApplied: (m) => he.emit("eqpreset", m?.name ?? "Flat")
-	}), $ = q ? installSkinMenu({
-		webamp: Ae,
+	}), et = q ? installSkinMenu({
+		webamp: Fe,
 		overlayHost: Q,
 		restore: !J,
 		onSkinChange: (m) => he.emit("skin", {
@@ -20679,14 +20741,14 @@ async function createRadioPlayer(m) {
 		onPickRecentModernSkin: ee ? (m) => ee.pickRecent?.(m) : void 0,
 		onPickBuiltinModernSkin: ee ? (m) => ee.pickBuiltin?.(m) : void 0,
 		getBuiltinModernSkins: ee ? () => ee.getBuiltin?.() ?? [] : void 0
-	}) : null, et = null, tt = null;
+	}) : null, tt = null, lt = null;
 	function keepMusicTags(m) {
 		let _ = m.playlist.currentTrack, x = _ == null ? null : m.tracks[_];
 		if (!x || !isYouTubeUrl(x.url) || x.albumArtUrl) return;
 		let C = Nx.get(x.url);
 		if (!C?.id) return;
 		let D = S(x.url);
-		Ae.store.dispatch({
+		Fe.store.dispatch({
 			type: "SET_MEDIA_TAGS",
 			id: _,
 			artist: D?.artist || x.artist || "",
@@ -20698,17 +20760,17 @@ async function createRadioPlayer(m) {
 			numberOfChannels: void 0
 		});
 	}
-	let lt = Ae.store.subscribe(() => {
-		let m = Ae.store.getState();
-		if (keepMusicTags(m), m.media.status !== et && (et = m.media.status, he.emit("status", et)), m.playlist.currentTrack !== tt) {
-			tt = m.playlist.currentTrack;
-			let _ = tt == null ? null : m.tracks[tt], x = _ ? S(_.url) : null, C = x && x.source !== "youtube" ? x : null;
-			qe && (_ && isYouTubeUrl(_.url) ? qe.showThumbnail(Nx.get(_.url)?.thumbnail ?? "", { force: m.media.status !== "PLAYING" }) : qe.getMode() !== "player" && qe.hide()), C && Fe.getStation()?.url !== C.url ? stationStarted(C) : C || (Fe.clearStation(), Le.stop(), Re.clear()), he.emit("track", _ ? {
+	let mt = Fe.store.subscribe(() => {
+		let m = Fe.store.getState();
+		if (keepMusicTags(m), m.media.status !== tt && (tt = m.media.status, he.emit("status", tt)), m.playlist.currentTrack !== lt) {
+			lt = m.playlist.currentTrack;
+			let _ = lt == null ? null : m.tracks[lt], x = _ ? S(_.url) : null, C = x && x.source !== "youtube" ? x : null;
+			Je && (_ && isYouTubeUrl(_.url) ? Je.showThumbnail(Nx.get(_.url)?.thumbnail ?? "", { force: m.media.status !== "PLAYING" }) : Je.getMode() !== "player" && Je.hide()), C && Le.getStation()?.url !== C.url ? stationStarted(C) : C || (Le.clearStation(), Re.stop(), ze.clear()), he.emit("track", _ ? {
 				track: _,
 				station: C
 			} : null);
 		}
-	}), mt = F === "row" ? {
+	}), xt = F === "row" ? {
 		main: {
 			x: 0,
 			y: 0
@@ -20735,59 +20797,61 @@ async function createRadioPlayer(m) {
 			y: 232
 		}
 	};
-	return Ae.store.dispatch({
+	return Fe.store.dispatch({
 		type: "UPDATE_WINDOW_POSITIONS",
 		absolute: !0,
-		positions: mt
-	}), Ee && Ee.loadDefault().then((m) => {
-		m.length > 0 && Ae.store.getState().playlist.trackOrder.length === 0 && Ae.appendTracks(toYouTubeTracks(m));
+		positions: xt
+	}), Oe && lacitisStartRows().then((m) => {
+		m.length > 0 && Fe.store.getState().playlist.trackOrder.length === 0 && Fe.appendTracks(toYouTubeTracks(m));
+	}).catch((m) => console.warn("Lācītis playlist:", m)), Ee && Ee.loadDefault().then((m) => {
+		m.length > 0 && Fe.store.getState().playlist.trackOrder.length === 0 && Fe.appendTracks(toYouTubeTracks(m));
 	}).catch((m) => console.warn("Startup playlist:", m)), {
-		webamp: Ae,
-		library: Ve,
-		eqAuto: $e,
+		webamp: Fe,
+		library: Ge,
+		eqAuto: $,
 		play,
 		enqueue,
-		pause: () => Ae.pause(),
-		resume: () => Ae.play(),
-		stop: () => Ae.stop(),
-		next: () => Ae.nextTrack(),
-		previous: () => Ae.previousTrack(),
-		setVolume: (m) => Ae.setVolume(m),
-		setSkin: (m, _) => $ ? $.setSkin(m, _) : Ae.setSkinFromUrl(m),
-		openSkinBrowser: () => $?.openSkinBrowser(),
-		skinBrowser: $?.skinBrowser ?? null,
-		openLibrary: (m, _) => m ? Ve.showNode(m, _) : Ve.show(),
-		closeLibrary: () => Ve.hide(),
+		pause: () => Fe.pause(),
+		resume: () => Fe.play(),
+		stop: () => Fe.stop(),
+		next: () => Fe.nextTrack(),
+		previous: () => Fe.previousTrack(),
+		setVolume: (m) => Fe.setVolume(m),
+		setSkin: (m, _) => et ? et.setSkin(m, _) : Fe.setSkinFromUrl(m),
+		openSkinBrowser: () => et?.openSkinBrowser(),
+		skinBrowser: et?.skinBrowser ?? null,
+		openLibrary: (m, _) => m ? Ge.showNode(m, _) : Ge.show(),
+		closeLibrary: () => Ge.hide(),
 		setStations: (m) => {
-			ge = normalizeStations(m), Ve.render();
+			ge = normalizeStations(m), Ge.render();
 		},
 		getStations: () => ge,
-		getAnalyser: () => Ae.media.getAnalyser(),
-		getStatus: () => Ae.getMediaStatus(),
+		getAnalyser: () => Fe.media.getAnalyser(),
+		getStatus: () => Fe.getMediaStatus(),
 		getCurrentStation: () => {
-			let m = Ae.store.getState(), _ = m.playlist.currentTrack == null ? null : m.tracks[m.playlist.currentTrack];
+			let m = Fe.store.getState(), _ = m.playlist.currentTrack == null ? null : m.tracks[m.playlist.currentTrack];
 			return _ ? S(_.url) : null;
 		},
 		hasStreamProxy: C,
-		isLowSpec: () => Xe,
+		isLowSpec: () => Qe,
 		favorites: Dx,
-		history: zS,
+		history: eC,
 		youtube: Ee,
-		lacitis: De,
-		isStreamPlayback: () => !!Je?.isStream?.(),
-		openVideoWindow: () => qe?.show(),
-		closeVideoWindow: () => qe?.hide(),
-		redockVideoWindow: () => qe?.redock(),
-		getNowPlaying: () => ze,
-		reconnect: () => Fe.reconnect(),
-		getPlaybackState: () => Fe.getState(),
+		lacitis: Oe,
+		isStreamPlayback: () => !!Xe?.isStream?.(),
+		openVideoWindow: () => Je?.show(),
+		closeVideoWindow: () => Je?.hide(),
+		redockVideoWindow: () => Je?.redock(),
+		getNowPlaying: () => Ve,
+		reconnect: () => Le.reconnect(),
+		getPlaybackState: () => Le.getState(),
 		streamFormat: D,
 		on: he.on,
 		emit: he.emit,
 		layoutWindows: (m = {
 			x: 0,
 			y: 0
-		}, _ = mt) => Ae.store.dispatch({
+		}, _ = xt) => Fe.store.dispatch({
 			type: "UPDATE_WINDOW_POSITIONS",
 			absolute: !0,
 			positions: Object.fromEntries(Object.entries(_).map(([_, x]) => [_, {
@@ -20796,13 +20860,13 @@ async function createRadioPlayer(m) {
 			}]))
 		}),
 		dispose: () => {
-			lt(), Je?.uninstall(), Ge?.destroy(), qe?.dispose(), Qe?.(), $?.dispose(), Fe.dispose(), Le.dispose(), Re.clear(), Ve.hide(), he.clear(), Ae.dispose();
+			mt(), Xe?.uninstall(), qe?.destroy(), Je?.dispose(), $e?.(), et?.dispose(), Le.dispose(), Re.dispose(), ze.clear(), Ge.hide(), he.clear(), Fe.dispose();
 		}
 	};
 }
 //#endregion
 //#region src/skinSurface.js
-var SC = "webamp-radio-skins", CC = "modernSkin", wC = 8, TC = "webamp.skin.mode.v1";
+var CC = "webamp-radio-skins", wC = "modernSkin", TC = 8, EC = "webamp.skin.mode.v1";
 async function inspectSkinArchive(m) {
 	let _ = await requireJSZip(), x;
 	try {
@@ -20846,10 +20910,10 @@ async function repackFolder(m, _) {
 }
 function openDb() {
 	return new Promise((m, _) => {
-		let x = indexedDB.open(SC, 1);
+		let x = indexedDB.open(CC, 1);
 		x.onupgradeneeded = () => {
 			let m = x.result;
-			m.objectStoreNames.contains(CC) || m.createObjectStore(CC);
+			m.objectStoreNames.contains(wC) || m.createObjectStore(wC);
 		}, x.onsuccess = () => m(x.result), x.onerror = () => _(x.error), x.onblocked = () => _(/* @__PURE__ */ Error("skin store blocked"));
 	});
 }
@@ -20866,13 +20930,13 @@ async function storeModernSkin(m, _ = "") {
 			at: Date.now()
 		};
 		await new Promise((m, _) => {
-			let D = x.transaction(CC, "readwrite"), O = D.objectStore(CC);
+			let D = x.transaction(wC, "readwrite"), O = D.objectStore(wC);
 			O.put(C, "current"), O.put(C, `recent:${S}`), D.oncomplete = m, D.onerror = () => _(D.error);
 		});
 		let D = await readRecentModernSkins();
-		D.length > wC && await new Promise((m) => {
-			let _ = x.transaction(CC, "readwrite");
-			for (let m of D.slice(wC)) _.objectStore(CC).delete(`recent:${m.label}`);
+		D.length > TC && await new Promise((m) => {
+			let _ = x.transaction(wC, "readwrite");
+			for (let m of D.slice(TC)) _.objectStore(wC).delete(`recent:${m.label}`);
 			_.oncomplete = m, _.onerror = m;
 		}), x.close();
 	} catch {}
@@ -20880,7 +20944,7 @@ async function storeModernSkin(m, _ = "") {
 async function readRecentModernSkins() {
 	try {
 		let m = await openDb(), _ = await new Promise((_, x) => {
-			let S = [], C = m.transaction(CC, "readonly").objectStore(CC).openCursor();
+			let S = [], C = m.transaction(wC, "readonly").objectStore(wC).openCursor();
 			C.onsuccess = () => {
 				let m = C.result;
 				if (!m) return _(S);
@@ -20895,7 +20959,7 @@ async function readRecentModernSkins() {
 async function readModernSkin() {
 	try {
 		let m = await openDb(), _ = await new Promise((_, x) => {
-			let S = m.transaction(CC, "readonly").objectStore(CC).get("current");
+			let S = m.transaction(wC, "readonly").objectStore(wC).get("current");
 			S.onsuccess = () => _(S.result ?? null), S.onerror = () => x(S.error);
 		});
 		return m.close(), _?.file ? {
@@ -20914,14 +20978,14 @@ function defaultChooseVariant(m) {
 }
 function readMode() {
 	try {
-		return localStorage.getItem(TC) || "classic";
+		return localStorage.getItem(EC) || "classic";
 	} catch {
 		return "classic";
 	}
 }
 function writeMode(m) {
 	try {
-		localStorage.setItem(TC, m);
+		localStorage.setItem(EC, m);
 	} catch {}
 }
 function createSkinSurface({ webamp: m, dock: _, classicStage: x, library: S, openSkinBrowser: C, getBox: D, seedTracks: O, defaultModern: F = null, modernAssetsBase: I = void 0, modernPrivateDefaults: L = void 0, switchButton: H = !0, barHeight: U = { max: "70vh" }, getStationInfo: W = null, emit: q = () => {} }) {
@@ -21226,7 +21290,7 @@ function builtinModernSkins(m = document.baseURI) {
 }
 //#endregion
 //#region src/embed.js
-var EC = 825, DC = 213;
+var DC = 825, OC = 213;
 async function mountWebampRadio(m, _ = {}) {
 	if (!(m instanceof HTMLElement)) throw Error("mountWebampRadio: pass the element the player should fill");
 	let { scale: x = "auto", maxScale: S = 2, lockWindows: C = !0, align: D = "center", overlayZIndex: O = 1e4, libraryNodes: F = [
@@ -21237,7 +21301,7 @@ async function mountWebampRadio(m, _ = {}) {
 	], assetsBase: I = document.baseURI, theme: L = W, forceTheme: H = !1, ...ee } = _, te = new URL(I, document.baseURI).href, J = builtinModernSkins(te);
 	m.classList.add("webamp-dock");
 	let ne = document.createElement("div");
-	ne.className = "webamp-dock-stage", ne.style.width = `${EC}px`, ne.style.height = "116px", m.append(ne);
+	ne.className = "webamp-dock-stage", ne.style.width = `${DC}px`, ne.style.height = "116px", m.append(ne);
 	let re = document.createElement("div");
 	re.id = "webamp", re.className = "webamp-dock-overlays", re.style.zIndex = String(O), document.body.append(re), document.documentElement.style.setProperty("--webamp-overlay-z", String(O + 1));
 	let Q = onContextMenu((m) => {
@@ -21353,12 +21417,12 @@ async function mountWebampRadio(m, _ = {}) {
 	}
 	let ce = !1, le = 1;
 	function fit() {
-		let _ = m.clientWidth || EC, O = m.clientHeight || 116, F = Math.min(_ / EC, O / 116, S), I = x === "auto" ? F >= 1 ? Math.floor(F) : F : x === "fit" ? F : Number(x) || 1;
+		let _ = m.clientWidth || DC, O = m.clientHeight || 116, F = Math.min(_ / DC, O / 116, S), I = x === "auto" ? F >= 1 ? Math.floor(F) : F : x === "fit" ? F : Number(x) || 1;
 		le = Math.max(.5, Math.round(I * 100) / 100), m.style.setProperty("--dock-scale", String(le));
-		let L = EC * le, H = 116 * le;
+		let L = DC * le, H = 116 * le;
 		if (!C) {
 			if (ne.style.left = "0px", ne.style.top = "0px", ne.style.width = `${Math.ceil(window.innerWidth / le)}px`, ne.style.height = `${Math.ceil(window.innerHeight / le)}px`, !se) {
-				let x = (275 + DC + 275) * le, S = m.getBoundingClientRect(), C = D === "left" ? S.left : D === "right" ? S.right - x : S.left + (_ - x) / 2, F = S.bottom - Math.max(0, (O - H) / 2), I = Math.max(0, Math.round(C / le)), L = Math.max(0, Math.round(F / le) - 116);
+				let x = (275 + OC + 275) * le, S = m.getBoundingClientRect(), C = D === "left" ? S.left : D === "right" ? S.right - x : S.left + (_ - x) / 2, F = S.bottom - Math.max(0, (O - H) / 2), I = Math.max(0, Math.round(C / le)), L = Math.max(0, Math.round(F / le) - 116);
 				ce = !0, ae.layoutWindows({
 					x: I,
 					y: L
@@ -21372,7 +21436,7 @@ async function mountWebampRadio(m, _ = {}) {
 						y: 0
 					},
 					playlist: {
-						x: 275 + DC,
+						x: 275 + OC,
 						y: 0
 					}
 				}), ce = !1;
@@ -21389,7 +21453,7 @@ async function mountWebampRadio(m, _ = {}) {
 		classicStage: ne,
 		library: ae.library,
 		getBox: () => ({
-			width: m.clientWidth || EC,
+			width: m.clientWidth || DC,
 			height: m.clientHeight || 116
 		}),
 		defaultModern: J[0],
@@ -21465,7 +21529,7 @@ async function mountWebampRadio(m, _ = {}) {
 }
 //#endregion
 //#region src/minka.js
-var OC = "media-profile-change", kC = "rg-stations-ready";
+var kC = "media-profile-change", AC = "rg-stations-ready";
 function readMinkaStations() {
 	try {
 		if (typeof stationsList < "u" && Array.isArray(stationsList)) return stationsList;
@@ -21491,7 +21555,7 @@ async function mountMinkaRadio(m, _ = {}) {
 		let m = readMinkaStations();
 		m && I.setStations(m);
 	};
-	S && (window.addEventListener(kC, applyStations), L.push(() => window.removeEventListener(kC, applyStations)));
+	S && (window.addEventListener(AC, applyStations), L.push(() => window.removeEventListener(AC, applyStations)));
 	let findByKey = (m) => (I.getStations?.() ?? []).find((_) => stationKey(_) === m) ?? null, profile = () => window.__mkUnifiedMedia ?? null, profileReady = () => !!(profile()?.getSession?.() && profile()?.isLoaded?.()), H = !1, pullFavorites = () => {
 		if (!profileReady()) return;
 		let m = profile().getRadio?.()?.favorites ?? [], _ = I.favorites.list();
@@ -21523,7 +21587,7 @@ async function mountMinkaRadio(m, _ = {}) {
 			id: m
 		});
 	};
-	if (C && (document.addEventListener(OC, pullFavorites), window.addEventListener(kC, pullFavorites), L.push(() => document.removeEventListener(OC, pullFavorites)), L.push(() => window.removeEventListener(kC, pullFavorites)), L.push(I.favorites.subscribe(pushFavorites)), pullFavorites()), D) {
+	if (C && (document.addEventListener(kC, pullFavorites), window.addEventListener(AC, pullFavorites), L.push(() => document.removeEventListener(kC, pullFavorites)), L.push(() => window.removeEventListener(AC, pullFavorites)), L.push(I.favorites.subscribe(pushFavorites)), pullFavorites()), D) {
 		let announce = (m) => {
 			let _ = I.getCurrentStation?.();
 			document.dispatchEvent(new CustomEvent("rg-now-playing-art", { detail: {
