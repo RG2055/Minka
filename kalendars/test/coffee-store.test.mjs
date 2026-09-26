@@ -49,3 +49,24 @@ test('clean stores are left untouched and the key matches the calendar', () => {
   assert.equal(store.key(' ANNA   Bērziņa '), 'anna bērziņa');
   assert.deepEqual({ ...store.counts({ 'ANNA BĒRZIŅA': 1500 }) }, { 'anna bērziņa': 999 });
 });
+
+test('the month line counts every cup of this month, including days ahead, and no other month', () => {
+  const mood = fs.readFileSync(new URL('../js/page/mood-feedback.js', import.meta.url), 'utf8');
+  const start = mood.indexOf('  function monthNumbers()');
+  const code = mood.slice(start, mood.indexOf('  var monthFillAt', start));
+  const stored = {
+    minkaCoffeeCountsV1: {
+      '01.09.2026': { anna: 3 }, '26.09.2026': { anna: 1, 'jānis ozols': 1 },
+      '27.09.2026': { 'jānis ozols': 2 }, '03.10.2026': { anna: 1 }, '31.08.2026': { anna: 5 }
+    }
+  };
+  class Clock extends Date { static now() { return Date.parse('2026-09-26T09:00:00Z'); } }
+  const c = vm.createContext({ Date: Clock, Intl, localStorage: { getItem: k => stored[k] ? JSON.stringify(stored[k]) : null } });
+  c.window = c;
+  vm.runInContext(fs.readFileSync(new URL('../js/daybook-model.js', import.meta.url), 'utf8'), c);
+  vm.runInContext('var monthRadio = { key: "", days: [] };'
+    + 'function readJson(k, f) { try { return JSON.parse(localStorage.getItem(k) || "") || f; } catch (_e) { return f; } }'
+    + code + ';globalThis.result = monthNumbers();', c);
+  assert.equal(c.result.cups, 7);
+  assert.equal(c.result.drinkers, 2);
+});

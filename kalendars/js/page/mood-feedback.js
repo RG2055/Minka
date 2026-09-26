@@ -415,9 +415,10 @@
       .catch(function () { monthRadio.at = Date.now(); monthRadio.key = range.from; })
       .then(function () { monthRadio.busy = false; });
   }
-  // Past days of this month come from the coffee API in one request, replacing
+  // Every day of this month comes from the coffee API in one request, replacing
   // what this device cached earlier (a day cached mid-shift used to stay short
-  // forever). Today stays with the calendar, which polls and posts it live.
+  // forever). Today and the day open in the calendar stay with the calendar,
+  // which polls and posts them live; they are only filled when missing.
   // An older worker without ?month= falls back to the per-day fill below.
   var monthCoffeeTried = {};
   function monthCoffeeFill(range, today) {
@@ -430,8 +431,10 @@
       .then(function (v) {
         if (!v || !v.ok || v.month !== ym || !v.days) return monthCoffeeFillDays(range, today, base);
         var all = readJson('minkaCoffeeCountsV1', {}), det = readJson('minkaCoffeeDetailsV1', {});
-        for (var d = new Date(range.from + 'T12:00:00Z'); d.toISOString().slice(0, 10) < today; d.setUTCDate(d.getUTCDate() + 1)) {
+        var live = [today.slice(8) + '.' + today.slice(5, 7) + '.' + today.slice(0, 4), String(window.__activeDateStr || '')];
+        for (var d = new Date(range.from + 'T12:00:00Z'); d.toISOString().slice(0, 10) <= range.to; d.setUTCDate(d.getUTCDate() + 1)) {
           var iso = d.toISOString().slice(0, 10), key = iso.slice(8) + '.' + iso.slice(5, 7) + '.' + iso.slice(0, 4);
+          if (live.indexOf(key) >= 0 && Object.prototype.hasOwnProperty.call(all, key)) continue;
           var day = v.days[key] || { counts: {}, details: {} };
           all[key] = C.counts(day.counts);
           det[key] = C.details(day.details);
@@ -469,9 +472,12 @@
     if (!M || !M.dutyDay) return null;
     var today = M.dutyDay(), range = M.monthRange(today.slice(0, 7));
     var inMonth = function (day) { return day && day >= range.from && day <= range.to && day <= today; };
+    // Coffee counts every day of the month: a cup logged for tomorrow's shift
+    // is still this month's cup.
     var coffee = readJson('minkaCoffeeCountsV1', {}), cups = 0, people = {};
     Object.keys(coffee).forEach(function (key) {
-      if (!inMonth(M.day(key))) return;
+      var day = M.day(key);
+      if (!day || day < range.from || day > range.to) return;
       Object.keys(coffee[key] || {}).forEach(function (name) {
         var n = Math.max(0, Number(coffee[key][name]) || 0);
         if (n) { cups += n; people[M.norm(name)] = true; }
@@ -1319,7 +1325,9 @@
   function paintMoodCoffee(force) {
     var refs = moodRefs();
     if (!refs) return;
-    paintMonth();
+    // A coffee change (force) recounts the month line too, inside the same
+    // debounced repaint, so a cup shows there without waiting for the memo.
+    paintMonth(force === true);
     var stats = moodStats(force);
     var coffeeTotal = stats.total === null ? 0 : Math.max(0, Number(stats.total) || 0);
     var coffeeFill = coffeeTotal > 0 ? Math.min(28, 8 + Math.log(coffeeTotal + 1) / Math.LN2 * 5.5) : 0;

@@ -557,7 +557,9 @@
     shiftsAll().forEach(function (e) { byKey[M.norm(e.name)] = e.name; });
     Object.keys(counts).forEach(function (key) {
       var day = M.day(key);
-      if (!day || day < b.range.from || day > b.range.to || day > b.today) return;
+      // Every day of the month counts: a cup logged for tomorrow's shift is
+      // still this month's cup (the mood card fills those days from the API).
+      if (!day || day < b.range.from || day > b.range.to) return;
       days++;
       var det = details[key] || {};
       Object.keys(counts[key] || {}).forEach(function (name) {
