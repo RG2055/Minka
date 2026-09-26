@@ -23,6 +23,8 @@
   var _overlay = null, _curMonth = null, _fitRaf = 0;
   var _viewMode = 'month';   // 'month' | 'week' | 'abs'
   var _weekIdx = 0;          // which week row (0-based) in week view
+  var _viewFrom = null;      // view being left, for the tab switch motion
+  var VIEWS = ['month', 'week', 'abs'];
   var _holiCache = {};
 
   function rgStore(){ return window.__grafiksStore || {}; }
@@ -218,7 +220,10 @@
       '.mcal-icbtn:active:not([disabled]){border-radius:12px;}',
       '.mcal-icbtn[disabled]{opacity:.38;cursor:default;}',
       '.mcal-icbtn svg{width:20px;height:20px;}',
-      '.mcal-seg{display:inline-flex;align-items:center;gap:2px;padding:4px;border-radius:24px;background:var(--c1);}',
+      '.mcal-seg{position:relative;display:inline-flex;align-items:center;gap:2px;padding:4px;border-radius:24px;background:var(--c1);}',
+      '.mcal-segpill{position:absolute;z-index:0;border-radius:16px;background:var(--pri-c);pointer-events:none;}',
+      '.mcal-seg button{position:relative;z-index:1;}',
+      '.mcal-seg.has-pill button.is-on{background:transparent;}',
       '.mcal-seg button{cursor:pointer;height:32px;padding:0 16px;border:0;border-radius:16px;background:transparent;color:var(--on-var);font-size:14px;font-weight:500;transition:background-color 150ms ease,color 150ms ease;}',
       '.mcal-seg button:hover{color:var(--on);}',
       '.mcal-seg button.is-on{background:var(--pri-c);color:var(--on-pri-c);}',
@@ -699,7 +704,30 @@
       + (_viewMode === 'abs' ? absFilters() : '')
       + '</div>';
     _overlay.querySelector('.mcal-inner').innerHTML = head + (_viewMode === 'abs' ? buildAbsences(month) : buildGrid(month));
+    if (_viewFrom){ var from = _viewFrom; _viewFrom = null; viewMotion(from); }
     scheduleFit();
+  }
+
+  // Tab switch (js/mk-motion.js, same as the card window): the selected pill
+  // slides to the new tab on springs and the new view enters from the side
+  // its tab lies on. No blur; plain switch when motion is off.
+  function viewMotion(from){
+    var MM = window.MinkaMotion;
+    var seg = _overlay.querySelector('.mcal-seg');
+    if (!MM || !MM.liquid || !seg || from === _viewMode) return;
+    var prevBtn = seg.querySelector('[data-view="' + from + '"]'), nextBtn = seg.querySelector('[data-view="' + _viewMode + '"]');
+    var pill = document.createElement('span');
+    pill.className = 'mcal-segpill';
+    pill.setAttribute('aria-hidden', 'true');
+    seg.prepend(pill);
+    if (MM.liquid(pill, seg, nextBtn, { from: prevBtn, animate: true })) seg.classList.add('has-pill');
+    else pill.remove();
+    var view = _overlay.querySelector('.mcal-absw') || _overlay.querySelector('.mcal-grid');
+    var dir = Math.sign(VIEWS.indexOf(_viewMode) - VIEWS.indexOf(from));
+    if (view && MM.animate && dir) MM.animate(view, [
+      { opacity: 0, translate: (6 * MM.travel() * dir) + 'px 0' },
+      { opacity: 1, translate: '0 0' }
+    ], 'spring-fast', { standard: true, measure: true });
   }
 
   // ---- panels -----------------------------------------------------------
@@ -786,6 +814,7 @@
         var dayMonth = monthParts(_curMonth);
         if (day > 0 && dayMonth.idx != null){
           _weekIdx = weekOfDay(dayMonth, day);
+          _viewFrom = _viewMode;
           _viewMode = 'week';
           render(_curMonth);
         }
@@ -796,6 +825,7 @@
       if (seg){
         var v = seg.getAttribute('data-view');
         if (v && v !== _viewMode){
+          _viewFrom = _viewMode;
           _viewMode = v;
           if (v === 'week'){
             var p = monthParts(_curMonth);
