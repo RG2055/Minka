@@ -797,7 +797,7 @@
   order: 3;
   width: 100%;
   margin-top: clamp(7px, 5cqw, 10px);
-  padding-bottom: clamp(17px, 12cqw, 21px);
+  padding-bottom: 6px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1625,19 +1625,23 @@ html.mk-low-spec .rg-mood-stage.is-idle .rg-mood-glow { animation: none !importa
   .rg-feedback-card .rg-pulse-write { transition: none; }
 }
 
-/* ── Mēnesis zem līknes (mood-feedback.js moodMonthMarkup) ─────────────
+/* ── Mēnesis zem reakcijām (mood-feedback.js moodMonthMarkup) ──────────
+   Secība kartītē: sejiņa, komandas sajūtas līkne, "Novērtē maiņu" ar
+   reakcijām, tad šī rinda (lietotāja lūgums 2026-09-26: vērtēšana tieši
+   zem līknes, skaitļi zem tās).
    Trīs kolonnas: skaitlis, zem tā skaidrs uzraksts, zem tā sīkums (kafijai
    cilvēki, radio dienas, bolusam GE/Philips josla). Bez rāmja; katra kolonna
    ir poga uz savu statistikas cilni. Fiksēts augstums, lai kartīte nelec. */
 .rg-feedback-card .rg-month {
-  order: 1;
+  order: 5;
   position: relative;
   z-index: 3;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 2px;
   height: 56px;
-  margin: 4px 0 2px;
+  /* the space under the reactions used to sit below them; now it is here */
+  margin: 2px 0 clamp(11px, 8cqw, 15px);
 }
 .rg-feedback-card .rg-month-item {
   display: grid;
