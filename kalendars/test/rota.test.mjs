@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-const { parseDocMonth, parseTechAbsences, buildRota, sectionKey, departmentOf, shiftOf } =
+const { parseDocMonth, parseTechAbsences, parseTechLeave, joinAbsences, buildRota, sectionKey, departmentOf, shiftOf } =
   await import(new URL('../../cloudflare/minka-api/src/rota.js', import.meta.url));
 
 // A doc sheet laid out like the radiologist mirror: title row, day header
@@ -144,4 +144,44 @@ test('a colour over the whole row is a highlight, not a department', () => {
   const dept = parseDocMonth(sheet).days['07.09.2026'].rezidenti_nodalas;
   assert.equal(dept.find(e => e.name === 'Persona J').dept, undefined);
   assert.equal(dept.find(e => e.name === 'Persona K').dept, 'Jugla');
+});
+
+test('a code written once runs over the days painted the same colour, also into the next month', () => {
+  const yellow = 2; // palette '#ff9900'
+  const paint = (row, from, to) => Object.fromEntries(Array.from({ length: to - from + 1 }, (_, i) => ['bg:' + row + ':' + (from + i), yellow]));
+  const aug = docSheet({ month: 8, rows: [{ a: 'Atbildīgie ārsti', name: 'PERSONA A', cells: { 28: 'ATV' } }, { name: 'PERSONA B' }, { name: 'PERSONA C' }],
+    merges: [[3, 1, 3, 1]], colors: paint(2, 28, 31) });
+  const sep = docSheet({ month: 9, rows: [{ a: 'Atbildīgie ārsti', name: 'PERSONA A', cells: { 5: '12' } }, { name: 'PERSONA B', cells: { 10: 'DNL' } }, { name: 'PERSONA C' }],
+    merges: [[3, 1, 3, 1]], colors: paint(2, 1, 3) });
+  const rota = buildRota({ sheets: [aug, sep] }, { sheets: [] });
+  assert.deepEqual(rota.absences.map(a => [a.name, a.code, a.from, a.to]), [
+    ['PERSONA A', 'ATV', '28.08.2026', '03.09.2026'],
+    ['PERSONA B', 'DNL', '10.09.2026', '10.09.2026']
+  ]);
+});
+
+test('radiographer leave plan: ranges per month, running over month ends, codes', () => {
+  const head = ['Nr. pk.', 'Vārds Uzvārds', 'Janvāris', 'Februāris', 'Marts', 'Aprīlis', 'Maijs', 'Jūnijs', 'Jūlijs', 'Augusts', 'Septembris', 'Oktobris', 'Novembris', 'Decembris'];
+  const row = (name, cells) => { const r = Array(14).fill(''); r[1] = name; for (const [m, v] of Object.entries(cells)) r[1 + Number(m)] = v; return r; };
+  const sheet = { name: 'ATVAĻINĀJUMI 2026', month: null, year: null, leave: true, values: [
+    ['Atvaļinājumu grafiks'], head,
+    row('PERSONA A', { 3: '9-15', 6: '29-', 7: '5', 12: '30-07.01.' }),
+    row('PERSONA B sanitārs/slimnieku kopējs', { 6: 'PA17-19', 8: '24-', 9: '-6' })
+  ], merges: [] };
+  assert.deepEqual(parseTechLeave(sheet).map(a => [a.name, a.role || '', a.code, a.from, a.to]), [
+    ['PERSONA A', '', 'A', '09.03.2026', '15.03.2026'],
+    ['PERSONA A', '', 'A', '29.06.2026', '05.07.2026'],
+    ['PERSONA A', '', 'A', '30.12.2026', '07.01.2027'],
+    ['PERSONA B', 'sanitārs', 'PA', '17.06.2026', '19.06.2026'],
+    ['PERSONA B', 'sanitārs', 'A', '24.08.2026', '06.09.2026']
+  ]);
+  assert.deepEqual(joinAbsences([
+    { src: 'tech', name: 'X', code: 'A', from: '28.08.2026', to: '31.08.2026' },
+    { src: 'tech', name: 'X', code: 'A', from: '01.09.2026', to: '02.09.2026' }
+  ]).map(a => a.from + '-' + a.to), ['28.08.2026-02.09.2026']);
+});
+
+test('codes keep their spelling and get a group', async () => {
+  const { codeGroup } = await import(new URL('../../cloudflare/minka-api/src/rota.js', import.meta.url));
+  assert.deepEqual(['ATV', 'x', 'Liep', 'DNL', 'MR', 'AD'].map(codeGroup), ['leave', 'unavailable', 'away', 'sick', 'assignment', 'other']);
 });

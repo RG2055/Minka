@@ -2,7 +2,8 @@
 //   doc  – the radiologist mirror of GRAFIKS.xlsx: attending radiologists,
 //          department doctors, emergency radiology (rotation + duties),
 //          residents on admission and department duties, department interns;
-//   tech – the radiographer schedule: absences only (shifts come from the
+//   tech – the radiographer schedule: absences only, plus the yearly leave
+//          plan tab (shifts come from the
 //          existing schedule API).
 // Absences (DNL, ATV, A, X…) are kept as written; the app labels the known
 // codes. Nothing here depends on names; every sheet is read by its layout.
@@ -88,6 +89,22 @@ export function absenceCode(value) {
   if (!/[A-Za-zĀ-ž]/.test(v)) return "";
   return /^dnl$/i.test(v) ? "DNL" : v;
 }
+// How the app groups the codes (the code itself is always kept as written).
+//   leave        – ATV, A (radiographers), PA additional, BA unpaid, BKA child care
+//   sick         – DNL
+//   away         – working or studying elsewhere: ERASMUS, LIEP(āja)
+//   assignment   – MR (radiographer at the MR scanner that day)
+//   unavailable  – X / N: cannot work that day
+//   other        – anything not known yet (AD, AB, ATP, ARV…)
+const CODE_GROUPS = {
+  ATV: "leave", A: "leave", PA: "leave", BA: "leave", BKA: "leave",
+  DNL: "sick",
+  ERASMUS: "away", LIEP: "away",
+  MR: "assignment",
+  X: "unavailable", N: "unavailable"
+};
+export const codeGroup = (code) => CODE_GROUPS[String(code || "").toUpperCase()] || "other";
+
 const color = (sheet, layer, r, c) => {
   const idx = ((sheet[layer] || [])[r] || [])[c];
   return idx === undefined ? "" : String((sheet.palette || [])[idx] || "");
@@ -196,6 +213,7 @@ export function parseDocMonth(sheet) {
   const days = {};
   const people = [];
   const absences = [];
+  const leads = [];
   for (const { day } of cols) days[dateKey(day, sheet.month, sheet.year)] = {};
   for (const block of blocks) {
     const defaults = {};
@@ -205,7 +223,21 @@ export function parseDocMonth(sheet) {
       if (!person) continue;
       people.push({ ...person, section: block.key });
       const rowColor = block.key === "rezidenti_nodalas" ? rowDefault(sheet, r, cols) : "";
-      for (const { col, day } of cols) {
+      // A painted cell after a code carries the absence on: the code is
+      // written once and the remaining days are coloured the same.
+      const painted = (col, bg) => bg && bg !== "#ffffff" && bg !== defaults[col];
+      const fillEnd = (i, bg) => {
+        let end = i;
+        while (end + 1 < cols.length && !cell(sheet, r, cols[end + 1].col) && color(sheet, "bg", r, cols[end + 1].col) === bg) end++;
+        return end;
+      };
+      // Painted days from day 1 without a code continue last month's absence.
+      const firstBg = cols.length ? color(sheet, "bg", r, cols[0].col) : "";
+      if (cols.length && cols[0].day === 1 && !cell(sheet, r, cols[0].col) && painted(cols[0].col, firstBg)) {
+        leads.push({ name: person.name, section: block.key, to: dateKey(cols[fillEnd(0, firstBg)].day, sheet.month, sheet.year) });
+      }
+      for (let i = 0; i < cols.length; i++) {
+        const { col, day } = cols[i];
         const value = cell(sheet, r, col);
         if (!value || value === "-" || value === "?" || value === ".") continue;
         const key = dateKey(day, sheet.month, sheet.year);
@@ -226,14 +258,16 @@ export function parseDocMonth(sheet) {
         const code = absenceCode(value);
         if (!code) continue;
         const merge = mergeAt(sheet, r, col);
-        const lastCol = merge ? merge[1] - 1 + merge[3] - 1 : col;
-        const span = cols.filter((c) => c.col >= col && c.col <= lastCol);
-        const to = span.length ? span[span.length - 1].day : day;
+        let last = i;
+        if (merge) while (last + 1 < cols.length && cols[last + 1].col <= merge[1] - 1 + merge[3] - 1) last++;
+        const bg = color(sheet, "bg", r, col);
+        if (painted(col, bg)) last = Math.max(last, fillEnd(last, bg));
+        const to = cols[last].day;
         absences.push({ src: "doc", name: person.name, section: block.key, code, from: key, to: dateKey(to, sheet.month, sheet.year) });
       }
     }
   }
-  return { month: sheet.month, year: sheet.year, days, people, absences, sections: blocks.map((b) => ({ key: b.key, label: b.label })) };
+  return { month: sheet.month, year: sheet.year, days, people, absences, leads, sections: blocks.map((b) => ({ key: b.key, label: b.label })) };
 }
 
 // A night that runs past midnight into the first day of the next month:
@@ -256,14 +290,20 @@ export function applyCarryOver(previous, current) {
 }
 
 /* ── radiographer absences: one code per day cell ── */
+// Orderlies are listed as "Name Surname sanitārs/slimnieku kopējs".
+function techPerson(raw) {
+  const m = raw.match(/^(.*?)\s+(sanitār\S*|slimnieku\s+kopēj\S*)(\/.*)?$/i);
+  return m ? { name: m[1].trim(), role: "sanitārs" } : { name: raw, role: "" };
+}
 export function parseTechAbsences(sheet) {
   const header = findDayHeader(sheet);
   if (!header || !sheet.month || !sheet.year) return [];
   const { cols } = dayColumns(sheet, header);
   const out = [];
   for (let r = header.row + 1; r < sheet.values.length; r++) {
-    const name = cell(sheet, r, 0);
-    if (!name || name.length <= 3 || /^(SLODZE|SUM|KOP[ĒE]JS|DATUMS)/i.test(name) || !/[a-zā-ž]/i.test(name)) continue;
+    const raw = cell(sheet, r, 0);
+    if (!raw || raw.length <= 3 || /^(SLODZE|SUM|KOP[ĒE]JS|DATUMS)/i.test(raw) || !/[a-zā-ž]/i.test(raw)) continue;
+    const { name, role } = techPerson(raw);
     let run = null;
     const flush = () => { if (run) { out.push(run); run = null; } };
     for (const { col, day } of cols) {
@@ -271,12 +311,87 @@ export function parseTechAbsences(sheet) {
       const isCode = !!value;
       if (isCode && run && run.code === value && run.lastDay === day - 1) { run.to = dateKey(day, sheet.month, sheet.year); run.lastDay = day; continue; }
       flush();
-      if (isCode) run = { src: "tech", name, code: value, from: dateKey(day, sheet.month, sheet.year), to: dateKey(day, sheet.month, sheet.year), lastDay: day };
+      if (isCode) run = { src: "tech", name, ...(role ? { role } : {}), code: value, from: dateKey(day, sheet.month, sheet.year), to: dateKey(day, sheet.month, sheet.year), lastDay: day };
     }
     flush();
   }
   return out.map(({ lastDay, ...rest }) => rest);
 }
+
+/* ── radiographer leave plan (ATVAĻINĀJUMI YYYY): one column per month ──
+   "9-15" days 9–15, "29-" from the 29th on (ends in the next month's cell,
+   "5" = up to the 5th), "30-07.01." up to 7 January, "PA17-19" with a code
+   (plain ranges are "A"). */
+const MONTH_NAMES = ["janv", "febr", "mart", "apr", "maij", "jūn", "jūl", "aug", "sept", "okt", "nov", "dec"];
+
+export function parseTechLeave(sheet) {
+  const year = Number((String(sheet.name || "").match(/(20\d\d)/) || [])[1]);
+  if (!year) return [];
+  let headRow = -1, nameCol = -1;
+  const monthCol = {};
+  for (let r = 0; r < Math.min(15, sheet.values.length) && headRow < 0; r++) {
+    (sheet.values[r] || []).forEach((v, c) => {
+      const t = cell(sheet, r, c).toLowerCase();
+      const m = MONTH_NAMES.findIndex((p) => t.startsWith(p));
+      if (m >= 0) monthCol[m + 1] = c;
+      if (/vārds|uzvārds/.test(t)) nameCol = c;
+    });
+    if (Object.keys(monthCol).length >= 12) headRow = r;
+    else for (const k of Object.keys(monthCol)) delete monthCol[k];
+  }
+  if (headRow < 0) return [];
+  if (nameCol < 0) nameCol = 1;
+  const lastDay = (m, y) => new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const out = [];
+  for (let r = headRow + 1; r < sheet.values.length; r++) {
+    const raw = cell(sheet, r, nameCol);
+    if (!raw || !/[a-zā-ž]/i.test(raw)) continue;
+    const { name, role } = techPerson(raw);
+    let open = null; // a range still running into the next month
+    for (let m = 1; m <= 12; m++) {
+      const text = cell(sheet, r, monthCol[m]);
+      for (const token of text.split(/[,;\n]+/).map((t) => t.trim()).filter(Boolean)) {
+        const t = token.match(/^([A-Za-zĀ-ž]*)\s*(\d{1,2})?\s*(-)?\s*(\d{1,2})?(?:\.(\d{1,2})\.?)?$/);
+        if (!t) continue;
+        const [, letters, a, dash, b, toMonth] = t;
+        const code = letters ? letters.toUpperCase() : "A";
+        if (open && !letters && ((a && !dash) || (!a && dash && b))) { // "5" or "-5" closes last month's "29-"
+          open.to = dateKey(Number(a || b), m, year); out.push(open); open = null; continue;
+        }
+        if (open) { open.to = dateKey(lastDay(open.m, year), open.m, year); out.push(open); open = null; }
+        if (!a) continue;
+        const entry = { src: "tech-plan", name, ...(role ? { role } : {}), code, from: dateKey(Number(a), m, year) };
+        if (!dash) { out.push({ ...entry, to: entry.from }); continue; }
+        if (b && toMonth) {
+          const tm = Number(toMonth);
+          out.push({ ...entry, to: dateKey(Number(b), tm, tm < m ? year + 1 : year) });
+        } else if (b) out.push({ ...entry, to: dateKey(Number(b), m, year) });
+        else open = { ...entry, m };
+      }
+    }
+    if (open) out.push({ ...open, to: dateKey(31, 12, year) });
+  }
+  return out.map(({ m, ...rest }) => rest);
+}
+
+const dayNumber = (key) => { const [d, m, y] = key.split(".").map(Number); return Date.UTC(y, m - 1, d) / 864e5; };
+
+// Absences cut at the end of a month (one sheet per month) joined back.
+export function joinAbsences(list) {
+  const sorted = [...list].sort((a, b) => (a.src + a.name + a.code).localeCompare(b.src + b.name + b.code) || dayNumber(a.from) - dayNumber(b.from));
+  const out = [];
+  for (const a of sorted) {
+    const prev = out[out.length - 1];
+    if (prev && prev.src === a.src && prev.name === a.name && prev.code === a.code && dayNumber(a.from) <= dayNumber(prev.to) + 1) {
+      if (dayNumber(a.to) > dayNumber(prev.to)) prev.to = a.to;
+      continue;
+    }
+    out.push({ ...a });
+  }
+  return out.sort((a, b) => dayNumber(a.from) - dayNumber(b.from) || a.name.localeCompare(b.name));
+}
+
+const withGroup = (a) => ({ ...a, group: codeGroup(a.code) });
 
 /* ── everything for the app ── */
 export function buildRota(docGrid, techGrid) {
@@ -285,12 +400,25 @@ export function buildRota(docGrid, techGrid) {
     .sort((a, b) => a.year - b.year || a.month - b.month);
   for (let i = 1; i < docMonths.length; i++) {
     const p = docMonths[i - 1], c = docMonths[i];
-    if ((c.year * 12 + c.month) - (p.year * 12 + p.month) === 1) applyCarryOver(p, c);
+    if ((c.year * 12 + c.month) - (p.year * 12 + p.month) === 1) {
+      applyCarryOver(p, c);
+      // Painted days at the start continue an absence that ran to month end.
+      const lastKey = dateKey(new Date(Date.UTC(p.year, p.month, 0)).getUTCDate(), p.month, p.year);
+      for (const lead of c.leads) {
+        const before = p.absences.find((a) => a.name === lead.name && a.to === lastKey);
+        if (before) c.absences.push({ ...before, section: lead.section, from: dateKey(1, c.month, c.year), to: lead.to });
+      }
+    }
   }
-  const techAbsences = (techGrid?.sheets || []).filter((s) => s.month && s.year && !s.leave).flatMap(parseTechAbsences);
+  const techSheets = techGrid?.sheets || [];
+  const techAbsences = techSheets.filter((s) => s.month && s.year && !s.leave).flatMap(parseTechAbsences);
+  const leavePlan = techSheets.filter((s) => s.leave).flatMap(parseTechLeave);
   return {
     ok: true,
     months: docMonths.map(({ month, year, days, people, sections }) => ({ month, year, days, people, sections })),
-    absences: docMonths.flatMap((m) => m.absences).concat(techAbsences)
+    // What the monthly sheets say (doc + tech), and the radiographers'
+    // yearly leave plan separately (it reaches past the monthly sheets).
+    absences: joinAbsences(docMonths.flatMap((m) => m.absences).concat(techAbsences)).map(withGroup),
+    leavePlan: joinAbsences(leavePlan).map(withGroup)
   };
 }
