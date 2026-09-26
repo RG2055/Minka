@@ -253,28 +253,63 @@ async function readSkins(env, strict = false) {
   }
 }
 
+// Night plans and bed layouts are logged in D1 (night_stats_log) and the
+// statistics are computed from it; the sheet keeps receiving a copy as an
+// archive, as it did when it was the only store.
 async function pushNightStats(env, payload) {
+  const row = {
+    date: payload.date || "",
+    savedAt: payload.savedAt || Date.now(),
+    order: Array.isArray(payload.order) ? payload.order : [],
+    sh: typeof payload.sh === "number" ? payload.sh : 0,
+    ei: typeof payload.ei === "number" ? payload.ei : 0,
+    beds: payload.beds && typeof payload.beds === "object" ? payload.beds : {},
+    source: "cloudflare"
+  };
+  try {
+    if (env.DB) {
+      await env.DB.prepare(`
+        INSERT INTO night_stats_log (date, saved_at, order_json, sh, ei, beds_json, source)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+      `).bind(row.date, row.savedAt, JSON.stringify(row.order), row.sh, row.ei, JSON.stringify(row.beds), row.source).run();
+    }
+  } catch (err) {
+    console.error(JSON.stringify({ message: "NS stats log failed", error: String(err) }));
+  }
   try {
     if (!env.NS_STATS_URL) return;
-
     await fetch(env.NS_STATS_URL, {
       method: "POST",
-      headers: {
-        "content-type": "application/json"
-      },
-      body: JSON.stringify({
-        date: payload.date || "",
-        savedAt: payload.savedAt || Date.now(),
-        order: Array.isArray(payload.order) ? payload.order : [],
-        sh: typeof payload.sh === "number" ? payload.sh : 0,
-        ei: typeof payload.ei === "number" ? payload.ei : 0,
-        beds: payload.beds && typeof payload.beds === "object" ? payload.beds : {},
-        source: "cloudflare"
-      })
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(row)
     });
   } catch (err) {
     console.error(JSON.stringify({ message: "NS stats push failed", error: String(err) }));
   }
+}
+
+// The sheet script's statistics, unchanged: per date the newest non-empty
+// order and bed layout; parts[name][i] counts the i-th place in the order,
+// beds[name][bed] counts nights in each bed.
+function computeNightStats(rows) {
+  const lastOrder = {}, lastOrderT = {}, lastBeds = {}, lastBedsT = {};
+  for (const row of rows) {
+    const date = row.date, t = Number(row.saved_at) || 0;
+    const oj = row.order_json, bj = row.beds_json;
+    if (!date) continue;
+    if (oj && oj !== "[]" && t >= (lastOrderT[date] || 0)) { lastOrderT[date] = t; lastOrder[date] = oj; }
+    if (bj && bj !== "{}" && t >= (lastBedsT[date] || 0)) { lastBedsT[date] = t; lastBeds[date] = bj; }
+  }
+  const parts = {}, beds = {}, dates = {};
+  Object.keys(lastOrder).forEach((d) => { dates[d] = 1; });
+  Object.keys(lastBeds).forEach((d) => { dates[d] = 1; });
+  let nights = 0;
+  Object.keys(dates).forEach((d) => {
+    nights++;
+    try { JSON.parse(lastOrder[d] || "[]").forEach((n, i) => { if (n) (parts[n] = parts[n] || [0, 0, 0, 0])[i]++; }); } catch (_) {}
+    try { const o = JSON.parse(lastBeds[d] || "{}"); Object.keys(o).forEach((bed) => { const n = o[bed]; if (n) (beds[n] = beds[n] || {})[bed] = (beds[n][bed] || 0) + 1; }); } catch (_) {}
+  });
+  return { ok: true, nights, parts, beds };
 }
 
 /* ── Schedule copy ──────────────────────────────────────────────────────
@@ -880,6 +915,15 @@ const worker = {
 
 
     if (url.pathname === "/api/ns-stats" && method === "GET") {
+      try {
+        const rows = await env.DB.prepare(
+          "SELECT date, saved_at, order_json, beds_json FROM night_stats_log ORDER BY id"
+        ).all();
+        return json(request, computeNightStats(rows.results || []));
+      } catch (err) {
+        console.error(JSON.stringify({ message: "Night stats from D1 failed", error: String(err) }));
+      }
+      // Fallback while D1 is unavailable: the sheet script computes the same.
       if (!env.NS_STATS_URL) {
         return json(request, { ok: false, error: "NS_STATS_URL missing" }, 500);
       }
