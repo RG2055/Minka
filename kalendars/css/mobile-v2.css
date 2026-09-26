@@ -265,7 +265,5 @@
    pāriet nākamajā rindiņā, nevis nogriezt vārdus aiz pogām. */
 :root.mk-mobile-shell.mk-mobile-v2 .mk-search-date-meta { flex-wrap: wrap !important; white-space: normal !important; overflow: visible !important; row-gap: 3px !important; }
 :root.mk-mobile-shell.mk-mobile-v2 #mkNamedayBar { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; max-width: none !important; min-width: 0 !important; }
-/* "Buy me a coffee": bez rāmja ap to (rāmis rāmī). */
-:root.mk-mobile-shell.mk-mobile-v2 .rg-bmc-qrblock { border: 0 !important; background: transparent !important; box-shadow: none !important; }
 /* Iestatījumu aizvēršana: pirkstam pietiekami liela poga. */
 :root.mk-mobile-shell.mk-mobile-v2 #tk-panel .tk-close { width: 44px !important; height: 44px !important; min-width: 44px !important; border-radius: 50% !important; font-size: 18px !important; }

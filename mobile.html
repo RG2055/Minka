@@ -28,7 +28,7 @@
     } catch (_e) {}
   }
 
-  var CALENDAR_BUILD = '20260926mb2';
+  var CALENDAR_BUILD = '20260926bm2';
 
   function withCalendarBuild(url) {
     try {
@@ -221,6 +221,8 @@
 <meta name="theme-color" content="#06101f">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>RG Mobile</title>
+<link rel="stylesheet" href="css/mk-sys.css?v=20260926bm2">
+<link rel="stylesheet" href="css/bolus-m3.css?v=20260926bm2">
 <link rel="icon" type="image/svg+xml" href="data/rg-brand.svg?v=20260924d1">
 <link rel="icon" type="image/png" sizes="192x192" href="data/rg-any-192.png?v=20260924d1">
 <link rel="apple-touch-icon" href="data/rg-apple-touch-180.png?v=20260924d1">
@@ -746,8 +748,8 @@ html.mk-low-spec #calendarEmbed {
 <body>
   <div id="calendarEmbed">
     <iframe
-      src="kalendars/index.html?mobile=1&cv=20260926mb2"
-      data-base-src="kalendars/index.html?mobile=1&cv=20260926mb2"
+      src="kalendars/index.html?mobile=1&cv=20260926bm2"
+      data-base-src="kalendars/index.html?mobile=1&cv=20260926bm2"
       id="calIframe"
       title="Mobilais dežūru grafiks"
       loading="eager"
@@ -884,9 +886,9 @@ html.mk-low-spec #calendarEmbed {
       if (params.oldTs) q += '&oldTs=' + params.oldTs;
       if (params.name !== undefined) q += '&name=' + encodeURIComponent(params.name || 'Anonims');
       fetch(q).then(function(r){ return r.json(); }).then(function(j) {
-        if (j && j.ok) _mkToast(action === 'delete_entry' ? 'Ieraksts dzests' : 'Ieraksts izlabots', 'ok');
-        else _mkToast('Serveris vel neatbalsta labosanu — izmaina tikai saja ierice', 'error');
-      }).catch(function(){ _mkToast('Nav savienojuma — izmaina tikai saja ierice', 'error'); });
+        if (j && j.ok) _mkToast(action === 'delete_entry' ? 'Ieraksts dzēsts' : 'Ieraksts izlabots', 'ok');
+        else _mkToast('Serveris vēl neatbalsta labošanu, izmaiņa tikai šajā ierīcē', 'error');
+      }).catch(function(){ _mkToast('Nav savienojuma, izmaiņa tikai šajā ierīcē', 'error'); });
     }
     function _recalcChangedAt(roomId) {
       var top = _history[roomId] && _history[roomId][0];
@@ -1041,7 +1043,7 @@ html.mk-low-spec #calendarEmbed {
       var name = encodeURIComponent(_names[roomId] || 'Anonims');
       if (ts) fetch(GS_URL + '?action=write&room=' + roomId + '&ts=' + ts + '&name=' + name, { cache: 'no-store' }).then(function(r){ if (!r.ok) throw new Error('Bolus save failed'); return r.json(); }).then(function(result){
         if (!result || result.ok !== true) throw new Error('Bolus save rejected');
-        _mkToast(_pendingThanks || 'Saglabats', 'ok');
+        _mkToast(_pendingThanks || 'Saglabāts', 'ok');
         _pendingThanks = null;
         var shout = _prettyFirst(_names[roomId] || '');
         if (shout) {
@@ -1190,7 +1192,7 @@ html.mk-low-spec #calendarEmbed {
       var cdDate = new Date(); cdDate.setDate(cdDate.getDate() + cdOffset);
       var cdStr = _tsToDateStr(cdDate.getTime());
       var workers = _ensureWorkersForDate(cdStr);
-      var cdLabel = cdOffset === 0 ? 'Sodien' : cdOffset === -1 ? 'Vakar' : cdOffset === 1 ? 'Rit' : cdStr;
+      var cdLabel = cdOffset === 0 ? 'Šodien' : cdOffset === -1 ? 'Vakar' : cdOffset === 1 ? 'Rīt' : cdStr;
       var isCustom = curName === ' ' || (!!curName && workers.indexOf(curName) === -1);
       var pts = _pickTs(r.id), pd = new Date(pts), dirty = _pick[r.id] !== null;
       var dStr = ('0'+pd.getDate()).slice(-2)+'.'+('0'+(pd.getMonth()+1)).slice(-2)+'.'+pd.getFullYear();
@@ -1233,7 +1235,7 @@ html.mk-low-spec #calendarEmbed {
             return '<div class="bhist-row bhist-deleting" data-i="'+i+'">'+
               '<div class="bhx-q">🗑️ Dzest "'+_fmt(ts)+' '+_escHtml(who)+'"?</div>'+
               '<div class="bhe-btns">'+
-                '<button class="bhx-yes" data-room="'+r.id+'" data-i="'+i+'">Ja, dzest</button>'+
+                '<button class="bhx-yes" data-room="'+r.id+'" data-i="'+i+'">Jā, dzēst</button>'+
                 '<button class="bhx-no" data-room="'+r.id+'" data-i="'+i+'">Ne, atstat</button>'+
               '</div>'+
             '</div>';
@@ -1268,8 +1270,8 @@ html.mk-low-spec #calendarEmbed {
         +'<div class="bwd-nav"><button class="bwd-arr" data-room="'+r.id+'" data-dir="-1">‹</button><span class="bwd-lbl">'+cdLabel+'</span><button class="bwd-arr" data-room="'+r.id+'" data-dir="1">›</button></div>'
         +'<div class="bwrap">'+workers.map(function(n){ var first = n.split(/\s+/)[0]; var sel = curName === n; return '<button class="bwc'+(sel?' bwsel':'')+'" data-room="'+r.id+'" data-name="'+n.replace(/"/g,'&quot;')+'">'+(_isChamp(n)?'👑 ':'')+first+'</button>'; }).join('')+'<button class="bwc bwcits'+(isCustom?' bwsel':'')+'" data-room="'+r.id+'">Cits</button><button class="bwc bwblank'+(curName===''?' bwsel':'')+'" data-room="'+r.id+'" data-name="">—</button></div>'
         +(isCustom ? '<input class="bname-inp bname-cits" data-room="'+r.id+'" type="text" placeholder="Ieraksti vardu..." maxlength="24" autocomplete="off" value="'+curName.trim().replace(/"/g,'&quot;')+'">' : '')
-        +'<div class="bnm-section"><div class="bnm-label">Nomainits</div><div class="bnm-prow"><button class="bnm-dpick'+(_calOpen[r.id]?' bnm-pact':'')+'" data-room="'+r.id+'">📅 '+dStr+'</button><button class="bnm-tpick'+(_tpOpen[r.id]?' bnm-pact':'')+'" data-room="'+r.id+'">⏰ '+tStr+'</button>'+(dirty?'<button class="bnm-savepick" data-room="'+r.id+'">Saglabat</button>':'<button class="bnm-now" data-room="'+r.id+'">Tagad</button>')+'</div>'+calH+tpH+'</div>'
-        +'<div class="bhist-hdr"><span class="bhist-lbl">Vesture</span>'+((_history[r.id]&&_history[r.id].length)?'<span class="bhist-cnt">'+_history[r.id].length+'</span>':'')+'<span class="bhist-hint">✏️ labot 🗑️ dzest</span></div>'
+        +'<div class="bnm-section"><div class="bnm-label">Nomainīts</div><div class="bnm-prow"><button class="bnm-dpick'+(_calOpen[r.id]?' bnm-pact':'')+'" data-room="'+r.id+'">📅 '+dStr+'</button><button class="bnm-tpick'+(_tpOpen[r.id]?' bnm-pact':'')+'" data-room="'+r.id+'">⏰ '+tStr+'</button>'+(dirty?'<button class="bnm-savepick" data-room="'+r.id+'">Saglabat</button>':'<button class="bnm-now" data-room="'+r.id+'">Tagad</button>')+'</div>'+calH+tpH+'</div>'
+        +'<div class="bhist-hdr"><span class="bhist-lbl">Vēsture</span>'+((_history[r.id]&&_history[r.id].length)?'<span class="bhist-cnt">'+_history[r.id].length+'</span>':'')+'</div>'
         +'<div class="bhist" id="bhist-'+r.id+'">'+histHtml+'</div>'
         +'</div>';
     }
@@ -1609,7 +1611,6 @@ html.mk-low-spec #calendarEmbed {
         '.bbar-scale{position:absolute;left:13%;right:13%;top:71.5%;display:flex;justify-content:space-between;font-size:clamp(8px,2.2vw,10px);font-weight:700;color:rgba(255,255,255,0.55);}'+
         '.bbar-txt{position:absolute;left:5%;right:5%;top:80%;text-align:center;font-size:clamp(10px,2.8vw,12px);font-weight:800;color:rgba(255,255,255,0.88);}'+
         '.bbar-txt-over{color:#ff9d94;}'+
-        '.bhist-hint{margin-left:auto;font-size:9px;font-weight:700;color:rgba(255,255,255,0.40);white-space:nowrap;}'+
         '.bh-actions{display:inline-flex;gap:5px;margin-left:auto;flex-shrink:0;}'+
         '.bh-edit,.bh-del{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:13px;line-height:1;padding:6px 8px;cursor:pointer;touch-action:manipulation;}'+
         '.bhist-editing,.bhist-deleting{display:flex;flex-direction:column;align-items:stretch;gap:7px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.18);border-radius:11px;padding:9px;margin:3px 0;}'+
@@ -1668,7 +1669,7 @@ html.mk-low-spec #calendarEmbed {
       _injectCss();
       var ov = document.createElement('div');
       ov.id = 'bolus-overlay';
-      ov.innerHTML = '<div id="bolus-sheet"><div id="bolus-handle"></div><div id="bolus-title-bar"><span id="bolus-title"><svg width="11" height="11" viewBox="0 0 24 24" style="opacity:.7;vertical-align:-1px" aria-hidden="true"><path d="M18 2l4 4M19 5l-2 2M6 18l-4 4M3 21l2-2M17 7l-10 10 3 3L20 10zM10 14l2 2M13 11l2 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> BOLUSA MAINA</span><span style="display:flex;gap:8px;align-items:center;"><button id="bolus-tops-btn" type="button" title="Menesa caklakie">🏆 TOPS</button><button id="bolus-close-btn" type="button" aria-label="Aizvert bolus paneli">✕</button></span></div><div id="bolus-tops" style="display:none"></div><div id="bolus-rooms"></div></div>';
+      ov.innerHTML = '<div id="bolus-sheet"><div id="bolus-handle"></div><div id="bolus-title-bar"><span id="bolus-title"><span class="bolus-head-icon" aria-hidden="true">'+(window.__mkDockIcon?window.__mkDockIcon('bolusDocBtn'):'')+'</span><span class="bolus-main-title">Bolusa maiņa</span></span><span style="display:flex;gap:8px;align-items:center;"><button id="bolus-tops-btn" type="button" title="Mēneša čaklākie"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4.5a2.5 2.5 0 0 0 3 3.8M17 6h2.5a2.5 2.5 0 0 1-3 3.8M12 14v4M8.5 20h7"/></svg><span>Tops</span></button><button id="bolus-close-btn" type="button" aria-label="Aizvērt bolusa paneli">✕</button></span></div><div id="bolus-tops" style="display:none"></div><div id="bolus-rooms"></div></div>';
       ov.addEventListener('click', function(e){
         var sheet = document.getElementById('bolus-sheet');
         if (!sheet) return;
@@ -2020,6 +2021,44 @@ window.__mkDockIcon=function(btnId){
     var f = document.getElementById('calIframe');
     try { f.contentWindow.postMessage({ type: 'mk-sheet-close', name: name }, location.origin); } catch (_e) {}
   });
+})();
+
+/* Bolus sheet: drag it down by its top (handle and title bar) to close,
+   like the calendar's sheets (kalendars/js/mobile-sheets.js). */
+(function(){
+  var drag = null, sheet = null;
+  function sheetEl(){ return sheet && sheet.isConnected ? sheet : (sheet = document.getElementById('bolus-sheet')); }
+  document.addEventListener('pointerdown', function(e){
+    var s = sheetEl();
+    if (!s || !s.contains(e.target) || e.button !== 0) return;
+    if (e.clientY - s.getBoundingClientRect().top > 72 || e.target.closest('button, input')) return;
+    drag = { id: e.pointerId, y0: e.clientY, t0: e.timeStamp, dy: 0, on: false };
+  }, true);
+  document.addEventListener('pointermove', function(e){
+    if (!drag || e.pointerId !== drag.id) return;
+    var s = sheetEl(), dy = e.clientY - drag.y0;
+    if (!drag.on) { if (dy < 8) { if (dy < -8) drag = null; return; } drag.on = true; s.style.transition = 'none'; }
+    drag.dy = Math.max(0, dy);
+    drag.v = drag.dy / Math.max(1, e.timeStamp - drag.t0);
+    s.style.transform = 'translateY(' + drag.dy + 'px)';
+  }, { passive: true });
+  function end(e){
+    if (!drag || e.pointerId !== drag.id) return;
+    var d = drag, s = sheetEl();
+    drag = null;
+    if (!d.on) return;
+    if (d.dy > 110 || (d.v > .8 && d.dy > 30)) {
+      s.style.transition = 'transform 200ms cubic-bezier(.3,0,.8,.15)';
+      s.style.transform = 'translateY(100%)';
+      setTimeout(function(){ if (window.toggleBolus) window.toggleBolus(false); s.style.removeProperty('transform'); s.style.removeProperty('transition'); }, 200);
+    } else {
+      s.style.transition = 'transform var(--mk-dur-spring-default, 560ms) var(--mk-ease-spring, ease)';
+      s.style.transform = '';
+      setTimeout(function(){ s.style.removeProperty('transition'); }, 600);
+    }
+  }
+  document.addEventListener('pointerup', end, true);
+  document.addEventListener('pointercancel', end, true);
 })();
 
 /* Plānotājs on the phone: the same planner app as on the desktop, as a full

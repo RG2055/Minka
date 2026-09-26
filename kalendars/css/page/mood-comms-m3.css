@@ -542,8 +542,8 @@
   font-family: 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif !important;
   font-variant-emoji: emoji !important;
 }
-/* Telefonā QR nav vajadzīgs — telefons pats ir tā ierīce, ar ko maksā —, tāpēc
-   bloks kļūst par parastu pogu: krūzīte, virsraksts un paldies rindiņa. */
+/* Telefonā QR nav vajadzīgs (telefons pats ir tā ierīce, ar ko maksā), tāpēc
+   paliek tikai poga un paldies rindiņa, bez rāmja ap tām. */
 :root.mk-mobile-shell #grafiks-list .rg-feedback-card .rg-bmc-qrimg { display: none !important; }
 :root.mk-mobile-shell #grafiks-list .rg-feedback-card .rg-bmc-qrblock {
   display: flex !important;
@@ -553,9 +553,8 @@
   padding: 10px 16px !important;
   gap: 12px !important;
   justify-content: center !important;
-  border: 1px solid rgba(255, 221, 0, .28) !important;
-  border-radius: 999px !important;
-  background: rgba(255, 221, 0, .06) !important;
+  border: 0 !important;
+  background: transparent !important;
 }
 :root.mk-mobile-shell #grafiks-list .rg-feedback-card .rg-bmc-qrblock small { display: none !important; }
 :root.mk-mobile-shell #grafiks-list .rg-feedback-card .rg-bmc-copy { padding-left: 0 !important; margin: 0 !important; }
