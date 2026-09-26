@@ -2951,7 +2951,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
 
 <script src="kalendars/js/daybook-model.js?v=20260911b" defer></script>
 <script src="js/radio-daybook.js?v=20260911i" defer></script>
-<script src="js/media-profile.js?v=20260924dth1" defer></script>
+<script src="js/media-profile.js?v=20260926rad1" defer></script>
 <script src="js/radio-source.js?v=20260926mo2" defer></script>
 
 <div id="mobileQrModal" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171000;background:rgba(2,4,8,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:20px;">
@@ -3151,6 +3151,8 @@ window.addEventListener('message', function(e) {
   function uniqueTodayWorkers() {
     var state = getCalendarState();
     var rg = Array.isArray(state && state.rg) ? state.rg : [];
+    // /rad: the radiologists (right column) are on the list too; RG unchanged.
+    if (window.MINKA_APP === 'rad' && Array.isArray(state && state.rd)) rg = rg.concat(state.rd);
     var live = rg.filter(function(w){ return w && w.name && !w.done; });
     var src = live.length ? live : rg;
     var seen = {};

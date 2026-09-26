@@ -88,7 +88,9 @@
  function roster(){
   let state=window.__minkaLastSelectedDayState;
   try{state=$('calIframe')?.contentWindow?.__minkaGetSelectedDayState?.()||state;}catch(_){}
-  const map=new Map();for(const w of (state?.rg||[]))if(w?.name)map.set(norm(w.name),{name:String(w.name),shift:'Dežūra'});
+  // /rad: residents (left) and radiologists (right) both log in; RG keeps its own list.
+  const people=window.MINKA_APP==='rad'?[...(state?.rg||[]),...(state?.rd||[])]:(state?.rg||[]);
+  const map=new Map();for(const w of people)if(w?.name)map.set(norm(w.name),{name:String(w.name),shift:'Dežūra'});
   if(!map.size)for(const name of window.__lacitisTodayWorkers?.()||[])map.set(norm(name),{name,shift:'Dežūra'});
   return {date:state?.activeDateStr||state?.date||state?.dateKey||state?.day||'',workers:[...map.values()]};
  }
