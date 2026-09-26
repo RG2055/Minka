@@ -17,7 +17,7 @@
   --pp-on-primary: #0b2a57;
   --pp-primary-c: #d6e3ff;
   --pp-on-primary-c: #0b1d36;
-  --pp-spring: cubic-bezier(.42, 1.67, .21, .9);
+  --pp-spring: var(--mk-ease-spring, cubic-bezier(.42, 1.67, .21, .9)); /* viena Minka atspere (css/mk-sys.css) */
   --pp-effects: cubic-bezier(.31, .94, .34, 1);
   background: var(--pp-bg) !important;
   border: 0 !important;

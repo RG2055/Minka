@@ -368,13 +368,20 @@
       var status = overlay.querySelector('.mk-draw-status');
       save.disabled = true;
       status.textContent = 'Sagatavo...';
-      try {
+      var MM = window.MinkaMotion;
+      var work = (async function() {
         var blob = await compactWebp(canvas);
         if (!blob) throw new Error('Zīmējums pārsniedz 96 KB');
         status.textContent = 'Saglabā...';
         await options.onSave(blob);
+      })();
+      try {
+        // Label → spinner → check; the editor closes once the check is drawn.
+        await (MM && MM.pending ? MM.pending(save, work) : work);
+        status.textContent = '';
         toast('Zīmējums saglabāts — redzēs visi', 'ok');
-        close();
+        if (MM && MM.pending && MM.level() !== 'reduced') setTimeout(close, 380);
+        else close();
       } catch (error) {
         status.textContent = error && error.message ? error.message : 'Neizdevās saglabāt';
         save.disabled = false;

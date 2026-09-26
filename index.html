@@ -38,7 +38,7 @@
   }
   window.__minkaHasApiAuth = function() { return !!getToken(); };
 
-  var CALENDAR_BUILD = '20260925rel1';
+  var CALENDAR_BUILD = '20260926sp1';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -132,7 +132,6 @@
       + '#minka-gate .mg-info h2 .mg-dt{margin:0;}'
       + '#minka-gate .mg-item{display:flex;gap:16px;align-items:flex-start;padding:17px 0;border-bottom:1px dotted #333;}'
       + '#minka-gate .mg-item:last-of-type{border-bottom:none;}'
-      + '#minka-gate .mg-num{flex:0 0 auto;width:26px;height:26px;background:#fff;color:#000;font:700 13px/26px ui-monospace,Menlo,Consolas,monospace;text-align:center;}'
       + '#minka-gate .mg-ic{flex:0 0 auto;width:46px;height:46px;border:1px solid #2e2e2e;display:flex;align-items:center;justify-content:center;}'
       + '#minka-gate .mg-item p{margin:0;font-size:14.5px;line-height:1.55;color:#cfcfcf;}'
       + '#minka-gate .mg-blue,#minka-gate .mg-green,#minka-gate .mg-red{color:#fff;font-weight:700;text-decoration:underline dotted;text-underline-offset:4px;}'
@@ -167,19 +166,19 @@
       + '</div>'
       + '<div class="mg-info">'
       + '<h2><span class="mg-sr" id="mg-info-src">Inform&#257;cija</span><canvas class="mg-dt" id="mg-info-dt" width="1" height="1" aria-hidden="true"></canvas></h2>'
-      + '<div class="mg-item"><div class="mg-num">1</div>'
+      + '<div class="mg-item">'
       + '<div class="mg-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><rect x="2.5" y="4.5" width="19" height="15"/><path d="M2.5 9h19M5 6.8h1M7.5 6.8h1M5.5 13h9M5.5 16h12"/></svg></div>'
       + '<p>&#352;&#299; nav instal&#275;jama programma; t&#257; ir p&#257;rl&#363;k&#257; atverama grafika p&#257;rskata <span class="mg-blue">t&#299;mek&#316;a lapa</span>.</p></div>'
-      + '<div class="mg-item"><div class="mg-num">2</div>'
+      + '<div class="mg-item">'
       + '<div class="mg-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><path d="M5.5 2.5h8.5l4.5 4.5v14.5h-13z"/><path d="M14 2.5V7h4.5M8.5 11.5h7v6h-7zM8.5 14.5h7M12 11.5v6"/></svg></div>'
       + '<p>Tiek att&#275;loti tikai de&#382;&#363;ru grafika dati no <span class="mg-green">Google Sheets</span>. Google Sheets tiek izmantots un apstiprin&#257;ts darba vajadz&#299;b&#257;m.</p></div>'
-      + '<div class="mg-item"><div class="mg-num">3</div>'
+      + '<div class="mg-item">'
       + '<div class="mg-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><rect x="3.5" y="5.5" width="17" height="15"/><path d="M3.5 10h17M8 3.5v4M16 3.5v4"/><path d="M7.5 13.5h1M11.5 13.5h1M15.5 13.5h1M7.5 17h1M11.5 17h1M15.5 17h1" stroke-width="2"/></svg></div>'
       + '<p>No Google Sheets datiem tiek izmantoti <span class="mg-blue">tikai de&#382;&#363;ru datumi un darba stundu ilgums</span>. &#352;ie dati tiek att&#275;loti &#275;rt&#257;k&#257; skat&#257; un izmantoti darbinieku <span class="mg-red">noslodzes/noguruma</span> apr&#275;&#311;inam.*</p></div>'
-      + '<div class="mg-item"><div class="mg-num">4</div>'
+      + '<div class="mg-item">'
       + '<div class="mg-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><rect x="4" y="11" width="16" height="9"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><path d="M12 14.5v2" stroke-width="2.2"/></svg></div>'
       + '<p>Piek&#316;uve lapai ir <span class="mg-blue">aizsarg&#257;ta ar paroli</span>; bez paroles grafika dati nav redzami.</p></div>'
-      + '<div class="mg-item"><div class="mg-num">5</div>'
+      + '<div class="mg-item">'
       + '<div class="mg-ic"><svg width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#fff"/><path fill="#000" d="M12 4.8a7.3 7.3 0 0 0-2.31 14.23c.37.07.5-.16.5-.35v-1.24c-2.03.44-2.46-.98-2.46-.98-.33-.85-.81-1.07-.81-1.07-.66-.45.05-.44.05-.44.73.05 1.12.75 1.12.75.65 1.12 1.71.8 2.13.61.07-.47.26-.8.46-.98-1.62-.18-3.33-.81-3.33-3.61 0-.8.29-1.45.75-1.96-.07-.18-.33-.93.07-1.93 0 0 .61-.2 2.01.75a7 7 0 0 1 3.66 0c1.4-.95 2.01-.75 2.01-.75.4 1 .15 1.75.07 1.93.47.51.75 1.16.75 1.96 0 2.81-1.71 3.43-3.34 3.61.26.23.5.67.5 1.35v2c0 .2.13.42.51.35A7.3 7.3 0 0 0 12 4.8z"/></svg></div>'
       + '<p>Publiskaj&#257; GitHub repozitorij&#257; <span class="mg-blue">nav</span> grafika datu, Google Sheets piek&#316;uves datu vai paro&#316;u.</p></div>'
       + '<div class="mg-foot">* Noguruma apr&#275;&#311;ins ir informat&#299;vs un balst&#299;ts uz de&#382;&#363;ru ilgumu un atp&#363;tas laiku.</div>'
@@ -638,8 +637,8 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 #mk-toast.mk-ok{border-color:rgba(48,209,88,.35);color:#30d158;}
 </style>
 <link rel="stylesheet" href="css/geist-ui.css?v=20260919type3">
-<link rel="stylesheet" href="css/mk-sys.css?v=20260924d1a">
-<script src="js/mk-motion.js?v=20260924d1"></script>
+<link rel="stylesheet" href="css/mk-sys.css?v=20260926sp1">
+<script src="js/mk-motion.js?v=20260926sp1"></script>
 <!-- Station picker in M3 on the system tokens above; must follow every older picker sheet. -->
 <link rel="stylesheet" href="css/radio-picker-m3.css?v=20260925pk3">
 <script src="js/image-palette.js?v=20260919palette2"></script>
@@ -650,7 +649,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <div id="calendarEmbed">
   <!-- Keep the expensive calendar document dormant behind the password gate.
        Authenticated startup assigns data-base-src immediately. -->
-  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260925rel1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260926sp1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- Dither loader (js/dither-loader.js). It stays up until the embedded
@@ -3569,8 +3568,8 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     var hasMedia = !!_mediaSnapshot(roomId);
     return '<div class="bmedia-panel" data-room="'+roomId+'">'+
       '<div class="ctmotion-media-stage'+(_mediaChooserOpen[roomId]?' is-choosing':'')+'">'+
-        '<div class="ctmotion-toolbar"><button type="button" class="bmedia-preset" data-room="'+roomId+'" title="Atzīmēt standarta komplektu" aria-label="Atzīmēt visas pudeles"><b aria-hidden="true">+</b> VISI</button>'+
-        '<button type="button" class="bmedia-clear" data-room="'+roomId+'" title="Noņemt visas pudeles" aria-label="Noņemt visas pudeles"'+(hasMedia?'':' disabled')+'><b aria-hidden="true">×</b> NOTĪRĪT</button></div>'+
+        '<div class="ctmotion-toolbar"><button type="button" class="bmedia-preset" data-room="'+roomId+'" title="Atzīmēt standarta komplektu" aria-label="Atzīmēt visas pudeles"><b aria-hidden="true">+</b> Visi</button>'+
+        '<button type="button" class="bmedia-clear" data-room="'+roomId+'" title="Noņemt visas pudeles" aria-label="Noņemt visas pudeles"'+(hasMedia?'':' disabled')+'><b aria-hidden="true">×</b> Notīrīt</button></div>'+
         '<figure class="ctmotion-reference">'+_mediaAssembly(roomId, changedAt)+'</figure>'+
         _mediaQuickbar(roomId)+
       '</div>'+
@@ -3646,28 +3645,28 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       chipsHtml+
       (function(){
         if (_recordStep[r.id] === 0) {
-          return '<div class="bnm-section bnm-idle"><button class="bnm-begin" data-room="'+r.id+'" type="button">NOMAINĪT</button></div>';
+          return '<div class="bnm-section bnm-idle"><button class="bnm-begin" data-room="'+r.id+'" type="button">Nomainīt</button></div>';
         }
         if (_recordStep[r.id] === 1) {
-          return '<div class="bnm-section bnm-who-hint">KURŠ NOMAINĪJA?</div>';
+          return '<div class="bnm-section bnm-who-hint">Kurš nomainīja?</div>';
         }
         var pts = _pick[r.id] !== null ? _pick[r.id] : Date.now();
         var pd = new Date(pts);
         var dStr = _dateText(pd.getTime());
         var tStr = _timeText(pd.getTime());
         return '<div class="bnm-section">'+
-          '<div class="bnm-label">IERAKSTA LAIKS</div>'+
+          '<div class="bnm-label">Ieraksta laiks</div>'+
           '<div class="bnm-prow">'+
-            '<label class="bnm-native-field"><span>DATUMS</span><input class="bnm-date-input" data-room="'+r.id+'" type="text" inputmode="numeric" maxlength="10" placeholder="DD.MM.GGGG" value="'+dStr+'"><button class="bnm-picker-btn bnm-dpick" data-room="'+r.id+'" type="button" aria-label="Atvērt kalendāru">'+_bolusIcon('calendar')+'</button></label>'+
-            '<label class="bnm-native-field bnm-time-field"><span>PRECĪZS LAIKS</span><input class="bnm-time-input" data-room="'+r.id+'" type="text" inputmode="numeric" maxlength="5" placeholder="HH:MM" value="'+tStr+'"><button class="bnm-picker-btn bnm-tpick" data-room="'+r.id+'" type="button" aria-label="Atvērt stundu un minūšu izvēli">'+_bolusIcon('clock')+'</button></label>'+
-            '<button class="bnm-savepick" data-room="'+r.id+'" type="button">SAGLABĀT</button>'+
+            '<label class="bnm-native-field"><span>Datums</span><input class="bnm-date-input" data-room="'+r.id+'" type="text" inputmode="numeric" maxlength="10" placeholder="DD.MM.GGGG" value="'+dStr+'"><button class="bnm-picker-btn bnm-dpick" data-room="'+r.id+'" type="button" aria-label="Atvērt kalendāru">'+_bolusIcon('calendar')+'</button></label>'+
+            '<label class="bnm-native-field bnm-time-field"><span>Precīzs laiks</span><input class="bnm-time-input" data-room="'+r.id+'" type="text" inputmode="numeric" maxlength="5" placeholder="HH:MM" value="'+tStr+'"><button class="bnm-picker-btn bnm-tpick" data-room="'+r.id+'" type="button" aria-label="Atvērt stundu un minūšu izvēli">'+_bolusIcon('clock')+'</button></label>'+
+            '<button class="bnm-savepick" data-room="'+r.id+'" type="button">Saglabāt</button>'+
           '</div>'+
           (_calOpen[r.id] ? _buildCal(r.id) : '')+
           (_tpOpen[r.id] ? _buildTp(r.id) : '')+
           '<small class="bnm-last">'+_escHtml(changedStr)+'</small>'+
         '</div>';
       })()+
-      '<div class="bhist-hdr"><span class="bhist-lbl">Vēsture</span>'+(histAll.length?'<span class="bhist-cnt">'+histAll.length+'</span>':'')+(histAll.length>3?'<button class="bhist-toggle" type="button" data-room="'+r.id+'">'+(_histExpanded[r.id]?'TUVĀKIE':'VISI')+'</button>':'')+'</div>'+
+      '<div class="bhist-hdr"><span class="bhist-lbl">Vēsture</span>'+(histAll.length?'<span class="bhist-cnt">'+histAll.length+'</span>':'')+(histAll.length>3?'<button class="bhist-toggle" type="button" data-room="'+r.id+'">'+(_histExpanded[r.id]?'Tuvākie':'Visi')+'</button>':'')+'</div>'+
       '<div class="bhist'+(_histExpanded[r.id]?' is-all':'')+'" id="bhist-'+r.id+'">'+
         (histRows.length ?
           histRows.map(function(entry,i){
@@ -3706,7 +3705,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
               (mediaText ? '<span class="bhist-media">'+_escHtml(mediaText)+'</span>' : '')+
             '</div>';
           }).join('') :
-          '<div class="bhist-empty">'+(_everPulled ? 'Nav ierakstu. Nospied NOMAINĪTS.' : 'Ielādē ierakstus…')+'</div>')+
+          '<div class="bhist-empty">'+(_everPulled ? 'Nav ierakstu. Nospied „Nomainīt”.' : 'Ielādē ierakstus…')+'</div>')+
       '</div>'+
     '</div>';
   }
@@ -4255,7 +4254,6 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       '#bolus-overlay{position:fixed;inset:0;z-index:1500;background:rgba(0,0,0,.78);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:flex-end;justify-content:center;overscroll-behavior:contain;}'+
       /* ── Sheet ── */
       '#bolus-sheet{width:100%;max-width:min(720px,98vw);background:linear-gradient(170deg,#0c1422 0%,#060c18 55%,#040a14 100%);border-radius:28px 28px 0 0;border:1px solid rgba(255,255,255,0.10);border-bottom:none;display:flex;flex-direction:column;height:calc(100dvh - 24px);overflow:hidden;box-shadow:0 -14px 34px rgba(0,0,0,0.64),0 -2px 0 rgba(255,255,255,0.04);}'+
-      '#bolus-handle{width:36px;height:4px;background:rgba(255,255,255,0.22);border-radius:99px;margin:6px auto 0;flex-shrink:0;}'+
       '#bolus-title-bar{display:flex;align-items:center;justify-content:space-between;padding:6px 14px 6px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.08);}'+
       '#bolus-title{font-size:11px;font-weight:800;letter-spacing:.20em;color:rgba(255,255,255,0.92);text-transform:uppercase;font-family:"Space Grotesk",system-ui;}'+
       '#bolus-close-btn{background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.18);color:rgba(255,255,255,0.85);border-radius:50%;width:26px;height:26px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0;}'+
@@ -4438,7 +4436,6 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       '.brc[data-room="philips"] .bhist-who{background:rgba(5,35,19,.86)!important;color:#dcffe8!important;}'+
       /* ── Compact vertical fit ── */
       '#bolus-sheet{height:calc(100dvh - 10px)!important;}'+
-      '#bolus-handle{height:3px!important;margin:4px auto 0!important;}'+
       '#bolus-title-bar{padding:8px 16px 8px!important;}'+
       '#bolus-title{font-size:15px!important;}'+
       '#bolus-close-btn{width:32px!important;height:32px!important;font-size:19px!important;}'+
@@ -4534,7 +4531,6 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       '#bolus-sheet{max-width:min(920px,98vw)!important;position:relative!important;background:radial-gradient(circle at 76% 0,rgba(82,197,207,.24),transparent 34%),linear-gradient(145deg,#124a72 0%,#0a3159 25%,#061d3b 62%,#041329 100%)!important;border-color:#64cad3!important;}'+
       '#bolus-title-bar{background:linear-gradient(90deg,rgba(8,42,73,.99),rgba(13,72,98,.98))!important;border-bottom-color:#65cbd3!important;}'+
       '#bolus-title{display:flex!important;flex-direction:column;align-items:flex-start;gap:2px;line-height:1!important;}'+
-      '.bolus-brandline{color:#7de0e4;font-size:7px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;}'+
       '.bolus-main-title{color:#fff;font-size:14px;font-weight:900;letter-spacing:.18em;}'+
       '#bolus-guide-btn{display:flex;align-items:center;gap:5px;height:30px;padding:0 9px;border:1px solid #83dce1;border-radius:7px;background:#0a4168;color:#fff;font:900 9px/1 "Space Grotesk",system-ui;letter-spacing:.08em;cursor:pointer;white-space:nowrap;}'+
       '#bolus-guide-btn b{display:grid;place-items:center;width:16px;height:16px;border:1px solid #fff;border-radius:50%;font-size:11px;}'+
@@ -4610,7 +4606,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
       '.bnm-section{border:0!important;border-top:1px solid rgba(126,216,222,.40)!important;border-radius:0!important;background:transparent!important;padding-top:7px!important}'+
       '.bhist{border:0!important;border-top:1px solid rgba(126,216,222,.28)!important;border-radius:0!important;background:rgba(2,19,39,.34)!important;box-shadow:none!important}'+
       /* Final anti-card pass: flat surfaces, no ornamental glass or nested windows. */+
-      '#bolus-sheet{background:#07345c!important;box-shadow:none!important}#bolus-title-bar{background:#082d50!important;box-shadow:none!important}#bolus-handle{background:#78d8dd!important}'+
+      '#bolus-sheet{background:#07345c!important;box-shadow:none!important}#bolus-title-bar{background:#082d50!important;box-shadow:none!important}'+
       '.bdevice-console .bscreen{border:0!important;background:transparent!important;box-shadow:none!important;color:#fff!important}.bdevice-console .bring-time,.bdevice-console .bring-secs,.bdevice-console .bring-label{color:#fff!important}.bbar{background:#16496d!important;box-shadow:none!important}'+
       '.bwd-arr,.bwc,.bwblank,.bwcits,.bnm-now,.bnm-savepick,.brc[data-room="philips"] .bwd-arr,.brc[data-room="philips"] .bwc,.brc[data-room="philips"] .bwblank,.brc[data-room="philips"] .bwcits,.brc[data-room="philips"] .bnm-now,.brc[data-room="philips"] .bnm-savepick{background:#0a456e!important;box-shadow:none!important;border-color:#66cbd2!important}'+
       '.bnm-native-field input,.brc[data-room="philips"] .bnm-native-field input{background:#092f54!important;box-shadow:none!important}.bnm-now,.bnm-savepick{border-radius:4px!important}.bnm-native-field input{border-radius:4px!important}'+
@@ -4693,12 +4689,11 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
     ov.id = 'bolus-overlay';
     ov.innerHTML =
       '<div id="bolus-sheet" onclick="event.stopPropagation()">'+
-        '<div id="bolus-handle"></div>'+
         '<div id="bolus-title-bar">'+
-          '<span id="bolus-title"><span class="bolus-brandline">ulrichINJECT · CT motion™ darba žurnāls</span><span class="bolus-main-title">BOLUSA MAIŅA</span></span>'+
+          '<span id="bolus-title"><span class="bolus-main-title">Bolusa maiņa</span></span>'+
           '<span style="display:flex;gap:8px;align-items:center;">'+
-            '<button id="bolus-guide-btn" type="button" title="Atvērt pudeles pieslēgšanas pamācību"><b>?</b><span>PAMĀCĪBA</span></button>'+
-            '<button id="bolus-tops-btn" type="button" title="Mēneša čaklākie">'+_bolusIcon('trophy')+'<span>TOPS</span></button>'+
+            '<button id="bolus-guide-btn" type="button" title="Atvērt pudeles pieslēgšanas pamācību"><b>?</b><span>Pamācība</span></button>'+
+            '<button id="bolus-tops-btn" type="button" title="Mēneša čaklākie">'+_bolusIcon('trophy')+'<span>Tops</span></button>'+
             '<button id="bolus-close-btn" onclick="toggleBolus()">✕</button>'+
           '</span>'+
         '</div>'+
@@ -4735,7 +4730,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
               '</section>'+
             '</div>'+
             '<div class="bolus-guide-stop"><b>Ja savienotājs ievietots šķībi vai tek šķidrums, STOP.</b><span> Nesāc darbu. Ievieto no jauna taisni centrā.</span></div>'+
-            '<button class="bolus-guide-done" type="button">AIZVĒRT</button>'+
+            '<button class="bolus-guide-done" type="button">Aizvērt</button>'+
           '</div>'+
         '</div>'+
       '</div>';
@@ -4783,7 +4778,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
         '<input type="text" id="bolus-edit-inp" inputmode="numeric" maxlength="16" placeholder="DD.MM.GGGG HH:MM">'+
         '<div style="display:flex;gap:10px;margin-top:4px;">'+
           '<button id="bolus-edit-cancel">Atcelt</button>'+
-          '<button id="bolus-edit-save">SAGLABĀT</button>'+
+          '<button id="bolus-edit-save">Saglabāt</button>'+
         '</div>'+
       '</div>';
     document.body.appendChild(em);
@@ -7332,6 +7327,7 @@ body.mk-buddy-header-home #mk-buddy-bolus {
 <link rel="stylesheet" href="css/radio-ambience.css?v=20260908ambient3">
 <script src="js/radio-ambience.js?v=20260919smooth1"></script>
 <link rel="stylesheet" href="css/calendar-surfaces.css?v=20260908surfaces3">
+<link rel="stylesheet" href="css/mk-spring.css?v=20260926sp1">
 
 <!-- Skin pack: bottom bar icon sets and surfaces (Galvene → Apakšējā josla).
      The original pixel icons stay in the markup; an alternative <i class="dock-alt"> is added once
@@ -7402,5 +7398,6 @@ html[data-dock-bar="rezgis"] #dockShelf #bottomBtnBar > .dock-bg{--dock-art:url(
   window.addEventListener('storage',function(e){if(e.key===KEY||e.key===null)apply();});
 })();
 </script>
+<link rel="stylesheet" href="css/bolus-m3.css?v=20260926bm10">
 </body>
 </html>

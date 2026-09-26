@@ -104,8 +104,25 @@
   --mk-dur-effects-fast: 150ms;
   --mk-dur-effects-default: 200ms;
   --mk-dur-effects-slow: 300ms;
+
+  /* Atsperes: slēgtas formas soļa reakcija, iepriekš pārvērsta linear()
+     (scripts/build-spring-easing.mjs). Pārlūks to izpilda pats, JS kadros
+     nestrādā. spring: ζ=.82, ~1 % pārsviediens; spring-flat: ζ=1, bez.
+     Ilgums ir līdz pilnai nomierināšanai, 90 % ceļa notiek pirmajā trešdaļā. */
+  --mk-ease-spring: cubic-bezier(.2, .9, .25, 1);
+  --mk-ease-spring-flat: cubic-bezier(.2, .8, .3, 1);
+  --mk-dur-spring-fast: 420ms;
+  --mk-dur-spring-default: 560ms;
+  --mk-dur-spring-slow: 720ms;
   /* Cik tālu telpiskas pārejas ceļo, 1 = pilns attālums */
   --mk-motion-travel: 1;
+}
+
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    --mk-ease-spring: linear(0, 0.0055 1.3%, 0.0247 2.8%, 0.0549 4.3%, 0.1006 6%, 0.1962 9%, 0.4271 15.5%, 0.528 18.5%, 0.6268 21.8%, 0.7064 24.8%, 0.7744 27.8%, 0.8354 31%, 0.8842 34.3%, 0.9248 37.8%, 0.9567 41.5%, 0.9801 45.5%, 0.9967 50%, 1.0068 55.3%, 1.0109 65.8%, 1);
+    --mk-ease-spring-flat: linear(0, 0.004 1%, 0.0188 2.3%, 0.0422 3.5%, 0.0788 5%, 0.1611 7.8%, 0.3622 13.8%, 0.465 17%, 0.5574 20.3%, 0.6378 23.5%, 0.7063 26.8%, 0.7676 30.3%, 0.8174 33.8%, 0.86 37.5%, 0.899 42%, 0.929 46.8%, 0.9532 52.3%, 0.9711 58.5%, 0.9914 73.8%, 1);
+  }
 }
 
 /* LITE: tā pati nozīme, mazāk darba kadrā. Bez pārsviediena (mazāk
@@ -118,6 +135,7 @@
   --mk-dur-spatial-slow: 480ms;
   --mk-motion-travel: .5;
 }
+:root[data-motion="lite"] { --mk-ease-spring: var(--mk-ease-spring-flat); }
 
 /* REDUCED: pieejamības izvēle. Telpiskās pārejas kļūst par īsu crossfade. */
 :root[data-motion="reduced"] {
@@ -131,6 +149,10 @@
   --mk-dur-effects-default: 120ms;
   --mk-dur-effects-slow: 150ms;
   --mk-motion-travel: 0;
+  /* Atsperes izslēgtas: slēdži, cilnes un pogas pārslēdzas uzreiz */
+  --mk-dur-spring-fast: 0ms;
+  --mk-dur-spring-default: 0ms;
+  --mk-dur-spring-slow: 0ms;
 }
 
 /* View Transitions (tikai full līmenī, sk. MinkaMotion.run): grupa kustas
@@ -148,3 +170,63 @@
 ::view-transition-new(root) {
   animation-duration: var(--mk-dur-effects-fast);
 }
+
+/* ── Asinhrona poga: MinkaMotion.pending(btn, work) ─────────────────────
+   Poga paliek savā izmērā; teksts izgaist, tā vietā griežas gredzens, tad
+   uzzīmējas ķeksis. Tikai opacity/transform + viens SVG gājiens. */
+.mk-pend-fx {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  pointer-events: none; opacity: 0;
+  transition: opacity 120ms var(--mk-ease-effects);
+}
+.mk-pend-fx svg {
+  width: 1.15em; height: 1.15em; fill: none; stroke: currentColor;
+  stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;
+}
+.mk-pend-busy, .mk-pend-done { position: relative; }
+.mk-pend-busy > :not(.mk-pend-fx), .mk-pend-done > :not(.mk-pend-fx) {
+  opacity: 0 !important; transition: opacity 90ms var(--mk-ease-exit);
+}
+/* Aizņemta poga nav blāva (disabled stils to parasti pelēko) un nav nospiežama */
+.mk-pend-busy, .mk-pend-done { opacity: 1 !important; }
+.mk-pend-busy { pointer-events: none; }
+.mk-pend-busy > .mk-pend-fx, .mk-pend-done > .mk-pend-fx { opacity: 1; }
+.mk-pend-busy > .mk-pend-fx svg { animation: mk-pend-spin 800ms linear infinite; }
+.mk-pend-busy > .mk-pend-fx circle { stroke-dasharray: 40 57; opacity: .9; }
+.mk-pend-done > .mk-pend-fx svg {
+  animation: mk-pend-pop var(--mk-dur-spring-fast) var(--mk-ease-spring) both;
+}
+.mk-pend-done > .mk-pend-fx path {
+  stroke-dasharray: 22; stroke-dashoffset: 22;
+  animation: mk-pend-draw 260ms var(--mk-ease-spring-flat) 40ms forwards;
+}
+@keyframes mk-pend-spin { to { transform: rotate(1turn); } }
+@keyframes mk-pend-pop { from { transform: scale(.6); } to { transform: none; } }
+@keyframes mk-pend-draw { to { stroke-dashoffset: 0; } }
+:root[data-motion="reduced"] .mk-pend-busy > .mk-pend-fx svg { animation-duration: 2400ms; }
+:root[data-motion="reduced"] .mk-pend-done > .mk-pend-fx svg,
+:root[data-motion="reduced"] .mk-pend-done > .mk-pend-fx path { animation: none; stroke-dashoffset: 0; }
+
+/* ── Šķidrais indikators: MinkaMotion.liquid(ind, bar, tab) ───────────────
+   Malas uz dažādām atsperēm: kustības virzienā priekšējā mala ātra, aizmugurējā
+   lēna, tāpēc pile ceļā izstiepjas. JS ieraksta tikai left/right vienreiz. */
+.mk-liquid {
+  position: absolute;
+  transition:
+    left var(--mk-dur-spring-default) var(--mk-ease-spring),
+    right var(--mk-dur-spring-default) var(--mk-ease-spring),
+    opacity var(--mk-dur-effects-fast) var(--mk-ease-effects) !important;
+}
+.mk-liquid[data-dir="1"] {
+  transition:
+    left var(--mk-dur-spring-slow) var(--mk-ease-spring),
+    right var(--mk-dur-spring-fast) var(--mk-ease-spring),
+    opacity var(--mk-dur-effects-fast) var(--mk-ease-effects) !important;
+}
+.mk-liquid[data-dir="-1"] {
+  transition:
+    left var(--mk-dur-spring-fast) var(--mk-ease-spring),
+    right var(--mk-dur-spring-slow) var(--mk-ease-spring),
+    opacity var(--mk-dur-effects-fast) var(--mk-ease-effects) !important;
+}
+.mk-liquid.is-static { transition: none !important; }

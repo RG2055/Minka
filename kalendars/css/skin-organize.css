@@ -28,6 +28,12 @@
   transition:background-color .25s var(--pp-effects,ease),color .25s var(--pp-effects,ease),border-radius .35s var(--pp-spring,ease);}
 #worker-modal#worker-modal .org-tabs button:hover {background:color-mix(in srgb,var(--pp-on,#e3e7ee) 8%,transparent);color:var(--pp-on,#e3e7ee);}
 #worker-modal#worker-modal .org-tabs button.is-active {background:var(--pp-primary-c,#d6e3ff);color:var(--pp-on-primary-c,#0b1d36);}
+/* Liquid pill: it carries the selected colour once placed (MinkaMotion.liquid) */
+#worker-modal#worker-modal .org-tabs {position:relative;}
+#worker-modal#worker-modal .org-tabs > button {position:relative;z-index:1;}
+#worker-modal#worker-modal .org-tab-pill {position:absolute;z-index:0;border-radius:999px;background:var(--pp-primary-c,#d6e3ff);pointer-events:none;opacity:0;}
+#worker-modal#worker-modal .org-tabs.has-pill > .org-tab-pill {opacity:1;}
+#worker-modal#worker-modal .org-tabs.has-pill > button.is-active {background:transparent;}
 #worker-modal#worker-modal .org-tabs button:focus-visible {outline:2px solid var(--pp-primary,#a8c7fa);outline-offset:2px;}
 @media (max-width:560px){#worker-modal#worker-modal .org-tabs button{font-size:12.5px;height:40px}}
 

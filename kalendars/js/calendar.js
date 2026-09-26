@@ -7448,27 +7448,17 @@ function wmTabMotion(prevBtn, nextBtn, viewEl, dir) {
     pill.setAttribute('aria-hidden', 'true');
     bar.prepend(pill);
   }
-  // Reads first, then writes: one layout.
-  const barBox = bar.getBoundingClientRect();
-  const to = nextBtn.getBoundingClientRect();
-  const from = prevBtn && prevBtn !== nextBtn ? prevBtn.getBoundingClientRect() : null;
-  // Placed with left/top (a tiny absolute box, written once per switch) so
-  // the `scale` below stretches it from its own left edge.
-  pill.style.width = to.width + 'px';
-  pill.style.height = to.height + 'px';
-  pill.style.left = (to.left - barBox.left + bar.scrollLeft) + 'px';
-  pill.style.top = (to.top - barBox.top) + 'px';
   bar.classList.add('has-seg-pill');
-  if (!MM || !from) return;
+  // Liquid pill (MinkaMotion.liquid): its edges ride two springs, so it
+  // stretches toward the new tab and settles to its width. CSS runs it.
+  if (MM && MM.liquid) MM.liquid(pill, bar, nextBtn, { from: prevBtn, animate: !!(prevBtn && prevBtn !== nextBtn) });
+  if (!MM || !prevBtn || prevBtn === nextBtn) return;
   const tr = MM.travel();
-  MM.animate(pill, [
-    { translate: (from.left - to.left) + 'px 0', scale: (from.width / to.width) + ' 1' },
-    { translate: '0 0', scale: '1 1' }
-  ], 'spatial-fast');
+  // Content swap: a short fade with a few px of travel, no blur.
   if (viewEl) MM.animate(viewEl, [
-    { opacity: 0, translate: (24 * tr * dir) + 'px 0' },
+    { opacity: 0, translate: (6 * tr * dir) + 'px 0' },
     { opacity: 1, translate: '0 0' }
-  ], 'spatial-fast', { standard: true, measure: true });
+  ], 'spring-fast', { standard: true, measure: true });
 }
 
 // The appearance editor holds full card clones and effect pictures: free them

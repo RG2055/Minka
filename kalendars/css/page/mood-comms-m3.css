@@ -54,7 +54,7 @@
   --m3x-on-secondary-container: #fafafa;
   --m3x-fresh: #f97316;
   --m3x-on-fresh: #1a0c00;
-  --m3x-spring: cubic-bezier(.2, 1.1, .35, 1);
+  --m3x-spring: var(--mk-ease-spring, cubic-bezier(.2, 1.1, .35, 1));
   --m3x-standard: cubic-bezier(.2, 0, 0, 1);
   background: rgba(4, 4, 6, .76) !important;
 }
@@ -733,7 +733,7 @@
   --m3x-primary-container: #064e3b;
   --m3x-on-primary-container: #a7f3d0;
   --m3x-standard: cubic-bezier(.2, 0, 0, 1);
-  --m3x-spring: cubic-bezier(.2, 1.1, .35, 1);
+  --m3x-spring: var(--mk-ease-spring, cubic-bezier(.2, 1.1, .35, 1));
   position: fixed !important;
   inset: 0 !important;
   z-index: 2147483150 !important;

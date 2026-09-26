@@ -2712,10 +2712,18 @@
       if (!event.target.closest('.rg-mood-note-save')) return;
       saveButton.disabled = true;
       errorLine.textContent = '';
-      postOwnMood(day, emoji, field.value).then(function (result) {
-        if (result.ok) { closeMoodNote(); return; }
+      var work = postOwnMood(day, emoji, field.value).then(function (result) {
+        if (result.ok) return result;
         errorLine.textContent = result.error || 'Neizdevās.';
         saveButton.disabled = false;
+        return false;
+      });
+      // Label → spinner → check, then the sheet closes once the check is drawn.
+      var MM = window.MinkaMotion;
+      (MM && MM.pending ? MM.pending(saveButton, work) : work).then(function (result) {
+        if (!result) return;
+        if (MM && MM.pending && MM.level() !== 'reduced') window.setTimeout(closeMoodNote, 380);
+        else closeMoodNote();
       });
     });
     window.setTimeout(function () { field.focus(); }, 60);
@@ -3147,7 +3155,7 @@
         if (!ownedToken) {
           commsStatus.textContent = 'Šī vecā ziņa ir tikai lasāma';
           save.disabled = false;
-          return;
+          return false;
         }
         try {
           await fetchFeedback('/api/feedback/message', {
@@ -3157,7 +3165,7 @@
         } catch (_error) {
           commsStatus.textContent = 'Neizdevās rediģēt';
           save.disabled = false;
-          return;
+          return false;
         }
       }
     } else {
@@ -3293,7 +3301,7 @@
     localStorage.setItem(COMMUNITY_AUTHOR_KEY, commsAuthor.value);
   });
   textarea.addEventListener('keydown', function (event) {
-    if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) { event.preventDefault(); saveText(); }
+    if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) { event.preventDefault(); sendWithMotion(); }
   });
 
   list.addEventListener('click', function (event) {
@@ -3344,7 +3352,13 @@
   });
   textarea.addEventListener('input', updateTextState);
   commsTopicInput.addEventListener('input', syncTopicEmojiButton);
-  save.addEventListener('click', saveText);
+  // Send button: arrow → spinner → check (MinkaMotion.pending), no layout change.
+  function sendWithMotion() {
+    if (!textarea.value.trim()) return saveText();
+    var MM = window.MinkaMotion;
+    return MM && MM.pending ? MM.pending(save, saveText) : saveText();
+  }
+  save.addEventListener('click', sendWithMotion);
   moreButton.addEventListener('click', function () { loadMessages(false); });
   document.addEventListener('keydown', function (event) {
     if (event.key === 'Escape' && !modal.hidden && !commsClosing) closeModal();

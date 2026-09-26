@@ -1,0 +1,176 @@
+/* ── Bolusa maiņa: M3 Expressive (kā pārējā Minka) ──────────────────────
+   Ielādē index.html pašās beigās, pēc visiem vecajiem bolus slāņiem.
+   Iekārtas ilustrācija (ctmotion-*) paliek kā saturs; viss apkārt — virsmas,
+   formas, pogas, čipi, lauki, vēsture — nāk no css/mk-sys.css tokeniem.
+   Telpas akcents: GE zils, Philips zaļš. Tikai plakanas krāsas, bez
+   gradientiem un mirdzumiem; formu maiņa uz kopīgās atsperes. */
+#bolus-overlay {
+  --bm-surface: var(--mk-sys-surface, #0c0f14);
+  --bm-c-low: var(--mk-sys-surface-container-low, #101318);
+  --bm-c-high: var(--mk-sys-surface-container-high, #1a1f27);
+  --bm-c-highest: var(--mk-sys-surface-container-highest, #222933);
+  --bm-on: var(--mk-sys-on-surface, #e6ebf2);
+  --bm-on-var: var(--mk-sys-on-surface-variant, #a9b3c1);
+  --bm-outline: var(--mk-sys-outline-variant, #262c36);
+  --bm-font: var(--font-ui, 'Geist Sans', system-ui, sans-serif);
+  --bm-time: var(--font-time, 'Geist Mono', ui-monospace, monospace);
+  --bm-spring: var(--mk-dur-spring-default, 560ms) var(--mk-ease-spring, ease);
+  --bm-spring-fast: var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, ease);
+  --bm-fx: var(--mk-dur-effects-fast, 150ms) var(--mk-ease-effects, ease);
+}
+#bolus-overlay .brc[data-room="ge"] { --room-col: #5aa9ff; --room-on: #00243f; --room-cont: #12304d; --room-on-cont: #d3e8ff; }
+#bolus-overlay .brc[data-room="philips"] { --room-col: #4fdb86; --room-on: #00391c; --room-cont: #113a24; --room-on-cont: #c6f5d6; }
+
+/* ── Virsma un galvene ── */
+#bolus-overlay #bolus-sheet { background: var(--bm-surface) !important; border: 0 !important; box-shadow: none !important; color: var(--bm-on) !important; }
+#bolus-overlay #bolus-title-bar { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 12px 20px 8px !important; align-items: center !important; }
+#bolus-overlay #bolus-title { display: flex !important; flex-direction: column !important; gap: 3px !important; letter-spacing: 0 !important; text-shadow: none !important; }
+#bolus-overlay .bolus-main-title { font: 700 22px/1.15 var(--bm-font) !important; letter-spacing: -.01em !important; text-transform: none !important; color: var(--bm-on) !important; }
+#bolus-overlay :is(#bolus-guide-btn, #bolus-tops-btn) {
+  display: inline-flex !important; align-items: center !important; gap: 8px !important;
+  height: 40px !important; padding: 0 16px 0 12px !important; border: 0 !important; border-radius: 999px !important;
+  background: var(--bm-c-highest) !important; color: var(--bm-on) !important;
+  font: 600 14px/1 var(--bm-font) !important; letter-spacing: 0 !important; text-transform: none !important; box-shadow: none !important;
+  transition: border-radius var(--bm-spring-fast), background-color var(--bm-fx) !important;
+}
+#bolus-overlay #bolus-guide-btn b { display: grid !important; place-items: center !important; width: 20px !important; height: 20px !important; border: 0 !important; border-radius: 50% !important; background: var(--bm-on) !important; color: var(--bm-surface) !important; font: 700 12px/1 var(--bm-font) !important; }
+#bolus-overlay #bolus-tops-btn { background: var(--mk-sys-tertiary-container, #45320d) !important; color: var(--mk-sys-on-tertiary-container, #ffe2a8) !important; }
+#bolus-overlay #bolus-tops-btn.on { background: var(--mk-sys-tertiary, #f5b73f) !important; color: var(--mk-sys-on-tertiary, #3f2a00) !important; }
+#bolus-overlay #bolus-close-btn {
+  display: grid !important; place-items: center !important; width: 40px !important; height: 40px !important; padding: 0 !important;
+  border: 0 !important; border-radius: 50% !important; background: var(--bm-c-high) !important; color: var(--bm-on) !important;
+  font: 400 18px/1 var(--bm-font) !important; box-shadow: none !important;
+  transition: border-radius var(--bm-spring-fast), background-color var(--bm-fx) !important;
+}
+#bolus-overlay :is(#bolus-guide-btn, #bolus-tops-btn, #bolus-close-btn):hover { filter: none !important; background-image: linear-gradient(rgba(255,255,255,.08), rgba(255,255,255,.08)) !important; }
+#bolus-overlay :is(#bolus-guide-btn, #bolus-tops-btn, #bolus-close-btn):active { border-radius: 12px !important; }
+#bolus-overlay #bolus-tops { margin: 8px 20px 0 !important; padding: 14px 18px !important; border: 0 !important; border-radius: 24px !important; background: var(--mk-sys-tertiary-container, #45320d) !important; }
+#bolus-overlay .btops-h { font: 600 13px/1.2 var(--bm-font) !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--mk-sys-on-tertiary-container, #ffe2a8) !important; }
+#bolus-overlay .btops-row { font: 500 14px/1.3 var(--bm-font) !important; color: var(--mk-sys-on-tertiary-container, #ffe2a8) !important; }
+
+/* ── Telpu kartītes ── */
+#bolus-overlay #bolus-rooms { background: transparent !important; gap: 12px !important; padding: 4px 16px 16px !important; }
+#bolus-overlay .brc[data-room] { background: var(--bm-c-low) !important; border: 0 !important; border-radius: 28px !important; box-shadow: none !important; padding: 8px 20px 16px !important; }
+#bolus-overlay .brc[data-room] .brn { left: 24px !important; top: 18px !important; font: 700 26px/1 var(--bm-font) !important; letter-spacing: -.01em !important; color: var(--room-col) !important; text-shadow: none !important; }
+/* Izvērstā vēsture (Visi): nosaukums ir absolūts, tāpēc pirmā režģa rinda
+   tam jāatvēl, citādi "Vēsture" uzklājas virsū. */
+#bolus-overlay .brc[data-room]:has(.bhist.is-all) { grid-template-rows: 48px auto minmax(0, 1fr) !important; }
+#bolus-overlay .brc[data-room] :is(.bnm-label, .bhist-lbl, .bwd-lbl) { font: 600 13px/1.2 var(--bm-font) !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--bm-on-var) !important; text-shadow: none !important; }
+#bolus-overlay .brc[data-room] .bhist-cnt { font: 600 12px/1 var(--bm-font) !important; padding: 3px 8px !important; border: 0 !important; border-radius: 999px !important; background: var(--bm-c-high) !important; color: var(--bm-on-var) !important; }
+
+/* ── Galvenā darbība: liela pile; nospiežot forma saraujas uz atsperes ── */
+#bolus-overlay .brc[data-room] .bnm-begin {
+  min-height: 72px !important; border: 0 !important; border-radius: 999px !important;
+  background: var(--room-col) !important; color: var(--room-on) !important;
+  font: 600 20px/1 var(--bm-font) !important; letter-spacing: 0 !important; text-transform: none !important;
+  box-shadow: none !important; outline: 0 !important;
+  transition: border-radius var(--bm-spring), background-color var(--bm-fx) !important;
+}
+#bolus-overlay .brc[data-room] .bnm-begin:hover { background: color-mix(in srgb, var(--room-col) 88%, #fff) !important; outline: 0 !important; }
+#bolus-overlay .brc[data-room] .bnm-begin:focus-visible { outline: 2px solid var(--mk-sys-secondary, #64d2ff) !important; outline-offset: 3px !important; }
+#bolus-overlay .brc[data-room] .bnm-begin:active { border-radius: 20px !important; }
+#bolus-overlay .brc[data-room] .bnm-who-hint { font: 600 16px/1.3 var(--bm-font) !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--bm-on-var) !important; }
+
+/* ── Operators: dienas pārslēgs + filtru čipi ── */
+#bolus-overlay .brc[data-room] .bwd-nav { align-items: center !important; gap: 8px !important; }
+#bolus-overlay .brc[data-room] .bwd-arr { display: grid !important; place-items: center !important; width: 32px !important; height: 32px !important; padding: 0 !important; border: 0 !important; border-radius: 50% !important; background: var(--bm-c-high) !important; color: var(--bm-on) !important; box-shadow: none !important; font: 500 18px/1 var(--bm-font) !important; }
+#bolus-overlay .brc[data-room] .bwrap { gap: 8px !important; }
+#bolus-overlay #bolus-sheet .brc[data-room] :is(.bwc, .bwcits, .bwblank) {
+  min-height: 40px !important; padding: 0 12px !important; border: 0 !important; border-radius: 12px !important;
+  background: var(--bm-c-high) !important; color: var(--bm-on) !important;
+  font: 600 14px/1 var(--bm-font) !important; letter-spacing: 0 !important; text-transform: none !important; box-shadow: none !important;
+  transition: border-radius var(--bm-spring-fast), background-color var(--bm-fx), color var(--bm-fx) !important;
+}
+#bolus-overlay #bolus-sheet .brc[data-room] :is(.bwc, .bwcits, .bwblank):hover { background: var(--bm-c-highest) !important; }
+#bolus-overlay #bolus-sheet .brc[data-room] :is(.bwc, .bwcits, .bwblank):active,
+#bolus-overlay #bolus-sheet .brc[data-room] :is(.bwc, .bwcits, .bwblank).bwsel { border-radius: 20px !important; }
+#bolus-overlay #bolus-sheet .brc[data-room] :is(.bwc, .bwcits, .bwblank).bwsel { background: var(--room-cont) !important; color: var(--room-on-cont) !important; }
+#bolus-overlay #bolus-sheet .bname-cits { height: 44px !important; border: 0 !important; border-radius: 12px !important; background: var(--bm-c-highest) !important; color: var(--bm-on) !important; caret-color: var(--room-col, #5aa9ff) !important; font: 500 15px/1 var(--bm-font) !important; box-shadow: inset 0 -2px 0 var(--room-col, #5aa9ff) !important; }
+
+/* ── Laiks: aizpildīti lauki, ikonu pogas, Saglabāt pile ── */
+#bolus-overlay .brc[data-room] .bnm-native-field > span { font: 600 12px/1.2 var(--bm-font) !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--bm-on-var) !important; }
+#bolus-overlay .brc[data-room] .bnm-native-field input {
+  height: 56px !important; border: 0 !important; border-radius: 16px !important;
+  background: var(--bm-c-highest) !important; color: var(--bm-on) !important;
+  font-family: var(--bm-time) !important; font-weight: 600 !important; box-shadow: none !important; outline: 0 !important;
+  transition: box-shadow var(--bm-fx) !important;
+}
+#bolus-overlay .brc[data-room] .bnm-native-field input:focus { box-shadow: inset 0 0 0 2px var(--room-col) !important; }
+#bolus-overlay .brc[data-room] .bnm-picker-btn { width: 40px !important; height: 40px !important; bottom: 8px !important; border: 0 !important; border-radius: 50% !important; background: transparent !important; color: var(--bm-on-var) !important; box-shadow: none !important; }
+#bolus-overlay .brc[data-room] .bnm-picker-btn:is(:hover, :focus-visible) { background: rgba(255,255,255,.08) !important; color: var(--bm-on) !important; outline: 0 !important; }
+#bolus-overlay .brc[data-room] :is(.bnm-savepick, .bnm-now) {
+  height: 52px !important; border: 0 !important; border-radius: 999px !important;
+  font: 600 16px/1 var(--bm-font) !important; letter-spacing: 0 !important; text-transform: none !important; box-shadow: none !important;
+  transition: border-radius var(--bm-spring), background-color var(--bm-fx) !important;
+}
+#bolus-overlay .brc[data-room] .bnm-savepick { background: var(--room-col) !important; color: var(--room-on) !important; }
+#bolus-overlay .brc[data-room] .bnm-now { background: var(--bm-c-highest) !important; color: var(--bm-on) !important; }
+#bolus-overlay .brc[data-room] :is(.bnm-savepick, .bnm-now):active { border-radius: 16px !important; }
+#bolus-overlay .brc[data-room] .bnm-last { font: 500 12px/1.3 var(--bm-font) !important; color: var(--bm-on-var) !important; letter-spacing: 0 !important; text-transform: none !important; }
+#bolus-overlay .brc[data-room] :is(.bnm-caldrop, .bnm-tpdrop) { border: 0 !important; border-radius: 20px !important; background: var(--bm-c-high) !important; }
+#bolus-overlay .brc[data-room] :is(.bnm-cnav, .bnm-tpa) { border: 0 !important; border-radius: 999px !important; background: var(--bm-c-highest) !important; color: var(--bm-on) !important; }
+#bolus-overlay .brc[data-room] .bcd { border-radius: 999px !important; }
+#bolus-overlay .brc[data-room] .bcd.bcd-s { background: var(--room-col) !important; color: var(--room-on) !important; }
+
+/* ── Iekārtas rīkjosla: tonālas mazās pogas telpas krāsā ── */
+#bolus-overlay .ctmotion-toolbar :is(.bmedia-preset, .bmedia-clear) { height: 26px !important; padding: 0 10px !important; border: 0 !important; border-radius: 999px !important; background: var(--bm-c-high) !important; color: var(--room-col, #5aa9ff) !important; font: 600 11px/1 var(--bm-font) !important; letter-spacing: 0 !important; text-transform: none !important; }
+
+/* Rīkjosla pārcelta uz kartītes galvenes rindu (līdzās telpas nosaukumam),
+   ievades kolonnas sākumā: iekārta ir pacelta par 35px, un vecajā vietā
+   pogas gūlās virsū NaCl pudelei. */
+#bolus-overlay .brc[data-room] .ctmotion-toolbar { top: -38px !important; left: calc(100% + 12px) !important; right: auto !important; gap: 8px !important; z-index: 10 !important; }
+/* Šaurā ekrānā iekārta aizņem visu platumu: pie kartītes labās malas. */
+@media (max-width: 560px) {
+  #bolus-overlay .brc[data-room] .ctmotion-toolbar { left: auto !important; right: -16px !important; }
+}
+
+/* ── Vēsture: saraksts ar dalītājiem, čips vārdam, ikonu pogas ── */
+#bolus-overlay .brc[data-room] .bhist-hdr { align-items: center !important; gap: 8px !important; border: 0 !important; }
+#bolus-overlay .brc[data-room] .bhist { background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; padding: 0 0 8px !important; }
+#bolus-overlay .brc[data-room] .bhist-row { border-bottom: 1px solid var(--bm-outline) !important; color: var(--bm-on) !important; font-family: var(--bm-font) !important; }
+#bolus-overlay .brc[data-room] .bhist-num { color: var(--bm-on-var) !important; font: 500 12px/1 var(--bm-time) !important; }
+#bolus-overlay .brc[data-room] .bhist-time { color: var(--bm-on) !important; font: 600 13px/1 var(--bm-time) !important; }
+#bolus-overlay .brc[data-room] .bhist-who { justify-self: start !important; width: auto !important; max-width: 100% !important; text-transform: none !important; letter-spacing: 0 !important; border: 0 !important; border-radius: 8px !important; background: var(--room-cont) !important; color: var(--room-on-cont) !important; font: 600 12px/1 var(--bm-font) !important; padding: 5px 10px !important; }
+#bolus-overlay .brc[data-room] .bhist-media { justify-self: start !important; width: auto !important; max-width: 100% !important; padding: 4px 10px !important; border: 0 !important; border-radius: 8px !important; background: var(--bm-c-high) !important; color: var(--bm-on-var) !important; font: 600 12px/1.2 var(--bm-font) !important; letter-spacing: 0 !important; text-transform: none !important; }
+#bolus-overlay .brc[data-room] .bhist-empty { font: 500 14px/1.4 var(--bm-font) !important; color: var(--bm-on-var) !important; letter-spacing: 0 !important; text-transform: none !important; }
+#bolus-overlay .brc[data-room] .bhist-toggle { height: 32px !important; padding: 0 14px !important; border: 0 !important; border-radius: 999px !important; background: var(--room-cont) !important; color: var(--room-on-cont) !important; font: 600 13px/1 var(--bm-font) !important; letter-spacing: 0 !important; text-transform: none !important; }
+#bolus-overlay .brc[data-room] .bhist-toggle:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--room-cont) 80%, #fff) !important; }
+#bolus-overlay .brc[data-room] :is(.bh-edit, .bh-del) { border: 0 !important; border-radius: 50% !important; background: transparent !important; color: var(--bm-on-var) !important; box-shadow: none !important; }
+#bolus-overlay .brc[data-room] :is(.bh-edit, .bh-del):hover { background: rgba(255,255,255,.08) !important; color: var(--bm-on) !important; }
+#bolus-overlay #bolus-sheet .bhist-row:is(.bhist-editing, .bhist-deleting) { border: 0 !important; border-radius: 20px !important; background: var(--bm-c-high) !important; padding: 12px !important; }
+#bolus-overlay #bolus-sheet .bhist-editing :is(.bhe-dt, .bhe-nm) { height: 44px !important; border: 0 !important; border-radius: 12px !important; background: var(--bm-c-highest) !important; color: var(--bm-on) !important; font-family: var(--bm-font) !important; }
+#bolus-overlay #bolus-sheet .bhist-editing :is(.bhe-dt, .bhe-nm):focus { box-shadow: inset 0 0 0 2px var(--room-col, #5aa9ff) !important; outline: 0 !important; }
+#bolus-overlay #bolus-sheet :is(.bhist-editing, .bhist-deleting) .bhe-btns > button { min-height: 40px !important; border: 0 !important; border-radius: 999px !important; font: 600 14px/1 var(--bm-font) !important; letter-spacing: 0 !important; text-transform: none !important; background: var(--bm-c-highest) !important; color: var(--bm-on) !important; }
+
+#bolus-overlay #bolus-sheet .bhist-editing .bhe-btns > .bhe-save { background: var(--room-col, #5aa9ff) !important; color: var(--room-on, #00243f) !important; }
+#bolus-overlay #bolus-sheet .bhist-deleting .bhe-btns > .bhx-yes { background: var(--mk-sys-error, #ff5c5c) !important; color: var(--mk-sys-on-error, #410003) !important; }
+#bolus-overlay #bolus-sheet :is(.bhe-head, .bhx-q) { font: 600 14px/1.3 var(--bm-font) !important; color: var(--bm-on) !important; letter-spacing: 0 !important; text-transform: none !important; }
+
+/* ── Pamācība: rāmis un pogas M3 formā ── */
+#bolus-overlay .bolus-guide-box { border: 0 !important; border-radius: 28px !important; }
+#bolus-overlay .bolus-guide-done { border: 0 !important; border-radius: 999px !important; min-height: 44px !important; padding: 0 24px !important; font: 600 15px/1 var(--bm-font) !important; letter-spacing: 0 !important; text-transform: none !important; }
+#bolus-overlay .bolus-guide-close { border-radius: 50% !important; }
+
+/* ── Šaurs ekrāns: galvenes pogas tikai ar ikonu, virsraksts vienā rindā ── */
+@media (max-width: 600px) {
+  #bolus-overlay #bolus-title { flex: 1 1 auto !important; min-width: 0 !important; }
+  #bolus-overlay .bolus-main-title { white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+  #bolus-overlay :is(#bolus-guide-btn, #bolus-tops-btn) { width: 40px !important; padding: 0 !important; justify-content: center !important; }
+  #bolus-overlay :is(#bolus-guide-btn, #bolus-tops-btn) > span { display: none !important; }
+}
+
+/* ── Zems logs (plats, bet ne augsts): iekārta mazāka, vēsture garāka ──────
+   Iekārtas zīmējums ir fiksēti 500px augsts; zemā logā tas atņēma vēsturei
+   vietu (redzamas tikai 3 rindas). --bm-dz samazina zīmējumu pēc loga
+   augstuma tā, lai vēsturei paliek vismaz ~5 rindas. Tikai divu kartīšu
+   izkārtojumā; izvēles režīms (is-choosing) paliek kā bija. */
+@media (min-width: 1101px) {
+  #bolus-overlay .brc[data-room]:not(:has(.bhist.is-all)):not(:has(.ctmotion-media-stage.is-choosing)) { grid-template-rows: 40px auto auto minmax(82px, 1fr) !important; }
+  #bolus-overlay .brc[data-room] .ctmotion-media-stage:not(.is-choosing) { height: calc(500px * var(--bm-dz, 1)) !important; min-height: calc(500px * var(--bm-dz, 1)) !important; }
+  #bolus-overlay .brc[data-room] .ctmotion-media-stage:not(.is-choosing) .ctmotion-reference { zoom: var(--bm-dz, 1); }
+}
+@media (min-width: 1101px) and (max-height: 860px) { #bolus-overlay { --bm-dz: .85; } }
+@media (min-width: 1101px) and (max-height: 800px) { #bolus-overlay { --bm-dz: .75; } }
+@media (min-width: 1101px) and (max-height: 740px) { #bolus-overlay { --bm-dz: .62; } }
+@media (min-width: 1101px) and (max-height: 680px) { #bolus-overlay { --bm-dz: .5; } }
+@media (min-width: 1101px) and (max-height: 620px) { #bolus-overlay { --bm-dz: .42; } }

@@ -60,9 +60,19 @@
     row.innerHTML = TABS.map(function (t) { return '<button type="button" role="tab" data-org-tab="' + t[0] + '">' + t[1] + '</button>'; }).join('');
     tabs.before(row); tabs.hidden = true;
 
+    // Liquid pill behind the selected tab (MinkaMotion.liquid, CSS springs).
+    var pill = document.createElement('span'); pill.className = 'org-tab-pill'; pill.setAttribute('aria-hidden', 'true'); row.prepend(pill);
+    // Width changes (window resize, the panel first shown) re-seat it without motion.
+    if (window.ResizeObserver) new ResizeObserver(function () {
+      var t = row.querySelector('.is-active');
+      if (t && window.MinkaMotion && window.MinkaMotion.liquid && window.MinkaMotion.liquid(pill, row, t, { animate: false })) row.classList.add('has-pill');
+    }).observe(row);
     function show(name) {
       current = name;
+      var prevTab = row.querySelector('.is-active');
       row.querySelectorAll('[data-org-tab]').forEach(function (b) { var on = b.dataset.orgTab === name; b.classList.toggle('is-active', on); b.setAttribute('aria-selected', String(on)); });
+      var MM = window.MinkaMotion, nextTab = row.querySelector('.is-active');
+      if (MM && MM.liquid && nextTab && MM.liquid(pill, row, nextTab, { from: prevTab, animate: !!prevTab && prevTab !== nextTab })) row.classList.add('has-pill');
       var faceTab = orig('face');
       if (name === 'presets') { orig('presets') && orig('presets').click(); face.removeAttribute('data-org'); return; }
       if (name === 'effects') { (orig('addons') || orig('details')).click(); face.removeAttribute('data-org'); effectThumbs(); return; }

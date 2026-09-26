@@ -741,8 +741,7 @@
     else delete _data[_activeWorker];
     refreshAllCards();
     if (dot) dot.className = 'mkp-sync-dot mkp-syncing';
-    if (saveBtn) saveBtn.textContent = 'Saglabā...';
-    var state = await saveToGist(_activeWorker);
+    var state = await savingMotion(saveBtn, saveToGist(_activeWorker));
     if (dot) dot.className = 'mkp-sync-dot ' + (
       state === 'github' ? 'mkp-ok' :
       state === 'local' ? 'mkp-local' :
@@ -750,9 +749,17 @@
     );
     if (text) text.textContent =
       state === 'error' ? 'Kļūda' : 'Saglabāts';
-    if (saveBtn) saveBtn.textContent =
-      state === 'error' ? 'Kļūda' : 'Saglabāts';
+    if (saveBtn && state === 'error') saveBtn.textContent = 'Kļūda';
     setTimeout(closePicker, 700);
+  }
+
+  // Save button: label → spinner → check (MinkaMotion.pending); an error
+  // state gets no check. Resolves with the save state.
+  function savingMotion(btn, work) {
+    var MM = window.MinkaMotion;
+    if (!btn || !MM || !MM.pending) return work;
+    var flagged = Promise.resolve(work).then(function (st) { return st === 'error' ? false : st; });
+    return MM.pending(btn, flagged).then(function (st) { return st === false ? 'error' : st; });
   }
 
   function openPicker(workerName, anchorEl) {
@@ -1893,8 +1900,7 @@
       else delete _data[workerName];
       refreshAllCards();
       if (dot) dot.className = 'mkp-sync-dot mkp-syncing';
-      saveBtn.textContent = 'Saglabā...';
-      var state = await saveToGist(workerName);
+      var state = await savingMotion(saveBtn, saveToGist(workerName));
       if (dot) dot.className = 'mkp-sync-dot ' + (
         state === 'github' ? 'mkp-ok' :
         state === 'local' ? 'mkp-local' :
@@ -1902,8 +1908,7 @@
       );
       if (syncText) syncText.textContent =
         state === 'error' ? 'Kļūda' : 'Saglabāts';
-      saveBtn.textContent =
-        state === 'error' ? 'Kļūda' : 'Saglabāts';
+      if (state === 'error') saveBtn.textContent = 'Kļūda';
     });
   }
 

@@ -43,6 +43,16 @@
     effects: 'cubic-bezier(.31, .94, .34, 1.00)',
     exit: 'cubic-bezier(.3, 0, .8, .15)'
   };
+  // Mirrors --mk-ease-spring / --mk-ease-spring-flat in css/mk-sys.css
+  // (scripts/build-spring-easing.mjs). linear() lets the browser run the
+  // spring itself; older engines get the nearest cubic-bezier.
+  var HAS_LINEAR = !!(window.CSS && CSS.supports && CSS.supports('transition-timing-function', 'linear(0, 1)'));
+  EASE.spring = HAS_LINEAR
+    ? 'linear(0, 0.0055 1.3%, 0.0247 2.8%, 0.0549 4.3%, 0.1006 6%, 0.1962 9%, 0.4271 15.5%, 0.528 18.5%, 0.6268 21.8%, 0.7064 24.8%, 0.7744 27.8%, 0.8354 31%, 0.8842 34.3%, 0.9248 37.8%, 0.9567 41.5%, 0.9801 45.5%, 0.9967 50%, 1.0068 55.3%, 1.0109 65.8%, 1)'
+    : 'cubic-bezier(.2, .9, .25, 1)';
+  EASE.springFlat = HAS_LINEAR
+    ? 'linear(0, 0.004 1%, 0.0188 2.3%, 0.0422 3.5%, 0.0788 5%, 0.1611 7.8%, 0.3622 13.8%, 0.465 17%, 0.5574 20.3%, 0.6378 23.5%, 0.7063 26.8%, 0.7676 30.3%, 0.8174 33.8%, 0.86 37.5%, 0.899 42%, 0.929 46.8%, 0.9532 52.3%, 0.9711 58.5%, 0.9914 73.8%, 1)'
+    : 'cubic-bezier(.2, .8, .3, 1)';
   // Mirrors css/mk-sys.css. [duration, expressive easing, standard easing]
   var TOKENS = {
     full: {
@@ -51,7 +61,10 @@
       'spatial-slow': [650, EASE.expressiveSlow, EASE.standard],
       'effects-fast': [150, EASE.effects, EASE.effects],
       'effects-default': [200, EASE.effects, EASE.effects],
-      'effects-slow': [300, EASE.effects, EASE.effects]
+      'effects-slow': [300, EASE.effects, EASE.effects],
+      'spring-fast': [420, EASE.spring, EASE.springFlat],
+      'spring-default': [560, EASE.spring, EASE.springFlat],
+      'spring-slow': [720, EASE.spring, EASE.springFlat]
     },
     lite: {
       'spatial-fast': [320, EASE.standard, EASE.standard],
@@ -59,7 +72,10 @@
       'spatial-slow': [480, EASE.standard, EASE.standard],
       'effects-fast': [150, EASE.effects, EASE.effects],
       'effects-default': [200, EASE.effects, EASE.effects],
-      'effects-slow': [260, EASE.effects, EASE.effects]
+      'effects-slow': [260, EASE.effects, EASE.effects],
+      'spring-fast': [420, EASE.springFlat, EASE.springFlat],
+      'spring-default': [520, EASE.springFlat, EASE.springFlat],
+      'spring-slow': [620, EASE.springFlat, EASE.springFlat]
     },
     reduced: {
       'spatial-fast': [120, EASE.effects, EASE.effects],
@@ -67,7 +83,10 @@
       'spatial-slow': [150, EASE.effects, EASE.effects],
       'effects-fast': [100, EASE.effects, EASE.effects],
       'effects-default': [120, EASE.effects, EASE.effects],
-      'effects-slow': [150, EASE.effects, EASE.effects]
+      'effects-slow': [150, EASE.effects, EASE.effects],
+      'spring-fast': [100, EASE.effects, EASE.effects],
+      'spring-default': [120, EASE.effects, EASE.effects],
+      'spring-slow': [150, EASE.effects, EASE.effects]
     }
   };
   var TRAVEL = { full: 1, lite: .5, reduced: 0 };
@@ -291,11 +310,13 @@
       // viewport reads as a wobble and is the heaviest frame to composite.
       var box = el.getBoundingClientRect();
       var big = box.width * box.height > .6 * window.innerWidth * window.innerHeight;
-      anims.push(animate(el, [{ translate: pose.translate, scale: pose.scale }, { translate: '0 0', scale: '1' }], big ? 'spatial-fast' : 'spatial-default', { measure: true, standard: big }));
+      // One spring (≈1 % overshoot), the same the controls use; full-screen
+      // layers take the flat one.
+      anims.push(animate(el, [{ translate: pose.translate, scale: pose.scale }, { translate: '0 0', scale: '1' }], big ? 'spring-fast' : 'spring-default', { measure: true, standard: big }));
     } else if (opts.from === 'bottom') {
-      anims.push(animate(el, [{ translate: '0 ' + Math.round(48 * tr) + 'px' }, { translate: '0 0' }], 'spatial-default', { measure: true }));
+      anims.push(animate(el, [{ translate: '0 ' + Math.round(48 * tr) + 'px' }, { translate: '0 0' }], 'spring-default', { measure: true }));
     } else {
-      anims.push(animate(el, [{ translate: '0 ' + Math.round(20 * tr) + 'px', scale: String(1 - .06 * tr) }, { translate: '0 0', scale: '1' }], 'spatial-default', { measure: true }));
+      anims.push(animate(el, [{ translate: '0 ' + Math.round(20 * tr) + 'px', scale: String(1 - .06 * tr) }, { translate: '0 0', scale: '1' }], 'spring-default', { measure: true }));
     }
     anims.push(animate(el, [{ opacity: 0 }, { opacity: 1 }], 'effects-fast'));
     if (opts.scrim) anims.push(animate(opts.scrim, [{ opacity: scrimFrom }, { opacity: 1 }], 'effects-default'));
@@ -315,7 +336,7 @@
     var pose = poseFrom(rectOf(opts.origin), el);
     var anims = [];
     if (pose) {
-      anims.push(animate(el, [{ translate: '0 0', scale: '1' }, { translate: pose.translate, scale: pose.scale }], 'spatial-fast', { standard: true, fill: 'forwards' }));
+      anims.push(animate(el, [{ translate: '0 0', scale: '1' }, { translate: pose.translate, scale: pose.scale }], 'spring-fast', { standard: true, fill: 'forwards' }));
       anims.push(animate(el, [{ opacity: 1 }, { opacity: 1, offset: .55 }, { opacity: 0 }], 'spatial-fast', { standard: true, fill: 'forwards' }));
     } else if (opts.from === 'bottom') {
       anims.push(animate(el, [{ translate: '0 0', opacity: 1 }, { translate: '0 ' + Math.round(48 * tr) + 'px', opacity: 0 }], 'effects-slow', { fill: 'forwards' }));
@@ -389,6 +410,90 @@
     }
   }
 
+  /* Liquid indicator: a pill that moves between tabs with its two edges on
+     different springs. The edge in the direction of travel leads (short
+     spring), the other trails (long spring), so the pill stretches on the
+     way and settles to the new tab's width. One write per switch; the
+     browser runs both transitions (.mk-liquid in css/mk-sys.css). */
+  function liquid(ind, bar, target, opts) {
+    opts = opts || {};
+    if (!ind || !bar || !target) return false;
+    function place(el, animate, dir) {
+      var b = bar.getBoundingClientRect(), t = el.getBoundingClientRect();
+      if (!t.width || !b.width) return false;         // not laid out: leave it
+      var x = t.left - b.left - bar.clientLeft + bar.scrollLeft;
+      var left = Math.round(x * 10) / 10;
+      var prev = parseFloat(ind.style.left);
+      ind.classList.add('mk-liquid');
+      ind.setAttribute('data-dir', dir || (isFinite(prev) && left < prev ? '-1' : '1'));
+      ind.classList.toggle('is-static', !animate);
+      if (opts.vertical !== false) {
+        ind.style.top = (Math.round((t.top - b.top - bar.clientTop + bar.scrollTop) * 10) / 10) + 'px';
+        ind.style.height = t.height + 'px';
+      }
+      ind.style.left = left + 'px';
+      ind.style.right = (Math.round((bar.clientWidth - x - t.width) * 10) / 10) + 'px';
+      return true;
+    }
+    var placed = ind.classList.contains('mk-liquid') && isFinite(parseFloat(ind.style.left));
+    var animate = opts.animate !== false;
+    // Never placed yet: start on the previous tab, then flow to the new one.
+    if (!placed && animate && opts.from && opts.from !== target && place(opts.from, false)) {
+      void ind.offsetWidth;                            // commit the start pose
+      placed = true;
+    }
+    return place(target, placed && animate);
+  }
+
+  /* Async button: label → spinner → check → label. The button keeps its box
+     (no layout change); only the content inside swaps. `work` is a promise
+     or a function returning one. Resolves/rejects with the work's result;
+     resolving to `false` counts as a failure (no check). */
+  var CHECK_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  var SPIN_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/></svg>';
+  function pending(btn, work, opts) {
+    opts = opts || {};
+    var p;
+    try { p = Promise.resolve(typeof work === 'function' ? work() : work); } catch (e) { p = Promise.reject(e); }
+    if (!btn || !btn.isConnected) return p;
+    // Bare text can't be faded on its own: wrap it once.
+    Array.prototype.slice.call(btn.childNodes).forEach(function (n) {
+      if (n.nodeType !== 3 || !n.nodeValue.trim()) return;
+      var s = document.createElement('span');
+      s.className = 'mk-pend-label';
+      btn.replaceChild(s, n);
+      s.appendChild(n);
+    });
+    var fx = btn.querySelector(':scope > .mk-pend-fx');
+    if (!fx) {
+      fx = document.createElement('span');
+      fx.className = 'mk-pend-fx';
+      fx.setAttribute('aria-hidden', 'true');
+      btn.appendChild(fx);
+    }
+    clearTimeout(btn.__mkPendT);
+    // Only show the spinner if the work is not instant: a local save that
+    // finishes in a frame goes straight to the check.
+    btn.__mkPendT = setTimeout(function () {
+      fx.innerHTML = SPIN_SVG;
+      btn.classList.remove('mk-pend-done');
+      btn.classList.add('mk-pend-busy');
+    }, opts.spinnerDelay == null ? 120 : opts.spinnerDelay);
+    btn.setAttribute('aria-busy', 'true');
+    var settle = function (ok) {
+      clearTimeout(btn.__mkPendT);
+      btn.removeAttribute('aria-busy');
+      btn.classList.remove('mk-pend-busy');
+      if (!ok || opts.check === false) { btn.classList.remove('mk-pend-done'); return; }
+      fx.innerHTML = CHECK_SVG;
+      btn.classList.add('mk-pend-done');
+      btn.__mkPendT = setTimeout(function () { btn.classList.remove('mk-pend-done'); }, opts.hold || 1100);
+    };
+    // Work that resolves to `false` failed without throwing: no check.
+    p.then(function (v) { settle(v !== false); }, function () { settle(false); });
+    return p;
+  }
+
   // Animations made elsewhere (the radio reveal) can be registered so that
   // atRest(key) knows about them.
   function track(key, anims) {
@@ -408,6 +513,8 @@
     token: token,
     animate: animate,
     flip: flip,
+    liquid: liquid,
+    pending: pending,
     run: run,
     measure: measure,
     report: report,

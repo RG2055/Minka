@@ -2513,18 +2513,18 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   pointer-events: none !important;
 }
 .shift-stop.is-exiting .shift-stop-dot {
-  animation: shiftStopFadeOut .7s ease forwards !important;
+  animation: shiftStopFadeOut .32s var(--mk-ease-exit, ease-in) forwards !important;
 }
+/* Exit without blur: fade with a few px of travel (filter was a per-frame
+   raster on weak PCs). */
 @keyframes shiftStopFadeOut {
   0% {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
-    filter: blur(0);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.55);
-    filter: blur(1px);
+    transform: translate(-50%, calc(-50% + 3px)) scale(0.7);
   }
 }
 #shift-stop-popover {

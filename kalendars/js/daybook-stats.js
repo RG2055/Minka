@@ -689,16 +689,20 @@
     if (key !== chrome.names) { chrome.names = key; chrome.select.innerHTML = personOptions(names); }
     chrome.select.value = state.person || '';
   }
-  // One read (the selected tab's box), one transform write.
+  // Liquid underline (MinkaMotion.liquid): one read, one left/right write;
+  // the edges ride two springs in CSS.
   function placeIndicator(animate) {
     if (!chrome || !chrome.indicator) return;
     var sel = chrome.tablist.querySelector('[aria-selected="true"]');
     var ind = chrome.indicator;
     if (!sel) { ind.style.opacity = '0'; return; }
-    var x = sel.offsetLeft, w = sel.offsetWidth;
-    ind.classList.toggle('is-static', !animate);
     ind.style.opacity = '1';
-    ind.style.transform = 'translateX(' + x + 'px) scaleX(' + w + ')';
+    if (window.MinkaMotion && window.MinkaMotion.liquid) {
+      window.MinkaMotion.liquid(ind, chrome.tablist, sel, { animate: !!animate, vertical: false });
+      return;
+    }
+    ind.style.left = sel.offsetLeft + 'px';
+    ind.style.width = sel.offsetWidth + 'px';
   }
   function bodyMotion(kind, info) {
     var MM = window.MinkaMotion, body = chrome.body;

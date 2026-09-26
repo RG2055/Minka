@@ -1,0 +1,103 @@
+/* ── Minka atsperes: slēdži ──────────────────────────────────────────────
+   Ielādē abi dokumenti pašās beigās (index.html un kalendars/index.html),
+   selektori trāpa tikai tur, kur vadīkla ir.
+
+   Slēdža poga ir novietota ar left + right (nevis translate), un abas malas
+   iet uz dažādām atsperēm (css/mk-sys.css): kustības virzienā priekšējā mala
+   ātra, aizmugurējā lēnāka, tāpēc poga ceļā izstiepjas un nosēžas. Pārlūks
+   to izpilda pats; JS kadros nestrādā. Nospiežot poga izplešas uz to pusi,
+   kurp ies. prefers-reduced-motion → ilgumi 0, pārslēdzas uzreiz. */
+
+/* Kopīgās pārejas: ieslēdzot vada labā mala, izslēdzot kreisā. */
+html body #worker-modal#worker-modal :is(.mk-switch, .mk-auto-toggle) > span::after,
+#slowFxPanel .slowfx-switch::after,
+#pioneerPixelGrid i::after {
+  transition:
+    left var(--mk-dur-spring-fast) var(--mk-ease-spring),
+    right var(--mk-dur-spring-default) var(--mk-ease-spring),
+    height var(--mk-dur-spring-fast) var(--mk-ease-spring),
+    background-color var(--mk-dur-effects-default) var(--mk-ease-effects) !important;
+}
+html body #worker-modal#worker-modal :is(.mk-switch, .mk-auto-toggle) > input:checked + span::after,
+#slowFxPanel .slowfx-keep-toggle input:checked + .slowfx-switch::after,
+#pioneerPixelGrid[aria-checked="true"] i::after {
+  transition:
+    left var(--mk-dur-spring-default) var(--mk-ease-spring),
+    right var(--mk-dur-spring-fast) var(--mk-ease-spring),
+    height var(--mk-dur-spring-fast) var(--mk-ease-spring),
+    background-color var(--mk-dur-effects-default) var(--mk-ease-effects) !important;
+}
+
+/* Izskats / emoji slēdži (M3 52×32, iekšpuse 48×28). Poga 16 → 24 px. */
+html body #worker-modal#worker-modal :is(.mk-switch, .mk-auto-toggle) > span::after {
+  left: 6px !important;
+  right: 26px !important;
+  width: auto !important;
+  height: 16px !important;
+  border-radius: 999px !important;
+}
+html body #worker-modal#worker-modal :is(.mk-switch, .mk-auto-toggle) > input:checked + span::after {
+  left: 22px !important;
+  right: 2px !important;
+  width: auto !important;
+  height: 24px !important;
+}
+html body #worker-modal#worker-modal :is(.mk-switch, .mk-auto-toggle):active > span::after {
+  right: 20px !important;
+  height: 26px !important;
+}
+html body #worker-modal#worker-modal :is(.mk-switch, .mk-auto-toggle):active > input:checked + span::after {
+  left: 16px !important;
+  right: 2px !important;
+  height: 26px !important;
+}
+
+/* Radio Slow FX "saglabāt toni" (iekšpuse 28×15, poga 11 px) */
+#slowFxPanel .slowfx-switch::after {
+  left: 2px;
+  right: 15px;
+  width: auto;
+  transform: none;
+}
+#slowFxPanel .slowfx-keep-toggle input:checked + .slowfx-switch::after {
+  left: 15px;
+  right: 2px;
+  transform: none;
+}
+#slowFxPanel .slowfx-keep-toggle:active .slowfx-switch::after { right: 11px; }
+#slowFxPanel .slowfx-keep-toggle:active input:checked + .slowfx-switch::after { left: 11px; right: 2px; }
+
+/* Radio "Pikseļu matrica" (iekšpuse 28×16, poga 12 px) */
+#pioneerPixelGrid i::after {
+  left: 2px;
+  right: 14px;
+  width: auto;
+}
+#pioneerPixelGrid[aria-checked="true"] i::after {
+  left: 14px;
+  right: 2px;
+}
+#pioneerPixelGrid:active i::after { right: 10px; }
+#pioneerPixelGrid[aria-checked="true"]:active i::after { left: 10px; right: 2px; }
+
+/* ── Slaideri: tieša manipulācija ────────────────────────────────────────
+   Vērtība seko pirkstam (dabīgais range). Satverot īkšķis uz atsperes
+   paaugas, atlaižot atsperīgi atgriežas — bez JS, tikai transform. */
+html body #worker-modal#worker-modal input[type="range"]::-webkit-slider-thumb,
+#radioWindow .fader::-webkit-slider-thumb,
+#slowFxPanel input[type="range"]::-webkit-slider-thumb {
+  transition:
+    transform var(--mk-dur-spring-fast) var(--mk-ease-spring),
+    background-color var(--mk-dur-effects-fast) var(--mk-ease-effects) !important;
+}
+html body #worker-modal#worker-modal input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.3) !important; }
+#radioWindow .fader:active::-webkit-slider-thumb,
+#slowFxPanel input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.35); }
+html body #worker-modal#worker-modal input[type="range"]::-moz-range-thumb,
+#radioWindow .fader::-moz-range-thumb,
+#slowFxPanel input[type="range"]::-moz-range-thumb {
+  transition: transform var(--mk-dur-spring-fast) var(--mk-ease-spring);
+}
+html body #worker-modal#worker-modal input[type="range"]:active::-moz-range-thumb,
+#radioWindow .fader:active::-moz-range-thumb,
+#slowFxPanel input[type="range"]:active::-moz-range-thumb { transform: scale(1.3); }

@@ -256,20 +256,17 @@
 }
 #stats-modal .db-tabs button:hover::before { opacity: var(--mk-state-hover); }
 #stats-modal .db-tabs button[aria-selected="true"] { color: var(--mk-sys-primary); }
-/* 1px wide, stretched by scaleX to the tab's width: moving it between tabs
-   is a compositor-only transform. */
+/* Liquid underline: left/right written once per switch by
+   MinkaMotion.liquid; the two edges ride different springs (.mk-liquid in
+   css/mk-sys.css), so it stretches toward the new tab and settles. */
 #stats-modal .db-tab-indicator {
   position: absolute;
-  left: 0;
   bottom: 0;
-  width: 1px;
   height: 3px;
+  border-radius: 3px 3px 0 0;
   background: var(--mk-sys-primary);
-  transform-origin: 0 0;
   pointer-events: none;
-  transition: transform var(--mk-dur-spatial-fast) var(--mk-ease-expressive-fast), opacity var(--mk-dur-effects-fast) var(--mk-ease-effects);
 }
-#stats-modal .db-tab-indicator.is-static { transition: none; }
 
 /* ── Body ───────────────────────────────────────────────────────────────── */
 #stats-modal .db-body { outline: none; }
