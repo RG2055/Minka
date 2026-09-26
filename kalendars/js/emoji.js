@@ -13,7 +13,7 @@
   var GIST_ID    = window.MINKA_GIST_ID    || SYNC_CFG.gistId    || '';
   var GIST_TOKEN = window.MINKA_GIST_TOKEN || SYNC_CFG.gistToken || '';
   var GIST_FILE  = 'minka_emoji.json';
-  var POLL_MS    = 30000;  /* 30 s: one D1 query per poll; cards repaint only when an emoji changed */
+  var POLL_MS    = 300000; /* 5 min (was 60s) — lighter background polling */
   var LOCAL_KEY  = 'minka_emoji_v2';
 
   function escapeHtml(value) {
