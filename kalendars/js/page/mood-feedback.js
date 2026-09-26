@@ -1305,9 +1305,8 @@
      ("Slikti", or the day's own note) sits lower than that belt, and then the
      label pill lay on top of "Novērtē maiņu". Pull up only as far as the
      label leaves room; with no label showing, the full pull-up stays.
-     /rad only: RG keeps its card exactly as it was. */
+     RG and /rad alike. */
   function fitTrendUnderLabel(card) {
-    if (window.MINKA_APP !== 'rad') return;
     var trend = card && card.querySelector('.rg-trend');
     var label = card && card.querySelector('.rg-mood-label');
     if (!trend || !label) return;
