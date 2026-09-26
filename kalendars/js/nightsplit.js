@@ -778,10 +778,19 @@
   function chalkboardUpload(blob){
     var api=bedCareApi();
     if(!api) return Promise.reject(new Error('Nav savienojuma ar mākoni'));
-    var form=new FormData();
-    form.append('worker',NS_CHALKBOARD_WORKER);
-    form.append('image',blob,'chalkboard.webp');
-    return api.apiFetch('/api/skin-art',{method:'POST',body:form}).then(function(r){
+    var send=function(){
+      var form=new FormData();
+      form.append('worker',NS_CHALKBOARD_WORKER);
+      form.append('image',blob,'chalkboard.webp');
+      return api.apiFetch('/api/skin-art',{method:'POST',body:form});
+    };
+    /* A dropped connection, or the server failing without CORS headers
+       (Cloudflare KV lets one key be written about once a second), reaches
+       the page only as "Failed to fetch": try once more before telling. */
+    return send().catch(function(error){
+      if(!(error instanceof TypeError)) throw error;
+      return new Promise(function(resolve){ setTimeout(resolve,1200); }).then(send);
+    }).then(function(r){
       return r.json().catch(function(){return {};}).then(function(data){
         if(!r.ok) throw new Error(data.error||'Neizdevās saglabāt tāfeli');
         var id=chalkboardArtId(data.skin);
