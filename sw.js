@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.789-mo2';
+const CACHE = 'minka-4.6.790-rad1';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
@@ -41,6 +41,8 @@ self.addEventListener('install', event => {
       appUrl('mobile.html'),
       appUrl('manifest.json'),
       appUrl('manifest-mobile.json'),
+      appUrl('manifest-rad.json'),
+      appUrl('manifest-mobile-rad.json'),
     ]))
   );
   self.skipWaiting();
@@ -192,7 +194,8 @@ self.addEventListener('fetch', event => {
           event.waitUntil(safeCachePut(request, response.clone()));
           return response;
         })
-        .catch(async () => (await caches.match(request)) || (await caches.match(appUrl('index.html'))) || new Response('', { status: 503, statusText: 'Offline' }))
+        // ?app=rad pages are the same files: match them without the query.
+        .catch(async () => (await caches.match(request)) || (await caches.match(request, { ignoreSearch: true })) || (await caches.match(appUrl('index.html'))) || new Response('', { status: 503, statusText: 'Offline' }))
     );
     return;
   }

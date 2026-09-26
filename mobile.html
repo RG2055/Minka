@@ -36,7 +36,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     } catch (_e) {}
   }
 
-  var CALENDAR_BUILD = '20260926mo2';
+  var CALENDAR_BUILD = '20260926rad1';
 
   function withCalendarBuild(url) {
     try {
@@ -223,6 +223,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
 </script>
 
 <link rel="manifest" href="manifest-mobile.json">
+<script>if(window.MINKA_APP==='rad'){document.querySelector('link[rel="manifest"]').href='manifest-mobile-rad.json';}</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="RG Mobile">
@@ -230,6 +231,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
 <meta name="theme-color" content="#06101f">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>RG Mobile</title>
+<script>if(window.MINKA_APP==='rad')document.title='RG Rad Mobile';</script>
 <link rel="stylesheet" href="css/mk-sys.css?v=20260926bm2">
 <!-- The shared motion system (windows grow out of their buttons, sliding
      pills); the calendar frame loads its own copy and reports to this one. -->
@@ -780,7 +782,7 @@ html.mk-low-spec #calendarEmbed {
     </div>
   </div>
 
-  <script src="js/bolus.js?v=20260926mo2"></script>
+  <script src="js/bolus.js?v=20260926rad1"></script>
 
   <script>
   let _syncRaf = 0;

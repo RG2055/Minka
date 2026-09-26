@@ -9,8 +9,8 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
 
-const FILES = ['index.html', 'mobile.html', 'sw.js', 'manifest.json', 'manifest-mobile.json'];
-const DIRS = ['css', 'js', 'data', 'assets', 'vendor', 'kalendars', 'integrations/lacitis/player'];
+const FILES = ['index.html', 'mobile.html', 'sw.js', 'manifest.json', 'manifest-mobile.json', 'manifest-rad.json', 'manifest-mobile-rad.json'];
+const DIRS = ['css', 'js', 'data', 'assets', 'vendor', 'kalendars', 'integrations/lacitis/player', 'rad'];
 // Never published, even when they sit inside a copied folder.
 const SKIP = [/\/test(\/|$)/, /\/tests(\/|$)/, /\.test\.m?js$/, /\/\.[^/]+$/, /\.md$/];
 
@@ -34,6 +34,8 @@ await writeFile(path.join(dist, '_headers'), [
   '/sw.js',
   '  Cache-Control: no-cache',
   '/kalendars/',
+  '  Cache-Control: no-cache',
+  '/rad/',
   '  Cache-Control: no-cache',
   ''
 ].join('\n'));

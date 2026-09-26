@@ -73,7 +73,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20260926mo2';
+  var CALENDAR_BUILD = '20260926rad1';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -344,12 +344,14 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
 
 <meta charset="UTF-8">
 <link rel="manifest" href="manifest.json">
+<script>if(window.MINKA_APP==='rad'){document.querySelector('link[rel="manifest"]').href='manifest-rad.json';}</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="RG">
 <meta name="theme-color" content="#09091a">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>RG</title>
+<script>if(window.MINKA_APP==='rad')document.title='RG Rad';</script>
 <link rel="icon" type="image/svg+xml" href="data/rg-brand.svg?v=20260924d1">
 <link rel="icon" type="image/png" sizes="32x32" href="data/rg-cal-32.png?v=20260925ic1">
 <link rel="icon" type="image/png" sizes="16x16" href="data/rg-cal-16.png?v=20260925ic1">
@@ -2976,7 +2978,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
 @keyframes mobileQrSpin{to{transform:rotate(360deg)}}
 </style>
 
-<script src="js/bolus.js?v=20260926mo2"></script>
+<script src="js/bolus.js?v=20260926rad1"></script>
 
 <script>
 var _nsOpen = false;
@@ -3699,9 +3701,9 @@ window.addEventListener('message', function(e) {
   function buildMobileBaseUrl() {
     var isLocal = /^(localhost|127(?:\.\d+){3}|\[?::1\]?)$/i.test(location.hostname || '');
     if (!isLocal && /^https:$/i.test(location.protocol) && location.origin && !/^(null|file:)/i.test(location.origin)) {
-      return new URL('mobile.html', location.href).toString();
+      return new URL(window.MINKA_APP === 'rad' ? 'mobile.html?app=rad' : 'mobile.html', location.href).toString();
     }
-    return MOBILE_QR_PUBLIC_URL;
+    return MOBILE_QR_PUBLIC_URL + (window.MINKA_APP === 'rad' ? '?app=rad' : '');
   }
 
   function buildMobilePairUrl(code) {
