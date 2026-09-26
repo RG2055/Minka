@@ -883,6 +883,9 @@
     else if (skin.fx === 'dither' || skin.fx === 'ditherpaper' || skin.fx === 'dithercolor') { el.classList.add('mk-fx-dither'); if (skin.fx !== 'dither') el.classList.add('mk-fx-' + skin.fx); }
     else if (['xray','halftone','duotone','ascii'].indexOf(skin.fx) >= 0) el.classList.add('mk-fx-pic', 'mk-fx-' + skin.fx);
     if (skin.fx && skin.fxs != null) el.style.setProperty('--mk-fx-scale', skin.fxs);
+    // /rad: every picture someone picks or uploads is dithered in their ink
+    // (unless they chose another picture effect; pre-dithered pictures as is).
+    if (window.MINKA_APP === 'rad' && el.classList.contains('mk-mid-card') && (skin.t === 'img' || skin.t === 'art') && !skin.fx && !/^dither-/.test(String(skin.id || ''))) el.classList.add('mk-fx-dither');
     if (window.MinkaCardFaces) window.MinkaCardFaces.apply(el, skin);
   };
   function applyToCards(k) {
