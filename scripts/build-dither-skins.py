@@ -247,8 +247,58 @@ def rtg_brain(x, y):
 
 
 # Kept what reads at a glance on a card. Tried and dropped: knee and pelvis
-# (could read as something else), skull, CT slice and spine (not clear).
-RTG = [('krutis', rtg_chest), ('plauksta', rtg_hand), ('mr', rtg_brain)]
+# (could read as something else), a drawn skull and spine (not clear).
+def rtg_flower(x, y):
+    """X-ray flower (the photographic genre): petals translucent, where they
+    overlap it gets brighter; fine veins; a stem and one leaf."""
+    X, Y = (x - .5) * AR, y - .42
+    v = .03
+    n = 7
+    r = math.hypot(X, Y)
+    a = math.atan2(Y, X)
+    petals = 0.0
+    for i in range(n):
+        ang = i * 2 * math.pi / n + .3
+        # distance along/across this petal's axis
+        along = X * math.cos(ang) + Y * math.sin(ang)
+        across = -X * math.sin(ang) + Y * math.cos(ang)
+        if along > 0:
+            d = ellipse_d(along, across, .17, 0, .17, .07)
+            if d < 0:
+                petals += .3 * (1 - (-d) ** 3) + .1          # translucent, brighter at the rim
+                if abs(across) < .004 + .01 * (along / .34):  # midrib
+                    petals += .25
+    v = max(v, min(.9, petals))
+    v = max(v, .8 * smooth(r - .045, .01))                       # centre
+    if .045 < r < .075:
+        v = max(v, .5 + .3 * math.sin(a * 24))                   # stamens
+    if Y > .05:                                                  # stem
+        v = max(v, .55 * smooth(abs(X - .02 * (Y - .05)) - .008, .005) * smooth(Y - .56, .02))
+    leaf = ellipse_d(X - .1, Y - .38, 0, 0, .11, .035)
+    if leaf < 0:
+        v = max(v, .35 + .35 * smooth(abs(Y - .38 - (X - .1) * .1) - .003, .003))
+    return xray(v, x, y)
+
+
+def rtg_ct(x, y):
+    """Axial CT of the abdomen: body outline, spine, aorta, liver, kidneys, gantry rings."""
+    X, Y = (x - .5) * AR, y - .5
+    v = .03
+    body = ellipse_d(X, Y, 0, 0, .4, .3)
+    v = max(v, .2 * smooth(body, .01))
+    v = max(v, .5 * smooth(abs(body) - .008, .006))                            # skin line
+    v = max(v, .8 * smooth(ellipse_d(X, Y, 0, .17, .06, .05), .01))           # vertebral body
+    v = max(v, .7 * smooth(ellipse_d(X, Y, 0, .24, .02, .045), .01))          # spinous process
+    v = max(v, .6 * smooth(ellipse_d(X, Y, .03, .07, .035, .035), .01))       # aorta
+    v = max(v, .42 * smooth(ellipse_d(X, Y, -.2, -.02, .16, .14), .02))       # liver
+    for side in (-1, 1):
+        v = max(v, .55 * smooth(ellipse_d(X, Y, side * .15, .13, .05, .07), .012))   # kidneys
+    for r in (.47, .53):                                                       # gantry rings
+        v = max(v, .25 * smooth(abs(math.hypot(X, Y) - r) - .004, .004))
+    return xray(v, x, y, .08)
+
+
+RTG = [('krutis', rtg_chest), ('plauksta', rtg_hand), ('mr', rtg_brain), ('zieds', rtg_flower), ('ct', rtg_ct)]
 # More pictures (brain, skulls, skeleton) come from reference images:
 # scripts/build-rad-photo-skins.py.
 # Inks: three warm ("f": rose, coral, peach) and three cool ("m": ice, teal,

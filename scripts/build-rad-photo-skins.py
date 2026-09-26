@@ -19,7 +19,6 @@ spec.loader.exec_module(dsk)
 W, H = 240, 135
 # name: (source file, background floor 0..255, gamma)
 PICS = {
-    'smadzenes': ('smadzenes.png', 20, .7),
     'galvaskauss': ('galvaskauss.png', 28, 1.15),
     'galvaskauss-sanis': ('galvaskauss-sanis.png', 95, 1.1),
     'skelets': ('skelets.png', 40, 1.0),
