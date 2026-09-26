@@ -296,6 +296,7 @@
       // absences timeline
       '#mcal-overlay{--ab-leave:#f2b84b;--ab-sick:#ff8a80;--ab-away:#4dd0c8;--ab-unavailable:#9aa4b2;--ab-other:#c9ced6;}',
       '.mcal-head .mcal-legend{flex-wrap:wrap;}',
+      '.mcal-head .mcal-abfilters{flex:1 0 100%;margin:-4px 0 0 -12px;}',
       '.mcal-abf{cursor:pointer;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:0;border-radius:16px;background:transparent;color:var(--on-var);font-size:13px;font-weight:500;transition:background-color 150ms ease,color 150ms ease,opacity 150ms ease;}',
       '.mcal-abf:hover{background:var(--c2);color:var(--on);}',
       '.mcal-abf i{width:10px;height:10px;border-radius:3px;background:var(--abc);}',
@@ -568,7 +569,7 @@
   }
 
   function absFilters(){
-    return '<div class="mcal-legend" role="group" aria-label="Prombūtņu veidi">' + AB_GROUPS.map(function(g){
+    return '<div class="mcal-legend mcal-abfilters" role="group" aria-label="Prombūtņu veidi">' + AB_GROUPS.map(function(g){
       return '<button class="mcal-abf is-' + g.k + '" data-abg="' + g.k + '" aria-pressed="' + !_absOff[g.k] + '"><i></i>' + g.name + '</button>';
     }).join('') + '</div>';
   }
@@ -686,13 +687,16 @@
       + '<button data-view="week" class="' + (_viewMode === 'week' ? 'is-on' : '') + '" aria-pressed="' + (_viewMode === 'week') + '">Nedēļa</button>'
       + '<button data-view="abs" class="' + (_viewMode === 'abs' ? 'is-on' : '') + '" aria-pressed="' + (_viewMode === 'abs') + '">Prombūtnes</button>'
       + '</div>'
-      + (_viewMode === 'abs' ? absFilters()
+      + (_viewMode === 'abs' ? ''
         : '<div class="mcal-legend" aria-label="Maiņu veidi"><span class="mcal-hk is-allday">Diennakts</span><span class="mcal-hk is-day">Diena</span><span class="mcal-hk is-night">Nakts</span></div>')
       + '<div class="mcal-actions">'
       + '<button class="mcal-actbtn" data-panel="bday">Dzimšanas dienas</button>'
       + '<button class="mcal-actbtn" data-panel="holi">Svētku dienas</button>'
       + '<button class="mcal-icbtn mcal-close" aria-label="Aizvērt">' + ICON.close + '</button>'
       + '</div>'
+      // Absence filters get their own line, so the top line stays as in
+      // the month view with the close button in the corner.
+      + (_viewMode === 'abs' ? absFilters() : '')
       + '</div>';
     _overlay.querySelector('.mcal-inner').innerHTML = head + (_viewMode === 'abs' ? buildAbsences(month) : buildGrid(month));
     scheduleFit();
