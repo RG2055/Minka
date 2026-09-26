@@ -171,3 +171,4 @@ html.minka-rad .rn-sofa.is-taken { --sc: 100,210,255; background: conic-gradient
 html.minka-rad .rn-sofa.is-pink { --sc: 255,159,196; } html.minka-rad .rn-sofa.is-green { --sc: 168,230,122; } html.minka-rad .rn-sofa.is-yellow { --sc: 245,212,90; }
 html.minka-rad .rn-sofa.is-orange { --sc: 255,160,80; } html.minka-rad .rn-sofa.is-teal { --sc: 77,208,200; } html.minka-rad .rn-sofa.is-steel { --sc: 130,170,220; } html.minka-rad .rn-sofa.is-copper { --sc: 215,140,95; }
 html.minka-rad .rn-plan-svg .rn-glass { stroke: rgba(100,210,255,.55); stroke-width: 3; stroke-dasharray: 6 4; }
+html.minka-rad .rn-plan-svg .rn-lead { stroke: rgba(245,183,63,.55); stroke-width: 3; }

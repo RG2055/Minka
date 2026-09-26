@@ -80,9 +80,9 @@
   var VB = { x: 120, y: 0, w: 1230, h: 510 };
   function planSvg() {
     function room(x, y, w, h, rim, label, lx, ly) {
-      return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="8" class="rn-floor"/>'
-        + '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="8" class="rn-wall"/>'
-        + '<rect x="' + (x + 5) + '" y="' + (y + 5) + '" width="' + (w - 10) + '" height="' + (h - 10) + '" rx="5" class="rn-rim" stroke="' + rim + '"/>'
+      return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="1" class="rn-floor"/>'
+        + '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="1" class="rn-wall"/>'
+        + '<rect x="' + (x + 5) + '" y="' + (y + 5) + '" width="' + (w - 10) + '" height="' + (h - 10) + '" rx="1" class="rn-rim" stroke="' + rim + '"/>'
         + (label ? '<text x="' + (lx == null ? x + 12 : lx) + '" y="' + (ly == null ? y + 22 : ly) + '" class="rn-label">' + label + '</text>' : '');
     }
     function shape(d, rim) { return '<path d="' + d + '" class="rn-floor"/><path d="' + d + '" class="rn-wall"/><path d="' + d + '" class="rn-rim" stroke="' + rim + '" transform="translate(0 0)"/>'; }
@@ -93,36 +93,33 @@
       // department: the crowned bed (a resident's or a doctor's)
       + room(140, 8, 190, 125, '#f5b73f', 'NODAĻA')
       // main room: kitchen units along the top wall (sink, hob), the Philips
-      // coffee machine with the fridge beside it, a corner sofa in the lower
+      // coffee machine in the top right corner with the fridge right beside it, a corner sofa in the lower
       // left corner (the two places to sleep), the door low on the right
       + room(440, 165, 215, 265, '#5ecbff', 'GALVENĀ ISTABA', 520, 250)
-      + '<rect x="452" y="172" width="120" height="30" rx="3" class="rn-counter-svg"/>'
-      + [462, 492, 522, 552].map(function (x) { return '<rect x="' + x + '" y="175" width="26" height="24" rx="2" class="rn-cabinet"/><circle cx="' + (x + 13) + '" cy="196" r="1.6" class="rn-knob"/>'; }).join('')
+      + '<rect x="452" y="172" width="158" height="30" rx="3" class="rn-counter-svg"/>'
+      + [462, 492, 522, 552, 582].map(function (x) { return '<rect x="' + x + '" y="175" width="26" height="24" rx="2" class="rn-cabinet"/><circle cx="' + (x + 13) + '" cy="196" r="1.6" class="rn-knob"/>'; }).join('')
       + '<rect x="494" y="178" width="22" height="15" rx="5" class="rn-sink"/><circle cx="505" cy="185" r="2" class="rn-knob"/>'
       + [[529, 181], [543, 181], [529, 192], [543, 192]].map(function (p) { return '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="4.5" class="rn-hob"/>'; }).join('')
       + '<text x="512" y="216" class="rn-tiny rn-mid">VIRTUVE</text>'
-      + '<rect x="578" y="174" width="30" height="28" rx="4" class="rn-appliance"/><rect x="586" y="188" width="14" height="8" rx="2" class="rn-cup"/><text x="593" y="184" class="rn-micro rn-mid">PHILIPS</text>'
-      + '<rect x="612" y="172" width="34" height="46" rx="4" class="rn-appliance"/><line x1="640" y1="182" x2="640" y2="206" class="rn-handle"/><text x="629" y="230" class="rn-tiny rn-mid">LEDUSSK.</text>'
+      + '<rect x="614" y="172" width="32" height="30" rx="4" class="rn-appliance"/><rect x="623" y="187" width="14" height="8" rx="2" class="rn-cup"/><text x="630" y="182" class="rn-micro rn-mid">PHILIPS</text>'
+      + '<rect x="612" y="206" width="34" height="50" rx="4" class="rn-appliance"/><line x1="618" y1="214" x2="618" y2="246" class="rn-handle"/><text x="604" y="268" class="rn-tiny rn-mid">LEDUSSK.</text>'
       + '<path d="M450 255 H486 V380 H600 V422 H450 Z" class="rn-sofa-frame"/><path d="M450 255 H462 V410 H600 V422 H450 Z" class="rn-sofa-back"/>'
       + door(655, 290, 655, 372)
-      // new admission unit: along the corridor and to the left the
-      // radiographers' workstation (a door into the CT Philips room), then the
-      // small residents' room; on along the corridor RTG Philips, and left of
-      // it the room where the radiographer sleeps
-      + room(900, 185, 100, 90, '#ff9fc4', 'REZIDENTI', 906, 203)
-      // corridor: up between the residents' room and CT, and along under CT to RTG
-      + shape('M865 365 H1000 V195 H1090 V336 H1210 V423 H865 Z', grey) + '<text x="880" y="400" class="rn-label">GAITENIS</text>'
-      // CT Philips with the radiographers' workstation on its right, behind a glass wall
-      + room(1090, 185, 120, 151, grey, 'CT PHILIPS', 1098, 205)
-      + '<circle cx="1128" cy="265" r="32" class="rn-gantry"/><circle cx="1128" cy="265" r="15" class="rn-gantry-hole"/><rect x="1122" y="265" width="12" height="62" rx="4" class="rn-table"/>'
-      + '<line x1="1165" y1="215" x2="1165" y2="330" class="rn-glass"/>'
-      + '<rect x="1172" y="228" width="30" height="56" rx="3" class="rn-appliance"/><rect x="1176" y="234" width="9" height="16" rx="1.5" class="rn-screen"/><rect x="1176" y="256" width="9" height="16" rx="1.5" class="rn-screen"/>'
-      + '<text x="1187" y="300" class="rn-micro rn-mid">DARBA</text><text x="1187" y="309" class="rn-micro rn-mid">STACIJA</text>'
-      // RTG Philips at the corridor's end, the radiographer's room under the corridor
-      + room(1210, 335, 125, 105, grey, 'RTG PHILIPS', 1220, 358)
-      + '<rect x="1242" y="378" width="66" height="36" rx="5" class="rn-table"/><circle cx="1275" cy="396" r="9" class="rn-gantry"/>'
-      + room(1012, 430, 76, 76, grey, 'RADIOGR.', 1018, 500)
-      + door(1000, 238, 1000, 268) + door(1090, 296, 1090, 328) + door(1210, 372, 1210, 410) + door(1048, 430, 1076, 430) + door(865, 378, 865, 412)
+      // New admission unit on one grid: one top line (y 185) for the residents'
+      // room, the corridor, the workstation and CT; one bottom line (y 423) for
+      // the corridor and RTG; shared walls. The workstation is open to the
+      // corridor (no wall), shielded from CT by a lead wall with a door.
+      + room(900, 185, 100, 90, '#ff9fc4', 'REZIDENTI', 908, 205)
+      + shape('M865 365 H1000 V185 H1124 V336 H1250 V423 H865 Z', grey) + '<text x="880" y="400" class="rn-label">GAITENIS</text>'
+      + '<text x="1068" y="205" class="rn-label">DARBA</text><text x="1068" y="221" class="rn-label">ST.</text>'
+      + '<rect x="1068" y="232" width="48" height="12" rx="3" class="rn-appliance"/><rect x="1071" y="235" width="18" height="6" rx="1.5" class="rn-screen"/><rect x="1094" y="235" width="18" height="6" rx="1.5" class="rn-screen"/>'
+      + room(1124, 185, 126, 151, grey, 'CT PHILIPS', 1134, 205)
+      + '<circle cx="1187" cy="262" r="34" class="rn-gantry"/><circle cx="1187" cy="262" r="16" class="rn-gantry-hole"/><rect x="1181" y="262" width="12" height="62" rx="4" class="rn-table"/>'
+      + '<line x1="1124" y1="190" x2="1124" y2="286" class="rn-lead"/><line x1="1124" y1="326" x2="1124" y2="331" class="rn-lead"/>'
+      + room(1250, 336, 90, 87, grey, 'RTG', 1260, 358) + '<text x="1260" y="375" class="rn-label">PHILIPS</text>'
+      + '<rect x="1262" y="384" width="66" height="30" rx="5" class="rn-table"/><circle cx="1295" cy="399" r="8" class="rn-gantry"/>'
+      + room(1012, 423, 76, 80, grey, 'RADIOGR.', 1020, 495)
+      + door(1000, 238, 1000, 268) + door(1124, 290, 1124, 322) + door(1250, 364, 1250, 404) + door(1034, 423, 1066, 423) + door(865, 378, 865, 412)
       + '</svg>';
   }
   // A bed's box in the plan's own coordinates → percentages of the map.
