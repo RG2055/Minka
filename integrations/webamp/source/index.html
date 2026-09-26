@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#111720" />
+    <meta name="description" content="Webamp - the real Winamp 2.9 music player, running in your browser." />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Webamp" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icons/favicon.png" />
+    <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+    <title>Webamp</title>
+  </head>
+  <body>
+    <!-- The host page (Minka) puts its own content here; the player lives in
+         the bar at the bottom, mounted into #radioWindow by src/main.js. -->
+    <main></main>
+    <div id="radioWindow" aria-label="Radio"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

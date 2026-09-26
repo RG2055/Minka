@@ -975,15 +975,19 @@ button.full-lyric-line{cursor:pointer}
    ════════════════════════════════════════════════════════════════ */
 const MINI_EMBED = new URLSearchParams(location.search).get('embed')==='mini' && window.parent!==window;
 const YTIFY_API = 'https://lacitis-api.gamernr1elite.workers.dev';
-const SEARCH_FALLBACKS = [
+// Checked 2026-09-26: inv.thepixora.com is gone (redirects away). echostreamz.com
+// (in upstream ytify's list) searches fine, but its /videoplayback proxy sends
+// Access-Control-Allow-Origin twice, which the browser rejects on this
+// crossorigin audio element, so it is a search fallback only.
+const STREAM_PROXIES = [
   'https://yt.omada.cafe',
-  'https://inv.thepixora.com',
   'https://invidious.schenkel.eti.br',
   'https://invidious.kemonomimi.nl'
 ];
+const SEARCH_FALLBACKS = [...STREAM_PROXIES.slice(0, 2), 'https://echostreamz.com', ...STREAM_PROXIES.slice(2)];
 const YTIFY_STREAM_BACKENDS = [
   {base:YTIFY_API, videoUrl:id=>`${YTIFY_API}/s/${id}`, audioProxy:''},
-  ...SEARCH_FALLBACKS.map(base=>({base, videoUrl:id=>`${base}/api/v1/videos/${id}`, audioProxy:base}))
+  ...STREAM_PROXIES.map(base=>({base, videoUrl:id=>`${base}/api/v1/videos/${id}`, audioProxy:base}))
 ];
 let currentProxy = YTIFY_STREAM_BACKENDS[0].base;
 const vidCache = new Map();

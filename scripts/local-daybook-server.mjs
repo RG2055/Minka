@@ -7,7 +7,7 @@ const addresses=Object.values(networkInterfaces()).flat().filter(n=>n.family==='
 const dir=path.join(root,'.local-preview'),file=path.join(dir,'daybook.json');await mkdir(dir,{recursive:true});
 let saved;try{saved=JSON.parse(await readFile(file,'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;saved={entries:[],radio:[]};}
 let pending=Promise.resolve();
-const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.avif':'image/avif','.gif':'image/gif','.woff2':'font/woff2','.mp3':'audio/mpeg','.mp4':'video/mp4','.webm':'video/webm','.webmanifest':'application/manifest+json','.ico':'image/x-icon'};
+const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.avif':'image/avif','.gif':'image/gif','.woff2':'font/woff2','.mp3':'audio/mpeg','.mp4':'video/mp4','.webm':'video/webm','.webmanifest':'application/manifest+json','.ico':'image/x-icon','.wal':'application/octet-stream','.wsz':'application/zip','.zip':'application/zip','.xml':'application/xml','.maki':'application/octet-stream','.m':'text/plain; charset=utf-8','.sym':'text/plain; charset=utf-8'};
 const json=(res,value,status=200)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
 http.createServer(async(req,res)=>{
  try{
@@ -31,7 +31,7 @@ http.createServer(async(req,res)=>{
  }
  if(!['GET','HEAD'].includes(req.method)){json(res,{},405);return;}
  const decoded=decodeURIComponent(url.pathname);
- if(decoded==='/sw.js'||decoded.split('/').some(s=>s.startsWith('.'))||/^\/(scripts|cloudflare|integrations)\//.test(decoded)){json(res,{},404);return;}
+ if(decoded==='/sw.js'||decoded.split('/').some(s=>s.startsWith('.'))||(/^\/(scripts|cloudflare|integrations)\//.test(decoded)&&!decoded.startsWith('/integrations/webamp/player/'))){json(res,{},404);return;}
  let target=await realpath(path.join(root,decoded));if(target!==root&&!target.startsWith(root+path.sep)){json(res,{},403);return;}
  let info=await stat(target);if(info.isDirectory()){target=await realpath(path.join(target,'index.html'));info=await stat(target);}
  if(!target.startsWith(root+path.sep)||!info.isFile()){json(res,{},403);return;}

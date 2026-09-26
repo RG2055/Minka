@@ -1,0 +1,1287 @@
+/* Player styles shared by the page and the embeddable build: the Media
+   Library window and the docked layout. Webamp injects its own skin CSS. */
+
+/* --- Media library: Internet Radio -----------------------------------------
+   Modelled on the SHOUTcast directory view of Winamp 5's Media Library: the
+   navigation tree on the left, the genre tree in the middle, a sortable station
+   table on the right, "Search:" above and the button bar with "Found N streams"
+   below.
+
+   The frame is Webamp's own generated-window chrome (.gen-window and the skin
+   sprites it references), so the interior only needs sizing inside
+   .gen-middle-center plus the library palette: pledit.text green on black,
+   the classic #0000c6 selection and grey column headers. */
+
+/* The overlay only provides the coordinate space; the player underneath stays
+   usable, as it does beside Winamp's own library window. */
+.ml-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 8000;
+  pointer-events: none;
+}
+
+.ml-overlay[hidden] {
+  display: none;
+}
+
+/* Size the generated window; the skin draws the border and title bar around it.
+   The !important values override the metrics Webamp applies to gen-windows. */
+.ml-window {
+  position: absolute !important;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  flex-direction: column;
+  width: 900px !important;
+  max-width: calc(100vw - 24px);
+  height: min(520px, calc(100vh - 32px)) !important;
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.ml-window .gen-top {
+  cursor: move;
+}
+
+.ml-window.is-dragging {
+  opacity: 0.92;
+}
+
+/* Give the close button real hit area on top of its skin sprite. */
+.ml-window .gen-close {
+  position: relative;
+  width: 9px;
+  height: 9px;
+  cursor: pointer;
+}
+
+.ml-window .gen-close::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+}
+
+/* Webamp's generated windows size .gen-middle-center from their own state, which
+   this window is not part of, so give it the remaining height explicitly. */
+.ml-window .gen-top,
+.ml-window .gen-bottom {
+  flex: 0 0 auto;
+}
+
+.ml-window .gen-middle {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.ml-window .gen-middle-center {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Scoped reset: a host page's own button / input / list styles must not leak
+   into the library or the skin browser. */
+.ml-body,
+.ml-body *,
+.skins-window .gen-middle-center,
+.skins-window .gen-middle-center * {
+  box-sizing: border-box;
+  margin: 0;
+  letter-spacing: normal;
+  text-transform: none;
+  text-shadow: none;
+  box-shadow: none;
+}
+
+.ml-body button,
+.ml-body input,
+.ml-body select,
+.skins-window button,
+.skins-window input,
+.skins-window select {
+  appearance: none;
+  -webkit-appearance: none;
+  min-width: 0;
+  line-height: normal;
+  text-align: center;
+  outline-offset: 0;
+}
+
+.ml-body ul,
+.ml-body li {
+  padding: 0;
+  list-style: none;
+}
+
+.ml-body {
+  /* Winamp Media Library colours.
+     Values are read from a classic skin's GENEX.BMP at the pixel offsets the
+     Winamp SDK documents (wa_dlg.h): x=48 item background, x=50 item text,
+     x=62 list header background, and so on, stepping two pixels each time.
+     Source skin: public/modern/assets/skins/base-2.91.wsz. */
+  --ml-item-bg: #000000;        /* x=48  WADLG_ITEMBG          */
+  --ml-text: #00ff00;           /* x=50  WADLG_ITEMFG          */
+  --ml-window-bg: #383757;      /* x=52  WADLG_WNDBG           */
+  --ml-button-text: #393942;    /* x=54  WADLG_BUTTONFG        */
+  --ml-window-text: #ffffff;    /* x=56  WADLG_WNDFG           */
+  --ml-hilite: #75748b;         /* x=58  WADLG_HILITE          */
+  --ml-select: #0000c6;         /* x=60  WADLG_SELCOLOR        */
+  --ml-header-bg: #484878;      /* x=62  LISTHEADER_BGCOLOR    */
+  --ml-header-text: #ffffff;    /* x=64  LISTHEADER_FONTCOLOR  */
+  --ml-header-frame-top: #6c6cb4;    /* x=66 HEADER_FRAME_TOPCOLOR    */
+  --ml-header-frame-bottom: #24243c; /* x=68 HEADER_FRAME_MIDDLECOLOR */
+  --ml-header-frame-pressed: #12121e;/* x=70 HEADER_FRAME_BOTTOMCOLOR */
+  --ml-header-empty: #24243c;   /* x=72  LISTHEADER_EMPTY_BGCOLOR */
+  --ml-scrollbar: #24243c;      /* x=74/76 SCROLLBAR_FGCOLOR    */
+  --ml-scrollbar-pressed: #798296;   /* x=78 PRESSED_SCROLLBAR_ONE  */
+  --ml-scrollbar-dead: #24243c; /* x=82  SCROLLBAR_DEADAREA_COLOR */
+  --ml-selbar-fg: #00c6ff;      /* x=84  SELBAR_FGCOLOR         */
+  --ml-selbar-bg: #00c6ff;      /* x=86  SELBAR_BGCOLOR         */
+
+  --ml-line: #75748b;           /* x=58  WADLG_HILITE (dividers, sunken borders) */
+  --ml-dim: #8b9aa2;
+
+  /* Media Library text is the player's font, not a fixed monospace family:
+     gen_ml/listview.cpp refreshFont() takes it from Winamp itself
+     (WM_ML_IPC / ML_IPC_SKIN_WADLG_GETFUNC). Default is a proportional
+     Windows UI face at the skin's own size. */
+  --ml-font: 11px/1.4 "MS Shell Dlg", "MS Sans Serif", Arial, "Liberation Sans", sans-serif;
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  color: var(--ml-text);
+  background: #000;
+  font: var(--ml-font);
+}
+
+/* Search bar */
+.ml-search-bar {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 5px;
+  border-bottom: 1px solid var(--ml-line);
+}
+
+.ml-search-label {
+  color: #cfe0e6;
+  white-space: nowrap;
+}
+
+.ml-input,
+.ml-select {
+  box-sizing: border-box;
+  width: 100%;
+  height: 19px;
+  padding: 0 4px;
+  border: 1px solid #3d4c55;
+  border-radius: 0;
+  color: var(--ml-text);
+  background: #050505;
+  font: var(--ml-font);
+}
+
+.ml-search {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ml-select {
+  color: #cfe0e6;
+}
+
+.ml-input:focus,
+.ml-select:focus {
+  border-color: var(--ml-text);
+  outline: none;
+}
+
+/* Panes */
+.ml-panes {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: 172px 168px minmax(0, 1fr);
+  min-height: 0;
+}
+
+.ml-panes.is-two-pane {
+  grid-template-columns: 172px minmax(0, 1fr);
+}
+
+.ml-nav,
+.ml-genres {
+  overflow: auto;
+  border-right: 1px solid var(--ml-line);
+  scrollbar-color: #39474f #000;
+  user-select: none;
+}
+
+.ml-nav {
+  padding: 3px 0;
+}
+
+.ml-nav-item,
+.ml-genre {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px 1px 8px;
+  cursor: default;
+  white-space: nowrap;
+}
+
+/* Tree rows. The control indents one level per step; the expander occupies the
+   same column at every level so labels line up, like a Win32 tree view. */
+.ml-nav-row {
+  display: flex;
+  align-items: center;
+  padding-left: calc(var(--depth, 0) * 15px);
+}
+
+.ml-nav-spacer {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+}
+
+/* Navigation icons. These are Winamp's own Media Library bitmaps, taken from
+   the plugin's resources (gen_ml/resources/*_16x16x16.bmp) and converted to PNG
+   with their alpha preserved. The list uses a single 16x16 icon per node, the
+   same size MLImageListI_Create() builds in gen_ml/fileview.cpp:90. */
+.ml-nav-item::before,
+.ml-genre::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 16px 16px;
+  image-rendering: pixelated;
+}
+
+/* Expander glyph: tree_closed / tree_open, the collapse arrows a tree control
+   draws in its own button column. */
+.ml-genre-toggle {
+  width: 16px;
+  height: 16px;
+  background-repeat: no-repeat;
+  background-position: center;
+  image-rendering: pixelated;
+}
+
+.ml-icon-radio::before { background-image: url("./assets/ml/ti_default_16x16x16.png"); }
+.ml-icon-list::before  { background-image: url("./assets/ml/ti_default_16x16x16.png"); }
+.ml-icon-star::before  { background-image: url("./assets/ml/ti_labs_16x16x16.png"); }
+.ml-icon-bookmark::before { background-image: url("./assets/ml/ti_default_16x16x16.png"); }
+.ml-icon-history::before  { background-image: url("./assets/ml/ti_default_16x16x16.png"); }
+.ml-icon-song::before     { background-image: url("./assets/ml/ti_default_16x16x16.png"); }
+
+.ml-genre-toggle.is-collapsed {
+  background-image: url("./assets/ml/tree_closed_16x16x16.png");
+}
+
+.ml-genre-toggle.is-expanded {
+  background-image: url("./assets/ml/tree_open_16x16x16.png");
+}
+
+.ml-nav-item {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Genre tree: primary genres carry a +/- expander, sub-genres are indented. */
+.ml-genres {
+  padding: 3px 0;
+}
+
+.ml-genre {
+  padding-left: calc(6px + var(--depth, 0) * 18px);
+}
+
+.ml-genre-toggle {
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  border: 1px solid #55656f;
+  color: #cfe0e6;
+  background: #000;
+  font-size: 9px;
+  line-height: 8px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.ml-genre-toggle:empty {
+  visibility: hidden;
+}
+
+.ml-genre.is-selected .ml-genre-toggle {
+  color: #000;
+  background: #cfe0e6;
+}
+
+.ml-genre-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Station table */
+/* The listview sits in a sunken border.
+   ml_hotmixradio/view.cpp draws it explicitly:
+     int tab[] = { IDC_LIST_HOTMIXRADIO | DCW_SUNKENBORDER };
+     dialogSkinner.Draw(hwndDlg, tab, ...);
+   DCW_SUNKENBORDER is 0x00010000 in wa_dlg.h. A sunken bevel is a dark line on
+   the top/left edge and a light line on the bottom/right, which is what the two
+   borders below produce. */
+.ml-table {
+  border-top: 1px solid var(--ml-scrollbar-dead);
+  border-left: 1px solid var(--ml-scrollbar-dead);
+  border-right: 1px solid var(--ml-window-bg);
+  border-bottom: 1px solid var(--ml-window-bg);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.ml-thead,
+.ml-row {
+  display: grid;
+  /* Row height.
+     UNVERIFIED / DERIVED. The source does not state a row height: gen_ml just
+     creates a WC_LISTVIEWW and reads the result back with LVM_GETITEMSPACING
+     (HeaderIconList.cpp:682), which means Win32 computes it from the tall of
+     the small image list and the font. With a 16x16 LVSIL_SMALL icon
+     (fileview.cpp:640) that puts the row at roughly max(16, text + 2) + 2.
+     18px is that figure, not a value quoted from the tree. Confirm against a
+     5.666 screenshot before treating it as exact. */
+  box-sizing: border-box;
+  min-height: 18px;
+  /* Name | Genre | Now Playing | Bitrate | Type | fav (Winamp's Internet Radio columns) */
+  grid-template-columns: minmax(150px, 2fr) minmax(70px, 1fr) minmax(90px, 1.6fr) 62px 48px 24px;
+  align-items: center;
+}
+
+/* Recently Heard: Song | Artist | Station | When */
+.ml-thead:has(.ml-col-when),
+.ml-row.is-song {
+  grid-template-columns: minmax(150px, 2fr) minmax(100px, 1.4fr) minmax(100px, 1.2fr) 118px;
+}
+
+.ml-row.is-playing .ml-col-name,
+.ml-row.is-playing .ml-col-nowplaying {
+  color: #b7ff65;
+}
+
+.ml-row.is-selected.is-playing .ml-col-name,
+.ml-row.is-selected.is-playing .ml-col-nowplaying {
+  color: #fff;
+}
+
+.ml-col-nowplaying {
+  color: #cfe0e6;
+}
+
+.ml-logo {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  object-fit: cover;
+  background: #0b1a0b;
+}
+
+.ml-station-icon.is-song {
+  border-radius: 0;
+  background: linear-gradient(#00ff00 0 2px, transparent 2px) right top / 5px 2px no-repeat,
+    radial-gradient(circle at 3px 6px, #00ff00 0 2px, transparent 2.5px);
+}
+
+.ml-fav {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: #7a8a5a;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1;
+}
+
+.ml-fav.is-on {
+  color: #f0a33a;
+}
+
+.ml-fav:hover {
+  color: #ffd27f;
+}
+
+.ml-col-votes {
+  color: #7fd0d6;
+  text-align: right;
+}
+
+/* Webamp's own stylesheet resets every descendant to content-box
+   (`#webamp * { box-sizing: content-box }`, because some host pages set
+   border-box globally). Our windows live inside #webamp, so any height we set
+   on a bordered element would gain the borders on top. Re-assert border-box at
+   a specificity that wins, so the header's 18px really is 18px total. */
+#webamp .ml-body,
+#webamp .ml-body *,
+#webamp .ml-window,
+#webamp .ml-window * {
+  box-sizing: border-box;
+}
+
+.ml-th.ml-col-votes {
+  color: #dfe8ec;
+}
+
+/* List header, painted the way the Winamp listview paints it: a flat
+   LISTHEADER_BGCOLOR fill with a one-pixel top/left highlight and a one-pixel
+   bottom/right shadow. No gradient — the SDK exposes three discrete colours for
+   the frame (wa_dlg.h x=66/68/70) and the listview draws them as borders. */
+.ml-thead {
+  flex: 0 0 auto;
+  border-bottom: 1px solid var(--ml-header-frame-bottom);
+  background: var(--ml-header-bg);
+}
+
+.ml-th {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  /* Header height comes from gen_ml/skinnedheader.cpp, which sizes the header
+     window from the list's own font:
+       if (GetTextMetricsW(hdc, &tm)) nHeight = tm.tmHeight + 6;
+     The body font's normal line box measures 12px in this browser, which is the
+     equivalent of tmHeight, so the header is 12 + 6 = 18px. */
+  /* skinnedheader.cpp sizes the whole header window to tmHeight + 6, borders
+     included, so this must be border-box: the 1px top/left highlight and 1px
+     bottom/right shadow are part of the 18px, not extra. */
+  box-sizing: border-box;
+  height: 18px;
+  padding: 0 4px;
+  /* top/left highlight, bottom/right shadow — as drawn by the listview header */
+  border-top: 1px solid var(--ml-header-frame-top);
+  border-left: 1px solid var(--ml-header-frame-top);
+  border-right: 1px solid var(--ml-header-frame-bottom);
+  border-bottom: 1px solid var(--ml-header-frame-bottom);
+  color: var(--ml-header-text);
+  background: var(--ml-header-bg);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  user-select: none;
+}
+
+.ml-th:hover {
+  background: var(--ml-header-frame-top);
+}
+
+.ml-th.is-sorted {
+  /* pressed state uses HEADER_FRAME_BOTTOMCOLOR as the fill */
+  background: var(--ml-header-frame-pressed);
+}
+
+.ml-th-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ml-th-arrow {
+  color: #9fb0b8;
+  font-size: 9px;
+}
+
+.ml-rows {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  outline: none;
+  scrollbar-color: #39474f #000;
+}
+
+.ml-rows:focus-visible {
+  box-shadow: inset 0 0 0 1px #3d4c55;
+}
+
+.ml-row {
+  cursor: default;
+  user-select: none;
+}
+
+/* LVS_SHOWSELALWAYS.
+   ml_hotmixradio.rc declares the list with
+     LVS_REPORT | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER
+   so a selected row keeps its selection bar even while another control has
+   focus. The inactive colours are WADLG_INACT_SELBAR_FG/BG (x=88/90), which
+   wa_dlg.h derives as:
+     a = WADLG_SELCOLOR
+     if (x == WADLG_INACT_SELBAR_BGCOLOR)
+         a = ((a/2) & 0x7F7F7F) + ((WADLG_WNDBG/2) & 0x7F7F7F)
+   With this skin's SELCOLOR #0000c6 and WNDBG #383857 that is #1c1c8e. */
+.ml-rows:not(:focus-within) .ml-row.is-selected {
+  background: #1c1c8e;
+  color: var(--ml-selbar-fg);
+}
+
+/* SWLVS_ALTERNATEITEMS (Winamp 5.55+).
+   gen_ml/skinnedlistview.cpp colours odd rows with WADLG_ITEMBG2/ITEMFG2, but
+   wa_dlg.h treats a #00C6FF pixel at x=92/94 as "not supplied" and falls back
+   to WADLG_ITEMBG/ITEMFG. In this skin both are #00C6FF, so alternate rows are
+   identical to normal rows — the styling below reproduces that fallback rather
+   than inventing a darker shade. The feature itself is kept, because the Media
+   Library preference toggles it (config_use_alternate_colors). */
+.ml-row.is-alt {
+  background: var(--ml-item-bg);
+  color: var(--ml-text);
+}
+
+.ml-row.is-selected.is-alt {
+  background: var(--ml-selbar-bg);
+  color: #000;
+}
+
+.ml-row.is-blocked {
+  color: #4f6350;
+}
+
+.ml-row.is-blocked.is-selected {
+  color: #aab4ff;
+}
+
+.ml-td {
+  padding: 0 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ml-col-name {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ml-station-icon {
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #00ff00 0 1.5px, transparent 1.5px 3.5px, #00ff00 3.5px 4.5px, transparent 4.5px);
+}
+
+.ml-station-icon.is-bookmarked {
+  border-radius: 0;
+  background: #f0a33a;
+  clip-path: polygon(50% 0, 62% 35%, 100% 38%, 70% 60%, 80% 100%, 50% 76%, 20% 100%, 30% 60%, 0 38%, 38% 35%);
+}
+
+.ml-station-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ml-col-bitrate,
+.ml-col-format,
+.ml-col-country {
+  color: #7fd0d6;
+}
+
+.ml-th.ml-col-bitrate,
+.ml-th.ml-col-format,
+.ml-th.ml-col-country {
+  color: #dfe8ec;
+}
+
+.ml-row.is-selected .ml-col-bitrate,
+.ml-row.is-selected .ml-col-format,
+.ml-row.is-selected .ml-col-country {
+  color: #cfe0ff;
+}
+
+.ml-message {
+  flex: 0 0 auto;
+  padding: 6px 8px;
+  color: #7fd0d6;
+  border-top: 1px solid var(--ml-line);
+}
+
+.ml-message[hidden] {
+  display: none;
+}
+
+/* Bottom bar */
+.ml-footer {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 5px;
+  border-top: 1px solid var(--ml-line);
+}
+
+.ml-status {
+  flex: 1 1 auto;
+  margin-left: 6px;
+  color: #cfe0e6;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.ml-button {
+  height: 19px;
+  padding: 0 9px;
+  border: 1px solid #55656f;
+  border-radius: 2px;
+  color: #dfe8ec;
+  background: #202b32;
+  cursor: pointer;
+  font: var(--ml-font);
+  white-space: nowrap;
+}
+
+.ml-button:hover:not(:disabled) {
+  border-color: var(--ml-text);
+  color: var(--ml-text);
+}
+
+.ml-button:disabled {
+  color: #5c6a72;
+  cursor: default;
+}
+
+.ml-button[hidden] {
+  display: none;
+}
+
+/* Popups: the Filter panel and the row context menu. */
+.ml-popup {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  gap: 4px;
+  min-width: 150px;
+  padding: 4px;
+  border: 1px solid #55656f;
+  background: #101a20;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+.ml-popup[hidden] {
+  display: none;
+}
+
+.ml-popup-title {
+  padding: 1px 2px 3px;
+  color: #cfe0e6;
+  border-bottom: 1px solid var(--ml-line);
+}
+
+.ml-filter-panel {
+  width: 190px;
+}
+
+.ml-menu-item {
+  height: 20px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 0;
+  color: #dfe8ec;
+  background: transparent;
+  cursor: pointer;
+  font: var(--ml-font);
+  text-align: left;
+}
+
+.ml-menu-item:hover:not(:disabled),
+.ml-menu-item:focus-visible {
+  color: #000;
+  background: var(--ml-selbar-bg);
+  outline: none;
+}
+
+.ml-menu-item:disabled {
+  color: #5c6a72;
+  cursor: default;
+}
+
+/* Fewer columns when the window cannot hold them all. */
+@media (max-width: 960px) and (min-width: 761px) {
+  .ml-thead,
+  .ml-row:not(.is-song) {
+    grid-template-columns: minmax(130px, 2fr) minmax(64px, 1fr) minmax(80px, 1.6fr) 56px 24px;
+  }
+
+  .ml-col-format {
+    display: none;
+  }
+}
+
+/* Narrow screens: stack the trees above the table as short scrolling strips. */
+@media (max-width: 760px) {
+  .ml-window {
+    height: calc(100vh - 32px) !important;
+  }
+
+  .ml-panes {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+  }
+
+  .ml-nav,
+  .ml-genres {
+    display: flex;
+    gap: 2px;
+    max-height: 64px;
+    padding: 2px 4px;
+    border-right: 0;
+    border-bottom: 1px solid var(--ml-line);
+    overflow-x: auto;
+  }
+
+  .ml-nav {
+    flex-wrap: nowrap;
+  }
+
+  .ml-genres {
+    flex-wrap: wrap;
+  }
+
+  .ml-genre {
+    padding-left: 6px;
+  }
+
+  /* Cards: station and "now playing" on the first line, the rest below. */
+  .ml-thead {
+    display: none;
+  }
+
+  .ml-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 28px;
+    grid-template-areas:
+      "name fav"
+      "now fav"
+      "meta meta";
+    row-gap: 1px;
+    padding: 4px 4px 4px 0;
+    border-bottom: 1px solid #101a10;
+  }
+
+  .ml-row .ml-col-name { grid-area: name; }
+  .ml-row .ml-col-nowplaying { grid-area: now; font-size: 10px; }
+  .ml-row .ml-col-fav { grid-area: fav; align-self: start; }
+  .ml-row .ml-col-genre,
+  .ml-row .ml-col-genre2,
+  .ml-row .ml-col-country,
+  .ml-row .ml-col-bitrate,
+  .ml-row .ml-col-format,
+  .ml-row .ml-col-votes {
+    grid-area: meta;
+    display: inline;
+    padding: 0 5px 0 0;
+    font-size: 10px;
+    color: #7fd0d6;
+  }
+
+  .ml-row .ml-col-genre { padding-left: 5px; }
+  .ml-row .ml-col-nowplaying:empty { display: none; }
+
+  .ml-row.is-song {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "name"
+      "artist"
+      "meta";
+  }
+
+  .ml-row.is-song .ml-col-artist { grid-area: artist; font-size: 10px; color: #cfe0e6; }
+  .ml-row.is-song .ml-col-station,
+  .ml-row.is-song .ml-col-when { grid-area: meta; display: inline; padding: 0 5px 0 0; font-size: 10px; color: #7fd0d6; }
+  .ml-row.is-song .ml-col-station { padding-left: 5px; }
+
+  .ml-row .ml-col-meta-wrap {
+    grid-area: meta;
+  }
+}
+
+.ml-icon-song::before {
+  border-radius: 50%;
+  background: radial-gradient(circle, #00ff00 0 2px, #0b1a0b 2px);
+}
+
+
+/* --- Docked embed ------------------------------------------------------------
+   mountWebampRadio() puts the three classic windows in one row inside the host
+   container ("the dock") and zooms the row to fit. `zoom` rather than
+   `transform` so the fixed-position library overlay keeps viewport
+   coordinates; the overlay undoes the zoom for itself. */
+
+.webamp-dock {
+  --dock-scale: 1;
+  position: relative;
+  /* No overflow clipping: Webamp's context menus open past the bar's edge. */
+}
+
+.webamp-dock-stage {
+  position: absolute;
+  zoom: var(--dock-scale);
+  image-rendering: pixelated;
+}
+
+.webamp-dock-stage #webamp,
+.webamp-dock-stage #webamp * {
+  image-rendering: pixelated;
+}
+
+.webamp-dock-stage #webamp {
+  position: absolute;
+  inset: 0;
+}
+
+/* Free-window mode (lockWindows: false): the stage is a fixed, full-page,
+   click-through layer; only Webamp's windows and menus take the pointer. */
+.webamp-dock-free .webamp-dock-stage {
+  position: fixed;
+  z-index: 600;
+  pointer-events: none;
+}
+
+.webamp-dock-free .webamp-dock-stage .window,
+.webamp-dock-free .webamp-dock-stage #webamp-context-menu,
+.webamp-dock-free .webamp-dock-stage .webamp-context-menu {
+  pointer-events: auto;
+}
+
+/* The library body hosted inside a Modern skin's window holder (Bento's
+   Media Library tab): fills the holder, no floating frame. */
+.ml-embed {
+  display: flex;
+  overflow: hidden;
+}
+
+.ml-embed > .ml-body {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Classic <-> Modern switch: a small bevelled button in the dock's corner in
+   the style of a Winamp 2 window button (no skin bitmap, so it reads the same
+   on every skin). Right-click opens the Skins menu. */
+.webamp-dock-switch {
+  position: absolute;
+  right: 4px;
+  top: 3px;
+  z-index: 5;
+  height: 13px;
+  padding: 0 5px;
+  border: 1px solid;
+  border-color: #6f7c86 #14181c #14181c #6f7c86;
+  border-radius: 0;
+  color: #d8e0e6;
+  background: linear-gradient(#3a444c, #1f262c);
+  font: bold 8px/11px Arial, "Liberation Sans", sans-serif;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  user-select: none;
+}
+
+.webamp-dock-switch:hover {
+  color: #fff;
+  background: linear-gradient(#485560, #262e35);
+}
+
+.webamp-dock-switch:active {
+  border-color: #14181c #6f7c86 #6f7c86 #14181c;
+  background: linear-gradient(#1f262c, #3a444c);
+}
+
+/* A Modern (.wal) skin drawn over the dock: the classic row underneath stays
+   mounted (it is the player) and is only hidden. The Modern host is placed
+   and zoomed by skinSurface.js. */
+.webamp-dock-modern {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.webamp-dock-modern[hidden] {
+  display: none;
+}
+
+/* In Modern mode the classic three-window row is not drawn. It must be
+   `display: none` rather than `visibility: hidden`: a hidden-but-laid-out row
+   still receives pointer events, and its transport buttons (which sit in a
+   zero-height .actions box) drift up into the Modern player and swallow clicks
+   meant for its controls. */
+.webamp-dock.modern-active .webamp-dock-stage {
+  display: none;
+}
+
+/* The Modern skin's resize outline.
+   Layout.ts appends this element to document.body, but the engine's stylesheet
+   is scoped under .webamp-modern-host, so that rule never matched it: dragging
+   a window edge changed the size with no outline to show where it would land.
+
+   `position` must stay absolute, not fixed. On release the engine reads the
+   outline's offsetLeft/offsetTop and writes them as the container's x/y; a
+   fixed element has no offsetParent, so those read as *viewport* coordinates
+   and the window jumps by its own screen offset on every resize. Absolute
+   keeps them relative to the page, which is what the engine expects.
+
+   The transition is dropped so the outline tracks the pointer exactly. */
+.resizing {
+  border: 1px solid #8ea9ff;
+  background: rgba(74, 74, 251, 0.18);
+  box-sizing: border-box;
+  z-index: 10050;
+  pointer-events: none;
+}
+
+/* Webamp renders its context menu into document.body with z-index 1 inline,
+   which a host's bottom bar (Minka: z-index 500) would cover. */
+#webamp-context-menu {
+  z-index: var(--webamp-overlay-z, 9001) !important;
+}
+
+/* Body-level layer for the library and skin browser windows (see embed.js). */
+#webamp.webamp-dock-overlays {
+  position: fixed;
+  inset: 0;
+  width: auto;
+  height: auto;
+  padding: 0;
+  pointer-events: none;
+}
+
+#webamp.webamp-dock-overlays > * {
+  pointer-events: auto;
+}
+
+#webamp.webamp-dock-overlays .ml-overlay,
+#webamp.webamp-dock-overlays .skins-overlay {
+  pointer-events: none;
+}
+
+#webamp.webamp-dock-overlays .ml-overlay > *,
+#webamp.webamp-dock-overlays .skins-overlay > * {
+  pointer-events: auto;
+}
+
+/* --- Skin Museum browser ---------------------------------------------------
+   Uses Webamp's generated-window chrome for the frame, so it repaints with the
+   active skin. The interior is a grid of museum screenshots. */
+
+.skins-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 7500;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+}
+
+.skins-overlay[hidden] {
+  display: none;
+}
+
+.skins-window {
+  position: relative !important;
+  display: flex;
+  flex-direction: column;
+  width: 620px !important;
+  max-width: calc(100vw - 24px);
+  height: min(600px, calc(100vh - 32px)) !important;
+  overflow: hidden;
+}
+
+.skins-window .gen-top,
+.skins-window .gen-bottom {
+  flex: 0 0 auto;
+}
+
+.skins-window .gen-middle {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.skins-window .gen-middle-center {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.skins-window .gen-close {
+  cursor: pointer;
+}
+
+.skins-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  background: #000;
+}
+
+.skins-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px;
+  border-bottom: 1px solid #2c3941;
+  background: #000;
+}
+
+.skins-select {
+  box-sizing: border-box;
+  height: 19px;
+  padding: 0 4px;
+  border: 1px solid #3d4c55;
+  border-radius: 0;
+  color: #cfe0e6;
+  background: #0e1418;
+  font: 11px "DejaVu Sans Mono", monospace;
+}
+
+.skins-select:focus {
+  border-color: #00ff00;
+  outline: none;
+}
+
+.skins-status {
+  color: #8b9aa2;
+  font: 10px "DejaVu Sans Mono", monospace;
+}
+
+/* Grid of skin previews */
+.skins-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
+  gap: 4px;
+  padding: 4px;
+  overflow-y: auto;
+  background: #000;
+  scrollbar-color: #39474f #000;
+}
+
+.skins-tile {
+  display: flex;
+  min-width: 0;
+}
+
+.skins-pick {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid #2c3941;
+  border-radius: 0;
+  color: #00ff00;
+  background: #060d06;
+  cursor: pointer;
+  font: 10px/1.3 "DejaVu Sans Mono", monospace;
+  text-align: left;
+}
+
+.skins-pick:hover,
+.skins-pick:focus-visible {
+  border-color: #00ff00;
+  color: #fff;
+  background: #122012;
+  outline: none;
+}
+
+.skins-tile.is-active .skins-pick {
+  border-color: #f0a33a;
+  color: #f0a33a;
+}
+
+.skins-thumb {
+  width: 100%;
+  aspect-ratio: 275 / 116;
+  object-fit: cover;
+  object-position: top left;
+  image-rendering: pixelated;
+  background: #000;
+}
+
+.skins-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.skins-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 3px;
+  border-top: 1px solid #2c3941;
+  background: #000;
+}
+
+.skins-page {
+  color: #8b9aa2;
+  font: 10px "DejaVu Sans Mono", monospace;
+}
+
+.skins-button {
+  height: 19px;
+  padding: 0 9px;
+  border: 1px solid #55656f;
+  border-radius: 2px;
+  color: #dfe8ec;
+  background: #202b32;
+  cursor: pointer;
+  font: 11px "DejaVu Sans Mono", monospace;
+}
+
+.skins-button:hover:not(:disabled) {
+  border-color: #00ff00;
+  color: #00ff00;
+}
+
+.skins-button:disabled {
+  color: #5c6a72;
+  cursor: default;
+}
+
+/* The museum entry injected into Webamp's Skins submenu. It reuses the native
+   menu item look, so only the pointer needs restoring (menu items are not
+   commonly clickable for injected nodes). */
+#webamp-context-menu li.webamp-skin-museum-entry {
+  cursor: pointer;
+}
+
+/* --- VIDEO window (youtube/videoWindow.js) ---------------------------------
+   Webamp gen-window chrome around one pane: the current YouTube track's
+   thumbnail, or the one YouTube player while a track plays. As small as
+   YouTube allows: the pane is exactly 200x200 (the chrome adds 13 x 34). */
+.video-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 8000;
+  pointer-events: none;
+}
+
+.video-overlay[hidden] {
+  display: none;
+}
+
+.video-window {
+  position: absolute !important;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  flex-direction: column;
+  /* size: inline (videoWindow.js setSize), at least 213 x 234 */
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.video-window .gen-top {
+  cursor: move;
+}
+
+.video-window.is-dragging {
+  opacity: 0.92;
+}
+
+.video-window .gen-close {
+  position: relative;
+  width: 9px;
+  height: 9px;
+  cursor: pointer;
+}
+
+.video-window .gen-close::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+}
+
+.video-window .gen-top,
+.video-window .gen-bottom {
+  flex: 0 0 auto;
+}
+
+.video-window .gen-middle {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.video-window .gen-middle-center {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.video-body {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  background: #000;
+  overflow: hidden;
+}
+
+.video-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: auto;
+}
+
+.video-thumb[hidden],
+.video-player[hidden] {
+  display: none;
+}
+
+.video-player {
+  width: 100%;
+  height: 100%;
+}
+
+.video-player iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+#webamp.webamp-dock-overlays .video-overlay {
+  pointer-events: none;
+}
+
+#webamp.webamp-dock-overlays .video-overlay > * {
+  pointer-events: auto;
+}

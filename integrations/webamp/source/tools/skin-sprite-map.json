@@ -1,0 +1,18 @@
+{
+  "MAIN": { "file": "MAIN.png", "size": [275, 116] },
+  "TITLEBAR": { "file": "TITLEBAR.png", "size": [344, 87] },
+  "CBUTTONS": { "file": "CBUTTONS.png", "size": [136, 36] },
+  "SHUFREP": { "file": "SHUFREP.png", "size": [92, 85] },
+  "EQMAIN": { "file": "EQMAIN.png", "size": [275, 315] },
+  "EQ_EX": { "file": "EQ_EX.png", "size": [275, 56] },
+  "PLEDIT": { "file": "PLEDIT.png", "size": [280, 186] },
+  "POSBAR": { "file": "POSBAR.png", "size": [307, 10] },
+  "VOLUME": { "file": "VOLUME.png", "size": [68, 433] },
+  "BALANCE": { "file": "BALANCE.png", "size": [47, 433] },
+  "MONOSTER": { "file": "MONOSTER.png", "size": [56, 24] },
+  "NUMBERS": { "file": "NUMBERS.png", "size": [90, 13] },
+  "NUMS_EX": { "file": "NUMS_EX.png", "size": [108, 13] },
+  "PLAYPAUS": { "file": "PLAYPAUS.png", "size": [48, 9] },
+  "GEN": { "file": "GEN.png", "size": [178, 86] },
+  "TEXT": { "file": "TEXT.png", "size": [155, 18] }
+}

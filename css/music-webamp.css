@@ -1,0 +1,105 @@
+/* MŪZIKA as Webamp (js/music-webamp.js): the player fills the music panel
+   under the RADIO / MŪZIKA switch; its own windows (Media Library, VIDEO,
+   skins) live at body level above the page. */
+#rgMusicWebamp, #rgMusicWebampHead { display: none; }
+#radioWindow.music-source.webamp-music {
+  display: flex !important;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px 8px !important;
+  box-sizing: border-box;
+}
+#radioWindow.music-source.webamp-music #lacMiniConsole { display: none !important; }
+/* Head row: sign-in and RADIO / WINAMP on the left, the tools on the right,
+   all 32 px tall in the switch's own style. */
+#radioWindow.music-source.webamp-music #rgMusicWebampHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  min-height: 32px;
+  position: relative;
+  z-index: 3;
+}
+#radioWindow.music-source.webamp-music #rgMusicWebampHead #radioSourceBar {
+  position: relative;
+  inset: auto;
+  margin: 0;
+  padding: 0;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+/* The Dither look adds its own pixel labels to these buttons: one label here. */
+#rgMusicWebampHead #radioSourceBar .dth-dt-wrap { display: none !important; }
+#rgMusicWebampHead #radioSourceBar button > span:not(.dth-dt-wrap) { display: inline !important; }
+#rgMusicNow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+  justify-content: center;
+  color: #c1d1dc;
+  font: 600 12px/1.2 system-ui, sans-serif;
+}
+#rgMusicNow[hidden] { display: none; }
+#rgMusicNow img { width: 32px; height: 32px; flex: 0 0 32px; object-fit: cover; border-radius: 4px; background: #0b1016; }
+#rgMusicNow img[hidden] { display: none; }
+#rgMusicNow span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#rgMusicWebampTools { display: flex; align-items: center; gap: 4px; margin-left: auto; flex: 0 0 auto; }
+#rgMusicWebampTools .mw-tool {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #c1d1dc;
+  font: 700 11px system-ui, sans-serif;
+  letter-spacing: .02em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .18s ease, color .18s ease;
+}
+#rgMusicWebampTools .mw-tool:hover { background: rgba(var(--radio-accent-rgb, 83, 201, 232), .12); color: #e2f8ff; }
+#rgMusicWebampTools .mw-tool:focus-visible { outline: 2px solid var(--radio-accent, #b7e9ff); outline-offset: 2px; }
+/* Player row: everything under the head; nothing reaches up into it. */
+#radioWindow.music-source.webamp-music #rgMusicWebamp {
+  display: block;
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+#rgMusicWebampSkins {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  width: 230px;
+  max-height: 65vh;
+  overflow: auto;
+  padding: 6px;
+  border: 1px solid #4a5363;
+  border-radius: 10px;
+  background: #202630;
+  color: #edf0f6;
+  box-shadow: 0 8px 24px #0008;
+}
+#rgMusicWebampSkins button {
+  display: block;
+  width: 100%;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: 500 14px/1.3 Inter, system-ui, sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+#rgMusicWebampSkins button:hover, #rgMusicWebampSkins button:focus-visible { background: #354152; }
+#rgMusicWebampSkins button[aria-current] { color: #a6dce9; }
+#rgMusicWebampSkins hr { margin: 5px; border: 0; border-top: 1px solid #485363; }

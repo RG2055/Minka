@@ -1,0 +1,24 @@
+{
+  "name": "webamp-pwa",
+  "version": "1.0.0",
+  "description": "Webamp as an installable PWA - the real Winamp 2.9 player in the browser.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "serve": "vite preview --host --port 4173",
+    "build:embed": "vite build --config vite.embed.config.js",
+    "build:all": "npm run build && npm run build:embed",
+    "build:minka": "vite build --config vite.embed.config.js && node tools/copy-to-minka.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.63.0",
+    "vite": "latest"
+  },
+  "dependencies": {
+    "hls.js": "^1.5.13",
+    "jszip": "^3.10.1",
+    "webamp": "^2.3.1"
+  }
+}

@@ -1,0 +1,7 @@
+
+# local secrets / keys
+.env.local
+.env.*.local
+node_modules/
+dist/
+dist-embed/

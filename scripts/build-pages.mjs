@@ -10,7 +10,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
 
 const FILES = ['index.html', 'mobile.html', 'migrate.html', 'sw.js', 'manifest.json', 'manifest-mobile.json', 'manifest-rad.json', 'manifest-mobile-rad.json'];
-const DIRS = ['css', 'js', 'data', 'assets', 'vendor', 'kalendars', 'integrations/lacitis/player', 'rad'];
+const DIRS = ['css', 'js', 'data', 'assets', 'vendor', 'kalendars', 'integrations/lacitis/player', 'integrations/webamp/player', 'rad'];
 // Never published, even when they sit inside a copied folder.
 const SKIP = [/\/test(\/|$)/, /\/tests(\/|$)/, /\.test\.m?js$/, /\/\.[^/]+$/, /\.md$/];
 

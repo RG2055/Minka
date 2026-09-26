@@ -1,0 +1,239 @@
+/* The "Spotify" theme layer.
+ *
+ * The bundled classic skin (public/skins/spotify.wsz) paints the player's own
+ * bitmaps — the main window, the equalizer, the playlist. Everything Webamp
+ * draws *outside* a skin bitmap needs CSS: the dock the player sits in, the
+ * Media Library and the Skin Museum (both built from Webamp's generated-window
+ * chrome, whose 1px bevels live in CSS) and the windowshade buttons.
+ *
+ * Loaded only when a mount asks for it (`theme: "spotify"`), so the default
+ * Webamp look is untouched.
+ */
+
+.webamp-theme-spotify {
+  --sp-bg: #0b0b0b;
+  --sp-surface: #121212;
+  --sp-surface-hi: #181818;
+  --sp-surface-lo: #050505;
+  --sp-rim: #2a2a2a;
+  --sp-line: #333333;
+  --sp-green: #1ed760;
+  --sp-green-dim: #169c47;
+  --sp-green-dark: #0c5228;
+  --sp-text: #ffffff;
+  --sp-text-dim: #b3b3b3;
+  --sp-text-muted: #7a7a7a;
+
+  /* The player is the picture; the pump behind it is plain black. */
+  background: transparent;
+}
+
+/* --- The Media Library ------------------------------------------------------
+   Winamp reads these from a skin's GENEX.BMP; Webamp parses GENEX but never
+   paints with it, so the palette is stated here instead. The variable names
+   mirror the Winamp SDK (wa_dlg.h) keys the player already uses. */
+
+.webamp-theme-spotify .ml-body {
+  --ml-item-bg: #121212;
+  --ml-text: #b3b3b3;
+  --ml-window-bg: #121212;
+  --ml-button-text: #b3b3b3;
+  --ml-window-text: #ffffff;
+  --ml-hilite: #2a2a2a;
+  --ml-select: #1ed760;
+  --ml-header-bg: #181818;
+  --ml-header-text: #b3b3b3;
+  --ml-header-frame-top: #333333;
+  --ml-header-frame-bottom: #1a1a1a;
+  --ml-header-frame-pressed: #101010;
+  --ml-header-empty: #181818;
+  --ml-scrollbar: #4d4d4d;
+  --ml-scrollbar-pressed: #1ed760;
+  --ml-scrollbar-dead: #121212;
+  --ml-selbar-fg: #ffffff;
+  --ml-selbar-bg: #1ed760;
+
+  --ml-line: #2a2a2a;
+  --ml-dim: #7a7a7a;
+
+  --ml-font: 12px/1.45 "Spotify Mix", "Circular", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  background: var(--sp-surface);
+  color: var(--ml-text);
+}
+
+/* Invert the selected row: Spotify marks selection with the accent fill and
+   black text, where Winamp used a blue bar and light text. */
+.webamp-theme-spotify .ml-body .ml-list-item.is-selected,
+.webamp-theme-spotify .ml-body .ml-row.is-selected {
+  background: var(--sp-green);
+  color: #000000;
+}
+
+.webamp-theme-spotify .ml-body .ml-tree-item.is-selected,
+.webamp-theme-spotify .ml-body .ml-node.is-selected {
+  background: var(--sp-green-dark);
+  color: var(--sp-text);
+}
+
+/* Flat inputs: no inset bevel, one hairline, the accent on focus. */
+.webamp-theme-spotify .ml-input,
+.webamp-theme-spotify .ml-select {
+  border: 1px solid var(--sp-rim);
+  border-radius: 4px;
+  color: var(--sp-text);
+  background: var(--sp-surface-lo);
+}
+
+.webamp-theme-spotify .ml-input:focus,
+.webamp-theme-spotify .ml-select:focus {
+  border-color: var(--sp-green);
+  outline: none;
+}
+
+/* Column headers: a flat bar, not a raised button. */
+.webamp-theme-spotify .ml-header-cell {
+  border-top: 0;
+  border-left: 0;
+  border-right: 1px solid var(--sp-rim);
+  border-bottom: 1px solid var(--sp-rim);
+  background: var(--sp-surface-hi);
+}
+
+.webamp-theme-spotify .ml-header-cell:hover {
+  background: #202020;
+}
+
+/* Toolbar buttons. */
+.webamp-theme-spotify .ml-button {
+  border: 1px solid var(--sp-rim);
+  border-radius: 999px;
+  color: var(--sp-text);
+  background: transparent;
+}
+
+.webamp-theme-spotify .ml-button:hover {
+  border-color: var(--sp-text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.webamp-theme-spotify .ml-button.is-primary {
+  border-color: transparent;
+  color: #000000;
+  background: var(--sp-green);
+}
+
+.webamp-theme-spotify .ml-button.is-primary:hover {
+  background: #23f06a;
+}
+
+/* The generated-window chrome around the library and the museum: swap the
+   1px bevel for a flat 1px rim (the sprites still supply the corners). */
+.webamp-theme-spotify .gen-window {
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
+}
+
+.webamp-theme-spotify .gen-middle-left,
+.webamp-theme-spotify .gen-middle-right,
+.webamp-theme-spotify .gen-middle-left-bottom,
+.webamp-theme-spotify .gen-middle-right-bottom {
+  background-image: none !important;
+  background-color: var(--sp-bg);
+  border-left: 1px solid var(--sp-rim);
+  border-right: 1px solid var(--sp-rim);
+  box-sizing: border-box;
+}
+
+.webamp-theme-spotify .gen-bottom-left,
+.webamp-theme-spotify .gen-bottom-right,
+.webamp-theme-spotify .gen-bottom {
+  background-image: none !important;
+  background-color: var(--sp-bg);
+}
+
+.webamp-theme-spotify .gen-bottom {
+  border-top: 1px solid var(--sp-rim);
+}
+
+/* --- Skin Museum ----------------------------------------------------------- */
+
+.webamp-theme-spotify .skins-body {
+  background: var(--sp-bg);
+}
+
+.webamp-theme-spotify .skins-toolbar,
+.webamp-theme-spotify .skins-footer {
+  border-color: var(--sp-rim);
+  background: var(--sp-bg);
+}
+
+.webamp-theme-spotify .skins-grid {
+  background: var(--sp-bg);
+  scrollbar-color: var(--sp-rim) var(--sp-bg);
+}
+
+.webamp-theme-spotify .skins-pick {
+  border: 1px solid var(--sp-rim);
+  border-radius: 6px;
+  color: var(--sp-text-dim);
+  background: var(--sp-surface);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 11px;
+}
+
+.webamp-theme-spotify .skins-pick:hover,
+.webamp-theme-spotify .skins-pick:focus-visible {
+  border-color: var(--sp-text);
+  color: var(--sp-text);
+  background: var(--sp-surface-hi);
+}
+
+.webamp-theme-spotify .skins-tile.is-active .skins-pick {
+  border-color: var(--sp-green);
+  color: var(--sp-green);
+}
+
+.webamp-theme-spotify .skins-select,
+.webamp-theme-spotify .skins-button {
+  border: 1px solid var(--sp-rim);
+  border-radius: 999px;
+  color: var(--sp-text);
+  background: transparent;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.webamp-theme-spotify .skins-button:hover:not(:disabled) {
+  border-color: var(--sp-green);
+  color: var(--sp-green);
+  background: transparent;
+}
+
+.webamp-theme-spotify .skins-status,
+.webamp-theme-spotify .skins-page {
+  color: var(--sp-text-muted);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* --- The dock's own switch button ------------------------------------------ */
+
+.webamp-theme-spotify .webamp-dock-switch {
+  border: 1px solid var(--sp-rim);
+  border-radius: 999px;
+  padding: 0 7px;
+  height: 14px;
+  color: var(--sp-text-dim);
+  background: rgba(18, 18, 18, 0.9);
+  font: 700 8px/12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: 0.6px;
+}
+
+.webamp-theme-spotify .webamp-dock-switch:hover {
+  border-color: var(--sp-green);
+  color: var(--sp-green);
+  background: rgba(18, 18, 18, 0.96);
+}
+
+.webamp-theme-spotify .webamp-dock-switch:active {
+  border-color: var(--sp-green-dim);
+  background: #0d0d0d;
+}

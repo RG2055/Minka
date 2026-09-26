@@ -1,0 +1,58 @@
+@import "./player.css";
+
+/* Host page + radio panel. Webamp injects its own classic Winamp styling. */
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: auto;
+  overscroll-behavior: none;
+  /* Plain: the skins are the picture; nothing is painted behind them. */
+  background: #000;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* Host-app stand-in: the page above, the radio bar below (Minka's #radioWindow). */
+:root {
+  --btnbar-h: 0px;
+  --rh: clamp(142px, 21vh, 170px);
+}
+
+main {
+  box-sizing: border-box;
+  min-height: 100%;
+  padding: 24px 28px calc(var(--rh) + var(--btnbar-h) + 24px);
+  color: #dbe6ea;
+}
+
+#radioWindow {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: var(--btnbar-h);
+  height: var(--rh);
+  z-index: 500;
+  background: transparent;
+  /* As in Minka: promoted layer; fixed children would be trapped in here,
+     which is why the player keeps its dialogs at body level. */
+  will-change: transform;
+}
+
+/* Free-window mode: the classic stage is a fixed full-page layer, which a
+   promoted bar would trap, so the page's bar is not promoted then. */
+#radioWindow.webamp-dock-free {
+  will-change: auto;
+}
+
+/* --- Modern skin view -------------------------------------------------------
+   The embed draws a .wal skin inside #radioWindow itself (see
+   skinSurface.js); the page only reflects the mode. */
+
