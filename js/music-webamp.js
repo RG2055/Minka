@@ -7,7 +7,7 @@
    localStorage minkaMusicEngine = "lacitis" (js/radio-source.js). */
 (function () {
   'use strict';
-  var VERSION = '20260927wa8';
+  var VERSION = '20260927wa9';
   var BASE = new URL('integrations/webamp/player/', document.baseURI).href;
   var DEFAULT_PLAYLIST = 'RDCLAK5uy_nlHCD7Y3YATeFPwGmGRiZv4pKXW57yN8o';
   // Winamp's own greeting, from YouTube: first in the playlist, and what
@@ -20,6 +20,7 @@
   var tools = null;
   var now = null; // cover + "artist — title" in the head (Classic has no ALBUM ART window)
   var barHome = null; // where #radioSourceBar lives while RADIO shows
+  var stoppedForRadio = false; // RADIO took over: a song still loading must not start
   var menu = null;
 
   // The old console's first screen, so "Lācītis" is never an empty list.
@@ -88,12 +89,14 @@
     if (!bar || !head || bar.parentNode === head) return;
     barHome = { parent: bar.parentNode, next: bar.nextSibling };
     head.insertBefore(bar, head.firstChild);
+    if (window.__syncRadioSourcePill) requestAnimationFrame(window.__syncRadioSourcePill);
   }
   function returnBar() {
     var bar = document.getElementById('radioSourceBar');
     if (!bar || !head || bar.parentNode !== head || !barHome) return;
     barHome.parent.insertBefore(bar, barHome.next && barHome.next.parentNode === barHome.parent ? barHome.next : null);
     barHome = null;
+    if (window.__syncRadioSourcePill) requestAnimationFrame(window.__syncRadioSourcePill);
   }
 
   function updateNow() {
@@ -201,6 +204,7 @@
       });
       // One player at a time: music starting stops the radio.
       player.on('status', function (state) {
+        if (state === 'PLAYING' && stoppedForRadio) { player.pause(); return; }
         if (state === 'PLAYING') {
           window.__mkRadioSupersededByLacitis = true;
           if (typeof window.__mkPauseRadioForLacitis === 'function') window.__mkPauseRadioForLacitis();
@@ -254,6 +258,7 @@
   }
 
   window.openWebampMusic = async function () {
+    stoppedForRadio = false;
     ensureHost();
     setVisible(true);
     var p = await mount();
@@ -266,6 +271,7 @@
   window.hideWebampMusic = function () { setVisible(false); };
   // Back to RADIO: the music stops too.
   window.stopWebampMusic = function () {
+    stoppedForRadio = true;
     setVisible(false);
     if (player && player.getStatus() === 'PLAYING') player.pause();
   };

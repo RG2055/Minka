@@ -67,7 +67,7 @@
     if (musicLoad) return musicLoad;
     musicLoad = new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      script.src = useWebamp() ? 'js/music-webamp.js?v=20260927wa8' : 'js/radio-music.js?v=20260908header2';
+      script.src = useWebamp() ? 'js/music-webamp.js?v=20260927wa9' : 'js/radio-music.js?v=20260908header2';
       script.onload = resolve;
       script.onerror = () => {
         musicLoad = null;
@@ -105,6 +105,13 @@
     }
     if (MM.liquid(pill, bar, nextBtn, { from: prevBtn, animate: !!prevBtn && prevBtn !== nextBtn })) bar.classList.add('has-pill');
   }
+  // The switch is moved between the radio window and the WINAMP head
+  // (js/music-webamp.js); the pill is placed against its bar, so it is put
+  // under the pressed button again after every move.
+  window.__syncRadioSourcePill = function () {
+    const pressed = document.querySelector('#radioSourceBar > button[aria-pressed="true"]');
+    if (pressed) sourcePill(null, pressed);
+  };
   window.setRadioSource = async function (source) {
     if (mobileView.matches) { closeMobileRadio(); return; }
     const prevSource = requestedSource;
