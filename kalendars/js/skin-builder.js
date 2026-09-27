@@ -375,7 +375,10 @@
       var w = rep.worst, from = C.parseColor(w.fg), sg = C.suggest(from ? from.slice(0, 3) : [255, 255, 255], w.leaves, null), d0 = ctxOf(host).draft();
       // No colour reads on this busy spot: the dark tone calms the whole picture.
       var under = UNDER[w.key] || w.label.toLowerCase(), tuneC = /^\d\.\d\d$/.test(String(d0.fxs || '')) ? +String(d0.fxs).slice(-1) : 5;
-      if (!sg.reaches && d0.face && d0.face.fullTintMode !== 1) h = { text: 'Fons zem ' + under + ' ir ļoti raibs (' + w.ratio.toFixed(2) + '). Tumšs tonis to nomierinās.', act: 'dark', label: 'Tumšs tonis' };
+      // First a plate behind just that element (the rest of the card stays as it is).
+      var M = window.MinkaCardFaceModel, plateOk = d0.face && M && (M.plateParts || []).indexOf(w.key) >= 0 && d0.face.face !== 'winamp' && !((d0.face.plates || {})[w.key] % 2);
+      if (!sg.reaches && plateOk) h = { text: 'Fons zem ' + under + ' ir ļoti raibs (' + w.ratio.toFixed(2) + '). Plāksne aiz tā padarīs to skaidri salasāmu.', act: 'plate:' + w.key, label: 'Plāksne' };
+      else if (!sg.reaches && d0.face && d0.face.fullTintMode !== 1) h = { text: 'Fons zem ' + under + ' ir ļoti raibs (' + w.ratio.toFixed(2) + '). Tumšs tonis to nomierinās.', act: 'dark', label: 'Tumšs tonis' };
       // Still too busy: a softer effect (its contrast down), then moving the element.
       else if (!sg.reaches && d0.fx && tuneC > 2) h = { text: 'Efekts zem ' + under + ' joprojām ir par raibu (' + w.ratio.toFixed(2) + '). Maigāks efekts palīdzēs.', act: 'soft', label: 'Maigāks efekts' };
       else if (!sg.reaches) h = { text: 'Zem ' + under + ' neder neviena krāsa (' + w.ratio.toFixed(2) + '). Pārvelc to uz mierīgāku vietu kartītē vai paslēp solī Izkārtojums.', act: '', label: '' };
@@ -441,6 +444,7 @@
           else if (t.dataset.hint === 'finish2') { var d = clone(ctx.draft()); d.face.finish = 2; update(host, d, {}); }
           else if (t.dataset.hint === 'soft') { var d3 = clone(ctx.draft()), fs = /^\d\.\d\d$/.test(String(d3.fxs || '')) ? String(d3.fxs) : '1.55'; d3.fxs = fs.slice(0, 3) + '2'; B.fixing = true; update(host, d3, { fix: true }); }
           else if (t.dataset.hint === 'dark') { var d2 = clone(ctx.draft()); d2.face.fullTintMode = 1; B.fixing = true; update(host, d2, { fix: true }); }
+          else if (t.dataset.hint.indexOf('plate:') === 0) { var d4 = clone(ctx.draft()); d4.face.plates = d4.face.plates || {}; d4.face.plates[t.dataset.hint.slice(6)] = 1; B.fixing = true; update(host, d4, { fix: true }); }
           B.hint = null; showHint(host);
           return;
         }

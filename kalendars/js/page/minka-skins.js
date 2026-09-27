@@ -1104,6 +1104,20 @@
     }
   }
 
+  /* The editor's left column sticks while the options scroll. Taller than the
+     window's visible part (the contrast list open), its bottom could never be
+     reached: it is held to the scroller's visible height and scrolls itself. */
+  function fitSkinAside(host) {
+    var aside = host && host.querySelector('.mk-skin-aside'); if (!aside) return;
+    var sc = aside.parentElement;
+    while (sc && sc !== document.body && !/(auto|scroll)/.test(getComputedStyle(sc).overflowY)) sc = sc.parentElement;
+    if (!sc || sc === document.body) { aside.style.maxHeight = ''; return; }
+    aside.style.maxHeight = Math.max(240, sc.clientHeight - 24) + 'px';
+  }
+  if (!window.__mkAsideFit) {
+    window.__mkAsideFit = true;
+    window.addEventListener('resize', function () { document.querySelectorAll('.mk-skin-shell').forEach(function (sh) { fitSkinAside(sh.parentElement); }); });
+  }
   // ── Cloudflare sync (skins + dekors vienā /api/skins ierakstā) ──
   // Kanonizē decimālskaitli servera regex vajadzībām: "1.00"→"1", "0.70"→"0.7", "0.95"→"0.95".
   function numStr(v) {
@@ -1767,6 +1781,7 @@
     html += '<div class="mk-skin-footer">'
       + '<button type="button" class="mk-skin-clear">✕ Noņemt visu izskatu</button></div>';
     host.innerHTML = html;
+    fitSkinAside(host);
 
     var previewList = host.querySelector('.mk-skin-preview-list');
     var prev;
@@ -1957,14 +1972,25 @@
         + '<div><strong>' + w.ratio.toFixed(2) + '</strong><small>' + (fails.length ? 'Vājākais: ' + skinEsc(w.label) : 'Viss labi salasāms') + '</small></div></div>'
         + '<div class="mk-contrast-badges">' + badge(lv.aaLarge, 'AA liels') + badge(lv.aaaLarge, 'AAA liels') + badge(lv.aa, 'AA') + badge(lv.aaa, 'AAA') + '</div>'
         + '<ul class="mk-contrast-list">';
+      // A colour is offered only where it really helps: on a very busy spot the best
+      // colour can be the one already there (Mainīt then did nothing) — the dark tone
+      // calms the picture instead.
+      var darkOk = !!(draft.face && draft.face.fullTintMode !== 1), fixable = 0;
+      function helps(p, sg) { return !!sg && (sg.reaches || sg.ratio > p.ratio / p.need + .03); }
+      // a plate behind just that element (none yet, or a clear one)
+      function plateOk(key) { var M = window.MinkaCardFaceModel; return !!(draft.face && M && (M.plateParts || []).indexOf(key) >= 0 && draft.face.face !== 'winamp' && !((draft.face.plates || {})[key] % 2)); }
       rep.parts.slice().sort(function(a, b) { return a.ratio / a.need - b.ratio / b.need; }).forEach(function(p) {
-        var sg = p.pass ? null : contrastSuggest(p);
+        var sg = p.pass ? null : contrastSuggest(p), can = canOwnColour() && helps(p, sg);
+        if (can) fixable++;
         html += '<li class="' + (p.pass ? 'is-pass' : 'is-fail') + '" data-contrast-part="' + p.key + '">'
           + '<span class="mk-contrast-sw" style="background:' + p.bg + ';color:' + p.fg + '">Aa</span>'
           + '<span class="mk-contrast-name">' + skinEsc(p.label) + '<small>' + (p.large ? 'liels teksts, vajag 3' : p.caption ? 'paraksts, vajag 3' : 'mazs teksts, vajag 4.5') + '</small></span>'
           + '<b class="mk-contrast-ratio">' + p.ratio.toFixed(2) + '</b>'
           + (p.pass ? '<span class="mk-c-mini is-pass">Pass ✓</span>'
-            : (canOwnColour() && sg ? '<button type="button" class="mk-contrast-fix" data-contrast-fix="' + p.key + '" title="Mainīt uz ' + sg.color + '"><i style="background:' + sg.color + '"></i>Mainīt</button>' : '<span class="mk-c-mini is-fail">Fail ✕</span>'))
+            : can ? '<button type="button" class="mk-contrast-fix" data-contrast-fix="' + p.key + '" title="Mainīt uz ' + sg.color + '"><i style="background:' + sg.color + '"></i>Mainīt</button>'
+            : sg && !sg.reaches && plateOk(p.key) ? '<button type="button" class="mk-contrast-fix" data-contrast-plate="' + p.key + '" title="Tumša plāksne aiz šī elementa">Plāksne</button>'
+            : sg && !sg.reaches && darkOk ? '<button type="button" class="mk-contrast-fix mk-contrast-dark" title="Tumšs tonis nomierina raibo fonu">Tumšs tonis</button>'
+            : '<span class="mk-c-mini is-fail">Fail ✕</span>')
           + (sg && !sg.reaches ? '<p class="mk-contrast-note">Fons zem šī ir ļoti raibs: labāk pārvieto to vai izvēlies mierīgāku efektu.</p>' : '')
           + '</li>';
       });
@@ -1972,8 +1998,8 @@
       // Where no colour reads (a busy spot), the dark tone calms the picture itself.
       var stuck = fails.some(function(p) { var sg = contrastSuggest(p); return sg && !sg.reaches; });
       if (stuck && draft.face && draft.face.fullTintMode !== 1) html += '<p class="mk-contrast-note">Dažviet fons ir pārāk raibs jebkurai krāsai. Tumšs tonis nomierina bildi.</p><button type="button" class="mk-contrast-dark">Ieslēgt tumšu toni</button>';
-      if (fails.length && canOwnColour()) html += '<button type="button" class="mk-contrast-fixall">Salabot visu (' + fails.length + ')</button>';
-      else if (fails.length) html += '<p class="mk-contrast-note">Izskats "Tonēts" krāso visu vienā tonī: izvēlies citu izskatu, lai varētu mainīt krāsas.</p>';
+      if (fixable && canOwnColour()) html += '<button type="button" class="mk-contrast-fixall">Salabot visu (' + fixable + ')</button>';
+      else if (fails.length && !canOwnColour()) html += '<p class="mk-contrast-note">Izskats "Tonēts" krāso visu vienā tonī: izvēlies citu izskatu, lai varētu mainīt krāsas.</p>';
       cBox.innerHTML = html;
     }
     if (cBtn) cBtn.addEventListener('click', function() {
@@ -1985,6 +2011,13 @@
     if (cBox) {
       cBox.addEventListener('click', function(e) {
         var one = e.target.closest('[data-contrast-fix]'), all = e.target.closest('.mk-contrast-fixall');
+        var plate = e.target.closest('[data-contrast-plate]');
+        if (plate && draft.face) {
+          rememberForUndo(); draft.face.plates = draft.face.plates || {}; draft.face.plates[plate.dataset.contrastPlate] = 1;
+          livePreview(); setSkin(name, draft, 1500); contrastCheck(1);
+          var u0 = host.querySelector('.mk-skin-undo'); if (u0) u0.disabled = false;
+          return;
+        }
         if (e.target.closest('.mk-contrast-dark') && draft.face) {
           rememberForUndo(); draft.face.fullTintMode = 1;
           livePreview(); setSkin(name, draft, 1500); contrastCheck(1);

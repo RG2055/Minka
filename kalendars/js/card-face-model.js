@@ -3,6 +3,9 @@
   'use strict';
   var faces = ['classic', 'photo', 'orbit', 'modular', 'winamp', 'dither'];
   var parts = ['hours', 'name', 'initials', 'month', 'coffee', 'fatigue', 'remaining', 'emoji', 'clock', 'moon'];
+  // Elements that sit on a plate (the watch's complications), and the plate each can
+  // take: 0 as the card, 1 dark, 2 clear (no plate), 3 tinted, 4 light.
+  var plateParts = ['initials', 'month', 'coffee', 'fatigue', 'remaining', 'emoji', 'clock'];
   // Centre x/y (%), size (%), visibility. Positions scale with the actual card.
   var layouts = {
     classic: [[50,45,100,1],[35,12,100,1],[16,12,100,0],[78,21,80,1],[14,39,90,1],[23,85,90,1],[53,85,90,1],[82,85,95,1],[50,20,100,0]],
@@ -54,6 +57,8 @@
     out.fullTintIntensity=bounded(value.fullTintIntensity,0,100,80);
     out.fullTintAuto=value.fullTintAuto===1||value.fullTintAuto===true?1:0;
     out.fullTintScheme=bounded(value.fullTintScheme,0,2,0); // 0 auto, 1 light, 2 dark
+    out.plates={};
+    parts.forEach(function (key) { out.plates[key]=plateParts.indexOf(key)>=0?bounded(value.plates&&value.plates[key],0,4,0):0; });
     parts.forEach(function (key, i) {
       var base = layouts[face][i] || moonLayouts[face], p = value.parts && value.parts[key];
       if (!Array.isArray(p)) p = base;
@@ -75,18 +80,22 @@
   }
   function pack(value) {
     var v = clean(value, true);
-    var colored=parts.some(function (key) { return v.colors[key]; })||v.fullTintMode>0;
+    // v5 adds each element's plate (only when one is chosen, so older looks keep their text)
+    var plated=parts.some(function (key) { return v.plates[key]; });
+    var colored=plated||parts.some(function (key) { return v.colors[key]; })||v.fullTintMode>0;
     var extra=colored||v.coffeeExplicit||v.coffeeMode!==1||v.coffeeContrast!==0;
-    return [colored?4:extra?3:2, faces.indexOf(v.face), v.tint, v.metal, v.finish, v.imageX, v.imageY, v.imageZoom]
+    return [plated?5:colored?4:extra?3:2, faces.indexOf(v.face), v.tint, v.metal, v.finish, v.imageX, v.imageY, v.imageZoom]
       .concat(parts.map(function (key) { return v.parts[key].join(','); }))
       .concat(extra?[v.coffeeMode,v.coffeeContrast]:[])
-      .concat(colored?[parts.map(function (key) { return v.colors[key]||'-'; }).join(','),[v.fullTintMode,v.fullTintHue,v.fullTintIntensity,v.fullTintAuto,v.fullTintScheme].join(',')]:[]).join('~');
+      .concat(colored?[parts.map(function (key) { return v.colors[key]||'-'; }).join(','),[v.fullTintMode,v.fullTintHue,v.fullTintIntensity,v.fullTintAuto,v.fullTintScheme].join(',')]:[])
+      .concat(plated?[parts.map(function (key) { return v.plates[key]; }).join('')]:[]).join('~');
   }
   function unpack(text) {
     var a = String(text || '').split('~');
     var legacy=a.length===17&&a[0]==='1';
     var coffee=a.length===20&&a[0]==='3';
-    var colored=a.length===22&&a[0]==='4';
+    var plated=a.length===23&&a[0]==='5';
+    var colored=(a.length===22&&a[0]==='4')||plated;
     if ((!legacy && !coffee && !colored && !(a.length===18&&a[0]==='2')) || !/^[0-5]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return null;
     if (!a.slice(3,8).every(function (n) { return /^\d{1,3}$/.test(n); })) return null;
     var value = { face: faces[+a[1]], tint: a[2], metal: +a[3], finish: +a[4], imageX: +a[5], imageY: +a[6], imageZoom: +a[7], parts: {} };
@@ -98,6 +107,7 @@
       var look=a[21].split(',');
       if(colors.length!==parts.length||!colors.every(function (c) { return c==='-'||/^[a-f0-9]{6}$/.test(c); })||look.length!==5||!/^[0-3]$/.test(look[0])||!/^\d{1,3}$/.test(look[1])||!/^\d{1,3}$/.test(look[2])||!/^[01]$/.test(look[3])||!/^[0-2]$/.test(look[4]))return null;
       value.colors={};parts.forEach(function (key, i) { value.colors[key]=colors[i]==='-'?'':colors[i]; });
+      if(plated){ if(!/^[0-4]{10}$/.test(a[22]))return null; value.plates={}; parts.forEach(function (key, i) { value.plates[key]=+a[22][i]; }); }
       value.fullTintMode=+look[0];value.fullTintHue=+look[1];value.fullTintIntensity=+look[2];value.fullTintAuto=+look[3];value.fullTintScheme=+look[4];
     }
     for (var i = 0; i < (legacy?9:10); i++) {
@@ -184,5 +194,5 @@
     return value;
   }
 
-  root.MinkaCardFaceModel = { fitDial: fitDial, faces: faces, parts: parts, clean: clean, preset: preset, pack: pack, unpack: unpack, fitPart: fitPart, symbolPlacement: symbolPlacement, coffeeColors: coffeeColors, effectiveCoffeeMode: effectiveCoffeeMode };
+  root.MinkaCardFaceModel = { fitDial: fitDial, faces: faces, parts: parts, plateParts: plateParts, clean: clean, preset: preset, pack: pack, unpack: unpack, fitPart: fitPart, symbolPlacement: symbolPlacement, coffeeColors: coffeeColors, effectiveCoffeeMode: effectiveCoffeeMode };
 })(globalThis);

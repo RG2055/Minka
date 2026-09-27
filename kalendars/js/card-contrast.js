@@ -430,7 +430,8 @@
       if (worst >= 1.08 && !best) best = { color: hex(c), ratio: worst };
       if (!bestMiss || worst > bestMiss.ratio) bestMiss = { color: hex(c), ratio: worst };
     }
-    return best ? { color: best.color, reaches: true } : { color: bestMiss.color, reaches: false };
+    // ratio: the worst part's ratio / need with that colour (so a caller can tell a real gain)
+    return best ? { color: best.color, reaches: true, ratio: best.ratio } : { color: bestMiss.color, reaches: false, ratio: bestMiss.ratio };
   }
   function ratioFor(color, leaves) {
     var c = parseColor(color); if (!c) return 0;

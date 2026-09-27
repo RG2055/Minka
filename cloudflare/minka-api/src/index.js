@@ -169,10 +169,13 @@ function validCardFacePart(part) {
   if (!part.startsWith("wf:")) return false;
   const a = part.slice(3).split("~");
   const coffee = a.length === 20 && a[0] === "3";
-  // v4 adds per-element colours (hex or "-" per element) and a full-tint strength.
-  const colored = a.length === 22 && a[0] === "4";
+  // v4 adds per-element colours (hex or "-" per element) and a full-tint strength;
+  // v5 adds each element's plate (one digit 0-4 per element).
+  const plated = a.length === 23 && a[0] === "5";
+  const colored = (a.length === 22 && a[0] === "4") || plated;
   if (!((a.length === 17 && a[0] === "1") || (a.length === 18 && a[0] === "2") || coffee || colored) || !/^[0-5]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return false;
   if ((coffee || colored) && (!/^[01]$/.test(a[18]) || !/^[0-2]$/.test(a[19]))) return false;
+  if (plated && !/^[0-4]{10}$/.test(a[22])) return false;
   const integer = (s, min, max) => /^(0|[1-9]\d{0,2})$/.test(s) && Number(s) >= min && Number(s) <= max;
   if (colored) {
     const look = a[21].split(",");

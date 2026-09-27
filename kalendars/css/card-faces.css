@@ -637,3 +637,59 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-fac
 .mk-wf-dial .seg.plan {stroke-dasharray:none;opacity:.7;}
 .mk-wf-dial .px.on {fill:color-mix(in srgb,var(--dial-ink) 35%,#fff);}
 .mk-wf-dial.dth .trk {stroke-dasharray:1.4 1.2;stroke-linecap:butt;stroke-opacity:.9;}
+/* The sticky left column scrolls itself when it is taller than the visible window
+   (minka-skins.js fitSkinAside sets its max height). */
+.mk-skin-shell:has(.wf-editor) .mk-skin-aside {overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;}
+@media (max-width: 700px) {.mk-skin-shell:has(.wf-editor) .mk-skin-aside {max-height:none !important;overflow:visible;}}
+
+/* ── Plates, polished like a watch's complications ──────────────────────────────
+   One material for every information chip: no hard outline (a hairline and a soft
+   light line on top instead), corners in proportion to the card (a capsule for one
+   line, a rounded tile for two), a soft shadow. */
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-finish] .mk-coffee-step,
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-finish] :is([data-wf-part="month"],[data-wf-part="fatigue"],[data-wf-part="remaining"],[data-wf-part="emoji"],[data-wf-part="clock"]) {
+  border:0 !important;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--wf-tint) 22%,#1b222cb8),color-mix(in srgb,var(--wf-tint) 9%,#0c1118c4)) !important;
+  box-shadow:inset 0 0 0 .5px #ffffff12,inset 0 1px 0 #ffffff24,0 1.5px 5px #00000040 !important;
+}
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-finish] :is([data-wf-part="month"],[data-wf-part="fatigue"]) {border-radius:5.5cqw !important;}
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-finish] :is([data-wf-part="remaining"],[data-wf-part="clock"]),
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-finish] .mk-coffee-step {border-radius:999px !important;}
+
+/* Each element's own plate (card-faces.js data-wf-plate), the letters follow it:
+   dark glass with its colour, clear (letters with a halo), tinted (its colour, white
+   letters, dark on a light colour), light (white, dark letters). */
+html body #grafiks-list.grid-view.grid-view .card.card.card.mk-mid-card.mk-watch-face[data-watch-face] :is([data-wf-plate]:not([data-wf-part="coffee"]),[data-wf-part="coffee"][data-wf-plate] .mk-coffee-step) {border:0 !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;}
+html body #grafiks-list.grid-view.grid-view .card.card.card.mk-mid-card.mk-watch-face[data-watch-face] :is([data-wf-plate="dark"]:not([data-wf-part="coffee"]),[data-wf-part="coffee"][data-wf-plate="dark"] .mk-coffee-step) {
+  background:linear-gradient(180deg,#252c35ec,#11161cee) !important;box-shadow:inset 0 0 0 .5px #ffffff10,inset 0 1px 0 #ffffff1c,0 1.5px 5px #00000055 !important;}
+html body #grafiks-list.grid-view.grid-view .card.card.card.mk-mid-card.mk-watch-face[data-watch-face] :is([data-wf-plate="clear"]:not([data-wf-part="coffee"]),[data-wf-part="coffee"][data-wf-plate="clear"] .mk-coffee-step) {
+  background:none !important;box-shadow:none !important;}
+html body #grafiks-list.grid-view.grid-view .card.card.card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-plate="clear"],
+html body #grafiks-list.grid-view.grid-view .card.card.card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-plate="clear"] * {text-shadow:0 1px 2px #000d,0 0 7px #0009 !important;}
+html body #grafiks-list.grid-view.grid-view .card.card.card.mk-mid-card.mk-watch-face[data-watch-face] :is([data-wf-plate="tinted"]:not([data-wf-part="coffee"]),[data-wf-part="coffee"][data-wf-plate="tinted"] .mk-coffee-step) {
+  background:linear-gradient(180deg,color-mix(in srgb,var(--wf-tint) 82%,#fff),var(--wf-tint)) !important;box-shadow:inset 0 1px 0 #ffffff4d,0 1.5px 5px #00000045 !important;}
+html body #grafiks-list.grid-view.grid-view .card.card.card.mk-mid-card.mk-watch-face[data-watch-face] :is([data-wf-plate="light"]:not([data-wf-part="coffee"]),[data-wf-part="coffee"][data-wf-plate="light"] .mk-coffee-step) {
+  background:linear-gradient(180deg,#fdfdfe,#e8ecf1) !important;box-shadow:inset 0 -1px 0 #00000012,0 1.5px 5px #00000040 !important;}
+/* letters on the tinted and light plates */
+html body #grafiks-list.grid-view.grid-view .card.card.card.mk-mid-card.mk-watch-face[data-watch-face] :is([data-wf-plate="tinted"],[data-wf-plate="tinted"] :is(.mk-mid-month-num,.mk-mid-month-label,.mk-mid-meta-label,.mk-mid-meta-value,.val,.mk-coffee-mid,.mk-coffee-num,.mk-coffee-sub,.mk-coffee-add)) {
+  color:#fff !important;-webkit-text-fill-color:#fff !important;text-shadow:0 1px 1px #0003 !important;}
+html body #grafiks-list.grid-view.grid-view .card.card.card.mk-mid-card.mk-watch-face[data-watch-face] :is([data-wf-plate="light"],.wf-plate-ink-dark[data-wf-plate="tinted"],[data-wf-plate="light"] :is(.mk-mid-month-num,.mk-mid-month-label,.mk-mid-meta-label,.mk-mid-meta-value,.val,.mk-coffee-mid,.mk-coffee-num,.mk-coffee-sub,.mk-coffee-add),.wf-plate-ink-dark[data-wf-plate="tinted"] :is(.mk-mid-month-num,.mk-mid-month-label,.mk-mid-meta-label,.mk-mid-meta-value,.val,.mk-coffee-mid,.mk-coffee-num,.mk-coffee-sub,.mk-coffee-add)) {
+  color:#141a22 !important;-webkit-text-fill-color:#141a22 !important;text-shadow:none !important;}
+/* the fatigue value keeps its meaning (green to red), deep enough for a light plate */
+html body #grafiks-list.grid-view.grid-view .card.card.card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-plate="light"] .mk-mid-meta-value {color:color-mix(in srgb,var(--mk-mid-fat-color,#30d158) 62%,#000) !important;-webkit-text-fill-color:color-mix(in srgb,var(--mk-mid-fat-color,#30d158) 62%,#000) !important;}
+/* initials on a plate: a round badge */
+html body #grafiks-list.grid-view.grid-view .card.card.card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="initials"][data-wf-plate]:not([data-wf-plate="clear"]) {padding:1.6cqw 2.6cqw !important;border-radius:999px !important;}
+
+/* The element panel's plate choice (card-faces.js .wf-part-plate). */
+.wf-part-plate {display:grid;gap:8px;margin:12px 0 4px;}
+.wf-part-plate[hidden] {display:none !important;}
+.wf-part-plate > span {font-size:12px;opacity:.8;}
+.wf-plate-modes {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;}
+.wf-plate-modes button {display:grid;justify-items:center;gap:6px;padding:9px 2px 8px;border-radius:14px;border:1px solid #ffffff14;background:#ffffff08;color:inherit;font:600 10.5px/1.15 var(--pp-font,system-ui);cursor:pointer;}
+.wf-plate-modes button[aria-pressed="true"] {border-color:var(--pp-primary,#a8c7fa);background:color-mix(in srgb,var(--pp-primary,#a8c7fa) 16%,transparent);}
+.wf-plate-sample {display:grid;place-items:center;width:36px;height:24px;border-radius:999px;font:800 13px/1 var(--pp-font,system-ui);font-style:normal;}
+.wf-plate-sample.p0 {background:linear-gradient(180deg,color-mix(in srgb,var(--wf-plate-tint,#d5e6ef) 22%,#1b222c),color-mix(in srgb,var(--wf-plate-tint,#d5e6ef) 9%,#0c1118));color:var(--wf-plate-tint,#d5e6ef);box-shadow:inset 0 1px 0 #ffffff2e;}
+.wf-plate-sample.p1 {background:linear-gradient(180deg,#252c35,#11161c);color:var(--wf-plate-tint,#d5e6ef);box-shadow:inset 0 1px 0 #ffffff1f;}
+.wf-plate-sample.p2 {background:repeating-conic-gradient(#3a414b 0 25%,#2a3038 0 50%) 0 0/8px 8px;color:var(--wf-plate-tint,#d5e6ef);text-shadow:0 1px 2px #000;}
+.wf-plate-sample.p3 {background:var(--wf-plate-tint,#5f95e6);color:#fff;}
+.wf-plate-sample.p4 {background:#f3f5f8;color:#141a22;}
