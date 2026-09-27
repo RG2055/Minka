@@ -256,3 +256,37 @@
 #worker-modal#worker-modal .mk-addon-tune {display:grid;gap:6px;}
 #worker-modal#worker-modal .mk-addon-tune[hidden] {display:none !important;}
 #worker-modal#worker-modal .mk-addon-tune input[type="range"] {width:100%;}
+
+/* ---- Remix + Atsaukt under the preview (always in reach) ---- */
+#worker-modal#worker-modal .mk-skin-quick {display:flex;gap:8px;width:100%;max-width:300px;margin:14px auto 0;box-sizing:border-box;}
+#worker-modal#worker-modal .mk-skin-quick button {display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;border:0;border-radius:22px;cursor:pointer;font:600 14px/1 var(--pp-font,system-ui) !important;}
+#worker-modal#worker-modal .mk-skin-quick svg {width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+#worker-modal#worker-modal .mk-remix {flex:1 1 auto;padding:0 20px;background:var(--pp-primary-c,#d6e3ff);color:var(--pp-on-primary-c,#0b1d36);}
+#worker-modal#worker-modal .mk-remix:hover {filter:brightness(1.06);}
+#worker-modal#worker-modal .mk-remix[aria-busy="true"] {opacity:.6;cursor:progress;}
+#worker-modal#worker-modal .mk-skin-undo {flex:0 0 44px;width:44px;padding:0;background:var(--pp-c3,#252c37);color:var(--pp-on,#e3e7ee);}
+#worker-modal#worker-modal .mk-skin-undo:disabled {opacity:.32;cursor:default;}
+#worker-modal#worker-modal .mk-skin-quick button:focus-visible {outline:2px solid var(--pp-primary,#a8c7fa);outline-offset:2px;}
+#worker-modal#worker-modal .mk-auto-palette small {display:block;margin-top:3px;font:500 12px/1.3 var(--pp-font,system-ui);color:var(--pp-on-var,#b8c1cd);}
+
+/* ---- picture effect ink: "Auto" = from the picture ---- */
+#worker-modal#worker-modal .mk-dither-inks {align-items:center;flex-wrap:wrap;}
+#worker-modal#worker-modal .mk-dither-inks button.mk-ink-auto {width:auto;height:28px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:transparent;color:var(--pp-on,#e3e7ee);font:600 12px/1 var(--pp-font,system-ui);}
+#worker-modal#worker-modal .mk-dither-inks button.mk-ink-auto[aria-pressed="true"] {background:#29394c;border-color:#64d2ff;color:#eaf4ff;}
+
+/* ---- the tab row stays in reach while a long tab scrolls ---- */
+#worker-modal#worker-modal .org-tabs {position:sticky;top:0;z-index:6;box-shadow:0 -12px 0 10px var(--pp-c1,#161b23);}
+#worker-modal#worker-modal .mk-focus-hint {margin:2px 0 4px;font:500 12.5px/1.3 var(--pp-font,system-ui);color:var(--pp-on-var,#b8c1cd);}
+#worker-modal#worker-modal .mk-focus-hint[hidden] {display:none !important;}
+/* While editing, the chosen element (and its resize grip) is on top of the others,
+   so the grip can always be grabbed — e.g. a timer dial under the big numeral. */
+#worker-modal#worker-modal .mk-skin-preview-list .mk-watch-face.wf-editing [data-wf-part].wf-selected {z-index:30 !important;}
+/* Decorations on the card: one tile per slot (up to three) + "+ Dekors". */
+#worker-modal#worker-modal .mk-addon-slots {display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px;}
+#worker-modal#worker-modal .mk-addon-slots button {position:relative;display:grid;place-items:center;width:56px;height:56px;padding:6px;border-radius:16px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);cursor:pointer;color:var(--pp-on,#e3e7ee);}
+#worker-modal#worker-modal .mk-addon-slots button[aria-pressed="true"] {border-color:var(--pp-primary,#a8c7fa);background:color-mix(in srgb,var(--pp-primary,#a8c7fa) 16%,transparent);}
+#worker-modal#worker-modal .mk-addon-slots img {display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;}
+#worker-modal#worker-modal .mk-addon-slots button {overflow:hidden;}
+#worker-modal#worker-modal .mk-addon-slots i {font:600 18px/1 var(--pp-font,system-ui);font-style:normal;opacity:.5;}
+#worker-modal#worker-modal .mk-addon-slots b {position:absolute;left:5px;top:4px;font:700 10px/1 var(--pp-font,system-ui);opacity:.6;}
+#worker-modal#worker-modal .mk-addon-slots .mk-addon-slot-add {width:auto;padding:0 16px;border-style:dashed;font:600 13px/1 var(--pp-font,system-ui);}

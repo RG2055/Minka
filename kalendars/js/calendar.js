@@ -3608,6 +3608,8 @@ function filterFullList(btn) {
       const uiState = getWorkerUiState({ startTime, endTime, shift: timer.dataset.shift || '' }, dateStr, now);
       const valEl = timer.querySelector('.val');
       if (uiState.isActive && uiState.remainingMs > 0) {
+        // Analog dial (card-faces.js) shows this timer once a minute: no per-second text for it.
+        if (timer.classList.contains('wf-analog')) return;
         if (valEl) valEl.textContent = uiState.timerText;
         const secsLeft = Math.floor(uiState.remainingMs / 1000);
         timer.classList.toggle('warning-critical', secsLeft <= 300);
@@ -6191,6 +6193,22 @@ function filterFullList(btn) {
       });
       return out;
     };
+    // All-time drinks per kind for one person (Monster ×N, Narvesen ×N …): every day
+    // in the local log, each day read the same way as today's breakdown.
+    window.__minkaGetCoffeeSourcesAllTime = function(name) {
+      const key = getCoffeePersonKey(String(name || '').trim());
+      const counts = getCoffeeStore(), details = getCoffeeDetailStore(), out = {};
+      COFFEE_SOURCES.forEach(k => { out[k] = 0; });
+      if (!key) return out;
+      Object.keys(counts || {}).forEach(day => {
+        const n = Math.max(0, Number(counts[day] && counts[day][key]) || 0);
+        if (!n) return;
+        const d = normalizeCoffeeDetail(details && details[day] && details[day][key], n);
+        COFFEE_SOURCES.forEach(k => { out[k] += Math.max(0, Number(d.sources[k]) || 0); });
+      });
+      COFFEE_SOURCES.forEach(k => { out[k] = Math.round(out[k] / coffeeEq(k)); });
+      return out;
+    };
     window.__minkaGetCoffeeTotalForNames = function(names) {
       const seen = new Set();
       return (Array.isArray(names) ? names : []).reduce((sum, name) => {
@@ -7573,6 +7591,15 @@ function wmTabMotion(prevBtn, nextBtn, viewEl, dir) {
     bar.prepend(pill);
   }
   bar.classList.add('has-seg-pill');
+  // The pill is placed in pixels: a window/panel resize has to re-seat it
+  // (without motion), or it keeps the old width at the old spot.
+  if (!bar.__wmPillRO && window.ResizeObserver) {
+    bar.__wmPillRO = new ResizeObserver(() => {
+      const active = bar.querySelector('.toggle-btn.active');
+      if (active && window.MinkaMotion && window.MinkaMotion.liquid) window.MinkaMotion.liquid(pill, bar, active, { animate: false });
+    });
+    bar.__wmPillRO.observe(bar);
+  }
   // Liquid pill (MinkaMotion.liquid): its edges ride two springs, so it
   // stretches toward the new tab and settles to its width. CSS runs it.
   if (MM && MM.liquid) MM.liquid(pill, bar, nextBtn, { from: prevBtn, animate: !!(prevBtn && prevBtn !== nextBtn) });

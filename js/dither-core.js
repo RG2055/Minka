@@ -129,9 +129,21 @@
      duotone: near-black → ink → near-white. */
   function toneMap(d, kind, ink) {
     var ramp;
+    if (kind === 'vivid') {
+      for (var v = 0; v < d.length; v += 4) {
+        var lv = .2126 * d[v] + .7152 * d[v + 1] + .0722 * d[v + 2];
+        d[v] = clamp8(lv + (d[v] - lv) * 1.4); d[v + 1] = clamp8(lv + (d[v + 1] - lv) * 1.4); d[v + 2] = clamp8(lv + (d[v + 2] - lv) * 1.4);
+      }
+    }
     if (kind === 'xray') ramp = [[2, 6, 12], [14, 40, 66], [60, 128, 170], [205, 234, 250], [250, 253, 255]];
-    else ramp = [ink.map(function (v) { return Math.round(v * .08); }), ink.map(function (v) { return Math.round(v * .55); }), ink, ink.map(function (v) { return Math.round(v + (255 - v) * .78); })];
-    var n = ramp.length - 1, invert = false;
+    // mono: black and white film (the grey half of "Puse"; vivid above is its colour half).
+    else if (kind === 'mono') ramp = [[10, 10, 11], [92, 92, 94], [196, 196, 198], [246, 246, 246]];
+    // poster: a two-ink print — near-black shadows into the ink, lights toward paper.
+    else if (kind === 'poster') ramp = [ink.map(function (v) { return Math.round(v * .05); }), ink.map(function (v) { return Math.round(v * .42); }), ink, ink.map(function (v) { return Math.round(v + (255 - v) * .62); })];
+    // focus: the "lens" look — shadows ultramarine, mids teal, lights orange, with film grain.
+    else if (kind === 'focus') ramp = [[8, 13, 58], [30, 60, 192], [44, 98, 228], [22, 150, 140], [244, 116, 22], [255, 196, 104]];
+    else if (kind !== 'vivid') ramp = [ink.map(function (v) { return Math.round(v * .08); }), ink.map(function (v) { return Math.round(v * .55); }), ink, ink.map(function (v) { return Math.round(v + (255 - v) * .78); })];
+    var n = ramp ? ramp.length - 1 : 0, invert = false;
     if (kind === 'xray') {
       // Film is dark with bright structures: invert light pictures only.
       var sum = 0; for (var q = 0; q < d.length; q += 16) sum += .2126 * d[q] + .7152 * d[q + 1] + .0722 * d[q + 2];
@@ -140,8 +152,17 @@
     for (var p = 0; p < d.length; p += 4) {
       var l = (.2126 * d[p] + .7152 * d[p + 1] + .0722 * d[p + 2]) / 255;
       if (kind === 'xray') { if (invert) l = 1 - l; l = Math.pow(l, 1.12); }   // soft gamma, no S-curve: smooth film tones
+      if (!ramp) break;                                  // vivid: already done above
       var f = l * n, i = Math.min(n - 1, Math.floor(f)), t = f - i, a = ramp[i], b = ramp[i + 1];
       d[p] = a[0] + (b[0] - a[0]) * t; d[p + 1] = a[1] + (b[1] - a[1]) * t; d[p + 2] = a[2] + (b[2] - a[2]) * t; d[p + 3] = 255;
+    }
+    if (kind === 'focus' || kind === 'poster' || kind === 'mono' || kind === 'vivid') {
+      // Fixed per-pixel grain (a hash, not Math.random): the same picture gives the same bytes, so caches hold.
+      for (var g = 0, px = 0; g < d.length; g += 4, px++) {
+        var hsh = Math.imul(px ^ 0x9e3779b9, 0x85ebca6b); hsh ^= hsh >>> 13; hsh = Math.imul(hsh, 0xc2b2ae35);
+        var gn = ((hsh >>> 24) - 128) * (kind === 'vivid' ? .07 : .16);
+        d[g] = clamp8(d[g] + gn); d[g + 1] = clamp8(d[g + 1] + gn); d[g + 2] = clamp8(d[g + 2] + gn);
+      }
     }
   }
   /* Halftone (round dots on a grid) and ASCII (characters by brightness),
@@ -266,7 +287,7 @@
     }
     if (opts.mode === 'halftone' || opts.mode === 'ascii') { var art = patternArt(id.data, w, h, opts); return alpha ? maskPattern(art) : art; }
     if (opts.sharpen !== 0) sharpen(id.data, w, h, opts.sharpen || .35);
-    if (opts.mode === 'xray' || opts.mode === 'duotone') { toneMap(id.data, opts.mode, opts.ink || [236, 234, 228]); if (alpha) putAlpha(id.data, false); ctx.putImageData(id, 0, 0); return cv; }
+    if (/^(xray|duotone|focus|poster|mono|vivid)$/.test(opts.mode)) { toneMap(id.data, opts.mode, opts.ink || [236, 234, 228]); if (alpha) putAlpha(id.data, false); ctx.putImageData(id, 0, 0); return cv; }
     if (opts.mode === 'bayer') bayerTone(id.data, w, h, opts.ink || [236, 236, 232], opts.paper || [6, 6, 6], opts.gamma || 1);
     else if (opts.mode === 'palette') diffusePalette(id.data, w, h, paletteOf(id.data, opts.colors || 6));
     else atkinson(id.data, w, h, opts.mode || 'color', opts.levels || (opts.mode === 'color' ? 3 : 2), opts.ink, opts.paper);
@@ -610,6 +631,7 @@
     var tb = /^\d\d$/.test(tune || '') ? +tune[0] : 5, tc = /^\d\d$/.test(tune || '') ? +tune[1] : 5;
     var fine = Math.pow(1.8, (5 - tb) / 5), con = function (base) { return +(base * (0.7 + tc * .06)).toFixed(3); };
     if (fx === 'xray') return { mode: 'xray', normalize: true, contrast: con(.95), sharpen: +(.2 / fine).toFixed(2), dot: 1 / sharp, soft: true };
+    if (fx === 'focus') return { mode: 'focus', normalize: true, contrast: con(1.1), sharpen: +(.25 / fine).toFixed(2), dot: 1 / sharp, soft: true };
     if (fx === 'duotone') return { mode: 'duotone', ink: ink, normalize: true, contrast: con(1.05), sharpen: +(.3 / fine).toFixed(2), dot: 1 / sharp, soft: true };
     if (fx === 'halftone' || fx === 'ascii') return { mode: fx, ink: ink, normalize: true, contrast: con(1.15), scale: sharp, cell: +fine.toFixed(2), dot: 1, soft: true };
     var dpx = Math.max(1, Math.min(4, Math.round(2 * fine)));
@@ -669,7 +691,41 @@
       list.forEach(function (c) { if (c.isConnected) decor(c); });
     });
   }
+  /* Fokuss lens: a window inside the picture layer (clipped with it, under the
+     numeral and chips) with crop corners and a centre cross. Static DOM, built
+     once per card; its picture lines up with the card's own crop. */
+  function showFocus(card, u) {
+    var bg = card.querySelector(':scope > .mk-wf-background');
+    if (!bg) return;                                  // classic cards without a face: halftone only
+    var lens = bg.querySelector(':scope > .mk-focus');
+    if (!lens) {
+      lens = doc.createElement('span'); lens.className = 'mk-focus'; lens.setAttribute('aria-hidden', 'true');
+      lens.innerHTML = '<span class="mk-focus-win"><b></b></span><i></i><i></i><i></i><i></i><em></em>';
+      bg.append(lens);
+    }
+    card.style.setProperty('--mk-skin-focus', 'url("' + u + '")');
+  }
+  /* Plakāts: the card body behind the picture window — charcoal with a fixed
+     grain, a barcode and a small caption. One static element per card. */
+  var POSTER_BODY = '<i class="mk-poster-code"></i>';
+  function showPoster(card) {
+    if (card.querySelector(':scope > .mk-poster')) return;
+    var bg = card.querySelector(':scope > .mk-wf-background');
+    if (!bg) return;
+    var el = doc.createElement('span'); el.className = 'mk-poster'; el.setAttribute('aria-hidden', 'true');
+    el.innerHTML = POSTER_BODY;
+    card.insertBefore(el, bg);
+  }
+  function clearPoster(card) {
+    card.querySelectorAll(':scope > .mk-poster').forEach(function (el) { el.remove(); });
+  }
+  function clearFocus(card) {
+    // The lens may have arrived in a copied card (preset thumbnails): remove it by element, not by style.
+    card.style.removeProperty('--mk-skin-focus');
+    card.querySelectorAll(':scope > .mk-wf-background > .mk-focus').forEach(function (el) { el.remove(); });
+  }
   function clearSkin(card) {
+    clearFocus(card); clearPoster(card);
     if (card.__dthCardFx) { card.__dthCardFx = null; card.__dthDecorOn = false; decor(card); }
     if (sizeWatch && card.__dthSize) { sizeWatch.unobserve(card); card.__dthSize = ''; }
     // Always drop the key: a job still running for this card must not paint its
@@ -726,7 +782,7 @@
   function paintSkin(card, snap) {
     var face = card.getAttribute('data-watch-face') === 'dither';
     var fx = card.classList.contains('mk-fx-dithercolor') ? 'palette' : card.classList.contains('mk-fx-ditherpaper') ? 'paper' : card.classList.contains('mk-fx-dither') ? 'dark'
-      : card.classList.contains('mk-fx-xray') ? 'xray' : card.classList.contains('mk-fx-halftone') ? 'halftone' : card.classList.contains('mk-fx-duotone') ? 'duotone' : card.classList.contains('mk-fx-ascii') ? 'ascii' : '';
+      : card.classList.contains('mk-fx-xray') ? 'xray' : card.classList.contains('mk-fx-focus') ? 'focus' : card.classList.contains('mk-fx-split') ? 'split' : card.classList.contains('mk-fx-poster') ? 'poster' : card.classList.contains('mk-fx-halftone') ? 'halftone' : card.classList.contains('mk-fx-duotone') ? 'duotone' : card.classList.contains('mk-fx-ascii') ? 'ascii' : '';
     var dithered = fx === 'palette' || fx === 'paper' || fx === 'dark';
     var want = fx || (face ? 'dark' : mode !== 'off' ? (mode === 'color' ? 'palette' : 'mono') : '');
     var raw = card.style.getPropertyValue('--mk-skin-img') || '';
@@ -768,7 +824,9 @@
     if (native && !want) want = 'dark';
     // …unless a non-dither effect was picked for it (rentgens, rastrs, duotons,
     // ASCII): that one is really applied, just as its thumbnail shows.
-    var real = !native || /^(xray|halftone|duotone|ascii)$/.test(fx);
+    var real = !native || /^(xray|halftone|duotone|ascii|focus|poster|split)$/.test(fx);
+    // Plakāts: the picture sits in a window (card-dither.css), so it is computed for that box.
+    if (want === 'poster') { w = Math.round(w * .88); h = Math.round(h * .6); }
     var sharp = Math.max(1, Math.round(host.devicePixelRatio || 1));
     // Per-card tuning packed in the skin's fxs field: "1.bc" → b = detail 0–9, c = contrast 0–9 (5/5 default).
     var tune = parseFloat(card.style.getPropertyValue('--mk-fx-scale')), tb = 5, tc = 5;
@@ -781,6 +839,10 @@
       return want === 'xray' ? { box: box, dot: 1 / sharp, pos: pos, mode: 'xray', normalize: true, contrast: con(.95), sharpen: +(.2 / fine).toFixed(2) }
       : want === 'duotone' ? { box: box, dot: 1 / sharp, pos: pos, mode: 'duotone', ink: ink, normalize: true, contrast: con(1.05), sharpen: +(.3 / fine).toFixed(2) }
       : (want === 'halftone' || want === 'ascii') ? { box: [w, h], dot: 1, pos: pos, mode: want, ink: ink, normalize: true, contrast: con(1.15), scale: sharp, cell: +fine.toFixed(2) }
+      // Fokuss: the picture as a fine neutral halftone; the lens (below) shows it in colour.
+      : want === 'poster' ? { box: box, dot: 1 / sharp, pos: pos, mode: 'poster', ink: ink, normalize: true, contrast: con(1.12), sharpen: +(.35 / fine).toFixed(2) }
+      : want === 'split' ? { box: box, dot: 1 / sharp, pos: pos, mode: 'mono', normalize: true, contrast: con(1.08), sharpen: +(.25 / fine).toFixed(2) }
+      : want === 'focus' ? { box: [w, h], dot: 1, pos: pos, mode: 'halftone', ink: [188, 188, 184], normalize: true, contrast: con(1.15), scale: sharp, cell: +(fine * .5).toFixed(2) }
       : want === 'palette' ? { box: box, dot: dot, pos: pos, mode: 'palette', colors: 8, contrast: con(1.06) }
       : want === 'mono' ? { box: box, dot: dot, pos: pos, mode: 'bayer', ink: [236, 234, 228], paper: [8, 8, 8], normalize: true, contrast: 1.15 }
       : { box: box, dot: dot, pos: pos, mode: 'bayer', ink: dotInk, paper: want === 'paper' ? [239, 236, 228] : [6, 6, 6], normalize: true, contrast: con(1.2), sharpen: .45 };
@@ -795,7 +857,7 @@
     card.__dthCardFx = dfx ? {
       mode: dfx.mode, ink: dfx.ink, paper: dfx.paper, colors: dfx.colors, normalize: dfx.normalize,
       contrast: dfx.contrast, sharpen: dfx.sharpen, cell: dfx.cell, scale: dfx.scale,
-      dot: (want === 'halftone' || want === 'ascii') ? 1 : dfx.dot, soft: /^(xray|duotone|halftone|ascii)$/.test(want)
+      dot: (want === 'halftone' || want === 'ascii' || want === 'focus') ? 1 : dfx.dot, soft: /^(xray|duotone|halftone|ascii|focus|poster|split)$/.test(want)
     } : null;
     if (card.querySelector(':scope > img.mk-card-addon')) requestDecor(card);
     if (zoom > 1) opts.dot = opts.dot / zoom;
@@ -809,10 +871,14 @@
     opts.stale = function () { return !card.isConnected || card.dataset.mkDitherKey !== key; };
     card.classList.remove('mk-dither-failed');
     busySkins++;
+    var lens = want === 'focus' || want === 'split' ? url(src, { box: box, dot: 1 / sharp, pos: pos, mode: want === 'split' ? 'vivid' : 'focus', normalize: want !== 'split', contrast: con(want === 'split' ? 1.04 : 1.1), sharpen: +(.25 / fine).toFixed(2), stale: opts.stale }).then(ready) : null;
+    if (!lens) clearFocus(card);
+    if (want === 'poster') showPoster(card); else clearPoster(card);
     url(src, opts).then(ready).then(function (u) {
       if (card.dataset.mkDitherKey !== key) return;
       card.style.setProperty('--mk-skin-dither', 'url("' + u + '")');
       card.classList.add('mk-has-dither');
+      if (lens) return lens.then(function (lu) { if (card.dataset.mkDitherKey === key) showFocus(card, lu); }, function () {});
     }, function () {
       // Pixels not readable (a host without CORS): show the plain picture instead.
       if (card.dataset.mkDitherKey === key) { clearSkin(card); card.classList.add('mk-dither-failed'); }

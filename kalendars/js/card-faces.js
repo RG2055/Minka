@@ -52,6 +52,126 @@
       if(palette&&card.dataset.coffeeContrast==='auto'&&card.dataset.coffeePalette===key)paint(palette.source||palette.num);
     });
   }
+  /* Analog shift timer ("Maiņas laiks" → Analogs). A 12-hour dial: the rest of
+     the shift as an arc, the hand at the time now, the hours left in its tip.
+     skin.tm = skin a–e + hand (1 dot, 2 needle, 3 bar) + face (1 light, 2 dark,
+     3 clear); the colour is the element's own (or the accent). Inline SVG,
+     redrawn once a minute — lighter than the digital timer's per-second text. */
+  var dialTimer = 0;
+  function hm(t) { var m = /^(\d{1,2}):(\d\d)$/.exec(String(t || '')); return m ? +m[1] * 60 + +m[2] : null; }
+  var DIAL_SKINS = [['a', 'Stikls'], ['b', 'Hronogrāfs'], ['c', 'Gredzens'], ['d', 'Rastrs'], ['e', 'Segmenti']];
+  var DIAL_RE = /^[a-e][1-3][1-3]$/;
+  /* Colours are never baked in: the SVG draws with currentColor (the card's accent,
+     or the element's own colour, or the dither ink) and --dial-ink; the dial's round
+     plate is the same tinted glass (or dotted dither chip) as the card's other chips.
+     The worked part of the shift is a conic mask on a plain element — no SVG ids. */
+  function dialMarkup(el, tm) {
+    var skin = tm[0], hand = +tm[1] || 1;
+    var s = hm(el.dataset.start), e = hm(el.dataset.end), active = s != null && e != null;
+    if (!active) {
+      var m = /(\d{1,2})(?::(\d\d))?\s*[–-]\s*(\d{1,2})(?::(\d\d))?/.exec(el.textContent || '');
+      if (m) { s = +m[1] * 60 + (+m[2] || 0); e = +m[3] * 60 + (+m[4] || 0); }
+    }
+    var d = new Date(), now = el.dataset.dialNow ? +el.dataset.dialNow : d.getHours() * 60 + d.getMinutes();
+    if (s != null && e <= s) e += 1440;
+    if (active && now < s) now += 1440;
+    var left = s == null ? 0 : active ? Math.max(0, e - now) : e - s;
+    var big = s == null ? '' : active ? Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0') : Math.round(left / 60) + 'h';
+    var small = active ? 'ATLIKUŠAS' : 'MAIŅA';
+    function ang(min) { return (min % 720) / 720 * 360; }
+    function pt(min, r) { var a = (min % 720) / 720 * Math.PI * 2 - Math.PI / 2; return [(50 + r * Math.cos(a)).toFixed(2), (50 + r * Math.sin(a)).toFixed(2)]; }
+    function arc(from, span, r) { var p0 = pt(from, r), p1 = pt(from + span, r); return 'M' + p0.join(' ') + 'A' + r + ' ' + r + ' 0 ' + (span > 360 ? 1 : 0) + ' 1 ' + p1.join(' '); }
+    function line(a, b, cls) { return '<line x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '" class="' + cls + '"/>'; }
+    var from = active ? now : s, rest = s == null ? 0 : Math.min(719, Math.max(0, e - from));
+    var done = active ? Math.min(719, Math.max(0, now - s)) : 0;
+    var body = '', label = 'mid', mask = done > 0 && skin !== 'c' && skin !== 'e' ? '<i class="dial-done" style="--a0:' + ang(s).toFixed(1) + 'deg;--sp:' + ang(done).toFixed(1) + 'deg"></i>' : '';
+    if (skin === 'a') {
+      for (var h = 0; h < 12; h++) body += line(pt(h * 60, 45.5), pt(h * 60, h % 3 ? 41.8 : 39.5), h % 3 ? 'tk' : 'tk q');
+      if (rest > 0) body += '<path class="rest" d="' + arc(from, rest, 47.6) + '"/>';
+    } else if (skin === 'b') {
+      for (var i = 0; i < 60; i++) body += line(pt(i * 12, 46.5), pt(i * 12, i % 5 ? 44.4 : 42.2), i % 5 ? 'tk fine' : 'tk');
+      body += [12, 3, 6, 9].map(function(n, k) { var q = pt(k * 180, 34.5); return '<text class="num" x="' + q[0] + '" y="' + (+q[1] + 3.3) + '">' + n + '</text>'; }).join('');
+      if (rest > 0) body += '<path class="rest" d="' + arc(from, rest, 40) + '"/>';
+      body += '<circle cx="50" cy="66" r="12.5" class="sub"/>'; label = 'sub';
+    } else if (skin === 'c') {
+      body += '<circle cx="50" cy="50" r="41" class="ring-track"/>';
+      if (done > 0) body += '<path class="ring-done" d="' + arc(s, done, 41) + '"/>';
+      if (rest > 0) body += '<path class="ring-rest" d="' + arc(from, rest, 41) + '"/>';
+      var mk = pt(now, 41); body += '<circle cx="' + mk[0] + '" cy="' + mk[1] + '" r="3.2" class="knob"/>';
+      hand = 0; label = 'big';
+    } else if (skin === 'd') {
+      for (var y = 8; y <= 92; y += 6.5) for (var x = 8; x <= 92; x += 6.5) {
+        var dx = x - 50, dy = y - 50, rr = Math.hypot(dx, dy);
+        if (rr > 44) continue;
+        var mm = ((Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360) / 360 * 720;
+        var k2 = ((mm - s) % 720 + 720) % 720, isDone = done > 0 && k2 <= done, isRest = !isDone && rest > 0 && ((mm - from) % 720 + 720) % 720 <= rest;
+        body += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (isDone ? 2.1 : isRest ? 1.35 : .8) + '" class="' + (isDone ? 'px on' : isRest ? 'px rest-dot' : 'px') + '"/>';
+      }
+      label = 'plate';
+    } else {
+      for (var g = 0; g < 12; g++) {
+        var g0 = g * 60, seg = arc(g0 + 3, 54, 42);
+        var kk = ((g0 - s % 720) + 720) % 720, fill = done > 0 ? Math.max(0, Math.min(60, done - kk)) : 0;
+        body += '<path class="seg" d="' + seg + '"/>';
+        if (fill > 4) body += '<path class="seg on" d="' + arc(g0 + 3, Math.min(54, fill - 3), 42) + '"/>';
+      }
+      if (rest > 0) body += '<path class="rest thin" d="' + arc(from, rest, 48) + '"/>';
+    }
+    var tip = pt(now, hand === 3 ? 25 : 35), tail = pt(now + 360, 8), handSvg = '';
+    if (hand === 1) handSvg = line(['50', '50'], tip, 'hand') + '<circle cx="' + tip[0] + '" cy="' + tip[1] + '" r="2.4" class="knob"/>';
+    else if (hand === 2) handSvg = line(tail, tip, 'hand') + '<circle cx="50" cy="50" r="2.6" class="pin"/>';
+    else if (hand === 3) handSvg = line(['50', '50'], tip, 'hand bar');
+    if (hand) handSvg += '<circle cx="50" cy="50" r="1.4" class="knob"/>';
+    var txt = '';
+    if (big) {
+      if (label === 'sub') txt = '<text class="v s" x="50" y="68.2">' + big + '</text>';
+      else if (label === 'big') txt = '<text class="v xl" x="50" y="55">' + big + '</text><text class="l" x="50" y="64">' + small + '</text>';
+      else if (label === 'plate') txt = '<rect x="30" y="58" width="40" height="15" rx="7.5" class="plate"/><text class="v s" x="50" y="68.6">' + big + '</text>';
+      else txt = '<text class="v" x="50" y="70">' + big + '</text><text class="l" x="50" y="77.5">' + small + '</text>';
+    }
+    return mask + '<svg viewBox="0 0 100 100" aria-hidden="true">' + body + handSvg + txt + '</svg>';
+  }
+  // Small previews for the skin picker: a 20–08 shift at 01:40 (on duty, so the worked part shows).
+  function dialPreview(tm) {
+    var el = document.createElement('span'); el.textContent = '20–08'; el.dataset.dialNow = '100';
+    el.dataset.start = '20:00'; el.dataset.end = '08:00';
+    return dialMarkup(el, tm);
+  }
+  function paintDial(el) {
+    var tm = el.dataset.tm, box = el.querySelector(':scope > .mk-wf-dial');
+    if (!box) { box = document.createElement('span'); el.append(box); }
+    var card = el.closest('.card'), dth = !!card && card.matches('[data-watch-face="dither"], .mk-fx-dither');
+    var cls = 'mk-wf-dial f' + tm[2] + ' sk-' + tm[0] + (dth ? ' dth' : '');
+    if (box.className !== cls) box.className = cls;
+    var html = dialMarkup(el, tm);
+    if (box.__html !== html) { box.innerHTML = html; box.__html = html; }
+    el.setAttribute('aria-label', 'Maiņas laiks: ' + ((box.querySelector('.v') || {}).textContent || ''));
+  }
+  function setDial(card, skin, config) {
+    var el = card.querySelector('[data-wf-part="remaining"]');
+    if (!el) return;
+    var tm = skin && DIAL_RE.test(String(skin.tm || '')) && config && config.face !== 'winamp' ? skin.tm : '';
+    if (!tm) {
+      if (el.classList.contains('wf-analog')) { el.classList.remove('wf-analog'); delete el.dataset.tm; el.removeAttribute('aria-label'); var old = el.querySelector(':scope > .mk-wf-dial'); if (old) old.remove(); }
+      return;
+    }
+    el.classList.add('wf-analog'); el.dataset.tm = tm;
+    // The static shift window is a bare text node: tuck it into a span the dial hides.
+    Array.prototype.slice.call(el.childNodes).forEach(function(n) {
+      if (n.nodeType === 3 && n.nodeValue.trim()) { var t = document.createElement('span'); t.className = 'wf-dial-text'; el.insertBefore(t, n); t.append(n); }
+    });
+    paintDial(el);
+    if (!dialTimer) dialTimer = setTimeout(paintDials, 60000 - Date.now() % 60000 + 40);
+  }
+  function paintDials() {
+    clearTimeout(dialTimer); dialTimer = 0;
+    if (document.hidden) return;
+    var nodes = document.querySelectorAll('.wf-analog[data-tm]');
+    if (!nodes.length) return;
+    nodes.forEach(paintDial);
+    dialTimer = setTimeout(paintDials, 60000 - Date.now() % 60000 + 40);
+  }
+  document.addEventListener('visibilitychange', paintDials);
   function esc(s) { return String(s).replace(/[&<>"']/g, function(c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function paintClock() {
     clearTimeout(clockTimer); clockTimer = 0;
@@ -256,6 +376,7 @@
       delete card.dataset.coffeeMode;delete card.dataset.coffeeContrast;delete card.dataset.coffeePalette;delete card.dataset.coffeeExpanded;
       var coffeeButton=card.querySelector('button.mk-coffee-mid');
       if(coffeeButton){coffeeButton.removeAttribute('aria-expanded');coffeeButton.setAttribute('aria-label','Atvērt kafijas izvēlni');}
+      card.querySelectorAll('.wf-analog').forEach(function(el) { el.classList.remove('wf-analog'); delete el.dataset.tm; var dl = el.querySelector(':scope > .mk-wf-dial'); if (dl) dl.remove(); });
       card.querySelectorAll('[data-wf-part]').forEach(function(el) {
         delete el.dataset.wfPart; el.hidden = false; el.classList.remove('wf-colored');
         ['--wf-x','--wf-y','--wf-scale','--wf-tint','--mk-txt-color'].forEach(function(p) { el.style.removeProperty(p); });
@@ -325,6 +446,7 @@
       else{el.style.removeProperty('--wf-tint');el.style.removeProperty('--mk-txt-color');}
     });
     if(config.face==='winamp')applyWinamp(card);else clearWinamp(card);
+    setDial(card,skin,config);
     // Dither face (and the app-wide "dither images" option): the background is re-dithered off-thread-ish, once per image.
     if(window.MinkaDither&&window.MinkaDither.skin)window.MinkaDither.skin(card);
     applyFullTint(card,skin,config);
@@ -465,8 +587,9 @@
       }
       if (!sourceSize) return;
       var r = sourceSize;
-      var addon=preview.querySelector(':scope > .mk-card-addon'), before=preview.getBoundingClientRect();
-      var a=addon&&addon.getBoundingClientRect(), left=0,right=0,top=0,bottom=0;
+      // Room for every decoration on the card (up to three), not only the first.
+      var before=preview.getBoundingClientRect(), a=null, left=0,right=0,top=0,bottom=0;
+      preview.querySelectorAll(':scope > .mk-card-addon').forEach(function(img){var r=img.getBoundingClientRect();if(!r.width)return;a=a?{left:Math.min(a.left,r.left),right:Math.max(a.right,r.right),top:Math.min(a.top,r.top),bottom:Math.max(a.bottom,r.bottom)}:{left:r.left,right:r.right,top:r.top,bottom:r.bottom};});
       if(a&&before.width&&before.height){
         left=Math.max(0,before.left-a.left)/before.width;right=Math.max(0,a.right-before.right)/before.width;
         top=Math.max(0,before.top-a.top)/before.height;bottom=Math.max(0,a.bottom-before.bottom)/before.height;
@@ -531,6 +654,10 @@
       + '<div class="wf-section"><div class="wf-label">Elementi <span>Velc priekšskatījumā</span></div><div class="wf-elements">'+M.parts.map(function(key){return '<button type="button" data-part="'+key+'">'+labels[key]+'</button>';}).join('')+'</div>'
       + '<div class="wf-part-head"><strong class="wf-part-name"></strong><button type="button" class="wf-remove">Noņemt</button></div>'
       + '<div class="wf-part-color"><span>Šī elementa krāsa</span><input type="color" class="wf-part-color-input" aria-label="Šī elementa krāsa"><button type="button" class="wf-part-color-clear">Kā akcenta krāsa</button></div>'
+      + '<div class="wf-timer-options" hidden><div class="wf-segment" aria-label="Taimeris"><button type="button" data-timer-style="">Cipari</button><button type="button" data-timer-style="a">Analogs</button></div>'
+      + '<div class="wf-timer-analog"><div class="wf-dial-skins" role="group" aria-label="Pulksteņa izskats">' + DIAL_SKINS.map(function(k){return '<button type="button" data-timer-skin="'+k[0]+'"><span class="wf-dial-mini"></span><b>'+k[1]+'</b></button>';}).join('') + '</div>'
+      + '<div class="wf-segment" aria-label="Rādītājs"><button type="button" data-timer-hand="1">Punkts</button><button type="button" data-timer-hand="2">Adata</button><button type="button" data-timer-hand="3">Josla</button></div>'
+      + '<div class="wf-segment" aria-label="Ciparnīca"><button type="button" data-timer-face="1">Kā kartītei</button><button type="button" data-timer-face="2">Tumšs</button><button type="button" data-timer-face="3">Bez fona</button></div></div></div>'
       + '<div class="wf-coffee-options" hidden><div class="wf-segment wf-coffee-mode" aria-label="Kafijas vadība"><button type="button" data-coffee-mode="0">Ikona → pogas</button><button type="button" data-coffee-mode="1">Vienmēr − / +</button></div><div class="wf-segment" aria-label="Kafijas tonis"><button type="button" data-coffee-contrast="0">Stikls</button><button type="button" data-coffee-contrast="1">Fona kontrasts</button><button type="button" data-coffee-contrast="2">Kartītes tonis</button></div></div>'
       + [['x','Horizontāli',5,95],['y','Vertikāli',5,95],['size','Izmērs',50,170]].map(function(r){return '<label class="wf-range wf-position"><span>'+r[1]+'</span><input type="range" data-position="'+r[0]+'" min="'+r[2]+'" max="'+r[3]+'"><output></output></label>';}).join('')
       + '<button type="button" class="wf-fit">Ietilpināt kartītē</button></div>'
@@ -589,6 +716,14 @@
       panel.querySelector('.wf-metal-name').textContent=metals[config.metal][0];
       panel.querySelector('.wf-part-name').textContent=labels[selectedPart];
       panel.querySelector('.wf-coffee-options').hidden=selectedPart!=='coffee';
+      var tm=DIAL_RE.test(String(options.get().tm||''))?options.get().tm:'';
+      panel.querySelector('.wf-timer-options').hidden=selectedPart!=='remaining'||config.face==='winamp';
+      panel.querySelector('.wf-timer-analog').hidden=!tm;
+      panel.querySelectorAll('[data-timer-style]').forEach(function(el){el.setAttribute('aria-pressed',String(el.dataset.timerStyle===(tm?'a':'')));});
+      panel.querySelectorAll('[data-timer-hand]').forEach(function(el){el.setAttribute('aria-pressed',String(!!tm&&el.dataset.timerHand===tm[1]));el.disabled=tm[0]==='c';});
+      // Skin tiles draw themselves with the chosen hand and face (built only when the list is shown).
+      if(tm)panel.querySelectorAll('[data-timer-skin]').forEach(function(el){el.setAttribute('aria-pressed',String(el.dataset.timerSkin===tm[0]));var key=el.dataset.timerSkin+tm[1]+tm[2],mini=el.firstElementChild;if(mini.dataset.key!==key){mini.innerHTML='<span class="mk-wf-dial f'+tm[2]+' sk-'+el.dataset.timerSkin+'">'+dialPreview(key)+'</span>';mini.dataset.key=key;}});
+      panel.querySelectorAll('[data-timer-face]').forEach(function(el){el.setAttribute('aria-pressed',String(!!tm&&el.dataset.timerFace===tm[2]));});
       panel.querySelectorAll('[data-coffee-mode]').forEach(function(el){el.setAttribute('aria-pressed',String(+el.dataset.coffeeMode===M.effectiveCoffeeMode(config)));});
       panel.querySelectorAll('[data-coffee-contrast]').forEach(function(el){el.setAttribute('aria-pressed',String(+el.dataset.coffeeContrast===config.coffeeContrast));});
       panel.querySelector('.wf-remove').textContent=config.parts[selectedPart][3]?'Noņemt':'Pievienot';
@@ -647,6 +782,11 @@
       if(el.dataset.tint){config.tint=el.dataset.tint;save();}
       if(el.dataset.metal!=null){config.metal=+el.dataset.metal;save();}
       if(el.dataset.finish!=null){config.finish=+el.dataset.finish;save('material');}
+      if(el.dataset.timerStyle!=null||el.dataset.timerHand||el.dataset.timerFace||el.dataset.timerSkin){
+        var cur=DIAL_RE.test(String(options.get().tm||''))?options.get().tm:'a11';
+        var next=el.dataset.timerStyle!=null?(el.dataset.timerStyle?cur:''):el.dataset.timerSkin?el.dataset.timerSkin+cur[1]+cur[2]:el.dataset.timerHand?cur[0]+el.dataset.timerHand+cur[2]:cur[0]+cur[1]+el.dataset.timerFace;
+        if(options.timer)options.timer(next);apply(preview,options.get());sync();
+      }
       if(el.dataset.coffeeMode!=null){config.coffeeMode=+el.dataset.coffeeMode;config.coffeeExplicit=1;save(true);}
       if(el.dataset.coffeeContrast!=null){if(window.MINKA_APP==='rad'&&!config.coffeeExplicit)config.coffeeMode=0;config.coffeeContrast=+el.dataset.coffeeContrast;save();}
       if(el.dataset.fullTintMode!=null){config.fullTintMode=+el.dataset.fullTintMode;save();}

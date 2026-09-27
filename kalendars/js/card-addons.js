@@ -3,6 +3,8 @@
 
   var STORAGE_KEY = 'mkWorkerCardAddonsV1';
   var CACHE_BUST = '20260912realistic1';
+  // The Focus kit has its own version, so the kept pictures stay in everyone's cache.
+  var FOCUS_BUST = '20260927focus2';
   var activeGroup = 'topper';
   var scanFrame = 0;
   var sectionFrame = 0;
@@ -26,85 +28,196 @@
   // worker skins, but its operational cards must stay clean and uncluttered.
   var CARD_SELECTOR = '#grafiks-list .card[data-worker]';
 
+  // Defined before ITEMS: the coffee items are built from them.
+  var COFFEE_DRINKS = [['narvesen', 'Narvesen'], ['monster', 'Monster'], ['monsterultra', 'Monster Ultra'], ['redbull', 'Red Bull'],
+    ['brite', 'Brite'], ['philips', 'Philips'], ['lofbergs', 'Löfbergs'], ['mycoffee', 'Mana kafija']];
+  var COFFEE_STATS = [['', 'Bez skaitļa'], ['n', 'Šodien pie katras'], ['t', 'Šodien kopā'], ['a', 'Visu laiku']];
+  /* Groups in the picker. Kept: everything someone uses (checked in the cloud,
+     2026-09-27). The unused originals made way for the Focus kit (focus-v1,
+     scripts/build-focus-addons.py): gradient-map "fokuss" and halftone cut-outs,
+     editorial labels, full-card frames and light, plus live coffee stickers. */
   var GROUPS = [
     { id: 'topper', label: 'Topperi' },
-    { id: 'sticker', label: 'Uzlīmes' },
+    { id: 'object', label: 'Objekti' },
     { id: 'charm', label: 'Piekariņi' },
-    { id: 'strip', label: 'Security stripi' },
-    { id: 'tape', label: 'Līmlentes' },
-    { id: 'object', label: 'Objekti' }
+    { id: 'chrome', label: 'Hroms' },
+    { id: 'frame', label: 'Kadri' },
+    { id: 'light', label: 'Gaisma' },
+    { id: 'sticker', label: 'Zīmes' },
+    { id: 'coffee', label: 'Kafija' }
   ];
 
   function optimized(file) { return 'data/card-addons/realistic-v1/' + file; }
+  function focusKit(file) { return 'data/card-addons/focus-v1/' + file; }
 
   var ITEMS = [
-    { id: 'topper-happy-tabby', label: 'Priecīgais kaķis', group: 'topper', dockY: 5, aspect: '640 / 513', src: optimized('topper-happy-tabby.webp') },
-    { id: 'topper-space-cat', label: 'Kosmosa kaķis', group: 'topper', dockY: 5, aspect: '640 / 527', src: optimized('topper-space-cat.webp') },
-    { id: 'topper-neon-black-cat', label: 'Neona melnais kaķis', group: 'topper', dockY: 5, aspect: '640 / 610', src: optimized('topper-neon-black-cat.webp') },
     { id: 'topper-flower-white-cat', label: 'Ziedu baltais kaķis', group: 'topper', dockY: 5, aspect: '640 / 523', src: optimized('topper-flower-white-cat.webp') },
-    { id: 'topper-music-orange-cat', label: 'Mūzikas rudais kaķis', group: 'topper', dockY: 6, aspect: '640 / 544', src: optimized('topper-music-orange-cat.webp') },
-    { id: 'topper-medic-tuxedo-cat', label: 'Mediķa kaķis', group: 'topper', dockY: 6, aspect: '601 / 640', src: optimized('topper-medic-tuxedo-cat.webp') },
-    { id: 'topper-night-nurse-cat', label: 'Nakts mediķa kaķis', group: 'topper', dockY: 5, aspect: '640 / 501', src: optimized('topper-night-nurse-cat.webp') },
+    { id: 'topper-neon-black-cat', label: 'Neona melnais kaķis', group: 'topper', dockY: 5, aspect: '640 / 610', src: optimized('topper-neon-black-cat.webp') },
     { id: 'topper-cosmic-moon', label: 'Kosmiskais mēness', group: 'topper', dockY: 7, aspect: '640 / 404', src: optimized('topper-cosmic-moon.webp') },
+    { id: 'topper-music-orange-cat', label: 'Mūzikas rudais kaķis', group: 'topper', dockY: 6, aspect: '640 / 544', src: optimized('topper-music-orange-cat.webp') },
+    { id: 'topper-night-nurse-cat', label: 'Nakts mediķa kaķis', group: 'topper', dockY: 5, aspect: '640 / 501', src: optimized('topper-night-nurse-cat.webp') },
+    { id: 'topper-medic-tuxedo-cat', label: 'Mediķa kaķis', group: 'topper', dockY: 6, aspect: '601 / 640', src: optimized('topper-medic-tuxedo-cat.webp') },
+    { id: 'topper-focus-tabby', label: 'Kaķis fokusā', group: 'topper', dockY: 5, aspect: '512 / 410', src: focusKit('topper-focus-tabby.webp') },
+    { id: 'topper-halftone-cat', label: 'Rastra kaķis', group: 'topper', dockY: 5, aspect: '512 / 422', src: focusKit('topper-halftone-cat.webp') },
 
-    { id: 'sticker-good-vibes', label: 'Good Vibes', group: 'sticker', src: optimized('sticker-good-vibes.webp') },
-    { id: 'sticker-night-mode', label: 'Night Mode', group: 'sticker', src: optimized('sticker-night-mode.webp') },
-    { id: 'sticker-24h-duty', label: '24H Duty', group: 'sticker', src: optimized('sticker-24h-duty.webp') },
-    { id: 'sticker-coffee-first', label: 'Coffee First', group: 'sticker', src: optimized('sticker-coffee-first.webp') },
-    { id: 'sticker-focus', label: 'Focus', group: 'sticker', src: optimized('sticker-focus.webp') },
-    { id: 'sticker-planet', label: 'Planēta', group: 'sticker', src: optimized('sticker-planet.webp') },
-    { id: 'sticker-prism', label: 'Kristāls', group: 'sticker', src: optimized('sticker-prism.webp') },
-    { id: 'sticker-pink-paw', label: 'Rozā ķepiņa', group: 'sticker', src: optimized('sticker-pink-paw.webp') },
+    { id: 'object-holo-helmet', label: 'Holo ķivere', group: 'object', src: optimized('object-holo-helmet.webp') },
+    { id: 'object-david', label: 'Dāvids', group: 'object', src: optimized('object-david.webp') },
+    { id: 'object-strawberry', label: 'Zemene', group: 'object', src: optimized('object-strawberry.webp') },
+    { id: 'object-radiology-cat', label: 'Radioloģijas kaķis', group: 'object', src: optimized('object-radiology-cat.webp') },
+    { id: 'object-glitch-statue', label: 'Neona statuja', group: 'object', src: optimized('object-glitch-statue.webp') },
+    { id: 'object-floral-skull', label: 'Ziedu galvaskauss', group: 'object', src: optimized('object-floral-skull.webp') },
+    { id: 'object-skeleton-peace', label: 'Skeleta miera zīme', group: 'object', src: optimized('object-skeleton-peace.webp') },
+    { id: 'object-astronaut', label: 'Mēness astronauts', group: 'object', src: optimized('object-astronaut.webp') },
+    { id: 'object-crystal-cat', label: 'Kristāla kaķis', group: 'object', src: optimized('object-crystal-cat.webp') },
+    { id: 'object-owl', label: 'Baltā pūce', group: 'object', src: optimized('object-owl.webp') },
+    { id: 'object-david-focus', label: 'Dāvids fokusā', group: 'object', src: focusKit('object-david-focus.webp') },
+    { id: 'object-owl-focus', label: 'Pūce fokusā', group: 'object', src: focusKit('object-owl-focus.webp') },
+    { id: 'object-astronaut-focus', label: 'Astronauts fokusā', group: 'object', src: focusKit('object-astronaut-focus.webp') },
+    { id: 'object-skull-focus', label: 'Galvaskauss fokusā', group: 'object', src: focusKit('object-skull-focus.webp') },
+    { id: 'object-skeleton-halftone', label: 'Miera zīme rastrā', group: 'object', src: focusKit('object-skeleton-halftone.webp') },
+    { id: 'object-cat-halftone', label: 'Kaķis rastrā', group: 'object', src: focusKit('object-cat-halftone.webp') },
+    { id: 'object-statue-halftone', label: 'Statuja rastrā', group: 'object', src: focusKit('object-statue-halftone.webp') },
 
-    { id: 'charm-gold-moon', label: 'Zelta mēness', group: 'charm', src: optimized('charm-gold-moon.webp') },
+    { id: 'charm-masked-night-skull', label: 'Mediķis maskā', group: 'charm', src: optimized('charm-masked-night-skull.webp') },
+    { id: 'charm-blue-moon', label: 'Zilais mēness', group: 'charm', src: optimized('charm-blue-moon.webp') },
+    { id: 'charm-night-nurse-skull', label: 'Nakts māsiņa', group: 'charm', src: optimized('charm-night-nurse-skull.webp') },
     { id: 'charm-prism-star', label: 'Kristāla zvaigzne', group: 'charm', src: optimized('charm-prism-star.webp') },
+    { id: 'charm-white-bone', label: 'Baltais kauliņš', group: 'charm', src: optimized('charm-white-bone.webp') },
     { id: 'charm-coffee', label: 'Kafija', group: 'charm', src: optimized('charm-coffee.webp') },
     { id: 'charm-paw', label: 'Ķepiņa', group: 'charm', src: optimized('charm-paw.webp') },
-    { id: 'charm-planet', label: 'Planēta', group: 'charm', src: optimized('charm-planet.webp') },
-    { id: 'charm-blue-moon', label: 'Zilais mēness', group: 'charm', src: optimized('charm-blue-moon.webp') },
-    { id: 'charm-white-bone', label: 'Baltais kauliņš', group: 'charm', src: optimized('charm-white-bone.webp') },
-    { id: 'charm-night-nurse-skull', label: 'Nakts māsiņa', group: 'charm', src: optimized('charm-night-nurse-skull.webp') },
-    { id: 'charm-masked-night-skull', label: 'Mediķis maskā', group: 'charm', src: optimized('charm-masked-night-skull.webp') },
-    { id: 'charm-holo-dice', label: 'Holo kauliņi', group: 'charm', src: optimized('charm-holo-dice.webp') },
-    { id: 'charm-holo-heart', label: 'Holo sirds', group: 'charm', src: optimized('charm-holo-heart.webp') },
+    { id: 'charm-lens', label: 'Objektīvs', group: 'charm', src: focusKit('charm-lens.svg') },
+    { id: 'charm-reticle', label: 'Tēmēklis', group: 'charm', src: focusKit('charm-reticle.svg') },
+    { id: 'charm-halftone-orb', label: 'Rastra lode', group: 'charm', src: focusKit('charm-halftone-orb.svg') },
+    { id: 'charm-focus-tag', label: 'Fokusa birka', group: 'charm', src: focusKit('charm-focus-tag.svg') },
 
-    { id: 'strip-night-shift', label: 'Night Shift', group: 'strip', src: optimized('strip-night-shift.webp') },
-    { id: 'strip-ct-ramp', label: 'CT Ramp', group: 'strip', src: optimized('strip-ct-ramp.webp') },
-    { id: 'strip-nmp', label: 'NMP', group: 'strip', src: optimized('strip-nmp.webp') },
-    { id: 'strip-xray-hand', label: 'Rentgena roka', group: 'strip', src: optimized('strip-xray-hand.webp') },
-    { id: 'strip-ct-hazard', label: 'CT brīdinājums', group: 'strip', src: optimized('strip-ct-hazard.webp') },
+    { id: 'chrome-set', label: 'Hroma komplekts', group: 'chrome', src: focusKit('chrome-set.webp') },
+    { id: 'chrome-d', label: 'Hroma puse', group: 'chrome', src: focusKit('chrome-d.webp') },
+    { id: 'chrome-half', label: 'Hroma loks', group: 'chrome', src: focusKit('chrome-half.webp') },
+    { id: 'chrome-drop', label: 'Hroma lāse', group: 'chrome', src: focusKit('chrome-drop.webp') },
+    { id: 'chrome-circle', label: 'Hroma disks', group: 'chrome', src: focusKit('chrome-circle.webp') },
+    { id: 'chrome-pill', label: 'Hroma kapsula', group: 'chrome', src: focusKit('chrome-pill.webp') },
 
-    { id: 'tape-clear', label: 'Caurspīdīga', group: 'tape', src: optimized('tape-clear.webp') },
-    { id: 'tape-black', label: 'Melna', group: 'tape', src: optimized('tape-black.webp') },
-    { id: 'tape-white', label: 'Balta', group: 'tape', src: optimized('tape-white.webp') },
-    { id: 'tape-paper', label: 'Papīra', group: 'tape', src: optimized('tape-paper.webp') },
-    { id: 'tape-grid', label: 'Rūtiņu', group: 'tape', src: optimized('tape-grid.webp') },
-    { id: 'tape-cream', label: 'Krēmkrāsas', group: 'tape', src: optimized('tape-cream.webp') },
-    { id: 'tape-iridescent', label: 'Hologrāfiska', group: 'tape', src: optimized('tape-iridescent.webp') },
-    { id: 'tape-gold', label: 'Zelta', group: 'tape', src: optimized('tape-gold.webp') },
-    { id: 'tape-on-duty', label: 'On Duty', group: 'tape', src: optimized('tape-on-duty.webp') },
-    { id: 'tape-rakus', label: 'Rakus', group: 'tape', src: optimized('tape-rakus.webp') },
-    { id: 'tape-holographic', label: 'Holo spīdums', group: 'tape', src: optimized('tape-holographic.webp') },
-    { id: 'tape-botanical-leaves', label: 'Eikalipta zaļumi', group: 'tape', src: optimized('tape-botanical-leaves.webp') },
+    { id: 'frame-holo', label: 'Holo svītras', group: 'frame', src: focusKit('frame-holo.webp') },
+    { id: 'frame-focus', label: 'Fokuss', group: 'frame', src: focusKit('frame-focus.svg') },
+    { id: 'frame-viewfinder', label: 'Skatu meklētājs', group: 'frame', src: focusKit('frame-viewfinder.svg') },
+    { id: 'frame-thirds', label: 'Trešdaļas', group: 'frame', src: focusKit('frame-thirds.svg') },
+    { id: 'frame-registration', label: 'Drukas zīmes', group: 'frame', src: focusKit('frame-registration.svg') },
+    { id: 'frame-ruler', label: 'Lineāls', group: 'frame', src: focusKit('frame-ruler.svg') },
 
-    { id: 'object-david', label: 'Dāvids', group: 'object', src: optimized('object-david.webp') },
-    { id: 'object-floral-statue', label: 'Ziedu statuja', group: 'object', src: optimized('object-floral-statue.webp') },
-    { id: 'object-glitch-statue', label: 'Neona statuja', group: 'object', src: optimized('object-glitch-statue.webp') },
-    { id: 'object-crystal-cat', label: 'Kristāla kaķis', group: 'object', src: optimized('object-crystal-cat.webp') },
-    { id: 'object-snake', label: 'Baltā čūska', group: 'object', src: optimized('object-snake.webp') },
-    { id: 'object-lilies', label: 'Lilijas', group: 'object', src: optimized('object-lilies.webp') },
-    { id: 'object-astronaut', label: 'Mēness astronauts', group: 'object', src: optimized('object-astronaut.webp') },
-    { id: 'object-floral-skull', label: 'Ziedu galvaskauss', group: 'object', src: optimized('object-floral-skull.webp') },
-    { id: 'object-owl', label: 'Baltā pūce', group: 'object', src: optimized('object-owl.webp') },
-    { id: 'object-radiology-cat', label: 'Radioloģijas kaķis', group: 'object', src: optimized('object-radiology-cat.webp') },
-    { id: 'object-new-floral-statue', label: 'Liliju statuja', group: 'object', src: optimized('object-new-floral-statue.webp') },
-    { id: 'object-skeleton-peace', label: 'Skeleta miera zīme', group: 'object', src: optimized('object-skeleton-peace.webp') },
-    { id: 'object-holo-helmet', label: 'Holo ķivere', group: 'object', src: optimized('object-holo-helmet.webp') },
-    { id: 'object-holo-skull', label: 'Holo galvaskauss', group: 'object', src: optimized('object-holo-skull.webp') },
-    { id: 'object-strawberry', label: 'Zemene', group: 'object', src: optimized('object-strawberry.webp') },
-    { id: 'object-green-glitter-bear', label: 'Zaļais spīdumu lācis', group: 'object', src: optimized('object-green-glitter-bear.webp') },
-    { id: 'object-cloud-cat', label: 'Kaķis uz mākoņa', group: 'object', src: optimized('object-cloud-cat.webp') }
-  ];
+    { id: 'light-leak-warm', label: 'Silta noplūde', group: 'light', src: focusKit('light-leak-warm.svg') },
+    { id: 'light-leak-cool', label: 'Vēsa noplūde', group: 'light', src: focusKit('light-leak-cool.svg') },
+    { id: 'light-bokeh', label: 'Bokeh', group: 'light', src: focusKit('light-bokeh.svg') },
+    { id: 'light-flare', label: 'Saules atspīdums', group: 'light', src: focusKit('light-flare.svg') },
+    { id: 'light-shine', label: 'Spīdums', group: 'light', src: focusKit('light-shine.svg') },
+
+    { id: 'sticker-24h-duty', label: '24H Duty', group: 'sticker', src: optimized('sticker-24h-duty.webp') },
+    { id: 'label-focus', label: 'Focus', group: 'sticker', flat: true, src: focusKit('label-focus.svg') },
+    { id: 'label-light-shine', label: 'light focus shine', group: 'sticker', flat: true, src: focusKit('label-light-shine.svg') },
+    { id: 'label-rec', label: 'REC', group: 'sticker', flat: true, src: focusKit('label-rec.svg') },
+    { id: 'label-exposure', label: 'Ekspozīcija', group: 'sticker', flat: true, src: focusKit('label-exposure.svg') },
+    { id: 'label-night', label: 'Nakts maiņa', group: 'sticker', flat: true, src: focusKit('label-night.svg') },
+    { id: 'label-lens-dot', label: 'On duty', group: 'sticker', src: focusKit('label-lens-dot.svg') },
+    { id: 'label-barcode', label: 'Svītrkods', group: 'sticker', flat: true, src: focusKit('label-barcode.svg') },
+
+    // Kept for the one card that still has it; no longer offered in the picker.
+    { id: 'tape-clear', label: 'Caurspīdīga', group: 'tape', hidden: true, src: optimized('tape-clear.webp') },
+  ].concat(coffeeItems());
+
+  /* Kafija: live stickers from the person's own coffee log (the same drinks and
+     pixel icons as the coffee menu). Each comes in four variants — no number,
+     a small count at each drink, today's total, all-time total — stored as the
+     id suffix (-n / -t / -a), so the cloud format stays the same. */
+  function coffeeItems() {
+    var out = [];
+    [['coffee-today', 'Šodienas kafijas', '']].concat(COFFEE_DRINKS.map(function(d) { return ['coffee-' + d[0], d[1], d[0]]; })).forEach(function(d) {
+      COFFEE_STATS.forEach(function(st) {
+        out.push({ id: d[0] + (st[0] ? '-' + st[0] : ''), base: d[0], stat: st[0], drink: d[2], label: d[1], group: 'coffee', dynamic: true, hidden: !!st[0] });
+      });
+    });
+    return out;
+  }
+  function coffeeToday(name) {
+    var out = { count: 0, sources: [] };
+    try {
+      var all = window.__minkaGetCoffeeDetailsForNames && window.__minkaGetCoffeeDetailsForNames([name]);
+      var v = all && Object.keys(all).length ? all[Object.keys(all)[0]] : null;
+      if (v) { out.count = v.count || 0; out.sources = (v.sources || []).slice().sort(function(a, b) { return b.count - a.count; }); }
+    } catch (_e) {}
+    return out;
+  }
+  function coffeeAllTime(name) {
+    try {
+      var want = String(name || '').trim().toLowerCase();
+      var row = (window.__minkaGetCoffeeLeaderboard ? window.__minkaGetCoffeeLeaderboard(999) : []).filter(function(r) { return String(r.name || '').trim().toLowerCase() === want; })[0];
+      return row ? row.count : 0;
+    } catch (_e) { return 0; }
+  }
+  /* Brite and "Mana kafija" icons point at PNG files; an SVG shown as an <img>
+     may not load outside files, so each PNG is fetched once and inlined. */
+  var coffeePng = Object.create(null);
+  function inlineCoffeePngs(raw) {
+    return raw.replace(/href="([^"]+\.png)"/g, function(all, href) {
+      var abs = new URL(href, document.baseURI).href;
+      if (coffeePng[abs] && coffeePng[abs] !== 1) return 'href="' + coffeePng[abs] + '"';
+      if (!coffeePng[abs]) {
+        coffeePng[abs] = 1;
+        fetch(abs).then(function(r) { return r.blob(); }).then(function(b) {
+          return new Promise(function(ok) { var fr = new FileReader(); fr.onload = function() { ok(fr.result); }; fr.readAsDataURL(b); });
+        }).then(function(data) { coffeePng[abs] = data; refreshCoffee(); }, function() { delete coffeePng[abs]; });
+      }
+      return 'href=""';
+    });
+  }
+  function coffeeAllTimeBySource(name) {
+    try { return window.__minkaGetCoffeeSourcesAllTime ? window.__minkaGetCoffeeSourcesAllTime(name) : {}; } catch (_e) { return {}; }
+  }
+  function coffeeIconAt(drink, x, y, size, faded) {
+    var raw = typeof window.__minkaCoffeeIcon === 'function' ? String(window.__minkaCoffeeIcon(drink) || '') : '';
+    if (raw.indexOf('<svg') < 0) return '';
+    raw = inlineCoffeePngs(raw);
+    return '<g filter="url(#o)"' + (faded ? ' opacity=".45"' : '') + '>' + raw.replace('<svg', '<svg x="' + x + '" y="' + y + '" width="' + size + '" height="' + size + '"') + '</g>';
+  }
+  function coffeeBadge(x, y, text) {
+    var len = String(text).length, w = len > 2 ? 7 * len + 6 : 19;   // a pill for 100+
+    return '<rect x="' + (x - w / 2) + '" y="' + (y - 9.5) + '" width="' + w + '" height="19" rx="9.5" fill="#f67a18" stroke="#0a0b0e" stroke-width="1.5"/>'
+      + '<text x="' + x + '" y="' + (y + 4) + '" text-anchor="middle" font-size="11" font-weight="800" fill="#fff" font-family="Helvetica Neue,Arial,sans-serif">' + text + '</text>';
+  }
+  function coffeePill(x, y, width, label, value) {
+    return '<rect x="' + x + '" y="' + y + '" width="' + width + '" height="17" rx="8.5" fill="#0a0b0e" stroke="#f4f2ec" stroke-opacity=".5"/>'
+      + '<text x="' + (x + 8) + '" y="' + (y + 12.3) + '" font-size="9.5" font-weight="600" fill="#f4f2ec" font-family="Helvetica Neue,Arial,sans-serif">' + label
+      + ' <tspan font-weight="800" fill="#f6a24a">' + value + '</tspan></text>';
+  }
+  /* Numbers: "n" today's count at each drink; "t" today's total in a pill;
+     "a" all time — every drink with its own count (Monster ×N, Narvesen ×N),
+     the single-drink sticker its own all-time count. */
+  function coffeeSvgUrl(item, name) {
+    var today = coffeeToday(name), parts = '', width, height;
+    var all = item.stat === 'a' ? coffeeAllTimeBySource(name) : null;
+    var drinks;
+    if (item.drink) drinks = [{ key: item.drink, count: all ? all[item.drink] || 0 : (today.sources.filter(function(s) { return s.key === item.drink; })[0] || {}).count || 0 }];
+    else if (all) drinks = Object.keys(all).filter(function(k) { return all[k] > 0; }).sort(function(a, b) { return all[b] - all[a]; }).slice(0, 4).map(function(k) { return { key: k, count: all[k] }; });
+    else drinks = today.sources.slice(0, 4);
+    if (!drinks.length) drinks = [{ key: item.drink || 'philips', count: 0 }];
+    var size = item.drink ? 58 : 36, step = size + 6;
+    drinks.forEach(function(d, i) {
+      parts += coffeeIconAt(d.key, 4 + i * step, 4, size, !d.count);
+      if (item.stat === 'n' || item.stat === 'a') parts += coffeeBadge(4 + i * step + size - 4, size - 2, d.count);
+    });
+    // Room for the count badges, which sit over the icons' lower right corner.
+    width = 8 + drinks.length * step - 6 + (item.stat === 'n' || item.stat === 'a' ? 10 : 0); height = size + 10 + (item.stat === 'n' || item.stat === 'a' ? 4 : 0);
+    if (item.stat === 't') {
+      var pw = 22 + (6 + String(today.count).length) * 6.2;
+      parts += coffeePill(2, height - 2, pw, 'šodien', today.count);
+      width = Math.max(width, pw + 4); height += 19;
+    }
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '">'
+      + '<defs><filter id="o" x="-10%" y="-10%" width="120%" height="120%"><feMorphology in="SourceAlpha" operator="dilate" radius="1.6" result="d"/><feFlood flood-color="#f4f2ec"/><feComposite in2="d" operator="in" result="w"/><feMerge><feMergeNode in="w"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>'
+      + parts + '</svg>';
+    return 'data:image/svg+xml,' + encodeURIComponent(svg);
+  }
+  function cardWorkerName(card) {
+    return (card && card.getAttribute && card.getAttribute('data-worker')) || currentWorkerName();
+  }
 
   var ITEM_BY_ID = Object.create(null);
   ITEMS.forEach(function(item) { ITEM_BY_ID[item.id] = item; });
@@ -146,12 +259,22 @@
     return (first + ' ' + last).replace(/--/g, '').trim();
   }
 
-  function getConfig(name) { return readAll()[normName(name)] || null; }
+  /* Up to three decorations per card. Stored as a list (older saves hold one
+     object — read as a list of one). */
+  var MAX_ADDONS = 3;
+  function toList(value) {
+    var list = Array.isArray(value) ? value : value ? [value] : [];
+    return list.map(function(v) { return normalizeConfig(v); }).filter(Boolean).slice(0, MAX_ADDONS);
+  }
+  function getList(name) { return toList(readAll()[normName(name)]); }
+  function getConfig(name) { return getList(name)[0] || null; }
+  // Items drawn as graphics (coffee, frames, light, labels) start without a picture effect.
+  function plainItem(item) { return !!item && (item.dynamic || item.group === 'frame' || item.group === 'light' || /^label-/.test(item.id)); }
 
   /* The decoration's own picture effect, independent of the card: 'card' follows
      the card's effect, 'none' keeps the plain picture, the rest are effects. Unset
      = the card's "Efekts arī dekoram" switch decides (older saves). */
-  var DECOR_FX = [['card', 'Kā kartītei'], ['none', 'Nav'], ['dither', 'Dither'], ['xray', 'Rentgens'], ['halftone', 'Rastrs'], ['duotone', 'Duotons'], ['ascii', 'ASCII']];
+  var DECOR_FX = [['card', 'Kā kartītei'], ['none', 'Nav'], ['focus', 'Fokuss'], ['dither', 'Dither'], ['xray', 'Rentgens'], ['halftone', 'Rastrs'], ['duotone', 'Duotons'], ['ascii', 'ASCII']];
   var DECOR_INKS = [['eceae4', 'Balta'], ['64d2ff', 'Ledus'], ['23cdcf', 'Ciāna'], ['1fe091', 'Zaļa'], ['f5b73f', 'Dzintars'], ['ff8a5c', 'Oranža'], ['ff5c5c', 'Sarkana'], ['2554a0', 'Tinte'], ['141414', 'Melna']];
   function validDecorFx(v) { return DECOR_FX.some(function(f) { return f[0] === v; }); }
 
@@ -159,7 +282,8 @@
     if (!config || !ITEM_BY_ID[config.id]) return null;
     var clean = {
       id: config.id,
-      scale: Math.round(Math.max(.25, Math.min(1.4, Number(config.scale) || 1)) * 100) / 100,
+      // The cloud stores 60–140 % (a smaller local value came back as 60 % on the next sync).
+      scale: Math.round(Math.max(.6, Math.min(1.4, Number(config.scale) || 1)) * 100) / 100,
       side: config.side === 'left' ? 'left' : 'right',
       x: Math.round(Math.max(-100, Math.min(100, Number(config.x) || 0)) * 100) / 100,
       y: Math.round(Math.max(-100, Math.min(100, Number(config.y) || 0)) * 100) / 100
@@ -172,11 +296,11 @@
     return clean;
   }
 
-  function saveConfig(name, config, options) {
+  function saveList(name, list, options) {
     var all = readAll();
     var key = normName(name);
-    var clean = normalizeConfig(config);
-    if (clean) all[key] = clean;
+    var clean = toList(list);
+    if (clean.length) all[key] = clean;
     else delete all[key];
     writeAll(all);
     applyWorker(name);
@@ -184,10 +308,13 @@
       window.mkSyncWorkerAppearance(name, true);
     }
   }
+  function saveConfig(name, config, options) { saveList(name, config ? [config] : [], options); }
 
-  function assetUrl(item) {
-    try { return new URL(item.src + '?v=' + CACHE_BUST, document.baseURI).href; }
-    catch (_error) { return item.src + '?v=' + CACHE_BUST; }
+  function assetUrl(item, card) {
+    if (item.dynamic) return coffeeSvgUrl(item, cardWorkerName(card));
+    var v = item.src.indexOf('focus-v1/') >= 0 ? FOCUS_BUST : CACHE_BUST;
+    try { return new URL(item.src + '?v=' + v, document.baseURI).href; }
+    catch (_error) { return item.src + '?v=' + v; }
   }
 
   function surfaceSignature(card) {
@@ -222,9 +349,10 @@
     surface.dataset.surfaceSignature = signature;
   }
 
-  function setAddonGroupClass(card, group) {
+  function setAddonGroupClass(card, groups) {
+    groups = [].concat(groups || []);
     GROUPS.forEach(function(item) {
-      card.classList.toggle('mk-addon-group-' + item.id, item.id === group);
+      card.classList.toggle('mk-addon-group-' + item.id, groups.indexOf(item.id) >= 0);
     });
   }
 
@@ -293,19 +421,29 @@
     topperClearanceFrame = requestAnimationFrame(syncTopperClearance);
   }
 
-  function applyToCard(card, config) {
-    var existing = card.querySelector(':scope > .mk-card-addon');
+  function applyToCard(card, value) {
+    var list = toList(value);
+    var images = card.querySelectorAll(':scope > .mk-card-addon');
     var surface = card.querySelector(':scope > .mk-card-addon-surface');
-    if (!config || !ITEM_BY_ID[config.id]) {
-      if (existing) existing.remove();
+    if (!list.length) {
+      images.forEach(function(img) { img.remove(); });
       if (surface) surface.remove();
       card.classList.remove('mk-addon-active');
-      setAddonGroupClass(card, '');
+      setAddonGroupClass(card, []);
       card.style.removeProperty('--mk-addon-card-radius');
       return;
     }
+    // One image per slot; images beyond the list go.
+    images.forEach(function(img) { if (!(+img.dataset.slot < list.length)) img.remove(); });
+    list.forEach(function(config, slot) { placeAddon(card, config, slot); });
+    setAddonGroupClass(card, list.map(function(c) { return ITEM_BY_ID[c.id].group; }));
+    card.classList.add('mk-addon-active');
+  }
+  function placeAddon(card, config, slot) {
+    var existing = card.querySelector(':scope > .mk-card-addon[data-slot="' + slot + '"]') || (slot === 0 ? card.querySelector(':scope > .mk-card-addon:not([data-slot])') : null);
+    var surface = card.querySelector(':scope > .mk-card-addon-surface');
     var item = ITEM_BY_ID[config.id];
-    var scale = Math.max(.25, Math.min(1.4, Number(config.scale) || 1));
+    var scale = Math.max(.6, Math.min(1.4, Number(config.scale) || 1));
     var side = config.side === 'left' ? 'left' : 'right';
     var offsetX = Math.max(-100, Math.min(100, Number(config.x) || 0));
     var offsetY = Math.max(-100, Math.min(100, Number(config.y) || 0));
@@ -319,6 +457,8 @@
          when the matching image already exists. Without this, only the few
          pixels inside the card (a clasp or paws) survive overflow:hidden. */
       var needsGeometry = !card.classList.contains('mk-addon-active');
+      // Coffee stickers follow the day's log: redraw when the numbers changed.
+      if (item.dynamic) { var fresh = assetUrl(item, card); if (existing.getAttribute('src') !== fresh) existing.src = fresh; }
       if ((existing.dataset.addonColor || '') !== (config.color || '') || (existing.dataset.addonFx || '') !== (config.fx || '')
         || (existing.dataset.addonTune || '') !== (config.tune || '')) {
         if (config.color) existing.dataset.addonColor = config.color; else delete existing.dataset.addonColor;
@@ -337,9 +477,8 @@
       existing.style.setProperty('--mk-addon-dock-y', (Number(item.dockY) || 3) + 'px');
       if (item.aspect) existing.style.setProperty('--mk-addon-aspect', item.aspect);
       else existing.style.removeProperty('--mk-addon-aspect');
+      existing.dataset.slot = String(slot);
       syncCardSurface(card, surface);
-      setAddonGroupClass(card, item.group);
-      card.classList.add('mk-addon-active');
       return;
     }
     if (existing) existing.remove();
@@ -357,6 +496,7 @@
     image.decoding = 'async';
     image.setAttribute('aria-hidden', 'true');
     image.dataset.addonId = item.id;
+    image.dataset.slot = String(slot);
     image.dataset.addonGroup = item.group;
     image.dataset.addonSide = side;
     image.dataset.addonScale = String(scale);
@@ -374,17 +514,18 @@
       scheduleTopperClearance();
       scheduleAddonPortals(80);
     }, { once: true });
-    image.src = assetUrl(item);
-    setAddonGroupClass(card, item.group);
-    card.classList.add('mk-addon-active');
-    card.appendChild(image);
+    image.src = assetUrl(item, card);
+    // Keep slot order in the DOM (later slots paint on top).
+    var after = null;
+    card.querySelectorAll(':scope > .mk-card-addon[data-slot]').forEach(function(img) { if (!after && +img.dataset.slot > slot) after = img; });
+    card.insertBefore(image, after);
     // "Efekts arī dekoram": the card's picture effect follows onto a new decoration.
     if (window.MinkaDither && window.MinkaDither.decor) window.MinkaDither.decor(card);
   }
 
   function applyWorker(name) {
     var key = normName(name);
-    var config = getConfig(name);
+    var config = getList(name);
     document.querySelectorAll('#grafiks-list .card[data-worker]').forEach(function(card) {
       if (normName(card.getAttribute('data-worker')) === key) applyToCard(card, config);
     });
@@ -657,7 +798,18 @@
     var preview = host.querySelector('.mk-skin-preview-real');
     if (!tabs || !editor) return;
     var name = currentWorkerName();
-    var config = getConfig(name) || { id: '', scale: 1, side: 'right', x: 0, y: 0 };
+    // Slots: up to three decorations; the panel edits one of them (config) at a time.
+    function emptySlot(side) { return { id: '', scale: 1, side: side || 'right', x: 0, y: 0 }; }
+    var slots = getList(name);
+    if (!slots.length) slots = [emptySlot()];
+    var activeSlot = 0;
+    var config = slots[0];
+    // Open on the chosen decoration's own group, not on whatever was browsed last.
+    if (config.id && ITEM_BY_ID[config.id]) activeGroup = ITEM_BY_ID[config.id].group;
+    function saveSlots(options) {
+      slots[activeSlot] = config;
+      saveList(name, slots.filter(function(c) { return c && c.id; }), options);
+    }
     var previewSlot = preview && preview.closest('.mk-skin-preview-slot');
 
     var tab = document.createElement('button');
@@ -673,19 +825,22 @@
     panel.className = 'mk-skin-section mk-addon-section';
     panel.dataset.skinPanel = 'addons';
     var groupsHtml = GROUPS.map(function(group) {
-      var count = ITEMS.filter(function(item) { return item.group === group.id; }).length;
+      var count = ITEMS.filter(function(item) { return item.group === group.id && !item.hidden; }).length;
       return '<button type="button" class="mk-addon-group' + (activeGroup === group.id ? ' is-active' : '')
         + '" data-addon-group="' + group.id + '">' + esc(group.label) + '<span>' + count + '</span></button>';
     }).join('');
-    panel.innerHTML = '<div class="mk-skin-section-head mk-addon-section-head"><span><strong>Kartītes dekors</strong><small>Viens dekors vienlaikus — bez pārblīvējuma</small></span><button type="button" class="mk-addon-remove" aria-label="Noņemt kartītes dekoru">✕ Noņemt dekoru</button></div>'
-      + '<div class="mk-addon-drag-hint">Satver dekoru uz kartītes un velc uz jebkuru vietu</div>'
+    panel.innerHTML = '<div class="mk-skin-section-head mk-addon-section-head"><span><strong>Kartītes dekors</strong><small>Līdz 3 dekoriem vienlaikus</small></span><button type="button" class="mk-addon-remove" aria-label="Noņemt izvēlēto dekoru">✕ Noņemt dekoru</button></div>'
+      + '<div class="mk-addon-drag-hint">Cita veida dekors nāk klāt (līdz 3), tā paša veida aizstāj izvēlēto. Kartītē velc jebkuru.</div>'
+      + '<div class="mk-addon-slots" role="group" aria-label="Dekori uz kartītes"></div>'
       + '<div class="mk-addon-groups">' + groupsHtml + '</div>'
       + '<div class="mk-addon-grid"></div>'
       + '<div class="mk-addon-controls">'
-      + '<label><span>Izmērs</span><input class="mk-addon-scale" type="range" min="25" max="140" step="5" value="' + Math.round((Number(config.scale) || 1) * 100) + '"><b class="mk-addon-scale-value">' + Math.round((Number(config.scale) || 1) * 100) + '%</b></label>'
+      + '<label><span>Izmērs</span><input class="mk-addon-scale" type="range" min="60" max="140" step="5" value="' + Math.round((Number(config.scale) || 1) * 100) + '"><b class="mk-addon-scale-value">' + Math.round((Number(config.scale) || 1) * 100) + '%</b></label>'
       + '<div class="mk-addon-side" role="group" aria-label="Dekora puse"><button type="button" data-addon-side="left" class="' + (config.side === 'left' ? 'is-active' : '') + '">Kreisā</button><button type="button" data-addon-side="right" class="' + (config.side !== 'left' ? 'is-active' : '') + '">Labā</button></div>'
       + '<button type="button" class="mk-addon-reset-position">↺ Pozīcija</button>'
       + '</div>'
+      + '<div class="mk-addon-coffee" hidden><span>Kafijas skaitlis</span><div class="mk-addon-coffee-stats" role="group" aria-label="Kafijas skaitlis">'
+      + COFFEE_STATS.map(function(st) { return '<button type="button" data-coffee-stat="' + st[0] + '">' + esc(st[1]) + '</button>'; }).join('') + '</div></div>'
       + '<div class="mk-addon-look">'
       + '<div class="mk-addon-look-label">Dekora efekts</div>'
       + '<div class="mk-addon-fx" role="group" aria-label="Dekora efekts">' + DECOR_FX.map(function(f) { return '<button type="button" data-decor-fx="' + f[0] + '">' + esc(f[1]) + '</button>'; }).join('') + '</div>'
@@ -702,14 +857,16 @@
     function syncPreviewClearance() {
       if (!previewSlot || !preview) return;
       if (window.MinkaCardFaces && window.MinkaCardFaces.refreshPreview) window.MinkaCardFaces.refreshPreview();
-      var addon = preview.querySelector(':scope > .mk-card-addon');
+      var addons = preview.querySelectorAll(':scope > .mk-card-addon');
+      var addon = addons[0];
       if (!addon) {
         previewSlot.style.removeProperty('--mk-addon-preview-top-clearance');
         previewSlot.style.removeProperty('--mk-addon-preview-bottom-clearance');
         return;
       }
       var cardRect = preview.getBoundingClientRect();
-      var addonRect = addon.getBoundingClientRect();
+      var addonRect = { top: Infinity, bottom: -Infinity, width: 0, height: 0 };
+      addons.forEach(function(img) { var r = img.getBoundingClientRect(); if (!r.width || !r.height) return; addonRect.top = Math.min(addonRect.top, r.top); addonRect.bottom = Math.max(addonRect.bottom, r.bottom); addonRect.width = 1; addonRect.height = 1; });
       if (!addonRect.width || !addonRect.height) return;
       var topOverflow = Math.max(0, cardRect.top - addonRect.top);
       var bottomOverflow = Math.max(0, addonRect.bottom - cardRect.bottom);
@@ -719,7 +876,7 @@
         var view = preview.closest('#modal-skin-view');
         var scroller = view && view.parentElement;
         if (!scroller) return;
-        var freshAddonRect = addon.getBoundingClientRect();
+        var freshAddonRect = (preview.querySelector(':scope > .mk-card-addon[data-slot="' + activeSlot + '"]') || addon).getBoundingClientRect();
         var scrollerRect = scroller.getBoundingClientRect();
         if (freshAddonRect.top < scrollerRect.top + 10) {
           scroller.scrollTop = Math.max(0, scroller.scrollTop - (scrollerRect.top + 10 - freshAddonRect.top));
@@ -730,59 +887,138 @@
     }
 
     function applyPreview() {
-      if (preview) applyToCard(preview, config && config.id ? config : null);
-      var previewAddon = preview && preview.querySelector(':scope > .mk-card-addon');
-      if (previewSlot) previewSlot.classList.toggle('mk-has-addon', !!previewAddon);
+      if (preview) applyToCard(preview, slots.filter(function(c) { return c && c.id; }));
+      var previewAddons = preview ? preview.querySelectorAll(':scope > .mk-card-addon') : [];
+      if (previewSlot) previewSlot.classList.toggle('mk-has-addon', !!previewAddons.length);
       syncPreviewClearance();
-      if (previewAddon && !previewAddon.complete) {
-        previewAddon.addEventListener('load', syncPreviewClearance, { once: true });
-      }
-      if (!previewAddon || previewAddon.dataset.dragBound === '1') return;
-      previewAddon.dataset.dragBound = '1';
-      previewAddon.addEventListener('pointerdown', function(event) {
-        if (!config || !config.id || event.button !== 0 || previewAddon.classList.contains('is-dragging')) return;
-        event.preventDefault();
-        event.stopPropagation();
-        var startX = event.clientX;
-        var startY = event.clientY;
-        var baseX = Number(config.x) || 0;
-        var baseY = Number(config.y) || 0;
-        var rect = preview.getBoundingClientRect();
-        var width = preview.clientWidth, height = preview.clientHeight;
-        var visibleWidth = width * rect.width / preview.offsetWidth;
-        var visibleHeight = height * rect.height / preview.offsetHeight;
-        if (!visibleWidth || !visibleHeight) return;
-        previewAddon.classList.add('is-dragging');
-        previewAddon.setPointerCapture(event.pointerId);
-        function move(moveEvent) {
-          if (moveEvent.pointerId !== event.pointerId) return;
-          var position = addonDragPosition(baseX, baseY, moveEvent.clientX - startX, moveEvent.clientY - startY, visibleWidth, visibleHeight);
-          config.x = position.x; config.y = position.y;
-          // Store the live position too: a queued geometry refresh must not
-          // restore the starting coordinates in the middle of a drag.
-          previewAddon.dataset.addonX = String(config.x);
-          previewAddon.dataset.addonY = String(config.y);
-          writeAddonGeometry(previewAddon, width, height);
-        }
-        function finish(endEvent) {
-          if (endEvent.pointerId !== event.pointerId) return;
-          if (endEvent.type === 'pointerup') move(endEvent);
-          if (endEvent.type === 'pointercancel') { config.x = baseX; config.y = baseY; }
-          previewAddon.classList.remove('is-dragging');
-          previewAddon.removeEventListener('pointermove', move);
-          previewAddon.removeEventListener('pointerup', finish);
-          previewAddon.removeEventListener('pointercancel', finish);
-          previewAddon.removeEventListener('lostpointercapture', finish);
-          if (previewAddon.hasPointerCapture(event.pointerId)) previewAddon.releasePointerCapture(event.pointerId);
-          saveConfig(name, config);
-          applyPreview();
-        }
-        previewAddon.addEventListener('pointermove', move);
-        previewAddon.addEventListener('pointerup', finish);
-        previewAddon.addEventListener('pointercancel', finish);
-        previewAddon.addEventListener('lostpointercapture', finish);
+      previewAddons.forEach(function(previewAddon) {
+        if (!previewAddon.complete) previewAddon.addEventListener('load', syncPreviewClearance, { once: true });
+        if (previewAddon.dataset.dragBound === '1') return;
+        previewAddon.dataset.dragBound = '1';
+        previewAddon.addEventListener('pointerdown', function(event) {
+          if (event.button !== 0 || previewAddon.classList.contains('is-dragging')) return;
+          // Grabbing a decoration also chooses it for the settings below.
+          var slot = +previewAddon.dataset.slot || 0;
+          if (slot !== activeSlot && slots[slot]) selectSlot(slot);
+          if (!config || !config.id) return;
+          event.preventDefault();
+          event.stopPropagation();
+          var startX = event.clientX;
+          var startY = event.clientY;
+          var baseX = Number(config.x) || 0;
+          var baseY = Number(config.y) || 0;
+          var rect = preview.getBoundingClientRect();
+          var width = preview.clientWidth, height = preview.clientHeight;
+          var visibleWidth = width * rect.width / preview.offsetWidth;
+          var visibleHeight = height * rect.height / preview.offsetHeight;
+          if (!visibleWidth || !visibleHeight) return;
+          previewAddon.classList.add('is-dragging');
+          previewAddon.setPointerCapture(event.pointerId);
+          function move(moveEvent) {
+            if (moveEvent.pointerId !== event.pointerId) return;
+            var position = addonDragPosition(baseX, baseY, moveEvent.clientX - startX, moveEvent.clientY - startY, visibleWidth, visibleHeight);
+            config.x = position.x; config.y = position.y;
+            // Store the live position too: a queued geometry refresh must not
+            // restore the starting coordinates in the middle of a drag.
+            previewAddon.dataset.addonX = String(config.x);
+            previewAddon.dataset.addonY = String(config.y);
+            writeAddonGeometry(previewAddon, width, height);
+          }
+          function finish(endEvent) {
+            if (endEvent.pointerId !== event.pointerId) return;
+            if (endEvent.type === 'pointerup') move(endEvent);
+            if (endEvent.type === 'pointercancel') { config.x = baseX; config.y = baseY; }
+            previewAddon.classList.remove('is-dragging');
+            previewAddon.removeEventListener('pointermove', move);
+            previewAddon.removeEventListener('pointerup', finish);
+            previewAddon.removeEventListener('pointercancel', finish);
+            previewAddon.removeEventListener('lostpointercapture', finish);
+            if (previewAddon.hasPointerCapture(event.pointerId)) previewAddon.releasePointerCapture(event.pointerId);
+            saveSlots();
+            applyPreview();
+          }
+          previewAddon.addEventListener('pointermove', move);
+          previewAddon.addEventListener('pointerup', finish);
+          previewAddon.addEventListener('pointercancel', finish);
+          previewAddon.addEventListener('lostpointercapture', finish);
+        });
       });
+      renderSlots();
     }
+
+    /* The slot row: one tile per decoration on the card (its picture), the chosen
+       one highlighted, and "+" while there is room for another. */
+    function renderSlots() {
+      var bar = panel.querySelector('.mk-addon-slots');
+      if (!bar) return;
+      var html = slots.map(function(c, i) {
+        var item = c && ITEM_BY_ID[c.id];
+        return '<button type="button" data-slot="' + i + '" aria-pressed="' + (i === activeSlot) + '" title="' + esc(item ? item.label : 'Izvēlies dekoru') + '">'
+          + (item ? '<img src="' + esc(assetUrl(item, null)) + '" alt="">' : '<i>?</i>') + '<b>' + (i + 1) + '</b></button>';
+      }).join('');
+      if (slots.length < MAX_ADDONS && slots[slots.length - 1] && slots[slots.length - 1].id) html += '<button type="button" class="mk-addon-slot-add" data-slot-add="1">+ Dekors</button>';
+      if (bar.__html !== html) { bar.innerHTML = html; bar.__html = html; }
+    }
+    /* A decoration that joins others finds its own free spot along the card's edge:
+       a few candidate places are tried on the preview (edit time only) and the one
+       that covers the fewest other decorations and card elements wins. */
+    function autoPlace() {
+      var slot = activeSlot, item = ITEM_BY_ID[config.id];
+      var img = preview && preview.querySelector(':scope > .mk-card-addon[data-slot="' + slot + '"]');
+      if (!img || !item || item.group === 'frame' || item.group === 'light') return;
+      function run() {
+        if (!img.isConnected || slots[slot] !== config) return;
+        var W = preview.clientWidth, H = preview.clientHeight;
+        function area(a, b) { var w = Math.min(a.right, b.right) - Math.max(a.left, b.left), h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top); return w > 0 && h > 0 ? w * h : 0; }
+        var others = Array.prototype.filter.call(preview.querySelectorAll(':scope > .mk-card-addon'), function(o) { return o !== img; }).map(function(o) { return o.getBoundingClientRect(); });
+        var parts = Array.prototype.filter.call(preview.querySelectorAll('[data-wf-part]'), function(el) { return !el.hidden && el.getClientRects().length; }).map(function(el) { return el.getBoundingClientRect(); });
+        var card = preview.getBoundingClientRect();
+        var tries = [['right', 0, 0], ['left', 0, 0], ['right', 0, 30], ['left', 0, 30], ['right', 0, 60], ['left', 0, 60], ['right', -32, 0], ['left', 32, 0]];
+        var best = null;
+        tries.forEach(function(t, i) {
+          img.dataset.addonSide = t[0]; img.dataset.addonX = String(t[1]); img.dataset.addonY = String(t[2]);
+          writeAddonGeometry(img, W, H);
+          var r = img.getBoundingClientRect(), score = 0;
+          others.forEach(function(o) { score += area(r, o) * 3; });
+          parts.forEach(function(p) { score += area(r, p); });
+          // Mostly off the card is not a spot either.
+          var inside = area(r, card), total = r.width * r.height || 1;
+          if (inside / total < .35) score += total;
+          score += i * 4;   // prefer the familiar spots on a tie
+          if (!best || score < best.score) best = { score: score, t: t };
+        });
+        config.side = best.t[0]; config.x = best.t[1]; config.y = best.t[2];
+        slots[slot] = config;
+        saveSlots(); syncControls(); applyPreview();
+      }
+      if (img.complete && img.naturalWidth) requestAnimationFrame(run); else img.addEventListener('load', function() { requestAnimationFrame(run); }, { once: true });
+    }
+    function syncControls() {
+      var sc = panel.querySelector('.mk-addon-scale'), v = Math.round((Number(config.scale) || 1) * 100);
+      sc.value = v; panel.querySelector('.mk-addon-scale-value').textContent = v + '%';
+      panel.querySelectorAll('[data-addon-side]').forEach(function(b) { b.classList.toggle('is-active', b.dataset.addonSide === (config.side === 'left' ? 'left' : 'right')); });
+    }
+    function selectSlot(i) {
+      activeSlot = i; config = slots[i];
+      var item = config && ITEM_BY_ID[config.id];
+      if (item) {
+        activeGroup = item.group;
+        panel.querySelectorAll('.mk-addon-group').forEach(function(b) { b.classList.toggle('is-active', b.dataset.addonGroup === activeGroup); });
+      }
+      syncControls(); renderGrid(); renderSlots();
+    }
+    panel.addEventListener('click', function(e) {
+      var b = e.target.closest && e.target.closest('.mk-addon-slots button');
+      if (!b) return;
+      if (b.dataset.slotAdd) {
+        // A new decoration starts on the other side, so it does not land on the first one.
+        var used = slots.filter(function(c) { return c.id; }).map(function(c) { return c.side; });
+        slots.push(emptySlot(used.indexOf('right') >= 0 && used.indexOf('left') < 0 ? 'left' : 'right'));
+        selectSlot(slots.length - 1);
+        return;
+      }
+      selectSlot(+b.dataset.slot);
+    });
 
     function renderGrid() {
       var grid = panel.querySelector('.mk-addon-grid');
@@ -790,10 +1026,11 @@
       removeButton.disabled = !(config && config.id);
       removeButton.setAttribute('aria-disabled', String(removeButton.disabled));
       syncLook();
-      grid.innerHTML = ITEMS.filter(function(item) { return item.group === activeGroup; }).map(function(item) {
-        var selected = config && config.id === item.id;
+      var chosen = config && ITEM_BY_ID[config.id], chosenBase = chosen ? (chosen.base || chosen.id) : '';
+      grid.innerHTML = ITEMS.filter(function(item) { return item.group === activeGroup && !item.hidden; }).map(function(item) {
+        var selected = chosenBase === item.id;
         return '<button type="button" class="mk-addon-choice' + (selected ? ' is-active' : '') + '" data-addon-id="' + esc(item.id) + '" aria-label="' + esc(item.label) + '" aria-pressed="' + selected + '" title="' + esc(item.label) + '">'
-          + '<span><img loading="lazy" decoding="async" draggable="false" src="' + esc(assetUrl(item)) + '" alt=""></span><b>' + esc(item.label) + '</b></button>';
+          + '<span><img loading="lazy" decoding="async" draggable="false" src="' + esc(assetUrl(item, null)) + '" alt=""></span><b>' + esc(item.label) + '</b></button>';
       }).join('');
       grid.querySelectorAll('.mk-addon-choice').forEach(function(button) {
         var thumb = button.querySelector('img');
@@ -805,15 +1042,36 @@
         thumb.addEventListener('error', function() {
           if (thumb.dataset.retried === '1') { markReady(); return; }
           thumb.dataset.retried = '1';
+          if (ITEM_BY_ID[button.dataset.addonId].dynamic) { markReady(); return; }
           thumb.src = assetUrl(ITEM_BY_ID[button.dataset.addonId]) + '&retry=1';
         });
         if (thumb.complete) markReady();
         button.addEventListener('click', function() {
-          // Another decoration keeps the chosen effect and colour.
-          config = { id: button.dataset.addonId, scale: Number(config.scale) || 1, side: config.side === 'left' ? 'left' : 'right', x: 0, y: 0, fx: config.fx, tune: config.tune, color: config.color };
-          saveConfig(name, config);
+          var pickedId = button.dataset.addonId, prevItem = ITEM_BY_ID[config.id];
+          /* A different kind than the chosen decoration (coffee while an object is
+             chosen) goes on the card next to it, while there is room; the same kind
+             swaps the chosen one. */
+          var added = false, sameKind = prevItem && ITEM_BY_ID[pickedId].group === prevItem.group;
+          if (!config.id && slots.filter(function(c) { return c && c.id; }).length) added = true;   // a "+ Dekors" slot
+          if (prevItem && !sameKind && slots.filter(function(c) { return c && c.id; }).length < MAX_ADDONS) {
+            added = true;
+            var usedSides = slots.filter(function(c) { return c.id; }).map(function(c) { return c.side; });
+            slots.push(emptySlot(usedSides.indexOf('right') >= 0 && usedSides.indexOf('left') < 0 ? 'left' : 'right'));
+            activeSlot = slots.length - 1; config = slots[activeSlot]; prevItem = null;
+          }
+          // Another decoration keeps the chosen effect and colour (a coffee sticker its number).
+          if (ITEM_BY_ID[pickedId].dynamic && prevItem && prevItem.dynamic && prevItem.stat) pickedId += '-' + prevItem.stat;
+          // A picture effect carries over between cut-outs; graphics (coffee, frames,
+          // light, labels) start plain — a dither of them on a dark card hid them.
+          var plain = plainItem(ITEM_BY_ID[pickedId]) || plainItem(prevItem);
+          // The same kind takes the old one's place; anything else starts at its default spot.
+          config = { id: pickedId, scale: Number(config.scale) || 1, side: config.side === 'left' ? 'left' : 'right', x: sameKind ? Number(config.x) || 0 : 0, y: sameKind ? Number(config.y) || 0 : 0,
+            fx: plain ? (plainItem(ITEM_BY_ID[pickedId]) ? 'none' : undefined) : config.fx, tune: plain ? undefined : config.tune, color: plain ? undefined : config.color };
+          saveSlots();
+          syncControls();
           renderGrid();
           applyPreview();
+          if (added) autoPlace();
         });
       });
     }
@@ -850,10 +1108,15 @@
       var look = panel.querySelector('.mk-addon-look');
       if (!look) return;
       look.hidden = !(config && config.id);
+      var item = config && ITEM_BY_ID[config.id], coffee = panel.querySelector('.mk-addon-coffee');
+      coffee.hidden = !(item && item.dynamic);
+      if (item && item.dynamic) coffee.querySelectorAll('[data-coffee-stat]').forEach(function(b) { b.setAttribute('aria-pressed', String(b.dataset.coffeeStat === item.stat)); });
+      // Frames and light cover the whole card: left / right means nothing there.
+      panel.querySelector('.mk-addon-side').hidden = !!item && (item.group === 'frame' || item.group === 'light');
       var fx = config.fx || (followsCard() ? 'card' : 'none');
       look.querySelectorAll('[data-decor-fx]').forEach(function(b) { b.setAttribute('aria-pressed', String(b.dataset.decorFx === fx)); });
       look.querySelectorAll('[data-decor-ink]').forEach(function(b) { b.setAttribute('aria-pressed', String(b.dataset.decorInk === (config.color || ''))); });
-      look.querySelector('.mk-addon-inks').hidden = fx === 'none';
+      look.querySelector('.mk-addon-inks').hidden = fx === 'none' || fx === 'focus';   // the lens has its own colours
       // Tuning belongs to the decoration's own effect ("Kā kartītei" uses the card's).
       var tuneBox = look.querySelector('.mk-addon-tune'), t = /^\d\d$/.test(config.tune || '') ? config.tune : '55';
       tuneBox.hidden = fx === 'none' || fx === 'card';
@@ -872,56 +1135,74 @@
         r.nextElementSibling.textContent = r.value;
         if (!config.id) return;
         readTune(); clearTimeout(tuneTimer);
-        tuneTimer = setTimeout(function() { if (preview) applyToCard(preview, config); }, 160);
+        tuneTimer = setTimeout(function() { slots[activeSlot] = config; if (preview) applyToCard(preview, slots.filter(function(c) { return c && c.id; })); }, 160);
       });
       r.addEventListener('change', function() {
         clearTimeout(tuneTimer);
         if (!config.id) return;
-        readTune(); saveConfig(name, config); applyPreview();
+        readTune(); saveSlots(); applyPreview();
       });
     });
     panel.querySelectorAll('[data-decor-fx]').forEach(function(button) {
       button.addEventListener('click', function() {
         if (!config.id) return;
         config.fx = button.dataset.decorFx;
-        saveConfig(name, config); syncLook(); applyPreview();
+        saveSlots(); syncLook(); applyPreview();
       });
     });
     panel.querySelectorAll('[data-decor-ink]').forEach(function(button) {
       button.addEventListener('click', function() {
         if (!config.id) return;
         if (button.dataset.decorInk) config.color = button.dataset.decorInk; else delete config.color;
-        saveConfig(name, config); syncLook(); applyPreview();
+        saveSlots(); syncLook(); applyPreview();
       });
     });
 
+    panel.querySelectorAll('[data-coffee-stat]').forEach(function(button) {
+      button.addEventListener('click', function() {
+        var item = ITEM_BY_ID[config.id];
+        if (!item || !item.dynamic) return;
+        config.id = item.base + (button.dataset.coffeeStat ? '-' + button.dataset.coffeeStat : '');
+        saveSlots(); syncLook(); applyPreview();
+      });
+    });
+
+    // Removes the chosen decoration only; the others stay.
     panel.querySelector('.mk-addon-remove').addEventListener('click', function() {
-      config = { id: '', scale: Number(config.scale) || 1, side: config.side === 'left' ? 'left' : 'right', x: 0, y: 0 };
-      saveConfig(name, null);
+      slots.splice(activeSlot, 1);
+      if (!slots.length) slots = [emptySlot()];
+      activeSlot = Math.min(activeSlot, slots.length - 1); config = slots[activeSlot];
+      saveList(name, slots.filter(function(c) { return c && c.id; }));
+      syncControls();
       renderGrid();
       applyPreview();
     });
 
     var scale = panel.querySelector('.mk-addon-scale');
     var scaleValue = panel.querySelector('.mk-addon-scale-value');
+    // While dragging only the preview follows; the save (all cards, cloud) on release.
     scale.addEventListener('input', function() {
       config.scale = Number(scale.value) / 100;
       scaleValue.textContent = scale.value + '%';
-      if (config.id) { saveConfig(name, config); applyPreview(); }
+      slots[activeSlot] = config;
+      if (config.id) applyPreview();
+    });
+    scale.addEventListener('change', function() {
+      if (config.id) { saveSlots(); applyPreview(); }
     });
 
     panel.querySelectorAll('[data-addon-side]').forEach(function(button) {
       button.addEventListener('click', function() {
         config.side = button.dataset.addonSide;
         panel.querySelectorAll('[data-addon-side]').forEach(function(item) { item.classList.toggle('is-active', item === button); });
-        if (config.id) { saveConfig(name, config); applyPreview(); }
+        if (config.id) { saveSlots(); applyPreview(); }
       });
     });
 
     panel.querySelector('.mk-addon-reset-position').addEventListener('click', function() {
       config.x = 0;
       config.y = 0;
-      if (config.id) { saveConfig(name, config); applyPreview(); }
+      if (config.id) { saveSlots(); applyPreview(); }
     });
 
     renderGrid();
@@ -973,6 +1254,7 @@
     },
     applyWorker: applyWorker,
     get: getConfig,
+    getList: getList,
     getAll: function() { return readAll(); },
     applyRosterNow: applyRosterNow,
     /* For anything that moves a decorated card without touching the DOM the
@@ -995,14 +1277,33 @@
     replaceFromCloud: function(value) {
       var clean = {};
       Object.keys(value && typeof value === 'object' ? value : {}).forEach(function(name) {
-        var config = normalizeConfig(value[name]);
-        if (config) clean[normName(name)] = config;
+        var list = toList(value[name]);
+        if (list.length) clean[normName(name)] = list;
       });
       writeAll(clean);
       scheduleScan();
     },
-    clear: function(name) { saveConfig(name, null); }
+    clear: function(name) { saveConfig(name, null); },
+    // Remix / Pieskaņot / Atsaukt write the decoration together with the look.
+    set: function(name, value, options) { saveList(name, toList(value), options); }
   };
+
+  // A coffee was logged (or synced): redraw the coffee stickers (cards and picker tiles), nothing else.
+  function refreshCoffee() {
+    document.querySelectorAll('.mk-card-addon[data-addon-group="coffee"]').forEach(function(img) {
+      var item = ITEM_BY_ID[img.dataset.addonId], card = img.parentElement;
+      if (!item || !card) return;
+      var fresh = assetUrl(item, card);
+      if (img.getAttribute('src') !== fresh) img.src = fresh;
+    });
+    document.querySelectorAll('.mk-addon-choice[data-addon-id^="coffee-"] img').forEach(function(img) {
+      var item = ITEM_BY_ID[img.closest('.mk-addon-choice').dataset.addonId];
+      if (!item) return;
+      var fresh = assetUrl(item, null);
+      if (img.getAttribute('src') !== fresh) img.src = fresh;
+    });
+  }
+  document.addEventListener('minka:coffee-changed', refreshCoffee);
 
   waitForHooks();
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', scanCards, { once: true });

@@ -106,6 +106,9 @@
         '': null,
         dither: { mode: 'bayer', ink: ink, paper: [6, 6, 6], normalize: true, contrast: 1.2, dot: 1 / k },
         xray: { mode: 'xray', normalize: true, contrast: .95, sharpen: .2, dot: 1 / k },
+        focus: { mode: 'focus', normalize: true, contrast: 1.1, sharpen: .25, dot: 1 / k },
+        split: { mode: 'mono', normalize: true, contrast: 1.08, sharpen: .25, dot: 1 / k },
+        poster: { mode: 'poster', ink: ink, normalize: true, contrast: 1.12, sharpen: .3, dot: 1 / k },
         halftone: { mode: 'halftone', ink: ink, normalize: true, contrast: 1.15, scale: k, dot: 1 },
         duotone: { mode: 'duotone', ink: ink, normalize: true, contrast: 1.05, dot: 1 / k },
         ascii: { mode: 'ascii', ink: ink, normalize: true, contrast: 1.15, scale: k, dot: 1 },
@@ -139,13 +142,17 @@
       var ditherFace = card.matches('[data-watch-face="dither"]');
       lock(face.querySelector('.wf-finish'), dither && !ditherFace ? 'Ar Dither efektu cipari ir punktoti, tāpēc materiāls tos nemaina. Ciparu krāsu maini ar Akcenta krāsu, Ciparu krāsu vai Izkārtojums → Šī elementa krāsa.' : '');
       lock(colorsBox.querySelector('.mk-skin-tool-emoji'), dither ? 'Ar Dither efektu fona emoji netiek rādīts.' : '');
+      // Tonēts: one hue over the whole card decides the number and text colours.
+      var tinted = card.getAttribute('data-full-tint') === 'tinted', tools = colorsBox.querySelectorAll('.mk-skin-tool');
+      lock(tools[0], tinted ? 'Tonētajā izskatā ciparu krāsu nosaka tonis (zemāk: Kartītes tonis).' : '');
+      lock(colorsBox.querySelector('.mk-skin-tool-text'), tinted ? 'Tonētajā izskatā teksta krāsu nosaka tonis.' : '');
       var effected = card.matches('.mk-fx-dither, .mk-fx-pic, [data-watch-face="dither"]');
       lock(face.querySelector('.wf-depth-control'), effected ? 'Ar attēla efektu izgrieztais objekts netiek likts priekšā ciparam — tas būtu bez efekta.' : '');
     }
     var lockFrame = 0;
     if (previewList && window.MutationObserver) new MutationObserver(function () {
       if (!lockFrame) lockFrame = requestAnimationFrame(function () { lockFrame = 0; syncLocks(); });
-    }).observe(previewList, { attributes: true, subtree: true, attributeFilter: ['class', 'data-watch-face'] });
+    }).observe(previewList, { attributes: true, subtree: true, attributeFilter: ['class', 'data-watch-face', 'data-full-tint'] });
     // The host element outlives every re-render: its listeners are bound once and
     // always talk to the latest render (older closures would point at old cards).
     host.__org = { paint: paint, paintAll: paintAll, effectThumbs: effectThumbs, syncLocks: syncLocks, tab: function () { return current; } };

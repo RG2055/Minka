@@ -139,3 +139,31 @@ html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-watch-face
 /* photo compositions: with a picture effect the cut-out foreground would show the
    untouched photo over the effect — hide it (the depth switch explains why) */
 .mk-has-dither:is(.mk-fx-dither,.mk-fx-pic) .mk-wf-depth {display:none !important;}
+/* Fokuss: a colour lens over the halftone picture (dither-core showFocus).
+   It lives in the picture layer, so the numeral and chips stay on top of it.
+   Its centre (--mk-focus-x/y, %) is dragged in Izskats: moving it is CSS only. */
+.mk-wf-background > .mk-focus {--fw:42;--fh:54;--fl:calc(var(--mk-focus-x,35) - 21);--ft:calc(var(--mk-focus-y,44) - 27);
+  position:absolute;left:calc(var(--fl) * 1%);top:calc(var(--ft) * 1%);width:42%;height:54%;pointer-events:none;}
+.mk-focus-win {position:absolute;inset:0;overflow:hidden;box-shadow:0 0 0 .75px rgba(255,255,255,.82);}
+.mk-focus-win > b {position:absolute;left:calc(-100% * var(--fl) / var(--fw));top:calc(-100% * var(--ft) / var(--fh));width:calc(10000% / var(--fw));height:calc(10000% / var(--fh));
+  background:var(--mk-skin-focus) 0 0/100% 100% no-repeat;transform:scale(var(--wf-zoom-ratio,1));transform-origin:var(--wf-bg-x,50%) var(--wf-bg-y,50%);}
+.mk-focus > i {position:absolute;width:5.5%;aspect-ratio:1;border:.75px solid rgba(255,255,255,.88);box-sizing:border-box;translate:-50% -50%;}
+.mk-focus > i:nth-of-type(1) {left:0;top:0;} .mk-focus > i:nth-of-type(2) {left:100%;top:0;}
+.mk-focus > i:nth-of-type(3) {left:0;top:100%;} .mk-focus > i:nth-of-type(4) {left:100%;top:100%;}
+.mk-focus > em {position:absolute;left:50%;top:50%;width:11%;aspect-ratio:1;translate:-50% -50%;
+  background:linear-gradient(#ffffffd9,#ffffffd9) center/.75px 100% no-repeat,linear-gradient(#ffffffd9,#ffffffd9) center/100% .75px no-repeat;}
+.mk-skin-preview-real.mk-fx-focus.can-move-focus, .mk-skin-preview-real.mk-fx-focus.can-move-focus * {cursor:grab !important;}
+.mk-skin-preview-real.mk-fx-focus.is-moving-focus, .mk-skin-preview-real.mk-fx-focus.is-moving-focus * {cursor:grabbing !important;}
+/* Plakāts: the picture in a rounded window at the top of a charcoal, grainy card
+   (dither-core showPoster). Static layers only; the grain is a small tiled image. */
+html body .card.mk-watch-face.mk-fx-poster > .mk-wf-background {inset:5% 6% 35% 6% !important;border-radius:7% / 9% !important;box-shadow:0 0 0 1px rgba(255,255,255,.06);}
+html body .card.mk-watch-face.mk-fx-poster > .mk-wf-background > i {transform:none !important;}
+.mk-poster {position:absolute;inset:0;z-index:0;border-radius:inherit;pointer-events:none;overflow:hidden;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E") 0 0/120px 120px,linear-gradient(160deg,#343436,#232325);}
+.mk-poster > .mk-poster-code {position:absolute;left:6%;bottom:6.5%;width:24%;height:5.5%;
+  background:repeating-linear-gradient(90deg,#f4f2ec 0 1.5px,transparent 1.5px 3px,#f4f2ec 3px 3.8px,transparent 3.8px 5.5px,#f4f2ec 5.5px 7.5px,transparent 7.5px 9px);}
+/* Puse: the colour half on the left of the divider (--mk-focus-x %), black and white on the right. */
+.mk-fx-split .mk-wf-background > .mk-focus {--fw:var(--mk-focus-x,50);--fh:100;--fl:0;--ft:0;left:0;top:0;width:calc(var(--mk-focus-x,50) * 1%);height:100%;}
+.mk-fx-split .mk-focus > i, .mk-fx-split .mk-focus > em {display:none;}
+.mk-fx-split .mk-focus-win {box-shadow:none;}
+.mk-skin-preview-real.mk-fx-split.can-move-focus, .mk-skin-preview-real.mk-fx-split.can-move-focus * {cursor:ew-resize !important;}

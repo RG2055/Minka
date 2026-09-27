@@ -528,3 +528,60 @@ html body #grafiks-list .card.mk-watch-face[data-full-tint] > .mk-card-addon,.mk
 .wf-editor .wf-part-color.is-own input[type=color] {box-shadow:0 0 0 2px #91e3c5;}
 .wf-editor .wf-part-color-clear {font-size:11px;padding:4px 9px;border-radius:8px;border:1px solid #ffffff22;background:#ffffff0a;color:inherit;cursor:pointer;}
 .wf-editor .wf-part-color-clear[hidden] {display:none;}
+/* Analog shift timer (card-faces.js setDial): the chip gives way to the dial. */
+html body #grafiks-list.grid-view.grid-view.grid-view .card.card.card.mk-mid-card.mk-watch-face [data-wf-part="remaining"].wf-analog.wf-analog {
+  background:none !important;border:0 !important;box-shadow:none !important;padding:0 !important;min-width:0 !important;backdrop-filter:none !important;outline-offset:2px;
+  overflow:visible !important;clip-path:none !important;-webkit-mask:none !important;mask:none !important;}
+html body #grafiks-list.grid-view.grid-view.grid-view .card.card.card.mk-mid-card.mk-watch-face [data-wf-part="remaining"].wf-analog.wf-analog::before,
+html body #grafiks-list.grid-view.grid-view.grid-view .card.card.card.mk-mid-card.mk-watch-face [data-wf-part="remaining"].wf-analog.wf-analog::after {display:none !important;}
+.mk-watch-face [data-wf-part="remaining"].wf-analog > :not(.mk-wf-dial):not(.wf-resize) {display:none !important;}
+/* The dial speaks the card's own language: the plate is the chips' tinted glass
+   (dotted dither chip on dither cards), every line and number is the card's accent
+   (or the element's own colour, or the dither ink). Sized in card units (cqw). */
+.mk-wf-dial {position:relative;display:block;width:32cqw;height:32cqw;border-radius:50%;color:var(--wf-tint,#d5e6ef);--dial-ink:var(--wf-tint,#d5e6ef);}
+.mk-wf-dial.f1 {background:radial-gradient(circle at 32% 26%,color-mix(in srgb,var(--wf-tint,#d5e6ef) 26%,transparent),color-mix(in srgb,var(--wf-tint,#d5e6ef) 9%,transparent) 55%,#08121b30);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--wf-tint,#d5e6ef) 34%,transparent),inset 0 1px 0 #ffffff38,0 1px 3px #00000018;}
+.mk-wf-dial.f2 {background:radial-gradient(circle at 35% 28%,#1a2330e6,#070b10eb);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--wf-tint,#d5e6ef) 26%,transparent),inset 0 1px 0 #ffffff1c;}
+.mk-wf-dial.f3 svg {filter:drop-shadow(0 1px 1.5px #0009);}
+.mk-wf-dial.dth {color:rgb(var(--dth-ink-rgb,236,234,228));--dial-ink:rgb(var(--dth-ink-rgb,236,234,228));}
+.mk-wf-dial.dth.f1,.mk-wf-dial.dth.f2 {background:conic-gradient(at 1px 1px,#060606 75%,transparent 0) 0 0/2px 2px;box-shadow:0 0 0 2px transparent;
+  outline:2px dotted rgba(var(--dth-ink-rgb,236,234,228),.75);outline-offset:-2px;}
+.mk-wf-dial svg {position:relative;display:block;width:100%;height:100%;overflow:visible;}
+/* the worked part of the shift: a conic mask, soft glass tint (dots on dither cards) */
+.mk-wf-dial .dial-done {position:absolute;inset:5%;border-radius:50%;background:currentColor;opacity:.2;
+  -webkit-mask:conic-gradient(from var(--a0),#000 0 var(--sp),transparent 0);mask:conic-gradient(from var(--a0),#000 0 var(--sp),transparent 0);}
+.mk-wf-dial.dth .dial-done {opacity:1;background:radial-gradient(circle,currentColor 42%,transparent 46%) 0 0/3px 3px;}
+.mk-wf-dial .tk {stroke:var(--dial-ink);stroke-width:1;stroke-linecap:round;opacity:.5;}
+.mk-wf-dial .tk.q {stroke-width:1.8;opacity:.95;}
+.mk-wf-dial .tk.fine {stroke-width:.5;opacity:.35;}
+.mk-wf-dial .rest {fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;}
+.mk-wf-dial .rest.thin {stroke-width:1.2;opacity:.7;}
+.mk-wf-dial .num {fill:var(--dial-ink);font-family:inherit;font-weight:650;font-size:9px;text-anchor:middle;font-variant-numeric:tabular-nums;opacity:.85;}
+.mk-wf-dial .sub {fill:none;stroke:var(--dial-ink);stroke-opacity:.35;stroke-width:.8;}
+.mk-wf-dial .ring-track {fill:none;stroke:currentColor;stroke-opacity:.14;stroke-width:9;}
+.mk-wf-dial .ring-done {fill:none;stroke:currentColor;stroke-opacity:.38;stroke-width:9;}
+.mk-wf-dial .ring-rest {fill:none;stroke:currentColor;stroke-width:9;stroke-linecap:round;}
+.mk-wf-dial.dth .ring-done {stroke-dasharray:1.2 1.4;stroke-opacity:1;}
+.mk-wf-dial .px {fill:var(--dial-ink);opacity:.22;}
+.mk-wf-dial .px.rest-dot {opacity:.55;}
+.mk-wf-dial .px.on {fill:currentColor;opacity:1;}
+.mk-wf-dial .seg {fill:none;stroke:currentColor;stroke-opacity:.16;stroke-width:6;stroke-linecap:round;}
+.mk-wf-dial .seg.on {stroke-opacity:1;}
+.mk-wf-dial .hand {stroke:var(--dial-ink);stroke-width:1.3;stroke-linecap:round;}
+.mk-wf-dial .hand.bar {stroke:currentColor;stroke-width:3.6;}
+.mk-wf-dial .knob {fill:currentColor;}
+.mk-wf-dial .pin {fill:none;stroke:currentColor;stroke-width:1.3;}
+.mk-wf-dial .plate {fill:#08121bb8;}
+.mk-wf-dial.dth .plate {fill:#060606;}
+.mk-wf-dial .v {fill:var(--dial-ink);font-family:inherit;font-weight:650;font-size:15px;letter-spacing:-.4px;text-anchor:middle;font-variant-numeric:tabular-nums;}
+.mk-wf-dial .v.s {font-size:10.5px;letter-spacing:-.2px;}
+.mk-wf-dial .v.xl {font-size:19px;}
+.mk-wf-dial .l {fill:var(--dial-ink);opacity:.65;font-family:inherit;font-weight:700;font-size:5px;letter-spacing:.6px;text-anchor:middle;}
+/* Pulksteņa izskats: tiles that draw each dial with the card's own accent. */
+.wf-dial-skins {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;}
+.wf-dial-skins button {display:grid;justify-items:center;gap:6px;padding:10px 4px 8px;border-radius:18px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:inherit;cursor:pointer;font:600 11.5px/1 var(--pp-font,system-ui);}
+.wf-dial-skins button[aria-pressed="true"] {border-color:var(--pp-primary,#a8c7fa);background:color-mix(in srgb,var(--pp-primary,#a8c7fa) 16%,transparent);}
+.wf-dial-mini {display:block;width:50px;height:50px;padding:3px;border-radius:50%;background:#0b1119;}
+.wf-dial-mini > .mk-wf-dial {width:100%;height:100%;}
+.wf-timer-options[hidden],.wf-timer-analog[hidden] {display:none !important;}
+.wf-timer-options {display:grid;gap:8px;margin:10px 0;}

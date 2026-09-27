@@ -498,3 +498,33 @@ html body :is(#grafiks-app,#worker-modal) .card.mk-watch-face.mk-addon-active.mk
 .mk-card-addon[src*="/realistic-v1/"] {
   filter: drop-shadow(0 2px 3px rgba(0,0,0,.28));
 }
+
+/* ---- Focus kit (focus-v1) ---- */
+/* Frames and light lie over the whole card; thin lines keep a hairline shadow to read on light pictures. */
+.mk-card-addon:is([data-addon-group="frame"],[data-addon-group="light"]) {
+  inset: 0; top: 0; left: 0; right: auto; bottom: auto; width: 100%; height: 100%;
+  object-fit: fill !important; transform: none; z-index: 25 !important; filter: none;
+}
+.mk-card-addon[data-addon-group="frame"] { filter: drop-shadow(0 0 1px rgba(0,0,0,.7)); }
+.mk-card-addon[data-addon-id="frame-holo"] { filter: none; }
+/* Editorial labels sit straight (the round badge keeps its tilt). */
+.mk-card-addon[data-addon-id^="label-"]:not([data-addon-id="label-lens-dot"]) { transform: none; width: 44%; height: 30%; top: -7%; filter: drop-shadow(0 1px 2px rgba(0,0,0,.65)); }
+/* Chrome pieces: a glass shape over the corner, like a sticker. */
+.mk-card-addon[data-addon-group="chrome"] {
+  width: 32%; height: 32%; top: -8%; right: -8%; object-position: top right; z-index: 3 !important;
+  filter: drop-shadow(0 6px 8px rgba(0,0,0,.45));
+}
+.mk-card-addon[data-addon-id="chrome-set"] { width: 40%; height: 52%; top: -6%; }
+.mk-card-addon[data-addon-group="coffee"] {
+  width: 44%; height: 34%; top: -9%; right: -7%; object-position: top right; transform: rotate(4deg); z-index: 3 !important;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,.45));
+}
+.mk-card-addon[data-addon-side="left"]:is([data-addon-group="chrome"],[data-addon-group="coffee"]) { left: -8%; right: auto; object-position: top left; }
+.mk-card-addon[data-addon-side="left"][data-addon-group="coffee"] { transform: rotate(-4deg); }
+.mk-card-addon[data-addon-side="left"][data-addon-id^="label-"]:not([data-addon-id="label-lens-dot"]) { transform: none; }
+.mk-addon-side[hidden], .mk-addon-coffee[hidden] { display: none !important; }
+.mk-addon-coffee { display: grid; gap: 8px; margin: 12px 0 4px; }
+.mk-addon-coffee > span { font: 600 13px/1.2 var(--pp-font, system-ui); color: var(--pp-on, #e3e7ee); }
+.mk-addon-coffee-stats { display: flex; flex-wrap: wrap; gap: 6px; }
+.mk-addon-coffee-stats button { height: 34px; padding: 0 14px; border-radius: 17px; border: 1px solid rgba(255,255,255,.14); background: transparent; color: var(--pp-on, #e3e7ee); font: 600 12.5px/1 var(--pp-font, system-ui); cursor: pointer; }
+.mk-addon-coffee-stats button[aria-pressed="true"] { background: #29394c; border-color: #64d2ff; color: #eaf4ff; }
