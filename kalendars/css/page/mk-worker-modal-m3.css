@@ -217,7 +217,9 @@
 }
 
 /* ── Visas cilnes: Nogurums, Kalendārs, Emoji ── */
-#worker-modal#worker-modal .modal-content *:not(.material-icons-round):not(.mkp-emoji-btn):not([class*="emoji"]):not(.shift-label) { font-family: var(--pp-font) !important; }
+/* The window's own type. Card previews (the editor's card, the preset tiles) keep the
+   card's own fonts, so they look exactly as the card will in the calendar. */
+#worker-modal#worker-modal .modal-content *:not(.material-icons-round):not(.mkp-emoji-btn):not([class*="emoji"]):not(.shift-label):not(.mk-mid-card):not(.mk-mid-card *) { font-family: var(--pp-font) !important; }
 
 /* Nogurums: plakanas tonālas kartītes (bez fona foto), M3 tipogrāfija */
 #worker-modal#worker-modal .fatigue-panel { border: 0 !important; background: transparent !important; box-shadow: none !important; }
