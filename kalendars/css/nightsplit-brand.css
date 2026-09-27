@@ -1343,33 +1343,36 @@ html.mk-low-spec #nsOverlay.open #nsPanel .ns-room-bed-zzz span { animation: nsZ
   opacity: .48;
 }
 
-/* Tiny Fluent dream scenes. Their frame strips pause outside the visible room. */
+/* Dreams (nightsplit.js nsRefreshDreams): a rendered cloud over the pillow's
+   corner, its Fluent strip and a small prop. Hidden until it is the bed's turn
+   (.is-dreaming), yet always laid out: the pets measure where it is. */
 #nsPanel .ns-bed-dream {
-  position: absolute; left: 86%; top: -24%; width: 76%; aspect-ratio: 80 / 64;
+  position: absolute; left: 80%; top: -30%; width: 70%; aspect-ratio: 6 / 5;
   z-index: 15; pointer-events: none; user-select: none;
+  opacity: 0; visibility: hidden; transform: translateY(5px) scale(.86); transform-origin: 18% 92%;
+  transition: opacity .7s ease, transform .8s cubic-bezier(.2,.8,.2,1), visibility 0s linear .8s;
 }
-#nsPanel .ns-room-bed.is-right-bottom .ns-bed-dream { left: auto; right: 80%; }
-#nsPanel .ns-dream-scene {
-  position: absolute; inset: 0;
+#nsPanel .ns-room-bed.is-dreaming .ns-bed-dream {
+  opacity: 1; visibility: visible; transform: none;
+  transition: opacity .7s ease, transform .8s cubic-bezier(.2,.8,.2,1), visibility 0s;
 }
-#nsPanel .ns-dream-cloud {
-  display: block; width: 100%; height: 100%; overflow: visible;
-  fill: #dce9ee; fill-opacity: .93; stroke: #91adbc; stroke-width: 1;
-}
+#nsPanel .ns-room-bed.is-dreaming .ns-room-bed-zzz { opacity: 0; transition: opacity .5s ease; }
+#nsPanel .ns-room-bed.is-right-bottom .ns-bed-dream { left: auto; right: 74%; transform-origin: 82% 92%; }
+html[data-motion="reduced"] #nsPanel .ns-bed-dream { transform: none; transition: opacity .6s ease, visibility 0s linear .6s; }
+html[data-motion="reduced"] #nsPanel .ns-room-bed.is-dreaming .ns-bed-dream { transition: opacity .6s ease, visibility 0s; }
+#nsPanel .ns-dream-scene { position: absolute; inset: 0; }
+#nsPanel .ns-dream-cloud { display: block; width: 100%; height: auto; max-width: none; }
 #nsPanel .is-right-bottom .ns-dream-cloud { transform: scaleX(-1); }
 #nsPanel .ns-dream-sprite {
-  position: absolute; left: 14%; bottom: 24%; width: 48%; aspect-ratio: 1;
-  overflow: hidden; contain: layout paint; font-size: 20px;
+  position: absolute; left: 25%; top: 17%; width: 38%; aspect-ratio: 1;
+  overflow: hidden; contain: layout paint; font-size: 18px;
 }
 #nsPanel .ns-dream-fallback, #nsPanel .ns-dream-prop {
   font-family: 'Fluent Emoji Gaps','Fluent Emoji Color','Apple Color Emoji','Segoe UI Emoji',sans-serif;
   line-height: 1; display: flex; align-items: center; justify-content: center;
 }
 #nsPanel .ns-dream-fallback { position: absolute; inset: 0; }
-#nsPanel .ns-dream-prop { position: absolute; right: 13%; top: 22%; font-size: 13px; }
-/* The Fluent black cat faces left: keep the butterfly by its face, not tail. */
-#nsPanel .ns-dream-scene.is-garden .ns-dream-sprite { left: 33%; }
-#nsPanel .ns-dream-scene.is-garden .ns-dream-prop { left: 13%; right: auto; top: 32%; font-size: 11px; }
+#nsPanel .ns-dream-prop { position: absolute; right: 16%; top: 20%; font-size: 11px; }
 #nsPanel .ns-dream-film {
   position: absolute; left: 0; top: 0; display: block; width: 100%; height: auto; max-width: none;
   visibility: hidden;
@@ -1544,7 +1547,7 @@ html.ns-motion-active #nsPanel .ns-bed-dream.is-in-view .ns-dream-film { animati
 #nsPanel .ns-stat-emoji { flex: 0 0 auto; font-size: 16px; line-height: 1.2; font-family: "Fluent Emoji Gaps", "Fluent Emoji Color", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important; }
 
 #nsPanel .ns-dream-phones { display:grid; grid-template-columns:repeat(2,12px); gap:2px 4px; transform:rotate(-12deg) scale(.72); }
-#nsPanel .ns-dream-scene .ns-dream-phones { position:absolute; right:10%; top:18%; transform:rotate(8deg) scale(.5); transform-origin:top right; }
+#nsPanel .ns-dream-scene .ns-dream-phones { position:absolute; left:30%; top:22%; transform:rotate(-6deg) scale(.5); transform-origin:top left; }
 #nsPanel .ns-dream-phones .ns-room-device { position:relative !important; width:12px !important; height:22px !important; margin:0 !important; }
 
 /* The mobile panel scrolls at readable size; keep its controls inside it. */
@@ -2174,3 +2177,213 @@ html.mk-low-spec:not(.mk-mobile-shell) #nsOverlay.open #nsPanel { transform: tra
   #nsOverlay #nsPanel .nsc-task-txt b { font-size: 9.5px; }
   #nsOverlay #nsPanel .nsc-task-txt small { font-size: 8.5px; }
 }
+
+/* ── Bed styles, plush, drag & drop (nightsplit.js). Transform and opacity only:
+   no filters on the beds while dragging (they repainted big layers on old PCs). ── */
+#nsPanel .ns-room-bed.has-bed-style .ns-room-bed-skin {display:none !important;}
+#nsPanel .ns-room-bed[data-i].nsdrag .ns-room-bed-card {opacity:.3 !important;filter:none !important;transition:opacity .12s ease;}
+#nsPanel .ns-room-bed[data-i].nsover .ns-room-bed-card {filter:none !important;outline:2px solid var(--nsc-accent,#56d7e6);outline-offset:5px;border-radius:18px;box-shadow:0 0 0 9px color-mix(in srgb,var(--nsc-accent,#56d7e6) 18%,transparent);animation:ns-ring .45s cubic-bezier(.2,.9,.25,1.15) both;}
+@keyframes ns-ring {from{outline-offset:16px;box-shadow:0 0 0 0 transparent;}to{outline-offset:5px;}}
+#nsPanel .ns-room-bed[data-i] {cursor:grab;}
+html.ns-dragging, html.ns-dragging * {cursor:grabbing !important;user-select:none !important;-webkit-user-select:none !important;}
+.ns-lift-ghost {position:fixed;left:0;top:0;z-index:99999;pointer-events:none;display:grid;justify-items:center;gap:4px;margin:-44px 0 0 -34px;will-change:transform;}
+.ns-lift-ghost:not(.is-bed) {margin:-18px 0 0 -40px;}
+.ns-lift-ghost img {display:block;width:62px;height:auto;rotate:-7deg;scale:1.1;transition:scale .28s cubic-bezier(.2,.9,.25,1.25),rotate .28s cubic-bezier(.2,.9,.25,1.25);}
+.ns-lift-ghost b {padding:4px 11px;border-radius:11px;background:#10171b;border:2px solid var(--ghost-accent,#56d7e6);color:var(--ghost-accent,#56d7e6);font:800 13px/1 Inter,system-ui,sans-serif;white-space:nowrap;box-shadow:0 6px 14px rgba(0,0,0,.35);}
+.ns-lift-ghost.is-over img {scale:1.24;rotate:0deg;}
+.ns-lift-ghost.is-dropping {transition:transform .2s cubic-bezier(.2,.8,.2,1),opacity .2s ease;opacity:0;}
+.ns-cheer {position:fixed;z-index:99998;width:0;height:0;pointer-events:none;}
+.ns-cheer i {position:absolute;left:0;top:0;width:7px;height:10px;border-radius:2px;background:var(--c);opacity:0;animation:ns-burst .95s cubic-bezier(.15,.75,.3,1) var(--d) forwards;}
+.ns-cheer.is-mini i {width:5px;height:5px;border-radius:50%;animation-duration:.55s;}
+@keyframes ns-burst {0%{opacity:1;transform:translate(-50%,-50%) scale(.4);}70%{opacity:1;}100%{opacity:0;transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y) + 30px)) rotate(var(--r));}}
+html[data-motion="reduced"] .ns-cheer, html[data-motion="reduced"] #nsPanel .ns-room-bed[data-i].nsover .ns-room-bed-card {animation:none;}
+/* Bed picker: a press on a bed */
+.ns-bed-picker {position:fixed;z-index:100000;width:min(372px,calc(100vw - 16px));max-height:min(82vh,600px);overflow:auto;box-sizing:border-box;padding:12px 12px 14px;border-radius:22px;background:#161c26;color:#e3e7ee;border:1px solid rgba(255,255,255,.08);box-shadow:0 18px 44px rgba(0,0,0,.5);font-family:Inter,system-ui,sans-serif;animation:ns-pop .3s cubic-bezier(.2,.9,.25,1.15) both;scrollbar-width:thin;}
+@keyframes ns-pop {from{opacity:0;transform:scale(.94) translateY(6px);}to{opacity:1;transform:none;}}
+.ns-bp-head {display:flex;justify-content:space-between;align-items:center;font:700 15px/1.2 Inter,system-ui,sans-serif;}
+.ns-bp-x {width:32px;height:32px;border:0;border-radius:50%;background:#252c37;color:#e3e7ee;cursor:pointer;font-size:13px;}
+.ns-bp-sub {margin:12px 0 6px;color:#b8c1cd;font:700 12px/1 Inter,system-ui,sans-serif;}
+.ns-bp-grid {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;}
+.ns-bp-grid button {display:grid;justify-items:center;gap:4px;min-width:0;padding:6px 2px 7px;border:1px solid transparent;border-radius:14px;background:transparent;color:#b8c1cd;font:600 10.5px/1.1 Inter,system-ui,sans-serif;cursor:pointer;transition:transform .25s cubic-bezier(.2,.9,.25,1.2),background-color .15s;}
+.ns-bp-grid button:hover {background:rgba(255,255,255,.05);}
+.ns-bp-grid button:active {transform:scale(.94);}
+.ns-bp-grid button span {max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ns-bp-grid button img {width:40px;height:57px;object-fit:contain;}
+.ns-bp-grid button[aria-pressed="true"] {background:rgba(168,199,250,.14);border-color:rgba(168,199,250,.55);color:#e3e7ee;}
+.ns-bp-plush {display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px;}
+.ns-bp-plush button {height:36px;border:1px solid transparent;border-radius:11px;background:rgba(255,255,255,.04);color:#b8c1cd;font-size:18px;cursor:pointer;}
+.ns-bp-plush button[aria-pressed="true"] {background:rgba(168,199,250,.16);border-color:rgba(168,199,250,.55);}
+/* ── Vēsture | Gultas and the bed studio: the panel's own segmented buttons with a
+   liquid pill (MinkaMotion), springs on press. The studio lies over the history
+   list, which keeps its place: the box never changes size, nothing overlaps. ── */
+#nsPanel .ns-stats-box {position:relative !important;}
+/* M3 segmented tabs, the same as the Izskats editor's (org-tabs): a primary-container
+   pill that flows between tabs (MinkaMotion.liquid), no borders, no bevels. */
+#nsPanel .ns-seg {position:relative;isolation:isolate;display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:var(--pp-c2,#1c222c);}
+#nsPanel .ns-seg-btn {position:relative;z-index:1;height:32px;padding:0 14px;border:0;border-radius:999px;background:transparent;color:var(--pp-on-var,#b8c1cd);font:600 12.5px/1 var(--pp-font,Inter,system-ui,sans-serif);letter-spacing:0;white-space:nowrap;cursor:pointer;transition:color .2s ease,background-color .2s ease,transform .3s cubic-bezier(.2,.9,.25,1.3);}
+#nsPanel .ns-seg-btn:hover {color:var(--pp-on,#e3e7ee);}
+#nsPanel .ns-seg-btn:active {transform:scale(.94);}
+#nsPanel .ns-seg-btn.is-on {background:var(--pp-primary-c,#d6e3ff);color:var(--pp-on-primary-c,#0b1d36);}
+#nsPanel .ns-seg.has-pill .ns-seg-btn.is-on {background:transparent;}
+#nsPanel .ns-seg-btn:focus-visible {outline:2px solid var(--pp-primary,#a8c7fa);outline-offset:2px;}
+#nsPanel .ns-seg-pill {position:absolute;z-index:0;top:3px;height:32px;left:3px;right:auto;border-radius:999px;background:var(--pp-primary-c,#d6e3ff);pointer-events:none;opacity:0;}
+#nsPanel .ns-seg.has-pill .ns-seg-pill {opacity:1;}
+#nsPanel .ns-stats-box[data-view="beds"] .ns-stats-body {visibility:hidden !important;}
+#nsPanel .ns-stats-box[data-view="beds"] .ns-stats-bed-title {display:none !important;}
+#nsPanel .ns-view-switch .ns-seg-btn {padding:0 11px;font-size:12px;}
+/* Gultu studija: over the history list, the box keeps its size. A row of the
+   sleepers' own little beds (their emoji on the pillow) with the page dots, then
+   one page of things that fills everything left. No words, no frames. */
+#nsPanel .ns-bed-studio {display:none;position:absolute;left:10px;right:10px;top:var(--ns-studio-top,50px);bottom:8px;flex-direction:column;gap:6px;overflow:hidden;}
+#nsPanel .ns-stats-box[data-view="beds"] .ns-bed-studio {display:flex;animation:ns-studio-in .32s cubic-bezier(.2,.9,.25,1.1) both;}
+@keyframes ns-studio-in {from{opacity:0;transform:translateY(8px) scale(.985);}to{opacity:1;transform:none;}}
+#nsPanel .ns-studio-people {display:flex;justify-content:center;align-items:flex-start;gap:6px;flex:none;height:62px;padding-top:2px;}
+#nsPanel .ns-studio-people button {position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:52px;padding:2px 3px 0;border:0;background:transparent;cursor:pointer;color:var(--pp-on-var,#b8c1cd);opacity:.55;transition:opacity .25s ease,transform .38s cubic-bezier(.2,.9,.25,1.35);}
+#nsPanel .ns-studio-av {display:block;width:30px;height:42px;}
+#nsPanel .ns-studio-av img {width:30px;height:auto;display:block;}
+#nsPanel .ns-studio-em {position:absolute;left:50%;top:6px;transform:translateX(-50%);font-size:15px;line-height:1;pointer-events:none;}
+#nsPanel .ns-studio-people b {display:block;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 10.5px/1.15 var(--pp-font,Inter,system-ui,sans-serif);}
+#nsPanel .ns-studio-people button:hover {opacity:.85;}
+#nsPanel .ns-studio-people button:active {transform:scale(.92);}
+#nsPanel .ns-studio-people button[aria-pressed="true"] {opacity:1;color:var(--pp-on,#e3e7ee);}
+#nsPanel .ns-studio-people button[aria-pressed="true"] b {font-weight:700;}
+/* The chosen one: a line around its own shape (four 1.5 px offsets of the silhouette), no ring, no glow. */
+#nsPanel .ns-studio-people button[aria-pressed="true"] .ns-studio-av img,
+#nsPanel .ns-studio-page button[aria-pressed="true"] img {filter:drop-shadow(1.5px 0 0 var(--pp-primary,#a8c7fa)) drop-shadow(-1.5px 0 0 var(--pp-primary,#a8c7fa)) drop-shadow(0 1.5px 0 var(--pp-primary,#a8c7fa)) drop-shadow(0 -1.5px 0 var(--pp-primary,#a8c7fa));}
+#nsPanel .ns-studio-nav {display:flex;align-items:center;justify-content:center;gap:10px;flex:none;height:30px;}
+#nsPanel .ns-studio-nav.is-single {display:none;}
+#nsPanel .ns-studio-arrow {display:grid;place-items:center;width:28px;height:28px;padding:0;border:0;border-radius:50%;background:var(--pp-c3,#252c37);color:var(--pp-on,#e3e7ee);cursor:pointer;transition:transform .25s cubic-bezier(.2,.9,.25,1.3),opacity .2s;}
+#nsPanel .ns-studio-arrow svg {width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+#nsPanel .ns-studio-arrow:active {transform:scale(.88);}
+#nsPanel .ns-studio-arrow:disabled {opacity:.28;cursor:default;}
+#nsPanel .ns-studio-dots {display:flex;align-items:center;gap:4px;padding:0 3px;}
+#nsPanel .ns-studio-dots i {display:block;width:6px;height:6px;border-radius:3px;background:color-mix(in srgb,var(--pp-on,#e3e7ee) 28%,transparent);transition:width .35s cubic-bezier(.2,.9,.25,1.3),background-color .25s;}
+#nsPanel .ns-studio-dots i.is-on {width:16px;background:var(--pp-primary,#a8c7fa);}
+#nsPanel .ns-studio-dots.is-many {gap:3px;}
+#nsPanel .ns-studio-dots.is-many i {width:4px;height:4px;}
+#nsPanel .ns-studio-dots.is-many i.is-on {width:10px;}
+/* The page: cells sized by the script to fill it exactly. */
+#nsPanel .ns-studio-page {flex:1 1 0;min-height:0;width:100%;display:grid;grid-template-columns:repeat(var(--cols,5),var(--cell-w,64px));grid-auto-rows:var(--cell-h,64px);gap:6px;justify-content:center;align-content:center;overflow:hidden;touch-action:pan-y;}
+#nsPanel .ns-studio-page button {display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;padding:0;border:0;background:transparent;cursor:pointer;animation:ns-sw-in .42s cubic-bezier(.2,.9,.25,1.25) calc(var(--i,0) * 14ms) both;transition:transform .28s cubic-bezier(.2,.9,.25,1.35);}
+#nsPanel .ns-studio-page.is-next button {animation-name:ns-page-next;}
+#nsPanel .ns-studio-page.is-prev button {animation-name:ns-page-prev;}
+@keyframes ns-sw-in {from{opacity:0;transform:scale(.6) translateY(6px);}to{opacity:1;transform:none;}}
+@keyframes ns-sw-pick {0%{transform:scale(.86);}55%{transform:scale(1.12);}100%{transform:scale(1);}}
+@keyframes ns-page-next {from{opacity:0;transform:translateX(28px) scale(.9);}to{opacity:1;transform:none;}}
+@keyframes ns-page-prev {from{opacity:0;transform:translateX(-28px) scale(.9);}to{opacity:1;transform:none;}}
+#nsPanel .ns-studio-page button:hover {transform:translateY(-2px) scale(1.05);}
+#nsPanel .ns-studio-page button:active {transform:scale(.93);}
+#nsPanel .ns-studio-page img {display:block;width:auto;height:auto;max-width:calc(var(--cell-w,64px) - 10px);max-height:calc(var(--cell-h,64px) - 10px);}
+#nsPanel .ns-studio-page button.is-picked {animation:ns-sw-pick .45s cubic-bezier(.2,.9,.25,1.4) both;}
+/* "None": an empty slot, a crossed-out circle. */
+#nsPanel .ns-studio-none {position:relative;display:block;width:min(46%,40px);aspect-ratio:1;border-radius:50%;border:2px solid color-mix(in srgb,var(--pp-on,#e3e7ee) 34%,transparent);}
+#nsPanel .ns-studio-none::after {content:"";position:absolute;left:50%;top:50%;width:2px;height:100%;background:color-mix(in srgb,var(--pp-on,#e3e7ee) 34%,transparent);transform:translate(-50%,-50%) rotate(45deg);}
+#nsPanel .ns-studio-page button[aria-pressed="true"] .ns-studio-none {border-color:var(--pp-primary,#a8c7fa);}
+#nsPanel .ns-studio-page button[aria-pressed="true"] .ns-studio-none::after {background:var(--pp-primary,#a8c7fa);}
+html[data-motion="reduced"] #nsPanel .ns-bed-studio, html[data-motion="reduced"] #nsPanel .ns-studio-page button {animation:none;}
+/* On the bed: an extra (decorative) pillow standing against the headboard in its
+   corner, as on a made bed, clear of the head and the sleeper; a toy by them on the
+   duvet. Pictures at the bed's own scale: --acc-w is their width on the bed picture. */
+#nsPanel .ns-bed-acc {position:absolute;z-index:11;width:calc(var(--acc-w,20%) * 1.7);height:auto;pointer-events:none;transform:translate(-50%,-50%) rotate(var(--acc-r,0deg));}
+#nsPanel .ns-bed-acc.is-pillow {left:80%;top:15%;width:min(40%,calc(var(--acc-w,20%) * .95));--acc-r:9deg;}
+#nsPanel .ns-bed-acc.is-toy {left:31%;top:58%;}
+#nsPanel .ns-bed-acc.is-new {animation:ns-acc-land .55s cubic-bezier(.2,.9,.25,1.35) both;}
+@keyframes ns-acc-land {0%{opacity:0;transform:translate(-50%,-110%) scale(1.25) rotate(var(--acc-r,0deg));}60%{opacity:1;transform:translate(-50%,-44%) scale(.96) rotate(var(--acc-r,0deg));}100%{transform:translate(-50%,-50%) rotate(var(--acc-r,0deg));}}
+html[data-motion="reduced"] #nsPanel .ns-bed-acc.is-new {animation:none;}
+/* A narrower list column leaves the rooms more width, so they grow into the row's
+   empty height (they are fitted by width). */
+@media (min-width: 900px) {
+  #nsPanel .ns-stats-box {flex-basis:318px !important;width:318px !important;min-width:318px !important;padding-left:12px !important;padding-right:12px !important;}
+  #nsPanel .ns-stat-row {grid-template-columns:42px minmax(0,1fr) 80px 70px !important;gap:6px !important;padding-right:8px !important;}
+}
+/* A rebuild (after a pick is saved, a new size) keeps everything where it is. */
+#nsPanel .ns-stats-box[data-view="beds"] .ns-bed-studio.is-still, #nsPanel .ns-studio-page.is-still button {animation:none;}
+/* The card's picture turning into light as its time passes (nightsplit.js ledCards):
+   above the picture, under the name, times, emoji and moon. */
+#nsPanel .nsc-full-card > canvas.nsc-led {position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;border-radius:inherit;}
+#nsPanel .nsc-full-card .nsc-card-checklist {z-index:3;}
+/* The part's name under the times ("Nakts sākums", "Dziļā nakts"): readable on any picture. */
+#nsOverlay #nsPanel .nsc-full-card .nsc-full-desc {margin-top:7px !important;}
+#nsOverlay #nsPanel .nsc-full-card .nsc-full-desc span {display:inline-block;padding:3px 9px 3px;border-radius:999px;background:rgba(6,10,16,.58);color:#f3f6fa !important;-webkit-text-fill-color:#f3f6fa !important;font-size:11.5px !important;font-weight:600 !important;letter-spacing:.01em !important;text-shadow:none !important;}
+/* An analog dial beside the times (nightsplit.js clockSvg): the part's hours as a
+   thick arc, bright where passed; while it runs a hand and a soft pulse. */
+#nsOverlay #nsPanel .nsc-full-time {display:flex !important;align-items:center !important;gap:8px !important;}
+#nsPanel .nsc-clock-btn {flex:none;display:grid;place-items:center;width:1.75em;height:1.75em;margin:-.2em 0;padding:0;border:0;border-radius:50%;background:none;cursor:pointer;transition:transform .35s cubic-bezier(.2,.9,.25,1.35);}
+#nsPanel .nsc-clock-btn:hover {transform:scale(1.12);}
+#nsPanel .nsc-clock-btn:active {transform:scale(.94);}
+#nsPanel .nsc-clock-btn:focus-visible {outline:2px solid var(--pp-primary,#a8c7fa);outline-offset:2px;}
+#nsPanel .nsc-clock {width:100%;height:100%;overflow:visible;}
+#nsPanel .nsc-clock-face {fill:rgba(6,10,16,.72);stroke:rgba(255,255,255,.28);stroke-width:1;}
+#nsPanel .nsc-clock-ticks {stroke:rgba(255,255,255,.6);stroke-width:1.2;stroke-linecap:round;}
+#nsPanel .nsc-clock-track {fill:none;stroke:rgba(255,255,255,.34);stroke-width:4;stroke-linecap:round;}
+#nsPanel .nsc-clock-done {fill:none;stroke:#fff;stroke-width:4.4;stroke-linecap:round;}
+#nsPanel .nsc-clock-hand {stroke:#fff;stroke-linecap:round;opacity:0;transition:transform .8s cubic-bezier(.2,.9,.25,1.2);}
+#nsPanel .nsc-clock-hand.is-hour {stroke-width:2.4;}
+#nsPanel .nsc-clock-hand.is-minute {stroke-width:1.4;stroke:var(--nsc-accent,#8fd6ff);}
+#nsPanel .nsc-clock-pin {fill:#fff;}
+#nsPanel .nsc-clock-pulse {fill:none;stroke:var(--nsc-accent,#8fd6ff);stroke-width:2;opacity:0;transform-origin:center;transform-box:fill-box;}
+#nsPanel .nsc-clock.is-running .nsc-clock-hand {opacity:1;}
+#nsPanel .nsc-clock.is-running .nsc-clock-pulse {animation:nsc-clock-pulse 2.4s ease-out infinite;}
+@keyframes nsc-clock-pulse {0%{opacity:.7;transform:scale(1);}100%{opacity:0;transform:scale(1.35);}}
+html[data-motion="reduced"] #nsPanel .nsc-clock.is-running .nsc-clock-pulse, html[data-motion="lite"] #nsPanel .nsc-clock.is-running .nsc-clock-pulse {animation:none;opacity:.5;}
+/* The big dial over the card (hover or tap on the small one). */
+#nsPanel .nsc-clock-pop {position:absolute;inset:6px;z-index:6;display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 12px;border-radius:13px;background:rgba(7,11,17,.9);color:#f3f6fa;animation:nsc-pop-in .32s cubic-bezier(.2,.9,.25,1.2) both;}
+#nsPanel .nsc-clock-pop.is-out {animation:nsc-pop-out .16s ease-in both;}
+@keyframes nsc-pop-in {from{opacity:0;transform:scale(.92);}to{opacity:1;transform:none;}}
+@keyframes nsc-pop-out {to{opacity:0;transform:scale(.96);}}
+#nsPanel .nsc-clock-pop .nsc-clock {flex:0 1 auto;height:100%;width:auto;max-width:52%;aspect-ratio:1;}
+#nsPanel .nsc-clock.is-big .nsc-clock-track {stroke-width:9;}
+#nsPanel .nsc-clock.is-big .nsc-clock-done {stroke-width:9.6;}
+#nsPanel .nsc-clock.is-big .nsc-clock-hand.is-hour {stroke-width:4.6;}
+#nsPanel .nsc-clock.is-big .nsc-clock-hand.is-minute {stroke-width:2.6;}
+#nsPanel .nsc-clock.is-big .nsc-clock-ticks {stroke-width:2;}
+#nsPanel .nsc-clock.is-big .nsc-clock-end {fill:#fff;}
+#nsPanel .nsc-clock-num {fill:rgba(255,255,255,.72);font:600 11px/1 var(--pp-font,Inter,system-ui,sans-serif);text-anchor:middle;dominant-baseline:central;}
+#nsPanel .nsc-clock-copy {display:grid;gap:6px;min-width:0;flex:0 1 auto;}
+#nsPanel .nsc-clock-copy b {font:700 clamp(12px,1.25vw,19px)/1.15 var(--pp-font,Inter,system-ui,sans-serif);font-variant-numeric:tabular-nums;}
+#nsPanel .nsc-clock-status {font:600 clamp(11px,1vw,14px)/1.2 var(--pp-font,Inter,system-ui,sans-serif);color:var(--nsc-accent,#8fd6ff);}
+html[data-motion="reduced"] #nsPanel .nsc-clock-pop {animation:none;}
+/* Both room names alike: the same pill (sized by its text) on one line, although
+   the rooms differ in size (the main room is 12 px lower in the row). */
+#nsOverlay #nsPanel .ns-room-titlebar {width:max-content !important;min-width:0 !important;min-height:0 !important;height:34px !important;padding:0 22px !important;display:flex !important;align-items:center !important;font-size:17px !important;line-height:1 !important;}
+#nsOverlay #nsPanel .ns-room-main .ns-room-titlebar {top:-7px !important;}
+#nsOverlay #nsPanel .ns-room-nmp .ns-room-titlebar {top:-7px !important;}
+/* The moon tucked into the card's corner, clear of the times. */
+#nsOverlay #nsPanel .nsc-moon-overlay {top:5px !important;right:5px !important;width:clamp(36px,15%,50px) !important;height:auto !important;aspect-ratio:1;padding:3px !important;}
+/* No empty band under the rooms row: the row ends where its content ends. */
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-room-block {padding-bottom:0 !important;}
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-room-stage {padding-bottom:0 !important;}
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanelContent {padding-bottom:4px !important;}
+/* The rendered rooms (scripts/blender/nakts_rooms.py): their own sizes, and the
+   front wall (from 79.7 % down) drawn over whatever stands on the floor. */
+#nsOverlay #nsPanel .ns-room-layout {grid-template-columns:440px 232px !important;}
+#nsOverlay #nsPanel .ns-room-main .ns-room-shell {width:440px !important;height:332px !important;}
+#nsOverlay #nsPanel .ns-room-nmp .ns-room-shell {width:232px !important;height:332px !important;}
+#nsOverlay #nsPanel .ns-room-image-foreground, #nsOverlay #nsPanel .ns-room-nmp .ns-room-image-foreground {clip-path:inset(85.8% 0 0 0) !important;}
+/* The rooms' pets (js/nakts-pets.js): sprites drawn by their feet among the beds;
+   the front wall stays over all of them. */
+#nsPanel .ns-pets {position:absolute;inset:0;pointer-events:none;}
+#nsPanel .ns-pet {position:absolute;left:0;top:0;background-repeat:no-repeat;pointer-events:none;will-change:transform;}
+#nsPanel .ns-pet-duvet, #nsPanel .ns-pet-heap, #nsPanel .ns-pet-slide {background-size:100% 100%;background-repeat:no-repeat;pointer-events:none;}
+#nsPanel .ns-pet-heap {transform-origin:50% 50%;}
+#nsPanel .ns-pet-drag {background-size:100% 400%;background-repeat:no-repeat;pointer-events:none;transform-origin:180px 50px;}
+/* The duvet back on its bed: a small bounce. Dream clouds step back over a cat. */
+#nsPanel .ns-room-bed-card.ns-bed-made {animation:ns-bed-made .45s cubic-bezier(.2,.9,.25,1.4);}
+@keyframes ns-bed-made {0%{scale:1;}40%{scale:1.05 .96;}100%{scale:1;}}
+#nsPanel .ns-room-bed.ns-dream-quiet .ns-bed-dream {opacity:0 !important;}
+#nsPanel .ns-pet-bubble {position:absolute;left:0;top:0;padding:3px 8px;border-radius:999px;background:rgba(240,244,250,.95);color:#10151c;font:700 11px/1 var(--pp-font,Inter,system-ui,sans-serif);white-space:nowrap;pointer-events:none;translate:-50% 0;animation:ns-bubble 1.3s ease-out forwards;}
+@keyframes ns-bubble {0%{opacity:0;scale:.6;}15%{opacity:1;scale:1.05;}25%{scale:1;}80%{opacity:1;}100%{opacity:0;margin-top:-10px;}}
+/* A fight under a bed: the bed rattles like in a cartoon. */
+#nsPanel .ns-room-bed.ns-bed-rumble .ns-room-bed-card {animation:ns-rumble .18s steps(3) infinite;}
+@keyframes ns-rumble {0%{translate:-2px 0;rotate:-1.6deg;}33%{translate:2px -2px;rotate:1.8deg;}66%{translate:-1px 1px;rotate:-.8deg;}100%{translate:1px -1px;rotate:1.2deg;}}
+html[data-motion="reduced"] #nsPanel .ns-room-bed.ns-bed-rumble .ns-room-bed-card {animation:none;}
+#nsOverlay #nsPanel .ns-room-image-foreground {z-index:300 !important;}
+/* The sleeper in each bed (nightsplit.js sleeperHTML), in the bed picture's own
+   places: pillow 8-32 %, fold 36-45 %, duvet 45-69 %, footboard from 69 %. */
+#nsPanel .ns-sleeper {display:none;}
+/* The sleeper is drawn into the bed picture (nightsplit.js: a rendered figure,
+   under the duvet or, with it off, on the bare bed); .ns-sleeper only says who. */
+#nsPanel .ns-room-bed.ns-duvet-off .ns-room-bed-skin.is-blanket {display:none !important;}
+/* History rows: the grey row starts at the part's badge (no grey band left of it). */
+#nsOverlay #nsPanel .ns-stat-row {padding-left:0 !important;border-radius:16px !important;overflow:hidden;}
+#nsOverlay #nsPanel .ns-stat-row .ns-stat-part {align-self:stretch !important;height:auto !important;margin:0 !important;}

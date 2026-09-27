@@ -99,6 +99,8 @@
     }
     window.__nsOverlayOpen = _nsOpen;
     setNightWalkerMotion(_nsOpen);
+    // the rooms' cats wake up once the panel has settled (and again if it was slow)
+    if(_nsOpen && window.NaktsPets){ setTimeout(function(){ if(_nsOpen) window.NaktsPets.sync(); }, 700); setTimeout(function(){ if(_nsOpen) window.NaktsPets.sync(); }, 2200); }
     if(_nsOpen && window.__ns) {
       // Rooms, beds and the history column are fitted from measured boxes:
       // measure the panel at its final size, not mid-growth.
@@ -107,6 +109,7 @@
         rest(function(){
           if(typeof window.__ns._update==='function') window.__ns._update();
           else if(typeof window.__ns._render==='function') window.__ns._render();
+
         });
         // The cat is a separate fixed layer: it jumps onto the bed once the
         // panel has arrived, so it never hangs in the air beside a moving bed.

@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 process.env.TZ='Europe/Riga';
 const source=fs.readFileSync(new URL('../js/nightsplit.js',import.meta.url),'utf8');
-const code=source.slice(source.indexOf('  function dreamPhones('),source.indexOf('  function dreamContents('));
+const code=source.slice(source.indexOf('  function dreamPhones('),source.indexOf('  /* Dreams. Each sleeper dreams'));
 function dreams(time,count=4,start=0,end=440,date='07.09.2026'){
  const Fixed=class extends Date{static now(){return +new Date(time);}};
  const sl=Array.from({length:count},(_,i)=>({w:{name:'worker'+i},s:start+Math.floor((end-start)*i/count),e:start+Math.floor((end-start)*(i+1)/count)}));

@@ -531,7 +531,11 @@ html body #grafiks-list .card.mk-watch-face[data-full-tint] > .mk-card-addon,.mk
 /* Analog shift timer (card-faces.js setDial): the chip gives way to the dial. */
 html body #grafiks-list.grid-view.grid-view.grid-view .card.card.card.mk-mid-card.mk-watch-face [data-wf-part="remaining"].wf-analog.wf-analog {
   background:none !important;border:0 !important;box-shadow:none !important;padding:0 !important;min-width:0 !important;backdrop-filter:none !important;outline-offset:2px;
-  overflow:visible !important;clip-path:none !important;-webkit-mask:none !important;mask:none !important;}
+  overflow:visible !important;clip-path:none !important;-webkit-mask:none !important;mask:none !important;
+  /* The dial (32cqw × its scale) always stays whole on the card: the saved spot is
+     kept, only where it is drawn is held inside the edges (presets, small cards). */
+  left:clamp(calc(16cqw * var(--wf-scale, 1) + 3px), var(--wf-x), calc(100% - 16cqw * var(--wf-scale, 1) - 3px)) !important;
+  top:clamp(calc(16cqw * var(--wf-scale, 1) + 3px), var(--wf-y), calc(100% - 16cqw * var(--wf-scale, 1) - 3px)) !important;}
 html body #grafiks-list.grid-view.grid-view.grid-view .card.card.card.mk-mid-card.mk-watch-face [data-wf-part="remaining"].wf-analog.wf-analog::before,
 html body #grafiks-list.grid-view.grid-view.grid-view .card.card.card.mk-mid-card.mk-watch-face [data-wf-part="remaining"].wf-analog.wf-analog::after {display:none !important;}
 .mk-watch-face [data-wf-part="remaining"].wf-analog > :not(.mk-wf-dial):not(.wf-resize) {display:none !important;}
@@ -596,3 +600,21 @@ html body :is(#grafiks-list,#worker-modal) .card.mk-mid-card.mk-watch-face [data
    (grid for "Stundas mēnesī"), which used to show a month chip people had turned off. */
 html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part][hidden],
 html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-finish] [data-wf-part][hidden] {display:none !important;}
+/* Not started yet: the shift window dashed and quieter, its start point marked. */
+.mk-wf-dial .plan {stroke-dasharray:2.2 2.6;stroke-linecap:butt;opacity:.6;}
+.mk-wf-dial .ring-rest.plan {stroke-dasharray:3 3;opacity:.45;}
+.mk-wf-dial .start {fill:var(--dial-ink);stroke:currentColor;stroke-width:1.4;}
+.mk-wf-dial .start-tick {stroke:currentColor;stroke-width:1.6;stroke-linecap:round;}
+/* Fatigue value keeps its meaning (green → red) but leans toward the card's text
+   colour, so it reads on light and dark plates alike (a pure #30d158 on a light
+   plate was 2.5:1). An element's own colour (Kontrasts → Mainīt) steers it too. */
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-mid-meta-value {
+  -webkit-text-fill-color:color-mix(in srgb,var(--mk-mid-fat-color,#30d158) 45%,rgb(var(--mk-txt-color,244,242,236))) !important;
+}
+/* An element with its own colour (chosen, or given by Kontrasts → Mainīt) has its
+   caption nearly opaque: the faded .65 caption is what failed on mid-tone plates. */
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .wf-colored :is(.mk-mid-meta-label,.mk-mid-month-label,.name-sub) {opacity:.92 !important;}
+/* With its own colour (chosen for readability) the value leans further in: 25 % level colour. */
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .wf-colored .mk-mid-meta-value {
+  -webkit-text-fill-color:color-mix(in srgb,var(--mk-mid-fat-color,#30d158) 25%,rgb(var(--mk-txt-color,244,242,236))) !important;
+}

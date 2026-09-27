@@ -140,6 +140,8 @@
     else if (kind === 'mono') ramp = [[10, 10, 11], [92, 92, 94], [196, 196, 198], [246, 246, 246]];
     // poster: a two-ink print — near-black shadows into the ink, lights toward paper.
     else if (kind === 'poster') ramp = [ink.map(function (v) { return Math.round(v * .05); }), ink.map(function (v) { return Math.round(v * .42); }), ink, ink.map(function (v) { return Math.round(v + (255 - v) * .62); })];
+    // heatmap: a thermal camera — navy, blue, cyan, green, yellow, orange, red.
+    else if (kind === 'heatmap') ramp = [[0, 8, 90], [0, 50, 255], [0, 200, 255], [0, 225, 90], [245, 240, 0], [255, 140, 0], [255, 20, 40]];
     // focus: the "lens" look — shadows ultramarine, mids teal, lights orange, with film grain.
     else if (kind === 'focus') ramp = [[8, 13, 58], [30, 60, 192], [44, 98, 228], [22, 150, 140], [244, 116, 22], [255, 196, 104]];
     else if (kind !== 'vivid') ramp = [ink.map(function (v) { return Math.round(v * .08); }), ink.map(function (v) { return Math.round(v * .55); }), ink, ink.map(function (v) { return Math.round(v + (255 - v) * .78); })];
@@ -167,32 +169,172 @@
   }
   /* Halftone (round dots on a grid) and ASCII (characters by brightness),
      drawn at device resolution (opts.scale) so dots and letters stay smooth. */
-  var ASCII_RAMP = " .'`,:;-~=+*ox#%&@";
+  var ASCII_RAMP = " .:-=+*o#%@";
+  /* Cell art, drawn once at device resolution:
+     halftone — round dots; ascii — characters by brightness;
+     mosaic — the picture's own colours as small rounded tiles with a seam;
+     bricks — the same as toy bricks (bevelled square, a stud with light and shade);
+     led — a dot matrix: a faint dot in every cell, bright ones where the picture is. */
+  function mix(c, t, k) { return [0, 1, 2].map(function (i) { return Math.round(c[i] + (t[i] - c[i]) * k); }); }
+  function css(c) { return 'rgb(' + c.map(function (v) { return Math.max(0, Math.min(255, Math.round(v))); }).join(',') + ')'; }
   function patternArt(d, w, h, opts) {
-    var f = opts.cell || 1, k = opts.scale || 1, ink = opts.ink || [236, 234, 228];
-    var cell = opts.mode === 'ascii' ? [4 * f, 6.5 * f] : [5 * f, 5 * f];
+    var f = opts.cell || 1, k = opts.scale || 1, ink = opts.ink || [236, 234, 228], mode = opts.mode;
+    var cell = mode === 'ascii' ? [5 * f, 8 * f] : mode === 'mosaic' ? [7 * f, 7 * f] : mode === 'bricks' ? [9 * f, 9 * f] : mode === 'led' ? [6 * f, 6 * f] : mode === 'pixelate' ? [8 * f, 8 * f] : mode === 'pointillism' ? [8 * f, 8 * f] : [5 * f, 5 * f];
     var cols = Math.max(1, Math.floor(w / cell[0])), rows = Math.max(1, Math.floor(h / cell[1]));
     var cw = Math.max(1, Math.round(cell[0])), chh = Math.max(1, Math.round(cell[1]));
     var out = doc.createElement('canvas'); out.width = Math.round(w * k); out.height = Math.round(h * k);
-    var c = out.getContext('2d'); c.fillStyle = '#060606'; c.fillRect(0, 0, out.width, out.height);
+    var c = out.getContext('2d');
+    c.fillStyle = mode === 'led' ? css(ink.map(function (v) { return v * .07 + 6; })) : mode === 'mosaic' ? '#101012' : '#060606';
+    c.fillRect(0, 0, out.width, out.height);
     c.fillStyle = 'rgb(' + ink.join(',') + ')';
-    if (opts.mode === 'ascii') { c.font = '700 ' + (cell[1] * 1.05 * k).toFixed(1) + 'px ui-monospace,Menlo,Consolas,monospace'; c.textBaseline = 'top'; }
+    if (mode === 'ascii') { c.font = '600 ' + (cell[1] * .95 * k).toFixed(1) + 'px ui-monospace,Menlo,Consolas,monospace'; c.textBaseline = 'top'; }
+    var S = cell[0] * k, dim = css(ink.map(function (v) { return v * .28 + 8; }));
     for (var gy = 0; gy < rows; gy++) for (var gx = 0; gx < cols; gx++) {
-      var sum = 0, cnt = 0;
+      var sum = 0, cnt = 0, sr = 0, sg = 0, sb = 0;
       var y0 = Math.floor(gy * cell[1]), x0 = Math.floor(gx * cell[0]);
       for (var y = y0; y < y0 + chh && y < h; y++) for (var x = x0; x < x0 + cw && x < w; x++) {
-        var p = (y * w + x) * 4; sum += .2126 * d[p] + .7152 * d[p + 1] + .0722 * d[p + 2]; cnt++;
+        var p = (y * w + x) * 4; sum += .2126 * d[p] + .7152 * d[p + 1] + .0722 * d[p + 2]; sr += d[p]; sg += d[p + 1]; sb += d[p + 2]; cnt++;
       }
-      var l = cnt ? sum / cnt / 255 : 0;
-      if (opts.mode === 'ascii') {
+      var l = cnt ? sum / cnt / 255 : 0, col = cnt ? [sr / cnt, sg / cnt, sb / cnt] : [0, 0, 0];
+      var px = gx * cell[0] * k, py = gy * cell[1] * k;
+      if (mode === 'ascii') {
         var ch = ASCII_RAMP[Math.min(ASCII_RAMP.length - 1, Math.floor(l * ASCII_RAMP.length))];
-        if (ch !== ' ') c.fillText(ch, gx * cell[0] * k, gy * cell[1] * k);
+        // Brightness twice over: a denser letter and a brighter ink, like a lit terminal.
+        if (ch !== ' ') { c.fillStyle = css(ink.map(function (v) { return v * (.4 + .6 * l); })); c.fillText(ch, px, py); }
+      } else if (mode === 'mosaic') {
+        var gap = Math.max(1, S * .12);
+        c.fillStyle = css(mix(col, [col[0] * 1.08, col[1] * 1.08, col[2] * 1.08], 1));
+        if (c.roundRect) { c.beginPath(); c.roundRect(px + gap / 2, py + gap / 2, S - gap, S - gap, S * .16); c.fill(); }
+        else c.fillRect(px + gap / 2, py + gap / 2, S - gap, S - gap);
+      } else if (mode === 'bricks') {
+        var cx = px + S / 2, cy = py + S / 2, e = Math.max(1, S * .07);
+        c.fillStyle = css(col); c.fillRect(px, py, S, S);
+        c.fillStyle = css(mix(col, [255, 255, 255], .22)); c.fillRect(px, py, S, e); c.fillRect(px, py, e, S);          // lit edges
+        c.fillStyle = css(mix(col, [0, 0, 0], .32)); c.fillRect(px, py + S - e, S, e); c.fillRect(px + S - e, py, e, S); // shaded edges
+        var r = S * .3;
+        c.beginPath(); c.arc(cx + e * .6, cy + e * .6, r, 0, 6.2832); c.fillStyle = css(mix(col, [0, 0, 0], .35)); c.fill();   // stud shadow
+        c.beginPath(); c.arc(cx, cy, r, 0, 6.2832); c.fillStyle = css(col); c.fill();
+        c.beginPath(); c.arc(cx, cy, r * .78, 3.5, 5.6); c.strokeStyle = css(mix(col, [255, 255, 255], .38)); c.lineWidth = Math.max(1, S * .06); c.stroke();   // stud highlight
+      } else if (mode === 'pixelate') {
+        c.fillStyle = css(col); c.fillRect(Math.floor(px), Math.floor(py), Math.ceil(S) + 1, Math.ceil(S) + 1);
+      } else if (mode === 'pointillism') {
+        // Two dabs per cell at fixed pseudo-random spots, bigger where it is darker.
+        // The cell's own colour underneath (no paper gaps), then three dabs a shade
+        // lighter, darker and warmer at fixed pseudo-random spots: a painted surface.
+        var sat = col.map(function (v) { var m = (col[0] + col[1] + col[2]) / 3; return m + (v - m) * 1.3; });
+        c.fillStyle = css(mix(sat, [0, 0, 0], .12)); c.fillRect(Math.floor(px), Math.floor(py), Math.ceil(S) + 1, Math.ceil(S) + 1);
+        var shades = [mix(sat, [255, 255, 255], .28), mix(sat, [0, 0, 0], .3), mix(sat, [255, 200, 120], .2)];
+        for (var dd = 0; dd < 3; dd++) {
+          var hh = Math.imul((gx * 73856093) ^ (gy * 19349663) ^ (dd * 83492791), 0x9e3779b1) >>> 0;
+          var jx = ((hh & 255) / 255 - .5) * S * .8, jy = (((hh >>> 8) & 255) / 255 - .5) * S * .8;
+          c.fillStyle = css(shades[dd]); c.beginPath(); c.ellipse(px + S / 2 + jx, py + S / 2 + jy, S * .3, S * .2, ((hh >>> 16) & 255) / 81, 0, 6.2832); c.fill();
+        }
+      } else if (mode === 'led') {
+        var cx2 = px + S / 2, cy2 = py + S / 2;
+        c.fillStyle = dim; c.beginPath(); c.arc(cx2, cy2, Math.max(.6, S * .09), 0, 6.2832); c.fill();
+        if (l > .1) { c.fillStyle = css(mix(ink, [255, 255, 255], Math.max(0, l - .75))); c.beginPath(); c.arc(cx2, cy2, Math.sqrt(l) * S * .4, 0, 6.2832); c.fill(); }
       } else {
-        var r = Math.sqrt(l) * cell[0] * .62 * k;
-        if (r > .35 * k) { c.beginPath(); c.arc((gx + .5) * cell[0] * k, (gy + .5) * cell[1] * k, r, 0, 6.2832); c.fill(); }
+        var rr = Math.sqrt(l) * cell[0] * .62 * k;
+        if (rr > .35 * k) { c.beginPath(); c.arc((gx + .5) * cell[0] * k, (gy + .5) * cell[1] * k, rr, 0, 6.2832); c.fill(); }
       }
     }
     return out;
+  }
+  /* CMYK print: four dot screens at the classic angles, printed onto paper. */
+  function cmykArt(d, w, h, period) {
+    var P = Math.max(3, period), inks = [[0, 160, 227], [230, 0, 126], [255, 226, 0], [24, 24, 26]], ang = [15, 75, 0, 45].map(function (a) { return a * Math.PI / 180; });
+    var cs = ang.map(Math.cos), sn = ang.map(Math.sin);
+    for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
+      var p = (y * w + x) * 4, r = d[p] / 255, g = d[p + 1] / 255, b = d[p + 2] / 255, k = 1 - Math.max(r, g, b);
+      var val = k >= .999 ? [0, 0, 0, 1] : [(1 - r - k) / (1 - k), (1 - g - k) / (1 - k), (1 - b - k) / (1 - k), k];
+      var out = [248, 246, 240];
+      for (var ch = 0; ch < 4; ch++) {
+        var u = x * cs[ch] + y * sn[ch], v = -x * sn[ch] + y * cs[ch];
+        var du = u - (Math.floor(u / P) + .5) * P, dv = v - (Math.floor(v / P) + .5) * P;
+        var rad = Math.sqrt(val[ch]) * P * .62, dist = Math.sqrt(du * du + dv * dv);
+        var cov = rad - dist + .5; cov = cov < 0 ? 0 : cov > 1 ? 1 : cov;
+        if (cov) for (var c = 0; c < 3; c++) out[c] *= 1 - cov * (1 - inks[ch][c] / 255);
+      }
+      d[p] = out[0]; d[p + 1] = out[1]; d[p + 2] = out[2]; d[p + 3] = 255;
+    }
+  }
+  /* Riso: two inks on cream paper, each a grainy layer; the second is printed a
+     little off register, as a real duplicator does. */
+  function risoArt(d, w, h, ink) {
+    var A = [255, 72, 150], B = ink && (ink[0] + ink[1] + ink[2]) < 600 ? ink : [0, 120, 191], src = new Uint8ClampedArray(d);
+    function grain(x, y, s) { var hh = Math.imul(((x >> 1) * 374761393) ^ ((y >> 1) * 668265263) ^ s, 1274126177) >>> 0; return (hh >>> 24) / 255; }
+    for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
+      var p = (y * w + x) * 4, x2 = Math.min(w - 1, x + 2), y2 = Math.min(h - 1, y + 1), q = (y2 * w + x2) * 4;
+      var da = 1 - src[p + 1] / 255, db = 1 - (src[q] * .7 + src[q + 2] * .3) / 255;
+      var ga = .5 + (grain(x, y, 11) - .5) * .55, gb = .5 + (grain(x, y, 29) - .5) * .55;
+      var ca = Math.max(0, Math.min(1, (da - ga) * 6 + .5)) * .9, cb = Math.max(0, Math.min(1, (db - gb) * 6 + .5)) * .85;
+      var out = [246, 240, 228];
+      for (var c = 0; c < 3; c++) out[c] *= (1 - ca * (1 - A[c] / 255)) * (1 - cb * (1 - B[c] / 255));
+      d[p] = out[0]; d[p + 1] = out[1]; d[p + 2] = out[2]; d[p + 3] = 255;
+    }
+  }
+  // Slieksnis: pure two-tone, the ink (when dark enough) on paper.
+  function thresholdArt(d, ink) {
+    var dark = ink && .2126 * ink[0] + .7152 * ink[1] + .0722 * ink[2] < 90 ? ink : [12, 12, 14], paper = [240, 239, 234];
+    var hist = new Uint32Array(256), n = d.length / 4, cut = 0, acc = 0;
+    for (var q = 0; q < d.length; q += 4) hist[(.2126 * d[q] + .7152 * d[q + 1] + .0722 * d[q + 2]) | 0]++;
+    for (; cut < 255 && (acc += hist[cut]) < n * .5; cut++);
+    cut = Math.max(70, Math.min(185, cut));
+    for (var p = 0; p < d.length; p += 4) {
+      var l = .2126 * d[p] + .7152 * d[p + 1] + .0722 * d[p + 2], t = (l - cut + 8) / 16; t = t < 0 ? 0 : t > 1 ? 1 : t;
+      for (var c = 0; c < 3; c++) d[p + c] = dark[c] + (paper[c] - dark[c]) * t;
+      d[p + 3] = 255;
+    }
+  }
+  // Kontūra: the picture's edges as pen lines on paper (Sobel on brightness).
+  function outlineArt(d, w, h) {
+    var lum = new Float32Array(w * h);
+    for (var i = 0, q = 0; i < d.length; i += 4, q++) lum[q] = .2126 * d[i] + .7152 * d[i + 1] + .0722 * d[i + 2];
+    // Smooth first (3×3 box) so photo grain and compression blocks do not read as edges.
+    var raw = lum; lum = new Float32Array(w * h);
+    for (var by = 0; by < h; by++) for (var bx = 0; bx < w; bx++) {
+      var sm = 0; for (var oy = -1; oy <= 1; oy++) for (var ox = -1; ox <= 1; ox++) sm += raw[Math.max(0, Math.min(h - 1, by + oy)) * w + Math.max(0, Math.min(w - 1, bx + ox))];
+      lum[by * w + bx] = sm / 9;
+    }
+    var mag = new Float32Array(w * h), hist = new Uint32Array(512);
+    for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
+      var xm = Math.max(0, x - 1), xp = Math.min(w - 1, x + 1), ym = Math.max(0, y - 1), yp = Math.min(h - 1, y + 1);
+      var gx = lum[ym * w + xp] + 2 * lum[y * w + xp] + lum[yp * w + xp] - lum[ym * w + xm] - 2 * lum[y * w + xm] - lum[yp * w + xm];
+      var gy = lum[yp * w + xm] + 2 * lum[yp * w + x] + lum[yp * w + xp] - lum[ym * w + xm] - 2 * lum[ym * w + x] - lum[ym * w + xp];
+      var mm = Math.sqrt(gx * gx + gy * gy); mag[y * w + x] = mm; hist[Math.min(511, mm >> 1)]++;
+    }
+    for (var lo = 511, acc = 0; lo > 0 && (acc += hist[lo]) < w * h * .09; lo--);
+    var edge = Math.max(36, lo * 2), span = Math.max(20, edge * .8);
+    for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+      var t = (mag[y * w + x] - edge) / span; t = t < 0 ? 0 : t > 1 ? 1 : t;
+      var p = (y * w + x) * 4, v = 240 - 226 * t;
+      d[p] = v; d[p + 1] = v - 1; d[p + 2] = v - 5; d[p + 3] = 255;
+    }
+  }
+  // Posterizācija: a few flat colour steps, a touch more saturated.
+  function posterizeArt(d, levels) {
+    var L = levels - 1;
+    for (var p = 0; p < d.length; p += 4) {
+      var m = (d[p] + d[p + 1] + d[p + 2]) / 3;
+      for (var c = 0; c < 3; c++) { var v = clamp8(m + (d[p + c] - m) * 1.3); d[p + c] = Math.round(v / 255 * L) / L * 255; }
+      d[p + 3] = 255;
+    }
+  }
+  /* Line screen: diagonal lines, thick where the picture is light, on the ink as
+     ground; red and blue read a pixel apart, so the edges fringe like a print. */
+  function linesArt(d, w, h, ink, period) {
+    var P = Math.max(3, period || 5), lum = new Float32Array(w * h), fg = [246, 247, 255];
+    for (var i = 0, q = 0; i < d.length; i += 4, q++) lum[q] = (.2126 * d[i] + .7152 * d[i + 1] + .0722 * d[i + 2]) / 255;
+    function cover(x, y) {
+      var xx = Math.max(0, Math.min(w - 1, x)), l = lum[y * w + xx];
+      var v = ((x + y) / P) % 1, dist = Math.abs(v - .5) * 2;
+      var t = (.1 + l * .7 - dist) * P * .7 + .5;
+      return t < 0 ? 0 : t > 1 ? 1 : t;
+    }
+    for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
+      var p = (y * w + x) * 4, cr = cover(x + 1, y), cg = cover(x, y), cb = cover(x - 1, y);
+      d[p] = ink[0] + (fg[0] - ink[0]) * cr; d[p + 1] = ink[1] + (fg[1] - ink[1]) * cg; d[p + 2] = ink[2] + (fg[2] - ink[2]) * cb; d[p + 3] = 255;
+    }
   }
   // Mild unsharp (3×3 cross): dithering eats edges, this puts them back.
   function sharpen(d, w, h, amount) {
@@ -285,9 +427,18 @@
       var d = id.data, c = opts.contrast;
       for (var i = 0; i < d.length; i += 4) { d[i] = clamp8((d[i] - 128) * c + 128); d[i + 1] = clamp8((d[i + 1] - 128) * c + 128); d[i + 2] = clamp8((d[i + 2] - 128) * c + 128); }
     }
-    if (opts.mode === 'halftone' || opts.mode === 'ascii') { var art = patternArt(id.data, w, h, opts); return alpha ? maskPattern(art) : art; }
+    if (/^(cmyk|riso|threshold|outline|posterize)$/.test(opts.mode)) {
+      if (opts.mode === 'cmyk') cmykArt(id.data, w, h, 6 * (opts.cell || 1) / (opts.dot || 1));
+      else if (opts.mode === 'riso') risoArt(id.data, w, h, opts.ink);
+      else if (opts.mode === 'threshold') thresholdArt(id.data, opts.ink);
+      else if (opts.mode === 'outline') outlineArt(id.data, w, h);
+      else posterizeArt(id.data, 4);
+      if (alpha) putAlpha(id.data, false); ctx.putImageData(id, 0, 0); return cv;
+    }
+    if (/^(halftone|ascii|mosaic|bricks|led|pixelate|pointillism)$/.test(opts.mode)) { var art = patternArt(id.data, w, h, opts); return alpha ? maskPattern(art) : art; }
+    if (opts.mode === 'lines') { linesArt(id.data, w, h, opts.ink || [58, 75, 255], 5 * (opts.cell || 1) / (opts.dot || 1)); if (alpha) putAlpha(id.data, false); ctx.putImageData(id, 0, 0); return cv; }
     if (opts.sharpen !== 0) sharpen(id.data, w, h, opts.sharpen || .35);
-    if (/^(xray|duotone|focus|poster|mono|vivid)$/.test(opts.mode)) { toneMap(id.data, opts.mode, opts.ink || [236, 234, 228]); if (alpha) putAlpha(id.data, false); ctx.putImageData(id, 0, 0); return cv; }
+    if (/^(xray|duotone|focus|poster|mono|vivid|heatmap)$/.test(opts.mode)) { toneMap(id.data, opts.mode, opts.ink || [236, 234, 228]); if (alpha) putAlpha(id.data, false); ctx.putImageData(id, 0, 0); return cv; }
     if (opts.mode === 'bayer') bayerTone(id.data, w, h, opts.ink || [236, 236, 232], opts.paper || [6, 6, 6], opts.gamma || 1);
     else if (opts.mode === 'palette') diffusePalette(id.data, w, h, paletteOf(id.data, opts.colors || 6));
     else atkinson(id.data, w, h, opts.mode || 'color', opts.levels || (opts.mode === 'color' ? 3 : 2), opts.ink, opts.paper);
@@ -633,7 +784,10 @@
     if (fx === 'xray') return { mode: 'xray', normalize: true, contrast: con(.95), sharpen: +(.2 / fine).toFixed(2), dot: 1 / sharp, soft: true };
     if (fx === 'focus') return { mode: 'focus', normalize: true, contrast: con(1.1), sharpen: +(.25 / fine).toFixed(2), dot: 1 / sharp, soft: true };
     if (fx === 'duotone') return { mode: 'duotone', ink: ink, normalize: true, contrast: con(1.05), sharpen: +(.3 / fine).toFixed(2), dot: 1 / sharp, soft: true };
-    if (fx === 'halftone' || fx === 'ascii') return { mode: fx, ink: ink, normalize: true, contrast: con(1.15), scale: sharp, cell: +fine.toFixed(2), dot: 1, soft: true };
+    if (fx === 'halftone' || fx === 'ascii' || fx === 'led') return { mode: fx, ink: ink, normalize: true, contrast: con(1.15), scale: sharp, cell: +fine.toFixed(2), dot: 1, soft: true };
+    // Cell art on a small cut-out: finer cells than on the card, or the shape is lost.
+    if (/^(mosaic|bricks|pixelate|pointillism)$/.test(fx)) return { mode: fx, normalize: true, contrast: con(1.05), scale: sharp, cell: +(fine * .7).toFixed(2), dot: 1, soft: true };
+    if (/^(cmyk|riso|threshold|outline|posterize|heatmap|lines)$/.test(fx)) return { mode: fx, ink: ink, normalize: true, contrast: con(fx === 'outline' ? 1 : 1.08), sharpen: fx === 'outline' || fx === 'lines' ? 0 : .2, cell: +(fine * .8).toFixed(2), dot: 1 / sharp, soft: true };
     var dpx = Math.max(1, Math.min(4, Math.round(2 * fine)));
     return { mode: 'bayer', ink: ink.map(function (v) { return Math.round(6 + (v - 6) * .7); }), paper: [6, 6, 6], normalize: true, contrast: con(1.2), sharpen: .45, dot: dpx / sharp };
   }
@@ -782,7 +936,8 @@
   function paintSkin(card, snap) {
     var face = card.getAttribute('data-watch-face') === 'dither';
     var fx = card.classList.contains('mk-fx-dithercolor') ? 'palette' : card.classList.contains('mk-fx-ditherpaper') ? 'paper' : card.classList.contains('mk-fx-dither') ? 'dark'
-      : card.classList.contains('mk-fx-xray') ? 'xray' : card.classList.contains('mk-fx-focus') ? 'focus' : card.classList.contains('mk-fx-split') ? 'split' : card.classList.contains('mk-fx-poster') ? 'poster' : card.classList.contains('mk-fx-halftone') ? 'halftone' : card.classList.contains('mk-fx-duotone') ? 'duotone' : card.classList.contains('mk-fx-ascii') ? 'ascii' : '';
+      : card.classList.contains('mk-fx-xray') ? 'xray' : card.classList.contains('mk-fx-focus') ? 'focus' : card.classList.contains('mk-fx-split') ? 'split' : card.classList.contains('mk-fx-poster') ? 'poster' : card.classList.contains('mk-fx-mosaic') ? 'mosaic' : card.classList.contains('mk-fx-bricks') ? 'bricks' : card.classList.contains('mk-fx-lines') ? 'lines' : card.classList.contains('mk-fx-led') ? 'led'
+      : /\bmk-fx-(pixelate|cmyk|riso|pointillism|heatmap|threshold|outline|posterize)\b/.test(card.className) ? card.className.match(/\bmk-fx-(pixelate|cmyk|riso|pointillism|heatmap|threshold|outline|posterize)\b/)[1] : card.classList.contains('mk-fx-halftone') ? 'halftone' : card.classList.contains('mk-fx-duotone') ? 'duotone' : card.classList.contains('mk-fx-ascii') ? 'ascii' : '';
     var dithered = fx === 'palette' || fx === 'paper' || fx === 'dark';
     var want = fx || (face ? 'dark' : mode !== 'off' ? (mode === 'color' ? 'palette' : 'mono') : '');
     var raw = card.style.getPropertyValue('--mk-skin-img') || '';
@@ -824,7 +979,7 @@
     if (native && !want) want = 'dark';
     // …unless a non-dither effect was picked for it (rentgens, rastrs, duotons,
     // ASCII): that one is really applied, just as its thumbnail shows.
-    var real = !native || /^(xray|halftone|duotone|ascii|focus|poster|split)$/.test(fx);
+    var real = !native || /^(xray|halftone|duotone|ascii|focus|poster|split|mosaic|bricks|lines|led|pixelate|cmyk|riso|pointillism|heatmap|threshold|outline|posterize)$/.test(fx);
     // Plakāts: the picture sits in a window (card-dither.css), so it is computed for that box.
     if (want === 'poster') { w = Math.round(w * .88); h = Math.round(h * .6); }
     var sharp = Math.max(1, Math.round(host.devicePixelRatio || 1));
@@ -838,7 +993,10 @@
     var effect = function (dot) {
       return want === 'xray' ? { box: box, dot: 1 / sharp, pos: pos, mode: 'xray', normalize: true, contrast: con(.95), sharpen: +(.2 / fine).toFixed(2) }
       : want === 'duotone' ? { box: box, dot: 1 / sharp, pos: pos, mode: 'duotone', ink: ink, normalize: true, contrast: con(1.05), sharpen: +(.3 / fine).toFixed(2) }
-      : (want === 'halftone' || want === 'ascii') ? { box: [w, h], dot: 1, pos: pos, mode: want, ink: ink, normalize: true, contrast: con(1.15), scale: sharp, cell: +fine.toFixed(2) }
+      : (want === 'halftone' || want === 'ascii' || want === 'led') ? { box: [w, h], dot: 1, pos: pos, mode: want, ink: ink, normalize: true, contrast: con(1.15), scale: sharp, cell: +fine.toFixed(2) }
+      : /^(cmyk|riso|threshold|outline|posterize|heatmap)$/.test(want) ? { box: box, dot: 1 / sharp, pos: pos, mode: want, ink: ink, normalize: true, contrast: con(want === 'outline' ? 1 : 1.08), sharpen: want === 'outline' ? 0 : .2, cell: +fine.toFixed(2) }
+      : (want === 'mosaic' || want === 'bricks' || want === 'pixelate' || want === 'pointillism') ? { box: [w, h], dot: 1, pos: pos, mode: want, normalize: true, contrast: con(1.05), scale: sharp, cell: +fine.toFixed(2) }
+      : want === 'lines' ? { box: box, dot: 1 / sharp, pos: pos, mode: 'lines', ink: ink, normalize: true, contrast: con(1.1), cell: +fine.toFixed(2) }
       // Fokuss: the picture as a fine neutral halftone; the lens (below) shows it in colour.
       : want === 'poster' ? { box: box, dot: 1 / sharp, pos: pos, mode: 'poster', ink: ink, normalize: true, contrast: con(1.12), sharpen: +(.35 / fine).toFixed(2) }
       : want === 'split' ? { box: box, dot: 1 / sharp, pos: pos, mode: 'mono', normalize: true, contrast: con(1.08), sharpen: +(.25 / fine).toFixed(2) }
@@ -857,7 +1015,7 @@
     card.__dthCardFx = dfx ? {
       mode: dfx.mode, ink: dfx.ink, paper: dfx.paper, colors: dfx.colors, normalize: dfx.normalize,
       contrast: dfx.contrast, sharpen: dfx.sharpen, cell: dfx.cell, scale: dfx.scale,
-      dot: (want === 'halftone' || want === 'ascii' || want === 'focus') ? 1 : dfx.dot, soft: /^(xray|duotone|halftone|ascii|focus|poster|split)$/.test(want)
+      dot: /^(halftone|ascii|focus|mosaic|bricks|led|pixelate|pointillism)$/.test(want) ? 1 : dfx.dot, soft: /^(xray|duotone|halftone|ascii|focus|poster|split|mosaic|bricks|lines|led|cmyk|riso|pointillism|heatmap|threshold|outline|posterize)$/.test(want)
     } : null;
     if (card.querySelector(':scope > img.mk-card-addon')) requestDecor(card);
     if (zoom > 1) opts.dot = opts.dot / zoom;

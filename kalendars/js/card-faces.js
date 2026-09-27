@@ -75,28 +75,49 @@
     var d = new Date(), now = el.dataset.dialNow ? +el.dataset.dialNow : d.getHours() * 60 + d.getMinutes();
     if (s != null && e <= s) e += 1440;
     if (active && now < s) now += 1440;
-    var left = s == null ? 0 : active ? Math.max(0, e - now) : e - s;
-    var big = s == null ? '' : active ? Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0') : Math.round(left / 60) + 'h';
-    var small = active ? 'ATLIKUŠAS' : 'MAIŅA';
+    /* Where the shift stands, told plainly. The card knows the shift window; when
+       the calendar shows today, the time decides — so the dial turns to "on duty"
+       by itself at the start (its minute repaint), without waiting for a redraw. */
+    function two(n) { return String(n).padStart(2, '0'); }
+    function hhmm(min) { min = ((min % 1440) + 1440) % 1440; return two(Math.floor(min / 60)) + ':' + two(min % 60); }
+    function dur(min) { return Math.floor(min / 60) + ':' + two(min % 60); }
+    var phase = 'none';
+    if (active) phase = 'on';
+    else if (s != null) {
+      // The calendar's own "today" (its duty day) when it has one, else the clock's date
+      // — the calendar writes dates as 27.09.2026, older code as 2026-09-27.
+      var shown = String(window.__activeDateStr || ''), todays = window.__todayDateStr
+        ? [String(window.__todayDateStr)]
+        : [two(d.getDate()) + '.' + two(d.getMonth() + 1) + '.' + d.getFullYear(), d.getFullYear() + '-' + two(d.getMonth() + 1) + '-' + two(d.getDate())];
+      if (todays.indexOf(shown) < 0) phase = 'plan';
+      else if (now >= s && now < e) phase = 'on';
+      else phase = now < s ? 'soon' : 'done';
+    }
+    var left = phase === 'on' ? Math.max(0, e - now) : phase === 'soon' ? s - now : s == null ? 0 : e - s;
+    var big = s == null ? '' : phase === 'on' || phase === 'soon' ? dur(left) : Math.round(left / 60) + 'h';
+    var small = { on: 'ATLIKUŠAS', soon: 'LĪDZ ' + hhmm(s), done: 'BEIGUSIES', plan: s == null ? '' : hhmm(s).slice(0, 2) + '–' + hhmm(e).slice(0, 2) }[phase] || '';
+    active = phase === 'on';
     function ang(min) { return (min % 720) / 720 * 360; }
     function pt(min, r) { var a = (min % 720) / 720 * Math.PI * 2 - Math.PI / 2; return [(50 + r * Math.cos(a)).toFixed(2), (50 + r * Math.sin(a)).toFixed(2)]; }
     function arc(from, span, r) { var p0 = pt(from, r), p1 = pt(from + span, r); return 'M' + p0.join(' ') + 'A' + r + ' ' + r + ' 0 ' + (span > 360 ? 1 : 0) + ' 1 ' + p1.join(' '); }
     function line(a, b, cls) { return '<line x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '" class="' + cls + '"/>'; }
-    var from = active ? now : s, rest = s == null ? 0 : Math.min(719, Math.max(0, e - from));
-    var done = active ? Math.min(719, Math.max(0, now - s)) : 0;
+    var from = active ? now : s, rest = s == null || phase === 'done' ? 0 : Math.min(719, Math.max(0, e - from));
+    var done = active ? Math.min(719, Math.max(0, now - s)) : phase === 'done' ? Math.min(719, e - s) : 0;
+    var plan = phase === 'soon' || phase === 'plan';   // not started: the window, dashed, with its start point
+    var pc = plan ? ' plan' : '';
     var body = '', label = 'mid', mask = done > 0 && skin !== 'c' && skin !== 'e' ? '<i class="dial-done" style="--a0:' + ang(s).toFixed(1) + 'deg;--sp:' + ang(done).toFixed(1) + 'deg"></i>' : '';
     if (skin === 'a') {
       for (var h = 0; h < 12; h++) body += line(pt(h * 60, 45.5), pt(h * 60, h % 3 ? 41.8 : 39.5), h % 3 ? 'tk' : 'tk q');
-      if (rest > 0) body += '<path class="rest" d="' + arc(from, rest, 47.6) + '"/>';
+      if (rest > 0) body += '<path class="rest' + pc + '" d="' + arc(from, rest, 47.6) + '"/>';
     } else if (skin === 'b') {
       for (var i = 0; i < 60; i++) body += line(pt(i * 12, 46.5), pt(i * 12, i % 5 ? 44.4 : 42.2), i % 5 ? 'tk fine' : 'tk');
       body += [12, 3, 6, 9].map(function(n, k) { var q = pt(k * 180, 34.5); return '<text class="num" x="' + q[0] + '" y="' + (+q[1] + 3.3) + '">' + n + '</text>'; }).join('');
-      if (rest > 0) body += '<path class="rest" d="' + arc(from, rest, 40) + '"/>';
+      if (rest > 0) body += '<path class="rest' + pc + '" d="' + arc(from, rest, 40) + '"/>';
       body += '<circle cx="50" cy="66" r="12.5" class="sub"/>'; label = 'sub';
     } else if (skin === 'c') {
       body += '<circle cx="50" cy="50" r="41" class="ring-track"/>';
       if (done > 0) body += '<path class="ring-done" d="' + arc(s, done, 41) + '"/>';
-      if (rest > 0) body += '<path class="ring-rest" d="' + arc(from, rest, 41) + '"/>';
+      if (rest > 0) body += '<path class="ring-rest' + pc + '" d="' + arc(from, rest, 41) + '"/>';
       var mk = pt(now, 41); body += '<circle cx="' + mk[0] + '" cy="' + mk[1] + '" r="3.2" class="knob"/>';
       hand = 0; label = 'big';
     } else if (skin === 'd') {
@@ -115,8 +136,10 @@
         body += '<path class="seg" d="' + seg + '"/>';
         if (fill > 4) body += '<path class="seg on" d="' + arc(g0 + 3, Math.min(54, fill - 3), 42) + '"/>';
       }
-      if (rest > 0) body += '<path class="rest thin" d="' + arc(from, rest, 48) + '"/>';
+      if (rest > 0) body += '<path class="rest thin' + pc + '" d="' + arc(from, rest, 48) + '"/>';
     }
+    // The start point, on the dial's rim: a dot with a tick, so "it begins here" reads at a glance.
+    if (plan) { var st = pt(s, 44), st2 = pt(s, 36); body += line(st2, st, 'start-tick') + '<circle cx="' + st[0] + '" cy="' + st[1] + '" r="3.3" class="start"/>'; }
     var tip = pt(now, hand === 3 ? 25 : 35), tail = pt(now + 360, 8), handSvg = '';
     if (hand === 1) handSvg = line(['50', '50'], tip, 'hand') + '<circle cx="' + tip[0] + '" cy="' + tip[1] + '" r="2.4" class="knob"/>';
     else if (hand === 2) handSvg = line(tail, tip, 'hand') + '<circle cx="50" cy="50" r="2.6" class="pin"/>';
@@ -785,6 +808,8 @@
       if(el.dataset.timerStyle!=null||el.dataset.timerHand||el.dataset.timerFace||el.dataset.timerSkin){
         var cur=DIAL_RE.test(String(options.get().tm||''))?options.get().tm:'a11';
         var next=el.dataset.timerStyle!=null?(el.dataset.timerStyle?cur:''):el.dataset.timerSkin?el.dataset.timerSkin+cur[1]+cur[2]:el.dataset.timerHand?cur[0]+el.dataset.timerHand+cur[2]:cur[0]+cur[1]+el.dataset.timerFace;
+        // Turning the dial on: it is bigger than the chip, so it takes the nearest free spot.
+        if(next&&!DIAL_RE.test(String(options.get().tm||''))&&M.fitDial){M.fitDial(config);save();}
         if(options.timer)options.timer(next);apply(preview,options.get());sync();
       }
       if(el.dataset.coffeeMode!=null){config.coffeeMode=+el.dataset.coffeeMode;config.coffeeExplicit=1;save(true);}
@@ -882,5 +907,5 @@
     cancelAnimationFrame(previewFrame); previewFrame = 0; refreshPreview = function() {};
     if (waSizes && host) host.querySelectorAll('.wf-winamp').forEach(function (card) { waSizes.unobserve(card); });
   }
-  window.MinkaCardFaces = { apply: apply, mount: mount, release: release, refreshPreview: function(){refreshPreview();} };
+  window.MinkaCardFaces = { dialPreview: dialPreview, dialSkins: DIAL_SKINS, apply: apply, mount: mount, release: release, refreshPreview: function(){refreshPreview();} };
 })();

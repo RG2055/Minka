@@ -52,24 +52,337 @@
     return 'rgb('+rgb.map(function(n){return Math.round(n+(255-n)*mix);}).join(',')+')';
   }
   // Small, cached bitmaps keep bed tinting out of the animation/compositing loop.
-  var _bedPixels=null, _bedTints=new Map();
-  function tintedBed(rgb){
-    if(_bedTints.has(rgb)) return _bedTints.get(rgb);
-    if(!_bedPixels) _bedPixels=new Promise(function(resolve,reject){
-      var img=new Image();
-      img.onload=function(){
-        try {
-          var canvas=document.createElement('canvas');canvas.width=256;canvas.height=364;
-          var ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,256,364);
-          resolve(ctx.getImageData(0,0,256,364));
-        } catch(err){reject(err);}
-      };
-      img.onerror=function(){_bedPixels=null;reject(new Error('Bed image unavailable'));};
-      img.src='assets/rooms/bed-neutral-256.webp';
+  var _bedPixelsBySrc=new Map(), _bedTints=new Map(), _thumbTints=new Map();
+  var _bedImages=new Map();
+  function bedImage(url){
+    if(!_bedImages.has(url)) _bedImages.set(url,new Promise(function(resolve,reject){
+      var im=new Image(); if(!/^(blob|data):/.test(url)) im.crossOrigin='anonymous';
+      // decoded off the main thread before it is drawn (drawImage would decode it there, in one go)
+      im.onload=function(){ if(im.decode) im.decode().then(function(){ resolve(im); },function(){ resolve(im); }); else resolve(im); };
+      im.onerror=function(){ _bedImages.delete(url); reject(new Error('image')); }; im.src=url;
+    }));
+    return _bedImages.get(url);
+  }
+  // Each linen zone's median light on the neutral bed (scripts/build-bed-linens.py).
+  var LINEN_REF={ duvet:202.3, pillow:190.8, fold:210.8, sheet:192.8 };
+  function linenShade(c,s){ return s<=1 ? c*s : c+(255-c)*Math.min(1,(s-1)*1.6); }
+  /* "Like the card": the card's own picture on the duvet, its colour on the pillow,
+     white sheets, all with the bed's shading. overlay = 'card|url|colours|rgb'. */
+  function paintCardLinen(ctx,source,overlay){
+    var part=overlay.split('|'), url=part[1], cols=(part[2]||'').split(';').filter(Boolean), pil=(part[3]||'200,200,205').split(',').map(Number);
+    var w=source.width, h=source.height;
+    function draw(pic){
+      var mc=document.createElement('canvas'); mc.width=w; mc.height=h;
+      var sc=document.createElement('canvas'); sc.width=w; sc.height=h;
+      var mx=mc.getContext('2d',RW), sx=sc.getContext('2d',RW);
+      mx.drawImage(pic.mask,0,0,w,h);
+      // The picture covers the duvet's box (as a card's background covers the card).
+      var bx=w*.06, by=h*.35, bw=w*.88, bh=h*.35;
+      if(pic.skin){
+        var iw=pic.skin.naturalWidth||1, ih=pic.skin.naturalHeight||1, k=Math.max(bw/iw,bh/ih);
+        sx.drawImage(pic.skin,bx+(bw-iw*k)/2,by+(bh-ih*k)/2,iw*k,ih*k);
+        // and on the pillow (its own box above the duvet's)
+        var px0=w*.22, py0=h*.08, pw0=w*.57, ph0=h*.25, k2=Math.max(pw0/iw,ph0/ih);
+        sx.save(); sx.beginPath(); sx.rect(px0,py0,pw0,ph0); sx.clip();
+        sx.drawImage(pic.skin,px0+(pw0-iw*k2)/2,py0+(ph0-ih*k2)/2,iw*k2,ih*k2); sx.restore();
+      } else {
+        var g=sx.createLinearGradient(bx,by,bx+bw,by+bh);
+        (cols.length?cols:['#5f95e6','#8fd6bf']).forEach(function(c,i,all){ g.addColorStop(all.length>1?i/(all.length-1):0,c); });
+        sx.fillStyle=g; sx.fillRect(bx,by,bw,bh);
+      }
+      var m=mx.getImageData(0,0,w,h).data, sk=sx.getImageData(0,0,w,h).data, a=source.data;
+      var out=ctx.getImageData(0,0,w,h), b=out.data;
+      for(var i=0;i<b.length;i+=4){
+        var al=m[i+3]/255; if(!al) continue;
+        var du=m[i]/255, pi=m[i+1]/255, fo=m[i+2]/255, sh=Math.max(0,al-du-pi-fo), lum=a[i]*.2126+a[i+1]*.7152+a[i+2]*.0722;
+        var sD=lum/LINEN_REF.duvet, sP=lum/LINEN_REF.pillow, sF=lum/LINEN_REF.fold, sS=lum/LINEN_REF.sheet;
+        for(var c=0;c<3;c++){
+          var v=(du*linenShade(sk[i+c],sD)+pi*linenShade(pic.skin?sk[i+c]:pil[c],sP)+fo*linenShade(246,sF)+sh*linenShade(242,sS))/al;
+          b[i+c]=b[i+c]*(1-al)+v*al;
+        }
+      }
+      ctx.putImageData(out,0,0);
+    }
+    return Promise.all([bedImage('assets/rooms/beds/linen-mask-256.webp?v='+BED_V), url?bedImage(url).catch(function(){ return null; }):Promise.resolve(null)])
+      .then(function(r){ try{ draw({mask:r[0],skin:r[1]}); } catch(_e){ draw({mask:r[0],skin:null}); } });
+  }
+  /* For the cats' duvet game (js/nakts-pets.js), made once per look and sleeper,
+     each a URL of its own (the bed pictures' cache releases its URLs, and a bed
+     left without its duvet must keep its picture):
+     bare  the bed with no duvet, the sleeper on the sheet (nsBedParts' body);
+     duvet the duvet alone, as it lies on the bed;
+     slide the duvet sliding off the bed's side (the right; mirrored for the left);
+     heap  the duvet crumpled on the floor;
+     drag  four frames of it carried in a cat's teeth (a strip, one under another). */
+  var BED_BARE='assets/rooms/bed-bare-256.webp';
+  var _bedParts=new Map();
+  function ownCopy(url){ return fetch(url).then(function(r){ return r.blob(); }).then(function(b){ return URL.createObjectURL(b); }); }
+  function sleeperOf(bedEl){
+    var sl=bedEl.querySelector('.ns-sleeper'), card=bedEl.querySelector('.ns-room-bed-card')||bedEl, cs=getComputedStyle(card);
+    var m=/url\(\s*["']?([^"')]+)["']?\s*\)/.exec(cs.getPropertyValue('--mk-skin-img')||'');
+    return { fig:sl&&sl.classList.contains('is-f')?'f':'m', pants:sl?sl.style.getPropertyValue('--pants').trim():'', accent:(cs.getPropertyValue('--nsc-accent')||'').trim(), url:m?m[1]:'' };
+  }
+  window.nsBedParts=function(bedEl){
+    var img=bedEl && bedEl.querySelector('.ns-room-bed-picture img'), look=img && img.__look;
+    if(!look) return Promise.reject(new Error('no bed look'));
+    var who=look.who||sleeperOf(bedEl), body='bare|'+who.fig+'|'+who.pants+'|'+who.accent+'|'+who.url;
+    var key=look.rgb+'|'+look.overlay+'|'+body;
+    if(_bedParts.has(key)) return _bedParts.get(key);
+    var cloth=duvetLook(look.overlay,look.rgb), out={};
+    // one piece at a time, the page drawing its frames in between (no long freeze on an old PC)
+    function rest(){ return new Promise(function(res){ setTimeout(res,16); }); }
+    var job=tintedBed(look.rgb,BED_BARE,0,look.overlay,body).then(ownCopy).then(function(u){ out.bare=u; return rest(); })
+      .then(function(){ return tintedBed(look.rgb,BED_BARE,0,look.overlay,'cloth|'+who.fig).then(ownCopy); }).then(function(u){ out.duvet=u; return rest(); })
+      .then(function(){ return dressState('slide',cloth); }).then(function(u){ out.slide=u; return rest(); })
+      .then(function(){ return dressState('floor',cloth); }).then(function(u){ out.heap=u; return rest(); })
+      .then(function(){ return dressState('drag',cloth); }).then(function(u){ out.drag=u; return out; });
+    _bedParts.set(key,job);
+    if(_bedParts.size>10){
+      var k0=_bedParts.keys().next().value, j0=_bedParts.get(k0); _bedParts.delete(k0);
+      j0.then(function(p){ setTimeout(function(){ Object.keys(p).forEach(function(n){ URL.revokeObjectURL(p[n]); }); },600000); }).catch(function(){});
+    }
+    job.catch(function(){ if(_bedParts.get(key)===job) _bedParts.delete(key); });
+    return job;
+  };
+  /* thumbW: a small copy for the studio's pictures, kept in its own cache so they
+     never push the beds' own pictures out (whose URLs would then be released).
+     overlay: a set of linen laid over the tinted bed (its picture, or 'card|...'),
+     so the frame keeps the sleeper's colour and the linen has its own. */
+  /* A person under the duvet: a real cloth simulated over a sleeper
+     (scripts/blender/nakts_duvet.py), kept as two pictures: its light and shade,
+     and where on the cloth each pixel is (UV). Any linen, card picture or colour
+     is laid on it here, so every fold stays. mode: 'full' the dressed bed,
+     'bare' the bed with no duvet (a flat sheet), 'cloth' the duvet alone. */
+  var _duvetMaps=null;
+  function duvetMaps(){
+    if(!_duvetMaps){
+      _duvetMaps=Promise.all([
+        fetch('assets/rooms/beds/duvet.json?v='+BED_V).then(function(r){ return r.json(); }),
+        fetch('assets/rooms/beds/linen-tex.json?v='+BED_V).then(function(r){ return r.json(); }),
+        bedImage('assets/rooms/beds/linen-mask-256.webp?v='+BED_V)
+      ]).then(function(r){ return { info:r[0], periods:r[1], mask:r[2] }; });
+      _duvetMaps.catch(function(){ _duvetMaps=null; });
+    }
+    return _duvetMaps;
+  }
+  // The duvet over a man's or a woman's figure: its UV, the light of cloth and
+  // figure, and what shows of the figure (the feet in their socks).
+  var _bedCloth={};
+  function bedCloth(fig){
+    if(!_bedCloth[fig]){
+      _bedCloth[fig]=Promise.all(['duvet-bed-'+fig+'-uv','duvet-bed-'+fig+'-shade','body-bed-'+fig+'-zone'].map(function(n){ return bedImage('assets/rooms/beds/'+n+'-256.webp?v='+BED_V); }));
+      _bedCloth[fig].catch(function(){ delete _bedCloth[fig]; });
+    }
+    return _bedCloth[fig];
+  }
+  // 'full|m|…', 'bare|f|…', 'cloth|m': what to draw, over whom
+  function modeOf(mode){ var p=String(mode===true?'full':mode||'').split('|'); return { kind:p[0], fig:p[1]==='f'?'f':'m' }; }
+  /* Canvases whose pixels are read back are kept in memory (willReadFrequently):
+     reading a GPU canvas stalls the page, long on old PCs. The maps are the same
+     every time: their pixels are read once per size. */
+  var RW={willReadFrequently:true};
+  var _pixels=new Map();
+  function pixelsOf(im,w,h){
+    var k=(im.currentSrc||im.src||'')+'|'+w+'x'+h, hit=_pixels.get(k);
+    if(hit) return hit;
+    var c=document.createElement('canvas'); c.width=w; c.height=h; var x=c.getContext('2d',RW); x.drawImage(im,0,0,w,h);
+    var d=x.getImageData(0,0,w,h);
+    if(k.charAt(0)!=='|' && k.indexOf('blob:')!==0){ _pixels.set(k,d); if(_pixels.size>24) _pixels.delete(_pixels.keys().next().value); }
+    return d;
+  }
+  // What the duvet is made of: a linen set's cloth, the card's picture, or the sleeper's colour.
+  function duvetLook(overlay,rgb){
+    if(overlay && overlay.indexOf('card|')===0){
+      var part=overlay.split('|');
+      return { url:part[1]||'', cols:(part[2]||'').split(';').filter(Boolean), cover:true };
+    }
+    var m=/linen-([a-z]+)-256/.exec(overlay||'');
+    if(m) return { url:'assets/rooms/beds/linen-tex-'+m[1]+'.webp?v='+BED_V, id:m[1] };
+    var ch=String(rgb||'200,200,205').split(',').map(function(n){ var c=64+Number(n)*.68; return Math.round(c+(255-c)*(0.8-0.65)/0.35); });
+    return { colour:ch };
+  }
+  function lookPixels(look){
+    if(look.url) return bedImage(look.url).then(function(im){
+      var tw=256, th=256;
+      if(look.cover){ var iw=im.naturalWidth||1, ih=im.naturalHeight||1, k=256/Math.max(iw,ih); tw=Math.max(8,Math.round(iw*k)); th=Math.max(8,Math.round(ih*k)); }
+      return { data:pixelsOf(im,tw,th).data, w:tw, h:th };
+    }).catch(function(){ return null; });
+    if(look.cols && look.cols.length){
+      var c=document.createElement('canvas'); c.width=c.height=128; var x=c.getContext('2d',RW), g=x.createLinearGradient(0,0,128,128);
+      look.cols.forEach(function(col,i,all){ g.addColorStop(all.length>1?i/(all.length-1):0,col); });
+      x.fillStyle=g; x.fillRect(0,0,128,128);
+      return Promise.resolve({ data:x.getImageData(0,0,128,128).data, w:128, h:128, cover:true });
+    }
+    return Promise.resolve(null);
+  }
+  /* Where on the linen or picture a point of the cloth is. The UV runs from the
+     bed's right (u 0) to its left and from the duvet's top edge (v 0) to its foot,
+     so u is turned round: prints and pictures read the right way. A card picture
+     shows on the duvet's top as it shows on the card (its crop at the card's
+     shape, centred), and carries on over the sides. */
+  var CARD_ASPECT=1.69, DUVET_TOP=[0.12,0.88,0,1];
+  function clothSampler(look,tex,info,periods,state){
+    var col=look.colour||[200,200,205];
+    if(!tex) return function(u,v,o){ o[0]=col[0]; o[1]=col[1]; o[2]=col[2]; };
+    var size=(info.sizes&&info.sizes[state])||info.cloth;      // prints keep their size on every state
+    var period=look.id?(periods[look.id]||200):0, cw=size[0]*info.ppm, cd=size[1]*info.ppm;
+    var repU=period?cw/period:1, repV=period?cd/period:1, cover=look.cover||tex.cover;
+    var ia=tex.w/tex.h, fw=ia>CARD_ASPECT?CARD_ASPECT/ia:1, fh=ia>CARD_ASPECT?1:ia/CARD_ASPECT, fx=(1-fw)/2, fy=(1-fh)/2;
+    var U0=DUVET_TOP[0], U1=DUVET_TOP[1], V0=DUVET_TOP[2], V1=DUVET_TOP[3], W=tex.w, H=tex.h, d=tex.data;
+    return function(u,v,o){
+      var tu, tv;
+      if(cover){ tu=fx+(U1-u)/(U1-U0)*fw; tv=fy+(v-V0)/(V1-V0)*fh; tu=tu<0?0:tu>1?1:tu; tv=tv<0?0:tv>1?1:tv; }
+      else { tu=((1-u)*repU)%1; tv=(v*repV)%1; }
+      var j=(Math.min(H-1,Math.floor(tv*H))*W+Math.min(W-1,Math.floor(tu*W)))*4;
+      o[0]=d[j]; o[1]=d[j+1]; o[2]=d[j+2];
+    };
+  }
+  var _clothMaps={};
+  function clothMaps(state){
+    if(!_clothMaps[state]){
+      _clothMaps[state]=Promise.all([bedImage('assets/rooms/beds/duvet-'+state+'-uv.webp?v='+BED_V), bedImage('assets/rooms/beds/duvet-'+state+'-shade.webp?v='+BED_V)]);
+      _clothMaps[state].catch(function(){ delete _clothMaps[state]; });
+    }
+    return _clothMaps[state];
+  }
+  // A duvet state on its own: the cloth dressed, and the shadow it casts.
+  var STATE_SCALE=(window.devicePixelRatio||1)>=1.5?1:0.5;   // the maps are drawn for 2x screens
+  function dressState(state,look){
+    return Promise.all([clothMaps(state), duvetMaps(), lookPixels(look)]).then(function(r){
+      var uvIm=r[0][0], w=Math.round(uvIm.naturalWidth*STATE_SCALE), h=Math.round(uvIm.naturalHeight*STATE_SCALE), info=r[1].info, tex=r[2];
+      var uv=pixelsOf(uvIm,w,h).data, sh=pixelsOf(r[0][1],w,h).data, ref=(info.refs&&info.refs[state])||info.ref||0.74;
+      var c=document.createElement('canvas'); c.width=w; c.height=h;
+      var x=c.getContext('2d'), out=x.createImageData(w,h), a=out.data, sample=clothSampler(look,tex,info,r[1].periods,state), px=[0,0,0];
+      for(var i=0;i<a.length;i+=4){
+        var cA=uv[i+3]/255, sA=sh[i+3]/255*(1-cA);
+        if(cA<=0){ if(sA>0) a[i+3]=Math.round(sA*.5*255); continue; }
+        sample(uv[i]/255,uv[i+1]/255,px);
+        var L=Math.min(1.5,sh[i]/255/ref);
+        a[i]=Math.min(255,px[0]*L); a[i+1]=Math.min(255,px[1]*L); a[i+2]=Math.min(255,px[2]*L); a[i+3]=Math.round(Math.min(1,cA+sA*.5)*255);
+      }
+      x.putImageData(out,0,0);
+      return new Promise(function(res){ c.toBlob(function(bl){ res(URL.createObjectURL(bl)); },'image/png'); });
     });
+  }
+  /* The bed dressed for a sleeper (the bare bed's picture, its duvet and fold now a
+     flat sheet): 'full' the duvet over their figure, the feet out of its end;
+     'bare' no duvet, the figure (paintBody); 'cloth' the duvet alone. */
+  function dressDuvet(ctx,source,overlay,rgb,mode){
+    var m=modeOf(mode), bare=m.kind==='bare', only=m.kind==='cloth';
+    return Promise.all([duvetMaps(), bare?null:bedCloth(m.fig)]).then(function(r){
+      var maps=r[0], cm=r[1], look=duvetLook(overlay,rgb), info=maps.info;
+      return lookPixels(look).then(function(tex){
+        var w=ctx.canvas.width, h=ctx.canvas.height, mask=pixelsOf(maps.mask,w,h).data;
+        var uv=cm?pixelsOf(cm[0],w,h).data:null, sh=cm?pixelsOf(cm[1],w,h).data:null, zn=cm?pixelsOf(cm[2],w,h).data:null;
+        var img=ctx.getImageData(0,0,w,h), a=img.data, s=source.data;
+        var ref=(info.bed&&info.bed[m.fig])||info.ref||0.74, sample=clothSampler(look,tex,info,maps.periods,'bed'), px=[0,0,0];
+        var foot=Math.round(h*497/728)*w*4, ch=String(rgb||'200,200,205').split(',').map(function(n){ return 64+Number(n)*.68; });
+        for(var i=0;i<a.length;i+=4){
+          if(only){ a[i]=a[i+1]=a[i+2]=0; a[i+3]=0; }
+          else {
+            // the linen's duvet and fold give way to a flat sheet on the mattress, and the
+            // footboard's top shows where they covered it
+            var k=Math.min(1,(mask[i]+mask[i+2])/255);
+            if(k>0){ var sl=(s[i]*.2126+s[i+1]*.7152+s[i+2]*.0722)/LINEN_REF.duvet;
+              if(i>=foot){ var lt=sl*LINEN_REF.duvet/255;
+                for(var q=0;q<3;q++){ var tc=lt<.65?ch[q]*lt/.65:ch[q]+(255-ch[q])*(lt-.65)/.35; a[i+q]=a[i+q]*(1-k)+tc*k; } }
+              else { a[i]=a[i]*(1-k)+linenShade(236,sl)*k; a[i+1]=a[i+1]*(1-k)+linenShade(236,sl)*k; a[i+2]=a[i+2]*(1-k)+linenShade(244,sl)*k; }
+              a[i+3]=s[i+3]; }
+            if(bare) continue;
+          }
+          var cA=uv[i+3]/255, fA=zn[i+3]/255, sA=sh[i+3]/255*(1-Math.max(cA,fA));
+          if(sA>0 && !only){ var d=1-sA*0.55; a[i]*=d; a[i+1]*=d; a[i+2]*=d; }
+          if(cA<=0) continue;
+          sample(uv[i]/255,uv[i+1]/255,px);
+          var L=Math.min(1.5,sh[i]/255/ref);
+          if(only){ a[i]=Math.min(255,px[0]*L); a[i+1]=Math.min(255,px[1]*L); a[i+2]=Math.min(255,px[2]*L); a[i+3]=Math.round(cA*255); }
+          else { a[i]=a[i]*(1-cA)+Math.min(255,px[0]*L)*cA; a[i+1]=a[i+1]*(1-cA)+Math.min(255,px[1]*L)*cA; a[i+2]=a[i+2]*(1-cA)+Math.min(255,px[2]*L)*cA;
+            if(a[i+3]<cA*255) a[i+3]=Math.round(cA*255); }     // the bed picture's seams do not show through
+        }
+        ctx.putImageData(img,0,0);
+        if(m.kind==='full') return paintBody(ctx,mode,{ shade:cm[1], zone:cm[2], ref:ref, shadow:false });
+      });
+    });
+  }
+  /* The sleeper without the duvet (scripts/blender/nakts_duvet.py 'body'): a man's
+     or a woman's figure, its light and which garment each pixel is. The T-shirt and
+     socks wear the card's picture (or its colour), the trousers their own colour,
+     arms and hands the emoji yellow; the figure's shadow falls on the sheet and pillow.
+     mode: 'bare|m or f|trousers #hex|card colour|picture url'. */
+  var SLEEPER_SKIN=[255,200,61];
+  var _bodyMaps={};
+  function bodyMaps(fig){
+    if(!_bodyMaps[fig]){
+      _bodyMaps[fig]=Promise.all([bedImage('assets/rooms/beds/body-'+fig+'-shade-256.webp?v='+BED_V), bedImage('assets/rooms/beds/body-'+fig+'-zone-256.webp?v='+BED_V)]);
+      _bodyMaps[fig].catch(function(){ delete _bodyMaps[fig]; });
+    }
+    return _bodyMaps[fig];
+  }
+  function colourRgb(c){
+    c=String(c||'').trim();
+    var m=/^#?([0-9a-f]{6})$/i.exec(c); if(m){ var n=parseInt(m[1],16); return [n>>16&255,n>>8&255,n&255]; }
+    m=/^#([0-9a-f]{3})$/i.exec(c); if(m) return m[1].split('').map(function(h){ return parseInt(h+h,16); });
+    m=/rgba?\(([^)]+)\)/.exec(c); if(m){ var p=m[1].split(/[\s,/]+/).map(parseFloat); return [p[0]||0,p[1]||0,p[2]||0]; }
+    return null;
+  }
+  function pictureIn(pic,w,h,box){
+    var c=document.createElement('canvas'); c.width=w; c.height=h;
+    var x=c.getContext('2d',RW), iw=pic.naturalWidth||1, ih=pic.naturalHeight||1, bw=box[2]-box[0]+1, bh=box[3]-box[1]+1, k=Math.max(bw/iw,bh/ih);
+    x.drawImage(pic,box[0]+(bw-iw*k)/2,box[1]+(bh-ih*k)/2,iw*k,ih*k);
+    return x.getImageData(0,0,w,h).data;
+  }
+  function paintBody(ctx,mode,given){
+    var p=String(mode).split('|'), fig=p[1]==='f'?'f':'m', pants=colourRgb(p[2])||[59,64,72], accent=colourRgb(p[3])||[120,170,190], url=p.slice(4).join('|');
+    var own=given?Promise.resolve([given.shade,given.zone]):bodyMaps(fig), shadow=!given||given.shadow!==false;
+    return Promise.all([own, url?bedImage(url).catch(function(){ return null; }):null, duvetMaps()]).then(function(r){
+      var w=ctx.canvas.width, h=ctx.canvas.height, sh=pixelsOf(r[0][0],w,h).data, zn=pixelsOf(r[0][1],w,h).data, ref=given&&given.ref||r[2].info.body||0.73;
+      var shirtBox=[w,h,0,0], sockBox=[w,h,0,0], i, x, y;
+      for(i=0;i<zn.length;i+=4){
+        if(zn[i+3]<128) continue;
+        x=(i>>2)%w; y=(i>>2)/w|0;
+        var b=zn[i]>128?shirtBox:(zn[i]+zn[i+1]+zn[i+2]<60?sockBox:null);
+        if(b){ if(x<b[0]) b[0]=x; if(y<b[1]) b[1]=y; if(x>b[2]) b[2]=x; if(y>b[3]) b[3]=y; }
+      }
+      var shirt=r[1]&&shirtBox[2]>shirtBox[0]?pictureIn(r[1],w,h,shirtBox):null, socks=r[1]&&sockBox[2]>sockBox[0]?pictureIn(r[1],w,h,sockBox):null;
+      var img=ctx.getImageData(0,0,w,h), a=img.data;
+      for(i=0;i<a.length;i+=4){
+        var cov=zn[i+3]/255, sA=shadow?sh[i+3]/255*(1-cov):0;
+        if(sA>0){ var d=1-sA*.5; a[i]*=d; a[i+1]*=d; a[i+2]*=d; }
+        if(cov<=0) continue;
+        var zr=zn[i]/255, zg=zn[i+1]/255, zb=zn[i+2]/255, zs=Math.max(0,1-zr-zg-zb), L=Math.min(1.6,sh[i]/255/ref);
+        for(var c=0;c<3;c++){
+          var v=zr*(shirt?shirt[i+c]:accent[c])+zg*pants[c]+zb*SLEEPER_SKIN[c]+zs*(socks?socks[i+c]:accent[c]);
+          a[i+c]=a[i+c]*(1-cov)+Math.min(255,v*L)*cov;
+        }
+        if(a[i+3]<cov*255) a[i+3]=Math.round(cov*255);
+      }
+      ctx.putImageData(img,0,0);
+    });
+  }
+  function tintedBed(rgb,src,thumbW,overlay,sleeper){
+    if(sleeper===true) sleeper='full';
+    src=src||(sleeper?BED_BARE:'assets/rooms/bed-neutral-256.webp');
+    var tkey=rgb+'|'+src+(thumbW?'|'+thumbW:'')+(overlay?'|'+overlay:'')+(sleeper?'|'+sleeper:''), cache=thumbW?_thumbTints:_bedTints;
+    if(cache.has(tkey)) return cache.get(tkey);
+    var pkey=src+(thumbW?'|'+thumbW:''), _bedPixels=_bedPixelsBySrc.get(pkey);
+    if(!_bedPixels){ _bedPixels=new Promise(function(resolve,reject){
+      var img=new Image();
+      img.onload=function(){ (img.decode?img.decode().catch(function(){}):Promise.resolve()).then(function(){   // decoded off the main thread
+        try {
+          var cw=img.naturalWidth||256, chh=img.naturalHeight||364;
+          if(thumbW && cw>thumbW){ chh=Math.round(chh*thumbW/cw); cw=thumbW; }
+          var canvas=document.createElement('canvas');canvas.width=cw;canvas.height=chh;
+          var ctx=canvas.getContext('2d',RW);ctx.drawImage(img,0,0,cw,chh);
+          resolve(ctx.getImageData(0,0,cw,chh));
+        } catch(err){reject(err);}
+      }); };
+      img.onerror=function(){_bedPixelsBySrc.delete(pkey);reject(new Error('Bed image unavailable'));};
+      img.src=src;
+    }); _bedPixelsBySrc.set(pkey,_bedPixels);
+      if(_bedPixelsBySrc.size>48) _bedPixelsBySrc.delete(_bedPixelsBySrc.keys().next().value); }
     var task=_bedPixels.then(function(source){
       var canvas=document.createElement('canvas');canvas.width=source.width;canvas.height=source.height;
-      var ctx=canvas.getContext('2d'), out=ctx.createImageData(source.width,source.height);
+      var ctx=canvas.getContext('2d',RW), out=ctx.createImageData(source.width,source.height);
       var channels=rgb.split(',').map(function(n){return 64+Number(n)*.68;}), a=source.data, b=out.data;
       for(var i=0;i<a.length;i+=4){
         var light=(a[i]*.2126+a[i+1]*.7152+a[i+2]*.0722)/255;
@@ -77,24 +390,88 @@
         b[i+3]=a[i+3];
       }
       ctx.putImageData(out,0,0);
+      var dressed=!overlay ? null
+        : overlay.indexOf('card|')===0 ? paintCardLinen(ctx,source,overlay)
+        : bedImage(overlay).then(function(ov){ ctx.drawImage(ov,0,0,canvas.width,canvas.height); });
+      return (dressed||Promise.resolve()).then(function(){
+        if(sleeper) return dressDuvet(ctx,source,overlay,rgb,sleeper);
+      }).then(function(){
+        if(String(sleeper).indexOf('bare|')===0) return paintBody(ctx,sleeper);
+      }).then(encode);
       // toBlob encodes off the main thread; toDataURL did the PNG encode
       // synchronously for every bed colour, a visible hitch on old PCs.
-      return new Promise(function(resolve){
+      function encode(){ return new Promise(function(resolve){
         if(!canvas.toBlob) { resolve(canvas.toDataURL('image/png')); return; }
         canvas.toBlob(function(blob){ resolve(blob ? URL.createObjectURL(blob) : canvas.toDataURL('image/png')); },'image/png');
-      });
+      }); }
     });
-    if(_bedTints.size>=24){
+    if(thumbW && _thumbTints.size>=120){
+      // The oldest thumbnail is long off the page: release it at once.
+      var tk=_thumbTints.keys().next().value, tt=_thumbTints.get(tk);
+      _thumbTints.delete(tk);
+      tt.then(function(url){ if(String(url).indexOf('blob:')===0) URL.revokeObjectURL(url); }).catch(function(){});
+    }
+    if(!thumbW && _bedTints.size>=24){
       var oldKey=_bedTints.keys().next().value, oldTask=_bedTints.get(oldKey);
       _bedTints.delete(oldKey);
       // Beds still showing the old URL keep their decoded bitmap; the blob URL
       // is only released after they have moved on to a newer one.
       if(oldTask) oldTask.then(function(url){ if(String(url).indexOf('blob:')===0) setTimeout(function(){ URL.revokeObjectURL(url); },60000); }).catch(function(){});
     }
-    _bedTints.set(rgb,task);
-    task.catch(function(){if(_bedTints.get(rgb)===task)_bedTints.delete(rgb);});
+    cache.set(tkey,task);
+    task.catch(function(){if(cache.get(tkey)===task)cache.delete(tkey);});
     return task;
   }
+  /* Bed linen (scripts/build-bed-linens.py): pillow, sheet, fold and duvet as a
+     picture of their own, laid over the bed tinted in the sleeper's colour, so
+     the frame stays theirs and the linen has its own colours.
+     [id, label, kind]: c the card's own picture, x dark, neon, shiny, space and
+     radiology, p prints, f fabrics (ambientCG CC0). */
+  var BED_STYLES=[['','Gluda','f'],['card','Kā kartiņa','c'],
+    ['hearts','Sirsniņas','p'],['daisy','Margrietiņas','p'],['sky','Sapņu debesis','p'],['cherry','Ķirši','p'],['floral','Ziedi','p'],['starlight','Zvaigznes','p'],['balloons','Gaisa baloni','p'],['planes','Lidmašīnas','p'],['bluecheck','Zilās rūtiņas','p'],['mushrooms','Sēnes','p'],['dinos','Dinozauri','p'],['rainbows','Varavīksnes','p'],['cats','Kaķīši','p'],['lemons','Citroni','p'],['ward','Nodaļas','p'],['polka','Punktiņi','p'],['chevron','Zigzagi','p'],['patchwork','Lāpītā','p'],['colorstripe','Krāsu svītras','p'],['fish','Zivtiņas','p'],['bees','Bitītes','p'],['midnight','Melns satīns','x'],['winesatin','Vīna satīns','x'],['emerald','Smaragda samts','x'],['gold','Zelta folija','x'],['silver','Sudraba folija','x'],['holo','Hologramma','x'],['neon','Neons','x'],['neonhearts','Neona sirdis','x'],['glow','Spīd tumsā','x'],['space','Kosmoss','x'],['planets','Planētas','x'],['xray','Rentgens','x'],['radiology','Radioloģija','x'],['knit','Adījums','f'],['quilted','Stepēta','f'],['waffle','Vafeļu','f'],['tartan','Tartāns','f'],['gingham','Rūtiņas','f'],['stripes','Svītras','f'],['linen','Lins','f'],['jersey','Trikotāža','f'],['denim','Džinss','f'],['plush','Plīšs','f'],['wool','Vilna','f'],['flannel','Flanelis','f'],['buffalo','Lielās rūtis','f'],['mustard','Sinepju','f']];
+  function bedStyleKind(id){ var b=BED_STYLES.filter(function(x){ return x[0]===id; })[0]; return b?b[2]:'f'; }
+  function bedStyleOf(skin){ var id=skin&&skin.bed; return id&&BED_STYLES.some(function(b){return b[0]===id;})?id:''; }
+  function bedStyleSrc(id,size){ return 'assets/rooms/beds/linen-'+id+'-'+size+'.webp?v='+BED_V; }
+  // What to lay over the tinted bed for a set ('card|...' is painted from the sleeper's card).
+  function linenOverlay(id,skin,rgb){
+    if(!id) return '';
+    if(id!=='card') return bedStyleSrc(id,256);
+    var pic=(window.mkSkinPicture && window.mkSkinPicture(skin)) || {};
+    var cols=String(pic.css||'').match(/#[0-9a-f]{3,8}\b|rgba?\([^)]*\)/gi)||[];
+    return 'card|'+(pic.url||'')+'|'+cols.slice(0,4).join(';')+'|'+(rgb||'200,200,205');
+  }
+  var BED_V='20260927b15';
+  /* On the bed: an extra pillow (Poly Haven CC0 throw pillows) and a toy (a teddy and
+     a bunny modelled in Blender, a rubber duck and a ball from Poly Haven), rendered
+     from the bed's view at its scale (scripts/blender/bed_accessories.py).
+     [file, label, width on the 512 px bed]; where they lie is set in CSS. */
+  var BED_PILLOWS=[['','Nav',0,0,''],["kc-cat", "Kaķis", 162, 0, "k"],["kc-bunny", "Zaķis", 136, 0, "k"],["kc-bear", "Lācis", 166, 0, "k"],["kc-moon", "Mēness", 176, 0, "k"],["kc-sun", "Saule", 192, 0, "k"],["kc-cloud", "Mākonis", 219, 0, "k"],["kc-flower", "Zieds", 176, 0, "k"],["kc-avocado", "Avokado", 128, 0, "k"],["kc-cookie", "Cepums", 182, 0, "k"],["kc-donut", "Virtulis", 184, 0, "k"],["kc-strawberry", "Zemene", 157, 0, "k"],["kc-capsule", "Kapsula", 197, 0, "k"],["kc-bone", "Kauls", 192, 0, "k"],["kc-bolt", "Zibens", 116, 0, "k"],["kc-fish", "Zivs", 187, 0, "k"],["kc-rainbow", "Varavīksne", 222, 0, "k"],["pc-heart-hearts", "Sirsniņas, sirds", 177, 0, "p"],["pc-flower-daisy", "Margrietiņas, zieds", 176, 0, "p"],["pc-cloud-sky", "Debesis, mākonis", 219, 0, "p"],["pc-round-cherry", "Ķirši, apaļš", 166, 0, "p"],["pc-square-floral", "Ziedi, kvadrāts", 106, 0, "p"],["pc-moon-starlight", "Zvaigznes, mēness", 176, 0, "p"],["pc-hexagon-balloons", "Baloni, sešstūris", 165, 0, "p"],["pc-lumbar-planes", "Lidmašīnas, garenais", 131, 0, "p"],["pc-bolster-bluecheck", "Rūtiņas, veltnis", 196, 0, "p"],["pc-scallop-mushrooms", "Sēnes, robains", 182, 0, "p"],["pc-triangle-dinos", "Dinozauri, trīsstūris", 148, 0, "p"],["pc-oval-rainbows", "Varavīksnes, ovāls", 222, 0, "p"],["pc-cathead-cats", "Kaķīši, kaķis", 162, 0, "p"],["pc-diamond-lemons", "Citroni, rombs", 153, 0, "p"],["pc-squircle-ward", "Nodaļas, mīksts kvadrāts", 179, 0, "p"],["pc-star-polka", "Punktiņi, zvaigzne", 184, 0, "p"],["pc-bolster-chevron", "Zigzagi, veltnis", 196, 0, "p"],["pc-square-patchwork", "Lāpītā, kvadrāts", 106, 0, "p"],["pc-lumbar-colorstripe", "Krāsu svītras, garenais", 131, 0, "p"],["pc-fish-fish", "Zivtiņas, zivs", 187, 0, "p"],["pc-hexagon-bees", "Bitītes, sešstūris", 165, 0, "p"],["pc-round-space", "Kosmoss, apaļš", 166, 0, "p"],["pc-bone-xray", "Rentgens, kauls", 192, 0, "p"],["pc-squircle-radiology", "Radioloģija, mīksts kvadrāts", 179, 0, "p"],["pc-heart-neon", "Neons, sirds", 177, 0, "p"],["pc-star-glow", "Spīd tumsā, zvaigzne", 184, 0, "p"],["fc-square-knit", "Kvadrāts adīts", 106, 1, "f"],["fc-round-waffle", "Apaļš vafeļu", 166, 1, "f"],["fc-bolster-tartan", "Veltnis tartāns", 196, 1, "f"],["fc-heart-plush", "Sirds plīša", 177, 1, "f"],["fc-star-knit", "Zvaigzne adīts", 184, 1, "f"],["fc-lumbar-waffle", "Garenais vafeļu", 131, 1, "f"],["fc-squircle-tartan", "Mīksts kvadrāts tartāns", 179, 1, "f"],["fc-oval-plush", "Ovāls plīša", 222, 1, "f"],["pillow-1", "Zigzags", 180, 0, "o"],["pillow-2", "Zigzags šķībi", 182, 0, "o"]];
+  var BED_TOYS=[['','Nav',0],["toy-teddy", "Lācītis", 94],["toy-teddy-cream", "Krēmīgais lācītis", 94],["toy-teddy-grey", "Pelēkais lācītis", 94],["toy-panda", "Panda", 94],["toy-koala", "Koala", 91],["toy-bunny", "Zaķītis", 77],["toy-cat", "Kaķītis", 85],["toy-cat-black", "Melnais kaķītis", 85],["toy-dog", "Sunītis", 79],["toy-fox", "Lapsiņa", 95],["toy-raccoon", "Jenots", 107],["toy-lion", "Lauva", 89],["toy-monkey", "Pērtiķis", 95],["toy-pig", "Sivēns", 86],["toy-cow", "Gotiņa", 90],["toy-sheep", "Aitiņa", 96],["toy-unicorn", "Vienradzis", 89],["toy-elephant", "Zilonītis", 83],["toy-dino", "Dinozaurs", 81],["toy-penguin", "Pingvīns", 94],["toy-owl", "Pūce", 81],["toy-chick", "Cālītis", 88],["toy-duck", "Pīlīte", 66],["toy-mouse", "Pelīte", 68],["toy-hamster", "Kāmis", 81],["toy-hedgehog", "Ezītis", 81],["toy-frog", "Vardīte", 97],["toy-turtle", "Bruņurupucis", 96],["toy-ladybug", "Mārīte", 80],["toy-bee", "Bitīte", 86],["toy-whale", "Valis", 117],["toy-dolphin", "Delfīns", 70],["toy-seal", "Ronis", 96],["toy-octopus", "Astoņkājis", 182],["toy-star", "Zvaigzne", 176],["toy-heart", "Sirsniņa", 169],["toy-cloud", "Mākonītis", 219]];
+  // Fabric cushions come in neutral grey; each gets its own colour (neighbours differ).
+  var CUSHION_RGB=['224,165,38','127,184,230','200,50,60','241,157,176','98,184,122','242,138,60','47,99,179','31,157,143','246,212,78','86,101,122','201,111,74','143,174,139','224,72,72','74,163,223'];
+  function cushionRgb(file){ var i=BED_PILLOWS.filter(function(p){ return p[3]; }).map(function(p){ return p[0]; }).indexOf(file); return CUSHION_RGB[(i<0?0:i)%CUSHION_RGB.length]; }
+  function bedAccSrc(id){ return 'assets/rooms/beds/acc-'+id+'.webp?v='+BED_V; }
+  function accOf(list,v){ var n=+v||0; return n>0&&n<list.length?list[n]:null; }
+  function applyBedAcc(el,skin){
+    var card=el.querySelector('.ns-room-bed-card'); if(!card) return;
+    var rgb=null;
+    [['pillow',accOf(BED_PILLOWS,skin&&skin.bq)],['toy',accOf(BED_TOYS,skin&&skin.bp)]].forEach(function(pair){
+      var node=card.querySelector('.ns-bed-acc.is-'+pair[0]), it=pair[1];
+      if(!it){ if(node) node.remove(); return; }
+      if(!node){ node=document.createElement('img'); node.className='ns-bed-acc is-'+pair[0]; node.alt=''; node.draggable=false; node.decoding='async'; card.appendChild(node); }
+      var src=bedAccSrc(it[0]);
+      if(it[3]){
+        rgb=cushionRgb(it[0]);
+        var tk=src+'|'+rgb;
+        if(node.__tk!==tk){ node.__tk=tk; node.style.setProperty('--acc-w',(it[2]/512*100).toFixed(1)+'%'); node.dataset.acc=it[0];
+          tintedBed(rgb,src).then(function(u){ if(node.__tk!==tk) return; node.src=u; node.classList.remove('is-new'); void node.offsetWidth; node.classList.add('is-new'); }).catch(function(){ node.src=src; }); }
+        return;
+      }
+      node.__tk='';
+      if(node.getAttribute('src')!==src){ node.src=src; node.style.setProperty('--acc-w',(it[2]/512*100).toFixed(1)+'%'); node.dataset.acc=it[0]; node.classList.remove('is-new'); void node.offsetWidth; node.classList.add('is-new'); }
+    });
+  }
+  window.__nsBedStyles={ styles:BED_STYLES, pillows:BED_PILLOWS, toys:BED_TOYS, src:bedStyleSrc };
   window.nsApplyWorkerColour=function(el,skin){
     if(!el.classList.contains('nsc-full-card') && !el.classList.contains('ns-room-bed')) return;
     var colour=getCol(el.getAttribute('data-worker'),skin);
@@ -102,23 +479,53 @@
     var fog=colour.rgb ? colour.rgb.split(',').map(function(n){return Math.round(72+Number(n)*.62);}).join(',') : '112,164,190';
     el.style.setProperty('--nsc-fog',fog);
     if(!el.classList.contains('ns-room-bed')) return;
-    refreshBedDream(el);
+    dreamRev++;                                  // their look may change their dream
     el.dataset.accent=colour.accent;
     var channels=colour.rgb ? colour.rgb.split(',').map(Number) : null;
     var dark=channels && channels[0]*.2126+channels[1]*.7152+channels[2]*.0722<120;
     el.style.setProperty('--ns-bed-label',dark?'#f0f7fa':'#08121a');
     var frame=el.querySelector('.ns-room-bed-card'), img=el.querySelector('.ns-room-bed-picture img');
     if(frame){frame.style.setProperty('--bed',colour.accent);frame.style.setProperty('--bed-border',colour.border);}
+    var style=bedStyleOf(skin);
+    // A look with a picture and no linen chosen: the picture is the linen (painted into the
+    // bed, so it rises over the sleeper like the rest), not a flat patch on top.
+    if(!style && skin && /^(img|art|grad)$/.test(String(skin.t||''))) style='card';
+    // A styled bed wears its own bedding: the look's picture is not cropped onto it.
+    el.classList.toggle('has-bed-style',!!style);
+    applyBedAcc(el,skin);
     if(!img) return;
-    var key=colour.rgb || colour.bed;
-    if(img.__tintKey===key)return;
-    img.__tintKey=key;
-    img.removeAttribute('srcset');
-    img.src='assets/rooms/bed-'+colour.bed+'-256.webp';
-    if(colour.rgb) tintedBed(colour.rgb).then(function(url){
-      if(img.__tintKey===key)img.src=url;
-    }).catch(function(){if(img.__tintKey===key)img.__tintKey=null;});
+    var preset='assets/rooms/bed-'+colour.bed+'-256.webp';
+    // The sleeper's colour (their own, or their preset tone's accent).
+    var rgb=colour.rgb || (/^#[0-9a-f]{6}$/i.test(colour.accent||'') ? [1,3,5].map(function(i){ return parseInt(colour.accent.slice(i,i+2),16); }).join(',') : '');
+    var overlay=linenOverlay(style,skin,rgb);
+    // who sleeps here: a man's or a woman's figure, their trousers, their card's look on T-shirt and socks
+    var sl=el.querySelector('.ns-sleeper'), pic=(window.mkSkinPicture && skin && window.mkSkinPicture(skin)) || {};
+    var who={ fig:sl&&sl.classList.contains('is-f')?'f':'m', pants:sl?sl.style.getPropertyValue('--pants').trim():'', accent:colour.accent||'', url:pic.url||'' };
+    var dress='full|'+who.fig+'|'+who.pants+'|'+who.accent+'|'+who.url;
+    var key=(overlay ? 'linen:'+overlay+'|' : '')+(colour.rgb || colour.bed)+'|'+dress;
+    // While a cat has the duvet off (js/nakts-pets.js) the bed shows its bare picture:
+    // the new dressed one waits until the duvet is back (img.__dressed).
+    var off=el.classList.contains('ns-duvet-off');
+    if((off?img.__dressedKey:img.__tintKey)===key)return;
+    if(off) img.__dressedKey=key; else img.__tintKey=key;
+    // The bed in the sleeper's colour, the linen laid over it, the duvet over the sleeper.
+    if(!img.getAttribute('src')) img.src=preset;
+    if(!off) img.__look={ rgb:rgb||'200,200,205', overlay:overlay, who:who };
+    tintedBed(rgb||'200,200,205',BED_BARE,0,overlay,dress).then(function(url){
+      if(el.classList.contains('ns-duvet-off')){ if(img.__dressedKey===key) img.__dressed={ src:url, key:key }; return; }
+      if(img.__tintKey===key){ img.removeAttribute('srcset'); img.src=url; }
+    }).catch(function(){ if(img.__tintKey===key) img.__tintKey=null; });
   };
+  /* The bed by the chalkboard wears a different set every day (the same one all day). */
+  function dressCareBed(root){
+    var img=(root||document).querySelector('#nsPanel .ns-bedcare-bed .ns-room-bed-picture img'); if(!img) return;
+    var d=new Date(), day=d.getFullYear()*1000+Math.floor((d-new Date(d.getFullYear(),0,0))/864e5);
+    var pool=BED_STYLES.filter(function(b){ return b[0] && b[2]!=='c'; });
+    var h=day*2654435761>>>0, id=pool[h%pool.length][0], key='care:'+id;
+    if(img.__tintKey===key) return;
+    img.__tintKey=key;
+    tintedBed('214,214,220',undefined,0,bedStyleSrc(id,256)).then(function(url){ if(img.__tintKey===key){ img.removeAttribute('srcset'); img.src=url; } }).catch(function(){ img.__tintKey=null; });
+  }
   // Reset used-colours each time a new day is selected (called from update())
   function resetColours(){_usedHashes={};}
   var st=null;
@@ -147,10 +554,13 @@
   var _nsLastRenderKey='';
   var ROOM_BED_KEYS=['main_left_top','main_left_bottom','main_right_top','nmp_center'];
   var ROOM_SLOTS={
-    'is-left':{x:19,y:25,w:13.7,scale:.94,z:24},
-    'is-right-top':{x:19,y:63,w:14.6,scale:1,z:28},
-    'is-right-bottom':{x:81,y:27,w:12.8,scale:.9,z:22},
-    'is-center':{x:51,y:48,w:32,scale:.96,z:25}
+    // As before: two beds one above the other on the left, one at the back on
+    // the right; the NMP bed in the middle. They fill the visible floor
+    // (10.5 % to the front wall's top at 85.8 % of the rendered room).
+    'is-left':{x:21.7,y:29.3,w:19.6,scale:1,z:24},
+    'is-right-top':{x:20.2,y:66.9,w:19.6,scale:1,z:28},
+    'is-right-bottom':{x:78.3,y:29.3,w:19.6,scale:1,z:22},
+    'is-center':{x:50,y:48,w:37.1,scale:1,z:25}
   };
   var NS_FLOW_GHOST = `<svg class="ns-flow-ghost" viewBox="0 0 10 7" shape-rendering="crispEdges" aria-hidden="true"><rect x="3" y="0" width="4" height="1" fill="#7dd3fc"/><rect x="2" y="1" width="6" height="1" fill="#38bdf8"/><rect x="1" y="2" width="1" height="1" fill="#38bdf8"/><rect x="4" y="2" width="2" height="1" fill="#38bdf8"/><rect x="8" y="2" width="1" height="1" fill="#38bdf8"/><rect x="2" y="2" width="2" height="1" fill="#07090f"/><rect x="6" y="2" width="2" height="1" fill="#07090f"/><rect x="1" y="3" width="8" height="3" fill="#38bdf8"/><rect x="1" y="6" width="1" height="1" fill="#38bdf8"/><rect x="3" y="6" width="1" height="1" fill="#38bdf8"/><rect x="6" y="6" width="1" height="1" fill="#38bdf8"/><rect x="8" y="6" width="1" height="1" fill="#38bdf8"/></svg>`;
   // ── Vēsturiskā nakts statistika (kurš ņem kuru daļu / kurā gultā guļ) ──
@@ -260,17 +670,33 @@
       +'</div>';
   }
 
+  var _nsView='hist';
+  // A segmented control in the panel's own buttons, with a liquid pill (MinkaMotion) under the chosen one.
+  function nsSeg(cls,label,items,cur,attr){
+    return '<div class="ns-seg '+cls+'" role="tablist" aria-label="'+label+'"><span class="ns-seg-pill" aria-hidden="true"></span>'
+      +items.map(function(it){ return '<button type="button" role="tab" class="ns-seg-btn'+(it[0]===cur?' is-on':'')+'" '+attr+'="'+it[0]+'" aria-selected="'+(it[0]===cur)+'">'+it[1]+'</button>'; }).join('')+'</div>';
+  }
+  function nsSegMove(bar,animate){
+    var on=bar&&bar.querySelector('.is-on'), pill=bar&&bar.querySelector('.ns-seg-pill'), prev=bar&&bar.__segPrev;
+    if(!on||!pill) return;
+    var MM=window.MinkaMotion;
+    if(MM&&MM.liquid&&MM.liquid(pill,bar,on,{ from:prev, animate:!!animate&&!!prev&&prev!==on })) bar.classList.add('has-pill');
+    bar.__segPrev=on;
+  }
   function nsStatsPanelHTML(){
-    // Tukšs konteiners — aizpildās asinhroni pēc fetch
-    return '<div class="ns-stats-box" id="nsStatsBox">'
-      +'<div class="ns-stats-head"><div class="ns-stats-title">Šīs maiņas vēsture</div><div class="ns-stats-bed-title">Gultas</div></div>'
+    // Tukšs konteiners — aizpildās asinhroni pēc fetch. Virsraksta vietā pārslēgs
+    // Vēsture | Gultas: gultu studija aizņem to pašu vietu (nekas netiek pārklāts).
+    return '<div class="ns-stats-box" id="nsStatsBox" data-view="'+_nsView+'">'
+      +'<div class="ns-stats-head"><div class="ns-stats-title">'+nsSeg('ns-view-switch','Vēsture vai gultas',[['hist','Vēsture'],['linen','Veļa'],['pillows','Spilveni'],['toys','Rotaļlietas']],(_nsView==='beds'&&_studio)?_studio.cat:'hist','data-ns-view')+'</div><div class="ns-stats-bed-title">Gultas</div></div>'
       +'<div class="ns-stats-body" id="nsStatsBody"><div class="ns-stats-load">Ielādē…</div></div>'
+      +'<div class="ns-bed-studio" id="nsBedStudio" aria-live="polite"></div>'
       +'</div>';
   }
 
   function nsRenderStats(slots){
     var box=document.getElementById('nsStatsBody');
     if(!box) return;
+    if(_nsView==='beds') setTimeout(function(){ setStatsView('beds'); },0);
     var people=(slots||[]).map(function(s,i){
       var fatigue=Number(s&&s.w&&s.w.fs);
       return {
@@ -1302,12 +1728,259 @@
       return ch==='&'?'&amp;':ch==='<'?'&lt;':ch==='>'?'&gt;':ch==='"'?'&quot;':'&#39;';
     });
   }
+  /* An analog dial beside the times: the part's hours as a thick arc on the
+     12-hour face (bright where they have passed), and while the part runs a
+     hand at the present moment and a soft pulse. Hover or tap: a big dial
+     over the card with the start, the end and how long is left. */
+  function clockPt(min,r,c){ var a=((min%720)/720)*Math.PI*2-Math.PI/2; return (c+Math.cos(a)*r).toFixed(2)+' '+(c+Math.sin(a)*r).toFixed(2); }
+  function clockArc(from,to,r,c){
+    var span=Math.max(.5,Math.min(719.5,to-from));
+    return 'M'+clockPt(from,r,c)+'A'+r+' '+r+' 0 '+(span>360?1:0)+' 1 '+clockPt(from+span,r,c);
+  }
+  function clockSvg(slot,big){
+    var V=big?120:40, c=V/2, R=big?46:15, ticks='';
+    for(var k=0;k<12;k++){
+      var a=k/12*Math.PI*2, r0=R+(big?(k%3?7:4):(k%3?3.2:1.8)), r1=R+(big?11:4.8);
+      ticks+='M'+(c+Math.cos(a)*r0).toFixed(2)+' '+(c+Math.sin(a)*r0).toFixed(2)+'L'+(c+Math.cos(a)*r1).toFixed(2)+' '+(c+Math.sin(a)*r1).toFixed(2);
+    }
+    var lab='';
+    if(big){
+      [[0,'12'],[180,'3'],[360,'6'],[540,'9']].forEach(function(n){ var p=clockPt(n[0],R-12,c).split(' '); lab+='<text class="nsc-clock-num" x="'+p[0]+'" y="'+p[1]+'">'+n[1]+'</text>'; });
+    }
+    return '<svg class="nsc-clock'+(big?' is-big':'')+'" viewBox="0 0 '+V+' '+V+'" aria-hidden="true">'
+      +'<circle class="nsc-clock-pulse" cx="'+c+'" cy="'+c+'" r="'+(R+(big?12:5.4))+'"/>'
+      +'<circle class="nsc-clock-face" cx="'+c+'" cy="'+c+'" r="'+(R+(big?12:5.4))+'"/>'
+      +'<path class="nsc-clock-ticks" d="'+ticks+'"/>'+lab
+      +'<path class="nsc-clock-track" d="'+clockArc(slot.s,slot.e,R,c)+'"/>'
+      +'<path class="nsc-clock-done" d=""/>'
+      +(big?'<circle class="nsc-clock-end" cx="'+clockPt(slot.s,R,c).split(' ')[0]+'" cy="'+clockPt(slot.s,R,c).split(' ')[1]+'" r="4"/><circle class="nsc-clock-end" cx="'+clockPt(slot.e,R,c).split(' ')[0]+'" cy="'+clockPt(slot.e,R,c).split(' ')[1]+'" r="4"/>':'')
+      +'<line class="nsc-clock-hand is-hour" x1="'+c+'" y1="'+c+'" x2="'+c+'" y2="'+(c-R*.58)+'" style="transform-origin:'+c+'px '+c+'px"/>'
+      +'<line class="nsc-clock-hand is-minute" x1="'+c+'" y1="'+c+'" x2="'+c+'" y2="'+(c-R*.92)+'" style="transform-origin:'+c+'px '+c+'px"/>'
+      +'<circle class="nsc-clock-pin" cx="'+c+'" cy="'+c+'" r="'+(big?3.4:1.8)+'"/>'
+      +'</svg>';
+  }
+  function nsClock(slot){
+    return '<button type="button" class="nsc-clock-btn" aria-label="Darba laiks '+escHtml(slot.ss+' – '+slot.es)+'">'+clockSvg(slot,false)+'</button>';
+  }
+  function clockLeft(min){ min=Math.max(0,Math.round(min)); var h=Math.floor(min/60), m=min%60; return (h?h+' h ':'')+(m||!h?m+' min':'').trim(); }
+  function clockPaint(svg,slot){
+    var p=ledProgress(slot), on=p>0&&p<1, big=svg.classList.contains('is-big'), V=big?120:40, c=V/2, R=big?46:15;
+    svg.classList.toggle('is-running',on); svg.classList.toggle('is-done',p>=1);
+    var done=svg.querySelector('.nsc-clock-done'), now=slot.s+(slot.e-slot.s)*Math.min(1,p);
+    if(done) done.setAttribute('d',p>0?clockArc(slot.s,now,R,c):'');
+    // A real clock while the part runs: the hour hand and the minute hand.
+    var hh=svg.querySelector('.nsc-clock-hand.is-hour'), mh=svg.querySelector('.nsc-clock-hand.is-minute');
+    if(on && hh) hh.style.transform='rotate('+((now%720)/720*360).toFixed(1)+'deg)';
+    if(on && mh) mh.style.transform='rotate('+((now%60)/60*360).toFixed(1)+'deg)';
+    return p;
+  }
+  function nsClockTick(){
+    document.querySelectorAll('#nsPanel .nsc-full-card').forEach(function(card){
+      var slot=st&&st.sl?st.sl[+card.getAttribute('data-i')]:null; if(!slot) return;
+      card.querySelectorAll('svg.nsc-clock').forEach(function(svg){ clockPaint(svg,slot); });
+      var pop=card.querySelector('.nsc-clock-pop'); if(pop) clockPopText(pop,slot);
+    });
+  }
+  function clockPopText(pop,slot){
+    var p=ledProgress(slot), total=slot.e-slot.s, t=pop.querySelector('.nsc-clock-status');
+    if(!t) return;
+    t.textContent = p>=1 ? 'Pabeigts' : p>0 ? 'Atlicis '+clockLeft(total*(1-p)) : 'Sāksies pēc '+clockLeft((function(){ var q=ledProgressAt(slot); return q; })());
+  }
+  // Minutes until the part starts (for the dial's "Sāksies pēc").
+  function ledProgressAt(slot){
+    var parts=activeDateKey().match(/^(\d{2})\.(\d{2})\.(\d{4})$/); if(!parts || !st || !st.sl.length) return 0;
+    var base=new Date(+parts[3],+parts[2]-1,+parts[1]); if(st.sl[0].s<12*60) base.setDate(base.getDate()+1);
+    return (base.getTime()+slot.s*60000-Date.now())/60000;
+  }
+  function clockOpen(card,byHover){
+    var slot=st&&st.sl?st.sl[+card.getAttribute('data-i')]:null; if(!slot) return;
+    var pop=card.querySelector('.nsc-clock-pop');
+    if(!pop){
+      document.querySelectorAll('#nsPanel .nsc-clock-pop').forEach(function(o){ o.remove(); });
+      pop=document.createElement('div'); pop.className='nsc-clock-pop';
+      pop.innerHTML=clockSvg(slot,true)+'<div class="nsc-clock-copy"><b>'+escHtml(slot.ss)+' – '+escHtml(slot.es)+'</b><span class="nsc-clock-status"></span></div>';
+      card.appendChild(pop);
+      clockPaint(pop.querySelector('svg'),slot); clockPopText(pop,slot);
+    }
+    pop.__hover=!!byHover;
+  }
+  function clockClose(card){ var pop=card&&card.querySelector('.nsc-clock-pop'); if(!pop) return; pop.classList.add('is-out'); setTimeout(function(){ pop.remove(); },160); }
+  if(!window.__nsClockWired){
+    window.__nsClockWired=true;
+    var hoverT=0;
+    document.addEventListener('click',function(e){
+      var btn=e.target.closest && e.target.closest('#nsPanel .nsc-clock-btn');
+      if(btn){ e.preventDefault(); e.stopPropagation(); var card=btn.closest('.nsc-full-card'), pop=card.querySelector('.nsc-clock-pop'); if(pop && !pop.__hover) clockClose(card); else { clockOpen(card,false); var p2=card.querySelector('.nsc-clock-pop'); if(p2) p2.__hover=false; } return; }
+      if(!(e.target.closest && e.target.closest('.nsc-clock-pop'))) document.querySelectorAll('#nsPanel .nsc-clock-pop').forEach(function(o){ clockClose(o.parentNode); });
+    },true);
+    document.addEventListener('pointerover',function(e){
+      if(e.pointerType!=='mouse') return;
+      var btn=e.target.closest && e.target.closest('#nsPanel .nsc-clock-btn'); if(!btn) return;
+      clearTimeout(hoverT); hoverT=setTimeout(function(){ clockOpen(btn.closest('.nsc-full-card'),true); },180);
+    });
+    document.addEventListener('pointerout',function(e){
+      if(e.pointerType!=='mouse') return;
+      var card=e.target.closest && e.target.closest('#nsPanel .nsc-full-card'); if(!card) return;
+      if(e.relatedTarget && card.contains(e.relatedTarget)) return;
+      clearTimeout(hoverT);
+      var pop=card.querySelector('.nsc-clock-pop'); if(pop && pop.__hover) clockClose(card);
+    });
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape') document.querySelectorAll('#nsPanel .nsc-clock-pop').forEach(function(o){ clockClose(o.parentNode); }); });
+  }
+  /* Time turns each card's picture into light: as a sleeper's part of the night
+     passes, their picture becomes an LED dot matrix, from left to right with a
+     ragged, grainy front that evens out as the part ends. Finished parts are
+     all light, the coming ones untouched. Only the picture: the name, times,
+     emoji and the moon stay on top. Cheap: the picture is read once as a small
+     grid of colours, and once a second only the cells whose time has come
+     (and the thin flickering front) are drawn. */
+  var LED_CELL=5, _led={ grids:{}, timer:0, openedAt:0 };
+  function ledProgress(slot){
+    // The night's own clock: its date, and the next day once the parts start after midnight.
+    if(!st || !Array.isArray(st.sl) || !st.sl.length || !slot) return 0;
+    var parts=activeDateKey().match(/^(\d{2})\.(\d{2})\.(\d{4})$/); if(!parts) return 0;
+    var base=new Date(+parts[3],+parts[2]-1,+parts[1]);
+    if(st.sl[0].s<12*60) base.setDate(base.getDate()+1);
+    var start=base.getTime()+slot.s*60000, end=base.getTime()+slot.e*60000, now=Date.now();
+    if(now>=end) return 1;
+    if(now<=start) return 0;
+    return (now-start)/Math.max(1,end-start);
+  }
+  function ledNoise(cols,rows,seed){
+    // Grainy clusters: random cells, softened once with their neighbours.
+    var r=new Float32Array(cols*rows), n=new Float32Array(cols*rows), h=seed>>>0;
+    for(var i=0;i<r.length;i++){ h=(h*1664525+1013904223)>>>0; r[i]=h/4294967296; }
+    for(var y=0;y<rows;y++) for(var x=0;x<cols;x++){
+      var s0=0,c0=0;
+      for(var dy=-1;dy<=1;dy++) for(var dx=-1;dx<=1;dx++){ var xx=x+dx, yy=y+dy; if(xx<0||yy<0||xx>=cols||yy>=rows) continue; var k=(dx||dy)?1:2; s0+=r[yy*cols+xx]*k; c0+=k; }
+      n[y*cols+x]=s0/c0*.6+r[y*cols+x]*.4;
+    }
+    return n;
+  }
+  function ledSourceColours(card,cols,rows){
+    // The picture as the card shows it, drawn into a grid of cols x rows.
+    var c=document.createElement('canvas'); c.width=cols; c.height=rows;
+    var x=c.getContext('2d',{willReadFrequently:true}), cs=getComputedStyle(card);
+    x.fillStyle=cs.backgroundColor||'#0a1116'; x.fillRect(0,0,cols,rows);
+    var skinVar=card.style.getPropertyValue('--mk-skin-img')||'', m=skinVar.match(/url\(['"]?([^'")]+)['"]?\)/);
+    var cols2=skinVar.replace(/url\([^)]*\)/g,'').match(/#[0-9a-f]{3,8}\b|rgba?\([^)]*\)/gi)||[];
+    function finish(){
+      var g=x.createLinearGradient(0,0,0,rows);
+      g.addColorStop(0,'rgba(4,9,13,.18)'); g.addColorStop(.58,'rgba(4,9,13,.25)'); g.addColorStop(1,'rgba(4,9,13,.54)');
+      x.fillStyle=g; x.fillRect(0,0,cols,rows);
+      try{ return x.getImageData(0,0,cols,rows).data; }catch(_e){ return null; }
+    }
+    function cover(img){
+      var iw=img.naturalWidth||img.width||1, ih=img.naturalHeight||img.height||1, k=Math.max(cols/iw,rows/ih);
+      x.imageSmoothingQuality='high';
+      x.drawImage(img,(cols-iw*k)/2,(rows-ih*k)/2,iw*k,ih*k);
+    }
+    if(m && card.classList.contains('mk-has-skin')) return bedImage(m[1]).then(function(img){ cover(img); return finish(); }).catch(function(){ return finish(); });
+    if(cols2.length>1){
+      var gg=x.createLinearGradient(0,0,cols,rows);
+      cols2.forEach(function(col,i,all){ gg.addColorStop(i/(all.length-1),col); });
+      x.fillStyle=gg; x.fillRect(0,0,cols,rows); return Promise.resolve(finish());
+    }
+    var svg=card.querySelector('.nsc-deco svg');
+    if(svg){
+      var src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg.outerHTML.indexOf('xmlns')<0?svg.outerHTML.replace('<svg','<svg xmlns="http://www.w3.org/2000/svg"'):svg.outerHTML);
+      return new Promise(function(res){ var im=new Image(); im.onload=function(){ x.drawImage(im,0,0,cols,rows); res(finish()); }; im.onerror=function(){ res(finish()); }; im.src=src; });
+    }
+    return Promise.resolve(finish());
+  }
+  // Lit like an LED: the colour more saturated and a little brighter, dark stays dark.
+  function ledLight(v,m){ return Math.max(0,Math.min(255,Math.round((m+(v-m)*1.45)*1.12))); }
+  function ledSetup(card,slot,index){
+    var w=card.clientWidth, h=card.clientHeight; if(w<40||h<40) return;
+    var cols=Math.ceil(w/LED_CELL), rows=Math.ceil(h/LED_CELL);
+    var key=(card.getAttribute('data-worker')||'')+'|'+(card.style.getPropertyValue('--mk-skin-img')||card.className)+'|'+cols+'x'+rows;
+    var cv=card.querySelector('canvas.nsc-led');
+    if(!cv){
+      cv=document.createElement('canvas'); cv.className='nsc-led'; cv.setAttribute('aria-hidden','true');
+      var deco=card.querySelector('.nsc-deco');
+      if(deco && deco.nextSibling) card.insertBefore(cv,deco.nextSibling); else card.insertBefore(cv,card.firstChild);
+    }
+    var dpr=Math.min(2,window.devicePixelRatio||1);
+    if(cv.__key!==key){
+      cv.__key=key; cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr);
+      cv.__st={ cols:cols, rows:rows, dpr:dpr, lit:new Uint8Array(cols*rows), band:[], spark:[], colours:null, noise:ledNoise(cols,rows,index*7919+cols*31+rows), shown:0 };
+      var grid=_led.grids[key];
+      (grid?Promise.resolve(grid):ledSourceColours(card,cols,rows)).then(function(data){
+        if(!data || cv.__key!==key) return;
+        _led.grids[key]=data; cv.__st.colours=data;
+        // Opening the panel: the light sweeps in to where the night is now.
+        var target=ledProgress(slot), lvl=document.documentElement.getAttribute('data-motion')||'full';
+        if(target>0 && lvl==='full' && performance.now()-_led.openedAt<2500){
+          var t0=performance.now(), dur=1100+index*180;
+          (function step(){
+            if(cv.__key!==key) return;
+            var k=Math.min(1,(performance.now()-t0)/dur), e=1-Math.pow(1-k,3);
+            ledDraw(cv,target*e,false);
+            if(k<1) requestAnimationFrame(step); else ledDraw(cv,target,true);
+          })();
+        } else ledDraw(cv,target,true);
+      });
+    }
+    cv.__slot=slot;
+  }
+  function ledDraw(cv,p,flicker){
+    var S=cv.__st; if(!S || !S.colours) return;
+    var ctx=cv.getContext('2d'), c=LED_CELL*S.dpr, cols=S.cols, rows=S.rows, col=S.colours, lit=S.lit, n=S.noise;
+    var amp=.34*(1-Math.min(1,p))+.04;
+    function cell(i,a,boost){
+      var x=(i%cols)*c, y=Math.floor(i/cols)*c, q=i*4, r=col[q], g=col[q+1], b=col[q+2];
+      ctx.clearRect(x,y,c,c);
+      if(a<1){ ctx.globalAlpha=a; }
+      ctx.fillStyle='#03060a'; ctx.fillRect(x,y,c,c);
+      var m=(r+g+b)/3, lr=ledLight(r*boost,m*boost), lg=ledLight(g*boost,m*boost), lb=ledLight(b*boost,m*boost), gap=Math.max(1,Math.round(c*.2)), sz=c-gap;
+      if(r+g+b<45){ ctx.fillStyle='rgba(120,150,180,.1)'; ctx.fillRect(x+gap/2,y+gap/2,sz,sz); }
+      else {
+        ctx.fillStyle='rgb('+lr+','+lg+','+lb+')'; ctx.fillRect(x+gap/2,y+gap/2,sz,sz);
+        ctx.fillStyle='rgba(255,255,255,.14)'; ctx.fillRect(x+gap/2,y+gap/2,sz*.4,sz*.25);
+      }
+      ctx.globalAlpha=1;
+    }
+    // Last second's sparks settle; the old front is cleared.
+    S.spark.forEach(function(i){ cell(i,1,1); }); S.spark=[];
+    S.band.forEach(function(i){ if(!lit[i]) ctx.clearRect((i%cols)*c,Math.floor(i/cols)*c,c,c); }); S.band=[];
+    for(var i=0;i<lit.length;i++){
+      if(lit[i]) continue;
+      var t=((i%cols)+.5)/cols+(n[i]-.5)*amp;
+      if(p>=1 || t<p){ lit[i]=1; if(flicker){ cell(i,1,1.35); S.spark.push(i); } else cell(i,1,1); }
+      else if(flicker && t<p+.035 && Math.random()<.55){ cell(i,.18+Math.random()*.32,1); S.band.push(i); }
+    }
+  }
+  function ledCards(scope){
+    if(!st || !st.sl) return;
+    if(!_led.timer) _led.openedAt=performance.now();   // the panel has just opened: sweep in
+    nsClockTick();
+    (scope||document).querySelectorAll('#nsPanel .nsc-full-card[data-i]').forEach(function(card){
+      var i=+card.getAttribute('data-i'), slot=st.sl[i];
+      if(!slot) return;
+      if(ledProgress(slot)<=0){ var old=card.querySelector('canvas.nsc-led'); if(old) old.remove(); return; }
+      ledSetup(card,slot,i);
+    });
+    if(!_led.timer) _led.timer=setInterval(function(){
+      if(!window.__nsOverlayOpen){ clearInterval(_led.timer); _led.timer=0; return; }
+      if(document.hidden) return;
+      nsClockTick();
+      document.querySelectorAll('#nsPanel canvas.nsc-led').forEach(function(cv){
+        if(!cv.__slot || !cv.__st || !cv.__st.colours) return;
+        var p=ledProgress(cv.__slot);
+        if(p<1 || cv.__st.spark.length || cv.__st.band.length) ledDraw(cv,p,p<1);
+      });
+      // A part that has just begun gets its layer.
+      if(st && st.sl) st.sl.forEach(function(slot,i){ var card=document.querySelector('#nsPanel .nsc-full-card[data-i="'+i+'"]'); if(card && !card.querySelector('canvas.nsc-led') && ledProgress(slot)>0) ledSetup(card,slot,i); });
+    },1000);
+  }
   function applyWorkerSkinsToNightCards(scope){
     if(typeof window.mkGetWorkerSkin!=='function' || typeof window.mkApplySkinToEl!=='function') return;
     (scope||document).querySelectorAll('.nsc-full-card[data-worker], .ns-room-bed[data-worker]').forEach(function(el){
       var worker=el.getAttribute('data-worker')||'';
       window.mkApplySkinToEl(el, window.mkGetWorkerSkin(worker));
     });
+    dressCareBed(scope);
+    requestAnimationFrame(function(){ ledCards(scope); if(window.NaktsPets) window.NaktsPets.sync(); });
   }
   /* The last part of the night does the morning round: bolus check, orange
      bags, CT/RTG restart and calibration. Three small flat illustrations in
@@ -1610,11 +2283,13 @@
 
   function roomPicture(roomType,layer){
     var main=roomType==='main';
-    var small=main?600:320;
-    var large=main?1200:640;
-    var height=main?381:392;
+    // Rendered in Blender (scripts/blender/nakts_rooms.py): the floor runs from
+    // 10.5 % to 91 % of the picture's height, the front wall's top is at 85.8 %.
+    var small=main?440:232;
+    var large=main?880:464;
+    var height=332;
     var base='assets/rooms/room-'+roomType+'-';
-    var rev='?v=20260822roomassets28';
+    var rev='?v=20260927rooms6';
     return '<picture class="ns-room-image ns-room-image-'+layer+'" aria-hidden="true">'
       +'<source type="image/avif" srcset="'+base+small+'.avif'+rev+' 1x, '+base+large+'.avif'+rev+' 2x">'
       +'<img src="'+base+small+'.webp'+rev+'" srcset="'+base+small+'.webp'+rev+' 1x, '+base+large+'.webp'+rev+' 2x" width="'+small+'" height="'+height+'" alt="" decoding="async" draggable="false">'
@@ -1625,7 +2300,7 @@
     var safe=tone||'neutral';
     var base='assets/rooms/bed-'+safe+'-';
     return '<picture class="ns-room-bed-picture" aria-hidden="true">'
-      +'<img src="'+base+'256.webp" srcset="'+base+'256.webp 1x, '+base+'512.webp 2x" width="256" height="364" alt="" decoding="async" draggable="false">'
+      +'<img src="'+base+'256.webp" width="256" height="364" alt="" decoding="async" draggable="false">'
       +'</picture>';
   }
 
@@ -1652,69 +2327,224 @@
     });
     return active>=0 && !!st.sl[active+1] && st.sl[active+1].w.name===name;
   }
-  // Curated pairs: one existing Fluent strip plus one quiet themed prop.
-  var dreamScenes=[
-    {theme:'stars',file:'cat',frames:72,emoji:'🐈',prop:'🌛'},
-    {theme:'garden',file:'black-cat',frames:72,emoji:'🐈‍⬛',prop:'🦋'},
-    {theme:'sea',file:'dolphin',frames:72,emoji:'🐬',prop:'🌊'},
-    {theme:'forest',file:'hedgehog',frames:72,emoji:'🦔',prop:'🍄'},
-    {theme:'meadow',file:'rabbit-face',frames:72,emoji:'🐰',prop:'🥕'},
-    {theme:'reading',file:'owl',frames:72,emoji:'🦉',prop:'📖'},
-    {theme:'snow',file:'penguin',frames:48,emoji:'🐧',prop:'❄️'},
-    {theme:'autumn',file:'fox',frames:73,emoji:'🦊',prop:'🍂'},
-    {theme:'coffee',file:'hot-beverage',frames:72,emoji:'☕',prop:'🥐',object:true},
-    {theme:'music',file:'maracas',frames:73,emoji:'🪇',prop:'🎵',object:true},
-    {theme:'space',file:'rocket',frames:73,emoji:'🚀',prop:'🪐',object:true},
-    {theme:'travel',file:'compass',frames:72,emoji:'🧭',prop:'🗺️',object:true},
-    {theme:'games',file:'robot',frames:52,emoji:'🤖',prop:'🎮',object:true},
-    {theme:'exploring',file:'flying-saucer',frames:72,emoji:'🛸',prop:'🌙',object:true},
-    {theme:'beach',file:'spiral-shell',frames:72,emoji:'🐚',prop:'🏖️',object:true},
-    {theme:'rest',file:'teddy-bear',frames:69,emoji:'🧸',prop:'🛏️',object:true}
-  ];
-  var dreamChoices=new Map(), dreamDeck=[], dreamDate='';
-  function pickDreamScene(name){
-    var date=activeDateKey();
-    if(date!==dreamDate){dreamDate=date;dreamChoices.clear();dreamDeck=[];}
-    if(!dreamChoices.has(name)){
-      if(!dreamDeck.length){
-        var animals=dreamScenes.filter(function(scene){return !scene.object;});
-        var objects=dreamScenes.filter(function(scene){return scene.object;});
-        // Shuffle only when needed, then alternate animals and objects so a
-        // visible group gets a mix, without duplicates or a running timer.
-        [animals,objects].forEach(function(pool){
-          for(var i=pool.length-1;i>0;i--){
-            var j=Math.floor(Math.random()*(i+1)), temp=pool[i];
-            pool[i]=pool[j];pool[j]=temp;
-          }
-        });
-        var first=Math.random()<.5 ? animals : objects;
-        var second=first===animals ? objects : animals;
-        for(var k=0;k<first.length;k++){dreamDeck.push(first[k],second[k]);}
+  /* Dreams. Each sleeper dreams of something of their own, chosen once a night
+     from what the app already shows the team about them: their bed's toy and
+     linen, their card's picture and decorations, their emoji, the coffee (or
+     energy drink) they had tonight, days off coming, their name day; a tired
+     sleeper dreams of rest. Never health, absences, moods or numbers. The same
+     dream on every PC (seeded by the name and the night), and two sleepers of a
+     night do not dream the same.
+     Calm: in a room at most one dream shows at a time, for a few seconds, then
+     the room rests; pointing at a bed (or tapping it) shows its dream. The one
+     whose part comes next dreams of the four handsets, all the time. */
+  // [Fluent strip in assets/emoji-anim, its frames, the emoji while it loads]
+  var DREAM_ART={
+    cat:['cat',72,'🐈'], blackcat:['black-cat',72,'🐈‍⬛'], coffee:['hot-beverage',72,'☕'], energy:['high-voltage',72,'⚡'],
+    teddy:['teddy-bear',69,'🧸'], sloth:['sloth',72,'🦥'], otter:['otter',72,'🦦'], lotus:['person-in-lotus-position',72,'🧘'],
+    shell:['spiral-shell',72,'🐚'], compass:['compass',72,'🧭'], rocket:['rocket',73,'🚀'], penguin:['penguin',48,'🐧'],
+    fox:['fox',73,'🦊'], owl:['owl',72,'🦉'], whale:['whale',72,'🐋'], dolphin:['dolphin',72,'🐬'], trex:['t-rex',72,'🦖'],
+    bee:['honeybee',73,'🐝'], hedgehog:['hedgehog',72,'🦔'], star:['glowing-star',72,'🌟'], shooting:['shooting-star',72,'🌠'],
+    moon:['first-quarter-moon-face',72,'🌛'], party:['partying-face',73,'🥳'], xray:['x-ray',73,'🩻'],
+    snow:['snowflake',72,'❄️'], polar:['polar-bear',72,'🐻‍❄️'], butterfly:['butterfly',72,'🦋'], unicorn:['unicorn',72,'🦄'],
+    deer:['deer',64,'🦌'], mammoth:['mammoth',72,'🦣'], maracas:['maracas',73,'🪇'],
+    rabbit:['rabbit-face',72,'🐰'], ufo:['flying-saucer',72,'🛸'], robot:['robot',52,'🤖'], sun:['sun-with-face',72,'🌞'],
+    wave:['water-wave',72,'🌊'], disco:['mirror-ball',72,'🪩'], dog:['dog-face',72,'🐶'], panda:['panda',72,'🐼'], bear:['bear',72,'🐻'],
+    frog:['frog',72,'🐸'], duck:['duck',72,'🦆'], octopus:['octopus',72,'🐙'], seal:['seal',66,'🦭'], parrot:['parrot',72,'🦜']
+  };
+  var DREAM_REST={teddy:1,moon:1,sloth:1,otter:1,lotus:1,star:1};
+  // what each of the bed's toys, linens, the card's decorations and pictures, and emoji dream of: [art, prop]
+  var TOY_DREAM={'toy-teddy':['teddy','🍯'],'toy-teddy-cream':['teddy','🍯'],'toy-teddy-grey':['teddy','🍯'],'toy-panda':['panda','🎋'],'toy-koala':['bear','🌿'],
+    'toy-bunny':['rabbit','🥕'],'toy-cat':['cat','🧶'],'toy-cat-black':['blackcat','🦋'],'toy-dog':['dog','🦴'],'toy-fox':['fox','🍂'],'toy-raccoon':['moon','🍎'],
+    'toy-lion':['sun','👑'],'toy-monkey':['parrot','🍌'],'toy-pig':['sun','🌼'],'toy-cow':['sun','🌼'],'toy-sheep':['moon','☁️'],'toy-unicorn':['unicorn','✨'],
+    'toy-elephant':['mammoth','🥜'],'toy-dino':['trex','🌋'],'toy-penguin':['penguin','🐟'],'toy-owl':['owl','📖'],'toy-chick':['duck','🌼'],'toy-duck':['duck','🫧'],
+    'toy-mouse':['cat','🧀'],'toy-hamster':['sun','🌻'],'toy-hedgehog':['hedgehog','🍄'],'toy-frog':['frog','🪷'],'toy-turtle':['wave','🐚'],'toy-ladybug':['butterfly','🌸'],
+    'toy-bee':['bee','🌼'],'toy-whale':['whale','🌊'],'toy-dolphin':['dolphin','🌊'],'toy-seal':['seal','🐟'],'toy-octopus':['octopus','🫧'],'toy-star':['shooting','✨'],
+    'toy-heart':['star','💛'],'toy-cloud':['moon','✨']};
+  var LINEN_DREAM={space:['rocket','🪐'],planets:['ufo','🪐'],planes:['compass','✈️'],fish:['dolphin','🐠'],bees:['bee','🌼'],cats:['cat','🧶'],dinos:['trex','🌿'],
+    mushrooms:['hedgehog','🍄'],daisy:['butterfly','🌼'],cherry:['butterfly','🌸'],floral:['butterfly','🌷'],starlight:['shooting','✨'],sky:['moon','⭐'],
+    midnight:['moon','✨'],glow:['shooting','✨'],neon:['disco','✨'],neonhearts:['disco','💗'],holo:['star','✨'],gold:['star','✨'],silver:['star','✨'],
+    xray:['xray','✨'],radiology:['xray','✨'],knit:['polar','❄️'],wool:['polar','❄️'],flannel:['snow','☕'],lemons:['sun','🍋'],balloons:['party','🎈'],
+    rainbows:['unicorn','⭐'],hearts:['teddy','💗']};
+  var ADDON_DREAM=[['astronaut',['rocket','🪐']],['planet',['ufo','🪐']],['moon',['moon','⭐']],['owl',['owl','📖']],['coffee',['coffee','🥐']],
+    ['paw',['cat','🐾']],['cat',['cat','🐾']],['dice',['star','🎲']],['bear',['teddy','🍯']],['strawberry',['sun','🍓']],['lilies',['butterfly','🌸']],
+    ['night',['moon','✨']],['prism',['star','✨']],['heart',['teddy','💗']]];
+  var PIC_DREAM=[['cat',['cat','🐾']],['dog',['dog','🦴']],['sea',['whale','🌊']],['ocean',['whale','🌊']],['beach',['shell','🏖️']],['space',['rocket','🪐']],
+    ['galaxy',['shooting','✨']],['forest',['deer','🌲']],['flower',['butterfly','🌸']],['sunset',['sun','🌅']],['snow',['polar','❄️']],['aesthetic',['star','✨']],
+    ['vapor',['disco','✨']],['rtg',['xray','✨']]];
+  var EMOJI_DREAM={'🐱':['cat','🧶'],'🐈':['cat','🧶'],'🐈‍⬛':['blackcat','🦋'],'🐶':['dog','🦴'],'🦊':['fox','🍂'],'🐻':['bear','🍯'],'🐼':['panda','🎋'],
+    '🐰':['rabbit','🥕'],'🦄':['unicorn','✨'],'🐧':['penguin','🐟'],'🦉':['owl','📖'],'🐸':['frog','🪷'],'🐙':['octopus','🫧'],'🐝':['bee','🌼'],
+    '🦋':['butterfly','🌸'],'🦖':['trex','🌿'],'🦕':['trex','🌿'],'🐿️':['hedgehog','🌰'],'🐬':['dolphin','🌊'],'🐳':['whale','🌊'],'🦦':['otter','🫧'],
+    '🦥':['sloth','🌿'],'🦔':['hedgehog','🍄'],'🦭':['seal','🐟'],'🦜':['parrot','🍌'],'🦌':['deer','🌲'],'🐻‍❄️':['polar','❄️'],'🌞':['sun','🌼'],
+    '🌛':['moon','⭐'],'🚀':['rocket','🪐'],'🤖':['robot','🎮'],'🛸':['ufo','🌙'],'🧸':['teddy','🍯'],'☕':['coffee','🥐'],'🥳':['party','🎈'],'😎':['sun','🏖️']};
+  var DREAM_SEASON={0:['snow','⛄'],1:['polar','❄️'],2:['butterfly','🌱'],3:['rabbit','🌷'],4:['bee','🌼'],5:['sun','🍓'],6:['dolphin','🏖️'],7:['shell','🌊'],
+    8:['hedgehog','🍄'],9:['fox','🍂'],10:['owl','🍁'],11:['moon','⭐']};
+  var DREAM_ANY=[['cat','🌛'],['blackcat','🦋'],['dolphin','🌊'],['hedgehog','🍄'],['rabbit','🥕'],['owl','📖'],['penguin','❄️'],['fox','🍂'],
+    ['coffee','🥐'],['maracas','🎵'],['rocket','🪐'],['compass','🗺️'],['robot','🎮'],['ufo','🌙'],['shell','🏖️'],['teddy','🍯']];
+  var ENERGY_DRINKS=/^(monster|monsterultra|redbull|brite)/;
+  function dreamRandom(seed){ return function(){ seed=(seed+0x6D2B79F5)|0; var t=Math.imul(seed^(seed>>>15),1|seed); t=t+Math.imul(t^(t>>>7),61|t)^t; return ((t^(t>>>14))>>>0)/4294967296; }; }
+  function dreamDays(a,b){ var x=/^(\d{2})\.(\d{2})\.(\d{4})$/.exec(a||''), y=/^(\d{2})\.(\d{2})\.(\d{4})$/.exec(b||''); if(!x||!y) return null; return Math.round((new Date(+y[3],+y[2]-1,+y[1])-new Date(+x[3],+x[2]-1,+x[1]))/864e5); }
+  function readJson(key){ try{ return JSON.parse(localStorage.getItem(key)||'{}')||{}; }catch(_e){ return {}; } }
+  // Everything a sleeper might dream of: [{art, prop, w (weight), tier (a name day beats all)}]
+  function dreamIdeas(name,night,drinks,slot){
+    var ideas=[], skin=(window.mkGetWorkerSkin && window.mkGetWorkerSkin(name)) || {};
+    function add(pair,w,tier){ if(pair && DREAM_ART[pair[0]]) ideas.push({art:pair[0],prop:pair[1]||'',w:w,tier:tier}); }
+    var first=String(name||'').trim().split(/\s+/)[0].toLocaleLowerCase('lv-LV'), d=new Date();
+    var days=window.LATVIAN_NAMEDAYS && window.LATVIAN_NAMEDAYS[('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)];
+    if(first && Array.isArray(days) && days.some(function(n){ return String(n).toLocaleLowerCase('lv-LV')===first; })) add(['party','🌸'],1,90);
+    var cup=drinks[name];
+    if(cup) add(cup.energy?['energy','🥤']:['coffee','🥐'],20+15*Math.min(2,cup.n),50);
+    try{
+      var f=window.__fatigue && window.__fatigue.calculateFatigue && window.__fatigue.calculateFatigue(name), next=f && f.nextShift && f.nextShift.date;
+      var off=next?dreamDays(night,String(next)):null;
+      if(off!=null && off>=3){ add(['sloth','🏖️'],30,60); add(['shell','🏝️'],20,60); add(['otter','🫧'],15,60); }
+    }catch(_e){}
+    var toy=accOf(BED_TOYS,skin.bp); if(toy) add(TOY_DREAM[toy[0]],30,45);
+    add(LINEN_DREAM[skin.bed||''],25,40);
+    try{ (window.MinkaCardAddons && window.MinkaCardAddons.getList ? window.MinkaCardAddons.getList(name) : []).forEach(function(it){
+      var id=String(it && it.id || ''); ADDON_DREAM.some(function(p){ if(id.indexOf(p[0])>=0){ add(p[1],20,40); return true; } return false; }); }); }catch(_e){}
+    add(EMOJI_DREAM[roomEmoji(name)],20,35);
+    var pid=String(skin.id||'');
+    PIC_DREAM.some(function(p){ if(pid.indexOf(p[0])>=0){ add(p[1],15,30); return true; } return false; });
+    if(slot && slot.w && Number(slot.w.fs)>=70){ ideas.forEach(function(i){ i.w*=DREAM_REST[i.art]?2:0.5; }); add(['moon','✨'],15,35); add(['teddy','🍯'],10,35); }
+    return ideas;
+  }
+  // Tonight's dreams, by name: the same on every PC, none twice, remade when their data changes.
+  var dreamPlan={key:'',byName:{}}, dreamRev=0, dreamRevAt=0;
+  function planDreams(names){
+    var night=activeDateKey(), now=Date.now();
+    if(now-dreamRevAt>60000){ dreamRevAt=now; dreamRev++; }          // coffee, days off: looked at again every minute
+    var key=night+'|'+names.join('|')+'|'+dreamRev;
+    if(dreamPlan.key===key) return dreamPlan.byName;
+    var counts=readJson('minkaCoffeeCountsV1')[night]||{}, details=readJson('minkaCoffeeDetailsV1')[night]||{}, drinks={};
+    var K=window.MinkaCoffeeStore && window.MinkaCoffeeStore.key || function(n){ return String(n||'').trim().toLowerCase(); };
+    names.forEach(function(n){
+      var k=K(n), c=Number(counts[k])||0; if(!c) return;
+      var src=(details[k]&&details[k].sources)||{}, energy=0, coffee=0;
+      Object.keys(src).forEach(function(s){ if(ENERGY_DRINKS.test(s)) energy+=Number(src[s])||0; else coffee+=Number(src[s])||0; });
+      drinks[n]={n:c, energy:energy>coffee};
+    });
+    var slots=(st && Array.isArray(st.sl)) ? st.sl : [], taken={}, byName={};
+    names.slice().sort().forEach(function(n){
+      var rnd=dreamRandom(_nameHash(n+'|'+night)), slot=slots.filter(function(sl){ return sl.w && sl.w.name===n; })[0];
+      var ideas=dreamIdeas(n,night,drinks,slot).filter(function(i){ return i.tier>=90 || !taken[i.art]; }), pickd=null;
+      var top=ideas.filter(function(i){ return i.tier>=90; })[0];
+      if(top) pickd=top;
+      else if(ideas.length){
+        var sum=ideas.reduce(function(t,i){ return t+i.w; },0), r=rnd()*sum;
+        for(var i=0;i<ideas.length && !pickd;i++){ r-=ideas[i].w; if(r<=0) pickd=ideas[i]; }
+        pickd=pickd||ideas[ideas.length-1];
+      } else {
+        var m=new Date().getMonth(), pool=[DREAM_SEASON[m]].concat(DREAM_ANY).filter(function(p){ return !taken[p[0]]; });
+        var pp=pool[Math.floor(rnd()*pool.length)]||DREAM_ANY[0];
+        pickd={art:pp[0],prop:pp[1]};
       }
-      dreamChoices.set(name,dreamDeck.shift());
-    }
-    return dreamChoices.get(name);
+      taken[pickd.art]=1; byName[n]={art:pickd.art,prop:pickd.prop};
+    });
+    dreamPlan={key:key,byName:byName};
+    return byName;
   }
-  function dreamContents(name){
-    var hash=_nameHash(name), scene=pickDreamScene(name);
-    var phones=dreamPhones(name);
-    var object='<span class="ns-dream-sprite" style="--dream-frames:'+scene.frames+';--dream-duration:'+(scene.frames/12)+'s;--dream-phase:-'+(hash%30/10)+'s"><span class="ns-dream-fallback">'+scene.emoji+'</span><img class="ns-dream-film" data-src="assets/emoji-anim/'+scene.file+'.webp" alt="" decoding="async" draggable="false"></span>';
-    var prop=phones ? '<span class="ns-dream-phones">'+['feature','smart','feature','smart'].map(function(type){return '<span class="ns-room-device is-'+type+'"></span>';}).join('')+'</span>' : '<span class="ns-dream-prop">'+scene.prop+'</span>';
-    var cloud='<svg class="ns-dream-cloud" viewBox="0 0 80 64" aria-hidden="true"><path d="M18 47C3 48 1 30 12 25C8 12 23 7 31 12C38 0 55 5 58 14C72 10 82 24 73 34C82 47 62 55 54 49C44 57 28 55 25 47Z"/><circle cx="18" cy="56" r="4"/><circle cx="11" cy="62" r="2"/></svg>';
-    return '<span class="ns-dream-scene is-'+(phones?'phones':scene.theme)+'">'+cloud+object+prop+'</span>';
+  window.__nsDreamPlan=function(){ return dreamPlan.byName; };
+  var DREAM_CLOUD='<img class="ns-dream-cloud" src="assets/rooms/dream-cloud-120.webp" srcset="assets/rooms/dream-cloud-120.webp 1x, assets/rooms/dream-cloud-240.webp 2x" alt="" decoding="async" draggable="false">';
+  function dreamContents(dream,name,phones){
+    if(phones) return '<span class="ns-dream-scene is-phones">'+DREAM_CLOUD+'<span class="ns-dream-phones">'+['feature','smart','feature','smart'].map(function(type){return '<span class="ns-room-device is-'+type+'"></span>';}).join('')+'</span></span>';
+    var art=DREAM_ART[dream.art]||DREAM_ART.moon, hash=_nameHash(name);
+    var sprite='<span class="ns-dream-sprite" style="--dream-frames:'+art[1]+';--dream-duration:'+(art[1]/12)+'s;--dream-phase:-'+(hash%30/10)+'s"><span class="ns-dream-fallback">'+art[2]+'</span><img class="ns-dream-film" data-src="assets/emoji-anim/'+art[0]+'.webp" alt="" decoding="async" draggable="false"></span>';
+    return '<span class="ns-dream-scene is-'+dream.art+'">'+DREAM_CLOUD+sprite+(dream.prop?'<span class="ns-dream-prop">'+dream.prop+'</span>':'')+'</span>';
   }
-  function refreshBedDream(el){
+  function refreshBedDream(el,dream,phones){
     var cloud=el.querySelector('.ns-bed-dream');
-    if(!cloud)return;
-    var html=dreamContents(el.getAttribute('data-worker')||'');
-    if(cloud.__dreamHtml===html)return;
-    cloud.innerHTML=html;cloud.__dreamHtml=html;
+    if(!cloud || !dream) return;
+    var key=phones?'phones':dream.art+'|'+dream.prop;          // markup only when the dream changes
+    if(cloud.__dreamKey===key) return;
+    cloud.innerHTML=dreamContents(dream,el.getAttribute('data-worker')||'',phones); cloud.__dreamKey=key;
     if(typeof window.__nsObserveDream==='function') window.__nsObserveDream(cloud);
   }
+  // Which dream shows: one a room at a time, in turn, 9 s on, then 22-40 s of rest.
+  var dreamRooms={}, dreamPeek={el:null,until:0};
+  function dreamOn(el,on){
+    if(el.__dreaming===on) return;
+    el.__dreaming=on; el.classList.toggle('is-dreaming',on);
+    var cloud=el.querySelector('.ns-bed-dream');                 // its strip loads and plays only while it shows
+    if(cloud && typeof window.__nsObserveDream==='function') window.__nsObserveDream(cloud);
+  }
+  function peekDream(el,secs){ dreamPeek={el:el,until:Date.now()+secs*1000}; window.nsRefreshDreams(); }
+  (function listenForPeeks(){
+    var hoverTimer=0;
+    document.addEventListener('pointerover',function(e){
+      if(e.pointerType==='touch') return;
+      var bed=e.target && e.target.closest && e.target.closest('#nsPanel .ns-room-bed[data-worker]'); if(!bed) return;
+      clearTimeout(hoverTimer); hoverTimer=setTimeout(function(){ peekDream(bed,4); },300);
+    },true);
+    document.addEventListener('pointerout',function(e){
+      var bed=e.target && e.target.closest && e.target.closest('#nsPanel .ns-room-bed[data-worker]'); if(!bed) return;
+      if(e.relatedTarget && bed.contains(e.relatedTarget)) return;
+      clearTimeout(hoverTimer);
+      if(dreamPeek.el===bed) dreamPeek.until=Math.min(dreamPeek.until,Date.now()+2000);
+    },true);
+    var downAt=null;
+    document.addEventListener('pointerdown',function(e){ downAt=[e.clientX,e.clientY]; },true);
+    document.addEventListener('click',function(e){
+      var bed=e.target && e.target.closest && e.target.closest('#nsPanel .ns-room-bed[data-worker]'); if(!bed || !downAt) return;
+      if(Math.abs(e.clientX-downAt[0])+Math.abs(e.clientY-downAt[1])>6) return;
+      peekDream(bed,6);
+    },true);
+  })();
   window.nsRefreshDreams=function(){
-    if(document.hidden || window.__nsOverlayOpen!==true)return;
-    document.querySelectorAll('#nsPanel .ns-room-bed[data-worker]').forEach(refreshBedDream);
+    if(document.hidden || window.__nsOverlayOpen!==true) return;
+    var beds=[].slice.call(document.querySelectorAll('#nsPanel .ns-room-bed[data-worker]'));
+    if(!beds.length) return;
+    var plan=planDreams(beds.map(function(el){ return el.getAttribute('data-worker')||''; }));
+    var now=Date.now(), rooms={};
+    beds.forEach(function(el){
+      var name=el.getAttribute('data-worker')||'', phones=dreamPhones(name);
+      refreshBedDream(el,plan[name],phones);
+      el.__phones=phones;
+      var room=el.closest('.ns-room-main')?'main':'nmp';
+      (rooms[room]=rooms[room]||[]).push(el);
+    });
+    Object.keys(rooms).forEach(function(k){
+      var list=rooms[k], R=dreamRooms[k]||(dreamRooms[k]={i:-1,on:null,t:now+4000});
+      if(R.on && !R.on.isConnected) R.on=null;
+      var free=function(el){ return !el.__phones && !el.classList.contains('ns-dream-quiet') && !el.classList.contains('ns-duvet-off') && !el.classList.contains('nsdrag'); };
+      var peek=dreamPeek.el && dreamPeek.until>now && list.indexOf(dreamPeek.el)>=0 ? dreamPeek.el : null;
+      if(!peek && now>=R.t){
+        if(R.on){ R.on=null; R.t=now+22000+Math.floor(Math.random()*18000); }
+        else {
+          var ok=list.filter(free);
+          if(ok.length){ R.i=(R.i+1)%ok.length; R.on=ok[R.i]; R.t=now+9000; }
+          else R.t=now+5000;
+        }
+      }
+      list.forEach(function(el){ dreamOn(el, el.__phones || el===peek || (!peek && el===R.on && free(el))); });
+    });
   };
+  /* The sleeper, drawn into the bed picture (nsApplyWorkerColour, nsBedParts): a
+     man's or a woman's figure under the (simulated) duvet, the feet in socks in
+     their card's look out of its end, the head their emoji on the pillow. When a
+     cat pulls the duvet off (js/nakts-pets.js, .ns-duvet-off) the whole person
+     shows: T-shirt and socks in the card's look, their own trousers colour,
+     emoji-yellow arms. This element only carries who they are (is-f, --pants). */
+  var SLEEPER_PANTS=['#3b4048','#2c3a55','#48648c','#80734f','#6f747c','#24272c','#55604a','#6b4a3a'];
+  // Latvian names and surnames: a man's end in -s or -š, a woman's in -a or -e.
+  // Names that break the rule (men's in -o or Russian men's in -a, women's in -s):
+  var MEN_NAMES=/^(raivo|ivo|oto|otto|hugo|marko|aivo|arvo|valdo|niko|nikita|ilja|iļja|miša|saša|kostja|vova|griša|daņa|ļova|luka|kuzma|foma)$/;
+  var WOMEN_NAMES=/^(iness|ines|agnes|agneses|doris|dolores|mercedes|frances|iris|lilits)$/;
+  function isWoman(name){
+    var parts=String(name||'').toLowerCase().split(/[\s.-]+/).map(function(t){ return t.replace(/[^a-zāčēģīķļņōŗšūž]/g,''); }).filter(function(t){ return t.length>1; });
+    if(!parts.length) return false;
+    if(MEN_NAMES.test(parts[0])) return false;
+    if(WOMEN_NAMES.test(parts[0])) return true;
+    var man=0, woman=0;
+    parts.forEach(function(t){ if(/[sš]$/.test(t)) man++; else if(/[ae]$/.test(t)) woman++; });
+    if(man!==woman) return woman>man;
+    return !/[sš]$/.test(parts[parts.length-1]);
+  }
+  window.__nsIsWoman=isWoman;
+  function sleeperHTML(name){
+    var first=String(name||'').trim().split(/\s+/)[0]||'', female=isWoman(name);
+    var h=0; for(var i=0;i<first.length;i++) h=(h*31+first.charCodeAt(i))>>>0;
+    return '<span class="ns-sleeper'+(female?' is-f':'')+'" aria-hidden="true" style="--pants:'+SLEEPER_PANTS[h%SLEEPER_PANTS.length]+'"></span>';
+  }
   function roomBed(roomIdx, slot, posCls){
     if(!slot){
       return '<div class="ns-room-bed ns-room-bed-empty '+posCls+'" data-i="'+roomIdx+'" data-empty="1" style="'+roomSlotStyle(posCls)+'">'
@@ -1731,6 +2561,7 @@
       +roomBedPicture(c.bed)
       +'<span class="ns-room-bed-skin is-pillow" aria-hidden="true"></span>'
       +'<span class="ns-room-bed-skin is-blanket" aria-hidden="true"></span>'
+      +sleeperHTML(slot.w.name)
       +roomDevices(slot)
       +(em?'<div class="ns-room-bed-head-emoji">'+escHtml(em)+'</div>':'')
       +'<span class="ns-bed-dream" aria-hidden="true"></span>'
@@ -1867,7 +2698,7 @@
       +'<div class="ns-room-shell">'
       +roomPicture('main','base')
       +'<div class="ns-room-scene-content">'
-      +roomWalker('main')
+      +(window.NaktsPets ? '' : roomWalker('main'))
       +roomBed(0, picked[0], 'is-left')
       +roomBed(1, picked[1], 'is-right-top')
       +roomBed(2, picked[2], 'is-right-bottom')
@@ -1880,7 +2711,7 @@
       +'<div class="ns-room-shell">'
       +roomPicture('nmp','base')
       +'<div class="ns-room-scene-content">'
-      +roomWalker('nmp')
+      +(window.NaktsPets ? '' : roomWalker('nmp'))
       +roomBed(3, picked[3], 'is-center')
       +'</div>'
       +roomPicture('nmp','foreground')
@@ -1909,7 +2740,7 @@
     var paddingY=(parseFloat(panelStyle.paddingTop)||0)+(parseFloat(panelStyle.paddingBottom)||0);
     var paddingX=(parseFloat(panelStyle.paddingLeft)||0)+(parseFloat(panelStyle.paddingRight)||0);
     var viewportHeight=window.visualViewport ? window.visualViewport.height : innerHeight;
-    var availableH=Math.max(1,viewportHeight-24-shellChrome-paddingY-12);
+    var availableH=Math.max(1,viewportHeight-24-shellChrome-paddingY);
     var availableW=Math.max(1,panel.clientWidth-paddingX);
     // Measure visible controls rather than transformed room artwork's overflow.
     var bounds=canvas.getBoundingClientRect();
@@ -1924,9 +2755,22 @@
     // tall column to screen height shrinks every control and history row.
     var scrollable=document.documentElement.classList.contains('mk-mobile-shell');
     var scale=Math.min(1,scrollable?1:availableH/Math.max(1,naturalH),availableW/Math.max(1,naturalW));
+    /* Shrunk to fit the height: the canvas is laid out wider (by as much as it
+       shrinks) so it still fills the panel's width, no empty sides. The rooms
+       are fitted again for the new width (once). */
+    if(!scrollable && !fitNightCanvas._again && typeof fitRoomBlocksNow==='function'){
+      var baseW=Math.max(1,panel.clientWidth-paddingX);
+      var wantW=scale<.995 ? Math.floor(baseW/Math.max(.55,availableH/Math.max(1,naturalH))) : baseW;
+      if(Math.abs(wantW-canvas.offsetWidth)>3){
+        canvas.style.width=wantW>baseW ? wantW+'px' : '';
+        fitNightCanvas._again=true;
+        try{ fitRoomBlocksNow(); } finally { fitNightCanvas._again=false; }
+        return;
+      }
+    }
     var offset=Math.max(0,(availableW-naturalW*scale)/2);
     canvas.style.transform='translateX('+offset+'px) scale('+scale+')';
-    panel.style.height=Math.ceil(naturalH*scale+paddingY+12)+'px';
+    panel.style.height=Math.ceil(naturalH*scale+paddingY)+'px';
     if(!scrollable) panel.scrollTop=0;
     panel.scrollLeft=0;
     document.documentElement.style.setProperty('--ns-scene-scale',String(scale));
@@ -1968,14 +2812,16 @@
         var blockW = Math.max(0,(stage && stage.clientWidth ? stage.clientWidth-stagePad : 0)) || panel.clientWidth || block.clientWidth || naturalW;
         var narrow = blockW < 640;
         var catW = (cat && !narrow) ? (cat.offsetWidth || 220) : 0;
-        var statsW = (stats && !narrow) ? (stats.offsetWidth || 370) : 0;
+        // The list's own width (before any share of spare room given below).
+        if(stats && !stats.__base) stats.__base = stats.offsetWidth || 318;
+        var statsW = (stats && !narrow) ? stats.__base : 0;
         var stageGap = stageStyle ? (parseFloat(stageStyle.columnGap)||parseFloat(stageStyle.gap)||16) : 16;
         var occupiedColumns = 1 + (statsW ? 1 : 0) + (catW ? 1 : 0);
         var gapW = Math.max(0,occupiedColumns-1)*stageGap;
         // Keep a small inner reserve for Windows display scaling/rounding. The
         // former hard-coded 350px stats width under-counted the real 370px
         // column and pushed the bed/board behind the panel's clipped edge.
-        var edgeReserve = narrow ? 0 : 10;
+        var edgeReserve = narrow ? 0 : 4;
         var availW = Math.max(120, blockW - catW - statsW - gapW - edgeReserve);
         var panelRect = panel.getBoundingClientRect();
         var fitRect  = fit.getBoundingClientRect();
@@ -1983,10 +2829,16 @@
         var headRect = headEl ? headEl.getBoundingClientRect() : null;
         var bottomReserve = 35;
         var availH   = Math.max(80, panelRect.bottom - fitRect.top - bottomReserve);
-        var widthScale = Math.min(1, availW / naturalW);
-        var scale = Math.min(widthScale, availH / naturalH);
-        // Preserve the source artwork proportions; fit the whole scene afterwards.
-        scale=widthScale;
+        var widthScale = Math.min(1.35, availW / naturalW);
+        var scale = widthScale;
+        // The rooms also fill the row's height (set by the list and the board
+        // beside them) instead of leaving it empty under them.
+        var cat0 = cat ? cat.querySelector('.ns-bedcare-popover') || cat.querySelector('.ns-bedcare-perch-copy') : null;
+        var rowH = cat0 ? cat0.getBoundingClientRect().bottom - (stage ? stage.getBoundingClientRect().top : fitRect.top) : 0;
+        if(!narrow && rowH > 120){
+          var roomTop = stage ? fitRect.top - (parseFloat(fit.style.marginTop)||0) - stage.getBoundingClientRect().top : 0;
+          scale = Math.min(widthScale, (rowH - roomTop - 10) / naturalH);
+        } else scale = Math.min(1, widthScale);
         if(!isFinite(scale) || scale <= 0) scale = 1;
         var roomsW = Math.ceil(naturalW * scale);
         var roomsH = Math.ceil(naturalH * scale);
@@ -2001,6 +2853,19 @@
         layout.style.transform = 'scale(' + scale + ')';
         fit.style.width  = roomsW + 'px';
         fit.style.height = roomsH + 'px';
+        // Width the rooms cannot use (they are held by the row's height): the
+        // list takes up to 110 px of it, the rest spreads between the columns.
+        if(stats && !narrow){
+          var spareW = Math.max(0, Math.floor(availW - roomsW));
+          var give = Math.min(110, spareW);
+          ['width','min-width','flex-basis'].forEach(function(k){ stats.style.setProperty(k, (stats.__base + give) + 'px', 'important'); });
+          if(stage) stage.style.justifyContent = spareW - give > 6 ? 'space-between' : '';
+        } else if(stats){
+          ['width','min-width','flex-basis'].forEach(function(k){ stats.style.removeProperty(k); });
+        }
+        // Any height the rooms cannot use is shared above and below them.
+        var spare = (!narrow && rowH > 120 && stage) ? rowH - (fitRect.top - (parseFloat(fit.style.marginTop)||0) - stage.getBoundingClientRect().top) - roomsH - 10 : 0;
+        fit.style.marginTop = spare > 4 ? Math.round(spare / 2) + 'px' : '';
         if(headEl){
           headEl.style.width = roomsW + 'px';
           headEl.style.textAlign = 'center';
@@ -2019,6 +2884,9 @@
         if(cat) {
           cat.style.width  = (narrow ? 150 : 220) + 'px';
           cat.style.height = (narrow ? 210 : 250) + 'px';
+          // Room below it for the bed-linen note exactly, not a fixed reserve
+          // (that left an empty band under the whole row).
+          if(!narrow && careHeight > 0) cat.style.setProperty('margin-bottom', Math.max(0, Math.ceil(careHeight - 250)) + 'px', 'important');
         }
       });
       fitNightCanvas(panel,canvas);
@@ -2307,7 +3175,7 @@
         +'<div class="nsc-full-top">'
         +'<span class="nsc-full-name">'+nm+'</span>'
         +'</div>'
-        +'<div class="nsc-full-time">'+escHtml(s.ss)+' – '+escHtml(s.es)+'</div>'
+        +'<div class="nsc-full-time">'+nsClock(s)+'<span>'+escHtml(s.ss)+' – '+escHtml(s.es)+'</span></div>'
         +(desc?'<div class="nsc-full-desc"><span>'+desc+'</span></div>':'')
         +'<div class="nsc-full-meta">'
         +'<span class="nsc-full-fat '+tr.cls+'" style="--nsc-fat-color:'+fatCol+';--nsc-fat-pct:'+fatPct+'%"><span class="nsc-fat-label">Nogurums</span><span class="nsc-fat-value" style="color:'+fatCol+' !important">'+fatPct+'% '+tr.icon+'</span></span>'
@@ -2453,183 +3321,318 @@
   if(window.visualViewport) window.visualViewport.addEventListener('resize', function(){ scheduleFitRoomBlocks(document); }, { passive:true });
   if(document.fonts) document.fonts.ready.then(function(){ scheduleFitRoomBlocks(document); });
 
-  // ── Drag & Drop ── pure mouse + touch, zero HTML5 drag API ───────────────
+  // ── Drag & Drop ── pointer events, one layout read when a drag starts ───
+  /* Press and move: the bed (or card) lifts into a small ghost that follows the
+     pointer; the target under it lights up with a ring (no filters). Drop: the
+     two beds glide into each other's place (FLIP, nothing rebuilt) and a handful
+     of confetti pops. A press without a move on a bed opens its style picker. */
   function drag(el){
     if(el._dragWired) return;
     el._dragWired=true;
-    var dragging=null, touching=null, lastH=null, ghost=null, rafId=null, mx=0, my=0;
-    var touchHoldTimer=null, touchStartX=0, touchStartY=0, touchDragReady=false, touchMoved=false;
-
-    function allDraggables(){ return el.querySelectorAll('.nsc-full-card, .ns-room-bed[data-i]'); }
-    function clearOver(){ allDraggables().forEach(function(x){x.classList.remove('nsover');}); lastH=null; }
-    function killGhost(){ cancelAnimationFrame(rafId); if(ghost){ghost.remove();ghost=null;} }
-    function moveGhost(){
-      if(ghost) ghost.style.transform='translate3d('+(mx+18)+'px,'+(my-28)+'px,0) scale(1.06) rotate(-2deg)';
-    }
-
-    function startGhost(c){
-      killGhost();
-      var nm=c.classList.contains('nsc-full-card')
-        ? (c.querySelector('.nsc-full-name') && c.querySelector('.nsc-full-name').textContent)
-        : (c.getAttribute('data-name')||'');
-      var accent='';
-      if(c.classList.contains('ns-room-bed')){
-        accent = (c.getAttribute('data-accent') || '').trim();
-      } else {
-        accent = (c.style.getPropertyValue('--nsc-accent') || '').trim();
+    var SEL='.nsc-full-card, .ns-room-bed[data-i]';
+    var pend=null, active=null, ghost=null, raf=0, mx=0, my=0, over=null, spots=null, holdTimer=0;
+    function isBed(n){ return !!(n && n.classList && n.classList.contains('ns-room-bed')); }
+    function setOver(t){
+      if(over===t) return;
+      if(over) over.classList.remove('nsover');
+      over=t;
+      if(over){
+        over.classList.add('nsover');
+        // A little sparkle each time a new place is reached (from the position read at the start).
+        var sp=spots && spots.filter(function(s){ return s.n===over; })[0];
+        if(sp) nsCheer(sp.r, (active&&active.getAttribute('data-accent'))||'', 5);
       }
-      accent = accent || '#56d7e6';
-      ghost=document.createElement('div');
-      ghost.textContent=nm||'?';
-      ghost.style.cssText='position:fixed;top:0;left:0;pointer-events:none;z-index:99999;'
-        +'padding:6px 16px;border-radius:12px;font-size:17px;font-weight:900;'
-        +'background:#10171b;border:2px solid '+accent+';color:'+accent+';'
-        +'box-shadow:5px 7px 14px rgba(0,0,0,.52),inset 1px 1px 0 rgba(255,255,255,.08);will-change:transform;white-space:nowrap;';
-      document.body.appendChild(ghost);
-      moveGhost();
+      if(ghost) ghost.classList.toggle('is-over',!!t);
     }
-
-    function clearTouchHold(){
-      if(touchHoldTimer){
-        clearTimeout(touchHoldTimer);
-        touchHoldTimer=null;
-      }
-    }
-
-    function updateOver(ox,oy){
-      var o=document.elementFromPoint(ox,oy);
-      var active=dragging||touching;
-      var target=o&&(o.closest('.nsc-full-card') || o.closest('.ns-room-bed[data-i]'));
-      if(target&&(!el.contains(target)||target===active))target=null;
-      if(target && active){
-        var activeRoom=active.classList && active.classList.contains('ns-room-bed');
-        var targetRoom=target.classList && target.classList.contains('ns-room-bed');
-        var activeCard=active.classList && active.classList.contains('nsc-full-card');
-        var targetCard=target.classList && target.classList.contains('nsc-full-card');
-        if(!((activeRoom && targetRoom) || (activeCard && targetCard))) target=null;
-      }
-      if(!target && active && active.classList && active.classList.contains('ns-room-bed')){
-        target = nearestRoomBed(ox, oy, active);
-      }
-      if(lastH&&lastH!==target)lastH.classList.remove('nsover');
-      lastH=target;
-      if(target){ target.classList.add('nsover'); }
-    }
-
-    function nearestRoomBed(x,y,exclude){
-      var beds=[].slice.call(el.querySelectorAll('.ns-room-bed[data-i]')).filter(function(b){ return b!==exclude; });
-      if(!beds.length) return null;
-      var best=null, bestDist=Infinity;
-      beds.forEach(function(b){
-        var r=b.getBoundingClientRect();
-        var cx=r.left + r.width/2;
-        var cy=r.top + r.height/2;
-        var dx=cx-x, dy=cy-y;
-        var dist=Math.sqrt(dx*dx+dy*dy);
-        var reach=Math.max(r.width, r.height) * 0.95;
-        if(dist <= reach && dist < bestDist){
-          best=b; bestDist=dist;
-        }
+    // Every target's place once, at the start: nothing is measured while moving.
+    function measure(src){
+      var bed=isBed(src);
+      spots=[].slice.call(el.querySelectorAll(bed?'.ns-room-bed[data-i]':'.nsc-full-card')).filter(function(n){ return n!==src; }).map(function(n){
+        var r=n.getBoundingClientRect();
+        return { n:n, x:r.left+r.width/2, y:r.top+r.height/2, reach:Math.max(r.width,r.height)*.95, r:r };
       });
-      return best;
     }
-
-    // ── Mouse ──────────────────────────────────────────────────────────────
-    el.addEventListener('mousedown',function(e){
-      var c=e.target.closest('.nsc-full-card, .ns-room-bed[data-i]'); if(!c||e.button!==0)return;
-      e.preventDefault();
-      dragging=c; mx=e.clientX; my=e.clientY;
-      c.classList.add('nsdrag');
-      startGhost(c);
-    });
-    document.addEventListener('mousemove',function(e){
-      if(!dragging)return;
+    function pick(x,y){
+      if(!spots || !active) return null;
+      var best=null, bd=Infinity;
+      if(isBed(active)){
+        spots.forEach(function(s){ var dx=s.x-x, dy=s.y-y, d=Math.sqrt(dx*dx+dy*dy); if(d<=s.reach && d<bd){ best=s; bd=d; } });
+      } else {
+        spots.forEach(function(s){ if(x>=s.r.left && x<=s.r.right && y>=s.r.top && y<=s.r.bottom) best=s; });
+      }
+      return best ? best.n : null;
+    }
+    function placeGhost(){ if(ghost) ghost.style.transform='translate3d('+mx+'px,'+my+'px,0)'; }
+    function makeGhost(src){
+      ghost=document.createElement('div');
+      ghost.className='ns-lift-ghost'+(isBed(src)?' is-bed':'');
+      var accent=(src.getAttribute('data-accent')||src.style.getPropertyValue('--nsc-accent')||'#56d7e6').trim();
+      ghost.style.setProperty('--ghost-accent',accent);
+      var name=isBed(src) ? (src.getAttribute('data-name')||'') : ((src.querySelector('.nsc-full-name')||{}).textContent||'');
+      var img=isBed(src) && src.querySelector('.ns-room-bed-picture img');
+      ghost.innerHTML=(img?'<img alt="" draggable="false" src="'+escHtml(img.currentSrc||img.src)+'">':'')+'<b>'+escHtml(String(name).trim().split(/\s+/)[0]||'?')+'</b>';
+      document.body.appendChild(ghost);
+      placeGhost();
+    }
+    function begin(src){
+      active=src;
+      src.classList.add('nsdrag');
+      measure(src);
+      makeGhost(src);
+      document.documentElement.classList.add('ns-dragging');
+    }
+    function frame(){ raf=0; placeGhost(); setOver(pick(mx,my)); }
+    function finish(commit){
+      clearTimeout(holdTimer);
+      if(raf){ cancelAnimationFrame(raf); raf=0; }
+      var src=active, target=commit ? over : null;
+      pend=null; active=null; spots=null;
+      document.documentElement.classList.remove('ns-dragging');
+      if(!src) return;
+      src.classList.remove('nsdrag');
+      setOver(null);
+      var g=ghost; ghost=null;
+      var to=(target||src).getBoundingClientRect();
+      if(g){
+        // The ghost settles into its bed (or back home) and fades.
+        g.classList.add('is-dropping');
+        g.style.transform='translate3d('+(to.left+to.width/2)+'px,'+(to.top+to.height/2)+'px,0)';
+        setTimeout(function(){ g.remove(); },220);
+      }
+      if(target){
+        var accent=src.getAttribute('data-accent')||src.style.getPropertyValue('--nsc-accent')||'';
+        if(isBed(src)) swapRoom(+src.dataset.i,+target.dataset.i);
+        else swap(+src.dataset.i,+target.dataset.i);
+        nsCheer(to,accent);
+      }
+    }
+    el.addEventListener('pointerdown',function(e){
+      if(e.pointerType==='mouse' && e.button!==0) return;
+      var c=e.target.closest(SEL);
+      if(!c || !el.contains(c) || e.target.closest('button, a, input, select, label, .ns-bed-picker')) return;
+      if(e.pointerType==='mouse') e.preventDefault();   // no text selection while dragging
+      pend={ c:c, x:e.clientX, y:e.clientY, id:e.pointerId, ready:e.pointerType==='mouse' };
       mx=e.clientX; my=e.clientY;
-      cancelAnimationFrame(rafId);
-      rafId=requestAnimationFrame(function(){ moveGhost(); updateOver(mx,my); });
+      clearTimeout(holdTimer);
+      // Touch: a short hold before a drag, so a swipe still scrolls the panel.
+      if(!pend.ready) holdTimer=setTimeout(function(){ if(pend) pend.ready=true; },170);
     });
-    document.addEventListener('mouseup',function(){
-      if(!dragging)return;
-      var target=lastH;
-      if(dragging.classList.contains('ns-room-bed')) target = nearestRoomBed(mx, my, dragging) || target;
-      dragging.classList.remove('nsdrag'); clearOver(); killGhost();
-      if(target){
-        if(dragging.classList.contains('ns-room-bed')) swapRoom(+dragging.dataset.i,+target.dataset.i);
-        else swap(+dragging.dataset.i,+target.dataset.i);
+    el.addEventListener('pointermove',function(e){
+      if(!pend || e.pointerId!==pend.id) return;
+      mx=e.clientX; my=e.clientY;
+      if(!active){
+        if(Math.abs(mx-pend.x)+Math.abs(my-pend.y)<6) return;
+        if(!pend.ready){ pend=null; clearTimeout(holdTimer); return; }
+        try{ el.setPointerCapture(e.pointerId); }catch(_e){}
+        begin(pend.c);
       }
-      dragging=null;
-    });
-
-    // ── Touch ──────────────────────────────────────────────────────────────
-    el.addEventListener('touchstart',function(e){
-      var c=e.target.closest('.nsc-full-card, .ns-room-bed[data-i]'); if(!c)return;
-      touching=c;
-      touchDragReady=false;
-      touchMoved=false;
-      touchStartX=mx=e.touches[0].clientX;
-      touchStartY=my=e.touches[0].clientY;
-      clearTouchHold();
-      touchHoldTimer=setTimeout(function(){
-        if(!touching || touchMoved) return;
-        touchDragReady=true;
-        touching.classList.add('nsdrag');
-        startGhost(touching);
-      }, 180);
-    },{passive:true});
-    el.addEventListener('touchmove',function(e){
-      if(!touching)return;
-      mx=e.touches[0].clientX; my=e.touches[0].clientY;
-      if(!touchDragReady){
-        if(Math.abs(mx-touchStartX)>10 || Math.abs(my-touchStartY)>10){
-          touchMoved=true;
-          clearTouchHold();
-          touching=null;
-        }
-        return;
-      }
-      cancelAnimationFrame(rafId);
-      rafId=requestAnimationFrame(function(){ moveGhost(); updateOver(mx,my); });
       e.preventDefault();
-    },{passive:false});
-    el.addEventListener('touchend',function(e){
-      clearTouchHold();
-      if(!touching)return;
-      if(!touchDragReady){
-        touching=null;
-        return;
-      }
-      var t=e.changedTouches[0];
-      mx=t.clientX; my=t.clientY;
-      updateOver(t.clientX,t.clientY);
-      var target=lastH;
-      if(touching.classList.contains('ns-room-bed')) target = nearestRoomBed(mx, my, touching) || target;
-      touching.classList.remove('nsdrag'); clearOver(); killGhost();
-      if(target){
-        if(touching.classList.contains('ns-room-bed')) swapRoom(+touching.dataset.i,+target.dataset.i);
-        else swap(+touching.dataset.i,+target.dataset.i);
-      }
-      touching=null;
-      touchDragReady=false;
+      if(!raf) raf=requestAnimationFrame(frame);
     });
-    el.addEventListener('touchcancel',function(){
-      clearTouchHold();
-      if(!touching)return;
-      touching.classList.remove('nsdrag'); clearOver(); killGhost(); touching=null;
-      touchDragReady=false;
-    },{passive:true});
+    el.addEventListener('pointerup',function(e){
+      if(!pend || e.pointerId!==pend.id) return;
+      var src=pend.c;
+      if(active){ mx=e.clientX; my=e.clientY; setOver(pick(mx,my)); finish(true); return; }
+      pend=null; clearTimeout(holdTimer);
+    });
+    // Vēsture | Gultas and the bed studio (a bed itself is only for dragging).
+    el.addEventListener('click',function(e){
+      var t=e.target.closest('#nsStatsBox button'); if(!t) return;
+      if(studioClick(t)){ e.preventDefault(); e.stopPropagation(); }
+    });
+    el.addEventListener('pointercancel',function(){ finish(false); });
+    el.addEventListener('lostpointercapture',function(){ if(active) finish(false); });
   }
 
-  function swap(a,b){
-    var w=st.sl.map(function(s){return s.w;});
-    var t=w[a];w[a]=w[b];w[b]=t;
-    st.sl=calc(w,st.sh,st.ei);
-    saveCurrentDayState();
-    render(true);
-    try{ if(window.__nsBarSync) window.__nsBarSync(); }catch(_e){}
-    setTimeout(function(){
-      var c=document.querySelectorAll('#nsPanelContent .nsc-full-card');
-      [a,b].forEach(function(i){if(c[i]){c[i].classList.add('nsswapped');setTimeout(function(){c[i]&&c[i].classList.remove('nsswapped');},600);}});
-    },40);
+  /* A small cheer where something landed: a dozen specks, CSS only,
+     gone in a second; fewer on lite motion, none on reduced. */
+  function nsCheer(rect,accent,count){
+    var lvl=document.documentElement.getAttribute('data-motion')||'full';
+    if(lvl==='reduced' || !rect) return;
+    var n=Math.min(count||14, lvl==='lite'?6:14), mini=n<8, cols=[(accent||'#56d7e6').trim(),'#ffd166','#6dd58c','#f4f2ec','#ff8a5c'], h='';
+    for(var i=0;i<n;i++){
+      var a=-Math.PI/2+(i/(n-1)-.5)*Math.PI*1.4, d=30+Math.random()*46;
+      h+='<i style="--x:'+Math.round(Math.cos(a)*d)+'px;--y:'+Math.round(Math.sin(a)*d)+'px;--r:'+Math.round(Math.random()*420-210)+'deg;--c:'+cols[i%cols.length]+';--d:'+Math.round(Math.random()*70)+'ms'+(i%3?'':';border-radius:50%')+'"></i>';
+    }
+    var box=document.createElement('div');
+    box.className='ns-cheer'+(mini?' is-mini':''); box.setAttribute('aria-hidden','true');
+    box.style.left=(rect.left+rect.width/2)+'px'; box.style.top=(rect.top+rect.height*.42)+'px';
+    box.innerHTML=h;
+    document.body.appendChild(box);
+    setTimeout(function(){ box.remove(); },1150);
+  }
+  // A bed glides from where it was to where it now is (transform only).
+  function nsGlide(bed,from,to){
+    if(!bed.animate || (document.documentElement.getAttribute('data-motion')||'full')==='reduced') return;
+    var p=bed.parentElement, k=p && p.offsetWidth ? p.getBoundingClientRect().width/p.offsetWidth : 1;
+    var dx=(from.left+from.width/2-(to.left+to.width/2))/(k||1), dy=(from.top+from.height/2-(to.top+to.height/2))/(k||1);
+    if(Math.abs(dx)+Math.abs(dy)<1) return;
+    var ease='cubic-bezier(.2,.9,.25,1.12)';
+    try{ var v=getComputedStyle(document.documentElement).getPropertyValue('--mk-ease-spring').trim(); if(v) ease=v; }catch(_e){}
+    try{ bed.animate([{translate:dx+'px '+dy+'px'},{translate:'0px 0px'}],{duration:540,easing:ease}); }
+    catch(_e){ try{ bed.animate([{translate:dx+'px '+dy+'px'},{translate:'0px 0px'}],{duration:480,easing:'cubic-bezier(.2,.9,.25,1.12)'}); }catch(_e2){} }
+  }
+
+  /* Gultu studija: in the history box's place, on the same switch as Vēsture
+     (Veļa / Spilveni / Rotaļlietas). No words: the sleepers are their own small
+     beds with their emoji, the things are pictures in their own shapes, and a
+     page holds as many as fit whole, as big as the space allows. Every pick
+     shows on the bed at once. */
+  var _studio={ name:'', cat:'linen', page:{} };
+  function studioBeds(){ return [].slice.call(document.querySelectorAll('#nsPanel .ns-room-bed[data-worker]')); }
+  function titleName(n){ var f=String(n||'').trim().split(/\s+/)[0]||''; return f.charAt(0).toUpperCase()+f.slice(1).toLowerCase(); }
+  function sleeperRgb(name,skin){
+    var colour=getCol(name,skin);
+    return colour.rgb || (/^#[0-9a-f]{6}$/i.test(colour.accent||'') ? [1,3,5].map(function(i){ return parseInt(colour.accent.slice(i,i+2),16); }).join(',') : '120,170,200');
+  }
+  // Groups follow one another (printed, then fabric, then the rest); "none" first.
+  var STUDIO_ORDER={ '':-2, c:-1, k:-1, x:0, p:1, f:2, o:3, a:0, s:1 };
+  function studioItems(cat,skin){
+    var list, cur, key;
+    if(cat==='linen'){
+      list=BED_STYLES.map(function(b){ return { id:b[0], label:b[1], group:b[0]?b[2]:'', src:'assets/rooms/bed-neutral-256.webp', linen:true }; });
+      cur=bedStyleOf(skin); key='bed';
+    } else if(cat==='pillows'){
+      list=BED_PILLOWS.map(function(p,i){ return { id:String(i), label:p[1], group:p[4]||'', src:p[0]?bedAccSrc(p[0]):'', tint:p[3]?cushionRgb(p[0]):'' }; });
+      cur=String(+(skin.bq||0)||0); key='bq';
+    } else {
+      list=BED_TOYS.map(function(t,i){ return { id:String(i), label:t[1], group:/^toy-(star|heart|cloud)$/.test(t[0])?'s':(t[0]?'a':''), src:t[0]?bedAccSrc(t[0]):'', tint:false }; });
+      cur=String(+(skin.bp||0)||0); key='bp';
+    }
+    list=list.map(function(x,i){ x.n=i; return x; }).sort(function(x,y){ return (STUDIO_ORDER[x.group]-STUDIO_ORDER[y.group]) || (x.n-y.n); });
+    return { list:list, cur:cur, key:key };
+  }
+  /* animate: only when the person asked for it (a tab, a page, a sleeper); a rebuild
+     after saving or a new size shows the same things still, nothing jumps. */
+  function renderStudio(animate){
+    var box=document.getElementById('nsBedStudio'); if(!box) return;
+    box.classList.toggle('is-still',!animate);
+    var beds=studioBeds();
+    if(!beds.length){ box.innerHTML='<div class="ns-stats-load">Šonakt gultās neviena nav</div>'; return; }
+    if(!_studio.name || !beds.some(function(b){ return b.getAttribute('data-worker')===_studio.name; })) _studio.name=beds[0].getAttribute('data-worker');
+    var name=_studio.name;
+    var people='<div class="ns-studio-people" role="group" aria-label="Kura gulta">'+beds.map(function(b){
+      var w=b.getAttribute('data-worker'), im=b.querySelector('.ns-room-bed-picture img'), em=roomEmoji(w);
+      return '<button type="button" data-studio-person="'+escHtml(w)+'" aria-pressed="'+(w===name)+'" title="'+escHtml(titleName(w))+'" aria-label="'+escHtml(titleName(w))+'">'
+        +'<span class="ns-studio-av"><img alt="" draggable="false" src="'+escHtml(im?(im.currentSrc||im.src):'assets/rooms/bed-neutral-256.webp')+'"></span>'
+        +(em?'<span class="ns-studio-em" aria-hidden="true">'+escHtml(em)+'</span>':'')+'<b>'+escHtml(titleName(w))+'</b></button>';
+    }).join('')+'</div>';
+    box.innerHTML=people
+      +'<div class="ns-studio-page"></div>'
+      +'<div class="ns-studio-nav"><button type="button" class="ns-studio-arrow" data-studio-page="-1" aria-label="Iepriekšējās"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>'
+      +'<span class="ns-studio-dots" aria-hidden="true"></span>'
+      +'<button type="button" class="ns-studio-arrow" data-studio-page="1" aria-label="Nākamās"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button></div>';
+    var pageEl=box.querySelector('.ns-studio-page');
+    studioSwipe(pageEl);
+    // A new size (window, panel) lays the page out again, without the slide.
+    if(window.ResizeObserver){
+      var lastSize=''; if(_studio.ro) _studio.ro.disconnect();
+      _studio.ro=new ResizeObserver(function(){
+        var sz=pageEl.clientWidth+'x'+pageEl.clientHeight;
+        if(sz===lastSize || !pageEl.isConnected) return;
+        var first=!lastSize; lastSize=sz; if(!first) paintStudioPage(0,false);
+      });
+      _studio.ro.observe(pageEl);
+    }
+    paintStudioPage(0,animate);
+  }
+  /* Wheel or a sideways swipe turns the page (no scrolling anywhere). */
+  function studioSwipe(pageEl){
+    if(!pageEl) return;
+    var last=0, x0=null;
+    pageEl.addEventListener('wheel',function(e){
+      var d=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;
+      e.preventDefault();
+      if(Math.abs(d)<8 || Date.now()-last<380) return;
+      last=Date.now(); studioTurn(d>0?1:-1);
+    },{passive:false});
+    pageEl.addEventListener('pointerdown',function(e){ x0=e.pointerType==='mouse'?null:e.clientX; });
+    pageEl.addEventListener('pointerup',function(e){
+      if(x0==null) return; var dx=e.clientX-x0; x0=null;
+      if(Math.abs(dx)>40){ _studio.swiped=Date.now(); studioTurn(dx<0?1:-1); }
+    });
+  }
+  function studioTurn(d){
+    var k=_studio.cat, it=_studio.pages||1, pg=(_studio.page[k]||0)+d;
+    if(pg<0 || pg>=it) return;
+    _studio.page[k]=pg; paintStudioPage(d);
+  }
+  /* One page: the cells grow to fill the whole space (rows and columns counted
+     from the measured box), so nothing is cut and nothing is left empty. */
+  function paintStudioPage(dir,animate){
+    var box=document.getElementById('nsBedStudio'); if(!box) return;
+    var pageEl=box.querySelector('.ns-studio-page'); if(!pageEl) return;
+    var name=_studio.name, skin=(window.mkGetWorkerSkin && window.mkGetWorkerSkin(name)) || {}, rgb=sleeperRgb(name,skin);
+    var it=studioItems(_studio.cat,skin), list=it.list, linen=_studio.cat==='linen';
+    var W=pageEl.clientWidth, H=pageEl.clientHeight, g=6;
+    if(W<40 || H<40) return;
+    // Rows nearest to the target size, a cell never bigger than maxH.
+    var target=linen?84:72, maxH=linen?120:92, aspect=linen?256/364:1;
+    var rows=Math.max(1,Math.round((H+g)/(target+g))), cellH=Math.min(maxH,Math.floor((H-g*(rows-1))/rows));
+    var cols=Math.max(1,Math.floor((W+g)/(cellH*aspect+g))), cellW=Math.floor((W-g*(cols-1))/cols);
+    var per=cols*rows, pages=Math.max(1,Math.ceil(list.length/per)), k=_studio.cat;
+    if(_studio.page[k]==null){ var ci=list.map(function(x){ return x.id; }).indexOf(it.cur); _studio.page[k]=ci>0?Math.min(Math.floor(ci/per),Math.ceil(list.length/per)-1):0; }
+    var pg=Math.max(0,Math.min(pages-1,_studio.page[k]||0));
+    _studio.page[k]=pg; _studio.pages=pages;
+    pageEl.style.setProperty('--cols',cols); pageEl.style.setProperty('--rows',rows);
+    pageEl.style.setProperty('--cell-w',cellW+'px'); pageEl.style.setProperty('--cell-h',cellH+'px');
+    pageEl.className='ns-studio-page is-'+_studio.cat+(dir?(dir>0?' is-next':' is-prev'):(animate?'':' is-still'));
+    // The last page ends with the last things (it may repeat a few), never half empty.
+    var from=Math.max(0,Math.min(pg*per,list.length-per));
+    pageEl.innerHTML=list.slice(from,from+per).map(function(x,i){
+      return '<button type="button" style="--i:'+i+'" data-studio-pick="'+escHtml(x.id)+'" data-studio-key="'+it.key+'" aria-pressed="'+(x.id===it.cur)+'" title="'+escHtml(x.label)+'" aria-label="'+escHtml(x.label)+'">'
+        +(x.src?'<img alt="" draggable="false" data-src="'+escHtml(x.src)+'"'+(x.tint?' data-tint="'+x.tint+'"':'')+(x.linen?' data-linen="'+escHtml(x.id)+'"':'')+'>':'<i class="ns-studio-none" aria-hidden="true"></i>')+'</button>';
+    }).join('');
+    pageEl.querySelectorAll('img').forEach(function(im){
+      var src=im.getAttribute('data-src');
+      var set=im.getAttribute('data-linen'), tint=im.getAttribute('data-tint');
+      // Linen: the sleeper's own bed with the set on it; cushions: in their own colour.
+      if(set!=null){ tintedBed(rgb,src,128,linenOverlay(set,skin,rgb)).then(function(u){ if(im.isConnected) im.src=u; }).catch(function(){ im.src=src; }); return; }
+      if(!tint){ im.src=src; return; }
+      tintedBed(tint,src,160).then(function(u){ if(im.isConnected) im.src=u; }).catch(function(){ im.src=src; });
+    });
+    var dots=box.querySelector('.ns-studio-dots'), nav=box.querySelector('.ns-studio-nav');
+    nav.classList.toggle('is-single',pages<2);
+    var dh=''; for(var i=0;i<pages;i++) dh+='<i'+(i===pg?' class="is-on"':'')+'></i>';
+    dots.innerHTML=dh; dots.classList.toggle('is-many',pages>8);
+    box.querySelector('[data-studio-page="-1"]').disabled=pg<=0;
+    box.querySelector('[data-studio-page="1"]').disabled=pg>=pages-1;
+  }
+  function setStatsView(view,animate){
+    var box=document.getElementById('nsStatsBox'); if(!box) return;
+    // One switch: Vēsture, or a part of the bed (Veļa / Spilveni / Rotaļlietas).
+    var tab=view;
+    if(view!=='hist'){ if(view!=='beds') _studio.cat=view; tab=_studio.cat; view='beds'; }
+    // The studio lies over the history list (which keeps its place): the box never changes size.
+    _nsView=view; box.dataset.view=view;   // first: the head is measured in this view's own layout
+    var head=box.querySelector('.ns-stats-head');
+    if(head) box.style.setProperty('--ns-studio-top',(head.offsetTop+head.offsetHeight+4)+'px');
+    var bar=box.querySelector('.ns-view-switch');
+    if(bar){ bar.querySelectorAll('[data-ns-view]').forEach(function(b){ var on=b.getAttribute('data-ns-view')===tab; b.classList.toggle('is-on',on); b.setAttribute('aria-selected',String(on)); }); nsSegMove(bar,animate); }
+    if(view==='beds') renderStudio(!!animate);
+  }
+  function studioClick(t){
+    if(t.hasAttribute('data-ns-view')){ setStatsView(t.getAttribute('data-ns-view'),true); return true; }
+    if(t.hasAttribute('data-studio-person')){
+      if(t.getAttribute('aria-pressed')==='true') return true;
+      _studio.name=t.getAttribute('data-studio-person');
+      t.parentNode.querySelectorAll('button').forEach(function(b){ b.setAttribute('aria-pressed',String(b===t)); });
+      paintStudioPage(0,true); return true;
+    }
+    if(t.hasAttribute('data-studio-page')){ studioTurn(+t.getAttribute('data-studio-page')); return true; }
+    if(!t.hasAttribute('data-studio-pick')) return false;
+    if(_studio.swiped && Date.now()-_studio.swiped<400) return true;
+    var name=_studio.name, key=t.getAttribute('data-studio-key'), id=t.getAttribute('data-studio-pick'), patch={};
+    if(!name || typeof window.mkPatchWorkerSkin!=='function') return false;
+    patch[key]=(key==='bed') ? (id||null) : (+id ? id : null);
+    window.mkPatchWorkerSkin(name,patch);
+    t.parentNode.querySelectorAll('button').forEach(function(b){ b.setAttribute('aria-pressed',String(b===t)); b.classList.remove('is-picked'); });
+    void t.offsetWidth; t.classList.add('is-picked');   // a little spring on the chosen one
+    var bed=studioBeds().filter(function(b){ return b.getAttribute('data-worker')===name; })[0];
+    if(bed) nsCheer(bed.getBoundingClientRect(),bed.getAttribute('data-accent'));
+    // The sleeper's little bed follows (new linen shows there too).
+    setTimeout(function(){ var av=document.querySelector('#nsBedStudio [data-studio-person][aria-pressed="true"] img'), im=bed&&bed.querySelector('.ns-room-bed-picture img'); if(av&&im) av.src=im.currentSrc||im.src; },600);
+    return true;
   }
 
   function swapRoom(a,b){
@@ -2638,16 +3641,31 @@
     while(order.length<4) order.push('');
     var t=order[a]; order[a]=order[b]; order[b]=t;
     saveRoomOrder(order);
-    render();
-    setTimeout(function(){
-      [a,b].forEach(function(i){
-        var bed=document.querySelector('#nsPanelContent .ns-room-bed[data-i="'+i+'"]');
-        if(bed){
-          bed.classList.add('nsswapped');
-          setTimeout(function(){ bed && bed.classList.remove('nsswapped'); },700);
-        }
-      });
-    },40);
+    var panel=document.getElementById('nsPanelContent');
+    var A=panel && panel.querySelector('.ns-room-bed[data-i="'+a+'"]'), B=panel && panel.querySelector('.ns-room-bed[data-i="'+b+'"]');
+    if(!A || !B){ render(); return; }
+    /* The two beds trade places in the DOM (slot index, position, room) instead of
+       the whole panel being rebuilt, then glide from where they were. */
+    var ra=A.getBoundingClientRect(), rb=B.getBoundingClientRect();
+    var POS=/\bis-(?:left|right-top|right-bottom|center)\b/;
+    var pa=(A.className.match(POS)||[''])[0], pb=(B.className.match(POS)||[''])[0];
+    if(pa) A.classList.remove(pa); if(pb) B.classList.remove(pb);
+    if(pb) A.classList.add(pb); if(pa) B.classList.add(pa);
+    ['--room-x','--room-y','--room-bed-w','--room-bed-scale','--room-bed-z'].forEach(function(prop){
+      var va=A.style.getPropertyValue(prop), vb=B.style.getPropertyValue(prop);
+      if(vb) A.style.setProperty(prop,vb); else A.style.removeProperty(prop);
+      if(va) B.style.setProperty(prop,va); else B.style.removeProperty(prop);
+    });
+    A.setAttribute('data-i',String(b)); B.setAttribute('data-i',String(a));
+    var mark=document.createComment('');
+    A.parentNode.insertBefore(mark,A); B.parentNode.insertBefore(A,B); mark.parentNode.insertBefore(B,mark); mark.remove();
+    nsGlide(A,ra,A.getBoundingClientRect());
+    nsGlide(B,rb,B.getBoundingClientRect());
+    if(window.NaktsPets && window.NaktsPets.bedsMoved) window.NaktsPets.bedsMoved();   // the cats' duvet game stops, the beds are measured again
+    // What a rebuild would draw now: the next light render leaves the rooms alone.
+    _nsLastRoomHtml=roomLayout(st.sl);
+    var idle=window.requestIdleCallback || function(f){ return setTimeout(f,120); };
+    idle(function(){ try{ nsRenderStats(st.sl); }catch(_e){} });
   }
 
   function raffleEscape(value){

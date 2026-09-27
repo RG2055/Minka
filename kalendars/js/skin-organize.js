@@ -16,6 +16,36 @@
   // /rad opens on the pictures (Fons); the radiographers keep Gatavie first.
   var current = window.MINKA_APP === 'rad' ? 'background' : 'presets';
 
+  // Small-thumbnail settings of every picture effect (also used by the Būvētājs).
+  function thumbModes(ink, k) {
+    return {
+      '': null,
+      dither: { mode: 'bayer', ink: ink, paper: [6, 6, 6], normalize: true, contrast: 1.2, dot: 1 / k },
+      xray: { mode: 'xray', normalize: true, contrast: .95, sharpen: .2, dot: 1 / k },
+      focus: { mode: 'focus', normalize: true, contrast: 1.1, sharpen: .25, dot: 1 / k },
+      split: { mode: 'mono', normalize: true, contrast: 1.08, sharpen: .25, dot: 1 / k },
+      poster: { mode: 'poster', ink: ink, normalize: true, contrast: 1.12, sharpen: .3, dot: 1 / k },
+      led: { mode: 'led', ink: ink, normalize: true, contrast: 1.15, scale: k, dot: 1, cell: .8 },
+      mosaic: { mode: 'mosaic', normalize: true, contrast: 1.05, scale: k, dot: 1, cell: .8 },
+      bricks: { mode: 'bricks', normalize: true, contrast: 1.05, scale: k, dot: 1, cell: .8 },
+      pixelate: { mode: 'pixelate', normalize: true, contrast: 1.05, scale: k, dot: 1, cell: .8 },
+      pointillism: { mode: 'pointillism', normalize: true, contrast: 1.05, scale: k, dot: 1, cell: .8 },
+      lines: { mode: 'lines', ink: ink, normalize: true, contrast: 1.1, dot: 1 / k, cell: .8 },
+      cmyk: { mode: 'cmyk', normalize: true, contrast: 1.08, dot: 1 / k, cell: .8 },
+      riso: { mode: 'riso', ink: ink, normalize: true, contrast: 1.08, dot: 1 / k },
+      heatmap: { mode: 'heatmap', normalize: true, contrast: 1.08, dot: 1 / k },
+      threshold: { mode: 'threshold', ink: ink, normalize: true, contrast: 1.08, dot: 1 / k },
+      outline: { mode: 'outline', normalize: true, contrast: 1, sharpen: 0, dot: 1 / k },
+      posterize: { mode: 'posterize', normalize: true, contrast: 1.08, dot: 1 / k },
+      halftone: { mode: 'halftone', ink: ink, normalize: true, contrast: 1.15, scale: k, dot: 1 },
+      duotone: { mode: 'duotone', ink: ink, normalize: true, contrast: 1.05, dot: 1 / k },
+      ascii: { mode: 'ascii', ink: ink, normalize: true, contrast: 1.15, scale: k, dot: 1 },
+      ditherpaper: { mode: 'bayer', ink: ink.map(function (v) { return Math.round(v * .45); }), paper: [239, 236, 228], normalize: true, contrast: 1.2, dot: 1 / k },
+      dithercolor: { mode: 'palette', colors: 8, contrast: 1.06, dot: 1 / k }
+    };
+  }
+  window.MinkaEffectThumbModes = thumbModes;
+
   function organize(host) {
     if (!host || host.querySelector('.org-tabs')) return;
     var q = function (s) { return host.querySelector(s); };
@@ -104,20 +134,8 @@
       var src = m[2], cs = getComputedStyle(card);
       var ink = (cs.getPropertyValue('--mk-num-color').trim().split(',').map(Number));
       if (!(ink.length === 3 && ink.every(isFinite))) ink = [236, 234, 228];
-      var k = Math.max(1, Math.round(window.devicePixelRatio || 1)), box = [96, 96];
-      var modes = {
-        '': null,
-        dither: { mode: 'bayer', ink: ink, paper: [6, 6, 6], normalize: true, contrast: 1.2, dot: 1 / k },
-        xray: { mode: 'xray', normalize: true, contrast: .95, sharpen: .2, dot: 1 / k },
-        focus: { mode: 'focus', normalize: true, contrast: 1.1, sharpen: .25, dot: 1 / k },
-        split: { mode: 'mono', normalize: true, contrast: 1.08, sharpen: .25, dot: 1 / k },
-        poster: { mode: 'poster', ink: ink, normalize: true, contrast: 1.12, sharpen: .3, dot: 1 / k },
-        halftone: { mode: 'halftone', ink: ink, normalize: true, contrast: 1.15, scale: k, dot: 1 },
-        duotone: { mode: 'duotone', ink: ink, normalize: true, contrast: 1.05, dot: 1 / k },
-        ascii: { mode: 'ascii', ink: ink, normalize: true, contrast: 1.15, scale: k, dot: 1 },
-        ditherpaper: { mode: 'bayer', ink: ink.map(function (v) { return Math.round(v * .45); }), paper: [239, 236, 228], normalize: true, contrast: 1.2, dot: 1 / k },
-        dithercolor: { mode: 'palette', colors: 8, contrast: 1.06, dot: 1 / k }
-      };
+      var k = Math.max(1, Math.round(window.devicePixelRatio || 1)), box = [64, 64];   // small square tiles
+      var modes = thumbModes(ink, k);
       host.querySelectorAll('[data-pic-effect],[data-card-dither]').forEach(function (b) {
         var v = b.hasAttribute('data-card-dither') ? b.dataset.cardDither : b.dataset.picEffect, o = modes[v];
         b.classList.add('has-thumb');

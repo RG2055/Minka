@@ -21,8 +21,10 @@
   const dreams = new Set();
   function updateDream(el) {
     if (!el.isConnected) { dreamObserver?.unobserve(el); dreams.delete(el); return; }
+    // a bed's dream loads and plays only while it is that bed's turn to dream
+    const bed = el.closest ? el.closest('.ns-room-bed') : null;
     const visible = !document.hidden && hostVisible && !expanded &&
-      !!overlay?.classList.contains('open') && el.__dreamInView === true;
+      !!overlay?.classList.contains('open') && el.__dreamInView === true && (!bed || bed.classList.contains('is-dreaming'));
     el.classList.toggle('is-in-view', visible);
     if (!visible) return;
     const film = el.querySelector('.ns-dream-film');

@@ -146,5 +146,43 @@
     if (root.MINKA_APP !== 'rad') return v.coffeeMode;
     return v.coffeeExplicit ? v.coffeeMode : 0;
   }
-  root.MinkaCardFaceModel = { faces: faces, parts: parts, clean: clean, preset: preset, pack: pack, unpack: unpack, fitPart: fitPart, symbolPlacement: symbolPlacement, coffeeColors: coffeeColors, effectiveCoffeeMode: effectiveCoffeeMode };
+  /* Analog timer placement. The dial (31 % of the card at scale 1) is much bigger
+     than the digital chip a layout was drawn for, so where it would cover another
+     element it moves to the nearest free spot (or gets a little smaller). Sizes are
+     the elements' measured boxes at scale 1, in % of the card; the big numeral is
+     avoided when there is room, otherwise the dial may sit over it. Pure data: the
+     same answer on every card, no measuring. */
+  var PART_BOX={name:[55,21],initials:[20,20],month:[26,23],coffee:[30,20],fatigue:[32,21],remaining:[30,16],emoji:[17,17],clock:[26,20],moon:[16,16],hours:[60,51]};
+  function boxOf(key,p){var sz=PART_BOX[key],s=p[2]/100;return [p[0]-sz[0]*s/2,p[1]-sz[1]*s/2,p[0]+sz[0]*s/2,p[1]+sz[1]*s/2];}
+  function overlapArea(a,b){var w=Math.min(a[2],b[2])-Math.max(a[0],b[0]),h=Math.min(a[3],b[3])-Math.max(a[1],b[1]);return w>0&&h>0?w*h:0;}
+  function fitDial(value){
+    var p=value&&value.parts&&value.parts.remaining;
+    if(!p||!p[3])return value;
+    var near=parts.filter(function(k){return k!=='remaining'&&k!=='hours'&&value.parts[k]&&value.parts[k][3];}).map(function(k){return boxOf(k,value.parts[k]);});
+    var withHours=value.parts.hours&&value.parts.hours[3]?near.concat([boxOf('hours',value.parts.hours)]):near;
+    function free(x,y,s,obstacles){
+      var h=31*s/2;if(x-h<1||x+h>99||y-h<1||y+h>99)return false;
+      var b=[x-h,y-h,x+h,y+h];
+      return obstacles.every(function(o){return overlapArea(b,o)<=.5;});
+    }
+    var s0=Math.max(.5,p[2]/100);
+    if(free(p[0],p[1],s0,near))return value;   // already fine where it is (the numeral may stay under it)
+    var scales=[1,.9,.8,.7,.6];
+    // Off the numeral first (a little smaller if need be), over it only when nothing else is free.
+    for(var t=0;t<2;t++){
+      for(var i=0;i<scales.length;i++){
+        var s=Math.max(.45,s0*scales[i]);
+        var best=null;
+        for(var y=4;y<=96;y+=2)for(var x=4;x<=96;x+=2){
+          if(!free(x,y,s,t?near:withHours))continue;
+          var dist=Math.hypot(x-p[0],y-p[1]);
+          if(!best||dist<best.d)best={x:x,y:y,d:dist};
+        }
+        if(best){p[0]=best.x;p[1]=best.y;p[2]=Math.round(s*100);return value;}
+      }
+    }
+    return value;
+  }
+
+  root.MinkaCardFaceModel = { fitDial: fitDial, faces: faces, parts: parts, clean: clean, preset: preset, pack: pack, unpack: unpack, fitPart: fitPart, symbolPlacement: symbolPlacement, coffeeColors: coffeeColors, effectiveCoffeeMode: effectiveCoffeeMode };
 })(globalThis);

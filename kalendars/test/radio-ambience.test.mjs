@@ -114,33 +114,38 @@ test('Fluent strips load only on screen, pause off screen, and old beds are rele
   dream.isConnected=false;h.window.__nsObserveDream(element());assert.equal(io.targets.has(dream),false);
 });
 
-test('every dream has an existing Fluent strip, a matching frame count and stable markup',()=>{
+test('dreams are personal, the same on every PC, never twice a night, and drawn from existing strips',()=>{
   const ns=fs.readFileSync(new URL('../js/nightsplit.js',import.meta.url),'utf8');
-  const code=ns.slice(ns.indexOf('  var dreamScenes='),ns.indexOf('  function refreshBedDream('));
+  const code=ns.slice(ns.indexOf('  var DREAM_ART='),ns.indexOf('  function refreshBedDream('));
   const manifest=JSON.parse(fs.readFileSync(new URL('../assets/emoji-anim/manifest.json',import.meta.url),'utf8'));
-  let phones=false, date='08.09.2026', randomCalls=0;
-  const c=vm.createContext({_nameHash:name=>Number(name),dreamPhones:()=>phones,activeDateKey:()=>date,Math:{floor:Math.floor,random:()=>{randomCalls++;return .31;}}});vm.runInContext(code,c);
-  const files=new Set();
-  for(let i=0;i<16;i++){
-    const html=c.dreamContents(String(i));assert.equal(html,c.dreamContents(String(i)));
-    const file=html.match(/data-src="assets\/emoji-anim\/([^"]+)"/)[1];
-    files.add(file);
-    assert.equal(html.match(/<img /g).length,1);
-    const info=Object.values(manifest.emoji).find(v=>v.file===file);assert.ok(info);
-    assert.equal(Number(html.match(/--dream-frames:(\d+)/)[1]),info.frames);
-    assert.ok(fs.existsSync(new URL('../assets/emoji-anim/'+file,import.meta.url)));
-    assert.doesNotMatch(html,/card-addons|☁|🌈|rainbow/);
-    assert.match(html,/<svg class="ns-dream-cloud"/);
+  const toys=[['','Nav',0],['toy-penguin','Pingvīns',94]];
+  function make(opts={}){
+    const store={minkaCoffeeCountsV1:JSON.stringify(opts.counts||{}),minkaCoffeeDetailsV1:JSON.stringify(opts.details||{})};
+    const win={mkGetWorkerSkin:n=>(opts.skins||{})[n]||{},LATVIAN_NAMEDAYS:opts.namedays||{},MinkaCardAddons:{getList:()=>[]},MinkaCoffeeStore:{key:n=>n.toLowerCase()}};
+    let randomCalls=0;
+    const c=vm.createContext({window:win,localStorage:{getItem:k=>store[k]||null},st:{sl:[]},activeDateKey:()=>'27.09.2026',
+      _nameHash:n=>[...n].reduce((h,ch)=>(h*31+ch.charCodeAt(0))>>>0,7),accOf:(list,v)=>{const n=+v||0;return n>0&&n<list.length?list[n]:null;},
+      BED_TOYS:toys,roomEmoji:n=>(opts.emoji||{})[n]||'',Date,JSON,Object,Array,String,Number,Math:Object.assign(Object.create(Math),{random:()=>{randomCalls++;return .5;}})});
+    vm.runInContext(code,c);c.calls=()=>randomCalls;return c;
   }
-  assert.equal(files.size,16,'a shuffled set has sixteen distinct subjects');
-  assert.equal([...files].filter(file=>file.includes('cat')).length,2,'cats remain part of a broader mix');
-  const choices=Array.from({length:16},(_,i)=>c.pickDreamScene(String(i)));
-  assert.equal(choices.filter(scene=>scene.object).length,8,'half the dreams show objects');
-  for(let i=1;i<choices.length;i++) assert.notEqual(!!choices[i].object,!!choices[i-1].object,'neighbours mix objects and animals');
-  const calls=randomCalls;
-  c.dreamContents('1');assert.equal(randomCalls,calls,'ordinary redraw does not shuffle or change scenes');
-  date='09.09.2026';c.dreamContents('1');assert.ok(randomCalls>calls,'another roster date gets a fresh shuffle');
-  phones=true;
-  assert.equal(c.dreamContents('1').match(/ns-room-device /g).length,4);
-  assert.match(c.dreamContents('1'),/ns-dream-scene is-phones/);
+  const names=['Anna Paraugs','Berta Paraugs','Cēzars Paraugs','Dora Paraugs'];
+  const a=make(), b=make();
+  const pa=a.planDreams(names), pb=b.planDreams(names);
+  assert.deepEqual(JSON.parse(JSON.stringify(pa)),JSON.parse(JSON.stringify(pb)),'the same dreams on every PC');
+  assert.equal(a.calls(),0,'no chance involved in choosing');
+  assert.equal(new Set(names.map(n=>pa[n].art)).size,4,'no two sleepers dream the same');
+  for(const art of Object.values(a.DREAM_ART)){
+    const info=Object.values(manifest.emoji).find(v=>v.file===art[0]+'.webp');
+    assert.ok(info,art[0]);assert.equal(info.frames,art[1],art[0]);
+    assert.ok(fs.existsSync(new URL('../assets/emoji-anim/'+art[0]+'.webp',import.meta.url)));
+    assert.doesNotMatch(art[0],/crystal|milky-way|rainbow|sleeping|skull|syringe/);
+  }
+  const own=make({skins:{'Anna Paraugs':{bp:1}},counts:{'27.09.2026':{'dora paraugs':2}},namedays:{[('0'+(new Date().getMonth()+1)).slice(-2)+'-'+('0'+new Date().getDate()).slice(-2)]:['Cēzars']}}).planDreams(names);
+  assert.equal(own['Anna Paraugs'].art,'penguin','the bed toy');
+  assert.equal(own['Dora Paraugs'].art,'coffee','coffee tonight');
+  assert.equal(own['Cēzars Paraugs'].art,'party','a name day comes first');
+  const html=a.dreamContents(pa['Anna Paraugs'],'Anna Paraugs',false);
+  assert.equal(html.match(/<img class="ns-dream-film"/g).length,1);
+  assert.match(html,/<img class="ns-dream-cloud"/);
+  assert.equal(a.dreamContents(pa['Anna Paraugs'],'Anna Paraugs',true).match(/ns-room-device /g).length,4);
 });

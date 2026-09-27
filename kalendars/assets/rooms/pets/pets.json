@@ -1,0 +1,141 @@
+{
+ "fps": 12,
+ "cat": {
+  "frame": 96,
+  "anchor": [
+   0.5,
+   0.62
+  ],
+  "cols": 8,
+  "rows": {
+   "walk-side": {
+    "row": 0,
+    "frames": 8
+   },
+   "walk-front": {
+    "row": 1,
+    "frames": 8
+   },
+   "walk-back": {
+    "row": 2,
+    "frames": 8
+   },
+   "run-side": {
+    "row": 3,
+    "frames": 6
+   },
+   "run-front": {
+    "row": 4,
+    "frames": 6
+   },
+   "run-back": {
+    "row": 5,
+    "frames": 6
+   },
+   "sit-side": {
+    "row": 6,
+    "frames": 8
+   },
+   "sit-front": {
+    "row": 7,
+    "frames": 8
+   },
+   "groom-front": {
+    "row": 8,
+    "frames": 8
+   },
+   "groom-side": {
+    "row": 9,
+    "frames": 8
+   },
+   "loaf-front": {
+    "row": 10,
+    "frames": 8
+   },
+   "sleep-front": {
+    "row": 11,
+    "frames": 8
+   },
+   "belly-front": {
+    "row": 12,
+    "frames": 8
+   },
+   "jump-side": {
+    "row": 13,
+    "frames": 6
+   },
+   "pounce-side": {
+    "row": 14,
+    "frames": 6
+   },
+   "bat-side": {
+    "row": 15,
+    "frames": 6
+   },
+   "hiss-side": {
+    "row": 16,
+    "frames": 6
+   },
+   "scratch-side": {
+    "row": 17,
+    "frames": 6
+   },
+   "tug-side": {
+    "row": 18,
+    "frames": 6
+   }
+  },
+  "coats": [
+   "black",
+   "ginger",
+   "grey"
+  ]
+ },
+ "mouse": {
+  "frame": 48,
+  "anchor": [
+   0.5,
+   0.5509
+  ],
+  "cols": 4,
+  "rows": {
+   "run-side": {
+    "row": 0,
+    "frames": 4
+   },
+   "run-front": {
+    "row": 1,
+    "frames": 4
+   },
+   "run-back": {
+    "row": 2,
+    "frames": 4
+   },
+   "sit-front": {
+    "row": 3,
+    "frames": 4
+   }
+  }
+ },
+ "fight": {
+  "frame": 160,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "cols": 6,
+  "rows": {
+   "fight": {
+    "row": 0,
+    "frames": 6
+   }
+  }
+ },
+ "box": {
+  "frame": 112,
+  "anchor": [
+   0.5,
+   0.5218
+  ]
+ }
+}

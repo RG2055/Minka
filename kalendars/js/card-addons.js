@@ -113,7 +113,8 @@
 
     { id: 'sticker-24h-duty', label: '24H Duty', group: 'sticker', src: optimized('sticker-24h-duty.webp') },
     { id: 'label-focus', label: 'Focus', group: 'sticker', flat: true, src: focusKit('label-focus.svg') },
-    { id: 'label-light-shine', label: 'light focus shine', group: 'sticker', flat: true, src: focusKit('label-light-shine.svg') },
+    // Hidden: three tiny words on a card read as a bug, not a decoration (still drawn where saved).
+    { id: 'label-light-shine', label: 'light focus shine', group: 'sticker', flat: true, hidden: true, src: focusKit('label-light-shine.svg') },
     { id: 'label-rec', label: 'REC', group: 'sticker', flat: true, src: focusKit('label-rec.svg') },
     { id: 'label-exposure', label: 'Ekspozīcija', group: 'sticker', flat: true, src: focusKit('label-exposure.svg') },
     { id: 'label-night', label: 'Nakts maiņa', group: 'sticker', flat: true, src: focusKit('label-night.svg') },
@@ -334,7 +335,9 @@
   /* The decoration's own picture effect, independent of the card: 'card' follows
      the card's effect, 'none' keeps the plain picture, the rest are effects. Unset
      = the card's "Efekts arī dekoram" switch decides (older saves). */
-  var DECOR_FX = [['card', 'Kā kartītei'], ['none', 'Nav'], ['focus', 'Fokuss'], ['dither', 'Dither'], ['xray', 'Rentgens'], ['halftone', 'Rastrs'], ['duotone', 'Duotons'], ['ascii', 'ASCII']];
+  var DECOR_FX = [['card', 'Kā kartītei'], ['none', 'Nav'], ['focus', 'Fokuss'], ['dither', 'Dither'], ['halftone', 'Rastrs'], ['cmyk', 'CMYK'], ['led', 'LED punkti'], ['riso', 'Riso'], ['pixelate', 'Pikseļi'], ['mosaic', 'Mozaīka'], ['bricks', 'Kluči'], ['pointillism', 'Punktisms'], ['heatmap', 'Siltums'], ['xray', 'Rentgens'], ['duotone', 'Duotons'], ['lines', 'Līnijas'], ['threshold', 'Slieksnis'], ['outline', 'Kontūra'], ['posterize', 'Posterizācija'], ['ascii', 'ASCII']];
+  // Effects that use the picture's own colours: the ink row means nothing for them.
+  var DECOR_NO_INK = /^(none|focus|cmyk|pixelate|mosaic|bricks|pointillism|heatmap|outline|posterize)$/;
   var DECOR_INKS = [['eceae4', 'Balta'], ['64d2ff', 'Ledus'], ['23cdcf', 'Ciāna'], ['1fe091', 'Zaļa'], ['f5b73f', 'Dzintars'], ['ff8a5c', 'Oranža'], ['ff5c5c', 'Sarkana'], ['2554a0', 'Tinte'], ['141414', 'Melna']];
   function validDecorFx(v) { return DECOR_FX.some(function(f) { return f[0] === v; }); }
 
@@ -1188,7 +1191,7 @@
       var fx = config.fx || (followsCard() ? 'card' : 'none');
       look.querySelectorAll('[data-decor-fx]').forEach(function(b) { b.setAttribute('aria-pressed', String(b.dataset.decorFx === fx)); });
       look.querySelectorAll('[data-decor-ink]').forEach(function(b) { b.setAttribute('aria-pressed', String(b.dataset.decorInk === (config.color || ''))); });
-      look.querySelector('.mk-addon-inks').hidden = fx === 'none' || fx === 'focus';   // the lens has its own colours
+      look.querySelector('.mk-addon-inks').hidden = DECOR_NO_INK.test(fx);   // the lens and colour effects have their own colours
       // Tuning belongs to the decoration's own effect ("Kā kartītei" uses the card's).
       var tuneBox = look.querySelector('.mk-addon-tune'), t = /^\d\d$/.test(config.tune || '') ? config.tune : '55';
       tuneBox.hidden = fx === 'none' || fx === 'card';
@@ -1320,6 +1323,7 @@
 
   window.MinkaCardAddons = {
     items: ITEMS.slice(),
+    src: function(id) { var item = ITEM_BY_ID[id]; return item ? assetUrl(item) : ''; },
     getDecoration: function(name) {
       var config = getConfig(name), item = config && ITEM_BY_ID[config.id];
       return item ? { id: item.id, label: item.label, src: assetUrl(item) } : null;

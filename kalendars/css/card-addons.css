@@ -116,10 +116,12 @@ html:not(.mk-mobile-shell) body #grafiks-app .main-panel #grafiks-list.grid-view
   padding-top: var(--mk-addon-top-clearance) !important;
 }
 
+/* Room above the preview for toppers only: a charm hanging below may pass over the
+   free space under the card, so Remix and the other buttons never jump. */
 .mk-skin-preview-slot.mk-has-addon {
   margin-top: var(--mk-addon-preview-top-clearance, 0px);
-  margin-bottom: var(--mk-addon-preview-bottom-clearance, 0px);
 }
+#worker-modal .mk-skin-quick {position: relative; z-index: 6;}
 
 .mk-card-addon {
   --mk-addon-scale: 1;
