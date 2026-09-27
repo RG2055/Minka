@@ -185,12 +185,17 @@
 #worker-modal#worker-modal .mk-skin-preview-list .mk-mid-card {pointer-events:auto !important;}
 #worker-modal#worker-modal .mk-skin-preview-list .mk-mid-card :is(button,a,input) {pointer-events:none !important;}
 #worker-modal#worker-modal .mk-skin-preview-list .mk-mid-card [data-wf-part] {pointer-events:auto !important;}
-/* selected element: outline + round corner handle for resizing */
-#worker-modal#worker-modal .mk-skin-preview-list .mk-watch-face.wf-editing [data-wf-part].wf-selected {outline:2px solid #64d2ff !important;outline-offset:3px;border-radius:6px;}
-.wf-resize {position:absolute !important;right:-11px;bottom:-11px;width:18px;height:18px;border-radius:50%;z-index:70;cursor:nwse-resize;
-  background:#fff;box-shadow:0 0 0 3px #64d2ff,0 2px 6px rgba(0,0,0,.4);pointer-events:auto !important;display:none;}
-.wf-editing .wf-selected > .wf-resize {display:block;}
-.wf-resize:hover {transform:scale(1.15);}
+/* Selected element: one frame for every element (card-faces.js placeSel), outside the
+   card so nothing clips it: the same rounded frame, line and corner handle whatever
+   the element's shape or size. The element itself draws no outline. */
+#worker-modal#worker-modal .mk-skin-preview-list .mk-watch-face.wf-editing [data-wf-part].wf-selected {outline:none !important;}
+.wf-sel {position:absolute;z-index:40;pointer-events:none;box-sizing:border-box;border:1.5px solid #64d2ff;border-radius:10px;
+  box-shadow:0 0 0 1px #0a0f1640;}
+.wf-sel[hidden] {display:none;}
+.wf-sel .wf-resize {position:absolute;right:-7px;bottom:-7px;width:12px;height:12px;border-radius:50%;cursor:nwse-resize;
+  background:#fff;box-shadow:0 0 0 1.5px #64d2ff,0 1px 4px rgba(0,0,0,.45);pointer-events:auto;transition:transform .15s ease;}
+.wf-sel .wf-resize::before {content:'';position:absolute;inset:-8px;border-radius:50%;}
+.wf-sel .wf-resize:hover {transform:scale(1.25);}
 
 /* picture effect row: six choices wrap into two tidy rows */
 #worker-modal#worker-modal .mk-pic-effects:not([hidden]) {flex-wrap:wrap !important;row-gap:4px !important;}

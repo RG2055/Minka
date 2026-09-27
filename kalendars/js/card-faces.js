@@ -809,11 +809,33 @@
       panel.querySelectorAll('[data-position]').forEach(function(el){var i={x:0,y:1,size:2}[el.dataset.position];if(i===2)el.max=selectedPart==='hours'?300:170;el.value=config.parts[selectedPart][i];el.nextElementSibling.textContent=el.value+'%';});
       panel.querySelectorAll('[data-image]').forEach(function(el){el.value=config[el.dataset.image];el.nextElementSibling.textContent=el.value+'%';});
       preview.querySelectorAll('[data-wf-part]').forEach(function(el){el.classList.toggle('wf-selected',el.dataset.wfPart===selectedPart);el.tabIndex=0;el.setAttribute('aria-label',labels[el.dataset.wfPart]);});
-      // Corner handle: resize the selected element with the mouse.
-      var oldHandle=preview.querySelector('.wf-resize'),selEl=preview.querySelector('[data-wf-part="'+selectedPart+'"]');
-      if(oldHandle&&oldHandle.parentElement!==selEl)oldHandle.remove();
-      if(selEl&&!selEl.hidden&&config.face!=='winamp'&&!selEl.querySelector(':scope > .wf-resize')){var hd=document.createElement('span');hd.className='wf-resize';hd.setAttribute('aria-hidden','true');hd.title='Velc, lai mainītu izmēru';selEl.append(hd);}
+      placeSel();
       preview.closest('.mk-skin-preview-list').setAttribute('aria-hidden','false');
+    }
+    /* One selection frame for every element, drawn outside the card (in the preview's
+       own box): the same rounded frame and corner handle whatever the element's shape,
+       size or clipping, in screen pixels. It follows the element as it moves. */
+    function placeSel(){
+      var host=preview.parentElement, selEl=preview.querySelector('[data-wf-part="'+selectedPart+'"]'), box=host&&host.querySelector(':scope > .wf-sel');
+      preview.querySelectorAll('[data-wf-part] > .wf-resize').forEach(function(h){h.remove();});
+      if(!host)return;
+      if(!selEl||selEl.hidden||!preview.classList.contains('wf-editing')||config.face==='winamp'){if(box)box.hidden=true;return;}
+      if(!box){
+        box=document.createElement('div');box.className='wf-sel';box.setAttribute('aria-hidden','true');
+        box.innerHTML='<span class="wf-resize" title="Velc, lai mainītu izmēru"></span>';
+        if(getComputedStyle(host).position==='static')host.style.position='relative';
+        host.append(box);
+        box.querySelector('.wf-resize').addEventListener('pointerdown',function(e){
+          if(e.button!==0)return;
+          var el=preview.querySelector('[data-wf-part="'+selectedPart+'"]');if(!el)return;
+          e.preventDefault();e.stopPropagation();startDrag(e,el,true);
+        });
+      }
+      var hr=host.getBoundingClientRect(), r=selEl.getBoundingClientRect(), pad=5;
+      box.hidden=false;
+      box.style.left=(r.left-hr.left+host.scrollLeft-host.clientLeft-pad)+'px';
+      box.style.top=(r.top-hr.top+host.scrollTop-host.clientTop-pad)+'px';
+      box.style.width=(r.width+pad*2)+'px';box.style.height=(r.height+pad*2)+'px';
     }
     // Keep the whole element inside the face, including its scaled bounds.
     // Read geometry only while editing; roster rendering never measures parts.
@@ -884,16 +906,19 @@
     // Pointer capture stays on the unchanged preview. All coordinates are relative
     // to its real dimensions; persisted values never depend on device pixels.
     var drag=null;
-    preview.addEventListener('pointerdown',function(e){
-      if(!preview.classList.contains('wf-editing')||e.button!==0||config.face==='winamp')return;
-      var el=e.target.closest('[data-wf-part]');if(!el)return;
-      e.preventDefault();e.stopPropagation();
-      var resizing=!!e.target.closest('.wf-resize');
+    function startDrag(e,el,resizing){
+      if(!preview.classList.contains('wf-editing')||config.face==='winamp')return;
       selectedPart=el.dataset.wfPart;sync();
       var r=preview.getBoundingClientRect(),b=el.getBoundingClientRect(),cx=b.left+b.width/2,cy=b.top+b.height/2;
       drag={id:e.pointerId,x:e.clientX,y:e.clientY,px:config.parts[selectedPart][0],py:config.parts[selectedPart][1],r:r,
         resize:resizing,size:config.parts[selectedPart][2],cx:cx,cy:cy,d0:Math.max(8,Math.hypot(e.clientX-cx,e.clientY-cy))};
       try{preview.setPointerCapture(e.pointerId);}catch(_e){}
+    }
+    preview.addEventListener('pointerdown',function(e){
+      if(!preview.classList.contains('wf-editing')||e.button!==0||config.face==='winamp')return;
+      var el=e.target.closest('[data-wf-part]');if(!el)return;
+      e.preventDefault();e.stopPropagation();
+      startDrag(e,el,false);
     });
     // Alignment guides while dragging: the card centre (amber) and the centres
     // of the other visible elements (blue). Within SNAP % the part locks on.
