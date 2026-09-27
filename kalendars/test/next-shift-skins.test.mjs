@@ -12,7 +12,7 @@ function card(name='',kind='is-day'){
 function skinHarness(){
  const c=vm.createContext({window:{},GRAD_MAP:{ocean:'linear-gradient(#0d1b2a, #123044)',rits:'linear-gradient(#ffecd2, #fcb69f)'},artUrl:id=>'art/'+id+'.webp',stockSkinUrl:id=>'stock/'+id+'.jpg'});
  const slice=(from,to)=>html.slice(html.indexOf(from),html.indexOf(to));
- vm.runInContext(slice('  function clampByte(value)','  function paletteFromRgb(rgb)'),c);
+ vm.runInContext(slice('  function clampByte(value)','  /* ── Saskaņotā palete'),c);
  vm.runInContext(slice('  var NEXT_TONE_READY','  window.mkApplySkinToEl ='),c);
  return c;
 }

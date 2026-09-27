@@ -1419,7 +1419,7 @@
     var A = window.MinkaCardAddons;
     if (!A || !A.items) return null;
     var group = pickOne(groups);
-    var ids = A.items.filter(function(i) { return i.group === group; }).map(function(i) { return i.id; });
+    var ids = A.items.filter(function(i) { return i.group === group && !i.hidden; }).map(function(i) { return i.id; });
     if (!ids.length) return null;
     var addon = { id: freshId(ids), scale: { topper: 1, charm: .9, sticker: .8, object: .85, tape: .9, strip: .9 }[group] || .9,
       side: Math.random() < .5 ? 'left' : 'right', x: 0, y: 0 };

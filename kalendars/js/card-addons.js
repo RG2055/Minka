@@ -120,6 +120,44 @@
     { id: 'label-lens-dot', label: 'On duty', group: 'sticker', src: focusKit('label-lens-dot.svg') },
     { id: 'label-barcode', label: 'Svītrkods', group: 'sticker', flat: true, src: focusKit('label-barcode.svg') },
 
+    /* Retired from the picker (nobody had them on a card, 2026-09-27). Kept hidden so
+       a decoration saved on some device still draws instead of vanishing. */
+    { id: 'topper-happy-tabby', label: 'Priecīgais kaķis', group: 'topper', hidden: true, dockY: 5, aspect: '640 / 513', src: optimized('topper-happy-tabby.webp') },
+    { id: 'topper-space-cat', label: 'Kosmosa kaķis', group: 'topper', hidden: true, dockY: 5, aspect: '640 / 527', src: optimized('topper-space-cat.webp') },
+    { id: 'sticker-good-vibes', label: 'Good Vibes', group: 'sticker', hidden: true, src: optimized('sticker-good-vibes.webp') },
+    { id: 'sticker-night-mode', label: 'Night Mode', group: 'sticker', hidden: true, src: optimized('sticker-night-mode.webp') },
+    { id: 'sticker-coffee-first', label: 'Coffee First', group: 'sticker', hidden: true, src: optimized('sticker-coffee-first.webp') },
+    { id: 'sticker-focus', label: 'Focus', group: 'sticker', hidden: true, src: optimized('sticker-focus.webp') },
+    { id: 'sticker-planet', label: 'Planēta', group: 'sticker', hidden: true, src: optimized('sticker-planet.webp') },
+    { id: 'sticker-prism', label: 'Kristāls', group: 'sticker', hidden: true, src: optimized('sticker-prism.webp') },
+    { id: 'sticker-pink-paw', label: 'Rozā ķepiņa', group: 'sticker', hidden: true, src: optimized('sticker-pink-paw.webp') },
+    { id: 'charm-gold-moon', label: 'Zelta mēness', group: 'charm', hidden: true, src: optimized('charm-gold-moon.webp') },
+    { id: 'charm-planet', label: 'Planēta', group: 'charm', hidden: true, src: optimized('charm-planet.webp') },
+    { id: 'charm-holo-dice', label: 'Holo kauliņi', group: 'charm', hidden: true, src: optimized('charm-holo-dice.webp') },
+    { id: 'charm-holo-heart', label: 'Holo sirds', group: 'charm', hidden: true, src: optimized('charm-holo-heart.webp') },
+    { id: 'strip-night-shift', label: 'Night Shift', group: 'strip', hidden: true, src: optimized('strip-night-shift.webp') },
+    { id: 'strip-ct-ramp', label: 'CT Ramp', group: 'strip', hidden: true, src: optimized('strip-ct-ramp.webp') },
+    { id: 'strip-nmp', label: 'NMP', group: 'strip', hidden: true, src: optimized('strip-nmp.webp') },
+    { id: 'strip-xray-hand', label: 'Rentgena roka', group: 'strip', hidden: true, src: optimized('strip-xray-hand.webp') },
+    { id: 'strip-ct-hazard', label: 'CT brīdinājums', group: 'strip', hidden: true, src: optimized('strip-ct-hazard.webp') },
+    { id: 'tape-black', label: 'Melna', group: 'tape', hidden: true, src: optimized('tape-black.webp') },
+    { id: 'tape-white', label: 'Balta', group: 'tape', hidden: true, src: optimized('tape-white.webp') },
+    { id: 'tape-paper', label: 'Papīra', group: 'tape', hidden: true, src: optimized('tape-paper.webp') },
+    { id: 'tape-grid', label: 'Rūtiņu', group: 'tape', hidden: true, src: optimized('tape-grid.webp') },
+    { id: 'tape-cream', label: 'Krēmkrāsas', group: 'tape', hidden: true, src: optimized('tape-cream.webp') },
+    { id: 'tape-iridescent', label: 'Hologrāfiska', group: 'tape', hidden: true, src: optimized('tape-iridescent.webp') },
+    { id: 'tape-gold', label: 'Zelta', group: 'tape', hidden: true, src: optimized('tape-gold.webp') },
+    { id: 'tape-on-duty', label: 'On Duty', group: 'tape', hidden: true, src: optimized('tape-on-duty.webp') },
+    { id: 'tape-rakus', label: 'Rakus', group: 'tape', hidden: true, src: optimized('tape-rakus.webp') },
+    { id: 'tape-holographic', label: 'Holo spīdums', group: 'tape', hidden: true, src: optimized('tape-holographic.webp') },
+    { id: 'tape-botanical-leaves', label: 'Eikalipta zaļumi', group: 'tape', hidden: true, src: optimized('tape-botanical-leaves.webp') },
+    { id: 'object-floral-statue', label: 'Ziedu statuja', group: 'object', hidden: true, src: optimized('object-floral-statue.webp') },
+    { id: 'object-snake', label: 'Baltā čūska', group: 'object', hidden: true, src: optimized('object-snake.webp') },
+    { id: 'object-lilies', label: 'Lilijas', group: 'object', hidden: true, src: optimized('object-lilies.webp') },
+    { id: 'object-new-floral-statue', label: 'Liliju statuja', group: 'object', hidden: true, src: optimized('object-new-floral-statue.webp') },
+    { id: 'object-holo-skull', label: 'Holo galvaskauss', group: 'object', hidden: true, src: optimized('object-holo-skull.webp') },
+    { id: 'object-green-glitter-bear', label: 'Zaļais spīdumu lācis', group: 'object', hidden: true, src: optimized('object-green-glitter-bear.webp') },
+    { id: 'object-cloud-cat', label: 'Kaķis uz mākoņa', group: 'object', hidden: true, src: optimized('object-cloud-cat.webp') },
     // Kept for the one card that still has it; no longer offered in the picker.
     { id: 'tape-clear', label: 'Caurspīdīga', group: 'tape', hidden: true, src: optimized('tape-clear.webp') },
   ].concat(coffeeItems());
@@ -290,17 +328,8 @@
     return (first + ' ' + last).replace(/--/g, '').trim();
   }
 
-  /* Up to three decorations per card. Stored as a list (older saves hold one
-     object — read as a list of one). */
-  var MAX_ADDONS = 3;
-  function toList(value) {
-    var list = Array.isArray(value) ? value : value ? [value] : [];
-    return list.map(function(v) { return normalizeConfig(v); }).filter(Boolean).slice(0, MAX_ADDONS);
-  }
-  function getList(name) { return toList(readAll()[normName(name)]); }
-  function getConfig(name) { return getList(name)[0] || null; }
-  // Items drawn as graphics (coffee, frames, light, labels) start without a picture effect.
-  function plainItem(item) { return !!item && (item.dynamic || item.group === 'frame' || item.group === 'light' || /^label-/.test(item.id)); }
+  // The first decoration as stored (a list since three are allowed; older saves hold one).
+  function getConfig(name) { var v = readAll()[normName(name)]; if (Array.isArray(v)) v = v[0]; return v || null; }
 
   /* The decoration's own picture effect, independent of the card: 'card' follows
      the card's effect, 'none' keeps the plain picture, the rest are effects. Unset
@@ -326,6 +355,17 @@
     if (/^[a-f0-9]{6}$/.test(String(config.color || ''))) clean.color = String(config.color);
     return clean;
   }
+
+  /* Up to three decorations per card. Stored as a list (older saves hold one
+     object — read as a list of one). */
+  var MAX_ADDONS = 3;
+  function toList(value) {
+    var list = Array.isArray(value) ? value : value ? [value] : [];
+    return list.map(function(v) { return normalizeConfig(v); }).filter(Boolean).slice(0, MAX_ADDONS);
+  }
+  function getList(name) { return toList(readAll()[normName(name)]); }
+  // Items drawn as graphics (coffee, frames, light, labels) start without a picture effect.
+  function plainItem(item) { return !!item && (item.dynamic || item.group === 'frame' || item.group === 'light' || /^label-/.test(item.id)); }
 
   function saveList(name, list, options) {
     var all = readAll();

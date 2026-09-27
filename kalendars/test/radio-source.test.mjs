@@ -12,7 +12,7 @@ function setup() {
         add: (...args) => args.forEach(x => classes.add(x)),
         remove: (...args) => args.forEach(x => classes.delete(x)),
         contains: x => classes.has(x)
-      }, setAttribute(k,v) { this.attributes[k] = v; }, remove() {} });
+      }, setAttribute(k,v) { this.attributes[k] = v; }, addEventListener() {}, querySelector: () => null, remove() {} });
     }
     return nodes.get(id);
   }
@@ -54,7 +54,8 @@ test('minimize and restore preserve the player; switching sources closes it', as
   const pending=s.window.setRadioSource('music');s.scripts[0].onload();await pending;
   s.window.minimizeRadioMusic();
   assert.equal(s.calls.minimize,1);assert.equal(s.calls.close,0);
-  assert.equal(s.node('radioToggleLabel').textContent,'MŪZIKA');
+  // Music plays in Winamp by default, and the dock button says so ("MŪZIKA" is the Lācītis engine).
+  assert.equal(s.node('radioToggleLabel').textContent,'WINAMP');
   assert.equal(s.node('radioToggle').attributes['aria-expanded'],'false');
   assert.equal(s.window.toggleRadioMusicVisibility(),true);
   await Promise.resolve();

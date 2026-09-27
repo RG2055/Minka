@@ -20,7 +20,7 @@ function page({ now = 0 } = {}) {
   };
   const media = [];
   const document = {
-    body, visibilityState: 'visible', createElement: el,
+    body, visibilityState: 'visible', createElement: el, getElementById: () => null,
     querySelectorAll: sel => (sel === 'audio,video' ? media : []),
     addEventListener(t, f) { docListeners[t] = f; }
   };

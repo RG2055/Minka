@@ -12,7 +12,7 @@ function fixture() {
   const initial = card(), replacement = card(), options = {source: initial};
   const slot = {parentElement: {clientWidth: 320}, style: style(),
     get clientWidth() { return parseFloat(this.style.width) || 300; }};
-  const preview = {isConnected: true, style: style(), classList: {add() {}}, querySelector: () => null,
+  const preview = {isConnected: true, style: style(), classList: {add() {}}, querySelector: () => null, querySelectorAll: () => [],
     getBoundingClientRect: () => ({width: 300, height: 300})};
   const observed = [], unobserved = [];
   const observer = {observe: node => observed.push(node), unobserve: node => unobserved.push(node)};
