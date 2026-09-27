@@ -227,6 +227,60 @@
     return html || '<div class="mkp-empty">Nekas nav atrasts</div>';
   }
 
+  /* The grid: a page per tab (and search) is built once and kept, so switching tabs
+     does not build and lay out hundreds of colour glyphs again; one set of listeners
+     on the whole grid (delegated); the preview follows the pointer once a frame. */
+  function showGridPage(left, workerLvl) {
+    var q = String(_emojiQuery || '').trim().toLowerCase(), key = _activeTab + '|' + q + '|' + workerLvl;
+    var pages = left.__pages || (left.__pages = {}), page = pages[key];
+    if (!page) {
+      page = document.createElement('div'); page.className = 'mkp-grid-page';
+      page.innerHTML = buildEmojiGroupsHtml(workerLvl, _selectedEmoji);
+      pages[key] = page;
+      var keys = Object.keys(pages); if (keys.length > 12) delete pages[keys[0]];
+    }
+    if (left.firstChild !== page) {
+      left.textContent = ''; left.appendChild(page); left.scrollTop = 0;
+      if ((document.documentElement.getAttribute('data-motion') || 'full') === 'full') { page.classList.remove('mkp-in'); void page.offsetWidth; page.classList.add('mkp-in'); }
+    }
+    markSelected(page, _selectedEmoji);
+  }
+  function markSelected(root, e) {
+    var btns = root.querySelectorAll('.mkp-emoji-btn');
+    for (var i = 0; i < btns.length; i++) {
+      var on = !!e && btns[i].getAttribute('data-emoji') === e;
+      if (btns[i].classList.contains('mkp-selected') !== on) btns[i].classList.toggle('mkp-selected', on);
+    }
+  }
+  function bindGrid(left, onPreview, onPick) {
+    if (left.__mkpBound) return;
+    left.__mkpBound = true;
+    var raf = 0, want = null, shown = null;
+    function preview(e) {
+      want = e;
+      if (!raf) raf = requestAnimationFrame(function () { raf = 0; if (want !== shown) { shown = want; onPreview(want); } });
+    }
+    function button(ev) { var b = ev.target && ev.target.closest ? ev.target.closest('.mkp-emoji-btn') : null; return b && left.contains(b) ? b : null; }
+    left.addEventListener('mouseover', function (ev) { var b = button(ev); if (b && !b.classList.contains('mkp-locked')) preview(b.getAttribute('data-emoji')); });
+    left.addEventListener('mouseleave', function () { preview(_selectedEmoji); });
+    left.addEventListener('click', function (ev) {
+      var b = button(ev); if (!b) return;
+      ev.stopPropagation();
+      if (b.classList.contains('mkp-locked')) { b.classList.add('mkp-lock-flash'); setTimeout(function () { b.classList.remove('mkp-lock-flash'); }, 500); return; }
+      var e = b.getAttribute('data-emoji'); shown = e; onPick(e);
+    });
+  }
+  // The colour font comes in pieces; the picker's pieces are fetched as it opens, so a
+  // tab shows its emoji at once instead of them popping in one piece after another.
+  var _pickerFontWarm = false;
+  function warmPickerFont() {
+    if (_pickerFontWarm || !document.fonts || !document.fonts.load) return;
+    _pickerFontWarm = true;
+    var all = Object.keys(EMOJI_BY_SECTION).map(function (k) { return EMOJI_BY_SECTION[k].join(''); }).join('');
+    var run = function () { document.fonts.load('26px "Fluent Emoji Color"', all).catch(function () {}); };
+    if (window.requestIdleCallback) window.requestIdleCallback(run, { timeout: 1200 }); else setTimeout(run, 150);
+  }
+
   // ── STATE ────────────────────────────────────────────────────────────────────
   var _data = {};
   var _pickerEl = null;
@@ -589,8 +643,6 @@
     var workerLvl = window.MinkaDaybook ? 10 : getWorkerLvl(_activeWorker || '');
     var currentEmoji = _selectedEmoji;
 
-    var gridHtml = buildEmojiGroupsHtml(workerLvl, currentEmoji);
-
     // ── Live preview ──
     var previewEmoji = safeEmoji(currentEmoji) || '';
     var workerFirst = (_activeWorker || '').split(' ')[0] || '';
@@ -633,17 +685,23 @@
         '<div class="mkp-tabs">' + buildCategoryButtons('mkp-tab') + '</div>' +
       '</div>' +
       '<div class="mkp-body">' +
-        '<div class="mkp-left">' + gridHtml + '</div>' +
+        '<div class="mkp-left"></div>' +
         previewHtml +
       '</div>' +
       footerHtml;
 
-    // Tab click
+    var left = inner.querySelector('.mkp-left');
+    showGridPage(left, workerLvl);
+    warmPickerFont();
+    bindGrid(left, previewPickerEmoji, function (e) { selectEmoji(e); });
+
+    // Tab click: only the grid changes
     inner.querySelectorAll('.mkp-tab').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
         _activeTab = btn.getAttribute('data-tab');
-        renderPicker();
+        inner.querySelectorAll('.mkp-tab').forEach(function (b) { b.classList.toggle('mkp-tab-active', b === btn); });
+        showGridPage(left, workerLvl);
       });
     });
 
@@ -652,38 +710,13 @@
       searchInput.addEventListener('input', function(e) {
         _emojiQuery = e.target.value || '';
         clearTimeout(_emojiSearchTimer);
-        _emojiSearchTimer = setTimeout(renderPicker, 90);
+        _emojiSearchTimer = setTimeout(function () { showGridPage(left, workerLvl); }, 90);
       });
       if (_emojiQuery) {
         searchInput.focus();
         searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
       }
     }
-
-    // Emoji click only: no hover transform/drop-shadow.
-    inner.querySelectorAll('.mkp-emoji-btn:not(.mkp-locked)').forEach(function(btn) {
-      btn.addEventListener('mouseenter', function() {
-        previewPickerEmoji(btn.getAttribute('data-emoji'));
-      });
-      btn.addEventListener('mouseleave', function() {
-        previewPickerEmoji(_selectedEmoji);
-      });
-      btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        selectEmoji(btn.getAttribute('data-emoji'));
-        renderPicker();
-      });
-    });
-
-    // Locked tooltip click
-    inner.querySelectorAll('.mkp-locked').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        // flash tooltip
-        btn.classList.add('mkp-lock-flash');
-        setTimeout(function() { btn.classList.remove('mkp-lock-flash'); }, 600);
-      });
-    });
 
     inner.addEventListener('click', function(e) {
       e.stopPropagation();
@@ -1414,7 +1447,10 @@
       }
       .mkp-group {
         margin:0 0 26px !important;
+        content-visibility:auto; contain-intrinsic-size:auto 260px;
       }
+      .mkp-grid-page.mkp-in { animation:mkp-page-in .16s ease-out both; }
+      @keyframes mkp-page-in { from { opacity:0; transform:translateY(3px); } to { opacity:1; transform:none; } }
       .mkp-group:last-child {
         margin-bottom:0 !important;
       }
@@ -1792,8 +1828,6 @@
     var workerSur   = workerName.split(' ').slice(1).join(' ') || '';
     var initials    = ((workerFirst[0]||'') + (workerSur[0]||'')).toUpperCase();
 
-    var grid = buildEmojiGroupsHtml(workerLvl, _sel);
-
     var footer =
       '<div class="mkp-footer" style="padding:8px 0 0;">' +
         '<button class="mkp-btn mkp-clear" data-mk-modal-clear="1">Noņemt</button>' +
@@ -1827,17 +1861,23 @@
         '<div class="mkp-tabs">' + buildCategoryButtons('mkp-tab') + '</div>' +
       '</div>' +
       '<div class="mkp-body mkp-modal-body">' +
-        '<div class="mkp-left">' + grid + '</div>' +
+        '<div class="mkp-left"></div>' +
         preview +
       '</div>' +
       footer;
 
-    // Tab clicks
+    var left = container.querySelector('.mkp-left');
+    showGridPage(left, workerLvl);
+    warmPickerFont();
+    bindGrid(left, previewModalEmoji, function (e) { _sel = e; _selectedEmoji = e; markSelected(left, e); previewModalEmoji(e); });
+
+    // Tab clicks: only the grid changes
     container.querySelectorAll('.mkp-tab').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
         _activeTab = btn.getAttribute('data-tab');
-        renderInModal(container);
+        container.querySelectorAll('.mkp-tab').forEach(function (b) { b.classList.toggle('mkp-tab-active', b === btn); });
+        showGridPage(left, workerLvl);
       });
     });
 
@@ -1846,51 +1886,13 @@
       searchInput.addEventListener('input', function(e) {
         _emojiQuery = e.target.value || '';
         clearTimeout(_emojiSearchTimer);
-        _emojiSearchTimer = setTimeout(function(){ renderInModal(container); }, 90);
+        _emojiSearchTimer = setTimeout(function(){ showGridPage(left, workerLvl); }, 90);
       });
       if (_emojiQuery) {
         searchInput.focus();
         searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
       }
     }
-
-    // Emoji clicks
-    container.querySelectorAll('.mkp-emoji-btn:not(.mkp-locked)').forEach(function(btn) {
-      btn.addEventListener('mouseenter', function() {
-        previewModalEmoji(btn.getAttribute('data-emoji'));
-      });
-      btn.addEventListener('mouseleave', function() {
-        previewModalEmoji(_selectedEmoji);
-      });
-      btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        _sel = btn.getAttribute('data-emoji');
-        _selectedEmoji = _sel;
-        container.querySelectorAll('.mkp-emoji-btn').forEach(function(b) {
-          b.classList.toggle('mkp-selected', b.getAttribute('data-emoji') === _sel);
-        });
-        // Lock preview on click
-        var pe = document.getElementById('mkp-modal-prev-emoji');
-        if (pe) pe.textContent = _sel || '';
-        var bg = document.getElementById('mkp-modal-bg-emoji');
-        if (bg) bg.textContent = _sel || '';
-        var big = document.getElementById('mkp-modal-picked-big');
-        if (big) big.textContent = _sel || '—';
-        var name = document.getElementById('mkp-modal-picked-name');
-        if (name) name.textContent = _sel ? getEmojiName(_sel) : 'Nav izvēlēts';
-        var cat = document.getElementById('mkp-modal-picked-cat');
-        if (cat) cat.textContent = _sel ? (SECTION_TITLES[getEmojiSection(_sel)] || '') : '';
-      });
-    });
-
-    // Locked shake
-    container.querySelectorAll('.mkp-locked').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        btn.classList.add('mkp-lock-flash');
-        setTimeout(function() { btn.classList.remove('mkp-lock-flash'); }, 400);
-      });
-    });
 
     // Clear
     var clearBtn = container.querySelector('[data-mk-modal-clear]');

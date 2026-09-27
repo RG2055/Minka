@@ -97,54 +97,84 @@
     var big = s == null ? '' : phase === 'on' || phase === 'soon' ? dur(left) : Math.round(left / 60) + 'h';
     var small = { on: 'ATLIKUŠAS', soon: 'LĪDZ ' + hhmm(s), done: 'BEIGUSIES', plan: s == null ? '' : hhmm(s).slice(0, 2) + '–' + hhmm(e).slice(0, 2) }[phase] || '';
     active = phase === 'on';
-    function ang(min) { return (min % 720) / 720 * 360; }
+    /* Read like the Nakts clock (one look is enough): the shift's hours as a thick,
+       soft arc on the rim, the part already worked bright over it, a round dot where
+       it ends, and a real clock's hour and minute hands at the time now. A 12-hour
+       dial shows the last 12 hours of a longer shift on the rim; the hours before
+       them are a thinner inner lap from now, so a 24-hour shift reads too. */
     function pt(min, r) { var a = (min % 720) / 720 * Math.PI * 2 - Math.PI / 2; return [(50 + r * Math.cos(a)).toFixed(2), (50 + r * Math.sin(a)).toFixed(2)]; }
-    function arc(from, span, r) { var p0 = pt(from, r), p1 = pt(from + span, r); return 'M' + p0.join(' ') + 'A' + r + ' ' + r + ' 0 ' + (span > 360 ? 1 : 0) + ' 1 ' + p1.join(' '); }
+    function arc(from, span, r) {
+      if (span >= 719.5) return 'M' + (50 - r) + ' 50A' + r + ' ' + r + ' 0 1 1 ' + (50 + r) + ' 50A' + r + ' ' + r + ' 0 1 1 ' + (50 - r) + ' 50';
+      var p0 = pt(from, r), p1 = pt(from + span, r); return 'M' + p0.join(' ') + 'A' + r + ' ' + r + ' 0 ' + (span > 360 ? 1 : 0) + ' 1 ' + p1.join(' ');
+    }
     function line(a, b, cls) { return '<line x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '" class="' + cls + '"/>'; }
-    var from = active ? now : s, rest = s == null || phase === 'done' ? 0 : Math.min(719, Math.max(0, e - from));
-    var done = active ? Math.min(719, Math.max(0, now - s)) : phase === 'done' ? Math.min(719, e - s) : 0;
+    function path(d, cls) { return '<path class="' + cls + '" d="' + d + '"/>'; }
     var plan = phase === 'soon' || phase === 'plan';   // not started: the window, dashed, with its start point
-    var pc = plan ? ' plan' : '';
-    var body = '', label = 'mid', mask = done > 0 && skin !== 'c' && skin !== 'e' ? '<i class="dial-done" style="--a0:' + ang(s).toFixed(1) + 'deg;--sp:' + ang(done).toFixed(1) + 'deg"></i>' : '';
+    var pc = plan ? ' plan' : '', ended = phase === 'done';
+    // the rim shows at most the shift's last 12 hours; before them, an inner lap
+    var first = s == null ? null : Math.max(s, e - 720);
+    var lapFrom = s == null ? 0 : active ? now : s, lap = s == null || ended ? 0 : Math.max(0, first - lapFrom);
+    var doneTo = active ? Math.max(first, now) : ended ? e : first;          // the worked part, on the rim
+    var R = { a: 42, b: 37.5, c: 41, d: 44, e: 42 }[skin] || 42;
+    var body = '', label = 'mid', mask = '';
+    function rimArcs(r) {
+      if (s == null) return '';
+      var out = path(arc(first, e - first, r), 'trk' + pc);
+      if (doneTo > first) out += path(arc(first, doneTo - first, r), 'dn');
+      return out;
+    }
+    function endDot(r) { if (s == null) return ''; var q = pt(e, r); return '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="3.6" class="end"/>'; }
     if (skin === 'a') {
-      for (var h = 0; h < 12; h++) body += line(pt(h * 60, 45.5), pt(h * 60, h % 3 ? 41.8 : 39.5), h % 3 ? 'tk' : 'tk q');
-      if (rest > 0) body += '<path class="rest' + pc + '" d="' + arc(from, rest, 47.6) + '"/>';
+      for (var h = 0; h < 12; h++) body += line(pt(h * 60, 34), pt(h * 60, h % 3 ? 31 : 28.5), h % 3 ? 'tk' : 'tk q');
+      body += rimArcs(R);
     } else if (skin === 'b') {
-      for (var i = 0; i < 60; i++) body += line(pt(i * 12, 46.5), pt(i * 12, i % 5 ? 44.4 : 42.2), i % 5 ? 'tk fine' : 'tk');
-      body += [12, 3, 6, 9].map(function(n, k) { var q = pt(k * 180, 34.5); return '<text class="num" x="' + q[0] + '" y="' + (+q[1] + 3.3) + '">' + n + '</text>'; }).join('');
-      if (rest > 0) body += '<path class="rest' + pc + '" d="' + arc(from, rest, 40) + '"/>';
+      for (var i = 0; i < 60; i++) body += line(pt(i * 12, 47.5), pt(i * 12, i % 5 ? 45.6 : 44), i % 5 ? 'tk fine' : 'tk');
+      body += [12, 3, 6, 9].map(function(n, k) { var q = pt(k * 180, 27.5); return '<text class="num" x="' + q[0] + '" y="' + (+q[1] + 3.3) + '">' + n + '</text>'; }).join('');
+      body += rimArcs(R);
       body += '<circle cx="50" cy="66" r="12.5" class="sub"/>'; label = 'sub';
     } else if (skin === 'c') {
-      body += '<circle cx="50" cy="50" r="41" class="ring-track"/>';
-      if (done > 0) body += '<path class="ring-done" d="' + arc(s, done, 41) + '"/>';
-      if (rest > 0) body += '<path class="ring-rest' + pc + '" d="' + arc(from, rest, 41) + '"/>';
-      var mk = pt(now, 41); body += '<circle cx="' + mk[0] + '" cy="' + mk[1] + '" r="3.2" class="knob"/>';
+      body += '<circle cx="50" cy="50" r="' + R + '" class="ring-track"/>' + rimArcs(R);
       hand = 0; label = 'big';
     } else if (skin === 'd') {
       for (var y = 8; y <= 92; y += 6.5) for (var x = 8; x <= 92; x += 6.5) {
         var dx = x - 50, dy = y - 50, rr = Math.hypot(dx, dy);
         if (rr > 44) continue;
-        var mm = ((Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360) / 360 * 720;
-        var k2 = ((mm - s) % 720 + 720) % 720, isDone = done > 0 && k2 <= done, isRest = !isDone && rest > 0 && ((mm - from) % 720 + 720) % 720 <= rest;
-        body += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (isDone ? 2.1 : isRest ? 1.35 : .8) + '" class="' + (isDone ? 'px on' : isRest ? 'px rest-dot' : 'px') + '"/>';
+        var mm = ((Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360) / 360 * 720, cls = 'px', rad = .8;
+        if (s != null) {
+          var k1 = ((mm - first % 720) % 720 + 720) % 720;
+          if (k1 <= doneTo - first && doneTo > first) { cls = 'px on'; rad = 2.1; }
+          else if (k1 <= e - first) { cls = 'px rest-dot' + pc; rad = 1.7; }
+        }
+        body += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + rad + '" class="' + cls + '"/>';
       }
       label = 'plate';
     } else {
       for (var g = 0; g < 12; g++) {
-        var g0 = g * 60, seg = arc(g0 + 3, 54, 42);
-        var kk = ((g0 - s % 720) + 720) % 720, fill = done > 0 ? Math.max(0, Math.min(60, done - kk)) : 0;
-        body += '<path class="seg" d="' + seg + '"/>';
-        if (fill > 4) body += '<path class="seg on" d="' + arc(g0 + 3, Math.min(54, fill - 3), 42) + '"/>';
+        var g0 = g * 60;
+        body += path(arc(g0 + 3, 54, R), 'seg');
+        if (s == null) continue;
+        // this segment's minutes inside the shift (rim window) and inside the worked part
+        var k0 = ((g0 - first % 720) % 720 + 720) % 720, a0 = Math.max(k0, 0), inWin = Math.max(0, Math.min(k0 + 60, e - first) - a0);
+        if (k0 < e - first && inWin > 4) body += path(arc(g0 + 3, Math.min(54, inWin - 3), R), 'seg rest' + pc);
+        var inDone = Math.max(0, Math.min(k0 + 60, doneTo - first) - a0);
+        if (k0 < doneTo - first && inDone > 4) body += path(arc(g0 + 3, Math.min(54, inDone - 3), R), 'seg on');
       }
-      if (rest > 0) body += '<path class="rest thin' + pc + '" d="' + arc(from, rest, 48) + '"/>';
     }
+    if (lap > 0) body += path(arc(lapFrom, lap, skin === 'b' ? 32 : skin === 'd' ? 47.5 : R - 8), 'lap' + pc);
+    if (skin !== 'd' || s != null) body += endDot(skin === 'd' ? 47.5 : R);
     // The start point, on the dial's rim: a dot with a tick, so "it begins here" reads at a glance.
-    if (plan) { var st = pt(s, 44), st2 = pt(s, 36); body += line(st2, st, 'start-tick') + '<circle cx="' + st[0] + '" cy="' + st[1] + '" r="3.3" class="start"/>'; }
-    var tip = pt(now, hand === 3 ? 25 : 35), tail = pt(now + 360, 8), handSvg = '';
-    if (hand === 1) handSvg = line(['50', '50'], tip, 'hand') + '<circle cx="' + tip[0] + '" cy="' + tip[1] + '" r="2.4" class="knob"/>';
-    else if (hand === 2) handSvg = line(tail, tip, 'hand') + '<circle cx="50" cy="50" r="2.6" class="pin"/>';
-    else if (hand === 3) handSvg = line(['50', '50'], tip, 'hand bar');
-    if (hand) handSvg += '<circle cx="50" cy="50" r="1.4" class="knob"/>';
+    if (plan && s != null) { var st = pt(s, R + 3), st2 = pt(s, R - 7); body += line(st2, st, 'start-tick') + '<circle cx="' + st[0] + '" cy="' + st[1] + '" r="3.3" class="start"/>'; }
+    // a real clock while it counts: the hour hand (its style), and a thin minute hand
+    var handSvg = '', showHands = hand && (active || phase === 'soon');
+    if (showHands) {
+      var tip = pt(now, hand === 3 ? 24 : 29), tail = pt(now + 360, 7), mtip = [(50 + 36 * Math.sin(now % 60 / 60 * Math.PI * 2)).toFixed(2), (50 - 36 * Math.cos(now % 60 / 60 * Math.PI * 2)).toFixed(2)];
+      handSvg = line(['50', '50'], mtip, 'hand min');
+      if (hand === 1) handSvg += line(['50', '50'], tip, 'hand') + '<circle cx="' + tip[0] + '" cy="' + tip[1] + '" r="2.4" class="knob"/>';
+      else if (hand === 2) handSvg += line(tail, tip, 'hand') + '<circle cx="50" cy="50" r="2.6" class="pin"/>';
+      else handSvg += line(['50', '50'], tip, 'hand bar');
+      handSvg += '<circle cx="50" cy="50" r="1.6" class="knob"/>';
+    }
+    if (skin === 'c' && active) { var kn = pt(now, R); handSvg += '<circle cx="' + kn[0] + '" cy="' + kn[1] + '" r="3.4" class="knob now"/>'; }
     var txt = '';
     if (big) {
       if (label === 'sub') txt = '<text class="v s" x="50" y="68.2">' + big + '</text>';
@@ -907,5 +937,5 @@
     cancelAnimationFrame(previewFrame); previewFrame = 0; refreshPreview = function() {};
     if (waSizes && host) host.querySelectorAll('.wf-winamp').forEach(function (card) { waSizes.unobserve(card); });
   }
-  window.MinkaCardFaces = { dialPreview: dialPreview, dialSkins: DIAL_SKINS, apply: apply, mount: mount, release: release, refreshPreview: function(){refreshPreview();} };
+  window.MinkaCardFaces = { dialPreview: dialPreview, dialMarkup: dialMarkup, dialSkins: DIAL_SKINS, apply: apply, mount: mount, release: release, refreshPreview: function(){refreshPreview();} };
 })();

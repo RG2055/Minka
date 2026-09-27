@@ -618,3 +618,22 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-fac
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .wf-colored .mk-mid-meta-value {
   -webkit-text-fill-color:color-mix(in srgb,var(--mk-mid-fat-color,#30d158) 25%,rgb(var(--mk-txt-color,244,242,236))) !important;
 }
+/* The shift on the analog dial, read like the Nakts clock (card-faces.js dialMarkup):
+   the shift's hours a soft thick arc on the rim, the worked part bright over it, a
+   round dot where it ends, a thin inner lap for the hours before the rim's last 12,
+   the hour hand in its chosen style and a thin minute hand. */
+.mk-wf-dial .trk {fill:none;stroke:currentColor;stroke-opacity:.3;stroke-width:8.5;stroke-linecap:round;}
+.mk-wf-dial .dn {fill:none;stroke:color-mix(in srgb,var(--dial-ink) 35%,#fff);stroke-width:8.9;stroke-linecap:round;}
+.mk-wf-dial.sk-b .trk {stroke-width:6.5;}
+.mk-wf-dial.sk-b .dn {stroke-width:6.9;}
+.mk-wf-dial.sk-c .trk,.mk-wf-dial.sk-c .dn {stroke-width:9;}
+.mk-wf-dial.f2 .trk {stroke-opacity:.38;}
+.mk-wf-dial .lap {fill:none;stroke:currentColor;stroke-opacity:.6;stroke-width:3.4;stroke-linecap:round;}
+.mk-wf-dial .end {fill:var(--dial-ink);stroke:#000b;stroke-width:1.2;}
+.mk-wf-dial .hand.min {stroke:currentColor;stroke-width:1.2;}
+.mk-wf-dial .knob.now {fill:var(--dial-ink);stroke:#000b;stroke-width:1;}
+.mk-wf-dial .seg.rest {stroke-opacity:.6;}
+.mk-wf-dial .seg.on {stroke:color-mix(in srgb,var(--dial-ink) 35%,#fff);stroke-opacity:1;}
+.mk-wf-dial .seg.plan {stroke-dasharray:none;opacity:.7;}
+.mk-wf-dial .px.on {fill:color-mix(in srgb,var(--dial-ink) 35%,#fff);}
+.mk-wf-dial.dth .trk {stroke-dasharray:1.4 1.2;stroke-linecap:butt;stroke-opacity:.9;}

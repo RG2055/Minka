@@ -2196,7 +2196,10 @@ html.ns-dragging, html.ns-dragging * {cursor:grabbing !important;user-select:non
 .ns-cheer i {position:absolute;left:0;top:0;width:7px;height:10px;border-radius:2px;background:var(--c);opacity:0;animation:ns-burst .95s cubic-bezier(.15,.75,.3,1) var(--d) forwards;}
 .ns-cheer.is-mini i {width:5px;height:5px;border-radius:50%;animation-duration:.55s;}
 @keyframes ns-burst {0%{opacity:1;transform:translate(-50%,-50%) scale(.4);}70%{opacity:1;}100%{opacity:0;transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y) + 30px)) rotate(var(--r));}}
-html[data-motion="reduced"] .ns-cheer, html[data-motion="reduced"] #nsPanel .ns-room-bed[data-i].nsover .ns-room-bed-card {animation:none;}
+html[data-motion="reduced"] #nsPanel .ns-room-bed[data-i].nsover .ns-room-bed-card {animation:none;}
+/* animations off: the specks show where they are and fade, no burst */
+.ns-cheer.is-still i {animation:ns-burst-still .7s ease-out var(--d) forwards;}
+@keyframes ns-burst-still {0%{opacity:0;transform:translate(calc(-50% + var(--x) * .45),calc(-50% + var(--y) * .45));}25%{opacity:1;}100%{opacity:0;transform:translate(calc(-50% + var(--x) * .45),calc(-50% + var(--y) * .45));}}
 /* Bed picker: a press on a bed */
 .ns-bed-picker {position:fixed;z-index:100000;width:min(372px,calc(100vw - 16px));max-height:min(82vh,600px);overflow:auto;box-sizing:border-box;padding:12px 12px 14px;border-radius:22px;background:#161c26;color:#e3e7ee;border:1px solid rgba(255,255,255,.08);box-shadow:0 18px 44px rgba(0,0,0,.5);font-family:Inter,system-ui,sans-serif;animation:ns-pop .3s cubic-bezier(.2,.9,.25,1.15) both;scrollbar-width:thin;}
 @keyframes ns-pop {from{opacity:0;transform:scale(.94) translateY(6px);}to{opacity:1;transform:none;}}
@@ -2294,7 +2297,7 @@ html[data-motion="reduced"] #nsPanel .ns-bed-acc.is-new {animation:none;}
    empty height (they are fitted by width). */
 @media (min-width: 900px) {
   #nsPanel .ns-stats-box {flex-basis:318px !important;width:318px !important;min-width:318px !important;padding-left:12px !important;padding-right:12px !important;}
-  #nsPanel .ns-stat-row {grid-template-columns:42px minmax(0,1fr) 80px 70px !important;gap:6px !important;padding-right:8px !important;}
+  #nsPanel .ns-stat-row {grid-template-columns:42px minmax(0,1fr) 70px 70px !important;gap:6px !important;padding-right:8px !important;}
 }
 /* A rebuild (after a pick is saved, a new size) keeps everything where it is. */
 #nsPanel .ns-stats-box[data-view="beds"] .ns-bed-studio.is-still, #nsPanel .ns-studio-page.is-still button {animation:none;}
@@ -2387,3 +2390,8 @@ html[data-motion="reduced"] #nsPanel .ns-room-bed.ns-bed-rumble .ns-room-bed-car
 /* History rows: the grey row starts at the part's badge (no grey band left of it). */
 #nsOverlay #nsPanel .ns-stat-row {padding-left:0 !important;border-radius:16px !important;overflow:hidden;}
 #nsOverlay #nsPanel .ns-stat-row .ns-stat-part {align-self:stretch !important;height:auto !important;margin:0 !important;}
+/* History rows: the sleeper's emoji always shows. A long name (and fonts that set
+   it wider, as on Windows) gives way with an ellipsis; the emoji keeps its place. */
+#nsOverlay #nsPanel .ns-stat-name {min-width:0;max-width:100%;}
+#nsOverlay #nsPanel .ns-stat-name > span:first-child {min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#nsOverlay #nsPanel .ns-stat-name .ns-stat-emoji {flex:0 0 auto;font-size:15px;line-height:1;}

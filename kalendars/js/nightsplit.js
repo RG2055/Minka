@@ -3401,9 +3401,12 @@
       }
       if(target){
         var accent=src.getAttribute('data-accent')||src.style.getPropertyValue('--nsc-accent')||'';
-        if(isBed(src)) swapRoom(+src.dataset.i,+target.dataset.i);
-        else swap(+src.dataset.i,+target.dataset.i);
+        var other=target.getAttribute('data-accent')||'', from=src.getBoundingClientRect();
+        // the cheer first: nothing in the move may keep it from showing
         nsCheer(to,accent);
+        if(isBed(src) && target!==src) nsCheer(from,other,10);    // the other sleeper lands in the first bed's place
+        try{ if(isBed(src)) swapRoom(+src.dataset.i,+target.dataset.i); else swap(+src.dataset.i,+target.dataset.i); }
+        catch(err){ if(window.console) console.warn('Nakts: move',err); }
       }
     }
     el.addEventListener('pointerdown',function(e){
@@ -3444,18 +3447,19 @@
     el.addEventListener('lostpointercapture',function(){ if(active) finish(false); });
   }
 
-  /* A small cheer where something landed: a dozen specks, CSS only,
-     gone in a second; fewer on lite motion, none on reduced. */
+  /* A light cheer where something landed: a dozen specks, CSS only, gone in a
+     second (the same on lite: a few transforms cost nothing); with animations
+     turned off they only fade where they are. */
   function nsCheer(rect,accent,count){
     var lvl=document.documentElement.getAttribute('data-motion')||'full';
-    if(lvl==='reduced' || !rect) return;
-    var n=Math.min(count||14, lvl==='lite'?6:14), mini=n<8, cols=[(accent||'#56d7e6').trim(),'#ffd166','#6dd58c','#f4f2ec','#ff8a5c'], h='';
+    if(!rect || !rect.width) return;
+    var n=Math.min(count||14,14), mini=n<8, cols=[(accent||'#56d7e6').trim(),'#ffd166','#6dd58c','#f4f2ec','#ff8a5c'], h='';
     for(var i=0;i<n;i++){
       var a=-Math.PI/2+(i/(n-1)-.5)*Math.PI*1.4, d=30+Math.random()*46;
       h+='<i style="--x:'+Math.round(Math.cos(a)*d)+'px;--y:'+Math.round(Math.sin(a)*d)+'px;--r:'+Math.round(Math.random()*420-210)+'deg;--c:'+cols[i%cols.length]+';--d:'+Math.round(Math.random()*70)+'ms'+(i%3?'':';border-radius:50%')+'"></i>';
     }
     var box=document.createElement('div');
-    box.className='ns-cheer'+(mini?' is-mini':''); box.setAttribute('aria-hidden','true');
+    box.className='ns-cheer'+(mini?' is-mini':'')+(lvl==='reduced'?' is-still':''); box.setAttribute('aria-hidden','true');
     box.style.left=(rect.left+rect.width/2)+'px'; box.style.top=(rect.top+rect.height*.42)+'px';
     box.innerHTML=h;
     document.body.appendChild(box);
@@ -3661,7 +3665,7 @@
     A.parentNode.insertBefore(mark,A); B.parentNode.insertBefore(A,B); mark.parentNode.insertBefore(B,mark); mark.remove();
     nsGlide(A,ra,A.getBoundingClientRect());
     nsGlide(B,rb,B.getBoundingClientRect());
-    if(window.NaktsPets && window.NaktsPets.bedsMoved) window.NaktsPets.bedsMoved();   // the cats' duvet game stops, the beds are measured again
+    try{ if(window.NaktsPets && window.NaktsPets.bedsMoved) window.NaktsPets.bedsMoved(); }catch(_e){}   // the cats' duvet game stops, the beds are measured again
     // What a rebuild would draw now: the next light render leaves the rooms alone.
     _nsLastRoomHtml=roomLayout(st.sl);
     var idle=window.requestIdleCallback || function(f){ return setTimeout(f,120); };
