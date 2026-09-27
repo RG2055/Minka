@@ -504,6 +504,9 @@ html body :is(#grafiks-app,#worker-modal) .card.mk-watch-face.mk-addon-active.mk
 .mk-card-addon:is([data-addon-group="frame"],[data-addon-group="light"]) {
   inset: 0; top: 0; left: 0; right: auto; bottom: auto; width: 100%; height: 100%;
   object-fit: fill !important; transform: none; z-index: 25 !important; filter: none;
+  /* Exactly the card: its rounded corners (the radius the add-on code copies onto the
+     card), never moved or scaled off it. */
+  border-radius: var(--mk-addon-card-radius, 22px); translate: none !important; scale: 1 !important;
 }
 .mk-card-addon[data-addon-group="frame"] { filter: drop-shadow(0 0 1px rgba(0,0,0,.7)); }
 .mk-card-addon[data-addon-id="frame-holo"] { filter: none; }
@@ -528,3 +531,4 @@ html body :is(#grafiks-app,#worker-modal) .card.mk-watch-face.mk-addon-active.mk
 .mk-addon-coffee-stats { display: flex; flex-wrap: wrap; gap: 6px; }
 .mk-addon-coffee-stats button { height: 34px; padding: 0 14px; border-radius: 17px; border: 1px solid rgba(255,255,255,.14); background: transparent; color: var(--pp-on, #e3e7ee); font: 600 12.5px/1 var(--pp-font, system-ui); cursor: pointer; }
 .mk-addon-coffee-stats button[aria-pressed="true"] { background: #29394c; border-color: #64d2ff; color: #eaf4ff; }
+.mk-addon-controls[hidden] { display: none !important; }

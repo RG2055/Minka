@@ -4,7 +4,7 @@
   var STORAGE_KEY = 'mkWorkerCardAddonsV1';
   var CACHE_BUST = '20260912realistic1';
   // The Focus kit has its own version, so the kept pictures stay in everyone's cache.
-  var FOCUS_BUST = '20260927focus2';
+  var FOCUS_BUST = '20260927focus3';
   var activeGroup = 'topper';
   var scanFrame = 0;
   var sectionFrame = 0;
@@ -70,6 +70,7 @@
     { id: 'object-astronaut', label: 'Mēness astronauts', group: 'object', src: optimized('object-astronaut.webp') },
     { id: 'object-crystal-cat', label: 'Kristāla kaķis', group: 'object', src: optimized('object-crystal-cat.webp') },
     { id: 'object-owl', label: 'Baltā pūce', group: 'object', src: optimized('object-owl.webp') },
+    { id: 'object-david-vapor', label: 'Dāvids vaporwave', group: 'object', src: focusKit('object-david-vapor.webp') },
     { id: 'object-david-focus', label: 'Dāvids fokusā', group: 'object', src: focusKit('object-david-focus.webp') },
     { id: 'object-owl-focus', label: 'Pūce fokusā', group: 'object', src: focusKit('object-owl-focus.webp') },
     { id: 'object-astronaut-focus', label: 'Astronauts fokusā', group: 'object', src: focusKit('object-astronaut-focus.webp') },
@@ -1141,8 +1142,9 @@
       var item = config && ITEM_BY_ID[config.id], coffee = panel.querySelector('.mk-addon-coffee');
       coffee.hidden = !(item && item.dynamic);
       if (item && item.dynamic) coffee.querySelectorAll('[data-coffee-stat]').forEach(function(b) { b.setAttribute('aria-pressed', String(b.dataset.coffeeStat === item.stat)); });
-      // Frames and light cover the whole card: left / right means nothing there.
-      panel.querySelector('.mk-addon-side').hidden = !!item && (item.group === 'frame' || item.group === 'light');
+      // Frames and light cover the whole card: side, size and position mean nothing there.
+      var fullCard = !!item && (item.group === 'frame' || item.group === 'light');
+      panel.querySelector('.mk-addon-controls').hidden = fullCard;
       var fx = config.fx || (followsCard() ? 'card' : 'none');
       look.querySelectorAll('[data-decor-fx]').forEach(function(b) { b.setAttribute('aria-pressed', String(b.dataset.decorFx === fx)); });
       look.querySelectorAll('[data-decor-ink]').forEach(function(b) { b.setAttribute('aria-pressed', String(b.dataset.decorInk === (config.color || ''))); });
@@ -1314,6 +1316,8 @@
       scheduleScan();
     },
     clear: function(name) { saveConfig(name, null); },
+    // Draw a list of decorations on a card copy (the ready-made looks' thumbnails).
+    applyTo: function(card, list) { applyToCard(card, list); },
     // Remix / Pieskaņot / Atsaukt write the decoration together with the look.
     set: function(name, value, options) { saveList(name, toList(value), options); }
   };

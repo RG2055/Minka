@@ -657,14 +657,14 @@
       + '<div class="wf-timer-options" hidden><div class="wf-segment" aria-label="Taimeris"><button type="button" data-timer-style="">Cipari</button><button type="button" data-timer-style="a">Analogs</button></div>'
       + '<div class="wf-timer-analog"><div class="wf-dial-skins" role="group" aria-label="Pulksteņa izskats">' + DIAL_SKINS.map(function(k){return '<button type="button" data-timer-skin="'+k[0]+'"><span class="wf-dial-mini"></span><b>'+k[1]+'</b></button>';}).join('') + '</div>'
       + '<div class="wf-segment" aria-label="Rādītājs"><button type="button" data-timer-hand="1">Punkts</button><button type="button" data-timer-hand="2">Adata</button><button type="button" data-timer-hand="3">Josla</button></div>'
-      + '<div class="wf-segment" aria-label="Ciparnīca"><button type="button" data-timer-face="1">Kā kartītei</button><button type="button" data-timer-face="2">Tumšs</button><button type="button" data-timer-face="3">Bez fona</button></div></div></div>'
+      + '<div class="wf-segment" aria-label="Ciparnīca"><button type="button" data-timer-face="1">Kā kartītei</button><button type="button" data-timer-face="2">Kontrasts</button><button type="button" data-timer-face="3">Bez fona</button></div></div></div>'
       + '<div class="wf-coffee-options" hidden><div class="wf-segment wf-coffee-mode" aria-label="Kafijas vadība"><button type="button" data-coffee-mode="0">Ikona → pogas</button><button type="button" data-coffee-mode="1">Vienmēr − / +</button></div><div class="wf-segment" aria-label="Kafijas tonis"><button type="button" data-coffee-contrast="0">Stikls</button><button type="button" data-coffee-contrast="1">Fona kontrasts</button><button type="button" data-coffee-contrast="2">Kartītes tonis</button></div></div>'
       + [['x','Horizontāli',5,95],['y','Vertikāli',5,95],['size','Izmērs',50,170]].map(function(r){return '<label class="wf-range wf-position"><span>'+r[1]+'</span><input type="range" data-position="'+r[0]+'" min="'+r[2]+'" max="'+r[3]+'"><output></output></label>';}).join('')
       + '<button type="button" class="wf-fit">Ietilpināt kartītē</button></div>'
       + '<label class="wf-depth-control"><input type="checkbox" class="wf-depth-toggle"> Objekts priekšā ciparam</label>'
       + '<details class="wf-background"><summary>Attēla novietojums</summary>'+[['imageX','Horizontāli',0,100],['imageY','Vertikāli',0,100],['imageZoom','Tuvinājums',100,180]].map(function(r){return '<label class="wf-range"><span>'+r[1]+'</span><input type="range" data-image="'+r[0]+'" min="'+r[2]+'" max="'+r[3]+'"><output></output></label>';}).join('')+'</details>'
       + '</div>'
-      + '<div class="wf-footer"><button type="button" class="wf-undo" disabled>Atcelt pēdējo</button><button type="button" class="wf-reset">Atjaunot izkārtojumu</button><button type="button" class="wf-original">Sākotnējā klasika</button></div>';
+      + '<div class="wf-footer"><button type="button" class="wf-undo" disabled>Atcelt pēdējo</button><button type="button" class="wf-minimal" title="Cipars, vārds, maiņas laiks, emoji un saule/mēness">Tikai svarīgais</button><button type="button" class="wf-reset">Atjaunot izkārtojumu</button><button type="button" class="wf-original">Sākotnējā klasika</button></div>';
     tabs.after(panel);
     var wfTab='layout';
     try{ wfTab=localStorage.getItem('minka:wf-tab')||'layout'; }catch(_e){}
@@ -797,6 +797,8 @@
       if(el.classList.contains('wf-remove')){config.parts[selectedPart][3]=config.parts[selectedPart][3]?0:1;save(true);}
       if(el.classList.contains('wf-undo')&&history.length){var previous=history.pop();config=M.clean(previous);options.change(previous);preview.classList.toggle('wf-editing',!!previous);apply(preview,options.get());sync();sizePreview();}
       if(el.classList.contains('wf-fit'))save('fit');
+      // The layout most people build by hand: the essentials only.
+      if(el.classList.contains('wf-minimal')){var keep={hours:1,name:1,remaining:1,emoji:1,moon:1};M.parts.forEach(function(k){config.parts[k][3]=keep[k]?1:0;});save(true);}
       if(el.classList.contains('wf-reset')){config=M.preset(config.face,config);save('all');}
       if(el.classList.contains('wf-original')){options.change(null);options.section('background');options.rebuild();}
     });

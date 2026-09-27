@@ -59,7 +59,10 @@
     // ---- own tab row ----
     var row = document.createElement('div'); row.className = 'org-tabs'; row.setAttribute('role', 'tablist'); row.setAttribute('aria-label', 'Izskats');
     row.innerHTML = TABS.map(function (t) { return '<button type="button" role="tab" data-org-tab="' + t[0] + '">' + t[1] + '</button>'; }).join('');
-    tabs.before(row); tabs.hidden = true;
+    // The row sits on a full-width band in the modal's colour: that band is what
+    // sticks while a long tab scrolls, so nothing shows past the pill's round ends.
+    var band = document.createElement('div'); band.className = 'org-tabs-band';
+    tabs.before(band); band.append(row); tabs.hidden = true;
 
     // Liquid pill behind the selected tab (MinkaMotion.liquid, CSS springs).
     var pill = document.createElement('span'); pill.className = 'org-tab-pill'; pill.setAttribute('aria-hidden', 'true'); row.prepend(pill);

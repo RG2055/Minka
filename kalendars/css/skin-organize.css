@@ -275,7 +275,10 @@
 #worker-modal#worker-modal .mk-dither-inks button.mk-ink-auto[aria-pressed="true"] {background:#29394c;border-color:#64d2ff;color:#eaf4ff;}
 
 /* ---- the tab row stays in reach while a long tab scrolls ---- */
-#worker-modal#worker-modal .org-tabs {position:sticky;top:0;z-index:6;box-shadow:0 -12px 0 10px var(--pp-c1,#161b23);}
+/* The band behind the tab row is the modal's own colour (#10141b) and full width:
+   invisible at rest, it hides what scrolls under the row once it sticks. */
+#worker-modal#worker-modal .mk-skin-editor.org > .org-tabs-band {order:0;position:sticky;top:-12px;/* the scroll area's own 12px padding */z-index:6;background:#10141b;margin:-10px -8px 8px;padding:10px 8px 10px;}
+#worker-modal#worker-modal .org-tabs-band > .org-tabs {margin:0;}
 #worker-modal#worker-modal .mk-focus-hint {margin:2px 0 4px;font:500 12.5px/1.3 var(--pp-font,system-ui);color:var(--pp-on-var,#b8c1cd);}
 #worker-modal#worker-modal .mk-focus-hint[hidden] {display:none !important;}
 /* While editing, the chosen element (and its resize grip) is on top of the others,

@@ -18,6 +18,7 @@
   }
   var IMG_GROUPS = [
     // Generated for the Focus kit (scripts/build-chrome-art.py): grain, chrome, holo foil.
+    { label: 'Vaporwave',           ids: ['vapor-secret','vapor-floral'] },
     { label: 'Hroms un graudi',     ids: ['focus-ribbons','focus-ribbons-teal','focus-chrome','focus-holo'] },
     { label: 'Abstrakti',          ids: ['abstract-color-wave','abstract-blue-liquid','abstract-pastel-orbit','abstract-sun-glow','abstract-neon-folds','abstract-white-flow','abstract-copper-web','abstract-paper-geometry','pix-color-waves'] },
     { label: 'Aesthetic',           ids: ['user-holo-jellyfish','user-glitter-rainbow','user-pixel-clouds','user-golden-water','user-rainbow-beach','user-silver-ocean','user-glitch-dinosaurs','gnome-glass-chip-d','gnome-lcd-rainbow-d','gnome-pixels-d','gnome-tarka-d','open-aesthetic','aesthetic-bird','aesthetic-cyborg','aesthetic-face','aesthetic-flash','aesthetic-helmet','aesthetic-sunset','aesthetic-water','user-bubble'] },
@@ -107,6 +108,7 @@
     'gnome-tarkov-pills-d': 'Krāsu stienīši — tumši', 'gnome-tarkov-pills-l': 'Krāsu stienīši — gaiši',
     'gnome-tubes-d': 'Nakts caurules', 'gnome-tubes-l': 'Nakts caurules — gaišas',
     'gnome-vnc-d': 'Vienkrāsains — tumšs', 'gnome-vnc-l': 'Vienkrāsains — gaišs',
+    'vapor-secret': 'Secret_ logs', 'vapor-floral': 'Floral grīda',
     'focus-ribbons': 'Zilās lentes', 'focus-ribbons-teal': 'Tirkīza lentes', 'focus-chrome': 'Hroma formas', 'focus-holo': 'Holo svītras',
     'dither-tors': 'Dither tors', 'dither-lode': 'Dither lode', 'dither-kapas': 'Dither kāpas',
     'dither-lentes': 'Dither lentes', 'dither-rezgis': 'Dither režģis', 'dither-signals': 'Dither signāls', 'dither-papirs': 'Dither papīrs'
@@ -263,14 +265,32 @@
     face.parts.moon=window.MinkaCardFaceModel.symbolPlacement(face.parts,face.face);
     PRESETS.push({label:p[0],group:'new-fx',isNew:true,bg:{t:'img',id:p[1]},num:'244,242,236',na:'1',txt:'244,242,236',fx:p[2],fl:p[3],face:face,depth:false,sw:'url(data/skins/skin-'+p[1]+'.webp)'});
   });
+  /* Vaporwave: whole looks — picture, layout, colours, the analog shift timer and
+     the decoration — made to go together. Their layout is kept as designed. */
+  (function(){
+    function vapor(label,bg,tint,finish,txt,tm,dialColor,addons,parts){
+      var face=window.MinkaCardFaceModel.preset('classic');
+      face.tint=tint;face.finish=finish;
+      Object.keys(parts).forEach(function(k){face.parts[k]=parts[k];});
+      face.colors.remaining=dialColor;
+      PRESETS.push({label:label,group:'vapor',isNew:true,bg:{t:'img',id:bg},num:hexToRgb('#'+tint),na:'1',txt:txt,face:face,depth:false,tm:tm,addons:addons,keepParts:true,sw:'url(data/skins/skin-'+bg+'.webp)'});
+    }
+    var hide=[50,50,100,0];
+    vapor('Secret_','vapor-secret','ffffff',2,'255,255,255','d13','3a2bf2',
+      [{id:'object-david-vapor',scale:1,side:'left',x:6,y:-4}],
+      {hours:[76,20,86,1],name:[66,90,70,1],remaining:[82,62,90,1],coffee:[14,11,72,1],moon:[58,9,56,0],month:hide.slice(),fatigue:hide.slice(),emoji:hide.slice(),initials:hide.slice(),clock:hide.slice()});
+    vapor('Floral','vapor-floral','4fe0b0',2,'255,255,255','b21','4fe0b0',
+      [{id:'object-david',scale:1.05,side:'left',x:4,y:-2}],
+      {hours:[80,46,74,1],name:[66,91,68,1],remaining:[82,72,84,1],coffee:[14,11,72,1],moon:[58,9,56,0],month:hide.slice(),fatigue:hide.slice(),emoji:hide.slice(),initials:hide.slice(),clock:hide.slice()});
+  })();
   /* Show the finest first: photo compositions, then posters and picture effects;
      the plain number looks come last. (Sorted once, before any button exists.) */
   (function(){
-    var rank={wildlife:0,botanical:0,ocean:0,landscape:1,poster:2,'new-fx':2,dither:3,collection:4,numbers:5};
+    var rank={vapor:-1,wildlife:0,botanical:0,ocean:0,landscape:1,poster:2,'new-fx':2,dither:3,collection:4,numbers:5};
     PRESETS=PRESETS.map(function(p,i){return [p,i];}).sort(function(a,b){return ((rank[a[0].group]==null?4:rank[a[0].group])-(rank[b[0].group]==null?4:rank[b[0].group]))||a[1]-b[1];}).map(function(x){return x[0];});
   })();
   var DITHER_INKS=[['eceae4','Balta'],['64d2ff','Ledus'],['23cdcf','Ciāna'],['1fe091','Zaļa'],['f5b73f','Dzintars'],['ff8a5c','Oranža'],['ff5c5c','Sarkana'],['2554a0','Tinte'],['141414','Melna']];
-  var PRESET_GROUPS=[['all','Visi'],['new','Jaunumi'],['poster','Plakāti'],['dither','Dither'],['wildlife','Dzīvnieki'],['botanical','Ziedi un augi'],['ocean','Ūdens'],['landscape','Ainavas un nakts'],['numbers','Ciparu efekti'],['collection','Citi foto']];
+  var PRESET_GROUPS=[['all','Visi'],['new','Jaunumi'],['vapor','Vaporwave'],['poster','Plakāti'],['dither','Dither'],['wildlife','Dzīvnieki'],['botanical','Ziedi un augi'],['ocean','Ūdens'],['landscape','Ainavas un nakts'],['numbers','Ciparu efekti'],['collection','Citi foto']];
   function presetInGroup(p,group){return group==='all'||(group==='new'?p.isNew:p.group===group);}
 
   /* Every card render asks for its skin: parse the stored map once per change,
@@ -339,7 +359,7 @@
     var cleanId = String(id || '');
     var material = window.MinkaFindCardMaterial(cleanId);
     if(material) return new URL(material.path+'?v=20260912photos1',document.baseURI).href;
-    var path = 'data/skins/skin-' + cleanId + '.webp' + (/^aesthetic-/.test(cleanId) ? '?v=2' : /^dither-rtg-/.test(cleanId) ? '?v=20260926h5' : /^focus-/.test(cleanId) ? '?v=20260927f1' : '');
+    var path = 'data/skins/skin-' + cleanId + '.webp' + (/^aesthetic-/.test(cleanId) ? '?v=2' : /^dither-rtg-/.test(cleanId) ? '?v=20260926h5' : /^(focus|vapor)-/.test(cleanId) ? '?v=20260927f2' : '');
     try { return new URL(path, document.baseURI).href; }
     catch (e) { return path; }
   }
@@ -1410,7 +1430,8 @@
   var REMIX_EFFECT_PHOTOS = null, REMIX_SCENE_PHOTOS = null;
   function remixRecipe() {
     var recent = REMIX_LAST.slice(-2);
-    var list = [[24, 'photo'], [26, 'effect'], [10, 'numbers'], [22, 'scene'], [8, 'dither'], [10, 'poster']].filter(function(r) {
+    // Weighted toward what people pick themselves (photo compositions, dither).
+    var list = [[30, 'photo'], [26, 'effect'], [6, 'numbers'], [18, 'scene'], [12, 'dither'], [8, 'poster']].filter(function(r) {
       return !(recent.length === 2 && recent[0] === r[1] && recent[1] === r[1]);
     });
     var kind = weighted(list.map(function(r) { return [r[0], r[1]]; }));
@@ -1434,7 +1455,7 @@
       var p = pool.filter(function(x) { return x.bg.id === id; })[0];
       skin = JSON.parse(JSON.stringify(p.bg));
       skin.face = carryFace(JSON.parse(JSON.stringify(p.face)), current);
-      if (kind === 'photo') skin.face.finish = pickOne([skin.face.finish, skin.face.finish, 1, 4]);
+      if (kind === 'photo') skin.face.finish = pickOne([skin.face.finish, skin.face.finish, 1, 4, 5]);   // neon is a favourite
       if (p.fx) skin.fx = p.fx;
       if (p.depth === false) skin.depth = false;
       skin.num = p.num;
@@ -1452,7 +1473,7 @@
       if (Math.random() < .4) addon = remixAddon(['sticker', 'charm'], null);
     } else {
       skin = { t: 'img', id: freshId(REMIX_SCENE_PHOTOS), depth: false, face: carryFace(M.preset(pickOne(['classic', 'photo', 'orbit', 'modular'])), current) };
-      skin.face.finish = weighted([[4, 0], [2, 1], [1, 2], [2, 4], [1, 3]]);
+      skin.face.finish = weighted([[4, 0], [2, 1], [1, 2], [2, 4], [1, 3], [3, 5]]);
       var look = Math.random();
       if (look < .12) { skin.face.fullTintMode = 3; skin.face.fullTintAuto = 1; }
       else if (look < .2) skin.face.fullTintMode = 1;
@@ -1873,13 +1894,15 @@
       var skin=JSON.parse(JSON.stringify(p.bg));
       skin.face=JSON.parse(JSON.stringify(p.face));
       if(draft.face){skin.face.coffeeMode=draft.face.coffeeMode;skin.face.coffeeContrast=draft.face.coffeeContrast;skin.face.colors=draft.face.colors;skin.face.fullTintMode=draft.face.fullTintMode;skin.face.fullTintHue=draft.face.fullTintHue;skin.face.fullTintIntensity=draft.face.fullTintIntensity;skin.face.fullTintAuto=draft.face.fullTintAuto;skin.face.fullTintScheme=draft.face.fullTintScheme;}
-      if(draft.face)Object.keys(draft.face.parts).forEach(function(key){skin.face.parts[key][3]=draft.face.parts[key][3];});
+      if(draft.face&&!p.keepParts)Object.keys(draft.face.parts).forEach(function(key){skin.face.parts[key][3]=draft.face.parts[key][3];});
+      if(p.keepParts&&draft.face)skin.face.colors.moon=draft.face.colors&&draft.face.colors.moon||'';
       skin.num=p.num;skin.numA=p.na;skin.em='0';
       if(p.fx)skin.fx=p.fx;
       if(p.fl)skin.fl=p.fl;
+      if(p.tm)skin.tm=p.tm;
       if(p.depth===false)skin.depth=false;
       if(p.txt)skin.txt=p.txt;
-      if(draft.tm)skin.tm=draft.tm;
+      if(draft.tm&&!p.tm)skin.tm=draft.tm;
       return skin;
     }
     // Each preset is a full clone of the card: build them only as they come into
@@ -1917,7 +1940,9 @@
       card.querySelectorAll('button,input,select,textarea,a').forEach(function(el){var span=document.createElement('span');span.className=el.className;span.innerHTML=el.innerHTML;el.replaceWith(span);});
       card.classList.add('mk-preset-card');card.classList.remove('mk-skin-preview-real','wf-scaled-preview','wf-editing');
       stage.id='grafiks-list';stage.classList.add('grid-view');stage.appendChild(card);
-      window.mkApplySkinToEl(card,bundleSkin(PRESETS[+button.dataset.preset]));
+      var preset=PRESETS[+button.dataset.preset];
+      window.mkApplySkinToEl(card,bundleSkin(preset));
+      if(preset.addons&&window.MinkaCardAddons&&window.MinkaCardAddons.applyTo)window.MinkaCardAddons.applyTo(card,preset.addons);
     }
     host.querySelectorAll('[data-preset-group]').forEach(function(button){
       button.addEventListener('click',function(){
@@ -1928,7 +1953,13 @@
       });
     });
     host.querySelectorAll('.mk-skin-preset').forEach(function(b) {
-      b.addEventListener('click',function(){rememberForUndo();draft=bundleSkin(PRESETS[+b.dataset.preset]);disableAutoPalette();commit();});
+      b.addEventListener('click',function(){
+        var p=PRESETS[+b.dataset.preset];
+        rememberForUndo();draft=bundleSkin(p);disableAutoPalette();
+        // A whole look brings its decoration (the old ones can come back with Atsaukt).
+        if(p.addons)setAddonQuiet(name,JSON.parse(JSON.stringify(p.addons)));
+        commit();
+      });
     });
     host.querySelector('[data-skin-section="presets"]').addEventListener('click',renderBundles);
     renderBundles();
