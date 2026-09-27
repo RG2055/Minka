@@ -535,10 +535,15 @@
   function eur(cents) {
     return (Math.max(0, Number(cents) || 0) / 100).toLocaleString('lv-LV', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
   }
+  /* Sources are stored in caffeine cups (a 500 ml Monster = 2, Brite = 1.25, as
+     the coffee menu counts them). Next to a drink's icon the number is drinks —
+     cans and cups — like the card's own coffee menu; the "tases" total stays cups. */
+  var COFFEE_EQ = { monster: 2, monsterultra: 2, brite: 1.25 };
+  function drinks(key, units) { var n = (Number(units) || 0) / (COFFEE_EQ[key] || 1); return n > 0 ? Math.max(1, Math.round(n)) : 0; }
   function sourceChips(sources) {
     var icon = window.__minkaCoffeeIcon;
     var parts = COFFEE_SOURCES.filter(function (d) { return (Number(sources && sources[d[0]]) || 0) > 0; }).map(function (d) {
-      var n = Number(sources[d[0]]) || 0;
+      var n = drinks(d[0], sources[d[0]]);
       return '<span class="db-csrc" title="' + d[1] + '">' + (icon ? icon(d[0]) : '<small>' + d[1] + '</small>') + '<b>' + n + '</b></span>';
     });
     return parts.length ? parts.join('') : '<span class="db-dim">—</span>';

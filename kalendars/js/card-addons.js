@@ -168,8 +168,38 @@
       return 'href=""';
     });
   }
+  /* All time = the coffee server's totals, the very numbers the Statistics tab
+     shows (it keeps them in window.__mkCoffeeTotalsApi / __mkCoffeeDetailsApi, and
+     so does this). Asked once; again only a while after a coffee is logged. */
+  var coffeeTotalsJob = null, coffeeTotalsAt = 0;
+  function coffeeNorm(name) {
+    var M = window.MinkaDaybookModel;
+    return M && typeof M.norm === 'function' ? M.norm(name) : String(name || '').trim().replace(/\s+/g, ' ').toLowerCase();
+  }
+  function loadCoffeeTotals(force) {
+    if (coffeeTotalsJob || (!force && window.__mkCoffeeDetailsApi) || (force && Date.now() - coffeeTotalsAt < 5000)) return;
+    coffeeTotalsAt = Date.now();
+    coffeeTotalsJob = fetch(String(window.MINKA_COFFEE_API_BASE || 'https://coffee.rgapp.page').replace(/\/+$/, '') + '/api/coffee?totals=1', { cache: 'no-store' })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (!d || !d.ok || !d.totals) return;
+        var t = {}, det = {};
+        Object.keys(d.totals).forEach(function(k) { t[coffeeNorm(k)] = Math.max(0, Number(d.totals[k]) || 0); });
+        Object.keys(d.details || {}).forEach(function(k) { det[coffeeNorm(k)] = d.details[k]; });
+        window.__mkCoffeeTotalsApi = t; window.__mkCoffeeDetailsApi = det;
+        refreshCoffee();
+      })
+      .catch(function() {})
+      .then(function() { coffeeTotalsJob = null; });
+  }
   function coffeeAllTimeBySource(name) {
-    try { return window.__minkaGetCoffeeSourcesAllTime ? window.__minkaGetCoffeeSourcesAllTime(name) : {}; } catch (_e) { return {}; }
+    var det = window.__mkCoffeeDetailsApi;
+    if (!det) { loadCoffeeTotals(); return {}; }
+    var src = (det[coffeeNorm(name)] || {}).sources || {}, out = {};
+    // Stored in caffeine cups; a sticker counts drinks (as the Statistics chips do).
+    var eq = { monster: 2, monsterultra: 2, brite: 1.25 };
+    Object.keys(src).forEach(function(k) { var n = (Number(src[k]) || 0) / (eq[k] || 1); out[k] = n > 0 ? Math.max(1, Math.round(n)) : 0; });
+    return out;
   }
   function coffeeIconAt(drink, x, y, size, faded) {
     var raw = typeof window.__minkaCoffeeIcon === 'function' ? String(window.__minkaCoffeeIcon(drink) || '') : '';
@@ -1303,7 +1333,11 @@
       if (img.getAttribute('src') !== fresh) img.src = fresh;
     });
   }
-  document.addEventListener('minka:coffee-changed', refreshCoffee);
+  document.addEventListener('minka:coffee-changed', function() {
+    refreshCoffee();
+    // An all-time sticker on the page: fetch the new totals (after the save has landed).
+    if (document.querySelector('.mk-card-addon[data-addon-id$="-a"]')) setTimeout(function() { loadCoffeeTotals(true); }, 4000);
+  });
 
   waitForHooks();
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', scanCards, { once: true });
