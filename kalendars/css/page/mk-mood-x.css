@@ -1,0 +1,508 @@
+/* Noskaņa X — RG datora noskaņas bloks vidus kolonnā (2026-09-28).
+   Sk. js/page/mood-feedback.js (MX), js/page/mood-trend.js (līnijas zīmējums
+   debesīs) un docs/mood-x-design.md (virziens, tokeni, stāvokļi, kustība).
+
+   Virziens: orbīta. Sejiņa centrā, kolēģi uz slīpas orbītas (tuvākie
+   lielāki), katram apkārt viņa kafija; fonā nakts debesis ASCII Magic
+   veidā: mākoņi paši ir no tūkstošiem sīku simbolu (kā rastrs, bez rindām),
+   ar dūmaku un mirdzumu, un ļoti lēni slīd; priekšā tīra datu līnija.
+   Melns fons; vadīklas un teksts M3 (css/mk-sys.css).
+
+   Divas daļas, tāpat kā Galvene X:
+   1. Esošie elementi: @layer mk-mx ar !important (slānis deklarēts
+      kalendars/index.html 5. rindā tūlīt aiz mk-hx, tāpēc tā !important
+      pārspēj vecos nesloņotos !important).
+   2. Jaunie elementi (.rg-scape*, .rg-mood-moon, .rg-rate-*, .rg-comment-*):
+      parasti noteikumi.
+   Kustība (orbīta, debesis) iet vienā kopīgā 10 Hz taktī, viens kadrs uz soli;
+   bez backdrop-filter, jo darba datori ir vāji. */
+
+@layer mk-mx {
+  :root.mk-mx #grafiks-list .rg-feedback-card.card.mk-mid-card {
+    --mx-ink: #f5f8fc;
+    --mx-muted: #a9b8cb;
+    --mx-faint: rgba(190, 206, 226, .72);
+    --mx-focus: #3cc8f0;
+    padding: 6px 2px 4px !important;
+    justify-content: flex-start !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card :is(.rg-feedback-card-head-spacer, .rg-feedback-cloud) { display: none !important; }
+
+  /* ── Režģis ─────────────────────────────────────────────────────────── */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-feedback-card-main {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    grid-template-areas:
+      "stage stage"
+      "title meta"
+      "taps  taps"
+      "state state"
+      "month month" !important;
+    align-items: center !important;
+    justify-content: stretch !important;
+    width: 100% !important;
+  }
+
+  /* ── Skatuve: caurspīdīga, virs ainavas (.rg-trend-plot, to zīmē
+     mood-trend.js) ─────────────────────────────────────────────────────── */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-mood-stage {
+    grid-area: stage !important;
+    position: relative !important;
+    z-index: 2 !important;
+    display: block !important;
+    height: var(--mx-stage-h, 390px) !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-mood-glow { display: none !important; }
+  /* translate, not transform: the tap pop animates transform (a scale) and
+     the two compose instead of the pop throwing the face into a corner. */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-mood-blob-wrap {
+    position: absolute !important;
+    left: 50% !important;
+    top: var(--mx-face-y, 132px) !important;
+    translate: -50% -50% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  /* The two pills keep their own look and icons (fatigue: the bolt and its
+     colour; coffee: the cup); they only move to the top corners, clear of
+     the orbit, with their word under them as before, now readable. */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-mood-side {
+    top: 8px !important;
+    transform: none !important;
+    z-index: 12 !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-mood-side--left { left: 8px !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-mood-side--right { right: 8px !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-mood-pill--coffee { pointer-events: auto !important; cursor: pointer !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-mood-side-label {
+    color: var(--mk-sys-on-surface-variant, #a9b3c1) !important;
+    font: 600 10.5px/1.2 Inter, system-ui, sans-serif !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .9) !important;
+  }
+  /* The colleagues' glass keeps its lens, with a deeper tint inside, so the
+     initials read on the brightest characters of the sky behind. */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-mood-person .rg-mood-person-glass { background: rgba(7, 12, 22, .66) !important; }
+  /* The radio is one more bubble on the orbit (mood-feedback.js), so the old
+     headphones and the radio box on the face are not shown. */
+  :root.mk-mx #grafiks-list .rg-feedback-card :is(.rg-mood-headphones, .rg-mood-headband, .rg-mood-now) { display: none !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-mood-radio-orb {
+    appearance: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: none !important;
+    font: inherit !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-mood-radio-orb .rg-mood-person-glass { transition: scale var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, cubic-bezier(.34, 1.4, .64, 1)) !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-mood-radio-orb:active .rg-mood-person-glass { scale: .9 !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-mood-radio-orb:focus-visible { outline: 2px solid var(--mx-focus) !important; outline-offset: 2px !important; border-radius: 50% !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-mood-radio-art {
+    position: absolute !important;
+    inset: 9% !important;
+    z-index: 1 !important;
+    width: 82% !important;
+    height: 82% !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-mood-radio-art:not([hidden]) + .rg-mood-person-emoji { display: none !important; }
+  /* no picture: while the spectrum plays it stands alone in the glass */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-mood-radio-orb.is-solo.is-eq .rg-mood-person-emoji { display: none !important; }
+  /* over the cover and over the radio emoji alike (that sits at 3) */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-mood-radio-spec {
+    position: absolute !important;
+    inset: 9% !important;
+    z-index: 4 !important;
+    display: block !important;
+    width: 82% !important;
+    height: 82% !important;
+    border-radius: 50% !important;
+    pointer-events: none !important;
+  }
+  /* Each person carries their own coffee as moons (see .rg-mood-moon); the
+     old count badge and the shift's scattered source badges are not shown. */
+  :root.mk-mx #grafiks-list .rg-feedback-card :is(.rg-mood-person-coffee, .rg-mood-coffee-orbit) { display: none !important; }
+  /* The mood's name right after the heading, under the curve
+     ("Novērtē maiņu  Lieliski"); mood-feedback.js moves it into .rg-rate-head. */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-rate-head {
+    grid-area: title !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+    margin: 4px 0 4px 6px !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-mood-label {
+    position: static !important;
+    order: 2 !important;
+    flex: 0 1 auto !important;
+    z-index: auto !important;
+    translate: none !important;
+    transform: none !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 4px 10px !important;
+    overflow: hidden !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    background: var(--mk-sys-surface-container-high, #1a1f27) !important;
+    box-shadow: none !important;
+    color: var(--mk-sys-on-surface, #e6ebf2) !important;
+    font: 700 12px/1.1 Inter, system-ui, sans-serif !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-mood-label:empty { display: none !important; }
+
+  /* ── Ainava: .rg-trend-plot aiz skatuves (mood-trend.js zīmē canvas) ── */
+  /* The curve's button keeps only its link text in the heading row; its
+     plot becomes the landscape behind the stage (position: static lets the
+     plot use the card as its box, while clicks still belong to the button). */
+  /* z-index/isolation off: a grid item's z-index applies even when static,
+     and would lift the whole landscape above the face. */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-trend {
+    grid-area: meta !important;
+    position: static !important;
+    z-index: auto !important;
+    isolation: auto !important;
+    display: inline-flex !important;
+    justify-self: end !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 4px 0 !important;
+    padding: 6px 8px 6px 12px !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    background: none !important;
+    box-shadow: none !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-trend::before { display: none !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-trend:hover { background: rgba(255, 255, 255, .06) !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-trend:focus-visible { outline: 2px solid var(--mx-focus) !important; outline-offset: 2px !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-trend-head { display: inline-flex !important; margin: 0 !important; padding: 0 !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-trend-title { display: none !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-trend-meta {
+    color: var(--mx-muted) !important;
+    font: 600 12.5px/1.2 Inter, system-ui, sans-serif !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-trend-plot {
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
+    z-index: 1 !important;
+    display: block !important;
+    width: auto !important;
+    height: var(--mx-stage-h, 390px) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: none !important;
+    box-shadow: none !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-trend-svg { display: none !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-trend-axis {
+    position: absolute !important;
+    left: 9px !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    display: block !important;
+    width: 14px !important;
+    height: auto !important;
+    margin: 0 !important;
+    opacity: .7 !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-trend-axis i {
+    position: absolute !important;
+    left: 0 !important;
+    font-size: 11px !important;
+    line-height: 1 !important;
+    translate: 0 -50% !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-trend-axis { display: none !important; }
+
+  /* ── Virsraksts ─────────────────────────────────────────────────────── */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-feedback-card-title {
+    order: 1 !important;
+    flex: none !important;
+    display: block !important;
+    margin: 0 !important;
+    color: var(--mx-ink) !important;
+    font: 700 15px/1.3 Inter, system-ui, sans-serif !important;
+    letter-spacing: -.01em !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+  }
+
+  /* ── Sejiņas: tieši tā pati rinda kā agrāk (bez kastes ap tām); nākotnes
+     dienai blāvas, jo tai vēl nevar balsot. ───────────────────────────── */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-taps { grid-area: taps !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-tap[aria-disabled="true"] { cursor: default !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-tap[aria-disabled="true"] > span:first-child { opacity: .38 !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-tap[aria-disabled="true"]:hover::before { background: transparent !important; }
+
+  /* ── Stāvokļa rinda: redzama tikai, kad tai ir ko teikt (tikko novērtēts,
+     ar "Atsaukt", vai nākotnes diena); citādi tikai ekrāna lasītājam. ── */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-rate-state.is-on .rg-feedback-card-reaction-label {
+    position: static !important;
+    display: inline !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    clip: auto !important;
+    clip-path: none !important;
+    color: var(--mx-muted) !important;
+    font: 550 12px/1.35 Inter, system-ui, sans-serif !important;
+    letter-spacing: 0 !important;
+    text-align: center !important;
+    text-transform: none !important;
+    white-space: normal !important;
+    opacity: 1 !important;
+  }
+
+  /* ── Šis mēnesis: josla pašā skatuvē, uzreiz zem līknes, ar plānu
+     atdalītāju pirms virsraksta. Trīs vienādas kolonnas: augšā ikona un
+     skaitlis, zem tā īss vārds (nekas netiek nogriezts); bolusam GE/Ph
+     josla visā kolonnas platumā. M3: stāvokļa slānis un atsperīgs
+     spiediens (tā pati atspere kā visur). ──────────────────────────── */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month {
+    grid-area: stage !important;
+    align-self: end !important;
+    position: relative !important;
+    z-index: 3 !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    align-items: stretch !important;
+    gap: 4px !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 6px !important;
+    padding: 0 0 4px !important;
+    border-bottom: 1px solid var(--mk-sys-outline-variant, rgba(255, 255, 255, .1)) !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item {
+    position: relative !important;
+    display: grid !important;
+    grid-template-rows: 18px 13px !important;
+    justify-items: center !important;
+    align-items: center !important;
+    row-gap: 2px !important;
+    min-width: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 4px 4px 5px !important;
+    overflow: hidden !important;
+    border: 0 !important;
+    border-radius: 14px !important;
+    background: none !important;
+    box-shadow: none !important;
+    color: var(--mx-ink) !important;
+    transition: background-color 150ms var(--mk-ease-effects, ease), transform var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, cubic-bezier(.34, 1.4, .64, 1)) !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item:hover { background: rgba(230, 235, 242, .08) !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item:active { background: rgba(230, 235, 242, .12) !important; transform: scale(.96) !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item:focus-visible { outline: 2px solid var(--mx-focus) !important; outline-offset: 1px !important; }
+  /* Row 1: icon + number (bolus: its split). */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item b {
+    grid-row: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    font: 700 14px/1 Inter, system-ui, sans-serif !important;
+    font-variant-numeric: tabular-nums !important;
+    letter-spacing: 0 !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card :is(.rg-month-item--coffee, .rg-month-item--radio) b::before {
+    flex: none;
+    font: 400 13px/1 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item--coffee b::before { content: '☕'; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item--radio b::before { content: '📻'; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item--coffee b { color: #f5c46b !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item--radio b { color: #9ed8ff !important; }
+  /* Row 2: what the number is. */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item span {
+    grid-row: 2 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    color: var(--mk-sys-on-surface-variant, #a9b3c1) !important;
+    font: 500 10.5px/13px Inter, system-ui, sans-serif !important;
+    letter-spacing: 0 !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  /* Bolus: GE 25 ▬▬ Ph 23 in row 1 (the total is the two together). */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item--bolus b { display: none !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item--bolus:has(small:empty) b { display: inline-flex !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item small {
+    grid-row: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    font: 700 11.5px/1 Inter, system-ui, sans-serif !important;
+    font-variant-numeric: tabular-nums !important;
+    white-space: nowrap !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item small:empty { display: none !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item small em { flex: none !important; font-style: normal !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item small em:first-of-type { order: 0 !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-split {
+    order: 1 !important;
+    flex: 1 1 auto !important;
+    width: auto !important;
+    min-width: 12px !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item small em:last-of-type { order: 2 !important; }
+
+  /* ── Komentāri: tas pats baltais kaķa burbulis; zem vārda "KOMENTĀRI"
+     dienas jaunākā ziņa savā rindā (nekad virs vārda), parastiem burtiem. ── */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-feedback-card-actions {
+    display: flex !important;
+    justify-content: flex-start !important;
+    margin: 8px 0 0 !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-write.rg-pulse-write--comment {
+    grid-template-columns: auto !important;
+    grid-template-rows: auto auto !important;
+    max-width: calc(100% - 20px) !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-write--comment .rg-comment-icon { grid-area: 1 / 1 / 3 / 2 !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-write--comment > span:not(.rg-comment-preview):not(.rg-feedback-badges) { grid-area: 1 / 1 !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-has-comment .rg-pulse-write--comment > span:not(.rg-comment-preview):not(.rg-feedback-badges) {
+    align-self: end !important;
+    justify-self: start !important;
+    padding-bottom: 3px !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-write--comment > .rg-comment-preview {
+    grid-area: 2 / 1 !important;
+    z-index: 1 !important;
+    align-self: start !important;
+    justify-self: stretch !important;
+    display: block !important;
+    max-width: 230px !important;
+    padding: 0 16px 10px !important;
+    overflow: hidden !important;
+    color: #3a4452 !important;
+    -webkit-text-fill-color: #3a4452 !important;
+    font: 600 11.5px/1.3 Inter, system-ui, sans-serif !important;
+    letter-spacing: 0 !important;
+    text-align: left !important;
+    text-overflow: ellipsis !important;
+    text-transform: none !important;
+    white-space: nowrap !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-write--comment > .rg-comment-preview[hidden] { display: none !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-write--comment > .rg-comment-preview b { color: #0d1117 !important; -webkit-text-fill-color: #0d1117 !important; font-weight: 750 !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-write--comment .rg-feedback-action-count:empty { display: none !important; }
+}
+
+/* ── Jaunie elementi ───────────────────────────────────────────────────── */
+.rg-scape { position: absolute; left: 0; top: 0; display: block; pointer-events: none; }
+/* The sky (mood-trend.js): the haze wanders (Web Animations, compositor),
+   the character grid above it stays put; soft edges all round, so the card
+   shows no box. It arrives once built (the picture loads after the card). */
+.rg-scape-sky {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 700ms var(--mk-ease-effects, ease);
+  /* Soft at every edge, and a dark ring round the big face, so the sky's
+     blue never runs into the glass and its liquid. */
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent), linear-gradient(to bottom, transparent, #000 26px, #000 calc(100% - 30px), transparent), radial-gradient(circle at 50% var(--mx-face-y, 132px), transparent 60px, rgba(0, 0, 0, .35) 74px, #000 104px);
+  -webkit-mask-composite: source-in, source-in;
+  mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent), linear-gradient(to bottom, transparent, #000 26px, #000 calc(100% - 30px), transparent), radial-gradient(circle at 50% var(--mx-face-y, 132px), transparent 60px, rgba(0, 0, 0, .35) 74px, #000 104px);
+  mask-composite: intersect;
+}
+.rg-scape-sky.is-on { opacity: .8; }             /* the whole sky 20 % lighter */
+:root[data-motion="reduced"] .rg-scape-sky { transition: none; }
+.rg-sky-move { position: absolute; left: 0; top: 0; }
+.rg-sky-back, .rg-sky-light, .rg-sky-tint, .rg-sky-mask { position: absolute; left: 0; top: 0; display: block; }
+/* The characters: a still stencil (white characters on black, redrawn only
+   where a cell changes) and a still tint, multiplied with the drifting
+   bright light, then screened onto the soft picture: each character takes
+   the colour of the cloud passing beneath it, continuously (compositor). */
+.rg-sky-chars { position: absolute; inset: 0; isolation: isolate; mix-blend-mode: screen; }
+.rg-sky-tint, .rg-sky-mask { mix-blend-mode: multiply; }
+/* A person's coffee: small moons round their glass (mood-feedback.js). */
+.rg-mood-moon {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  transform: translate(-50%, -50%) translate(var(--mx-mx, 0), var(--mx-my, 0));
+  pointer-events: none;
+}
+.rg-mood-moon svg { display: block; width: 15px; height: 15px; filter: none; }
+.rg-mood-moon b { color: #ffe2a8; font: 800 10px/1 Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px rgba(0, 0, 0, .85); }
+.rg-scape-ping {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1.5px #ffffff;
+  pointer-events: none;
+}
+/* State line and its undo. */
+.rg-rate-state {
+  grid-area: state;
+  display: none;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 4px 10px;
+  min-height: 30px;
+  margin: 6px 0 0;
+  text-align: center;
+}
+.rg-rate-state.is-on { display: flex; }
+/* M3 filled tonal button (secondary container). */
+.rg-rate-undo {
+  height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--mk-sys-secondary-container, #143444);
+  color: var(--mk-sys-on-secondary-container, #cbeeff);
+  font: 700 12.5px/1 Inter, system-ui, sans-serif;
+  cursor: pointer;
+  transition: background-color 150ms var(--mk-ease-effects, ease);
+}
+.rg-rate-undo:hover { background: color-mix(in srgb, var(--mk-sys-secondary-container, #143444) 88%, #cbeeff); }
+.rg-rate-undo:focus-visible { outline: 2px solid var(--mk-sys-secondary, #64d2ff); outline-offset: 2px; }
+.rg-rate-undo[hidden] { display: none; }
+/* A day's own emoji on the curve, in the Fluent font like the statistics
+   chart (mood-trend.js places them). */
+.rg-scape-marks { position: absolute; inset: 0; pointer-events: none; }
+.rg-scape-own {
+  position: absolute;
+  font-family: 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  font-style: normal;
+  line-height: 1;
+  transform: translate(-50%, -50%);
+}
+.rg-scape-own { font-size: 15px; filter: none; }

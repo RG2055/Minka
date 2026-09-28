@@ -1,6 +1,9 @@
 (function () {
   var list = document.getElementById('grafiks-list');
   if (!list) return;
+  // Noskaņa X (kalendars/index.html <head>): the redesigned card on the RG
+  // desktop. Its styles are css/page/mk-mood-x.css, its curve mood-trend.js.
+  var MX = document.documentElement.classList.contains('mk-mx');
   // /rad keeps its own mood and comments in the browser too (same origin).
   var mkKey = (window.__mkKey || function (k) { return k; });
   var PULSE_KEY = mkKey('minkaShiftPulseV2');
@@ -9,7 +12,7 @@
   var ENTRY_COUNT_KEY = mkKey('minkaRgFeedbackCountsV2');
   var OWN_MOOD_KEY = mkKey('minkaRgOwnMoodV1');
   var lastWriteButton = null;
-  var ratingFlushTimer = 0;
+  var ratingFlushTimers = {};
   var ratingSyncs = {};
   var ratingsLoadedAt = {};
   // When this device last had the comment/idea feed open, and how fresh the
@@ -528,7 +531,7 @@
       if (b.children[0].textContent !== num) b.children[0].textContent = num;
       if (b.children[1].textContent !== label) b.children[1].textContent = label;
       if (b.children[2].innerHTML !== detail) b.children[2].innerHTML = detail;
-      b.title = title;
+      if (MX) { b.removeAttribute('title'); b.setAttribute('aria-label', title); } else b.title = title;   // no hover tips on the stage
     };
     set('coffee', n.cups, 'kafijas šomēnes', '', 'Šomēnes izdzertas ' + n.cups + ' kafijas. Atvērt statistiku');
     set('radio', n.top ? n.top.name : '', n.top ? 'biežākā stacija' : 'radio šomēnes', '', n.top ? 'Šomēnes biežāk skanēja ' + n.top.name + ' (' + n.top.days + ' dienas), kopā ' + n.stations + ' stacijas. Atvērt statistiku' : 'Radio šomēnes nav skanējis');
@@ -837,8 +840,391 @@
     moodAfterParse[key] = fn;
     return true;
   }
+  /* Noskaņa X: an orbit. The face is the centre; the shift's people float on
+     one tilted ring round it, nearer (lower) ones larger and brighter, the
+     far ones smaller, fainter and behind the glass; round each person their
+     own coffee turns as small moons (the shift's total is the "Dežūrā" pill,
+     the month's the tile below). Behind everything the fortnight lies as a
+     3D surface of characters (mood-trend.js). Fully determined by the head
+     count: no retries, no measuring loop. The ring's size is handed to CSS
+     and to the drawing (card.__mx). */
+  var MX_FACE_Y = 132;                   // face centre in the stage
+  var MX_BELOW = 273;                    // stage under the face centre: ring front, curve, marks, the month strip (the mood's name sits in the heading)
+  // Their coffee: up to three moons on the upper right of the bubble, each
+  // the calendar's own icon for that drink, with a count above one.
+  function mxMoons(person, sources, size) {
+    person.querySelectorAll('.rg-mood-moon').forEach(function (m) { m.remove(); });
+    var list = (sources || []).filter(function (s) { return Number(s.count) > 0; }).slice(0, 3);
+    list.forEach(function (source, j) {
+      var a = (-62 + j * 36) * Math.PI / 180, r = size / 2 + 10;
+      var moon = document.createElement('span');
+      moon.className = 'rg-mood-moon';
+      moon.style.setProperty('--mx-mx', (Math.cos(a) * r).toFixed(1) + 'px');
+      moon.style.setProperty('--mx-my', (Math.sin(a) * r).toFixed(1) + 'px');
+      moon.setAttribute('aria-hidden', 'true');
+      moon.innerHTML = moodSourceIcon(source.key);            // the calendar's own coffee icons
+      if (source.count > 1) {
+        var count = document.createElement('b');
+        count.textContent = String(source.count);
+        moon.appendChild(count);
+      }
+      person.appendChild(moon);
+    });
+  }
+  // One slow turn every four minutes, run by the compositor: Web Animations
+  // on translate, transform and opacity only, so it is smooth on any
+  // computer with no script per frame. x and y are each an alternating
+  // ease-in-out-sine half, which is a cosine, so together they trace the
+  // ellipse; depth (size, fading) rides on y. Every bubble shares one start
+  // time, so a day switch rebuilds the ring without a jump. Paused while the
+  // stage is off screen; still for reduced motion.
+  // Moved on the shared clock (MinkaMotion.onAmbientTick, 15 a second, the
+  // same ticks as the sky and the header weather): the animations stay paused
+  // and the tick sets their time, so the page draws one frame per tick
+  // instead of every refresh. Each bubble is one animation: 48 points round
+  // its ellipse, joined by straight segments (a chord is < 0.3 px off).
+  var ORBIT_MS = 240000, ORBIT_POINTS = 48;
+  var orbit = { anims: [], held: false, offscreen: false, io: null, stage: null, off: null, t0: null };
+  function orbitTick(now) {
+    var t = now - orbit.t0;
+    for (var i = 0; i < orbit.anims.length; i++) orbit.anims[i].currentTime = t;
+    if (mxRadio && mxRadio.on) mxSpecDraw();
+  }
+  function orbitListen() {
+    var M = window.MinkaMotion, want = !orbit.held && orbit.anims.length > 0 && !!(M && M.onAmbientTick);
+    if (want && !orbit.off) orbit.off = M.onAmbientTick(orbitTick);
+    else if (!want && orbit.off) { orbit.off(); orbit.off = null; }
+  }
+  function orbitPose(t, geo, big, small) {
+    var near = (Math.sin(t) + 1) / 2, size = small + near * (big - small);
+    return {
+      x: Math.cos(t) * geo.rx, y: Math.sin(t) * geo.ry + geo.cyRing, size: size,
+      transform: 'translate(-50%,-50%) translate(' + (Math.cos(t) * geo.rx).toFixed(1) + 'px,' + (Math.sin(t) * geo.ry + geo.cyRing).toFixed(1) + 'px) scale(' + (size / big).toFixed(3) + ')',
+      opacity: (.6 + near * .4).toFixed(2)
+    };
+  }
+  function orbitSpin(people, geo, big, small, phase, step) {
+    orbit.anims.forEach(function (anim) { anim.cancel(); });
+    orbit.anims = [];
+    var still = document.documentElement.dataset.motion === 'reduced';
+    if (orbit.t0 == null) orbit.t0 = performance.now();          // one clock: a rebuild never jumps
+    people.forEach(function (person, i) {
+      var th = (phase + i * step) * Math.PI / 180;
+      if (still || typeof person.animate !== 'function') {
+        var pose = orbitPose(th, geo, big, small);
+        person.style.transform = pose.transform;
+        person.style.opacity = pose.opacity;
+        return;
+      }
+      person.style.transform = '';
+      person.style.opacity = '';
+      var frames = [];
+      for (var k = 0; k <= ORBIT_POINTS; k++) {
+        var p = orbitPose(th + k / ORBIT_POINTS * Math.PI * 2, geo, big, small);
+        frames.push({ offset: k / ORBIT_POINTS, transform: p.transform, opacity: +p.opacity });
+      }
+      var anim = person.animate(frames, { duration: ORBIT_MS, iterations: Infinity });
+      anim.pause();
+      orbit.anims.push(anim);
+    });
+    if (orbit.anims.length) orbitTick(performance.now());
+    orbitListen();
+  }
+  function orbitHold(held) {
+    if (orbit.held === held) return;
+    orbit.held = held;
+    orbitListen();
+  }
+  /* While the shift radio plays, the station joins the orbit as one more
+     glass bubble (its cover or logo inside, in their own colours; a radio
+     emoji without one) and turns with the colleagues; a tap opens the radio
+     (daybook.js tells us the state). The old headphones and the radio
+     box on the face are not shown in Noskaņa X (mk-mood-x.css). */
+  var mxRadio = { on: false, art: '', name: '', tint: '' };
+  function mxRadioArt(url) { return url && /^(https?:|data:)/.test(url) && !/radio-default\.svg(\?|$)|DefaultTrack/.test(url) ? url : ''; }
+  function mxRadioOrb(ring) {
+    var orb = ring.querySelector('.rg-mood-radio-orb');
+    if (!mxRadio.on) { if (orb) orb.remove(); return; }
+    if (!orb) {
+      orb = document.createElement('button');
+      orb.type = 'button';
+      orb.className = 'rg-mood-person rg-mood-radio-orb';
+      orb.innerHTML = '<span class="rg-mood-person-glass"><img class="rg-mood-radio-art" alt="" decoding="async" hidden><span class="rg-mood-person-emoji">\ud83d\udcfb</span><canvas class="rg-mood-radio-spec" aria-hidden="true"></canvas></span>';
+      var img = orb.querySelector('img');
+      img.addEventListener('error', function () { img.hidden = true; img.removeAttribute('src'); orb.classList.add('is-solo'); });
+      ring.appendChild(orb);
+    }
+    orb.setAttribute('aria-label', 'Skan radio: ' + (mxRadio.name || 'radio') + '. Atvērt radio');
+    var art = orb.querySelector('.rg-mood-radio-art');
+    if (mxRadio.art) { if (art.getAttribute('src') !== mxRadio.art) art.src = mxRadio.art; art.hidden = false; }
+    else { art.hidden = true; art.removeAttribute('src'); }
+    orb.classList.toggle('is-solo', art.hidden);
+  }
+  /* The radio bubble's spectrum: five small bars, the bass in the middle and
+     the higher notes out to both sides, in a low dome like the glass itself.
+     Over a cover they stand on its lower edge on a soft dark chin; a station
+     without a picture shows them alone in the middle of the glass (the radio
+     emoji steps aside while they play; in a pause they rest as five dots).
+     Each band is measured against its own recent level, so a loud and a
+     quiet station both dance round the middle. Coloured by the album (the
+     tint the shell samples from the cover): deep at the foot, light at the
+     tips; over the cover itself lighter still, so they part from it.
+     Read from the radio's own analyser, which the shell hands over read-only
+     (js/radio.js is not touched), and drawn on the orbit's own tick (15 a
+     second, the same frames, never one more), falling back like a VU meter.
+     Silent, paused or off screen: nothing is drawn at all. */
+  var MX_SPEC_BANDS = 3;                                      // bars: 2 1 0 1 2
+  var MX_SPEC_DOME = [1, .84, .68];
+  var mxSpec = { cv: null, orb: null, ctx: null, w: 0, h: 0, bed: null, fill: null, data: null, live: false, drawn: '', bars: new Float32Array(MX_SPEC_BANDS), avg: new Float32Array(MX_SPEC_BANDS) };
+  // the album colour mixed toward white by t
+  function mxTintMix(hex, t) {
+    var v = parseInt(hex.slice(1), 16), c = [v >> 16 & 255, v >> 8 & 255, v & 255];
+    return 'rgb(' + c.map(function (x) { return Math.round(x + (255 - x) * t); }).join(',') + ')';
+  }
+  function mxSpecFill(ctx, H, cover) {
+    var key = (mxRadio.tint || 'white') + (cover ? 'c' : 's');
+    if (mxSpec.fill && mxSpec.fill.key === key) return mxSpec.fill.paint;
+    var paint = 'rgba(255, 255, 255, .92)';
+    if (mxRadio.tint) {
+      paint = ctx.createLinearGradient(0, cover ? H * .8 : H * .78, 0, cover ? H * .5 : H * .22);
+      paint.addColorStop(0, mxTintMix(mxRadio.tint, cover ? .42 : .1));
+      paint.addColorStop(1, mxTintMix(mxRadio.tint, cover ? .86 : .6));
+    }
+    mxSpec.fill = { key: key, paint: paint };
+    return paint;
+  }
+  function mxAnalyser() {
+    try { return window.parent.MinkaShiftRadio.analyser(); } catch (_e) { return null; }
+  }
+  function mxSpecDraw() {
+    var cv = mxSpec.cv;
+    if (!cv || !cv.isConnected) {
+      cv = mxSpec.cv = list.querySelector('.rg-mood-radio-orb .rg-mood-radio-spec');
+      mxSpec.ctx = null; mxSpec.w = 0; mxSpec.drawn = ''; mxSpec.live = false; mxSpec.fill = null;
+      if (!cv) return;
+      mxSpec.orb = cv.closest('.rg-mood-radio-orb');
+    }
+    var an = mxAnalyser(), live = !!(an && an.context && an.context.state === 'running');
+    if (live !== mxSpec.live) { mxSpec.live = live; mxSpec.orb.classList.toggle('is-eq', live); }
+    var bars = mxSpec.bars, n = bars.length, loud = 0, i;
+    if (live) {
+      var bins = an.frequencyBinCount;
+      if (!mxSpec.data || mxSpec.data.length !== bins) mxSpec.data = new Uint8Array(bins);
+      an.getByteFrequencyData(mxSpec.data);
+      // log-spaced bands over the part of the range where the music is
+      var top = Math.max(n + 1, Math.floor(bins * .6));
+      for (i = 0; i < n; i++) {
+        var a = i ? Math.floor(Math.pow(top, i / n)) : 0, b = Math.max(a + 1, Math.floor(Math.pow(top, (i + 1) / n)));
+        var sum = 0;
+        for (var k = a; k < b; k++) sum += mxSpec.data[k];
+        var v = sum / (b - a) / 255;
+        mxSpec.avg[i] += (v - mxSpec.avg[i]) * .06;         // about a second of memory
+        var lvl = Math.min(1, Math.max(0, (v / (mxSpec.avg[i] + .02) - .5) * 1.3));
+        bars[i] = Math.max(lvl, bars[i] * .72);
+      }
+    } else {
+      for (i = 0; i < n; i++) bars[i] *= .72;
+    }
+    for (i = 0; i < n; i++) if (bars[i] > loud) loud = bars[i];
+    var solo = mxSpec.orb.classList.contains('is-solo');
+    // with a cover, a pause draws nothing; alone in the glass, the bars rest as dots
+    var mode = loud >= .03 ? (solo ? 'solo' : 'cover') : (solo && live ? 'rest' : '');
+    if (!mode || (mode === 'rest' && mxSpec.drawn === 'rest')) {
+      if (!mode && mxSpec.drawn) { mxSpec.ctx.clearRect(0, 0, mxSpec.w, mxSpec.h); mxSpec.drawn = ''; }
+      return;
+    }
+    if (!mxSpec.w) {                                          // sized once per bubble
+      var dpr = Math.min(2, window.devicePixelRatio || 1);
+      var w = Math.round(cv.clientWidth * dpr), h = Math.round(cv.clientHeight * dpr);
+      if (!w || !h) return;
+      cv.width = mxSpec.w = w; cv.height = mxSpec.h = h;
+      mxSpec.ctx = cv.getContext('2d');
+      // a soft dark chin under the bars (the canvas is round), so they read on any cover
+      mxSpec.bed = mxSpec.ctx.createLinearGradient(0, h * .46, 0, h);
+      mxSpec.bed.addColorStop(0, 'rgba(4, 8, 16, 0)');
+      mxSpec.bed.addColorStop(1, 'rgba(4, 8, 16, .66)');
+    }
+    var ctx = mxSpec.ctx, W = mxSpec.w, H = mxSpec.h, cover = mode === 'cover';
+    ctx.clearRect(0, 0, W, H);
+    if (cover) { ctx.fillStyle = mxSpec.bed; ctx.fillRect(0, H * .46, W, H * .54); }
+    // whole pixels, so the thin bars stay crisp on a plain screen; one path, one fill
+    var bw = Math.max(2, Math.round(W * .075)), gap = Math.max(1, Math.round(bw * .8));
+    var count = n * 2 - 1, x0 = Math.round((W - (count * bw + (count - 1) * gap)) / 2);
+    var span = cover ? H * .3 : H * .5, base = Math.round(H * .8), mid = H / 2;
+    ctx.fillStyle = mxSpecFill(ctx, H, cover);
+    ctx.beginPath();
+    for (i = 0; i < count; i++) {
+      var d = Math.abs(i - (n - 1)), lv = mode === 'rest' ? 0 : bars[d] * MX_SPEC_DOME[d];
+      var bh = Math.max(bw, Math.round(bw + lv * (span - bw))), x = x0 + i * (bw + gap);
+      var y = cover ? base - bh : Math.round(mid - bh / 2);  // over a cover from its edge up, alone from the middle out
+      if (ctx.roundRect) ctx.roundRect(x, y, bw, bh, bw / 2); else ctx.rect(x, y, bw, bh);
+    }
+    ctx.fill();
+    mxSpec.drawn = mode;
+  }
+  if (MX) {
+    document.addEventListener('minka-shift-radio', function (e) {
+      var st = e.detail || {}, on = !!(st.playing && st.name), art = mxRadioArt(st.cover) || mxRadioArt(st.logo);
+      var tint = /^#[0-9a-f]{6}$/i.test(st.tint || '') ? st.tint : '';
+      if (tint !== mxRadio.tint) {                            // a new song's colour: the next tick repaints
+        mxRadio.tint = tint;
+        if (mxSpec.drawn) mxSpec.drawn = 'stale';
+      }
+      if (on === mxRadio.on && art === mxRadio.art && (st.name || '') === mxRadio.name) return;
+      mxRadio = { on: on, art: art, name: st.name || '', tint: tint };
+      var ring = list.querySelector('.rg-feedback-card [data-rg-ring]');
+      if (ring) placeMoodStaffMx(ring);
+    });
+    list.addEventListener('click', function (e) {
+      if (!e.target.closest || !e.target.closest('.rg-mood-radio-orb')) return;
+      e.preventDefault();
+      try { window.parent.postMessage({ type: 'minka-shift-radio-control', action: 'open' }, location.origin); } catch (_e) {}
+    });
+  }
+  /* Text in a moving bubble trembles: at every tick the bubble is drawn a
+     fraction of a pixel further on and the browser snaps letters to whole
+     pixels, while the glass slides smoothly (measured: the emoji jumped up to
+     a screen pixel against its glass). Pictures are not snapped, so each
+     bubble's emoji or initials is drawn once into a small canvas of the same
+     look (font, colour, shadows) that rides with the glass. One drawing per
+     face and size, copied into every bubble that shows it. */
+  var mxGlyphCache = {};
+  function mxGlyphShadows(value) {
+    if (!value || value === 'none') return [];
+    return value.split(/,(?![^(]*\))/).map(function (part) {
+      var color = (part.match(/rgba?\([^)]*\)|#[0-9a-f]+/i) || ['transparent'])[0];
+      var len = (part.replace(color, '').match(/-?[\d.]+px/g) || []).map(parseFloat);
+      return { color: color, x: len[0] || 0, y: len[1] || 0, blur: len[2] || 0 };
+    });
+  }
+  function mxGlyphDraw(g) {
+    var cv = document.createElement('canvas'), ctx = cv.getContext('2d');
+    if (!ctx) return null;
+    var shadows = mxGlyphShadows(g.shadow), size = g.size, dpr = g.dpr;
+    ctx.font = g.font;
+    if (g.spacing !== 'normal' && 'letterSpacing' in ctx) ctx.letterSpacing = g.spacing;
+    var m = ctx.measureText(g.text);
+    var w = m.width, h = g.lineH;
+    var pad = Math.ceil(size * .3 + shadows.reduce(function (a, s) { return Math.max(a, s.blur + Math.abs(s.x) + Math.abs(s.y)); }, 0));
+    var cw = Math.ceil(w) + pad * 2, ch = Math.ceil(h) + pad * 2;
+    cv.width = Math.ceil(cw * dpr);
+    cv.height = Math.ceil(ch * dpr);
+    ctx.scale(dpr, dpr);
+    ctx.font = g.font;                                      // resizing the canvas reset the state
+    if (g.spacing !== 'normal' && 'letterSpacing' in ctx) ctx.letterSpacing = g.spacing;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    // the same baseline as the line box: half the leading above the ascent
+    var asc = Math.round(m.fontBoundingBoxAscent || size * .8), desc = Math.round(m.fontBoundingBoxDescent || size * .2);
+    var x = pad + Math.ceil(w) / 2, y = pad + (h - asc - desc) / 2 + asc;
+    ctx.fillStyle = g.color;
+    // the shadows alone (the text of those passes lands out of sight), last one lowest, like CSS
+    var away = cw + 40;
+    for (var i = shadows.length - 1; i >= 0; i--) {
+      var s = shadows[i];
+      ctx.shadowColor = s.color;
+      ctx.shadowBlur = s.blur * dpr;
+      ctx.shadowOffsetX = (s.x + away) * dpr;
+      ctx.shadowOffsetY = s.y * dpr;
+      ctx.fillText(g.text, x - away, y);
+    }
+    ctx.shadowColor = 'transparent';
+    ctx.fillText(g.text, x, y);
+    return { cv: cv, w: w, h: h, pad: pad, cw: cw, ch: ch };
+  }
+  function mxGlyphs(people) {
+    var dpr = Math.min(2, window.devicePixelRatio || 1), jobs = [];
+    people.forEach(function (person) {                     // read everything first, then write
+      var span = person.querySelector('.rg-mood-person-emoji');
+      if (!span) return;
+      var text = span.__mxText != null ? span.__mxText : span.textContent;
+      if (!text) return;
+      var cs = getComputedStyle(span);
+      if (cs.display === 'none') return;
+      var size = parseFloat(cs.fontSize) || 0;
+      if (!size) return;
+      var font = cs.fontStyle + ' ' + cs.fontWeight + ' ' + size + 'px ' + cs.fontFamily;
+      var g = {
+        text: text, font: font, size: size, dpr: dpr, spacing: cs.letterSpacing,
+        lineH: parseFloat(cs.lineHeight) || size, color: cs.webkitTextFillColor || cs.color, shadow: cs.textShadow
+      };
+      g.key = [text, font, g.spacing, g.lineH, g.color, g.shadow, dpr].join('|');
+      if (span.__mxKey === g.key) return;
+      if (document.fonts && document.fonts.check && !document.fonts.check(font, text)) {
+        document.fonts.load(font, text).then(function () { if (person.isConnected) mxGlyphs([person]); }, function () {});
+        return;                                             // the letters as text until their font is in
+      }
+      jobs.push({ span: span, g: g });
+    });
+    jobs.forEach(function (job) {
+      var g = job.g, span = job.span;
+      var d = mxGlyphCache[g.key] || (mxGlyphCache[g.key] = mxGlyphDraw(g));
+      if (!d) return;
+      var cv = document.createElement('canvas');
+      cv.className = 'rg-mood-person-glyph';
+      cv.width = d.cv.width;
+      cv.height = d.cv.height;
+      var ctx = cv.getContext('2d');
+      if (!ctx) return;
+      ctx.drawImage(d.cv, 0, 0);
+      cv.setAttribute('aria-hidden', 'true');
+      cv.style.cssText = 'position:absolute;left:' + (-d.pad) + 'px;top:' + (-d.pad) + 'px;width:' + d.cw + 'px;height:' + d.ch + 'px;pointer-events:none';
+      span.__mxText = g.text;
+      span.__mxKey = g.key;
+      span.style.width = Math.ceil(d.w) + 'px';            // the box the text had, so nothing moves
+      span.style.height = d.h + 'px';
+      span.replaceChildren(cv);
+    });
+  }
+  function placeMoodStaffMx(ring) {
+    var card = ring && ring.closest('.rg-feedback-card');
+    var stage = card && card.querySelector('.rg-mood-stage');
+    if (!stage) return;
+    var lens = card.querySelector('.rg-mood-glass-lens');
+    var d = (lens && lens.offsetWidth) || 124;          // layout size, unaffected by the tap pop
+    mxRadioOrb(ring);
+    var people = [].slice.call(ring.querySelectorAll('.rg-mood-person'));
+    var n = people.length;
+    var W = stage.clientWidth || 300;
+    // Busy shifts get smaller glass, so the ring never crowds.
+    var big = n > 10 ? 34 : n > 7 ? 38 : 42, small = big - 14;
+    var rx = Math.min(W / 2 - 24, 136);
+    // Tall enough that the far side passes above the face, never across it.
+    var ry = Math.round(Math.max(d / 2 + small / 2 + 6, rx * .6));
+    var geo = { faceY: MX_FACE_Y, faceD: d, stageH: MX_FACE_Y + MX_BELOW, rx: rx, ry: ry, cyRing: 4, groundGap: 64 };  // the month strip under the curve
+    card.__mx = geo;
+    card.style.setProperty('--mx-face-y', geo.faceY + 'px');
+    card.style.setProperty('--mx-stage-h', geo.stageH + 'px');
+    var step = n ? 360 / n : 0, phase = 90 + step / 2;  // nobody sits right at the bottom
+    people.forEach(function (person) {
+      person.hidden = false;
+      // no hover tooltips on the stage; the name stays for screen readers
+      if (person.title) { person.setAttribute('aria-label', person.title); person.removeAttribute('title'); }
+      person.style.setProperty('--rg-person-size', big + 'px');     // depth is the scale
+      person.style.setProperty('--rg-person-z', '9');
+      person.style.setProperty('--rg-bubble-squash', '1');
+      person.style.setProperty('--rg-bubble-roll', '0deg');
+      person.style.setProperty('--rg-bubble-content-x', '1');
+      mxMoons(person, person.__mxCoffee, big);
+    });
+    mxGlyphs(people);
+    orbitSpin(people, geo, big, small, phase, step);
+    if (orbit.stage !== stage && typeof IntersectionObserver === 'function') {
+      if (orbit.io) orbit.io.disconnect();
+      orbit.stage = stage;
+      orbit.io = new IntersectionObserver(function (entries) {
+        orbit.offscreen = !entries[entries.length - 1].isIntersecting;
+        orbitHold(orbit.offscreen || document.hidden);
+      });
+      orbit.io.observe(stage);
+      // Minimised or another tab: nothing turns in the background.
+      document.addEventListener('visibilitychange', function () { orbitHold(orbit.offscreen || document.hidden); });
+    }
+    if (window.MinkaMoodTrend) window.MinkaMoodTrend.paint(card);
+  }
   function placeMoodStaff(ring) {
     if (afterParse('place', function () { if (ring && ring.isConnected) placeMoodStaff(ring); })) return;
+    if (MX) { placeMoodStaffMx(ring); return; }
     var wrap = ring && ring.parentElement;
     var blob = wrap && wrap.querySelector('.rg-mood-blob');
     var people = ring ? [].slice.call(ring.querySelectorAll('.rg-mood-person')) : [];
@@ -846,7 +1232,9 @@
     var blobRect = blob.getBoundingClientRect();
     var blobSize = blobRect.width || 100;
     var card = ring.closest('.rg-feedback-card');
-    var cardRect = card.getBoundingClientRect();
+    // Noskaņa X: the scatter stays inside the sky window, never under the
+    // heading or the faces below it.
+    var cardRect = (MX && card.querySelector('.rg-mood-stage') || card).getBoundingClientRect();
     var cx = blobRect.left + blobRect.width / 2;
     var cy = blobRect.top + blobRect.height / 2;
     var bounds = {
@@ -927,8 +1315,9 @@
           : blobSize * .50 + size * .54 + 11 + depth * 5;
       var coffeeExtra = person.querySelector('.rg-mood-person-coffee') ? 7 : 2;
       var chosen = null;
+      if (MX) size = Math.min(size, 40);
       if (useBusyRows) {
-        size = Math.max(32, Math.min(46, busyBaseSize * (1.25 - depth * .48)));
+        size = Math.max(32, Math.min(MX ? 40 : 46, busyBaseSize * (1.25 - depth * .48)));
         var busyVisualHalf = size * .59 + (coffeeExtra > 2 ? 4 : 0);
         var busyHalfWidth = Math.max(1, Math.min(-bounds.l, bounds.r) - busyVisualHalf);
         var busyTopX = arcCount === 5
@@ -1229,6 +1618,7 @@
       item.className = 'rg-mood-person' + (person.role === 'rd' ? ' is-rd' : '') + (!person.emoji ? ' is-initials' : '');
       item.setAttribute('data-rg-worker', person.name || '');
       item.title = person.name + (person.coffee ? ' · kafija ×' + person.coffee : '');
+      item.__mxCoffee = person.coffeeSources || [];
       if (Number.isFinite(person.fatigue)) {
         var fatigueLevel = Math.max(0, Math.min(100, Number(person.fatigue) || 0));
         item.style.setProperty('--rg-person-fatigue', moodFatigueColor(person.fatigue));
@@ -1263,7 +1653,7 @@
       }
       fragment.appendChild(item);
     });
-    (coffeeSources || []).slice(0, 7).forEach(function (source) {
+    (MX ? [] : coffeeSources || []).slice(0, 7).forEach(function (source) {
       var item = document.createElement('span');
       item.className = 'rg-mood-coffee-orbit';
       item.dataset.rgCoffeeKey = source.key;
@@ -1314,7 +1704,8 @@
   function fitTrendUnderLabel(card, preview) {
     var trend = card && card.querySelector('.rg-trend');
     var label = card && card.querySelector('.rg-mood-label');
-    if (!trend || !label) return;
+    // Noskaņa X: the label sits on the face and the curve lies behind it.
+    if (!trend || !label || MX) return;
     label.style.visibility = '';
     if (preview) {
       if (getComputedStyle(label).opacity === '0') return;
@@ -1532,7 +1923,7 @@
         stops: stage.querySelectorAll('.rg-mood-blob-stop'),
         glow: stage.querySelector('.rg-mood-glow'),
         fluentFace: stage.querySelector('[data-rg-fluent-face]'),
-        label: stage.querySelector('.rg-mood-label'),
+        label: (stage.closest('.rg-feedback-card') || stage).querySelector('.rg-mood-label'),
         ring: stage.querySelector('[data-rg-ring]'),
         top: stage.querySelector('[data-rg-top]'),
         chips: {
@@ -1588,7 +1979,7 @@
       // card's other label is screen-reader only, so a note written there was
       // never seen.
       var ownNote = !preview && own && own.note ? own.note : '';
-      refs.label.textContent = ownNote || visual.label || '\u00a0';
+      refs.label.textContent = ownNote || visual.label || (MX ? '' : '\u00a0');   // MX: empty hides the chip
       refs.label.style.color = ownNote ? '' : (key ? visual.color1 : '');
       refs.label.classList.toggle('is-own-note', !!ownNote);
       refs.label.title = ownNote;
@@ -1899,6 +2290,113 @@
     window.clearTimeout(moodSectionResizeTimer);
     moodSectionResizeTimer = window.setTimeout(runMoodSectionLayout, 180);
   }, { passive: true });
+  /* Noskaņa X: the few nodes the redesigned card adds to the shared
+     markup (idempotent: the card is reused across days). */
+  function mxEnhance(card) {
+    if (!MX || !card || card.__mxReady) return;
+    card.__mxReady = true;
+    var label = card.querySelector('.rg-feedback-card-reaction-label');
+    if (label && !label.parentElement.classList.contains('rg-rate-state')) {
+      var state = document.createElement('div');
+      state.className = 'rg-rate-state';
+      label.parentNode.insertBefore(state, label);
+      state.appendChild(label);
+      var undo = document.createElement('button');
+      undo.type = 'button';
+      undo.className = 'rg-rate-undo';
+      undo.dataset.rgUndo = '1';
+      undo.hidden = true;
+      undo.textContent = 'Atsaukt';
+      undo.setAttribute('aria-label', 'Atsaukt savu vērtējumu');
+      state.appendChild(undo);
+    }
+    var meta = card.querySelector('.rg-trend-meta');
+    if (meta && meta.firstChild && meta.firstChild.nodeType === 3) meta.firstChild.textContent = 'Statistika';
+    // The mood's name sits right after the heading ("Novērtē maiņu  Lieliski"),
+    // so the rating comes straight under the curve with no empty row.
+    var title = card.querySelector('.rg-feedback-card-title'), moodName = card.querySelector('.rg-mood-label');
+    if (title && moodName && !card.querySelector('.rg-rate-head')) {
+      var head = document.createElement('div');
+      head.className = 'rg-rate-head';
+      title.parentNode.insertBefore(head, title);
+      head.appendChild(title);
+      head.appendChild(moodName);
+    }
+    var write = card.querySelector('.rg-pulse-write--comment');
+    if (write && !write.querySelector('.rg-comment-preview')) {
+      var preview = document.createElement('span');
+      preview.className = 'rg-comment-preview';
+      preview.hidden = true;
+      write.appendChild(preview);
+    }
+  }
+  // The newest message of the selected day in the comment bubble. It comes
+  // from the same day request that already looks for mood markers
+  // (loadOwnMood), so it costs no extra call.
+  /* Anonīmi dzīvnieki komentāros, kā Google dokumentos ("Anonymous Fox"):
+     vārds nav jāizvēlas. Latviski, ar pareizo dzimti, un tikai dzīvnieki,
+     kuru vārds latviski nav lamuvārds (nav govs, cūkas, brieža, zaķa,
+     sliņķa...). Emoji ir viena kodpunkta (Fluent fonts). Kurš dzīvnieks ir
+     tavs, izlemj myAnimal(); /rad paliek pie vecās autora izvēles. */
+  var ANIMAL_IDS = window.MINKA_APP !== 'rad';
+  var ANIMALS = [
+    ['lapsa', '🦊', 'f'], ['ezis', '🦔', 'm'], ['pūce', '🦉', 'f'], ['lācis', '🐻', 'm'], ['panda', '🐼', 'f'],
+    ['koala', '🐨', 'f'], ['tīģeris', '🐯', 'm'], ['lauva', '🦁', 'f'], ['vilks', '🐺', 'm'], ['jenots', '🦝', 'm'],
+    ['ūdrs', '🦦', 'm'], ['bebrs', '🦫', 'm'], ['ķengurs', '🦘', 'm'], ['lama', '🦙', 'f'], ['pingvīns', '🐧', 'm'],
+    ['ronis', '🦭', 'm'], ['delfīns', '🐬', 'm'], ['astoņkājis', '🐙', 'm'], ['krabis', '🦀', 'm'], ['ķirzaka', '🦎', 'f'],
+    ['varde', '🐸', 'f'], ['flamingo', '🦩', 'm'], ['gulbis', '🦢', 'm'], ['pīle', '🦆', 'f'], ['bite', '🐝', 'f'],
+    ['tauriņš', '🦋', 'm'], ['mārīte', '🐞', 'f'], ['žirafe', '🦒', 'f'], ['zebra', '🦓', 'f'], ['bizons', '🦬', 'm'],
+    ['zirgs', '🐴', 'm'], ['vienradzis', '🦄', 'm'], ['trusis', '🐰', 'm'], ['kāmis', '🐹', 'm'], ['kaķis', '🐱', 'm'],
+    ['pele', '🐭', 'f'], ['sikspārnis', '🦇', 'm'], ['pūķis', '🐉', 'm']
+  ];
+  // Avatar tones: M3 dark containers with their on-colour (teal, amber,
+  // green, blue, coral, lime; no purple).
+  var ANIMAL_TONES = [['#12383f', '#9eeffd'], ['#3a2f12', '#ffe08a'], ['#153a24', '#a6f3c0'], ['#12304f', '#b3d7ff'], ['#43241c', '#ffc2ae'], ['#2f3813', '#dcef9a']];
+  function animalName(animal) { return (animal[2] === 'f' ? 'Anonīmā ' : 'Anonīmais ') + animal[0]; }
+  var ANIMAL_BY_NAME = {};
+  ANIMALS.forEach(function (animal, index) { ANIMAL_BY_NAME[animalName(animal).toLocaleLowerCase('lv-LV')] = index; });
+  function animalIndex(name) {
+    var index = ANIMAL_BY_NAME[String(name || '').trim().toLocaleLowerCase('lv-LV')];
+    return index == null ? -1 : index;
+  }
+  // An author's avatar: the animal on its tone, else initials as before.
+  function paintAnimalAvatar(el, name) {
+    var index = animalIndex(name);
+    el.classList.toggle('is-animal', index >= 0);
+    if (index < 0) {
+      el.textContent = communityInitials(name || 'Anonīms');
+      el.style.removeProperty('--rg-ava-bg');
+      el.style.removeProperty('--rg-ava-fg');
+      return;
+    }
+    var tone = ANIMAL_TONES[index % ANIMAL_TONES.length];
+    el.textContent = ANIMALS[index][1];
+    el.style.setProperty('--rg-ava-bg', tone[0]);
+    el.style.setProperty('--rg-ava-fg', tone[1]);
+  }
+  function authorWithAnimal(name) {
+    var index = animalIndex(name);
+    return (index >= 0 ? ANIMALS[index][1] + ' ' : '') + name;
+  }
+  var commentPreviews = {};              // day -> { author, body, at } | null
+  function paintCommentPreview(card) {
+    var preview = card && card.querySelector('.rg-comment-preview');
+    if (!preview) return;
+    var item = commentPreviews[shiftDayKey()];
+    preview.hidden = !item;
+    card.classList.toggle('mx-has-comment', !!item);
+    if (!item) return;
+    var who = item.author || 'Anonīmi';
+    if (preview.dataset.at === String(item.at) && preview.dataset.who === who) return;
+    preview.dataset.at = String(item.at);
+    preview.dataset.who = who;
+    var name = document.createElement('b');
+    name.textContent = authorWithAnimal(who) + ': ';
+    preview.replaceChildren(name, document.createTextNode(item.body));
+    preview.title = who + ': ' + item.body;
+    var write = card.querySelector('.rg-pulse-write--comment');
+    if (write) write.setAttribute('aria-label', 'Atvērt komentārus. Jaunākais: ' + who + ': ' + item.body);
+  }
   function mount(deferLayout, skipRatings, skipMoodPaint) {
     var label = list.querySelector('.cards-section-label-rd');
     var section = label && label.closest('.cards-section');
@@ -1927,6 +2425,7 @@
         + '<div class="rg-feedback-card-actions"><button class="rg-pulse-write rg-pulse-write--comment" type="button" data-rg-write="comment" title="Atvērt komentārus"><b class="rg-comment-icon" aria-hidden="true"></b><span>Komentāri</span><small class="rg-feedback-action-count" data-rg-action-count="comment"></small></button></div>'
         + bmcQrMarkup();
     }
+    mxEnhance(pulse);
     moodHost.appendChild(pulse);
     window.MinkaDaybook?.enhance(pulse);
     if (!deferLayout) scheduleMoodSectionLayout();
@@ -1992,7 +2491,11 @@
     if (dominant) card.dataset.mood = dominant.key;
     else card.removeAttribute('data-mood');
     var reactionLabel = card.querySelector('.rg-feedback-card-reaction-label');
-    if (reactionLabel) {
+    if (MX) {
+      mxEnhance(card);
+      paintRateState();
+      paintCommentPreview(card);
+    } else if (reactionLabel) {
       var voted = reactions.reduce(function (sum, item) { return sum + Math.max(0, Number(counts[item.key]) || 0); }, 0);
       var isLiveDay = shiftDayKey() === liveShiftDayKey();
       var own = ownMoodFor(shiftDayKey());
@@ -2007,7 +2510,9 @@
     card.querySelectorAll('[data-rg-pulse]').forEach(function (button) {
       var isSelected = !!selected && button.dataset.rgPulse === selected.key;
       button.classList.toggle('is-selected', isSelected);
-      button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+      // Noskaņa X: a face is an action (each tap is a vote), not a toggle.
+      if (MX) button.removeAttribute('aria-pressed');
+      else button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
     });
     paintEntryCounts();
     // Single hook for the mood blob: paintCounts() already runs after every
@@ -2053,10 +2558,100 @@
     button.appendChild(burst);
     burst.addEventListener('animationend', function () { burst.remove(); }, { once: true });
   }
+  /* ── Noskaņa X: novērtējums ar atsaukšanu ──────────────────────────────
+     The API only adds votes, so "Atsaukt" works by waiting: the newest tap
+     stays on this device for a few seconds (counted and shown at once) and
+     is sent when that time runs out, when another face is tapped, the day
+     changes or the page is hidden. Undo drops it before it ever leaves.
+     Shared work PCs: several people may vote one after another, so taps are
+     not limited, but a double click on the same face counts once. */
+  var MX_UNDO_MS = 6000;
+  var rateHold = null;                   // { day, key, timer }
+  var rateUndone = null;                 // { day, at }: "Vērtējums atsaukts."
+  var rateLockUntil = {};
+  function holdRating(day, key) {
+    rateHold = { day: day, key: key, timer: window.setTimeout(function () { releaseHold(true); }, MX_UNDO_MS) };
+  }
+  function releaseHold(send) {
+    var hold = rateHold;
+    if (!hold) return;
+    window.clearTimeout(hold.timer);
+    rateHold = null;
+    if (send) flushRatings(hold.day);
+    if (hold.day === shiftDayKey()) paintRateState();
+  }
+  function undoRating() {
+    var hold = rateHold;
+    if (!hold) return;
+    window.clearTimeout(hold.timer);
+    rateHold = null;
+    var all = readJson(PULSE_KEY, {}), counts = all[hold.day] || {};
+    counts[hold.key] = Math.max(0, (Number(counts[hold.key]) || 0) - 1);
+    if (counts._last === hold.key) delete counts._last;
+    all[hold.day] = counts;
+    writeJson(PULSE_KEY, all);
+    var pending = readJson(PENDING_PULSE_KEY, {}), dayPending = pending[hold.day] || {};
+    dayPending[hold.key] = Math.max(0, (Number(dayPending[hold.key]) || 0) - 1);
+    if (!dayPending[hold.key]) delete dayPending[hold.key];
+    if (Object.keys(dayPending).length) pending[hold.day] = dayPending;
+    else delete pending[hold.day];
+    writeJson(PENDING_PULSE_KEY, pending);
+    rateUndone = { day: hold.day, at: Date.now() };
+    window.setTimeout(function () { if (rateUndone && Date.now() - rateUndone.at >= 3900) { rateUndone = null; paintRateState(); } }, 4000);
+    paintCounts();
+    var undo = list.querySelector('.rg-feedback-card [data-rg-undo]');
+    var focusBack = list.querySelector('.rg-feedback-card [data-rg-pulse="' + hold.key + '"]');
+    if (undo && document.activeElement === undo && focusBack) focusBack.focus({ preventScroll: true });
+  }
+  function futureDay(day) { return day > liveShiftDayKey(); }
+  function voteWord(n) { return n % 10 === 1 && n % 100 !== 11 ? 'vērtējums' : 'vērtējumi'; }
+  // The one line under the faces: what a tap did, or what there is so far.
+  function mxStateText(voted) {
+    var day = shiftDayKey(), live = liveShiftDayKey();
+    if (futureDay(day)) return 'Šo maiņu varēs novērtēt, kad tā sāksies.';
+    if (rateHold && rateHold.day === day) {
+      var held = reactions.find(function (item) { return item.key === rateHold.key; });
+      return 'Paldies! Tu novērtēji: ' + (held ? held.label : '') + '.';
+    }
+    if (rateUndone && rateUndone.day === day && Date.now() - rateUndone.at < 4000) return 'Vērtējums atsaukts.';
+    if (!voted) return day === live ? 'Vēl neviens nav novērtējis. Balsojums ir anonīms.' : 'Šai maiņai vērtējumu nav.';
+    return (day === live ? 'Šodien ' : 'Šai maiņai ') + voted + ' ' + voteWord(voted) + '. Balsojums ir anonīms.';
+  }
+  function paintRateState() {
+    if (!MX) return;
+    var card = list.querySelector('.rg-feedback-card');
+    if (!card) return;
+    var counts = pulseCounts();
+    var voted = reactions.reduce(function (sum, item) { return sum + Math.max(0, Number(counts[item.key]) || 0); }, 0);
+    var label = card.querySelector('.rg-feedback-card-reaction-label');
+    if (label) {
+      var text = mxStateText(voted);
+      if (label.textContent !== text) label.textContent = text;
+      label.classList.toggle('is-empty-state', !voted);
+    }
+    var undo = card.querySelector('[data-rg-undo]');
+    var holding = !!(rateHold && rateHold.day === shiftDayKey());
+    if (undo) undo.hidden = !holding;
+    var closed = futureDay(shiftDayKey());
+    var state = card.querySelector('.rg-rate-state');
+    if (state) state.classList.toggle('is-on', holding || closed || !!(rateUndone && rateUndone.day === shiftDayKey() && Date.now() - rateUndone.at < 4000));
+    card.querySelectorAll('[data-rg-pulse], [data-rg-own-mood]').forEach(function (button) {
+      if (closed) button.setAttribute('aria-disabled', 'true');
+      else button.removeAttribute('aria-disabled');
+    });
+  }
   function addReaction(button) {
     var key = button.dataset.rgPulse;
-    var all = readJson(PULSE_KEY, {});
     var day = shiftDayKey();
+    if (MX) {
+      if (futureDay(day)) { paintRateState(); return; }
+      var tappedAt = Date.now();
+      if (rateLockUntil[key] && tappedAt < rateLockUntil[key]) return;
+      rateLockUntil[key] = tappedAt + 1200;
+      // A new tap closes the previous one's undo window: that one goes now.
+      releaseHold(true);
+    }
+    var all = readJson(PULSE_KEY, {});
     var counts = all[day] || {};
     counts[key] = Math.max(0, Number(counts[key]) || 0) + 1;
     counts._last = key;
@@ -2068,13 +2663,17 @@
     pending[day] = dayPending;
     writeJson(PENDING_PULSE_KEY, pending);
     moodPopNext = true;
+    if (MX) holdRating(day, key);
     paintCounts();
     addBurst(button, button.dataset.emoji || '❤️');
+    if (MX) return;
     var reaction = reactions.find(function (item) { return item.key === key; });
     var label = button.closest('.rg-feedback-card') && button.closest('.rg-feedback-card').querySelector('.rg-feedback-card-reaction-label');
     if (label) label.textContent = reaction ? reaction.label : 'Paldies!';
-    window.clearTimeout(ratingFlushTimer);
-    ratingFlushTimer = window.setTimeout(function () { flushRatings(day); }, 320);
+    // One timer per day: switching days within the delay used to cancel
+    // the previous day's send.
+    window.clearTimeout(ratingFlushTimers[day]);
+    ratingFlushTimers[day] = window.setTimeout(function () { delete ratingFlushTimers[day]; flushRatings(day); }, 320);
   }
 
   /* ── Sava noskaņa: emoji + pāris vārdi ─────────────────────────────────
@@ -2134,11 +2733,17 @@
     moodOwnLoadedAt[day] = now;
     try {
       var data = await fetchFeedback('/api/feedback?date=' + encodeURIComponent(day) + '&kind=comment&limit=100');
-      var newest = null;
+      var newest = null, newestChat = null;
       (data.messages || []).forEach(function (item) {
         var parsed = parseMoodMessage(item);
         if (parsed && (!newest || parsed.at > newest.at)) newest = parsed;
+        if (parsed || !MX) return;
+        // Noskaņa X: the day's newest chat message goes into the bubble.
+        var message = communityDecode(item), at = Number(item.createdAt) || 0;
+        var body = String(message.body || '').replace(/\s+/g, ' ').trim();
+        if (body && (!newestChat || at > newestChat.at)) newestChat = { author: message.author, body: body.slice(0, 160), at: at };
       });
+      if (MX) commentPreviews[day] = newestChat;
       // Tukša atbilde (ziņa izkritusi no loga, ieraksts vēl ceļā) nenodzēš jau
       // izvēlēto emoji — tikai jaunāks ieraksts to nomaina.
       var known = ownMoodFor(day);
@@ -2179,9 +2784,17 @@
     if (day === shiftDayKey()) paintCounts();
   }
   function flushRatings(day) {
-    if (ratingSyncs[day]) return ratingSyncs[day];
-    ratingSyncs[day] = (async function () {
+    if (ratingSyncs[day]) {
+      // Taps made while a send is on its way go out right after it, instead
+      // of waiting for the next ratings load.
+      ratingSyncs[day].again = true;
+      return ratingSyncs[day];
+    }
+    var failed = false;
+    var job = ratingSyncs[day] = (async function () {
       var snapshot = Object.assign({}, pendingPulseCounts(day));
+      // The newest tap still inside its undo window stays here (Noskaņa X).
+      if (rateHold && rateHold.day === day) snapshot[rateHold.key] = Math.max(0, (Number(snapshot[rateHold.key]) || 0) - 1);
       var keys = reactions.map(function (item) { return item.key; }).filter(function (key) { return Number(snapshot[key]) > 0; });
       for (var i = 0; i < keys.length; i++) {
         var key = keys[i];
@@ -2202,11 +2815,15 @@
           writeJson(PENDING_PULSE_KEY, allPending);
           updateLocalRating(day, key, data.count, remaining);
         } catch (_error) {
+          failed = true;
           break;
         }
       }
-    })().finally(function () { delete ratingSyncs[day]; });
-    return ratingSyncs[day];
+    })().finally(function () {
+      delete ratingSyncs[day];
+      if (job.again && !failed) flushRatings(day);
+    });
+    return job;
   }
   async function loadRatings(day, force) {
     var now = Date.now();
@@ -2245,7 +2862,11 @@
     + '<p class="rg-comms-section-label">Tēmas</p><div class="rg-comms-topic-list" id="rgCommsTopics"></div></aside>'
     + '<main class="rg-comms-main"><div class="rg-comms-feed-head"><div><strong id="rgCommsFeedTitle">Visi komentāri</strong><small id="rgCommsFeedSubtitle">Visa komandas sarakste vienuviet</small></div></div>'
     + '<div class="rg-feedback-list rg-comms-feed" id="rgFeedbackList" aria-live="polite"></div><button class="rg-feedback-more" id="rgFeedbackMore" type="button" hidden>Rādīt vēl</button>'
-    + '<div class="rg-comms-composer"><div class="rg-comms-compose-context"><label class="rg-comms-author-wrap"><span>Autors</span><select class="rg-comms-author" id="rgCommsAuthor" aria-label="Izvēlies komentāra autoru"><option value="">Anonīmi</option></select></label><span class="rg-comms-topic-field"><input class="rg-comms-topic-input" id="rgCommsTopicInput" maxlength="44" placeholder="Tēma (nav obligāta)" autocomplete="off" title="Tēma, zem kuras ziņa parādīsies"><button type="button" class="rg-comms-topic-emoji-btn" id="rgCommsTopicEmoji" title="Tēmas emoji" aria-label="Izvēlēties tēmas emoji">☺</button></span><span class="rg-comms-replying" id="rgCommsReplying"></span><button class="rg-comms-cancel-reply" id="rgCommsCancelReply" type="button" hidden aria-label="Atcelt atbildi">×</button></div>'
+    + '<div class="rg-comms-composer"><div class="rg-comms-compose-context">'
+    + (ANIMAL_IDS
+      ? '<span class="rg-comms-me" id="rgCommsMe" title="Komentāri ir anonīmi: katrai dienai tev ir savs dzīvnieks, kā Google dokumentos."><span class="rg-comms-avatar rg-comms-me-ava" id="rgCommsMeAva" aria-hidden="true"></span><span class="rg-comms-me-name" id="rgCommsMeName"></span></span><input type="hidden" id="rgCommsAuthor" value="">'
+      : '<label class="rg-comms-author-wrap"><span>Autors</span><select class="rg-comms-author" id="rgCommsAuthor" aria-label="Izvēlies komentāra autoru"><option value="">Anonīmi</option></select></label>')
+    + '<span class="rg-comms-topic-field"><input class="rg-comms-topic-input" id="rgCommsTopicInput" maxlength="44" placeholder="Tēma (nav obligāta)" autocomplete="off" title="Tēma, zem kuras ziņa parādīsies"><button type="button" class="rg-comms-topic-emoji-btn" id="rgCommsTopicEmoji" title="Tēmas emoji" aria-label="Izvēlēties tēmas emoji">☺</button></span><span class="rg-comms-replying" id="rgCommsReplying"></span><button class="rg-comms-cancel-reply" id="rgCommsCancelReply" type="button" hidden aria-label="Atcelt atbildi">×</button></div>'
     + '<div class="rg-comms-compose-row"><textarea id="rgFeedbackText" maxlength="560" placeholder="Raksti ziņu…"></textarea><button class="rg-comms-send" id="rgFeedbackSave" type="button" disabled aria-label="Nosūtīt ziņu" title="Nosūtīt ziņu">↑</button></div>'
     + '<div class="rg-comms-tools" aria-label="Ātrie emoji"><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="👍">👍</button><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="😂">😂</button><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="❤️">❤️</button><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="🔥">🔥</button><button class="rg-comms-emoji" type="button" data-rg-chat-emoji="☕">☕</button><button class="rg-comms-emoji rg-comms-emoji-more" type="button" id="rgCommsEmojiMore" title="Visi emoji" aria-label="Atvērt emoji sarakstu">＋</button><span class="rg-comms-status" id="rgCommsStatus"></span><span class="rg-comms-char-count" id="rgFeedbackChars">0 / 560</span></div></div>'
     + '</main></div><div id="rgFeedbackDays" hidden></div><span id="rgFeedbackTargetDay" hidden></span>'
@@ -2262,6 +2883,9 @@
   var commsTopics = modal.querySelector('#rgCommsTopics');
   var commsTopicInput = modal.querySelector('#rgCommsTopicInput');
   var commsAuthor = modal.querySelector('#rgCommsAuthor');
+  var commsMe = modal.querySelector('#rgCommsMe');
+  var commsMeAva = modal.querySelector('#rgCommsMeAva');
+  var commsMeName = modal.querySelector('#rgCommsMeName');
   var commsFeedTitle = modal.querySelector('#rgCommsFeedTitle');
   var commsFeedSubtitle = modal.querySelector('#rgCommsFeedSubtitle');
   var commsAllCount = modal.querySelector('#rgCommsAllCount');
@@ -2553,6 +3177,7 @@
   var COMMUNITY_OWNED_KEY = mkKey('minkaCommunityOwnedV1');
   var COMMUNITY_EDIT_TOKEN_KEY = mkKey('minkaCommunityEditTokensV1');
   var COMMUNITY_AUTHOR_KEY = mkKey('minkaCommunityAuthorV1');
+  var COMMUNITY_ANIMAL_KEY = mkKey('minkaCommunityAnimalV1');   // { seed, days: { day: name } }
   var communityMessages = [];
   var communityMode = 'all';
   var communityView = 'all';
@@ -2654,7 +3279,57 @@
     if (!parts.length) return 'A';
     return (parts[0].charAt(0) + (parts.length > 1 ? parts[parts.length - 1].charAt(0) : '')).toLocaleUpperCase('lv-LV');
   }
+  /* Your animal for a day: the same all day (so a thread can be followed),
+     another the next day. It starts from a random seed kept on this device
+     (never sent) and skips animals others already used that day, so two
+     people rarely share one; once you write, that day's animal is kept. */
+  function communityAnimalState() {
+    var state = readJson(COMMUNITY_ANIMAL_KEY, {});
+    if (!state || typeof state !== 'object' || Array.isArray(state)) state = {};
+    if (!state.days || typeof state.days !== 'object') state.days = {};
+    if (typeof state.seed !== 'string' || state.seed.length < 8) {
+      state.seed = newClientId();
+      writeJson(COMMUNITY_ANIMAL_KEY, state);
+    }
+    return state;
+  }
+  function myAnimal(day, keep) {
+    var state = communityAnimalState();
+    if (animalIndex(state.days[day]) >= 0) return state.days[day];
+    var owned = communityOwnedIds(), taken = {};
+    communityMessages.forEach(function (item) {
+      if ((item.date || item.shiftDay) !== day || owned.indexOf(item.clientId) >= 0) return;
+      var index = animalIndex(item.author);
+      if (index >= 0) taken[index] = true;
+    });
+    var seed = state.seed + '|' + day, hash = 2166136261;
+    for (var c = 0; c < seed.length; c++) { hash ^= seed.charCodeAt(c); hash = Math.imul(hash, 16777619); }
+    var start = (hash >>> 0) % ANIMALS.length, pick = start;
+    for (var k = 0; k < ANIMALS.length; k++) {
+      var index = (start + k) % ANIMALS.length;
+      if (!taken[index]) { pick = index; break; }
+    }
+    var name = animalName(ANIMALS[pick]);
+    if (keep) {
+      state.days[day] = name;
+      var days = Object.keys(state.days).sort();
+      while (days.length > 40) delete state.days[days.shift()];
+      writeJson(COMMUNITY_ANIMAL_KEY, state);
+    }
+    return name;
+  }
+  function paintCommunityMe(name) {
+    commsAuthor.value = name;
+    if (!commsMe) return;
+    paintAnimalAvatar(commsMeAva, name);
+    commsMeName.textContent = name || 'Anonīmi';
+    commsMe.setAttribute('aria-label', 'Tu raksti kā ' + (name || 'Anonīmi'));
+  }
   function refreshCommunityAuthors() {
+    if (ANIMAL_IDS) {
+      paintCommunityMe(communityEditing ? (communityEditing.author || '') : myAnimal(shiftDayKey(), false));
+      return;
+    }
     var selected = localStorage.getItem(COMMUNITY_AUTHOR_KEY) || '';
     var names = [];
     var nameKeys = {};
@@ -3156,7 +3831,7 @@
       article.dataset.rgMessageKey = item.key;
       var avatar = document.createElement('span');
       avatar.className = 'rg-comms-avatar';
-      avatar.textContent = communityInitials(authorName);
+      paintAnimalAvatar(avatar, authorName);
       var main = document.createElement('div');
       main.className = 'rg-comms-message-main';
       var head = document.createElement('div');
@@ -3367,7 +4042,9 @@
     if (!body) return;
     var topic = commsTopicInput.value.trim() || (communityView === 'topic' ? communityTopic : 'Vispārīgi');
     var parent = communityEditing ? (communityEditing.parent || '') : (communityReply && communityReply.key || '');
-    var encoded = communityEncode(topic, parent, commsAuthor.value, body);
+    var authorName = !ANIMAL_IDS ? commsAuthor.value
+      : communityEditing ? (communityEditing.author || '') : myAnimal(shiftDayKey(), true);
+    var encoded = communityEncode(topic, parent, authorName, body);
     save.disabled = true;
     commsStatus.textContent = communityEditing ? 'Saglabā izmaiņas…' : 'Nosūta…';
     if (communityEditing && communityEditing.clientId) {
@@ -3414,6 +4091,7 @@
     commsCancelReply.hidden = true;
     updateTextState();
     await loadCommunity();
+    refreshCommunityAuthors();
   };
 
   document.addEventListener('keydown', function (event) {
@@ -3469,13 +4147,16 @@
       if (communityEditing) {
         textarea.value = communityEditing.body;
         commsTopicInput.value = communityEditing.topic === 'Vispārīgi' ? '' : communityEditing.topic;
-        if (communityEditing.author && ![].slice.call(commsAuthor.options).some(function (option) { return option.value === communityEditing.author; })) {
-          var authorOption = document.createElement('option');
-          authorOption.value = communityEditing.author;
-          authorOption.textContent = communityEditing.author;
-          commsAuthor.appendChild(authorOption);
+        if (ANIMAL_IDS) paintCommunityMe(communityEditing.author || '');
+        else {
+          if (communityEditing.author && ![].slice.call(commsAuthor.options).some(function (option) { return option.value === communityEditing.author; })) {
+            var authorOption = document.createElement('option');
+            authorOption.value = communityEditing.author;
+            authorOption.textContent = communityEditing.author;
+            commsAuthor.appendChild(authorOption);
+          }
+          commsAuthor.value = communityEditing.author || '';
         }
-        commsAuthor.value = communityEditing.author || '';
         commsReplying.textContent = 'Rediģē ziņu';
         commsCancelReply.hidden = false;
         updateTextState();
@@ -3524,20 +4205,26 @@
     commsCancelReply.hidden = true;
     textarea.value = '';
     updateTextState();
+    refreshCommunityAuthors();
   });
   commsSearch.addEventListener('input', function () { renderCommunity(); });
-  commsAuthor.addEventListener('change', function () {
-    localStorage.setItem(COMMUNITY_AUTHOR_KEY, commsAuthor.value);
-  });
+  if (!ANIMAL_IDS) {
+    commsAuthor.addEventListener('change', function () {
+      localStorage.setItem(COMMUNITY_AUTHOR_KEY, commsAuthor.value);
+    });
+  }
   textarea.addEventListener('keydown', function (event) {
     if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) { event.preventDefault(); sendWithMotion(); }
   });
 
   list.addEventListener('click', function (event) {
+    var undo = event.target.closest('[data-rg-undo]');
+    if (undo) { event.preventDefault(); event.stopPropagation(); undoRating(); return; }
     var ownMood = event.target.closest('[data-rg-own-mood]');
     if (ownMood) {
       event.preventDefault();
       event.stopPropagation();
+      if (ownMood.getAttribute('aria-disabled') === 'true') { paintRateState(); return; }
       openTopicEmojiPicker('', ownMood, 'mood');
       return;
     }
@@ -3595,6 +4282,11 @@
     if (tap && !tap.contains(event.relatedTarget)) endMoodBlobPreview();
   });
   list.addEventListener('pointercancel', endMoodBlobPreview);
+  // Noskaņa X: the held tap is sent as soon as its day is left or the page
+  // goes away (it is also kept in the pending store, so nothing is lost).
+  window.addEventListener('daySelected', function () { releaseHold(true); });
+  document.addEventListener('visibilitychange', function () { if (document.hidden) releaseHold(true); });
+  window.addEventListener('pagehide', function () { releaseHold(true); });
   modal.addEventListener('click', function (event) {
     if (event.target === modal || event.target.closest('[data-rg-close]')) closeModal();
     var dayButton = event.target.closest('[data-rg-day]');

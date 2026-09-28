@@ -2,7 +2,7 @@
 <html lang="lv">
 <head>
 <!-- Dark first paint: prevents white flash and hides the incomplete data layout. -->
-<style>/* Galvene X: slānis deklarēts pirmais, lai tā !important labojumi (css/page/mk-header-x.css) pārspēj vecos galvenes slāņus. */@layer mk-hx;html{background:#060b13;}body{background:#060b13;}html.mk-schedule-booting #grafiks-app{visibility:hidden!important;}</style>
+<style>/* Galvene X un Noskaņa X: slāņi deklarēti pirmie, lai to !important labojumi (css/page/mk-header-x.css, mk-mood-x.css) pārspēj vecos slāņus. */@layer mk-hx, mk-mx;html{background:#060b13;}body{background:#060b13;}html.mk-schedule-booting #grafiks-app{visibility:hidden!important;}</style>
 <script>
 document.documentElement.classList.add('mk-schedule-booting');
 // Safety net only: calendar.js reveals the page once it is parsed, styled and has fonts.
@@ -194,6 +194,24 @@ window.__mkLeftRole=window.MINKA_APP==='rad'?{one:'Rezidents',many:'Rezidenti'}:
     if (!off) root.classList.add('mk-hx');
   } catch (_e) {}
 })();
+/* Noskaņa X (2026-09-28): jaunais noskaņas bloks vidus kolonnā RG datorā.
+   Telefons un /rad paliek kā bija. Kamēr tas top, tikai pēc izvēles:
+   ?mood=1 (kalendāra vai čaulas adresē) vai localStorage mkMoodX=1. */
+(function() {
+  try {
+    var root = document.documentElement;
+    if (root.classList.contains('mk-mobile-shell') || window.MINKA_APP === 'rad') return;
+    // ?mood=1 in either address turns it on and is remembered (the login gate
+    // reloads the page without it); ?mood=0 turns it off and forgets it.
+    var q = null;
+    try { q = new URLSearchParams(location.search).get('mood'); } catch (_q) {}
+    try { q = q || new URLSearchParams(parent.location.search).get('mood'); } catch (_p) {}
+    try { if (q === '1') localStorage.setItem('mkMoodX', '1'); else if (q === '0') localStorage.removeItem('mkMoodX'); } catch (_w) {}
+    var on = q === '1';
+    try { on = on || (q !== '0' && localStorage.getItem('mkMoodX') === '1'); } catch (_s) {}
+    if (on) root.classList.add('mk-mx');
+  } catch (_e) {}
+})();
 </script>
 
 <meta charset="UTF-8">
@@ -209,7 +227,7 @@ window.__mkLeftRole=window.MINKA_APP==='rad'?{one:'Rezidents',many:'Rezidenti'}:
 <link rel="preload" as="font" type="font/woff2" href="../assets/fonts/geist/GeistMono-Variable.woff2" crossorigin>
 <link rel="stylesheet" href="css/bundle.css?v=20260924perf5">
 <link rel="stylesheet" href="../css/mk-sys.css?v=20260926sp1">
-<script src="../js/mk-motion.js?v=20260928hx2"></script>
+<script src="../js/mk-motion.js?v=20260928mx11"></script>
 <link rel="stylesheet" href="css/skin-draw.css?v=20260829chalk1">
 <link rel="stylesheet" href="css/card-addons.css?v=20260928chm1">
 <script src="js/card-addons.js?v=20260928chm1" defer></script>
@@ -942,7 +960,7 @@ function _mkToast(msg, type) {
 <script src="js/calendar.js?v=20260928hx2"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260925pack6" defer></script>
-<script src="js/header-weather.js?v=20260928perf1" defer></script>
+<script src="js/header-weather.js?v=20260928mx5" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260924perf4"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
 <script src="js/light-model.js?v=20260908light1"></script>
@@ -961,7 +979,7 @@ function _mkToast(msg, type) {
 <script src="js/levels.js?v=20260927ns1" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260928hx4';
+window.__minkaLocalBuild = '20260928cal3';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -1678,8 +1696,8 @@ window.addEventListener('message', function(e) {
 
 <link rel="stylesheet" id="mk-rg-pulse-v2" href="css/page/mk-rg-pulse-v2.css?v=20260926mg1">
 
-<script src="js/page/mood-feedback.js?v=20260926mg4"></script>
-<script src="js/page/mood-trend.js?v=20260926rad1" defer></script>
+<script src="js/page/mood-feedback.js?v=20260928mx25"></script>
+<script src="js/page/mood-trend.js?v=20260928mx41" defer></script>
 
 <link rel="stylesheet" id="mk-mid-card-focus-v1" href="css/page/mk-mid-card-focus-v1.css?v=20260924perf1">
 
@@ -1975,15 +1993,17 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 <link rel="stylesheet" href="css/header-appearance.css?v=20260925pack9">
 <script src="js/header-appearance.js?v=20260928hx2"></script>
 <link rel="stylesheet" href="css/header-duty-summary.css?v=20260923wm10">
-<link rel="stylesheet" href="css/page/mood-comms-m3.css?v=20260926mo1">
+<link rel="stylesheet" href="css/page/mood-comms-m3.css?v=20260928an1">
 <link rel="stylesheet" id="mk-worker-modal-m3" href="css/page/mk-worker-modal-m3.css?v=20260928izs122">
 <link rel="stylesheet" href="css/skin-organize.css?v=20260928izs122">
 <link rel="stylesheet" id="mk-stats-m3" href="css/page/stats-m3.css?v=20260927ns1">
 <link rel="stylesheet" id="mk-m3-surfaces" href="css/page/m3-surfaces.css?v=20260926mo1">
 <link rel="stylesheet" href="../css/mk-spring.css?v=20260926sp1">
 <!-- Galvene X: jaunā RG datora galvene (izslēdzama ar ?hx=0, sk. <head>). -->
-<link rel="stylesheet" id="mk-header-x" href="css/page/mk-header-x.css?v=20260928hx18">
+<link rel="stylesheet" id="mk-header-x" href="css/page/mk-header-x.css?v=20260928hx22">
 <script src="js/page/mk-search-core.js?v=20260928hx2" defer></script>
-<script src="js/page/mk-header-x.js?v=20260928hx18" defer></script>
+<script src="js/page/mk-header-x.js?v=20260928hx19" defer></script>
+<!-- Noskaņa X: jaunais noskaņas bloks RG datorā (izslēdzams ar ?mood=0, sk. <head>). -->
+<link rel="stylesheet" id="mk-mood-x" href="css/page/mk-mood-x.css?v=20260928mx25">
 </body>
 </html>

@@ -742,7 +742,7 @@
       + item('phones', 'phone', 'Tālruņu saraksts', 'Visi numuri pa nodaļām, ar meklēšanu', chev)
       + item('lanes', 'lanes', 'Katra maiņa savā joslā', t.today ? 'Laika lineālā zem galvenes' : 'Pieejams tikai šodienai', sw(t.lanes), !t.today)
       + item('ns', 'moon', 'Nakts sadalījums lineālā', t.nsAvail ? 'Kurš guļ kurā laikā, uz laika joslas' : (t.today ? 'Šodienai nakts plāna vēl nav' : 'Pieejams tikai šodienai'), sw(t.ns), !t.nsAvail)
-      + item('cal', 'calendar', 'Izvēlēties datumu', 'Mēneša kalendārs', chev)
+      + item('cal', 'calendar', 'Izvēlēties datumu', 'Pāriet uz jebkuru dienu', chev)
       + item('look', 'palette', 'Galvenes izskats', 'Fons, krāsas, progresa josla', chev)
       + '<div class="hx-mi-keys" role="note"><b>Taustiņi</b>'
       +   '<span><kbd>←</kbd><kbd>→</kbd> iepriekšējā, nākamā diena</span>'
@@ -762,8 +762,176 @@
     var from = els.tools;
     closePop();
     if (id === 'phones') openPhones(from);
-    else if (id === 'cal') { var c = $('miniCalBtn'); if (c) c.click(); }
+    else if (id === 'cal') openDate(from);
     else if (id === 'look') openLook(from);
+  }
+
+  /* ── Datuma izvēle: M3 kalendārs ─────────────────────────────────────────
+     Aizstāj veco mini kalendāru (calendar.js, tas paliek telefonam un /rad).
+     Izaug no pogas, kas to atvēra (Rīki vai kalendāra poga dienu joslā), un
+     stāv zem tās, tonēts kā pārējie galvenes logi. Mēneši pārslēdzas tikai
+     logā: grafiks pāriet uz citu mēnesi tikai tad, kad izvēlas dienu. Mēneši
+     bez grafika ir blāvi. Taustiņi: bultas pa dienām un nedēļām, PageUp /
+     PageDown pa mēnešiem, Home / End nedēļas sākums un beigas, Esc aizver. */
+  var dp = { el: null, anchor: null, y: 0, m: 0, focus: '' };
+  var DP_WD = ['Pr', 'Ot', 'Tr', 'Ce', 'Pk', 'Se', 'Sv'];
+  // Months with a schedule (either role) as year * 12 + month, from the
+  // previous month on like the calendar's own list; null while not loaded.
+  function dpMonths() {
+    var set = {}, n = 0, t = parseDMY(shiftToday()), min = t ? t.getFullYear() * 12 + t.getMonth() - 1 : 0;
+    [window.__grafiksStore, window.__grafiksStoreRad].forEach(function (store) {
+      if (!store || typeof store !== 'object') return;
+      Object.keys(store).forEach(function (key) {
+        var mi = -1, y = 0;
+        String(key).split(/\s+/).forEach(function (w) {
+          if (/^20\d{2}$/.test(w)) y = +w;
+          else if (/^\d{2}$/.test(w)) y = y || 2000 + +w;
+          else if (mi < 0) mi = CORE.monthIndex(w);
+        });
+        if (mi >= 0 && y && y * 12 + mi >= min) { set[y * 12 + mi] = true; n++; }
+      });
+    });
+    return n ? set : null;
+  }
+  function dpRange(months) {
+    if (!months) return null;
+    var keys = Object.keys(months).map(Number);
+    return { min: Math.min.apply(null, keys), max: Math.max.apply(null, keys) };
+  }
+  function dpHtml() {
+    var months = dpMonths(), range = dpRange(months), view = dp.y * 12 + dp.m, has = !months || !!months[view];
+    var n = new Date(dp.y, dp.m + 1, 0).getDate(), lead = (new Date(dp.y, dp.m, 1).getDay() + 6) % 7;
+    var today = shiftToday(), active = activeDate();
+    var html = '<div class="hx-dp-head">'
+      + '<b class="hx-dp-title" id="hxDpTitle">' + esc(cap(CORE.MONTH_NAMES[dp.m])) + ' ' + dp.y + '</b>'
+      + '<button type="button" class="hx-dp-nav" data-dp="-1" aria-label="Iepriekšējais mēnesis"' + (range && view <= range.min ? ' disabled' : '') + '>' + icon('chevL') + '</button>'
+      + '<button type="button" class="hx-dp-nav" data-dp="1" aria-label="Nākamais mēnesis"' + (range && view >= range.max ? ' disabled' : '') + '>' + icon('chevR') + '</button>'
+      + '</div>'
+      + '<div class="hx-dp-wd" aria-hidden="true">' + DP_WD.map(function (w) { return '<span>' + w + '</span>'; }).join('') + '</div>'
+      + '<div class="hx-dp-grid" role="group" aria-labelledby="hxDpTitle">';
+    for (var i = 0; i < lead; i++) html += '<span aria-hidden="true"></span>';
+    for (var d = 1; d <= n; d++) {
+      var date = new Date(dp.y, dp.m, d), ds = dmy(date), weekend = date.getDay() === 0 || date.getDay() === 6;
+      var label = CORE.longLabel(date) + ' ' + dp.y + (ds === today ? ', šodien' : '') + (ds === active ? ', atvērta' : '') + (has ? '' : ', grafika vēl nav');
+      html += '<button type="button" class="hx-dp-day' + (weekend ? ' is-weekend' : '') + (ds === today ? ' is-today' : '') + (ds === active ? ' is-active' : '') + '"'
+        + ' data-date="' + ds + '" tabindex="' + (ds === dp.focus ? '0' : '-1') + '" aria-label="' + esc(label) + '"'
+        + (ds === today ? ' aria-current="date"' : '') + (has ? '' : ' aria-disabled="true"') + '>' + d + '</button>';
+    }
+    return html + '</div>' + (has ? '' : '<p class="hx-dp-note">Šim mēnesim grafika vēl nav</p>')
+      + '<div class="hx-dp-foot"><button type="button" class="hx-dp-today" data-dp="today" title="Atpakaļ uz šodienu (T)">' + icon('undo') + '<span>Šodien</span></button></div>';
+  }
+  // The grid's one tab stop: the chosen day, today or the 1st of the month.
+  function dpRender(focusSel) {
+    if (!dp.el) return;
+    var inView = function (ds) { var x = parseDMY(ds); return !!x && x.getFullYear() === dp.y && x.getMonth() === dp.m; };
+    if (!inView(dp.focus)) dp.focus = [activeDate(), shiftToday()].filter(inView)[0] || dmy(new Date(dp.y, dp.m, 1));
+    dp.el.innerHTML = dpHtml();
+    var t = focusSel && dp.el.querySelector(focusSel);
+    if (t && t.disabled) t = dp.el.querySelector('.hx-dp-day[tabindex="0"]');
+    if (t) t.focus({ preventScroll: true });
+  }
+  function ensureDate() {
+    if (dp.el) return dp.el;
+    var el = doc.createElement('div');
+    el.id = 'hxDate';
+    el.className = 'hx-dp';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-label', 'Izvēlēties datumu');
+    el.hidden = true;
+    $('minkaBarWrap').appendChild(el);
+    el.addEventListener('click', function (e) {
+      var b = e.target.closest('button');
+      if (!b || b.disabled) return;
+      if (b.dataset.date) {
+        if (b.getAttribute('aria-disabled') === 'true') toast('Šim mēnesim grafika vēl nav');
+        else pickDate(b.dataset.date);
+      } else if (b.dataset.dp === 'today') pickDate(shiftToday());
+      else {
+        var v = dp.y * 12 + dp.m + +b.dataset.dp;
+        dp.y = Math.floor(v / 12); dp.m = v % 12;
+        dpRender('[data-dp="' + b.dataset.dp + '"]');
+      }
+    });
+    el.addEventListener('keydown', dpKey);
+    dp.el = el;
+    return el;
+  }
+  function dpKey(e) {
+    var k = e.key;
+    if (k === 'Escape') { e.preventDefault(); e.stopPropagation(); closeDate(true); return; }
+    var day = e.target.closest && e.target.closest('.hx-dp-day');
+    var d = day && parseDMY(day.dataset.date);
+    if (!d || e.altKey || e.ctrlKey || e.metaKey) return;
+    var wd = (d.getDay() + 6) % 7, to = new Date(d);
+    if (k === 'ArrowLeft') to.setDate(d.getDate() - 1);
+    else if (k === 'ArrowRight') to.setDate(d.getDate() + 1);
+    else if (k === 'ArrowUp') to.setDate(d.getDate() - 7);
+    else if (k === 'ArrowDown') to.setDate(d.getDate() + 7);
+    else if (k === 'Home') to.setDate(d.getDate() - wd);
+    else if (k === 'End') to.setDate(d.getDate() + 6 - wd);
+    else if (k === 'PageUp' || k === 'PageDown') {
+      to = new Date(d.getFullYear(), d.getMonth() + (k === 'PageUp' ? -1 : 1), 1);
+      to.setDate(Math.min(d.getDate(), new Date(to.getFullYear(), to.getMonth() + 1, 0).getDate()));
+    } else return;
+    e.preventDefault();
+    e.stopPropagation();
+    var range = dpRange(dpMonths()), v = to.getFullYear() * 12 + to.getMonth();
+    if (range && (v < range.min || v > range.max)) return;
+    dp.focus = dmy(to);
+    if (to.getFullYear() !== dp.y || to.getMonth() !== dp.m) {
+      dp.y = to.getFullYear(); dp.m = to.getMonth();
+      dpRender('.hx-dp-day[tabindex="0"]');
+      return;
+    }
+    day.tabIndex = -1;
+    var next = dp.el.querySelector('[data-date="' + dp.focus + '"]');
+    if (next) { next.tabIndex = 0; next.focus({ preventScroll: true }); }
+  }
+  function pickDate(ds) {
+    closeDate(true);
+    // The roster is rebuilt a frame later, so the window starts closing at once.
+    requestAnimationFrame(function () { goToDate(ds); });
+  }
+  function openDate(anchor) {
+    closePop();
+    closeSearch(false);
+    closePhones();
+    var el = ensureDate(), a = dp.anchor = anchor && anchor.isConnected ? anchor : els.tools;
+    var d = parseDMY(activeDate()) || new Date();
+    dp.y = d.getFullYear(); dp.m = d.getMonth(); dp.focus = activeDate();
+    dpRender();
+    el.__closing = false;
+    el.hidden = false;
+    // Under its opener, centred on it, inside the header's width.
+    var wr = $('minkaBarWrap').getBoundingClientRect(), ar = a.getBoundingClientRect(), w = el.offsetWidth;
+    el.style.left = Math.round(Math.max(8, Math.min(wr.width - w - 8, ar.left + ar.width / 2 - wr.left - w / 2))) + 'px';
+    el.style.top = Math.round(ar.bottom - wr.top + 8) + 'px';
+    if (a.getAttribute('aria-haspopup') === 'dialog') a.setAttribute('aria-expanded', 'true');
+    layerSync();
+    var M = motion();
+    if (M && M.openSurface) M.openSurface(el, { key: 'hx-date', origin: a });
+    var day = el.querySelector('.hx-dp-day[tabindex="0"]');
+    if (day) day.focus({ preventScroll: true });
+    doc.addEventListener('pointerdown', outsideDate, true);
+  }
+  function closeDate(restoreFocus) {
+    var el = dp.el, a = dp.anchor;
+    if (!el || el.hidden || el.__closing) return;
+    el.__closing = true;
+    doc.removeEventListener('pointerdown', outsideDate, true);
+    if (a && a.getAttribute('aria-haspopup') === 'dialog') a.setAttribute('aria-expanded', 'false');
+    var done = function () { if (!el.__closing) return; el.__closing = false; el.hidden = true; layerSync(); };
+    var M = motion();
+    if (M && M.closeSurface && a && a.isConnected) M.closeSurface(el, { key: 'hx-date', origin: a }, done);
+    else done();
+    if (restoreFocus && a && a.isConnected) a.focus({ preventScroll: true });
+  }
+  function toggleDate(anchor) {
+    if (dp.el && !dp.el.hidden && !dp.el.__closing && dp.anchor === anchor) closeDate(false);
+    else openDate(anchor);
+  }
+  function outsideDate(e) {
+    if (dp.el && !dp.el.contains(e.target) && !(dp.anchor && dp.anchor.contains(e.target))) closeDate(false);
   }
 
   /* ── Galvenes izskats: izaug no pogas, kas to atvēra, un stāv zem galvenes
@@ -771,6 +939,7 @@
   function openLook(anchor) {
     closePop();
     closeSearch(false);
+    closeDate(false);
     var b = $('headerAppearanceBtn');
     if (!b) return;
     b.click();
@@ -890,6 +1059,7 @@
   function openPhones(anchor, query) {
     closePop();
     closeSearch(false);
+    closeDate(false);
     var el = ensurePhones();
     ph.anchor = anchor && anchor.isConnected ? anchor : els.tools;
     el.querySelector('input').value = query || '';
@@ -1104,7 +1274,7 @@
      virs tā (fixed, z 9999). Kamēr kāds logs ir redzams, slānis paceļas virs
      kaķa; kad logs aizvērts, viss ir kā bija. */
   function layerSync() {
-    var up = (pop && !pop.hidden) || (pal && !pal.hidden) || (ph.el && !ph.el.hidden);
+    var up = (pop && !pop.hidden) || (pal && !pal.hidden) || (ph.el && !ph.el.hidden) || (dp.el && !dp.el.hidden);
     root.classList.toggle('hx-layer-up', !!up);
   }
 
@@ -1151,6 +1321,7 @@
     if (kind === 'coffee') loadBmc();
     if (popKind === kind && !pop.hidden && !pop.__closing) { if (pinned) popPinned = true; return; }
     closeSearch(false);
+    closeDate(false);
     if (popAnchor) popAnchor.setAttribute('aria-expanded', 'false');
     // Moving from one chip to the next: the same window glides over and its
     // content changes, instead of closing and growing again.
@@ -1315,7 +1486,7 @@
     { id: 'radio', title: 'Radio', sub: 'Atvērt radio', icon: 'radio', words: 'radio muzika stacija klausities', run: function () { openRadio('radio'); } },
     { id: 'winamp', title: 'Winamp', sub: 'Mūzika (Lācītis) radio logā', icon: 'music', words: 'winamp muzika lacitis dziesmas playlist', run: function () { openRadio('music'); } },
     { id: 'bolus', title: 'Bolus', sub: 'Bolusa maiņa un atzīmes', icon: 'drop', words: 'bolus bolusa maina injektors', run: function () { shellClick('bolusDocBtn'); } },
-    { id: 'month', title: 'Mēneša kalendārs', sub: 'Viss mēnesis vienā skatā', icon: 'calendar', words: 'kalendars menesis grafiks datums', run: function () { if (!shellClick('monthCalDocBtn')) { var b = $('miniCalBtn'); if (b) b.click(); } } },
+    { id: 'month', title: 'Mēneša kalendārs', sub: 'Viss mēnesis vienā skatā', icon: 'calendar', words: 'kalendars menesis grafiks datums', run: function () { if (!shellClick('monthCalDocBtn')) openDate(els.searchbox); } },
     { id: 'planner', title: 'Plānotājs', sub: 'Grafika plānotājs', icon: 'lanes', words: 'planotajs grafiks planot', run: function () { shellClick('planotajsDockBtn'); } },
     { id: 'lunch', title: 'Pusdienas', sub: 'Pusdienu pasūtīšana', icon: 'coffee', words: 'pusdienas edamais pasutit', run: function () { shellClick('pusdienasDockBtn'); } },
     { id: 'mobile', title: 'Mobilā versija', sub: 'QR kods un instrukcija telefonam', icon: 'mobile', words: 'mobila versija telefons qr iphone android lietotne instalet', run: function () { openPop('mobile', els.mobile, true); } },
@@ -1562,6 +1733,7 @@
   }
   function openSearch(initial) {
     closePop();
+    closeDate(false);
     ensurePalette();
     var wasOpen = !pal.hidden && !pal.__closing;
     if (!wasOpen) palOpener = doc.activeElement;
@@ -1659,6 +1831,7 @@
       if ((e.ctrlKey || e.metaKey) && !e.altKey && (k === 'k' || k === 'K')) { e.preventDefault(); openSearch(); return; }
       if (k === 'Escape' && pop && !pop.hidden) { closePop(); if (popAnchor) popAnchor.focus(); return; }
       if (k === 'Escape' && ph.el && !ph.el.hidden) { closePhones(); return; }
+      if (k === 'Escape' && dp.el && !dp.el.hidden) { closeDate(true); return; }
       if (e.ctrlKey || e.metaKey || e.altKey || typing(e.target) || overlayOpen() || e.defaultPrevented) return;
       if (k === '/') { e.preventDefault(); openSearch(); }
       else if ((k === 't' || k === 'T') && !e.shiftKey) { e.preventDefault(); goToday(); }
@@ -1681,14 +1854,28 @@
       scroller.scrollLeft += e.deltaY;
       e.preventDefault();
     }, { passive: false });
+    // The day strip's calendar button opens the date picker below (M3), not
+    // the old mini calendar, and toggles it.
     var cal = $('miniCalBtn');
-    if (cal) { cal.title = 'Mēneša kalendārs'; cal.innerHTML = icon('calendar'); }
+    if (cal) {
+      cal.title = 'Izvēlēties datumu';
+      cal.setAttribute('aria-haspopup', 'dialog');
+      cal.setAttribute('aria-expanded', 'false');
+      cal.innerHTML = icon('calendar');
+      cal.onclick = function (e) { e.preventDefault(); e.stopPropagation(); toggleDate(cal); };
+    }
     var menu = $('minkaBarMenu');
     if (menu) menu.title = 'Tālruņu saraksts';
   }
 
   window.addEventListener('minka:duty-summary', function (e) { renderWing(e.detail && e.detail.role); });
-  window.addEventListener('daySelected', function () { requestAnimationFrame(function () { renderDate(); syncFacts(); }); });
+  window.addEventListener('daySelected', function () {
+    requestAnimationFrame(function () {
+      renderDate();
+      syncFacts();
+      if (dp.el && !dp.el.hidden && !dp.el.__closing) dpRender();
+    });
+  });
   window.addEventListener('minka:weather', function () { if (popKind === 'weather') fillPop('weather'); });
   document.addEventListener('minka:storeReady', function () { peopleCache = null; adopt(); renderDate(); });
   window.addEventListener('minka:auto-day-rollover', renderDate);
@@ -1723,6 +1910,7 @@
       if (pop && !pop.hidden && !pop.__closing) closePop();
       closeSearch(false);
       closePhones();
+      closeDate(false);
     }, true);
   } catch (_e) {}
 

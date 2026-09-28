@@ -1085,3 +1085,39 @@
   grid-template-columns: var(--rg-bmc-left, 132px) auto minmax(0, 1fr) auto !important;
   margin-top: calc(-1 * var(--rg-bmc-lift, 64px)) !important;
 }
+
+/* Anonīmie dzīvnieki (mood-feedback.js, ANIMALS): autora avatārs ir
+   dzīvnieks savā tonālajā aplī; sastādītājā vārda izvēles vietā ir čips
+   "tu raksti kā ...", ko nevar un nevajag mainīt. */
+#rgFeedbackModal .rg-comms-avatar.is-animal {
+  background: var(--rg-ava-bg, var(--m3x-primary-container)) !important;
+  color: var(--rg-ava-fg, var(--m3x-on-primary-container)) !important;
+  font: 400 18px/1 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif !important;
+}
+#rgFeedbackModal .rg-comms-me {
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0 14px 0 4px;
+  border-radius: 999px;
+  background: var(--m3x-container-highest);
+  color: var(--m3x-on-surface);
+  font: 500 13px/1 Inter, system-ui, sans-serif;
+  white-space: nowrap;
+  cursor: default;
+}
+#rgFeedbackModal .rg-comms-me .rg-comms-avatar {
+  flex: none;
+  width: 28px !important;
+  height: 28px !important;
+  font-size: 16px !important;
+}
+#rgFeedbackModal .rg-comms-me-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 720px) {
+  #rgFeedbackModal .rg-comms-me { width: calc(48% - 4px); }
+}

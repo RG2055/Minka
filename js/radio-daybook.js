@@ -157,8 +157,22 @@
       if (window.loadRadioScripts) await window.loadRadioScripts();
       if (e.data.action === 'toggle') { var play = document.getElementById('playBtn'); if (play) play.click(); }
       if (e.data.action === 'focus' && window.focusRadio) window.focusRadio();
+      // The mood card's radio bubble: open the window the way the dock button
+      // does (the same reveal); when it is open already, bring it forward.
+      if (e.data.action === 'open') {
+        var reveal = window.__mkRadioReveal;
+        if (reveal && !reveal.logicalOpen() && window.toggleRadio) window.toggleRadio();
+        else if (window.focusRadio) window.focusRadio();
+      }
       if (e.data.action === 'stations') { if (window.focusRadio) window.focusRadio(); if (window.toggleMenu) window.toggleMenu(); }
     }
   });
-  window.MinkaShiftRadio = { attach: attach, snapshot: function () { return Object.assign({}, state); }, history: function () { return records; } };
+  window.MinkaShiftRadio = {
+    attach: attach,
+    snapshot: function () { return Object.assign({}, state); },
+    history: function () { return records; },
+    // The radio's own analyser (js/radio.js), only read: the mood card's radio
+    // bubble draws a small spectrum from it. Null until the radio has played.
+    analyser: function () { try { return typeof analyser !== 'undefined' && analyser || null; } catch (_e) { return null; } }
+  };
 })();

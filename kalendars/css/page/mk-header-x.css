@@ -205,7 +205,12 @@
 /* Viens režģis visam vidum: datuma rinda un rīku rinda stāv uz vienas ass,
    ziņas sākas līmenī ar nedēļas dienu. Rindas ir fiksētas, tāpēc nekas
    nepārlec, ja kāda fakta (vārdadienu, svētku) nav. */
+/* Above the wings: on another day the date line grows ("Pēc 3 dienām",
+   "Šodien"), the chips cannot shrink and reach into the right wing's column,
+   whose empty box would otherwise take their hover and clicks. */
 .hx-center {
+  position: relative;
+  z-index: 1;
   container-type: inline-size;
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
@@ -724,6 +729,88 @@
 .hx-mi-keys b { width: 100%; font-size: 11.5px; font-weight: 700; color: var(--hx-pop-faint); }
 .hx-mi-keys kbd { display: inline-block; min-width: 16px; margin-right: 3px; padding: 2px 5px; border-radius: 5px; background: rgba(20, 33, 43, .08); color: var(--hx-pop-text); font: 650 10.5px/1.3 var(--font-ui, system-ui); text-align: center; }
 
+/* ── Datuma izvēle (M3 kalendārs) ────────────────────────────────────── */
+.hx-dp {
+  --hx-dp-weekend: #a8321f;
+  position: absolute;
+  z-index: 42;
+  width: 320px;
+  box-sizing: border-box;
+  padding: 8px 14px 14px;
+  border-radius: 28px;
+  background: var(--hx-pop-bg);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .28), 0 1px 0 rgba(255, 255, 255, .7) inset;
+  color: var(--hx-pop-text);
+  font-size: 13px;
+  text-shadow: none;
+  transform-origin: 50% 0;
+}
+.hx-dp[hidden] { display: none; }
+.hx-dp-head { display: flex; align-items: center; gap: 2px; height: 52px; padding-left: 8px; }
+.hx-dp-title { flex: 1 1 auto; min-width: 0; font-size: 16px; font-weight: 750; letter-spacing: -.01em; white-space: nowrap; }
+.hx-dp-foot { display: flex; justify-content: flex-end; margin-top: 6px; }
+.hx-dp-today {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px 0 10px;
+  border: 0;
+  border-radius: 18px;
+  background: none;
+  color: var(--hx-pop-accent);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 150ms var(--mk-ease-effects, ease);
+}
+.hx-dp-today .hx-ic { width: 17px; height: 17px; }
+.hx-dp-nav {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--hx-pop-text);
+  cursor: pointer;
+  transition: background-color 150ms var(--mk-ease-effects, ease);
+}
+.hx-dp-nav .hx-ic { width: 20px; height: 20px; }
+.hx-dp-nav:disabled { opacity: .38; cursor: default; }
+.hx-dp-wd,
+.hx-dp-grid { display: grid; grid-template-columns: repeat(7, 40px); gap: 2px; justify-content: center; }
+.hx-dp-wd span { height: 32px; font-size: 12px; font-weight: 650; line-height: 32px; text-align: center; color: var(--hx-pop-muted); }
+.hx-dp-wd span:nth-child(n+6) { color: var(--hx-dp-weekend); }
+.hx-dp-day {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--hx-pop-text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background-color 150ms var(--mk-ease-effects, ease), color 150ms var(--mk-ease-effects, ease);
+}
+.hx-dp-day.is-weekend { color: var(--hx-dp-weekend); }
+:is(.hx-dp-today, .hx-dp-nav:not(:disabled), .hx-dp-day):hover { background: var(--hx-pop-raised); }
+.hx-dp-day.is-today { box-shadow: inset 0 0 0 1.5px var(--hx-pop-accent); color: var(--hx-pop-accent); font-weight: 800; }
+.hx-dp-day.is-active,
+.hx-dp-day.is-active:hover { background: var(--hx-pop-accent); box-shadow: none; color: #ffffff; font-weight: 750; }
+.hx-dp-day[aria-disabled="true"] { opacity: .38; cursor: default; }
+.hx-dp-day[aria-disabled="true"]:hover { background: none; }
+.hx-dp :is(button):focus-visible { outline: 2px solid var(--hx-pop-accent); outline-offset: 2px; }
+.hx-dp-day:active:not([aria-disabled="true"]) { background: var(--hx-pop-active); }
+.hx-dp-note { margin: 8px 0 0; font-size: 12px; text-align: center; color: var(--hx-pop-muted); }
+
 /* ── Tālruņi ─────────────────────────────────────────────────────────── */
 .hx-phones {
   position: absolute;
@@ -1071,6 +1158,22 @@
 
   /* Dienu josla */
   :root.mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row { gap: 8px !important; }
+  /* Dienu josla sniedzas līdz pašai galvenes malai: agrāk tā sēdēja 3 px
+     atkāpē, un šajā rāmī sānos un apakšā paspīdēja bilde / LED matrica.
+     Saturs paliek tieši vietā (atkāpe pāriet uz iekšējo polsterējumu),
+     galvenes augstums nemainās; stūri tādi paši kā fonam (24 px). */
+  :root.mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row {
+    box-sizing: border-box !important;
+    width: calc(100% + 6px) !important;
+    max-width: none !important;
+    margin-left: -3px !important;
+    margin-right: -3px !important;
+    margin-bottom: -3px !important;
+    padding-left: 11px !important;
+    padding-right: 11px !important;
+    padding-bottom: 7px !important;
+    border-radius: 0 0 24px 24px !important;
+  }
   :root.mk-hx:not(.mk-mobile-shell) #minkaBarWrap #grafiks-scroller {
     scroll-behavior: auto !important;
     scroll-padding-inline: 46px !important;

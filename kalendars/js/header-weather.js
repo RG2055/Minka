@@ -392,12 +392,15 @@
       any = true;
       if (!document.hidden) a.currentTime = a.__mkDrift + driftClock;
     });
-    if (!any && driftTimer) { clearInterval(driftTimer); driftTimer = 0; }
+    if (!any && driftTimer) { if (typeof driftTimer === 'function') driftTimer(); else clearInterval(driftTimer); driftTimer = 0; }
   }
   function startDrifts() {
     if (driftTimer || typeof layer.getAnimations !== 'function') return;
     driftLast = performance.now();
-    driftTimer = setInterval(driftTick, DRIFT_STEP_MS);
+    // The shared clock (js/mk-motion.js): the mood card's slow motion steps
+    // on the same tick, so together they still cost ten frames a second.
+    var M = window.MinkaMotion;
+    driftTimer = M && M.onSlowTick ? M.onSlowTick(driftTick) : setInterval(driftTick, DRIFT_STEP_MS);
     driftTick();
   }
   visibilityChanged();

@@ -496,6 +496,45 @@
     return p;
   }
 
+  /* One shared clock for slow drifts stepped by hand. A running CSS/WAAPI
+     animation makes the compositor draw every refresh (60 a second, measured:
+     steps() does not help) even when it moves a pixel a second; here the
+     animations stay paused and are moved by setting their time, so the page
+     draws one frame per tick, and everything on the clock shares that frame.
+       onAmbientTick(fn)  15 a second: things the eye follows (the mood card's
+                          orbit and sky); a step is ~0.13-0.24 px at their speed.
+       onSlowTick(fn)     every other of the same ticks (the header weather),
+                          so it never adds frames of its own.
+     It stops when nobody listens. Both return an unsubscribe function. */
+  var tickFns = [], ambientFns = [], tickTimer = 0, tickCount = 0;
+  // Its pace: 15 a second, or ?tick=10..30 in the page's (or the shell's)
+  // address to compare; the choice is remembered on this device.
+  var TICK_HZ = (function () {
+    var q = null;
+    try { q = new URLSearchParams(location.search).get('tick'); } catch (_q) {}
+    try { q = q || new URLSearchParams(parent.location.search).get('tick'); } catch (_p) {}
+    try { if (q) localStorage.setItem('mkTickHz', q); q = q || localStorage.getItem('mkTickHz'); } catch (_s) {}
+    var hz = Math.round(Number(q));
+    return hz >= 10 && hz <= 30 ? hz : 15;
+  })();
+  function runTicks() {
+    var now = performance.now();
+    tickCount++;
+    ambientFns.slice().forEach(function (fn) { try { fn(now); } catch (_e) {} });
+    if (tickCount % 2 === 0) tickFns.slice().forEach(function (fn) { try { fn(now); } catch (_e) {} });
+    if (!tickFns.length && !ambientFns.length) { clearInterval(tickTimer); tickTimer = 0; }
+  }
+  function subscribe(list, fn) {
+    if (typeof fn !== 'function') return function () {};
+    list.push(fn);
+    if (!tickTimer) tickTimer = setInterval(runTicks, 1000 / TICK_HZ);
+    return function () {
+      var i = list.indexOf(fn);
+      if (i >= 0) list.splice(i, 1);
+    };
+  }
+  function onSlowTick(fn) { return subscribe(tickFns, fn); }
+  function onAmbientTick(fn) { return subscribe(ambientFns, fn); }
   // Animations made elsewhere (the radio reveal) can be registered so that
   // atRest(key) knows about them.
   function track(key, anims) {
@@ -517,6 +556,8 @@
     flip: flip,
     liquid: liquid,
     pending: pending,
+    onSlowTick: onSlowTick,
+    onAmbientTick: onAmbientTick,
     run: run,
     measure: measure,
     report: report,
