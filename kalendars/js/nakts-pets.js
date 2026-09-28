@@ -193,12 +193,44 @@
     s.row = r.row; s.col = col;
     s.el.style.backgroundPosition = (-col * s.d.frame) + 'px ' + (-r.row * s.d.frame) + 'px';
   }
-  function put(s, g, x, y, lift, flip, z, scale) {
+  function pose(s, g, x, y, lift, flip, scale) {
     var d = s.d, k = (scale || 1) * depthScale(g, y);
     var tx = x - d.anchor[0] * d.frame, ty = y - d.anchor[1] * d.frame - (lift || 0);
-    var t = 'translate3d(' + tx.toFixed(1) + 'px,' + ty.toFixed(1) + 'px,0) scale(' + (flip ? -k : k).toFixed(3) + ',' + k.toFixed(3) + ')';
+    return 'translate3d(' + tx.toFixed(1) + 'px,' + ty.toFixed(1) + 'px,0) scale(' + (flip ? -k : k).toFixed(3) + ',' + k.toFixed(3) + ')';
+  }
+  function put(s, g, x, y, lift, flip, z, scale) {
+    if (s.anim) stopGlide(s);
+    var t = pose(s, g, x, y, lift, flip, scale);
     if (s.t !== t) { s.t = t; s.el.style.transform = t; }
     if (s.z !== z) { s.z = z; s.el.style.zIndex = z; }
+  }
+  /* A straight leg of a walk is handed to the compositor as one animation, from
+     where the pet is to the leg's end at the pet's speed. Moving a pet from here
+     every frame made the browser lay out the whole panel's layers again 60 times
+     a second; now the page does nothing until the leg ends. The path is the same
+     straight line at the same speed (the depth scale grows with y, linearly, as
+     the transform is interpolated). lite / reduced keep their 30 steps a second.
+     Legs that are not straight (the pet cuts the corner step by step), jumps and
+     a carried duvet stay frame by frame. */
+  var GLIDE = typeof Element !== 'undefined' && typeof Element.prototype.animate === 'function';
+  function glideLeg(s, g, x, y, p, v, flip, z, scale) {
+    if (s.z !== z) { s.z = z; s.el.style.zIndex = z; }
+    var lv = level(), L = s.leg;
+    if (L && L.x === p.x && L.y === p.y && L.flip === flip && L.v === v && L.lv === lv) return;   // already on its way there
+    var dx = Math.abs(p.x - x), dy = Math.abs(p.y - y);
+    if (!(v > 0) || dx + dy < 0.5 || (dx >= 0.5 && dy >= 0.5)) { put(s, g, x, y, 0, flip, z, scale); return; }
+    var a = pose(s, g, x, y, 0, flip, scale), b = pose(s, g, p.x, p.y, 0, flip, scale), secs = (dx + dy) / v;
+    if (s.anim) s.anim.cancel();
+    s.t = a; s.el.style.transform = a;           // where it is now (and stays, should the leg be cut short)
+    s.anim = s.el.animate([{ transform: a }, { transform: b }], {
+      duration: secs * 1000, fill: 'forwards',
+      easing: lv === 'full' ? 'linear' : 'steps(' + Math.max(1, Math.round(secs * 30)) + ', end)'
+    });
+    s.leg = { x: p.x, y: p.y, flip: flip, v: v, lv: lv };
+  }
+  function stopGlide(s) {
+    if (s.anim) { s.anim.cancel(); s.anim = null; }
+    s.leg = null; s.t = null;                     // the next put() writes the pose again
   }
 
   // ── a cat ──
@@ -327,8 +359,12 @@
     }
     this.draw(g);
   };
+  // The loop stops (panel closed): the pet is left where it is, not where its leg began.
+  Cat.prototype.settle = function () {
+    if (this.s.anim) { stopGlide(this.s); put(this.s, this.room.g, this.x, this.y, this.lift, this.dir === 'side' && this.flip, this.s.z, CAT_SCALE); }
+  };
   Cat.prototype.draw = function (g) {
-    if (this.hidden) { if (this.s.el.style.visibility !== 'hidden') this.s.el.style.visibility = 'hidden'; return; }
+    if (this.hidden) { if (this.s.anim) stopGlide(this.s); if (this.s.el.style.visibility !== 'hidden') this.s.el.style.visibility = 'hidden'; return; }
     if (this.s.el.style.visibility) this.s.el.style.visibility = '';
     var key = this.anim + '-' + this.dir;
     if (!this.s.d.rows[key]) { this.dir = this.s.d.rows[this.anim + '-side'] ? 'side' : 'front'; key = this.anim + '-' + this.dir; }
@@ -336,7 +372,9 @@
     var col = this.anim === 'jump' ? (this.frame || 0) : Math.floor(this.t * (ANIM_FPS[this.anim] || 12)) % n;
     show(this.s, key, col);
     var z = this.box ? this.box.z : this.bed ? this.bed.z + 2 : (this.jump ? zAt(g, Math.max(this.jump.y0, this.jump.y1)) + 1 : zAt(g, this.y));
-    put(this.s, g, this.x, this.y, this.lift, this.dir === 'side' && this.flip, z, CAT_SCALE);
+    var carried = this.room.carry && this.room.carry.cat === this;
+    if (GLIDE && this.path.length && !this.jump && !carried) glideLeg(this.s, g, this.x, this.y, this.path[0], this.speed, this.dir === 'side' && this.flip, z, CAT_SCALE);
+    else put(this.s, g, this.x, this.y, this.lift, this.dir === 'side' && this.flip, z, CAT_SCALE);
     // In the box only what is between its sides shows (the front wall covers the rest).
     var fr = this.s.d.frame, sideCut = Math.max(0, fr / 2 - 21), below = Math.max(0, fr * (1 - this.s.d.anchor[1]) - 3);
     var clip = this.box && !this.jump ? 'inset(0 ' + sideCut + 'px ' + below.toFixed(1) + 'px ' + sideCut + 'px)' : '';
@@ -365,9 +403,13 @@
     this.path = route(this.room, { x: this.x, y: this.y }, this.hole(), 12);
     this.onArrive = function () { self.hidden = true; self.until = now() + rnd(10, 22); };
   };
+  Mouse.prototype.settle = function () {
+    if (this.s.anim) { stopGlide(this.s); put(this.s, this.room.g, this.x, this.y, 0, this.anim !== 'sit' && this.dir === 'side' && this.flip, this.s.z); }
+  };
   Mouse.prototype.step = function (dt, T) {
     this.t += dt; var g = this.room.g;
     if (this.hidden) {
+      if (this.s.anim) stopGlide(this.s);
       if (this.s.el.style.visibility !== 'hidden') this.s.el.style.visibility = 'hidden';
       if (T > this.until) { var p = this.hole(); this.x = p.x; this.y = p.y + 6; this.hidden = false; this.anim = 'sit'; this.until = T + rnd(2, 4); }
       return;
@@ -390,7 +432,9 @@
     }
     var key = this.anim === 'sit' ? 'sit-front' : 'run-' + this.dir;
     show(this.s, key, Math.floor(this.t * 10) % this.s.d.rows[key].frames);
-    put(this.s, g, this.x, this.y, 0, this.anim !== 'sit' && this.dir === 'side' && this.flip, zAt(g, this.y));
+    var flip = this.anim !== 'sit' && this.dir === 'side' && this.flip;
+    if (GLIDE && this.path.length) glideLeg(this.s, g, this.x, this.y, this.path[0], this.speed, flip, zAt(g, this.y));
+    else put(this.s, g, this.x, this.y, 0, flip, zAt(g, this.y));
   };
 
   // ── a room ──
@@ -700,8 +744,11 @@
     raf = requestAnimationFrame(tick);
   }
   var quietAt = 0;
+  function eachPet(fn) {
+    Object.keys(rooms).forEach(function (k) { rooms[k].cats.forEach(fn); rooms[k].mice.forEach(fn); });
+  }
   function tick() {
-    if (window.__nsOverlayOpen !== true) { running = false; return; }
+    if (window.__nsOverlayOpen !== true) { running = false; eachPet(function (p) { p.settle(); }); return; }
     raf = requestAnimationFrame(tick);
     if (document.hidden) { lastT = now(); return; }
     var T = now(), dt = Math.min(0.1, T - lastT);
@@ -744,5 +791,13 @@
       return what === 'fight' ? fight(r) : what === 'back' ? duvetBack(r) : duvetOff(r);
     }
   };
-  document.addEventListener('visibilitychange', function () { if (!document.hidden) lastT = now(); });
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) lastT = now();
+    // The walk model stands still while the page is hidden: so do the legs on the compositor.
+    eachPet(function (p) {
+      var a = p.s.anim; if (!a) return;
+      if (document.hidden) { if (a.playState === 'running') a.pause(); }
+      else if (a.playState === 'paused') a.play();   // (a finished leg would start over on play())
+    });
+  });
 })();

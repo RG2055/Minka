@@ -382,8 +382,23 @@
     return dayIndex.get(dateStr) || [];
   }
 
+  // The same night window is asked for over and over while one timeline is built
+  // (every recovery and habit variant, every scenario): it is worked out once per
+  // roster. The answer is only read, never changed, so it can be shared.
+  const nightWindowSeen = new Map();
+  let nightWindowStore = null;
   function savedNightWindow(entry, workerName, saved) {
     if (!saved || !Array.isArray(saved.order) || saved.order.length < 2 || saved.order.length > 8) return null;
+    const store = window.__grafiksStore || null;
+    if (store !== nightWindowStore) { nightWindowSeen.clear(); nightWindowStore = store; }
+    const key = entry.dateStr + '|' + (+new Date(entry.date)) + '|' + workerName + '|' + saved.order.join('\u0001') + '|' + saved.sh + '|' + saved.ei;
+    if (nightWindowSeen.has(key)) return nightWindowSeen.get(key);
+    const found = savedNightWindowOf(entry, workerName, saved);
+    if (nightWindowSeen.size > 2000) nightWindowSeen.clear();
+    nightWindowSeen.set(key, found);
+    return found;
+  }
+  function savedNightWindowOf(entry, workerName, saved) {
     const order = saved.order;
     if (new Set(order).size !== order.length || !order.includes(workerName)) return null;
     if (![23,23.5,0,0.5,1].includes(saved.sh) || ![0,1,2].includes(saved.ei)) return null;

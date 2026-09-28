@@ -203,7 +203,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20260928nsw1';
+  var CALENDAR_BUILD = '20260928perf1';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -817,7 +817,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <div id="calendarEmbed">
   <!-- Keep the expensive calendar document dormant behind the password gate.
        Authenticated startup assigns data-base-src immediately. -->
-  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260928nsw1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260928perf1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- Dither loader (js/dither-loader.js). It stays up until the embedded
@@ -3101,7 +3101,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
   </section>
 </div>
 
-<script src="kalendars/js/daybook-model.js?v=20260911b" defer></script>
+<script src="kalendars/js/daybook-model.js?v=20260928perf1" defer></script>
 <script src="js/radio-daybook.js?v=20260926api1" defer></script>
 <script src="js/media-profile.js?v=20260926pin1" defer></script>
 <script src="js/radio-source.js?v=20260927wb4" defer></script>

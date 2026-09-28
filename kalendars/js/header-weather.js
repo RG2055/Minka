@@ -276,7 +276,7 @@
 
   function setState(state) {
     var next = STATES.indexOf(state) >= 0 ? state : 'partly-cloudy';
-    if (layer.dataset.weatherState !== next) layer.dataset.weatherState = next;
+    if (layer.dataset.weatherState !== next) { layer.dataset.weatherState = next; startDrifts(); }
     var demoLabel = document.querySelector('[data-mk-weather-demo-label]');
     if (demoLabel) {
       if (demoLabel.tagName === 'SELECT') demoLabel.value = next;
@@ -361,9 +361,51 @@
 
   function visibilityChanged() {
     document.documentElement.classList.toggle('mk-weather-paused', document.hidden);
+    if (!document.hidden) startDrifts();
+  }
+
+  /* The slow drifts (the clear-sky light, the cloud banks, the fog) move a
+     pixel or two a second, yet a running CSS animation makes the compositor
+     draw the whole page 60 times a second for them: on a weak work PC that is
+     most of what an idle calendar costs. They are stepped 10 times a second
+     instead, along the same keyframes, easing and timing (each step is well
+     under a pixel for the clouds, about two pixels of a soft glow for the
+     light). Rain, snow, hail and lightning move fast and run as they are. */
+  var SLOW_DRIFTS = { mkWeatherLight: 1, mkWeatherCloudDrift: 1, mkWeatherCloudDriftBack: 1, mkWeatherFog: 1, mkWeatherFogBack: 1 };
+  var DRIFT_STEP_MS = 100;
+  var driftTimer = 0, driftClock = 0, driftLast = 0;
+  function driftTick() {
+    var now = performance.now();
+    if (!document.hidden) driftClock += now - driftLast;   // the CSS pauses them while hidden too
+    driftLast = now;
+    var any = false;
+    layer.getAnimations({ subtree: true }).forEach(function (a) {
+      if (!SLOW_DRIFTS[a.animationName]) return;
+      var timing = a.effect && a.effect.getTiming ? a.effect.getTiming() : null;
+      var slow = !!timing && timing.duration > 5000;             // lite / reduced motion cut them to nothing
+      if (a.__mkDrift == null) {
+        if (a.playState !== 'running' || !slow) return;
+        a.__mkDrift = (a.currentTime || 0) - driftClock;
+        a.pause();
+      }
+      if (a.playState !== 'paused' || !slow) return;
+      any = true;
+      if (!document.hidden) a.currentTime = a.__mkDrift + driftClock;
+    });
+    if (!any && driftTimer) { clearInterval(driftTimer); driftTimer = 0; }
+  }
+  function startDrifts() {
+    if (driftTimer || typeof layer.getAnimations !== 'function') return;
+    driftLast = performance.now();
+    driftTimer = setInterval(driftTick, DRIFT_STEP_MS);
+    driftTick();
   }
   visibilityChanged();
   document.addEventListener('visibilitychange', visibilityChanged, { passive: true });
+  // Motion settings switch the drifts on and off (data-motion, mk-no-anim, mk-low-spec).
+  if (typeof MutationObserver === 'function') {
+    new MutationObserver(startDrifts).observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-motion'] });
+  }
 
   window.MinkaHeaderWeather = {
     sync: sync,

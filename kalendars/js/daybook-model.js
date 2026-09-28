@@ -1,7 +1,14 @@
 /* Shared, dependency-free rules for shift-day summaries. No browser or network work. */
 (function(root){
 'use strict';
-const norm=s=>String(s||'').normalize('NFC').trim().replace(/\s+/g,' ').toLocaleLowerCase('lv-LV');
+// Names repeat thousands of times in one statistics render, and the Latvian
+// lower-casing is slow: each distinct string is normalised once.
+const normSeen=new Map();
+const norm=s=>{
+ const k=String(s||'');let v=normSeen.get(k);
+ if(v===undefined){v=k.normalize('NFC').trim().replace(/\s+/g,' ').toLocaleLowerCase('lv-LV');if(normSeen.size>4000)normSeen.clear();normSeen.set(k,v);}
+ return v;
+};
 function day(value){
  let s=String(value||''),m=s.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);if(m)s=m[3]+'-'+m[2]+'-'+m[1];
  if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return '';

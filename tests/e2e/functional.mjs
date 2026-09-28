@@ -93,6 +93,24 @@ await test('night panel opens and shows night stats rows', async()=>{ const p=aw
   await p.evaluate(()=>window.toggleNsOverlay(false)); ok(await waitFor(()=>p.evaluate(()=>window.__nsOverlayOpen!==true)),'did not close');
   ok(!p.__errs.length,'errors: '+p.__errs.join(' | ')); await p.context().close(); });
 
+// 3cb2c7c dropped swap(): a card dropped on another did nothing (the drag swallows the error).
+await test('night panel: a time-slot card dropped on another swaps the sleepers, a bed on a bed swaps the beds', async()=>{ const p=await cal();
+  await p.evaluate(()=>window.toggleNsOverlay(true));
+  ok(await waitFor(()=>p.evaluate(()=>document.querySelectorAll('#nsPanelContent .nsc-full-card').length>=2),9000),'no time-slot cards');
+  await p.waitForTimeout(1500);
+  const warns=[]; p.on('console',m=>{ if(/Nakts: move/.test(m.text())) warns.push(m.text().slice(0,120)); });
+  const drag=async(sel,a,b)=>{ const boxes=await p.evaluate(s=>[...document.querySelectorAll(s)].map(e=>{const r=e.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2};}),sel);
+    await p.mouse.move(boxes[a].x,boxes[a].y); await p.mouse.down();
+    for(let k=1;k<=10;k++) await p.mouse.move(boxes[a].x+(boxes[b].x-boxes[a].x)*k/10,boxes[a].y+(boxes[b].y-boxes[a].y)*k/10);
+    await p.mouse.up(); await p.waitForTimeout(900); };
+  const names=()=>p.evaluate(()=>[...document.querySelectorAll('#nsPanelContent .nsc-full-card .nsc-full-name')].map(e=>e.textContent.trim()));
+  const before=await names(); await drag('#nsPanelContent .nsc-full-card',0,1); const after=await names();
+  ok(after[0]===before[1]&&after[1]===before[0],'cards not swapped: '+before.join(',')+' -> '+after.join(','));
+  const beds=()=>p.evaluate(()=>[...document.querySelectorAll('#nsPanel .ns-room-bed[data-i]')].sort((a,b)=>a.dataset.i-b.dataset.i).map(e=>e.getAttribute('data-worker')||''));
+  const b0=await beds(); await drag('#nsPanel .ns-room-bed[data-i="0"], #nsPanel .ns-room-bed[data-i="1"]',0,1); const b1=await beds();
+  ok(b1[0]===b0[1]&&b1[1]===b0[0],'beds not swapped: '+b0.join(',')+' -> '+b1.join(','));
+  ok(!warns.length,'move failed: '+warns.join(' | ')); ok(!p.__errs.length,'errors: '+p.__errs.join(' | ')); await p.context().close(); return after.slice(0,2).join(' ⇄ '); });
+
 await test('month calendar opens, navigates, closes', async()=>{ const p=await cal();
   await p.evaluate(()=>window.MinkaMonthCal.open()); ok(await waitFor(()=>p.evaluate(()=>window.MinkaMonthCal.isOpen())),'not open');
   const nodes=await p.evaluate(()=>document.getElementsByTagName('*').length);
