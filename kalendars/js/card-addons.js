@@ -686,6 +686,42 @@
     });
   }
 
+  /* Izskata priekšskatījums: piekariņš karājas zem kartītes tieši tur, kur
+     stāv Remix / Atsaukt / Aa. Pogas paliek savā augstumā, bet rinda atbrīvo
+     vietu piekariņa pusē (Remix kļūst šaurāks), un nākamais saturs sākas zem
+     piekariņa. Ja vietas blakus nepietiek, pogas noslīd zem piekariņa. */
+  function fitPreviewControls(slot) {
+    var aside = slot && slot.parentElement;
+    var quick = aside && aside.querySelector(':scope > .mk-skin-quick');
+    var card = slot && slot.querySelector('.mk-skin-preview-real');
+    if (!quick || !card) return;
+    var keys = ['--mk-addon-quick-start', '--mk-addon-quick-end', '--mk-addon-quick-after'];
+    keys.forEach(function(key) { aside.style.removeProperty(key); });
+    slot.style.removeProperty('--mk-addon-preview-push');
+    var cardRect = card.getBoundingClientRect();
+    var hang = null;
+    card.querySelectorAll(':scope > .mk-card-addon').forEach(function(img) {
+      var r = img.getBoundingClientRect();
+      if (!r.width || r.bottom <= cardRect.bottom + 1) return;
+      hang = hang
+        ? { left: Math.min(hang.left, r.left), right: Math.max(hang.right, r.right), bottom: Math.max(hang.bottom, r.bottom) }
+        : { left: r.left, right: r.right, bottom: r.bottom };
+    });
+    var row = quick.getBoundingClientRect();
+    // Only the stacked layout (buttons under the card) can collide.
+    if (!hang || !row.width || row.top < cardRect.bottom - 1 || hang.bottom <= row.top) return;
+    if (hang.right > row.left && hang.left < row.right) {
+      var onRight = (hang.left + hang.right) / 2 > (row.left + row.right) / 2;
+      var reserve = Math.ceil(onRight ? row.right - hang.left + 8 : hang.right - row.left + 8);
+      if (row.width - reserve < 160) {
+        slot.style.setProperty('--mk-addon-preview-push', Math.ceil(hang.bottom - cardRect.bottom + 12) + 'px');
+        return;
+      }
+      aside.style.setProperty(onRight ? '--mk-addon-quick-end' : '--mk-addon-quick-start', reserve + 'px');
+    }
+    if (hang.bottom > row.bottom) aside.style.setProperty('--mk-addon-quick-after', Math.ceil(hang.bottom - row.bottom + 10) + 'px');
+  }
+
   function scheduleAddonPortals(duration) {
     if (document.hidden) return;
     portalBurstUntil = Math.max(portalBurstUntil, Date.now() + (duration || 0));
@@ -936,6 +972,7 @@
       if (!addon) {
         previewSlot.style.removeProperty('--mk-addon-preview-top-clearance');
         previewSlot.style.removeProperty('--mk-addon-preview-bottom-clearance');
+        fitPreviewControls(previewSlot);
         return;
       }
       var cardRect = preview.getBoundingClientRect();
@@ -946,6 +983,7 @@
       var bottomOverflow = Math.max(0, addonRect.bottom - cardRect.bottom);
       previewSlot.style.setProperty('--mk-addon-preview-top-clearance', Math.ceil(topOverflow + (topOverflow ? 12 : 0)) + 'px');
       previewSlot.style.setProperty('--mk-addon-preview-bottom-clearance', Math.ceil(bottomOverflow + (bottomOverflow ? 12 : 0)) + 'px');
+      fitPreviewControls(previewSlot);
       requestAnimationFrame(function() {
         var view = preview.closest('#modal-skin-view');
         var scroller = view && view.parentElement;
@@ -1329,6 +1367,7 @@
       return item ? { id: item.id, label: item.label, src: assetUrl(item) } : null;
     },
     applyWorker: applyWorker,
+    fitPreviewControls: fitPreviewControls,
     get: getConfig,
     getList: getList,
     getAll: function() { return readAll(); },

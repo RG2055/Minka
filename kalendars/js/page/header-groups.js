@@ -31,7 +31,14 @@
          status chips and the two controls form two calmer groups below. */
       var ns = document.getElementById('ns-bar-toggle');
       var lanes = document.getElementById('lanes-mini-toggle');
-      if (isDesktop) {
+      /* Galvene X (mk-header-x.js) pati izkārto datumu, čipus un ziņu rindu.
+         Te paliek tikai režīmu pogas, citādi abi skripti čipus pārceltu
+         viens otram pa virsu bez gala. */
+      if (isDesktop && document.documentElement.classList.contains('mk-hx')) {
+        var hxModes = document.getElementById('mkRailModes');
+        if (lanes && hxModes && lanes.parentElement !== hxModes) hxModes.appendChild(lanes);
+        if (ns && hxModes && ns.parentElement !== hxModes) hxModes.appendChild(ns);
+      } else if (isDesktop) {
         var nameday = document.getElementById('mkNamedayBar');
         var birthday = document.getElementById('mkBdayBadge');
         var mainRow = searchDate.querySelector('.mk-search-date-main');

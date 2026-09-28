@@ -1792,12 +1792,28 @@
     var base=new Date(+parts[3],+parts[2]-1,+parts[1]); if(st.sl[0].s<12*60) base.setDate(base.getDate()+1);
     return (base.getTime()+slot.s*60000-Date.now())/60000;
   }
+  // A card's accent comes from its picture and can be almost black; on the
+  // dark dial it must still read, so lift it toward white until it does.
+  function clockReadable(accent){
+    var s=String(accent||'').trim(), m, rgb=null;
+    if((m=s.match(/^#([0-9a-f]{6})$/i))) rgb=[0,2,4].map(function(k){ return parseInt(m[1].substr(k,2),16); });
+    else if((m=s.match(/^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)/i))) rgb=[+m[1],+m[2],+m[3]];
+    if(!rgb) return '';
+    function lum(c){ return c.map(function(v){ v/=255; return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4); }).reduce(function(a,v,k){ return a+v*[.2126,.7152,.0722][k]; },0); }
+    for(var t=0;t<=1.001;t+=.1){
+      var c=rgb.map(function(v){ return Math.round(v+(255-v)*t); });
+      if(lum(c)>=.3) return t?'rgb('+c.join(',')+')':'';
+    }
+    return '';
+  }
   function clockOpen(card,byHover){
     var slot=st&&st.sl?st.sl[+card.getAttribute('data-i')]:null; if(!slot) return;
     var pop=card.querySelector('.nsc-clock-pop');
     if(!pop){
       document.querySelectorAll('#nsPanel .nsc-clock-pop').forEach(function(o){ o.remove(); });
       pop=document.createElement('div'); pop.className='nsc-clock-pop';
+      var lift=clockReadable(getComputedStyle(card).getPropertyValue('--nsc-accent'));
+      if(lift) pop.style.setProperty('--nsc-accent',lift);
       pop.innerHTML=clockSvg(slot,true)+'<div class="nsc-clock-copy"><b>'+escHtml(slot.ss)+' – '+escHtml(slot.es)+'</b><span class="nsc-clock-status"></span></div>';
       card.appendChild(pop);
       clockPaint(pop.querySelector('svg'),slot); clockPopText(pop,slot);

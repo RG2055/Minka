@@ -2070,6 +2070,7 @@
           var t = top === Infinity ? 0 : Math.max(0, cr.top - top), b = bottom === -Infinity ? 0 : Math.max(0, bottom - cr.bottom);
           slot.style.setProperty('--mk-addon-preview-top-clearance', Math.ceil(t + (t ? 12 : 0)) + 'px');
           slot.style.setProperty('--mk-addon-preview-bottom-clearance', Math.ceil(b + (b ? 12 : 0)) + 'px');
+          if (A && A.fitPreviewControls) A.fitPreviewControls(slot);
         });
         contrastCheck(0);
       },

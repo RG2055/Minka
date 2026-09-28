@@ -771,6 +771,10 @@ const worker = {
       return json(request, { ok: false, error: "Unauthorized" }, 401);
     }
 
+    if (url.pathname === "/api/weather" && method === "GET") {
+      return weatherResponse(request, env, ctx);
+    }
+
     if (url.pathname === "/api/pair/new" && method === "POST") {
       const db = pairDatabase(env);
       await ensurePairSchema(db);
@@ -1216,6 +1220,41 @@ const worker = {
 
 export default worker;
 
+
+// Laikapstākļi Rīgā (OpenWeatherMap) visiem lietotājiem no viena malas keša.
+// Atslēga ir tikai šeit, Worker slepenajā vērtībā OWM_KEY (npx wrangler secret
+// put OWM_KEY), nevis pārlūka kodā. OWM tiek vaicāts ne biežāk kā reizi
+// 10 minūtēs, lai cik skatījumu būtu, tāpēc limits netiek aizsniegts.
+const OWM_BASE = "https://api.openweathermap.org/data/2.5/";
+const WEATHER_TTL_SECONDS = 600;
+async function weatherResponse(request, env, ctx) {
+  if (!env.OWM_KEY) return json(request, { ok: false, error: "OWM_KEY missing" }, 503);
+  const cache = caches.default;
+  const key = new Request(new URL("/__cache/weather-riga-owm-v1", request.url).toString());
+  let cached = await cache.match(key);
+  if (!cached) {
+    const query = "q=Riga&units=metric&appid=" + encodeURIComponent(env.OWM_KEY);
+    const [current, forecast] = await Promise.all([
+      fetch(OWM_BASE + "weather?" + query, { headers: { accept: "application/json" } }),
+      fetch(OWM_BASE + "forecast?" + query, { headers: { accept: "application/json" } })
+    ]);
+    if (!current.ok) return json(request, { ok: false, error: "Weather unavailable", status: current.status }, 502);
+    const body = JSON.stringify({
+      ok: true,
+      current: await current.json(),
+      forecast: forecast.ok ? await forecast.json() : null,
+      at: Date.now()
+    });
+    cached = new Response(body, {
+      headers: { "content-type": "application/json; charset=utf-8", "cache-control": "public, max-age=" + WEATHER_TTL_SECONDS }
+    });
+    ctx.waitUntil(cache.put(key, cached.clone()));
+  }
+  const headers = new Headers(cors(request));
+  headers.set("content-type", "application/json; charset=utf-8");
+  headers.set("cache-control", "no-store");
+  return new Response(cached.body, { headers });
+}
 
 function cors(request) {
   const origin = request.headers.get("origin") || "*";

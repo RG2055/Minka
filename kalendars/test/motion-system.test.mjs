@@ -39,7 +39,7 @@ test('both documents load the shared tokens and motion layer', () => {
 
 test('the first paint already carries a motion level, separate from low-spec', () => {
   for (const page of [shell, calendarPage]) {
-    assert.match(page, /setAttribute\('data-motion', reduceMotion \? 'reduced' : \(motionStore\.level === 'lite' \? 'lite' : 'full'\)\)/);
+    assert.match(page, /setAttribute\('data-motion', reduceMotion \? 'reduced' : 'full'\)/);
   }
   assert.doesNotMatch(shell, /var lowSpec = reduceMotion \|\|/, 'reduced motion is no longer folded into lowSpec');
 });
@@ -55,24 +55,19 @@ test('tokens: lite drops the overshoot, reduced drops travel', () => {
   assert.match(tokens, /:root\[data-motion="reduced"\] \{[\s\S]*?--mk-motion-travel: 0;/);
 });
 
-test('level: full by default, lite only from stored evidence, reduced from the media query', () => {
+test('level: the same full motion everywhere, reduced only from the media query', () => {
   assert.equal(loadMotion().api.level(), 'full');
-  assert.equal(loadMotion({ stored: { level: 'lite', at: Date.now() } }).api.level(), 'lite');
-  assert.equal(loadMotion({ stored: { level: 'lite', at: Date.now() - 20 * 86400000 } }).api.level(), 'full', 're-probed after two weeks');
+  assert.equal(loadMotion({ stored: { level: 'lite', at: Date.now() } }).api.level(), 'full', 'an old stored lite is ignored');
   assert.equal(loadMotion({ reduce: true, stored: { level: 'lite', at: Date.now() } }).api.level(), 'reduced');
   const { attrs } = loadMotion({ stored: { level: 'lite', at: Date.now() } });
-  assert.equal(attrs['data-motion'], 'lite');
+  assert.equal(attrs['data-motion'], 'full');
 });
 
-test('one janky transition never switches the level; three do', () => {
+test('janky transitions never lower the level (one motion on every computer)', () => {
   const { api, attrs } = loadMotion();
-  api.report({ frames: 30, long: 20, worst: 90 });
-  api.report({ frames: 30, long: 0, worst: 17 });
-  api.report({ frames: 30, long: 12, worst: 60 });
+  for (let i = 0; i < 5; i++) api.report({ frames: 30, long: 20, worst: 180 });
   assert.equal(api.level(), 'full');
-  api.report({ frames: 30, long: 1, worst: 180 });
-  assert.equal(api.level(), 'lite');
-  assert.equal(attrs['data-motion'], 'lite');
+  assert.equal(attrs['data-motion'], 'full');
 });
 
 test('the radio grows out of and back into the dock button as itself', () => {

@@ -19,7 +19,8 @@ await test('calendar loads without JS errors, cards render', async()=>{ const p=
   ok(n>=6,'cards '+n); for(const w of ['ALPHA','BETA','GAMMA','DELTA']) ok(txt.includes(w),'missing '+w); ok(!p.__errs.length,'errors: '+p.__errs.join(' | ')); await p.context().close(); return n+' cards'; });
 
 await test('day navigation: click another day, then back', async()=>{ const p=await cal();
-  const hdr=async()=>p.locator('#minkaBar').innerText();
+  // Galvene X draws the date in #hxTop (the old bar stays in the DOM, hidden).
+  const hdr=async()=>p.evaluate(()=>(document.querySelector('#hxTop .hx-date-num')||document.getElementById('minkaBar')).innerText);
   const h0=await hdr(); await p.click('#p-27-09-2026');
   ok(await waitFor(async()=>await p.locator('#p-27-09-2026').evaluate(e=>e.classList.contains('active'))),'27th not active');
   ok(await waitFor(async()=>(await hdr())!==h0),'header did not change after day click');
@@ -57,6 +58,21 @@ await test('comments panel opens (KOMENTĀRI) and accepts typing', async()=>{ co
   ok(!p.__errs.length,'errors: '+p.__errs.join(' | ')); await p.context().close(); return typed; });
 
 await test('header search: launch button opens, typing shows results, Escape clears', async()=>{ const p=await cal();
+  if(await p.evaluate(()=>!!document.querySelector('#hxTop .hx-search'))){
+    // Galvene X: the search bar opens the search window, results are keyboard driven.
+    await p.click('#hxTop .hx-search');
+    ok(await waitFor(()=>p.evaluate(()=>{const pal=document.getElementById('hxPalette'); return pal&&!pal.hidden&&document.activeElement&&document.activeElement.classList.contains('hx-pal-input');})),'search window did not open/focus');
+    await p.keyboard.type('alpha',{delay:30});
+    ok(await waitFor(()=>p.evaluate(()=>document.querySelectorAll('#hxPalList .hx-opt').length>0)),'no results for "alpha"');
+    const n=await p.evaluate(()=>document.querySelectorAll('#hxPalList .hx-opt').length);
+    const look=await p.evaluate(()=>{const it=document.querySelector('#hxPalList .hx-opt.is-active'); return it?getComputedStyle(it).display:null;});
+    ok(look==='flex','first result not highlighted/styled: '+look);
+    await p.keyboard.press('Escape');
+    ok(await waitFor(()=>p.evaluate(()=>document.querySelector('#hxPalette .hx-pal-input').value==='')),'Escape did not clear text');
+    await p.keyboard.press('Escape');
+    ok(await waitFor(()=>p.evaluate(()=>document.getElementById('hxPalette').hidden)),'second Escape did not close');
+    ok(!p.__errs.length,'errors: '+p.__errs.join(' | ')); await p.context().close(); return n+' results';
+  }
   const editable=await p.evaluate(()=>document.getElementById('minkaBarInput').getAttribute('contenteditable'));
   ok(editable==='true','input not editable: '+editable);
   await p.click('#mkSearchLaunch');

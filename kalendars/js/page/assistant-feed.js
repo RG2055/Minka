@@ -6,7 +6,10 @@
   const input = document.getElementById('minkaBarInput');
   const aiPanel = document.getElementById('minkaAiPanel');
   const RSS = 'https://api.rss2json.com/v1/api.json';
-  const WEATHER_URL = 'https://api.openweathermap.org/data/2.5/weather?q=Riga&appid=e91db7aba1dd5745f52eb99e7cc38e8e&units=metric';
+  // Laikapstākļi: OpenWeatherMap caur rgapp.page Worker (/api/weather). Atslēga
+  // glabājas tikai Worker slepenajā vērtībā, nevis šeit, un Worker to vaicā ne
+  // biežāk kā reizi 10 minūtēs visiem lietotājiem kopā.
+  const WEATHER_PATH = '/api/weather';
   // LSM's current public integration is still RSS. Use the broad news feed
   // plus the staff-relevant health feed; the former Rīga feed is currently
   // valid but empty, so polling it only added a request without any headlines.
@@ -32,9 +35,12 @@
     'mist':'migla',
     'fog':'bieza migla',
     'drizzle':'smidzina',
-    'sleet':'slapjš sniegs'
+    'sleet':'slapjš sniegs',
+    'light intensity drizzle':'viegli smidzina',
+    'light intensity shower rain':'lietusgāzes',
+    'shower rain':'lietusgāzes',
+    'haze':'dūmaka'
   };
-
   let newsCache = loadStoredNews();
   window.__minkaNewsCache = newsCache.slice();
   let newsIdx = 0;
@@ -52,6 +58,14 @@
   let newsBusy = false;
   let weatherBusy = false;
   let weatherCache = null;
+  const WEATHER_STORAGE_KEY = 'minka_weather_last_v1';
+  // The last reading (at most 3 h old) until the first request returns.
+  if (!window.__mkBarWeatherData) {
+    try {
+      const saved = JSON.parse(localStorage.getItem(WEATHER_STORAGE_KEY) || 'null');
+      if (saved && saved.at && Date.now() - saved.at < 3 * 3600000 && Number.isFinite(Number(saved.t))) window.__mkBarWeatherData = saved;
+    } catch(_e) {}
+  }
 
   function loadStoredNews(){
     try {
@@ -192,7 +206,7 @@ function getTauriInvoke(){
 
   function normalizeDesc(raw){
     const s = String(raw || '').toLowerCase().trim();
-  return DESCMAP[s] || s || 'laikapstākļi nav zināmi';
+    return DESCMAP[s] || s || 'laikapstākļi nav zināmi';
   }
   function moonPhaseInfo(year, month, day){
     const c = Math.floor;
@@ -229,22 +243,64 @@ function getTauriInvoke(){
     if (typeof window.mkBarRefresh === 'function') window.mkBarRefresh();
   });
 
+  async function fetchWeatherJson(){
+    const api = window.MinkaApi;
+    if (!api || typeof api.apiFetch !== 'function' || !(api.getToken && api.getToken())) throw new Error('Nav pieteicies');
+    const r = await api.apiFetch(WEATHER_PATH);
+    if (!r.ok) throw new Error('Laikapstākļi ' + r.status);
+    const data = await r.json();
+    if (!data || !data.current || !data.current.main) throw new Error('Nav laikapstākļu');
+    return data;
+  }
+  const hhmm = d => String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  const ymdKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  // OWM 5 dienu prognoze (ik pēc 3 h) → nākamās 24 h un dienas ar min/max.
+  function forecastParts(forecast){
+    const list = (forecast && Array.isArray(forecast.list)) ? forecast.list : [];
+    const hours = list.slice(0, 8).map(item => {
+      const c = (item.weather && item.weather[0]) || {};
+      return { time: hhmm(new Date(item.dt * 1000)), t: Math.round(Number(item.main && item.main.temp)),
+        id: Number(c.id) || 0, icon: String(c.icon || ''), desc: normalizeDesc(c.description) };
+    });
+    const byDay = {};
+    list.forEach(item => {
+      const d = new Date(item.dt * 1000), key = ymdKey(d);
+      const day = byDay[key] || (byDay[key] = { date: key, min: Infinity, max: -Infinity, rain: 0, pick: null, pickGap: 99 });
+      const t = Number(item.main && item.main.temp);
+      if (Number.isFinite(t)) { day.min = Math.min(day.min, t); day.max = Math.max(day.max, t); }
+      day.rain = Math.max(day.rain, Math.round((Number(item.pop) || 0) * 100));
+      const gap = Math.abs(d.getHours() - 13);            // the midday reading describes the day
+      if (gap < day.pickGap) { day.pickGap = gap; day.pick = (item.weather && item.weather[0]) || {}; }
+    });
+    const days = Object.keys(byDay).sort().map(key => {
+      const d = byDay[key], c = d.pick || {};
+      return { date: key, min: Math.round(d.min), max: Math.round(d.max), rain: d.rain,
+        id: Number(c.id) || 0, icon: String(c.icon || '').replace(/n$/, 'd'), desc: normalizeDesc(c.description) };
+    });
+    return { hours, days };
+  }
+
   async function refreshWeather(){
     if (weatherBusy) return;
     weatherBusy = true;
     try {
-      const r = await fetch(WEATHER_URL, { cache:'no-store' });
-      const w = await r.json();
+      const data = await fetchWeatherJson();
+      const w = data.current;
       const condition = w && w.weather && w.weather[0] || {};
       const raw = String(condition.description || '').toLowerCase();
       const temp = Math.round(Number(w && w.main && w.main.temp || 0));
       const feels = Math.round(Number(w && w.main && w.main.feels_like || temp));
       const wind = Math.round(Number(w && w.wind && w.wind.speed || 0) * 10) / 10;
+      const sun = v => Number(v) ? hhmm(new Date(Number(v) * 1000)) : '';
+      const parts = forecastParts(data.forecast);
       weatherCache = {
         desc: normalizeDesc(raw),
         temp,
         feels,
         wind,
+        humidity: Math.round(Number(w && w.main && w.main.humidity)) || 0,
+        sunrise: sun(w && w.sys && w.sys.sunrise),
+        sunset: sun(w && w.sys && w.sys.sunset),
         conditionId: Number(condition.id) || 0,
         main: String(condition.main || ''),
         rawDesc: raw,
@@ -252,7 +308,13 @@ function getTauriInvoke(){
         sig: [normalizeDesc(raw), temp, feels, wind].join('|')
       };
       // Feed bar chip + rebuild ticker so weather item appears
-      window.__mkBarWeatherData = { t: weatherCache.temp, desc: weatherCache.desc, wind: weatherCache.wind, conditionId:weatherCache.conditionId, main:weatherCache.main, rawDesc:weatherCache.rawDesc, icon:weatherCache.icon };
+      window.__mkBarWeatherData = { t: weatherCache.temp, desc: weatherCache.desc, wind: weatherCache.wind, conditionId:weatherCache.conditionId, main:weatherCache.main, rawDesc:weatherCache.rawDesc, icon:weatherCache.icon,
+        feels: weatherCache.feels, humidity: weatherCache.humidity, sunrise: weatherCache.sunrise, sunset: weatherCache.sunset,
+        hours: parts.hours, days: parts.days, at: Number(data.at) || Date.now() };
+      // Kept for the next start: the chip shows the last reading at once
+      // instead of an empty chip until the first request returns.
+      try { localStorage.setItem(WEATHER_STORAGE_KEY, JSON.stringify(window.__mkBarWeatherData)); } catch(_s) {}
+      try { window.dispatchEvent(new CustomEvent('minka:weather', { detail: window.__mkBarWeatherData })); } catch(_ev) {}
       if (typeof window.mkBarRefresh === 'function') window.mkBarRefresh();
       // Rebuild ticker with updated weather prepended (pass current newsCache)
       if (typeof window.mkTickerFeed === 'function') window.mkTickerFeed(newsCache);
@@ -406,9 +468,9 @@ function nextNews(){
       const medals = ['\uD83E\uDD47','\uD83E\uDD48','\uD83E\uDD49','4)','5)'];
       const parts = top5.map(function(w,i) {
         const lvl = w.levelData && w.levelData.current ? w.levelData.current.lvl : '?';
-        const col = (w.levelData && w.levelData.current && w.levelData.current.color) || '#a78bfa';
+        const col = (w.levelData && w.levelData.current && w.levelData.current.color) || '#64d2ff';
         const safeName = tickerEsc(String(w.name || '').split(' ')[0]);
-        const safeCol = /^#[0-9a-f]{3,8}$/i.test(String(col)) ? col : '#a78bfa';
+        const safeCol = /^#[0-9a-f]{3,8}$/i.test(String(col)) ? col : '#64d2ff';
         const safeXp = Math.max(0, Math.round(Number(w.xp) || 0));
         const safeLvl = tickerEsc(String(lvl));
         return medals[i] + ' <b>' + safeName + '</b> <span style="color:' + safeCol + ';font-weight:700;">Lv.' + safeLvl + '</span> <span style="color:#4ade80;font-weight:700;">' + safeXp + ' XP</span>';
@@ -800,9 +862,13 @@ function nextNews(){
 
     var items = [];
 
-    /* Weather item first */
+    /* Weather item first. Galvene X shows the weather in its own chip (with
+       details on hover), so there the line carries only the news. */
     var wd = window.__mkBarWeatherData;
-    if (wd && wd.desc && wd.t !== undefined) {
+    var hx = document.documentElement.classList.contains('mk-hx');
+    if (hx) {
+      /* no weather item */
+    } else if (wd && wd.desc && wd.t !== undefined) {
       var moon = (typeof window.currentMoon === 'function') ? window.currentMoon() : null;
       var wText = 'Rīgā ' + wd.desc + ' ' + wd.t + '°C'
         + (wd.wind ? ' vējš ' + wd.wind + ' m/s' : '')

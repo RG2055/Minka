@@ -150,6 +150,9 @@
     BIRTHDAYS = normalizeBirthdays(list);
     _bdayMap = null;
     _bdayLoaded = true;
+    // The header search shows a colleague's birthday next to their shifts.
+    window.__mkBirthdays = BIRTHDAYS.slice();
+    try { window.dispatchEvent(new CustomEvent('minka:birthdays')); } catch(_e){}
   }
   function refreshBirthdaysUi(){
     try { if (isOpen()) render(_curMonth); } catch(_e){}
@@ -1132,14 +1135,21 @@
     var today = list.filter(function(x){ return x.days === 0; });
     var isToday = today.length > 0;
     btn.style.display = nearest ? '' : 'none';
+    // Galvene X names the person ("Nika, pēc 7 dienām"); a birthday further
+    // than two weeks away stays a quiet icon (the list opens on click).
+    var hx = document.documentElement.classList.contains('mk-hx');
+    // Everyone whose birthday falls on that same nearest day ("Anna un Berta").
+    var nearestAll = nearest ? list.filter(function(x){ return x.days === nearest.days; }) : [];
+    var soonText = nearest && hx ? birthdayNames(nearestAll) + ', ' + bdayRelLong(nearest.days).toLowerCase() : (nearest ? bdayRelLong(nearest.days) : '');
     // On the birthday replace the countdown with a compact congratulations.
     btn.innerHTML = '<span class="mk-bday-ic" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16v9H4zM4 16c2 2 3-2 5 0s3-2 5 0 4-2 6 0M8 12V8m8 4V8M8 5V3m8 2V3"/></svg></span>'
-      + (nearest ? '<span class="mk-bday-pill">' + esc(isToday ? birthdayNames(today) : bdayRelLong(nearest.days)) + '</span>' : '');
+      + (nearest ? '<span class="mk-bday-pill">' + esc(isToday ? birthdayNames(today) : soonText) + '</span>' : '');
     btn.classList.toggle('has-up', !!nearest);
     btn.classList.toggle('is-today', isToday);
+    btn.classList.toggle('is-far', !!nearest && !isToday && nearest.days > BDAY_NEAR_DAYS);
     btn.title = nearest
       ? (isToday ? ('Šodien: ' + today.map(function(x){ return x.name; }).join(', '))
-        : ('Tuvākā: ' + nearest.name + ' ' + bdayRelLong(nearest.days)))
+        : ('Tuvākā: ' + nearestAll.map(function(x){ return x.name; }).join(', ') + ' ' + bdayRelLong(nearest.days)))
       : 'Dzimšanas dienas';
   }
   function initBdayBadge(){

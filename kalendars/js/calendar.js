@@ -2042,7 +2042,9 @@ function filterFullList(btn) {
       requestAnimationFrame(() => {
         if (!p.classList.contains('active')) return;   // a newer click won
         p.scrollIntoView({
-          inline: 'center',
+          // Galvene X: the strip only moves when the day would leave the view,
+          // so the pill that was clicked stays under the pointer.
+          inline: document.documentElement.classList.contains('mk-hx') ? 'nearest' : 'center',
           behavior: document.documentElement.classList.contains('mk-low-spec') ? 'auto' : 'smooth',
           block: 'nearest'
         });
@@ -3035,6 +3037,27 @@ function filterFullList(btn) {
   // we're already past it).
   const __dutyHeaderCache = {};
 
+  // Galvene X (mk-header-x.js) zīmē spārnus pati: tie paši dati, kas šeit
+  // kļūst par tekstu, tiek nodoti kā objekts. Nekas netiek rēķināts divreiz.
+  function publishDutySummary(pillId, summary) {
+    const role = pillId.indexOf('radiologists') === 0 ? 'rd' : 'rg';
+    summary.role = role;
+    summary.date = activeDateStr;
+    window.__mkDutySummary = window.__mkDutySummary || {};
+    window.__mkDutySummary[role] = summary;
+    try { window.dispatchEvent(new CustomEvent('minka:duty-summary', { detail: summary })); } catch (_e) {}
+  }
+  function dutyPerson(w) {
+    const parts = String(w && w.name || '').trim().split(/\s+/).filter(Boolean);
+    return {
+      first: formatSideNamePart(parts[0], false) || String(w && w.name || '').trim(),
+      name: w && w.name,
+      shift: String(w && w.shift || ''),
+      start: w && w.startTime || '',
+      end: w && w.endTime || ''
+    };
+  }
+
   function renderDutyHeader(pillId, listId, workers, isToday, now, singular, plural) {
     const pill = document.getElementById(pillId);
     if (!pill) return;
@@ -3043,6 +3066,7 @@ function filterFullList(btn) {
     if (!isToday) {
       updateShiftCountPill(pillId, workers.length, singular, plural);
       if (strip) strip.remove();
+      publishDutySummary(pillId, { isToday: false, listId, count: workers.length, people: workers.map(dutyPerson) });
       return;
     }
     const nightRefBase = createDateFromDateTime(activeDateStr, '23:00');
@@ -3158,9 +3182,11 @@ function filterFullList(btn) {
         + '</div>';
     };
     const lines = [];
+    const groupsData = [];
     let visualRows = 0;
     const addGroup = (kind, icon, timeLabel, list) => {
       lines.push(groupHtml(kind, icon, timeLabel, list));
+      groupsData.push({ kind: kind, label: getDutySentenceLabel(timeLabel), people: list.map(function(p) { return { first: p.first, name: p.name }; }) });
       visualRows += groupNeedsWrap(kind, timeLabel, list) ? 2 : 1;
     };
     if (stay.length) addGroup('dl-night', '🌙', 'Naktī', stay);
@@ -3177,6 +3203,11 @@ function filterFullList(btn) {
     strip.style.setProperty('--mk-duty-group-count', Math.max(1, lines.length));
     strip.style.setProperty('--mk-duty-fixed-height', fixedStripHeight.toFixed(2) + 'px');
     strip.innerHTML = lines.join('');
+    publishDutySummary(pillId, {
+      isToday: true, listId, nowCount, nightCount, sameNightRoster,
+      now: nowPeople.map(function(p) { return { first: p.first, name: p.name }; }),
+      groups: groupsData, people: workers.map(dutyPerson)
+    });
   }
 
   // Name click → scroll that person's card into view with a short highlight
@@ -3644,6 +3675,18 @@ function filterFullList(btn) {
     }
   }
 
+  function setTextIfChanged(el, text) {
+    if (el && el.textContent !== text) el.textContent = text;
+  }
+  // Galvene X shows what is left of the shift as "19 h 15 min": it cannot be
+  // mistaken for a clock time and changes once a minute, not every second.
+  function rulerRemainingText(ms, clockText) {
+    if (!document.documentElement.classList.contains('mk-hx')) return clockText;
+    const totalMin = Math.max(0, Math.floor(ms / 60000));
+    const h = Math.floor(totalMin / 60), m = totalMin % 60;
+    return h ? h + ' h ' + m + ' min' : m + ' min';
+  }
+
   function updateShiftStripTimers(now) {
     const t = now instanceof Date ? now.getTime() : Date.now();
     document.querySelectorAll('.sl-times-strip').forEach(function(strip) {
@@ -3663,10 +3706,12 @@ function filterFullList(btn) {
         const m = Math.floor((remainingMs % 3600000) / 60000);
         const s = Math.floor((remainingMs % 60000) / 1000);
         remainEl.textContent = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
-        remainEl.style.color = remainingMs > 14400000 ? 'rgba(139,92,246,0.95)' : remainingMs > 7200000 ? 'rgba(251,191,36,0.95)' : 'rgba(239,68,68,0.95)';
+        remainEl.style.color = remainingMs > 14400000 ? 'rgba(100,210,255,0.95)' : remainingMs > 7200000 ? 'rgba(251,191,36,0.95)' : 'rgba(239,68,68,0.95)';
 
         // Low-performance mode skips the heavy ruler rebuild for four out of
         // five ticks. Keep the lightweight pill clock/countdown truly live.
+        // Only a changed text is written: an equal write still replaces the
+        // node and re-lays the pill out, every second.
         const wrap = strip.closest('#shift-progress-wrap');
         const rNow = wrap && wrap.querySelector('.sl-ruler-now');
         if (rNow) {
@@ -3674,10 +3719,11 @@ function filterFullList(btn) {
           const remainingEl = rNow.querySelector('.sl-rn-remaining');
           if (clockEl) {
             const current = new Date(t);
-            clockEl.textContent = String(current.getHours()).padStart(2, '0') + ':' + String(current.getMinutes()).padStart(2, '0');
+            setTextIfChanged(clockEl, String(current.getHours()).padStart(2, '0') + ':' + String(current.getMinutes()).padStart(2, '0'));
           }
-          if (remainingEl) remainingEl.textContent = remainEl.textContent;
-          rNow.setAttribute('aria-label', 'Tagad ' + (clockEl ? clockEl.textContent : '') + ', atlicis ' + (remainingEl ? remainingEl.textContent : ''));
+          if (remainingEl) setTextIfChanged(remainingEl, rulerRemainingText(remainingMs, remainEl.textContent));
+          const label = 'Tagad ' + (clockEl ? clockEl.textContent : '') + ', atlicis ' + (remainingEl ? remainingEl.textContent : '');
+          if (rNow.getAttribute('aria-label') !== label) rNow.setAttribute('aria-label', label);
         }
       }
     });
@@ -4773,7 +4819,7 @@ function filterFullList(btn) {
     if (rNow) {
       var nd = new Date(nowMs);
       var clockEl = rNow.querySelector('.sl-rn-clock');
-      if (clockEl) clockEl.textContent = String(nd.getHours()).padStart(2, '0') + ':' + String(nd.getMinutes()).padStart(2, '0');
+      if (clockEl) setTextIfChanged(clockEl, String(nd.getHours()).padStart(2, '0') + ':' + String(nd.getMinutes()).padStart(2, '0'));
       else rNow.textContent = String(nd.getHours()).padStart(2, '0') + ':' + String(nd.getMinutes()).padStart(2, '0');
     }
     var scr = wrap.querySelector('.sl-scrubber'); if (scr) scr.style.left = scrubPct.toFixed(2) + '%';
@@ -4800,11 +4846,14 @@ function filterFullList(btn) {
       if (remEl) {
         var _reH = Math.floor(_reMs / 3600000), _reM = Math.floor((_reMs % 3600000) / 60000), _reS = Math.floor((_reMs % 60000) / 1000);
         remEl.textContent = String(_reH).padStart(2, '0') + ':' + String(_reM).padStart(2, '0') + ':' + String(_reS).padStart(2, '0');
-        remEl.style.color = _reMs > 14400000 ? 'rgba(139,92,246,0.95)' : _reMs > 7200000 ? 'rgba(251,191,36,0.95)' : 'rgba(239,68,68,0.95)';
+        remEl.style.color = _reMs > 14400000 ? 'rgba(100,210,255,0.95)' : _reMs > 7200000 ? 'rgba(251,191,36,0.95)' : 'rgba(239,68,68,0.95)';
         var rnRemaining = rNow && rNow.querySelector('.sl-rn-remaining');
-        if (rnRemaining) rnRemaining.textContent = remEl.textContent;
+        if (rnRemaining) setTextIfChanged(rnRemaining, rulerRemainingText(_reMs, remEl.textContent));
       }
-      if (rNow) rNow.setAttribute('aria-label', 'Tagad ' + (clockEl ? clockEl.textContent : '') + ', atlicis ' + (rNow.querySelector('.sl-rn-remaining') ? rNow.querySelector('.sl-rn-remaining').textContent : ''));
+      if (rNow) {
+        var _rnLabel = 'Tagad ' + (clockEl ? clockEl.textContent : '') + ', atlicis ' + (rNow.querySelector('.sl-rn-remaining') ? rNow.querySelector('.sl-rn-remaining').textContent : '');
+        if (rNow.getAttribute('aria-label') !== _rnLabel) rNow.setAttribute('aria-label', _rnLabel);
+      }
     }
     if (rNow) _layoutCompactRulerNow(wrap, rNow, scrubPct);
   }
@@ -4942,7 +4991,7 @@ function filterFullList(btn) {
     var _reMs = Math.max(0, counterEndMs - nowMs);
     var _reH = Math.floor(_reMs/3600000), _reM = Math.floor((_reMs%3600000)/60000), _reS = Math.floor((_reMs%60000)/1000);
     var _reStr = String(_reH).padStart(2,'0') + ':' + String(_reM).padStart(2,'0') + ':' + String(_reS).padStart(2,'0');
-    var _reColor = _reMs > 14400000 ? 'rgba(139,92,246,0.95)' : _reMs > 7200000 ? 'rgba(251,191,36,0.95)' : 'rgba(239,68,68,0.95)';
+    var _reColor = _reMs > 14400000 ? 'rgba(100,210,255,0.95)' : _reMs > 7200000 ? 'rgba(251,191,36,0.95)' : 'rgba(239,68,68,0.95)';
 
     var _pctInt = Math.round(scrubPctR);
     // % sits just left of the scrubber inside the elapsed zone; this is only
@@ -4956,9 +5005,9 @@ function filterFullList(btn) {
       '</div>' +
       '<span class="sl-ruler-pct" style="right:' + _pctRight + '">' + _pctInt + '%</span>' +
       rulerTicks +
-      '<span class="sl-ruler-now" aria-label="Tagad ' + nowLabel + ', atlicis ' + _reStr + '">' +
+      '<span class="sl-ruler-now" aria-label="Tagad ' + nowLabel + ', atlicis ' + rulerRemainingText(_reMs, _reStr) + '">' +
         '<strong class="sl-rn-clock">' + nowLabel + '</strong>' +
-        '<span class="sl-rn-word">atlicis</span><strong class="sl-rn-remaining">' + _reStr + '</strong>' +
+        '<span class="sl-rn-word">atlicis</span><strong class="sl-rn-remaining">' + rulerRemainingText(_reMs, _reStr) + '</strong>' +
       '</span>' +
     '</div>';
 
@@ -5029,11 +5078,14 @@ function filterFullList(btn) {
     if (_lanesBtn && wrap.contains(_lanesBtn) && _nsBtnRow) _nsBtnRow.appendChild(_lanesBtn);
     wrap.innerHTML = html;
 
-    // Re-slot the buttons into today's strip (keeps their event listeners alive)
+    // Re-slot the buttons into today's strip (keeps their event listeners alive).
+    // On desktop they live in the day rail (#mkRailModes): moving them into the
+    // hidden strip here only made header-groups.js move them back every minute.
+    var _railModes = document.getElementById('mkRailModes');
     var _nsSlot = wrap.querySelector('#sl-ns-slot');
-    if (_nsSlot && _nsBtn) _nsSlot.appendChild(_nsBtn);
+    if (_nsSlot && _nsBtn && !(_railModes && _railModes.contains(_nsBtn))) _nsSlot.appendChild(_nsBtn);
     var _lanesSlot = wrap.querySelector('#sl-lanes-slot');
-    if (_lanesSlot && _lanesBtn) _lanesSlot.appendChild(_lanesBtn);
+    if (_lanesSlot && _lanesBtn && !(_railModes && _railModes.contains(_lanesBtn))) _lanesSlot.appendChild(_lanesBtn);
 
     var _rulerNow = wrap.querySelector('.sl-ruler-now');
     // Position the pill and resolve covered tick labels before the browser can
@@ -6883,6 +6935,8 @@ function filterFullList(btn) {
   window.g_updatePanelsForDate = g_updatePanelsForDate;
   window.g_selectDay = g_selectDay;
   window.g_stepDay = g_stepDay;
+  // Pāriet uz jebkuru datumu ar grafiku (arī citā mēnesī); false = tāda nav.
+  window.g_goToDate = g_selectDateWithMonthSync;
 
 })();
 

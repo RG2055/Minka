@@ -203,7 +203,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20260928perf1';
+  var CALENDAR_BUILD = '20260928hx4';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -456,7 +456,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     // is chosen from measured frames and stored per device.
     try {
       var motionStore = JSON.parse(localStorage.getItem('minkaMotionV1') || '{}') || {};
-      document.documentElement.setAttribute('data-motion', reduceMotion ? 'reduced' : (motionStore.level === 'lite' ? 'lite' : 'full'));
+      document.documentElement.setAttribute('data-motion', reduceMotion ? 'reduced' : 'full');
     } catch (_m) { document.documentElement.setAttribute('data-motion', reduceMotion ? 'reduced' : 'full'); }
 
     window.__mkPerfProfile = {
@@ -806,7 +806,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 </style>
 <link rel="stylesheet" href="css/geist-ui.css?v=20260919type3">
 <link rel="stylesheet" href="css/mk-sys.css?v=20260926sp1">
-<script src="js/mk-motion.js?v=20260927lq1"></script>
+<script src="js/mk-motion.js?v=20260928hx2"></script>
 <!-- Station picker in M3 on the system tokens above; must follow every older picker sheet. -->
 <link rel="stylesheet" href="css/radio-picker-m3.css?v=20260925pk3">
 <script src="js/image-palette.js?v=20260919palette2"></script>
@@ -817,7 +817,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <div id="calendarEmbed">
   <!-- Keep the expensive calendar document dormant behind the password gate.
        Authenticated startup assigns data-base-src immediately. -->
-  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260928perf1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260928hx4" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- Dither loader (js/dither-loader.js). It stays up until the embedded
@@ -3945,6 +3945,13 @@ window.addEventListener('message', function(e) {
   }
 
   window.toggleMobileQrModal = function toggleMobileQrModal() {
+    // Galvene X has its own "RG telefonā" window (same one-time code), so
+    // the dock opens that one instead of this older modal.
+    try {
+      var calFrame = document.getElementById('calIframe');
+      var hx = window.MINKA_APP !== 'rad' && calFrame && calFrame.contentWindow && calFrame.contentWindow.MkHeaderX;
+      if (hx && hx.openMobile) { hx.openMobile(); return; }
+    } catch (_e) {}
     var modal = document.getElementById('mobileQrModal');
     var btn = document.getElementById('mobileDockBtn');
     if (!modal) return;
@@ -5158,5 +5165,22 @@ window.__mkDockIcon=function(btnId){
 </script>
 <link rel="stylesheet" href="css/bolus-m3.css?v=20260926mo2">
 <script src="js/move-notice.js?v=20260926mv2" defer></script>
+<script>
+/* Galvene X: Ctrl/⌘+K un "/" atver kalendāra galvenes meklēšanu arī tad, kad
+   fokuss ir čaulā (dokā, radio), ne tikai kalendārā. */
+document.addEventListener('keydown', function (e) {
+  var k = e.key, t = e.target;
+  var cmdK = (e.ctrlKey || e.metaKey) && !e.altKey && (k === 'k' || k === 'K');
+  var slash = k === '/' && !e.ctrlKey && !e.metaKey && !e.altKey;
+  if (!cmdK && !slash) return;
+  if (slash && t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+  var f = document.getElementById('calIframe'), w = null;
+  try { w = f && f.contentWindow; } catch (_e) {}
+  if (!w || !w.MkHeaderX || typeof w.MkHeaderX.openSearch !== 'function') return;
+  e.preventDefault();
+  try { f.focus(); w.focus(); } catch (_e) {}
+  w.MkHeaderX.openSearch();
+});
+</script>
 </body>
 </html>

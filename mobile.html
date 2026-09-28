@@ -36,7 +36,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     } catch (_e) {}
   }
 
-  var CALENDAR_BUILD = '20260928perf1';
+  var CALENDAR_BUILD = '20260928hx4';
 
   function withCalendarBuild(url) {
     try {
@@ -134,7 +134,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
         + '<img src="data/rg-loader-ring.gif?v=20260924d1" alt="RG" width="128" height="128" style="display:block;width:112px;height:112px;margin:0 auto 14px;image-rendering:pixelated">'
         + '<h1 style="margin:0;font-size:0"><span id="minka-pair-title" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap">Piekļuve telefonā</span><canvas id="minka-pair-title-dt" width="1" height="1" aria-hidden="true" style="display:block;margin:0 auto;image-rendering:pixelated"></canvas></h1>'
         + '<div style="width:64px;height:4px;margin:12px auto 0;background-image:repeating-conic-gradient(#fff 0 25%,transparent 0 50%);background-size:2px 2px"></div>'
-        + '<div style="margin-top:14px;font-size:14px;line-height:1.55;color:#a3a3a3">Ievadi vienreizējo kodu no <b style="color:#fff">MOBILE</b> loga datorā.</div>'
+        + '<div style="margin-top:14px;font-size:14px;line-height:1.55;color:#a3a3a3">Ievadi vienreizējo kodu no <b style="color:#fff">' + (window.MINKA_APP === 'rad' ? 'MOBILE' : 'RG telefonā') + '</b> loga datorā.</div>'
         + '<input id="minka-pair-code" type="text" inputmode="text" autocomplete="one-time-code" autocapitalize="characters" maxlength="11" placeholder="XXXX XXXX" style="width:100%;height:52px;margin-top:22px;box-sizing:border-box;border:1px solid #4a4a4a;border-radius:4px;background:#000;color:#fff;text-align:center;font:700 18px/1 ui-monospace,monospace;letter-spacing:.15em;outline:none;text-transform:uppercase">'
         + '<button id="minka-pair-submit" type="button" style="width:100%;height:48px;margin-top:12px;border:0;border-radius:4px;background:#fff;color:#000;font:700 14px/1 Inter,system-ui,sans-serif">Savienot</button>'
         + '<div id="minka-pair-error" style="min-height:18px;margin-top:11px;color:#fff;font-size:12px"></div>'
@@ -235,7 +235,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
 <link rel="stylesheet" href="css/mk-sys.css?v=20260926bm2">
 <!-- The shared motion system (windows grow out of their buttons, sliding
      pills); the calendar frame loads its own copy and reports to this one. -->
-<script src="js/mk-motion.js?v=20260927lq1"></script>
+<script src="js/mk-motion.js?v=20260928hx2"></script>
 <link rel="icon" type="image/svg+xml" href="data/rg-brand.svg?v=20260924d1">
 <link rel="icon" type="image/png" sizes="192x192" href="data/rg-any-192.png?v=20260924d1">
 <link rel="apple-touch-icon" href="data/rg-apple-touch-180.png?v=20260924d1">
@@ -734,8 +734,8 @@ html.mk-low-spec #calendarEmbed {
 <body>
   <div id="calendarEmbed">
     <iframe
-      src="kalendars/index.html?mobile=1&cv=20260928perf1"
-      data-base-src="kalendars/index.html?mobile=1&cv=20260928perf1"
+      src="kalendars/index.html?mobile=1&cv=20260928hx4"
+      data-base-src="kalendars/index.html?mobile=1&cv=20260928hx4"
       id="calIframe"
       title="Mobilais dežūru grafiks"
       loading="eager"

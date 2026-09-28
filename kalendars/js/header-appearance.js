@@ -335,8 +335,12 @@
       });
     }
     let enhancePending = false;
+    const ruler = doc.getElementById('shift-progress-wrap');
     const observer = new MutationObserver(records => {
       if (records.some(r => r.type === 'attributes' && (r.attributeName === 'src' || r.attributeName === 'data-header-period'))) schedule();
+      // The ruler's clock text changes every second; nothing here reads it, so
+      // those ticks must not re-scan the duty icons and all thirty day pills.
+      if (ruler && records.every(r => ruler.contains(r.target))) return;
       if (enhancePending) return;
       enhancePending = true;
       requestAnimationFrame(() => { enhancePending = false; enhanceHeader(); enhanceDays(); });

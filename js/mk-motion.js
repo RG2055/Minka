@@ -20,7 +20,6 @@
   'use strict';
   if (window.MinkaMotion) return;
   var KEY = 'minkaMotionV1';
-  var REPROBE_MS = 14 * 24 * 3600 * 1000;
   var root = document.documentElement;
   var mq = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
   var listeners = [];
@@ -97,10 +96,11 @@
   function writeStore(value) {
     try { localStorage.setItem(KEY, JSON.stringify(value)); } catch (_e) {}
   }
+  // One motion everywhere (2026-09-28): the same full motion on every
+  // computer. Only the system's own "reduce motion" setting (an accessibility
+  // choice) turns it down. A stored 'lite' from earlier measurements is ignored.
   function computeLevel() {
     if (mq && mq.matches) return 'reduced';
-    var s = readStore();
-    if (s.level === 'lite' && !(s.at && Date.now() - s.at > REPROBE_MS)) return 'lite';
     return 'full';
   }
   var level = computeLevel();
@@ -130,13 +130,8 @@
     if (!sample || sample.frames < 6 || level === 'reduced') return;
     var s = readStore();
     var recent = (s.recent || []).concat([{ l: level, j: +(sample.long / sample.frames).toFixed(3), w: Math.round(sample.worst) }]).slice(-6);
-    var next = { level: s.level || 'full', at: s.at || 0, recent: recent };
-    if (level === 'full') {
-      var bad = recent.filter(function (r) { return r.l === 'full' && (r.j > .25 || r.w > 140); }).length;
-      if (bad >= 3) { next.level = 'lite'; next.at = Date.now(); next.recent = []; }
-    }
-    writeStore(next);
-    refresh();
+    // Kept only as evidence for measuring (never lowers the level any more).
+    writeStore({ level: 'full', at: s.at || 0, recent: recent });
   }
   // Samples frame gaps with rAF, only for the lifetime of one transition.
   function measure(promise, expectedMs) {

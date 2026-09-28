@@ -3,7 +3,7 @@
 import {chromium} from 'playwright';
 const base=process.argv[2]; const b=await chromium.launch(); const p=await (await b.newContext({viewport:{width:1440,height:900}})).newPage();
 await p.clock.install({time:new Date('2026-09-24T10:30:00+03:00')}); await p.clock.resume();
-await p.addInitScript(()=>{ window.__polls={news:0,weather:0}; document.addEventListener('DOMContentLoaded',()=>{ const f=window.fetch; window.fetch=function(u){ const s=String(typeof u==='string'?u:u&&u.url); if(/rss2json/.test(s))window.__polls.news++; if(/openweathermap/.test(s))window.__polls.weather++; return f.apply(this,arguments); }; },{once:true}); });
+await p.addInitScript(()=>{ window.__polls={news:0,weather:0}; document.addEventListener('DOMContentLoaded',()=>{ const f=window.fetch; window.fetch=function(u){ const s=String(typeof u==='string'?u:u&&u.url); if(/rss2json/.test(s))window.__polls.news++; if(/\/api\/weather/.test(s))window.__polls.weather++; return f.apply(this,arguments); }; },{once:true}); });
 await p.goto(base+'/kalendars/index.html',{waitUntil:'load'}); await p.waitForTimeout(4000);
 const polls=()=>p.evaluate(()=>({...window.__polls}));
 const setHidden=h=>p.evaluate(h=>{ Object.defineProperty(document,'hidden',{configurable:true,get:()=>h}); Object.defineProperty(document,'visibilityState',{configurable:true,get:()=>h?'hidden':'visible'}); document.dispatchEvent(new Event('visibilitychange')); },h);

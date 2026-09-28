@@ -661,6 +661,7 @@
       slot.style.marginRight='0';
       slot.style.setProperty('--mk-addon-preview-top-clearance',Math.ceil(r.height*scale*top+(top?12:0))+'px');
       slot.style.setProperty('--mk-addon-preview-bottom-clearance',Math.ceil(r.height*scale*bottom+(bottom?12:0))+'px');
+      if(typeof window!=='undefined'&&window.MinkaCardAddons&&window.MinkaCardAddons.fitPreviewControls)requestAnimationFrame(function(){window.MinkaCardAddons.fitPreviewControls(slot);});
       preview.classList.add('wf-scaled-preview');
       preview.style.setProperty('--wf-preview-width', r.width + 'px');
       preview.style.setProperty('--wf-preview-height', r.height + 'px');
