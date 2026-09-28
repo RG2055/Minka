@@ -67,17 +67,109 @@
 </script>
 <script>
 /* RG flow: the CT control room in the evening, the cat grooming by the PC, the
-   RG icon is clicked, confetti, and the room closes onto the RG loader exactly as
-   the page draws it (the hibiscus clip, the ring, "Ielādē grafiku…"). It plays
-   once per session when the app starts and again at the 08:00 shift change
-   (calendar.js calls window.__mkPlayFlow instead of the old confetti). Any click
-   or key skips it; if it cannot play within 2.5 s the app simply carries on.
+   RG icon is clicked, confetti, the room closes to black. It plays once per
+   session when the app starts and again at the 08:00 shift change (calendar.js
+   calls window.__mkPlayFlow instead of the old confetti), not on phones. Any
+   click or key skips it; if it cannot play within 2.5 s the app simply carries on.
+   The ending is drawn here, not in the video: from frame 128 the page's RG icon
+   covers the video's own (both hold still to frame 132, when the video's goes),
+   then flies straight into a copy of #mk-app-loader built from the same classes
+   and files, so the ring lands exactly on the real loader's ring at any window
+   size, and the GIFs (same URLs) run in step with it.
    Source: ~/Downloads/rg-intro-video (Three.js scene + Blender-rigged cat,
    edited in Tesseract). RG only: /rad has its own intro above. */
 (function(){
   if (window.MINKA_APP === 'rad') return;
-  var V = '20260928f3';
+  // Not on phones. The phone app is mobile.html (no film, it keeps the confetti);
+  // this covers index.html opened on a phone: without __mkPlayFlow calendar.js
+  // falls back to the confetti the same way.
+  try { if (Math.min(screen.width, screen.height) < 600 && matchMedia('(pointer: coarse)').matches) return; } catch (_e) {}
+  var V = '20260928f6';
   var playing = null;
+  var ICON_SRC = 'data/rg-cal-192.png?v=20260924d1';
+  var RING_SRC = 'data/rg-loader-ring.gif?v=20260924d1';
+  var ICON0 = { x: 690.085, y: 411.631, size: 138.617 };   // the icon in frames 128-132 (it holds there), px of the 1920x1080 video
+  function bezier(x1, y1, x2, y2) {                           // the same easing curves as the video
+    function at(t, a, b) { return ((1 - 3 * b + 3 * a) * t + (3 * b - 6 * a)) * t * t + 3 * a * t; }
+    return function (x) {
+      if (x <= 0) return 0; if (x >= 1) return 1;
+      var lo = 0, hi = 1, t = x;
+      for (var i = 0; i < 32; i++) { t = (lo + hi) / 2; if (at(t, x1, x2) < x) lo = t; else hi = t; }
+      return at((lo + hi) / 2, y1, y2);
+    };
+  }
+  var flyEase = bezier(0.45, 0, 0.2, 1), inEase = bezier(0.4, 0, 0.2, 1);
+  function ramp(f, a, b, e) { var t = (f - a) / (b - a); t = t < 0 ? 0 : t > 1 ? 1 : t; return e ? e(t) : t; }
+  // A window narrower than 16:9 crops the film at the sides. Keep the story in the
+  // picture: the film's left edge (the cat, the PC) stays while the RG icon (x 700 in
+  // the film from frame 70 on) still sits well inside; a phone crops around the icon.
+  function cropLeft(vis) {
+    var a = 0.55 + 0.2 * ramp(vis, 600, 1000);
+    return Math.max(0, Math.min(1920 - vis, 700 - a * vis));
+  }
+  function ending(box, v) {
+    var built = null, pos = '';
+    function build() {
+      var layer = document.createElement('div');
+      layer.style.cssText = 'position:absolute;inset:0;pointer-events:none';
+      // #mk-app-loader's column: same classes, gap and files as the real one
+      var rep = document.createElement('div');
+      rep.style.cssText = 'position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;overflow:hidden';
+      var bgSrc = window.__mkLoaderBg || 'data/loader-hibiscus.gif?v=20260924d1';
+      var bg = new Image(); bg.className = 'mkl-bg'; bg.alt = ''; bg.src = bgSrc; bg.style.opacity = '0';
+      var scrim = new Image(); scrim.className = 'mkl-scrim'; scrim.alt = ''; scrim.style.opacity = '0';
+      scrim.src = /portrait/.test(bgSrc) ? 'data/loader-scrim-portrait.png?v=20260924d1' : 'data/loader-scrim.png?v=20260924d1';
+      var slot = new Image(); slot.className = 'mkl-ring'; slot.alt = ''; slot.src = RING_SRC; slot.style.visibility = 'hidden';
+      var text = document.createElement('canvas'); text.className = 'mkl-text'; text.width = text.height = 1; text.style.opacity = '0';
+      rep.appendChild(bg); rep.appendChild(scrim); rep.appendChild(slot); rep.appendChild(text);
+      var status = document.getElementById('mklLoadStatus');
+      if (window.MinkaDitherText) {
+        if (status) window.MinkaDitherText.bind(text, status, { size: 13 });
+        else window.MinkaDitherText.draw(text, 'Ielādē grafiku…', { size: 13 });
+      }
+      var icon = new Image(); icon.alt = ''; icon.src = ICON_SRC;
+      icon.style.cssText = 'position:absolute;left:0;top:0;display:none;transform-origin:0 0';
+      var ring = new Image(); ring.alt = ''; ring.src = RING_SRC;
+      ring.style.cssText = 'position:absolute;left:0;top:0;display:none;transform-origin:0 0;image-rendering:pixelated';
+      layer.appendChild(rep); layer.appendChild(icon); layer.appendChild(ring);
+      box.appendChild(layer);
+      built = { bg: bg, scrim: scrim, slot: slot, text: text, icon: icon, ring: ring };
+    }
+    function place(el, x, y, size, alpha, radius) {
+      if (alpha <= 0.001) { el.style.display = 'none'; return; }
+      el.style.display = 'block';
+      el.style.width = size + 'px'; el.style.height = size + 'px';
+      el.style.transform = 'translate(' + (x - size / 2) + 'px,' + (y - size / 2) + 'px)';
+      el.style.opacity = String(alpha);
+      el.style.borderRadius = radius ? radius + 'px' : '';
+    }
+    return function (f) {
+      var W = box.clientWidth, H = box.clientHeight;
+      var s = Math.max(W / 1920, H / 1080), vis = W / s, c = cropLeft(vis);
+      // while the icon flies the crop eases to the centred one: the room's last opening
+      // follows the film's own path to the frame centre, which then stays under the icon
+      var k = ramp(f, 132, 158, flyEase);
+      var ox = -(c + ((1920 - vis) / 2 - c) * k) * s, oy = (H - 1080 * s) / 2;   // object-fit: cover
+      var p = ox.toFixed(2) + 'px 50%';
+      if (p !== pos) v.style.objectPosition = pos = p;
+      if (!built) { if (f < 110) return; build(); }
+      var b = built;
+      if (f < 128) { b.icon.style.display = b.ring.style.display = 'none'; return; }
+      // the film holds its icon still to frame 132; from there it flies straight onto
+      // the real ring, whatever part of the frame the window shows
+      var r = b.slot.getBoundingClientRect();
+      var sx = (ICON0.x - c) * s, sy = oy + ICON0.y * s, ss = ICON0.size * s;   // the film's icon, held
+      var x = sx + (r.left + r.width / 2 - sx) * k, y = sy + (r.top + r.height / 2 - sy) * k - Math.sin(k * Math.PI) * 40 * s;
+      var size = ss + (r.width - ss) * k;
+      var ringK = ramp(f, 146, 162, inEase), loaderK = ramp(f, 150, 176, inEase);
+      var landed = f >= 162;
+      place(b.icon, x, y, size, landed ? 0 : 1 - ringK, size * 0.22);
+      place(b.ring, x, y, size, landed ? 0 : ringK, 0);
+      b.slot.style.visibility = landed ? 'visible' : 'hidden';          // from here the ring is laid out like the real one
+      b.bg.style.opacity = String(0.62 * loaderK);
+      b.scrim.style.opacity = b.text.style.opacity = String(loaderK);
+    };
+  }
   window.__mkPlayFlow = function(opts){
     if (playing) return playing;
     opts = opts || {};
@@ -98,7 +190,16 @@
       });
       box.appendChild(v);
       (document.body || document.documentElement).appendChild(box);
+      new Image().src = ICON_SRC;                          // decoded well before frame 128
       var done = false, guard = 0;
+      var drawEnding = ending(box, v);
+      drawEnding(0);                                       // the crop, before the first frame
+      if (v.requestVideoFrameCallback) {
+        var onFrame = function (now, meta) { if (done) return; drawEnding(Math.round(meta.mediaTime * 30)); v.requestVideoFrameCallback(onFrame); };
+        v.requestVideoFrameCallback(onFrame);
+      } else {
+        (function raf() { if (done) return; drawEnding(v.currentTime * 30); requestAnimationFrame(raf); })();
+      }
       function finish(){
         if (done) return; done = true;
         clearTimeout(guard);
