@@ -362,7 +362,8 @@ html, body { overflow: hidden !important; }
   pointer-events:none;
   overflow:hidden;
   opacity:var(--stars-overlay-opacity, .92);
-  mix-blend-mode:screen;
+  /* No mix-blend-mode: a full-screen blend layer was re-blended on every
+     frame; the stars are light on the dark app, plain alpha looks the same. */
   transition:opacity 1.8s ease;
 }
 body.stars-active #stars-overlay{display:block;}
@@ -372,16 +373,17 @@ body.stars-active #stars-overlay{display:block;}
   inset:0;
   background:
     radial-gradient(circle at 78% 16%, rgba(180,210,255,.10), transparent 18%),
-    linear-gradient(180deg, rgba(8,12,28,.10), rgba(8,12,28,0) 45%, rgba(255,170,120,.04) 100%);
+    linear-gradient(180deg, transparent 45%, rgba(255,170,120,.04) 100%);
 }
 .stars-layer{
   position:absolute;
   inset:-8vh -8vw;
 }
+/* The stars' drift and twinkle are Web Animations made paused by
+   js/page/stars-overlay.js and stepped on the shared clock (~7.5 a second);
+   free-running CSS animations here kept the page at 60 frames a second. */
 .s-star{
   position:absolute;
-  /* will-change removed: 127 stars no longer each pin a standing GPU layer; the drift still animates */
-  animation:s-drift var(--drift-dur, 24s) linear infinite alternate;
 }
 .s-star-core{
   display:block;
@@ -389,26 +391,13 @@ body.stars-active #stars-overlay{display:block;}
   height:100%;
   border-radius:50%;
   background:radial-gradient(circle at 40% 40%, rgba(255,255,255,.98) 0%, rgba(230,240,255,.92) 38%, rgba(170,190,255,.30) 62%, rgba(170,190,255,0) 100%);
-  box-shadow:0 0 8px rgba(255,255,255,.28), 0 0 16px rgba(168,139,250,.14);
-  animation:s-breathe var(--twinkle-dur, 8s) ease-in-out infinite;
-  animation-delay:var(--twinkle-delay, 0s);
+  box-shadow:0 0 8px rgba(255,255,255,.28), 0 0 16px rgba(150,180,255,.14);
 }
 .s-star.is-dim .s-star-core{
   opacity:.45;
-  /* blur(.15px) removed: sub-pixel blur is invisible but forced every star onto the GPU filter path */
 }
 .s-star.is-tiny .s-star-core{
   box-shadow:0 0 4px rgba(255,255,255,.18);
-}
-@keyframes s-breathe{
-  0%{opacity:.34; transform:scale(.94);}
-  35%{opacity:.76; transform:scale(1.03);}
-  70%{opacity:.52; transform:scale(.98);}
-  100%{opacity:.88; transform:scale(1.06);}
-}
-@keyframes s-drift{
-  0%{transform:translate3d(0,0,0);}
-  100%{transform:translate3d(var(--dx, 0px), var(--dy, 0px), 0);}
 }
 </style>
 <style>
@@ -967,7 +956,7 @@ function _mkToast(msg, type) {
 <script src="js/recovery-model.js?v=20260908recovery1"></script>
 <script src="js/fatigue.js?v=20260928perf1"></script>
 <script src="js/nakts-pets.js?v=20260928perf1" defer></script>
-<script src="js/nightsplit.js?v=20260928nsw2" defer></script>
+<script src="js/nightsplit.js?v=20260929mem2" defer></script>
 <script src="js/monthcal.js?v=20260928hx7" defer></script>
 <script src="js/design_v1.js?v=20260924perf3" defer></script>
 <script src="js/theme.js?v=20260924dth6" defer></script>
@@ -979,7 +968,7 @@ function _mkToast(msg, type) {
 <script src="js/levels.js?v=20260927ns1" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260929cal7';
+window.__minkaLocalBuild = '20260929cal8';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -1095,7 +1084,7 @@ document.addEventListener('keydown', (e) => {
 <!-- /rad night (radiologists, residents, beds); does nothing for the radiographers -->
 <script src="js/rad-night.js?v=20260926rn14"></script>
 
-<script src="js/page/stars-overlay.js?v=20260924perf1"></script>
+<script src="js/page/stars-overlay.js?v=20260929st3"></script>
 
 
 

@@ -9,6 +9,40 @@
     return document.getElementById('stars-overlay');
   }
 
+  /* The night sky: the same 127 stars with the same look (the CSS in
+     kalendars/index.html), the same slow drift (±5 px over 18–38 s) and
+     twinkle (6–13 s), but their animations are paused and moved on the app's
+     shared clock (MinkaMotion.onSlowTick, ~7.5 steps a second: the ticks the
+     mood sky already draws on) instead of running free. As 254 free-running
+     CSS animations under a full-screen blend layer they kept the compositor at
+     60 frames a second all night: idle CPU 13 % renderer + 69 % GPU process
+     (5 % + 11 % with no stars; measured). One canvas for them cost 74 MB of
+     the tab's memory, so they stay small elements. */
+  var anims=[], offTick=null, localTimer=0, t0=0;
+  var TWINKLE=[
+    { opacity:.34, transform:'scale(.94)', easing:'ease-in-out' },
+    { offset:.35, opacity:.76, transform:'scale(1.03)', easing:'ease-in-out' },
+    { offset:.7, opacity:.52, transform:'scale(.98)', easing:'ease-in-out' },
+    { opacity:.88, transform:'scale(1.06)' }
+  ];
+  function reducedMotion(){ try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch(_e){ return false; } }
+  function step(now){
+    if(document.hidden) return;
+    var t=(now||performance.now())-t0;
+    for(var i=0;i<anims.length;i++) anims[i].currentTime=t;
+  }
+  function startStars(){
+    if(offTick || localTimer || !anims.length) return;
+    step();
+    if(reducedMotion()) return;                               // one still pose
+    var M=window.MinkaMotion;
+    if(M && M.onSlowTick) offTick=M.onSlowTick(step);
+    else localTimer=setInterval(step, 133);
+  }
+  function stopStars(){
+    if(offTick){ offTick(); offTick=null; }
+    if(localTimer){ clearInterval(localTimer); localTimer=0; }
+  }
   function ensureStars(){
     if(generated) return;
     var host=container();
@@ -32,20 +66,24 @@
           'height:'+size+'px',
           'left:'+(Math.random()*100).toFixed(3)+'vw',
           'top:'+(Math.random()*100).toFixed(3)+'vh',
-          '--dx:'+((Math.random()*10)-5).toFixed(2)+'px',
-          '--dy:'+((Math.random()*8)-4).toFixed(2)+'px',
-          '--drift-dur:'+(Math.random()*20+18).toFixed(2)+'s',
-          '--twinkle-dur:'+(Math.random()*7+6).toFixed(2)+'s',
-          '--twinkle-delay:'+(-Math.random()*8).toFixed(2)+'s',
           'opacity:'+(Math.random()*0.55+0.20).toFixed(2)
         ].join(';');
         star.appendChild(core);
         layer.appendChild(star);
+        if(typeof star.animate!=='function') continue;
+        var dx=((Math.random()*10)-5).toFixed(2), dy=((Math.random()*8)-4).toFixed(2);
+        var drift=star.animate([{ transform:'translate3d(0,0,0)' }, { transform:'translate3d('+dx+'px,'+dy+'px,0)' }],
+          { duration:(Math.random()*20+18)*1000, iterations:Infinity, direction:'alternate', easing:'linear' });
+        var twinkle=core.animate(TWINKLE,
+          { duration:(Math.random()*7+6)*1000, iterations:Infinity, delay:-Math.random()*8000 });
+        drift.pause(); twinkle.pause();
+        anims.push(drift, twinkle);
       }
     }
     addStars(layerFar, 85, 1.6);
     addStars(layerNear, 42, 2.8);
 
+    t0=performance.now();
     generated=true;
   }
 
@@ -127,8 +165,8 @@
 
   function apply(){
     var on = manualOn || isAutoNight();
-    if(on) ensureStars();
     document.body.classList.toggle('stars-active', on);
+    if(on){ ensureStars(); startStars(); } else if(generated) stopStars();
     applyStrength(on);
   }
 

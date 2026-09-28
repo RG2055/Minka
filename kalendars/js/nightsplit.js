@@ -181,6 +181,22 @@
      reading a GPU canvas stalls the page, long on old PCs. The maps are the same
      every time: their pixels are read once per size. */
   var RW={willReadFrequently:true};
+  /* Markup about to be replaced: its CSS animations are taken out of the style
+     first. The closed panel is rebuilt on every day switch with its animations
+     paused, and a paused CSS animation on a removed node stays in the
+     document's timeline and keeps that node, and with it the whole old panel
+     (cards, LED canvases, room pictures, bed images): +55 nodes and several MB
+     a switch. cancel() does not release it (measured with a heap snapshot);
+     animation:none, applied while the node is still in the page, does. */
+  function releaseAnims(el){
+    try{
+      if(!el || !el.getAnimations) return;
+      var targets=[];
+      el.getAnimations({subtree:true}).forEach(function(a){ var t=a.effect && a.effect.target; if(t && t.style && targets.indexOf(t)<0) targets.push(t); });
+      targets.forEach(function(t){ t.style.setProperty('animation','none','important'); });
+      targets.forEach(function(t){ void getComputedStyle(t).animationName; });   // applied now, before the node goes
+    }catch(_e){}
+  }
   var _pixels=new Map();
   function pixelsOf(im,w,h){
     var k=(im.currentSrc||im.src||'')+'|'+w+'x'+h, hit=_pixels.get(k);
@@ -2960,6 +2976,7 @@
     var panel = document.getElementById('nsPanelContent');
     if(!panel) return; // overlay not yet created
     if(!st||!st.sl||!st.sl.length){
+      releaseAnims(panel);
       panel.innerHTML='<div style="color:rgba(255,255,255,.35);text-align:center;padding:32px;font-size:13px;">Nav nakts maiņas darbinieku šai dienai.</div>';
       return;
     }
@@ -3244,10 +3261,11 @@
       _crEl.style.setProperty('--ns-gap',nsGap);
       _crEl.style.setProperty('--ns-card-h',nsCardH);
       _crEl.style.setProperty('--ns-name-size',nsNameSize);
+      releaseAnims(_crEl);
       _crEl.innerHTML=cards;
       applyWorkerSkinsToNightCards(_crEl);
-      var _ob=panel.querySelector('.ns-flow-bar'); if(_ob) _ob.remove();
-      var _ol=panel.querySelector('.ns-flow-labels'); if(_ol) _ol.remove();
+      var _ob=panel.querySelector('.ns-flow-bar'); if(_ob){ releaseAnims(_ob); _ob.remove(); }
+      var _ol=panel.querySelector('.ns-flow-labels'); if(_ol){ releaseAnims(_ol); _ol.remove(); }
       if(flowBar) _crEl.insertAdjacentHTML('afterend', flowBar);
       var _me=panel.querySelector('.ns-flow-meta'); if(_me) _me.innerHTML=_metaHtml;
       // Beds use the saved per-name arrangement, so a pure reorder leaves the room
@@ -3255,7 +3273,7 @@
       var _rb=panel.querySelector('.ns-room-block');
       var _walkersMissing=!!(_rb && !_rb.querySelector('.ns-room-walker'));
       if(_roomHtml!==_nsLastRoomHtml || _walkersMissing){
-        if(_rb){ _rb.outerHTML=_roomHtml; }
+        if(_rb){ releaseAnims(_rb); _rb.outerHTML=_roomHtml; }
         _nsLastRoomHtml=_roomHtml;
         applyWorkerSkinsToNightCards(panel);
         wireBedCarePerch(panel);
@@ -3275,6 +3293,7 @@
       return;
     }
 
+    releaseAnims(panel);
     panel.innerHTML=
       '<div class="ns-panel-canvas"><div class="ns-panel-head">'
       +'<span class="ns-panel-title">'+nsHeadIcon()+'<span>Nakts sadalījums</span></span>'
