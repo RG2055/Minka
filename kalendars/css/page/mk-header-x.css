@@ -212,12 +212,14 @@
 .hx-center {
   position: relative;
   z-index: 1;
-  container-type: inline-size;
+  container: hxc / inline-size;
   display: grid;
-  /* Ziņas un meklēšana sākas vienā vietā: kreiso kolonnu nosaka tikai
-     datuma rinda (līdz 384 px, garākajai "Pirms 12 dienām" rindai), nevis
-     dzimšanas dienas čips vai vārdadienas; tie iekļaujas kolonnā. */
-  grid-template-columns: minmax(max-content, 384px) minmax(min-content, 1fr);
+  /* Kreiso kolonnu nosaka datuma rinda un dzimšanas dienas čips (tas
+     vienmēr pilns), ne vārdadienas. Ja vietas pietiek, tā ir 384 px (garākā
+     rinda "Pirms 12 dienām"), tāpēc ziņas un meklēšana stāv vienā vietā arī,
+     pārslēdzot dienas; ja nepietiek, meklēšanas lodziņš sarūk. Labā kolonna
+     nekad neiziet ārpus vidus (agrāk tā ielīda radiologu spārnā). */
+  grid-template-columns: minmax(max-content, clamp(0px, calc(100% - 560px), 384px)) minmax(0, 1fr);
   grid-template-rows: 36px 24px 19px 19px;
   column-gap: 20px;
   row-gap: 2px;
@@ -228,13 +230,15 @@
 .hx-dateblock,
 .hx-side { display: contents; }
 .hx-line-date { grid-column: 1; grid-row: 1; }
-.hx-line-wd, .hx-namedays, .hx-dayfact-slot, .hx-row-feed { contain: inline-size; }
+/* Dzimšanas dienas čips (nedēļas dienas rindā) vienmēr redzams pilnībā; vārdadienas un svētki kolonnu neplēš. */
+.hx-namedays, .hx-dayfact-slot, .hx-row-feed { contain: inline-size; }
 .hx-line-wd { grid-column: 1; grid-row: 2; }
 .hx-namedays { grid-column: 1; grid-row: 3; }
 .hx-dayfact-slot { grid-column: 1; grid-row: 4; }
 .hx-row-tools { grid-column: 2; grid-row: 1; }
-/* Ziņas vienā rindā ar nedēļas dienu (tā pati 24 px ass kā dzimšanas dienas čipam). */
-.hx-row-feed { grid-column: 2; grid-row: 2; align-self: stretch; }
+/* Ziņu pirmā rinda ir uz tās pašas 24 px ass kā nedēļas diena un dzimšanas
+   dienas čips; garš virsraksts turpinās otrajā rindā zem tās (pilns, ne "…"). */
+.hx-row-feed { grid-column: 2; grid-row: 2 / 4; align-self: start; }
 .hx-line { display: flex; align-items: center; gap: 8px; min-width: 0; white-space: nowrap; }
 .hx-line[hidden] { display: none; }
 .hx-line-date { height: 36px; }
@@ -294,8 +298,9 @@
 .hx-dayfact-slot { height: 19px; overflow: hidden; }
 
 .hx-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.hx-row-tools { overflow: visible; }
 .hx-row-tools { height: 36px; }
-.hx-row-feed { min-height: 0; height: 24px; }
+.hx-row-feed { min-height: 0; align-items: flex-start; }
 .hx-status { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; margin-left: auto; }
 .hx-chip {
   display: inline-flex;
@@ -346,7 +351,9 @@
   display: flex;
   align-items: center;
   flex: 1 1 auto;
-  min-width: 210px;
+  /* Sarūk, ja vietas nepietiek (līdz lupai un Rīkiem); teksts saīsinās. */
+  container: hxs / inline-size;
+  min-width: 76px;
   max-width: 500px;
   height: 34px;
   border-radius: 17px;
@@ -412,16 +419,27 @@
   white-space: nowrap;
   text-shadow: none;
 }
-.hx-feed { display: flex; align-items: center; flex: 1 1 auto; min-width: 0; max-height: 38px; overflow: hidden; }
+.hx-feed { display: flex; align-items: flex-start; flex: 1 1 auto; min-width: 0; max-height: 45px; overflow: hidden; }
 
-@container (max-width: 760px) {
+@container hxc (max-width: 760px) {
   .hx-row-feed { display: none; }
 }
-@container (max-width: 860px) {
+/* Ļoti šaurā vidū (mazs logs) dzimšanas dienas čips atkal iekļaujas kolonnā ar "…". */
+@container hxc (max-width: 640px) {
+  .hx-line-wd { contain: inline-size; }
+}
+/* Šaurā vidū citā dienā vietu dod mēness čips (mk-header-x.js syncMoonTuck);
+   tā procenti ir arī laikapstākļu logā. */
+#hxTop .hx-moon.is-tucked { display: none; }
+/* Šaurs meklēšanas lodziņš: vispirms pazūd ⌘K, tad Rīku vārds, tad teksts. */
+@container hxs (max-width: 300px) { .hx-kbd { display: none; } }
+@container hxs (max-width: 210px) { .hx-tools span { display: none; } .hx-tools { padding: 0 11px 0 9px; } }
+@container hxs (max-width: 150px) { .hx-search-ph { display: none; } }
+@container hxc (max-width: 860px) {
   .hx-tools span { display: none; }
   .hx-tools { padding: 0 11px 0 9px; }
 }
-@container (max-width: 600px) {
+@container hxc (max-width: 600px) {
   .hx-date-num { font-size: 25px; }
   .hx-kbd { display: none; }
   .hx-moon { display: none; }
@@ -1050,8 +1068,9 @@
     align-items: center !important;
     width: 100% !important;
     min-width: 0 !important;
-    height: 24px !important;
-    max-height: 24px !important;
+    align-items: flex-start !important;
+    height: auto !important;
+    max-height: 45px !important;
     min-height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -1092,7 +1111,7 @@
   }
   :root.mk-hx:not(.mk-mobile-shell) #hxTop #mkTickerTrack .mk-news-item {
     display: flex !important;
-    align-items: center !important;
+    align-items: flex-start !important;
     gap: 8px !important;
     min-width: 0 !important;
     max-width: 100% !important;
@@ -1111,6 +1130,7 @@
   :root.mk-hx:not(.mk-mobile-shell) #hxTop #mkTickerTrack .mk-news-meta {
     display: inline-flex !important;
     align-items: center !important;
+    height: 24px !important;
     gap: 6px !important;
     flex: 0 0 auto !important;
     margin: 0 !important;
@@ -1137,16 +1157,18 @@
     text-shadow: var(--hx-shadow) !important;
   }
   :root.mk-hx:not(.mk-mobile-shell) #hxTop #mkTickerTrack .mk-news-headline {
-    /* Viena rinda līmenī ar nedēļas dienu; pilns virsraksts – virs peles. */
-    display: block !important;
+    /* Pirmā rinda līmenī ar nedēļas dienu (24 px ass), otrā zem tās. */
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
     min-width: 0 !important;
     overflow: hidden !important;
-    white-space: nowrap !important;
-    text-overflow: ellipsis !important;
+    white-space: normal !important;
+    padding-top: 2px !important;
     color: var(--hx-text) !important;
     font-size: 13px !important;
     font-weight: 550 !important;
-    line-height: 17px !important;
+    line-height: 20px !important;
     text-shadow: var(--hx-shadow) !important;
   }
   :root.mk-hx:not(.mk-mobile-shell) #hxTop #mkTickerTrack .mk-news-item:hover .mk-news-headline {

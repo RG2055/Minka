@@ -297,6 +297,7 @@
     els.rel.classList.toggle('is-today', isToday);
     els.today.hidden = isToday;
     top.classList.toggle('is-other-day', !isToday);
+    syncMoonTuck();
     if (popKind === 'moon' || popKind === 'weather') fillPop(popKind);
     if (wasToday !== isToday) {
       if (isToday) {
@@ -1881,6 +1882,17 @@
     var menu = $('minkaBarMenu');
     if (menu) menu.title = 'Tālruņu saraksts';
   }
+
+  /* ── Citā dienā šaurā vidū mēness čips dod vietu datuma rindai ─────────
+     (tā procenti ir arī laikapstākļu logā). Pārslēgšana ir momentāna: plūstoša
+     čipu platuma maiņa lika pārrēķināt izkārtojumu katrā kadrā tieši dienas
+     zīmēšanas laikā, un dienu pārslēgšana kļuva manāmi smagāka. */
+  function syncMoonTuck() {
+    var moon = top && top.querySelector('.hx-moon'), center = top && top.querySelector('.hx-center');
+    if (!moon || !center) return;
+    moon.classList.toggle('is-tucked', top.classList.contains('is-other-day') && center.clientWidth <= 780);
+  }
+  window.addEventListener('resize', function () { clearTimeout(syncMoonTuck.t); syncMoonTuck.t = setTimeout(syncMoonTuck, 200); });
 
   window.addEventListener('minka:duty-summary', function (e) { renderWing(e.detail && e.detail.role); });
   window.addEventListener('daySelected', function () {

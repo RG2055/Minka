@@ -306,7 +306,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20260929cal6';
+  var CALENDAR_BUILD = '20260929cal7';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -1816,9 +1816,30 @@ function initApp() {
   if (cal) cal.addEventListener('load', () => { _lastShellLayout = null; setTimeout(syncShellLayout, 80); });
   setTimeout(syncShellLayout, 80);
 
-  // Keyboard shortcut: Space = play, arrows = next/prev, M = mute
+  // Keyboard shortcut: Space = play, arrows = next/prev, M = mute. Only while
+  // the radio window is open: the radio code is now loaded from the start (the
+  // mood orbit uses it), and with focus in the shell (after a dock click) the
+  // arrows started the radio instead of changing the day. Otherwise ← → go to
+  // the calendar's day, as they do inside it.
   document.addEventListener('keydown', e => {
-    if (['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
+    if (['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName) || e.target.isContentEditable) return;
+    const bc = document.body.classList;
+    const radioOpen = !bc.contains('radio-hidden') && !bc.contains('radio-idle');
+    if (!radioOpen) {
+      if ((e.key === 'ArrowRight' || e.key === 'ArrowLeft') && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey && !e.defaultPrevented
+        && !document.querySelector('[aria-hidden="false"][id$="Sheet"]')) {
+        try {
+          const cw = document.getElementById('calIframe') && document.getElementById('calIframe').contentWindow;
+          // Handed to the calendar's own ← → handler, with its checks (open windows etc.).
+          if (cw && cw.document.body) {
+            const fwd = new cw.KeyboardEvent('keydown', { key: e.key, code: e.code, bubbles: true, cancelable: true });
+            cw.document.body.dispatchEvent(fwd);
+            if (fwd.defaultPrevented) e.preventDefault();
+          }
+        } catch (_e) {}
+      }
+      return;
+    }
     if (e.code === 'Space' && !e.ctrlKey && !e.altKey) {
       e.preventDefault();
       const btn = document.getElementById('playBtn');
