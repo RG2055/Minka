@@ -194,21 +194,21 @@ window.__mkLeftRole=window.MINKA_APP==='rad'?{one:'Rezidents',many:'Rezidenti'}:
     if (!off) root.classList.add('mk-hx');
   } catch (_e) {}
 })();
-/* Noskaņa X (2026-09-28): jaunais noskaņas bloks vidus kolonnā RG datorā.
-   Telefons un /rad paliek kā bija. Kamēr tas top, tikai pēc izvēles:
-   ?mood=1 (kalendāra vai čaulas adresē) vai localStorage mkMoodX=1. */
+/* Noskaņa X (2026-09-28): noskaņas bloks vidus kolonnā RG datorā, ieslēgts
+   visiem. Telefons un /rad paliek kā bija. Vecais bloks tikai kā rezerve:
+   ?mood=0 (kalendāra vai čaulas adresē) vai localStorage mkMoodX=0. */
 (function() {
   try {
     var root = document.documentElement;
     if (root.classList.contains('mk-mobile-shell') || window.MINKA_APP === 'rad') return;
-    // ?mood=1 in either address turns it on and is remembered (the login gate
-    // reloads the page without it); ?mood=0 turns it off and forgets it.
+    // On by default. ?mood=0 in either address turns it off and is remembered
+    // (the login gate reloads the page without it); ?mood=1 turns it back on.
     var q = null;
     try { q = new URLSearchParams(location.search).get('mood'); } catch (_q) {}
     try { q = q || new URLSearchParams(parent.location.search).get('mood'); } catch (_p) {}
-    try { if (q === '1') localStorage.setItem('mkMoodX', '1'); else if (q === '0') localStorage.removeItem('mkMoodX'); } catch (_w) {}
-    var on = q === '1';
-    try { on = on || (q !== '0' && localStorage.getItem('mkMoodX') === '1'); } catch (_s) {}
+    try { if (q === '0') localStorage.setItem('mkMoodX', '0'); else if (q === '1') localStorage.removeItem('mkMoodX'); } catch (_w) {}
+    var on = q !== '0';
+    try { on = on && (q === '1' || localStorage.getItem('mkMoodX') !== '0'); } catch (_s) {}
     if (on) root.classList.add('mk-mx');
   } catch (_e) {}
 })();
@@ -979,7 +979,7 @@ function _mkToast(msg, type) {
 <script src="js/levels.js?v=20260927ns1" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20260928cal3';
+window.__minkaLocalBuild = '20260928cal4';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row

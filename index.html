@@ -8,7 +8,7 @@
    Plānotājs or night plan. Everything else is shared with the radiographers. */
 (function(){try{var rad=new URLSearchParams(location.search).get('app')==='rad';window.MINKA_APP=rad?'rad':'rg';if(rad)document.documentElement.classList.add('minka-rad');}catch(_e){window.MINKA_APP='rg';}})();
 /* Noskaņa X: ?mood=1 is remembered before the login gate (which reloads the page without it), ?mood=0 forgets it. */
-(function(){try{var m=new URLSearchParams(location.search).get('mood');if(m==='1')localStorage.setItem('mkMoodX','1');else if(m==='0')localStorage.removeItem('mkMoodX');}catch(_e){}})();
+(function(){try{var m=new URLSearchParams(location.search).get('mood');if(m==='0')localStorage.setItem('mkMoodX','0');else if(m==='1')localStorage.removeItem('mkMoodX');}catch(_e){}})();
 </script>
 <script>
 /* /rad intro: the radiologists' room in the evening, the RG Rad icon is
@@ -306,7 +306,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20260928cal3';
+  var CALENDAR_BUILD = '20260928cal4';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
