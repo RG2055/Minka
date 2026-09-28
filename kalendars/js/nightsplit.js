@@ -3639,6 +3639,20 @@
     return true;
   }
 
+  // Two sleepers trade their turns (a time-slot card dropped on another).
+  function swap(a,b){
+    var w=st.sl.map(function(s){return s.w;});
+    var t=w[a];w[a]=w[b];w[b]=t;
+    st.sl=calc(w,st.sh,st.ei);
+    saveCurrentDayState();
+    render(true);
+    try{ if(window.__nsBarSync) window.__nsBarSync(); }catch(_e){}
+    setTimeout(function(){
+      var c=document.querySelectorAll('#nsPanelContent .nsc-full-card');
+      [a,b].forEach(function(i){if(c[i]){c[i].classList.add('nsswapped');setTimeout(function(){c[i]&&c[i].classList.remove('nsswapped');},600);}});
+    },40);
+  }
+
   function swapRoom(a,b){
     if(!st || a===b || a<0 || b<0) return;
     var order=getRoomOrder(st.sl);
