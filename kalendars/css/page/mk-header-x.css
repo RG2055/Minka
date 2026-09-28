@@ -133,7 +133,7 @@
 }
 .hx-count {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 4px;
   flex: 0 0 auto;
   height: 24px;
@@ -149,7 +149,8 @@
   text-shadow: var(--hx-chip-shadow, 0 1px 1px rgba(0, 0, 0, .35));
 }
 .hx-count[hidden] { display: none; }
-.hx-count b { font-size: 15px; font-weight: 750; color: var(--hx-role-name); font-variant-numeric: tabular-nums; }
+.hx-count span { line-height: 24px; }
+.hx-count b { font-size: 14px; font-weight: 750; line-height: 24px; color: var(--hx-role-name); font-variant-numeric: tabular-nums; }
 .hx-crew { display: flex; flex-direction: column; gap: 3px; min-width: 0; max-width: 100%; }
 .hx-wing-rd .hx-crew { align-items: flex-end; }
 .hx-crew-row {
@@ -213,7 +214,10 @@
   z-index: 1;
   container-type: inline-size;
   display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
+  /* Ziņas un meklēšana sākas vienā vietā: kreiso kolonnu nosaka tikai
+     datuma rinda (līdz 384 px, garākajai "Pirms 12 dienām" rindai), nevis
+     dzimšanas dienas čips vai vārdadienas; tie iekļaujas kolonnā. */
+  grid-template-columns: minmax(max-content, 384px) minmax(min-content, 1fr);
   grid-template-rows: 36px 24px 19px 19px;
   column-gap: 20px;
   row-gap: 2px;
@@ -224,11 +228,13 @@
 .hx-dateblock,
 .hx-side { display: contents; }
 .hx-line-date { grid-column: 1; grid-row: 1; }
+.hx-line-wd, .hx-namedays, .hx-dayfact-slot, .hx-row-feed { contain: inline-size; }
 .hx-line-wd { grid-column: 1; grid-row: 2; }
 .hx-namedays { grid-column: 1; grid-row: 3; }
 .hx-dayfact-slot { grid-column: 1; grid-row: 4; }
 .hx-row-tools { grid-column: 2; grid-row: 1; }
-.hx-row-feed { grid-column: 2; grid-row: 2 / 5; align-self: start; }
+/* Ziņas vienā rindā ar nedēļas dienu (tā pati 24 px ass kā dzimšanas dienas čipam). */
+.hx-row-feed { grid-column: 2; grid-row: 2; align-self: stretch; }
 .hx-line { display: flex; align-items: center; gap: 8px; min-width: 0; white-space: nowrap; }
 .hx-line[hidden] { display: none; }
 .hx-line-date { height: 36px; }
@@ -289,7 +295,7 @@
 
 .hx-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .hx-row-tools { height: 36px; }
-.hx-row-feed { min-height: 0; max-height: 40px; padding-top: 3px; }
+.hx-row-feed { min-height: 0; height: 24px; }
 .hx-status { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; margin-left: auto; }
 .hx-chip {
   display: inline-flex;
@@ -1044,8 +1050,8 @@
     align-items: center !important;
     width: 100% !important;
     min-width: 0 !important;
-    height: auto !important;
-    max-height: 38px !important;
+    height: 24px !important;
+    max-height: 24px !important;
     min-height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -1110,17 +1116,17 @@
     margin: 0 !important;
   }
   :root.mk-hx:not(.mk-mobile-shell) #hxTop #mkTickerTrack .mk-ticker-cat {
-    height: 20px !important;
-    padding: 0 8px !important;
-    border-radius: 10px !important;
+    height: 22px !important;
+    padding: 0 9px !important;
+    border-radius: 11px !important;
     border: 0 !important;
     background: var(--hx-glass) !important;
     box-shadow: inset 0 0 0 1px var(--hx-glass-ring) !important;
     color: var(--hx-text) !important;
-    font-size: 11px !important;
-    font-weight: 700 !important;
-    line-height: 20px !important;
-    letter-spacing: .01em !important;
+    font-size: 12px !important;
+    font-weight: 650 !important;
+    line-height: 22px !important;
+    letter-spacing: 0 !important;
     text-transform: none !important;
     text-shadow: var(--hx-chip-shadow, 0 1px 1px rgba(0, 0, 0, .4)) !important;
   }
@@ -1131,13 +1137,12 @@
     text-shadow: var(--hx-shadow) !important;
   }
   :root.mk-hx:not(.mk-mobile-shell) #hxTop #mkTickerTrack .mk-news-headline {
-    /* Visa virsraksta rinda: līdz divām rindām, nevis nogriezta ar "…". */
-    display: -webkit-box !important;
-    -webkit-line-clamp: 2 !important;
-    -webkit-box-orient: vertical !important;
+    /* Viena rinda līmenī ar nedēļas dienu; pilns virsraksts – virs peles. */
+    display: block !important;
     min-width: 0 !important;
     overflow: hidden !important;
-    white-space: normal !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
     color: var(--hx-text) !important;
     font-size: 13px !important;
     font-weight: 550 !important;

@@ -249,7 +249,7 @@
     if (!s) return;
     var rows = [], full = [];
     if (s.isToday) {
-      count.innerHTML = '<b>' + s.nowCount + '</b><span>tagad</span>';
+      count.innerHTML = '<span>tagad</span><b>' + s.nowCount + '</b>';
       count.title = s.sameNightRoster ? 'Tagad dežūrā ' + s.nowCount + ', visi paliek arī naktī' : 'Tagad dežūrā ' + s.nowCount + ', naktī ' + s.nightCount;
       (s.groups || []).forEach(function (g) {
         var kind = g.kind === 'dl-night' ? 'night' : g.kind === 'dl-leave' ? 'leave' : 'later';
@@ -257,7 +257,7 @@
         full.push(g.label + ': ' + g.people.map(function (p) { return p.first; }).join(', '));
       });
     } else {
-      count.innerHTML = '<b>' + s.count + '</b><span>dežūrā</span>';
+      count.innerHTML = '<span>dežūrā</span><b>' + s.count + '</b>';
       count.title = 'Dežūrā ' + s.count;
       shiftGroups(s.people).forEach(function (g) {
         rows.push(crewRow(g.kind, g.label, g.list, s.listId));

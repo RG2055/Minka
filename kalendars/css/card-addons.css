@@ -156,6 +156,14 @@ html body #worker-modal#worker-modal .mk-skin-quick {
 .mk-skin-preview-real > .mk-card-addon.is-dragging {
   cursor: grabbing !important;
 }
+/* Frames and light lie over the whole card and do not move: in the preview
+   they let the pointer through, or they would hide every decoration under
+   them from the hand (a light leak over a REC label). Their tiles below the
+   card still choose them. */
+.mk-skin-preview-real > .mk-card-addon:is([data-addon-group="frame"], [data-addon-group="light"]) {
+  pointer-events: none !important;
+  cursor: auto !important;
+}
 
 .mk-card-addon[data-addon-group="topper"] {
   width: 52%;
