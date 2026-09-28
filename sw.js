@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.958-mx3';
+const CACHE = 'minka-4.6.958-mx4';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
@@ -141,10 +141,11 @@ self.addEventListener('fetch', event => {
     }
   })();
 
-  if (isApiRequest) {
-    event.respondWith(fetch(request));
-    return;
-  }
+  // API calls are left to the browser (no respondWith): relaying them gained
+  // nothing, and a request relayed by this worker died with it when a new
+  // version took over during page load ("Failed to fetch"; the phone list
+  // then stayed empty until the next reload).
+  if (isApiRequest) return;
 
   // Respect callers that explicitly request fresh data. Without this guard,
   // the generic cache-first branch below can return an old response even when
@@ -163,10 +164,7 @@ self.addEventListener('fetch', event => {
   // these URLs contain timestamp cache-busters, so caching them would create
   // a new Cache Storage entry on every poll.
   const parsedUrl = new URL(url);
-  if (!request.destination && parsedUrl.origin !== self.location.origin) {
-    event.respondWith(fetch(request));
-    return;
-  }
+  if (!request.destination && parsedUrl.origin !== self.location.origin) return;
 
   // The installed app reads its presentation metadata from the web app
   // manifest. Never pin that metadata behind cache-first, so installation

@@ -306,7 +306,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20260928cal5';
+  var CALENDAR_BUILD = '20260929cal6';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -2979,6 +2979,17 @@ body:not(.radio-idle) #dockShelf #bottomBtnBar>#radioIdleBtn{display:none!import
   </section>
 </div>
 
+<!-- rgpool (rgapp.page/pool, its own Worker): the electricity price, opened from the header search. -->
+<div id="rgpoolSheet" aria-hidden="true" onclick="if(event.target===this) closeRgpoolSheet()" style="display:none;position:fixed;inset:0;z-index:171192;pointer-events:auto;background:transparent;">
+  <section id="rgpoolSheetPanel" role="dialog" aria-label="rgpool, elektrības cena" style="position:absolute;right:12px;bottom:86px;width:min(480px,calc(100vw - 24px));height:min(860px,calc(100dvh - 108px));min-height:420px;border-radius:24px;background:#121318;box-shadow:0 18px 60px rgba(0,0,0,.58),inset 0 0 0 1px rgba(255,255,255,.08);overflow:hidden;pointer-events:auto;">
+    <div style="height:40px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 8px 0 16px;border-bottom:1px solid rgba(255,255,255,.08);color:#f2f2f7;font:600 13px/1 'Google Sans',Inter,system-ui;">
+      <span>rgpool</span>
+      <button type="button" onclick="closeRgpoolSheet()" aria-label="Aizvērt rgpool" style="width:32px;height:32px;border-radius:16px;border:0;background:rgba(255,255,255,.08);color:#f2f2f7;font:500 18px/1 system-ui;cursor:pointer;">×</button>
+    </div>
+    <iframe id="rgpoolSheetFrame" title="rgpool" style="display:block;width:100%;height:calc(100% - 40px);border:0;background:#121318;"></iframe>
+  </section>
+</div>
+
 <div id="pusdienasSheet" aria-hidden="true" onclick="if(event.target===this) closePusdienasSheet()" style="display:none;position:fixed;inset:0;z-index:171190;pointer-events:auto;background:transparent;">
   <section id="pusdienasSheetPanel" aria-label="Pusdienas" onclick="event.stopPropagation()" style="position:absolute;right:12px;bottom:86px;width:min(560px,calc(100vw - 24px));height:min(720px,calc(100dvh - 108px));min-height:500px;border-radius:18px;border:1px solid rgba(255,255,255,.18);background:#181818;box-shadow:0 18px 60px rgba(0,0,0,.58),0 0 0 1px rgba(255,255,255,.05) inset;overflow:hidden;pointer-events:auto;">
     <div style="height:38px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 10px 0 14px;border-bottom:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.035);color:#f7f7f7;font:900 12px/1 'Space Grotesk',system-ui;letter-spacing:.08em;text-transform:uppercase;">
@@ -3906,6 +3917,45 @@ function mkSheetClose(sheet, panel, key, btn, done) {
       event.preventDefault();
       window.closePlanotajsSheet();
     }
+  });
+})();
+
+/* rgpool: the electricity price app (its own Worker at /pool) in a window
+   that grows out of the header search box and returns into it. Loaded on the
+   first open, kept while closed, unloaded after a few idle minutes. */
+(function(){
+  var URL_POOL = '/pool/';
+  var IDLE_MS = 5 * 60 * 1000, unloadTimer = 0, origin = null, lastFocus = null;
+  window.openRgpoolSheet = function openRgpoolSheet(from) {
+    var sheet = document.getElementById('rgpoolSheet');
+    var frame = document.getElementById('rgpoolSheetFrame');
+    if (!sheet || !frame) { window.open(URL_POOL, '_blank', 'noopener'); return; }
+    origin = from || null;
+    if (sheet.dataset.closing !== '1') lastFocus = document.activeElement;
+    clearTimeout(unloadTimer);
+    if (!frame.getAttribute('src') || frame.getAttribute('src') === 'about:blank') frame.setAttribute('src', URL_POOL);
+    sheet.style.display = 'block';
+    sheet.setAttribute('aria-hidden', 'false');
+    mkSheetOpen(sheet, document.getElementById('rgpoolSheetPanel'), 'rgpool', origin);
+    if (typeof window.updateBuddyUiSuppression === 'function') window.updateBuddyUiSuppression();
+  };
+  window.closeRgpoolSheet = function closeRgpoolSheet() {
+    var sheet = document.getElementById('rgpoolSheet');
+    var frame = document.getElementById('rgpoolSheetFrame');
+    if (!sheet || sheet.style.display === 'none' || sheet.dataset.closing === '1') return;
+    sheet.setAttribute('aria-hidden', 'true');
+    mkSheetClose(sheet, document.getElementById('rgpoolSheetPanel'), 'rgpool', origin, function () {
+      sheet.style.display = 'none';
+      clearTimeout(unloadTimer);
+      unloadTimer = setTimeout(function () { if (frame && sheet.style.display === 'none') frame.setAttribute('src', 'about:blank'); }, IDLE_MS);
+      if (typeof window.updateBuddyUiSuppression === 'function') window.updateBuddyUiSuppression();
+    });
+    if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus({ preventScroll: true });
+    lastFocus = null;
+  };
+  document.addEventListener('keydown', function (event) {
+    var sheet = document.getElementById('rgpoolSheet');
+    if (event.key === 'Escape' && sheet && sheet.style.display !== 'none') { event.preventDefault(); window.closeRgpoolSheet(); }
   });
 })();
 

@@ -507,18 +507,32 @@ if (typeof hospitalDatabase === 'undefined') {
 }
 
 let hospitalDatabaseLoadInFlight = false;
+// The list is asked for while the page loads, together with everything else,
+// and that one request sometimes fails ("Failed to fetch"); with no second try
+// the header search found no numbers until the next reload. Now it tries again
+// a few times, and the search asks for it too when it is still empty.
+const HOSPITAL_DB_RETRY_MS = [2000, 6000, 15000, 40000];
+let hospitalDatabaseRetry = 0, hospitalDatabaseRetryTimer = 0;
+function retryHospitalDatabase() {
+  if (hospitalDatabase.length || hospitalDatabaseRetry >= HOSPITAL_DB_RETRY_MS.length) return;
+  clearTimeout(hospitalDatabaseRetryTimer);
+  hospitalDatabaseRetryTimer = setTimeout(loadHospitalDatabaseFromApi, HOSPITAL_DB_RETRY_MS[hospitalDatabaseRetry++]);
+}
 async function loadHospitalDatabaseFromApi() {
   if (!window.MinkaApi || typeof window.MinkaApi.apiFetch !== 'function') return false;
   if (hospitalDatabaseLoadInFlight) return false;
   hospitalDatabaseLoadInFlight = true;
+  let ok = false;
   try {
     const res = await window.MinkaApi.apiFetch('/api/phones');
     if (!res.ok) return false;
     const data = await res.json();
     if (!Array.isArray(data)) return false;
+    ok = true;
     hospitalDatabase.length = 0;
     data.forEach(item => hospitalDatabase.push(item));
     window.hospitalDatabase = hospitalDatabase;
+    document.dispatchEvent(new CustomEvent('mk:phones'));
     if (typeof window.renderSearchResults === 'function') {
       window.renderSearchResults((input && input.textContent) || '');
     }
@@ -528,18 +542,27 @@ async function loadHospitalDatabaseFromApi() {
     return false;
   } finally {
     hospitalDatabaseLoadInFlight = false;
+    if (!ok && window.MinkaApi && window.MinkaApi.getToken && window.MinkaApi.getToken()) retryHospitalDatabase();
   }
 }
+// For the header search: load the numbers now if they are not here yet.
+window.mkEnsurePhones = function() {
+  if (hospitalDatabase.length || hospitalDatabaseLoadInFlight) return;
+  if (window.MinkaApi && window.MinkaApi.getToken && window.MinkaApi.getToken()) loadHospitalDatabaseFromApi();
+};
 
 document.addEventListener('minka:auth-ok', function() {
+  hospitalDatabaseRetry = 0;
   loadHospitalDatabaseFromApi();
 });
 
-window.addEventListener('load', function() {
+function loadHospitalDatabaseIfSignedIn() {
   if (window.MinkaApi && window.MinkaApi.getToken && window.MinkaApi.getToken()) {
     loadHospitalDatabaseFromApi();
   }
-});
+}
+if (document.readyState === 'complete') loadHospitalDatabaseIfSignedIn();
+else window.addEventListener('load', loadHospitalDatabaseIfSignedIn);
 
 function getCatIcon(cat) {
   if (!cat) return '🏥';

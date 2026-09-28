@@ -10,8 +10,10 @@ test('ZET JSONP refreshes bypass the SW asset cache, even with script destinatio
   caches:{match(){throw Error('Live metadata must not use cached script responses');},open(){throw Error('Live metadata must not enter the asset cache');}}
  });
  for(const stamp of ['1','2']){
-  let response;const request={method:'GET',url:'https://rds.eurozet.pl/reader/history.php?true=jsonData&_='+stamp,destination:'script',cache:'default'};
-  events.fetch({request,respondWith:value=>response=value});assert.equal(await(await response).text(),'jsonData({})');
+  // The worker leaves live metadata to the browser: no respondWith, so no
+  // cached script can answer it and nothing enters the asset cache.
+  let responded=false;const request={method:'GET',url:'https://rds.eurozet.pl/reader/history.php?true=jsonData&_='+stamp,destination:'script',cache:'default'};
+  events.fetch({request,respondWith:()=>{responded=true;}});assert.equal(responded,false);
  }
- assert.equal(requests.length,2);
+ assert.equal(requests.length,0);
 });

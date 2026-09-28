@@ -690,7 +690,7 @@
 .hx-cf-logo { display: inline-block; width: 22px; height: 10px; margin: 0 4px 0 1px; vertical-align: -1px; }
 
 /* ── Meklēšana: funkciju flīzes un dienu birkas ──────────────────────── */
-.hx-pal-tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; padding: 2px 2px 6px; }
+.hx-pal-tiles { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; padding: 2px 2px 6px; }
 /* Nosaukums vienmēr pilns: ja neietilpst, pārnesas otrajā rindā. */
 .hx-opt.is-tile { flex-direction: column; justify-content: flex-start; gap: 7px; min-height: 90px; padding: 12px 6px 8px; text-align: center; }
 .hx-opt.is-tile b { max-width: 100%; font-size: 12.5px; font-weight: 650; line-height: 1.25; text-wrap: balance; overflow-wrap: anywhere; hyphens: auto; }

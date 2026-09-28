@@ -1461,6 +1461,16 @@
     btn.click();
     return true;
   }
+  // rgpool (rgapp.page/pool, its own Worker) opens in the shell's window,
+  // grown out of the search box like the other surfaces.
+  function openRgpool() {
+    var p = shell(), box = els.searchbox || els.search;
+    if (!p || typeof p.openRgpoolSheet !== 'function') { window.open('/pool/', '_blank', 'noopener'); return; }
+    var r = box.getBoundingClientRect(), f = null;
+    try { f = window.frameElement; } catch (_e) {}
+    var fr = f ? f.getBoundingClientRect() : { left: 0, top: 0 };
+    p.openRgpoolSheet({ left: r.left + fr.left, top: r.top + fr.top, width: r.width, height: r.height });
+  }
   function openStats(tab) {
     window.__mkStatsOpenTab = tab || '';
     if (typeof window.openStatsModal === 'function') window.openStatsModal({ from: els.searchbox });
@@ -1488,6 +1498,7 @@
     { id: 'bolus', title: 'Bolus', sub: 'Bolusa maiņa un atzīmes', icon: 'drop', words: 'bolus bolusa maina injektors', run: function () { shellClick('bolusDocBtn'); } },
     { id: 'month', title: 'Mēneša kalendārs', sub: 'Viss mēnesis vienā skatā', icon: 'calendar', words: 'kalendars menesis grafiks datums', run: function () { if (!shellClick('monthCalDocBtn')) openDate(els.searchbox); } },
     { id: 'planner', title: 'Plānotājs', sub: 'Grafika plānotājs', icon: 'lanes', words: 'planotajs grafiks planot', run: function () { shellClick('planotajsDockBtn'); } },
+    { id: 'rgpool', title: 'rgpool', sub: 'Elektrības cena tagad (Nord Pool)', icon: 'bolt', words: 'rgpool elektriba elektribas cena elektro strava energija nord pool nordpool birza kwh', run: openRgpool },
     { id: 'lunch', title: 'Pusdienas', sub: 'Pusdienu pasūtīšana', icon: 'coffee', words: 'pusdienas edamais pasutit', run: function () { shellClick('pusdienasDockBtn'); } },
     { id: 'mobile', title: 'Mobilā versija', sub: 'QR kods un instrukcija telefonam', icon: 'mobile', words: 'mobila versija telefons qr iphone android lietotne instalet', run: function () { openPop('mobile', els.mobile, true); } },
     { id: 'stats', title: 'Statistika', sub: 'Pārskats par mēnesi', icon: 'chart', words: 'statistika parskats leaderboard', run: function () { openStats('overview'); } },
@@ -1532,7 +1543,7 @@
         out.push({ kind: 'action', ref: 'a:today', icon: t0.icon, title: t0.title, sub: t0.sub, run: t0.run });
       }
       out.push({ group: 'Atvērt' });
-      ['radio', 'winamp', 'ns', 'bolus', 'month', 'planner', 'stats', 'lunch', 'mobile', 'phones'].forEach(function (id) {
+      ['radio', 'winamp', 'ns', 'bolus', 'month', 'planner', 'stats', 'lunch', 'rgpool', 'mobile', 'phones'].forEach(function (id) {
         var a = ACTION_BY_ID[id];
         if (a) out.push({ kind: 'action', tile: true, ref: 'a:' + id, icon: a.icon, title: a.title, sub: a.sub, run: a.run });
       });
@@ -1662,6 +1673,8 @@
     palInput = pal.querySelector('.hx-pal-input');
     palList = pal.querySelector('.hx-pal-list');
     palInput.addEventListener('input', function () { clearTimeout(palTimer); palTimer = setTimeout(renderResults, 60); });
+    // The phone list can arrive after the palette opened: show its numbers then.
+    doc.addEventListener('mk:phones', function () { if (palInput.value.trim()) renderResults(); });
     palInput.addEventListener('keydown', onPalKey);
     palList.addEventListener('pointermove', function (e) {
       var opt = e.target.closest('.hx-opt');
@@ -1750,6 +1763,7 @@
     els.search.setAttribute('aria-expanded', 'true');
     top.classList.add('is-searching');
     palInput.value = typeof initial === 'string' ? initial : (wasOpen ? palInput.value : '');
+    if (typeof window.mkEnsurePhones === 'function') window.mkEnsurePhones();
     renderResults();
     palInput.focus({ preventScroll: true });
     if (!wasOpen) {
