@@ -188,10 +188,12 @@ html body #worker-modal#worker-modal .mk-skin-quick {
 }
 
 .mk-card-addon[data-addon-group="charm"] {
-  width: 28%;
-  height: 66%;
-  top: calc(100% - 13px);
-  right: -8%;
+  /* a keychain from the card's bottom corner: short enough that the card keeps
+     its size in the editor and the row below keeps its room (was 66 % long) */
+  width: 22%;
+  height: 44%;
+  top: calc(100% - 12px);
+  right: 2%;
   object-position: top center;
   transform-origin: top center;
 }
@@ -252,6 +254,30 @@ html body > .mk-card-addon.mk-card-addon-portal.is-visible {
   top: -8%;
 }
 
+.mk-card-addon[data-addon-group="e3d"] {
+  /* a 3D emoji sticker on the card's top corner, a little over the edge, slightly turned */
+  width: 30%;
+  height: 30%;
+  top: -7%;
+  right: -5%;
+  object-position: center;
+  transform: rotate(6deg);
+  transform-origin: center;
+}
+.mk-card-addon[data-addon-side="left"][data-addon-group="e3d"] { left: -5%; right: auto; transform: rotate(-6deg); }
+
+.mk-card-addon[data-addon-group="toy"] {
+  /* a plush toy sitting on the card's bottom corner, only a little over the edge */
+  width: 34%;
+  height: 40%;
+  right: -3%;
+  bottom: -7%;
+  object-position: bottom right;
+  transform-origin: bottom right;
+  z-index: 3 !important;
+}
+.mk-card-addon[data-addon-side="left"][data-addon-group="toy"] { left: -3%; right: auto; object-position: bottom left; transform-origin: bottom left; }
+
 .mk-card-addon[data-addon-group="object"] {
   width: 50%;
   height: 78%;
@@ -279,8 +305,8 @@ html body :is(#grafiks-app,#worker-modal) .card.mk-watch-face.mk-addon-active.mk
   z-index: 8 !important;
 }
 
+.mk-card-addon[data-addon-side="left"][data-addon-group="charm"] { left: 2%; right: auto; }
 .mk-card-addon[data-addon-side="left"][data-addon-group="sticker"],
-.mk-card-addon[data-addon-side="left"][data-addon-group="charm"],
 .mk-card-addon[data-addon-side="left"][data-addon-group="strip"],
 .mk-card-addon[data-addon-side="left"][data-addon-group="object"] {
   left: -10%;

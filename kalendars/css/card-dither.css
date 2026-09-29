@@ -66,6 +66,19 @@ html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watc
    (card-faces.js sets --mk-txt-color = r,g,b on it) draws its ink, dotted frame
    and text in that colour instead of the effect's. */
 html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watch-face="dither"],.mk-fx-dither) .wf-colored {--dth-ink-rgb:var(--mk-txt-color) !important;--dth-chip-txt:var(--mk-txt-color) !important;}
+/* Krāsas → Teksts: the name and the small values take the chosen text colour
+   whenever it reads on the chips (light on the dark chips, dark on paper). */
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watch-face="dither"],.mk-fx-dither):not(.mk-fx-ditherpaper).mk-has-txt:not(.mk-txt-dark),
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watch-face="dither"],.mk-fx-dither).mk-fx-ditherpaper.mk-has-txt.mk-txt-dark {--dth-chip-txt:var(--mk-txt-color);}
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watch-face="dither"],.mk-fx-dither):not(.mk-fx-ditherpaper).mk-has-txt:not(.mk-txt-dark) :is(.mk-mid-meta-time,.mk-mid-meta-value,.mk-mid-month-num,.mk-coffee-num):not(.wf-colored *),
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watch-face="dither"],.mk-fx-dither).mk-fx-ditherpaper.mk-has-txt.mk-txt-dark :is(.mk-mid-meta-time,.mk-mid-meta-value,.mk-mid-month-num,.mk-coffee-num):not(.wf-colored *) {
+  color:rgb(var(--mk-txt-color)) !important;-webkit-text-fill-color:rgb(var(--mk-txt-color)) !important;
+}
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watch-face="dither"],.mk-fx-dither):not(.mk-fx-ditherpaper).mk-has-txt:not(.mk-txt-dark) :is(.mk-mid-month-label,.mk-mid-meta-label):not(.wf-colored *),
+html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watch-face="dither"],.mk-fx-dither).mk-fx-ditherpaper.mk-has-txt.mk-txt-dark :is(.mk-mid-month-label,.mk-mid-meta-label):not(.wf-colored *) {
+  color:rgba(var(--mk-txt-color),.78) !important;-webkit-text-fill-color:rgba(var(--mk-txt-color),.78) !important;
+}
+
 html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watch-face="dither"],.mk-fx-dither) .name-main {
   color:rgb(var(--dth-chip-txt)) !important;-webkit-text-fill-color:rgb(var(--dth-chip-txt)) !important;text-shadow:none !important;
   background:none !important;-webkit-background-clip:border-box !important;background-clip:border-box !important;opacity:1 !important;
@@ -102,7 +115,7 @@ html body #grafiks-list.grid-view.grid-view .card.card.mk-mid-card:is([data-watc
   color:var(--wf-thumb-tint,#eceae4);-webkit-text-fill-color:var(--wf-thumb-tint,#eceae4);background:none;-webkit-text-stroke:0;text-shadow:2px 2px 0 #060606;
 }
 /* Dither face: no material, no metal frame (its frame is dotted); Kartītes izskats stays — it tones the dithered picture. */
-.wf-editor.is-dither :is(.wf-finish,.wf-metal) {display:none !important;}
+/* Dither: the frame and the digit style stay visible, greyed with their reason (skin-organize.js). */
 
 .mk-skin-thumb[data-mk-dither-src] {image-rendering:pixelated;}
 

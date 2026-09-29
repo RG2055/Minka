@@ -461,7 +461,9 @@
      a bunny modelled in Blender, a rubber duck and a ball from Poly Haven), rendered
      from the bed's view at its scale (scripts/blender/bed_accessories.py).
      [file, label, width on the 512 px bed]; where they lie is set in CSS. */
-  var BED_PILLOWS=[['','Nav',0,0,''],["kc-cat", "Kaķis", 162, 0, "k"],["kc-bunny", "Zaķis", 136, 0, "k"],["kc-bear", "Lācis", 166, 0, "k"],["kc-moon", "Mēness", 176, 0, "k"],["kc-sun", "Saule", 192, 0, "k"],["kc-cloud", "Mākonis", 219, 0, "k"],["kc-flower", "Zieds", 176, 0, "k"],["kc-avocado", "Avokado", 128, 0, "k"],["kc-cookie", "Cepums", 182, 0, "k"],["kc-donut", "Virtulis", 184, 0, "k"],["kc-strawberry", "Zemene", 157, 0, "k"],["kc-capsule", "Kapsula", 197, 0, "k"],["kc-bone", "Kauls", 192, 0, "k"],["kc-bolt", "Zibens", 116, 0, "k"],["kc-fish", "Zivs", 187, 0, "k"],["kc-rainbow", "Varavīksne", 222, 0, "k"],["pc-heart-hearts", "Sirsniņas, sirds", 177, 0, "p"],["pc-flower-daisy", "Margrietiņas, zieds", 176, 0, "p"],["pc-cloud-sky", "Debesis, mākonis", 219, 0, "p"],["pc-round-cherry", "Ķirši, apaļš", 166, 0, "p"],["pc-square-floral", "Ziedi, kvadrāts", 106, 0, "p"],["pc-moon-starlight", "Zvaigznes, mēness", 176, 0, "p"],["pc-hexagon-balloons", "Baloni, sešstūris", 165, 0, "p"],["pc-lumbar-planes", "Lidmašīnas, garenais", 131, 0, "p"],["pc-bolster-bluecheck", "Rūtiņas, veltnis", 196, 0, "p"],["pc-scallop-mushrooms", "Sēnes, robains", 182, 0, "p"],["pc-triangle-dinos", "Dinozauri, trīsstūris", 148, 0, "p"],["pc-oval-rainbows", "Varavīksnes, ovāls", 222, 0, "p"],["pc-cathead-cats", "Kaķīši, kaķis", 162, 0, "p"],["pc-diamond-lemons", "Citroni, rombs", 153, 0, "p"],["pc-squircle-ward", "Nodaļas, mīksts kvadrāts", 179, 0, "p"],["pc-star-polka", "Punktiņi, zvaigzne", 184, 0, "p"],["pc-bolster-chevron", "Zigzagi, veltnis", 196, 0, "p"],["pc-square-patchwork", "Lāpītā, kvadrāts", 106, 0, "p"],["pc-lumbar-colorstripe", "Krāsu svītras, garenais", 131, 0, "p"],["pc-fish-fish", "Zivtiņas, zivs", 187, 0, "p"],["pc-hexagon-bees", "Bitītes, sešstūris", 165, 0, "p"],["pc-round-space", "Kosmoss, apaļš", 166, 0, "p"],["pc-bone-xray", "Rentgens, kauls", 192, 0, "p"],["pc-squircle-radiology", "Radioloģija, mīksts kvadrāts", 179, 0, "p"],["pc-heart-neon", "Neons, sirds", 177, 0, "p"],["pc-star-glow", "Spīd tumsā, zvaigzne", 184, 0, "p"],["fc-square-knit", "Kvadrāts adīts", 106, 1, "f"],["fc-round-waffle", "Apaļš vafeļu", 166, 1, "f"],["fc-bolster-tartan", "Veltnis tartāns", 196, 1, "f"],["fc-heart-plush", "Sirds plīša", 177, 1, "f"],["fc-star-knit", "Zvaigzne adīts", 184, 1, "f"],["fc-lumbar-waffle", "Garenais vafeļu", 131, 1, "f"],["fc-squircle-tartan", "Mīksts kvadrāts tartāns", 179, 1, "f"],["fc-oval-plush", "Ovāls plīša", 222, 1, "f"],["pillow-1", "Zigzags", 180, 0, "o"],["pillow-2", "Zigzags šķībi", 182, 0, "o"]];
+  var BED_PILLOWS=[['','Nav',0,0,''],["kc-cat", "Kaķis", 162, 0, "k"],["kc-bunny", "Zaķis", 136, 0, "k"],["kc-bear", "Lācis", 166, 0, "k"],["kc-moon", "Mēness", 176, 0, "k"],["kc-sun", "Saule", 192, 0, "k"],["kc-cloud", "Mākonis", 219, 0, "k"],["kc-flower", "Zieds", 176, 0, "k"],["kc-avocado", "Avokado", 128, 0, "k"],["kc-cookie", "Cepums", 182, 0, "k"],["kc-donut", "Virtulis", 184, 0, "k"],["kc-strawberry", "Zemene", 157, 0, "k"],["kc-capsule", "Kapsula", 197, 0, "k"],["kc-bone", "Kauls", 192, 0, "k"],["kc-bolt", "Zibens", 116, 0, "k"],["kc-fish", "Zivs", 187, 0, "k"],["kc-rainbow", "Varavīksne", 222, 0, "k"],["pc-heart-hearts", "Sirsniņas, sirds", 177, 0, "p"],["pc-flower-daisy", "Margrietiņas, zieds", 176, 0, "p"],["pc-cloud-sky", "Debesis, mākonis", 219, 0, "p"],["pc-round-cherry", "Ķirši, apaļš", 166, 0, "p"],["pc-square-floral", "Ziedi, kvadrāts", 106, 0, "p"],["pc-moon-starlight", "Zvaigznes, mēness", 176, 0, "p"],["pc-hexagon-balloons", "Baloni, sešstūris", 165, 0, "p"],["pc-lumbar-planes", "Lidmašīnas, garenais", 131, 0, "p"],["pc-bolster-bluecheck", "Rūtiņas, veltnis", 196, 0, "p"],["pc-scallop-mushrooms", "Sēnes, robains", 182, 0, "p"],["pc-triangle-dinos", "Dinozauri, trīsstūris", 148, 0, "p"],["pc-oval-rainbows", "Varavīksnes, ovāls", 222, 0, "p"],["pc-cathead-cats", "Kaķīši, kaķis", 162, 0, "p"],["pc-diamond-lemons", "Citroni, rombs", 153, 0, "p"],["pc-squircle-ward", "Nodaļas, mīksts kvadrāts", 179, 0, "p"],["pc-star-polka", "Punktiņi, zvaigzne", 184, 0, "p"],["pc-bolster-chevron", "Zigzagi, veltnis", 196, 0, "p"],["pc-square-patchwork", "Lāpītā, kvadrāts", 106, 0, "p"],["pc-lumbar-colorstripe", "Krāsu svītras, garenais", 131, 0, "p"],["pc-fish-fish", "Zivtiņas, zivs", 187, 0, "p"],["pc-hexagon-bees", "Bitītes, sešstūris", 165, 0, "p"],["pc-round-space", "Kosmoss, apaļš", 166, 0, "p"],["pc-bone-xray", "Rentgens, kauls", 192, 0, "p"],["pc-squircle-radiology", "Radioloģija, mīksts kvadrāts", 179, 0, "p"],["pc-heart-neon", "Neons, sirds", 177, 0, "p"],["pc-star-glow", "Spīd tumsā, zvaigzne", 184, 0, "p"],["fc-square-knit", "Kvadrāts adīts", 106, 1, "f"],["fc-round-waffle", "Apaļš vafeļu", 166, 1, "f"],["fc-bolster-tartan", "Veltnis tartāns", 196, 1, "f"],["fc-heart-plush", "Sirds plīša", 177, 1, "f"],["fc-star-knit", "Zvaigzne adīts", 184, 1, "f"],["fc-lumbar-waffle", "Garenais vafeļu", 131, 1, "f"],["fc-squircle-tartan", "Mīksts kvadrāts tartāns", 179, 1, "f"],["fc-oval-plush", "Ovāls plīša", 222, 1, "f"],["pillow-1", "Zigzags", 180, 0, "o"],["pillow-2", "Zigzags šķībi", 182, 0, "o"],
+    /* emoji balloons as cushions (Emoji Balloons Pack, DESIGNRIP, CC BY 4.0) — added at the end, so saved choices keep their numbers */
+    ["bl-b01", "Balons: smaids", 170, 0, "b"], ["bl-b02", "Balons: smaids", 170, 0, "b"], ["bl-b03", "Balons: prieks", 170, 0, "b"], ["bl-b04", "Balons: mirkšķis", 170, 0, "b"], ["bl-b05", "Balons: smiekli", 170, 0, "b"], ["bl-b06", "Balons: plats smaids", 170, 0, "b"], ["bl-b07", "Balons: svilpo", 170, 0, "b"], ["bl-b08", "Balons: dusmas", 170, 0, "b"], ["bl-b09", "Balons: acis uz augšu", 170, 0, "b"], ["bl-b10", "Balons: neveikli", 170, 0, "b"], ["bl-b11", "Balons: mierīgs", 170, 0, "b"], ["bl-b12", "Balons: smejas", 170, 0, "b"], ["bl-b13", "Balons: neitrāls", 170, 0, "b"], ["bl-b14", "Balons: mēle", 170, 0, "b"], ["bl-b15", "Balons: mēle ārā", 170, 0, "b"], ["bl-b16", "Balons: miegains", 170, 0, "b"], ["bl-b17", "Balons: bēdīgs", 170, 0, "b"], ["bl-b18", "Balons: prieka asaras", 170, 0, "b"], ["bl-b19", "Balons: raud", 170, 0, "b"], ["bl-b20", "Balons: siekalas", 170, 0, "b"], ["bl-b21", "Balons: buča", 170, 0, "b"], ["bl-b22", "Balons: iemīlējies", 170, 0, "b"], ["bl-b23", "Balons: satraukts", 170, 0, "b"], ["bl-b24", "Balons: slikti", 170, 0, "b"], ["bl-b25", "Balons: bučo", 170, 0, "b"], ["bl-b26", "Balons: maska", 170, 0, "b"], ["bl-b27", "Balons: nauda", 170, 0, "b"]];
   var BED_TOYS=[['','Nav',0],["toy-teddy", "Lācītis", 94],["toy-teddy-cream", "Krēmīgais lācītis", 94],["toy-teddy-grey", "Pelēkais lācītis", 94],["toy-panda", "Panda", 94],["toy-koala", "Koala", 91],["toy-bunny", "Zaķītis", 77],["toy-cat", "Kaķītis", 85],["toy-cat-black", "Melnais kaķītis", 85],["toy-dog", "Sunītis", 79],["toy-fox", "Lapsiņa", 95],["toy-raccoon", "Jenots", 107],["toy-lion", "Lauva", 89],["toy-monkey", "Pērtiķis", 95],["toy-pig", "Sivēns", 86],["toy-cow", "Gotiņa", 90],["toy-sheep", "Aitiņa", 96],["toy-unicorn", "Vienradzis", 89],["toy-elephant", "Zilonītis", 83],["toy-dino", "Dinozaurs", 81],["toy-penguin", "Pingvīns", 94],["toy-owl", "Pūce", 81],["toy-chick", "Cālītis", 88],["toy-duck", "Pīlīte", 66],["toy-mouse", "Pelīte", 68],["toy-hamster", "Kāmis", 81],["toy-hedgehog", "Ezītis", 81],["toy-frog", "Vardīte", 97],["toy-turtle", "Bruņurupucis", 96],["toy-ladybug", "Mārīte", 80],["toy-bee", "Bitīte", 86],["toy-whale", "Valis", 117],["toy-dolphin", "Delfīns", 70],["toy-seal", "Ronis", 96],["toy-octopus", "Astoņkājis", 182],["toy-star", "Zvaigzne", 176],["toy-heart", "Sirsniņa", 169],["toy-cloud", "Mākonītis", 219]];
   // Fabric cushions come in neutral grey; each gets its own colour (neighbours differ).
   var CUSHION_RGB=['224,165,38','127,184,230','200,50,60','241,157,176','98,184,122','242,138,60','47,99,179','31,157,143','246,212,78','86,101,122','201,111,74','143,174,139','224,72,72','74,163,223'];
@@ -2200,6 +2202,36 @@
     if(prevStarted && s.s-cur<=12*60) return {cls:'is-next', text:'Nākamā · pēc '+nsLeftText(s.s-cur)};
     return null;
   }
+  // The person whose part it is now colours the window (M3 tonal surfaces, the seed is
+  // their card's colour): set on #nsPanel, CSS mixes the tokens. Never a purple seed.
+  function nsSeed(css){
+    var m=/^#([0-9a-f]{6})$/i.exec(css||''), rgb=m?[0,2,4].map(function(i){return parseInt(m[1].slice(i,i+2),16);}):String(css||'').match(/\d+(\.\d+)?/g);
+    if(!rgb || rgb.length<3) return '';
+    var r=rgb[0]/255,g=rgb[1]/255,b=rgb[2]/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),h=0,l=(mx+mn)/2,sat=0;
+    if(mx!==mn){var d=mx-mn;sat=l>.5?d/(2-mx-mn):d/(mx+mn);h=(mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4)*60;}
+    if(h>228&&h<330) h=h<279?228:330;
+    return 'hsl('+Math.round(h)+' '+Math.round(Math.max(sat*100,35))+'% '+Math.round(Math.min(Math.max(l*100,45),70))+'%)';
+  }
+  // Whose colour: the part on now; before the night the next one (the first part all day
+  // long); after the last part the last one, until the day turns. Another date: its first.
+  function nsTintIndex(slots,cur){
+    var todayStr=window.__g_todayStr || window.__todayDateStr;
+    if(!(window.__activeDateStr && todayStr && window.__activeDateStr===todayStr)) return 0;
+    for(var i=0;i<slots.length;i++) if(cur<slots[i].e) return i;
+    return slots.length-1;
+  }
+  function nsTintPanel(card){
+    var host=document.getElementById('nsPanel'); if(!host) return;
+    var seed=card?nsSeed((card.style.getPropertyValue('--nsc-accent')||'').trim()):'';
+    host.classList.toggle('ns-tinted',!!seed);
+    if(seed){ if(host.style.getPropertyValue('--ns-seed')!==seed) host.style.setProperty('--ns-seed',seed); }
+    else host.style.removeProperty('--ns-seed');
+  }
+  function nsTintNow(){
+    var pc=document.getElementById('nsPanelContent');
+    if(!pc || !st || !st.sl || !st.sl.length){ nsTintPanel(null); return; }
+    nsTintPanel(pc.querySelector('.nsc-full-card[data-i="'+nsTintIndex(st.sl,nsNightCursor())+'"]'));
+  }
   function nsApplyCardStates(cur){
     var panel=document.getElementById('nsPanelContent');
     if(!panel || !st || !st.sl) return;
@@ -2222,6 +2254,7 @@
       }
       span.__nsSeen=true;
     });
+    nsTintNow();
   }
 
   // Laika čips zem joslas seko līnijai; tuvās robežu atzīmes (01:50…) paceļas
@@ -3348,6 +3381,7 @@
         var btnR=document.getElementById('nsToggleBtn');
         if(btnR){btnR.style.borderColor=hasActiveR?'rgba(0,255,136,.55)':'';btnR.querySelector && btnR.querySelector('.ns-led') && (btnR.querySelector('.ns-led').style.background=hasActiveR?'#00ff88':'');}
       }catch(e){}
+      nsTintNow();
       refreshFlowLiveMarker();
       publishPlan();
       return;
@@ -3408,6 +3442,7 @@
       var btn=document.getElementById('nsToggleBtn');
       if(btn){btn.style.borderColor=hasActive?'rgba(0,255,136,.55)':'';btn.querySelector && btn.querySelector('.ns-led') && (btn.querySelector('.ns-led').style.background=hasActive?'#00ff88':'');}
     }catch(e){}
+    nsTintNow();
     refreshFlowLiveMarker();
     publishPlan();
   }
@@ -3585,7 +3620,7 @@
     return colour.rgb || (/^#[0-9a-f]{6}$/i.test(colour.accent||'') ? [1,3,5].map(function(i){ return parseInt(colour.accent.slice(i,i+2),16); }).join(',') : '120,170,200');
   }
   // Groups follow one another (printed, then fabric, then the rest); "none" first.
-  var STUDIO_ORDER={ '':-2, c:-1, k:-1, x:0, p:1, f:2, o:3, a:0, s:1 };
+  var STUDIO_ORDER={ '':-2, c:-1, k:-1, b:-.5, x:0, p:1, f:2, o:3, a:0, s:1 };
   function studioItems(cat,skin){
     var list, cur, key;
     if(cat==='linen'){
@@ -3992,6 +4027,7 @@
       // Reopening reuses the panel DOM; still retry expired/failed history.
       nsRenderStats(st.sl);
       bedCareFetch().then(bedCareRenderPerch);
+      nsTintNow();
       refreshFlowLiveMarker();
       publishPlan();
       return;

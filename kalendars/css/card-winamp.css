@@ -193,4 +193,9 @@ html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafik
 }
 .wf-face-choice .wf-face-thumb.wf-thumb-winamp b { color:#9dff4a !important;-webkit-text-fill-color:#9dff4a !important;background:none !important;font-weight:800 !important;text-shadow:0 0 6px #9dff4a88; }
 .wf-face-choice .wf-face-thumb.wf-thumb-winamp small { color:#9dff4a !important;opacity:.85; }
-.wf-editor.is-winamp :is(.wf-look,.wf-finish,.wf-metal,.wf-accent,.wf-position,.wf-fit,.wf-reset,.wf-part-color,.wf-coffee-options) { display:none !important; }
+.wf-editor.is-winamp :is(.wf-look,.wf-finish,.wf-metal,.wf-accent,.wf-part-color,.wf-coffee-options) { display:none !important; }
+/* A moved element (card-faces.js: data-wf-free) leaves the player layout and sits
+   where it was put, at its own size — every element of every face can be edited. */
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] [data-wf-part][data-wf-free] {
+  left:var(--wf-x) !important;top:var(--wf-y) !important;transform:translate(-50%,-50%) scale(var(--wf-scale,1)) !important;
+}

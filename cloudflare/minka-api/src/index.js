@@ -141,7 +141,7 @@ const SKINS_KEY = "skins:v1";
 const SKIN_ART_PREFIX = "skin-art::";
 const SKIN_ART_MAX_BYTES = 96 * 1024;
 const SKIN_ART_ID_RE = /^[a-f0-9]{32}$/;
-const SKIN_PART_RE = /^(img:[\w-]{1,40}|art:[a-f0-9]{32}|grad:[a-z]{1,16}|hue:\d{1,3},\d{1,3},\d{1,3}|txt:\d{1,3},\d{1,3},\d{1,3}|num:\d{1,3},\d{1,3},\d{1,3}|na:(0(\.\d{1,2})?|1)|em:(0(\.\d{1,2})?|1)|emn:[01]|dp:0|fx:[a-z]{1,12}|fxs:[0-3](\.\d{1,2})?|fp:\d{1,2},\d{1,2}|tm:(?:[a-h][1-3][1-3]|[p-t]11)|bd:[a-z]{2,12}|bp:\d{1,2}|bq:\d{1,2}|av:1|ad:[a-z0-9-]{1,40},(?:[6-9]\d|1[0-3]\d|140),[lr],-?(?:1000|[0-9]{1,3}),-?(?:1000|[0-9]{1,3}))$/;
+const SKIN_PART_RE = /^(img:[\w-]{1,40}|art:[a-f0-9]{32}|grad:[a-z]{1,16}|emo:[bcp][0-3]m?-(?:[0-9a-f]{2,6}(?:\.[0-9a-f]{2,6}){0,9}|x[rb]\d{2})|hue:\d{1,3},\d{1,3},\d{1,3}|txt:\d{1,3},\d{1,3},\d{1,3}|num:\d{1,3},\d{1,3},\d{1,3}|na:(0(\.\d{1,2})?|1)|em:(0(\.\d{1,2})?|1)|emn:[01]|es:[sbw]|te:[fgoh]|ez:(?:[123]|[6-9]\d|[1-3]\d\d)|dp:0|fx:[a-z]{1,12}|fxs:[0-3](\.\d{1,2})?|fp:\d{1,2},\d{1,2}|tm:(?:[a-h][1-3][1-3]|[p-t]11)|bd:[a-z]{2,12}|bp:\d{1,2}|bq:\d{1,2}|av:1|ad:[a-z0-9-]{1,40},(?:[6-9]\d|1[0-3]\d|140),[lr],-?(?:1000|[0-9]{1,3}),-?(?:1000|[0-9]{1,3}))$/;
 
 function cleanSkinWorker(value) {
   if (typeof value !== "string") return "";
@@ -173,7 +173,7 @@ function validCardFacePart(part) {
   // v5 adds each element's plate (one digit 0-4 per element).
   const plated = a.length === 23 && a[0] === "5";
   const colored = (a.length === 22 && a[0] === "4") || plated;
-  if (!((a.length === 17 && a[0] === "1") || (a.length === 18 && a[0] === "2") || coffee || colored) || !/^[0-5]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return false;
+  if (!((a.length === 17 && a[0] === "1") || (a.length === 18 && a[0] === "2") || coffee || colored) || !/^[0-9]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return false;
   if ((coffee || colored) && (!/^[01]$/.test(a[18]) || !/^[0-2]$/.test(a[19]))) return false;
   if (plated && !/^[0-4]{10}$/.test(a[22])) return false;
   const integer = (s, min, max) => /^(0|[1-9]\d{0,2})$/.test(s) && Number(s) >= min && Number(s) <= max;
@@ -182,7 +182,7 @@ function validCardFacePart(part) {
     if (!/^(-|[a-f0-9]{6})(,(-|[a-f0-9]{6})){9}$/.test(a[20]) || look.length !== 5 || !/^[0-3]$/.test(look[0])
       || !integer(look[1], 0, 360) || !integer(look[2], 0, 100) || !/^[01]$/.test(look[3]) || !/^[0-2]$/.test(look[4])) return false;
   }
-  if (!integer(a[3],0,11) || !integer(a[4],0,5) || !integer(a[5],0,100) || !integer(a[6],0,100) || !integer(a[7],100,180)) return false;
+  if (!integer(a[3],0,23) || !integer(a[4],0,8) || !integer(a[5],0,100) || !integer(a[6],0,100) || !integer(a[7],100,180)) return false;
   return a.slice(8, (coffee || colored) ? 18 : a.length).every((part, index) => {
     const p = part.split(",");
     return p.length === 4 && integer(p[0],5,95) && integer(p[1],5,95) && integer(p[2],50,index === 0 ? 300 : 170)

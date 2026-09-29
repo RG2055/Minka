@@ -665,7 +665,8 @@
       seen[key] = true;
       names.push(name);
       var emojiNode = card.querySelector('.mk-mid-person-emoji');
-      var emoji = String(emojiNode && emojiNode.textContent || '').trim();
+      // a 3D emoji is a picture on the card: its value rides along on the element
+      var emoji = String(emojiNode && (emojiNode.getAttribute('data-mk-emoji') || emojiNode.textContent) || '').trim();
       data.staff.push({
         name: name,
         key: key,
@@ -1635,7 +1636,9 @@
       liquidVessel.appendChild(liquid);
       var identity = document.createElement('span');
       identity.className = 'rg-mood-person-emoji';
-      identity.textContent = person.emoji || person.initials || '?';
+      var pic3d = person.emoji && window.MinkaEmoji3D && window.MinkaEmoji3D.html(person.emoji, false, 'rg-mood-e3d');
+      if (pic3d) { identity.innerHTML = pic3d; identity.classList.add('is-e3d'); }
+      else identity.textContent = person.emoji || person.initials || '?';
       glass.appendChild(liquidVessel);
       glass.appendChild(identity);
       item.appendChild(glass);
@@ -2456,6 +2459,11 @@
     // Synchronous, and it drops any solve queued for the next frame — the day
     // switch must not pay for the same geometry pass twice.
     runMoodSectionLayout();
+    // The paint was skipped above because a day switch queues its own refresh.
+    // A rebuild without one (a shift ended, the tab came back) would leave the
+    // finished worker's bubble on the mood card: refresh from the new cards.
+    // Cheap when nothing changed — the staff signature skips the rebuild.
+    if (!moodDayRefreshFrame && !moodDayRefreshIdle && !moodDayRefreshTimer) scheduleMoodCoffeeRefresh();
     if (measure) {
       (window.__minkaRosterFinalizeMetrics ||= []).push({
         mountMs: +(mountedAt - startedAt).toFixed(2),
@@ -4355,6 +4363,8 @@
   // the "0 %" it read before that, unless an unrelated repaint happened to follow.
   document.addEventListener('minka:initial-decorations-ready', scheduleMoodCoffeeRefresh);
   document.addEventListener('minka:fatigue-updated', scheduleMoodCoffeeRefresh);
+  // someone chose a new emoji: the bubbles show it now, not after the next day switch
+  document.addEventListener('minka:personal-emoji', scheduleMoodCoffeeRefresh);
   if (window.__minkaInitialDecorationsReady) scheduleMoodCoffeeRefresh();
   syncFeedbackModalState(false);
   mount();

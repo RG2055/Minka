@@ -123,7 +123,7 @@ test('reopening an unchanged night plan retries history after a timeout',async()
     fat:w=>w, applySavedDayState:w=>({sh:0,ei:0,workers:w}),
     calc:w=>w.map((worker,i)=>({w:worker,s:i*100,e:(i+1)*100})),
     scheduleFitRoomBlocks(){}, bedCareFetch:async()=>({}), bedCareRenderPerch(){},
-    refreshFlowLiveMarker(){}, publishPlan(){},
+    refreshFlowLiveMarker(){}, nsTintNow(){}, publishPlan(){},
     render:()=>{renders++;h.c.nsRenderStats(h.c.st.sl);}
   });
   h.c.window.__nsOverlayOpen=true;

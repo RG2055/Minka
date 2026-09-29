@@ -503,3 +503,145 @@
   color: var(--pp-on) !important;
   box-shadow: inset 0 0 0 2px var(--pp-primary) !important;
 }
+/* Phones: the four main tabs as words only, each as wide as its word — with icons
+   "Nogurums" and "Kalendārs" ran into each other below 430 px. */
+@media (max-width: 430px) {
+  #worker-modal#worker-modal .view-toggle {display:flex !important;}
+  #worker-modal#worker-modal .view-toggle .toggle-btn {flex:1 1 auto !important;min-width:0 !important;padding:0 8px !important;font-size:13px !important;white-space:nowrap !important;}
+  #worker-modal#worker-modal .view-toggle .toggle-btn svg {display:none !important;}
+}
+
+/* Emoji tab: the list fills the window (no empty band under it) and the emoji are
+   big enough to see and hit; only the list scrolls, search and buttons stay put. */
+:root:not(.mk-mobile-shell) #worker-modal#worker-modal:has(#modal-emoji-view:not(.hide)) .modal-content {overflow:hidden !important;display:flex !important;flex-direction:column !important;}
+:root:not(.mk-mobile-shell) #worker-modal#worker-modal #modal-emoji-view:not(.hide) {flex:1 1 auto !important;min-height:0 !important;display:flex !important;flex-direction:column !important;}
+:root:not(.mk-mobile-shell) #worker-modal#worker-modal #modal-emoji-view .mkp-modal-body {flex:1 1 auto !important;min-height:0 !important;display:flex !important;}
+:root:not(.mk-mobile-shell) #worker-modal#worker-modal #modal-emoji-view .mkp-left {flex:1 1 auto !important;max-height:none !important;min-height:0 !important;overflow-y:auto !important;scrollbar-width:thin !important;}
+:root:not(.mk-mobile-shell) #worker-modal#worker-modal #modal-emoji-view .mkp-left::-webkit-scrollbar {width:6px !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-grid {grid-template-columns:repeat(auto-fill,minmax(64px,1fr)) !important;gap:4px !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-emoji-btn {font-size:36px !important;border-radius:18px !important;}
+/* no growing on hover: a group clips what sticks out of it (content-visibility), so the
+   tile lights up in place instead, and the chosen one has a ring inside its own edge */
+#worker-modal#worker-modal #modal-emoji-view .mkp-emoji-btn:hover:not(.mkp-locked) {transform:none !important;background:var(--pp-c3,#252c37) !important;border-radius:14px !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-emoji-btn.mkp-selected {background:color-mix(in srgb,var(--pp-primary,#a8c7fa) 22%,transparent) !important;border-color:transparent !important;box-shadow:inset 0 0 0 2px var(--pp-primary,#a8c7fa) !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-group h5 {margin:14px 4px 6px !important;font-size:13px !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-footer {flex:none !important;}
+
+/* The emoji picker (Emoji tab and the pop-up) draws with the app's own Fluent font, like the cards. */
+:is(#worker-modal,#mk-emoji-picker) :is(.mkp-emoji-btn,.mkp-tab,.mkp-prev-side-emoji,.mkp-prev-bg-emoji,#mkp-modal-picked-big,.mkp-picked-big,.mkp-lock-emoji) {
+  font-family:'Fluent Emoji Gaps','Fluent Emoji Color','Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif !important;
+}
+/* Emoji tab footer: Noņemt … Likt kā fonu, Saglabāt on one line */
+#worker-modal#worker-modal #modal-emoji-view .mkp-footer {display:grid !important;grid-template-columns:auto minmax(0,1fr) auto auto !important;align-items:center !important;gap:8px !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-footer .mkp-asbg {margin:0 !important;}
+
+/* ═══ Emoji tab: one M3 bar of groups, the window in the chosen emoji's colour ═══ */
+#worker-modal#worker-modal #modal-emoji-view .mkp-tabs {display:flex !important;grid-template-columns:none !important;gap:2px !important;position:relative !important;margin:0 0 14px !important;padding:4px !important;
+  border-radius:30px !important;background:var(--pp-c1) !important;overflow-x:auto !important;overflow-y:hidden !important;scrollbar-width:none !important;overscroll-behavior-x:contain;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-tabs::-webkit-scrollbar {display:none !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-tabs .mkp-tab {flex:1 0 84px !important;position:relative !important;z-index:1 !important;display:flex !important;flex-direction:column !important;align-items:center !important;justify-content:center !important;gap:4px !important;
+  height:60px !important;min-height:0 !important;padding:0 6px !important;border:0 !important;border-radius:26px !important;background:transparent !important;color:var(--pp-on-var) !important;box-shadow:none !important;transform:none !important;
+  transition:color .2s var(--pp-effects),background-color .15s var(--pp-effects) !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-tabs .mkp-tab:hover:not(.mkp-tab-active) {background:color-mix(in srgb,var(--pp-on) 7%,transparent) !important;color:var(--pp-on) !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-tabs .mkp-tab.mkp-tab-active {background:transparent !important;color:var(--pp-on-primary-c) !important;border:0 !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-tabs:not(.has-pill) .mkp-tab.mkp-tab-active {background:var(--pp-primary-c) !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-tabs .mkp-tab:active .mkp-tab-ico {transform:scale(.9);}
+/* the icon in the app's Fluent font (the window's own font rule took it over) */
+#worker-modal#worker-modal #modal-emoji-view .mkp-tabs .mkp-tab .mkp-tab-ico {display:grid;place-items:center;height:26px;font-family:'Fluent Emoji Gaps','Fluent Emoji Color','Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif !important;font-size:23px !important;line-height:1 !important;
+  transition:transform .3s var(--pp-spring);}
+#worker-modal#worker-modal #modal-emoji-view .mkp-tabs .mkp-tab .mkp-tab-ico .mkp-tab-pic {width:26px;height:26px;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-tabs .mkp-tab .mkp-cat-name {position:static !important;transform:none !important;opacity:1 !important;padding:0 !important;border:0 !important;border-radius:0 !important;background:none !important;
+  color:inherit !important;font:500 11.5px/1 var(--pp-font) !important;letter-spacing:0 !important;text-transform:none !important;white-space:nowrap !important;pointer-events:none !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-tab-pill {position:absolute;z-index:0;border-radius:26px;background:var(--pp-primary-c);pointer-events:none;opacity:0;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-tabs.has-pill > .mkp-tab-pill {opacity:1;}
+/* Jaunums: a green badge on the new groups (and their headings) */
+#worker-modal#worker-modal .mkp-tab-new {position:absolute;top:3px;right:6px;padding:2px 6px;border-radius:8px;background:#6dd58c;color:#06341b;font:700 9px/1.15 var(--pp-font) !important;font-style:normal;letter-spacing:.02em;pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,.35);}
+#worker-modal#worker-modal .mkp-group h5 .mkp-tab-new {position:static;display:inline-block;margin-left:8px;vertical-align:1px;letter-spacing:.02em;text-transform:none;}
+/* the window takes the chosen emoji's colour (emoji.js tintWindow); surfaces fade over */
+#worker-modal#worker-modal.mk-emoji-mode.emo-tinted {
+  --pp-bg:color-mix(in oklab,var(--emo-seed) 8%,#10141b);
+  --pp-c1:color-mix(in oklab,var(--emo-seed) 11%,#161b23);
+  --pp-c2:color-mix(in oklab,var(--emo-seed) 13%,#1c222c);
+  --pp-c3:color-mix(in oklab,var(--emo-seed) 15%,#252c37);
+  --pp-c4:color-mix(in oklab,var(--emo-seed) 17%,#2f3743);
+  --pp-primary:color-mix(in oklab,var(--emo-seed) 58%,#f4f6fa);
+  --pp-on-primary:color-mix(in oklab,var(--emo-seed) 35%,#0a0e14);
+  --pp-primary-c:color-mix(in oklab,var(--emo-seed) 32%,#f4f6fa);
+  --pp-on-primary-c:color-mix(in oklab,var(--emo-seed) 30%,#080b10);
+}
+#worker-modal#worker-modal.mk-emoji-mode {transition:background-color .55s var(--pp-effects) !important;}
+#worker-modal#worker-modal.mk-emoji-mode :is(.mkp-tabs,.mkp-tab-pill,.mkp-search,.mkp-btn,.view-toggle,.modal-close,#modal-total-hours) {transition:background-color .55s var(--pp-effects),color .3s var(--pp-effects),border-radius .35s var(--pp-spring) !important;}
+@media (prefers-reduced-motion: reduce) { #worker-modal#worker-modal.mk-emoji-mode, #worker-modal#worker-modal.mk-emoji-mode * {transition:none !important;} }
+/* Emoji tab: Izmērs kartītē, a connected button group in the footer's middle */
+#worker-modal#worker-modal .mkp-size {display:flex;align-items:center;justify-content:center;gap:2px;}
+#worker-modal#worker-modal .mkp-size > span {margin-right:10px;font:500 13px/1 var(--pp-font) !important;color:var(--pp-on-var);}
+#worker-modal#worker-modal .mkp-size button {min-width:48px;height:40px;padding:0 12px;border:0;border-radius:8px;background:var(--pp-c3);color:var(--pp-on);font:600 13px/1 var(--pp-font) !important;cursor:pointer;
+  transition:border-radius .35s var(--pp-spring),background-color .15s var(--pp-effects);}
+#worker-modal#worker-modal .mkp-size button:nth-of-type(1) {border-radius:20px 8px 8px 20px;}
+#worker-modal#worker-modal .mkp-size button:last-child {border-radius:8px 20px 20px 8px;}
+#worker-modal#worker-modal .mkp-size button:hover {background:var(--pp-c4);}
+#worker-modal#worker-modal .mkp-size button[aria-pressed="true"] {border-radius:20px;background:var(--pp-primary);color:var(--pp-on-primary);}
+/* a new group's tab: the badge on top, the icon a little smaller under it, never covered */
+#worker-modal#worker-modal #modal-emoji-view .mkp-tabs .mkp-tab.mkp-tab-isnew {justify-content:flex-end !important;padding-bottom:8px !important;gap:3px !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-tabs .mkp-tab.mkp-tab-isnew .mkp-tab-ico {height:20px;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-tabs .mkp-tab.mkp-tab-isnew .mkp-tab-ico .mkp-tab-pic {width:20px;height:20px;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-tabs .mkp-tab .mkp-tab-new {top:5px;right:auto;left:50%;translate:-50% 0;box-shadow:none;}
+/* Emoji tab: the live preview of the person's own card, right of the list */
+#worker-modal#worker-modal #modal-emoji-view .mkp-modal-body {display:grid !important;grid-template-columns:minmax(0,1fr) 220px !important;gap:18px !important;align-items:start !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-preview-wrap {display:flex !important;flex-direction:column !important;gap:10px !important;padding:0 !important;min-height:0 !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-preview-wrap .mkp-preview-card {display:none !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-preview-label {margin:0 !important;font:600 11px/1.2 var(--pp-font) !important;letter-spacing:.12em !important;text-transform:uppercase !important;color:var(--pp-on-var) !important;}
+#worker-modal#worker-modal .mkp-live-stage {position:relative;width:100%;}
+#worker-modal#worker-modal .mkp-live-stage > .mkp-live {position:absolute !important;inset:0 !important;display:block !important;width:100% !important;height:100% !important;min-height:0 !important;padding:0 !important;margin:0 !important;overflow:visible !important;background:none !important;pointer-events:none !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-picked-meta {margin:6px 0 0 !important;padding:12px !important;border-radius:18px !important;background:var(--pp-c1) !important;border:0 !important;}
+@media (max-width: 760px) { #worker-modal#worker-modal #modal-emoji-view .mkp-modal-body {grid-template-columns:1fr !important;} #worker-modal#worker-modal #modal-emoji-view .mkp-preview-wrap {display:none !important;} }
+#worker-modal#worker-modal .mkp-live-drag {cursor:grab !important;}
+#worker-modal#worker-modal .mkp-live-drag.is-dragging {cursor:grabbing !important;outline:2px solid var(--pp-primary) !important;outline-offset:3px;border-radius:999px;}
+#worker-modal#worker-modal .mkp-live-hint {display:grid;gap:8px;font:500 12px/1.35 var(--pp-font) !important;color:var(--pp-on-var);text-align:center;}
+#worker-modal#worker-modal .mkp-live-hint button {justify-self:center;height:34px;padding:0 14px;border:0;border-radius:17px;background:var(--pp-c3);color:var(--pp-on);font:600 12.5px/1 var(--pp-font) !important;cursor:pointer;}
+#worker-modal#worker-modal .mkp-live-hint button:hover {background:var(--pp-c4);}
+#worker-modal#worker-modal #modal-emoji-view .mkp-live-stage {width:100%;}
+/* the preview column fits the window's height (emoji.js fit): stretched, never cut */
+#worker-modal#worker-modal #modal-emoji-view .mkp-modal-body {align-items:stretch !important;min-height:0 !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-preview-wrap {align-items:center !important;min-height:0 !important;overflow:hidden !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-live-stage {flex:none;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-picked-meta {display:flex !important;align-items:center !important;gap:10px !important;width:100%;box-sizing:border-box;margin:0 !important;padding:8px 12px !important;border-radius:16px !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-picked-big {font-size:26px !important;line-height:1 !important;flex:none;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-picked-big .mk-e3d {width:30px;height:30px;}
+#worker-modal#worker-modal #modal-emoji-view #mkp-modal-picked-name {font:600 13px/1.2 var(--pp-font) !important;}
+#worker-modal#worker-modal #modal-emoji-view #mkp-modal-picked-cat {font:600 10px/1.2 var(--pp-font) !important;letter-spacing:.1em;}
+/* the list ends in a soft fade above the footer, not a hard cut through a row of emoji */
+#worker-modal#worker-modal #modal-emoji-view .mkp-left::after {content:"";position:sticky;bottom:-1px;display:block;height:34px;margin-top:-34px;pointer-events:none;
+  background:linear-gradient(to bottom,transparent,var(--pp-bg));}
+#worker-modal#worker-modal #modal-emoji-view .mkp-left {padding-bottom:10px !important;}
+/* the size slider beside the preview card: the editor's M3 edge slider */
+#worker-modal#worker-modal .mkp-live-stage {margin-right:44px;}
+#worker-modal#worker-modal .mkp-ez {--f:.14;position:absolute;top:6%;bottom:6%;left:calc(100% + 16px);width:14px;cursor:pointer;touch-action:none;outline:none;}
+#worker-modal#worker-modal .mkp-ez::before {content:"";position:absolute;inset:-6px -12px;}
+#worker-modal#worker-modal .mkp-ez > i {position:absolute;left:0;width:14px;display:block;pointer-events:none;}
+#worker-modal#worker-modal .mkp-ez-on {bottom:0;height:calc((100% - 16px) * var(--f) + 2px);border-radius:2px 2px 7px 7px;background:var(--pp-primary);}
+#worker-modal#worker-modal .mkp-ez-off {top:0;height:calc((100% - 16px) * (1 - var(--f)) + 2px);border-radius:7px 7px 2px 2px;background:color-mix(in srgb,var(--pp-on) 14%,transparent);}
+#worker-modal#worker-modal .mkp-ez > .mkp-ez-dot {top:5px;left:5px;width:4px;height:4px;border-radius:2px;background:var(--pp-primary);}
+#worker-modal#worker-modal .mkp-ez-knob {position:absolute;left:-7px;width:28px;height:4px;bottom:calc((100% - 16px) * var(--f) + 6px);border-radius:2px;background:var(--pp-primary);box-shadow:0 0 0 2px var(--pp-bg);pointer-events:none;transition:height .15s ease,left .15s ease,width .15s ease;}
+#worker-modal#worker-modal .mkp-ez.is-on .mkp-ez-knob,#worker-modal#worker-modal .mkp-ez:hover .mkp-ez-knob {left:-9px;width:32px;}
+#worker-modal#worker-modal .mkp-ez:focus-visible .mkp-ez-knob {box-shadow:0 0 0 2px var(--pp-bg),0 0 0 4px var(--pp-on);}
+#worker-modal#worker-modal .mkp-ez-tip {position:absolute;right:calc(100% + 14px);bottom:calc((100% - 16px) * var(--f) + 8px);translate:0 50%;padding:6px 10px;border-radius:10px;background:var(--pp-on);color:var(--pp-bg);font:600 13px/1 var(--pp-font) !important;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s ease;}
+#worker-modal#worker-modal .mkp-ez.is-on .mkp-ez-tip,#worker-modal#worker-modal .mkp-ez:hover .mkp-ez-tip {opacity:1;}
+/* Emoji tab: the emoji's look on the card under the preview (skin-organize.css draws the
+   tiles), four in a row in the narrow column */
+#worker-modal#worker-modal #modal-emoji-view .mkp-look {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;width:100%;flex:none;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-look button {padding:7px 2px 6px;gap:3px;background:var(--pp-c1);}
+#worker-modal#worker-modal #modal-emoji-view .mkp-look button:hover {background:var(--pp-c3);}
+#worker-modal#worker-modal #modal-emoji-view .mkp-look .mk-emoji-style-sample {font-size:24px;height:26px;display:grid;place-items:center;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-look .mk-emoji-style-sample .mk-e3d {width:26px;height:26px;vertical-align:0;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-look b {font-size:10.5px !important;white-space:nowrap;}
+/* a short preview column gives way in order (emoji.js fit): heading, drag hint, name, labels */
+#worker-modal#worker-modal #modal-emoji-view .mkp-modal-preview:is([data-fit="1"],[data-fit="2"],[data-fit="3"],[data-fit="4"]) > .mkp-preview-label,
+#worker-modal#worker-modal #modal-emoji-view .mkp-modal-preview:is([data-fit="2"],[data-fit="3"],[data-fit="4"]) > .mkp-live-hint:not(.is-note),
+#worker-modal#worker-modal #modal-emoji-view .mkp-modal-preview:is([data-fit="3"],[data-fit="4"]) > .mkp-picked-meta {display:none !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-modal-preview[data-fit="4"] .mkp-look b {display:none !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-modal-preview[data-fit="4"] .mkp-look button {padding:6px 2px;}
+/* the original card: no size to set, so no slider and no S / M / L / XL */
+#worker-modal#worker-modal .mkp-size[hidden], #worker-modal#worker-modal .mkp-ez[hidden] {display:none !important;}
+#worker-modal#worker-modal .mkp-live-stage:has(> .mkp-ez[hidden]) {margin-right:0;}
+#worker-modal#worker-modal .mkp-live-hint.is-note {font-size:12.5px !important;color:var(--pp-on) !important;}

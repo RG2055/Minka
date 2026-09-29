@@ -497,8 +497,17 @@
       // Saderīgi ar veco API (kafijas tonis, pilnais tonis): num / txt / na / source.
       num: accent.join(','), txt: text.join(','), na: '1', source: info.source.map(clampByte).join(','),
       accent: hexOf(accent), ink: ink, inkPaper: inkPaper, pop: pop, metals: metals,
-      hue: Math.round(h) % 360, lum: info.lum, grey: grey
+      hue: Math.round(h) % 360, lum: info.lum, grey: grey, info: info
     };
+  }
+  /* Four colourings that suit the background, as examples to pick from: the
+     picture's own, its second colour (or the opposite one), and the two
+     neighbours. A grey picture gets four calm colours instead. */
+  function paletteVariants(pal) {
+    var info = pal && pal.info; if (!info) return pal ? [pal] : [];
+    var tint = function (hue, sat) { return harmonyFrom(Object.assign({}, info, { hue: ((hue % 360) + 360) % 360, sat: sat || Math.max(55, info.sat), chroma: Math.max(.2, info.chroma) })); };
+    if (pal.grey) return [pal, tint(212, 58), tint(24, 64), tint(158, 52)];
+    return [pal, info.hue2 != null && Math.abs(((info.hue2 - info.hue + 540) % 360) - 180) < 150 ? tint(info.hue2) : tint(info.hue + 180), tint(info.hue + 32), tint(info.hue - 32)];
   }
   function harmonyFromColors(list) {
     var d = new Uint8ClampedArray(list.length * 4);
@@ -540,6 +549,7 @@
     if (skin.t === 'hue' && parseRgbTriplet(skin.rgb)) return Promise.resolve(harmonyFromColors([parseRgbTriplet(skin.rgb)]));
     if (skin.t === 'img' && skin.id) return sampleImagePalette(stockSkinUrl(skin.id));
     if (skin.t === 'art' && skin.id && artUrl(skin.id)) return sampleImagePalette(artUrl(skin.id));
+    if (skin.t === 'emo' && skin.id) { var ps = emoSpec(skin.id); if (ps) return emoPaint(ps).then(sampleImagePalette, function () { return fallbackHarmony(); }); }
     return Promise.resolve(fallbackHarmony());
   }
   // Share the existing small-image palette sampler with contrast controls.
@@ -994,8 +1004,183 @@
     face.parts.initials[3] = 0;
     return { t: 'img', id: 'dither-rtg-' + scene + (/^perf-/.test(scene) ? '' : '-' + ink[0]), num: hexToRgb('#' + ink[1]), na: '1', txt: '241,240,234', face: face, depth: false, radDefault: true };
   }
+  /* ── Emoji as the background ──────────────────────────────────────────────
+     skin.t 'emo', id "<layout><style>[m]-<code points>": layout b (one, big), c (in the
+     corner, cut by the edge) or p (a pattern); style 0 Fluent, 1 the system's emoji,
+     2 black, 3 white; "m" = it follows the person's own emoji. The picture is drawn once
+     per emoji and look into a small canvas (webp) and then is an ordinary background:
+     the picture effects (Dither, Rastrs …) work on it like on a photo. */
+  // …or "x<id>": a 3D emoji picture (js/emoji3d.js), e.g. "p2-xr07".
+  var EMO_RE = /^[bcp][0-3]m?-(?:[0-9a-f]{2,6}(\.[0-9a-f]{2,6}){0,9}|x[rb]\d{2})$/;
+  var emoReady = Object.create(null), emoPending = Object.create(null);
+  function emoCodes(e) { return Array.from(String(e || '')).map(function (c) { return c.codePointAt(0).toString(16); }).join('.'); }
+  function emoFromCodes(s) { try { return String.fromCodePoint.apply(null, String(s).split('.').map(function (h) { return parseInt(h, 16); })); } catch (_e) { return ''; } }
+  // A background's tail: a 3D emoji as its picture's id ("xr29"), any other as its code points.
+  function emoTail(e) { var id = window.MinkaEmoji3D && window.MinkaEmoji3D.decode(e); return id ? 'x' + id : emoCodes(e); }
+  function emoSpec(id, owner) {
+    var m = /^([bcp])([0-3])(m?)-(.+)$/.exec(String(id || '')); if (!m || !EMO_RE.test(id)) return null;
+    // "Mans emoji" follows the person's emoji, a 3D one as its picture
+    var mine = m[3] && owner && window.MinkaEmoji && window.MinkaEmoji.get ? window.MinkaEmoji.get(owner) : '';
+    var mine3d = mine && window.MinkaEmoji3D && window.MinkaEmoji3D.decode(mine);
+    if (mine3d) return { layout: m[1], style: +m[2], image: window.MinkaEmoji3D.url(mine3d, 320), tail: 'x' + mine3d, key: m[1] + m[2] + '|x' + mine3d };
+    if (m[4].charAt(0) === 'x') {
+      var pic = window.MinkaEmoji3D && window.MinkaEmoji3D.url(m[4].slice(1), 320); if (!pic) return null;
+      return { layout: m[1], style: +m[2], image: pic, tail: m[4], key: m[1] + m[2] + '|' + m[4] };
+    }
+    var own = m[3] && owner && window.MinkaEmoji && window.MinkaEmoji.get ? window.MinkaEmoji.get(owner) : '';
+    var emoji = own || emoFromCodes(m[4]); if (!emoji) return null;
+    return { layout: m[1], style: +m[2], emoji: emoji, key: m[1] + m[2] + '|' + emoji };
+  }
+  function emoPaint(spec) {
+    if (emoPending[spec.key]) return emoPending[spec.key];
+    var S = 384, font = function (px) { return px + 'px ' + (spec.style === 1 ? '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif' : '"Fluent Emoji Gaps","Fluent Emoji Color","Apple Color Emoji","Segoe UI Emoji",sans-serif'); };
+    var picture = null;
+    var load = spec.image
+      ? new Promise(function (ok, no) { var im = new Image(); im.decoding = 'async'; im.onload = function () { picture = im; ok(); }; im.onerror = no; im.src = spec.image; })
+      : spec.style === 1 || !document.fonts || !document.fonts.load ? Promise.resolve() : document.fonts.load(font(64), spec.emoji).catch(function () {});
+    emoPending[spec.key] = load.then(function () {
+      var c = document.createElement('canvas'); c.width = c.height = S;
+      var g = c.getContext('2d');
+      // the emoji layer, then its look (grey / black / white) worked out on the pixels
+      var L = document.createElement('canvas'); L.width = L.height = S; var lg = L.getContext('2d', { willReadFrequently: true });
+      lg.textAlign = 'center'; lg.textBaseline = 'middle';
+      // one emoji at (x, y), size px: the glyph, or the 3D picture
+      var put = function (x, y, px) { if (picture) lg.drawImage(picture, x - px * .5, y - px * .5, px, px); else { lg.font = font(px); lg.fillText(spec.emoji, x, y); } };
+      if (spec.layout === 'p') {
+        for (var row = 0; row * 96 < S + 96; row++) for (var col = -1; col * 96 < S + 96; col++) {
+          lg.save(); lg.translate(col * 96 + (row % 2 ? 48 : 0) + 24, row * 96 + 30); lg.rotate((row + col) % 2 ? .14 : -.14); put(0, 0, picture ? 66 : 58); lg.restore();
+        }
+      } else if (spec.layout === 'c') put(S * .74, S * .78, picture ? 460 : 430);
+      else put(S / 2, S * .54, picture ? 270 : 250);
+      var img = lg.getImageData(0, 0, S, S), d = img.data, sr = 0, sg = 0, sb = 0, sa = 0;
+      for (var i = 0; i < d.length; i += 16) { var a = d[i + 3]; if (a > 60) { sr += d[i] * a; sg += d[i + 1] * a; sb += d[i + 2] * a; sa += a; } }
+      var avg = sa ? [sr / sa, sg / sa, sb / sa] : [60, 90, 130];
+      if (spec.style >= 2) {
+        var br = spec.style === 2 ? .62 : 1.25, ct = spec.style === 2 ? 1.45 : .8;
+        for (var j = 0; j < d.length; j += 4) {
+          var v = (.2126 * d[j] + .7152 * d[j + 1] + .0722 * d[j + 2]) / 255 * br; v = ((v - .5) * ct + .5) * 255;
+          d[j] = d[j + 1] = d[j + 2] = v < 0 ? 0 : v > 255 ? 255 : v;
+        }
+        lg.putImageData(img, 0, 0);
+      }
+      // the ground: the emoji's own colour, deep; charcoal under black, slate under white
+      var mix = function (c1, k) { return 'rgb(' + c1.map(function (v, n) { return Math.round(v + ([10, 12, 16][n] - v) * k); }).join(',') + ')'; };
+      var grd = g.createLinearGradient(0, 0, S, S);
+      if (spec.style === 2) { grd.addColorStop(0, '#34373d'); grd.addColorStop(1, '#0f1013'); }
+      else if (spec.style === 3) { grd.addColorStop(0, '#3e4a5e'); grd.addColorStop(1, '#171c26'); }
+      else { grd.addColorStop(0, mix(avg, .5)); grd.addColorStop(1, mix(avg, .82)); }
+      g.fillStyle = grd; g.fillRect(0, 0, S, S);
+      g.globalAlpha = spec.layout === 'p' ? .85 : 1; g.drawImage(L, 0, 0); g.globalAlpha = 1;
+      var url = c.toDataURL('image/webp', .86); if (!/^data:image\/webp/.test(url)) url = c.toDataURL('image/png');
+      c.width = c.height = L.width = L.height = 1;
+      emoReady[spec.key] = url; delete emoPending[spec.key];
+      return url;
+    });
+    return emoPending[spec.key];
+  }
+  function emoOwner(el) { var w = el && el.getAttribute && (el.getAttribute('data-worker') || el.getAttribute('data-next-worker') || el.getAttribute('data-emo-owner')); return w || ''; }
+  window.mkEmojiBackground = { codes: emoCodes, tail: emoTail, spec: emoSpec, paint: emoPaint, ready: function (spec) { return spec && emoReady[spec.key]; } };
+  // The person saved a new emoji in the Emoji tab: a background that follows it is redrawn.
+  window.mkSyncEmojiBackground = function (name) {
+    var sk = window.mkGetWorkerSkin && window.mkGetWorkerSkin(name);
+    if (!sk || sk.t !== 'emo' || !/^[bcp][0-3]m-/.test(sk.id || '')) return;
+    var em = window.MinkaEmoji && window.MinkaEmoji.get(name); if (!em) return;
+    var next = JSON.parse(JSON.stringify(sk)); next.id = sk.id.slice(0, 3) + '-' + emoTail(em);
+    if (next.id === sk.id) return;
+    setSkin(name, next);
+    var k = normName(name);
+    document.querySelectorAll('#grafiks-list .card[data-worker]').forEach(function (c) { if (normName(c.getAttribute('data-worker')) === k) window.mkApplySkinToEl(c, next); });
+  };
+
+  var EZ_RE = /^(?:[123]|[6-9]\d|[1-3]\d\d)$/;
+  function ezPercent(v) {
+    v = String(v || ''); if (!EZ_RE.test(v)) return 100;
+    return v.length === 1 ? { '1': 80, '2': 220, '3': 340 }[v] : Math.max(60, Math.min(350, +v));
+  }
+  /* A large emoji (L / XL) never leaves the card: once placed, its plate is measured and
+     pushed back inside by the least it takes (a translate, 3 % of the card from the edge). */
+  function fitEmojiInside(card) {
+    var el = card && (card.querySelector('[data-wf-part="emoji"]') || card.querySelector('.mk-mid-meta-emoji:not(.is-initials)'));
+    if (!el) return;
+    if (el.style.getPropertyValue('translate')) el.style.removeProperty('translate');
+    if (!card.classList.contains('mk-emoji-zs') || !(parseFloat(card.style.getPropertyValue('--mk-ez')) > 1)) return;
+    var c = card.getBoundingClientRect(), r = el.getBoundingClientRect(); if (!c.width || !r.width) return;
+    var m = c.width * .03, dx = 0, dy = 0;
+    if (r.width > c.width - 2 * m) dx = (c.left + c.right - r.left - r.right) / 2;
+    else if (r.left < c.left + m) dx = c.left + m - r.left; else if (r.right > c.right - m) dx = c.right - m - r.right;
+    if (r.height > c.height - 2 * m) dy = (c.top + c.bottom - r.top - r.bottom) / 2;
+    else if (r.top < c.top + m) dy = c.top + m - r.top; else if (r.bottom > c.bottom - m) dy = c.bottom - m - r.bottom;
+    if (!dx && !dy) return;
+    var k = card.offsetWidth ? c.width / card.offsetWidth : 1;     // a scaled preview: undo its scale
+    el.style.setProperty('translate', (dx / k).toFixed(1) + 'px ' + (dy / k).toFixed(1) + 'px');
+  }
+  window.mkFitEmojiInside = fitEmojiInside;
+  // Emoji tab → Izmērs: how big the person's emoji sits on the card ('' = as drawn).
+  // sizes in %: 60–350 (the older S / L / XL presets were stored as 1 / 2 / 3)
+  window.mkGetEmojiSize = function (name) { var sk = window.mkGetWorkerSkin && window.mkGetWorkerSkin(name); return ezPercent(sk && sk.ez); };
+  window.mkSetEmojiSize = function (name, z) {
+    var cur = (window.mkGetWorkerSkin && window.mkGetWorkerSkin(name)) || null;
+    var sk = JSON.parse(JSON.stringify(cur || {}));
+    var pc = Math.round(Math.max(60, Math.min(350, Number(z) || 100)));
+    if (pc === 100) delete sk.ez; else sk.ez = String(pc);
+    if ((sk.ez || '') === ((cur && cur.ez) || '')) return;
+    pushUndo(name, cur);
+    var next = hasAny(sk) ? sk : null;
+    setSkin(name, next, 400);
+    var k = normName(name);
+    document.querySelectorAll('#grafiks-list .card[data-worker]').forEach(function (c) { if (normName(c.getAttribute('data-worker')) === k) window.mkApplySkinToEl(c, next); });
+  };
+  // Emoji look (Fluent '' / system 's' / black 'b' / white 'w'): the Emoji tab sets it too.
+  window.mkGetEmojiLook = function (name) { var sk = window.mkGetWorkerSkin && window.mkGetWorkerSkin(name); return (sk && /^[sbw]$/.test(sk.es || '')) ? sk.es : ''; };
+  window.mkSetEmojiLook = function (name, es) {
+    var cur = (window.mkGetWorkerSkin && window.mkGetWorkerSkin(name)) || null;
+    var sk = JSON.parse(JSON.stringify(cur || {}));
+    if (/^[sbw]$/.test(es || '')) sk.es = es; else delete sk.es;
+    if ((sk.es || '') === ((cur && cur.es) || '')) return;
+    pushUndo(name, cur);
+    var next = hasAny(sk) ? sk : null;
+    setSkin(name, next, 400);
+    var k = normName(name);
+    document.querySelectorAll('#grafiks-list .card[data-worker]').forEach(function (c) { if (normName(c.getAttribute('data-worker')) === k) window.mkApplySkinToEl(c, next); });
+  };
+  // The look samples show the person's own emoji (a 3D one as its picture), else the cat.
+  window.mkPaintEmojiLookSamples = function (root, emoji) {
+    if (!root) return;
+    root.querySelectorAll('.mk-emoji-style-sample').forEach(function (s) {
+      var v = emoji || '😺';
+      if (window.MinkaEmoji3D && window.MinkaEmoji3D.decode(v)) window.MinkaEmoji3D.paint(s, v);
+      else { if (s.hasAttribute('data-mk-emoji')) s.removeAttribute('data-mk-emoji'); if (s.textContent !== v || s.children.length) s.textContent = v; }
+    });
+  };
+  // Emoji tab → drag the emoji on the preview: its place on a card with a layout (% of the card).
+  window.mkSetEmojiPlace = function (name, x, y) {
+    var M = window.MinkaCardFaceModel, cur = (window.mkGetWorkerSkin && window.mkGetWorkerSkin(name)) || null;
+    if (!M || !cur || !cur.face) return false;
+    var sk = JSON.parse(JSON.stringify(cur)), f = M.clean(sk.face, true);
+    f.parts.emoji[0] = Math.round(Math.max(6, Math.min(94, x))); f.parts.emoji[1] = Math.round(Math.max(6, Math.min(94, y))); f.parts.emoji[3] = 1;
+    sk.face = M.clean(f, true);
+    pushUndo(name, cur);
+    setSkin(name, sk, 400);
+    var k = normName(name);
+    document.querySelectorAll('#grafiks-list .card[data-worker]').forEach(function (c) { if (normName(c.getAttribute('data-worker')) === k) window.mkApplySkinToEl(c, sk); });
+    return true;
+  };
+  // Emoji tab → "Likt kā fonu": the person's emoji becomes the card's background (keeps the
+  // layout and look it had, else one big Fluent emoji).
+  window.mkSetEmojiBackground = function (name) {
+    var em = window.MinkaEmoji && window.MinkaEmoji.get(name); if (!em) return false;
+    var sk = JSON.parse(JSON.stringify((window.mkGetWorkerSkin && window.mkGetWorkerSkin(name)) || {}));
+    var cur = sk.t === 'emo' ? /^([bcp])([0-3])/.exec(String(sk.id || '')) : null;
+    pushUndo(name, window.mkGetWorkerSkin(name));
+    sk.t = 'emo'; sk.id = (cur ? cur[1] + cur[2] : 'b0') + 'm-' + emoTail(em); delete sk.rgb;
+    setSkin(name, sk);
+    var k = normName(name);
+    document.querySelectorAll('#grafiks-list .card[data-worker]').forEach(function (c) { if (normName(c.getAttribute('data-worker')) === k) window.mkApplySkinToEl(c, sk); });
+    return true;
+  };
   // The picture behind a look (for the Nakts bed linen "like the card"): a URL or CSS gradient.
   window.mkSkinPicture = function(skin) {
+    if (skin && skin.t === 'emo') { var es = emoSpec(skin.id); return es && emoReady[es.key] ? { url: emoReady[es.key] } : null; }
     if (!skin) return null;
     if (skin.t === 'art' && skin.id && artUrl(skin.id)) return { url: artUrl(skin.id) };
     if (skin.t === 'img' && skin.id) return { url: stockSkinUrl(skin.id) };
@@ -1010,8 +1195,8 @@
     if (numEl) { numEl.style.removeProperty('color'); numEl.style.removeProperty('-webkit-text-fill-color'); }
     // Night duration sits on a fixed dark info strip, independent of skin text colours.
     if (el.classList.contains('nsc-full-card')) numEl = null;
-    ['mk-has-skin','mk-has-grad','mk-skin-fit','mk-has-num','mk-has-txt','mk-has-spark','mk-fx-hearts','mk-fx-mirdz','mk-fx-burb','mk-fx-ziedi','mk-fx-taur','mk-fx-dither','mk-fx-ditherpaper','mk-fx-dithercolor','mk-fx-pic','mk-fx-xray','mk-fx-halftone','mk-fx-duotone','mk-fx-ascii','mk-fx-focus','mk-fx-poster','mk-fx-split','mk-fx-mosaic','mk-fx-bricks','mk-fx-lines','mk-fx-led','mk-fx-pixelate','mk-fx-cmyk','mk-fx-riso','mk-fx-pointillism','mk-fx-heatmap','mk-fx-threshold','mk-fx-outline','mk-fx-posterize','mk-emoji-custom','mk-emoji-normal','nsc-worker-skinned','nsc-skin-hue','nsc-skin-contain','ns-room-bed-skin-hue'].forEach(function(c){ el.classList.remove(c); });
-    ['--mk-skin-img','--mk-emoji-tint','--mk-emoji-tint-a','--mk-num-color','--mk-num-alpha','--mk-txt-color','--mk-emoji-op','--mk-fx-scale','--mk-focus-x','--mk-focus-y'].forEach(function(p){ el.style.removeProperty(p); });
+    ['mk-has-skin','mk-has-grad','mk-skin-fit','mk-has-num','mk-has-txt','mk-txt-dark','mk-emoji-sys','mk-emoji-black','mk-emoji-white','mk-txtfx-f','mk-txtfx-g','mk-txtfx-o','mk-txtfx-h','mk-emoji-zs','mk-has-spark','mk-fx-hearts','mk-fx-mirdz','mk-fx-burb','mk-fx-ziedi','mk-fx-taur','mk-fx-dither','mk-fx-ditherpaper','mk-fx-dithercolor','mk-fx-pic','mk-fx-xray','mk-fx-halftone','mk-fx-duotone','mk-fx-ascii','mk-fx-focus','mk-fx-poster','mk-fx-split','mk-fx-mosaic','mk-fx-bricks','mk-fx-lines','mk-fx-led','mk-fx-pixelate','mk-fx-cmyk','mk-fx-riso','mk-fx-pointillism','mk-fx-heatmap','mk-fx-threshold','mk-fx-outline','mk-fx-posterize','mk-emoji-custom','mk-emoji-normal','nsc-worker-skinned','nsc-skin-hue','nsc-skin-contain','ns-room-bed-skin-hue'].forEach(function(c){ el.classList.remove(c); });
+    ['--mk-skin-img','--mk-ez','--mk-emoji-tint','--mk-emoji-tint-a','--mk-num-color','--mk-num-alpha','--mk-txt-color','--mk-emoji-op','--mk-fx-scale','--mk-focus-x','--mk-focus-y'].forEach(function(p){ el.style.removeProperty(p); });
     if (!skin) { if (window.MinkaCardFaces) window.MinkaCardFaces.apply(el, null); return; }
     if (el.classList.contains('nsc-full-card')) el.classList.add('nsc-worker-skinned');
     if (skin.t === 'art' && skin.id && artUrl(skin.id)) {
@@ -1023,6 +1208,21 @@
       if (el.classList.contains('nsc-full-card') && /^cat-/.test(String(skin.id))) el.classList.add('nsc-skin-contain');
       var material=window.MinkaFindCardMaterial(skin.id);
       el.style.setProperty('--mk-skin-img', "url('" + stockSkinUrl(skin.id) + "')"+(material&&material.background?','+material.background:''));
+    } else if (skin.t === 'emo' && skin.id) {
+      var es = emoSpec(skin.id, emoOwner(el));
+      if (es) {
+        el.classList.add('mk-has-skin');
+        el.__emoKey = es.key;
+        if (emoReady[es.key]) el.style.setProperty('--mk-skin-img', "url('" + emoReady[es.key] + "')");
+        else {
+          el.style.setProperty('--mk-skin-img', 'linear-gradient(150deg,#1d2230,#0b0e14)');
+          emoPaint(es).then(function (url) {
+            if (el.__emoKey !== es.key) return;
+            el.style.setProperty('--mk-skin-img', "url('" + url + "')");
+            if (window.MinkaDither && window.MinkaDither.skin) window.MinkaDither.skin(el);
+          }, function () {});
+        }
+      }
     } else if (skin.t === 'grad' && skin.id && GRAD_MAP[skin.id]) {
       el.classList.add('mk-has-skin');
       el.classList.add('mk-has-grad');
@@ -1048,12 +1248,27 @@
     if (skin.txt && /^\d{1,3}(,\d{1,3}){2}$/.test(String(skin.txt))) {
       el.classList.add('mk-has-txt');
       el.style.setProperty('--mk-txt-color', skin.txt);
+      // Dark or light ink: the Dither chips only take a text colour that reads on them.
+      // (WCAG luminance: below .105 it would not reach 3:1 on the near-black chips)
+      var tc = String(skin.txt).split(',').map(function (v) { v = Number(v) / 255; return v <= .04045 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); });
+      if (tc[0] * .2126 + tc[1] * .7152 + tc[2] * .0722 < .105) el.classList.add('mk-txt-dark');
     }
     if (skin.em != null) {
       el.classList.add('mk-emoji-custom');
       el.style.setProperty('--mk-emoji-op', skin.em);
     }
     if (skin.emn === '0') el.classList.add('mk-emoji-normal');
+    // Emoji look for the card's emoji and the background one: system, black, white (Fluent by default).
+    var esClass = { s: 'mk-emoji-sys', b: 'mk-emoji-black', w: 'mk-emoji-white' }[skin.es];
+    if (esClass) el.classList.add(esClass);
+    // Text effect for the name, labels and small values (not the numeral): flat, glow, outline, hard shadow.
+    if (/^[fgoh]$/.test(String(skin.te || ''))) el.classList.add('mk-txtfx-' + skin.te);
+    // The person's emoji on the card: small, as drawn, large or extra large (Emoji tab → Izmērs).
+    // The person's emoji on the card: its size in % (Emoji tab → size), 100 = as drawn.
+    var ezp = ezPercent(skin.ez);
+    if (ezp !== 100) { el.classList.add('mk-emoji-zs'); el.style.setProperty('--mk-ez', (ezp / 100).toFixed(2)); }
+    if (el.__ezFit) cancelAnimationFrame(el.__ezFit);
+    el.__ezFit = requestAnimationFrame(function () { el.__ezFit = 0; fitEmojiInside(el); });
     if (skin.fx === 'spark') el.classList.add('mk-has-spark');
     else if (['hearts','mirdz','burb','ziedi','taur'].indexOf(skin.fx) >= 0) el.classList.add('mk-fx-' + skin.fx);
     else if (skin.fx === 'dither' || skin.fx === 'ditherpaper' || skin.fx === 'dithercolor') { el.classList.add('mk-fx-dither'); if (skin.fx !== 'dither') el.classList.add('mk-fx-' + skin.fx); }
@@ -1077,7 +1292,7 @@
       window.mkApplySkinToEl(c, skin);
     });
   }
-  function hasAny(sk) { return !!(sk && (sk.t || sk.num || sk.txt || sk.em != null || sk.emn != null || sk.fx || sk.face || sk.bed || sk.bp || sk.bq)); }
+  function hasAny(sk) { return !!(sk && (sk.t || sk.num || sk.txt || sk.em != null || sk.emn != null || sk.es || sk.te || sk.ez || sk.fx || sk.face || sk.bed || sk.bp || sk.bq)); }
   function storeSkinLocal(name, skin) {
     cloudRevision++;
     localEdited = true;
@@ -1171,12 +1386,16 @@
       if (sk.t === 'art' && sk.id) p.push('art:' + sk.id);
       else if (sk.t === 'img' && sk.id) p.push('img:' + sk.id);
       else if (sk.t === 'grad' && sk.id) p.push('grad:' + sk.id);
+      else if (sk.t === 'emo' && EMO_RE.test(String(sk.id || ''))) p.push('emo:' + sk.id);
       else if (sk.t === 'hue' && sk.rgb) p.push('hue:' + sk.rgb);
       if (sk.txt) p.push('txt:' + sk.txt);
       if (sk.num) p.push('num:' + sk.num);
       if (sk.numA != null) p.push('na:' + numStr(sk.numA));
       if (sk.em != null) p.push('em:' + numStr(sk.em));
       if (sk.emn != null) p.push('emn:' + sk.emn);
+      if (/^[sbw]$/.test(String(sk.es || ''))) p.push('es:' + sk.es);
+      if (/^[fgoh]$/.test(String(sk.te || ''))) p.push('te:' + sk.te);
+      if (EZ_RE.test(String(sk.ez || ''))) p.push('ez:' + sk.ez);
       if (sk.fx) p.push('fx:' + sk.fx);
       if (sk.fx && sk.fxs != null) p.push('fxs:' + numStr(sk.fxs));
       if ((sk.fx === 'focus' || sk.fx === 'split') && /^\d{1,2},\d{1,2}$/.test(String(sk.fl || ''))) p.push('fp:' + sk.fl);
@@ -1206,12 +1425,16 @@
       if (part.indexOf('art:') === 0) { sk.t = 'art'; sk.id = part.slice(4); }
       else if (part.indexOf('img:') === 0) { sk.t = 'img'; sk.id = part.slice(4); }
       else if (part.indexOf('grad:') === 0) { sk.t = 'grad'; sk.id = part.slice(5); }
+      else if (part.indexOf('emo:') === 0) { if (EMO_RE.test(part.slice(4))) { sk.t = 'emo'; sk.id = part.slice(4); } }
       else if (part.indexOf('hue:') === 0) { sk.t = 'hue'; sk.rgb = part.slice(4); }
       else if (part.indexOf('txt:') === 0) { sk.txt = part.slice(4); }
       else if (part.indexOf('num:') === 0) { sk.num = part.slice(4); }
       else if (part.indexOf('na:') === 0) { sk.numA = part.slice(3); }
       else if (part.indexOf('em:') === 0) { sk.em = part.slice(3); }
       else if (part.indexOf('emn:') === 0) { sk.emn = part.slice(4); }
+      else if (part.indexOf('es:') === 0) { if (/^[sbw]$/.test(part.slice(3))) sk.es = part.slice(3); }
+      else if (part.indexOf('te:') === 0) { if (/^[fgoh]$/.test(part.slice(3))) sk.te = part.slice(3); }
+      else if (part.indexOf('ez:') === 0) { if (EZ_RE.test(part.slice(3))) sk.ez = part.slice(3); }
       else if (part.indexOf('fx:') === 0) { sk.fx = part.slice(3); }
       else if (part.indexOf('fxs:') === 0) { sk.fxs = part.slice(4); }
       else if (part.indexOf('fp:') === 0) { if (/^\d{1,2},\d{1,2}$/.test(part.slice(3))) sk.fl = part.slice(3); }
@@ -1571,6 +1794,9 @@
     if (current && current.tm && !(opts.keep && skin.tm)) { skin.tm = current.tm; if (skin.face && /^[a-h]/.test(skin.tm)) M.fitDial(skin.face); }
     if (current && current.em != null) skin.em = current.em;
     if (current && current.emn != null) skin.emn = current.emn;
+    if (current && current.es) skin.es = current.es;
+    if (current && current.te) skin.te = current.te;
+    if (current && current.ez) skin.ez = current.ez;
     if (opts.keep) return Promise.resolve({ skin: skin, addon: addon });
     return suggestedPalette(skin).then(function(pal) {
       harmonizeSkin(skin, pal, opts);
@@ -1604,6 +1830,17 @@
   };
   window.mkRenderSkinPicker = function(host) {
     if (!host) return;
+    // A rebuild in place (a change, undo) keeps each column where it was scrolled to:
+    // a tap on a tile further down never throws the list back to its top.
+    function rerender() {
+      var key = function (el) { return el.tagName + '.' + String(el.className || '').split(/\s+/).filter(function (c) { return c && !/^(is|has)-/.test(c); }).sort().join('.') + (el.dataset && el.dataset.tab ? '#' + el.dataset.tab : ''); };
+      var kept = [];
+      Array.prototype.forEach.call(host.querySelectorAll('*'), function (el) { if (el.scrollTop > 0) kept.push([key(el), el.scrollTop]); });
+      window.mkRenderSkinPicker(host);
+      if (!kept.length) return;
+      var all = host.querySelectorAll('*');
+      kept.forEach(function (k) { for (var i = 0; i < all.length; i++) if (key(all[i]) === k[0]) { all[i].scrollTop = k[1]; break; } });
+    }
     paletteRevision++;
     var name = currentWorkerName();
     var cur = window.mkGetWorkerSkin(name);
@@ -1651,7 +1888,8 @@
       + '<section class="mk-contrast" aria-label="Kontrasts"' + (contrastOpen ? '' : ' hidden') + '><p class="mk-contrast-wait">Mēra…</p></section>'
       + '<div class="mk-auto-palette"><div><strong>Auto krāsas</strong><small>Saskaņo ciparus, tekstu, efekta tinti, ietvaru un dekoru ar fonu</small></div>'
       + '<label class="mk-auto-toggle"><input type="checkbox" class="mk-auto-palette-toggle"' + (autoPaletteEnabled ? ' checked' : '') + '><span></span><b>Auto</b></label>'
-      + '<button type="button" class="mk-auto-palette-now">Pieskaņot</button></div>'
+      + '<button type="button" class="mk-auto-palette-now">Pieskaņot</button>'
+      + '<div class="mk-auto-variants" role="group" aria-label="Fonam atbilstošas krāsas"></div></div>'
       + '</aside><div class="mk-skin-editor"><div class="mk-skin-main-tabs" role="tablist" aria-label="Izskata sadaļas">'
       + '<button type="button" class="mk-skin-main-tab' + (activeSkinSection === 'background' ? ' is-active' : '') + '" data-skin-section="background" role="tab" aria-selected="' + (activeSkinSection === 'background') + '">Fons</button>'
       + '<button type="button" class="mk-skin-main-tab' + (activeSkinSection === 'details' ? ' is-active' : '') + '" data-skin-section="details" role="tab" aria-selected="' + (activeSkinSection === 'details') + '">Pieskaņot</button>'
@@ -1675,12 +1913,18 @@
     html += '<div class="mk-skin-tool mk-skin-tool-text"><div class="mk-skin-tool-head">Teksts</div><div class="mk-skin-custom">'
       + '<input type="color" class="mk-txt-color" value="' + (draft.txt ? rgbToHex(draft.txt) : '#ffffff') + '" title="Vārda un iniciāļu krāsa">'
       + '<button type="button" class="mk-txt-clear" title="Atiestatīt teksta krāsu">↺</button>'
+      + '<div class="mk-txt-fx" role="group" aria-label="Teksta efekts">' + [['', 'Parasts'], ['f', 'Plakans'], ['g', 'Mirdzums'], ['o', 'Kontūra'], ['h', 'Ēna']].map(function (o) {
+          return '<button type="button" data-txt-fx="' + o[0] + '" aria-pressed="' + ((draft.te || '') === o[0]) + '"><i class="mk-txtfx-sample' + (o[0] ? ' mk-txtfx-' + o[0] : '') + '" aria-hidden="true">Aa</i><b>' + o[1] + '</b></button>';
+        }).join('') + '</div>'
       + '</div></div>';
     html += '<div class="mk-skin-tool mk-skin-tool-emoji"><div class="mk-skin-tool-head">Emoji fonā</div><div class="mk-skin-custom">'
       + '<label class="mk-switch"><input type="checkbox" class="mk-emoji-show"' + (emShown ? ' checked' : '') + '><span></span><b>Rādīt</b></label>'
       + '<input type="range" class="mk-emoji-op" min="4" max="60" step="2" value="' + (emShown ? emVal : 13) + '"' + (emShown ? '' : ' disabled') + '>'
       + '<span class="mk-emoji-op-val">' + (emShown ? emVal : 0) + '%</span>'
       + '<label class="mk-chk"><input type="checkbox" class="mk-emoji-neg"' + (draft.emn === '0' ? '' : ' checked') + '> Negatīvs</label>'
+      + '<div class="mk-emoji-style" role="group" aria-label="Emoji izskats">' + [['', 'Fluent', ''], ['s', 'Sistēmas', 'mk-emoji-sys'], ['b', 'Melns', 'mk-emoji-black'], ['w', 'Balts', 'mk-emoji-white']].map(function (o) {
+          return '<button type="button" data-emoji-style="' + o[0] + '" aria-pressed="' + ((draft.es || '') === o[0]) + '"><span class="mk-emoji-style-sample ' + o[2] + '" aria-hidden="true">😺</span><b>' + o[1] + '</b></button>';
+        }).join('') + '</div>'
       + '</div></div>';
     html += '</div>';
 
@@ -1742,6 +1986,33 @@
     }
     html += '</div></div>';
 
+    // Emoji fons: any emoji as the background (the person's own, which then follows it,
+    // or any other from the Fluent set), in three layouts and four looks.
+    var myEmoji = window.MinkaEmoji && window.MinkaEmoji.get ? window.MinkaEmoji.get(name) : '';
+    var emoNow = draft.t === 'emo' ? /^([bcp])([0-3])(m?)-(.+)$/.exec(String(draft.id || '')) : null;
+    var emoSpecNow = emoNow ? window.mkEmojiBackground.spec(draft.id, name) : null;
+    var my3d = myEmoji && window.MinkaEmoji3D ? window.MinkaEmoji3D.decode(myEmoji) : null;
+    var emoPicId = emoSpecNow && emoSpecNow.image ? emoSpecNow.tail.slice(1) : !emoNow && my3d ? my3d : '';
+    var emoPic = emoPicId ? '<img src="' + skinEsc(window.MinkaEmoji3D.url(emoPicId, 128)) + '" alt="">' : '';
+    var emoShown = emoNow ? (emoNow[3] && myEmoji ? myEmoji : (emoSpecNow || {}).emoji || (emoPic ? 'pic' : '')) : myEmoji;
+    var emoGlyph = function (n) { return emoPic ? emoPic.repeat(n) : skinEsc(emoShown).repeat(n); };
+    var emoMine = !!emoNow && !!emoNow[3];
+    html += '<div class="mk-bg-panel mk-bg-emoji" data-bg-panel="emoji"><div class="mk-bg-emoji-head">Emoji fonā</div>'
+      + '<div class="mk-bg-emoji-which">'
+      + (myEmoji ? '<button type="button" class="mk-bg-emoji-mine" aria-pressed="' + emoMine + '"><i>' + (my3d ? '<img src="' + skinEsc(window.MinkaEmoji3D.url(my3d, 128)) + '" alt="">' : skinEsc(myEmoji)) + '</i><b>Mans emoji</b></button>' : '')
+      + '<button type="button" class="mk-bg-emoji-other" aria-expanded="false" aria-pressed="' + (!!emoNow && !emoMine) + '"><i>' + (emoNow && !emoMine ? emoGlyph(1) : '＋') + '</i><b>' + (emoNow && !emoMine ? 'Cits emoji' : 'Izvēlēties citu') + '</b></button>'
+      + '</div>'
+      + '<div class="mk-bg-emoji-pop" hidden><div class="mk-bg-emoji-tabs" role="tablist" aria-label="Emoji grupas"></div><div class="mk-bg-emoji-grid"></div></div>'
+      + (emoShown
+        ? '<div class="mk-bg-emoji-layouts" role="group" aria-label="Emoji fona izkārtojums">' + [['b', 'Viens'], ['c', 'Stūrī'], ['p', 'Raksts']].map(function (l) {
+            return '<button type="button" data-emo-layout="' + l[0] + '" aria-pressed="' + (!!emoNow && emoNow[1] === l[0]) + '"><span class="mk-emo-mini mk-emo-' + l[0] + '" aria-hidden="true">' + emoGlyph(l[0] === 'p' ? 6 : 1) + '</span><b>' + l[1] + '</b></button>';
+          }).join('') + '</div>'
+          + '<div class="mk-bg-emoji-looks" role="group" aria-label="Emoji fona izskats">' + [['0', 'Fluent'], ['1', 'Sistēmas'], ['2', 'Melns'], ['3', 'Balts']].map(function (o) {
+            return '<button type="button" data-emo-look="' + o[0] + '" aria-pressed="' + (emoNow ? emoNow[2] === o[0] : o[0] === '0') + '">' + o[1] + '</button>';
+          }).join('') + '</div>'
+        : '')
+      + '</div>';
+
     html += '<div class="mk-bg-panel mk-bg-images' + (activeBgMode === 'image' ? ' is-active' : '') + '" data-bg-panel="image">'
       + '<div class="mk-skin-category-nav">'
       + '<div class="mk-skin-category-bar" role="tablist" aria-label="Attēlu kategorijas">';
@@ -1788,6 +2059,7 @@
     if (previewSource && previewList) {
       prev = previewSource.cloneNode(true);
       prev.removeAttribute('data-worker');
+      prev.setAttribute('data-emo-owner', name);   // "Mans emoji" backgrounds follow this person
       prev.removeAttribute('id');
       prev.classList.add('mk-skin-preview-real');
       prev.querySelectorAll('[id]').forEach(function(node) { node.removeAttribute('id'); });
@@ -1828,7 +2100,7 @@
     function commit() {
       cancelLive();
       setSkin(name, hasAny(draft) ? draft : null);
-      window.mkRenderSkinPicker(host);
+      rerender();
     }
     // Save and repaint the cards, but keep the editor as it is: effect, colour and
     // tuning changes update their own controls in place (no rebuild, no flicker).
@@ -1891,7 +2163,7 @@
         cancelLive();
         setSkin(name, draft, 1500);
         contrastFixPending = true;
-        window.mkRenderSkinPicker(host);
+        rerender();
       }).catch(function() { remixBtn.removeAttribute('aria-busy'); });
     });
     /* ── Kontrasts (WCAG 2, like colourcontrast.cc): every text on the preview
@@ -2082,7 +2354,7 @@
         return changed;
       },
       undoPush: rememberForUndo,
-      finish: function() { cancelLive(); livePreview(); setSkin(name, hasAny(draft) ? draft : null); window.mkRenderSkinPicker(host); }
+      finish: function() { cancelLive(); livePreview(); setSkin(name, hasAny(draft) ? draft : null); rerender(); }
     };
 
     /* Fokuss: drag the colour lens on the preview. Only two CSS variables move
@@ -2142,7 +2414,7 @@
       setAddonQuiet(name, step.addon);
       cancelLive();
       setSkin(name, hasAny(draft) ? draft : null, 600);
-      window.mkRenderSkinPicker(host);
+      rerender();
     });
 
     host.querySelectorAll('.mk-skin-main-tab').forEach(function(tab) {
@@ -2158,6 +2430,25 @@
         });
       });
     });
+    var variantsBox = host.querySelector('.mk-auto-variants');
+    if (variantsBox) suggestedPalette(draft).then(function (pal) {
+      if (!variantsBox.isConnected) return;
+      var list = paletteVariants(pal), rgb = function (t) { return 'rgb(' + String(t).split(',').map(Math.round).join(',') + ')'; };
+      variantsBox.innerHTML = list.map(function (v, i) {
+        var on = String(draft.num || '') === String(v.num);
+        return '<button type="button" class="mk-auto-var" data-var="' + i + '" aria-pressed="' + on + '" title="' + (i ? 'Cits saskaņots variants' : 'Fona paša krāsas') + '" style="--v-bg:' + rgb(v.source) + ';--v-num:' + rgb(v.num) + ';--v-txt:' + rgb(v.txt) + '"><b>24</b><i></i></button>';
+      }).join('');
+      variantsBox.querySelectorAll('.mk-auto-var').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var v = list[+b.dataset.var]; if (!v) return;
+          rememberForUndo(); disableAutoPalette();
+          harmonizeSkin(draft, v, { force: true });
+          var addons = currentAddon(name);
+          if (addons.length) setAddonQuiet(name, addons.map(function (a) { return harmonizeAddon(a, v); }));
+          contrastFixPending = true; commit();
+        });
+      });
+    }, function () {});
     var autoToggle = host.querySelector('.mk-auto-palette-toggle');
     autoToggle.addEventListener('change', function() {
       autoPaletteEnabled = autoToggle.checked;
@@ -2169,6 +2460,56 @@
       applySuggestedPaletteThenCommit(true);
     });
 
+    // Emoji fons: which emoji, a layout or a look sets it (keeping the rest); the picture is
+    // drawn first, so the auto colours can read it.
+    function setEmojiBg(layout, look, pick) {
+      var mine = window.MinkaEmoji && window.MinkaEmoji.get ? window.MinkaEmoji.get(name) : '';
+      var cur = draft.t === 'emo' ? /^([bcp])([0-3])(m?)-(.+)$/.exec(String(draft.id || '')) : null;
+      var follow = pick ? pick === 'mine' : cur ? !!cur[3] : !!mine;
+      // the tail: a 3D picture ("x…") as is, an emoji as its code points
+      var tail = pick && pick.charAt(0) === 'x' ? pick
+        : pick && pick !== 'mine' ? window.mkEmojiBackground.codes(pick)
+        : follow && mine ? window.mkEmojiBackground.tail(mine)
+        : cur ? cur[4] : mine ? window.mkEmojiBackground.tail(mine) : '';
+      if (!tail) return;
+      var id = (layout || (cur ? cur[1] : 'b')) + (look != null ? look : (cur ? cur[2] : '0')) + (follow && mine ? 'm' : '') + '-' + tail;
+      rememberForUndo();
+      draft = Object.assign({}, draft, { t: 'emo', id: id }); delete draft.rgb;
+      var sp = window.mkEmojiBackground.spec(id, name);
+      (sp ? window.mkEmojiBackground.paint(sp) : Promise.resolve()).then(function () { applySuggestedPaletteThenCommit(); }, function () { commit(); });
+    }
+    host.querySelectorAll('[data-emo-layout]').forEach(function (b) { b.addEventListener('click', function () { setEmojiBg(b.dataset.emoLayout, null); }); });
+    host.querySelectorAll('[data-emo-look]').forEach(function (b) { b.addEventListener('click', function () { setEmojiBg(null, b.dataset.emoLook); }); });
+    var emoMineBtn = host.querySelector('.mk-bg-emoji-mine');
+    if (emoMineBtn) emoMineBtn.addEventListener('click', function () { setEmojiBg(null, null, 'mine'); });
+    // "Cits emoji": the Fluent set by group, built when first opened
+    var emoOther = host.querySelector('.mk-bg-emoji-other'), emoPop = host.querySelector('.mk-bg-emoji-pop');
+    if (emoOther && emoPop) {
+      var cat = window.MinkaEmoji && window.MinkaEmoji.catalogue ? window.MinkaEmoji.catalogue() : null;
+      var groups = cat ? cat.sections.filter(function (g) { return g.id !== 'all' && cat.bySection[g.id] && cat.bySection[g.id].length; }) : [];
+      var E3 = window.MinkaEmoji3D;
+      if (E3) E3.sets.forEach(function (st) { var first = E3.list(st[0])[0]; if (first) groups.push({ id: '3d-' + st[0], set: st[0], title: st[1], icon: E3.url(first.id, 128) }); });
+      var paintGroup = function (id) {
+        emoPop.querySelectorAll('[data-emo-group]').forEach(function (t) { var on = t.dataset.emoGroup === id; t.classList.toggle('is-active', on); t.setAttribute('aria-selected', String(on)); });
+        var g = groups.filter(function (x) { return x.id === id; })[0];
+        emoPop.querySelector('.mk-bg-emoji-grid').innerHTML = g && g.set
+          ? E3.list(g.set).map(function (it) { return '<button type="button" class="is-pic" data-emo-pick="x' + it.id + '" title="' + skinEsc(it.label) + '"><img loading="lazy" decoding="async" src="' + skinEsc(E3.url(it.id, 128)) + '" alt=""></button>'; }).join('')
+          : (cat.bySection[id] || []).map(function (e) { return '<button type="button" data-emo-pick="' + skinEsc(e) + '" title="' + skinEsc(cat.names[e] || '') + '">' + skinEsc(e) + '</button>'; }).join('');
+      };
+      emoOther.addEventListener('click', function () {
+        var open = emoPop.hidden;
+        emoPop.hidden = !open; emoOther.setAttribute('aria-expanded', String(open));
+        if (open && cat && !emoPop.dataset.built) {
+          emoPop.dataset.built = '1';
+          emoPop.querySelector('.mk-bg-emoji-tabs').innerHTML = groups.map(function (g) { return '<button type="button" role="tab" data-emo-group="' + g.id + '" title="' + skinEsc(g.title) + '">' + (g.icon ? '<img src="' + skinEsc(g.icon) + '" alt="">' : skinEsc(g.label)) + '</button>'; }).join('');
+          paintGroup(groups.length > 4 ? groups[3].id : (groups[0] || {}).id);
+        }
+      });
+      emoPop.addEventListener('click', function (e) {
+        var t = e.target.closest('[data-emo-group]'); if (t) { paintGroup(t.dataset.emoGroup); return; }
+        var p = e.target.closest('[data-emo-pick]'); if (p) setEmojiBg(null, null, p.dataset.emoPick);
+      });
+    }
     host.querySelector('.mk-skin-art-open').addEventListener('click', function() {
       if (!window.MinkaSkinDraw || typeof window.MinkaSkinDraw.open !== 'function') {
         if (typeof _mkToast === 'function') _mkToast('Zīmēšanas rīks nav ielādēts', 'error');
@@ -2184,6 +2525,7 @@
         monthHours: (previewCard && previewCard.querySelector('.mk-mid-month-num') || {}).textContent || '0h',
         fatigue: (previewCard && (previewCard.querySelector('.fat-pct') || previewCard.querySelector('.mk-mid-meta-value')) || {}).textContent || '',
         role: previewCard && previewCard.classList.contains('card-rd') ? 'rd' : 'rg',
+        card: previewCard || null,
         numberColor: draft.num ? 'rgba(' + draft.num + ',' + (draft.numA != null ? draft.numA : 1) + ')' : (previewCard && previewCard.classList.contains('card-rd') ? '#ff5a55' : numberHex(draft)),
         textColor: draft.txt ? 'rgb(' + draft.txt + ')' : '#ffffff',
         onSave: async function(blob) {
@@ -2381,6 +2723,20 @@
       if (ev.target.checked) delete draft.emn; else draft.emn = '0';
       commit();
     });
+    host.querySelectorAll('[data-txt-fx]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (b.dataset.txtFx) draft.te = b.dataset.txtFx; else delete draft.te;
+        commit();
+      });
+    });
+    window.mkPaintEmojiLookSamples(host.querySelector('.mk-emoji-style'), window.MinkaEmoji && window.MinkaEmoji.get(name));
+    host.querySelectorAll('[data-emoji-style]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        disableAutoPalette();
+        if (b.dataset.emojiStyle) draft.es = b.dataset.emojiStyle; else delete draft.es;
+        commit();
+      });
+    });
     // Per-card dither effect (stored in the skin's fx slot, which the API already accepts).
     // One picture effect per card (skin fx): dither variants, rentgens, rastrs, duotons, ascii.
     function setPicEffect(v) {
@@ -2486,7 +2842,7 @@
       draft = {};
       setAddonQuiet(name, null);
       setSkin(name, null);
-      window.mkRenderSkinPicker(host);
+      rerender();
     });
     if (window.MinkaCardFaces) window.MinkaCardFaces.mount(host, {
       source: previewSizeSource,
@@ -2505,7 +2861,10 @@
       timer: function(value){ if (value) draft.tm = value; else delete draft.tm; commitQuiet(); },
       section: function(value) { activeSkinSection = value; },
       active: function() { return activeSkinSection; },
-      rebuild: function() { window.mkRenderSkinPicker(host); }
+      rebuild: function() { rerender(); },
+      // save now and redraw (a rebuild alone redraws from the saved look, which a
+      // change made a moment ago has not reached yet: the first press was undone)
+      commit: function() { commit(); }
     });
   };
 })();

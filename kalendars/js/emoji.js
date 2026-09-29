@@ -126,6 +126,9 @@
   EMOJI_BY_SECTION.med = EMOJI_BY_SECTION.med.concat(['😷','🤒','🤕','🦴','🧫','🧼','🦽','👨‍⚕️','👩‍⚕️']);
   EMOJI_BY_SECTION.med = EMOJI_BY_SECTION.med.filter(function(e,i,a){return a.indexOf(e)===i;});
   EMOJI_BY_SECTION.mood = EMOJI_BY_SECTION.mood.concat(['😍','🥰','🤩','😊','😌','🤔','😇','😜','🤗','😺']);
+  // Plain faces first (🙂 and the everyday smileys), then the moods.
+  EMOJI_BY_SECTION.mood = ['🙂','😀','😃','😄','😁','😆','😅','😂','🤣','🥲','🥹','☺️','😉','😋','😛','😝','🤭','🤫','😐','😶','🙄','😮','😯','😲','😳','😦','😟','🙁','☹️','😢','😭','😱','😨','😰','😥','😞','😓','😩','😫','😖','😣','😠','😡','🤬','🤠','🤓','🥸','🫣','🫢','🥴','🤥']
+    .concat(EMOJI_BY_SECTION.mood).filter(function(e,i,a){return a.indexOf(e)===i;});
   EMOJI_BY_SECTION.energy = EMOJI_BY_SECTION.energy.concat(['🔋','🔌','🌞','🌛','🌩️','🎇','🌫️','🔭','💣','🧨']);
   EMOJI_BY_SECTION.animals = EMOJI_BY_SECTION.animals.concat(['🐶','🐰','🐹','🐮','🐴','🦉','🦄','🐑','🦆','🐯','🐈','🐈‍⬛','😸','🦕','🦖','🫎','🐻‍❄️','🦬','🦤','🪼']);
   EMOJI_BY_SECTION.nature = EMOJI_BY_SECTION.nature.concat(['🍃','🌼','🪻','🪷','🐾','🌥️','🌦️','🌨️','🪵','🌳']);
@@ -150,6 +153,7 @@
 
   var SECTION_TITLES = {};
   SECTIONS.forEach(function(sec) { SECTION_TITLES[sec.id] = sec.title; });
+  SECTION_TITLES['e3d-roji'] = 'Roji 3D'; SECTION_TITLES['e3d-balloon'] = 'Baloni 3D';
   var EMOJI_NAMES = {
     '🩻':'Rentgens','💉':'Šļirce','🏥':'Slimnīca','🔬':'Mikroskops','💊':'Tablete','🩺':'Stetoskops','🩹':'Plāksteris','🧬':'DNS','🫀':'Sirds','🫁':'Plaušas','🧠':'Smadzenes','🩸':'Asinis','🧪':'Mēģene','🚑':'Ātrā palīdzība','🥼':'Halāts','😷':'Maska','🤒':'Slims','🦴':'Kauls',
     '😴':'Miegs','😎':'Foršs','🤯':'Pārslodze','🤖':'Robots','🥱':'Žāva','🫡':'Dežūra','🫠':'Izkusis','😮‍💨':'Izelpa','😵‍💫':'Reibonis','❤️‍🔥':'Deg','❤️‍🩹':'Atkopjas',
@@ -157,10 +161,13 @@
     '🦊':'Lapsa','🐱':'Kaķis','🐶':'Suns','🐉':'Pūķis','🦖':'Dinozaurs','🦕':'Dinozaurs','🦉':'Pūce','🐦‍🔥':'Fēnikss','🪼':'Medūza','🫎':'Alnis',
     '🌿':'Lapa','🍀':'Āboliņš','🪻':'Hiacinte','🪷':'Lotoss','🪾':'Koks','🌌':'Galaktika','🌈':'Varavīksne','🫧':'Burbuļi',
     '☕':'Kafija','🍕':'Pica','🎮':'Spēles','🎧':'Austiņas','📚':'Grāmatas','🪄':'Burvju nūjiņa','🪬':'Amulets','🛜':'Wi-Fi','💻':'Dators','📱':'Telefons',
-    '🔥':'Uguns','🏆':'Kauss','💎':'Dimants','👑':'Kronis'
+    '🔥':'Uguns','🏆':'Kauss','💎':'Dimants','👑':'Kronis',
+    '🙂':'Smaids','😀':'Priecīgs','😃':'Prieks','😄':'Jautrs','😁':'Plats smaids','😆':'Smiekli','😅':'Uff','😂':'Smieklu asaras','🤣':'Ripo aiz smiekliem','🥲':'Smaids caur asarām','🥹':'Aizkustināts','☺️':'Mīlīgs','😉':'Piemiedz aci','😋':'Garšīgi','😛':'Mēle','😝':'Ķēmojas','🤭':'Aizsedz muti','🤫':'Klusu','😐':'Neitrāls','😶':'Bez vārdiem','🙄':'Acis pret debesīm','😮':'Pārsteigts','😯':'Apklusis','😲':'Šokā','😳':'Samulsis','😦':'Apjucis','😟':'Noraizējies','🙁':'Mazliet bēdīgs','☹️':'Bēdīgs','😢':'Asara','😭':'Raud','😱':'Kliedz','😨':'Nobijies','😰':'Uztraucies','😥':'Atvieglots','😞':'Vīlies','😓':'Sviedri','😩':'Noguris','😫':'Pārguris','😖':'Samocīts','😣':'Izturēt','😠':'Dusmīgs','😡':'Nikns','🤬':'Lamājas','🤠':'Kovbojs','🤓':'Gudrinieks','🥸':'Inkognito','🫣':'Palūr','🫢':'Ak!','🥴':'Apreibis','🤥':'Melis'
   };
 
   function getEmojiSection(emoji) {
+    var E3 = window.MinkaEmoji3D, id3 = E3 && E3.decode(emoji);
+    if (id3) return 'e3d-' + E3.get(id3).set;
     var keys = ['med','mood','energy','animals','nature','stuff','rare'];
     for (var i = 0; i < keys.length; i++) {
       if ((EMOJI_BY_SECTION[keys[i]] || []).indexOf(emoji) !== -1) return keys[i];
@@ -169,6 +176,8 @@
   }
 
   function getEmojiName(emoji) {
+    var E3 = window.MinkaEmoji3D, id = E3 && E3.decode(emoji);
+    if (id) return E3.get(id).label;
     return EMOJI_NAMES[emoji] || 'Emoji';
   }
 
@@ -183,10 +192,18 @@
     });
   }
 
+  // The 3D emoji (js/emoji3d.js) as two more groups in this picker.
+  function e3dSections() {
+    var E3 = window.MinkaEmoji3D; if (!E3) return [];
+    return E3.sets.map(function (st) { var first = E3.list(st[0])[0]; return first ? { id: 'e3d-' + st[0], set: st[0], label: '<img class="mkp-tab-pic" src="' + E3.url(first.id, 128) + '" alt="">', title: st[1] + ' 3D' } : null; }).filter(Boolean);
+  }
+  function e3dList(k) { var E3 = window.MinkaEmoji3D, set = /^e3d-(.+)$/.exec(k); return E3 && set ? E3.list(set[1]).map(function (it) { return E3.encode(it.id); }) : null; }
   function buildCategoryButtons(buttonClass) {
-    return SECTIONS.map(function(sec) {
-      return '<button class="' + buttonClass + (_activeTab === sec.id ? ' mkp-tab-active' : '') + '" data-tab="' + sec.id + '" title="' + sec.title + '">' +
-        sec.label + '<span class="mkp-cat-name">' + sec.title + '</span></button>';
+    var sections = SECTIONS.slice(0, -1).concat(e3dSections(), SECTIONS.slice(-1));
+    return sections.map(function(sec) {
+      var isNew = /^e3d-/.test(sec.id);
+      return '<button class="' + buttonClass + (_activeTab === sec.id ? ' mkp-tab-active' : '') + (isNew ? ' mkp-tab-isnew' : '') + '" data-tab="' + sec.id + '" title="' + sec.title + '">' +
+        '<span class="mkp-tab-ico">' + sec.label + '</span><span class="mkp-cat-name">' + sec.title + '</span>' + (isNew ? '<i class="mkp-tab-new">Jaunums</i>' : '') + '</button>';
     }).join('');
   }
 
@@ -200,17 +217,18 @@
         '<span class="mkp-lock-badge">' + LOCKED[e].label + '</span>' +
       '</button>';
     }
-    return '<button class="' + cls + '" data-emoji="' + e + '" title="' + getEmojiName(e) + '">' + e + '</button>';
+    var pic = window.MinkaEmoji3D && window.MinkaEmoji3D.html(e);
+    return '<button class="' + cls + (pic ? ' mkp-e3d' : '') + '" data-emoji="' + e + '" title="' + getEmojiName(e) + '">' + (pic || e) + '</button>';
   }
 
   function buildEmojiGroupsHtml(workerLvl, currentEmoji) {
     var q = String(_emojiQuery || '').trim().toLowerCase();
     var keys = _activeTab === 'all'
-      ? ['med','mood','energy','animals','nature','stuff','rare']
+      ? ['med','mood','energy','animals','nature','stuff'].concat(e3dSections().map(function (x) { return x.id; }), ['rare'])
       : [_activeTab];
     var html = '';
     keys.forEach(function(k) {
-      var list = (EMOJI_BY_SECTION[k] || []).filter(function(e) {
+      var list = (EMOJI_BY_SECTION[k] || e3dList(k) || []).filter(function(e) {
         if (!q) return true;
         return e.indexOf(q) !== -1 ||
           getEmojiName(e).toLowerCase().indexOf(q) !== -1 ||
@@ -218,7 +236,7 @@
       });
       if (!list.length) return;
       html += '<section class="mkp-group" data-group="' + k + '">' +
-        '<h5>' + (SECTION_TITLES[k] || k) + '</h5>' +
+        '<h5>' + (SECTION_TITLES[k] || (e3dSections().filter(function (x) { return x.id === k; })[0] || {}).title || k) + (/^e3d-/.test(k) ? ' <i class="mkp-tab-new">Jaunums</i>' : '') + '</h5>' +
         '<div class="mkp-grid">' +
           list.map(function(e) { return emojiButtonHtml(e, workerLvl, currentEmoji); }).join('') +
         '</div>' +
@@ -424,6 +442,8 @@
   // ── CARD UPDATES ─────────────────────────────────────────────────────────────
   function refreshAllCards() {
     if(window.parent!==window)window.parent.postMessage({type:"minka-personal-emoji-updated"},location.origin);
+    // the mood card reads the emoji from the cards: after they are painted, it refreshes too
+    setTimeout(function () { document.dispatchEvent(new CustomEvent('minka:personal-emoji')); }, 0);
     document.querySelectorAll('.card[data-worker]').forEach(function(card) {
       updateCardEmoji(card, card.getAttribute('data-worker'));
     });
@@ -432,8 +452,9 @@
     });
   }
 
-  function updateCardEmoji(card, name) {
-    var emoji = safeEmoji(_data[name]) || null;
+  // override: paint this emoji instead of the saved one (the Emoji tab's live preview)
+  function updateCardEmoji(card, name, override) {
+    var emoji = arguments.length > 2 ? (override || null) : (safeEmoji(_data[name]) || null);
     var meta = card.querySelector('.mk-mid-meta-emoji');
     if (meta) {
       var initials = String(name || '').trim().split(/\s+/).slice(0, 2).map(function(part) { return part.charAt(0); }).join('').toUpperCase();
@@ -441,8 +462,10 @@
       meta.classList.toggle('is-initials', !emoji);
       meta.setAttribute('data-mk-emoji-home', glyph);
       var fly = meta.querySelector('.mk-mid-meta-emoji-fly');
-      if (fly) fly.textContent = glyph;
+      if (fly) paintEmoji(fly, glyph);
     }
+    var bgEl = card.querySelector('.mk-mid-bg-emoji');
+    if (bgEl && emoji && typeof window !== 'undefined' && window.MinkaEmoji3D && (window.MinkaEmoji3D.decode(emoji) || bgEl.hasAttribute('data-mk-emoji'))) paintEmoji(bgEl, emoji, true);
     var shiftIcons = card.querySelector('.shift-icons');
     var midEl = card.querySelector('.mk-mid-person-emoji');
     var statusRail = card.querySelector('.mk-mid-status-icons');
@@ -456,7 +479,7 @@
           midEl.setAttribute('data-mk-emoji-click', '1');
           statusRail.insertBefore(midEl, statusRail.firstChild);
         }
-        midEl.textContent = emoji;
+        paintEmoji(midEl, emoji);
       } else if (midEl) {
         midEl.remove();
       }
@@ -484,7 +507,66 @@
         if (topDiv) topDiv.appendChild(el);
       }
     }
-    el.textContent = emoji;
+    paintEmoji(el, emoji);
+  }
+
+  /* The chosen emoji's colour for the window (M3 dynamic colour): the emoji is drawn once
+     into a tiny canvas and its saturated pixels averaged; cached per emoji. Grey or purple
+     emoji leave the window neutral. */
+  var _seedCache = Object.create(null), _tintRun = 0;
+  function emojiSeed(e) {
+    if (!e) return Promise.resolve(null);
+    if (_seedCache[e] !== undefined) return Promise.resolve(_seedCache[e]);
+    var E3 = window.MinkaEmoji3D, id3 = E3 && E3.decode(e), S = 28;
+    var read = function (paint) {
+      try {
+        var c = document.createElement('canvas'); c.width = c.height = S;
+        var g = c.getContext('2d', { willReadFrequently: true }); paint(g);
+        var d = g.getImageData(0, 0, S, S).data, r = 0, gg = 0, b = 0, w = 0;
+        for (var i = 0; i < d.length; i += 4) {
+          var a = d[i + 3] / 255; if (a < .5) continue;
+          var mx = Math.max(d[i], d[i + 1], d[i + 2]), mn = Math.min(d[i], d[i + 1], d[i + 2]), sat = mx ? (mx - mn) / mx : 0;
+          if (sat < .28 || mx < 60) continue;
+          var k = a * sat * sat; r += d[i] * k; gg += d[i + 1] * k; b += d[i + 2] * k; w += k;
+        }
+        if (w < 3) return null;
+        r /= w; gg /= w; b /= w;
+        var M = Math.max(r, gg, b), N = Math.min(r, gg, b), h = 0, dd = M - N;
+        if (dd) h = (M === r ? ((gg - b) / dd + 6) % 6 : M === gg ? (b - r) / dd + 2 : (r - gg) / dd + 4) * 60;
+        if (h > 228 && h < 330) return null;               // never a purple window
+        return 'rgb(' + [r, gg, b].map(Math.round).join(',') + ')';
+      } catch (_e) { return null; }
+    };
+    var done = function (v) { _seedCache[e] = v; return v; };
+    if (id3) return new Promise(function (ok) {
+      var im = new Image(); im.onload = function () { ok(done(read(function (g) { g.drawImage(im, 0, 0, S, S); }))); }; im.onerror = function () { ok(done(null)); };
+      im.src = E3.url(id3, 128);
+    });
+    var font = '22px "Fluent Emoji Gaps","Fluent Emoji Color","Apple Color Emoji","Segoe UI Emoji",sans-serif';
+    var ready = document.fonts && document.fonts.load ? document.fonts.load(font, e).catch(function () {}) : Promise.resolve();
+    return ready.then(function () { return done(read(function (g) { g.font = font; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(e, S / 2, S / 2 + 1); })); });
+  }
+  function tintWindow(e) {
+    var modal = document.getElementById('worker-modal'); if (!modal) return;
+    var run = ++_tintRun;
+    emojiSeed(e).then(function (rgb) {
+      if (run !== _tintRun) return;
+      if (rgb) { modal.style.setProperty('--emo-seed', rgb); modal.classList.add('emo-tinted'); }
+      else modal.classList.remove('emo-tinted');
+    });
+  }
+
+  // An emoji into an element: a 3D emoji picture (js/emoji3d.js) or the text, as before.
+  function paintEmoji(el, value, big) {
+    var E3 = typeof window !== 'undefined' && window.MinkaEmoji3D;
+    // A still Fluent frame (emoji-hover-animation) hides the glyph with a transparent text
+    // colour; a new emoji written here drops that frame, so the colour goes with it
+    // (else the next emoji stayed invisible). The module adds a frame again if it needs one.
+    if (el.style && /transparent|rgba\(0, 0, 0, 0\)/.test(el.style.color + el.style.getPropertyValue('-webkit-text-fill-color'))) {
+      ['color', '-webkit-text-fill-color', '--mk-anim-frames', '--mk-anim-dur'].forEach(function (k) { el.style.removeProperty(k); });
+    }
+    if (E3 && E3.decode(value)) E3.paint(el, value, big);
+    else { if (el.hasAttribute && el.hasAttribute('data-mk-emoji')) el.removeAttribute('data-mk-emoji'); if (el.textContent !== value || el.children.length) el.textContent = value; }
   }
 
   function updateSideEmoji(block, name) {
@@ -507,7 +589,7 @@
       else if (sideNameRow) sideNameRow.appendChild(el);
       else block.appendChild(el);
     }
-    el.textContent = emoji;
+    paintEmoji(el, emoji);
   }
 
   // ── HOOK CARDS ───────────────────────────────────────────────────────────────
@@ -730,11 +812,11 @@
     _selectedEmoji = e;
     // Update preview immediately
     var pe = document.getElementById('mkp-preview-emoji');
-    if (pe) pe.textContent = e || '';
+    if (pe) paintEmoji(pe, e || '', true);
     var bg = document.getElementById('mkp-preview-bg-emoji');
-    if (bg) bg.textContent = e || '';
+    if (bg) paintEmoji(bg, e || '', true);
     var big = document.getElementById('mkp-picked-big');
-    if (big) big.textContent = e || '—';
+    if (big) paintEmoji(big, e || '—', true);
     var name = document.getElementById('mkp-picked-name');
     if (name) name.textContent = e ? getEmojiName(e) : 'Nav izvēlēts';
     var cat = document.getElementById('mkp-picked-cat');
@@ -749,24 +831,145 @@
 
   function previewPickerEmoji(e) {
     var pe = document.getElementById('mkp-preview-emoji');
-    if (pe) pe.textContent = e || '';
+    if (pe) paintEmoji(pe, e || '', true);
     var bg = document.getElementById('mkp-preview-bg-emoji');
-    if (bg) bg.textContent = e || '';
+    if (bg) paintEmoji(bg, e || '', true);
     var big = document.getElementById('mkp-picked-big');
-    if (big) big.textContent = e || '—';
+    if (big) paintEmoji(big, e || '—', true);
     var name = document.getElementById('mkp-picked-name');
     if (name) name.textContent = e ? getEmojiName(e) : 'Nav izvēlēts';
     var cat = document.getElementById('mkp-picked-cat');
     if (cat) cat.textContent = e ? (SECTION_TITLES[getEmojiSection(e)] || '') : '';
   }
 
+  /* The Emoji tab's preview: a still copy of the person's own card (its look, layout and
+     size as they are), small, showing the emoji under the pointer or the chosen one, at
+     the chosen size. Rebuilt with the tab; the copy is outside the roster (no data-worker). */
+  var _live = null;
+  function liveCard(container, name) {
+    _live = null;
+    var holder = container.querySelector('.mkp-modal-preview'); if (!holder) return null;
+    var src = Array.prototype.filter.call(document.querySelectorAll('.card.mk-mid-card[data-worker]'), function (c) { return c.getAttribute('data-worker') === name && !c.closest('.mk-skin-preview-list'); })[0];
+    var r = src && src.getBoundingClientRect(); if (!r || !r.width || !r.height) return null;
+    var wrap = document.createElement('div'); wrap.id = 'grafiks-list'; wrap.className = 'grid-view mk-skin-preview-list mkp-live';
+    var c = src.cloneNode(true);
+    c.removeAttribute('data-worker'); c.removeAttribute('id');
+    c.querySelectorAll('[id],[data-worker]').forEach(function (el) { el.removeAttribute('id'); el.removeAttribute('data-worker'); });
+    c.querySelectorAll('.mk-card-addon-portaled').forEach(function (el) { el.classList.remove('mk-card-addon-portaled'); });
+    c.querySelectorAll('button,input,select,textarea,a').forEach(function (el) { var sp = document.createElement('span'); sp.className = el.className; sp.innerHTML = el.innerHTML; el.replaceWith(sp); });
+    ['position:absolute', 'left:0', 'top:0', 'margin:0', 'transform-origin:0 0', 'pointer-events:none'].forEach(function (d) { var i = d.indexOf(':'); c.style.setProperty(d.slice(0, i), d.slice(i + 1), 'important'); });
+    c.style.setProperty('width', r.width + 'px', 'important'); c.style.setProperty('height', r.height + 'px', 'important');
+    var stage = document.createElement('div'); stage.className = 'mkp-live-stage'; stage.style.aspectRatio = r.width + ' / ' + r.height;
+    wrap.appendChild(c); stage.appendChild(wrap);
+    var label = holder.querySelector('.mkp-preview-label'); if (label) { label.textContent = 'Tā izskatīsies'; label.after(stage); } else holder.prepend(stage);
+    // as big as the column allows in both directions: the name box and hint stay in sight
+    // A short column gives way in order (holder data-fit, CSS): the heading, the drag hint,
+    // the emoji's name, the look's labels; the card and the look tiles stay.
+    var fit = function () {
+      var room = holder.clientWidth - 44, want = Math.min(150, room), side = 0;
+      for (var lvl = 0; lvl <= 4; lvl++) {
+        if (holder.dataset.fit !== String(lvl)) holder.dataset.fit = lvl;
+        var other = 0; Array.prototype.forEach.call(holder.children, function (ch) { if (ch !== stage && ch.getClientRects().length) other += ch.offsetHeight + 10; });
+        side = Math.floor(Math.min(room, (holder.clientHeight - other - 8) * r.width / r.height));
+        if (side >= want) break;
+      }
+      side = Math.max(96, side);
+      if (stage.style.width !== side + 'px') stage.style.width = side + 'px';
+      c.style.setProperty('transform', 'scale(' + (side / r.width).toFixed(4) + ')', 'important');
+    };
+    requestAnimationFrame(fit);
+    if (container.__liveRO) container.__liveRO.disconnect();
+    container.__liveRO = window.ResizeObserver ? new ResizeObserver(function () { fit(); }) : null;
+    if (container.__liveRO) container.__liveRO.observe(holder);
+    // Place the emoji: drag it on the preview (a card with a layout); the Original card has
+    // fixed places, so it points to the layouts instead.
+    var part = c.querySelector('[data-wf-part="emoji"]'), hint = document.createElement('div'); hint.className = 'mkp-live-hint';
+    if (part && typeof window.mkSetEmojiPlace === 'function') {
+      hint.textContent = 'Velc emoji, lai noliktu to, kur gribi';
+      part.style.setProperty('pointer-events', 'auto', 'important'); part.classList.add('mkp-live-drag');
+      var drag = null;
+      var at = function (ev) { var cr = c.getBoundingClientRect(); return [Math.max(6, Math.min(94, (ev.clientX - cr.left) / cr.width * 100)), Math.max(6, Math.min(94, (ev.clientY - cr.top) / cr.height * 100))]; };
+      part.addEventListener('pointerdown', function (ev) { if (ev.button !== 0) return; ev.preventDefault(); ev.stopPropagation(); drag = ev.pointerId; part.style.removeProperty('translate'); try { part.setPointerCapture(ev.pointerId); } catch (_e) {} part.classList.add('is-dragging'); });
+      part.addEventListener('pointermove', function (ev) { if (drag !== ev.pointerId) return; var p = at(ev); part.style.setProperty('--wf-x', p[0].toFixed(1) + '%'); part.style.setProperty('--wf-y', p[1].toFixed(1) + '%'); });
+      var drop = function (ev) { if (drag !== ev.pointerId) return; drag = null; part.classList.remove('is-dragging'); var p = at(ev); window.mkSetEmojiPlace(name, p[0], p[1]); if (typeof window.mkFitEmojiInside === 'function') requestAnimationFrame(function () { window.mkFitEmojiInside(c); }); };
+      part.addEventListener('pointerup', drop); part.addEventListener('pointercancel', drop);
+    } else {
+      // The original card has the emoji's own fixed place and size: said here, and the way on.
+      hint.classList.add('is-note');
+      hint.innerHTML = '<span>Šajā izskatā emoji nevar palielināt un pārvietot.</span><button type="button">Mainīt izskatu</button>';
+      hint.querySelector('button').addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        if (typeof window.showModalView === 'function') { window.showModalView('skin'); setTimeout(function () { var t = document.querySelector('[data-org-tab="layout"]'); if (t) t.click(); }, 700); }
+      });
+    }
+    stage.after(hint);
+    // The emoji's look on the card (Fluent / system / black / white) under the preview, its
+    // samples in the emoji being tried: a black emoji on the card says why, right here.
+    var LOOKS = [['', 'Fluent', ''], ['s', 'Sistēmas', 'mk-emoji-sys'], ['b', 'Melns', 'mk-emoji-black'], ['w', 'Balts', 'mk-emoji-white']];
+    var look = null, paintLook = function () {};
+    if (typeof window.mkSetEmojiLook === 'function') {
+      Array.prototype.forEach.call(holder.querySelectorAll('.mkp-look'), function (x) { x.remove(); });
+      var curLook = window.mkGetEmojiLook(name);
+      look = document.createElement('div'); look.className = 'mk-emoji-style mkp-look'; look.setAttribute('role', 'group'); look.setAttribute('aria-label', 'Emoji izskats kartītē');
+      look.innerHTML = LOOKS.map(function (o) { return '<button type="button" data-emoji-look="' + o[0] + '" aria-pressed="' + (curLook === o[0]) + '"><span class="mk-emoji-style-sample ' + o[2] + '" aria-hidden="true"></span><b>' + o[1] + '</b></button>'; }).join('');
+      holder.appendChild(look);
+      paintLook = function (e) { if (typeof window.mkPaintEmojiLookSamples === 'function') window.mkPaintEmojiLookSamples(look, e); };
+      look.addEventListener('click', function (ev) {
+        var b = ev.target.closest('[data-emoji-look]'); if (!b) return;
+        ev.stopPropagation();
+        var v = b.dataset.emojiLook;
+        LOOKS.forEach(function (o) { if (o[2]) c.classList.toggle(o[2], o[0] === v); });
+        look.querySelectorAll('[data-emoji-look]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+        window.mkSetEmojiLook(name, v);
+      });
+    }
+    var refit = function () { if (typeof window.mkFitEmojiInside === 'function') requestAnimationFrame(function () { window.mkFitEmojiInside(c); }); };
+    /* The size slider beside the card: the editor's M3 edge slider (filled below the bar
+       handle, a stop dot at the top), 60–350 %; the card follows while dragging, the size
+       is saved on release; S / M / L / XL below are its presets. */
+    var MIN = 60, MAX = 350, cur = 100;
+    // no slider (nor S / M / L / XL) where the size does nothing visible: the original card
+    var sizeBox = container.querySelector('.mkp-size'); if (sizeBox) sizeBox.hidden = !part;
+    var sl = document.createElement('div'); sl.className = 'mkp-ez'; sl.setAttribute('role', 'slider'); sl.tabIndex = 0; sl.hidden = !part;
+    sl.setAttribute('aria-label', 'Emoji izmērs kartītē'); sl.setAttribute('aria-valuemin', MIN); sl.setAttribute('aria-valuemax', MAX);
+    sl.innerHTML = '<i class="mkp-ez-off"></i><i class="mkp-ez-on"></i><i class="mkp-ez-dot"></i><b class="mkp-ez-knob"></b><span class="mkp-ez-tip"></span>';
+    stage.appendChild(sl);
+    var paintSlider = function (v) {
+      var f = (v - MIN) / (MAX - MIN);
+      sl.style.setProperty('--f', f.toFixed(4)); sl.setAttribute('aria-valuenow', v);
+      sl.querySelector('.mkp-ez-tip').textContent = v + '%';
+    };
+    var apply = function (v) {
+      cur = v;
+      if (v === 100) { c.classList.remove('mk-emoji-zs'); c.style.removeProperty('--mk-ez'); }
+      else { c.classList.add('mk-emoji-zs'); c.style.setProperty('--mk-ez', (v / 100).toFixed(2)); }
+      paintSlider(v); refit();
+      container.querySelectorAll('[data-emoji-size]').forEach(function (x) { x.setAttribute('aria-pressed', String(+x.dataset.emojiSize === v)); });
+    };
+    var save = function () { if (typeof window.mkSetEmojiSize === 'function') window.mkSetEmojiSize(name, cur); };
+    var fromY = function (ev) { var b = sl.getBoundingClientRect(); var f = 1 - (ev.clientY - b.top - 8) / Math.max(1, b.height - 16); return Math.round(MIN + Math.max(0, Math.min(1, f)) * (MAX - MIN)); };
+    var sliding = null;
+    sl.addEventListener('pointerdown', function (ev) { if (ev.button !== 0) return; ev.preventDefault(); ev.stopPropagation(); sliding = ev.pointerId; try { sl.setPointerCapture(ev.pointerId); } catch (_e) {} sl.classList.add('is-on'); apply(fromY(ev)); });
+    sl.addEventListener('pointermove', function (ev) { if (sliding !== ev.pointerId) return; apply(fromY(ev)); });
+    var end = function (ev) { if (sliding !== ev.pointerId) return; sliding = null; sl.classList.remove('is-on'); save(); };
+    sl.addEventListener('pointerup', end); sl.addEventListener('pointercancel', end);
+    sl.addEventListener('keydown', function (ev) {
+      var d = ev.key === 'ArrowUp' || ev.key === 'ArrowRight' ? 5 : ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' ? -5 : 0;
+      if (!d) return; ev.preventDefault(); apply(Math.max(MIN, Math.min(MAX, cur + d * (ev.shiftKey ? 4 : 1)))); save();
+    });
+    return (_live = {
+      emoji: function (e) { var v = e ? safeEmoji(e) : null; updateCardEmoji(c, name, v); paintLook(v); refit(); },
+      size: function (v) { apply(Math.round(Math.max(MIN, Math.min(MAX, Number(v) || 100)))); }
+    });
+  }
   function previewModalEmoji(e) {
+    if (_live) _live.emoji(e || _selectedEmoji);
     var pe = document.getElementById('mkp-modal-prev-emoji');
-    if (pe) pe.textContent = e || '';
+    if (pe) paintEmoji(pe, e || '', true);
     var bg = document.getElementById('mkp-modal-bg-emoji');
-    if (bg) bg.textContent = e || '';
+    if (bg) paintEmoji(bg, e || '', true);
     var big = document.getElementById('mkp-modal-picked-big');
-    if (big) big.textContent = e || '—';
+    if (big) paintEmoji(big, e || '—', true);
     var name = document.getElementById('mkp-modal-picked-name');
     if (name) name.textContent = e ? getEmojiName(e) : 'Nav izvēlēts';
     var cat = document.getElementById('mkp-modal-picked-cat');
@@ -802,6 +1005,35 @@
     var flagged = Promise.resolve(work).then(function (st) { return st === 'error' ? false : st; });
     return MM.pending(btn, flagged).then(function (st) { return st === false ? 'error' : st; });
   }
+
+  /* Emoji tab: choosing saves (a quick run of clicks is saved once, 350 ms after the last);
+     leaving the tab or closing the window saves what is still waiting, at once. */
+  var _autoTimer = 0, _autoWorker = null;
+  function commitSelection(workerName, btn) {
+    clearTimeout(_autoTimer); _autoTimer = 0; _autoWorker = null;
+    if (!workerName) return null;
+    var want = safeEmoji(_selectedEmoji) || null, have = safeEmoji(_data[workerName]) || null;
+    if (want === have) return null;
+    if (want) _data[workerName] = want; else delete _data[workerName];
+    refreshAllCards();
+    // a background that follows the emoji follows it now, before the editor may read the look
+    if (typeof window.mkSyncEmojiBackground === 'function') window.mkSyncEmojiBackground(workerName);
+    var dot = document.getElementById('mkp-modal-dot'), syncText = document.getElementById('mkp-modal-sync-text');
+    if (dot) dot.className = 'mkp-sync-dot mkp-syncing';
+    var work = saveToGist(workerName);
+    var run = btn && btn.isConnected ? savingMotion(btn, work) : work;
+    return Promise.resolve(run).then(function (state) {
+      if (dot) dot.className = 'mkp-sync-dot ' + (state === 'github' ? 'mkp-ok' : state === 'local' ? 'mkp-local' : state === 'github-read' ? 'mkp-github-read' : 'mkp-err');
+      if (syncText) syncText.textContent = state === 'error' ? 'Kļūda' : 'Saglabāts';
+      if (state === 'error' && btn && btn.isConnected) btn.textContent = 'Kļūda';
+      return state;
+    });
+  }
+  function scheduleCommit(workerName) {
+    clearTimeout(_autoTimer); _autoWorker = workerName;
+    _autoTimer = setTimeout(function () { commitSelection(workerName, document.getElementById('mkp-modal-save')); }, 350);
+  }
+  function flushSelection() { if (_autoTimer && _autoWorker) commitSelection(_autoWorker, null); }
 
   function openPicker(workerName, anchorEl) {
     _activeWorker = workerName;
@@ -1831,7 +2063,12 @@
     var footer =
       '<div class="mkp-footer" style="padding:8px 0 0;">' +
         '<button class="mkp-btn mkp-clear" data-mk-modal-clear="1">Noņemt</button>' +
-        '<div></div>' +
+        '<div class="mkp-size" role="group" aria-label="Emoji izmērs kartītē"><span>Izmērs kartītē</span>' +
+          [['80', 'S'], ['100', 'M'], ['220', 'L'], ['340', 'XL']].map(function (z) {
+            var cur = typeof window.mkGetEmojiSize === 'function' ? window.mkGetEmojiSize(workerName) : 100;
+            return '<button type="button" data-emoji-size="' + z[0] + '" aria-pressed="' + (String(cur) === z[0]) + '">' + z[1] + '</button>';
+          }).join('') + '</div>' +
+        '<button class="mkp-btn mkp-asbg" id="mkp-modal-asbg" title="Šo emoji likt kā kartītes fonu">Likt kā fonu</button>' +
         '<button class="mkp-btn mkp-save" id="mkp-modal-save">Saglabāt</button>' +
       '</div>';
 
@@ -1869,14 +2106,36 @@
     var left = container.querySelector('.mkp-left');
     showGridPage(left, workerLvl);
     warmPickerFont();
-    bindGrid(left, previewModalEmoji, function (e) { _sel = e; _selectedEmoji = e; markSelected(left, e); previewModalEmoji(e); });
+    bindGrid(left, previewModalEmoji, function (e) { _sel = e; _selectedEmoji = e; markSelected(left, e); previewModalEmoji(e); tintWindow(e); scheduleCommit(workerName); });
+    if (_sel && window.MinkaEmoji3D && window.MinkaEmoji3D.decode(_sel)) previewModalEmoji(_sel);
+    tintWindow(_sel);
+    // the live preview of the person's own card
+    if (liveCard(container, workerName)) {
+      _live.emoji(_sel);
+      _live.size(typeof window.mkGetEmojiSize === 'function' ? window.mkGetEmojiSize(workerName) : 100);
+    }
+    // the tab row: one M3 bar, the chosen tab on a pill that slides to the next one
+    var tabRow = container.querySelector('.mkp-tabs'), tabPill = document.createElement('span');
+    tabPill.className = 'mkp-tab-pill'; tabPill.setAttribute('aria-hidden', 'true');
+    if (tabRow) tabRow.prepend(tabPill);
+    var seatPill = function (from, animate) {
+      var MM = window.MinkaMotion, act = tabRow && tabRow.querySelector('.mkp-tab-active');
+      if (MM && MM.liquid && act && MM.liquid(tabPill, tabRow, act, { from: from, animate: animate })) tabRow.classList.add('has-pill');
+    };
+    if (container.__tabRO) container.__tabRO.disconnect();
+    container.__tabRO = window.ResizeObserver && tabRow ? new ResizeObserver(function () { seatPill(null, false); }) : null;
+    if (container.__tabRO) container.__tabRO.observe(tabRow);
+    requestAnimationFrame(function () { seatPill(null, false); });
 
     // Tab clicks: only the grid changes
     container.querySelectorAll('.mkp-tab').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
+        var prevTab = container.querySelector('.mkp-tab.mkp-tab-active');
         _activeTab = btn.getAttribute('data-tab');
         container.querySelectorAll('.mkp-tab').forEach(function (b) { b.classList.toggle('mkp-tab-active', b === btn); });
+        seatPill(prevTab, !!prevTab && prevTab !== btn);
+        if (tabRow && tabRow.scrollWidth > tabRow.clientWidth) tabRow.scrollTo({ left: Math.max(0, btn.offsetLeft - (tabRow.clientWidth - btn.offsetWidth) / 2), behavior: 'smooth' });
         showGridPage(left, workerLvl);
       });
     });
@@ -1901,6 +2160,8 @@
       _sel = null;
       _selectedEmoji = null;
       container.querySelectorAll('.mkp-emoji-btn').forEach(function(b) { b.classList.remove('mkp-selected'); });
+      tintWindow(null);
+      scheduleCommit(workerName);
       var pe = document.getElementById('mkp-modal-prev-emoji');
       var bg = document.getElementById('mkp-modal-bg-emoji');
       var big = document.getElementById('mkp-modal-picked-big');
@@ -1917,26 +2178,35 @@
     var saveBtn = document.getElementById('mkp-modal-save');
     var dot = document.getElementById('mkp-modal-dot');
     var syncText = document.getElementById('mkp-modal-sync-text');
-    if (saveBtn) saveBtn.addEventListener('click', async function(e) {
+    if (saveBtn) saveBtn.addEventListener('click', function(e) {
       e.stopPropagation();
       _sel = _selectedEmoji;
-      if (_sel) _data[workerName] = _sel;
-      else delete _data[workerName];
-      refreshAllCards();
-      if (dot) dot.className = 'mkp-sync-dot mkp-syncing';
-      var state = await savingMotion(saveBtn, saveToGist(workerName));
-      if (dot) dot.className = 'mkp-sync-dot ' + (
-        state === 'github' ? 'mkp-ok' :
-        state === 'local' ? 'mkp-local' :
-        state === 'github-read' ? 'mkp-github-read' : 'mkp-err'
-      );
-      if (syncText) syncText.textContent =
-        state === 'error' ? 'Kļūda' : 'Saglabāts';
-      if (state === 'error') saveBtn.textContent = 'Kļūda';
+      commitSelection(workerName, saveBtn);
+    });
+    // Izmērs kartītē: the emoji's size on this person's card, saved at once.
+    container.querySelectorAll('[data-emoji-size]').forEach(function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        container.querySelectorAll('[data-emoji-size]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+        if (_live) _live.size(+b.dataset.emojiSize);
+        if (typeof window.mkSetEmojiSize === 'function') window.mkSetEmojiSize(workerName, b.dataset.emojiSize);
+      });
+    });
+    // "Likt kā fonu": keep the chosen emoji, make it the card's background and show it in Izskats → Fons.
+    var asBg = document.getElementById('mkp-modal-asbg');
+    if (asBg) asBg.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (!_selectedEmoji) return;
+      if (_data[workerName] !== _selectedEmoji) { _data[workerName] = _selectedEmoji; refreshAllCards(); saveToGist(workerName); }
+      if (typeof window.mkSetEmojiBackground === 'function' && window.mkSetEmojiBackground(workerName) && typeof window.showModalView === 'function') {
+        window.showModalView('skin');
+        setTimeout(function () { var t = document.querySelector('[data-org-tab="background"]'); if (t) t.click(); }, 60);
+      }
     });
   }
 
   window.MinkaEmoji = {
+    flush: flushSelection,
     get: getEmojiForWorker,
     safe: safeEmoji,
     refresh: refreshAllCards,

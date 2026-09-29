@@ -39,6 +39,8 @@
   var GROUPS = [
     { id: 'topper', label: 'Topperi' },
     { id: 'object', label: 'Objekti' },
+    { id: 'toy', label: 'Rotaļlietas' },
+    { id: 'e3d', label: '3D emoji' },
     { id: 'charm', label: 'Piekariņi' },
     { id: 'chrome', label: 'Hroms' },
     { id: 'frame', label: 'Kadri' },
@@ -289,6 +291,29 @@
     return (card && card.getAttribute && card.getAttribute('data-worker')) || currentWorkerName();
   }
 
+  // The big groups are shown in parts, each under its own heading (renderGrid).
+  var TOY_SUB = {};
+  [['Lācīši', 'toy-teddy toy-teddy-cream toy-teddy-grey toy-panda toy-koala'],
+    ['Mājās', 'toy-bunny toy-cat toy-cat-black toy-dog toy-hamster toy-mouse toy-pig toy-cow toy-sheep toy-chick toy-duck'],
+    ['Savvaļā', 'toy-fox toy-raccoon toy-lion toy-monkey toy-elephant toy-hedgehog toy-owl toy-unicorn toy-dino toy-ladybug toy-bee'],
+    ['Ūdenī', 'toy-penguin toy-frog toy-turtle toy-whale toy-dolphin toy-seal toy-octopus'],
+    ['Formas', 'toy-star toy-heart toy-cloud']].forEach(function (g) { g[1].split(' ').forEach(function (id) { TOY_SUB[id] = g[0]; }); });
+  var SUB_ORDER = ['Lācīši', 'Mājās', 'Savvaļā', 'Ūdenī', 'Formas', 'Roji', 'Baloni'];
+  /* Rotaļlietas: the plush toys from the night beds (people's favourites), sitting on
+     the card's bottom corner. Same pictures as in Nakts (assets/rooms/beds). */
+  [['toy-teddy', 'Lācītis'], ['toy-teddy-cream', 'Krēmīgais lācītis'], ['toy-teddy-grey', 'Pelēkais lācītis'], ['toy-panda', 'Panda'], ['toy-koala', 'Koala'],
+    ['toy-bunny', 'Zaķītis'], ['toy-cat', 'Kaķītis'], ['toy-cat-black', 'Melnais kaķītis'], ['toy-dog', 'Sunītis'], ['toy-fox', 'Lapsiņa'], ['toy-raccoon', 'Jenots'],
+    ['toy-lion', 'Lauva'], ['toy-monkey', 'Pērtiķis'], ['toy-pig', 'Sivēns'], ['toy-cow', 'Gotiņa'], ['toy-sheep', 'Aitiņa'], ['toy-unicorn', 'Vienradzis'],
+    ['toy-elephant', 'Zilonītis'], ['toy-dino', 'Dinozaurs'], ['toy-penguin', 'Pingvīns'], ['toy-owl', 'Pūce'], ['toy-chick', 'Cālītis'], ['toy-duck', 'Pīlīte'],
+    ['toy-mouse', 'Pelīte'], ['toy-hamster', 'Kāmis'], ['toy-hedgehog', 'Ezītis'], ['toy-frog', 'Vardīte'], ['toy-turtle', 'Bruņurupucis'], ['toy-ladybug', 'Mārīte'],
+    ['toy-bee', 'Bitīte'], ['toy-whale', 'Valis'], ['toy-dolphin', 'Delfīns'], ['toy-seal', 'Ronis'], ['toy-octopus', 'Astoņkājis'], ['toy-star', 'Zvaigzne'],
+    ['toy-heart', 'Sirsniņa'], ['toy-cloud', 'Mākonītis']].forEach(function(t) {
+    ITEMS.push({ id: t[0], label: t[1], group: 'toy', sub: TOY_SUB[t[0]] || 'Savvaļā', src: 'assets/rooms/beds/acc-' + t[0] + '.webp' });
+  });
+  // 3D emoji (js/emoji3d.js): Roji x Moji faces and emoji balloons, as stickers on the card.
+  if (window.MinkaEmoji3D) window.MinkaEmoji3D.list().forEach(function(it) {
+    ITEMS.push({ id: 'e3d-' + it.id, label: it.label, group: 'e3d', sub: it.set === 'roji' ? 'Roji' : 'Baloni', src: 'assets/emoji3d/' + it.id + '-320.webp' });
+  });
   var ITEM_BY_ID = Object.create(null);
   ITEMS.forEach(function(item) { ITEM_BY_ID[item.id] = item; });
 
@@ -1063,12 +1088,14 @@
     function renderSlots() {
       var bar = panel.querySelector('.mk-addon-slots');
       if (!bar) return;
+      // each decoration on the card: its picture, and its own ✕ (no separate "remove" to find)
       var html = slots.map(function(c, i) {
         var item = c && ITEM_BY_ID[c.id];
-        return '<button type="button" data-slot="' + i + '" aria-pressed="' + (i === activeSlot) + '" title="' + esc(item ? item.label : 'Izvēlies dekoru') + '">'
-          + (item ? '<img src="' + esc(assetUrl(item, null)) + '" alt="">' : '<i>?</i>') + '<b>' + (i + 1) + '</b></button>';
+        return '<span class="mk-addon-slot"><button type="button" data-slot="' + i + '" aria-pressed="' + (i === activeSlot) + '" title="' + esc(item ? item.label : 'Izvēlies dekoru') + '">'
+          + (item ? '<img src="' + esc(assetUrl(item, null)) + '" alt="">' : '<i>?</i>') + '<b>' + (i + 1) + '</b></button>'
+          + (item ? '<button type="button" class="mk-addon-slot-x" data-slot-remove="' + i + '" aria-label="Noņemt: ' + esc(item.label) + '" title="Noņemt">×</button>' : '') + '</span>';
       }).join('');
-      if (slots.length < MAX_ADDONS && slots[slots.length - 1] && slots[slots.length - 1].id) html += '<button type="button" class="mk-addon-slot-add" data-slot-add="1">+ Dekors</button>';
+      if (slots.length < MAX_ADDONS && slots[slots.length - 1] && slots[slots.length - 1].id) html += '<button type="button" class="mk-addon-slot-add" data-slot-add="1">+ Pievienot</button>';
       if (bar.__html !== html) { bar.innerHTML = html; bar.__html = html; }
     }
     /* A decoration that joins others finds its own free spot along the card's edge:
@@ -1117,9 +1144,17 @@
         activeGroup = item.group;
         panel.querySelectorAll('.mk-addon-group').forEach(function(b) { b.classList.toggle('is-active', b.dataset.addonGroup === activeGroup); });
       }
-      syncControls(); renderGrid(); renderSlots();
+      syncControls(); renderGrid(); renderSlots(); announceSlot();
+    }
+    // The chosen decoration is the chosen element on the card too (card-faces: its frame
+    // and the size slider beside the card), not whatever was chosen there before.
+    function announceSlot() {
+      var el = preview && preview.querySelector(':scope > .mk-card-addon[data-slot="' + activeSlot + '"]');
+      if (el) el.dispatchEvent(new CustomEvent('mk-addon-choose', { bubbles: true }));
     }
     panel.addEventListener('click', function(e) {
+      var x = e.target.closest && e.target.closest('[data-slot-remove]');
+      if (x) { selectSlot(+x.dataset.slotRemove); panel.querySelector('.mk-addon-remove').click(); return; }
       var b = e.target.closest && e.target.closest('.mk-addon-slots button');
       if (!b) return;
       if (b.dataset.slotAdd) {
@@ -1139,11 +1174,22 @@
       removeButton.setAttribute('aria-disabled', String(removeButton.disabled));
       syncLook();
       var chosen = config && ITEM_BY_ID[config.id], chosenBase = chosen ? (chosen.base || chosen.id) : '';
-      grid.innerHTML = ITEMS.filter(function(item) { return item.group === activeGroup && !item.hidden; }).map(function(item) {
+      var shown = ITEMS.filter(function(item) { return item.group === activeGroup && !item.hidden; }).map(function(item, n) { return { item: item, n: n }; })
+        .sort(function(a, b) { return (SUB_ORDER.indexOf(a.item.sub) - SUB_ORDER.indexOf(b.item.sub)) || (a.n - b.n); }).map(function(x) { return x.item; });
+      var lastSub = null;
+      grid.innerHTML = shown.map(function(item) {
         var selected = chosenBase === item.id;
-        return '<button type="button" class="mk-addon-choice' + (selected ? ' is-active' : '') + '" data-addon-id="' + esc(item.id) + '" aria-label="' + esc(item.label) + '" aria-pressed="' + selected + '" title="' + esc(item.label) + '">'
+        var head = item.sub && item.sub !== lastSub ? '<h6 class="mk-addon-sub">' + esc(item.sub) + '<span>' + shown.filter(function(x) { return x.sub === item.sub; }).length + '</span></h6>' : '';
+        lastSub = item.sub;
+        return head + '<button type="button" class="mk-addon-choice' + (selected ? ' is-active' : '') + '" data-addon-id="' + esc(item.id) + '" aria-label="' + esc(item.label) + '" aria-pressed="' + selected + '" title="' + esc(item.label) + '">'
           + '<span><img loading="lazy" decoding="async" draggable="false" src="' + esc(assetUrl(item, null)) + '" alt=""></span><b>' + esc(item.label) + '</b></button>';
       }).join('');
+      // CC BY 4.0: the 3D emoji carry their authors' names
+      var credit = panel.querySelector('.mk-addon-credit');
+      if (activeGroup === 'e3d') {
+        if (!credit) { credit = document.createElement('p'); credit.className = 'mk-addon-credit'; grid.after(credit); }
+        credit.textContent = '3D emoji: Roji x Moji — Dmitrij Matvejchuk; Emoji Balloons — DESIGNRIP. Licence CC BY 4.0.';
+      } else if (credit) credit.remove();
       grid.querySelectorAll('.mk-addon-choice').forEach(function(button) {
         var thumb = button.querySelector('img');
         function markReady() {
@@ -1184,6 +1230,7 @@
           renderGrid();
           applyPreview();
           if (added) autoPlace();
+          announceSlot();
         });
       });
     }

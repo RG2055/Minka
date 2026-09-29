@@ -5,11 +5,15 @@
   var M = window.MinkaCardFaceModel;
   var labels = { hours: 'Maiņas stundas', name: 'Vārds', initials: 'Iniciāļi', month: 'Stundas mēnesī', coffee: 'Kafija', fatigue: 'Nogurums', remaining: 'Maiņas laiks', emoji: 'Emoji', clock: 'Pulkstenis', moon: 'Saule / mēness' };
   var selectors = { hours: '.mk-mid-hours', name: '.mk-mid-name-wrap', initials: '.mk-mid-initials', month: '.mk-mid-month', coffee: '.mk-mid-coffee', fatigue: '.mk-mid-meta-fat', remaining: '.mk-mid-meta-time', emoji: '.mk-mid-meta-emoji', clock: '.mk-wf-clock', moon: '.mk-wf-moon' };
-  var titles = ['Klasika', 'Foto stikls', 'Loks', 'Moduļi', 'Winamp', 'Dither'];
+  var titles = ['Klasika', 'Foto stikls', 'Loks', 'Moduļi', 'Winamp', 'Dither', 'Gameboy', 'Termostats', 'Punkti', 'Līnijas'];
   var metals = [
     ['Sudrabs','#d7d9de'],['Dabiskais titāns','#b7afa0'],['Melnais titāns','#484a50'],['Rozā zelts','#d9b3a7'],
     ['Zelts','#c7ac7c'],['Slānekļa titāns','#71747a'],['Tuksneša titāns','#c4a98d'],['Baltais titāns','#e7e5de'],
-    ['Zilais titāns','#74869e'],['Pusnakts','#303b4a'],['Zvaigžņu gaisma','#e2d8c2'],['Kosmosa pelēks','#858589']
+    ['Zilais titāns','#74869e'],['Pusnakts','#303b4a'],['Zvaigžņu gaisma','#e2d8c2'],['Kosmosa pelēks','#858589'],
+    ['Bez ietvara','transparent'],   // 12: no frame at all (the picture to the card's edge)
+    // 13–23: colour frames (never purple); "Kā akcents" follows the card's accent
+    ['Balts','#f5f5f2'],['Ogļu melns','#141518'],['Kā akcents','var(--wf-tint)'],['Neona zils','#4cc9ff'],['Laima','#b9f26a'],
+    ['Koraļļu','#ff8a80'],['Rozā','#f7a8c8'],['Saulgrieze','#ffc94d'],['Tirkīzs','#3dd6c6'],['Mētra','#9be3c1'],['Sarkans','#e5484d']
   ];
   var colors = [
     ['Ledus','#d5e6ef'],['Rozā','#f4cec7'],['Ceriņi','#c8b5eb'],['Ultramarīns','#718aff'],['Debeszils','#a5cbea'],
@@ -22,6 +26,16 @@
   var currentPick = function () { return null; };
   var releaseContours = function () {};
   var currentSettle = function () {};
+  // Sections that are not about the card's elements (Gatavie, Fons) hide the chosen
+  // element's frame, outline and slider; the choice itself is kept.
+  var quietParts = false, currentQuiet = function () {}, currentAdopt = function () {};
+  // By hand everything goes exactly where it is put: a move or a resize never moves
+  // anything else, and nothing springs back. "Neļaut pārklāties" (a device preference,
+  // off unless switched on) makes a drop settle in the nearest free spot instead.
+  // Arrangements the editor makes itself (a layout, a ready look, an added element)
+  // are always tidied; "Sakārtot" tidies on request.
+  var FREE_KEY = 'minka:wf-free';
+  function freeMode() { try { return localStorage.getItem(FREE_KEY) !== '0'; } catch (_e) { return true; } }
   var previewObserver = null;
   var previewFrame = 0;
   var refreshPreview = function() {};
@@ -284,16 +298,28 @@
     }).join('');
   }
   function m3Source(el) {
-    var v = el.querySelector(':scope > .val');
+    var v = el.querySelector(':scope > .val, :scope > .mk-m3d-src');
     if (v) return v.textContent;
     var t = '';
     el.childNodes.forEach(function (n) { if (n.nodeType === 3) t += n.nodeValue; else if (n.nodeType === 1 && n.classList.contains('wf-dial-text')) t += n.textContent; });
     return t.trim();
   }
   function m3Paint(el) {
+    // Off shift the element holds the shift window as bare text (08-17): wrap it, so the
+    // drawn readout replaces it instead of standing beside it (CSS hides only elements).
+    var stray = Array.prototype.filter.call(el.childNodes, function (n) { return n.nodeType === 3 && n.nodeValue.trim(); });
+    if (stray.length) {
+      var src = el.querySelector(':scope > .mk-m3d-src');
+      if (!src) { src = document.createElement('span'); src.className = 'mk-m3d-src'; el.insertBefore(src, stray[0]); }
+      src.textContent = stray.map(function (n) { return n.nodeValue; }).join('').trim();
+      stray.forEach(function (n) { n.remove(); });
+    }
     var skin = el.dataset.td, text = m3Source(el), box = el.querySelector(':scope > .mk-m3d');
     if (!box) { box = document.createElement('span'); box.setAttribute('aria-hidden', 'true'); el.append(box); }
-    var cls = 'mk-m3d m3-' + skin;
+    // A time range (08-20: the shift, not a countdown) reads on one line in every look;
+    // the tall looks are made for hours:minutes:seconds.
+    var range = /[-–]/.test(text) && !/:/.test(text);
+    var cls = 'mk-m3d m3-' + skin + (range ? ' m3-range' : '');
     if (box.className !== cls) { box.className = cls; box.dataset.shape = ''; box.dataset.text = ''; }
     var tokens = m3Tokens(text), shape = tokens.map(function (t) { return /\d/.test(t) ? 'd' + t.length : t; }).join();
     if (box.dataset.text === text) return;
@@ -352,6 +378,42 @@
     dialTimer = setTimeout(paintDials, 60000 - Date.now() % 60000 + 40);
   }
   document.addEventListener('visibilitychange', paintDials);
+  /* Bitmap numerals (Punkti = a dot-matrix sign, Pikseļi = an LCD): a 5×7 font,
+     drawn as one small SVG only when the number changes. The real digits stay in
+     the element for its size and for screen readers; they are just not painted. */
+  var BITS = {
+    '0': [14, 17, 19, 21, 25, 17, 14], '1': [4, 12, 4, 4, 4, 4, 14], '2': [14, 17, 1, 2, 4, 8, 31], '3': [31, 2, 4, 2, 1, 17, 14],
+    '4': [2, 6, 10, 18, 31, 2, 2], '5': [31, 16, 30, 1, 1, 17, 14], '6': [6, 8, 16, 30, 17, 17, 14], '7': [31, 1, 2, 4, 8, 8, 8],
+    '8': [14, 17, 17, 14, 17, 17, 14], '9': [14, 17, 17, 15, 1, 2, 12], 'h': [16, 16, 22, 25, 17, 17, 17], ':': [0, 12, 12, 0, 12, 12, 0], '-': [0, 0, 0, 31, 0, 0, 0]
+  };
+  function bitSvg(text, kind) {
+    var chars = String(text || '').trim().split('').filter(function (c) { return BITS[c]; });
+    if (!chars.length) return '';
+    var body = '', w = chars.length * 6 - 1;
+    chars.forEach(function (c, i) {
+      BITS[c].forEach(function (row, y) {
+        for (var x = 0; x < 5; x++) if (row & (16 >> x)) body += kind === 'dots'
+          ? '<circle cx="' + (i * 6 + x + .5) + '" cy="' + (y + .5) + '" r=".43"/>'
+          : '<rect x="' + (i * 6 + x + .04) + '" y="' + (y + .04) + '" width=".92" height=".92"/>';
+      });
+    });
+    return '<svg class="mk-bitnum" viewBox="-.2 -.2 ' + (w + .4) + ' 7.4" aria-hidden="true">' + body + '</svg>';
+  }
+  var BIT_FINISH = { 6: 'dots', 7: 'px' };
+  function paintBitDigits(card, finish) {
+    var el = card.querySelector('[data-wf-part="hours"]');
+    if (!el) return;
+    var kind = BIT_FINISH[finish] || '', old = el.querySelector(':scope > .mk-bitnum');
+    if (!kind) { if (old) old.remove(); return; }
+    var text = Array.prototype.filter.call(el.childNodes, function (n) { return n.nodeType === 3; }).map(function (n) { return n.nodeValue; }).join('').trim();
+    var key = kind + ':' + text;
+    if (old && old.__key === key) return;
+    var html = bitSvg(text, kind);
+    if (old) old.remove();
+    if (!html) return;
+    el.insertAdjacentHTML('beforeend', html);
+    el.lastElementChild.__key = key;
+  }
   function esc(s) { return String(s).replace(/[&<>"']/g, function(c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function paintClock() {
     clearTimeout(clockTimer); clockTimer = 0;
@@ -364,6 +426,61 @@
     clockTimer = setTimeout(paintClock, 60000 - Date.now() % 60000 + 25);
   }
   document.addEventListener('visibilitychange', paintClock);
+  /* The drawn parts of the newer faces: static SVG, drawn once per face change,
+     in currentColor (the accent/ink) — no ids, no filters, no animation. */
+  function faceArt(face) {
+    if (face === 'orbit') return orbitArt();
+    var a = '';
+    if (face === 'thermo') {
+      // a thermostat dial rising from the lower right corner: a dark band, fine edges, ticks, a glass knob
+      a += '<circle cx="104" cy="104" r="58" fill="none" stroke="#0f223acc" stroke-width="12"/>'
+        + '<circle cx="104" cy="104" r="64.2" fill="none" stroke="currentColor" stroke-opacity=".45" stroke-width=".5"/>'
+        + '<circle cx="104" cy="104" r="51.8" fill="none" stroke="currentColor" stroke-opacity=".55" stroke-width=".5"/>';
+      for (var t = 0; t <= 30; t++) {
+        var ang = (184 + t * 3) * Math.PI / 180, big = t % 5 === 0, r1 = 54.5, r2 = big ? 61.5 : 59;
+        a += '<line x1="' + (104 + r1 * Math.cos(ang)).toFixed(2) + '" y1="' + (104 + r1 * Math.sin(ang)).toFixed(2) + '" x2="' + (104 + r2 * Math.cos(ang)).toFixed(2) + '" y2="' + (104 + r2 * Math.sin(ang)).toFixed(2) + '" stroke="currentColor" stroke-opacity="' + (big ? .85 : .5) + '" stroke-width="' + (big ? 1 : .7) + '" stroke-linecap="round"/>';
+      }
+      var k = 226 * Math.PI / 180, kx = (104 + 58 * Math.cos(k)).toFixed(2), ky = (104 + 58 * Math.sin(k)).toFixed(2);
+      a += '<circle cx="' + kx + '" cy="' + ky + '" r="5.2" fill="#bfe6f7" fill-opacity=".35" stroke="#e8f7ff" stroke-opacity=".8" stroke-width=".5"/>'
+        + '<circle cx="' + (kx - 1.4) + '" cy="' + (ky - 1.6) + '" r="1.6" fill="#fff" fill-opacity=".7"/>';
+      return '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">' + a + '</svg>';
+    }
+    if (face === 'lines') {
+      // line drawings on paper: nested circles with ± marks, a fan of lines, one warm dot
+      a += '<g fill="none" stroke="currentColor" stroke-width=".4" stroke-opacity=".45">'
+        + '<circle cx="24" cy="60" r="21"/><circle cx="24" cy="65.5" r="15.5"/><circle cx="24" cy="70.5" r="10.5"/><circle cx="24" cy="74.5" r="6.5"/>';
+      for (var f = 0; f <= 10; f++) a += '<line x1="84" y1="6" x2="' + (66 + f * 3.4) + '" y2="36"/>';
+      a += '<line x1="66" y1="36" x2="100" y2="36"/></g>'
+        + '<g stroke="currentColor" stroke-width=".7" stroke-linecap="round" stroke-opacity=".75"><line x1="22" y1="44" x2="26" y2="44"/><line x1="22" y1="53.5" x2="26" y2="53.5"/><line x1="24" y1="51.5" x2="24" y2="55.5"/></g>'
+        + '<circle cx="87" cy="86" r="5.5" fill="#e5602a" fill-opacity=".92"/>';
+      return '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">' + a + '</svg>';
+    }
+    if (face === 'gameboy') {
+      // the handheld: a dark frame round the LCD, the power light, the speaker slots
+      a += '<rect x="5" y="4" width="90" height="77" rx="5" fill="#4b505c"/>'
+        + '<circle cx="8.6" cy="36" r="1.3" fill="#e2362d"/>';
+      for (var g = 0; g < 4; g++) a += '<line x1="' + (78 + g * 3.2) + '" y1="97" x2="' + (84 + g * 3.2) + '" y2="88" stroke="#7d828d" stroke-width="1.3" stroke-linecap="round"/>';
+      return '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' + a + '</svg>';
+    }
+    return '';
+  }
+  /* Termostats shows today's outdoor temperature in its dial — the reading the page
+     header already has (window.__mkBarWeatherData), redrawn when it announces a new
+     one (minka:weather). No request of its own, no timer. */
+  function outdoorTemp() {
+    var w = window.__mkBarWeatherData, t = w && Number(w.t);
+    return w && w.t !== '' && w.t != null && Number.isFinite(t) ? Math.round(t) : null;
+  }
+  function paintTemp(card, on) {
+    var el = card.querySelector(':scope > .mk-wf-temp'), t = on ? outdoorTemp() : null;
+    if (t == null) { if (el) el.remove(); return; }
+    if (!el) { el = document.createElement('span'); el.className = 'mk-wf-temp'; el.innerHTML = '<b></b><sup>°C</sup>'; card.append(el); }
+    var txt = String(t).replace('-', '−');
+    if (el.firstChild.textContent !== txt) { el.firstChild.textContent = txt; el.setAttribute('aria-label', 'Ārā ' + t + ' grādi'); }
+  }
+  window.addEventListener('minka:weather', function () {
+    document.querySelectorAll('.card.mk-watch-face[data-watch-face="thermo"]').forEach(function (card) { paintTemp(card, true); });
+  });
   function orbitArt() {
     // Two corner arcs only; the earlier faint inner frame read as a stray box.
     return '<svg viewBox="0 0 200 200" preserveAspectRatio="none" aria-hidden="true"><path d="M18 69V53Q18 18 53 18H116 M182 131V147Q182 182 147 182H84" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" opacity=".65"/></svg>';
@@ -504,6 +621,8 @@
     });
     el.__waObs.observe(el, { childList: true, characterData: true, subtree: true });
   }
+  var waDefault = null;
+  function waDefaults() { return waDefault || (waDefault = M.preset('winamp').parts); }
   function clearWinamp(card) {
     if (!card.classList.contains('wf-winamp')) return;
     card.classList.remove('wf-winamp', 'is-playing');
@@ -558,8 +677,9 @@
       if(coffeeButton){coffeeButton.removeAttribute('aria-expanded');coffeeButton.setAttribute('aria-label','Atvērt kafijas izvēlni');}
       card.querySelectorAll('.wf-analog').forEach(function(el) { el.classList.remove('wf-analog'); delete el.dataset.tm; var dl = el.querySelector(':scope > .mk-wf-dial'); if (dl) dl.remove(); });
       card.querySelectorAll('.wf-m3d').forEach(clearM3);
+      card.querySelectorAll('.mk-bitnum,.mk-wf-temp').forEach(function(n){n.remove();});
       card.querySelectorAll('[data-wf-part]').forEach(function(el) {
-        delete el.dataset.wfPart; el.hidden = false; el.classList.remove('wf-colored');
+        delete el.dataset.wfPart; el.hidden = false; el.classList.remove('wf-colored'); el.removeAttribute('data-wf-free');
         ['--wf-x','--wf-y','--wf-scale','--wf-tint','--mk-txt-color'].forEach(function(p) { el.style.removeProperty(p); });
       });
       card.querySelectorAll('.mk-wf-art,.mk-wf-clock,.mk-wf-moon,.mk-wf-effects,.mk-wf-depth,.mk-wf-background').forEach(function(el) { el.remove(); });
@@ -597,6 +717,7 @@
     }else if(effects)effects.remove();
     card.style.setProperty('--wf-tint', '#'+config.tint);
     card.style.setProperty('--wf-metal', metals[config.metal][1]);
+    card.classList.toggle('wf-no-frame', config.metal === 12);
     card.style.setProperty('--wf-bg-x', config.imageX+'%');
     card.style.setProperty('--wf-bg-y', config.imageY+'%');
     card.style.setProperty('--wf-bg-zoom', config.imageZoom+'%');
@@ -605,7 +726,7 @@
     card.style.setProperty('--wf-surname-chars', Math.max(1, (nameSub && nameSub.textContent || '').trim().length));
     var art = card.querySelector('.mk-wf-art');
     if (!art) { art = document.createElement('div'); art.className = 'mk-wf-art'; art.setAttribute('aria-hidden','true'); card.prepend(art); }
-    if (art.dataset.face !== config.face) { art.innerHTML = config.face === 'orbit' ? orbitArt() : ''; art.dataset.face = config.face; }
+    if (art.dataset.face !== config.face) { art.innerHTML = faceArt(config.face); art.dataset.face = config.face; }
     if (!card.querySelector('.mk-wf-clock')) { var clock = document.createElement('span'); clock.className = 'mk-wf-clock'; clock.setAttribute('aria-label','Laiks Rīgā'); card.append(clock); }
     if (!card.querySelector('.mk-wf-moon')) { var moon=document.createElement('span');moon.className='mk-wf-moon';moon.innerHTML='<i aria-hidden="true"></i>';moon.setAttribute('aria-label','Nakts maiņa');card.append(moon); }
     var shiftIcon=card.querySelector('.mk-mid-shift-emoji');
@@ -619,6 +740,9 @@
       var p = config.parts[key];
       el.dataset.wfPart = key; el.hidden = !p[3] || (key==='moon'&&period==='mixed'&&!card.classList.contains('wf-editing'));
       el.style.setProperty('--wf-x', p[0]+'%'); el.style.setProperty('--wf-y', p[1]+'%'); el.style.setProperty('--wf-scale', p[2]/100);
+      // Winamp: the player layout, unless this element was moved (then its own place).
+      var wd=config.face==='winamp'&&waDefaults()[key];
+      if(wd&&(p[0]!==wd[0]||p[1]!==wd[1]||p[2]!==wd[2]))el.setAttribute('data-wf-free','');else el.removeAttribute('data-wf-free');
       // Own colour: the element gets its own tint and text colour variables, so
       // every rule that reads --wf-tint / --mk-txt-color picks it up locally.
       var own=config.fullTintMode===3?'':config.colors[key];
@@ -632,6 +756,8 @@
       el.classList.toggle('wf-plate-ink-dark',plate==='tinted'&&lum>.55);
     });
     if(config.face==='winamp')applyWinamp(card);else clearWinamp(card);
+    paintBitDigits(card,config.face==='winamp'?0:config.finish);
+    paintTemp(card,config.face==='thermo');
     setDial(card,skin,config);
     // Dither face (and the app-wide "dither images" option): the background is re-dithered off-thread-ish, once per image.
     if(window.MinkaDither&&window.MinkaDither.skin)window.MinkaDither.skin(card);
@@ -743,6 +869,9 @@
       if(palette&&card.dataset.fullTintPalette===key)paintHue(hueOf(palette.source||palette.num));
     });
   }
+  // The chosen element outlives a rebuild of the editor (a look change redraws it all),
+  // for the same person: the Emoji chosen stays chosen with its settings.
+  var keptSel = { who: null, part: 'hours' };
   function mount(host, options) {
     if (previewObserver) { previewObserver.disconnect(); previewObserver = null; }
     cancelAnimationFrame(previewFrame); previewFrame=0;
@@ -780,12 +909,26 @@
         left=Math.max(0,before.left-a.left)/before.width;right=Math.max(0,a.right-before.right)/before.width;
         top=Math.max(0,before.top-a.top)/before.height;bottom=Math.max(0,a.bottom-before.bottom)/before.height;
       }
-      var available=slot.parentElement.clientWidth;
-      slot.style.width=Math.floor(Math.min(300,(available-12)/(1+left+right)))+'px';
+      var aside=slot.parentElement, available=aside.clientWidth;
+      var rimRoom=34;   // the rim knob's lane on the right (card-faces paintRim)
+      // The editor (skin-organize.css, wide windows): the card sits in the middle
+      // column, as large as the window's height allows, the label and buttons in
+      // the column on its left. The lane is kept on both sides so it stays centred.
+      var st=getComputedStyle(aside), stage=!!st.getPropertyValue&&st.getPropertyValue('--org-stage').trim()==='1';
+      if(stage){
+        var sv=parseFloat(st.getPropertyValue('--org-side')),side=isFinite(sv)?sv:200, cap=parseFloat(st.getPropertyValue('--org-card-max'))||380;
+        var byW=(available-side-2*rimRoom-32)/(1+left+right);   // the aside holds the left column and the card's
+        var byH=(aside.clientHeight-(parseFloat(st.getPropertyValue('--org-bar'))||0)-36-24)/(1+top+bottom)*r.width/r.height;
+        slot.style.width=Math.floor(Math.max(140,Math.min(cap,byW,byH)))+'px';
+        slot.style.marginLeft=Math.ceil(slot.clientWidth*left+rimRoom)+'px';
+        slot.style.marginRight=Math.ceil(slot.clientWidth*right+rimRoom)+'px';
+      }else{
+        slot.style.width=Math.floor(Math.min(300,(available-12-rimRoom)/(1+left+right)))+'px';
+        slot.style.marginLeft=Math.max(0,(available-rimRoom-slot.clientWidth*(1+left+right))/2+slot.clientWidth*left)+'px';
+        slot.style.marginRight='0';
+      }
       host.style.setProperty('--wf-card-aspect',r.width+'/'+r.height);
       var scale = slot.clientWidth / r.width;
-      slot.style.marginLeft=Math.max(0,(available-slot.clientWidth*(1+left+right))/2+slot.clientWidth*left)+'px';
-      slot.style.marginRight='0';
       slot.style.setProperty('--mk-addon-preview-top-clearance',Math.ceil(r.height*scale*top+(top?12:0))+'px');
       slot.style.setProperty('--mk-addon-preview-bottom-clearance',Math.ceil(r.height*scale*bottom+(bottom?12:0))+'px');
       if(typeof window!=='undefined'&&window.MinkaCardAddons&&window.MinkaCardAddons.fitPreviewControls)requestAnimationFrame(function(){window.MinkaCardAddons.fitPreviewControls(slot);});
@@ -795,7 +938,16 @@
       preview.style.setProperty('--wf-preview-scale', scale);
       preview.style.setProperty('--wf-preview-padding', r.padding);
       slot.style.height = (r.height * scale) + 'px';
+      slot.style.marginTop = slot.style.marginBottom = '18px';   // the rim knob's lane rounds the corners
+      // the editor keeps a topper's and a charm's room around the card, so the whole
+      // decorated card is centred and nothing reaches the section bar
+      if (stage) { var ph = r.height * scale; slot.style.marginTop = Math.ceil(18 + ph * top) + 'px'; slot.style.marginBottom = Math.ceil(18 + ph * bottom) + 'px'; }
       slot.style.aspectRatio = 'auto';
+      // the chosen element's frame, outline and the slider beside the card follow the new
+      // size at once (a new size is not a move: nothing glides across the card)
+      var ready = function () { return typeof mounted !== 'undefined' && mounted && preview.isConnected; };
+      if (ready()) snapSel();
+      else if (typeof requestAnimationFrame === 'function') requestAnimationFrame(function () { if (ready()) snapSel(); });
     }
     if (options.source && window.ResizeObserver) {
       previewObserver = new ResizeObserver(function(){
@@ -811,11 +963,20 @@
     tabs.prepend(tab);
     var panel = document.createElement('section');
     panel.className = 'mk-skin-section wf-editor'; panel.dataset.skinPanel = 'face';
-    var selectedPart = 'hours';
+    // Parts of this panel may be shown elsewhere (skin-organize puts the layouts on
+    // the card's other side): such a container is adopted — it gets the panel's own
+    // listeners, and every lookup covers it too.
+    var panelHandlers = [], adopted = [];
+    function onPanel(type, fn) { panel.addEventListener(type, fn); panelHandlers.push([type, fn]); adopted.forEach(function (a) { a.addEventListener(type, fn); }); }
+    function pq(sel) { var el = panel.querySelector(sel); for (var i = 0; !el && i < adopted.length; i++) el = adopted[i].querySelector(sel); return el; }
+    function pqa(sel) { var out = Array.prototype.slice.call(panel.querySelectorAll(sel)); adopted.forEach(function (a) { out = out.concat(Array.prototype.slice.call(a.querySelectorAll(sel))); }); return out; }
+    currentAdopt = function (el) { if (!el || adopted.indexOf(el) >= 0) return; adopted.push(el); panelHandlers.forEach(function (h) { el.addEventListener(h[0], h[1]); }); mirrorPanel(); };
+    function mirrorPanel() { adopted.forEach(function (a) { a.className = a.className.replace(/\bis-(winamp|dither)\b/g, '').trim(); if (panel.classList.contains('is-winamp')) a.classList.add('is-winamp'); if (panel.classList.contains('is-dither')) a.classList.add('is-dither'); }); }
     var config = M.clean(options.get().face);
+    var selectedPart = keptSel.who === sourceWorker && config.parts[keptSel.part] ? keptSel.part : 'hours';
     var history = [];
     var faceTiles = M.faces.map(function(face,i) {
-      return '<button type="button" class="wf-face-choice" data-face="'+face+'"><span class="wf-face-thumb wf-thumb-'+face+'"><i>'+(face==='orbit'?orbitArt():'')+'</i><b>24</b><small>DEŽŪRA</small></span><strong>'+titles[i]+'</strong></button>';
+      return '<button type="button" class="wf-face-choice" data-face="'+face+'"><span class="wf-face-thumb wf-thumb-'+face+'"><i>'+faceArt(face)+'</i><b>24</b><small>DEŽŪRA</small></span><strong>'+titles[i]+'</strong></button>';
     }).join('');
     var look = ''
       + '<div class="wf-section wf-look"><div class="wf-label">Kartītes izskats <span>attiecas uz visu kartīti, arī attēlu</span></div><div class="wf-segment wf-look-modes" aria-label="Kartītes izskats">'+[['0','Noklusējums'],['1','Tumšs'],['2','Caurspīdīgs'],['3','Tonēts']].map(function(m){return '<button type="button" data-full-tint-mode="'+m[0]+'"><b class="wf-look-sample" aria-hidden="true">24</b><span>'+m[1]+'</span></button>';}).join('')+'</div>'
@@ -828,13 +989,13 @@
       + [['layout','Izkārtojums'],['colors','Krāsas'],['parts','Elementi']].map(function(t){return '<button type="button" role="tab" data-wf-tab="'+t[0]+'">'+t[1]+'</button>';}).join('')
       + '</div>'
       + '<div class="wf-group" data-wf-group="layout" role="tabpanel">'
-      + '<div class="wf-faces">'+faceTiles+'</div>'
+      + '<div class="wf-faces"><button type="button" class="wf-face-choice wf-face-original" data-original title="Kartīte, kāda tā ir bez izkārtojuma"><span class="wf-face-thumb wf-thumb-original"><i class="wf-orig-name"></i><b>24</b><i class="wf-orig-pill"></i></span><strong>Oriģināls</strong></button>'+faceTiles+'</div>'
       + '</div>'
       + '<div class="wf-group" data-wf-group="colors" role="tabpanel">'
       + look
       + '<div class="wf-section wf-accent"><div class="wf-label">Akcenta krāsa <span>cipariem, čipiem un ikonām, ja elementam nav savas</span> <input type="color" class="wf-color" aria-label="Akcenta krāsa"></div><div class="wf-swatches">'+colors.map(function(c){return '<button type="button" data-tint="'+c[1].slice(1)+'" style="--sw:'+c[1]+'" title="'+c[0]+'" aria-label="'+c[0]+'"></button>';}).join('')+'</div>'
       + '</div><div class="wf-section wf-finish"><div class="wf-label">Ciparu materiāls</div>'
-      + '<div class="wf-segment" aria-label="Ciparu materiāls">'+['Stikls','Metāls','Tīrs','Plūsma','Perlamutrs','Neons'].map(function(t,i){return '<button type="button" data-finish="'+i+'" data-watch-finish="'+i+'" aria-label="'+t+'"><b class="wf-number-sample" aria-hidden="true">24</b><span>'+t+'</span></button>';}).join('')+'</div></div>'
+      + '<div class="wf-segment" aria-label="Ciparu materiāls">'+['Stikls','Metāls','Tīrs','Plūsma','Perlamutrs','Neons','Punkti','Pikseļi','Kontūra'].map(function(t,i){return '<button type="button" data-finish="'+i+'" data-watch-finish="'+i+'" aria-label="'+t+'"><b class="wf-number-sample" aria-hidden="true">24</b><span>'+t+'</span></button>';}).join('')+'</div></div>'
       + '<div class="wf-section wf-metal"><div class="wf-label">Metāla ietvars <span class="wf-metal-name"></span></div><div class="wf-metals">'+metals.map(function(c,i){return '<button type="button" data-metal="'+i+'" style="--sw:'+c[1]+'" title="'+c[0]+'" aria-label="'+c[0]+'"></button>';}).join('')+'</div></div>'
       + '</div>'
       + '<div class="wf-group" data-wf-group="parts" role="tabpanel">'
@@ -851,22 +1012,23 @@
       + '<div class="wf-coffee-options" hidden><div class="wf-segment wf-coffee-mode" aria-label="Kafijas vadība"><button type="button" data-coffee-mode="0">Ikona → pogas</button><button type="button" data-coffee-mode="1">Vienmēr − / +</button></div><div class="wf-segment" aria-label="Kafijas tonis"><button type="button" data-coffee-contrast="0">Stikls</button><button type="button" data-coffee-contrast="1">Fona kontrasts</button><button type="button" data-coffee-contrast="2">Kartītes tonis</button></div></div>'
       + [['x','Horizontāli',5,95],['y','Vertikāli',5,95],['size','Izmērs',50,170]].map(function(r){return '<label class="wf-range wf-position"><span>'+r[1]+'</span><input type="range" data-position="'+r[0]+'" min="'+r[2]+'" max="'+r[3]+'"><output></output></label>';}).join('')
       + '<button type="button" class="wf-fit">Ietilpināt kartītē</button></div>'
+      + '<label class="wf-switch wf-nooverlap"><input type="checkbox" class="wf-nooverlap-toggle"><i aria-hidden="true"></i><span><b>Neļaut pārklāties</b><small>Nomestais elements nosēžas tuvākajā brīvajā vietā, pārējie paliek. Izslēdz, lai liktu pilnīgi brīvi.</small></span></label>'
       + '<label class="wf-depth-control"><input type="checkbox" class="wf-depth-toggle"> Objekts priekšā ciparam</label>'
       + '<details class="wf-background"><summary>Attēla novietojums</summary>'+[['imageX','Horizontāli',0,100],['imageY','Vertikāli',0,100],['imageZoom','Tuvinājums',100,180]].map(function(r){return '<label class="wf-range"><span>'+r[1]+'</span><input type="range" data-image="'+r[0]+'" min="'+r[2]+'" max="'+r[3]+'"><output></output></label>';}).join('')+'</details>'
       + '</div>'
-      + '<div class="wf-footer"><button type="button" class="wf-undo" disabled>Atcelt pēdējo</button><button type="button" class="wf-minimal" title="Cipars, vārds, maiņas laiks, emoji un saule/mēness">Tikai svarīgais</button><button type="button" class="wf-reset">Atjaunot izkārtojumu</button><button type="button" class="wf-original">Sākotnējā klasika</button></div>';
+      + '<div class="wf-footer"><button type="button" class="wf-undo" disabled>Atcelt pēdējo</button><button type="button" class="wf-tidy" title="Neviens elements nepārklājas un visi ir kartītē">Sakārtot</button><button type="button" class="wf-minimal" title="Cipars, vārds, maiņas laiks, emoji un saule/mēness">Tikai svarīgais</button><button type="button" class="wf-reset">Atjaunot izkārtojumu</button><button type="button" class="wf-original">Sākotnējā klasika</button></div>';
     tabs.after(panel);
     var wfTab='layout';
     try{ wfTab=localStorage.getItem('minka:wf-tab')||'layout'; }catch(_e){}
     function showGroup(name){
-      if(!panel.querySelector('[data-wf-group="'+name+'"]'))name='layout';
+      if(!pq('[data-wf-group="'+name+'"]'))name='layout';
       wfTab=name;
       try{ localStorage.setItem('minka:wf-tab',name); }catch(_e){}
-      panel.querySelectorAll('[data-wf-tab]').forEach(function(b){var on=b.dataset.wfTab===name;b.classList.toggle('is-active',on);b.setAttribute('aria-selected',String(on));});
-      panel.querySelectorAll('[data-wf-group]').forEach(function(g){g.hidden=g.dataset.wfGroup!==name;});
+      pqa('[data-wf-tab]').forEach(function(b){var on=b.dataset.wfTab===name;b.classList.toggle('is-active',on);b.setAttribute('aria-selected',String(on));});
+      pqa('[data-wf-group]').forEach(function(g){g.hidden=g.dataset.wfGroup!==name;});
     }
     showGroup(wfTab);
-    panel.addEventListener('click',function(e){var b=e.target.closest('[data-wf-tab]');if(b)showGroup(b.dataset.wfTab);});
+    onPanel('click',function(e){var b=e.target.closest('[data-wf-tab]');if(b)showGroup(b.dataset.wfTab);});
 
     function activate() {
       config=M.clean(options.get().face);
@@ -880,8 +1042,10 @@
     }
     function sync() {
       panel.classList.toggle('is-winamp',config.face==='winamp');
-      panel.classList.toggle('is-dither',config.face==='dither');
-      panel.querySelectorAll('[data-face]').forEach(function(el){
+      panel.classList.toggle('is-dither',config.face==='dither');mirrorPanel();
+      panel.dataset.sel=selKind==='part'?selectedPart:selKind;if(selKind==='part'){keptSel.who=sourceWorker;keptSel.part=selectedPart;}   // what is chosen (skin-organize shows its own settings with it)
+      var og=pq('[data-original]');if(og){og.setAttribute('aria-pressed',String(!options.get().face));og.querySelector('b').textContent=(preview.querySelector('.mk-mid-hours')||{}).textContent||'24';}
+      pqa('[data-face]').forEach(function(el){
         el.setAttribute('aria-pressed',String(!!options.get().face&&el.dataset.face===config.face));
         var look=M.preset(el.dataset.face,options.get().face?config:null);
         el.style.setProperty('--wf-thumb-tint','#'+look.tint);
@@ -889,54 +1053,60 @@
         el.querySelector('b').textContent=(preview.querySelector('.mk-mid-hours')||{}).textContent||'24';
       });
       var depthThumb=preview.querySelector('.mk-wf-depth');
-      panel.style.setProperty('--wf-depth-thumbnail',depthThumb?depthThumb.firstElementChild.style.backgroundImage:'none');
-      panel.style.setProperty('--wf-thumbnail-image',preview.style.getPropertyValue('--mk-skin-img')||'linear-gradient(150deg,#323b53,#0c121c)');
-      panel.querySelectorAll('[data-tint]').forEach(function(el){el.setAttribute('aria-pressed',String(el.dataset.tint===config.tint));});
-      panel.querySelectorAll('[data-metal]').forEach(function(el){el.setAttribute('aria-pressed',String(+el.dataset.metal===config.metal));});
+      host.style.setProperty('--wf-depth-thumbnail',depthThumb?depthThumb.firstElementChild.style.backgroundImage:'none');
+      host.style.setProperty('--wf-thumbnail-image',preview.style.getPropertyValue('--mk-skin-img')||'linear-gradient(150deg,#323b53,#0c121c)');
+      pqa('[data-tint]').forEach(function(el){el.setAttribute('aria-pressed',String(el.dataset.tint===config.tint));});
+      pqa('[data-metal]').forEach(function(el){el.setAttribute('aria-pressed',String(+el.dataset.metal===config.metal));});
       panel.style.setProperty('--wf-tint','#'+config.tint);
-      panel.querySelectorAll('.wf-number-sample').forEach(function(el){el.textContent=(preview.querySelector('.mk-mid-hours')||{}).textContent||'24';});
-      panel.querySelectorAll('[data-finish]').forEach(function(el){el.setAttribute('aria-pressed',String(+el.dataset.finish===config.finish));});
-      panel.querySelectorAll('[data-part]').forEach(function(el){el.setAttribute('aria-pressed',String(el.dataset.part===selectedPart));el.classList.toggle('is-off',!config.parts[el.dataset.part][3]);});
+      var sampleNum=((preview.querySelector('.mk-mid-hours')||{}).textContent||'24').trim()||'24';
+      pqa('.wf-number-sample').forEach(function(el){
+        var kind=BIT_FINISH[+(el.closest('[data-finish]')||{dataset:{}}).dataset.finish];
+        var html=kind?'<span class="wf-bit-sample">'+sampleNum+'</span>'+bitSvg(sampleNum,kind):sampleNum;
+        if(el.__html!==html){el.innerHTML=html;el.__html=html;}
+      });
+      pqa('[data-finish]').forEach(function(el){el.setAttribute('aria-pressed',String(+el.dataset.finish===config.finish));});
+      pqa('[data-part]').forEach(function(el){el.setAttribute('aria-pressed',String(el.dataset.part===selectedPart));el.classList.toggle('is-off',!config.parts[el.dataset.part][3]);});
       var hasDepth=options.get().t==='img'&&!!window.MinkaFindCardMaterial(options.get().id);
-      panel.querySelector('.wf-depth-control').hidden=!hasDepth;
-      panel.querySelector('.wf-depth-toggle').checked=options.get().depth!==false;
-      panel.querySelector('.wf-color').value='#'+config.tint;
-      panel.querySelector('.wf-metal-name').textContent=metals[config.metal][0];
-      panel.querySelector('.wf-part-name').textContent=labels[selectedPart];
-      panel.querySelector('.wf-coffee-options').hidden=selectedPart!=='coffee';
+      pq('.wf-depth-control').hidden=!hasDepth;
+      pq('.wf-depth-toggle').checked=options.get().depth!==false;
+      pq('.wf-nooverlap-toggle').checked=!freeMode();
+      pq('.wf-color').value='#'+config.tint;
+      pq('.wf-metal-name').textContent=metals[config.metal][0];
+      pq('.wf-part-name').textContent=labels[selectedPart];
+      pq('.wf-coffee-options').hidden=selectedPart!=='coffee';
       var tmAll=TM_RE.test(String(options.get().tm||''))?options.get().tm:'', tm=DIAL_RE.test(tmAll)?tmAll:'', td=DIGIT_RE.test(tmAll)?tmAll[0]:'';
-      panel.querySelector('.wf-timer-options').hidden=selectedPart!=='remaining'||config.face==='winamp';
-      panel.querySelector('.wf-timer-analog').hidden=!tm;
-      panel.querySelector('.wf-timer-digital').hidden=!!tm;
-      panel.querySelectorAll('[data-timer-digit]').forEach(function(el){el.setAttribute('aria-pressed',String(el.dataset.timerDigit===td));});
-      panel.querySelectorAll('[data-timer-style]').forEach(function(el){el.setAttribute('aria-pressed',String(el.dataset.timerStyle===(tm?'a':'')));});
-      panel.querySelectorAll('[data-timer-hand]').forEach(function(el){el.setAttribute('aria-pressed',String(!!tm&&el.dataset.timerHand===tm[1]));el.disabled=/[cfgh]/.test(tm[0]);});
+      pq('.wf-timer-options').hidden=selectedPart!=='remaining'||config.face==='winamp';
+      pq('.wf-timer-analog').hidden=!tm;
+      pq('.wf-timer-digital').hidden=!!tm;
+      pqa('[data-timer-digit]').forEach(function(el){el.setAttribute('aria-pressed',String(el.dataset.timerDigit===td));});
+      pqa('[data-timer-style]').forEach(function(el){el.setAttribute('aria-pressed',String(el.dataset.timerStyle===(tm?'a':'')));});
+      pqa('[data-timer-hand]').forEach(function(el){el.setAttribute('aria-pressed',String(!!tm&&el.dataset.timerHand===tm[1]));el.disabled=/[cfgh]/.test(tm[0]);});
       // Skin tiles draw themselves with the chosen hand and face (built only when the list is shown).
-      if(tm)panel.querySelectorAll('[data-timer-skin]').forEach(function(el){el.setAttribute('aria-pressed',String(el.dataset.timerSkin===tm[0]));var key=el.dataset.timerSkin+tm[1]+tm[2],mini=el.firstElementChild;if(mini.dataset.key!==key){mini.innerHTML='<span class="mk-wf-dial f'+tm[2]+' sk-'+el.dataset.timerSkin+'">'+dialPreview(key)+'</span>';mini.dataset.key=key;}});
-      panel.querySelectorAll('[data-timer-face]').forEach(function(el){el.setAttribute('aria-pressed',String(!!tm&&el.dataset.timerFace===tm[2]));});
-      panel.querySelectorAll('[data-coffee-mode]').forEach(function(el){el.setAttribute('aria-pressed',String(+el.dataset.coffeeMode===M.effectiveCoffeeMode(config)));});
-      panel.querySelectorAll('[data-coffee-contrast]').forEach(function(el){el.setAttribute('aria-pressed',String(+el.dataset.coffeeContrast===config.coffeeContrast));});
-      panel.querySelector('.wf-remove').textContent=config.parts[selectedPart][3]?'Noņemt':'Pievienot';
+      if(tm)pqa('[data-timer-skin]').forEach(function(el){el.setAttribute('aria-pressed',String(el.dataset.timerSkin===tm[0]));var key=el.dataset.timerSkin+tm[1]+tm[2],mini=el.firstElementChild;if(mini.dataset.key!==key){mini.innerHTML='<span class="mk-wf-dial f'+tm[2]+' sk-'+el.dataset.timerSkin+'">'+dialPreview(key)+'</span>';mini.dataset.key=key;}});
+      pqa('[data-timer-face]').forEach(function(el){el.setAttribute('aria-pressed',String(!!tm&&el.dataset.timerFace===tm[2]));});
+      pqa('[data-coffee-mode]').forEach(function(el){el.setAttribute('aria-pressed',String(+el.dataset.coffeeMode===M.effectiveCoffeeMode(config)));});
+      pqa('[data-coffee-contrast]').forEach(function(el){el.setAttribute('aria-pressed',String(+el.dataset.coffeeContrast===config.coffeeContrast));});
+      pq('.wf-remove').textContent=config.parts[selectedPart][3]?'Noņemt':'Pievienot';
       var own=config.colors[selectedPart];
-      panel.querySelector('.wf-part-color-input').value='#'+(own||config.tint);
-      panel.querySelector('.wf-part-color').classList.toggle('is-own',!!own);
-      panel.querySelector('.wf-part-color-clear').hidden=!own;
-      var plateRow=panel.querySelector('.wf-part-plate'), canPlate=(M.plateParts||[]).indexOf(selectedPart)>=0&&config.face!=='winamp';
+      pq('.wf-part-color-input').value='#'+(own||config.tint);
+      pq('.wf-part-color').classList.toggle('is-own',!!own);
+      pq('.wf-part-color-clear').hidden=!own;
+      var plateRow=pq('.wf-part-plate'), canPlate=(M.plateParts||[]).indexOf(selectedPart)>=0&&config.face!=='winamp';
       plateRow.hidden=!canPlate;
       if(canPlate){ plateRow.style.setProperty('--wf-plate-tint','#'+(own||config.tint)); plateRow.querySelectorAll('[data-part-plate]').forEach(function(b){b.setAttribute('aria-pressed',String(+b.dataset.partPlate===(config.plates[selectedPart]||0)));}); }
-      panel.querySelectorAll('[data-full-tint-mode]').forEach(function(el){el.setAttribute('aria-pressed',String(+el.dataset.fullTintMode===config.fullTintMode));});
-      var tinted=panel.querySelector('.wf-look-tinted');tinted.hidden=config.fullTintMode!==3;
-      var hue=panel.querySelector('.wf-full-tint-hue');hue.value=config.fullTintHue;hue.nextElementSibling.textContent=config.fullTintHue+'°';
-      var light=panel.querySelector('.wf-full-tint-light');light.value=config.fullTintIntensity;light.nextElementSibling.textContent=config.fullTintIntensity+'%';
+      pqa('[data-full-tint-mode]').forEach(function(el){el.setAttribute('aria-pressed',String(+el.dataset.fullTintMode===config.fullTintMode));});
+      var tinted=pq('.wf-look-tinted');tinted.hidden=config.fullTintMode!==3;
+      var hue=pq('.wf-full-tint-hue');hue.value=config.fullTintHue;hue.nextElementSibling.textContent=config.fullTintHue+'°';
+      var light=pq('.wf-full-tint-light');light.value=config.fullTintIntensity;light.nextElementSibling.textContent=config.fullTintIntensity+'%';
       panel.style.setProperty('--wf-look-hue',config.fullTintHue);
-      var scheme=panel.querySelector('.wf-look-scheme');scheme.hidden=config.fullTintMode<2;
+      var scheme=pq('.wf-look-scheme');scheme.hidden=config.fullTintMode<2;
       scheme.querySelectorAll('[data-full-tint-scheme]').forEach(function(el){el.setAttribute('aria-pressed',String(+el.dataset.fullTintScheme===config.fullTintScheme));});
-      var auto=panel.querySelector('.wf-full-tint-auto');auto.setAttribute('aria-pressed',String(!!config.fullTintAuto));
+      var auto=pq('.wf-full-tint-auto');auto.setAttribute('aria-pressed',String(!!config.fullTintAuto));
       tinted.classList.toggle('is-auto',!!config.fullTintAuto);
-      panel.querySelectorAll('.wf-look-sample').forEach(function(el){el.textContent=(preview.querySelector('.mk-mid-hours')||{}).textContent||'24';});
-      panel.querySelector('.wf-undo').disabled=!history.length;
-      panel.querySelectorAll('[data-position]').forEach(function(el){var i={x:0,y:1,size:2}[el.dataset.position];if(i===2)el.max=selectedPart==='hours'?300:170;el.value=config.parts[selectedPart][i];el.nextElementSibling.textContent=el.value+'%';});
-      panel.querySelectorAll('[data-image]').forEach(function(el){el.value=config[el.dataset.image];el.nextElementSibling.textContent=el.value+'%';});
+      pqa('.wf-look-sample').forEach(function(el){el.textContent=(preview.querySelector('.mk-mid-hours')||{}).textContent||'24';});
+      pq('.wf-undo').disabled=!history.length;
+      pqa('[data-position]').forEach(function(el){var i={x:0,y:1,size:2}[el.dataset.position];if(i===2)el.max=selectedPart==='hours'?300:170;el.value=config.parts[selectedPart][i];el.nextElementSibling.textContent=el.value+'%';});
+      pqa('[data-image]').forEach(function(el){el.value=config[el.dataset.image];el.nextElementSibling.textContent=el.value+'%';});
       preview.querySelectorAll('[data-wf-part]').forEach(function(el){el.classList.toggle('wf-selected',el.dataset.wfPart===selectedPart);el.tabIndex=0;el.setAttribute('aria-label',labels[el.dataset.wfPart]);});
       placeSel();
       preview.closest('.mk-skin-preview-list').setAttribute('aria-hidden','false');
@@ -990,7 +1160,10 @@
       if(box.right<=box.left||box.bottom<=box.top)return null;
       return {el:el,box:box,hit:function(x,y){
         if(x<box.left||x>box.right||y<box.top||y>box.bottom)return null;
-        if(m.ready){var u=Math.floor((x-q.left-ox)/W*m.w),v=Math.floor((y-q.top-oy)/H*m.h);if(u<0||v<0||u>=m.w||v>=m.h||m.a[v*m.w+u]<=40)return null;}
+        // opaque within two mask pixels: a dotted (dithered) picture is hit between its dots too
+        if(m.ready){var u=Math.floor((x-q.left-ox)/W*m.w),v=Math.floor((y-q.top-oy)/H*m.h),on=false;
+          for(var dv=-2;dv<=2&&!on;dv++)for(var du=-2;du<=2;du++){var uu=u+du,vv=v+dv;if(uu>=0&&vv>=0&&uu<m.w&&vv<m.h&&m.a[vv*m.w+uu]>40){on=true;break;}}
+          if(!on)return null;}
         return {area:(box.right-box.left)*(box.bottom-box.top)};
       }};
     }
@@ -1013,7 +1186,6 @@
     // The card's elements: with a layout, its parts; on the original classic card, the same elements by class.
     function partEls(){
       var face=!!options.get().face,out=[];
-      if(face&&config.face==='winamp')return out;
       M.parts.forEach(function(key){
         var el=face?preview.querySelector('[data-wf-part="'+key+'"]'):preview.querySelector(selectors[key]);
         if(!el||el.hidden||!el.getClientRects().length)return;
@@ -1057,7 +1229,15 @@
        Selected: the same frame, solid, with its name and four handles. Both are plain
        boxes outside the card, held inside the preview, so a numeral grown past the
        card edge still has a handle within reach. */
-    var selKind='part',selAddon=null;
+    var selKind='part',selAddon=null,selAddonSlot=null;
+    // The chosen decoration: card-addons redraws its picture on a change (size, effect), so
+    // it is found again by its slot; never the numeral in its place.
+    function addonEl(){
+      if(selAddon&&selAddon.isConnected)return selAddon;
+      var el=selAddonSlot==null?null:preview.querySelector(':scope > .mk-card-addon[data-slot="'+selAddonSlot+'"]');
+      if(el)selAddon=el;return el;
+    }
+    function pickAddon(el){selKind='addon';selAddon=el;selAddonSlot=el?el.dataset.slot:null;}
     function frameHost(){var h=preview.parentElement;if(h&&getComputedStyle(h).position==='static')h.style.position='relative';return h;}
     function placeFrame(box,b,pad){
       var host=box.parentElement,hr=host.getBoundingClientRect(),W=host.clientWidth,H=host.clientHeight;
@@ -1081,7 +1261,7 @@
       if(f)return f;
       var svg=doc.getElementById('mk-contour-defs');
       if(!svg){svg=doc.createElementNS(NS,'svg');svg.id='mk-contour-defs';svg.setAttribute('aria-hidden','true');svg.setAttribute('width','0');svg.setAttribute('height','0');svg.style.cssText='position:absolute;width:0;height:0;overflow:hidden';doc.body.append(svg);}
-      var color=kind==='sel'?'#64d2ff':'#8fdfff';
+      var color=kind==='sel'?'#a8c7fa':'#c6d9fb';   // the editor's primary (M3 --pp-primary)
       svg.insertAdjacentHTML('beforeend','<filter id="'+id+'" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">'
         +'<feComponentTransfer in="SourceAlpha" result="a"><feFuncA type="discrete" tableValues="0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1"/></feComponentTransfer>'
         +'<feMorphology in="a" operator="dilate" radius="2" result="d"/>'
@@ -1102,6 +1282,8 @@
     // and pictures take the silhouette filter (alpha ≥ .35, so glows and shadows do not count).
     function isChip(el){
       if(el.tagName==='IMG'||el.classList.contains('mk-wf-depth'))return false;
+      // the numeral, the name and the sun/moon are drawn shapes (dither paints them with a pattern): outline the shape, never the box
+      if(/^(hours|name|moon)$/.test(el.dataset.wfPart||''))return false;
       var cs=getComputedStyle(el);
       if(cs.backgroundClip==='text'||cs.webkitBackgroundClip==='text')return false;   // gradient digits: their glyphs are the shape
       return cs.backgroundImage!=='none'||!/^(transparent|rgba\(\d+, \d+, \d+, 0\))$/.test(cs.backgroundColor);
@@ -1118,11 +1300,18 @@
       clearContour(el);
       var saved={k:kind};CONTOUR_PROPS.forEach(function(k){saved[k]={v:el.style.getPropertyValue(k),p:el.style.getPropertyPriority(k)};});
       el.__contour=saved;
+      // The numeral: its four corner handles already show it is chosen; an outline traced
+      // around outlined, neon or dotted digits doubled every stroke. Hover outlines only
+      // the solid styles.
+      if(el.getAttribute('data-wf-part')==='hours'||el.classList.contains('mk-mid-hours')){
+        var fin=+(options.get().face?config.finish:0);
+        if(kind==='sel'||fin>=5){saved.chip=true;return;}
+      }
       if(isChip(el)){
         saved.chip=true;
         // In the chip's own units: the preview and the element's size scale it on screen.
         var w=el.offsetWidth,sc=(w?el.getBoundingClientRect().width/w:1)||1;
-        el.style.setProperty('outline',((kind==='sel'?2:1.5)/sc).toFixed(2)+'px solid '+(kind==='sel'?'#64d2ff':'#8fdfffd9'),'important');
+        el.style.setProperty('outline',((kind==='sel'?2:1.5)/sc).toFixed(2)+'px solid '+(kind==='sel'?'#a8c7fa':'#c6d9fbd9'),'important');
         el.style.setProperty('outline-offset',(1.5/sc).toFixed(2)+'px','important');
         return;
       }
@@ -1141,7 +1330,7 @@
     function showHover(hit){ setContour('hov',hit?hit.el:null); }
     function isSelected(hit){
       if(hit.kind==='part')return selKind==='part'&&hit.key===selectedPart&&preview.classList.contains('wf-editing');
-      return hit.kind===selKind&&(hit.kind!=='addon'||hit.el===selAddon);
+      return hit.kind===selKind&&(hit.kind!=='addon'||hit.el===addonEl());
     }
     function paintHover(){
       hovFrame=0;if(drag)return;
@@ -1154,24 +1343,33 @@
       hovX=e.clientX;hovY=e.clientY;if(!hovFrame)hovFrame=requestAnimationFrame(paintHover);
     },{passive:true});
     preview.addEventListener('pointerleave',function(){cancelAnimationFrame(hovFrame);hovFrame=0;showHover(null);});
-    function selEl(){return selKind==='depth'?preview.querySelector(':scope > .mk-wf-depth'):selKind==='addon'?selAddon:preview.querySelector('[data-wf-part="'+selectedPart+'"]');}
+    function selEl(){return selKind==='depth'?preview.querySelector(':scope > .mk-wf-depth'):selKind==='addon'?addonEl():preview.querySelector('[data-wf-part="'+selectedPart+'"]');}
     function selBox(){
       if(selKind==='depth'){var f=depthFrame();return f&&f.box;}
-      if(selKind==='addon'){var a=selAddon&&selAddon.isConnected&&addonFrame(selAddon);return a&&a.box;}
+      if(selKind==='addon'){var ae=addonEl(),a=ae&&addonFrame(ae);return a&&a.box;}
       var el=preview.querySelector('[data-wf-part="'+selectedPart+'"]');
-      if(!el||el.hidden||!preview.classList.contains('wf-editing')||config.face==='winamp')return null;
+      if(!el||el.hidden||!preview.classList.contains('wf-editing'))return null;
       return partBox(selectedPart,el);
+    }
+    // Place the frame and the slider without their glide (after a rebuild or a resize).
+    var snapping=false,mounted=false;   // mounted: the editor is complete (the first sizing runs before)
+    function snapSel(){
+      var host=frameHost(),els=host?[host.querySelector(':scope > .wf-sel')].concat(rim?[rim.knob,rim.tip]:[]).filter(Boolean):[];
+      els.forEach(function(el){el.classList.add('no-anim');});
+      snapping=true;try{placeSel();}finally{snapping=false;}
+      if(typeof requestAnimationFrame==='function')requestAnimationFrame(function(){requestAnimationFrame(function(){els.concat(host?[host.querySelector(':scope > .wf-sel')]:[]).forEach(function(el){if(el)el.classList.remove('no-anim');});});});
     }
     function placeSel(){
       var host=frameHost(),box=host&&host.querySelector(':scope > .wf-sel');
       preview.querySelectorAll('[data-wf-part] > .wf-resize').forEach(function(h){h.remove();});
       if(!host)return;
-      var b=selBox();
+      var b=quietParts&&selKind==='part'?null:selBox();
       setContour('sel',b?selEl():null);
-      if(!b){if(box)box.hidden=true;return;}
+      if(!b){if(box)box.hidden=true;paintRim();return;}
       if(!box){
-        box=document.createElement('div');box.className='wf-sel';box.setAttribute('aria-hidden','true');
-        box.innerHTML='<b class="wf-sel-tag"></b>'+['nw','ne','sw','se'].map(function(c){return '<span class="wf-resize" data-c="'+c+'" title="Velc, lai mainītu izmēru"></span>';}).join('');
+        box=document.createElement('div');box.className='wf-sel no-anim';box.setAttribute('aria-hidden','true');
+        if(typeof requestAnimationFrame==='function')requestAnimationFrame(function(){requestAnimationFrame(function(){box.classList.remove('no-anim');});});
+        box.innerHTML=['nw','ne','sw','se'].map(function(c){return '<span class="wf-resize" data-c="'+c+'" title="Velc, lai mainītu izmēru"></span>';}).join('');
         host.append(box);
         box.addEventListener('pointerdown',function(e){
           if(e.button!==0||!e.target.classList.contains('wf-resize'))return;
@@ -1182,10 +1380,9 @@
       }
       box.hidden=false;
       box.classList.toggle('no-size',selKind==='addon');
-      var tag=box.firstElementChild,name=selKind==='depth'?'Objekts':selKind==='addon'?'Dekors':labels[selectedPart];
-      if(tag.textContent!==name)tag.textContent=name;
       box.style.borderRadius=(selKind==='part'&&selectedPart!=='hours'?radiusOf({kind:'part',key:selectedPart,el:preview.querySelector('[data-wf-part="'+selectedPart+'"]')}):12)+'px';
-      box.classList.toggle('tag-in',placeFrame(box,b,5)<18);
+      placeFrame(box,b,5);
+      paintRim();
     }
     // Keep the whole element inside the face, including its scaled bounds.
     // Read geometry only while editing; roster rendering never measures parts.
@@ -1215,9 +1412,38 @@
        room near by (the numeral may stay behind a chip when there is none), and
        only when nothing is free it gets a little smaller. Edit time only: the roster
        never measures. Returns true when anything moved. */
+    /* The big number has its own zone: whatever the chips take, it fits what is left —
+       a little smaller or a step aside (never below 55 % of its size) — and is never
+       drawn under a chip. placed: the chips' boxes; numeral: its digits' box (% of card). */
+    function heroFit(placed,r,numeral,inCard,over){
+      var hp=config.parts.hours,hel=preview.querySelector('[data-wf-part="hours"]');
+      if(!numeral||!hp||!hp[3]||!hel||hel.hidden)return false;
+      var er=hel.getBoundingClientRect(),ex=((er.left+er.right)/2-r.left)/r.width*100,ey=((er.top+er.bottom)/2-r.top)/r.height*100;
+      var nb=function(k,dx,dy){return [ex+(numeral[0]-ex)*k+dx,ey+(numeral[1]-ey)*k+dy,ex+(numeral[2]-ex)*k+dx,ey+(numeral[3]-ey)*k+dy];};
+      var clear=function(b){if(!inCard(b))return false;for(var i=0;i<placed.length;i++)if(over(b,placed[i],1.6))return false;return true;};
+      var steps=[[0,0],[0,-3],[0,3],[-3,0],[3,0],[0,-6],[0,6],[-6,0],[6,0]],found=null;
+      for(var k=1;k>=.55&&!found;k-=.03)for(var o=0;o<steps.length;o++)if(clear(nb(k,steps[o][0],steps[o][1]))){found=[k,steps[o][0],steps[o][1]];break;}
+      if(!found||(found[0]===1&&!found[1]&&!found[2]))return false;
+      hp[2]=Math.max(50,Math.round(hp[2]*found[0]));hp[0]=Math.round(hp[0]+found[1]);hp[1]=Math.round(hp[1]+found[2]);
+      return true;
+    }
+    // After a change by hand (a drop, a resize): only the number makes way, if it must.
+    function heroMakeWay(changedKey){
+      if(freeMode()||changedKey==='hours'||!config.parts.hours||!config.parts.hours[3])return false;
+      var r=preview.getBoundingClientRect(),hel=preview.querySelector('[data-wf-part="hours"]');if(!r.width||!hel||hel.hidden)return false;
+      var P=function(b){return [(b.left-r.left)/r.width*100,(b.top-r.top)/r.height*100,(b.right-r.left)/r.width*100,(b.bottom-r.top)/r.height*100];};
+      var placed=partEls().filter(function(q){return q[0]!=='hours';}).map(function(q){return P(partBox(q[0],q[1]));});
+      var tmp=preview.querySelector(':scope > .mk-wf-temp');if(tmp&&tmp.getClientRects().length)placed.push(P(tmp.getBoundingClientRect()));
+      var over=function(a,b,g){return a[0]<b[2]+g&&a[2]>b[0]-g&&a[1]<b[3]+g&&a[3]>b[1]-g;};
+      var inCard=function(b){if(b[0]<3||b[2]>97||b[1]<3||b[3]>97)return false;return [[b[0],b[1]],[b[2],b[1]],[b[0],b[3]],[b[2],b[3]]].every(function(c){var dx=Math.max(0,22-c[0],c[0]-78),dy=Math.max(0,22-c[1],c[1]-78);return !dx||!dy||dx*dx+dy*dy<=19*19;});};
+      var numeral=P(partBox('hours',hel)),moved=false;
+      glide(function(){moved=heroFit(placed,r,numeral,inCard,over);});
+      return moved;
+    }
     var SETTLE_ORDER=['name','remaining','fatigue','month','initials','emoji','clock','coffee','moon'];
     function settle(fixedKey,lastKey){
-      if(!options.get().face||config.face==='winamp')return false;
+      // The layout being edited, not the saved look: the first layout a card gets has not been saved yet.
+      if(!config||config.face==='winamp')return false;
       apply(preview,Object.assign({},options.get(),{face:config}));
       var r=preview.getBoundingClientRect();if(!r.width||!r.height)return false;
       function pct(b){return [(b.left-r.left)/r.width*100,(b.top-r.top)/r.height*100,(b.right-r.left)/r.width*100,(b.bottom-r.top)/r.height*100];}
@@ -1232,6 +1458,8 @@
       function rank(k){return k===fixedKey?-1:k===lastKey?99:SETTLE_ORDER.indexOf(k);}
       items.sort(function(a,b){return rank(a.key)-rank(b.key);});
       var G=1.4,placed=[],moved=false;
+      // the Termostats dial's temperature is a fixed part of the face: chips keep off it
+      var tmp=preview.querySelector(':scope > .mk-wf-temp');if(tmp&&tmp.getClientRects().length)placed.push(pct(tmp.getBoundingClientRect()));
       function over(a,b,g){return a[0]<b[2]+g&&a[2]>b[0]-g&&a[1]<b[3]+g&&a[3]>b[1]-g;}
       function inCard(b){
         if(b[0]<3||b[2]>97||b[1]<3||b[3]>97)return false;
@@ -1267,55 +1495,103 @@
           // What was just moved stays — only pulled back inside the card if it pokes out.
           hit=inCard(it.b)?[0,0]:nearest(it,1,false,30)||[0,0];
           if(hit[0]||hit[1]){it.p[0]=Math.round(it.p[0]+hit[0]);it.p[1]=Math.round(it.p[1]+hit[1]);moved=true;}
-          placed.push(at(it,1,hit[0],hit[1]));return;
+          it.pb=at(it,1,hit[0],hit[1]);placed.push(it.pb);return;
         }
         // Nudge, then a little smaller where it is, then farther (still off the numeral),
         // then over the numeral near by, then anywhere. Never below ~70 % of its size
         // unless nothing else is left: small text is no better than hidden text.
         var tries=[[1,true,6],[.9,true,8],[1,true,24],[.9,true,24],[.8,true,14],[1,false,40],[.9,false,40],[.8,false,100],[.7,false,100]];
         // (never below 70 % of the normal size: smaller text stops being read)
-        tries=tries.filter(function(t,i){return i===0||it.p[2]*t[0]>=70;});
+        var floor=Math.min(70,it.p[2]);tries=tries.filter(function(t,i){return i===0||it.p[2]*t[0]>=floor;});
         // Last resort, still better than lying on another element: smaller, down to the 50 % floor.
         [.6,.5].forEach(function(k2){var sc=Math.max(50,it.p[2]*k2)/it.p[2];if(sc<1)tries.push([sc,false,100]);});
         // Already over the numeral (the layout's own design) and clear of every chip: leave it.
-        if(free(it.b,false))hit=numeral&&over(it.b,numeral,.6)?nearest(it,1,true,10)||[0,0]:[0,0];
+        // A chip that lies on the number moves off it — farther if it must, a little smaller if that is what fits.
+        if(free(it.b,false))hit=numeral&&over(it.b,numeral,.6)?nearest(it,1,true,26)||(function(){var h=nearest(it,.85,true,26);if(h)k=.85;return h;})()||[0,0]:[0,0];
         for(var t=0;!hit&&t<tries.length;t++){k=tries[t][0];hit=nearest(it,k,tries[t][1],tries[t][2]);}
         if(!hit){hit=[0,0];k=1;}
         var nx=Math.round(it.p[0]+hit[0]),ny=Math.round(it.p[1]+hit[1]),ns=Math.max(50,Math.round(it.p[2]*k));
         if(nx!==it.p[0]||ny!==it.p[1]||ns!==it.p[2]){it.p[0]=nx;it.p[1]=ny;it.p[2]=ns;moved=true;}
-        placed.push(at(it,k,hit[0],hit[1]));
+        it.pb=at(it,k,hit[0],hit[1]);placed.push(it.pb);
+      });
+      if(fixedKey!=='hours'&&heroFit(placed,r,numeral,inCard,over))moved=true;
+      // A row with one element left in it (the others hidden) centres it.
+      [[0,30],[72,100]].forEach(function(band){
+        var inBand=items.filter(function(it){return it.p[3]&&it.p[1]>=band[0]&&it.p[1]<=band[1];});
+        if(inBand.length!==1||inBand[0].key===fixedKey)return;
+        var it=inBand[0],b0=it.pb||it.b,dx=50-((b0[0]+b0[2])/2),bx=[b0[0]+dx,b0[1],b0[2]+dx,b0[3]];
+        var others=placed.filter(function(q){return q!==it.pb;});
+        // (never onto the number)
+        if(Math.abs(dx)>1&&inCard(bx)&&!(numeral&&over(bx,numeral,.6))&&others.every(function(q){return !over(bx,q,1.4);})){it.p[0]=Math.round(it.p[0]+dx);moved=true;}
       });
       if(moved){config=M.clean(config,true);apply(preview,Object.assign({},options.get(),{face:config}));}
       return moved;
     }
     // A settle outside save() (a new timer, a slider let go): stored without an undo step of its own.
     // keepNum: a ready-made look keeps its own numeral colour (a layout save would set it to the accent).
-    function settleStore(fixedKey,lastKey,keepNum){
-      if(!settle(fixedKey,lastKey))return;
+    function settleStore(fixedKey,lastKey,keepNum,force){
+      if(freeMode()&&!force)return;
+      var moved=false;glide(function(){moved=settle(fixedKey,lastKey);});
+      if(!moved)return;
       var d=options.get(),num=d.num;
       options.change(M.clean(config,true));
       if(keepNum){if(num==null)delete d.num;else d.num=num;var nc=host.querySelector('.mk-num-color');if(nc&&num)nc.value='#'+String(num).split(',').map(function(n){return (+n).toString(16).padStart(2,'0');}).join('');}
       sync();
     }
-    currentSettle=function(){if(options.get().face&&preview.isConnected)settleStore(null,null,true);};
-    /* constrain: true = the selected element was moved/sized (it stays, the rest make room);
-       'all'/'fit'/'material' = a whole new arrangement; 'parts' = an element was added or
-       removed (it finds a free spot, the rest stay); 'slide' = a slider mid-drag (no settle
-       until it is let go). */
+    currentSettle=function(){if(options.get().face&&preview.isConnected)settleStore(null,null,true,true);};   // a ready look: the editor's own arrangement
+    currentQuiet=function(){if(preview.isConnected)placeSel();};
+    /* Elements that change place glide there (the spring every other panel uses), so
+       what moved and where to is seen, not guessed. Only `translate` is animated —
+       the elements keep their own transform — on the preview card alone. */
+    function partCenters(){
+      var m={};
+      preview.querySelectorAll('[data-wf-part]').forEach(function(el){if(el.hidden||!el.getClientRects().length)return;var r=el.getBoundingClientRect();m[el.dataset.wfPart]=[r.left+r.width/2,r.top+r.height/2,el];});
+      return m;
+    }
+    // skinAfter: the look to draw afterwards (default: the working layout).
+    function glide(fn,skinAfter){
+      var MM=window.MinkaMotion,a=MM&&MM.animate&&preview.isConnected?partCenters():null;
+      fn();
+      if(!a)return;
+      apply(preview,skinAfter?skinAfter():Object.assign({},options.get(),{face:config}));
+      var b=partCenters(),sc=parseFloat(preview.style.getPropertyValue('--wf-preview-scale'))||1;
+      Object.keys(b).forEach(function(k){
+        if(!a[k])return;
+        var dx=(a[k][0]-b[k][0])/sc,dy=(a[k][1]-b[k][1])/sc,el=b[k][2];
+        if(Math.abs(dx)+Math.abs(dy)<2)return;
+        if(el.__glide)try{el.__glide.cancel();}catch(_e){}
+        el.__glide=MM.animate(el,[{translate:dx.toFixed(1)+'px '+dy.toFixed(1)+'px'},{translate:'0px 0px'}],'spring-default');
+      });
+      placeSel();
+    }
+    /* constrain: true = the selected element was moved or sized — it stays where it was
+       put and nothing else moves; 'drop' = the same after a drag (the drop itself already
+       found its spot); 'all'/'fit'/'material' = a whole new arrangement is tidied;
+       'parts'/'grow' = an element was added or grew — it finds room, the rest stay;
+       'slide' = a slider mid-drag. What is done by hand is never tidied (freeMode). */
     function save(constrain) {
       history.push(options.get().face ? M.clean(options.get().face) : null);
       if(history.length>20)history.shift();
       preview.classList.add('wf-editing');config=M.clean(config);
-      var c=constrain==='slide'||constrain==='parts'?true:constrain;
-      if(c)constrainParts(c==='all'||c==='material',c===true||c==='material');
-      if(constrain&&constrain!=='slide')settle(constrain===true?selectedPart:null,constrain==='parts'?selectedPart:null);
-      options.change(M.clean(config,true));sync();sizePreview();
+      var tidy=/^(all|fit|material|parts|grow)$/.test(String(constrain));
+      var run=function(){
+        var c=constrain==='slide'||constrain==='parts'||constrain==='grow'||constrain==='drop'?true:constrain;
+        // a whole new arrangement is placed by the grid itself (settle keeps it inside the rounded card);
+        // the older inward nudge would pull elements off their rows first
+        if(c&&c!=='all')constrainParts(c==='material',c===true||c==='material');
+        if(tidy)settle(null,constrain==='parts'||constrain==='grow'?selectedPart:null);
+      };
+      if(tidy)glide(run);else run();
+      options.change(M.clean(config,true));
+      sync();sizePreview();
     }
     tab.addEventListener('click',activate);
     tabs.addEventListener('click',function(e){if(e.target.closest('[data-skin-section]')!==tab){preview.classList.remove('wf-editing');apply(preview,options.get());}});
-    panel.addEventListener('click',function(e){
+    onPanel('click',function(e){
       var el=e.target.closest('button');if(!el)return;
-      if(el.dataset.face){var previous=options.get().face;if(previous)previous=M.clean(previous);config=M.preset(el.dataset.face,previous?config:null);if(previous)M.parts.forEach(function(key){config.parts[key][3]=previous.parts[key][3];});if(el.dataset.face==='winamp'&&(!previous||previous.face!=='winamp'))config.tint='9dff4a';save('all');}
+      // the card as it is without a layout (the tile first in Izkārtojums)
+      if(el.hasAttribute('data-original')){if(options.get().face){options.change(null);(options.commit||options.rebuild)();}return;}
+      if(el.dataset.face){var previous=options.get().face;if(previous)previous=M.clean(previous);config=M.preset(el.dataset.face,previous?config:null);if(previous)M.parts.forEach(function(key){config.parts[key][3]=previous.parts[key][3];});save('all');}
       if(el.dataset.tint){config.tint=el.dataset.tint;save();}
       if(el.dataset.metal!=null){config.metal=+el.dataset.metal;save();}
       if(el.dataset.finish!=null){config.finish=+el.dataset.finish;save('material');}
@@ -1326,9 +1602,9 @@
         if(DIAL_RE.test(next)&&!DIAL_RE.test(String(options.get().tm||''))&&M.fitDial){M.fitDial(config);save();}
         if(options.timer)options.timer(next);apply(preview,options.get());sync();
         // A dial or a stacked readout is bigger than the chip: it finds room, the rest stay.
-        settleStore(null,'remaining');
+        settleStore(null,'remaining',false,true);
       }
-      if(el.dataset.coffeeMode!=null){config.coffeeMode=+el.dataset.coffeeMode;config.coffeeExplicit=1;save(true);}
+      if(el.dataset.coffeeMode!=null){config.coffeeMode=+el.dataset.coffeeMode;config.coffeeExplicit=1;save('grow');}
       if(el.dataset.coffeeContrast!=null){if(window.MINKA_APP==='rad'&&!config.coffeeExplicit)config.coffeeMode=0;config.coffeeContrast=+el.dataset.coffeeContrast;save();}
       if(el.dataset.fullTintMode!=null){config.fullTintMode=+el.dataset.fullTintMode;save();}
       if(el.dataset.fullTintScheme!=null){config.fullTintScheme=+el.dataset.fullTintScheme;save();}
@@ -1337,15 +1613,17 @@
       if(el.dataset.partPlate!=null){config.plates[selectedPart]=+el.dataset.partPlate;save();}
       if(el.dataset.part){selKind='part';selectedPart=el.dataset.part;if(!config.parts[selectedPart][3]||!options.get().face){config.parts[selectedPart][3]=1;save('parts');}else sync();}
       if(el.classList.contains('wf-remove')){config.parts[selectedPart][3]=config.parts[selectedPart][3]?0:1;save('parts');}
-      if(el.classList.contains('wf-undo')&&history.length){var previous=history.pop();config=M.clean(previous);options.change(previous);preview.classList.toggle('wf-editing',!!previous);apply(preview,options.get());sync();sizePreview();}
+      if(el.classList.contains('wf-undo')&&history.length){var previous=history.pop();glide(function(){config=M.clean(previous);options.change(previous);preview.classList.toggle('wf-editing',!!previous);},function(){return options.get();});sync();sizePreview();}
       if(el.classList.contains('wf-fit'))save('fit');
+      if(el.classList.contains('wf-tidy'))save('all');
       // The layout most people build by hand: the essentials only.
       if(el.classList.contains('wf-minimal')){var keep={hours:1,name:1,remaining:1,emoji:1,moon:1};M.parts.forEach(function(k){config.parts[k][3]=keep[k]?1:0;});save('all');}
       if(el.classList.contains('wf-reset')){config=M.preset(config.face,config);save('all');}
-      if(el.classList.contains('wf-original')){options.change(null);options.section('background');options.rebuild();}
+      if(el.classList.contains('wf-original')){options.change(null);options.section('background');(options.commit||options.rebuild)();}
     });
-    panel.querySelector('.wf-depth-toggle').addEventListener('change',function(e){options.depth(e.target.checked);sync();});
-    panel.addEventListener('input',function(e){
+    pq('.wf-depth-toggle').addEventListener('change',function(e){options.depth(e.target.checked);sync();});
+    pq('.wf-nooverlap-toggle').addEventListener('change',function(e){try{localStorage.setItem(FREE_KEY,e.target.checked?'0':'1');}catch(_e){}});
+    onPanel('input',function(e){
       var el=e.target;
       if(el.classList.contains('wf-color'))config.tint=el.value.slice(1);
       else if(el.classList.contains('wf-part-color-input'))config.colors[selectedPart]=el.value.slice(1);
@@ -1357,19 +1635,82 @@
       save(el.dataset.position?'slide':false);
     });
     // A position slider let go: now the others make room.
-    panel.addEventListener('change',function(e){if(e.target.dataset&&e.target.dataset.position)settleStore(selectedPart);});
+    onPanel('change',function(e){if(e.target.dataset&&e.target.dataset.position)settleStore(selectedPart);});
     // Pointer capture stays on the unchanged preview. All coordinates are relative
     // to its real dimensions; persisted values never depend on device pixels.
     // While dragging only the moved element's three variables change (once a frame);
     // the full repaint, the sliders and the save wait for the release.
     var drag=null,dragFrame=0,dragEvt=null;
+    function pctOf(b,r){return [(b.left-r.left)/r.width*100,(b.top-r.top)/r.height*100,(b.right-r.left)/r.width*100,(b.bottom-r.top)/r.height*100];}
+    function inCardPct(b){
+      if(b[0]<3||b[2]>97||b[1]<3||b[3]>97)return false;
+      return [[b[0],b[1]],[b[2],b[1]],[b[0],b[3]],[b[2],b[3]]].every(function(c){var dx=Math.max(0,22-c[0],c[0]-78),dy=Math.max(0,22-c[1],c[1]-78);return !dx||!dy||dx*dx+dy*dy<=19*19;});
+    }
     function startDrag(e,el,resizing){
-      if(!preview.classList.contains('wf-editing')||config.face==='winamp')return;
-      selKind='part';selectedPart=el.dataset.wfPart;sync();showHover(null);
-      var r=preview.getBoundingClientRect(),b=partBox(selectedPart,el),cx=(b.left+b.right)/2,cy=(b.top+b.bottom)/2;
-      drag={id:e.pointerId,x:e.clientX,y:e.clientY,px:config.parts[selectedPart][0],py:config.parts[selectedPart][1],r:r,el:el,
-        resize:resizing,size:config.parts[selectedPart][2],cx:cx,cy:cy,d0:Math.max(8,Math.hypot(e.clientX-cx,e.clientY-cy)),moved:false};
+      if(!preview.classList.contains('wf-editing'))return;
+      selKind='part';selectedPart=el.dataset.wfPart;
+      var r=preview.getBoundingClientRect(),b=partBox(selectedPart,el),cx=(b.left+b.right)/2,cy=(b.top+b.bottom)/2,p=config.parts[selectedPart];
+      // Winamp keeps its own player layout until an element is moved: from then on it
+      // sits where it was put, at the size it had in the player.
+      if(config.face==='winamp'&&!el.hasAttribute('data-wf-free')){p[0]=Math.round((cx-r.left)/r.width*100);p[1]=Math.round((cy-r.top)/r.height*100);p[2]=100;el.setAttribute('data-wf-free','');livePart();}
+      sync();showHover(null);
+      drag={id:e.pointerId,x:e.clientX,y:e.clientY,px:p[0],py:p[1],r:r,el:el,
+        resize:resizing,size:p[2],cx:cx,cy:cy,d0:Math.max(8,Math.hypot(e.clientX-cx,e.clientY-cy)),moved:false};
+      // The drop lands on a free spot: the other elements are measured once, here.
+      if(!resizing&&!freeMode()){
+        var own=pctOf(b,r);
+        drag.obs=partEls().filter(function(q){return q[0]!==selectedPart&&q[0]!=='hours';}).map(function(q){return pctOf(partBox(q[0],q[1]),r);});
+        drag.hw=(own[2]-own[0])/2;drag.hh=(own[3]-own[1])/2;drag.ox=(own[0]+own[2])/2-p[0];drag.oy=(own[1]+own[3])/2-p[1];
+        if(selectedPart!=='hours')drag.num=numeralPct(r);
+      }
+      live(true);
       try{preview.setPointerCapture(e.pointerId);}catch(_e){}
+    }
+    // While the pointer moves things the frame follows it exactly; otherwise it glides.
+    function live(on){var h=frameHost();if(h)h.classList.toggle('wf-live',!!on);}
+    // Where the dragged element would settle if let go at (x, y): there, when it is
+    // free; else the nearest free spot (ring by ring, whole per cent). Pure arithmetic.
+    function landing(x,y,state){
+      var d=state||drag;if(!d||!d.obs)return null;
+      function boxAt(cx,cy){return [cx+d.ox-d.hw,cy+d.oy-d.hh,cx+d.ox+d.hw,cy+d.oy+d.hh];}
+      function hitsBox(b,o,g){return b[0]<o[2]+g&&b[2]>o[0]-g&&b[1]<o[3]+g&&b[3]>o[1]-g;}
+      // the number's zone counts as taken first; only when nothing near is free may a chip lie on it
+      function ok(b,avoidNum){if(!inCardPct(b))return false;if(avoidNum&&d.num&&hitsBox(b,d.num,.6))return false;for(var i=0;i<d.obs.length;i++)if(hitsBox(b,d.obs[i],1.2))return false;return true;}
+      for(var pass=0;pass<2;pass++){
+        var avoid=pass===0;
+        if(ok(boxAt(x,y),avoid))return [x,y];
+        for(var r=1;r<=40;r++){
+          var best=null,bd=1e9;
+          for(var i=-r;i<=r;i++){
+            [[i,-r],[i,r],[-r,i],[r,i]].forEach(function(t){var q=t[0]*t[0]+t[1]*t[1];if(q>=bd)return;var cx=x+t[0],cy=y+t[1];if(cx<5||cx>95||cy<5||cy>95)return;if(ok(boxAt(cx,cy),avoid)){best=[cx,cy];bd=q;}});
+          }
+          if(best)return best;
+        }
+      }
+      return [x,y];
+    }
+    function numeralPct(r){var h=preview.querySelector('[data-wf-part="hours"]');return h&&!h.hidden&&h.getClientRects().length?pctOf(partBox('hours',h),r):null;}
+    /* The element that was just changed (grown with a handle, the slider or a pinch)
+       finds room itself when it now lies on another; the others stay where they are. */
+    function roomFor(key){
+      if(freeMode()||!key||key==='hours')return false;
+      var el=preview.querySelector('[data-wf-part="'+key+'"]'),p=config.parts[key];if(!el||el.hidden||!p)return false;
+      var r=preview.getBoundingClientRect(),own=pctOf(partBox(key,el),r);
+      var st={obs:partEls().filter(function(q){return q[0]!==key&&q[0]!=='hours';}).map(function(q){return pctOf(partBox(q[0],q[1]),r);}),
+        hw:(own[2]-own[0])/2,hh:(own[3]-own[1])/2,ox:(own[0]+own[2])/2-p[0],oy:(own[1]+own[3])/2-p[1],num:numeralPct(r)};
+      var land=landing(p[0],p[1],st);
+      if(!land||(land[0]===p[0]&&land[1]===p[1]))return false;
+      glide(function(){p[0]=land[0];p[1]=land[1];});
+      return true;
+    }
+    function showGhost(land){
+      var host=frameHost(),g=host&&host.querySelector(':scope > .wf-ghost');
+      var p=config.parts[selectedPart];
+      if(!land||(land[0]===p[0]&&land[1]===p[1])){if(g)g.hidden=true;return;}
+      if(!g){g=document.createElement('div');g.className='wf-ghost';g.setAttribute('aria-hidden','true');host.append(g);}
+      var d=drag,r=d.r,b=[land[0]+d.ox-d.hw,land[1]+d.oy-d.hh,land[0]+d.ox+d.hw,land[1]+d.oy+d.hh];
+      g.hidden=false;g.style.borderRadius=radiusOf({kind:'part',key:selectedPart,el:d.el})+'px';
+      placeFrame(g,{left:r.left+b[0]/100*r.width,top:r.top+b[1]/100*r.height,right:r.left+b[2]/100*r.width,bottom:r.top+b[3]/100*r.height},2);
     }
     // The object in front of the numeral is the photo's own cut-out: moving it moves
     // the picture (Attēla novietojums), its handles zoom the picture.
@@ -1378,6 +1719,7 @@
       selKind='depth';showHover(null);placeSel();
       var clip=f.el.getBoundingClientRect(),q=f.el.firstElementChild.getBoundingClientRect(),m=maskOf(cssUrl(f.el.firstElementChild.style.backgroundImage));
       var s=Math.max(q.width/m.nw,q.height/m.nh),cx=(f.box.left+f.box.right)/2,cy=(f.box.top+f.box.bottom)/2;
+      live(true);
       drag={id:e.pointerId,x:e.clientX,y:e.clientY,obj:true,zoom:zoom,ix:config.imageX,iy:config.imageY,iz:config.imageZoom,
         spanX:m.nw*s-clip.width,spanY:m.nh*s-clip.height,cx:cx,cy:cy,d0:Math.max(8,Math.hypot(e.clientX-cx,e.clientY-cy)),moved:false};
       try{preview.setPointerCapture(e.pointerId);}catch(_e){}
@@ -1392,11 +1734,13 @@
       if(typeof window._mkToast==='function')window._mkToast('Kartīte pārslēgta uz rediģējamu izkārtojumu — “Atcelt pēdējo” to atgriež','ok');
       return preview.querySelector('[data-wf-part="'+key+'"]');
     }
+    // A decoration chosen in the Dekori panel becomes the chosen element here.
+    preview.addEventListener('mk-addon-choose',function(e){var el=e.target;if(!el||!el.classList||!el.classList.contains('mk-card-addon'))return;pickAddon(el);showHover(null);placeSel();});
     preview.addEventListener('pointerdown',function(e){
       if(e.button!==0)return;
       var hit=pickPress(e);
       if(!hit){if(selKind!=='part'){selKind='part';placeSel();}return;}
-      if(hit.kind==='addon'){selKind='addon';selAddon=hit.el;showHover(null);placeSel();return;}   // it drags itself (card-addons)
+      if(hit.kind==='addon'){pickAddon(hit.el);showHover(null);placeSel();return;}   // it drags itself (card-addons)
       e.preventDefault();e.stopPropagation();
       if(hit.kind==='depth'){startObject(e,false);return;}
       showGroup('parts');
@@ -1448,7 +1792,7 @@
         }
         liveImage();placeSel();
         // A photo that exactly fills the card has nowhere to slide: say what helps instead.
-        if(!drag.zoom&&drag.spanX<=1&&drag.spanY<=1){var tg=frameHost().querySelector('.wf-sel-tag');if(tg)tg.textContent='Objekts: vispirms tuvini (velc stūri)';}
+        if(!drag.zoom&&drag.spanX<=1&&drag.spanY<=1&&typeof window._mkToast==='function'&&!drag.hinted){drag.hinted=1;window._mkToast('Bilde jau aizpilda kartīti: vispirms tuvini to (velc stūri), tad to var pārbīdīt','ok');}
         return;
       }
       if(drag.resize){
@@ -1461,6 +1805,7 @@
         var s=snap(nx,ny);
         config.parts[selectedPart][0]=Math.round(s[0]);
         config.parts[selectedPart][1]=Math.round(s[1]);
+        drag.land=landing(config.parts[selectedPart][0],config.parts[selectedPart][1]);showGhost(drag.land);
       }
       livePart();placeSel();
     }
@@ -1474,7 +1819,14 @@
       if(!drag||e.pointerId!==drag.id)return;
       var d=drag;if(dragFrame){cancelAnimationFrame(dragFrame);dragStep();}
       drag=null;dragEvt=null;var g=preview.querySelector(':scope > .wf-guides');if(g)g.remove();
-      if(d.moved){apply(preview,Object.assign({},options.get(),{face:config}));save(d.obj?false:true);}else placeSel();
+      showGhost(null);live(false);
+      if(!d.moved){placeSel();return;}
+      // Dropped on another element: it glides on to the free spot the outline showed.
+      var p=d.obj?null:config.parts[selectedPart];
+      if(p&&d.land&&(d.land[0]!==p[0]||d.land[1]!==p[1])){var land=d.land;glide(function(){p[0]=land[0];p[1]=land[1];});}
+      else{apply(preview,Object.assign({},options.get(),{face:config}));if(d.resize)roomFor(selectedPart);}
+      if(p)heroMakeWay(selectedPart);
+      save(d.obj?false:'drop');
     }
     preview.addEventListener('pointerup',endDrag);preview.addEventListener('pointercancel',endDrag);preview.addEventListener('lostpointercapture',endDrag);
     preview.addEventListener('click',function(e){if(preview.classList.contains('wf-editing')){e.preventDefault();e.stopPropagation();}},true);
@@ -1483,13 +1835,13 @@
     preview.parentElement.addEventListener('wheel',function(e){
       if(!e.ctrlKey||drag)return;
       var b=selBox();if(!b||e.clientX<b.left-8||e.clientX>b.right+8||e.clientY<b.top-8||e.clientY>b.bottom+8)return;
-      e.preventDefault();
+      e.preventDefault();live(true);
       // A trackpad pinch sends small steps, a mouse wheel notch ~100: each step is capped.
       var k=Math.max(.9,Math.min(1.1,Math.exp(-e.deltaY*.004)));
       if(selKind==='depth'){config.imageZoom=Math.max(100,Math.min(180,Math.round(config.imageZoom*k)));liveImage();}
       else if(selKind==='part'){var p=config.parts[selectedPart];p[2]=Math.max(50,Math.min(selectedPart==='hours'?300:170,Math.round(p[2]*k)));livePart();}
       else return;
-      placeSel();clearTimeout(wheelSave);wheelSave=setTimeout(function(){apply(preview,Object.assign({},options.get(),{face:config}));save(selKind==='part');},260);
+      placeSel();clearTimeout(wheelSave);wheelSave=setTimeout(function(){live(false);apply(preview,Object.assign({},options.get(),{face:config}));if(selKind==='part'){roomFor(selectedPart);heroMakeWay(selectedPart);}save(selKind==='part');},260);
     },{passive:false});
     preview.addEventListener('keydown',function(e){
       if(!preview.classList.contains('wf-editing'))return;
@@ -1501,13 +1853,194 @@
       var i=/Left|Right/.test(e.key)?0:1,delta=/Left|Up/.test(e.key)?-1:1;
       config.parts[selectedPart][i]+=delta*(e.shiftKey?5:1);save(true);
     });
+    /* ---- The rim knob: a glass knob on the card's own edge ----
+       It rides the right rim, round both corners, and a soft glow trails it from
+       where the scale starts. Tap it to switch what it changes — Izmērs, Spilgtums,
+       Krāsa (the lightness and hue of the element's own colour: nothing new is
+       stored) — and drag it along the edge. It works for the selected element, a
+       decoration (its size) and the object (the picture's zoom). The rim is sampled
+       once per card size; a drag moves one knob and one stroke, once a frame. */
+    var RIM_MODES=[['size','Izmērs'],['light','Spilgtums'],['hue','Krāsa']],edgeMode='size';
+    try{edgeMode=localStorage.getItem('minka:wf-edge')||'size';}catch(_e){}
+    if(!RIM_MODES.some(function(m){return m[0]===edgeMode;}))edgeMode='size';
+    var ICONS={
+      size:'<path d="M8 16l4 4 4-4M8 8l4-4 4 4M12 4v16"/>',
+      light:'<circle cx="12" cy="12" r="3.6"/><path d="M12 3.5v2M12 18.5v2M3.5 12h2M18.5 12h2M6 6l1.4 1.4M16.6 16.6 18 18M6 18l1.4-1.4M16.6 7.4 18 6"/>',
+      hue:'<path d="M12 3.8c3.2 3.7 5.4 6.7 5.4 9.4a5.4 5.4 0 0 1-10.8 0c0-2.7 2.2-5.7 5.4-9.4z"/>'
+    };
+    var RIM_OUT=17,rim=null,rimCache=null,rimDrag=null,rimRaf=0,rimX=0,rimY=0,rimTip=0,rimState='',rimWho='';
+    // The edge control is an M3 slider standing beside the card's right edge: a
+    // straight track (more at the top), a bar handle with a gap on both sides, a
+    // stop dot at the end, and under it a round button that says what it changes.
+    function buildRim(){
+      var host=frameHost();if(!host)return null;
+      if(rim&&rim.host===host&&rim.track.isConnected)return rim;
+      var track=document.createElement('div');track.className='wf-edge';track.setAttribute('aria-hidden','true');
+      track.innerHTML='<i class="wf-edge-off"></i><i class="wf-edge-on"></i><i class="wf-edge-stop"></i>';
+      var knob=document.createElement('button');knob.type='button';knob.className='wf-rim-knob';knob.setAttribute('role','slider');knob.setAttribute('aria-orientation','vertical');
+      var mode=document.createElement('button');mode.type='button';mode.className='wf-edge-mode';
+      mode.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"></svg>';
+      var tip=document.createElement('div');tip.className='wf-rim-tip';tip.setAttribute('aria-hidden','true');tip.innerHTML='<span></span><b></b>';
+      host.append(track,knob,mode,tip);
+      rim={host:host,track:track,knob:knob,mode:mode,tip:tip,off:track.children[0],on:track.children[1],stop:track.children[2]};
+      function start(e){
+        if(e.button!==0)return;e.preventDefault();e.stopPropagation();
+        rimDrag={id:e.pointerId,x:e.clientX,y:e.clientY,moved:false,el:e.currentTarget};rimX=e.clientX;rimY=e.clientY;
+        try{e.currentTarget.setPointerCapture(e.pointerId);}catch(_e){}
+        live(true);showTip(true);
+        if(e.currentTarget!==knob){rimDrag.moved=true;rimStep();}   // a press on the track jumps there
+      }
+      function move(e){
+        if(!rimDrag||e.pointerId!==rimDrag.id)return;
+        if(!rimDrag.moved&&Math.abs(e.clientX-rimDrag.x)+Math.abs(e.clientY-rimDrag.y)<3)return;
+        rimDrag.moved=true;rimX=e.clientX;rimY=e.clientY;
+        if(!rimRaf)rimRaf=requestAnimationFrame(rimStep);
+      }
+      function end(e){
+        if(!rimDrag||e.pointerId!==rimDrag.id)return;
+        var d=rimDrag;rimDrag=null;live(false);
+        if(rimRaf){cancelAnimationFrame(rimRaf);rimRaf=0;if(d.moved)rimStep(true);}
+        if(!d.moved){showTip(false);return;}
+        commitRim();showTip(false);
+      }
+      [knob,track].forEach(function(t){
+        t.addEventListener('pointerdown',start);t.addEventListener('pointermove',move);
+        ['pointerup','pointercancel','lostpointercapture'].forEach(function(n){t.addEventListener(n,end);});
+        t.addEventListener('pointerenter',function(){if(!rimDrag)showTip(true);});
+        t.addEventListener('pointerleave',function(){if(!rimDrag)showTip(false);});
+      });
+      mode.addEventListener('pointerdown',function(e){e.stopPropagation();});
+      mode.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();cycleMode();});
+      knob.addEventListener('keydown',function(e){
+        var rg=rimRange(),v=rimValue(),step=e.shiftKey?10:1,next=null;
+        if(e.key==='ArrowRight'||e.key==='ArrowUp')next=v+step;else if(e.key==='ArrowLeft'||e.key==='ArrowDown')next=v-step;
+        else if(e.key==='Home')next=rg[0];else if(e.key==='End')next=rg[1];
+        else if(e.key==='Enter'||e.key===' '){e.preventDefault();cycleMode();return;}
+        if(next==null)return;e.preventDefault();
+        setRimValue(Math.max(rg[0],Math.min(rg[1],next)));paintRim();showTip(true);commitRim();showTip(false);
+      });
+      knob.addEventListener('focus',function(){showTip(true);});
+      knob.addEventListener('blur',function(){if(!rimDrag)showTip(false);});
+      return rim;
+    }
+    function rimTarget(){
+      if(selKind==='part'){if(quietParts)return '';var el=preview.querySelector('[data-wf-part="'+selectedPart+'"]');return el&&!el.hidden&&preview.classList.contains('wf-editing')?'part':'';}
+      if(selKind==='addon')return addonEl()&&host.querySelector('.mk-addon-scale')?'addon':'';
+      if(selKind==='depth')return depthFrame()?'depth':'';
+      return '';
+    }
+    function modesNow(){var t=rimTarget();return t!=='part'||config.face==='winamp'?['size']:['size','light','hue'];}
+    function modeNow(){var m=modesNow();return m.indexOf(edgeMode)>=0?edgeMode:'size';}
+    function rimRange(){
+      var t=rimTarget(),m=modeNow();
+      if(t==='addon')return [60,140];if(t==='depth')return [100,180];
+      return m==='size'?[50,selectedPart==='hours'?300:170]:m==='hue'?[0,359]:[12,92];
+    }
+    function hexHsl(hex){
+      var c=[0,2,4].map(function(i){return parseInt(hex.slice(i,i+2),16)/255;}),r=c[0],g=c[1],b=c[2],max=Math.max(r,g,b),min=Math.min(r,g,b),l=(max+min)/2,h=0,s2=0;
+      if(max!==min){var d=max-min;s2=l>.5?d/(2-max-min):d/(max+min);h=(max===r?(g-b)/d+(g<b?6:0):max===g?(b-r)/d+2:(r-g)/d+4)*60;}
+      return [h,s2*100,l*100];
+    }
+    function rimValue(){
+      var t=rimTarget(),m=modeNow();
+      if(t==='addon')return +host.querySelector('.mk-addon-scale').value;
+      if(t==='depth')return config.imageZoom;
+      if(m==='size')return config.parts[selectedPart][2];
+      var hsl=hexHsl(config.colors[selectedPart]||config.tint);return Math.round(m==='hue'?hsl[0]:hsl[2]);
+    }
+    function liveColor(){
+      var el=preview.querySelector('[data-wf-part="'+selectedPart+'"]'),own=config.colors[selectedPart];if(!el)return;
+      el.classList.toggle('wf-colored',!!own);
+      if(own){el.style.setProperty('--wf-tint','#'+own);el.style.setProperty('--mk-txt-color',own.match(/../g).map(function(v){return parseInt(v,16);}).join(','));}
+      else{el.style.removeProperty('--wf-tint');el.style.removeProperty('--mk-txt-color');}
+    }
+    function setRimValue(v){
+      var t=rimTarget(),m=modeNow();
+      if(!t)return;
+      if(t==='addon'){var sc=host.querySelector('.mk-addon-scale');sc.value=Math.round(v/5)*5;sc.dispatchEvent(new Event('input',{bubbles:true}));placeSel();return;}
+      if(t==='depth'){config.imageZoom=v;liveImage();return;}
+      if(m==='size'){config.parts[selectedPart][2]=v;livePart();return;}
+      var hsl=hexHsl(config.colors[selectedPart]||config.tint);
+      if(m==='hue'){hsl[0]=v;if(hsl[1]<35)hsl[1]=62;if(hsl[2]<22||hsl[2]>88)hsl[2]=62;}   // a grey accent gets colour when turned
+      else hsl[2]=v;
+      config.colors[selectedPart]=hslHex(hsl[0],hsl[1],hsl[2]).slice(1);liveColor();
+    }
+    function commitRim(){
+      var t=rimTarget(),m=modeNow();
+      if(!t)return;
+      if(t==='addon'){var sc=host.querySelector('.mk-addon-scale');if(sc)sc.dispatchEvent(new Event('change',{bubbles:true}));return;}
+      apply(preview,Object.assign({},options.get(),{face:config}));
+      if(t==='part'&&m==='size'){roomFor(selectedPart);heroMakeWay(selectedPart);}
+      save(t==='depth'?false:m==='size'?true:false);
+    }
+    function cycleMode(){
+      var ms=modesNow();if(ms.length<2){showTip(true);clearTimeout(rimTip);rimTip=setTimeout(function(){showTip(false);},1200);return;}
+      edgeMode=ms[(ms.indexOf(modeNow())+1)%ms.length];
+      try{localStorage.setItem('minka:wf-edge',edgeMode);}catch(_e){}
+      rimState='';paintRim();showTip(true);clearTimeout(rimTip);rimTip=setTimeout(function(){showTip(false);},1400);
+      if(rim&&window.MinkaMotion&&MinkaMotion.animate)MinkaMotion.animate(rim.mode.firstElementChild,[{transform:'scale(.6) rotate(-40deg)',opacity:.2},{transform:'none',opacity:1}],'spring-fast');
+    }
+    // The reading shows while the slider is pointed at, dragged or focused.
+    function showTip(on){if(!rim)return;rim.tip.classList.toggle('is-on',!!on||!!rimDrag);}
+    // The track's line in host pixels: beside the card's right edge, clear of its corners' curve.
+    function rimPath(){
+      var hr=rim.host.getBoundingClientRect(),r=preview.getBoundingClientRect();
+      var pad=Math.max(10,Math.min(26,r.height*.07)),x=r.right-hr.left+RIM_OUT,y0=r.top-hr.top+pad,y1=r.bottom-hr.top-pad-40;
+      var key=[x,y0,y1].map(function(n){return n.toFixed(1);}).join();
+      if(rimCache&&rimCache.key===key)return rimCache;
+      rimCache={key:key,x:x,y0:y0,y1:y1,bottom:r.bottom-hr.top-pad};return rimCache;
+    }
+    function rimStep(){
+      rimRaf=0;if(!rimDrag||!rim)return;
+      var c=rimPath(),hr=rim.host.getBoundingClientRect(),y=rimY-hr.top,f=Math.max(0,Math.min(1,(c.y1-y)/(c.y1-c.y0)));
+      var rg=rimRange(),v=Math.round(rg[0]+f*(rg[1]-rg[0]));
+      if(v!==rimValue()){setRimValue(v);placeSel();}else paintRim();
+    }
+    var HUES='linear-gradient(to top,'+[0,60,120,180,240,300,359].map(function(h){return 'hsl('+h+' 70% 58%)';}).join(',')+')';
+    function paintRim(){
+      var t=rimTarget();
+      if(!t){if(rim){rim.track.hidden=true;rim.knob.hidden=true;rim.mode.hidden=true;rim.tip.hidden=true;}rimState='';return;}
+      if(!buildRim())return;
+      var c=rimPath(),m=modeNow(),rg=rimRange(),v=rimValue(),f=Math.max(0,Math.min(1,(v-rg[0])/(rg[1]-rg[0])));
+      var col=t==='part'&&m!=='size'?'#'+(config.colors[selectedPart]||config.tint):'';
+      var label=t==='addon'?'Dekora izmērs':t==='depth'?'Tuvinājums':RIM_MODES.filter(function(x){return x[0]===m;})[0][1];
+      var state=[c.key,t,m,v,col,selectedPart].join('|');
+      if(state===rimState)return;
+      // another element chosen: the handle snaps to its value (a glide from the last one's
+      // size looked like the slider jumping); a change of the same element still glides
+      var who=[t,t==='part'?selectedPart:t==='addon'?selAddonSlot:'',m].join('|');
+      var first=!rimState||who!==rimWho;rimState=state;rimWho=who;
+      rim.track.hidden=rim.knob.hidden=rim.mode.hidden=rim.tip.hidden=false;
+      var len=c.y1-c.y0,y=c.y1-f*len,GAP=6;
+      // the track and its two parts: filled below the handle, empty above it
+      rim.track.style.transform='translate('+(c.x-7).toFixed(1)+'px,'+c.y0.toFixed(1)+'px)';rim.track.style.height=len.toFixed(1)+'px';
+      rim.track.style.setProperty('--len',len.toFixed(1)+'px');
+      rim.on.style.height=Math.max(0,c.y1-y-GAP).toFixed(1)+'px';rim.off.style.height=Math.max(0,y-c.y0-GAP).toFixed(1)+'px';
+      rim.stop.hidden=y-c.y0-GAP<14;
+      var hsl=col?hexHsl(col.slice(1)):null;
+      rim.track.dataset.mode=t==='part'?m:'size';
+      rim.track.style.setProperty('--paint',m==='hue'&&t==='part'?HUES:m==='light'&&t==='part'?'linear-gradient(to top,hsl('+Math.round(hsl[0])+' '+Math.round(Math.max(hsl[1],30))+'% 12%),hsl('+Math.round(hsl[0])+' '+Math.round(Math.max(hsl[1],30))+'% 92%))':'none');
+      [rim.track,rim.knob,rim.tip].forEach(function(n){if(col)n.style.setProperty('--c',col);else n.style.removeProperty('--c');});
+      rim.knob.classList.toggle('no-anim',first||snapping);rim.tip.classList.toggle('no-anim',first||snapping);
+      rim.knob.style.transform='translate('+c.x.toFixed(1)+'px,'+y.toFixed(1)+'px)';
+      rim.tip.style.transform='translate('+c.x.toFixed(1)+'px,'+y.toFixed(1)+'px)';
+      rim.mode.style.transform='translate('+c.x.toFixed(1)+'px,'+(c.bottom-15).toFixed(1)+'px)';
+      var ic=rim.mode.firstElementChild,mk=t==='part'?m:'size';if(ic.dataset.m!==mk){ic.dataset.m=mk;ic.innerHTML=ICONS[mk];}
+      var many=modesNow().length>1;rim.mode.disabled=!many;
+      rim.mode.setAttribute('aria-label',many?'Regulē: '+label.toLowerCase()+'. Pieskaries, lai mainītu':'Regulē: '+label.toLowerCase());
+      rim.mode.title=many?label+' (pieskaries: '+RIM_MODES.map(function(x){return x[1].toLowerCase();}).join(', ')+')':label;
+      rim.tip.firstElementChild.textContent=label;rim.tip.lastElementChild.textContent=v+(m==='hue'&&t==='part'?'°':'%');
+      rim.knob.setAttribute('aria-valuemin',rg[0]);rim.knob.setAttribute('aria-valuemax',rg[1]);rim.knob.setAttribute('aria-valuenow',v);
+      rim.knob.setAttribute('aria-label',(t==='part'?labels[selectedPart]+': ':'')+label.toLowerCase());
+    }
+    mounted=true;
     if(options.active()==='face')activate();
   }
   // The editor is being emptied: stop watching its preview and card clones.
   function release(host) {
     if (previewObserver) { previewObserver.disconnect(); previewObserver = null; }
-    cancelAnimationFrame(previewFrame); previewFrame = 0; refreshPreview = function() {}; currentPick = function () { return null; }; currentSettle = function () {}; releaseContours(); releaseContours = function () {};
+    cancelAnimationFrame(previewFrame); previewFrame = 0; refreshPreview = function() {}; currentPick = function () { return null; }; currentSettle = function () {}; currentQuiet = function () {}; currentAdopt = function () {}; releaseContours(); releaseContours = function () {};
     if (waSizes && host) host.querySelectorAll('.wf-winamp').forEach(function (card) { waSizes.unobserve(card); });
   }
-  window.MinkaCardFaces = { dialPreview: dialPreview, dialMarkup: dialMarkup, dialSkins: DIAL_SKINS, digitSkins: DIGIT_SKINS, digitPreview: digitPreview, pick: function(e){ return currentPick(e); }, settle: function(){ currentSettle(); }, apply: apply, mount: mount, release: release, refreshPreview: function(){refreshPreview();} };
+  window.MinkaCardFaces = { dialPreview: dialPreview, dialMarkup: dialMarkup, dialSkins: DIAL_SKINS, digitSkins: DIGIT_SKINS, digitPreview: digitPreview, pick: function(e){ return currentPick(e); }, settle: function(){ currentSettle(); }, quiet: function(on){ if (quietParts !== !!on) { quietParts = !!on; currentQuiet(); } }, adopt: function(el){ currentAdopt(el); }, apply: apply, mount: mount, release: release, refreshPreview: function(){refreshPreview();} };
 })();

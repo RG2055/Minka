@@ -1,0 +1,311 @@
+/* The newer faces — Gameboy, Termostats, Punkti, Līnijas (card-faces.js faceArt,
+   card-face-model.js looks). In their own cascade layer: a layered !important beats
+   the older unlayered !important rules without a specificity race, and an element's
+   own plate (data-wf-plate) still wins because these defaults skip plated elements.
+   Static paint only: no blur, no blend modes, no animation. */
+@layer mk-fx {
+
+/* ---------- shared: text and chips follow the face's ink (the accent) ---------- */
+.card.mk-watch-face:is([data-watch-face="gameboy"],[data-watch-face="dots"],[data-watch-face="lines"]) [data-wf-part] {text-shadow:none !important;}
+.card.mk-watch-face:is([data-watch-face="gameboy"],[data-watch-face="dots"],[data-watch-face="lines"]) [data-wf-part="name"] :is(.name-main,.name-sub),
+.card.mk-watch-face:is([data-watch-face="gameboy"],[data-watch-face="dots"],[data-watch-face="lines"]) :is(.mk-mid-meta-label,.mk-mid-meta-value,.mk-mid-month-num,.mk-mid-month-label,.mk-coffee-num,[data-wf-part="remaining"],[data-wf-part="remaining"] .val,[data-wf-part="clock"],[data-wf-part="initials"],.mk-mid-meta-emoji.is-initials .mk-mid-meta-emoji-fly) {
+  color:var(--wf-tint) !important;-webkit-text-fill-color:var(--wf-tint) !important;text-shadow:none !important;background:none !important;
+}
+.card.mk-watch-face:is([data-watch-face="gameboy"],[data-watch-face="dots"],[data-watch-face="lines"]) .mk-bitnum {fill:var(--wf-tint);}
+.card.mk-watch-face:is([data-watch-face="dots"],[data-watch-face="lines"])::after {display:none !important;}
+
+/* ---------- Gameboy: a handheld, the card on its LCD ---------- */
+.card.mk-watch-face[data-watch-face="gameboy"] {background:#aeb2bb !important;border-radius:7% 7% 26% 7% !important;}
+.card.mk-watch-face[data-watch-face="gameboy"]::before {background-image:linear-gradient(165deg,#d5d8de,#b4b8c0 48%,#9da1aa) !important;background-size:100% 100% !important;}
+.card.mk-watch-face[data-watch-face="gameboy"]::after {border-color:#ffffff70 !important;border-bottom-color:#0003 !important;background:none !important;}
+.card.mk-watch-face[data-watch-face="gameboy"] > .mk-wf-background {
+  z-index:2 !important;inset:7.6% 9.4% 23.4% 9.4% !important;border-radius:2px !important;
+  background:linear-gradient(172deg,#bcc596,#a7b27f) !important;box-shadow:inset 0 2px 0 #00000026 !important;
+}
+.card.mk-watch-face[data-watch-face="gameboy"] > .mk-wf-background > i {filter:grayscale(1) contrast(1.1) !important;opacity:.2 !important;}
+/* the LCD's pixel grid, painted once */
+.card.mk-watch-face[data-watch-face="gameboy"] > .mk-wf-background::after {
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,#0000 0 67%,#2f4a1f14 67%) 0 0/3px 3px,linear-gradient(#0000 0 67%,#2f4a1f14 67%) 0 0/3px 3px;
+}
+.card.mk-watch-face[data-watch-face="gameboy"] [data-wf-part]:not([data-wf-part="hours"]) {font-family:'Geist Mono',ui-monospace,Menlo,monospace !important;}
+.card.mk-watch-face[data-watch-face="gameboy"] [data-wf-part="name"] :is(.name-main,.name-sub) {text-transform:uppercase !important;letter-spacing:.06em !important;font-family:'Geist Mono',ui-monospace,monospace !important;}
+.card.mk-watch-face[data-watch-face="gameboy"] :is([data-wf-part="fatigue"],[data-wf-part="month"],[data-wf-part="remaining"],[data-wf-part="clock"],[data-wf-part="initials"],[data-wf-part="emoji"]):not([data-wf-plate]):not(.wf-analog),
+.card.mk-watch-face[data-watch-face="gameboy"] [data-wf-part="coffee"]:not([data-wf-plate]) .mk-coffee-step {
+  background:none !important;border:1.5px solid var(--wf-tint) !important;border-radius:3px !important;box-shadow:none !important;backdrop-filter:none !important;
+}
+/* on the body below the screen the buttons are the console's own dark grey */
+.card.mk-watch-face[data-watch-face="gameboy"] [data-wf-part="coffee"]:not([data-wf-plate]) .mk-coffee-step,
+.card.mk-watch-face[data-watch-face="gameboy"] [data-wf-part="emoji"]:not([data-wf-plate]) {border-color:#4b505c !important;}
+
+/* ---------- Termostats: deep water blue, glass outlines, a dial in the corner ---------- */
+.card.mk-watch-face[data-watch-face="thermo"]::before {background-image:linear-gradient(180deg,#1b3657f2,#2a77a0e6 58%,#8c9ca2d9) !important;background-size:100% 100% !important;}
+.card.mk-watch-face[data-watch-face="thermo"] [data-wf-part="name"] .name-main {color:var(--wf-tint) !important;-webkit-text-fill-color:var(--wf-tint) !important;text-shadow:none !important;font-weight:600 !important;}
+.card.mk-watch-face[data-watch-face="thermo"] [data-wf-part="name"] .name-sub {color:#d7ecf7 !important;-webkit-text-fill-color:#d7ecf7 !important;text-shadow:none !important;opacity:.8 !important;}
+.card.mk-watch-face[data-watch-face="thermo"] :is([data-wf-part="fatigue"],[data-wf-part="month"],[data-wf-part="remaining"],[data-wf-part="clock"],[data-wf-part="initials"],[data-wf-part="emoji"]):not([data-wf-plate]):not(.wf-analog),
+.card.mk-watch-face[data-watch-face="thermo"] [data-wf-part="coffee"]:not([data-wf-plate]) .mk-coffee-step {
+  background:#ffffff14 !important;border:1px solid #ffffff5e !important;border-radius:999px !important;box-shadow:inset 0 1px 0 #ffffff24 !important;backdrop-filter:none !important;
+}
+.card.mk-watch-face[data-watch-face="thermo"] :is(.mk-mid-meta-label,.mk-mid-month-label) {color:#d7ecf7 !important;-webkit-text-fill-color:#d7ecf7 !important;opacity:.78 !important;}
+
+/* ---------- Punkti: a warm dot-matrix sign ---------- */
+.card.mk-watch-face[data-watch-face="dots"]::before {background-image:linear-gradient(180deg,#f9cea4f2,#f3a8b6f2) !important;background-size:100% 100% !important;}
+.card.mk-watch-face[data-watch-face="dots"] :is([data-wf-part="fatigue"],[data-wf-part="month"],[data-wf-part="remaining"],[data-wf-part="clock"],[data-wf-part="initials"],[data-wf-part="emoji"]):not([data-wf-plate]):not(.wf-analog),
+.card.mk-watch-face[data-watch-face="dots"] [data-wf-part="coffee"]:not([data-wf-plate]) .mk-coffee-step {
+  background:none !important;border:0 !important;box-shadow:none !important;backdrop-filter:none !important;
+}
+.card.mk-watch-face[data-watch-face="dots"] :is(.mk-mid-meta-label,.mk-mid-month-label,[data-wf-part="name"] .name-sub) {opacity:.62 !important;}
+
+/* ---------- Līnijas: line drawings on paper ---------- */
+.card.mk-watch-face[data-watch-face="lines"]::before {background-image:linear-gradient(#efe9dcf6,#ebe4d4f6) !important;background-size:100% 100% !important;}
+.card.mk-watch-face[data-watch-face="lines"] :is([data-wf-part="fatigue"],[data-wf-part="month"],[data-wf-part="remaining"],[data-wf-part="clock"],[data-wf-part="initials"],[data-wf-part="emoji"]):not([data-wf-plate]):not(.wf-analog),
+.card.mk-watch-face[data-watch-face="lines"] [data-wf-part="coffee"]:not([data-wf-plate]) .mk-coffee-step {
+  background:#eee8dbf0 !important;border:1px solid var(--wf-tint) !important;border-radius:0 !important;box-shadow:none !important;backdrop-filter:none !important;
+}
+/* the plain ("Tīrs") numeral is drawn thin here, like the lines around it */
+.card.mk-watch-face[data-watch-face="lines"][data-watch-finish="2"] [data-wf-part="hours"] {
+  font-family:'M3 Digits',Arial,sans-serif !important;font-weight:300 !important;font-stretch:88% !important;letter-spacing:0 !important;
+  background:none !important;-webkit-text-fill-color:var(--wf-tint) !important;color:var(--wf-tint) !important;
+}
+.card.mk-watch-face[data-watch-face="lines"] :is(.mk-mid-meta-label,.mk-mid-month-label,[data-wf-part="name"] .name-sub) {opacity:.6 !important;}
+
+/* ---------- picker tiles ---------- */
+.wf-face-thumb:is(.wf-thumb-gameboy,.wf-thumb-thermo,.wf-thumb-dots,.wf-thumb-lines) i {position:absolute;inset:0;border:0;border-radius:0;transform:none;opacity:1;}
+.wf-face-thumb:is(.wf-thumb-gameboy,.wf-thumb-thermo,.wf-thumb-dots,.wf-thumb-lines) i svg {display:block;width:100%;height:100%;}
+.wf-face-thumb:is(.wf-thumb-gameboy,.wf-thumb-thermo,.wf-thumb-dots,.wf-thumb-lines) :is(b,small) {position:relative;z-index:1;}
+.wf-thumb-gameboy {background:linear-gradient(165deg,#d5d8de,#9da1aa) !important;border-radius:9% 9% 30% 9% !important;border-color:#e7e5de !important;}
+.wf-thumb-gameboy::before {content:'';position:absolute;inset:8% 10% 24%;background:#b3bd8c;border-radius:2px;z-index:1;}
+.wf-thumb-gameboy i {color:#2f4a1f;}
+.wf-thumb-gameboy b {color:#2f4a1f !important;background:none !important;-webkit-text-fill-color:#2f4a1f !important;font-family:'Geist Mono',monospace !important;letter-spacing:0 !important;transform:translateY(-10%);z-index:2 !important;}
+.wf-thumb-gameboy small {color:#2f4a1f !important;z-index:2 !important;transform:translateY(-120%);}
+.wf-thumb-thermo {background:linear-gradient(180deg,#1b3657,#2a77a0 58%,#8c9ca2) !important;border-color:#303b4a !important;}
+.wf-thumb-thermo i {color:#8fd8ff;}
+.wf-thumb-thermo b {font-family:'M3 Digits',Arial,sans-serif !important;font-weight:330 !important;font-variation-settings:'ROND' 100;color:transparent !important;background:none !important;-webkit-text-stroke:1px #bfeaff !important;letter-spacing:0 !important;transform:translate(-14%,-14%);}
+.wf-thumb-thermo small {color:#bfeaff !important;}
+.wf-thumb-dots {background:linear-gradient(180deg,#f9cea4,#f3a8b6) !important;border-color:#d9b3a7 !important;}
+.wf-thumb-dots b {background:none !important;-webkit-text-fill-color:transparent !important;color:transparent !important;
+  background-image:radial-gradient(circle,#1f1f24 42%,transparent 46%) !important;background-size:4px 4px !important;-webkit-background-clip:text !important;background-clip:text !important;}
+.wf-thumb-dots small {color:#1f1f24 !important;}
+.wf-thumb-lines {background:#ece5d6 !important;border-color:#e2d8c2 !important;}
+.wf-thumb-lines i {color:#1f1c17;}
+.wf-thumb-lines b {font-family:'M3 Digits',Arial,sans-serif !important;font-weight:300 !important;color:#1f1c17 !important;background:none !important;-webkit-text-fill-color:#1f1c17 !important;letter-spacing:0 !important;transform:translateX(18%);}
+.wf-thumb-lines small {color:#1f1c17 !important;}
+}
+
+/* ---------- On-card editing controls: one family ----------
+   Everything the editor draws over the card speaks the editor's own M3 language —
+   the primary (#a8c7fa) and primary-container (#d6e3ff / ink #0b1d36) of its active
+   tabs, the same type and pill radii: the element's outline, its name tag, the
+   corner handles, the landing outline, and the rim knob with its trail and reading.
+   The rim knob runs just inside the card's edge (card-faces.js paintRim), so no
+   panel edge can cut it. No blur, no animation loops. */
+@layer mk-fx {
+/* The edge slider (card-faces.js paintRim): an M3 Expressive slider standing just
+   outside the card's right edge. Filled below the handle, empty above it with a
+   stop dot at the end; the handle is a bar across the track with a gap each side. */
+.wf-edge {position:absolute;left:0;top:0;width:14px;z-index:41;touch-action:none;cursor:pointer;}
+.wf-edge::before {content:"";position:absolute;inset:-6px -10px;}
+.wf-edge[hidden] {display:none;}
+.wf-edge > i {position:absolute;left:0;width:14px;display:block;pointer-events:none;}
+.wf-edge-off {top:0;border-radius:7px 7px 2px 2px;background:#ffffff24;}
+.wf-edge-on {bottom:0;border-radius:2px 2px 7px 7px;background:var(--c,#a8c7fa);}
+.wf-edge > .wf-edge-stop {top:5px;left:5px;width:4px;height:4px;border-radius:2px;background:var(--c,#a8c7fa);}
+.wf-edge > .wf-edge-stop[hidden] {display:none;}
+/* colour modes: the whole scale painted along the track, the empty part dimmed */
+.wf-edge:is([data-mode="hue"],[data-mode="light"]) > :is(.wf-edge-on,.wf-edge-off) {background:var(--paint);background-size:14px var(--len);}
+.wf-edge:is([data-mode="hue"],[data-mode="light"]) > .wf-edge-on {background-position:0 100%;}
+.wf-edge:is([data-mode="hue"],[data-mode="light"]) > .wf-edge-off {background-position:0 0;opacity:.45;}
+.wf-edge:is([data-mode="hue"],[data-mode="light"]) > .wf-edge-stop {display:none;}
+/* the selection frame and its handles are always above the slider */
+.wf-sel {z-index:44 !important;}
+/* the handle: a 4 px bar across the track (2 px while pressed); the button around it is the target */
+.wf-rim-knob {position:absolute;left:0;top:0;width:40px !important;height:24px !important;margin:-12px 0 0 -20px !important;padding:0 !important;min-width:0 !important;z-index:42;
+  border:0 !important;border-radius:0 !important;background:none !important;box-shadow:none !important;cursor:grab;touch-action:none;
+  transition:transform .42s var(--mk-ease-spring,cubic-bezier(.2,.9,.25,1));}
+.wf-rim-knob::before {content:"";position:absolute;left:6px;right:6px;top:50%;height:4px;margin-top:-2px;border-radius:2px;background:var(--c,#a8c7fa);box-shadow:0 0 0 1px #0b1d3659;
+  transition:height .18s ease,margin .18s ease,left .18s ease,right .18s ease;}
+.wf-edge[data-mode="hue"] ~ .wf-rim-knob::before,.wf-rim-knob:is(:hover,:active)::before {left:3px;right:3px;}
+.wf-rim-knob:active::before {height:2px;margin-top:-1px;}
+.wf-rim-knob[hidden] {display:none;}
+.wf-rim-knob:active {cursor:grabbing;}
+.wf-rim-knob:focus-visible {outline:none;}
+.wf-rim-knob:focus-visible::before {box-shadow:0 0 0 2px #10141b,0 0 0 4px #fff;}
+.wf-rim-knob.no-anim,.wf-live > .wf-rim-knob,.wf-live > .wf-rim-tip {transition:none !important;}
+/* under the track: what the slider changes; a tap moves on (Izmērs → Spilgtums → Krāsa) */
+.wf-edge-mode {position:absolute;left:0;top:0;width:30px !important;height:30px !important;min-width:0 !important;margin:-15px 0 0 -15px !important;padding:0 !important;z-index:42;display:grid;place-items:center;
+  border:0 !important;border-radius:15px !important;background:#252c37 !important;color:#e3e7ee !important;box-shadow:0 0 0 1px #ffffff17 !important;cursor:pointer;
+  transition:border-radius .35s var(--mk-ease-spring,ease),background-color .15s ease;}
+.wf-edge-mode:hover:not(:disabled) {background:#2f3743 !important;}
+.wf-edge-mode:active:not(:disabled) {border-radius:9px !important;}
+.wf-edge-mode:disabled {cursor:default;opacity:1;}
+.wf-edge-mode[hidden] {display:none;}
+.wf-edge-mode svg {width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.wf-edge-mode:focus-visible {outline:2px solid #fff;outline-offset:2px;}
+/* the reading: an M3 tooltip beside the handle (name small, value large) */
+.wf-rim-tip {position:absolute;left:0;top:0;z-index:50;pointer-events:none;display:grid;gap:3px;white-space:nowrap;
+  translate:calc(-100% - 24px) -50%;padding:8px 12px !important;margin:0 !important;border-radius:12px !important;background:#e3e7ee !important;color:#10141b;box-shadow:0 6px 18px #00000073;
+  opacity:0;scale:.94;transition:opacity .16s ease,scale .3s var(--mk-ease-spring,ease),transform .42s var(--mk-ease-spring,cubic-bezier(.2,.9,.25,1));}
+.wf-rim-tip[hidden] {display:none;}
+.wf-rim-tip.is-on {opacity:1;scale:1;}
+.wf-rim-tip.no-anim {transition:opacity .16s ease,scale .3s var(--mk-ease-spring,ease);}
+.wf-rim-tip span {font:500 11px/1.1 var(--pp-font,system-ui);opacity:.7;}
+.wf-rim-tip b {font:600 18px/1 var(--pp-font,system-ui);font-variant-numeric:tabular-nums;}
+@media (prefers-reduced-motion: reduce) { .wf-rim-knob,.wf-rim-knob::before,.wf-rim-tip,.wf-edge-mode {transition:none !important;} }
+/* the element's name on its frame, the four corner handles, the landing outline */
+.wf-sel-tag {background:#d6e3ff !important;color:#0b1d36 !important;border-radius:8px !important;padding:3px 8px !important;
+  font:600 11px/1.2 var(--pp-font,system-ui) !important;box-shadow:0 0 0 1px #0b1d3640,0 3px 10px #00000047 !important;left:0 !important;margin-bottom:6px !important;}
+.wf-sel .wf-resize {width:10px !important;height:10px !important;background:#d6e3ff !important;box-shadow:0 0 0 1.5px #0b1d36b3,0 2px 5px #00000066 !important;}
+.wf-sel .wf-resize[data-c="nw"] {left:-6px !important;top:-6px !important;}
+.wf-sel .wf-resize[data-c="ne"] {right:-6px !important;top:-6px !important;}
+.wf-sel .wf-resize[data-c="sw"] {left:-6px !important;bottom:-6px !important;}
+.wf-sel .wf-resize[data-c="se"] {right:-6px !important;bottom:-6px !important;}
+.wf-ghost {border:1.5px dashed #a8c7fae6 !important;background:#a8c7fa1f !important;}
+.wf-sel.tag-below .wf-sel-tag {bottom:auto !important;top:100% !important;margin:6px 0 0 !important;}
+/* nine digit styles: the row wraps instead of running off the panel */
+.wf-finish .wf-segment {display:grid !important;grid-template-columns:repeat(auto-fill,minmax(88px,1fr)) !important;overflow:visible !important;}
+}
+
+/* ---------- motion that explains ---------- */
+@layer mk-fx {
+/* the selection frame glides to the element just picked (not while the pointer drives it) */
+.wf-sel {transition:left .36s var(--mk-ease-spring,cubic-bezier(.2,.9,.25,1)),top .36s var(--mk-ease-spring,cubic-bezier(.2,.9,.25,1)),
+  width .36s var(--mk-ease-spring,cubic-bezier(.2,.9,.25,1)),height .36s var(--mk-ease-spring,cubic-bezier(.2,.9,.25,1)),border-radius .2s ease;}
+.wf-live > .wf-sel,.wf-live > .wf-ghost {transition:none !important;}
+/* a layout tile answers the press */
+.wf-face-choice .wf-face-thumb {transition:transform .32s var(--mk-ease-spring,cubic-bezier(.2,.9,.25,1));}
+.wf-face-choice:active .wf-face-thumb {transform:scale(.95);transition-duration:.08s;}
+@media (prefers-reduced-motion: reduce) { .wf-sel,.wf-face-choice .wf-face-thumb {transition:none !important;} }
+}
+
+/* Termostats: today's outdoor temperature inside the dial, in the reading's glass outline */
+@layer mk-fx {
+.card.mk-watch-face[data-watch-face="thermo"] > .mk-wf-temp {position:absolute !important;z-index:2 !important;right:6% !important;bottom:9% !important;left:auto !important;top:auto !important;width:auto !important;height:auto !important;margin:0 !important;padding:0 !important;display:flex !important;align-items:flex-start;gap:.06em;pointer-events:none;
+  font:330 13cqw/1 'M3 Digits',Arial,sans-serif !important;font-variation-settings:'ROND' 100;letter-spacing:0;color:transparent;-webkit-text-fill-color:transparent;
+  -webkit-text-stroke:.025em color-mix(in srgb,var(--wf-tint,#8fd8ff) 80%,#fff);
+  background-image:linear-gradient(165deg,#ffffff40,color-mix(in srgb,var(--wf-tint,#8fd8ff) 18%,transparent) 60%);-webkit-background-clip:text;background-clip:text;}
+.card.mk-watch-face[data-watch-face="thermo"] > .mk-wf-temp sup {font:500 4.6cqw/1 var(--pp-font,system-ui);-webkit-text-stroke:0;color:#d7ecf7;-webkit-text-fill-color:#d7ecf7;margin-top:.35em;}
+.card.mk-watch-face:not([data-watch-face="thermo"]) > .mk-wf-temp {display:none;}
+}
+/* snap guides in the same palette: the card's centre dashed, another element's line solid */
+@layer mk-fx {
+.wf-guides .wf-g-v,.wf-guides .wf-g-h {background:#a8c7fa !important;box-shadow:0 0 0 1px #0b1d3640 !important;}
+.wf-guides :is(.wf-g-v,.wf-g-h)[data-kind="center"] {background:#d6e3ff !important;}
+.wf-guides :is(.wf-g-cx,.wf-g-cy) {border-color:#d6e3ff4d !important;}
+}
+
+/* Light faces (Gameboy LCD, Punkti, Līnijas): the coffee cup and the analog shift dial
+   take the face's ink too — a pale cup and a black disc read badly on paper. */
+@layer mk-fx {
+.card.mk-watch-face:is([data-watch-face="gameboy"],[data-watch-face="dots"],[data-watch-face="lines"]) :is(.mk-coffee-cup,.mk-coffee-cup *,.mk-coffee-mid svg,.mk-coffee-mid svg *) {color:var(--wf-tint) !important;fill:currentColor !important;}
+.card.mk-watch-face:is([data-watch-face="gameboy"],[data-watch-face="dots"],[data-watch-face="lines"]) .mk-coffee-mid {color:var(--wf-tint) !important;opacity:1 !important;}
+.card.mk-watch-face:is([data-watch-face="gameboy"],[data-watch-face="dots"],[data-watch-face="lines"]) .mk-wf-dial {color:var(--wf-tint) !important;--dial-ink:var(--wf-tint);--dial-halo:transparent;}
+.card.mk-watch-face:is([data-watch-face="gameboy"],[data-watch-face="dots"],[data-watch-face="lines"]) .mk-wf-dial:is(.f1,.f2) {background:color-mix(in srgb,var(--wf-tint) 7%,transparent) !important;box-shadow:inset 0 0 0 1.5px var(--wf-tint) !important;}
+.card.mk-watch-face:is([data-watch-face="gameboy"],[data-watch-face="dots"],[data-watch-face="lines"]) .mk-wf-dial .m3disc {fill:color-mix(in srgb,var(--wf-tint) 7%,transparent) !important;stroke:var(--wf-tint);stroke-width:1.2;}
+.card.mk-watch-face:is([data-watch-face="gameboy"],[data-watch-face="dots"],[data-watch-face="lines"]) .mk-wf-dial :is(.m3num,.v,.l,.num) {fill:var(--wf-tint) !important;stroke:none !important;}
+.card.mk-watch-face:is([data-watch-face="gameboy"],[data-watch-face="dots"],[data-watch-face="lines"]) .mk-wf-dial .m3trk {stroke:color-mix(in srgb,var(--wf-tint) 22%,transparent) !important;}
+}
+/* Izkārtojums → Oriģināls: the card without a layout, drawn like the others' tiles —
+   the name top left, the big number, the plate along the bottom. */
+@layer mk-fx {
+.wf-face-thumb.wf-thumb-original {display:grid;place-content:center;}
+.wf-face-thumb.wf-thumb-original > i.wf-orig-name {position:absolute;left:11%;top:10%;width:40%;height:7%;border-radius:4px;background:#ffffffd9;}
+.wf-face-thumb.wf-thumb-original > i.wf-orig-pill {position:absolute;left:9%;right:9%;bottom:9%;height:19%;border-radius:999px;background:#0000004d;box-shadow:inset 0 0 0 1px #ffffff47;}
+.wf-face-thumb.wf-thumb-original > b {position:relative;z-index:1;margin-top:-12%;color:#fffffff2;-webkit-text-fill-color:#fffffff2;}
+}
+/* Krāsas → Teksts: every text on the card takes the chosen colour — name, shift
+   time, timer, labels, month, initials — except the numeral (Cipari has its own
+   colour) and the fatigue value (its colour is the level). Layouts with an ink of
+   their own (Winamp, Gameboy, Termostats, Punkti, Līnijas; Dither in card-dither.css)
+   keep it, and the Teksts tile says so (skin-organize.js). */
+@layer mk-fx {
+#grafiks-list.grid-view .card.mk-mid-card.mk-has-txt:not(.rg-feedback-card):not([data-watch-face="winamp"],[data-watch-face="gameboy"],[data-watch-face="thermo"],[data-watch-face="dots"],[data-watch-face="lines"],[data-watch-face="dither"],.mk-fx-dither) :is(.name-main,.mk-mid-meta-time,.mk-mid-timer,.mk-mid-month-num,.mk-mid-initials,[data-wf-part="initials"]):not(.mk-wf-dial *) {
+  color:rgb(var(--mk-txt-color)) !important;-webkit-text-fill-color:rgb(var(--mk-txt-color)) !important;
+}
+#grafiks-list.grid-view .card.mk-mid-card.mk-has-txt:not(.rg-feedback-card):not([data-watch-face="winamp"],[data-watch-face="gameboy"],[data-watch-face="thermo"],[data-watch-face="dots"],[data-watch-face="lines"],[data-watch-face="dither"],.mk-fx-dither) :is(.name-sub,.mk-mid-meta-label,.mk-mid-month-label):not(.mk-wf-dial *) {
+  color:rgba(var(--mk-txt-color),.82) !important;-webkit-text-fill-color:rgba(var(--mk-txt-color),.82) !important;
+}
+}
+
+/* The shift timer's digital looks, legible everywhere:
+   - a time range (08-20) sits on one line in every look (the tall ones are for h:m:s);
+   - Kontūra keeps its outline but gets a light fill, so it does not melt into a busy picture;
+   - the picker tiles show the tall looks small enough to be seen whole. */
+@layer mk-fx {
+.mk-m3d.m3-range:is(.m3-p,.m3-r) {display:inline-flex !important;align-items:center !important;gap:.04em;font-stretch:25% !important;}
+.mk-m3d.m3-range:is(.m3-p,.m3-r) .g {grid-row:auto !important;font-size:2em !important;line-height:.8 !important;align-self:center !important;opacity:1 !important;font-stretch:25% !important;}
+.mk-m3d.m3-range:is(.m3-p,.m3-r) .ds {display:inline-block !important;align-self:center !important;width:.3em !important;height:.08em !important;margin:0 .08em !important;}
+.mk-m3d.m3-range.m3-q {display:inline-flex !important;flex-direction:column;align-items:center !important;row-gap:.04em;}
+.mk-m3d.m3-range.m3-q .g {font-size:1.25em !important;line-height:.85 !important;}
+.mk-m3d.m3-range.m3-q .ds {display:block !important;width:.5em !important;height:.08em !important;margin:.03em 0 !important;}
+.mk-m3d.m3-range.m3-q .lead {display:none !important;}
+.mk-m3d.m3-range:is(.m3-s,.m3-t) .ds {display:inline-block !important;align-self:center !important;}
+.mk-m3d.m3-r .g {-webkit-text-fill-color:color-mix(in srgb,currentColor 14%,transparent) !important;-webkit-text-stroke-width:.038em !important;}
+.mk-m3d.m3-r {font-stretch:62% !important;}
+.mk-m3d.m3-r .g {font-stretch:62% !important;}
+.mk-m3d.m3-range.m3-r .g {font-size:1.7em !important;}
+.wf-digit-mini .mk-m3d:is(.m3-p,.m3-r) {font-size:9.5px !important;}
+.wf-digit-mini .mk-m3d.m3-q {font-size:10px !important;}
+.wf-digit-mini .mk-m3d.m3-s {font-size:11px !important;}
+}
+/* The frame meets the picture cleanly: the card's own base is the frame's colour (a
+   dark base there showed as a dark hairline along the rounded edge, very visible when
+   the card is shown large), and the dark base lies under the picture instead. */
+@layer mk-fx {
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] {background-color:var(--wf-metal) !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] > .mk-wf-background > i {background-color:#080b10 !important;}
+}
+
+@layer mk-fx { .wf-sel.no-anim, .wf-rim-knob.no-anim, .wf-rim-tip.no-anim {transition:none !important;} }
+
+/* Emoji look (Krāsas → Emoji fonā → Emoji izskats), for the card's emoji and the
+   background one: the system's emoji, glossy black (the Fluent 3D drawing kept, only
+   darkened, its highlights still reading on a dark plate) or porcelain white. The glyph
+   only: never its plate, never initials. One static filter, no blur: nothing to redo per frame. */
+@layer mk-fx {
+.card.mk-emoji-sys :is(.mk-mid-meta-emoji:not(.is-initials) > .mk-mid-meta-emoji-fly,.mk-mid-bg-emoji,.mk-mid-person-emoji),
+.mk-emoji-style-sample.mk-emoji-sys {font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif !important;}
+.card.mk-emoji-black :is(.mk-mid-meta-emoji:not(.is-initials) > .mk-mid-meta-emoji-fly,.mk-mid-bg-emoji,.mk-mid-person-emoji),
+.mk-emoji-style-sample.mk-emoji-black {filter:grayscale(1) brightness(.62) contrast(1.45) !important;}
+.card.mk-emoji-white :is(.mk-mid-meta-emoji:not(.is-initials) > .mk-mid-meta-emoji-fly,.mk-mid-bg-emoji,.mk-mid-person-emoji),
+.mk-emoji-style-sample.mk-emoji-white {filter:grayscale(1) brightness(1.25) contrast(.8) !important;}
+}
+
+/* Ietvars → Bez ietvara: no metal edge and no glass edge, the picture reaches the card's edge */
+@layer mk-fx {
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face.wf-no-frame[data-watch-face] {border-width:0 !important;background-color:transparent !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face.wf-no-frame[data-watch-face]::after {border-color:transparent !important;}
+.wf-metals button[data-metal="12"] {background:transparent !important;box-shadow:inset 0 0 0 1.5px rgba(184,193,205,.55) !important;position:relative;overflow:hidden;}
+.wf-metals button[data-metal="12"]::after {content:"";position:absolute;left:50%;top:-10%;width:1.5px;height:120%;background:rgba(184,193,205,.7);transform:rotate(45deg);}
+}
+/* "Bez ietvara" first among the frames */
+@layer mk-fx { .wf-metals button[data-metal="12"] {order:-1;} }
+
+/* Krāsas → Teksts → Teksta efekts: the name, labels and small values (the numeral has
+   its own style). Static text-shadow / stroke only: nothing animates, cheap to paint. */
+@layer mk-fx {
+.card.mk-mid-card.mk-txtfx-f :is(.name-main,.name-sub,.mk-mid-month-num,.mk-mid-month-label,.mk-mid-meta-time,.mk-mid-timer,.mk-mid-meta-label,.mk-mid-initials,[data-wf-part="initials"]):not(.mk-wf-dial *),
+.mk-txtfx-sample.mk-txtfx-f {text-shadow:none !important;-webkit-text-stroke:0 !important;}
+.card.mk-mid-card.mk-txtfx-g :is(.name-main,.name-sub,.mk-mid-month-num,.mk-mid-month-label,.mk-mid-meta-time,.mk-mid-timer,.mk-mid-meta-label,.mk-mid-initials,[data-wf-part="initials"]):not(.mk-wf-dial *),
+.mk-txtfx-sample.mk-txtfx-g {text-shadow:0 0 .22em rgba(var(--mk-txt-color,255,255,255),.8),0 0 .6em rgba(var(--mk-txt-color,255,255,255),.38) !important;}
+.card.mk-mid-card.mk-txtfx-o :is(.name-main,.name-sub,.mk-mid-month-num,.mk-mid-month-label,.mk-mid-meta-time,.mk-mid-timer,.mk-mid-meta-label,.mk-mid-initials,[data-wf-part="initials"]):not(.mk-wf-dial *),
+.mk-txtfx-sample.mk-txtfx-o {text-shadow:none !important;-webkit-text-stroke:.11em rgba(6,8,12,.78) !important;paint-order:stroke fill !important;}
+.card.mk-mid-card.mk-txtfx-h :is(.name-main,.name-sub,.mk-mid-month-num,.mk-mid-month-label,.mk-mid-meta-time,.mk-mid-timer,.mk-mid-meta-label,.mk-mid-initials,[data-wf-part="initials"]):not(.mk-wf-dial *),
+.mk-txtfx-sample.mk-txtfx-h {text-shadow:.07em .07em 0 rgba(0,0,0,.6) !important;}
+}
+/* 3D emoji pictures (js/emoji3d.js) wherever a person's emoji is shown: the size of the
+   glyph they stand in for, never a layout change. */
+.mk-e3d {display:inline-block;width:1.15em;height:1.15em;vertical-align:-.18em;object-fit:contain;pointer-events:none;-webkit-user-drag:none;}
+.mkp-emoji-btn.mkp-e3d .mk-e3d {width:1.3em;height:1.3em;}
+.mkp-tab-pic {width:1.2em;height:1.2em;object-fit:contain;vertical-align:middle;}
+.rg-mood-person-emoji.is-e3d .mk-e3d {width:1.25em;height:1.25em;vertical-align:middle;}
+/* Emoji tab → Izmērs kartītē: the person's emoji on the card, S / M / L / XL. A scale on
+   the glyph (or 3D picture) only — composited, the plate keeps its size; L and XL may
+   stand out of the plate like a sticker. */
+@layer mk-fx {
+/* --mk-ez is set on the card (minka-skins.js), 0.6–3.5 */
+/* the whole emoji plate grows (its round glass and the emoji together), never the glyph alone */
+#grafiks-list .card.mk-mid-card.mk-emoji-zs:not(.mk-watch-face) .mk-mid-meta-emoji:not(.is-initials) {scale:var(--mk-ez);transform-origin:50% 75%;position:relative;z-index:6;overflow:visible !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face.mk-emoji-zs[data-watch-face] [data-wf-part="emoji"] {transform:translate(-50%,-50%) scale(calc(var(--wf-scale, 1) * var(--mk-ez))) !important;}
+/* the small emoji beside the name (no plate) */
+.card.mk-emoji-zs .mk-mid-person-emoji {scale:min(var(--mk-ez),1.6);transform-origin:center;}
+}

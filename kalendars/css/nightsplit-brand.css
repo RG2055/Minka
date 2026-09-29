@@ -2395,3 +2395,23 @@ html[data-motion="reduced"] #nsPanel .ns-room-bed.ns-bed-rumble .ns-room-bed-car
 #nsOverlay #nsPanel .ns-stat-name {min-width:0;max-width:100%;}
 #nsOverlay #nsPanel .ns-stat-name > span:first-child {min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 #nsOverlay #nsPanel .ns-stat-name .ns-stat-emoji {flex:0 0 auto;font-size:15px;line-height:1;}
+
+/* The person whose part it is now colours the window (nightsplit.js nsTintPanel, seed =
+   their card's colour, never purple): the M3 surfaces and the chosen chips take it, and a
+   soft light from the top. The base stays #060b12 where the rooms stand (baked into them). */
+#nsOverlay #nsPanel.ns-tinted {
+  --pp-c1: color-mix(in oklab, var(--ns-seed) 9%, #10161d);
+  --pp-c2: color-mix(in oklab, var(--ns-seed) 11%, #171e27);
+  --pp-c3: color-mix(in oklab, var(--ns-seed) 14%, #202833);
+  --pp-c4: color-mix(in oklab, var(--ns-seed) 17%, #2a3340);
+  --pp-outline: color-mix(in oklab, var(--ns-seed) 22%, #3d4653);
+  --pp-primary: color-mix(in oklab, var(--ns-seed) 58%, #f4f6fa);
+  --pp-on-primary: color-mix(in oklab, var(--ns-seed) 35%, #0a0e14);
+  --pp-primary-c: color-mix(in oklab, var(--ns-seed) 32%, #f4f6fa);
+  --pp-on-primary-c: color-mix(in oklab, var(--ns-seed) 30%, #080b10);
+}
+/* the light covers the whole window (the close button's strip too), the content lets it through */
+#nsOverlay #nsPanel.ns-tinted {
+  background: radial-gradient(130% 40% at 50% 0%, color-mix(in oklab, var(--ns-seed) 16%, transparent), transparent 100%), #060b12 !important;
+}
+#nsOverlay #nsPanel.ns-tinted #nsPanelContent { background: transparent !important; }

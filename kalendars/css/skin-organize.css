@@ -7,7 +7,7 @@
 #worker-modal#worker-modal .mk-skin-editor.org > .org-tabs {order:0;}
 #worker-modal#worker-modal .mk-skin-editor.org > .mk-skin-section {order:1;}
 #worker-modal#worker-modal .mk-skin-editor.org > [data-skin-panel="face"][data-org="bg"] {order:2;min-height:0;margin-top:16px;}
-#worker-modal#worker-modal .mk-skin-editor.org .mk-skin-section-head {display:none !important;}
+#worker-modal#worker-modal :is(.mk-skin-editor.org,.org-left) .mk-skin-section-head {display:none !important;}
 #worker-modal#worker-modal .mk-skin-editor.org [data-skin-panel="face"][data-org] :is(.wf-subtabs,.wf-editor-heading) {display:none !important;}
 
 /* Izkārtojums: faces + elements */
@@ -83,40 +83,40 @@
 }
 
 /* ---- M3 checkbox ---- */
-#worker-modal#worker-modal :is(.mk-skin-editor,.mk-skin-aside) input[type="checkbox"]:not(.mk-auto-palette-toggle):not([role="switch"]) {
+#worker-modal#worker-modal :is(.mk-skin-editor,.mk-skin-aside,.org-left) input[type="checkbox"]:not(.mk-auto-palette-toggle):not([role="switch"]) {
   -webkit-appearance:none;appearance:none;width:18px;height:18px;margin:0 8px 0 0;border:2px solid var(--pp-on-var,#b8c1cd);border-radius:2px;background:transparent;cursor:pointer;flex:0 0 18px;vertical-align:middle;
 }
-#worker-modal#worker-modal :is(.mk-skin-editor,.mk-skin-aside) input[type="checkbox"]:not(.mk-auto-palette-toggle):not([role="switch"]):checked {
+#worker-modal#worker-modal :is(.mk-skin-editor,.mk-skin-aside,.org-left) input[type="checkbox"]:not(.mk-auto-palette-toggle):not([role="switch"]):checked {
   border-color:var(--pp-primary,#a8c7fa);
   background:var(--pp-primary,#a8c7fa) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath d='M4 9.5l3.2 3.2L14 5.8' fill='none' stroke='%230b2a57' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/14px no-repeat;
 }
 
 /* ---- colour inputs → round swatches ---- */
-#worker-modal#worker-modal :is(.mk-skin-editor,.mk-skin-aside) input[type="color"] {
+#worker-modal#worker-modal :is(.mk-skin-editor,.mk-skin-aside,.org-left) input[type="color"] {
   -webkit-appearance:none;appearance:none;width:40px;height:40px;padding:0;border:0;border-radius:50%;background:none;cursor:pointer;
   box-shadow:0 0 0 1px var(--pp-c4,#2f3743);
 }
-#worker-modal#worker-modal :is(.mk-skin-editor,.mk-skin-aside) input[type="color"]::-webkit-color-swatch-wrapper {padding:0;}
-#worker-modal#worker-modal :is(.mk-skin-editor,.mk-skin-aside) input[type="color"]::-webkit-color-swatch {border:0;border-radius:50%;}
+#worker-modal#worker-modal :is(.mk-skin-editor,.mk-skin-aside,.org-left) input[type="color"]::-webkit-color-swatch-wrapper {padding:0;}
+#worker-modal#worker-modal :is(.mk-skin-editor,.mk-skin-aside,.org-left) input[type="color"]::-webkit-color-swatch {border:0;border-radius:50%;}
 
 /* ---- connected button groups (segmented) with the expressive morph ---- */
-#worker-modal#worker-modal .mk-skin-editor .wf-segment:not(.wf-look-modes):not([hidden]) {display:flex !important;gap:2px;padding:0;background:none;border-radius:0;}
-#worker-modal#worker-modal .mk-skin-editor .wf-segment:not(.wf-look-modes) > button {
+#worker-modal#worker-modal :is(.mk-skin-editor,.org-left) .wf-segment:not(.wf-look-modes):not([hidden]) {display:flex !important;gap:2px;padding:0;background:none;border-radius:0;}
+#worker-modal#worker-modal :is(.mk-skin-editor,.org-left) .wf-segment:not(.wf-look-modes) > button {
   flex:1 1 0;min-height:40px;border:0;border-radius:8px;background:var(--pp-c3,#252c37);color:var(--pp-on,#e3e7ee);font:600 13px/1 var(--pp-font,system-ui) !important;cursor:pointer;
   transition:border-radius .35s var(--pp-spring,ease),background-color .2s var(--pp-effects,ease);
 }
-#worker-modal#worker-modal .mk-skin-editor .wf-segment:not(.wf-look-modes) > button:first-child {border-radius:20px 8px 8px 20px;}
-#worker-modal#worker-modal .mk-skin-editor .wf-segment:not(.wf-look-modes) > button:last-child {border-radius:8px 20px 20px 8px;}
-#worker-modal#worker-modal .mk-skin-editor .wf-segment:not(.wf-look-modes) > button:is([aria-pressed="true"],.is-active) {border-radius:20px;background:var(--pp-primary,#a8c7fa);color:var(--pp-on-primary,#0b2a57);}
+#worker-modal#worker-modal :is(.mk-skin-editor,.org-left) .wf-segment:not(.wf-look-modes) > button:first-child {border-radius:20px 8px 8px 20px;}
+#worker-modal#worker-modal :is(.mk-skin-editor,.org-left) .wf-segment:not(.wf-look-modes) > button:last-child {border-radius:8px 20px 20px 8px;}
+#worker-modal#worker-modal :is(.mk-skin-editor,.org-left) .wf-segment:not(.wf-look-modes) > button:is([aria-pressed="true"],.is-active) {border-radius:20px;background:var(--pp-primary,#a8c7fa);color:var(--pp-on-primary,#0b2a57);}
 
 /* ---- effect chips (M3 filter chips) ---- */
-#worker-modal#worker-modal .mk-skin-editor .mk-fx-row {display:flex;flex-wrap:wrap;gap:8px;}
-#worker-modal#worker-modal .mk-skin-editor .mk-skin-fx {
+#worker-modal#worker-modal :is(.mk-skin-editor,.org-left) .mk-fx-row {display:flex;flex-wrap:wrap;gap:8px;}
+#worker-modal#worker-modal :is(.mk-skin-editor,.org-left) .mk-skin-fx {
   height:36px;padding:0 16px;border:1px solid var(--pp-c4,#2f3743);border-radius:10px;background:transparent;color:var(--pp-on,#e3e7ee);font:600 13px/1 var(--pp-font,system-ui) !important;cursor:pointer;
   transition:border-radius .3s var(--pp-spring,ease),background-color .2s var(--pp-effects,ease);
 }
-#worker-modal#worker-modal .mk-skin-editor .mk-skin-fx:hover {background:color-mix(in srgb,var(--pp-on,#e3e7ee) 8%,transparent);}
-#worker-modal#worker-modal .mk-skin-editor .mk-skin-fx.is-on {border-color:transparent;border-radius:18px;background:var(--pp-primary-c,#d6e3ff);color:var(--pp-on-primary-c,#0b1d36);}
+#worker-modal#worker-modal :is(.mk-skin-editor,.org-left) .mk-skin-fx:hover {background:color-mix(in srgb,var(--pp-on,#e3e7ee) 8%,transparent);}
+#worker-modal#worker-modal :is(.mk-skin-editor,.org-left) .mk-skin-fx.is-on {border-color:transparent;border-radius:18px;background:var(--pp-primary-c,#d6e3ff);color:var(--pp-on-primary-c,#0b1d36);}
 
 /* the grouped tool cards read as M3 surfaces */
 #worker-modal#worker-modal .org-colors .mk-skin-tools,#worker-modal#worker-modal .org-effects .mk-skin-effects {border:0 !important;border-radius:20px !important;background:var(--pp-c2,#1c222c) !important;padding:14px 16px !important;}
@@ -239,10 +239,10 @@
 #worker-modal#worker-modal .mk-pic-tune:not([hidden]) {display:grid;grid-template-columns:1fr;gap:2px;}
 #worker-modal#worker-modal .mk-pic-tune input[type="range"] {flex:1 1 auto;}
 /* effect tiles are a real grid (an older flex rule measured the thumbnails wrong and let the sliders overlap) */
-#worker-modal#worker-modal .mk-skin-editor .mk-dither-switch .wf-segment:is(.mk-pic-effects,.mk-card-dither):not([hidden]) {
+#worker-modal#worker-modal :is(.mk-skin-editor,.org-left) .mk-dither-switch .wf-segment:is(.mk-pic-effects,.mk-card-dither):not([hidden]) {
   display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;grid-auto-rows:auto !important;gap:8px !important;flex-wrap:nowrap !important;height:auto !important;
 }
-#worker-modal#worker-modal .mk-skin-editor .mk-dither-switch .wf-segment:is(.mk-pic-effects,.mk-card-dither) > button {flex:none !important;width:auto !important;}
+#worker-modal#worker-modal :is(.mk-skin-editor,.org-left) .mk-dither-switch .wf-segment:is(.mk-pic-effects,.mk-card-dither) > button {flex:none !important;width:auto !important;}
 
 /* ---- a control that can't work with the current effect: greyed out, reason underneath ---- */
 #worker-modal#worker-modal .org-locked {opacity:.38 !important;pointer-events:none !important;filter:none;}
@@ -313,7 +313,7 @@
 #worker-modal#worker-modal .mk-addon-slots .mk-addon-slot-add {width:auto;padding:0 16px;border-style:dashed;font:600 13px/1 var(--pp-font,system-ui);}
 /* Effect tiles, compact: a small square preview with the name under it, many per
    row (21 effects fit without a long scroll). The chosen one gets a soft panel. */
-#worker-modal#worker-modal .mk-skin-editor .mk-dither-switch .wf-segment:is(.mk-pic-effects,.mk-card-dither):not([hidden]) {grid-template-columns:repeat(auto-fill,minmax(74px,1fr)) !important;gap:4px !important;}
+#worker-modal#worker-modal :is(.mk-skin-editor,.org-left) .mk-dither-switch .wf-segment:is(.mk-pic-effects,.mk-card-dither):not([hidden]) {grid-template-columns:repeat(auto-fill,minmax(74px,1fr)) !important;gap:4px !important;}
 #worker-modal#worker-modal :is(.mk-pic-effects,.mk-card-dither) > button.has-thumb {
   align-items:center !important;justify-content:flex-start !important;gap:6px !important;padding:7px 4px 8px !important;
   background:transparent !important;border:1px solid transparent !important;border-radius:14px !important;
@@ -327,7 +327,7 @@
 }
 /* The row is a flex line: sized with an unknown width the auto-fill grid counts one
    column (21 rows), and the line kept that height. Full width and no stretch. */
-#worker-modal#worker-modal .mk-skin-editor .mk-dither-switch .wf-segment:is(.mk-pic-effects,.mk-card-dither):not([hidden]) {flex:1 1 100% !important;width:100% !important;min-width:0 !important;height:auto !important;align-self:flex-start !important;align-content:start !important;}
+#worker-modal#worker-modal :is(.mk-skin-editor,.org-left) .mk-dither-switch .wf-segment:is(.mk-pic-effects,.mk-card-dither):not([hidden]) {flex:1 1 100% !important;width:100% !important;min-width:0 !important;height:auto !important;align-self:flex-start !important;align-content:start !important;}
 
 /* ---- Kontrasts: "Aa" check next to Remix, WCAG levels like colourcontrast.cc ---- */
 #worker-modal#worker-modal .mk-contrast-btn {position:relative;flex:0 0 44px;width:44px;padding:0;background:var(--pp-c3,#252c37);color:var(--pp-on,#e3e7ee);}
@@ -432,7 +432,7 @@ html body #worker-modal .card .mk-contrast-flag {outline:2px dashed #ffb4ab;outl
 #worker-modal#worker-modal .bld-mini {padding:3px 6px;border-radius:7px;font:700 10px/1 var(--pp-font,system-ui);}
 #worker-modal#worker-modal .bld-mini.is-pass {background:#1d3526;color:#9be2b0;}
 #worker-modal#worker-modal .bld-mini.is-fail {background:#3d2124;color:#ffb4ab;}
-#worker-modal#worker-modal .mk-skin-editor .bld .bld-finish.wf-segment:not([hidden]) {display:grid !important;grid-template-columns:repeat(auto-fill,minmax(74px,1fr)) !important;gap:8px !important;margin:0 !important;padding:0 !important;background:none !important;border-radius:0 !important;}
+#worker-modal#worker-modal :is(.mk-skin-editor,.org-left) .bld .bld-finish.wf-segment:not([hidden]) {display:grid !important;grid-template-columns:repeat(auto-fill,minmax(74px,1fr)) !important;gap:8px !important;margin:0 !important;padding:0 !important;background:none !important;border-radius:0 !important;}
 #worker-modal#worker-modal .bld-finish .wf-number-sample {font-size:32px;}
 #worker-modal#worker-modal .bld-digital {display:grid;place-items:center;align-content:center;width:50px;height:50px;border-radius:50%;background:#0b1119;color:#e3e7ee;font:700 13px/1 var(--pp-font,system-ui);font-variant-numeric:tabular-nums;}
 #worker-modal#worker-modal .bld-digital small {font:600 6px/1.4 var(--pp-font,system-ui);opacity:.7;}
@@ -489,3 +489,484 @@ html[data-motion="reduced"] #worker-modal .bld-stars span.on {animation:none;}
 /* Picture tiles: the photo covers the whole square whatever its own shape (wide abstracts left a gap). */
 #worker-modal#worker-modal .bld-pics .bld-tile {display:block;}
 #worker-modal#worker-modal .bld-pics .bld-tile img {position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+/* Where a dropped element will land (card-faces.js landing): a dashed outline of it. */
+.wf-ghost {position:absolute;z-index:38;pointer-events:none;box-sizing:border-box;border:1.5px dashed #64d2ffd0;background:#64d2ff17;border-radius:10px;}
+.wf-ghost[hidden] {display:none;}
+/* "Neļaut pārklāties": an M3 switch with its explanation. */
+.wf-switch {display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;margin:14px 0 6px;cursor:pointer;}
+.wf-switch input {position:absolute;opacity:0;pointer-events:none;}
+.wf-switch i {position:relative;width:44px;height:26px;border-radius:13px;background:#2c333d;box-shadow:inset 0 0 0 2px #7d8794;transition:background .2s ease,box-shadow .2s ease;}
+.wf-switch i::after {content:'';position:absolute;left:7px;top:7px;width:12px;height:12px;border-radius:50%;background:#9aa4b1;
+  transition:transform .32s var(--mk-ease-spring,cubic-bezier(.2,.9,.25,1)),width .2s ease,height .2s ease,left .2s ease,top .2s ease,background .2s ease;}
+.wf-switch input:checked + i {background:var(--pp-primary,#a8c7fa);box-shadow:none;}
+.wf-switch input:checked + i::after {left:4px;top:3px;width:20px;height:20px;background:#0b1f3a;transform:translateX(17px);}
+.wf-switch input:focus-visible + i {outline:2px solid var(--pp-primary,#a8c7fa);outline-offset:2px;}
+.wf-switch b {display:block;font:600 13px/1.25 var(--pp-font,system-ui);color:var(--pp-on,#e3e7ee);}
+.wf-switch small {display:block;margin-top:2px;font:400 11.5px/1.35 var(--pp-font,system-ui);color:#a5b5c8;}
+/* Phones: five equal fifths cut "Izkārtojums" in half — each tab takes the width
+   of its word instead, a little smaller, and the row still fits a 360 px screen. */
+@media (max-width: 520px) {
+  #worker-modal#worker-modal .org-tabs {grid-template-columns:repeat(5,auto);justify-content:space-between;gap:2px;
+    overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;}
+  #worker-modal#worker-modal .org-tabs::-webkit-scrollbar {display:none;}
+  #worker-modal#worker-modal .org-tabs button {padding:0 6px !important;font-size:12.5px !important;white-space:nowrap;}
+}
+
+/* ═══ Editor (2026-09-29): the card in the middle, like an editor ═══
+   A computer window: the section, names and Remix / Atsaukt / Aa on the left,
+   the card big in the middle with a soft light in its own colour, the settings
+   on their own sheet on the right with the five sections in a floating bar at
+   its bottom. Flat M3 surfaces only: no blur, nothing looping. */
+
+/* the section bar (every width): icon over label, the selected one on the pill */
+#worker-modal#worker-modal .org-tabs-band > .org-tabs {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;width:min(460px,calc(100vw - 40px));margin:0;padding:6px;box-sizing:border-box;
+  border-radius:32px;background:var(--pp-c3,#252c37);box-shadow:0 12px 32px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.07);}
+#worker-modal#worker-modal .org-tabs-band > .org-tabs button {display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;height:54px;min-width:0;padding:0 2px !important;border-radius:26px;
+  font:600 12px/1 var(--pp-font,system-ui) !important;letter-spacing:0;white-space:nowrap;color:var(--pp-on-var,#b8c1cd);}
+#worker-modal#worker-modal .org-tabs-band > .org-tabs button:hover {background:transparent;color:var(--pp-on,#e3e7ee);}
+#worker-modal#worker-modal .org-tabs-band > .org-tabs button.is-active {color:var(--pp-on-primary-c,#0b1d36);}
+#worker-modal#worker-modal .org-tabs-band > .org-tabs > .org-tab-pill {border-radius:26px;}
+#worker-modal#worker-modal .org-ico {width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+#worker-modal#worker-modal .org-ico .f {fill:currentColor;stroke:none;}
+#worker-modal#worker-modal .org-tabs-band > .org-tabs button > span {overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+/* narrow windows: the bar sticks to the bottom of the scrolling window */
+#worker-modal#worker-modal .mk-skin-shell.org-shell > .org-tabs-band {grid-column:1 / -1;position:sticky;bottom:10px;z-index:8;display:flex;justify-content:center;margin:14px 0 0;padding:0;background:none;}
+#worker-modal#worker-modal .mk-skin-shell.is-building > .org-tabs-band {display:none !important;}
+#worker-modal#worker-modal .org-label {display:none;}
+
+@media (min-width: 1100px) {
+  /* one window-high editor: the two sheets scroll on their own, nothing else does */
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal.mk-skin-mode .modal-content {overflow:hidden !important;padding:0 !important;}
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal.mk-skin-mode #modal-skin-view:not(.hide) {position:relative;flex:1 1 auto;min-height:0;display:flex !important;flex-direction:column;padding:0 !important;background:none !important;}
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .mk-skin-shell.org-shell {--org-side:clamp(320px,29vw,480px);
+    flex:1 1 auto;min-height:0;display:grid !important;grid-template-columns:var(--org-side) minmax(0,1fr) var(--org-side) !important;grid-template-rows:minmax(0,1fr);align-items:stretch !important;gap:0;position:relative;}
+
+  /* middle: the card, as big as the window allows, the section bar under it */
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .org-shell > .mk-skin-aside {
+    --org-stage:1;--org-card-max:440px;--org-bar:84px;--org-side:0px;
+    grid-column:2;grid-row:1;align-self:stretch !important;position:relative !important;top:auto !important;min-height:0;max-height:none !important;overflow:visible !important;isolation:isolate;
+    display:grid !important;grid-template-columns:minmax(0,1fr) !important;grid-template-rows:minmax(0,1fr) !important;align-items:center;justify-items:center;gap:0;padding:0 0 var(--org-bar);box-sizing:border-box;
+  }
+  /* a soft light in the card's own colour behind it (skin-organize.js syncGlow) */
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .org-shell > .mk-skin-aside::before {content:"";position:absolute;z-index:-1;top:calc(50% - var(--org-bar) / 2);left:50%;width:min(760px,100%);height:110%;translate:-50% -50%;pointer-events:none;
+    background:radial-gradient(closest-side,color-mix(in srgb,var(--org-glow,var(--pp-primary,#a8c7fa)) 26%,transparent),color-mix(in srgb,var(--org-glow,var(--pp-primary,#a8c7fa)) 7%,transparent) 55%,transparent);}
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .org-shell > .mk-skin-aside > .mk-skin-preview-slot {grid-column:1;grid-row:1;align-self:center;justify-self:center;max-width:none;}
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .org-shell .org-label {display:none !important;}
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .org-shell > .org-tabs-band {grid-column:2;grid-row:1;align-self:end;justify-self:center;position:relative;bottom:auto;z-index:8;width:100%;display:flex;justify-content:center;margin:0 0 18px;}
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .org-shell > .org-tabs-band > .org-tabs {width:min(440px,calc(100% - 24px));}
+
+  /* the two sheets */
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .org-shell > :is(.org-left,.mk-skin-editor.org) {min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent;
+    padding:16px 16px 24px;border-radius:28px;background:var(--pp-c1,#161b23);box-sizing:border-box;}
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .org-shell > .org-left {grid-column:1;grid-row:1;margin:8px 0 12px 12px;display:flex;flex-direction:column;gap:14px;}
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .org-shell > .mk-skin-editor.org {grid-column:3;grid-row:1;margin:8px 12px 12px 0;}
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .org-left > * {flex-shrink:0;}
+
+  /* left top: Remix, Atsaukt, Aa in one row; Kontrasts opens under it */
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .org-left-top {display:grid;gap:10px;}
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .org-left-top .mk-skin-quick {display:grid;grid-template-columns:minmax(0,1fr) 48px 48px;gap:8px;width:auto;max-width:none;margin:0 !important;padding:0 !important;}
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .org-left-top .mk-skin-quick .mk-remix {height:48px;min-width:0;padding:0 18px;border-radius:24px;justify-content:center;gap:10px;font:600 16px/1 var(--pp-font,system-ui) !important;
+    transition:border-radius .35s var(--pp-spring,ease),filter .15s ease;}
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .org-left-top .mk-skin-quick .mk-remix svg {width:22px;height:22px;stroke-width:2;}
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .org-left-top .mk-skin-quick .mk-remix:active {border-radius:14px;}
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .org-left-top .mk-skin-quick :is(.mk-skin-undo,.mk-contrast-btn) {width:48px;height:48px;flex:none;border-radius:24px;transition:border-radius .35s var(--pp-spring,ease),background-color .15s ease;}
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .org-left-top .mk-skin-quick :is(.mk-skin-undo,.mk-contrast-btn):active {border-radius:14px;}
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .org-left-top .mk-contrast {width:auto;max-width:none;margin:0;max-height:none;overflow:visible;}
+
+  /* the slider's reading sits right of its handle, in the room beside the card */
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .org-shell .wf-rim-tip {translate:24px -50%;}
+}
+
+/* One header row on wide windows (every tab, so switching never moves it):
+   name on the left, the four tabs as one connected group in the middle. */
+@media (min-width: 1000px) {
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .modal-header {min-height:72px;padding:14px 16px 10px 28px !important;box-sizing:border-box;align-items:center;}
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .modal-header-text {max-width:calc(50% - 270px);min-width:0;overflow:hidden;}
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .modal-header-text > * {white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .view-toggle {position:absolute !important;top:14px;left:50%;translate:-50% 0;z-index:5;display:flex !important;gap:2px !important;width:auto !important;margin:0 !important;padding:4px !important;
+    border-radius:26px !important;background:var(--pp-c1,#161b23) !important;}
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .view-toggle .toggle-btn {height:40px !important;min-height:0 !important;padding:0 18px !important;border-radius:20px !important;background:transparent !important;white-space:nowrap;}
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .view-toggle .toggle-btn:hover {background:var(--pp-c3,#252c37) !important;}
+  :root:not(.mk-mobile-shell) #worker-modal#worker-modal .view-toggle .toggle-btn.active {background:var(--pp-primary-c,#d6e3ff) !important;}
+}
+
+/* ═══ Krāsas as tiles (every width): each group its own surface, like the
+   settings of a phone; the three colour tools share a grid. ═══ */
+#worker-modal#worker-modal .org-colors .mk-skin-tools {display:grid !important;grid-template-columns:repeat(auto-fill,minmax(180px,1fr)) !important;gap:10px !important;padding:0 !important;background:none !important;border-radius:0 !important;}
+#worker-modal#worker-modal .org-colors .mk-skin-tool {display:grid !important;grid-template-columns:auto minmax(0,1fr) auto !important;align-items:center !important;align-content:start !important;gap:16px 12px !important;
+  padding:16px !important;margin:0 !important;border:0 !important;border-radius:24px !important;background:var(--pp-c2,#1c222c) !important;}
+#worker-modal#worker-modal .org-colors .mk-skin-tool > .mk-skin-custom {display:contents !important;}
+#worker-modal#worker-modal .org-colors .mk-skin-tool > .mk-skin-tool-head {grid-column:1 / 3;grid-row:1;align-self:center;font:600 11px/1.2 var(--pp-font,system-ui) !important;letter-spacing:.12em !important;text-transform:uppercase !important;color:var(--pp-on-var,#b8c1cd) !important;}
+#worker-modal#worker-modal .org-colors .mk-skin-tool :is(.mk-num-alpha-val,.mk-emoji-op-val) {grid-column:3;grid-row:1;min-width:0 !important;font:500 26px/1 var(--pp-font,system-ui) !important;letter-spacing:-.01em;color:var(--pp-on,#e3e7ee) !important;text-align:right;}
+#worker-modal#worker-modal .org-colors .mk-skin-tool :is(input[type="color"],.mk-switch) {grid-column:1;grid-row:2;}
+#worker-modal#worker-modal .org-colors .mk-skin-tool input[type="range"] {grid-column:2 / 4;grid-row:2;width:100% !important;min-width:0 !important;}
+#worker-modal#worker-modal .org-colors .mk-skin-tool .mk-txt-clear {grid-column:3;grid-row:2;justify-self:end;}
+#worker-modal#worker-modal .org-colors .mk-skin-tool .mk-chk {grid-column:1 / -1;grid-row:3;}
+#worker-modal#worker-modal .org-colors .mk-skin-tool-emoji {grid-column:1 / -1;}
+#worker-modal#worker-modal .org-colors .mk-skin-tools > .org-lock-note {grid-column:1 / -1;margin:0;}
+#worker-modal#worker-modal .org-colors .mk-auto-palette {margin:0 0 10px !important;padding:14px 16px !important;border-radius:24px !important;background:var(--pp-c2,#1c222c) !important;}
+#worker-modal#worker-modal [data-skin-panel="face"][data-org="colors"] [data-wf-group="colors"] {display:grid !important;gap:10px;margin-top:10px;}
+#worker-modal#worker-modal [data-skin-panel="face"][data-org="colors"] [data-wf-group="colors"] > .wf-section {margin:0 !important;padding:16px !important;border:0 !important;border-radius:24px;background:var(--pp-c2,#1c222c);}
+#worker-modal#worker-modal [data-skin-panel="face"][data-org="colors"] [data-wf-group="colors"] > .wf-section > .wf-label {margin:0 0 12px;font:600 11px/1.2 var(--pp-font,system-ui) !important;letter-spacing:.12em !important;text-transform:uppercase !important;color:var(--pp-on-var,#b8c1cd) !important;}
+#worker-modal#worker-modal [data-skin-panel="face"][data-org="colors"] [data-wf-group="colors"] > .wf-section > .wf-label .wf-metal-name {font:500 13px/1 var(--pp-font,system-ui) !important;letter-spacing:0 !important;text-transform:none !important;color:var(--pp-on,#e3e7ee) !important;}
+#worker-modal#worker-modal [data-skin-panel="face"][data-org="colors"] [data-wf-group="colors"] > .wf-section .wf-segment > button:not([aria-pressed="true"]) {background:var(--pp-c3,#252c37) !important;}
+
+/* Efekti: the chosen effect fills its whole tile; names without a picture get room */
+#worker-modal#worker-modal :is(.mk-pic-effects,.mk-card-dither) > button.has-thumb[aria-pressed="true"] {background:var(--pp-primary-c,#d6e3ff) !important;border-color:transparent !important;color:var(--pp-on-primary-c,#0b1d36) !important;}
+#worker-modal#worker-modal :is(.mk-skin-editor,.org-left) .mk-dither-switch .wf-segment:is(.mk-pic-effects,.mk-card-dither):not([hidden]):not(:has(> .has-thumb)) {grid-template-columns:repeat(auto-fill,minmax(100px,1fr)) !important;gap:6px !important;}
+#worker-modal#worker-modal :is(.mk-pic-effects,.mk-card-dither) > button:not(.has-thumb) {min-width:0 !important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 8px !important;}
+
+/* ═══ Fons (every width): M3, one thing at a time ═══ */
+/* The sheet is a flex column: nothing in it may shrink (the picture position slid under the pictures). */
+#worker-modal#worker-modal .mk-skin-editor.org > * {flex-shrink:0;}
+/* Attēli / Krāsa / Zīmējums: one connected button group across the sheet */
+#worker-modal#worker-modal :is(.mk-skin-editor.org,.org-left) .mk-bg-toolbar {display:block !important;margin:0 0 12px !important;padding:0 !important;}
+#worker-modal#worker-modal :is(.mk-skin-editor.org,.org-left) .mk-bg-mode-tabs {display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px !important;width:100%;padding:0 !important;border-radius:0 !important;background:none !important;}
+#worker-modal#worker-modal :is(.mk-skin-editor.org,.org-left) .mk-bg-mode {height:44px !important;min-height:0 !important;padding:0 8px !important;border-radius:8px !important;background:var(--pp-c2,#1c222c) !important;color:var(--pp-on,#e3e7ee) !important;font:600 14px/1 var(--pp-font,system-ui) !important;
+  transition:border-radius .35s var(--pp-spring,ease),background-color .15s ease !important;}
+#worker-modal#worker-modal :is(.mk-skin-editor.org,.org-left) .mk-bg-mode:first-child {border-radius:22px 8px 8px 22px !important;}
+#worker-modal#worker-modal :is(.mk-skin-editor.org,.org-left) .mk-bg-mode:last-child {border-radius:8px 22px 22px 8px !important;}
+#worker-modal#worker-modal :is(.mk-skin-editor.org,.org-left) .mk-bg-mode:hover:not(.is-active) {background:var(--pp-c3,#252c37) !important;}
+#worker-modal#worker-modal :is(.mk-skin-editor.org,.org-left) .mk-bg-mode.is-active {border-radius:22px !important;background:var(--pp-primary,#a8c7fa) !important;color:var(--pp-on-primary,#0b2a57) !important;}
+/* the category: one button showing where you are; all categories in a menu under it */
+#worker-modal#worker-modal .org-shell .mk-bg-images {position:relative;}
+#worker-modal#worker-modal .org-cat-btn {display:flex;align-items:center;gap:10px;width:100%;height:52px;margin:0 0 12px;padding:0 12px 0 18px;box-sizing:border-box;border:0;border-radius:16px;
+  background:var(--pp-c2,#1c222c);color:var(--pp-on,#e3e7ee);cursor:pointer;text-align:left;transition:background-color .15s ease,border-radius .35s var(--pp-spring,ease);}
+#worker-modal#worker-modal .org-cat-btn:hover {background:var(--pp-c3,#252c37);}
+#worker-modal#worker-modal .org-cat-btn[aria-expanded="true"] {border-radius:16px 16px 8px 8px;background:var(--pp-c3,#252c37);}
+#worker-modal#worker-modal .org-cat-btn .org-cat-k {font:600 11px/1 var(--pp-font,system-ui) !important;letter-spacing:.12em;text-transform:uppercase;color:var(--pp-on-var,#b8c1cd);}
+#worker-modal#worker-modal .org-cat-btn b {min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 15px/1.2 var(--pp-font,system-ui) !important;}
+#worker-modal#worker-modal .org-cat-btn i {font:500 13px/1 var(--pp-font,system-ui) !important;font-style:normal;color:var(--pp-on-var,#b8c1cd);}
+#worker-modal#worker-modal .org-cat-btn svg {flex:none;width:22px;height:22px;margin-left:auto;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:rotate .35s var(--pp-spring,ease);}
+#worker-modal#worker-modal .org-cat-btn[aria-expanded="true"] svg {rotate:180deg;}
+#worker-modal#worker-modal .org-cat-btn:focus-visible {outline:2px solid var(--pp-primary,#a8c7fa);outline-offset:2px;}
+#worker-modal#worker-modal .org-shell .mk-skin-category-nav.org-cat-pop {display:none !important;position:absolute;left:0;right:0;top:56px;z-index:20;padding:10px;border-radius:8px 8px 20px 20px;
+  background:var(--pp-c3,#252c37);box-shadow:0 14px 34px rgba(0,0,0,.55);}
+#worker-modal#worker-modal .org-shell .mk-skin-category-nav.org-cat-pop.is-open {display:block !important;}
+#worker-modal#worker-modal .org-cat-pop .mk-skin-category-bar {display:flex !important;flex-wrap:wrap !important;gap:6px !important;padding:0 !important;}
+#worker-modal#worker-modal .org-cat-pop .mk-skin-category {min-height:36px !important;padding:0 14px !important;border-radius:18px !important;background:var(--pp-c4,#2f3743) !important;color:var(--pp-on,#e3e7ee) !important;font:500 13px/1 var(--pp-font,system-ui) !important;}
+#worker-modal#worker-modal .org-cat-pop .mk-skin-category:hover {background:color-mix(in srgb,var(--pp-on,#e3e7ee) 14%,var(--pp-c4,#2f3743)) !important;}
+#worker-modal#worker-modal .org-cat-pop .mk-skin-category.is-active {background:var(--pp-primary-c,#d6e3ff) !important;color:var(--pp-on-primary-c,#0b1d36) !important;}
+/* pictures: big square tiles, the name on a soft shade, the chosen one ringed and ticked */
+#worker-modal#worker-modal .org-shell .mk-bg-images .mk-skin-grid.is-active {display:grid !important;grid-template-columns:repeat(auto-fill,minmax(112px,1fr)) !important;gap:8px !important;}
+#worker-modal#worker-modal .org-shell .mk-bg-images .mk-skin-thumb {aspect-ratio:1 !important;border-radius:18px !important;}
+#worker-modal#worker-modal .org-shell .mk-bg-images .mk-skin-thumb:hover {border-radius:12px !important;}
+#worker-modal#worker-modal .org-shell .mk-bg-images .mk-skin-thumb > span {padding:26px 10px 9px !important;background:linear-gradient(transparent,rgba(5,8,14,.86)) !important;font:600 12px/1.15 var(--pp-font,system-ui) !important;}
+#worker-modal#worker-modal .org-shell .mk-bg-images .mk-skin-thumb::after {top:8px !important;right:8px !important;width:24px !important;height:24px !important;background:var(--pp-primary,#a8c7fa) !important;color:var(--pp-on-primary,#0b2a57) !important;font:700 13px/1 var(--pp-font,system-ui) !important;}
+/* the picture's position (and the object in front): a tile of its own under the pictures */
+#worker-modal#worker-modal [data-skin-panel="face"][data-org="bg"] {margin-top:12px !important;}
+#worker-modal#worker-modal [data-skin-panel="face"][data-org="bg"] details.wf-background {margin:0 !important;padding:16px !important;border:0 !important;border-radius:24px;background:var(--pp-c2,#1c222c);}
+#worker-modal#worker-modal [data-skin-panel="face"][data-org="bg"] details.wf-background > summary {display:flex;align-items:center;justify-content:space-between;list-style:none;margin:0 0 6px;cursor:pointer;
+  font:600 11px/1.2 var(--pp-font,system-ui) !important;letter-spacing:.12em;text-transform:uppercase;color:var(--pp-on-var,#b8c1cd) !important;}
+#worker-modal#worker-modal [data-skin-panel="face"][data-org="bg"] details.wf-background > summary::-webkit-details-marker {display:none;}
+#worker-modal#worker-modal [data-skin-panel="face"][data-org="bg"] details.wf-background > summary::after {content:"";width:7px;height:7px;margin-right:4px;border-right:2px solid;border-bottom:2px solid;rotate:45deg;translate:0 -2px;transition:rotate .3s var(--pp-spring,ease);}
+#worker-modal#worker-modal [data-skin-panel="face"][data-org="bg"] details.wf-background[open] > summary::after {rotate:-135deg;translate:0 2px;}
+#worker-modal#worker-modal [data-skin-panel="face"][data-org="bg"] .wf-depth-control {margin-top:10px !important;padding:16px !important;border:0 !important;border-radius:24px;background:var(--pp-c2,#1c222c);}
+
+/* ═══ The two sheets' content (every width) ═══ */
+#worker-modal#worker-modal .org-slot {display:none;}
+#worker-modal#worker-modal .org-shell:is([data-org-tab="presets"]) .org-slot[data-tab="presets"],
+#worker-modal#worker-modal .org-shell:is([data-org-tab="background"]) .org-slot[data-tab="background"],
+#worker-modal#worker-modal .org-shell:is([data-org-tab="layout"]) .org-slot[data-tab="layout"],
+#worker-modal#worker-modal .org-shell:is([data-org-tab="colors"]) .org-slot[data-tab="colors"],
+#worker-modal#worker-modal .org-shell:is([data-org-tab="effects"]) .org-slot[data-tab="effects"] {display:block;}
+#worker-modal#worker-modal .org-slot [data-wf-group] {display:block !important;}
+#worker-modal#worker-modal .mk-skin-shell.is-building > .org-left {display:none !important;}
+/* narrow windows: one column — the left sheet's pieces simply follow the card */
+@media (max-width: 1099px) {
+  #worker-modal#worker-modal .org-shell > .org-left {display:contents;}
+  #worker-modal#worker-modal .org-left-top {display:grid;gap:10px;margin:12px 0;}
+  #worker-modal#worker-modal .org-slot {margin:0 0 14px;}
+}
+:root.mk-mobile-shell #worker-modal#worker-modal .org-shell > .org-left {display:contents;}
+/* Fons: pictures on the left; colour, your own drawing and the position on the right —
+   all three kinds at once, so the mode buttons are not needed */
+#worker-modal#worker-modal :is(.mk-skin-editor.org,.org-left) .mk-bg-toolbar {display:none !important;}
+#worker-modal#worker-modal .org-slot .mk-bg-panel.mk-bg-images,
+#worker-modal#worker-modal .mk-skin-editor.org [data-skin-panel="background"] .mk-bg-panel {display:block !important;}
+#worker-modal#worker-modal .mk-skin-editor.org [data-skin-panel="background"] .mk-bg-panel {margin:0 0 10px !important;padding:16px !important;border-radius:24px;background:var(--pp-c2,#1c222c);}
+#worker-modal#worker-modal .mk-skin-editor.org [data-skin-panel="background"] .mk-bg-colors::before {content:"Krāsa";display:block;margin:0 0 12px;font:600 11px/1.2 var(--pp-font,system-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--pp-on-var,#b8c1cd);}
+#worker-modal#worker-modal .mk-skin-editor.org [data-skin-panel="background"] .mk-bg-workspace {display:block !important;}
+/* "Uzzīmēt savu fonu": a big, obvious tile */
+#worker-modal#worker-modal :is(.mk-skin-editor.org,.org-left) .mk-bg-draw .mk-skin-art-open {display:grid !important;grid-template-columns:48px minmax(0,1fr);grid-template-rows:auto auto;align-items:center;column-gap:14px;row-gap:3px;width:100%;min-height:76px;
+  padding:14px 18px !important;border:0 !important;border-radius:20px !important;background:var(--pp-primary-c,#d6e3ff) !important;color:var(--pp-on-primary-c,#0b1d36) !important;text-align:left;
+  font:600 16px/1.2 var(--pp-font,system-ui) !important;cursor:pointer;transition:border-radius .35s var(--pp-spring,ease),filter .15s ease;}
+#worker-modal#worker-modal :is(.mk-skin-editor.org,.org-left) .mk-bg-draw .mk-skin-art-open::before {content:"";grid-row:1 / 3;width:48px;height:48px;border-radius:24px;
+  background:var(--pp-on-primary-c,#0b1d36) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d6e3ff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20z'/%3E%3Cpath d='M13.5 7.5l3 3'/%3E%3C/svg%3E") center/24px no-repeat;}
+#worker-modal#worker-modal :is(.mk-skin-editor.org,.org-left) .mk-bg-draw .mk-skin-art-open::after {content:"Ar peli vai pirkstu, tieši kartītē";font:500 12.5px/1.3 var(--pp-font,system-ui);opacity:.75;}
+#worker-modal#worker-modal :is(.mk-skin-editor.org,.org-left) .mk-bg-draw .mk-skin-art-open:hover {filter:brightness(1.04);}
+#worker-modal#worker-modal :is(.mk-skin-editor.org,.org-left) .mk-bg-draw .mk-skin-art-open:active {border-radius:12px !important;}
+/* section headings on the sheets */
+#worker-modal#worker-modal .org-sub.org-sub-top {margin-top:0;}
+#worker-modal#worker-modal .org-slot .org-effects > .org-sub:first-child {margin-top:0;}
+#worker-modal#worker-modal .org-slot .bld-entry {margin:0 0 12px;}
+#worker-modal#worker-modal .org-slot .mk-preset-groups {display:flex;flex-wrap:wrap;gap:6px;}
+
+/* "Noņemt visu izskatu" closes the right sheet, quietly */
+#worker-modal#worker-modal .mk-skin-editor.org > .mk-skin-footer {order:99;margin:18px 0 0 !important;padding:14px 0 0 !important;border-top:1px solid rgba(184,193,205,.1) !important;}
+#worker-modal#worker-modal .mk-skin-editor.org > .mk-skin-footer .mk-skin-clear {min-height:36px !important;padding:0 14px !important;background:transparent !important;color:var(--pp-on-var,#b8c1cd) !important;}
+#worker-modal#worker-modal .mk-skin-editor.org > .mk-skin-footer .mk-skin-clear:hover {background:var(--pp-c2,#1c222c) !important;color:var(--pp-on,#e3e7ee) !important;}
+/* the picture being edited: a calm dashed frame in the editor's colour */
+.wf-bg-hilite {inset:8px !important;border:2px dashed color-mix(in srgb,var(--pp-primary,#a8c7fa) 80%,transparent) !important;}
+
+/* Dekori: the size slider on its own row, the side and the reset under it (they overlapped) */
+#worker-modal#worker-modal .mk-addon-controls {display:grid !important;grid-template-columns:1fr auto;align-items:center;gap:10px 8px !important;}
+#worker-modal#worker-modal .mk-addon-controls > label {grid-column:1 / -1;}
+#worker-modal#worker-modal .mk-addon-controls > .mk-addon-side {justify-self:start;}
+#worker-modal#worker-modal .mk-addon-controls > .mk-addon-reset-position {justify-self:end;}
+#worker-modal#worker-modal .mk-skin-editor.org > [data-skin-panel="background"] {padding-bottom:0 !important;margin-bottom:0 !important;}
+
+/* ═══ The editor window takes the card's colour (M3 dynamic colour) ═══
+   One seed colour (skin-organize.js syncGlow) tints the surfaces a little and
+   gives the buttons and pills their tones; set only when the colour changes. */
+#worker-modal#worker-modal.mk-skin-mode.org-tinted {
+  --pp-bg:color-mix(in oklab,var(--org-seed) 7%,#10141b);
+  --pp-c1:color-mix(in oklab,var(--org-seed) 9%,#161b23);
+  --pp-c2:color-mix(in oklab,var(--org-seed) 11%,#1c222c);
+  --pp-c3:color-mix(in oklab,var(--org-seed) 13%,#252c37);
+  --pp-c4:color-mix(in oklab,var(--org-seed) 15%,#2f3743);
+  --pp-primary:color-mix(in oklab,var(--org-seed) 55%,#f4f6fa);
+  --pp-on-primary:color-mix(in oklab,var(--org-seed) 35%,#0a0e14);
+  --pp-primary-c:color-mix(in oklab,var(--org-seed) 30%,#f4f6fa);
+  --pp-on-primary-c:color-mix(in oklab,var(--org-seed) 30%,#080b10);
+  transition:background-color .6s ease;
+}
+/* Auto krāsas: four colourings from the background, as examples to pick */
+#worker-modal#worker-modal .org-colors .mk-auto-palette {flex-wrap:wrap !important;}
+#worker-modal#worker-modal .mk-auto-palette .mk-auto-palette-now {display:none !important;}
+#worker-modal#worker-modal .mk-auto-variants {flex:1 1 100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:4px;}
+#worker-modal#worker-modal .mk-auto-variants:empty {display:none;}
+#worker-modal#worker-modal .mk-auto-var {position:relative;display:grid;place-items:center;height:56px;padding:0;border:0;border-radius:16px;background:var(--v-bg);cursor:pointer;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);transition:border-radius .35s var(--pp-spring,ease),box-shadow .15s ease;}
+#worker-modal#worker-modal .mk-auto-var b {font:700 24px/1 var(--pp-font,system-ui) !important;letter-spacing:-.02em;color:var(--v-num);-webkit-text-fill-color:var(--v-num);}
+#worker-modal#worker-modal .mk-auto-var i {position:absolute;left:12px;right:12px;bottom:7px;height:3px;border-radius:2px;background:var(--v-txt);opacity:.9;}
+#worker-modal#worker-modal .mk-auto-var:hover {border-radius:12px;}
+#worker-modal#worker-modal .mk-auto-var[aria-pressed="true"] {box-shadow:0 0 0 2px var(--pp-c2,#1c222c),0 0 0 4px var(--pp-primary,#a8c7fa);}
+#worker-modal#worker-modal .mk-auto-var:focus-visible {outline:2px solid var(--pp-primary,#a8c7fa);outline-offset:3px;}
+/* "Noņemt visu izskatu" under Remix: a quiet text button, always in sight */
+#worker-modal#worker-modal .org-left-top > .mk-skin-footer {order:0;justify-self:start;margin:0 !important;padding:0 !important;border:0 !important;}
+#worker-modal#worker-modal .org-left-top > .mk-skin-footer .mk-skin-clear {min-height:32px !important;padding:0 12px !important;border-radius:16px !important;background:transparent !important;color:var(--pp-on-var,#b8c1cd) !important;font:500 13px/1 var(--pp-font,system-ui) !important;}
+#worker-modal#worker-modal .org-left-top > .mk-skin-footer .mk-skin-clear:hover {background:var(--pp-c2,#1c222c) !important;color:var(--pp-on,#e3e7ee) !important;}
+/* Fons, right: compact — colours in one tight grid, the drawing button is the tile itself */
+#worker-modal#worker-modal .mk-skin-editor.org [data-skin-panel="background"] .mk-bg-panel.mk-bg-draw {padding:0 !important;background:none !important;}
+#worker-modal#worker-modal .mk-skin-editor.org [data-skin-panel="background"] .mk-skin-art-row {display:block !important;margin:0 !important;}
+#worker-modal#worker-modal .mk-skin-editor.org .mk-skin-grads {display:grid !important;grid-template-columns:repeat(auto-fill,minmax(30px,1fr)) !important;gap:6px !important;}
+#worker-modal#worker-modal .mk-skin-editor.org .mk-skin-grads > * {width:100% !important;height:auto !important;aspect-ratio:1;min-width:0 !important;margin:0 !important;border-radius:10px !important;}
+#worker-modal#worker-modal .mk-skin-editor.org .mk-skin-grads > input[type="color"] {border-radius:50% !important;}
+#worker-modal#worker-modal .mk-skin-editor.org [data-skin-panel="face"][data-org="bg"] {margin-top:0 !important;}
+
+/* ═══ M3 Expressive sliders (every slider in this window) ═══
+   A 16 px track: filled up to the handle, empty after it, a 6 px gap on both
+   sides of the handle, a stop dot at the end. The handle is a 4 px bar (2 px while
+   dragged). One gradient per track, painted from --p (skin-organize.js paint). */
+#worker-modal#worker-modal input[type="range"] {height:40px;--sa:var(--pp-primary,#a8c7fa);--si:color-mix(in srgb,var(--pp-primary,#a8c7fa) 20%,var(--pp-c3,#252c37));}
+#worker-modal#worker-modal input[type="range"]::-webkit-slider-runnable-track {
+  height:16px;border-radius:8px;border:0;box-shadow:none;
+  background:
+    radial-gradient(circle at calc(100% - 8px) 50%,var(--sa) 0 2px,transparent 2.6px),
+    linear-gradient(90deg,var(--sa) 0 calc(var(--p) - 7px),transparent calc(var(--p) - 7px) calc(var(--p) + 7px),var(--si) calc(var(--p) + 7px)) !important;
+}
+/* the handle looks 4 px but is 16 px to grab; under the pointer it thickens */
+#worker-modal#worker-modal input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance:none;width:16px;height:34px;margin-top:-9px;border-radius:2px;
+  background:linear-gradient(var(--sa),var(--sa)) center/4px 100% no-repeat !important;border:0 !important;box-shadow:none !important;transform:none !important;cursor:grab;
+  transition:background-size .15s ease;
+}
+#worker-modal#worker-modal input[type="range"]:hover::-webkit-slider-thumb {transform:none !important;background-size:6px 100% !important;}
+#worker-modal#worker-modal input[type="range"]:active::-webkit-slider-thumb {background-size:3px 100% !important;box-shadow:none !important;cursor:grabbing;}
+#worker-modal#worker-modal input[type="range"]:focus-visible::-webkit-slider-thumb {box-shadow:0 0 0 2px var(--pp-c1,#161b23),0 0 0 4px var(--sa) !important;}
+#worker-modal#worker-modal input[type="range"]::-moz-range-track {height:16px;border-radius:8px;background:var(--si);}
+#worker-modal#worker-modal input[type="range"]::-moz-range-progress {height:16px;border-radius:8px 2px 2px 8px;background:var(--sa);}
+#worker-modal#worker-modal input[type="range"]::-moz-range-thumb {width:4px;height:32px;border-radius:2px;border:0;background:var(--sa);box-shadow:none;}
+@media (prefers-reduced-motion: reduce) { #worker-modal#worker-modal input[type="range"]::-webkit-slider-thumb {transition:none;} }
+
+/* ═══ Izkārtojums, right: only what matters ═══
+   Where an element goes and how big it is are done on the card itself (drag it; the
+   slider beside the card sizes it), so no position sliders, no "fit" button, no undo
+   twice, no second way to the original look, no explanations in the way. */
+#worker-modal#worker-modal [data-skin-panel="face"][data-org="layout"] :is(.wf-position,.wf-fit) {display:none !important;}
+#worker-modal#worker-modal [data-skin-panel="face"] .wf-footer :is(.wf-undo,.wf-original) {display:none !important;}
+#worker-modal#worker-modal [data-skin-panel="face"] .wf-nooverlap small {display:none !important;}
+#worker-modal#worker-modal [data-skin-panel="face"][data-org="layout"] .wf-depth-control + .org-lock-note {display:none !important;}
+#worker-modal#worker-modal .mk-addon-drag-hint {display:none !important;}
+#worker-modal#worker-modal .org-colors .mk-auto-palette small {display:none !important;}
+/* the three actions: one row of tonal buttons with icons */
+#worker-modal#worker-modal [data-skin-panel="face"] .wf-footer {display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px !important;margin:14px 0 0 !important;padding:0 !important;border:0 !important;}
+#worker-modal#worker-modal [data-skin-panel="face"] .wf-footer button {display:flex !important;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:64px !important;padding:8px 6px !important;border-radius:18px !important;
+  background:var(--pp-c2,#1c222c) !important;color:var(--pp-on,#e3e7ee) !important;font:500 12.5px/1.15 var(--pp-font,system-ui) !important;text-align:center;}
+#worker-modal#worker-modal [data-skin-panel="face"] .wf-footer button:hover {background:var(--pp-c3,#252c37) !important;}
+#worker-modal#worker-modal [data-skin-panel="face"] .wf-footer button:active {border-radius:12px !important;}
+#worker-modal#worker-modal [data-skin-panel="face"] .wf-footer button::before {content:"";width:22px;height:22px;background:currentColor;-webkit-mask:var(--ico) center/22px no-repeat;mask:var(--ico) center/22px no-repeat;}
+#worker-modal#worker-modal [data-skin-panel="face"] .wf-footer .wf-tidy {--ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3.5' y='3.5' width='7' height='7' rx='2'/%3E%3Crect x='13.5' y='3.5' width='7' height='7' rx='2'/%3E%3Crect x='3.5' y='13.5' width='7' height='7' rx='2'/%3E%3Cpath d='M17 13.5v7M13.5 17h7'/%3E%3C/svg%3E");}
+#worker-modal#worker-modal [data-skin-panel="face"] .wf-footer .wf-minimal {--ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.8l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.6-4.8 2.6.9-5.4-3.9-3.8 5.4-.8z'/%3E%3C/svg%3E");}
+#worker-modal#worker-modal [data-skin-panel="face"] .wf-footer .wf-reset {--ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 12a7.5 7.5 0 1 0 2.2-5.3'/%3E%3Cpath d='M4.5 4.5v4h4'/%3E%3C/svg%3E");}
+/* the one switch, on one line */
+#worker-modal#worker-modal [data-skin-panel="face"] .wf-nooverlap {align-items:center !important;margin:12px 0 0 !important;}
+/* Gatavie: the builder's own entry in the list gives way to the one on the left */
+#worker-modal#worker-modal .org-shell:has(.org-bld) [data-skin-panel="presets"] > .bld-entry:not(.org-bld) {display:none !important;}
+#worker-modal#worker-modal .org-shell [data-skin-panel="presets"] > .mk-preset-groups {margin:0 0 12px;}
+
+/* ═══ The chosen element (Izkārtojums, right): its name, then all of its own settings ═══ */
+#worker-modal#worker-modal [data-skin-panel="face"][data-org="layout"] .wf-part-head {display:flex !important;align-items:center;justify-content:space-between;gap:10px;margin:16px 0 4px !important;padding:14px 0 0 !important;border-top:1px solid rgba(184,193,205,.12);}
+#worker-modal#worker-modal [data-skin-panel="face"][data-org="layout"] .wf-part-head .wf-part-name {font:600 16px/1.2 var(--pp-font,system-ui) !important;color:var(--pp-on,#e3e7ee) !important;}
+#worker-modal#worker-modal [data-skin-panel="face"][data-org="layout"] .wf-part-head .wf-part-name::before {content:"Izvēlēts";display:block;margin-bottom:3px;font:600 10.5px/1 var(--pp-font,system-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--pp-on-var,#b8c1cd);}
+/* size stays here too (the slider beside the card does the same) */
+#worker-modal#worker-modal [data-skin-panel="face"][data-org="layout"] .wf-position:has(input[data-position="size"]) {display:grid !important;margin-top:6px;}
+/* the numeral's style, right under its colour */
+#worker-modal#worker-modal [data-skin-panel="face"][data-org="layout"] .wf-part-color + .wf-finish {display:block !important;margin:10px 0 4px !important;padding:0 !important;border:0 !important;background:none !important;}
+#worker-modal#worker-modal [data-skin-panel="face"][data-org="layout"] .wf-part-color + .wf-finish > .wf-label {margin:0 0 8px;font:600 11px/1.2 var(--pp-font,system-ui) !important;letter-spacing:.12em;text-transform:uppercase;color:var(--pp-on-var,#b8c1cd) !important;}
+#worker-modal#worker-modal [data-skin-panel="face"][data-org="layout"] .wf-part-color + .wf-finish > .wf-segment {display:grid !important;grid-template-columns:repeat(auto-fill,minmax(76px,1fr)) !important;gap:6px !important;}
+#worker-modal#worker-modal [data-skin-panel="face"][data-org="layout"] .wf-part-color + .wf-finish > .wf-segment {grid-template-columns:repeat(auto-fill,minmax(62px,1fr)) !important;}
+#worker-modal#worker-modal [data-skin-panel="face"][data-org="layout"] .wf-part-color + .wf-finish .wf-number-sample {font-size:24px !important;}
+#worker-modal#worker-modal [data-skin-panel="face"][data-org] [data-wf-group="parts"] > .wf-section:first-child {margin-top:0 !important;padding-top:0 !important;border-top:0 !important;}
+
+/* ═══ Dekori (M3, one thing at a time) ═══
+   On the card: each decoration its own tile with its own ✕; "+ Pievienot" while
+   there is room. Below, the groups right above their pictures: clean tiles (no
+   transparency checker), the one on the card ringed and ticked. */
+#worker-modal#worker-modal .org-sub-row .mk-addon-remove {display:none !important;}
+#worker-modal#worker-modal .mk-addon-slots {display:flex !important;flex-wrap:wrap;gap:10px !important;margin:0 0 16px !important;}
+#worker-modal#worker-modal .mk-addon-slots .mk-addon-slot {position:relative;display:block;}
+#worker-modal#worker-modal .mk-addon-slots .mk-addon-slot > button[data-slot] {width:72px !important;height:72px !important;padding:8px !important;border:0 !important;border-radius:20px !important;background:var(--pp-c2,#1c222c) !important;
+  transition:border-radius .35s var(--pp-spring,ease),box-shadow .15s ease;}
+#worker-modal#worker-modal .mk-addon-slots .mk-addon-slot > button[data-slot][aria-pressed="true"] {border-radius:24px !important;box-shadow:0 0 0 2px var(--pp-c1,#161b23),0 0 0 4px var(--pp-primary,#a8c7fa) !important;}
+#worker-modal#worker-modal .mk-addon-slots .mk-addon-slot > button[data-slot] b {left:8px;top:6px;font:600 10px/1 var(--pp-font,system-ui) !important;opacity:.55;}
+#worker-modal#worker-modal .mk-addon-slots .mk-addon-slot-x {position:absolute;top:-6px;right:-6px;display:grid;place-items:center;width:26px;height:26px;padding:0;border:0;border-radius:13px;cursor:pointer;
+  background:var(--pp-c4,#2f3743);color:var(--pp-on,#e3e7ee);font:500 16px/1 var(--pp-font,system-ui);box-shadow:0 2px 6px rgba(0,0,0,.45);transition:background-color .15s ease,transform .2s var(--pp-spring,ease);}
+#worker-modal#worker-modal .mk-addon-slots .mk-addon-slot-x:hover {background:#8c1d18;color:#ffdad6;transform:scale(1.08);}
+#worker-modal#worker-modal .mk-addon-slots .mk-addon-slot-add {height:72px !important;width:auto !important;padding:0 18px !important;border:1.5px dashed color-mix(in srgb,var(--pp-on-var,#b8c1cd) 45%,transparent) !important;border-radius:20px !important;background:transparent !important;
+  color:var(--pp-on,#e3e7ee) !important;font:500 14px/1 var(--pp-font,system-ui) !important;}
+#worker-modal#worker-modal .mk-addon-slots .mk-addon-slot-add:hover {background:var(--pp-c2,#1c222c) !important;}
+/* the pictures */
+#worker-modal#worker-modal .mk-addon-grid {grid-template-columns:repeat(auto-fill,minmax(92px,1fr)) !important;gap:8px !important;}
+#worker-modal#worker-modal .mk-addon-choice {position:relative;min-height:0 !important;padding:8px 6px 9px !important;border:0 !important;border-radius:18px !important;background:var(--pp-c2,#1c222c) !important;color:var(--pp-on-var,#b8c1cd) !important;
+  transition:border-radius .35s var(--pp-spring,ease),background-color .15s ease;}
+#worker-modal#worker-modal .mk-addon-choice:hover {background:var(--pp-c3,#252c37) !important;border-radius:14px !important;}
+#worker-modal#worker-modal .mk-addon-choice > span {height:70px !important;border-radius:12px !important;background:none !important;}
+#worker-modal#worker-modal .mk-addon-choice b {margin-top:6px !important;font:500 11.5px/1.2 var(--pp-font,system-ui) !important;}
+#worker-modal#worker-modal .mk-addon-choice.is-active {background:color-mix(in srgb,var(--pp-primary,#a8c7fa) 22%,var(--pp-c2,#1c222c)) !important;box-shadow:inset 0 0 0 2px var(--pp-primary,#a8c7fa) !important;color:var(--pp-on,#e3e7ee) !important;}
+#worker-modal#worker-modal .mk-addon-choice.is-active::after {content:"✓";position:absolute;top:6px;right:6px;display:grid;place-items:center;width:20px;height:20px;border-radius:10px;background:var(--pp-primary,#a8c7fa);color:var(--pp-on-primary,#0b2a57);font:700 11px/1 var(--pp-font,system-ui);}
+/* the chosen decoration's own settings: one tile */
+#worker-modal#worker-modal .mk-addon-controls:not([hidden]) {margin-top:14px !important;padding:14px 16px !important;border-radius:22px;background:var(--pp-c2,#1c222c);}
+#worker-modal#worker-modal .mk-addon-look:not([hidden]) {margin-top:10px !important;padding:14px 16px !important;border:0 !important;border-radius:22px;background:var(--pp-c2,#1c222c);}
+/* Auto krāsas: title and switch on one line, the four examples on their own row */
+#worker-modal#worker-modal .org-colors .mk-auto-palette {display:grid !important;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px 12px !important;}
+#worker-modal#worker-modal .org-colors .mk-auto-palette > .mk-auto-variants {grid-column:1 / -1;}
+/* a note at the top of a section that cannot work with the current layout, with the way out */
+#worker-modal#worker-modal .org-banner {display:grid;gap:10px;margin:0 0 12px;padding:14px 16px;border-radius:20px;background:color-mix(in srgb,var(--pp-primary,#a8c7fa) 16%,var(--pp-c2,#1c222c));}
+#worker-modal#worker-modal .org-banner p {margin:0;font:500 13px/1.4 var(--pp-font,system-ui);color:var(--pp-on,#e3e7ee);}
+#worker-modal#worker-modal .org-banner button {justify-self:start;height:40px;padding:0 18px;border:0;border-radius:20px;background:var(--pp-primary,#a8c7fa);color:var(--pp-on-primary,#0b2a57);font:600 13px/1 var(--pp-font,system-ui);cursor:pointer;transition:border-radius .35s var(--pp-spring,ease);}
+#worker-modal#worker-modal .org-banner button:active {border-radius:12px;}
+
+/* Emoji izskats: four samples in a connected row inside the emoji tile */
+#worker-modal#worker-modal .org-colors .mk-skin-tool .mk-emoji-style {grid-column:1 / -1;grid-row:4;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;}
+#worker-modal#worker-modal .mk-emoji-style button {display:grid;justify-items:center;gap:4px;padding:8px 4px 7px;border:0;border-radius:16px;background:var(--pp-c3,#252c37);color:var(--pp-on-var,#b8c1cd);cursor:pointer;transition:border-radius .35s var(--pp-spring,ease),background-color .15s ease;}
+#worker-modal#worker-modal .mk-emoji-style button:hover {background:var(--pp-c4,#2f3743);}
+#worker-modal#worker-modal .mk-emoji-style button[aria-pressed="true"] {border-radius:22px;background:color-mix(in srgb,var(--pp-primary,#a8c7fa) 24%,var(--pp-c3,#252c37));box-shadow:inset 0 0 0 2px var(--pp-primary,#a8c7fa);color:var(--pp-on,#e3e7ee);}
+#worker-modal#worker-modal .mk-emoji-style-sample {font-family:'Fluent Emoji Gaps','Fluent Emoji Color','Apple Color Emoji','Segoe UI Emoji',sans-serif;font-size:30px;line-height:1;}
+#worker-modal#worker-modal .mk-emoji-style b {font:500 11.5px/1 var(--pp-font,system-ui) !important;}
+
+/* The frame chosen on the card: a thin ring in the editor's colour; the element's
+   frame and the slider beside the card step aside meanwhile (they would overlap it). */
+#worker-modal#worker-modal .mk-skin-preview-list .mk-mid-card.wf-frame-selected {outline:2px solid var(--pp-primary,#a8c7fa) !important;outline-offset:3px !important;}
+#worker-modal#worker-modal .mk-skin-preview-list .mk-mid-card.wf-frame-selected ~ :is(.wf-sel,.wf-edge,.wf-rim-knob,.wf-edge-mode,.wf-rim-tip) {display:none !important;}
+#worker-modal#worker-modal .wf-metal.is-selected {outline:2px solid var(--pp-primary,#a8c7fa) !important;}
+/* The numeral's style lives in one place: with the numeral (select it on the card, Izkārtojums) */
+#worker-modal#worker-modal [data-skin-panel="face"][data-org="colors"] :is(.wf-finish,.wf-finish + .org-lock-note) {display:none !important;}
+
+/* Teksta efekts: five samples in the Teksts tile */
+#worker-modal#worker-modal .org-colors .mk-skin-tool .mk-txt-fx {grid-column:1 / -1;grid-row:3;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;}
+#worker-modal#worker-modal .mk-txt-fx button {display:grid;justify-items:center;gap:4px;min-width:0;padding:8px 2px 7px;border:0;border-radius:14px;background:var(--pp-c3,#252c37);color:var(--pp-on-var,#b8c1cd);cursor:pointer;transition:border-radius .35s var(--pp-spring,ease),background-color .15s ease;}
+#worker-modal#worker-modal .mk-txt-fx button:hover {background:var(--pp-c4,#2f3743);}
+#worker-modal#worker-modal .mk-txt-fx button[aria-pressed="true"] {border-radius:20px;background:color-mix(in srgb,var(--pp-primary,#a8c7fa) 24%,var(--pp-c3,#252c37));box-shadow:inset 0 0 0 2px var(--pp-primary,#a8c7fa);color:var(--pp-on,#e3e7ee);}
+#worker-modal#worker-modal .mk-txtfx-sample {--mk-txt-color:255,255,255;font:800 20px/1 var(--pp-font,system-ui) !important;font-style:normal;color:#fff;text-shadow:0 1px 3px #0008;}
+#worker-modal#worker-modal .mk-txt-fx b {max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:500 10.5px/1 var(--pp-font,system-ui) !important;}
+/* the Teksts tile spans the row now that it holds the effects */
+#worker-modal#worker-modal .org-colors .mk-skin-tool-text {grid-column:1 / -1;}
+/* Emoji tile (right column in Krāsas): the look first, then the background emoji
+   (switch | amount | value), "Negatīvs" under it; a note, if any, last. */
+#worker-modal#worker-modal .org-emoji-box {margin:0 0 10px;}
+#worker-modal#worker-modal .org-colors.org-emoji-box .mk-skin-tool.mk-skin-tool-emoji {display:grid !important;grid-template-columns:auto minmax(0,1fr) 48px !important;align-items:center !important;gap:12px !important;padding:16px !important;border-radius:24px !important;background:var(--pp-c2,#1c222c) !important;}
+#worker-modal#worker-modal .org-colors.org-emoji-box .mk-skin-tool-emoji > .mk-skin-custom {display:contents !important;}
+#worker-modal#worker-modal .org-colors.org-emoji-box .mk-skin-tool-emoji > .mk-skin-tool-head {grid-column:1 / -1 !important;grid-row:1 !important;}
+#worker-modal#worker-modal .org-colors.org-emoji-box .mk-skin-tool-emoji > .mk-emoji-style {grid-column:1 / -1 !important;grid-row:2 !important;}
+#worker-modal#worker-modal .org-colors.org-emoji-box .mk-skin-tool-emoji .mk-switch {grid-column:1 !important;grid-row:3 !important;}
+#worker-modal#worker-modal .org-colors.org-emoji-box .mk-skin-tool-emoji input.mk-emoji-op {grid-column:2 !important;grid-row:3 !important;width:100% !important;min-width:0 !important;}
+#worker-modal#worker-modal .org-colors.org-emoji-box .mk-skin-tool-emoji .mk-emoji-op-val {grid-column:3 !important;grid-row:3 !important;font:500 15px/1 var(--pp-font,system-ui) !important;text-align:right;min-width:0 !important;}
+#worker-modal#worker-modal .org-colors.org-emoji-box .mk-skin-tool-emoji .mk-chk {grid-column:1 / -1 !important;grid-row:4 !important;}
+#worker-modal#worker-modal .org-colors.org-emoji-box .mk-skin-tool-emoji > .org-lock-note {grid-column:1 / -1 !important;grid-row:5 !important;margin:0 !important;}
+/* when the background emoji cannot show (Dither), only its row is greyed, never the look */
+#worker-modal#worker-modal .org-colors.org-emoji-box .mk-skin-tool-emoji > .mk-skin-custom.org-locked > * {opacity:.38;pointer-events:none;}
+
+/* Fons → Emoji fonā: three layouts (small previews) and four looks */
+#worker-modal#worker-modal .mk-bg-emoji-head {margin:0 0 12px;font:600 11px/1.2 var(--pp-font,system-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--pp-on-var,#b8c1cd);}
+#worker-modal#worker-modal .mk-bg-emoji-layouts {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+#worker-modal#worker-modal .mk-bg-emoji-layouts button {display:grid;gap:6px;justify-items:center;padding:6px 6px 8px;border:0;border-radius:18px;background:var(--pp-c3,#252c37);color:var(--pp-on-var,#b8c1cd);cursor:pointer;transition:border-radius .35s var(--pp-spring,ease),background-color .15s ease;}
+#worker-modal#worker-modal .mk-bg-emoji-layouts button:hover {background:var(--pp-c4,#2f3743);}
+#worker-modal#worker-modal .mk-bg-emoji-layouts button[aria-pressed="true"] {border-radius:22px;background:color-mix(in srgb,var(--pp-primary,#a8c7fa) 24%,var(--pp-c3,#252c37));box-shadow:inset 0 0 0 2px var(--pp-primary,#a8c7fa);color:var(--pp-on,#e3e7ee);}
+#worker-modal#worker-modal .mk-bg-emoji-layouts b {font:500 12px/1 var(--pp-font,system-ui) !important;}
+#worker-modal#worker-modal .mk-emo-mini {position:relative;display:grid;place-items:center;width:100%;aspect-ratio:1;overflow:hidden;border-radius:12px;background:linear-gradient(150deg,#26303f,#10141c);
+  font-family:'Fluent Emoji Gaps','Fluent Emoji Color','Apple Color Emoji','Segoe UI Emoji',sans-serif;line-height:1;}
+#worker-modal#worker-modal .mk-emo-mini.mk-emo-b {font-size:38px;}
+#worker-modal#worker-modal .mk-emo-mini.mk-emo-c {font-size:72px;place-items:end;}
+#worker-modal#worker-modal .mk-emo-mini.mk-emo-c {padding:0;text-indent:0;}
+#worker-modal#worker-modal .mk-emo-mini.mk-emo-c::before {content:none;}
+#worker-modal#worker-modal .mk-emo-mini.mk-emo-c {justify-items:end;align-items:end;}
+#worker-modal#worker-modal .mk-emo-mini.mk-emo-p {display:block;padding:4px;font-size:17px;letter-spacing:4px;line-height:1.6;text-align:center;word-break:break-all;opacity:.9;}
+#worker-modal#worker-modal .mk-bg-emoji-looks {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;margin-top:10px;}
+#worker-modal#worker-modal .mk-bg-emoji-looks button {height:40px;border:0;border-radius:8px;background:var(--pp-c3,#252c37);color:var(--pp-on,#e3e7ee);font:500 12.5px/1 var(--pp-font,system-ui);cursor:pointer;transition:border-radius .35s var(--pp-spring,ease);}
+#worker-modal#worker-modal .mk-bg-emoji-looks button:first-child {border-radius:20px 8px 8px 20px;}
+#worker-modal#worker-modal .mk-bg-emoji-looks button:last-child {border-radius:8px 20px 20px 8px;}
+#worker-modal#worker-modal .mk-bg-emoji-looks button[aria-pressed="true"] {border-radius:20px;background:var(--pp-primary,#a8c7fa);color:var(--pp-on-primary,#0b2a57);}
+#worker-modal#worker-modal .mk-bg-emoji-none {margin:0 0 10px;font:500 13px/1.4 var(--pp-font,system-ui);color:var(--pp-on-var,#b8c1cd);}
+#worker-modal#worker-modal .mk-bg-emoji-pick {height:40px;padding:0 18px;border:0;border-radius:20px;background:var(--pp-primary,#a8c7fa);color:var(--pp-on-primary,#0b2a57);font:600 13px/1 var(--pp-font,system-ui);cursor:pointer;}
+/* Emoji tab: "Likt kā fonu" beside Saglabāt */
+#worker-modal#worker-modal .mkp-asbg {margin-right:8px;background:var(--pp-c3,#252c37) !important;color:var(--pp-on,#e3e7ee) !important;}
+/* Emoji fonā: which emoji (mine / another), and the Fluent set to pick another from */
+#worker-modal#worker-modal .mk-bg-emoji-which {display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px;margin:0 0 10px;}
+#worker-modal#worker-modal .mk-bg-emoji-which button {display:flex;align-items:center;gap:10px;height:52px;padding:0 14px 0 8px;border:0;border-radius:26px;background:var(--pp-c3,#252c37);color:var(--pp-on,#e3e7ee);cursor:pointer;text-align:left;
+  transition:border-radius .35s var(--pp-spring,ease),background-color .15s ease;}
+#worker-modal#worker-modal .mk-bg-emoji-which button:hover {background:var(--pp-c4,#2f3743);}
+#worker-modal#worker-modal .mk-bg-emoji-which button[aria-pressed="true"] {border-radius:16px;background:color-mix(in srgb,var(--pp-primary,#a8c7fa) 24%,var(--pp-c3,#252c37));box-shadow:inset 0 0 0 2px var(--pp-primary,#a8c7fa);}
+#worker-modal#worker-modal .mk-bg-emoji-which button[aria-expanded="true"] {border-radius:16px 16px 8px 8px;}
+#worker-modal#worker-modal .mk-bg-emoji-which i {display:grid;place-items:center;width:38px;height:38px;flex:none;border-radius:19px;background:var(--pp-c1,#161b23);font-style:normal;font-size:24px;line-height:1;
+  font-family:'Fluent Emoji Gaps','Fluent Emoji Color','Apple Color Emoji','Segoe UI Emoji',sans-serif;}
+#worker-modal#worker-modal .mk-bg-emoji-which b {min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:500 13.5px/1 var(--pp-font,system-ui) !important;}
+#worker-modal#worker-modal .mk-bg-emoji-pop {margin:-4px 0 12px;padding:8px;border-radius:8px 8px 20px 20px;background:var(--pp-c3,#252c37);}
+#worker-modal#worker-modal .mk-bg-emoji-pop[hidden] {display:none;}
+#worker-modal#worker-modal .mk-bg-emoji-tabs {display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:4px;margin:0 0 8px;}
+#worker-modal#worker-modal .mk-bg-emoji-tabs button {height:38px;border:0;border-radius:12px;background:transparent;font-size:20px;line-height:1;cursor:pointer;font-family:'Fluent Emoji Gaps','Fluent Emoji Color','Apple Color Emoji','Segoe UI Emoji',sans-serif;}
+#worker-modal#worker-modal .mk-bg-emoji-tabs button:hover {background:var(--pp-c4,#2f3743);}
+#worker-modal#worker-modal .mk-bg-emoji-tabs button.is-active {background:var(--pp-primary-c,#d6e3ff);}
+#worker-modal#worker-modal .mk-bg-emoji-grid {display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:2px;max-height:196px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;}
+#worker-modal#worker-modal .mk-bg-emoji-grid button {aspect-ratio:1;border:0;border-radius:12px;background:transparent;font-size:28px;line-height:1;cursor:pointer;font-family:'Fluent Emoji Gaps','Fluent Emoji Color','Apple Color Emoji','Segoe UI Emoji',sans-serif;}
+#worker-modal#worker-modal .mk-bg-emoji-grid button:hover {background:var(--pp-c4,#2f3743);}
+/* 3D emoji pictures in the emoji background picker and its chips */
+#worker-modal#worker-modal .mk-bg-emoji-grid button.is-pic {padding:4px;}
+#worker-modal#worker-modal .mk-bg-emoji-grid button.is-pic img,#worker-modal#worker-modal .mk-bg-emoji-tabs img {display:block;width:100%;height:100%;object-fit:contain;}
+#worker-modal#worker-modal .mk-bg-emoji-tabs button {padding:5px;}
+#worker-modal#worker-modal .mk-bg-emoji-tabs img {width:26px;height:26px;margin:auto;}
+#worker-modal#worker-modal .mk-bg-emoji-which i img {width:28px;height:28px;object-fit:contain;}
+#worker-modal#worker-modal .mk-emo-mini img {width:62%;height:62%;object-fit:contain;}
+#worker-modal#worker-modal .mk-emo-mini.mk-emo-c img {width:120%;height:120%;margin:0 -30% -30% 0;}
+#worker-modal#worker-modal .mk-emo-mini.mk-emo-p img {display:inline-block;width:30%;height:30%;margin:1%;}
+#worker-modal#worker-modal .mk-addon-credit {margin:8px 2px 0;font:500 11px/1.4 var(--pp-font,system-ui);color:var(--pp-on-var,#b8c1cd);opacity:.8;}
+/* the parts of a big decoration group: a heading across the grid, with the count */
+#worker-modal#worker-modal .mk-addon-grid > .mk-addon-sub {grid-column:1 / -1;display:flex;align-items:baseline;gap:8px;margin:10px 2px 2px;font:600 11px/1.2 var(--pp-font,system-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--pp-on-var,#b8c1cd);}
+#worker-modal#worker-modal .mk-addon-grid > .mk-addon-sub:first-child {margin-top:0;}
+#worker-modal#worker-modal .mk-addon-grid > .mk-addon-sub span {font-weight:500;letter-spacing:0;opacity:.7;}
+/* Izkārtojums → Emoji chosen: its look (Fluent / system / black / white) under Plāksne */
+#worker-modal#worker-modal .org-emoji-look {display:grid;gap:8px;margin:12px 0 4px;}
+#worker-modal#worker-modal .org-emoji-look > span {font-size:12px;opacity:.8;}
+#worker-modal#worker-modal .org-emoji-look > .mk-emoji-style {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;}
+/* Emoji fonā: every emoji in it (the chips, the picker, the layout samples) in the Fluent
+   set, as on the card; the modal's text font rule (2 ids + 7 classes) is outranked by the id */
+#worker-modal#worker-modal #modal-skin-view :is(.mk-bg-emoji-grid button,.mk-bg-emoji-tabs button,.mk-bg-emoji-which i,.mk-emo-mini) {font-family:'Fluent Emoji Gaps','Fluent Emoji Color','Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif !important;}
+/* the old Emoji tile (Krāsas) stays hidden: its look went to the Emoji element, its "behind
+   the numeral" to Fons → Emoji fonā (skin-organize.js) */
+#worker-modal#worker-modal .mk-skin-tool.mk-skin-tool-emoji[hidden] {display:none !important;}
+#worker-modal#worker-modal .org-wm {display:grid;grid-template-columns:auto minmax(0,1fr) 48px;align-items:center;gap:12px;margin-top:12px;}
+#worker-modal#worker-modal .org-wm input.mk-emoji-op {width:100% !important;min-width:0 !important;margin:0 !important;}
+#worker-modal#worker-modal .org-wm .mk-emoji-op-val {font:500 15px/1 var(--pp-font,system-ui) !important;text-align:right;color:var(--pp-on,#e3e7ee);}
+#worker-modal#worker-modal .org-wm.org-locked > * {opacity:.38;pointer-events:none;}
+#worker-modal#worker-modal .org-wm + .org-lock-note {margin-top:6px;}

@@ -7704,7 +7704,11 @@ function updateModalTotalHours() {
 
 function outsideModalClose(e) {
   const modal = document.getElementById('worker-modal');
-  if (modal.classList.contains('open') && !modal.contains(e.target)) {
+  // A click in a window opened from this one (the drawing editor, a picker) is not
+  // "outside"; neither is one on something that removed itself on that click (its ✕).
+  const t = e.target;
+  if (!t || !t.isConnected || (t.closest && t.closest('.mk-draw-overlay, [aria-modal="true"]'))) return;
+  if (modal.classList.contains('open') && !modal.contains(t)) {
     closeWorkerModal();
     document.removeEventListener('click', outsideModalClose);
   }
@@ -7888,9 +7892,47 @@ function releaseSkinViewSoon() {
   }, 700);
 }
 
+// The window's width for a tab: the appearance editor is laid out like an editor
+// (settings | card | settings) and takes the whole window on a computer.
+function wmWidthFor(view) {
+  return view === 'skin' && window.innerWidth >= 1100 ? Math.min(window.innerWidth - 24, 1560) : Math.min(980, window.innerWidth * 0.96);
+}
+// The window changes width without a jump and without laying out every frame: its
+// visible part is clipped from the old frame to the new one on MinkaMotion's springs.
+// Growing: the new width at once, the clip opens outward. Shrinking: the clip closes
+// in on the still-wide window first, then the tab switches (see showModalView).
+function wmClipFrom(w, oldW) { return 'inset(0px ' + Math.max(0, (w - oldW) / 2) + 'px 0px ' + Math.max(0, (w - oldW) / 2) + 'px round 32px)'; }
 function showModalView(view) {
-  if (view !== 'skin') releaseSkinViewSoon();
+  // an emoji chosen a moment ago is saved before the tab changes (Izskats shows it)
+  if (view !== 'emoji' && window.MinkaEmoji && window.MinkaEmoji.flush) window.MinkaEmoji.flush();
   const _wm = document.getElementById('worker-modal');
+  const MM = window.MinkaMotion;
+  const desk = !!_wm && !document.documentElement.classList.contains('mk-mobile-shell') && !!_wm.style.getPropertyValue('width');
+  const oldW = desk ? parseFloat(_wm.style.getPropertyValue('width')) || 0 : 0;
+  const newW = desk ? wmWidthFor(view) : 0;
+  const moving = desk && _wm.classList.contains('open') && !!(MM && MM.animate) && MM.level && MM.level() !== 'reduced';
+  if (moving && newW < oldW - 1 && !showModalView.__shrinking) {
+    // leaving the editor: the tab pill moves now, the window narrows, then the view swaps
+    const nextBtn = _wm.querySelector('.view-toggle .toggle-btn#toggle-' + view);
+    const prevBtn = _wm.querySelector('.view-toggle .toggle-btn.active');
+    if (nextBtn && prevBtn && nextBtn !== prevBtn) { wmTabMotion(prevBtn, nextBtn, null, 1); prevBtn.classList.remove('active'); nextBtn.classList.add('active'); }
+    const idx = WM_TABS.indexOf(view); if (idx >= 0) wmTabIndex = idx;
+    showModalView.__shrinking = true;
+    // the editor stays in sight while the window narrows (quickly), then the next tab
+    // comes in with a short fade: never an empty window, never a jump
+    const body = _wm.querySelector('.modal-content');
+    const a = MM.animate(_wm, [{ clipPath: 'inset(0px 0px 0px 0px round 32px)' }, { clipPath: wmClipFrom(oldW, newW) }], 'spatial-fast', { fill: 'forwards' });
+    // (still marked as shrinking while the view swaps, so this branch is not taken again)
+    const done = () => {
+      if (!showModalView.__shrinking) return;
+      showModalView(view); showModalView.__shrinking = false;
+      if (a) a.cancel();
+      if (body) MM.animate(body, [{ opacity: .15 }, { opacity: 1 }], 'effects-fast', { fill: 'backwards' });
+    };
+    if (a) a.finished.then(done, done); else done();
+    return;
+  }
+  if (view !== 'skin') releaseSkinViewSoon();
   const _prevBtn = _wm ? _wm.querySelector('.view-toggle .toggle-btn.active') : null;
   const _nextIndex = WM_TABS.indexOf(view);
   const _dir = wmTabIndex >= 0 && _nextIndex >= 0 ? Math.sign(_nextIndex - wmTabIndex) : 0;
@@ -7899,6 +7941,18 @@ function showModalView(view) {
   if (_wm) {
     _wm.classList.toggle('mk-skin-mode', view === 'skin');
     _wm.classList.toggle('mk-fatigue-mode', view === 'fatigue');
+    _wm.classList.toggle('mk-emoji-mode', view === 'emoji');
+    if (desk && Math.abs(newW - oldW) > 1) {
+      _wm.style.setProperty('width', newW + 'px', 'important');
+      _wm.style.setProperty('left', Math.round((window.innerWidth - newW) / 2) + 'px', 'important');
+      // growing into the editor: the new width is laid out once, the clip opens outward
+      if (moving && newW > oldW) {
+        MM.animate(_wm, [{ clipPath: wmClipFrom(newW, oldW) }, { clipPath: 'inset(0px 0px 0px 0px round 32px)' }], 'spring-default');
+        // the editor comes in with the window, not in one jump
+        const body = _wm.querySelector('.modal-content');
+        if (body) MM.animate(body, [{ opacity: .15 }, { opacity: 1 }], 'effects-default');
+      }
+    }
   }
   const listView = document.getElementById('modal-list-view');
   const calendarView = document.getElementById('modal-calendar-view');
@@ -7963,6 +8017,7 @@ function showModalView(view) {
 
 let workerModalOrigin = null;
 function closeWorkerModal() {
+  if (window.MinkaEmoji && window.MinkaEmoji.flush) window.MinkaEmoji.flush();
   clearTimeout(workerModalOutsideTimer);
   clearTimeout(workerModalCloseTimer);
   setWorkerModalBuddyFlag(false);

@@ -31,8 +31,9 @@ test('preview reconnects after the roster replaces its source card', () => {
   assert.equal(f.options.source, f.replacement);
   assert.deepEqual(f.observed, [f.replacement]);
   assert.deepEqual(f.unobserved, [f.initial]);
-  assert.equal(f.slot.clientWidth, 178);
-  assert.equal(400 * f.preview.style['--wf-preview-scale'], 178);
+  // 190 − 12 (gutter) − 34 (the rim knob's lane on the right) = 144
+  assert.equal(f.slot.clientWidth, 144);
+  assert.equal(400 * f.preview.style['--wf-preview-scale'], 144);
 });
 
 test('preview still fits a narrower column while the source is absent', () => {
@@ -41,8 +42,8 @@ test('preview still fits a narrower column while the source is absent', () => {
   f.initial.isConnected = f.replacement.isConnected = false;
   f.slot.parentElement.clientWidth = 190;
   f.resize();
-  assert.equal(f.slot.clientWidth, 178);
-  assert.equal(f.slot.style.height, '178px');
+  assert.equal(f.slot.clientWidth, 144);
+  assert.equal(f.slot.style.height, '144px');
   assert.equal(f.preview.style['--wf-preview-padding'], '0px');
-  assert.equal(400 * f.preview.style['--wf-preview-scale'], 178);
+  assert.equal(400 * f.preview.style['--wf-preview-scale'], 144);
 });

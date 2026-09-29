@@ -771,3 +771,27 @@ html body :is(#grafiks-list,#worker-modal) .card.card.card.mk-mid-card.mk-watch-
 .mk-m3d.m3-r .g {-webkit-text-stroke-width:.06em;}
 /* In the small picker tile the pills get a size that fits (the card keeps its own). */
 .wf-digit-mini .mk-m3d.m3-t {font-size:11px;}
+/* ---- Digit styles 6–8 (card-faces.js bitSvg / finish) ----
+   Punkti: a dot-matrix sign; Pikseļi: LCD pixels — the digits are a small SVG over
+   the (unpainted) real digits. Kontūra: rounded glass outlines (the M3 digits cut,
+   round terminals), like a thermostat. All three work on every layout. */
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:is([data-watch-finish="6"],[data-watch-finish="7"]) [data-wf-part="hours"] {
+  color:transparent !important;-webkit-text-fill-color:transparent !important;background:none !important;background-image:none !important;
+  text-shadow:none !important;-webkit-text-stroke:0 !important;filter:none !important;
+}
+.mk-bitnum {position:absolute;left:50%;top:50%;height:.7em;width:auto;overflow:visible;transform:translate(-50%,-50%);pointer-events:none;
+  fill:color-mix(in srgb,var(--wf-tint,#d5e6ef) 78%,#fff);opacity:var(--wf-number-alpha,1);}
+.wf-colored > .mk-bitnum {fill:var(--wf-tint);}
+[data-watch-finish="7"] .mk-bitnum {shape-rendering:crispEdges;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-watch-finish="8"] [data-wf-part="hours"],
+.wf-segment [data-watch-finish="8"] .wf-number-sample {
+  font-family:'M3 Digits',Arial,sans-serif !important;font-weight:330 !important;font-stretch:100% !important;font-style:normal !important;
+  font-variation-settings:'ROND' 100 !important;letter-spacing:.01em !important;
+  background-image:linear-gradient(165deg,#ffffff38,color-mix(in srgb,var(--wf-tint,#d5e6ef) 16%,transparent) 55%,#ffffff14) !important;
+  background-clip:text !important;-webkit-background-clip:text !important;-webkit-text-fill-color:transparent !important;
+  -webkit-text-stroke:.022em color-mix(in srgb,var(--wf-tint,#d5e6ef) 75%,#fff) !important;text-shadow:none !important;
+}
+/* picker samples: the SVG over an invisible copy of the digits */
+.wf-number-sample {position:relative;}
+.wf-number-sample .wf-bit-sample {visibility:hidden;}
+.wf-number-sample .mk-bitnum {fill:var(--wf-tint,#d5e6ef);}

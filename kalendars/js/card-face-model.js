@@ -1,25 +1,48 @@
 /* Compact, versioned appearance data. No DOM, timers, or network work. */
 (function (root) {
   'use strict';
-  var faces = ['classic', 'photo', 'orbit', 'modular', 'winamp', 'dither'];
+  var faces = ['classic', 'photo', 'orbit', 'modular', 'winamp', 'dither', 'gameboy', 'thermo', 'dots', 'lines'];
   var parts = ['hours', 'name', 'initials', 'month', 'coffee', 'fatigue', 'remaining', 'emoji', 'clock', 'moon'];
   // Elements that sit on a plate (the watch's complications), and the plate each can
   // take: 0 as the card, 1 dark, 2 clear (no plate), 3 tinted, 4 light.
   var plateParts = ['initials', 'month', 'coffee', 'fatigue', 'remaining', 'emoji', 'clock'];
-  // Centre x/y (%), size (%), visibility. Positions scale with the actual card.
+  /* Centre x/y (%), size (%), visibility. Positions scale with the actual card.
+     Every layout sits on the same grid, so nothing is ever drawn over anything:
+       top row  (y ≈ 15) — the sun/moon, the name, the month's hours;
+       middle   (y ≈ 50) — the big number in its own zone, the coffee cup and the
+                           emoji at its sides;
+       bottom   (y ≈ 86) — fatigue and the shift time.
+     The top and bottom rows keep in from the rounded corners (usable ≈ 12–88 %).
+     Each face keeps its character on that grid (Foto: the number to the right;
+     Loks: the name under the number; Moduļi: a 2×2 grid; Gameboy: the buttons on
+     its body). Order: hours, name, initials, month, coffee, fatigue, remaining,
+     emoji, clock; the sun/moon is in moonLayouts. */
   var layouts = {
-    classic: [[50,45,100,1],[35,12,100,1],[16,12,100,0],[78,21,80,1],[14,39,90,1],[23,85,90,1],[53,85,90,1],[82,85,95,1],[50,20,100,0]],
-    photo: [[68,38,130,1],[37,78,100,1],[17,14,100,0],[78,21,80,0],[16,16,90,1],[19,58,90,0],[64,92,80,1],[18,51,100,1],[50,14,90,0]],
-    orbit: [[50,47,96,1],[50,72,78,1],[50,13,80,0],[77,19,80,1],[26,19,85,1],[24,84,72,1],[50,92,65,1],[78,84,78,1],[50,12,80,0]],
-    modular: [[50,32,85,1],[50,12,80,1],[16,14,90,0],[77,58,95,1],[25,58,100,1],[25,83,95,1],[72,84,100,1],[85,16,100,1],[50,45,90,0]],
-    // Player face: positions are percentages of the display window, laid out
-    // like the mock-up (moon top left, month chip top right, numeral centre,
-    // fatigue left, name below, badge right, shift chip at the bottom).
+    classic: [[50,50,90,1],[45,15,80,1],[16,12,100,0],[79,16,66,1],[13,50,80,1],[29,86,80,1],[67,86,84,1],[87,50,80,1],[50,20,100,0]],
+    photo:   [[64,50,92,1],[40,15,80,1],[16,12,100,0],[80,16,64,1],[16,50,80,1],[29,86,80,1],[67,86,84,1],[16,68,78,1],[50,20,100,0]],
+    orbit:   [[50,44,84,1],[50,70,72,1],[16,12,100,0],[78,16,64,1],[22,16,78,1],[27,86,66,1],[58,87,70,1],[83,85,68,1],[50,20,100,0]],
+    modular: [[50,36,74,1],[42,13,76,1],[16,12,100,0],[73,64,86,1],[27,64,86,1],[27,87,86,1],[73,87,86,1],[84,14,70,1],[50,45,90,0]],
+    // Player face: positions are percentages of the display window (card-winamp.css draws its own layout).
     winamp: [[56,40,100,1],[50,66,90,1],[83,76,100,0],[85,15,85,1],[13,91,70,1],[17,58,90,1],[52,93,85,1],[83,76,95,1],[50,30,90,0]],
-    // Dither: the classic arrangement; the look comes from card-dither.css.
-    dither: [[50,45,100,1],[35,12,100,1],[16,12,100,0],[78,21,80,1],[14,39,90,1],[23,85,90,1],[53,85,90,1],[82,85,95,1],[50,20,100,0]]
+    // Dither: the classic grid; the look comes from card-dither.css.
+    dither:  [[50,50,90,1],[45,15,80,1],[16,12,100,0],[79,16,66,1],[13,50,80,1],[29,86,80,1],[67,86,84,1],[87,50,80,1],[50,20,100,0]],
+    // Gameboy: everything on the LCD (top 78 %); coffee and emoji are its buttons on the body.
+    gameboy: [[50,42,78,1],[40,16,74,1],[16,12,100,0],[76,17,62,1],[28,89,76,1],[30,68,72,1],[70,68,76,1],[79,89,76,1],[50,20,100,0]],
+    // Termostats: the reading top left, like a thermostat; the dial fills the lower right and
+    // holds the outdoor temperature (card-faces.js), so the chips keep to the left and the top.
+    thermo:  [[38,49,88,1],[36,15,78,1],[16,12,100,0],[82,17,60,1],[84,54,74,1],[25,84,70,1],[57,87,72,1],[84,36,74,1],[50,20,100,0]],
+    // Punkti: a dot-matrix sign, the reading in the middle, the name small under it.
+    dots:    [[50,45,92,1],[50,75,76,1],[16,12,100,0],[80,16,60,1],[22,88,70,1],[24,16,64,1],[50,89,74,1],[80,88,70,1],[50,20,100,0]],
+    // Līnijas: line drawings on paper, the reading to the right of the circles; the circles stay
+    // clear — the cup leads the bottom row, the emoji sits in the top row between name and hours.
+    lines:   [[62,50,90,1],[34,14,78,1],[16,12,100,0],[82,17,60,1],[16,85,70,1],[38,85,66,1],[68,85,68,1],[65,15,60,1],[50,20,100,0]]
   };
-  var moonLayouts={classic:[82,39,90,1],photo:[57,12,80,1],orbit:[57,11,75,1],modular:[17,34,90,1],winamp:[26,15,95,1],dither:[82,39,90,1]};
+  var moonLayouts={classic:[15,16,70,1],photo:[16,32,70,1],orbit:[50,16,64,1],modular:[16,36,70,1],winamp:[26,15,95,1],dither:[15,16,70,1],gameboy:[17,42,66,1],thermo:[62,15,62,1],dots:[50,15,60,1],lines:[16,40,64,1]};
+  // Default sun/moon spots saved by earlier versions: recognised as "not moved by the person".
+  var OLD_MOONS=[[14,68,100,1],[14,76,100,1],[82,39,90,1],[57,12,80,1],[57,11,75,1],[17,34,90,1],[16,34,78,1],[12,13,70,1],[50,13,70,1],[86,40,70,1],[60,12,62,1]];
+  /* Faces that bring their own palette (ink, frame, digits): taken when a card
+     switches to them, so a light accent never ends up on a light LCD or paper. */
+  var looks={winamp:{tint:'9dff4a'},gameboy:{tint:'2f4a1f',metal:7,finish:7},thermo:{tint:'8fd8ff',metal:9,finish:8},dots:{tint:'1f1f24',metal:3,finish:6},lines:{tint:'1f1c17',metal:10,finish:2}};
   function bounded(n, min, max, fallback) {
     n = Number(n);
     return Number.isFinite(n) ? Math.round(Math.min(max, Math.max(min, n))) : fallback;
@@ -28,7 +51,7 @@
   // Once moved, the symbol keeps its own coordinates independently of the hours.
   function symbolPlacement(values, face) {
     var hours=values.hours||[68,38,100,1],scale=hours[2]/100;
-    if(face==='winamp')return moonLayouts.winamp.slice();
+    if(moonLayouts[face])return moonLayouts[face].slice();   // its place on the face's grid
     // The uncondensed numeral needs a full symbol-width of extra clearance.
     // High-set photo bundles also leave the top-left row for the coffee buttons.
     if(face==='classic')return fitPart([Math.round(hours[0]-38*scale),Math.round(Math.max(hours[1]<36?24:16,hours[1]-21*scale)),90,1],14.4,14.4);
@@ -38,7 +61,7 @@
     value = value && typeof value === 'object' ? value : {};
     var face = faces.indexOf(value.face) >= 0 ? value.face : 'classic';
     var out = { face: face, tint: /^[a-f0-9]{6}$/i.test(value.tint || '') ? value.tint.toLowerCase() : 'd5e6ef',
-      metal: bounded(value.metal, 0, 11, 0), finish: bounded(value.finish, 0, 5, 0),
+      metal: bounded(value.metal, 0, 23, 0), finish: bounded(value.finish, 0, 8, 0),
       imageX: bounded(value.imageX, 0, 100, 50), imageY: bounded(value.imageY, 0, 100, 50),
       imageZoom: bounded(value.imageZoom, 100, 180, 100), parts: {} };
     out.coffeeMode=bounded(value.coffeeMode,0,1,1);
@@ -65,7 +88,8 @@
       out.parts[key] = [bounded(p[0], 5, 95, base[0]), bounded(p[1], 5, 95, base[1]), bounded(p[2], 50, key==='hours'?300:170, base[2]), p[3] === 0 ? 0 : 1];
     });
     var oldSymbol=value.parts&&value.parts.moon;
-    if(!keepSymbolPosition&&(!oldSymbol||Object.values(moonLayouts).concat([[14,68,100,1],[14,76,100,1]]).some(function(p){return p.slice(0,3).join()===oldSymbol.slice(0,3).join();}))){
+    // A sun/moon still at any default spot (today's, or one an older version stored) takes the face's designed spot.
+    if(!keepSymbolPosition&&(!oldSymbol||Object.values(moonLayouts).concat(OLD_MOONS).some(function(p){return p.slice(0,3).join()===oldSymbol.slice(0,3).join();}))){
       var visibility=out.parts.moon[3];out.parts.moon=symbolPlacement(out.parts,face);out.parts.moon[3]=visibility;
     }
     return out;
@@ -76,6 +100,16 @@
       value.tint = face === 'orbit' ? 'c8e69f' : face === 'photo' ? 'f4cec7' : face === 'modular' ? '73e2de' : face === 'winamp' ? '9dff4a' : face === 'dither' ? 'eceae4' : 'd5e6ef';
       value.metal = face === 'photo' ? 3 : face === 'orbit' ? 2 : 0;
     }
+    // A new arrangement uses the compact coffee cup (tap opens − / +), unless the person chose "always − / +".
+    if (!value.coffeeExplicit) value.coffeeMode = 0;
+    // Switching into a face with its own palette takes that palette; leaving one for a
+    // plain face gives back that face's own colours (dark ink on dark glass is unreadable).
+    // Per-element colours belong to the palette they were chosen for: entering or leaving
+    // a face with its own palette starts them fresh (a turquoise numeral on a Gameboy LCD clashes).
+    var paletteChange = (looks[face] && (!previous || previous.face !== face)) || (previous && looks[previous.face] && !looks[face]);
+    if (paletteChange) { value.colors = {}; value.fullTintMode = 0; }
+    if (looks[face] && (!previous || previous.face !== face)) Object.assign(value, looks[face]);
+    else if (previous && looks[previous.face] && !looks[face]) { var plain = preset(face, null); value.tint = plain.tint; value.metal = plain.metal; value.finish = plain.finish; }
     return clean(value);
   }
   function pack(value) {
@@ -96,7 +130,7 @@
     var coffee=a.length===20&&a[0]==='3';
     var plated=a.length===23&&a[0]==='5';
     var colored=(a.length===22&&a[0]==='4')||plated;
-    if ((!legacy && !coffee && !colored && !(a.length===18&&a[0]==='2')) || !/^[0-5]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return null;
+    if ((!legacy && !coffee && !colored && !(a.length===18&&a[0]==='2')) || !/^[0-9]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return null;
     if (!a.slice(3,8).every(function (n) { return /^\d{1,3}$/.test(n); })) return null;
     var value = { face: faces[+a[1]], tint: a[2], metal: +a[3], finish: +a[4], imageX: +a[5], imageY: +a[6], imageZoom: +a[7], parts: {} };
     if(coffee||colored){if(!/^[01]$/.test(a[18])||!/^[0-2]$/.test(a[19]))return null;value.coffeeMode=+a[18];value.coffeeContrast=+a[19];
@@ -194,5 +228,5 @@
     return value;
   }
 
-  root.MinkaCardFaceModel = { fitDial: fitDial, faces: faces, parts: parts, plateParts: plateParts, clean: clean, preset: preset, pack: pack, unpack: unpack, fitPart: fitPart, symbolPlacement: symbolPlacement, coffeeColors: coffeeColors, effectiveCoffeeMode: effectiveCoffeeMode };
+  root.MinkaCardFaceModel = { fitDial: fitDial, faces: faces, looks: looks, parts: parts, plateParts: plateParts, clean: clean, preset: preset, pack: pack, unpack: unpack, fitPart: fitPart, symbolPlacement: symbolPlacement, coffeeColors: coffeeColors, effectiveCoffeeMode: effectiveCoffeeMode };
 })(globalThis);

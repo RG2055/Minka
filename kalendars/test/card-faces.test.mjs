@@ -41,7 +41,7 @@ test('changing presets retains chosen materials but resets the element layout', 
 test('invalid local values are bounded without overriding chosen visibility', () => {
   const value = M.clean({ tint: 'url(evil)', imageZoom: 999, parts: { hours: [-100, Infinity, 999, 0], name: [50, 50, 100, 0] } });
   assert.equal(value.tint, 'd5e6ef'); assert.equal(value.imageZoom, 180);
-  assert.deepEqual(value.parts.hours, [5, 45, 300, 0]);
+  assert.deepEqual(value.parts.hours, [5, 50, 300, 0]);   // the classic grid's number zone is centred at y 50
   assert.equal(value.parts.name[3], 0);
 });
 
@@ -57,13 +57,11 @@ test('old symbol defaults move beside the numeral while custom positions and vis
   assert.equal(upgraded.parts.moon[3],0);
   face.parts.moon=[30,62,140,1];
   assert.deepEqual(M.unpack(M.pack(face)).parts.moon,face.parts.moon);
-  const fern={hours:[68,39,105,1]},orchid={hours:[70,38,105,1]};
-  assert.deepEqual(M.symbolPlacement(fern,'photo'),[47,17,100,1]);
-  assert.deepEqual(M.symbolPlacement(orchid,'photo'),[49,16,100,1]);
-  // Butterfly and koi use a wider, high-set numeral: leave room to its left.
-  const classic=M.symbolPlacement({hours:[58,28,100,1]},'classic');
-  assert.deepEqual(classic,[20,24,90,1]);
-  assert.ok(classic[0]+16*classic[2]/200 < 58-30);
+  // The sun/moon has its own spot on each face's grid (top row or beside the number),
+  // wherever the number is; only a moon the person moved keeps its own place.
+  assert.deepEqual(M.symbolPlacement({hours:[68,39,105,1]},'photo'),[16,32,70,1]);
+  assert.deepEqual(M.symbolPlacement({hours:[58,28,100,1]},'classic'),[15,16,70,1]);
+  for(const f of M.faces){const q=M.symbolPlacement({hours:[50,50,100,1]},f);assert.ok(q[0]>=5&&q[0]<=95&&q[1]>=5&&q[1]<=95,f);}
   const moved=M.clean({...face,parts:{...face.parts,hours:[60,55,120,1]}});
   assert.deepEqual(moved.parts.moon,[30,62,140,1]);
 });
@@ -86,6 +84,7 @@ test('shift symbols distinguish day, overnight and 24 hour duties including effe
 test('v1 saved cards retain all existing elements and upgrade to an independent moon', async () => {
   const request=fixture();
   const original=M.preset('photo');
+  original.coffeeMode=1;   // v1 looks predate the coffee setting: they always showed − / +
   original.parts.month[3]=0;
   original.parts.hours=[68,38,130,1];
   const fields=M.pack(original).split('~');fields[0]='1';fields.pop();
@@ -120,10 +119,14 @@ test('coffee presentation and contrast survive API storage and legacy defaults',
     assert.equal(M.preset('classic',face).coffeeMode,mode);
     assert.equal(M.preset('classic',face).coffeeContrast,contrast);
   }
+  // A new arrangement starts with the compact cup (a tap opens − / +): the wide control
+  // does not fit the grid beside the number. A chosen "always − / +" is kept (loop above).
   const old=M.unpack(M.pack(M.preset('classic')));
-  assert.equal(old.coffeeMode,1);assert.equal(old.coffeeContrast,0);
-  // RG: the stored mode as always ("always − / +" by default).
-  assert.equal(M.effectiveCoffeeMode(old),1);
+  assert.equal(old.coffeeMode,0);assert.equal(old.coffeeContrast,0);
+  assert.equal(M.effectiveCoffeeMode(old),0);
+  // A look stored before (no choice made, "always − / +" stored) stays as it was on RG.
+  const stored=M.clean({face:'classic',coffeeMode:1});
+  assert.equal(M.effectiveCoffeeMode(stored),1);
   // /rad: nobody chose, so the coffee icon that opens into − / + is shown; a
   // chosen "always − / +" is kept.
   globalThis.MINKA_APP='rad';
@@ -216,8 +219,9 @@ test('API persists complete legacy appearance plus face and decoration, and can 
 
 test('API and decoder reject malformed and out of range layouts without overwriting saved data', async () => {
   const request = fixture();
-  const valid = M.pack(M.preset('photo'));
-  const mutations = [[0,'3'],[1,'6'],[2,'url(x)'],[3,'12'],[4,'6'],[5,'101'],[6,'-1'],[7,'99'],[8,'50,50,100,2'],[9,'50,50,100,-1'],[10,'50,50,171,1'],[11,'00,50,100,1']];
+  const v2 = M.preset('photo'); v2.coffeeMode = 1;   // the v2 format (no coffee fields) these mutations are written for
+  const valid = M.pack(v2);
+  const mutations = [[0,'3'],[1,'10'],[2,'url(x)'],[3,'24'],[4,'9'],[5,'101'],[6,'-1'],[7,'99'],[8,'50,50,100,2'],[9,'50,50,100,-1'],[10,'50,50,171,1'],[11,'00,50,100,1']];
   await request('grad:menta');
   for (const [index, replacement] of mutations) {
     const fields = valid.split('~'); fields[index] = replacement;
@@ -285,7 +289,7 @@ test('per-element colours and the whole-card look survive storage, default off, 
   // Colours follow a face change; with no colours and the default look it drops back to v2.
   assert.equal(M.preset('classic',face).colors.hours,'ff5c5c');
   assert.equal(M.preset('classic',face).fullTintMode,3);
-  const plain=M.clean(Object.assign({},face,{colors:{},fullTintMode:0}));
+  const plain=M.clean(Object.assign({},face,{colors:{},fullTintMode:0,coffeeMode:1}));
   assert.equal(M.pack(plain).split('~')[0],'2');
   assert.equal(M.unpack(M.pack(M.preset('classic'))).fullTintMode,0);
   for(const [index,invalid] of [[20,'red,-,-,-,-,-,-,-,-,-'],[20,'ff5c5c'],[21,'4,10,10,0,0'],[21,'3,361,10,0,0'],[21,'3,10,101,0,0'],[21,'3,10,10,2,0'],[21,'3,10,10,0,3'],[21,'3,10,10,0']]){

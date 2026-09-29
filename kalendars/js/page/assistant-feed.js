@@ -887,13 +887,13 @@ function nextNews(){
 	  }
 	  function renderTickerItem(d) {
 	    var href = safeTickerUrl(d.link);
-	    var label = String(d.cat ? d.cat + ': ' : '') + String(d.text || '');
+	    var label = String(d.cat ? (d.cat === 'aslimnica' ? 'aslimnīca' : d.cat) + ': ' : '') + String(d.text || '');
 	    var tag = href ? 'a' : 'span';
 	    var open = '<' + tag + ' class="mk-news-item" title="' + tickerEsc(label) + '"'
 	      + (href ? ' href="' + tickerEsc(href) + '" target="_blank" rel="noopener noreferrer" data-href="' + tickerEsc(href) + '"' : '') + '>';
 	    var time = d.time ? '<span class="mk-tick-time">' + tickerEsc(d.time) + '</span>' : '';
-	    // "aslimnica" kā slimnīcas logo: sarkans "a".
-    var catText = d.cat === 'aslimnica' ? '<span class="mk-cat-a">a</span>slimnica' : tickerEsc(d.cat);
+	    // "aslimnīca" kā slimnīcas logo: sarkans "a" (id no API paliek "aslimnica").
+    var catText = d.cat === 'aslimnica' ? '<span class="mk-cat-a">a</span>slimnīca' : tickerEsc(d.cat);
     var badge = d.cat ? '<span class="mk-ticker-cat ' + catClass(d.cat) + '">' + catText + '</span>' : '';
 	    var meta = (time || badge) ? '<span class="mk-news-meta">' + time + badge + '</span>' : '';
 	    var text = '<span class="mk-news-headline">' + tickerEsc(d.text) + '</span>';
