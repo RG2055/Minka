@@ -533,7 +533,7 @@
 }
 /* Emoji tab footer: Noņemt … Likt kā fonu, Saglabāt on one line */
 #worker-modal#worker-modal #modal-emoji-view .mkp-footer {display:grid !important;grid-template-columns:auto minmax(0,1fr) auto auto !important;align-items:center !important;gap:8px !important;}
-#worker-modal#worker-modal #modal-emoji-view .mkp-footer .mkp-asbg {margin:0 !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-footer .mkp-asbg {margin:0 !important;justify-self:end !important;width:auto !important;}
 
 /* ═══ Emoji tab: one M3 bar of groups, the window in the chosen emoji's colour ═══ */
 #worker-modal#worker-modal #modal-emoji-view .mkp-tabs {display:flex !important;grid-template-columns:none !important;gap:2px !important;position:relative !important;margin:0 0 14px !important;padding:4px !important;
