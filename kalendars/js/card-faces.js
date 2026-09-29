@@ -18,6 +18,10 @@
     ['Kosmiski oranžs','#e98b50'],['Dziļi zils','#64799b'],['Miglas zils','#cadbea'],['Lavanda','#c9c2df'],['Salvijas zaļš','#c2cab4'],['Mākoņu balts','#eeeae4'],['Gaišs zelts','#e5d8bb'],['Nakts melns','#62666d']
   ];
   var clockTimer = 0;
+  var masks = new Map();
+  var currentPick = function () { return null; };
+  var releaseContours = function () {};
+  var currentSettle = function () {};
   var previewObserver = null;
   var previewFrame = 0;
   var refreshPreview = function() {};
@@ -60,8 +64,13 @@
   var dialTimer = 0;
   var PLATES = ['', 'dark', 'clear', 'tinted', 'light'];
   function hm(t) { var m = /^(\d{1,2}):(\d\d)$/.exec(String(t || '')); return m ? +m[1] * 60 + +m[2] : null; }
-  var DIAL_SKINS = [['a', 'Stikls'], ['b', 'Hronogrāfs'], ['c', 'Gredzens'], ['d', 'Rastrs'], ['e', 'Segmenti']];
-  var DIAL_RE = /^[a-e][1-3][1-3]$/;
+  /* f–h are M3 Expressive progress dials (see m3Dial); p–t the M3 clock's digital
+     readouts (alarm tile, stopwatch, outlined alarm, timer, time-input pills). One field (skin.tm) keeps both: an
+     analog skin + hand + face, or a digital skin + "11". Their digits are the
+     Google Sans Flex cut in assets/fonts/m3-digits (fetched only when shown). */
+  var DIAL_SKINS = [['a', 'Stikls'], ['b', 'Hronogrāfs'], ['c', 'Gredzens'], ['d', 'Rastrs'], ['e', 'Segmenti'], ['f', 'Aplis'], ['g', 'Cepums'], ['h', 'Vilnis']];
+  var DIGIT_SKINS = [['p', 'Modinātājs'], ['q', 'Hronometrs'], ['r', 'Kontūra'], ['s', 'Taimeris'], ['t', 'Plāksnes']];
+  var DIAL_RE = /^[a-h][1-3][1-3]$/, DIGIT_RE = /^[p-t]11$/, TM_RE = /^(?:[a-h][1-3][1-3]|[p-t]11)$/;
   /* Colours are never baked in: the SVG draws with currentColor (the card's accent,
      or the element's own colour, or the dither ink) and --dial-ink; the dial's round
      plate is the same tinted glass (or dotted dither chip) as the card's other chips.
@@ -98,6 +107,7 @@
     var big = s == null ? '' : phase === 'on' || phase === 'soon' ? dur(left) : Math.round(left / 60) + 'h';
     var small = { on: 'ATLIKUŠAS', soon: 'LĪDZ ' + hhmm(s), done: 'BEIGUSIES', plan: s == null ? '' : hhmm(s).slice(0, 2) + '–' + hhmm(e).slice(0, 2) }[phase] || '';
     active = phase === 'on';
+    if (skin === 'f' || skin === 'g' || skin === 'h') return m3Dial(skin, s, e, now, phase, left, hhmm, dur);
     /* Read like the Nakts clock (one look is enough): the shift's hours as a thick,
        soft arc on the rim, the part already worked bright over it, a round dot where
        it ends, and a real clock's hour and minute hands at the time now. A 12-hour
@@ -185,6 +195,47 @@
     }
     return mask + '<svg viewBox="0 0 100 100" aria-hidden="true">' + body + handSvg + txt + '</svg>';
   }
+  /* M3 dials (f Aplis, g Cepums, h Vilnis), after Material's circular progress and
+     the Tomato timer: built to be read at card size — a solid tonal disc, a thick
+     ring (the part of the shift still to go, depleting clockwise from 12) with a gap
+     before its track, and one big number. Nothing smaller than the number.
+       on duty → the time left (7:42), the ring = what is left of the shift
+       today, not started → the start time (20:00), track only, a dot at 12
+       another day / over → the window (20–08), quiet. */
+  function m3Dial(skin, s, e, now, phase, left, hhmm, dur) {
+    var R = skin === 'g' ? 44 : 41, frac = s == null ? 0 : phase === 'on' ? Math.max(0, Math.min(1, left / Math.max(1, e - s))) : 0;
+    var text = s == null ? '' : phase === 'on' ? dur(left) : phase === 'soon' ? hhmm(s) : hhmm(s).slice(0, 2) + '–' + hhmm(e).slice(0, 2);
+    function ap(deg, r) { var a = deg * Math.PI / 180; return (50 + r * Math.sin(a)).toFixed(2) + ' ' + (50 - r * Math.cos(a)).toFixed(2); }
+    function arcD(a0, a1, r) { if (a1 - a0 >= 359.5) return 'M50 ' + (50 - r) + 'A' + r + ' ' + r + ' 0 1 1 49.99 ' + (50 - r) + 'Z'; return 'M' + ap(a0, r) + 'A' + r + ' ' + r + ' 0 ' + (a1 - a0 > 180 ? 1 : 0) + ' 1 ' + ap(a1, r); }
+    function waveD(a0, a1, r, amp, n) {
+      var d = '', steps = Math.max(8, Math.ceil((a1 - a0) / 2.5));
+      for (var i = 0; i <= steps; i++) { var a = a0 + (a1 - a0) * i / steps, k = Math.min(1, (a - a0) / 8, (a1 - a) / 8); d += (i ? 'L' : 'M') + ap(a, r + amp * k * Math.sin(a / 360 * n * Math.PI * 2)); }
+      return d;
+    }
+    var body = '', end = frac * 360, gap = 17;
+    if (skin === 'g') {
+      // an M3 cookie (9 soft sides): the plate, and its own outline is the ring
+      var ck = '';
+      for (var i = 0; i <= 180; i++) { var a = i * 2; ck += (i ? 'L' : 'M') + ap(a, 41.5 + 3.4 * Math.cos(a / 360 * 9 * Math.PI * 2)); }
+      body += '<path class="m3disc" d="' + ck + 'Z"/>';
+      body += '<path class="m3trk" pathLength="100" d="' + ck + '"/>';
+      if (frac > 0) body += '<path class="m3ind" pathLength="100" stroke-dasharray="' + (frac * 100).toFixed(1) + ' 101" d="' + ck + '"/>';
+    } else {
+      body += '<circle class="m3disc" cx="50" cy="50" r="47.5"/>';
+      if (frac <= 0) body += '<path class="m3trk" d="' + arcD(0, 360, R) + '"/>';
+      else if (end >= 360 - gap) body += skin === 'h' ? '<path class="m3ind" d="' + waveD(0, 360, R, 2.1, 12) + '"/>' : '<path class="m3ind" d="' + arcD(0, 360, R) + '"/>';
+      else {
+        body += '<path class="m3trk" d="' + arcD(end + gap, 360 - gap, R) + '"/>';
+        body += '<path class="m3ind" d="' + (skin === 'h' && end > 30 ? waveD(0, end, R, 2.1, 12) : arcD(0, end, R)) + '"/>';
+      }
+    }
+    if (phase === 'soon') body += '<circle class="m3dot" cx="50" cy="' + (50 - R) + '" r="3.2"/>';
+    if (text) {
+      var n = text.length, size = n <= 4 ? 27 : 23.5;
+      body += '<text class="m3num' + (phase === 'on' ? '' : ' q') + '" x="50" y="' + (50 + size * .35).toFixed(1) + '" style="font-size:' + size + 'px">' + text + '</text>';
+    }
+    return '<svg viewBox="0 0 100 100" aria-hidden="true">' + body + '</svg>';
+  }
   // Small previews for the skin picker: a 20–08 shift at 01:40 (on duty, so the worked part shows).
   function dialPreview(tm) {
     var el = document.createElement('span'); el.textContent = '20–08'; el.dataset.dialNow = '100';
@@ -199,12 +250,87 @@
     if (box.className !== cls) box.className = cls;
     var html = dialMarkup(el, tm);
     if (box.__html !== html) { box.innerHTML = html; box.__html = html; }
-    el.setAttribute('aria-label', 'Maiņas laiks: ' + ((box.querySelector('.v') || {}).textContent || ''));
+    el.setAttribute('aria-label', 'Maiņas laiks: ' + ((box.querySelector('.v, .m3num') || {}).textContent || ''));
   }
+  /* M3 digital readouts (p–s). The calendar keeps writing the timer text once a
+     second as before; a mirror in digit groups is drawn next to it (the text stays
+     for screen readers). Only a group whose digits changed is rewritten. */
+  // Two-digit hours, as the M3 clock writes them (07:42, not 7:42).
+  function m3Tokens(text) {
+    var t = String(text || '').match(/\d+|[:–-]/g) || [];
+    if (t[0] && t[0].length === 1) t[0] = '0' + t[0];
+    return t;
+  }
+  /* Taimeris fades what is still zero at the front (00:42:10): a whole zero group
+     and the separator after it fade once (.z), a group's own leading zero is <u>. */
+  function m3Group(t, zeroGroup, skin) {
+    if (skin !== 's' || zeroGroup) return t;
+    var z = /^0+(?=\d)/.exec(t);
+    return z ? '<u>' + z[0] + '</u>' + t.slice(z[0].length) : t;
+  }
+  function m3Classes(tokens, skin) {
+    var lead = true;
+    return tokens.map(function (t) {
+      if (!/\d/.test(t)) return (t === ':' ? 'cl' : 'ds') + (skin === 's' && lead ? ' z' : '');
+      var zero = lead && /^0+$/.test(t), leadIn = lead; lead = zero;
+      return 'g' + (skin === 's' && zero ? ' z' : '') + (leadIn ? '' : ' mid');
+    });
+  }
+  function m3Markup(text, skin) {
+    var tokens = m3Tokens(text), cls = m3Classes(tokens, skin);
+    return (skin === 'q' ? '<i class="lead"></i>' : '') + tokens.map(function (t, i) {
+      if (!/\d/.test(t)) return '<i class="' + cls[i] + '"></i>';
+      return '<b class="' + cls[i] + '">' + m3Group(t, / z/.test(cls[i]), cls[i].indexOf('mid') < 0 ? skin : '') + '</b>';
+    }).join('');
+  }
+  function m3Source(el) {
+    var v = el.querySelector(':scope > .val');
+    if (v) return v.textContent;
+    var t = '';
+    el.childNodes.forEach(function (n) { if (n.nodeType === 3) t += n.nodeValue; else if (n.nodeType === 1 && n.classList.contains('wf-dial-text')) t += n.textContent; });
+    return t.trim();
+  }
+  function m3Paint(el) {
+    var skin = el.dataset.td, text = m3Source(el), box = el.querySelector(':scope > .mk-m3d');
+    if (!box) { box = document.createElement('span'); box.setAttribute('aria-hidden', 'true'); el.append(box); }
+    var cls = 'mk-m3d m3-' + skin;
+    if (box.className !== cls) { box.className = cls; box.dataset.shape = ''; box.dataset.text = ''; }
+    var tokens = m3Tokens(text), shape = tokens.map(function (t) { return /\d/.test(t) ? 'd' + t.length : t; }).join();
+    if (box.dataset.text === text) return;
+    box.dataset.text = text;
+    if (box.dataset.shape !== shape) { box.innerHTML = m3Markup(text, skin); box.dataset.shape = shape; return; }
+    // Same shape (a second ticked): only what changed is rewritten.
+    var nodes = box.children, off = skin === 'q' ? 1 : 0, kinds = m3Classes(tokens, skin);
+    tokens.forEach(function (t, i) {
+      var n = nodes[i + off];
+      if (n.className !== kinds[i]) n.className = kinds[i];
+      if (!/\d/.test(t)) return;
+      var html = m3Group(t, / z/.test(kinds[i]), kinds[i].indexOf('mid') < 0 ? skin : '');
+      if (n.__t !== html) { n.innerHTML = html; n.__t = html; }
+    });
+  }
+  function m3Watch(el) {
+    m3Paint(el);
+    if (el.__m3Obs || typeof MutationObserver !== 'function') return;
+    el.__m3Obs = new MutationObserver(function (list) {
+      if (list.some(function (m) { var t = m.target.nodeType === 1 ? m.target : m.target.parentElement; return !(t && t.closest('.mk-m3d')); })) m3Paint(el);
+    });
+    el.__m3Obs.observe(el, { childList: true, characterData: true, subtree: true });
+  }
+  function clearM3(el) {
+    if (!el.classList.contains('wf-m3d')) return;
+    el.classList.remove('wf-m3d'); delete el.dataset.td;
+    if (el.__m3Obs) { el.__m3Obs.disconnect(); delete el.__m3Obs; }
+    var box = el.querySelector(':scope > .mk-m3d'); if (box) box.remove();
+  }
+  // Picker tiles: the readout as it looks on duty.
+  function digitPreview(key) { return '<span class="mk-m3d m3-' + key[0] + '">' + m3Markup(key[0] === 's' ? '0:42:10' : '7:42:10', key[0]) + '</span>'; }
   function setDial(card, skin, config) {
     var el = card.querySelector('[data-wf-part="remaining"]');
     if (!el) return;
-    var tm = skin && DIAL_RE.test(String(skin.tm || '')) && config && config.face !== 'winamp' ? skin.tm : '';
+    var tm = skin && TM_RE.test(String(skin.tm || '')) && config && config.face !== 'winamp' ? skin.tm : '';
+    if (DIGIT_RE.test(tm)) { el.classList.add('wf-m3d'); el.dataset.td = tm[0]; m3Watch(el); tm = ''; }
+    else clearM3(el);
     if (!tm) {
       if (el.classList.contains('wf-analog')) { el.classList.remove('wf-analog'); delete el.dataset.tm; el.removeAttribute('aria-label'); var old = el.querySelector(':scope > .mk-wf-dial'); if (old) old.remove(); }
       return;
@@ -431,6 +557,7 @@
       var coffeeButton=card.querySelector('button.mk-coffee-mid');
       if(coffeeButton){coffeeButton.removeAttribute('aria-expanded');coffeeButton.setAttribute('aria-label','Atvērt kafijas izvēlni');}
       card.querySelectorAll('.wf-analog').forEach(function(el) { el.classList.remove('wf-analog'); delete el.dataset.tm; var dl = el.querySelector(':scope > .mk-wf-dial'); if (dl) dl.remove(); });
+      card.querySelectorAll('.wf-m3d').forEach(clearM3);
       card.querySelectorAll('[data-wf-part]').forEach(function(el) {
         delete el.dataset.wfPart; el.hidden = false; el.classList.remove('wf-colored');
         ['--wf-x','--wf-y','--wf-scale','--wf-tint','--mk-txt-color'].forEach(function(p) { el.style.removeProperty(p); });
@@ -717,6 +844,7 @@
       // The element's plate, in the card tone's own words (and a light one, as on a watch).
       + '<div class="wf-part-plate"><span>Plāksne</span><div class="wf-plate-modes" role="group" aria-label="Plāksne">'+[['0','Kā kartītei'],['1','Tumšs'],['2','Caurspīdīgs'],['3','Tonēts'],['4','Gaišs']].map(function(m){return '<button type="button" data-part-plate="'+m[0]+'"><i class="wf-plate-sample p'+m[0]+'" aria-hidden="true">9</i><span>'+m[1]+'</span></button>';}).join('')+'</div></div>'
       + '<div class="wf-timer-options" hidden><div class="wf-segment" aria-label="Taimeris"><button type="button" data-timer-style="">Cipari</button><button type="button" data-timer-style="a">Analogs</button></div>'
+      + '<div class="wf-timer-digital"><div class="wf-digit-skins" role="group" aria-label="Ciparu izskats"><button type="button" data-timer-digit=""><span class="wf-digit-mini"><span class="mk-m3d m3-plain">7:42:10</span></span><b>Parasti</b></button>' + DIGIT_SKINS.map(function(k){return '<button type="button" data-timer-digit="'+k[0]+'"><span class="wf-digit-mini">'+digitPreview(k[0]+'11')+'</span><b>'+k[1]+'</b></button>';}).join('') + '</div></div>'
       + '<div class="wf-timer-analog"><div class="wf-dial-skins" role="group" aria-label="Pulksteņa izskats">' + DIAL_SKINS.map(function(k){return '<button type="button" data-timer-skin="'+k[0]+'"><span class="wf-dial-mini"></span><b>'+k[1]+'</b></button>';}).join('') + '</div>'
       + '<div class="wf-segment" aria-label="Rādītājs"><button type="button" data-timer-hand="1">Punkts</button><button type="button" data-timer-hand="2">Adata</button><button type="button" data-timer-hand="3">Josla</button></div>'
       + '<div class="wf-segment" aria-label="Ciparnīca"><button type="button" data-timer-face="1">Kā kartītei</button><button type="button" data-timer-face="2">Kontrasts</button><button type="button" data-timer-face="3">Bez fona</button></div></div></div>'
@@ -740,8 +868,6 @@
     showGroup(wfTab);
     panel.addEventListener('click',function(e){var b=e.target.closest('[data-wf-tab]');if(b)showGroup(b.dataset.wfTab);});
 
-    // Pieskaroties elementam priekšskatījumā, uzreiz rāda tā iestatījumus.
-    preview.addEventListener('pointerdown',function(e){if(e.target.closest&&e.target.closest('[data-wf-part]'))showGroup('parts');},true);
     function activate() {
       config=M.clean(options.get().face);
       options.section('face');
@@ -778,11 +904,13 @@
       panel.querySelector('.wf-metal-name').textContent=metals[config.metal][0];
       panel.querySelector('.wf-part-name').textContent=labels[selectedPart];
       panel.querySelector('.wf-coffee-options').hidden=selectedPart!=='coffee';
-      var tm=DIAL_RE.test(String(options.get().tm||''))?options.get().tm:'';
+      var tmAll=TM_RE.test(String(options.get().tm||''))?options.get().tm:'', tm=DIAL_RE.test(tmAll)?tmAll:'', td=DIGIT_RE.test(tmAll)?tmAll[0]:'';
       panel.querySelector('.wf-timer-options').hidden=selectedPart!=='remaining'||config.face==='winamp';
       panel.querySelector('.wf-timer-analog').hidden=!tm;
+      panel.querySelector('.wf-timer-digital').hidden=!!tm;
+      panel.querySelectorAll('[data-timer-digit]').forEach(function(el){el.setAttribute('aria-pressed',String(el.dataset.timerDigit===td));});
       panel.querySelectorAll('[data-timer-style]').forEach(function(el){el.setAttribute('aria-pressed',String(el.dataset.timerStyle===(tm?'a':'')));});
-      panel.querySelectorAll('[data-timer-hand]').forEach(function(el){el.setAttribute('aria-pressed',String(!!tm&&el.dataset.timerHand===tm[1]));el.disabled=tm[0]==='c';});
+      panel.querySelectorAll('[data-timer-hand]').forEach(function(el){el.setAttribute('aria-pressed',String(!!tm&&el.dataset.timerHand===tm[1]));el.disabled=/[cfgh]/.test(tm[0]);});
       // Skin tiles draw themselves with the chosen hand and face (built only when the list is shown).
       if(tm)panel.querySelectorAll('[data-timer-skin]').forEach(function(el){el.setAttribute('aria-pressed',String(el.dataset.timerSkin===tm[0]));var key=el.dataset.timerSkin+tm[1]+tm[2],mini=el.firstElementChild;if(mini.dataset.key!==key){mini.innerHTML='<span class="mk-wf-dial f'+tm[2]+' sk-'+el.dataset.timerSkin+'">'+dialPreview(key)+'</span>';mini.dataset.key=key;}});
       panel.querySelectorAll('[data-timer-face]').forEach(function(el){el.setAttribute('aria-pressed',String(!!tm&&el.dataset.timerFace===tm[2]));});
@@ -813,30 +941,251 @@
       placeSel();
       preview.closest('.mk-skin-preview-list').setAttribute('aria-hidden','false');
     }
-    /* One selection frame for every element, drawn outside the card (in the preview's
-       own box): the same rounded frame and corner handle whatever the element's shape,
-       size or clipping, in screen pixels. It follows the element as it moves. */
+    /* ---- What is under the pointer ----
+       Picking goes by what is drawn, not by the elements' boxes: the big numeral's box
+       is far taller than its digits, the name's box runs over the coffee and the moon,
+       and a picture (the object in front, a decoration) is mostly see-through. Each
+       candidate is measured (a tight glyph box for the numeral, opaque pixels for
+       pictures) and the smallest one under the pointer wins; a quick second press on
+       the same spot steps to the one below it. Only rectangles are read, on pointer
+       events, at most once a frame — nothing runs while the pointer is still. */
+    var glyphMetrics={}, glyphCanvas=null;
+    function glyphBox(el){
+      var range=document.createRange();range.selectNodeContents(el);
+      var r=range.getBoundingClientRect(),text=el.textContent.trim();
+      if(!r.width||!text)return el.getBoundingClientRect();
+      var cs=getComputedStyle(el),font=cs.fontStyle+' '+cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily,key=font+'|'+text,m=glyphMetrics[key];
+      if(!m){
+        var ctx=(glyphCanvas||(glyphCanvas=document.createElement('canvas'))).getContext('2d');ctx.font=font;
+        var t=ctx.measureText(text);m=glyphMetrics[key]={fa:t.fontBoundingBoxAscent,fd:t.fontBoundingBoxDescent,aa:t.actualBoundingBoxAscent,ad:t.actualBoundingBoxDescent};
+      }
+      if(!(m.fa+m.fd))return r;
+      var k=r.height/(m.fa+m.fd);
+      return {left:r.left,right:r.right,top:r.top+(m.fa-m.aa)*k,bottom:r.top+(m.fa+m.ad)*k};
+    }
+    // Alpha of a picture, once, at most 96 px: which pixels are really there.
+    function maskOf(url){
+      if(masks.has(url))return masks.get(url);
+      if(masks.size>=24)masks.delete(masks.keys().next().value);
+      var m={ready:false};masks.set(url,m);
+      var img=new Image();img.decoding='async';
+      img.onload=function(){try{
+        var s=Math.min(1,96/Math.max(img.naturalWidth,img.naturalHeight)),w=Math.max(1,Math.round(img.naturalWidth*s)),h=Math.max(1,Math.round(img.naturalHeight*s));
+        var c=document.createElement('canvas');c.width=w;c.height=h;var x=c.getContext('2d',{willReadFrequently:true});x.drawImage(img,0,0,w,h);
+        var d=x.getImageData(0,0,w,h).data,a=new Uint8Array(w*h),b=[w,h,-1,-1];
+        for(var i=0;i<w*h;i++){a[i]=d[i*4+3];if(a[i]>40){var px=i%w,py=(i/w)|0;if(px<b[0])b[0]=px;if(py<b[1])b[1]=py;if(px>b[2])b[2]=px;if(py>b[3])b[3]=py;}}
+        m.w=w;m.h=h;m.a=a;m.nw=img.naturalWidth;m.nh=img.naturalHeight;m.box=b[2]<0?null:[b[0]/w,b[1]/h,(b[2]+1)/w,(b[3]+1)/h];m.ready=true;
+      }catch(_e){m.failed=true;}};
+      img.onerror=function(){m.failed=true;};
+      img.src=url;
+      return m;
+    }
+    function cssUrl(v){var u=/url\((['"]?)([^'")]+)\1\)/.exec(v||'');return u?u[2]:'';}
+    /* A picture drawn inside a box q (screen px) at size W×H, offset ox/oy, clipped
+       to `clip`: hit(x,y) says whether an opaque pixel is there; box is the opaque part. */
+    function pictureFrame(el,url,q,W,H,ox,oy,clip){
+      var m=maskOf(url);
+      if(!m.ready&&!m.failed)return {el:el,box:clip,hit:function(x,y){return x>=clip.left&&x<=clip.right&&y>=clip.top&&y<=clip.bottom?{area:(clip.right-clip.left)*(clip.bottom-clip.top)*1.5}:null;}};
+      var bx=m.box||[0,0,1,1],box={left:Math.max(clip.left,q.left+ox+W*bx[0]),top:Math.max(clip.top,q.top+oy+H*bx[1]),right:Math.min(clip.right,q.left+ox+W*bx[2]),bottom:Math.min(clip.bottom,q.top+oy+H*bx[3])};
+      if(box.right<=box.left||box.bottom<=box.top)return null;
+      return {el:el,box:box,hit:function(x,y){
+        if(x<box.left||x>box.right||y<box.top||y>box.bottom)return null;
+        if(m.ready){var u=Math.floor((x-q.left-ox)/W*m.w),v=Math.floor((y-q.top-oy)/H*m.h);if(u<0||v<0||u>=m.w||v>=m.h||m.a[v*m.w+u]<=40)return null;}
+        return {area:(box.right-box.left)*(box.bottom-box.top)};
+      }};
+    }
+    // The object cut out of the photo, standing in front of the numeral (background-size: cover).
+    function depthFrame(){
+      var d=preview.querySelector(':scope > .mk-wf-depth'),i=d&&d.firstElementChild;
+      if(!i||!d.getClientRects().length||getComputedStyle(d).display==='none')return null;
+      var url=cssUrl(i.style.backgroundImage);if(!url)return null;
+      var m=maskOf(url);if(!m.ready)return m.failed?null:{el:d,box:null,hit:function(){return null;}};
+      var q=i.getBoundingClientRect(),s=Math.max(q.width/m.nw,q.height/m.nh),W=m.nw*s,H=m.nh*s;
+      return pictureFrame(d,url,q,W,H,(q.width-W)*config.imageX/100,(q.height-H)*config.imageY/100,d.getBoundingClientRect());
+    }
+    // A decoration: an <img> with object-fit: contain and its own object-position.
+    function addonFrame(img){
+      var url=img.currentSrc||img.src;if(!url||!img.naturalWidth)return null;
+      var q=img.getBoundingClientRect(),s=Math.min(q.width/img.naturalWidth,q.height/img.naturalHeight),W=img.naturalWidth*s,H=img.naturalHeight*s;
+      var pos=getComputedStyle(img).objectPosition.split(' ').map(function(v){return /%$/.test(v)?parseFloat(v)/100:.5;});
+      return pictureFrame(img,url,q,W,H,(q.width-W)*pos[0],(q.height-H)*(pos[1]==null?.5:pos[1]),q);
+    }
+    // The card's elements: with a layout, its parts; on the original classic card, the same elements by class.
+    function partEls(){
+      var face=!!options.get().face,out=[];
+      if(face&&config.face==='winamp')return out;
+      M.parts.forEach(function(key){
+        var el=face?preview.querySelector('[data-wf-part="'+key+'"]'):preview.querySelector(selectors[key]);
+        if(!el||el.hidden||!el.getClientRects().length)return;
+        out.push([key,el]);
+      });
+      return out;
+    }
+    function partBox(key,el){var r=key==='hours'?glyphBox(el):el.getBoundingClientRect();return {left:r.left,top:r.top,right:r.right,bottom:r.bottom};}
+    function hits(x,y){
+      var list=[];
+      partEls().forEach(function(p){
+        var b=partBox(p[0],p[1]),w=b.right-b.left,h=b.bottom-b.top;if(!w||!h)return;
+        var gx=Math.max(0,(24-w)/2),gy=Math.max(0,(24-h)/2);   // a small one still gets a finger-sized target
+        if(x<b.left-gx||x>b.right+gx||y<b.top-gy||y>b.bottom+gy)return;
+        list.push({kind:'part',key:p[0],el:p[1],box:b,area:w*h});
+      });
+      preview.querySelectorAll(':scope > .mk-card-addon').forEach(function(img){
+        if(/^(frame|light)$/.test(img.dataset.addonGroup||'')||!img.getClientRects().length)return;
+        var f=addonFrame(img),h=f&&f.hit(x,y);if(h)list.push({kind:'addon',el:img,box:f.box,area:h.area});
+      });
+      var dp=options.get().face&&depthFrame(),hd=dp&&dp.hit(x,y);
+      if(hd)list.push({kind:'depth',el:dp.el,box:dp.box,area:hd.area});
+      return list.sort(function(a,b){return a.area-b.area;});
+    }
+    var lastPress=null;
+    function sameHit(a,b){return !!a&&!!b&&a.kind===b.kind&&a.el===b.el;}
+    // One answer per press, shared with skin-organize (it routes the tabs on the same event).
+    function pickPress(e){
+      if(lastPress&&lastPress.e===e)return lastPress.hit;
+      var list=hits(e.clientX,e.clientY),i=0,p=lastPress;
+      if(p&&list.length>1&&!p.moved&&e.timeStamp-p.t<550&&Math.abs(p.x-e.clientX)+Math.abs(p.y-e.clientY)<6){
+        var prev=list.findIndex(function(h){return sameHit(h,p.hit);});if(prev>=0)i=(prev+1)%list.length;
+      }
+      lastPress={e:e,t:e.timeStamp,x:e.clientX,y:e.clientY,hit:list[i]||null,moved:false};
+      return lastPress.hit;
+    }
+    currentPick=pickPress;
+    releaseContours=function(){clearContour(contourOn.hov);clearContour(contourOn.sel);contourOn.hov=contourOn.sel=null;};
+    /* ---- Hover and selection frames ----
+       Hover: the element's own outline lights up (a thin frame with its corner radius).
+       Selected: the same frame, solid, with its name and four handles. Both are plain
+       boxes outside the card, held inside the preview, so a numeral grown past the
+       card edge still has a handle within reach. */
+    var selKind='part',selAddon=null;
+    function frameHost(){var h=preview.parentElement;if(h&&getComputedStyle(h).position==='static')h.style.position='relative';return h;}
+    function placeFrame(box,b,pad){
+      var host=box.parentElement,hr=host.getBoundingClientRect(),W=host.clientWidth,H=host.clientHeight;
+      var l=Math.max(-6,b.left-hr.left-pad),t=Math.max(-6,b.top-hr.top-pad),r=Math.min(W+6,b.right-hr.left+pad),bt=Math.min(H+6,b.bottom-hr.top+pad);
+      box.style.left=l+'px';box.style.top=t+'px';box.style.width=Math.max(12,r-l)+'px';box.style.height=Math.max(12,bt-t)+'px';
+      return t;
+    }
+    function radiusOf(hit){
+      if(hit.kind!=='part'||hit.key==='hours')return 12;
+      var sc=parseFloat(preview.style.getPropertyValue('--wf-preview-scale'))||1;
+      return Math.min(26,(parseFloat(getComputedStyle(hit.el).borderTopLeftRadius)||8)*sc+4);
+    }
+    /* The outline itself lights up — around the digits, the chip's own shape, the
+       object's silhouette — not a box. One SVG filter per state (hover, selected):
+       the element's alpha, made solid, grown by a pixel or two, minus the element =
+       a clean ring in the accent blue. It sits only on the one element hovered or
+       selected and is drawn once (nothing animates), so an old PC does not feel it. */
+    var NS='http://www.w3.org/2000/svg',contourOn={hov:null,sel:null};
+    function contourFilter(kind){
+      var doc=preview.ownerDocument,id='mk-contour-'+kind,f=doc.getElementById(id);
+      if(f)return f;
+      var svg=doc.getElementById('mk-contour-defs');
+      if(!svg){svg=doc.createElementNS(NS,'svg');svg.id='mk-contour-defs';svg.setAttribute('aria-hidden','true');svg.setAttribute('width','0');svg.setAttribute('height','0');svg.style.cssText='position:absolute;width:0;height:0;overflow:hidden';doc.body.append(svg);}
+      var color=kind==='sel'?'#64d2ff':'#8fdfff';
+      svg.insertAdjacentHTML('beforeend','<filter id="'+id+'" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">'
+        +'<feComponentTransfer in="SourceAlpha" result="a"><feFuncA type="discrete" tableValues="0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1"/></feComponentTransfer>'
+        +'<feMorphology in="a" operator="dilate" radius="2" result="d"/>'
+        +'<feComposite in="d" in2="a" operator="out" result="ring"/>'
+        +'<feFlood flood-color="'+color+'"'+(kind==='hov'?' flood-opacity=".85"':'')+'/>'
+        +'<feComposite in2="ring" operator="in" result="line"/>'
+        +'<feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="line"/></feMerge></filter>');
+      return doc.getElementById(id);
+    }
+    var CONTOUR_PROPS=['filter','outline','outline-offset'];
+    function clearContour(el){
+      if(!el||!el.__contour)return;
+      CONTOUR_PROPS.forEach(function(k){var o=el.__contour[k];if(o&&o.v)el.style.setProperty(k,o.v,o.p);else el.style.removeProperty(k);});
+      delete el.__contour;
+    }
+    // A chip (it has a plate) is outlined by the browser itself, exactly along its own
+    // rounded shape; its soft shadow is not part of it. Only bare digits, text, icons
+    // and pictures take the silhouette filter (alpha ≥ .35, so glows and shadows do not count).
+    function isChip(el){
+      if(el.tagName==='IMG'||el.classList.contains('mk-wf-depth'))return false;
+      var cs=getComputedStyle(el);
+      if(cs.backgroundClip==='text'||cs.webkitBackgroundClip==='text')return false;   // gradient digits: their glyphs are the shape
+      return cs.backgroundImage!=='none'||!/^(transparent|rgba\(\d+, \d+, \d+, 0\))$/.test(cs.backgroundColor);
+    }
+    // Keep the ring the same few screen pixels on a small icon and a numeral grown to 300 %.
+    function ringRadius(kind,el){
+      var w=el.offsetWidth,sc=w?el.getBoundingClientRect().width/w:1,ring=((kind==='sel'?2:1.6)/(sc||1)).toFixed(2);
+      var f=contourFilter(kind),m=f.querySelector('feMorphology');
+      if(m.getAttribute('radius')!==ring)m.setAttribute('radius',ring);
+      return f;
+    }
+    function applyContour(kind,el){
+      if(el.__contour&&el.__contour.k===kind){if(!el.__contour.chip)ringRadius(kind,el);return;}
+      clearContour(el);
+      var saved={k:kind};CONTOUR_PROPS.forEach(function(k){saved[k]={v:el.style.getPropertyValue(k),p:el.style.getPropertyPriority(k)};});
+      el.__contour=saved;
+      if(isChip(el)){
+        saved.chip=true;
+        // In the chip's own units: the preview and the element's size scale it on screen.
+        var w=el.offsetWidth,sc=(w?el.getBoundingClientRect().width/w:1)||1;
+        el.style.setProperty('outline',((kind==='sel'?2:1.5)/sc).toFixed(2)+'px solid '+(kind==='sel'?'#64d2ff':'#8fdfffd9'),'important');
+        el.style.setProperty('outline-offset',(1.5/sc).toFixed(2)+'px','important');
+        return;
+      }
+      var base=getComputedStyle(el).filter,f=ringRadius(kind,el);
+      el.style.setProperty('filter','url(#'+f.id+')'+(base&&base!=='none'?' '+base:''),'important');
+    }
+    function setContour(kind,el){
+      if(kind==='hov'&&el&&el===contourOn.sel)el=null;              // the selected one is already outlined
+      var prev=contourOn[kind],other=kind==='hov'?'sel':'hov';
+      contourOn[kind]=el;
+      if(kind==='sel'&&el&&contourOn.hov===el)contourOn.hov=null;   // selection takes it over
+      if(prev&&prev!==el){if(prev===contourOn[other])applyContour(other,prev);else clearContour(prev);}
+      if(el)applyContour(kind,el);
+    }
+    var hovFrame=0,hovX=0,hovY=0;
+    function showHover(hit){ setContour('hov',hit?hit.el:null); }
+    function isSelected(hit){
+      if(hit.kind==='part')return selKind==='part'&&hit.key===selectedPart&&preview.classList.contains('wf-editing');
+      return hit.kind===selKind&&(hit.kind!=='addon'||hit.el===selAddon);
+    }
+    function paintHover(){
+      hovFrame=0;if(drag)return;
+      var hit=hits(hovX,hovY)[0]||null;
+      showHover(hit&&!isSelected(hit)?hit:null);
+      var cur=hit?'grab':'';if(preview.style.cursor!==cur)preview.style.cursor=cur;
+    }
+    preview.addEventListener('pointermove',function(e){
+      if(drag||e.buttons||e.pointerType==='touch')return;
+      hovX=e.clientX;hovY=e.clientY;if(!hovFrame)hovFrame=requestAnimationFrame(paintHover);
+    },{passive:true});
+    preview.addEventListener('pointerleave',function(){cancelAnimationFrame(hovFrame);hovFrame=0;showHover(null);});
+    function selEl(){return selKind==='depth'?preview.querySelector(':scope > .mk-wf-depth'):selKind==='addon'?selAddon:preview.querySelector('[data-wf-part="'+selectedPart+'"]');}
+    function selBox(){
+      if(selKind==='depth'){var f=depthFrame();return f&&f.box;}
+      if(selKind==='addon'){var a=selAddon&&selAddon.isConnected&&addonFrame(selAddon);return a&&a.box;}
+      var el=preview.querySelector('[data-wf-part="'+selectedPart+'"]');
+      if(!el||el.hidden||!preview.classList.contains('wf-editing')||config.face==='winamp')return null;
+      return partBox(selectedPart,el);
+    }
     function placeSel(){
-      var host=preview.parentElement, selEl=preview.querySelector('[data-wf-part="'+selectedPart+'"]'), box=host&&host.querySelector(':scope > .wf-sel');
+      var host=frameHost(),box=host&&host.querySelector(':scope > .wf-sel');
       preview.querySelectorAll('[data-wf-part] > .wf-resize').forEach(function(h){h.remove();});
       if(!host)return;
-      if(!selEl||selEl.hidden||!preview.classList.contains('wf-editing')||config.face==='winamp'){if(box)box.hidden=true;return;}
+      var b=selBox();
+      setContour('sel',b?selEl():null);
+      if(!b){if(box)box.hidden=true;return;}
       if(!box){
         box=document.createElement('div');box.className='wf-sel';box.setAttribute('aria-hidden','true');
-        box.innerHTML='<span class="wf-resize" title="Velc, lai mainītu izmēru"></span>';
-        if(getComputedStyle(host).position==='static')host.style.position='relative';
+        box.innerHTML='<b class="wf-sel-tag"></b>'+['nw','ne','sw','se'].map(function(c){return '<span class="wf-resize" data-c="'+c+'" title="Velc, lai mainītu izmēru"></span>';}).join('');
         host.append(box);
-        box.querySelector('.wf-resize').addEventListener('pointerdown',function(e){
-          if(e.button!==0)return;
-          var el=preview.querySelector('[data-wf-part="'+selectedPart+'"]');if(!el)return;
-          e.preventDefault();e.stopPropagation();startDrag(e,el,true);
+        box.addEventListener('pointerdown',function(e){
+          if(e.button!==0||!e.target.classList.contains('wf-resize'))return;
+          e.preventDefault();e.stopPropagation();
+          if(selKind==='depth'){startObject(e,true);return;}
+          var el=preview.querySelector('[data-wf-part="'+selectedPart+'"]');if(el)startDrag(e,el,true);
         });
       }
-      var hr=host.getBoundingClientRect(), r=selEl.getBoundingClientRect(), pad=5;
       box.hidden=false;
-      box.style.left=(r.left-hr.left+host.scrollLeft-host.clientLeft-pad)+'px';
-      box.style.top=(r.top-hr.top+host.scrollTop-host.clientTop-pad)+'px';
-      box.style.width=(r.width+pad*2)+'px';box.style.height=(r.height+pad*2)+'px';
+      box.classList.toggle('no-size',selKind==='addon');
+      var tag=box.firstElementChild,name=selKind==='depth'?'Objekts':selKind==='addon'?'Dekors':labels[selectedPart];
+      if(tag.textContent!==name)tag.textContent=name;
+      box.style.borderRadius=(selKind==='part'&&selectedPart!=='hours'?radiusOf({kind:'part',key:selectedPart,el:preview.querySelector('[data-wf-part="'+selectedPart+'"]')}):12)+'px';
+      box.classList.toggle('tag-in',placeFrame(box,b,5)<18);
     }
     // Keep the whole element inside the face, including its scaled bounds.
     // Read geometry only while editing; roster rendering never measures parts.
@@ -856,10 +1205,111 @@
       });
       config=M.clean(config);
     }
+    /* ---- The layout rule under every edit ----
+       Elements never lie on top of each other: after a layout is chosen, an element
+       is moved, grown, added or given another timer, every visible element is
+       measured (the numeral by its digits) and placed in turn — the one just moved
+       stays where it was put, then name, timer, fatigue, month, initials, emoji,
+       clock, coffee, moon. Each keeps its spot if it is free; otherwise it takes the
+       nearest free one inside the rounded card, off the big numeral when there is
+       room near by (the numeral may stay behind a chip when there is none), and
+       only when nothing is free it gets a little smaller. Edit time only: the roster
+       never measures. Returns true when anything moved. */
+    var SETTLE_ORDER=['name','remaining','fatigue','month','initials','emoji','clock','coffee','moon'];
+    function settle(fixedKey,lastKey){
+      if(!options.get().face||config.face==='winamp')return false;
+      apply(preview,Object.assign({},options.get(),{face:config}));
+      var r=preview.getBoundingClientRect();if(!r.width||!r.height)return false;
+      function pct(b){return [(b.left-r.left)/r.width*100,(b.top-r.top)/r.height*100,(b.right-r.left)/r.width*100,(b.bottom-r.top)/r.height*100];}
+      var numeral=null,items=[];
+      M.parts.forEach(function(key){
+        var p=config.parts[key],el=preview.querySelector('[data-wf-part="'+key+'"]');
+        if(!p||!p[3]||!el||el.hidden||!el.getClientRects().length)return;
+        var b=pct(partBox(key,el));if(b[2]-b[0]<=0||b[3]-b[1]<=0)return;
+        if(key==='hours'){numeral=b;return;}
+        items.push({key:key,p:p,b:b});
+      });
+      function rank(k){return k===fixedKey?-1:k===lastKey?99:SETTLE_ORDER.indexOf(k);}
+      items.sort(function(a,b){return rank(a.key)-rank(b.key);});
+      var G=1.4,placed=[],moved=false;
+      function over(a,b,g){return a[0]<b[2]+g&&a[2]>b[0]-g&&a[1]<b[3]+g&&a[3]>b[1]-g;}
+      function inCard(b){
+        if(b[0]<3||b[2]>97||b[1]<3||b[3]>97)return false;
+        return [[b[0],b[1]],[b[2],b[1]],[b[0],b[3]],[b[2],b[3]]].every(function(c){var dx=Math.max(0,22-c[0],c[0]-78),dy=Math.max(0,22-c[1],c[1]-78);return !dx||!dy||dx*dx+dy*dy<=19*19;});
+      }
+      function free(b,avoidNum){
+        if(!inCard(b))return false;
+        for(var i=0;i<placed.length;i++)if(over(b,placed[i],G))return false;
+        return !(avoidNum&&numeral&&over(b,numeral,.6));
+      }
+      function at(it,k,dx,dy){var cx=(it.b[0]+it.b[2])/2,cy=(it.b[1]+it.b[3])/2,hw=(it.b[2]-it.b[0])/2*k,hh=(it.b[3]-it.b[1])/2*k;return [cx+dx-hw,cy+dy-hh,cx+dx+hw,cy+dy+hh];}
+      function numCover(b){if(!numeral)return 0;var w=Math.min(b[2],numeral[2])-Math.max(b[0],numeral[0]),h=Math.min(b[3],numeral[3])-Math.max(b[1],numeral[1]);return w>0&&h>0?w*h:0;}
+      // Nearest free offset, ring by ring outwards (whole per cent steps). Where the
+      // numeral may be covered, the cost is distance plus how much of it is covered,
+      // so a chip over the numeral takes its edge, not its middle.
+      function nearest(it,k,avoidNum,maxD){
+        var best=null,bc=1e9;
+        for(var d=0;d<=maxD&&d*d<bc;d++){
+          var test=function(dx,dy){
+            var x=it.p[0]+dx,y=it.p[1]+dy;if(x<5||x>95||y<5||y>95)return;
+            var b=at(it,k,dx,dy),q=dx*dx+dy*dy;if(q>=bc)return;
+            if(!avoidNum)q+=numCover(b)*1.4;
+            if(q<bc&&free(b,avoidNum)){best=[dx,dy];bc=q;}
+          };
+          for(var i=-d;i<=d;i++){test(i,-d);if(d)test(i,d);if(i>-d&&i<d){test(-d,i);test(d,i);}}
+          if(best&&avoidNum)return best;
+        }
+        return best;
+      }
+      items.forEach(function(it){
+        var hit=null,k=1;
+        if(it.key===fixedKey){
+          // What was just moved stays — only pulled back inside the card if it pokes out.
+          hit=inCard(it.b)?[0,0]:nearest(it,1,false,30)||[0,0];
+          if(hit[0]||hit[1]){it.p[0]=Math.round(it.p[0]+hit[0]);it.p[1]=Math.round(it.p[1]+hit[1]);moved=true;}
+          placed.push(at(it,1,hit[0],hit[1]));return;
+        }
+        // Nudge, then a little smaller where it is, then farther (still off the numeral),
+        // then over the numeral near by, then anywhere. Never below ~70 % of its size
+        // unless nothing else is left: small text is no better than hidden text.
+        var tries=[[1,true,6],[.9,true,8],[1,true,24],[.9,true,24],[.8,true,14],[1,false,40],[.9,false,40],[.8,false,100],[.7,false,100]];
+        // (never below 70 % of the normal size: smaller text stops being read)
+        tries=tries.filter(function(t,i){return i===0||it.p[2]*t[0]>=70;});
+        // Last resort, still better than lying on another element: smaller, down to the 50 % floor.
+        [.6,.5].forEach(function(k2){var sc=Math.max(50,it.p[2]*k2)/it.p[2];if(sc<1)tries.push([sc,false,100]);});
+        // Already over the numeral (the layout's own design) and clear of every chip: leave it.
+        if(free(it.b,false))hit=numeral&&over(it.b,numeral,.6)?nearest(it,1,true,10)||[0,0]:[0,0];
+        for(var t=0;!hit&&t<tries.length;t++){k=tries[t][0];hit=nearest(it,k,tries[t][1],tries[t][2]);}
+        if(!hit){hit=[0,0];k=1;}
+        var nx=Math.round(it.p[0]+hit[0]),ny=Math.round(it.p[1]+hit[1]),ns=Math.max(50,Math.round(it.p[2]*k));
+        if(nx!==it.p[0]||ny!==it.p[1]||ns!==it.p[2]){it.p[0]=nx;it.p[1]=ny;it.p[2]=ns;moved=true;}
+        placed.push(at(it,k,hit[0],hit[1]));
+      });
+      if(moved){config=M.clean(config,true);apply(preview,Object.assign({},options.get(),{face:config}));}
+      return moved;
+    }
+    // A settle outside save() (a new timer, a slider let go): stored without an undo step of its own.
+    // keepNum: a ready-made look keeps its own numeral colour (a layout save would set it to the accent).
+    function settleStore(fixedKey,lastKey,keepNum){
+      if(!settle(fixedKey,lastKey))return;
+      var d=options.get(),num=d.num;
+      options.change(M.clean(config,true));
+      if(keepNum){if(num==null)delete d.num;else d.num=num;var nc=host.querySelector('.mk-num-color');if(nc&&num)nc.value='#'+String(num).split(',').map(function(n){return (+n).toString(16).padStart(2,'0');}).join('');}
+      sync();
+    }
+    currentSettle=function(){if(options.get().face&&preview.isConnected)settleStore(null,null,true);};
+    /* constrain: true = the selected element was moved/sized (it stays, the rest make room);
+       'all'/'fit'/'material' = a whole new arrangement; 'parts' = an element was added or
+       removed (it finds a free spot, the rest stay); 'slide' = a slider mid-drag (no settle
+       until it is let go). */
     function save(constrain) {
       history.push(options.get().face ? M.clean(options.get().face) : null);
       if(history.length>20)history.shift();
-      preview.classList.add('wf-editing');config=M.clean(config);if(constrain)constrainParts(constrain==='all'||constrain==='material',constrain===true||constrain==='material');options.change(M.clean(config));sync();sizePreview();
+      preview.classList.add('wf-editing');config=M.clean(config);
+      var c=constrain==='slide'||constrain==='parts'?true:constrain;
+      if(c)constrainParts(c==='all'||c==='material',c===true||c==='material');
+      if(constrain&&constrain!=='slide')settle(constrain===true?selectedPart:null,constrain==='parts'?selectedPart:null);
+      options.change(M.clean(config,true));sync();sizePreview();
     }
     tab.addEventListener('click',activate);
     tabs.addEventListener('click',function(e){if(e.target.closest('[data-skin-section]')!==tab){preview.classList.remove('wf-editing');apply(preview,options.get());}});
@@ -869,12 +1319,14 @@
       if(el.dataset.tint){config.tint=el.dataset.tint;save();}
       if(el.dataset.metal!=null){config.metal=+el.dataset.metal;save();}
       if(el.dataset.finish!=null){config.finish=+el.dataset.finish;save('material');}
-      if(el.dataset.timerStyle!=null||el.dataset.timerHand||el.dataset.timerFace||el.dataset.timerSkin){
+      if(el.dataset.timerStyle!=null||el.dataset.timerHand||el.dataset.timerFace||el.dataset.timerSkin||el.dataset.timerDigit!=null){
         var cur=DIAL_RE.test(String(options.get().tm||''))?options.get().tm:'a11';
-        var next=el.dataset.timerStyle!=null?(el.dataset.timerStyle?cur:''):el.dataset.timerSkin?el.dataset.timerSkin+cur[1]+cur[2]:el.dataset.timerHand?cur[0]+el.dataset.timerHand+cur[2]:cur[0]+cur[1]+el.dataset.timerFace;
+        var next=el.dataset.timerDigit!=null?(el.dataset.timerDigit?el.dataset.timerDigit+'11':''):el.dataset.timerStyle!=null?(el.dataset.timerStyle?cur:''):el.dataset.timerSkin?el.dataset.timerSkin+cur[1]+cur[2]:el.dataset.timerHand?cur[0]+el.dataset.timerHand+cur[2]:cur[0]+cur[1]+el.dataset.timerFace;
         // Turning the dial on: it is bigger than the chip, so it takes the nearest free spot.
-        if(next&&!DIAL_RE.test(String(options.get().tm||''))&&M.fitDial){M.fitDial(config);save();}
+        if(DIAL_RE.test(next)&&!DIAL_RE.test(String(options.get().tm||''))&&M.fitDial){M.fitDial(config);save();}
         if(options.timer)options.timer(next);apply(preview,options.get());sync();
+        // A dial or a stacked readout is bigger than the chip: it finds room, the rest stay.
+        settleStore(null,'remaining');
       }
       if(el.dataset.coffeeMode!=null){config.coffeeMode=+el.dataset.coffeeMode;config.coffeeExplicit=1;save(true);}
       if(el.dataset.coffeeContrast!=null){if(window.MINKA_APP==='rad'&&!config.coffeeExplicit)config.coffeeMode=0;config.coffeeContrast=+el.dataset.coffeeContrast;save();}
@@ -883,12 +1335,12 @@
       if(el.classList.contains('wf-full-tint-auto')){config.fullTintAuto=config.fullTintAuto?0:1;save();}
       if(el.classList.contains('wf-part-color-clear')){config.colors[selectedPart]='';save();}
       if(el.dataset.partPlate!=null){config.plates[selectedPart]=+el.dataset.partPlate;save();}
-      if(el.dataset.part){selectedPart=el.dataset.part;if(!config.parts[selectedPart][3]||!options.get().face){config.parts[selectedPart][3]=1;save(true);}else sync();}
-      if(el.classList.contains('wf-remove')){config.parts[selectedPart][3]=config.parts[selectedPart][3]?0:1;save(true);}
+      if(el.dataset.part){selKind='part';selectedPart=el.dataset.part;if(!config.parts[selectedPart][3]||!options.get().face){config.parts[selectedPart][3]=1;save('parts');}else sync();}
+      if(el.classList.contains('wf-remove')){config.parts[selectedPart][3]=config.parts[selectedPart][3]?0:1;save('parts');}
       if(el.classList.contains('wf-undo')&&history.length){var previous=history.pop();config=M.clean(previous);options.change(previous);preview.classList.toggle('wf-editing',!!previous);apply(preview,options.get());sync();sizePreview();}
       if(el.classList.contains('wf-fit'))save('fit');
       // The layout most people build by hand: the essentials only.
-      if(el.classList.contains('wf-minimal')){var keep={hours:1,name:1,remaining:1,emoji:1,moon:1};M.parts.forEach(function(k){config.parts[k][3]=keep[k]?1:0;});save(true);}
+      if(el.classList.contains('wf-minimal')){var keep={hours:1,name:1,remaining:1,emoji:1,moon:1};M.parts.forEach(function(k){config.parts[k][3]=keep[k]?1:0;});save('all');}
       if(el.classList.contains('wf-reset')){config=M.preset(config.face,config);save('all');}
       if(el.classList.contains('wf-original')){options.change(null);options.section('background');options.rebuild();}
     });
@@ -902,25 +1354,61 @@
       else if(el.dataset.position)config.parts[selectedPart][{x:0,y:1,size:2}[el.dataset.position]]=+el.value;
       else if(el.dataset.image)config[el.dataset.image]=+el.value;
       else return;
-      save(!!el.dataset.position);
+      save(el.dataset.position?'slide':false);
     });
+    // A position slider let go: now the others make room.
+    panel.addEventListener('change',function(e){if(e.target.dataset&&e.target.dataset.position)settleStore(selectedPart);});
     // Pointer capture stays on the unchanged preview. All coordinates are relative
     // to its real dimensions; persisted values never depend on device pixels.
-    var drag=null;
+    // While dragging only the moved element's three variables change (once a frame);
+    // the full repaint, the sliders and the save wait for the release.
+    var drag=null,dragFrame=0,dragEvt=null;
     function startDrag(e,el,resizing){
       if(!preview.classList.contains('wf-editing')||config.face==='winamp')return;
-      selectedPart=el.dataset.wfPart;sync();
-      var r=preview.getBoundingClientRect(),b=el.getBoundingClientRect(),cx=b.left+b.width/2,cy=b.top+b.height/2;
-      drag={id:e.pointerId,x:e.clientX,y:e.clientY,px:config.parts[selectedPart][0],py:config.parts[selectedPart][1],r:r,
-        resize:resizing,size:config.parts[selectedPart][2],cx:cx,cy:cy,d0:Math.max(8,Math.hypot(e.clientX-cx,e.clientY-cy))};
+      selKind='part';selectedPart=el.dataset.wfPart;sync();showHover(null);
+      var r=preview.getBoundingClientRect(),b=partBox(selectedPart,el),cx=(b.left+b.right)/2,cy=(b.top+b.bottom)/2;
+      drag={id:e.pointerId,x:e.clientX,y:e.clientY,px:config.parts[selectedPart][0],py:config.parts[selectedPart][1],r:r,el:el,
+        resize:resizing,size:config.parts[selectedPart][2],cx:cx,cy:cy,d0:Math.max(8,Math.hypot(e.clientX-cx,e.clientY-cy)),moved:false};
       try{preview.setPointerCapture(e.pointerId);}catch(_e){}
     }
+    // The object in front of the numeral is the photo's own cut-out: moving it moves
+    // the picture (Attēla novietojums), its handles zoom the picture.
+    function startObject(e,zoom){
+      var f=depthFrame();if(!f||!f.box)return;
+      selKind='depth';showHover(null);placeSel();
+      var clip=f.el.getBoundingClientRect(),q=f.el.firstElementChild.getBoundingClientRect(),m=maskOf(cssUrl(f.el.firstElementChild.style.backgroundImage));
+      var s=Math.max(q.width/m.nw,q.height/m.nh),cx=(f.box.left+f.box.right)/2,cy=(f.box.top+f.box.bottom)/2;
+      drag={id:e.pointerId,x:e.clientX,y:e.clientY,obj:true,zoom:zoom,ix:config.imageX,iy:config.imageY,iz:config.imageZoom,
+        spanX:m.nw*s-clip.width,spanY:m.nh*s-clip.height,cx:cx,cy:cy,d0:Math.max(8,Math.hypot(e.clientX-cx,e.clientY-cy)),moved:false};
+      try{preview.setPointerCapture(e.pointerId);}catch(_e){}
+    }
+    function becomeLayout(key){
+      // The original classic card has no saved layout: the first grab gives it one,
+      // in the same place and colour, so the element can move. Atcelt returns it.
+      var num=String(options.get().num||'');
+      config=M.preset('classic',null);
+      if(/^\d{1,3},\d{1,3},\d{1,3}$/.test(num))config.tint=num.split(',').map(function(n){return Math.min(255,+n).toString(16).padStart(2,'0');}).join('');
+      selectedPart=key;save('all');
+      if(typeof window._mkToast==='function')window._mkToast('Kartīte pārslēgta uz rediģējamu izkārtojumu — “Atcelt pēdējo” to atgriež','ok');
+      return preview.querySelector('[data-wf-part="'+key+'"]');
+    }
     preview.addEventListener('pointerdown',function(e){
-      if(!preview.classList.contains('wf-editing')||e.button!==0||config.face==='winamp')return;
-      var el=e.target.closest('[data-wf-part]');if(!el)return;
+      if(e.button!==0)return;
+      var hit=pickPress(e);
+      if(!hit){if(selKind!=='part'){selKind='part';placeSel();}return;}
+      if(hit.kind==='addon'){selKind='addon';selAddon=hit.el;showHover(null);placeSel();return;}   // it drags itself (card-addons)
       e.preventDefault();e.stopPropagation();
+      if(hit.kind==='depth'){startObject(e,false);return;}
+      showGroup('parts');
+      var el=hit.el;
+      if(!options.get().face){el=becomeLayout(hit.key);if(!el)return;}
+      else if(!preview.classList.contains('wf-editing'))return;
       startDrag(e,el,false);
-    });
+    },true);
+    // An addon being dragged (its own capture): the frame follows it.
+    preview.addEventListener('pointermove',function(e){
+      if(selKind==='addon'&&e.buttons&&selAddon&&selAddon.classList.contains('is-dragging')&&!dragFrame)dragFrame=requestAnimationFrame(function(){dragFrame=0;placeSel();});
+    },{passive:true});
     // Alignment guides while dragging: the card centre (amber) and the centres
     // of the other visible elements (blue). Within SNAP % the part locks on.
     var SNAP=2.5;
@@ -942,28 +1430,74 @@
       if(by){h.style.top=by.v+'%';h.dataset.kind=by.k;ny=by.v;}
       return [nx,ny];
     }
-    preview.addEventListener('pointermove',function(e){
-      if(!drag||e.pointerId!==drag.id)return;
+    function livePart(){
+      var p=config.parts[selectedPart],el=preview.querySelector('[data-wf-part="'+selectedPart+'"]');if(!el)return;
+      el.style.setProperty('--wf-x',p[0]+'%');el.style.setProperty('--wf-y',p[1]+'%');el.style.setProperty('--wf-scale',p[2]/100);
+    }
+    function liveImage(){
+      preview.style.setProperty('--wf-bg-x',config.imageX+'%');preview.style.setProperty('--wf-bg-y',config.imageY+'%');
+      preview.style.setProperty('--wf-bg-zoom',config.imageZoom+'%');preview.style.setProperty('--wf-zoom-ratio',config.imageZoom/100);
+    }
+    function dragStep(){
+      dragFrame=0;var e=dragEvt;if(!drag||!e)return;
+      if(drag.obj){
+        if(drag.zoom)config.imageZoom=Math.max(100,Math.min(180,Math.round(drag.iz*Math.hypot(e.clientX-drag.cx,e.clientY-drag.cy)/drag.d0)));
+        else{
+          if(drag.spanX>1)config.imageX=Math.max(0,Math.min(100,Math.round(drag.ix-(e.clientX-drag.x)*100/drag.spanX)));
+          if(drag.spanY>1)config.imageY=Math.max(0,Math.min(100,Math.round(drag.iy-(e.clientY-drag.y)*100/drag.spanY)));
+        }
+        liveImage();placeSel();
+        // A photo that exactly fills the card has nowhere to slide: say what helps instead.
+        if(!drag.zoom&&drag.spanX<=1&&drag.spanY<=1){var tg=frameHost().querySelector('.wf-sel-tag');if(tg)tg.textContent='Objekts: vispirms tuvini (velc stūri)';}
+        return;
+      }
       if(drag.resize){
         // size follows the distance from the element's centre
         var max=selectedPart==='hours'?300:170,d=Math.hypot(e.clientX-drag.cx,e.clientY-drag.cy);
         config.parts[selectedPart][2]=Math.max(50,Math.min(max,Math.round(drag.size*d/drag.d0)));
-        apply(preview,Object.assign({},options.get(),{face:config}));sync();return;
+      }else{
+        var nx=Math.max(5,Math.min(95,drag.px+(e.clientX-drag.x)/drag.r.width*100));
+        var ny=Math.max(5,Math.min(95,drag.py+(e.clientY-drag.y)/drag.r.height*100));
+        var s=snap(nx,ny);
+        config.parts[selectedPart][0]=Math.round(s[0]);
+        config.parts[selectedPart][1]=Math.round(s[1]);
       }
-      var nx=Math.max(5,Math.min(95,drag.px+(e.clientX-drag.x)/drag.r.width*100));
-      var ny=Math.max(5,Math.min(95,drag.py+(e.clientY-drag.y)/drag.r.height*100));
-      var s=snap(nx,ny);
-      config.parts[selectedPart][0]=Math.round(s[0]);
-      config.parts[selectedPart][1]=Math.round(s[1]);
-      constrainParts(false,true);apply(preview,Object.assign({},options.get(),{face:config}));sync();
+      livePart();placeSel();
+    }
+    preview.addEventListener('pointermove',function(e){
+      if(!drag||e.pointerId!==drag.id)return;
+      if(!drag.moved&&Math.abs(e.clientX-drag.x)+Math.abs(e.clientY-drag.y)<3)return;
+      drag.moved=true;if(lastPress)lastPress.moved=true;
+      dragEvt=e;if(!dragFrame)dragFrame=requestAnimationFrame(dragStep);
     });
-    function endDrag(e){if(!drag||e.pointerId!==drag.id)return;drag=null;var g=preview.querySelector(':scope > .wf-guides');if(g)g.remove();save(true);}
+    function endDrag(e){
+      if(!drag||e.pointerId!==drag.id)return;
+      var d=drag;if(dragFrame){cancelAnimationFrame(dragFrame);dragStep();}
+      drag=null;dragEvt=null;var g=preview.querySelector(':scope > .wf-guides');if(g)g.remove();
+      if(d.moved){apply(preview,Object.assign({},options.get(),{face:config}));save(d.obj?false:true);}else placeSel();
+    }
     preview.addEventListener('pointerup',endDrag);preview.addEventListener('pointercancel',endDrag);preview.addEventListener('lostpointercapture',endDrag);
     preview.addEventListener('click',function(e){if(preview.classList.contains('wf-editing')){e.preventDefault();e.stopPropagation();}},true);
+    // Pinch on a trackpad (or Ctrl + wheel) over the selected element resizes it.
+    var wheelSave=0;
+    preview.parentElement.addEventListener('wheel',function(e){
+      if(!e.ctrlKey||drag)return;
+      var b=selBox();if(!b||e.clientX<b.left-8||e.clientX>b.right+8||e.clientY<b.top-8||e.clientY>b.bottom+8)return;
+      e.preventDefault();
+      // A trackpad pinch sends small steps, a mouse wheel notch ~100: each step is capped.
+      var k=Math.max(.9,Math.min(1.1,Math.exp(-e.deltaY*.004)));
+      if(selKind==='depth'){config.imageZoom=Math.max(100,Math.min(180,Math.round(config.imageZoom*k)));liveImage();}
+      else if(selKind==='part'){var p=config.parts[selectedPart];p[2]=Math.max(50,Math.min(selectedPart==='hours'?300:170,Math.round(p[2]*k)));livePart();}
+      else return;
+      placeSel();clearTimeout(wheelSave);wheelSave=setTimeout(function(){apply(preview,Object.assign({},options.get(),{face:config}));save(selKind==='part');},260);
+    },{passive:false});
     preview.addEventListener('keydown',function(e){
-      if(!preview.classList.contains('wf-editing')||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;
+      if(!preview.classList.contains('wf-editing'))return;
       var el=e.target.closest('[data-wf-part]');if(!el)return;
-      e.preventDefault();e.stopPropagation();selectedPart=el.dataset.wfPart;
+      var arrow=['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key),size=e.key==='+'||e.key==='='||e.key==='-';
+      if(!arrow&&!size)return;
+      e.preventDefault();e.stopPropagation();selKind='part';selectedPart=el.dataset.wfPart;
+      if(size){var p=config.parts[selectedPart];p[2]=Math.max(50,Math.min(selectedPart==='hours'?300:170,p[2]+(e.key==='-'?-1:1)*(e.shiftKey?10:4)));save(true);return;}
       var i=/Left|Right/.test(e.key)?0:1,delta=/Left|Up/.test(e.key)?-1:1;
       config.parts[selectedPart][i]+=delta*(e.shiftKey?5:1);save(true);
     });
@@ -972,8 +1506,8 @@
   // The editor is being emptied: stop watching its preview and card clones.
   function release(host) {
     if (previewObserver) { previewObserver.disconnect(); previewObserver = null; }
-    cancelAnimationFrame(previewFrame); previewFrame = 0; refreshPreview = function() {};
+    cancelAnimationFrame(previewFrame); previewFrame = 0; refreshPreview = function() {}; currentPick = function () { return null; }; currentSettle = function () {}; releaseContours(); releaseContours = function () {};
     if (waSizes && host) host.querySelectorAll('.wf-winamp').forEach(function (card) { waSizes.unobserve(card); });
   }
-  window.MinkaCardFaces = { dialPreview: dialPreview, dialMarkup: dialMarkup, dialSkins: DIAL_SKINS, apply: apply, mount: mount, release: release, refreshPreview: function(){refreshPreview();} };
+  window.MinkaCardFaces = { dialPreview: dialPreview, dialMarkup: dialMarkup, dialSkins: DIAL_SKINS, digitSkins: DIGIT_SKINS, digitPreview: digitPreview, pick: function(e){ return currentPick(e); }, settle: function(){ currentSettle(); }, apply: apply, mount: mount, release: release, refreshPreview: function(){refreshPreview();} };
 })();

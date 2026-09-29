@@ -141,7 +141,7 @@ const SKINS_KEY = "skins:v1";
 const SKIN_ART_PREFIX = "skin-art::";
 const SKIN_ART_MAX_BYTES = 96 * 1024;
 const SKIN_ART_ID_RE = /^[a-f0-9]{32}$/;
-const SKIN_PART_RE = /^(img:[\w-]{1,40}|art:[a-f0-9]{32}|grad:[a-z]{1,16}|hue:\d{1,3},\d{1,3},\d{1,3}|txt:\d{1,3},\d{1,3},\d{1,3}|num:\d{1,3},\d{1,3},\d{1,3}|na:(0(\.\d{1,2})?|1)|em:(0(\.\d{1,2})?|1)|emn:[01]|dp:0|fx:[a-z]{1,12}|fxs:[0-3](\.\d{1,2})?|fp:\d{1,2},\d{1,2}|tm:[a-e][1-3][1-3]|bd:[a-z]{2,12}|bp:\d{1,2}|bq:\d{1,2}|av:1|ad:[a-z0-9-]{1,40},(?:[6-9]\d|1[0-3]\d|140),[lr],-?(?:1000|[0-9]{1,3}),-?(?:1000|[0-9]{1,3}))$/;
+const SKIN_PART_RE = /^(img:[\w-]{1,40}|art:[a-f0-9]{32}|grad:[a-z]{1,16}|hue:\d{1,3},\d{1,3},\d{1,3}|txt:\d{1,3},\d{1,3},\d{1,3}|num:\d{1,3},\d{1,3},\d{1,3}|na:(0(\.\d{1,2})?|1)|em:(0(\.\d{1,2})?|1)|emn:[01]|dp:0|fx:[a-z]{1,12}|fxs:[0-3](\.\d{1,2})?|fp:\d{1,2},\d{1,2}|tm:(?:[a-h][1-3][1-3]|[p-t]11)|bd:[a-z]{2,12}|bp:\d{1,2}|bq:\d{1,2}|av:1|ad:[a-z0-9-]{1,40},(?:[6-9]\d|1[0-3]\d|140),[lr],-?(?:1000|[0-9]{1,3}),-?(?:1000|[0-9]{1,3}))$/;
 
 function cleanSkinWorker(value) {
   if (typeof value !== "string") return "";

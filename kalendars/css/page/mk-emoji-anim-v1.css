@@ -76,4 +76,7 @@
   @media (prefers-reduced-motion: reduce) {
     .mk-emoji-nudge-box.mk-emoji-nudge-box { animation: none !important; }
   }
-  @media (prefers-reduced-motion: reduce) { .mk-emoji-film { display: none !important; } }
+  /* Samazināta kustība: statiskais kadrs paliek redzams (tas aizstāj glifu, ko
+     fonts nesalīmē), tikai nekustas. Agrāk te bija display:none — tad šie emoji
+     bija tukši. */
+  @media (prefers-reduced-motion: reduce) { html .mk-emoji-film.is-playing.is-playing { animation: none !important; } }

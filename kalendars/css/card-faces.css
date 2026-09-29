@@ -586,9 +586,11 @@ html body #grafiks-list.grid-view.grid-view.grid-view .card.card.card.mk-mid-car
 .mk-wf-dial .v.xl {font-size:20px;}
 .mk-wf-dial .l {fill:var(--dial-ink);opacity:.85;font-family:inherit;font-weight:800;font-size:5.4px;letter-spacing:.6px;text-anchor:middle;}
 /* Pulksteņa izskats: tiles that draw each dial with the card's own accent. */
-.wf-dial-skins {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;}
-.wf-dial-skins button {display:grid;justify-items:center;gap:6px;padding:10px 4px 8px;border-radius:18px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:inherit;cursor:pointer;font:600 11.5px/1 var(--pp-font,system-ui);}
-.wf-dial-skins button[aria-pressed="true"] {border-color:var(--pp-primary,#a8c7fa);background:color-mix(in srgb,var(--pp-primary,#a8c7fa) 16%,transparent);}
+.wf-dial-skins,.wf-digit-skins {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}
+.wf-digit-skins {grid-template-columns:repeat(5,minmax(0,1fr));margin-top:8px;}
+.wf-timer-digital[hidden] {display:none !important;}
+.wf-dial-skins button,.wf-digit-skins button {display:grid;justify-items:center;gap:6px;padding:10px 4px 8px;border-radius:18px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:inherit;cursor:pointer;font:600 11.5px/1 var(--pp-font,system-ui);}
+.wf-dial-skins button[aria-pressed="true"],.wf-digit-skins button[aria-pressed="true"] {border-color:var(--pp-primary,#a8c7fa);background:color-mix(in srgb,var(--pp-primary,#a8c7fa) 16%,transparent);}
 .wf-dial-mini {display:block;width:50px;height:50px;padding:3px;border-radius:50%;background:#0b1119;}
 .wf-dial-mini > .mk-wf-dial {width:100%;height:100%;}
 .wf-timer-options[hidden],.wf-timer-analog[hidden] {display:none !important;}
@@ -693,3 +695,79 @@ html body #grafiks-list.grid-view.grid-view .card.card.card.mk-mid-card.mk-watch
 .wf-plate-sample.p2 {background:repeating-conic-gradient(#3a414b 0 25%,#2a3038 0 50%) 0 0/8px 8px;color:var(--wf-plate-tint,#d5e6ef);text-shadow:0 1px 2px #000;}
 .wf-plate-sample.p3 {background:var(--wf-plate-tint,#5f95e6);color:#fff;}
 .wf-plate-sample.p4 {background:#f3f5f8;color:#141a22;}
+
+/* ---- M3 Expressive clocks (card-faces.js: dial skins f–h, digital readouts p–t) ----
+   After the M3 Expressive clock concept: Google Sans Flex digits (a 13 kB cut, fetched
+   only when one of these is on screen), tonal plates, round ends. Colours follow the
+   card's rules as the other dials do: currentColor = the accent (or the element's own
+   colour), --dial-ink its light tint; Kontrasts / Bez fona change the plate. Static:
+   drawn once a minute (analog) or when the timer text changes (digital), no loops. */
+@font-face {font-family:'M3 Digits';src:url('../assets/fonts/m3-digits/digits.woff2') format('woff2');font-weight:300 800;font-stretch:25% 100%;font-display:swap;unicode-range:U+20,U+2D,U+30-3A,U+68,U+2013;}
+/* M3 dials (m3Dial): drawn whole in the SVG, so the chip plate steps aside. */
+.mk-wf-dial:is(.sk-f,.sk-g,.sk-h) {background:none !important;box-shadow:none !important;outline:0 !important;}
+.mk-wf-dial:is(.sk-f,.sk-g,.sk-h) svg {filter:none !important;}
+.mk-wf-dial .m3disc {fill:color-mix(in srgb,var(--wf-tint,#d5e6ef) 18%,#0c0f14);fill-opacity:.94;}
+.mk-wf-dial .m3trk {fill:none;stroke:color-mix(in srgb,var(--wf-tint,#d5e6ef) 30%,#262b33);stroke-width:7.5;stroke-linecap:round;}
+.mk-wf-dial .m3ind {fill:none;stroke:currentColor;stroke-width:7.5;stroke-linecap:round;stroke-linejoin:round;}
+.mk-wf-dial.sk-h :is(.m3ind,.m3trk) {stroke-width:6.5;}
+.mk-wf-dial.sk-g .m3disc {fill-opacity:.96;}
+.mk-wf-dial.sk-g :is(.m3ind,.m3trk) {stroke-width:5.5;}
+.mk-wf-dial .m3dot {fill:currentColor;}
+.mk-wf-dial .m3num {fill:color-mix(in srgb,var(--wf-tint,#d5e6ef) 14%,#fff);font-family:'M3 Digits',Arial,sans-serif;font-weight:620;font-stretch:84%;
+  text-anchor:middle;letter-spacing:-.2px;font-variant-numeric:tabular-nums;}
+.mk-wf-dial .m3num.q {fill-opacity:.78;font-weight:520;}
+/* Kontrasts: black plate, white digits. Bez fona: no plate, digits with a dark halo. */
+.mk-wf-dial.f2 .m3disc {fill:#000;fill-opacity:1;}
+.mk-wf-dial.f2 .m3trk {stroke:#ffffff30;}
+.mk-wf-dial.f2 .m3num {fill:#fff;}
+.mk-wf-dial.f3 .m3disc {fill:none;}
+.mk-wf-dial.f3 .m3trk {stroke:#ffffff38;}
+.mk-wf-dial.f3 .m3num {paint-order:stroke;stroke:#000000a8;stroke-width:3.2px;stroke-linejoin:round;}
+.mk-wf-dial.dth .m3disc {fill:#060606;fill-opacity:1;}
+.mk-wf-dial.dth .m3trk {stroke-dasharray:1.4 1.6;stroke-linecap:butt;}
+/* The older dials: their small caption only where it can be read (a big dial). */
+.mk-wf-dial {container-type:inline-size;}
+@container (max-width: 110px) {
+  .mk-wf-dial:not(.sk-f):not(.sk-g):not(.sk-h) .l {display:none;}
+  .mk-wf-dial:not(.sk-f):not(.sk-g):not(.sk-h) .v:not(.s) {font-size:19px;transform:translateY(-3px);transform-box:fill-box;}
+}
+/* Digital: the timer text stays (screen readers), the readout is drawn beside it. */
+.mk-watch-face [data-wf-part="remaining"].wf-m3d > :not(.mk-m3d):not(.wf-resize) {display:none !important;}
+.mk-m3d {display:inline-flex;align-items:center;font-family:'M3 Digits',Arial,sans-serif !important;font-weight:500 !important;font-style:normal;font-stretch:100%;
+  font-variant-numeric:tabular-nums;letter-spacing:0 !important;line-height:1;white-space:nowrap;color:inherit;-webkit-text-fill-color:currentColor !important;}
+.mk-m3d b {font-weight:inherit;}
+/* Faded once (never a faded group inside a faded group), readable on a dark tile. */
+.mk-m3d u,.mk-m3d .z {text-decoration:none;opacity:.42;}
+.mk-m3d .cl {display:inline-block;width:.22em;height:.62em;flex:none;
+  background:radial-gradient(circle,currentColor .07em,transparent .082em) 50% 0/100% 50% repeat-y;}
+.mk-m3d .ds {display:inline-block;width:.3em;height:.1em;margin:0 .1em;border-radius:1em;background:currentColor;flex:none;}
+/* Modinātājs (the alarm tile): hours huge and ultra-condensed, minutes beside them at
+   the top, the seconds small below the minutes. Kontūra is the same, outlined (alarm off). */
+.mk-m3d:is(.m3-p,.m3-r) {display:inline-grid;grid-template-columns:auto auto;grid-template-rows:auto auto;column-gap:.05em;align-items:start;font-weight:420 !important;font-stretch:25%;}
+.mk-m3d:is(.m3-p,.m3-r) :is(.cl,.ds) {display:none;}
+.mk-m3d:is(.m3-p,.m3-r) .g:nth-of-type(1) {grid-row:1 / span 2;font-size:2.7em;line-height:.74;letter-spacing:-.01em;}
+.mk-m3d:is(.m3-p,.m3-r) .g:nth-of-type(2) {font-size:1.45em;line-height:.8;}
+.mk-m3d:is(.m3-p,.m3-r) .g:nth-of-type(3) {font-size:.72em;font-stretch:70%;font-weight:600;align-self:end;opacity:.8;line-height:1;padding-bottom:.02em;}
+.mk-m3d.m3-r {font-weight:360 !important;}
+.mk-m3d.m3-r .g {-webkit-text-fill-color:transparent !important;-webkit-text-stroke:.045em currentColor;}
+.mk-m3d.m3-r .g:nth-of-type(3) {-webkit-text-fill-color:currentColor !important;-webkit-text-stroke:0;}
+/* Hronometrs (the stopwatch): a pair per line, the separator as two dots in its own cell. */
+.mk-m3d.m3-q {display:inline-grid;grid-template-columns:auto auto;align-items:center;column-gap:.08em;row-gap:.06em;font-weight:490 !important;font-stretch:95%;font-feature-settings:'zero' 1;}
+.mk-m3d.m3-q .g {font-size:1.3em;line-height:.8;}
+.mk-m3d.m3-q .lead {display:block;width:.22em;}
+.mk-m3d.m3-q .cl {height:.66em;}
+.mk-m3d.m3-q .ds {width:.22em;margin:0;}
+/* Taimeris: one line, wide, the leading zeros faded (00:42:10). */
+.mk-m3d.m3-s {font-weight:470 !important;font-size:1.12em;font-feature-settings:'zero' 1;gap:.02em;}
+/* Plāksnes (the time input): each pair in its own tonal pill, the separator between. */
+.mk-m3d.m3-t {gap:.08em;font-weight:400 !important;}
+.mk-m3d.m3-t .g {padding:.12em .3em .1em;border-radius:.45em;background:color-mix(in srgb,var(--wf-tint,#d5e6ef) 55%,#ffe2d4);color:#2a1410;-webkit-text-fill-color:#2a1410 !important;font-size:1.12em;}
+.mk-m3d.m3-t .g:first-child {background:color-mix(in srgb,var(--wf-tint,#d5e6ef) 30%,#ff9c78);}
+/* Picker tiles */
+.wf-digit-mini {display:flex;align-items:center;justify-content:center;width:100%;height:56px;border-radius:14px;background:#0b1119;color:var(--pp-on,#e3e7ee);--wf-tint:var(--pp-primary,#a8c7fa);font-size:13px;overflow:hidden;}
+/* The tall readouts sit in the M3 tile shape (a rounded square), not a pill. */
+html body :is(#grafiks-list,#worker-modal) .card.card.card.mk-mid-card.mk-watch-face [data-wf-part="remaining"].wf-m3d:is([data-td="p"],[data-td="q"],[data-td="r"]) {border-radius:.9em !important;padding:.35em .55em !important;}
+.mk-m3d:is(.m3-p,.m3-r) {font-size:1.18em;}
+.mk-m3d.m3-r .g {-webkit-text-stroke-width:.06em;}
+/* In the small picker tile the pills get a size that fits (the card keeps its own). */
+.wf-digit-mini .mk-m3d.m3-t {font-size:11px;}

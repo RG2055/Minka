@@ -188,6 +188,11 @@
         + skins.map(function (k) {
           var key = k[0] + '21';
           return '<button type="button" class="bld-tile" data-tm="' + key + '" aria-pressed="' + (tm[0] === k[0]) + '"><span class="wf-dial-mini"><span class="mk-wf-dial f1 sk-' + k[0] + '">' + (F && F.dialPreview ? F.dialPreview(key) : '') + '</span></span><b>' + k[1] + '</b>' + (k[0] === 'a' ? '<em class="bld-rec">Ieteicams</em>' : '') + '</button>';
+        }).join('')
+        // The M3 digital readouts, beside the dials.
+        + ((F && F.digitSkins) || []).map(function (k) {
+          var key = k[0] + '11';
+          return '<button type="button" class="bld-tile" data-tm="' + key + '" aria-pressed="' + (tm === key) + '"><span class="wf-digit-mini">' + F.digitPreview(key) + '</span><b>' + k[1] + '</b></button>';
         }).join('') + '</div>';
     } else if (step === 'decor') {
       var A = window.MinkaCardAddons, have = ctx.addons().map(function (a) { return a.id; });
@@ -210,7 +215,7 @@
       var badges = [];
       if (score >= 1) badges.push(['Salasāms', 'Viss teksts iziet kontrastu']);
       if (draft.fx) badges.push(['Eksperimentētājs', 'Bildei ir efekts']);
-      if (draft.tm) badges.push(['Laika meistars', 'Analogs taimeris']);
+      if (draft.tm) badges.push(['Laika meistars', /^[a-h]/.test(draft.tm) ? 'Analogs taimeris' : 'M3 cipari']);
       if (ctx.addons().length >= 3) badges.push(['Kolekcionārs', 'Trīs dekori']);
       var shown = draft.face ? Object.keys(draft.face.parts).filter(function (k) { return draft.face.parts[k][3]; }).length : 9;
       if (shown <= 5) badges.push(['Minimālists', 'Tikai svarīgais']);
@@ -310,7 +315,7 @@
       } else if (el.dataset.part) {
         var p = face.parts[el.dataset.part]; p[3] = p[3] ? 0 : 1;
       } else return;
-      if (draft.tm) M().fitDial(draft.face);
+      if (/^[a-h]/.test(draft.tm || '')) M().fitDial(draft.face);
       update(host, draft, { fix: true });
       award(host, 'layout', 10);
       render(host);
@@ -339,7 +344,7 @@
     }
     if (step === 'timer' && el.dataset.tm != null) {
       var tm = el.dataset.tm;
-      if (tm) { draft.tm = tm; M().fitDial(draft.face); } else delete draft.tm;
+      if (tm) { draft.tm = tm; if (/^[a-h]/.test(tm)) M().fitDial(draft.face); } else delete draft.tm;
       update(host, draft, { fix: false });
       award(host, 'timer', 10);
       render(host);
@@ -411,7 +416,7 @@
     if (draft.face) M().parts.forEach(function (k) { if (draft.face.parts && draft.face.parts[k]) face.parts[k][3] = draft.face.parts[k][3]; });
     var fresh0 = { t: 'img', id: (kit.SCENIC_SKINS[0] || {}).id || 'open-blue', face: face, depth: false };
     ['em', 'emn', 'tm'].forEach(function (k) { if (draft[k] != null) fresh0[k] = draft[k]; });
-    if (fresh0.tm) M().fitDial(fresh0.face);
+    if (/^[a-h]/.test(fresh0.tm || '')) M().fitDial(fresh0.face);
     withPalette(host, fresh0).then(function (pal) { kit.harmonize(fresh0, pal, { force: true }); update(host, fresh0, { fix: true }); });
     open(host);
   }

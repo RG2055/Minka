@@ -1181,7 +1181,7 @@
       if (sk.fx && sk.fxs != null) p.push('fxs:' + numStr(sk.fxs));
       if ((sk.fx === 'focus' || sk.fx === 'split') && /^\d{1,2},\d{1,2}$/.test(String(sk.fl || ''))) p.push('fp:' + sk.fl);
       if (sk.depth === false) p.push('dp:0');
-      if (/^[a-e][1-3][1-3]$/.test(String(sk.tm || ''))) p.push('tm:' + sk.tm);
+      if (/^(?:[a-h][1-3][1-3]|[p-t]11)$/.test(String(sk.tm || ''))) p.push('tm:' + sk.tm);
       if (/^[a-z]{2,12}$/.test(String(sk.bed || ''))) p.push('bd:' + sk.bed);
       if (/^\d{1,2}$/.test(String(sk.bp || ''))) p.push('bp:' + sk.bp);
       if (/^\d{1,2}$/.test(String(sk.bq || ''))) p.push('bq:' + sk.bq);
@@ -1216,7 +1216,7 @@
       else if (part.indexOf('fxs:') === 0) { sk.fxs = part.slice(4); }
       else if (part.indexOf('fp:') === 0) { if (/^\d{1,2},\d{1,2}$/.test(part.slice(3))) sk.fl = part.slice(3); }
       else if (part === 'dp:0') { sk.depth = false; }
-      else if (part.indexOf('tm:') === 0) { if (/^[a-e][1-3][1-3]$/.test(part.slice(3))) sk.tm = part.slice(3); }
+      else if (part.indexOf('tm:') === 0) { if (/^(?:[a-h][1-3][1-3]|[p-t]11)$/.test(part.slice(3))) sk.tm = part.slice(3); }
       else if (part.indexOf('bd:') === 0) { if (/^[a-z]{2,12}$/.test(part.slice(3))) sk.bed = part.slice(3); }
       else if (part.indexOf('bp:') === 0) { if (/^\d{1,2}$/.test(part.slice(3))) sk.bp = part.slice(3); }
       else if (part.indexOf('bq:') === 0) { if (/^\d{1,2}$/.test(part.slice(3))) sk.bq = part.slice(3); }
@@ -1568,7 +1568,7 @@
     }
     // The person's own emoji and timer settings stay.
     // (A ready-made set with its own timer keeps it; elsewhere the dial gets a free spot.)
-    if (current && current.tm && !(opts.keep && skin.tm)) { skin.tm = current.tm; if (skin.face) M.fitDial(skin.face); }
+    if (current && current.tm && !(opts.keep && skin.tm)) { skin.tm = current.tm; if (skin.face && /^[a-h]/.test(skin.tm)) M.fitDial(skin.face); }
     if (current && current.em != null) skin.em = current.em;
     if (current && current.emn != null) skin.emn = current.emn;
     if (opts.keep) return Promise.resolve({ skin: skin, addon: addon });
@@ -2209,7 +2209,7 @@
       if(p.depth===false)skin.depth=false;
       if(p.txt)skin.txt=p.txt;
       // The person's analog timer on a layout drawn for the small chip: give it a free spot.
-      if(draft.tm&&!p.tm){skin.tm=draft.tm;window.MinkaCardFaceModel.fitDial(skin.face);}
+      if(draft.tm&&!p.tm){skin.tm=draft.tm;if(/^[a-h]/.test(skin.tm))window.MinkaCardFaceModel.fitDial(skin.face);}
       return skin;
     }
     // Each preset is a full clone of the card: build them only as they come into
@@ -2266,6 +2266,8 @@
         // A whole look brings its decoration (the old ones can come back with Atsaukt).
         if(p.addons)setAddonQuiet(name,JSON.parse(JSON.stringify(p.addons)));
         commit();
+        // The look's layout drawn for other names and numbers: make room where they collide (card-faces settle).
+        requestAnimationFrame(function(){ if(window.MinkaCardFaces&&window.MinkaCardFaces.settle)window.MinkaCardFaces.settle(); });
       });
     });
     host.querySelector('[data-skin-section="presets"]').addEventListener('click',renderBundles);

@@ -20,6 +20,11 @@
      bezsaistē. */
   var BASE = 'assets/emoji-anim/';
   var manifest = null, loading = false, playing = null, nudging = null, activeText = '';
+  /* Samazināta kustība (Windows "Rādīt animācijas" izslēgts, "labākā veiktspēja"):
+     uzejot nekas nespēlē. Agrāk JS glifu paslēpa, bet CSS tajā pašā režīmā paslēpa
+     arī bildi — emoji palika tukšs, līdz pele aizgāja prom. */
+  var reduceMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  function stillOnly() { return !!(reduceMotion && reduceMotion.matches); }
 
   /* Kartītes pārzīmējas reizi sekundē (pulkstenis), un tad animētais elements
      tiek izmests un uzlikts no jauna. Animācija sāktos no nulles katru sekundi,
@@ -119,6 +124,9 @@
 
     var reveal = function () {
       if (!el.isConnected || box.parentNode !== el) return;
+      /* Glifs tiek paslēpts TIKAI tad, ja bilde tiešām ir un tiek zīmēta. Ja tā
+         neielādējās vai CSS to slēpj, kaste pazūd un glifs paliek — nekad tukšums. */
+      if (!film.naturalWidth || getComputedStyle(film).display === 'none') { box.remove(); return; }
       /* Kadru skaits tiek ņemts no paša attēla, nevis no manifesta: ja kešā ir
          vecāka josla ar citu kadru skaitu, steps() nesakristu ar joslas garumu un
          animācija vienmērīgi slīdētu, nevis pārslēgtos pa kadriem. */
@@ -148,7 +156,7 @@
        pārslēdzot dienu. */
     film.src = BASE + info.file;
     if (film.complete && film.naturalWidth) reveal();
-    else if (film.decode) film.decode().then(reveal, reveal);
+    else if (film.decode) film.decode().then(reveal, function () { if (film.complete && film.naturalWidth) reveal(); else box.remove(); });
     else film.onload = reveal;
     return film;
   }
@@ -198,6 +206,7 @@
        to pašu mezglu, bet nomainīt tajā emoji. Ar pārbaudi tikai pēc elementa
        jaunais emoji paliktu bez animācijas. */
     if (!manifest) return;
+    if (stillOnly()) { stop(); return; }
     if ((el === playing || el === nudging) && text === activeText) return;
     var info = manifest.emoji && manifest.emoji[text];
     stop();
@@ -234,11 +243,16 @@
   }, { passive: true });
 
   document.addEventListener('mouseout', function (e) {
+    /* Pele atstāja kalendāru: aizmirstam, kur tā bija. Citādi nākamā pārzīmēšana
+       (pulkstenis, reizi sekundē) atsāka animāciju tai kartītei, kas bija zem
+       vecās vietas — bez peles, uz visiem laikiem. */
+    if (!e.relatedTarget) lastX = lastY = -1;
     var active = playing || nudging;
     if (!active) return;
     if (targetOf(e.relatedTarget) !== active) stop();
   }, { passive: true });
-  window.addEventListener('blur', stop);
+  window.addEventListener('blur', function () { lastX = lastY = -1; stop(); });
+  if (reduceMotion && reduceMotion.addEventListener) reduceMotion.addEventListener('change', stop);
   document.addEventListener('visibilitychange', function () { if (document.hidden) stop(); });
 
   /* Kartītes pārzīmējas reizi sekundē (pulkstenis), un tad animētais elements

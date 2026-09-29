@@ -222,10 +222,22 @@
     // Click what you want to change: an element → its settings, the picture → Fons.
     if (previewList) previewList.addEventListener('pointerdown', function (e) {
       if (e.button !== 0 || !e.target.closest('.mk-mid-card')) return;
+      // What was pressed is decided by what is drawn there (card-faces pick): the
+      // smallest element under the pointer, a decoration or the object only on
+      // their opaque pixels. The face editor handles the same press the same way.
+      var F = window.MinkaCardFaces, hit = F && F.pick ? F.pick(e) : undefined;
+      var addonEl = hit === undefined ? e.target.closest('.mk-card-addon') : hit && hit.kind === 'addon' ? hit.el : null;
       // The decoration drags on its own; a click without moving opens its menu (above).
-      if (e.target.closest('.mk-card-addon')) { addonDown = [e.clientX, e.clientY]; return; }
+      if (addonEl) { addonDown = [e.clientX, e.clientY]; return; }
       addonDown = null;
-      var part = e.target.closest('[data-wf-part]'), card = e.target.closest('.mk-mid-card');
+      var part = hit === undefined || (!hit && e.target.closest('[data-wf-part]')) ? e.target.closest('[data-wf-part]') : hit && hit.kind === 'part' ? hit.el : null, card = e.target.closest('.mk-mid-card');
+      if (hit && hit.kind === 'depth') {
+        // The object in front of the numeral is part of the picture: Fons, its position below.
+        selectFrame(false); selectBackground(false);
+        if (current !== 'background') show('background');
+        setTimeout(function () { var pos = face.querySelector('details.wf-background'); if (pos) pos.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, 60);
+        return;
+      }
       if (!part) {
         // the rim of the card = its frame → Krāsas, at the metal frame
         var r = card.getBoundingClientRect(), edge = Math.min(14, r.width * .07);
@@ -242,7 +254,7 @@
         return;
       }
       selectFrame(false); selectBackground(false);
-      if (!previewList.querySelector('.mk-watch-face')) { if (current !== 'colors') show('colors'); return; }
+      // (the original classic card gets a layout on this press: card-faces becomeLayout)
       if (current !== 'layout') show('layout');
       // the face editor selects the part on this same pointerdown; then bring its settings into view
       setTimeout(function () { var head = face.querySelector('.wf-part-head'); if (head) head.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, 60);
