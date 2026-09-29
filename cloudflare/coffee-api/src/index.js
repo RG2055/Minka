@@ -20,6 +20,8 @@ async function checkAuth(request, env) {
   if (!env.AUTH) return 'unchecked';
   try {
     const r = await env.AUTH.fetch('https://minka-api/api/me', { headers: { authorization: header } });
+    // Read the tiny reply: an unread body leaves the minka-api call logged as "canceled".
+    await r.arrayBuffer().catch(() => {});
     if (r.ok) {
       if (GOOD_TOKENS.size > 50) GOOD_TOKENS.clear();
       GOOD_TOKENS.set(header, Date.now() + 10 * 60000);
