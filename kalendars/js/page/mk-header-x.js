@@ -1466,7 +1466,7 @@
   // grown out of the search box like the other surfaces.
   function openRgpool() {
     var p = shell(), box = els.searchbox || els.search;
-    if (!p || typeof p.openRgpoolSheet !== 'function') { window.open('/pool/', '_blank', 'noopener'); return; }
+    if (!p || typeof p.openRgpoolSheet !== 'function') { window.open(location.hostname === 'rgapp.page' ? '/pool/' : 'https://rgapp.page/pool/', '_blank', 'noopener'); return; }
     var r = box.getBoundingClientRect(), f = null;
     try { f = window.frameElement; } catch (_e) {}
     var fr = f ? f.getBoundingClientRect() : { left: 0, top: 0 };

@@ -3945,7 +3945,8 @@ function mkSheetClose(sheet, panel, key, btn, done) {
    that grows out of the header search box and returns into it. Loaded on the
    first open, kept while closed, unloaded after a few idle minutes. */
 (function(){
-  var URL_POOL = '/pool/';
+  // /pool is a route on rgapp.page only; from GitHub Pages it must be absolute.
+  var URL_POOL = location.hostname === 'rgapp.page' ? '/pool/' : 'https://rgapp.page/pool/';
   var IDLE_MS = 5 * 60 * 1000, unloadTimer = 0, origin = null, lastFocus = null;
   window.openRgpoolSheet = function openRgpoolSheet(from) {
     var sheet = document.getElementById('rgpoolSheet');

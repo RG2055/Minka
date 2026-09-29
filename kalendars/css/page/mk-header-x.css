@@ -1162,6 +1162,8 @@
     -webkit-line-clamp: 2 !important;
     -webkit-box-orient: vertical !important;
     min-width: 0 !important;
+    /* Vecā galvene (mk-integrated-duty-header-v1) liek 35 px — divas 20 px rindas tad nogriezās. */
+    max-height: none !important;
     overflow: hidden !important;
     white-space: normal !important;
     padding-top: 2px !important;
