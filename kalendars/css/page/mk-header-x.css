@@ -911,6 +911,7 @@
 /* Atgriežoties uz šodienu, progress ieslīd no kreisās (viena atspere). */
 @keyframes hx-fill-in { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 @keyframes hx-pill-in { from { transform: translateY(3px) scale(.94); } to { transform: none; } }
+@keyframes hx-rl-fade { from { opacity: 0; } to { opacity: 1; } }
 
 /* ── Veco elementu pielāgojumi (uzvar vecos !important slāņus) ───────── */
 @layer mk-hx {
@@ -1150,6 +1151,8 @@
     text-transform: none !important;
     text-shadow: var(--hx-chip-shadow, 0 1px 1px rgba(0, 0, 0, .4)) !important;
   }
+  /* Austrumu slimnīcas ziņas: "aslimnica" ar sarkanu "a" kā slimnīcas logo. */
+  :root.mk-hx #mkTickerTrack .mk-ticker-cat .mk-cat-a { color: #ff6b6b !important; }
   :root.mk-hx:not(.mk-mobile-shell) #hxTop #mkTickerTrack .mk-tick-time {
     color: var(--hx-faint) !important;
     font-size: 11.5px !important;
@@ -1183,6 +1186,105 @@
   :root.mk-hx:not(.mk-mobile-shell) #minkaBarWrap .sl-rn-remaining {
     font-family: var(--font-ui, system-ui) !important;
     font-variant-numeric: tabular-nums !important;
+  }
+
+  /* "Tagad" čips: pa kreisi pulkstenis, pa labi atskaite zilā, atdalīta ar
+     smalku svītriņu. "atlicis" tajā pašā krāsā, nevis pelēks. */
+  :root.mk-hx:not(.mk-mobile-shell) #minkaBarWrap .sl-ruler .sl-ruler-now {
+    padding-right: 2px !important;
+    gap: 0 !important;
+  }
+  :root.mk-hx:not(.mk-mobile-shell) #minkaBarWrap .sl-ruler-now .sl-rn-rest {
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 14px !important;
+    margin-left: 7px !important;
+    padding: 0 6px 0 7px !important;
+    color: #075985 !important;
+    background: none !important;
+    /* Tikai smalka svītriņa atdala pulksteni no atskaites, bez fona. */
+    box-shadow: inset 1px 0 0 rgba(11, 18, 32, .16) !important;
+  }
+  :root.mk-hx:not(.mk-mobile-shell) #minkaBarWrap .sl-ruler-now .sl-rn-rest :is(.sl-rn-word, .sl-rn-remaining) {
+    color: inherit !important;
+  }
+  :root.mk-hx:not(.mk-mobile-shell) #minkaBarWrap .sl-ruler-now .sl-rn-rest .sl-rn-word {
+    font-weight: 650 !important;
+    opacity: .85 !important;
+    margin-right: .3em !important;
+  }
+  :root.mk-hx:not(.mk-mobile-shell) #minkaBarWrap .sl-ruler-now .sl-rn-rest .sl-rn-timer { margin-left: 0 !important; }
+
+  /* Lineāls sniedzas līdz tām pašām malām kā dienu josla zem tā (arī tai
+     margin 0 -3px): agrāk tas sēdēja 3 px atkāpē, un pa kreisi no 08:00
+     aizpildes paspīdēja bilde — josla "nesākās no sākuma". */
+  :root.mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > #shift-progress-wrap {
+    margin-left: -3px !important;
+    margin-right: -3px !important;
+    width: calc(100% + 6px) !important;
+    max-width: none !important;
+  }
+
+  /* Laika lineāls, M3 kustība. Stundu atzīmes dzīvo joslā (apakšā), "tagad"
+     čips virs tās, tāpēc tie nekad nepārklājas. Kad % vai joslas mala
+     pienāk pie atzīmes (14% pie 14:00), atzīme paceļas un izgaist
+     (emphasized accelerate), un aiz tās atgriežas (emphasized decelerate).
+     Kuras atzīmes atkāpjas, izlemj calendar.js (_layoutCompactRulerNow). */
+  :root.mk-hx:not(.mk-mobile-shell) #minkaBarWrap .sl-ruler .sl-rtick {
+    top: auto !important;
+    bottom: 0 !important;
+    height: 14px !important;
+    line-height: 14px !important;
+    z-index: 2 !important;
+    pointer-events: none !important;
+    opacity: 1;
+    translate: 0 0;
+    transition: opacity 320ms cubic-bezier(.05, .7, .1, 1), translate 420ms cubic-bezier(.05, .7, .1, 1) !important;
+  }
+  :root.mk-hx:not(.mk-mobile-shell) #minkaBarWrap .sl-ruler .sl-rtick.sl-rtick-hidden {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 0 !important;
+    translate: 0 -6px !important;
+    transition: opacity 180ms cubic-bezier(.3, 0, .8, .15), translate 220ms cubic-bezier(.3, 0, .8, .15) !important;
+  }
+  /* Čips, % un josla pozīciju NEanimē: ik 5 s tie pavirzās ~0,1 px, un
+     "left"/"width" pāreja vājam datoram lika pārrēķināt izkārtojumu 0,9 s
+     no katrām 5 s, neko redzamu nedodot. Agrākie lēcieni nāca no nepareizā
+     sākuma izkārtojuma, un tas ir salabots (_settleRuler). Plūdeni ir tikai
+     čipa platums, kad teksts saīsinās ("1 h" → "59 min"), retāk kā reizi
+     minūtē. */
+  :root.mk-hx:not(.mk-mobile-shell) #minkaBarWrap .sl-ruler .sl-ruler-now {
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+    transition: width 450ms cubic-bezier(.2, 0, 0, 1) !important;
+  }
+  :root.mk-hx:not(.mk-mobile-shell) #minkaBarWrap .sl-ruler.sl-ruler-instant :is(.sl-rtick, .sl-ruler-now, .sl-ruler-pct, .sl-ruler-elapsed) {
+    transition: none !important;
+  }
+  /* Kamēr lineālu nevar izmērīt, nekas nav redzams nepareizā vietā. */
+  :root.mk-hx:not(.mk-mobile-shell) #minkaBarWrap .sl-ruler.sl-ruler-pending :is(.sl-rtick, .sl-ruler-now, .sl-ruler-pct, .sl-ruler-elapsed) {
+    opacity: 0 !important;
+    transition: none !important;
+  }
+  /* Pirmā parādīšanās: josla aizpildās no maiņas sākuma (08:00), čips, %
+     un atzīmes jau savā vietā tikai iezogas. */
+  :root.mk-hx:not(.mk-mobile-shell) #minkaBarWrap .sl-ruler.sl-ruler-enter .sl-ruler-elapsed {
+    animation: hx-fill-in 700ms cubic-bezier(.05, .7, .1, 1) both !important;
+  }
+  :root.mk-hx:not(.mk-mobile-shell) #minkaBarWrap .sl-ruler.sl-ruler-enter :is(.sl-ruler-now, .sl-ruler-pct) {
+    animation: hx-rl-fade 400ms cubic-bezier(.05, .7, .1, 1) 300ms both !important;
+  }
+  :root.mk-hx:not(.mk-mobile-shell) #minkaBarWrap .sl-ruler.sl-ruler-enter .sl-rtick:not(.sl-rtick-hidden) {
+    animation: hx-rl-fade 400ms cubic-bezier(.05, .7, .1, 1) 150ms both !important;
+  }
+  :root[data-motion="reduced"].mk-hx #minkaBarWrap .sl-ruler :is(.sl-rtick, .sl-ruler-now, .sl-ruler-pct, .sl-ruler-elapsed) {
+    transition: none !important;
+    animation: none !important;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :root.mk-hx #minkaBarWrap .sl-ruler :is(.sl-rtick, .sl-ruler-now, .sl-ruler-pct, .sl-ruler-elapsed) { transition: none !important; animation: none !important; }
   }
 
   /* Dienu josla */

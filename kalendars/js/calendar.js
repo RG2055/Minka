@@ -3706,8 +3706,11 @@ function filterFullList(btn) {
   function rulerRemainingText(ms, clockText) {
     if (!document.documentElement.classList.contains('mk-hx')) return clockText;
     const totalMin = Math.max(0, Math.floor(ms / 60000));
+    // The last minute is "< 1 min", never a misleading "0 min".
+    if (!totalMin) return ms > 0 ? '< 1 min' : '0 min';
     const h = Math.floor(totalMin / 60), m = totalMin % 60;
-    return h ? h + ' h ' + m + ' min' : m + ' min';
+    // Whole hours read as "3 h", not "3 h 0 min".
+    return h ? (m ? h + ' h ' + m + ' min' : h + ' h') : m + ' min';
   }
 
   function updateShiftStripTimers(now) {
@@ -3745,6 +3748,8 @@ function filterFullList(btn) {
             setTextIfChanged(clockEl, String(current.getHours()).padStart(2, '0') + ':' + String(current.getMinutes()).padStart(2, '0'));
           }
           if (remainingEl) setTextIfChanged(remainingEl, rulerRemainingText(remainingMs, remainEl.textContent));
+          const _sStart = Number(strip.dataset.startMs) || 0, _sEnd = Number(strip.dataset.endMs) || 0;
+          _updateRulerIcons(rNow, t, remainingMs, _sEnd - _sStart);
           const label = 'Tagad ' + (clockEl ? clockEl.textContent : '') + ', atlicis ' + (remainingEl ? remainingEl.textContent : '');
           if (rNow.getAttribute('aria-label') !== label) rNow.setAttribute('aria-label', label);
         }
@@ -4785,23 +4790,164 @@ function filterFullList(btn) {
     });
   }
 
-  function _layoutCompactRulerNow(wrap, rNow, scrubPct) {
-    if (!wrap || !rNow) return;
-    var ruler = rNow.closest('.sl-ruler');
-    if (!ruler) return;
-    var rulerWidth = ruler.clientWidth || 0;
-    var pillWidth = rNow.offsetWidth || 0;
-    if (!rulerWidth || !pillWidth) return;
+  // "Tagad" čipā: mazs analogais pulkstenis pie pašreizējā laika (lai
+  // uzreiz redz, ka 11:44 ir pulkstenis) un smilšu pulkstenis pie "atlicis".
+  // Dizains pārņemts no rbouaf/material-clock (MIT, M3 Expressive pulkstenis):
+  // 9 viļņu "cookie" ciparnīca, "baton" rādītāji ar Google pulksteņa
+  // proporcijām (DialGeometry.kt: stunda 0,778, minūte 0,889 no Rmin, tapa)
+  // un pie "atlicis" Material stila smilšu pulkstenis (sk. zemāk). Burtu
+  // augstumā, čips neaug augstumā.
+  // Leņķi aug monotoni (30 dienu ciklā), tāpēc rādītāji ar M3 kustību iet
+  // uz priekšu, nevis atpakaļ caur 12.
+  var _RULER_FACE = (function() {
+    // MaterialShapes.Cookie9Sided, approximated: 9 soft lobes, 9 % deep.
+    var n = 9, R = 7.4, depth = 0.09, d = '';
+    for (var i = 0; i <= 108; i++) {
+      var t = i / 108 * 2 * Math.PI;
+      var r = R * (1 - depth * (1 - Math.cos(n * t)) / 2);
+      d += (i ? 'L' : 'M') + (8 + r * Math.sin(t)).toFixed(2) + ' ' + (8 - r * Math.cos(t)).toFixed(2);
+    }
+    var rMin = R * (1 - depth);
+    // Baton hands; widths are thickened for a 12 px icon (at true watch
+    // proportions they would be under half a pixel).
+    function baton(len, w, tail) {
+      return '<rect x="' + (8 - w / 2).toFixed(2) + '" y="' + (8 - len).toFixed(2) + '" width="' + w + '" height="' + (len + tail).toFixed(2) + '" rx="' + (w / 2) + '"/>';
+    }
+    return {
+      outline: d + 'Z',
+      hour: baton(0.778 * rMin, 1.9, 0.067 * rMin * 4),
+      minute: baton(0.889 * rMin, 1.35, 0.0889 * rMin * 4)
+    };
+  })();
+  function _rulerHandAngles(nowMs) {
+    var d = new Date(nowMs);
+    // 30-day cycle (a multiple of 12 h): the angles stay small enough for the
+    // renderer's float precision; the one wrap a month is the only spin back.
+    var localMin = Math.floor((nowMs - d.getTimezoneOffset() * 60000) / 60000) % 43200;
+    return { h: localMin * 0.5, m: localMin * 6 };
+  }
+  // Smilšu pulkstenis (Material Symbols "hourglass", noapaļots): augšējā
+  // kamerā tik smilšu, cik maiņas atlicis, apakšējā — cik pagājis, un plāna
+  // strūkliņa starp tām, kamēr laiks rit. Līmeņi ir <rect> y/height, ko
+  // Chrome var pārvērst ar CSS pāreju (M3 standard), pārējie vienkārši nolec.
+  var _HG_TOP = 3.3, _HG_NECK = 7.55, _HG_BOTTOM = 12.7;
+  function _rulerSand(frac) {
+    frac = Math.max(0, Math.min(1, frac));
+    var topH = (_HG_NECK - _HG_TOP) * frac, botH = (_HG_BOTTOM - 8.45) * (1 - frac);
+    return {
+      topY: _HG_NECK - topH, topH: topH,
+      botY: _HG_BOTTOM - botH, botH: botH,
+      stream: frac > 0.004 && frac < 0.996
+    };
+  }
+  function _rulerHourglassHtml(frac) {
+    var s = _rulerSand(frac);
+    var glass = 'M4.4 3.2V4.7C4.4 6.3 7 7 7 8S4.4 9.7 4.4 11.3V12.8H11.6V11.3C11.6 9.7 9 9 9 8S11.6 6.3 11.6 4.7V3.2Z';
+    return '<svg class="sl-rn-timer sl-rn-hourglass" viewBox="0 0 16 16" aria-hidden="true">' +
+      '<defs><clipPath id="slHgClip"><path d="' + glass + '"/></clipPath></defs>' +
+      '<g clip-path="url(#slHgClip)">' +
+        '<rect class="sl-hg-top" x="3" width="10" y="' + s.topY.toFixed(2) + '" height="' + s.topH.toFixed(2) + '"/>' +
+        '<rect class="sl-hg-bot" x="3" width="10" y="' + s.botY.toFixed(2) + '" height="' + s.botH.toFixed(2) + '"/>' +
+        '<rect class="sl-hg-stream" x="7.65" width=".7" y="7.6" height="5.1"' + (s.stream ? '' : ' style="opacity:0"') + '/>' +
+      '</g>' +
+      '<path class="sl-hg-glass" d="' + glass + '"/>' +
+      '<rect class="sl-hg-cap" x="3" y="1.6" width="10" height="1.7" rx=".85"/>' +
+      '<rect class="sl-hg-cap" x="3" y="12.7" width="10" height="1.7" rx=".85"/>' +
+    '</svg>';
+  }
+  function _rulerIconsHtml(nowMs, remainingMs, totalMs) {
+    var a = _rulerHandAngles(nowMs);
+    var face = '<svg class="sl-rn-face" viewBox="0 0 16 16" aria-hidden="true">' +
+      '<path class="sl-rn-dial" d="' + _RULER_FACE.outline + '"/>' +
+      '<g class="sl-rn-h" style="transform:rotate(' + a.h + 'deg)">' + _RULER_FACE.hour + '</g>' +
+      '<g class="sl-rn-m" style="transform:rotate(' + a.m + 'deg)">' + _RULER_FACE.minute + '</g>' +
+      '<circle class="sl-rn-pin" cx="8" cy="8" r="1.15"/>' +
+    '</svg>';
+    var timer = _rulerHourglassHtml(totalMs > 0 ? remainingMs / totalMs : 0);
+    return { face: face, timer: timer };
+  }
+  function _updateRulerIcons(rNow, nowMs, remainingMs, totalMs) {
+    if (!rNow) return;
+    var face = rNow.querySelector('.sl-rn-face');
+    if (face) {
+      var a = _rulerHandAngles(nowMs);
+      if (face._mkMin !== a.m) {
+        face._mkMin = a.m;
+        face.querySelector('.sl-rn-h').style.transform = 'rotate(' + a.h + 'deg)';
+        face.querySelector('.sl-rn-m').style.transform = 'rotate(' + a.m + 'deg)';
+      }
+    }
+    var timer = rNow.querySelector('.sl-rn-timer');
+    if (timer && totalMs > 0) {
+      var v = Math.round(Math.max(0, Math.min(1, remainingMs / totalMs)) * 1000);
+      if (timer._mkV !== v) {
+        timer._mkV = v;
+        var sand = _rulerSand(v / 1000);
+        var top = timer.querySelector('.sl-hg-top'), bot = timer.querySelector('.sl-hg-bot'), stream = timer.querySelector('.sl-hg-stream');
+        // Attributes for every browser; the CSS values let Chrome glide.
+        if (top) { top.setAttribute('y', sand.topY.toFixed(2)); top.setAttribute('height', sand.topH.toFixed(2)); top.style.y = sand.topY.toFixed(2) + 'px'; top.style.height = sand.topH.toFixed(2) + 'px'; }
+        if (bot) { bot.setAttribute('y', sand.botY.toFixed(2)); bot.setAttribute('height', sand.botH.toFixed(2)); bot.style.y = sand.botY.toFixed(2) + 'px'; bot.style.height = sand.botH.toFixed(2) + 'px'; }
+        if (stream) stream.style.opacity = sand.stream ? '' : '0';
+      }
+    }
+  }
 
-    // Keep the wider combined pill inside the ruler even near 08:00/08:00.
+  // Returns false while the ruler cannot be measured yet (not laid out, 0 px):
+  // the caller then keeps it pending instead of painting it in a wrong place.
+  function _layoutCompactRulerNow(wrap, rNow, scrubPct) {
+    if (!wrap || !rNow) return false;
+    var ruler = rNow.closest('.sl-ruler');
+    if (!ruler) return false;
+    ruler._mkScrubPct = scrubPct;
+    var rulerWidth = ruler.clientWidth || 0;
+    // The pill's natural width (its text shrinks from "20 h 7 min" to
+    // "8 min"). It is then set explicitly, so a CSS transition can let the
+    // pill narrow smoothly instead of snapping (header X, see its CSS).
+    var prevWidth = rNow.style.width;
+    rNow.style.width = '';
+    var pillWidth = rNow.offsetWidth || 0;
+    if (prevWidth) { rNow.style.width = prevWidth; void rNow.offsetWidth; }
+    if (!rulerWidth || !pillWidth) return false;
+    if (rNow._mkW !== pillWidth) { rNow._mkW = pillWidth; rNow.style.width = pillWidth + 'px'; }
+
+    // Keep the pill inside the ruler, clear of the card edge by a few px, even
+    // at 08:00 and in the last minutes of the shift.
+    var EDGE = 6;
     var center = rulerWidth * Math.max(0, Math.min(100, scrubPct)) / 100;
-    var left = Math.max(0, Math.min(rulerWidth - pillWidth, center - pillWidth / 2));
+    var left = Math.max(EDGE, Math.min(rulerWidth - pillWidth - EDGE, center - pillWidth / 2));
     rNow.style.left = left.toFixed(1) + 'px';
     rNow.style.transform = 'none';
 
-    // Hide only tick labels that the pill physically covers. Width reads are
-    // batched before class writes, so this remains a tiny once-per-second job.
+    // The percentage is a caption of the elapsed fill, so it is pinned to the
+    // fill's end in pixels: inside the fill while it fits, and just after it
+    // (as plain text, not a box) while the fill is still narrower than the
+    // label — a percentage-based minimum left it floating on its own near the
+    // start of every shift.
+    var fillWidth = rulerWidth * Math.max(0, Math.min(100, scrubPct)) / 100;
+    var pctEl = ruler.querySelector('.sl-ruler-pct');
+    var pctBox = null;
+    if (pctEl) {
+      var pctWidth = pctEl.offsetWidth || 0;
+      var inside = fillWidth >= pctWidth + 12;
+      var pctLeft = inside ? fillWidth - pctWidth - 6 : Math.min(rulerWidth - pctWidth, fillWidth + 6);
+      pctEl.classList.toggle('sl-ruler-pct-out', !inside);
+      pctEl.style.right = 'auto';
+      pctEl.style.left = pctLeft.toFixed(1) + 'px';
+      pctBox = { left: pctLeft, right: pctLeft + pctWidth, top: pctEl.offsetTop, bottom: pctEl.offsetTop + pctEl.offsetHeight };
+    }
+    var pillBox = { left: left, right: left + pillWidth, top: rNow.offsetTop, bottom: rNow.offsetTop + rNow.offsetHeight };
+
+    // An hour label steps aside (lifts and fades, see CSS) only where something
+    // really sits on it: the pill or the percentage. (The fill's moving end may
+    // pass under a label: white text reads on both sides.) Boxes are compared in both axes,
+    // so the same code serves labels above the band and labels inside it.
+    // Reads are batched before the class writes: a tiny once-per-second job.
     var ticks = Array.from(ruler.querySelectorAll('.sl-rtick'));
+    // Only the label's ink counts: the side padding (10 px on the card edges)
+    // would otherwise hide 14:00 for an hour on a narrow screen.
+    var tickCs = ticks.length ? getComputedStyle(ticks[0]) : null;
+    var padL = tickCs ? parseFloat(tickCs.paddingLeft) || 0 : 0;
+    var padR = tickCs ? parseFloat(tickCs.paddingRight) || 0 : 0;
     var metrics = ticks.map(function(tick) {
       var pct = parseFloat(tick.style.left) || 0;
       var x = rulerWidth * pct / 100;
@@ -4809,26 +4955,63 @@ function filterFullList(btn) {
       var transform = String(tick.style.transform || '');
       var tickLeft = transform.indexOf('-100%') >= 0 ? x - width
         : transform.indexOf('-50%') >= 0 ? x - width / 2 : x;
-      return { tick: tick, left: tickLeft, right: tickLeft + width };
+      return { tick: tick, left: tickLeft + padL, right: tickLeft + width - padR, top: tick.offsetTop, bottom: tick.offsetTop + tick.offsetHeight };
     });
-    metrics.forEach(function(metric) {
-      metric.tick.classList.toggle('sl-rtick-hidden', metric.right > left - 5 && metric.left < left + pillWidth + 5);
-    });
-
-    // The percentage is a caption of the elapsed fill, so it is pinned to the
-    // fill's end in pixels: inside the fill while it fits, and just after it
-    // (as plain text, not a box) while the fill is still narrower than the
-    // label — a percentage-based minimum left it floating on its own near the
-    // start of every shift.
-    var pctEl = ruler.querySelector('.sl-ruler-pct');
-    if (pctEl) {
-      var fillWidth = rulerWidth * Math.max(0, Math.min(100, scrubPct)) / 100;
-      var pctWidth = pctEl.offsetWidth || 0;
-      var inside = fillWidth >= pctWidth + 12;
-      pctEl.classList.toggle('sl-ruler-pct-out', !inside);
-      pctEl.style.right = 'auto';
-      pctEl.style.left = (inside ? fillWidth - pctWidth - 6 : Math.min(rulerWidth - pctWidth, fillWidth + 6)).toFixed(1) + 'px';
+    function hits(a, b, gap) {
+      return !!b && a.right > b.left - gap && a.left < b.right + gap && a.bottom > b.top && a.top < b.bottom;
     }
+    metrics.forEach(function(m) {
+      m.tick.classList.toggle('sl-rtick-hidden', hits(m, pillBox, 5) || hits(m, pctBox, 6));
+    });
+    return true;
+  }
+
+  // First paint of the ruler: everything appears at once, already in place,
+  // and the fill grows in from the start of the shift. Until the ruler can be
+  // measured (hidden tab, fonts, layout not ready) it stays invisible instead
+  // of showing the pill and labels in a wrong spot and jumping later.
+  function _settleRuler(wrap, rNow, scrubPct, isFirst) {
+    var ruler = rNow && rNow.closest('.sl-ruler');
+    if (!ruler) return;
+    var born = Date.now();
+    // Placement in the first moments (this pass, and the page still settling
+    // its width while styles, fonts and side columns load) is instant; only
+    // later changes (a window resize) glide.
+    function instant() {
+      ruler.classList.add('sl-ruler-instant');
+      clearTimeout(ruler._mkInstantT);
+      ruler._mkInstantT = setTimeout(function() { ruler.classList.remove('sl-ruler-instant'); }, 120);
+    }
+    function place() {
+      if (Date.now() - born < 2500) instant();
+      if (!_layoutCompactRulerNow(wrap, rNow, ruler._mkScrubPct)) return false;
+      if (ruler.classList.contains('sl-ruler-pending')) {
+        ruler.classList.remove('sl-ruler-pending');
+        _playRulerEnter(ruler);
+      }
+      return true;
+    }
+    ruler._mkScrubPct = scrubPct;
+    if (!place()) ruler.classList.add('sl-ruler-pending');
+    else if (isFirst) _playRulerEnter(ruler);
+    // Pixel positions follow every width change at once, instead of waiting
+    // for the next tick (5 s on weak PCs) and then jumping.
+    if (wrap._mkRulerRO) wrap._mkRulerRO.disconnect();
+    if (typeof ResizeObserver !== 'function') return;
+    wrap._mkRulerRO = new ResizeObserver(function() {
+      if (!ruler.isConnected) { wrap._mkRulerRO.disconnect(); return; }
+      place();
+    });
+    wrap._mkRulerRO.observe(ruler);
+    wrap._mkRulerRO.observe(rNow);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function() { if (ruler.isConnected) place(); });
+  }
+  function _playRulerEnter(ruler) {
+    ruler.classList.remove('sl-ruler-enter');
+    void ruler.offsetWidth;
+    ruler.classList.add('sl-ruler-enter');
+    clearTimeout(ruler._mkEnterT);
+    ruler._mkEnterT = setTimeout(function() { ruler.classList.remove('sl-ruler-enter'); }, 1100);
   }
 
   // Cheap per-second refresh of only the values that actually move, so the full
@@ -4873,12 +5056,16 @@ function filterFullList(btn) {
         var rnRemaining = rNow && rNow.querySelector('.sl-rn-remaining');
         if (rnRemaining) setTextIfChanged(rnRemaining, rulerRemainingText(_reMs, remEl.textContent));
       }
+      _updateRulerIcons(rNow, nowMs, _reMs, Math.max(1, _cEnd - _cStart));
       if (rNow) {
         var _rnLabel = 'Tagad ' + (clockEl ? clockEl.textContent : '') + ', atlicis ' + (rNow.querySelector('.sl-rn-remaining') ? rNow.querySelector('.sl-rn-remaining').textContent : '');
         if (rNow.getAttribute('aria-label') !== _rnLabel) rNow.setAttribute('aria-label', _rnLabel);
       }
     }
-    if (rNow) _layoutCompactRulerNow(wrap, rNow, scrubPct);
+    if (rNow && _layoutCompactRulerNow(wrap, rNow, scrubPct)) {
+      var _pending = rNow.closest('.sl-ruler.sl-ruler-pending');
+      if (_pending) { _pending.classList.remove('sl-ruler-pending'); _playRulerEnter(_pending); }
+    }
   }
 
   function buildShiftLanes(stops, axisStart, axisEnd, nowDate, nsOverlay, counterStart, counterEnd) {
@@ -5006,8 +5193,9 @@ function filterFullList(btn) {
       const lp = lpNum.toFixed(2);
       const xf = i === 0 ? 'translateX(0)' : (tMs === axisEndMs ? 'translateX(-100%)' : 'translateX(-50%)');
       const isSun = pair[1] === 14, isMoon = pair[1] === 2;
-      // Hide tick if current-time pill overlaps it (~4% threshold ≈ ~1h)
-      const hidden = Math.abs(lpNum - scrubPctR) < 4.2;
+      // Which labels step aside is decided from real pixel bounds in
+      // _layoutCompactRulerNow, in the same task, before the first paint.
+      const hidden = false;
       rulerTicks += '<span class="sl-rtick' + (isSun?' sl-rtick-sun':'') + (isMoon?' sl-rtick-moon':'') + (hidden?' sl-rtick-hidden':'') + '" style="left:' + lp + '%;transform:' + xf + '">' + String(pair[1]).padStart(2,'0') + ':00</span>';
     });
     // Elapsed / remaining strip
@@ -5017,6 +5205,7 @@ function filterFullList(btn) {
     var _reColor = _reMs > 14400000 ? 'rgba(100,210,255,0.95)' : _reMs > 7200000 ? 'rgba(251,191,36,0.95)' : 'rgba(239,68,68,0.95)';
 
     var _pctInt = Math.round(scrubPctR);
+    var _rnIcons = _rulerIconsHtml(nowMs, _reMs, Math.max(1, counterEndMs - counterStartMs));
     // % sits just left of the scrubber inside the elapsed zone; this is only
     // the first paint, _layoutCompactRulerNow then pins it to the fill in px.
     var _pctRight = 'calc(' + (100 - Math.max(6, scrubPctR)).toFixed(2) + '% + 6px)';
@@ -5029,8 +5218,9 @@ function filterFullList(btn) {
       '<span class="sl-ruler-pct" style="right:' + _pctRight + '">' + _pctInt + '%</span>' +
       rulerTicks +
       '<span class="sl-ruler-now" aria-label="Tagad ' + nowLabel + ', atlicis ' + rulerRemainingText(_reMs, _reStr) + '">' +
-        '<strong class="sl-rn-clock">' + nowLabel + '</strong>' +
-        '<span class="sl-rn-word">atlicis</span><strong class="sl-rn-remaining">' + rulerRemainingText(_reMs, _reStr) + '</strong>' +
+        _rnIcons.face + '<strong class="sl-rn-clock">' + nowLabel + '</strong>' +
+        // M3 connected group: the countdown is its own tonal segment.
+        '<span class="sl-rn-rest">' + _rnIcons.timer + '<span class="sl-rn-word">atlicis</span><strong class="sl-rn-remaining">' + rulerRemainingText(_reMs, _reStr) + '</strong></span>' +
       '</span>' +
     '</div>';
 
@@ -5099,6 +5289,8 @@ function filterFullList(btn) {
     var _nsBtnRow = document.querySelector('.ns-btn-row');
     if (_nsBtn && wrap.contains(_nsBtn) && _nsBtnRow) _nsBtnRow.appendChild(_nsBtn);
     if (_lanesBtn && wrap.contains(_lanesBtn) && _nsBtnRow) _nsBtnRow.appendChild(_lanesBtn);
+    // The periodic self-healing rebuild must not replay the entrance.
+    var _hadRuler = !!wrap.querySelector('.sl-ruler');
     wrap.innerHTML = html;
 
     // Re-slot the buttons into today's strip (keeps their event listeners alive).
@@ -5114,7 +5306,7 @@ function filterFullList(btn) {
     // Position the pill and resolve covered tick labels before the browser can
     // paint this freshly rebuilt ruler. Deferring this by one animation frame
     // exposed the yellow 14:00 label for a single frame.
-    if (_rulerNow) _layoutCompactRulerNow(wrap, _rulerNow, scrubPctR);
+    if (_rulerNow) _settleRuler(wrap, _rulerNow, scrubPctR, !_hadRuler);
 
   }
 

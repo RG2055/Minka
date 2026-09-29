@@ -578,7 +578,6 @@
     'is-right-bottom':{x:78.3,y:29.3,w:19.6,scale:1,z:22},
     'is-center':{x:50,y:48,w:37.1,scale:1,z:25}
   };
-  var NS_FLOW_GHOST = `<svg class="ns-flow-ghost" viewBox="0 0 10 7" shape-rendering="crispEdges" aria-hidden="true"><rect x="3" y="0" width="4" height="1" fill="#7dd3fc"/><rect x="2" y="1" width="6" height="1" fill="#38bdf8"/><rect x="1" y="2" width="1" height="1" fill="#38bdf8"/><rect x="4" y="2" width="2" height="1" fill="#38bdf8"/><rect x="8" y="2" width="1" height="1" fill="#38bdf8"/><rect x="2" y="2" width="2" height="1" fill="#07090f"/><rect x="6" y="2" width="2" height="1" fill="#07090f"/><rect x="1" y="3" width="8" height="3" fill="#38bdf8"/><rect x="1" y="6" width="1" height="1" fill="#38bdf8"/><rect x="3" y="6" width="1" height="1" fill="#38bdf8"/><rect x="6" y="6" width="1" height="1" fill="#38bdf8"/><rect x="8" y="6" width="1" height="1" fill="#38bdf8"/></svg>`;
   // ── Vēsturiskā nakts statistika (kurš ņem kuru daļu / kurā gultā guļ) ──
   // Lasa apkopojumu caur Minka API; Google Apps Script URL paliek Cloudflare secretā.
   var NS_STATS_API_PATH='/api/ns-stats';
@@ -2129,13 +2128,7 @@
 
   function getFlowLiveState(slots){
     if(!slots || !slots.length) return null;
-    var now=new Date();
-    var cur=now.getHours()*60 + now.getMinutes() + (now.getSeconds()/60);
-    if(st && typeof st.sh==='number'){
-      var startMin=Math.round(st.sh*60);
-      if(st.sh >= 20 && cur < 12*60) cur += 1440;
-      if(st.sh >= 20 && cur < startMin && now.getHours() >= 20) cur += 1440;
-    }
+    var cur=nsNightCursor();
     var start=slots[0].s;
     var end=slots[slots.length-1].e;
     if(cur < start || cur > end) return null;
@@ -2150,13 +2143,110 @@
     if(document.getElementById('nsLiveFlowStyles')) return;
     var style=document.createElement('style');
     style.id='nsLiveFlowStyles';
+    // M3 kustība: standard (.2,0,0,1) pārvietojumiem, emphasized decelerate
+    // (.05,.7,.1,1) parādīšanās brīžiem, emphasized accelerate (.3,0,.8,.15)
+    // aiziešanai. Nekādas pulsēšanas: līnija vienkārši mierīgi slīd.
     style.textContent=''
-      +'.ns-flow-bar{position:relative;overflow:visible}'
-      +'.ns-flow-live{position:absolute;top:50%;transform:translate(-50%,-50%);width:16px;height:16px;border-radius:999px;background:#ff4d5f;border:2px solid rgba(255,255,255,.9);box-shadow:0 0 0 3px rgba(255,77,95,.15),0 0 16px rgba(255,77,95,.48),0 0 28px rgba(255,77,95,.28);pointer-events:none;z-index:7}'
-      +'.ns-flow-live::before{content:\"\";position:absolute;left:50%;bottom:100%;transform:translate(-50%,-4px);width:2px;height:10px;border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.1));opacity:.9}'
-      +'.ns-flow-live::after{content:\"\";position:absolute;inset:-5px;border-radius:inherit;border:1px solid rgba(255,255,255,.18);animation:nsFlowLivePulse 1.8s ease-out infinite}'
-      +'@keyframes nsFlowLivePulse{0%{transform:scale(.72);opacity:.85}100%{transform:scale(1.55);opacity:0}}';
+      +'#nsPanel .ns-flow-bar{position:relative;overflow:visible}'
+      +'#nsPanel .ns-flow-cursor{position:absolute;top:-4px;bottom:-4px;width:3px;margin-left:-1.5px;border-radius:3px;background:#fff;box-shadow:0 0 0 1.5px rgba(6,10,16,.55);pointer-events:none;z-index:7;transition:left 1s linear}'
+      +'#nsPanel .ns-flow-labels{position:relative}'
+      +'#nsPanel .ns-flow-labels>span{transition:opacity 320ms cubic-bezier(.05,.7,.1,1),translate 420ms cubic-bezier(.05,.7,.1,1)}'
+      +'#nsPanel .ns-flow-labels>span.ns-lbl-away{opacity:0;translate:0 -4px;transition:opacity 160ms cubic-bezier(.3,0,.8,.15),translate 200ms cubic-bezier(.3,0,.8,.15)}'
+      +'#nsPanel .ns-flow-now-chip{position:absolute;top:50%;left:0;translate:0 -50%;padding:0 7px;border-radius:8px;background:#fff;color:#0b1220;font:600 11px/16px var(--font-ui,system-ui);font-style:normal;font-variant-numeric:tabular-nums;white-space:nowrap;pointer-events:none;transition:left 600ms cubic-bezier(.2,0,0,1)}'
+      +'#nsPanel .ns-flow-labels.ns-instant>*{transition:none!important}'
+      // Kartīšu statuss: kas guļ tagad, nākamais, jau izgulējušies.
+      +':is(#nsOverlay,html) #nsPanel .nsc-full-card{transition:opacity 500ms cubic-bezier(.2,0,0,1),filter 500ms cubic-bezier(.2,0,0,1),box-shadow 500ms cubic-bezier(.2,0,0,1)}'
+      +':is(#nsOverlay,html) #nsPanel .nsc-full-card.nsc-is-done{opacity:.62;filter:saturate(.7)}'
+      +':is(#nsOverlay,html) #nsPanel .nsc-full-card.nsc-is-now{box-shadow:0 0 0 2px var(--nsc-accent,#fff),0 10px 28px rgba(0,0,0,.35)!important}'
+      +':is(#nsOverlay,html) #nsPanel .nsc-full-card .nsc-full-desc span.nsc-desc.is-now{background:#fff!important;color:#0b1220!important;-webkit-text-fill-color:#0b1220!important;font-weight:700!important}'
+      +':is(#nsOverlay,html) #nsPanel .nsc-full-card .nsc-full-desc span.nsc-desc.is-next{background:rgba(255,255,255,.18)!important}'
+      +'#nsPanel .nsc-full-desc .nsc-desc.nsc-swap{animation:nsDescIn 360ms cubic-bezier(.05,.7,.1,1) both}'
+      +'@keyframes nsDescIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}'
+      +'@media (prefers-reduced-motion:reduce){#nsPanel .ns-flow-cursor,#nsPanel .ns-flow-labels>*,#nsPanel .nsc-full-card{transition:none!important}#nsPanel .nsc-desc.nsc-swap{animation:none!important}}';
     document.head.appendChild(style);
+  }
+
+  // Nakts minūtes tajā pašā skalā kā slot.s/slot.e. Vakarā pirms nakts, kas
+  // sākas pēc pusnakts, tās ir negatīvas (lai "nākamā pēc 3 h" strādā).
+  // The duty day runs 08:00 → 08:00: before 08:00 we are inside the night of
+  // the previous date, from 08:00 on tonight's night is still ahead.
+  function nsNightCursor(){
+    var now=new Date(), h=now.getHours();
+    var cur=h*60+now.getMinutes()+now.getSeconds()/60;
+    if(st && typeof st.sh==='number'){
+      if(st.sh>=12){ if(h<8) cur+=1440; }
+      else if(h>=8) cur-=1440;
+    }
+    return cur;
+  }
+  function nsLeftText(min){
+    min=Math.max(0,Math.ceil(min));
+    if(min<1) return 'mazāk par minūti';
+    var h=Math.floor(min/60), m=min%60;
+    return h?(h+' h'+(m?' '+m+' min':'')):(m+' min');
+  }
+  // Viena kartīte: guļ tagad / nākamā / izgulējās. Tikai šodienas naktij.
+  function nsSlotState(slots,i,cur){
+    // __g_todayStr is the live duty day from calendar.js (it stays on the
+    // previous date until 08:00, exactly like tonight's plan does).
+    var todayStr=window.__g_todayStr || window.__todayDateStr;
+    var today=window.__activeDateStr && todayStr && window.__activeDateStr===todayStr;
+    if(!today || !slots || !slots[i]) return null;
+    var s=slots[i];
+    if(cur>=s.s && cur<s.e) return {cls:'is-now', text:'Guļ · vēl '+nsLeftText(s.e-cur)};
+    if(cur>=s.e) return {cls:'is-done', text:'Izgulējās ✓'};
+    // Countdown only for the very next person, and only within 12 h.
+    var prevStarted = i===0 || cur>=slots[i-1].s;
+    if(prevStarted && s.s-cur<=12*60) return {cls:'is-next', text:'Nākamā · pēc '+nsLeftText(s.s-cur)};
+    return null;
+  }
+  function nsApplyCardStates(cur){
+    var panel=document.getElementById('nsPanelContent');
+    if(!panel || !st || !st.sl) return;
+    panel.querySelectorAll('.nsc-full-card[data-i]').forEach(function(card){
+      var i=+card.getAttribute('data-i');
+      var state=nsSlotState(st.sl,i,cur);
+      ['nsc-is-now','nsc-is-next','nsc-is-done'].forEach(function(c){ card.classList.toggle(c, !!state && c==='nsc-'+state.cls); });
+      var span=card.querySelector('.nsc-full-desc .nsc-desc');
+      if(!span) return;
+      var cls=state?state.cls:'';
+      var prev=span.getAttribute('data-state')||'';
+      var text=state?state.text:(span.getAttribute('data-desc')||'');
+      if(span.textContent!==text) span.textContent=text;
+      if(prev!==cls){
+        span.classList.remove('is-now','is-next','is-done','nsc-swap');
+        if(cls) span.classList.add(cls);
+        span.setAttribute('data-state',cls);
+        // Stāvokļa maiņa (piem., nākamā → guļ) iezogas; minūšu skaitītājs ne.
+        if(prev || span.__nsSeen){ void span.offsetWidth; span.classList.add('nsc-swap'); }
+      }
+      span.__nsSeen=true;
+    });
+  }
+
+  // Laika čips zem joslas seko līnijai; tuvās robežu atzīmes (01:50…) paceļas
+  // un izgaist, lai nekas nepārklājas, un atgriežas, kad čips aizgājis.
+  function nsPlaceNowChip(bar, pct, cur){
+    var labels=bar.parentNode && bar.parentNode.querySelector('.ns-flow-labels');
+    var chip=labels && labels.querySelector('.ns-flow-now-chip');
+    if(!chip) return;
+    var h=Math.floor(((cur%1440)+1440)%1440/60), m=Math.floor(((cur%60)+60)%60);
+    var text=(h<10?'0':'')+h+':'+(m<10?'0':'')+m;
+    if(chip.textContent!==text) chip.textContent=text;
+    var W=labels.clientWidth, cw=chip.offsetWidth;
+    if(!W || !cw) return;
+    var left=Math.max(0, Math.min(W-cw, W*pct/100-cw/2));
+    if(!chip.__nsPlaced){
+      labels.classList.add('ns-instant');
+      setTimeout(function(){ labels.classList.remove('ns-instant'); }, 120);
+      chip.__nsPlaced=true;
+    }
+    chip.style.left=left.toFixed(1)+'px';
+    var lb=labels.getBoundingClientRect();
+    Array.prototype.forEach.call(labels.querySelectorAll(':scope > span'), function(sp){
+      var r=sp.getBoundingClientRect(), l=r.left-lb.left;
+      sp.classList.toggle('ns-lbl-away', l+r.width>left-6 && l<left+cw+6);
+    });
   }
 
   var _nsFlowTimer=0;
@@ -2169,58 +2259,21 @@
     window.nsRefreshDreams();
     var bar=document.querySelector('#nsPanelContent .ns-flow-bar');
     if(!bar || !st || !st.sl || !st.sl.length) return;
-    var dot=bar.querySelector('.ns-flow-live');
+    nsApplyCardStates(nsNightCursor());
+    var cursor=bar.querySelector('.ns-flow-cursor');
     var spent=bar.querySelector('.ns-flow-spent');
     var live=getFlowLiveState(st.sl);
     if(!live){
-      if(dot) dot.style.display='none';
+      if(cursor) cursor.style.display='none';
       if(spent) spent.style.width='0%';
       return;
     }
     // Pagājušais laiks — tumšāks pārklājs no sākuma līdz tagadnei
     if(spent) spent.style.width=live.pct.toFixed(3)+'%';
-    if(dot){
-      dot.style.display='block';
-      dot.style.left=live.pct.toFixed(3)+'%';
-      // Atlikušais aktīvajā daļā: laiks (HH:MM:SS) pa kreisi, procenti pa labi.
-      var timeEl=dot.querySelector('.ns-flow-time');
-      var pctEl=dot.querySelector('.ns-flow-pct');
-      var workerEl=dot.querySelector('.ns-flow-worker');
-      var cur=live.now, active=null;
-      for(var i=0;i<st.sl.length;i++){ if(cur>=st.sl[i].s && cur<st.sl[i].e){ active=st.sl[i]; break; } }
-      if(active){
-        var total=Math.max(1, active.e-active.s);
-        var leftMin=Math.max(0, active.e-cur);
-        var remPct=Math.round(leftMin/total*100);
-        var totSec=Math.max(0, Math.round(leftMin*60));
-        var h=Math.floor(totSec/3600), m=Math.floor((totSec%3600)/60), sec=totSec%60;
-        var pad=function(n){return (n<10?'0':'')+n;};
-        var hhmmss=(h>0?h+':':'')+pad(m)+':'+pad(sec);
-        // Near the bar's edges there's no room for the side labels: when the part
-        // has just started the buddy sits at the far left and the time (drawn to its
-        // left) would clip off-bar, so hide it until it moves far enough in. Same for
-        // the % near the right edge.
-        if(timeEl){ timeEl.textContent=hhmmss; timeEl.style.display = live.pct < 9 ? 'none' : 'block'; }
-        if(pctEl){ pctEl.textContent=remPct+'%'; pctEl.style.display = live.pct > 91 ? 'none' : 'block'; }
-        if(workerEl){
-          var activeName=String((active.w&&active.w.name)||'').trim();
-          var activeFirst=activeName.split(/\s+/)[0]||'';
-          var activeEmoji=roomEmoji(activeName);
-          workerEl.classList.toggle('is-left-edge', live.pct < 10);
-          workerEl.classList.toggle('is-right-edge', live.pct > 90);
-          var workerMarkup=(activeEmoji?'<span class="ns-flow-worker-emoji">'+escHtml(activeEmoji)+'</span>':'')
-            +'<span class="ns-flow-worker-name">'+escHtml(activeFirst)+'</span>';
-          if(workerEl.__nsMarkup!==workerMarkup){ workerEl.innerHTML=workerMarkup; workerEl.__nsMarkup=workerMarkup; }
-          workerEl.style.display=activeFirst?'inline-flex':'none';
-        }
-      } else {
-        if(timeEl) timeEl.style.display='none';
-        if(pctEl) pctEl.style.display='none';
-        if(workerEl) {
-          workerEl.classList.remove('is-left-edge','is-right-edge');
-          workerEl.style.display='none';
-        }
-      }
+    if(cursor){
+      cursor.style.display='block';
+      cursor.style.left=live.pct.toFixed(3)+'%';
+      nsPlaceNowChip(bar, live.pct, live.now);
     }
   }
 
@@ -3201,7 +3254,7 @@
       var checklist = lastSlotChecklist(i, st.sl.length);
       var em=(window.MinkaEmoji&&window.MinkaEmoji.get)?(window.MinkaEmoji.get(s.w.name)||''):'';
       return '<div class="nsc-card-wrap" data-i="'+i+'">'
-        +'<div class="nsc-full-card nsc-theme-'+theme+(rt.active?' nsc-active':'')+(checklist?' nsc-has-checklist':'')+'" data-i="'+i+'" data-worker="'+escHtml(s.w.name||'')+'" style="--nsc-accent:'+c.accent+';--nsc-grad:'+gradCss+'">'
+        +'<div class="nsc-full-card nsc-theme-'+theme+(rt.active?' nsc-active':'')+(function(){ var x=nsSlotState(st.sl,i,nsNightCursor()); return x?' nsc-'+x.cls:''; })()+(checklist?' nsc-has-checklist':'')+'" data-i="'+i+'" data-worker="'+escHtml(s.w.name||'')+'" style="--nsc-accent:'+c.accent+';--nsc-grad:'+gradCss+'">'
         +'<div class="nsc-deco" aria-hidden="true">'+_nightSvg(theme,i,s.w.name,c.accent,s,st.sl[0].s,st.sl[st.sl.length-1].e)+'</div>'
         +(theme==='moon'?'<span class="nsc-moon-overlay" aria-hidden="true"><svg viewBox="0 0 64 64">'+_moonSVG(32,32,25,_moonPhase(window.__activeDateStr),'nsc-moon-'+i)+'</svg></span>':'')
         +'<div class="nsc-full-inner">'
@@ -3209,7 +3262,11 @@
         +'<span class="nsc-full-name">'+nm+'</span>'
         +'</div>'
         +'<div class="nsc-full-time">'+nsClock(s)+'<span>'+escHtml(s.ss)+' – '+escHtml(s.es)+'</span></div>'
-        +(desc?'<div class="nsc-full-desc"><span>'+desc+'</span></div>':'')
+        +(function(){
+          var state=nsSlotState(st.sl,i,nsNightCursor());
+          if(!desc && !state) return '';
+          return '<div class="nsc-full-desc"><span class="nsc-desc'+(state?' '+state.cls:'')+'" data-desc="'+escHtml(desc)+'">'+(state?escHtml(state.text):desc)+'</span></div>';
+        })()
         +'<div class="nsc-full-meta">'
         +'<span class="nsc-full-fat '+tr.cls+'" style="--nsc-fat-color:'+fatCol+';--nsc-fat-pct:'+fatPct+'%"><span class="nsc-fat-label">Nogurums</span><span class="nsc-fat-value" style="color:'+fatCol+' !important">'+fatPct+'% '+tr.icon+'</span></span>'
         +'<span class="nsc-dur-cluster"><span class="nsc-full-dur">'+dur+'</span></span>'
@@ -3236,11 +3293,14 @@
       }).join('');
       var _flowLabels='<div class="ns-flow-labels"><span>'+escHtml(st.sl[0].ss)+'</span>'
         +st.sl.map(function(s){ return '<span>'+escHtml(s.es)+'</span>'; }).join('')
+        +(live?'<i class="ns-flow-now-chip" aria-hidden="true"></i>':'')
         +'</div>';
       flowBar='<div class="ns-flow-bar">'
         +_flowSegs
         +(live?'<div class="ns-flow-spent" style="width:'+live.pct.toFixed(3)+'%"></div>':'<div class="ns-flow-spent" style="width:0%"></div>')
-        +(live?'<div class="ns-flow-live" style="left:'+live.pct.toFixed(3)+'%"><span class="ns-flow-worker"></span><span class="ns-flow-time"></span>'+NS_FLOW_GHOST+'<span class="ns-flow-pct"></span></div>':'')
+        // "Tagad": tieva līnija joslā un viens laika čips zem tās. Kas guļ un
+        // cik vēl atlicis, rāda pašas kartītes (nsApplyCardStates).
+        +(live?'<div class="ns-flow-cursor" style="left:'+live.pct.toFixed(3)+'%"></div>':'')
         +'</div>'
         +_flowLabels;
     }

@@ -13,6 +13,8 @@ const fixture=String.raw`(()=>{
  const q=new URLSearchParams(location.search), baseline=false, cold=q.has('cold');
  const delayMs=Math.max(0,Math.min(60000,Number(q.get('delay')||1000)));
  sessionStorage.setItem('minka_api_token_v1','local-fixture-only');
+ // ?visible=1: behave as a visible tab even in a hidden preview pane (timers otherwise pause).
+ if(q.has('visible')){Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});Object.defineProperty(document,'visibilityState',{configurable:true,get:()=>'visible'});}
  try{delete Navigator.prototype.serviceWorker;}catch(_){}
  // Optional busier shift for layout checks: localStorage['minka:audit-staff']=7.
  const allNames=['ALPHA TEST','BETA TEST','GAMMA TEST','DELTA TEST','EPSILON TEST','ZETA TEST','ETA TEST','THETA TEST'];
@@ -25,7 +27,7 @@ const fixture=String.raw`(()=>{
  const history=n=>({ok:true,nights:n,parts:Object.fromEntries(names.map(name=>[name,[4,3,2,1]])),beds:{}});
  if(cold)localStorage.removeItem('minkaNightStatsV1');
  else localStorage.setItem('minkaNightStatsV1',JSON.stringify({at:Date.now()-13*3600000,data:history(10)}));
- const days=Array.from({length:30},(_,i)=>({date:String(i+1).padStart(2,'0')+'.09.2026',workers:names.map(name=>({name,shift:'24'}))}));
+ const days=Array.from({length:30},(_,i)=>({date:String(i+1).padStart(2,'0')+'.09.2026',workers:names.map(name=>({name,shift:'24',startTime:'08:00',endTime:'08:00'}))}));
  const schedule={knownCarryovers:{},radiographers:{'SEPTEMBRIS 2026':days},radiologists:{'SEPTEMBRIS 2026':days.map(d=>({...d,workers:d.workers.slice(0,2)}))}};
  const realFetch=window.fetch.bind(window), result={baseline,cold,delayMs,requests:0,requestAt:null,panelAt:null,rowsAt:null,firstText:null,errors:[]};
  function show(){const el=document.getElementById('audit-result');if(el)el.textContent=JSON.stringify({...result,rowWaitMs:result.rowsAt===null?null:Math.round(result.rowsAt-result.panelAt),prefetched:result.requestAt!==null&&result.panelAt!==null&&result.requestAt<result.panelAt});}

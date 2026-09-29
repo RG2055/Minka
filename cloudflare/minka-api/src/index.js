@@ -775,6 +775,10 @@ const worker = {
       return weatherResponse(request, env, ctx);
     }
 
+    if (url.pathname === "/api/news" && method === "GET") {
+      return newsResponse(request, env, ctx);
+    }
+
     if (url.pathname === "/api/pair/new" && method === "POST") {
       const db = pairDatabase(env);
       await ensurePairSchema(db);
@@ -1254,6 +1258,41 @@ async function weatherResponse(request, env, ctx) {
   headers.set("content-type", "application/json; charset=utf-8");
   headers.set("cache-control", "no-store");
   return new Response(cached.body, { headers });
+}
+
+/* Ziņas (LSM + Austrumu slimnīca, sk. ./news.js): savāktas reizi 10 minūtēs
+   visiem kopā. Ja visi avoti reizē neatbild, atdod pēdējo labo kopiju no D1. */
+const NEWS_TTL_SECONDS = 600;
+const NEWS_KEY = "news";
+async function newsResponse(request, env, ctx) {
+  const cache = caches.default;
+  const key = new Request(new URL("/__cache/news-v1", request.url).toString());
+  let body = null;
+  const hit = await cache.match(key);
+  if (hit) body = await hit.text();
+  if (!body) {
+    const { collectNews } = await import("./news.js");
+    const news = await collectNews(fetch);
+    if (news.items.length) {
+      body = JSON.stringify({ ok: true, ...news });
+      ctx.waitUntil(cache.put(key, new Response(body, {
+        headers: { "content-type": "application/json; charset=utf-8", "cache-control": "public, max-age=" + NEWS_TTL_SECONDS }
+      })));
+      if (env.DB) ctx.waitUntil(ensureUpstreamCache(env.DB).then(() => env.DB.prepare(`
+        INSERT INTO upstream_cache (key, body, fetched_at) VALUES (?1, ?2, ?3)
+        ON CONFLICT(key) DO UPDATE SET body = excluded.body, fetched_at = excluded.fetched_at, last_error = NULL
+      `).bind(NEWS_KEY, body, news.at).run()).catch(() => {}));
+    } else {
+      console.error(JSON.stringify({ message: "News sources failed", status: news.status }));
+      const row = env.DB ? await env.DB.prepare("SELECT body FROM upstream_cache WHERE key = ?1").bind(NEWS_KEY).first().catch(() => null) : null;
+      if (!row || !row.body) return json(request, { ok: false, error: "News unavailable", status: news.status }, 502);
+      body = row.body;
+    }
+  }
+  const headers = new Headers(cors(request));
+  headers.set("content-type", "application/json; charset=utf-8");
+  headers.set("cache-control", "no-store");
+  return new Response(body, { headers });
 }
 
 function cors(request) {

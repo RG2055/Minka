@@ -2,11 +2,13 @@
 import http from 'node:http';import {networkInterfaces} from 'node:os';
 import {readFile,writeFile,mkdir,rename,realpath,stat} from 'node:fs/promises';import {createReadStream} from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';
 import '../kalendars/js/daybook-model.js';
+import {collectNews} from '../cloudflare/minka-api/src/news.js';
 const M=globalThis.MinkaDaybookModel,root=await realpath(fileURLToPath(new URL('../',import.meta.url))),port=Number(process.argv[2]||8010);
 const addresses=Object.values(networkInterfaces()).flat().filter(n=>n.family==='IPv4'&&!n.internal).map(n=>n.address),hosts=new Set(['localhost','127.0.0.1',...addresses].map(h=>h+':'+port));
 const dir=path.join(root,'.local-preview'),file=path.join(dir,'daybook.json');await mkdir(dir,{recursive:true});
 let saved;try{saved=JSON.parse(await readFile(file,'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;saved={entries:[],radio:[]};}
 let pending=Promise.resolve();
+let newsMemo=null;
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.avif':'image/avif','.gif':'image/gif','.woff2':'font/woff2','.mp3':'audio/mpeg','.mp4':'video/mp4','.webm':'video/webm','.webmanifest':'application/manifest+json','.ico':'image/x-icon','.wal':'application/octet-stream','.wsz':'application/zip','.zip':'application/zip','.xml':'application/xml','.maki':'application/octet-stream','.m':'text/plain; charset=utf-8','.sym':'text/plain; charset=utf-8'};
 const json=(res,value,status=200)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
 http.createServer(async(req,res)=>{
@@ -29,6 +31,8 @@ http.createServer(async(req,res)=>{
  let raw='';for await(const c of req){raw+=c;if(raw.length>262144)throw Error('Too large');}
  const r=await fetch('https://lacitis-api.gamernr1elite.workers.dev'+url.pathname,{method:req.method,headers:{'Content-Type':'application/json'},body:req.method==='POST'?raw:undefined,signal:AbortSignal.timeout(15000)});res.writeHead(r.status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(await r.text());return;
  }
+ // Ziņas: tas pats modulis kā minka-api /api/news, 10 min atmiņā.
+ if(url.pathname==='/api/news'&&req.method==='GET'){if(!newsMemo||Date.now()-newsMemo.at>600000){const n=await collectNews(fetch);if(n.items.length||!newsMemo)newsMemo={...n,ok:n.items.length>0};}json(res,newsMemo);return;}
  if(!['GET','HEAD'].includes(req.method)){json(res,{},405);return;}
  const decoded=decodeURIComponent(url.pathname);
  if(decoded==='/sw.js'||decoded.split('/').some(s=>s.startsWith('.'))||(/^\/(scripts|cloudflare|integrations)\//.test(decoded)&&!decoded.startsWith('/integrations/webamp/player/'))){json(res,{},404);return;}

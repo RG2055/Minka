@@ -17,6 +17,11 @@
     { label:'Ziņas', url:'https://www.lsm.lv/rss/?lang=lv&catid=14' },
     { label:'Veselība', url:'https://www.lsm.lv/rss/?lang=lv&catid=51' }
   ];
+  // Galvenais ceļš: minka-api /api/news savāc LSM un Austrumu slimnīcas ziņas
+  // reizi 10 minūtēs visiem kopā (cloudflare/minka-api/src/news.js). FEEDS caur
+  // rss2json paliek tikai kā rezerve, ja API neatbild.
+  const NEWS_PATH = '/api/news';
+  const NEWS_MAX = 14;
   const NEWS_STORAGE_KEY = 'minka_lsm_news_v2';
   const NEWS_STORAGE_MAX_AGE = 12 * 60 * 60 * 1000;
   const DESCMAP = {
@@ -72,14 +77,14 @@
       const saved = JSON.parse(localStorage.getItem(NEWS_STORAGE_KEY) || 'null');
       if (!saved || !Array.isArray(saved.items) || !saved.savedAt) return [];
       if ((Date.now() - Number(saved.savedAt)) > NEWS_STORAGE_MAX_AGE) return [];
-      return saved.items.filter(it => it && typeof it.text === 'string' && it.text.length > 8).slice(0, 12);
+      return saved.items.filter(it => it && typeof it.text === 'string' && it.text.length > 8).slice(0, NEWS_MAX);
     } catch (_e) {
       return [];
     }
   }
   function storeNews(items){
     try {
-      localStorage.setItem(NEWS_STORAGE_KEY, JSON.stringify({ savedAt: Date.now(), items: items.slice(0, 12) }));
+      localStorage.setItem(NEWS_STORAGE_KEY, JSON.stringify({ savedAt: Date.now(), items: items.slice(0, NEWS_MAX) }));
     } catch (_e) {}
   }
   function newsIdentity(item){
@@ -103,6 +108,33 @@
     } finally {
       if (timer) clearTimeout(timer);
     }
+  }
+
+  // Serveris jau atdod gatavu secību (slimnīcas ziņas iestarpinātas), tāpēc
+  // šeit tikai pārveido formātā "Kategorija: virsraksts" un nekārto no jauna.
+  async function fetchNewsApi(){
+    let data;
+    if (window.MINKA_LOCAL_DAYBOOK) {
+      data = await fetchJsonWithTimeout(NEWS_PATH, 9000);
+    } else {
+      const api = window.MinkaApi;
+      if (!api || typeof api.apiFetch !== 'function' || !(api.getToken && api.getToken())) throw new Error('Nav pieteicies');
+      const r = await Promise.race([
+        api.apiFetch(NEWS_PATH),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 9000))
+      ]);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      data = await r.json();
+    }
+    return (data && Array.isArray(data.items) ? data.items : [])
+      .map(it => ({
+        sig: String((it && it.src) || '') + '|' + String((it && it.link) || ''),
+        link: String((it && it.link) || '').trim(),
+        pub: Number(it && it.pub) || 0,
+        text: String((it && it.cat) || 'Ziņas') + ': ' + String((it && it.title) || '').replace(/\s+/g, ' ').trim()
+      }))
+      .filter(it => it.link && it.text.length > 8)
+      .slice(0, NEWS_MAX);
   }
 
   if (isMobileShell) {
@@ -354,6 +386,17 @@ async function refreshNews(){
       return;
     }
 
+    const fromApi = await fetchNewsApi().catch((e) => { console.warn('[Minka] /api/news failed, using RSS fallback', e); return []; });
+    if (fromApi.length) {
+      newsCache = fromApi;
+      newsIdx = 0;
+      storeNews(newsCache);
+      window.__minkaNewsCache = newsCache.slice();
+      if (typeof window.mkTickerFeed === 'function') window.mkTickerFeed(newsCache);
+      newsBusy = false;
+      return;
+    }
+
     const chunks = await Promise.all(FEEDS.map(async (feed) => {
       try {
         const d = await fetchJsonWithTimeout(RSS + '?rss_url=' + encodeURIComponent(feed.url), 9000);
@@ -560,7 +603,8 @@ function nextNews(){
     // While the app is hidden a poll is only marked as due; it runs the moment
     // the app is visible again, so nobody sees data older than the interval.
     let newsDue = false, weatherDue = false;
-    setInterval(() => { if (document.hidden) newsDue = true; else refreshNews(); }, 8 * 60 * 1000);
+    // Tikpat bieži, cik serveris ziņas atjauno (10 min kešs).
+    setInterval(() => { if (document.hidden) newsDue = true; else refreshNews(); }, 10 * 60 * 1000);
     setInterval(() => { if (document.hidden) weatherDue = true; else refreshWeather(); }, 20 * 60 * 1000);
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) return;
@@ -812,7 +856,8 @@ function nextNews(){
     'sports':'sports','hokejs':'hokejs',
     'politika':'politika','kultūra':'kultura','kultura':'kultura',
     'ekonomika':'ekonomika','bizness':'ekonomika',
-    'laiks':'laiks','laiks':'laiks'
+    'laiks':'laiks','laiks':'laiks',
+    'aslimnica':'aslimnica'
   };
   function catClass(cat) {
     return 'mk-cat-' + (CAT_CLASS[String(cat||'').toLowerCase()] || 'default');
@@ -821,6 +866,10 @@ function nextNews(){
 	    if (!ts) return '';
 	    var d = new Date(ts);
 	    if (isNaN(d)) return '';
+	    // Šodienas ziņām laiks, vecākām (piem., slimnīcas jaunumiem) datums.
+	    if (d.toDateString() !== new Date().toDateString()) {
+	      return String(d.getDate()).padStart(2,'0') + '.' + String(d.getMonth() + 1).padStart(2,'0') + '.';
+	    }
 	    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
 	  }
 	  function tickerEsc(value) {
@@ -843,7 +892,9 @@ function nextNews(){
 	    var open = '<' + tag + ' class="mk-news-item" title="' + tickerEsc(label) + '"'
 	      + (href ? ' href="' + tickerEsc(href) + '" target="_blank" rel="noopener noreferrer" data-href="' + tickerEsc(href) + '"' : '') + '>';
 	    var time = d.time ? '<span class="mk-tick-time">' + tickerEsc(d.time) + '</span>' : '';
-	    var badge = d.cat ? '<span class="mk-ticker-cat ' + catClass(d.cat) + '">' + tickerEsc(d.cat) + '</span>' : '';
+	    // "aslimnica" kā slimnīcas logo: sarkans "a".
+    var catText = d.cat === 'aslimnica' ? '<span class="mk-cat-a">a</span>slimnica' : tickerEsc(d.cat);
+    var badge = d.cat ? '<span class="mk-ticker-cat ' + catClass(d.cat) + '">' + catText + '</span>' : '';
 	    var meta = (time || badge) ? '<span class="mk-news-meta">' + time + badge + '</span>' : '';
 	    var text = '<span class="mk-news-headline">' + tickerEsc(d.text) + '</span>';
 	    return open + meta + text + '</' + tag + '>';
