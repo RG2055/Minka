@@ -1933,7 +1933,7 @@
     function modeNow(){var m=modesNow();return m.indexOf(edgeMode)>=0?edgeMode:'size';}
     function rimRange(){
       var t=rimTarget(),m=modeNow();
-      if(t==='addon')return [60,140];if(t==='depth')return [100,180];
+      if(t==='addon')return [30,200];if(t==='depth')return [100,180];
       return m==='size'?[50,selectedPart==='hours'?300:170]:m==='hue'?[0,359]:[12,92];
     }
     function hexHsl(hex){

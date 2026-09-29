@@ -371,7 +371,7 @@
     var clean = {
       id: config.id,
       // The cloud stores 60–140 % (a smaller local value came back as 60 % on the next sync).
-      scale: Math.round(Math.max(.6, Math.min(1.4, Number(config.scale) || 1)) * 100) / 100,
+      scale: Math.round(Math.max(.3, Math.min(2, Number(config.scale) || 1)) * 100) / 100,
       side: config.side === 'left' ? 'left' : 'right',
       x: Math.round(Math.max(-100, Math.min(100, Number(config.x) || 0)) * 100) / 100,
       y: Math.round(Math.max(-100, Math.min(100, Number(config.y) || 0)) * 100) / 100
@@ -542,7 +542,7 @@
     var existing = card.querySelector(':scope > .mk-card-addon[data-slot="' + slot + '"]') || (slot === 0 ? card.querySelector(':scope > .mk-card-addon:not([data-slot])') : null);
     var surface = card.querySelector(':scope > .mk-card-addon-surface');
     var item = ITEM_BY_ID[config.id];
-    var scale = Math.max(.6, Math.min(1.4, Number(config.scale) || 1));
+    var scale = Math.max(.3, Math.min(2, Number(config.scale) || 1));
     var side = config.side === 'left' ? 'left' : 'right';
     var offsetX = Math.max(-100, Math.min(100, Number(config.x) || 0));
     var offsetY = Math.max(-100, Math.min(100, Number(config.y) || 0));
@@ -967,10 +967,10 @@
     panel.innerHTML = '<div class="mk-skin-section-head mk-addon-section-head"><span><strong>Kartītes dekors</strong><small>Līdz 3 dekoriem vienlaikus</small></span><button type="button" class="mk-addon-remove" aria-label="Noņemt izvēlēto dekoru">✕ Noņemt dekoru</button></div>'
       + '<div class="mk-addon-drag-hint">Cita veida dekors nāk klāt (līdz 3), tā paša veida aizstāj izvēlēto. Kartītē velc jebkuru.</div>'
       + '<div class="mk-addon-slots" role="group" aria-label="Dekori uz kartītes"></div>'
-      + '<div class="mk-addon-groups">' + groupsHtml + '</div>'
-      + '<div class="mk-addon-grid"></div>'
+      // The chosen decoration's own settings come first (its menu, in sight at once);
+      // the catalogue to change it or add another follows.
       + '<div class="mk-addon-controls">'
-      + '<label><span>Izmērs</span><input class="mk-addon-scale" type="range" min="60" max="140" step="5" value="' + Math.round((Number(config.scale) || 1) * 100) + '"><b class="mk-addon-scale-value">' + Math.round((Number(config.scale) || 1) * 100) + '%</b></label>'
+      + '<label><span>Izmērs</span><input class="mk-addon-scale" type="range" min="30" max="200" step="5" value="' + Math.round((Number(config.scale) || 1) * 100) + '"><b class="mk-addon-scale-value">' + Math.round((Number(config.scale) || 1) * 100) + '%</b></label>'
       + '<div class="mk-addon-side" role="group" aria-label="Dekora puse"><button type="button" data-addon-side="left" class="' + (config.side === 'left' ? 'is-active' : '') + '">Kreisā</button><button type="button" data-addon-side="right" class="' + (config.side !== 'left' ? 'is-active' : '') + '">Labā</button></div>'
       + '<button type="button" class="mk-addon-reset-position">↺ Pozīcija</button>'
       + '</div>'
@@ -986,7 +986,10 @@
       + '<div class="mk-addon-inks" role="group" aria-label="Dekora krāsa"><span>Dekora krāsa</span>'
       + '<button type="button" class="mk-addon-ink-auto" data-decor-ink="">Kā kartītei</button>'
       + DECOR_INKS.map(function(c) { return '<button type="button" data-decor-ink="' + c[0] + '" style="--ink:#' + c[0] + '" title="' + c[1] + '" aria-label="' + c[1] + '"></button>'; }).join('')
-      + '</div></div>';
+      + '</div></div>'
+      + '<div class="mk-addon-cat-label">Izvēlies dekoru</div>'
+      + '<div class="mk-addon-groups">' + groupsHtml + '</div>'
+      + '<div class="mk-addon-grid"></div>';
     editor.appendChild(panel);
 
     function syncPreviewClearance() {
@@ -1272,7 +1275,9 @@
       if (item && item.dynamic) coffee.querySelectorAll('[data-coffee-stat]').forEach(function(b) { b.setAttribute('aria-pressed', String(b.dataset.coffeeStat === item.stat)); });
       // Frames and light cover the whole card: side, size and position mean nothing there.
       var fullCard = !!item && (item.group === 'frame' || item.group === 'light');
-      panel.querySelector('.mk-addon-controls').hidden = fullCard;
+      panel.querySelector('.mk-addon-controls').hidden = fullCard || !(config && config.id);
+      var catLabel = panel.querySelector('.mk-addon-cat-label');
+      if (catLabel) catLabel.textContent = config && config.id ? 'Mainīt uz citu' : 'Izvēlies dekoru';
       var fx = config.fx || (followsCard() ? 'card' : 'none');
       look.querySelectorAll('[data-decor-fx]').forEach(function(b) { b.setAttribute('aria-pressed', String(b.dataset.decorFx === fx)); });
       look.querySelectorAll('[data-decor-ink]').forEach(function(b) { b.setAttribute('aria-pressed', String(b.dataset.decorInk === (config.color || ''))); });

@@ -970,3 +970,6 @@ html[data-motion="reduced"] #worker-modal .bld-stars span.on {animation:none;}
 #worker-modal#worker-modal .org-wm .mk-emoji-op-val {font:500 15px/1 var(--pp-font,system-ui) !important;text-align:right;color:var(--pp-on,#e3e7ee);}
 #worker-modal#worker-modal .org-wm.org-locked > * {opacity:.38;pointer-events:none;}
 #worker-modal#worker-modal .org-wm + .org-lock-note {margin-top:6px;}
+/* Dekori: the chosen decoration's menu first, then "Mainīt uz citu" / "Izvēlies dekoru" */
+#worker-modal#worker-modal .mk-addon-cat-label {margin:18px 0 8px;font:600 13px/1.2 var(--pp-font,system-ui);color:var(--pp-on,#e3e7ee);}
+#worker-modal#worker-modal :is(.mk-addon-controls,.mk-addon-look).org-flash {outline:2px solid var(--pp-primary,#a8c7fa);outline-offset:2px;transition:outline-color .9s;}

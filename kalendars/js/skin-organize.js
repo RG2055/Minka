@@ -416,10 +416,12 @@
       if (current !== 'effects') show('effects');
       var grp = addon.dataset.addonGroup, gb = grp && host.querySelector('.mk-addon-group[data-addon-group="' + grp + '"]');
       if (gb && !gb.classList.contains('is-active')) gb.click();
+      // its menu (size, side, effect, colour) sits at the top of Dekori: shown from there
       setTimeout(function () {
-        var sec = host.querySelector('.mk-addon-section'), tile = sec && sec.querySelector('.mk-addon-choice.is-active');
-        var target = tile || sec; if (target) target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        if (tile) { tile.classList.add('org-flash'); setTimeout(function () { tile.classList.remove('org-flash'); }, 900); }
+        var sec = host.querySelector('.mk-addon-section');
+        var menu = sec && (sec.querySelector('.mk-addon-controls:not([hidden])') || sec.querySelector('.mk-addon-look:not([hidden])'));
+        if (editor.scrollTop) editor.scrollTo({ top: 0, behavior: 'smooth' });
+        if (menu) { menu.classList.add('org-flash'); setTimeout(function () { menu.classList.remove('org-flash'); }, 900); }
       }, 60);
     }, true);
     // Click what you want to change: an element → its settings, the picture → Fons.

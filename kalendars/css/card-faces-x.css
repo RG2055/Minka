@@ -262,6 +262,9 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-fac
    darkened, its highlights still reading on a dark plate) or porcelain white. The glyph
    only: never its plate, never initials. One static filter, no blur: nothing to redo per frame. */
 @layer mk-fx {
+/* the glyph itself is Fluent on every layout: Gameboy, Winamp and the other inked faces
+   set a mono font on their parts, which the emoji inherited (then the system emoji showed) */
+.card.mk-mid-card :is(.mk-mid-meta-emoji:not(.is-initials) > .mk-mid-meta-emoji-fly,.mk-mid-bg-emoji,.mk-mid-person-emoji) {font-family:'Fluent Emoji Gaps','Fluent Emoji Color','Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif !important;}
 .card.mk-emoji-sys :is(.mk-mid-meta-emoji:not(.is-initials) > .mk-mid-meta-emoji-fly,.mk-mid-bg-emoji,.mk-mid-person-emoji),
 .mk-emoji-style-sample.mk-emoji-sys {font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif !important;}
 .card.mk-emoji-black :is(.mk-mid-meta-emoji:not(.is-initials) > .mk-mid-meta-emoji-fly,.mk-mid-bg-emoji,.mk-mid-person-emoji),

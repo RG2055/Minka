@@ -1369,7 +1369,7 @@
     }
     var clean = {
       id: id,
-      scale: Math.round(Math.max(.6, Math.min(1.4, Number(value.scale) || 1)) * 100),
+      scale: Math.round(Math.max(.3, Math.min(2, Number(value.scale) || 1)) * 100),
       side: value.side === 'left' ? 'l' : 'r',
       x: Math.round(Math.max(-100, Math.min(100, Number(value.x) || 0)) * 10),
       y: Math.round(Math.max(-100, Math.min(100, Number(value.y) || 0)) * 10)
