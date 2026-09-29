@@ -2340,8 +2340,8 @@
      vārds nav jāizvēlas. Latviski, ar pareizo dzimti, un tikai dzīvnieki,
      kuru vārds latviski nav lamuvārds (nav govs, cūkas, brieža, zaķa,
      sliņķa...). Emoji ir viena kodpunkta (Fluent fonts). Kurš dzīvnieks ir
-     tavs, izlemj myAnimal(); /rad paliek pie vecās autora izvēles. */
-  var ANIMAL_IDS = window.MINKA_APP !== 'rad';
+     tavs, izlemj myAnimal(). Arī /rad (no 2026-09-30): tur agrāk izvēlējās vārdu no saraksta. */
+  var ANIMAL_IDS = true;
   var ANIMALS = [
     ['lapsa', '🦊', 'f'], ['ezis', '🦔', 'm'], ['pūce', '🦉', 'f'], ['lācis', '🐻', 'm'], ['panda', '🐼', 'f'],
     ['koala', '🐨', 'f'], ['tīģeris', '🐯', 'm'], ['lauva', '🦁', 'f'], ['vilks', '🐺', 'm'], ['jenots', '🦝', 'm'],

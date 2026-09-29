@@ -335,6 +335,8 @@
           skin = Object.assign({}, skin, { t: 'img' });
           migrated = true;
         }
+        if (window.MINKA_APP === 'rad') skin = radUndither(skin);
+        if (!skin) return;
         merged[normName(k)] = skin;
       });
       if (migrated) localStorage.setItem(KEY, JSON.stringify(merged));
@@ -904,105 +906,14 @@
     // Saglabātā teksta krāsa ir sākumpunkts, nevis galavārds: to pieskaņo fonam.
     applyNextShiftReadability(el, skin);
   }
-  /* /rad: a resident who has not chosen a look gets a dithered radiology
-     picture (scripts/build-dither-skins.py, rtg-*) on the Dither face. Warm
-     inks (rose, coral, peach) for first names with the Latvian women's
-     ending -a/-e, cool ones (ice, teal, green) otherwise; ink and picture
-     are picked by name. Everyone can change it in Izskats. */
-  // Warm (women's names): the prettier ones, no skeletons. Cool: the rest.
-  // Real radiographs/CT (CC0, scripts/rad-src/SOURCES.md), drawn MR and flower,
-  // and the colour perfusion maps (perf-*: their own colours, no ink).
-  // Brains: MR T2, head CT and one perfusion slot ("perf": CBF, Tmax or CBV
-  // by name); a day never repeats a picture. Warm: no skulls or skeletons.
-  var RAD_SCENES_WARM = ['zieds', 'krutis', 'smadzenes', 'ct', 'plauksta', 'ctkrutis', 'ctgalva', 'perf'];
-  var RAD_SCENES_COOL = ['plauksta', 'galvaskauss', 'skelets', 'krutis', 'smadzenes', 'ct', 'ctkrutis', 'ctgalva', 'galvaskauss-sanis', 'perf'];
-  var RAD_SHIFT = { krutis: 60, ct: 58, ctkrutis: 58, 'galvaskauss-sanis': 58, zieds: 68, plauksta: 72, skelets: 72, smadzenes: 70, ctgalva: 70, galvaskauss: 74, 'perf-cbf': 70, 'perf-tmax': 70, 'perf-cbv': 70 };
-  function nameHash(text) {
-    var h = 0;
-    for (var i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) >>> 0;
-    return h;
-  }
-  function isWarmName(name) { return /[AEĀĒ]$/i.test(String(name).trim().split(/\s+/)[0] || ''); }
-  // Each person's own order of pictures (stable), then the day's list picks in
-  // card order: everyone gets the first picture nobody before them has, so a
-  // day never shows the same picture twice while there are enough of them.
-  function scenePreference(name) {
-    var pool = isWarmName(name) ? RAD_SCENES_WARM : RAD_SCENES_COOL;
-    return pool.slice().sort(function (a, b) { return nameHash(name + '|' + a) - nameHash(name + '|' + b); });
-  }
-  var radAssignCache = { key: '', map: {} };
-  // The day's residents from the roster itself (known before any card is
-  // drawn, same order everywhere), else from the cards on the page.
-  function dayResidents(el) {
-    var store = window.__grafiksStore || {}, day = String(window.__activeDateStr || '');
-    for (var m in store) {
-      var days = store[m] || [];
-      for (var i = 0; i < days.length; i++) {
-        if (days[i] && days[i].date === day) return (days[i].workers || []).map(function (w) { return String(w.name || '').trim(); });
-      }
-    }
-    var list = el.closest && el.closest('#grafiks-list');
-    return list ? Array.prototype.map.call(list.querySelectorAll('.mk-mid-card-rg[data-worker]'), function (c) { return String(c.getAttribute('data-worker') || '').trim(); }) : [];
-  }
-  function radScene(el, name) {
-    // Only people on the default look take part (an own look uses nothing).
-    var names = dayResidents(el).filter(function (n, i, a) { return a.indexOf(n) === i && blankSkin(window.mkGetWorkerSkin(n)); });
-    if (names.indexOf(name) < 0) return { scene: scenePreference(name)[0], ink: -1 };
-    var key = names.join('|');
-    if (radAssignCache.key !== key) {
-      var used = {}, map = {};
-      names.forEach(function (n) {
-        var pref = scenePreference(n);
-        var pick = pref.find(function (sc) { return !used[sc]; });
-        if (!pick) pick = pref.slice().sort(function (a, b) { return used[a].length - used[b].length; })[0];   // run out: the least used one
-        var inks = used[pick] || [];
-        var ink = [0, 1, 2].find(function (i) { return inks.indexOf(i) < 0; });              // a repeat gets another ink
-        used[pick] = inks.concat(ink == null ? [] : [ink]);
-        map[n] = { scene: pick, ink: inks.length ? (ink == null ? -1 : ink) : -1 };
-      });
-      radAssignCache = { key: key, map: map };
-    }
-    return radAssignCache.map[name];
-  }
-  // A saved look that is only the plain default card (no picture, classic
-  // face, default tint) counts as not chosen in /rad.
-  function blankSkin(skin) {
-    if (!skin || skin.t || skin.fx) return !skin;
-    var f = skin.face;
-    return !f || (f.face === 'classic' && f.tint === 'd5e6ef' && !f.fullTintMode);
-  }
-  function radDefaultSkin(el) {
-    if (window.MINKA_APP !== 'rad' || !el || !el.classList || !el.classList.contains('mk-mid-card-rg')) return null;
-    var M = window.MinkaCardFaceModel;
-    if (!M) return null;
-    var name = String(el.getAttribute('data-worker') || '').trim();
-    var warm = isWarmName(name);
-    var hash = nameHash(name);
-    var inks = warm ? [['f1', 'ffb3cf'], ['f2', 'ff9e8f'], ['f3', 'ffc9a8']] : [['m1', '8fd0ff'], ['m2', '5ee0d0'], ['m3', 'a8e67a']];
-    var pick = radScene(el, name);
-    var scene = pick.scene;
-    if (scene === 'perf') scene = ['perf-cbf', 'perf-tmax', 'perf-cbv'][hash % 3];
-    var ink = inks[pick.ink >= 0 ? pick.ink : Math.floor(hash / 7) % 3];
-    var face = M.preset('dither');
-    face.tint = ink[1];
-    // Like a picture card: the anatomy left of centre (the picture is
-    // shifted in its frame), the big number right, shift time and the
-    // day/night mark on top, coffee top right, name bottom left, emoji or
-    // initials bottom right. No month or fatigue chip: nothing overlaps.
-    // How far the picture moves left in its frame: as far as each subject
-    // still fits whole in the square card (wide ones move less).
-    face.imageX = RAD_SHIFT[scene] || 70;
-    face.parts.hours = [76, 47, 105, 1];
-    face.parts.name = [30, 86, 85, 1];
-    face.parts.remaining = [20, 12, 80, 1];
-    face.parts.moon = [50, 12, 85, 1];
-    face.colors.moon = 'ffd27a';                    // soft gold: stands out on every picture
-    face.parts.coffee = [84, 12, 80, 1];
-    face.parts.emoji = [86, 86, 85, 1];
-    face.parts.month[3] = 0;
-    face.parts.fatigue = [78, 72, 70, 1];              // under the number, above the initials
-    face.parts.initials[3] = 0;
-    return { t: 'img', id: 'dither-rtg-' + scene + (/^perf-/.test(scene) ? '' : '-' + ink[0]), num: hexToRgb('#' + ink[1]), na: '1', txt: '241,240,234', face: face, depth: false, radDefault: true };
+  /* /rad no longer gives residents a dithered radiology picture: a look saved while that
+     was the default (its dither-rtg picture was never a choice of its own) reads as the
+     plain card, and the person's own choices on it stay (emoji, text effect, bed …). */
+  function radUndither(skin) {
+    if (!skin || skin.t !== 'img' || !/^dither-rtg-/.test(String(skin.id || ''))) return skin;
+    var s = JSON.parse(JSON.stringify(skin));
+    ['t', 'id', 'face', 'num', 'na', 'txt', 'depth', 'radDefault'].forEach(function (k) { delete s[k]; });
+    return hasAny(s) ? s : null;
   }
   /* ── Emoji as the background ──────────────────────────────────────────────
      skin.t 'emo', id "<layout><style>[m]-<code points>": layout b (one, big), c (in the
@@ -1188,7 +1099,7 @@
     return null;
   };
   window.mkApplySkinToEl = function(el, skin) {
-    if (blankSkin(skin)) skin = radDefaultSkin(el) || skin;
+    if (window.MINKA_APP === 'rad') skin = radUndither(skin);
     if (el.classList.contains('mk-next-person')) { applyNextShiftSkin(el, skin); return; }
     if (window.nsApplyWorkerColour) window.nsApplyWorkerColour(el, skin);
     var numEl = el.querySelector('.mk-mid-hours.card-shift') || el.querySelector('.pv-num') || el.querySelector('.nsc-full-dur');
@@ -1279,10 +1190,6 @@
       var lens = String(skin.fl).split(',');
       el.style.setProperty('--mk-focus-x', lens[0]); el.style.setProperty('--mk-focus-y', lens[1]);
     }
-    // /rad: every picture a resident picks or uploads is dithered in their ink
-    // (unless they chose another picture effect; pre-dithered pictures as is).
-    // Radiologists' cards are never touched.
-    if (window.MINKA_APP === 'rad' && el.classList.contains('mk-mid-card-rg') && (skin.t === 'img' || skin.t === 'art') && !skin.fx && !/^dither-/.test(String(skin.id || ''))) el.classList.add('mk-fx-dither');
     if (window.MinkaCardFaces) window.MinkaCardFaces.apply(el, skin);
   };
   function applyToCards(k) {
@@ -1859,12 +1766,6 @@
         var role = previewSource.classList.contains('mk-mid-card-rd') ? 'mk-mid-card-rd' : 'mk-mid-card-rg';
         previewSizeSource = Array.prototype.find.call(rosterCards, function(card) { return card.classList.contains(role); }) || rosterCards[0];
       }
-    }
-    // /rad: a resident without a chosen look edits the look they actually see
-    // (the default radiology card), so every element on it can be moved/changed.
-    if (blankSkin(cur) && previewSource) {
-      var seed = radDefaultSkin(previewSource);
-      if (seed) { draft = JSON.parse(JSON.stringify(seed)); delete draft.radDefault; }
     }
     var emVal = draft.em != null ? Math.round(parseFloat(draft.em) * 100) : 13;
     var emShown = draft.em !== '0';

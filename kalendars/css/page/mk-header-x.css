@@ -198,8 +198,10 @@
 .hx-name:focus-visible { outline: 2px solid var(--hx-accent); outline-offset: 1px; }
 .hx-sep { color: var(--hx-faint); }
 .hx-crew.is-dense { gap: 1px; }
-.hx-crew.is-dense .hx-crew-row { font-size: 12px; line-height: 15px; }
-.hx-crew.is-dense .hx-crew-names { -webkit-line-clamp: 1; }
+.hx-crew.is-dense .hx-crew-row { font-size: 12px; line-height: 14px; }
+.hx-wing.is-dense { gap: 2px; }
+.hx-crew.is-roomy .hx-crew-names { -webkit-line-clamp: 3; }
+.hx-crew.is-tight .hx-crew-names { -webkit-line-clamp: 1; }
 .hx-crew-empty { margin: 0; font-size: 12.5px; color: var(--hx-faint); text-shadow: var(--hx-shadow); }
 
 /* ── Vidus: datuma bloks pa kreisi, rīki pa labi ─────────────────────── */

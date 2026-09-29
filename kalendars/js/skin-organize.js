@@ -21,8 +21,8 @@
     colors: '<path d="M12 3.5a8.5 8.5 0 1 0 0 17c1.2 0 1.9-.8 1.9-1.8 0-.5-.2-.9-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1 .8-1.7 1.8-1.7h2.1c2.1 0 3.7-1.6 3.7-3.7 0-3.9-3.8-7.2-8.5-7.2z"/><circle class="f" cx="7.6" cy="11.4" r="1.25"/><circle class="f" cx="9.8" cy="7.6" r="1.25"/><circle class="f" cx="14.2" cy="7.6" r="1.25"/>',
     effects: '<circle class="f" cx="6" cy="6" r="1"/><circle class="f" cx="12" cy="6" r="1.5"/><circle class="f" cx="18" cy="6" r="1"/><circle class="f" cx="6" cy="12" r="1.5"/><circle class="f" cx="12" cy="12" r="2.1"/><circle class="f" cx="18" cy="12" r="1.5"/><circle class="f" cx="6" cy="18" r="1"/><circle class="f" cx="12" cy="18" r="1.5"/><circle class="f" cx="18" cy="18" r="1"/>'
   };
-  // /rad opens on the pictures (Fons); the radiographers keep Gatavie first.
-  var current = window.MINKA_APP === 'rad' ? 'background' : 'presets';
+  // Gatavie first, in RG and /rad alike (/rad opened on Fons while it had its dithered default).
+  var current = 'presets';
 
   // Small-thumbnail settings of every picture effect (also used by the Būvētājs).
   function thumbModes(ink, k) {

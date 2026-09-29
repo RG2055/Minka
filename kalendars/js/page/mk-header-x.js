@@ -32,6 +32,10 @@
   }
   function pad(n) { return String(n).padStart(2, '0'); }
   var isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '');
+  // /rad (radiologists and residents): the same header; only what /rad has (no Bolus,
+  // planner, lunch or the radiographers' night plan) and its own name, RG Rad.
+  var IS_RAD = window.MINKA_APP === 'rad';
+  var APP_NAME = IS_RAD ? 'RG Rad' : 'RG';
 
   /* ── Ikonas (viena līnija, 24 px režģis, apaļi gali) ─────────────────── */
   var PATHS = {
@@ -154,7 +158,7 @@
       +           '<span class="hx-qr-tile"><img src="assets/coffee/bmc-qr.svg?v=official1" width="24" height="24" alt="" aria-hidden="true"></span>'
       +           '<span class="hx-coffee-count" hidden>' + icon('coffee') + '<b></b></span>'
       +         '</button>'
-      +         '<button type="button" class="hx-chip hx-mobile" data-pop="mobile" aria-haspopup="dialog" aria-expanded="false" aria-label="RG telefonā: QR kods un instrukcija">'
+      +         '<button type="button" class="hx-chip hx-mobile" data-pop="mobile" aria-haspopup="dialog" aria-expanded="false" aria-label="' + APP_NAME + ' telefonā: QR kods un instrukcija">'
       +           icon('mobile')
       +         '</button>'
       +       '</div>'
@@ -247,27 +251,57 @@
     if (!wing) return;
     var count = wing.querySelector('.hx-count'), crew = wing.querySelector('.hx-crew');
     if (!s) return;
-    var rows = [], full = [];
+    var groups = [];
     if (s.isToday) {
       count.innerHTML = '<span>tagad</span><b>' + s.nowCount + '</b>';
       count.title = s.sameNightRoster ? 'Tagad dežūrā ' + s.nowCount + ', visi paliek arī naktī' : 'Tagad dežūrā ' + s.nowCount + ', naktī ' + s.nightCount;
       (s.groups || []).forEach(function (g) {
-        var kind = g.kind === 'dl-night' ? 'night' : g.kind === 'dl-leave' ? 'leave' : 'later';
-        rows.push(crewRow(kind, g.label, g.people, s.listId));
-        full.push(g.label + ': ' + g.people.map(function (p) { return p.first; }).join(', '));
+        groups.push({ kind: g.kind === 'dl-night' ? 'night' : g.kind === 'dl-leave' ? 'leave' : 'later', label: g.label, list: g.people });
       });
     } else {
       count.innerHTML = '<span>dežūrā</span><b>' + s.count + '</b>';
       count.title = 'Dežūrā ' + s.count;
-      shiftGroups(s.people).forEach(function (g) {
-        rows.push(crewRow(g.kind, g.label, g.list, s.listId));
-        full.push(g.label + ': ' + g.list.map(function (p) { return p.first; }).join(', '));
-      });
+      groups = shiftGroups(s.people);
     }
     count.hidden = false;
-    crew.innerHTML = rows.length ? rows.join('') : '<p class="hx-crew-empty">' + (s.isToday ? 'Šobrīd neviena' : 'Nav dežūru') + '</p>';
-    crew.classList.toggle('is-dense', rows.length >= 4);
-    wing.title = full.join('\n');
+    wing.title = groups.map(function (g) { return g.label + ': ' + g.list.map(function (p) { return p.first; }).join(', '); }).join('\n');
+    fitWing(wing, crew, groups, s);
+  }
+  /* Many people on many shifts (a big /rad day): the wing keeps its height (the header
+     never grows). Tried in order, the first that shows every name wins: as drawn, smaller
+     type, then (3+ shifts) day / night / 24 h rows (times in the tooltip), smaller, three
+     lines each. None does: the last that still fits, else one line per shift. */
+  function fitWing(wing, crew, groups, s) {
+    var merged = groups.length > 2 ? mergeShifts(groups) : null, painted = null, keep = null;
+    function paint(list, cls) {
+      if (painted !== list) { paintCrew(crew, list, s); painted = list; }
+      crew.classList.toggle('is-dense', cls !== ''); wing.classList.toggle('is-dense', cls !== '');
+      crew.classList.toggle('is-roomy', cls === 'd3'); crew.classList.toggle('is-tight', cls === 'tight');
+    }
+    function fitsHeight() { return !wing.clientHeight || wing.scrollHeight <= wing.clientHeight + 1; }
+    function allNames() { return Array.prototype.every.call(crew.querySelectorAll('.hx-crew-names'), function (n) { return n.scrollHeight <= n.clientHeight + 1; }); }
+    var tries = [[groups, ''], [groups, 'd']];
+    if (merged) tries.push([merged, ''], [merged, 'd'], [merged, 'd3']);
+    for (var i = 0; i < tries.length; i++) {
+      paint(tries[i][0], tries[i][1]);
+      if (!fitsHeight()) continue;
+      if (allNames()) return;
+      keep = tries[i];
+    }
+    if (keep) paint(keep[0], keep[1]);
+    else paint(merged || groups, 'tight');
+  }
+  function paintCrew(crew, groups, s) {
+    crew.innerHTML = groups.length ? groups.map(function (g) { return crewRow(g.kind, g.label, g.list, s.listId); }).join('')
+      : '<p class="hx-crew-empty">' + (s.isToday ? 'Šobrīd neviena' : 'Nav dežūru') + '</p>';
+  }
+  function mergeShifts(groups) {
+    var full = { kind: 'full', label: 'Diennakts', list: [] }, day = { kind: 'leave', label: 'Dienā', list: [] }, night = { kind: 'night', label: 'Naktī', list: [] };
+    groups.forEach(function (g) {
+      var into = g.kind === 'night' ? night : g.kind === 'full' ? full : day;
+      g.list.forEach(function (p) { if (!into.list.some(function (q) { return q.name === p.name; })) into.list.push(p); });
+    });
+    return [full, day, night].filter(function (g) { return g.list.length; });
   }
   function focusWorkerCard(name, listId) {
     var list = $(listId);
@@ -742,7 +776,7 @@
     return '<div class="hx-menu" role="menu" aria-label="Rīki">'
       + item('phones', 'phone', 'Tālruņu saraksts', 'Visi numuri pa nodaļām, ar meklēšanu', chev)
       + item('lanes', 'lanes', 'Katra maiņa savā joslā', t.today ? 'Laika lineālā zem galvenes' : 'Pieejams tikai šodienai', sw(t.lanes), !t.today)
-      + item('ns', 'moon', 'Nakts sadalījums lineālā', t.nsAvail ? 'Kurš guļ kurā laikā, uz laika joslas' : (t.today ? 'Šodienai nakts plāna vēl nav' : 'Pieejams tikai šodienai'), sw(t.ns), !t.nsAvail)
+      + (IS_RAD ? '' : item('ns', 'moon', 'Nakts sadalījums lineālā', t.nsAvail ? 'Kurš guļ kurā laikā, uz laika joslas' : (t.today ? 'Šodienai nakts plāna vēl nav' : 'Pieejams tikai šodienai'), sw(t.ns), !t.nsAvail))
       + item('cal', 'calendar', 'Izvēlēties datumu', 'Pāriet uz jebkuru dienu', chev)
       + item('look', 'palette', 'Galvenes izskats', 'Fons, krāsas, progresa josla', chev)
       + '<div class="hx-mi-keys" role="note"><b>Taustiņi</b>'
@@ -1114,9 +1148,9 @@
   function mobilePopHtml() {
     return '<div class="hx-mob">'
       +   '<div class="hx-mob-top">'
-      +     '<div class="hx-mob-qr"><img alt="QR kods: atver RG telefonā" width="132" height="132"></div>'
+      +     '<div class="hx-mob-qr"><img alt="QR kods: atver ' + APP_NAME + ' telefonā" width="132" height="132"></div>'
       +     '<div class="hx-mob-copy">'
-      +       '<span class="hx-pop-eyebrow hx-mob-brand"><img src="../data/rg-cal-24.png?v=20260925ic1" srcset="../data/rg-cal-24.png?v=20260925ic1 1x, ../data/rg-cal-48.png?v=20260925ic1 2x" width="24" height="24" alt="" aria-hidden="true">RG telefonā</span>'
+      +       '<span class="hx-pop-eyebrow hx-mob-brand"><img src="../data/rg-cal-24.png?v=20260925ic1" srcset="../data/rg-cal-24.png?v=20260925ic1 1x, ../data/rg-cal-48.png?v=20260925ic1 2x" width="24" height="24" alt="" aria-hidden="true">' + APP_NAME + ' telefonā</span>'
       +       '<h3>Noskenē QR un ievadi kodu</h3>'
       +       '<p>Telefons drošībai prasīs šo vienreizējo kodu:</p>'
       +       '<div class="hx-mob-code is-waiting"><div class="hx-mob-coderow"><b aria-live="polite">···· ····</b>'
@@ -1126,11 +1160,11 @@
       +         '<button type="button" class="hx-mob-new" title="Izveidot jaunu kodu">' + icon('refresh') + 'Jauns kods</button></div></div>'
       +     '</div>'
       +   '</div>'
-      +   '<div class="hx-mob-why"><h4 class="hx-mob-h">Kāpēc RG telefonā</h4>'
+      +   '<div class="hx-mob-why"><h4 class="hx-mob-h">Kāpēc ' + APP_NAME + ' telefonā</h4>'
       +   '<ul class="hx-mob-perks">'
-      +     '<li>' + dockTile('planotajsDockBtn', 'lanes') + '<span><b>Grafika plānotājs</b>Vēlmes nākamajiem mēnešiem iesniedz no telefona.</span></li>'
+      +     (IS_RAD ? '' : '<li>' + dockTile('planotajsDockBtn', 'lanes') + '<span><b>Grafika plānotājs</b>Vēlmes nākamajiem mēnešiem iesniedz no telefona.</span></li>')
       +     '<li>' + dockTile('monthCalDocBtn', 'calendar') + '<span><b>Grafiks kabatā</b>Kurš strādā šodien, rīt un jebkurā dienā.</span></li>'
-      +     '<li>' + dockTile('nsToggleBtnParent', 'moon') + '<span><b>Nakts, Bolus, statistika</b>Tie paši rīki, kas datorā.</span></li>'
+      +     '<li>' + dockTile('nsToggleBtnParent', 'moon') + '<span><b>' + (IS_RAD ? 'Nakts un statistika' : 'Nakts, Bolus, statistika') + '</b>Tie paši rīki, kas datorā.</span></li>'
       +     '<li><span class="hx-mob-app is-rg" aria-hidden="true"><img src="../data/rg-cal-32.png?v=20260925ic1" srcset="../data/rg-cal-32.png?v=20260925ic1 1x, ../data/rg-cal-192.png?v=20260924d1 2x" width="30" height="30" alt=""></span><span><b>Kā lietotne</b>Sākuma ekrānā, bez App Store, vienmēr jaunākā versija.</span></li>'
       +   '</ul></div>'
       // Zīmēts telefona paraugs (ne ekrānuzņēmums): nekādu īstu datu.
@@ -1205,6 +1239,7 @@
     ensureQrLib().then(function () {
       if (!img.isConnected) return;
       var u = new URL(mobileBaseUrl());
+      if (IS_RAD) u.searchParams.set('app', 'rad');
       u.searchParams.set('from', 'desktop-qr');
       var qr = window.qrcode(0, 'M');
       qr.addData(u.toString());
@@ -1300,7 +1335,7 @@
   function fillPop(kind) {
     if (!pop) return;
     pop.innerHTML = kind === 'weather' ? weatherPopHtml() : kind === 'moon' ? moonPopHtml() : kind === 'tools' ? toolsHtml() : kind === 'mobile' ? mobilePopHtml() : coffeePopHtml();
-    pop.setAttribute('aria-label', kind === 'weather' ? 'Laikapstākļi' : kind === 'moon' ? 'Mēness' : kind === 'tools' ? 'Rīki' : kind === 'mobile' ? 'RG telefonā' : 'Atbalstīt RG');
+    pop.setAttribute('aria-label', kind === 'weather' ? 'Laikapstākļi' : kind === 'moon' ? 'Mēness' : kind === 'tools' ? 'Rīki' : kind === 'mobile' ? APP_NAME + ' telefonā' : 'Atbalstīt RG');
     if (kind === 'mobile') mobileOpen();
     pop.dataset.kind = kind;
   }
@@ -1366,7 +1401,7 @@
 
   /* ── Meklēšana ───────────────────────────────────────────────────────── */
   var pal = null, palInput = null, palList = null, results = [], activeIdx = -1, palTimer = 0, palOpener = null;
-  var RECENT_KEY = 'mkHxRecentV1';
+  var RECENT_KEY = window.__mkKey ? window.__mkKey('mkHxRecentV1') : 'mkHxRecentV1';   // /rad keeps its own (other people)
   function recent() { try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]') || []; } catch (_e) { return []; } }
   function remember(item) {
     if (!item || !item.ref) return;
@@ -1513,6 +1548,7 @@
     { id: 'settings', title: 'Iestatījumi', sub: 'Par sistēmu un atjauninājumiem', icon: 'tune', words: 'iestatijumi versija atjauninajumi', run: function () { shellClick('settingsDockBtn'); } },
     { id: 'coffee', title: 'Atbalstīt RG', sub: 'Buy me a coffee', icon: 'coffee', words: 'kafija atbalsts buy me a coffee ziedot', run: function () { openPop('coffee', els.coffee, true); } }
   ];
+  if (IS_RAD) ACTIONS = ACTIONS.filter(function (a) { return ['bolus', 'planner', 'lunch', 'settings', 'stats-night', 'stats-bolus'].indexOf(a.id) < 0; });
   var ACTION_BY_ID = {};
   ACTIONS.forEach(function (a) { ACTION_BY_ID[a.id] = a; });
 
@@ -1892,7 +1928,10 @@
     if (!moon || !center) return;
     moon.classList.toggle('is-tucked', top.classList.contains('is-other-day') && center.clientWidth <= 780);
   }
-  window.addEventListener('resize', function () { clearTimeout(syncMoonTuck.t); syncMoonTuck.t = setTimeout(syncMoonTuck, 200); });
+  window.addEventListener('resize', function () {
+    clearTimeout(syncMoonTuck.t);
+    syncMoonTuck.t = setTimeout(function () { syncMoonTuck(); renderWing('rg'); renderWing('rd'); }, 200);
+  });
 
   window.addEventListener('minka:duty-summary', function (e) { renderWing(e.detail && e.detail.role); });
   window.addEventListener('daySelected', function () {

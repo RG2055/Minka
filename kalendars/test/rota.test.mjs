@@ -235,6 +235,22 @@ test('/rad schedule: a year group split off above the labelled admission block b
   assert.deepEqual(left.map(w => [w.name, w.section]), [['PERSONA E', 'neatliekama_dezuras'], ['PERSONA G', 'rezidenti_uznemsana'], ['PERSONA I', 'rezidenti_uznemsana']]);
 });
 
+test('"VĀ" after a name is another person, "*" only a note', () => {
+  const sheet = docSheet({
+    rows: [
+      { a: 'Atbildīgie ārsti', name: 'PERSONA ALFA VĀ', cells: { 1: '12' } },          // row 3
+      { name: 'PERSONA ALFA', cells: { 2: '12' } },                                     // row 4: someone else
+      { name: 'PERSONA BETA *', cells: { 3: '12' } }                                    // row 5: a note
+    ],
+    merges: [[3, 1, 3, 1]]
+  });
+  const m = buildRota({ sheets: [sheet] }, { sheets: [] }).months[0];
+  const names = (date) => (m.days[date].atbildigie || []).map(e => e.name.toUpperCase());
+  assert.deepEqual(names('01.09.2026'), ['PERSONA ALFA VĀ']);
+  assert.deepEqual(names('02.09.2026'), ['PERSONA ALFA']);
+  assert.deepEqual(names('03.09.2026'), ['PERSONA BETA']);
+});
+
 test('one person, one name: spelling variants of a resident merge, different people in the same list stay apart', () => {
   const sheet = docSheet({
     rows: [

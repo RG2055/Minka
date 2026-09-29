@@ -253,6 +253,10 @@
 @layer mk-fx {
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] {background-color:var(--wf-metal) !important;}
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] > .mk-wf-background > i {background-color:#080b10 !important;}
+/* …except Winamp, whose frame is a picture (the skin): its own dark navy under it, and never
+   the card's screen blend, which on a card without a picture laid the silver metal colour
+   over the frame and turned the player white. */
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data-watch-face="winamp"] {background-color:#02082a !important;background-blend-mode:normal !important;}
 }
 
 @layer mk-fx { .wf-sel.no-anim, .wf-rim-knob.no-anim, .wf-rim-tip.no-anim {transition:none !important;} }

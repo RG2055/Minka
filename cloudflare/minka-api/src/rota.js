@@ -193,8 +193,9 @@ function personRow(sheet, r) {
   let hoursNote = "";
   const m = name.match(/^(.*?)\s+(\d{1,2}\s*[-–]\s*\d{1,2})$/);
   if (m) { name = m[1].trim(); hoursNote = m[2].replace(/\s+/g, ""); }
-  // A mark after the name ("*", "VĀ") is a note on the row, not the name.
-  name = name.replace(/\s*\*+$/, "").replace(/\s+V[ĀA]$/i, "").trim();
+  // A mark after the name ("*") is a note on the row, not the name. "VĀ" is not: two
+  // different people with the same name are told apart by it (the RG lists keep it too).
+  name = name.replace(/\s*\*+$/, "").trim();
   const yearText = cell(sheet, r, 1);
   const year = /^[1-6]$/.test(yearText) ? Number(yearText) : null;
   return { name, year, hoursNote };
