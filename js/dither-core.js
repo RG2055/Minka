@@ -537,7 +537,11 @@
     var docs = [doc];
     try { var f = doc.getElementById('calIframe'); if (f && f.contentDocument) docs.push(f.contentDocument); } catch (_) {}
     try { if (host.parent !== host) docs.push(host.parent.document); } catch (_) {}
-    return docs.some(function (d) { return !!d.querySelector('.mk-skin-preview-real'); });
+    // The preview stays in the page (hidden) after the editor closes: only a
+    // visible one means the editor is open.
+    return docs.some(function (d) {
+      return Array.prototype.some.call(d.querySelectorAll('.mk-skin-preview-real'), function (p) { return p.getClientRects().length > 0; });
+    });
   }
   /* A fresh picture is kept here and sent, a moment later and off the busy
      path. Made while the appearance editor is open, it waits for the editor
