@@ -13924,7 +13924,7 @@ var et = "Arial", tt = 13, PlayListGui = class extends Fe {
 					this._selectedIndex = m, this.refresh();
 				}), v.addEventListener("dblclick", (e) => {
 					this._uiRoot.playlist.playtrack(m), this._uiRoot.audio.play(), this.refresh();
-				}), v.innerHTML = `<span>${m + 1}. ${e.gettitle(m)}</span><span>${e.getlength(m)}</span>`, this._contentPanel.appendChild(v);
+				}), v.append(Object.assign(document.createElement("span"), { textContent: `${m + 1}. ${e.gettitle(m)}` }), Object.assign(document.createElement("span"), { textContent: `${e.getlength(m)}` })), this._contentPanel.appendChild(v);
 			}
 		}, this.itemClick = () => {};
 	}

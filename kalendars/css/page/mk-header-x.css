@@ -900,13 +900,15 @@
   border-radius: 14px;
   color: var(--hx-pop-text);
 }
-.hx-ph-row + .hx-ph-row { box-shadow: 0 -1px 0 var(--hx-pop-line); }
+/* No divider lines: a line drawn on a rounded row bends at its ends and looks
+   broken. M3 lists separate rows with space alone. */
+.hx-ph-row + .hx-ph-row { margin-top: 2px; }
 .hx-ph-row.is-hit { background: var(--hx-pop-raised); }
 .hx-ph-name { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; min-width: 0; }
 .hx-ph-name b { overflow: hidden; font-size: 14px; font-weight: 650; white-space: nowrap; text-overflow: ellipsis; }
 .hx-ph-name small { overflow: hidden; font-size: 12px; color: var(--hx-pop-muted); white-space: nowrap; text-overflow: ellipsis; }
 .hx-ph-name mark { background: none; color: var(--hx-pop-accent); font-weight: 800; }
-.hx-ph-num { flex: 0 0 auto; font-size: 16px; font-weight: 750; letter-spacing: .01em; font-variant-numeric: tabular-nums; }
+.hx-ph-num { flex: 0 0 auto; font-size: 20px; font-weight: 750; letter-spacing: .01em; font-variant-numeric: tabular-nums; }
 .hx-ph-empty { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 26px 8px; color: var(--hx-pop-muted); }
 .hx-ph-empty b { color: var(--hx-pop-text); font-size: 14px; }
 

@@ -44,7 +44,12 @@ export default class PlayListGui extends Group {
           this._uiRoot.audio.play();
           this.refresh();
         });
-        line.innerHTML = `<span>${i + 1}. ${pl.gettitle(i)}</span><span>${pl.getlength(i)}</span>`;
+        // Titles come from stations and stream metadata: text only, never HTML.
+        const titleEl = document.createElement("span");
+        titleEl.textContent = `${i + 1}. ${pl.gettitle(i)}`;
+        const lengthEl = document.createElement("span");
+        lengthEl.textContent = `${pl.getlength(i)}`;
+        line.append(titleEl, lengthEl);
         this._contentPanel.appendChild(line);
       }
     };

@@ -807,9 +807,8 @@ function openFullListModal(ev) {
         </div>
         <div class="fll-group-items">`;
     groups[cat].forEach(item => {
-      const safePhone = escapeHtml(item.phone).replace(/'/g, '&#39;');
       html += `
-        <a class="fll-item" href="javascript:void(0)" onclick="event.stopPropagation();if(navigator.clipboard){navigator.clipboard.writeText('${safePhone}').catch(()=>{});var s=this.querySelector('.fll-phone-num');if(s){var t=s.textContent;s.textContent='✓';setTimeout(function(){s.textContent=t},1400);}}">
+        <div class="fll-item">
           <div class="fll-item-info">
             <span class="fll-item-name">${escapeHtml(item.name)}</span>
             ${item.sub ? `<span class="fll-item-sub">${escapeHtml(item.sub)}</span>` : ''}
@@ -818,7 +817,7 @@ function openFullListModal(ev) {
             <span class="fll-phone-icon">📞</span>
             <span class="fll-phone-num">${escapeHtml(item.phone)}</span>
           </div>
-        </a>`;
+        </div>`;
     });
     html += `</div></div>`;
   });

@@ -1090,7 +1090,7 @@ async function invidiousSearch(query, signal){
       }
       if(!Array.isArray(data)) throw new Error('Invalid response');
       const out=data.map(v=>{
-        const id = endpoint.kind === 'invidious' ? v.videoId : v.id;
+        const id = ytId(endpoint.kind === 'invidious' ? v.videoId : v.id);
         const lengthSeconds = typeof v.lengthSeconds === 'number' ? v.lengthSeconds : parseDuration(v.duration || '');
         return cleanTrackMetadata({
         id, title:v.title||'Nezināma dziesma', author:v.author||'',
@@ -1144,9 +1144,9 @@ async function getStreamData(videoId, signal, skippedSources=new Set()){
         cachedAt:Date.now(),
         title:d.title||'Nezināma dziesma', author:d.author||'', lengthSeconds:d.lengthSeconds||0,
         audioStreams, proxy:source.audioProxy||'', sourceBase:source.base,
-        recommended:(d.recommendedVideos||[]).map(r=>cleanTrackMetadata({
-          id:r.videoId || r.id, title:r.title||'Nezināma dziesma', author:r.author||'',
-          duration:r.duration || fmtDur(r.lengthSeconds), lengthSeconds:r.lengthSeconds||parseDuration(r.duration || ''), thumbnail:thumb(r.videoId || r.id)
+        recommended:(d.recommendedVideos||[]).filter(r=>ytId(r.videoId || r.id)).map(r=>cleanTrackMetadata({
+          id:ytId(r.videoId || r.id), title:r.title||'Nezināma dziesma', author:r.author||'',
+          duration:r.duration || fmtDur(r.lengthSeconds), lengthSeconds:r.lengthSeconds||parseDuration(r.duration || ''), thumbnail:thumb(ytId(r.videoId || r.id))
         }))
       };
       currentProxy=source.base;
@@ -1420,7 +1420,7 @@ function renderCards(target, tracks, descFn){
     const meta=cleanMusicMeta(t);
     const c=document.createElement('button');c.type='button';c.className='card';c.dataset.id=t.id;
     c.setAttribute('aria-label','Atskaņot '+meta.title);
-    c.innerHTML=`<img class="card-cover" src="${t.thumbnail}" alt="" loading="lazy" decoding="async" onerror="this.src='https://i.ytimg.com/vi/${t.id}/default.jpg'">
+    c.innerHTML=`<img class="card-cover" src="${esc(t.thumbnail)}" alt="" loading="lazy" decoding="async"${ytFallback(t)}>
       <span class="card-title" title="${esc(meta.title)}">${esc(meta.title)}</span><span class="card-desc" title="${esc(meta.author)}">${esc(descFn?cleanMusicMeta({title:t.title,author:descFn(t)}).author:meta.author)}</span>
       <span class="card-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>`;
     c.addEventListener('click',()=>playTrack(t,tracks));
@@ -1433,15 +1433,19 @@ function renderList(target, tracks){
     const meta=cleanMusicMeta(t);
     const r=document.createElement('button');r.type='button';r.className='list-row';r.dataset.id=t.id;
     r.setAttribute('aria-label','Atskaņot '+meta.title);
-    r.innerHTML=`<img class="list-cover" src="${t.thumbnail}" alt="" loading="lazy" decoding="async" onerror="this.src='https://i.ytimg.com/vi/${t.id}/default.jpg'">
+    r.innerHTML=`<img class="list-cover" src="${esc(t.thumbnail)}" alt="" loading="lazy" decoding="async"${ytFallback(t)}>
       <span><span class="list-title">${esc(meta.title)}</span><span class="list-meta">${esc(meta.author)}</span></span>
-      <span class="list-len">${t.duration||fmt(t.lengthSeconds)}</span>
+      <span class="list-len">${esc(t.duration||fmt(t.lengthSeconds))}</span>
       <span class="list-play"><span class="play-ico"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span><span class="pause-ico"><svg viewBox="0 0 24 24"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg></span></span>`;
     r.addEventListener('click',()=>playTrack(t,tracks));
     l.appendChild(r);
   });
 }
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+// A YouTube video id is letters, digits, - and _; anything else from a search
+// instance is dropped before it can reach a URL or an attribute.
+function ytId(v){v=String(v||'');return /^[\w-]{6,20}$/.test(v)?v:''}
+function ytFallback(t){const id=ytId(t&&t.id);return id?` onerror="this.src='https://i.ytimg.com/vi/${id}/default.jpg'"`:''}
 
 /* ════════════════════════════════════════════════════════════════
    SEED: fetch real top tracks on load via curated song searches
@@ -1821,7 +1825,7 @@ function renderLibrary(){
     const el=document.createElement('button');el.type='button';el.className='lib-item';
     el.setAttribute('aria-label',p.name);
     const cover=p.isRadio?'https://www.radiorecord.ru/upload/iblock/fd8/record_new.jpeg':(p.tracks[0]?.thumbnail||'https://picsum.photos/seed/pl'+i+'/100/100');
-    el.innerHTML=`<img class="lib-cover" src="${cover}" alt="" loading="lazy"><div class="lib-meta"><div class="lib-name">${esc(p.name)}</div><div class="lib-sub">${esc(p.sub)}</div></div>`;
+    el.innerHTML=`<img class="lib-cover" src="${esc(cover)}" alt="" loading="lazy"><div class="lib-meta"><div class="lib-name">${esc(p.name)}</div><div class="lib-sub">${esc(p.sub)}</div></div>`;
     el.addEventListener('click',()=>{ if(p.isRadio){ $$('.nav-item').forEach(x=>x.classList.remove('active')); document.querySelector('[data-nav="radio"]').classList.add('active'); loadRadioView() } else if(p.tracks[0]){playTrack(p.tracks[0],p.tracks); toast('Atskaņo: '+p.name)} });
     wrap.appendChild(el);
   });
@@ -3353,9 +3357,9 @@ function renderLikedSongsList(el, tracks){
     const r = document.createElement('button');
     r.type='button';r.className = 'list-row'; r.dataset.id = t.id;
     r.setAttribute('aria-label','Atskaņot '+meta.title);
-    r.innerHTML = `<img class="list-cover" src="${t.thumbnail||''}" alt="" loading="lazy" onerror="this.src='https://i.ytimg.com/vi/${t.id}/default.jpg'">
+    r.innerHTML = `<img class="list-cover" src="${esc(t.thumbnail)}" alt="" loading="lazy"${ytFallback(t)}>
       <span><span class="list-title">${esc(meta.title)}</span><span class="list-meta">${esc(meta.author)}</span></span>
-      <span class="list-len">${t.duration||''}</span>
+      <span class="list-len">${esc(t.duration)}</span>
       <span class="list-play"><span class="play-ico"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span><span class="pause-ico"><svg viewBox="0 0 24 24"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg></span></span>`;
     r.addEventListener('click',()=>playTrack(t, tracks));
     el.appendChild(r);

@@ -838,12 +838,18 @@ const worker = {
 
     if (url.pathname === "/api/phones" && method === "POST") {
       const body = await readJson(request);
-      if (!body?.name || !body?.phone) {
+      // Plain text only: a number is digits and separators, the rest has no
+      // markup or quote characters, and every field has a length cap.
+      const text = (value, max) => typeof value === "string"
+        ? value.replace(/[\u0000-\u001f<>"'`\\]/g, "").replace(/\s+/g, " ").trim().slice(0, max) : "";
+      const name = text(body?.name, 80), cat = text(body?.cat, 40), sub = text(body?.sub, 80);
+      const phone = typeof body?.phone === "string" ? body.phone.trim() : "";
+      if (!name || !/^[0-9 +()./,-]{2,40}$/.test(phone)) {
         return json(request, { ok: false, error: "name and phone required" }, 400);
       }
       await env.DB.prepare(
         "INSERT INTO phones (name, phone, cat, sub) VALUES (?, ?, ?, ?)"
-      ).bind(body.name, body.phone, body.cat || "", body.sub || "").run();
+      ).bind(name, phone, cat, sub).run();
       return json(request, { ok: true });
     }
 
