@@ -903,19 +903,15 @@
 /* No divider lines: a line drawn on a rounded row bends at its ends and looks
    broken. M3 lists separate rows with space alone. */
 .hx-ph-row + .hx-ph-row { margin-top: 2px; }
-/* Each row is one soft tile (M3 segmented list) in its own tint, so a name
-   and its number read as a pair; the cap keeps the number near the name on a
-   wide list. Six tints in turn (no purple). */
-.hx-ph-row { --ph-tint: #3b82c4; max-width: 520px; background: color-mix(in srgb, var(--ph-tint) 16%, transparent); }
-.hx-ph-row:nth-of-type(6n+2) { --ph-tint: #1f9e9a; }
-.hx-ph-row:nth-of-type(6n+3) { --ph-tint: #3f9d4a; }
-.hx-ph-row:nth-of-type(6n+4) { --ph-tint: #c99a1c; }
-.hx-ph-row:nth-of-type(6n+5) { --ph-tint: #d9772b; }
-.hx-ph-row:nth-of-type(6n+6) { --ph-tint: #d4574f; }
+/* Each row is one soft tile (M3 segmented list) in the theme's own tint,
+   every other one a shade stronger, so a name and its number read as a pair
+   across the full width. */
+.hx-ph-row { background: color-mix(in srgb, var(--hx-pop-raised) 38%, transparent); }
+.hx-ph-row:nth-of-type(even) { background: color-mix(in srgb, var(--hx-pop-raised) 70%, transparent); }
 .hx-ph-row.is-hit { background: var(--hx-pop-raised); }
 .hx-ph-name { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; min-width: 0; }
-.hx-ph-name b { overflow: hidden; font-size: 14px; font-weight: 650; white-space: nowrap; text-overflow: ellipsis; }
-.hx-ph-name small { overflow: hidden; font-size: 12px; color: var(--hx-pop-muted); white-space: nowrap; text-overflow: ellipsis; }
+.hx-ph-name b { overflow: hidden; font-size: 17px; font-weight: 650; white-space: nowrap; text-overflow: ellipsis; }
+.hx-ph-name small { overflow: hidden; font-size: 13px; color: var(--hx-pop-muted); white-space: nowrap; text-overflow: ellipsis; }
 .hx-ph-name mark { background: none; color: var(--hx-pop-accent); font-weight: 800; }
 .hx-ph-num { flex: 0 0 auto; font-size: 20px; font-weight: 750; letter-spacing: .01em; font-variant-numeric: tabular-nums; }
 .hx-ph-empty { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 26px 8px; color: var(--hx-pop-muted); }
