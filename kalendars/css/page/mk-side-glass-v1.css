@@ -212,6 +212,12 @@
 /* Kājene atver cilvēka kalendāru (calendar.js). */
 .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) .mk-side-card > .mk-side-nfoot { cursor: pointer !important; -webkit-user-select: none !important; user-select: none !important; }
 
+@property --mk-side-z {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+
 /* ── Šodienas sānu kartītes vienmēr ietilpst kolonnā ─────────────────────
    Kartītes izkārtojums nemainās nemaz: ja tās neietilpst, katru kartīti
    vienmērīgi samazina (zoom) kā mazāku tās pašas kartītes kopiju, tāpēc
@@ -239,7 +245,10 @@ html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .s
 html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty):has(> :nth-child(8 of .mk-side-card)) { --mk-side-n: 8; }
 /* Starp kartītēm 6 px kolonnas atstarpe + 3 px mala. */
 html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card:has(> .mk-side-ticks) {
-  zoom: clamp(.45, (100cqh - (var(--mk-side-n) - 1) * 9px) / var(--mk-side-n) / var(--mk-side-nat), .68);
+  /* mērogs kā skaitlis (@property), lai iekšā to var izmantot stabiņu
+     platumam veselos ekrāna pikseļos */
+  --mk-side-z: clamp(.45, (100cqh - (var(--mk-side-n) - 1) * 9px) / var(--mk-side-n) / var(--mk-side-nat), .68);
+  zoom: var(--mk-side-z);
   margin-bottom: 3px !important;
 }
 
@@ -788,5 +797,25 @@ html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .s
   grid-area: foot !important;
   justify-content: end !important;
   padding-top: 0 !important;
+}
+
+/* Visi stabiņi vienā platumā: platums un atstarpe veselos ierīces pikseļos
+   (pēc kartītes mēroga un ekrāna mērogojuma 100–200 %), atlikums vienādi
+   abās malās. Citādi daļskaitļa platumi noapaļojas dažiem uz 5, citiem uz 6. */
+:root { --mk-dpx: 1px; }
+@media (resolution: 1.1dppx) { :root { --mk-dpx: calc(1px / 1.1); } }
+@media (resolution: 1.25dppx) { :root { --mk-dpx: .8px; } }
+@media (resolution: 1.5dppx) { :root { --mk-dpx: calc(1px / 1.5); } }
+@media (resolution: 1.75dppx) { :root { --mk-dpx: calc(1px / 1.75); } }
+@media (resolution: 2dppx) { :root { --mk-dpx: .5px; } }
+html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card:has(> .mk-side-ticks) > .mk-side-ticks {
+  container-type: inline-size !important;
+  justify-content: center !important;
+  --mk-tick-gap: round(nearest, 3px, var(--mk-dpx, 1px));
+  gap: calc(var(--mk-tick-gap) / var(--mk-side-z, 1)) !important;
+}
+html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card:has(> .mk-side-ticks) > .mk-side-ticks > i {
+  flex: none !important;
+  width: calc(round(down, (100cqw * var(--mk-side-z, 1) - 23 * var(--mk-tick-gap)) / 24, var(--mk-dpx, 1px)) / var(--mk-side-z, 1)) !important;
 }
 

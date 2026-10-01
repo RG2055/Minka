@@ -50,6 +50,9 @@
     else setTimeout(fn, 200);
   }
   function warm() {
+    // The "auto" coffee colours of every card face, worked out once and kept
+    // (card-faces.js), so the coffee chip does not change colour after a card shows.
+    try { if (window.MinkaCardFaces && window.MinkaCardFaces.warmCoffee && window.mkGetAllSkins) idle(function () { window.MinkaCardFaces.warmCoffee(window.mkGetAllSkins()); }); } catch (_e) {}
     var urls = collect();
     stats.queued += urls.length;
     var next = function () {

@@ -875,6 +875,8 @@
     });
   }
 
+  // Every colleague's skin (read-only use, e.g. warming caches in idle time).
+  window.mkGetAllSkins = function() { return loadAll(); };
   window.mkGetWorkerSkin = function(name) {
     var all = loadAll();
     return all[normName(name)] || null;

@@ -40,6 +40,45 @@
   var previewFrame = 0;
   var refreshPreview = function() {};
   var coffeePalettes = new Map();
+  /* The "auto" coffee colours are sampled from the skin's picture (async). They
+     are kept on the device too, so a card shows the right colours in its first
+     frame instead of switching a moment later (a visible blink on day switch). */
+  var COFFEE_PALETTE_KEY = 'minka:coffee-palette-v1', coffeePaletteMemo = null;
+  function knownCoffeePalette(key) {
+    if (!coffeePaletteMemo) { try { coffeePaletteMemo = JSON.parse(localStorage.getItem(COFFEE_PALETTE_KEY) || '{}') || {}; } catch (_e) { coffeePaletteMemo = {}; } }
+    return coffeePaletteMemo[key] || '';
+  }
+  function rememberCoffeePalette(key, rgb) {
+    if (!rgb || knownCoffeePalette(key) === rgb) return;
+    coffeePaletteMemo[key] = rgb;
+    var keys = Object.keys(coffeePaletteMemo);
+    if (keys.length > 200) delete coffeePaletteMemo[keys[0]];
+    try { localStorage.setItem(COFFEE_PALETTE_KEY, JSON.stringify(coffeePaletteMemo)); } catch (_e) {}
+  }
+  // Idle-time warm-up (card-pictures-warm.js): every colleague's "auto" coffee
+  // colours worked out and kept before their card is first shown, one at a time.
+  function warmCoffee(all) {
+    if (typeof window.mkSuggestSkinPalette !== 'function' || !all) return;
+    var todo = [];
+    Object.keys(all).forEach(function(name) {
+      var skin = all[name], config = skin && skin.face ? M.clean(skin.face) : null;
+      if (!config || config.coffeeContrast !== 1) return;
+      var key = JSON.stringify([skin.t, skin.id, skin.rgb]);
+      if (!knownCoffeePalette(key) && !coffeePalettes.has(key)) todo.push([key, skin]);
+    });
+    var idle = window.requestIdleCallback || function(fn) { return setTimeout(fn, 200); };
+    (function next() {
+      var item = todo.shift();
+      if (!item) return;
+      var key = item[0];
+      if (!coffeePalettes.has(key)) coffeePalettes.set(key, window.mkSuggestSkinPalette(item[1]).catch(function() { return null; }));
+      coffeePalettes.get(key).then(function(palette) {
+        var rgb = palette && (palette.source || palette.num);
+        if (rgb) rememberCoffeePalette(key, rgb);
+        idle(next);
+      });
+    })();
+  }
   function applyCoffee(card,skin,config) {
     var mode=M.effectiveCoffeeMode(config);
     if(card.dataset.coffeeMode!==(mode?'open':'icon'))delete card.dataset.coffeeExpanded;
@@ -60,14 +99,18 @@
     if(card.dataset.coffeePalette===key)return;
     card.dataset.coffeePalette=key;
     function paint(rgb){var c=M.coffeeColors(rgb);card.style.setProperty('--wf-coffee-bg',c.background);card.style.setProperty('--wf-coffee-ink',c.foreground);}
-    paint(skin.rgb);
+    var known=knownCoffeePalette(key);
+    paint(known||skin.rgb);
     if(typeof window.mkSuggestSkinPalette!=='function')return;
     if(!coffeePalettes.has(key)){
       if(coffeePalettes.size>=128)coffeePalettes.delete(coffeePalettes.keys().next().value);
       coffeePalettes.set(key,window.mkSuggestSkinPalette(skin).catch(function(){return null;}));
     }
     coffeePalettes.get(key).then(function(palette){
-      if(palette&&card.dataset.coffeeContrast==='auto'&&card.dataset.coffeePalette===key)paint(palette.source||palette.num);
+      var rgb=palette&&(palette.source||palette.num);
+      if(!rgb)return;
+      rememberCoffeePalette(key,rgb);
+      if(rgb!==known&&card.dataset.coffeeContrast==='auto'&&card.dataset.coffeePalette===key)paint(rgb);
     });
   }
   /* Analog shift timer ("Maiņas laiks" → Analogs). A 12-hour dial: the rest of
@@ -1754,19 +1797,25 @@
       if(selKind==='addon'&&e.buttons&&selAddon&&selAddon.classList.contains('is-dragging')&&!dragFrame)dragFrame=requestAnimationFrame(function(){dragFrame=0;placeSel();});
     },{passive:true});
     // Alignment guides while dragging: the card centre (amber) and the centres
-    // of the other visible elements (blue). Within SNAP % the part locks on.
-    var SNAP=2.5;
+    // of the other visible elements (blue). Within SNAP_PX screen pixels the part
+    // locks on, but only while the hand slows down near a guide: a quick move
+    // passes guides by, and Alt (or Ctrl/⌘) held turns snapping off, so an
+    // element can sit anywhere, also just beside a guide.
+    var SNAP_PX=5,FAST_PX_MS=.6;
     function guideLayer(){
       var g=preview.querySelector(':scope > .wf-guides');
       if(!g){g=document.createElement('div');g.className='wf-guides';g.setAttribute('aria-hidden','true');g.innerHTML='<i class="wf-g-cx"></i><i class="wf-g-cy"></i><i class="wf-g-v"></i><i class="wf-g-h"></i>';preview.append(g);}
       return g;
     }
-    function snap(nx,ny){
+    function snap(nx,ny,free){
+      var g0=preview.querySelector(':scope > .wf-guides');
+      if(free){if(g0){g0.querySelector('.wf-g-v').hidden=true;g0.querySelector('.wf-g-h').hidden=true;}return [nx,ny];}
+      var SNAP=SNAP_PX/Math.max(1,drag.r.width)*100,SNAPY=SNAP_PX/Math.max(1,drag.r.height)*100;
       var xs=[[50,'center']],ys=[[50,'center']];
       M.parts.forEach(function(key){var p=config.parts[key];if(key===selectedPart||!p||!p[3])return;var el=preview.querySelector('[data-wf-part="'+key+'"]');if(!el||el.hidden)return;xs.push([p[0],'part']);ys.push([p[1],'part']);});
       var bx=null,by=null;
       xs.forEach(function(t){var d=Math.abs(t[0]-nx);if(d<=SNAP&&(!bx||d<bx.d))bx={v:t[0],k:t[1],d:d};});
-      ys.forEach(function(t){var d=Math.abs(t[0]-ny);if(d<=SNAP&&(!by||d<by.d))by={v:t[0],k:t[1],d:d};});
+      ys.forEach(function(t){var d=Math.abs(t[0]-ny);if(d<=SNAPY&&(!by||d<by.d))by={v:t[0],k:t[1],d:d};});
       var g=guideLayer();g.classList.add('is-on');
       var v=g.querySelector('.wf-g-v'),h=g.querySelector('.wf-g-h');
       v.hidden=!bx;h.hidden=!by;
@@ -1802,7 +1851,7 @@
       }else{
         var nx=Math.max(5,Math.min(95,drag.px+(e.clientX-drag.x)/drag.r.width*100));
         var ny=Math.max(5,Math.min(95,drag.py+(e.clientY-drag.y)/drag.r.height*100));
-        var s=snap(nx,ny);
+        var s=snap(nx,ny,e.altKey||e.ctrlKey||e.metaKey||drag.fast);
         config.parts[selectedPart][0]=Math.round(s[0]);
         config.parts[selectedPart][1]=Math.round(s[1]);
         drag.land=landing(config.parts[selectedPart][0],config.parts[selectedPart][1]);showGhost(drag.land);
@@ -1813,6 +1862,10 @@
       if(!drag||e.pointerId!==drag.id)return;
       if(!drag.moved&&Math.abs(e.clientX-drag.x)+Math.abs(e.clientY-drag.y)<3)return;
       drag.moved=true;if(lastPress)lastPress.moved=true;
+      // how fast the hand moves (px per ms, smoothed): fast = no snapping
+      var now=e.timeStamp||performance.now();
+      if(drag.lt){var dt=Math.max(1,now-drag.lt),v=Math.hypot(e.clientX-drag.lx,e.clientY-drag.ly)/dt;drag.v=drag.v==null?v:drag.v*.6+v*.4;drag.fast=drag.v>FAST_PX_MS;}
+      drag.lt=now;drag.lx=e.clientX;drag.ly=e.clientY;
       dragEvt=e;if(!dragFrame)dragFrame=requestAnimationFrame(dragStep);
     });
     function endDrag(e){
@@ -2042,5 +2095,5 @@
     cancelAnimationFrame(previewFrame); previewFrame = 0; refreshPreview = function() {}; currentPick = function () { return null; }; currentSettle = function () {}; currentQuiet = function () {}; currentAdopt = function () {}; releaseContours(); releaseContours = function () {};
     if (waSizes && host) host.querySelectorAll('.wf-winamp').forEach(function (card) { waSizes.unobserve(card); });
   }
-  window.MinkaCardFaces = { dialPreview: dialPreview, dialMarkup: dialMarkup, dialSkins: DIAL_SKINS, digitSkins: DIGIT_SKINS, digitPreview: digitPreview, pick: function(e){ return currentPick(e); }, settle: function(){ currentSettle(); }, quiet: function(on){ if (quietParts !== !!on) { quietParts = !!on; currentQuiet(); } }, adopt: function(el){ currentAdopt(el); }, apply: apply, mount: mount, release: release, refreshPreview: function(){refreshPreview();} };
+  window.MinkaCardFaces = { dialPreview: dialPreview, dialMarkup: dialMarkup, dialSkins: DIAL_SKINS, digitSkins: DIGIT_SKINS, digitPreview: digitPreview, pick: function(e){ return currentPick(e); }, settle: function(){ currentSettle(); }, quiet: function(on){ if (quietParts !== !!on) { quietParts = !!on; currentQuiet(); } }, adopt: function(el){ currentAdopt(el); }, apply: apply, mount: mount, release: release, refreshPreview: function(){refreshPreview();}, warmCoffee: warmCoffee };
 })();
