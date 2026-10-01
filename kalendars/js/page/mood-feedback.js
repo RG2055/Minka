@@ -860,7 +860,7 @@
      count: no retries, no measuring loop. The ring's size is handed to CSS
      and to the drawing (card.__mx). */
   var MX_FACE_Y = 132;                   // face centre in the stage
-  var MX_BELOW = 273;                    // stage under the face centre: ring front, curve, marks, the month strip (the mood's name sits in the heading)
+  var MX_BELOW = 227;                    // stage under the face centre: ring front, curve, marks (the month strip now sits under the faces, the mood's name in the heading)
   // Their coffee: up to three moons on the upper right of the bubble, each
   // the calendar's own icon for that drink, with a count above one.
   function mxMoons(person, sources, size) {
@@ -1202,7 +1202,7 @@
     var rx = Math.min(W / 2 - 24, 136);
     // Tall enough that the far side passes above the face, never across it.
     var ry = Math.round(Math.max(d / 2 + small / 2 + 6, rx * .6));
-    var geo = { faceY: MX_FACE_Y, faceD: d, stageH: MX_FACE_Y + MX_BELOW, rx: rx, ry: ry, cyRing: 4, groundGap: 64 };  // the month strip under the curve
+    var geo = { faceY: MX_FACE_Y, faceD: d, stageH: MX_FACE_Y + MX_BELOW, rx: rx, ry: ry, cyRing: 4, groundGap: 18 };  // the curve's floor; "Novērtē maiņu" follows right under it
     card.__mx = geo;
     card.style.setProperty('--mx-face-y', geo.faceY + 'px');
     card.style.setProperty('--mx-stage-h', geo.stageH + 'px');

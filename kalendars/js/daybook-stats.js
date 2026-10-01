@@ -708,14 +708,23 @@
      cold month is warmed person by person between frames (ensureFatigue). */
   function fatigueApi() { return window.__fatigue && window.__fatigue.monthSeries ? window.__fatigue : null; }
   function fatColor(v) { var F = fatigueApi(); return F ? F.getPresentation(v).color : '#ff9f43'; }
-  function sparkline(values, color) {
+  // The same language as the worker's month curve (fatigue.js monthCurveHtml):
+  // the lived part solid, the forecast dashed and fainter. With the forecast
+  // drawn, the first day of a month still has a line (it used to need two
+  // lived days and showed nothing on the 1st).
+  function sparkline(values, color, lived) {
     var n = values.length;
     if (n < 2) return '';
+    if (lived == null) lived = n;
     // Daily awake peaks live between ~40 (rest day) and ~75, so the line
     // uses that band: the shape of the month, not a flat line near the middle.
     var W = 120, H = 28, lo = 35, hi = 80;
     var pts = values.map(function (v, i) { return (i / (n - 1) * W).toFixed(1) + ',' + (H - 2 - (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo) * (H - 4)).toFixed(1); });
-    return '<svg class="db-spark" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true"><polyline points="' + pts.join(' ') + '" fill="none" stroke="' + color + '" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>';
+    var line = function (list, extra) { return list.length > 1 ? '<polyline points="' + list.join(' ') + '" fill="none" stroke="' + color + '" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"' + extra + '/>' : ''; };
+    var past = pts.slice(0, Math.max(1, lived)), future = lived < n ? pts.slice(Math.max(0, lived - 1)) : [];
+    var dot = past.length === 1 ? '<circle cx="' + past[0].split(',')[0] + '" cy="' + past[0].split(',')[1] + '" r="1.8" fill="' + color + '"/>' : '';
+    return '<svg class="db-spark" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">'
+      + line(future, ' stroke-dasharray="3 4" opacity=".55"') + line(past, '') + dot + '</svg>';
   }
   var fatigueJob = null;
   function fatigueMeta() {
@@ -804,7 +813,7 @@
     })();
     var people = data.names.map(function (name) {
       var sum = F.monthSummary(data.series[name], now);
-      return { name: name, days: data.fatByDay[name].slice(0, past), sum: sum };
+      return { name: name, days: data.fatByDay[name], lived: past, sum: sum };
     }).filter(function (p) { return p.sum && p.sum.peak; })
       .sort(function (a, c) { return c.sum.highHours - a.sum.highHours || c.sum.peak.score - a.sum.peak.score; });
     var teamHigh = people.reduce(function (a, p) { return a + p.sum.highHours; }, 0);
@@ -819,7 +828,7 @@
       var g = GROUP.rg, pk = p.sum.peak, c = fatColor(pk.score);
       return '<button type="button" class="db-fat-row" data-db-person="' + esc(p.name) + '">' + avatar(p.name, g.accent)
         + '<span class="db-fat-name"><b>' + esc(shortName(p.name)) + '</b><small>Augstākais <span style="color:' + c + '">' + pk.score + '</span></small></span>'
-        + sparkline(p.days, c)
+        + sparkline(p.days, c, p.lived)
         + '<span class="db-fat-val"><b style="color:' + (p.sum.highHours ? fatColor(46) : 'inherit') + '">' + p.sum.highHours + ' h</b><small>augstā zonā</small></span></button>';
     }), '</div>', CAP) : empty('Šomēnes nav noguruma datu.');
     return tiles

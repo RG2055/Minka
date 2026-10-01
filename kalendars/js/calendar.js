@@ -3233,6 +3233,30 @@ function filterFullList(btn) {
     });
   }
 
+  // A side card's fatigue (the ring or the shift's ticks) opens the person
+  // on the Nogurums tab, the curve already on this shift's day.
+  // The ticks' faded top lies under the name and 24H: a press there still
+  // means the ticks, unless it lands on a control of its own (the emoji).
+  document.addEventListener('click', function(e) {
+    const t = e.target;
+    let hit = t && t.closest && t.closest('.mk-side-card :is(.mk-side-ticks, .mk-side-fatigue)');
+    if (!hit && t && t.closest && t.closest('.mk-side-card') && !t.closest('button, a, input, select, textarea, [data-mk-emoji-click], .mk-emoji-side')) {
+      const ticks = t.closest('.mk-side-card').querySelector(':scope > .mk-side-ticks');
+      const r = ticks && ticks.getBoundingClientRect();
+      if (r && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) hit = ticks;
+    }
+    // The footer (shift split, next shift, the month's shifts) is about the
+    // person's schedule: it opens their calendar instead.
+    const foot = !hit && t && t.closest && t.closest('.mk-side-card > .mk-side-nfoot');
+    if (!hit && !foot) return;
+    const card = (hit || foot).closest('.mk-side-card');
+    if (!card || !card.dataset.worker) return;
+    e.preventDefault();
+    e.stopPropagation();
+    // Ring, ticks or footer, the window grows out of the whole card: one motion.
+    showWorkerSchedule(card.dataset.worker, card.dataset.shift, foot ? { view: 'calendar', origin: card } : { fatigueRange: 'day', origin: card });
+  });
+
   // Name click → scroll that person's card into view with a short highlight
   document.addEventListener('click', function(e) {
     const nameEl = e.target && e.target.closest && e.target.closest('.mk-duty-strip [data-w]');
@@ -3468,6 +3492,171 @@ function filterFullList(btn) {
     return nextHtml || monthHtml ? `<dl class="mk-side-nfoot${splitHtml ? ' mk-side-nfoot--split' : ''}">${splitHtml}${nextHtml}${monthHtml}</dl>` : '';
   }
 
+  /* Today's fatigue on the side card: its own row of ticks (nothing laid
+     over it), under the name and ring, from the start of
+     the shift to its end (idea after Bencho's "Progress ticks", MIT,
+     bencho.dev/licence). Each tick is a slice of the shift, as tall as the
+     modelled fatigue then (a wave over the day) and coloured by its level
+     (Zems green, Vidējs yellow, Augsts orange, Kritisks red); what is
+     already worked is full colour, the rest is the forecast, dimmed. Nothing is
+     written on it: the ring and the footer carry the numbers, the ticks only
+     show the shape of the day.
+     Read off the person's month timeline (the worker window uses the same,
+     cached), in idle time after the cards are drawn, never in the click
+     that drew them. A shift is worked out once: later renders put the same
+     ticks back at once, without animating them again. Static after that:
+     one timer moves "now" to the next tick, when the clock gets there. */
+  const SIDE_TICKS = 24;
+  const sideTickCache = new Map();   // name|shift start -> { start, end, colors, heights }
+  let sideTickIdle = 0, sideTickTimer = 0;
+  function sideTickDuty(name, now) {
+    const f = window.__fatigue;
+    if (!f || typeof f.monthSeries !== 'function') return null;
+    const d = new Date(now);
+    const series = f.monthSeries(name, d.getFullYear(), d.getMonth() + 1, 1);
+    if (!series || !series.duties) return null;
+    const rosterStart = new Date(now); if (rosterStart.getHours() < 8) rosterStart.setDate(rosterStart.getDate() - 1);
+    rosterStart.setHours(8, 0, 0, 0);
+    const from = +rosterStart, to = from + 24 * 3600e3;
+    return series.duties.find(x => x.start <= now && now < x.end)
+      || series.duties.find(x => x.start >= from && x.start < to) || null;
+  }
+  function sideTickScore(name, t) {
+    const d = new Date(t), s = window.__fatigue.monthSeries(name, d.getFullYear(), d.getMonth() + 1, 1);
+    if (!s || !s.samples) return null;
+    const x = (t - s.from) / 3600e3, i = Math.floor(x), a = s.samples[i], b = s.samples[i + 1] || a;
+    if (!a) return b ? b.score : null;
+    return a.score + ((b ? b.score : a.score) - a.score) * (x - i);
+  }
+  // The month series a shift's ticks were read from. A night-part change (or
+  // new schedule data) makes the fatigue model rebuild them, so a cached row
+  // is current only while it still points at the very same series objects.
+  function sideTickRefs(name, duty, build) {
+    const f = window.__fatigue, months = [], refs = [];
+    for (const t of [duty.start, duty.end - 1]) {
+      const d = new Date(t), y = d.getFullYear(), m = d.getMonth() + 1;
+      if (!months.some(x => x[0] === y && x[1] === m)) months.push([y, m]);
+    }
+    for (const [y, m] of months) {
+      if (!build && !(f.isMonthSeriesReady && f.isMonthSeriesReady(name, y, m, 1))) return null;
+      refs.push(f.monthSeries(name, y, m, 1));
+    }
+    return refs;
+  }
+  function sideTickFresh(entry, refs) {
+    return !!refs && refs.length === entry.refs.length && refs.every((r, i) => r === entry.refs[i]);
+  }
+  function sideTickEntry(name, now) {
+    const duty = sideTickDuty(name, now);
+    if (!duty || !(duty.end > duty.start)) return null;
+    const key = name + '|' + duty.start, refs = sideTickRefs(name, duty, true);
+    const cached = sideTickCache.get(key);
+    if (cached && sideTickFresh(cached, refs)) return cached;
+    const span = (duty.end - duty.start) / SIDE_TICKS, colors = [], heights = [];
+    for (let i = 0; i < SIDE_TICKS; i++) {
+      const v = sideTickScore(name, duty.start + (i + .5) * span);
+      const score = Number.isFinite(v) ? Math.max(0, Math.min(100, v)) : 0;
+      heights.push((score / 100).toFixed(3));
+      const p = window.__fatigue.getPresentation ? window.__fatigue.getPresentation(Math.round(score)) : null;
+      colors.push(p && p.color || '#42d991');
+    }
+    const entry = { key, start: duty.start, end: duty.end, colors, heights, refs };
+    sideTickCache.delete(key); sideTickCache.set(key, entry);
+    if (sideTickCache.size > 40) sideTickCache.delete(sideTickCache.keys().next().value);
+    return entry;
+  }
+  // For a render: this person's ticks from the cache, without building a
+  // series. Stale ones (series rebuilt meanwhile) are drawn as they were and
+  // marked, so the row never blinks out; idle time refreshes it in place.
+  function sideTickCached(name, now) {
+    const f = window.__fatigue, at = new Date(now);
+    const ready = f && f.isMonthSeriesReady && f.isMonthSeriesReady(name, at.getFullYear(), at.getMonth() + 1, 1);
+    if (ready) {
+      const duty = sideTickDuty(name, now), entry = duty && sideTickCache.get(name + '|' + duty.start);
+      return entry ? { entry, stale: !sideTickFresh(entry, sideTickRefs(name, duty, false)) } : null;
+    }
+    let last = null;
+    sideTickCache.forEach(e => { if (e.key.startsWith(name + '|') && e.start <= now && now < e.end + 16 * 3600e3) last = e; });
+    return last ? { entry: last, stale: true } : null;
+  }
+  function sideTickNow(entry, now) {
+    return Math.floor((now - entry.start) / ((entry.end - entry.start) / SIDE_TICKS));
+  }
+  function sideTicksHtml(entry, now, stale) {
+    const cur = sideTickNow(entry, now);
+    let html = '';
+    for (let i = 0; i < SIDE_TICKS; i++) {
+      html += `<i class="${i < cur ? 'is-on' : i === cur ? 'is-now' : ''}" style="--c:${entry.colors[i]};--h:${entry.heights[i]}"></i>`;
+    }
+    return `<button type="button" class="mk-side-ticks" data-tick-key="${mkEscAttr(entry.key)}"${stale ? ' data-stale="1"' : ''} aria-label="Nogurums šajā maiņā: atvērt" title="Nogurums šajā maiņā">${html}</button>`;
+  }
+  // Moves "now" along without redrawing anything: two class flips per card.
+  function sideTicksAdvance() {
+    clearTimeout(sideTickTimer); sideTickTimer = 0;
+    const now = Date.now();
+    let next = Infinity;
+    document.querySelectorAll('.mk-side-ticks[data-tick-key]').forEach(row => {
+      const entry = sideTickCache.get(row.dataset.tickKey);
+      if (!entry) return;
+      const cur = sideTickNow(entry, now);
+      Array.prototype.forEach.call(row.children, (tick, i) => {
+        tick.classList.toggle('is-on', i < cur);
+        tick.classList.toggle('is-now', i === cur);
+      });
+      const span = (entry.end - entry.start) / SIDE_TICKS, boundary = entry.start + (cur + 1) * span;
+      if (now < entry.end && boundary > now) next = Math.min(next, boundary);
+    });
+    if (next < Infinity) sideTickTimer = setTimeout(sideTicksAdvance, Math.min(next - now + 500, 3600e3));
+  }
+  const sideTickPending = new Set();
+  function scheduleSideTicks(container, options) {
+    if (!options.isToday || !container || !window.__fatigue || typeof window.__fatigue.monthSeries !== 'function') return;
+    sideTickPending.add(container);   // both columns share one idle pass
+    if (sideTickIdle) return;
+    const idle = window.requestIdleCallback || (cb => setTimeout(cb, 300));
+    sideTickIdle = idle(function pass(deadline) {
+      sideTickIdle = 0;
+      const now = Date.now(), MM = window.MinkaMotion;
+      const cards = [];
+      sideTickPending.forEach(box => Array.prototype.forEach.call(box.querySelectorAll('.mk-side-card'), card => {
+        const main = card.querySelector(':scope > .mk-side-card-main');
+        const row = card.querySelector(':scope > .mk-side-ticks');
+        if (main && (!row || row.dataset.stale)) cards.push(main);
+      }));
+      // A person's month timeline costs a few ms the first time (more on the
+      // work PCs): a slice of ~10 ms per idle period, the rest in the next.
+      const until = performance.now() + Math.min(10, deadline && deadline.timeRemaining ? Math.max(4, deadline.timeRemaining()) : 10);
+      let n = 0;
+      while (cards.length && performance.now() < until) {
+        const main = cards.shift();
+        let entry = null;
+        try { entry = sideTickEntry(main.parentElement.dataset.worker, now); } catch (_e) {}
+        if (!entry || !main.isConnected) continue;
+        const old = main.parentElement.querySelector(':scope > .mk-side-ticks');
+        if (old) {
+          // Same elements, new values: colours ease over (CSS), no rebuild.
+          Array.prototype.forEach.call(old.children, (tick, i) => {
+            tick.style.setProperty('--c', entry.colors[i]);
+            tick.style.setProperty('--h', entry.heights[i]);
+          });
+          old.dataset.tickKey = entry.key;
+          delete old.dataset.stale;
+          continue;
+        }
+        main.insertAdjacentHTML('afterend', sideTicksHtml(entry, now));
+        // First time this shift is shown: the track fades up into place, one
+        // compositor animation for the whole row, a few ms apart per card.
+        const row = main.nextElementSibling;
+        if (MM && typeof MM.animate === 'function') {
+          MM.animate(row, [{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'none' }], 'spatial-default', { delay: (n++) * 40 });
+        }
+      }
+      if (cards.length) { sideTickIdle = idle(pass, { timeout: 1500 }); return; }
+      sideTickPending.clear();
+      sideTicksAdvance();
+    }, { timeout: 1500 });
+  }
+
   function renderSideDutyCards(container, workers, options) {
     if (!container) return;
     const scheduleIndex = options.isToday ? buildSideScheduleIndex(options.sourceStore, activeDateStr, options.now) : new Map();
@@ -3504,6 +3693,15 @@ function filterFullList(btn) {
         : uiState.shiftBadge;
       const footer = options.isToday ? renderSideFooter(scheduleIndex.get(workerName), fatigue) : '';
       const sideVars = `--mk-side-fat:${fatigue.score}%;--mk-side-fat-color:${fatigue.color};`;
+      // Already worked out for this shift: back at once, no animation (a
+      // stale row too, refreshed in place in idle time).
+      let ticks = '';
+      if (options.isToday) {
+        try {
+          const hit = sideTickCached(workerName, +options.now);
+          if (hit) ticks = sideTicksHtml(hit.entry, Date.now(), hit.stale);
+        } catch (_e) {}
+      }
 
       return `
         <article class="duty-block mk-side-card ${options.roleClass}${iconHtml ? ' has-shift-icon' : ''}${isDone ? ' duty-done' : ''}" style="${sideVars}" data-worker="${workerAttr}" data-shift="${shiftAttr}" data-type="${typeAttr}" data-fatigue="${fatigue.key}">
@@ -3526,11 +3724,13 @@ function filterFullList(btn) {
               </div>
             </div>
           </div>
+          ${ticks}
           ${footer}
-          ${personEmoji || initials ? `<span class="mk-side-wm${personEmoji ? ' is-emoji' : ''}" aria-hidden="true">${mkEscAttr(personEmoji || initials)}</span>` : ''}
+          
         </article>`;
     });
     container.innerHTML = cards.length ? cards.join('') : '<span class="mk-duty-empty">ATPŪTA</span>';
+    scheduleSideTicks(container, options);
   }
 
   /* /rad left column: residents are many (duties + rotation, up to ~15 on a
@@ -7441,7 +7641,10 @@ let modalWorkerDates = [];
 let modalListReady = false, modalCalendarReady = false;
 let workerModalCloseTimer, workerModalOutsideTimer;
 
-function showWorkerSchedule(workerName, currentShift) {
+function showWorkerSchedule(workerName, currentShift, opts) {
+  // The fatigue curve opens on the month, or on the shift day when the
+  // window was opened from a side card's fatigue (see below).
+  try { if (window.__fatigue && window.__fatigue.setCurveRange) window.__fatigue.setCurveRange(opts && opts.fatigueRange || 'month'); } catch (_e) {}
   clearTimeout(workerModalCloseTimer);
   clearTimeout(workerModalOutsideTimer);
   window.__wmWorkerName = String(workerName || '').trim();
@@ -7554,7 +7757,7 @@ function showWorkerSchedule(workerName, currentShift) {
   // Position once; fade without scaling the entire text-heavy sheet.
   wmPin('transform', 'none');
   wmTabIndex = -1;
-  showModalView('fatigue');
+  showModalView(opts && opts.view === 'calendar' ? 'calendar' : 'fatigue');
 
   modal.classList.remove('wm-closing');
   modal.classList.add('open');
@@ -7563,7 +7766,7 @@ function showWorkerSchedule(workerName, currentShift) {
   // M3 container transform: the window grows out of the card that was
   // pressed and returns into it on close (js/mk-motion.js).
   if (window.MinkaMotion) {
-    workerModalOrigin = window.MinkaMotion.recentLauncher();
+    workerModalOrigin = (opts && opts.origin && opts.origin.isConnected ? opts.origin : null) || window.MinkaMotion.recentLauncher();
     window.MinkaMotion.openSurface(modal, { key: 'worker', origin: workerModalOrigin, scrim: bd });
   }
   setWorkerModalBuddyFlag(true);

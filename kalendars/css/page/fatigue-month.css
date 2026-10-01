@@ -144,3 +144,29 @@
 #worker-modal .fh-month { padding-bottom: 6px; }
 #worker-modal.mk-fatigue-mode .fh-health .fh-option { padding: 7px 10px; }
 #worker-modal.mk-fatigue-mode .fh-option .fh-slot-scores { margin-top: 4px; padding-top: 4px; }
+
+/* Diena / Nedēļa / Mēnesis over the same curve (fatigue.js fhMonthHtml).
+   M3 segmented buttons in the window's own tab colours; the facts stay on
+   the right. Spring press, no glow. */
+/* Title | switch | facts: the switch sits in its own centre column, so a
+   longer title or facts never move it. */
+#worker-modal .fh-month-head:has(.fh-range) { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; }
+#worker-modal .fh-month-head:has(.fh-range) .fh-month-facts { justify-self: end; }
+#worker-modal .fh-month-head:has(.fh-range) :is(h3, .fh-month-facts) { align-self: center; line-height: 1.25; margin: 0; }
+#worker-modal .fh-range { position: relative; display: inline-flex; gap: 2px; padding: 2px; border-radius: 999px; background: rgba(255, 255, 255, .06); align-self: center; }
+/* the liquid pill (MinkaMotion.liquid): the pressed button's fill rides it */
+#worker-modal .fh-range > .fh-range-pill { position: absolute; z-index: 0; border-radius: 999px; background: #dbe5f5; opacity: 0; pointer-events: none; }
+#worker-modal .fh-range.has-pill > .fh-range-pill { opacity: 1; }
+#worker-modal .fh-range.has-pill button[aria-pressed="true"] { background: transparent; }
+#worker-modal .fh-range button {
+  position: relative; z-index: 1;
+  border: 0; border-radius: 999px; padding: 5px 12px; min-height: 28px;
+  background: transparent; color: var(--pp-on-var, #b4c5cd);
+  font: 600 12.5px/1 Inter, system-ui, sans-serif; cursor: pointer;
+  transition: background-color .18s ease, color .18s ease, transform .2s var(--mk-ease-spring, cubic-bezier(.34, 1.4, .64, 1));
+}
+#worker-modal .fh-range button:hover { background: rgba(255, 255, 255, .08); color: var(--pp-on, #e2e8f0); }
+#worker-modal .fh-range button:active { transform: scale(.96); }
+#worker-modal .fh-range button[aria-pressed="true"] { background: #dbe5f5; color: #0d1726; }
+#worker-modal .fh-range button:focus-visible { outline: 2px solid #3cc8f0; outline-offset: 2px; }
+.fmc-x span.is-end { transform: translateX(-100%); }

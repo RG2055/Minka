@@ -53,34 +53,69 @@
   overflow: hidden !important; border-radius: 50% !important;
   z-index: 1 !important; pointer-events: none !important;
   transform: none !important; contain: paint;
+  /* the liquid's surface is sized from the sphere, not from the fill */
+  container-type: size;
+  /* Inside the sphere (the glass picture itself, ::after, is unchanged).
+     A sphere darkens towards its rim, which is what makes the inside read
+     as depth rather than a flat disc; and the liquid's colour, bounced off
+     the far wall, tints the empty glass just above it. Static gradients:
+     painted once, nothing runs. */
+  background:
+    radial-gradient(ellipse 92% 58% at 50% 100%, color-mix(in srgb, var(--mk-side-fat-color, #30d158) 20%, transparent), transparent 72%),
+    radial-gradient(circle at 50% 40%, rgba(255,255,255,.035) 0 36%, rgba(0,0,0,.34) 100%) !important;
+}
+/* The liquid seen again in the glass: a concave inner wall shows it upside
+   down and squeezed into a crescent under the top rim. It grows with the
+   fill, stays faint, and the vessel's circle clips it into shape. */
+#grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring .mk-side-liquid-vessel::before {
+  content: "" !important; display: block !important;
+  position: absolute !important; left: 6% !important; right: 6% !important; top: 0 !important;
+  height: calc(clamp(0%, var(--mk-side-fat, 0%), 100%) * .34) !important;
+  border-radius: 0 0 50% 50% / 0 0 100% 100% !important;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--mk-side-fat-color, #30d158) 34%, transparent),
+    color-mix(in srgb, var(--mk-side-fat-color, #30d158) 6%, transparent)) !important;
+  pointer-events: none !important;
 }
 #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring .liquid-fill {
   position: absolute !important; display: block !important;
   left: 0 !important; right: 0 !important; bottom: 0 !important;
   height: clamp(0%, var(--mk-side-fat, 0%), 100%) !important;
   overflow: hidden !important;
-  border-radius: 48% 48% 50% 50% / 3px 3px 50% 50% !important;
+  /* The top edge is the back rim of the surface, an arc seen from a little
+     above, so the liquid starts with the surface's own curve. */
+  border-radius: 50% 50% 0 0 / 7cqh 7cqh 0 0 !important;
   clip-path: none !important;
   background:
-    radial-gradient(ellipse at 28% 12%, rgba(240,252,255,.26), transparent 40%),
+    /* light focused by the sphere: a bright crescent near the bottom */
+    radial-gradient(ellipse 40% 13% at 50% 90%, color-mix(in srgb, var(--mk-side-fat-color, #30d158) 35%, rgba(255,255,255,.75)), transparent),
+    /* a slice of a sphere, not a flat band: darker where it curves away */
+    radial-gradient(ellipse 74% 130% at 50% 0%, transparent 52%, rgba(0,6,16,.34) 100%),
+    /* deeper colour further down */
     linear-gradient(180deg,
-      color-mix(in srgb, var(--mk-side-fat-color, #30d158) 48%, transparent),
-      color-mix(in srgb, var(--mk-side-fat-color, #30d158) 72%, transparent)) !important;
-  box-shadow: inset 4px 0 7px rgba(226,250,255,.08), inset -5px 0 8px rgba(4,11,23,.14) !important;
+      color-mix(in srgb, var(--mk-side-fat-color, #30d158) 58%, transparent),
+      color-mix(in srgb, var(--mk-side-fat-color, #30d158) 84%, #000 16%)) !important;
+  box-shadow: none !important;
   transform: none !important; z-index: 2 !important; pointer-events: none !important;
   transition: height 480ms cubic-bezier(.22,.78,.22,1) !important;
 }
+/* The surface: a lit ellipse, its back rim the fill's top edge and its
+   front rim a little lower, so the level reads as a liquid, not a line. */
 #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring .liquid-fill::before {
   content: "" !important; display: block !important;
-  position: absolute !important; top: 0 !important; right: 4% !important; left: 4% !important;
-  width: auto !important; height: 2px !important;
-  border-radius: 50% !important; background: rgba(244,253,255,.72) !important;
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--mk-side-fat-color, #30d158) 70%, transparent) !important;
+  position: absolute !important; top: 0 !important; left: 0 !important; right: 0 !important;
+  width: auto !important; height: 14cqh !important;
+  border-radius: 50% !important;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--mk-side-fat-color, #30d158) 38%, rgba(255,255,255,.62)),
+    color-mix(in srgb, var(--mk-side-fat-color, #30d158) 70%, rgba(255,255,255,.22))) !important;
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--mk-side-fat-color, #30d158) 60%, #000 40%) !important;
 }
+/* the window's light on the liquid's near side */
 #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring .liquid-fill::after {
   content: "" !important; display: block !important;
   position: absolute !important; inset: 0 !important;
-  background: linear-gradient(90deg, rgba(255,255,255,.18), transparent 24%, transparent 74%, rgba(0,10,28,.15)) !important;
+  background: linear-gradient(90deg, rgba(255,255,255,.16), transparent 22%, transparent 78%, rgba(0,10,28,.12)) !important;
 }
 #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring > .mk-side-score {
   position: relative !important; z-index: 5 !important;
@@ -89,7 +124,10 @@
   text-shadow: 0 1px 2px rgba(0,0,0,.65) !important;
 }
 #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring small {
-  color: rgba(235,245,252,.92) !important;
+  color: rgba(245,250,255,.98) !important;
+  /* The level word sits right on the lit liquid surface: a tight dark halo
+     keeps it readable on any fill colour without touching the glass. */
+  text-shadow: 0 0 2px rgba(0,0,0,.9), 0 0 4px rgba(0,0,0,.6), 0 1px 1px rgba(0,0,0,.8) !important;
 }
 @media (prefers-reduced-motion: reduce) {
   #grafiks-app :is(#radiographers-duty, #radiologists-duty) .mk-side-ring .liquid-fill { transition: none !important; }
@@ -128,3 +166,48 @@
 /* Uz stikla ūdenszīme kļūst par netīrumu — mokapā tās nav. */
 .side-panel.side-panel.side-panel.side-panel #radiographers-duty .mk-side-wm,
 .side-panel.side-panel.side-panel.side-panel #radiologists-duty .mk-side-wm { display: none !important; }
+
+/* ── Šīs maiņas nogurums (calendar.js sideTicksHtml) ─────────────────────
+   Vilnis: katrs stabiņš ir maiņas daļa, tik augsts, cik tad modelētais
+   nogurums, un tā līmeņa krāsā (tā pati valoda kā mēneša grafikā:
+   prognoze tā pati krāsa blāvāk, "tagad" ar grafika "Tagad" zilo apmali).
+   Apakšējie 12 px ir rindas pašas vieta un pilnā krāsā; kas paceļas augstāk
+   aiz vārda un 24H, izdziest līdz vieglam tonim (viena statiska maska), tāpēc
+   teksts paliek virsū un salasāms, un kartīte aug tikai par šiem 12 px.
+   Nekas neskrien: tikai krāsas pāreja, kad "tagad" pavirzās. */
+.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) .mk-side-card > .mk-side-ticks {
+  position: relative !important; z-index: 1 !important;
+  display: flex !important; align-items: flex-end !important; gap: 2px !important;
+  width: 100% !important; height: 38px !important;
+  margin: -24px 0 4px !important; padding: 0 !important;
+  border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important;
+  font: inherit !important; color: inherit !important;
+  cursor: pointer !important;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-mask-image: linear-gradient(to top, #000 0, #000 12px, rgba(0, 0, 0, .3) 20px, rgba(0, 0, 0, .14) 100%);
+          mask-image: linear-gradient(to top, #000 0, #000 12px, rgba(0, 0, 0, .3) 20px, rgba(0, 0, 0, .14) 100%);
+}
+.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) .mk-side-card > .mk-side-ticks:focus-visible {
+  outline: 2px solid #3cc8f0 !important; outline-offset: 2px !important;
+}
+.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) .mk-side-card .mk-side-fatigue { cursor: pointer !important; -webkit-user-select: none !important; user-select: none !important; }
+.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) .mk-side-ticks > i {
+  flex: 1 1 0 !important; min-width: 0 !important;
+  height: calc(8px + var(--h, .3) * 30px) !important;
+  border-radius: 999px !important;
+  background: color-mix(in srgb, var(--c, #42d991) 55%, transparent) !important;
+  transition: background-color 600ms ease !important;
+}
+.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) .mk-side-ticks > i:is(.is-on, .is-now) {
+  background: var(--c, #42d991) !important;
+}
+.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) .mk-side-ticks > i.is-now {
+  /* inside the tick: the row's mask cuts anything drawn outside it */
+  box-shadow: inset 0 0 0 1.5px #9cceff !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) .mk-side-ticks > i { transition: none !important; }
+}
+
+/* Kājene atver cilvēka kalendāru (calendar.js). */
+.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) .mk-side-card > .mk-side-nfoot { cursor: pointer !important; -webkit-user-select: none !important; user-select: none !important; }

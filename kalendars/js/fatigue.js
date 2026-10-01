@@ -732,14 +732,28 @@
   // forecast after now dashed), the card's level bands and the duties under
   // it. Plain SVG stretched to the width; text and dots are HTML so they keep
   // their shape. Hover reads the numbers from data-fmc (bound once below).
+  // The window a curve shows: the whole month, or the shift day (08:00 to
+  // 08:00) or seven days around it, cut from the same hourly month series.
+  function curveWindow(series,range,anchor){
+    const n=series.samples.length-1;
+    if(range!=='day'&&range!=='week')return {i0:0,i1:n,range:'month'};
+    const at=Math.min(Math.max(+anchor||Date.now(),series.from),series.to-1);
+    const day=new Date(at);if(day.getHours()<8)day.setDate(day.getDate()-1);day.setHours(8,0,0,0);
+    const len=range==='day'?24:7*24;
+    let i0=Math.round((+day-(range==='week'?3*24*HOUR:0)-series.from)/(series.stepHours*HOUR));
+    i0=Math.max(0,Math.min(n-len/series.stepHours,i0));
+    return {i0,i1:Math.min(n,i0+len/series.stepHours),range};
+  }
   function monthCurveHtml(workerName,year,month,opts={}){
     const series=monthSeries(workerName,year,month,1);
     if(!series)return '';
-    const hours=Math.round((series.to-series.from)/HOUR),now=Date.now();
-    const pct=t=>(100*(t-series.from)/(series.to-series.from)).toFixed(3);
+    const now=Date.now(),win=curveWindow(series,opts.range,opts.anchor);
+    const S=series.samples.slice(win.i0,win.i1+1),step=series.stepHours*HOUR;
+    const wFrom=series.from+win.i0*step,wTo=series.from+win.i1*step,span=wTo-wFrom;
+    const hours=Math.round(span/HOUR);
+    const pct=t=>(100*(t-wFrom)/span).toFixed(3);
     const y=v=>(100-v).toFixed(1);
     const paths={awake:'',sleep:'',awakeF:'',sleepF:''};let prevKey=null;
-    const S=series.samples;
     for(let i=0;i<S.length-1;i++){
       const a=S[i],b=S[i+1];
       if(!a||!b){prevKey=null;continue;}
@@ -752,29 +766,36 @@
     S.forEach((v,i)=>{if(v)area+=(area?'L':'M')+i+' '+y(v.score);});
     if(area)area+='L'+(S.length-1)+' 100L'+S.findIndex(Boolean)+' 100Z';
     let weekends='',ticks='';
-    for(let d=0;d*24<hours;d++){
-      const date=new Date(year,month-1,d+1),dow=date.getDay();
-      if(dow===0||dow===6)weekends+=`<rect x="${d*24}" y="0" width="24" height="100" class="fmc-we"/>`;
-      if(dow===1||d===0)ticks+=`<span style="left:${pct(+date)}%">${d+1}.${month}.</span>`;
+    if(win.range==='day'){
+      // every four hours from the shift start: 08, 12, 16, 20, 00, 04, 08
+      for(let h=0;h<=hours;h+=4){const t=wFrom+h*HOUR,d=new Date(t);ticks+=`<span style="left:${pct(t)}%"${h===hours?' class="is-end"':''}>${String(d.getHours()).padStart(2,'0')}:00</span>`;}
+    }else{
+      const first=new Date(wFrom);first.setHours(0,0,0,0);
+      for(let d=new Date(first);+d<wTo;d.setDate(d.getDate()+1)){
+        const t=+d,dow=d.getDay(),x=(Math.max(t,wFrom)-wFrom)/step,w=(Math.min(t+24*HOUR,wTo)-Math.max(t,wFrom))/step;
+        if((dow===0||dow===6)&&w>0)weekends+=`<rect x="${x}" y="0" width="${w}" height="100" class="fmc-we"/>`;
+        if(t>=wFrom&&(win.range==='week'||dow===1||t===series.from))ticks+=`<span style="left:${pct(t)}%">${d.getDate()}.${d.getMonth()+1}.</span>`;
+      }
     }
-    const band=(from,to,cls)=>`<rect x="0" y="${100-to}" width="${hours}" height="${to-from}" class="${cls}"/>`;
+    const band=(from,to,cls)=>`<rect x="0" y="${100-to}" width="${S.length-1}" height="${to-from}" class="${cls}"/>`;
     const lv=FATIGUE_LEVELS;
     const bands=band(lv[2].max,100,'fmc-z4')+band(lv[1].max,lv[2].max,'fmc-z3');
     const stops=[[100,lv[3].color],[lv[2].max,lv[3].color],[lv[2].max,lv[2].color],[lv[1].max,lv[2].color],[lv[1].max,lv[1].color],[lv[0].max,lv[1].color],[lv[0].max,lv[0].color],[0,lv[0].color]]
       .map(([v,c])=>`<stop offset="${100-v}%" stop-color="${c}"/>`).join('');
     const gid='fmcG'+Math.random().toString(36).slice(2,8);
-    const sum=monthSummary(series,now);
-    const inMonth=now>series.from&&now<series.to;
+    const sum=monthSummary(win.range==='month'?series:{samples:S,stepHours:series.stepHours,to:wTo},now);
+    if(opts.out)opts.out.sum=sum,opts.out.from=wFrom,opts.out.to=wTo,opts.out.range=win.range;
+    const inMonth=now>wFrom&&now<wTo;
     const nowMark=inMonth?`<i class="fmc-now" style="left:${pct(now)}%"><b>Tagad</b></i>`:'';
     const peakMark=sum?.peak?`<i class="fmc-peak" style="left:${pct(sum.peak.t)}%;top:${100-sum.peak.score}%;--c:${getPresentation(sum.peak.score).color}"></i>`:'';
-    const duties=series.duties.map(d=>{
-      const a=Math.max(d.start,series.from),b=Math.min(d.end,series.to);
-      return `<i class="fmc-duty is-${d.kind==='nakts'?'night':d.kind==='diennakts'?'allday':'day'}" style="left:${pct(a)}%;width:${(100*(b-a)/(series.to-series.from)).toFixed(3)}%"></i>`;
+    const duties=series.duties.filter(d=>d.end>wFrom&&d.start<wTo).map(d=>{
+      const a=Math.max(d.start,wFrom),b=Math.min(d.end,wTo);
+      return `<i class="fmc-duty is-${d.kind==='nakts'?'night':d.kind==='diennakts'?'allday':'day'}" style="left:${pct(a)}%;width:${(100*(b-a)/span).toFixed(3)}%"></i>`;
     }).join('');
     const levelLabels=`<span class="fmc-lvl" style="top:${100-(lv[2].max+100)/2}%">${lv[3].label}</span><span class="fmc-lvl" style="top:${100-(lv[1].max+lv[2].max)/2}%">${lv[2].label}</span><span class="fmc-lvl" style="top:${100-(lv[0].max+lv[1].max)/2}%">${lv[1].label}</span>`;
     const data=S.map(v=>v?(v.asleep?'-':'')+v.score:'').join(',');
-    const label=`${workerName}: nogurums ${month}. mēnesī. Augstā zonā ${sum?.highHours??0} stundas nomodā${sum?.peak?', augstākais '+sum.peak.score+'/100':''}.`;
-    return `<figure class="fmc${opts.compact?' is-compact':''}" data-fmc="${data}" data-fmc-from="${series.from}" data-fmc-step="${series.stepHours}">
+    const label=`${workerName}: nogurums ${win.range==='day'?'maiņas dienā':win.range==='week'?'septiņās dienās':month+'. mēnesī'}. Augstā zonā ${sum?.highHours??0} stundas nomodā${sum?.peak?', augstākais '+sum.peak.score+'/100':''}.`;
+    return `<figure class="fmc${opts.compact?' is-compact':''} is-${win.range}" data-fmc="${data}" data-fmc-from="${wFrom}" data-fmc-step="${series.stepHours}">
       <div class="fmc-plot" role="img" aria-label="${escapeHtml(label)}">
         <svg viewBox="0 0 ${S.length-1} 100" preserveAspectRatio="none" aria-hidden="true">
           <defs><linearGradient id="${gid}" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="100">${stops}</linearGradient></defs>
@@ -1490,12 +1511,9 @@
     // With the night parts shown, the footnote joins their note line (one row less).
     const footnote=`Aptuvena prognoze, nevis mērījums.${f.sleepModel.estimatedHistoryNights?' Daļa vēstures aplēsta pēc ieradumiem.':''}`;
     const comparisonHtml=comparison?`<section class="fh-comparison"><div class="fh-comparison-head"><h3>Kuru nakts daļu strādāt?</h3><div class="fh-sleep-legend"><span class="is-work">Darbs</span><span class="is-sleep">Miegs*</span></div></div><div class="fh-options" style="--fh-parts:${comparison.options.length}">${comparison.options.map(nightCard).join('')}</div><p class="fh-sleep-note">* Atvēlētas ${assumptions.latencyMinutes} min iemigšanai katrā reizē.${comparison.saved?'':' Nesaglabāts plāns.'} ${footnote}</p></section>`:'';
-    // The person's whole month on the card's scale (same curve as Statistika).
-    const monthAt=new Date(f.evaluatedAt||Date.now());
-    const monthCurve=monthCurveHtml(f.workerName,monthAt.getFullYear(),monthAt.getMonth()+1,{compact:true});
-    const monthSum=monthCurve?monthSummary(monthSeries(f.workerName,monthAt.getFullYear(),monthAt.getMonth()+1,1)):null;
-    const monthName=['janvārī','februārī','martā','aprīlī','maijā','jūnijā','jūlijā','augustā','septembrī','oktobrī','novembrī','decembrī'][monthAt.getMonth()];
-    const monthHtml=monthCurve?`<section class="fh-month"><div class="fh-month-head"><h3>Nogurums ${monthName}</h3><div class="fh-month-facts"><span>Augstā zonā <b>${monthSum.highHours} h</b></span>${monthSum.peak?`<span>Augstākais <b style="color:${getPresentation(monthSum.peak.score).color}">${monthSum.peak.score}</b> ${new Date(monthSum.peak.t).getDate()}.${monthAt.getMonth()+1}.</span>`:''}</div></div>${monthCurve}</section>`:'';
+    // The person's fatigue on the card's scale (same curve as Statistika):
+    // the month, or the shift day / seven days around it (fhMonthHtml).
+    const monthHtml=fhMonthHtml(f);
     const middleHtml=`<section class="fh-middle"><div class="fh-chart">${createForecastCurve(projection)||'<p>Izvēlies maiņu, lai redzētu noguruma prognozi.</p>'}${projection?`<div class="fh-start-score">Sākumā <b style="color:${getPresentation(projection.startScore).color}">${projection.startScore}/100</b><span>Augstākais <b style="color:${getPresentation(projection.peak.score).color}">${projection.peak.score}/100</b> — ${timeOnly(projection.peak.time)}</span></div>`:''}</div><div class="fh-rest">${restHtml}</div></section>`;
     // SmartCrew-inspired presentation: expose the actual schedule features,
     // without adding a second heuristic score or arbitrary extra penalties.
@@ -1555,6 +1573,62 @@
     });
   }
 
+  /* Mēnesis / Nedēļa / Diena over the same curve. The worker window opens on
+     the month; a tap on a side card's fatigue opens it on the shift day.
+     Remembered while the window is open, reset by the next opening. */
+  let curveRange='month';
+  function setCurveRange(range){curveRange=['day','week','month'].includes(range)?range:'month';}
+  const MONTH_LOC=['janvārī','februārī','martā','aprīlī','maijā','jūnijā','jūlijā','augustā','septembrī','oktobrī','novembrī','decembrī'];
+  // The app's one switch motion (MinkaMotion.liquid, as the window's tabs):
+  // a pill under the pressed button, its edges on two springs, so it
+  // stretches toward the new choice and settles; the curve swaps at once.
+  function fhRangePill(bar,prevBtn,nextBtn,animate){
+    const MM=window.MinkaMotion;
+    if(!bar||!nextBtn||!MM||!MM.liquid)return;
+    let pill=bar.querySelector(':scope > .fh-range-pill');
+    if(!pill){pill=document.createElement('span');pill.className='fh-range-pill';pill.setAttribute('aria-hidden','true');bar.prepend(pill);}
+    if(MM.liquid(pill,bar,nextBtn,{from:prevBtn,animate:!!animate&&!!prevBtn&&prevBtn!==nextBtn}))bar.classList.add('has-pill');
+    else{pill.remove();bar.classList.remove('has-pill');}
+  }
+  // Switching keeps the header and its switch (the same pill rides on, as in
+  // the window's tabs); only the title, facts and curve are swapped. The new
+  // curve comes in on M3's shared X axis: from the side of the choice made,
+  // a short slide and fade (transform + opacity, compositor only), never
+  // from nothing.
+  const RANGE_ORDER=['day','week','month'];
+  function fhSwitchRange(container,was){
+    const section=container.querySelector('.fh-month');
+    if(!section)return;
+    const tpl=document.createElement('template');
+    tpl.innerHTML=fhMonthHtml(calculateFatigue(container.dataset.worker)).trim();
+    const fresh=tpl.content.firstElementChild;
+    if(!fresh)return;
+    const swap=sel=>{const a=section.querySelector(sel),b=fresh.querySelector(sel);if(a&&b)a.replaceWith(b);return b;};
+    swap('.fh-month-head h3');swap('.fh-month-facts');
+    const fig=swap('.fmc');
+    const bar=section.querySelector('.fh-range');
+    if(bar){
+      bar.querySelectorAll('[data-fmc-range]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.fmcRange===curveRange)));
+      const next=bar.querySelector('[data-fmc-range="'+curveRange+'"]');
+      fhRangePill(bar,bar.querySelector('[data-fmc-range="'+was+'"]'),next,true);
+      if(next)next.focus({preventScroll:true});
+    }
+    const MM=window.MinkaMotion;
+    if(fig&&MM&&MM.animate){
+      const dir=RANGE_ORDER.indexOf(curveRange)>RANGE_ORDER.indexOf(was)?1:-1;
+      MM.animate(fig,[{opacity:.35,transform:'translateX('+(dir*24)+'px)'},{opacity:1,transform:'none'}],'spatial-default');
+    }
+  }
+  function fhMonthHtml(f){
+    const monthAt=new Date(f.evaluatedAt||Date.now());
+    const out={};
+    const curve=monthCurveHtml(f.workerName,monthAt.getFullYear(),monthAt.getMonth()+1,{compact:true,range:curveRange,anchor:+monthAt,out});
+    if(!curve)return '';
+    const sum=out.sum,d=t=>{const x=new Date(t);return x.getDate()+'.'+(x.getMonth()+1)+'.';};
+    const title=out.range==='day'?'Nogurums '+(Math.abs(Date.now()-(out.from+12*HOUR))<12*HOUR?'šajā maiņā':d(out.from)):out.range==='week'?'Nogurums '+d(out.from)+'–'+d(out.to-HOUR):'Nogurums '+MONTH_LOC[monthAt.getMonth()];
+    const seg=[['day','Diena'],['week','Nedēļa'],['month','Mēnesis']].map(([k,l])=>`<button type="button" data-fmc-range="${k}" aria-pressed="${out.range===k}">${l}</button>`).join('');
+    return `<section class="fh-month"><div class="fh-month-head"><h3>${title}</h3><div class="fh-range" role="group" aria-label="Periods">${seg}</div><div class="fh-month-facts"><span>Augstā zonā <b>${sum?.highHours??0} h</b></span>${sum?.peak?`<span>Augstākais <b style="color:${getPresentation(sum.peak.score).color}">${sum.peak.score}</b> ${out.range==='day'?new Date(sum.peak.t).toLocaleTimeString('lv-LV',{hour:'2-digit',minute:'2-digit'}):d(sum.peak.t)}</span>`:''}</div></div>${curve}</section>`;
+  }
   function renderModalFatigue() {
     const container = document.getElementById('modal-fatigue-view');
     if (!container) return;
@@ -1572,6 +1646,8 @@
     const previousSection=container.dataset.worker===fullName?container.querySelector('[data-fatigue-section][aria-pressed="true"]')?.dataset.fatigueSection:'schedule';
     container.dataset.worker=fullName;
     container.innerHTML = createDetailPanel(calculateFatigue(fullName));
+    const rangeBar=container.querySelector('.fh-range');
+    if(rangeBar)requestAnimationFrame(()=>{if(rangeBar.isConnected)fhRangePill(rangeBar,null,rangeBar.querySelector('[aria-pressed="true"]'),false);});
     if(moreOpen&&container.querySelector('.fh-more'))container.querySelector('.fh-more').open=true;
     if(!container.dataset.fatigueSectionsBound){
       container.dataset.fatigueSectionsBound='1';
@@ -1589,6 +1665,14 @@
             output.textContent='2024. gada modelis: miegainība '+range('kss')+' KSS skalā (1–9). Lēnas reakcijas uzmanības testā: '+range('pvt')+'. Miega scenāriji, nevis mērījumi. Šīs skalas nav mūsu 0–100 indekss.';
           }catch(error){output.textContent='Salīdzinājumu neizdevās aprēķināt.';}
           finally{compare.disabled=false;}
+          return;
+        }
+        const range=event.target.closest('[data-fmc-range]');
+        if(range&&container.contains(range)){
+          const was=curveRange;
+          setCurveRange(range.dataset.fmcRange);
+          if(was===curveRange)return;
+          fhSwitchRange(container,was);
           return;
         }
         const button=event.target.closest('[data-fatigue-section]');
@@ -1696,7 +1780,7 @@
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshNightFatigue(); });
   window.addEventListener('storage', e => { if (!e.key || e.key === 'minkaNightSplitByDateV1') refreshNightFatigue(); });
 
-  window.__fatigue = { calculateFatigue, gatherWorkerHistory, getPresentation, scoreAt, monthSeries, monthSummary, monthCurveHtml, isMonthSeriesReady, FATIGUE_LEVELS, forecast, nightScenarios, compareRecovery, compareLight, modelParameters: window.MinkaSleepModel.parameters, sleepAssumptions, savedNightWindow, clearCache: clearFatigueCache };
+  window.__fatigue = { setCurveRange, calculateFatigue, gatherWorkerHistory, getPresentation, scoreAt, monthSeries, monthSummary, monthCurveHtml, isMonthSeriesReady, FATIGUE_LEVELS, forecast, nightScenarios, compareRecovery, compareLight, modelParameters: window.MinkaSleepModel.parameters, sleepAssumptions, savedNightWindow, clearCache: clearFatigueCache };
   window.__fatigueRenderModal = renderModalFatigue;
   window.__minkaFatigueReady = true;
   document.dispatchEvent(new CustomEvent('minka:fatigue-ready'));

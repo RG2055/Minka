@@ -271,14 +271,15 @@
     opacity: 1 !important;
   }
 
-  /* ── Šis mēnesis: josla pašā skatuvē, uzreiz zem līknes, ar plānu
-     atdalītāju pirms virsraksta. Trīs vienādas kolonnas: augšā ikona un
-     skaitlis, zem tā īss vārds (nekas netiek nogriezts); bolusam GE/Ph
-     josla visā kolonnas platumā. M3: stāvokļa slānis un atsperīgs
-     spiediens (tā pati atspere kā visur). ──────────────────────────── */
+  /* ── Šis mēnesis: zem sejām, ar plānu atdalītāju virs tā, lai zem līknes
+     uzreiz ir "Novērtē maiņu" (vērtējums ir galvenā darbība, mēneša
+     skaitļi ir uzziņa). Trīs vienādas kolonnas: augšā ikona un skaitlis,
+     zem tā īss vārds (nekas netiek nogriezts); bolusam GE/Ph josla visā
+     kolonnas platumā. M3: stāvokļa slānis un atsperīgs spiediens (tā pati
+     atspere kā visur). ──────────────────────────────────────────────── */
   :root.mk-mx #grafiks-list .rg-feedback-card .rg-month {
-    grid-area: stage !important;
-    align-self: end !important;
+    grid-area: month !important;
+    align-self: start !important;
     position: relative !important;
     z-index: 3 !important;
     display: grid !important;
@@ -287,9 +288,9 @@
     gap: 4px !important;
     width: auto !important;
     height: auto !important;
-    margin: 0 6px !important;
-    padding: 0 0 4px !important;
-    border-bottom: 1px solid var(--mk-sys-outline-variant, rgba(255, 255, 255, .1)) !important;
+    margin: 8px 6px 0 !important;
+    padding: 6px 0 0 !important;
+    border-top: 1px solid var(--mk-sys-outline-variant, rgba(255, 255, 255, .1)) !important;
   }
   :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item {
     position: relative !important;

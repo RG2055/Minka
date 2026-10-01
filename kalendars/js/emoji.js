@@ -2039,9 +2039,10 @@
       window.showWorkerSchedule = _patchedShowWorker;
     }
   }
-  function _patchedShowWorker(workerName, shift) {
+  function _patchedShowWorker(workerName) {
     _modalWorker = workerName;
-    if (_origShowWorker) _origShowWorker.call(this, workerName, shift);
+    // every argument through (the third one picks the fatigue curve's range)
+    if (_origShowWorker) _origShowWorker.apply(this, arguments);
   }
   patchShowWorker(); /* patch immediately on load */
   setInterval(function(){ if(!document.hidden) patchShowWorker(); }, 30000);

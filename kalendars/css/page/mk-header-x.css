@@ -1308,6 +1308,11 @@
     border-radius: 0 0 24px 24px !important;
   }
   :root.mk-hx:not(.mk-mobile-shell) #minkaBarWrap #grafiks-scroller {
+    /* room for a day's focus ring (2px + 2px offset), which the scrolling
+       strip would otherwise cut; the negative margin keeps every day where
+       it was */
+    padding: 4px 6px !important;
+    margin: -2px -4px !important;
     scroll-behavior: auto !important;
     scroll-padding-inline: 46px !important;
     gap: 4px !important;
