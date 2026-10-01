@@ -603,8 +603,22 @@ async function createSession(env, kind) {
   return token;
 }
 
-function clientIp(request) {
-  return request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for") || "unknown";
+// The login limit counts failures per address, but stores only a hash of it
+// (the column is still called "ip"); rows older than a day are removed by
+// purgeOldRows().
+async function clientIp(request) {
+  return sha256Hex("login-ip:" + (request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for") || "unknown"));
+}
+
+// Every 10 minutes: drop expired sessions and day-old login failure counts,
+// so neither table keeps anything longer than it is useful.
+async function purgeOldRows(env) {
+  if (!env.DB) return;
+  const now = Date.now();
+  await env.DB.batch([
+    env.DB.prepare("DELETE FROM sessions WHERE expires_at < ?1").bind(now),
+    env.DB.prepare("DELETE FROM login_failures WHERE window_start < ?1").bind(now - 86400000)
+  ]).catch((e) => console.error(JSON.stringify({ message: "Purge failed", error: String(e && e.message || e) })));
 }
 
 async function loginBlocked(env, ip) {
@@ -687,7 +701,7 @@ async function refreshGrid(env, src) {
 const worker = {
   async scheduled(event, env, ctx) {
     if (event && event.cron === "*/10 * * * *") {
-      ctx.waitUntil(Promise.all(GRID_SOURCES.map((src) => refreshGrid(env, src))));
+      ctx.waitUntil(Promise.all([...GRID_SOURCES.map((src) => refreshGrid(env, src)), purgeOldRows(env)]));
       return;
     }
     ctx.waitUntil(refreshSchedule(env));
@@ -714,7 +728,7 @@ const worker = {
     }
 
     if (url.pathname === "/api/login" && method === "POST") {
-      const ip = clientIp(request);
+      const ip = await clientIp(request);
       if (await loginBlocked(env, ip)) {
         return json(request, { ok: false, error: "Too many attempts, try again in a few minutes" }, 429);
       }
@@ -1295,10 +1309,22 @@ async function newsResponse(request, env, ctx) {
   return new Response(body, { headers });
 }
 
+// Browsers may call this API only from the app's own pages: rgapp.page, the
+// GitHub Pages test copy and local/LAN dev servers. Any other site gets no
+// CORS header, so its scripts cannot read the answers.
+function allowedOrigin(origin) {
+  if (origin === "https://rgapp.page" || origin === "https://rg2055.github.io") return origin;
+  try {
+    const u = new URL(origin);
+    if (u.protocol === "http:" && /^(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|[\w-]+\.local)$/.test(u.hostname)) return origin;
+  } catch { /* no or bad Origin */ }
+  return "";
+}
+
 function cors(request) {
-  const origin = request.headers.get("origin") || "*";
+  const origin = allowedOrigin(request.headers.get("origin") || "");
   return {
-    "access-control-allow-origin": origin,
+    ...(origin ? { "access-control-allow-origin": origin } : {}),
     "access-control-allow-methods": "GET,POST,OPTIONS",
     "access-control-allow-headers": "content-type, authorization",
     "access-control-expose-headers": "x-minka-token",

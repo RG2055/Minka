@@ -306,7 +306,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20261001tk8';
+  var CALENDAR_BUILD = '20261001sec1';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -453,6 +453,9 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
       + '#minka-gate .mg-ic svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}'
       + '#minka-gate .mg-item p{margin:0;padding-top:5px;font-size:13.5px;line-height:1.5;color:#b9c8d2;}'
       + '#minka-gate .mg-em{color:var(--mg-text);font-weight:600;}'
+      + '#minka-gate .mg-pop-link{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:13px;line-height:18px;font-weight:500;color:var(--mg-pri);text-decoration:none;}'
+      + '#minka-gate .mg-pop-link:hover,#minka-gate .mg-pop-link:focus-visible{text-decoration:underline;text-underline-offset:3px;}'
+      + '#minka-gate .mg-pop-link svg{width:14px;height:14px;flex:none;}'
       + '#minka-gate .mg-foot{margin-top:4px;padding-top:10px;border-top:1px solid rgba(214,236,255,.07);font-size:12px;line-height:17px;color:var(--mg-faint);}'
       + '@media(max-width:1330px){#minka-gate .mg-pop{left:8px;right:8px;top:8px;bottom:8px;width:auto;max-height:none;transform:scale(.97);transform-origin:50% 88%;}#minka-gate.is-about .mg-pop{transform:none;}}'
       + '@media(max-width:480px){#minka-gate .mg-shell{padding:24px 12px;}#minka-gate .mg-login{padding:28px 20px 18px;}}'
@@ -494,6 +497,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
       + '<div class="mg-item"><span class="mg-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 19c-4 1.3-4-2-5.5-2.5M14.5 21v-3.2a2.8 2.8 0 0 0-.8-2.2c2.7-.3 5.5-1.3 5.5-6a4.7 4.7 0 0 0-1.3-3.2 4.3 4.3 0 0 0-.1-3.2s-1-.3-3.4 1.3a11.6 11.6 0 0 0-6 0C6 2.9 5 3.2 5 3.2a4.3 4.3 0 0 0-.1 3.2 4.7 4.7 0 0 0-1.3 3.2c0 4.6 2.8 5.7 5.5 6a2.8 2.8 0 0 0-.8 2.2V21"/></svg></span>'
       + '<p>Publiskajā GitHub repozitorijā <span class="mg-em">nav</span> grafika datu, Google Sheets piekļuves datu vai paroļu.</p></div>'
       + '<div class="mg-foot">* Noguruma aprēķins ir informatīvs un balstīts uz dežūru ilgumu un atpūtas laiku.</div>'
+      + '<a class="mg-pop-link" href="privatums.html">Privātums un drošība<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>'
       + '</div>'
       + '</section>'
       + '</div>';
@@ -690,6 +694,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
 
 <meta charset="UTF-8">
 <link rel="manifest" href="manifest.json">
+<link rel="privacy-policy" href="privatums.html">
 <script>if(window.MINKA_APP==='rad'){document.querySelector('link[rel="manifest"]').href='manifest-rad.json';}</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -705,30 +710,15 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
 <link rel="apple-touch-icon" href="data/rg-apple-touch-180.png?v=20260924d1">
 
 <!-- Preconnect to external origins so DNS/TLS is resolved before requests fire -->
-<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 
-<!-- Fonts: non-blocking via media trick → swap to all once loaded -->
-<link rel="preload" as="style"
-  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
-  onload="this.onload=null;this.rel='stylesheet'">
-<noscript>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
-</noscript>
-<!-- Google Sans: M3 stila elementiem (GE/PH čipi). Faili lādējas tikai, kad tekstu izmanto. -->
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<!-- Fonts: served from this site (scripts/build-fonts.mjs), so no visitor IP goes
+     to Google; non-blocking preload, swapped to a stylesheet once loaded. -->
+<link rel="preload" as="style" href="assets/fonts/web/main.css?v=20261001sec1" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="assets/fonts/web/main.css?v=20261001sec1"></noscript>
 
 <!-- Font Awesome ielādējas dinamiski līdz ar radio skriptiem (tikai radio to lieto) -->
-
-<!-- Digital-7 font: non-blocking (only used in radio clock display) -->
-<link rel="preload" as="style"
-  href="https://fonts.cdnfonts.com/css/digital-7-mono"
-  onload="this.onload=null;this.rel='stylesheet'">
-<noscript>
-  <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/digital-7-mono">
-</noscript>
 
 <!-- hls.js tiek ielādēts dinamiski no js/radio.js tikai tad, kad pirmo reizi atskaņo HLS straumi -->
 
@@ -1363,6 +1353,9 @@ async function loadRadioScripts() {
     var _fa = document.createElement('link');
     _fa.id = 'mk-fa-css'; _fa.rel = 'stylesheet';
     _fa.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
+    // Subresource integrity: the browser refuses the file if the CDN ever serves other bytes.
+    _fa.integrity = 'sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0';
+    _fa.crossOrigin = 'anonymous'; _fa.referrerPolicy = 'no-referrer';
     document.head.appendChild(_fa);
   }
   await loadAny(['js/radio-metadata.js?v=20260910metadata1']);
@@ -1373,7 +1366,7 @@ async function loadRadioScripts() {
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20260919pixel2']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
-  await loadAny(['js/radio.js?v=20260930rperf1']);
+  await loadAny(['js/radio.js?v=20261001sec1']);
   await loadAny(['js/radio_extras_v4.js?v=20260930rperf1']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;

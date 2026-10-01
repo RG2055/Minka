@@ -8,9 +8,22 @@ const FEEDBACK_PATHS = new Set([
   "/api/radio"
 ]);
 
+// Browsers may call this API only from the app's own pages: rgapp.page, the
+// GitHub Pages test copy and local/LAN dev servers. Any other site gets no
+// CORS header, so its scripts cannot read the answers.
+function allowedOrigin(origin) {
+  if (origin === "https://rgapp.page" || origin === "https://rg2055.github.io") return origin;
+  try {
+    const u = new URL(origin);
+    if (u.protocol === "http:" && /^(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|[\w-]+\.local)$/.test(u.hostname)) return origin;
+  } catch { /* no or bad Origin */ }
+  return "";
+}
+
 function corsHeaders(request) {
+  const origin = allowedOrigin(request.headers.get("origin") || "");
   const headers = new Headers({
-    "access-control-allow-origin": request.headers.get("origin") || "*",
+    ...(origin ? { "access-control-allow-origin": origin } : {}),
     "access-control-allow-methods": "GET,POST,PATCH,DELETE,OPTIONS",
     "access-control-allow-headers": "content-type, authorization",
     "access-control-max-age": "86400",

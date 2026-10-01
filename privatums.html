@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="lv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privātums un drošība | RG</title>
+<meta name="description" content="Kādus datus apstrādā Radiogrāferu grafiks (rgapp.page), kur tie glabājas un kā lapa ir aizsargāta.">
+<link rel="icon" type="image/svg+xml" href="data/rg-brand.svg?v=20260924d1">
+<link rel="stylesheet" href="assets/fonts/web/main.css?v=20261001sec1">
+<style>
+  :root {
+    --bg: #f6f8fa; --card: #ffffff; --text: #14212b; --muted: #50616e; --line: #dde4ea; --accent: #0b6b94;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0b1218; --card: #111b23; --text: #e9f1f6; --muted: #9fb1bd; --line: #1f2c36; --accent: #a6e1ff; color-scheme: dark; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 32px 16px 64px; }
+  a { color: var(--accent); }
+  .back { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; text-decoration: none; }
+  .back:hover { text-decoration: underline; text-underline-offset: 3px; }
+  header { display: flex; align-items: center; gap: 14px; margin: 24px 0 8px; }
+  header img { width: 44px; height: 44px; flex: none; }
+  h1 { margin: 0; font-size: 28px; line-height: 1.2; font-weight: 700; letter-spacing: -.01em; }
+  .lead { margin: 0 0 28px; color: var(--muted); }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px 22px; margin: 0 0 14px; }
+  h2 { margin: 0 0 8px; font-size: 18px; line-height: 1.35; font-weight: 600; }
+  p { margin: 0 0 10px; }
+  ul { margin: 0 0 10px; padding-left: 20px; }
+  li { margin: 0 0 6px; }
+  section > :last-child { margin-bottom: 0; }
+  .key { font-weight: 600; }
+  footer { margin-top: 28px; font-size: 14px; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="./">&larr; Atpakaļ uz grafiku</a>
+  <header>
+    <img src="data/rg-brand.svg?v=20260924d1" alt="" width="44" height="44">
+    <h1>Privātums un drošība</h1>
+  </header>
+  <p class="lead">Radiogrāferu grafiks (rgapp.page) ir dežūru grafika pārskats nodaļas darbiniekiem. Lapu izveidoja un uztur radiogrāfers Rihards Gavriļenko. Šeit aprakstīts, kādi dati tiek apstrādāti, kur tie glabājas un kā lapa ir aizsargāta.</p>
+
+  <section>
+    <h2>Pacientu dati netiek apstrādāti</h2>
+    <p>Lapā nav pacientu datu, un tie netiek ne vākti, ne glabāti. Lūdzam tos neierakstīt arī brīvā teksta laukos (piemēram, atsauksmēs).</p>
+  </section>
+
+  <section>
+    <h2>Kādi dati tiek apstrādāti</h2>
+    <ul>
+      <li><span class="key">Dežūru grafiks:</span> darbinieku vārdi, maiņas un prombūtnes no nodaļas grafika (Google Sheets). Redzams tikai pēc pieslēgšanās.</li>
+      <li><span class="key">Iekšējo tālruņu saraksts:</span> redzams tikai pēc pieslēgšanās.</li>
+      <li><span class="key">Ko darbinieki ievada paši:</span> kafijas skaitītājs (vārds un skaits), bolusa ieraksti (vārds, telpa, apjomi), nakts gultu plāns, izvēlētās emoji un izskata attēli.</li>
+      <li><span class="key">Atsauksmes:</span> vērtējums un teksts bez autora vārda.</li>
+      <li><span class="key">Radio profils:</span> vārds no grafika un PIN kods. PIN tiek glabāts tikai kā sālīta jaucējvērtība, nevis pats kods.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Pieslēgšanās</h2>
+    <p>Pieslēdzoties ierīce saņem nejaušu piekļuves žetonu. Serverī glabājas tikai žetona SHA-256 jaucējvērtība, un žetons beidzas ne vēlāk kā 90 dienas pēc pēdējās lietošanas. Nepareizu paroļu skaits tiek ierobežots; šim nolūkam glabājas tikai IP adreses jaucējvērtība, un tā tiek dzēsta pēc diennakts.</p>
+  </section>
+
+  <section>
+    <h2>Kas glabājas tavā ierīcē</h2>
+    <p>Pārlūka krātuvē (localStorage) glabājas piekļuves žetons, grafika kopija darbam bez interneta un tavi iestatījumi. Lapa <span class="key">neizmanto sīkdatnes</span>, reklāmas, analītiku vai izsekošanu. Krātuvi var notīrīt pārlūka iestatījumos.</p>
+  </section>
+
+  <section>
+    <h2>Kur dati glabājas</h2>
+    <ul>
+      <li><span class="key">Cloudflare</span> (Workers, D1, KV): lapa, API un ievadītie dati. Tehniskie pieprasījumu žurnāli glabājas dažas dienas.</li>
+      <li><span class="key">Google Sheets:</span> grafika avots, ko nodaļa jau izmanto darba vajadzībām.</li>
+    </ul>
+    <p>Dati netiek pārdoti un netiek nodoti trešajām pusēm.</p>
+  </section>
+
+  <section>
+    <h2>Ar ko sazinās tavs pārlūks</h2>
+    <p>Fonti un lapas faili tiek ielādēti no pašas rgapp.page. Citi pakalpojumi tiek izmantoti tikai tad, kad lieto attiecīgo funkciju:</p>
+    <ul>
+      <li>Radio: radiostaciju straumes, logotipi un dziesmu informācija, radio-browser.info katalogs, kā arī cdnjs un jsDelivr atskaņotāja komponentēm.</li>
+      <li>Mūzikas atskaņotāji (Lācītis, Webamp): YouTube un mūzikas meklēšanas pakalpojumi, kas saņem meklēto dziesmu vai izpildītāju.</li>
+      <li>Atsevišķi attēli un saites (piemēram, Buy Me a Coffee poga) no attiecīgajiem pakalpojumiem.</li>
+      <li>Laikapstākļi: tos pieprasa serveris par Rīgu, tava atrašanās vieta netiek nosūtīta.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Drošība</h2>
+    <ul>
+      <li>Tikai HTTPS savienojums (HSTS), TLS sertifikāts no Google Trust Services.</li>
+      <li>DNSSEC parakstīts domēns.</li>
+      <li>Content Security Policy un citas drošības galvenes.</li>
+      <li>Grafiks, tālruņi un pārējie dati ir pieejami tikai pēc pieslēgšanās; API atbild tikai pašas lapas pieprasījumiem.</li>
+      <li>Avota kodā nav paroļu, piekļuves atslēgu vai grafika datu.</li>
+    </ul>
+    <p>Ja pamani drošības problēmu, lūdzu, raksti uz <a href="mailto:security@rgapp.page">security@rgapp.page</a> (<a href="/.well-known/security.txt">security.txt</a>).</p>
+  </section>
+
+  <section>
+    <h2>Jautājumi un datu dzēšana</h2>
+    <p>Ja vēlies uzzināt, kādi ar tevi saistīti ieraksti glabājas, vai lūgt tos izdzēst, raksti uz <a href="mailto:security@rgapp.page">security@rgapp.page</a>.</p>
+  </section>
+
+  <footer>Atjaunināts 2026. gada 1. oktobrī.</footer>
+</main>
+</body>
+</html>

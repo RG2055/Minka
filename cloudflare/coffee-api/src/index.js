@@ -1,5 +1,6 @@
+// Access-Control-Allow-Origin is added per request in fetch() below, only
+// for the app's own pages.
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
   'Access-Control-Allow-Headers': 'content-type, authorization',
   'Access-Control-Max-Age': '86400'
@@ -206,8 +207,30 @@ async function readCoffeeEventsByDay(env, pattern) {
   }
 }
 
-export default {
+// Browsers may call this API only from the app's own pages: rgapp.page, the
+// GitHub Pages test copy and local/LAN dev servers. Any other site gets no
+// CORS header, so its scripts cannot read the answers.
+function allowedOrigin(origin) {
+  if (origin === 'https://rgapp.page' || origin === 'https://rg2055.github.io') return origin;
+  try {
+    const u = new URL(origin);
+    if (u.protocol === 'http:' && /^(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|[\w-]+\.local)$/.test(u.hostname)) return origin;
+  } catch (_e) { /* no or bad Origin */ }
+  return '';
+}
+
+const handler = {
   async fetch(request, env) {
+    const response = await handler.route(request, env);
+    const origin = allowedOrigin(request.headers.get('origin') || '');
+    if (!origin) return response;
+    const out = new Response(response.body, response);
+    out.headers.set('Access-Control-Allow-Origin', origin);
+    out.headers.append('Vary', 'Origin');
+    return out;
+  },
+
+  async route(request, env) {
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
     }
@@ -387,3 +410,5 @@ export default {
     return json({ ok: false, error: 'method not allowed' }, 405);
   }
 };
+
+export default handler;

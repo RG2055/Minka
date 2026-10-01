@@ -3,7 +3,6 @@
    Better animations, polish, accessibility, aesthetics
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap');
 
 :root {
   --spring: cubic-bezier(.2,.9,.2,1);

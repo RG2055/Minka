@@ -2140,6 +2140,9 @@ function play(url, name) {
         loader = document.createElement('script');
         loader.id = 'mk-hls-loader';
         loader.src = 'https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js';
+        // Subresource integrity: other bytes from the CDN are refused (then the stream plays directly).
+        loader.integrity = 'sha384-w6Gb3fXHb5e1LUYa/hYA5Q41bEDglN5ZPCG7Jvnoo8/X90oGnlPqBlBJCe38mEMm';
+        loader.crossOrigin = 'anonymous';
         document.head.appendChild(loader);
     }
     const failed = () => { loader.remove(); direct(); };
