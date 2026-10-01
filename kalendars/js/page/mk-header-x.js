@@ -1197,11 +1197,11 @@
     });
     return qrLib;
   }
+  // Always the real address: a computer still on the old GitHub Pages copy
+  // (or a local one) must not send phones there. The pairing code is claimed
+  // through the shared API, so it works whichever address showed it.
   function mobileBaseUrl() {
-    var p = shell(), loc = null;
-    try { loc = p ? p.location : location; } catch (_e) { loc = location; }
-    var local = /^(localhost|127(?:\.\d+){3}|\[?::1\]?|\d+\.\d+\.\d+\.\d+)$/i.test(loc.hostname || '');
-    return !local && loc.protocol === 'https:' ? new URL('mobile.html', loc.href).toString() : 'https://rgapp.page/mobile.html';
+    return 'https://rgapp.page/mobile.html';
   }
   function mobileEls() {
     var box = pop && popKind === 'mobile' ? pop.querySelector('.hx-mob-code') : null;

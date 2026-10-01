@@ -306,7 +306,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20261001rperf1';
+  var CALENDAR_BUILD = '20261001qr1';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -1033,7 +1033,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <div id="calendarEmbed">
   <!-- Keep the expensive calendar document dormant behind the password gate.
        Authenticated startup assigns data-base-src immediately. -->
-  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20261001rperf1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20261001qr1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- Dither loader (js/dither-loader.js). It stays up until the embedded
@@ -4148,11 +4148,8 @@ window.addEventListener('message', function(e) {
     el.style.display = clean ? 'block' : 'none';
   }
 
+  // Always rgapp.page, never the address this computer happens to be on.
   function buildMobileBaseUrl() {
-    var isLocal = /^(localhost|127(?:\.\d+){3}|\[?::1\]?)$/i.test(location.hostname || '');
-    if (!isLocal && /^https:$/i.test(location.protocol) && location.origin && !/^(null|file:)/i.test(location.origin)) {
-      return new URL(window.MINKA_APP === 'rad' ? 'mobile.html?app=rad' : 'mobile.html', location.href).toString();
-    }
     return MOBILE_QR_PUBLIC_URL + (window.MINKA_APP === 'rad' ? '?app=rad' : '');
   }
 
