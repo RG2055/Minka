@@ -143,6 +143,18 @@
     EMOJI_BY_SECTION[k] = EMOJI_BY_SECTION[k].filter(function(e,i,a){return a.indexOf(e)===i;});
   });
 
+  // The 38 animals of the anonymous comment authors (ANIMALS in
+  // kalendars/js/page/mood-feedback.js) lead the "Dzīvnieki" tab, named plainly.
+  var CRITTERS = [
+    ['🦊','Lapsa'],['🦔','Ezis'],['🦉','Pūce'],['🐻','Lācis'],['🐼','Panda'],['🐨','Koala'],['🐯','Tīģeris'],['🦁','Lauva'],
+    ['🐺','Vilks'],['🦝','Jenots'],['🦦','Ūdrs'],['🦫','Bebrs'],['🦘','Ķengurs'],['🦙','Lama'],['🐧','Pingvīns'],['🦭','Ronis'],
+    ['🐬','Delfīns'],['🐙','Astoņkājis'],['🦀','Krabis'],['🦎','Ķirzaka'],['🐸','Varde'],['🦩','Flamingo'],['🦢','Gulbis'],['🦆','Pīle'],
+    ['🐝','Bite'],['🦋','Tauriņš'],['🐞','Mārīte'],['🦒','Žirafe'],['🦓','Zebra'],['🦬','Bizons'],['🐴','Zirgs'],['🦄','Vienradzis'],
+    ['🐰','Trusis'],['🐹','Kāmis'],['🐱','Kaķis'],['🐭','Pele'],['🦇','Sikspārnis'],['🐉','Pūķis']
+  ];
+  EMOJI_BY_SECTION.animals = CRITTERS.map(function(c) { return c[0]; }).concat(EMOJI_BY_SECTION.animals)
+    .filter(function(e,i,a){return a.indexOf(e)===i;});
+
   // Build "all" from all sections except rare
   EMOJI_BY_SECTION.all = [];
   ['med','mood','energy','animals','nature','stuff'].forEach(function(k) {
@@ -164,6 +176,8 @@
     '🔥':'Uguns','🏆':'Kauss','💎':'Dimants','👑':'Kronis',
     '🙂':'Smaids','😀':'Priecīgs','😃':'Prieks','😄':'Jautrs','😁':'Plats smaids','😆':'Smiekli','😅':'Uff','😂':'Smieklu asaras','🤣':'Ripo aiz smiekliem','🥲':'Smaids caur asarām','🥹':'Aizkustināts','☺️':'Mīlīgs','😉':'Piemiedz aci','😋':'Garšīgi','😛':'Mēle','😝':'Ķēmojas','🤭':'Aizsedz muti','🤫':'Klusu','😐':'Neitrāls','😶':'Bez vārdiem','🙄':'Acis pret debesīm','😮':'Pārsteigts','😯':'Apklusis','😲':'Šokā','😳':'Samulsis','😦':'Apjucis','😟':'Noraizējies','🙁':'Mazliet bēdīgs','☹️':'Bēdīgs','😢':'Asara','😭':'Raud','😱':'Kliedz','😨':'Nobijies','😰':'Uztraucies','😥':'Atvieglots','😞':'Vīlies','😓':'Sviedri','😩':'Noguris','😫':'Pārguris','😖':'Samocīts','😣':'Izturēt','😠':'Dusmīgs','😡':'Nikns','🤬':'Lamājas','🤠':'Kovbojs','🤓':'Gudrinieks','🥸':'Inkognito','🫣':'Palūr','🫢':'Ak!','🥴':'Apreibis','🤥':'Melis'
   };
+
+  CRITTERS.forEach(function(c) { EMOJI_NAMES[c[0]] = c[1]; });
 
   function getEmojiSection(emoji) {
     var E3 = window.MinkaEmoji3D, id3 = E3 && E3.decode(emoji);
@@ -2003,10 +2017,14 @@
     loadLocal();
     hookNewCards();
     refreshAllCards();
-    var hookTimer = 0;
+    // In a microtask, not 120 ms later: the new day's cards get their 3D
+    // emoji before the browser paints them, so the plain glyph never shows
+    // and swaps a moment later. Same work, done once per rebuild.
+    var hookQueued = false;
     var queueCardHook = function() {
-      clearTimeout(hookTimer);
-      hookTimer = setTimeout(hookNewCards, 120);
+      if (hookQueued) return;
+      hookQueued = true;
+      Promise.resolve().then(function() { hookQueued = false; hookNewCards(); });
     };
     ['grafiks-list', 'radiographers-duty', 'radiologists-duty'].forEach(function(id) {
       var container = document.getElementById(id);

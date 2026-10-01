@@ -141,6 +141,14 @@ const SKINS_KEY = "skins:v1";
 const SKIN_ART_PREFIX = "skin-art::";
 const SKIN_ART_MAX_BYTES = 96 * 1024;
 const SKIN_ART_ID_RE = /^[a-f0-9]{32}$/;
+// Finished card effects (js/dither-core.js): one PNG per picture + effect +
+// size + colours, named by a SHA-256 of that description. Made once on any
+// device, then fetched instead of computed again. Unused ones expire.
+const FX_PREFIX = "fx::";
+const FX_HASH_RE = /^[a-f0-9]{64}$/;
+const FX_MAX_BYTES = 600 * 1024;
+const FX_MAX_SIDE = 2400;
+const FX_TTL_SECONDS = 60 * 86400;
 const SKIN_PART_RE = /^(img:[\w-]{1,40}|art:[a-f0-9]{32}|grad:[a-z]{1,16}|emo:[bcp][0-3]m?-(?:[0-9a-f]{2,6}(?:\.[0-9a-f]{2,6}){0,9}|x[rb]\d{2})|hue:\d{1,3},\d{1,3},\d{1,3}|txt:\d{1,3},\d{1,3},\d{1,3}|num:\d{1,3},\d{1,3},\d{1,3}|na:(0(\.\d{1,2})?|1)|em:(0(\.\d{1,2})?|1)|emn:[01]|es:[sbw]|te:[fgoh]|ez:(?:[123]|[6-9]\d|[1-3]\d\d)|dp:0|fx:[a-z]{1,12}|fxs:[0-3](\.\d{1,2})?|fp:\d{1,2},\d{1,2}|tm:(?:[a-h][1-3][1-3]|[p-t]11)|bd:[a-z]{2,12}|bp:\d{1,2}|bq:\d{1,2}|av:1|ad:[a-z0-9-]{1,40},(?:[3-9]\d|1\d\d|200),[lr],-?(?:1000|[0-9]{1,3}),-?(?:1000|[0-9]{1,3}))$/;
 
 function cleanSkinWorker(value) {
@@ -220,6 +228,14 @@ function createSkinArtId() {
 
 function ascii(bytes, offset, length) {
   return String.fromCharCode(...bytes.subarray(offset, offset + length));
+}
+
+function pngDimensions(buffer) {
+  const b = new Uint8Array(buffer);
+  const sig = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+  if (b.length < 33 || sig.some((v, i) => b[i] !== v) || ascii(b, 12, 4) !== "IHDR") return null;
+  const dv = new DataView(buffer);
+  return { width: dv.getUint32(16), height: dv.getUint32(20) };
 }
 
 function webpDimensions(buffer) {
@@ -787,6 +803,33 @@ const worker = {
 
     if (url.pathname === "/api/weather" && method === "GET") {
       return weatherResponse(request, env, ctx);
+    }
+
+    const fxMatch = url.pathname.match(/^\/api\/fx\/([a-f0-9]{64})$/);
+    if (fxMatch && method === "GET") {
+      const image = await env.MINKA_EMOJI.get(FX_PREFIX + fxMatch[1], { type: "arrayBuffer", cacheTtl: 86400 });
+      const headers = new Headers(cors(request));
+      if (!image) {
+        // Not made yet: 204, not 404, so browsers do not log every miss as an error.
+        headers.set("cache-control", "no-store");
+        return new Response(null, { status: 204, headers });
+      }
+      headers.set("content-type", "image/png");
+      headers.set("cache-control", "private, max-age=86400");
+      headers.set("x-content-type-options", "nosniff");
+      return new Response(image, { headers });
+    }
+    if (fxMatch && method === "POST") {
+      const declared = Number(request.headers.get("content-length") || 0);
+      if (declared > FX_MAX_BYTES) return json(request, { ok: false, error: "image too large" }, 413);
+      const body = await request.arrayBuffer();
+      if (body.byteLength > FX_MAX_BYTES) return json(request, { ok: false, error: "image too large" }, 413);
+      const size = pngDimensions(body);
+      if (!size || !size.width || !size.height || size.width > FX_MAX_SIDE || size.height > FX_MAX_SIDE) {
+        return json(request, { ok: false, error: "PNG image required" }, 400);
+      }
+      await env.MINKA_EMOJI.put(FX_PREFIX + fxMatch[1], body, { expirationTtl: FX_TTL_SECONDS, metadata: { w: size.width, h: size.height } });
+      return json(request, { ok: true });
     }
 
     if (url.pathname === "/api/news" && method === "GET") {

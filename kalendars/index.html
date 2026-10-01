@@ -925,7 +925,7 @@ function _mkToast(msg, type) {
 <script src="js/card-face-model.js?v=20260929ed44"></script>
 <script src="js/card-materials.js?v=20260912faces21"></script>
 <!-- Before the first card render: cards painted from the cached schedule get their picture effect at once. -->
-<script src="../js/dither-core.js?v=20260928izs122"></script>
+<script src="../js/dither-core.js?v=20261001fx4"></script>
 <script src="js/card-faces.js?v=20260930fx1"></script>
 <!-- Saved worker skins must be ready before the cached roster is rendered. -->
 <script src="js/card-contrast.js?v=20260928izs122" defer></script>
@@ -946,14 +946,14 @@ function _mkToast(msg, type) {
 <script src="js/design_v1.js?v=20260924perf3" defer></script>
 <script src="js/theme.js?v=20260924dth6" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
-<script src="js/emoji.js?v=20261001tk3" defer></script>
+<script src="js/emoji.js?v=20261001an4" defer></script>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
 <script src="js/daybook-model.js?v=20260928perf1" defer></script>
 <script src="js/daybook.js?v=20261001tk3" defer></script>
 <script src="js/levels.js?v=20260927ns1" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20261001sec4';
+window.__minkaLocalBuild = '20261001fx1';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row
@@ -1000,14 +1000,16 @@ window.__minkaLocalBuild = '20261001sec4';
     });
   }
 
-  // Observer to trigger entrance on new content
+  // Observer to trigger entrance on new content. Only the first content
+  // gets the entrance: a day switch shows the new day at once, without motion
+  // (blocks fading in one by one looked like the page assembling itself).
   const observer = new MutationObserver((mutations) => {
     for (const m of mutations) {
       if (m.addedNodes.length > 0) {
         const hasRelevant = [...m.addedNodes].some(n =>
           n.nodeType === 1 && (n.classList?.contains('duty-block') || n.classList?.contains('grafiks-row') || n.classList?.contains('day-pill'))
         );
-        if (hasRelevant) staggerEntrance();
+        if (hasRelevant) { observer.disconnect(); staggerEntrance(); return; }
       }
     }
   });

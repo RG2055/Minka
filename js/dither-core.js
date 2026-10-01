@@ -449,6 +449,115 @@
 
   // Resolve once the image is decoded, so swapping it in never shows an empty frame.
   var decoded = new Set();
+  // The latest finished picture per source + effect, at any size: a card
+  // rebuilt on a day switch shows it at once while its exact size is made,
+  // so an effect never blinks off and back on. Plain URL strings, dropped
+  // when their blob is revoked.
+  var recent = new Map(), recentLens = new Map();
+  function keepRecent(map, like, u) { map.delete(like); map.set(like, u); if (map.size > 24) map.delete(map.keys().next().value); }
+  function forget(u) { [recent, recentLens].forEach(function (m) { m.forEach(function (v, k) { if (v === u) m.delete(k); }); }); }
+
+  /* ---------- finished card effects, kept and shared ----------
+     A card's effect is the same PNG for the same picture, effect, size and
+     colours. Once made (on this computer or a colleague's) it is kept in this
+     browser (Cache Storage) and on minka-api (/api/fx), so it is fetched
+     instead of computed again: after a reload, on another day, on a weak PC.
+     The editor's own preview copies are never kept (see rosterCard()). */
+  var FX_VERSION = 1, FX_CACHE = 'minka-fx-v1', FX_LOCAL_MAX = 100, FX_SHARE_DELAY = 1200;
+  var stored = shared && shared._stored ? shared._stored : new Map();   // canonical key -> PNG Blob
+  var stats = shared && shared._stats ? shared._stats : { computed: 0, local: 0, server: 0, saved: 0 };
+  var storedReady = shared && shared._storedReady ? shared._storedReady : loadStored();
+  function loadStored() {
+    if (!host.caches) return Promise.resolve();
+    return host.caches.open(FX_CACHE).then(function (c) {
+      return c.keys().then(function (reqs) {
+        var drop = reqs.length > FX_LOCAL_MAX ? reqs.slice(0, reqs.length - FX_LOCAL_MAX) : [];
+        drop.forEach(function (r) { c.delete(r); });
+        return Promise.all(reqs.slice(drop.length).map(function (r) {
+          return c.match(r).then(function (res) {
+            var k = res && res.headers.get('x-fx-key');
+            return k ? res.blob().then(function (b) { stored.set(decodeURIComponent(k), b); }) : null;
+          });
+        }));
+      });
+    }).catch(function () {});
+  }
+  // The picture's address without the host (rgapp.page, the GitHub test copy and
+  // a local server name the same file alike); blob: and data: pictures exist on
+  // one device only and are not kept.
+  function canonSrc(src) {
+    try {
+      var u = new URL(src, doc.baseURI);
+      if (u.protocol !== 'https:' && u.protocol !== 'http:') return '';
+      if (u.origin === host.location.origin) return u.pathname.replace(/^\/Minka(?=\/)/, '') + u.search;
+      if (/(^|\.)rgapp\.page$|\.workers\.dev$/.test(u.hostname)) return '//' + u.hostname.split('.')[0] + u.pathname + u.search;
+      return u.href;
+    } catch (_) { return ''; }
+  }
+  function fxHash(canon) {
+    if (!host.crypto || !host.crypto.subtle || !host.TextEncoder) return Promise.reject(new Error('no crypto'));
+    return host.crypto.subtle.digest('SHA-256', new host.TextEncoder().encode('fx' + FX_VERSION + '|' + canon)).then(function (buf) {
+      return Array.from(new Uint8Array(buf), function (b) { return (b < 16 ? '0' : '') + b.toString(16); }).join('');
+    });
+  }
+  function fxApi() {
+    var A = null;
+    try { A = host.MinkaApi || (host.parent !== host ? host.parent.MinkaApi : null); } catch (_) { A = host.MinkaApi || null; }
+    var token = A && A.getToken ? A.getToken() : '';
+    return A && A.base && token ? { base: A.base, token: token } : null;
+  }
+  function keepLocal(canon, hash, blob) {
+    stored.set(canon, blob);
+    if (stored.size > FX_LOCAL_MAX) stored.delete(stored.keys().next().value);
+    if (!host.caches) return;
+    host.caches.open(FX_CACHE).then(function (c) {
+      return c.put('https://fx.invalid/' + hash, new Response(blob, { headers: { 'content-type': 'image/png', 'x-fx-key': encodeURIComponent(canon) } }));
+    }).catch(function () {});
+  }
+  // From minka-api: a PNG, or null (missing, offline, signed out, slow).
+  function serverFx(hash) {
+    var api = fxApi();
+    if (!api || !host.fetch) return Promise.resolve(null);
+    var ctl = host.AbortController ? new host.AbortController() : null;
+    var timer = ctl ? host.setTimeout(function () { ctl.abort(); }, 1500) : 0;
+    return host.fetch(api.base + '/api/fx/' + hash, { headers: { authorization: 'Bearer ' + api.token }, signal: ctl ? ctl.signal : undefined })
+      .then(function (r) { return r.status === 200 && /image\/png/.test(r.headers.get('content-type') || '') ? r.blob() : null; })
+      .catch(function () { return null; })
+      .then(function (b) { host.clearTimeout(timer); return b; });
+  }
+  // The kept/shared pictures and the same-frame apply are for the schedule's own
+  // cards only (centre cards and the side lists); the night split, the editor's
+  // copies and anything else keep the old path untouched.
+  function rosterCard(card) {
+    return !!(card && card.closest && card.closest('#grafiks-list, #radiographers-duty, #radiologists-duty'))
+      && !card.closest('.mk-skin-preview-real, .mk-skin-preview, .mk-preset-card, .mk-contrast-probe');
+  }
+  // The appearance editor is open (its live preview exists in some frame).
+  function editorOpen() {
+    var docs = [doc];
+    try { var f = doc.getElementById('calIframe'); if (f && f.contentDocument) docs.push(f.contentDocument); } catch (_) {}
+    try { if (host.parent !== host) docs.push(host.parent.document); } catch (_) {}
+    return docs.some(function (d) { return !!d.querySelector('.mk-skin-preview-real'); });
+  }
+  /* A fresh picture is kept here and sent, a moment later and off the busy
+     path. Made while the appearance editor is open, it waits for the editor
+     to close and goes only if a card still shows it, so drafts and slider
+     drags stay on this computer. */
+  function shareLater(canon, u, blob) {
+    var drafted = false;
+    var attempt = function () {
+      if (editorOpen()) { drafted = true; host.setTimeout(attempt, 4000); return; }
+      if (stored.has(canon) || (drafted && !inUse(u))) return;
+      fxHash(canon).then(function (hash) {
+        keepLocal(canon, hash, blob);
+        stats.saved++;
+        var api = fxApi();
+        if (!api || blob.size > 600 * 1024) return;
+        host.fetch(api.base + '/api/fx/' + hash, { method: 'POST', headers: { authorization: 'Bearer ' + api.token, 'content-type': 'image/png' }, body: blob }).catch(function () {});
+      }, function () {});
+    };
+    host.setTimeout(attempt, FX_SHARE_DELAY);
+  }
   function ready(u) {
     if (decoded.has(u)) return Promise.resolve(u);
     var im = new Image(); im.src = u;
@@ -478,7 +587,7 @@
     // card sets the URL a moment after it resolves, so only revoke it later, if unused.
     var settledNow = !!(old && old._url);
     Promise.resolve(old).then(function (u) {
-      var drop = function () { if (u && !inUse(u) && cache.get(oldKey) !== old) { try { URL.revokeObjectURL(u); } catch (_) {} } };
+      var drop = function () { if (u && !inUse(u) && cache.get(oldKey) !== old) { forget(u); try { URL.revokeObjectURL(u); } catch (_) {} } };
       if (settledNow) drop(); else host.setTimeout(drop, 5000);
     }, function () {});
   }
@@ -526,9 +635,29 @@
       if (hit._wants) { if (opts.stale) hit._wants.push(opts.stale); else hit._wants = null; }
       return hit;
     }
+    // Kept from before (this browser, or minka-api): no work, and when it is
+    // already in memory the URL is there at once (callers apply it in the same frame).
+    var cs0 = opts.share ? canonSrc(src) : '', canon = cs0 ? cs0 + key.slice(src.length) : '';
+    if (canon && stored.has(canon)) {
+      var su = URL.createObjectURL(stored.get(canon));
+      var sj = Promise.resolve(su);
+      sj._url = su; sj._wants = null; stats.local++;
+      remember(key, sj);
+      return sj;
+    }
+    var job = canon ? storedReady.then(function () {
+      if (stored.has(canon)) { stats.local++; return URL.createObjectURL(stored.get(canon)); }
+      return fxHash(canon).then(serverFx, function () { return null; }).then(function (b) {
+        if (!b) return compute();
+        stats.server++;
+        fxHash(canon).then(function (hash) { keepLocal(canon, hash, b); }, function () {});
+        return URL.createObjectURL(b);
+      });
+    }) : compute();
+    function compute() {
     // Ready-made dither art is cropped pixel for pixel: never from the smoothed copy.
     var pic = opts.mode === 'recolor' ? load(src, !sameOrigin(src)) : source(src);
-    var job = pic.then(function (im) {
+    return pic.then(function (im) {
       var run = lane.then(nextTurn).then(function () {
         if (job._wants && job._wants.every(function (f) { return f(); })) throw STALE();
         if (opts.box) {
@@ -538,13 +667,20 @@
           opts = Object.assign({}, opts, { width: Math.max(8, Math.floor(opts.box[0] / dot)), height: Math.max(8, Math.floor(opts.box[1] / dot)), cover: true });
         }
         var cv = image(im, opts);
+        stats.computed++;
         return new Promise(function (resolve, reject) {
-          cv.toBlob(function (b) { b ? resolve(URL.createObjectURL(b)) : reject(new Error('toBlob')); }, 'image/png');
+          cv.toBlob(function (b) {
+            if (!b) { reject(new Error('toBlob')); return; }
+            var u = URL.createObjectURL(b);
+            if (canon) shareLater(canon, u, b);
+            resolve(u);
+          }, 'image/png');
         });
       });
       lane = run.then(null, function () {});
       return run;
     });
+    }
     job._wants = opts.stale ? [opts.stale] : null;
     job.then(function (u) { job._url = u; }, function () {});
     job.catch(function () { if (cache.get(key) === job) cache.delete(key); });
@@ -560,7 +696,7 @@
     Array.from(cache.keys()).forEach(function (key) {
       var job = cache.get(key), u = job && job._url;
       if (!u || inUse(u)) return;
-      cache.delete(key); decoded.delete(u);
+      cache.delete(key); decoded.delete(u); forget(u);
       try { URL.revokeObjectURL(u); } catch (_) {}
     });
   }
@@ -828,10 +964,16 @@
       if (img.dataset.mkDitherDecor === key) return;
       img.dataset.mkDitherDecor = key;
       o.stale = function () { return !img.isConnected || img.dataset.mkDitherDecor !== key; };
-      url(src, o).then(ready).then(function (u) {
-        if (img.dataset.mkDitherDecor !== key) return;
+      o.share = rosterCard(card);
+      var paint = function (u) {
         img.style.setProperty('content', 'url("' + u + '")');
         img.style.setProperty('image-rendering', soft ? 'auto' : 'pixelated');
+      };
+      var dj = url(src, o);
+      if (o.share && dj._url) paint(dj._url);   // already made or kept: the same frame
+      dj.then(ready).then(function (u) {
+        if (img.dataset.mkDitherDecor !== key) return;
+        paint(u);
       }, function () { if (img.dataset.mkDitherDecor === key) clearDecor(img); });
     });
   }
@@ -1029,14 +1171,27 @@
     opts.stale = function () { return !card.isConnected || card.dataset.mkDitherKey !== key; };
     card.classList.remove('mk-dither-failed');
     busySkins++;
-    var lens = want === 'focus' || want === 'split' ? url(src, { box: box, dot: 1 / sharp, pos: pos, mode: want === 'split' ? 'vivid' : 'focus', normalize: want !== 'split', contrast: con(want === 'split' ? 1.04 : 1.1), sharpen: +(.25 / fine).toFixed(2), stale: opts.stale }).then(ready) : null;
+    var roster = rosterCard(card);
+    opts.share = roster;
+    var lensJob = want === 'focus' || want === 'split' ? url(src, { box: box, dot: 1 / sharp, pos: pos, mode: want === 'split' ? 'vivid' : 'focus', normalize: want !== 'split', contrast: con(want === 'split' ? 1.04 : 1.1), sharpen: +(.25 / fine).toFixed(2), stale: opts.stale, share: opts.share }) : null;
+    var lens = lensJob ? lensJob.then(ready) : null;
     if (!lens) clearFocus(card);
     if (want === 'poster') showPoster(card); else clearPoster(card);
-    url(src, opts).then(ready).then(function (u) {
+    // Already made (same day, same size, or kept from before): set it now, in
+    // the frame the card first shows. Else the latest one of this picture +
+    // effect stands in until the exact one is there.
+    var like = [src, want, (!real || !dithered ? ink : tint).join('.'), tb, tc].join('|');
+    var main = url(src, opts);
+    var nowU = roster ? main._url || recent.get(like) : null;
+    if (nowU) { card.style.setProperty('--mk-skin-dither', 'url("' + nowU + '")'); card.classList.add('mk-has-dither'); }
+    var nowL = roster && lensJob ? lensJob._url || recentLens.get(like) : null;
+    if (nowL) showFocus(card, nowL);
+    main.then(ready).then(function (u) {
+      if (roster) keepRecent(recent, like, u);
       if (card.dataset.mkDitherKey !== key) return;
       card.style.setProperty('--mk-skin-dither', 'url("' + u + '")');
       card.classList.add('mk-has-dither');
-      if (lens) return lens.then(function (lu) { if (card.dataset.mkDitherKey === key) showFocus(card, lu); }, function () {});
+      if (lens) return lens.then(function (lu) { if (roster) keepRecent(recentLens, like, lu); if (card.dataset.mkDitherKey === key) showFocus(card, lu); }, function () {});
     }, function () {
       // Pixels not readable (a host without CORS): show the plain picture instead.
       if (card.dataset.mkDitherKey === key) { clearSkin(card); card.classList.add('mk-dither-failed'); }
@@ -1068,8 +1223,10 @@
       var dim = ink.map(function (v) { return Math.round(6 + (v - 6) * .7); });
       var out = image(cv, { width: 120, height: 120, mode: 'duo', levels: 2, ink: dim, paper: [6, 6, 6] });
       job = new Promise(function (resolve, reject) { out.toBlob(function (b) { b ? resolve(URL.createObjectURL(b)) : reject(new Error('toBlob')); }, 'image/png'); });
+      job.then(function (u) { job._url = u; }, function () {});
       remember(key, job);
     }
+    if (job._url && rosterCard(card)) { card.style.setProperty('--mk-skin-dither', 'url("' + job._url + '")'); card.classList.add('mk-has-dither'); }
     job.then(function (u) {
       if (card.dataset.mkDitherKey !== key) return;
       card.style.setProperty('--mk-skin-dither', 'url("' + u + '")');
@@ -1084,7 +1241,8 @@
 
   host.MinkaDither = {
     bayer8: BAYER8, image: image, url: url, atkinson: atkinson,
-    mode: function () { return mode; }, setMode: setMode, skin: skin, decor: requestDecor, ready: ready, trim: trim, settled: settled, _apply: apply, _cache: cache
+    mode: function () { return mode; }, setMode: setMode, skin: skin, decor: requestDecor, ready: ready, trim: trim, settled: settled, _apply: apply, _cache: cache,
+    _stored: stored, _storedReady: storedReady, _stats: stats
   };
   // Cards painted before this script ran still get their effect.
   function boot() { if (mode !== 'off') apply(mode); else skinAll(); }
