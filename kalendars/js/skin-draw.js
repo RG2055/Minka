@@ -73,6 +73,9 @@
   function open(options) {
     options = options || {};
     var chalkboardMode = options.mode === 'chalkboard';
+    // A drawing for the comments and the mood sky: transparent, drawn on the
+    // night sky it will float in (mood-feedback.js).
+    var skyMode = options.mode === 'sky';
     var DRAW_W = chalkboardMode ? 480 : SIZE;
     var DRAW_H = chalkboardMode ? 270 : SIZE;
     var old = document.querySelector('.mk-draw-overlay');
@@ -88,11 +91,11 @@
         + '<span class="dr-slider-fill" aria-hidden="true"></span><span class="dr-slider-label">' + label + '</span><output>' + value + unit + '</output></label>';
     };
     var overlay = document.createElement('div');
-    overlay.className = 'mk-draw-overlay' + (chalkboardMode ? ' is-chalkboard' : '');
+    overlay.className = 'mk-draw-overlay' + (chalkboardMode ? ' is-chalkboard' : '') + (skyMode ? ' is-sky' : '');
     overlay.innerHTML = ''
       + '<section class="mk-draw-dialog" role="dialog" aria-modal="true" aria-labelledby="mkDrawTitle">'
       + '<header class="dr-head"><span class="dr-head-ico">' + ICON.brush + '</span>'
-      + '<div class="dr-title"><h3 id="mkDrawTitle">' + (chalkboardMode ? 'Nakts tāfele' : 'Zīmē savu fonu') + '</h3><span class="mk-draw-worker"></span></div>'
+      + '<div class="dr-title"><h3 id="mkDrawTitle">' + (chalkboardMode ? 'Nakts tāfele' : skyMode ? 'Uzzīmē' : 'Zīmē savu fonu') + '</h3><span class="mk-draw-worker"></span></div>'
       + '<div class="dr-head-actions">'
       + '<button type="button" class="dr-icon mk-draw-undo" aria-label="Atsaukt" title="Atsaukt (Ctrl+Z)" disabled>' + ICON.undo + '</button>'
       + '<button type="button" class="dr-icon mk-draw-redo" aria-label="Atkārtot" title="Atkārtot (Ctrl+Shift+Z)" disabled>' + ICON.redo + '</button>'
@@ -132,11 +135,11 @@
       + '<span class="mk-draw-card-fatigue"><i><em></em></i><b></b></span></div></section>'
       + '</aside></div>'
       + '<footer class="dr-foot"><span class="mk-draw-status" role="status"></span><button type="button" class="dr-btn dr-btn-text mk-draw-cancel">Atcelt</button>'
-      + '<button type="button" class="dr-btn dr-btn-filled mk-draw-save">' + (chalkboardMode ? 'Saglabāt tāfeli' : 'Saglabāt') + '</button></footer>'
+      + '<button type="button" class="dr-btn dr-btn-filled mk-draw-save">' + (chalkboardMode ? 'Saglabāt tāfeli' : skyMode ? 'Nosūtīt' : 'Saglabāt') + '</button></footer>'
       + '</section>';
     // The same tones as the card window (and its tint, when the card coloured it).
     var wm = document.getElementById('worker-modal');
-    if (wm && !chalkboardMode) {
+    if (wm && !chalkboardMode && !skyMode) {
       var ws = getComputedStyle(wm);
       ['--pp-bg', '--pp-c1', '--pp-c2', '--pp-c3', '--pp-c4', '--pp-primary', '--pp-on-primary', '--pp-primary-c', '--pp-on-primary-c'].forEach(function (k) {
         var v = ws.getPropertyValue(k).trim(); if (v) overlay.style.setProperty(k, v);
@@ -510,7 +513,7 @@
         // Label → spinner → check; the editor closes once the check is drawn.
         await (MM && MM.pending ? MM.pending(save, work) : work);
         status.textContent = '';
-        toast('Zīmējums saglabāts — redzēs visi', 'ok');
+        toast(skyMode ? 'Zīmējums nosūtīts' : 'Zīmējums saglabāts — redzēs visi', 'ok');
         if (MM && MM.pending && MM.level() !== 'reduced') setTimeout(close, 380);
         else close();
       } catch (error) {
@@ -526,7 +529,7 @@
       overlay.querySelector('.mk-draw-card-initials').style.color = options.textColor;
     }
     paintRecent(); setTool('pen'); setColor(color);
-    fillBase(bg); dirty = false;
+    fillBase(skyMode ? 'transparent' : bg); dirty = false;
     if (options.initialUrl) {
       var image = new Image();
       image.crossOrigin = 'anonymous';

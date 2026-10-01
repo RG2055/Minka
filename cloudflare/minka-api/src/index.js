@@ -140,6 +140,7 @@ async function ensurePairSchema(db) {
 const SKINS_KEY = "skins:v1";
 const SKIN_ART_PREFIX = "skin-art::";
 const SKIN_ART_MAX_BYTES = 96 * 1024;
+const SKY_ART_TTL = 60 * 86400;              // drawings in the comments and the mood sky
 const SKIN_ART_ID_RE = /^[a-f0-9]{32}$/;
 // Finished card effects (js/dither-core.js): one PNG per picture + effect +
 // size + colours, named by a SHA-256 of that description. Made once on any
@@ -996,6 +997,41 @@ const worker = {
         artId,
         asset: "/skin-assets/" + artId + ".webp"
       });
+    }
+
+    // A drawing for the comments and the mood sky (kalendars mood-feedback.js):
+    // stored and served like a card's drawing (/skin-assets/<id>.webp), but
+    // nobody's skin, and it goes away by itself after 60 days. The comment
+    // that shows it lives in the feedback API.
+    if (url.pathname === "/api/sky-art" && method === "POST") {
+      const contentLength = Number(request.headers.get("content-length") || 0);
+      if (contentLength > SKIN_ART_MAX_BYTES + 48 * 1024) {
+        return json(request, { ok: false, error: "image too large" }, 413);
+      }
+      let form;
+      try {
+        form = await request.formData();
+      } catch (_error) {
+        return json(request, { ok: false, error: "invalid form data" }, 400);
+      }
+      const image = form.get("image");
+      if (!image || typeof image.arrayBuffer !== "function" || image.type !== "image/webp") {
+        return json(request, { ok: false, error: "384x384 WebP image required" }, 400);
+      }
+      if (image.size < 32 || image.size > SKIN_ART_MAX_BYTES) {
+        return json(request, { ok: false, error: "image must be at most 96 KB" }, 413);
+      }
+      const imageBuffer = await image.arrayBuffer();
+      const dimensions = webpDimensions(imageBuffer);
+      if (!dimensions || dimensions.width !== 384 || dimensions.height !== 384) {
+        return json(request, { ok: false, error: "image must be exactly 384x384" }, 400);
+      }
+      const artId = createSkinArtId();
+      await env.MINKA_EMOJI.put(SKIN_ART_PREFIX + artId, imageBuffer, {
+        expirationTtl: SKY_ART_TTL,
+        metadata: { sky: true, contentType: "image/webp" }
+      });
+      return json(request, { ok: true, artId, asset: "/skin-assets/" + artId + ".webp" });
     }
 
     if (url.pathname === "/api/skins" && method === "GET") {

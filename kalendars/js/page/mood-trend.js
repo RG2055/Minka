@@ -269,7 +269,7 @@
     var mx = card.__mx || {};
     var W = plot.clientWidth, H = plot.clientHeight;
     if (W < 120 || H < 200) return null;
-    var faceY = mx.faceY || 132, ground = H - (mx.groundGap || 24), amp = 92;
+    var faceY = mx.faceY || 132, ground = H - (mx.groundGap || 24), amp = 66;   // low enough that the coffee over the points stays clear of the ring
     return { W: W, H: H, cx: W / 2, faceY: faceY, faceR: (mx.faceD || 124) / 2,
       ground: ground, amp: amp, left: 14, right: W - 14, chartTop: ground - 4 - amp, chartBottom: ground - 14 };
   }
@@ -630,32 +630,38 @@
     var pts = m.rows.map(function (r, i) { return { row: r, x: X(i), y: r.mood ? Y(r.mood.score) : Y(3), own: owns[r.day] && owns[r.day].emoji ? owns[r.day] : null }; });
     scape.pts = pts;
     var dots = pts.filter(function (p) { return p.row.mood; });
-    if (dots.length > 1) {
-      var line = monotone(dots.map(function (p) { return [p.x, p.y]; }), 12);
+    // The rated day still waiting for its first vote has no point of its own:
+    // the line just runs on, level, from the last vote to it.
+    var waiting = pts.find(function (p) { return p.row.day === m.selected && !p.row.mood; });
+    var last = dots[dots.length - 1];
+    if (waiting && last && last.x < waiting.x) waiting.y = last.y;
+    if (dots.length > 1 || (waiting && last && last.x < waiting.x)) {
+      var line = dots.length > 1 ? monotone(dots.map(function (p) { return [p.x, p.y]; }), 12) : [[last.x, last.y]];
+      if (waiting && last && last.x < waiting.x) line = line.concat([[waiting.x, last.y]]);
+      var trace = function () { ctx.beginPath(); line.forEach(function (p, i) { if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); }); };
       ctx.save();
-      ctx.beginPath(); line.forEach(function (p, i) { if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); });
-      ctx.setLineDash([4, 5]); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-      ctx.strokeStyle = 'rgba(4,7,14,.45)'; ctx.lineWidth = 3.4; ctx.stroke();   // a thin dark edge: reads on the clouds too
-      ctx.strokeStyle = 'rgba(125,211,252,.9)'; ctx.lineWidth = 1.6; ctx.stroke();
+      // one unbroken line: a dark edge so it reads on the bright clouds, a
+      // soft wide halo (a plain wider stroke, no blur) and the line itself
+      trace();
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.strokeStyle = 'rgba(4,7,14,.55)'; ctx.lineWidth = 4.2; ctx.stroke();
+      ctx.strokeStyle = 'rgba(125,211,252,.22)'; ctx.lineWidth = 6; ctx.stroke();
+      ctx.strokeStyle = '#8fdcff'; ctx.lineWidth = 2; ctx.stroke();
       ctx.restore();
     }
     // The sky's characters fill down to this curve: move their border too.
-    scape.line = dots.length > 1 ? line : null;
+    scape.line = line && line.length > 1 ? line : null;
     skyRegion();
     pts.forEach(function (p) {
       var sel = p.row.day === m.selected;
-      if (!p.row.mood) {
-        if (!sel || p.own) return;
-        ctx.save(); ctx.setLineDash([2.5, 2.5]); ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1.4;
-        ctx.beginPath(); ctx.arc(p.x, p.y, 5.5, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
-        return;
-      }
+      if (!p.row.mood) return;
       var r = 3.2 + Math.min(4, p.row.mood.total / 3);
       ctx.fillStyle = moodFor(p.row.mood.score).color;
       ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = '#0c0d11'; ctx.lineWidth = 1.5; ctx.stroke();
       if (sel) { ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(p.x, p.y, r + 3, 0, Math.PI * 2); ctx.stroke(); }
     });
+    drawCoffee(ctx, pts, geo, scape.line);
     // The days' own emoji, under their point (the characters fill the sky
     // above the curve): real text in the Fluent font (drawn by the page, so
     // the web font is always the one used).
@@ -669,9 +675,82 @@
     var html = '';
     pts.forEach(function (p) {
       if (!p.own) return;
-      html += '<i class="rg-scape-own" style="left:' + p.x.toFixed(1) + 'px;top:' + (p.y + 15).toFixed(1) + 'px">' + esc(p.own.emoji) + '</i>';
+      var below = p.row.mood ? 3.2 + Math.min(4, p.row.mood.total / 3) : 2;   // right under its point
+      html += '<i class="rg-scape-own" style="left:' + p.x.toFixed(1) + 'px;top:' + (p.y + below + 9).toFixed(1) + 'px">' + esc(p.own.emoji) + '</i>';
     });
     marks.innerHTML = html;
+  }
+  /* Each day's coffee under the curve: the app's own cup and the team's
+     number of cups for that day, nothing more. From the same coffee store as
+     the calendar (minkaCoffeeCountsV1); a day without coffee shows nothing. */
+  var CUP = null;
+  function coffeeByDay(days) {
+    var store = readJson('minkaCoffeeCountsV1'), out = {};
+    days.forEach(function (day) {
+      var key = day.slice(8) + '.' + day.slice(5, 7) + '.' + day.slice(0, 4), counts = store[key];
+      if (!counts) return;
+      var cups = 0;
+      Object.keys(counts).forEach(function (name) { cups += Math.max(0, Number(counts[name]) || 0); });
+      if (cups) out[day] = cups;
+    });
+    return out;
+  }
+  // The curve's height at x (the drawn polyline); null without a curve.
+  function curveYAt(line, x) {
+    if (!line || line.length < 2 || x < line[0][0] || x > line[line.length - 1][0]) return null;
+    for (var i = 1; i < line.length; i++) {
+      if (line[i][0] >= x) {
+        var a = line[i - 1], b = line[i], t = b[0] === a[0] ? 0 : (x - a[0]) / (b[0] - a[0]);
+        return a[1] + (b[1] - a[1]) * t;
+      }
+    }
+    return null;
+  }
+  // On the curve itself: over each day's point the cup, and the number over
+  // the cup (stacked, narrow enough for the 14 days), with a dark rim so they read on
+  // the bright characters too. A day without a vote sits where the curve
+  // passes its date.
+  function drawCoffee(ctx, pts, geo, line) {
+    var cups = coffeeByDay(pts.map(function (p) { return p.row.day; }));
+    if (!Object.keys(cups).length || typeof Path2D !== 'function') return;
+    // the cup of the shift's coffee pill (mood-feedback.js moodPillCupSvg), 20 px box
+    CUP = CUP || {
+      body: new Path2D('M2.6 5.6h11v7.6a3.6 3.6 0 0 1-3.6 3.6H6.2a3.6 3.6 0 0 1-3.6-3.6V5.6Z'),
+      handle: new Path2D('M14.2 7.6h1.1a2.6 2.6 0 0 1 0 5.2h-1.1')
+    };
+    var k = 9 / 20;
+    ctx.save();
+    ctx.font = '800 9.5px Inter, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.lineJoin = 'round';
+    pts.forEach(function (p) {
+      var n = cups[p.row.day];
+      if (!n) return;
+      var y = p.row.mood ? p.y : curveYAt(line, p.x), r = p.row.mood ? 3.2 + Math.min(4, p.row.mood.total / 3) : 1;
+      if (y == null) y = p.y;
+      // where the curve climbs steeply past its day, sit over the higher side
+      // of it, so the line never runs through the cup or the number
+      [-6, 6].forEach(function (dx) { var side = curveYAt(line, p.x + dx); if (side != null && side - 2 < y - r) { y = side - 2; r = 0; } });
+      var cupTop = y - r - 10.6;                             // the cup just over the point (its body ends 3 px above)
+      ctx.save();
+      ctx.translate(p.x - 4.3, cupTop);
+      ctx.scale(k, k);
+      ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(4,7,14,.9)';
+      ctx.stroke(CUP.body); ctx.stroke(CUP.handle);
+      ctx.fillStyle = ctx.strokeStyle = '#f5c46b';
+      ctx.fill(CUP.body);
+      ctx.lineWidth = 1.9;
+      ctx.stroke(CUP.handle);
+      ctx.restore();
+      var base = cupTop + 0.5;                               // the number over the cup
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(4,7,14,.9)';
+      ctx.strokeText(String(n), p.x, base);
+      ctx.fillStyle = '#f5c46b';
+      ctx.fillText(String(n), p.x, base);
+    });
+    ctx.restore();
   }
   function scapeSummary(m) {
     var rated = m.rows.filter(function (r) { return r.mood; });
@@ -711,7 +790,8 @@
     var owns = readJson(OWN_KEY);
     var sig = m.selected + '|' + m.live + '|' + [geo.W, geo.H, geo.faceY, geo.faceR, window.devicePixelRatio || 1].join(',')
       + '|' + m.rows.map(function (r) { return owns[r.day] && owns[r.day].emoji || ''; }).join(',')
-      + '|' + m.rows.map(function (r) { return r.mood ? r.mood.score.toFixed(3) + ':' + r.mood.total : '-'; }).join(',');
+      + '|' + m.rows.map(function (r) { return r.mood ? r.mood.score.toFixed(3) + ':' + r.mood.total : '-'; }).join(',')
+      + '|' + JSON.stringify(coffeeByDay(m.rows.map(function (r) { return r.day; })));
     scape.m = m;
     scape.geo = geo;
     loadSky();
@@ -851,11 +931,31 @@
     if (typeof window.openStatsModal === 'function') window.openStatsModal({ from: trend });
   });
   window.addEventListener('online', scheduleFetch);
+  // Coffee logged here or in the shell: the bars follow (only a changed
+  // total redraws, see the signature in paintScape).
+  var coffeeRepaint = 0;
+  function repaintSoon() { clearTimeout(coffeeRepaint); coffeeRepaint = setTimeout(function () { paint(); }, 400); }
+  document.addEventListener('minka:coffee-changed', repaintSoon);
+  window.addEventListener('storage', function (event) { if (event.key === 'minkaCoffeeCountsV1') repaintSoon(); });
   document.addEventListener('visibilitychange', function () {
     skyRun(!document.hidden && !scape.hold);
     if (!document.hidden) paint();
   });
 
-  window.MinkaMoodTrend = { paint: paint };
+  // Noskaņa X: where a day sits on the curve, in the plot's own px (the
+  // comments that rise above their day, mood-feedback.js). Rated days and the
+  // selected day only: the others have no point to point at.
+  function dayPoint(day) {
+    if (!MX || !scape.pts || !scape.m) return null;
+    var p = scape.pts.find(function (q) { return q.row.day === day; });
+    if (!p || (!p.row.mood && day !== scape.m.selected)) return null;
+    return { x: p.x, y: p.y, r: p.row.mood ? 3.2 + Math.min(4, p.row.mood.total / 3) : 1 };
+  }
+  window.MinkaMoodTrend = {
+    paint: paint,
+    point: dayPoint,
+    days: function () { return (scape.m || model()).rows.map(function (r) { return r.day; }); },
+    ping: function (day) { var p = dayPoint(day); if (p) scapePing(p); }
+  };
   paint();
 })();

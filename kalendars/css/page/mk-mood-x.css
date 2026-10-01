@@ -328,12 +328,6 @@
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
   }
-  :root.mk-mx #grafiks-list .rg-feedback-card :is(.rg-month-item--coffee, .rg-month-item--radio) b::before {
-    flex: none;
-    font: 400 13px/1 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
-  }
-  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item--coffee b::before { content: '☕'; }
-  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item--radio b::before { content: '📻'; }
   :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item--coffee b { color: #f5c46b !important; }
   :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item--radio b { color: #9ed8ff !important; }
   /* Row 2: what the number is. */
@@ -415,6 +409,351 @@
   :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-write--comment > .rg-comment-preview[hidden] { display: none !important; }
   :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-write--comment > .rg-comment-preview b { color: #0d1117 !important; -webkit-text-fill-color: #0d1117 !important; font-weight: 750 !important; }
   :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-write--comment .rg-feedback-action-count:empty { display: none !important; }
+
+  /* ── 2026-10-01: apakša runā skatuves valodā ─────────────────────────
+     Virsrakstā vairs nav "Statistika": statistiku atver pašas debesis
+     (līknes poga, tās zīmējums ir skatuves fons) un mēneša pilles. Poga
+     paliek pieejama tastatūrai, tikai bez sava teksta. */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-trend {
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-trend-head { display: none !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-trend:focus-visible { outline: 0 !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-trend:focus-visible .rg-trend-plot { outline: 2px solid var(--mx-focus) !important; outline-offset: -2px !important; border-radius: 22px !important; }
+  /* The mood's name takes the mood's own tint (its colour is set inline). */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-mood-label {
+    background: color-mix(in srgb, currentColor 16%, #10151d) !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-mood-label.is-own-note { background: var(--mk-sys-surface-container-high, #1a1f27) !important; }
+
+  /* Vērtējums: katra sejiņa savā stikla burbulī, tieši tādā pašā kā kolēģi
+     orbītā (tā pati lēca, tas pats tonis). Uzejot burbulis paceļas un
+     sejiņa pagriež galvu, nospiežot ieknikšķas (atspere); izvēlētā iekrāsojas
+     savā tonī. */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-taps {
+    --mx-tap: clamp(32px, 11.6cqw, 40px);
+    gap: 0 !important;
+    margin: 2px 0 0 !important;
+    padding: 4px 0 2px !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-tap {
+    width: 100% !important;
+    height: 52px !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 50% !important;
+    background: none !important;
+    box-shadow: none !important;
+    transform: none !important;
+    font-size: 25px !important;
+    translate: 0 0;
+    scale: 1;
+    transition: translate var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1)), scale var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1)) !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-tap::before {
+    width: var(--mx-tap) !important;
+    height: var(--mx-tap) !important;
+    border-radius: 50% !important;
+    background:
+      radial-gradient(circle at 31% 24%, rgba(255, 255, 255, .24), transparent 31%),
+      linear-gradient(145deg, rgba(157, 215, 255, .15), rgba(255, 255, 255, .04) 40%, rgba(5, 14, 27, .86)) !important;
+    box-shadow: inset 0 0 0 1px rgba(214, 235, 255, .14), inset 0 1px 0 rgba(255, 255, 255, .2) !important;
+    transition: box-shadow 160ms var(--mk-ease-effects, ease) !important;
+  }
+  /* the glass lens over the body, as on the orbit's bubbles (the same picture) */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-tap:not(.rg-pulse-own)::after {
+    content: '' !important;
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    z-index: 1 !important;
+    width: calc(var(--mx-tap) * 1.18) !important;
+    height: calc(var(--mx-tap) * 1.18) !important;
+    translate: -50% -50% !important;
+    background: url('../../assets/mood-glass-premium.webp?v=20260820b') center / contain no-repeat !important;
+    pointer-events: none !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-tap > span:first-child {
+    position: relative !important;
+    z-index: 2 !important;
+    transform: none !important;
+    rotate: 0deg;
+    transition: rotate var(--mk-dur-spring-default, 560ms) var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1)) !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-tap:not([aria-disabled="true"]):hover { translate: 0 -3px; scale: 1.06; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-tap:not([aria-disabled="true"]):hover > span:first-child { rotate: -9deg; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-tap:not([aria-disabled="true"]):hover::before {
+    background:
+      radial-gradient(circle at 31% 24%, rgba(255, 255, 255, .3), transparent 31%),
+      linear-gradient(145deg, rgba(var(--rg-reaction-rgb, 157, 215, 255), .3), rgba(255, 255, 255, .05) 42%, rgba(5, 14, 27, .82)) !important;
+    box-shadow: inset 0 0 0 1px rgba(var(--rg-reaction-rgb, 214, 235, 255), .42), inset 0 1px 0 rgba(255, 255, 255, .24) !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-tap:not([aria-disabled="true"]):active { translate: 0 0; scale: .9; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-tap.is-selected::before {
+    background:
+      radial-gradient(circle at 31% 24%, rgba(255, 255, 255, .28), transparent 31%),
+      linear-gradient(145deg, rgba(var(--rg-reaction-rgb, 148, 184, 213), .42), rgba(var(--rg-reaction-rgb, 148, 184, 213), .1) 45%, rgba(5, 14, 27, .84)) !important;
+    box-shadow: inset 0 0 0 1.5px rgba(var(--rg-reaction-rgb, 148, 184, 213), .75), inset 0 1px 0 rgba(255, 255, 255, .24) !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-tap[aria-disabled="true"]::before { opacity: .45 !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-tap:focus-visible { outline: 2px solid var(--mx-focus) !important; outline-offset: -2px !important; }
+  /* the count: an M3 badge on the bubble's shoulder, cut out of the page */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-count {
+    left: calc(50% + 11px) !important;
+    right: auto !important;
+    top: 1px !important;
+    z-index: 3 !important;
+    min-width: 17px !important;
+    height: 17px !important;
+    padding: 0 4px !important;
+    border: 2px solid #000 !important;
+    border-radius: 999px !important;
+    font: 800 9.5px/13px Inter, system-ui, sans-serif !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+  /* "Savs vērtējums": the same size, an empty dashed bubble */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-own > span:first-child {
+    width: var(--mx-tap) !important;
+    height: var(--mx-tap) !important;
+    flex-basis: var(--mx-tap) !important;
+    border-color: rgba(214, 235, 255, .3) !important;
+    background: rgba(5, 14, 27, .5) !important;
+  }
+  /* The invitation (no vote from this computer today yet): the bubbles bob
+     once in a row, every couple of minutes (mood-feedback.js mxInvite). */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-taps.mx-invite .rg-pulse-tap:not(:hover) { animation: mx-invite 640ms var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1)) both; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-taps.mx-invite .rg-pulse-tap:nth-child(2) { animation-delay: 70ms; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-taps.mx-invite .rg-pulse-tap:nth-child(3) { animation-delay: 140ms; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-taps.mx-invite .rg-pulse-tap:nth-child(4) { animation-delay: 210ms; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-taps.mx-invite .rg-pulse-tap:nth-child(5) { animation-delay: 280ms; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-taps.mx-invite .rg-pulse-tap:nth-child(6) { animation: none; }
+
+  /* Šis mēnesis: trīs pilles kā skatuves augšējās ("Nogurums", "Dežūrā"),
+     vārds zem tām; bez atdalītāja līnijas. Kafija savā brūnajā (tā pati kā
+     dežūras kafijai), radio ledus zilā, bolus GE zils pret Philips zaļu.
+     Uzejot gaišāka, nospiežot ieknikšķas. */
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month {
+    gap: 6px !important;
+    margin: 10px 4px 0 !important;
+    padding: 0 !important;
+    border-top: 0 !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item {
+    grid-template-rows: 30px 14px !important;
+    row-gap: 5px !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    border-radius: 0 !important;
+    background: none !important;
+    transform: none !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item:hover,
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item:active { background: none !important; transform: none !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item:focus-visible { outline: 0 !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item :is(b, small) {
+    box-sizing: border-box !important;
+    height: 30px !important;
+    padding: 0 12px !important;
+    border-radius: 999px !important;
+    background-color: var(--mx-pill, rgba(230, 235, 242, .08)) !important;
+    background-image: linear-gradient(transparent, transparent) !important;
+    transition: background-image 150ms var(--mk-ease-effects, ease), scale var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1)) !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item:hover :is(b, small) { background-image: linear-gradient(rgba(255, 255, 255, .08), rgba(255, 255, 255, .08)) !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item:active :is(b, small) { scale: .94; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item:focus-visible :is(b, small) { outline: 2px solid var(--mx-focus) !important; outline-offset: 2px !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item b { gap: 6px !important; font-size: 14.5px !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item--coffee { --mx-pill: rgba(200, 132, 42, .26); }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item--coffee b { color: #ffd08a !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item--radio { --mx-pill: rgba(100, 210, 255, .15); }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item--radio b { color: #b2e6ff !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item small { width: auto !important; max-width: 100% !important; gap: 5px !important; padding: 0 10px !important; font-size: 12px !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item small em:first-of-type { color: #8cc4ff !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item small em:last-of-type { color: #7be7a4 !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-split { width: 22px !important; min-width: 12px !important; flex: 0 1 22px !important; height: 5px !important; border-radius: 3px !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item span { font-size: 11px !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-ico {
+    flex: none !important;
+    display: block !important;
+    width: 15px !important;
+    height: 15px !important;
+    color: inherit !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-ico svg { display: block !important; width: 100% !important; height: 100% !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-ico.is-emoji { font: 400 13px/15px 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif !important; text-align: center !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-month-item b em { font-style: normal !important; }
+
+  /* Viena kompakta rinda (2026-10-01): piecas sejiņas, savs vērtējums un
+     komentāri — kaķa baltais runas burbulis mazā stikla burbulī ar saviem
+     skaitļiem (kopā un šodien jauni). Lielā burbuļa vairs nav, kaķis gaida
+     zem kartītes (daily-cat.js). Zīmēt var komentāru logā. */
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-taps { --mx-tap: clamp(30px, 10.6cqw, 38px); grid-template-columns: repeat(8, minmax(0, 1fr)) !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .rg-pulse-taps.mx-invite .mx-draw-tap { animation: none; }
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact .rg-feedback-card-actions { display: none !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write.rg-pulse-write--comment {
+    position: relative !important;
+    display: grid !important;
+    place-items: center !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: 52px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 50% !important;
+    background: none !important;
+    box-shadow: none !important;
+    translate: 0 0;
+    scale: 1;
+    transition: translate var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1)), scale var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1)) !important;
+  }
+  /* the glass, as on the faces */
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment::before {
+    content: '' !important;
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    width: var(--mx-tap) !important;
+    height: var(--mx-tap) !important;
+    border-radius: 50% !important;
+    translate: -50% -50% !important;
+    background:
+      radial-gradient(circle at 31% 24%, rgba(255, 255, 255, .24), transparent 31%),
+      linear-gradient(145deg, rgba(157, 215, 255, .15), rgba(255, 255, 255, .04) 40%, rgba(5, 14, 27, .86)) !important;
+    box-shadow: inset 0 0 0 1px rgba(214, 235, 255, .14), inset 0 1px 0 rgba(255, 255, 255, .2) !important;
+    pointer-events: none !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment::after {
+    content: '' !important;
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    z-index: 1 !important;
+    width: calc(var(--mx-tap) * 1.18) !important;
+    height: calc(var(--mx-tap) * 1.18) !important;
+    translate: -50% -50% !important;
+    background: url('../../assets/mood-glass-premium.webp?v=20260820b') center / contain no-repeat !important;
+    pointer-events: none !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment:hover { translate: 0 -3px; scale: 1.06; }
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment:active { translate: 0 0; scale: .9; }
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment:focus-visible { outline: 2px solid var(--mx-focus) !important; outline-offset: -2px !important; }
+  /* the white speech bubble, small, with its tail */
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment .rg-comment-icon {
+    grid-area: auto !important;
+    position: relative !important;
+    z-index: 2 !important;
+    justify-self: center !important;
+    align-self: center !important;
+    width: 20px !important;
+    min-width: 0 !important;
+    height: 15px !important;
+    min-height: 0 !important;
+    margin: 2px 0 0 !important;
+    border-radius: 6px !important;
+    background: #ffffff !important;
+    transform: none !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment .rg-comment-icon::after {
+    left: 4px !important;
+    bottom: -4px !important;
+    border-top: 5px solid #ffffff !important;
+    border-right: 5px solid transparent !important;
+    border-left: 0 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment > span:not(.rg-feedback-badges),
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment > .rg-comment-preview { display: none !important; }
+  /* M3 badges on the glass's top-right corner, as on the faces: the total
+     there, today's new ones just left of it in the same row; with new ones
+     the bubble itself takes their warm tint. */
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment .rg-feedback-badges {
+    position: absolute !important;
+    inset: 0 !important;
+    grid-area: auto !important;          /* a grid area would be its box, not the button */
+    place-self: auto !important;
+    z-index: 3 !important;
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    transform: none !important;
+    translate: none !important;
+    pointer-events: none !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment :is(.rg-feedback-action-count, .rg-feedback-new-count) {
+    position: absolute !important;
+    top: calc((52px - var(--mx-tap, 36px)) / 2 + 2px) !important;   /* centred on the glass's upper rim */
+    translate: -50% -50% !important;
+    display: grid !important;
+    place-items: center !important;
+    box-sizing: border-box !important;
+    min-width: 16px !important;
+    height: 16px !important;
+    margin: 0 !important;
+    padding: 0 4px !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 0 0 2px #000 !important;
+    font: 600 10.5px/16px Inter, system-ui, sans-serif !important;
+    font-variant-numeric: tabular-nums !important;
+    letter-spacing: 0 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+  /* the total as a notification badge (iOS style: red, white, bold) */
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment .rg-feedback-action-count {
+    left: calc(50% + var(--mx-tap, 36px) * .36) !important;            /* the top-right corner of the glass */
+    right: auto !important;
+    min-width: 21px !important;
+    height: 21px !important;
+    padding: 0 3px !important;
+    border-radius: 999px !important;
+    background: #ff3b30 !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    font: 700 10.5px/21px -apple-system, 'SF Pro Text', Inter, system-ui, sans-serif !important;
+    letter-spacing: -.02em !important;
+  }
+  /* today's new ones right above the total, on the same corner (the bubbles
+     beside it keep their own corners free) */
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment .rg-feedback-new-count { left: calc(50% + var(--mx-tap, 36px) * .36) !important; right: auto !important; top: calc((52px - var(--mx-tap, 36px)) / 2 - 20px) !important; background: #ffb59a !important; color: #4a1500 !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment :is(.rg-feedback-action-count, .rg-feedback-new-count):empty { display: none !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment.has-new::before {
+    background:
+      radial-gradient(circle at 31% 24%, rgba(255, 255, 255, .26), transparent 31%),
+      linear-gradient(145deg, rgba(255, 158, 112, .5), rgba(255, 140, 90, .14) 46%, rgba(30, 10, 4, .86)) !important;
+    box-shadow: inset 0 0 0 1.5px rgba(255, 181, 154, .7), inset 0 1px 0 rgba(255, 255, 255, .24) !important;
+  }
+  /* No heading row: the cat says "Novērtē maiņu!" (mood-feedback.js); the
+     faces come right under the curve. */
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact .rg-rate-head { display: none !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-taps { margin-top: 0 !important; padding-top: 0 !important; }
+}
+.rg-feedback-card .rg-month-ico:empty { display: none; }
+.rg-feedback-card .rg-month-item b em { font-style: normal; }
+/* A drawing in the comments (mood-feedback.js, skin-draw.js "sky"): the
+   picture on the night sky it was drawn on; the pen sits by the emoji. */
+#rgFeedbackModal .rg-comms-bubble.is-art { padding: 6px !important; background: #070c16 !important; }
+#rgFeedbackModal .rg-comms-art { display: block; width: min(192px, 60vw); height: auto; aspect-ratio: 1; border-radius: 12px; background: radial-gradient(120% 90% at 50% 0%, #10233a, #060b13 70%); }
+/* in the sky: the drawing alone on a dark glass card, the artist's animal on its corner */
+.mx-say.is-art { --mx-say-bg: rgba(7, 12, 22, .94); padding: 5px; }
+.mx-say.is-art:hover { --mx-say-bg: rgba(14, 22, 36, .96); }
+.mx-say.is-art .mx-say-text { display: none; }
+.mx-say.is-art .mx-say-ava { position: absolute; right: -6px; top: -6px; z-index: 1; }
+.mx-say.is-art .mx-say-ava:empty { display: none; }
+.mx-say-art { display: block; width: 64px; height: 64px; border-radius: 10px; }
+.mx-say-art[hidden] { display: none; }
+@keyframes mx-invite {
+  0%, 100% { translate: 0 0; }
+  35% { translate: 0 -6px; }
 }
 
 /* ── Jaunie elementi ───────────────────────────────────────────────────── */
@@ -507,3 +846,320 @@
   transform: translate(-50%, -50%);
 }
 .rg-scape-own { font-size: 15px; filter: none; }
+/* A comment in the sky (mood-feedback.js mxSay): the cat's own white speech
+   bubble, its tail on the day's point on the curve. Static while shown; it
+   only scales in from the tail and fades out (one animation each way). */
+.mx-say {
+  position: absolute;
+  z-index: 14;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(212px, calc(100% - 12px));
+  margin: 0;
+  padding: 6px 12px 7px 6px;
+  border: 0;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #1b222c;
+  font: 600 11.5px/1.32 Inter, system-ui, sans-serif;
+  letter-spacing: 0;
+  text-align: left;
+  cursor: pointer;
+  transform-origin: var(--mx-say-tail, 50%) calc(100% + 8px);
+  -webkit-tap-highlight-color: transparent;
+}
+.mx-say[hidden] { display: none; }
+/* the shape is one SVG outline (bubble and tail, mood-feedback.js mxSayShape) */
+.mx-say { --mx-say-bg: #ffffff; isolation: isolate; background: none !important; border-radius: 0; }
+.mx-say:hover { --mx-say-bg: #f1f6fb; }
+.mx-say-shape { position: absolute; left: 0; top: 0; z-index: -1; overflow: visible; fill: var(--mx-say-bg); pointer-events: none; }
+.mx-say:focus-visible { outline: 2px solid #3cc8f0; outline-offset: 2px; }
+.mx-say-ava {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--mx-ava, #e6edf5);
+  font: 400 13px/1 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+}
+.mx-say-text {
+  display: -webkit-box;
+  min-width: 0;
+  padding-top: 3px;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* The month in the stage's top band, between the corner pills
+   (mood-feedback.js mxEnhance): the strip the orbit never reaches. Small
+   coloured lines, each a way into its statistics tab. */
+.mx-month-top {
+  position: absolute;
+  top: 3px;                              /* the orbit's top bubble (and its coffee) never comes above ~27 px */
+  left: 50%;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  box-sizing: border-box;
+  max-width: calc(100% - 124px);
+  height: 19px;
+  padding: 0 2px;
+  border-radius: 10px;
+  background: rgba(14, 20, 30, .86);
+  box-shadow: inset 0 0 0 1px rgba(214, 235, 255, .1);
+  translate: -50% 0;
+}
+.mx-month-top:empty { display: none; }
+@layer mk-mx {
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-month-sides .rg-month { display: none !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    width: auto !important;
+    min-width: 0 !important;
+    height: 17px !important;
+    margin: 0 !important;
+    padding: 0 4px !important;
+    overflow: hidden !important;
+    border: 0 !important;
+    border-radius: 11px !important;
+    background: none !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    transform: none !important;
+    scale: 1;
+    transition: background-color 150ms var(--mk-ease-effects, ease), scale var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1)) !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item:hover { background: rgba(255, 255, 255, .1) !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item:active { scale: .94; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item:focus-visible { outline: 2px solid var(--mx-focus) !important; outline-offset: 1px !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item.is-empty { display: none !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item > span { display: none !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item :is(b, small) {
+    height: auto !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    background: none !important;
+    font: 700 10.5px/15px Inter, system-ui, sans-serif !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .9) !important;
+    white-space: nowrap !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item:is(:hover, :active) :is(b, small) { background: none !important; scale: 1 !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-month-top .rg-month-ico { width: 11px !important; height: 11px !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-month-top .rg-month-ico.is-emoji { font-size: 10px !important; line-height: 11px !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item--radio b em { display: block; flex: 0 1 auto; min-width: 0; max-width: 90px; overflow: hidden; text-overflow: ellipsis; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item small { width: auto !important; gap: 4px !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-month-top .rg-month-split { width: 14px !important; flex: 0 0 14px !important; height: 4px !important; }
+}
+@layer mk-mx {
+  /* the month's coffee always whole; the station's name gives way (…) */
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item--coffee { flex: none !important; overflow: visible !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item--radio { flex: 0 1 auto !important; min-width: 0 !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item--bolus { flex: none !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item--radio b { min-width: 0 !important; max-width: 100% !important; overflow: hidden !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item--radio b { flex: 0 1 auto !important; }
+}
+.mx-month-top { overflow: hidden; }
+
+/* Galerija kā Doom (js/page/mood-gallery-3d.js): the 320×200 picture blown
+   up with sharp pixels, a slim M3 bar above it. */
+#mxDoom {
+  position: fixed;
+  inset: 0;
+  z-index: 230000;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, .88);
+}
+#mxDoom[hidden] { display: none; }
+.mx-doom {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(96vw, calc((92vh - 52px) * 1.6), 1280px);
+  color: #e8edf3;
+  font: 600 13px/1.3 Inter, system-ui, sans-serif;
+}
+.mx-doom-bar { display: flex; align-items: center; gap: 12px; min-height: 40px; }
+.mx-doom-bar strong { font: 800 17px/1 Inter, system-ui, sans-serif; letter-spacing: -.01em; }
+.mx-doom-help { flex: 1; min-width: 0; overflow: hidden; color: #9aa6b4; font-size: 12px; white-space: nowrap; text-overflow: ellipsis; }
+.mx-doom-draw, .mx-doom-look-actions button {
+  height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 18px;
+  background: #dfe7f1;
+  color: #10161d;
+  font: 700 13px/1 Inter, system-ui, sans-serif;
+  cursor: pointer;
+  transition: background-color 150ms var(--mk-ease-effects, ease), scale var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, ease);
+}
+.mx-doom-draw:hover, .mx-doom-look-actions button:hover { background: #ffffff; }
+.mx-doom-draw:active, .mx-doom-look-actions button:active { scale: .95; }
+.mx-doom-close {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, .08);
+  color: #e8edf3;
+  font: 400 24px/1 Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+.mx-doom-close:hover { background: rgba(255, 255, 255, .16); }
+.mx-doom :is(button):focus-visible { outline: 2px solid #3cc8f0; outline-offset: 2px; }
+.mx-doom-screen {
+  position: relative;
+  aspect-ratio: 320 / 200;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #000;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .1);
+}
+.mx-doom-screen canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; image-rendering: crisp-edges; }
+.mx-doom-view { cursor: grab; touch-action: none; }
+.mx-doom-view:active { cursor: grabbing; }
+.mx-doom-look {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 14px;
+  background: rgba(0, 0, 0, .86);
+}
+.mx-doom-look[hidden] { display: none; }
+.mx-doom-look figure { display: grid; justify-items: center; gap: 10px; margin: 0; }
+.mx-doom-look img {
+  width: min(62vh, 52vw, 520px);
+  height: auto;
+  aspect-ratio: 1;
+  border: 6px solid #c99a3a;
+  border-radius: 6px;
+  background: radial-gradient(120% 90% at 50% 0%, #10233a, #060b13 70%);
+  box-shadow: 0 0 0 2px #6e4f16;
+}
+.mx-doom-look figcaption { color: #e8d07a; font: 700 14px/1.3 Inter, system-ui, sans-serif; }
+.mx-doom-look-actions { display: flex; gap: 10px; }
+/* the month pill: "Šomēnes" and one of its three at a time (mood-feedback.js mxMonthTicker) */
+.mx-mt-cap { flex: none; padding: 0 3px 0 7px; color: #9fb0c3; font: 600 10px/17px Inter, system-ui, sans-serif; white-space: nowrap; }
+@layer mk-mx {
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item:not(.is-on) { display: none !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item--coffee b::after { content: attr(data-unit); color: #c9a46a; font-weight: 600; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item--radio b em { max-width: 120px !important; }
+}
+/* 🎨 like 💬 (mood-feedback.js mxPaintDrawCount): the shift's drawings as
+   the red badge on the top-right of the glass, new ones top-left, the glass
+   tinted while there are new ones. */
+@layer mk-mx {
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-draw-tap :is(.mx-draw-count, .mx-draw-new) {
+    position: absolute !important;
+    top: calc((52px - var(--mx-tap, 36px)) / 2 + 2px) !important;
+    right: auto !important;
+    z-index: 3 !important;
+    display: grid !important;
+    place-items: center !important;
+    box-sizing: border-box !important;
+    min-width: 21px !important;
+    height: 21px !important;
+    margin: 0 !important;
+    padding: 0 3px !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    box-shadow: 0 0 0 2px #000 !important;
+    font: 700 10.5px/21px -apple-system, 'SF Pro Text', Inter, system-ui, sans-serif !important;
+    letter-spacing: -.02em !important;
+    translate: -50% -50% !important;
+    transform: none !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-draw-tap .mx-draw-count { left: calc(50% + var(--mx-tap, 36px) * .3) !important; background: #ff3b30 !important; color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-draw-tap .mx-draw-new { left: calc(50% + var(--mx-tap, 36px) * .36) !important; top: calc((52px - var(--mx-tap, 36px)) / 2 - 20px) !important; background: #ffb59a !important; color: #4a1500 !important; -webkit-text-fill-color: #4a1500 !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-draw-tap :is(.mx-draw-count, .mx-draw-new):empty { display: none !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-draw-tap.has-new::before {
+    background:
+      radial-gradient(circle at 31% 24%, rgba(255, 255, 255, .26), transparent 31%),
+      linear-gradient(145deg, rgba(255, 158, 112, .5), rgba(255, 140, 90, .14) 46%, rgba(30, 10, 4, .86)) !important;
+    box-shadow: inset 0 0 0 1.5px rgba(255, 181, 154, .7), inset 0 1px 0 rgba(255, 255, 255, .24) !important;
+  }
+}
+
+/* One badge an icon (M3): 💬 carries its total in the white speech icon,
+   the red badge on the glass's top-right is only today's new ones; 🎨's red
+   badge is the shift's drawings. New ones tint the glass. */
+@layer mk-mx {
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment .rg-feedback-action-count { display: none !important; }
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment .rg-feedback-new-count {
+    left: calc(50% + var(--mx-tap, 36px) * .3) !important;           /* the same spot and size as 🎨's */
+    top: calc((52px - var(--mx-tap, 36px)) / 2 + 2px) !important;
+    background: #ff3b30 !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment .rg-comment-icon {
+    display: grid !important;
+    place-items: center !important;
+    width: auto !important;
+    min-width: 22px !important;
+    height: 17px !important;
+    padding: 0 5px !important;
+    box-sizing: border-box !important;
+    border-radius: 7px !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment .rg-comment-icon::before {
+    content: attr(data-total);
+    color: #10161d;
+    -webkit-text-fill-color: #10161d;
+    font: 800 10px/1 Inter, system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.01em;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card .mx-draw-tap .mx-draw-new { display: none !important; }
+}
+/* 💬 and 🎨 badges: ONE rule for both, so they are the very same size,
+   type and spot (the number of new comments today; the shift's drawings). */
+@layer mk-mx {
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact :is(.rg-pulse-write--comment .rg-feedback-new-count, .mx-draw-tap .mx-draw-count) {
+    position: absolute !important;
+    left: calc(50% + var(--mx-tap, 36px) * .3) !important;
+    right: auto !important;
+    top: calc((52px - var(--mx-tap, 36px)) / 2 + 2px) !important;
+    bottom: auto !important;
+    z-index: 3 !important;
+    display: grid !important;
+    place-items: center !important;
+    box-sizing: border-box !important;
+    width: auto !important;
+    min-width: 21px !important;
+    height: 21px !important;
+    margin: 0 !important;
+    padding: 0 4px !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    background: #ff3b30 !important;
+    box-shadow: 0 0 0 2px #000 !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    font: 700 11px/21px -apple-system, 'SF Pro Text', Inter, system-ui, sans-serif !important;
+    font-variant-numeric: tabular-nums !important;
+    letter-spacing: -.02em !important;
+    text-align: center !important;
+    translate: -50% -50% !important;
+    transform: none !important;
+    scale: none !important;
+    animation: none !important;
+  }
+  :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact :is(.rg-pulse-write--comment .rg-feedback-new-count, .mx-draw-tap .mx-draw-count):empty { display: none !important; }
+}

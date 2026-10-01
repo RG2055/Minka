@@ -51,10 +51,19 @@
   position: relative;
   overflow: hidden;
   opacity: 1;
-  transform: translate3d(0, 0, 0) scale(1);
-  transform-origin: 50% 88%;
-  transition: opacity 260ms ease, transform 260ms cubic-bezier(.4, 0, .2, 1);
+  /* --cat-size: a new size with every hop (daily-cat.js), scaled round the
+     paws so a perch keeps its feet where they are; it changes during the
+     hop's own glide. */
+  transform: translate3d(0, 0, 0) scale(var(--cat-size, 1));
+  transform-origin: 50% 96%;
+  transition: opacity 260ms ease, transform 520ms cubic-bezier(.32, .78, .32, 1);
 }
+/* Only the cat itself takes the pointer (its scaled picture), never the
+   empty rest of the 96 px box: a small cat on a rating bubble must not
+   cover the bubbles round it. */
+.mk-daily-cat-pet { pointer-events: none; }
+.mk-daily-cat-pet:not(.is-night-perched) .mk-daily-cat-sprite-wrap { pointer-events: auto; cursor: grab; }
+.mk-daily-cat-pet.is-dragging .mk-daily-cat-sprite-wrap { cursor: grabbing; }
 
 .mk-daily-cat-pet.is-day-switching {
   pointer-events: none;
@@ -62,7 +71,7 @@
 
 .mk-daily-cat-pet.is-day-switching .mk-daily-cat-sprite-wrap {
   opacity: 0;
-  transform: translate3d(0, 5px, 0) scale(.82);
+  transform: translate3d(0, 5px, 0) scale(calc(var(--cat-size, 1) * .82));
 }
 
 .mk-daily-cat-sprite {
@@ -251,9 +260,75 @@
    the pet never lags behind the card it sits on. */
 .mk-daily-cat-pet.is-hopping {
   will-change: transform;
-  transition: transform 520ms cubic-bezier(.32, .78, .32, 1);
+  transition: transform var(--cat-hop, 520ms) cubic-bezier(.32, .78, .32, 1);
 }
+/* running about the mood card: an even pace, timed by the distance */
+.mk-daily-cat-pet.is-running { transition-timing-function: cubic-bezier(.45, .05, .55, .95); }
 
 @media (prefers-reduced-motion: reduce) {
   .mk-daily-cat-pet.is-hopping { transition: none; }
 }
+
+/* The pet's own speech bubble (daily-cat.js say): white, its tail toward
+   the cat's head on whichever side it sits. Static while shown. */
+.mk-cat-say {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(236px, calc(100vw - 16px));
+  margin: 0;
+  padding: 7px 12px 8px 7px;
+  border: 0;
+  border-radius: 18px;
+  background: #ffffff;
+  color: #1b222c;
+  font: 600 12px/1.34 Inter, system-ui, sans-serif;
+  letter-spacing: 0;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.mk-cat-say[hidden] { display: none; }
+/* the shape is drawn by an SVG path (bubble and tail in one outline, daily-cat.js speechShape) */
+.mk-cat-say { --cat-say-bg: #ffffff; background: none; border-radius: 0; isolation: isolate; }
+.mk-cat-say:hover { --cat-say-bg: #f1f6fb; }
+.mk-cat-say-shape {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  overflow: visible;
+  fill: var(--cat-say-bg);
+  pointer-events: none;
+}
+.mk-cat-say[data-side="right"] .mk-cat-say-shape { left: auto; right: 0; scale: -1 1; }
+.mk-cat-say:focus-visible { outline: 2px solid #3cc8f0; outline-offset: 2px; }
+.mk-cat-say.is-ask { padding-left: 12px; font-weight: 750; }
+.mk-cat-say-ava {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--cat-say-ava, #e6edf5);
+  font: 400 13px/1 'Fluent Emoji Gaps', 'Fluent Emoji Color', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+}
+.mk-cat-say-ava[hidden] { display: none; }
+.mk-cat-say-text {
+  display: -webkit-box;
+  min-width: 0;
+  padding-top: 3px;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+.mk-cat-say.is-ask .mk-cat-say-text { padding-top: 0; }
+
