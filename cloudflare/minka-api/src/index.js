@@ -1034,6 +1034,36 @@ const worker = {
       return json(request, { ok: true, artId, asset: "/skin-assets/" + artId + ".webp" });
     }
 
+    // Hearts for the gallery's drawings: GET ?ids=a,b,c gives each one's count
+    // and which this device has hearted; POST { artId, like } sets this
+    // device's heart. The device is a hash of its bearer token (no names).
+    if (url.pathname === "/api/art-likes" && (method === "GET" || method === "POST")) {
+      if (!env.DB) return json(request, { ok: false, error: "no database" }, 503);
+      const voter = (await sha256Hex("art-like:" + (request.headers.get("authorization") || ""))).slice(0, 32);
+      if (method === "GET") {
+        const ids = String(url.searchParams.get("ids") || "").split(",").filter((id) => /^[a-f0-9]{32}$/.test(id)).slice(0, 200);
+        if (!ids.length) return json(request, { ok: true, likes: {}, mine: [] });
+        const marks = ids.map((_, i) => "?" + (i + 1)).join(",");
+        const [counts, mine] = await env.DB.batch([
+          env.DB.prepare(`SELECT art_id, COUNT(*) AS n FROM art_likes WHERE art_id IN (${marks}) GROUP BY art_id`).bind(...ids),
+          env.DB.prepare(`SELECT art_id FROM art_likes WHERE voter = ?${ids.length + 1} AND art_id IN (${marks})`).bind(...ids, voter)
+        ]);
+        const likes = {};
+        (counts.results || []).forEach((row) => { likes[row.art_id] = Number(row.n) || 0; });
+        return json(request, { ok: true, likes, mine: (mine.results || []).map((row) => row.art_id) });
+      }
+      const body = await readJson(request);
+      const artId = String(body?.artId || "");
+      if (!/^[a-f0-9]{32}$/.test(artId)) return json(request, { ok: false, error: "artId required" }, 400);
+      if (body?.like === false) {
+        await env.DB.prepare("DELETE FROM art_likes WHERE art_id = ?1 AND voter = ?2").bind(artId, voter).run();
+      } else {
+        await env.DB.prepare("INSERT OR IGNORE INTO art_likes (art_id, voter, created_at) VALUES (?1, ?2, ?3)").bind(artId, voter, Date.now()).run();
+      }
+      const row = await env.DB.prepare("SELECT COUNT(*) AS n FROM art_likes WHERE art_id = ?1").bind(artId).first();
+      return json(request, { ok: true, count: Number(row?.n) || 0, liked: body?.like !== false });
+    }
+
     if (url.pathname === "/api/skins" && method === "GET") {
       return json(request, await readSkins(env));
     }

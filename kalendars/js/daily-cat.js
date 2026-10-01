@@ -424,7 +424,8 @@
     speech.className = 'mk-cat-say';
     speech.hidden = true;
     speech.innerHTML = '<svg class="mk-cat-say-shape" aria-hidden="true"><path/></svg>'
-      + '<span class="mk-cat-say-ava" aria-hidden="true"></span><span class="mk-cat-say-text"></span>';
+      + '<span class="mk-cat-say-ava" aria-hidden="true"></span><span class="mk-cat-say-text"></span>'
+      + '<img class="mk-cat-say-art" alt="" decoding="async" hidden>';
     speech.addEventListener('click', function () {
       var act = speechClick;
       hideSpeech(true);
@@ -487,6 +488,15 @@
     ava.hidden = !item.ava;
     if (item.avaBg) ava.style.setProperty('--cat-say-ava', item.avaBg); else ava.style.removeProperty('--cat-say-ava');
     el.children[2].textContent = item.text;
+    // a drawing: shown small in the bubble; the bubble is measured once it has loaded
+    var art = el.children[3];
+    art.hidden = !item.art;
+    if (item.art) {
+      if (art.getAttribute('src') !== item.art) {
+        art.onload = function () { if (!el.hidden && speechSize) { speechSize = { w: el.offsetWidth, h: el.offsetHeight }; placeSpeech(); speechShape(el, speechSize.w, speechSize.h); } };
+        art.src = item.art;
+      }
+    } else art.removeAttribute('src');
     el.setAttribute('aria-label', item.label || item.text);
     el.classList.toggle('is-ask', !!item.ask);
     speechClick = item.onClick || null;

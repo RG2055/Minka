@@ -1,0 +1,179 @@
+<!doctype html><meta charset="utf-8"><style>body{margin:0;background:#888}</style>
+<!-- The drink in your hand for the gallery game (mood-gallery-3d.js), made from
+     3D and turned into pixels: the WebXR generic hand (hand-right.glb, MIT,
+     webxr-input-profiles) posed round a Löfbergs paper cup or the White Monster
+     photo (can-photo.webp, CC0) wrapped onto a can. Settings come in the hash
+     as JSON (cup.json, can.json); build.mjs runs it and writes the sprites. -->
+<script type="importmap">{"imports":{"three":"./three/build/three.module.js","three/addons/":"./three/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+const P = JSON.parse(decodeURIComponent(location.hash.slice(1) || '{}'));
+const S = P.size || 768, SW = S, SH = Math.round(S * (P.tall || 1));
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setSize(SW, SH); renderer.setPixelRatio(1);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = P.exposure || 1.0;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(P.fov || 40, SW / SH, 0.01, 10);
+cam.position.fromArray(P.cam || [0, 0.1, 0.42]); cam.lookAt(new THREE.Vector3().fromArray(P.look || [0, 0, 0]));
+scene.add(new THREE.HemisphereLight(0xdfe6ff, 0x6a4a3a, P.hemi ?? 1.1));
+const key = new THREE.DirectionalLight(0xfff1e0, P.key ?? 2.6); key.position.fromArray(P.keyPos || [-0.5, 0.8, 0.6]); key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048); Object.assign(key.shadow.camera, { left: -0.3, right: 0.3, top: 0.3, bottom: -0.3, near: 0.01, far: 3 }); key.shadow.bias = -0.0005; key.shadow.normalBias = 0.002;
+scene.add(key);
+const rim = new THREE.DirectionalLight(0xcfe0ff, P.rim ?? 0.8); rim.position.set(0.7, 0.3, -0.6); scene.add(rim);
+const fill = new THREE.DirectionalLight(0xffe2cc, P.fill ?? 0.7); fill.position.set(0.2, -0.6, 0.8); scene.add(fill);
+const D = THREE.MathUtils.degToRad;
+
+function cupMesh() {
+  const g = new THREE.Group();
+  const H = 0.13, rt = 0.043, rb = 0.032;
+  const cv = document.createElement('canvas'); cv.width = 1024; cv.height = 512; const c = cv.getContext('2d');
+  c.fillStyle = P.purple || '#5b2a86'; c.fillRect(0, 0, 1024, 512);
+  c.fillStyle = '#fff'; c.font = 'bold 92px Georgia, serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+  for (const dx of [0, 1024]) { c.save(); c.translate((P.textU ?? 950) - dx, P.textV ?? 150); c.scale(0.92, 1); c.fillText('Löfbergs', 0, 0); c.restore(); }
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, H, 64, 1, true), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.55, side: THREE.DoubleSide }));
+  body.castShadow = body.receiveShadow = true; g.add(body);
+  const bottom = new THREE.Mesh(new THREE.CircleGeometry(rb, 48), new THREE.MeshStandardMaterial({ color: 0x4a2270 })); bottom.rotation.x = Math.PI / 2; bottom.position.y = -H / 2; g.add(bottom);
+  const lidM = new THREE.MeshStandardMaterial({ color: 0x1c1c22, roughness: 0.35 });
+  const rim = new THREE.Mesh(new THREE.CylinderGeometry(rt + 0.003, rt + 0.003, 0.009, 64), lidM); rim.position.y = H / 2 + 0.003; rim.castShadow = true; g.add(rim);
+  const top = new THREE.Mesh(new THREE.CylinderGeometry(rt - 0.006, rt + 0.001, 0.012, 64), lidM); top.position.y = H / 2 + 0.012; g.add(top);
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(rt - 0.008, rt - 0.008, 0.002, 64), new THREE.MeshStandardMaterial({ color: 0x2a2a32, roughness: 0.5 })); cap.position.y = H / 2 + 0.0185; g.add(cap);
+  const slot = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.003, 0.005), new THREE.MeshStandardMaterial({ color: 0x050507 })); slot.position.set(0, H / 2 + 0.0195, rt - 0.016); g.add(slot);
+  return g;
+}
+async function canMesh() {
+  // the White Monster photo (front, CC0) wrapped back onto a cylinder: column
+  // at angle a around the can shows the photo at 0.5 + 0.5 sin a
+  const g = new THREE.Group();
+  const H = P.canH || 0.152, r = P.canR || 0.0285;
+  const img = await new Promise(res => { const i = new Image(); i.onload = () => res(i); i.src = 'can-photo.webp'; });
+  const pc = document.createElement('canvas'); pc.width = img.width; pc.height = img.height; pc.getContext('2d').drawImage(img, 0, 0);
+  const cv = document.createElement('canvas'); cv.width = 1024; cv.height = img.height; const c = cv.getContext('2d');
+  c.fillStyle = '#e9edf1'; c.fillRect(0, 0, 1024, img.height);
+  for (let x = 0; x < 1024; x++) {
+    let a = (x + 0.5) / 1024 * Math.PI * 2 - D(P.canFace || 0); a = Math.atan2(Math.sin(a), Math.cos(a));
+    if (Math.abs(a) > D(86)) continue;
+    const sx = Math.min(img.width - 1, Math.max(0, Math.floor((0.5 + 0.5 * Math.sin(a)) * img.width)));
+    c.drawImage(pc, sx, 0, 1, img.height, x, 0, 1, img.height);
+  }
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(r, r, H, 96, 1, true), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.45, metalness: 0.05 }));
+  body.castShadow = body.receiveShadow = true; g.add(body);
+  const metal = new THREE.MeshStandardMaterial({ color: 0xc4c9cf, roughness: 0.3, metalness: 0.75 });
+  const top = new THREE.Mesh(new THREE.CircleGeometry(r * 0.97, 48), metal); top.rotation.x = -Math.PI / 2; top.position.y = H / 2 - 0.0005; g.add(top);
+  const lip = new THREE.Mesh(new THREE.TorusGeometry(r * 0.96, 0.0012, 8, 64), metal); lip.rotation.x = Math.PI / 2; lip.position.y = H / 2; g.add(lip);
+  const tab = new THREE.Mesh(new THREE.BoxGeometry(0.010, 0.0012, 0.016), new THREE.MeshStandardMaterial({ color: 0x111116, roughness: 0.4, metalness: 0.4 })); tab.position.set(0, H / 2 + 0.0004, 0.004); g.add(tab);
+  const bottom = new THREE.Mesh(new THREE.CircleGeometry(r, 48), metal); bottom.rotation.x = Math.PI / 2; bottom.position.y = -H / 2; g.add(bottom);
+  g.position.y = P.canY || 0.01;
+  return g;
+}
+const gltf = await new Promise(res => new GLTFLoader().load('hand-right.glb', res));
+const hand = gltf.scene;
+const bones = {}; hand.traverse(o => { if (o.isBone) bones[o.name] = o; });
+let mesh; hand.traverse(o => { if (o.isSkinnedMesh) mesh = o; });
+mesh.material = new THREE.MeshStandardMaterial({ color: new THREE.Color(P.skin || '#d9a184'), roughness: 0.62, metalness: 0 });
+mesh.castShadow = mesh.receiveShadow = true; mesh.frustumCulled = false;
+hand.updateMatrixWorld(true);
+const F = ['index', 'middle', 'ring', 'pinky'], seg = ['metacarpal', 'phalanx-proximal', 'phalanx-intermediate', 'phalanx-distal', 'tip'];
+const chain = {};
+for (const f of F) chain[f] = seg.map(s => bones[f + '-finger-' + s]);
+chain.thumb = ['metacarpal', 'phalanx-proximal', 'phalanx-distal', 'tip'].map(s => bones['thumb-' + s]);
+for (const k in chain) { let parent = bones.wrist; for (const b of chain[k]) { parent.attach(b); parent = b; } }
+// pose: P.pose[finger] = [[x,y,z] per joint] degrees (local)
+const pose = P.pose || {};
+for (const k in chain) (pose[k] || []).forEach((e, i) => { const b = chain[k][i]; if (!b || !e) return; b.quaternion.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(D(e[0] || 0), D(e[1] || 0), D(e[2] || 0), 'XYZ'))); });
+// orient the hand: model finger dir -Y, palm normal -X
+const holder = new THREE.Group(); holder.add(hand);
+const f = new THREE.Vector3().fromArray(P.f || [0, 0, -1]).normalize(), n0 = new THREE.Vector3().fromArray(P.n || [-1, 0, 0]);
+const n = n0.clone().sub(f.clone().multiplyScalar(n0.dot(f))).normalize(), t = new THREE.Vector3().crossVectors(f, n);
+// model axes: -Y -> f, -X -> n, -Z -> t  => Y=-f, X=-n, Z=-t
+const m = new THREE.Matrix4().makeBasis(n.clone().negate(), f.clone().negate(), t.clone().negate());
+hand.quaternion.setFromRotationMatrix(m);
+const off = new THREE.Vector3().fromArray(P.palm || [0.04, 0.0, 0.0]); // where the palm reference (middle metacarpal) goes
+hand.updateMatrixWorld(true);
+const ref = new THREE.Vector3(); bones['middle-finger-phalanx-proximal'].getWorldPosition(ref);
+hand.position.copy(off.clone().sub(ref));
+if (P.roll) holder.rotation.set(D(P.roll[0]), D(P.roll[1]), D(P.roll[2]));
+scene.add(holder);
+// forearm: the wrist's own end ring pulled out along +Y (fingers are -Y), so
+// the arm is the hand's own surface with no seam
+if (P.arm !== false) {
+  // the open wrist is a slanted ring with a cap; move the cap and every ring
+  // vertex sitting on it (matched by position) as one piece
+  const pos = mesh.geometry.attributes.position, nrm = mesh.geometry.attributes.normal, len = P.armLen || 0.3, grow = P.armGrow || 1.15;
+  const cx = P.armX ?? 0.0385, cz = P.armZ ?? 0.0105, key = i => [pos.getX(i), pos.getY(i), pos.getZ(i)].map(v => v.toFixed(5)).join();
+  const capKeys = new Set();
+  for (let i = 0; i < pos.count; i++) if (nrm.getY(i) > 0.9 && pos.getY(i) > 0.05) capKeys.add(key(i));
+  const moves = [];
+  for (let i = 0; i < pos.count; i++) if (capKeys.has(key(i))) moves.push([i, nrm.getY(i) > 0.9]);
+  for (const [i, cap] of moves) {
+    const x = pos.getX(i), z = pos.getZ(i);
+    pos.setXYZ(i, cx + (x - cx) * grow + (P.armBend || 0), pos.getY(i) + len, cz + (z - cz) * grow + (P.armSide || 0));
+    if (!cap) { const ex = (x - cx) / 0.0185 ** 2, ez = (z - cz) / 0.0262 ** 2, el = Math.hypot(ex, ez) || 1; nrm.setXYZ(i, ex / el, 0, ez / el); }
+  }
+  pos.needsUpdate = true; nrm.needsUpdate = true;
+}
+const item = P.item === 'can' ? await canMesh() : P.item === 'none' ? new THREE.Group() : cupMesh();
+item.rotation.y = D(P.itemRot || 0); if (P.itemTilt) item.rotation.z = D(P.itemTilt);
+holder.add(item);
+renderer.render(scene, cam);
+// where the drink's bottom lands (the game keeps the rows below it off screen)
+item.updateMatrixWorld(true);
+{ const bb = new THREE.Box3().setFromObject(item); let lo = -1; for (const x of [bb.min.x, bb.max.x]) for (const z of [bb.min.z, bb.max.z]) { const v = new THREE.Vector3(x, bb.min.y, z).project(cam); lo = Math.max(lo, (1 - v.y) / 2 * SH); } window.__itemBottom = lo; }
+if (!P.px) window.__out = renderer.domElement.toDataURL('image/png');
+else window.__out = pixelize(renderer.domElement, P.px);
+
+// 3D picture -> pixel sprite: box filter down to P.px rows, hard alpha, a
+// small palette (k-means), a touch of ordered dither, darker rim inside
+function pixelize(gl, H) {
+  const big = document.createElement('canvas'); big.width = SW; big.height = SH;
+  const bctx = big.getContext('2d', { willReadFrequently: true }); bctx.drawImage(gl, 0, 0);
+  const bd = bctx.getImageData(0, 0, SW, SH).data;
+  let x0 = SW, y0 = SH, x1 = -1, y1 = -1;
+  for (let y = 0; y < SH; y++) for (let x = 0; x < SW; x++) if (bd[(y * SW + x) * 4 + 3] > 8) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (P.cropBottom) y1 = SH - 1;
+  if (P.cropTo) y1 = Math.min(y1, Math.floor(P.cropTo * SH));
+  const ch = y1 - y0 + 1, cw = x1 - x0 + 1; if (P.pxK) H = Math.round(ch / P.pxK); const k = ch / H, w = Math.round(cw / k);
+  const rgb = new Float32Array(w * H * 3), al = new Float32Array(w * H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < w; x++) {
+    const sx0 = x0 + x * k, sy0 = y0 + y * k; let r = 0, g = 0, b = 0, a = 0, n = 0;
+    for (let yy = Math.floor(sy0); yy < Math.min(y1 + 1, Math.ceil(sy0 + k)); yy++) for (let xx = Math.floor(sx0); xx < Math.min(x1 + 1, Math.ceil(sx0 + k)); xx++) {
+      const q = (yy * SW + xx) * 4, aa = bd[q + 3] / 255; r += bd[q] * aa; g += bd[q + 1] * aa; b += bd[q + 2] * aa; a += aa; n++;
+    }
+    const i = y * w + x; al[i] = n ? a / n : 0;
+    if (a > 0) { rgb[i * 3] = r / a / 255; rgb[i * 3 + 1] = g / a / 255; rgb[i * 3 + 2] = b / a / 255; }
+  }
+  const mask = new Uint8Array(w * H); for (let i = 0; i < w * H; i++) mask[i] = al[i] > (P.alphaCut || 0.5) ? 1 : 0;
+  // k-means palette over the opaque pixels (deterministic start: spread by brightness)
+  const pts = []; for (let i = 0; i < w * H; i++) if (mask[i]) pts.push(i);
+  const K = P.colors || 28, pal = [];
+  const lum = i => rgb[i * 3] * 0.3 + rgb[i * 3 + 1] * 0.59 + rgb[i * 3 + 2] * 0.11;
+  const sorted = pts.slice().sort((a, b) => lum(a) - lum(b));
+  for (let c = 0; c < K; c++) { const i = sorted[Math.floor((c + 0.5) / K * sorted.length)]; pal.push([rgb[i * 3], rgb[i * 3 + 1], rgb[i * 3 + 2]]); }
+  const near = (r, g, b) => { let best = 0, bd2 = 1e9; for (let c = 0; c < K; c++) { const p = pal[c], d = (p[0] - r) ** 2 + (p[1] - g) ** 2 + (p[2] - b) ** 2; if (d < bd2) { bd2 = d; best = c; } } return best; };
+  for (let it = 0; it < 14; it++) {
+    const acc = pal.map(() => [0, 0, 0, 0]);
+    for (const i of pts) { const c = near(rgb[i * 3], rgb[i * 3 + 1], rgb[i * 3 + 2]); acc[c][0] += rgb[i * 3]; acc[c][1] += rgb[i * 3 + 1]; acc[c][2] += rgb[i * 3 + 2]; acc[c][3]++; }
+    acc.forEach((a, c) => { if (a[3]) pal[c] = [a[0] / a[3], a[1] / a[3], a[2] / a[3]]; });
+  }
+  const B4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  const out = document.createElement('canvas'); out.width = w; out.height = H;
+  const octx = out.getContext('2d'), od = octx.createImageData(w, H);
+  const amp = P.dither ?? 0.05;
+  for (let y = 0; y < H; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x; if (!mask[i]) continue;
+    const j = (B4[(y & 3) * 4 + (x & 3)] / 16 - 0.47) * amp;
+    let p = pal[near(rgb[i * 3] + j, rgb[i * 3 + 1] + j, rgb[i * 3 + 2] + j)];
+    const edge = (x === 0 || !mask[i - 1]) || (x === w - 1 || !mask[i + 1]) || (y === 0 || !mask[i - w]) || (y < H - 1 && !mask[i + w]);
+    const m = edge ? (P.rim ?? 0.66) : 1;
+    od.data[i * 4] = p[0] * m * 255; od.data[i * 4 + 1] = p[1] * m * 255; od.data[i * 4 + 2] = p[2] * m * 255; od.data[i * 4 + 3] = 255;
+  }
+  octx.putImageData(od, 0, 0);
+  window.__map = { w, H, itemBottom: window.__itemBottom != null ? Math.round((window.__itemBottom - y0) / k) : null };
+  return out.toDataURL('image/png');
+}
+</script>

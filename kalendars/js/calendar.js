@@ -8288,6 +8288,8 @@ function showModalView(view) {
   if (_toggleEmoji) _toggleEmoji.classList.remove('active');
   const _skinView = document.getElementById('modal-skin-view');
   if (_skinView) _skinView.classList.add('hide');
+  // the dithered work on blue round the appearance editor only (js/dither-backdrop.js)
+  if (view !== 'skin' && window.MinkaDitherBackdrop) window.MinkaDitherBackdrop.detach(document.getElementById('worker-modal-backdrop'));
   const _toggleSkin = document.getElementById('toggle-skin');
   if (_toggleSkin) _toggleSkin.classList.remove('active');
 
@@ -8321,6 +8323,7 @@ function showModalView(view) {
     if (skinView) skinView.classList.remove('hide');
     if (toggleSkin) toggleSkin.classList.add('active');
     if (typeof window.mkRenderSkinPicker === 'function') window.mkRenderSkinPicker(skinView);
+    if (window.MinkaDitherBackdrop) window.MinkaDitherBackdrop.attach(document.getElementById('worker-modal-backdrop'), { box: document.getElementById('worker-modal') });
   }
   // Motion only for a switch inside an open window; opening has its own.
   const _nextBtn = _wm ? _wm.querySelector('.view-toggle .toggle-btn.active') : null;
@@ -8340,6 +8343,7 @@ function closeWorkerModal() {
   if (modal) {
     const wasOpen = modal.classList.contains('open');
     modal.classList.remove('open');
+    if (window.MinkaDitherBackdrop) window.MinkaDitherBackdrop.detach(bd);
     const reset = () => {
       modal.classList.remove('wm-closing');
       modal.style.left = '';

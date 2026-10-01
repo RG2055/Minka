@@ -9,7 +9,7 @@ const dir=path.join(root,'.local-preview'),file=path.join(dir,'daybook.json');aw
 let saved;try{saved=JSON.parse(await readFile(file,'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;saved={entries:[],radio:[]};}
 let pending=Promise.resolve();
 let newsMemo=null;
-const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.avif':'image/avif','.gif':'image/gif','.woff2':'font/woff2','.mp3':'audio/mpeg','.mp4':'video/mp4','.webm':'video/webm','.webmanifest':'application/manifest+json','.ico':'image/x-icon','.wal':'application/octet-stream','.wsz':'application/zip','.zip':'application/zip','.xml':'application/xml','.maki':'application/octet-stream','.m':'text/plain; charset=utf-8','.sym':'text/plain; charset=utf-8'};
+const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.avif':'image/avif','.gif':'image/gif','.woff2':'font/woff2','.mp3':'audio/mpeg','.m4a':'audio/mp4','.mp4':'video/mp4','.webm':'video/webm','.webmanifest':'application/manifest+json','.ico':'image/x-icon','.wal':'application/octet-stream','.wsz':'application/zip','.zip':'application/zip','.xml':'application/xml','.maki':'application/octet-stream','.m':'text/plain; charset=utf-8','.sym':'text/plain; charset=utf-8'};
 const json=(res,value,status=200)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
 http.createServer(async(req,res)=>{
  try{

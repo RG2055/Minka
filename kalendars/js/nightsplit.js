@@ -4077,6 +4077,14 @@
     closeTimeWheel: function(){ closeTimeWheel(false); },
     _update: update,
     getPlan:getPublicPlan,
+    // Read only, for the mood gallery's night room: who sleeps in which bed
+    // (ROOM_BED_KEYS order, as the room picture shows them) and each one's colour.
+    getRoomBeds:function(){
+      if(!st || !st.sl || !st.sl.length) return null;
+      var colors={};
+      st.sl.forEach(function(s){ var n=String((s.w && s.w.name) || '').trim(); if(n) colors[n]=getCol(n).accent; });
+      return { order:getRoomOrder(st.sl), colors:colors };
+    },
     openRaffle:openRaffle,
     closeRaffle:closeRaffle,
     openBedCare:openBedCare,

@@ -2531,9 +2531,11 @@
   function chatItems(messages) {
     var out = [];
     (messages || []).forEach(function (item) {
-      if (parseMoodMessage(item)) return;
+      // a vote with "Savs emoji" and a few words: the cat reads those too
+      var mood = parseMoodMessage(item);
+      if (mood) { if (mood.note) out.push({ type: 'note', emoji: mood.emoji, body: mood.note, author: '', at: mood.at }); return; }
       var at = Number(item.createdAt) || 0, message = communityDecode(item), art = drawArt(message.body);
-      if (art) { out.push({ type: 'art', art: art, author: message.author, at: at }); return; }
+      if (art) { out.push({ type: 'art', art: art, author: message.author, at: at, key: message.key, parent: message.parent }); return; }
       var body = String(message.body || '').replace(/\s+/g, ' ').trim();
       if (body) out.push({ type: 'chat', author: message.author, body: body.slice(0, 160), at: at });
     });
@@ -2548,8 +2550,9 @@
      Ik pa laikam: ja šodien šajā datorā vēl nav balsots, kaķis pasaka
      "Novērtē maiņu!" (klikšķis palēkā sejiņu burbuļus); citreiz kaķis
      nolasa kādu uzrakstītu komentāru (jaunos, vēl neredzētos, vispirms) ar
-     rakstītāja dzīvnieku. Zīmējums uzpeld debesīs ar asti uz savu dienu
-     līknē; arī komentārs, ja kaķa nav (šaurs logs, radio virsū).
+     rakstītāja dzīvnieku, parāda jaunu zīmējumu mazu savā burbulī (klikšķis:
+     galerija) vai aicina "Apskaties galeriju un uzzīmē!". Ja kaķa nav
+     (izslēgts, šaurs logs), komentārs uzpeld debesīs; zīmējums ne.
      Pirmais ~8 s pēc ielādes, tad ik 24–40 s. Viens elements un divas īsas
      animācijas uz parādīšanos; starp tām nekas nedarbojas, paslēptā cilnē vai
      ārpus ekrāna nekas nenotiek. Ziņas: izvēlētā diena jau nāk ar
@@ -2752,15 +2755,26 @@
       mxSaySchedule(next);
       return;
     }
+    // now and then (not on a day still to come) the cat invites into the gallery
+    if (mxSay.count % 4 === 2 && !futureDay(day) && cat && cat.say
+      && cat.say({ text: 'Apskaties galeriju un uzzīmē!', ask: true, onClick: function () { mxOpenGallery3D(list.querySelector('.rg-feedback-card .mx-draw-tap')); } })) {
+      mxSaySchedule(next);
+      return;
+    }
     var pick = mxSayPick();
-    if (pick && pick.c.type === 'chat' && cat && cat.say) {
-      var index = animalIndex(pick.c.author);
+    if (pick && cat && cat.say) {
+      var index = animalIndex(pick.c.author), drawing = pick.c.type === 'art', note = pick.c.type === 'note';
+      var who = index >= 0 ? ANIMALS[index][0] : '';
+      // a drawing: the cat shows it small in its bubble (a click opens the gallery)
       if (cat.say({
-        text: pick.c.body,
-        ava: index >= 0 ? ANIMALS[index][1] : '💬',
-        avaBg: index >= 0 ? ANIMAL_TONES[index % ANIMAL_TONES.length][0] : '',
-        label: 'Komentārs ' + mxSayDay(pick.day) + ': ' + pick.c.body + '. Atvērt komentārus',
-        onClick: function () { mxOpenComments(null); }
+        text: drawing ? (who ? who + ' uzzīmēja ' : 'Uzzīmēts ') + mxSayDay(pick.day) : pick.c.body,
+        art: drawing ? skyArtUrl(pick.c.art) : '',
+        ava: note ? pick.c.emoji : index >= 0 ? ANIMALS[index][1] : '💬',
+        avaBg: !note && index >= 0 ? ANIMAL_TONES[index % ANIMAL_TONES.length][0] : '',
+        label: drawing ? 'Zīmējums ' + mxSayDay(pick.day) + '. Atvērt galeriju'
+          : note ? 'Par maiņu ' + mxSayDay(pick.day) + ': ' + pick.c.body
+          : 'Komentārs ' + mxSayDay(pick.day) + ': ' + pick.c.body + '. Atvērt komentārus',
+        onClick: drawing ? function () { mxOpenGallery3D(list.querySelector('.rg-feedback-card .mx-draw-tap')); } : function () { mxOpenComments(null); }
       })) { mxSaySchedule(next); return; }
       // the cat is there but busy (running about, on the glass): it reads
       // this one a little later, rather than the sky covering the curve
@@ -2770,7 +2784,9 @@
         return;
       }
     }
-    mxSaySchedule(pick && mxSayShow(pick) ? next : null);
+    // no cat on screen (switched off, a narrow window): a comment rises in the
+    // sky instead; a drawing waits for the cat (no pictures over the curve)
+    mxSaySchedule(pick && pick.c.type === 'chat' && mxSayShow(pick) ? next : null);
   }
   function mxOpenComments(from) {
     openModal('comment', list.querySelector('.rg-feedback-card [data-rg-write="comment"]') || from);
@@ -2804,7 +2820,7 @@
       onSave: function (blob) { return mxSkyUpload(blob, day, fromComments === true); }
     });
   }
-  async function mxSkyUpload(blob, day, fromComments) {
+  async function mxSkyUpload(blob, day, fromComments, overKey) {
     var api = mxApi();
     if (!api) throw new Error('Nav savienojuma ar mākoni');
     var form = new FormData();
@@ -2812,21 +2828,16 @@
     var response = await api.apiFetch('/api/sky-art', { method: 'POST', body: form });
     var data = await response.json().catch(function () { return {}; });
     if (!response.ok || !/^[a-f0-9]{32}$/.test(String(data.artId || ''))) throw new Error(data.error || 'Neizdevās saglabāt zīmējumu');
-    var author = await postDrawing(data.artId, day, fromComments === true);
-    var item = { type: 'art', art: data.artId, author: author, at: Date.now() };
+    var author = await postDrawing(data.artId, day, fromComments === true, overKey);
+    var item = { type: 'art', art: data.artId, author: author, at: Date.now(), parent: overKey || '' };
     (commentFeed[day] = commentFeed[day] || []).unshift(item);
     mxPaintDrawCount(list.querySelector('.rg-feedback-card'));
-    if (fromComments) return;
-    // Up it goes into the sky, once the editor has closed.
-    setTimeout(function () {
-      var point = window.MinkaMoodTrend && window.MinkaMoodTrend.point(day);
-      if (!point || day !== shiftDayKey()) return;
-      var key = day + '|' + item.at + '|' + item.art;
-      mxSay.shown[key] = true;
-      mxSay.last = key;
-      mxSayShow({ day: day, c: item, point: point, key: key });
-      mxSaySchedule(MX_SAY_HOLD + MX_SAY_GAP);
-    }, 700);
+    // no picture over the curve: the cat shows it in its bubble, once the editor has closed
+    if (!fromComments) setTimeout(function () {
+      var cat = window.__minkaDailyCat;
+      if (cat && cat.say) cat.say({ text: 'Tavs zīmējums ir galerijā!', art: skyArtUrl(item.art), ava: '🎨', onClick: function () { mxOpenGallery3D(list.querySelector('.rg-feedback-card .mx-draw-tap')); } });
+    }, 900);
+    return item;
   }
 
   /* ── Galerija ──────────────────────────────────────────────────────────
@@ -2888,6 +2899,7 @@
   // seen here yet (since the gallery was last opened on this computer) tint
   // the bubble and show "+N".
   var GALLERY_SEEN_KEY = mkKey('minkaGallerySeenV1');
+  var GALLERY_SLOTS_KEY = mkKey('minkaGallerySlotsV1');      // drawing → the frame it was drawn in (this computer)
   function mxPaintDrawCount(card) {
     var badge = card && card.querySelector('[data-mx-draw-count]'), fresh = card && card.querySelector('[data-mx-draw-new]');
     if (!badge) return;
@@ -2914,99 +2926,218 @@
       var art = drawArt(item.body);
       if (!art || byKey[art]) return;
       byKey[art] = true;
-      out.push({ day: item.date || item.shiftDay, art: art, author: item.author, at: Number(item.createdAt) || 0 });
+      out.push({ day: item.date || item.shiftDay || shiftDayKey(), art: art, author: item.author, at: Number(item.createdAt) || 0, key: item.key || '', parent: item.parent || '' });
     });
     Object.keys(commentFeed).forEach(function (day) {
       (commentFeed[day] || []).forEach(function (c) {
         if (c.type !== 'art' || byKey[c.art]) return;
         byKey[c.art] = true;
-        out.push({ day: day, art: c.art, author: c.author, at: c.at });
+        out.push({ day: day, art: c.art, author: c.author, at: c.at, key: c.key || '', parent: c.parent || '' });
       });
     });
     return out;
   }
+  /* ── Slavas zāle ────────────────────────────────────────────────────────
+     Visi zīmējumi uz dither fona (js/dither-backdrop.js) kā kartītes pa
+     vienai: vidū liela, sānos nākamās; bultas, vilkšana vai klikšķis uz
+     sānu kartītes pārslēdz. "Jaunākie" vai "Labākie" pēc sirsniņām (tikai
+     patīk, nepatīk nav; minka-api /api/art-likes, viena no ierīces).
+     Pie kartītes: Komentāros, Pārzīmēt (pa virsu vecajam, tas paliek čatā)
+     un Dzēst (tikai savus, kā ziņas sarakstē). Zīmē tikai redzamās kartītes. */
+  var hof = { at: 0, sort: 'new', likes: {}, mine: {}, likesOk: false, list: [], confirm: '' };
+  function hofItems() {
+    var items = galleryItems(), keys = {}, covered = {};
+    items.forEach(function (it) { if (it.key) keys[it.key] = true; });
+    items.forEach(function (it) { if (it.parent && keys[it.parent]) covered[it.parent] = true; });
+    items.forEach(function (it) {
+      it.covered = !!covered[it.key];
+      it.likes = hof.likes[it.art] || 0;
+      it.liked = !!hof.mine[it.art];
+      var msg = communityMessages.find(function (m) { return drawArt(m.body) === it.art; });
+      it.clientId = msg ? msg.clientId : '';
+      it.own = !!(msg && (msg.pending || communityEditToken(msg.clientId)));
+    });
+    return items.sort(hof.sort === 'best' ? function (a, b) { return (b.likes - a.likes) || (b.at - a.at); } : function (a, b) { return b.at - a.at; });
+  }
+  function hofLoadLikes() {
+    var api = mxApi(), ids = galleryItems().map(function (it) { return it.art; }).slice(0, 200);
+    if (!api || !ids.length) return Promise.resolve();
+    return api.apiFetch('/api/art-likes?ids=' + ids.join(',')).then(function (r) { return r.ok ? r.json() : null; }).then(function (data) {
+      hof.likesOk = !!(data && data.ok);
+      if (!hof.likesOk) return;
+      hof.likes = data.likes || {};
+      hof.mine = {};
+      (data.mine || []).forEach(function (id) { hof.mine[id] = true; });
+    }, function () { hof.likesOk = false; });
+  }
+  function hofLike(it) {
+    var api = mxApi();
+    if (!api || !hof.likesOk) return;
+    var like = !hof.mine[it.art];
+    hof.mine[it.art] = like;
+    hof.likes[it.art] = Math.max(0, (hof.likes[it.art] || 0) + (like ? 1 : -1));
+    renderGallery();
+    api.apiFetch('/api/art-likes', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ artId: it.art, like: like }) })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (data && data.ok) hof.likes[it.art] = data.count;
+        else { hof.mine[it.art] = !like; hof.likes[it.art] = Math.max(0, (hof.likes[it.art] || 0) + (like ? -1 : 1)); }
+        if (gallery && !gallery.hidden) renderGallery();
+      });
+  }
+  function hofDelete(it) {
+    var msg = communityMessages.find(function (m) { return m.clientId === it.clientId; });
+    if (!msg) return;
+    var done = function () {
+      Object.keys(commentFeed).forEach(function (day) { commentFeed[day] = (commentFeed[day] || []).filter(function (c) { return c.art !== it.art; }); });
+      return loadCommunity().then(function () {
+        renderGallery();
+        if (window.MinkaGallery3D && window.MinkaGallery3D.isOpen()) window.MinkaGallery3D.refresh(gallery3dOptions(null));
+      });
+    };
+    if (msg.pending) { removePendingMessage(msg.clientId); done(); return; }
+    var editToken = communityEditToken(msg.clientId);
+    if (!editToken) return;
+    fetchFeedback('/api/feedback/message', {
+      method: 'DELETE', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ clientId: msg.clientId, editToken: editToken })
+    }).then(function () {
+      forgetCommunityOwnership(msg.clientId);
+      return loadGlobalEntryCount('comment', true);
+    }).then(done).catch(function () { var s = gallery && gallery.querySelector('.mx-hof-status'); if (s) s.textContent = 'Neizdevās izdzēst'; });
+  }
+  function hofDraw(it) {
+    var day = shiftDayKey();
+    if (!window.MinkaSkinDraw || futureDay(day)) return;
+    window.MinkaSkinDraw.open({
+      mode: 'sky',
+      initialUrl: it ? skyArtUrl(it.art) : '',
+      name: it ? 'Zīmē pa virsu: jaunais būs rāmī, vecais paliks čatā' : 'Visi to redzēs galerijā un komentāros',
+      onSave: function (blob) {
+        return mxSkyUpload(blob, day, 'gallery', it ? it.key : '').then(function () {
+          hof.at = 0; hof.sort = 'new';
+          renderGallery();
+          if (window.MinkaGallery3D && window.MinkaGallery3D.isOpen()) window.MinkaGallery3D.refresh(gallery3dOptions(null));
+        });
+      }
+    });
+  }
   function renderGallery(loading) {
     if (!gallery) return;
-    var body = gallery.querySelector('.mx-gal-body');
-    var items = galleryItems(), selected = shiftDayKey(), days = {};
-    items.forEach(function (it) { (days[it.day] = days[it.day] || []).push(it); });
-    var order = Object.keys(days).sort(function (a, b) { return a === selected ? -1 : b === selected ? 1 : (a < b ? 1 : -1); });
-    body.replaceChildren();
-    gallery.querySelector('.mx-gal-sub').textContent = items.length ? items.length + (items.length % 10 === 1 && items.length % 100 !== 11 ? ' zīmējums' : ' zīmējumi') + ' pa dežūrām' : 'Katras dežūras zīmējumi';
-    if (!order.length) {
-      var empty = document.createElement('p');
-      empty.className = 'mx-gal-empty';
-      empty.textContent = loading ? 'Ielādē…' : 'Vēl nav neviena zīmējuma. Uzzīmē pirmo!';
-      body.appendChild(empty);
-      return;
-    }
-    order.forEach(function (day) {
-      var section = document.createElement('section');
-      section.className = 'mx-gal-day' + (day === selected ? ' is-now' : '');
-      var head = document.createElement('h3');
-      head.textContent = galleryDayTitle(day);
-      var count = document.createElement('small');
-      count.textContent = String(days[day].length);
-      head.appendChild(count);
-      var grid = document.createElement('div');
-      grid.className = 'mx-gal-grid';
-      days[day].sort(function (a, b) { return b.at - a.at; }).forEach(function (it) {
-        var tile = document.createElement('button');
-        tile.type = 'button';
-        tile.className = 'mx-gal-tile';
-        tile.setAttribute('aria-label', 'Zīmējums' + (it.author ? ', ' + it.author : '') + '. Palielināt');
-        var img = document.createElement('img');
-        img.src = skyArtUrl(it.art);
-        img.alt = '';
-        img.loading = 'lazy';
-        img.decoding = 'async';
-        img.width = 192;
-        img.height = 192;
-        tile.appendChild(img);
+    var list = hof.list = hofItems(), n = list.length;
+    hof.at = Math.max(0, Math.min(n - 1, hof.at));
+    gallery.querySelector('.mx-hof-sub').textContent = n ? n + (n % 10 === 1 && n % 100 !== 11 ? ' zīmējums' : ' zīmējumi') : (loading ? 'Ielādē…' : '');
+    gallery.querySelectorAll('[data-hof-sort]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.hofSort === hof.sort)); b.disabled = b.dataset.hofSort === 'best' && !hof.likesOk; });
+    var stage = gallery.querySelector('.mx-hof-stage'), keep = {};
+    gallery.querySelector('.mx-hof-empty').hidden = !!n || loading;
+    gallery.querySelector('.mx-hof-foot').hidden = !n;
+    var cardW = Math.min(stage.clientWidth * 0.62, stage.clientHeight * 0.78, 460) || 360;
+    stage.style.setProperty('--hof-w', Math.round(cardW) + 'px');
+    for (var i = Math.max(0, hof.at - 3); i <= Math.min(n - 1, hof.at + 3); i++) {
+      var it = list[i], o = i - hof.at, card = stage.querySelector('[data-hof-art="' + it.art + '"]');
+      keep[it.art] = true;
+      if (!card) {
+        card = document.createElement('article');
+        card.className = 'mx-hof-card';
+        card.dataset.hofArt = it.art;
         var index = animalIndex(it.author);
-        if (index >= 0) {
-          var who = document.createElement('span');
-          who.className = 'mx-gal-who';
-          who.textContent = ANIMALS[index][1];
-          who.style.setProperty('--mx-ava', ANIMAL_TONES[index % ANIMAL_TONES.length][0]);
-          who.title = it.author;
-          tile.appendChild(who);
-        }
-        grid.appendChild(tile);
-      });
-      section.append(head, grid);
-      body.appendChild(section);
-    });
+        card.innerHTML = '<div class="mx-hof-pic"><img alt="" decoding="async"></div><span class="mx-hof-rank" hidden></span><span class="mx-hof-tag" hidden>pārzīmēts</span>'
+          + '<footer><span class="mx-hof-ava"></span><span class="mx-hof-who"><b></b><small></small></span>'
+          + '<button type="button" class="mx-hof-like" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-9.6A4 4 0 0 1 12 8a4 4 0 0 1 7 2.4C19 15.6 12 20 12 20z"/></svg><span></span></button></footer>';
+        card.querySelector('img').src = skyArtUrl(it.art);
+        card.querySelector('.mx-hof-ava').textContent = index >= 0 ? ANIMALS[index][1] : '🎨';
+        if (index >= 0) card.querySelector('.mx-hof-ava').style.setProperty('--mx-ava', ANIMAL_TONES[index % ANIMAL_TONES.length][0]);
+        card.querySelector('.mx-hof-who b').textContent = it.author || 'Anonīms';
+        card.querySelector('.mx-hof-who small').textContent = galleryDayTitle(it.day);
+        stage.appendChild(card);
+      }
+      var ao = Math.abs(o);
+      card.style.setProperty('--hof-x', (o * 0.66) + '');
+      card.style.setProperty('--hof-s', ao ? String(0.8 - (ao - 1) * 0.1) : '1');
+      card.style.opacity = ao > 2 ? '0' : ao ? String(0.7 - (ao - 1) * 0.25) : '1';
+      card.style.zIndex = String(10 - ao);
+      card.classList.toggle('is-now', !o);
+      card.setAttribute('aria-hidden', String(!!o));
+      card.dataset.hofAt = String(i);
+      var rank = card.querySelector('.mx-hof-rank');
+      rank.hidden = !(hof.sort === 'best' && it.likes && i < 3);
+      rank.textContent = String(i + 1);
+      card.querySelector('.mx-hof-tag').hidden = !it.covered;
+      var like = card.querySelector('.mx-hof-like');
+      like.hidden = !hof.likesOk;
+      like.setAttribute('aria-pressed', String(it.liked));
+      like.setAttribute('aria-label', (it.liked ? 'Noņemt sirsniņu' : 'Patīk') + ', ' + it.likes);
+      like.querySelector('span').textContent = it.likes ? String(it.likes) : '';
+    }
+    stage.querySelectorAll('.mx-hof-card').forEach(function (c) { if (!keep[c.dataset.hofArt]) c.remove(); });
+    var cur = list[hof.at];
+    gallery.querySelector('.mx-hof-count').textContent = n ? (hof.at + 1) + ' / ' + n : '';
+    gallery.querySelector('.mx-hof-prev').disabled = hof.at <= 0;
+    gallery.querySelector('.mx-hof-next').disabled = hof.at >= n - 1;
+    var del = gallery.querySelector('.mx-hof-del');
+    del.hidden = !(cur && cur.own);
+    del.textContent = cur && hof.confirm === cur.art ? 'Tiešām dzēst?' : 'Dzēst';
+    del.classList.toggle('is-confirm', !!(cur && hof.confirm === cur.art));
+    gallery.querySelector('.mx-hof-redraw').hidden = !cur || !cur.key || futureDay(shiftDayKey());
+  }
+  function hofGo(at) {
+    if (!hof.list.length) return;
+    hof.at = Math.max(0, Math.min(hof.list.length - 1, at));
+    hof.confirm = '';
+    renderGallery();
   }
   function galleryNode() {
     if (gallery) return gallery;
     gallery = document.createElement('div');
     gallery.id = 'mxGallery';
     gallery.hidden = true;
-    gallery.innerHTML = '<section class="mx-gal" role="dialog" aria-modal="true" aria-labelledby="mxGalTitle">'
-      + '<header class="mx-gal-head"><span class="mx-gal-logo" aria-hidden="true">\ud83c\udfa8</span>'
-      + '<div class="mx-gal-heading"><h2 id="mxGalTitle">Galerija</h2><p class="mx-gal-sub"></p></div>'
+    gallery.innerHTML = '<section class="mx-gal mx-hof" role="dialog" aria-modal="true" aria-labelledby="mxGalTitle">'
+      + '<header class="mx-hof-head"><span class="mx-gal-logo" aria-hidden="true">🏆</span>'
+      + '<div class="mx-gal-heading"><h2 id="mxGalTitle">Slavas zāle</h2><p class="mx-hof-sub"></p></div>'
+      + '<div class="mx-hof-sort" role="group" aria-label="Kārtot"><button type="button" data-hof-sort="new" aria-pressed="true">Jaunākie</button><button type="button" data-hof-sort="best" aria-pressed="false">Labākie</button></div>'
       + '<button class="mx-gal-draw" type="button">Uzzīmēt</button>'
-      + '<button class="mx-gal-close" type="button" aria-label="Aizvērt">×</button></header>'
-      + '<div class="mx-gal-body"></div></section>';
+      + '<button class="mx-gal-close" type="button" aria-label="Aizvērt (Esc)">×</button></header>'
+      + '<div class="mx-hof-stage"><p class="mx-hof-empty" hidden>Vēl nav neviena zīmējuma. Uzzīmē pirmo!</p>'
+      + '<button type="button" class="mx-hof-nav mx-hof-prev" aria-label="Iepriekšējais">‹</button><button type="button" class="mx-hof-nav mx-hof-next" aria-label="Nākamais">›</button></div>'
+      + '<footer class="mx-hof-foot"><span class="mx-hof-count"></span>'
+      + '<button type="button" class="mx-hof-act mx-hof-chat">Komentāros</button><button type="button" class="mx-hof-act mx-hof-redraw">Pārzīmēt</button>'
+      + '<button type="button" class="mx-hof-act mx-hof-del" hidden>Dzēst</button><span class="mx-hof-status" role="status"></span></footer></section>';
     gallery.addEventListener('click', function (event) {
-      if (event.target === gallery || event.target.closest('.mx-gal-close')) { mxCloseGallery(); return; }
-      if (event.target.closest('.mx-gal-draw')) {
-        var day = shiftDayKey();
-        if (!window.MinkaSkinDraw || futureDay(day)) return;
-        window.MinkaSkinDraw.open({
-          mode: 'sky',
-          name: 'Visi to redzēs galerijā un komentāros',
-          onSave: function (blob) { return mxSkyUpload(blob, day, 'gallery').then(function () { renderGallery(); }); }
-        });
-        return;
+      var cur = hof.list[hof.at];
+      if (event.target.closest('.mx-gal-close')) { mxCloseGallery(); return; }      // a click beside it does nothing
+      if (event.target.closest('.mx-gal-draw')) { hofDraw(null); return; }
+      var sort = event.target.closest('[data-hof-sort]');
+      if (sort) { hof.sort = sort.dataset.hofSort; hof.at = 0; renderGallery(); return; }
+      if (event.target.closest('.mx-hof-prev')) { hofGo(hof.at - 1); return; }
+      if (event.target.closest('.mx-hof-next')) { hofGo(hof.at + 1); return; }
+      var likeBtn = event.target.closest('.mx-hof-like');
+      if (likeBtn) { var it = hof.list[+likeBtn.closest('.mx-hof-card').dataset.hofAt]; if (it) hofLike(it); return; }
+      var card = event.target.closest('.mx-hof-card');
+      if (card && !card.classList.contains('is-now')) { hofGo(+card.dataset.hofAt); return; }
+      if (!cur) return;
+      if (event.target.closest('.mx-hof-chat')) { mxCloseGallery(); if (window.MinkaGallery3D && window.MinkaGallery3D.isOpen()) window.MinkaGallery3D.close(); mxOpenComments(null); return; }
+      if (event.target.closest('.mx-hof-redraw')) { hofDraw(cur); return; }
+      if (event.target.closest('.mx-hof-del')) {
+        if (hof.confirm === cur.art) { hof.confirm = ''; hofDelete(cur); }
+        else { hof.confirm = cur.art; renderGallery(); setTimeout(function () { if (hof.confirm === cur.art) { hof.confirm = ''; renderGallery(); } }, 3500); }
       }
-      var tile = event.target.closest('.mx-gal-tile');
-      if (tile) tile.classList.toggle('is-big');
+    });
+    // a swipe sideways goes to the next or the previous one
+    var swipe = null;
+    gallery.querySelector('.mx-hof-stage').addEventListener('pointerdown', function (e) { swipe = { x: e.clientX, y: e.clientY }; });
+    gallery.querySelector('.mx-hof-stage').addEventListener('pointerup', function (e) {
+      if (!swipe) return;
+      var dx = e.clientX - swipe.x, dy = e.clientY - swipe.y;
+      swipe = null;
+      if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.4) hofGo(hof.at + (dx < 0 ? 1 : -1));
     });
     document.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape' && gallery && !gallery.hidden && !document.querySelector('.mk-draw-overlay')) mxCloseGallery();
-    });
+      if (!gallery || gallery.hidden || document.querySelector('.mk-draw-overlay')) return;
+      if (event.key === 'Escape') { event.stopPropagation(); mxCloseGallery(); }
+      else if (event.key === 'ArrowLeft') { event.preventDefault(); hofGo(hof.at - 1); }
+      else if (event.key === 'ArrowRight') { event.preventDefault(); hofGo(hof.at + 1); }
+    }, true);
+    window.addEventListener('resize', function () { if (gallery && !gallery.hidden) renderGallery(); });
     document.body.appendChild(gallery);
     return gallery;
   }
@@ -3022,14 +3153,18 @@
       window.MinkaMotion.openSurface(dialog, { key: 'gallery', origin: galleryOrigin, scrim: g });
     }
     syncFeedbackModalState(true);
+    if (window.MinkaDitherBackdrop) window.MinkaDitherBackdrop.attach(g, { box: dialog });
+    if (window.MinkaGallery3D && window.MinkaGallery3D.pause) window.MinkaGallery3D.pause(true);
+    hof.confirm = '';
     renderGallery(true);
-    // the full list comes with the comments' own loader
-    loadCommunity().then(function () { if (!g.hidden) renderGallery(); }, function () { if (!g.hidden) renderGallery(); });
+    // the full list comes with the comments' own loader, the hearts from minka-api
+    var again = function () { if (!g.hidden) renderGallery(); };
+    Promise.all([loadCommunity().catch(function () {}), hofLoadLikes()]).then(again, again);
   }
   /* Galerija kā Doom (js/page/mood-gallery-3d.js, ielādējas tikai pirmajā
      reizē): pastaiga pa zāli ar zīmējumiem uz sienām. Ja tā neielādējas,
      paliek parastā galerija (režģis augstāk). */
-  var GALLERY3D_SRC = 'js/page/mood-gallery-3d.js?v=20261001g3d4';
+  var GALLERY3D_SRC = 'js/page/mood-gallery-3d.js?v=20261002g3d13';
   var gallery3dLoad = null;
   function gallery3d() {
     if (window.MinkaGallery3D) return Promise.resolve(window.MinkaGallery3D);
@@ -3045,10 +3180,12 @@
     return gallery3dLoad;
   }
   // Who sleeps tonight (Nakts sadalījums plan for the day open): name,
-  // their emoji, from–to, and whether it is their turn right now.
+  // their emoji, from–to, whether it is their turn right now, and their bed
+  // and colour as the night panel shows them.
   function gallerySleepers() {
-    var plan = null;
+    var plan = null, rooms = null;
     try { plan = window.__ns && window.__ns.getPlan ? window.__ns.getPlan() : null; } catch (_e) {}
+    try { rooms = window.__ns && window.__ns.getRoomBeds ? window.__ns.getRoomBeds() : null; } catch (_e) {}
     if (!plan || !plan.segments || !plan.segments.length) return [];
     var staff = (moodStats(false) || {}).staff || [];
     var mins = function (t) { var m = String(t || '').match(/^(\d{1,2}):(\d{2})$/); return m ? +m[1] * 60 + +m[2] : null; };
@@ -3062,7 +3199,8 @@
       return {
         name: seg.name, first: seg.firstName || String(seg.name || '').split(/\s+/)[0],
         emoji: person.emoji || '', from: seg.start, to: seg.end, now: inTurn,
-        color: ['#5b7fd1', '#4c6fbd', '#6a8ddb', '#4565a8', '#7896de'][i % 5]
+        bed: rooms ? rooms.order.indexOf(seg.name) : -1,
+        color: (rooms && rooms.colors[seg.name]) || ['#5b7fd1', '#4c6fbd', '#6a8ddb', '#4565a8', '#7896de'][i % 5]
       };
     });
   }
@@ -3075,9 +3213,11 @@
       origin: origin,
       items: items.map(function (it) {
         var index = animalIndex(it.author);
-        return { day: it.day, art: it.art, url: skyArtUrl(it.art), at: it.at, authorName: it.author || '', authorEmoji: index >= 0 ? ANIMALS[index][1] : '' };
+        return { day: it.day, art: it.art, url: skyArtUrl(it.art), at: it.at, key: it.key || '', parent: it.parent || '', authorName: it.author || '', authorEmoji: index >= 0 ? ANIMALS[index][1] : '' };
       }),
       sleepers: gallerySleepers(),
+      today: selected,
+      slotMap: readJson(GALLERY_SLOTS_KEY, {}),
       me: { name: meName, emoji: meIndex >= 0 ? ANIMALS[meIndex][1] : '🐱', short: meIndex >= 0 ? ANIMALS[meIndex][0] : '' },
       stats: {
         today: items.filter(function (it) { return it.day === selected; }).length,
@@ -3086,14 +3226,27 @@
       },
       dayTitle: galleryDayTitle,
       onComments: function () { mxOpenComments(null); },
-      onDraw: function () {
+      // "Visi zīmējumi": the hall of fame over the game
+      onAll: function (from) { mxOpenGallery(from); },
+      // a drawing for this dežūra; from an empty frame it hangs in that frame;
+      // over a drawing (info.over, info.base): the old picture is under the
+      // pen, the new one takes its frame, the old one stays in the chat
+      onDraw: function (info) {
         var day = shiftDayKey();
         if (!window.MinkaSkinDraw || futureDay(day)) return;
         window.MinkaSkinDraw.open({
           mode: 'sky',
-          name: 'Visi to redzēs galerijā un komentāros',
+          initialUrl: info && info.base || '',
+          name: info && info.over ? 'Zīmē pa virsu: jaunais būs rāmī, vecais paliks čatā' : 'Visi to redzēs galerijā un komentāros',
           onSave: function (blob) {
-            return mxSkyUpload(blob, day, 'gallery').then(function () {
+            return mxSkyUpload(blob, day, 'gallery', info && info.over).then(function (item) {
+              if (item && info && info.slot) {
+                var map = readJson(GALLERY_SLOTS_KEY, {});
+                map[item.art] = info.slot;
+                var keys = Object.keys(map);
+                if (keys.length > 200) keys.slice(0, keys.length - 200).forEach(function (k) { delete map[k]; });
+                writeJson(GALLERY_SLOTS_KEY, map);
+              }
               if (window.MinkaGallery3D && window.MinkaGallery3D.isOpen()) window.MinkaGallery3D.refresh(gallery3dOptions(null));
             });
           }
@@ -3117,6 +3270,7 @@
   function mxCloseGallery() {
     var g = gallery;
     if (!g || g.hidden || galleryClosing) return;
+    if (window.MinkaGallery3D && window.MinkaGallery3D.pause) window.MinkaGallery3D.pause(false);
     var dialog = g.querySelector('.mx-gal');
     syncFeedbackModalState(false);
     if (window.MinkaMotion && dialog) {
@@ -3528,7 +3682,7 @@
       // the day's chat into the sky (mxSay).
       if (MX) {
         commentFeed[day] = chatItems(data.messages);
-        commentPreviews[day] = commentFeed[day][0] || null;
+        commentPreviews[day] = newestChat(commentFeed[day]);
       }
       // Tukša atbilde (ziņa izkritusi no loga, ieraksts vēl ceļā) nenodzēš jau
       // izvēlēto emoji — tikai jaunāks ieraksts to nomaina.
@@ -4410,6 +4564,12 @@
       var MM = window.MinkaMotion;
       (MM && MM.pending ? MM.pending(saveButton, work) : work).then(function (result) {
         if (!result) return;
+        // Noskaņa X has no line for it on the card: the cat says the words back
+        if (MX && window.__minkaDailyCat && window.__minkaDailyCat.say) {
+          var said = cleanMoodNote(field.value);
+          window.setTimeout(function () { window.__minkaDailyCat.say({ text: said, ava: emoji, label: 'Par maiņu: ' + said }); }, 700);
+          (commentFeed[day] = commentFeed[day] || []).unshift({ type: 'note', emoji: emoji, body: said, author: '', at: Date.now() });
+        }
         if (MM && MM.pending && MM.level() !== 'reduced') window.setTimeout(function () { closeMoodNote(); }, 380);
         else closeMoodNote();
       });
@@ -4715,7 +4875,8 @@
         + '&kind=' + encodeURIComponent(pair.kind) + '&limit=100';
       if (before != null) path += '&before=' + encodeURIComponent(before);
       var data = await fetchFeedback(path);
-      messages = messages.concat(data.messages || []);
+      // a message always knows its day (the gallery hangs it on that day's wall)
+      messages = messages.concat((data.messages || []).map(function (m) { return m && !m.date ? Object.assign({ date: pair.date }, m) : m; }));
       if (!data.hasMore || data.nextBefore == null || seenCursors[data.nextBefore]) break;
       seenCursors[data.nextBefore] = true;
       before = data.nextBefore;
@@ -4897,10 +5058,12 @@
 
   // A drawing goes out like any message from you: your animal for the day,
   // the topic and reply open in the composer (from the comments window).
-  async function postDrawing(artId, day, fromComments) {
+  // overKey: drawn over another drawing in the gallery; posted as an answer to
+  // it (older versions show it so in the chat), the gallery hangs it in that frame
+  async function postDrawing(artId, day, fromComments, overKey) {
     var open = fromComments && !modal.hidden;
     var topic = open ? (commsTopicInput.value.trim() || (communityView === 'topic' ? communityTopic : 'Vispārīgi')) : 'Vispārīgi';
-    var parent = open && communityReply ? (communityReply.key || '') : '';
+    var parent = overKey ? String(overKey) : open && communityReply ? (communityReply.key || '') : '';
     var authorName = ANIMAL_IDS ? myAnimal(day, true) : (commsAuthor.value || '');
     var clientId = newClientId();
     var editToken = newEditToken();

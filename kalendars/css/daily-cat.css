@@ -331,4 +331,15 @@
   -webkit-line-clamp: 3;
 }
 .mk-cat-say.is-ask .mk-cat-say-text { padding-top: 0; }
+/* a drawing the cat shows: small, on the night sky it was drawn on (fixed
+   size, so the bubble is measured right before the picture arrives) */
+.mk-cat-say-art {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  background: radial-gradient(120% 90% at 50% 0%, #10233a, #060b13 70%);
+  object-fit: contain;
+}
+.mk-cat-say-art[hidden] { display: none; }
 

@@ -29,6 +29,7 @@
     star: I('<path d="M12 3.8l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.6-4.8 2.6.9-5.4-3.9-3.8 5.4-.8z"/>'),
     heart: I('<path d="M12 19.5s-7-4.3-7-9.4A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 2.1c0 5.1-7 9.4-7 9.4z"/>'),
     spark: I('<path d="M12 3l1.9 7.1L21 12l-7.1 1.9L12 21l-1.9-7.1L3 12l7.1-1.9z"/>'),
+    dither: I('<path class="f" d="M6 6h.01M18 6h.01M9 10h.01M15 10h.01M6 14h.01M12 14h.01M18 14h.01M9 18h.01M15 18h.01M6 18h.01M12 18h.01M18 18h.01"/>'),
     undo: I('<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>'),
     redo: I('<path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>'),
     clear: I('<path d="M5 7h14M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/>'),
@@ -37,11 +38,14 @@
     plus: I('<path d="M12 6v12M6 12h12"/>')
   };
   var TOOLS = [
-    ['Otas', [['pen', 'Pildspalva'], ['neon', 'Neons'], ['marker', 'Marķieris'], ['spray', 'Aerosols'], ['eraser', 'Dzēšgumija']]],
+    ['Otas', [['pen', 'Pildspalva'], ['neon', 'Neons'], ['marker', 'Marķieris'], ['spray', 'Aerosols'], ['dither', 'Dither'], ['eraser', 'Dzēšgumija']]],
     ['Figūras', [['line', 'Līnija'], ['arrow', 'Bulta'], ['rect', 'Taisnstūris'], ['circle', 'Aplis']]],
     ['Zīmogi', [['star', 'Zvaigzne'], ['heart', 'Sirds'], ['spark', 'Dzirksts']]]
   ];
-  var FREEHAND = { pen: 1, neon: 1, marker: 1, spray: 1, eraser: 1 };
+  var FREEHAND = { pen: 1, neon: 1, marker: 1, spray: 1, dither: 1, eraser: 1 };
+  // ordered (Bayer 4×4) dots, the app's dither: a soft brush and a background
+  var BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  var DOT = 2;
   var STAMP = { star: 1, heart: 1, spark: 1 };
 
   function toast(message, type) {
@@ -126,7 +130,7 @@
       + BACKGROUNDS.map(function (c) { return '<button type="button" class="dr-swatch" data-bg="' + c + '" style="--c:' + c + '" aria-label="Fons ' + c + '"></button>'; }).join('')
       + '<label class="dr-swatch dr-swatch-own" title="Sava fona krāsa">' + ICON.plus + '<input type="color" class="mk-draw-bg" value="#0b1019" aria-label="Sava fona krāsa"></label></div>'
       + '<div class="dr-chips" role="group" aria-label="Efekti">'
-      + [['stars', 'Zvaigznes'], ['dots', 'Punkti'], ['grid', 'Režģis'], ['vignette', 'Vinjete']].map(function (e) { return '<button type="button" class="dr-chip mk-draw-effect" data-effect="' + e[0] + '">' + e[1] + '</button>'; }).join('')
+      + [['stars', 'Zvaigznes'], ['dots', 'Punkti'], ['dither', 'Dither'], ['grid', 'Režģis'], ['vignette', 'Vinjete']].map(function (e) { return '<button type="button" class="dr-chip mk-draw-effect" data-effect="' + e[0] + '">' + e[1] + '</button>'; }).join('')
       + '</div></section>'
       + '<section class="dr-card dr-preview-card"><h4>Kartē</h4><div class="mk-draw-card-preview">'
       + '<canvas class="mk-draw-preview" width="' + PREVIEW_SIZE + '" height="' + PREVIEW_SIZE + '"></canvas><div class="mk-draw-card-scrim"></div>'
@@ -146,6 +150,8 @@
       });
     }
     document.body.appendChild(overlay);
+    // round the editor the same dithered work on blue as round the gallery (js/dither-backdrop.js)
+    if (window.MinkaDitherBackdrop) window.MinkaDitherBackdrop.attach(overlay, { box: overlay.querySelector('.mk-draw-dialog') });
 
     overlay.querySelector('.mk-draw-worker').textContent = name;
     overlay.querySelector('.mk-draw-card-initials').textContent = initials(name);
@@ -251,6 +257,14 @@
         gradient.addColorStop(1, 'rgba(0,0,0,.68)');
         target.fillStyle = gradient;
         target.fillRect(0, 0, DRAW_W, DRAW_H);
+      } else if (stroke.effect === 'dither') {
+        target.fillStyle = stroke.color;
+        for (var dy = 0; dy < DRAW_H; dy += DOT) {
+          var dd = Math.pow(dy / DRAW_H, 1.3) * 0.9;
+          for (var dx = 0; dx < DRAW_W; dx += DOT) {
+            if ((BAYER4[((dy / DOT) & 3) * 4 + ((dx / DOT) & 3)] + 0.5) / 16 < dd) target.fillRect(dx, dy, DOT, DOT);
+          }
+        }
       } else if (stroke.effect === 'grid') {
         target.strokeStyle = stroke.color; target.globalAlpha = .24; target.lineWidth = 1;
         for (var gx = 24; gx < DRAW_W; gx += 24) { target.beginPath(); target.moveTo(gx, 0); target.lineTo(gx, DRAW_H); target.stroke(); }
@@ -275,7 +289,25 @@
       target.globalCompositeOperation = t === 'eraser' ? 'destination-out' : 'source-over';
       target.strokeStyle = target.fillStyle = stroke.color;
       target.lineWidth = stroke.size; target.lineCap = 'round'; target.lineJoin = 'round';
-      if (t === 'spray') {
+      if (t === 'dither') {
+        // every point a round patch of dots on the same grid, densest in the middle
+        var rr = stroke.size * 1.6, seen = {};
+        stroke.points.forEach(function (p, pi) {
+          var q = stroke.points[pi + 1] || p, steps = Math.max(1, Math.ceil(Math.hypot(q.x - p.x, q.y - p.y) / (rr * 0.5)));
+          for (var k = 0; k < steps; k++) {
+            var cx = p.x + (q.x - p.x) * k / steps, cy = p.y + (q.y - p.y) * k / steps;
+            for (var gy = Math.floor((cy - rr) / DOT) * DOT; gy <= cy + rr; gy += DOT) {
+              for (var gx = Math.floor((cx - rr) / DOT) * DOT; gx <= cx + rr; gx += DOT) {
+                var key = gx + ',' + gy;
+                if (seen[key]) continue;
+                var f = 1 - Math.hypot(gx + 1 - cx, gy + 1 - cy) / rr;
+                if (f <= 0) continue;
+                if ((BAYER4[((gy / DOT) & 3) * 4 + ((gx / DOT) & 3)] + 0.5) / 16 < f * 1.15) { seen[key] = 1; target.fillRect(gx, gy, DOT, DOT); }
+              }
+            }
+          }
+        });
+      } else if (t === 'spray') {
         var rand = rng(stroke.seed), rad = stroke.size * 1.7;
         stroke.points.forEach(function (p) {
           for (var k = 0; k < 8 + stroke.size; k++) {
@@ -391,6 +423,7 @@
       if (previewFrame) cancelAnimationFrame(previewFrame);
       clearTimeout(liveTimer); if (liveUrl) URL.revokeObjectURL(liveUrl); live = null;
       window.removeEventListener('keydown', onKeyDown, true);
+      if (window.MinkaDitherBackdrop) window.MinkaDitherBackdrop.detach(overlay);
       overlay.remove();
       strokes.length = 0; redoStack.length = 0;
       current = null;
@@ -493,7 +526,7 @@
     overlay.querySelector('.mk-draw-clear').addEventListener('click', clearInk);
     overlay.querySelector('.mk-draw-close').addEventListener('click', close);
     overlay.querySelector('.mk-draw-cancel').addEventListener('click', close);
-    overlay.addEventListener('pointerdown', function (event) { if (event.target === overlay) close(); });
+    // a click beside the editor does nothing (a drawing is never lost by a slip): × , Atcelt or Esc close it
     window.addEventListener('keydown', onKeyDown, true);
 
     overlay.querySelector('.mk-draw-save').addEventListener('click', async function () {
