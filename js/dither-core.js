@@ -543,24 +543,44 @@
       return Array.prototype.some.call(d.querySelectorAll('.mk-skin-preview-real'), function (p) { return p.getClientRects().length > 0; });
     });
   }
-  /* A fresh picture is kept here and sent, a moment later and off the busy
-     path. Made while the appearance editor is open, it waits for the editor
-     to close and goes only if a card still shows it, so drafts and slider
-     drags stay on this computer. */
+  /* Fresh pictures wait in one list and are kept here and sent a moment later,
+     off the busy path. One made while the appearance editor is open (a draft,
+     a Remix try, a slider value) waits for the editor to close and goes only
+     if a card still shows it; any other goes as soon as the editor is not open. */
+  var unsaved = new Map(), sweepTimer = 0;   // blob URL -> { canon, blob, drafted }
   function shareLater(canon, u, blob) {
-    var drafted = false;
-    var attempt = function () {
-      if (editorOpen()) { drafted = true; host.setTimeout(attempt, 4000); return; }
-      if (stored.has(canon) || (drafted && !inUse(u))) return;
-      fxHash(canon).then(function (hash) {
-        keepLocal(canon, hash, blob);
+    unsaved.set(u, { canon: canon, blob: blob, drafted: editorOpen() });
+    stats.pending = unsaved.size;
+    if (!sweepTimer) sweepTimer = host.setTimeout(sweep, FX_SHARE_DELAY);
+  }
+  function sweep() {
+    sweepTimer = 0;
+    if (editorOpen()) {
+      unsaved.forEach(function (e) { e.drafted = true; });
+      sweepTimer = host.setTimeout(sweep, 2000);
+      return;
+    }
+    unsaved.forEach(function (e, u) {
+      unsaved.delete(u);
+      if (stored.has(e.canon)) return;
+      if (e.drafted && !inUse(u)) { stats.dropped = (stats.dropped || 0) + 1; return; }
+      fxHash(e.canon).then(function (hash) {
+        keepLocal(e.canon, hash, e.blob);
         stats.saved++;
         var api = fxApi();
-        if (!api || blob.size > 600 * 1024) return;
-        host.fetch(api.base + '/api/fx/' + hash, { method: 'POST', headers: { authorization: 'Bearer ' + api.token, 'content-type': 'image/png' }, body: blob }).catch(function () {});
+        if (!api || e.blob.size > 600 * 1024) return;
+        host.fetch(api.base + '/api/fx/' + hash, { method: 'POST', headers: { authorization: 'Bearer ' + api.token, 'content-type': 'image/png' }, body: e.blob })
+          .then(function (r) { if (r.ok) stats.sent = (stats.sent || 0) + 1; }, function () {});
       }, function () {});
-    };
-    host.setTimeout(attempt, FX_SHARE_DELAY);
+    });
+    stats.pending = unsaved.size;
+  }
+  // A schedule card showing a picture made for a copy that is not kept (the
+  // editor's preview hit the same size first): keep it for the card all the same.
+  function ensureKept(src, job, u) {
+    var cs = job && job._key ? canonSrc(src) : '', canon = cs ? cs + job._key.slice(src.length) : '';
+    if (!canon || stored.has(canon) || unsaved.has(u) || !host.fetch) return;
+    host.fetch(u).then(function (r) { return r.blob(); }).then(function (b) { shareLater(canon, u, b); }, function () {});
   }
   function ready(u) {
     if (decoded.has(u)) return Promise.resolve(u);
@@ -645,7 +665,7 @@
     if (canon && stored.has(canon)) {
       var su = URL.createObjectURL(stored.get(canon));
       var sj = Promise.resolve(su);
-      sj._url = su; sj._wants = null; stats.local++;
+      sj._url = su; sj._wants = null; sj._key = key; stats.local++;
       remember(key, sj);
       return sj;
     }
@@ -686,6 +706,7 @@
     });
     }
     job._wants = opts.stale ? [opts.stale] : null;
+    job._key = key;
     job.then(function (u) { job._url = u; }, function () {});
     job.catch(function () { if (cache.get(key) === job) cache.delete(key); });
     remember(key, job);
@@ -976,6 +997,7 @@
       var dj = url(src, o);
       if (o.share && dj._url) paint(dj._url);   // already made or kept: the same frame
       dj.then(ready).then(function (u) {
+        if (o.share) ensureKept(src, dj, u);
         if (img.dataset.mkDitherDecor !== key) return;
         paint(u);
       }, function () { if (img.dataset.mkDitherDecor === key) clearDecor(img); });
@@ -1191,11 +1213,11 @@
     var nowL = roster && lensJob ? lensJob._url || recentLens.get(like) : null;
     if (nowL) showFocus(card, nowL);
     main.then(ready).then(function (u) {
-      if (roster) keepRecent(recent, like, u);
+      if (roster) { keepRecent(recent, like, u); ensureKept(src, main, u); }
       if (card.dataset.mkDitherKey !== key) return;
       card.style.setProperty('--mk-skin-dither', 'url("' + u + '")');
       card.classList.add('mk-has-dither');
-      if (lens) return lens.then(function (lu) { if (roster) keepRecent(recentLens, like, lu); if (card.dataset.mkDitherKey === key) showFocus(card, lu); }, function () {});
+      if (lens) return lens.then(function (lu) { if (roster) { keepRecent(recentLens, like, lu); ensureKept(src, lensJob, lu); } if (card.dataset.mkDitherKey === key) showFocus(card, lu); }, function () {});
     }, function () {
       // Pixels not readable (a host without CORS): show the plain picture instead.
       if (card.dataset.mkDitherKey === key) { clearSkin(card); card.classList.add('mk-dither-failed'); }
