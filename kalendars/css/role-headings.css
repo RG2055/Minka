@@ -134,3 +134,68 @@ html.host-radio-open body #grafiks-list.grid-view .cards-section-label {
   width: 72px;
   max-width: 72px;
 }
+
+/* M3 Expressive role headings (RG on a computer; /rad and the phone keep their
+   own). The role icon sits in a tonal rounded square, the name in sentence
+   case, no rule after it. Hover morphs the square into a circle on the shared
+   spring. A heading steps aside
+   for a topper (card-addons.js headingAroundToppers) by translate only, on
+   the spring; a new day's heading is drawn in its place at once. */
+html:not(.minka-rad):not(.mk-mobile-shell) #grafiks-list.grid-view .cards-section-label {
+  gap: 10px !important;
+}
+
+html:not(.minka-rad):not(.mk-mobile-shell) #grafiks-list.grid-view .cards-section-label > .cards-role-mark,
+html:not(.minka-rad):not(.mk-mobile-shell) #grafiks-list.grid-view .cards-section-label > .cards-role-name {
+  translate: var(--mk-role-shift, 0px) 0;
+  transition: translate var(--mk-dur-spring-default, 560ms) var(--mk-ease-spring, ease);
+}
+
+html:not(.minka-rad):not(.mk-mobile-shell) #grafiks-list.grid-view .cards-section-label.mk-role-instant > * {
+  transition: none !important;
+}
+
+html:not(.minka-rad):not(.mk-mobile-shell) #grafiks-list.grid-view .cards-role-mark {
+  position: relative;
+  isolation: isolate;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+html:not(.minka-rad):not(.mk-mobile-shell) #grafiks-list.grid-view .cards-role-mark::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 11px;
+  background: rgba(var(--mk-role-rgb), .16);
+  transition: border-radius var(--mk-dur-spring-default, 560ms) var(--mk-ease-spring, ease),
+    background-color var(--mk-dur-effects-default, 200ms) var(--mk-ease-effects, ease);
+}
+
+html:not(.minka-rad):not(.mk-mobile-shell) #grafiks-list.grid-view .cards-section-label:hover .cards-role-mark::after {
+  border-radius: 16px;
+  background-color: rgba(var(--mk-role-rgb), .24);
+}
+
+html:not(.minka-rad):not(.mk-mobile-shell) #grafiks-list.grid-view .cards-role-mark::before {
+  width: 18px;
+  height: 18px;
+}
+
+html:not(.minka-rad):not(.mk-mobile-shell) #grafiks-list.grid-view .cards-role-name {
+  font-family: var(--mk-font-brand, "Google Sans", Inter, system-ui, sans-serif) !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+html:not(.minka-rad):not(.mk-mobile-shell) #grafiks-list.grid-view .cards-role-rule {
+  display: none !important;
+}

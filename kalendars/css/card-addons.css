@@ -165,6 +165,18 @@ html body #worker-modal#worker-modal .mk-skin-quick {
   cursor: auto !important;
 }
 
+/* The line a topper may not rise above (card-addons.js TOPPER_ROOM), shown
+   on the editor's preview while a topper is dragged. */
+.mk-skin-preview-real > .mk-topper-limit {
+  position: absolute;
+  left: -8%;
+  right: -8%;
+  height: 0;
+  border-top: 1.5px dashed rgba(255, 255, 255, .55);
+  pointer-events: none;
+  z-index: 30;
+}
+
 .mk-card-addon[data-addon-group="topper"] {
   width: 52%;
   height: auto;

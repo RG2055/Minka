@@ -455,11 +455,56 @@
     });
   }
 
-  function writeAddonGeometry(image, cardWidth, cardHeight) {
+  /* Toppers never make room for themselves: no card moves or changes size for
+     one. A topper sits where it was placed (on the card's top edge) and rises
+     into the free band above the card, at most TOPPER_ROOM of the card's width
+     (the role heading row and its gap; the heading's text steps aside, see
+     syncSectionClearance). One too tall for that band is drawn a little
+     smaller, still sitting where it was placed, never pushed into its card.
+     The editor's preview uses the same rule: dragging stops at the line and
+     the size stops growing at it, so what is placed there is what the
+     calendar shows. */
+  var TOPPER_ROOM = 0.35;
+  function aspectOf(value) {
+    var m = /^\s*([\d.]+)\s*\/\s*([\d.]+)\s*$/.exec(String(value || ''));
+    return m && +m[2] ? +m[1] / +m[2] : 0;
+  }
+  // A topper's unscaled height and how far it may reach up from the card's
+  // top edge at offset 0 (px), or null for any other decoration. The dock's
+  // few px stay as slack, so a topper fits alike at every card size.
+  function topperBase(image, cardWidth, imageHeight) {
+    if (image.dataset.addonGroup !== 'topper') return null;
+    var item = ITEM_BY_ID[image.dataset.addonId];
+    if (!item) return null;
+    var h = imageHeight;
+    if (!h) {
+      var ratio = aspectOf(item.aspect) || (image.naturalWidth && image.naturalHeight ? image.naturalWidth / image.naturalHeight : 0);
+      if (!ratio) return null;
+      h = cardWidth * 0.52 / ratio;
+    }
+    return { h: h, reach: TOPPER_ROOM * cardWidth };
+  }
+  // How a topper at offset y (px) is drawn under the line: {scale, y}, or null.
+  function topperFit(image, cardWidth, imageHeight, y) {
+    var base = topperBase(image, cardWidth, imageHeight);
+    if (!base) return null;
+    var scale = Math.max(.3, Math.min(2, Number(image.dataset.addonScale) || 1));
+    var reach = base.reach + y;
+    if (base.h * scale <= reach) return { scale: scale, y: y };
+    if (reach >= base.h * .3) return { scale: reach / base.h, y: y };
+    return { scale: .3, y: y + base.h * .3 - reach };
+  }
+  function writeAddonGeometry(image, cardWidth, cardHeight, imageHeight) {
     var offsetX = Number(image.dataset.addonX) || 0;
     var offsetY = Number(image.dataset.addonY) || 0;
+    var y = offsetY * cardHeight / 100;
+    var fit = topperFit(image, cardWidth, imageHeight, y);
+    if (fit) {
+      y = fit.y;
+      image.style.setProperty('--mk-addon-scale', fit.scale);
+    }
     image.style.setProperty('--mk-addon-offset-x', (offsetX * cardWidth / 100) + 'px');
-    image.style.setProperty('--mk-addon-offset-y', (offsetY * cardHeight / 100) + 'px');
+    image.style.setProperty('--mk-addon-offset-y', y + 'px');
   }
 
   function addonDragPosition(baseX, baseY, dx, dy, width, height) {
@@ -477,10 +522,11 @@
     ));
     var measurements = images.map(function(image) {
       var card = image.parentElement;
-      return { image: image, width: card.clientWidth, height: card.clientHeight };
+      return { image: image, width: card.clientWidth, height: card.clientHeight,
+        imageHeight: image.dataset.addonGroup === 'topper' ? image.offsetHeight : 0 };
     });
     measurements.forEach(function(entry) {
-      writeAddonGeometry(entry.image, entry.width, entry.height);
+      writeAddonGeometry(entry.image, entry.width, entry.height, entry.imageHeight);
     });
     scheduleAddonPortals(80);
   }
@@ -609,6 +655,7 @@
     if (item.aspect) image.style.setProperty('--mk-addon-aspect', item.aspect);
     writeAddonGeometry(image, card.clientWidth, card.clientHeight);
     image.addEventListener('load', function() {
+      scheduleAddonGeometry();
       scheduleSectionClearance();
       scheduleTopperClearance();
       scheduleAddonPortals(80);
@@ -779,35 +826,67 @@
     scheduleAddonPortals(32);
   }
 
+  /* A topper rises into its role heading's row instead of pushing the cards
+     down. The heading's mark and name step right to the first free place
+     beside the toppers, so no topper covers the heading and the heading
+     covers no topper. They move by translate only (role-headings.css, on the
+     M3 spring); positions are read from layout, which that never changes.
+     Measures only. */
+  function headingAroundToppers(section) {
+    var label = section.querySelector(':scope > .cards-section-label');
+    if (!label || !label.offsetHeight) return null;
+    var name = label.querySelector(':scope > .cards-role-name');
+    var mark = label.querySelector(':scope > .cards-role-mark') || name;
+    if (!name || name.offsetParent !== label) return null;
+    var labelRect = label.getBoundingClientRect();
+    var start = labelRect.left + mark.offsetLeft;
+    var textWidth = name.offsetLeft + name.offsetWidth - mark.offsetLeft;
+    var textTop = labelRect.top + Math.min(mark.offsetTop, name.offsetTop);
+    var textBottom = labelRect.top + Math.max(mark.offsetTop + mark.offsetHeight, name.offsetTop + name.offsetHeight);
+    var spans = [];
+    section.querySelectorAll(':scope > .cards-subgrid > .card > .mk-card-addon[data-addon-group="topper"]').forEach(function(topper) {
+      var r = topper.getBoundingClientRect();
+      if (r.width && r.top < textBottom && r.bottom > textTop) spans.push([r.left - 8, r.right + 8]);
+    });
+    spans.sort(function(x, y) { return x[0] - y[0]; });
+    var left = start;
+    spans.forEach(function(span) {
+      if (left < span[1] && left + textWidth > span[0]) left = span[1];
+    });
+    // No free place wide enough: the heading keeps its place.
+    if (left + textWidth > labelRect.right) left = start;
+    return { label: label, shift: Math.round(left - start) };
+  }
+  function writeHeadingAroundToppers(plan) {
+    if (!plan) return;
+    var label = plan.label;
+    var known = label.dataset.mkRoleShift;
+    if (known === String(plan.shift)) return;
+    label.dataset.mkRoleShift = String(plan.shift);
+    // A heading drawn for a new day starts in its place: no motion on day switches.
+    if (known == null) {
+      label.classList.add('mk-role-instant');
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() { label.classList.remove('mk-role-instant'); });
+      });
+    }
+    if (plan.shift > 0) label.style.setProperty('--mk-role-shift', plan.shift + 'px');
+    else label.style.removeProperty('--mk-role-shift');
+  }
+
   function syncSectionClearance(skipMoodLayout) {
     sectionFrame = 0;
     var list = document.querySelector('#grafiks-list.grid-view');
     if (!list) return;
     var sections = Array.prototype.slice.call(list.querySelectorAll(':scope > .cards-section'));
-    var header = document.getElementById('minkaBarWrap');
-    var headerRect = header ? header.getBoundingClientRect() : null;
-    var listTop = list.getBoundingClientRect().top;
     /* Read every rectangle first, then update styles. Keeping these phases
        separate avoids a forced page layout for each decorated section. */
     var plans = sections.map(function(section, sectionIndex) {
       var style = getComputedStyle(section);
       var current = parseFloat(style.getPropertyValue('--mk-addon-section-top-clearance')) || 0;
-      var label = section.querySelector(':scope > .cards-section-label');
-      var toppers = Array.prototype.slice.call(section.querySelectorAll(
-        ':scope > .cards-subgrid > .card > .mk-card-addon[data-addon-group="topper"]'
-      ));
+      // Cards never move for a topper (see TOPPER_ROOM): no room is made above them.
       var desired = 0;
-      if (toppers.length) {
-        var labelRect = label ? label.getBoundingClientRect() : null;
-        var requiredTop = labelRect && labelRect.height
-          ? labelRect.bottom
-          : (headerRect ? headerRect.bottom : listTop);
-        var minTop = Math.min.apply(null, toppers.map(function(topper) {
-          return topper.getBoundingClientRect().top;
-        }));
-        desired = Math.ceil(current + requiredTop - minTop + 8);
-        desired = Math.max(0, Math.min(desired, 220));
-      }
+      var heading = headingAroundToppers(section);
       var bottomClearance = 0;
       if (sectionIndex === sections.length - 1) {
         var charms = Array.prototype.slice.call(section.querySelectorAll(
@@ -825,6 +904,7 @@
         section: section,
         current: current,
         desired: desired,
+        heading: heading,
         bottomClearance: bottomClearance
       };
     });
@@ -836,6 +916,7 @@
         else section.style.removeProperty('--mk-addon-section-top-clearance');
         sectionGeometryChanged = true;
       }
+      writeHeadingAroundToppers(plan.heading);
       if (plan.bottomClearance) {
         section.style.setProperty('--mk-addon-section-bottom-clearance', plan.bottomClearance + 'px');
       } else {
@@ -1026,8 +1107,37 @@
       });
     }
 
+    // The line a topper may not rise above (TOPPER_ROOM), shown on the preview
+    // while the chosen topper is dragged or resized.
+    function topperLimit(show) {
+      var line = preview && preview.querySelector(':scope > .mk-topper-limit');
+      var item = config && ITEM_BY_ID[config.id];
+      if (!show || !preview || !item || item.group !== 'topper') {
+        if (line) line.remove();
+        return;
+      }
+      if (!line) {
+        line = document.createElement('span');
+        line.className = 'mk-topper-limit';
+        line.setAttribute('aria-hidden', 'true');
+        preview.appendChild(line);
+      }
+      line.style.top = (-TOPPER_ROOM * preview.clientWidth) + 'px';
+    }
+
     function applyPreview() {
       if (preview) applyToCard(preview, slots.filter(function(c) { return c && c.id; }));
+      // A topper drawn smaller to fit under the line keeps that size, so the
+      // size control shows what the card shows.
+      var chosenTopper = preview && config && config.id
+        && preview.querySelector(':scope > .mk-card-addon[data-slot="' + activeSlot + '"][data-addon-group="topper"]');
+      var drawnScale = chosenTopper ? Number(chosenTopper.style.getPropertyValue('--mk-addon-scale')) : 0;
+      if (drawnScale && drawnScale < (Number(config.scale) || 1) - .001) {
+        config.scale = Math.max(.3, Math.floor(drawnScale * 20) / 20);
+        slots[activeSlot] = config;
+        syncControls();
+        applyToCard(preview, slots.filter(function(c) { return c && c.id; }));
+      }
       var previewAddons = preview ? preview.querySelectorAll(':scope > .mk-card-addon') : [];
       if (previewSlot) previewSlot.classList.toggle('mk-has-addon', !!previewAddons.length);
       syncPreviewClearance();
@@ -1054,6 +1164,18 @@
           if (!visibleWidth || !visibleHeight) return;
           previewAddon.classList.add('is-dragging');
           previewAddon.setPointerCapture(event.pointerId);
+          // A topper stops at the line it may not rise above (TOPPER_ROOM).
+          var addonHeight = previewAddon.offsetHeight;
+          var base = topperBase(previewAddon, width, addonHeight);
+          if (base) {
+            // One drawn smaller to fit under the line keeps that size from here on.
+            var fitNow = topperFit(previewAddon, width, addonHeight, baseY * height / 100);
+            if (fitNow.scale < (Number(config.scale) || 1)) {
+              config.scale = Math.max(.3, Math.floor(fitNow.scale * 20) / 20);
+              syncControls();
+            }
+            topperLimit(true);
+          }
           function move(moveEvent) {
             if (moveEvent.pointerId !== event.pointerId) return;
             var position = addonDragPosition(baseX, baseY, moveEvent.clientX - startX, moveEvent.clientY - startY, visibleWidth, visibleHeight);
@@ -1061,13 +1183,18 @@
             // Store the live position too: a queued geometry refresh must not
             // restore the starting coordinates in the middle of a drag.
             previewAddon.dataset.addonX = String(config.x);
+            if (base) {
+              var topY = base.h * Math.max(.3, Math.min(2, Number(config.scale) || 1)) - base.reach;
+              if (config.y * height / 100 < topY) config.y = Math.ceil(topY / height * 10000) / 100;
+            }
             previewAddon.dataset.addonY = String(config.y);
-            writeAddonGeometry(previewAddon, width, height);
+            writeAddonGeometry(previewAddon, width, height, addonHeight);
           }
           function finish(endEvent) {
             if (endEvent.pointerId !== event.pointerId) return;
             if (endEvent.type === 'pointerup') move(endEvent);
             if (endEvent.type === 'pointercancel') { config.x = baseX; config.y = baseY; }
+            topperLimit(false);
             previewAddon.classList.remove('is-dragging');
             previewAddon.removeEventListener('pointermove', move);
             previewAddon.removeEventListener('pointerup', finish);
@@ -1348,11 +1475,23 @@
     // While dragging only the preview follows; the save (all cards, cloud) on release.
     scale.addEventListener('input', function() {
       config.scale = Number(scale.value) / 100;
+      // A topper stops growing at the line it may not rise above.
+      var addon = preview && preview.querySelector(':scope > .mk-card-addon[data-slot="' + activeSlot + '"]');
+      var base = addon && topperBase(addon, preview.clientWidth, addon.offsetHeight);
+      if (base && config.id === addon.dataset.addonId) {
+        var most = Math.floor((base.reach + (Number(config.y) || 0) * preview.clientHeight / 100) / base.h * 20) / 20;
+        if (config.scale > most) {
+          config.scale = Math.max(.3, most);
+          scale.value = String(Math.round(config.scale * 100));
+        }
+        topperLimit(true);
+      }
       scaleValue.textContent = scale.value + '%';
       slots[activeSlot] = config;
       if (config.id) applyPreview();
     });
     scale.addEventListener('change', function() {
+      topperLimit(false);
       if (config.id) { saveSlots(); applyPreview(); }
     });
 
