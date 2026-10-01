@@ -258,7 +258,8 @@ function drawDotMatrix(ctx, W, H, data, dt=16.7) {
       typeof audio !== 'undefined' && !audio.paused &&
       typeof analyser !== 'undefined' && !!analyser &&
       typeof vizStyle !== 'undefined' && vizStyle >= 8 && vizStyle <= 10 &&
-      !(typeof isAdjustingVol !== 'undefined' && isAdjustingVol);
+      !(typeof isAdjustingVol !== 'undefined' && isAdjustingVol) &&
+      !window.__mkRadioConsoleCovered?.();
   }
 
   function extraLoop(){
@@ -302,6 +303,7 @@ function drawDotMatrix(ctx, W, H, data, dt=16.7) {
   new MutationObserver(scheduleExtraViz).observe(document.body,{attributes:true,attributeFilter:['class']});
   scheduleExtraViz();
   document.addEventListener('visibilitychange', scheduleExtraViz);
+  window.__mkScheduleExtraViz = scheduleExtraViz;
 })();
 
 // ─────────────────────────────────────────────────────────────

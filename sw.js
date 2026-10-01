@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.6.964-rad3';
+const CACHE = 'minka-4.6.965-rperf1';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
@@ -73,7 +73,9 @@ self.addEventListener('activate', event => {
           if (/\.(js|css|html)(\?|$)/i.test(req.url)) continue;
           if (await fresh.match(req)) continue;
           const res = await old.match(req);
-          if (res) await fresh.put(req, res);
+          // Opaque entries (cross-origin no-cors) may be a cached error:
+          // their status is invisible. Drop them; online they are refetched.
+          if (res && res.type !== 'opaque') await fresh.put(req, res);
         }
       } catch (_e) {
         // Best effort — worst case the asset is refetched on demand.
@@ -165,6 +167,15 @@ self.addEventListener('fetch', event => {
   // a new Cache Storage entry on every poll.
   const parsedUrl = new URL(url);
   if (!request.destination && parsedUrl.origin !== self.location.origin) return;
+
+  // Cross-origin images (station logos from the world catalogue, album
+  // covers, flags) are left to the browser's HTTP cache. They arrive as
+  // opaque responses whose status cannot be seen: the cache-first branch
+  // below kept a one-off 503/403 or a proxy's block page as "the logo" for
+  // good, carried it across versions, and every new track cover added one
+  // more padded entry. The HTTP cache honours each host's own headers and
+  // retries a failure on the next request.
+  if (request.destination === 'image' && parsedUrl.origin !== self.location.origin) return;
 
   // The installed app reads its presentation metadata from the web app
   // manifest. Never pin that metadata behind cache-first, so installation

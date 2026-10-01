@@ -1953,7 +1953,9 @@ button:focus-visible, input:focus-visible, select:focus-visible{
   border-radius: 8px !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  transition: all .2s ease !important;
+  /* Not "all": that caught the inherited visibility flip of every radio
+     open/close and each skin's size changes, as main-thread animations. */
+  transition: background-color .2s ease, border-color .2s ease, color .2s ease, transform .2s ease, box-shadow .2s ease !important;
 }
 #radioWindow .epb:hover, #radioWindow .eq-btn:hover {
   background: rgba(255,255,255,0.10) !important;
@@ -1996,7 +1998,9 @@ button:focus-visible, input:focus-visible, select:focus-visible{
   border: none !important;
   border-radius: 50% !important;
   color: #000 !important;
-  transition: all .2s cubic-bezier(.22,.68,0,1.2) !important;
+  transition-property: background-color, color, transform, box-shadow, filter !important;
+  transition-duration: .2s !important;
+  transition-timing-function: cubic-bezier(.22,.68,0,1.2) !important;
   box-shadow: 0 0 20px color-mix(in srgb, var(--radio-accent) 50%, transparent), 0 2px 8px rgba(0,0,0,0.4) !important;
 }
 #radioWindow #playBtn:hover {

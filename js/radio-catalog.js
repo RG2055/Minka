@@ -20,7 +20,9 @@
         return { id: row.stationuuid, catalogKey: 'rb:' + row.stationuuid,
             title: String(row.name).trim().slice(0, 180), group: 'world', country,
             tooltip: [countryName(country), String(row.tags || '').split(',').filter(Boolean).slice(0, 3).join(', ')].filter(Boolean).join(' · '),
-            cover: safeURL(row.favicon), stream_320: url, stream_128: url,
+            // http: favicons are fetched over https (as Chrome would upgrade
+            // them on this https page anyway) instead of being dropped.
+            cover: safeURL(String(row.favicon || '').trim().replace(/^http:\/\//i, 'https://')), stream_320: url, stream_128: url,
             stream_hls: row.hls === 1 || url.includes('.m3u8') ? url : '', stream_64: '', prefix: '',
             codec: String(row.codec || '').slice(0, 20), bitrate: Number(row.bitrate) || 0 };
     }

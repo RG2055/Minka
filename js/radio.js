@@ -101,6 +101,15 @@ function radioVisualsInactive() {
         document.body.classList.contains('radio-idle') ||
         document.body.classList.contains('radio-anim');
 }
+// Amp and Dither draw their own spectrum; the classic console, this canvas
+// included, sits collapsed to 1x1 px under their shell. Analysing and painting
+// it there was a second full visualizer loop nobody could see.
+const radioWin = document.getElementById('radioWindow');
+function radioConsoleCovered() {
+    const layout = radioWin && radioWin.dataset.radioLayout;
+    return (layout === 'amp' || layout === 'dither') && !radioWin.classList.contains('music-source');
+}
+window.__mkRadioConsoleCovered = radioConsoleCovered;
 function scheduleDraw(delayMs) {
     if (__drawScheduled) return;
     __drawScheduled = true;
@@ -139,6 +148,7 @@ window.__mkRadioPlaybackState = function() {
 
 function syncRadioVisualLoops() {
     window.rgPioneer?.sync();
+    window.__mkScheduleExtraViz?.();
     if (radioVisualsInactive()) {
         return;
     }
@@ -149,13 +159,27 @@ window.__mkSyncRadioVisuals = syncRadioVisualLoops;
 // Pre-warm AudioContext on first user gesture anywhere — eliminates the
 // "click twice" bug caused by suspended AudioContext on iOS/Chrome
 (function() {
-    function preWarm() {
-        document.removeEventListener('pointerdown', preWarm, true);
-        document.removeEventListener('keydown', preWarm, true);
+    function warm() {
         try {
             if (!aCtx) setupAudio();
             if (aCtx && aCtx.state === 'suspended') aCtx.resume().catch(()=>{});
         } catch(e){}
+    }
+    function preWarm() {
+        document.removeEventListener('pointerdown', preWarm, true);
+        document.removeEventListener('keydown', preWarm, true);
+        // Constructing the AudioContext opens the audio device: ~25 ms here,
+        // ~100 ms on the work PCs, inside the very pointerdown that opens the
+        // radio. Chromium lets the click paint its first frame first: the
+        // gesture's sticky activation still starts the context running (and
+        // play() calls setupAudio() itself if it comes sooner). Safari/iOS
+        // need it inside the gesture.
+        if (typeof navigator !== 'undefined' && /(?:Chrome|Chromium|Edg|OPR)\//.test(navigator.userAgent || '')) {
+            let done = false;
+            const run = () => { if (!done) { done = true; warm(); } };
+            requestAnimationFrame(() => setTimeout(run, 0));
+            setTimeout(run, 250);
+        } else warm();
     }
     document.addEventListener('pointerdown', preWarm, { capture: true, once: true, passive: true });
     document.addEventListener('keydown',     preWarm, { capture: true, once: true, passive: true });
@@ -278,6 +302,10 @@ function setNowUI(artist = "", title = "", coverUrl = ""){
     }
     cover.removeAttribute("crossorigin");
     cover._mkStationLogo = npStationLogo;
+    // Record answers its own "no art" placeholder as a site-relative path
+    // (/local/templates/.../DefaultTrack_600.png): against this app it is a
+    // 404 and a broken cover first. The station logo stands in instead.
+    if (!/^https?:\/\//i.test(coverUrl)) coverUrl = "";
     const nextSrc = coverUrl || npStationLogo || MK_COVER_BUDDY;
     if (cover.getAttribute('src') !== nextSrc) cover.src = nextSrc;
     cover.style.display = "block";
@@ -1157,7 +1185,7 @@ function loadWorldCatalog() {
     if (worldCatalogLoad) return worldCatalogLoad;
     worldCatalogLoad = new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.src = 'js/radio-catalog.js?v=20260910world2';
+        script.src = 'js/radio-catalog.js?v=20260930rperf1';
         script.onload = () => resolve(window.rgRadioCatalog);
         script.onerror = () => { script.remove(); worldCatalogLoad = null; reject(new Error('Neizdevās ielādēt staciju katalogu.')); };
         document.head.appendChild(script);
@@ -1187,7 +1215,10 @@ async function loadFeaturedStations() {
     try {
         const api = await loadWorldCatalog(), rows = await api.featured();
         featuredKeys = new Set(rows.map(s => s.catalogKey));
-        installWorldStations(rows);
+        // featured() is memoised: on every later picker open these rows are
+        // already in the catalogue, and installing them again only built a new
+        // station array, i.e. a full rebuild of the open list and its images.
+        if (!rows.every(row => stationsList.some(s => s && radioStationKey(s) === row.catalogKey))) installWorldStations(rows);
         void loadDiscoveryOverview(api);
     } catch (_) {
         const list = document.getElementById('stationPickerList');
@@ -1226,7 +1257,7 @@ function discoveryLogoStations() {
 function discoveryLogosHTML(logos) {
     const waiting = discoveryChecking || discoveryStations.some(s => !radioHealth.status(stationStreamUrl(s)));
     const holes = waiting ? Math.max(0, Math.min(4, DISCOVERY_SHOWN - logos.length)) : 0;
-    return logos.map(station => `<button type="button" class="discovery-logo" data-discovery-play="${escapeHtml(radioStationKey(station))}" aria-label="Atskaņot ${escapeHtml(station.title)}" title="${escapeHtml(station.title)}"><span class="discovery-logo-img"><img src="${escapeHtml(stationLogoUrl(station))}" alt="" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${LACITIS_RADIO_FALLBACK}'"></span><span class="discovery-logo-name">${escapeHtml(station.title)}</span></button>`).join('')
+    return logos.map(station => `<button type="button" class="discovery-logo" data-discovery-play="${escapeHtml(radioStationKey(station))}" aria-label="Atskaņot ${escapeHtml(station.title)}" title="${escapeHtml(station.title)}"><span class="discovery-logo-img"><img ${stationLogoAttrs(station)} alt="" loading="lazy" decoding="async"></span><span class="discovery-logo-name">${escapeHtml(station.title)}</span></button>`).join('')
         + '<span class="discovery-logo is-checking" aria-hidden="true"><span class="discovery-logo-img"></span><span class="discovery-logo-name"></span></span>'.repeat(holes);
 }
 let discoveryRailTimer = 0;
@@ -1406,7 +1437,7 @@ function syncWorldPicker() {
         controls.querySelector('#worldStationGenre').addEventListener('change', event => { worldGenre = event.target.value; worldOffset = 0; void loadWorldPage(); });
         controls.querySelector('[data-world-page="prev"]').addEventListener('click', () => { worldOffset = Math.max(0, worldOffset - 60); void loadWorldPage(); });
         controls.querySelector('[data-world-page="next"]').addEventListener('click', () => { worldOffset += 60; void loadWorldPage(); });
-        controls.querySelector('[data-world-retry]').addEventListener('click', () => { worldFavoriteAttempts.clear(); ensureWorldFavorites(window.__mkUnifiedMedia?.getRadio()?.favorites || []); void loadWorldPage(); });
+        controls.querySelector('[data-world-retry]').addEventListener('click', () => { worldFavoriteAttempts.clear(); failedStationLogos.clear(); ensureWorldFavorites(window.__mkUnifiedMedia?.getRadio()?.favorites || []); void loadWorldPage(); });
     }
     const genreSelect = controls.querySelector('#worldStationGenre');
     if (worldGenre && !Array.from(genreSelect.options).some(o => o.value === worldGenre)) { const option = document.createElement('option'); option.value = worldGenre; option.textContent = DISCOVERY_GENRE_NAMES[worldGenre] || worldGenre; genreSelect.appendChild(option); }
@@ -1462,15 +1493,40 @@ function normalizeStationText(value) {
     return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
 }
 
+function latvianLogoUrl(title) {
+    const key = normalizeStationText(title);
+    if (LV_STATION_EXTRA_LOGOS[key]) return LACITIS_RADIO_LOGO_BASE + LV_STATION_EXTRA_LOGOS[key];
+    const match = LV_STATION_LOGO_RULES.find(([needle]) => key.includes(needle));
+    return match ? LACITIS_RADIO_LOGO_BASE + match[1] : '';
+}
+/* Station artwork. The world catalogue (Radio Browser) is user-maintained:
+   about a third of its favicons are dead (404/403, an HTML page, a Drive
+   sign-in) and many Latvian rows have none. A URL that failed once is
+   remembered for the session, so re-rendering the list neither requests it
+   again nor flashes a broken tile first; a Latvian row falls back to the
+   bundled logo of the same station before the generic one. */
+const failedStationLogos = new Set();
+function stationLogoFallback(station) {
+    return (station?.country === 'LV' && latvianLogoUrl(station.title)) || LACITIS_RADIO_FALLBACK;
+}
 function stationLogoUrl(station) {
     if (station?.group === 'latvija') {
-        const key = normalizeStationText(station.title);
-        if (LV_STATION_EXTRA_LOGOS[key]) return LACITIS_RADIO_LOGO_BASE + LV_STATION_EXTRA_LOGOS[key];
-        const match = LV_STATION_LOGO_RULES.find(([needle]) => key.includes(needle));
-        if (match) return LACITIS_RADIO_LOGO_BASE + match[1];
+        const local = latvianLogoUrl(station.title);
+        if (local) return local;
     }
     const direct = String(station?.cover || station?.bg_image_mobile || station?.bg_image || '').trim();
-    return direct || LACITIS_RADIO_FALLBACK;
+    return direct && !failedStationLogos.has(direct) ? direct : stationLogoFallback(station);
+}
+function stationLogoFailed(img) {
+    const url = img.getAttribute('src') || '';
+    if (!url || url === LACITIS_RADIO_FALLBACK) { img.onerror = null; return; }
+    failedStationLogos.add(url);
+    const next = img.getAttribute('data-fallback');
+    img.src = next && next !== url && !failedStationLogos.has(next) ? next : LACITIS_RADIO_FALLBACK;
+}
+function stationLogoAttrs(station) {
+    const src = stationLogoUrl(station), fallback = stationLogoFallback(station);
+    return `src="${escapeHtml(src)}"${fallback !== src && fallback !== LACITIS_RADIO_FALLBACK ? ` data-fallback="${escapeHtml(fallback)}"` : ''} onerror="stationLogoFailed(this)"`;
 }
 
 function radioStationKey(station){return station.catalogKey || (station.group==='latvija'?'lv:':'record:')+String(station.title||'').normalize('NFC').trim().toLocaleLowerCase('lv-LV');}
@@ -1564,13 +1620,11 @@ function renderStationPickerList() {
         const title = escapeHtml(station.title || 'Radio');
         const description = escapeHtml(station.group === 'latvija' && (!station.tooltip || station.tooltip === 'Radio Record')
             ? 'Latvijas radio' : (station.tooltip || 'Radio Record'));
-        const logo = escapeHtml(stationLogoUrl(station));
         const offline = radioHealth.status(stationStreamUrl(station)) === 'fail';
         return `<div class="station-entry"><button class="station-tile${station.group === 'latvija' ? ' station-lv' : ''}${isCurrent ? ' is-current' : ''}${offline ? ' is-offline' : ''}"
             type="button" data-station-index="${index}" title="${title}&#10;${description}" aria-label="Atskaņot ${title}" aria-description="${description}" aria-current="${isCurrent ? 'true' : 'false'}">
             <span class="station-logo-wrap">
-                <img class="station-logo" src="${logo}" alt="" width="44" height="44" loading="lazy" decoding="async" fetchpriority="low"
-                    onerror="this.onerror=null;this.src='${LACITIS_RADIO_FALLBACK}'">
+                <img class="station-logo" ${stationLogoAttrs(station)} alt="" width="44" height="44" loading="lazy" decoding="async" fetchpriority="low">
             </span>
             <span class="station-copy"><strong>${title}</strong><small>${offline ? '<b class="station-offline-note">Pēdējoreiz nesasniedzama · </b>' : ''}${station.group === 'world' ? countryFlag(station.country) : ''}${description}</small></span>
             <span class="station-play-mark" aria-hidden="true">${isCurrent ? STATION_SELECTED_ICON : STATION_PLAY_ICON}</span>
@@ -2482,7 +2536,7 @@ function draw(ts = 0) {
     // cheap classList check fixes both. Audio plays via the <audio> element, so
     // sleeping the visualizer never stops the music.
     __drawScheduled = false;
-    const shouldSleep = vizStyle === MK_NO_VIZ || vizStyle === 5 || (vizStyle >= 8 && vizStyle <= 10) || radioVisualsInactive() || audio.paused || !analyser;
+    const shouldSleep = vizStyle === MK_NO_VIZ || vizStyle === 5 || (vizStyle >= 8 && vizStyle <= 10) || radioVisualsInactive() || audio.paused || !analyser || window.__mkRadioConsoleCovered?.();
     if (shouldSleep) {
         // Visibility/radio-toggle/play events restart the loop. Do not leave an
         // invisible 500 ms polling loop running for the whole minimized period.
@@ -3570,6 +3624,8 @@ function focusRadio(){
     window.rgPioneerLayout?.apply(rw,appearance);
     window.rgAmpLayout?.apply(rw,appearance);
     window.rgDitherLayout?.apply(rw,appearance);
+    // Leaving Amp/Dither uncovers the console canvas: wake its loop.
+    if(previousLayout!==rw.dataset.radioLayout)window.__mkSyncRadioVisuals?.();
     rw.style.setProperty('background-position',['left','center','right','top','bottom'].includes(appearance.position)?appearance.position:'center','important');
     rw.style.setProperty('background-size','cover','important');
     if(appearance.layout==='pioneer'||appearance.layout==='amp'||appearance.layout==='dither'){['border-color','border-top-color','box-shadow'].forEach(p=>rw.style.removeProperty(p));}

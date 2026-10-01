@@ -711,16 +711,21 @@
   var BMC_URL = 'https://buymeacoffee.com/rgapp';
   var BMC_BUTTON_URL = 'https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=%E2%98%95&slug=rgapp&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff';
   var BMC_COUNT_KEY = 'mkBmcSupportersV1';
-  var bmcSrc = '', bmcJob = null, bmcCount = null;
+  var bmcSrc = '', bmcJob = null, bmcCount = null, bmcCheckedAt = 0;
   try {
     var savedCount = JSON.parse(localStorage.getItem(BMC_COUNT_KEY) || 'null');
-    if (savedCount && Number.isFinite(savedCount.n)) bmcCount = savedCount.n;
+    if (savedCount && Number.isFinite(savedCount.n)) { bmcCount = savedCount.n; bmcCheckedAt = +savedCount.at || 0; }
   } catch (_e) {}
   // The official button draws the supporter count in white on yellow; one
   // fetch gives both a readable (black) count and the number for the chip.
+  // The button is served with max-age one year and sits in BMC's own CDN for
+  // days: the plain URL kept answering an old supporter count (1 while the
+  // page said 3). A new key every hour gets a fresh count past both caches;
+  // within the hour reloads are answered by the browser cache (no request).
+  function bmcFreshUrl() { return BMC_BUTTON_URL + '&mk=' + Math.floor(Date.now() / 36e5); }
   function loadBmc() {
     if (bmcJob) return bmcJob;
-    bmcJob = fetch(BMC_BUTTON_URL).then(function (r) { return r.ok ? r.text() : ''; }).then(function (svg) {
+    bmcJob = fetch(bmcFreshUrl()).then(function (r) { return r.ok ? r.text() : ''; }).then(function (svg) {
       if (!svg) return;
       var m = svg.match(/text-anchor="middle"[^>]*>\s*(\d{1,6})\s*</);
       if (m) {
@@ -730,9 +735,12 @@
       }
       var dark = svg.replace(/(<text[^>]*text-anchor="middle"[^>]*fill=")white(")/, '$1#000000$2');
       if (window.URL && URL.createObjectURL) bmcSrc = URL.createObjectURL(new Blob([dark], { type: 'image/svg+xml' }));
+    }).catch(function () {}).then(function () {
+      // The open card's button waits for this one response (no second
+      // request for the same picture); without it, the plain button.
       var img = doc.querySelector('#hxPop .hx-bmc img');
-      if (img && bmcSrc) img.src = bmcSrc;
-    }).catch(function () {});
+      if (img && !img.getAttribute('src')) img.src = bmcSrc || BMC_BUTTON_URL;
+    });
     return bmcJob;
   }
   function paintBmcCount() {
@@ -753,7 +761,7 @@
       +   '<h3>Atbalsti RG attīstību</h3>'
       +   '<p>Ja RG tev noder darbā, vari uzsaukt kafiju: tas ir paldies par ieguldīto laiku un atbalsts nākamajiem uzlabojumiem.</p>'
       +   '<p class="hx-muted">Noskenē QR ar telefona kameru vai spied pogu. ' + (n ? 'Skaitlis pogā rāda, cik cilvēku jau atbalstījuši: <b>' + n + '</b>.' : 'Skaitlis pogā rāda, cik cilvēku jau atbalstījuši.') + '</p>'
-      +   '<a class="hx-bmc" href="' + BMC_URL + '" target="_blank" rel="noopener"><img alt="Buy me a coffee" width="188" height="40" decoding="async" src="' + esc(bmcSrc || BMC_BUTTON_URL) + '"></a>'
+      +   '<a class="hx-bmc" href="' + BMC_URL + '" target="_blank" rel="noopener"><img alt="Buy me a coffee" width="188" height="40" decoding="async"' + (bmcSrc ? ' src="' + esc(bmcSrc) + '"' : '') + '></a>'
       + '</div></div>';
   }
 
@@ -1963,7 +1971,8 @@
     });
     // The supporter count is fetched once, in idle time, after the calendar is up.
     var idle = window.requestIdleCallback || function (cb) { return setTimeout(cb, 1200); };
-    setTimeout(function () { idle(function () { loadBmc(); }); }, 8000);
+    // Checked within the last hour (this or another tab): nothing to do.
+    if (Date.now() - bmcCheckedAt >= 36e5) setTimeout(function () { idle(function () { loadBmc(); }); }, 8000);
   }
   window.MkHeaderX = { openSearch: openSearch, closeSearch: closeSearch, goToday: goToday,
     openMobile: function () { if (els.mobile) openPop('mobile', els.mobile, true); } };

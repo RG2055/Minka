@@ -12,7 +12,7 @@
   font-weight: 800 !important;
   letter-spacing: 0.3px !important;
   cursor: pointer !important;
-  transition: all .18s ease !important;
+  transition: background-color .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease !important;
 }
 #ceqTriggerBtn.active,
 #ceqTriggerBtn:hover {

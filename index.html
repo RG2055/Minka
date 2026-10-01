@@ -306,7 +306,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20260930rad3';
+  var CALENDAR_BUILD = '20261001rperf1';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -734,16 +734,16 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
 
 
 <!-- App CSS: critical shell loads normally; radio extras load non-blocking -->
-<link rel="stylesheet" href="css/minka.css?v=20260910vfd3">
+<link rel="stylesheet" href="css/minka.css?v=20260930rperf1">
 <link rel="stylesheet" href="css/radio-extra.css?v=20260910oel3">
 <!-- Non-critical CSS loaded async -->
 <link rel="preload" as="style" href="css/improvements.css?v=20260910pioneer2"
   onload="this.onload=null;this.rel='stylesheet'">
-<link rel="preload" as="style" href="css/radio_extras_v4.css"
+<link rel="preload" as="style" href="css/radio_extras_v4.css?v=20260930rperf1"
   onload="this.onload=null;this.rel='stylesheet'">
 <noscript>
   <link rel="stylesheet" href="css/improvements.css?v=20260910pioneer2">
-  <link rel="stylesheet" href="css/radio_extras_v4.css">
+  <link rel="stylesheet" href="css/radio_extras_v4.css?v=20260930rperf1">
 </noscript>
 <!-- Radio polish overrides — must load after all other radio CSS -->
 <link rel="stylesheet" href="css/radio_polish_v1.css?v=20260708b">
@@ -1033,7 +1033,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <div id="calendarEmbed">
   <!-- Keep the expensive calendar document dormant behind the password gate.
        Authenticated startup assigns data-base-src immediately. -->
-  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20260930rad3" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20261001rperf1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- Dither loader (js/dither-loader.js). It stays up until the embedded
@@ -1373,8 +1373,8 @@ async function loadRadioScripts() {
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20260919pixel2']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
-  await loadAny(['js/radio.js?v=20260926api1']);
-  await loadAny(['js/radio_extras_v4.js?v=20260919pixel2']);
+  await loadAny(['js/radio.js?v=20260930rperf1']);
+  await loadAny(['js/radio_extras_v4.js?v=20260930rperf1']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;
   return true;
@@ -1723,7 +1723,15 @@ function radioIdleClick() {
         setTimeout(tryStart, 100);
       }
     }
-    tryStart();
+    // Chromium: the reveal paints its first frame before the stream, hls.js
+    // and the audio graph are set up (the click's sticky activation still
+    // allows play()). Other engines keep it inside the gesture.
+    if (typeof navigator !== 'undefined' && /(?:Chrome|Chromium|Edg|OPR)\//.test(navigator.userAgent || '')) {
+      var started = false;
+      var once = function () { if (!started) { started = true; tryStart(); } };
+      requestAnimationFrame(function () { setTimeout(once, 0); });
+      setTimeout(once, 250);
+    } else tryStart();
   }).catch(function(err) {
     console.error(err);
     btn._loading = false;
