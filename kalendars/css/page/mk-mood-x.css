@@ -1303,7 +1303,8 @@
   cursor: pointer;
   transition: background-color 150ms ease, color 150ms ease, scale var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, ease);
 }
-.mx-hof-like svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
+.mx-hof-like svg { flex: none; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
+.mx-hof-like span:empty { display: none; }
 .mx-hof-like[aria-pressed="true"] { background: rgba(255, 90, 95, .14); color: #ff5a5f; }
 .mx-hof-like[aria-pressed="true"] svg { fill: currentColor; }
 .mx-hof-like:active { scale: .9; }

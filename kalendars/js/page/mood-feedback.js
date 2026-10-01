@@ -3043,7 +3043,7 @@
         var index = animalIndex(it.author);
         card.innerHTML = '<div class="mx-hof-pic"><img alt="" decoding="async"></div><span class="mx-hof-rank" hidden></span><span class="mx-hof-tag" hidden>pārzīmēts</span>'
           + '<footer><span class="mx-hof-ava"></span><span class="mx-hof-who"><b></b><small></small></span>'
-          + '<button type="button" class="mx-hof-like" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-9.6A4 4 0 0 1 12 8a4 4 0 0 1 7 2.4C19 15.6 12 20 12 20z"/></svg><span></span></button></footer>';
+          + '<button type="button" class="mx-hof-like" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19.9 4.78 11.3A4.2 4.2 0 1 1 12 7.32a4.2 4.2 0 1 1 7.22 3.98z"/></svg><span></span></button></footer>';
         card.querySelector('img').src = skyArtUrl(it.art);
         card.querySelector('.mx-hof-ava').textContent = index >= 0 ? ANIMALS[index][1] : '🎨';
         if (index >= 0) card.querySelector('.mx-hof-ava').style.setProperty('--mx-ava', ANIMAL_TONES[index % ANIMAL_TONES.length][0]);
