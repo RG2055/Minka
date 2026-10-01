@@ -7,7 +7,8 @@
    no tās Jaunais NMP: gultas tajās vietās, kur Nakts sadalījumā, tajās tās
    nakts gulētāji, pa istabām staigā Nakts kaķi. Tālāk Leonardo zāle ar
    Mīlo Venēru, tad šīs dežūras siena ar tukšiem rāmjiem (zīmē tieši tur)
-   un pārējās dežūras. Apakšā Doom josla ar tavu dienas anonīmo dzīvnieku.
+   un pārējās dežūras. Zāles galā pie White Monster stūra sienas akvārijs
+   (E vai klikšķis: pabarot zivtiņas). Apakšā Doom josla ar tavu dienas anonīmo dzīvnieku.
 
    Dzinējs ir mazs "raycaster" (Wolfenstein princips, kā
    cynicconn/RaycastEngineTechDemo): grīda un griesti katrs vienā tonī ar
@@ -557,89 +558,246 @@
     return out;
   }
 
-  /* ── Koi dīķis ────────────────────────────────────────────────────────── */
-  // A low pond set into the lobby floor, seen from above as you walk round
-  // it (after cyze.dev's koi dither pond): water in two tones with moving
-  // light, koi with a beating tail and a shadow, dithered (Bayer). They dart
-  // off when you come close and drift back; E feeds them. Simulated and
-  // painted 20 times a second, only while the pond is in sight.
-  var PONDRES = 80;                                        // texels a unit
-  function pondColor(hex) { var c = rgbOf(hex); return (255 << 24 | c[2] << 16 | c[1] << 8 | c[0]) >>> 0; }
-  var POND_C = {
-    water: pondColor('#0f2c3d'), light: pondColor('#2f7395'), shadow: pondColor('#08192a'),
-    orange: pondColor('#ff8a3d'), orangeD: pondColor('#c4561f'), white: pondColor('#f3eee6'), whiteD: pondColor('#b9b4ab'),
-    food: pondColor('#e2c27a'), rim: pondColor('#b7b0a3'), rimD: pondColor('#8e877b')
-  };
-  function makePond(rect) {
-    var w = Math.round((rect.x1 - rect.x0) * PONDRES), h = Math.round((rect.y1 - rect.y0) * PONDRES), r = rnd(61), koi = [];
-    for (var i = 0; i < 4; i++) koi.push({ x: 24 + r() * (w - 48), y: 16 + r() * (h - 32), a: r() * 6.28, sp: 9 + r() * 5, ph: r() * 6, len: 17 + r() * 6, pat: (r() * 255) | 1, scare: 0 });
-    return { w: w, h: h, koi: koi, food: [], px: new Uint32Array(w * h), t: 0, at: 0, levels: null };
-  }
-  function pondNear(st, d) {
-    var m = st.map.pond, cx = Math.max(m.x0, Math.min(m.x1, st.x)), cy = Math.max(m.y0, Math.min(m.y1, st.y));
-    return Math.hypot(st.x - cx, st.y - cy) < d;
-  }
-  function stepPond(st, dt) {
-    var pd = st.pond, m = st.map.pond;
-    pd.t += dt;
-    var ux = (st.x - m.x0) * PONDRES, uy = (st.y - m.y0) * PONDRES;
-    var cx = Math.max(0, Math.min(pd.w, ux)), cy = Math.max(0, Math.min(pd.h, uy)), near = pondNear(st, 0.9);
-    pd.koi.forEach(function (k) {
-      var best = null, bd = 1e9;
-      pd.food.forEach(function (f) { var d = Math.hypot(f.x - k.x, f.y - k.y); if (d < bd) { bd = d; best = f; } });
-      var want = k.a + Math.sin(pd.t * 0.7 + k.ph * 0.3) * 0.9, speed = k.sp, turn = 2.6;
-      if (best) { want = Math.atan2(best.y - k.y, best.x - k.x); speed = k.sp * 1.5; if (bd < 3.5) best.eaten = true; }
-      else if (near && Math.hypot(k.x - cx, k.y - cy) < 50) k.scare = 1.3;     // you came close: dart off
-      if (k.scare > 0) { k.scare -= dt; want = Math.atan2(k.y - cy, k.x - cx); speed = k.sp * 3.2; turn = 6; }
-      var mg = 10;
-      if (k.x < mg || k.x > pd.w - mg || k.y < mg || k.y > pd.h - mg) { want = Math.atan2(pd.h / 2 - k.y, pd.w / 2 - k.x); turn = Math.max(turn, 4); }
-      var diff = Math.atan2(Math.sin(want - k.a), Math.cos(want - k.a));
-      k.a += Math.max(-turn * dt, Math.min(turn * dt, diff));
-      k.x = Math.max(4, Math.min(pd.w - 4, k.x + Math.cos(k.a) * speed * dt));
-      k.y = Math.max(4, Math.min(pd.h - 4, k.y + Math.sin(k.a) * speed * dt));
-      k.ph += dt * (3 + speed * 0.35);
+  /* ── Akvārijs ─────────────────────────────────────────────────────────── */
+  // A tank on the hall's end wall by the White Monster corner: sand, plants
+  // that sway, an air stone's bubbles and fish seen from the side that turn
+  // round in depth (narrowing as they turn), the far ones smaller and bluer.
+  // E or a click drops flakes where you look and the fish come up to eat.
+  // Three wall cells carry it (their own copies of the plaster); the water is
+  // painted on a small canvas only while it is in sight,
+  // and only the tank's rows of those textures and their mips are redone
+  // (30 times a second while they feed, 20 otherwise).
+  var AQ_CELLS = 3, AQ_W = AQ_CELLS * TEX;                 // the strip of wall, cells right to left in x
+  var AQ_OUT = [192, 44, 703, 189], AQ_IN = [196, 54, 699, 183];   // texels across the strip: frame, water
+  var AQ_TW = AQ_IN[2] - AQ_IN[0] + 1, AQ_TH = AQ_IN[3] - AQ_IN[1] + 1, AQ_SAND = AQ_TH - 16;
+  // species: length in texels, height to length, colours back / side / belly, how many
+  var FISH = [
+    { kind: 'gold', len: 46, hr: 0.42, c: ['#b4470f', '#f28a1e', '#ffd28a'], fin: 'rgba(255,170,80,.75)', n: 2, sp: 24 },
+    { kind: 'angel', len: 34, hr: 0.9, c: ['#8d939c', '#dfe3e6', '#f4f6f7'], fin: 'rgba(225,230,235,.6)', n: 1, sp: 16 },
+    { kind: 'guppy', len: 22, hr: 0.32, c: ['#6f7d86', '#b9c4c9', '#e4ebee'], fin: 'rgba(255,120,60,.9)', n: 2, sp: 30 },
+    { kind: 'neon', len: 18, hr: 0.3, c: ['#3c4a5c', '#9fb2c2', '#e8eef2'], fin: 'rgba(220,235,245,.35)', n: 6, sp: 32 },
+    { kind: 'cory', len: 24, hr: 0.38, c: ['#5b5448', '#a39985', '#e2dacb'], fin: 'rgba(170,160,140,.6)', n: 1, sp: 12 }
+  ];
+  function makeAquarium(st, rect) {
+    var r = rnd(19), fish = [];
+    FISH.forEach(function (s) {
+      for (var i = 0; i < s.n; i++) {
+        var f = { s: s, x: 30 + r() * (AQ_TW - 60), y: 20 + r() * (AQ_SAND - 40), z: r(), yaw: r() < 0.5 ? 0 : Math.PI, ph: r() * 6, tx: 0, ty: 0, tz: 0, speed: s.sp * (0.8 + r() * 0.4), wait: 0 };
+        if (s.kind === 'cory') f.y = AQ_SAND - 2;
+        fish.push(f);
+      }
     });
-    pd.food = pd.food.filter(function (f) { f.life -= dt; return !f.eaten && f.life > 0; });
+    fish.forEach(function (f) { aimFish(f, r); });
+    // the strip's own plaster with the frame on it, cut into the cells' textures
+    var strip = canvas(AQ_W, TEX), sc = strip.getContext('2d');
+    for (var i = 0; i < AQ_CELLS; i++) sc.drawImage(st.tex.plasterCanvas, i * TEX, 0);
+    sc.fillStyle = 'rgba(40,30,20,.18)'; sc.fillRect(AQ_OUT[0] + 4, AQ_OUT[3] + 1, AQ_OUT[2] - AQ_OUT[0] + 1, 2);   // its shadow on the wall
+    sc.fillStyle = '#16191d'; sc.fillRect(AQ_OUT[0], AQ_OUT[1], AQ_OUT[2] - AQ_OUT[0] + 1, AQ_OUT[3] - AQ_OUT[1] + 1);
+    sc.fillStyle = '#2a2f35'; sc.fillRect(AQ_OUT[0], AQ_OUT[1], AQ_OUT[2] - AQ_OUT[0] + 1, 2);                   // the hood's edge
+    sc.fillStyle = '#cfeaff'; sc.fillRect(AQ_IN[0], AQ_IN[1] - 2, AQ_TW, 1);                                     // its light strip
+    sc.fillStyle = '#2a2f35'; sc.fillRect(AQ_OUT[0], AQ_OUT[3] - 1, AQ_OUT[2] - AQ_OUT[0] + 1, 1);
+    var all = data(strip), cells = [];
+    for (i = 0; i < AQ_CELLS; i++) {
+      var px0 = new Uint32Array(TEX * TEX);
+      for (var y = 0; y < TEX; y++) px0.set(all.subarray(y * AQ_W + i * TEX, y * AQ_W + (i + 1) * TEX), y * TEX);
+      cells.push({ mips: mipChain(px0, TEX, TEX, MIPS) });
+    }
+    var water = canvas(AQ_TW, AQ_TH);
+    return { rect: rect, fish: fish, food: [], bubbles: [], t: 0, at: 0, cells: cells, water: water, wctx: water.getContext('2d', { willReadFrequently: true }), back: aquaBack(), plants: aquaPlants(), r: r };
   }
-  function stampKoi(pd, k, shadow) {
-    var N = 9, ca = Math.cos(k.a), sa = Math.sin(k.a), w = pd.w, h = pd.h, px = pd.px, C = POND_C;
-    for (var i = 0; i <= N; i++) {
-      var t = i / N, along = k.len * (0.35 - t), wave = Math.sin(k.ph - t * 2.6) * t * t * k.len * 0.16;
-      var sx = k.x + ca * along - sa * wave + (shadow ? 2.5 : 0), sy = k.y + sa * along + ca * wave + (shadow ? 3 : 0);
-      var r = i === N ? k.len * 0.13 : k.len * 0.16 * (i === 0 ? 0.82 : 1 - Math.pow(t, 1.4) * 0.8);
-      var light = (k.pat >> (i % 8)) & 1, x0 = Math.max(1, Math.floor(sx - r)), x1 = Math.min(w - 2, Math.ceil(sx + r));
-      for (var y = Math.max(1, Math.floor(sy - r)); y <= Math.min(h - 2, Math.ceil(sy + r)); y++) for (var x = x0; x <= x1; x++) {
-        var d = Math.hypot(x - sx, y - sy) / r;
-        if (d > 1) continue;
-        var q = y * w + x;
-        if (shadow) { if (px[q] === C.water || px[q] === C.light) px[q] = C.shadow; continue; }
-        var edge = (BAYER8[(y & 7) * 8 + (x & 7)] + 0.5) / 64 < (d - 0.45) * 1.7;
-        px[q] = light ? (edge ? C.whiteD : C.white) : (edge ? C.orangeD : C.orange);
+  // where a fish heads next: anywhere for most, the sand for the catfish,
+  // round the first neon for the other neons
+  function aimFish(f, r, lead) {
+    if (f.s.kind === 'cory') { f.tx = 20 + r() * (AQ_TW - 40); f.ty = AQ_SAND - 2; f.tz = r(); return; }
+    if (lead) { f.tx = lead.x - Math.cos(lead.yaw) * (10 + r() * 16); f.ty = lead.y + (r() - 0.5) * 14; f.tz = Math.max(0, Math.min(1, lead.z + (r() - 0.5) * 0.3)); return; }
+    f.tx = 24 + r() * (AQ_TW - 48); f.ty = 14 + r() * (AQ_SAND - 34); f.tz = r();
+  }
+  // the still part, painted once: deep water, the back of the tank, sand, stones
+  function aquaBack() {
+    var c = canvas(AQ_TW, AQ_TH), x = c.getContext('2d'), r = rnd(5);
+    var g = x.createLinearGradient(0, 0, 0, AQ_TH);
+    g.addColorStop(0, '#5fb3c4'); g.addColorStop(0.55, '#2b7f96'); g.addColorStop(1, '#17566c');
+    x.fillStyle = g; x.fillRect(0, 0, AQ_TW, AQ_TH);
+    var sg = x.createLinearGradient(0, AQ_SAND - 6, 0, AQ_TH);
+    sg.addColorStop(0, '#b9a47c'); sg.addColorStop(1, '#8a7656');
+    x.fillStyle = sg;
+    x.beginPath(); x.moveTo(0, AQ_SAND - 2);
+    for (var i = 0; i <= 12; i++) x.lineTo(i * AQ_TW / 12, AQ_SAND - 3 + Math.sin(i * 1.7) * 2.5);
+    x.lineTo(AQ_TW, AQ_TH); x.lineTo(0, AQ_TH); x.fill();
+    for (i = 0; i < 260; i++) { x.fillStyle = r() < 0.5 ? 'rgba(90,72,48,.5)' : 'rgba(235,222,190,.45)'; x.fillRect((r() * AQ_TW) | 0, AQ_SAND - 1 + ((r() * 16) | 0), 1, 1); }
+    // smooth river stones: a small pile left of the middle, a few on their own
+    [[0.3, 20, 17], [0.355, 15, 12], [0.255, 12, 9], [0.33, 8, 6], [0.62, 9, 11], [0.71, 6, 7], [0.12, 7, 8]].forEach(function (s) {
+      var sx = AQ_TW * s[0], sy = AQ_SAND + 1, rg = x.createRadialGradient(sx - s[1] * 0.3, sy - s[2] * 0.7, 1, sx, sy, s[1] * 1.3);
+      rg.addColorStop(0, '#9a9a94'); rg.addColorStop(1, '#4b4d4c');
+      x.fillStyle = rg; x.beginPath(); x.ellipse(sx, sy, s[1] * 1.4, s[2], 0, Math.PI, 0); x.fill();
+    });
+    return c;
+  }
+  function aquaPlants() {
+    var r = rnd(29), out = [];
+    [0.05, 0.09, 0.15, 0.48, 0.53, 0.8, 0.86, 0.92, 0.97].forEach(function (u, i) {
+      var blades = [];
+      for (var k = 0; k < 4 + ((r() * 3) | 0); k++) blades.push({ dx: (r() - 0.5) * 8, h: 30 + r() * (AQ_SAND - 50), lean: (r() - 0.5) * 14, ph: r() * 6 });
+      out.push({ x: AQ_TW * u, front: i % 3 === 1, blades: blades, c: i % 2 ? ['#2f7d3a', '#57a84a'] : ['#2b6b45', '#4c9a5c'] });
+    });
+    return out;
+  }
+  function drawPlants(x, aq, front) {
+    x.lineCap = 'round';
+    aq.plants.forEach(function (p) {
+      if (p.front !== front) return;
+      p.blades.forEach(function (b, i) {
+        var sway = Math.sin(aq.t * 0.9 + b.ph) * 4, bx = p.x + b.dx, by = AQ_SAND + 1;
+        x.strokeStyle = i % 2 ? p.c[0] : p.c[1]; x.lineWidth = front ? 3 : 2.5;
+        x.beginPath(); x.moveTo(bx, by); x.quadraticCurveTo(bx + b.lean * 0.4, by - b.h * 0.55, bx + b.lean + sway, by - b.h); x.stroke();
+      });
+    });
+  }
+  // a fish from the side, nose to +x, at the origin; t: its tail's beat
+  function drawFish(x, f) {
+    var s = f.s, L = s.len, h = L * s.hr, t = Math.sin(f.ph);
+    var g = x.createLinearGradient(0, -h * 0.55, 0, h * 0.55);
+    g.addColorStop(0, s.c[0]); g.addColorStop(0.45, s.c[1]); g.addColorStop(1, s.c[2]);
+    // tail, beating round its root
+    x.save(); x.translate(-L * 0.3, 0); x.rotate(t * 0.35);
+    x.fillStyle = s.fin;
+    var tl = s.kind === 'guppy' ? L * 0.45 : s.kind === 'gold' ? L * 0.36 : L * 0.24, th = s.kind === 'guppy' ? h * 1.5 : s.kind === 'angel' ? h * 0.5 : h * 0.8;
+    x.beginPath(); x.moveTo(0, 0); x.quadraticCurveTo(-tl * 0.6, -th * 0.2, -tl, -th * 0.6); x.quadraticCurveTo(-tl * 0.75, 0, -tl, th * 0.6); x.quadraticCurveTo(-tl * 0.6, th * 0.2, 0, 0); x.fill();
+    if (s.kind === 'guppy') { x.fillStyle = 'rgba(80,140,255,.55)'; x.beginPath(); x.moveTo(-tl * 0.35, 0); x.quadraticCurveTo(-tl * 0.8, -th * 0.3, -tl, -th * 0.45); x.lineTo(-tl, -th * 0.1); x.fill(); }
+    x.restore();
+    // fins: the angelfish's long sails, a small dorsal for the rest
+    x.fillStyle = s.fin;
+    if (s.kind === 'angel') {
+      x.beginPath(); x.moveTo(L * 0.1, -h * 0.4); x.quadraticCurveTo(-L * 0.1, -h * 1.2, -L * 0.25, -h * 1.35); x.quadraticCurveTo(-L * 0.18, -h * 0.6, -L * 0.28, -h * 0.1); x.fill();
+      x.beginPath(); x.moveTo(L * 0.1, h * 0.4); x.quadraticCurveTo(-L * 0.1, h * 1.2, -L * 0.25, h * 1.35); x.quadraticCurveTo(-L * 0.18, h * 0.6, -L * 0.28, h * 0.1); x.fill();
+    } else {
+      x.beginPath(); x.moveTo(L * 0.08, -h * 0.42); x.quadraticCurveTo(-L * 0.05, -h * 0.85, -L * 0.14, -h * 0.4); x.fill();
+    }
+    // the body
+    x.fillStyle = g;
+    x.beginPath(); x.moveTo(L * 0.5, 0);
+    x.bezierCurveTo(L * 0.44, -h * 0.5, L * 0.05, -h * 0.62, -L * 0.32, -h * 0.12);
+    x.lineTo(-L * 0.32, h * 0.12);
+    x.bezierCurveTo(L * 0.05, h * 0.62, L * 0.44, h * 0.5, L * 0.5, 0); x.fill();
+    // markings
+    if (s.kind === 'neon') {
+      x.fillStyle = '#2fd0ff'; x.fillRect(-L * 0.28, -h * 0.18, L * 0.68, Math.max(1, h * 0.22));
+      x.fillStyle = '#ff3b4e'; x.fillRect(-L * 0.3, h * 0.05, L * 0.42, Math.max(1, h * 0.26));
+    } else if (s.kind === 'angel') {
+      x.fillStyle = 'rgba(30,30,34,.75)';
+      [0.22, -0.02, -0.22].forEach(function (u) { x.fillRect(L * u - 1, -h * 0.55, 2, h * 1.1); });
+    } else if (s.kind === 'cory') {
+      x.fillStyle = 'rgba(40,36,30,.6)';
+      for (var k = 0; k < 6; k++) x.fillRect(-L * 0.25 + k * L * 0.1, -h * 0.15 + (k % 2) * 2, 1.5, 1.5);
+    }
+    // light along the back, the gill, the eye
+    x.fillStyle = 'rgba(255,255,255,.28)';
+    x.beginPath(); x.ellipse(L * 0.08, -h * 0.28, L * 0.26, Math.max(1, h * 0.1), -0.08, 0, Math.PI * 2); x.fill();
+    x.strokeStyle = 'rgba(0,0,0,.18)'; x.lineWidth = 1;
+    x.beginPath(); x.moveTo(L * 0.26, -h * 0.3); x.quadraticCurveTo(L * 0.2, 0, L * 0.26, h * 0.3); x.stroke();
+    var er = Math.max(1.2, L * 0.055);
+    x.fillStyle = '#101418'; x.beginPath(); x.arc(L * 0.36, -h * 0.08, er, 0, Math.PI * 2); x.fill();
+    x.fillStyle = 'rgba(255,255,255,.85)'; x.fillRect(L * 0.36 - er * 0.5, -h * 0.08 - er * 0.6, 1, 1);
+  }
+  function stepAquarium(aq, dt) {
+    var r = aq.r, lead = aq.fish.find(function (f) { return f.s.kind === 'neon'; });
+    aq.t += dt;
+    aq.food.forEach(function (fd) {
+      if (fd.y < AQ_SAND - 1) { fd.y += dt * (5 + fd.k * 3); fd.x += Math.sin(aq.t * 1.6 + fd.k * 9) * dt * 3; }
+      else fd.life -= dt;
+    });
+    aq.fish.forEach(function (f) {
+      var food = null, fdd = 1e9;
+      aq.food.forEach(function (fd) { var d = Math.hypot(fd.x - f.x, fd.y - f.y); if (d < fdd && (f.s.kind !== 'cory' || fd.y > AQ_SAND - 8)) { fdd = d; food = fd; } });
+      var tx = f.tx, ty = f.ty, tz = f.tz, speed = f.speed;
+      if (food) { tx = food.x; ty = food.y; tz = 0.85; speed *= 1.7; if (Math.abs(food.x - f.x) < f.s.len * 0.4 && Math.abs(food.y - f.y) < 6) food.eaten = true; }
+      else if (Math.hypot(tx - f.x, ty - f.y) < 6) {
+        f.wait -= dt;
+        if (f.wait <= 0) { aimFish(f, r, f.s.kind === 'neon' && f !== lead ? lead : null); f.wait = 0.5 + r() * 2.5; }
+        speed *= 0.25;
+      }
+      // it turns round only for a target well behind it (a slow half circle
+      // through depth), never back and forth for one just above or below
+      var dx = tx - f.x;
+      if (f.dir == null) f.dir = Math.cos(f.yaw) < 0 ? -1 : 1;
+      if (dx * f.dir < -f.s.len) f.dir = -f.dir;
+      var want = Math.atan2((tz - f.z) * 90, f.dir * Math.max(Math.abs(dx) * (dx * f.dir > 0 ? 1 : 0), f.s.len)), diff = Math.atan2(Math.sin(want - f.yaw), Math.cos(want - f.yaw));
+      f.yaw += Math.max(-2.4 * dt, Math.min(2.4 * dt, diff));
+      var slow = dx * f.dir > 0 ? Math.min(1, 0.25 + Math.abs(dx) / (f.s.len * 2)) : 0.35;   // eases in over the food instead of passing it
+      f.x = Math.max(f.s.len * 0.5, Math.min(AQ_TW - f.s.len * 0.5, f.x + Math.cos(f.yaw) * speed * slow * dt));
+      f.z = Math.max(0, Math.min(1, f.z + Math.sin(f.yaw) * speed * dt / 90));
+      f.y += Math.max(-speed * 0.5 * dt, Math.min(speed * 0.5 * dt, ty - f.y));
+      f.y = Math.max(f.s.len * f.s.hr * 0.7 + 3, Math.min(AQ_SAND - (f.s.kind === 'cory' ? 2 : 6), f.y));
+      f.ph += dt * (4 + speed * 0.3);
+    });
+    aq.food = aq.food.filter(function (fd) { return !fd.eaten && fd.life > 0; });
+    if (r() < dt * 3) aq.bubbles.push({ x: AQ_TW - 22 + (r() - 0.5) * 4, y: AQ_SAND - 1, rad: 1 + r() * 1.6, ph: r() * 6 });
+    aq.bubbles.forEach(function (b) { b.y -= dt * (22 + b.rad * 6); b.x += Math.sin(aq.t * 5 + b.ph) * dt * 4; });
+    aq.bubbles = aq.bubbles.filter(function (b) { return b.y > 2; });
+  }
+  function paintAquarium(aq) {
+    var x = aq.wctx, t = aq.t;
+    x.drawImage(aq.back, 0, 0);
+    // light falling through the surface
+    x.fillStyle = 'rgba(220,250,255,.07)';
+    for (var i = 0; i < 6; i++) {
+      var lx = ((i * 97 + t * 7) % (AQ_TW + 80)) - 40;
+      x.beginPath(); x.moveTo(lx, 0); x.lineTo(lx + 22, 0); x.lineTo(lx + 52, AQ_SAND); x.lineTo(lx + 34, AQ_SAND); x.fill();
+    }
+    drawPlants(x, aq, false);
+    aq.fish.slice().sort(function (a, b) { return a.z - b.z; }).forEach(function (f) {
+      var k = 0.62 + 0.38 * f.z, sx = Math.cos(f.yaw);
+      if (Math.abs(sx) < 0.16) sx = sx < 0 ? -0.16 : 0.16;               // head on: a narrow fish, not none
+      x.save();
+      x.globalAlpha = 0.7 + 0.3 * f.z;                                    // the far ones through more water
+      x.translate(f.x, f.y); x.scale(sx * k, k);
+      drawFish(x, f);
+      x.restore();
+    });
+    x.globalAlpha = 1;
+    x.fillStyle = '#e0b866';
+    aq.food.forEach(function (fd) { x.fillRect(fd.x | 0, fd.y | 0, 3, 2); });
+    x.strokeStyle = 'rgba(235,250,255,.7)'; x.lineWidth = 1;
+    aq.bubbles.forEach(function (b) { x.beginPath(); x.arc(b.x, b.y, b.rad, 0, Math.PI * 2); x.stroke(); });
+    drawPlants(x, aq, true);
+    x.fillStyle = 'rgba(230,250,255,.45)'; x.fillRect(0, 0, AQ_TW, 2);                // the surface
+    x.fillStyle = 'rgba(255,255,255,.06)';                                           // the front glass
+    x.beginPath(); x.moveTo(AQ_TW * 0.08, 0); x.lineTo(AQ_TW * 0.16, 0); x.lineTo(AQ_TW * 0.06, AQ_TH); x.lineTo(-AQ_TW * 0.02, AQ_TH); x.fill();
+    // into the three cells' textures, then their smaller copies (the tank's rows only)
+    var src = new Uint32Array(x.getImageData(0, 0, AQ_TW, AQ_TH).data.buffer);
+    for (var ci = 0; ci < AQ_CELLS; ci++) {
+      var c0 = Math.max(AQ_IN[0], ci * TEX), c1 = Math.min(AQ_IN[2], ci * TEX + TM);
+      if (c0 > c1) continue;
+      var dst = aq.cells[ci].mips[0].px, n = c1 - c0 + 1;
+      for (var y = 0; y < AQ_TH; y++) dst.set(src.subarray(y * AQ_TW + c0 - AQ_IN[0], y * AQ_TW + c0 - AQ_IN[0] + n), (AQ_IN[1] + y) * TEX + c0 - ci * TEX);
+      halveRows(aq.cells[ci].mips, AQ_IN[1], AQ_IN[3]);
+    }
+  }
+  // redo the mips of a texture between two rows of its full size copy
+  function halveRows(levels, y0, y1) {
+    for (var l = 1; l < levels.length; l++) {
+      var a = levels[l - 1], b = levels[l], w = a.w, nw = b.w, cur = a.px, next = b.px;
+      y0 >>= 1; y1 = (y1 >> 1);
+      for (var y = y0; y <= Math.min(y1, b.h - 1); y++) {
+        var r0 = y * 2 * w, r1 = r0 + w;
+        for (var xx = 0; xx < nw; xx++) {
+          var p = cur[r0 + xx * 2], q = cur[r0 + xx * 2 + 1], s = cur[r1 + xx * 2], u = cur[r1 + xx * 2 + 1];
+          next[y * nw + xx] = (255 << 24 | ((((p >> 16) & 255) + ((q >> 16) & 255) + ((s >> 16) & 255) + ((u >> 16) & 255)) >> 2) << 16
+            | ((((p >> 8) & 255) + ((q >> 8) & 255) + ((s >> 8) & 255) + ((u >> 8) & 255)) >> 2) << 8
+            | (((p & 255) + (q & 255) + (s & 255) + (u & 255)) >> 2)) >>> 0;
+        }
       }
     }
   }
-  function paintPond(pd) {
-    var w = pd.w, h = pd.h, px = pd.px, t = pd.t, C = POND_C;
-    for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
-      var c = Math.sin(x * 0.19 + t * 1.1 + Math.sin(y * 0.23 - t * 0.8) * 1.6) * Math.sin(y * 0.31 - t * 0.9 + x * 0.05);
-      px[y * w + x] = (BAYER8[(y & 7) * 8 + (x & 7)] + 0.5) / 64 < c * c * 0.55 ? C.light : C.water;
-    }
-    pd.koi.forEach(function (k) { stampKoi(pd, k, true); });
-    pd.koi.forEach(function (k) { stampKoi(pd, k, false); });
-    pd.food.forEach(function (f) { var q = (f.y | 0) * w + (f.x | 0); if (q >= 0 && q < px.length - 1) { px[q] = C.food; px[q + 1] = C.food; } });
-    for (y = 0; y < h; y++) for (x = 0; x < w; x++) {                       // the stone rim
-      var e = Math.min(x, y, w - 1 - x, h - 1 - y);
-      if (e < 4) px[y * w + x] = e === 3 ? C.rimD : C.rim;
-    }
-    pd.levels = mipChain(px, w, h, 4);
+  // flakes on the water above where you look (wx: the wall's x there)
+  function feedFish(st, wx) {
+    var aq = st.aqua, rect = st.map.aquarium;
+    var c = (rect.cell1 + 1 - wx) * TEX - AQ_IN[0];
+    if (!(c >= 0 && c < AQ_TW)) c = AQ_TW / 2;
+    for (var i = 0; i < 8; i++) aq.food.push({ x: Math.max(4, Math.min(AQ_TW - 4, c + (Math.random() - 0.5) * 30)), y: 3 + Math.random() * 3, k: Math.random(), life: 8 });
+    say(st, 'Zivtiņas peld ēst');
   }
-  function feedPond(st) {
-    var pd = st.pond, m = st.map.pond;
-    var cx = Math.max(10, Math.min(pd.w - 10, (st.x - m.x0) * PONDRES)), cy = Math.max(10, Math.min(pd.h - 10, (st.y - m.y0) * PONDRES));
-    for (var i = 0; i < 7; i++) pd.food.push({ x: cx + (Math.random() - 0.5) * 18, y: cy + (Math.random() - 0.5) * 12, life: 14 });
-    pd.koi.forEach(function (k) { k.scare = 0; });
-    say(st, 'Koi peld klāt');
-  }
+  function inTank(st, wx) { var a = st.map.aquarium; return wx >= a.x0 && wx <= a.x1; }
 
   /* ── Kafija rokā ──────────────────────────────────────────────────────── */
   // What you hold, Doom's weapon place: the Löfbergs machine's purple paper
@@ -729,9 +887,9 @@
     wall.slice().sort(function (a, b) { return b.at - a.at; }).slice(0, 2).forEach(function (it, i) {
       slots.push(i ? { x: NMP.x1 + 1, y: 8, face: 'w', item: it, night: true } : { x: MAIN.x1 + 1, y: 3, face: 'w', item: it, night: true });
     });
-    // the koi pond in the lobby floor, along the windows of Galvenā istaba
-    var pond = { x0: 3.45, x1: 5.55, y0: 1.12, y1: 1.92 };
-    return { w: Wm, h: H, grid: grid, zone: zone, doors: doors, doorAt: doorAt, segs: segs, slots: slots, pond: pond };
+    // the aquarium on the hall's end wall, by the White Monster corner (cells 4, 3, 2 as you face it)
+    var aquarium = { y: H - 1, cell1: 4, x0: 5 - (AQ_IN[2] + 1) / TEX, x1: 5 - AQ_IN[0] / TEX };
+    return { w: Wm, h: H, grid: grid, zone: zone, doors: doors, doorAt: doorAt, segs: segs, slots: slots, aquarium: aquarium };
   }
   // which side of a door you are on decides the room
   function zoneAt(map, x, y) {
@@ -770,6 +928,7 @@
     var dirX = Math.cos(st.a), dirY = Math.sin(st.a), plX = -dirY * FOV, plY = dirX * FOV;
     var pz = zoneAt(map, st.x, st.y), x, y, lut;
     st.pickRef.fill(null);
+    st.aquaSeen = false;
     // walls, column by column; a glass wall is remembered and the ray goes on
     // through it, an open door lets it pass where the leaf has slid away
     for (x = 0; x < W; x++) {
@@ -816,6 +975,7 @@
         var face = side === 0 ? (stepX > 0 ? 3 : 1) : (stepY > 0 ? 0 : 2);
         art = cell !== WALL && cell !== PILLAR ? null : st.artAt[ci * 4 + face] || null;
         var pc = pmy * mw + pmx;
+        if (art && art.aquarium) st.aquaSeen = true;
         tex = art ? art.tex : grid[pc] === DOOR ? T.jamb : cell === PILLAR ? T.stone : zone[pc] ? T.nightWall : T.plaster;
       }
       if (perp < 0.0001) perp = 0.0001;
@@ -843,8 +1003,7 @@
     // floor and ceiling (Doom's flats): each row reads the texture copy that
     // fits how much floor one pixel covers there, so far rows do not sparkle;
     // past a window or a door the other room's texture
-    var wt = st.wallTop, wb = st.wallBot, cr = st.cross, pond = map.pond, pondLv = st.pond && st.pond.levels;
-    st.pondSeen = false;
+    var wt = st.wallTop, wb = st.wallBot, cr = st.cross;
     for (y = 0; y < H; y++) {
       if (Math.abs(y - half) < 0.5) continue;
       var fl = y > half, eyeH = fl ? z : 1 - z, rd = (eyeH * P) / Math.abs(y - half);
@@ -854,24 +1013,9 @@
       var own = fl ? (pz ? T.nightFloor : T.floor) : (pz ? T.nightCeil : T.ceil), oth = fl ? (pz ? T.floor : T.nightFloor) : (pz ? T.ceil : T.nightCeil);
       var ol = own.mips[Lf], al = oth.mips[Lf], opx = ol.px, apx = al.px, S = ol.w, m = S - 1, sbf = TB - Lf;
       var lutf = luts[shadeLevel(rd, 0)], o = y * W;
-      // does this row cross the koi pond? (its own picture, set into the floor)
-      var pondRow = false, plv = null, ku = 0, kv = 0;
-      if (fl && pondLv) {
-        var ex = fx0 + W * sx, ey = fy0 + W * sy;
-        if (Math.max(fx0, ex) >= pond.x0 && Math.min(fx0, ex) <= pond.x1 && Math.max(fy0, ey) >= pond.y0 && Math.min(fy0, ey) <= pond.y1) {
-          var fp = Math.max(rd * 2 * FOV / W, rd * rd / (eyeH * P)) * PONDRES, Lp = 0;
-          if (fp >= 2) Lp = Math.min(pondLv.length - 1, 31 - Math.clz32(fp | 0));
-          plv = pondLv[Lp]; ku = plv.w / (pond.x1 - pond.x0); kv = plv.h / (pond.y1 - pond.y0); pondRow = true;
-        }
-      }
       for (x = 0; x < W; x++) {
         if (y >= wt[x] && y <= wb[x]) continue;
         var wx = fx0 + x * sx, wy = fy0 + x * sy;
-        if (pondRow && wx >= pond.x0 && wx < pond.x1 && wy >= pond.y0 && wy < pond.y1) {
-          buf[o + x] = px(plv.px[(((wy - pond.y0) * kv) | 0) * plv.w + (((wx - pond.x0) * ku) | 0)], lutf);
-          st.pondSeen = true;
-          continue;
-        }
         var ti = ((((wy * S) | 0) & m) << sbf) | (((wx * S) | 0) & m);
         buf[o + x] = px(cr[x] >= 0 && rd > cr[x] ? apx[ti] : opx[ti], lutf);
       }
@@ -897,10 +1041,7 @@
     var c = st.ctx, mid = VIEW_H / 2, s = W / 512;
     var cx = W >> 1, ref = st.pickRef[cx];
     st.aim = ref && st.pickDist[cx] <= (ref.isArt ? 3.4 : ref.reach || 2.4) ? ref : null;
-    if (!st.aim && st.pond && pondNear(st, 1.4)) {
-      var pa = Math.atan2((pond.y0 + pond.y1) / 2 - st.y, (pond.x0 + pond.x1) / 2 - st.x) - st.a;
-      if (Math.abs(Math.atan2(Math.sin(pa), Math.cos(pa))) < 0.75) st.aim = st.pondRef;
-    }
+    if (st.aim && st.aim.aquarium) { if (inTank(st, st.pickWX[cx])) st.aim.at = st.pickWX[cx]; else st.aim = null; }
     c.fillStyle = st.aim ? '#ffd166' : 'rgba(255,255,255,.6)';
     c.fillRect(W / 2 - s, mid - 6 * s, 2 * s, 4 * s); c.fillRect(W / 2 - s, mid + 2 * s, 2 * s, 4 * s);
     c.fillRect(W / 2 - 6 * s, mid - s, 4 * s, 2 * s); c.fillRect(W / 2 + 2 * s, mid - s, 4 * s, 2 * s);
@@ -1036,7 +1177,7 @@
       case 'easel': return ['E', 'Zīmēt'];
       case 'statue': return ['E', 'Apskatīt: ' + VENUS.title];
       case 'cat': return ['E', 'Paglaudīt: ' + a.name];
-      case 'pond': return ['E', 'Pabarot koi'];
+      case 'aquarium': return ['E', 'Pabarot zivtiņas'];
       case 'monster': return ['E', 'Paņemt White Monster'];
       case 'monsterbox': return ['E', 'Paņemt bundžu no kastes'];
       case 'bed': return ['E', a.person ? a.person.first + (a.person.from ? ' guļ ' + a.person.from + '–' + a.person.to : '') : 'Tukša gulta'];
@@ -1095,9 +1236,6 @@
       if (el) el.innerHTML = (pair[1] && dockIcon(pair[1])) || ICONS[pair[0]];
     });
   }
-  // the koi pond's dots (the backdrop round the game is js/dither-backdrop.js)
-  var BAYER8 = [0, 32, 8, 40, 2, 34, 10, 42, 48, 16, 56, 24, 50, 18, 58, 26, 12, 44, 4, 36, 14, 46, 6, 38, 60, 28, 52, 20, 62, 30, 54, 22,
-    3, 35, 11, 43, 1, 33, 9, 41, 51, 19, 59, 27, 49, 17, 57, 25, 15, 47, 7, 39, 13, 45, 5, 37, 63, 31, 55, 23, 61, 29, 53, 21];
 
   /* ── Mūzika ───────────────────────────────────────────────────────────── */
   // Its own quiet player (not the radio): starts with the gallery, the
@@ -1171,8 +1309,6 @@
     var ci = my * map.w + mx, cell = map.grid[ci];
     if (cell === DOOR) { if (map.doors[map.doorAt[ci]].open < 0.9) return false; }
     else if (cell !== EMPTY) return false;
-    var pd = map.pond;
-    if (x > pd.x0 && x < pd.x1 && y > pd.y0 && y < pd.y1) return false;
     for (var i = 0; i < st.props.length; i++) {
       var p = st.props[i];
       if (p.solid && !p.hidden && (p.x - x) * (p.x - x) + (p.y - y) * (p.y - y) < p.solid * p.solid) return false;
@@ -1265,8 +1401,8 @@
       if (d.open !== want) { d.open = want ? Math.min(1, d.open + dt * 2.6) : Math.max(0, d.open - dt * 2); moved = true; }
     });
     updateCats(st, dt, now);
-    var pondTick = st.pondSeen && now - st.pond.at >= 50;
-    if (pondTick) { stepPond(st, Math.min(0.1, (now - (st.pond.at || now)) / 1000)); paintPond(st.pond); st.pond.at = now; }
+    var aq = st.aqua, aquaTick = aq && st.aquaSeen && !st.viewing && now - aq.at >= (aq.food.length ? 32 : 48);
+    if (aquaTick) { stepAquarium(aq, Math.min(0.1, (now - (aq.at || now)) / 1000)); paintAquarium(aq); aq.at = now; }
     // eye height eases to sitting or standing
     var eye = st.seated ? EYE_SEATED : EYE;
     if (Math.abs(st.z - eye) > 0.002) { st.z += (eye - st.z) * Math.min(1, dt * 9); moved = true; } else st.z = eye;
@@ -1283,7 +1419,7 @@
     if (st.msgDrawn && now >= st.msgUntil) st.dirty = true;     // the message has run out: clear it
     // nothing changed: nothing is drawn; a cat in sight is drawn 30 times a second
     var catTick = st.catsSeen && now - st.drawnAt >= 32;
-    if (!moved && !st.dirty && !catTick && !pondTick) return;
+    if (!moved && !st.dirty && !catTick && !aquaTick) return;
     if (now - st.drawnAt < 28 && !st.dirty) return;
     st.drawnAt = now;
     st.dirty = false;
@@ -1409,7 +1545,7 @@
       case 'gramophone': setMusic(st, !st.musicOn); return;
       case 'machine': if (!st.brew) menu(true); return;
       case 'statue': look({ src: ART + 'venus-milo.webp' + ART_V, caption: VENUS.caption }); return;
-      case 'pond': feedPond(st); return;
+      case 'aquarium': feedFish(st, ref.at); return;
       case 'monster': case 'monsterbox': takeCan(st); return;
       case 'cat':
         ref.mode = 'sit'; ref.until = performance.now() + 5000; ref.t = 0;
@@ -1424,6 +1560,8 @@
     var hc = st.cup && st.cup.canvas;
     if (hc && !st.cup.outAt && cy > VIEW_H - hc.show && cx > W - hc.width) { sip(st); return; }
     var x = Math.max(0, Math.min(W - 1, cx | 0)), ref = st.pickRef[x];
+    if (ref && ref.aquarium && !inTank(st, st.pickWX[x])) ref = null;
+    if (ref && ref.aquarium) ref.at = st.pickWX[x];
     if (ref && cy >= st.pickY0[x] - 4 && cy <= st.pickY1[x] + 4) {
       var reach = ref.isArt ? 3.4 : ref.reach || 2.4;
       if (st.pickDist[x] <= reach) { interact(ref); return; }
@@ -1433,12 +1571,6 @@
     if (cy <= VIEW_H / 2 + 2) return;
     var dist = (st.z * P) / (cy - VIEW_H / 2), cam = 2 * cx / W - 1;
     var dirX = Math.cos(st.a), dirY = Math.sin(st.a), gx = st.x + dist * (dirX - dirY * FOV * cam), gy = st.y + dist * (dirY + dirX * FOV * cam);
-    var pd = st.map.pond;
-    if (gx >= pd.x0 && gx <= pd.x1 && gy >= pd.y0 && gy <= pd.y1) {            // the pond: feed the koi (walk up first)
-      if (pondNear(st, 1.4)) feedPond(st);
-      else st.goal = { x: Math.max(pd.x0, Math.min(pd.x1, gx)), y: gy < (pd.y0 + pd.y1) / 2 ? pd.y0 : pd.y1, stop: 0.6, then: st.pondRef };
-      return;
-    }
     st.goal = { x: gx, y: gy, stop: 0.2 };
   }
 
@@ -1677,7 +1809,7 @@
       map: map, x: 4.3, y: 4.55, a: -2.75, z: EYE, keys: {}, dragTurn: 0, walk: 0, sips: 0, sip: 0, seated: false,
       artAt: new Array(map.w * map.h * 4), aim: null, dirty: true, closed: false, frames: 0, cost: 0, loweredAt: -99, drawnAt: 0,
       props: props, cats: cats, catFrames: null, cup: null, brew: null, goal: null, promptKey: '',
-      pond: makePond(map.pond), pondRef: { kind: 'pond', reach: 1.4 }, pondSeen: true,
+      aqua: null, aquaSeen: true,
       musicOn: false, today: opts.today, sleepers: sleepers, bedPeople: bedPeople, items: items,
       me: opts.me || {},
       stats: Object.assign({ total: items.length, days: map.segs.length - 1, sleeping: sleepers.length, coffee: '', comments: '' }, opts.stats || {}),
@@ -1716,6 +1848,12 @@
     makeSprites();
     if (st.seated) sitDown(st, props.find(function (p) { return p.kind === 'chair' && Math.hypot(p.x - st.x, p.y - st.y) < 0.05; }) || props.find(function (p) { return p.kind === 'table'; }));
     map.slots.forEach(function (slot) { loadArt(st, slot); });
+    // the aquarium's three cells of the end wall (their faces towards the hall)
+    st.aqua = makeAquarium(st, map.aquarium);
+    st.aqua.cells.forEach(function (tex, i) {
+      st.artAt[(map.aquarium.y * map.w + map.aquarium.cell1 - i) * 4 + FACES.n] = { kind: 'aquarium', aquarium: true, reach: 2.6, tex: tex, at: 0 };
+    });
+    paintAquarium(st.aqua);
     paintMusic();
     drawHud(st);
     if (!keep) say(st, 'Laipni lūgti galerijā! Pa kreisi Löfbergs kafija, pa labi durvis uz Nakts istabu');
