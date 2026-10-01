@@ -97,7 +97,7 @@ test('next-shift rendering resolves full names without joining today-only worker
  const target={classList:{remove(){},add(){}},querySelectorAll:()=>cards};
  const c=vm.createContext({document:{getElementById:()=>null},window:{mkGetWorkerSkin:name=>({owner:name}),mkApplySkinToEl:(el,skin)=>calls.push([el.name,skin.owner])},
  isValidShift:()=>true,getDutyShiftType:()=>'',getDutyShiftHours:w=>w.shift,formatSideNamePart:s=>s,mkEscAttr:s=>s,getSidePersonEmoji:()=>''});
- vm.runInContext(js.slice(js.indexOf('  function renderNextShiftCard('),js.indexOf('  const SIDE_MONTH_NAMES')),c);
+ vm.runInContext(js.slice(js.indexOf('  function renderNextShiftCard('),js.indexOf('  const SIDE_MONTH_SHORT')),c);
  c.renderNextShiftCard(target,'summary',crew);assert.deepEqual(calls,[['AIJA ONE','AIJA ONE'],['AIJA TWO','AIJA TWO']]);
  assert.match(target.innerHTML,/data-next-worker="AIJA ONE"/);assert.doesNotMatch(target.innerHTML,/data-worker=/);
 });

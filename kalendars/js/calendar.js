@@ -3376,6 +3376,11 @@ function filterFullList(btn) {
     if (upper) return text.toUpperCase();
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
   }
+  // "PAULIŅA-MELNE" -> "Pauliņa-Melne", "SAFRONOVA VĀ" -> "Safronova Vā"
+  function formatSideSurname(value) {
+    return String(value || '').trim().toLowerCase()
+      .replace(/(^|[\s-])(\S)/g, (m, sep, ch) => sep + ch.toUpperCase());
+  }
 
   function filterVisibleWorkers(workers, isToday, now) {
     const list = Array.isArray(workers) ? workers.slice() : [];
@@ -3438,7 +3443,8 @@ function filterFullList(btn) {
     }
   }
 
-  const SIDE_MONTH_NAMES = ['janvāris','februāris','marts','aprīlis','maijs','jūnijs','jūlijs','augusts','septembris','oktobris','novembris','decembris'];
+  // Short forms for the side card footer, so date, time and hours stay on one line.
+  const SIDE_MONTH_SHORT = ['janv.','febr.','marts','apr.','maijs','jūn.','jūl.','aug.','sept.','okt.','nov.','dec.'];
   const SIDE_MONTH_LOCATIVE = ['janvārī','februārī','martā','aprīlī','maijā','jūnijā','jūlijā','augustā','septembrī','oktobrī','novembrī','decembrī'];
 
   function sideDateNumber(dateStr) {
@@ -3553,9 +3559,10 @@ function filterFullList(btn) {
     let nextHtml = '';
     if (meta.next) {
       const parts = String(meta.next.date || '').split('.').map(Number);
-      const start = meta.next.worker.startTime ? ` · ${mkEscAttr(meta.next.worker.startTime)}` : '';
-      const hours = meta.next.worker.shift ? ` · ${mkEscAttr(meta.next.worker.shift)}h` : '';
-      nextHtml = `<div class="mk-side-nfoot-row"><dt>Nākamā maiņa</dt><dd>${parts[0]}. ${SIDE_MONTH_NAMES[parts[1] - 1]}${start}${hours}</dd></div>`;
+      // Date, time and hours as separate pieces; the row's gap spaces them.
+      const start = meta.next.worker.startTime ? ` <span>${mkEscAttr(meta.next.worker.startTime)}</span>` : '';
+      const hours = meta.next.worker.shift ? ` <span>${mkEscAttr(meta.next.worker.shift)}h</span>` : '';
+      nextHtml = `<div class="mk-side-nfoot-row"><dt>Nākamā maiņa</dt><dd><span>${parts[0]}. ${SIDE_MONTH_SHORT[parts[1] - 1]}</span>${start}${hours}</dd></div>`;
     }
 
     let monthHtml = '';
@@ -3570,7 +3577,7 @@ function filterFullList(btn) {
         .filter(([key]) => types[key] > 0)
         .map(([key, label, color]) => `<i style="flex:${types[key]} 1 0;background:${color}" title="${label === 'D' ? 'Diena' : label === 'N' ? 'Nakts' : '24h'}: ${types[key]}"><b>${types[key]}</b><span>${label}</span></i>`)
         .join('');
-      monthHtml = `<div class="mk-side-nfoot-row"><dt>Maiņas ${SIDE_MONTH_LOCATIVE[selectedMonth - 1]}</dt><dd>${meta.done} / ${meta.total}${remaining > 0 ? ` <em>(vēl ${remaining})</em>` : ''}</dd></div>`;
+      monthHtml = `<div class="mk-side-nfoot-row"><dt>Maiņas ${SIDE_MONTH_LOCATIVE[selectedMonth - 1]}</dt><dd><span>${meta.done}\u202F/\u202F${meta.total}</span>${remaining > 0 ? ` <em>(vēl ${remaining})</em>` : ''}</dd></div>`;
       // The bar takes the place of the footer's dashed divider.
       if (split) splitHtml = `<div class="mk-side-nfoot-row mk-side-nfoot-row--split"><span class="mk-nfoot-split">${split}</span></div>`;
     }
@@ -3637,15 +3644,22 @@ function filterFullList(btn) {
     const key = name + '|' + duty.start, refs = sideTickRefs(name, duty, true);
     const cached = sideTickCache.get(key);
     if (cached && sideTickFresh(cached, refs)) return cached;
-    const span = (duty.end - duty.start) / SIDE_TICKS, colors = [], heights = [];
+    const span = (duty.end - duty.start) / SIDE_TICKS, colors = [], heights = [], scores = [];
     for (let i = 0; i < SIDE_TICKS; i++) {
       const v = sideTickScore(name, duty.start + (i + .5) * span);
       const score = Number.isFinite(v) ? Math.max(0, Math.min(100, v)) : 0;
+      scores.push(score);
       heights.push((score / 100).toFixed(3));
       const p = window.__fatigue.getPresentation ? window.__fatigue.getPresentation(Math.round(score)) : null;
       colors.push(p && p.color || '#42d991');
     }
-    const entry = { key, start: duty.start, end: duty.end, colors, heights, refs };
+    // The same wave scaled to this shift's own range (at least 30 points
+    // wide), so a change of a few points over the shift shows; the colour
+    // still tells the absolute level.
+    let lo = Math.max(0, Math.min.apply(null, scores) - 8), hi = Math.min(100, Math.max.apply(null, scores) + 4);
+    if (hi - lo < 30) { const pad = (30 - (hi - lo)) / 2; lo = Math.max(0, lo - pad); hi = Math.min(100, lo + 30); }
+    const rel = scores.map(v => ((v - lo) / Math.max(1, hi - lo)).toFixed(3));
+    const entry = { key, start: duty.start, end: duty.end, colors, heights, rel, refs };
     sideTickCache.delete(key); sideTickCache.set(key, entry);
     if (sideTickCache.size > 40) sideTickCache.delete(sideTickCache.keys().next().value);
     return entry;
@@ -3667,13 +3681,20 @@ function filterFullList(btn) {
   function sideTickNow(entry, now) {
     return Math.floor((now - entry.start) / ((entry.end - entry.start) / SIDE_TICKS));
   }
-  function sideTicksHtml(entry, now, stale) {
+  // tip: { score, label } of the person's fatigue now, shown in a bubble over
+  // the current tick (it moves with "now"); hidden where the ring is shown.
+  function sideTicksHtml(entry, now, stale, tip) {
     const cur = sideTickNow(entry, now);
     let html = '';
     for (let i = 0; i < SIDE_TICKS; i++) {
-      html += `<i class="${i < cur ? 'is-on' : i === cur ? 'is-now' : ''}" style="--c:${entry.colors[i]};--h:${entry.heights[i]}"></i>`;
+      html += `<i class="${i < cur ? 'is-on' : i === cur ? 'is-now' : ''}" style="--c:${entry.colors[i]};--h:${entry.heights[i]};--hr:${entry.rel ? entry.rel[i] : entry.heights[i]}"></i>`;
     }
-    return `<button type="button" class="mk-side-ticks" data-tick-key="${mkEscAttr(entry.key)}"${stale ? ' data-stale="1"' : ''} aria-label="Nogurums šajā maiņā: atvērt" title="Nogurums šajā maiņā">${html}</button>`;
+    if (tip && tip.score !== '' && tip.score != null) {
+      html += `<span class="mk-side-tick-tip" aria-hidden="true"><b>${mkEscAttr(tip.score)}</b>${mkEscAttr(tip.label || '')}</span><span class="mk-side-tick-pin" aria-hidden="true"></span>`;
+    }
+    const at = Math.max(0, Math.min(SIDE_TICKS - 1, cur));
+    const phase = cur < 0 ? 'before' : cur >= SIDE_TICKS ? 'after' : 'on';
+    return `<button type="button" class="mk-side-ticks" data-tick-key="${mkEscAttr(entry.key)}"${stale ? ' data-stale="1"' : ''} data-phase="${phase}" style="--now:${at}" aria-label="Nogurums šajā maiņā: atvērt" title="Nogurums šajā maiņā">${html}</button>`;
   }
   // Moves "now" along without redrawing anything: two class flips per card.
   function sideTicksAdvance() {
@@ -3684,10 +3705,12 @@ function filterFullList(btn) {
       const entry = sideTickCache.get(row.dataset.tickKey);
       if (!entry) return;
       const cur = sideTickNow(entry, now);
-      Array.prototype.forEach.call(row.children, (tick, i) => {
+      row.querySelectorAll(':scope > i').forEach((tick, i) => {
         tick.classList.toggle('is-on', i < cur);
         tick.classList.toggle('is-now', i === cur);
       });
+      row.style.setProperty('--now', Math.max(0, Math.min(SIDE_TICKS - 1, cur)));
+      row.dataset.phase = cur < 0 ? 'before' : cur >= SIDE_TICKS ? 'after' : 'on';
       const span = (entry.end - entry.start) / SIDE_TICKS, boundary = entry.start + (cur + 1) * span;
       if (now < entry.end && boundary > now) next = Math.min(next, boundary);
     });
@@ -3720,15 +3743,17 @@ function filterFullList(btn) {
         const old = main.parentElement.querySelector(':scope > .mk-side-ticks');
         if (old) {
           // Same elements, new values: colours ease over (CSS), no rebuild.
-          Array.prototype.forEach.call(old.children, (tick, i) => {
+          old.querySelectorAll(':scope > i').forEach((tick, i) => {
             tick.style.setProperty('--c', entry.colors[i]);
             tick.style.setProperty('--h', entry.heights[i]);
+            tick.style.setProperty('--hr', entry.rel[i]);
           });
           old.dataset.tickKey = entry.key;
           delete old.dataset.stale;
           continue;
         }
-        main.insertAdjacentHTML('afterend', sideTicksHtml(entry, now));
+        const cardEl = main.parentElement;
+        main.insertAdjacentHTML('afterend', sideTicksHtml(entry, now, false, { score: cardEl.dataset.fatScore, label: cardEl.dataset.fatLabel }));
         // First time this shift is shown: the track fades up into place, one
         // compositor animation for the whole row, a few ms apart per card.
         const row = main.nextElementSibling;
@@ -3749,7 +3774,7 @@ function filterFullList(btn) {
       const workerName = String(worker.name || '').trim();
       const nameParts = workerName.split(/\s+/).filter(Boolean);
       const firstName = formatSideNamePart(nameParts[0], false);
-      const surname = formatSideNamePart(nameParts.slice(1).join(' '), true);
+      const surname = formatSideSurname(nameParts.slice(1).join(' '));
       const initials = (nameParts[0]?.[0] || '') + (nameParts[1]?.[0] || '');
       const personEmoji = getSidePersonEmoji(workerName);
       const uiState = getWorkerUiState(worker, worker.date, options.now);
@@ -3784,12 +3809,12 @@ function filterFullList(btn) {
       if (options.isToday) {
         try {
           const hit = sideTickCached(workerName, +options.now);
-          if (hit) ticks = sideTicksHtml(hit.entry, Date.now(), hit.stale);
+          if (hit) ticks = sideTicksHtml(hit.entry, Date.now(), hit.stale, { score: fatigue.score, label: fatigue.label });
         } catch (_e) {}
       }
 
       return `
-        <article class="duty-block mk-side-card ${options.roleClass}${iconHtml ? ' has-shift-icon' : ''}${isDone ? ' duty-done' : ''}" style="${sideVars}" data-worker="${workerAttr}" data-shift="${shiftAttr}" data-type="${typeAttr}" data-fatigue="${fatigue.key}">
+        <article class="duty-block mk-side-card ${options.roleClass}${iconHtml ? ' has-shift-icon' : ''}${isDone ? ' duty-done' : ''}" style="${sideVars}" data-fat-score="${mkEscAttr(fatigue.score)}" data-fat-label="${mkEscAttr(fatigue.label || '')}" data-worker="${workerAttr}" data-shift="${shiftAttr}" data-type="${typeAttr}" data-fatigue="${fatigue.key}">
           <div class="mk-side-card-main">
             <div class="mk-side-icon-rail">
               ${personEmoji ? `<span class="mk-emoji-side" data-mk-emoji-click="1">${mkEscAttr(personEmoji)}</span>` : ''}
