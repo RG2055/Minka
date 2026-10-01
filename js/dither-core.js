@@ -1242,6 +1242,9 @@
   host.MinkaDither = {
     bayer8: BAYER8, image: image, url: url, atkinson: atkinson,
     mode: function () { return mode; }, setMode: setMode, skin: skin, decor: requestDecor, ready: ready, trim: trim, settled: settled, _apply: apply, _cache: cache,
+    // The queued cards now, not in the next frame: a day switch held in a View
+    // Transition gets no animation frames until it is shown (calendar.js).
+    flush: function () { if (pendingSkins.size) flushSkins(); if (decorFrame) { var list = Array.from(decorCards); decorCards.clear(); list.forEach(function (c) { if (c.isConnected) decor(c); }); } },
     _stored: stored, _storedReady: storedReady, _stats: stats
   };
   // Cards painted before this script ran still get their effect.

@@ -2024,7 +2024,7 @@ function filterFullList(btn) {
         if (document.activeElement && document.activeElement.tagName === 'INPUT') {
           document.activeElement.blur();
         }
-        g_selectDay(dateStr);
+        g_selectDayHeld(dateStr);
       };
 
       div.innerHTML = `<span class="weekday">${weekday}</span><span>${d}</span>`;
@@ -2041,6 +2041,85 @@ function filterFullList(btn) {
     return `${dd}.${mm}.${m[3]}`;
   }
 
+  /* A day switch is shown in one piece. The old day stays on screen (a View
+     Transition, with no animation at all) until the new day's card effects,
+     decorations and emoji pictures are ready, at most DAY_HOLD_MS, then the
+     whole page swaps in one frame. Usually everything is ready at once and
+     nothing is held; a picture seen for the first time on this computer
+     (fetched from the server) no longer pops in a moment after its card.
+     A day already shown complete in this session skips the hold entirely.
+     Only for days a person picks (a day pill, the mini calendar); data
+     refreshes and the automatic step at a shift's end call g_selectDay()
+     directly, as before, because their next lines read the new day at once. */
+  const DAY_HOLD_MS = 300;
+  let g_dayVT = null;
+  // Something on the new day's cards still on its way: an effect or lens not
+  // set yet, a decoration's effect, a picture not loaded, an emoji still frame.
+  const DAY_FX = /\bmk-fx-(dither|pic|xray|focus|split|poster|mosaic|bricks|lines|led|pixelate|cmyk|riso|pointillism|heatmap|threshold|outline|posterize|halftone|duotone|ascii)\b/;
+  function g_dayMissing() {
+    const F = window.MinkaEmojiFilm;
+    const cards = document.querySelectorAll('#grafiks-list .card[data-worker], #radiographers-duty [data-worker], #radiologists-duty [data-worker]');
+    for (const card of cards) {
+      if (DAY_FX.test(card.className) && !card.style.getPropertyValue('--mk-skin-dither')) return true;
+      if (/\bmk-fx-(focus|split)\b/.test(card.className) && card.querySelector(':scope > .mk-wf-background') && !card.style.getPropertyValue('--mk-skin-focus')) return true;
+      for (const img of card.querySelectorAll('img')) {
+        if (!img.complete || !img.naturalWidth) return true;
+        if (img.dataset.mkDitherDecor && !img.style.getPropertyValue('content')) return true;
+      }
+      if (F) for (const el of card.querySelectorAll('.mk-emoji-side, .mk-mid-person-emoji, .mk-mid-meta-emoji-fly')) {
+        if (!F.staticSrc((el.textContent || '').trim())) continue;
+        const box = el.querySelector('.mk-emoji-film-box');
+        if (!box || box.style.visibility === 'hidden') return true;
+      }
+    }
+    return false;
+  }
+  function g_dayReady() {
+    const D = window.MinkaDither;
+    // No animation frames run while the switch is held: do the frame-batched
+    // work (card effects, decorations, emoji still frames) right now.
+    try { if (D && D.flush) D.flush(); } catch (_e) {}
+    try { if (window.MinkaEmojiFilm && window.MinkaEmojiFilm.apply) window.MinkaEmojiFilm.apply(); } catch (_e) {}
+    // Usually everything is there already: show the new day at once.
+    if (!g_dayMissing()) return Promise.resolve();
+    const until = performance.now() + DAY_HOLD_MS;
+    return new Promise(resolve => {
+      const check = () => {
+        try { if (D && D.flush) D.flush(); } catch (_e) {}
+        if (!g_dayMissing() || performance.now() >= until) resolve();
+        else setTimeout(check, 12);
+      };
+      setTimeout(check, 12);
+    });
+  }
+  // Days already shown complete in this session (at this window width): their
+  // pictures are all in memory, so they switch at once, with no hold at all.
+  const g_dayComplete = new Set();
+  const g_dayKey = date => normalizeDateStr(date) + '|' + document.documentElement.clientWidth;
+  function g_noteDayComplete(date) {
+    requestAnimationFrame(() => {
+      if (normalizeDateStr(activeDateStr) === normalizeDateStr(date) && !g_dayMissing()) g_dayComplete.add(g_dayKey(date));
+    });
+  }
+  function g_selectDayHeld(date) {
+    const root = document.documentElement;
+    if (typeof document.startViewTransition !== 'function' || document.hidden || root.classList.contains('mk-schedule-booting')
+      || g_dayComplete.has(g_dayKey(date))) {
+      g_selectDay(date);
+      g_noteDayComplete(date);
+      return;
+    }
+    // A newer click wins: the previous hold ends at once.
+    if (g_dayVT) { try { g_dayVT.skipTransition(); } catch (_e) {} }
+    root.classList.add('mk-day-vt');
+    const vt = g_dayVT = document.startViewTransition(() => { g_selectDay(date); return g_dayReady(); });
+    vt.finished.catch(() => {}).then(() => {
+      if (g_dayVT !== vt) return;
+      g_dayVT = null;
+      root.classList.remove('mk-day-vt');
+      g_noteDayComplete(date);
+    });
+  }
   function g_selectDay(date) {
     const dayPerfStartedAt = (window.__minkaMeasureDaySwitches || G_DAY_PERF_ENABLED)
       ? performance.now()
@@ -7355,6 +7434,7 @@ function filterFullList(btn) {
   }
   window.g_updatePanelsForDate = g_updatePanelsForDate;
   window.g_selectDay = g_selectDay;
+  window.g_selectDayHeld = g_selectDayHeld;
   window.g_stepDay = g_stepDay;
   // Pāriet uz jebkuru datumu ar grafiku (arī citā mēnesī); false = tāda nav.
   window.g_goToDate = g_selectDateWithMonthSync;
@@ -8473,7 +8553,7 @@ function renderMiniCal() {
 
 function miniCalSelectDay(dateStr) {
   closeMiniCal();
-  g_selectDay(dateStr);
+  g_selectDayHeld(dateStr);
 }
 
 function miniCalPrevMonth() {

@@ -301,7 +301,7 @@ window.__mkLeftRole=window.MINKA_APP==='rad'?{one:'Rezidents',many:'Rezidenti'}:
 </style>
 
 <link rel="stylesheet" id="mk-emoji-anim-v1" href="css/page/mk-emoji-anim-v1.css?v=20260929emo1">
-<script src="js/page/emoji-hover-animation.js?v=20261001emo2"></script>
+<script src="js/page/emoji-hover-animation.js?v=20261001emo3"></script>
 <!-- Fonts and icons: served from this site (scripts/build-fonts.mjs), so no
      visitor IP goes to Google; non-blocking preload swap. -->
 <link rel="preload" as="style" href="../assets/fonts/web/calendar.css?v=20261001sec1" onload="this.onload=null;this.rel='stylesheet'">
@@ -925,13 +925,13 @@ function _mkToast(msg, type) {
 <script src="js/card-face-model.js?v=20260929ed44"></script>
 <script src="js/card-materials.js?v=20260912faces21"></script>
 <!-- Before the first card render: cards painted from the cached schedule get their picture effect at once. -->
-<script src="../js/dither-core.js?v=20261001fx4"></script>
+<script src="../js/dither-core.js?v=20261001fx5"></script>
 <script src="js/card-faces.js?v=20260930fx1"></script>
 <!-- Saved worker skins must be ready before the cached roster is rendered. -->
 <script src="js/card-contrast.js?v=20260928izs122" defer></script>
 <script src="js/page/minka-skins.js?v=20260930rad2"></script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20261001pw1"></script>
+<script src="js/calendar.js?v=20261001vt5"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20260925pack6" defer></script>
 <script src="js/header-weather.js?v=20260928mx5" defer></script>
@@ -948,13 +948,21 @@ function _mkToast(msg, type) {
 <script src="js/minka.sync.config.js" defer></script>
 <script src="js/emoji.js?v=20261001an5" defer></script>
 <script src="js/page/card-pictures-warm.js?v=20261001pw4" defer></script>
+<style>
+/* Day switch (calendar.js g_selectDay): the old day is held until the new one
+   is ready, then swapped in one frame. No animation for this transition only;
+   other view transitions in the app keep theirs. */
+:root.mk-day-vt::view-transition-group(*),
+:root.mk-day-vt::view-transition-old(*),
+:root.mk-day-vt::view-transition-new(*) { animation: none !important; }
+</style>
 <link rel="stylesheet" href="css/daybook.css?v=20260913f">
 <script src="js/daybook-model.js?v=20260928perf1" defer></script>
 <script src="js/daybook.js?v=20261001tk3" defer></script>
 <script src="js/levels.js?v=20260927ns1" defer></script>
 
 <script>
-window.__minkaLocalBuild = '20261001pw1';
+window.__minkaLocalBuild = '20261001vt1';
 (function(){
   // Last-resort sweep for the month boundaries listed in
   // js/known-carryovers.js: a card that survived every filter because its row

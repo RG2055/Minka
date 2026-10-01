@@ -344,6 +344,9 @@
   /* For js/page/card-pictures-warm.js: the still Fluent frame an emoji gets on
      a card (only for those the font does not draw), so it can be loaded early. */
   window.MinkaEmojiFilm = {
+    // The still frames for cards just built (the day switch calls it before
+    // its new day is shown, instead of waiting for the observer's frame).
+    apply: function () { applyStatics(); },
     staticSrc: function (text) {
       text = String(text || '').trim();
       var info = manifest && manifest.emoji && manifest.emoji[text];
