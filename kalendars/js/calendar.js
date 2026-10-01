@@ -8416,6 +8416,10 @@ window.__minkaHostLayout = function(data, applyHost) {
   if (changed && window.MinkaCardAddons && typeof window.MinkaCardAddons.syncNow === 'function') {
     try { window.MinkaCardAddons.syncNow(); } catch (_e) {}
   }
+  // The mood card too, in this pass, instead of 120-180 ms later in view.
+  if (typeof applyHost === 'function' && typeof window.__minkaMoodHostLayout === 'function') {
+    try { window.__minkaMoodHostLayout(); } catch (_e) {}
+  }
   requestAnimationFrame(function(){
     var pop = document.getElementById('miniCalPopup');
     if (pop && pop.style.display !== 'none') positionMiniCalPopup();

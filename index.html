@@ -306,7 +306,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20261001qr1';
+  var CALENDAR_BUILD = '20261001rf1';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -1033,7 +1033,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <div id="calendarEmbed">
   <!-- Keep the expensive calendar document dormant behind the password gate.
        Authenticated startup assigns data-base-src immediately. -->
-  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20261001qr1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
+  <iframe src="about:blank" data-base-src="kalendars/index.html?cv=20261001rf1" id="calIframe" title="Dežūru grafiks" loading="eager" allowtransparency="true" fetchpriority="high"></iframe>
 </div>
 
 <!-- Dither loader (js/dither-loader.js). It stays up until the embedded
@@ -1760,7 +1760,10 @@ function _doSync(duringReveal) {
              : (dockBar   && dockBar.offsetHeight)   ? dockBar.offsetHeight + 20
              : 52;
   const radioVisible = !!rw && !document.body.classList.contains('radio-hidden') && !document.body.classList.contains('radio-idle') && rw.style.display !== 'none';
-  const radioH = radioVisible ? Math.max(0, Math.round(rw.getBoundingClientRect().height || rw.offsetHeight || 0)) : 0;
+  // Layout height, not the visual box: mid-reveal the window is scaled down,
+  // and getBoundingClientRect() then gave the calendar a too-small radio, so
+  // it re-laid twice on every open (under the dim, then again at settle).
+  const radioH = radioVisible ? Math.max(0, Math.round(rw.offsetHeight || rw.getBoundingClientRect().height || 0)) : 0;
   // Lācītis mini dock shares the same bottom-console slot as the radio.
   const lac = document.getElementById('lacMiniConsole');
   const lacVisible = !!lac && lac.classList.contains('docked');

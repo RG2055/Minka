@@ -2299,6 +2299,22 @@
   // Let that one geometry change request a fresh mood/roster placement without
   // polling or observing the whole document.
   window.__minkaScheduleMoodSectionLayout = scheduleMoodSectionLayout;
+  /* Radio open/close resizes this frame. The card used to follow only
+     120–180 ms later (section pull-up, curve, the ring of bubbles), after the
+     cards had faded back in: a visible jump. The host now calls this in its
+     own reflow task, under the dim, so the card arrives in place. The usual
+     size-change reactions still run afterwards as a safety net; with nothing
+     left to move they change nothing. */
+  window.__minkaMoodHostLayout = function () {
+    if (!list.querySelector('.rg-feedback-card')) return;
+    runMoodSectionLayout();
+    var refs = moodRefs();
+    if (refs && refs.ring && refs.ring.isConnected) {
+      var card = refs.ring.closest('.rg-feedback-card');
+      if (card) fitTrendUnderLabel(card, moodPreviewing);
+      if (refs.ring.firstChild) placeMoodStaff(refs.ring);
+    }
+  };
   window.addEventListener('resize', function () {
     window.clearTimeout(moodSectionResizeTimer);
     moodSectionResizeTimer = window.setTimeout(runMoodSectionLayout, 180);
