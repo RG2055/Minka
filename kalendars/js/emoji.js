@@ -2231,6 +2231,8 @@
     refresh: refreshAllCards,
     reload: loadFromGist,
     renderInModal: renderInModal,
+    // Everyone's emoji (a copy), for js/page/card-pictures-warm.js.
+    all: function () { return Object.assign({}, _data); },
     // The Fluent catalogue, so other pickers in the app offer the same set
     // instead of a handful of hardcoded faces. Copies, not the live arrays.
     catalogue: function () {

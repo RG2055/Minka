@@ -340,4 +340,14 @@
   }
   if (document.body) boot();
   else document.addEventListener('DOMContentLoaded', boot, { once: true });
+
+  /* For js/page/card-pictures-warm.js: the still Fluent frame an emoji gets on
+     a card (only for those the font does not draw), so it can be loaded early. */
+  window.MinkaEmojiFilm = {
+    staticSrc: function (text) {
+      text = String(text || '').trim();
+      var info = manifest && manifest.emoji && manifest.emoji[text];
+      return info && needsStatic(text) ? BASE + info.file : '';
+    }
+  };
 })();

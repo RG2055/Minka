@@ -445,8 +445,15 @@ function revealGrafiksApp() {
     window.MinkaDither && window.MinkaDither.settled ? window.MinkaDither.settled() : Promise.resolve(),
     new Promise(resolve => setTimeout(resolve, 800))
   ]);
+  // Decorations and 3D emoji of the first day: decoded too (capped), so the
+  // calendar is not uncovered with them painting a moment after the cards.
+  const picturesReady = () => Promise.race([
+    Promise.all(Array.prototype.map.call(document.querySelectorAll('#grafiks-list img, #radiographers-duty img, #radiologists-duty img'),
+      img => img.decode ? img.decode().catch(() => {}) : null)),
+    new Promise(resolve => setTimeout(resolve, 600))
+  ]);
   const show = () => requestAnimationFrame(() => root.classList.remove('mk-schedule-booting'));
-  parsed.then(sheetsLoaded).then(fontsReady).then(effectsReady).then(show, show);
+  parsed.then(sheetsLoaded).then(fontsReady).then(effectsReady).then(picturesReady).then(show, show);
 }
 
 function notifyHostAppReady() {
